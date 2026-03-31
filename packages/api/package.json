@@ -1,0 +1,29 @@
+{
+	"name": "@fcalell/api",
+	"version": "0.0.0",
+	"type": "module",
+	"imports": {
+		"#*": "./src/*.ts"
+	},
+	"exports": {
+		"./middleware/*": "./src/middleware/*.ts",
+		"./lib/*": "./src/lib/*.ts"
+	},
+	"license": "MIT",
+	"scripts": {
+		"check-types": "tsc --noEmit --pretty || true",
+		"lint": "biome check --write --unsafe",
+		"check": "pnpm check-types && pnpm lint",
+		"clear": "rm -rf node_modules .turbo"
+	},
+	"dependencies": {
+		"@orpc/contract": "^1.13.7",
+		"@orpc/server": "^1.13.7",
+		"hono": "^4.12.8",
+		"zod": "^4.3.6"
+	},
+	"devDependencies": {
+		"@fcalell/typescript-config": "workspace:*",
+		"typescript": "^5.9.3"
+	}
+}
