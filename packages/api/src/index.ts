@@ -1,2 +1,4 @@
-// @fcalell/api — Hono middleware and oRPC utilities
-// Will export: auth middleware, rate limiting, logging, error handling
+export { ORPCError as ApiError } from "@orpc/server";
+export { defineApp } from "#define";
+export type { Middleware } from "#procedure";
+export type { InferRouter } from "#types";

@@ -1,7 +1,7 @@
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import type { AuthConfig } from "#kit/config";
+import type { AuthPolicy } from "#kit/config";
 
 const DB_KIT_DIR = ".db-kit";
 const AUTH_CONFIG_FILE = "auth-config.ts";
@@ -11,7 +11,7 @@ export function authSchemaPath(): string {
 	return join(process.cwd(), DB_KIT_DIR, AUTH_SCHEMA_FILE);
 }
 
-export function generateAuthSchema(auth: AuthConfig): boolean {
+export function generateAuthSchema(auth: AuthPolicy): boolean {
 	const dir = join(process.cwd(), DB_KIT_DIR);
 	if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
 
@@ -35,7 +35,7 @@ export function generateAuthSchema(auth: AuthConfig): boolean {
 	return result.status === 0;
 }
 
-function buildConfigFile(auth: AuthConfig): string {
+function buildConfigFile(auth: AuthPolicy): string {
 	const imports = [
 		'import { betterAuth } from "better-auth";',
 		'import { drizzleAdapter } from "better-auth/adapters/drizzle";',
@@ -46,12 +46,8 @@ function buildConfigFile(auth: AuthConfig): string {
 	const pluginNames: string[] = [];
 	const plugins: string[] = [];
 
-	if (auth.emailOTP) {
-		pluginNames.push("emailOTP");
-		plugins.push(
-			"emailOTP({ sendVerificationOTP: async () => {} })",
-		);
-	}
+	pluginNames.push("emailOTP");
+	plugins.push("emailOTP({ sendVerificationOTP: async () => {} })");
 
 	if (auth.organization) {
 		pluginNames.push("organization");
@@ -70,12 +66,10 @@ function buildConfigFile(auth: AuthConfig): string {
 		);
 	}
 
-	const sessionArg = auth.session
-		? `\n\tsession: ${JSON.stringify(auth.session)},`
+	const sessionArg = auth.session?.additionalFields
+		? `\n\tsession: ${JSON.stringify({ additionalFields: auth.session.additionalFields })},`
 		: "";
-	const userArg = auth.user
-		? `\n\tuser: ${JSON.stringify(auth.user)},`
-		: "";
+	const userArg = auth.user ? `\n\tuser: ${JSON.stringify(auth.user)},` : "";
 
 	return `${imports.join("\n")}
 

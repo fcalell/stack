@@ -1,5 +1,5 @@
 import { createHash, createHmac } from "node:crypto";
-import { existsSync } from "node:fs";
+import { existsSync, mkdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 
 const MINIFLARE_UNIQUE_KEY = "miniflare-D1DatabaseObject";
@@ -34,19 +34,9 @@ export function getLocalD1Path(
 	const d1Dir = resolve(wranglerDir, "state/v3/d1/miniflare-D1DatabaseObject");
 
 	if (!existsSync(d1Dir)) {
-		throw new Error(
-			`Wrangler D1 state not found: ${d1Dir}. Run 'pnpm dev:init' first.`,
-		);
+		mkdirSync(d1Dir, { recursive: true });
 	}
 
 	const filename = getMiniflareDbFilename(databaseId);
-	const dbPath = join(d1Dir, `${filename}.sqlite`);
-
-	if (!existsSync(dbPath)) {
-		throw new Error(
-			`D1 database file not found: ${dbPath}. Run 'pnpm dev:init' first.`,
-		);
-	}
-
-	return dbPath;
+	return join(d1Dir, `${filename}.sqlite`);
 }

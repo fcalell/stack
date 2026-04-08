@@ -11,13 +11,26 @@ const { positionals, values } = parseArgs({
 });
 
 const command = positionals[0];
+const commands = ["dev", "deploy", "init", "reset"];
 
-if (!command || !["dev", "deploy"].includes(command)) {
-	console.log("Usage: db-kit <dev|deploy> [--studio] [--config path]");
+if (!command || !commands.includes(command)) {
+	console.log(
+		"Usage: db-kit <dev|deploy|init|reset> [--studio] [--config path]",
+	);
 	process.exit(1);
 }
 
-const configPath = resolve(values.config!);
+if (command === "init") {
+	const { init } = await import("#kit/init");
+	await init();
+	process.exit(0);
+}
+
+const configPath = resolve(values.config ?? "db.config.ts");
+
+const { ensureDeps } = await import("#kit/deps");
+ensureDeps(configPath);
+
 const mod = await import(configPath);
 const config = mod.default;
 
@@ -29,7 +42,10 @@ if (!config?.dialect || !["d1", "sqlite"].includes(config.dialect)) {
 if (command === "dev") {
 	const { dev } = await import("#kit/dev");
 	dev(config, { studio: values.studio ?? false });
-} else {
+} else if (command === "deploy") {
 	const { deploy } = await import("#kit/deploy");
 	deploy(config);
+} else if (command === "reset") {
+	const { reset } = await import("#kit/reset");
+	reset(config);
 }

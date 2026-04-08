@@ -1,16 +1,45 @@
 import { type ChildProcess, spawn, spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import {
+	appendFileSync,
+	existsSync,
+	mkdirSync,
+	readdirSync,
+	readFileSync,
+	writeFileSync,
+} from "node:fs";
 import { join, resolve } from "node:path";
 import { authSchemaPath, generateAuthSchema } from "#auth/generate";
 import { getLocalD1Path } from "#d1/miniflare";
-import type { DatabaseConfig } from "#kit/config";
+import {
+	type AuthPolicy,
+	type DatabaseConfig,
+	getMigrationsPath,
+	getSchemaPath,
+} from "#kit/config";
 
 const DB_KIT_DIR = ".db-kit";
 const DRIZZLE_CONFIG = "drizzle.config.mjs";
 
 function ensureDir(): void {
 	const dir = join(process.cwd(), DB_KIT_DIR);
-	if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+	if (!existsSync(dir)) {
+		mkdirSync(dir, { recursive: true });
+		ensureGitignore();
+	}
+}
+
+export function ensureGitignore(): boolean {
+	const gitignorePath = join(process.cwd(), ".gitignore");
+	const entry = ".db-kit";
+
+	if (existsSync(gitignorePath)) {
+		const content = readFileSync(gitignorePath, "utf-8");
+		if (content.includes(entry)) return false;
+		appendFileSync(gitignorePath, `\n${entry}\n`);
+	} else {
+		writeFileSync(gitignorePath, `${entry}\n`);
+	}
+	return true;
 }
 
 function configPath(): string {
@@ -33,7 +62,7 @@ function drizzleKit(...args: string[]): boolean {
 }
 
 function schemaList(config: DatabaseConfig): string[] {
-	const schemas = [config.schema];
+	const schemas = [getSchemaPath(config)];
 	if (config.auth) {
 		const path = authSchemaPath();
 		if (existsSync(path)) schemas.push(path);
@@ -41,15 +70,45 @@ function schemaList(config: DatabaseConfig): string[] {
 	return schemas;
 }
 
+function discoverWranglerDir(): string {
+	const cwd = process.cwd();
+
+	// Check current directory
+	if (existsSync(join(cwd, ".wrangler"))) return cwd;
+
+	// Check sibling directories
+	const parent = resolve(cwd, "..");
+	if (existsSync(parent)) {
+		for (const entry of readdirSync(parent, { withFileTypes: true })) {
+			if (!entry.isDirectory()) continue;
+			const candidate = join(parent, entry.name, ".wrangler");
+			if (existsSync(candidate)) return join(parent, entry.name);
+		}
+	}
+
+	// Check parent directory
+	if (existsSync(join(parent, ".wrangler"))) return parent;
+
+	throw new Error(
+		"Could not find .wrangler directory. Run wrangler dev first, or ensure .wrangler exists in a sibling/parent directory.",
+	);
+}
+
 export function localDbUrl(config: DatabaseConfig): string {
 	if (config.dialect === "sqlite") return resolve(config.path);
-	return getLocalD1Path(config.databaseId, config.wranglerDir);
+	const wranglerDir = discoverWranglerDir();
+	return getLocalD1Path(config.databaseId, wranglerDir);
+}
+
+function getAuthPolicy(config: DatabaseConfig): AuthPolicy | null {
+	return config.auth ?? null;
 }
 
 export function ensureAuthSchema(config: DatabaseConfig): boolean {
-	if (!config.auth) return true;
+	const policy = getAuthPolicy(config);
+	if (!policy) return true;
 	console.log("Generating auth schema...");
-	return generateAuthSchema(config.auth);
+	return generateAuthSchema(policy);
 }
 
 export function push(config: DatabaseConfig): boolean {
@@ -65,7 +124,7 @@ export function generate(config: DatabaseConfig): boolean {
 	writeConfig({
 		dialect: "sqlite",
 		schema: schemaList(config),
-		out: config.migrations,
+		out: getMigrationsPath(config),
 	});
 	return drizzleKit("generate", "--config", configPath());
 }
@@ -84,7 +143,7 @@ export function migrate(config: DatabaseConfig): boolean {
 	writeConfig({
 		dialect: "sqlite",
 		...(config.dialect === "d1" && { driver: "d1-http" }),
-		out: config.migrations,
+		out: getMigrationsPath(config),
 		dbCredentials,
 	});
 

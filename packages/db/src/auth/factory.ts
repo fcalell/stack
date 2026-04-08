@@ -1,154 +1,163 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { emailOTP, organization } from "better-auth/plugins";
-import type { DatabaseConfig } from "#kit/config";
+import type { AuthPolicy } from "#kit/config";
 
-interface EmailOTPRuntime {
-	sendOTP: (data: {
-		email: string;
-		otp: string;
-		type: string;
-	}) => Promise<void>;
-	otpLength?: number;
-	expiresIn?: number;
-	sendVerificationOnSignUp?: boolean;
-}
-
-interface OrganizationRuntime {
-	sendInvitation: (data: {
-		email: string;
-		organization: { name: string; slug: string };
-		inviter: { email: string; name?: string };
-		invitationId: string;
-		role: string;
-	}) => Promise<void>;
-	invitationExpiresIn?: number;
-	// biome-ignore lint/suspicious/noExplicitAny: Better Auth plugin types from "better-auth/plugins/access"
-	ac?: any;
-	// biome-ignore lint/suspicious/noExplicitAny: Better Auth Role type from "better-auth/plugins/access"
-	roles?: Record<string, any>;
-}
-
-export interface AuthRuntime {
+export interface AuthEnvConfig {
 	secret: string;
-	baseURL: string;
-	appURL: string;
-	cookiePrefix?: string;
-	cookieDomain?: string;
+	appURL?: string;
 	trustedOrigins?: string[];
-	session?: {
-		expiresIn?: number;
-		updateAge?: number;
-	};
-	emailOTP?: EmailOTPRuntime;
-	organization?: OrganizationRuntime;
+}
+
+export interface OTPCallbackData<TEnv = unknown> {
+	email: string;
+	otp: string;
+	type: string;
+	env: TEnv;
+}
+
+export interface InvitationCallbackData<TEnv = unknown> {
+	email: string;
+	organization: { name: string; slug: string };
+	inviter: { email: string; name?: string };
+	invitationId: string;
+	role: string;
+	env: TEnv;
+}
+
+interface CreateAuthOptions {
+	// biome-ignore lint/suspicious/noExplicitAny: Accepts any Drizzle client instance (D1 or SQLite)
+	db: any;
+	policy: AuthPolicy;
+	env: AuthEnvConfig;
+	// biome-ignore lint/suspicious/noExplicitAny: Cloudflare Worker env bindings passed to callbacks
+	bindings: any;
+	baseURL: string;
+	corsOrigins?: string[];
+	// biome-ignore lint/suspicious/noExplicitAny: callback env generic resolved at defineApp level
+	sendOTP?: (data: OTPCallbackData<any>) => Promise<void>;
+	// biome-ignore lint/suspicious/noExplicitAny: callback env generic resolved at defineApp level
+	sendInvitation?: (data: InvitationCallbackData<any>) => Promise<void>;
 }
 
 // biome-ignore lint/suspicious/noExplicitAny: AuthInstance is derived from betterAuth() return type
 const cache = new WeakMap<object, any>();
 
-// biome-ignore lint/suspicious/noExplicitAny: Accepts any Drizzle client instance (D1 or SQLite)
-export function createAuth(
-	db: any,
-	config: DatabaseConfig,
-	runtime: AuthRuntime,
-) {
-	const existing = cache.get(db);
+export function createAuth(options: CreateAuthOptions) {
+	const existing = cache.get(options.db);
 	if (existing) return existing;
 
-	const authConfig = config.auth;
-	if (!authConfig) {
-		throw new Error("No auth config found in database config");
-	}
+	const { db, policy, env: authEnv } = options;
 
-	const plugins = buildPlugins(authConfig, runtime);
-	const secureCookies = runtime.baseURL.startsWith("https://");
+	const appURL =
+		authEnv.appURL ?? options.corsOrigins?.[0] ?? options.baseURL;
+	const trustedOrigins = authEnv.trustedOrigins ?? [appURL];
+	const secureCookies = options.baseURL.startsWith("https://");
 
-	const auth = betterAuth({
+	const plugins = buildPlugins(
+		policy,
+		options.bindings,
+		options.sendOTP,
+		options.sendInvitation,
+	);
+
+	const instance = betterAuth({
 		database: drizzleAdapter(db, {
 			provider: "sqlite",
 			usePlural: true,
 		}),
-		baseURL: runtime.baseURL,
-		secret: runtime.secret,
-		trustedOrigins: runtime.trustedOrigins ?? [runtime.appURL],
+		baseURL: options.baseURL,
+		secret: authEnv.secret,
+		trustedOrigins,
 		session: {
-			...(authConfig.session?.additionalFields && {
-				additionalFields: authConfig.session.additionalFields,
+			...(policy.session?.additionalFields && {
+				additionalFields: policy.session.additionalFields,
 			}),
-			expiresIn: runtime.session?.expiresIn ?? 60 * 60 * 24 * 7,
-			updateAge: runtime.session?.updateAge ?? 60 * 60 * 24,
+			expiresIn: policy.session?.expiresIn ?? 60 * 60 * 24 * 7,
+			updateAge: policy.session?.updateAge ?? 60 * 60 * 24,
 		},
-		...(authConfig.user?.additionalFields && {
-			user: { additionalFields: authConfig.user.additionalFields },
+		...(policy.user?.additionalFields && {
+			user: { additionalFields: policy.user.additionalFields },
 		}),
 		advanced: {
-			...(runtime.cookiePrefix && { cookiePrefix: runtime.cookiePrefix }),
+			...(policy.cookies?.prefix && {
+				cookiePrefix: policy.cookies.prefix,
+			}),
 			useSecureCookies: secureCookies,
-			...(runtime.cookieDomain && {
+			...(policy.cookies?.domain && {
 				crossSubDomainCookies: {
 					enabled: true,
-					domain: runtime.cookieDomain,
+					domain: policy.cookies.domain,
 				},
 			}),
 		},
 		plugins,
 	});
 
-	cache.set(db, auth);
-	return auth;
+	cache.set(db, instance);
+	return instance;
 }
 
 export type AuthInstance = ReturnType<typeof createAuth>;
 
-// biome-ignore lint/suspicious/noExplicitAny: Better Auth plugin array type
-function buildPlugins(authConfig: NonNullable<DatabaseConfig["auth"]>, runtime: AuthRuntime): any[] {
+function buildPlugins(
+	policy: AuthPolicy,
+	// biome-ignore lint/suspicious/noExplicitAny: Cloudflare Worker env bindings
+	bindings: any,
+	// biome-ignore lint/suspicious/noExplicitAny: callback env generic resolved at defineApp level
+	sendOTP?: (data: OTPCallbackData<any>) => Promise<void>,
+	// biome-ignore lint/suspicious/noExplicitAny: callback env generic resolved at defineApp level
+	sendInvitation?: (data: InvitationCallbackData<any>) => Promise<void>,
+	// biome-ignore lint/suspicious/noExplicitAny: Better Auth plugin array type
+): any[] {
 	const plugins = [];
 
-	if (authConfig.emailOTP && runtime.emailOTP) {
-		const opts = runtime.emailOTP;
+	if (sendOTP) {
 		plugins.push(
 			emailOTP({
-				otpLength: opts.otpLength ?? 6,
-				expiresIn: opts.expiresIn ?? 300,
-				sendVerificationOnSignUp: opts.sendVerificationOnSignUp ?? false,
+				otpLength: 6,
+				expiresIn: 300,
+				sendVerificationOnSignUp: false,
 				async sendVerificationOTP({ email, otp, type }) {
-					await opts.sendOTP({ email, otp, type });
+					await sendOTP({ email, otp, type, env: bindings });
 				},
 			}),
 		);
 	}
 
-	if (authConfig.organization && runtime.organization) {
-		const opts = runtime.organization;
-		const orgAdditionalFields =
-			authConfig.organization !== true &&
-			authConfig.organization.additionalFields;
+	if (policy.organization) {
+		const orgConfig =
+			typeof policy.organization === "object" ? policy.organization : {};
 
 		plugins.push(
 			organization({
-				...(opts.ac && { ac: opts.ac }),
-				...(opts.roles && { roles: opts.roles }),
-				invitationExpiresIn: opts.invitationExpiresIn ?? 60 * 60 * 48,
-				// biome-ignore lint/suspicious/noExplicitAny: Better Auth invitation callback type
-				async sendInvitationEmail(data: any) {
-					await opts.sendInvitation({
-						email: data.email,
-						organization: {
-							name: data.organization.name,
-							slug: data.organization.slug,
-						},
-						inviter: {
-							email: data.inviter.user.email,
-							name: data.inviter.user.name ?? undefined,
-						},
-						invitationId: data.id,
-						role: data.role,
-					});
-				},
-				...(orgAdditionalFields && {
+				...(orgConfig.ac && { ac: orgConfig.ac }),
+				...(orgConfig.roles && { roles: orgConfig.roles }),
+				invitationExpiresIn: 60 * 60 * 48,
+				...(sendInvitation && {
+					// biome-ignore lint/suspicious/noExplicitAny: Better Auth invitation data type
+					async sendInvitationEmail(data: any) {
+						await sendInvitation({
+							email: data.email,
+							organization: {
+								name: data.organization.name,
+								slug: data.organization.slug,
+							},
+							inviter: {
+								email: data.inviter.user.email,
+								name: data.inviter.user.name ?? undefined,
+							},
+							invitationId: data.id,
+							role: data.role,
+							env: bindings,
+						});
+					},
+				}),
+				...(orgConfig.additionalFields && {
 					schema: {
-						organization: { additionalFields: orgAdditionalFields },
+						organization: {
+							additionalFields: orgConfig.additionalFields,
+						},
 					},
 				}),
 			}),

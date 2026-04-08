@@ -4,7 +4,7 @@ Reference material for @fcalell/stack packages. Read individual docs as needed.
 
 ## Packages
 
-- [API](.knowledge/packages/api.md) — Hono middleware, oRPC utilities
+- [API](packages/api/README.md) — API framework, procedure builder, auth/RBAC middleware, typed client
 - [UI](.knowledge/packages/ui.md) — Design system components, variants, composition patterns
 
 ## Design

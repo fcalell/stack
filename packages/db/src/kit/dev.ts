@@ -1,6 +1,6 @@
 import { watch } from "node:fs";
 import { dirname, resolve } from "node:path";
-import type { DatabaseConfig } from "#kit/config";
+import { type DatabaseConfig, getSchemaPath } from "#kit/config";
 import { ensureAuthSchema, push, startStudio } from "#kit/run";
 
 export function dev(
@@ -10,7 +10,7 @@ export function dev(
 	if (!ensureAuthSchema(config)) process.exit(1);
 	if (!push(config)) process.exit(1);
 
-	const schemaPath = resolve(config.schema);
+	const schemaPath = resolve(getSchemaPath(config));
 	const watchDir = schemaPath.endsWith(".ts")
 		? dirname(schemaPath)
 		: schemaPath;

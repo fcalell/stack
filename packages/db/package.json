@@ -6,10 +6,15 @@
 		"#*": "./src/*.ts"
 	},
 	"exports": {
+		".": "./src/kit/config.ts",
+		"./orm": "./src/orm.ts",
 		"./d1": "./src/d1/client.ts",
 		"./sqlite": "./src/sqlite/client.ts",
 		"./kit": "./src/kit/config.ts",
-		"./auth": "./src/auth/factory.ts"
+		"./auth": "./src/auth/define.ts",
+		"./auth/factory": "./src/auth/factory.ts",
+		"./auth/access": "./src/auth/access.ts",
+		"./auth/infer": "./src/auth/infer.ts"
 	},
 	"bin": {
 		"db-kit": "./src/kit/cli.ts"
@@ -32,11 +37,15 @@
 		"tsx": ">=4.0.0"
 	},
 	"peerDependenciesMeta": {
-		"better-auth": { "optional": true },
-		"@better-auth/cli": { "optional": true },
-		"better-sqlite3": { "optional": true },
-		"drizzle-kit": { "optional": true },
-		"tsx": { "optional": true }
+		"better-auth": {
+			"optional": true
+		},
+		"@better-auth/cli": {
+			"optional": true
+		},
+		"better-sqlite3": {
+			"optional": true
+		}
 	},
 	"devDependencies": {
 		"@better-auth/cli": "^1.4.21",

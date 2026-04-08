@@ -11,7 +11,7 @@ Shared packages for all @fcalell projects. SolidJS + Hono + Cloudflare stack.
 | `@fcalell/typescript-config` | tsconfig presets (base, solid-vite, node-tsx) | Config-only, no docs needed |
 | `@fcalell/biome-config` | Shareable Biome formatter/linter config | Config-only, no docs needed |
 | `@fcalell/db` | Drizzle ORM clients (D1/SQLite), `db-kit` CLI, Better Auth integration | `packages/db/README.md` |
-| `@fcalell/api` | Hono middleware + oRPC utilities | `.knowledge/packages/api.md` |
+| `@fcalell/api` | API framework: procedure builder, auth/RBAC middleware, typed client | `packages/api/README.md` |
 | `@fcalell/ui` | Design system: SolidJS + Kobalte + Tailwind v4 + CVA | `.knowledge/packages/ui.md` |
 
 ## Commands
