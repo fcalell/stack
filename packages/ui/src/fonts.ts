@@ -1,1 +1,1 @@
-// Font imports — will be migrated from @repo/ui
+import "@fontsource-variable/jetbrains-mono";

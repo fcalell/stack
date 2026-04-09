@@ -1,1 +1,288 @@
-/* Design system globals — will be migrated from @repo/ui */
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ============================================================
+   TAILWIND V4 THEME
+   Maps derived tokens to Tailwind utility classes.
+   ============================================================ */
+
+@theme {
+	--color-*: initial;
+	--radius-*: initial;
+	--shadow-*: initial;
+
+	/* Essential colors */
+	--color-white: #fff;
+	--color-black: #000;
+
+	/* Fonts */
+	--font-sans: var(--ui-font-sans);
+	--font-mono: var(--ui-font-mono);
+
+	/* Spacing base unit — p-4 = 4 × --spacing */
+	--spacing: var(--ui-spacing);
+
+	/* Border radius scale — derived from --ui-radius */
+	--radius-xs: calc(var(--ui-radius) * 0.5);
+	--radius-sm: calc(var(--ui-radius) * 0.75);
+	--radius-md: var(--ui-radius);
+	--radius-lg: calc(var(--ui-radius) * 1.5);
+	--radius-xl: calc(var(--ui-radius) * 2);
+	--radius-2xl: calc(var(--ui-radius) * 3);
+	--radius-full: 9999px;
+
+	/* Shadows — reference mode-aware CSS variables */
+	--shadow-xs: var(--ui-shadow-xs);
+	--shadow-sm: var(--ui-shadow-sm);
+	--shadow-md: var(--ui-shadow-md);
+	--shadow-lg: var(--ui-shadow-lg);
+	--shadow-xl: var(--ui-shadow-xl);
+
+	/* Semantic colors — reference mode-aware CSS variables */
+	--color-background: var(--background);
+	--color-foreground: var(--foreground);
+	--color-card: var(--card);
+	--color-card-foreground: var(--card-foreground);
+	--color-popover: var(--popover);
+	--color-popover-foreground: var(--popover-foreground);
+	--color-primary: var(--primary);
+	--color-primary-foreground: var(--primary-foreground);
+	--color-secondary: var(--secondary);
+	--color-secondary-foreground: var(--secondary-foreground);
+	--color-muted: var(--muted);
+	--color-muted-foreground: var(--muted-foreground);
+	--color-accent: var(--accent);
+	--color-accent-foreground: var(--accent-foreground);
+	--color-destructive: var(--destructive);
+	--color-destructive-foreground: var(--destructive-foreground);
+	--color-success: var(--success);
+	--color-success-foreground: var(--success-foreground);
+	--color-warning: var(--warning);
+	--color-warning-foreground: var(--warning-foreground);
+	--color-border: var(--border);
+	--color-input: var(--input);
+	--color-ring: var(--ring);
+
+	/* Transitions */
+	--ease-ui: cubic-bezier(0.4, 0, 0.2, 1);
+	--duration-fast: 100ms;
+	--duration-base: 150ms;
+
+	/* Animations */
+	--animate-content-show: content-show 150ms var(--ease-ui);
+	--animate-content-hide: content-hide 150ms var(--ease-ui);
+	--animate-caret-blink: caret-blink 1.25s ease-out infinite;
+}
+
+/* ============================================================
+   USER-CONFIGURABLE BASE TOKENS
+   Override these in your app's CSS to customize the design system.
+
+   Example — warm brand with no shadows:
+     :root {
+       --ui-primary-h: 30;
+       --ui-primary-c: 0.2;
+       --ui-gray-h: 30;
+       --ui-shadow-strength: 0;
+     }
+   ============================================================ */
+
+:root {
+	/* Primary color — hue (0–360) and chroma (0–0.4) in OKLCh */
+	--ui-primary-h: 250;
+	--ui-primary-c: 0.17;
+
+	/* Gray tint — keeps neutrals warm or cool */
+	--ui-gray-h: 250;
+	--ui-gray-c: 0.015;
+
+	/* Status color hues */
+	--ui-success-h: 152;
+	--ui-warning-h: 80;
+	--ui-error-h: 28;
+
+	/* Base spacing unit */
+	--ui-spacing: 0.25rem;
+
+	/* Base border radius */
+	--ui-radius: 0.5rem;
+
+	/* Shadow intensity — 0 = none, 1 = full */
+	--ui-shadow-strength: 1;
+
+	/* Font stacks */
+	--ui-font-sans: ui-sans-serif, system-ui, -apple-system, sans-serif;
+	--ui-font-mono: ui-monospace, "Cascadia Code", "Source Code Pro", monospace;
+}
+
+/* ============================================================
+   DERIVED SEMANTIC TOKENS — Light mode
+   ============================================================ */
+
+:root {
+	color-scheme: light;
+
+	/* Surfaces */
+	--background: oklch(0.985 var(--ui-gray-c) var(--ui-gray-h));
+	--foreground: oklch(0.145 var(--ui-gray-c) var(--ui-gray-h));
+	--card: oklch(1 0 0);
+	--card-foreground: oklch(0.145 var(--ui-gray-c) var(--ui-gray-h));
+	--popover: oklch(1 0 0);
+	--popover-foreground: oklch(0.145 var(--ui-gray-c) var(--ui-gray-h));
+
+	/* Brand */
+	--primary: oklch(0.55 var(--ui-primary-c) var(--ui-primary-h));
+	--primary-foreground: oklch(0.985 0 0);
+
+	/* Neutral variants */
+	--secondary: oklch(0.93 0.01 var(--ui-gray-h));
+	--secondary-foreground: oklch(0.205 var(--ui-gray-c) var(--ui-gray-h));
+	--muted: oklch(0.94 0.008 var(--ui-gray-h));
+	--muted-foreground: oklch(0.46 0.015 var(--ui-gray-h));
+	--accent: oklch(0.94 0.008 var(--ui-gray-h));
+	--accent-foreground: oklch(0.205 var(--ui-gray-c) var(--ui-gray-h));
+
+	/* Status */
+	--destructive: oklch(0.55 0.2 var(--ui-error-h));
+	--destructive-foreground: oklch(0.985 0 0);
+	--success: oklch(0.55 0.17 var(--ui-success-h));
+	--success-foreground: oklch(0.985 0 0);
+	--warning: oklch(0.75 0.15 var(--ui-warning-h));
+	--warning-foreground: oklch(0.205 0 0);
+
+	/* Chrome */
+	--border: oklch(0.885 0.008 var(--ui-gray-h));
+	--input: oklch(0.885 0.008 var(--ui-gray-h));
+	--ring: oklch(0.55 var(--ui-primary-c) var(--ui-primary-h));
+
+	/* Shadows — light mode */
+	--ui-shadow-xs: 0 1px 1px
+		oklch(0 0 0 / calc(0.03 * var(--ui-shadow-strength)));
+	--ui-shadow-sm:
+		0 1px 2px oklch(0 0 0 / calc(0.04 * var(--ui-shadow-strength))),
+		0 1px 1px oklch(0 0 0 / calc(0.06 * var(--ui-shadow-strength)));
+	--ui-shadow-md:
+		0 4px 6px oklch(0 0 0 / calc(0.06 * var(--ui-shadow-strength))),
+		0 2px 4px oklch(0 0 0 / calc(0.04 * var(--ui-shadow-strength)));
+	--ui-shadow-lg:
+		0 10px 15px oklch(0 0 0 / calc(0.08 * var(--ui-shadow-strength))),
+		0 4px 6px oklch(0 0 0 / calc(0.04 * var(--ui-shadow-strength)));
+	--ui-shadow-xl:
+		0 20px 25px oklch(0 0 0 / calc(0.1 * var(--ui-shadow-strength))),
+		0 8px 10px oklch(0 0 0 / calc(0.04 * var(--ui-shadow-strength)));
+}
+
+/* ============================================================
+   DERIVED SEMANTIC TOKENS — Dark mode
+   ============================================================ */
+
+.dark {
+	color-scheme: dark;
+
+	/* Surfaces */
+	--background: oklch(0.145 var(--ui-gray-c) var(--ui-gray-h));
+	--foreground: oklch(0.935 var(--ui-gray-c) var(--ui-gray-h));
+	--card: oklch(0.185 var(--ui-gray-c) var(--ui-gray-h));
+	--card-foreground: oklch(0.935 var(--ui-gray-c) var(--ui-gray-h));
+	--popover: oklch(0.185 var(--ui-gray-c) var(--ui-gray-h));
+	--popover-foreground: oklch(0.935 var(--ui-gray-c) var(--ui-gray-h));
+
+	/* Brand */
+	--primary: oklch(0.65 var(--ui-primary-c) var(--ui-primary-h));
+	--primary-foreground: oklch(0.145 0 0);
+
+	/* Neutral variants */
+	--secondary: oklch(0.22 0.015 var(--ui-gray-h));
+	--secondary-foreground: oklch(0.88 var(--ui-gray-c) var(--ui-gray-h));
+	--muted: oklch(0.22 0.012 var(--ui-gray-h));
+	--muted-foreground: oklch(0.6 0.015 var(--ui-gray-h));
+	--accent: oklch(0.22 0.012 var(--ui-gray-h));
+	--accent-foreground: oklch(0.88 var(--ui-gray-c) var(--ui-gray-h));
+
+	/* Status */
+	--destructive: oklch(0.6 0.2 var(--ui-error-h));
+	--destructive-foreground: oklch(0.985 0 0);
+	--success: oklch(0.6 0.17 var(--ui-success-h));
+	--success-foreground: oklch(0.985 0 0);
+	--warning: oklch(0.78 0.15 var(--ui-warning-h));
+	--warning-foreground: oklch(0.205 0 0);
+
+	/* Chrome */
+	--border: oklch(0.28 0.015 var(--ui-gray-h));
+	--input: oklch(0.28 0.015 var(--ui-gray-h));
+	--ring: oklch(0.65 var(--ui-primary-c) var(--ui-primary-h));
+
+	/* Shadows — dark mode (higher opacity for darker backgrounds) */
+	--ui-shadow-xs: 0 1px 2px
+		oklch(0 0 0 / calc(0.12 * var(--ui-shadow-strength)));
+	--ui-shadow-sm:
+		0 1px 3px oklch(0 0 0 / calc(0.16 * var(--ui-shadow-strength))),
+		0 1px 2px oklch(0 0 0 / calc(0.24 * var(--ui-shadow-strength)));
+	--ui-shadow-md:
+		0 4px 6px oklch(0 0 0 / calc(0.2 * var(--ui-shadow-strength))),
+		0 2px 4px oklch(0 0 0 / calc(0.16 * var(--ui-shadow-strength)));
+	--ui-shadow-lg:
+		0 10px 15px oklch(0 0 0 / calc(0.25 * var(--ui-shadow-strength))),
+		0 4px 6px oklch(0 0 0 / calc(0.16 * var(--ui-shadow-strength)));
+	--ui-shadow-xl:
+		0 20px 25px oklch(0 0 0 / calc(0.3 * var(--ui-shadow-strength))),
+		0 8px 10px oklch(0 0 0 / calc(0.16 * var(--ui-shadow-strength)));
+}
+
+/* ============================================================
+   BASE STYLES
+   ============================================================ */
+
+@layer base {
+	*,
+	*::before,
+	*::after {
+		border-color: var(--border);
+	}
+
+	body {
+		background-color: var(--background);
+		color: var(--foreground);
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+	}
+}
+
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+
+@keyframes content-show {
+	from {
+		opacity: 0;
+		transform: scale(0.96);
+	}
+	to {
+		opacity: 1;
+		transform: scale(1);
+	}
+}
+
+@keyframes content-hide {
+	from {
+		opacity: 1;
+		transform: scale(1);
+	}
+	to {
+		opacity: 0;
+		transform: scale(0.96);
+	}
+}
+
+@keyframes caret-blink {
+	0%,
+	70%,
+	100% {
+		opacity: 1;
+	}
+	20%,
+	50% {
+		opacity: 0;
+	}
+}
