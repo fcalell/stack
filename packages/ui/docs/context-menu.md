@@ -1,41 +1,38 @@
 # ContextMenu
 
-Right-click context menu. Same API shape as DropdownMenu but triggered by right-click. Built on Kobalte's ContextMenu primitive.
+Data-driven right-click context menu. Same item types as DropdownMenu but triggered by right-click. Built on Kobalte's ContextMenu primitive.
 
 ```tsx
 import { ContextMenu } from "@fcalell/ui/components/context-menu";
 ```
 
-## Sub-components
+## Props
 
-| Sub-component | Description |
-|---------------|-------------|
-| `ContextMenu` (Root) | Menu state manager |
-| `ContextMenu.Trigger` | Area that responds to right-click |
-| `ContextMenu.Content` | Portal-rendered menu panel |
-| `ContextMenu.Item` | Standard menu item |
-| `ContextMenu.Shortcut` | Right-aligned keyboard shortcut (`<kbd>`) |
-| `ContextMenu.Separator` | Visual divider |
-| `ContextMenu.Group` | Logical item group |
-| `ContextMenu.GroupLabel` | Label for a group |
-| `ContextMenu.Sub` | Submenu container |
-| `ContextMenu.SubTrigger` | Item that opens a submenu |
-| `ContextMenu.SubContent` | Submenu panel |
-| `ContextMenu.CheckboxItem` | Toggleable item with check indicator |
-| `ContextMenu.RadioGroup` | Radio group container |
-| `ContextMenu.RadioItem` | Radio option with dot indicator |
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `items` | `MenuItems` | -- | Array of items or item groups (same types as DropdownMenu) |
+| `class` | `string` | -- | Additional classes on the trigger area |
+| `contentClass` | `string` | -- | Additional classes on the menu panel |
+| `children` | `JSX.Element` | -- | The area that responds to right-click |
 
 ## Basic usage
 
 ```tsx
-<ContextMenu>
-  <ContextMenu.Trigger>
-    <div class="border border-dashed p-8">Right-click here</div>
-  </ContextMenu.Trigger>
-  <ContextMenu.Content>
-    <ContextMenu.Item>Cut</ContextMenu.Item>
-    <ContextMenu.Item>Copy</ContextMenu.Item>
-    <ContextMenu.Item>Paste</ContextMenu.Item>
-  </ContextMenu.Content>
+<ContextMenu
+  items={[
+    { label: "Cut", shortcut: "⌘X", onSelect: handleCut },
+    { label: "Copy", shortcut: "⌘C", onSelect: handleCopy },
+    { label: "Paste", shortcut: "⌘V", onSelect: handlePaste },
+  ]}
+>
+  <div class="border border-dashed p-8">Right-click here</div>
 </ContextMenu>
+```
+
+## Item types
+
+Uses the same `MenuItem`, `MenuItems`, and `MenuGroup` types from `@fcalell/ui/components/dropdown-menu`. See the DropdownMenu docs for the full type reference.
+
+```tsx
+import type { MenuItem } from "@fcalell/ui/components/dropdown-menu";
 ```

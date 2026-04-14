@@ -1,12 +1,14 @@
 import type { Context, Middleware } from "@orpc/server";
 import { ORPCError } from "@orpc/server";
-import { getHeaders } from "#internal/headers";
 
 export interface RateLimitBinding {
 	limit(options: { key: string }): Promise<{ success: boolean }>;
 }
 
+export type RateLimitKind = "ip" | "email";
+
 interface RateLimitContext extends Context {
+	reqHeaders: Headers;
 	_rateLimiter?: {
 		ip?: RateLimitBinding;
 		email?: RateLimitBinding;
@@ -14,67 +16,48 @@ interface RateLimitContext extends Context {
 	_devMode?: boolean;
 }
 
-async function enforce(limiter: RateLimitBinding, key: string): Promise<void> {
-	const result = await limiter.limit({ key });
-	if (!result.success) {
-		throw new ORPCError("TOO_MANY_REQUESTS", {
-			message: "Rate limit exceeded. Please try again later.",
-		});
-	}
-}
+type KeyExtractor = (context: RateLimitContext, input: unknown) => string;
 
-function getClientIp(headers: Headers | undefined): string {
-	if (!headers) return "unknown";
-	return headers.get("CF-Connecting-IP") || "unknown";
-}
+const KEY_EXTRACTORS: Record<RateLimitKind, KeyExtractor> = {
+	ip: (context) => context.reqHeaders.get("CF-Connecting-IP") || "unknown",
+	email: (_, input) => (input as { email: string }).email.toLowerCase(),
+};
 
-export function createIpRateLimitMiddleware<
+type InputOf<K extends RateLimitKind> = K extends "email"
+	? { email: string }
+	: unknown;
+
+export function createRateLimitMiddleware<
+	K extends RateLimitKind,
 	TContext extends RateLimitContext,
->(): Middleware<
+>(
+	kind: K,
+): Middleware<
 	TContext,
 	Record<never, never>,
-	unknown,
+	InputOf<K>,
 	unknown,
 	Record<never, never>,
 	Record<never, never>
 > {
-	return async ({ context, next }) => {
-		const limiter = context._rateLimiter?.ip;
+	return async ({ context, next }, input) => {
+		const limiter = context._rateLimiter?.[kind];
 		const isDev = context._devMode ?? false;
 
-		if (limiter && !isDev) {
-			await enforce(limiter, getClientIp(getHeaders(context)));
-		} else if (!limiter && !isDev) {
-			console.error("IP rate limiter not configured in production");
+		if (isDev) return next({ context: {} });
+
+		if (!limiter) {
+			console.error(`${kind} rate limiter not configured in production`);
 			throw new ORPCError("INTERNAL_SERVER_ERROR", {
 				message: "Server configuration error",
 			});
 		}
 
-		return next({ context: {} });
-	};
-}
-
-export function createEmailRateLimitMiddleware<
-	TContext extends RateLimitContext,
->(): Middleware<
-	TContext,
-	Record<never, never>,
-	{ email: string },
-	unknown,
-	Record<never, never>,
-	Record<never, never>
-> {
-	return async ({ context, next }, input: { email: string }) => {
-		const limiter = context._rateLimiter?.email;
-		const isDev = context._devMode ?? false;
-
-		if (limiter && !isDev) {
-			await enforce(limiter, input.email.toLowerCase());
-		} else if (!limiter && !isDev) {
-			console.error("Email rate limiter not configured in production");
-			throw new ORPCError("INTERNAL_SERVER_ERROR", {
-				message: "Server configuration error",
+		const key = KEY_EXTRACTORS[kind](context, input);
+		const result = await limiter.limit({ key });
+		if (!result.success) {
+			throw new ORPCError("TOO_MANY_REQUESTS", {
+				message: "Rate limit exceeded. Please try again later.",
 			});
 		}
 

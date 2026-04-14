@@ -4,7 +4,7 @@
 	"private": true,
 	"license": "MIT",
 	"exports": {
-		"./biome.json": "./biome.json"
+		"./shared.json": "./shared.json"
 	},
 	"scripts": {
 		"clear": "rm -rf node_modules .turbo"

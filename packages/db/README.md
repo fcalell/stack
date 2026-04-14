@@ -1,6 +1,6 @@
 # @fcalell/db
 
-Drizzle ORM toolkit for Cloudflare D1 and SQLite. Ships a unified CLI for schema management, type-safe client factories, and an optional Better Auth integration — all driven by a single config file.
+Drizzle ORM toolkit for Cloudflare D1 and SQLite. Type-safe client factories and an optional Better Auth integration — all driven by `stack.config.ts`. Database tooling (dev, deploy, reset) is provided by the `stack` CLI (`@fcalell/cli`).
 
 ## Install
 
@@ -8,17 +8,19 @@ Drizzle ORM toolkit for Cloudflare D1 and SQLite. Ships a unified CLI for schema
 pnpm add @fcalell/db
 ```
 
-`drizzle-kit` and `tsx` are required peer dependencies and are auto-installed by pnpm. Feature-specific dependencies (`better-auth`, `@better-auth/cli`, `better-sqlite3`) are installed automatically by `db-kit` when your config requires them.
+Feature-specific dependencies (`better-auth`, `better-sqlite3`) are optional peer deps — install only if you use auth or SQLite.
 
 ## Quick start
 
-### 1. Scaffold with `db-kit init`
+### 1. Scaffold with `stack`
 
 ```bash
-db-kit init
+stack init        # interactive — select Database layer
+# or
+stack add db      # add database to an existing project
 ```
 
-Interactive — asks for dialect (D1/SQLite), auth, and organizations. Creates `db.config.ts`, `src/schema/index.ts`, `src/migrations/`, and adds `.db-kit` to `.gitignore`.
+Creates `stack.config.ts`, `src/schema/index.ts`, `src/migrations/`, and adds `.db-kit` to `.gitignore`.
 
 ### 2. Define your schema
 
@@ -38,13 +40,16 @@ export const projects = sqliteTable("projects", {
 ### 3. Define your config
 
 ```ts
-import { defineDatabase } from "@fcalell/db";
+// stack.config.ts
+import { defineConfig } from "@fcalell/config";
 import * as schema from "./src/schema";
 
-export default defineDatabase({
-  dialect: "d1",
-  schema,
-  databaseId: "9a619a0b-...",
+export default defineConfig({
+  db: {
+    dialect: "d1",
+    databaseId: "9a619a0b-...",
+    schema,
+  },
 });
 ```
 
@@ -55,10 +60,12 @@ For non-standard layouts, use the escape hatch: `schema: { path: "./custom/path"
 Or for a plain SQLite project:
 
 ```ts
-export default defineDatabase({
-  dialect: "sqlite",
-  schema,
-  path: "./data/app.sqlite",
+export default defineConfig({
+  db: {
+    dialect: "sqlite",
+    path: "./data/app.sqlite",
+    schema,
+  },
 });
 ```
 
@@ -66,17 +73,19 @@ export default defineDatabase({
 
 ```bash
 # Local development — push schema + watch for changes
-db-kit dev
+stack dev
 
 # With Drizzle Studio
-db-kit dev --studio
+stack dev --studio
 
 # Production — generate migrations + apply
-db-kit deploy
+stack deploy
 
 # Drop + recreate local database
-db-kit reset
+stack db reset
 ```
+
+See `@fcalell/cli` docs for the full CLI reference.
 
 ### 5. Query at runtime
 
@@ -98,34 +107,6 @@ import { eq, and, desc } from "@fcalell/db/orm";
 await db.delete(projects).where(eq(projects.id, id));
 await db.select().from(projects).where(and(eq(projects.orgId, orgId))).orderBy(desc(projects.createdAt));
 ```
-
-## CLI: `db-kit`
-
-A single `db.config.ts` drives all database tooling. No manual Drizzle configs needed — the CLI generates them internally in a `.db-kit/` directory (auto-added to `.gitignore`).
-
-### Commands
-
-| Command | What it does |
-|---------|-------------|
-| `db-kit init` | Interactive scaffold — config, schema, migrations, .gitignore |
-| `db-kit dev` | Push schema to local DB, watch for changes |
-| `db-kit dev --studio` | Same, plus launch Drizzle Studio |
-| `db-kit deploy` | Generate migrations, then apply them |
-| `db-kit reset` | Drop + recreate local database from schema |
-
-### Options
-
-| Flag | Default | Description |
-|------|---------|-------------|
-| `--studio` | `false` | Launch Drizzle Studio alongside dev |
-| `--config <path>` | `db.config.ts` | Path to config file |
-
-### How it works
-
-- **`init`** interactively scaffolds `db.config.ts`, `src/schema/index.ts`, `src/migrations/`, and adds `.db-kit` to `.gitignore`. Asks for dialect, auth, and organization options.
-- **`dev`** runs `drizzle-kit push` against your local database (SQLite file or Wrangler's local D1), then watches your schema directory for `.ts` changes with a 300ms debounce. The `.wrangler` state directory is auto-discovered from sibling/parent directories.
-- **`deploy`** runs `drizzle-kit generate` to create migration files, then `drizzle-kit migrate` to apply them. For D1, it connects via HTTP using `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_D1_TOKEN` environment variables.
-- **`reset`** deletes the local database file and re-pushes the schema. Useful during development.
 
 ## Runtime clients
 
@@ -153,13 +134,14 @@ Creates a Drizzle client backed by `better-sqlite3`. Useful for scripts, seeds, 
 
 ## Auth integration
 
-Optional [Better Auth](https://www.better-auth.com/) integration. `defineAuth()` defines the **policy** — the schema-time configuration that drives auth table generation. Runtime concerns (secrets, callbacks) are handled by `@fcalell/api`'s `defineApp()`.
+Optional [Better Auth](https://www.better-auth.com/) integration. Auth is configured as a section in `stack.config.ts` — the schema-time configuration that drives auth table generation. Runtime concerns (secrets, callbacks) are handled by `@fcalell/api`'s `defineApp()`.
 
-### defineAuth
+### Auth config
 
 ```ts
-import { defineAuth } from "@fcalell/db/auth";
+import { defineConfig } from "@fcalell/config";
 import { createAccessControl } from "@fcalell/db/auth/access";
+import * as schema from "./src/schema";
 
 const ac = createAccessControl({
   organization: ["update", "delete"],
@@ -168,27 +150,27 @@ const ac = createAccessControl({
   project: ["create", "read", "update", "delete"],
 });
 
-const auth = defineAuth({
-  cookies: { prefix: "myapp", domain: ".example.com" },
-  session: {
-    expiresIn: 60 * 60 * 24 * 7,
-    additionalFields: {
-      activeProjectId: { type: "string" },
-    },
+export default defineConfig({
+  db: {
+    dialect: "d1",
+    databaseId: "9a619a0b-...",
+    schema,
   },
-  user: {
-    additionalFields: {
-      timezone: { type: "string" },
+  auth: {
+    cookies: { prefix: "myapp", domain: ".example.com" },
+    session: {
+      expiresIn: 60 * 60 * 24 * 7,
+      additionalFields: {
+        activeProjectId: { type: "string" },
+      },
     },
+    user: {
+      additionalFields: {
+        timezone: { type: "string" },
+      },
+    },
+    organization: { ac, roles: { owner: ac.newRole({ ... }) } },
   },
-  organization: { ac, roles: { owner: ac.newRole({ ... }) } },
-});
-
-export default defineDatabase({
-  dialect: "d1",
-  schema,
-  databaseId: "9a619a0b-...",
-  auth,
 });
 ```
 
@@ -196,15 +178,15 @@ Runtime secrets (`AUTH_SECRET`) and callbacks (`sendOTP`, `sendInvitation`) are 
 
 ### Defaults
 
-| Setting | Where | Default |
-|---------|-------|---------|
-| Database adapter | — | SQLite/Drizzle with `usePlural: true` |
-| Session expiry | policy | 7 days |
-| Session refresh | policy | 24 hours |
-| OTP length | — | 6 digits |
-| OTP expiry | — | 5 minutes |
-| Invitation expiry | — | 48 hours |
-| Secure cookies | — | Enabled when `baseURL` is HTTPS |
+| Setting | Default |
+|---------|---------|
+| Database adapter | SQLite/Drizzle with `usePlural: true` |
+| Session expiry | 7 days |
+| Session refresh | 24 hours |
+| OTP length | 6 digits |
+| OTP expiry | 5 minutes |
+| Invitation expiry | 48 hours |
+| Secure cookies | Enabled when `baseURL` is HTTPS |
 
 ## Type utilities
 
@@ -212,10 +194,10 @@ Derive user/session types from your config for use in shared types or frontend c
 
 ```ts
 import type { InferUser, InferSession } from "@fcalell/db/auth/infer";
-import type dbConfig from "./db.config";
+import type config from "./stack.config";
 
-type User = InferUser<typeof dbConfig>;
-type Session = InferSession<typeof dbConfig>;
+type User = InferUser<typeof config>;
+type Session = InferSession<typeof config>;
 ```
 
 `InferUser` starts from the Better Auth base user (`id`, `name`, `email`, `emailVerified`, `image`, `createdAt`, `updatedAt`) and adds any `additionalFields` from `auth.user`. `InferSession` does the same for sessions, and includes `activeOrganizationId` when the organization plugin is configured.
@@ -237,44 +219,14 @@ const ac = createAccessControl({
 
 `ac.statements` is auto-derived by `defineApp` for RBAC autocomplete in the procedure builder.
 
-## Config reference
-
-### D1
-
-```ts
-defineDatabase({
-  dialect: "d1",
-  schema: Record<string, unknown>,   // Schema module (or { path, module } escape hatch)
-  databaseId: string,                 // Cloudflare D1 database ID
-  migrations?: string,                // Migration output directory (default: ./src/migrations)
-  studioPort?: number,                // Drizzle Studio port (default: 4983)
-  auth?: AuthPolicy,                  // From defineAuth()
-});
-```
-
-### SQLite
-
-```ts
-defineDatabase({
-  dialect: "sqlite",
-  schema: Record<string, unknown>,
-  path: string,                       // Path to SQLite database file
-  migrations?: string,
-  studioPort?: number,
-  auth?: AuthPolicy,
-});
-```
-
 ## Exports
 
 | Subpath | Purpose |
 |---------|---------|
-| `@fcalell/db` | `defineDatabase()`, `getSchemaPath()`, `getSchemaModule()`, `getMigrationsPath()` |
+| `@fcalell/db` | `DatabaseConfig`, `getSchemaPath()`, `getSchemaModule()`, `getMigrationsPath()` |
 | `@fcalell/db/orm` | Drizzle table/column builders, operators, relations, aggregates |
 | `@fcalell/db/d1` | `createClient()` for Cloudflare D1 |
 | `@fcalell/db/sqlite` | `createClient()` for SQLite |
-| `@fcalell/db/auth` | `defineAuth()` — auth policy configuration |
-| `@fcalell/db/auth/factory` | `createAuth()` — internal Better Auth factory |
 | `@fcalell/db/auth/access` | `createAccessControl()`, `getStatements()`, `role()`, `defaultOrgRoles` |
 | `@fcalell/db/auth/infer` | `InferUser<T>`, `InferSession<T>` — type utilities derived from config |
 

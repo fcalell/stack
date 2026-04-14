@@ -1,123 +1,113 @@
 # Select
 
-Dropdown select menu. Built on Kobalte's Select primitive for keyboard navigation, ARIA combobox semantics, and portal-rendered content.
+Data-driven dropdown select. Built on Kobalte's Select primitive for keyboard navigation, ARIA combobox semantics, and portal-rendered content.
 
 ```tsx
 import { Select } from "@fcalell/ui/components/select";
 ```
 
-## Sub-components
-
-### Select (Root)
-
-Kobalte's `Select.Root` — manages state, options, and selection. Pass `options`, `value`/`onChange` (controlled) or `defaultValue`, and `itemComponent`.
-
-| Prop | Type | Description |
-|------|------|-------------|
-| `options` | `T[]` | Array of option values |
-| `value` | `T` | Controlled selected value |
-| `defaultValue` | `T` | Initial value (uncontrolled) |
-| `onChange` | `(value: T) => void` | Selection change handler |
-| `optionValue` | `keyof T \| ((item: T) => string)` | Key or accessor for option identity |
-| `optionTextValue` | `keyof T \| ((item: T) => string)` | Key or accessor for display text |
-| `itemComponent` | `Component` | Render function for each item |
-| `placeholder` | `string` | Placeholder when no value selected |
-| `disabled` | `boolean` | Disable the select |
-
-### Select.Trigger
-
-Styled trigger button. Shows the selected value and a chevron icon.
+## Props
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `size` | `"sm" \| "default" \| "lg"` | `"default"` | Height, padding, and text size |
-| `class` | `string` | -- | Additional Tailwind classes |
-| `children` | `JSX.Element` | -- | Trigger content (typically `Select.Value`) |
+| `options` | `SelectOptions` | -- | Array of options or option groups |
+| `value` | `string` | -- | Controlled selected value |
+| `onValueChange` | `(value: string) => void` | -- | Selection change handler |
+| `placeholder` | `string` | `"Select an option"` | Placeholder when no value selected |
+| `disabled` | `boolean` | `false` | Disable the select |
+| `size` | `"sm" \| "default" \| "lg"` | `"default"` | Trigger height/padding |
+| `class` | `string` | -- | Additional classes on the trigger |
+| `contentClass` | `string` | -- | Additional classes on the dropdown panel |
+| `aria-invalid` | `boolean` | -- | Invalid state for form integration |
+| `disallowEmptySelection` | `boolean` | `true` | Prevent deselecting |
+| `children` | `(option: SelectOption) => JSX.Element` | -- | Custom item content render |
 
-### Select.Value
+## Option types
 
-Renders the selected value's text. Place inside `Select.Trigger`.
+```ts
+type SelectOption = { value: string; label: string; disabled?: boolean };
+type SelectOptionGroup = { label: string; options: SelectOption[] };
+type SelectOptions = SelectOption[] | SelectOptionGroup[];
+```
 
-### Select.HiddenSelect
-
-Hidden native `<select>` for form submission. Place inside the root.
-
-### Select.Content
-
-Portal-rendered dropdown panel with entry/exit animations.
-
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `class` | `string` | -- | Additional Tailwind classes |
-
-### Select.Item
-
-Individual option within the dropdown. Shows a check icon when selected.
-
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `item` | `T` | -- | The option value (from Kobalte) |
-| `class` | `string` | -- | Additional Tailwind classes |
-| `children` | `JSX.Element` | -- | Item display content |
-
-### Select.Section
-
-Groups related items with optional label.
-
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `class` | `string` | -- | Additional Tailwind classes |
-
-### Select.SectionLabel
-
-Uppercase label for a section group. Styled like the Label component.
-
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `class` | `string` | -- | Additional Tailwind classes |
+Grouped options are auto-detected by checking for an `options` array on the first element.
 
 ## Basic usage
 
 ```tsx
 <Select
-  options={["Apple", "Banana", "Cherry"]}
+  options={[
+    { value: "apple", label: "Apple" },
+    { value: "banana", label: "Banana" },
+    { value: "cherry", label: "Cherry" },
+  ]}
+  value={value()}
+  onValueChange={setValue}
   placeholder="Pick a fruit"
-  itemComponent={(props) => (
-    <Select.Item item={props.item}>{props.item.rawValue}</Select.Item>
-  )}
->
-  <Select.Trigger>
-    <Select.Value<string>>{(state) => state.selectedOption()}</Select.Value>
-  </Select.Trigger>
-  <Select.Content />
-</Select>
+/>
 ```
 
-## With sections
+## Custom item rendering
+
+Pass a children render function to customize how each item appears in the dropdown. The function receives the raw `SelectOption` object and returns the content to display inside each item. The item wrapper, check indicator, and keyboard handling are managed by Select.
 
 ```tsx
 <Select
-  options={options}
-  optionValue="id"
-  optionTextValue="label"
-  itemComponent={(props) => (
-    <Select.Item item={props.item}>{props.item.rawValue.label}</Select.Item>
-  )}
+  options={fruits()}
+  value={value()}
+  onValueChange={setValue}
 >
-  <Select.Trigger size="sm">
-    <Select.Value<Option>>{(state) => state.selectedOption()?.label}</Select.Value>
-  </Select.Trigger>
-  <Select.Content>
-    <Select.Section>
-      <Select.SectionLabel>Fruits</Select.SectionLabel>
-    </Select.Section>
-  </Select.Content>
+  {(option) => (
+    <>
+      <FruitIcon name={option.value} />
+      {option.label}
+    </>
+  )}
 </Select>
 ```
 
-## Composition
+## Grouped options
 
-The `selectTriggerVariants` export is available for applying trigger styles to custom elements:
+Pass option groups and sections are rendered automatically with labels:
+
+```tsx
+<Select
+  options={[
+    {
+      label: "Fruits",
+      options: [
+        { value: "apple", label: "Apple" },
+        { value: "banana", label: "Banana" },
+      ],
+    },
+    {
+      label: "Vegetables",
+      options: [
+        { value: "carrot", label: "Carrot" },
+        { value: "spinach", label: "Spinach" },
+      ],
+    },
+  ]}
+  value={value()}
+  onValueChange={setValue}
+/>
+```
+
+## Sizes
+
+```tsx
+<Select options={options} size="sm" />
+<Select options={options} size="default" />
+<Select options={options} size="lg" />
+```
+
+## With form integration
+
+Works with `Form.Select` from `@fcalell/ui/components/form` for TanStack Form integration. The `aria-invalid` prop enables destructive styling on validation errors.
+
+## Exports
+
+The `selectTriggerVariants` CVA export is available for applying trigger styles to custom elements:
 
 ```tsx
 import { selectTriggerVariants } from "@fcalell/ui/components/select";

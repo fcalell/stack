@@ -10,7 +10,7 @@ import { Inset } from "@fcalell/ui/components/inset";
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `variant` | `"default" \| "error"` | `"default"` | Border color — default uses `border-border`, error uses `border-destructive` |
+| `variant` | `"default" \| "destructive"` | `"default"` | Border color — default uses `border-border`, destructive uses `border-destructive` |
 | `class` | `string` | -- | Additional Tailwind classes |
 
 ## Basic usage
@@ -21,10 +21,10 @@ import { Inset } from "@fcalell/ui/components/inset";
 </Inset>
 ```
 
-## Error variant
+## Destructive variant
 
 ```tsx
-<Inset variant="error">
+<Inset variant="destructive">
   <Text.Small>This action cannot be undone.</Text.Small>
 </Inset>
 ```

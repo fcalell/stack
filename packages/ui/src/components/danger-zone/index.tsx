@@ -18,7 +18,7 @@ function DangerZone(props: DangerZoneProps) {
 
 	return (
 		<Inset
-			variant="error"
+			variant="destructive"
 			class={cn("py-4", props.class)}
 			role="region"
 			aria-label="Danger zone"

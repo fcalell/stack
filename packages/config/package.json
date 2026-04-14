@@ -1,0 +1,22 @@
+{
+	"name": "@fcalell/config",
+	"version": "0.0.0",
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts"
+	},
+	"license": "MIT",
+	"scripts": {
+		"check-types": "tsc --noEmit --pretty",
+		"lint": "biome check --write --unsafe",
+		"check": "pnpm check-types && pnpm lint",
+		"clear": "rm -rf node_modules .turbo"
+	},
+	"dependencies": {
+		"@fcalell/db": "workspace:*"
+	},
+	"devDependencies": {
+		"@fcalell/typescript-config": "workspace:*",
+		"typescript": "^5.9.3"
+	}
+}

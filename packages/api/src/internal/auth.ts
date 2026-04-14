@@ -1,8 +1,8 @@
 import type { Context, Middleware } from "@orpc/server";
 import { ORPCError } from "@orpc/server";
-import { getHeaders } from "#internal/headers";
 
 interface AuthRequirement extends Context {
+	reqHeaders: Headers;
 	auth: {
 		api: {
 			getSession: (opts: {
@@ -39,16 +39,10 @@ export function createAuthMiddleware<
 	Record<never, never>
 > {
 	return async ({ context, next }) => {
-		const headers = getHeaders(context);
-
-		if (!headers) {
-			throw new ORPCError("INTERNAL_SERVER_ERROR", {
-				message: "Request headers not available",
-			});
-		}
-
 		try {
-			const sessionData = await context.auth.api.getSession({ headers });
+			const sessionData = await context.auth.api.getSession({
+				headers: context.reqHeaders,
+			});
 
 			if (!sessionData?.session || !sessionData?.user) {
 				throw new ORPCError("UNAUTHORIZED", {

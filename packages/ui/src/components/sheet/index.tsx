@@ -3,8 +3,14 @@ import type { PolymorphicProps } from "@kobalte/core/polymorphic";
 import { cva, type VariantProps } from "class-variance-authority";
 import { X } from "lucide-solid";
 import type { ComponentProps, JSX, ValidComponent } from "solid-js";
-import { splitProps } from "solid-js";
+import { For, Show, splitProps } from "solid-js";
+import { Button } from "#components/button";
 import { cn } from "#lib/cn";
+import {
+	createOverlayContext,
+	createOverlayHook,
+	createProviderState,
+} from "#lib/overlay";
 
 // ─── Portal (internal) ───
 
@@ -177,6 +183,92 @@ function Description<T extends ValidComponent = "p">(
 	);
 }
 
+// ─── SheetProvider ───
+
+const { Context: SheetContext, useCtx: useSheetCtx } =
+	createOverlayContext("Sheet");
+
+function SheetProvider(props: { children: JSX.Element }) {
+	const { entries, context } = createProviderState();
+
+	return (
+		<SheetContext.Provider value={context}>
+			{props.children}
+			<For each={entries()}>{(entry) => entry.component()}</For>
+		</SheetContext.Provider>
+	);
+}
+
+// ─── createSheet ───
+
+type CreateSheetOptions = {
+	position?: "top" | "bottom" | "left" | "right";
+	size?: "sm" | "md" | "lg" | "xl" | "full";
+	contentClass?: string;
+	sheetProps?: Partial<{ preventScroll: boolean; modal: boolean }>;
+};
+
+function createSheet<P = void, R = undefined>(
+	render: (props: P, close: (result?: R) => void) => JSX.Element,
+	options?: CreateSheetOptions,
+): { open: (props: P) => Promise<R | undefined> } {
+	const ctx = useSheetCtx();
+
+	return createOverlayHook<P, R>(ctx, (s) => (
+		<SheetPrimitive.Root
+			open={s.isOpen()}
+			onOpenChange={s.handleOpenChange}
+			{...options?.sheetProps}
+		>
+			<Show when={s.state()} keyed>
+				{(current) => (
+					<Content
+						position={options?.position ?? "right"}
+						size={options?.size ?? "sm"}
+						class={options?.contentClass}
+					>
+						{render(current.props, s.close)}
+					</Content>
+				)}
+			</Show>
+		</SheetPrimitive.Root>
+	));
+}
+
+// ─── createConfirmSheet ───
+
+type ConfirmSheetProps = {
+	title: string;
+	description: string;
+	confirmLabel?: string;
+	cancelLabel?: string;
+	variant?: "default" | "destructive";
+};
+
+function createConfirmSheet(options?: CreateSheetOptions) {
+	return createSheet<ConfirmSheetProps, boolean>((props, close) => {
+		return (
+			<>
+				<Header>
+					<Title>{props.title}</Title>
+				</Header>
+				<Description>{props.description}</Description>
+				<Footer>
+					<Button variant="secondary" onClick={() => close(false)}>
+						{props.cancelLabel ?? "Cancel"}
+					</Button>
+					<Button
+						variant={props.variant ?? "default"}
+						onClick={() => close(true)}
+					>
+						{props.confirmLabel ?? "Confirm"}
+					</Button>
+				</Footer>
+			</>
+		);
+	}, options);
+}
+
 // ─── Exports ───
 
 export const Sheet = Object.assign(SheetPrimitive.Root, {
@@ -187,4 +279,8 @@ export const Sheet = Object.assign(SheetPrimitive.Root, {
 	Footer,
 	Title,
 	Description,
+	Provider: SheetProvider,
 });
+
+export type { ConfirmSheetProps, CreateSheetOptions };
+export { createConfirmSheet, createSheet };

@@ -1,4 +1,4 @@
-import type { AuthPolicy, FieldConfig } from "#kit/config";
+import type { AuthPolicy, FieldConfig } from "#config";
 
 type FieldType<F extends FieldConfig> = F["type"] extends "string"
 	? string
@@ -6,7 +6,9 @@ type FieldType<F extends FieldConfig> = F["type"] extends "string"
 		? number
 		: F["type"] extends "boolean"
 			? boolean
-			: never;
+			: F["type"] extends "date"
+				? Date
+				: never;
 
 type InferAdditionalFields<T> =
 	T extends Record<string, FieldConfig>
@@ -15,7 +17,7 @@ type InferAdditionalFields<T> =
 					? FieldType<T[K]>
 					: FieldType<T[K]> | null;
 			}
-		: {};
+		: Record<never, never>;
 
 type BaseUser = {
 	id: string;
@@ -47,9 +49,9 @@ type ExtractAuthPolicy<TConfig> = TConfig extends {
 
 type OrgSessionFields<TPolicy> = TPolicy extends { organization: infer O }
 	? O extends false
-		? {}
+		? Record<never, never>
 		: { activeOrganizationId: string | null }
-	: {};
+	: Record<never, never>;
 
 export type InferUser<TConfig extends { auth?: unknown }> = BaseUser &
 	(ExtractAuthPolicy<TConfig> extends {
@@ -58,7 +60,7 @@ export type InferUser<TConfig extends { auth?: unknown }> = BaseUser &
 		};
 	}
 		? InferAdditionalFields<F>
-		: {});
+		: Record<never, never>);
 
 export type InferSession<TConfig extends { auth?: unknown }> = BaseSession &
 	OrgSessionFields<ExtractAuthPolicy<TConfig>> &
@@ -68,4 +70,4 @@ export type InferSession<TConfig extends { auth?: unknown }> = BaseSession &
 		};
 	}
 		? InferAdditionalFields<F>
-		: {});
+		: Record<never, never>);

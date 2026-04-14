@@ -1,12 +1,12 @@
 import type { Context, Middleware } from "@orpc/server";
 import { ORPCError } from "@orpc/server";
-import { getHeaders } from "#internal/headers";
 
 interface OrgScopedContext extends Context {
 	session: { activeOrganizationId?: string | null; [key: string]: unknown };
 }
 
 interface RbacContext extends Context {
+	reqHeaders: Headers;
 	auth: {
 		api: {
 			hasPermission: (opts: {
@@ -58,16 +58,8 @@ export function createRbacMiddleware<TContext extends RbacContext>(
 	Record<never, never>
 > {
 	return async ({ context, next }) => {
-		const headers = getHeaders(context);
-
-		if (!headers) {
-			throw new ORPCError("INTERNAL_SERVER_ERROR", {
-				message: "Request headers not available",
-			});
-		}
-
 		const result = await context.auth.api.hasPermission({
-			headers,
+			headers: context.reqHeaders,
 			body: { permissions: { [resource]: actions } },
 		});
 

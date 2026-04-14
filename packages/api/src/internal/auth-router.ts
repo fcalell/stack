@@ -1,6 +1,7 @@
 import type { AuthPolicy } from "@fcalell/db";
 import { ORPCError } from "@orpc/server";
 import { z } from "zod";
+import type { ProcedureFactory } from "#procedure";
 
 interface AuthRouterConfig {
 	policy: AuthPolicy;
@@ -14,29 +15,28 @@ function forwardCookies(betterAuthHeaders: Headers, resHeaders: Headers): void {
 	}
 }
 
-function getResHeaders(context: Record<string, unknown>): Headers {
-	const resHeaders = context.resHeaders as Headers | undefined;
-	if (!resHeaders) {
-		throw new ORPCError("INTERNAL_SERVER_ERROR", {
-			message: "Response headers not available",
-		});
+function omitKeys(
+	obj: Record<string, unknown>,
+	keys: Set<string>,
+): Record<string, unknown> {
+	const result: Record<string, unknown> = {};
+	for (const [key, value] of Object.entries(obj)) {
+		if (!keys.has(key)) result[key] = value;
 	}
-	return resHeaders;
+	return result;
 }
 
-function getReqHeaders(context: Record<string, unknown>): Headers {
-	const reqHeaders =
-		(context._headers as Headers | undefined) ??
-		(context.reqHeaders as Headers | undefined);
-	if (!reqHeaders) {
-		throw new ORPCError("INTERNAL_SERVER_ERROR", {
-			message: "Request headers not available",
-		});
-	}
-	return reqHeaders;
-}
+const SENSITIVE_USER_FIELDS = new Set(["password", "twoFactorSecret"]);
+const SENSITIVE_SESSION_FIELDS = new Set(["token"]);
+
+const sanitizeUser = (user: Record<string, unknown>) =>
+	omitKeys(user, SENSITIVE_USER_FIELDS);
+const sanitizeSession = (session: Record<string, unknown>) =>
+	omitKeys(session, SENSITIVE_SESSION_FIELDS);
 
 interface AuthContext {
+	reqHeaders: Headers;
+	resHeaders: Headers;
 	auth: {
 		api: {
 			getSession: (opts: { headers: Headers }) => Promise<unknown>;
@@ -46,22 +46,18 @@ interface AuthContext {
 			}) => Promise<{ headers: Headers }>;
 			updateUser: (opts: {
 				headers: Headers;
-				// biome-ignore lint/suspicious/noExplicitAny: Better Auth body type
-				body: any;
+				body: Record<string, unknown>;
 			}) => Promise<unknown>;
 			sendVerificationOTP?: (opts: {
-				// biome-ignore lint/suspicious/noExplicitAny: Better Auth body type
-				body: any;
+				body: Record<string, unknown>;
 			}) => Promise<unknown>;
 			signInEmailOTP?: (opts: {
-				// biome-ignore lint/suspicious/noExplicitAny: Better Auth body type
-				body: any;
+				body: Record<string, unknown>;
 				returnHeaders: true;
 			}) => Promise<{ headers: Headers; response: unknown }>;
 			setActiveOrganization?: (opts: {
 				headers: Headers;
-				// biome-ignore lint/suspicious/noExplicitAny: Better Auth body type
-				body: any;
+				body: Record<string, unknown>;
 				returnHeaders: true;
 			}) => Promise<{ headers: Headers }>;
 		};
@@ -71,203 +67,185 @@ interface AuthContext {
 	[key: string]: unknown;
 }
 
-// biome-ignore lint/suspicious/noExplicitAny: Procedure builder from createProcedure, internal usage
-type ProcedureBuilder = any;
+// biome-ignore lint/suspicious/noExplicitAny: auth router is framework-internal and doesn't care about per-call type refinement
+type AuthProcedureFactory = ProcedureFactory<any, any>;
 
 export function createAuthRouter(
-	baseProcedure: ProcedureBuilder,
-	authProcedure: ProcedureBuilder,
+	procedure: AuthProcedureFactory,
 	config: AuthRouterConfig,
 ) {
 	const { policy } = config;
-	// biome-ignore lint/suspicious/noExplicitAny: dynamic router construction
-	const router: Record<string, any> = {};
+	const authProcedure = procedure({ auth: true });
 
-	// Always available when auth is configured
-	router.getSession = authProcedure.handler(
-		async ({ context }: { context: AuthContext }) => {
-			const { user, session } = context;
-			return {
-				user: sanitizeUser(user),
-				session: sanitizeSession(session),
-			};
-		},
-	);
+	const router: Record<string, unknown> = {
+		getSession: authProcedure.handler(
+			async ({ context }: { context: AuthContext }) => ({
+				user: sanitizeUser(context.user),
+				session: sanitizeSession(context.session),
+			}),
+		),
 
-	router.signOut = authProcedure.handler(
-		async ({ context }: { context: AuthContext }) => {
-			const reqHeaders = getReqHeaders(context);
-			const resHeaders = getResHeaders(context);
+		signOut: authProcedure.handler(
+			async ({ context }: { context: AuthContext }) => {
+				try {
+					const { headers: authHeaders } = await context.auth.api.signOut({
+						headers: context.reqHeaders,
+						returnHeaders: true,
+					});
+					forwardCookies(authHeaders, context.resHeaders);
+				} catch (error) {
+					console.error("Failed to revoke session server-side", {
+						error: error instanceof Error ? error.message : "unknown",
+					});
+				}
+				return { success: true };
+			},
+		),
 
-			try {
-				const { headers: authHeaders } = await context.auth.api.signOut({
-					headers: reqHeaders,
-					returnHeaders: true,
-				});
-				forwardCookies(authHeaders, resHeaders);
-			} catch (error) {
-				console.error("Failed to revoke session server-side", {
-					error: error instanceof Error ? error.message : "unknown",
-				});
-			}
+		updateUser: authProcedure
+			.input(buildUpdateUserSchema(policy))
+			.handler(
+				async ({
+					input,
+					context,
+				}: {
+					input: Record<string, unknown>;
+					context: AuthContext;
+				}) => {
+					await context.auth.api.updateUser({
+						headers: context.reqHeaders,
+						body: input,
+					});
+					return { ...sanitizeUser(context.user), ...input };
+				},
+			),
+	};
 
-			return { success: true };
-		},
-	);
+	if (config.emailOTP) {
+		Object.assign(router, createEmailOtpRoutes(procedure));
+	}
 
-	router.updateUser = authProcedure
-		.input(buildUpdateUserSchema(policy))
+	if (hasOrganization(policy)) {
+		Object.assign(router, createOrgRoutes(authProcedure));
+	}
+
+	return router;
+}
+
+function createEmailOtpRoutes(procedure: AuthProcedureFactory) {
+	const rateLimitedProcedure = procedure({ rateLimit: ["ip", "email"] });
+	const emailSchema = z.object({
+		email: z.string().email("Please enter a valid email address"),
+	});
+
+	const sendOtp = rateLimitedProcedure
+		.input(emailSchema)
 		.handler(
 			async ({
 				input,
 				context,
 			}: {
-				input: Record<string, unknown>;
+				input: { email: string };
 				context: AuthContext;
 			}) => {
-				const reqHeaders = getReqHeaders(context);
-
-				await context.auth.api.updateUser({
-					headers: reqHeaders,
-					body: input,
-				});
-
-				return {
-					...sanitizeUser(context.user),
-					...input,
-				};
+				try {
+					await context.auth.api.sendVerificationOTP?.({
+						body: { email: input.email, type: "sign-in" },
+					});
+				} catch (error) {
+					console.error("Failed to send OTP", {
+						error: error instanceof Error ? error.message : "unknown",
+					});
+				}
+				// Always return success (timing attack prevention)
+				return { success: true };
 			},
 		);
 
-	// Email OTP procedures
-	if (config.emailOTP) {
-		router.sendOtp = baseProcedure
-			.rateLimit("ip")
-			.rateLimit("email")
-			.input(
-				z.object({
-					email: z.string().email("Please enter a valid email address"),
-				}),
-			)
-			.handler(
-				async ({
-					input,
-					context,
-				}: {
-					input: { email: string };
-					context: AuthContext;
-				}) => {
-					try {
-						await context.auth.api.sendVerificationOTP?.({
-							body: { email: input.email, type: "sign-in" },
-						});
-					} catch (error) {
-						console.error("Failed to send OTP", {
-							error: error instanceof Error ? error.message : "unknown",
-						});
-					}
-					// Always return success (timing attack prevention)
-					return { success: true };
-				},
-			);
-
-		router.verifyOtp = baseProcedure
-			.rateLimit("ip")
-			.rateLimit("email")
-			.input(
-				z.object({
-					email: z.string().email("Please enter a valid email address"),
-					token: z.string().length(6, "OTP code must be 6 digits"),
-				}),
-			)
-			.handler(
-				async ({
-					input,
-					context,
-				}: {
-					input: { email: string; token: string };
-					context: AuthContext;
-				}) => {
-					const resHeaders = getResHeaders(context);
-
-					try {
-						const result = await context.auth.api.signInEmailOTP?.({
-							body: { email: input.email, otp: input.token },
-							returnHeaders: true,
-						});
-						if (!result) {
-							throw new ORPCError("INTERNAL_SERVER_ERROR", {
-								message: "Email OTP plugin not configured",
-							});
-						}
-
-						forwardCookies(result.headers, resHeaders);
-
-						const response = result.response as
-							| { user?: { id: string; email: string } }
-							| undefined;
-						if (!response?.user) {
-							throw new ORPCError("UNAUTHORIZED", {
-								message: "Invalid or expired verification code",
-							});
-						}
-
-						return {
-							user: {
-								id: response.user.id,
-								email: response.user.email,
-							},
-						};
-					} catch (error) {
-						if (error instanceof ORPCError) throw error;
-						console.error("OTP verification failed", {
-							error: error instanceof Error ? error.message : "unknown",
-						});
-						throw new ORPCError("UNAUTHORIZED", {
-							message: "Invalid or expired verification code",
-						});
-					}
-				},
-			);
-	}
-
-	// Organization procedures
-	if (hasOrganization(policy)) {
-		router.setActiveOrganization = authProcedure
-			.input(z.object({ organizationId: z.string().min(1) }))
-			.handler(
-				async ({
-					input,
-					context,
-				}: {
-					input: { organizationId: string };
-					context: AuthContext;
-				}) => {
-					const reqHeaders = getReqHeaders(context);
-					const resHeaders = getResHeaders(context);
-
-					const result = await context.auth.api.setActiveOrganization?.({
-						headers: reqHeaders,
-						body: { organizationId: input.organizationId },
+	const verifyOtp = rateLimitedProcedure
+		.input(
+			emailSchema.extend({
+				token: z.string().length(6, "OTP code must be 6 digits"),
+			}),
+		)
+		.handler(
+			async ({
+				input,
+				context,
+			}: {
+				input: { email: string; token: string };
+				context: AuthContext;
+			}) => {
+				try {
+					const result = await context.auth.api.signInEmailOTP?.({
+						body: { email: input.email, otp: input.token },
 						returnHeaders: true,
 					});
 					if (!result) {
 						throw new ORPCError("INTERNAL_SERVER_ERROR", {
-							message: "Organization plugin not configured",
+							message: "Email OTP plugin not configured",
 						});
 					}
 
-					forwardCookies(result.headers, resHeaders);
+					forwardCookies(result.headers, context.resHeaders);
 
-					return {
-						success: true,
-						activeOrganizationId: input.organizationId,
-					};
-				},
-			);
-	}
+					const user = extractResponseUser(result.response);
+					if (!user) {
+						throw new ORPCError("UNAUTHORIZED", {
+							message: "Invalid or expired verification code",
+						});
+					}
+					return { user };
+				} catch (error) {
+					if (error instanceof ORPCError) throw error;
+					console.error("OTP verification failed", {
+						error: error instanceof Error ? error.message : "unknown",
+					});
+					throw new ORPCError("UNAUTHORIZED", {
+						message: "Invalid or expired verification code",
+					});
+				}
+			},
+		);
 
-	return router;
+	return { sendOtp, verifyOtp };
+}
+
+function createOrgRoutes(
+	// biome-ignore lint/suspicious/noExplicitAny: authProcedure from the framework factory
+	authProcedure: any,
+) {
+	const setActiveOrganization = authProcedure
+		.input(z.object({ organizationId: z.string().min(1) }))
+		.handler(
+			async ({
+				input,
+				context,
+			}: {
+				input: { organizationId: string };
+				context: AuthContext;
+			}) => {
+				const result = await context.auth.api.setActiveOrganization?.({
+					headers: context.reqHeaders,
+					body: { organizationId: input.organizationId },
+					returnHeaders: true,
+				});
+				if (!result) {
+					throw new ORPCError("INTERNAL_SERVER_ERROR", {
+						message: "Organization plugin not configured",
+					});
+				}
+
+				forwardCookies(result.headers, context.resHeaders);
+
+				return {
+					success: true,
+					activeOrganizationId: input.organizationId,
+				};
+			},
+		);
+
+	return { setActiveOrganization };
 }
 
 function hasOrganization(policy: AuthPolicy | undefined): boolean {
@@ -295,26 +273,15 @@ function buildUpdateUserSchema(policy: AuthPolicy | undefined) {
 	return z.object(fields);
 }
 
-const SENSITIVE_USER_FIELDS = new Set(["password", "twoFactorSecret"]);
-
-function sanitizeUser(user: Record<string, unknown>): Record<string, unknown> {
-	const result: Record<string, unknown> = {};
-	for (const [key, value] of Object.entries(user)) {
-		if (!SENSITIVE_USER_FIELDS.has(key)) {
-			result[key] = value;
-		}
-	}
-	return result;
-}
-
-function sanitizeSession(
-	session: Record<string, unknown>,
-): Record<string, unknown> {
-	const result: Record<string, unknown> = {};
-	for (const [key, value] of Object.entries(session)) {
-		if (key !== "token") {
-			result[key] = value;
-		}
-	}
-	return result;
+function extractResponseUser(
+	response: unknown,
+): { id: string; email: string } | undefined {
+	if (typeof response !== "object" || response === null) return undefined;
+	if (!("user" in response)) return undefined;
+	const { user } = response;
+	if (typeof user !== "object" || user === null) return undefined;
+	if (!("id" in user) || !("email" in user)) return undefined;
+	if (typeof user.id !== "string" || typeof user.email !== "string")
+		return undefined;
+	return { id: user.id, email: user.email };
 }

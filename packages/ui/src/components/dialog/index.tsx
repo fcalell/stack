@@ -2,8 +2,16 @@ import * as DialogPrimitive from "@kobalte/core/dialog";
 import type { PolymorphicProps } from "@kobalte/core/polymorphic";
 import { X } from "lucide-solid";
 import type { ComponentProps, JSX, ValidComponent } from "solid-js";
-import { splitProps } from "solid-js";
+import { createSignal, createUniqueId, For, Show, splitProps } from "solid-js";
+import { Button } from "#components/button";
+import { Input } from "#components/input";
+import { Text } from "#components/text";
 import { cn } from "#lib/cn";
+import {
+	createOverlayContext,
+	createOverlayHook,
+	createProviderState,
+} from "#lib/overlay";
 
 // ─── Portal + Overlay (internal) ───
 
@@ -62,7 +70,7 @@ function Content<T extends ValidComponent = "div">(
 				{...rest}
 			>
 				{local.children}
-				<DialogPrimitive.CloseButton class="absolute right-3 top-3 flex size-8 items-center justify-center text-muted-foreground transition-[color,background-color,border-color] duration-base ease-ui hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring disabled:pointer-events-none">
+				<DialogPrimitive.CloseButton class="absolute right-3 top-3 flex size-8 items-center justify-center text-muted-foreground transition-[color,background-color,border-color] duration-base ease-ui hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2 disabled:pointer-events-none">
 					<X class="size-4" aria-hidden="true" />
 					<span class="sr-only">Close</span>
 				</DialogPrimitive.CloseButton>
@@ -134,6 +142,136 @@ function Description<T extends ValidComponent = "p">(
 	);
 }
 
+// ─── DialogProvider ───
+
+const { Context: DialogContext, useCtx: useDialogCtx } =
+	createOverlayContext("Dialog");
+
+function DialogProvider(props: { children: JSX.Element }) {
+	const { entries, context } = createProviderState();
+
+	return (
+		<DialogContext.Provider value={context}>
+			{props.children}
+			<For each={entries()}>{(entry) => entry.component()}</For>
+		</DialogContext.Provider>
+	);
+}
+
+// ─── createDialog ───
+
+type CreateDialogOptions = {
+	contentClass?: string;
+	dialogProps?: Partial<{ preventScroll: boolean; modal: boolean }>;
+};
+
+function createDialog<P = void, R = undefined>(
+	render: (props: P, close: (result?: R) => void) => JSX.Element,
+	options?: CreateDialogOptions,
+): { open: (props: P) => Promise<R | undefined> } {
+	const ctx = useDialogCtx();
+
+	return createOverlayHook<P, R>(ctx, (s) => (
+		<DialogPrimitive.Root
+			open={s.isOpen()}
+			onOpenChange={s.handleOpenChange}
+			{...options?.dialogProps}
+		>
+			<Show when={s.state()} keyed>
+				{(current) => (
+					<Content class={options?.contentClass}>
+						{render(current.props, s.close)}
+					</Content>
+				)}
+			</Show>
+		</DialogPrimitive.Root>
+	));
+}
+
+// ─── createConfirmDialog ───
+
+type ConfirmDialogProps = {
+	title: string;
+	description: string;
+	confirmLabel?: string;
+	cancelLabel?: string;
+	variant?: "default" | "destructive";
+};
+
+function createConfirmDialog(options?: CreateDialogOptions) {
+	return createDialog<ConfirmDialogProps, boolean>((props, close) => {
+		return (
+			<>
+				<Header>
+					<Title>{props.title}</Title>
+				</Header>
+				<Description>{props.description}</Description>
+				<Footer>
+					<Button variant="secondary" onClick={() => close(false)}>
+						{props.cancelLabel ?? "Cancel"}
+					</Button>
+					<Button
+						variant={props.variant ?? "default"}
+						onClick={() => close(true)}
+					>
+						{props.confirmLabel ?? "Confirm"}
+					</Button>
+				</Footer>
+			</>
+		);
+	}, options);
+}
+
+// ─── createConfirmByNameDialog ───
+
+type ConfirmByNameProps = {
+	name: string;
+	title: string;
+	description: string;
+	actionLabel: string;
+};
+
+function createConfirmByNameDialog(options?: CreateDialogOptions) {
+	return createDialog<ConfirmByNameProps, boolean>((props, close) => {
+		const [value, setValue] = createSignal("");
+		const matches = () => value() === props.name;
+		const inputId = createUniqueId();
+
+		return (
+			<>
+				<Header>
+					<Title>{props.title}</Title>
+				</Header>
+				<Description>{props.description}</Description>
+				<div class="flex flex-col gap-2">
+					<Text.Muted as="label" for={inputId}>
+						Type <span class="font-bold text-foreground">{props.name}</span> to
+						confirm
+					</Text.Muted>
+					<Input
+						id={inputId}
+						value={value()}
+						onInput={(e) => setValue(e.currentTarget.value)}
+						placeholder={props.name}
+					/>
+				</div>
+				<Footer>
+					<Button variant="secondary" onClick={() => close(undefined)}>
+						Cancel
+					</Button>
+					<Button
+						variant="destructive"
+						disabled={!matches()}
+						onClick={() => close(true)}
+					>
+						{props.actionLabel}
+					</Button>
+				</Footer>
+			</>
+		);
+	}, options);
+}
+
 // ─── Exports ───
 
 export const Dialog = Object.assign(DialogPrimitive.Root, {
@@ -143,4 +281,8 @@ export const Dialog = Object.assign(DialogPrimitive.Root, {
 	Footer,
 	Title,
 	Description,
+	Provider: DialogProvider,
 });
+
+export type { ConfirmByNameProps, ConfirmDialogProps, CreateDialogOptions };
+export { createConfirmByNameDialog, createConfirmDialog, createDialog };

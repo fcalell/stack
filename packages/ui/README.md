@@ -12,6 +12,10 @@ pnpm add @fcalell/ui
 
 Peer dependency: `solid-js ^1.9`.
 
+Optional peer dependencies (install only if you use the corresponding features):
+- `@tanstack/solid-form ^1.28` — required by `Form` adapters
+- `@tanstack/solid-query ^5.80` — required by `lib/query` utilities
+
 ## Quick start
 
 ### 1. Import the stylesheet
@@ -171,7 +175,7 @@ Per-component documentation lives in `docs/`:
 | Input | `@fcalell/ui/components/input` | Single + `inputClasses`. Props: `size` | [docs/input.md](docs/input.md) |
 | Textarea | `@fcalell/ui/components/textarea` | Single + `textareaClasses`. Props: `size` | [docs/textarea.md](docs/textarea.md) |
 | Checkbox | `@fcalell/ui/components/checkbox` | Single + `checkboxVariants`. Props: `size`, `label`, `indeterminate` | [docs/checkbox.md](docs/checkbox.md) |
-| Select | `@fcalell/ui/components/select` | Compound: Trigger, Value, HiddenSelect, Content, Item, Section, SectionLabel | [docs/select.md](docs/select.md) |
+| Select | `@fcalell/ui/components/select` | Data-driven. Props: `options`, `value`, `onValueChange`, `size`, `children` (render prop) | [docs/select.md](docs/select.md) |
 | Field | `@fcalell/ui/components/field` | Compound: Label, Content, Description, Value, Error | [docs/field.md](docs/field.md) |
 | InputGroup | `@fcalell/ui/components/input-group` | Compound: Input, Textarea, Addon, Button, Text | [docs/input-group.md](docs/input-group.md) |
 | InputOTP | `@fcalell/ui/components/input-otp` | Compound: Input, Group, Slot, Separator + `REGEXP_ONLY_DIGITS` | [docs/input-otp.md](docs/input-otp.md) |
@@ -185,7 +189,7 @@ Per-component documentation lives in `docs/`:
 | SectionToolbar | `@fcalell/ui/components/section-toolbar` | Compound: Left, Right | [docs/section-toolbar.md](docs/section-toolbar.md) |
 | Table | `@fcalell/ui/components/table` | Compound: Header, Body, Footer, Row, Head, Cell, Caption | [docs/table.md](docs/table.md) |
 | DataTable | `@fcalell/ui/components/data-table` | Single. Props: `columns`, `data`, `fallback`, `caption` | [docs/data-table.md](docs/data-table.md) |
-| Dialog | `@fcalell/ui/components/dialog` | Compound: Trigger, Content, Header, Footer, Title, Description | [docs/dialog.md](docs/dialog.md) |
+| Dialog | `@fcalell/ui/components/dialog` | Compound: Trigger, Content, Header, Footer, Title, Description, Provider + `createDialog`, `createConfirmDialog`, `createConfirmByNameDialog` | [docs/dialog.md](docs/dialog.md) |
 | Sheet | `@fcalell/ui/components/sheet` | Compound: Trigger, Close, Content, Header, Footer, Title, Description | [docs/sheet.md](docs/sheet.md) |
 | DropdownMenu | `@fcalell/ui/components/dropdown-menu` | Compound: Trigger, Content, Item, Shortcut, Label, Separator, Sub, SubTrigger, SubContent, CheckboxItem, GroupLabel, RadioGroup, RadioItem | [docs/dropdown-menu.md](docs/dropdown-menu.md) |
 | ContextMenu | `@fcalell/ui/components/context-menu` | Compound: Trigger, Content, Item, Shortcut, Separator, Sub, SubTrigger, SubContent, CheckboxItem, GroupLabel, RadioGroup, RadioItem | [docs/context-menu.md](docs/context-menu.md) |
@@ -197,6 +201,8 @@ Per-component documentation lives in `docs/`:
 | NavigationProgress | `@fcalell/ui/components/navigation-progress` | Single. Props: `loading` | [docs/navigation-progress.md](docs/navigation-progress.md) |
 | Sidebar | `@fcalell/ui/components/sidebar` | Compound: Provider, Trigger, Rail, Inset, Header, Footer, Content, Group, Menu, MenuItem, MenuButton, + more | [docs/sidebar.md](docs/sidebar.md) |
 | Logo | `@fcalell/ui/components/logo` | Single. Props: `icon`, `text`, `size`, `responsive` | [docs/logo.md](docs/logo.md) |
+| Form | `@fcalell/ui/components/form` | Namespace: Field, Input, Textarea, Select, Checkbox, InputOTP, EnumInput. TanStack Form adapters | [docs/form.md](docs/form.md) |
+| QueryBoundary | `@fcalell/ui/components/query-boundary` | Single. Props: `query`, `loadingFallback`, `emptyWhen`, `emptyFallback`, `gracePeriod` | [docs/query-boundary.md](docs/query-boundary.md) |
 
 ## Utilities
 
@@ -210,6 +216,16 @@ import { cn } from "@fcalell/ui/lib/cn";
 cn("px-4 py-2", condition && "bg-primary", className);
 ```
 
+### query
+
+Safe TanStack Solid Query wrappers, multi-query combiner, and optimistic mutation hook. Prevents SolidJS Suspense corruption when reading `.data` on pending queries.
+
+```ts
+import { useQuery, useInfiniteQuery, combineQueries, useOptimisticMutation } from "@fcalell/ui/lib/query";
+```
+
+Requires peer dependency: `@tanstack/solid-query ^5.80`.
+
 ## Exports
 
 | Subpath | Purpose |
@@ -218,6 +234,7 @@ cn("px-4 py-2", condition && "bg-primary", className);
 | `@fcalell/ui/fonts` | JetBrains Mono Variable font registration |
 | `@fcalell/ui/components/*` | Component modules (e.g., `components/text`) |
 | `@fcalell/ui/lib/cn` | `cn()` class merging utility |
+| `@fcalell/ui/lib/query` | Safe `useQuery`/`useInfiniteQuery`, `combineQueries`, `useOptimisticMutation` |
 
 ## Conventions
 

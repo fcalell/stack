@@ -1,14 +1,15 @@
-import type { AuthPolicy, DatabaseConfig } from "@fcalell/db";
+import type { StackConfig } from "@fcalell/config";
+import type { AuthPolicy } from "@fcalell/db";
 import { getSchemaModule } from "@fcalell/db";
-import { createAuth } from "@fcalell/db/auth/factory";
+import { createClient as createD1Client } from "@fcalell/db/d1";
+import type { AnyD1Database, DrizzleD1Database } from "drizzle-orm/d1";
+import { type CorsOrigin, createApp } from "#app";
 import type {
 	AuthEnvConfig,
 	InvitationCallbackData,
 	OTPCallbackData,
-} from "@fcalell/db/auth/factory";
-import { createClient as createD1Client } from "@fcalell/db/d1";
-import type { AnyD1Database, DrizzleD1Database } from "drizzle-orm/d1";
-import { type CorsOrigin, createApp } from "#app";
+} from "#internal/auth-factory";
+import { createAuth } from "#internal/auth-factory";
 import { createAuthRouter } from "#internal/auth-router";
 import type { RateLimitBinding } from "#internal/rate-limiter";
 import { createProcedure } from "#procedure";
@@ -16,15 +17,15 @@ import type { Procedure } from "#types";
 
 type DefaultStatements = Record<string, readonly string[]>;
 
-type ExtractSchemaModule<TConfig> = TConfig extends {
+type ExtractSchemaModule<TConfig extends StackConfig> = TConfig["db"] extends {
 	schema: { module: infer M extends Record<string, unknown> };
 }
 	? M
-	: TConfig extends { schema: infer M extends Record<string, unknown> }
+	: TConfig["db"] extends { schema: infer M extends Record<string, unknown> }
 		? M
 		: Record<string, unknown>;
 
-type ExtractStatements<TConfig> = TConfig extends {
+type ExtractStatements<TConfig extends StackConfig> = TConfig extends {
 	auth: {
 		organization: { ac: { statements: infer S extends DefaultStatements } };
 	};
@@ -44,24 +45,13 @@ interface EnvConfig {
 
 interface AppDefinition<
 	TBindings extends Record<string, unknown>,
-	TConfig extends DatabaseConfig,
+	TConfig extends StackConfig,
 	_TStatements extends DefaultStatements,
 > {
-	db: TConfig;
+	config: TConfig;
 	env: (env: TBindings) => EnvConfig;
-	cors?: CorsOrigin;
-	prefix?: `/${string}`;
 	sendOTP?: (data: OTPCallbackData<TBindings>) => Promise<void>;
 	sendInvitation?: (data: InvitationCallbackData<TBindings>) => Promise<void>;
-}
-
-interface InternalContext {
-	_headers?: Headers;
-	_rateLimiter?: {
-		ip?: RateLimitBinding;
-		email?: RateLimitBinding;
-	};
-	_devMode?: boolean;
 }
 
 type FrameworkContext<
@@ -72,11 +62,13 @@ type FrameworkContext<
 	// biome-ignore lint/suspicious/noExplicitAny: auth instance type is complex and inferred via $Infer at usage
 	auth: any;
 	env: TBindings;
+	reqHeaders: Headers;
+	resHeaders: Headers;
 };
 
 export function defineApp<
 	TBindings extends Record<string, unknown>,
-	TConfig extends DatabaseConfig,
+	TConfig extends StackConfig,
 	TStatements extends DefaultStatements = ExtractStatements<TConfig>,
 >(definition: AppDefinition<TBindings, TConfig, TStatements>) {
 	type TSchema = ExtractSchemaModule<TConfig>;
@@ -84,29 +76,29 @@ export function defineApp<
 
 	const procedure = createProcedure<Ctx, TStatements>();
 
-	const authPolicy: AuthPolicy | undefined = definition.db.auth;
+	const authPolicy: AuthPolicy | undefined = definition.config.auth;
 	const authRouter = authPolicy
-		? createAuthRouter(procedure, procedure.auth(), {
+		? createAuthRouter(procedure, {
 				policy: authPolicy,
 				emailOTP: !!definition.sendOTP,
 			})
 		: undefined;
 
-	// biome-ignore lint/suspicious/noExplicitAny: auth router procedures are dynamically generated
 	type AuthRoutes = TConfig extends { auth: AuthPolicy }
-		? { auth: Record<string, Procedure<any, any>> }
-		: {};
+		? { auth: Record<string, Procedure<unknown, unknown>> }
+		: Record<never, never>;
 
 	return {
 		procedure,
 
 		handler<TRoutes extends Record<string, unknown>>(routes: TRoutes) {
-			const dbConfig = definition.db;
+			const dbConfig = definition.config.db;
 			const schemaModule = getSchemaModule(dbConfig);
 
-			const fullRouter = authRouter
-				? { auth: authRouter, ...routes }
-				: routes;
+			const fullRouter = authRouter ? { auth: authRouter, ...routes } : routes;
+
+			const cors = definition.config.api?.cors;
+			const prefix = definition.config.api?.prefix;
 
 			const honoApp = createApp<TBindings, Ctx>({
 				router: fullRouter,
@@ -118,45 +110,45 @@ export function defineApp<
 						throw new Error("D1 binding not provided in env callback");
 					}
 
-					const db: DrizzleD1Database<TSchema> = createD1Client(
-						d1,
-						schemaModule,
-						// biome-ignore lint/suspicious/noExplicitAny: schema module type preserved via ExtractSchemaModule generic
-					) as any;
+					// Schema module type is erased by getSchemaModule(); restore the
+					// compile-time generic so the Drizzle client is properly typed.
+					const typedSchema = schemaModule as TSchema;
+					const db = createD1Client(d1, typedSchema);
 
-					if (dbConfig.auth && !envConfig.auth) {
+					if (authPolicy && !envConfig.auth) {
 						throw new Error(
-							"Auth is configured in database config but env callback did not return auth config. " +
+							"Auth is configured but env callback did not return auth config. " +
 								"Provide auth: { secret: string } in your env callback.",
 						);
 					}
 
 					const auth =
-						dbConfig.auth && envConfig.auth
+						authPolicy && envConfig.auth
 							? createAuth({
 									db,
-									policy: dbConfig.auth,
+									policy: authPolicy,
 									env: envConfig.auth,
 									bindings: env,
 									baseURL: new URL(req.url).origin,
-									corsOrigins: normalizeCorsOrigins(definition.cors),
+									corsOrigins: normalizeCorsOrigins(cors),
 									sendOTP: definition.sendOTP,
 									sendInvitation: definition.sendInvitation,
 								})
 							: undefined;
 
-					const ctx: Ctx & InternalContext = { db, auth, env };
-					if (envConfig.rateLimiter) {
-						ctx._rateLimiter = envConfig.rateLimiter;
-					}
-					if (envConfig.devMode) {
-						ctx._devMode = true;
-					}
-
-					return ctx as Ctx;
+					// reqHeaders/resHeaders are injected by the oRPC
+					// Request/Response Headers plugins before middleware runs.
+					const ctx = {
+						db,
+						auth,
+						env,
+						_rateLimiter: envConfig.rateLimiter,
+						_devMode: envConfig.devMode,
+					};
+					return ctx as unknown as Ctx;
 				},
-				cors: definition.cors,
-				prefix: definition.prefix,
+				cors,
+				prefix,
 			});
 
 			type FullRouter = AuthRoutes & TRoutes;

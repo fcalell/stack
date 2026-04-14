@@ -22,5 +22,5 @@ export function createClient<TRouter>(
 			}),
 	});
 
-	return createORPCClient(link) as any;
+	return createORPCClient<RouterClient<TRouter>>(link);
 }

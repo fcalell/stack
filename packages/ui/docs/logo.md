@@ -12,7 +12,7 @@ import { Logo } from "@fcalell/ui/components/logo";
 |------|------|---------|-------------|
 | `icon` | `JSX.Element` | -- | Logo icon/SVG |
 | `text` | `JSX.Element` | -- | Optional brand text |
-| `size` | `"sm" \| "md" \| "lg" \| "xl" \| "2xl"` | `"md"` | Icon and text sizing |
+| `size` | `"sm" \| "default" \| "lg" \| "xl" \| "2xl"` | `"default"` | Icon and text sizing |
 | `align` | `"start" \| "center" \| "end"` | `"center"` | Vertical alignment |
 | `responsive` | `boolean` | `false` | Hide text below `@[8rem]` container width |
 | `class` | `string` | -- | Additional Tailwind classes |
@@ -22,7 +22,7 @@ import { Logo } from "@fcalell/ui/components/logo";
 | Size | Icon | Text | Gap |
 |------|------|------|-----|
 | `sm` | 24px | 16px | 4px |
-| `md` | 32px | 18px | 8px |
+| `default` | 32px | 18px | 8px |
 | `lg` | 40px | 24px | 8px |
 | `xl` | 48px | 30px | 12px |
 | `2xl` | 64px | 36px | 12px |

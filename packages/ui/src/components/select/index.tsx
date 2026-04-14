@@ -3,10 +3,50 @@ import * as SelectPrimitive from "@kobalte/core/select";
 import { cva, type VariantProps } from "class-variance-authority";
 import { Check, ChevronDown } from "lucide-solid";
 import type { JSX, ValidComponent } from "solid-js";
-import { splitProps } from "solid-js";
+import { createMemo, splitProps } from "solid-js";
 import { cn } from "#lib/cn";
 
-// ─── Trigger ───
+// ─── Option types ───
+
+type SelectOption = {
+	value: string;
+	label: string;
+	disabled?: boolean;
+};
+
+type SelectOptionGroup = {
+	label: string;
+	options: SelectOption[];
+};
+
+type SelectOptions = SelectOption[] | SelectOptionGroup[];
+
+function isGroupedOptions(
+	options: SelectOptions,
+): options is SelectOptionGroup[] {
+	return (
+		options.length > 0 &&
+		typeof options[0] === "object" &&
+		"options" in options[0] &&
+		Array.isArray(options[0].options)
+	);
+}
+
+function findOption(
+	options: SelectOptions,
+	value: string,
+): SelectOption | undefined {
+	if (isGroupedOptions(options)) {
+		for (const group of options) {
+			const found = group.options.find((opt) => opt.value === value);
+			if (found) return found;
+		}
+		return undefined;
+	}
+	return options.find((opt) => opt.value === value);
+}
+
+// ─── Trigger (internal) ───
 
 const selectTriggerVariants = cva(
 	"flex w-full flex-row items-center justify-between gap-2 rounded-md border-2 border-input bg-muted font-mono text-sm text-foreground outline-none transition-all select-none text-left focus-visible:border-primary focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 aria-invalid:border-destructive aria-invalid:outline-2 aria-invalid:outline-destructive aria-invalid:outline-offset-2 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
@@ -56,25 +96,16 @@ function Trigger<T extends ValidComponent = "button">(
 	);
 }
 
-// ─── Content ───
+// ─── Content (internal) ───
 
-type ContentProps<T extends ValidComponent = "div"> =
-	SelectPrimitive.SelectContentProps<T> & {
-		class?: string;
-	};
-
-function Content<T extends ValidComponent = "div">(
-	props: PolymorphicProps<T, ContentProps<T>>,
-) {
-	const [local, rest] = splitProps(props as ContentProps, ["class"]);
+function Content(props: { class?: string }) {
 	return (
 		<SelectPrimitive.Portal>
 			<SelectPrimitive.Content
 				class={cn(
 					"z-50 overflow-hidden rounded-md border-2 border-border bg-popover text-popover-foreground outline-none origin-[var(--kb-select-content-transform-origin)] animate-content-hide data-[expanded]:animate-content-show",
-					local.class,
+					props.class,
 				)}
-				{...rest}
 			>
 				<SelectPrimitive.Listbox class="max-h-60 overflow-x-hidden overflow-y-auto py-1" />
 			</SelectPrimitive.Content>
@@ -82,28 +113,19 @@ function Content<T extends ValidComponent = "div">(
 	);
 }
 
-// ─── Item ───
+// ─── Item (internal) ───
 
-type ItemProps<T extends ValidComponent = "li"> =
-	SelectPrimitive.SelectItemProps<T> & {
-		class?: string;
-		children?: JSX.Element;
-	};
-
-function Item<T extends ValidComponent = "li">(
-	props: PolymorphicProps<T, ItemProps<T>>,
-) {
-	const [local, rest] = splitProps(props as ItemProps, ["class", "children"]);
+function Item(props: {
+	item: SelectPrimitive.SelectItemProps["item"];
+	children?: JSX.Element;
+}) {
 	return (
 		<SelectPrimitive.Item
-			class={cn(
-				"relative flex w-full cursor-default flex-row items-center gap-2 px-4 py-2 text-sm outline-none transition-colors select-none hover:bg-muted data-highlighted:bg-muted data-disabled:pointer-events-none data-disabled:opacity-50",
-				local.class,
-			)}
-			{...rest}
+			item={props.item}
+			class="relative flex w-full cursor-default flex-row items-center gap-2 px-4 py-2 text-sm outline-none transition-colors select-none hover:bg-muted data-highlighted:bg-muted data-disabled:pointer-events-none data-disabled:opacity-50"
 		>
 			<SelectPrimitive.ItemLabel class="flex flex-1 flex-row items-center gap-2">
-				<span class="flex-1">{local.children}</span>
+				<span class="flex-1">{props.children}</span>
 			</SelectPrimitive.ItemLabel>
 			<SelectPrimitive.ItemIndicator>
 				<Check class="size-4 shrink-0 text-current" aria-hidden="true" />
@@ -112,62 +134,96 @@ function Item<T extends ValidComponent = "li">(
 	);
 }
 
-// ─── Section ───
+// ─── Section (internal) ───
 
-type SectionProps<T extends ValidComponent = "li"> =
-	SelectPrimitive.SelectSectionProps<T> & {
-		class?: string;
-	};
-
-function Section<T extends ValidComponent = "li">(
-	props: PolymorphicProps<T, SectionProps<T>>,
-) {
-	const [local, rest] = splitProps(props as SectionProps, ["class"]);
+function Section(props: { label: string }) {
 	return (
-		<SelectPrimitive.Section
-			class={cn("mt-1 first:mt-0", local.class)}
-			{...rest}
-		/>
+		<SelectPrimitive.Section class="mt-1 first:mt-0">
+			<SelectPrimitive.Label class="px-4 py-2 text-xs font-bold uppercase tracking-widest text-muted-foreground">
+				{props.label}
+			</SelectPrimitive.Label>
+		</SelectPrimitive.Section>
 	);
 }
 
-// ─── SectionLabel ───
+// ─── Select (public) ───
 
-type SectionLabelProps<T extends ValidComponent = "span"> =
-	SelectPrimitive.SelectLabelProps<T> & { class?: string };
+type SelectProps = {
+	options: SelectOptions;
+	value?: string;
+	onValueChange?: (value: string) => void;
+	placeholder?: string;
+	disabled?: boolean;
+	size?: "sm" | "default" | "lg";
+	class?: string;
+	contentClass?: string;
+	"aria-invalid"?: boolean;
+	disallowEmptySelection?: boolean;
+	children?: (option: SelectOption) => JSX.Element;
+};
 
-function SectionLabel<T extends ValidComponent = "span">(
-	props: PolymorphicProps<T, SectionLabelProps<T>>,
-) {
-	const [local, rest] = splitProps(props as SectionLabelProps, ["class"]);
+function Select(props: SelectProps) {
+	const grouped = createMemo(() => isGroupedOptions(props.options));
+
 	return (
-		<SelectPrimitive.Label
-			class={cn(
-				"px-4 py-2 text-xs font-bold uppercase tracking-widest text-muted-foreground",
-				local.class,
+		<SelectPrimitive.Root<SelectOption, SelectOptionGroup>
+			options={props.options as (SelectOption | SelectOptionGroup)[]}
+			optionValue="value"
+			optionTextValue="label"
+			optionDisabled="disabled"
+			optionGroupChildren={grouped() ? "options" : undefined}
+			value={
+				props.value !== undefined
+					? (findOption(props.options, props.value) ?? null)
+					: undefined
+			}
+			onChange={(opt) => {
+				if (opt) props.onValueChange?.(opt.value);
+			}}
+			disabled={props.disabled}
+			disallowEmptySelection={props.disallowEmptySelection ?? true}
+			itemComponent={(itemProps) => (
+				<Item item={itemProps.item}>
+					{props.children
+						? props.children(itemProps.item.rawValue)
+						: itemProps.item.rawValue.label}
+				</Item>
 			)}
-			{...rest}
-		/>
+			sectionComponent={(sectionProps) => (
+				<Section
+					label={
+						(sectionProps.section.rawValue as unknown as SelectOptionGroup)
+							.label
+					}
+				/>
+			)}
+		>
+			<Trigger
+				size={props.size}
+				class={props.class}
+				aria-invalid={props["aria-invalid"]}
+			>
+				<SelectPrimitive.Value<SelectOption>>
+					{(state) => {
+						const selected = state.selectedOption();
+						return (
+							<span
+								class={`flex-1 truncate ${!selected ? "text-muted-foreground" : ""}`}
+							>
+								{selected
+									? selected.label
+									: (props.placeholder ?? "Select an option")}
+							</span>
+						);
+					}}
+				</SelectPrimitive.Value>
+			</Trigger>
+			<Content class={props.contentClass} />
+		</SelectPrimitive.Root>
 	);
 }
 
 // ─── Exports ───
 
-const Select = Object.assign(SelectPrimitive.Root, {
-	Trigger,
-	Value: SelectPrimitive.Value,
-	HiddenSelect: SelectPrimitive.HiddenSelect,
-	Content,
-	Item,
-	Section,
-	SectionLabel,
-});
-
-export type {
-	ContentProps as SelectContentProps,
-	ItemProps as SelectItemProps,
-	SectionLabelProps as SelectSectionLabelProps,
-	SectionProps as SelectSectionProps,
-	TriggerProps as SelectTriggerProps,
-};
+export type { SelectOption, SelectOptionGroup, SelectOptions, SelectProps };
 export { Select, selectTriggerVariants };

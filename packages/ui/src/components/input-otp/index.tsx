@@ -1,58 +1,16 @@
 import OtpField from "@corvu/otp-field";
-import type { ComponentProps } from "solid-js";
-import { Show, splitProps } from "solid-js";
+import { createMemo, For, Index, Show } from "solid-js";
 import { cn } from "#lib/cn";
 
 const REGEXP_ONLY_DIGITS = "^\\d*$";
 
-type InputOTPProps = Parameters<typeof OtpField>[0] & {
-	class?: string;
-};
+// ─── Slot (internal) ───
 
-function Root(props: InputOTPProps) {
-	const [local, rest] = splitProps(props, ["class"]);
-	return (
-		<OtpField
-			class={cn("group flex items-center has-disabled:opacity-50", local.class)}
-			{...rest}
-		/>
-	);
-}
-
-function OTPInput(props: ComponentProps<typeof OtpField.Input>) {
-	const [local, rest] = splitProps(props, ["class"]);
-	return (
-		<OtpField.Input
-			spellcheck={false}
-			class={cn("disabled:cursor-not-allowed", local.class)}
-			{...rest}
-		/>
-	);
-}
-
-function Group(props: ComponentProps<"div">) {
-	const [local, rest] = splitProps(props, ["class", "children"]);
-	return (
-		<div
-			role="presentation"
-			class={cn("flex items-center gap-2", local.class)}
-			{...rest}
-		>
-			{local.children}
-		</div>
-	);
-}
-
-type SlotProps = ComponentProps<"div"> & {
-	index: number;
-};
-
-function Slot(props: SlotProps) {
-	const [local, rest] = splitProps(props, ["index", "class"]);
+function Slot(props: { index: number }) {
 	const context = OtpField.useContext();
 
-	const char = () => context.value()[local.index] ?? "";
-	const isActive = () => context.activeSlots().includes(local.index);
+	const char = () => context.value()[props.index] ?? "";
+	const isActive = () => context.activeSlots().includes(props.index);
 	const showFakeCaret = () =>
 		isActive() && context.isInserting() && char() === "";
 
@@ -64,9 +22,7 @@ function Slot(props: SlotProps) {
 				"relative flex h-10 w-10 items-center justify-center rounded-md border-2 border-input bg-muted font-mono text-sm",
 				"data-active:z-10 data-active:outline-2 data-active:outline-ring data-active:outline-offset-2",
 				"group-aria-invalid:border-destructive",
-				local.class,
 			)}
-			{...rest}
 		>
 			{char()}
 			<Show when={showFakeCaret()}>
@@ -78,24 +34,79 @@ function Slot(props: SlotProps) {
 	);
 }
 
-function Separator(props: ComponentProps<"div">) {
-	const [local, rest] = splitProps(props, ["class", "children"]);
+// ─── Separator (internal) ───
+
+function Separator() {
 	return (
-		<div
-			class={cn("flex items-center", local.class)}
-			aria-hidden="true"
-			{...rest}
-		>
-			{local.children ?? <span class="text-muted-foreground">-</span>}
+		<div class="flex items-center" aria-hidden="true">
+			<span class="text-muted-foreground">-</span>
 		</div>
 	);
 }
 
-export const InputOTP = Object.assign(Root, {
-	Input: OTPInput,
-	Group,
-	Slot,
-	Separator,
-});
+// ─── InputOTP (public) ───
 
-export { REGEXP_ONLY_DIGITS };
+type InputOTPProps = {
+	maxLength: number;
+	pattern?: string | null;
+	value?: string;
+	onValueChange?: (value: string) => void;
+	onComplete?: (value: string) => void;
+	disabled?: boolean;
+	class?: string;
+	id?: string;
+	"aria-invalid"?: boolean;
+};
+
+function InputOTP(props: InputOTPProps) {
+	const groups = createMemo(() => {
+		const len = props.maxLength;
+		const half = Math.ceil(len / 2);
+		return [half, len - half];
+	});
+
+	return (
+		<OtpField
+			maxLength={props.maxLength}
+			value={props.value}
+			onValueChange={props.onValueChange}
+			onComplete={props.onComplete}
+			class={cn("group flex items-center has-disabled:opacity-50", props.class)}
+			aria-invalid={props["aria-invalid"] || undefined}
+		>
+			{(() => {
+				let offset = 0;
+				return (
+					<For each={groups()}>
+						{(groupSize, gi) => {
+							const start = offset;
+							offset += groupSize;
+							return (
+								<>
+									{gi() > 0 && <Separator />}
+									<div role="presentation" class="flex items-center gap-2">
+										<Index each={Array.from({ length: groupSize })}>
+											{(_, i) => <Slot index={start + i} />}
+										</Index>
+									</div>
+								</>
+							);
+						}}
+					</For>
+				);
+			})()}
+			<OtpField.Input
+				id={props.id}
+				pattern={props.pattern ?? REGEXP_ONLY_DIGITS}
+				disabled={props.disabled}
+				spellcheck={false}
+				class="disabled:cursor-not-allowed"
+			/>
+		</OtpField>
+	);
+}
+
+// ─── Exports ───
+
+export type { InputOTPProps };
+export { InputOTP, REGEXP_ONLY_DIGITS };

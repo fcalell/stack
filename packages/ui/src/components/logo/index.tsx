@@ -6,14 +6,14 @@ const logoIconClasses = cva("shrink-0", {
 	variants: {
 		size: {
 			sm: "size-6",
-			md: "size-8",
+			default: "size-8",
 			lg: "size-10",
 			xl: "size-12",
 			"2xl": "size-16",
 		},
 	},
 	defaultVariants: {
-		size: "md",
+		size: "default",
 	},
 });
 
@@ -21,7 +21,7 @@ const logoContainerClasses = cva("inline-flex", {
 	variants: {
 		size: {
 			sm: "gap-1",
-			md: "gap-2",
+			default: "gap-2",
 			lg: "gap-2",
 			xl: "gap-3",
 			"2xl": "gap-3",
@@ -33,7 +33,7 @@ const logoContainerClasses = cva("inline-flex", {
 		},
 	},
 	defaultVariants: {
-		size: "md",
+		size: "default",
 		align: "center",
 	},
 });
@@ -44,7 +44,7 @@ const logoTextClasses = cva(
 		variants: {
 			size: {
 				sm: "text-base",
-				md: "text-lg",
+				default: "text-lg",
 				lg: "text-2xl",
 				xl: "text-3xl",
 				"2xl": "text-4xl",
@@ -55,7 +55,7 @@ const logoTextClasses = cva(
 			},
 		},
 		defaultVariants: {
-			size: "md",
+			size: "default",
 			responsive: false,
 		},
 	},

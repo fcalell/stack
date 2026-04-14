@@ -6,24 +6,50 @@
 		"**/*.css"
 	],
 	"imports": {
-		"#components/*": "./src/components/*/index.tsx",
-		"#lib/*": "./src/lib/*.ts"
+		"#components/*": [
+			"./src/components/*/index.tsx",
+			"./src/components/*/index.ts"
+		],
+		"#lib/*": [
+			"./src/lib/*.ts",
+			"./src/lib/*.tsx"
+		]
 	},
 	"exports": {
 		"./globals.css": "./src/globals.css",
 		"./fonts": "./src/fonts.ts",
-		"./components/*": "./src/components/*/index.ts",
-		"./lib/*": "./src/lib/*.ts"
+		"./components/*": [
+			"./src/components/*/index.tsx",
+			"./src/components/*/index.ts"
+		],
+		"./lib/*": [
+			"./src/lib/*.ts",
+			"./src/lib/*.tsx"
+		]
 	},
+	"files": [
+		"src",
+		"README.md"
+	],
 	"license": "MIT",
 	"scripts": {
-		"check-types": "tsc --noEmit --pretty || true",
+		"check-types": "tsc --noEmit --pretty",
 		"lint": "biome check --write --unsafe",
 		"check": "pnpm check-types && pnpm lint",
 		"clear": "rm -rf node_modules .turbo"
 	},
 	"peerDependencies": {
-		"solid-js": "^1.9"
+		"solid-js": "^1.9",
+		"@tanstack/solid-form": "^1.28",
+		"@tanstack/solid-query": "^5.80"
+	},
+	"peerDependenciesMeta": {
+		"@tanstack/solid-form": {
+			"optional": true
+		},
+		"@tanstack/solid-query": {
+			"optional": true
+		}
 	},
 	"dependencies": {
 		"@corvu/otp-field": "^0.1.4",
@@ -38,6 +64,8 @@
 	},
 	"devDependencies": {
 		"@fcalell/typescript-config": "workspace:*",
+		"@tanstack/solid-form": "^1.28.6",
+		"@tanstack/solid-query": "^5.97.0",
 		"tailwindcss": "^4.2.1",
 		"typescript": "^5.9.3"
 	}

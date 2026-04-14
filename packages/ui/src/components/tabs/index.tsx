@@ -1,94 +1,130 @@
-import type { PolymorphicProps } from "@kobalte/core/polymorphic";
 import * as TabsPrimitive from "@kobalte/core/tabs";
-import type { ValidComponent } from "solid-js";
-import { splitProps } from "solid-js";
+import type { JSX } from "solid-js";
+import { For, splitProps } from "solid-js";
 import { cn } from "#lib/cn";
 
-// ─── List ───
+// ─── Tab types ───
 
-type ListProps<T extends ValidComponent = "div"> =
-	TabsPrimitive.TabsListProps<T> & { class?: string };
+type Tab = {
+	value: string;
+	label: string;
+	content: JSX.Element;
+	disabled?: boolean;
+};
 
-function List<T extends ValidComponent = "div">(
-	props: PolymorphicProps<T, ListProps<T>>,
-) {
-	const [local, rest] = splitProps(props as ListProps, ["class"]);
+// ─── List (internal) ───
+
+function List(props: { class?: string; children: JSX.Element }) {
 	return (
 		<TabsPrimitive.List
 			class={cn(
 				"inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground",
-				local.class,
+				props.class,
 			)}
-			{...rest}
-		/>
+		>
+			{props.children}
+		</TabsPrimitive.List>
 	);
 }
 
-// ─── Trigger ───
+// ─── Trigger (internal) ───
 
-type TriggerProps<T extends ValidComponent = "button"> =
-	TabsPrimitive.TabsTriggerProps<T> & { class?: string };
-
-function Trigger<T extends ValidComponent = "button">(
-	props: PolymorphicProps<T, TriggerProps<T>>,
-) {
-	const [local, rest] = splitProps(props as TriggerProps, ["class"]);
+function Trigger(props: {
+	value: string;
+	disabled?: boolean;
+	children: JSX.Element;
+}) {
 	return (
 		<TabsPrimitive.Trigger
-			class={cn(
-				"inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium transition-colors duration-base ease-ui focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2 disabled:pointer-events-none disabled:opacity-50 data-selected:bg-background data-selected:text-foreground",
-				local.class,
-			)}
-			{...rest}
-		/>
+			value={props.value}
+			disabled={props.disabled}
+			class="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium transition-colors duration-base ease-ui focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2 disabled:pointer-events-none disabled:opacity-50 data-selected:bg-background data-selected:text-foreground"
+		>
+			{props.children}
+		</TabsPrimitive.Trigger>
 	);
 }
 
-// ─── Content ───
+// ─── Content (internal) ───
 
-type ContentProps<T extends ValidComponent = "div"> =
-	TabsPrimitive.TabsContentProps<T> & { class?: string };
-
-function Content<T extends ValidComponent = "div">(
-	props: PolymorphicProps<T, ContentProps<T>>,
-) {
-	const [local, rest] = splitProps(props as ContentProps, ["class"]);
+function Content(props: {
+	value: string;
+	class?: string;
+	children: JSX.Element;
+}) {
 	return (
 		<TabsPrimitive.Content
+			value={props.value}
 			class={cn(
 				"mt-0 focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
-				local.class,
+				props.class,
 			)}
-			{...rest}
-		/>
+		>
+			{props.children}
+		</TabsPrimitive.Content>
 	);
 }
 
-// ─── Indicator ───
+// ─── Indicator (internal) ───
 
-type IndicatorProps<T extends ValidComponent = "div"> =
-	TabsPrimitive.TabsIndicatorProps<T> & { class?: string };
-
-function Indicator<T extends ValidComponent = "div">(
-	props: PolymorphicProps<T, IndicatorProps<T>>,
-) {
-	const [local, rest] = splitProps(props as IndicatorProps, ["class"]);
+function Indicator() {
 	return (
-		<TabsPrimitive.Indicator
-			class={cn(
-				"absolute bg-primary transition-all duration-250 data-[orientation=horizontal]:-bottom-px data-[orientation=horizontal]:h-0.5 data-[orientation=vertical]:-right-px data-[orientation=vertical]:w-0.5",
-				local.class,
-			)}
+		<TabsPrimitive.Indicator class="absolute bg-primary transition-all duration-250 data-[orientation=horizontal]:-bottom-px data-[orientation=horizontal]:h-0.5 data-[orientation=vertical]:-right-px data-[orientation=vertical]:w-0.5" />
+	);
+}
+
+// ─── Tabs (public) ───
+
+type TabsProps = {
+	tabs: Tab[];
+	value?: string;
+	defaultValue?: string;
+	onValueChange?: (value: string) => void;
+	orientation?: "horizontal" | "vertical";
+	class?: string;
+	listClass?: string;
+	contentClass?: string;
+	children?: (tab: Tab) => JSX.Element;
+};
+
+function Tabs(props: TabsProps) {
+	const [local, rest] = splitProps(props, [
+		"tabs",
+		"class",
+		"listClass",
+		"contentClass",
+		"children",
+		"onValueChange",
+	]);
+
+	return (
+		<TabsPrimitive.Root
+			class={local.class}
+			onChange={local.onValueChange}
 			{...rest}
-		/>
+		>
+			<List class={local.listClass}>
+				<For each={local.tabs}>
+					{(tab) => (
+						<Trigger value={tab.value} disabled={tab.disabled}>
+							{local.children ? local.children(tab) : tab.label}
+						</Trigger>
+					)}
+				</For>
+				<Indicator />
+			</List>
+			<For each={local.tabs}>
+				{(tab) => (
+					<Content value={tab.value} class={local.contentClass}>
+						{tab.content}
+					</Content>
+				)}
+			</For>
+		</TabsPrimitive.Root>
 	);
 }
 
 // ─── Exports ───
 
-export const Tabs = Object.assign(TabsPrimitive.Root, {
-	List,
-	Trigger,
-	Content,
-	Indicator,
-});
+export type { Tab, TabsProps };
+export { Tabs };

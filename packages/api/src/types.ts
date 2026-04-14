@@ -6,7 +6,7 @@ export interface Procedure<TInput = unknown, TOutput = unknown> {
 }
 
 export type Router = {
-	[key: string]: Procedure<any, any> | Router;
+	[key: string]: Procedure<unknown, unknown> | Router;
 };
 
 type ProcedureCall<TInput, TOutput> = [TInput] extends [undefined]

@@ -1,3 +1,4 @@
+import { ORPCError } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/fetch";
 import {
 	RequestHeadersPlugin,
@@ -7,6 +8,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { secureHeaders } from "hono/secure-headers";
+import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 export type CorsOrigin =
 	| string
@@ -28,7 +30,7 @@ export function createApp<
 	TContext extends Record<string, unknown>,
 >(config: AppConfig<TBindings, TContext>) {
 	const app = new Hono<{ Bindings: TBindings }>();
-	const rpcPrefix = config.prefix ?? ("/rpc" as `/${string}`);
+	const rpcPrefix: `/${string}` = config.prefix ?? "/rpc";
 
 	app.use("*", logger());
 	app.use("*", secureHeaders());
@@ -49,10 +51,10 @@ export function createApp<
 		plugins: [new RequestHeadersPlugin(), new ResponseHeadersPlugin()],
 	});
 
+	app.get("/", (c) => c.json({ ok: true }));
+
 	app.post(`${rpcPrefix}/*`, async (c) => {
 		const ctx = config.context({ env: c.env, req: c.req.raw });
-		// Inject request headers for internal middleware (auth, rbac, rate-limit)
-		(ctx as Record<string, unknown>)._headers = c.req.raw.headers;
 
 		const { matched, response } = await handler.handle(c.req.raw, {
 			prefix: rpcPrefix,
@@ -67,9 +69,16 @@ export function createApp<
 	});
 
 	app.onError((err, c) => {
+		if (err instanceof ORPCError) {
+			return c.json(
+				{ code: err.code, message: err.message },
+				{ status: err.status as ContentfulStatusCode },
+			);
+		}
+
 		console.error("API Error:", err);
 		return c.json(
-			{ error: "Internal server error", code: "INTERNAL_ERROR" },
+			{ code: "INTERNAL_SERVER_ERROR", message: "Internal Server Error" },
 			500,
 		);
 	});

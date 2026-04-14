@@ -3,7 +3,7 @@ import { splitProps } from "solid-js";
 import { cn } from "#lib/cn";
 
 type InsetProps = ComponentProps<"div"> & {
-	variant?: "default" | "error";
+	variant?: "default" | "destructive";
 };
 
 function Inset(props: InsetProps) {
@@ -12,7 +12,9 @@ function Inset(props: InsetProps) {
 		<div
 			class={cn(
 				"flex flex-col gap-3 border-l-2 pl-4",
-				local.variant === "error" ? "border-destructive" : "border-border",
+				local.variant === "destructive"
+					? "border-destructive"
+					: "border-border",
 				local.class,
 			)}
 			{...rest}
