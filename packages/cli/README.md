@@ -45,10 +45,12 @@ Interactive project scaffold. Creates the directory if it doesn't exist, or uses
 | Always | `package.json`, `tsconfig.json`, `biome.json`, `.gitignore` |
 | Database | `stack.config.ts`, `src/schema/index.ts`, `src/migrations/` |
 | API | `src/worker/index.ts`, `src/worker/routes/index.ts`, `src/worker/env.d.ts`, `wrangler.toml` |
-| App | `src/app/entry.tsx`, `src/app/app.tsx`, `src/app/app.css` |
+| App | `vite.config.ts`, `src/app/entry.tsx` (one-line `createApp()`), `src/app/app.css`, `src/app/pages/_layout.tsx`, `src/app/pages/index.tsx`; adds `"imports": { "#/*": "./src/*" }` to `package.json` |
 | App + API | `src/app/lib/api.ts` (typed client wired to `AppRouter`) |
 
 API auto-selects Database (requires it). App is fully independent. Existing files are never overwritten.
+
+The `#/*` Node `imports` field is the canonical path alias — it works in Vite, the Cloudflare Worker, Node scripts, and tests with no plugin or `tsconfig` `paths` configuration. Consumers write `import { api } from "#/lib/api"` identically across `src/app/**` and `src/worker/**`.
 
 ### `stack add <feature>`
 
@@ -60,7 +62,7 @@ Add a feature to an existing project. Available features:
 | `auth` | `db` configured | Adds `auth` section to `stack.config.ts` |
 | `org` | `auth` configured | Adds `createAccessControl()` and organization config |
 | `api` | `db` configured | Scaffolds worker entry, routes, wrangler.toml, adds `api` section to config |
-| `ui` | None | Scaffolds app entry, CSS |
+| `ui` | None | Scaffolds `vite.config.ts`, `src/app/entry.tsx`, `src/app/app.css`, `src/app/pages/{_layout,index}.tsx`, and `src/app/lib/api.ts` (when an API is configured) |
 
 ### `stack dev [--studio]`
 

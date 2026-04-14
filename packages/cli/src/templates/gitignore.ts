@@ -14,7 +14,7 @@ export function gitignoreTemplate(options: GitignoreOptions): string {
 		entries.push(".wrangler");
 	}
 	if (options.app) {
-		entries.push(".vinxi");
+		entries.push(".stack");
 	}
 
 	return `${entries.join("\n")}\n`;

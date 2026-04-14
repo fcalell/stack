@@ -3,7 +3,8 @@
 	"version": "0.0.0",
 	"type": "module",
 	"sideEffects": [
-		"**/*.css"
+		"**/*.css",
+		"./src/fonts.ts"
 	],
 	"imports": {
 		"#components/*": [
@@ -18,6 +19,10 @@
 	"exports": {
 		"./globals.css": "./src/globals.css",
 		"./fonts": "./src/fonts.ts",
+		"./fonts-manifest": "./src/fonts-manifest.ts",
+		"./app": "./src/app/index.tsx",
+		"./meta": "./src/meta/index.ts",
+		"./router": "./src/router/index.ts",
 		"./components/*": [
 			"./src/components/*/index.tsx",
 			"./src/components/*/index.ts"
@@ -40,14 +45,10 @@
 	},
 	"peerDependencies": {
 		"solid-js": "^1.9",
-		"@tanstack/solid-form": "^1.28",
-		"@tanstack/solid-query": "^5.80"
+		"@tanstack/solid-form": "^1.28"
 	},
 	"peerDependenciesMeta": {
 		"@tanstack/solid-form": {
-			"optional": true
-		},
-		"@tanstack/solid-query": {
 			"optional": true
 		}
 	},
@@ -55,6 +56,9 @@
 		"@corvu/otp-field": "^0.1.4",
 		"@fontsource-variable/jetbrains-mono": "^5.2.8",
 		"@kobalte/core": "^0.13.11",
+		"@solidjs/meta": "^0.29.4",
+		"@solidjs/router": "^0.16.1",
+		"@tanstack/solid-query": "^5.97.0",
 		"@tanstack/solid-table": "^8.21.3",
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",
@@ -65,7 +69,6 @@
 	"devDependencies": {
 		"@fcalell/typescript-config": "workspace:*",
 		"@tanstack/solid-form": "^1.28.6",
-		"@tanstack/solid-query": "^5.97.0",
 		"tailwindcss": "^4.2.1",
 		"typescript": "^5.9.3"
 	}

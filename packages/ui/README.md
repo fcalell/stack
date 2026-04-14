@@ -61,6 +61,77 @@ Add the `dark` class to `<html>` — all tokens switch automatically:
 <html class="dark">
 ```
 
+When the `@fcalell/vite` preset is used, an anti-FOUC script is injected into `index.html` automatically — it reads `localStorage.theme` (falling back to `prefers-color-scheme`) and sets `.dark` on `<html>` before first paint, so consumers don't have to write the inline script themselves.
+
+## App entry
+
+Wire the entire app with one call:
+
+```tsx
+// src/app/entry.tsx
+import { createApp } from "@fcalell/ui/app";
+import "./app.css";
+
+createApp();
+```
+
+`createApp()` mounts the app and wraps the tree in `ErrorBoundary → providers → QueryClientProvider → MetaProvider → Router → Toaster`. Routes are pulled from the `virtual:fcalell-routes` module emitted by `@fcalell/vite` (file-based routing under `src/app/pages/`) — pass an explicit `routes` array to opt out.
+
+```tsx
+createApp({
+  routes,                                            // optional — defaults to virtual:fcalell-routes
+  providers: (children) => <FeatureFlags>{children}</FeatureFlags>,
+  queryClient,                                       // optional — defaults to new QueryClient()
+  errorFallback: (err, reset) => <MyFallback ... />, // optional — defaults to <EmptyState>
+  rootId: "root",                                    // optional — element id to mount into
+});
+```
+
+### Routing
+
+`@fcalell/ui/router` re-exports the SolidJS Router primitives (`A`, `Navigate`, `useNavigate`, `useParams`, `useLocation`, `useSearchParams`, `useMatch`, `useResolvedPath`, `useIsRouting`, `useCurrentMatches`) plus a typed `routes` builder generated from your `src/app/pages/` tree:
+
+```tsx
+import { A, useNavigate, routes } from "@fcalell/ui/router";
+
+<A href={routes.projects.detail({ id: "123" })}>Open project</A>;
+
+const navigate = useNavigate();
+navigate(routes.projects.settings({ id: "123" }));
+```
+
+Missing or extra params are compile errors. Renaming a page file renames the builder property, surfacing every stale call site.
+
+### Meta tags
+
+`@fcalell/ui/meta` re-exports `Title`, `Meta`, `Link`, and `MetaProvider` from `@solidjs/meta`. `createApp()` wraps the tree in `<MetaProvider>` automatically — use `<Title>` inline in any page:
+
+```tsx
+import { Title } from "@fcalell/ui/meta";
+
+export default function ProjectDetail() {
+  return (
+    <>
+      <Title>Project · MyApp</Title>
+      {/* ... */}
+    </>
+  );
+}
+```
+
+### useTheme
+
+Runtime light/dark toggle. Reads/writes `localStorage.theme` and toggles `.dark` on `<html>`:
+
+```tsx
+import { useTheme } from "@fcalell/ui/lib/theme";
+
+const [theme, setTheme] = useTheme();
+<button onClick={() => setTheme(theme() === "dark" ? "light" : "dark")}>
+  Toggle theme
+</button>;
+```
+
 ## Token system
 
 The design system derives all visual tokens from a minimal set of base values. Override any of these in your app's CSS to customize everything at once:
@@ -201,7 +272,7 @@ Per-component documentation lives in `docs/`:
 | NavigationProgress | `@fcalell/ui/components/navigation-progress` | Single. Props: `loading` | [docs/navigation-progress.md](docs/navigation-progress.md) |
 | Sidebar | `@fcalell/ui/components/sidebar` | Compound: Provider, Trigger, Rail, Inset, Header, Footer, Content, Group, Menu, MenuItem, MenuButton, + more | [docs/sidebar.md](docs/sidebar.md) |
 | Logo | `@fcalell/ui/components/logo` | Single. Props: `icon`, `text`, `size`, `responsive` | [docs/logo.md](docs/logo.md) |
-| Form | `@fcalell/ui/components/form` | Namespace: Field, Input, Textarea, Select, Checkbox, InputOTP, EnumInput. TanStack Form adapters | [docs/form.md](docs/form.md) |
+| Form | `@fcalell/ui/components/form` | Namespace: Field, Input, Textarea, Select, Checkbox, InputOTP, EnumInput. TanStack Form adapters + `useApiForm` helper + raw `createForm` | [docs/form.md](docs/form.md) |
 | QueryBoundary | `@fcalell/ui/components/query-boundary` | Single. Props: `query`, `loadingFallback`, `emptyWhen`, `emptyFallback`, `gracePeriod` | [docs/query-boundary.md](docs/query-boundary.md) |
 
 ## Utilities
@@ -218,23 +289,72 @@ cn("px-4 py-2", condition && "bg-primary", className);
 
 ### query
 
-Safe TanStack Solid Query wrappers, multi-query combiner, and optimistic mutation hook. Prevents SolidJS Suspense corruption when reading `.data` on pending queries.
+Safe TanStack Solid Query wrappers, a multi-query combiner, and a single mutation hook with optional optimistic updates. Prevents SolidJS Suspense corruption when reading `.data` on pending queries.
 
 ```ts
-import { useQuery, useInfiniteQuery, combineQueries, useOptimisticMutation } from "@fcalell/ui/lib/query";
+import {
+  useQuery,
+  useInfiniteQuery,
+  useMutation,
+  useQueryClient,
+  combineQueries,
+} from "@fcalell/ui/lib/query";
+```
+
+`useMutation` accepts a single config with optional `updates` for optimistic cache mutations and automatic rollback on error:
+
+```tsx
+// Simple — no optimistic ceremony
+const deleteProject = useMutation(() => ({
+  mutation: () => api.projects.delete.mutationOptions(),
+  errorMessage: "Failed to delete project",
+}));
+
+// Optimistic — same API, just adds updates
+const createProject = useMutation(() => ({
+  mutation: () => api.projects.create.mutationOptions(),
+  updates: [
+    { queryKey: () => ["projects"], updater: (old, vars) => [...old, vars] },
+  ],
+  onSuccess: (data) => navigate(`/projects/${data.id}`),
+}));
 ```
 
 Requires peer dependency: `@tanstack/solid-query ^5.80`.
+
+### useApiForm
+
+Wraps TanStack Solid Form with Zod validation, a mutation, toasts, and field-error mapping for `ApiError.fieldErrors`. Five lines instead of ~25:
+
+```tsx
+import { useApiForm } from "@fcalell/ui/components/form";
+
+const form = useApiForm({
+  schema: createProjectSchema,
+  defaultValues: { name: "" },
+  mutation: api.projects.create,
+  onSuccess: (project) => navigate(`/projects/${project.id}`),
+  successMessage: "Project created",
+  errorMessage: "Failed to create project",
+});
+```
+
+Returns the raw TanStack form instance — `Form.Input` / `Form.Select` / etc. work unchanged. The `createForm` raw export remains available for unusual cases (multi-step forms, uploads, conditional mutations).
 
 ## Exports
 
 | Subpath | Purpose |
 |---------|---------|
 | `@fcalell/ui/globals.css` | Token system, Tailwind theme, base styles, animations |
-| `@fcalell/ui/fonts` | JetBrains Mono Variable font registration |
-| `@fcalell/ui/components/*` | Component modules (e.g., `components/text`) |
+| `@fcalell/ui/fonts` | JetBrains Mono Variable font registration (side-effect import) |
+| `@fcalell/ui/fonts-manifest` | `FontEntry` type and `defaultFonts` array — consumed by the `@fcalell/vite` preload plugin |
+| `@fcalell/ui/app` | `createApp()` — mounts the root tree with router, query, meta, toaster, error boundary |
+| `@fcalell/ui/router` | Typed `routes` builder (from `virtual:fcalell-routes`) + SolidJS Router primitives (`A`, `useNavigate`, `useParams`, ...) |
+| `@fcalell/ui/meta` | `Title`, `Meta`, `Link`, `MetaProvider` — re-exported from `@solidjs/meta` |
+| `@fcalell/ui/components/*` | Component modules (e.g., `components/text`); `components/form` also exports `useApiForm` and the raw `createForm` |
 | `@fcalell/ui/lib/cn` | `cn()` class merging utility |
-| `@fcalell/ui/lib/query` | Safe `useQuery`/`useInfiniteQuery`, `combineQueries`, `useOptimisticMutation` |
+| `@fcalell/ui/lib/query` | Safe `useQuery`/`useInfiniteQuery`, `useMutation` (with optional optimistic updates), `useQueryClient`, `combineQueries` |
+| `@fcalell/ui/lib/theme` | `useTheme()` runtime light/dark toggle |
 
 ## Conventions
 

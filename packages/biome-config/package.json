@@ -2,6 +2,7 @@
 	"name": "@fcalell/biome-config",
 	"version": "0.0.0",
 	"private": true,
+	"sideEffects": false,
 	"license": "MIT",
 	"exports": {
 		"./shared.json": "./shared.json"

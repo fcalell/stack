@@ -1,9 +1,9 @@
 import {
 	useInfiniteQuery as _useInfiniteQuery,
+	useMutation as _useMutation,
 	useQuery as _useQuery,
 	type CreateMutationResult,
 	type QueryKey,
-	useMutation,
 	useQueryClient,
 } from "@tanstack/solid-query";
 
@@ -36,7 +36,7 @@ export const useInfiniteQuery = ((...args: unknown[]) =>
 
 export type { CreateQueryResult, QueryClient } from "@tanstack/solid-query";
 export type { CreateMutationResult, QueryKey };
-export { useMutation, useQueryClient };
+export { useQueryClient };
 
 type QueryLike<TData, TError> = {
 	data: TData | undefined;
@@ -94,26 +94,27 @@ type QueryUpdate<TVars, TData> = {
 	onSuccessUpdater?: (old: any[], data: TData, vars: TVars) => any[];
 };
 
-type OptimisticMutationOptions<TVars, TData> = {
+type MutationOptions<TVars, TData> = {
 	mutation: () => MutationSource;
-	updates: QueryUpdate<TVars, TData>[];
+	updates?: QueryUpdate<TVars, TData>[];
 	onSuccess?: (data: TData, vars: TVars) => void;
 	onError?: (error: unknown, vars: TVars) => boolean | undefined;
 	errorMessage?: string;
 	errorHandler?: (message: string) => void;
 };
 
-function useOptimisticMutation<TVars, TData>(
-	options: () => OptimisticMutationOptions<TVars, TData>,
+function useMutation<TVars, TData>(
+	options: () => MutationOptions<TVars, TData>,
 ): CreateMutationResult<TData, unknown, TVars> {
 	const queryClient = useQueryClient();
 
-	return useMutation(() => {
+	return _useMutation(() => {
 		const opts = options();
+		const updates = opts.updates ?? [];
 		const { mutationKey, mutationFn } = opts.mutation();
-		const hasOptimistic = opts.updates.some((u) => u.updater);
+		const hasOptimistic = updates.some((u) => u.updater);
 		const hasCacheUpdates =
-			hasOptimistic || opts.updates.some((u) => u.onSuccessUpdater);
+			hasOptimistic || updates.some((u) => u.onSuccessUpdater);
 
 		return {
 			mutationKey,
@@ -124,14 +125,14 @@ function useOptimisticMutation<TVars, TData>(
 						const snapshots = new Map<string, unknown>();
 
 						await Promise.all(
-							opts.updates
+							updates
 								.filter((u) => u.updater)
 								.map((u) =>
 									queryClient.cancelQueries({ queryKey: u.queryKey() }),
 								),
 						);
 
-						for (const update of opts.updates) {
+						for (const update of updates) {
 							if (!update.updater) continue;
 							const key = update.queryKey();
 							const keyStr = JSON.stringify(key);
@@ -150,7 +151,7 @@ function useOptimisticMutation<TVars, TData>(
 				variables: TVars,
 				_context: { snapshots: Map<string, unknown> } | undefined,
 			) => {
-				for (const update of opts.updates) {
+				for (const update of updates) {
 					if (!update.onSuccessUpdater) continue;
 					const key = update.queryKey();
 					// biome-ignore lint/suspicious/noExplicitAny: query cache stores untyped data
@@ -166,7 +167,7 @@ function useOptimisticMutation<TVars, TData>(
 				context: { snapshots: Map<string, unknown> } | undefined,
 			) => {
 				if (context?.snapshots) {
-					for (const update of opts.updates) {
+					for (const update of updates) {
 						if (!update.updater) continue;
 						const key = update.queryKey();
 						const keyStr = JSON.stringify(key);
@@ -190,10 +191,5 @@ function useOptimisticMutation<TVars, TData>(
 	});
 }
 
-export type {
-	MutationSource,
-	OptimisticMutationOptions,
-	QueryLike,
-	QueryUpdate,
-};
-export { combineQueries, useOptimisticMutation };
+export type { MutationOptions, MutationSource, QueryLike, QueryUpdate };
+export { combineQueries, useMutation };

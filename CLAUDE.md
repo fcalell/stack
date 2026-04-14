@@ -16,7 +16,7 @@ Full-stack framework for SolidJS + Hono + Cloudflare. Ships everything a consume
 |---------|---------|------|
 | `@fcalell/config` | Unified `stack.config.ts` — `defineConfig()` | @packages/config/README.md |
 | `@fcalell/cli` | `stack` CLI: project scaffolding, dev orchestration, deploy | @packages/cli/README.md |
-| `@fcalell/vite` | Vite preset: SolidJS + Tailwind v4 + API proxy (internal, CLI-managed) | @packages/vite/README.md |
+| `@fcalell/vite` | Vite preset: SolidJS + Tailwind v4 + API proxy + file-based routing + theme/font FOUC prevention | @packages/vite/README.md |
 | `@fcalell/db` | Drizzle ORM clients (D1/SQLite), Better Auth integration | @packages/db/README.md |
 | `@fcalell/api` | API framework: procedure builder, auth/RBAC middleware, typed client | @packages/api/README.md |
 | `@fcalell/ui` | Design system: SolidJS + Kobalte + Tailwind v4 + CVA | @packages/ui/README.md, component docs in `packages/ui/docs/*.md` |
@@ -55,9 +55,10 @@ A full-stack consumer project looks like:
 
 ```
 my-app/
-  package.json
+  package.json             # imports: { "#/*": "./src/*" } — alias works in Vite, worker, scripts
   tsconfig.json            # extends @fcalell/typescript-config
   biome.json               # extends @fcalell/biome-config
+  vite.config.ts           # defineConfig() from @fcalell/vite (3 lines)
   stack.config.ts          # defineConfig() — single source of truth
   wrangler.toml
   src/
@@ -67,12 +68,15 @@ my-app/
       index.ts             # defineApp() — runtime wiring only
       routes/              # ← business logic (procedures)
     app/
-      entry.tsx            # scaffolded once
-      app.tsx              # root layout
+      entry.tsx            # one line: createApp() from @fcalell/ui/app
       app.css              # theme token overrides
       lib/api.ts           # createClient<AppRouter>()
-      pages/               # ← business logic (UI)
+      pages/               # ← business logic (UI) — file-based routes
+        _layout.tsx        # root layout (wraps siblings)
+        index.tsx          # /
 ```
+
+Routes under `src/app/pages/` are picked up by the file-based routing plugin in `@fcalell/vite` (emitted as `virtual:fcalell-routes`) and mounted by `createApp()`. The typed `routes` builder is exported from `@fcalell/ui/router` for refactor-safe link generation.
 
 ## Config architecture
 

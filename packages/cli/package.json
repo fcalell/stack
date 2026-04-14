@@ -2,6 +2,7 @@
 	"name": "@fcalell/cli",
 	"version": "0.0.0",
 	"type": "module",
+	"sideEffects": false,
 	"imports": {
 		"#*": "./src/*.ts"
 	},

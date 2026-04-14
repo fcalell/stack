@@ -2,6 +2,10 @@
 	"name": "@fcalell/vite",
 	"version": "0.0.0",
 	"type": "module",
+	"sideEffects": false,
+	"imports": {
+		"#*": "./src/*.ts"
+	},
 	"exports": {
 		".": "./src/index.ts"
 	},
@@ -13,7 +17,9 @@
 		"clear": "rm -rf node_modules .turbo"
 	},
 	"dependencies": {
+		"@fcalell/ui": "workspace:*",
 		"@tailwindcss/vite": "^4.2.1",
+		"fast-glob": "^3.3.3",
 		"tailwindcss": "^4.2.1",
 		"vite": "^7.0.0",
 		"vite-plugin-solid": "^2.11.6"

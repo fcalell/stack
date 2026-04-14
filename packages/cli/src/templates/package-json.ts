@@ -29,22 +29,26 @@ export function packageJsonTemplate(options: PackageJsonOptions): string {
 		deps["@fcalell/ui"] = "workspace:*";
 		deps["@fcalell/vite"] = "workspace:*";
 		deps["solid-js"] = "^1.9.0";
-		deps["@solidjs/router"] = "^0.15.0";
 	}
 
-	const pkg = {
+	const pkg: Record<string, unknown> = {
 		name: options.name,
 		version: "0.0.0",
 		private: true,
 		type: "module",
-		scripts: {
-			dev: "stack dev",
-			deploy: "stack deploy",
-			check: "stack check",
-		},
-		dependencies: sortKeys(deps),
-		devDependencies: sortKeys(devDeps),
 	};
+
+	if (options.app) {
+		pkg.imports = { "#/*": "./src/*" };
+	}
+
+	pkg.scripts = {
+		dev: "stack dev",
+		deploy: "stack deploy",
+		check: "stack check",
+	};
+	pkg.dependencies = sortKeys(deps);
+	pkg.devDependencies = sortKeys(devDeps);
 
 	return `${JSON.stringify(pkg, null, "\t")}\n`;
 }

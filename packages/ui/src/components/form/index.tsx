@@ -297,6 +297,8 @@ export const Form = {
 	EnumInput: FormEnumInput,
 };
 
+export { createForm } from "@tanstack/solid-form";
+export { useApiForm } from "./use-api-form";
 export type {
 	FormCheckboxProps,
 	FormEnumInputProps,
