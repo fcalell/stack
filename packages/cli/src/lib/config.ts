@@ -1,4 +1,5 @@
 import { resolve } from "node:path";
+import { log } from "@clack/prompts";
 import type { StackConfig } from "@fcalell/config";
 import { ensureDeps } from "#drizzle/deps";
 
@@ -11,7 +12,7 @@ export async function loadConfig(configPath: string): Promise<StackConfig> {
 	const config: unknown = mod.default;
 
 	if (!isStackConfig(config)) {
-		console.error(`Invalid config at ${resolved}`);
+		log.error(`Invalid config at ${resolved}`);
 		process.exit(1);
 	}
 

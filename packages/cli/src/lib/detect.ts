@@ -11,6 +11,6 @@ export function detect(cwd = process.cwd()): ProjectState {
 	return {
 		hasConfig: existsSync(join(cwd, "stack.config.ts")),
 		hasApi: existsSync(join(cwd, "src", "worker", "index.ts")),
-		hasApp: existsSync(join(cwd, "src", "app", "entry.tsx")),
+		hasApp: existsSync(join(cwd, "src", "app", "pages")),
 	};
 }

@@ -52,9 +52,16 @@ export interface PaginatedResult<T> {
 	nextCursor: string | null;
 }
 
+interface QueryBuilder<T> {
+	findMany(config: {
+		where?: SQL;
+		limit?: number;
+		orderBy?: SQLiteColumn[];
+	}): Promise<T[]>;
+}
+
 export async function paginate<T extends { id: string; createdAt: Date }>(
-	// biome-ignore lint/suspicious/noExplicitAny: Drizzle query builder type
-	queryBuilder: any,
+	queryBuilder: QueryBuilder<T>,
 	options: PaginateOptions,
 ): Promise<PaginatedResult<T>> {
 	const limit = clampLimit(options.limit);

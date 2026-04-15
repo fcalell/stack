@@ -1,4 +1,5 @@
-import { join } from "node:path";
+import { basename, join } from "node:path";
+import { spinner } from "@clack/prompts";
 import { detect } from "#lib/detect";
 import { ask, choose, confirm } from "#lib/prompt";
 import {
@@ -8,6 +9,7 @@ import {
 	scaffoldFiles,
 	skipIfConfigured,
 } from "#lib/scaffold";
+import { createD1Database } from "#lib/wrangler";
 import { schemaTemplate } from "#templates/schema";
 import { stackConfigTemplate } from "#templates/stack-config";
 
@@ -36,7 +38,7 @@ export async function add(options?: DbOptions): Promise<void> {
 		]);
 
 		if (dialect === "d1") {
-			databaseId = await ask("D1 database ID");
+			databaseId = await acquireD1Id();
 		} else {
 			sqlitePath = await ask("SQLite file path", "./data/app.sqlite");
 		}
@@ -61,4 +63,27 @@ export async function add(options?: DbOptions): Promise<void> {
 	if (ensureGitignore(".db-kit")) created.push(".gitignore");
 
 	announceCreated(created);
+}
+
+async function acquireD1Id(): Promise<string | undefined> {
+	const createNew = await confirm("Create a new D1 database?");
+
+	if (!createNew) {
+		return await ask("D1 database ID");
+	}
+
+	const defaultName = `${basename(process.cwd())}-db`;
+	const name = await ask("Database name", defaultName);
+
+	const s = spinner();
+	s.start("Creating D1 database...");
+	const result = createD1Database(name);
+
+	if (result) {
+		s.stop(`Created D1 database: ${result.name} (${result.id})`);
+		return result.id;
+	}
+
+	s.stop("Failed to create D1 database.");
+	return await ask("D1 database ID (enter manually)");
 }

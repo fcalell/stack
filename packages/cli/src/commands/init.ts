@@ -1,7 +1,9 @@
 import { existsSync, mkdirSync } from "node:fs";
 import { basename } from "node:path";
+import { intro, log, note, outro, spinner } from "@clack/prompts";
 import { ask, choose, confirm, multi } from "#lib/prompt";
 import { announceCreated, scaffoldFiles } from "#lib/scaffold";
+import { createD1Database } from "#lib/wrangler";
 import { biomeTemplate } from "#templates/biome";
 import { gitignoreTemplate } from "#templates/gitignore";
 import { packageJsonTemplate } from "#templates/package-json";
@@ -23,7 +25,7 @@ export async function init(dir: string): Promise<void> {
 }
 
 async function run(dir: string): Promise<void> {
-	console.log(`\nInitializing project in ${dir}\n`);
+	intro(`stack init ${basename(dir)}`);
 
 	let layers: string[];
 	let dbDialect: "d1" | "sqlite" | undefined;
@@ -41,16 +43,31 @@ async function run(dir: string): Promise<void> {
 
 		// API requires db
 		if (layers.includes("api") && !layers.includes("db")) {
-			console.log("API requires database — adding database layer.");
+			log.warn("API requires database — adding database layer.");
 			layers.unshift("db");
 		}
 
 		if (layers.includes("db")) {
-			console.log("\n── Database ──");
+			log.step("Database");
 			dbDialect = await choose<"d1" | "sqlite">("Dialect:", ["d1", "sqlite"]);
 
 			if (dbDialect === "d1") {
-				databaseId = await ask("D1 database ID");
+				const createNew = await confirm("Create a new D1 database?");
+				if (createNew) {
+					const dbName = await ask("Database name", `${basename(dir)}-db`);
+					const s = spinner();
+					s.start("Creating D1 database...");
+					const result = createD1Database(dbName);
+					if (result) {
+						s.stop(`Created D1 database: ${result.name} (${result.id})`);
+						databaseId = result.id;
+					} else {
+						s.stop("Failed to create D1 database.");
+						databaseId = await ask("D1 database ID (enter manually)");
+					}
+				} else {
+					databaseId = await ask("D1 database ID");
+				}
 			} else {
 				sqlitePath = await ask("SQLite file path", "./data/app.sqlite");
 			}
@@ -100,7 +117,28 @@ async function run(dir: string): Promise<void> {
 		await addUi();
 	}
 
-	console.log("\nDone! Next steps:");
-	console.log("  pnpm install");
-	console.log("  stack dev");
+	const nextSteps = ["pnpm install"];
+
+	if (
+		hasDb &&
+		dbDialect === "d1" &&
+		(!databaseId || databaseId.includes("YOUR"))
+	) {
+		nextSteps.push(
+			"npx wrangler d1 create <name>  # then update databaseId in stack.config.ts",
+		);
+	}
+
+	nextSteps.push("stack dev");
+
+	const devExplain: string[] = [];
+	if (hasDb) devExplain.push("push schema");
+	if (hasApi) devExplain.push("start API on :8787");
+	if (hasApp) devExplain.push("start app on :5173");
+	if (devExplain.length > 0) {
+		nextSteps.push(`  → will ${devExplain.join(", ")}`);
+	}
+
+	note(nextSteps.join("\n"), "Next steps");
+	outro("Done!");
 }

@@ -1,3 +1,4 @@
+import { log } from "@clack/prompts";
 import { loadConfig } from "#lib/config";
 import { editConfig } from "#lib/config-writer";
 import { detect } from "#lib/detect";
@@ -17,15 +18,15 @@ export async function add(): Promise<void> {
 			ast.auth = { cookies: { prefix: "app" } };
 		});
 	} catch (error) {
-		console.error(error instanceof Error ? error.message : error);
+		log.error(error instanceof Error ? error.message : String(error));
 		process.exit(1);
 	}
 
-	console.log("Added authentication to stack.config.ts");
+	log.success("Added authentication to stack.config.ts");
 
 	if (state.hasApi) {
-		console.log(
-			"\nReminder: Add sendOTP and sendInvitation callbacks to defineApp() in src/worker/index.ts",
+		log.info(
+			"Reminder: Add sendOTP and sendInvitation callbacks to defineApp() in src/worker/index.ts",
 		);
 	}
 }

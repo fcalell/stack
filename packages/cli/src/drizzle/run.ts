@@ -1,6 +1,7 @@
-import { type ChildProcess, spawn, spawnSync } from "node:child_process";
+import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
+import { log } from "@clack/prompts";
 import type { StackConfig } from "@fcalell/config";
 import { getMigrationsPath, getSchemaPath } from "@fcalell/db";
 import { authSchemaPath, generateAuthSchema } from "#drizzle/auth-schema";
@@ -60,9 +61,8 @@ function discoverWranglerDir(): string {
 
 	if (existsSync(join(parent, ".wrangler"))) return parent;
 
-	throw new Error(
-		"Could not find .wrangler directory. Run wrangler dev first, or ensure .wrangler exists in a sibling/parent directory.",
-	);
+	// Fall back to cwd — getLocalD1Path will create the directory structure
+	return cwd;
 }
 
 export function localDbUrl(config: StackConfig): string {
@@ -73,7 +73,7 @@ export function localDbUrl(config: StackConfig): string {
 
 export function ensureAuthSchema(config: StackConfig): boolean {
 	if (!config.auth) return true;
-	console.log("Generating auth schema...");
+	log.step("Generating auth schema...");
 	return generateAuthSchema(config.auth);
 }
 
@@ -116,20 +116,14 @@ export function migrate(config: StackConfig): boolean {
 	return drizzleKit("migrate", "--config", configPath());
 }
 
-export function startStudio(config: StackConfig): ChildProcess {
+export function writeStudioConfig(config: StackConfig): string[] {
 	writeConfig({
 		dialect: "sqlite",
 		schema: schemaList(config),
 		dbCredentials: { url: localDbUrl(config) },
 	});
-
 	const port = String(config.dev?.studioPort ?? 4983);
-
-	return spawn(
-		"npx",
-		["drizzle-kit", "studio", "--config", configPath(), "--port", port],
-		{ stdio: "inherit" },
-	);
+	return ["drizzle-kit", "studio", "--config", configPath(), "--port", port];
 }
 
 function d1RemoteCredentials(
@@ -138,9 +132,7 @@ function d1RemoteCredentials(
 	const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
 	const token = process.env.CLOUDFLARE_D1_TOKEN;
 	if (!accountId || !token) {
-		console.error(
-			"Required env vars: CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_D1_TOKEN",
-		);
+		log.error("Required env vars: CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_D1_TOKEN");
 		return null;
 	}
 	return { accountId, databaseId: db.databaseId, token };

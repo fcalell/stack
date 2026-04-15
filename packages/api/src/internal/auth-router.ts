@@ -1,7 +1,7 @@
 import type { AuthPolicy } from "@fcalell/db";
 import { ORPCError } from "@orpc/server";
 import { z } from "zod";
-import type { ProcedureFactory } from "#procedure";
+import type { ProcedureBuilder, ProcedureFactory } from "#procedure";
 
 interface AuthRouterConfig {
 	policy: AuthPolicy;
@@ -212,8 +212,7 @@ function createEmailOtpRoutes(procedure: AuthProcedureFactory) {
 }
 
 function createOrgRoutes(
-	// biome-ignore lint/suspicious/noExplicitAny: authProcedure from the framework factory
-	authProcedure: any,
+	authProcedure: Pick<ProcedureBuilder<AuthContext, undefined>, "input">,
 ) {
 	const setActiveOrganization = authProcedure
 		.input(z.object({ organizationId: z.string().min(1) }))

@@ -1,6 +1,7 @@
 #!/usr/bin/env tsx
 import { resolve } from "node:path";
 import { parseArgs } from "node:util";
+import { log } from "@clack/prompts";
 
 const { positionals, values } = parseArgs({
 	allowPositionals: true,
@@ -23,7 +24,7 @@ const COMMANDS: Record<string, string[]> = {
 };
 
 function usage(): never {
-	console.log(`Usage:
+	log.info(`Usage:
   stack init [dir]                 Scaffold a new project
   stack add <db|auth|org|api|ui>   Add a feature
   stack dev [--studio]             Start development
@@ -40,8 +41,8 @@ if (command === "init") {
 	await init(dir);
 } else if (command === "add") {
 	if (!subcommand || !COMMANDS.add?.includes(subcommand)) {
-		console.error(`Unknown feature: ${subcommand}`);
-		console.log("Available: db, auth, org, api, ui");
+		log.error(`Unknown feature: ${subcommand}`);
+		log.info("Available: db, auth, org, api, ui");
 		process.exit(1);
 	}
 	const mod = await import(`#commands/add/${subcommand}`);
@@ -54,7 +55,7 @@ if (command === "init") {
 	await deploy({ config: configPath });
 } else if (command === "db") {
 	if (subcommand !== "reset") {
-		console.error("Usage: stack db reset");
+		log.error("Usage: stack db reset");
 		process.exit(1);
 	}
 	const { reset } = await import("#commands/db/reset");

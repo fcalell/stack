@@ -30,7 +30,7 @@ Which layers do you want?
 Select (comma-separated): 1, 2, 3
 ```
 
-Then prompts for layer-specific config (dialect, auth, organizations) and scaffolds the full project: `package.json`, `tsconfig.json`, `biome.json`, `stack.config.ts`, worker entry, app entry, and more.
+Then prompts for layer-specific config (dialect, auth, organizations) and scaffolds the project — only business-logic files. Boilerplate (entry points, CSS, type declarations, route barrels) is handled by the framework at dev/build time.
 
 ## Commands
 
@@ -44,13 +44,30 @@ Interactive project scaffold. Creates the directory if it doesn't exist, or uses
 |-----------|-------|
 | Always | `package.json`, `tsconfig.json`, `biome.json`, `.gitignore` |
 | Database | `stack.config.ts`, `src/schema/index.ts`, `src/migrations/` |
-| API | `src/worker/index.ts`, `src/worker/routes/index.ts`, `src/worker/env.d.ts`, `wrangler.toml` |
-| App | `vite.config.ts`, `src/app/entry.tsx` (one-line `createApp()`), `src/app/app.css`, `src/app/pages/_layout.tsx`, `src/app/pages/index.tsx`; adds `"imports": { "#/*": "./src/*" }` to `package.json` |
-| App + API | `src/app/lib/api.ts` (typed client wired to `AppRouter`) |
+| API | `src/worker/index.ts`, `wrangler.toml` (D1 only) |
+| App | `src/app/pages/_layout.tsx`, `src/app/pages/index.tsx`; adds `"imports": { "#/*": "./src/*" }` to `package.json` |
 
 API auto-selects Database (requires it). App is fully independent. Existing files are never overwritten.
 
-The `#/*` Node `imports` field is the canonical path alias — it works in Vite, the Cloudflare Worker, Node scripts, and tests with no plugin or `tsconfig` `paths` configuration. Consumers write `import { api } from "#/lib/api"` identically across `src/app/**` and `src/worker/**`.
+**What the framework generates to `.stack/` (gitignored):**
+
+| File | When | Purpose |
+|------|------|---------|
+| `.stack/env.d.ts` | API configured | `Env` interface derived from config |
+| `.stack/routes.d.ts` | App configured | Typed route builder declarations |
+| `.stack/index.html` | App configured (no user `index.html`) | Virtual HTML entry for Vite |
+| `.stack/api-client.d.ts` | App + API | Types for `virtual:fcalell-api-client` |
+| `src/worker/routes/index.ts` | API configured | Auto-generated barrel from route files |
+
+**What consumers can optionally create as overrides:**
+
+| File | Effect |
+|------|--------|
+| `vite.config.ts` | Overrides the default Vite preset (used by `stack-vite` bin) |
+| `src/app/entry.tsx` | Custom app entry (providers, query client, etc.) |
+| `src/app/app.css` | Custom CSS (theme tokens, global overrides) |
+
+The `#/*` Node `imports` field is the canonical path alias — it works in Vite, the Cloudflare Worker, Node scripts, and tests with no plugin or `tsconfig` `paths` configuration.
 
 ### `stack add <feature>`
 
@@ -61,14 +78,15 @@ Add a feature to an existing project. Available features:
 | `db` | None | Scaffolds `stack.config.ts`, schema, migrations |
 | `auth` | `db` configured | Adds `auth` section to `stack.config.ts` |
 | `org` | `auth` configured | Adds `createAccessControl()` and organization config |
-| `api` | `db` configured | Scaffolds worker entry, routes, wrangler.toml, adds `api` section to config |
-| `ui` | None | Scaffolds `vite.config.ts`, `src/app/entry.tsx`, `src/app/app.css`, `src/app/pages/{_layout,index}.tsx`, and `src/app/lib/api.ts` (when an API is configured) |
+| `api` | `db` configured | Scaffolds worker entry, wrangler.toml, generates `.stack/env.d.ts` |
+| `ui` | None | Scaffolds `src/app/pages/{_layout,index}.tsx` |
 
 ### `stack dev [--studio]`
 
 Context-aware development mode. Detects what's configured and runs the relevant workflows:
 
 - **Database configured:** pushes schema to local DB, watches `src/schema/` for changes (300ms debounce)
+- **API configured:** generates `.stack/env.d.ts`, watches `src/worker/routes/` and regenerates the barrel on file add/remove
 - **`--studio` flag:** launches Drizzle Studio alongside the watcher
 
 ### `stack deploy`
@@ -100,7 +118,7 @@ The CLI reads `stack.config.ts` to determine what's configured:
 | Auth | `auth` section present in config |
 | Organizations | `createAccessControl` import present |
 | API | `src/worker/index.ts` exists |
-| App | `src/app/entry.tsx` exists |
+| App | `src/app/pages/` directory exists |
 
 ## License
 

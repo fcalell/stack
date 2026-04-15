@@ -177,10 +177,10 @@ interface BuilderState {
 	paginated: boolean;
 }
 
-// biome-ignore lint/suspicious/noExplicitAny: handler fn preserves type via interface generic
-function wrapPaginatedHandler(fn: any) {
-	// biome-ignore lint/suspicious/noExplicitAny: oRPC handler opts
-	return (opts: any) => {
+function wrapPaginatedHandler(
+	fn: (opts: { input: { limit?: number } }) => unknown,
+) {
+	return (opts: { input: { limit?: number } }) => {
 		opts.input.limit = clampLimit(opts.input.limit);
 		return fn(opts);
 	};
@@ -213,8 +213,7 @@ function createBuilder(state: BuilderState): any {
 		},
 
 		input(userSchema: z.ZodType) {
-			// biome-ignore lint/suspicious/noExplicitAny: merged schema preserved by interface
-			let merged: any = userSchema;
+			let merged: z.ZodType = userSchema;
 			if (hasBaseShape) {
 				if (!(userSchema instanceof z.ZodObject)) {
 					throw new Error(

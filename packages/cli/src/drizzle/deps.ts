@@ -2,6 +2,7 @@ import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { join } from "node:path";
+import { log } from "@clack/prompts";
 
 const resolve = createRequire(join(process.cwd(), "_")).resolve;
 
@@ -34,14 +35,14 @@ export function ensureDeps(configPath: string): void {
 	const missing = [...needed].filter((pkg) => !isInstalled(pkg));
 	if (missing.length === 0) return;
 
-	console.log(`Installing dependencies: ${missing.join(", ")}`);
+	log.step(`Installing dependencies: ${missing.join(", ")}`);
 	const result = spawnSync("pnpm", ["add", "-D", ...missing], {
 		stdio: "inherit",
 		cwd: process.cwd(),
 	});
 
 	if (result.status !== 0) {
-		console.error("Failed to install dependencies.");
+		log.error("Failed to install dependencies.");
 		process.exit(1);
 	}
 }

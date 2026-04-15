@@ -7,7 +7,7 @@ export function tsconfigTemplate(options: TsconfigOptions): string {
 		extends: options.app
 			? "@fcalell/typescript-config/solid-vite.json"
 			: "@fcalell/typescript-config/node-tsx.json",
-		include: options.app ? ["src", ".stack"] : ["src"],
+		include: ["src", ".stack"],
 	};
 
 	return `${JSON.stringify(config, null, "\t")}\n`;

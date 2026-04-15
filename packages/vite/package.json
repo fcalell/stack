@@ -6,6 +6,9 @@
 	"imports": {
 		"#*": "./src/*.ts"
 	},
+	"bin": {
+		"stack-vite": "./bin/vite.mjs"
+	},
 	"exports": {
 		".": "./src/index.ts"
 	},

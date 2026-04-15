@@ -6,10 +6,11 @@ import {
 	writeFileSync,
 } from "node:fs";
 import { dirname, join } from "node:path";
+import { log } from "@clack/prompts";
 
 export function writeIfMissing(path: string, content: string): boolean {
 	if (existsSync(path)) {
-		console.log(`  ${path} already exists, skipping`);
+		log.info(`${path} already exists, skipping`);
 		return false;
 	}
 	mkdirSync(dirname(path), { recursive: true });
@@ -29,20 +30,20 @@ export function scaffoldFiles(
 
 export function announceCreated(created: readonly string[]): void {
 	if (created.length > 0) {
-		console.log(`\nCreated: ${created.join(", ")}`);
+		log.success(`Created: ${created.join(", ")}`);
 	}
 }
 
 export function requireFeature(label: string, ok: boolean, hint: string): void {
 	if (!ok) {
-		console.error(`${label} is not configured. ${hint}`);
+		log.error(`${label} is not configured. ${hint}`);
 		process.exit(1);
 	}
 }
 
 export function skipIfConfigured(label: string, configured: boolean): boolean {
 	if (configured) {
-		console.log(`${label} is already configured.`);
+		log.info(`${label} is already configured.`);
 		return true;
 	}
 	return false;
@@ -73,4 +74,39 @@ export function ensureGitignore(...entries: string[]): boolean {
 		added = true;
 	}
 	return added;
+}
+
+export interface PackageJsonPatch {
+	imports?: Record<string, string>;
+	dependencies?: Record<string, string>;
+	scripts?: Record<string, string>;
+}
+
+export function patchPackageJson(cwd: string, patch: PackageJsonPatch): void {
+	const pkgPath = join(cwd, "package.json");
+	if (!existsSync(pkgPath)) {
+		log.warn("No package.json found — skipping dependency setup.");
+		return;
+	}
+
+	const pkg = JSON.parse(readFileSync(pkgPath, "utf-8")) as Record<
+		string,
+		unknown
+	>;
+	let changed = false;
+
+	for (const field of ["imports", "dependencies", "scripts"] as const) {
+		const additions = patch[field];
+		if (!additions) continue;
+		const existing = (pkg[field] ?? {}) as Record<string, string>;
+		const missing = Object.entries(additions).filter(([k]) => !(k in existing));
+		if (missing.length > 0) {
+			pkg[field] = { ...existing, ...Object.fromEntries(missing) };
+			changed = true;
+		}
+	}
+
+	if (changed) {
+		writeFileSync(pkgPath, `${JSON.stringify(pkg, null, "\t")}\n`);
+	}
 }

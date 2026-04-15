@@ -6,7 +6,7 @@ export function workerTemplate(options: WorkerOptions): string {
 	const imports = [
 		'import { defineApp } from "@fcalell/api";',
 		'import config from "../../stack.config";',
-		'import { routes } from "./routes";',
+		'import * as routes from "./routes";',
 	];
 
 	const lines: string[] = [];
@@ -38,7 +38,7 @@ export function workerTemplate(options: WorkerOptions): string {
 	lines.push("");
 	lines.push("export const procedure = app.procedure;");
 	lines.push("");
-	lines.push("const api = app.handler({ ...routes });");
+	lines.push("const api = app.handler(routes);");
 	lines.push("export type AppRouter = typeof api._router;");
 	lines.push("export default api;");
 	lines.push("");

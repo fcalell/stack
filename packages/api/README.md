@@ -9,7 +9,7 @@ API framework for Cloudflare Workers. Wraps Hono + oRPC so consumers only define
 | Export | Purpose |
 |--------|---------|
 | `@fcalell/api` | `defineApp`, `ApiError`, `Middleware`, `InferRouter` |
-| `@fcalell/api/client` | `createClient` — typed RPC client for frontend |
+| `@fcalell/api/client` | `createClient`, `RouterClient` — typed RPC client for frontend |
 | `@fcalell/api/schema` | `z` — Zod re-export (consumers never install zod directly) |
 | `@fcalell/api/lib/cursor` | `encodeCursor`, `decodeCursor`, `paginate`, pagination constants |
 | `@fcalell/api/lib/slugify` | `slugify`, `isReservedSlug`, `createSlugify` |
@@ -90,7 +90,7 @@ export const projects = {
 ### 3. Export the worker
 
 ```ts
-const api = app.handler({ projects });
+const api = app.handler(routes);
 export type AppRouter = typeof api._router;
 export default api;
 ```
@@ -99,17 +99,25 @@ Auth routes are auto-included when `config.auth` is present. No manual `{ auth: 
 
 ### 4. Client (frontend)
 
-```ts
-import { createClient } from "@fcalell/api/client";
-import type { AppRouter } from "@repo/api";
+When using `@fcalell/vite`, a typed client is available as a virtual module — no setup file needed:
 
-export const api = createClient<AppRouter>();
+```ts
+import { api } from "virtual:fcalell-api-client";
 // api.projects.list({ status: "active" }) → fully typed
 // api.auth.getSession() → fully typed
 // api.auth.sendOtp({ email: "..." }) → fully typed
 ```
 
-The client defaults to `/rpc` — matching the server's default prefix. Pass `{ url: "/custom" }` to override.
+For custom configuration, create the client manually:
+
+```ts
+import { createClient } from "@fcalell/api/client";
+import type { AppRouter } from "@repo/api";
+
+export const api = createClient<AppRouter>({ url: "/custom" });
+```
+
+The client defaults to `/rpc` — matching the server's default prefix.
 
 ## What `defineApp` handles automatically
 

@@ -265,15 +265,16 @@ function emitTypedRoutes(root: RouteNode): { runtime: string; types: string } {
 	walk(root, [], [], "");
 
 	// Build nested runtime object
-	// biome-ignore lint/suspicious/noExplicitAny: dynamic nested object construction
-	const runtimeTree: Record<string, any> = {};
+	interface RouteTree {
+		[key: string]: RouteTree | { __leaf: Leaf };
+	}
+	const runtimeTree: RouteTree = {};
 	for (const leaf of leaves) {
-		// biome-ignore lint/suspicious/noExplicitAny: nested walk
-		let cursor: Record<string, any> = runtimeTree;
+		let cursor: RouteTree = runtimeTree;
 		for (let i = 0; i < leaf.keys.length - 1; i++) {
 			const k = leaf.keys[i] as string;
 			if (!cursor[k] || typeof cursor[k] !== "object") cursor[k] = {};
-			cursor = cursor[k];
+			cursor = cursor[k] as RouteTree;
 		}
 		const lastKey = leaf.keys[leaf.keys.length - 1] as string;
 		cursor[lastKey] = { __leaf: leaf };

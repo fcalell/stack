@@ -12,14 +12,26 @@ pnpm add @fcalell/vite
 
 ## Usage
 
-```ts
-// vite.config.ts
-import { defineConfig } from "@fcalell/vite";
+No config file needed. The `stack-vite` binary applies the preset automatically:
 
-export default defineConfig();
+```bash
+stack-vite dev     # development server
+stack-vite build   # production build
+stack-vite preview # preview production build
 ```
 
-That's it. SolidJS compilation, Tailwind v4 processing, an API proxy to `localhost:8787`, file-based routing under `src/app/pages/`, and anti-FOUC theme + font preload injection are all configured automatically.
+To customize, create a `vite.config.ts` — `stack-vite` detects and uses it:
+
+```ts
+// vite.config.ts (optional)
+import { defineConfig } from "@fcalell/vite";
+
+export default defineConfig({
+  apiProxy: "http://localhost:9000",
+});
+```
+
+SolidJS compilation, Tailwind v4 processing, an API proxy to `localhost:8787`, file-based routing under `src/app/pages/`, auto-generated `index.html` + app entry, and anti-FOUC theme + font preload injection are all configured automatically.
 
 ## Options
 
@@ -62,6 +74,8 @@ export default defineConfig({
 
 ## What it handles
 
+- **App entry + HTML** — auto-generates `index.html` and app entry if the consumer doesn't provide them. If `src/app/entry.tsx` exists, it's used as the entry. If `src/app/app.css` exists, it's imported; otherwise Tailwind + `@fcalell/ui/globals.css` are injected automatically.
+- **API client** — when `src/worker/index.ts` exists, provides `virtual:fcalell-api-client` (typed via `.stack/api-client.d.ts`) so the consumer can `import { api } from "virtual:fcalell-api-client"` with full type safety.
 - **SolidJS** — JSX compilation via `vite-plugin-solid`
 - **Tailwind v4** — CSS processing via `@tailwindcss/vite`
 - **API proxy** — `/rpc` requests proxied to the Cloudflare Worker dev server in development

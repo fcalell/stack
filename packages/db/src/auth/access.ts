@@ -16,8 +16,7 @@ export function createAccessControl<
 }
 
 export function getStatements(
-	// biome-ignore lint/suspicious/noExplicitAny: AC object may come from config with any type
-	ac: any,
+	ac: { statements?: Record<string, readonly string[]> } | undefined,
 ): Record<string, readonly string[]> | undefined {
 	return ac?.statements;
 }

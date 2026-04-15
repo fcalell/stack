@@ -1,26 +1,41 @@
 import {
-	checkbox,
-	input,
-	confirm as inquirerConfirm,
+	cancel,
+	confirm as clackConfirm,
+	isCancel,
+	multiselect,
 	select,
-} from "@inquirer/prompts";
+	text,
+} from "@clack/prompts";
 
-export function ask(message: string, defaultValue?: string): Promise<string> {
-	return input({ message, default: defaultValue });
+function unwrap<T>(value: T | symbol): T {
+	if (isCancel(value)) {
+		cancel("Cancelled.");
+		process.exit(0);
+	}
+	return value as T;
 }
 
-export function confirm(message: string): Promise<boolean> {
-	return inquirerConfirm({ message, default: false });
+export async function ask(
+	message: string,
+	defaultValue?: string,
+): Promise<string> {
+	return unwrap(await text({ message, defaultValue }));
 }
 
-export function choose<T extends string>(
+export async function confirm(message: string): Promise<boolean> {
+	return unwrap(await clackConfirm({ message, initialValue: false }));
+}
+
+export async function choose<T extends string>(
 	message: string,
 	options: readonly [T, ...T[]],
 ): Promise<T> {
-	return select({
+	const value = await select({
 		message,
-		choices: options.map((value) => ({ value, name: value })),
+		// biome-ignore lint/suspicious/noExplicitAny: Option<T> conditional type is unresolvable with generics
+		options: options.map((v) => ({ value: v, label: v })) as any,
 	});
+	return unwrap(value) as T;
 }
 
 export interface MultiOption<T extends string> {
@@ -29,16 +44,15 @@ export interface MultiOption<T extends string> {
 	default?: boolean;
 }
 
-export function multi<T extends string>(
+export async function multi<T extends string>(
 	message: string,
 	options: readonly MultiOption<T>[],
 ): Promise<T[]> {
-	return checkbox({
+	const value = await multiselect({
 		message,
-		choices: options.map((o) => ({
-			name: o.label,
-			value: o.value,
-			checked: o.default ?? false,
-		})),
+		// biome-ignore lint/suspicious/noExplicitAny: Option<T> conditional type is unresolvable with generics
+		options: options.map((o) => ({ value: o.value, label: o.label })) as any,
+		initialValues: options.filter((o) => o.default).map((o) => o.value),
 	});
+	return unwrap(value) as T[];
 }

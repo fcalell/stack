@@ -1,3 +1,4 @@
+import { log } from "@clack/prompts";
 import { loadConfig } from "#lib/config";
 import { createAccessControlExpression, editConfig } from "#lib/config-writer";
 import { detect } from "#lib/detect";
@@ -36,9 +37,9 @@ export async function add(): Promise<void> {
 			});
 		});
 	} catch (error) {
-		console.error(error instanceof Error ? error.message : error);
+		log.error(error instanceof Error ? error.message : String(error));
 		process.exit(1);
 	}
 
-	console.log("Added organizations to stack.config.ts");
+	log.success("Added organizations to stack.config.ts");
 }

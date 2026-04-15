@@ -42,11 +42,19 @@ export function packageJsonTemplate(options: PackageJsonOptions): string {
 		pkg.imports = { "#/*": "./src/*" };
 	}
 
-	pkg.scripts = {
+	const scripts: Record<string, string> = {
 		dev: "stack dev",
 		deploy: "stack deploy",
 		check: "stack check",
 	};
+
+	if (options.app) {
+		scripts["dev:app"] = "stack-vite dev";
+		scripts.build = "stack-vite build";
+		scripts.preview = "stack-vite preview";
+	}
+
+	pkg.scripts = scripts;
 	pkg.dependencies = sortKeys(deps);
 	pkg.devDependencies = sortKeys(devDeps);
 

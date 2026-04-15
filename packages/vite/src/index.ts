@@ -2,6 +2,7 @@ import type { FontEntry } from "@fcalell/ui/fonts-manifest";
 import tailwindcss from "@tailwindcss/vite";
 import { type UserConfig, defineConfig as viteDefineConfig } from "vite";
 import solid from "vite-plugin-solid";
+import { appEntryPlugin } from "#plugins/app-entry";
 import { type RoutesPluginOptions, routesPlugin } from "#plugins/routes";
 import { themeFontsPlugin } from "#plugins/theme-fonts";
 
@@ -34,6 +35,7 @@ export function defineConfig(config: StackConfig = {}): UserConfig {
 
 	return viteDefineConfig({
 		plugins: [
+			appEntryPlugin(),
 			solid(),
 			tailwindcss(),
 			themeFontsPlugin({ fonts }),

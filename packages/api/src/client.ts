@@ -2,6 +2,8 @@ import { createORPCClient } from "@orpc/client";
 import { RPCLink } from "@orpc/client/fetch";
 import type { RouterClient } from "#types";
 
+export type { RouterClient } from "#types";
+
 export interface ClientConfig {
 	url?: string;
 	fetch?: typeof globalThis.fetch;

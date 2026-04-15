@@ -1,18 +1,19 @@
 import { join } from "node:path";
+import { log } from "@clack/prompts";
 import type { StackConfig } from "@fcalell/config";
 import { loadConfig } from "#lib/config";
 import { editConfig } from "#lib/config-writer";
 import { detect } from "#lib/detect";
+import { generateApiRouteBarrel, generateEnvDts } from "#lib/generate";
 import { ask } from "#lib/prompt";
 import {
 	announceCreated,
+	ensureDir,
 	ensureGitignore,
 	requireFeature,
 	scaffoldFiles,
 	skipIfConfigured,
 } from "#lib/scaffold";
-import { envDtsTemplate } from "#templates/env-dts";
-import { routesTemplate } from "#templates/routes";
 import { workerTemplate } from "#templates/worker";
 import { wranglerTemplate } from "#templates/wrangler";
 
@@ -32,11 +33,6 @@ export async function add(): Promise<void> {
 
 	const entries: Array<[string, string]> = [
 		[join("src", "worker", "index.ts"), workerTemplate({ auth: hasAuth })],
-		[join("src", "worker", "routes", "index.ts"), routesTemplate()],
-		[
-			join("src", "worker", "env.d.ts"),
-			envDtsTemplate({ d1: isD1, auth: hasAuth }),
-		],
 	];
 
 	if (isD1) {
@@ -53,7 +49,10 @@ export async function add(): Promise<void> {
 	}
 
 	const created = scaffoldFiles(entries);
-	if (ensureGitignore(".wrangler")) created.push(".gitignore");
+	ensureDir(join("src", "worker", "routes"));
+	generateApiRouteBarrel();
+	generateEnvDts(config);
+	if (ensureGitignore(".wrangler", ".stack")) created.push(".gitignore");
 	announceCreated(created);
 
 	await addApiConfigSection(config);
@@ -67,7 +66,7 @@ async function addApiConfigSection(config: StackConfig): Promise<void> {
 			ast.api = { cors: ["http://localhost:3000"] };
 		});
 	} catch (error) {
-		console.error(error instanceof Error ? error.message : error);
+		log.error(error instanceof Error ? error.message : String(error));
 		process.exit(1);
 	}
 }
