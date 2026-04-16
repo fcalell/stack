@@ -1,0 +1,45 @@
+{
+	"name": "@fcalell/plugin-db",
+	"version": "0.0.0",
+	"type": "module",
+	"sideEffects": false,
+	"exports": {
+		".": "./src/index.ts",
+		"./cli": "./src/cli.ts",
+		"./runtime": "./src/runtime.ts",
+		"./orm": "./src/orm.ts",
+		"./d1": "./src/d1/client.ts",
+		"./sqlite": "./src/sqlite/client.ts"
+	},
+	"stack-plugin": {
+		"name": "db",
+		"label": "Database",
+		"cli": "./src/cli.ts"
+	},
+	"license": "MIT",
+	"scripts": {
+		"check-types": "tsc --noEmit --pretty",
+		"lint": "biome check --write --unsafe",
+		"check": "pnpm check-types && pnpm lint",
+		"test": "vitest run",
+		"clear": "rm -rf node_modules .turbo"
+	},
+	"dependencies": {
+		"@fcalell/config": "workspace:*",
+		"drizzle-orm": "^0.45.1"
+	},
+	"peerDependencies": {
+		"better-sqlite3": "^12.0.0"
+	},
+	"peerDependenciesMeta": {
+		"better-sqlite3": {
+			"optional": true
+		}
+	},
+	"devDependencies": {
+		"@fcalell/typescript-config": "workspace:*",
+		"@types/better-sqlite3": "^7.6.13",
+		"better-sqlite3": "^12.8.0",
+		"typescript": "^5.9.3"
+	}
+}

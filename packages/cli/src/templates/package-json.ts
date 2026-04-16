@@ -1,33 +1,23 @@
 interface PackageJsonOptions {
 	name: string;
-	db: boolean;
-	api: boolean;
-	app: boolean;
+	plugins: string[];
 }
 
 export function packageJsonTemplate(options: PackageJsonOptions): string {
 	const deps: Record<string, string> = {};
 	const devDeps: Record<string, string> = {
 		"@fcalell/cli": "workspace:*",
+		"@fcalell/config": "workspace:*",
 		"@fcalell/typescript-config": "workspace:*",
 		"@fcalell/biome-config": "workspace:*",
 	};
 
-	if (options.db) {
-		deps["@fcalell/config"] = "workspace:*";
-		deps["@fcalell/db"] = "workspace:*";
-		devDeps["drizzle-kit"] = "^0.31.0";
-		devDeps.tsx = "^4.19.0";
+	for (const name of options.plugins) {
+		deps[`@fcalell/plugin-${name}`] = "workspace:*";
 	}
 
-	if (options.api) {
-		deps["@fcalell/api"] = "workspace:*";
-		devDeps.wrangler = "^4.0.0";
-	}
-
-	if (options.app) {
-		deps["@fcalell/ui"] = "workspace:*";
-		deps["@fcalell/vite"] = "workspace:*";
+	const hasApp = options.plugins.includes("app");
+	if (hasApp) {
 		deps["solid-js"] = "^1.9.0";
 	}
 
@@ -38,19 +28,19 @@ export function packageJsonTemplate(options: PackageJsonOptions): string {
 		type: "module",
 	};
 
-	if (options.app) {
+	if (hasApp) {
 		pkg.imports = { "#/*": "./src/*" };
 	}
 
 	const scripts: Record<string, string> = {
+		generate: "stack generate",
 		dev: "stack dev",
+		build: "stack build",
 		deploy: "stack deploy",
-		check: "stack check",
 	};
 
-	if (options.app) {
+	if (hasApp) {
 		scripts["dev:app"] = "stack-vite dev";
-		scripts.build = "stack-vite build";
 		scripts.preview = "stack-vite preview";
 	}
 

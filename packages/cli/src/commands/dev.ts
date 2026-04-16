@@ -1,118 +1,147 @@
-import { existsSync, watch } from "node:fs";
-import { dirname, join, resolve } from "node:path";
-import { intro, log, note, spinner } from "@clack/prompts";
-import { getSchemaPath } from "@fcalell/db";
+import { watch } from "node:fs";
+import { join } from "node:path";
+import { intro, log, note } from "@clack/prompts";
 import pc from "picocolors";
-import { ensureAuthSchema, push, writeStudioConfig } from "#drizzle/run";
 import { loadConfig } from "#lib/config";
-import { detect } from "#lib/detect";
-import { generateApiRouteBarrel, generateEnvDts } from "#lib/generate";
+import { discoverPlugins, sortByDependencies } from "#lib/discovery";
+import { generateApiRouteBarrel } from "#lib/generate";
+import {
+	createDevContext,
+	createPluginContext,
+} from "#lib/plugin-context";
 import { type ManagedProcess, onExit, spawnPrefixed } from "#lib/proc";
-import { requireFeature } from "#lib/scaffold";
 
 interface DevOptions {
 	studio: boolean;
 	config: string;
 }
 
-export async function dev(options: DevOptions): Promise<void> {
-	const state = detect();
-	requireFeature("Database", state.hasConfig, "Run `stack init` first.");
+const COLORS: Array<(s: string) => string> = [
+	pc.yellow,
+	pc.cyan,
+	pc.magenta,
+	pc.green,
+	pc.blue,
+];
 
+export async function dev(options: DevOptions): Promise<void> {
 	intro("stack dev");
 
+	const { generate } = await import("#commands/generate");
+	await generate(options.config);
+
 	const config = await loadConfig(options.config);
+	const discovered = await discoverPlugins(config);
+	const sorted = sortByDependencies(discovered, config);
+	const cwd = process.cwd();
+	const baseCtx = createPluginContext({ cwd, config });
 
-	generateEnvDts(config);
+	const ports = new Map<string, number>();
+	let nextPort = 8787;
 
-	const s = spinner();
-	s.start("Pushing schema...");
-	if (!ensureAuthSchema(config)) process.exit(1);
-	if (!push(config)) process.exit(1);
-	s.stop("Schema pushed");
+	for (const p of sorted) {
+		if (!p.cli.dev) continue;
+		const tempCtx = createDevContext(baseCtx, ports);
+		const contribution = await p.cli.dev(tempCtx);
+		if (contribution.processes) {
+			for (const proc of contribution.processes) {
+				if (proc.defaultPort && !ports.has(proc.name)) {
+					ports.set(proc.name, proc.defaultPort);
+				} else if (!ports.has(proc.name)) {
+					ports.set(proc.name, nextPort++);
+				}
+			}
+		}
+	}
 
-	const hasOrg = !!config.auth?.organization;
-	const bannerLines = [
-		`Database:  ${config.db.dialect}${config.db.dialect === "d1" ? " (local)" : ""}`,
-		`Auth:      ${config.auth ? `enabled${hasOrg ? " (with organizations)" : ""}` : "off"}`,
-		`API:       ${state.hasApi ? "watching routes" : "off"}`,
-		`App:       ${state.hasApp ? "file-based routing" : "off"}`,
-		`Studio:    ${options.studio ? `port ${config.dev?.studioPort ?? 4983}` : "off"}`,
-	];
-	note(bannerLines.join("\n"), "Configuration");
+	const ctx = createDevContext(baseCtx, ports);
+	const allProcesses: ManagedProcess[] = [];
+	const bannerLines: string[] = [];
+	let colorIndex = 0;
 
-	const processes: ManagedProcess[] = [];
+	for (const p of sorted) {
+		if (!p.cli.dev) continue;
 
-	// Schema watcher
-	const schemaPath = resolve(getSchemaPath(config.db));
-	const watchDir = schemaPath.endsWith(".ts")
-		? dirname(schemaPath)
-		: schemaPath;
-	let schemaDebounce: ReturnType<typeof setTimeout>;
-	watch(watchDir, { recursive: true }, (_event, filename) => {
-		if (!filename?.endsWith(".ts")) return;
-		clearTimeout(schemaDebounce);
-		schemaDebounce = setTimeout(() => {
-			log.step("Schema change detected, pushing...");
-			push(config);
-		}, 300);
-	});
+		const contribution = await p.cli.dev(ctx);
 
-	// API route barrel watcher
-	const routesDir = join(process.cwd(), "src", "worker", "routes");
+		if (contribution.setup) {
+			await contribution.setup();
+		}
+
+		if (contribution.banner) {
+			bannerLines.push(...contribution.banner);
+		}
+
+		if (contribution.processes) {
+			for (const proc of contribution.processes) {
+				const color = COLORS[colorIndex % COLORS.length];
+				if (color) colorIndex++;
+				allProcesses.push(
+					spawnPrefixed({
+						name: proc.name,
+						color: color ?? pc.white,
+						command: proc.command,
+						args: proc.args,
+						cwd,
+					}),
+				);
+			}
+		}
+
+		if (contribution.watchers) {
+			for (const w of contribution.watchers) {
+				for (const watchPath of w.paths) {
+					const fullPath = join(cwd, watchPath);
+					let debounceTimer: ReturnType<typeof setTimeout>;
+					watch(
+						fullPath,
+						{ recursive: true },
+						(_event, filename) => {
+							if (!filename) return;
+							if (w.ignore?.some((p) => filename.includes(p)))
+								return;
+							clearTimeout(debounceTimer);
+							debounceTimer = setTimeout(async () => {
+								await w.onChange({
+									type: "change",
+									path: filename,
+								});
+							}, w.debounce ?? 300);
+						},
+					);
+				}
+			}
+		}
+	}
+
+	// Route barrel watcher (built-in)
+	const routesDir = join(cwd, "src", "worker", "routes");
+	const { existsSync } = await import("node:fs");
 	if (existsSync(routesDir)) {
-		generateApiRouteBarrel();
 		let routesDebounce: ReturnType<typeof setTimeout>;
 		watch(routesDir, (_event, filename) => {
 			if (!filename?.endsWith(".ts") || filename === "index.ts") return;
 			clearTimeout(routesDebounce);
 			routesDebounce = setTimeout(() => {
 				log.step("Route change detected, regenerating barrel...");
-				generateApiRouteBarrel();
+				generateApiRouteBarrel(cwd);
 			}, 300);
 		});
 	}
 
-	// Spawn wrangler dev (API server)
-	if (state.hasApi) {
-		processes.push(
-			spawnPrefixed({
-				name: "api",
-				color: pc.yellow,
-				command: "npx",
-				args: ["wrangler", "dev"],
-			}),
-		);
-	}
-
-	// Spawn stack-vite dev (app dev server)
-	if (state.hasApp) {
-		processes.push(
-			spawnPrefixed({
-				name: "app",
-				color: pc.cyan,
-				command: "npx",
-				args: ["stack-vite", "dev"],
-			}),
-		);
-	}
-
-	// Spawn Drizzle Studio
 	if (options.studio) {
-		const studioArgs = writeStudioConfig(config);
-		processes.push(
-			spawnPrefixed({
-				name: "studio",
-				color: pc.magenta,
-				command: "npx",
-				args: studioArgs,
-			}),
+		bannerLines.push(
+			`Studio:    port ${config.dev?.studioPort ?? 4983}`,
 		);
+	}
+
+	if (bannerLines.length > 0) {
+		note(bannerLines.join("\n"), "Configuration");
 	}
 
 	log.info("Watching for changes...");
 
-	for (const proc of processes) {
+	for (const proc of allProcesses) {
 		proc.child.on("exit", (code) => {
 			if (code !== 0 && code !== null) {
 				log.warn(`[${proc.name}] exited with code ${code}`);
@@ -120,5 +149,22 @@ export async function dev(options: DevOptions): Promise<void> {
 		});
 	}
 
-	onExit(processes);
+	// Config watcher — re-generate on change
+	let configDebounce: ReturnType<typeof setTimeout>;
+	watch(cwd, (_event, filename) => {
+		if (filename !== "stack.config.ts") return;
+		clearTimeout(configDebounce);
+		configDebounce = setTimeout(async () => {
+			log.step("Config changed, regenerating...");
+			try {
+				await generate(options.config);
+			} catch (err) {
+				log.warn(
+					`Regeneration failed: ${err instanceof Error ? err.message : String(err)}`,
+				);
+			}
+		}, 500);
+	});
+
+	onExit(allProcesses);
 }

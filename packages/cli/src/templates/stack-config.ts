@@ -1,59 +1,67 @@
 interface StackConfigOptions {
-	dialect: "d1" | "sqlite";
-	databaseId?: string;
-	sqlitePath?: string;
-	auth: boolean;
-	org: boolean;
+	domain: string;
+	plugins: string[];
+	pluginAnswers: Map<string, Record<string, unknown>>;
 }
 
 export function stackConfigTemplate(options: StackConfigOptions): string {
 	const imports = ['import { defineConfig } from "@fcalell/config";'];
 
-	if (options.org) {
+	for (const name of options.plugins) {
 		imports.push(
-			'import { createAccessControl } from "@fcalell/db/auth/access";',
+			`import { ${name} } from "@fcalell/plugin-${name}";`,
 		);
 	}
 
-	imports.push('import * as schema from "./src/schema";');
+	const pluginCalls: string[] = [];
+	for (const name of options.plugins) {
+		const answers = options.pluginAnswers.get(name);
+		if (answers && Object.keys(answers).length > 0) {
+			const optStr = formatOptions(answers, 2);
+			pluginCalls.push(`\t\t${name}(${optStr})`);
+		} else {
+			pluginCalls.push(`\t\t${name}()`);
+		}
+	}
 
 	const lines: string[] = [];
-
 	lines.push("");
 	lines.push("export default defineConfig({");
-
-	// db section
-	lines.push("\tdb: {");
-	if (options.dialect === "d1") {
-		lines.push('\t\tdialect: "d1",');
-		lines.push(
-			`\t\tdatabaseId: "${options.databaseId || "YOUR_D1_DATABASE_ID"}",`,
-		);
-	} else {
-		lines.push('\t\tdialect: "sqlite",');
-		lines.push(`\t\tpath: "${options.sqlitePath || "./data/app.sqlite"}",`);
-	}
-	lines.push("\t\tschema,");
-	lines.push("\t},");
-
-	// auth section
-	if (options.auth) {
-		lines.push("\tauth: {");
-		lines.push('\t\tcookies: { prefix: "app" },');
-		if (options.org) {
-			lines.push("\t\torganization: {");
-			lines.push("\t\t\tac: createAccessControl({");
-			lines.push('\t\t\t\torganization: ["update", "delete"],');
-			lines.push('\t\t\t\tmember: ["create", "update", "delete"],');
-			lines.push('\t\t\t\tinvitation: ["create", "cancel"],');
-			lines.push("\t\t\t}),");
-			lines.push("\t\t},");
-		}
-		lines.push("\t},");
-	}
-
+	lines.push(`\tdomain: "${options.domain}",`);
+	lines.push("\tplugins: [");
+	lines.push(`${pluginCalls.join(",\n")},`);
+	lines.push("\t],");
 	lines.push("});");
 	lines.push("");
 
 	return `${imports.join("\n")}\n${lines.join("\n")}`;
+}
+
+function formatOptions(
+	obj: Record<string, unknown>,
+	depth: number,
+): string {
+	const indent = "\t".repeat(depth);
+	const innerIndent = "\t".repeat(depth + 1);
+	const entries: string[] = [];
+
+	for (const [key, value] of Object.entries(obj)) {
+		if (typeof value === "string") {
+			entries.push(`${innerIndent}${key}: "${value}"`);
+		} else if (typeof value === "number" || typeof value === "boolean") {
+			entries.push(`${innerIndent}${key}: ${value}`);
+		} else if (
+			typeof value === "object" &&
+			value !== null &&
+			!Array.isArray(value)
+		) {
+			entries.push(
+				`${innerIndent}${key}: ${formatOptions(value as Record<string, unknown>, depth + 1)}`,
+			);
+		} else {
+			entries.push(`${innerIndent}${key}: ${JSON.stringify(value)}`);
+		}
+	}
+
+	return `{\n${entries.join(",\n")},\n${indent}}`;
 }

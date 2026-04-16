@@ -1,14 +1,20 @@
 import { resolve } from "node:path";
 import { log } from "@clack/prompts";
 import type { StackConfig } from "@fcalell/config";
-import { ensureDeps } from "#drizzle/deps";
 
 export async function loadConfig(configPath: string): Promise<StackConfig> {
 	const resolved = resolve(configPath);
 
-	ensureDeps(resolved);
+	let mod: Record<string, unknown>;
+	try {
+		mod = await import(resolved);
+	} catch (err) {
+		log.error(
+			`Could not load config at ${resolved}: ${err instanceof Error ? err.message : String(err)}`,
+		);
+		process.exit(1);
+	}
 
-	const mod = await import(resolved);
 	const config: unknown = mod.default;
 
 	if (!isStackConfig(config)) {
@@ -21,8 +27,8 @@ export async function loadConfig(configPath: string): Promise<StackConfig> {
 
 function isStackConfig(value: unknown): value is StackConfig {
 	if (typeof value !== "object" || value === null) return false;
-	if (!("db" in value) || typeof value.db !== "object" || value.db === null)
+	if (!("plugins" in value) || !Array.isArray(value.plugins)) return false;
+	if (!("validate" in value) || typeof value.validate !== "function")
 		return false;
-	if (!("dialect" in value.db)) return false;
-	return value.db.dialect === "d1" || value.db.dialect === "sqlite";
+	return true;
 }

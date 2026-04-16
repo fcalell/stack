@@ -1,91 +1,95 @@
-export type { AuthPolicy, DatabaseConfig, FieldConfig } from "@fcalell/db";
+// ── Plugin config type ──────────────────────────────────────────────
 
-import type { AuthPolicy, DatabaseConfig } from "@fcalell/db";
-
-interface ApiConfig {
-	cors?: string | string[];
-	prefix?: `/${string}`;
+export interface PluginConfig<
+	TName extends string = string,
+	TOptions = unknown,
+> {
+	readonly __plugin: TName;
+	readonly requires?: readonly string[];
+	readonly options: TOptions;
 }
 
-interface DevConfig {
+// ── Binding declarations ────────────────────────────────────────────
+
+export interface BindingDeclaration {
+	name: string;
+	type:
+		| "d1"
+		| "r2"
+		| "kv"
+		| "queue"
+		| "rate_limiter"
+		| "durable_object"
+		| "service"
+		| "var"
+		| "secret";
+	databaseId?: string;
+	databaseName?: string;
+	bucketName?: string;
+	kvNamespaceId?: string;
+	className?: string;
+	rateLimit?: { limit: number; period: number };
+	devDefault?: string;
+}
+
+// ── Validation types ────────────────────────────────────────────────
+
+export interface ValidationError {
+	plugin: string;
+	message: string;
+	fix?: string;
+}
+
+export interface ValidationResult {
+	valid: boolean;
+	errors: ValidationError[];
+}
+
+// ── Dev config ──────────────────────────────────────────────────────
+
+export interface DevConfig {
 	studioPort?: number;
 }
 
-export interface StackConfig {
-	db: DatabaseConfig;
-	auth?: AuthPolicy;
-	api?: ApiConfig;
+// ── Stack config ────────────────────────────────────────────────────
+
+export interface StackConfig<
+	T extends readonly PluginConfig[] = readonly PluginConfig[],
+> {
+	domain?: string;
+	plugins: T;
 	dev?: DevConfig;
+	validate(): ValidationResult;
 }
 
-function validate(config: StackConfig): void {
-	if (!config.db || typeof config.db !== "object") {
-		throw new Error("defineConfig: db is required and must be an object");
-	}
+// ── Plugin extraction ───────────────────────────────────────────────
 
-	const dialect = config.db.dialect as string;
-	if (dialect !== "d1" && dialect !== "sqlite") {
-		throw new Error(
-			`defineConfig: db.dialect must be "d1" or "sqlite", got "${dialect}"`,
-		);
-	}
+export type ExtractPlugin<
+	T extends readonly PluginConfig[],
+	N extends string,
+> = Extract<T[number], { __plugin: N }>;
 
-	if (!config.db.schema || typeof config.db.schema !== "object") {
-		throw new Error(
-			"defineConfig: db.schema is required and must be an object",
-		);
-	}
+export function getPlugin<T extends readonly PluginConfig[], N extends string>(
+	config: StackConfig<T>,
+	name: N,
+): ExtractPlugin<T, N> {
+	const found = config.plugins.find((p) => p.__plugin === name);
+	if (!found) throw new Error(`Plugin "${name}" not found in config`);
+	return found as ExtractPlugin<T, N>;
+}
 
-	if (config.db.dialect === "d1") {
+// ── defineConfig ────────────────────────────────────────────────────
+
+export function defineConfig<const T extends readonly PluginConfig[]>(input: {
+	domain?: string;
+	plugins: T;
+	dev?: DevConfig;
+}): StackConfig<T> {
+	if (input.dev?.studioPort !== undefined) {
 		if (
-			typeof config.db.databaseId !== "string" ||
-			config.db.databaseId.length === 0
-		) {
-			throw new Error(
-				'defineConfig: db.databaseId is required when dialect is "d1"',
-			);
-		}
-	}
-
-	if (config.db.dialect === "sqlite") {
-		if (typeof config.db.path !== "string" || config.db.path.length === 0) {
-			throw new Error(
-				'defineConfig: db.path is required when dialect is "sqlite"',
-			);
-		}
-	}
-
-	if (
-		config.db.migrations !== undefined &&
-		(typeof config.db.migrations !== "string" ||
-			config.db.migrations.length === 0)
-	) {
-		throw new Error(
-			"defineConfig: db.migrations must be a non-empty string if provided",
-		);
-	}
-
-	if (config.api?.prefix !== undefined && !config.api.prefix.startsWith("/")) {
-		throw new Error('defineConfig: api.prefix must start with "/"');
-	}
-
-	if (config.api?.cors !== undefined) {
-		const cors = config.api.cors;
-		if (
-			typeof cors !== "string" &&
-			(!Array.isArray(cors) || !cors.every((c) => typeof c === "string"))
-		) {
-			throw new Error(
-				"defineConfig: api.cors must be a string or array of strings",
-			);
-		}
-	}
-
-	if (config.dev?.studioPort !== undefined) {
-		if (
-			typeof config.dev.studioPort !== "number" ||
-			!Number.isInteger(config.dev.studioPort) ||
-			config.dev.studioPort <= 0
+			typeof input.dev.studioPort !== "number" ||
+			!Number.isInteger(input.dev.studioPort) ||
+			input.dev.studioPort <= 0
 		) {
 			throw new Error(
 				"defineConfig: dev.studioPort must be a positive integer",
@@ -93,19 +97,36 @@ function validate(config: StackConfig): void {
 		}
 	}
 
-	if (config.auth?.session?.expiresIn !== undefined) {
-		if (
-			typeof config.auth.session.expiresIn !== "number" ||
-			config.auth.session.expiresIn <= 0
-		) {
-			throw new Error(
-				"defineConfig: auth.session.expiresIn must be a positive number",
-			);
-		}
-	}
-}
+	return {
+		...input,
+		validate() {
+			const errors: ValidationError[] = [];
+			const seen = new Set<string>();
 
-export function defineConfig<T extends StackConfig>(config: T): T {
-	validate(config);
-	return config;
+			for (const plugin of input.plugins) {
+				if (seen.has(plugin.__plugin)) {
+					errors.push({
+						plugin: plugin.__plugin,
+						message: `Duplicate plugin: "${plugin.__plugin}" appears more than once.`,
+					});
+				}
+				seen.add(plugin.__plugin);
+			}
+
+			const names = new Set(input.plugins.map((p) => p.__plugin));
+			for (const plugin of input.plugins) {
+				for (const req of plugin.requires ?? []) {
+					if (!names.has(req)) {
+						errors.push({
+							plugin: plugin.__plugin,
+							message: `Requires "${req}", but it is not in the plugins array.`,
+							fix: `Run: stack add ${req}`,
+						});
+					}
+				}
+			}
+
+			return { valid: errors.length === 0, errors };
+		},
+	};
 }

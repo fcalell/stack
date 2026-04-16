@@ -6,9 +6,6 @@
 	"imports": {
 		"#*": "./src/*.ts"
 	},
-	"bin": {
-		"stack-vite": "./bin/vite.mjs"
-	},
 	"exports": {
 		".": "./src/index.ts"
 	},
@@ -17,12 +14,12 @@
 		"check-types": "tsc --noEmit --pretty",
 		"lint": "biome check --write --unsafe",
 		"check": "pnpm check-types && pnpm lint",
+		"test": "vitest run",
 		"clear": "rm -rf node_modules .turbo"
 	},
 	"dependencies": {
 		"@fcalell/ui": "workspace:*",
 		"@tailwindcss/vite": "^4.2.1",
-		"fast-glob": "^3.3.3",
 		"tailwindcss": "^4.2.1",
 		"vite": "^7.0.0",
 		"vite-plugin-solid": "^2.11.6"

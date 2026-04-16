@@ -1,17 +1,16 @@
 interface GitignoreOptions {
-	db: boolean;
-	api: boolean;
-	app: boolean;
+	plugins: string[];
 }
 
 export function gitignoreTemplate(options: GitignoreOptions): string {
 	const entries = ["node_modules", "dist", ".stack"];
 
-	if (options.db) {
+	if (options.plugins.includes("db")) {
 		entries.push(".db-kit");
 	}
-	if (options.api) {
+	if (options.plugins.includes("api")) {
 		entries.push(".wrangler");
+		entries.push(".dev.vars");
 	}
 
 	return `${entries.join("\n")}\n`;

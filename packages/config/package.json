@@ -4,17 +4,16 @@
 	"type": "module",
 	"sideEffects": false,
 	"exports": {
-		".": "./src/index.ts"
+		".": "./src/index.ts",
+		"./plugin": "./src/plugin.ts"
 	},
 	"license": "MIT",
 	"scripts": {
 		"check-types": "tsc --noEmit --pretty",
 		"lint": "biome check --write --unsafe",
 		"check": "pnpm check-types && pnpm lint",
+		"test": "vitest run",
 		"clear": "rm -rf node_modules .turbo"
-	},
-	"dependencies": {
-		"@fcalell/db": "workspace:*"
 	},
 	"devDependencies": {
 		"@fcalell/typescript-config": "workspace:*",

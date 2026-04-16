@@ -4,50 +4,68 @@ Full-stack framework for SolidJS + Hono + Cloudflare. Ships everything a consume
 
 ## Philosophy
 
-**The consumer never touches underlying tools.** Each package wraps its domain (Drizzle, Hono, oRPC, Kobalte, Vite, Tailwind) and re-exports only what's needed. Consumers don't install or import `drizzle-orm`, `hono`, `zod`, `@kobalte/core`, `vite`, or `tailwindcss` directly — the stack handles it.
+**The consumer never touches underlying tools.** Plugins wrap their domain (Drizzle, Hono, oRPC, Kobalte, Vite, Tailwind) and re-export only what's needed. Consumers don't install or import `drizzle-orm`, `hono`, `zod`, `@kobalte/core`, `vite`, or `tailwindcss` directly — the stack handles it.
 
-**Everything is opt-in and composable.** A project can use just the UI, just the database, or the full stack. The CLI scaffolds what you pick and detects what's configured.
+**Everything is opt-in and composable.** A project can use just the UI, just the database, or the full stack. Plugins declare what they need (`requires: ["db"]`), the CLI auto-resolves dependencies, and `defineConfig()` validates the graph.
 
-**Single config, single entry point.** `stack.config.ts` is the single source of truth for the project — database, auth policy, API settings, dev options. `defineApp()` is the single entry point for the API runtime — it receives the config and only adds runtime concerns (secrets, bindings, callbacks). The `stack` CLI is one command for init, dev, and deploy.
+**Single config, plugin-driven.** `stack.config.ts` is the single source of truth — a `domain`, a `plugins` array, and optional dev settings. Each plugin contributes config, bindings, generated files, worker runtime, and CLI hooks. The `stack` CLI is one command for init, dev, build, and deploy.
 
 ## Packages
 
+Core packages provide infrastructure. They have no domain logic — that lives in plugins.
+
 | Package | Purpose | Docs |
 |---------|---------|------|
-| `@fcalell/config` | Unified `stack.config.ts` — `defineConfig()` | @packages/config/README.md |
-| `@fcalell/cli` | `stack` CLI: project scaffolding, dev orchestration, deploy | @packages/cli/README.md |
-| `@fcalell/vite` | Vite preset: SolidJS + Tailwind v4 + API proxy + file-based routing + theme/font FOUC prevention | @packages/vite/README.md |
-| `@fcalell/db` | Drizzle ORM clients (D1/SQLite), Better Auth integration | @packages/db/README.md |
-| `@fcalell/api` | API framework: procedure builder, auth/RBAC middleware, typed client | @packages/api/README.md |
-| `@fcalell/ui` | Design system: SolidJS + Kobalte + Tailwind v4 + CVA | @packages/ui/README.md, component docs in `packages/ui/docs/*.md` |
+| `@fcalell/config` | `defineConfig()`, `PluginConfig`, `CliPlugin` interface | @packages/config/README.md |
+| `@fcalell/cli` | `stack` CLI: init, add, remove, generate, dev, build, deploy | @packages/cli/README.md |
+| `@fcalell/vite` | Base Vite preset: SolidJS + Tailwind v4 + theme/font FOUC prevention | @packages/vite/README.md |
+| `@fcalell/ui` | Design system: SolidJS + Kobalte + Tailwind v4 + CVA | @packages/ui/README.md |
 | `@fcalell/typescript-config` | tsconfig presets (base, solid-vite, node-tsx) | @packages/typescript-config/README.md |
 | `@fcalell/biome-config` | Shareable Biome formatter/linter config | @packages/biome-config/README.md |
+
+## Plugins
+
+Plugins are self-contained feature units. Each provides a config factory, a CLI plugin (scaffold, generate, dev, build, deploy), optional worker runtime, and optional Vite plugins.
+
+| Plugin | Purpose | Config factory |
+|--------|---------|----------------|
+| `@fcalell/plugin-db` | Drizzle ORM clients (D1/SQLite), schema tooling | `db()` |
+| `@fcalell/plugin-auth` | Better Auth integration, RBAC, access control | `auth()` |
+| `@fcalell/plugin-api` | API framework: Hono + oRPC, procedure builder, typed client | `api()` |
+| `@fcalell/plugin-app` | SolidJS app: file-based routing, virtual entry/CSS/HTML | `app()` |
 
 ### Dependency graph
 
 ```
-config ──> db
-api    ──> config, db
-cli    ──> config, db
-vite      (standalone, used internally by cli)
-ui        (standalone)
+config                      (leaf — no @fcalell/* deps)
+cli ──────────────────────> config
+vite ─────────────────────> ui (fonts manifest only)
+ui                          (leaf)
+
+plugin-db ────────────────> config
+plugin-auth ──────────────> config, plugin-db
+plugin-api ───────────────> config
+plugin-app ───────────────> config
 ```
 
-`db` and `ui` have no `@fcalell/*` dependencies — they are leaf packages. `config` depends on `db` for auth and database types. `api` and `cli` depend on `config` for the unified config type and on `db` for runtime clients and tooling. `vite` and `ui` are fully independent.
+`config` and `ui` are leaf packages. `cli` depends only on `config` and dynamically imports plugin CLI modules at runtime via `@fcalell/plugin-<name>/cli`. `vite` depends on `ui` for the fonts manifest. Plugins depend on `config` for types; `plugin-auth` also depends on `plugin-db`.
 
 ## CLI: `stack`
 
-The `stack` CLI lives in `@fcalell/cli`. It scaffolds consumer projects, runs dev workflows, and deploys.
+The `stack` CLI lives in `@fcalell/cli`. It discovers plugins from `stack.config.ts` and delegates to their `CliPlugin` implementations.
 
 ```bash
-stack init [dir]                 # Interactive project scaffold (pick db, api, app)
-stack add <db|auth|org|api|ui>   # Add a feature to an existing project
-stack dev [--studio]             # Context-aware dev (schema watch, Drizzle Studio)
-stack deploy                     # Context-aware deploy (migrations)
-stack db reset                   # Reset local database
+stack init [dir]             # Interactive project scaffold (pick plugins)
+stack add <plugin>           # Add a plugin to an existing project
+stack remove <plugin>        # Remove a plugin (checks dependents)
+stack generate               # Regenerate .stack/ files from config
+stack dev [--studio]         # Plugin-driven dev (processes, watchers, schema push)
+stack build                  # Plugin-driven production build
+stack deploy                 # Plugin-driven deploy (migrations, wrangler)
+stack db reset               # Reset local database
 ```
 
-The CLI reads `stack.config.ts` to determine what's configured (database, auth, organizations) and checks the filesystem for scaffolded layers (worker entry, pages directory).
+Plugin discovery: the CLI reads `config.plugins`, maps each `__plugin` name to `@fcalell/plugin-<name>/cli`, and imports the default export. Plugins are sorted by `requires` before execution.
 
 ## Consumer project structure
 
@@ -55,51 +73,179 @@ A full-stack consumer project looks like:
 
 ```
 my-app/
-  package.json             # imports: { "#/*": "./src/*" } — alias works in Vite, worker, scripts
-  tsconfig.json            # extends @fcalell/typescript-config
-  biome.json               # extends @fcalell/biome-config
-  stack.config.ts          # defineConfig() — single source of truth
-  wrangler.toml
+  package.json               # imports: { "#/*": "./src/*" }
+  tsconfig.json              # extends @fcalell/typescript-config
+  biome.json                 # extends @fcalell/biome-config
+  stack.config.ts            # defineConfig({ domain, plugins: [db(...), auth(), api(), app()] })
+  wrangler.toml              # consumer-owned base; .stack/wrangler.toml merges bindings
   src/
-    schema/                # ← business logic (Drizzle tables)
-    migrations/            # ← generated
+    schema/                  # Drizzle tables (business logic)
+    migrations/              # generated by drizzle-kit
     worker/
-      index.ts             # defineApp() — runtime wiring only
-      routes/              # ← business logic (procedures, auto-barreled)
+      plugins/
+        auth.ts              # defineAuthCallbacks() — runtime callbacks per plugin
+      routes/                # business logic (procedures, auto-barreled)
+        index.ts             # generated barrel
+      middleware.ts           # optional custom middleware
     app/
-      pages/               # ← business logic (UI) — file-based routes
-        _layout.tsx        # root layout (wraps siblings)
-        index.tsx          # /
+      pages/                 # file-based routes (business logic)
+        _layout.tsx
+        index.tsx
+      entry.tsx              # optional custom app entry
+      app.css                # optional custom CSS
+  .stack/                    # generated — gitignored
+    env.d.ts                 # Env interface from plugin bindings
+    worker.ts                # virtual worker entry
+    wrangler.toml            # merged wrangler config
+    routes.d.ts              # typed route builder declarations
+  .dev.vars                  # generated secrets template for local dev
 ```
 
-The framework handles everything else internally:
-- **index.html, app entry, CSS** — auto-generated by `@fcalell/vite` (virtual). Override by creating `src/app/entry.tsx` or `src/app/app.css`.
-- **API client** — available via `import { api } from "virtual:fcalell-api-client"` when a worker exists.
-- **Env types** — `.stack/env.d.ts` is generated from `stack.config.ts` by the CLI.
-- **Route barrel** — `src/worker/routes/index.ts` is auto-generated from sibling files by `stack dev`.
-- **Vite config** — `stack-vite` bin applies the preset automatically. Override by creating `vite.config.ts`.
-
-Routes under `src/app/pages/` are picked up by the file-based routing plugin in `@fcalell/vite` (emitted as `virtual:fcalell-routes`) and mounted by `createApp()`. The typed `routes` builder is exported from `@fcalell/ui/router` for refactor-safe link generation.
+The framework generates everything in `.stack/`. Consumer code lives in `src/`. The virtual worker in `.stack/worker.ts` is assembled from plugin `WorkerContribution` declarations — it imports runtime factories, applies them in dependency order, and includes consumer routes and middleware.
 
 ## Config architecture
 
-**Static config** (`stack.config.ts`) — what the project *is*:
-- Database: dialect, schema, databaseId
-- Auth: cookies, session fields, user fields, organizations, RBAC
-- API: CORS origins, RPC prefix
-- Dev: studio port
+**Plugin-based config** (`stack.config.ts`):
 
-**Runtime config** (`defineApp()`) — how the project *runs*:
-- Environment bindings (D1, secrets, rate limiters)
-- Auth secrets (`AUTH_SECRET`, `APP_URL`)
-- Email callbacks (`sendOTP`, `sendInvitation`)
+```ts
+import { defineConfig } from "@fcalell/config";
+import { db } from "@fcalell/plugin-db";
+import { auth } from "@fcalell/plugin-auth";
+import { api } from "@fcalell/plugin-api";
+import { app } from "@fcalell/plugin-app";
+import * as schema from "./src/schema";
 
-The rule: if the CLI or type system needs it, it goes in `stack.config.ts`. If it requires a live environment, it stays in `defineApp()`.
+export default defineConfig({
+  domain: "example.com",
+  plugins: [
+    db({ dialect: "d1", databaseId: "...", schema }),
+    auth({ cookies: { prefix: "myapp" }, organization: true }),
+    api({ cors: ["https://app.example.com"] }),
+    app(),
+  ],
+  dev: { studioPort: 4983 },
+});
+```
+
+Each plugin config factory returns a `PluginConfig<Name, Options>` with a `__plugin` brand, optional `requires` array, and typed `options`. `defineConfig()` validates the graph (no duplicates, all `requires` satisfied) via the `.validate()` method.
+
+**Runtime callbacks** (`src/worker/plugins/<name>.ts`) — what the project provides at runtime:
+
+- Auth callbacks: `sendOTP`, `sendInvitation`
+- Plugins declare callbacks via `WorkerContribution.callbacks`
+- The virtual worker imports callback files when they exist
+
+The rule: if the CLI, codegen, or type system needs it, it goes in `stack.config.ts`. If it requires a live environment (secrets, bindings, email sending), it stays in runtime callback files.
+
+## Plugin system
+
+### Plugin config (`PluginConfig`)
+
+```ts
+interface PluginConfig<TName extends string, TOptions> {
+  readonly __plugin: TName;
+  readonly requires?: readonly string[];
+  readonly options: TOptions;
+}
+```
+
+Config factories (e.g. `db()`, `auth()`) validate options and return a `PluginConfig`. The `requires` array declares dependencies — `auth()` returns `requires: ["db"]`.
+
+### CLI plugin (`CliPlugin`)
+
+Each plugin exports a `CliPlugin` from its `./cli` subpath:
+
+```ts
+interface CliPlugin<TOptions> {
+  name: string;
+  label: string;
+  detect(ctx: PluginContext): boolean;
+  prompt?(ctx: PluginContext): Promise<Record<string, unknown>>;
+  scaffold(ctx: PluginContext, answers: Record<string, unknown>): Promise<void>;
+  remove?(ctx: PluginContext): Promise<RemovalResult>;
+  bindings(options: TOptions): BindingDeclaration[];
+  generate(ctx: PluginContext): Promise<GeneratedFile[]>;
+  worker?: WorkerContribution;
+  dev?(ctx: DevContext): Promise<DevContribution>;
+  build?(ctx: BuildContext): Promise<BuildContribution>;
+  deploy?(ctx: DeployContext): Promise<void>;
+}
+```
+
+The CLI calls these hooks in dependency order. `PluginContext` provides filesystem helpers, config access, dependency management, and prompts.
+
+### Worker contributions
+
+Plugins declare how they participate in the virtual worker:
+
+```ts
+interface WorkerContribution {
+  runtime?: { importFrom: string; factory: string };
+  callbacks?: { required: boolean; defineHelper: string; importFrom: string };
+  routes?: true;
+  middleware?: true;
+}
+```
+
+The CLI codegen assembles `.stack/worker.ts` by importing each plugin's runtime factory and chaining `.use()` calls.
+
+### Binding declarations
+
+Plugins declare the Cloudflare bindings they need:
+
+```ts
+interface BindingDeclaration {
+  name: string;
+  type: "d1" | "r2" | "kv" | "queue" | "rate_limiter" | "durable_object" | "service" | "var" | "secret";
+  databaseId?: string;
+  rateLimit?: { limit: number; period: number };
+  devDefault?: string;
+}
+```
+
+The CLI collects bindings from all plugins, generates `env.d.ts` and `.stack/wrangler.toml`, and detects collisions.
+
+### Dev/Build/Deploy contributions
+
+Plugins return contribution objects describing processes, watchers, setup hooks, and build steps:
+
+- `DevContribution`: `setup()`, `processes[]`, `watchers[]`, `banner[]`
+- `BuildContribution`: `preBuild()`, `postBuild()`
+- Deploy: direct `deploy(ctx)` method
 
 ## Commands
 
 ```bash
-pnpm check            # Lint (Biome) + type-check all packages
+pnpm check            # Lint (Biome) + type-check all packages and plugins
+pnpm test             # Run all tests once (vitest run)
+pnpm test:watch       # Run tests in watch mode (vitest)
 ```
+
+## Testing
+
+Vitest workspace at the root orchestrates per-package and per-plugin test projects. Each testable package/plugin has its own `vitest.config.ts` (sets `test.name`). Tests live next to the code they test as `*.test.ts` files.
+
+**Test projects:** `packages/config`, `packages/vite`, `packages/cli`, `plugins/db`, `plugins/auth`, `plugins/api`, `plugins/app`, `tests/integration`.
+
+Integration tests in `tests/integration/` verify cross-plugin behavior: config composition, config validation, binding collection, env.d.ts generation, wrangler.toml generation, virtual worker assembly, and plugin CLI contracts.
+
+### Writing tests
+
+- Co-locate test files: `src/foo.ts` -> `src/foo.test.ts`
+- Import from `vitest`: `import { describe, expect, it, vi } from "vitest"`
+- Import the module under test via relative path
+- Use `vi.fn()` / `vi.mock()` for mocking — no external mock libraries
+- Test pure logic and edge cases; mock external dependencies (DB, bindings)
+- Plugin CLI tests mock `PluginContext` — no real filesystem operations
+
+### Development workflow
+
+When developing a new feature or fixing a bug:
+
+1. Write or update the implementation
+2. Add/update tests covering the change — run `pnpm test` to verify
+3. Run `pnpm check` (lint + type-check)
+
+All three must pass before a change is considered complete. CI runs `pnpm check` and `pnpm test` on every push.
 
 > Coding conventions live in `.claude/rules/`.

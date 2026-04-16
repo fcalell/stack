@@ -6,6 +6,10 @@
 	"imports": {
 		"#*": "./src/*.ts"
 	},
+	"exports": {
+		"./codegen": "./src/lib/codegen.ts",
+		"./discovery": "./src/lib/discovery.ts"
+	},
 	"bin": {
 		"stack": "./src/cli.ts"
 	},
@@ -14,44 +18,21 @@
 		"check-types": "tsc --noEmit --pretty",
 		"lint": "biome check --write --unsafe",
 		"check": "pnpm check-types && pnpm lint",
+		"test": "vitest run",
 		"clear": "rm -rf node_modules .turbo"
 	},
 	"dependencies": {
 		"@fcalell/config": "workspace:*",
-		"@fcalell/db": "workspace:*",
 		"@clack/prompts": "^0.11.0",
 		"magicast": "^0.5.2",
 		"picocolors": "^1.1.0"
 	},
 	"peerDependencies": {
-		"@better-auth/cli": "^1.4.0",
-		"better-auth": "^1.5.0",
-		"better-sqlite3": "^12.0.0",
-		"drizzle-kit": "^0.31.0",
 		"tsx": ">=4.0.0"
 	},
-	"peerDependenciesMeta": {
-		"better-auth": {
-			"optional": true
-		},
-		"@better-auth/cli": {
-			"optional": true
-		},
-		"better-sqlite3": {
-			"optional": true
-		},
-		"drizzle-kit": {
-			"optional": true
-		}
-	},
 	"devDependencies": {
-		"@better-auth/cli": "^1.4.21",
 		"@fcalell/typescript-config": "workspace:*",
-		"@types/better-sqlite3": "^7.6.13",
 		"@types/node": "^25.5.0",
-		"better-auth": "^1.5.5",
-		"better-sqlite3": "^12.8.0",
-		"drizzle-kit": "^0.31.9",
 		"tsx": "^4.19.0",
 		"typescript": "^5.9.3"
 	}

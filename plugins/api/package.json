@@ -1,0 +1,41 @@
+{
+	"name": "@fcalell/plugin-api",
+	"version": "0.0.0",
+	"type": "module",
+	"sideEffects": false,
+	"exports": {
+		".": "./src/index.ts",
+		"./cli": "./src/cli.ts",
+		"./runtime": "./src/runtime.ts",
+		"./client": "./src/client.ts",
+		"./schema": "./src/schema.ts",
+		"./lib/cursor": "./src/lib/cursor.ts",
+		"./lib/slugify": "./src/lib/slugify.ts"
+	},
+	"stack-plugin": {
+		"name": "api",
+		"label": "API",
+		"cli": "./src/cli.ts"
+	},
+	"license": "MIT",
+	"scripts": {
+		"check-types": "tsc --noEmit --pretty",
+		"lint": "biome check --write --unsafe",
+		"check": "pnpm check-types && pnpm lint",
+		"test": "vitest run",
+		"clear": "rm -rf node_modules .turbo"
+	},
+	"dependencies": {
+		"@fcalell/config": "workspace:*",
+		"@orpc/client": "^1.13.7",
+		"@orpc/server": "^1.13.7",
+		"drizzle-orm": "^0.45.1",
+		"hono": "^4.12.8",
+		"slugify": "^1.6.9",
+		"zod": "^4.3.6"
+	},
+	"devDependencies": {
+		"@fcalell/typescript-config": "workspace:*",
+		"typescript": "^5.9.3"
+	}
+}

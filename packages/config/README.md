@@ -1,6 +1,6 @@
 # @fcalell/config
 
-Unified configuration for the `@fcalell/stack` framework. A single `stack.config.ts` drives the CLI, API, and build tooling.
+Plugin-based configuration for the `@fcalell/stack` framework. A single `stack.config.ts` with a `plugins` array drives the CLI, code generation, and runtime.
 
 ## Install
 
@@ -13,147 +13,219 @@ pnpm add @fcalell/config
 ```ts
 // stack.config.ts
 import { defineConfig } from "@fcalell/config";
+import { db } from "@fcalell/plugin-db";
+import { auth } from "@fcalell/plugin-auth";
+import { api } from "@fcalell/plugin-api";
+import { app } from "@fcalell/plugin-app";
 import * as schema from "./src/schema";
 
 export default defineConfig({
-  db: {
-    dialect: "d1",
-    databaseId: "9a619a0b-...",
-    schema,
-  },
+  domain: "example.com",
+  plugins: [
+    db({ dialect: "d1", databaseId: "9a619a0b-...", schema }),
+    auth({ cookies: { prefix: "myapp" }, organization: true }),
+    api({ cors: ["https://app.example.com"] }),
+    app(),
+  ],
+  dev: { studioPort: 4983 },
 });
 ```
 
-That's the minimal config. Add sections as needed:
+## Config shape
 
 ```ts
-import { defineConfig } from "@fcalell/config";
-import { createAccessControl } from "@fcalell/db/auth/access";
-import * as schema from "./src/schema";
+defineConfig({
+  domain?: string,            // Project domain (used by plugins for CORS, cookies, etc.)
+  plugins: PluginConfig[],    // Plugin config objects from factory functions
+  dev?: {
+    studioPort?: number,      // Drizzle Studio port (default: 4983)
+  },
+})
+```
 
-const ac = createAccessControl({
-  organization: ["update", "delete"],
-  member: ["create", "update", "delete"],
-  invitation: ["create", "cancel"],
-  project: ["create", "read", "update", "delete"],
+Returns a `StackConfig<T>` with a `.validate()` method that checks for duplicates and unsatisfied `requires`.
+
+## Config variants
+
+```ts
+// Full-stack
+defineConfig({
+  domain: "example.com",
+  plugins: [db({ ... }), auth(), api(), app()],
 });
 
-export default defineConfig({
-  db: {
-    dialect: "d1",
-    databaseId: "9a619a0b-...",
-    schema,
-  },
-  auth: {
-    cookies: { prefix: "myapp", domain: ".example.com" },
-    session: {
-      expiresIn: 60 * 60 * 24 * 7,
-      additionalFields: {
-        activeProjectId: { type: "string" },
-      },
-    },
-    user: {
-      additionalFields: {
-        timezone: { type: "string" },
-      },
-    },
-    organization: { ac },
-  },
-  api: {
-    cors: ["https://app.example.com"],
-    prefix: "/rpc",
-  },
-  dev: {
-    studioPort: 4983,
-  },
+// API-only (no frontend)
+defineConfig({
+  plugins: [db({ ... }), api()],
+});
+
+// Frontend-only (no backend)
+defineConfig({
+  plugins: [app()],
+});
+
+// Database + auth only (headless)
+defineConfig({
+  plugins: [db({ ... }), auth()],
 });
 ```
 
-## Config sections
+## `PluginConfig`
 
-### `db` (required)
-
-Database configuration. Either D1 or SQLite.
+Each plugin config factory returns a `PluginConfig<TName, TOptions>`:
 
 ```ts
-// D1
-db: {
-  dialect: "d1",
-  databaseId: string,
-  schema: Record<string, unknown>,
-  migrations?: string,  // default: "./src/migrations"
-}
-
-// SQLite
-db: {
-  dialect: "sqlite",
-  path: string,
-  schema: Record<string, unknown>,
-  migrations?: string,
+interface PluginConfig<TName extends string, TOptions> {
+  readonly __plugin: TName;
+  readonly requires?: readonly string[];
+  readonly options: TOptions;
 }
 ```
 
-`schema` accepts a module object directly. For non-standard layouts, use the escape hatch: `schema: { path: "./custom/path", module: schema }`.
+- `__plugin` -- unique plugin identifier (e.g. `"db"`, `"auth"`)
+- `requires` -- other plugins that must be present (validated by `defineConfig().validate()`)
+- `options` -- plugin-specific configuration
 
-### `auth` (optional)
+## Plugin extraction
 
-Authentication policy. Drives Better Auth schema generation and runtime behavior.
+Retrieve a specific plugin's config from the stack config:
 
 ```ts
-auth: {
-  cookies?: { prefix?: string; domain?: string },
-  session?: {
-    expiresIn?: number,
-    updateAge?: number,
-    additionalFields?: Record<string, FieldConfig>,
-  },
-  user?: {
-    additionalFields?: Record<string, FieldConfig>,
-  },
-  organization?: boolean | {
-    ac?: AccessControl,
-    roles?: Record<string, Role>,
-    additionalFields?: Record<string, FieldConfig>,
-  },
+import { getPlugin } from "@fcalell/config";
+
+const dbConfig = getPlugin(config, "db");
+// dbConfig.__plugin === "db"
+// dbConfig.options -- typed as DbOptions
+```
+
+Throws if the plugin is not found. The return type is narrowed by the `ExtractPlugin<T, N>` utility.
+
+## Validation
+
+```ts
+const config = defineConfig({ plugins: [auth()] });
+const result = config.validate();
+// result.valid === false
+// result.errors[0].message === 'Requires "db", but it is not in the plugins array.'
+// result.errors[0].fix === 'Run: stack add db'
+```
+
+## `BindingDeclaration`
+
+Plugins declare the Cloudflare bindings they need. The CLI collects these to generate `env.d.ts` and `wrangler.toml`.
+
+```ts
+interface BindingDeclaration {
+  name: string;
+  type: "d1" | "r2" | "kv" | "queue" | "rate_limiter" | "durable_object" | "service" | "var" | "secret";
+  databaseId?: string;
+  databaseName?: string;
+  bucketName?: string;
+  kvNamespaceId?: string;
+  className?: string;
+  rateLimit?: { limit: number; period: number };
+  devDefault?: string;
 }
 ```
 
-Runtime secrets (`AUTH_SECRET`) and callbacks (`sendOTP`, `sendInvitation`) are provided in `defineApp()` — see `@fcalell/api` docs.
+## `@fcalell/config/plugin` subpath
 
-### `api` (optional)
+Types and interfaces for plugin authors. This subpath defines the CLI plugin contract.
 
-Static API configuration.
+### `CliPlugin<TOptions>`
+
+The interface every plugin's `./cli` export must implement:
 
 ```ts
-api: {
-  cors?: string | string[],
-  prefix?: `/${string}`,  // default: "/rpc"
+interface CliPlugin<TOptions> {
+  name: string;
+  label: string;
+
+  detect(ctx: PluginContext): boolean | Promise<boolean>;
+  prompt?(ctx: PluginContext): Promise<Record<string, unknown>>;
+  scaffold(ctx: PluginContext, answers: Record<string, unknown>): Promise<void>;
+  remove?(ctx: PluginContext): Promise<RemovalResult>;
+
+  bindings(options: TOptions): BindingDeclaration[];
+  generate(ctx: PluginContext): Promise<GeneratedFile[]>;
+
+  worker?: WorkerContribution;
+
+  dev?(ctx: DevContext): Promise<DevContribution>;
+  build?(ctx: BuildContext): Promise<BuildContribution>;
+  deploy?(ctx: DeployContext): Promise<void>;
 }
 ```
 
-### `dev` (optional)
+### `PluginContext`
 
-Development workflow configuration.
+Provided by the CLI to plugin hooks. Includes filesystem helpers, config access, dependency management, and interactive prompts.
 
 ```ts
-dev: {
-  studioPort?: number,  // default: 4983
+interface PluginContext {
+  cwd: string;
+  config: StackConfig | null;
+  hasPlugin(name: string): boolean;
+  getPluginOptions<T>(name: string): T | undefined;
+
+  writeFile(path: string, content: string): Promise<void>;
+  writeIfMissing(path: string, content: string): Promise<boolean>;
+  ensureDir(path: string): Promise<void>;
+  fileExists(path: string): Promise<boolean>;
+  readFile(path: string): Promise<string>;
+
+  addDependencies(deps: Record<string, string>): void;
+  addDevDependencies(deps: Record<string, string>): void;
+  addToGitignore(...entries: string[]): void;
+
+  addPluginToConfig(opts: { importSource: string; importName: string; options: Record<string, unknown> }): Promise<void>;
+  removePluginFromConfig(name: string): Promise<void>;
+
+  prompt: { text, confirm, select, multiselect };
+  log: { info, warn, success, error };
 }
 ```
 
-## What consumes this config
+Extended contexts: `DevContext` adds `getPort(name)`, `BuildContext` adds `outDir`, `DeployContext` adds `env`, `preview`, `dryRun`.
 
-| Consumer | Reads |
-|----------|-------|
-| `stack` CLI | `db`, `auth`, `dev` — for schema push, auth generation, studio |
-| `defineApp()` | `db`, `auth`, `api` — for runtime wiring |
-| Type utilities | `auth` — for `InferUser<T>`, `InferSession<T>` |
+### `WorkerContribution`
+
+Declares how a plugin participates in the virtual worker:
+
+```ts
+interface WorkerContribution {
+  runtime?: { importFrom: string; factory: string };
+  callbacks?: { required: boolean; defineHelper: string; importFrom: string };
+  routes?: true;
+  middleware?: true;
+  handlers?: ("scheduled" | "queue" | "email" | "tail")[];
+}
+```
+
+### `DevContribution` / `BuildContribution`
+
+```ts
+interface DevContribution {
+  setup?: () => Promise<void>;
+  processes?: ProcessSpec[];
+  watchers?: WatcherSpec[];
+  vitePlugins?: unknown[];
+  banner?: string[];
+}
+
+interface BuildContribution {
+  preBuild?: () => Promise<void>;
+  postBuild?: () => Promise<void>;
+  vitePlugins?: unknown[];
+}
+```
 
 ## Exports
 
 | Subpath | Purpose |
 |---------|---------|
-| `@fcalell/config` | `defineConfig()`, `StackConfig`, `AuthPolicy`, `FieldConfig`, `DatabaseConfig` |
+| `@fcalell/config` | `defineConfig()`, `StackConfig`, `PluginConfig`, `BindingDeclaration`, `getPlugin()`, `ExtractPlugin` |
+| `@fcalell/config/plugin` | `CliPlugin`, `PluginContext`, `DevContext`, `BuildContext`, `DeployContext`, `DevContribution`, `BuildContribution`, `WorkerContribution`, `GeneratedFile`, `RemovalResult`, `ProcessSpec`, `WatcherSpec` |
 
 ## License
 

@@ -1,12 +1,15 @@
 import { existsSync, mkdirSync } from "node:fs";
-import { basename } from "node:path";
-import { intro, log, note, outro, spinner } from "@clack/prompts";
-import { ask, choose, confirm, multi } from "#lib/prompt";
+import { basename, join } from "node:path";
+import { intro, log, note, outro } from "@clack/prompts";
+import type { CliPlugin } from "@fcalell/config/plugin";
+import { OFFICIAL_PLUGINS } from "#lib/discovery";
+import { ask, multi } from "#lib/prompt";
+import { createPluginContext } from "#lib/plugin-context";
 import { announceCreated, scaffoldFiles } from "#lib/scaffold";
-import { createD1Database } from "#lib/wrangler";
 import { biomeTemplate } from "#templates/biome";
 import { gitignoreTemplate } from "#templates/gitignore";
 import { packageJsonTemplate } from "#templates/package-json";
+import { stackConfigTemplate } from "#templates/stack-config";
 import { tsconfigTemplate } from "#templates/tsconfig";
 
 export async function init(dir: string): Promise<void> {
@@ -27,118 +30,99 @@ export async function init(dir: string): Promise<void> {
 async function run(dir: string): Promise<void> {
 	intro(`stack init ${basename(dir)}`);
 
-	let layers: string[];
-	let dbDialect: "d1" | "sqlite" | undefined;
-	let databaseId: string | undefined;
-	let sqlitePath: string | undefined;
-	let auth = false;
-	let org = false;
+	let selectedPlugins: string[] = [];
+	let domain = "example.com";
 
 	if (process.stdin.isTTY) {
-		layers = await multi("Which layers do you want?", [
-			{ label: "Database  (@fcalell/db)", value: "db" },
-			{ label: "API       (@fcalell/api)", value: "api" },
-			{ label: "App       (@fcalell/ui + @fcalell/vite)", value: "app" },
+		selectedPlugins = await multi("Which plugins do you want?", [
+			...OFFICIAL_PLUGINS.map((p) => ({
+				label: `${p.label}  (@fcalell/plugin-${p.name})`,
+				value: p.name,
+			})),
 		]);
 
-		// API requires db
-		if (layers.includes("api") && !layers.includes("db")) {
-			log.warn("API requires database — adding database layer.");
-			layers.unshift("db");
-		}
-
-		if (layers.includes("db")) {
-			log.step("Database");
-			dbDialect = await choose<"d1" | "sqlite">("Dialect:", ["d1", "sqlite"]);
-
-			if (dbDialect === "d1") {
-				const createNew = await confirm("Create a new D1 database?");
-				if (createNew) {
-					const dbName = await ask("Database name", `${basename(dir)}-db`);
-					const s = spinner();
-					s.start("Creating D1 database...");
-					const result = createD1Database(dbName);
-					if (result) {
-						s.stop(`Created D1 database: ${result.name} (${result.id})`);
-						databaseId = result.id;
-					} else {
-						s.stop("Failed to create D1 database.");
-						databaseId = await ask("D1 database ID (enter manually)");
+		// Auto-select required dependencies
+		for (const name of [...selectedPlugins]) {
+			const info = OFFICIAL_PLUGINS.find((p) => p.name === name);
+			if (info?.requires) {
+				for (const req of info.requires) {
+					if (!selectedPlugins.includes(req)) {
+						log.warn(
+							`${info.label} requires ${req} — adding automatically.`,
+						);
+						selectedPlugins.unshift(req);
 					}
-				} else {
-					databaseId = await ask("D1 database ID");
 				}
-			} else {
-				sqlitePath = await ask("SQLite file path", "./data/app.sqlite");
 			}
-
-			auth = await confirm("Include authentication?");
-			org = auth ? await confirm("Include organizations?") : false;
 		}
-	} else {
-		layers = [];
+
+		domain = await ask("Domain", "example.com");
 	}
 
-	const hasDb = layers.includes("db");
-	const hasApi = layers.includes("api");
-	const hasApp = layers.includes("app");
 	const name = basename(dir);
+	const hasApp = selectedPlugins.includes("app");
 
+	// Scaffold base files
 	const created = scaffoldFiles([
 		[
 			"package.json",
-			packageJsonTemplate({ name, db: hasDb, api: hasApi, app: hasApp }),
+			packageJsonTemplate({
+				name,
+				plugins: selectedPlugins,
+			}),
 		],
 		["tsconfig.json", tsconfigTemplate({ app: hasApp })],
 		["biome.json", biomeTemplate()],
-		[".gitignore", gitignoreTemplate({ db: hasDb, api: hasApi, app: hasApp })],
+		[".gitignore", gitignoreTemplate({ plugins: selectedPlugins })],
 	]);
 	announceCreated(created);
 
-	// Delegate to add commands for each layer
-	if (hasDb) {
-		const { add: addDb } = await import("#commands/add/db");
-		await addDb({
-			dialect: dbDialect,
-			databaseId,
-			sqlitePath,
-			auth,
-			org,
-		});
+	// Load and run prompts + scaffold for each selected plugin
+	const pluginAnswers = new Map<string, Record<string, unknown>>();
+
+	for (const pluginName of selectedPlugins) {
+		const info = OFFICIAL_PLUGINS.find((p) => p.name === pluginName);
+		if (!info) continue;
+
+		let cli: CliPlugin;
+		try {
+			const mod = await import(`${info.packageName}/cli`);
+			cli = mod.default ?? mod;
+		} catch {
+			log.warn(
+				`Could not load ${info.packageName} — it will be set up after install.`,
+			);
+			continue;
+		}
+
+		const ctx = createPluginContext({ cwd: dir, config: null });
+
+		let answers: Record<string, unknown> = {};
+		if (process.stdin.isTTY && cli.prompt) {
+			answers = await cli.prompt(ctx);
+		}
+		pluginAnswers.set(pluginName, answers);
+
+		await cli.scaffold(ctx, answers);
 	}
 
-	if (hasApi) {
-		const { add: addApi } = await import("#commands/add/api");
-		await addApi();
+	// Generate stack.config.ts
+	const configContent = stackConfigTemplate({
+		domain,
+		plugins: selectedPlugins,
+		pluginAnswers,
+	});
+	scaffoldFiles([["stack.config.ts", configContent]]);
+
+	// Run generate if possible
+	try {
+		const { generate } = await import("#commands/generate");
+		await generate("stack.config.ts");
+	} catch {
+		// May fail if plugin packages aren't installed yet
 	}
 
-	if (hasApp) {
-		const { add: addUi } = await import("#commands/add/ui");
-		await addUi();
-	}
-
-	const nextSteps = ["pnpm install"];
-
-	if (
-		hasDb &&
-		dbDialect === "d1" &&
-		(!databaseId || databaseId.includes("YOUR"))
-	) {
-		nextSteps.push(
-			"npx wrangler d1 create <name>  # then update databaseId in stack.config.ts",
-		);
-	}
-
-	nextSteps.push("stack dev");
-
-	const devExplain: string[] = [];
-	if (hasDb) devExplain.push("push schema");
-	if (hasApi) devExplain.push("start API on :8787");
-	if (hasApp) devExplain.push("start app on :5173");
-	if (devExplain.length > 0) {
-		nextSteps.push(`  → will ${devExplain.join(", ")}`);
-	}
-
+	const nextSteps = ["pnpm install", "stack dev"];
 	note(nextSteps.join("\n"), "Next steps");
 	outro("Done!");
 }
