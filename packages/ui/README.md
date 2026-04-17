@@ -83,7 +83,7 @@ createApp({
   providers: (children) => <FeatureFlags>{children}</FeatureFlags>,
   queryClient,                                       // optional — defaults to new QueryClient()
   errorFallback: (err, reset) => <MyFallback ... />, // optional — defaults to <EmptyState>
-  rootId: "root",                                    // optional — element id to mount into
+  rootId: "app",                                     // optional — element id to mount into (default "app")
 });
 ```
 

@@ -155,11 +155,51 @@ describe("add()", () => {
 		expect(existsSync(scaffoldPath)).toBe(true);
 		expect(readFileSync(scaffoldPath, "utf-8")).toContain("auth scaffold");
 
-		// Config updated with auth import
+		// Config updated with auth import AND an auth() call in the plugins array
 		const rewritten = readFileSync(join(dir, "stack.config.ts"), "utf-8");
 		expect(rewritten).toContain('from "@fcalell/plugin-auth"');
+		expect(rewritten).toMatch(/\bauth\(\s*\)/);
 
 		expect(generateMock).toHaveBeenCalledWith("stack.config.ts");
+	});
+
+	it("inlines prompt answers into the plugin call", async () => {
+		mockAvailable = [
+			makePlugin("auth", {
+				label: "Auth",
+				register: (_ctx, bus) => {
+					bus.on(Init.Prompt, (p) => {
+						p.configOptions.auth = {
+							cookies: { prefix: "myapp" },
+							organization: true,
+						};
+					});
+				},
+			}),
+		];
+		mockConfig = {
+			plugins: [],
+			validate: () => ({ valid: true, errors: [] }),
+		};
+
+		await add("auth", "stack.config.ts");
+
+		const rewritten = readFileSync(join(dir, "stack.config.ts"), "utf-8");
+		expect(rewritten).toContain('prefix: "myapp"');
+		expect(rewritten).toMatch(/organization:\s*true/);
+	});
+
+	it("writes a direct plugin() call when there are no prompt answers", async () => {
+		mockAvailable = [makePlugin("api")];
+		mockConfig = {
+			plugins: [],
+			validate: () => ({ valid: true, errors: [] }),
+		};
+
+		await add("api", "stack.config.ts");
+
+		const rewritten = readFileSync(join(dir, "stack.config.ts"), "utf-8");
+		expect(rewritten).toMatch(/\bapi\(\s*\)/);
 	});
 
 	it("throws MissingPluginError when the plugin has an unmet dependency", async () => {

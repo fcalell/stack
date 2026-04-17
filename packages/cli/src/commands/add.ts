@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { log, outro } from "@clack/prompts";
+import { builders } from "magicast";
 import { Init } from "#events";
 import { editConfig, hasPluginCall } from "#lib/config-writer";
 import { dependencyNames, loadAvailablePlugins } from "#lib/discovery";
@@ -58,7 +59,9 @@ export async function add(
 		return;
 	}
 
-	// Register plugin and scaffold files
+	// Register plugin, collect prompt answers, scaffold files
+	let answers: Record<string, unknown> = {};
+	const nonInteractive = !process.stdin.isTTY;
 	try {
 		const bus = createEventBus();
 		const ctx = createRegisterContext({
@@ -73,9 +76,13 @@ export async function add(
 					return false;
 				}
 			},
+			nonInteractive,
 		});
 
 		pluginInfo.cli.register(ctx, bus, pluginInfo.events);
+
+		const promptPayload = await bus.emit(Init.Prompt, { configOptions: {} });
+		answers = promptPayload.configOptions[pluginName] ?? {};
 
 		const scaffold = await bus.emit(Init.Scaffold, {
 			files: [],
@@ -109,6 +116,12 @@ export async function add(
 			if (!ast.plugins) {
 				ast.plugins = [];
 			}
+
+			const call =
+				Object.keys(answers).length > 0
+					? builders.functionCall(importName, answers)
+					: builders.functionCall(importName);
+			ast.plugins.push(call);
 		});
 	}
 

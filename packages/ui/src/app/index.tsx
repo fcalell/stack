@@ -23,9 +23,10 @@ export interface CreateAppOptions {
 }
 
 export function createApp(options: CreateAppOptions = {}): void {
-	const root = document.getElementById(options.rootId ?? "root");
+	const rootId = options.rootId ?? "app";
+	const root = document.getElementById(rootId);
 	if (!root) {
-		throw new Error(`Root element #${options.rootId ?? "root"} not found`);
+		throw new Error(`Root element #${rootId} not found`);
 	}
 
 	const queryClient = options.queryClient ?? new QueryClient();

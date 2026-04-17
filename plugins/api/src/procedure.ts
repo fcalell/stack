@@ -1,4 +1,4 @@
-import { os } from "@orpc/server";
+import { ORPCError, os } from "@orpc/server";
 import { z } from "zod";
 import { clampLimit } from "./lib/cursor";
 import type { Procedure } from "./types";
@@ -206,7 +206,6 @@ function createAuthMiddleware() {
 		};
 		next: (opts: { context: unknown }) => Promise<unknown>;
 	}) => {
-		const { ORPCError } = await import("@orpc/server");
 		try {
 			const sessionData = await context.auth.api.getSession({
 				headers: context.reqHeaders,
@@ -249,7 +248,6 @@ function createOrgConsistencyMiddleware() {
 		},
 		input: unknown,
 	) => {
-		const { ORPCError } = await import("@orpc/server");
 		const { activeOrganizationId } = context.session;
 		if (!activeOrganizationId) {
 			throw new ORPCError("BAD_REQUEST", {
@@ -289,7 +287,6 @@ function createRbacMiddleware(resource: string, actions: string[]) {
 		};
 		next: (opts: { context: unknown }) => Promise<unknown>;
 	}) => {
-		const { ORPCError } = await import("@orpc/server");
 		const result = await context.auth.api.hasPermission({
 			headers: context.reqHeaders,
 			body: { permissions: { [resource]: actions } },
@@ -323,15 +320,6 @@ function extractIp(headers: Headers): string {
 	return "unknown";
 }
 
-// Runtime validation: previously `(input as { email: string }).email.toLowerCase()`
-// would crash with "Cannot read properties of undefined" if the input lacked an
-// email. We check the shape explicitly and surface a clear `BAD_REQUEST`
-// (thrown as a plain `Error` here; `createRateLimitMiddleware` is inside the
-// oRPC chain so this propagates as a 500 unless wrapped — keeping it as a
-// hard failure signals a developer error in procedure config, not a client
-// error). Setup-time validation would need access to the input schema inside
-// `createRateLimitMiddleware`, which is constructed before `.input(...)` is
-// called — too invasive for this refactor.
 function extractEmail(input: unknown): string {
 	if (
 		input === null ||
@@ -340,9 +328,10 @@ function extractEmail(input: unknown): string {
 		typeof (input as { email: unknown }).email !== "string" ||
 		(input as { email: string }).email.length === 0
 	) {
-		throw new Error(
-			'rateLimit: "email" requires the procedure input to include a non-empty `email: string` field',
-		);
+		throw new ORPCError("BAD_REQUEST", {
+			message:
+				'rateLimit: "email" requires the procedure input to include a non-empty `email: string` field',
+		});
 	}
 	return (input as { email: string }).email.toLowerCase();
 }
@@ -367,7 +356,6 @@ function createRateLimitMiddleware(kind: RateLimitKind) {
 		},
 		input: unknown,
 	) => {
-		const { ORPCError } = await import("@orpc/server");
 		const limiter = context._rateLimiter?.[kind];
 		const isDev = context._devMode ?? false;
 

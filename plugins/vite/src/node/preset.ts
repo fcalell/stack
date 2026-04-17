@@ -1,6 +1,7 @@
 import { createRequire } from "node:module";
 import { basename } from "node:path";
 import { defaultFonts, type FontEntry } from "@fcalell/ui/fonts-manifest";
+import tailwindcss from "@tailwindcss/vite";
 import type { Plugin, ResolvedConfig } from "vite";
 
 interface AssetLike {
@@ -134,40 +135,5 @@ export interface BasePresetOptions {
 
 export function createBasePreset(opts: BasePresetOptions = {}): Plugin[] {
 	const fonts = opts.fonts ?? defaultFonts;
-	const plugins: Plugin[] = [];
-
-	try {
-		const tailwind = require("@tailwindcss/vite");
-		plugins.push((tailwind.default ?? tailwind)());
-	} catch {
-		// Tailwind not available
-	}
-
-	plugins.push(themeFontsPlugin(fonts));
-
-	return plugins;
-}
-
-export function generateViteConfig(
-	_frameworkPlugins: unknown[],
-	_options?: { port?: number },
-): string {
-	const pluginImports = [
-		'import tailwindcss from "@tailwindcss/vite";',
-		'import { themeFontsPlugin } from "@fcalell/plugin-vite/preset";',
-	];
-
-	const lines = [
-		'import { defineConfig } from "vite";',
-		...pluginImports,
-		"",
-		"export default defineConfig({",
-		"  plugins: [",
-		"    tailwindcss(),",
-		"    // Framework plugins are injected here at generate time",
-		"  ],",
-		"});",
-	];
-
-	return lines.join("\n");
+	return [...tailwindcss(), themeFontsPlugin(fonts)];
 }

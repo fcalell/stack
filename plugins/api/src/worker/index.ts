@@ -159,7 +159,9 @@ function createAppBuilder<TContext extends Record<string, unknown>>(
 				plugins: [new RequestHeadersPlugin(), new ResponseHeadersPlugin()],
 			});
 
-			const app = new Hono();
+			const app = new Hono<{
+				Variables: { __stackCtx: Record<string, unknown> };
+			}>();
 
 			app.use("*", logger());
 			app.use("*", secureHeaders());
@@ -174,9 +176,7 @@ function createAppBuilder<TContext extends Record<string, unknown>>(
 				);
 			}
 
-			app.get("/", (c) => c.json({ ok: true }));
-
-			app.post(`${rpcPrefix}/*`, async (c) => {
+			app.use("*", async (c, next) => {
 				const env = c.env;
 				const request = c.req.raw;
 
@@ -184,10 +184,7 @@ function createAppBuilder<TContext extends Record<string, unknown>>(
 					entry.plugin.validateEnv?.(env);
 				}
 
-				let ctx: Record<string, unknown> = {
-					env,
-					request,
-				};
+				let ctx: Record<string, unknown> = { env, request };
 
 				for (const entry of allEntries) {
 					if (isPluginEntry(entry)) {
@@ -199,7 +196,22 @@ function createAppBuilder<TContext extends Record<string, unknown>>(
 					}
 				}
 
-				const { matched, response } = await rpcHandler.handle(request, {
+				for (const entry of pluginEntries) {
+					const fetchFn = entry.plugin.fetch;
+					if (typeof fetchFn !== "function") continue;
+					const claimed = await fetchFn(request, env, ctx);
+					if (claimed) return claimed;
+				}
+
+				c.set("__stackCtx", ctx);
+				await next();
+			});
+
+			app.get("/", (c) => c.json({ ok: true }));
+
+			app.post(`${rpcPrefix}/*`, async (c) => {
+				const ctx = c.get("__stackCtx");
+				const { matched, response } = await rpcHandler.handle(c.req.raw, {
 					prefix: rpcPrefix,
 					context: ctx,
 				});
