@@ -1,0 +1,12 @@
+{
+	"extends": "@fcalell/typescript-config/node-tsx.json",
+	"include": ["src"],
+	"exclude": [
+		"src/app",
+		"src/router",
+		"src/meta",
+		"src/query",
+		"src/theme",
+		"src/cn"
+	]
+}

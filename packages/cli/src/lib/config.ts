@@ -1,6 +1,6 @@
 import { resolve } from "node:path";
 import { log } from "@clack/prompts";
-import type { StackConfig } from "@fcalell/config";
+import type { StackConfig } from "#config";
 
 export async function loadConfig(configPath: string): Promise<StackConfig> {
 	const resolved = resolve(configPath);

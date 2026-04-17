@@ -7,17 +7,24 @@ export function packageJsonTemplate(options: PackageJsonOptions): string {
 	const deps: Record<string, string> = {};
 	const devDeps: Record<string, string> = {
 		"@fcalell/cli": "workspace:*",
-		"@fcalell/config": "workspace:*",
 		"@fcalell/typescript-config": "workspace:*",
 		"@fcalell/biome-config": "workspace:*",
+		typescript: "^5.9.3",
 	};
+
+	const hasWorker =
+		options.plugins.includes("api") || options.plugins.includes("db");
+	if (hasWorker) {
+		devDeps.wrangler = "^4.14.0";
+	}
 
 	for (const name of options.plugins) {
 		deps[`@fcalell/plugin-${name}`] = "workspace:*";
 	}
 
-	const hasApp = options.plugins.includes("app");
-	if (hasApp) {
+	const hasSolid =
+		options.plugins.includes("solid") || options.plugins.includes("solid-ui");
+	if (hasSolid) {
 		deps["solid-js"] = "^1.9.0";
 	}
 
@@ -28,7 +35,7 @@ export function packageJsonTemplate(options: PackageJsonOptions): string {
 		type: "module",
 	};
 
-	if (hasApp) {
+	if (hasSolid) {
 		pkg.imports = { "#/*": "./src/*" };
 	}
 
@@ -38,11 +45,6 @@ export function packageJsonTemplate(options: PackageJsonOptions): string {
 		build: "stack build",
 		deploy: "stack deploy",
 	};
-
-	if (hasApp) {
-		scripts["dev:app"] = "stack-vite dev";
-		scripts.preview = "stack-vite preview";
-	}
 
 	pkg.scripts = scripts;
 	pkg.dependencies = sortKeys(deps);

@@ -7,7 +7,9 @@
 		"#*": "./src/*.ts"
 	},
 	"exports": {
-		"./codegen": "./src/lib/codegen.ts",
+		".": "./src/config.ts",
+		"./events": "./src/events.ts",
+		"./codegen": "./src/lib/codegen-v2.ts",
 		"./discovery": "./src/lib/discovery.ts"
 	},
 	"bin": {
@@ -22,7 +24,6 @@
 		"clear": "rm -rf node_modules .turbo"
 	},
 	"dependencies": {
-		"@fcalell/config": "workspace:*",
 		"@clack/prompts": "^0.11.0",
 		"magicast": "^0.5.2",
 		"picocolors": "^1.1.0"

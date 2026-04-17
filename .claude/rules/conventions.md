@@ -14,29 +14,46 @@ TypeScript configs extend `@fcalell/typescript-config` — never define compiler
 
 Each plugin lives in `plugins/<name>/` and is published as `@fcalell/plugin-<name>`.
 
-Config factory function name matches plugin name: `db()`, `auth()`, `api()`, `app()`. Config factory returns `PluginConfig<Name, Options>` with the `__plugin` brand. Validation of options happens inside the factory.
+Plugins are built with `createPlugin()` from `@fcalell/cli`. The result is both a callable config factory and a CLI plugin:
 
-`requires` array declares plugin dependencies (e.g. `auth()` returns `requires: ["db"]`). The CLI and `defineConfig().validate()` enforce this.
-
-CLI plugin is exported from the `./cli` subpath as the default export. It implements the `CliPlugin<TOptions>` interface from `@fcalell/config/plugin`.
-
-Runtime plugin (if any) is exported from the `./runtime` subpath. The `WorkerContribution.runtime` field points to this subpath and names the factory function.
-
-`stack-plugin` field in `package.json` declares the plugin name, label, and CLI entry point for CLI discovery:
-
-```json
-{
-  "stack-plugin": {
-    "name": "db",
-    "label": "Database",
-    "cli": "./src/cli.ts"
-  }
-}
+```ts
+import { createPlugin } from "@fcalell/cli";
+export const db = createPlugin("db", { label: "Database", ... });
 ```
 
-Plugin tests are co-located as `*.test.ts` next to source files. Plugin CLI tests mock `PluginContext` — no real filesystem operations.
+Config factory function name matches plugin name: `db()`, `auth()`, `api()`, `solid()`, `solidUi()`.
 
-Callback files for plugins live in `src/worker/plugins/<name>.ts` in the consumer project. Plugins declare callbacks via `WorkerContribution.callbacks` and export a `define<Name>Callbacks` helper.
+Dependencies are typed event tokens: `depends: [db.events.SchemaReady]`. The CLI reads `event.source` to build the dependency graph and enforce presence.
+
+Implicit plugins (like `plugin-vite`) are marked with `implicit: true` in `createPlugin()` and are never listed in consumer configs — they're auto-resolved from dependency chains.
+
+### Plugin folder structure
+
+```
+plugins/<name>/
+  src/
+    index.ts              ← createPlugin result (main export ".")
+    index.test.ts
+    types.ts              ← shared option types
+    node/                 ← Node.js only — CLI operations
+    worker/               ← Cloudflare Workers only — runtime (exported as "./runtime")
+```
+
+`worker/` files never import from `node/`. `node/` files never import from `worker/`.
+
+Runtime plugin (if any) is exported from `./runtime` subpath. The CLI discovers it by checking `package.json` exports. Runtime factories take plain options, not `PluginConfig`.
+
+### Plugin commands
+
+Plugins register subcommands via the `commands` field on `createPlugin`. The CLI auto-routes `stack <plugin> <command>`.
+
+### Plugin callbacks
+
+Plugins declare typed callbacks via `callbacks: { sendOTP: callback<{ email: string; code: string }>() }`. The `createPlugin` result exposes `auth.defineCallbacks(impl)` for consumer callback files.
+
+### Plugin tests
+
+Co-located as `*.test.ts` next to source files. Use `createEventBus()` from `@fcalell/cli/events` and mock `RegisterContext` from `@fcalell/cli`. Test event handlers by emitting events and asserting on payload mutations.
 
 ## Code style
 

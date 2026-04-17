@@ -5,15 +5,9 @@
 	"sideEffects": false,
 	"exports": {
 		".": "./src/index.ts",
-		"./cli": "./src/cli.ts",
-		"./runtime": "./src/runtime.ts",
+		"./runtime": "./src/worker/index.ts",
 		"./access": "./src/access.ts",
 		"./infer": "./src/infer.ts"
-	},
-	"stack-plugin": {
-		"name": "auth",
-		"label": "Auth",
-		"cli": "./src/cli.ts"
 	},
 	"license": "MIT",
 	"scripts": {
@@ -24,7 +18,7 @@
 		"clear": "rm -rf node_modules .turbo"
 	},
 	"dependencies": {
-		"@fcalell/config": "workspace:*",
+		"@fcalell/cli": "workspace:*",
 		"@fcalell/plugin-db": "workspace:*"
 	},
 	"devDependencies": {

@@ -1,82 +1,72 @@
-import { describe, expect, it } from "vitest";
+import type { RegisterContext } from "@fcalell/cli";
 import {
-	type DbOptions,
-	db,
-	getMigrationsPath,
-	getSchemaModule,
-	getSchemaPath,
-} from "./index";
+	createEventBus,
+	Dev,
+	Generate,
+	Init,
+	Remove,
+} from "@fcalell/cli/events";
+import { describe, expect, it, vi } from "vitest";
+import { type DbOptions, db } from "./index";
 
-describe("db", () => {
+function createMockCtx(
+	overrides: Partial<RegisterContext<DbOptions>> & { options: DbOptions },
+): RegisterContext<DbOptions> {
+	return {
+		cwd: "/tmp/test",
+		hasPlugin: () => false,
+		readFile: vi.fn(async () => ""),
+		fileExists: vi.fn(async () => false),
+		log: {
+			info: vi.fn(),
+			warn: vi.fn(),
+			success: vi.fn(),
+			error: vi.fn(),
+		},
+		prompt: {
+			text: vi.fn(async () => ""),
+			confirm: vi.fn(async () => false),
+			select: vi.fn(async () => undefined as any),
+			multiselect: vi.fn(async () => []),
+		},
+		...overrides,
+	};
+}
+
+describe("db config factory", () => {
 	it("returns correct PluginConfig for D1 dialect", () => {
-		const result = db({
-			dialect: "d1",
-			databaseId: "abc-123",
-			schema: { users: {} },
-		});
+		const result = db({ dialect: "d1", databaseId: "abc-123" });
 		expect(result.__plugin).toBe("db");
 		expect(result.options.dialect).toBe("d1");
 		expect(result.options.databaseId).toBe("abc-123");
 	});
 
 	it("returns correct PluginConfig for SQLite dialect", () => {
-		const result = db({
-			dialect: "sqlite",
-			path: "./data/app.sqlite",
-			schema: { users: {} },
-		});
+		const result = db({ dialect: "sqlite", path: "./data/app.sqlite" });
 		expect(result.__plugin).toBe("db");
 		expect(result.options.dialect).toBe("sqlite");
 		expect(result.options.path).toBe("./data/app.sqlite");
 	});
 
 	it("throws when D1 missing databaseId", () => {
-		expect(() => db({ dialect: "d1", schema: { users: {} } })).toThrow(
-			"db: D1 dialect requires databaseId",
+		expect(() => db({ dialect: "d1" })).toThrow(
+			"D1 dialect requires databaseId",
 		);
 	});
 
 	it("throws when SQLite missing path", () => {
-		expect(() => db({ dialect: "sqlite", schema: { users: {} } })).toThrow(
-			"db: SQLite dialect requires path",
+		expect(() => db({ dialect: "sqlite" })).toThrow(
+			"SQLite dialect requires path",
 		);
 	});
 
-	it("throws when schema is missing", () => {
-		expect(() =>
-			db({
-				dialect: "d1",
-				databaseId: "abc",
-				schema: null as unknown as Record<string, unknown>,
-			}),
-		).toThrow("db: schema is required");
-	});
-
-	it("throws when schema is not an object", () => {
-		expect(() =>
-			db({
-				dialect: "d1",
-				databaseId: "abc",
-				schema: "bad" as unknown as Record<string, unknown>,
-			}),
-		).toThrow("db: schema is required");
-	});
-
 	it("defaults binding to DB_MAIN", () => {
-		const result = db({
-			dialect: "d1",
-			databaseId: "abc",
-			schema: { users: {} },
-		});
+		const result = db({ dialect: "d1", databaseId: "abc" });
 		expect(result.options.binding).toBe("DB_MAIN");
 	});
 
 	it("defaults migrations path to ./src/migrations", () => {
-		const result = db({
-			dialect: "d1",
-			databaseId: "abc",
-			schema: { users: {} },
-		});
+		const result = db({ dialect: "d1", databaseId: "abc" });
 		expect(result.options.migrations).toBe("./src/migrations");
 	});
 
@@ -84,7 +74,6 @@ describe("db", () => {
 		const result = db({
 			dialect: "d1",
 			databaseId: "abc",
-			schema: { users: {} },
 			binding: "DB_SECONDARY",
 		});
 		expect(result.options.binding).toBe("DB_SECONDARY");
@@ -94,102 +83,151 @@ describe("db", () => {
 		const result = db({
 			dialect: "d1",
 			databaseId: "abc",
-			schema: { users: {} },
 			migrations: "./custom/migrations",
 		});
 		expect(result.options.migrations).toBe("./custom/migrations");
 	});
+});
 
-	it("__plugin is 'db'", () => {
-		const result = db({
-			dialect: "d1",
-			databaseId: "abc",
-			schema: { users: {} },
+describe("db.events", () => {
+	it("exposes SchemaReady event", () => {
+		expect(db.events.SchemaReady.source).toBe("db");
+		expect(db.events.SchemaReady.name).toBe("SchemaReady");
+	});
+});
+
+describe("db.name", () => {
+	it("is 'db'", () => {
+		expect(db.name).toBe("db");
+	});
+});
+
+describe("db.cli", () => {
+	it("has correct name and label", () => {
+		expect(db.cli.name).toBe("db");
+		expect(db.cli.label).toBe("Database");
+	});
+
+	it("exposes commands", () => {
+		expect(Object.keys(db.cli.commands)).toEqual(
+			expect.arrayContaining(["push", "generate", "apply", "status", "reset"]),
+		);
+	});
+});
+
+describe("db register", () => {
+	it("pushes scaffold files on Init.Scaffold", async () => {
+		const bus = createEventBus();
+		const ctx = createMockCtx({
+			options: {
+				dialect: "d1",
+				databaseId: "abc",
+				binding: "DB_MAIN",
+				migrations: "./src/migrations",
+			},
 		});
-		expect(result.__plugin).toBe("db");
-	});
+		db.cli.register(ctx, bus, db.events);
 
-	it("has no requires field", () => {
-		const result = db({
-			dialect: "d1",
-			databaseId: "abc",
-			schema: { users: {} },
+		const scaffold = await bus.emit(Init.Scaffold, {
+			files: [],
+			dependencies: {},
+			devDependencies: {},
+			gitignore: [],
 		});
-		expect(result.requires).toBeUndefined();
-	});
-});
 
-describe("getSchemaPath", () => {
-	it("returns custom path when schema has path+module structure", () => {
-		const options: DbOptions = {
-			dialect: "d1",
-			databaseId: "abc",
-			schema: { path: "./custom/schema", module: { users: {} } },
-		};
-		expect(getSchemaPath(options)).toBe("./custom/schema");
+		expect(scaffold.files).toContainEqual({
+			path: "src/schema/index.ts",
+			content: expect.stringContaining("sqliteTable"),
+		});
+		expect(scaffold.dependencies["@fcalell/plugin-db"]).toBe("workspace:*");
+		expect(scaffold.devDependencies["drizzle-kit"]).toBeDefined();
+		expect(scaffold.gitignore).toContain(".db-kit");
 	});
 
-	it("returns default for a plain module object", () => {
-		const options: DbOptions = {
-			dialect: "d1",
-			databaseId: "abc",
-			schema: { users: {}, posts: {} },
-		};
-		expect(getSchemaPath(options)).toBe("./src/schema");
+	it("pushes D1 binding on Generate for d1 dialect", async () => {
+		const bus = createEventBus();
+		const ctx = createMockCtx({
+			options: {
+				dialect: "d1",
+				databaseId: "abc-123",
+				binding: "DB_MAIN",
+				migrations: "./src/migrations",
+			},
+		});
+		db.cli.register(ctx, bus, db.events);
+
+		const gen = await bus.emit(Generate, { files: [], bindings: [] });
+		expect(gen.bindings).toContainEqual(
+			expect.objectContaining({
+				name: "DB_MAIN",
+				type: "d1",
+				databaseId: "abc-123",
+			}),
+		);
 	});
 
-	it("returns default when module is null", () => {
-		const options: DbOptions = {
-			dialect: "d1",
-			databaseId: "abc",
-			schema: { path: "./x", module: null } as unknown as Record<
-				string,
-				unknown
-			>,
-		};
-		expect(getSchemaPath(options)).toBe("./src/schema");
-	});
-});
+	it("pushes no bindings on Generate for sqlite dialect", async () => {
+		const bus = createEventBus();
+		const ctx = createMockCtx({
+			options: {
+				dialect: "sqlite",
+				path: "./data/app.sqlite",
+				binding: "DB_MAIN",
+				migrations: "./src/migrations",
+			},
+		});
+		db.cli.register(ctx, bus, db.events);
 
-describe("getSchemaModule", () => {
-	it("returns module for path+module schema", () => {
-		const module = { users: {}, posts: {} };
-		const options: DbOptions = {
-			dialect: "d1",
-			databaseId: "abc",
-			schema: { path: "./x", module },
-		};
-		expect(getSchemaModule(options)).toBe(module);
+		const gen = await bus.emit(Generate, { files: [], bindings: [] });
+		expect(gen.bindings).toHaveLength(0);
 	});
 
-	it("returns schema directly for a plain module object", () => {
-		const schema = { users: {}, posts: {} };
-		const options: DbOptions = {
-			dialect: "d1",
-			databaseId: "abc",
-			schema,
-		};
-		expect(getSchemaModule(options)).toBe(schema);
-	});
-});
+	it("pushes cleanup info on Remove", async () => {
+		const bus = createEventBus();
+		const ctx = createMockCtx({
+			options: {
+				dialect: "d1",
+				databaseId: "abc",
+				binding: "DB_MAIN",
+				migrations: "./src/migrations",
+			},
+		});
+		db.cli.register(ctx, bus, db.events);
 
-describe("getMigrationsPath", () => {
-	it("returns custom path when provided", () => {
-		const options: DbOptions = {
-			dialect: "d1",
-			databaseId: "abc",
-			schema: { users: {} },
-			migrations: "./custom/migrations",
-		};
-		expect(getMigrationsPath(options)).toBe("./custom/migrations");
+		const removal = await bus.emit(Remove, {
+			files: [],
+			dependencies: [],
+		});
+		expect(removal.files).toContain("src/schema/");
+		expect(removal.dependencies).toContain("@fcalell/plugin-db");
 	});
 
-	it("returns default when migrations is undefined", () => {
-		const options: DbOptions = {
-			dialect: "d1",
-			databaseId: "abc",
-			schema: { users: {} },
-		};
-		expect(getMigrationsPath(options)).toBe("./src/migrations");
+	it("pushes schema push setup + watcher on Dev.Ready", async () => {
+		const bus = createEventBus();
+		const ctx = createMockCtx({
+			options: {
+				dialect: "d1",
+				databaseId: "abc",
+				binding: "DB_MAIN",
+				migrations: "./src/migrations",
+			},
+		});
+		db.cli.register(ctx, bus, db.events);
+
+		const ready = await bus.emit(Dev.Ready, {
+			url: "http://localhost:8787",
+			port: 8787,
+			setup: [],
+			watchers: [],
+		});
+
+		expect(ready.setup).toHaveLength(1);
+		expect(ready.setup[0]?.name).toBe("db-schema-push");
+		expect(ready.watchers).toContainEqual(
+			expect.objectContaining({
+				name: "schema",
+				paths: "src/schema/**",
+			}),
+		);
 	});
 });

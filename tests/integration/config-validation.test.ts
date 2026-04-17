@@ -1,42 +1,27 @@
-import { describe, expect, it } from "vitest";
-import { defineConfig } from "@fcalell/config";
-import { db } from "@fcalell/plugin-db";
-import { auth } from "@fcalell/plugin-auth";
+import { defineConfig } from "@fcalell/cli";
 import { api } from "@fcalell/plugin-api";
-import { app } from "@fcalell/plugin-app";
-
-const fakeSchema = { users: {}, posts: {} };
+import { auth } from "@fcalell/plugin-auth";
+import { db } from "@fcalell/plugin-db";
+import { solid } from "@fcalell/plugin-solid";
+import { describe, expect, it } from "vitest";
 
 describe("plugin factory validation", () => {
 	it("db throws for d1 dialect without databaseId", () => {
-		expect(() =>
-			db({ dialect: "d1", schema: fakeSchema } as Parameters<typeof db>[0]),
-		).toThrow("databaseId");
+		expect(() => db({ dialect: "d1" } as Parameters<typeof db>[0])).toThrow(
+			"databaseId",
+		);
 	});
 
 	it("db throws for sqlite dialect without path", () => {
 		expect(() =>
 			db({
 				dialect: "sqlite",
-				schema: fakeSchema,
 			} as Parameters<typeof db>[0]),
 		).toThrow("path");
 	});
 
-	it("db throws for missing schema", () => {
-		expect(() =>
-			db({
-				dialect: "d1",
-				databaseId: "test-id",
-				schema: null,
-			} as unknown as Parameters<typeof db>[0]),
-		).toThrow("schema");
-	});
-
 	it("auth throws for negative expiresIn", () => {
-		expect(() => auth({ session: { expiresIn: -100 } })).toThrow(
-			"expiresIn",
-		);
+		expect(() => auth({ session: { expiresIn: -100 } })).toThrow("expiresIn");
 	});
 
 	it("auth throws for zero expiresIn", () => {
@@ -44,43 +29,32 @@ describe("plugin factory validation", () => {
 	});
 
 	it("api throws for prefix not starting with /", () => {
-		expect(() =>
-			api({ prefix: "rpc" as `/${string}` }),
-		).toThrow("prefix");
+		expect(() => api({ prefix: "rpc" as `/${string}` })).toThrow("prefix");
 	});
 
 	it("api throws for invalid cors type", () => {
-		expect(() =>
-			api({ cors: 123 as unknown as string }),
-		).toThrow("cors");
+		expect(() => api({ cors: 123 as unknown as string })).toThrow("cors");
 	});
 });
 
 describe("cross-plugin dependency validation", () => {
-	it("auth without db produces validation error", () => {
+	it("auth without db passes config validation (checked at runtime)", () => {
 		const config = defineConfig({
 			plugins: [auth(), api()],
 		});
 
 		const result = config.validate();
-		expect(result.valid).toBe(false);
-		expect(result.errors).toEqual(
-			expect.arrayContaining([
-				expect.objectContaining({
-					plugin: "auth",
-					message: expect.stringContaining("db"),
-				}),
-			]),
-		);
+		expect(result.valid).toBe(true);
+		expect(result.errors).toHaveLength(0);
 	});
 
-	it("full chain db + auth + api + app validates together", () => {
+	it("full chain db + auth + api + solid validates together", () => {
 		const config = defineConfig({
 			plugins: [
-				db({ dialect: "d1", databaseId: "test", schema: fakeSchema }),
+				db({ dialect: "d1", databaseId: "test" }),
 				auth({ cookies: { prefix: "test" }, organization: true }),
 				api({ cors: "https://test.com", prefix: "/rpc" }),
-				app(),
+				solid(),
 			],
 		});
 
@@ -89,59 +63,21 @@ describe("cross-plugin dependency validation", () => {
 		expect(result.errors).toHaveLength(0);
 	});
 
-	it("removing db while auth is present produces validation error", () => {
+	it("auth plugin declares dependency on db via cli.depends", () => {
+		expect(auth.cli.depends).toHaveLength(1);
+		expect(auth.cli.depends[0]?.source).toBe("db");
+	});
+
+	it("duplicate plugin produces validation error", () => {
 		const config = defineConfig({
-			plugins: [auth(), app()],
+			plugins: [
+				db({ dialect: "d1", databaseId: "x" }),
+				db({ dialect: "d1", databaseId: "y" }),
+			],
 		});
 
 		const result = config.validate();
 		expect(result.valid).toBe(false);
-		expect(
-			result.errors.some(
-				(e) => e.plugin === "auth" && e.message.includes("db"),
-			),
-		).toBe(true);
-	});
-
-	it("validation error includes fix suggestion", () => {
-		const config = defineConfig({
-			plugins: [auth()],
-		});
-
-		const result = config.validate();
-		expect(result.valid).toBe(false);
-		expect(result.errors[0]?.fix).toContain("stack add db");
-	});
-
-	it("defineConfig throws for invalid studioPort", () => {
-		expect(() =>
-			defineConfig({
-				plugins: [],
-				dev: { studioPort: -1 },
-			}),
-		).toThrow("studioPort");
-
-		expect(() =>
-			defineConfig({
-				plugins: [],
-				dev: { studioPort: 0 },
-			}),
-		).toThrow("studioPort");
-
-		expect(() =>
-			defineConfig({
-				plugins: [],
-				dev: { studioPort: 1.5 },
-			}),
-		).toThrow("studioPort");
-	});
-
-	it("valid studioPort passes", () => {
-		expect(() =>
-			defineConfig({
-				plugins: [],
-				dev: { studioPort: 4983 },
-			}),
-		).not.toThrow();
+		expect(result.errors[0]?.message).toContain("Duplicate");
 	});
 });

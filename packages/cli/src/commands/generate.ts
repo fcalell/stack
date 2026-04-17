@@ -1,17 +1,18 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { log } from "@clack/prompts";
+import { Generate } from "#events";
 import {
-	collectBindings,
 	generateDevVars,
 	generateEnvDts,
-	generateVirtualWorker,
+	generateVirtualWorkerV2,
 	generateWranglerToml,
-} from "#lib/codegen";
+	hasRuntimeExport,
+} from "#lib/codegen-v2";
 import { loadConfig } from "#lib/config";
 import { discoverPlugins, sortByDependencies } from "#lib/discovery";
 import { generateApiRouteBarrel } from "#lib/generate";
-import { createPluginContext } from "#lib/plugin-context";
+import { registerPlugins } from "#lib/registration";
 
 const STACK_DIR = ".stack";
 
@@ -21,74 +22,82 @@ export async function generate(configPath: string): Promise<void> {
 	const validation = config.validate();
 	if (!validation.valid) {
 		for (const err of validation.errors) {
-			log.error(`[${err.plugin}] ${err.message}${err.fix ? ` — ${err.fix}` : ""}`);
+			log.error(
+				`[${err.plugin}] ${err.message}${err.fix ? ` — ${err.fix}` : ""}`,
+			);
 		}
 		process.exit(1);
 	}
 
 	const discovered = await discoverPlugins(config);
-	const sorted = sortByDependencies(discovered, config);
+	const sorted = sortByDependencies(discovered);
 	const cwd = process.cwd();
-	const ctx = createPluginContext({ cwd, config });
 
 	const stackDir = join(cwd, STACK_DIR);
 	mkdirSync(stackDir, { recursive: true });
 
-	const { bindings, collisions } = collectBindings(sorted);
-	if (collisions.length > 0) {
-		for (const c of collisions) {
-			log.warn(
-				`Binding name "${c.name}" declared by multiple plugins: ${c.plugins.join(", ")}`,
-			);
-		}
+	const bus = registerPlugins(sorted, config, cwd);
+
+	// Emit Generate event to collect files and bindings from plugins
+	const genResult = await bus.emit(Generate, { files: [], bindings: [] });
+
+	// Write plugin-contributed files
+	for (const f of genResult.files) {
+		const fullPath = join(cwd, f.path);
+		mkdirSync(join(fullPath, ".."), { recursive: true });
+		writeFileSync(fullPath, f.content);
 	}
 
-	for (const p of sorted) {
-		const files = await p.cli.generate(ctx);
-		for (const f of files) {
-			const fullPath = join(cwd, f.path);
-			mkdirSync(join(fullPath, ".."), { recursive: true });
-			writeFileSync(fullPath, f.content);
-		}
+	const allBindings = genResult.bindings;
+
+	if (allBindings.length > 0) {
+		writeFileSync(join(stackDir, "env.d.ts"), generateEnvDts(allBindings));
 	}
 
-	if (bindings.length > 0) {
-		writeFileSync(join(stackDir, "env.d.ts"), generateEnvDts(bindings));
-	}
+	const hasWorkerPlugins = sorted.some((p) =>
+		hasRuntimeExport(`@fcalell/plugin-${p.name}`),
+	);
 
-	const pluginsWithWorker = sorted
-		.filter((p) => p.cli.worker)
-		.map((p) => ({ name: p.name, worker: p.cli.worker }));
-
-	if (pluginsWithWorker.length > 0) {
+	if (hasWorkerPlugins) {
 		const hasMiddleware = existsSync(
 			join(cwd, "src", "worker", "middleware.ts"),
 		);
 		const hasRoutes = existsSync(join(cwd, "src", "worker", "routes"));
-		const callbackFiles: string[] = [];
+		const hasSchema = existsSync(join(cwd, "src", "schema"));
 
-		for (const p of sorted) {
-			if (p.cli.worker?.callbacks) {
-				const cbPath = join(
-					cwd,
-					"src",
-					"worker",
-					"plugins",
-					`${p.name}.ts`,
-				);
-				if (existsSync(cbPath)) {
-					callbackFiles.push(p.name);
-				}
-			}
-		}
+		const pluginInfos = sorted
+			.map((p) => {
+				const packageName = `@fcalell/plugin-${p.name}`;
+				return {
+					name: p.name,
+					packageName,
+					hasRuntime: hasRuntimeExport(packageName),
+					hasCallbacks: Object.keys(p.cli.callbacks).length > 0,
+					options: (p.options ?? {}) as Record<string, unknown>,
+				};
+			})
+			.filter((p) => p.hasRuntime);
+
+		const hasFrontend = sorted.some((p) => p.name === "vite");
+		const hasAuth = sorted.some((p) => p.name === "auth");
+		const vitePlugin = sorted.find((p) => p.name === "vite");
+		const frontendPort = hasFrontend
+			? (((vitePlugin?.options as Record<string, unknown> | undefined)?.port as
+					| number
+					| undefined) ?? 3000)
+			: undefined;
 
 		writeFileSync(
 			join(stackDir, "worker.ts"),
-			generateVirtualWorker({
-				plugins: pluginsWithWorker,
+			generateVirtualWorkerV2({
+				plugins: pluginInfos,
+				hasSchema,
 				hasMiddleware,
 				hasRoutes,
-				callbackFiles,
+				domain: config.domain,
+				frontendPort,
+				hasFrontend,
+				hasAuth,
 			}),
 		);
 
@@ -98,12 +107,12 @@ export async function generate(configPath: string): Promise<void> {
 
 		writeFileSync(
 			join(stackDir, "wrangler.toml"),
-			generateWranglerToml({ consumerWrangler, bindings }),
+			generateWranglerToml({ consumerWrangler, bindings: allBindings }),
 		);
 
 		const devVarsPath = join(cwd, ".dev.vars");
 		if (!existsSync(devVarsPath)) {
-			const devVars = generateDevVars(bindings);
+			const devVars = generateDevVars(allBindings);
 			if (devVars) {
 				writeFileSync(devVarsPath, devVars);
 			}

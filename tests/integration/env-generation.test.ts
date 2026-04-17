@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest";
+import type { BindingDeclaration } from "@fcalell/cli";
 import { generateEnvDts } from "@fcalell/cli/codegen";
-import type { BindingDeclaration } from "@fcalell/config";
+import { describe, expect, it } from "vitest";
 
 describe("generateEnvDts", () => {
 	it("D1 binding produces D1Database type", () => {
@@ -12,9 +12,7 @@ describe("generateEnvDts", () => {
 	});
 
 	it("secret binding produces string type", () => {
-		const result = generateEnvDts([
-			{ name: "AUTH_SECRET", type: "secret" },
-		]);
+		const result = generateEnvDts([{ name: "AUTH_SECRET", type: "secret" }]);
 
 		expect(result).toContain("AUTH_SECRET: string;");
 	});

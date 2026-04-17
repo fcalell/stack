@@ -71,7 +71,6 @@ my-app/
   package.json             # imports: { "#/*": "./src/*" } — alias for app + worker
   tsconfig.json            # extends @fcalell/typescript-config
   biome.json               # extends @fcalell/biome-config
-  vite.config.ts           # defineConfig() from @fcalell/vite (3 lines)
   stack.config.ts          # defineConfig() — single source of truth
   wrangler.toml
   src/
@@ -79,15 +78,12 @@ my-app/
     migrations/            # generated
     worker/
       index.ts             # defineApp() — runtime wiring
-      routes/              # procedures
+      routes/              # procedures (auto-barreled)
     app/
-      entry.tsx            # one line: createApp() from @fcalell/ui/app
-      app.css              # theme token overrides
-      lib/api.ts           # createClient<AppRouter>()
       pages/               # file-based routes (index.tsx, _layout.tsx, [id].tsx, ...)
 ```
 
-Routes under `src/app/pages/` are picked up automatically by the file-based routing plugin in `@fcalell/vite` and consumed by `createApp()`. See [`@fcalell/vite`](packages/vite/README.md#file-based-routing) for the naming conventions.
+The framework handles everything else internally — `index.html`, app entry, CSS, API client, env types, and route barrels are all auto-generated. Override by creating `vite.config.ts`, `src/app/entry.tsx`, or `src/app/app.css`. See [`@fcalell/vite`](packages/vite/README.md) for details.
 
 ## Repository commands
 

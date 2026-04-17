@@ -4,23 +4,27 @@ interface StackConfigOptions {
 	pluginAnswers: Map<string, Record<string, unknown>>;
 }
 
+function toCamelCase(name: string): string {
+	return name.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
+}
+
 export function stackConfigTemplate(options: StackConfigOptions): string {
-	const imports = ['import { defineConfig } from "@fcalell/config";'];
+	const imports = ['import { defineConfig } from "@fcalell/cli";'];
 
 	for (const name of options.plugins) {
-		imports.push(
-			`import { ${name} } from "@fcalell/plugin-${name}";`,
-		);
+		const id = toCamelCase(name);
+		imports.push(`import { ${id} } from "@fcalell/plugin-${name}";`);
 	}
 
 	const pluginCalls: string[] = [];
 	for (const name of options.plugins) {
+		const id = toCamelCase(name);
 		const answers = options.pluginAnswers.get(name);
 		if (answers && Object.keys(answers).length > 0) {
 			const optStr = formatOptions(answers, 2);
-			pluginCalls.push(`\t\t${name}(${optStr})`);
+			pluginCalls.push(`\t\t${id}(${optStr})`);
 		} else {
-			pluginCalls.push(`\t\t${name}()`);
+			pluginCalls.push(`\t\t${id}()`);
 		}
 	}
 
@@ -37,10 +41,7 @@ export function stackConfigTemplate(options: StackConfigOptions): string {
 	return `${imports.join("\n")}\n${lines.join("\n")}`;
 }
 
-function formatOptions(
-	obj: Record<string, unknown>,
-	depth: number,
-): string {
+function formatOptions(obj: Record<string, unknown>, depth: number): string {
 	const indent = "\t".repeat(depth);
 	const innerIndent = "\t".repeat(depth + 1);
 	const entries: string[] = [];

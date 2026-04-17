@@ -1,10 +1,11 @@
+import { spawnSync } from "node:child_process";
 import { intro, log, outro } from "@clack/prompts";
+import { Deploy } from "#events";
 import { loadConfig } from "#lib/config";
 import { discoverPlugins, sortByDependencies } from "#lib/discovery";
-import {
-	createDeployContext,
-	createPluginContext,
-} from "#lib/plugin-context";
+import { sortStepsByPhase } from "#lib/executor";
+import { confirm } from "#lib/prompt";
+import { registerPlugins } from "#lib/registration";
 
 interface DeployOptions {
 	config: string;
@@ -13,22 +14,64 @@ interface DeployOptions {
 export async function deploy(options: DeployOptions): Promise<void> {
 	intro("stack deploy");
 
+	// Build first (includes generate)
 	const { build } = await import("#commands/build");
 	await build(options.config);
 
 	const config = await loadConfig(options.config);
 	const discovered = await discoverPlugins(config);
-	const sorted = sortByDependencies(discovered, config);
+	const sorted = sortByDependencies(discovered);
 	const cwd = process.cwd();
-	const baseCtx = createPluginContext({ cwd, config });
-	const ctx = createDeployContext(baseCtx);
 
-	for (const p of sorted) {
-		if (!p.cli.deploy) continue;
-		log.step(`Deploying ${p.name}...`);
-		await p.cli.deploy(ctx);
-		log.success(`${p.name} deployed`);
+	const bus = registerPlugins(sorted, config, cwd);
+
+	// Deploy.Plan — collect checks
+	const planResult = await bus.emit(Deploy.Plan, { checks: [] });
+
+	if (planResult.checks.length > 0) {
+		log.info("Deploy plan:");
+		for (const check of planResult.checks) {
+			log.info(`  ${check.plugin}: ${check.description}`);
+			for (const item of check.items) {
+				log.info(
+					`    - ${item.label}${item.detail ? ` (${item.detail})` : ""}`,
+				);
+			}
+		}
+
+		if (process.stdin.isTTY) {
+			const ok = await confirm("Proceed with deployment?");
+			if (!ok) {
+				outro("Aborted.");
+				return;
+			}
+		}
 	}
+
+	// Deploy.Execute — collect steps
+	const deployResult = await bus.emit(Deploy.Execute, { steps: [] });
+
+	const steps = sortStepsByPhase(deployResult.steps);
+
+	for (const step of steps) {
+		log.step(`Deploying: ${step.name}`);
+		if ("run" in step) {
+			await step.run();
+		} else {
+			const result = spawnSync(step.exec.command, step.exec.args, {
+				stdio: "inherit",
+				cwd: step.exec.cwd ?? cwd,
+			});
+			if (result.status !== 0) {
+				log.error(`Deploy step "${step.name}" failed`);
+				process.exit(1);
+			}
+		}
+		log.success(`${step.name} deployed`);
+	}
+
+	// Deploy.Complete
+	await bus.emit(Deploy.Complete, undefined as unknown as undefined);
 
 	outro("Deployed");
 }

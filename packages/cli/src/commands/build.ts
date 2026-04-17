@@ -1,56 +1,86 @@
 import { spawnSync } from "node:child_process";
-import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { intro, log, outro } from "@clack/prompts";
+import { Build } from "#events";
+import { hasRuntimeExport } from "#lib/codegen-v2";
 import { loadConfig } from "#lib/config";
 import { discoverPlugins, sortByDependencies } from "#lib/discovery";
-import {
-	createBuildContext,
-	createPluginContext,
-} from "#lib/plugin-context";
+import { sortStepsByPhase } from "#lib/executor";
+import { registerPlugins } from "#lib/registration";
 
 export async function build(configPath: string): Promise<void> {
 	intro("stack build");
 
+	// Generate
 	const { generate } = await import("#commands/generate");
 	await generate(configPath);
 
 	const config = await loadConfig(configPath);
 	const discovered = await discoverPlugins(config);
-	const sorted = sortByDependencies(discovered, config);
+	const sorted = sortByDependencies(discovered);
 	const cwd = process.cwd();
-	const baseCtx = createPluginContext({ cwd, config });
-	const ctx = createBuildContext(baseCtx, join(cwd, "dist"));
 
-	const preBuildFns: Array<() => Promise<void>> = [];
-	const postBuildFns: Array<() => Promise<void>> = [];
+	const bus = registerPlugins(sorted, config, cwd);
 
-	for (const p of sorted) {
-		if (!p.cli.build) continue;
-		const contribution = await p.cli.build(ctx);
-		if (contribution.preBuild) preBuildFns.push(contribution.preBuild);
-		if (contribution.postBuild) postBuildFns.push(contribution.postBuild);
-	}
+	// Build.Configure — collect vitePlugins and codegen metadata
+	await bus.emit(Build.Configure, {
+		vitePlugins: [],
+		viteImports: [],
+		vitePluginCalls: [],
+	});
 
-	for (const fn of preBuildFns) {
-		await fn();
-	}
+	// Build.Start — collect steps
+	const buildResult = await bus.emit(Build.Start, { steps: [] });
 
-	const hasApp = existsSync(join(cwd, "src", "app", "pages"));
-	if (hasApp) {
-		log.step("Building app...");
-		const result = spawnSync("npx", ["stack-vite", "build"], {
-			stdio: "inherit",
+	// Check if any plugin has a worker runtime
+	const hasWorker = sorted.some((p) =>
+		hasRuntimeExport(`@fcalell/plugin-${p.name}`),
+	);
+
+	// If hasWorker, add wrangler bundle step
+	if (hasWorker) {
+		buildResult.steps.push({
+			name: "Bundle worker",
+			phase: "post",
+			exec: {
+				command: "npx",
+				args: [
+					"wrangler",
+					"deploy",
+					"--dry-run",
+					"--outdir",
+					join(cwd, "dist"),
+					"--config",
+					join(cwd, ".stack", "wrangler.toml"),
+				],
+			},
 		});
-		if (result.error || result.status !== 0) {
-			log.error(result.error?.message ?? "App build failed");
-			process.exit(1);
-		}
-		log.success("App built");
 	}
 
-	for (const fn of postBuildFns) {
-		await fn();
+	// Sort steps by phase and execute sequentially
+	const steps = sortStepsByPhase(buildResult.steps);
+
+	for (const step of steps) {
+		const phaseLabel =
+			step.phase === "pre"
+				? "Pre-build"
+				: step.phase === "post"
+					? "Post-build"
+					: "Building";
+		log.step(`${phaseLabel}: ${step.name}`);
+
+		if ("run" in step) {
+			await step.run();
+		} else {
+			const result = spawnSync(step.exec.command, step.exec.args, {
+				stdio: "inherit",
+				cwd: step.exec.cwd ?? cwd,
+			});
+			if (result.status !== 0) {
+				log.error(`${phaseLabel} step "${step.name}" failed`);
+				process.exit(1);
+			}
+		}
 	}
 
 	outro("Build complete");

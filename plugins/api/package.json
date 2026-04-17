@@ -5,17 +5,11 @@
 	"sideEffects": false,
 	"exports": {
 		".": "./src/index.ts",
-		"./cli": "./src/cli.ts",
-		"./runtime": "./src/runtime.ts",
+		"./runtime": "./src/worker/index.ts",
 		"./client": "./src/client.ts",
 		"./schema": "./src/schema.ts",
 		"./lib/cursor": "./src/lib/cursor.ts",
 		"./lib/slugify": "./src/lib/slugify.ts"
-	},
-	"stack-plugin": {
-		"name": "api",
-		"label": "API",
-		"cli": "./src/cli.ts"
 	},
 	"license": "MIT",
 	"scripts": {
@@ -26,7 +20,7 @@
 		"clear": "rm -rf node_modules .turbo"
 	},
 	"dependencies": {
-		"@fcalell/config": "workspace:*",
+		"@fcalell/cli": "workspace:*",
 		"@orpc/client": "^1.13.7",
 		"@orpc/server": "^1.13.7",
 		"drizzle-orm": "^0.45.1",

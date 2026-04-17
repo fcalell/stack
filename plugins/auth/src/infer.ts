@@ -1,4 +1,4 @@
-import type { FieldConfig } from "./index";
+import type { FieldConfig } from "./types";
 
 type FieldType<F extends FieldConfig> = F["type"] extends "string"
 	? string

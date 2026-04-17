@@ -1,6 +1,6 @@
 # @fcalell/plugin-db
 
-Database plugin for the `@fcalell/stack` framework. Wraps Drizzle ORM for Cloudflare D1 and SQLite with WeakMap-cached clients, schema helpers, and CLI hooks for dev/deploy workflows.
+Database plugin for the `@fcalell/stack` framework. Wraps Drizzle ORM for Cloudflare D1 and SQLite with WeakMap-cached clients, schema helpers, and event-driven CLI hooks for dev/deploy workflows.
 
 ## Install
 
@@ -16,16 +16,14 @@ Feature-specific dependencies (`better-sqlite3`) are optional peer deps -- insta
 
 ```ts
 // stack.config.ts
-import { defineConfig } from "@fcalell/config";
+import { defineConfig } from "@fcalell/cli";
 import { db } from "@fcalell/plugin-db";
-import * as schema from "./src/schema";
 
 export default defineConfig({
   plugins: [
     db({
       dialect: "d1",
       databaseId: "9a619a0b-...",
-      schema,
     }),
   ],
 });
@@ -37,9 +35,10 @@ Or for SQLite:
 db({
   dialect: "sqlite",
   path: "./data/app.sqlite",
-  schema,
 })
 ```
+
+Schema is no longer passed in config options. The generated worker imports `src/schema` by convention.
 
 ### 2. Define your schema
 
@@ -94,9 +93,20 @@ Both clients are cached (D1 via `WeakMap`, SQLite via `Map`) so it is safe to ca
 | `dialect` | `"d1" \| "sqlite"` | -- | Required. Database dialect. |
 | `databaseId` | `string` | -- | Required for D1. |
 | `path` | `string` | -- | Required for SQLite. |
-| `schema` | `TSchema \| { path, module }` | -- | Required. Schema module or `{ path, module }` for non-standard layouts. |
 | `migrations` | `string` | `"./src/migrations"` | Migrations directory. |
 | `binding` | `string` | `"DB_MAIN"` | D1 binding name in `wrangler.toml` / env. |
+
+## Commands
+
+The plugin registers subcommands accessible via `stack db <command>`:
+
+| Command | Description |
+|---------|-------------|
+| `stack db push` | Push schema to local database |
+| `stack db generate` | Generate migration files from schema diff |
+| `stack db apply [--remote]` | Apply pending migrations (local or remote D1) |
+| `stack db status` | Show applied vs pending migrations |
+| `stack db reset` | Reset local database (all data will be lost) |
 
 ## Bindings
 
@@ -108,60 +118,70 @@ When `dialect` is `"d1"`, the plugin auto-declares one binding:
 
 Customize via the `binding` option.
 
-## Helper functions
+## Plugin implementation
+
+Built with `createPlugin` from `@fcalell/cli`:
 
 ```ts
-import { getSchemaPath, getSchemaModule, getMigrationsPath } from "@fcalell/plugin-db";
+import { createPlugin } from "@fcalell/cli";
+import { Init, Generate, Remove, Dev, Deploy } from "@fcalell/cli/events";
 
-getSchemaPath(options)      // "./src/schema" or custom path
-getSchemaModule(options)    // the schema module object
-getMigrationsPath(options)  // "./src/migrations" or custom path
+export const db = createPlugin("db", {
+  label: "Database",
+  events: ["SchemaReady"],
+  commands: { push: { ... }, generate: { ... }, apply: { ... }, status: { ... }, reset: { ... } },
+  config(options) { ... },
+  register(ctx, bus, events) {
+    bus.on(Init.Scaffold, (p) => { ... });
+    bus.on(Generate, (p) => { ... });
+    bus.on(Remove, (p) => { ... });
+    bus.on(Dev.Ready, (p) => { ... });
+    bus.on(Deploy.Plan, (p) => { ... });
+  },
+});
 ```
+
+### Event handlers
+
+| Event | Behavior |
+|-------|----------|
+| `Init.Prompt` | Asks for dialect (D1/SQLite), then database ID or file path |
+| `Init.Scaffold` | Writes `src/schema/index.ts` template, creates `src/migrations/`, adds deps, gitignores `.db-kit` |
+| `Generate` | Pushes D1 binding declaration onto the payload |
+| `Remove` | Declares `src/schema/`, `src/migrations/`, and package deps for cleanup |
+| `Dev.Ready` | Pushes schema to local database on start, watches `src/schema/` for changes (300ms debounce) |
+| `Deploy.Plan` | Generates and registers pending migration checks for remote D1 |
+
+### Events emitted
+
+| Event | When |
+|-------|------|
+| `db.events.SchemaReady` | After schema push completes (startup or watch trigger) |
+
+Other plugins (e.g. `auth`) depend on `db.events.SchemaReady` via `depends: [db.events.SchemaReady]`.
+
+### Runtime
+
+The `./runtime` export provides a `RuntimePlugin` for the worker builder chain:
+
+```ts
+import dbRuntime from "@fcalell/plugin-db/runtime";
+
+// Takes plain options -- no config dependency
+dbRuntime({ binding: "DB_MAIN", schema })
+```
+
+Returns `{ db }` to downstream plugins via the builder's context accumulation.
 
 ## Exports
 
 | Subpath | Purpose |
 |---------|---------|
-| `@fcalell/plugin-db` | `db()`, `DbOptions`, `FieldConfig`, `getSchemaPath()`, `getSchemaModule()`, `getMigrationsPath()` |
+| `@fcalell/plugin-db` | `db()`, `DbOptions` |
 | `@fcalell/plugin-db/orm` | Drizzle table/column builders, operators, relations, aggregates |
 | `@fcalell/plugin-db/d1` | `createClient()` for Cloudflare D1 |
 | `@fcalell/plugin-db/sqlite` | `createClient()` for SQLite (requires `better-sqlite3`) |
 | `@fcalell/plugin-db/runtime` | `dbRuntime()` -- runtime plugin factory |
-| `@fcalell/plugin-db/cli` | CLI plugin (detect, scaffold, dev, deploy hooks) |
-
-## For plugin authors / maintainers
-
-### Runtime plugin
-
-`dbRuntime(pluginConfig)` returns a `RuntimePlugin` with:
-
-- **`validateEnv(env)`** -- asserts the D1 binding exists in the environment
-- **`context(env)`** -- reads the D1 binding from `env`, creates a WeakMap-cached Drizzle client, and provides `{ db }` to downstream plugins
-
-### CLI plugin hooks
-
-| Hook | Behavior |
-|------|----------|
-| `detect` | Checks if `"db"` is in the config's plugin list |
-| `prompt` | Asks for dialect (D1/SQLite), then database ID or file path |
-| `scaffold` | Writes `src/schema/index.ts` template, creates `src/migrations/`, adds deps (`@fcalell/plugin-db`, `drizzle-kit`, `tsx`), gitignores `.db-kit` |
-| `bindings` | Returns a D1 binding declaration (for D1 dialect only) |
-| `generate` | No standalone generated files |
-| `dev` | Pushes schema to local database on start, watches `src/schema/` (300ms debounce) for changes |
-| `deploy` | Generates and applies database migrations via drizzle-kit |
-
-### Worker contribution
-
-The plugin contributes only a runtime context provider (no routes, middleware, or handlers):
-
-```ts
-worker: {
-  runtime: {
-    importFrom: "@fcalell/plugin-db/runtime",
-    factory: "dbRuntime",
-  },
-}
-```
 
 ## License
 

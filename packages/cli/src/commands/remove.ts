@@ -1,7 +1,10 @@
 import { log, outro } from "@clack/prompts";
+import { Remove } from "#events";
 import { loadConfig } from "#lib/config";
-import { OFFICIAL_PLUGINS, discoverPlugins } from "#lib/discovery";
-import { createPluginContext } from "#lib/plugin-context";
+import { editConfig } from "#lib/config-writer";
+import { discoverPlugins } from "#lib/discovery";
+import { createEventBus } from "#lib/event-bus";
+import { createRegisterContext } from "#lib/registration";
 
 export async function remove(
 	pluginName: string,
@@ -9,49 +12,67 @@ export async function remove(
 ): Promise<void> {
 	const config = await loadConfig(configPath);
 	const cwd = process.cwd();
-	const ctx = createPluginContext({ cwd, config });
 
-	if (!ctx.hasPlugin(pluginName)) {
+	const hasPlugin = config.plugins.some((p) => p.__plugin === pluginName);
+	if (!hasPlugin) {
 		log.error(`Plugin "${pluginName}" is not in your config.`);
 		process.exit(1);
 	}
 
-	const dependents = config.plugins.filter((p) =>
-		p.requires?.includes(pluginName),
+	const discovered = await discoverPlugins(config);
+
+	// Check if any other plugin depends on this one
+	const dependents = discovered.filter((p) =>
+		p.cli.depends.some((d) => d.source === pluginName),
 	);
 	if (dependents.length > 0) {
-		const names = dependents.map((p) => p.__plugin).join(", ");
+		const names = dependents.map((p) => p.name).join(", ");
 		log.error(
 			`Cannot remove "${pluginName}" — required by: ${names}. Remove those first.`,
 		);
 		process.exit(1);
 	}
 
-	const discovered = await discoverPlugins(config);
 	const plugin = discovered.find((p) => p.name === pluginName);
 
-	if (plugin?.cli.remove) {
-		const result = await plugin.cli.remove(ctx);
+	if (plugin) {
+		const bus = createEventBus();
+		const ctx = createRegisterContext({
+			cwd,
+			options: plugin.options,
+			hasPlugin: (name) => config.plugins.some((pl) => pl.__plugin === name),
+		});
 
-		if (result.filesToDelete?.length) {
-			log.info(`Files to remove: ${result.filesToDelete.join(", ")}`);
+		plugin.cli.register(ctx, bus, plugin.events);
+
+		const result = await bus.emit(Remove, {
+			files: [],
+			dependencies: [],
+		});
+
+		if (result.files.length > 0) {
+			log.info(`Files to remove: ${result.files.join(", ")}`);
 		}
-		if (result.packagesToRemove?.length) {
-			log.info(
-				`Packages to remove: ${result.packagesToRemove.join(", ")}`,
-			);
-		}
-		if (result.notes?.length) {
-			for (const note of result.notes) {
-				log.info(note);
-			}
+		if (result.dependencies.length > 0) {
+			log.info(`Packages to remove: ${result.dependencies.join(", ")}`);
 		}
 	}
 
-	await ctx.removePluginFromConfig(pluginName);
+	// Remove plugin from config file
+	const fullConfigPath = `${cwd}/${configPath}`;
+	await editConfig(fullConfigPath, ({ config: ast }) => {
+		if (Array.isArray(ast.plugins)) {
+			const idx = ast.plugins.findIndex(
+				// biome-ignore lint/suspicious/noExplicitAny: magicast proxies are dynamically typed
+				(p: any) => p?.$type === "function-call" && p.$callee === pluginName,
+			);
+			if (idx >= 0) {
+				ast.plugins.splice(idx, 1);
+			}
+		}
+	});
 
-	const pluginInfo = OFFICIAL_PLUGINS.find((p) => p.name === pluginName);
-	const label = pluginInfo?.label ?? pluginName;
+	const label = plugin?.cli.label ?? pluginName;
 
 	const { generate } = await import("#commands/generate");
 	try {

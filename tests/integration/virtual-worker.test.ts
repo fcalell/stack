@@ -1,79 +1,59 @@
+import { generateVirtualWorkerV2 } from "@fcalell/cli/codegen";
 import { describe, expect, it } from "vitest";
-import { generateVirtualWorker } from "@fcalell/cli/codegen";
 
-describe("generateVirtualWorker", () => {
+describe("generateVirtualWorkerV2", () => {
 	it("full-stack config produces correct imports and builder chain", () => {
-		const result = generateVirtualWorker({
+		const result = generateVirtualWorkerV2({
 			plugins: [
 				{
 					name: "db",
-					worker: {
-						runtime: {
-							importFrom: "@fcalell/plugin-db/runtime",
-							factory: "dbRuntime",
-						},
-					},
+					packageName: "@fcalell/plugin-db",
+					hasRuntime: true,
+					hasCallbacks: false,
+					options: { dialect: "d1", databaseId: "test-id" },
 				},
 				{
 					name: "auth",
-					worker: {
-						runtime: {
-							importFrom: "@fcalell/plugin-auth/runtime",
-							factory: "authRuntime",
-						},
-						callbacks: {
-							required: false,
-							defineHelper: "defineAuthCallbacks",
-							importFrom: "@fcalell/plugin-auth",
-						},
-						routes: true,
-					},
+					packageName: "@fcalell/plugin-auth",
+					hasRuntime: true,
+					hasCallbacks: true,
+					options: {},
 				},
 				{
 					name: "api",
-					worker: {
-						runtime: {
-							importFrom: "@fcalell/plugin-api/runtime",
-							factory: "createWorker",
-						},
-						routes: true,
-						middleware: true,
-					},
-				},
-				{
-					name: "app",
-					worker: undefined,
+					packageName: "@fcalell/plugin-api",
+					hasRuntime: true,
+					hasCallbacks: false,
+					options: { cors: "https://example.com" },
 				},
 			],
+			hasSchema: true,
 			hasMiddleware: true,
 			hasRoutes: true,
-			callbackFiles: ["auth"],
+			domain: "example.com",
 		});
 
-		expect(result).toContain('import config from "../stack.config"');
-		expect(result).toContain('import { getPlugin } from "@fcalell/config"');
 		expect(result).toContain(
-			'import { createWorker } from "@fcalell/plugin-db/runtime"',
+			'import createWorker from "@fcalell/plugin-api/runtime"',
 		);
 		expect(result).toContain(
-			'import { dbRuntime } from "@fcalell/plugin-db/runtime"',
+			'import dbRuntime from "@fcalell/plugin-db/runtime"',
 		);
 		expect(result).toContain(
-			'import { authRuntime } from "@fcalell/plugin-auth/runtime"',
+			'import authRuntime from "@fcalell/plugin-auth/runtime"',
 		);
 		expect(result).toContain(
-			'import { createWorker } from "@fcalell/plugin-api/runtime"',
+			'import authCallbacks from "../src/worker/plugins/auth"',
 		);
-		expect(result).toContain('import authCallbacks from "../src/worker/plugins/auth"');
-		expect(result).toContain(
-			'import * as routes from "../src/worker/routes"',
-		);
+		expect(result).toContain('import * as schema from "../src/schema"');
+		expect(result).toContain('import * as routes from "../src/worker/routes"');
 		expect(result).toContain(
 			'import middleware from "../src/worker/middleware"',
 		);
 		expect(result).toContain(".use(dbRuntime(");
+		expect(result).toContain("schema");
 		expect(result).toContain(".use(authRuntime(");
-		expect(result).toContain("authCallbacks)");
+		expect(result).toContain("authCallbacks");
 		expect(result).toContain(".use(middleware)");
 		expect(result).toContain(".handler(routes)");
 		expect(result).toContain("export type AppRouter");
@@ -81,31 +61,26 @@ describe("generateVirtualWorker", () => {
 	});
 
 	it("API-only config (no auth) produces simpler worker", () => {
-		const result = generateVirtualWorker({
+		const result = generateVirtualWorkerV2({
 			plugins: [
 				{
 					name: "db",
-					worker: {
-						runtime: {
-							importFrom: "@fcalell/plugin-db/runtime",
-							factory: "dbRuntime",
-						},
-					},
+					packageName: "@fcalell/plugin-db",
+					hasRuntime: true,
+					hasCallbacks: false,
+					options: { dialect: "d1", databaseId: "test-id" },
 				},
 				{
 					name: "api",
-					worker: {
-						runtime: {
-							importFrom: "@fcalell/plugin-api/runtime",
-							factory: "createWorker",
-						},
-						routes: true,
-					},
+					packageName: "@fcalell/plugin-api",
+					hasRuntime: true,
+					hasCallbacks: false,
+					options: {},
 				},
 			],
+			hasSchema: true,
 			hasMiddleware: false,
 			hasRoutes: true,
-			callbackFiles: [],
 		});
 
 		expect(result).toContain("dbRuntime");
@@ -118,63 +93,74 @@ describe("generateVirtualWorker", () => {
 		const basePlugins = [
 			{
 				name: "api",
-				worker: {
-					runtime: {
-						importFrom: "@fcalell/plugin-api/runtime",
-						factory: "createWorker",
-					},
-				},
+				packageName: "@fcalell/plugin-api",
+				hasRuntime: true,
+				hasCallbacks: false,
+				options: {},
 			},
 		];
 
-		const withMiddleware = generateVirtualWorker({
+		const withMiddleware = generateVirtualWorkerV2({
 			plugins: basePlugins,
+			hasSchema: false,
 			hasMiddleware: true,
 			hasRoutes: false,
-			callbackFiles: [],
 		});
 
-		const withoutMiddleware = generateVirtualWorker({
+		const withoutMiddleware = generateVirtualWorkerV2({
 			plugins: basePlugins,
+			hasSchema: false,
 			hasMiddleware: false,
 			hasRoutes: false,
-			callbackFiles: [],
 		});
 
 		expect(withMiddleware).toContain("middleware");
 		expect(withoutMiddleware).not.toContain("middleware");
 	});
 
-	it("callback imports are included only when callback files exist", () => {
-		const plugins = [
-			{
-				name: "auth",
-				worker: {
-					runtime: {
-						importFrom: "@fcalell/plugin-auth/runtime",
-						factory: "authRuntime",
-					},
-					callbacks: {
-						required: false,
-						defineHelper: "defineAuthCallbacks",
-						importFrom: "@fcalell/plugin-auth",
-					},
+	it("callback imports are included only when plugin hasCallbacks is true", () => {
+		const withCallbacks = generateVirtualWorkerV2({
+			plugins: [
+				{
+					name: "auth",
+					packageName: "@fcalell/plugin-auth",
+					hasRuntime: true,
+					hasCallbacks: true,
+					options: {},
 				},
-			},
-		];
-
-		const withCallbacks = generateVirtualWorker({
-			plugins,
+				{
+					name: "api",
+					packageName: "@fcalell/plugin-api",
+					hasRuntime: true,
+					hasCallbacks: false,
+					options: {},
+				},
+			],
+			hasSchema: false,
 			hasMiddleware: false,
 			hasRoutes: false,
-			callbackFiles: ["auth"],
 		});
 
-		const withoutCallbacks = generateVirtualWorker({
-			plugins,
+		const withoutCallbacks = generateVirtualWorkerV2({
+			plugins: [
+				{
+					name: "auth",
+					packageName: "@fcalell/plugin-auth",
+					hasRuntime: true,
+					hasCallbacks: false,
+					options: {},
+				},
+				{
+					name: "api",
+					packageName: "@fcalell/plugin-api",
+					hasRuntime: true,
+					hasCallbacks: false,
+					options: {},
+				},
+			],
+			hasSchema: false,
 			hasMiddleware: false,
 			hasRoutes: false,
-			callbackFiles: [],
 		});
 
 		expect(withCallbacks).toContain("authCallbacks");
@@ -185,27 +171,25 @@ describe("generateVirtualWorker", () => {
 		const plugins = [
 			{
 				name: "api",
-				worker: {
-					runtime: {
-						importFrom: "@fcalell/plugin-api/runtime",
-						factory: "createWorker",
-					},
-				},
+				packageName: "@fcalell/plugin-api",
+				hasRuntime: true,
+				hasCallbacks: false,
+				options: {},
 			},
 		];
 
-		const withRoutes = generateVirtualWorker({
+		const withRoutes = generateVirtualWorkerV2({
 			plugins,
+			hasSchema: false,
 			hasMiddleware: false,
 			hasRoutes: true,
-			callbackFiles: [],
 		});
 
-		const withoutRoutes = generateVirtualWorker({
+		const withoutRoutes = generateVirtualWorkerV2({
 			plugins,
+			hasSchema: false,
 			hasMiddleware: false,
 			hasRoutes: false,
-			callbackFiles: [],
 		});
 
 		expect(withRoutes).toContain(
@@ -217,21 +201,26 @@ describe("generateVirtualWorker", () => {
 	});
 
 	it("generated code has correct structure (imports, builder chain, export)", () => {
-		const result = generateVirtualWorker({
+		const result = generateVirtualWorkerV2({
 			plugins: [
 				{
 					name: "db",
-					worker: {
-						runtime: {
-							importFrom: "@fcalell/plugin-db/runtime",
-							factory: "dbRuntime",
-						},
-					},
+					packageName: "@fcalell/plugin-db",
+					hasRuntime: true,
+					hasCallbacks: false,
+					options: {},
+				},
+				{
+					name: "api",
+					packageName: "@fcalell/plugin-api",
+					hasRuntime: true,
+					hasCallbacks: false,
+					options: {},
 				},
 			],
+			hasSchema: false,
 			hasMiddleware: false,
 			hasRoutes: false,
-			callbackFiles: [],
 		});
 
 		const lines = result.split("\n");
@@ -241,7 +230,7 @@ describe("generateVirtualWorker", () => {
 		const importLines = lines.filter((l) => l.startsWith("import"));
 		expect(importLines.length).toBeGreaterThanOrEqual(2);
 
-		expect(result).toContain("const worker = createWorker(config)");
+		expect(result).toContain("const worker = createWorker(");
 		expect(result).toContain("export default worker");
 	});
 });

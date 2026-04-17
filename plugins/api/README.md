@@ -1,6 +1,6 @@
 # @fcalell/plugin-api
 
-API plugin for the `@fcalell/stack` framework. Wraps Hono + oRPC + Zod so consumers only define procedures. Provides the builder chain, procedure factory, typed RPC client, and CLI hooks for dev/build/deploy.
+API plugin for the `@fcalell/stack` framework. Wraps Hono + oRPC + Zod so consumers only define procedures. Provides the builder chain, procedure factory, typed RPC client, and event-driven CLI hooks for dev/build/deploy.
 
 **Stack:** Hono + oRPC + Zod (all internal -- consumers don't import them)
 
@@ -16,14 +16,13 @@ pnpm add @fcalell/plugin-api
 
 ```ts
 // stack.config.ts
-import { defineConfig } from "@fcalell/config";
+import { defineConfig } from "@fcalell/cli";
 import { api } from "@fcalell/plugin-api";
 import { db } from "@fcalell/plugin-db";
-import * as schema from "./src/schema";
 
 export default defineConfig({
   plugins: [
-    db({ dialect: "d1", databaseId: "9a619a0b-...", schema }),
+    db({ dialect: "d1", databaseId: "9a619a0b-..." }),
     api({
       cors: ["https://app.example.com"],
       prefix: "/rpc",
@@ -34,24 +33,26 @@ export default defineConfig({
 
 The `api` plugin has no required dependencies -- it can be used standalone, though most setups pair it with `db` and `auth`.
 
-### 2. Build the worker
+### 2. Worker (generated)
+
+The CLI generates `.stack/worker.ts` automatically. The generated worker uses the builder chain with inlined options:
 
 ```ts
-// src/worker/index.ts
-import { createWorker } from "@fcalell/plugin-api/runtime";
-import { dbRuntime } from "@fcalell/plugin-db/runtime";
-import config from "../../stack.config";
-import * as routes from "./routes";
+// .stack/worker.ts (generated)
+import createWorker from "@fcalell/plugin-api/runtime";
+import dbRuntime from "@fcalell/plugin-db/runtime";
+import * as schema from "../src/schema";
+import * as routes from "../src/worker/routes";
 
-const worker = createWorker(config)
-  .use(dbRuntime(getPlugin(config, "db")))
+const worker = createWorker({ cors: ["https://app.example.com"] })
+  .use(dbRuntime({ binding: "DB_MAIN", schema }))
   .handler(routes);
 
 export type AppRouter = typeof worker._router;
 export default worker;
 ```
 
-The builder chain (`createWorker(config).use(plugin).handler(routes)`) accumulates context from each `.use()` call. The final `.handler()` creates a Hono app with CORS, logging, secure headers, and the oRPC handler mounted at the configured prefix.
+The builder chain (`createWorker(options).use(plugin).handler(routes)`) accumulates context from each `.use()` call. The final `.handler()` creates a Hono app with CORS, logging, secure headers, and the oRPC handler mounted at the configured prefix.
 
 ### 3. Write procedures
 
@@ -145,7 +146,7 @@ const withProject: Middleware<
 
 ### 7. Client (frontend)
 
-When using `@fcalell/plugin-app`, a typed client is available as a virtual module:
+When using `@fcalell/plugin-solid`, a typed client is available as a virtual module:
 
 ```ts
 import { api } from "virtual:fcalell-api-client";
@@ -177,7 +178,7 @@ throw new ApiError("FORBIDDEN", { message: "Insufficient permissions" });
 ### 9. Router type export
 
 ```ts
-const worker = createWorker(config).use(...).handler(routes);
+const worker = createWorker(options).use(...).handler(routes);
 export type AppRouter = typeof worker._router;
 export default worker;
 ```
@@ -230,71 +231,56 @@ const { slugify: s, isReserved } = createSlugify(["admin", "api", "system"]);
 
 Default reserved slugs: `admin`, `api`, `system`, `auth`, `new`, `settings`.
 
+## Plugin implementation
+
+Built with `createPlugin` from `@fcalell/cli`:
+
+```ts
+import { createPlugin } from "@fcalell/cli";
+import { Init, Generate, Remove, Dev } from "@fcalell/cli/events";
+
+export const api = createPlugin("api", {
+  label: "API",
+  config(options) { ... },
+  register(ctx, bus) {
+    bus.on(Init.Scaffold, (p) => { ... });
+    bus.on(Generate, (p) => { ... });
+    bus.on(Remove, (p) => { ... });
+    bus.on(Dev.Start, (p) => { ... });
+  },
+});
+```
+
+### Event handlers
+
+| Event | Behavior |
+|-------|----------|
+| `Init.Scaffold` | Creates `wrangler.toml`, adds deps (`@fcalell/plugin-api`, `wrangler`), gitignores `.wrangler`, `.stack` |
+| `Generate` | Generates `src/worker/routes/index.ts` barrel file from route files |
+| `Remove` | Declares `src/worker/routes/` and package deps for cleanup |
+| `Dev.Start` | Starts wrangler dev server, watches `src/worker/routes/` for file add/remove to regenerate the barrel (300ms debounce) |
+
+### Runtime
+
+The `./runtime` export provides `createWorker()` for building the worker:
+
+```ts
+import createWorker from "@fcalell/plugin-api/runtime";
+
+// Takes plain ApiWorkerOptions -- no config dependency
+createWorker({ cors: ["https://app.example.com"], prefix: "/rpc" })
+```
+
 ## Exports
 
 | Subpath | Purpose |
 |---------|---------|
 | `@fcalell/plugin-api` | `api()`, `ApiOptions`, `ApiError`, `Middleware`, `InferRouter` |
-| `@fcalell/plugin-api/runtime` | `createWorker()`, `RuntimePlugin`, `AppBuilder`, `WorkerExport` |
+| `@fcalell/plugin-api/runtime` | `createWorker()`, `RuntimePlugin`, `AppBuilder`, `WorkerExport`, `ApiWorkerOptions` |
 | `@fcalell/plugin-api/client` | `createClient()`, `RouterClient`, `ClientConfig` |
 | `@fcalell/plugin-api/schema` | `z` (Zod re-export), `ZodObject`, `ZodType`, `ZodRawShape` |
 | `@fcalell/plugin-api/lib/cursor` | `encodeCursor`, `decodeCursor`, `paginate`, `clampLimit`, constants |
 | `@fcalell/plugin-api/lib/slugify` | `slugify`, `isReservedSlug`, `createSlugify` |
-| `@fcalell/plugin-api/cli` | CLI plugin (detect, scaffold, dev, build, deploy hooks) |
-
-## For plugin authors / maintainers
-
-### Builder chain internals
-
-`createWorker(config)` reads the `api` plugin options from the config and returns an `AppBuilder`. The builder maintains an ordered list of `UseEntry` items (either `RuntimePlugin` instances or plain functions). On `.handler(routes)`:
-
-1. All plugin entries contribute routes via their `routes()` method
-2. Plugin routes are merged with consumer routes (consumer routes take precedence)
-3. An oRPC `RPCHandler` is created with request/response header plugins
-4. A Hono app is created with logger, secure headers, and optional CORS middleware
-5. On each POST to `{prefix}/*`, the builder validates env, builds context by calling each entry in order, and delegates to the oRPC handler
-6. Plugin collision detection prevents registering two plugins with the same name
-
-### RuntimePlugin interface
-
-```ts
-interface RuntimePlugin<TName, TDeps, TProvides> {
-  name: TName;
-  validateEnv?(env: unknown): void;
-  context(env: unknown, upstream: TDeps): TProvides | Promise<TProvides>;
-  routes?(procedure: any): Record<string, Procedure>;
-}
-```
-
-Plugins can also expose `handlers()` returning `{ scheduled?, queue?, email? }` for non-fetch Cloudflare Worker event handlers.
-
-### CLI plugin hooks
-
-| Hook | Behavior |
-|------|----------|
-| `detect` | Checks if `"api"` is in the config's plugin list |
-| `prompt` | No prompts (returns `{}`) |
-| `scaffold` | Creates `src/worker/routes/`, writes `wrangler.toml` (D1 only), adds deps (`@fcalell/plugin-api`, `wrangler`), gitignores `.wrangler`, `.stack` |
-| `bindings` | No bindings (returns `[]`) |
-| `generate` | Generates `src/worker/routes/index.ts` barrel file from route files |
-| `dev` | Starts wrangler dev server, watches `src/worker/routes/` for file add/remove to regenerate the barrel (300ms debounce) |
-| `build` | Post-build hook placeholder for wrangler build |
-| `deploy` | Deploys the API worker |
-
-### Worker contribution
-
-The plugin contributes runtime, routes, and middleware:
-
-```ts
-worker: {
-  runtime: {
-    importFrom: "@fcalell/plugin-api/runtime",
-    factory: "createWorker",
-  },
-  routes: true,
-  middleware: true,
-}
-```
 
 ## License
 

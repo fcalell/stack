@@ -1,6 +1,6 @@
 # @fcalell/plugin-auth
 
-Authentication plugin for the `@fcalell/stack` framework. Wraps Better Auth with OTP login, organization RBAC, and session management -- all driven by config. Requires the `db` plugin.
+Authentication plugin for the `@fcalell/stack` framework. Wraps Better Auth with OTP login, organization RBAC, and session management -- all driven by config. Depends on the `db` plugin via `db.events.SchemaReady`.
 
 ## Install
 
@@ -14,14 +14,13 @@ pnpm add @fcalell/plugin-auth
 
 ```ts
 // stack.config.ts
-import { defineConfig } from "@fcalell/config";
+import { defineConfig } from "@fcalell/cli";
 import { db } from "@fcalell/plugin-db";
 import { auth } from "@fcalell/plugin-auth";
-import * as schema from "./src/schema";
 
 export default defineConfig({
   plugins: [
-    db({ dialect: "d1", databaseId: "9a619a0b-...", schema }),
+    db({ dialect: "d1", databaseId: "9a619a0b-..." }),
     auth({
       cookies: { prefix: "myapp", domain: ".example.com" },
       session: {
@@ -40,7 +39,7 @@ export default defineConfig({
 });
 ```
 
-The `auth` plugin requires `db` -- the framework validates this at config time.
+The `auth` plugin depends on `db` -- the CLI validates this via `depends: [db.events.SchemaReady]`.
 
 ### 2. Define callbacks
 
@@ -48,22 +47,21 @@ Runtime secrets and email callbacks live in a separate file, scaffolded automati
 
 ```ts
 // src/worker/plugins/auth.ts
-import { defineAuthCallbacks } from "@fcalell/plugin-auth";
+import { auth } from "@fcalell/plugin-auth";
 
-export default defineAuthCallbacks({
-  async sendOTP({ email, otp }) {
-    await resend.emails.send({ to: email, subject: "Your code", text: otp });
+export default auth.defineCallbacks({
+  sendOTP({ email, code }) {
+    // TODO: send OTP email
+    console.log(`OTP for ${email}: ${code}`);
   },
-  async sendInvitation({ email, organization, invitedBy }) {
-    await resend.emails.send({
-      to: email,
-      subject: `Join ${organization.name}`,
-    });
+  sendInvitation({ email, orgName }) {
+    // TODO: send invitation email
+    console.log(`Invitation for ${email} to ${orgName}`);
   },
 });
 ```
 
-`sendOTP` is required; `sendInvitation` is optional (only needed when organizations are enabled).
+`auth.defineCallbacks()` is a typed identity function -- it enforces the callback shapes declared via `callback<T>()` in the plugin definition. `sendOTP` is required; `sendInvitation` is optional (only needed when organizations are enabled).
 
 ### 3. Organizations and RBAC
 
@@ -137,7 +135,7 @@ type Session = InferSession<typeof config>;
 
 ## Bindings
 
-The plugin auto-declares four bindings:
+The plugin auto-declares four bindings (pushed onto the `Generate` payload):
 
 | Binding | Type | Default name | Dev default |
 |---------|------|--------------|-------------|
@@ -148,61 +146,56 @@ The plugin auto-declares four bindings:
 
 All binding names are customizable via config options.
 
+## Plugin implementation
+
+Built with `createPlugin` from `@fcalell/cli`:
+
+```ts
+import { createPlugin, callback } from "@fcalell/cli";
+import { Init, Generate, Remove } from "@fcalell/cli/events";
+import { db } from "@fcalell/plugin-db";
+
+export const auth = createPlugin("auth", {
+  label: "Auth",
+  depends: [db.events.SchemaReady],
+  callbacks: {
+    sendOTP: callback<{ email: string; code: string }>(),
+    sendInvitation: callback<{ email: string; orgName: string }>(),
+  },
+  config(options) { ... },
+  register(ctx, bus) { ... },
+});
+```
+
+### Event handlers
+
+| Event | Behavior |
+|-------|----------|
+| `Init.Prompt` | Asks for cookie prefix and whether to include organizations |
+| `Init.Scaffold` | Writes `src/worker/plugins/auth.ts` callback template, adds `@fcalell/plugin-auth` dependency |
+| `Generate` | Pushes 4 binding declarations (auth secret, app URL, IP rate limiter, email rate limiter) |
+| `Remove` | Declares `src/worker/plugins/auth.ts` and `@fcalell/plugin-auth` for cleanup |
+
+### Runtime
+
+The `./runtime` export provides `authRuntime()` for the worker builder chain:
+
+```ts
+import authRuntime from "@fcalell/plugin-auth/runtime";
+
+authRuntime({ secretVar: "AUTH_SECRET", ... }, callbacks)
+```
+
+Receives `{ db }` from the upstream db plugin and provides `{ auth }` to downstream plugins.
+
 ## Exports
 
 | Subpath | Purpose |
 |---------|---------|
-| `@fcalell/plugin-auth` | `auth()`, `AuthOptions`, `FieldConfig`, `defineAuthCallbacks`, `AuthCallbacks` |
+| `@fcalell/plugin-auth` | `auth()`, `AuthOptions` |
 | `@fcalell/plugin-auth/access` | `createAccessControl()`, `getStatements()`, `defaultOrgRoles` |
 | `@fcalell/plugin-auth/infer` | `InferUser<T>`, `InferSession<T>` -- type utilities derived from config |
 | `@fcalell/plugin-auth/runtime` | `authRuntime()` -- runtime plugin factory |
-| `@fcalell/plugin-auth/cli` | CLI plugin (detect, scaffold, bindings, generate hooks) |
-
-## For plugin authors / maintainers
-
-### Runtime plugin
-
-`authRuntime(pluginConfig, callbacks?)` returns a `RuntimePlugin` with:
-
-- **`validateEnv(env)`** -- asserts the auth secret env var exists
-- **`context(env, upstream)`** -- receives `{ db }` from the upstream db plugin, creates the Better Auth instance, and provides `{ auth }` to downstream plugins
-
-The runtime depends on `{ db }` from the `db` plugin (enforced by `requires: ["db"]` in config).
-
-### Callbacks
-
-`defineAuthCallbacks()` is a typed identity function for the callback file at `src/worker/plugins/auth.ts`. The `AuthCallbacks` interface requires `sendOTP` and optionally accepts `sendInvitation`.
-
-### CLI plugin hooks
-
-| Hook | Behavior |
-|------|----------|
-| `detect` | Checks if `"auth"` is in the config's plugin list |
-| `prompt` | Asks for cookie prefix and whether to include organizations |
-| `scaffold` | Writes `src/worker/plugins/auth.ts` callback template, adds `@fcalell/plugin-auth` dependency |
-| `bindings` | Returns 4 binding declarations: auth secret, app URL, IP rate limiter, email rate limiter |
-| `generate` | No standalone generated files (auth schema generation is handled by the db plugin) |
-
-### Worker contribution
-
-The plugin contributes runtime context, callbacks, and routes:
-
-```ts
-worker: {
-  runtime: {
-    importFrom: "@fcalell/plugin-auth/runtime",
-    factory: "authRuntime",
-  },
-  callbacks: {
-    required: false,
-    defineHelper: "defineAuthCallbacks",
-    importFrom: "@fcalell/plugin-auth",
-  },
-  routes: true,
-}
-```
-
-When `routes: true`, the auth plugin auto-generates auth procedures (getSession, signOut, sendOtp, verifyOtp, updateUser, setActiveOrganization) that are merged into the worker's router.
 
 ## License
 

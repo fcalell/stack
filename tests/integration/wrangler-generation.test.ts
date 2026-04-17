@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest";
+import type { BindingDeclaration } from "@fcalell/cli";
 import { generateWranglerToml } from "@fcalell/cli/codegen";
-import type { BindingDeclaration } from "@fcalell/config";
+import { describe, expect, it } from "vitest";
 
 describe("generateWranglerToml", () => {
 	it("D1 binding produces [[d1_databases]] section", () => {
@@ -82,7 +82,7 @@ main = "src/worker/index.ts"`;
 
 		expect(result).toContain('name = "test-app"');
 		expect(result).toContain("compatibility_date");
-		expect(result).toContain('main = ".stack/worker.ts"');
+		expect(result).toContain('main = "worker.ts"');
 	});
 
 	it("multiple binding types produce all sections correctly", () => {

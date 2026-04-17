@@ -1,10 +1,5 @@
 import { writeFile as fsWriteFile } from "node:fs/promises";
-import {
-	builders,
-	generateCode,
-	loadFile,
-	type ProxifiedModule,
-} from "magicast";
+import { generateCode, loadFile, type ProxifiedModule } from "magicast";
 
 interface ConfigAst {
 	mod: ProxifiedModule;
@@ -95,19 +90,4 @@ export class EditConfigError extends Error {
 		);
 		this.name = "EditConfigError";
 	}
-}
-
-/**
- * Build an inlined `createAccessControl({...})` function-call expression
- * suitable for assignment via magicast.
- */
-export function createAccessControlExpression(
-	statements: Record<string, readonly string[]>,
-	// biome-ignore lint/suspicious/noExplicitAny: magicast function-call builder is dynamically typed
-): any {
-	const statementsObject: Record<string, string[]> = {};
-	for (const [key, value] of Object.entries(statements)) {
-		statementsObject[key] = [...value];
-	}
-	return builders.functionCall("createAccessControl", statementsObject);
 }

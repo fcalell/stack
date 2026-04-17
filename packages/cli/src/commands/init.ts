@@ -1,10 +1,11 @@
 import { existsSync, mkdirSync } from "node:fs";
-import { basename, join } from "node:path";
+import { basename } from "node:path";
 import { intro, log, note, outro } from "@clack/prompts";
-import type { CliPlugin } from "@fcalell/config/plugin";
-import { OFFICIAL_PLUGINS } from "#lib/discovery";
+import { Init } from "#events";
+import { dependencyNames, loadAvailablePlugins } from "#lib/discovery";
+import { createEventBus } from "#lib/event-bus";
 import { ask, multi } from "#lib/prompt";
-import { createPluginContext } from "#lib/plugin-context";
+import { createRegisterContext } from "#lib/registration";
 import { announceCreated, scaffoldFiles } from "#lib/scaffold";
 import { biomeTemplate } from "#templates/biome";
 import { gitignoreTemplate } from "#templates/gitignore";
@@ -33,22 +34,25 @@ async function run(dir: string): Promise<void> {
 	let selectedPlugins: string[] = [];
 	let domain = "example.com";
 
+	const available = await loadAvailablePlugins();
+	const selectablePlugins = available.filter((p) => !p.cli.implicit);
+
 	if (process.stdin.isTTY) {
 		selectedPlugins = await multi("Which plugins do you want?", [
-			...OFFICIAL_PLUGINS.map((p) => ({
-				label: `${p.label}  (@fcalell/plugin-${p.name})`,
+			...selectablePlugins.map((p) => ({
+				label: `${p.cli.label}  (@fcalell/plugin-${p.name})`,
 				value: p.name,
 			})),
 		]);
 
 		// Auto-select required dependencies
 		for (const name of [...selectedPlugins]) {
-			const info = OFFICIAL_PLUGINS.find((p) => p.name === name);
-			if (info?.requires) {
-				for (const req of info.requires) {
+			const info = available.find((p) => p.name === name);
+			if (info) {
+				for (const req of dependencyNames(info)) {
 					if (!selectedPlugins.includes(req)) {
 						log.warn(
-							`${info.label} requires ${req} — adding automatically.`,
+							`${info.cli.label} requires ${req} — adding automatically.`,
 						);
 						selectedPlugins.unshift(req);
 					}
@@ -60,7 +64,8 @@ async function run(dir: string): Promise<void> {
 	}
 
 	const name = basename(dir);
-	const hasApp = selectedPlugins.includes("app");
+	const hasSolid =
+		selectedPlugins.includes("solid") || selectedPlugins.includes("solid-ui");
 
 	// Scaffold base files
 	const created = scaffoldFiles([
@@ -71,39 +76,41 @@ async function run(dir: string): Promise<void> {
 				plugins: selectedPlugins,
 			}),
 		],
-		["tsconfig.json", tsconfigTemplate({ app: hasApp })],
+		["tsconfig.json", tsconfigTemplate({ app: hasSolid })],
 		["biome.json", biomeTemplate()],
 		[".gitignore", gitignoreTemplate({ plugins: selectedPlugins })],
 	]);
 	announceCreated(created);
 
-	// Load and run prompts + scaffold for each selected plugin
+	// Load and register each selected plugin via the event bus
+	const bus = createEventBus();
 	const pluginAnswers = new Map<string, Record<string, unknown>>();
 
 	for (const pluginName of selectedPlugins) {
-		const info = OFFICIAL_PLUGINS.find((p) => p.name === pluginName);
-		if (!info) continue;
+		const plugin = available.find((p) => p.name === pluginName);
+		if (!plugin) continue;
 
-		let cli: CliPlugin;
-		try {
-			const mod = await import(`${info.packageName}/cli`);
-			cli = mod.default ?? mod;
-		} catch {
-			log.warn(
-				`Could not load ${info.packageName} — it will be set up after install.`,
-			);
-			continue;
-		}
+		const ctx = createRegisterContext({
+			cwd: dir,
+			options: {},
+			hasPlugin: (n) => selectedPlugins.includes(n),
+		});
 
-		const ctx = createPluginContext({ cwd: dir, config: null });
+		plugin.cli.register(ctx, bus, plugin.events);
+		pluginAnswers.set(pluginName, {});
+	}
 
-		let answers: Record<string, unknown> = {};
-		if (process.stdin.isTTY && cli.prompt) {
-			answers = await cli.prompt(ctx);
-		}
-		pluginAnswers.set(pluginName, answers);
+	// Emit scaffold event to let plugins contribute files
+	const scaffold = await bus.emit(Init.Scaffold, {
+		files: [],
+		dependencies: {},
+		devDependencies: {},
+		gitignore: [],
+	});
 
-		await cli.scaffold(ctx, answers);
+	// Write plugin-contributed scaffold files
+	for (const file of scaffold.files) {
+		scaffoldFiles([[file.path, file.content]]);
 	}
 
 	// Generate stack.config.ts

@@ -1,84 +1,116 @@
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { log, outro } from "@clack/prompts";
-import { loadConfig } from "#lib/config";
-import {
-	OFFICIAL_PLUGINS,
-	discoverPlugins,
-} from "#lib/discovery";
-import { createPluginContext } from "#lib/plugin-context";
+import { Init } from "#events";
+import { editConfig } from "#lib/config-writer";
+import { dependencyNames, loadAvailablePlugins } from "#lib/discovery";
+import { createEventBus } from "#lib/event-bus";
+import { createRegisterContext } from "#lib/registration";
+import { scaffoldFiles } from "#lib/scaffold";
 
 export async function add(
 	pluginName: string,
 	configPath: string,
 ): Promise<void> {
-	const pluginInfo = OFFICIAL_PLUGINS.find((p) => p.name === pluginName);
+	const available = await loadAvailablePlugins();
+	const pluginInfo = available.find((p) => p.name === pluginName);
 	if (!pluginInfo) {
 		log.error(`Unknown plugin: "${pluginName}"`);
 		log.info(
-			`Available plugins: ${OFFICIAL_PLUGINS.map((p) => p.name).join(", ")}`,
+			`Available plugins: ${available
+				.filter((p) => !p.cli.implicit)
+				.map((p) => p.name)
+				.join(", ")}`,
 		);
 		process.exit(1);
 	}
 
-	const packageName = pluginInfo.packageName;
-
-	let cli: Awaited<ReturnType<typeof discoverPlugins>>[number]["cli"];
-	try {
-		const mod = await import(`${packageName}/cli`);
-		cli = mod.default ?? mod;
-	} catch {
-		log.error(
-			`Plugin package "${packageName}" not found. Run: pnpm add ${packageName}`,
-		);
-		process.exit(1);
-	}
-
-	let config: Awaited<ReturnType<typeof loadConfig>> | null = null;
-	try {
-		config = await loadConfig(configPath);
-	} catch {
-		// Config may not exist yet — that's OK for some plugins
-	}
-
+	const packageName = `@fcalell/plugin-${pluginName}`;
 	const cwd = process.cwd();
-	const ctx = createPluginContext({ cwd, config });
 
-	const alreadyConfigured = await cli.detect(ctx);
-	if (alreadyConfigured) {
-		log.info(`${pluginInfo.label} is already configured.`);
-		return;
-	}
+	// Check if plugin already exists in config
+	let hasPlugin = false;
+	try {
+		const { loadConfig } = await import("#lib/config");
+		const config = await loadConfig(configPath);
+		hasPlugin = config.plugins.some((p) => p.__plugin === pluginName);
 
-	if (pluginInfo.requires) {
-		for (const req of pluginInfo.requires) {
-			if (!ctx.hasPlugin(req)) {
+		for (const req of dependencyNames(pluginInfo)) {
+			if (!config.plugins.some((p) => p.__plugin === req)) {
 				log.error(
-					`${pluginInfo.label} requires "${req}". Run: stack add ${req}`,
+					`${pluginInfo.cli.label} requires "${req}". Run: stack add ${req}`,
 				);
 				process.exit(1);
 			}
 		}
+	} catch {
+		// Config may not exist yet
 	}
 
-	let answers: Record<string, unknown> = {};
-	if (process.stdin.isTTY && cli.prompt) {
-		answers = await cli.prompt(ctx);
+	if (hasPlugin) {
+		log.info(`${pluginInfo.cli.label} is already configured.`);
+		return;
 	}
 
-	await cli.scaffold(ctx, answers);
+	// Register plugin and scaffold files
+	try {
+		const bus = createEventBus();
+		const ctx = createRegisterContext({
+			cwd,
+			options: {},
+			hasPlugin: (name) => {
+				try {
+					const configFile = readFileSync(join(cwd, configPath), "utf-8");
+					return configFile.includes(`${name}(`) || name === pluginName;
+				} catch {
+					return name === pluginName;
+				}
+			},
+		});
 
-	await ctx.addPluginToConfig({
-		importSource: packageName,
-		importName: pluginName,
-		options: answers,
-	});
+		pluginInfo.cli.register(ctx, bus, pluginInfo.events);
+
+		const scaffold = await bus.emit(Init.Scaffold, {
+			files: [],
+			dependencies: {},
+			devDependencies: {},
+			gitignore: [],
+		});
+
+		for (const file of scaffold.files) {
+			scaffoldFiles([[file.path, file.content]]);
+		}
+	} catch {
+		log.warn(
+			`Could not load ${packageName} — it will be set up after install.`,
+		);
+	}
+
+	// Add plugin to config file
+	const fullConfigPath = join(cwd, configPath);
+	const importName = pluginName.replace(/-([a-z])/g, (_, c: string) =>
+		c.toUpperCase(),
+	);
+	if (existsSync(fullConfigPath)) {
+		await editConfig(fullConfigPath, ({ mod, config: ast }) => {
+			mod.imports.$append({
+				from: packageName,
+				imported: importName,
+				local: importName,
+			});
+
+			if (!ast.plugins) {
+				ast.plugins = [];
+			}
+		});
+	}
 
 	const { generate } = await import("#commands/generate");
 	try {
 		await generate(configPath);
 	} catch {
-		// Generate may fail if not all plugins are installed yet
 		log.warn("Could not run generate — run `stack generate` after install.");
 	}
 
-	outro(`Added ${pluginInfo.label}`);
+	outro(`Added ${pluginInfo.cli.label}`);
 }

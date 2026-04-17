@@ -5,16 +5,10 @@
 	"sideEffects": false,
 	"exports": {
 		".": "./src/index.ts",
-		"./cli": "./src/cli.ts",
-		"./runtime": "./src/runtime.ts",
+		"./runtime": "./src/worker/index.ts",
 		"./orm": "./src/orm.ts",
 		"./d1": "./src/d1/client.ts",
 		"./sqlite": "./src/sqlite/client.ts"
-	},
-	"stack-plugin": {
-		"name": "db",
-		"label": "Database",
-		"cli": "./src/cli.ts"
 	},
 	"license": "MIT",
 	"scripts": {
@@ -25,7 +19,7 @@
 		"clear": "rm -rf node_modules .turbo"
 	},
 	"dependencies": {
-		"@fcalell/config": "workspace:*",
+		"@fcalell/cli": "workspace:*",
 		"drizzle-orm": "^0.45.1"
 	},
 	"peerDependencies": {

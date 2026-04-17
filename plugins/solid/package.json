@@ -1,0 +1,35 @@
+{
+	"name": "@fcalell/plugin-solid",
+	"version": "0.0.0",
+	"type": "module",
+	"sideEffects": false,
+	"exports": {
+		".": "./src/index.ts",
+		"./app": "./src/app/index.ts",
+		"./router": "./src/router/index.ts",
+		"./meta": "./src/meta/index.ts",
+		"./query": "./src/query/index.ts",
+		"./theme": "./src/theme/index.ts",
+		"./cn": "./src/cn/index.ts",
+		"./node/vite-routes": "./src/node/vite-routes.ts"
+	},
+	"license": "MIT",
+	"scripts": {
+		"check-types": "tsc --noEmit --pretty",
+		"lint": "biome check --write --unsafe",
+		"check": "pnpm check-types && pnpm lint",
+		"test": "vitest run",
+		"clear": "rm -rf node_modules .turbo"
+	},
+	"dependencies": {
+		"@fcalell/cli": "workspace:*",
+		"@fcalell/plugin-vite": "workspace:*",
+		"@fcalell/ui": "workspace:*",
+		"fast-glob": "^3.3.3"
+	},
+	"devDependencies": {
+		"@fcalell/typescript-config": "workspace:*",
+		"typescript": "^5.9.3",
+		"vite": "^7.0.4"
+	}
+}

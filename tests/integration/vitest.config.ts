@@ -6,24 +6,31 @@ const root = resolve(import.meta.dirname, "../..");
 export default defineConfig({
 	resolve: {
 		alias: {
-			"@fcalell/config/plugin": resolve(root, "packages/config/src/plugin.ts"),
-			"@fcalell/config": resolve(root, "packages/config/src/index.ts"),
 			"@fcalell/cli/codegen": resolve(
 				root,
-				"packages/cli/src/lib/codegen.ts",
+				"packages/cli/src/lib/codegen-v2.ts",
 			),
 			"@fcalell/cli/discovery": resolve(
 				root,
 				"packages/cli/src/lib/discovery.ts",
 			),
-			"@fcalell/plugin-db/cli": resolve(root, "plugins/db/src/cli.ts"),
+			"@fcalell/cli/events": resolve(root, "packages/cli/src/events.ts"),
+			"@fcalell/cli": resolve(root, "packages/cli/src/config.ts"),
+			"#config": resolve(root, "packages/cli/src/config.ts"),
+			"#lib/create-plugin": resolve(
+				root,
+				"packages/cli/src/lib/create-plugin.ts",
+			),
+			"#lib/event-bus": resolve(root, "packages/cli/src/lib/event-bus.ts"),
 			"@fcalell/plugin-db": resolve(root, "plugins/db/src/index.ts"),
-			"@fcalell/plugin-auth/cli": resolve(root, "plugins/auth/src/cli.ts"),
 			"@fcalell/plugin-auth": resolve(root, "plugins/auth/src/index.ts"),
-			"@fcalell/plugin-api/cli": resolve(root, "plugins/api/src/cli.ts"),
 			"@fcalell/plugin-api": resolve(root, "plugins/api/src/index.ts"),
-			"@fcalell/plugin-app/cli": resolve(root, "plugins/app/src/cli.ts"),
-			"@fcalell/plugin-app": resolve(root, "plugins/app/src/index.ts"),
+			"@fcalell/plugin-vite": resolve(root, "plugins/vite/src/index.ts"),
+			"@fcalell/plugin-solid": resolve(root, "plugins/solid/src/index.ts"),
+			"@fcalell/plugin-solid-ui": resolve(
+				root,
+				"plugins/solid-ui/src/index.ts",
+			),
 		},
 	},
 	test: {

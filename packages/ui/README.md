@@ -61,7 +61,7 @@ Add the `dark` class to `<html>` — all tokens switch automatically:
 <html class="dark">
 ```
 
-When the `@fcalell/vite` preset is used, an anti-FOUC script is injected into `index.html` automatically — it reads `localStorage.theme` (falling back to `prefers-color-scheme`) and sets `.dark` on `<html>` before first paint, so consumers don't have to write the inline script themselves.
+When the `@fcalell/plugin-vite` preset is active, an anti-FOUC script is injected into `index.html` automatically — it reads `localStorage.theme` (falling back to `prefers-color-scheme`) and sets `.dark` on `<html>` before first paint, so consumers don't have to write the inline script themselves.
 
 ## App entry
 
@@ -75,7 +75,7 @@ import "./app.css";
 createApp();
 ```
 
-`createApp()` mounts the app and wraps the tree in `ErrorBoundary → providers → QueryClientProvider → MetaProvider → Router → Toaster`. Routes are pulled from the `virtual:fcalell-routes` module emitted by `@fcalell/vite` (file-based routing under `src/app/pages/`) — pass an explicit `routes` array to opt out.
+`createApp()` mounts the app and wraps the tree in `ErrorBoundary → providers → QueryClientProvider → MetaProvider → Router → Toaster`. Routes are pulled from the `virtual:fcalell-routes` module emitted by `@fcalell/plugin-solid` (file-based routing under `src/app/pages/`) — pass an explicit `routes` array to opt out.
 
 ```tsx
 createApp({
@@ -347,7 +347,7 @@ Returns the raw TanStack form instance — `Form.Input` / `Form.Select` / etc. w
 |---------|---------|
 | `@fcalell/ui/globals.css` | Token system, Tailwind theme, base styles, animations |
 | `@fcalell/ui/fonts` | JetBrains Mono Variable font registration (side-effect import) |
-| `@fcalell/ui/fonts-manifest` | `FontEntry` type and `defaultFonts` array — consumed by the `@fcalell/vite` preload plugin |
+| `@fcalell/ui/fonts-manifest` | `FontEntry` type and `defaultFonts` array — consumed by the `@fcalell/plugin-vite` preload plugin |
 | `@fcalell/ui/app` | `createApp()` — mounts the root tree with router, query, meta, toaster, error boundary |
 | `@fcalell/ui/router` | Typed `routes` builder (from `virtual:fcalell-routes`) + SolidJS Router primitives (`A`, `useNavigate`, `useParams`, ...) |
 | `@fcalell/ui/meta` | `Title`, `Meta`, `Link`, `MetaProvider` — re-exported from `@solidjs/meta` |
@@ -355,6 +355,12 @@ Returns the raw TanStack form instance — `Form.Input` / `Form.Select` / etc. w
 | `@fcalell/ui/lib/cn` | `cn()` class merging utility |
 | `@fcalell/ui/lib/query` | Safe `useQuery`/`useInfiniteQuery`, `useMutation` (with optional optimistic updates), `useQueryClient`, `combineQueries` |
 | `@fcalell/ui/lib/theme` | `useTheme()` runtime light/dark toggle |
+
+## Plugin integration
+
+Framework infrastructure (`createApp`, router, meta, query, theme, `cn`) is also available via `@fcalell/plugin-solid` subpath exports. When using the full stack, import from `@fcalell/plugin-solid` for app-level wiring and from `@fcalell/ui` for components and utilities.
+
+The `@fcalell/plugin-solid-ui` CLI plugin manages `@fcalell/ui` -- it handles scaffolding, dependency installation, and integration with the `@fcalell/plugin-solid` build pipeline.
 
 ## Conventions
 

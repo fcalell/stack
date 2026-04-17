@@ -3,13 +3,13 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
 	test: {
 		projects: [
-			"packages/config",
-			"packages/vite",
 			"packages/cli",
 			"plugins/db",
 			"plugins/auth",
 			"plugins/api",
-			"plugins/app",
+			"plugins/vite",
+			"plugins/solid",
+			"plugins/solid-ui",
 			"tests/integration",
 		],
 	},

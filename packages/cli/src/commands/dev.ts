@@ -1,15 +1,14 @@
-import { watch } from "node:fs";
+import { existsSync, watch } from "node:fs";
 import { join } from "node:path";
-import { intro, log, note } from "@clack/prompts";
+import { intro, log } from "@clack/prompts";
 import pc from "picocolors";
+import { Dev } from "#events";
+import { hasRuntimeExport } from "#lib/codegen-v2";
 import { loadConfig } from "#lib/config";
 import { discoverPlugins, sortByDependencies } from "#lib/discovery";
 import { generateApiRouteBarrel } from "#lib/generate";
-import {
-	createDevContext,
-	createPluginContext,
-} from "#lib/plugin-context";
 import { type ManagedProcess, onExit, spawnPrefixed } from "#lib/proc";
+import { registerPlugins } from "#lib/registration";
 
 interface DevOptions {
 	studio: boolean;
@@ -27,96 +26,109 @@ const COLORS: Array<(s: string) => string> = [
 export async function dev(options: DevOptions): Promise<void> {
 	intro("stack dev");
 
+	// Generate
 	const { generate } = await import("#commands/generate");
 	await generate(options.config);
 
 	const config = await loadConfig(options.config);
 	const discovered = await discoverPlugins(config);
-	const sorted = sortByDependencies(discovered, config);
+	const sorted = sortByDependencies(discovered);
 	const cwd = process.cwd();
-	const baseCtx = createPluginContext({ cwd, config });
 
-	const ports = new Map<string, number>();
-	let nextPort = 8787;
+	const bus = registerPlugins(sorted, config, cwd);
 
-	for (const p of sorted) {
-		if (!p.cli.dev) continue;
-		const tempCtx = createDevContext(baseCtx, ports);
-		const contribution = await p.cli.dev(tempCtx);
-		if (contribution.processes) {
-			for (const proc of contribution.processes) {
-				if (proc.defaultPort && !ports.has(proc.name)) {
-					ports.set(proc.name, proc.defaultPort);
-				} else if (!ports.has(proc.name)) {
-					ports.set(proc.name, nextPort++);
-				}
-			}
-		}
-	}
+	// Check if any plugin has a worker runtime
+	const hasWorker = sorted.some((p) =>
+		hasRuntimeExport(`@fcalell/plugin-${p.name}`),
+	);
 
-	const ctx = createDevContext(baseCtx, ports);
+	// Dev.Configure — collect vitePlugins and codegen metadata
+	await bus.emit(Dev.Configure, {
+		vitePlugins: [],
+		viteImports: [],
+		vitePluginCalls: [],
+	});
+
+	// Dev.Start — collect processes and watchers
+	const devStart = await bus.emit(Dev.Start, {
+		processes: [],
+		watchers: [],
+	});
+
 	const allProcesses: ManagedProcess[] = [];
-	const bannerLines: string[] = [];
 	let colorIndex = 0;
 
-	for (const p of sorted) {
-		if (!p.cli.dev) continue;
+	// Spawn wrangler if any plugin has a worker
+	if (hasWorker) {
+		const wranglerConfig = join(cwd, ".stack", "wrangler.toml");
+		const color = COLORS[colorIndex % COLORS.length];
+		if (color) colorIndex++;
+		allProcesses.push(
+			spawnPrefixed({
+				name: "wrangler",
+				color: color ?? pc.white,
+				command: "npx",
+				args: [
+					"wrangler",
+					"dev",
+					"--config",
+					wranglerConfig,
+					"--persist-to",
+					".stack/dev",
+				],
+				cwd,
+			}),
+		);
+	}
 
-		const contribution = await p.cli.dev(ctx);
+	// Spawn plugin-contributed processes
+	for (const proc of devStart.processes) {
+		const color = COLORS[colorIndex % COLORS.length];
+		if (color) colorIndex++;
+		allProcesses.push(
+			spawnPrefixed({
+				name: proc.name,
+				color: color ?? pc.white,
+				command: proc.command,
+				args: proc.args,
+				cwd,
+			}),
+		);
+	}
 
-		if (contribution.setup) {
-			await contribution.setup();
-		}
+	// Dev.Ready — collect setup tasks and post-ready watchers
+	const devReady = await bus.emit(Dev.Ready, {
+		url: "",
+		port: 0,
+		setup: [],
+		watchers: [],
+	});
 
-		if (contribution.banner) {
-			bannerLines.push(...contribution.banner);
-		}
+	// Run setup tasks sequentially
+	for (const task of devReady.setup) {
+		log.step(`Setup: ${task.name}`);
+		await task.run();
+	}
 
-		if (contribution.processes) {
-			for (const proc of contribution.processes) {
-				const color = COLORS[colorIndex % COLORS.length];
-				if (color) colorIndex++;
-				allProcesses.push(
-					spawnPrefixed({
-						name: proc.name,
-						color: color ?? pc.white,
-						command: proc.command,
-						args: proc.args,
-						cwd,
-					}),
-				);
-			}
-		}
-
-		if (contribution.watchers) {
-			for (const w of contribution.watchers) {
-				for (const watchPath of w.paths) {
-					const fullPath = join(cwd, watchPath);
-					let debounceTimer: ReturnType<typeof setTimeout>;
-					watch(
-						fullPath,
-						{ recursive: true },
-						(_event, filename) => {
-							if (!filename) return;
-							if (w.ignore?.some((p) => filename.includes(p)))
-								return;
-							clearTimeout(debounceTimer);
-							debounceTimer = setTimeout(async () => {
-								await w.onChange({
-									type: "change",
-									path: filename,
-								});
-							}, w.debounce ?? 300);
-						},
-					);
-				}
-			}
-		}
+	// Start all watchers (from both Dev.Start and Dev.Ready)
+	const allWatchers = [...devStart.watchers, ...devReady.watchers];
+	for (const w of allWatchers) {
+		const fullPath = join(cwd, w.paths);
+		if (!existsSync(fullPath)) continue;
+		let debounceTimer: ReturnType<typeof setTimeout>;
+		watch(fullPath, { recursive: true }, (_event, filename) => {
+			if (!filename) return;
+			if (w.ignore?.some((pattern: string) => filename.includes(pattern)))
+				return;
+			clearTimeout(debounceTimer);
+			debounceTimer = setTimeout(async () => {
+				await w.handler(filename, "change");
+			}, w.debounce ?? 300);
+		});
 	}
 
 	// Route barrel watcher (built-in)
 	const routesDir = join(cwd, "src", "worker", "routes");
-	const { existsSync } = await import("node:fs");
 	if (existsSync(routesDir)) {
 		let routesDebounce: ReturnType<typeof setTimeout>;
 		watch(routesDir, (_event, filename) => {
@@ -127,16 +139,6 @@ export async function dev(options: DevOptions): Promise<void> {
 				generateApiRouteBarrel(cwd);
 			}, 300);
 		});
-	}
-
-	if (options.studio) {
-		bannerLines.push(
-			`Studio:    port ${config.dev?.studioPort ?? 4983}`,
-		);
-	}
-
-	if (bannerLines.length > 0) {
-		note(bannerLines.join("\n"), "Configuration");
 	}
 
 	log.info("Watching for changes...");

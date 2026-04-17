@@ -1,110 +1,76 @@
-import type { PluginConfig, StackConfig } from "@fcalell/config";
 import { describe, expect, it } from "vitest";
+import { defineEvent } from "#lib/event-bus";
 import {
-	OFFICIAL_PLUGINS,
 	type DiscoveredPlugin,
+	PLUGIN_NAMES,
 	sortByDependencies,
 } from "./discovery";
 
-function makeConfig(
-	plugins: Array<{ name: string; requires?: string[] }>,
-): StackConfig {
-	return {
-		plugins: plugins.map((p) => ({
-			__plugin: p.name,
-			requires: p.requires ?? [],
-			options: {},
-		})) as unknown as readonly PluginConfig[],
-		validate: () => ({ valid: true, errors: [] }),
-	};
-}
-
-function makeDiscovered(name: string): DiscoveredPlugin {
+function makeDiscovered(name: string, dependsOn?: string[]): DiscoveredPlugin {
 	return {
 		name,
 		cli: {
 			name,
 			label: name,
-			detect: async () => false,
-			scaffold: async () => {},
-			bindings: () => [],
-			generate: async () => [],
+			implicit: false,
+			depends: (dependsOn ?? []).map((dep) =>
+				defineEvent<void>(dep, `${dep}.ready`),
+			),
+			callbacks: {},
+			commands: {},
+			register: () => {},
 		},
+		events: {},
 		options: {},
 	};
 }
 
 describe("sortByDependencies", () => {
 	it("returns plugins in dependency order", () => {
-		const config = makeConfig([
-			{ name: "auth", requires: ["db"] },
-			{ name: "db" },
-			{ name: "api" },
-		]);
-
 		const discovered = [
-			makeDiscovered("auth"),
+			makeDiscovered("auth", ["db"]),
 			makeDiscovered("db"),
 			makeDiscovered("api"),
 		];
 
-		const sorted = sortByDependencies(discovered, config);
+		const sorted = sortByDependencies(discovered);
 		const names = sorted.map((p) => p.name);
 
 		expect(names.indexOf("db")).toBeLessThan(names.indexOf("auth"));
 	});
 
 	it("handles plugins with no dependencies", () => {
-		const config = makeConfig([
-			{ name: "app" },
-			{ name: "db" },
-		]);
+		const discovered = [makeDiscovered("app"), makeDiscovered("db")];
 
-		const discovered = [
-			makeDiscovered("app"),
-			makeDiscovered("db"),
-		];
-
-		const sorted = sortByDependencies(discovered, config);
+		const sorted = sortByDependencies(discovered);
 		expect(sorted).toHaveLength(2);
 	});
 
 	it("handles empty list", () => {
-		const config = makeConfig([]);
-		const sorted = sortByDependencies([], config);
+		const sorted = sortByDependencies([]);
 		expect(sorted).toHaveLength(0);
 	});
 
 	it("does not duplicate plugins", () => {
-		const config = makeConfig([
-			{ name: "auth", requires: ["db"] },
-			{ name: "api", requires: ["db"] },
-			{ name: "db" },
-		]);
-
 		const discovered = [
-			makeDiscovered("auth"),
-			makeDiscovered("api"),
+			makeDiscovered("auth", ["db"]),
+			makeDiscovered("api", ["db"]),
 			makeDiscovered("db"),
 		];
 
-		const sorted = sortByDependencies(discovered, config);
+		const sorted = sortByDependencies(discovered);
 		const names = sorted.map((p) => p.name);
 		expect(new Set(names).size).toBe(names.length);
 	});
 });
 
-describe("OFFICIAL_PLUGINS", () => {
+describe("PLUGIN_NAMES", () => {
 	it("contains the core plugins", () => {
-		const names = OFFICIAL_PLUGINS.map((p) => p.name);
-		expect(names).toContain("db");
-		expect(names).toContain("auth");
-		expect(names).toContain("api");
-		expect(names).toContain("app");
-	});
-
-	it("auth requires db", () => {
-		const auth = OFFICIAL_PLUGINS.find((p) => p.name === "auth");
-		expect(auth?.requires).toContain("db");
+		expect(PLUGIN_NAMES).toContain("db");
+		expect(PLUGIN_NAMES).toContain("auth");
+		expect(PLUGIN_NAMES).toContain("api");
+		expect(PLUGIN_NAMES).toContain("vite");
+		expect(PLUGIN_NAMES).toContain("solid");
+		expect(PLUGIN_NAMES).toContain("solid-ui");
 	});
 });

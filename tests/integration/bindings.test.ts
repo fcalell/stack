@@ -1,20 +1,54 @@
-import { describe, expect, it } from "vitest";
-import { collectBindings } from "@fcalell/cli/codegen";
-import dbCli from "@fcalell/plugin-db/cli";
-import authCli from "@fcalell/plugin-auth/cli";
-import apiCli from "@fcalell/plugin-api/cli";
-import appCli from "@fcalell/plugin-app/cli";
-import type { DbOptions } from "@fcalell/plugin-db";
-import type { AuthOptions } from "@fcalell/plugin-auth";
+import type { RegisterContext } from "@fcalell/cli";
+import { createEventBus, Generate } from "@fcalell/cli/events";
 import type { ApiOptions } from "@fcalell/plugin-api";
-import type { AppOptions } from "@fcalell/plugin-app";
+import { api } from "@fcalell/plugin-api";
+import type { AuthOptions } from "@fcalell/plugin-auth";
+import { auth } from "@fcalell/plugin-auth";
+import type { DbOptions } from "@fcalell/plugin-db";
+import { db } from "@fcalell/plugin-db";
+import { describe, expect, it, vi } from "vitest";
+
+function createMockCtx<T>(options: T): RegisterContext<T> {
+	return {
+		cwd: "/tmp/test",
+		options,
+		hasPlugin: () => false,
+		readFile: vi.fn(async () => ""),
+		fileExists: vi.fn(async () => false),
+		log: {
+			info: vi.fn(),
+			warn: vi.fn(),
+			success: vi.fn(),
+			error: vi.fn(),
+		},
+		prompt: {
+			text: vi.fn(async () => ""),
+			confirm: vi.fn(async () => false),
+			select: vi.fn(async () => undefined as any),
+			multiselect: vi.fn(async () => []),
+		},
+	};
+}
+
+async function collectPluginBindings<T>(
+	plugin: {
+		cli: { register: (ctx: RegisterContext<T>, bus: any, events: any) => void };
+		events: Record<string, any>;
+	},
+	options: T,
+) {
+	const bus = createEventBus();
+	const ctx = createMockCtx(options);
+	plugin.cli.register(ctx, bus, plugin.events);
+	const gen = await bus.emit(Generate, { files: [], bindings: [] });
+	return gen.bindings;
+}
 
 describe("binding collection across plugins", () => {
-	it("db plugin returns D1 binding for d1 dialect", () => {
-		const bindings = dbCli.bindings({
+	it("db plugin returns D1 binding for d1 dialect", async () => {
+		const bindings = await collectPluginBindings(db, {
 			dialect: "d1",
 			databaseId: "test-id",
-			schema: {},
 			binding: "DB_MAIN",
 			migrations: "./src/migrations",
 		} satisfies DbOptions);
@@ -27,11 +61,10 @@ describe("binding collection across plugins", () => {
 		});
 	});
 
-	it("db plugin returns empty bindings for sqlite dialect", () => {
-		const bindings = dbCli.bindings({
+	it("db plugin returns empty bindings for sqlite dialect", async () => {
+		const bindings = await collectPluginBindings(db, {
 			dialect: "sqlite",
 			path: "./data/app.sqlite",
-			schema: {},
 			binding: "DB_MAIN",
 			migrations: "./src/migrations",
 		} satisfies DbOptions);
@@ -39,8 +72,8 @@ describe("binding collection across plugins", () => {
 		expect(bindings).toHaveLength(0);
 	});
 
-	it("auth plugin returns 4 bindings (secret, appUrl, 2 rate limiters)", () => {
-		const bindings = authCli.bindings({
+	it("auth plugin returns 4 bindings (secret, appUrl, 2 rate limiters)", async () => {
+		const bindings = await collectPluginBindings(auth, {
 			secretVar: "AUTH_SECRET",
 			appUrlVar: "APP_URL",
 			rateLimiter: {
@@ -67,32 +100,28 @@ describe("binding collection across plugins", () => {
 		expect(ipLimiter?.type).toBe("rate_limiter");
 		expect(ipLimiter?.rateLimit).toEqual({ limit: 100, period: 60 });
 
-		const emailLimiter = bindings.find(
-			(b) => b.name === "RATE_LIMITER_EMAIL",
-		);
+		const emailLimiter = bindings.find((b) => b.name === "RATE_LIMITER_EMAIL");
 		expect(emailLimiter?.type).toBe("rate_limiter");
 		expect(emailLimiter?.rateLimit).toEqual({ limit: 5, period: 300 });
 	});
 
-	it("api plugin returns empty bindings", () => {
-		const bindings = apiCli.bindings({ prefix: "/rpc" } satisfies ApiOptions);
+	it("api plugin returns empty bindings", async () => {
+		const bindings = await collectPluginBindings(api, {
+			prefix: "/rpc",
+		} satisfies ApiOptions);
 		expect(bindings).toHaveLength(0);
 	});
 
-	it("app plugin returns empty bindings", () => {
-		const bindings = appCli.bindings({} satisfies AppOptions);
-		expect(bindings).toHaveLength(0);
-	});
+	it("event-based binding collection aggregates bindings from multiple plugins", async () => {
+		const bus = createEventBus();
 
-	it("collectBindings aggregates bindings from multiple plugins", () => {
-		const dbOptions: DbOptions = {
+		const dbOpts: DbOptions = {
 			dialect: "d1",
 			databaseId: "test-id",
-			schema: {},
 			binding: "DB_MAIN",
 			migrations: "./src/migrations",
 		};
-		const authOptions: AuthOptions = {
+		const authOpts: AuthOptions = {
 			secretVar: "AUTH_SECRET",
 			appUrlVar: "APP_URL",
 			rateLimiter: {
@@ -100,18 +129,17 @@ describe("binding collection across plugins", () => {
 				email: { binding: "RATE_LIMITER_EMAIL", limit: 5, period: 300 },
 			},
 		};
+		const apiOpts: ApiOptions = { prefix: "/rpc" };
 
-		const result = collectBindings([
-			{ name: "db", cli: dbCli, options: dbOptions },
-			{ name: "auth", cli: authCli, options: authOptions },
-			{ name: "api", cli: apiCli, options: { prefix: "/rpc" } },
-			{ name: "app", cli: appCli, options: {} },
-		]);
+		db.cli.register(createMockCtx(dbOpts), bus, db.events);
+		auth.cli.register(createMockCtx(authOpts), bus, auth.events);
+		api.cli.register(createMockCtx(apiOpts), bus, api.events);
 
-		expect(result.bindings).toHaveLength(5);
-		expect(result.collisions).toHaveLength(0);
+		const gen = await bus.emit(Generate, { files: [], bindings: [] });
 
-		const names = result.bindings.map((b) => b.name);
+		expect(gen.bindings).toHaveLength(5);
+
+		const names = gen.bindings.map((b) => b.name);
 		expect(names).toContain("DB_MAIN");
 		expect(names).toContain("AUTH_SECRET");
 		expect(names).toContain("APP_URL");
@@ -119,30 +147,8 @@ describe("binding collection across plugins", () => {
 		expect(names).toContain("RATE_LIMITER_EMAIL");
 	});
 
-	it("collectBindings detects binding name collisions", () => {
-		const fakePlugin1 = {
-			...dbCli,
-			bindings: () => [{ name: "SHARED_BINDING", type: "d1" as const }],
-		};
-		const fakePlugin2 = {
-			...authCli,
-			bindings: () => [{ name: "SHARED_BINDING", type: "secret" as const }],
-		};
-
-		const result = collectBindings([
-			{ name: "plugin-a", cli: fakePlugin1, options: {} },
-			{ name: "plugin-b", cli: fakePlugin2, options: {} },
-		]);
-
-		expect(result.collisions).toHaveLength(1);
-		expect(result.collisions[0]).toMatchObject({
-			name: "SHARED_BINDING",
-			plugins: ["plugin-a", "plugin-b"],
-		});
-	});
-
-	it("custom binding names override defaults", () => {
-		const bindings = authCli.bindings({
+	it("custom binding names override defaults", async () => {
+		const bindings = await collectPluginBindings(auth, {
 			secretVar: "MY_SECRET",
 			appUrlVar: "MY_APP_URL",
 			rateLimiter: {

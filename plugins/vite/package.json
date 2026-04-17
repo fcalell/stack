@@ -1,0 +1,29 @@
+{
+	"name": "@fcalell/plugin-vite",
+	"version": "0.0.0",
+	"type": "module",
+	"sideEffects": false,
+	"exports": {
+		".": "./src/index.ts",
+		"./preset": "./src/node/preset.ts"
+	},
+	"license": "MIT",
+	"scripts": {
+		"check-types": "tsc --noEmit --pretty",
+		"lint": "biome check --write --unsafe",
+		"check": "pnpm check-types && pnpm lint",
+		"test": "vitest run",
+		"clear": "rm -rf node_modules .turbo"
+	},
+	"dependencies": {
+		"@fcalell/cli": "workspace:*",
+		"@fcalell/ui": "workspace:*",
+		"@tailwindcss/vite": "^4.1.7",
+		"tailwindcss": "^4.1.7",
+		"vite": "^7.0.4"
+	},
+	"devDependencies": {
+		"@fcalell/typescript-config": "workspace:*",
+		"typescript": "^5.9.3"
+	}
+}
