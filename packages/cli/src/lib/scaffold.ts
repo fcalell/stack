@@ -7,6 +7,7 @@ import {
 } from "node:fs";
 import { dirname, join } from "node:path";
 import { log } from "@clack/prompts";
+import { ScaffoldError } from "#lib/errors";
 
 export function writeIfMissing(path: string, content: string): boolean {
 	if (existsSync(path)) {
@@ -36,8 +37,7 @@ export function announceCreated(created: readonly string[]): void {
 
 export function requireFeature(label: string, ok: boolean, hint: string): void {
 	if (!ok) {
-		log.error(`${label} is not configured. ${hint}`);
-		process.exit(1);
+		throw new ScaffoldError(`${label} is not configured. ${hint}`);
 	}
 }
 

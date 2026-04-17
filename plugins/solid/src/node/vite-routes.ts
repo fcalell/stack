@@ -1,18 +1,15 @@
-import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import fg from "fast-glob";
 import type { Plugin, ViteDevServer } from "vite";
 import {
 	buildTree,
-	emitDts,
 	emitRoutes,
 	emitVirtualModule,
+	writeRoutesDts,
 } from "./routes-core";
 
 const VIRTUAL_ID = "virtual:fcalell-routes";
 const RESOLVED_VIRTUAL_ID = `\0${VIRTUAL_ID}`;
-const DTS_DIR = ".stack";
-const DTS_FILE = "routes.d.ts";
 
 export interface RoutesPluginOptions {
 	pagesDir?: string;
@@ -30,16 +27,13 @@ export function routesPlugin(opts: RoutesPluginOptions = {}): Plugin {
 			.sync(["**/*.tsx", "**/*.jsx"], { cwd: absPagesDir })
 			.sort();
 		const { root, notFoundFile } = buildTree(files, absPagesDir);
-		const { routesArray, typedRoutesRuntime, typedRoutesTypes } = emitRoutes(
+		const { routesArray, typedRoutesRuntime } = emitRoutes(
 			root,
 			projectRoot,
 			notFoundFile,
 		);
 		cachedModule = emitVirtualModule(routesArray, typedRoutesRuntime);
-
-		const dtsDir = join(projectRoot, DTS_DIR);
-		mkdirSync(dtsDir, { recursive: true });
-		writeFileSync(join(dtsDir, DTS_FILE), emitDts(typedRoutesTypes));
+		writeRoutesDts(projectRoot, pagesDirRel);
 	}
 
 	return {

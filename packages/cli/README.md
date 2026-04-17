@@ -293,8 +293,8 @@ The `generate` command produces several files:
 |---------|---------|
 | `@fcalell/cli` | `defineConfig()`, `createPlugin()`, `callback()`, `getPlugin()`, `StackConfig`, `PluginConfig`, `BindingDeclaration`, `RegisterContext`, `CommandContext`, `CommandDefinition` |
 | `@fcalell/cli/events` | `defineEvent()`, `createEventBus()`, `Event`, `EventBus`, lifecycle events (`Init`, `Generate`, `Dev`, `Build`, `Deploy`, `Remove`), payload types |
-| `@fcalell/cli/codegen` | `generateEnvDts()`, `generateVirtualWorkerV2()`, `generateWranglerToml()`, `generateDevVars()`, `collectBindings()` |
-| `@fcalell/cli/discovery` | `discoverPlugins()`, `sortByDependencies()`, `loadAvailablePlugins()`, `PLUGIN_NAMES` |
+| `@fcalell/cli/codegen` | `generateEnvDts()`, `generateVirtualWorker()`, `generateWranglerToml()`, `generateDevVars()`, `collectBindings()` |
+| `@fcalell/cli/discovery` | `discoverPlugins()`, `sortByDependencies()`, `loadAvailablePlugins()`, `FIRST_PARTY_PLUGINS`, `PLUGIN_NAMES` |
 
 ## License
 

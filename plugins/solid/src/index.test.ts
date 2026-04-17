@@ -1,4 +1,3 @@
-import type { RegisterContext } from "@fcalell/cli";
 import {
 	Build,
 	createEventBus,
@@ -7,12 +6,22 @@ import {
 	Init,
 	Remove,
 } from "@fcalell/cli/events";
+import { createMockCtx } from "@fcalell/cli/testing";
 import { describe, expect, it, vi } from "vitest";
 import { type SolidOptions, solid } from "./index";
 
-vi.mock("fast-glob", () => ({
-	default: { sync: () => ["index.tsx", "_layout.tsx"] },
-}));
+const writeRoutesDtsMock = vi.fn();
+
+vi.mock("./node/routes-core", async () => {
+	const actual =
+		await vi.importActual<typeof import("./node/routes-core")>(
+			"./node/routes-core",
+		);
+	return {
+		...actual,
+		writeRoutesDts: (...args: unknown[]) => writeRoutesDtsMock(...args),
+	};
+});
 
 vi.mock("vite-plugin-solid", () => ({
 	default: () => ({ name: "vite-plugin-solid" }),
@@ -21,33 +30,6 @@ vi.mock("vite-plugin-solid", () => ({
 vi.mock("./node/vite-routes", () => ({
 	routesPlugin: () => ({ name: "fcalell:routes" }),
 }));
-
-function createMockCtx(
-	overrides?: Partial<RegisterContext<SolidOptions>> & {
-		options?: SolidOptions;
-	},
-): RegisterContext<SolidOptions> {
-	return {
-		cwd: "/tmp/test",
-		options: {},
-		hasPlugin: () => false,
-		readFile: vi.fn(async () => ""),
-		fileExists: vi.fn(async () => false),
-		log: {
-			info: vi.fn(),
-			warn: vi.fn(),
-			success: vi.fn(),
-			error: vi.fn(),
-		},
-		prompt: {
-			text: vi.fn(async () => ""),
-			confirm: vi.fn(async () => false),
-			select: vi.fn(async () => undefined as never),
-			multiselect: vi.fn(async () => []),
-		},
-		...overrides,
-	};
-}
 
 describe("solid config factory", () => {
 	it("returns PluginConfig with __plugin 'solid'", () => {
@@ -156,27 +138,41 @@ describe("solid register", () => {
 		expect(config.vitePluginCalls.length).toBeGreaterThan(0);
 	});
 
-	it("generates route types on Generate", async () => {
+	it("writes routes dts on Generate via writeRoutesDts", async () => {
+		writeRoutesDtsMock.mockClear();
 		const bus = createEventBus();
 		const ctx = createMockCtx();
 		solid.cli.register(ctx, bus, solid.events);
 
 		const gen = await bus.emit(Generate, { files: [], bindings: [] });
-		const routesDts = gen.files.find((f) => f.path === ".stack/routes.d.ts");
-		expect(routesDts).toBeDefined();
-		expect(routesDts?.content).toContain("virtual:fcalell-routes");
-		expect(routesDts?.content).toContain("@fcalell/plugin-solid");
-		expect(routesDts?.content).toContain("RouteDefinition");
-	});
-
-	it("skips route generation when routes: false", async () => {
-		const bus = createEventBus();
-		const ctx = createMockCtx({ options: { routes: false } });
-		solid.cli.register(ctx, bus, solid.events);
-
-		const gen = await bus.emit(Generate, { files: [], bindings: [] });
+		expect(writeRoutesDtsMock).toHaveBeenCalledWith(
+			"/tmp/test",
+			"src/app/pages",
+		);
 		expect(gen.files).not.toContainEqual(
 			expect.objectContaining({ path: ".stack/routes.d.ts" }),
 		);
+	});
+
+	it("passes custom pagesDir to writeRoutesDts", async () => {
+		writeRoutesDtsMock.mockClear();
+		const bus = createEventBus();
+		const ctx = createMockCtx<SolidOptions>({
+			options: { routes: { pagesDir: "src/pages" } },
+		});
+		solid.cli.register(ctx, bus, solid.events);
+
+		await bus.emit(Generate, { files: [], bindings: [] });
+		expect(writeRoutesDtsMock).toHaveBeenCalledWith("/tmp/test", "src/pages");
+	});
+
+	it("skips route generation when routes: false", async () => {
+		writeRoutesDtsMock.mockClear();
+		const bus = createEventBus();
+		const ctx = createMockCtx<SolidOptions>({ options: { routes: false } });
+		solid.cli.register(ctx, bus, solid.events);
+
+		await bus.emit(Generate, { files: [], bindings: [] });
+		expect(writeRoutesDtsMock).not.toHaveBeenCalled();
 	});
 });

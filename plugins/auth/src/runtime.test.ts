@@ -59,10 +59,11 @@ describe("authRuntime", () => {
 				sendOTP: vi.fn(),
 				sendInvitation: vi.fn(),
 			};
-			const runtime = authRuntime(
-				{ secretVar: "AUTH_SECRET", appUrlVar: "APP_URL" },
+			const runtime = authRuntime({
+				secretVar: "AUTH_SECRET",
+				appUrlVar: "APP_URL",
 				callbacks,
-			);
+			});
 			const env = { AUTH_SECRET: "secret" };
 			const upstream = { db: { mock: true } };
 			const result = runtime.context(env, upstream);

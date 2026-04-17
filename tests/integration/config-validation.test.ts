@@ -1,4 +1,5 @@
 import { defineConfig } from "@fcalell/cli";
+import { ConfigValidationError } from "@fcalell/cli/errors";
 import { api } from "@fcalell/plugin-api";
 import { auth } from "@fcalell/plugin-auth";
 import { db } from "@fcalell/plugin-db";
@@ -7,17 +8,11 @@ import { describe, expect, it } from "vitest";
 
 describe("plugin factory validation", () => {
 	it("db throws for d1 dialect without databaseId", () => {
-		expect(() => db({ dialect: "d1" } as Parameters<typeof db>[0])).toThrow(
-			"databaseId",
-		);
+		expect(() => db({ dialect: "d1" })).toThrow("databaseId");
 	});
 
 	it("db throws for sqlite dialect without path", () => {
-		expect(() =>
-			db({
-				dialect: "sqlite",
-			} as Parameters<typeof db>[0]),
-		).toThrow("path");
+		expect(() => db({ dialect: "sqlite" })).toThrow("path");
 	});
 
 	it("auth throws for negative expiresIn", () => {
@@ -79,5 +74,27 @@ describe("cross-plugin dependency validation", () => {
 		const result = config.validate();
 		expect(result.valid).toBe(false);
 		expect(result.errors[0]?.message).toContain("Duplicate");
+	});
+});
+
+describe("typed error classes round-trip from validation results", () => {
+	it("ConfigValidationError carries the ValidationError[] from a duplicate-plugin config", () => {
+		const config = defineConfig({
+			plugins: [
+				db({ dialect: "d1", databaseId: "x" }),
+				db({ dialect: "d1", databaseId: "y" }),
+			],
+		});
+
+		const result = config.validate();
+		expect(result.valid).toBe(false);
+
+		// This is exactly the error `generate()` throws when validation fails —
+		// consumers and third-party orchestrators can catch it via instanceof.
+		const error = new ConfigValidationError(result.errors);
+		expect(error).toBeInstanceOf(ConfigValidationError);
+		expect(error.errors).toHaveLength(result.errors.length);
+		expect(error.errors[0]?.message).toContain("Duplicate");
+		expect(error.code).toBe("CONFIG_VALIDATION");
 	});
 });

@@ -4,16 +4,17 @@ import type {
 	FlagDefinition,
 	InternalCliPlugin,
 } from "#lib/create-plugin";
+import { StackError } from "#lib/errors";
+import type { EventBus } from "#lib/event-bus";
 
 export interface PluginCommandMatch {
-	plugin: InternalCliPlugin<any>;
-	command: CommandDefinition<any, any>;
+	plugin: InternalCliPlugin<unknown>;
+	command: CommandDefinition<unknown, Record<string, unknown>>;
 	commandName: string;
-	flags: Record<string, unknown>;
 }
 
 export function findPluginCommand(
-	plugins: InternalCliPlugin<any>[],
+	plugins: InternalCliPlugin<unknown>[],
 	pluginName: string,
 	commandName: string,
 ): PluginCommandMatch | null {
@@ -23,15 +24,28 @@ export function findPluginCommand(
 	const command = plugin.commands[commandName];
 	if (!command) return null;
 
-	return { plugin, command, commandName, flags: {} };
+	return { plugin, command, commandName };
 }
 
 export function parseCommandFlags(
-	command: CommandDefinition<any, any>,
+	command: CommandDefinition<unknown, Record<string, unknown>>,
 	argv: string[],
 ): Record<string, unknown> {
 	const flags: Record<string, unknown> = {};
 	const defs = (command.options ?? {}) as Record<string, FlagDefinition>;
+
+	// Build lookup maps for canonical names and aliases.
+	const longLookup = new Map<string, string>();
+	const shortLookup = new Map<string, string>();
+	for (const [key, def] of Object.entries(defs)) {
+		longLookup.set(key, key);
+		if (def.alias) {
+			longLookup.set(def.alias, key);
+			if (def.alias.length === 1) {
+				shortLookup.set(def.alias, key);
+			}
+		}
+	}
 
 	// Set defaults
 	for (const [key, def] of Object.entries(defs)) {
@@ -42,21 +56,48 @@ export function parseCommandFlags(
 		}
 	}
 
+	const availableList = () =>
+		Object.entries(defs)
+			.map(([k, d]) => (d.alias ? `--${k} (-${d.alias})` : `--${k}`))
+			.join(", ") || "(none)";
+
 	// Parse argv
 	for (let i = 0; i < argv.length; i++) {
-		const arg = argv[i]!;
-		if (!arg.startsWith("--")) continue;
+		const arg = argv[i];
+		if (arg === undefined) continue;
+		// Positional — silently passed through (unchanged behavior).
+		if (!arg.startsWith("-")) continue;
 
-		const name = arg.slice(2);
-		const def = defs[name];
+		let canonical: string | undefined;
+		if (arg.startsWith("--")) {
+			const token = arg.slice(2);
+			canonical = longLookup.get(token);
+			if (!canonical) {
+				throw new StackError(
+					`Unknown flag "${arg}" for command "${command.description}". Available: ${availableList()}`,
+					"UNKNOWN_FLAG",
+				);
+			}
+		} else {
+			const token = arg.slice(1);
+			canonical = shortLookup.get(token);
+			if (!canonical) {
+				throw new StackError(
+					`Unknown flag "${arg}" for command "${command.description}". Available: ${availableList()}`,
+					"UNKNOWN_FLAG",
+				);
+			}
+		}
+
+		const def = defs[canonical];
 		if (!def) continue;
 
 		if (def.type === "boolean") {
-			flags[name] = true;
+			flags[canonical] = true;
 		} else {
 			const next = argv[i + 1];
 			if (next !== undefined) {
-				flags[name] = def.type === "number" ? Number(next) : next;
+				flags[canonical] = def.type === "number" ? Number(next) : next;
 				i++;
 			}
 		}
@@ -68,6 +109,7 @@ export function parseCommandFlags(
 export function createCommandContext<TOptions>(opts: {
 	options: TOptions;
 	cwd: string;
+	bus: EventBus;
 	log: CommandContext<TOptions>["log"];
 	prompt: CommandContext<TOptions>["prompt"];
 }): CommandContext<TOptions> {
@@ -75,15 +117,14 @@ export function createCommandContext<TOptions>(opts: {
 }
 
 export function formatPluginCommands(
-	plugins: InternalCliPlugin<any>[],
+	plugins: InternalCliPlugin<unknown>[],
 ): string {
 	const lines: string[] = [];
 	for (const plugin of plugins) {
-		const commandNames = Object.keys(plugin.commands);
-		if (commandNames.length === 0) continue;
+		const entries = Object.entries(plugin.commands);
+		if (entries.length === 0) continue;
 
-		for (const cmdName of commandNames) {
-			const cmd = plugin.commands[cmdName]!;
+		for (const [cmdName, cmd] of entries) {
 			const flagStr = cmd.options
 				? Object.entries(cmd.options as Record<string, FlagDefinition>)
 						.map(([k, _v]) => `--${k}`)

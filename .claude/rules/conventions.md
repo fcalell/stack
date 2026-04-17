@@ -27,6 +27,18 @@ Dependencies are typed event tokens: `depends: [db.events.SchemaReady]`. The CLI
 
 Implicit plugins (like `plugin-vite`) are marked with `implicit: true` in `createPlugin()` and are never listed in consumer configs — they're auto-resolved from dependency chains.
 
+Third-party plugins published outside the `@fcalell/plugin-*` namespace must pass an explicit `package` option to `createPlugin`:
+
+```ts
+export const widget = createPlugin("widget", {
+  label: "Widget",
+  package: "@acme/stack-plugin-widget",
+  register() {},
+});
+```
+
+The CLI stamps this onto every `PluginConfig` as `__package` and uses it for dynamic `import()` at discovery time. First-party plugins omit the field and fall back to the `@fcalell/plugin-${name}` default.
+
 ### Plugin folder structure
 
 ```

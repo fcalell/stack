@@ -117,6 +117,28 @@ export interface DeployExecutePayload {
 	steps: DeployStep[];
 }
 
+// Codegen.Frontend is emitted before Codegen.Worker so frontend plugins
+// (e.g. solid) can announce their port/domain. Worker plugins read the
+// populated payload off the bus history when building the virtual worker.
+export interface CodegenFrontendPayload {
+	port?: number;
+	domain?: string;
+}
+
+// Codegen.Worker is the pipeline that builds .stack/worker.ts. Each runtime
+// plugin mutates this payload; exactly one plugin must claim `root`.
+export interface CodegenWorkerPayload {
+	imports: string[];
+	root: null | {
+		factoryName: string;
+		optionsLiteral: string;
+	};
+	useLines: string[];
+	handlerArg: string;
+	tailLines: string[];
+	frontend?: CodegenFrontendPayload;
+}
+
 // ── Core lifecycle events ───────────────────────────────────────────
 
 export const Init = {
@@ -128,12 +150,20 @@ export const Generate = defineEvent<GeneratePayload>("core", "generate");
 
 export const Dev = {
 	Configure: defineEvent<DevConfigurePayload>("core", "dev.configure"),
+	ConfigureReady: defineEvent<DevConfigurePayload>(
+		"core",
+		"dev.configure.ready",
+	),
 	Start: defineEvent<DevStartPayload>("core", "dev.start"),
 	Ready: defineEvent<DevReadyPayload>("core", "dev.ready"),
 };
 
 export const Build = {
 	Configure: defineEvent<BuildConfigurePayload>("core", "build.configure"),
+	ConfigureReady: defineEvent<BuildConfigurePayload>(
+		"core",
+		"build.configure.ready",
+	),
 	Start: defineEvent<BuildStartPayload>("core", "build.start"),
 };
 
@@ -144,3 +174,8 @@ export const Deploy = {
 };
 
 export const Remove = defineEvent<RemovePayload>("core", "remove");
+
+export const Codegen = {
+	Frontend: defineEvent<CodegenFrontendPayload>("core", "codegen.frontend"),
+	Worker: defineEvent<CodegenWorkerPayload>("core", "codegen.worker"),
+};

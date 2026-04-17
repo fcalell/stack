@@ -1,7 +1,7 @@
 import { join } from "node:path";
-import { createPlugin } from "@fcalell/cli";
-import { Build, Dev } from "@fcalell/cli/events";
-import type { ViteOptions } from "./types";
+import { createPlugin, fromSchema } from "@fcalell/cli";
+import { Build, Codegen, Dev } from "@fcalell/cli/events";
+import { type ViteOptions, viteOptionsSchema } from "./types";
 
 function buildViteConfig(configPayload: {
 	viteImports: string[];
@@ -36,26 +36,31 @@ export const vite = createPlugin("vite", {
 	implicit: true,
 	events: ["ViteConfigured"],
 
-	config(options: ViteOptions = {}) {
-		return options;
-	},
+	config: fromSchema<ViteOptions>(viteOptionsSchema),
 
 	register(ctx, bus, events) {
-		bus.on(Dev.Configure, (_p) => {
-			// Framework plugins push into p.vitePlugins/viteImports/vitePluginCalls before this runs.
-			// Vite reads the collected values in Dev.Start.
+		bus.on(Codegen.Frontend, (p) => {
+			p.port = ctx.options?.port ?? 3000;
+		});
+
+		// Dev.ConfigureReady / Build.ConfigureReady fire AFTER Dev.Configure /
+		// Build.Configure with the fully-populated payload, so we can write the
+		// generated vite config without depending on handler registration order.
+		async function writeViteConfig(configPayload: {
+			viteImports: string[];
+			vitePluginCalls: string[];
+		}): Promise<void> {
+			const { writeFileSync, mkdirSync } = await import("node:fs");
+			mkdirSync(join(ctx.cwd, ".stack"), { recursive: true });
+			const configContent = buildViteConfig(configPayload);
+			writeFileSync(join(ctx.cwd, ".stack/vite.config.ts"), configContent);
+		}
+
+		bus.on(Dev.ConfigureReady, async (p) => {
+			await writeViteConfig(p);
 		});
 
 		bus.on(Dev.Start, async (p) => {
-			const [configPayload] = bus.history(Dev.Configure);
-			if (!configPayload) return;
-
-			const { writeFileSync, mkdirSync } = await import("node:fs");
-			mkdirSync(join(ctx.cwd, ".stack"), { recursive: true });
-
-			const configContent = buildViteConfig(configPayload);
-			writeFileSync(join(ctx.cwd, ".stack/vite.config.ts"), configContent);
-
 			const port = ctx.options?.port ?? 3000;
 			p.processes.push({
 				name: "vite",
@@ -72,20 +77,14 @@ export const vite = createPlugin("vite", {
 				color: "cyan",
 			});
 
-			await bus.emit(events.ViteConfigured, undefined);
+			await bus.emit(events.ViteConfigured);
 		});
 
-		bus.on(Build.Start, async (p) => {
-			const [configPayload] = bus.history(Build.Configure);
+		bus.on(Build.ConfigureReady, async (p) => {
+			await writeViteConfig(p);
+		});
 
-			const { writeFileSync, mkdirSync } = await import("node:fs");
-			mkdirSync(join(ctx.cwd, ".stack"), { recursive: true });
-
-			const configContent = buildViteConfig(
-				configPayload ?? { viteImports: [], vitePluginCalls: [] },
-			);
-			writeFileSync(join(ctx.cwd, ".stack/vite.config.ts"), configContent);
-
+		bus.on(Build.Start, (p) => {
 			p.steps.push({
 				name: "vite-build",
 				phase: "main",

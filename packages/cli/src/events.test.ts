@@ -22,18 +22,22 @@ describe("core lifecycle events", () => {
 		expect(Generate.name).toBe("generate");
 	});
 
-	it("Dev namespace has Configure, Start, Ready events", () => {
+	it("Dev namespace has Configure, ConfigureReady, Start, Ready events", () => {
 		expect(Dev.Configure.source).toBe("core");
 		expect(Dev.Configure.name).toBe("dev.configure");
+		expect(Dev.ConfigureReady.source).toBe("core");
+		expect(Dev.ConfigureReady.name).toBe("dev.configure.ready");
 		expect(Dev.Start.source).toBe("core");
 		expect(Dev.Start.name).toBe("dev.start");
 		expect(Dev.Ready.source).toBe("core");
 		expect(Dev.Ready.name).toBe("dev.ready");
 	});
 
-	it("Build namespace has Configure and Start events", () => {
+	it("Build namespace has Configure, ConfigureReady, Start events", () => {
 		expect(Build.Configure.source).toBe("core");
 		expect(Build.Configure.name).toBe("build.configure");
+		expect(Build.ConfigureReady.source).toBe("core");
+		expect(Build.ConfigureReady.name).toBe("build.configure.ready");
 		expect(Build.Start.source).toBe("core");
 		expect(Build.Start.name).toBe("build.start");
 	});
@@ -58,9 +62,11 @@ describe("core lifecycle events", () => {
 			Init.Scaffold,
 			Generate,
 			Dev.Configure,
+			Dev.ConfigureReady,
 			Dev.Start,
 			Dev.Ready,
 			Build.Configure,
+			Build.ConfigureReady,
 			Build.Start,
 			Deploy.Plan,
 			Deploy.Execute,

@@ -276,7 +276,8 @@ createWorker({ cors: ["https://app.example.com"], prefix: "/rpc" })
 | Subpath | Purpose |
 |---------|---------|
 | `@fcalell/plugin-api` | `api()`, `ApiOptions`, `ApiError`, `Middleware`, `InferRouter` |
-| `@fcalell/plugin-api/runtime` | `createWorker()`, `RuntimePlugin`, `AppBuilder`, `WorkerExport`, `ApiWorkerOptions` |
+| `@fcalell/plugin-api/runtime` | `createWorker()`, `AppBuilder`, `WorkerExport`, `ApiWorkerOptions` |
+| `@fcalell/cli/runtime` | `RuntimePlugin`, `RuntimePluginEventHandlers` |
 | `@fcalell/plugin-api/client` | `createClient()`, `RouterClient`, `ClientConfig` |
 | `@fcalell/plugin-api/schema` | `z` (Zod re-export), `ZodObject`, `ZodType`, `ZodRawShape` |
 | `@fcalell/plugin-api/lib/cursor` | `encodeCursor`, `decodeCursor`, `paginate`, `clampLimit`, constants |

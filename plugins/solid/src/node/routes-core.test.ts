@@ -98,6 +98,20 @@ describe("buildTree", () => {
 		expect(settings).toBeDefined();
 		expect(settings?.leafFile).toBe(`${pagesDir}/projects/[id]/settings.tsx`);
 	});
+
+	it("throws when two group-prefixed files resolve to the same URL path", () => {
+		expect(() =>
+			buildTree(["(auth)/login.tsx", "(public)/login.tsx"], pagesDir),
+		).toThrow(
+			/Route collision at \/login.*\(auth\)\/login\.tsx.*\(public\)\/login\.tsx/s,
+		);
+	});
+
+	it("throws when a group index collides with a sibling group index", () => {
+		expect(() =>
+			buildTree(["(app)/index.tsx", "(marketing)/index.tsx"], pagesDir),
+		).toThrow(/Route collision at \//);
+	});
 });
 
 describe("joinUrl", () => {

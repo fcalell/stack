@@ -1,1 +1,1 @@
-export type SolidUiOptions = {};
+export type SolidUiOptions = Record<string, never>;

@@ -1,15 +1,16 @@
 # @fcalell/stack
 
-A full-stack framework for SolidJS, Hono, and Cloudflare. The stack ships database, API, UI, and tooling as composable packages so a project only contains business logic.
+A plugin-driven full-stack framework for SolidJS, Hono, and Cloudflare Workers. The stack ships database, API, UI, and tooling behind a single `stack` CLI so a project only contains business logic.
 
 ## What you get
 
-- **Database** — Drizzle ORM for Cloudflare D1 and SQLite, with optional Better Auth integration.
-- **API** — Hono and oRPC wrapped behind a procedure builder with auth, RBAC, rate limiting, and pagination.
-- **UI** — SolidJS design system built on Kobalte, Tailwind v4, and CVA.
-- **Tooling** — A `stack` CLI that scaffolds projects, runs dev workflows, and deploys. Vite, TypeScript, and Biome presets included.
+- **Database** — Drizzle ORM for Cloudflare D1 and SQLite (`@fcalell/plugin-db`).
+- **Auth** — Better Auth integration, RBAC, access control (`@fcalell/plugin-auth`).
+- **API** — Hono + oRPC behind a procedure builder with auth, rate limiting, and a typed client (`@fcalell/plugin-api`).
+- **UI** — SolidJS + Kobalte + Tailwind v4 + CVA design system (`@fcalell/ui`, `@fcalell/plugin-solid`, `@fcalell/plugin-solid-ui`).
+- **Tooling** — One `stack` CLI for init, dev, build, deploy. TypeScript and Biome presets included.
 
-Consumers never install or import `drizzle-orm`, `hono`, `zod`, `@kobalte/core`, `vite`, or `tailwindcss` directly. The stack wraps them.
+Consumers never install or import `drizzle-orm`, `hono`, `zod`, `@kobalte/core`, `vite`, or `tailwindcss` directly. Plugins wrap their domain and re-export only what is needed.
 
 ## Quick start
 
@@ -18,80 +19,100 @@ pnpm add -D @fcalell/cli
 pnpm exec stack init my-app
 ```
 
-The interactive wizard asks which layers to include (Database, API, App), prompts for layer-specific options, and scaffolds a working project. From inside the project:
+`stack init` prompts for plugins and plugin-specific options, scaffolds the project, and generates `.stack/`. From inside the project:
 
 ```bash
-stack dev               # context-aware dev (schema watch, local DB push)
+stack dev               # plugin-driven dev (processes, watchers, schema push)
 stack dev --studio      # also launch Drizzle Studio
-stack deploy            # generate and apply migrations
-stack db reset          # drop and recreate the local database
+stack build             # plugin-driven production build
+stack deploy            # migrations + wrangler
+stack db push           # plugin subcommands: stack <plugin> <command>
 ```
 
-See [`@fcalell/cli`](packages/cli/README.md) for the full command reference.
+## Consumer example
+
+A minimal `stack.config.ts` is the single source of truth — a `domain`, a `plugins` array, and optional dev settings.
+
+```ts
+import { defineConfig } from "@fcalell/cli";
+import { db } from "@fcalell/plugin-db";
+import { auth } from "@fcalell/plugin-auth";
+import { api } from "@fcalell/plugin-api";
+import { solid } from "@fcalell/plugin-solid";
+import { solidUi } from "@fcalell/plugin-solid-ui";
+
+export default defineConfig({
+  domain: "example.com",
+  plugins: [
+    db({ dialect: "d1", databaseId: "9a619a0b-..." }),
+    auth({ cookies: { prefix: "myapp" }, organization: true }),
+    api({ cors: ["https://app.example.com"] }),
+    solid(),
+    solidUi(),
+  ],
+});
+```
+
+Plugins declare dependencies via typed event tokens (`depends: [db.events.SchemaReady]`). The CLI resolves them automatically, so the order above does not matter. `plugin-vite` is implicit — auto-resolved from `plugin-solid`.
+
+## CLI commands
+
+| Command | Purpose |
+|---------|---------|
+| `stack init [dir]` | Interactive project scaffold (pick plugins) |
+| `stack add <plugin>` | Add a plugin to an existing project |
+| `stack remove <plugin>` | Remove a plugin (checks dependents) |
+| `stack generate` | Regenerate `.stack/` files from config |
+| `stack dev [--studio]` | Plugin-driven dev |
+| `stack build` | Plugin-driven production build |
+| `stack deploy` | Plugin-driven deploy |
+| `stack <plugin> <command>` | Plugin-registered subcommand (e.g. `stack db push`) |
+| `stack plugin init <name>` | Scaffold a third-party plugin skeleton |
 
 ## Packages
 
-| Package | Purpose | Docs |
-|---------|---------|------|
-| `@fcalell/cli` | `stack` CLI: project scaffolding, dev orchestration, deploy | [packages/cli](packages/cli/README.md) |
-| `@fcalell/config` | Unified `stack.config.ts` via `defineConfig()` | [packages/config](packages/config/README.md) |
-| `@fcalell/db` | Drizzle clients for D1/SQLite, Better Auth integration, access control | [packages/db](packages/db/README.md) |
-| `@fcalell/api` | API framework: procedure builder, middleware, typed client | [packages/api](packages/api/README.md) |
-| `@fcalell/ui` | SolidJS design system (Kobalte + Tailwind v4 + CVA) | [packages/ui](packages/ui/README.md) |
-| `@fcalell/vite` | Vite preset: SolidJS, Tailwind v4, API proxy, file-based routing, theme/font FOUC prevention | [packages/vite](packages/vite/README.md) |
-| `@fcalell/typescript-config` | Shared `tsconfig` presets | [packages/typescript-config](packages/typescript-config/README.md) |
-| `@fcalell/biome-config` | Shared Biome formatter and linter config | [packages/biome-config](packages/biome-config/README.md) |
+| Package | Purpose |
+|---------|---------|
+| [`@fcalell/cli`](packages/cli) | `defineConfig()`, `createPlugin()`, `stack` CLI, event bus, codegen |
+| [`@fcalell/ui`](packages/ui) | SolidJS design system (Kobalte + Tailwind v4 + CVA) |
+| [`@fcalell/typescript-config`](packages/typescript-config) | Shared `tsconfig` presets |
+| [`@fcalell/biome-config`](packages/biome-config) | Shared Biome formatter and linter config |
 
-### Dependency graph
+## Plugins
 
-```
-config ──> db
-api    ──> config, db
-cli    ──> config, db
-vite      (standalone, used internally by cli)
-ui        (standalone)
-```
+| Plugin | Purpose | Factory |
+|--------|---------|---------|
+| [`@fcalell/plugin-db`](plugins/db) | Drizzle ORM clients (D1/SQLite), schema tooling, migrations | `db()` |
+| [`@fcalell/plugin-auth`](plugins/auth) | Better Auth integration, RBAC, access control | `auth()` |
+| [`@fcalell/plugin-api`](plugins/api) | Hono + oRPC, procedure builder, typed client | `api()` |
+| [`@fcalell/plugin-vite`](plugins/vite) | Framework-agnostic Vite lifecycle (implicit) | `vite()` |
+| [`@fcalell/plugin-solid`](plugins/solid) | SolidJS compilation, file-based routing, app bootstrap | `solid()` |
+| [`@fcalell/plugin-solid-ui`](plugins/solid-ui) | Design system CLI plugin — manages `@fcalell/ui` | `solidUi()` |
 
-`db` and `ui` are leaf packages with no `@fcalell/*` dependencies. Every package can be consumed independently — use just the UI, just the database, or the full stack.
+See each plugin's README for config options, commands, event handlers, and runtime exports.
 
-## Architecture
+## Writing a plugin
 
-A consumer project has one config file and one runtime entry point.
+Third-party plugins are first-class. Scaffold one with:
 
-**`stack.config.ts`** is the static source of truth. It declares what the project *is* — database dialect, schema, auth policy, RBAC statements, CORS origins, dev options. The CLI and type system both read from it.
-
-**`defineApp()`** is the runtime entry point in the worker. It receives the config and only adds runtime concerns — environment bindings, secrets, email callbacks. See [`@fcalell/api`](packages/api/README.md) for the full surface.
-
-The rule: if the CLI or type system needs it, it goes in `stack.config.ts`. If it requires a live environment, it stays in `defineApp()`.
-
-## Consumer project structure
-
-```
-my-app/
-  package.json             # imports: { "#/*": "./src/*" } — alias for app + worker
-  tsconfig.json            # extends @fcalell/typescript-config
-  biome.json               # extends @fcalell/biome-config
-  stack.config.ts          # defineConfig() — single source of truth
-  wrangler.toml
-  src/
-    schema/                # Drizzle tables
-    migrations/            # generated
-    worker/
-      index.ts             # defineApp() — runtime wiring
-      routes/              # procedures (auto-barreled)
-    app/
-      pages/               # file-based routes (index.tsx, _layout.tsx, [id].tsx, ...)
+```bash
+pnpm exec stack plugin init my-plugin
+pnpm exec stack plugin init my-plugin --package @acme/stack-plugin-foo --dir ./packages/my-plugin
 ```
 
-The framework handles everything else internally — `index.html`, app entry, CSS, API client, env types, and route barrels are all auto-generated. Override by creating `vite.config.ts`, `src/app/entry.tsx`, or `src/app/app.css`. See [`@fcalell/vite`](packages/vite/README.md) for details.
+The scaffold produces a `createPlugin()`-based skeleton, a vitest test wired to `@fcalell/cli/testing`, and a runtime stub exported from `./runtime`. Publish it under any npm name — consumers add it to `stack.config.ts` like any built-in plugin.
 
 ## Repository commands
 
 ```bash
-pnpm check     # type-check all packages and run Biome
-pnpm lint      # Biome with --write --unsafe
-pnpm clear     # remove node_modules and turbo caches
+pnpm check            # Lint (Biome) + type-check all packages
+pnpm test             # Run all tests once (vitest run)
+pnpm test:watch       # Run tests in watch mode
 ```
+
+## Architecture
+
+See [`CLAUDE.md`](CLAUDE.md) for the full architecture, lifecycle events, dependency graph, and generated-file layout. Coding conventions live in [`.claude/rules/conventions.md`](.claude/rules/conventions.md).
 
 ## License
 

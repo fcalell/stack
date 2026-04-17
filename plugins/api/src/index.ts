@@ -1,12 +1,44 @@
-import { createPlugin } from "@fcalell/cli";
-import { Deploy, Dev, Generate, Init, Remove } from "@fcalell/cli/events";
+import { createPlugin, fromSchema } from "@fcalell/cli";
+import {
+	Codegen,
+	Deploy,
+	Dev,
+	Generate,
+	Init,
+	Remove,
+} from "@fcalell/cli/events";
+import { z } from "zod";
 import { generateRouteBarrel } from "./node/barrel";
 
+function serialize(value: unknown): string {
+	return JSON.stringify(value, null, "\t");
+}
+
+// Kept hand-written so `prefix` can use the template-literal type `/${string}`,
+// which Zod can't express directly. The schema below complements this interface
+// and provides runtime validation with matching error messages.
 export interface ApiOptions {
 	cors?: string | string[];
 	prefix?: `/${string}`;
 	domain?: string;
 }
+
+const apiOptionsSchema = z.object({
+	cors: z
+		.union([z.string(), z.array(z.string())], {
+			error: "api: cors must be a string or array of strings",
+		})
+		.optional(),
+	prefix: z
+		.string()
+		.refine((p) => p.startsWith("/"), {
+			error: "api: prefix must start with /",
+		})
+		.default("/rpc"),
+	domain: z.string().optional(),
+});
+
+const parseApiOptions = fromSchema<ApiOptions>(apiOptionsSchema);
 
 const WRANGLER_TEMPLATE = (name: string) =>
 	`name = "${name}"
@@ -17,22 +49,11 @@ main = ".stack/worker.ts"
 export const api = createPlugin("api", {
 	label: "API",
 
-	config(options: ApiOptions) {
-		const opts = options ?? {};
-		if (opts.prefix && !opts.prefix.startsWith("/")) {
-			throw new Error("api: prefix must start with /");
-		}
-		if (opts.cors !== undefined) {
-			const corsVal = opts.cors;
-			if (
-				typeof corsVal !== "string" &&
-				(!Array.isArray(corsVal) ||
-					!corsVal.every((c) => typeof c === "string"))
-			) {
-				throw new Error("api: cors must be a string or array of strings");
-			}
-		}
-		return { prefix: "/rpc" as `/${string}`, ...opts };
+	config(options: ApiOptions): ApiOptions {
+		const parsed = parseApiOptions(options ?? {});
+		// Cast prefix back to the template-literal type; the refinement above
+		// guarantees it starts with "/" at runtime.
+		return { ...parsed, prefix: parsed.prefix as `/${string}` };
 	},
 
 	register(ctx, bus) {
@@ -53,6 +74,73 @@ export const api = createPlugin("api", {
 				path: "src/worker/routes/index.ts",
 				content: barrelContent,
 			});
+		});
+
+		bus.on(Codegen.Worker, async (p) => {
+			if (p.root) {
+				throw new Error(
+					`Plugin "api" cannot claim the worker root because another plugin already did.`,
+				);
+			}
+
+			const options = (ctx.options ?? {}) as {
+				cors?: string | string[];
+				prefix?: `/${string}`;
+				domain?: string;
+			};
+
+			const workerOptions: Record<string, unknown> = {};
+			const domain = p.frontend?.domain ?? options.domain;
+			if (domain) workerOptions.domain = domain;
+			if (options.prefix) workerOptions.prefix = options.prefix;
+
+			const corsOrigins: string[] = [];
+			if (options.cors) {
+				corsOrigins.push(
+					...(Array.isArray(options.cors) ? options.cors : [options.cors]),
+				);
+			}
+			const frontendPort = p.frontend?.port;
+			if (frontendPort != null) {
+				const localOrigin = `http://localhost:${frontendPort}`;
+				if (!corsOrigins.includes(localOrigin)) {
+					corsOrigins.push(localOrigin);
+				}
+				if (domain) {
+					const domainOrigin = `https://${domain}`;
+					if (!corsOrigins.includes(domainOrigin)) {
+						corsOrigins.push(domainOrigin);
+					}
+					const appOrigin = `https://app.${domain}`;
+					if (!corsOrigins.includes(appOrigin)) {
+						corsOrigins.push(appOrigin);
+					}
+				}
+			}
+			if (corsOrigins.length > 0) {
+				workerOptions.cors = corsOrigins;
+			}
+
+			p.imports.push(`import createWorker from "@fcalell/plugin-api/runtime";`);
+			p.root = {
+				factoryName: "createWorker",
+				optionsLiteral: serialize(workerOptions),
+			};
+
+			const hasMiddleware = await ctx.fileExists("src/worker/middleware.ts");
+			if (hasMiddleware) {
+				p.imports.push('import middleware from "../src/worker/middleware";');
+				p.useLines.push("\t.use(middleware)");
+			}
+
+			const hasRoutes = await ctx.fileExists("src/worker/routes");
+			if (hasRoutes) {
+				p.imports.push('import * as routes from "../src/worker/routes";');
+				p.handlerArg = "routes";
+			}
+
+			p.tailLines.push("export type AppRouter = typeof worker._router;");
+			p.tailLines.push("export default worker;");
 		});
 
 		bus.on(Remove, (p) => {

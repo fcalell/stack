@@ -1,0 +1,27 @@
+{
+	"name": "@fcalell/tests-integration",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"check-types": "tsc --noEmit --pretty",
+		"lint": "biome check --write --unsafe",
+		"check": "pnpm check-types && pnpm lint",
+		"test": "vitest run",
+		"clear": "rm -rf node_modules .turbo"
+	},
+	"dependencies": {
+		"@fcalell/cli": "workspace:*",
+		"@fcalell/plugin-api": "workspace:*",
+		"@fcalell/plugin-auth": "workspace:*",
+		"@fcalell/plugin-db": "workspace:*",
+		"@fcalell/plugin-solid": "workspace:*",
+		"@fcalell/plugin-solid-ui": "workspace:*",
+		"@fcalell/plugin-vite": "workspace:*"
+	},
+	"devDependencies": {
+		"@fcalell/typescript-config": "workspace:*",
+		"typescript": "^5.9.3",
+		"vitest": "^3.2.3"
+	}
+}

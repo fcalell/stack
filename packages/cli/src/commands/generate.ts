@@ -1,16 +1,16 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { log } from "@clack/prompts";
-import { Generate } from "#events";
+import { Codegen, Generate } from "#events";
 import {
 	generateDevVars,
 	generateEnvDts,
-	generateVirtualWorkerV2,
+	generateVirtualWorker,
 	generateWranglerToml,
 	hasRuntimeExport,
-} from "#lib/codegen-v2";
+} from "#lib/codegen";
 import { loadConfig } from "#lib/config";
 import { discoverPlugins, sortByDependencies } from "#lib/discovery";
+import { ConfigValidationError } from "#lib/errors";
 import { generateApiRouteBarrel } from "#lib/generate";
 import { registerPlugins } from "#lib/registration";
 
@@ -21,12 +21,7 @@ export async function generate(configPath: string): Promise<void> {
 
 	const validation = config.validate();
 	if (!validation.valid) {
-		for (const err of validation.errors) {
-			log.error(
-				`[${err.plugin}] ${err.message}${err.fix ? ` — ${err.fix}` : ""}`,
-			);
-		}
-		process.exit(1);
+		throw new ConfigValidationError(validation.errors);
 	}
 
 	const discovered = await discoverPlugins(config);
@@ -54,51 +49,28 @@ export async function generate(configPath: string): Promise<void> {
 		writeFileSync(join(stackDir, "env.d.ts"), generateEnvDts(allBindings));
 	}
 
-	const hasWorkerPlugins = sorted.some((p) =>
-		hasRuntimeExport(`@fcalell/plugin-${p.name}`),
-	);
+	const hasWorkerPlugins = sorted.some((p) => hasRuntimeExport(p.cli.package));
 
 	if (hasWorkerPlugins) {
-		const hasMiddleware = existsSync(
-			join(cwd, "src", "worker", "middleware.ts"),
-		);
-		const hasRoutes = existsSync(join(cwd, "src", "worker", "routes"));
-		const hasSchema = existsSync(join(cwd, "src", "schema"));
+		// Emit Codegen.Frontend first so frontend plugins (e.g. solid) can
+		// announce their port/domain. Always emit — even when no frontend is
+		// installed — so worker plugins can always read bus.history() safely.
+		const frontend = await bus.emit(Codegen.Frontend, {
+			domain: config.domain,
+		});
 
-		const pluginInfos = sorted
-			.map((p) => {
-				const packageName = `@fcalell/plugin-${p.name}`;
-				return {
-					name: p.name,
-					packageName,
-					hasRuntime: hasRuntimeExport(packageName),
-					hasCallbacks: Object.keys(p.cli.callbacks).length > 0,
-					options: (p.options ?? {}) as Record<string, unknown>,
-				};
-			})
-			.filter((p) => p.hasRuntime);
-
-		const hasFrontend = sorted.some((p) => p.name === "vite");
-		const hasAuth = sorted.some((p) => p.name === "auth");
-		const vitePlugin = sorted.find((p) => p.name === "vite");
-		const frontendPort = hasFrontend
-			? (((vitePlugin?.options as Record<string, unknown> | undefined)?.port as
-					| number
-					| undefined) ?? 3000)
-			: undefined;
+		const workerPayload = await bus.emit(Codegen.Worker, {
+			imports: [],
+			root: null,
+			useLines: [],
+			handlerArg: "",
+			tailLines: [],
+			frontend,
+		});
 
 		writeFileSync(
 			join(stackDir, "worker.ts"),
-			generateVirtualWorkerV2({
-				plugins: pluginInfos,
-				hasSchema,
-				hasMiddleware,
-				hasRoutes,
-				domain: config.domain,
-				frontendPort,
-				hasFrontend,
-				hasAuth,
-			}),
+			generateVirtualWorker(workerPayload),
 		);
 
 		const consumerWrangler = existsSync(join(cwd, "wrangler.toml"))

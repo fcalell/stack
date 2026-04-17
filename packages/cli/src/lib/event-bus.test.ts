@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { EventHandlerError } from "#lib/errors";
 import { createEventBus, defineEvent, type EventBus } from "#lib/event-bus";
 
 describe("defineEvent", () => {
@@ -71,17 +72,53 @@ describe("EventBus", () => {
 			expect(bus.history(event)).toEqual([1, 2]);
 		});
 
-		it("rejects on first handler throw (fail-fast)", async () => {
+		it("fails fast on the first handler error and does not run later handlers", async () => {
 			const event = defineEvent<void>("test", "e");
 			const second = vi.fn();
+			const third = vi.fn();
 
 			bus.on(event, () => {
-				throw new Error("boom");
+				throw new Error("boom-1");
 			});
 			bus.on(event, second);
+			bus.on(event, () => {
+				throw new Error("boom-2");
+			});
+			bus.on(event, third);
 
-			await expect(bus.emit(event, undefined)).rejects.toThrow("boom");
+			const err = await bus
+				.emit(event, undefined)
+				.then(() => null)
+				.catch((e: unknown) => e);
+
+			expect(err).toBeInstanceOf(EventHandlerError);
+			const wrapped = err as EventHandlerError;
+			expect(wrapped.eventSource).toBe("test");
+			expect(wrapped.eventName).toBe("e");
+			expect((wrapped.cause as Error).message).toBe("boom-1");
 			expect(second).not.toHaveBeenCalled();
+			expect(third).not.toHaveBeenCalled();
+		});
+
+		it("preserves payload mutations from handlers that ran before a throw", async () => {
+			const event = defineEvent<{ items: string[] }>("test", "e");
+			bus.on(event, (data) => {
+				data.items.push("a");
+				throw new Error("boom");
+			});
+			bus.on(event, (data) => {
+				data.items.push("b");
+			});
+
+			const payload = { items: [] as string[] };
+			const err = await bus
+				.emit(event, payload)
+				.then(() => null)
+				.catch((e: unknown) => e);
+
+			expect(err).toBeInstanceOf(EventHandlerError);
+			// Fail-fast: second handler never runs, so only "a" is pushed.
+			expect(payload.items).toEqual(["a"]);
 		});
 
 		it("stores payload in history even if handler throws", async () => {
@@ -98,6 +135,16 @@ describe("EventBus", () => {
 			const event = defineEvent<string>("test", "e");
 			const result = await bus.emit(event, "hello");
 			expect(result).toBe("hello");
+		});
+
+		it("accepts Event<void> with no second argument", async () => {
+			const event = defineEvent<void>("test", "void-emit");
+			const handler = vi.fn();
+			bus.on(event, handler);
+
+			await expect(bus.emit(event)).resolves.toBeUndefined();
+			expect(handler).toHaveBeenCalledTimes(1);
+			expect(handler).toHaveBeenCalledWith(undefined);
 		});
 	});
 
@@ -198,6 +245,75 @@ describe("EventBus", () => {
 			const hist = bus.history(event);
 			hist.push(999);
 			expect(bus.history(event)).toEqual([1]);
+		});
+	});
+
+	describe("payload validation", () => {
+		it("no-op when event has no validator", async () => {
+			const event = defineEvent<{ value: number }>("test", "no-validate");
+			const result = await bus.emit(event, { value: 1 });
+			expect(result).toEqual({ value: 1 });
+		});
+
+		it("throws a wrapped error when validator throws", async () => {
+			const event = defineEvent<{ value: number }>("test", "validate-fail", {
+				validate: (d) => {
+					if (
+						typeof d !== "object" ||
+						d === null ||
+						typeof (d as { value: unknown }).value !== "number"
+					) {
+						throw new Error("expected { value: number }");
+					}
+					return d as { value: number };
+				},
+			});
+
+			await expect(
+				bus.emit(event, { value: "nope" } as unknown as { value: number }),
+			).rejects.toThrow(
+				"Event test:validate-fail payload validation failed: expected { value: number }",
+			);
+		});
+
+		it("handlers receive the coerced validated data", async () => {
+			const event = defineEvent<{ value: number }>("test", "validate-coerce", {
+				validate: (d) => {
+					const raw = (d as { value: unknown }).value;
+					return { value: Number(raw) };
+				},
+			});
+
+			const received: Array<{ value: number }> = [];
+			bus.on(event, (data) => {
+				received.push(data);
+			});
+
+			const result = await bus.emit(event, {
+				value: "42",
+			} as unknown as { value: number });
+
+			expect(result).toEqual({ value: 42 });
+			expect(received).toEqual([{ value: 42 }]);
+		});
+
+		it("always runs validation (no NODE_ENV skip)", async () => {
+			vi.stubEnv("NODE_ENV", "production");
+			try {
+				const validate = vi.fn((d: unknown) => d as { value: number });
+				const event = defineEvent<{ value: number }>(
+					"test",
+					"always-validate",
+					{
+						validate,
+					},
+				);
+
+				await bus.emit(event, { value: 1 });
+				expect(validate).toHaveBeenCalledTimes(1);
+			} finally {
+				vi.unstubAllEnvs();
+			}
 		});
 	});
 

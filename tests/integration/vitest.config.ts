@@ -6,15 +6,14 @@ const root = resolve(import.meta.dirname, "../..");
 export default defineConfig({
 	resolve: {
 		alias: {
-			"@fcalell/cli/codegen": resolve(
-				root,
-				"packages/cli/src/lib/codegen-v2.ts",
-			),
+			"@fcalell/cli/codegen": resolve(root, "packages/cli/src/lib/codegen.ts"),
 			"@fcalell/cli/discovery": resolve(
 				root,
 				"packages/cli/src/lib/discovery.ts",
 			),
 			"@fcalell/cli/events": resolve(root, "packages/cli/src/events.ts"),
+			"@fcalell/cli/errors": resolve(root, "packages/cli/src/lib/errors.ts"),
+			"@fcalell/cli/testing": resolve(root, "packages/cli/src/testing.ts"),
 			"@fcalell/cli": resolve(root, "packages/cli/src/config.ts"),
 			"#config": resolve(root, "packages/cli/src/config.ts"),
 			"#lib/create-plugin": resolve(

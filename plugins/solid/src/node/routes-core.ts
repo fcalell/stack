@@ -1,4 +1,6 @@
+import { mkdirSync, writeFileSync } from "node:fs";
 import { join, relative } from "node:path";
+import fg from "fast-glob";
 
 export interface RouteNode {
 	segment: string;
@@ -106,7 +108,36 @@ export function buildTree(
 		leafNode.leafFile = abs;
 	}
 
+	// Group segments collapse to "" in URLs, so `(auth)/login.tsx` and
+	// `(public)/login.tsx` both resolve to `/login`. Detect by walking the
+	// tree and mapping each leaf/index source to its final URL path.
+	assertNoRouteCollisions(root);
+
 	return { root, notFoundFile };
+}
+
+function assertNoRouteCollisions(root: RouteNode): void {
+	const seen = new Map<string, string>();
+
+	function register(url: string, source: string): void {
+		const existing = seen.get(url);
+		if (existing && existing !== source) {
+			throw new Error(
+				`Route collision at ${url}: both ${existing} and ${source} resolve to the same path`,
+			);
+		}
+		seen.set(url, source);
+	}
+
+	function walk(node: RouteNode, url: string): void {
+		if (node.indexFile) register(url || "/", node.indexFile);
+		if (node.leafFile) register(url || "/", node.leafFile);
+		for (const child of node.children.values()) {
+			walk(child, joinUrl(url, child.segment));
+		}
+	}
+
+	walk(root, "");
 }
 
 export function joinUrl(parent: string, seg: string): string {
@@ -338,4 +369,14 @@ declare module "virtual:fcalell-routes" {
 \texport const typedRoutes: ${typedRoutesTypes};
 }
 `;
+}
+
+export function writeRoutesDts(cwd: string, pagesDirRel: string): void {
+	const absPagesDir = join(cwd, pagesDirRel);
+	const files = fg.sync(["**/*.tsx", "**/*.jsx"], { cwd: absPagesDir }).sort();
+	const { root } = buildTree(files, absPagesDir);
+	const { typedRoutesTypes } = emitRoutes(root, cwd, undefined);
+	const dtsDir = join(cwd, ".stack");
+	mkdirSync(dtsDir, { recursive: true });
+	writeFileSync(join(dtsDir, "routes.d.ts"), emitDts(typedRoutesTypes));
 }

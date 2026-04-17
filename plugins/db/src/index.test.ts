@@ -1,4 +1,3 @@
-import type { RegisterContext } from "@fcalell/cli";
 import {
 	createEventBus,
 	Dev,
@@ -6,32 +5,10 @@ import {
 	Init,
 	Remove,
 } from "@fcalell/cli/events";
+import { createMockCtx } from "@fcalell/cli/testing";
 import { describe, expect, it, vi } from "vitest";
 import { type DbOptions, db } from "./index";
-
-function createMockCtx(
-	overrides: Partial<RegisterContext<DbOptions>> & { options: DbOptions },
-): RegisterContext<DbOptions> {
-	return {
-		cwd: "/tmp/test",
-		hasPlugin: () => false,
-		readFile: vi.fn(async () => ""),
-		fileExists: vi.fn(async () => false),
-		log: {
-			info: vi.fn(),
-			warn: vi.fn(),
-			success: vi.fn(),
-			error: vi.fn(),
-		},
-		prompt: {
-			text: vi.fn(async () => ""),
-			confirm: vi.fn(async () => false),
-			select: vi.fn(async () => undefined as any),
-			multiselect: vi.fn(async () => []),
-		},
-		...overrides,
-	};
-}
+import * as pushModule from "./node/push";
 
 describe("db config factory", () => {
 	it("returns correct PluginConfig for D1 dialect", () => {
@@ -110,15 +87,19 @@ describe("db.cli", () => {
 
 	it("exposes commands", () => {
 		expect(Object.keys(db.cli.commands)).toEqual(
-			expect.arrayContaining(["push", "generate", "apply", "status", "reset"]),
+			expect.arrayContaining(["push", "generate", "apply", "reset"]),
 		);
+	});
+
+	it("does not expose status command", () => {
+		expect(Object.keys(db.cli.commands)).not.toContain("status");
 	});
 });
 
 describe("db register", () => {
 	it("pushes scaffold files on Init.Scaffold", async () => {
 		const bus = createEventBus();
-		const ctx = createMockCtx({
+		const ctx = createMockCtx<DbOptions>({
 			options: {
 				dialect: "d1",
 				databaseId: "abc",
@@ -146,7 +127,7 @@ describe("db register", () => {
 
 	it("pushes D1 binding on Generate for d1 dialect", async () => {
 		const bus = createEventBus();
-		const ctx = createMockCtx({
+		const ctx = createMockCtx<DbOptions>({
 			options: {
 				dialect: "d1",
 				databaseId: "abc-123",
@@ -168,7 +149,7 @@ describe("db register", () => {
 
 	it("pushes no bindings on Generate for sqlite dialect", async () => {
 		const bus = createEventBus();
-		const ctx = createMockCtx({
+		const ctx = createMockCtx<DbOptions>({
 			options: {
 				dialect: "sqlite",
 				path: "./data/app.sqlite",
@@ -184,7 +165,7 @@ describe("db register", () => {
 
 	it("pushes cleanup info on Remove", async () => {
 		const bus = createEventBus();
-		const ctx = createMockCtx({
+		const ctx = createMockCtx<DbOptions>({
 			options: {
 				dialect: "d1",
 				databaseId: "abc",
@@ -202,9 +183,57 @@ describe("db register", () => {
 		expect(removal.dependencies).toContain("@fcalell/plugin-db");
 	});
 
+	it("serializes concurrent schema pushes from setup + watcher", async () => {
+		let active = 0;
+		let maxActive = 0;
+		let calls = 0;
+		const spy = vi
+			.spyOn(pushModule, "pushSchemaLocal")
+			.mockImplementation(async () => {
+				calls++;
+				active++;
+				maxActive = Math.max(maxActive, active);
+				await new Promise((r) => setTimeout(r, 30));
+				active--;
+			});
+
+		const bus = createEventBus();
+		const ctx = createMockCtx<DbOptions>({
+			options: {
+				dialect: "d1",
+				databaseId: "abc",
+				binding: "DB_MAIN",
+				migrations: "./src/migrations",
+			},
+		});
+		db.cli.register(ctx, bus, db.events);
+
+		const ready = await bus.emit(Dev.Ready, {
+			url: "http://localhost:8787",
+			port: 8787,
+			setup: [],
+			watchers: [],
+		});
+
+		const setupStep = ready.setup[0];
+		const watcher = ready.watchers[0];
+		if (!setupStep || !watcher) throw new Error("missing setup/watcher");
+
+		// Fire initial push + two concurrent watcher pushes while in-flight.
+		// Expect coalescing: only one extra push queued, never overlapping.
+		const p1 = setupStep.run();
+		const p2 = watcher.handler("src/schema/index.ts", "change");
+		const p3 = watcher.handler("src/schema/index.ts", "change");
+		await Promise.all([p1, p2, p3]);
+
+		expect(maxActive).toBe(1);
+		expect(calls).toBe(2);
+		spy.mockRestore();
+	});
+
 	it("pushes schema push setup + watcher on Dev.Ready", async () => {
 		const bus = createEventBus();
-		const ctx = createMockCtx({
+		const ctx = createMockCtx<DbOptions>({
 			options: {
 				dialect: "d1",
 				databaseId: "abc",

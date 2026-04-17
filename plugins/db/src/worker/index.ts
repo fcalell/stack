@@ -1,11 +1,6 @@
-import type { DrizzleD1Database } from "drizzle-orm/d1";
+import type { RuntimePlugin } from "@fcalell/cli/runtime";
+import type { AnyD1Database, DrizzleD1Database } from "drizzle-orm/d1";
 import { createClient } from "../d1/client";
-
-export interface RuntimePlugin<TName extends string, TDeps, TProvides> {
-	name: TName;
-	validateEnv?(env: unknown): void;
-	context(env: unknown, upstream: TDeps): TProvides | Promise<TProvides>;
-}
 
 export default function dbRuntime<
 	TSchema extends Record<string, unknown>,
@@ -22,7 +17,7 @@ export default function dbRuntime<
 		},
 		context(env) {
 			const d1 = (env as Record<string, unknown>)[options.binding];
-			return { db: createClient(d1 as any, options.schema) };
+			return { db: createClient(d1 as AnyD1Database, options.schema) };
 		},
 	};
 }

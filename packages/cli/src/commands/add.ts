@@ -2,8 +2,9 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { log, outro } from "@clack/prompts";
 import { Init } from "#events";
-import { editConfig } from "#lib/config-writer";
+import { editConfig, hasPluginCall } from "#lib/config-writer";
 import { dependencyNames, loadAvailablePlugins } from "#lib/discovery";
+import { ConfigLoadError, MissingPluginError } from "#lib/errors";
 import { createEventBus } from "#lib/event-bus";
 import { createRegisterContext } from "#lib/registration";
 import { scaffoldFiles } from "#lib/scaffold";
@@ -15,36 +16,41 @@ export async function add(
 	const available = await loadAvailablePlugins();
 	const pluginInfo = available.find((p) => p.name === pluginName);
 	if (!pluginInfo) {
-		log.error(`Unknown plugin: "${pluginName}"`);
-		log.info(
-			`Available plugins: ${available
-				.filter((p) => !p.cli.implicit)
-				.map((p) => p.name)
-				.join(", ")}`,
+		const availableNames = available
+			.filter((p) => !p.cli.implicit)
+			.map((p) => p.name)
+			.join(", ");
+		throw new MissingPluginError(
+			pluginName,
+			`Unknown plugin: "${pluginName}". Available plugins: ${availableNames}`,
 		);
-		process.exit(1);
 	}
 
-	const packageName = `@fcalell/plugin-${pluginName}`;
+	const packageName = pluginInfo.cli.package;
 	const cwd = process.cwd();
 
 	// Check if plugin already exists in config
 	let hasPlugin = false;
+	const { loadConfig } = await import("#lib/config");
+	let config: Awaited<ReturnType<typeof loadConfig>> | null = null;
 	try {
-		const { loadConfig } = await import("#lib/config");
-		const config = await loadConfig(configPath);
+		config = await loadConfig(configPath);
+	} catch (err) {
+		// Config may not exist yet — only swallow load errors
+		if (!(err instanceof ConfigLoadError)) throw err;
+	}
+
+	if (config) {
 		hasPlugin = config.plugins.some((p) => p.__plugin === pluginName);
 
 		for (const req of dependencyNames(pluginInfo)) {
 			if (!config.plugins.some((p) => p.__plugin === req)) {
-				log.error(
+				throw new MissingPluginError(
+					req,
 					`${pluginInfo.cli.label} requires "${req}". Run: stack add ${req}`,
 				);
-				process.exit(1);
 			}
 		}
-	} catch {
-		// Config may not exist yet
 	}
 
 	if (hasPlugin) {
@@ -59,11 +65,12 @@ export async function add(
 			cwd,
 			options: {},
 			hasPlugin: (name) => {
+				if (name === pluginName) return true;
 				try {
 					const configFile = readFileSync(join(cwd, configPath), "utf-8");
-					return configFile.includes(`${name}(`) || name === pluginName;
+					return hasPluginCall(configFile, name);
 				} catch {
-					return name === pluginName;
+					return false;
 				}
 			},
 		});

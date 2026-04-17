@@ -1,32 +1,7 @@
-import type { RegisterContext } from "@fcalell/cli";
 import { createEventBus, Init, Remove } from "@fcalell/cli/events";
-import { describe, expect, it, vi } from "vitest";
-import { type SolidUiOptions, solidUi } from "./index";
-
-function createMockCtx(
-	overrides?: Partial<RegisterContext<SolidUiOptions>>,
-): RegisterContext<SolidUiOptions> {
-	return {
-		cwd: "/tmp/test",
-		options: {},
-		hasPlugin: () => false,
-		readFile: vi.fn(async () => ""),
-		fileExists: vi.fn(async () => false),
-		log: {
-			info: vi.fn(),
-			warn: vi.fn(),
-			success: vi.fn(),
-			error: vi.fn(),
-		},
-		prompt: {
-			text: vi.fn(async () => ""),
-			confirm: vi.fn(async () => false),
-			select: vi.fn(async () => undefined as never),
-			multiselect: vi.fn(async () => []),
-		},
-		...overrides,
-	};
-}
+import { createMockCtx } from "@fcalell/cli/testing";
+import { describe, expect, it } from "vitest";
+import { solidUi } from "./index";
 
 describe("solidUi config factory", () => {
 	it("returns PluginConfig with __plugin 'solid-ui'", () => {

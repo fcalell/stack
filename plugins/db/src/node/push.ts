@@ -9,6 +9,12 @@ import {
 import { join } from "node:path";
 import type { DbOptions } from "../types";
 
+function sqliteLocalUrl(options: DbOptions): string {
+	return options.dialect === "sqlite" && options.path
+		? options.path
+		: ".stack/dev/local.db";
+}
+
 function writeDrizzleConfig(configPath: string, content: string): void {
 	const dir = join(configPath, "..");
 	mkdirSync(dir, { recursive: true });
@@ -40,17 +46,19 @@ function runCommand(
 
 export async function pushSchemaLocal(
 	cwd: string,
-	_options: DbOptions,
+	options: DbOptions,
 ): Promise<void> {
 	const configDir = join(cwd, ".stack", "dev");
 	mkdirSync(configDir, { recursive: true });
+
+	const dbUrl = sqliteLocalUrl(options);
 
 	const configPath = join(configDir, "drizzle.config.ts");
 	const configContent = `import { defineConfig } from "drizzle-kit";
 export default defineConfig({
   dialect: "sqlite",
   schema: "./src/schema/index.ts",
-  dbCredentials: { url: ".stack/dev/local.db" },
+  dbCredentials: { url: "${dbUrl}" },
 });
 `;
 	writeDrizzleConfig(configPath, configContent);
@@ -106,6 +114,10 @@ export async function applyMigrationsRemote(
 	cwd: string,
 	options: DbOptions,
 ): Promise<void> {
+	if (options.dialect === "sqlite") {
+		throw new Error("Remote migrations not supported for sqlite dialect");
+	}
+
 	const databaseName = options.databaseId;
 	if (!databaseName) {
 		throw new Error("Cannot apply remote migrations: no databaseId configured");
@@ -122,6 +134,25 @@ export async function applyMigrationsLocal(
 	cwd: string,
 	options: DbOptions,
 ): Promise<void> {
+	if (options.dialect === "sqlite") {
+		const configDir = join(cwd, ".stack", "dev");
+		mkdirSync(configDir, { recursive: true });
+
+		const configPath = join(configDir, "drizzle-migrate.config.ts");
+		const configContent = `import { defineConfig } from "drizzle-kit";
+export default defineConfig({
+  dialect: "sqlite",
+  schema: "./src/schema/index.ts",
+  out: "${options.migrations ?? "./src/migrations"}",
+  dbCredentials: { url: "${sqliteLocalUrl(options)}" },
+});
+`;
+		writeDrizzleConfig(configPath, configContent);
+
+		runCommand("npx", ["drizzle-kit", "migrate", "--config", configPath], cwd);
+		return;
+	}
+
 	const databaseName = options.databaseId;
 	if (!databaseName) {
 		throw new Error("Cannot apply local migrations: no databaseId configured");
@@ -132,20 +163,4 @@ export async function applyMigrationsLocal(
 		["wrangler", "d1", "migrations", "apply", databaseName, "--local"],
 		cwd,
 	);
-}
-
-export async function getMigrationStatus(
-	cwd: string,
-	options: DbOptions,
-): Promise<{ applied: number; pending: number }> {
-	const migrationsDir = join(cwd, options.migrations ?? "./src/migrations");
-
-	if (!existsSync(migrationsDir)) {
-		return { applied: 0, pending: 0 };
-	}
-
-	const entries = readdirSync(migrationsDir).filter((f) => f.endsWith(".sql"));
-	const totalFiles = entries.length;
-
-	return { applied: 0, pending: totalFiles };
 }

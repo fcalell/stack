@@ -1,9 +1,9 @@
-import { existsSync, watch } from "node:fs";
+import { existsSync, type FSWatcher, watch } from "node:fs";
 import { join } from "node:path";
 import { intro, log } from "@clack/prompts";
 import pc from "picocolors";
 import { Dev } from "#events";
-import { hasRuntimeExport } from "#lib/codegen-v2";
+import { hasRuntimeExport } from "#lib/codegen";
 import { loadConfig } from "#lib/config";
 import { discoverPlugins, sortByDependencies } from "#lib/discovery";
 import { generateApiRouteBarrel } from "#lib/generate";
@@ -38,16 +38,17 @@ export async function dev(options: DevOptions): Promise<void> {
 	const bus = registerPlugins(sorted, config, cwd);
 
 	// Check if any plugin has a worker runtime
-	const hasWorker = sorted.some((p) =>
-		hasRuntimeExport(`@fcalell/plugin-${p.name}`),
-	);
+	const hasWorker = sorted.some((p) => hasRuntimeExport(p.cli.package));
 
-	// Dev.Configure — collect vitePlugins and codegen metadata
-	await bus.emit(Dev.Configure, {
+	// Dev.Configure — collect vitePlugins and codegen metadata.
+	// Dev.ConfigureReady fires right after with the finalized payload so
+	// consumers (e.g. plugin-vite) can act on the fully-populated config.
+	const devConfigure = await bus.emit(Dev.Configure, {
 		vitePlugins: [],
 		viteImports: [],
 		vitePluginCalls: [],
 	});
+	await bus.emit(Dev.ConfigureReady, devConfigure);
 
 	// Dev.Start — collect processes and watchers
 	const devStart = await bus.emit(Dev.Start, {
@@ -110,35 +111,41 @@ export async function dev(options: DevOptions): Promise<void> {
 		await task.run();
 	}
 
+	const fsWatchers: FSWatcher[] = [];
+
 	// Start all watchers (from both Dev.Start and Dev.Ready)
 	const allWatchers = [...devStart.watchers, ...devReady.watchers];
 	for (const w of allWatchers) {
 		const fullPath = join(cwd, w.paths);
 		if (!existsSync(fullPath)) continue;
 		let debounceTimer: ReturnType<typeof setTimeout>;
-		watch(fullPath, { recursive: true }, (_event, filename) => {
-			if (!filename) return;
-			if (w.ignore?.some((pattern: string) => filename.includes(pattern)))
-				return;
-			clearTimeout(debounceTimer);
-			debounceTimer = setTimeout(async () => {
-				await w.handler(filename, "change");
-			}, w.debounce ?? 300);
-		});
+		fsWatchers.push(
+			watch(fullPath, { recursive: true }, (_event, filename) => {
+				if (!filename) return;
+				if (w.ignore?.some((pattern: string) => filename.includes(pattern)))
+					return;
+				clearTimeout(debounceTimer);
+				debounceTimer = setTimeout(async () => {
+					await w.handler(filename, "change");
+				}, w.debounce ?? 300);
+			}),
+		);
 	}
 
 	// Route barrel watcher (built-in)
 	const routesDir = join(cwd, "src", "worker", "routes");
 	if (existsSync(routesDir)) {
 		let routesDebounce: ReturnType<typeof setTimeout>;
-		watch(routesDir, (_event, filename) => {
-			if (!filename?.endsWith(".ts") || filename === "index.ts") return;
-			clearTimeout(routesDebounce);
-			routesDebounce = setTimeout(() => {
-				log.step("Route change detected, regenerating barrel...");
-				generateApiRouteBarrel(cwd);
-			}, 300);
-		});
+		fsWatchers.push(
+			watch(routesDir, (_event, filename) => {
+				if (!filename?.endsWith(".ts") || filename === "index.ts") return;
+				clearTimeout(routesDebounce);
+				routesDebounce = setTimeout(() => {
+					log.step("Route change detected, regenerating barrel...");
+					generateApiRouteBarrel(cwd);
+				}, 300);
+			}),
+		);
 	}
 
 	log.info("Watching for changes...");
@@ -153,20 +160,24 @@ export async function dev(options: DevOptions): Promise<void> {
 
 	// Config watcher — re-generate on change
 	let configDebounce: ReturnType<typeof setTimeout>;
-	watch(cwd, (_event, filename) => {
-		if (filename !== "stack.config.ts") return;
-		clearTimeout(configDebounce);
-		configDebounce = setTimeout(async () => {
-			log.step("Config changed, regenerating...");
-			try {
-				await generate(options.config);
-			} catch (err) {
-				log.warn(
-					`Regeneration failed: ${err instanceof Error ? err.message : String(err)}`,
-				);
-			}
-		}, 500);
-	});
+	fsWatchers.push(
+		watch(cwd, (_event, filename) => {
+			if (filename !== "stack.config.ts") return;
+			clearTimeout(configDebounce);
+			configDebounce = setTimeout(async () => {
+				log.step("Config changed, regenerating...");
+				try {
+					await generate(options.config);
+				} catch (err) {
+					log.warn(
+						`Regeneration failed: ${err instanceof Error ? err.message : String(err)}`,
+					);
+				}
+			}, 500);
+		}),
+	);
 
-	onExit(allProcesses);
+	onExit(allProcesses, () => {
+		for (const w of fsWatchers) w.close();
+	});
 }

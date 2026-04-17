@@ -3,6 +3,7 @@ import { intro, log, outro } from "@clack/prompts";
 import { Deploy } from "#events";
 import { loadConfig } from "#lib/config";
 import { discoverPlugins, sortByDependencies } from "#lib/discovery";
+import { StepFailedError } from "#lib/errors";
 import { sortStepsByPhase } from "#lib/executor";
 import { confirm } from "#lib/prompt";
 import { registerPlugins } from "#lib/registration";
@@ -63,15 +64,14 @@ export async function deploy(options: DeployOptions): Promise<void> {
 				cwd: step.exec.cwd ?? cwd,
 			});
 			if (result.status !== 0) {
-				log.error(`Deploy step "${step.name}" failed`);
-				process.exit(1);
+				throw new StepFailedError(step.name, result.status, step.exec.command);
 			}
 		}
 		log.success(`${step.name} deployed`);
 	}
 
 	// Deploy.Complete
-	await bus.emit(Deploy.Complete, undefined as unknown as undefined);
+	await bus.emit(Deploy.Complete);
 
 	outro("Deployed");
 }

@@ -1,7 +1,11 @@
-import { callback, createPlugin } from "@fcalell/cli";
-import { Generate, Init, Remove } from "@fcalell/cli/events";
+import { callback, createPlugin, fromSchema } from "@fcalell/cli";
+import { Codegen, Generate, Init, Remove } from "@fcalell/cli/events";
 import { db } from "@fcalell/plugin-db";
-import type { AuthOptions } from "./types";
+import { type AuthOptions, authOptionsSchema } from "./types";
+
+function serialize(value: unknown): string {
+	return JSON.stringify(value, null, "\t");
+}
 
 const AUTH_CALLBACKS_TEMPLATE = `import { auth } from "@fcalell/plugin-auth";
 
@@ -25,28 +29,18 @@ export const auth = createPlugin("auth", {
 		sendInvitation: callback<{ email: string; orgName: string }>(),
 	},
 
-	config(options: AuthOptions = {}) {
-		if (
-			options?.session?.expiresIn !== undefined &&
-			options.session.expiresIn <= 0
-		) {
-			throw new Error("auth: session.expiresIn must be a positive number");
-		}
-		return {
-			secretVar: "AUTH_SECRET",
-			appUrlVar: "APP_URL",
-			rateLimiter: {
-				ip: { binding: "RATE_LIMITER_IP", limit: 100, period: 60 },
-				email: { binding: "RATE_LIMITER_EMAIL", limit: 5, period: 300 },
-			},
-			...options,
-		};
-	},
+	config: fromSchema<AuthOptions>(authOptionsSchema),
 
 	register(ctx, bus) {
-		bus.on(Init.Prompt, async () => {
-			await ctx.prompt.text("Cookie prefix:", { default: "app" });
-			await ctx.prompt.confirm("Include organizations?");
+		bus.on(Init.Prompt, async (p) => {
+			const prefix = await ctx.prompt.text("Cookie prefix:", {
+				default: "app",
+			});
+			const organization = await ctx.prompt.confirm("Include organizations?");
+			p.configOptions.auth = {
+				cookies: { prefix },
+				organization,
+			};
 		});
 
 		bus.on(Init.Scaffold, (p) => {
@@ -58,7 +52,7 @@ export const auth = createPlugin("auth", {
 		});
 
 		bus.on(Generate, (p) => {
-			const opts = ctx.options!;
+			const opts = ctx.options;
 			p.bindings.push(
 				{
 					name: opts.secretVar ?? "AUTH_SECRET",
@@ -92,6 +86,32 @@ export const auth = createPlugin("auth", {
 		bus.on(Remove, (p) => {
 			p.files.push("src/worker/plugins/auth.ts");
 			p.dependencies.push("@fcalell/plugin-auth");
+		});
+
+		bus.on(Codegen.Worker, async (p) => {
+			p.imports.push(`import authRuntime from "@fcalell/plugin-auth/runtime";`);
+
+			const effectiveOptions: Record<string, unknown> = {
+				...(ctx.options as Record<string, unknown>),
+			};
+			// Cross-origin dev: when a frontend is present, cookies need
+			// sameSite=none so the browser sends them to the worker origin.
+			if (p.frontend?.port != null) {
+				effectiveOptions.sameSite = "none";
+			}
+			const opts = serialize(effectiveOptions);
+
+			const hasCallbacks = await ctx.fileExists("src/worker/plugins/auth.ts");
+			if (hasCallbacks) {
+				p.imports.push(
+					`import authCallbacks from "../src/worker/plugins/auth";`,
+				);
+				p.useLines.push(
+					`\t.use(authRuntime({ ...${opts}, callbacks: authCallbacks }))`,
+				);
+			} else {
+				p.useLines.push(`\t.use(authRuntime(${opts}))`);
+			}
 		});
 	},
 });

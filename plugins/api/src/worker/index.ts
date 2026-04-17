@@ -1,3 +1,7 @@
+import type {
+	RuntimePlugin,
+	RuntimePluginEventHandlers,
+} from "@fcalell/cli/runtime";
 import { ORPCError } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/fetch";
 import {
@@ -10,33 +14,8 @@ import { logger } from "hono/logger";
 import { secureHeaders } from "hono/secure-headers";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 import { createProcedure } from "../procedure";
-import type { Procedure } from "../types";
 
 export type { InferRouter } from "../types";
-
-// ---------- Runtime plugin protocol ----------
-
-export interface RuntimePlugin<
-	TName extends string,
-	TDeps = object,
-	TProvides = object,
-> {
-	name: TName;
-	validateEnv?(env: unknown): void;
-	context(env: unknown, upstream: TDeps): TProvides | Promise<TProvides>;
-	routes?(
-		// biome-ignore lint/suspicious/noExplicitAny: procedure type varies per context
-		procedure: any,
-	): Record<string, Procedure<unknown, unknown>>;
-}
-
-// ---------- Event handlers ----------
-
-interface EventHandlers {
-	scheduled?(controller: unknown, env: unknown, ctx: unknown): Promise<void>;
-	queue?(batch: unknown, env: unknown, ctx: unknown): Promise<void>;
-	email?(message: unknown, env: unknown, ctx: unknown): Promise<void>;
-}
 
 // ---------- Worker export ----------
 
@@ -250,13 +229,10 @@ function createAppBuilder<TContext extends Record<string, unknown>>(
 				);
 			});
 
-			const eventHandlers: EventHandlers = {};
+			const eventHandlers: RuntimePluginEventHandlers = {};
 			for (const entry of pluginEntries) {
-				const plugin = entry.plugin as RuntimePlugin<string> & {
-					handlers?: () => EventHandlers;
-				};
-				if (typeof plugin.handlers === "function") {
-					const handlers = plugin.handlers();
+				if (typeof entry.plugin.handlers === "function") {
+					const handlers = entry.plugin.handlers();
 					if (handlers.scheduled) eventHandlers.scheduled = handlers.scheduled;
 					if (handlers.queue) eventHandlers.queue = handlers.queue;
 					if (handlers.email) eventHandlers.email = handlers.email;

@@ -1,6 +1,6 @@
 import { resolve } from "node:path";
-import { log } from "@clack/prompts";
 import type { StackConfig } from "#config";
+import { ConfigLoadError } from "#lib/errors";
 
 export async function loadConfig(configPath: string): Promise<StackConfig> {
 	const resolved = resolve(configPath);
@@ -9,17 +9,16 @@ export async function loadConfig(configPath: string): Promise<StackConfig> {
 	try {
 		mod = await import(resolved);
 	} catch (err) {
-		log.error(
+		throw new ConfigLoadError(
 			`Could not load config at ${resolved}: ${err instanceof Error ? err.message : String(err)}`,
+			err,
 		);
-		process.exit(1);
 	}
 
 	const config: unknown = mod.default;
 
 	if (!isStackConfig(config)) {
-		log.error(`Invalid config at ${resolved}`);
-		process.exit(1);
+		throw new ConfigLoadError(`Invalid config at ${resolved}`);
 	}
 
 	return config;

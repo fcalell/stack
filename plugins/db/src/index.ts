@@ -1,14 +1,24 @@
 import { join } from "node:path";
-import { createPlugin } from "@fcalell/cli";
-import { Deploy, Dev, Generate, Init, Remove } from "@fcalell/cli/events";
+import { createPlugin, fromSchema } from "@fcalell/cli";
+import {
+	Codegen,
+	Deploy,
+	Dev,
+	Generate,
+	Init,
+	Remove,
+} from "@fcalell/cli/events";
 import {
 	applyMigrationsLocal,
 	applyMigrationsRemote,
 	generateMigrations,
-	getMigrationStatus,
 	pushSchemaLocal,
 } from "./node/push";
-import type { DbOptions } from "./types";
+import { type DbOptions, dbOptionsSchema } from "./types";
+
+function serialize(value: unknown): string {
+	return JSON.stringify(value, null, "\t");
+}
 
 const SCHEMA_TEMPLATE = `import { sqliteTable, text, integer } from "@fcalell/plugin-db/orm";
 
@@ -23,19 +33,7 @@ export const db = createPlugin("db", {
 	label: "Database",
 	events: ["SchemaReady"],
 
-	config(options: DbOptions) {
-		if (options.dialect === "d1" && !options.databaseId) {
-			throw new Error("D1 dialect requires databaseId");
-		}
-		if (options.dialect === "sqlite" && !options.path) {
-			throw new Error("SQLite dialect requires path");
-		}
-		return {
-			binding: "DB_MAIN",
-			migrations: "./src/migrations",
-			...options,
-		};
-	},
+	config: fromSchema<DbOptions>(dbOptionsSchema),
 
 	commands: {
 		push: {
@@ -78,13 +76,6 @@ export const db = createPlugin("db", {
 				ctx.log.success("Migrations applied");
 			},
 		},
-		status: {
-			description: "Show applied vs pending migrations",
-			handler: async (ctx) => {
-				const status = await getMigrationStatus(ctx.cwd, ctx.options);
-				ctx.log.info(`Applied: ${status.applied}, Pending: ${status.pending}`);
-			},
-		},
 		reset: {
 			description: "Reset local database (all data will be lost)",
 			handler: async (ctx) => {
@@ -105,20 +96,43 @@ export const db = createPlugin("db", {
 	},
 
 	register(ctx, bus, events) {
-		bus.on(Init.Prompt, async () => {
+		let currentPush: Promise<void> | null = null;
+		let queuedPush: Promise<void> | null = null;
+		const serializedPush = (): Promise<void> => {
+			if (queuedPush) return queuedPush;
+			if (currentPush) {
+				queuedPush = currentPush.then(() => {
+					const next = pushSchemaLocal(ctx.cwd, ctx.options);
+					currentPush = next.finally(() => {
+						currentPush = null;
+					});
+					queuedPush = null;
+					return currentPush;
+				});
+				return queuedPush;
+			}
+			currentPush = pushSchemaLocal(ctx.cwd, ctx.options).finally(() => {
+				currentPush = null;
+			});
+			return currentPush;
+		};
+
+		bus.on(Init.Prompt, async (p) => {
 			const dialect = await ctx.prompt.select("Database dialect:", [
 				{ label: "D1 (Cloudflare)", value: "d1" as const },
 				{ label: "SQLite (local)", value: "sqlite" as const },
 			]);
+			const answers: Record<string, unknown> = { dialect };
 			if (dialect === "d1") {
-				await ctx.prompt.text("D1 database ID:", {
+				answers.databaseId = await ctx.prompt.text("D1 database ID:", {
 					default: "YOUR_D1_DATABASE_ID",
 				});
 			} else {
-				await ctx.prompt.text("SQLite file path:", {
+				answers.path = await ctx.prompt.text("SQLite file path:", {
 					default: "./data/app.sqlite",
 				});
 			}
+			p.configOptions.db = answers;
 		});
 
 		bus.on(Init.Scaffold, (p) => {
@@ -143,6 +157,18 @@ export const db = createPlugin("db", {
 			}
 		});
 
+		bus.on(Codegen.Worker, async (p) => {
+			p.imports.push(`import dbRuntime from "@fcalell/plugin-db/runtime";`);
+			const opts = serialize(ctx.options ?? {});
+			const hasSchema = await ctx.fileExists("src/schema");
+			if (hasSchema) {
+				p.imports.push('import * as schema from "../src/schema";');
+				p.useLines.push(`\t.use(dbRuntime({ ...${opts}, schema }))`);
+			} else {
+				p.useLines.push(`\t.use(dbRuntime(${opts}))`);
+			}
+		});
+
 		bus.on(Remove, (p) => {
 			p.files.push("src/schema/", "src/migrations/");
 			p.dependencies.push("@fcalell/plugin-db", "drizzle-kit", "tsx");
@@ -153,9 +179,9 @@ export const db = createPlugin("db", {
 				name: "db-schema-push",
 				run: async () => {
 					ctx.log.info("Pushing schema to local database...");
-					await pushSchemaLocal(ctx.cwd, ctx.options);
+					await serializedPush();
 					ctx.log.success("Schema pushed");
-					await bus.emit(events.SchemaReady, undefined);
+					await bus.emit(events.SchemaReady);
 				},
 			});
 
@@ -166,9 +192,9 @@ export const db = createPlugin("db", {
 				debounce: 300,
 				handler: async () => {
 					ctx.log.info("Schema change detected, re-pushing...");
-					await pushSchemaLocal(ctx.cwd, ctx.options);
+					await serializedPush();
 					ctx.log.success("Schema pushed");
-					await bus.emit(events.SchemaReady, undefined);
+					await bus.emit(events.SchemaReady);
 				},
 			});
 		});

@@ -1,6 +1,7 @@
 packages:
   - packages/*
   - plugins/*
+  - tests/*
 
 onlyBuiltDependencies:
   - better-sqlite3

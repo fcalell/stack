@@ -1,31 +1,7 @@
-import type { RegisterContext } from "@fcalell/cli";
 import { createEventBus, Generate, Init, Remove } from "@fcalell/cli/events";
+import { createMockCtx } from "@fcalell/cli/testing";
 import { describe, expect, it, vi } from "vitest";
 import { type AuthOptions, auth } from "./index";
-
-function createMockCtx(
-	overrides: Partial<RegisterContext<AuthOptions>> & { options: AuthOptions },
-): RegisterContext<AuthOptions> {
-	return {
-		cwd: "/tmp/test",
-		hasPlugin: () => false,
-		readFile: vi.fn(async () => ""),
-		fileExists: vi.fn(async () => false),
-		log: {
-			info: vi.fn(),
-			warn: vi.fn(),
-			success: vi.fn(),
-			error: vi.fn(),
-		},
-		prompt: {
-			text: vi.fn(async () => ""),
-			confirm: vi.fn(async () => false),
-			select: vi.fn(async () => undefined as never),
-			multiselect: vi.fn(async () => []),
-		},
-		...overrides,
-	};
-}
 
 describe("auth config factory", () => {
 	it("returns PluginConfig with __plugin 'auth'", () => {
@@ -183,7 +159,7 @@ describe("auth.defineCallbacks", () => {
 describe("auth register", () => {
 	it("pushes scaffold files on Init.Scaffold", async () => {
 		const bus = createEventBus();
-		const ctx = createMockCtx({
+		const ctx = createMockCtx<AuthOptions>({
 			options: {
 				secretVar: "AUTH_SECRET",
 				appUrlVar: "APP_URL",
@@ -211,7 +187,7 @@ describe("auth register", () => {
 
 	it("pushes bindings on Generate", async () => {
 		const bus = createEventBus();
-		const ctx = createMockCtx({
+		const ctx = createMockCtx<AuthOptions>({
 			options: {
 				secretVar: "AUTH_SECRET",
 				appUrlVar: "APP_URL",
@@ -235,7 +211,7 @@ describe("auth register", () => {
 
 	it("uses custom secret var names in bindings", async () => {
 		const bus = createEventBus();
-		const ctx = createMockCtx({
+		const ctx = createMockCtx<AuthOptions>({
 			options: {
 				secretVar: "MY_SECRET",
 				appUrlVar: "MY_URL",
@@ -254,7 +230,7 @@ describe("auth register", () => {
 
 	it("uses custom rate limiter bindings", async () => {
 		const bus = createEventBus();
-		const ctx = createMockCtx({
+		const ctx = createMockCtx<AuthOptions>({
 			options: {
 				secretVar: "AUTH_SECRET",
 				appUrlVar: "APP_URL",
@@ -275,7 +251,7 @@ describe("auth register", () => {
 
 	it("includes dev defaults for secret bindings", async () => {
 		const bus = createEventBus();
-		const ctx = createMockCtx({
+		const ctx = createMockCtx<AuthOptions>({
 			options: {
 				secretVar: "AUTH_SECRET",
 				appUrlVar: "APP_URL",
@@ -294,7 +270,7 @@ describe("auth register", () => {
 
 	it("pushes cleanup info on Remove", async () => {
 		const bus = createEventBus();
-		const ctx = createMockCtx({
+		const ctx = createMockCtx<AuthOptions>({
 			options: {
 				secretVar: "AUTH_SECRET",
 				appUrlVar: "APP_URL",

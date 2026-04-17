@@ -48,8 +48,16 @@ export function killAll(processes: ManagedProcess[]): void {
 	for (const proc of processes) proc.kill();
 }
 
-export function onExit(processes: ManagedProcess[]): void {
+export function onExit(
+	processes: ManagedProcess[],
+	cleanup?: () => void,
+): void {
 	const handler = () => {
+		try {
+			cleanup?.();
+		} catch {
+			// Never let cleanup errors block process shutdown.
+		}
 		killAll(processes);
 		process.exit(0);
 	};

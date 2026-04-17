@@ -40,6 +40,12 @@ const authPlugin = createPlugin("auth", {
 
 const plugins = [dbPlugin.cli, authPlugin.cli];
 
+function getCommand(name: string) {
+	const cmd = dbPlugin.cli.commands[name];
+	if (!cmd) throw new Error(`Test setup: missing command '${name}'`);
+	return cmd;
+}
+
 describe("findPluginCommand", () => {
 	it("finds a command by plugin and command name", () => {
 		const match = findPluginCommand(plugins, "db", "push");
@@ -64,22 +70,67 @@ describe("findPluginCommand", () => {
 
 describe("parseCommandFlags", () => {
 	it("parses boolean flags", () => {
-		const cmd = dbPlugin.cli.commands.apply!;
+		const cmd = getCommand("apply");
 		const flags = parseCommandFlags(cmd, ["--remote"]);
 		expect(flags.remote).toBe(true);
 	});
 
 	it("uses defaults when flag not provided", () => {
-		const cmd = dbPlugin.cli.commands.apply!;
+		const cmd = getCommand("apply");
 		const flags = parseCommandFlags(cmd, []);
 		expect(flags.remote).toBe(false);
 	});
 
-	it("ignores unknown flags", () => {
-		const cmd = dbPlugin.cli.commands.apply!;
-		const flags = parseCommandFlags(cmd, ["--unknown", "--remote"]);
+	it("throws on unknown long flags with a helpful message", () => {
+		const cmd = getCommand("apply");
+		expect(() => parseCommandFlags(cmd, ["--unknown"])).toThrow(
+			/Unknown flag "--unknown"/,
+		);
+	});
+
+	it("throws on unknown short flags", () => {
+		const cmd = getCommand("apply");
+		expect(() => parseCommandFlags(cmd, ["-x"])).toThrow(/Unknown flag "-x"/);
+	});
+
+	it("passes positionals through without error", () => {
+		const cmd = getCommand("apply");
+		const flags = parseCommandFlags(cmd, ["positional", "--remote"]);
 		expect(flags.remote).toBe(true);
-		expect(flags.unknown).toBeUndefined();
+	});
+
+	it("accepts a long alias in place of the canonical name", () => {
+		const cmd = {
+			description: "Test",
+			options: {
+				yes: {
+					type: "boolean" as const,
+					description: "Yes",
+					alias: "confirm",
+					default: false,
+				},
+			},
+			handler: vi.fn(),
+		};
+		const flags = parseCommandFlags(cmd, ["--confirm"]);
+		expect(flags.yes).toBe(true);
+	});
+
+	it("accepts a single-char alias as a short flag", () => {
+		const cmd = {
+			description: "Test",
+			options: {
+				yes: {
+					type: "boolean" as const,
+					description: "Yes",
+					alias: "y",
+					default: false,
+				},
+			},
+			handler: vi.fn(),
+		};
+		const flags = parseCommandFlags(cmd, ["-y"]);
+		expect(flags.yes).toBe(true);
 	});
 
 	it("parses string flags", () => {
@@ -106,9 +157,9 @@ describe("parseCommandFlags", () => {
 		expect(flags.port).toBe(8080);
 	});
 
-	it("returns empty object for command with no options", () => {
-		const cmd = dbPlugin.cli.commands.push!;
-		const flags = parseCommandFlags(cmd, ["--anything"]);
+	it("returns empty object for command with no options when no flags passed", () => {
+		const cmd = getCommand("push");
+		const flags = parseCommandFlags(cmd, []);
 		expect(flags).toEqual({});
 	});
 });

@@ -1,8 +1,10 @@
+import { join } from "node:path";
 import { log, outro } from "@clack/prompts";
 import { Remove } from "#events";
 import { loadConfig } from "#lib/config";
-import { editConfig } from "#lib/config-writer";
+import { removePluginCall } from "#lib/config-writer";
 import { discoverPlugins } from "#lib/discovery";
+import { MissingPluginError, StackError } from "#lib/errors";
 import { createEventBus } from "#lib/event-bus";
 import { createRegisterContext } from "#lib/registration";
 
@@ -15,8 +17,10 @@ export async function remove(
 
 	const hasPlugin = config.plugins.some((p) => p.__plugin === pluginName);
 	if (!hasPlugin) {
-		log.error(`Plugin "${pluginName}" is not in your config.`);
-		process.exit(1);
+		throw new MissingPluginError(
+			pluginName,
+			`Plugin "${pluginName}" is not in your config.`,
+		);
 	}
 
 	const discovered = await discoverPlugins(config);
@@ -27,10 +31,10 @@ export async function remove(
 	);
 	if (dependents.length > 0) {
 		const names = dependents.map((p) => p.name).join(", ");
-		log.error(
+		throw new StackError(
 			`Cannot remove "${pluginName}" — required by: ${names}. Remove those first.`,
+			"PLUGIN_HAS_DEPENDENTS",
 		);
-		process.exit(1);
 	}
 
 	const plugin = discovered.find((p) => p.name === pluginName);
@@ -59,18 +63,8 @@ export async function remove(
 	}
 
 	// Remove plugin from config file
-	const fullConfigPath = `${cwd}/${configPath}`;
-	await editConfig(fullConfigPath, ({ config: ast }) => {
-		if (Array.isArray(ast.plugins)) {
-			const idx = ast.plugins.findIndex(
-				// biome-ignore lint/suspicious/noExplicitAny: magicast proxies are dynamically typed
-				(p: any) => p?.$type === "function-call" && p.$callee === pluginName,
-			);
-			if (idx >= 0) {
-				ast.plugins.splice(idx, 1);
-			}
-		}
-	});
+	const fullConfigPath = join(cwd, configPath);
+	await removePluginCall(fullConfigPath, pluginName);
 
 	const label = plugin?.cli.label ?? pluginName;
 

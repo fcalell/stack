@@ -1,34 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
-import {
-	callback,
-	createPlugin,
-	type RegisterContext,
-} from "#lib/create-plugin";
+import { callback, createPlugin } from "#lib/create-plugin";
 import { createEventBus, defineEvent } from "#lib/event-bus";
-
-function createMockRegisterContext<T>(
-	overrides: Partial<RegisterContext<T>> & { options: T },
-): RegisterContext<T> {
-	return {
-		cwd: "/test",
-		hasPlugin: () => false,
-		readFile: vi.fn(async () => ""),
-		fileExists: vi.fn(async () => false),
-		log: {
-			info: vi.fn(),
-			warn: vi.fn(),
-			success: vi.fn(),
-			error: vi.fn(),
-		},
-		prompt: {
-			text: vi.fn(async () => ""),
-			confirm: vi.fn(async () => false),
-			select: vi.fn(async () => undefined as any),
-			multiselect: vi.fn(async () => []),
-		},
-		...overrides,
-	};
-}
+import { createMockCtx } from "#testing";
 
 describe("createPlugin", () => {
 	describe("config factory (callable)", () => {
@@ -57,14 +30,56 @@ describe("createPlugin", () => {
 			expect(myPlugin({ port: 3000 }).options.port).toBe(3000);
 		});
 
-		it("can be called without arguments", () => {
+		it("can be called without arguments when config() supplies defaults", () => {
 			const myPlugin = createPlugin("test", {
 				label: "Test",
+				config(options?: { value?: number }) {
+					return { value: options?.value ?? 1 };
+				},
 				register() {},
 			});
 
 			const config = myPlugin();
 			expect(config.__plugin).toBe("test");
+			expect(config.options).toEqual({ value: 1 });
+		});
+
+		it("throws when options are omitted and no config() is defined", () => {
+			const myPlugin = createPlugin("test", {
+				label: "Test",
+				register() {},
+			});
+
+			expect(() => myPlugin()).toThrow(/requires options/);
+		});
+
+		it("stamps __package with the default @fcalell/plugin-<name> when not set", () => {
+			const myPlugin = createPlugin("db", {
+				label: "Database",
+				config(options?: Record<string, unknown>) {
+					return options ?? {};
+				},
+				register() {},
+			});
+
+			const config = myPlugin();
+			expect(config.__package).toBe("@fcalell/plugin-db");
+			expect(myPlugin.cli.package).toBe("@fcalell/plugin-db");
+		});
+
+		it("honours an explicit `package` option for third-party plugins", () => {
+			const myPlugin = createPlugin("widget", {
+				label: "Widget",
+				package: "@acme/stack-plugin-widget",
+				config(options?: Record<string, unknown>) {
+					return options ?? {};
+				},
+				register() {},
+			});
+
+			const config = myPlugin();
+			expect(config.__package).toBe("@acme/stack-plugin-widget");
+			expect(myPlugin.cli.package).toBe("@acme/stack-plugin-widget");
 		});
 	});
 
@@ -136,7 +151,7 @@ describe("createPlugin", () => {
 				register: registerFn,
 			});
 
-			const ctx = createMockRegisterContext({ options: {} });
+			const ctx = createMockCtx({ options: {} });
 			const bus = createEventBus();
 
 			myPlugin.cli.register(ctx, bus, {});
@@ -186,7 +201,7 @@ describe("createPlugin", () => {
 			});
 
 			const impl = {
-				sendOTP: async ({ email, code }: { email: string; code: string }) => {
+				sendOTP: async (_payload: { email: string; code: string }) => {
 					// no-op
 				},
 			};
@@ -201,7 +216,7 @@ describe("createPlugin", () => {
 				register() {},
 			});
 
-			expect((myPlugin as any).defineCallbacks).toBeUndefined();
+			expect("defineCallbacks" in myPlugin).toBe(false);
 		});
 	});
 
@@ -218,17 +233,8 @@ describe("createPlugin", () => {
 			});
 
 			const bus = createEventBus();
-			const ctx = createMockRegisterContext({ options: {} });
+			const ctx = createMockCtx({ options: {} });
 			myPlugin.cli.register(ctx, bus, myPlugin.events);
-
-			const _generateEvent = defineEvent<{ items: string[] }>(
-				"core",
-				"generate",
-			);
-
-			// This uses a different symbol so it won't match.
-			// In real usage, events are shared via imports.
-			// Let's test with the actual event reference:
 		});
 
 		it("plugins can listen to shared event references", async () => {
@@ -253,16 +259,8 @@ describe("createPlugin", () => {
 			});
 
 			const bus = createEventBus();
-			pluginA.cli.register(
-				createMockRegisterContext({ options: {} }),
-				bus,
-				pluginA.events,
-			);
-			pluginB.cli.register(
-				createMockRegisterContext({ options: {} }),
-				bus,
-				pluginB.events,
-			);
+			pluginA.cli.register(createMockCtx({ options: {} }), bus, pluginA.events);
+			pluginB.cli.register(createMockCtx({ options: {} }), bus, pluginB.events);
 
 			const result = await bus.emit(sharedEvent, { items: [] });
 			expect(result.items).toEqual(["from-a", "from-b"]);
@@ -284,16 +282,12 @@ describe("createPlugin", () => {
 			const bus = createEventBus();
 
 			myPlugin.cli.register(
-				createMockRegisterContext({ options: {} }),
+				createMockCtx({ options: {} }),
 				bus,
 				myPlugin.events,
 			);
 			bus.on(myPlugin.events.SchemaReady, schemaReadyHandler);
 
-			// Trigger via the core event
-			const _devReady = defineEvent<void>("core", "dev.ready");
-			// This won't trigger because it's a different symbol.
-			// In real code, events are shared references. Let's use the bus directly:
 			await bus.emit(myPlugin.events.SchemaReady, undefined);
 
 			expect(schemaReadyHandler).toHaveBeenCalledTimes(1);
@@ -347,16 +341,8 @@ describe("createPlugin", () => {
 
 			const bus = createEventBus();
 			// Register in dependency order (db before auth)
-			db.cli.register(
-				createMockRegisterContext({ options: {} }),
-				bus,
-				db.events,
-			);
-			auth.cli.register(
-				createMockRegisterContext({ options: {} }),
-				bus,
-				auth.events,
-			);
+			db.cli.register(createMockCtx({ options: {} }), bus, db.events);
+			auth.cli.register(createMockCtx({ options: {} }), bus, auth.events);
 
 			const result = await bus.emit(sharedEvent, { order: [] });
 			expect(result.order).toEqual(["db", "auth"]);

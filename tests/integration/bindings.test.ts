@@ -1,44 +1,33 @@
-import type { RegisterContext } from "@fcalell/cli";
-import { createEventBus, Generate } from "@fcalell/cli/events";
+import type { BindingDeclaration, RegisterContext } from "@fcalell/cli";
+import {
+	createEventBus,
+	type Event,
+	type EventBus,
+	Generate,
+} from "@fcalell/cli/events";
+import { createMockCtx } from "@fcalell/cli/testing";
 import type { ApiOptions } from "@fcalell/plugin-api";
 import { api } from "@fcalell/plugin-api";
 import type { AuthOptions } from "@fcalell/plugin-auth";
 import { auth } from "@fcalell/plugin-auth";
 import type { DbOptions } from "@fcalell/plugin-db";
 import { db } from "@fcalell/plugin-db";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
-function createMockCtx<T>(options: T): RegisterContext<T> {
-	return {
-		cwd: "/tmp/test",
-		options,
-		hasPlugin: () => false,
-		readFile: vi.fn(async () => ""),
-		fileExists: vi.fn(async () => false),
-		log: {
-			info: vi.fn(),
-			warn: vi.fn(),
-			success: vi.fn(),
-			error: vi.fn(),
-		},
-		prompt: {
-			text: vi.fn(async () => ""),
-			confirm: vi.fn(async () => false),
-			select: vi.fn(async () => undefined as any),
-			multiselect: vi.fn(async () => []),
-		},
-	};
-}
-
-async function collectPluginBindings<T>(
+async function collectPluginBindings<
+	T,
+	E extends Record<string, Event<unknown>>,
+>(
 	plugin: {
-		cli: { register: (ctx: RegisterContext<T>, bus: any, events: any) => void };
-		events: Record<string, any>;
+		cli: {
+			register: (ctx: RegisterContext<T>, bus: EventBus, events: E) => void;
+		};
+		events: E;
 	},
 	options: T,
-) {
+): Promise<BindingDeclaration[]> {
 	const bus = createEventBus();
-	const ctx = createMockCtx(options);
+	const ctx = createMockCtx({ options });
 	plugin.cli.register(ctx, bus, plugin.events);
 	const gen = await bus.emit(Generate, { files: [], bindings: [] });
 	return gen.bindings;
@@ -131,9 +120,9 @@ describe("binding collection across plugins", () => {
 		};
 		const apiOpts: ApiOptions = { prefix: "/rpc" };
 
-		db.cli.register(createMockCtx(dbOpts), bus, db.events);
-		auth.cli.register(createMockCtx(authOpts), bus, auth.events);
-		api.cli.register(createMockCtx(apiOpts), bus, api.events);
+		db.cli.register(createMockCtx({ options: dbOpts }), bus, db.events);
+		auth.cli.register(createMockCtx({ options: authOpts }), bus, auth.events);
+		api.cli.register(createMockCtx({ options: apiOpts }), bus, api.events);
 
 		const gen = await bus.emit(Generate, { files: [], bindings: [] });
 

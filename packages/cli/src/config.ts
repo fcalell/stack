@@ -5,6 +5,11 @@ export interface PluginConfig<
 	TOptions = unknown,
 > {
 	readonly __plugin: TName;
+	// Explicit npm package name used for runtime discovery. Optional for
+	// backward compatibility: when absent, discovery falls back to
+	// `@fcalell/plugin-${__plugin}`. Third-party plugins published under a
+	// different namespace must set this via `createPlugin(..., { package })`.
+	readonly __package?: string;
 	readonly options: TOptions;
 }
 
@@ -109,3 +114,4 @@ export type {
 	RegisterContext,
 } from "#lib/create-plugin";
 export { callback, createPlugin } from "#lib/create-plugin";
+export { fromSchema } from "#lib/plugin-config";

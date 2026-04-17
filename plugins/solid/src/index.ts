@@ -1,9 +1,8 @@
-import { join } from "node:path";
 import { createPlugin } from "@fcalell/cli";
 import { Build, Dev, Generate, Init, Remove } from "@fcalell/cli/events";
 import { vite } from "@fcalell/plugin-vite";
-import fg from "fast-glob";
-import { buildTree, emitDts, emitRoutes } from "./node/routes-core";
+import solidPlugin from "vite-plugin-solid";
+import { writeRoutesDts } from "./node/routes-core";
 import type { SolidOptions } from "./types";
 
 const INDEX_HTML = `<!doctype html>
@@ -79,9 +78,6 @@ export const solid = createPlugin("solid", {
 			viteImports: string[];
 			vitePluginCalls: string[];
 		}) => {
-			// vite-plugin-solid is available in the consumer project at runtime
-			// @ts-expect-error -- dynamic import of runtime-only dependency
-			const { default: solidPlugin } = await import("vite-plugin-solid");
 			p.vitePlugins.push(solidPlugin());
 			const { routesPlugin } = await import("./node/vite-routes");
 			const pagesDir =
@@ -100,7 +96,7 @@ export const solid = createPlugin("solid", {
 		bus.on(Dev.Configure, injectVitePlugins);
 		bus.on(Build.Configure, injectVitePlugins);
 
-		bus.on(Generate, async (p) => {
+		bus.on(Generate, async (_p) => {
 			if (ctx.options?.routes === false) return;
 
 			const routesConfig =
@@ -108,20 +104,10 @@ export const solid = createPlugin("solid", {
 					? ctx.options.routes
 					: {};
 			const pagesDirRel = routesConfig.pagesDir ?? "src/app/pages";
-			const absPagesDir = join(ctx.cwd, pagesDirRel);
 
-			const files = fg
-				.sync(["**/*.tsx", "**/*.jsx"], { cwd: absPagesDir })
-				.sort();
-			const { root, notFoundFile } = buildTree(files, absPagesDir);
-			const { typedRoutesTypes } = emitRoutes(root, ctx.cwd, notFoundFile);
+			writeRoutesDts(ctx.cwd, pagesDirRel);
 
-			p.files.push({
-				path: ".stack/routes.d.ts",
-				content: emitDts(typedRoutesTypes),
-			});
-
-			await bus.emit(events.SolidConfigured, undefined);
+			await bus.emit(events.SolidConfigured);
 		});
 	},
 });

@@ -1,4 +1,3 @@
-import type { RegisterContext } from "@fcalell/cli";
 import {
 	createEventBus,
 	Dev,
@@ -6,33 +5,9 @@ import {
 	Init,
 	Remove,
 } from "@fcalell/cli/events";
-import { describe, expect, it, vi } from "vitest";
+import { createMockCtx } from "@fcalell/cli/testing";
+import { describe, expect, it } from "vitest";
 import { type ApiOptions, api } from "./index";
-
-function createMockCtx(
-	overrides: Partial<RegisterContext<ApiOptions>> & { options: ApiOptions },
-): RegisterContext<ApiOptions> {
-	return {
-		cwd: "/tmp/test",
-		hasPlugin: () => false,
-		readFile: vi.fn(async () => ""),
-		fileExists: vi.fn(async () => false),
-		log: {
-			info: vi.fn(),
-			warn: vi.fn(),
-			success: vi.fn(),
-			error: vi.fn(),
-		},
-		prompt: {
-			text: vi.fn(async () => ""),
-			confirm: vi.fn(async () => false),
-			// biome-ignore lint/suspicious/noExplicitAny: mock return type
-			select: vi.fn(async () => undefined as any),
-			multiselect: vi.fn(async () => []),
-		},
-		...overrides,
-	};
-}
 
 describe("api config factory", () => {
 	it("returns PluginConfig with __plugin: 'api'", () => {
@@ -104,7 +79,7 @@ describe("api.cli", () => {
 describe("api register", () => {
 	it("pushes scaffold files on Init.Scaffold", async () => {
 		const bus = createEventBus();
-		const ctx = createMockCtx({
+		const ctx = createMockCtx<ApiOptions>({
 			options: { prefix: "/rpc" },
 		});
 		api.cli.register(ctx, bus, api.events);
@@ -129,7 +104,7 @@ describe("api register", () => {
 
 	it("pushes route barrel on Generate", async () => {
 		const bus = createEventBus();
-		const ctx = createMockCtx({
+		const ctx = createMockCtx<ApiOptions>({
 			options: { prefix: "/rpc" },
 		});
 		api.cli.register(ctx, bus, api.events);
@@ -146,7 +121,7 @@ describe("api register", () => {
 
 	it("pushes cleanup info on Remove", async () => {
 		const bus = createEventBus();
-		const ctx = createMockCtx({
+		const ctx = createMockCtx<ApiOptions>({
 			options: { prefix: "/rpc" },
 		});
 		api.cli.register(ctx, bus, api.events);
@@ -163,7 +138,7 @@ describe("api register", () => {
 
 	it("pushes wrangler process and route watcher on Dev.Start", async () => {
 		const bus = createEventBus();
-		const ctx = createMockCtx({
+		const ctx = createMockCtx<ApiOptions>({
 			options: { prefix: "/rpc" },
 		});
 		api.cli.register(ctx, bus, api.events);

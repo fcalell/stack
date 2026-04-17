@@ -1,37 +1,82 @@
 import type { RegisterContext } from "@fcalell/cli";
-import { createEventBus, Generate, Init, Remove } from "@fcalell/cli/events";
-import { api } from "@fcalell/plugin-api";
-import { auth } from "@fcalell/plugin-auth";
-import { db } from "@fcalell/plugin-db";
-import { describe, expect, it, vi } from "vitest";
+import {
+	createEventBus,
+	type Event,
+	type EventBus,
+	Generate,
+	Init,
+	Remove,
+} from "@fcalell/cli/events";
+import { createMockCtx } from "@fcalell/cli/testing";
+import { type ApiOptions, api } from "@fcalell/plugin-api";
+import { type AuthOptions, auth } from "@fcalell/plugin-auth";
+import { type DbOptions, db } from "@fcalell/plugin-db";
+import { describe, expect, it } from "vitest";
 
-function createMockCtx<T>(options: T): RegisterContext<T> {
-	return {
-		cwd: "/tmp/test-project",
-		options,
-		hasPlugin: vi.fn().mockReturnValue(false),
-		readFile: vi.fn(async () => ""),
-		fileExists: vi.fn(async () => false),
-		log: {
-			info: vi.fn(),
-			warn: vi.fn(),
-			success: vi.fn(),
-			error: vi.fn(),
+const dbOptions: DbOptions = {
+	dialect: "d1",
+	databaseId: "test",
+	binding: "DB_MAIN",
+	migrations: "./src/migrations",
+};
+
+const authOptions: AuthOptions = {
+	secretVar: "AUTH_SECRET",
+	appUrlVar: "APP_URL",
+	rateLimiter: {
+		ip: { binding: "RATE_LIMITER_IP", limit: 100, period: 60 },
+		email: {
+			binding: "RATE_LIMITER_EMAIL",
+			limit: 5,
+			period: 300,
 		},
-		prompt: {
-			text: vi.fn(async () => ""),
-			confirm: vi.fn(async () => false),
-			select: vi.fn(async () => undefined as any),
-			multiselect: vi.fn(async () => []),
-		},
+	},
+};
+
+const apiOptions: ApiOptions = {};
+
+type PluginOptions = DbOptions | AuthOptions | ApiOptions;
+
+const optionsByName: Record<string, PluginOptions> = {
+	db: dbOptions,
+	auth: authOptions,
+	api: apiOptions,
+};
+
+interface AnyCliPlugin {
+	cli: {
+		name: string;
+		label: string;
+		register: (
+			ctx: RegisterContext<unknown>,
+			bus: EventBus,
+			events: Record<string, Event<unknown>>,
+		) => void;
 	};
+	events: Record<string, Event<unknown>>;
 }
 
 describe("createPlugin-based CLI plugin contracts", () => {
-	const newPlugins = [
-		{ plugin: db, expectedName: "db", expectedLabel: "Database" },
-		{ plugin: auth, expectedName: "auth", expectedLabel: "Auth" },
-		{ plugin: api, expectedName: "api", expectedLabel: "API" },
+	const newPlugins: Array<{
+		plugin: AnyCliPlugin;
+		expectedName: string;
+		expectedLabel: string;
+	}> = [
+		{
+			plugin: db as unknown as AnyCliPlugin,
+			expectedName: "db",
+			expectedLabel: "Database",
+		},
+		{
+			plugin: auth as unknown as AnyCliPlugin,
+			expectedName: "auth",
+			expectedLabel: "Auth",
+		},
+		{
+			plugin: api as unknown as AnyCliPlugin,
+			expectedName: "api",
+			expectedLabel: "API",
+		},
 	];
 
 	describe.each(newPlugins)("$expectedName plugin", ({
@@ -53,30 +98,9 @@ describe("createPlugin-based CLI plugin contracts", () => {
 
 		it("contributes bindings via Generate event", async () => {
 			const bus = createEventBus();
-			let options: any = {};
-			if (expectedName === "db") {
-				options = {
-					dialect: "d1",
-					databaseId: "test",
-					binding: "DB_MAIN",
-					migrations: "./src/migrations",
-				};
-			} else if (expectedName === "auth") {
-				options = {
-					secretVar: "AUTH_SECRET",
-					appUrlVar: "APP_URL",
-					rateLimiter: {
-						ip: { binding: "RATE_LIMITER_IP", limit: 100, period: 60 },
-						email: {
-							binding: "RATE_LIMITER_EMAIL",
-							limit: 5,
-							period: 300,
-						},
-					},
-				};
-			}
+			const options = optionsByName[expectedName] ?? {};
 
-			const ctx = createMockCtx(options);
+			const ctx = createMockCtx({ options });
 			plugin.cli.register(ctx, bus, plugin.events);
 
 			const gen = await bus.emit(Generate, { files: [], bindings: [] });
@@ -101,17 +125,9 @@ describe("createPlugin-based CLI plugin contracts", () => {
 
 		it("contributes scaffold files via Init.Scaffold event", async () => {
 			const bus = createEventBus();
-			let options: any = {};
-			if (expectedName === "db") {
-				options = {
-					dialect: "d1",
-					databaseId: "test",
-					binding: "DB_MAIN",
-					migrations: "./src/migrations",
-				};
-			}
+			const options = optionsByName[expectedName] ?? {};
 
-			const ctx = createMockCtx(options);
+			const ctx = createMockCtx({ options });
 			plugin.cli.register(ctx, bus, plugin.events);
 
 			const scaffold = await bus.emit(Init.Scaffold, {
@@ -129,17 +145,9 @@ describe("createPlugin-based CLI plugin contracts", () => {
 
 		it("contributes removal info via Remove event", async () => {
 			const bus = createEventBus();
-			let options: any = {};
-			if (expectedName === "db") {
-				options = {
-					dialect: "d1",
-					databaseId: "test",
-					binding: "DB_MAIN",
-					migrations: "./src/migrations",
-				};
-			}
+			const options = optionsByName[expectedName] ?? {};
 
-			const ctx = createMockCtx(options);
+			const ctx = createMockCtx({ options });
 			plugin.cli.register(ctx, bus, plugin.events);
 
 			const removal = await bus.emit(Remove, {

@@ -1,5 +1,6 @@
+import type { RuntimePlugin } from "@fcalell/cli/runtime";
 import { describe, expect, it } from "vitest";
-import { createWorker, type RuntimePlugin } from "./worker/index";
+import { createWorker } from "./worker/index";
 
 describe("createWorker", () => {
 	it("returns an AppBuilder with use and handler methods", () => {

@@ -36,7 +36,6 @@ import {
 	applyMigrationsLocal,
 	applyMigrationsRemote,
 	generateMigrations,
-	getMigrationStatus,
 	pushSchemaLocal,
 } from "./push";
 
@@ -124,6 +123,20 @@ describe("pushSchemaLocal", () => {
 		await expect(pushSchemaLocal("/project", defaultOptions)).rejects.toThrow(
 			"push failed",
 		);
+	});
+
+	it("points at options.path for sqlite dialect", async () => {
+		mockedSpawnSync.mockReturnValue(mockSpawnSuccess());
+		const sqliteOptions: DbOptions = {
+			dialect: "sqlite",
+			path: "./data/app.sqlite",
+		};
+
+		await pushSchemaLocal("/project", sqliteOptions);
+
+		const writtenContent = mockedWriteFileSync.mock.calls[0]?.[1] as string;
+		expect(writtenContent).toContain("./data/app.sqlite");
+		expect(writtenContent).not.toContain(".stack/dev/local.db");
 	});
 });
 
@@ -237,12 +250,27 @@ describe("applyMigrationsRemote", () => {
 		);
 	});
 
-	it("throws when databaseId is missing", async () => {
-		const noDbOptions: DbOptions = { dialect: "sqlite", path: "./local.db" };
+	it("throws for sqlite dialect", async () => {
+		const sqliteOptions: DbOptions = {
+			dialect: "sqlite",
+			path: "./local.db",
+		};
 
 		await expect(
-			applyMigrationsRemote("/project", noDbOptions),
-		).rejects.toThrow("no databaseId configured");
+			applyMigrationsRemote("/project", sqliteOptions),
+		).rejects.toThrow("Remote migrations not supported for sqlite dialect");
+	});
+
+	it("does not shell out for sqlite dialect", async () => {
+		const sqliteOptions: DbOptions = {
+			dialect: "sqlite",
+			path: "./local.db",
+		};
+
+		await expect(
+			applyMigrationsRemote("/project", sqliteOptions),
+		).rejects.toThrow();
+		expect(mockedSpawnSync).not.toHaveBeenCalled();
 	});
 
 	it("throws on command failure", async () => {
@@ -257,7 +285,7 @@ describe("applyMigrationsRemote", () => {
 });
 
 describe("applyMigrationsLocal", () => {
-	it("runs wrangler d1 migrations apply --local", async () => {
+	it("runs wrangler d1 migrations apply --local for d1 dialect", async () => {
 		mockedSpawnSync.mockReturnValue(mockSpawnSuccess());
 
 		await applyMigrationsLocal("/project", defaultOptions);
@@ -269,10 +297,35 @@ describe("applyMigrationsLocal", () => {
 		);
 	});
 
-	it("throws when databaseId is missing", async () => {
-		const noDbOptions: DbOptions = { dialect: "sqlite", path: "./local.db" };
+	it("runs drizzle-kit migrate for sqlite dialect", async () => {
+		mockedSpawnSync.mockReturnValue(mockSpawnSuccess());
+		const sqliteOptions: DbOptions = {
+			dialect: "sqlite",
+			path: "./data/app.sqlite",
+			migrations: "./src/migrations",
+		};
 
-		await expect(applyMigrationsLocal("/project", noDbOptions)).rejects.toThrow(
+		await applyMigrationsLocal("/project", sqliteOptions);
+
+		expect(mockedSpawnSync).toHaveBeenCalledWith(
+			"npx",
+			[
+				"drizzle-kit",
+				"migrate",
+				"--config",
+				join("/project", ".stack", "dev", "drizzle-migrate.config.ts"),
+			],
+			expect.objectContaining({ cwd: "/project" }),
+		);
+		const writtenContent = mockedWriteFileSync.mock.calls[0]?.[1] as string;
+		expect(writtenContent).toContain('dialect: "sqlite"');
+		expect(writtenContent).toContain("./data/app.sqlite");
+	});
+
+	it("throws for d1 dialect when databaseId is missing", async () => {
+		const noIdOptions: DbOptions = { dialect: "d1" };
+
+		await expect(applyMigrationsLocal("/project", noIdOptions)).rejects.toThrow(
 			"no databaseId configured",
 		);
 	});
@@ -283,55 +336,5 @@ describe("applyMigrationsLocal", () => {
 		await expect(
 			applyMigrationsLocal("/project", defaultOptions),
 		).rejects.toThrow("local apply failed");
-	});
-});
-
-describe("getMigrationStatus", () => {
-	it("returns zero counts when directory does not exist", async () => {
-		mockedExistsSync.mockReturnValue(false);
-
-		const result = await getMigrationStatus("/project", defaultOptions);
-
-		expect(result).toEqual({ applied: 0, pending: 0 });
-	});
-
-	it("counts .sql files as pending", async () => {
-		mockedExistsSync.mockReturnValue(true);
-		mockedReaddirSync.mockReturnValue([
-			"0001_init.sql" as string,
-			"0002_add_users.sql" as string,
-			"_journal.json" as string,
-		]);
-
-		const result = await getMigrationStatus("/project", defaultOptions);
-
-		expect(result).toEqual({ applied: 0, pending: 2 });
-	});
-
-	it("uses custom migrations path", async () => {
-		const customOptions: DbOptions = {
-			...defaultOptions,
-			migrations: "./custom/migrations",
-		};
-		mockedExistsSync.mockReturnValue(true);
-		mockedReaddirSync.mockReturnValue([]);
-
-		await getMigrationStatus("/project", customOptions);
-
-		expect(mockedExistsSync).toHaveBeenCalledWith(
-			join("/project", "custom", "migrations"),
-		);
-	});
-
-	it("returns zero pending when no .sql files", async () => {
-		mockedExistsSync.mockReturnValue(true);
-		mockedReaddirSync.mockReturnValue([
-			"_journal.json" as string,
-			"meta" as string,
-		]);
-
-		const result = await getMigrationStatus("/project", defaultOptions);
-
-		expect(result).toEqual({ applied: 0, pending: 0 });
 	});
 });

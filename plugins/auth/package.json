@@ -19,7 +19,8 @@
 	},
 	"dependencies": {
 		"@fcalell/cli": "workspace:*",
-		"@fcalell/plugin-db": "workspace:*"
+		"@fcalell/plugin-db": "workspace:*",
+		"zod": "^4.3.6"
 	},
 	"devDependencies": {
 		"@fcalell/typescript-config": "workspace:*",
