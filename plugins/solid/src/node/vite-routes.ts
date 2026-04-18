@@ -5,11 +5,11 @@ import {
 	buildTree,
 	emitRoutes,
 	emitVirtualModule,
+	VIRTUAL_ROUTES_ID,
 	writeRoutesDts,
 } from "./routes-core";
 
-const VIRTUAL_ID = "virtual:fcalell-routes";
-const RESOLVED_VIRTUAL_ID = `\0${VIRTUAL_ID}`;
+const RESOLVED_VIRTUAL_ID = `\0${VIRTUAL_ROUTES_ID}`;
 
 export interface RoutesPluginOptions {
 	pagesDir?: string;
@@ -46,7 +46,7 @@ export function routesPlugin(opts: RoutesPluginOptions = {}): Plugin {
 		},
 
 		resolveId(id) {
-			if (id === VIRTUAL_ID) return RESOLVED_VIRTUAL_ID;
+			if (id === VIRTUAL_ROUTES_ID) return RESOLVED_VIRTUAL_ID;
 			return null;
 		},
 

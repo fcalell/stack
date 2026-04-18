@@ -37,9 +37,15 @@ describe("generateVirtualWorker", () => {
 			],
 			root: {
 				factoryName: "createWorker",
-				optionsLiteral: '{\n\t"domain": "example.com"\n}',
+				options: { domain: "example.com" },
 			},
-			useLines: ['\t.use(dbRuntime({ binding: "DB_MAIN" }))'],
+			uses: [
+				{
+					kind: "factory",
+					factoryName: "dbRuntime",
+					options: { binding: "DB_MAIN" },
+				},
+			],
 			handlerArg: "routes",
 			tailLines: [
 				"export type AppRouter = typeof worker._router;",
@@ -57,6 +63,7 @@ describe("generateVirtualWorker", () => {
 		expect(result).toContain("const worker = createWorker(");
 		expect(result).toContain('"domain": "example.com"');
 		expect(result).toContain(".use(dbRuntime(");
+		expect(result).toContain('"binding": "DB_MAIN"');
 		expect(result).toContain(".handler(routes)");
 		expect(result).toContain("export type AppRouter");
 		expect(result).toContain("export default worker");
@@ -66,7 +73,7 @@ describe("generateVirtualWorker", () => {
 		const result = generateVirtualWorker({
 			imports: ['import dbRuntime from "@fcalell/plugin-db/runtime";'],
 			root: null,
-			useLines: [],
+			uses: [],
 			handlerArg: "",
 			tailLines: [],
 		});
@@ -78,8 +85,8 @@ describe("generateVirtualWorker", () => {
 	it("supports empty handlerArg for handler() without routes", () => {
 		const result = generateVirtualWorker({
 			imports: ['import createWorker from "@fcalell/plugin-api/runtime";'],
-			root: { factoryName: "createWorker", optionsLiteral: "{}" },
-			useLines: [],
+			root: { factoryName: "createWorker" },
+			uses: [],
 			handlerArg: "",
 			tailLines: ["export default worker;"],
 		});
@@ -87,11 +94,44 @@ describe("generateVirtualWorker", () => {
 		expect(result).toContain(".handler()");
 	});
 
+	it("renders identifier-only use-specs as bare identifiers", () => {
+		const result = generateVirtualWorker({
+			imports: [],
+			root: { factoryName: "createWorker" },
+			uses: [{ kind: "identifier", identifier: "middleware" }],
+			handlerArg: "",
+			tailLines: [],
+		});
+
+		expect(result).toContain(".use(middleware)");
+	});
+
+	it("renders identifier fields unquoted alongside JSON options", () => {
+		const result = generateVirtualWorker({
+			imports: [],
+			root: { factoryName: "createWorker" },
+			uses: [
+				{
+					kind: "factory",
+					factoryName: "dbRuntime",
+					options: { binding: "DB_MAIN" },
+					identifierFields: { schema: "schema" },
+				},
+			],
+			handlerArg: "",
+			tailLines: [],
+		});
+
+		expect(result).toContain('"binding": "DB_MAIN"');
+		expect(result).toContain("schema,");
+		expect(result).not.toContain('"schema"');
+	});
+
 	it("writes the generated-by header first", () => {
 		const result = generateVirtualWorker({
 			imports: [],
 			root: null,
-			useLines: [],
+			uses: [],
 			handlerArg: "",
 			tailLines: [],
 		});

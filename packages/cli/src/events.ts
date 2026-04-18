@@ -81,10 +81,27 @@ export interface RemovePayload {
 	dependencies: string[];
 }
 
+// Structured import declaration for the generated .stack/vite.config.ts.
+// Supports default, named, or combined imports without forcing plugins to
+// handcraft `import ... from "..."` strings.
+export interface ViteImportSpec {
+	from: string;
+	default?: string;
+	named?: string[];
+}
+
+// Structured plugin-call spec for the vite plugins array. `options` is
+// serialized as a JSON literal — no identifier injection is supported here
+// (plugins don't need it today).
+export interface VitePluginCallSpec {
+	name: string;
+	options?: Record<string, unknown>;
+}
+
 export interface DevConfigurePayload {
 	vitePlugins: unknown[];
-	viteImports: string[];
-	vitePluginCalls: string[];
+	viteImports: ViteImportSpec[];
+	vitePluginCalls: VitePluginCallSpec[];
 }
 
 export interface DevStartPayload {
@@ -101,8 +118,8 @@ export interface DevReadyPayload {
 
 export interface BuildConfigurePayload {
 	vitePlugins: unknown[];
-	viteImports: string[];
-	vitePluginCalls: string[];
+	viteImports: ViteImportSpec[];
+	vitePluginCalls: VitePluginCallSpec[];
 }
 
 export interface BuildStartPayload {
@@ -125,15 +142,36 @@ export interface CodegenFrontendPayload {
 	domain?: string;
 }
 
+// A `.use(...)` contribution to the worker builder chain.
+// `factory` renders as `.use(factoryName(<options>))`; `identifier` as
+// `.use(identifierName)`. Options split into JSON-serializable data and
+// bare identifier fields so the renderer can keep identifiers unquoted.
+export type WorkerUseSpec =
+	| {
+			kind: "factory";
+			factoryName: string;
+			options?: Record<string, unknown>;
+			identifierFields?: Record<string, string>;
+	  }
+	| {
+			kind: "identifier";
+			identifier: string;
+	  };
+
+// The root worker factory call — `const worker = factoryName(<options>)`.
+// Only one plugin claims this per pipeline.
+export interface WorkerRootSpec {
+	factoryName: string;
+	options?: Record<string, unknown>;
+	identifierFields?: Record<string, string>;
+}
+
 // Codegen.Worker is the pipeline that builds .stack/worker.ts. Each runtime
 // plugin mutates this payload; exactly one plugin must claim `root`.
 export interface CodegenWorkerPayload {
 	imports: string[];
-	root: null | {
-		factoryName: string;
-		optionsLiteral: string;
-	};
-	useLines: string[];
+	root: null | WorkerRootSpec;
+	uses: WorkerUseSpec[];
 	handlerArg: string;
 	tailLines: string[];
 	frontend?: CodegenFrontendPayload;

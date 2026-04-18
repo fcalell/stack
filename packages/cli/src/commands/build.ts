@@ -23,15 +23,12 @@ export async function build(configPath: string): Promise<void> {
 
 	const bus = registerPlugins(sorted, config, cwd);
 
-	// Build.Configure — collect vitePlugins and codegen metadata.
-	// Build.ConfigureReady fires right after with the finalized payload so
-	// consumers (e.g. plugin-vite) can act on the fully-populated config.
-	const buildConfigure = await bus.emit(Build.Configure, {
+	const configured = await bus.emit(Build.Configure, {
 		vitePlugins: [],
 		viteImports: [],
 		vitePluginCalls: [],
 	});
-	await bus.emit(Build.ConfigureReady, buildConfigure);
+	await bus.emit(Build.ConfigureReady, configured);
 
 	// Build.Start — collect steps
 	const buildResult = await bus.emit(Build.Start, { steps: [] });

@@ -40,15 +40,12 @@ export async function dev(options: DevOptions): Promise<void> {
 	// Check if any plugin has a worker runtime
 	const hasWorker = sorted.some((p) => hasRuntimeExport(p.cli.package));
 
-	// Dev.Configure — collect vitePlugins and codegen metadata.
-	// Dev.ConfigureReady fires right after with the finalized payload so
-	// consumers (e.g. plugin-vite) can act on the fully-populated config.
-	const devConfigure = await bus.emit(Dev.Configure, {
+	const configured = await bus.emit(Dev.Configure, {
 		vitePlugins: [],
 		viteImports: [],
 		vitePluginCalls: [],
 	});
-	await bus.emit(Dev.ConfigureReady, devConfigure);
+	await bus.emit(Dev.ConfigureReady, configured);
 
 	// Dev.Start — collect processes and watchers
 	const devStart = await bus.emit(Dev.Start, {

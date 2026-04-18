@@ -10,10 +10,6 @@ import {
 import { z } from "zod";
 import { generateRouteBarrel } from "./node/barrel";
 
-function serialize(value: unknown): string {
-	return JSON.stringify(value, null, "\t");
-}
-
 // Kept hand-written so `prefix` can use the template-literal type `/${string}`,
 // which Zod can't express directly. The schema below complements this interface
 // and provides runtime validation with matching error messages.
@@ -124,13 +120,13 @@ export const api = createPlugin("api", {
 			p.imports.push(`import createWorker from "@fcalell/plugin-api/runtime";`);
 			p.root = {
 				factoryName: "createWorker",
-				optionsLiteral: serialize(workerOptions),
+				options: workerOptions,
 			};
 
 			const hasMiddleware = await ctx.fileExists("src/worker/middleware.ts");
 			if (hasMiddleware) {
 				p.imports.push('import middleware from "../src/worker/middleware";');
-				p.useLines.push("\t.use(middleware)");
+				p.uses.push({ kind: "identifier", identifier: "middleware" });
 			}
 
 			const hasRoutes = await ctx.fileExists("src/worker/routes");

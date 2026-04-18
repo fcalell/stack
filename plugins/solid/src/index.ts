@@ -1,5 +1,13 @@
 import { createPlugin } from "@fcalell/cli";
-import { Build, Dev, Generate, Init, Remove } from "@fcalell/cli/events";
+import {
+	Build,
+	Dev,
+	Generate,
+	Init,
+	Remove,
+	type ViteImportSpec,
+	type VitePluginCallSpec,
+} from "@fcalell/cli/events";
 import { vite } from "@fcalell/plugin-vite";
 import solidPlugin from "vite-plugin-solid";
 import { writeRoutesDts } from "./node/routes-core";
@@ -75,8 +83,8 @@ export const solid = createPlugin("solid", {
 
 		const injectVitePlugins = async (p: {
 			vitePlugins: unknown[];
-			viteImports: string[];
-			vitePluginCalls: string[];
+			viteImports: ViteImportSpec[];
+			vitePluginCalls: VitePluginCallSpec[];
 		}) => {
 			p.vitePlugins.push(solidPlugin());
 			const { routesPlugin } = await import("./node/vite-routes");
@@ -86,12 +94,16 @@ export const solid = createPlugin("solid", {
 					: "src/app/pages";
 			p.vitePlugins.push(routesPlugin({ pagesDir }));
 
-			p.viteImports.push('import solidPlugin from "vite-plugin-solid";');
-			p.viteImports.push(
-				'import { routesPlugin } from "@fcalell/plugin-solid/node/vite-routes";',
-			);
-			p.vitePluginCalls.push("solidPlugin()");
-			p.vitePluginCalls.push(`routesPlugin(${JSON.stringify({ pagesDir })})`);
+			p.viteImports.push({
+				from: "vite-plugin-solid",
+				default: "solidPlugin",
+			});
+			p.viteImports.push({
+				from: "@fcalell/plugin-solid/node/vite-routes",
+				named: ["routesPlugin"],
+			});
+			p.vitePluginCalls.push({ name: "solidPlugin" });
+			p.vitePluginCalls.push({ name: "routesPlugin", options: { pagesDir } });
 		};
 		bus.on(Dev.Configure, injectVitePlugins);
 		bus.on(Build.Configure, injectVitePlugins);

@@ -16,10 +16,6 @@ import {
 } from "./node/push";
 import { type DbOptions, dbOptionsSchema } from "./types";
 
-function serialize(value: unknown): string {
-	return JSON.stringify(value, null, "\t");
-}
-
 const SCHEMA_TEMPLATE = `import { sqliteTable, text, integer } from "@fcalell/plugin-db/orm";
 
 export const examples = sqliteTable("examples", {
@@ -159,13 +155,22 @@ export const db = createPlugin("db", {
 
 		bus.on(Codegen.Worker, async (p) => {
 			p.imports.push(`import dbRuntime from "@fcalell/plugin-db/runtime";`);
-			const opts = serialize(ctx.options ?? {});
+			const options = (ctx.options ?? {}) as Record<string, unknown>;
 			const hasSchema = await ctx.fileExists("src/schema");
 			if (hasSchema) {
 				p.imports.push('import * as schema from "../src/schema";');
-				p.useLines.push(`\t.use(dbRuntime({ ...${opts}, schema }))`);
+				p.uses.push({
+					kind: "factory",
+					factoryName: "dbRuntime",
+					options,
+					identifierFields: { schema: "schema" },
+				});
 			} else {
-				p.useLines.push(`\t.use(dbRuntime(${opts}))`);
+				p.uses.push({
+					kind: "factory",
+					factoryName: "dbRuntime",
+					options,
+				});
 			}
 		});
 

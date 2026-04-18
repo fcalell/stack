@@ -66,7 +66,7 @@ async function runPipeline(
 	const worker = await bus.emit(Codegen.Worker, {
 		imports: [],
 		root: null,
-		useLines: [],
+		uses: [],
 		handlerArg: "",
 		tailLines: [],
 		frontend: frontendPayload,

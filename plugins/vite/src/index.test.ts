@@ -103,8 +103,8 @@ describe("vite register", () => {
 
 		const configured = await bus.emit(Dev.Configure, {
 			vitePlugins: [],
-			viteImports: ['import solidPlugin from "vite-plugin-solid";'],
-			vitePluginCalls: ["solidPlugin()"],
+			viteImports: [{ from: "vite-plugin-solid", default: "solidPlugin" }],
+			vitePluginCalls: [{ name: "solidPlugin" }],
 		});
 		await bus.emit(Dev.ConfigureReady, configured);
 
@@ -112,7 +112,7 @@ describe("vite register", () => {
 			join(tempCwd, ".stack/vite.config.ts"),
 			"utf8",
 		);
-		expect(written).toContain('import solidPlugin from "vite-plugin-solid";');
+		expect(written).toContain('import solidPlugin from "vite-plugin-solid"');
 		expect(written).toContain("solidPlugin()");
 	});
 
@@ -144,8 +144,8 @@ describe("vite register", () => {
 
 		const configured = await bus.emit(Build.Configure, {
 			vitePlugins: [],
-			viteImports: ['import solidPlugin from "vite-plugin-solid";'],
-			vitePluginCalls: ["solidPlugin()"],
+			viteImports: [{ from: "vite-plugin-solid", default: "solidPlugin" }],
+			vitePluginCalls: [{ name: "solidPlugin" }],
 		});
 		await bus.emit(Build.ConfigureReady, configured);
 
@@ -153,7 +153,7 @@ describe("vite register", () => {
 			join(tempCwd, ".stack/vite.config.ts"),
 			"utf8",
 		);
-		expect(written).toContain('import solidPlugin from "vite-plugin-solid";');
+		expect(written).toContain('import solidPlugin from "vite-plugin-solid"');
 		expect(written).toContain("solidPlugin()");
 	});
 });

@@ -6,6 +6,7 @@ import {
 	emitTypedRoutes,
 	joinUrl,
 	parseSegment,
+	VIRTUAL_ROUTES_ID,
 } from "./routes-core";
 
 describe("parseSegment", () => {
@@ -201,7 +202,7 @@ describe("emitDts", () => {
 	it("generates valid TypeScript declaration module", () => {
 		const dts = emitDts('{ "index": () => string; }');
 
-		expect(dts).toContain('declare module "virtual:fcalell-routes"');
+		expect(dts).toContain(`declare module "${VIRTUAL_ROUTES_ID}"`);
 		expect(dts).toContain("RouteDefinition");
 		expect(dts).toContain("@solidjs/router");
 	});

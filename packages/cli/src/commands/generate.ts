@@ -62,7 +62,7 @@ export async function generate(configPath: string): Promise<void> {
 		const workerPayload = await bus.emit(Codegen.Worker, {
 			imports: [],
 			root: null,
-			useLines: [],
+			uses: [],
 			handlerArg: "",
 			tailLines: [],
 			frontend,

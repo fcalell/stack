@@ -1,35 +1,14 @@
 import { join } from "node:path";
 import { createPlugin, fromSchema } from "@fcalell/cli";
-import { Build, Codegen, Dev } from "@fcalell/cli/events";
+import { generateViteConfig } from "@fcalell/cli/codegen";
+import {
+	Build,
+	Codegen,
+	Dev,
+	type ViteImportSpec,
+	type VitePluginCallSpec,
+} from "@fcalell/cli/events";
 import { type ViteOptions, viteOptionsSchema } from "./types";
-
-function buildViteConfig(configPayload: {
-	viteImports: string[];
-	vitePluginCalls: string[];
-}): string {
-	const imports = [
-		'import { defineConfig } from "vite";',
-		'import tailwindcss from "@tailwindcss/vite";',
-		'import { themeFontsPlugin } from "@fcalell/plugin-vite/preset";',
-		...configPayload.viteImports,
-	];
-
-	const pluginCalls = [
-		"tailwindcss()",
-		"themeFontsPlugin()",
-		...configPayload.vitePluginCalls,
-	];
-
-	return [
-		...imports,
-		"",
-		"export default defineConfig({",
-		"  plugins: [",
-		...pluginCalls.map((call) => `    ${call},`),
-		"  ],",
-		"});",
-	].join("\n");
-}
 
 export const vite = createPlugin("vite", {
 	label: "Vite",
@@ -47,12 +26,12 @@ export const vite = createPlugin("vite", {
 		// Build.Configure with the fully-populated payload, so we can write the
 		// generated vite config without depending on handler registration order.
 		async function writeViteConfig(configPayload: {
-			viteImports: string[];
-			vitePluginCalls: string[];
+			viteImports: ViteImportSpec[];
+			vitePluginCalls: VitePluginCallSpec[];
 		}): Promise<void> {
 			const { writeFileSync, mkdirSync } = await import("node:fs");
 			mkdirSync(join(ctx.cwd, ".stack"), { recursive: true });
-			const configContent = buildViteConfig(configPayload);
+			const configContent = generateViteConfig(configPayload);
 			writeFileSync(join(ctx.cwd, ".stack/vite.config.ts"), configContent);
 		}
 

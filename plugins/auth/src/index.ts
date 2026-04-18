@@ -3,10 +3,6 @@ import { Codegen, Generate, Init, Remove } from "@fcalell/cli/events";
 import { db } from "@fcalell/plugin-db";
 import { type AuthOptions, authOptionsSchema } from "./types";
 
-function serialize(value: unknown): string {
-	return JSON.stringify(value, null, "\t");
-}
-
 const AUTH_CALLBACKS_TEMPLATE = `import { auth } from "@fcalell/plugin-auth";
 
 export default auth.defineCallbacks({
@@ -91,26 +87,32 @@ export const auth = createPlugin("auth", {
 		bus.on(Codegen.Worker, async (p) => {
 			p.imports.push(`import authRuntime from "@fcalell/plugin-auth/runtime";`);
 
-			const effectiveOptions: Record<string, unknown> = {
+			const options: Record<string, unknown> = {
 				...(ctx.options as Record<string, unknown>),
 			};
 			// Cross-origin dev: when a frontend is present, cookies need
 			// sameSite=none so the browser sends them to the worker origin.
 			if (p.frontend?.port != null) {
-				effectiveOptions.sameSite = "none";
+				options.sameSite = "none";
 			}
-			const opts = serialize(effectiveOptions);
 
 			const hasCallbacks = await ctx.fileExists("src/worker/plugins/auth.ts");
 			if (hasCallbacks) {
 				p.imports.push(
 					`import authCallbacks from "../src/worker/plugins/auth";`,
 				);
-				p.useLines.push(
-					`\t.use(authRuntime({ ...${opts}, callbacks: authCallbacks }))`,
-				);
+				p.uses.push({
+					kind: "factory",
+					factoryName: "authRuntime",
+					options,
+					identifierFields: { callbacks: "authCallbacks" },
+				});
 			} else {
-				p.useLines.push(`\t.use(authRuntime(${opts}))`);
+				p.uses.push({
+					kind: "factory",
+					factoryName: "authRuntime",
+					options,
+				});
 			}
 		});
 	},
