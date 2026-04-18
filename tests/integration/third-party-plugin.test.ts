@@ -38,7 +38,7 @@ describe("Third-party plugin discovery (config carries __package)", () => {
 		};
 
 		const config: StackConfig = defineConfig({
-			domain: "example.com",
+			app: { name: "app", domain: "example.com" },
 			plugins: [widgetConfig],
 		});
 
@@ -74,6 +74,7 @@ describe("Third-party plugin discovery (config carries __package)", () => {
 		const { api } = await import("@fcalell/plugin-api");
 
 		const config = defineConfig({
+			app: { name: "app", domain: "example.com" },
 			plugins: [
 				api(),
 				{

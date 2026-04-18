@@ -6,7 +6,6 @@ import { Dev } from "#events";
 import { hasRuntimeExport } from "#lib/codegen";
 import { loadConfig } from "#lib/config";
 import { discoverPlugins, sortByDependencies } from "#lib/discovery";
-import { generateApiRouteBarrel } from "#lib/generate";
 import { type ManagedProcess, onExit, spawnPrefixed } from "#lib/proc";
 import { registerPlugins } from "#lib/registration";
 
@@ -39,13 +38,6 @@ export async function dev(options: DevOptions): Promise<void> {
 
 	// Check if any plugin has a worker runtime
 	const hasWorker = sorted.some((p) => hasRuntimeExport(p.cli.package));
-
-	const configured = await bus.emit(Dev.Configure, {
-		vitePlugins: [],
-		viteImports: [],
-		vitePluginCalls: [],
-	});
-	await bus.emit(Dev.ConfigureReady, configured);
 
 	// Dev.Start — collect processes and watchers
 	const devStart = await bus.emit(Dev.Start, {
@@ -125,22 +117,6 @@ export async function dev(options: DevOptions): Promise<void> {
 				debounceTimer = setTimeout(async () => {
 					await w.handler(filename, "change");
 				}, w.debounce ?? 300);
-			}),
-		);
-	}
-
-	// Route barrel watcher (built-in)
-	const routesDir = join(cwd, "src", "worker", "routes");
-	if (existsSync(routesDir)) {
-		let routesDebounce: ReturnType<typeof setTimeout>;
-		fsWatchers.push(
-			watch(routesDir, (_event, filename) => {
-				if (!filename?.endsWith(".ts") || filename === "index.ts") return;
-				clearTimeout(routesDebounce);
-				routesDebounce = setTimeout(() => {
-					log.step("Route change detected, regenerating barrel...");
-					generateApiRouteBarrel(cwd);
-				}, 300);
 			}),
 		);
 	}

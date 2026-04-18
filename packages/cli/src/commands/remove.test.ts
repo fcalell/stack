@@ -18,6 +18,7 @@ vi.mock("#commands/generate", () => ({
 }));
 
 let mockConfig: StackConfig = {
+	app: { name: "app", domain: "example.com" },
 	plugins: [],
 	validate: () => ({ valid: true, errors: [] }),
 };
@@ -62,7 +63,7 @@ import { db } from "@fcalell/plugin-db";
 import { solidUi } from "@fcalell/plugin-solid-ui";
 
 export default defineConfig({
-	domain: "example.com",
+	app: { name: "app", domain: "example.com" },
 	plugins: [
 		db(),
 		solidUi(),
@@ -76,7 +77,11 @@ describe("remove()", () => {
 
 	beforeEach(() => {
 		generateMock.mockClear();
-		mockConfig = { plugins: [], validate: () => ({ valid: true, errors: [] }) };
+		mockConfig = {
+			app: { name: "app", domain: "example.com" },
+			plugins: [],
+			validate: () => ({ valid: true, errors: [] }),
+		};
 		mockDiscovered = [];
 		dir = mkdtempSync(join(tmpdir(), "stack-remove-"));
 		writeFileSync(join(dir, "stack.config.ts"), baseConfigSource);
@@ -90,6 +95,7 @@ describe("remove()", () => {
 
 	it("throws MissingPluginError when the plugin is not in config", async () => {
 		mockConfig = {
+			app: { name: "app", domain: "example.com" },
 			plugins: [{ __plugin: "db", options: {} }],
 			validate: () => ({ valid: true, errors: [] }),
 		};
@@ -102,6 +108,7 @@ describe("remove()", () => {
 
 	it("throws StackError with PLUGIN_HAS_DEPENDENTS when other plugins depend on it", async () => {
 		mockConfig = {
+			app: { name: "app", domain: "example.com" },
 			plugins: [
 				{ __plugin: "db", options: {} },
 				{ __plugin: "auth", options: {} },
@@ -131,6 +138,7 @@ describe("remove()", () => {
 		const removedFiles: string[] = [];
 
 		mockConfig = {
+			app: { name: "app", domain: "example.com" },
 			plugins: [
 				{ __plugin: "db", options: {} },
 				{ __plugin: "solid-ui", options: {} },

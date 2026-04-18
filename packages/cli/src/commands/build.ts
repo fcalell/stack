@@ -23,13 +23,6 @@ export async function build(configPath: string): Promise<void> {
 
 	const bus = registerPlugins(sorted, config, cwd);
 
-	const configured = await bus.emit(Build.Configure, {
-		vitePlugins: [],
-		viteImports: [],
-		vitePluginCalls: [],
-	});
-	await bus.emit(Build.ConfigureReady, configured);
-
 	// Build.Start — collect steps
 	const buildResult = await bus.emit(Build.Start, { steps: [] });
 

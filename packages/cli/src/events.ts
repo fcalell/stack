@@ -1,4 +1,12 @@
-import type { BindingDeclaration } from "#config";
+import type {
+	HtmlInjection,
+	MiddlewareSpec,
+	ProviderSpec,
+	ScaffoldSpec,
+	TsExpression,
+	TsImportSpec,
+	TsTypeRef,
+} from "#ast";
 import { defineEvent } from "#lib/event-bus";
 
 export {
@@ -58,50 +66,29 @@ export interface DeployCheck {
 	action: () => Promise<void>;
 }
 
-// ── Payload types ───────────────────────────────────────────────────
+// ── Core payload types ──────────────────────────────────────────────
 
 export interface InitPromptPayload {
 	configOptions: Record<string, Record<string, unknown>>;
 }
 
 export interface InitScaffoldPayload {
-	files: { path: string; content: string }[];
+	files: ScaffoldSpec[];
 	dependencies: Record<string, string>;
 	devDependencies: Record<string, string>;
 	gitignore: string[];
 }
 
+// Generate no longer carries raw bindings — plugins push typed specs into
+// Codegen.Wrangler and Codegen.Env directly. Plugins still use Generate to
+// emit plain files (e.g. api's route barrel).
 export interface GeneratePayload {
 	files: GeneratedFile[];
-	bindings: BindingDeclaration[];
 }
 
 export interface RemovePayload {
 	files: string[];
 	dependencies: string[];
-}
-
-// Structured import declaration for the generated .stack/vite.config.ts.
-// Supports default, named, or combined imports without forcing plugins to
-// handcraft `import ... from "..."` strings.
-export interface ViteImportSpec {
-	from: string;
-	default?: string;
-	named?: string[];
-}
-
-// Structured plugin-call spec for the vite plugins array. `options` is
-// serialized as a JSON literal — no identifier injection is supported here
-// (plugins don't need it today).
-export interface VitePluginCallSpec {
-	name: string;
-	options?: Record<string, unknown>;
-}
-
-export interface DevConfigurePayload {
-	vitePlugins: unknown[];
-	viteImports: ViteImportSpec[];
-	vitePluginCalls: VitePluginCallSpec[];
 }
 
 export interface DevStartPayload {
@@ -116,12 +103,6 @@ export interface DevReadyPayload {
 	watchers: WatcherSpec[];
 }
 
-export interface BuildConfigurePayload {
-	vitePlugins: unknown[];
-	viteImports: ViteImportSpec[];
-	vitePluginCalls: VitePluginCallSpec[];
-}
-
 export interface BuildStartPayload {
 	steps: BuildStep[];
 }
@@ -134,47 +115,114 @@ export interface DeployExecutePayload {
 	steps: DeployStep[];
 }
 
-// Codegen.Frontend is emitted before Codegen.Worker so frontend plugins
-// (e.g. solid) can announce their port/domain. Worker plugins read the
-// populated payload off the bus history when building the virtual worker.
-export interface CodegenFrontendPayload {
-	port?: number;
-	domain?: string;
-}
+// ── Codegen payload types ───────────────────────────────────────────
 
-// A `.use(...)` contribution to the worker builder chain.
-// `factory` renders as `.use(factoryName(<options>))`; `identifier` as
-// `.use(identifierName)`. Options split into JSON-serializable data and
-// bare identifier fields so the renderer can keep identifiers unquoted.
-export type WorkerUseSpec =
-	| {
-			kind: "factory";
-			factoryName: string;
-			options?: Record<string, unknown>;
-			identifierFields?: Record<string, string>;
-	  }
-	| {
-			kind: "identifier";
-			identifier: string;
-	  };
-
-// The root worker factory call — `const worker = factoryName(<options>)`.
-// Only one plugin claims this per pipeline.
-export interface WorkerRootSpec {
-	factoryName: string;
-	options?: Record<string, unknown>;
-	identifierFields?: Record<string, string>;
-}
-
-// Codegen.Worker is the pipeline that builds .stack/worker.ts. Each runtime
-// plugin mutates this payload; exactly one plugin must claim `root`.
+// CodegenWorkerPayload models the .stack/worker.ts builder chain.
+//
+// Deviation from CODEGEN.md: we add a `base: TsExpression | null` field so
+// plugin-api can claim the root factory call (`createWorker({...})`) without
+// repurposing `middlewareChain[0]`. `middlewareChain` stays purely a list of
+// `.use(arg)` arguments. The tail (`export type AppRouter...`, `export default
+// worker;`) is fixed in the aggregator — no payload field needed.
 export interface CodegenWorkerPayload {
+	imports: TsImportSpec[];
+	base: TsExpression | null;
+	middlewareChain: TsExpression[];
+	handler: { identifier: string } | null;
+	domain: string;
+	cors: string[];
+}
+
+// WranglerBindingSpec is the structured representation of a wrangler.toml
+// binding declaration. Deviation from CODEGEN.md: `rate_limiter` omits the
+// `namespace` field because the current emitted config uses `type = "ratelimit"`
+// under `[[unsafe.bindings]]` with no namespace — preserving observed behavior
+// over speculative spec fields.
+export type WranglerBindingSpec =
+	| {
+			kind: "d1";
+			binding: string;
+			databaseName: string;
+			databaseId: string;
+			migrationsDir?: string;
+	  }
+	| { kind: "kv"; binding: string; id: string }
+	| { kind: "r2"; binding: string; bucketName: string }
+	| {
+			kind: "rate_limiter";
+			binding: string;
+			simple: { limit: number; period: number };
+	  }
+	| { kind: "var"; name: string; value: string };
+
+export type WranglerRouteSpec = {
+	pattern: string;
+	zone?: string;
+	customDomain?: boolean;
+};
+
+// Deviation from CODEGEN.md: we add a `secrets` array so `.dev.vars` generation
+// can continue to emit dev defaults for secret-typed vars. Secrets aren't a
+// wrangler binding kind — they're worker-env vars that get a dev-only value.
+export interface CodegenWranglerPayload {
+	bindings: WranglerBindingSpec[];
+	routes: WranglerRouteSpec[];
+	vars: Record<string, string>;
+	secrets: Array<{ name: string; devDefault: string }>;
+	compatibilityDate: string;
+}
+
+export interface CodegenEnvPayload {
+	fields: Array<{
+		name: string;
+		type: TsTypeRef;
+		from?: TsImportSpec;
+	}>;
+}
+
+export interface CodegenViteConfigPayload {
+	imports: TsImportSpec[];
+	pluginCalls: TsExpression[];
+	resolveAliases: Array<{ find: string; replacement: string }>;
+	devServerPort: number;
+}
+
+export interface CodegenEntryPayload {
+	imports: TsImportSpec[];
+	mountExpression: TsExpression | null;
+}
+
+export interface CodegenHtmlPayload {
+	shell: URL | null;
+	head: HtmlInjection[];
+	bodyEnd: HtmlInjection[];
+}
+
+export interface CodegenAppCssPayload {
 	imports: string[];
-	root: null | WorkerRootSpec;
-	uses: WorkerUseSpec[];
-	handlerArg: string;
-	tailLines: string[];
-	frontend?: CodegenFrontendPayload;
+	layers: Array<{ name: string; content: string }>;
+}
+
+export interface CodegenRoutesDtsPayload {
+	// Placeholder shape — plugin-solid continues to write routes.d.ts directly.
+	// Phase 5 wires a proper writer driven by this payload.
+	pagesDir: string | null;
+}
+
+// ── Composition payload types ───────────────────────────────────────
+
+// Composition.Providers collects JSX wrappers + sibling elements that land
+// in .stack/virtual-providers.tsx. Consumers (and plugin-solid's entry) import
+// that module via `virtual:stack-providers`.
+export interface CompositionProvidersPayload {
+	providers: ProviderSpec[];
+}
+
+// Composition.Middleware collects ordered middleware call expressions plus the
+// imports they need. The aggregator sorts entries by phase then `order` and
+// feeds the result into Codegen.Worker's middlewareChain.
+export interface CompositionMiddlewarePayload {
+	entries: MiddlewareSpec[];
 }
 
 // ── Core lifecycle events ───────────────────────────────────────────
@@ -187,21 +235,11 @@ export const Init = {
 export const Generate = defineEvent<GeneratePayload>("core", "generate");
 
 export const Dev = {
-	Configure: defineEvent<DevConfigurePayload>("core", "dev.configure"),
-	ConfigureReady: defineEvent<DevConfigurePayload>(
-		"core",
-		"dev.configure.ready",
-	),
 	Start: defineEvent<DevStartPayload>("core", "dev.start"),
 	Ready: defineEvent<DevReadyPayload>("core", "dev.ready"),
 };
 
 export const Build = {
-	Configure: defineEvent<BuildConfigurePayload>("core", "build.configure"),
-	ConfigureReady: defineEvent<BuildConfigurePayload>(
-		"core",
-		"build.configure.ready",
-	),
 	Start: defineEvent<BuildStartPayload>("core", "build.start"),
 };
 
@@ -214,6 +252,26 @@ export const Deploy = {
 export const Remove = defineEvent<RemovePayload>("core", "remove");
 
 export const Codegen = {
-	Frontend: defineEvent<CodegenFrontendPayload>("core", "codegen.frontend"),
 	Worker: defineEvent<CodegenWorkerPayload>("core", "codegen.worker"),
+	Wrangler: defineEvent<CodegenWranglerPayload>("core", "codegen.wrangler"),
+	Env: defineEvent<CodegenEnvPayload>("core", "codegen.env"),
+	ViteConfig: defineEvent<CodegenViteConfigPayload>(
+		"core",
+		"codegen.vite-config",
+	),
+	Entry: defineEvent<CodegenEntryPayload>("core", "codegen.entry"),
+	Html: defineEvent<CodegenHtmlPayload>("core", "codegen.html"),
+	AppCss: defineEvent<CodegenAppCssPayload>("core", "codegen.app-css"),
+	RoutesDts: defineEvent<CodegenRoutesDtsPayload>("core", "codegen.routes-dts"),
+};
+
+export const Composition = {
+	Providers: defineEvent<CompositionProvidersPayload>(
+		"core",
+		"composition.providers",
+	),
+	Middleware: defineEvent<CompositionMiddlewarePayload>(
+		"core",
+		"composition.middleware",
+	),
 };

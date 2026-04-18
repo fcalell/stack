@@ -376,12 +376,26 @@ declare module "${VIRTUAL_ROUTES_ID}" {
 `;
 }
 
-export function writeRoutesDts(cwd: string, pagesDirRel: string): void {
+export function buildRoutesDts(
+	cwd: string,
+	pagesDirRel: string,
+): string | null {
 	const absPagesDir = join(cwd, pagesDirRel);
-	const files = fg.sync(["**/*.tsx", "**/*.jsx"], { cwd: absPagesDir }).sort();
+	let files: string[];
+	try {
+		files = fg.sync(["**/*.tsx", "**/*.jsx"], { cwd: absPagesDir }).sort();
+	} catch {
+		return null;
+	}
 	const { root } = buildTree(files, absPagesDir);
 	const { typedRoutesTypes } = emitRoutes(root, cwd, undefined);
+	return emitDts(typedRoutesTypes);
+}
+
+export function writeRoutesDts(cwd: string, pagesDirRel: string): void {
+	const dts = buildRoutesDts(cwd, pagesDirRel);
+	if (!dts) return;
 	const dtsDir = join(cwd, ".stack");
 	mkdirSync(dtsDir, { recursive: true });
-	writeFileSync(join(dtsDir, "routes.d.ts"), emitDts(typedRoutesTypes));
+	writeFileSync(join(dtsDir, "routes.d.ts"), dts);
 }

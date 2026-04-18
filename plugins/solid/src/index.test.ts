@@ -1,7 +1,6 @@
 import {
-	Build,
+	Codegen,
 	createEventBus,
-	Dev,
 	Generate,
 	Init,
 	Remove,
@@ -73,7 +72,7 @@ describe("solid.cli", () => {
 });
 
 describe("solid register", () => {
-	it("pushes scaffold files on Init.Scaffold", async () => {
+	it("contributes the home scaffold on Init.Scaffold", async () => {
 		const bus = createEventBus();
 		const ctx = createMockCtx();
 		solid.cli.register(ctx, bus, solid.events);
@@ -85,14 +84,43 @@ describe("solid register", () => {
 			gitignore: [],
 		});
 
-		expect(scaffold.files).toContainEqual(
-			expect.objectContaining({ path: "src/app/pages/_layout.tsx" }),
+		const home = scaffold.files.find(
+			(f) => f.target === "src/app/pages/index.tsx",
 		);
-		expect(scaffold.files).toContainEqual(
-			expect.objectContaining({ path: "src/app/pages/index.tsx" }),
+		expect(home).toBeDefined();
+		expect(home?.source.pathname.endsWith("templates/home.tsx")).toBe(true);
+
+		// Tier A files (entry.tsx / _layout.tsx / index.html / app.css) moved to
+		// .stack/** in Phase 5 and are no longer scaffolded.
+		expect(scaffold.files.some((f) => f.target === "src/app/entry.tsx")).toBe(
+			false,
 		);
+		expect(
+			scaffold.files.some((f) => f.target === "src/app/pages/_layout.tsx"),
+		).toBe(false);
+		expect(scaffold.files.some((f) => f.target === "index.html")).toBe(false);
+
 		expect(scaffold.dependencies["@fcalell/plugin-solid"]).toBe("workspace:*");
 		expect(scaffold.dependencies["solid-js"]).toBeDefined();
+	});
+
+	it("does not contribute the home scaffold when solid-ui is present", async () => {
+		const bus = createEventBus();
+		const ctx = createMockCtx({
+			hasPlugin: (name: string) => name === "solid-ui",
+		});
+		solid.cli.register(ctx, bus, solid.events);
+
+		const scaffold = await bus.emit(Init.Scaffold, {
+			files: [],
+			dependencies: {},
+			devDependencies: {},
+			gitignore: [],
+		});
+
+		expect(
+			scaffold.files.some((f) => f.target === "src/app/pages/index.tsx"),
+		).toBe(false);
 	});
 
 	it("pushes cleanup info on Remove", async () => {
@@ -108,34 +136,50 @@ describe("solid register", () => {
 		expect(removal.dependencies).toContain("@fcalell/plugin-solid");
 	});
 
-	it("injects vite plugins on Dev.Configure", async () => {
+	it("contributes vite plugins on Codegen.ViteConfig", async () => {
 		const bus = createEventBus();
 		const ctx = createMockCtx();
 		solid.cli.register(ctx, bus, solid.events);
 
-		const config = await bus.emit(Dev.Configure, {
-			vitePlugins: [],
-			viteImports: [],
-			vitePluginCalls: [],
+		const cfg = await bus.emit(Codegen.ViteConfig, {
+			imports: [],
+			pluginCalls: [],
+			resolveAliases: [],
+			devServerPort: 3000,
 		});
-		expect(config.vitePlugins.length).toBeGreaterThan(0);
-		expect(config.viteImports.length).toBeGreaterThan(0);
-		expect(config.vitePluginCalls.length).toBeGreaterThan(0);
+		expect(cfg.imports).toContainEqual(
+			expect.objectContaining({
+				source: "vite-plugin-solid",
+				default: "solidPlugin",
+			}),
+		);
+		expect(cfg.imports).toContainEqual(
+			expect.objectContaining({
+				source: "@fcalell/plugin-solid/node/vite-routes",
+				named: ["routesPlugin"],
+			}),
+		);
+		expect(cfg.pluginCalls.length).toBeGreaterThanOrEqual(2);
 	});
 
-	it("injects vite plugins on Build.Configure", async () => {
+	it("reports pagesDir via Codegen.RoutesDts", async () => {
 		const bus = createEventBus();
-		const ctx = createMockCtx();
+		const ctx = createMockCtx<SolidOptions>({
+			options: { routes: { pagesDir: "src/pages" } },
+		});
 		solid.cli.register(ctx, bus, solid.events);
 
-		const config = await bus.emit(Build.Configure, {
-			vitePlugins: [],
-			viteImports: [],
-			vitePluginCalls: [],
-		});
-		expect(config.vitePlugins.length).toBeGreaterThan(0);
-		expect(config.viteImports.length).toBeGreaterThan(0);
-		expect(config.vitePluginCalls.length).toBeGreaterThan(0);
+		const routes = await bus.emit(Codegen.RoutesDts, { pagesDir: null });
+		expect(routes.pagesDir).toBe("src/pages");
+	});
+
+	it("reports null pagesDir when routes: false", async () => {
+		const bus = createEventBus();
+		const ctx = createMockCtx<SolidOptions>({ options: { routes: false } });
+		solid.cli.register(ctx, bus, solid.events);
+
+		const routes = await bus.emit(Codegen.RoutesDts, { pagesDir: null });
+		expect(routes.pagesDir).toBeNull();
 	});
 
 	it("writes routes dts on Generate via writeRoutesDts", async () => {
@@ -144,7 +188,7 @@ describe("solid register", () => {
 		const ctx = createMockCtx();
 		solid.cli.register(ctx, bus, solid.events);
 
-		const gen = await bus.emit(Generate, { files: [], bindings: [] });
+		const gen = await bus.emit(Generate, { files: [] });
 		expect(writeRoutesDtsMock).toHaveBeenCalledWith(
 			"/tmp/test",
 			"src/app/pages",
@@ -162,7 +206,7 @@ describe("solid register", () => {
 		});
 		solid.cli.register(ctx, bus, solid.events);
 
-		await bus.emit(Generate, { files: [], bindings: [] });
+		await bus.emit(Generate, { files: [] });
 		expect(writeRoutesDtsMock).toHaveBeenCalledWith("/tmp/test", "src/pages");
 	});
 
@@ -172,7 +216,7 @@ describe("solid register", () => {
 		const ctx = createMockCtx<SolidOptions>({ options: { routes: false } });
 		solid.cli.register(ctx, bus, solid.events);
 
-		await bus.emit(Generate, { files: [], bindings: [] });
+		await bus.emit(Generate, { files: [] });
 		expect(writeRoutesDtsMock).not.toHaveBeenCalled();
 	});
 });

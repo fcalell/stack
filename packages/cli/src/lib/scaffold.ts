@@ -5,11 +5,19 @@ import {
 	readFileSync,
 	writeFileSync,
 } from "node:fs";
-import { dirname, join } from "node:path";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { dirname, join, resolve } from "node:path";
 import { log } from "@clack/prompts";
+import type { ScaffoldSpec } from "#ast";
 import { ScaffoldError } from "#lib/errors";
 
-export function writeIfMissing(path: string, content: string): boolean {
+// Legacy accommodation for the CLI's own base-file templates (package.json,
+// tsconfig.json, biome.json, .gitignore, stack.config.ts). Base templates are
+// dynamic and return strings; they are not contributed via Init.Scaffold, so
+// they do not flow through writeScaffoldSpecs. Plugin-contributed scaffolds
+// must go through ScaffoldSpec + writeScaffoldSpecs — do not reach for this
+// helper for plugin-driven content.
+export function writeIfMissingString(path: string, content: string): boolean {
 	if (existsSync(path)) {
 		log.info(`${path} already exists, skipping`);
 		return false;
@@ -19,12 +27,33 @@ export function writeIfMissing(path: string, content: string): boolean {
 	return true;
 }
 
-export function scaffoldFiles(
-	entries: ReadonlyArray<readonly [path: string, content: string]>,
-): string[] {
+export async function writeScaffoldSpecs(
+	specs: ScaffoldSpec[],
+	cwd: string,
+): Promise<string[]> {
+	// Duplicate-target detection runs BEFORE any writes. Two plugins that
+	// claim the same scaffold target is a programming error — the old
+	// "last writer wins" behaviour silently dropped contributions.
+	const seen = new Set<string>();
+	for (const spec of specs) {
+		if (seen.has(spec.target)) {
+			throw new ScaffoldError(
+				`Duplicate scaffold target: ${spec.target} contributed by multiple plugins`,
+				spec.target,
+			);
+		}
+		seen.add(spec.target);
+	}
+
 	const created: string[] = [];
-	for (const [path, content] of entries) {
-		if (writeIfMissing(path, content)) created.push(path);
+	for (const spec of specs) {
+		const absTarget = resolve(cwd, spec.target);
+		if (existsSync(absTarget)) continue;
+
+		const content = await readFile(spec.source, "utf8");
+		await mkdir(dirname(absTarget), { recursive: true });
+		await writeFile(absTarget, content);
+		created.push(spec.target);
 	}
 	return created;
 }

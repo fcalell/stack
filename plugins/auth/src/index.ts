@@ -1,21 +1,29 @@
 import { callback, createPlugin, fromSchema } from "@fcalell/cli";
-import { Codegen, Generate, Init, Remove } from "@fcalell/cli/events";
+import type { TsExpression, TsImportSpec } from "@fcalell/cli/ast";
+import { Codegen, Init, Remove } from "@fcalell/cli/events";
 import { db } from "@fcalell/plugin-db";
 import { type AuthOptions, authOptionsSchema } from "./types";
 
-const AUTH_CALLBACKS_TEMPLATE = `import { auth } from "@fcalell/plugin-auth";
-
-export default auth.defineCallbacks({
-\tsendOTP({ email, code }) {
-\t\t// TODO: send OTP email
-\t\tconsole.log(\`OTP for \${email}: \${code}\`);
-\t},
-\tsendInvitation({ email, orgName }) {
-\t\t// TODO: send invitation email
-\t\tconsole.log(\`Invitation for \${email} to \${orgName}\`);
-\t},
-});
-`;
+function toExpression(value: unknown): TsExpression {
+	if (value === null) return { kind: "null" };
+	if (value === undefined) return { kind: "undefined" };
+	if (typeof value === "string") return { kind: "string", value };
+	if (typeof value === "number") return { kind: "number", value };
+	if (typeof value === "boolean") return { kind: "boolean", value };
+	if (Array.isArray(value)) {
+		return { kind: "array", items: value.map(toExpression) };
+	}
+	if (typeof value === "object") {
+		const properties: Array<{ key: string; value: TsExpression }> = [];
+		for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+			properties.push({ key: k, value: toExpression(v) });
+		}
+		return { kind: "object", properties };
+	}
+	// Fallback: stringify unknowns (e.g. functions/classes should not appear
+	// in plugin options, but we need TS types to stay sound).
+	return { kind: "string", value: String(value) };
+}
 
 export const auth = createPlugin("auth", {
 	label: "Auth",
@@ -41,40 +49,65 @@ export const auth = createPlugin("auth", {
 
 		bus.on(Init.Scaffold, (p) => {
 			p.files.push({
-				path: "src/worker/plugins/auth.ts",
-				content: AUTH_CALLBACKS_TEMPLATE,
+				source: new URL("../templates/auth-callbacks.ts", import.meta.url),
+				target: "src/worker/plugins/auth.ts",
 			});
 			p.dependencies["@fcalell/plugin-auth"] = "workspace:*";
 		});
 
-		bus.on(Generate, (p) => {
+		bus.on(Codegen.Wrangler, (p) => {
 			const opts = ctx.options;
+			const secretName = opts.secretVar ?? "AUTH_SECRET";
+			const appUrlName = opts.appUrlVar ?? "APP_URL";
+
+			p.secrets.push(
+				{ name: secretName, devDefault: "dev-secret-change-me" },
+				{ name: appUrlName, devDefault: "http://localhost:3000" },
+			);
+
 			p.bindings.push(
 				{
-					name: opts.secretVar ?? "AUTH_SECRET",
-					type: "secret",
-					devDefault: "dev-secret-change-me",
-				},
-				{
-					name: opts.appUrlVar ?? "APP_URL",
-					type: "secret",
-					devDefault: "http://localhost:3000",
-				},
-				{
-					name: opts.rateLimiter?.ip?.binding ?? "RATE_LIMITER_IP",
-					type: "rate_limiter",
-					rateLimit: {
+					kind: "rate_limiter",
+					binding: opts.rateLimiter?.ip?.binding ?? "RATE_LIMITER_IP",
+					simple: {
 						limit: opts.rateLimiter?.ip?.limit ?? 100,
 						period: opts.rateLimiter?.ip?.period ?? 60,
 					},
 				},
 				{
-					name: opts.rateLimiter?.email?.binding ?? "RATE_LIMITER_EMAIL",
-					type: "rate_limiter",
-					rateLimit: {
+					kind: "rate_limiter",
+					binding: opts.rateLimiter?.email?.binding ?? "RATE_LIMITER_EMAIL",
+					simple: {
 						limit: opts.rateLimiter?.email?.limit ?? 5,
 						period: opts.rateLimiter?.email?.period ?? 300,
 					},
+				},
+			);
+		});
+
+		bus.on(Codegen.Env, (p) => {
+			const opts = ctx.options;
+			const secretName = opts.secretVar ?? "AUTH_SECRET";
+			const appUrlName = opts.appUrlVar ?? "APP_URL";
+			const stringType = { kind: "reference" as const, name: "string" };
+			const rateLimiterImport: TsImportSpec = {
+				source: "@cloudflare/workers-types",
+				named: ["RateLimiter"],
+				typeOnly: true,
+			};
+
+			p.fields.push(
+				{ name: secretName, type: stringType },
+				{ name: appUrlName, type: stringType },
+				{
+					name: opts.rateLimiter?.ip?.binding ?? "RATE_LIMITER_IP",
+					type: { kind: "reference", name: "RateLimiter" },
+					from: rateLimiterImport,
+				},
+				{
+					name: opts.rateLimiter?.email?.binding ?? "RATE_LIMITER_EMAIL",
+					type: { kind: "reference", name: "RateLimiter" },
+					from: rateLimiterImport,
 				},
 			);
 		});
@@ -85,35 +118,42 @@ export const auth = createPlugin("auth", {
 		});
 
 		bus.on(Codegen.Worker, async (p) => {
-			p.imports.push(`import authRuntime from "@fcalell/plugin-auth/runtime";`);
+			p.imports.push({
+				source: "@fcalell/plugin-auth/runtime",
+				default: "authRuntime",
+			});
 
 			const options: Record<string, unknown> = {
 				...(ctx.options as Record<string, unknown>),
 			};
-			// Cross-origin dev: when a frontend is present, cookies need
-			// sameSite=none so the browser sends them to the worker origin.
-			if (p.frontend?.port != null) {
+			// Cross-origin dev: when the cors list includes a localhost origin,
+			// browsers won't send cookies unless sameSite=none.
+			const crossOriginDev = p.cors.some((o) =>
+				o.startsWith("http://localhost"),
+			);
+			if (crossOriginDev) {
 				options.sameSite = "none";
 			}
 
 			const hasCallbacks = await ctx.fileExists("src/worker/plugins/auth.ts");
-			if (hasCallbacks) {
-				p.imports.push(
-					`import authCallbacks from "../src/worker/plugins/auth";`,
-				);
-				p.uses.push({
-					kind: "factory",
-					factoryName: "authRuntime",
-					options,
-					identifierFields: { callbacks: "authCallbacks" },
+			const argExpr = toExpression(options);
+			if (argExpr.kind === "object" && hasCallbacks) {
+				p.imports.push({
+					source: "../src/worker/plugins/auth",
+					default: "authCallbacks",
 				});
-			} else {
-				p.uses.push({
-					kind: "factory",
-					factoryName: "authRuntime",
-					options,
+				argExpr.properties.push({
+					key: "callbacks",
+					value: { kind: "identifier", name: "authCallbacks" },
+					shorthand: true,
 				});
 			}
+
+			p.middlewareChain.push({
+				kind: "call",
+				callee: { kind: "identifier", name: "authRuntime" },
+				args: [argExpr],
+			});
 		});
 	},
 });

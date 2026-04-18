@@ -35,6 +35,7 @@ describe("plugin factory validation", () => {
 describe("cross-plugin dependency validation", () => {
 	it("auth without db passes config validation (checked at runtime)", () => {
 		const config = defineConfig({
+			app: { name: "app", domain: "example.com" },
 			plugins: [auth(), api()],
 		});
 
@@ -45,6 +46,7 @@ describe("cross-plugin dependency validation", () => {
 
 	it("full chain db + auth + api + solid validates together", () => {
 		const config = defineConfig({
+			app: { name: "app", domain: "example.com" },
 			plugins: [
 				db({ dialect: "d1", databaseId: "test" }),
 				auth({ cookies: { prefix: "test" }, organization: true }),
@@ -65,6 +67,7 @@ describe("cross-plugin dependency validation", () => {
 
 	it("duplicate plugin produces validation error", () => {
 		const config = defineConfig({
+			app: { name: "app", domain: "example.com" },
 			plugins: [
 				db({ dialect: "d1", databaseId: "x" }),
 				db({ dialect: "d1", databaseId: "y" }),
@@ -80,6 +83,7 @@ describe("cross-plugin dependency validation", () => {
 describe("typed error classes round-trip from validation results", () => {
 	it("ConfigValidationError carries the ValidationError[] from a duplicate-plugin config", () => {
 		const config = defineConfig({
+			app: { name: "app", domain: "example.com" },
 			plugins: [
 				db({ dialect: "d1", databaseId: "x" }),
 				db({ dialect: "d1", databaseId: "y" }),

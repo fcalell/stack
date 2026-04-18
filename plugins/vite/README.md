@@ -14,14 +14,20 @@ Consumers typically do not install this directly. It is pulled in as a dependenc
 
 ## How it works
 
-`plugin-vite` owns the Vite lifecycle. It listens for `Dev.Start` and `Build.Start` events, generates `.stack/vite.config.ts` from collected plugin contributions, and spawns the Vite process.
+`plugin-vite` owns the Vite lifecycle. Framework plugins (like `plugin-solid`) inject their Vite plugins by contributing to the `Codegen.ViteConfig` event during `stack generate`. The CLI aggregates contributions, writes `.stack/vite.config.ts`, and `plugin-vite` spawns the Vite process during `Dev.Start` / `Build.Start`.
 
-Framework plugins (like `plugin-solid`) inject their Vite plugins by pushing into the `Dev.Configure` / `Build.Configure` payload:
+Contributions are typed AST specs — `TsImportSpec` for imports and `TsExpression` for plugin calls — so plugin authors never concatenate source strings:
 
 ```ts
-bus.on(Dev.Configure, (p) => {
-  p.viteImports.push('import solidPlugin from "vite-plugin-solid";');
-  p.vitePluginCalls.push("solidPlugin()");
+import type { TsExpression, TsImportSpec } from "@fcalell/cli/ast";
+
+bus.on(Codegen.ViteConfig, (p) => {
+  p.imports.push({ source: "vite-plugin-solid", default: "solidPlugin" });
+  p.pluginCalls.push({
+    kind: "call",
+    callee: { kind: "identifier", name: "solidPlugin" },
+    args: [],
+  });
 });
 ```
 
@@ -51,20 +57,21 @@ vite({ port: 4000 })
 ## Lifecycle
 
 ```
-Dev:     Dev.Configure (framework plugins inject) → Dev.Start (generate config, spawn vite dev, emit ViteConfigured)
-Build:   Build.Configure (framework plugins inject) → Build.Start (generate config, push vite build step)
+Generate: Codegen.ViteConfig (framework plugins contribute typed imports + plugin calls; CLI writes .stack/vite.config.ts)
+Dev:      Dev.Start (spawn vite dev, emit ViteConfigured)
+Build:    Build.Start (push vite build step with output to dist/client)
 ```
 
 ### Dev
 
-1. Framework plugins push `viteImports` and `vitePluginCalls` into the `Dev.Configure` payload
-2. On `Dev.Start`, the plugin reads the collected payload, generates `.stack/vite.config.ts`, and spawns `vite dev`
-3. Emits `ViteConfigured` so downstream plugins know Vite is ready
+1. Framework plugins push `TsImportSpec`s and `TsExpression` plugin calls into the `Codegen.ViteConfig` payload during `stack generate`
+2. The CLI aggregates and writes `.stack/vite.config.ts` via the AST printer
+3. On `Dev.Start`, the plugin spawns `vite dev` using the generated config and emits `ViteConfigured`
 
 ### Build
 
-1. Framework plugins push imports/calls into the `Build.Configure` payload
-2. On `Build.Start`, the plugin generates `.stack/vite.config.ts` and pushes a `vite build` step (output to `dist/client`)
+1. `Codegen.ViteConfig` contributions are aggregated at generate time (same flow as Dev)
+2. On `Build.Start`, the plugin pushes a `vite build` step (output to `dist/client`)
 
 ## Preset
 

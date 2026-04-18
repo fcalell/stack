@@ -1,13 +1,6 @@
 import { join } from "node:path";
 import { createPlugin, fromSchema } from "@fcalell/cli";
-import {
-	Codegen,
-	Deploy,
-	Dev,
-	Generate,
-	Init,
-	Remove,
-} from "@fcalell/cli/events";
+import { Codegen, Deploy, Dev, Init, Remove } from "@fcalell/cli/events";
 import {
 	applyMigrationsLocal,
 	applyMigrationsRemote,
@@ -15,15 +8,6 @@ import {
 	pushSchemaLocal,
 } from "./node/push";
 import { type DbOptions, dbOptionsSchema } from "./types";
-
-const SCHEMA_TEMPLATE = `import { sqliteTable, text, integer } from "@fcalell/plugin-db/orm";
-
-export const examples = sqliteTable("examples", {
-\tid: text("id").primaryKey(),
-\tname: text("name").notNull(),
-\tcreatedAt: integer("created_at", { mode: "timestamp" }).notNull(),
-});
-`;
 
 export const db = createPlugin("db", {
 	label: "Database",
@@ -133,8 +117,8 @@ export const db = createPlugin("db", {
 
 		bus.on(Init.Scaffold, (p) => {
 			p.files.push({
-				path: "src/schema/index.ts",
-				content: SCHEMA_TEMPLATE,
+				source: new URL("../templates/schema.ts", import.meta.url),
+				target: "src/schema/index.ts",
 			});
 			p.dependencies["@fcalell/plugin-db"] = "workspace:*";
 			p.devDependencies["drizzle-kit"] = "^0.31.0";
@@ -142,36 +126,65 @@ export const db = createPlugin("db", {
 			p.gitignore.push(".db-kit");
 		});
 
-		bus.on(Generate, (p) => {
-			if (ctx.options?.dialect === "d1") {
-				p.bindings.push({
-					name: ctx.options.binding ?? "DB_MAIN",
-					type: "d1",
-					databaseId: ctx.options.databaseId,
-					databaseName: ctx.options.databaseId,
-				});
-			}
+		bus.on(Codegen.Wrangler, (p) => {
+			if (ctx.options?.dialect !== "d1") return;
+			const binding = ctx.options.binding ?? "DB_MAIN";
+			const databaseId = ctx.options.databaseId;
+			if (!databaseId) return;
+			p.bindings.push({
+				kind: "d1",
+				binding,
+				databaseName: databaseId,
+				databaseId,
+			});
+		});
+
+		bus.on(Codegen.Env, (p) => {
+			if (ctx.options?.dialect !== "d1") return;
+			const binding = ctx.options.binding ?? "DB_MAIN";
+			p.fields.push({
+				name: binding,
+				type: { kind: "reference", name: "D1Database" },
+				from: {
+					source: "@cloudflare/workers-types",
+					named: ["D1Database"],
+					typeOnly: true,
+				},
+			});
 		});
 
 		bus.on(Codegen.Worker, async (p) => {
-			p.imports.push(`import dbRuntime from "@fcalell/plugin-db/runtime";`);
-			const options = (ctx.options ?? {}) as Record<string, unknown>;
+			p.imports.push({
+				source: "@fcalell/plugin-db/runtime",
+				default: "dbRuntime",
+			});
 			const hasSchema = await ctx.fileExists("src/schema");
+			const properties: Array<{
+				key: string;
+				value: import("@fcalell/cli/ast").TsExpression;
+				shorthand?: boolean;
+			}> = [
+				{
+					key: "binding",
+					value: {
+						kind: "string",
+						value: ctx.options?.binding ?? "DB_MAIN",
+					},
+				},
+			];
 			if (hasSchema) {
-				p.imports.push('import * as schema from "../src/schema";');
-				p.uses.push({
-					kind: "factory",
-					factoryName: "dbRuntime",
-					options,
-					identifierFields: { schema: "schema" },
-				});
-			} else {
-				p.uses.push({
-					kind: "factory",
-					factoryName: "dbRuntime",
-					options,
+				p.imports.push({ source: "../src/schema", namespace: "schema" });
+				properties.push({
+					key: "schema",
+					value: { kind: "identifier", name: "schema" },
+					shorthand: true,
 				});
 			}
+			p.middlewareChain.push({
+				kind: "call",
+				callee: { kind: "identifier", name: "dbRuntime" },
+				args: [{ kind: "object", properties }],
+			});
 		});
 
 		bus.on(Remove, (p) => {

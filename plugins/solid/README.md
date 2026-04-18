@@ -108,7 +108,7 @@ Scans `src/app/pages/` for `.tsx` / `.jsx` files, builds the route tree, and gen
 
 ### Dev / Build
 
-Injects `vite-plugin-solid` and the routes plugin into the `Dev.Configure` / `Build.Configure` payload. These are picked up by `plugin-vite` and written into `.stack/vite.config.ts`.
+Contributes `vite-plugin-solid` and the routes plugin to the `Codegen.ViteConfig` payload (typed `TsImportSpec`s + `TsExpression` plugin calls). The CLI aggregates contributions and writes `.stack/vite.config.ts`; `plugin-vite` spawns the dev/build processes using it.
 
 ### Remove
 

@@ -5,10 +5,12 @@ import { db } from "@fcalell/plugin-db";
 import { solid } from "@fcalell/plugin-solid";
 import { describe, expect, it } from "vitest";
 
+const app = { name: "app", domain: "example.com" };
+
 describe("defineConfig with multiple plugin combinations", () => {
 	it("full-stack config (db + auth + api + solid) validates successfully", () => {
 		const config = defineConfig({
-			domain: "example.com",
+			app,
 			plugins: [
 				db({ dialect: "d1", databaseId: "test-db-id" }),
 				auth(),
@@ -24,6 +26,7 @@ describe("defineConfig with multiple plugin combinations", () => {
 
 	it("frontend-only config (solid only) validates successfully", () => {
 		const config = defineConfig({
+			app,
 			plugins: [solid()],
 		});
 
@@ -34,6 +37,7 @@ describe("defineConfig with multiple plugin combinations", () => {
 
 	it("API-only config (db + api) validates successfully", () => {
 		const config = defineConfig({
+			app,
 			plugins: [db({ dialect: "d1", databaseId: "test-db-id" }), api()],
 		});
 
@@ -44,6 +48,7 @@ describe("defineConfig with multiple plugin combinations", () => {
 
 	it("API-without-db config (api only) validates successfully", () => {
 		const config = defineConfig({
+			app,
 			plugins: [api()],
 		});
 
@@ -54,6 +59,7 @@ describe("defineConfig with multiple plugin combinations", () => {
 
 	it("auth without db passes config validation (dependency is event-based, checked at runtime)", () => {
 		const config = defineConfig({
+			app,
 			plugins: [auth(), api()],
 		});
 
@@ -64,6 +70,7 @@ describe("defineConfig with multiple plugin combinations", () => {
 
 	it("duplicate plugin names are caught", () => {
 		const config = defineConfig({
+			app,
 			plugins: [
 				db({ dialect: "d1", databaseId: "id-1" }),
 				db({ dialect: "d1", databaseId: "id-2" }),
@@ -77,21 +84,23 @@ describe("defineConfig with multiple plugin combinations", () => {
 		);
 	});
 
-	it("domain is preserved through config", () => {
+	it("app.domain is preserved through config", () => {
 		const config = defineConfig({
-			domain: "myapp.example.com",
+			app: { name: "myapp", domain: "myapp.example.com" },
 			plugins: [solid()],
 		});
 
-		expect(config.domain).toBe("myapp.example.com");
+		expect(config.app.domain).toBe("myapp.example.com");
 	});
 
 	it("plugin order does not matter for validation (deps are checked by name)", () => {
 		const configAscending = defineConfig({
+			app,
 			plugins: [db({ dialect: "d1", databaseId: "test-id" }), auth(), api()],
 		});
 
 		const configReversed = defineConfig({
+			app,
 			plugins: [api(), auth(), db({ dialect: "d1", databaseId: "test-id" })],
 		});
 
@@ -101,6 +110,7 @@ describe("defineConfig with multiple plugin combinations", () => {
 
 	it("getPlugin extracts the correct plugin with full options", () => {
 		const config = defineConfig({
+			app,
 			plugins: [
 				db({ dialect: "d1", databaseId: "my-db-id" }),
 				auth({ cookies: { prefix: "myapp" } }),
@@ -128,6 +138,7 @@ describe("defineConfig with multiple plugin combinations", () => {
 
 	it("getPlugin throws for missing plugin", () => {
 		const config = defineConfig({
+			app,
 			plugins: [solid()],
 		});
 

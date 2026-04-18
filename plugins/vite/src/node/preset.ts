@@ -1,5 +1,6 @@
+import { existsSync } from "node:fs";
 import { createRequire } from "node:module";
-import { basename } from "node:path";
+import { basename, resolve } from "node:path";
 import { defaultFonts, type FontEntry } from "@fcalell/ui/fonts-manifest";
 import tailwindcss from "@tailwindcss/vite";
 import type { Plugin, ResolvedConfig } from "vite";
@@ -125,6 +126,47 @@ export function themeFontsPlugin(fonts: FontEntry[] = defaultFonts): Plugin {
 
 				return tags;
 			},
+		},
+	};
+}
+
+// Pass-through stub for when no plugin contributed providers. The import
+// must not break at runtime even when `.stack/virtual-providers.tsx` wasn't
+// written.
+const PROVIDERS_STUB = `import type { JSX } from "solid-js";
+export default function Providers(props: { children: JSX.Element }): JSX.Element {
+	return props.children;
+}
+`;
+
+export interface ProvidersPluginOptions {
+	// Path (absolute or relative to `cwd`) to the generated providers module.
+	// Defaults to `.stack/virtual-providers.tsx` relative to the Vite config
+	// file via its `root` — consumers rarely override this.
+	modulePath?: string;
+	cwd?: string;
+}
+
+export function providersPlugin(opts: ProvidersPluginOptions = {}): Plugin {
+	const VIRTUAL_ID = "virtual:stack-providers";
+	const RESOLVED_ID = `\0${VIRTUAL_ID}`;
+	const cwd = opts.cwd ?? process.cwd();
+	const modulePath = opts.modulePath
+		? resolve(cwd, opts.modulePath)
+		: resolve(cwd, ".stack/virtual-providers.tsx");
+
+	return {
+		name: "fcalell:stack-providers",
+
+		resolveId(id) {
+			if (id !== VIRTUAL_ID) return null;
+			if (existsSync(modulePath)) return modulePath;
+			return RESOLVED_ID;
+		},
+
+		load(id) {
+			if (id !== RESOLVED_ID) return null;
+			return PROVIDERS_STUB;
 		},
 	};
 }

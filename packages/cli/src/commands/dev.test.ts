@@ -1,5 +1,5 @@
 import { EventEmitter } from "node:events";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -70,6 +70,7 @@ vi.mock("#commands/generate", () => ({
 }));
 
 let mockConfig: StackConfig = {
+	app: { name: "app", domain: "example.com" },
 	plugins: [],
 	validate: () => ({ valid: true, errors: [] }),
 };
@@ -126,7 +127,11 @@ describe("dev()", () => {
 		generateMock.mockClear();
 		hasRuntimeMock.mockClear();
 		hasRuntimeMock.mockImplementation(() => false);
-		mockConfig = { plugins: [], validate: () => ({ valid: true, errors: [] }) };
+		mockConfig = {
+			app: { name: "app", domain: "example.com" },
+			plugins: [],
+			validate: () => ({ valid: true, errors: [] }),
+		};
 		mockDiscovered = [];
 		dir = mkdtempSync(join(tmpdir(), "stack-dev-"));
 		process.chdir(dir);
@@ -137,15 +142,15 @@ describe("dev()", () => {
 		rmSync(dir, { recursive: true, force: true });
 	});
 
-	it("invokes generate before Dev.Configure / Dev.Ready", async () => {
+	it("invokes generate before Dev.Start / Dev.Ready", async () => {
 		const order: string[] = [];
 		generateMock.mockImplementation(async () => {
 			order.push("generate");
 		});
 		mockDiscovered = [
 			makePlugin("p", (_ctx, bus) => {
-				bus.on(Dev.Configure, () => {
-					order.push("configure");
+				bus.on(Dev.Start, () => {
+					order.push("start");
 				});
 				bus.on(Dev.Ready, () => {
 					order.push("ready");
@@ -155,7 +160,7 @@ describe("dev()", () => {
 
 		await dev({ studio: false, config: "stack.config.ts" });
 
-		expect(order).toEqual(["generate", "configure", "ready"]);
+		expect(order).toEqual(["generate", "start", "ready"]);
 	});
 
 	it("runs Dev.Ready setup tasks in registration order", async () => {
@@ -333,30 +338,5 @@ describe("dev()", () => {
 		expect(
 			watchers.find((w) => w.path.endsWith("does/not/exist")),
 		).toBeUndefined();
-	});
-
-	it("regenerates the route barrel when a non-index route file changes", async () => {
-		vi.useFakeTimers();
-		try {
-			const routesDir = join(process.cwd(), "src", "worker", "routes");
-			mkdirSync(routesDir, { recursive: true });
-			writeFileSync(join(routesDir, "users.ts"), "// placeholder");
-			existsMock.mockImplementation((p: string) => p === routesDir);
-
-			mockDiscovered = [makePlugin("api")];
-
-			await dev({ studio: false, config: "stack.config.ts" });
-
-			const routesWatcher = watchers.find((w) => w.path === routesDir);
-			expect(routesWatcher).toBeDefined();
-
-			// Simulate a change to a route file; the handler debounces 300ms and
-			// then writes src/worker/routes/index.ts.
-			routesWatcher?.handler("change", "users.ts");
-			await vi.advanceTimersByTimeAsync(350);
-		} finally {
-			vi.useFakeTimers({ toFake: [] });
-			vi.useRealTimers();
-		}
 	});
 });

@@ -1,7 +1,8 @@
 import type { RegisterContext } from "@fcalell/cli";
-import { generateVirtualWorker } from "@fcalell/cli/codegen";
+import { aggregateMiddleware, aggregateWorker } from "@fcalell/cli/codegen";
 import {
 	Codegen,
+	Composition,
 	createEventBus,
 	type Event,
 	type EventBus,
@@ -10,15 +11,13 @@ import { createMockCtx } from "@fcalell/cli/testing";
 import { api } from "@fcalell/plugin-api";
 import { auth } from "@fcalell/plugin-auth";
 import { db } from "@fcalell/plugin-db";
+import { vite } from "@fcalell/plugin-vite";
 import { describe, expect, it } from "vitest";
 
 interface MockFs {
 	[path: string]: boolean;
 }
 
-// The plugin-specific option types collide with createMockCtx's generic when
-// passing ctx through a shared helper. Treat each plugin as AnyCliPlugin (the
-// same erasure used by plugin-cli-contracts.test.ts) for registration only.
 interface AnyCliPlugin {
 	cli: {
 		register: (
@@ -58,20 +57,29 @@ function registerApi(bus: EventBus, fs: MockFs, options: unknown): void {
 	registerPlugin(api as unknown as AnyCliPlugin, bus, fs, options);
 }
 
+function registerVite(bus: EventBus, fs: MockFs, options: unknown): void {
+	registerPlugin(vite as unknown as AnyCliPlugin, bus, fs, options);
+}
+
 async function runPipeline(
 	bus: EventBus,
-	frontend?: { port?: number; domain?: string },
+	opts: { domain?: string } = {},
 ): Promise<string> {
-	const frontendPayload = await bus.emit(Codegen.Frontend, frontend ?? {});
-	const worker = await bus.emit(Codegen.Worker, {
-		imports: [],
-		root: null,
-		uses: [],
-		handlerArg: "",
-		tailLines: [],
-		frontend: frontendPayload,
+	// Match the order in generate.ts: Composition.Middleware seeds the worker
+	// payload before Codegen.Worker fires, so plugin-api's consumer-middleware
+	// contribution lands in the chain.
+	const middleware = await bus.emit(Composition.Middleware, { entries: [] });
+	const aggregated = aggregateMiddleware(middleware);
+
+	const payload = await bus.emit(Codegen.Worker, {
+		imports: aggregated?.imports ?? [],
+		base: null,
+		middlewareChain: aggregated?.calls ?? [],
+		handler: null,
+		domain: opts.domain ?? "",
+		cors: [],
 	});
-	return generateVirtualWorker(worker);
+	return aggregateWorker(payload);
 }
 
 describe("virtual worker codegen pipeline (event-driven)", () => {
@@ -177,14 +185,12 @@ describe("virtual worker codegen pipeline (event-driven)", () => {
 		expect(withoutRoutes).toContain(".handler()");
 	});
 
-	it("inlines domain and cors from frontend signal", async () => {
+	it("inlines domain and cors from vite + domain signals", async () => {
 		const bus = createEventBus();
+		registerVite(bus, {}, { port: 3000 });
 		registerApi(bus, {}, {});
 
-		const result = await runPipeline(bus, {
-			domain: "example.com",
-			port: 3000,
-		});
+		const result = await runPipeline(bus, { domain: "example.com" });
 
 		expect(result).toContain("example.com");
 		expect(result).toContain("http://localhost:3000");
@@ -192,11 +198,12 @@ describe("virtual worker codegen pipeline (event-driven)", () => {
 		expect(result).toContain("https://app.example.com");
 	});
 
-	it("merges explicit api cors with frontend-derived origins", async () => {
+	it("merges explicit api cors with vite-derived origins", async () => {
 		const bus = createEventBus();
+		registerVite(bus, {}, { port: 4000 });
 		registerApi(bus, {}, { cors: ["https://custom.example.com"] });
 
-		const result = await runPipeline(bus, { port: 4000 });
+		const result = await runPipeline(bus);
 
 		expect(result).toContain("https://custom.example.com");
 		expect(result).toContain("http://localhost:4000");
@@ -204,9 +211,10 @@ describe("virtual worker codegen pipeline (event-driven)", () => {
 
 	it("does not duplicate existing localhost origin", async () => {
 		const bus = createEventBus();
+		registerVite(bus, {}, { port: 3000 });
 		registerApi(bus, {}, { cors: ["http://localhost:3000"] });
 
-		const result = await runPipeline(bus, { port: 3000 });
+		const result = await runPipeline(bus);
 
 		const corsMatches = result.match(/http:\/\/localhost:3000/g);
 		expect(corsMatches).toHaveLength(1);
@@ -221,8 +229,9 @@ describe("virtual worker codegen pipeline (event-driven)", () => {
 		expect(result).not.toContain("cors");
 	});
 
-	it("sets auth sameSite=none when a frontend is present", async () => {
+	it("sets auth sameSite=none when a frontend contributes localhost cors", async () => {
 		const bus = createEventBus();
+		registerVite(bus, {}, { port: 3000 });
 		registerAuth(
 			bus,
 			{ "src/worker/plugins/auth.ts": true },
@@ -232,9 +241,9 @@ describe("virtual worker codegen pipeline (event-driven)", () => {
 		);
 		registerApi(bus, {}, {});
 
-		const result = await runPipeline(bus, { port: 3000 });
+		const result = await runPipeline(bus);
 
-		expect(result).toContain('"sameSite": "none"');
+		expect(result).toContain('sameSite: "none"');
 	});
 
 	it("does not set sameSite when no frontend signal is present", async () => {
@@ -260,8 +269,6 @@ describe("virtual worker codegen pipeline (event-driven)", () => {
 
 		const result = await runPipeline(bus);
 		const lines = result.split("\n");
-
-		expect(lines[0]).toContain("Generated by @fcalell/cli");
 
 		const importLines = lines.filter((l) => l.startsWith("import"));
 		expect(importLines.length).toBeGreaterThanOrEqual(2);

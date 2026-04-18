@@ -124,8 +124,8 @@ Plugins subscribe to lifecycle events in their `register()` function. The CLI em
 
 ```
 stack init / add:   Init.Prompt -> Init.Scaffold -> Generate
-stack dev:          Generate -> Dev.Configure -> Dev.Start -> [wrangler] -> Dev.Ready
-stack build:        Generate -> Build.Configure -> Build.Start
+stack dev:          Generate -> Dev.Start -> [wrangler] -> Dev.Ready
+stack build:        Generate -> Build.Start
 stack deploy:       Generate -> Build -> Deploy.Plan -> Deploy.Execute -> Deploy.Complete
 stack remove:       Remove -> Generate
 ```
@@ -244,7 +244,7 @@ This runs automatically during `stack init`, `stack add`, `stack remove`, `stack
 
 ### `stack dev [--studio]`
 
-Plugin-driven development mode. Emits `Generate`, then `Dev.Configure`, `Dev.Start`, and `Dev.Ready`:
+Plugin-driven development mode. Emits `Generate`, then `Dev.Start` and `Dev.Ready`:
 
 - **`db` plugin:** pushes schema to local DB on startup, watches `src/schema/` for changes
 - **`api` plugin:** starts `wrangler dev`, watches `src/worker/routes/` and regenerates the barrel on file add/remove
@@ -255,7 +255,7 @@ Processes are color-coded and prefixed in the terminal. The `--studio` flag adds
 
 ### `stack build`
 
-Plugin-driven production build. Emits `Generate`, then `Build.Configure` and `Build.Start`.
+Plugin-driven production build. Emits `Generate`, then `Build.Start`.
 
 ### `stack deploy`
 

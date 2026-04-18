@@ -92,11 +92,13 @@ describe("stack CLI subprocess e2e", () => {
 		expect(existsSync(resolve(dir, "stack.config.ts"))).toBe(true);
 		expect(existsSync(resolve(dir, "biome.json"))).toBe(true);
 
-		// Plugin-contributed files
+		// Plugin-contributed files (Tier B business logic only; Tier A hidden
+		// wiring files like entry.tsx / _layout.tsx / index.html / wrangler.toml
+		// are no longer scaffolded into src/ — they regenerate into .stack/**).
 		expect(existsSync(resolve(dir, "src/schema/index.ts"))).toBe(true);
 		expect(existsSync(resolve(dir, "src/app/pages/index.tsx"))).toBe(true);
-		expect(existsSync(resolve(dir, "src/app/pages/_layout.tsx"))).toBe(true);
-		expect(existsSync(resolve(dir, "wrangler.toml"))).toBe(true);
+		expect(existsSync(resolve(dir, "src/app/pages/_layout.tsx"))).toBe(false);
+		expect(existsSync(resolve(dir, "wrangler.toml"))).toBe(false);
 
 		// Generated .stack dir (init calls generate as its final step)
 		expect(existsSync(resolve(dir, ".stack"))).toBe(true);
@@ -108,6 +110,7 @@ describe("stack CLI subprocess e2e", () => {
 		expect(cfg).toContain('from "@fcalell/plugin-api"');
 		expect(cfg).toContain('from "@fcalell/plugin-solid"');
 		expect(cfg).toContain('domain: "example.com"');
+		expect(cfg).toMatch(/app:\s*\{/);
 	});
 
 	it("stack generate produces .stack/worker.ts and .stack/wrangler.toml", {
@@ -128,7 +131,10 @@ describe("stack CLI subprocess e2e", () => {
 		expect(worker).toContain("export default worker");
 
 		const wrangler = readFileSync(wranglerPath, "utf-8");
-		expect(wrangler).toContain('main = ".stack/worker.ts"');
+		// `main` is relative to the wrangler.toml path; the generated file lives
+		// in .stack/ so "worker.ts" resolves to .stack/worker.ts. Consumers can
+		// override by providing their own wrangler.toml with a custom `main`.
+		expect(wrangler).toContain('main = "worker.ts"');
 		expect(wrangler).toContain("[[d1_databases]]");
 		expect(wrangler).toContain("DB_MAIN");
 	});

@@ -25,6 +25,7 @@ vi.mock("#commands/build", () => ({
 }));
 
 let mockConfig: StackConfig = {
+	app: { name: "app", domain: "example.com" },
 	plugins: [],
 	validate: () => ({ valid: true, errors: [] }),
 };
@@ -69,7 +70,11 @@ describe("deploy()", () => {
 		spawnMock.mockReset();
 		spawnMock.mockImplementation(() => ({ status: 0 }));
 		buildMock.mockClear();
-		mockConfig = { plugins: [], validate: () => ({ valid: true, errors: [] }) };
+		mockConfig = {
+			app: { name: "app", domain: "example.com" },
+			plugins: [],
+			validate: () => ({ valid: true, errors: [] }),
+		};
 		mockDiscovered = [];
 		dir = mkdtempSync(join(tmpdir(), "stack-deploy-"));
 		process.chdir(dir);

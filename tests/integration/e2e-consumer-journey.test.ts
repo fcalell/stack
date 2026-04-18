@@ -8,7 +8,7 @@ import {
 	sortByDependencies,
 } from "@fcalell/cli/discovery";
 import {
-	Build,
+	Codegen,
 	createEventBus,
 	Deploy,
 	type EventBus,
@@ -54,7 +54,7 @@ describe("E2E consumer journey (db + auth + api + solid + solid-ui)", () => {
 	});
 
 	const config = defineConfig({
-		domain: "app.example.com",
+		app: { name: "app", domain: "app.example.com" },
 		plugins: [
 			db({ dialect: "d1", databaseId: "app-db" }),
 			auth({ cookies: { prefix: "app" }, organization: true }),
@@ -94,10 +94,22 @@ describe("E2E consumer journey (db + auth + api + solid + solid-ui)", () => {
 			gitignore: [],
 		});
 
-		const paths = scaffold.files.map((f) => f.path);
-		expect(paths).toContain("src/schema/index.ts");
-		expect(paths).toContain("src/worker/plugins/auth.ts");
-		expect(paths).toContain("wrangler.toml");
+		const targets = scaffold.files.map((f) => f.target);
+		expect(targets).toContain("src/schema/index.ts");
+		expect(targets).toContain("src/worker/plugins/auth.ts");
+		// plugin-solid + plugin-solid-ui coordinate so only one contributes the
+		// home page (solid-ui wins); there is no duplicate target.
+		expect(targets.filter((t) => t === "src/app/pages/index.tsx")).toHaveLength(
+			1,
+		);
+		// wrangler.toml scaffold was dropped in Phase 4 — the CLI aggregates
+		// wrangler config directly.
+		expect(targets).not.toContain("wrangler.toml");
+		// Tier A hidden wiring files also no longer scaffold.
+		expect(targets).not.toContain("src/app/entry.tsx");
+		expect(targets).not.toContain("src/app/pages/_layout.tsx");
+		expect(targets).not.toContain("index.html");
+		expect(targets).not.toContain("src/app/app.css");
 
 		expect(scaffold.dependencies["@fcalell/plugin-db"]).toBe("workspace:*");
 		expect(scaffold.dependencies["@fcalell/plugin-auth"]).toBe("workspace:*");
@@ -106,22 +118,32 @@ describe("E2E consumer journey (db + auth + api + solid + solid-ui)", () => {
 		expect(scaffold.gitignore).toContain(".stack");
 	});
 
-	it("Generate collects bindings for every runtime-critical plugin", async () => {
+	it("Codegen.Wrangler collects bindings + secrets for every runtime-critical plugin", async () => {
 		const discovered = await discoverPlugins(config);
 		const sorted = sortByDependencies(discovered);
 		const bus = registerPlugins(sorted, config, cwd);
 
-		const gen = await bus.emit(Generate, { files: [], bindings: [] });
+		const wrangler = await bus.emit(Codegen.Wrangler, {
+			bindings: [],
+			routes: [],
+			vars: {},
+			secrets: [],
+			compatibilityDate: "2025-01-01",
+		});
 
-		const bindingNames = gen.bindings.map((b) => b.name);
-		expect(bindingNames).toContain("DB_MAIN");
-		expect(bindingNames).toContain("AUTH_SECRET");
-		expect(bindingNames).toContain("APP_URL");
-		expect(bindingNames).toContain("RATE_LIMITER_IP");
-		expect(bindingNames).toContain("RATE_LIMITER_EMAIL");
+		const bindingIds = wrangler.bindings.map((b) =>
+			b.kind === "var" ? b.name : b.binding,
+		);
+		expect(bindingIds).toContain("DB_MAIN");
+		expect(bindingIds).toContain("RATE_LIMITER_IP");
+		expect(bindingIds).toContain("RATE_LIMITER_EMAIL");
 
-		const d1 = gen.bindings.find((b) => b.type === "d1");
-		expect(d1?.databaseId).toBe("app-db");
+		const secretNames = wrangler.secrets.map((s) => s.name);
+		expect(secretNames).toContain("AUTH_SECRET");
+		expect(secretNames).toContain("APP_URL");
+
+		const d1 = wrangler.bindings.find((b) => b.kind === "d1");
+		expect(d1?.kind === "d1" ? d1.databaseId : null).toBe("app-db");
 	});
 
 	it("Deploy.Execute collects wrangler + db migration steps", async () => {
@@ -143,18 +165,20 @@ describe("E2E consumer journey (db + auth + api + solid + solid-ui)", () => {
 		}
 	});
 
-	it("Build.Configure collects Vite plugin contributions", async () => {
+	it("Codegen.ViteConfig collects Vite plugin contributions", async () => {
 		const discovered = await discoverPlugins(config);
 		const sorted = sortByDependencies(discovered);
 		const bus = registerPlugins(sorted, config, cwd);
 
-		const built = await bus.emit(Build.Configure, {
-			vitePlugins: [],
-			viteImports: [],
-			vitePluginCalls: [],
+		const cfg = await bus.emit(Codegen.ViteConfig, {
+			imports: [],
+			pluginCalls: [],
+			resolveAliases: [],
+			devServerPort: 0,
 		});
 
-		expect(built.viteImports.length).toBeGreaterThan(0);
+		expect(cfg.imports.length).toBeGreaterThan(0);
+		expect(cfg.pluginCalls.length).toBeGreaterThan(0);
 	});
 
 	it("Remove aggregates files and dependencies for every plugin", async () => {
@@ -171,7 +195,7 @@ describe("E2E consumer journey (db + auth + api + solid + solid-ui)", () => {
 		expect(removal.dependencies).toContain("@fcalell/plugin-api");
 	});
 
-	it("scaffolded files contain valid TypeScript-looking content", async () => {
+	it("scaffold templates on disk contain the expected source", async () => {
 		const discovered = await discoverPlugins(config);
 		const sorted = sortByDependencies(discovered);
 		const bus = registerPlugins(sorted, config, cwd);
@@ -183,16 +207,26 @@ describe("E2E consumer journey (db + auth + api + solid + solid-ui)", () => {
 			gitignore: [],
 		});
 
-		const schema = scaffold.files.find((f) => f.path === "src/schema/index.ts");
-		expect(schema?.content).toContain("sqliteTable");
+		const { readFileSync } = await import("node:fs");
+		const { fileURLToPath } = await import("node:url");
+
+		const schema = scaffold.files.find(
+			(f) => f.target === "src/schema/index.ts",
+		);
+		expect(schema).toBeDefined();
+		if (schema) {
+			const src = readFileSync(fileURLToPath(schema.source), "utf8");
+			expect(src).toContain("sqliteTable");
+		}
 
 		const authCallbacks = scaffold.files.find(
-			(f) => f.path === "src/worker/plugins/auth.ts",
+			(f) => f.target === "src/worker/plugins/auth.ts",
 		);
-		expect(authCallbacks?.content).toContain("auth.defineCallbacks");
-
-		const wrangler = scaffold.files.find((f) => f.path === "wrangler.toml");
-		expect(wrangler?.content).toContain('main = ".stack/worker.ts"');
+		expect(authCallbacks).toBeDefined();
+		if (authCallbacks) {
+			const src = readFileSync(fileURLToPath(authCallbacks.source), "utf8");
+			expect(src).toContain("auth.defineCallbacks");
+		}
 	});
 });
 
@@ -208,13 +242,28 @@ describe("E2E minimal journey (api only)", () => {
 	});
 
 	it("api-only config generates with no bindings and a wrangler step", async () => {
-		const config = defineConfig({ plugins: [api()] });
+		const config = defineConfig({
+			app: { name: "api-only", domain: "api.example.com" },
+			plugins: [api()],
+		});
 		const discovered = await discoverPlugins(config);
 		const sorted = sortByDependencies(discovered);
 		const bus = registerPlugins(sorted, config, cwd);
 
-		const gen = await bus.emit(Generate, { files: [], bindings: [] });
-		expect(gen.bindings).toHaveLength(0);
+		const gen = await bus.emit(Generate, { files: [] });
+		// api plugin contributes a route barrel file via Generate.
+		expect(gen.files.map((f) => f.path)).toContain(
+			"src/worker/routes/index.ts",
+		);
+
+		const wrangler = await bus.emit(Codegen.Wrangler, {
+			bindings: [],
+			routes: [],
+			vars: {},
+			secrets: [],
+			compatibilityDate: "2025-01-01",
+		});
+		expect(wrangler.bindings).toHaveLength(0);
 
 		const deploy = await bus.emit(Deploy.Execute, { steps: [] });
 		expect(deploy.steps.find((s) => s.name === "Worker")).toBeDefined();

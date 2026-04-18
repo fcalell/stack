@@ -1,3 +1,4 @@
+import type { AppConfig } from "#config";
 import { StackError } from "#lib/errors";
 import type { Event, EventBus } from "#lib/event-bus";
 import { defineEvent } from "#lib/event-bus";
@@ -19,6 +20,7 @@ export function callback<
 export interface RegisterContext<TOptions> {
 	options: TOptions;
 	cwd: string;
+	app: AppConfig;
 
 	hasPlugin(name: string): boolean;
 

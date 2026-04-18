@@ -44,6 +44,7 @@ export async function remove(
 		const ctx = createRegisterContext({
 			cwd,
 			options: plugin.options,
+			app: config.app,
 			hasPlugin: (name) => config.plugins.some((pl) => pl.__plugin === name),
 		});
 

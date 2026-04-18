@@ -1,4 +1,5 @@
 import {
+	Codegen,
 	createEventBus,
 	Dev,
 	Generate,
@@ -77,7 +78,7 @@ describe("api.cli", () => {
 });
 
 describe("api register", () => {
-	it("pushes scaffold files on Init.Scaffold", async () => {
+	it("contributes deps/devDeps/gitignore on Init.Scaffold (no wrangler scaffold)", async () => {
 		const bus = createEventBus();
 		const ctx = createMockCtx<ApiOptions>({
 			options: { prefix: "/rpc" },
@@ -91,10 +92,10 @@ describe("api register", () => {
 			gitignore: [],
 		});
 
-		expect(scaffold.files).toContainEqual(
-			expect.objectContaining({
-				path: "wrangler.toml",
-			}),
+		// wrangler.toml is no longer scaffolded — the CLI's aggregateWrangler
+		// handles the missing consumer file directly.
+		expect(scaffold.files.some((f) => f.target === "wrangler.toml")).toBe(
+			false,
 		);
 		expect(scaffold.dependencies["@fcalell/plugin-api"]).toBe("workspace:*");
 		expect(scaffold.devDependencies.wrangler).toBeDefined();
@@ -109,7 +110,7 @@ describe("api register", () => {
 		});
 		api.cli.register(ctx, bus, api.events);
 
-		const gen = await bus.emit(Generate, { files: [], bindings: [] });
+		const gen = await bus.emit(Generate, { files: [] });
 
 		expect(gen.files).toContainEqual(
 			expect.objectContaining({
@@ -134,6 +135,80 @@ describe("api register", () => {
 		expect(removal.files).toContain("src/worker/routes/");
 		expect(removal.dependencies).toContain("@fcalell/plugin-api");
 		expect(removal.dependencies).toContain("wrangler");
+	});
+
+	it("claims worker base on Codegen.Worker with createWorker() call", async () => {
+		const bus = createEventBus();
+		const ctx = createMockCtx<ApiOptions>({
+			options: { prefix: "/rpc", domain: "example.com" },
+		});
+		api.cli.register(ctx, bus, api.events);
+
+		const worker = await bus.emit(Codegen.Worker, {
+			imports: [],
+			base: null,
+			middlewareChain: [],
+			handler: null,
+			domain: "example.com",
+			cors: [],
+		});
+
+		expect(worker.base).not.toBeNull();
+		expect(worker.base?.kind).toBe("call");
+		if (worker.base?.kind === "call") {
+			expect(worker.base.callee).toEqual({
+				kind: "identifier",
+				name: "createWorker",
+			});
+		}
+		expect(worker.imports).toContainEqual({
+			source: "@fcalell/plugin-api/runtime",
+			default: "createWorker",
+		});
+	});
+
+	it("derives production CORS origins from domain when dev localhost present", async () => {
+		const bus = createEventBus();
+		const ctx = createMockCtx<ApiOptions>({
+			options: { prefix: "/rpc", domain: "example.com" },
+		});
+		api.cli.register(ctx, bus, api.events);
+
+		const worker = await bus.emit(Codegen.Worker, {
+			imports: [],
+			base: null,
+			middlewareChain: [],
+			handler: null,
+			domain: "example.com",
+			cors: ["http://localhost:3000"],
+		});
+
+		expect(worker.cors).toContain("http://localhost:3000");
+		expect(worker.cors).toContain("https://example.com");
+		expect(worker.cors).toContain("https://app.example.com");
+	});
+
+	it("throws on Codegen.Worker when another plugin already claimed base", async () => {
+		const bus = createEventBus();
+		const ctx = createMockCtx<ApiOptions>({
+			options: { prefix: "/rpc" },
+		});
+		api.cli.register(ctx, bus, api.events);
+
+		await expect(
+			bus.emit(Codegen.Worker, {
+				imports: [],
+				base: {
+					kind: "call",
+					callee: { kind: "identifier", name: "other" },
+					args: [],
+				},
+				middlewareChain: [],
+				handler: null,
+				domain: "",
+				cors: [],
+			}),
+		).rejects.toThrow(/cannot claim the worker root/);
 	});
 
 	it("pushes wrangler process and route watcher on Dev.Start", async () => {

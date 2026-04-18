@@ -7,8 +7,8 @@ import { editConfig, hasPluginCall } from "#lib/config-writer";
 import { dependencyNames, loadAvailablePlugins } from "#lib/discovery";
 import { ConfigLoadError, MissingPluginError } from "#lib/errors";
 import { createEventBus } from "#lib/event-bus";
-import { createRegisterContext } from "#lib/registration";
-import { scaffoldFiles } from "#lib/scaffold";
+import { createRegisterContext, syntheticAppConfig } from "#lib/registration";
+import { announceCreated, writeScaffoldSpecs } from "#lib/scaffold";
 
 export async function add(
 	pluginName: string,
@@ -67,6 +67,7 @@ export async function add(
 		const ctx = createRegisterContext({
 			cwd,
 			options: {},
+			app: config?.app ?? syntheticAppConfig(cwd),
 			hasPlugin: (name) => {
 				if (name === pluginName) return true;
 				try {
@@ -91,9 +92,8 @@ export async function add(
 			gitignore: [],
 		});
 
-		for (const file of scaffold.files) {
-			scaffoldFiles([[file.path, file.content]]);
-		}
+		const created = await writeScaffoldSpecs(scaffold.files, cwd);
+		announceCreated(created);
 	} catch {
 		log.warn(
 			`Could not load ${packageName} — it will be set up after install.`,

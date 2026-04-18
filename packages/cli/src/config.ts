@@ -13,29 +13,6 @@ export interface PluginConfig<
 	readonly options: TOptions;
 }
 
-// ── Binding declarations ────────────────────────────────────────────
-
-export interface BindingDeclaration {
-	name: string;
-	type:
-		| "d1"
-		| "r2"
-		| "kv"
-		| "queue"
-		| "rate_limiter"
-		| "durable_object"
-		| "service"
-		| "var"
-		| "secret";
-	databaseId?: string;
-	databaseName?: string;
-	bucketName?: string;
-	kvNamespaceId?: string;
-	className?: string;
-	rateLimit?: { limit: number; period: number };
-	devDefault?: string;
-}
-
 // ── Validation types ────────────────────────────────────────────────
 
 export interface ValidationError {
@@ -49,12 +26,27 @@ export interface ValidationResult {
 	errors: ValidationError[];
 }
 
+// ── App config ──────────────────────────────────────────────────────
+
+// AppConfig is the top-level identity / HTML metadata surface. Introduced in
+// Phase 5 (replaces top-level `domain`). `name` and `domain` are required;
+// everything else has a sensible default that lands during `defineConfig`.
+export interface AppConfig {
+	name: string;
+	domain: string;
+	title?: string;
+	description?: string;
+	icon?: string;
+	themeColor?: string;
+	lang?: string;
+}
+
 // ── Stack config ────────────────────────────────────────────────────
 
 export interface StackConfig<
 	T extends readonly PluginConfig[] = readonly PluginConfig[],
 > {
-	domain?: string;
+	app: AppConfig;
 	plugins: T;
 	validate(): ValidationResult;
 }
@@ -78,15 +70,44 @@ export function getPlugin<T extends readonly PluginConfig[], N extends string>(
 // ── defineConfig ────────────────────────────────────────────────────
 
 export function defineConfig<const T extends readonly PluginConfig[]>(input: {
-	domain?: string;
+	app: AppConfig;
 	plugins: T;
 }): StackConfig<T> {
+	// Apply defaults once here so the rest of the pipeline (and plugin
+	// registers) can rely on `ctx.app.title` / `ctx.app.lang` being populated.
+	const app: AppConfig = {
+		...input.app,
+		title: input.app.title ?? input.app.name,
+		lang: input.app.lang ?? "en",
+	};
+
 	return {
-		...input,
+		app,
+		plugins: input.plugins,
 		validate() {
 			const errors: ValidationError[] = [];
-			const seen = new Set<string>();
 
+			if (!input.app || typeof input.app !== "object") {
+				errors.push({
+					plugin: "app",
+					message: "app is required (expected { name, domain })",
+				});
+			} else {
+				if (
+					typeof input.app.name !== "string" ||
+					input.app.name.trim() === ""
+				) {
+					errors.push({ plugin: "app", message: "app.name is required" });
+				}
+				if (
+					typeof input.app.domain !== "string" ||
+					input.app.domain.trim() === ""
+				) {
+					errors.push({ plugin: "app", message: "app.domain is required" });
+				}
+			}
+
+			const seen = new Set<string>();
 			for (const plugin of input.plugins) {
 				if (seen.has(plugin.__plugin)) {
 					errors.push({

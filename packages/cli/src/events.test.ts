@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
 	Build,
+	Codegen,
 	Deploy,
 	Dev,
 	defineEvent,
@@ -22,22 +23,14 @@ describe("core lifecycle events", () => {
 		expect(Generate.name).toBe("generate");
 	});
 
-	it("Dev namespace has Configure, ConfigureReady, Start, Ready events", () => {
-		expect(Dev.Configure.source).toBe("core");
-		expect(Dev.Configure.name).toBe("dev.configure");
-		expect(Dev.ConfigureReady.source).toBe("core");
-		expect(Dev.ConfigureReady.name).toBe("dev.configure.ready");
+	it("Dev namespace has Start, Ready events", () => {
 		expect(Dev.Start.source).toBe("core");
 		expect(Dev.Start.name).toBe("dev.start");
 		expect(Dev.Ready.source).toBe("core");
 		expect(Dev.Ready.name).toBe("dev.ready");
 	});
 
-	it("Build namespace has Configure, ConfigureReady, Start events", () => {
-		expect(Build.Configure.source).toBe("core");
-		expect(Build.Configure.name).toBe("build.configure");
-		expect(Build.ConfigureReady.source).toBe("core");
-		expect(Build.ConfigureReady.name).toBe("build.configure.ready");
+	it("Build namespace has Start event", () => {
 		expect(Build.Start.source).toBe("core");
 		expect(Build.Start.name).toBe("build.start");
 	});
@@ -56,22 +49,45 @@ describe("core lifecycle events", () => {
 		expect(Remove.name).toBe("remove");
 	});
 
+	it("Codegen namespace has Worker, Wrangler, Env, ViteConfig, Entry, Html, AppCss, RoutesDts", () => {
+		expect(Codegen.Worker.source).toBe("core");
+		expect(Codegen.Worker.name).toBe("codegen.worker");
+		expect(Codegen.Wrangler.source).toBe("core");
+		expect(Codegen.Wrangler.name).toBe("codegen.wrangler");
+		expect(Codegen.Env.source).toBe("core");
+		expect(Codegen.Env.name).toBe("codegen.env");
+		expect(Codegen.ViteConfig.source).toBe("core");
+		expect(Codegen.ViteConfig.name).toBe("codegen.vite-config");
+		expect(Codegen.Entry.source).toBe("core");
+		expect(Codegen.Entry.name).toBe("codegen.entry");
+		expect(Codegen.Html.source).toBe("core");
+		expect(Codegen.Html.name).toBe("codegen.html");
+		expect(Codegen.AppCss.source).toBe("core");
+		expect(Codegen.AppCss.name).toBe("codegen.app-css");
+		expect(Codegen.RoutesDts.source).toBe("core");
+		expect(Codegen.RoutesDts.name).toBe("codegen.routes-dts");
+	});
+
 	it("all events have unique symbol ids", () => {
 		const allEvents = [
 			Init.Prompt,
 			Init.Scaffold,
 			Generate,
-			Dev.Configure,
-			Dev.ConfigureReady,
 			Dev.Start,
 			Dev.Ready,
-			Build.Configure,
-			Build.ConfigureReady,
 			Build.Start,
 			Deploy.Plan,
 			Deploy.Execute,
 			Deploy.Complete,
 			Remove,
+			Codegen.Worker,
+			Codegen.Wrangler,
+			Codegen.Env,
+			Codegen.ViteConfig,
+			Codegen.Entry,
+			Codegen.Html,
+			Codegen.AppCss,
+			Codegen.RoutesDts,
 		];
 		const ids = allEvents.map((e) => e.id);
 		expect(new Set(ids).size).toBe(ids.length);

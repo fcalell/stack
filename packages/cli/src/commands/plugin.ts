@@ -2,7 +2,7 @@ import { existsSync, mkdirSync } from "node:fs";
 import { basename, resolve } from "node:path";
 import { log, outro } from "@clack/prompts";
 import { StackError } from "#lib/errors";
-import { scaffoldFiles } from "#lib/scaffold";
+import { writeIfMissingString } from "#lib/scaffold";
 import {
 	pluginIndexTemplate,
 	pluginIndexTestTemplate,
@@ -55,14 +55,18 @@ export async function initPlugin(options: InitPluginOptions): Promise<void> {
 			.map((part) => (part ? part[0]?.toUpperCase() + part.slice(1) : part))
 			.join(" ");
 
-		const created = scaffoldFiles([
+		const entries: Array<[string, string]> = [
 			["package.json", pluginPackageJsonTemplate({ name, packageName })],
 			["tsconfig.json", pluginTsconfigTemplate()],
 			["src/index.ts", pluginIndexTemplate({ name, packageName, label })],
 			["src/index.test.ts", pluginIndexTestTemplate({ name, packageName })],
 			["src/worker/index.ts", pluginRuntimeTemplate({ name })],
 			["README.md", pluginReadmeTemplate({ name, packageName, label })],
-		]);
+		];
+		const created: string[] = [];
+		for (const [path, content] of entries) {
+			if (writeIfMissingString(path, content)) created.push(path);
+		}
 
 		if (created.length === 0) {
 			log.info(

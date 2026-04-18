@@ -1,6 +1,8 @@
 import { createPlugin, fromSchema } from "@fcalell/cli";
+import type { TsExpression } from "@fcalell/cli/ast";
 import {
 	Codegen,
+	Composition,
 	Deploy,
 	Dev,
 	Generate,
@@ -36,12 +38,6 @@ const apiOptionsSchema = z.object({
 
 const parseApiOptions = fromSchema<ApiOptions>(apiOptionsSchema);
 
-const WRANGLER_TEMPLATE = (name: string) =>
-	`name = "${name}"
-compatibility_date = "${new Date().toISOString().split("T")[0]}"
-main = ".stack/worker.ts"
-`;
-
 export const api = createPlugin("api", {
 	label: "API",
 
@@ -54,11 +50,6 @@ export const api = createPlugin("api", {
 
 	register(ctx, bus) {
 		bus.on(Init.Scaffold, (p) => {
-			p.files.push({
-				path: "wrangler.toml",
-				content: WRANGLER_TEMPLATE("my-app"),
-			});
-
 			p.dependencies["@fcalell/plugin-api"] = "workspace:*";
 			p.devDependencies.wrangler = "^4.14.0";
 			p.gitignore.push(".wrangler", ".stack");
@@ -73,70 +64,99 @@ export const api = createPlugin("api", {
 		});
 
 		bus.on(Codegen.Worker, async (p) => {
-			if (p.root) {
+			if (p.base) {
 				throw new Error(
 					`Plugin "api" cannot claim the worker root because another plugin already did.`,
 				);
 			}
 
-			const options = (ctx.options ?? {}) as {
-				cors?: string | string[];
-				prefix?: `/${string}`;
-				domain?: string;
-			};
+			const options = (ctx.options ?? {}) as ApiOptions;
 
-			const workerOptions: Record<string, unknown> = {};
-			const domain = p.frontend?.domain ?? options.domain;
-			if (domain) workerOptions.domain = domain;
-			if (options.prefix) workerOptions.prefix = options.prefix;
-
-			const corsOrigins: string[] = [];
-			if (options.cors) {
-				corsOrigins.push(
-					...(Array.isArray(options.cors) ? options.cors : [options.cors]),
-				);
+			const workerOptions: Array<{ key: string; value: TsExpression }> = [];
+			const domain = p.domain || options.domain;
+			if (domain) {
+				workerOptions.push({
+					key: "domain",
+					value: { kind: "string", value: domain },
+				});
 			}
-			const frontendPort = p.frontend?.port;
-			if (frontendPort != null) {
-				const localOrigin = `http://localhost:${frontendPort}`;
-				if (!corsOrigins.includes(localOrigin)) {
-					corsOrigins.push(localOrigin);
+			if (options.prefix) {
+				workerOptions.push({
+					key: "prefix",
+					value: { kind: "string", value: options.prefix },
+				});
+			}
+
+			const corsOrigins: string[] = [...p.cors];
+			if (options.cors) {
+				for (const o of Array.isArray(options.cors)
+					? options.cors
+					: [options.cors]) {
+					if (!corsOrigins.includes(o)) corsOrigins.push(o);
 				}
-				if (domain) {
-					const domainOrigin = `https://${domain}`;
-					if (!corsOrigins.includes(domainOrigin)) {
-						corsOrigins.push(domainOrigin);
-					}
-					const appOrigin = `https://app.${domain}`;
-					if (!corsOrigins.includes(appOrigin)) {
-						corsOrigins.push(appOrigin);
-					}
-				}
+			}
+			// When a frontend plugin contributed a localhost origin (via its vite
+			// dev port), derive matching production origins from the domain.
+			const hasLocalhost = corsOrigins.some((o) =>
+				o.startsWith("http://localhost"),
+			);
+			if (hasLocalhost && domain) {
+				const domainOrigin = `https://${domain}`;
+				if (!corsOrigins.includes(domainOrigin)) corsOrigins.push(domainOrigin);
+				const appOrigin = `https://app.${domain}`;
+				if (!corsOrigins.includes(appOrigin)) corsOrigins.push(appOrigin);
 			}
 			if (corsOrigins.length > 0) {
-				workerOptions.cors = corsOrigins;
+				workerOptions.push({
+					key: "cors",
+					value: {
+						kind: "array",
+						items: corsOrigins.map((o) => ({ kind: "string", value: o })),
+					},
+				});
+				// Update the payload's cors list so downstream plugins (e.g. auth)
+				// observe the final origins.
+				p.cors.splice(0, p.cors.length, ...corsOrigins);
 			}
 
-			p.imports.push(`import createWorker from "@fcalell/plugin-api/runtime";`);
-			p.root = {
-				factoryName: "createWorker",
-				options: workerOptions,
+			p.imports.push({
+				source: "@fcalell/plugin-api/runtime",
+				default: "createWorker",
+			});
+
+			p.base = {
+				kind: "call",
+				callee: { kind: "identifier", name: "createWorker" },
+				args:
+					workerOptions.length > 0
+						? [{ kind: "object", properties: workerOptions }]
+						: [],
 			};
-
-			const hasMiddleware = await ctx.fileExists("src/worker/middleware.ts");
-			if (hasMiddleware) {
-				p.imports.push('import middleware from "../src/worker/middleware";');
-				p.uses.push({ kind: "identifier", identifier: "middleware" });
-			}
 
 			const hasRoutes = await ctx.fileExists("src/worker/routes");
 			if (hasRoutes) {
-				p.imports.push('import * as routes from "../src/worker/routes";');
-				p.handlerArg = "routes";
+				p.imports.push({ source: "../src/worker/routes", namespace: "routes" });
+				p.handler = { identifier: "routes" };
 			}
+		});
 
-			p.tailLines.push("export type AppRouter = typeof worker._router;");
-			p.tailLines.push("export default worker;");
+		// Consumer middleware is an implicit contribution via the conventional
+		// file `src/worker/middleware.ts`. Published via Composition.Middleware
+		// so third-party plugins can interleave middleware around it.
+		bus.on(Composition.Middleware, async (p) => {
+			const hasMiddleware = await ctx.fileExists("src/worker/middleware.ts");
+			if (!hasMiddleware) return;
+			p.entries.push({
+				imports: [
+					{
+						source: "../src/worker/middleware",
+						default: "middleware",
+					},
+				],
+				call: { kind: "identifier", name: "middleware" },
+				phase: "before-routes",
+				order: 100,
+			});
 		});
 
 		bus.on(Remove, (p) => {

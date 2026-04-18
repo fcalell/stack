@@ -62,7 +62,7 @@ describe("Init.Prompt in non-interactive mode", () => {
 
 	it("emits across multiple plugins and accumulates answers keyed by plugin name", async () => {
 		const config = {
-			domain: "app.example.com",
+			app: { name: "app", domain: "app.example.com" },
 			plugins: [db({ dialect: "d1", databaseId: "placeholder" }), auth({})],
 			validate: () => ({ valid: true, errors: [] }),
 		};
@@ -97,6 +97,7 @@ describe("Init.Prompt → pluginAnswers wiring (mirrors init.ts merge)", () => {
 
 	it("pluginAnswers collects each plugin's configOptions after Init.Prompt", async () => {
 		const config = {
+			app: { name: "app", domain: "example.com" },
 			plugins: [db({ dialect: "d1", databaseId: "abc" }), auth({})],
 			validate: () => ({ valid: true, errors: [] }),
 		};

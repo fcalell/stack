@@ -1,3 +1,4 @@
+import type { ScaffoldSpec } from "#ast";
 import type {
 	BuildStartPayload,
 	BuildStep,
@@ -20,6 +21,19 @@ export function deduplicateFiles(
 		byPath.set(file.path, file);
 	}
 	return [...byPath.values()];
+}
+
+// Duplicate-target detection for scaffold specs runs during writeScaffoldSpecs
+// and raises ScaffoldError. This helper just flags whether any duplicates exist
+// so the executor can surface them consistently with the other payload passes.
+export function scaffoldDuplicateTargets(specs: ScaffoldSpec[]): string[] {
+	const seen = new Set<string>();
+	const dupes: string[] = [];
+	for (const spec of specs) {
+		if (seen.has(spec.target)) dupes.push(spec.target);
+		seen.add(spec.target);
+	}
+	return dupes;
 }
 
 // ── Dependency merging ──────────────────────────────────────────────
@@ -53,7 +67,7 @@ export function sortStepsByPhase<T extends { phase: "pre" | "main" | "post" }>(
 // ── Scaffold payload processing ─────────────────────────────────────
 
 export interface ScaffoldResult {
-	files: { path: string; content: string }[];
+	files: ScaffoldSpec[];
 	dependencies: Record<string, string>;
 	devDependencies: Record<string, string>;
 	gitignore: string[];
@@ -62,8 +76,10 @@ export interface ScaffoldResult {
 export function processScaffoldPayload(
 	payload: InitScaffoldPayload,
 ): ScaffoldResult {
+	// No deduplication here: duplicate targets are an error and get caught by
+	// writeScaffoldSpecs before any files land on disk.
 	return {
-		files: deduplicateFiles(payload.files),
+		files: payload.files,
 		dependencies: payload.dependencies,
 		devDependencies: payload.devDependencies,
 		gitignore: deduplicateGitignore(payload.gitignore),

@@ -1,4 +1,5 @@
 import {
+	Codegen,
 	createEventBus,
 	Dev,
 	Generate,
@@ -116,16 +117,17 @@ describe("db register", () => {
 			gitignore: [],
 		});
 
-		expect(scaffold.files).toContainEqual({
-			path: "src/schema/index.ts",
-			content: expect.stringContaining("sqliteTable"),
-		});
+		const schema = scaffold.files.find(
+			(f) => f.target === "src/schema/index.ts",
+		);
+		expect(schema).toBeDefined();
+		expect(schema?.source.pathname.endsWith("templates/schema.ts")).toBe(true);
 		expect(scaffold.dependencies["@fcalell/plugin-db"]).toBe("workspace:*");
 		expect(scaffold.devDependencies["drizzle-kit"]).toBeDefined();
 		expect(scaffold.gitignore).toContain(".db-kit");
 	});
 
-	it("pushes D1 binding on Generate for d1 dialect", async () => {
+	it("pushes D1 binding on Codegen.Wrangler for d1 dialect", async () => {
 		const bus = createEventBus();
 		const ctx = createMockCtx<DbOptions>({
 			options: {
@@ -137,17 +139,44 @@ describe("db register", () => {
 		});
 		db.cli.register(ctx, bus, db.events);
 
-		const gen = await bus.emit(Generate, { files: [], bindings: [] });
-		expect(gen.bindings).toContainEqual(
+		const wrangler = await bus.emit(Codegen.Wrangler, {
+			bindings: [],
+			routes: [],
+			vars: {},
+			secrets: [],
+			compatibilityDate: "2025-01-01",
+		});
+		expect(wrangler.bindings).toContainEqual(
 			expect.objectContaining({
-				name: "DB_MAIN",
-				type: "d1",
+				kind: "d1",
+				binding: "DB_MAIN",
 				databaseId: "abc-123",
 			}),
 		);
 	});
 
-	it("pushes no bindings on Generate for sqlite dialect", async () => {
+	it("pushes D1 env field on Codegen.Env for d1 dialect", async () => {
+		const bus = createEventBus();
+		const ctx = createMockCtx<DbOptions>({
+			options: {
+				dialect: "d1",
+				databaseId: "abc-123",
+				binding: "DB_MAIN",
+				migrations: "./src/migrations",
+			},
+		});
+		db.cli.register(ctx, bus, db.events);
+
+		const env = await bus.emit(Codegen.Env, { fields: [] });
+		expect(env.fields).toContainEqual(
+			expect.objectContaining({
+				name: "DB_MAIN",
+				type: { kind: "reference", name: "D1Database" },
+			}),
+		);
+	});
+
+	it("pushes no wrangler bindings for sqlite dialect", async () => {
 		const bus = createEventBus();
 		const ctx = createMockCtx<DbOptions>({
 			options: {
@@ -159,8 +188,30 @@ describe("db register", () => {
 		});
 		db.cli.register(ctx, bus, db.events);
 
-		const gen = await bus.emit(Generate, { files: [], bindings: [] });
-		expect(gen.bindings).toHaveLength(0);
+		const wrangler = await bus.emit(Codegen.Wrangler, {
+			bindings: [],
+			routes: [],
+			vars: {},
+			secrets: [],
+			compatibilityDate: "2025-01-01",
+		});
+		expect(wrangler.bindings).toHaveLength(0);
+	});
+
+	it("emits Generate without bindings field (plain files only)", async () => {
+		const bus = createEventBus();
+		const ctx = createMockCtx<DbOptions>({
+			options: {
+				dialect: "d1",
+				databaseId: "abc-123",
+				binding: "DB_MAIN",
+				migrations: "./src/migrations",
+			},
+		});
+		db.cli.register(ctx, bus, db.events);
+
+		const gen = await bus.emit(Generate, { files: [] });
+		expect(gen.files).toEqual([]);
 	});
 
 	it("pushes cleanup info on Remove", async () => {

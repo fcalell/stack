@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { createEventBus, Init, Remove } from "@fcalell/cli/events";
 import { createMockCtx } from "@fcalell/cli/testing";
 import { describe, expect, it } from "vitest";
@@ -23,7 +25,7 @@ describe("solidUi.cli", () => {
 });
 
 describe("solidUi register", () => {
-	it("pushes UI-rich scaffold files on Init.Scaffold", async () => {
+	it("contributes a home scaffold spec on Init.Scaffold", async () => {
 		const bus = createEventBus();
 		const ctx = createMockCtx();
 		solidUi.cli.register(ctx, bus, {});
@@ -35,31 +37,33 @@ describe("solidUi register", () => {
 			gitignore: [],
 		});
 
-		const layout = scaffold.files.find(
-			(f) => f.path === "src/app/pages/_layout.tsx",
+		const home = scaffold.files.find(
+			(f) => f.target === "src/app/pages/index.tsx",
 		);
-		expect(layout?.content).toContain("Toaster");
+		expect(home).toBeDefined();
+		expect(home?.source.pathname.endsWith("templates/home.tsx")).toBe(true);
 
-		const index = scaffold.files.find(
-			(f) => f.path === "src/app/pages/index.tsx",
-		);
-		expect(index?.content).toContain("Card");
+		// The template on disk contains the UI-rich Card import.
+		if (home) {
+			const content = readFileSync(fileURLToPath(home.source), "utf8");
+			expect(content).toContain("Card");
+		}
 
-		expect(scaffold.files).toContainEqual(
-			expect.objectContaining({ path: "src/app/app.css" }),
-		);
 		expect(scaffold.dependencies["@fcalell/ui"]).toBe("workspace:*");
 	});
 
-	it("template override: solid-ui templates win over solid's", async () => {
+	it("solid + solid-ui: plugin-solid yields to solid-ui for the home page", async () => {
 		const bus = createEventBus();
 
-		// Register solid first (bare templates)
+		// Register solid first — when ctx.hasPlugin("solid-ui") is true, it
+		// contributes no scaffold (solid-ui owns the home page).
 		const { solid } = await import("@fcalell/plugin-solid");
-		const solidCtx = createMockCtx();
+		const solidCtx = createMockCtx({
+			hasPlugin: (name: string) => name === "solid-ui",
+		});
 		solid.cli.register(solidCtx, bus, solid.events);
 
-		// Register solid-ui second (rich templates)
+		// Register solid-ui second.
 		const uiCtx = createMockCtx();
 		solidUi.cli.register(uiCtx, bus, {});
 
@@ -70,13 +74,14 @@ describe("solidUi register", () => {
 			gitignore: [],
 		});
 
-		// Both push to the same paths, but solid-ui registered later
-		const layouts = scaffold.files.filter(
-			(f) => f.path === "src/app/pages/_layout.tsx",
+		const homes = scaffold.files.filter(
+			(f) => f.target === "src/app/pages/index.tsx",
 		);
-		// Last writer wins
-		const finalLayout = layouts[layouts.length - 1];
-		expect(finalLayout?.content).toContain("Toaster");
+		// Exactly one — solid-ui's rich version. No duplicate target to trip
+		// writeScaffoldSpecs.
+		expect(homes).toHaveLength(1);
+		// The one survivor is solid-ui's rich template.
+		expect(homes[0]?.source.pathname).toContain("solid-ui/templates/home.tsx");
 	});
 
 	it("pushes cleanup info on Remove", async () => {

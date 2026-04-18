@@ -1,4 +1,4 @@
-import { createEventBus, Generate, Init, Remove } from "@fcalell/cli/events";
+import { Codegen, createEventBus, Init, Remove } from "@fcalell/cli/events";
 import { createMockCtx } from "@fcalell/cli/testing";
 import { describe, expect, it, vi } from "vitest";
 import { type AuthOptions, auth } from "./index";
@@ -157,18 +157,18 @@ describe("auth.defineCallbacks", () => {
 });
 
 describe("auth register", () => {
+	const defaultOptions: AuthOptions = {
+		secretVar: "AUTH_SECRET",
+		appUrlVar: "APP_URL",
+		rateLimiter: {
+			ip: { binding: "RATE_LIMITER_IP", limit: 100, period: 60 },
+			email: { binding: "RATE_LIMITER_EMAIL", limit: 5, period: 300 },
+		},
+	};
+
 	it("pushes scaffold files on Init.Scaffold", async () => {
 		const bus = createEventBus();
-		const ctx = createMockCtx<AuthOptions>({
-			options: {
-				secretVar: "AUTH_SECRET",
-				appUrlVar: "APP_URL",
-				rateLimiter: {
-					ip: { binding: "RATE_LIMITER_IP", limit: 100, period: 60 },
-					email: { binding: "RATE_LIMITER_EMAIL", limit: 5, period: 300 },
-				},
-			},
-		});
+		const ctx = createMockCtx<AuthOptions>({ options: defaultOptions });
 		auth.cli.register(ctx, bus, auth.events);
 
 		const scaffold = await bus.emit(Init.Scaffold, {
@@ -178,62 +178,93 @@ describe("auth register", () => {
 			gitignore: [],
 		});
 
-		expect(scaffold.files).toContainEqual({
-			path: "src/worker/plugins/auth.ts",
-			content: expect.stringContaining("defineCallbacks"),
-		});
+		const callbacks = scaffold.files.find(
+			(f) => f.target === "src/worker/plugins/auth.ts",
+		);
+		expect(callbacks).toBeDefined();
+		expect(
+			callbacks?.source.pathname.endsWith("templates/auth-callbacks.ts"),
+		).toBe(true);
 		expect(scaffold.dependencies["@fcalell/plugin-auth"]).toBe("workspace:*");
 	});
 
-	it("pushes bindings on Generate", async () => {
+	it("pushes rate-limiter bindings + secrets on Codegen.Wrangler", async () => {
 		const bus = createEventBus();
-		const ctx = createMockCtx<AuthOptions>({
-			options: {
-				secretVar: "AUTH_SECRET",
-				appUrlVar: "APP_URL",
-				rateLimiter: {
-					ip: { binding: "RATE_LIMITER_IP", limit: 100, period: 60 },
-					email: { binding: "RATE_LIMITER_EMAIL", limit: 5, period: 300 },
-				},
-			},
-		});
+		const ctx = createMockCtx<AuthOptions>({ options: defaultOptions });
 		auth.cli.register(ctx, bus, auth.events);
 
-		const gen = await bus.emit(Generate, { files: [], bindings: [] });
-		expect(gen.bindings).toHaveLength(4);
-		expect(gen.bindings.map((b) => b.name)).toEqual([
+		const wrangler = await bus.emit(Codegen.Wrangler, {
+			bindings: [],
+			routes: [],
+			vars: {},
+			secrets: [],
+			compatibilityDate: "2025-01-01",
+		});
+
+		expect(wrangler.bindings).toHaveLength(2);
+		expect(wrangler.bindings[0]).toEqual({
+			kind: "rate_limiter",
+			binding: "RATE_LIMITER_IP",
+			simple: { limit: 100, period: 60 },
+		});
+		expect(wrangler.bindings[1]).toEqual({
+			kind: "rate_limiter",
+			binding: "RATE_LIMITER_EMAIL",
+			simple: { limit: 5, period: 300 },
+		});
+		expect(wrangler.secrets).toEqual([
+			{ name: "AUTH_SECRET", devDefault: "dev-secret-change-me" },
+			{ name: "APP_URL", devDefault: "http://localhost:3000" },
+		]);
+	});
+
+	it("pushes env fields on Codegen.Env", async () => {
+		const bus = createEventBus();
+		const ctx = createMockCtx<AuthOptions>({ options: defaultOptions });
+		auth.cli.register(ctx, bus, auth.events);
+
+		const env = await bus.emit(Codegen.Env, { fields: [] });
+		expect(env.fields).toHaveLength(4);
+		expect(env.fields.map((f) => f.name)).toEqual([
 			"AUTH_SECRET",
 			"APP_URL",
 			"RATE_LIMITER_IP",
 			"RATE_LIMITER_EMAIL",
 		]);
+		expect(env.fields[0]?.type).toEqual({ kind: "reference", name: "string" });
+		expect(env.fields[2]?.type).toEqual({
+			kind: "reference",
+			name: "RateLimiter",
+		});
 	});
 
-	it("uses custom secret var names in bindings", async () => {
+	it("uses custom secret var names in wrangler payload", async () => {
 		const bus = createEventBus();
 		const ctx = createMockCtx<AuthOptions>({
 			options: {
+				...defaultOptions,
 				secretVar: "MY_SECRET",
 				appUrlVar: "MY_URL",
-				rateLimiter: {
-					ip: { binding: "RATE_LIMITER_IP", limit: 100, period: 60 },
-					email: { binding: "RATE_LIMITER_EMAIL", limit: 5, period: 300 },
-				},
 			},
 		});
 		auth.cli.register(ctx, bus, auth.events);
 
-		const gen = await bus.emit(Generate, { files: [], bindings: [] });
-		expect(gen.bindings[0]?.name).toBe("MY_SECRET");
-		expect(gen.bindings[1]?.name).toBe("MY_URL");
+		const wrangler = await bus.emit(Codegen.Wrangler, {
+			bindings: [],
+			routes: [],
+			vars: {},
+			secrets: [],
+			compatibilityDate: "2025-01-01",
+		});
+		expect(wrangler.secrets[0]?.name).toBe("MY_SECRET");
+		expect(wrangler.secrets[1]?.name).toBe("MY_URL");
 	});
 
 	it("uses custom rate limiter bindings", async () => {
 		const bus = createEventBus();
 		const ctx = createMockCtx<AuthOptions>({
 			options: {
-				secretVar: "AUTH_SECRET",
-				appUrlVar: "APP_URL",
+				...defaultOptions,
 				rateLimiter: {
 					ip: { binding: "CUSTOM_IP", limit: 50, period: 30 },
 					email: { binding: "CUSTOM_EMAIL", limit: 10, period: 600 },
@@ -242,44 +273,28 @@ describe("auth register", () => {
 		});
 		auth.cli.register(ctx, bus, auth.events);
 
-		const gen = await bus.emit(Generate, { files: [], bindings: [] });
-		expect(gen.bindings[2]?.name).toBe("CUSTOM_IP");
-		expect(gen.bindings[2]?.rateLimit).toEqual({ limit: 50, period: 30 });
-		expect(gen.bindings[3]?.name).toBe("CUSTOM_EMAIL");
-		expect(gen.bindings[3]?.rateLimit).toEqual({ limit: 10, period: 600 });
-	});
-
-	it("includes dev defaults for secret bindings", async () => {
-		const bus = createEventBus();
-		const ctx = createMockCtx<AuthOptions>({
-			options: {
-				secretVar: "AUTH_SECRET",
-				appUrlVar: "APP_URL",
-				rateLimiter: {
-					ip: { binding: "RATE_LIMITER_IP", limit: 100, period: 60 },
-					email: { binding: "RATE_LIMITER_EMAIL", limit: 5, period: 300 },
-				},
-			},
+		const wrangler = await bus.emit(Codegen.Wrangler, {
+			bindings: [],
+			routes: [],
+			vars: {},
+			secrets: [],
+			compatibilityDate: "2025-01-01",
 		});
-		auth.cli.register(ctx, bus, auth.events);
-
-		const gen = await bus.emit(Generate, { files: [], bindings: [] });
-		expect(gen.bindings[0]?.devDefault).toBe("dev-secret-change-me");
-		expect(gen.bindings[1]?.devDefault).toBe("http://localhost:3000");
+		expect(wrangler.bindings[0]).toEqual({
+			kind: "rate_limiter",
+			binding: "CUSTOM_IP",
+			simple: { limit: 50, period: 30 },
+		});
+		expect(wrangler.bindings[1]).toEqual({
+			kind: "rate_limiter",
+			binding: "CUSTOM_EMAIL",
+			simple: { limit: 10, period: 600 },
+		});
 	});
 
 	it("pushes cleanup info on Remove", async () => {
 		const bus = createEventBus();
-		const ctx = createMockCtx<AuthOptions>({
-			options: {
-				secretVar: "AUTH_SECRET",
-				appUrlVar: "APP_URL",
-				rateLimiter: {
-					ip: { binding: "RATE_LIMITER_IP", limit: 100, period: 60 },
-					email: { binding: "RATE_LIMITER_EMAIL", limit: 5, period: 300 },
-				},
-			},
-		});
+		const ctx = createMockCtx<AuthOptions>({ options: defaultOptions });
 		auth.cli.register(ctx, bus, auth.events);
 
 		const removal = await bus.emit(Remove, {

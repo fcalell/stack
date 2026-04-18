@@ -1,19 +1,33 @@
-import type { BindingDeclaration } from "@fcalell/cli";
-import { generateWranglerToml } from "@fcalell/cli/codegen";
+import { aggregateWrangler } from "@fcalell/cli/codegen";
+import type {
+	CodegenWranglerPayload,
+	WranglerBindingSpec,
+} from "@fcalell/cli/events";
 import { describe, expect, it } from "vitest";
 
-describe("generateWranglerToml", () => {
+const emptyPayload: CodegenWranglerPayload = {
+	bindings: [],
+	routes: [],
+	vars: {},
+	secrets: [],
+	compatibilityDate: "2025-01-01",
+};
+
+describe("aggregateWrangler", () => {
 	it("D1 binding produces [[d1_databases]] section", () => {
-		const result = generateWranglerToml({
+		const result = aggregateWrangler({
 			consumerWrangler: null,
-			bindings: [
-				{
-					name: "DB_MAIN",
-					type: "d1",
-					databaseId: "abc-123",
-					databaseName: "my-db",
-				},
-			],
+			payload: {
+				...emptyPayload,
+				bindings: [
+					{
+						kind: "d1",
+						binding: "DB_MAIN",
+						databaseId: "abc-123",
+						databaseName: "my-db",
+					},
+				],
+			},
 		});
 
 		expect(result).toContain("[[d1_databases]]");
@@ -23,15 +37,18 @@ describe("generateWranglerToml", () => {
 	});
 
 	it("rate limiter produces [[unsafe.bindings]] section", () => {
-		const result = generateWranglerToml({
+		const result = aggregateWrangler({
 			consumerWrangler: null,
-			bindings: [
-				{
-					name: "RATE_LIMITER_IP",
-					type: "rate_limiter",
-					rateLimit: { limit: 100, period: 60 },
-				},
-			],
+			payload: {
+				...emptyPayload,
+				bindings: [
+					{
+						kind: "rate_limiter",
+						binding: "RATE_LIMITER_IP",
+						simple: { limit: 100, period: 60 },
+					},
+				],
+			},
 		});
 
 		expect(result).toContain("[[unsafe.bindings]]");
@@ -44,11 +61,21 @@ describe("generateWranglerToml", () => {
 	it("consumer wrangler.toml is preserved when provided", () => {
 		const consumerWrangler = `name = "my-custom-app"
 compatibility_date = "2025-01-01"
-main = "src/worker/index.ts"`;
+main = ".stack/worker.ts"`;
 
-		const result = generateWranglerToml({
+		const result = aggregateWrangler({
 			consumerWrangler,
-			bindings: [{ name: "DB_MAIN", type: "d1", databaseId: "abc" }],
+			payload: {
+				...emptyPayload,
+				bindings: [
+					{
+						kind: "d1",
+						binding: "DB_MAIN",
+						databaseId: "abc",
+						databaseName: "my-db",
+					},
+				],
+			},
 		});
 
 		expect(result).toContain('name = "my-custom-app"');
@@ -56,27 +83,30 @@ main = "src/worker/index.ts"`;
 		expect(result).toContain("[[d1_databases]]");
 	});
 
-	it("secret bindings are NOT included as d1/kv/r2 sections but placed under [vars]", () => {
-		const bindings: BindingDeclaration[] = [
-			{ name: "AUTH_SECRET", type: "secret" },
-			{ name: "APP_URL", type: "secret" },
-		];
-
-		const result = generateWranglerToml({
+	it("secrets appear under [vars] with empty values (not as bindings)", () => {
+		const result = aggregateWrangler({
 			consumerWrangler: null,
-			bindings,
+			payload: {
+				...emptyPayload,
+				secrets: [
+					{ name: "AUTH_SECRET", devDefault: "dev" },
+					{ name: "APP_URL", devDefault: "http://localhost:3000" },
+				],
+			},
 		});
 
 		expect(result).not.toContain("[[d1_databases]]");
 		expect(result).not.toContain("[[r2_buckets]]");
 		expect(result).not.toContain("[[unsafe.bindings]]");
 		expect(result).toContain("[vars]");
+		expect(result).toContain('AUTH_SECRET = ""');
+		expect(result).toContain('APP_URL = ""');
 	});
 
 	it("generates default header when no consumer wrangler exists", () => {
-		const result = generateWranglerToml({
+		const result = aggregateWrangler({
 			consumerWrangler: null,
-			bindings: [],
+			payload: emptyPayload,
 			name: "test-app",
 		});
 
@@ -86,21 +116,29 @@ main = "src/worker/index.ts"`;
 	});
 
 	it("multiple binding types produce all sections correctly", () => {
-		const bindings: BindingDeclaration[] = [
-			{ name: "DB_MAIN", type: "d1", databaseId: "db-id", databaseName: "db" },
+		const bindings: WranglerBindingSpec[] = [
 			{
-				name: "RATE_LIMITER_IP",
-				type: "rate_limiter",
-				rateLimit: { limit: 100, period: 60 },
+				kind: "d1",
+				binding: "DB_MAIN",
+				databaseId: "db-id",
+				databaseName: "db",
 			},
-			{ name: "AUTH_SECRET", type: "secret" },
-			{ name: "MY_KV", type: "kv", kvNamespaceId: "kv-id" },
-			{ name: "MY_BUCKET", type: "r2", bucketName: "assets" },
+			{
+				kind: "rate_limiter",
+				binding: "RATE_LIMITER_IP",
+				simple: { limit: 100, period: 60 },
+			},
+			{ kind: "kv", binding: "MY_KV", id: "kv-id" },
+			{ kind: "r2", binding: "MY_BUCKET", bucketName: "assets" },
 		];
 
-		const result = generateWranglerToml({
+		const result = aggregateWrangler({
 			consumerWrangler: null,
-			bindings,
+			payload: {
+				...emptyPayload,
+				bindings,
+				secrets: [{ name: "AUTH_SECRET", devDefault: "dev" }],
+			},
 		});
 
 		expect(result).toContain("[[d1_databases]]");
@@ -112,13 +150,16 @@ main = "src/worker/index.ts"`;
 		expect(result).toContain('bucket_name = "assets"');
 	});
 
-	it("var-type bindings get empty string values under [vars]", () => {
-		const result = generateWranglerToml({
+	it("var-type bindings get string values under [vars]", () => {
+		const result = aggregateWrangler({
 			consumerWrangler: null,
-			bindings: [{ name: "MY_VAR", type: "var" }],
+			payload: {
+				...emptyPayload,
+				bindings: [{ kind: "var", name: "MY_VAR", value: "hello" }],
+			},
 		});
 
 		expect(result).toContain("[vars]");
-		expect(result).toContain('MY_VAR = ""');
+		expect(result).toContain('MY_VAR = "hello"');
 	});
 });

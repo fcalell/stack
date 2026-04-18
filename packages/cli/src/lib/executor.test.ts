@@ -116,12 +116,11 @@ describe("sortStepsByPhase", () => {
 });
 
 describe("processScaffoldPayload", () => {
-	it("deduplicates files, preserves deps and gitignore", () => {
+	it("passes through scaffold specs and dedupes gitignore entries", () => {
 		const payload = {
 			files: [
-				{ path: "a.ts", content: "first" },
-				{ path: "a.ts", content: "second" },
-				{ path: "b.ts", content: "only" },
+				{ source: new URL("file:///a"), target: "a.ts" },
+				{ source: new URL("file:///b"), target: "b.ts" },
 			],
 			dependencies: { foo: "1.0.0" },
 			devDependencies: { bar: "2.0.0" },
@@ -130,7 +129,7 @@ describe("processScaffoldPayload", () => {
 
 		const result = processScaffoldPayload(payload);
 		expect(result.files).toHaveLength(2);
-		expect(result.files.find((f) => f.path === "a.ts")?.content).toBe("second");
+		expect(result.files.map((f) => f.target)).toEqual(["a.ts", "b.ts"]);
 		expect(result.gitignore).toEqual([".stack", ".wrangler"]);
 	});
 });

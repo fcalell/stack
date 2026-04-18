@@ -4,10 +4,12 @@
 	"type": "module",
 	"sideEffects": false,
 	"imports": {
+		"#ast": "./src/ast/index.ts",
 		"#*": "./src/*.ts"
 	},
 	"exports": {
 		".": "./src/config.ts",
+		"./ast": "./src/ast/index.ts",
 		"./events": "./src/events.ts",
 		"./errors": "./src/lib/errors.ts",
 		"./runtime": "./src/runtime.ts",
@@ -29,8 +31,10 @@
 	"dependencies": {
 		"@clack/prompts": "^0.11.0",
 		"magicast": "^0.5.2",
+		"node-html-parser": "^7.1.0",
 		"picocolors": "^1.1.0",
-		"smol-toml": "^1.6.1"
+		"smol-toml": "^1.6.1",
+		"ts-morph": "^28.0.0"
 	},
 	"peerDependencies": {
 		"tsx": ">=4.0.0",

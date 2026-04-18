@@ -1,46 +1,7 @@
 import { createPlugin } from "@fcalell/cli";
-import { Init, Remove } from "@fcalell/cli/events";
+import { Codegen, Composition, Init, Remove } from "@fcalell/cli/events";
 import { solid } from "@fcalell/plugin-solid";
 import type { SolidUiOptions } from "./types";
-
-const LAYOUT_TEMPLATE = `import type { ParentProps } from "solid-js";
-import { Toaster } from "@fcalell/ui/components/toast";
-
-export default function Layout(props: ParentProps) {
-\treturn (
-\t\t<>
-\t\t\t{props.children}
-\t\t\t<Toaster />
-\t\t</>
-\t);
-}
-`;
-
-const INDEX_TEMPLATE = `import { Text } from "@fcalell/ui/components/text";
-import { Card } from "@fcalell/ui/components/card";
-
-export default function Home() {
-\treturn (
-\t\t<Card>
-\t\t\t<Card.Header>
-\t\t\t\t<Card.Title>Welcome</Card.Title>
-\t\t\t\t<Card.Description>Your app is ready.</Card.Description>
-\t\t\t</Card.Header>
-\t\t</Card>
-\t);
-}
-`;
-
-const ENTRY_OVERRIDE = `import "./app.css";
-import { createApp } from "@fcalell/plugin-solid/app";
-
-const app = createApp();
-app.mount("#app");
-`;
-
-const ENTRY_CSS = `@import "tailwindcss";
-@import "@fcalell/ui/globals.css";
-`;
 
 export const solidUi = createPlugin("solid-ui", {
 	label: "Design System",
@@ -52,23 +13,30 @@ export const solidUi = createPlugin("solid-ui", {
 
 	register(_ctx, bus) {
 		bus.on(Init.Scaffold, (p) => {
-			// Override solid's bare templates with UI-rich versions.
-			// Last writer wins — solid-ui depends on solid, so it registers
-			// later and its templates take precedence.
 			p.files.push({
-				path: "src/app/entry.tsx",
-				content: ENTRY_OVERRIDE,
+				source: new URL("../templates/home.tsx", import.meta.url),
+				target: "src/app/pages/index.tsx",
 			});
-			p.files.push({
-				path: "src/app/pages/_layout.tsx",
-				content: LAYOUT_TEMPLATE,
-			});
-			p.files.push({
-				path: "src/app/pages/index.tsx",
-				content: INDEX_TEMPLATE,
-			});
-			p.files.push({ path: "src/app/app.css", content: ENTRY_CSS });
 			p.dependencies["@fcalell/ui"] = "workspace:*";
+		});
+
+		bus.on(Codegen.AppCss, (p) => {
+			p.imports.push("@fcalell/ui/globals.css");
+		});
+
+		// MetaProvider wraps the app so <Title> / <Meta> from any page can
+		// contribute to <head>. Toaster renders as a sibling alongside the
+		// wrapped children so solid-sonner anchors at the root.
+		bus.on(Composition.Providers, (p) => {
+			p.providers.push({
+				imports: [
+					{ source: "@fcalell/ui/meta", named: ["MetaProvider"] },
+					{ source: "@fcalell/ui/components/toast", named: ["Toaster"] },
+				],
+				wrap: { identifier: "MetaProvider" },
+				siblings: [{ kind: "jsx", tag: "Toaster", props: [], children: [] }],
+				order: 100,
+			});
 		});
 
 		bus.on(Remove, (p) => {

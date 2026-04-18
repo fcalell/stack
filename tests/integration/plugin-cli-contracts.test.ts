@@ -1,9 +1,9 @@
 import type { RegisterContext } from "@fcalell/cli";
 import {
+	Codegen,
 	createEventBus,
 	type Event,
 	type EventBus,
-	Generate,
 	Init,
 	Remove,
 } from "@fcalell/cli/events";
@@ -96,30 +96,31 @@ describe("createPlugin-based CLI plugin contracts", () => {
 			expect(typeof plugin.cli.register).toBe("function");
 		});
 
-		it("contributes bindings via Generate event", async () => {
+		it("contributes bindings via Codegen.Wrangler event", async () => {
 			const bus = createEventBus();
 			const options = optionsByName[expectedName] ?? {};
 
 			const ctx = createMockCtx({ options });
 			plugin.cli.register(ctx, bus, plugin.events);
 
-			const gen = await bus.emit(Generate, { files: [], bindings: [] });
+			const wrangler = await bus.emit(Codegen.Wrangler, {
+				bindings: [],
+				routes: [],
+				vars: {},
+				secrets: [],
+				compatibilityDate: "2025-01-01",
+			});
 
-			for (const binding of gen.bindings) {
-				const validTypes = [
-					"d1",
-					"r2",
-					"kv",
-					"queue",
-					"rate_limiter",
-					"durable_object",
-					"service",
-					"var",
-					"secret",
-				];
-				expect(validTypes).toContain(binding.type);
-				expect(typeof binding.name).toBe("string");
-				expect(binding.name.length).toBeGreaterThan(0);
+			const validKinds = ["d1", "kv", "r2", "rate_limiter", "var"];
+			for (const binding of wrangler.bindings) {
+				expect(validKinds).toContain(binding.kind);
+				const id = binding.kind === "var" ? binding.name : binding.binding;
+				expect(typeof id).toBe("string");
+				expect(id.length).toBeGreaterThan(0);
+			}
+			for (const secret of wrangler.secrets) {
+				expect(typeof secret.name).toBe("string");
+				expect(secret.name.length).toBeGreaterThan(0);
 			}
 		});
 

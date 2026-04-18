@@ -1,4 +1,5 @@
 interface StackConfigOptions {
+	name: string;
 	domain: string;
 	plugins: string[];
 	pluginAnswers: Map<string, Record<string, unknown>>;
@@ -31,7 +32,10 @@ export function stackConfigTemplate(options: StackConfigOptions): string {
 	const lines: string[] = [];
 	lines.push("");
 	lines.push("export default defineConfig({");
-	lines.push(`\tdomain: "${options.domain}",`);
+	lines.push("\tapp: {");
+	lines.push(`\t\tname: "${options.name}",`);
+	lines.push(`\t\tdomain: "${options.domain}",`);
+	lines.push("\t},");
 	lines.push("\tplugins: [");
 	lines.push(`${pluginCalls.join(",\n")},`);
 	lines.push("\t],");

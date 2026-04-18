@@ -7,6 +7,7 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { StackConfig } from "#config";
 import { Init } from "#events";
@@ -72,7 +73,7 @@ const baseConfigSource = `import { defineConfig } from "@fcalell/cli";
 import { db } from "@fcalell/plugin-db";
 
 export default defineConfig({
-	domain: "example.com",
+	app: { name: "app", domain: "example.com" },
 	plugins: [
 		db(),
 	],
@@ -101,6 +102,7 @@ describe("add()", () => {
 	it("throws MissingPluginError for unknown plugin", async () => {
 		mockAvailable = [makePlugin("db"), makePlugin("auth")];
 		mockConfig = {
+			app: { name: "app", domain: "example.com" },
 			plugins: [{ __plugin: "db", options: {} }],
 			validate: () => ({ valid: true, errors: [] }),
 		};
@@ -113,6 +115,7 @@ describe("add()", () => {
 	it("is a no-op when the plugin is already configured", async () => {
 		mockAvailable = [makePlugin("db")];
 		mockConfig = {
+			app: { name: "app", domain: "example.com" },
 			plugins: [{ __plugin: "db", options: {} }],
 			validate: () => ({ valid: true, errors: [] }),
 		};
@@ -129,6 +132,9 @@ describe("add()", () => {
 	});
 
 	it("scaffolds plugin files, rewrites config, and regenerates", async () => {
+		const templatePath = join(dir, "__tmpl-auth.ts");
+		writeFileSync(templatePath, "// auth scaffold\n");
+
 		mockAvailable = [
 			makePlugin("db"),
 			makePlugin("auth", {
@@ -136,14 +142,15 @@ describe("add()", () => {
 				register: (_ctx, bus) => {
 					bus.on(Init.Scaffold, (p) => {
 						p.files.push({
-							path: "src/worker/plugins/auth.ts",
-							content: "// auth scaffold",
+							source: pathToFileURL(templatePath),
+							target: "src/worker/plugins/auth.ts",
 						});
 					});
 				},
 			}),
 		];
 		mockConfig = {
+			app: { name: "app", domain: "example.com" },
 			plugins: [{ __plugin: "db", options: {} }],
 			validate: () => ({ valid: true, errors: [] }),
 		};
@@ -178,6 +185,7 @@ describe("add()", () => {
 			}),
 		];
 		mockConfig = {
+			app: { name: "app", domain: "example.com" },
 			plugins: [],
 			validate: () => ({ valid: true, errors: [] }),
 		};
@@ -192,6 +200,7 @@ describe("add()", () => {
 	it("writes a direct plugin() call when there are no prompt answers", async () => {
 		mockAvailable = [makePlugin("api")];
 		mockConfig = {
+			app: { name: "app", domain: "example.com" },
 			plugins: [],
 			validate: () => ({ valid: true, errors: [] }),
 		};
@@ -217,6 +226,7 @@ describe("add()", () => {
 			makePlugin("api"),
 		];
 		mockConfig = {
+			app: { name: "app", domain: "example.com" },
 			plugins: [{ __plugin: "api", options: {} }],
 			validate: () => ({ valid: true, errors: [] }),
 		};

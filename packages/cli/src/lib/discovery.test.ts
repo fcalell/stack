@@ -189,7 +189,7 @@ describe("discoverPlugins — third-party plugins via __package", () => {
 		});
 
 		const config: StackConfig = {
-			domain: "example.com",
+			app: { name: "app", domain: "example.com" },
 			plugins: [
 				{
 					__plugin: "widget",
@@ -232,6 +232,7 @@ describe("discoverPlugins — third-party plugins via __package", () => {
 		}));
 
 		const config: StackConfig = {
+			app: { name: "app", domain: "example.com" },
 			plugins: [{ __plugin: "legacy", options: {} }],
 			validate: () => ({ valid: true, errors: [] }),
 		};
@@ -271,7 +272,7 @@ describe("discoverPlugins — implicit plugin failures", () => {
 		);
 
 		const config: StackConfig = {
-			domain: "example.com",
+			app: { name: "app", domain: "example.com" },
 			plugins: [{ __plugin: "parent", options: {} }],
 			validate: () => ({ valid: true, errors: [] }),
 		};

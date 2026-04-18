@@ -1,13 +1,5 @@
-import { join } from "node:path";
 import { createPlugin, fromSchema } from "@fcalell/cli";
-import { generateViteConfig } from "@fcalell/cli/codegen";
-import {
-	Build,
-	Codegen,
-	Dev,
-	type ViteImportSpec,
-	type VitePluginCallSpec,
-} from "@fcalell/cli/events";
+import { Build, Codegen, Dev } from "@fcalell/cli/events";
 import { type ViteOptions, viteOptionsSchema } from "./types";
 
 export const vite = createPlugin("vite", {
@@ -18,25 +10,72 @@ export const vite = createPlugin("vite", {
 	config: fromSchema<ViteOptions>(viteOptionsSchema),
 
 	register(ctx, bus, events) {
-		bus.on(Codegen.Frontend, (p) => {
-			p.port = ctx.options?.port ?? 3000;
+		bus.on(Codegen.ViteConfig, (p) => {
+			const port = ctx.options?.port ?? 3000;
+			p.devServerPort = port;
+			p.imports.push({
+				source: "@tailwindcss/vite",
+				default: "tailwindcss",
+			});
+			p.imports.push({
+				source: "@fcalell/plugin-vite/preset",
+				named: ["themeFontsPlugin", "providersPlugin"],
+			});
+			p.pluginCalls.push({
+				kind: "call",
+				callee: { kind: "identifier", name: "tailwindcss" },
+				args: [],
+			});
+			p.pluginCalls.push({
+				kind: "call",
+				callee: { kind: "identifier", name: "themeFontsPlugin" },
+				args: [],
+			});
+			p.pluginCalls.push({
+				kind: "call",
+				callee: { kind: "identifier", name: "providersPlugin" },
+				args: [],
+			});
 		});
 
-		// Dev.ConfigureReady / Build.ConfigureReady fire AFTER Dev.Configure /
-		// Build.Configure with the fully-populated payload, so we can write the
-		// generated vite config without depending on handler registration order.
-		async function writeViteConfig(configPayload: {
-			viteImports: ViteImportSpec[];
-			vitePluginCalls: VitePluginCallSpec[];
-		}): Promise<void> {
-			const { writeFileSync, mkdirSync } = await import("node:fs");
-			mkdirSync(join(ctx.cwd, ".stack"), { recursive: true });
-			const configContent = generateViteConfig(configPayload);
-			writeFileSync(join(ctx.cwd, ".stack/vite.config.ts"), configContent);
-		}
+		bus.on(Codegen.Worker, (p) => {
+			// Contribute a localhost origin so worker CORS includes the vite dev
+			// server. Frontend plugins that run on their own port can layer on top.
+			const port = ctx.options?.port ?? 3000;
+			const origin = `http://localhost:${port}`;
+			if (!p.cors.includes(origin)) p.cors.push(origin);
+		});
 
-		bus.on(Dev.ConfigureReady, async (p) => {
-			await writeViteConfig(p);
+		bus.on(Codegen.AppCss, (p) => {
+			p.imports.push("tailwindcss");
+		});
+
+		bus.on(Codegen.Html, (p) => {
+			p.shell = new URL("../templates/shell.html", import.meta.url);
+			const lang = ctx.app.lang ?? "en";
+			p.head.push({ kind: "html-attr", name: "lang", value: lang });
+			p.head.push({ kind: "title", value: ctx.app.title ?? ctx.app.name });
+			if (ctx.app.description) {
+				p.head.push({
+					kind: "meta",
+					name: "description",
+					content: ctx.app.description,
+				});
+			}
+			if (ctx.app.themeColor) {
+				p.head.push({
+					kind: "meta",
+					name: "theme-color",
+					content: ctx.app.themeColor,
+				});
+			}
+			if (ctx.app.icon) {
+				p.head.push({
+					kind: "link",
+					rel: "icon",
+					href: ctx.app.icon,
+				});
+			}
 		});
 
 		bus.on(Dev.Start, async (p) => {
@@ -57,10 +96,6 @@ export const vite = createPlugin("vite", {
 			});
 
 			await bus.emit(events.ViteConfigured);
-		});
-
-		bus.on(Build.ConfigureReady, async (p) => {
-			await writeViteConfig(p);
 		});
 
 		bus.on(Build.Start, (p) => {

@@ -10,8 +10,12 @@ import {
 import { MissingPluginError, StackError } from "#lib/errors";
 import { createEventBus } from "#lib/event-bus";
 import { ask, multi } from "#lib/prompt";
-import { createRegisterContext } from "#lib/registration";
-import { announceCreated, scaffoldFiles } from "#lib/scaffold";
+import { createRegisterContext, syntheticAppConfig } from "#lib/registration";
+import {
+	announceCreated,
+	writeIfMissingString,
+	writeScaffoldSpecs,
+} from "#lib/scaffold";
 import { biomeTemplate } from "#templates/biome";
 import { gitignoreTemplate } from "#templates/gitignore";
 import { packageJsonTemplate } from "#templates/package-json";
@@ -20,6 +24,7 @@ import { tsconfigTemplate } from "#templates/tsconfig";
 
 export interface InitOptions {
 	plugins?: string[];
+	name?: string;
 	domain?: string;
 	yes?: boolean;
 }
@@ -54,10 +59,12 @@ async function run(dir: string, options: InitOptions): Promise<void> {
 	const flagDriven =
 		options.plugins !== undefined ||
 		options.domain !== undefined ||
+		options.name !== undefined ||
 		options.yes === true;
 	const nonInteractive = flagDriven || !process.stdin.isTTY;
 
 	let selectedPlugins: string[] = [];
+	let appName = options.name ?? basename(dir);
 	let domain = options.domain ?? "example.com";
 
 	if (options.plugins !== undefined) {
@@ -86,6 +93,7 @@ async function run(dir: string, options: InitOptions): Promise<void> {
 			}
 		}
 
+		appName = await ask("App name", basename(dir));
 		domain = await ask("Domain", "example.com");
 	}
 
@@ -94,7 +102,7 @@ async function run(dir: string, options: InitOptions): Promise<void> {
 		selectedPlugins.includes("solid") || selectedPlugins.includes("solid-ui");
 
 	// Scaffold base files
-	const created = scaffoldFiles([
+	const baseEntries: Array<[string, string]> = [
 		[
 			"package.json",
 			packageJsonTemplate({
@@ -105,8 +113,12 @@ async function run(dir: string, options: InitOptions): Promise<void> {
 		["tsconfig.json", tsconfigTemplate({ app: hasSolid })],
 		["biome.json", biomeTemplate()],
 		[".gitignore", gitignoreTemplate({ plugins: selectedPlugins })],
-	]);
-	announceCreated(created);
+	];
+	const createdBase: string[] = [];
+	for (const [path, content] of baseEntries) {
+		if (writeIfMissingString(path, content)) createdBase.push(path);
+	}
+	announceCreated(createdBase);
 
 	// Load and register each selected plugin via the event bus
 	const bus = createEventBus();
@@ -119,6 +131,7 @@ async function run(dir: string, options: InitOptions): Promise<void> {
 		const ctx = createRegisterContext({
 			cwd: dir,
 			options: {},
+			app: { ...syntheticAppConfig(dir), name: appName, domain },
 			hasPlugin: (n) => selectedPlugins.includes(n),
 			nonInteractive,
 		});
@@ -156,18 +169,20 @@ async function run(dir: string, options: InitOptions): Promise<void> {
 		gitignore: [],
 	});
 
-	// Write plugin-contributed scaffold files
-	for (const file of scaffold.files) {
-		scaffoldFiles([[file.path, file.content]]);
-	}
+	// Write plugin-contributed scaffold files (URL-sourced, no placeholder subst).
+	const createdPluginFiles = await writeScaffoldSpecs(scaffold.files, dir);
+	announceCreated(createdPluginFiles);
 
 	// Generate stack.config.ts
 	const configContent = stackConfigTemplate({
+		name: appName,
 		domain,
 		plugins: selectedPlugins,
 		pluginAnswers,
 	});
-	scaffoldFiles([["stack.config.ts", configContent]]);
+	if (writeIfMissingString("stack.config.ts", configContent)) {
+		announceCreated(["stack.config.ts"]);
+	}
 
 	// Run generate — failures here leave a broken .stack/, so surface them
 	// loudly rather than silently continuing into misleading "Next steps".

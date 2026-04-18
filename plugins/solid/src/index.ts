@@ -1,49 +1,8 @@
 import { createPlugin } from "@fcalell/cli";
-import {
-	Build,
-	Dev,
-	Generate,
-	Init,
-	Remove,
-	type ViteImportSpec,
-	type VitePluginCallSpec,
-} from "@fcalell/cli/events";
+import { Codegen, Generate, Init, Remove } from "@fcalell/cli/events";
 import { vite } from "@fcalell/plugin-vite";
-import solidPlugin from "vite-plugin-solid";
 import { writeRoutesDts } from "./node/routes-core";
 import type { SolidOptions } from "./types";
-
-const INDEX_HTML = `<!doctype html>
-<html lang="en">
-\t<head>
-\t\t<meta charset="UTF-8" />
-\t\t<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-\t\t<title>App</title>
-\t</head>
-\t<body>
-\t\t<div id="app"></div>
-\t\t<script type="module" src="./src/app/entry.tsx"></script>
-\t</body>
-</html>
-`;
-
-const ENTRY_TEMPLATE = `import { createApp } from "@fcalell/plugin-solid/app";
-
-const app = createApp();
-app.mount("#app");
-`;
-
-const LAYOUT_TEMPLATE = `import type { ParentProps } from "solid-js";
-
-export default function Layout(props: ParentProps) {
-\treturn <>{props.children}</>;
-}
-`;
-
-const INDEX_TEMPLATE = `export default function Home() {
-\treturn <h1>Welcome</h1>;
-}
-`;
 
 export const solid = createPlugin("solid", {
 	label: "SolidJS",
@@ -56,22 +15,15 @@ export const solid = createPlugin("solid", {
 
 	register(ctx, bus, events) {
 		bus.on(Init.Scaffold, (p) => {
-			p.files.push({
-				path: "index.html",
-				content: INDEX_HTML,
-			});
-			p.files.push({
-				path: "src/app/entry.tsx",
-				content: ENTRY_TEMPLATE,
-			});
-			p.files.push({
-				path: "src/app/pages/_layout.tsx",
-				content: LAYOUT_TEMPLATE,
-			});
-			p.files.push({
-				path: "src/app/pages/index.tsx",
-				content: INDEX_TEMPLATE,
-			});
+			// When plugin-solid-ui is present it contributes its own richer
+			// home scaffold with the same target. Skip our bare version so
+			// writeScaffoldSpecs never trips on a duplicate target.
+			if (!ctx.hasPlugin("solid-ui")) {
+				p.files.push({
+					source: new URL("../templates/home.tsx", import.meta.url),
+					target: "src/app/pages/index.tsx",
+				});
+			}
 			p.dependencies["@fcalell/plugin-solid"] = "workspace:*";
 			p.dependencies["solid-js"] = "^1.9.0";
 		});
@@ -81,32 +33,118 @@ export const solid = createPlugin("solid", {
 			p.dependencies.push("@fcalell/plugin-solid", "solid-js");
 		});
 
-		const injectVitePlugins = async (p: {
-			vitePlugins: unknown[];
-			viteImports: ViteImportSpec[];
-			vitePluginCalls: VitePluginCallSpec[];
-		}) => {
-			p.vitePlugins.push(solidPlugin());
-			const { routesPlugin } = await import("./node/vite-routes");
+		bus.on(Codegen.ViteConfig, (p) => {
 			const pagesDir =
 				ctx.options?.routes && typeof ctx.options.routes === "object"
 					? (ctx.options.routes.pagesDir ?? "src/app/pages")
 					: "src/app/pages";
-			p.vitePlugins.push(routesPlugin({ pagesDir }));
-
-			p.viteImports.push({
-				from: "vite-plugin-solid",
+			p.imports.push({
+				source: "vite-plugin-solid",
 				default: "solidPlugin",
 			});
-			p.viteImports.push({
-				from: "@fcalell/plugin-solid/node/vite-routes",
+			p.imports.push({
+				source: "@fcalell/plugin-solid/node/vite-routes",
 				named: ["routesPlugin"],
 			});
-			p.vitePluginCalls.push({ name: "solidPlugin" });
-			p.vitePluginCalls.push({ name: "routesPlugin", options: { pagesDir } });
-		};
-		bus.on(Dev.Configure, injectVitePlugins);
-		bus.on(Build.Configure, injectVitePlugins);
+			p.pluginCalls.push({
+				kind: "call",
+				callee: { kind: "identifier", name: "solidPlugin" },
+				args: [],
+			});
+			p.pluginCalls.push({
+				kind: "call",
+				callee: { kind: "identifier", name: "routesPlugin" },
+				args: [
+					{
+						kind: "object",
+						properties: [
+							{
+								key: "pagesDir",
+								value: { kind: "string", value: pagesDir },
+							},
+						],
+					},
+				],
+			});
+		});
+
+		bus.on(Codegen.RoutesDts, (p) => {
+			// Mirrors the direct writeRoutesDts call below; Phase 5 wires the
+			// aggregator-backed writer.
+			if (ctx.options?.routes === false) {
+				p.pagesDir = null;
+				return;
+			}
+			const routesConfig =
+				ctx.options?.routes && typeof ctx.options.routes === "object"
+					? ctx.options.routes
+					: {};
+			p.pagesDir = routesConfig.pagesDir ?? "src/app/pages";
+		});
+
+		bus.on(Codegen.Entry, (p) => {
+			p.imports.push({ source: "./app.css", sideEffect: true });
+			p.imports.push({
+				source: "solid-js/web",
+				named: ["render"],
+			});
+			p.imports.push({
+				source: "@solidjs/router",
+				named: ["Router"],
+			});
+			p.imports.push({
+				source: "virtual:fcalell-routes",
+				named: ["routes"],
+			});
+			p.imports.push({
+				source: "virtual:stack-providers",
+				default: "Providers",
+			});
+			p.mountExpression = {
+				kind: "call",
+				callee: { kind: "identifier", name: "render" },
+				args: [
+					{
+						kind: "arrow",
+						params: [],
+						body: {
+							kind: "jsx",
+							tag: "Providers",
+							props: [],
+							children: [
+								{
+									kind: "jsx",
+									tag: "Router",
+									props: [],
+									children: [{ kind: "identifier", name: "routes" }],
+								},
+							],
+						},
+					},
+					{
+						kind: "as",
+						expression: {
+							kind: "call",
+							callee: {
+								kind: "member",
+								object: { kind: "identifier", name: "document" },
+								property: "getElementById",
+							},
+							args: [{ kind: "string", value: "app" }],
+						},
+						type: { kind: "reference", name: "HTMLElement" },
+					},
+				],
+			};
+		});
+
+		bus.on(Codegen.Html, (p) => {
+			p.bodyEnd.push({
+				kind: "script",
+				type: "module",
+				src: "/entry.tsx",
+			});
+		});
 
 		bus.on(Generate, async (_p) => {
 			if (ctx.options?.routes === false) return;

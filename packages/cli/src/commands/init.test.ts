@@ -1,6 +1,13 @@
-import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import {
+	existsSync,
+	mkdtempSync,
+	readFileSync,
+	rmSync,
+	writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Init } from "#events";
 import type { DiscoveredPlugin } from "#lib/discovery";
@@ -94,13 +101,17 @@ describe("init() with --plugins flag", () => {
 	});
 
 	it("scaffolds plugin-contributed files from Init.Scaffold", async () => {
+		// Write the template that the plugin registers, then point the spec at it.
+		const templatePath = join(dir, "__tmpl-schema.ts");
+		writeFileSync(templatePath, "// schema entry\n");
+
 		mockAvailable = [
 			makePlugin("db", {
 				register: (_ctx, bus) => {
 					bus.on(Init.Scaffold, (p) => {
 						p.files.push({
-							path: "src/schema/index.ts",
-							content: "// schema entry",
+							source: pathToFileURL(templatePath),
+							target: "src/schema/index.ts",
 						});
 					});
 				},

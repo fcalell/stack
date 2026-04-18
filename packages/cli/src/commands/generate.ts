@@ -1,17 +1,22 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { Codegen, Generate } from "#events";
+import { Codegen, Composition, Generate } from "#events";
 import {
-	generateDevVars,
-	generateEnvDts,
-	generateVirtualWorker,
-	generateWranglerToml,
+	aggregateAppCss,
+	aggregateDevVars,
+	aggregateEntry,
+	aggregateEnvDts,
+	aggregateHtml,
+	aggregateMiddleware,
+	aggregateProviders,
+	aggregateViteConfig,
+	aggregateWorker,
+	aggregateWrangler,
 	hasRuntimeExport,
 } from "#lib/codegen";
 import { loadConfig } from "#lib/config";
 import { discoverPlugins, sortByDependencies } from "#lib/discovery";
 import { ConfigValidationError } from "#lib/errors";
-import { generateApiRouteBarrel } from "#lib/generate";
 import { registerPlugins } from "#lib/registration";
 
 const STACK_DIR = ".stack";
@@ -33,45 +38,72 @@ export async function generate(configPath: string): Promise<void> {
 
 	const bus = registerPlugins(sorted, config, cwd);
 
-	// Emit Generate event to collect files and bindings from plugins
-	const genResult = await bus.emit(Generate, { files: [], bindings: [] });
+	// Emit Generate event to collect plain files from plugins (e.g. api's route
+	// barrel). Bindings now flow through Codegen.Wrangler / Codegen.Env.
+	const genResult = await bus.emit(Generate, { files: [] });
 
-	// Write plugin-contributed files
 	for (const f of genResult.files) {
 		const fullPath = join(cwd, f.path);
 		mkdirSync(join(fullPath, ".."), { recursive: true });
 		writeFileSync(fullPath, f.content);
 	}
 
-	const allBindings = genResult.bindings;
-
-	if (allBindings.length > 0) {
-		writeFileSync(join(stackDir, "env.d.ts"), generateEnvDts(allBindings));
-	}
-
 	const hasWorkerPlugins = sorted.some((p) => hasRuntimeExport(p.cli.package));
 
+	// Codegen.Wrangler — bindings, routes, vars, secrets.
+	const wranglerPayload = await bus.emit(Codegen.Wrangler, {
+		bindings: [],
+		routes: [],
+		vars: {},
+		secrets: [],
+		compatibilityDate: new Date().toISOString().split("T")[0] ?? "",
+	});
+
+	// Codegen.Env — typed env.d.ts fields.
+	const envPayload = await bus.emit(Codegen.Env, { fields: [] });
+
+	if (envPayload.fields.length > 0) {
+		writeFileSync(join(stackDir, "env.d.ts"), aggregateEnvDts(envPayload));
+	}
+
+	// Codegen.ViteConfig — moved from Dev/Build Configure to generate time.
+	const viteConfigPayload = await bus.emit(Codegen.ViteConfig, {
+		imports: [],
+		pluginCalls: [],
+		resolveAliases: [],
+		devServerPort: 0,
+	});
+
+	if (
+		viteConfigPayload.pluginCalls.length > 0 ||
+		viteConfigPayload.imports.length > 0
+	) {
+		writeFileSync(
+			join(stackDir, "vite.config.ts"),
+			aggregateViteConfig(viteConfigPayload),
+		);
+	}
+
 	if (hasWorkerPlugins) {
-		// Emit Codegen.Frontend first so frontend plugins (e.g. solid) can
-		// announce their port/domain. Always emit — even when no frontend is
-		// installed — so worker plugins can always read bus.history() safely.
-		const frontend = await bus.emit(Codegen.Frontend, {
-			domain: config.domain,
+		// Composition.Middleware must fire BEFORE Codegen.Worker so the worker
+		// payload is seeded with the ordered middleware chain (and the imports
+		// needed for the calls). Plugins can still contribute via Codegen.Worker
+		// directly, but the canonical surface is Composition.Middleware.
+		const middlewarePayload = await bus.emit(Composition.Middleware, {
+			entries: [],
 		});
+		const aggregated = aggregateMiddleware(middlewarePayload);
 
 		const workerPayload = await bus.emit(Codegen.Worker, {
-			imports: [],
-			root: null,
-			uses: [],
-			handlerArg: "",
-			tailLines: [],
-			frontend,
+			imports: aggregated?.imports ?? [],
+			base: null,
+			middlewareChain: aggregated?.calls ?? [],
+			handler: null,
+			domain: config.app.domain,
+			cors: [],
 		});
 
-		writeFileSync(
-			join(stackDir, "worker.ts"),
-			generateVirtualWorker(workerPayload),
-		);
+		writeFileSync(join(stackDir, "worker.ts"), aggregateWorker(workerPayload));
 
 		const consumerWrangler = existsSync(join(cwd, "wrangler.toml"))
 			? readFileSync(join(cwd, "wrangler.toml"), "utf-8")
@@ -79,20 +111,53 @@ export async function generate(configPath: string): Promise<void> {
 
 		writeFileSync(
 			join(stackDir, "wrangler.toml"),
-			generateWranglerToml({ consumerWrangler, bindings: allBindings }),
+			aggregateWrangler({ consumerWrangler, payload: wranglerPayload }),
 		);
 
 		const devVarsPath = join(cwd, ".dev.vars");
 		if (!existsSync(devVarsPath)) {
-			const devVars = generateDevVars(allBindings);
+			const devVars = aggregateDevVars(wranglerPayload.secrets);
 			if (devVars) {
 				writeFileSync(devVarsPath, devVars);
 			}
 		}
 	}
 
-	const routesDir = join(cwd, "src", "worker", "routes");
-	if (existsSync(routesDir)) {
-		generateApiRouteBarrel(cwd);
+	const providersPayload = await bus.emit(Composition.Providers, {
+		providers: [],
+	});
+	const providersSource = aggregateProviders(providersPayload);
+	if (providersSource !== null) {
+		writeFileSync(join(stackDir, "virtual-providers.tsx"), providersSource);
 	}
+
+	const entryPayload = await bus.emit(Codegen.Entry, {
+		imports: [],
+		mountExpression: null,
+	});
+	const entrySource = aggregateEntry(entryPayload);
+	if (entrySource !== null) {
+		writeFileSync(join(stackDir, "entry.tsx"), entrySource);
+	}
+
+	const htmlPayload = await bus.emit(Codegen.Html, {
+		shell: null,
+		head: [],
+		bodyEnd: [],
+	});
+	const htmlSource = await aggregateHtml(htmlPayload);
+	if (htmlSource !== null) {
+		writeFileSync(join(stackDir, "index.html"), htmlSource);
+	}
+
+	const appCssPayload = await bus.emit(Codegen.AppCss, {
+		imports: [],
+		layers: [],
+	});
+	const appCssSource = aggregateAppCss(appCssPayload);
+	if (appCssSource !== null) {
+		writeFileSync(join(stackDir, "app.css"), appCssSource);
+	}
+
+	await bus.emit(Codegen.RoutesDts, { pagesDir: null });
 }

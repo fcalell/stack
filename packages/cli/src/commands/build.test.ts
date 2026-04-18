@@ -37,6 +37,7 @@ vi.mock("#commands/generate", () => ({
 
 // Stub config loading + discovery so build.ts runs with a synthetic plugin set.
 let mockConfig: StackConfig = {
+	app: { name: "app", domain: "example.com" },
 	plugins: [],
 	validate: () => ({ valid: true, errors: [] }),
 };
@@ -81,7 +82,11 @@ describe("build()", () => {
 		spawnMock.mockImplementation(() => ({ status: 0 }));
 		generateMock.mockClear();
 		mockHasRuntime = false;
-		mockConfig = { plugins: [], validate: () => ({ valid: true, errors: [] }) };
+		mockConfig = {
+			app: { name: "app", domain: "example.com" },
+			plugins: [],
+			validate: () => ({ valid: true, errors: [] }),
+		};
 		mockDiscovered = [];
 		dir = mkdtempSync(join(tmpdir(), "stack-build-"));
 		process.chdir(dir);

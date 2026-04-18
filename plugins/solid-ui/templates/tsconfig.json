@@ -1,0 +1,4 @@
+{
+	"extends": "@fcalell/typescript-config/solid-vite.json",
+	"include": ["."]
+}
