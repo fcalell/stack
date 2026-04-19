@@ -1,9 +1,41 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { createEventBus, Init, Remove } from "@fcalell/cli/events";
+import { Codegen, createEventBus, Init, Remove } from "@fcalell/cli/events";
 import { createMockCtx } from "@fcalell/cli/testing";
+import type { FontEntry } from "@fcalell/ui/fonts-manifest";
 import { describe, expect, it } from "vitest";
 import { solidUi } from "./index";
+
+const inter: FontEntry = {
+	family: "Inter Variable",
+	specifier: "@fontsource-variable/inter/files/inter-latin-wght-normal.woff2",
+	weight: "100 900",
+	style: "normal",
+	role: "sans",
+	fallback: {
+		family: "sans-serif",
+		ascentOverride: "90%",
+		descentOverride: "22%",
+		lineGapOverride: "0%",
+		sizeAdjust: "107%",
+	},
+};
+
+const jetbrains: FontEntry = {
+	family: "JetBrains Mono Variable",
+	specifier:
+		"@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2",
+	weight: "100 800",
+	style: "normal",
+	role: "mono",
+	fallback: {
+		family: "monospace",
+		ascentOverride: "90%",
+		descentOverride: "22%",
+		lineGapOverride: "0%",
+		sizeAdjust: "100%",
+	},
+};
 
 describe("solidUi config factory", () => {
 	it("returns PluginConfig with __plugin 'solid-ui'", () => {
@@ -82,6 +114,107 @@ describe("solidUi register", () => {
 		expect(homes).toHaveLength(1);
 		// The one survivor is solid-ui's rich template.
 		expect(homes[0]?.source.pathname).toContain("solid-ui/templates/home.tsx");
+	});
+
+	it("contributes themeFontsPlugin with defaultFonts on Codegen.ViteConfig", async () => {
+		const bus = createEventBus();
+		const ctx = createMockCtx();
+		solidUi.cli.register(ctx, bus, {});
+
+		const cfg = await bus.emit(Codegen.ViteConfig, {
+			imports: [],
+			pluginCalls: [],
+			resolveAliases: [],
+			devServerPort: 0,
+		});
+
+		expect(cfg.imports).toContainEqual(
+			expect.objectContaining({
+				source: "@fcalell/plugin-vite/preset",
+				named: ["themeFontsPlugin"],
+			}),
+		);
+		const fontsCall = cfg.pluginCalls.find(
+			(c) =>
+				c.kind === "call" &&
+				c.callee.kind === "identifier" &&
+				c.callee.name === "themeFontsPlugin",
+		);
+		if (fontsCall?.kind !== "call") throw new Error("expected call");
+		expect(fontsCall.args).toHaveLength(1);
+		const arg = fontsCall.args[0];
+		if (arg?.kind !== "array") throw new Error("expected array");
+		// defaultFonts ships one entry (JetBrains Mono)
+		expect(arg.items).toHaveLength(1);
+	});
+
+	it("inlines custom fonts into themeFontsPlugin args", async () => {
+		const bus = createEventBus();
+		const ctx = createMockCtx({ options: { fonts: [inter, jetbrains] } });
+		solidUi.cli.register(ctx, bus, {});
+
+		const cfg = await bus.emit(Codegen.ViteConfig, {
+			imports: [],
+			pluginCalls: [],
+			resolveAliases: [],
+			devServerPort: 0,
+		});
+
+		const fontsCall = cfg.pluginCalls.find(
+			(c) =>
+				c.kind === "call" &&
+				c.callee.kind === "identifier" &&
+				c.callee.name === "themeFontsPlugin",
+		);
+		if (fontsCall?.kind !== "call") throw new Error("expected call");
+		const arg = fontsCall.args[0];
+		if (arg?.kind !== "array") throw new Error("expected array");
+		expect(arg.items).toHaveLength(2);
+		const first = arg.items[0];
+		if (first?.kind !== "object") throw new Error("expected object");
+		expect(first.properties).toContainEqual(
+			expect.objectContaining({
+				key: "family",
+				value: { kind: "string", value: "Inter Variable" },
+			}),
+		);
+	});
+
+	it("contributes --ui-font-* layer on Codegen.AppCss for fonts with roles", async () => {
+		const bus = createEventBus();
+		const ctx = createMockCtx({ options: { fonts: [inter, jetbrains] } });
+		solidUi.cli.register(ctx, bus, {});
+
+		const css = await bus.emit(Codegen.AppCss, {
+			imports: [],
+			layers: [],
+		});
+
+		expect(css.imports).toContain("@fcalell/ui/globals.css");
+		expect(css.layers).toHaveLength(1);
+		const layer = css.layers[0];
+		expect(layer?.name).toBe("base");
+		expect(layer?.content).toContain(
+			'--ui-font-sans: "Inter Variable", "Inter Variable Fallback"',
+		);
+		expect(layer?.content).toContain(
+			'--ui-font-mono: "JetBrains Mono Variable", "JetBrains Mono Variable Fallback"',
+		);
+	});
+
+	it("omits --ui-font-* layer when no fonts have roles", async () => {
+		const bus = createEventBus();
+		const ctx = createMockCtx({
+			options: { fonts: [{ ...inter, role: undefined }] },
+		});
+		solidUi.cli.register(ctx, bus, {});
+
+		const css = await bus.emit(Codegen.AppCss, {
+			imports: [],
+			layers: [],
+		});
+
+		expect(css.layers).toHaveLength(0);
 	});
 
 	it("pushes cleanup info on Remove", async () => {

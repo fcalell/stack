@@ -231,13 +231,16 @@ importers:
       '@fcalell/plugin-solid':
         specifier: workspace:*
         version: link:../solid
+      '@fcalell/plugin-vite':
+        specifier: workspace:*
+        version: link:../vite
+      '@fcalell/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
     devDependencies:
       '@fcalell/typescript-config':
         specifier: workspace:*
         version: link:../../packages/typescript-config
-      '@fcalell/ui':
-        specifier: workspace:*
-        version: link:../../packages/ui
       solid-js:
         specifier: ^1.9.0
         version: 1.9.12

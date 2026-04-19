@@ -19,16 +19,11 @@ export const vite = createPlugin("vite", {
 			});
 			p.imports.push({
 				source: "@fcalell/plugin-vite/preset",
-				named: ["themeFontsPlugin", "providersPlugin"],
+				named: ["providersPlugin"],
 			});
 			p.pluginCalls.push({
 				kind: "call",
 				callee: { kind: "identifier", name: "tailwindcss" },
-				args: [],
-			});
-			p.pluginCalls.push({
-				kind: "call",
-				callee: { kind: "identifier", name: "themeFontsPlugin" },
 				args: [],
 			});
 			p.pluginCalls.push({
@@ -52,30 +47,6 @@ export const vite = createPlugin("vite", {
 
 		bus.on(Codegen.Html, (p) => {
 			p.shell = new URL("../templates/shell.html", import.meta.url);
-			const lang = ctx.app.lang ?? "en";
-			p.head.push({ kind: "html-attr", name: "lang", value: lang });
-			p.head.push({ kind: "title", value: ctx.app.title ?? ctx.app.name });
-			if (ctx.app.description) {
-				p.head.push({
-					kind: "meta",
-					name: "description",
-					content: ctx.app.description,
-				});
-			}
-			if (ctx.app.themeColor) {
-				p.head.push({
-					kind: "meta",
-					name: "theme-color",
-					content: ctx.app.themeColor,
-				});
-			}
-			if (ctx.app.icon) {
-				p.head.push({
-					kind: "link",
-					rel: "icon",
-					href: ctx.app.icon,
-				});
-			}
 		});
 
 		bus.on(Dev.Start, async (p) => {

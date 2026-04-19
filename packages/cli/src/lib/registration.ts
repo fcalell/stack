@@ -37,14 +37,12 @@ export function createRegisterContext(
 }
 
 // Synthetic AppConfig used by `init` / `add` flows where the stack config isn't
-// yet fully loaded. `name` tracks the target directory; other fields fall back
-// to pragmatic defaults. Plugins rarely rely on `ctx.app` during init/add.
+// yet fully loaded. `name` tracks the target directory. Plugins rarely rely on
+// `ctx.app` during init/add.
 export function syntheticAppConfig(cwd: string): AppConfig {
 	return {
 		name: basename(cwd),
 		domain: "example.com",
-		title: basename(cwd),
-		lang: "en",
 	};
 }
 

@@ -139,6 +139,37 @@ export const solid = createPlugin("solid", {
 		});
 
 		bus.on(Codegen.Html, (p) => {
+			const opts = ctx.options ?? {};
+			p.head.push({
+				kind: "html-attr",
+				name: "lang",
+				value: opts.lang ?? "en",
+			});
+			p.head.push({
+				kind: "title",
+				value: opts.title ?? ctx.app.name,
+			});
+			if (opts.description) {
+				p.head.push({
+					kind: "meta",
+					name: "description",
+					content: opts.description,
+				});
+			}
+			if (opts.themeColor) {
+				p.head.push({
+					kind: "meta",
+					name: "theme-color",
+					content: opts.themeColor,
+				});
+			}
+			if (opts.icon) {
+				p.head.push({
+					kind: "link",
+					rel: "icon",
+					href: opts.icon,
+				});
+			}
 			p.bodyEnd.push({
 				kind: "script",
 				type: "module",

@@ -219,4 +219,90 @@ describe("solid register", () => {
 		await bus.emit(Generate, { files: [] });
 		expect(writeRoutesDtsMock).not.toHaveBeenCalled();
 	});
+
+	it("contributes default lang + title (from app.name) on Codegen.Html", async () => {
+		const bus = createEventBus();
+		const ctx = createMockCtx();
+		solid.cli.register(ctx, bus, solid.events);
+
+		const html = await bus.emit(Codegen.Html, {
+			shell: null,
+			head: [],
+			bodyEnd: [],
+		});
+		expect(html.head).toContainEqual({
+			kind: "html-attr",
+			name: "lang",
+			value: "en",
+		});
+		expect(html.head).toContainEqual({
+			kind: "title",
+			value: "test-app",
+		});
+		expect(html.bodyEnd).toContainEqual(
+			expect.objectContaining({ kind: "script", src: "/entry.tsx" }),
+		);
+	});
+
+	it("contributes description/themeColor/icon from options on Codegen.Html", async () => {
+		const bus = createEventBus();
+		const ctx = createMockCtx<SolidOptions>({
+			options: {
+				title: "Hello",
+				description: "hi",
+				themeColor: "#fff",
+				icon: "./icon.svg",
+				lang: "fr",
+			},
+		});
+		solid.cli.register(ctx, bus, solid.events);
+
+		const html = await bus.emit(Codegen.Html, {
+			shell: null,
+			head: [],
+			bodyEnd: [],
+		});
+		expect(html.head).toContainEqual({
+			kind: "html-attr",
+			name: "lang",
+			value: "fr",
+		});
+		expect(html.head).toContainEqual({ kind: "title", value: "Hello" });
+		expect(html.head).toContainEqual({
+			kind: "meta",
+			name: "description",
+			content: "hi",
+		});
+		expect(html.head).toContainEqual({
+			kind: "meta",
+			name: "theme-color",
+			content: "#fff",
+		});
+		expect(html.head).toContainEqual({
+			kind: "link",
+			rel: "icon",
+			href: "./icon.svg",
+		});
+	});
+
+	it("omits optional head entries when options are absent", async () => {
+		const bus = createEventBus();
+		const ctx = createMockCtx();
+		solid.cli.register(ctx, bus, solid.events);
+
+		const html = await bus.emit(Codegen.Html, {
+			shell: null,
+			head: [],
+			bodyEnd: [],
+		});
+		expect(html.head).not.toContainEqual(
+			expect.objectContaining({ kind: "meta", name: "description" }),
+		);
+		expect(html.head).not.toContainEqual(
+			expect.objectContaining({ kind: "meta", name: "theme-color" }),
+		);
+		expect(html.head).not.toContainEqual(
+			expect.objectContaining({ kind: "link", rel: "icon" }),
+		);
+	});
 });

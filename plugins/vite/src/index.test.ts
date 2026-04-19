@@ -71,7 +71,7 @@ describe("vite register", () => {
 		expect(viteProcess?.args).toContain("4000");
 	});
 
-	it("contributes tailwind + theme-fonts imports on Codegen.ViteConfig", async () => {
+	it("contributes tailwind + providers imports on Codegen.ViteConfig", async () => {
 		const bus = createEventBus();
 		const ctx = createMockCtx();
 		vite.cli.register(ctx, bus, vite.events);
@@ -92,10 +92,31 @@ describe("vite register", () => {
 		expect(cfg.imports).toContainEqual(
 			expect.objectContaining({
 				source: "@fcalell/plugin-vite/preset",
-				named: ["themeFontsPlugin", "providersPlugin"],
+				named: ["providersPlugin"],
 			}),
 		);
 		expect(cfg.devServerPort).toBe(3000);
+	});
+
+	it("does not contribute themeFontsPlugin (plugin-solid-ui owns fonts)", async () => {
+		const bus = createEventBus();
+		const ctx = createMockCtx();
+		vite.cli.register(ctx, bus, vite.events);
+
+		const cfg = await bus.emit(Codegen.ViteConfig, {
+			imports: [],
+			pluginCalls: [],
+			resolveAliases: [],
+			devServerPort: 0,
+		});
+
+		const fontsCall = cfg.pluginCalls.find(
+			(c) =>
+				c.kind === "call" &&
+				c.callee.kind === "identifier" &&
+				c.callee.name === "themeFontsPlugin",
+		);
+		expect(fontsCall).toBeUndefined();
 	});
 
 	it("uses custom port for Codegen.ViteConfig devServerPort", async () => {

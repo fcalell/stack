@@ -10,6 +10,18 @@ All packages use `workspace:*` to depend on sibling `@fcalell/*` packages.
 
 TypeScript configs extend `@fcalell/typescript-config` — never define compiler options directly.
 
+## Where a new feature or config surface belongs
+
+Before adding any option, type, or file, decide who owns the domain. The default answer is **a plugin, not core**.
+
+- **`@fcalell/cli` (core) is domain-agnostic.** Orchestration, event bus, codegen, `defineConfig`, `createPlugin`, AST specs. Never add domain types here (`FontEntry`, `AuthProvider`, `SchemaTable`, etc.). If you catch yourself importing a domain type into `packages/cli/src/`, stop and move it.
+- **`AppConfig` / top-level `app`** takes only cross-cutting identity (`name`, `domain`) — values consumed by more than one plugin. A value that only makes sense to one plugin's domain does **not** go on `app` — it goes on that plugin's options. HTML `<head>` metadata (`title`, `description`, `icon`, `themeColor`, `lang`) lives on `plugin-solid` because it's meaningless without a frontend.
+- **Plugin options** are the home for domain config. Typography → `solidUi({ fonts })`. API CORS → `api({ cors })`. Drizzle dialect → `db({ dialect })`. Types for those options live in the plugin's `src/types.ts` (or alongside the runtime package that already owns the type, e.g. `@fcalell/ui/fonts-manifest`).
+- **Runtime data types** (e.g. `FontEntry`, design tokens) belong in the runtime package whose contract they describe (`@fcalell/ui/*`) — the owning plugin re-exports them from its `types.ts`.
+- **Cross-plugin coordination** goes through events, never through shared core state. If plugin A needs to hand a value to plugin B's codegen call, A contributes to the same `Codegen.*` payload B also contributes to, or A listens to a typed event B defines via `events: [...]`.
+
+Quick test: if removing the feature would require changes to `@fcalell/cli`, the feature is in the wrong place.
+
 ## Plugin conventions
 
 Each plugin lives in `plugins/<name>/` and is published as `@fcalell/plugin-<name>`.

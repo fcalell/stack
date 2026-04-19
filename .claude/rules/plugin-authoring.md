@@ -2,6 +2,15 @@
 
 Short, concrete guide for writing a `@fcalell/stack` plugin. Conventions on folder layout, hash imports, `worker/` vs `node/` split, and testing live in `.claude/rules/conventions.md` — not repeated here.
 
+## Design paradigm
+
+A plugin's job is to take a domain (db, auth, UI, …) and make it invisible to the consumer. Keep these paradigms in mind every time you add a new plugin or feature:
+
+- **Automate by default.** If the plugin can generate, infer, default, or auto-wire a value, do it — don't expose an option. The target is zero hand-written glue in the consumer's repo. A new consumer-facing option is the last resort, and every option needs a sensible default.
+- **Contribute, don't coordinate.** You talk to the CLI, never to other plugins. Push typed payloads into `Codegen.*` / `Composition.*` / `Dev.*` / `Build.*` / `Deploy.*` events and let the aggregator merge. If you need a value from another plugin, either depend on an event it declares (`depends: [otherPlugin.events.Foo]`) or read the shared codegen payload you both contribute to. Never import another plugin's internals at runtime.
+- **Speak the shared contract.** `createPlugin`, `RegisterContext`, typed event payloads, and AST specs are the only surface. Don't introduce a sibling mechanism (custom file formats, plugin-to-plugin hooks, globals). A third-party plugin shipped outside this repo must be able to do everything a first-party plugin does with the same interface.
+- **Own the domain end-to-end.** Anything domain-specific — option types, codegen, runtime factories, CLI subcommands — lives in the plugin. Never leak a domain type into `@fcalell/cli`. If you catch yourself editing `packages/cli/src/` to land a feature, stop and move it.
+
 ## The `createPlugin` contract
 
 ```ts
@@ -131,8 +140,8 @@ Binding kinds: `d1`, `kv`, `r2`, `rate_limiter`, `var`. Aggregator catches dupli
 ```ts
 bus.on(Codegen.Html, (p) => {
   p.shell = new URL("../templates/shell.html", import.meta.url);
-  p.head.push({ kind: "title", value: ctx.app.title ?? ctx.app.name });
-  p.head.push({ kind: "html-attr", name: "lang", value: ctx.app.lang ?? "en" });
+  p.head.push({ kind: "title", value: ctx.options.title ?? ctx.app.name });
+  p.head.push({ kind: "html-attr", name: "lang", value: ctx.options.lang ?? "en" });
   p.head.push({ kind: "meta", name: "theme-color", content: "#000" });
   p.bodyEnd.push({ kind: "script", src: "/entry.tsx", type: "module" });
 });

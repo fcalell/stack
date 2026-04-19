@@ -4,11 +4,15 @@ Full-stack framework for SolidJS + Hono + Cloudflare. Ships everything a consume
 
 ## Philosophy
 
-**The consumer never touches underlying tools.** Plugins wrap their domain (Drizzle, Hono, oRPC, Kobalte, Vite, Tailwind) and re-export only what's needed. Consumers don't install or import `drizzle-orm`, `hono`, `zod`, `@kobalte/core`, `vite`, or `tailwindcss` directly — the stack handles it.
+**The consumer writes only business logic.** Plugins wrap their domain (Drizzle, Hono, oRPC, Kobalte, Vite, Tailwind) and re-export only what's needed. Consumers don't install or import `drizzle-orm`, `hono`, `zod`, `@kobalte/core`, `vite`, or `tailwindcss` directly — and they don't hand-write glue code, boilerplate config, or wiring. If a value can be generated, inferred, defaulted, or auto-wired, a plugin must do it behind the scenes. A new consumer-facing option is the last resort, not the first.
 
 **Everything is opt-in and composable.** A project can use just the UI, just the database, or the full stack. Plugins declare dependencies via typed event tokens (`depends: [db.events.SchemaReady]`), the CLI auto-resolves dependencies, and `defineConfig()` validates the graph.
 
-**Single config, plugin-driven.** `stack.config.ts` is the single source of truth — a `domain`, a `plugins` array, and optional dev settings. Each plugin contributes config, bindings, generated files, worker runtime, and CLI hooks via an event-driven lifecycle. The `stack` CLI is one command for init, dev, build, and deploy.
+**CLI orchestrates; plugins contribute independently.** `@fcalell/cli` owns the lifecycle (init/dev/build/deploy), the event bus, codegen aggregation, and `stack.config.ts` — nothing else. Plugins never import each other to coordinate; they contribute to typed event payloads (`Codegen.Worker`, `Codegen.Wrangler`, `Composition.Providers`, …) and the CLI aggregates the results. Cross-plugin handoff happens via events or shared codegen payloads, never via shared mutable state.
+
+**Plugins share one contract.** Every plugin — first-party or third-party — is built with `createPlugin()`, receives a `RegisterContext`, and speaks the same event + AST-spec vocabulary. A third-party plugin (e.g. `@acme/stack-plugin-widget`) composes cleanly with the official ones: same lifecycle hooks, same codegen surfaces, same dependency rules. When extending the framework, extend that shared interface — don't ship a new one.
+
+**Features live in the plugin that owns the domain; core stays domain-agnostic.** `@fcalell/cli` does not know what fonts, auth, or schemas mean. Typography options go on `plugin-solid-ui`; CORS on `plugin-api`; tables on `plugin-db`; HTML `<head>` metadata on `plugin-solid`. The top-level `app` field is strictly cross-cutting identity (`name`, `domain`) — values consumed by more than one plugin. If a field only makes sense for one plugin's domain, it belongs on that plugin's options, not on `app`. Domain types (`FontEntry`, `AuthProvider`, etc.) must not leak into `@fcalell/cli`.
 
 ## Packages
 
@@ -146,7 +150,7 @@ my-app/
 
 ## Config
 
-`defineConfig` takes a required top-level `app` field holding cross-cutting identity and optional HTML `<head>` metadata, plus the `plugins` array.
+`defineConfig` takes a required top-level `app` field with cross-cutting identity (`name`, `domain`), plus the `plugins` array. Domain-specific config — including HTML `<head>` metadata — lives on the plugin that owns the surface.
 
 ```ts
 // stack.config.ts
@@ -159,25 +163,26 @@ import { solidUi } from "@fcalell/plugin-solid-ui";
 
 export default defineConfig({
   app: {
-    name: "my-app",           // REQUIRED — wrangler worker name, default auth cookie prefix
+    name: "my-app",           // REQUIRED — wrangler worker name, default auth cookie prefix, fallback <title>
     domain: "example.com",    // REQUIRED — CORS, trustedOrigins, app URL construction
-    title: "My App",          // optional — default <title>; defaults to app.name
-    description: "...",       // optional — <meta name="description">
-    icon: "./public/favicon.svg",
-    themeColor: "#000000",
-    lang: "en",               // defaults to "en"
   },
   plugins: [
     db({ dialect: "d1", databaseId: "..." }),
     auth({ cookies: { prefix: "myapp" }, organization: true }),
     api({ cors: ["https://app.example.com"] }),
-    solid(),
+    solid({
+      title: "My App",                  // optional — <title>; defaults to app.name
+      description: "...",               // optional — <meta name="description">
+      icon: "./public/favicon.svg",     // optional — <link rel="icon">
+      themeColor: "#000000",            // optional — <meta name="theme-color">
+      lang: "en",                       // optional — <html lang>; defaults to "en"
+    }),
     solidUi(),
   ],
 });
 ```
 
-`app.name` flows into the generated `wrangler.toml`; `app.domain` drives CORS and auth trusted origins; the optional fields are consumed by `plugin-vite` through `Codegen.Html` to build `.stack/index.html`.
+`app.name` flows into the generated `wrangler.toml` and is the fallback `<title>`; `app.domain` drives CORS and auth trusted origins. HTML `<head>` metadata is owned by `plugin-solid` via `Codegen.Html`; a worker-only project needs none of it.
 
 Note: `plugin-vite` is implicit — auto-resolved as a dependency of `plugin-solid`.
 

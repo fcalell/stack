@@ -17,8 +17,6 @@ export function createMockCtx<T = Record<string, never>>(
 		app: {
 			name: "test-app",
 			domain: "example.com",
-			title: "test-app",
-			lang: "en",
 		},
 		hasPlugin: () => false,
 		readFile: vi.fn(async () => ""),

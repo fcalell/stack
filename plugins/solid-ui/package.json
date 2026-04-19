@@ -16,11 +16,12 @@
 	},
 	"dependencies": {
 		"@fcalell/cli": "workspace:*",
-		"@fcalell/plugin-solid": "workspace:*"
+		"@fcalell/plugin-solid": "workspace:*",
+		"@fcalell/plugin-vite": "workspace:*",
+		"@fcalell/ui": "workspace:*"
 	},
 	"devDependencies": {
 		"@fcalell/typescript-config": "workspace:*",
-		"@fcalell/ui": "workspace:*",
 		"solid-js": "^1.9.0",
 		"typescript": "^5.9.3"
 	}

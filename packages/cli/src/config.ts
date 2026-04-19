@@ -28,17 +28,14 @@ export interface ValidationResult {
 
 // ── App config ──────────────────────────────────────────────────────
 
-// AppConfig is the top-level identity / HTML metadata surface. Introduced in
-// Phase 5 (replaces top-level `domain`). `name` and `domain` are required;
-// everything else has a sensible default that lands during `defineConfig`.
+// AppConfig is the top-level identity surface: cross-cutting values that
+// more than one plugin consumes. `name` flows into wrangler / default auth
+// cookie prefix / fallback HTML title; `domain` drives CORS and auth
+// trustedOrigins. Anything that only matters to a single plugin's domain
+// (HTML metadata, typography, …) lives on that plugin's options instead.
 export interface AppConfig {
 	name: string;
 	domain: string;
-	title?: string;
-	description?: string;
-	icon?: string;
-	themeColor?: string;
-	lang?: string;
 }
 
 // ── Stack config ────────────────────────────────────────────────────
@@ -73,16 +70,8 @@ export function defineConfig<const T extends readonly PluginConfig[]>(input: {
 	app: AppConfig;
 	plugins: T;
 }): StackConfig<T> {
-	// Apply defaults once here so the rest of the pipeline (and plugin
-	// registers) can rely on `ctx.app.title` / `ctx.app.lang` being populated.
-	const app: AppConfig = {
-		...input.app,
-		title: input.app.title ?? input.app.name,
-		lang: input.app.lang ?? "en",
-	};
-
 	return {
-		app,
+		app: input.app,
 		plugins: input.plugins,
 		validate() {
 			const errors: ValidationError[] = [];

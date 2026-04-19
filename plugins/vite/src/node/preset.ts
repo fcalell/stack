@@ -48,19 +48,30 @@ function findBundleUrl(
 	return null;
 }
 
-function buildFontFaceCss(fonts: FontEntry[]): string {
-	return fonts
-		.map(
-			(f) => `@font-face {
-	font-family: '${f.family} Fallback';
-	src: local('${f.fallback.family}');
-	ascent-override: ${f.fallback.ascentOverride};
-	descent-override: ${f.fallback.descentOverride};
-	line-gap-override: ${f.fallback.lineGapOverride};
-	size-adjust: ${f.fallback.sizeAdjust};
-}`,
-		)
-		.join("\n");
+function buildFontFaceCss(
+	fonts: Array<{ font: FontEntry; href: string | null }>,
+): string {
+	const blocks: string[] = [];
+	for (const { font, href } of fonts) {
+		if (href) {
+			blocks.push(`@font-face {
+	font-family: '${font.family}';
+	src: url('${href}') format('woff2');
+	font-weight: ${font.weight};
+	font-style: ${font.style};
+	font-display: swap;
+}`);
+		}
+		blocks.push(`@font-face {
+	font-family: '${font.family} Fallback';
+	src: local('${font.fallback.family}');
+	ascent-override: ${font.fallback.ascentOverride};
+	descent-override: ${font.fallback.descentOverride};
+	line-gap-override: ${font.fallback.lineGapOverride};
+	size-adjust: ${font.fallback.sizeAdjust};
+}`);
+	}
+	return blocks.join("\n");
 }
 
 export function themeFontsPlugin(fonts: FontEntry[] = defaultFonts): Plugin {
@@ -89,39 +100,43 @@ export function themeFontsPlugin(fonts: FontEntry[] = defaultFonts): Plugin {
 					},
 				];
 
+				const resolved: Array<{ font: FontEntry; href: string | null }> = [];
+
 				for (const font of fonts) {
 					const abs = resolveFontAbs(font.specifier);
-					if (!abs) continue;
-
 					let href: string | null = null;
-					if (config.command === "build" && ctx.bundle) {
-						href = findBundleUrl(
-							ctx.bundle as unknown as BundleLike,
-							config.base,
-							abs,
-						);
-					} else {
-						href = `/@fs/${abs}`;
+					if (abs) {
+						if (config.command === "build" && ctx.bundle) {
+							href = findBundleUrl(
+								ctx.bundle as unknown as BundleLike,
+								config.base,
+								abs,
+							);
+						} else {
+							href = `/@fs/${abs}`;
+						}
 					}
-					if (!href) continue;
+					resolved.push({ font, href });
 
-					tags.push({
-						tag: "link",
-						injectTo: "head",
-						attrs: {
-							rel: "preload",
-							as: "font",
-							type: "font/woff2",
-							href,
-							crossorigin: "",
-						},
-					});
+					if (href) {
+						tags.push({
+							tag: "link",
+							injectTo: "head",
+							attrs: {
+								rel: "preload",
+								as: "font",
+								type: "font/woff2",
+								href,
+								crossorigin: "",
+							},
+						});
+					}
 				}
 
 				tags.push({
 					tag: "style",
 					injectTo: "head",
-					children: buildFontFaceCss(fonts),
+					children: buildFontFaceCss(resolved),
 				});
 
 				return tags;
