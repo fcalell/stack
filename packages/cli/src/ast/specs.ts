@@ -155,9 +155,18 @@ export type HtmlDocument = {
 export type ScaffoldSpec = {
 	source: URL; // file:// URL to template on disk
 	target: string; // cwd-relative path
+	plugin: string; // plugin that contributed this scaffold (for attribution)
 };
 
 // ── Composition ─────────────────────────────────────────────────────
+
+// Only JSX-shaped expressions are valid children of the composed providers
+// tree. Allowing arbitrary TsExpression (e.g. string/number literals) would
+// emit nonsense output like `<MetaProvider>{props.children}"hi"</MetaProvider>`.
+export type TsJsxExpression = Extract<
+	TsExpression,
+	{ kind: "jsx" } | { kind: "jsx-fragment" }
+>;
 
 export type ProviderSpec = {
 	imports: TsImportSpec[];
@@ -165,7 +174,7 @@ export type ProviderSpec = {
 		identifier: string;
 		props?: Array<{ name: string; value: TsExpression }>;
 	};
-	siblings?: TsExpression[]; // JSX elements rendered alongside
+	siblings?: TsJsxExpression[]; // JSX elements rendered alongside
 	order: number; // lower = outer wrapper
 };
 

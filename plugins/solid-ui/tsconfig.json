@@ -1,4 +1,4 @@
 {
-	"extends": "@fcalell/typescript-config/node-tsx.json",
+	"extends": "@fcalell/typescript-config/solid-vite.json",
 	"include": ["src"]
 }

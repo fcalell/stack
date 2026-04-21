@@ -18,9 +18,8 @@ describe("Third-party plugin discovery (config carries __package)", () => {
 				cli: {
 					name: "widget",
 					label: "Widget",
-					implicit: false,
 					package: THIRD_PARTY_PACKAGE,
-					depends: [],
+					after: [],
 					callbacks: {},
 					commands: {},
 					register: registerSpy,
@@ -60,9 +59,8 @@ describe("Third-party plugin discovery (config carries __package)", () => {
 				cli: {
 					name: "widget",
 					label: "Widget",
-					implicit: false,
 					package: THIRD_PARTY_PACKAGE,
-					depends: [],
+					after: [],
 					callbacks: {},
 					commands: {},
 					register: () => {},

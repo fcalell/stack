@@ -1,30 +1,25 @@
-import { createPlugin, fromSchema } from "@fcalell/cli";
-import { Build, Codegen, Dev } from "@fcalell/cli/events";
-import { type ViteOptions, viteOptionsSchema } from "./types";
+import { createPlugin, type } from "@fcalell/cli";
+import { Build, Dev, Generate } from "@fcalell/cli/events";
+import { api } from "@fcalell/plugin-api";
+import { aggregateViteConfig } from "./node/codegen";
+import { type CodegenViteConfigPayload, viteOptionsSchema } from "./types";
 
 export const vite = createPlugin("vite", {
 	label: "Vite",
-	implicit: true,
-	events: ["ViteConfigured"],
+	events: {
+		ViteConfigured: type<void>(),
+		ViteConfig: type<CodegenViteConfigPayload>(),
+	},
 
-	config: fromSchema<ViteOptions>(viteOptionsSchema),
+	schema: viteOptionsSchema,
 
 	register(ctx, bus, events) {
-		bus.on(Codegen.ViteConfig, (p) => {
+		bus.on(events.ViteConfig, (p) => {
 			const port = ctx.options?.port ?? 3000;
 			p.devServerPort = port;
 			p.imports.push({
-				source: "@tailwindcss/vite",
-				default: "tailwindcss",
-			});
-			p.imports.push({
 				source: "@fcalell/plugin-vite/preset",
 				named: ["providersPlugin"],
-			});
-			p.pluginCalls.push({
-				kind: "call",
-				callee: { kind: "identifier", name: "tailwindcss" },
-				args: [],
 			});
 			p.pluginCalls.push({
 				kind: "call",
@@ -33,23 +28,38 @@ export const vite = createPlugin("vite", {
 			});
 		});
 
-		bus.on(Codegen.Worker, (p) => {
-			// Contribute a localhost origin so worker CORS includes the vite dev
-			// server. Frontend plugins that run on their own port can layer on top.
+		// Contribute the dev-server localhost origin to CORS unless the
+		// consumer has overridden `app.origins` entirely. Mirrors the
+		// pre-Phase-4 behavior the CLI used to inline.
+		bus.on(api.events.Worker, (p) => {
+			if (ctx.app.origins) return;
 			const port = ctx.options?.port ?? 3000;
 			const origin = `http://localhost:${port}`;
 			if (!p.cors.includes(origin)) p.cors.push(origin);
 		});
 
-		bus.on(Codegen.AppCss, (p) => {
-			p.imports.push("tailwindcss");
+		// ViteConfigured fires during Generate — after the ViteConfig payload has
+		// been collected — so downstream plugins (`after: [vite.events.ViteConfigured]`)
+		// see the signal across generate/dev/build alike. The file is emitted into
+		// Generate's `files` accumulator; the CLI writes them after Generate
+		// resolves.
+		bus.on(Generate, async (p) => {
+			const payload = await bus.emit(events.ViteConfig, {
+				imports: [],
+				pluginCalls: [],
+				resolveAliases: [],
+				devServerPort: 0,
+			});
+			if (payload.pluginCalls.length > 0 || payload.imports.length > 0) {
+				p.files.push({
+					path: ".stack/vite.config.ts",
+					content: aggregateViteConfig(payload),
+				});
+			}
+			await bus.emit(events.ViteConfigured);
 		});
 
-		bus.on(Codegen.Html, (p) => {
-			p.shell = new URL("../templates/shell.html", import.meta.url);
-		});
-
-		bus.on(Dev.Start, async (p) => {
+		bus.on(Dev.Start, (p) => {
 			const port = ctx.options?.port ?? 3000;
 			p.processes.push({
 				name: "vite",
@@ -65,8 +75,6 @@ export const vite = createPlugin("vite", {
 				readyPattern: /Local:/,
 				color: "cyan",
 			});
-
-			await bus.emit(events.ViteConfigured);
 		});
 
 		bus.on(Build.Start, (p) => {

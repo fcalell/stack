@@ -32,7 +32,11 @@ export function routesPlugin(opts: RoutesPluginOptions = {}): Plugin {
 			projectRoot,
 			notFoundFile,
 		);
-		cachedModule = emitVirtualModule(routesArray, typedRoutesRuntime);
+		cachedModule = emitVirtualModule(
+			routesArray,
+			typedRoutesRuntime,
+			pagesDirRel,
+		);
 		writeRoutesDts(projectRoot, pagesDirRel);
 	}
 

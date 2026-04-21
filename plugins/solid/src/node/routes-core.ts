@@ -1,4 +1,4 @@
-import { mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { join, relative } from "node:path";
 import fg from "fast-glob";
 
@@ -196,14 +196,11 @@ export function emitRoutes(
 		return out;
 	}
 
-	let routesArray: string;
-	if (root.layoutFile) {
-		const children = emitChildren(root, "/");
-		routesArray = `[{ path: "/", component: ${jsonLoadGlob(root.layoutFile, projectRoot)}, children: [${children.join(", ")}] }]`;
-	} else {
-		const children = emitChildren(root, "");
-		routesArray = `[${children.join(", ")}]`;
-	}
+	const children = emitChildren(root, "/");
+	const layoutComponent = root.layoutFile
+		? jsonLoadGlob(root.layoutFile, projectRoot)
+		: "DefaultLayout";
+	let routesArray = `[{ path: "/", component: ${layoutComponent}, children: [${children.join(", ")}] }]`;
 
 	if (notFoundFile) {
 		const arr = routesArray.slice(0, -1);
@@ -356,11 +353,14 @@ export function emitTypedRoutes(root: RouteNode): {
 export function emitVirtualModule(
 	routesArray: string,
 	typedRoutesRuntime: string,
+	pagesDirRel: string = "src/app/pages",
 ): string {
-	const globPattern = "/src/app/pages/**/*.{tsx,jsx}";
+	const normalized = pagesDirRel.replace(/^\/+/, "").replace(/\/+$/, "");
+	const globPattern = `/${normalized}/**/*.{tsx,jsx}`;
 	return `import { lazy } from "solid-js";
 const pages = import.meta.glob(${JSON.stringify(globPattern)});
 const load = (p) => lazy(() => pages[p]());
+const DefaultLayout = (props) => props.children;
 export const routes = ${routesArray};
 export const typedRoutes = ${typedRoutesRuntime};
 `;
@@ -376,17 +376,16 @@ declare module "${VIRTUAL_ROUTES_ID}" {
 `;
 }
 
-export function buildRoutesDts(
-	cwd: string,
-	pagesDirRel: string,
-): string | null {
+export function buildRoutesDts(cwd: string, pagesDirRel: string): string {
 	const absPagesDir = join(cwd, pagesDirRel);
-	let files: string[];
-	try {
-		files = fg.sync(["**/*.tsx", "**/*.jsx"], { cwd: absPagesDir }).sort();
-	} catch {
-		return null;
+	if (!existsSync(absPagesDir)) {
+		throw new Error(
+			`plugin-solid: pages directory not found at "${pagesDirRel}". ` +
+				`Create the directory or set solid({ routes: { pagesDir: "..." } }) ` +
+				`to point at an existing directory.`,
+		);
 	}
+	const files = fg.sync(["**/*.tsx", "**/*.jsx"], { cwd: absPagesDir }).sort();
 	const { root } = buildTree(files, absPagesDir);
 	const { typedRoutesTypes } = emitRoutes(root, cwd, undefined);
 	return emitDts(typedRoutesTypes);
@@ -394,7 +393,6 @@ export function buildRoutesDts(
 
 export function writeRoutesDts(cwd: string, pagesDirRel: string): void {
 	const dts = buildRoutesDts(cwd, pagesDirRel);
-	if (!dts) return;
 	const dtsDir = join(cwd, ".stack");
 	mkdirSync(dtsDir, { recursive: true });
 	writeFileSync(join(dtsDir, "routes.d.ts"), dts);

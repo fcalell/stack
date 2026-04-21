@@ -21,17 +21,15 @@ import { api } from "@fcalell/plugin-api";
 import { db } from "@fcalell/plugin-db";
 
 export default defineConfig({
+  app: { name: "my-app", domain: "example.com" },
   plugins: [
     db({ dialect: "d1", databaseId: "9a619a0b-..." }),
-    api({
-      cors: ["https://app.example.com"],
-      prefix: "/rpc",
-    }),
+    api({ prefix: "/rpc" }),
   ],
 });
 ```
 
-The `api` plugin has no required dependencies -- it can be used standalone, though most setups pair it with `db` and `auth`.
+The `api` plugin has no required dependencies -- it can be used standalone, though most setups pair it with `db` and `auth`. CORS origins are derived from `app.domain` (and the vite dev port, when a frontend plugin is active); override with `app.origins`.
 
 ### 2. Worker (generated)
 
@@ -44,7 +42,10 @@ import dbRuntime from "@fcalell/plugin-db/runtime";
 import * as schema from "../src/schema";
 import * as routes from "../src/worker/routes";
 
-const worker = createWorker({ cors: ["https://app.example.com"] })
+const worker = createWorker({
+  domain: "example.com",
+  cors: ["https://example.com", "https://app.example.com"],
+})
   .use(dbRuntime({ binding: "DB_MAIN", schema }))
   .handler(routes);
 
@@ -194,9 +195,9 @@ export type AppRouter = InferRouter<typeof worker>;
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `cors` | `string \| string[]` | -- | CORS allowed origins |
-| `prefix` | `` `/${string}` `` | `"/rpc"` | RPC handler path prefix |
-| `domain` | `string` | -- | API domain |
+| `prefix` | `string` (must start with `/`) | `"/rpc"` | RPC handler path prefix |
+
+CORS origins and API domain are derived from `app.domain` / `app.origins` (top-level config), not from the plugin options.
 
 ## Utilities
 
@@ -241,7 +242,7 @@ import { Init, Generate, Remove, Dev } from "@fcalell/cli/events";
 
 export const api = createPlugin("api", {
   label: "API",
-  config(options) { ... },
+  schema: apiOptionsSchema,
   register(ctx, bus) {
     bus.on(Init.Scaffold, (p) => { ... });
     bus.on(Generate, (p) => { ... });
@@ -267,8 +268,9 @@ The `./runtime` export provides `createWorker()` for building the worker:
 ```ts
 import createWorker from "@fcalell/plugin-api/runtime";
 
-// Takes plain ApiWorkerOptions -- no config dependency
-createWorker({ cors: ["https://app.example.com"], prefix: "/rpc" })
+// Takes plain ApiWorkerOptions -- no config dependency.
+// The generated worker passes origins derived from app.domain / app.origins.
+createWorker({ domain: "example.com", cors: ["https://example.com"], prefix: "/rpc" })
 ```
 
 ## Exports
@@ -277,7 +279,7 @@ createWorker({ cors: ["https://app.example.com"], prefix: "/rpc" })
 |---------|---------|
 | `@fcalell/plugin-api` | `api()`, `ApiOptions`, `ApiError`, `Middleware`, `InferRouter` |
 | `@fcalell/plugin-api/runtime` | `createWorker()`, `AppBuilder`, `WorkerExport`, `ApiWorkerOptions` |
-| `@fcalell/cli/runtime` | `RuntimePlugin`, `RuntimePluginEventHandlers` |
+| `@fcalell/cli/runtime` | `RuntimePlugin` |
 | `@fcalell/plugin-api/client` | `createClient()`, `RouterClient`, `ClientConfig` |
 | `@fcalell/plugin-api/schema` | `z` (Zod re-export), `ZodObject`, `ZodType`, `ZodRawShape` |
 | `@fcalell/plugin-api/lib/cursor` | `encodeCursor`, `decodeCursor`, `paginate`, `clampLimit`, constants |

@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
 	Build,
-	Codegen,
 	Deploy,
 	Dev,
 	defineEvent,
@@ -49,25 +48,6 @@ describe("core lifecycle events", () => {
 		expect(Remove.name).toBe("remove");
 	});
 
-	it("Codegen namespace has Worker, Wrangler, Env, ViteConfig, Entry, Html, AppCss, RoutesDts", () => {
-		expect(Codegen.Worker.source).toBe("core");
-		expect(Codegen.Worker.name).toBe("codegen.worker");
-		expect(Codegen.Wrangler.source).toBe("core");
-		expect(Codegen.Wrangler.name).toBe("codegen.wrangler");
-		expect(Codegen.Env.source).toBe("core");
-		expect(Codegen.Env.name).toBe("codegen.env");
-		expect(Codegen.ViteConfig.source).toBe("core");
-		expect(Codegen.ViteConfig.name).toBe("codegen.vite-config");
-		expect(Codegen.Entry.source).toBe("core");
-		expect(Codegen.Entry.name).toBe("codegen.entry");
-		expect(Codegen.Html.source).toBe("core");
-		expect(Codegen.Html.name).toBe("codegen.html");
-		expect(Codegen.AppCss.source).toBe("core");
-		expect(Codegen.AppCss.name).toBe("codegen.app-css");
-		expect(Codegen.RoutesDts.source).toBe("core");
-		expect(Codegen.RoutesDts.name).toBe("codegen.routes-dts");
-	});
-
 	it("all events have unique symbol ids", () => {
 		const allEvents = [
 			Init.Prompt,
@@ -80,14 +60,6 @@ describe("core lifecycle events", () => {
 			Deploy.Execute,
 			Deploy.Complete,
 			Remove,
-			Codegen.Worker,
-			Codegen.Wrangler,
-			Codegen.Env,
-			Codegen.ViteConfig,
-			Codegen.Entry,
-			Codegen.Html,
-			Codegen.AppCss,
-			Codegen.RoutesDts,
 		];
 		const ids = allEvents.map((e) => e.id);
 		expect(new Set(ids).size).toBe(ids.length);

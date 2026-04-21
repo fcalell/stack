@@ -1,12 +1,4 @@
-import type {
-	HtmlInjection,
-	MiddlewareSpec,
-	ProviderSpec,
-	ScaffoldSpec,
-	TsExpression,
-	TsImportSpec,
-	TsTypeRef,
-} from "#ast";
+import type { ScaffoldSpec } from "#ast";
 import { defineEvent } from "#lib/event-bus";
 
 export {
@@ -79,16 +71,20 @@ export interface InitScaffoldPayload {
 	gitignore: string[];
 }
 
-// Generate no longer carries raw bindings — plugins push typed specs into
-// Codegen.Wrangler and Codegen.Env directly. Plugins still use Generate to
-// emit plain files (e.g. api's route barrel).
+// Generate carries the file accumulator plus a post-write hook plugins can
+// register callbacks on. The CLI writes every `files` entry, then runs the
+// `postWrite` list in registration order. Plugins that shell out to tools
+// (e.g. cloudflare running `wrangler types` off the freshly written
+// `.stack/wrangler.toml`) queue themselves here.
 export interface GeneratePayload {
 	files: GeneratedFile[];
+	postWrite: Array<() => Promise<void>>;
 }
 
 export interface RemovePayload {
 	files: string[];
 	dependencies: string[];
+	devDependencies: string[];
 }
 
 export interface DevStartPayload {
@@ -113,116 +109,6 @@ export interface DeployPlanPayload {
 
 export interface DeployExecutePayload {
 	steps: DeployStep[];
-}
-
-// ── Codegen payload types ───────────────────────────────────────────
-
-// CodegenWorkerPayload models the .stack/worker.ts builder chain.
-//
-// Deviation from CODEGEN.md: we add a `base: TsExpression | null` field so
-// plugin-api can claim the root factory call (`createWorker({...})`) without
-// repurposing `middlewareChain[0]`. `middlewareChain` stays purely a list of
-// `.use(arg)` arguments. The tail (`export type AppRouter...`, `export default
-// worker;`) is fixed in the aggregator — no payload field needed.
-export interface CodegenWorkerPayload {
-	imports: TsImportSpec[];
-	base: TsExpression | null;
-	middlewareChain: TsExpression[];
-	handler: { identifier: string } | null;
-	domain: string;
-	cors: string[];
-}
-
-// WranglerBindingSpec is the structured representation of a wrangler.toml
-// binding declaration. Deviation from CODEGEN.md: `rate_limiter` omits the
-// `namespace` field because the current emitted config uses `type = "ratelimit"`
-// under `[[unsafe.bindings]]` with no namespace — preserving observed behavior
-// over speculative spec fields.
-export type WranglerBindingSpec =
-	| {
-			kind: "d1";
-			binding: string;
-			databaseName: string;
-			databaseId: string;
-			migrationsDir?: string;
-	  }
-	| { kind: "kv"; binding: string; id: string }
-	| { kind: "r2"; binding: string; bucketName: string }
-	| {
-			kind: "rate_limiter";
-			binding: string;
-			simple: { limit: number; period: number };
-	  }
-	| { kind: "var"; name: string; value: string };
-
-export type WranglerRouteSpec = {
-	pattern: string;
-	zone?: string;
-	customDomain?: boolean;
-};
-
-// Deviation from CODEGEN.md: we add a `secrets` array so `.dev.vars` generation
-// can continue to emit dev defaults for secret-typed vars. Secrets aren't a
-// wrangler binding kind — they're worker-env vars that get a dev-only value.
-export interface CodegenWranglerPayload {
-	bindings: WranglerBindingSpec[];
-	routes: WranglerRouteSpec[];
-	vars: Record<string, string>;
-	secrets: Array<{ name: string; devDefault: string }>;
-	compatibilityDate: string;
-}
-
-export interface CodegenEnvPayload {
-	fields: Array<{
-		name: string;
-		type: TsTypeRef;
-		from?: TsImportSpec;
-	}>;
-}
-
-export interface CodegenViteConfigPayload {
-	imports: TsImportSpec[];
-	pluginCalls: TsExpression[];
-	resolveAliases: Array<{ find: string; replacement: string }>;
-	devServerPort: number;
-}
-
-export interface CodegenEntryPayload {
-	imports: TsImportSpec[];
-	mountExpression: TsExpression | null;
-}
-
-export interface CodegenHtmlPayload {
-	shell: URL | null;
-	head: HtmlInjection[];
-	bodyEnd: HtmlInjection[];
-}
-
-export interface CodegenAppCssPayload {
-	imports: string[];
-	layers: Array<{ name: string; content: string }>;
-}
-
-export interface CodegenRoutesDtsPayload {
-	// Placeholder shape — plugin-solid continues to write routes.d.ts directly.
-	// Phase 5 wires a proper writer driven by this payload.
-	pagesDir: string | null;
-}
-
-// ── Composition payload types ───────────────────────────────────────
-
-// Composition.Providers collects JSX wrappers + sibling elements that land
-// in .stack/virtual-providers.tsx. Consumers (and plugin-solid's entry) import
-// that module via `virtual:stack-providers`.
-export interface CompositionProvidersPayload {
-	providers: ProviderSpec[];
-}
-
-// Composition.Middleware collects ordered middleware call expressions plus the
-// imports they need. The aggregator sorts entries by phase then `order` and
-// feeds the result into Codegen.Worker's middlewareChain.
-export interface CompositionMiddlewarePayload {
-	entries: MiddlewareSpec[];
 }
 
 // ── Core lifecycle events ───────────────────────────────────────────
@@ -250,28 +136,3 @@ export const Deploy = {
 };
 
 export const Remove = defineEvent<RemovePayload>("core", "remove");
-
-export const Codegen = {
-	Worker: defineEvent<CodegenWorkerPayload>("core", "codegen.worker"),
-	Wrangler: defineEvent<CodegenWranglerPayload>("core", "codegen.wrangler"),
-	Env: defineEvent<CodegenEnvPayload>("core", "codegen.env"),
-	ViteConfig: defineEvent<CodegenViteConfigPayload>(
-		"core",
-		"codegen.vite-config",
-	),
-	Entry: defineEvent<CodegenEntryPayload>("core", "codegen.entry"),
-	Html: defineEvent<CodegenHtmlPayload>("core", "codegen.html"),
-	AppCss: defineEvent<CodegenAppCssPayload>("core", "codegen.app-css"),
-	RoutesDts: defineEvent<CodegenRoutesDtsPayload>("core", "codegen.routes-dts"),
-};
-
-export const Composition = {
-	Providers: defineEvent<CompositionProvidersPayload>(
-		"core",
-		"composition.providers",
-	),
-	Middleware: defineEvent<CompositionMiddlewarePayload>(
-		"core",
-		"composition.middleware",
-	),
-};

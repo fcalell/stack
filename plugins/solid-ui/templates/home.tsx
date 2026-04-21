@@ -1,4 +1,4 @@
-import { Card } from "@fcalell/ui/components/card";
+import { Card } from "@fcalell/plugin-solid-ui/components/card";
 
 export default function Home() {
 	return (

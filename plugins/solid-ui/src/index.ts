@@ -1,9 +1,11 @@
-import { createPlugin } from "@fcalell/cli";
+import { createPlugin, type } from "@fcalell/cli";
 import type { TsExpression } from "@fcalell/cli/ast";
-import { Codegen, Composition, Init, Remove } from "@fcalell/cli/events";
+import { Generate, Init } from "@fcalell/cli/events";
 import { solid } from "@fcalell/plugin-solid";
-import { defaultFonts, type FontEntry } from "@fcalell/ui/fonts-manifest";
-import type { SolidUiOptions } from "./types";
+import { vite } from "@fcalell/plugin-vite";
+import { aggregateAppCss } from "./node/codegen";
+import { defaultFonts, type FontEntry } from "./node/fonts";
+import { type CodegenAppCssPayload, solidUiOptionsSchema } from "./types";
 
 const ROLE_FALLBACKS: Record<NonNullable<FontEntry["role"]>, string[]> = {
 	sans: ["ui-sans-serif", "system-ui", "-apple-system", "sans-serif"],
@@ -74,25 +76,39 @@ function fontsToTokenCss(fonts: FontEntry[]): string | null {
 
 export const solidUi = createPlugin("solid-ui", {
 	label: "Design System",
-	depends: [solid.events.SolidConfigured],
+	events: {
+		AppCss: type<CodegenAppCssPayload>(),
+	},
+	after: [solid.events.SolidConfigured],
 
-	config(options: SolidUiOptions = {}) {
-		return options;
+	schema: solidUiOptionsSchema,
+
+	dependencies: {
+		tailwindcss: "^4.1.7",
+	},
+	devDependencies: {
+		"@tailwindcss/vite": "^4.1.7",
 	},
 
-	register(ctx, bus) {
+	register(ctx, bus, events) {
 		bus.on(Init.Scaffold, (p) => {
-			p.files.push({
-				source: new URL("../templates/home.tsx", import.meta.url),
-				target: "src/app/pages/index.tsx",
-			});
-			p.dependencies["@fcalell/ui"] = "workspace:*";
+			p.files.push(ctx.scaffold("home.tsx", "src/app/pages/index.tsx"));
 		});
 
-		bus.on(Codegen.ViteConfig, (p) => {
+		bus.on(vite.events.ViteConfig, (p) => {
+			p.imports.push({
+				source: "@tailwindcss/vite",
+				default: "tailwindcss",
+			});
+			p.pluginCalls.push({
+				kind: "call",
+				callee: { kind: "identifier", name: "tailwindcss" },
+				args: [],
+			});
+
 			const fonts = ctx.options?.fonts ?? defaultFonts;
 			p.imports.push({
-				source: "@fcalell/plugin-vite/preset",
+				source: "@fcalell/plugin-solid-ui/node/fonts",
 				named: ["themeFontsPlugin"],
 			});
 			p.pluginCalls.push({
@@ -105,32 +121,50 @@ export const solidUi = createPlugin("solid-ui", {
 			});
 		});
 
-		bus.on(Codegen.AppCss, (p) => {
-			p.imports.push("@fcalell/ui/globals.css");
+		bus.on(events.AppCss, (p) => {
+			p.imports.push("tailwindcss");
+			p.imports.push("@fcalell/plugin-solid-ui/globals.css");
 			const fonts = ctx.options?.fonts ?? defaultFonts;
 			const layer = fontsToTokenCss(fonts);
 			if (layer) p.layers.push({ name: "base", content: layer });
 		});
 
+		bus.on(Generate, async (p) => {
+			const appCssPayload = await bus.emit(events.AppCss, {
+				imports: [],
+				layers: [],
+			});
+			const appCssSource = aggregateAppCss(appCssPayload);
+			if (appCssSource !== null) {
+				p.files.push({ path: ".stack/app.css", content: appCssSource });
+			}
+		});
+
 		// MetaProvider wraps the app so <Title> / <Meta> from any page can
 		// contribute to <head>. Toaster renders as a sibling alongside the
-		// wrapped children so solid-sonner anchors at the root.
-		bus.on(Composition.Providers, (p) => {
+		// wrapped children so solid-sonner anchors at the root. order = 0 so
+		// MetaProvider stays outermost even as more providers compose in.
+		bus.on(solid.events.Providers, (p) => {
 			p.providers.push({
 				imports: [
-					{ source: "@fcalell/ui/meta", named: ["MetaProvider"] },
-					{ source: "@fcalell/ui/components/toast", named: ["Toaster"] },
+					{
+						source: "@fcalell/plugin-solid-ui/meta",
+						named: ["MetaProvider"],
+					},
+					{
+						source: "@fcalell/plugin-solid-ui/components/toast",
+						named: ["Toaster"],
+					},
 				],
 				wrap: { identifier: "MetaProvider" },
 				siblings: [{ kind: "jsx", tag: "Toaster", props: [], children: [] }],
-				order: 100,
+				order: 0,
 			});
 		});
 
-		bus.on(Remove, (p) => {
-			p.dependencies.push("@fcalell/ui");
-			// Don't delete src/app/ — plugin-solid owns that directory
-		});
+		// No Remove handler needed: plugin-solid-ui has no consumer-owned
+		// surface to tear down — plugin-solid owns `src/app/` and the package
+		// itself is removed from `package.json` by the CLI remove command.
 	},
 });
 

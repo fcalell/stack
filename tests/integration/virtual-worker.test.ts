@@ -1,14 +1,11 @@
 import type { RegisterContext } from "@fcalell/cli";
-import { aggregateMiddleware, aggregateWorker } from "@fcalell/cli/codegen";
-import {
-	Codegen,
-	Composition,
-	createEventBus,
-	type Event,
-	type EventBus,
-} from "@fcalell/cli/events";
+import { createEventBus, type Event, type EventBus } from "@fcalell/cli/events";
 import { createMockCtx } from "@fcalell/cli/testing";
 import { api } from "@fcalell/plugin-api";
+import {
+	aggregateMiddleware,
+	aggregateWorker,
+} from "@fcalell/plugin-api/node/codegen";
 import { auth } from "@fcalell/plugin-auth";
 import { db } from "@fcalell/plugin-db";
 import { vite } from "@fcalell/plugin-vite";
@@ -20,6 +17,9 @@ interface MockFs {
 
 interface AnyCliPlugin {
 	cli: {
+		name: string;
+		package: string;
+		callbacks: Record<string, unknown>;
 		register: (
 			ctx: RegisterContext<unknown>,
 			bus: EventBus,
@@ -29,58 +29,55 @@ interface AnyCliPlugin {
 	events: Record<string, Event<unknown>>;
 }
 
-function makeCtx(fs: MockFs, options: unknown): RegisterContext<unknown> {
-	return createMockCtx({
-		options,
-		fileExists: async (p: string) => fs[p] ?? false,
-	});
+interface PluginEntry {
+	plugin: AnyCliPlugin;
+	options: unknown;
 }
 
-function registerPlugin(
-	plugin: AnyCliPlugin,
-	bus: EventBus,
-	fs: MockFs,
-	options: unknown,
-): void {
-	plugin.cli.register(makeCtx(fs, options), bus, plugin.events);
-}
-
-function registerDb(bus: EventBus, fs: MockFs, options: unknown): void {
-	registerPlugin(db as unknown as AnyCliPlugin, bus, fs, options);
-}
-
-function registerAuth(bus: EventBus, fs: MockFs, options: unknown): void {
-	registerPlugin(auth as unknown as AnyCliPlugin, bus, fs, options);
-}
-
-function registerApi(bus: EventBus, fs: MockFs, options: unknown): void {
-	registerPlugin(api as unknown as AnyCliPlugin, bus, fs, options);
-}
-
-function registerVite(bus: EventBus, fs: MockFs, options: unknown): void {
-	registerPlugin(vite as unknown as AnyCliPlugin, bus, fs, options);
+function registerAll(bus: EventBus, fs: MockFs, entries: PluginEntry[]): void {
+	const discoveredPlugins = entries.map(({ plugin }) => ({
+		name: plugin.cli.name,
+		package: plugin.cli.package,
+		callbacks: plugin.cli.callbacks as Record<
+			string,
+			{ readonly __type?: unknown; readonly __optional?: boolean }
+		>,
+	}));
+	for (const { plugin, options } of entries) {
+		const ctx = createMockCtx({
+			options,
+			fileExists: async (p: string) => fs[p] ?? false,
+			discoveredPlugins,
+		});
+		plugin.cli.register(ctx, bus, plugin.events);
+	}
 }
 
 async function runPipeline(
 	bus: EventBus,
-	opts: { domain?: string } = {},
+	opts: { cors?: string[] } = {},
 ): Promise<string> {
-	// Match the order in generate.ts: Composition.Middleware seeds the worker
-	// payload before Codegen.Worker fires, so plugin-api's consumer-middleware
-	// contribution lands in the chain.
-	const middleware = await bus.emit(Composition.Middleware, { entries: [] });
+	// Match plugin-api's Generate handler ordering: api.events.Middleware seeds
+	// the Worker payload before api.events.Worker fires, so ordered middleware
+	// imports/calls land in the chain.
+	const middleware = await bus.emit(api.events.Middleware, { entries: [] });
 	const aggregated = aggregateMiddleware(middleware);
 
-	const payload = await bus.emit(Codegen.Worker, {
+	const payload = await bus.emit(api.events.Worker, {
 		imports: aggregated?.imports ?? [],
 		base: null,
+		pluginRuntimes: [],
 		middlewareChain: aggregated?.calls ?? [],
 		handler: null,
-		domain: opts.domain ?? "",
-		cors: [],
+		cors: opts.cors ?? [],
 	});
 	return aggregateWorker(payload);
 }
+
+const dbPlugin = db as unknown as AnyCliPlugin;
+const authPlugin = auth as unknown as AnyCliPlugin;
+const apiPlugin = api as unknown as AnyCliPlugin;
+const vitePlugin = vite as unknown as AnyCliPlugin;
 
 describe("virtual worker codegen pipeline (event-driven)", () => {
 	it("full-stack config produces correct imports and builder chain", async () => {
@@ -92,11 +89,15 @@ describe("virtual worker codegen pipeline (event-driven)", () => {
 			"src/worker/routes": true,
 		};
 
-		registerDb(bus, fs, { dialect: "d1", databaseId: "test-id" });
-		registerAuth(bus, fs, { secretVar: "AUTH_SECRET" });
-		registerApi(bus, fs, { cors: "https://example.com" });
+		registerAll(bus, fs, [
+			{ plugin: dbPlugin, options: { dialect: "d1", databaseId: "test-id" } },
+			{ plugin: authPlugin, options: { secretVar: "AUTH_SECRET" } },
+			{ plugin: apiPlugin, options: {} },
+		]);
 
-		const result = await runPipeline(bus, { domain: "example.com" });
+		const result = await runPipeline(bus, {
+			cors: ["https://example.com"],
+		});
 
 		expect(result).toContain(
 			'import createWorker from "@fcalell/plugin-api/runtime"',
@@ -129,8 +130,10 @@ describe("virtual worker codegen pipeline (event-driven)", () => {
 		const bus = createEventBus();
 		const fs: MockFs = { "src/schema": true, "src/worker/routes": true };
 
-		registerDb(bus, fs, { dialect: "d1", databaseId: "test-id" });
-		registerApi(bus, fs, {});
+		registerAll(bus, fs, [
+			{ plugin: dbPlugin, options: { dialect: "d1", databaseId: "test-id" } },
+			{ plugin: apiPlugin, options: {} },
+		]);
 
 		const result = await runPipeline(bus);
 
@@ -142,11 +145,13 @@ describe("virtual worker codegen pipeline (event-driven)", () => {
 
 	it("middleware import is included only when middleware.ts exists", async () => {
 		const busWith = createEventBus();
-		registerApi(busWith, { "src/worker/middleware.ts": true }, {});
+		registerAll(busWith, { "src/worker/middleware.ts": true }, [
+			{ plugin: apiPlugin, options: {} },
+		]);
 		const withMiddleware = await runPipeline(busWith);
 
 		const busWithout = createEventBus();
-		registerApi(busWithout, {}, {});
+		registerAll(busWithout, {}, [{ plugin: apiPlugin, options: {} }]);
 		const withoutMiddleware = await runPipeline(busWithout);
 
 		expect(withMiddleware).toContain("middleware");
@@ -155,13 +160,17 @@ describe("virtual worker codegen pipeline (event-driven)", () => {
 
 	it("callback imports are included only when auth callback file exists", async () => {
 		const busWith = createEventBus();
-		registerAuth(busWith, { "src/worker/plugins/auth.ts": true }, {});
-		registerApi(busWith, {}, {});
+		registerAll(busWith, { "src/worker/plugins/auth.ts": true }, [
+			{ plugin: authPlugin, options: {} },
+			{ plugin: apiPlugin, options: {} },
+		]);
 		const withCallbacks = await runPipeline(busWith);
 
 		const busWithout = createEventBus();
-		registerAuth(busWithout, {}, {});
-		registerApi(busWithout, {}, {});
+		registerAll(busWithout, {}, [
+			{ plugin: authPlugin, options: {} },
+			{ plugin: apiPlugin, options: {} },
+		]);
 		const withoutCallbacks = await runPipeline(busWithout);
 
 		expect(withCallbacks).toContain("authCallbacks");
@@ -170,11 +179,13 @@ describe("virtual worker codegen pipeline (event-driven)", () => {
 
 	it("routes import is included when routes dir exists", async () => {
 		const busWith = createEventBus();
-		registerApi(busWith, { "src/worker/routes": true }, {});
+		registerAll(busWith, { "src/worker/routes": true }, [
+			{ plugin: apiPlugin, options: {} },
+		]);
 		const withRoutes = await runPipeline(busWith);
 
 		const busWithout = createEventBus();
-		registerApi(busWithout, {}, {});
+		registerAll(busWithout, {}, [{ plugin: apiPlugin, options: {} }]);
 		const withoutRoutes = await runPipeline(busWithout);
 
 		expect(withRoutes).toContain(
@@ -185,77 +196,56 @@ describe("virtual worker codegen pipeline (event-driven)", () => {
 		expect(withoutRoutes).toContain(".handler()");
 	});
 
-	it("inlines domain and cors from vite + domain signals", async () => {
+	it("inlines cors from payload-supplied origins", async () => {
 		const bus = createEventBus();
-		registerVite(bus, {}, { port: 3000 });
-		registerApi(bus, {}, {});
+		registerAll(bus, {}, [
+			{ plugin: vitePlugin, options: { port: 3000 } },
+			{ plugin: apiPlugin, options: {} },
+		]);
 
-		const result = await runPipeline(bus, { domain: "example.com" });
+		const result = await runPipeline(bus, {
+			cors: [
+				"https://example.com",
+				"https://app.example.com",
+				"http://localhost:3000",
+			],
+		});
 
-		expect(result).toContain("example.com");
 		expect(result).toContain("http://localhost:3000");
 		expect(result).toContain("https://example.com");
 		expect(result).toContain("https://app.example.com");
 	});
 
-	it("merges explicit api cors with vite-derived origins", async () => {
+	it("does not add CORS when payload is empty", async () => {
 		const bus = createEventBus();
-		registerVite(bus, {}, { port: 4000 });
-		registerApi(bus, {}, { cors: ["https://custom.example.com"] });
-
-		const result = await runPipeline(bus);
-
-		expect(result).toContain("https://custom.example.com");
-		expect(result).toContain("http://localhost:4000");
-	});
-
-	it("does not duplicate existing localhost origin", async () => {
-		const bus = createEventBus();
-		registerVite(bus, {}, { port: 3000 });
-		registerApi(bus, {}, { cors: ["http://localhost:3000"] });
-
-		const result = await runPipeline(bus);
-
-		const corsMatches = result.match(/http:\/\/localhost:3000/g);
-		expect(corsMatches).toHaveLength(1);
-	});
-
-	it("does not add CORS when no frontend signal is present", async () => {
-		const bus = createEventBus();
-		registerApi(bus, {}, {});
+		registerAll(bus, {}, [{ plugin: apiPlugin, options: {} }]);
 
 		const result = await runPipeline(bus);
 
 		expect(result).not.toContain("cors");
 	});
 
-	it("sets auth sameSite=none when a frontend contributes localhost cors", async () => {
+	it("sets auth sameSite=none when payload cors includes localhost", async () => {
 		const bus = createEventBus();
-		registerVite(bus, {}, { port: 3000 });
-		registerAuth(
-			bus,
-			{ "src/worker/plugins/auth.ts": true },
-			{
-				secretVar: "AUTH_SECRET",
-			},
-		);
-		registerApi(bus, {}, {});
+		registerAll(bus, { "src/worker/plugins/auth.ts": true }, [
+			{ plugin: vitePlugin, options: { port: 3000 } },
+			{ plugin: authPlugin, options: { secretVar: "AUTH_SECRET" } },
+			{ plugin: apiPlugin, options: {} },
+		]);
 
-		const result = await runPipeline(bus);
+		const result = await runPipeline(bus, {
+			cors: ["http://localhost:3000"],
+		});
 
 		expect(result).toContain('sameSite: "none"');
 	});
 
 	it("does not set sameSite when no frontend signal is present", async () => {
 		const bus = createEventBus();
-		registerAuth(
-			bus,
-			{ "src/worker/plugins/auth.ts": true },
-			{
-				secretVar: "AUTH_SECRET",
-			},
-		);
-		registerApi(bus, {}, {});
+		registerAll(bus, { "src/worker/plugins/auth.ts": true }, [
+			{ plugin: authPlugin, options: { secretVar: "AUTH_SECRET" } },
+			{ plugin: apiPlugin, options: {} },
+		]);
 
 		const result = await runPipeline(bus);
 
@@ -264,8 +254,10 @@ describe("virtual worker codegen pipeline (event-driven)", () => {
 
 	it("generated code has correct structure (imports, builder chain, export)", async () => {
 		const bus = createEventBus();
-		registerDb(bus, {}, {});
-		registerApi(bus, {}, {});
+		registerAll(bus, {}, [
+			{ plugin: dbPlugin, options: { dialect: "d1", databaseId: "test-id" } },
+			{ plugin: apiPlugin, options: {} },
+		]);
 
 		const result = await runPipeline(bus);
 		const lines = result.split("\n");
@@ -279,8 +271,10 @@ describe("virtual worker codegen pipeline (event-driven)", () => {
 
 	it("throws when two plugins claim the worker root", async () => {
 		const bus = createEventBus();
-		registerApi(bus, {}, {});
-		registerApi(bus, {}, {});
+		registerAll(bus, {}, [
+			{ plugin: apiPlugin, options: {} },
+			{ plugin: apiPlugin, options: {} },
+		]);
 
 		await expect(runPipeline(bus)).rejects.toThrow(
 			/cannot claim the worker root/,

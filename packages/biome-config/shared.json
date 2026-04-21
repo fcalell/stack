@@ -10,6 +10,7 @@
 			"!**/.turbo",
 			"!**/.wrangler",
 			"!**/.output",
+			"!**/.stack",
 			"!**/storybook-static",
 			"!**/coverage",
 			"!**/routeTree.gen.ts"

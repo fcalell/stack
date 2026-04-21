@@ -33,9 +33,14 @@ export interface ValidationResult {
 // cookie prefix / fallback HTML title; `domain` drives CORS and auth
 // trustedOrigins. Anything that only matters to a single plugin's domain
 // (HTML metadata, typography, …) lives on that plugin's options instead.
+//
+// `origins` overrides the auto-derived CORS allow-list. When omitted, the
+// CLI derives `https://${domain}`, `https://app.${domain}`, and (when a
+// frontend dev server is present) the vite dev-port localhost origin.
 export interface AppConfig {
 	name: string;
 	domain: string;
+	origins?: string[];
 }
 
 // ── Stack config ────────────────────────────────────────────────────
@@ -98,6 +103,20 @@ export function defineConfig<const T extends readonly PluginConfig[]>(input: {
 
 			const seen = new Set<string>();
 			for (const plugin of input.plugins) {
+				if (typeof plugin?.__plugin !== "string" || plugin.__plugin === "") {
+					errors.push({
+						plugin: "(unknown)",
+						message:
+							"Plugin entry is missing __plugin. Use the factory returned by createPlugin() instead of constructing config objects by hand.",
+					});
+					continue;
+				}
+				if (typeof plugin.__package !== "string" || plugin.__package === "") {
+					errors.push({
+						plugin: plugin.__plugin,
+						message: `Plugin "${plugin.__plugin}" is missing __package. Call its factory (e.g. ${plugin.__plugin}()) — createPlugin() stamps __package automatically; hand-authored entries must set it explicitly.`,
+					});
+				}
 				if (seen.has(plugin.__plugin)) {
 					errors.push({
 						plugin: plugin.__plugin,
@@ -123,5 +142,5 @@ export type {
 	PluginExport,
 	RegisterContext,
 } from "#lib/create-plugin";
-export { callback, createPlugin } from "#lib/create-plugin";
-export { fromSchema } from "#lib/plugin-config";
+export { callback, createPlugin, type } from "#lib/create-plugin";
+export type { Event, EventBus, EventTypeMarker } from "#lib/event-bus";

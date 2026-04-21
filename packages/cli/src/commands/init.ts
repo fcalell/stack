@@ -51,7 +51,6 @@ async function run(dir: string, options: InitOptions): Promise<void> {
 	intro(`stack init ${basename(dir)}`);
 
 	const available = await loadAvailablePlugins();
-	const selectablePlugins = available.filter((p) => !p.cli.implicit);
 
 	// Non-interactive mode triggers when any flag is provided OR stdin is not a TTY.
 	// This keeps interactive `stack init` behaviour unchanged while letting CI and
@@ -71,7 +70,7 @@ async function run(dir: string, options: InitOptions): Promise<void> {
 		selectedPlugins = resolvePluginSelection(options.plugins, available);
 	} else if (!nonInteractive) {
 		selectedPlugins = await multi("Which plugins do you want?", [
-			...selectablePlugins.map((p) => ({
+			...available.map((p) => ({
 				label: `${p.cli.label}  (${p.cli.package})`,
 				value: p.name,
 			})),
@@ -213,8 +212,7 @@ function resolvePluginSelection(
 	requested: string[],
 	available: DiscoveredPlugin[],
 ): string[] {
-	const selectable = available.filter((p) => !p.cli.implicit);
-	const validNames = new Set(selectable.map((p) => p.name));
+	const validNames = new Set(available.map((p) => p.name));
 
 	const unknown = requested.filter((n) => !validNames.has(n));
 	if (unknown.length > 0) {

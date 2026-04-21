@@ -1,16 +1,51 @@
-import { createPlugin } from "@fcalell/cli";
-import { Codegen, Generate, Init, Remove } from "@fcalell/cli/events";
+import { createPlugin, type } from "@fcalell/cli";
+import { Generate, Init, Remove } from "@fcalell/cli/events";
 import { vite } from "@fcalell/plugin-vite";
-import { writeRoutesDts } from "./node/routes-core";
-import type { SolidOptions } from "./types";
+import {
+	aggregateEntry,
+	aggregateHtml,
+	aggregateProviders,
+} from "./node/codegen";
+import { buildRoutesDts, writeRoutesDts } from "./node/routes-core";
+import type {
+	CodegenEntryPayload,
+	CodegenHtmlPayload,
+	CodegenRoutesDtsPayload,
+	CompositionProvidersPayload,
+	SolidOptions,
+} from "./types";
+import { solidOptionsSchema } from "./types";
+
+type RoutesConfig = { enabled: false } | { enabled: true; pagesDir: string };
+
+// File-based routing is on by default. `routes: false` disables it entirely;
+// `routes: { pagesDir }` customises the directory.
+function resolveRoutesConfig(options: SolidOptions | undefined): RoutesConfig {
+	const raw = options?.routes;
+	if (raw === false) return { enabled: false };
+	const pagesDir =
+		raw && typeof raw === "object"
+			? (raw.pagesDir ?? "src/app/pages")
+			: "src/app/pages";
+	return { enabled: true, pagesDir };
+}
 
 export const solid = createPlugin("solid", {
 	label: "SolidJS",
-	events: ["SolidConfigured"],
-	depends: [vite.events.ViteConfigured],
+	events: {
+		SolidConfigured: type<void>(),
+		Entry: type<CodegenEntryPayload>(),
+		Html: type<CodegenHtmlPayload>(),
+		Providers: type<CompositionProvidersPayload>(),
+		RoutesDts: type<CodegenRoutesDtsPayload>(),
+	},
+	after: [vite.events.ViteConfigured],
 
-	config(options: SolidOptions = {}) {
-		return options;
+	schema: solidOptionsSchema,
+
+	dependencies: {
+		"@fcalell/plugin-solid": "workspace:*",
+		"solid-js": "^1.9.0",
 	},
 
 	register(ctx, bus, events) {
@@ -19,37 +54,31 @@ export const solid = createPlugin("solid", {
 			// home scaffold with the same target. Skip our bare version so
 			// writeScaffoldSpecs never trips on a duplicate target.
 			if (!ctx.hasPlugin("solid-ui")) {
-				p.files.push({
-					source: new URL("../templates/home.tsx", import.meta.url),
-					target: "src/app/pages/index.tsx",
-				});
+				p.files.push(ctx.scaffold("home.tsx", "src/app/pages/index.tsx"));
 			}
-			p.dependencies["@fcalell/plugin-solid"] = "workspace:*";
-			p.dependencies["solid-js"] = "^1.9.0";
 		});
 
 		bus.on(Remove, (p) => {
 			p.files.push("src/app/");
-			p.dependencies.push("@fcalell/plugin-solid", "solid-js");
 		});
 
-		bus.on(Codegen.ViteConfig, (p) => {
-			const pagesDir =
-				ctx.options?.routes && typeof ctx.options.routes === "object"
-					? (ctx.options.routes.pagesDir ?? "src/app/pages")
-					: "src/app/pages";
+		bus.on(vite.events.ViteConfig, (p) => {
 			p.imports.push({
 				source: "vite-plugin-solid",
 				default: "solidPlugin",
-			});
-			p.imports.push({
-				source: "@fcalell/plugin-solid/node/vite-routes",
-				named: ["routesPlugin"],
 			});
 			p.pluginCalls.push({
 				kind: "call",
 				callee: { kind: "identifier", name: "solidPlugin" },
 				args: [],
+			});
+
+			const routes = resolveRoutesConfig(ctx.options);
+			if (!routes.enabled) return;
+
+			p.imports.push({
+				source: "@fcalell/plugin-solid/node/vite-routes",
+				named: ["routesPlugin"],
 			});
 			p.pluginCalls.push({
 				kind: "call",
@@ -60,7 +89,7 @@ export const solid = createPlugin("solid", {
 						properties: [
 							{
 								key: "pagesDir",
-								value: { kind: "string", value: pagesDir },
+								value: { kind: "string", value: routes.pagesDir },
 							},
 						],
 					},
@@ -68,21 +97,8 @@ export const solid = createPlugin("solid", {
 			});
 		});
 
-		bus.on(Codegen.RoutesDts, (p) => {
-			// Mirrors the direct writeRoutesDts call below; Phase 5 wires the
-			// aggregator-backed writer.
-			if (ctx.options?.routes === false) {
-				p.pagesDir = null;
-				return;
-			}
-			const routesConfig =
-				ctx.options?.routes && typeof ctx.options.routes === "object"
-					? ctx.options.routes
-					: {};
-			p.pagesDir = routesConfig.pagesDir ?? "src/app/pages";
-		});
-
-		bus.on(Codegen.Entry, (p) => {
+		// Contributes the mount expression to plugin-solid's own Entry event.
+		bus.on(events.Entry, (p) => {
 			p.imports.push({ source: "./app.css", sideEffect: true });
 			p.imports.push({
 				source: "solid-js/web",
@@ -138,8 +154,11 @@ export const solid = createPlugin("solid", {
 			};
 		});
 
-		bus.on(Codegen.Html, (p) => {
+		// Contributes <head>/<body> defaults to plugin-solid's own Html event.
+		// Shell template lives in this plugin since solid owns the HTML pipeline.
+		bus.on(events.Html, (p) => {
 			const opts = ctx.options ?? {};
+			p.shell = ctx.template("shell.html");
 			p.head.push({
 				kind: "html-attr",
 				name: "lang",
@@ -177,16 +196,60 @@ export const solid = createPlugin("solid", {
 			});
 		});
 
-		bus.on(Generate, async (_p) => {
-			if (ctx.options?.routes === false) return;
+		bus.on(Generate, async (p) => {
+			// Emit plugin-owned events, aggregate, push files into the shared
+			// accumulator. Ordering mirrors the previous generate.ts sequence
+			// so snapshot output stays stable.
+			const providersPayload = await bus.emit(events.Providers, {
+				providers: [],
+			});
+			const providersSource = aggregateProviders(providersPayload);
+			if (providersSource !== null) {
+				p.files.push({
+					path: ".stack/virtual-providers.tsx",
+					content: providersSource,
+				});
+			}
 
-			const routesConfig =
-				ctx.options?.routes && typeof ctx.options.routes === "object"
-					? ctx.options.routes
-					: {};
-			const pagesDirRel = routesConfig.pagesDir ?? "src/app/pages";
+			const entryPayload = await bus.emit(events.Entry, {
+				imports: [],
+				mountExpression: null,
+			});
+			const entrySource = aggregateEntry(entryPayload);
+			if (entrySource !== null) {
+				p.files.push({ path: ".stack/entry.tsx", content: entrySource });
+			}
 
-			writeRoutesDts(ctx.cwd, pagesDirRel);
+			const htmlPayload = await bus.emit(events.Html, {
+				shell: null,
+				head: [],
+				bodyEnd: [],
+			});
+			const htmlSource = await aggregateHtml(htmlPayload);
+			if (htmlSource !== null) {
+				p.files.push({ path: ".stack/index.html", content: htmlSource });
+			}
+
+			const routes = resolveRoutesConfig(ctx.options);
+			const routesPayload = await bus.emit(events.RoutesDts, {
+				pagesDir: routes.enabled ? routes.pagesDir : null,
+			});
+			if (routesPayload.pagesDir) {
+				// Directory-presence check lives in buildRoutesDts; swallow the
+				// error so a fresh consumer without src/app/pages yet doesn't
+				// block `stack generate`. writeRoutesDts covers the happy path.
+				try {
+					const dts = buildRoutesDts(ctx.cwd, routesPayload.pagesDir);
+					p.files.push({ path: ".stack/routes.d.ts", content: dts });
+				} catch {
+					// pagesDir doesn't exist yet — nothing to write.
+				}
+				// Keep writeRoutesDts for parity with prior behavior (mkdirs
+				// .stack/ as a side effect when the CLI hasn't yet).
+				try {
+					writeRoutesDts(ctx.cwd, routesPayload.pagesDir);
+				} catch {}
+			}
 
 			await bus.emit(events.SolidConfigured);
 		});

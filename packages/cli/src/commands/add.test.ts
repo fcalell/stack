@@ -28,7 +28,7 @@ let mockConfigError: unknown = null;
 vi.mock("#lib/discovery", () => ({
 	loadAvailablePlugins: vi.fn(async () => mockAvailable),
 	dependencyNames: (p: DiscoveredPlugin) =>
-		p.cli.depends
+		p.cli.after
 			.filter((d) => d.source !== "core")
 			.map((d) => d.source)
 			.filter((s, i, a) => a.indexOf(s) === i),
@@ -45,7 +45,6 @@ vi.mock("#lib/config", () => ({
 function makePlugin(
 	name: string,
 	opts: {
-		implicit?: boolean;
 		label?: string;
 		register?: DiscoveredPlugin["cli"]["register"];
 	} = {},
@@ -55,9 +54,8 @@ function makePlugin(
 		cli: {
 			name,
 			label: opts.label ?? `${name} plugin`,
-			implicit: opts.implicit ?? false,
 			package: `@fcalell/plugin-${name}`,
-			depends: [],
+			after: [],
 			callbacks: {},
 			commands: {},
 			register: opts.register ?? (() => {}),
@@ -144,6 +142,7 @@ describe("add()", () => {
 						p.files.push({
 							source: pathToFileURL(templatePath),
 							target: "src/worker/plugins/auth.ts",
+							plugin: "auth",
 						});
 					});
 				},
@@ -219,7 +218,7 @@ describe("add()", () => {
 				...makePlugin("auth", { label: "Auth" }),
 				cli: {
 					...makePlugin("auth", { label: "Auth" }).cli,
-					depends: [dbEvent],
+					after: [dbEvent],
 				},
 			},
 			makePlugin("db"),

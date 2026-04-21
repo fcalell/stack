@@ -8,7 +8,6 @@ import {
 	sortByDependencies,
 } from "@fcalell/cli/discovery";
 import {
-	Codegen,
 	createEventBus,
 	Deploy,
 	type EventBus,
@@ -19,9 +18,11 @@ import {
 import { createMockCtx } from "@fcalell/cli/testing";
 import { api } from "@fcalell/plugin-api";
 import { auth } from "@fcalell/plugin-auth";
+import { cloudflare } from "@fcalell/plugin-cloudflare";
 import { db } from "@fcalell/plugin-db";
 import { solid } from "@fcalell/plugin-solid";
 import { solidUi } from "@fcalell/plugin-solid-ui";
+import { vite } from "@fcalell/plugin-vite";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 function registerPlugins(
@@ -56,9 +57,11 @@ describe("E2E consumer journey (db + auth + api + solid + solid-ui)", () => {
 	const config = defineConfig({
 		app: { name: "app", domain: "app.example.com" },
 		plugins: [
+			cloudflare(),
 			db({ dialect: "d1", databaseId: "app-db" }),
 			auth({ cookies: { prefix: "app" }, organization: true }),
-			api({ cors: "https://app.example.com", prefix: "/rpc" }),
+			api({ prefix: "/rpc" }),
+			vite(),
 			solid(),
 			solidUi(),
 		],
@@ -118,12 +121,12 @@ describe("E2E consumer journey (db + auth + api + solid + solid-ui)", () => {
 		expect(scaffold.gitignore).toContain(".stack");
 	});
 
-	it("Codegen.Wrangler collects bindings + secrets for every runtime-critical plugin", async () => {
+	it("cloudflare.events.Wrangler collects bindings + secrets for every runtime-critical plugin", async () => {
 		const discovered = await discoverPlugins(config);
 		const sorted = sortByDependencies(discovered);
 		const bus = registerPlugins(sorted, config, cwd);
 
-		const wrangler = await bus.emit(Codegen.Wrangler, {
+		const wrangler = await bus.emit(cloudflare.events.Wrangler, {
 			bindings: [],
 			routes: [],
 			vars: {},
@@ -165,12 +168,12 @@ describe("E2E consumer journey (db + auth + api + solid + solid-ui)", () => {
 		}
 	});
 
-	it("Codegen.ViteConfig collects Vite plugin contributions", async () => {
+	it("vite.events.ViteConfig collects Vite plugin contributions", async () => {
 		const discovered = await discoverPlugins(config);
 		const sorted = sortByDependencies(discovered);
 		const bus = registerPlugins(sorted, config, cwd);
 
-		const cfg = await bus.emit(Codegen.ViteConfig, {
+		const cfg = await bus.emit(vite.events.ViteConfig, {
 			imports: [],
 			pluginCalls: [],
 			resolveAliases: [],
@@ -186,7 +189,11 @@ describe("E2E consumer journey (db + auth + api + solid + solid-ui)", () => {
 		const sorted = sortByDependencies(discovered);
 		const bus = registerPlugins(sorted, config, cwd);
 
-		const removal = await bus.emit(Remove, { files: [], dependencies: [] });
+		const removal = await bus.emit(Remove, {
+			files: [],
+			dependencies: [],
+			devDependencies: [],
+		});
 
 		expect(removal.files).toContain("src/schema/");
 		expect(removal.files).toContain("src/worker/plugins/auth.ts");
@@ -244,19 +251,19 @@ describe("E2E minimal journey (api only)", () => {
 	it("api-only config generates with no bindings and a wrangler step", async () => {
 		const config = defineConfig({
 			app: { name: "api-only", domain: "api.example.com" },
-			plugins: [api()],
+			plugins: [cloudflare(), api()],
 		});
 		const discovered = await discoverPlugins(config);
 		const sorted = sortByDependencies(discovered);
 		const bus = registerPlugins(sorted, config, cwd);
 
-		const gen = await bus.emit(Generate, { files: [] });
+		const gen = await bus.emit(Generate, { files: [], postWrite: [] });
 		// api plugin contributes a route barrel file via Generate.
 		expect(gen.files.map((f) => f.path)).toContain(
 			"src/worker/routes/index.ts",
 		);
 
-		const wrangler = await bus.emit(Codegen.Wrangler, {
+		const wrangler = await bus.emit(cloudflare.events.Wrangler, {
 			bindings: [],
 			routes: [],
 			vars: {},

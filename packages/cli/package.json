@@ -5,6 +5,7 @@
 	"sideEffects": false,
 	"imports": {
 		"#ast": "./src/ast/index.ts",
+		"#ast/*": "./src/ast/*.ts",
 		"#*": "./src/*.ts"
 	},
 	"exports": {

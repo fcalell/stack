@@ -1,15 +1,9 @@
 // Canonical RuntimePlugin protocol shared by all plugins that ship a worker runtime.
 // Each runtime plugin contributes typed context to the request chain and may
-// optionally register oRPC routes, HTTP routes, or Cloudflare Workers event handlers.
+// optionally register oRPC routes or intercept HTTP requests.
 //
 // The `procedure` argument of `routes()` is framework-agnostic (`unknown`) here;
 // plugin-api narrows it to its own procedure builder at the call site.
-
-export interface RuntimePluginEventHandlers {
-	scheduled?(controller: unknown, env: unknown, ctx: unknown): Promise<void>;
-	queue?(batch: unknown, env: unknown, ctx: unknown): Promise<void>;
-	email?(message: unknown, env: unknown, ctx: unknown): Promise<void>;
-}
 
 export interface RuntimePlugin<
 	TName extends string = string,
@@ -20,7 +14,6 @@ export interface RuntimePlugin<
 	validateEnv?(env: unknown): void;
 	context(env: unknown, upstream: TDeps): TProvides | Promise<TProvides>;
 	routes?(procedure: unknown): Record<string, unknown>;
-	handlers?(): RuntimePluginEventHandlers;
 	// Return a Response to claim the request; return null/undefined to pass.
 	// Tried in registration order before the RPC handler runs, so a plugin
 	// that owns a URL prefix (e.g. /api/auth) can intercept first.

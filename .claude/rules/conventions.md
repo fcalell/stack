@@ -16,9 +16,9 @@ Before adding any option, type, or file, decide who owns the domain. The default
 
 - **`@fcalell/cli` (core) is domain-agnostic.** Orchestration, event bus, codegen, `defineConfig`, `createPlugin`, AST specs. Never add domain types here (`FontEntry`, `AuthProvider`, `SchemaTable`, etc.). If you catch yourself importing a domain type into `packages/cli/src/`, stop and move it.
 - **`AppConfig` / top-level `app`** takes only cross-cutting identity (`name`, `domain`) — values consumed by more than one plugin. A value that only makes sense to one plugin's domain does **not** go on `app` — it goes on that plugin's options. HTML `<head>` metadata (`title`, `description`, `icon`, `themeColor`, `lang`) lives on `plugin-solid` because it's meaningless without a frontend.
-- **Plugin options** are the home for domain config. Typography → `solidUi({ fonts })`. API CORS → `api({ cors })`. Drizzle dialect → `db({ dialect })`. Types for those options live in the plugin's `src/types.ts` (or alongside the runtime package that already owns the type, e.g. `@fcalell/ui/fonts-manifest`).
-- **Runtime data types** (e.g. `FontEntry`, design tokens) belong in the runtime package whose contract they describe (`@fcalell/ui/*`) — the owning plugin re-exports them from its `types.ts`.
-- **Cross-plugin coordination** goes through events, never through shared core state. If plugin A needs to hand a value to plugin B's codegen call, A contributes to the same `Codegen.*` payload B also contributes to, or A listens to a typed event B defines via `events: [...]`.
+- **Plugin options** are the home for domain config. Typography → `solidUi({ fonts })`. API CORS → `api({ cors })`. Drizzle dialect → `db({ dialect })`. Types for those options live in the plugin's `src/types.ts`, or alongside the plugin that renders them at build time (e.g. `FontEntry` sits in `@fcalell/plugin-solid-ui/node/fonts` because `themeFontsPlugin` consumes it).
+- **Runtime data types** (e.g. `FontEntry`, design tokens) belong to the plugin that renders or emits them at build time — downstream plugins import via its subpath export and re-export from their own `types.ts` for consumers.
+- **Cross-plugin coordination** goes through events, never through shared core state. If plugin A needs to hand a value to plugin B's codegen call, A contributes to the same payload B's owning event defines (`api.events.Worker`, `cloudflare.events.Wrangler`, `solid.events.Html`, …), or A listens to a typed event B declared via `events: { … }`.
 
 Quick test: if removing the feature would require changes to `@fcalell/cli`, the feature is in the wrong place.
 
@@ -35,9 +35,9 @@ export const db = createPlugin("db", { label: "Database", ... });
 
 Config factory function name matches plugin name: `db()`, `auth()`, `api()`, `solid()`, `solidUi()`.
 
-Dependencies are typed event tokens: `depends: [db.events.SchemaReady]`. The CLI reads `event.source` to build the dependency graph and enforce presence.
+Plugin ordering is declared via typed event tokens: `after: [db.events.SchemaReady]`. The CLI reads `event.source` to build the dependency graph and enforce presence.
 
-Implicit plugins (like `plugin-vite`) are marked with `implicit: true` in `createPlugin()` and are never listed in consumer configs — they're auto-resolved from dependency chains.
+Every plugin a consumer depends on must be listed explicitly in `stack.config.ts`. There is no implicit-resolution layer: if `plugin-solid` requires `plugin-vite`, the consumer adds `vite()` alongside `solid()`. Validation surfaces the missing plugin with an actionable error.
 
 Third-party plugins published outside the `@fcalell/plugin-*` namespace must pass an explicit `package` option to `createPlugin`:
 

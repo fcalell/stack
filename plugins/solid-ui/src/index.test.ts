@@ -1,10 +1,11 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { Codegen, createEventBus, Init, Remove } from "@fcalell/cli/events";
+import { createEventBus, Init, Remove } from "@fcalell/cli/events";
 import { createMockCtx } from "@fcalell/cli/testing";
-import type { FontEntry } from "@fcalell/ui/fonts-manifest";
+import { vite } from "@fcalell/plugin-vite";
 import { describe, expect, it } from "vitest";
 import { solidUi } from "./index";
+import type { FontEntry } from "./node/fonts";
 
 const inter: FontEntry = {
 	family: "Inter Variable",
@@ -50,9 +51,9 @@ describe("solidUi.cli", () => {
 		expect(solidUi.cli.label).toBe("Design System");
 	});
 
-	it("depends on solid.events.SolidConfigured", () => {
-		expect(solidUi.cli.depends).toHaveLength(1);
-		expect(solidUi.cli.depends[0]?.source).toBe("solid");
+	it("runs after solid.events.SolidConfigured", () => {
+		expect(solidUi.cli.after).toHaveLength(1);
+		expect(solidUi.cli.after[0]?.source).toBe("solid");
 	});
 });
 
@@ -60,7 +61,7 @@ describe("solidUi register", () => {
 	it("contributes a home scaffold spec on Init.Scaffold", async () => {
 		const bus = createEventBus();
 		const ctx = createMockCtx();
-		solidUi.cli.register(ctx, bus, {});
+		solidUi.cli.register(ctx, bus, solidUi.events);
 
 		const scaffold = await bus.emit(Init.Scaffold, {
 			files: [],
@@ -80,8 +81,6 @@ describe("solidUi register", () => {
 			const content = readFileSync(fileURLToPath(home.source), "utf8");
 			expect(content).toContain("Card");
 		}
-
-		expect(scaffold.dependencies["@fcalell/ui"]).toBe("workspace:*");
 	});
 
 	it("solid + solid-ui: plugin-solid yields to solid-ui for the home page", async () => {
@@ -97,7 +96,7 @@ describe("solidUi register", () => {
 
 		// Register solid-ui second.
 		const uiCtx = createMockCtx();
-		solidUi.cli.register(uiCtx, bus, {});
+		solidUi.cli.register(uiCtx, bus, solidUi.events);
 
 		const scaffold = await bus.emit(Init.Scaffold, {
 			files: [],
@@ -116,12 +115,12 @@ describe("solidUi register", () => {
 		expect(homes[0]?.source.pathname).toContain("solid-ui/templates/home.tsx");
 	});
 
-	it("contributes themeFontsPlugin with defaultFonts on Codegen.ViteConfig", async () => {
+	it("contributes themeFontsPlugin with defaultFonts on vite.events.ViteConfig", async () => {
 		const bus = createEventBus();
 		const ctx = createMockCtx();
-		solidUi.cli.register(ctx, bus, {});
+		solidUi.cli.register(ctx, bus, solidUi.events);
 
-		const cfg = await bus.emit(Codegen.ViteConfig, {
+		const cfg = await bus.emit(vite.events.ViteConfig, {
 			imports: [],
 			pluginCalls: [],
 			resolveAliases: [],
@@ -130,7 +129,7 @@ describe("solidUi register", () => {
 
 		expect(cfg.imports).toContainEqual(
 			expect.objectContaining({
-				source: "@fcalell/plugin-vite/preset",
+				source: "@fcalell/plugin-solid-ui/node/fonts",
 				named: ["themeFontsPlugin"],
 			}),
 		);
@@ -151,9 +150,9 @@ describe("solidUi register", () => {
 	it("inlines custom fonts into themeFontsPlugin args", async () => {
 		const bus = createEventBus();
 		const ctx = createMockCtx({ options: { fonts: [inter, jetbrains] } });
-		solidUi.cli.register(ctx, bus, {});
+		solidUi.cli.register(ctx, bus, solidUi.events);
 
-		const cfg = await bus.emit(Codegen.ViteConfig, {
+		const cfg = await bus.emit(vite.events.ViteConfig, {
 			imports: [],
 			pluginCalls: [],
 			resolveAliases: [],
@@ -180,17 +179,17 @@ describe("solidUi register", () => {
 		);
 	});
 
-	it("contributes --ui-font-* layer on Codegen.AppCss for fonts with roles", async () => {
+	it("contributes --ui-font-* layer on solidUi.events.AppCss for fonts with roles", async () => {
 		const bus = createEventBus();
 		const ctx = createMockCtx({ options: { fonts: [inter, jetbrains] } });
-		solidUi.cli.register(ctx, bus, {});
+		solidUi.cli.register(ctx, bus, solidUi.events);
 
-		const css = await bus.emit(Codegen.AppCss, {
+		const css = await bus.emit(solidUi.events.AppCss, {
 			imports: [],
 			layers: [],
 		});
 
-		expect(css.imports).toContain("@fcalell/ui/globals.css");
+		expect(css.imports).toContain("@fcalell/plugin-solid-ui/globals.css");
 		expect(css.layers).toHaveLength(1);
 		const layer = css.layers[0];
 		expect(layer?.name).toBe("base");
@@ -207,9 +206,9 @@ describe("solidUi register", () => {
 		const ctx = createMockCtx({
 			options: { fonts: [{ ...inter, role: undefined }] },
 		});
-		solidUi.cli.register(ctx, bus, {});
+		solidUi.cli.register(ctx, bus, solidUi.events);
 
-		const css = await bus.emit(Codegen.AppCss, {
+		const css = await bus.emit(solidUi.events.AppCss, {
 			imports: [],
 			layers: [],
 		});
@@ -217,17 +216,21 @@ describe("solidUi register", () => {
 		expect(css.layers).toHaveLength(0);
 	});
 
-	it("pushes cleanup info on Remove", async () => {
+	it("on Remove, unwires tailwindcss and leaves src/app/ to plugin-solid", async () => {
 		const bus = createEventBus();
 		const ctx = createMockCtx();
-		solidUi.cli.register(ctx, bus, {});
+		solidUi.cli.register(ctx, bus, solidUi.events);
 
 		const removal = await bus.emit(Remove, {
 			files: [],
 			dependencies: [],
+			devDependencies: [],
 		});
-		expect(removal.dependencies).toContain("@fcalell/ui");
-		// Should NOT delete src/app/ — plugin-solid owns that
+		// Should NOT delete src/app/ — plugin-solid owns that.
 		expect(removal.files).not.toContain("src/app/");
+		// Tailwind is a consumer-facing dependency of plugin-solid-ui, so it
+		// unwires on remove; `@tailwindcss/vite` is a devDependency.
+		expect(removal.dependencies).toContain("tailwindcss");
+		expect(removal.devDependencies).toContain("@tailwindcss/vite");
 	});
 });

@@ -1,17 +1,17 @@
-import { aggregateProviders } from "@fcalell/cli/codegen";
-import { Composition, createEventBus } from "@fcalell/cli/events";
+import { createEventBus } from "@fcalell/cli/events";
 import { createMockCtx } from "@fcalell/cli/testing";
 import { solid } from "@fcalell/plugin-solid";
+import { aggregateProviders } from "@fcalell/plugin-solid/codegen";
 import { solidUi } from "@fcalell/plugin-solid-ui";
 import { describe, expect, it } from "vitest";
 
-describe("Composition.Providers integration (solid + solid-ui)", () => {
-	it("plugin-solid-ui contributes MetaProvider + Toaster via Composition.Providers", async () => {
+describe("solid.events.Providers integration (solid + solid-ui)", () => {
+	it("plugin-solid-ui contributes MetaProvider + Toaster via solid.events.Providers", async () => {
 		const bus = createEventBus();
 		const ctx = createMockCtx();
-		solidUi.cli.register(ctx, bus, {});
+		solidUi.cli.register(ctx, bus, solidUi.events);
 
-		const payload = await bus.emit(Composition.Providers, { providers: [] });
+		const payload = await bus.emit(solid.events.Providers, { providers: [] });
 		expect(payload.providers).toHaveLength(1);
 
 		const spec = payload.providers[0];
@@ -29,7 +29,7 @@ describe("Composition.Providers integration (solid + solid-ui)", () => {
 		const ctx = createMockCtx();
 		solid.cli.register(ctx, bus, solid.events);
 
-		const payload = await bus.emit(Composition.Providers, { providers: [] });
+		const payload = await bus.emit(solid.events.Providers, { providers: [] });
 		expect(payload.providers).toHaveLength(0);
 
 		// aggregateProviders returns null — the Vite plugin then serves the stub.
@@ -39,16 +39,18 @@ describe("Composition.Providers integration (solid + solid-ui)", () => {
 	it("generated virtual-providers.tsx wraps Router children inside MetaProvider with Toaster sibling", async () => {
 		const bus = createEventBus();
 		const ctx = createMockCtx();
-		solidUi.cli.register(ctx, bus, {});
+		solidUi.cli.register(ctx, bus, solidUi.events);
 
-		const payload = await bus.emit(Composition.Providers, { providers: [] });
+		const payload = await bus.emit(solid.events.Providers, { providers: [] });
 		const source = aggregateProviders(payload);
 		expect(source).not.toBeNull();
 		if (!source) return;
 
-		expect(source).toContain('import { MetaProvider } from "@fcalell/ui/meta"');
 		expect(source).toContain(
-			'import { Toaster } from "@fcalell/ui/components/toast"',
+			'import { MetaProvider } from "@fcalell/plugin-solid-ui/meta"',
+		);
+		expect(source).toContain(
+			'import { Toaster } from "@fcalell/plugin-solid-ui/components/toast"',
 		);
 		expect(source).toContain('import type { JSX } from "solid-js"');
 
@@ -61,8 +63,10 @@ describe("Composition.Providers integration (solid + solid-ui)", () => {
 	it("preserves outer-first wrap order across multiple providers", async () => {
 		const bus = createEventBus();
 
-		// Simulate a third-party plugin adding an outer wrapper with lower order.
-		bus.on(Composition.Providers, (p) => {
+		// Simulate a third-party plugin adding an inner wrapper with higher order.
+		// MetaProvider ships at order 0 so it stays outermost — this verifies
+		// that `order` still orders arbitrary contributions relative to it.
+		bus.on(solid.events.Providers, (p) => {
 			p.providers.push({
 				imports: [{ source: "@third/theme", named: ["ThemeProvider"] }],
 				wrap: { identifier: "ThemeProvider" },
@@ -71,16 +75,16 @@ describe("Composition.Providers integration (solid + solid-ui)", () => {
 		});
 
 		const ctx = createMockCtx();
-		solidUi.cli.register(ctx, bus, {});
+		solidUi.cli.register(ctx, bus, solidUi.events);
 
-		const payload = await bus.emit(Composition.Providers, { providers: [] });
+		const payload = await bus.emit(solid.events.Providers, { providers: [] });
 		const source = aggregateProviders(payload);
 		expect(source).not.toBeNull();
 		if (!source) return;
 
-		// ThemeProvider (order 50) is outer; MetaProvider (order 100) is inner.
+		// MetaProvider (order 0) is outer; ThemeProvider (order 50) is inner.
 		expect(source).toMatch(
-			/<ThemeProvider>[\s\S]*<MetaProvider>[\s\S]*<\/MetaProvider>[\s\S]*<\/ThemeProvider>/,
+			/<MetaProvider>[\s\S]*<ThemeProvider>[\s\S]*<\/ThemeProvider>[\s\S]*<\/MetaProvider>/,
 		);
 	});
 });

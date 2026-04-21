@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { callback, createPlugin } from "#lib/create-plugin";
+import { z } from "zod";
+import { callback, createPlugin, type } from "#lib/create-plugin";
 import { createEventBus, defineEvent } from "#lib/event-bus";
 import { createMockCtx } from "#testing";
 
@@ -16,13 +17,14 @@ describe("createPlugin", () => {
 			expect(config.options).toEqual({ value: 42 });
 		});
 
-		it("runs config validation when provided", () => {
+		it("validates via the provided schema", () => {
 			const myPlugin = createPlugin("test", {
 				label: "Test",
-				config(options: { port: number }) {
-					if (options.port <= 0) throw new Error("Port must be positive");
-					return options;
-				},
+				schema: z.object({
+					port: z
+						.number()
+						.refine((p) => p > 0, { error: "Port must be positive" }),
+				}),
 				register() {},
 			});
 
@@ -30,12 +32,10 @@ describe("createPlugin", () => {
 			expect(myPlugin({ port: 3000 }).options.port).toBe(3000);
 		});
 
-		it("can be called without arguments when config() supplies defaults", () => {
+		it("can be called without arguments when the schema supplies defaults", () => {
 			const myPlugin = createPlugin("test", {
 				label: "Test",
-				config(options?: { value?: number }) {
-					return { value: options?.value ?? 1 };
-				},
+				schema: z.object({ value: z.number().default(1) }),
 				register() {},
 			});
 
@@ -44,21 +44,18 @@ describe("createPlugin", () => {
 			expect(config.options).toEqual({ value: 1 });
 		});
 
-		it("throws when options are omitted and no config() is defined", () => {
+		it("passes options through when no schema is defined", () => {
 			const myPlugin = createPlugin("test", {
 				label: "Test",
 				register() {},
 			});
 
-			expect(() => myPlugin()).toThrow(/requires options/);
+			expect(myPlugin().options).toEqual({});
 		});
 
 		it("stamps __package with the default @fcalell/plugin-<name> when not set", () => {
 			const myPlugin = createPlugin("db", {
 				label: "Database",
-				config(options?: Record<string, unknown>) {
-					return options ?? {};
-				},
 				register() {},
 			});
 
@@ -71,9 +68,6 @@ describe("createPlugin", () => {
 			const myPlugin = createPlugin("widget", {
 				label: "Widget",
 				package: "@acme/stack-plugin-widget",
-				config(options?: Record<string, unknown>) {
-					return options ?? {};
-				},
 				register() {},
 			});
 
@@ -117,6 +111,37 @@ describe("createPlugin", () => {
 
 			expect(myPlugin.events).toEqual({});
 		});
+
+		it("accepts a typed-payload map built with `type<T>()`", async () => {
+			interface WorkerPayload {
+				bindings: string[];
+			}
+
+			const myPlugin = createPlugin("worker-owner", {
+				label: "Worker Owner",
+				events: {
+					Worker: type<WorkerPayload>(),
+					Ready: type<void>(),
+				},
+				register() {},
+			});
+
+			expect(myPlugin.events.Worker.source).toBe("worker-owner");
+			expect(myPlugin.events.Worker.name).toBe("Worker");
+			expect(myPlugin.events.Ready.source).toBe("worker-owner");
+			expect(typeof myPlugin.events.Worker.id).toBe("symbol");
+			expect(myPlugin.events.Worker.id).not.toBe(myPlugin.events.Ready.id);
+
+			// End-to-end: emit a typed payload and receive it in a handler.
+			const bus = createEventBus();
+			const handler = vi.fn();
+			bus.on(myPlugin.events.Worker, handler);
+			const received = await bus.emit(myPlugin.events.Worker, {
+				bindings: ["DB_MAIN"],
+			});
+			expect(received).toEqual({ bindings: ["DB_MAIN"] });
+			expect(handler).toHaveBeenCalledWith({ bindings: ["DB_MAIN"] });
+		});
 	});
 
 	describe(".name", () => {
@@ -135,13 +160,13 @@ describe("createPlugin", () => {
 			const dep = defineEvent<void>("other", "Ready");
 			const myPlugin = createPlugin("db", {
 				label: "Database",
-				depends: [dep],
+				after: [dep],
 				register() {},
 			});
 
 			expect(myPlugin.cli.name).toBe("db");
 			expect(myPlugin.cli.label).toBe("Database");
-			expect(myPlugin.cli.depends).toContain(dep);
+			expect(myPlugin.cli.after).toContain(dep);
 		});
 
 		it("register delegates to definition.register", () => {
@@ -155,7 +180,21 @@ describe("createPlugin", () => {
 			const bus = createEventBus();
 
 			myPlugin.cli.register(ctx, bus, {});
-			expect(registerFn).toHaveBeenCalledWith(ctx, bus, {});
+			// createPlugin stamps `plugin`/`template`/`scaffold` onto ctx before
+			// forwarding to the user's register function. Everything else passes
+			// through verbatim.
+			expect(registerFn).toHaveBeenCalledTimes(1);
+			const [receivedCtx, receivedBus, receivedEvents] =
+				registerFn.mock.calls[0] ?? [];
+			expect(receivedCtx).toMatchObject({
+				cwd: ctx.cwd,
+				options: ctx.options,
+				plugin: "test",
+			});
+			expect(typeof receivedCtx.template).toBe("function");
+			expect(typeof receivedCtx.scaffold).toBe("function");
+			expect(receivedBus).toBe(bus);
+			expect(receivedEvents).toEqual({});
 		});
 
 		it("exposes commands from definition", () => {
@@ -295,7 +334,7 @@ describe("createPlugin", () => {
 	});
 
 	describe("cross-plugin dependencies", () => {
-		it("depends references carry source information for graph resolution", () => {
+		it("after references carry source information for graph resolution", () => {
 			const dbPlugin = createPlugin("db", {
 				label: "Database",
 				events: ["SchemaReady"],
@@ -304,13 +343,13 @@ describe("createPlugin", () => {
 
 			const authPlugin = createPlugin("auth", {
 				label: "Auth",
-				depends: [dbPlugin.events.SchemaReady],
+				after: [dbPlugin.events.SchemaReady],
 				register() {},
 			});
 
 			// The CLI uses event.source to build the dependency graph
-			expect(authPlugin.cli.depends[0]?.source).toBe("db");
-			expect(authPlugin.cli.depends[0]?.name).toBe("SchemaReady");
+			expect(authPlugin.cli.after[0]?.source).toBe("db");
+			expect(authPlugin.cli.after[0]?.name).toBe("SchemaReady");
 		});
 
 		it("dependency order determines handler execution order", async () => {
@@ -331,7 +370,7 @@ describe("createPlugin", () => {
 
 			const auth = createPlugin("auth", {
 				label: "Auth",
-				depends: [db.events.SchemaReady],
+				after: [db.events.SchemaReady],
 				register(_ctx, bus) {
 					bus.on(sharedEvent, (p) => {
 						p.order.push("auth");

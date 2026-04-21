@@ -1,8 +1,9 @@
 import { access, readFile } from "node:fs/promises";
 import { basename, join } from "node:path";
 import type { AppConfig, StackConfig } from "#config";
-import type { RegisterContext } from "#lib/create-plugin";
+import type { DiscoveredPluginInfo, RegisterContext } from "#lib/create-plugin";
 import type { DiscoveredPlugin } from "#lib/discovery";
+import { StackError } from "#lib/errors";
 import { createEventBus, type EventBus } from "#lib/event-bus";
 import { createLogContext, createPromptContext } from "#lib/prompt";
 
@@ -11,8 +12,19 @@ interface ContextOptions {
 	options: unknown;
 	app: AppConfig;
 	hasPlugin: (name: string) => boolean;
+	discoveredPlugins?: DiscoveredPluginInfo[];
 	nonInteractive?: boolean;
 }
+
+// `plugin`, `template`, and `scaffold` are overwritten by `createPlugin`'s
+// register wrapper before the plugin's user code runs. The placeholders here
+// exist solely to satisfy the RegisterContext type at this construction site.
+const placeholderTemplate = (_name: string): URL => {
+	throw new StackError(
+		"ctx.template() called before createPlugin stamped its resolver",
+		"PLUGIN_CONFIG_INVALID",
+	);
+};
 
 export function createRegisterContext(
 	opts: ContextOptions,
@@ -21,7 +33,16 @@ export function createRegisterContext(
 		cwd: opts.cwd,
 		options: opts.options,
 		app: opts.app,
+		plugin: "",
+		discoveredPlugins: opts.discoveredPlugins ?? [],
 		hasPlugin: opts.hasPlugin,
+		template: placeholderTemplate,
+		scaffold: (_name: string, _target: string) => {
+			throw new StackError(
+				"ctx.scaffold() called before createPlugin stamped its resolver",
+				"PLUGIN_CONFIG_INVALID",
+			);
+		},
 		readFile: async (path: string) => readFile(join(opts.cwd, path), "utf-8"),
 		fileExists: async (path: string) => {
 			try {
@@ -30,6 +51,12 @@ export function createRegisterContext(
 			} catch {
 				return false;
 			}
+		},
+		runtime: () => {
+			throw new StackError(
+				"ctx.runtime() called before createPlugin stamped its helper",
+				"PLUGIN_CONFIG_INVALID",
+			);
 		},
 		log: createLogContext(),
 		prompt: createPromptContext({ nonInteractive: opts.nonInteractive }),
@@ -52,11 +79,17 @@ export function registerPlugins(
 	cwd: string,
 ): EventBus {
 	const bus = createEventBus();
+	const discoveredPlugins: DiscoveredPluginInfo[] = sorted.map((p) => ({
+		name: p.cli.name,
+		package: p.cli.package,
+		callbacks: p.cli.callbacks,
+	}));
 	for (const p of sorted) {
 		const ctx = createRegisterContext({
 			cwd,
 			options: p.options,
 			app: config.app,
+			discoveredPlugins,
 			hasPlugin: (name) => config.plugins.some((pl) => pl.__plugin === name),
 		});
 		p.cli.register(ctx, bus, p.events);

@@ -10,7 +10,7 @@ describe("createWorker", () => {
 	});
 
 	it("accepts plain options", () => {
-		const builder = createWorker({ prefix: "/api", cors: "https://a.com" });
+		const builder = createWorker({ prefix: "/api", cors: ["https://a.com"] });
 		expect(typeof builder.use).toBe("function");
 		expect(typeof builder.handler).toBe("function");
 	});

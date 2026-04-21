@@ -31,7 +31,13 @@ describe("writeScaffoldSpecs", () => {
 		writeFileSync(tmpl, "// schema content\n");
 
 		const created = await writeScaffoldSpecs(
-			[{ source: pathToFileURL(tmpl), target: "src/schema/index.ts" }],
+			[
+				{
+					source: pathToFileURL(tmpl),
+					target: "src/schema/index.ts",
+					plugin: "db",
+				},
+			],
 			cwd,
 		);
 
@@ -46,7 +52,13 @@ describe("writeScaffoldSpecs", () => {
 		writeFileSync(join(cwd, "existing.ts"), "// original");
 
 		const created = await writeScaffoldSpecs(
-			[{ source: pathToFileURL(tmpl), target: "existing.ts" }],
+			[
+				{
+					source: pathToFileURL(tmpl),
+					target: "existing.ts",
+					plugin: "db",
+				},
+			],
 			cwd,
 		);
 
@@ -63,8 +75,16 @@ describe("writeScaffoldSpecs", () => {
 		await expect(
 			writeScaffoldSpecs(
 				[
-					{ source: pathToFileURL(tmplA), target: "src/same.ts" },
-					{ source: pathToFileURL(tmplB), target: "src/same.ts" },
+					{
+						source: pathToFileURL(tmplA),
+						target: "src/same.ts",
+						plugin: "alpha",
+					},
+					{
+						source: pathToFileURL(tmplB),
+						target: "src/same.ts",
+						plugin: "beta",
+					},
 				],
 				cwd,
 			),
@@ -79,7 +99,13 @@ describe("writeScaffoldSpecs", () => {
 		writeFileSync(tmpl, "// t\n");
 
 		await writeScaffoldSpecs(
-			[{ source: pathToFileURL(tmpl), target: "nested/deep/file.ts" }],
+			[
+				{
+					source: pathToFileURL(tmpl),
+					target: "nested/deep/file.ts",
+					plugin: "db",
+				},
+			],
 			cwd,
 		);
 

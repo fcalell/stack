@@ -1,12 +1,16 @@
 # @fcalell/plugin-solid-ui
 
-Design system CLI plugin for the `@fcalell/stack` framework. Manages `@fcalell/ui` as a dependency, scaffolds UI-rich templates, and wires up the CSS import. This plugin enhances the templates provided by `plugin-solid` with design system components.
+SolidJS design system for the `@fcalell/stack` framework. Ships the full component library (Kobalte + Tailwind v4 + CVA) **and** the CLI plugin that wires it into a consumer's `stack dev` / `stack build` flow — scaffolded templates, CSS import, font preloading, and provider composition.
+
+**Stack:** SolidJS + Kobalte + Tailwind v4 + CVA + `@tanstack/solid-query` + `@tanstack/solid-form` (all internal -- consumers import from this package's subpaths).
 
 ## Install
 
 ```bash
 pnpm add @fcalell/plugin-solid-ui
 ```
+
+Peer dependencies: `solid-js ^1.9`, `@tanstack/solid-form ^1.28` (optional).
 
 ## Usage
 
@@ -19,6 +23,7 @@ import { solid } from "@fcalell/plugin-solid";
 import { solidUi } from "@fcalell/plugin-solid-ui";
 
 export default defineConfig({
+  app: { name: "my-app", domain: "example.com" },
   plugins: [
     solid(),
     solidUi(),
@@ -28,9 +33,18 @@ export default defineConfig({
 
 `plugin-solid` (and transitively `plugin-vite`) are auto-resolved as dependencies.
 
+### Import components
+
+```tsx
+import { Button } from "@fcalell/plugin-solid-ui/components/button";
+import { Card } from "@fcalell/plugin-solid-ui/components/card";
+import { Form } from "@fcalell/plugin-solid-ui/components/form";
+```
+
+
 ## How it works
 
-`plugin-solid-ui` depends on `plugin-solid` via `solid.events.SolidConfigured`. Because it registers after `plugin-solid` in the event bus, its scaffold templates override the bare ones from `plugin-solid` (last writer wins).
+`plugin-solid-ui` registers after `plugin-solid` via `solid.events.SolidConfigured`. Its scaffold templates override the bare ones from `plugin-solid` (last writer wins); its codegen wires up the design-system CSS import, font tokens, and the `MetaProvider` / `Toaster` composition.
 
 ### Template override
 
@@ -39,49 +53,68 @@ export default defineConfig({
 | `src/app/pages/_layout.tsx` | Bare pass-through layout | Layout with `<Toaster />` |
 | `src/app/pages/index.tsx` | Plain `<h1>Welcome</h1>` | `Card` with `Card.Title` + `Card.Description` |
 
-### Additional scaffold files
-
-| File | Purpose |
-|------|---------|
-| `src/app/app.css` | Imports `tailwindcss` and `@fcalell/ui/globals.css` |
-
-### Dependencies added
-
-- `@fcalell/ui` -- the design system runtime
-
 ## Config options
 
-No options. The plugin is configured by adding it to the plugins array:
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `fonts` | `FontEntry[]` | `defaultFonts` (JetBrains Mono as `mono`) | Webfonts to preload. Each entry is preloaded, gets an `@font-face` (real + fallback metrics), and — when `role` is set — rebinds the matching `--ui-font-*` token. |
 
 ```ts
-solidUi()
+import { solidUi } from "@fcalell/plugin-solid-ui";
+
+solidUi({
+  fonts: [
+    {
+      family: "Inter Variable",
+      specifier: "@fontsource-variable/inter/files/inter-latin-wght-normal.woff2",
+      weight: "100 900",
+      style: "normal",
+      role: "sans",
+      fallback: {
+        family: "sans-serif",
+        ascentOverride: "90%",
+        descentOverride: "22%",
+        lineGapOverride: "0%",
+        sizeAdjust: "107%",
+      },
+    },
+  ],
+});
 ```
 
-## Dependencies
-
-`plugin-solid-ui` depends on `plugin-solid` via `solid.events.SolidConfigured`. The CLI auto-resolves `plugin-solid` (and `plugin-vite`) when `plugin-solid-ui` is present.
+`FontEntry` is re-exported from `@fcalell/plugin-solid-ui`. The type and the `themeFontsPlugin` that consumes it both live in `@fcalell/plugin-solid-ui/node/fonts`.
 
 ## Lifecycle
 
 ### Init / Scaffold
 
-Pushes UI-rich templates that override `plugin-solid`'s bare versions:
+Pushes `src/app/pages/index.tsx` — a UI-rich home page using `Card` and `Text` components. Overrides the bare template from `plugin-solid`.
 
-- `src/app/pages/_layout.tsx` -- layout with `<Toaster />` from `@fcalell/ui/components/toast`
-- `src/app/pages/index.tsx` -- index page using `Card` and `Text` components
-- `src/app/app.css` -- Tailwind + design system CSS imports
+### Generate
 
-Adds `@fcalell/ui` as a dependency.
+Contributes `themeFontsPlugin(fonts)` from `@fcalell/plugin-solid-ui/node/fonts` to `plugin-vite`'s `vite.events.ViteConfig`. Owns `solidUi.events.AppCss` and pushes `@fcalell/plugin-solid-ui/globals.css` into it, emitting a `--ui-font-*` CSS layer for each role-bound font. Adds `MetaProvider` + `Toaster` to `solid.events.Providers`.
 
 ### Remove
 
-Removes `@fcalell/ui` from dependencies. Does not delete `src/app/` -- that directory is owned by `plugin-solid`.
+Nothing to tear down: the design-system runtime lives inside this package and is removed from `package.json` when the plugin is uninstalled. `src/app/` is owned by `plugin-solid`.
 
 ## Exports
 
 | Subpath | Purpose |
 |---------|---------|
-| `@fcalell/plugin-solid-ui` | `solidUi()`, `SolidUiOptions` |
+| `@fcalell/plugin-solid-ui` | `solidUi()`, `SolidUiOptions`, `FontEntry` |
+| `@fcalell/plugin-solid-ui/globals.css` | Token system, Tailwind theme, base styles, animations |
+| `@fcalell/plugin-solid-ui/fonts` | JetBrains Mono Variable registration (side-effect import) |
+| `@fcalell/plugin-solid-ui/node/fonts` | `FontEntry`, `defaultFonts`, `themeFontsPlugin()` (node-side Vite plugin) |
+| `@fcalell/plugin-solid-ui/app` | `createApp()` — mounts the root tree with router, query, meta, toaster, error boundary |
+| `@fcalell/plugin-solid-ui/meta` | `Title`, `Meta`, `Link`, `MetaProvider` — re-exported from `@solidjs/meta` |
+| `@fcalell/plugin-solid-ui/router` | Typed `routes` builder + SolidJS Router primitives |
+| `@fcalell/plugin-solid-ui/components/*` | Component modules (e.g. `components/button`, `components/form`) |
+| `@fcalell/plugin-solid-ui/lib/cn` | `cn()` class merging utility |
+| `@fcalell/plugin-solid-ui/lib/query` | Safe `useQuery`/`useInfiniteQuery`, `useMutation`, `useQueryClient`, `combineQueries` |
+| `@fcalell/plugin-solid-ui/lib/theme` | `useTheme()` runtime light/dark toggle |
+
+Component documentation lives in [`docs/`](docs/).
 
 ## License
 

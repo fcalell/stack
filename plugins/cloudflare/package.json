@@ -1,0 +1,28 @@
+{
+	"name": "@fcalell/plugin-cloudflare",
+	"version": "0.0.0",
+	"type": "module",
+	"sideEffects": false,
+	"exports": {
+		".": "./src/index.ts"
+	},
+	"license": "MIT",
+	"scripts": {
+		"check-types": "tsc --noEmit --pretty",
+		"lint": "biome check --write --unsafe",
+		"check": "pnpm check-types && pnpm lint",
+		"test": "vitest run",
+		"clear": "rm -rf node_modules .turbo"
+	},
+	"dependencies": {
+		"@clack/prompts": "^0.11.0",
+		"@fcalell/cli": "workspace:*",
+		"smol-toml": "^1.4.2",
+		"zod": "^4.3.6"
+	},
+	"devDependencies": {
+		"@fcalell/typescript-config": "workspace:*",
+		"@types/node": "^25.5.0",
+		"typescript": "^5.9.3"
+	}
+}

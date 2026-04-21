@@ -1,6 +1,5 @@
 import type { RegisterContext } from "@fcalell/cli";
 import {
-	Codegen,
 	createEventBus,
 	type Event,
 	type EventBus,
@@ -10,6 +9,7 @@ import {
 import { createMockCtx } from "@fcalell/cli/testing";
 import { type ApiOptions, api } from "@fcalell/plugin-api";
 import { type AuthOptions, auth } from "@fcalell/plugin-auth";
+import { cloudflare } from "@fcalell/plugin-cloudflare";
 import { type DbOptions, db } from "@fcalell/plugin-db";
 import { describe, expect, it } from "vitest";
 
@@ -96,14 +96,14 @@ describe("createPlugin-based CLI plugin contracts", () => {
 			expect(typeof plugin.cli.register).toBe("function");
 		});
 
-		it("contributes bindings via Codegen.Wrangler event", async () => {
+		it("contributes bindings via cloudflare.events.Wrangler event", async () => {
 			const bus = createEventBus();
 			const options = optionsByName[expectedName] ?? {};
 
 			const ctx = createMockCtx({ options });
 			plugin.cli.register(ctx, bus, plugin.events);
 
-			const wrangler = await bus.emit(Codegen.Wrangler, {
+			const wrangler = await bus.emit(cloudflare.events.Wrangler, {
 				bindings: [],
 				routes: [],
 				vars: {},
@@ -154,10 +154,12 @@ describe("createPlugin-based CLI plugin contracts", () => {
 			const removal = await bus.emit(Remove, {
 				files: [],
 				dependencies: [],
+				devDependencies: [],
 			});
 
 			expect(removal.files.length).toBeGreaterThanOrEqual(0);
 			expect(removal.dependencies.length).toBeGreaterThanOrEqual(0);
+			expect(removal.devDependencies.length).toBeGreaterThanOrEqual(0);
 		});
 	});
 });

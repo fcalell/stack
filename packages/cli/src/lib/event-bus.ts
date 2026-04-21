@@ -31,6 +31,20 @@ export function defineEvent<T = void>(
 	};
 }
 
+// ── Phantom-typed event payload marker ─────────────────────────────
+//
+// Used on the `events` field of `createPlugin` to declare a payload type
+// without constructing the Event token yet (createPlugin stamps in the plugin
+// `source` when it builds the resolved map). Purely a type carrier — no
+// runtime shape beyond the brand.
+export interface EventTypeMarker<T> {
+	readonly __eventType?: T;
+}
+
+export function type<T>(): EventTypeMarker<T> {
+	return {};
+}
+
 // ── EventBus ────────────────────────────────────────────────────────
 
 type Handler<T> = (data: T) => void | Promise<void>;

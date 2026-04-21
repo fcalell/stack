@@ -1,9 +1,14 @@
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+	buildRoutesDts,
 	buildTree,
 	emitDts,
 	emitRoutes,
 	emitTypedRoutes,
+	emitVirtualModule,
 	joinUrl,
 	parseSegment,
 	VIRTUAL_ROUTES_ID,
@@ -147,11 +152,13 @@ describe("emitRoutes", () => {
 		expect(routesArray).toContain("_layout.tsx");
 	});
 
-	it("emits flat array when root has no layout", () => {
+	it("wraps routes in a DefaultLayout when root has no layout", () => {
 		const { root } = buildTree(["index.tsx"], pagesDir);
 		const { routesArray } = emitRoutes(root, projectRoot, undefined);
 
-		expect(routesArray).not.toContain("children:");
+		expect(routesArray).toContain("component: DefaultLayout");
+		expect(routesArray).toContain("children:");
+		expect(routesArray).not.toContain("_layout.tsx");
 	});
 
 	it("appends 404 catch-all when notFoundFile exists", () => {
@@ -195,6 +202,55 @@ describe("emitTypedRoutes", () => {
 		expect(runtime).not.toContain('"app"');
 		// but the route should still exist
 		expect(runtime).toContain("index");
+	});
+});
+
+describe("emitVirtualModule", () => {
+	it("defines a DefaultLayout pass-through", () => {
+		const module = emitVirtualModule("[]", "{}");
+		expect(module).toContain("const DefaultLayout = (props) => props.children");
+	});
+
+	it("uses the default pages dir when none is provided", () => {
+		const module = emitVirtualModule("[]", "{}");
+		expect(module).toContain('"/src/app/pages/**/*.{tsx,jsx}"');
+	});
+
+	it("honors a configurable pagesDir", () => {
+		const module = emitVirtualModule("[]", "{}", "app/routes");
+		expect(module).toContain('"/app/routes/**/*.{tsx,jsx}"');
+	});
+
+	it("normalizes leading and trailing slashes in pagesDir", () => {
+		const module = emitVirtualModule("[]", "{}", "/custom/pages/");
+		expect(module).toContain('"/custom/pages/**/*.{tsx,jsx}"');
+	});
+});
+
+describe("buildRoutesDts", () => {
+	it("throws when pagesDir does not exist", () => {
+		const cwd = mkdtempSync(join(tmpdir(), "plugin-solid-rdts-"));
+		try {
+			expect(() => buildRoutesDts(cwd, "src/app/pages")).toThrow(
+				/pages directory not found at "src\/app\/pages"/,
+			);
+		} finally {
+			rmSync(cwd, { recursive: true, force: true });
+		}
+	});
+
+	it("builds a valid dts when pagesDir exists", () => {
+		const cwd = mkdtempSync(join(tmpdir(), "plugin-solid-rdts-"));
+		try {
+			const pagesDir = join(cwd, "src/app/pages");
+			mkdirSync(pagesDir, { recursive: true });
+			writeFileSync(join(pagesDir, "index.tsx"), "export default () => null;");
+			const dts = buildRoutesDts(cwd, "src/app/pages");
+			expect(dts).toContain(VIRTUAL_ROUTES_ID);
+			expect(dts).toContain("() => string");
+		} finally {
+			rmSync(cwd, { recursive: true, force: true });
+		}
 	});
 });
 

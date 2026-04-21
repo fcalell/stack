@@ -6,6 +6,7 @@ const root = resolve(import.meta.dirname, "../..");
 export default defineConfig({
 	resolve: {
 		alias: {
+			"@fcalell/cli/ast": resolve(root, "packages/cli/src/ast/index.ts"),
 			"@fcalell/cli/codegen": resolve(root, "packages/cli/src/lib/codegen.ts"),
 			"@fcalell/cli/discovery": resolve(
 				root,
@@ -21,11 +22,31 @@ export default defineConfig({
 				"packages/cli/src/lib/create-plugin.ts",
 			),
 			"#lib/event-bus": resolve(root, "packages/cli/src/lib/event-bus.ts"),
+			"@fcalell/plugin-cloudflare": resolve(
+				root,
+				"plugins/cloudflare/src/index.ts",
+			),
 			"@fcalell/plugin-db": resolve(root, "plugins/db/src/index.ts"),
 			"@fcalell/plugin-auth": resolve(root, "plugins/auth/src/index.ts"),
+			"@fcalell/plugin-api/node/codegen": resolve(
+				root,
+				"plugins/api/src/node/codegen.ts",
+			),
+			"@fcalell/plugin-api/node/types": resolve(
+				root,
+				"plugins/api/src/node/types.ts",
+			),
 			"@fcalell/plugin-api": resolve(root, "plugins/api/src/index.ts"),
 			"@fcalell/plugin-vite": resolve(root, "plugins/vite/src/index.ts"),
+			"@fcalell/plugin-solid/codegen": resolve(
+				root,
+				"plugins/solid/src/node/codegen.ts",
+			),
 			"@fcalell/plugin-solid": resolve(root, "plugins/solid/src/index.ts"),
+			"@fcalell/plugin-solid-ui/node/fonts": resolve(
+				root,
+				"plugins/solid-ui/src/node/fonts.ts",
+			),
 			"@fcalell/plugin-solid-ui": resolve(
 				root,
 				"plugins/solid-ui/src/index.ts",

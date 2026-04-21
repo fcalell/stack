@@ -362,7 +362,10 @@ function createRateLimitMiddleware(kind: RateLimitKind) {
 		if (isDev) return next({ context: {} });
 
 		if (!limiter) {
-			console.error(`${kind} rate limiter not configured in production`);
+			console.error(
+				`[api] Procedure requires rate limiting ("${kind}") but no ${kind} rate limiter is bound to the worker context. ` +
+					`Ensure plugin-auth is configured with a rateLimiter binding, or inject { _rateLimiter: { ${kind}: binding } } via .use() when constructing the worker.`,
+			);
 			throw new ORPCError("INTERNAL_SERVER_ERROR", {
 				message: "Server configuration error",
 			});

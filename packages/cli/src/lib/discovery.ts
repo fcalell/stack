@@ -87,7 +87,7 @@ export async function loadAvailablePlugins(): Promise<DiscoveredPlugin[]> {
 }
 
 export function dependencyNames(plugin: DiscoveredPlugin): string[] {
-	return plugin.cli.depends
+	return plugin.cli.after
 		.filter((d) => d.source !== "core")
 		.map((d) => d.source)
 		.filter((s, i, a) => a.indexOf(s) === i);
@@ -97,7 +97,6 @@ export async function discoverPlugins(
 	config: StackConfig,
 ): Promise<DiscoveredPlugin[]> {
 	const plugins: DiscoveredPlugin[] = [];
-	const loaded = new Set<string>();
 
 	for (const pluginConfig of config.plugins) {
 		const name = pluginConfig.__plugin;
@@ -106,47 +105,6 @@ export async function discoverPlugins(
 		// Fall back to the first-party convention for older configs.
 		const packageName = pluginConfig.__package ?? `@fcalell/plugin-${name}`;
 		plugins.push(await loadPlugin(name, packageName, pluginConfig.options));
-		loaded.add(name);
-	}
-
-	// Auto-resolve implicit plugins required by dependencies.
-	// Errors from `loadPlugin` propagate — silently skipping a missing implicit
-	// leaves downstream code running with a missing dependency and produces
-	// cryptic failures later.
-	//
-	// Implicit plugins are only resolvable by their source name via the
-	// first-party convention: event tokens carry only `source`, not a package
-	// name. Implicit plugins are therefore expected to live under
-	// `@fcalell/plugin-*`.
-	let added = true;
-	while (added) {
-		added = false;
-		for (const p of plugins) {
-			for (const dep of p.cli.depends) {
-				if (dep.source !== "core" && !loaded.has(dep.source)) {
-					let resolved: DiscoveredPlugin;
-					try {
-						resolved = await loadPlugin(
-							dep.source,
-							`@fcalell/plugin-${dep.source}`,
-							{},
-						);
-					} catch (cause) {
-						const detail =
-							cause instanceof Error ? cause.message : String(cause);
-						throw new Error(
-							`Implicit plugin "${dep.source}" required by "${p.name}" ` +
-								`failed to load: ${detail}`,
-						);
-					}
-					if (resolved.cli.implicit) {
-						plugins.push(resolved);
-						loaded.add(dep.source);
-						added = true;
-					}
-				}
-			}
-		}
 	}
 
 	validateDependencies(plugins);
@@ -158,11 +116,11 @@ export function validateDependencies(plugins: DiscoveredPlugin[]): void {
 	const available = new Set(plugins.map((p) => p.name));
 
 	for (const plugin of plugins) {
-		for (const dep of plugin.cli.depends) {
+		for (const dep of plugin.cli.after) {
 			if (dep.source === "core") continue;
 			if (!available.has(dep.source)) {
 				throw new Error(
-					`[${plugin.name}] depends on event '${dep.name}' from plugin '${dep.source}', ` +
+					`[${plugin.name}] must run after event '${dep.name}' from plugin '${dep.source}', ` +
 						`but plugin '${dep.source}' is not in your config. ` +
 						`Add ${dep.source}() to plugins array.`,
 				);
@@ -189,7 +147,7 @@ export function sortByDependencies(
 			const cycle = [...path.slice(cycleStart), name].join(" -> ");
 			throw new Error(
 				`Circular plugin dependency: ${cycle}. ` +
-					`Break the cycle by removing one of the 'depends' entries.`,
+					`Break the cycle by removing one of the 'after' entries.`,
 			);
 		}
 
@@ -198,7 +156,7 @@ export function sortByDependencies(
 
 		visiting.add(name);
 		const nextPath = [...path, name];
-		for (const dep of plugin.cli.depends) {
+		for (const dep of plugin.cli.after) {
 			if (dep.source !== "core") {
 				visit(dep.source, nextPath);
 			}

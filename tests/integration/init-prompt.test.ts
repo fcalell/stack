@@ -2,7 +2,9 @@ import type { RegisterContext } from "@fcalell/cli";
 import { discoverPlugins, sortByDependencies } from "@fcalell/cli/discovery";
 import { createEventBus, Init } from "@fcalell/cli/events";
 import { createMockCtx } from "@fcalell/cli/testing";
+import { api } from "@fcalell/plugin-api";
 import { type AuthOptions, auth } from "@fcalell/plugin-auth";
+import { cloudflare } from "@fcalell/plugin-cloudflare";
 import { type DbOptions, db } from "@fcalell/plugin-db";
 import { describe, expect, it } from "vitest";
 
@@ -63,7 +65,12 @@ describe("Init.Prompt in non-interactive mode", () => {
 	it("emits across multiple plugins and accumulates answers keyed by plugin name", async () => {
 		const config = {
 			app: { name: "app", domain: "app.example.com" },
-			plugins: [db({ dialect: "d1", databaseId: "placeholder" }), auth({})],
+			plugins: [
+				cloudflare(),
+				api(),
+				db({ dialect: "d1", databaseId: "placeholder" }),
+				auth({}),
+			],
 			validate: () => ({ valid: true, errors: [] }),
 		};
 		const discovered = await discoverPlugins(config);
@@ -98,7 +105,12 @@ describe("Init.Prompt → pluginAnswers wiring (mirrors init.ts merge)", () => {
 	it("pluginAnswers collects each plugin's configOptions after Init.Prompt", async () => {
 		const config = {
 			app: { name: "app", domain: "example.com" },
-			plugins: [db({ dialect: "d1", databaseId: "abc" }), auth({})],
+			plugins: [
+				cloudflare(),
+				api(),
+				db({ dialect: "d1", databaseId: "abc" }),
+				auth({}),
+			],
 			validate: () => ({ valid: true, errors: [] }),
 		};
 		const discovered = await discoverPlugins(config);

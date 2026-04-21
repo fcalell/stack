@@ -39,7 +39,7 @@ export default defineConfig({
 });
 ```
 
-The `auth` plugin depends on `db` -- the CLI validates this via `depends: [db.events.SchemaReady]`.
+The `auth` plugin depends on `db` -- the CLI validates this via `after: [db.events.SchemaReady]`.
 
 ### 2. Define callbacks
 
@@ -157,12 +157,12 @@ import { db } from "@fcalell/plugin-db";
 
 export const auth = createPlugin("auth", {
   label: "Auth",
-  depends: [db.events.SchemaReady],
+  after: [db.events.SchemaReady],
   callbacks: {
     sendOTP: callback<{ email: string; code: string }>(),
     sendInvitation: callback<{ email: string; orgName: string }>(),
   },
-  config(options) { ... },
+  schema: authOptionsSchema,
   register(ctx, bus) { ... },
 });
 ```

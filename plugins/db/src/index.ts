@@ -1,19 +1,31 @@
 import { join } from "node:path";
-import { createPlugin, fromSchema } from "@fcalell/cli";
-import { Codegen, Deploy, Dev, Init, Remove } from "@fcalell/cli/events";
+import { createPlugin } from "@fcalell/cli";
+import { Deploy, Dev, Init, Remove } from "@fcalell/cli/events";
+import { api } from "@fcalell/plugin-api";
+import { cloudflare } from "@fcalell/plugin-cloudflare";
 import {
 	applyMigrationsLocal,
 	applyMigrationsRemote,
 	generateMigrations,
 	pushSchemaLocal,
 } from "./node/push";
-import { type DbOptions, dbOptionsSchema } from "./types";
+import { dbOptionsSchema } from "./types";
 
 export const db = createPlugin("db", {
 	label: "Database",
 	events: ["SchemaReady"],
+	after: [cloudflare.events.Wrangler, api.events.Worker],
 
-	config: fromSchema<DbOptions>(dbOptionsSchema),
+	schema: dbOptionsSchema,
+
+	dependencies: {
+		"@fcalell/plugin-db": "workspace:*",
+	},
+	devDependencies: {
+		"drizzle-kit": "^0.31.0",
+		tsx: "^4.19.0",
+	},
+	gitignore: [".db-kit"],
 
 	commands: {
 		push: {
@@ -116,17 +128,10 @@ export const db = createPlugin("db", {
 		});
 
 		bus.on(Init.Scaffold, (p) => {
-			p.files.push({
-				source: new URL("../templates/schema.ts", import.meta.url),
-				target: "src/schema/index.ts",
-			});
-			p.dependencies["@fcalell/plugin-db"] = "workspace:*";
-			p.devDependencies["drizzle-kit"] = "^0.31.0";
-			p.devDependencies.tsx = "^4.19.0";
-			p.gitignore.push(".db-kit");
+			p.files.push(ctx.scaffold("schema.ts", "src/schema/index.ts"));
 		});
 
-		bus.on(Codegen.Wrangler, (p) => {
+		bus.on(cloudflare.events.Wrangler, (p) => {
 			if (ctx.options?.dialect !== "d1") return;
 			const binding = ctx.options.binding ?? "DB_MAIN";
 			const databaseId = ctx.options.databaseId;
@@ -139,57 +144,26 @@ export const db = createPlugin("db", {
 			});
 		});
 
-		bus.on(Codegen.Env, (p) => {
+		bus.on(api.events.Worker, async (p) => {
+			// The worker runtime currently targets Cloudflare D1 only. The sqlite
+			// dialect uses better-sqlite3 which cannot run in the Workers isolate,
+			// so we scaffold schema tooling without contributing runtime middleware.
 			if (ctx.options?.dialect !== "d1") return;
-			const binding = ctx.options.binding ?? "DB_MAIN";
-			p.fields.push({
-				name: binding,
-				type: { kind: "reference", name: "D1Database" },
-				from: {
-					source: "@cloudflare/workers-types",
-					named: ["D1Database"],
-					typeOnly: true,
-				},
-			});
-		});
-
-		bus.on(Codegen.Worker, async (p) => {
-			p.imports.push({
-				source: "@fcalell/plugin-db/runtime",
-				default: "dbRuntime",
-			});
+			const rt = ctx.runtime(p);
+			// dbRuntime reads only {binding, schema}; replace the auto-seeded
+			// options with just the fields the runtime signature accepts.
+			rt.options = {
+				binding: { kind: "string", value: ctx.options.binding ?? "DB_MAIN" },
+			};
 			const hasSchema = await ctx.fileExists("src/schema");
-			const properties: Array<{
-				key: string;
-				value: import("@fcalell/cli/ast").TsExpression;
-				shorthand?: boolean;
-			}> = [
-				{
-					key: "binding",
-					value: {
-						kind: "string",
-						value: ctx.options?.binding ?? "DB_MAIN",
-					},
-				},
-			];
 			if (hasSchema) {
 				p.imports.push({ source: "../src/schema", namespace: "schema" });
-				properties.push({
-					key: "schema",
-					value: { kind: "identifier", name: "schema" },
-					shorthand: true,
-				});
+				rt.options.schema = { kind: "identifier", name: "schema" };
 			}
-			p.middlewareChain.push({
-				kind: "call",
-				callee: { kind: "identifier", name: "dbRuntime" },
-				args: [{ kind: "object", properties }],
-			});
 		});
 
 		bus.on(Remove, (p) => {
 			p.files.push("src/schema/", "src/migrations/");
-			p.dependencies.push("@fcalell/plugin-db", "drizzle-kit", "tsx");
 		});
 
 		bus.on(Dev.Ready, (p) => {

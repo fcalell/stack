@@ -33,7 +33,7 @@ For SolidJS apps built with Vite.
 For Node.js packages run via `tsx`.
 
 - Extends `base.json`
-- `module: esnext`, `moduleResolution: bundler`
+- `module: esnext`, `moduleResolution: bundler` (packages publish `.ts` source directly via `exports` and run under `tsx`, which resolves without explicit `.js` extensions)
 
 ## Usage
 

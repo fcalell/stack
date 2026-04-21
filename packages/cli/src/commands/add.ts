@@ -17,10 +17,7 @@ export async function add(
 	const available = await loadAvailablePlugins();
 	const pluginInfo = available.find((p) => p.name === pluginName);
 	if (!pluginInfo) {
-		const availableNames = available
-			.filter((p) => !p.cli.implicit)
-			.map((p) => p.name)
-			.join(", ");
+		const availableNames = available.map((p) => p.name).join(", ");
 		throw new MissingPluginError(
 			pluginName,
 			`Unknown plugin: "${pluginName}". Available plugins: ${availableNames}`,

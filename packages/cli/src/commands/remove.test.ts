@@ -42,9 +42,8 @@ function makePlugin(
 		cli: {
 			name,
 			label: `${name} plugin`,
-			implicit: false,
 			package: `@fcalell/plugin-${name}`,
-			depends: (opts.dependsOn ?? []).map((dep) =>
+			after: (opts.dependsOn ?? []).map((dep) =>
 				defineEvent<void>(dep, `${dep}.ready`),
 			),
 			callbacks: {},

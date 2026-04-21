@@ -27,7 +27,7 @@ export async function remove(
 
 	// Check if any other plugin depends on this one
 	const dependents = discovered.filter((p) =>
-		p.cli.depends.some((d) => d.source === pluginName),
+		p.cli.after.some((d) => d.source === pluginName),
 	);
 	if (dependents.length > 0) {
 		const names = dependents.map((p) => p.name).join(", ");
@@ -53,6 +53,7 @@ export async function remove(
 		const result = await bus.emit(Remove, {
 			files: [],
 			dependencies: [],
+			devDependencies: [],
 		});
 
 		if (result.files.length > 0) {
@@ -60,6 +61,9 @@ export async function remove(
 		}
 		if (result.dependencies.length > 0) {
 			log.info(`Packages to remove: ${result.dependencies.join(", ")}`);
+		}
+		if (result.devDependencies.length > 0) {
+			log.info(`Dev packages to remove: ${result.devDependencies.join(", ")}`);
 		}
 	}
 

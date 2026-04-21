@@ -1,4 +1,4 @@
-import { Build, Codegen, createEventBus, Dev } from "@fcalell/cli/events";
+import { Build, createEventBus, Dev, Generate } from "@fcalell/cli/events";
 import { createMockCtx } from "@fcalell/cli/testing";
 import { describe, expect, it } from "vitest";
 import { vite } from "./index";
@@ -33,8 +33,8 @@ describe("vite.cli", () => {
 		expect(vite.cli.label).toBe("Vite");
 	});
 
-	it("has no depends", () => {
-		expect(vite.cli.depends).toHaveLength(0);
+	it("has no after entries", () => {
+		expect(vite.cli.after).toHaveLength(0);
 	});
 });
 
@@ -71,24 +71,18 @@ describe("vite register", () => {
 		expect(viteProcess?.args).toContain("4000");
 	});
 
-	it("contributes tailwind + providers imports on Codegen.ViteConfig", async () => {
+	it("contributes providers import on vite.events.ViteConfig", async () => {
 		const bus = createEventBus();
 		const ctx = createMockCtx();
 		vite.cli.register(ctx, bus, vite.events);
 
-		const cfg = await bus.emit(Codegen.ViteConfig, {
+		const cfg = await bus.emit(vite.events.ViteConfig, {
 			imports: [],
 			pluginCalls: [],
 			resolveAliases: [],
 			devServerPort: 0,
 		});
 
-		expect(cfg.imports).toContainEqual(
-			expect.objectContaining({
-				source: "@tailwindcss/vite",
-				default: "tailwindcss",
-			}),
-		);
 		expect(cfg.imports).toContainEqual(
 			expect.objectContaining({
 				source: "@fcalell/plugin-vite/preset",
@@ -98,12 +92,29 @@ describe("vite register", () => {
 		expect(cfg.devServerPort).toBe(3000);
 	});
 
+	it("does not contribute tailwindcss (plugin-solid-ui owns tailwind)", async () => {
+		const bus = createEventBus();
+		const ctx = createMockCtx();
+		vite.cli.register(ctx, bus, vite.events);
+
+		const cfg = await bus.emit(vite.events.ViteConfig, {
+			imports: [],
+			pluginCalls: [],
+			resolveAliases: [],
+			devServerPort: 0,
+		});
+
+		expect(cfg.imports).not.toContainEqual(
+			expect.objectContaining({ source: "@tailwindcss/vite" }),
+		);
+	});
+
 	it("does not contribute themeFontsPlugin (plugin-solid-ui owns fonts)", async () => {
 		const bus = createEventBus();
 		const ctx = createMockCtx();
 		vite.cli.register(ctx, bus, vite.events);
 
-		const cfg = await bus.emit(Codegen.ViteConfig, {
+		const cfg = await bus.emit(vite.events.ViteConfig, {
 			imports: [],
 			pluginCalls: [],
 			resolveAliases: [],
@@ -119,12 +130,12 @@ describe("vite register", () => {
 		expect(fontsCall).toBeUndefined();
 	});
 
-	it("uses custom port for Codegen.ViteConfig devServerPort", async () => {
+	it("uses custom port for vite.events.ViteConfig devServerPort", async () => {
 		const bus = createEventBus();
 		const ctx = createMockCtx({ options: { port: 4000 } });
 		vite.cli.register(ctx, bus, vite.events);
 
-		const cfg = await bus.emit(Codegen.ViteConfig, {
+		const cfg = await bus.emit(vite.events.ViteConfig, {
 			imports: [],
 			pluginCalls: [],
 			resolveAliases: [],
@@ -134,21 +145,18 @@ describe("vite register", () => {
 		expect(cfg.devServerPort).toBe(4000);
 	});
 
-	it("contributes localhost origin to Codegen.Worker cors", async () => {
+	it("emits ViteConfigured on Generate (not only Dev.Start)", async () => {
 		const bus = createEventBus();
 		const ctx = createMockCtx();
 		vite.cli.register(ctx, bus, vite.events);
 
-		const worker = await bus.emit(Codegen.Worker, {
-			imports: [],
-			base: null,
-			middlewareChain: [],
-			handler: null,
-			domain: "",
-			cors: [],
+		let fired = false;
+		bus.on(vite.events.ViteConfigured, () => {
+			fired = true;
 		});
 
-		expect(worker.cors).toContain("http://localhost:3000");
+		await bus.emit(Generate, { files: [], postWrite: [] });
+		expect(fired).toBe(true);
 	});
 
 	it("pushes vite build step on Build.Start", async () => {

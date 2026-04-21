@@ -19,6 +19,8 @@
 	},
 	"dependencies": {
 		"@fcalell/cli": "workspace:*",
+		"@fcalell/plugin-api": "workspace:*",
+		"@fcalell/plugin-cloudflare": "workspace:*",
 		"@fcalell/plugin-db": "workspace:*",
 		"better-auth": "^1.6.5",
 		"zod": "^4.3.6"

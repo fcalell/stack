@@ -102,7 +102,9 @@ describe("stack CLI subprocess e2e", () => {
 
 		// Generated .stack dir (init calls generate as its final step)
 		expect(existsSync(resolve(dir, ".stack"))).toBe(true);
-		expect(existsSync(resolve(dir, ".stack/env.d.ts"))).toBe(true);
+		expect(existsSync(resolve(dir, ".stack/worker-configuration.d.ts"))).toBe(
+			true,
+		);
 
 		// Config imports the plugins we asked for
 		const cfg = readFileSync(resolve(dir, "stack.config.ts"), "utf-8");

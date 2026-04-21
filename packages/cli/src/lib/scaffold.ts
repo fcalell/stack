@@ -34,15 +34,16 @@ export async function writeScaffoldSpecs(
 	// Duplicate-target detection runs BEFORE any writes. Two plugins that
 	// claim the same scaffold target is a programming error — the old
 	// "last writer wins" behaviour silently dropped contributions.
-	const seen = new Set<string>();
+	const seen = new Map<string, string>();
 	for (const spec of specs) {
-		if (seen.has(spec.target)) {
+		const prior = seen.get(spec.target);
+		if (prior !== undefined) {
 			throw new ScaffoldError(
-				`Duplicate scaffold target: ${spec.target} contributed by multiple plugins`,
+				`Duplicate scaffold target "${spec.target}" contributed by plugin-${prior} and plugin-${spec.plugin}`,
 				spec.target,
 			);
 		}
-		seen.add(spec.target);
+		seen.set(spec.target, spec.plugin);
 	}
 
 	const created: string[] = [];

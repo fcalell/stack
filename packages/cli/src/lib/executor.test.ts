@@ -119,8 +119,8 @@ describe("processScaffoldPayload", () => {
 	it("passes through scaffold specs and dedupes gitignore entries", () => {
 		const payload = {
 			files: [
-				{ source: new URL("file:///a"), target: "a.ts" },
-				{ source: new URL("file:///b"), target: "b.ts" },
+				{ source: new URL("file:///a"), target: "a.ts", plugin: "alpha" },
+				{ source: new URL("file:///b"), target: "b.ts", plugin: "beta" },
 			],
 			dependencies: { foo: "1.0.0" },
 			devDependencies: { bar: "2.0.0" },
@@ -236,13 +236,13 @@ describe("processDeployPayload", () => {
 describe("processGenerateFiles", () => {
 	it("deduplicates generated files", () => {
 		const files = [
-			{ path: ".stack/env.d.ts", content: "v1" },
-			{ path: ".stack/env.d.ts", content: "v2" },
+			{ path: ".stack/index.html", content: "v1" },
+			{ path: ".stack/index.html", content: "v2" },
 			{ path: ".stack/worker.ts", content: "worker" },
 		];
 		const result = processGenerateFiles(files);
 		expect(result).toHaveLength(2);
-		expect(result.find((f) => f.path === ".stack/env.d.ts")?.content).toBe(
+		expect(result.find((f) => f.path === ".stack/index.html")?.content).toBe(
 			"v2",
 		);
 	});

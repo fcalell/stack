@@ -1,6 +1,6 @@
 # @fcalell/plugin-solid
 
-SolidJS framework plugin for the `@fcalell/stack` framework. Provides SolidJS compilation, file-based routing with typed route declarations, and app bootstrap. Re-exports `@fcalell/ui` runtime utilities so consumers import from a single source.
+SolidJS framework plugin for the `@fcalell/stack` framework. Provides SolidJS compilation, file-based routing with typed route declarations, and app bootstrap. Design-system components, app bootstrap, router primitives, and all consumer-facing runtime utilities live in `@fcalell/plugin-solid-ui`.
 
 **Stack:** SolidJS + vite-plugin-solid + file-based router (all internal -- consumers don't import them)
 
@@ -48,7 +48,7 @@ src/app/pages/
 
 ```tsx
 // src/app/entry.tsx
-import { createApp } from "@fcalell/plugin-solid/app";
+import { createApp } from "@fcalell/plugin-solid-ui/app";
 import "./app.css";
 
 createApp();
@@ -57,7 +57,7 @@ createApp();
 ### 4. Use typed routes
 
 ```tsx
-import { A, useNavigate, routes } from "@fcalell/plugin-solid/router";
+import { A, useNavigate, routes } from "@fcalell/plugin-solid-ui/router";
 
 <A href={routes.projects.detail({ id: "123" })}>Open project</A>;
 
@@ -108,37 +108,20 @@ Scans `src/app/pages/` for `.tsx` / `.jsx` files, builds the route tree, and gen
 
 ### Dev / Build
 
-Contributes `vite-plugin-solid` and the routes plugin to the `Codegen.ViteConfig` payload (typed `TsImportSpec`s + `TsExpression` plugin calls). The CLI aggregates contributions and writes `.stack/vite.config.ts`; `plugin-vite` spawns the dev/build processes using it.
+Contributes `vite-plugin-solid` and the routes plugin to `plugin-vite`'s `vite.events.ViteConfig` payload (typed `TsImportSpec`s + `TsExpression` plugin calls). `plugin-vite` aggregates contributions and writes `.stack/vite.config.ts`, then spawns the dev/build processes using it.
 
 ### Remove
 
 Marks `src/app/` for deletion and removes `@fcalell/plugin-solid` and `solid-js` from dependencies.
-
-## Re-exports from `@fcalell/ui`
-
-The plugin re-exports `@fcalell/ui` runtime utilities so consumers use `@fcalell/plugin-solid/*` as their single import source:
-
-| Subpath | Re-exports from |
-|---------|----------------|
-| `./app` | `createApp`, `CreateAppOptions` |
-| `./router` | `A`, `Navigate`, `routes`, `useNavigate`, `useParams`, `useLocation`, `useSearchParams`, `useMatch`, `useResolvedPath`, `useIsRouting`, `useCurrentMatches` |
-| `./meta` | `Title`, `Meta`, `Link`, `MetaProvider` |
-| `./query` | `useQuery`, `useInfiniteQuery`, `useMutation`, `useQueryClient`, `combineQueries` |
-| `./theme` | `useTheme` |
-| `./cn` | `cn` |
 
 ## Exports
 
 | Subpath | Purpose |
 |---------|---------|
 | `@fcalell/plugin-solid` | `solid()`, `SolidOptions` |
-| `@fcalell/plugin-solid/app` | `createApp()`, `CreateAppOptions` |
-| `@fcalell/plugin-solid/router` | Typed `routes` builder + SolidJS Router primitives |
-| `@fcalell/plugin-solid/meta` | `Title`, `Meta`, `Link`, `MetaProvider` |
-| `@fcalell/plugin-solid/query` | `useQuery`, `useInfiniteQuery`, `useMutation`, `useQueryClient`, `combineQueries` |
-| `@fcalell/plugin-solid/theme` | `useTheme()` |
-| `@fcalell/plugin-solid/cn` | `cn()` class merging utility |
 | `@fcalell/plugin-solid/node/vite-routes` | `routesPlugin()` -- Vite plugin for file-based routing (used internally) |
+
+Consumer-facing runtime utilities (`createApp`, router primitives, meta, query, theme, `cn`, components) live in [`@fcalell/plugin-solid-ui`](../solid-ui).
 
 ## License
 

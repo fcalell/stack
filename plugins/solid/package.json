@@ -5,12 +5,7 @@
 	"sideEffects": false,
 	"exports": {
 		".": "./src/index.ts",
-		"./app": "./src/app/index.ts",
-		"./router": "./src/router/index.ts",
-		"./meta": "./src/meta/index.ts",
-		"./query": "./src/query/index.ts",
-		"./theme": "./src/theme/index.ts",
-		"./cn": "./src/cn/index.ts",
+		"./codegen": "./src/node/codegen.ts",
 		"./node/vite-routes": "./src/node/vite-routes.ts"
 	},
 	"license": "MIT",
@@ -24,9 +19,9 @@
 	"dependencies": {
 		"@fcalell/cli": "workspace:*",
 		"@fcalell/plugin-vite": "workspace:*",
-		"@fcalell/ui": "workspace:*",
 		"fast-glob": "^3.3.3",
-		"vite-plugin-solid": "^2.11.6"
+		"vite-plugin-solid": "^2.11.6",
+		"zod": "^4.3.6"
 	},
 	"devDependencies": {
 		"@fcalell/typescript-config": "workspace:*",

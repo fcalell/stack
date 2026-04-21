@@ -2,10 +2,43 @@
 	"name": "@fcalell/plugin-solid-ui",
 	"version": "0.0.0",
 	"type": "module",
-	"sideEffects": false,
-	"exports": {
-		".": "./src/index.ts"
+	"sideEffects": [
+		"**/*.css",
+		"./src/ui/fonts.ts"
+	],
+	"imports": {
+		"#components/*": [
+			"./src/ui/components/*/index.tsx",
+			"./src/ui/components/*/index.ts"
+		],
+		"#lib/*": [
+			"./src/ui/lib/*.ts",
+			"./src/ui/lib/*.tsx"
+		]
 	},
+	"exports": {
+		".": "./src/index.ts",
+		"./globals.css": "./src/ui/globals.css",
+		"./fonts": "./src/ui/fonts.ts",
+		"./node/fonts": "./src/node/fonts.ts",
+		"./app": "./src/ui/app/index.tsx",
+		"./meta": "./src/ui/meta/index.ts",
+		"./router": "./src/ui/router/index.ts",
+		"./components/*": [
+			"./src/ui/components/*/index.tsx",
+			"./src/ui/components/*/index.ts"
+		],
+		"./lib/*": [
+			"./src/ui/lib/*.ts",
+			"./src/ui/lib/*.tsx"
+		]
+	},
+	"files": [
+		"src",
+		"templates",
+		"docs",
+		"README.md"
+	],
 	"license": "MIT",
 	"scripts": {
 		"check-types": "tsc --noEmit --pretty",
@@ -14,15 +47,40 @@
 		"test": "vitest run",
 		"clear": "rm -rf node_modules .turbo"
 	},
+	"peerDependencies": {
+		"solid-js": "^1.9",
+		"@tanstack/solid-form": "^1.28"
+	},
+	"peerDependenciesMeta": {
+		"@tanstack/solid-form": {
+			"optional": true
+		}
+	},
 	"dependencies": {
+		"@corvu/otp-field": "^0.1.4",
 		"@fcalell/cli": "workspace:*",
 		"@fcalell/plugin-solid": "workspace:*",
 		"@fcalell/plugin-vite": "workspace:*",
-		"@fcalell/ui": "workspace:*"
+		"@fontsource-variable/jetbrains-mono": "^5.2.8",
+		"@kobalte/core": "^0.13.11",
+		"@solidjs/meta": "^0.29.4",
+		"@solidjs/router": "^0.16.1",
+		"@tailwindcss/vite": "^4.1.7",
+		"@tanstack/solid-query": "^5.97.0",
+		"@tanstack/solid-table": "^8.21.3",
+		"class-variance-authority": "^0.7.1",
+		"clsx": "^2.1.1",
+		"lucide-solid": "^0.577.0",
+		"solid-sonner": "^0.3.1",
+		"tailwind-merge": "^3.5.0",
+		"tailwindcss": "^4.1.7",
+		"zod": "^4.3.6"
 	},
 	"devDependencies": {
 		"@fcalell/typescript-config": "workspace:*",
+		"@tanstack/solid-form": "^1.28.6",
 		"solid-js": "^1.9.0",
-		"typescript": "^5.9.3"
+		"typescript": "^5.9.3",
+		"vite": "^7.0.4"
 	}
 }

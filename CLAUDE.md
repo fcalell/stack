@@ -6,9 +6,9 @@ Full-stack framework for SolidJS + Hono + Cloudflare. Ships everything a consume
 
 **The consumer writes only business logic.** Plugins wrap their domain (Drizzle, Hono, oRPC, Kobalte, Vite, Tailwind) and re-export only what's needed. Consumers don't install or import `drizzle-orm`, `hono`, `zod`, `@kobalte/core`, `vite`, or `tailwindcss` directly — and they don't hand-write glue code, boilerplate config, or wiring. If a value can be generated, inferred, defaulted, or auto-wired, a plugin must do it behind the scenes. A new consumer-facing option is the last resort, not the first.
 
-**Everything is opt-in and composable.** A project can use just the UI, just the database, or the full stack. Plugins declare dependencies via typed event tokens (`depends: [db.events.SchemaReady]`), the CLI auto-resolves dependencies, and `defineConfig()` validates the graph.
+**Everything is opt-in and composable.** A project can use just the UI, just the database, or the full stack. Plugins declare ordering via typed event tokens (`after: [db.events.SchemaReady]`), the CLI auto-resolves dependencies, and `defineConfig()` validates the graph.
 
-**CLI orchestrates; plugins contribute independently.** `@fcalell/cli` owns the lifecycle (init/dev/build/deploy), the event bus, codegen aggregation, and `stack.config.ts` — nothing else. Plugins never import each other to coordinate; they contribute to typed event payloads (`Codegen.Worker`, `Codegen.Wrangler`, `Composition.Providers`, …) and the CLI aggregates the results. Cross-plugin handoff happens via events or shared codegen payloads, never via shared mutable state.
+**CLI orchestrates; plugins contribute independently.** `@fcalell/cli` owns the lifecycle (init/dev/build/deploy), the event bus, and `stack.config.ts` — nothing else. Codegen surfaces are typed events defined on the owning plugin: `api.events.Worker`, `api.events.Middleware`, `cloudflare.events.Wrangler`, `vite.events.ViteConfig`, `solid.events.Entry` / `Html` / `Providers` / `RoutesDts`, `solidUi.events.AppCss`. Core defines only the cross-cutting `Generate` event; everything else is plugin-owned. Plugins never import each other to coordinate; they contribute to shared payloads and the owning plugin's aggregator writes the file. Cross-plugin handoff happens via events or shared codegen payloads, never via shared mutable state.
 
 **Plugins share one contract.** Every plugin — first-party or third-party — is built with `createPlugin()`, receives a `RegisterContext`, and speaks the same event + AST-spec vocabulary. A third-party plugin (e.g. `@acme/stack-plugin-widget`) composes cleanly with the official ones: same lifecycle hooks, same codegen surfaces, same dependency rules. When extending the framework, extend that shared interface — don't ship a new one.
 
@@ -19,7 +19,6 @@ Full-stack framework for SolidJS + Hono + Cloudflare. Ships everything a consume
 | Package | Purpose |
 |---------|---------|
 | `@fcalell/cli` | `defineConfig()`, `createPlugin()`, `stack` CLI, event bus, codegen |
-| `@fcalell/ui` | Design system: SolidJS + Kobalte + Tailwind v4 + CVA (runtime components) |
 | `@fcalell/typescript-config` | tsconfig presets (base, solid-vite, node-tsx) |
 | `@fcalell/biome-config` | Shareable Biome formatter/linter config |
 
@@ -29,25 +28,26 @@ Plugins are self-contained feature units built with `createPlugin()`. Each provi
 
 | Plugin | Purpose | Config factory |
 |--------|---------|----------------|
+| `@fcalell/plugin-cloudflare` | Cloudflare bindings, wrangler.toml codegen, `wrangler types` Env generation | `cloudflare()` |
 | `@fcalell/plugin-db` | Drizzle ORM clients (D1/SQLite), schema tooling, migrations | `db()` |
 | `@fcalell/plugin-auth` | Better Auth integration, RBAC, access control | `auth()` |
 | `@fcalell/plugin-api` | API framework: Hono + oRPC, procedure builder, typed client | `api()` |
-| `@fcalell/plugin-vite` | Framework-agnostic Vite lifecycle (Tailwind, FOUC, fonts) — implicit | `vite()` |
+| `@fcalell/plugin-vite` | Framework-agnostic Vite lifecycle (providers virtual module) | `vite()` |
 | `@fcalell/plugin-solid` | SolidJS compilation, file-based routing, app bootstrap | `solid()` |
-| `@fcalell/plugin-solid-ui` | Design system CLI plugin — manages `@fcalell/ui` | `solidUi()` |
+| `@fcalell/plugin-solid-ui` | Design system: SolidJS + Kobalte + Tailwind v4 + CVA components, fonts, typography tokens | `solidUi()` |
 
 ### Dependency graph
 
 ```
 @fcalell/cli               (core — defineConfig, createPlugin, events, CLI)
-@fcalell/ui                (runtime — SolidJS design system components)
 
-plugin-vite ──────────────> cli (framework-agnostic Vite lifecycle, implicit)
-plugin-db ────────────────> cli
-plugin-auth ──────────────> cli, plugin-db (via db.events.SchemaReady)
+plugin-cloudflare ────────> cli (owns cloudflare.events.Wrangler + wrangler.toml codegen)
+plugin-vite ──────────────> cli (framework-agnostic Vite lifecycle; owns vite.events.ViteConfig)
+plugin-db ────────────────> cli, plugin-cloudflare (contributes to cloudflare.events.Wrangler)
+plugin-auth ──────────────> cli, plugin-db (via db.events.SchemaReady), plugin-cloudflare (contributes to cloudflare.events.Wrangler)
 plugin-api ───────────────> cli
-plugin-solid ─────────────> cli, plugin-vite (via vite.events.ViteConfigured)
-plugin-solid-ui ──────────> cli, plugin-solid (via solid.events.SolidConfigured)
+plugin-solid ─────────────> cli, plugin-vite (via vite.events.ViteConfigured; contributes to vite.events.ViteConfig)
+plugin-solid-ui ──────────> cli, plugin-vite (contributes to vite.events.ViteConfig), plugin-solid (via solid.events.SolidConfigured)
 ```
 
 ## Plugin System
@@ -63,10 +63,10 @@ import { Init, Generate, Remove, Dev } from "@fcalell/cli/events";
 export const db = createPlugin("db", {
   label: "Database",
   events: ["SchemaReady"],
-  depends: [],
+  after: [],
   callbacks: { ... },
   commands: { push: { ... }, reset: { ... } },
-  config(options) { return { ...defaults, ...options }; },
+  schema: dbOptionsSchema,
   register(ctx, bus, events) {
     bus.on(Init.Scaffold, (p) => { p.files.push(...); });
     bus.on(Generate, (p) => { p.bindings.push(...); });
@@ -85,11 +85,11 @@ stack deploy:       Generate → Build → Deploy.Plan → Deploy.Execute → De
 stack remove:       Remove → Generate
 ```
 
-During `Generate`, plugins contribute typed specs to `Codegen.*` events (`Worker`, `Wrangler`, `Env`, `ViteConfig`, `Entry`, `Html`, `AppCss`, `RoutesDts`) and `Composition.Providers` / `Composition.Middleware`. The CLI aggregates contributions and writes the files in `.stack/`.
+During `Generate`, plugins contribute typed specs to plugin-owned events: `api.events.Worker` / `api.events.Middleware`, `cloudflare.events.Wrangler`, `vite.events.ViteConfig`, `solid.events.Entry` / `Html` / `Providers` / `RoutesDts`, `solidUi.events.AppCss`. Each owning plugin listens on `Generate`, emits its own event, and pushes the aggregated file(s) into `payload.files`; the CLI writes the files to `.stack/` and runs any `payload.postWrite` hooks (e.g. `plugin-cloudflare` shells out to `wrangler types` after writing `.stack/wrangler.toml`).
 
 ### Dependencies are event imports
 
-`depends: [db.events.SchemaReady]` replaces `requires: ["db"]`. The event token's `source` field tells the CLI which plugin defines it. TypeScript enforces the import; the CLI validates presence and computes topological order.
+`after: [db.events.SchemaReady]` declares plugin ordering. The event token's `source` field tells the CLI which plugin defines it. TypeScript enforces the import; the CLI validates presence and computes topological order.
 
 ### Plugin commands
 
@@ -131,20 +131,20 @@ my-app/
       plugins/
         auth.ts              # auth.defineCallbacks() — runtime callbacks
       routes/                # business logic (procedures; barrel generated to index.ts)
-      middleware.ts          # optional custom middleware (wired via Composition.Middleware)
+      middleware.ts          # optional custom middleware (wired via api.events.Middleware)
     app/
       pages/                 # file-based routes (business logic)
         index.tsx            # `_layout.tsx` is optional; plugin-solid ships a default
     app.css                  # optional consumer CSS; imported by .stack/app.css if present
   .stack/                    # generated — gitignored
-    env.d.ts                 # Env interface from Codegen.Env contributions
+    worker-configuration.d.ts # Env interface generated by `wrangler types`
     worker.ts                # virtual worker entry (inlined options, convention-based)
     wrangler.toml            # merged wrangler config
-    vite.config.ts           # Vite config from Codegen.ViteConfig contributions
+    vite.config.ts           # Vite config from vite.events.ViteConfig contributions
     entry.tsx                # app bootstrap (generated; never edit)
-    index.html               # HTML shell with <head> injections from Codegen.Html
+    index.html               # HTML shell with <head> injections from solid.events.Html
     app.css                  # aggregated stylesheet; consumer's src/app.css is imported if present
-    virtual-providers.tsx    # composition surface for Composition.Providers contributions
+    virtual-providers.tsx    # composition surface for solid.events.Providers contributions
     routes.d.ts              # typed route builder declarations
 ```
 
@@ -158,18 +158,25 @@ import { defineConfig } from "@fcalell/cli";
 import { db } from "@fcalell/plugin-db";
 import { auth } from "@fcalell/plugin-auth";
 import { api } from "@fcalell/plugin-api";
+import { vite } from "@fcalell/plugin-vite";
 import { solid } from "@fcalell/plugin-solid";
 import { solidUi } from "@fcalell/plugin-solid-ui";
 
 export default defineConfig({
   app: {
     name: "my-app",           // REQUIRED — wrangler worker name, default auth cookie prefix, fallback <title>
-    domain: "example.com",    // REQUIRED — CORS, trustedOrigins, app URL construction
+    domain: "example.com",    // REQUIRED — drives CORS, trustedOrigins, app URL construction
+    origins: [                // OPTIONAL — overrides the auto-derived CORS allow-list
+      "https://example.com",
+      "https://app.example.com",
+      "http://localhost:3000",
+    ],
   },
   plugins: [
     db({ dialect: "d1", databaseId: "..." }),
     auth({ cookies: { prefix: "myapp" }, organization: true }),
-    api({ cors: ["https://app.example.com"] }),
+    api(),
+    vite(),
     solid({
       title: "My App",                  // optional — <title>; defaults to app.name
       description: "...",               // optional — <meta name="description">
@@ -182,9 +189,9 @@ export default defineConfig({
 });
 ```
 
-`app.name` flows into the generated `wrangler.toml` and is the fallback `<title>`; `app.domain` drives CORS and auth trusted origins. HTML `<head>` metadata is owned by `plugin-solid` via `Codegen.Html`; a worker-only project needs none of it.
+`app.name` flows into the generated `wrangler.toml` and is the fallback `<title>`; `app.domain` drives CORS (`https://${domain}` + `https://app.${domain}`, plus the vite dev-port localhost origin when a frontend plugin is present) and auth trusted origins. Set `app.origins` to override the derived allow-list entirely. HTML `<head>` metadata is owned by `plugin-solid` via `solid.events.Html`; a worker-only project needs none of it.
 
-Note: `plugin-vite` is implicit — auto-resolved as a dependency of `plugin-solid`.
+Every plugin the consumer depends on must be listed explicitly — there is no implicit-resolution layer. `plugin-solid` requires `plugin-vite`, so both appear in the config. `stack init` auto-adds the missing dependency when you pick `solid` in the interactive picker.
 
 ## Runtime Architecture
 
@@ -199,7 +206,10 @@ import * as schema from "../src/schema";
 import authCallbacks from "../src/worker/plugins/auth";
 import * as routes from "../src/worker/routes";
 
-const worker = createWorker({ domain: "example.com", cors: [...] })
+const worker = createWorker({
+  domain: "example.com",
+  cors: ["https://example.com", "https://app.example.com"],
+})
   .use(dbRuntime({ binding: "DB_MAIN", schema }))
   .use(authRuntime({ cookies: { prefix: "myapp" }, callbacks: authCallbacks }))
   .handler(routes);
@@ -220,7 +230,7 @@ pnpm test:watch       # Run tests in watch mode (vitest)
 
 Vitest workspace at the root orchestrates per-package test projects. Tests live next to the code they test as `*.test.ts` files.
 
-**Test projects:** `packages/cli`, `plugins/db`, `plugins/auth`, `plugins/api`, `plugins/vite`, `plugins/solid`, `plugins/solid-ui`, `tests/integration`.
+**Test projects:** `packages/cli`, `plugins/cloudflare`, `plugins/db`, `plugins/auth`, `plugins/api`, `plugins/vite`, `plugins/solid`, `plugins/solid-ui`, `tests/integration`.
 
 ### Writing tests
 

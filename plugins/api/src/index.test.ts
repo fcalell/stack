@@ -1,5 +1,4 @@
 import {
-	Codegen,
 	createEventBus,
 	Dev,
 	Generate,
@@ -27,40 +26,14 @@ describe("api config factory", () => {
 	});
 
 	it("throws when prefix doesn't start with /", () => {
-		// @ts-expect-error testing runtime validation
 		expect(() => api({ prefix: "rpc" })).toThrow(
 			"api: prefix must start with /",
 		);
 	});
 
-	it("throws when cors is invalid type", () => {
-		// @ts-expect-error testing runtime validation
-		expect(() => api({ cors: 123 })).toThrow(
-			"api: cors must be a string or array of strings",
-		);
-	});
-
-	it("accepts cors as string", () => {
-		const config = api({ cors: "https://example.com" });
-		expect(config.options.cors).toBe("https://example.com");
-	});
-
-	it("accepts cors as string array", () => {
-		const origins = ["https://a.com", "https://b.com"];
-		const config = api({ cors: origins });
-		expect(config.options.cors).toEqual(origins);
-	});
-
 	it("accepts empty options (all defaults)", () => {
 		const config = api({});
 		expect(config.options.prefix).toBe("/rpc");
-		expect(config.options.cors).toBeUndefined();
-		expect(config.options.domain).toBeUndefined();
-	});
-
-	it("custom domain is preserved", () => {
-		const config = api({ domain: "api.example.com" });
-		expect(config.options.domain).toBe("api.example.com");
 	});
 });
 
@@ -110,7 +83,7 @@ describe("api register", () => {
 		});
 		api.cli.register(ctx, bus, api.events);
 
-		const gen = await bus.emit(Generate, { files: [] });
+		const gen = await bus.emit(Generate, { files: [], postWrite: [] });
 
 		expect(gen.files).toContainEqual(
 			expect.objectContaining({
@@ -130,27 +103,28 @@ describe("api register", () => {
 		const removal = await bus.emit(Remove, {
 			files: [],
 			dependencies: [],
+			devDependencies: [],
 		});
 
 		expect(removal.files).toContain("src/worker/routes/");
 		expect(removal.dependencies).toContain("@fcalell/plugin-api");
-		expect(removal.dependencies).toContain("wrangler");
+		expect(removal.devDependencies).toContain("wrangler");
 	});
 
-	it("claims worker base on Codegen.Worker with createWorker() call", async () => {
+	it("claims worker base on api.events.Worker with createWorker() call", async () => {
 		const bus = createEventBus();
 		const ctx = createMockCtx<ApiOptions>({
-			options: { prefix: "/rpc", domain: "example.com" },
+			options: { prefix: "/rpc" },
 		});
 		api.cli.register(ctx, bus, api.events);
 
-		const worker = await bus.emit(Codegen.Worker, {
+		const worker = await bus.emit(api.events.Worker, {
 			imports: [],
 			base: null,
+			pluginRuntimes: [],
 			middlewareChain: [],
 			handler: null,
-			domain: "example.com",
-			cors: [],
+			cors: ["https://example.com"],
 		});
 
 		expect(worker.base).not.toBeNull();
@@ -160,6 +134,12 @@ describe("api register", () => {
 				kind: "identifier",
 				name: "createWorker",
 			});
+			const firstArg = worker.base.args[0];
+			expect(firstArg?.kind).toBe("object");
+			if (firstArg?.kind === "object") {
+				const keys = firstArg.properties.map((prop) => prop.key);
+				expect(keys).toContain("cors");
+			}
 		}
 		expect(worker.imports).toContainEqual({
 			source: "@fcalell/plugin-api/runtime",
@@ -167,28 +147,7 @@ describe("api register", () => {
 		});
 	});
 
-	it("derives production CORS origins from domain when dev localhost present", async () => {
-		const bus = createEventBus();
-		const ctx = createMockCtx<ApiOptions>({
-			options: { prefix: "/rpc", domain: "example.com" },
-		});
-		api.cli.register(ctx, bus, api.events);
-
-		const worker = await bus.emit(Codegen.Worker, {
-			imports: [],
-			base: null,
-			middlewareChain: [],
-			handler: null,
-			domain: "example.com",
-			cors: ["http://localhost:3000"],
-		});
-
-		expect(worker.cors).toContain("http://localhost:3000");
-		expect(worker.cors).toContain("https://example.com");
-		expect(worker.cors).toContain("https://app.example.com");
-	});
-
-	it("throws on Codegen.Worker when another plugin already claimed base", async () => {
+	it("throws on api.events.Worker when another plugin already claimed base", async () => {
 		const bus = createEventBus();
 		const ctx = createMockCtx<ApiOptions>({
 			options: { prefix: "/rpc" },
@@ -196,16 +155,16 @@ describe("api register", () => {
 		api.cli.register(ctx, bus, api.events);
 
 		await expect(
-			bus.emit(Codegen.Worker, {
+			bus.emit(api.events.Worker, {
 				imports: [],
 				base: {
 					kind: "call",
 					callee: { kind: "identifier", name: "other" },
 					args: [],
 				},
+				pluginRuntimes: [],
 				middlewareChain: [],
 				handler: null,
-				domain: "",
 				cors: [],
 			}),
 		).rejects.toThrow(/cannot claim the worker root/);

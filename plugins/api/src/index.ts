@@ -1,122 +1,123 @@
-import { createPlugin, fromSchema } from "@fcalell/cli";
+import { join } from "node:path";
+import { createPlugin, type } from "@fcalell/cli";
 import type { TsExpression } from "@fcalell/cli/ast";
-import {
-	Codegen,
-	Composition,
-	Deploy,
-	Dev,
-	Generate,
-	Init,
-	Remove,
-} from "@fcalell/cli/events";
+import { hasRuntimeExport } from "@fcalell/cli/codegen";
+import { Deploy, Dev, Generate, Remove } from "@fcalell/cli/events";
 import { z } from "zod";
 import { generateRouteBarrel } from "./node/barrel";
+import { aggregateMiddleware, aggregateWorker } from "./node/codegen";
+import type { MiddlewarePayload, WorkerPayload } from "./node/types";
 
-// Kept hand-written so `prefix` can use the template-literal type `/${string}`,
-// which Zod can't express directly. The schema below complements this interface
-// and provides runtime validation with matching error messages.
-export interface ApiOptions {
-	cors?: string | string[];
-	prefix?: `/${string}`;
-	domain?: string;
-}
-
-const apiOptionsSchema = z.object({
-	cors: z
-		.union([z.string(), z.array(z.string())], {
-			error: "api: cors must be a string or array of strings",
-		})
-		.optional(),
+export const apiOptionsSchema = z.object({
 	prefix: z
 		.string()
 		.refine((p) => p.startsWith("/"), {
 			error: "api: prefix must start with /",
 		})
 		.default("/rpc"),
-	domain: z.string().optional(),
 });
 
-const parseApiOptions = fromSchema<ApiOptions>(apiOptionsSchema);
+export type ApiOptions = z.input<typeof apiOptionsSchema>;
 
 export const api = createPlugin("api", {
 	label: "API",
 
-	config(options: ApiOptions): ApiOptions {
-		const parsed = parseApiOptions(options ?? {});
-		// Cast prefix back to the template-literal type; the refinement above
-		// guarantees it starts with "/" at runtime.
-		return { ...parsed, prefix: parsed.prefix as `/${string}` };
+	events: {
+		// The worker codegen payload — other plugins contribute runtime entries,
+		// middleware imports, and overrides here. plugin-api seeds `base` and
+		// optionally `handler` from its own handler (runs first, since it's
+		// the owner and has no `after:`).
+		Worker: type<WorkerPayload>(),
+		// Ordered middleware call expressions. plugin-api auto-includes
+		// `src/worker/middleware.ts` when it exists; other plugins can
+		// interleave by phase + order.
+		Middleware: type<MiddlewarePayload>(),
 	},
 
-	register(ctx, bus) {
-		bus.on(Init.Scaffold, (p) => {
-			p.dependencies["@fcalell/plugin-api"] = "workspace:*";
-			p.devDependencies.wrangler = "^4.14.0";
-			p.gitignore.push(".wrangler", ".stack");
-		});
+	schema: apiOptionsSchema,
 
-		bus.on(Generate, (p) => {
+	dependencies: {
+		"@fcalell/plugin-api": "workspace:*",
+	},
+	devDependencies: {
+		wrangler: "^4.14.0",
+	},
+	gitignore: [".wrangler", ".stack"],
+
+	register(ctx, bus, events) {
+		bus.on(Generate, async (p) => {
+			// Always regenerate the route barrel alongside any worker codegen.
 			const barrelContent = generateRouteBarrel(ctx.cwd);
 			p.files.push({
 				path: "src/worker/routes/index.ts",
 				content: barrelContent,
 			});
+
+			// Abort worker codegen if no plugin in the resolved config declares
+			// a `./runtime` export — nothing would land in the chain and the
+			// generated worker.ts would only contain an empty createWorker()
+			// call with no providers.
+			const hasWorkerPlugins = ctx.discoveredPlugins.some((pl) =>
+				hasRuntimeExport(pl.package),
+			);
+			if (!hasWorkerPlugins) return;
+
+			// Emit api.events.Middleware first so the ordered middleware calls
+			// (+ imports) seed the Worker payload before plugin-owned runtime
+			// contributions land.
+			const middlewarePayload = await bus.emit(events.Middleware, {
+				entries: [],
+			});
+			const aggregated = aggregateMiddleware(middlewarePayload);
+
+			// CORS origins are derived from app config (app.origins, or fallback
+			// to `https://${domain}` + `https://app.${domain}`). plugin-vite
+			// contributes its dev-server localhost origin via api.events.Worker
+			// when origins aren't user-overridden.
+			const origins = ctx.app.origins ?? [
+				`https://${ctx.app.domain}`,
+				`https://app.${ctx.app.domain}`,
+			];
+
+			const workerPayload = await bus.emit(events.Worker, {
+				imports: aggregated?.imports ?? [],
+				base: null,
+				pluginRuntimes: [],
+				middlewareChain: aggregated?.calls ?? [],
+				handler: null,
+				cors: origins,
+			});
+
+			p.files.push({
+				path: ".stack/worker.ts",
+				content: aggregateWorker(workerPayload),
+			});
 		});
 
-		bus.on(Codegen.Worker, async (p) => {
+		bus.on(events.Worker, async (p) => {
 			if (p.base) {
 				throw new Error(
 					`Plugin "api" cannot claim the worker root because another plugin already did.`,
 				);
 			}
 
-			const options = (ctx.options ?? {}) as ApiOptions;
+			const options = ctx.options ?? {};
 
 			const workerOptions: Array<{ key: string; value: TsExpression }> = [];
-			const domain = p.domain || options.domain;
-			if (domain) {
-				workerOptions.push({
-					key: "domain",
-					value: { kind: "string", value: domain },
-				});
-			}
 			if (options.prefix) {
 				workerOptions.push({
 					key: "prefix",
 					value: { kind: "string", value: options.prefix },
 				});
 			}
-
-			const corsOrigins: string[] = [...p.cors];
-			if (options.cors) {
-				for (const o of Array.isArray(options.cors)
-					? options.cors
-					: [options.cors]) {
-					if (!corsOrigins.includes(o)) corsOrigins.push(o);
-				}
-			}
-			// When a frontend plugin contributed a localhost origin (via its vite
-			// dev port), derive matching production origins from the domain.
-			const hasLocalhost = corsOrigins.some((o) =>
-				o.startsWith("http://localhost"),
-			);
-			if (hasLocalhost && domain) {
-				const domainOrigin = `https://${domain}`;
-				if (!corsOrigins.includes(domainOrigin)) corsOrigins.push(domainOrigin);
-				const appOrigin = `https://app.${domain}`;
-				if (!corsOrigins.includes(appOrigin)) corsOrigins.push(appOrigin);
-			}
-			if (corsOrigins.length > 0) {
+			if (p.cors.length > 0) {
 				workerOptions.push({
 					key: "cors",
 					value: {
 						kind: "array",
-						items: corsOrigins.map((o) => ({ kind: "string", value: o })),
+						items: p.cors.map((o) => ({ kind: "string", value: o })),
 					},
 				});
-				// Update the payload's cors list so downstream plugins (e.g. auth)
-				// observe the final origins.
-				p.cors.splice(0, p.cors.length, ...corsOrigins);
 			}
 
 			p.imports.push({
@@ -138,12 +139,39 @@ export const api = createPlugin("api", {
 				p.imports.push({ source: "../src/worker/routes", namespace: "routes" });
 				p.handler = { identifier: "routes" };
 			}
+
+			// Auto-wire callback files for every plugin in the graph that
+			// declares callbacks AND owns a runtime. Runs after all other
+			// Worker handlers (plugin-api is the emitter; its own handler runs
+			// first because it registered first, and we re-enter the payload
+			// here to attach callbacks). Each plugin's entry is found-or-created
+			// via `pluginRuntimes.find(...)`; if the owner didn't touch the
+			// payload, this wiring still creates the entry so the plugin
+			// participates in the chain with just its auto-seeded options.
+			for (const pl of ctx.discoveredPlugins) {
+				const hasCallbacks = Object.keys(pl.callbacks ?? {}).length > 0;
+				if (!hasCallbacks) continue;
+				if (!hasRuntimeExport(pl.package)) continue;
+				const callbackPath = `src/worker/plugins/${pl.name}.ts`;
+				const fileExists = await ctx.fileExists(callbackPath);
+				if (!fileExists) continue;
+				const entry = p.pluginRuntimes.find((r) => r.plugin === pl.name);
+				if (!entry) continue;
+				const callbackIdentifier = `${pl.name}Callbacks`;
+				entry.callbacks = {
+					import: {
+						source: `../${callbackPath.replace(/\.ts$/, "")}`,
+						default: callbackIdentifier,
+					},
+					identifier: callbackIdentifier,
+				};
+			}
 		});
 
 		// Consumer middleware is an implicit contribution via the conventional
-		// file `src/worker/middleware.ts`. Published via Composition.Middleware
+		// file `src/worker/middleware.ts`. Published via api.events.Middleware
 		// so third-party plugins can interleave middleware around it.
-		bus.on(Composition.Middleware, async (p) => {
+		bus.on(events.Middleware, async (p) => {
 			const hasMiddleware = await ctx.fileExists("src/worker/middleware.ts");
 			if (!hasMiddleware) return;
 			p.entries.push({
@@ -161,7 +189,6 @@ export const api = createPlugin("api", {
 
 		bus.on(Remove, (p) => {
 			p.files.push("src/worker/routes/");
-			p.dependencies.push("@fcalell/plugin-api", "wrangler");
 		});
 
 		bus.on(Deploy.Execute, (p) => {
@@ -201,7 +228,6 @@ export const api = createPlugin("api", {
 					if (type === "add" || type === "unlink") {
 						const barrelContent = generateRouteBarrel(ctx.cwd);
 						const { writeFileSync } = await import("node:fs");
-						const { join } = await import("node:path");
 						writeFileSync(
 							join(ctx.cwd, "src/worker/routes/index.ts"),
 							barrelContent,

@@ -96,10 +96,25 @@ export function parseCommandFlags(
 			flags[canonical] = true;
 		} else {
 			const next = argv[i + 1];
-			if (next !== undefined) {
-				flags[canonical] = def.type === "number" ? Number(next) : next;
-				i++;
+			if (next === undefined || next.startsWith("-")) {
+				throw new StackError(
+					`Flag "${arg}" requires a ${def.type} value.`,
+					"MISSING_FLAG_VALUE",
+				);
 			}
+			if (def.type === "number") {
+				const parsed = Number(next);
+				if (Number.isNaN(parsed)) {
+					throw new StackError(
+						`Flag "${arg}" expects a number, got "${next}".`,
+						"INVALID_FLAG_VALUE",
+					);
+				}
+				flags[canonical] = parsed;
+			} else {
+				flags[canonical] = next;
+			}
+			i++;
 		}
 	}
 

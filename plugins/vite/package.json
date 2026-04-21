@@ -17,9 +17,7 @@
 	},
 	"dependencies": {
 		"@fcalell/cli": "workspace:*",
-		"@fcalell/ui": "workspace:*",
-		"@tailwindcss/vite": "^4.1.7",
-		"tailwindcss": "^4.1.7",
+		"@fcalell/plugin-api": "workspace:*",
 		"vite": "^7.0.4",
 		"zod": "^4.3.6"
 	},

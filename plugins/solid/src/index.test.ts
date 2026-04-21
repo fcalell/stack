@@ -1,11 +1,6 @@
-import {
-	Codegen,
-	createEventBus,
-	Generate,
-	Init,
-	Remove,
-} from "@fcalell/cli/events";
+import { createEventBus, Generate, Init, Remove } from "@fcalell/cli/events";
 import { createMockCtx } from "@fcalell/cli/testing";
+import { vite } from "@fcalell/plugin-vite";
 import { describe, expect, it, vi } from "vitest";
 import { type SolidOptions, solid } from "./index";
 
@@ -65,9 +60,9 @@ describe("solid.cli", () => {
 		expect(solid.cli.label).toBe("SolidJS");
 	});
 
-	it("depends on vite.events.ViteConfigured", () => {
-		expect(solid.cli.depends).toHaveLength(1);
-		expect(solid.cli.depends[0]?.source).toBe("vite");
+	it("runs after vite.events.ViteConfigured", () => {
+		expect(solid.cli.after).toHaveLength(1);
+		expect(solid.cli.after[0]?.source).toBe("vite");
 	});
 });
 
@@ -131,17 +126,18 @@ describe("solid register", () => {
 		const removal = await bus.emit(Remove, {
 			files: [],
 			dependencies: [],
+			devDependencies: [],
 		});
 		expect(removal.files).toContain("src/app/");
 		expect(removal.dependencies).toContain("@fcalell/plugin-solid");
 	});
 
-	it("contributes vite plugins on Codegen.ViteConfig", async () => {
+	it("contributes vite plugins on vite.events.ViteConfig", async () => {
 		const bus = createEventBus();
 		const ctx = createMockCtx();
 		solid.cli.register(ctx, bus, solid.events);
 
-		const cfg = await bus.emit(Codegen.ViteConfig, {
+		const cfg = await bus.emit(vite.events.ViteConfig, {
 			imports: [],
 			pluginCalls: [],
 			resolveAliases: [],
@@ -162,33 +158,13 @@ describe("solid register", () => {
 		expect(cfg.pluginCalls.length).toBeGreaterThanOrEqual(2);
 	});
 
-	it("reports pagesDir via Codegen.RoutesDts", async () => {
-		const bus = createEventBus();
-		const ctx = createMockCtx<SolidOptions>({
-			options: { routes: { pagesDir: "src/pages" } },
-		});
-		solid.cli.register(ctx, bus, solid.events);
-
-		const routes = await bus.emit(Codegen.RoutesDts, { pagesDir: null });
-		expect(routes.pagesDir).toBe("src/pages");
-	});
-
-	it("reports null pagesDir when routes: false", async () => {
-		const bus = createEventBus();
-		const ctx = createMockCtx<SolidOptions>({ options: { routes: false } });
-		solid.cli.register(ctx, bus, solid.events);
-
-		const routes = await bus.emit(Codegen.RoutesDts, { pagesDir: null });
-		expect(routes.pagesDir).toBeNull();
-	});
-
 	it("writes routes dts on Generate via writeRoutesDts", async () => {
 		writeRoutesDtsMock.mockClear();
 		const bus = createEventBus();
 		const ctx = createMockCtx();
 		solid.cli.register(ctx, bus, solid.events);
 
-		const gen = await bus.emit(Generate, { files: [] });
+		const gen = await bus.emit(Generate, { files: [], postWrite: [] });
 		expect(writeRoutesDtsMock).toHaveBeenCalledWith(
 			"/tmp/test",
 			"src/app/pages",
@@ -206,7 +182,7 @@ describe("solid register", () => {
 		});
 		solid.cli.register(ctx, bus, solid.events);
 
-		await bus.emit(Generate, { files: [] });
+		await bus.emit(Generate, { files: [], postWrite: [] });
 		expect(writeRoutesDtsMock).toHaveBeenCalledWith("/tmp/test", "src/pages");
 	});
 
@@ -216,16 +192,16 @@ describe("solid register", () => {
 		const ctx = createMockCtx<SolidOptions>({ options: { routes: false } });
 		solid.cli.register(ctx, bus, solid.events);
 
-		await bus.emit(Generate, { files: [] });
+		await bus.emit(Generate, { files: [], postWrite: [] });
 		expect(writeRoutesDtsMock).not.toHaveBeenCalled();
 	});
 
-	it("contributes default lang + title (from app.name) on Codegen.Html", async () => {
+	it("contributes default lang + title (from app.name) on solid.events.Html", async () => {
 		const bus = createEventBus();
 		const ctx = createMockCtx();
 		solid.cli.register(ctx, bus, solid.events);
 
-		const html = await bus.emit(Codegen.Html, {
+		const html = await bus.emit(solid.events.Html, {
 			shell: null,
 			head: [],
 			bodyEnd: [],
@@ -244,7 +220,7 @@ describe("solid register", () => {
 		);
 	});
 
-	it("contributes description/themeColor/icon from options on Codegen.Html", async () => {
+	it("contributes description/themeColor/icon from options on solid.events.Html", async () => {
 		const bus = createEventBus();
 		const ctx = createMockCtx<SolidOptions>({
 			options: {
@@ -257,7 +233,7 @@ describe("solid register", () => {
 		});
 		solid.cli.register(ctx, bus, solid.events);
 
-		const html = await bus.emit(Codegen.Html, {
+		const html = await bus.emit(solid.events.Html, {
 			shell: null,
 			head: [],
 			bodyEnd: [],
@@ -290,7 +266,7 @@ describe("solid register", () => {
 		const ctx = createMockCtx();
 		solid.cli.register(ctx, bus, solid.events);
 
-		const html = await bus.emit(Codegen.Html, {
+		const html = await bus.emit(solid.events.Html, {
 			shell: null,
 			head: [],
 			bodyEnd: [],

@@ -1,7 +1,4 @@
-import type {
-	RuntimePlugin,
-	RuntimePluginEventHandlers,
-} from "@fcalell/cli/runtime";
+import type { RuntimePlugin } from "@fcalell/cli/runtime";
 import { ORPCError } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/fetch";
 import {
@@ -19,19 +16,15 @@ export type { InferRouter } from "../types";
 
 // ---------- Worker export ----------
 
-export interface WorkerExport {
+export interface WorkerExport<
+	TRouter extends Record<string, unknown> = Record<string, unknown>,
+> {
 	fetch: (
 		request: Request,
 		env: unknown,
 		ctx: unknown,
 	) => Response | Promise<Response>;
-	scheduled?: (
-		controller: unknown,
-		env: unknown,
-		ctx: unknown,
-	) => Promise<void>;
-	queue?: (batch: unknown, env: unknown, ctx: unknown) => Promise<void>;
-	_router: unknown;
+	_router: TRouter;
 }
 
 // ---------- Builder types ----------
@@ -62,7 +55,9 @@ export interface AppBuilder<TContext extends Record<string, unknown>> {
 		fn: (ctx: TContext) => TExtra | Promise<TExtra>,
 	): AppBuilder<TContext & TExtra>;
 
-	handler(consumerRoutes: Record<string, unknown>): WorkerExport;
+	handler<TRoutes extends Record<string, unknown>>(
+		consumerRoutes: TRoutes,
+	): WorkerExport<TRoutes>;
 }
 
 // ---------- Base context ----------
@@ -78,22 +73,28 @@ type BaseContext = {
 // ---------- ApiOptions (plain) ----------
 
 export interface ApiWorkerOptions {
-	cors?: string | string[];
+	cors?: string[];
 	prefix?: `/${string}`;
 }
+
+type ResolvedApiOptions = Required<Pick<ApiWorkerOptions, "prefix">> &
+	Pick<ApiWorkerOptions, "cors">;
 
 // ---------- createWorker ----------
 
 export function createWorker(
 	options?: ApiWorkerOptions,
 ): AppBuilder<BaseContext> {
-	const apiOptions = { prefix: "/rpc" as `/${string}`, ...options };
+	const apiOptions: ResolvedApiOptions = {
+		prefix: "/rpc",
+		...options,
+	};
 	return createAppBuilder<BaseContext>([], apiOptions);
 }
 
 function createAppBuilder<TContext extends Record<string, unknown>>(
 	entries: UseEntry[],
-	apiOptions: ApiWorkerOptions,
+	apiOptions: ResolvedApiOptions,
 ): AppBuilder<TContext> {
 	return {
 		use(
@@ -135,12 +136,12 @@ function createAppBuilder<TContext extends Record<string, unknown>>(
 			return createAppBuilder<any>(newEntries, apiOptions);
 		},
 
-		handler(consumerRoutes: Record<string, unknown>): WorkerExport {
-			const rpcPrefix: `/${string}` = apiOptions.prefix ?? "/rpc";
-			const corsOrigin = apiOptions.cors;
+		handler<TRoutes extends Record<string, unknown>>(
+			consumerRoutes: TRoutes,
+		): WorkerExport<TRoutes> {
+			const { prefix: rpcPrefix, cors: corsOrigin } = apiOptions;
 
 			const pluginEntries = entries.filter(isPluginEntry);
-			const allEntries = entries;
 
 			const procedure = createProcedure<TContext>();
 
@@ -163,10 +164,20 @@ function createAppBuilder<TContext extends Record<string, unknown>>(
 				Variables: { __stackCtx: Record<string, unknown> };
 			}>();
 
-			app.use("*", logger());
-			app.use("*", secureHeaders());
-
-			if (corsOrigin) {
+			// CORS must run first so preflights and error responses always carry
+			// CORS headers; mounting it after logger/secureHeaders leaks non-CORS
+			// responses to the browser when an earlier layer short-circuits.
+			//
+			// An explicitly empty origin list is a misconfiguration (usually
+			// `app.origins: []` override): silently skipping CORS would make
+			// browsers fail preflights with no diagnostic. `undefined` is
+			// allowed for non-browser workers that don't need CORS at all.
+			if (corsOrigin !== undefined) {
+				if (corsOrigin.length === 0) {
+					throw new Error(
+						"createWorker: cors was provided but is empty. Check app.domain / app.origins.",
+					);
+				}
 				app.use(
 					"*",
 					cors({
@@ -175,6 +186,8 @@ function createAppBuilder<TContext extends Record<string, unknown>>(
 					}),
 				);
 			}
+			app.use("*", logger());
+			app.use("*", secureHeaders());
 
 			app.use("*", async (c, next) => {
 				const env = c.env;
@@ -186,7 +199,7 @@ function createAppBuilder<TContext extends Record<string, unknown>>(
 
 				let ctx: Record<string, unknown> = { env, request };
 
-				for (const entry of allEntries) {
+				for (const entry of entries) {
 					if (isPluginEntry(entry)) {
 						const provided = await entry.plugin.context(env, ctx);
 						ctx = { ...ctx, ...provided };
@@ -241,30 +254,11 @@ function createAppBuilder<TContext extends Record<string, unknown>>(
 				);
 			});
 
-			const eventHandlers: RuntimePluginEventHandlers = {};
-			for (const entry of pluginEntries) {
-				if (typeof entry.plugin.handlers === "function") {
-					const handlers = entry.plugin.handlers();
-					if (handlers.scheduled) eventHandlers.scheduled = handlers.scheduled;
-					if (handlers.queue) eventHandlers.queue = handlers.queue;
-					if (handlers.email) eventHandlers.email = handlers.email;
-				}
-			}
-
 			const honoFetch = app.fetch.bind(app);
-			const workerExport: WorkerExport = {
+			return {
 				fetch: (request, env, ctx) => honoFetch(request, env, ctx as undefined),
-				_router: fullRouter,
+				_router: fullRouter as unknown as TRoutes,
 			};
-
-			if (eventHandlers.scheduled) {
-				workerExport.scheduled = eventHandlers.scheduled;
-			}
-			if (eventHandlers.queue) {
-				workerExport.queue = eventHandlers.queue;
-			}
-
-			return workerExport;
 		},
 	} as AppBuilder<TContext>;
 }

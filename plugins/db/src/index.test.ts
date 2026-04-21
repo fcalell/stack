@@ -1,5 +1,4 @@
 import {
-	Codegen,
 	createEventBus,
 	Dev,
 	Generate,
@@ -7,6 +6,8 @@ import {
 	Remove,
 } from "@fcalell/cli/events";
 import { createMockCtx } from "@fcalell/cli/testing";
+import { api } from "@fcalell/plugin-api";
+import { cloudflare } from "@fcalell/plugin-cloudflare";
 import { describe, expect, it, vi } from "vitest";
 import { type DbOptions, db } from "./index";
 import * as pushModule from "./node/push";
@@ -127,7 +128,7 @@ describe("db register", () => {
 		expect(scaffold.gitignore).toContain(".db-kit");
 	});
 
-	it("pushes D1 binding on Codegen.Wrangler for d1 dialect", async () => {
+	it("pushes D1 binding on cloudflare.events.Wrangler for d1 dialect", async () => {
 		const bus = createEventBus();
 		const ctx = createMockCtx<DbOptions>({
 			options: {
@@ -139,7 +140,7 @@ describe("db register", () => {
 		});
 		db.cli.register(ctx, bus, db.events);
 
-		const wrangler = await bus.emit(Codegen.Wrangler, {
+		const wrangler = await bus.emit(cloudflare.events.Wrangler, {
 			bindings: [],
 			routes: [],
 			vars: {},
@@ -151,27 +152,6 @@ describe("db register", () => {
 				kind: "d1",
 				binding: "DB_MAIN",
 				databaseId: "abc-123",
-			}),
-		);
-	});
-
-	it("pushes D1 env field on Codegen.Env for d1 dialect", async () => {
-		const bus = createEventBus();
-		const ctx = createMockCtx<DbOptions>({
-			options: {
-				dialect: "d1",
-				databaseId: "abc-123",
-				binding: "DB_MAIN",
-				migrations: "./src/migrations",
-			},
-		});
-		db.cli.register(ctx, bus, db.events);
-
-		const env = await bus.emit(Codegen.Env, { fields: [] });
-		expect(env.fields).toContainEqual(
-			expect.objectContaining({
-				name: "DB_MAIN",
-				type: { kind: "reference", name: "D1Database" },
 			}),
 		);
 	});
@@ -188,7 +168,7 @@ describe("db register", () => {
 		});
 		db.cli.register(ctx, bus, db.events);
 
-		const wrangler = await bus.emit(Codegen.Wrangler, {
+		const wrangler = await bus.emit(cloudflare.events.Wrangler, {
 			bindings: [],
 			routes: [],
 			vars: {},
@@ -196,6 +176,100 @@ describe("db register", () => {
 			compatibilityDate: "2025-01-01",
 		});
 		expect(wrangler.bindings).toHaveLength(0);
+	});
+
+	it("skips worker runtime contribution for sqlite dialect", async () => {
+		// better-sqlite3 can't run in the Workers isolate, so sqlite dialect
+		// must not inject dbRuntime middleware into the generated worker.
+		const bus = createEventBus();
+		const ctx = createMockCtx<DbOptions>({
+			options: {
+				dialect: "sqlite",
+				path: "./data/app.sqlite",
+				binding: "DB_MAIN",
+				migrations: "./src/migrations",
+			},
+		});
+		db.cli.register(ctx, bus, db.events);
+
+		const worker = await bus.emit(api.events.Worker, {
+			imports: [],
+			base: null,
+			pluginRuntimes: [],
+			middlewareChain: [],
+			handler: null,
+			cors: [],
+		});
+		expect(worker.imports).toHaveLength(0);
+		expect(worker.pluginRuntimes).toHaveLength(0);
+		expect(worker.middlewareChain).toHaveLength(0);
+	});
+
+	it("contributes worker runtime middleware for d1 dialect", async () => {
+		const bus = createEventBus();
+		const ctx = createMockCtx<DbOptions>({
+			options: {
+				dialect: "d1",
+				databaseId: "abc",
+				binding: "DB_MAIN",
+				migrations: "./src/migrations",
+			},
+			fileExists: async () => false,
+		});
+		db.cli.register(ctx, bus, db.events);
+
+		const worker = await bus.emit(api.events.Worker, {
+			imports: [],
+			base: null,
+			pluginRuntimes: [],
+			middlewareChain: [],
+			handler: null,
+			cors: [],
+		});
+		expect(worker.pluginRuntimes).toHaveLength(1);
+		const entry = worker.pluginRuntimes[0];
+		expect(entry?.plugin).toBe("db");
+		expect(entry?.identifier).toBe("dbRuntime");
+		expect(entry?.import).toEqual({
+			source: "@fcalell/plugin-db/runtime",
+			default: "dbRuntime",
+		});
+		expect(entry?.options.binding).toEqual({
+			kind: "string",
+			value: "DB_MAIN",
+		});
+	});
+
+	it("adds schema namespace import + option when src/schema exists", async () => {
+		const bus = createEventBus();
+		const ctx = createMockCtx<DbOptions>({
+			options: {
+				dialect: "d1",
+				databaseId: "abc",
+				binding: "DB_MAIN",
+				migrations: "./src/migrations",
+			},
+			fileExists: async (p: string) => p === "src/schema",
+		});
+		db.cli.register(ctx, bus, db.events);
+
+		const worker = await bus.emit(api.events.Worker, {
+			imports: [],
+			base: null,
+			pluginRuntimes: [],
+			middlewareChain: [],
+			handler: null,
+			cors: [],
+		});
+		expect(worker.imports).toContainEqual({
+			source: "../src/schema",
+			namespace: "schema",
+		});
+		const entry = worker.pluginRuntimes[0];
+		expect(entry?.options.schema).toEqual({
+			kind: "identifier",
+			name: "schema",
+		});
 	});
 
 	it("emits Generate without bindings field (plain files only)", async () => {
@@ -210,7 +284,7 @@ describe("db register", () => {
 		});
 		db.cli.register(ctx, bus, db.events);
 
-		const gen = await bus.emit(Generate, { files: [] });
+		const gen = await bus.emit(Generate, { files: [], postWrite: [] });
 		expect(gen.files).toEqual([]);
 	});
 
@@ -229,9 +303,13 @@ describe("db register", () => {
 		const removal = await bus.emit(Remove, {
 			files: [],
 			dependencies: [],
+			devDependencies: [],
 		});
 		expect(removal.files).toContain("src/schema/");
 		expect(removal.dependencies).toContain("@fcalell/plugin-db");
+		expect(removal.devDependencies).toEqual(
+			expect.arrayContaining(["drizzle-kit", "tsx"]),
+		);
 	});
 
 	it("serializes concurrent schema pushes from setup + watcher", async () => {

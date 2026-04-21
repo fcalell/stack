@@ -8,7 +8,7 @@ import type { AuthRuntimeOptions, FieldConfig } from "../types";
 
 export interface AuthCallbacks {
 	sendOTP: (payload: { email: string; code: string }) => void | Promise<void>;
-	sendInvitation: (payload: {
+	sendInvitation?: (payload: {
 		email: string;
 		orgName: string;
 	}) => void | Promise<void>;
@@ -17,6 +17,7 @@ export interface AuthCallbacks {
 export interface AuthRuntimeInput extends AuthRuntimeOptions {
 	callbacks?: AuthCallbacks;
 	sameSite?: "strict" | "lax" | "none";
+	trustedOrigins?: string[];
 	cookies?: { prefix?: string; domain?: string };
 	session?: {
 		expiresIn?: number;
@@ -76,7 +77,7 @@ function buildAuth(
 						}
 					: undefined,
 				async sendInvitationEmail(data) {
-					await options.callbacks?.sendInvitation({
+					await options.callbacks?.sendInvitation?.({
 						email: data.email,
 						orgName: data.organization.name,
 					});
@@ -88,6 +89,7 @@ function buildAuth(
 	return betterAuth({
 		baseURL: env[options.appUrlVar] as string,
 		secret: env[options.secretVar] as string,
+		trustedOrigins: options.trustedOrigins,
 		// biome-ignore lint/suspicious/noExplicitAny: drizzleAdapter DB type is opaque.
 		database: drizzleAdapter(db as any, { provider: "sqlite" }),
 		advanced: {

@@ -162,6 +162,50 @@ describe("parseCommandFlags", () => {
 		const flags = parseCommandFlags(cmd, []);
 		expect(flags).toEqual({});
 	});
+
+	it("throws when a string flag has no value at argv end", () => {
+		const cmd = {
+			description: "Test",
+			options: {
+				name: { type: "string" as const, description: "Name" },
+			},
+			handler: vi.fn(),
+		};
+		expect(() => parseCommandFlags(cmd, ["--name"])).toThrow(
+			/Flag "--name" requires a string value/,
+		);
+	});
+
+	it("throws when a string flag is followed by another flag instead of a value", () => {
+		const cmd = {
+			description: "Test",
+			options: {
+				name: { type: "string" as const, description: "Name" },
+				remote: {
+					type: "boolean" as const,
+					description: "Remote",
+					default: false,
+				},
+			},
+			handler: vi.fn(),
+		};
+		expect(() => parseCommandFlags(cmd, ["--name", "--remote"])).toThrow(
+			/Flag "--name" requires a string value/,
+		);
+	});
+
+	it("throws when a number flag receives a non-numeric value", () => {
+		const cmd = {
+			description: "Test",
+			options: {
+				port: { type: "number" as const, description: "Port" },
+			},
+			handler: vi.fn(),
+		};
+		expect(() => parseCommandFlags(cmd, ["--port", "abc"])).toThrow(
+			/Flag "--port" expects a number, got "abc"/,
+		);
+	});
 });
 
 describe("formatPluginCommands", () => {

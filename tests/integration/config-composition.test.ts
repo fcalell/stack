@@ -14,7 +14,7 @@ describe("defineConfig with multiple plugin combinations", () => {
 			plugins: [
 				db({ dialect: "d1", databaseId: "test-db-id" }),
 				auth(),
-				api({ cors: "https://example.com" }),
+				api(),
 				solid(),
 			],
 		});
@@ -114,7 +114,7 @@ describe("defineConfig with multiple plugin combinations", () => {
 			plugins: [
 				db({ dialect: "d1", databaseId: "my-db-id" }),
 				auth({ cookies: { prefix: "myapp" } }),
-				api({ cors: ["https://a.com", "https://b.com"], prefix: "/api" }),
+				api({ prefix: "/api" }),
 				solid(),
 			],
 		});

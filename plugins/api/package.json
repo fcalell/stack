@@ -8,6 +8,8 @@
 		"./runtime": "./src/worker/index.ts",
 		"./client": "./src/client.ts",
 		"./schema": "./src/schema.ts",
+		"./node/codegen": "./src/node/codegen.ts",
+		"./node/types": "./src/node/types.ts",
 		"./lib/cursor": "./src/lib/cursor.ts",
 		"./lib/slugify": "./src/lib/slugify.ts"
 	},

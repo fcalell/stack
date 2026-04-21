@@ -26,10 +26,6 @@ describe("plugin factory validation", () => {
 	it("api throws for prefix not starting with /", () => {
 		expect(() => api({ prefix: "rpc" as `/${string}` })).toThrow("prefix");
 	});
-
-	it("api throws for invalid cors type", () => {
-		expect(() => api({ cors: 123 as unknown as string })).toThrow("cors");
-	});
 });
 
 describe("cross-plugin dependency validation", () => {
@@ -50,7 +46,7 @@ describe("cross-plugin dependency validation", () => {
 			plugins: [
 				db({ dialect: "d1", databaseId: "test" }),
 				auth({ cookies: { prefix: "test" }, organization: true }),
-				api({ cors: "https://test.com", prefix: "/rpc" }),
+				api({ prefix: "/rpc" }),
 				solid(),
 			],
 		});
@@ -60,9 +56,9 @@ describe("cross-plugin dependency validation", () => {
 		expect(result.errors).toHaveLength(0);
 	});
 
-	it("auth plugin declares dependency on db via cli.depends", () => {
-		expect(auth.cli.depends).toHaveLength(1);
-		expect(auth.cli.depends[0]?.source).toBe("db");
+	it("auth plugin declares dependency on db via cli.after", () => {
+		const sources = auth.cli.after.map((e) => e.source);
+		expect(sources).toContain("db");
 	});
 
 	it("duplicate plugin produces validation error", () => {
@@ -77,6 +73,22 @@ describe("cross-plugin dependency validation", () => {
 		const result = config.validate();
 		expect(result.valid).toBe(false);
 		expect(result.errors[0]?.message).toContain("Duplicate");
+	});
+
+	it("hand-authored plugin entry missing __package fails validation", () => {
+		const config = defineConfig({
+			app: { name: "app", domain: "example.com" },
+			plugins: [
+				// Simulates a user constructing the config object directly instead
+				// of calling the factory — discovery would silently fall back to
+				// `@fcalell/plugin-widget`, which may not be the right package.
+				{ __plugin: "widget", options: {} } as never,
+			],
+		});
+
+		const result = config.validate();
+		expect(result.valid).toBe(false);
+		expect(result.errors[0]?.message).toContain("__package");
 	});
 });
 

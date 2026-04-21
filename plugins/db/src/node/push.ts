@@ -58,7 +58,7 @@ export async function pushSchemaLocal(
 export default defineConfig({
   dialect: "sqlite",
   schema: "./src/schema/index.ts",
-  dbCredentials: { url: "${dbUrl}" },
+  dbCredentials: { url: ${JSON.stringify(dbUrl)} },
 });
 `;
 	writeDrizzleConfig(configPath, configContent);
@@ -86,7 +86,7 @@ export async function generateMigrations(
 export default defineConfig({
   dialect: "sqlite",
   schema: "./src/schema/index.ts",
-  out: "${options.migrations ?? "./src/migrations"}",
+  out: ${JSON.stringify(options.migrations ?? "./src/migrations")},
 });
 `;
 	writeDrizzleConfig(configPath, configContent);
@@ -143,8 +143,8 @@ export async function applyMigrationsLocal(
 export default defineConfig({
   dialect: "sqlite",
   schema: "./src/schema/index.ts",
-  out: "${options.migrations ?? "./src/migrations"}",
-  dbCredentials: { url: "${sqliteLocalUrl(options)}" },
+  out: ${JSON.stringify(options.migrations ?? "./src/migrations")},
+  dbCredentials: { url: ${JSON.stringify(sqliteLocalUrl(options))} },
 });
 `;
 		writeDrizzleConfig(configPath, configContent);

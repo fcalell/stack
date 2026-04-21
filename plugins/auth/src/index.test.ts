@@ -1,5 +1,7 @@
-import { Codegen, createEventBus, Init, Remove } from "@fcalell/cli/events";
+import { createEventBus, Init, Remove } from "@fcalell/cli/events";
 import { createMockCtx } from "@fcalell/cli/testing";
+import { api } from "@fcalell/plugin-api";
+import { cloudflare } from "@fcalell/plugin-cloudflare";
 import { describe, expect, it, vi } from "vitest";
 import { type AuthOptions, auth } from "./index";
 
@@ -182,18 +184,20 @@ describe("auth register", () => {
 			(f) => f.target === "src/worker/plugins/auth.ts",
 		);
 		expect(callbacks).toBeDefined();
-		expect(
-			callbacks?.source.pathname.endsWith("templates/auth-callbacks.ts"),
-		).toBe(true);
+		// Auto-wired: createPlugin scaffolds templates/callbacks.ts when the
+		// plugin declares both `callbacks` and `runtime`.
+		expect(callbacks?.source.pathname.endsWith("templates/callbacks.ts")).toBe(
+			true,
+		);
 		expect(scaffold.dependencies["@fcalell/plugin-auth"]).toBe("workspace:*");
 	});
 
-	it("pushes rate-limiter bindings + secrets on Codegen.Wrangler", async () => {
+	it("pushes rate-limiter bindings + secrets on cloudflare.events.Wrangler", async () => {
 		const bus = createEventBus();
 		const ctx = createMockCtx<AuthOptions>({ options: defaultOptions });
 		auth.cli.register(ctx, bus, auth.events);
 
-		const wrangler = await bus.emit(Codegen.Wrangler, {
+		const wrangler = await bus.emit(cloudflare.events.Wrangler, {
 			bindings: [],
 			routes: [],
 			vars: {},
@@ -218,26 +222,6 @@ describe("auth register", () => {
 		]);
 	});
 
-	it("pushes env fields on Codegen.Env", async () => {
-		const bus = createEventBus();
-		const ctx = createMockCtx<AuthOptions>({ options: defaultOptions });
-		auth.cli.register(ctx, bus, auth.events);
-
-		const env = await bus.emit(Codegen.Env, { fields: [] });
-		expect(env.fields).toHaveLength(4);
-		expect(env.fields.map((f) => f.name)).toEqual([
-			"AUTH_SECRET",
-			"APP_URL",
-			"RATE_LIMITER_IP",
-			"RATE_LIMITER_EMAIL",
-		]);
-		expect(env.fields[0]?.type).toEqual({ kind: "reference", name: "string" });
-		expect(env.fields[2]?.type).toEqual({
-			kind: "reference",
-			name: "RateLimiter",
-		});
-	});
-
 	it("uses custom secret var names in wrangler payload", async () => {
 		const bus = createEventBus();
 		const ctx = createMockCtx<AuthOptions>({
@@ -249,7 +233,7 @@ describe("auth register", () => {
 		});
 		auth.cli.register(ctx, bus, auth.events);
 
-		const wrangler = await bus.emit(Codegen.Wrangler, {
+		const wrangler = await bus.emit(cloudflare.events.Wrangler, {
 			bindings: [],
 			routes: [],
 			vars: {},
@@ -273,7 +257,7 @@ describe("auth register", () => {
 		});
 		auth.cli.register(ctx, bus, auth.events);
 
-		const wrangler = await bus.emit(Codegen.Wrangler, {
+		const wrangler = await bus.emit(cloudflare.events.Wrangler, {
 			bindings: [],
 			routes: [],
 			vars: {},
@@ -292,6 +276,102 @@ describe("auth register", () => {
 		});
 	});
 
+	it("threads p.cors into trustedOrigins on api.events.Worker", async () => {
+		const bus = createEventBus();
+		const ctx = createMockCtx<AuthOptions>({ options: defaultOptions });
+		auth.cli.register(ctx, bus, auth.events);
+
+		const cors = ["https://example.com", "https://app.example.com"];
+		const worker = await bus.emit(api.events.Worker, {
+			imports: [],
+			base: null,
+			pluginRuntimes: [],
+			middlewareChain: [],
+			handler: null,
+			cors,
+		});
+
+		const entry = worker.pluginRuntimes.find((r) => r.plugin === "auth");
+		expect(entry).toBeDefined();
+		expect(entry?.identifier).toBe("authRuntime");
+		expect(entry?.options.trustedOrigins).toEqual({
+			kind: "array",
+			items: cors.map((o) => ({ kind: "string", value: o })),
+		});
+	});
+
+	it("omits trustedOrigins when p.cors is empty", async () => {
+		const bus = createEventBus();
+		const ctx = createMockCtx<AuthOptions>({ options: defaultOptions });
+		auth.cli.register(ctx, bus, auth.events);
+
+		const worker = await bus.emit(api.events.Worker, {
+			imports: [],
+			base: null,
+			pluginRuntimes: [],
+			middlewareChain: [],
+			handler: null,
+			cors: [],
+		});
+
+		const entry = worker.pluginRuntimes.find((r) => r.plugin === "auth");
+		expect(entry).toBeDefined();
+		expect(entry?.options.trustedOrigins).toBeUndefined();
+	});
+
+	it("wires callbacks onto the runtime entry when callback file exists", async () => {
+		// Callback → runtime wiring lives in plugin-api's api.events.Worker
+		// handler; it walks ctx.discoveredPlugins for plugins declaring both
+		// callbacks and a ./runtime export, and attaches the generated import
+		// when the convention file exists. We register api alongside auth and
+		// seed both contexts with discoveredPlugins so api's handler can see
+		// auth's callback declaration.
+		const bus = createEventBus();
+		const discoveredPlugins = [
+			{
+				name: auth.cli.name,
+				package: auth.cli.package,
+				callbacks: auth.cli.callbacks,
+			},
+			{
+				name: api.cli.name,
+				package: api.cli.package,
+				callbacks: api.cli.callbacks,
+			},
+		];
+		const fileExists = async (p: string) => p === "src/worker/plugins/auth.ts";
+		const authCtx = createMockCtx<AuthOptions>({
+			options: defaultOptions,
+			fileExists,
+			discoveredPlugins,
+		});
+		auth.cli.register(authCtx, bus, auth.events);
+		const apiCtx = createMockCtx({
+			options: {},
+			fileExists,
+			discoveredPlugins,
+		});
+		api.cli.register(apiCtx, bus, api.events);
+
+		const worker = await bus.emit(api.events.Worker, {
+			imports: [],
+			base: null,
+			pluginRuntimes: [],
+			middlewareChain: [],
+			handler: null,
+			cors: [],
+		});
+
+		const entry = worker.pluginRuntimes.find((r) => r.plugin === "auth");
+		expect(entry?.callbacks).toEqual({
+			import: {
+				source: "../src/worker/plugins/auth",
+				default: "authCallbacks",
+			},
+			identifier: "authCallbacks",
+		});
+	});
+
 	it("pushes cleanup info on Remove", async () => {
 		const bus = createEventBus();
 		const ctx = createMockCtx<AuthOptions>({ options: defaultOptions });
@@ -300,6 +380,7 @@ describe("auth register", () => {
 		const removal = await bus.emit(Remove, {
 			files: [],
 			dependencies: [],
+			devDependencies: [],
 		});
 		expect(removal.files).toContain("src/worker/plugins/auth.ts");
 		expect(removal.dependencies).toContain("@fcalell/plugin-auth");

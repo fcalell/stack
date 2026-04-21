@@ -3,11 +3,12 @@ import type { AnyD1Database, DrizzleD1Database } from "drizzle-orm/d1";
 import { createClient } from "../d1/client";
 
 export default function dbRuntime<
-	TSchema extends Record<string, unknown>,
+	TSchema extends Record<string, unknown> = Record<string, unknown>,
 >(options: {
 	binding: string;
-	schema: TSchema;
+	schema?: TSchema;
 }): RuntimePlugin<"db", object, { db: DrizzleD1Database<TSchema> }> {
+	const schema = (options.schema ?? {}) as TSchema;
 	return {
 		name: "db",
 		validateEnv(env: unknown) {
@@ -17,7 +18,7 @@ export default function dbRuntime<
 		},
 		context(env) {
 			const d1 = (env as Record<string, unknown>)[options.binding];
-			return { db: createClient(d1 as AnyD1Database, options.schema) };
+			return { db: createClient(d1 as AnyD1Database, schema) };
 		},
 	};
 }

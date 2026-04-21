@@ -47,9 +47,8 @@ function makePlugin(
 		cli: {
 			name,
 			label: name,
-			implicit: false,
 			package: `@fcalell/plugin-${name}`,
-			depends: [],
+			after: [],
 			callbacks: {},
 			commands: {},
 			register,

@@ -130,7 +130,7 @@ export const db = createPlugin("db", {
   label: "Database",
   events: ["SchemaReady"],
   commands: { push: { ... }, generate: { ... }, apply: { ... }, status: { ... }, reset: { ... } },
-  config(options) { ... },
+  schema: dbOptionsSchema,
   register(ctx, bus, events) {
     bus.on(Init.Scaffold, (p) => { ... });
     bus.on(Generate, (p) => { ... });
@@ -158,7 +158,7 @@ export const db = createPlugin("db", {
 |-------|------|
 | `db.events.SchemaReady` | After schema push completes (startup or watch trigger) |
 
-Other plugins (e.g. `auth`) depend on `db.events.SchemaReady` via `depends: [db.events.SchemaReady]`.
+Other plugins (e.g. `auth`) order themselves against `db.events.SchemaReady` via `after: [db.events.SchemaReady]`.
 
 ### Runtime
 

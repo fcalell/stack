@@ -9,11 +9,33 @@ export const fieldConfigSchema = z.object({
 
 export type FieldConfig = z.infer<typeof fieldConfigSchema>;
 
-const rateLimitEntrySchema = z.object({
-	binding: z.string().optional(),
-	limit: z.number().optional(),
-	period: z.number().optional(),
-});
+const rateLimiterIpSchema = z
+	.object({
+		binding: z.string().default("RATE_LIMITER_IP"),
+		limit: z
+			.number()
+			.positive({ error: "auth: rateLimiter.limit must be a positive number" })
+			.default(100),
+		period: z
+			.number()
+			.positive({ error: "auth: rateLimiter.period must be a positive number" })
+			.default(60),
+	})
+	.default({ binding: "RATE_LIMITER_IP", limit: 100, period: 60 });
+
+const rateLimiterEmailSchema = z
+	.object({
+		binding: z.string().default("RATE_LIMITER_EMAIL"),
+		limit: z
+			.number()
+			.positive({ error: "auth: rateLimiter.limit must be a positive number" })
+			.default(5),
+		period: z
+			.number()
+			.positive({ error: "auth: rateLimiter.period must be a positive number" })
+			.default(300),
+	})
+	.default({ binding: "RATE_LIMITER_EMAIL", limit: 5, period: 300 });
 
 const organizationObjectSchema = z.object({
 	ac: z.unknown().optional(),
@@ -53,16 +75,8 @@ export const authOptionsSchema = z.object({
 	appUrlVar: z.string().default("APP_URL"),
 	rateLimiter: z
 		.object({
-			ip: rateLimitEntrySchema.default({
-				binding: "RATE_LIMITER_IP",
-				limit: 100,
-				period: 60,
-			}),
-			email: rateLimitEntrySchema.default({
-				binding: "RATE_LIMITER_EMAIL",
-				limit: 5,
-				period: 300,
-			}),
+			ip: rateLimiterIpSchema,
+			email: rateLimiterEmailSchema,
 		})
 		.default({
 			ip: { binding: "RATE_LIMITER_IP", limit: 100, period: 60 },

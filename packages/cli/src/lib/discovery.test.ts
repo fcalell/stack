@@ -16,9 +16,8 @@ function makeDiscovered(name: string, dependsOn?: string[]): DiscoveredPlugin {
 		cli: {
 			name,
 			label: name,
-			implicit: false,
 			package: `@fcalell/plugin-${name}`,
-			depends: (dependsOn ?? []).map((dep) =>
+			after: (dependsOn ?? []).map((dep) =>
 				defineEvent<void>(dep, `${dep}.ready`),
 			),
 			callbacks: {},
@@ -108,7 +107,7 @@ describe("validateDependencies", () => {
 		const discovered = [makeDiscovered("auth", ["db"])];
 
 		expect(() => validateDependencies(discovered)).toThrow(
-			/\[auth\] depends on event 'db\.ready' from plugin 'db'.*not in your config.*Add db\(\) to plugins array/,
+			/\[auth\] must run after event 'db\.ready' from plugin 'db'.*not in your config.*Add db\(\) to plugins array/,
 		);
 	});
 
@@ -125,9 +124,8 @@ describe("validateDependencies", () => {
 				cli: {
 					name: "a",
 					label: "a",
-					implicit: false,
 					package: "@fcalell/plugin-a",
-					depends: [defineEvent<void>("core", "Init.Scaffold")],
+					after: [defineEvent<void>("core", "Init.Scaffold")],
 					callbacks: {},
 					commands: {},
 					register: () => {},
@@ -176,9 +174,8 @@ describe("discoverPlugins — third-party plugins via __package", () => {
 					cli: {
 						name: "widget",
 						label: "Widget",
-						implicit: false,
 						package: thirdPartyPackage,
-						depends: [],
+						after: [],
 						callbacks: {},
 						commands: {},
 						register: () => {},
@@ -220,9 +217,8 @@ describe("discoverPlugins — third-party plugins via __package", () => {
 				cli: {
 					name: "legacy",
 					label: "Legacy",
-					implicit: false,
 					package: "@fcalell/plugin-legacy",
-					depends: [],
+					after: [],
 					callbacks: {},
 					commands: {},
 					register: () => {},
@@ -245,21 +241,19 @@ describe("discoverPlugins — third-party plugins via __package", () => {
 	});
 });
 
-describe("discoverPlugins — implicit plugin failures", () => {
-	it("throws with actionable context when an implicit dependency fails to load", async () => {
+describe("discoverPlugins — missing dependency", () => {
+	it("throws when a top-level plugin depends on an event from a plugin not in the config", async () => {
 		// "parent" is the top-level plugin the consumer put in their config.
-		// It depends on an implicit plugin "ghost" that does not exist as an
-		// installable package. loadPlugin's import() must reject so the
-		// implicit-resolution loop surfaces the failure.
+		// It must run after an event sourced from "ghost", which the consumer
+		// forgot to add. Discovery surfaces the actionable error.
 		vi.doMock("@fcalell/plugin-parent", () => ({
 			parent: {
 				__plugin: "parent",
 				cli: {
 					name: "parent",
 					label: "Parent",
-					implicit: false,
 					package: "@fcalell/plugin-parent",
-					depends: [defineEvent<void>("ghost", "ghost.ready")],
+					after: [defineEvent<void>("ghost", "ghost.ready")],
 					callbacks: {},
 					commands: {},
 					register: () => {},
@@ -267,9 +261,6 @@ describe("discoverPlugins — implicit plugin failures", () => {
 				events: {},
 			},
 		}));
-		vi.doMock("@fcalell/plugin-ghost", () =>
-			Promise.reject(new Error("Cannot find module '@fcalell/plugin-ghost'")),
-		);
 
 		const config: StackConfig = {
 			app: { name: "app", domain: "example.com" },
@@ -278,10 +269,9 @@ describe("discoverPlugins — implicit plugin failures", () => {
 		};
 
 		await expect(discoverPlugins(config)).rejects.toThrow(
-			/Implicit plugin "ghost" required by "parent" failed to load/,
+			/\[parent\] must run after event 'ghost\.ready' from plugin 'ghost'.*not in your config/,
 		);
 
 		vi.doUnmock("@fcalell/plugin-parent");
-		vi.doUnmock("@fcalell/plugin-ghost");
 	});
 });

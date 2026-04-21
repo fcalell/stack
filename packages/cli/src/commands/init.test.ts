@@ -26,7 +26,7 @@ let mockAvailable: DiscoveredPlugin[] = [];
 vi.mock("#lib/discovery", () => ({
 	loadAvailablePlugins: vi.fn(async () => mockAvailable),
 	dependencyNames: (p: DiscoveredPlugin) =>
-		p.cli.depends
+		p.cli.after
 			.filter((d) => d.source !== "core")
 			.map((d) => d.source)
 			.filter((s, i, a) => a.indexOf(s) === i),
@@ -35,7 +35,6 @@ vi.mock("#lib/discovery", () => ({
 function makePlugin(
 	name: string,
 	opts: {
-		implicit?: boolean;
 		register?: DiscoveredPlugin["cli"]["register"];
 	} = {},
 ): DiscoveredPlugin {
@@ -44,9 +43,8 @@ function makePlugin(
 		cli: {
 			name,
 			label: `${name} plugin`,
-			implicit: opts.implicit ?? false,
 			package: `@fcalell/plugin-${name}`,
-			depends: [],
+			after: [],
 			callbacks: {},
 			commands: {},
 			register: opts.register ?? (() => {}),
@@ -112,6 +110,7 @@ describe("init() with --plugins flag", () => {
 						p.files.push({
 							source: pathToFileURL(templatePath),
 							target: "src/schema/index.ts",
+							plugin: "db",
 						});
 					});
 				},

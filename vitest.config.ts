@@ -4,6 +4,7 @@ export default defineConfig({
 	test: {
 		projects: [
 			"packages/cli",
+			"plugins/cloudflare",
 			"plugins/db",
 			"plugins/auth",
 			"plugins/api",
