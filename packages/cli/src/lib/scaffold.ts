@@ -13,8 +13,8 @@ import { ScaffoldError } from "#lib/errors";
 
 // Legacy accommodation for the CLI's own base-file templates (package.json,
 // tsconfig.json, biome.json, .gitignore, stack.config.ts). Base templates are
-// dynamic and return strings; they are not contributed via Init.Scaffold, so
-// they do not flow through writeScaffoldSpecs. Plugin-contributed scaffolds
+// dynamic and return strings; they are not contributed via cliSlots.initScaffolds,
+// so they do not flow through writeScaffoldSpecs. Plugin-contributed scaffolds
 // must go through ScaffoldSpec + writeScaffoldSpecs — do not reach for this
 // helper for plugin-driven content.
 export function writeIfMissingString(path: string, content: string): boolean {

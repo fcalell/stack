@@ -1,12 +1,20 @@
+import { writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { createPlugin, type } from "@fcalell/cli";
-import type { TsExpression } from "@fcalell/cli/ast";
-import { hasRuntimeExport } from "@fcalell/cli/codegen";
-import { Deploy, Dev, Generate, Remove } from "@fcalell/cli/events";
+import { plugin, slot } from "@fcalell/cli";
+import type {
+	MiddlewareSpec,
+	TsExpression,
+	TsImportSpec,
+} from "@fcalell/cli/ast";
+import { cliSlots } from "@fcalell/cli/cli-slots";
 import { z } from "zod";
 import { generateRouteBarrel } from "./node/barrel";
 import { aggregateMiddleware, aggregateWorker } from "./node/codegen";
-import type { MiddlewarePayload, WorkerPayload } from "./node/types";
+import type {
+	CallbackSpec,
+	PluginRuntimeEntry,
+	WorkerPayload,
+} from "./node/types";
 
 export const apiOptionsSchema = z.object({
 	prefix: z
@@ -19,20 +27,201 @@ export const apiOptionsSchema = z.object({
 
 export type ApiOptions = z.input<typeof apiOptionsSchema>;
 
-export const api = createPlugin("api", {
-	label: "API",
+// ── Slot declarations ──────────────────────────────────────────────
+//
+// Every worker fragment the plugin owns is a slot; peer plugins contribute
+// into them by importing `api.slots.*` and calling `.contribute(fn)`. The
+// final `.stack/worker.ts` comes out of the `workerSource` derivation, which
+// structurally reads every other slot — no ordering between contributions to
+// reason about.
 
-	events: {
-		// The worker codegen payload — other plugins contribute runtime entries,
-		// middleware imports, and overrides here. plugin-api seeds `base` and
-		// optionally `handler` from its own handler (runs first, since it's
-		// the owner and has no `after:`).
-		Worker: type<WorkerPayload>(),
-		// Ordered middleware call expressions. plugin-api auto-includes
-		// `src/worker/middleware.ts` when it exists; other plugins can
-		// interleave by phase + order.
-		Middleware: type<MiddlewarePayload>(),
+const SOURCE = "api";
+
+// Sort imports by source so the emitted worker file is independent of
+// `config.plugins` array order. dedupeImports preserves insertion order
+// within a group, so we sort the raw list first.
+const workerImports = slot.list<TsImportSpec>({
+	source: SOURCE,
+	name: "workerImports",
+	sortBy: (a, b) => a.source.localeCompare(b.source),
+});
+
+// Sort runtimes by plugin name so the generated `.use(...)` chain is
+// deterministic regardless of `config.plugins` array order. Hono middleware
+// order within pluginRuntimes is semantically independent — each runtime
+// attaches its own `c.var.<plugin>` — so a stable sort gives order-invariant
+// worker source without changing behavior.
+const pluginRuntimes = slot.list<PluginRuntimeEntry>({
+	source: SOURCE,
+	name: "pluginRuntimes",
+	sortBy: (a, b) => a.plugin.localeCompare(b.plugin),
+});
+
+const middlewareEntries = slot.list<MiddlewareSpec>({
+	source: SOURCE,
+	name: "middlewareEntries",
+});
+
+// Derived view of middleware: sorted call expressions.
+const middlewareCalls = slot.derived<
+	TsExpression[],
+	{ entries: typeof middlewareEntries }
+>({
+	source: SOURCE,
+	name: "middlewareCalls",
+	inputs: { entries: middlewareEntries },
+	compute: (inp) => aggregateMiddleware({ entries: inp.entries }).calls,
+});
+
+// Derived view of middleware imports (deduplicated).
+const middlewareImports = slot.derived<
+	TsImportSpec[],
+	{ entries: typeof middlewareEntries }
+>({
+	source: SOURCE,
+	name: "middlewareImports",
+	inputs: { entries: middlewareEntries },
+	compute: (inp) => aggregateMiddleware({ entries: inp.entries }).imports,
+});
+
+// The handler is a value slot — api seeds it conditionally on whether the
+// consumer has a `src/worker/routes` directory. Other plugins may override
+// via `override: true` if they own the root handler shape.
+const routesHandler = slot.value<{ identifier: string } | null>({
+	source: SOURCE,
+	name: "routesHandler",
+	seed: async (ctx) =>
+		(await ctx.fileExists("src/worker/routes"))
+			? { identifier: "routes" }
+			: null,
+});
+
+// Free-form extra CORS origins contributed by frontend plugins (e.g. vite's
+// localhost). Users override the CORS allow-list entirely via
+// `app.origins` — see `cors` below.
+const corsOrigins = slot.list<string>({
+	source: SOURCE,
+	name: "corsOrigins",
+});
+
+// The final CORS list peer plugins actually read. When the consumer supplies
+// `app.origins` we honour it verbatim; otherwise we derive a default from the
+// domain and append any extras from `corsOrigins`.
+const cors = slot.derived<string[], { extras: typeof corsOrigins }>({
+	source: SOURCE,
+	name: "cors",
+	inputs: { extras: corsOrigins },
+	compute: (inp, ctx) => {
+		if (ctx.app.origins) return ctx.app.origins;
+		const base = [`https://${ctx.app.domain}`, `https://app.${ctx.app.domain}`];
+		return [...base, ...inp.extras];
 	},
+});
+
+// Callback files a peer plugin wants wired into its runtime entry. Key is
+// the plugin name; must match `PluginRuntimeEntry.plugin`. The worker
+// aggregator splices `callbacks: <identifier>` into the corresponding
+// runtime's options object and imports the identifier.
+const callbacks = slot.map<CallbackSpec>({
+	source: SOURCE,
+	name: "callbacks",
+});
+
+// The root builder call. Derived from cors + options so worker options
+// (prefix / cors) are baked in purely from dataflow.
+const workerBase = slot.derived<TsExpression, { cors: typeof cors }>({
+	source: SOURCE,
+	name: "workerBase",
+	inputs: { cors },
+	compute: (inp, ctx) => {
+		const options = (ctx.options ?? {}) as ApiOptions;
+		const properties: Array<{ key: string; value: TsExpression }> = [];
+		if (options.prefix) {
+			properties.push({
+				key: "prefix",
+				value: { kind: "string", value: options.prefix },
+			});
+		}
+		if (inp.cors.length > 0) {
+			properties.push({
+				key: "cors",
+				value: {
+					kind: "array",
+					items: inp.cors.map((o) => ({ kind: "string", value: o })),
+				},
+			});
+		}
+		return {
+			kind: "call",
+			callee: { kind: "identifier", name: "createWorker" },
+			args: properties.length > 0 ? [{ kind: "object", properties }] : [],
+		};
+	},
+});
+
+// The rendered `.stack/worker.ts` source. Pulled into `cli.slots.artifactFiles`
+// by the auto-contribution below, gated on `pluginRuntimes` being non-empty
+// (with only the api plugin, no runtimes would land in the chain — emitting a
+// hollow worker would be confusing).
+const workerSource = slot.derived<
+	string | null,
+	{
+		imports: typeof workerImports;
+		base: typeof workerBase;
+		runtimes: typeof pluginRuntimes;
+		middlewareCalls: typeof middlewareCalls;
+		middlewareImports: typeof middlewareImports;
+		handler: typeof routesHandler;
+		callbacks: typeof callbacks;
+	}
+>({
+	source: SOURCE,
+	name: "workerSource",
+	inputs: {
+		imports: workerImports,
+		base: workerBase,
+		runtimes: pluginRuntimes,
+		middlewareCalls,
+		middlewareImports,
+		handler: routesHandler,
+		callbacks,
+	},
+	compute: (inp) => {
+		// With only plugin-api in the config, `pluginRuntimes` is empty — nothing
+		// would actually run. Return null so the file-emission contribution
+		// skips writing a hollow worker.
+		if (inp.runtimes.length === 0) return null;
+
+		const payload: WorkerPayload = {
+			imports: [...inp.imports, ...inp.middlewareImports],
+			base: inp.base,
+			pluginRuntimes: inp.runtimes,
+			middlewareChain: inp.middlewareCalls,
+			handler: inp.handler,
+			callbacks: inp.callbacks,
+		};
+		return aggregateWorker(payload);
+	},
+});
+
+export const api = plugin<
+	"api",
+	ApiOptions,
+	{
+		workerImports: typeof workerImports;
+		pluginRuntimes: typeof pluginRuntimes;
+		middlewareEntries: typeof middlewareEntries;
+		middlewareCalls: typeof middlewareCalls;
+		middlewareImports: typeof middlewareImports;
+		routesHandler: typeof routesHandler;
+		corsOrigins: typeof corsOrigins;
+		cors: typeof cors;
+		callbacks: typeof callbacks;
+		workerBase: typeof workerBase;
+		workerSource: typeof workerSource;
+	}
+>("api", {
+	label: "API",
 
 	schema: apiOptionsSchema,
 
@@ -44,137 +233,43 @@ export const api = createPlugin("api", {
 	},
 	gitignore: [".wrangler", ".stack"],
 
-	register(ctx, bus, events) {
-		bus.on(Generate, async (p) => {
-			// Always regenerate the route barrel alongside any worker codegen.
-			const barrelContent = generateRouteBarrel(ctx.cwd);
-			p.files.push({
-				path: "src/worker/routes/index.ts",
-				content: barrelContent,
-			});
+	slots: {
+		workerImports,
+		pluginRuntimes,
+		middlewareEntries,
+		middlewareCalls,
+		middlewareImports,
+		routesHandler,
+		corsOrigins,
+		cors,
+		callbacks,
+		workerBase,
+		workerSource,
+	},
 
-			// Abort worker codegen if no plugin in the resolved config declares
-			// a `./runtime` export — nothing would land in the chain and the
-			// generated worker.ts would only contain an empty createWorker()
-			// call with no providers.
-			const hasWorkerPlugins = ctx.discoveredPlugins.some((pl) =>
-				hasRuntimeExport(pl.package),
-			);
-			if (!hasWorkerPlugins) return;
-
-			// Emit api.events.Middleware first so the ordered middleware calls
-			// (+ imports) seed the Worker payload before plugin-owned runtime
-			// contributions land.
-			const middlewarePayload = await bus.emit(events.Middleware, {
-				entries: [],
-			});
-			const aggregated = aggregateMiddleware(middlewarePayload);
-
-			// CORS origins are derived from app config (app.origins, or fallback
-			// to `https://${domain}` + `https://app.${domain}`). plugin-vite
-			// contributes its dev-server localhost origin via api.events.Worker
-			// when origins aren't user-overridden.
-			const origins = ctx.app.origins ?? [
-				`https://${ctx.app.domain}`,
-				`https://app.${ctx.app.domain}`,
-			];
-
-			const workerPayload = await bus.emit(events.Worker, {
-				imports: aggregated?.imports ?? [],
-				base: null,
-				pluginRuntimes: [],
-				middlewareChain: aggregated?.calls ?? [],
-				handler: null,
-				cors: origins,
-			});
-
-			p.files.push({
-				path: ".stack/worker.ts",
-				content: aggregateWorker(workerPayload),
-			});
-		});
-
-		bus.on(events.Worker, async (p) => {
-			if (p.base) {
-				throw new Error(
-					`Plugin "api" cannot claim the worker root because another plugin already did.`,
-				);
-			}
-
-			const options = ctx.options ?? {};
-
-			const workerOptions: Array<{ key: string; value: TsExpression }> = [];
-			if (options.prefix) {
-				workerOptions.push({
-					key: "prefix",
-					value: { kind: "string", value: options.prefix },
-				});
-			}
-			if (p.cors.length > 0) {
-				workerOptions.push({
-					key: "cors",
-					value: {
-						kind: "array",
-						items: p.cors.map((o) => ({ kind: "string", value: o })),
-					},
-				});
-			}
-
-			p.imports.push({
+	contributes: (self) => [
+		// Always import `createWorker` — the base call uses it verbatim.
+		self.slots.workerImports.contribute(
+			(): TsImportSpec => ({
 				source: "@fcalell/plugin-api/runtime",
 				default: "createWorker",
-			});
+			}),
+		),
 
-			p.base = {
-				kind: "call",
-				callee: { kind: "identifier", name: "createWorker" },
-				args:
-					workerOptions.length > 0
-						? [{ kind: "object", properties: workerOptions }]
-						: [],
-			};
-
+		// Routes namespace import, gated on the handler value slot's seed.
+		self.slots.workerImports.contribute(async (ctx) => {
 			const hasRoutes = await ctx.fileExists("src/worker/routes");
-			if (hasRoutes) {
-				p.imports.push({ source: "../src/worker/routes", namespace: "routes" });
-				p.handler = { identifier: "routes" };
-			}
-
-			// Auto-wire callback files for every plugin in the graph that
-			// declares callbacks AND owns a runtime. Runs after all other
-			// Worker handlers (plugin-api is the emitter; its own handler runs
-			// first because it registered first, and we re-enter the payload
-			// here to attach callbacks). Each plugin's entry is found-or-created
-			// via `pluginRuntimes.find(...)`; if the owner didn't touch the
-			// payload, this wiring still creates the entry so the plugin
-			// participates in the chain with just its auto-seeded options.
-			for (const pl of ctx.discoveredPlugins) {
-				const hasCallbacks = Object.keys(pl.callbacks ?? {}).length > 0;
-				if (!hasCallbacks) continue;
-				if (!hasRuntimeExport(pl.package)) continue;
-				const callbackPath = `src/worker/plugins/${pl.name}.ts`;
-				const fileExists = await ctx.fileExists(callbackPath);
-				if (!fileExists) continue;
-				const entry = p.pluginRuntimes.find((r) => r.plugin === pl.name);
-				if (!entry) continue;
-				const callbackIdentifier = `${pl.name}Callbacks`;
-				entry.callbacks = {
-					import: {
-						source: `../${callbackPath.replace(/\.ts$/, "")}`,
-						default: callbackIdentifier,
-					},
-					identifier: callbackIdentifier,
-				};
-			}
-		});
+			if (!hasRoutes) return undefined;
+			return { source: "../src/worker/routes", namespace: "routes" };
+		}),
 
 		// Consumer middleware is an implicit contribution via the conventional
-		// file `src/worker/middleware.ts`. Published via api.events.Middleware
-		// so third-party plugins can interleave middleware around it.
-		bus.on(events.Middleware, async (p) => {
+		// file `src/worker/middleware.ts`. Published via `middlewareEntries` so
+		// third-party plugins can interleave middleware around it.
+		self.slots.middlewareEntries.contribute(async (ctx) => {
 			const hasMiddleware = await ctx.fileExists("src/worker/middleware.ts");
-			if (!hasMiddleware) return;
-			p.entries.push({
+			if (!hasMiddleware) return undefined;
+			return {
 				imports: [
 					{
 						source: "../src/worker/middleware",
@@ -184,62 +279,67 @@ export const api = createPlugin("api", {
 				call: { kind: "identifier", name: "middleware" },
 				phase: "before-routes",
 				order: 100,
-			});
-		});
+			} as MiddlewareSpec;
+		}),
 
-		bus.on(Remove, (p) => {
-			p.files.push("src/worker/routes/");
-		});
+		// Emit the rendered worker file into cli.slots.artifactFiles. Null
+		// source (no runtimes in the config) skips the emission.
+		cliSlots.artifactFiles.contribute(async (ctx) => {
+			const src = await ctx.resolve(self.slots.workerSource);
+			if (src === null) return undefined;
+			return { path: ".stack/worker.ts", content: src };
+		}),
 
-		bus.on(Deploy.Execute, (p) => {
-			p.steps.push({
-				name: "Worker",
-				phase: "main",
-				exec: {
-					command: "npx",
-					args: ["wrangler", "deploy", "--config", ".stack/wrangler.toml"],
-				},
-			});
-		});
+		// Always regenerate the route barrel — cheap, order-independent.
+		cliSlots.artifactFiles.contribute((ctx) => ({
+			path: "src/worker/routes/index.ts",
+			content: generateRouteBarrel(ctx.cwd),
+		})),
 
-		bus.on(Dev.Start, (p) => {
-			p.processes.push({
-				name: "api",
+		// Dev wrangler process.
+		cliSlots.devProcesses.contribute(() => ({
+			name: "api",
+			command: "npx",
+			args: ["wrangler", "dev", "--port", "8787", "--persist-to", ".stack/dev"],
+			defaultPort: 8787,
+			readyPattern: /Ready on/,
+			color: "yellow",
+		})),
+
+		// Route watcher — regenerates the barrel when route files appear/disappear.
+		cliSlots.devWatchers.contribute((ctx) => ({
+			name: "routes",
+			paths: "src/worker/routes/**",
+			ignore: ["**/index.ts"],
+			debounce: 300,
+			async handler(_path, type) {
+				if (type === "add" || type === "unlink") {
+					const barrelContent = generateRouteBarrel(ctx.cwd);
+					writeFileSync(
+						join(ctx.cwd, "src/worker/routes/index.ts"),
+						barrelContent,
+					);
+					ctx.log.info("Route barrel regenerated");
+				}
+			},
+		})),
+
+		// Deploy step: push the worker up via wrangler.
+		cliSlots.deploySteps.contribute(() => ({
+			name: "Worker",
+			phase: "main",
+			exec: {
 				command: "npx",
-				args: [
-					"wrangler",
-					"dev",
-					"--port",
-					"8787",
-					"--persist-to",
-					".stack/dev",
-				],
-				defaultPort: 8787,
-				readyPattern: /Ready on/,
-				color: "yellow",
-			});
+				args: ["wrangler", "deploy", "--config", ".stack/wrangler.toml"],
+			},
+		})),
 
-			p.watchers.push({
-				name: "routes",
-				paths: "src/worker/routes/**",
-				ignore: ["**/index.ts"],
-				debounce: 300,
-				async handler(_path, type) {
-					if (type === "add" || type === "unlink") {
-						const barrelContent = generateRouteBarrel(ctx.cwd);
-						const { writeFileSync } = await import("node:fs");
-						writeFileSync(
-							join(ctx.cwd, "src/worker/routes/index.ts"),
-							barrelContent,
-						);
-						ctx.log.info("Route barrel regenerated");
-					}
-				},
-			});
-		});
-	},
+		// Remove: clean the routes directory on `stack remove api`.
+		cliSlots.removeFiles.contribute(() => "src/worker/routes/"),
+	],
 });
 
 export { ApiError } from "./error";
+export type { CallbackSpec, PluginRuntimeEntry } from "./node/types";
 export type { Middleware } from "./procedure";
 export type { InferRouter } from "./types";

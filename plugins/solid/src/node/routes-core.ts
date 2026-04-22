@@ -376,16 +376,19 @@ declare module "${VIRTUAL_ROUTES_ID}" {
 `;
 }
 
+// Build the `.stack/routes.d.ts` source. When the pages directory doesn't
+// exist yet (fresh consumer — `stack init` → `stack generate` before any
+// page is scaffolded) we still emit a valid declaration module with an empty
+// typed-routes shape. That keeps generated references to
+// `virtual:fcalell-routes` type-checking from day one; a later `stack dev`
+// re-runs `emitRoutes` for the real value. Never throws on missing dir.
 export function buildRoutesDts(cwd: string, pagesDirRel: string): string {
 	const absPagesDir = join(cwd, pagesDirRel);
-	if (!existsSync(absPagesDir)) {
-		throw new Error(
-			`plugin-solid: pages directory not found at "${pagesDirRel}". ` +
-				`Create the directory or set solid({ routes: { pagesDir: "..." } }) ` +
-				`to point at an existing directory.`,
-		);
-	}
-	const files = fg.sync(["**/*.tsx", "**/*.jsx"], { cwd: absPagesDir }).sort();
+	// `fg.sync` on a missing cwd returns `[]` — no need to shortcut, but we
+	// keep the `existsSync` fast-path to avoid `fast-glob`'s directory stat.
+	const files = existsSync(absPagesDir)
+		? fg.sync(["**/*.tsx", "**/*.jsx"], { cwd: absPagesDir }).sort()
+		: [];
 	const { root } = buildTree(files, absPagesDir);
 	const { typedRoutesTypes } = emitRoutes(root, cwd, undefined);
 	return emitDts(typedRoutesTypes);

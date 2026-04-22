@@ -28,7 +28,7 @@ export default defineConfig({
 });
 ```
 
-`plugin-vite` is auto-resolved as a dependency -- no need to list it.
+`plugin-vite` must be listed explicitly alongside `plugin-solid` (`stack init` adds it automatically when you pick `solid` in the picker; `stack add solid` does the same).
 
 ### 2. Create pages
 
@@ -81,38 +81,49 @@ solid({ routes: { pagesDir: "src/pages" } })
 solid({ routes: false })
 ```
 
-## Events
+## Owned slots
 
-| Event | Emitted by | Purpose |
-|-------|------------|---------|
-| `SolidConfigured` | `Generate` | Signals that route declarations have been generated. `plugin-solid-ui` depends on this. |
+| Slot | Kind | Purpose |
+|------|------|---------|
+| `solid.slots.providers` | `list<ProviderSpec>` | JSX wrappers / siblings composed into `.stack/virtual-providers.tsx` (sorted by `order`) |
+| `solid.slots.entryImports` | `list<TsImportSpec>` | Imports for `.stack/entry.tsx` |
+| `solid.slots.mountExpression` | `value<TsExpression \| null>` | Root render call (override-able for custom mount) |
+| `solid.slots.htmlShell` | `value<URL \| null>` | HTML shell template URL (override-able) |
+| `solid.slots.htmlHead` | `list<HtmlInjection>` | `<head>` injections |
+| `solid.slots.htmlBodyEnd` | `list<HtmlInjection>` | End-of-body injections |
+| `solid.slots.routesPagesDir` | `derived<string \| null>` | Resolved pages directory (null when routing disabled) |
+| `solid.slots.entrySource` | `derived<string \| null>` | Final `.stack/entry.tsx` source |
+| `solid.slots.htmlSource` | `derived<string \| null>` | Final `.stack/index.html` source |
+| `solid.slots.providersSource` | `derived<string \| null>` | Final `.stack/virtual-providers.tsx` source |
+| `solid.slots.routesDtsSource` | `derived<string \| null>` | Final `.stack/routes.d.ts` source |
+| `solid.slots.homeScaffold` | `value<ScaffoldSpec>` (`override`) | Home-page scaffold; `plugin-solid-ui` overrides it cleanly |
 
 ## Dependencies
 
-`plugin-solid` depends on `plugin-vite` via `vite.events.ViteConfigured`. The CLI auto-resolves `plugin-vite` when `plugin-solid` is present.
+`plugin-solid` requires `plugin-vite` (`requires: ["vite"]`). Both must be listed in `stack.config.ts`. The slot graph derives execution order from data flow — `plugin-solid` contributes to `vite.slots.configImports` / `pluginCalls`, so its contributions are resolved naturally before `vite.slots.viteConfig` is composed.
 
-## Lifecycle
+## Lifecycle contributions
 
 ### Init / Scaffold
 
-Pushes layout and index page templates to `src/app/pages/`:
+Templates contributed via `cliSlots.initScaffolds`:
 
-- `src/app/pages/_layout.tsx` -- bare layout (passes through children)
-- `src/app/pages/index.tsx` -- minimal index page
+- `src/app/pages/_layout.tsx` (bare pass-through layout)
+- `src/app/pages/index.tsx` via `solid.slots.homeScaffold` (the design-system version from `plugin-solid-ui` overrides this when present)
 
-Adds `@fcalell/plugin-solid` and `solid-js` as dependencies.
+Auto-wires `@fcalell/plugin-solid` and `solid-js` into `cliSlots.initDeps`.
 
 ### Generate
 
-Scans `src/app/pages/` for `.tsx` / `.jsx` files, builds the route tree, and generates `.stack/routes.d.ts` with typed route builder declarations. Emits the `SolidConfigured` event.
+Resolves `routesPagesDir` from options. When routing is enabled, `solid.slots.routesDtsSource` scans the pages directory and produces typed route declarations (graceful empty stub when the directory is missing — fresh-project safe). The four `*Source` derived slots compose `.stack/entry.tsx`, `.stack/index.html`, `.stack/virtual-providers.tsx`, and `.stack/routes.d.ts`; thin `cliSlots.artifactFiles` contributions write each.
 
 ### Dev / Build
 
-Contributes `vite-plugin-solid` and the routes plugin to `plugin-vite`'s `vite.events.ViteConfig` payload (typed `TsImportSpec`s + `TsExpression` plugin calls). `plugin-vite` aggregates contributions and writes `.stack/vite.config.ts`, then spawns the dev/build processes using it.
+Contributes `vite-plugin-solid` and the file-based-routing Vite plugin to `vite.slots.configImports` + `vite.slots.pluginCalls`. `plugin-vite` composes them into `.stack/vite.config.ts` and runs the dev/build processes — no coordination needed between the two plugins.
 
 ### Remove
 
-Marks `src/app/` for deletion and removes `@fcalell/plugin-solid` and `solid-js` from dependencies.
+Contributes `src/app/` to `cliSlots.removeFiles` and removes `@fcalell/plugin-solid` + `solid-js` from `package.json`.
 
 ## Exports
 

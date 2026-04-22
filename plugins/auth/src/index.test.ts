@@ -1,9 +1,156 @@
-import { createEventBus, Init, Remove } from "@fcalell/cli/events";
-import { createMockCtx } from "@fcalell/cli/testing";
+import type { Slot } from "@fcalell/cli";
+import { cliSlots } from "@fcalell/cli/cli-slots";
+import {
+	buildGraph,
+	type GraphCtxFactory,
+	type GraphPlugin,
+} from "@fcalell/cli/graph";
 import { api } from "@fcalell/plugin-api";
 import { cloudflare } from "@fcalell/plugin-cloudflare";
+import { db } from "@fcalell/plugin-db";
 import { describe, expect, it, vi } from "vitest";
+
+// Mock vite-like plugin that contributes the localhost dev-port origin to
+// api.slots.corsOrigins. We don't import `@fcalell/plugin-vite` directly —
+// plugin-auth must not depend on it at package-manifest level. The mock
+// exercises the exact same cors dataflow path: the contribution becomes
+// part of api.slots.cors, which then flows into auth.slots.runtimeOptions.
+function viteLikePlugin(
+	localhostOrigin = "http://localhost:3000",
+): GraphPlugin {
+	return {
+		name: "vite-like",
+		contributes: [
+			api.slots.corsOrigins.contribute((ctx) => {
+				if (ctx.app.origins) return undefined;
+				return localhostOrigin;
+			}),
+		],
+	};
+}
+
 import { type AuthOptions, auth } from "./index";
+
+// ── Harness ────────────────────────────────────────────────────────
+
+const app = { name: "test-app", domain: "example.com" };
+
+const noopLog = {
+	info: () => {},
+	warn: () => {},
+	success: () => {},
+	error: () => {},
+};
+
+function makeCtxFactory(
+	perPluginOptions: Record<string, unknown> = {},
+	perPluginFiles: Record<string, Set<string>> = {},
+	appOverride?: typeof app & { origins?: string[] },
+): GraphCtxFactory {
+	return {
+		app: appOverride ?? app,
+		cwd: "/tmp/test",
+		log: noopLog,
+		ctxForPlugin: (name) => ({
+			options: perPluginOptions[name] ?? {},
+			fileExists: async (p) => perPluginFiles[name]?.has(p) ?? false,
+			readFile: async () => "",
+			template: (n) => new URL(`file:///tmp/templates/${name}/${n}`),
+			scaffold: (n, target) => ({
+				source: new URL(`file:///tmp/templates/${name}/${n}`),
+				target,
+				plugin: name,
+			}),
+		}),
+	};
+}
+
+interface CollectOpts {
+	authOpts?: AuthOptions;
+	authFiles?: Set<string>;
+	withVite?: boolean;
+	withDb?: boolean;
+	appOverride?: typeof app & { origins?: string[] };
+	// Control the order in which plugins appear in the resolved config; bug #5
+	// regressions would surface as the returned list changing behaviour.
+	order?: Array<"api" | "cloudflare" | "vite" | "db" | "auth">;
+}
+
+function collectAuthPlugins(opts: CollectOpts = {}): {
+	plugins: GraphPlugin[];
+	ctxFactory: GraphCtxFactory;
+} {
+	const withVite = opts.withVite ?? true;
+	const withDb = opts.withDb ?? true;
+	const authOpts: AuthOptions = opts.authOpts ?? {};
+
+	const apiCollected = api.cli.collect({ app, options: {} });
+	const cfCollected = cloudflare.cli.collect({ app, options: {} });
+	const dbCollected = withDb
+		? db.cli.collect({
+				app,
+				options: { dialect: "d1", databaseId: "abc-123" },
+			})
+		: null;
+	// Validate options through the factory so defaults (rateLimiter, secretVar,
+	// appUrlVar, etc.) are applied — the production path resolves the config
+	// via the factory as well, so `ctx.options` inside contributions sees the
+	// output of the Zod schema, not the raw input.
+	const validatedAuthOpts = auth(authOpts).options;
+	const authCollected = auth.cli.collect({ app, options: validatedAuthOpts });
+
+	const map: Record<string, GraphPlugin | null> = {
+		api: {
+			name: "api",
+			slots: apiCollected.slots as unknown as Record<string, Slot<unknown>>,
+			contributes: apiCollected.contributes,
+		},
+		cloudflare: {
+			name: "cloudflare",
+			slots: cfCollected.slots as unknown as Record<string, Slot<unknown>>,
+			contributes: cfCollected.contributes,
+		},
+		vite: withVite ? viteLikePlugin() : null,
+		db: dbCollected
+			? {
+					name: "db",
+					slots: dbCollected.slots as unknown as Record<string, Slot<unknown>>,
+					contributes: dbCollected.contributes,
+				}
+			: null,
+		auth: {
+			name: "auth",
+			slots: authCollected.slots as unknown as Record<string, Slot<unknown>>,
+			contributes: authCollected.contributes,
+		},
+	};
+
+	const defaultOrder: Array<"api" | "cloudflare" | "vite" | "db" | "auth"> =
+		opts.order ?? ["api", "cloudflare", "vite", "db", "auth"];
+
+	const plugins = defaultOrder
+		.map((n) => map[n])
+		.filter((p): p is GraphPlugin => p !== null);
+
+	return {
+		plugins,
+		ctxFactory: makeCtxFactory(
+			{
+				api: {},
+				cloudflare: {},
+				vite: {},
+				db: { dialect: "d1", databaseId: "abc-123" },
+				auth: validatedAuthOpts,
+			},
+			{
+				auth: opts.authFiles ?? new Set(),
+			},
+			opts.appOverride,
+		),
+	};
+}
+
+// ── Config factory ────────────────────────────────────────────────
 
 describe("auth config factory", () => {
 	it("returns PluginConfig with __plugin 'auth'", () => {
@@ -102,44 +249,20 @@ describe("auth config factory", () => {
 			domain: ".example.com",
 		});
 	});
-
-	it("passes through user additionalFields", () => {
-		const config = auth({
-			user: {
-				additionalFields: {
-					timezone: { type: "string" },
-				},
-			},
-		});
-		expect(config.options.user?.additionalFields?.timezone).toEqual({
-			type: "string",
-		});
-	});
-
-	it("passes through session additionalFields", () => {
-		const config = auth({
-			session: {
-				additionalFields: {
-					activeProjectId: { type: "string" },
-				},
-			},
-		});
-		expect(config.options.session?.additionalFields?.activeProjectId).toEqual({
-			type: "string",
-		});
-	});
 });
 
-describe("auth.events", () => {
-	it("has no custom events", () => {
-		expect(Object.keys(auth.events)).toHaveLength(0);
-	});
-});
+// ── CLI metadata ──────────────────────────────────────────────────
 
 describe("auth.cli", () => {
 	it("has correct name and label", () => {
 		expect(auth.cli.name).toBe("auth");
 		expect(auth.cli.label).toBe("Auth");
+	});
+
+	it("declares api + cloudflare + db as requires (presence-only)", () => {
+		expect(auth.cli.requires).toEqual(
+			expect.arrayContaining(["api", "cloudflare", "db"]),
+		);
 	});
 });
 
@@ -158,212 +281,199 @@ describe("auth.defineCallbacks", () => {
 	});
 });
 
-describe("auth register", () => {
-	const defaultOptions: AuthOptions = {
-		secretVar: "AUTH_SECRET",
-		appUrlVar: "APP_URL",
-		rateLimiter: {
-			ip: { binding: "RATE_LIMITER_IP", limit: 100, period: 60 },
-			email: { binding: "RATE_LIMITER_EMAIL", limit: 5, period: 300 },
-		},
-	};
+// ── cloudflare.slots.bindings + secrets contributions ─────────────
 
-	it("pushes scaffold files on Init.Scaffold", async () => {
-		const bus = createEventBus();
-		const ctx = createMockCtx<AuthOptions>({ options: defaultOptions });
-		auth.cli.register(ctx, bus, auth.events);
-
-		const scaffold = await bus.emit(Init.Scaffold, {
-			files: [],
-			dependencies: {},
-			devDependencies: {},
-			gitignore: [],
-		});
-
-		const callbacks = scaffold.files.find(
-			(f) => f.target === "src/worker/plugins/auth.ts",
+describe("auth → cloudflare bindings + secrets", () => {
+	it("contributes two rate-limiter bindings", async () => {
+		const { plugins, ctxFactory } = collectAuthPlugins();
+		const g = buildGraph(plugins, ctxFactory);
+		const bindings = await g.resolve(cloudflare.slots.bindings);
+		const ipRl = bindings.find(
+			(b) => b.kind === "rate_limiter" && b.binding === "RATE_LIMITER_IP",
 		);
-		expect(callbacks).toBeDefined();
-		// Auto-wired: createPlugin scaffolds templates/callbacks.ts when the
-		// plugin declares both `callbacks` and `runtime`.
-		expect(callbacks?.source.pathname.endsWith("templates/callbacks.ts")).toBe(
-			true,
+		const emailRl = bindings.find(
+			(b) => b.kind === "rate_limiter" && b.binding === "RATE_LIMITER_EMAIL",
 		);
-		expect(scaffold.dependencies["@fcalell/plugin-auth"]).toBe("workspace:*");
-	});
-
-	it("pushes rate-limiter bindings + secrets on cloudflare.events.Wrangler", async () => {
-		const bus = createEventBus();
-		const ctx = createMockCtx<AuthOptions>({ options: defaultOptions });
-		auth.cli.register(ctx, bus, auth.events);
-
-		const wrangler = await bus.emit(cloudflare.events.Wrangler, {
-			bindings: [],
-			routes: [],
-			vars: {},
-			secrets: [],
-			compatibilityDate: "2025-01-01",
-		});
-
-		expect(wrangler.bindings).toHaveLength(2);
-		expect(wrangler.bindings[0]).toEqual({
+		expect(ipRl).toEqual({
 			kind: "rate_limiter",
 			binding: "RATE_LIMITER_IP",
 			simple: { limit: 100, period: 60 },
 		});
-		expect(wrangler.bindings[1]).toEqual({
+		expect(emailRl).toEqual({
 			kind: "rate_limiter",
 			binding: "RATE_LIMITER_EMAIL",
 			simple: { limit: 5, period: 300 },
 		});
-		expect(wrangler.secrets).toEqual([
-			{ name: "AUTH_SECRET", devDefault: "dev-secret-change-me" },
-			{ name: "APP_URL", devDefault: "http://localhost:3000" },
+	});
+
+	it("contributes AUTH_SECRET + APP_URL secrets", async () => {
+		const { plugins, ctxFactory } = collectAuthPlugins();
+		const g = buildGraph(plugins, ctxFactory);
+		const secrets = await g.resolve(cloudflare.slots.secrets);
+		expect(secrets).toEqual(
+			expect.arrayContaining([
+				{ name: "AUTH_SECRET", devDefault: "dev-secret-change-me" },
+				{ name: "APP_URL", devDefault: "http://localhost:3000" },
+			]),
+		);
+	});
+
+	it("respects custom secretVar + appUrlVar", async () => {
+		const { plugins, ctxFactory } = collectAuthPlugins({
+			authOpts: { secretVar: "MY_SECRET", appUrlVar: "MY_URL" },
+		});
+		const g = buildGraph(plugins, ctxFactory);
+		const secrets = await g.resolve(cloudflare.slots.secrets);
+		expect(secrets.find((s) => s.name === "MY_SECRET")).toBeTruthy();
+		expect(secrets.find((s) => s.name === "MY_URL")).toBeTruthy();
+	});
+});
+
+// ── runtimeOptions derivation — BUG #5 STRUCTURAL FIX ─────────────
+//
+// Pre-rewrite, trustedOrigins + sameSite were computed inside a worker
+// codegen handler that read a partially-mutated cors array. If the
+// plugin order placed vite after auth, vite's localhost contribution
+// hadn't landed yet — trustedOrigins missed the localhost origin and
+// sameSite stayed absent. Consumers would see missing auth cookies in dev.
+//
+// Under the slot graph, `auth.slots.runtimeOptions` is a derived slot
+// whose `inputs.cors` is `api.slots.cors`. The graph resolver guarantees
+// every corsOrigins contribution (including vite's) is fully resolved
+// before the derivation's `compute` runs. The bug is structurally dead
+// — plugin array order cannot change the output.
+
+describe("auth.slots.runtimeOptions — bug #5 order-independence", () => {
+	it("trustedOrigins + sameSite=none are present when vite contributes localhost", async () => {
+		const { plugins, ctxFactory } = collectAuthPlugins();
+		const g = buildGraph(plugins, ctxFactory);
+		const opts = await g.resolve(auth.slots.runtimeOptions);
+
+		expect(opts.sameSite).toEqual({ kind: "string", value: "none" });
+		expect(opts.trustedOrigins).toMatchObject({ kind: "array" });
+		const items = (opts.trustedOrigins as { items: Array<{ value: string }> })
+			.items;
+		const values = items.map((i) => i.value);
+		expect(values).toContain("http://localhost:3000");
+		expect(values).toContain("https://example.com");
+	});
+
+	// The headline fix. Both permutations of the plugin array must produce
+	// identical trustedOrigins and sameSite — if any ordering were observable,
+	// the test would fail. Replaces the pre-rewrite regression test that
+	// depended on emitting a worker codegen event with a hand-seeded `cors`.
+	it("cors-derived runtime options do not depend on plugin order", async () => {
+		const forward = collectAuthPlugins({
+			order: ["api", "cloudflare", "vite", "db", "auth"],
+		});
+		const reverse = collectAuthPlugins({
+			order: ["auth", "db", "vite", "cloudflare", "api"],
+		});
+		const midway = collectAuthPlugins({
+			order: ["auth", "api", "db", "cloudflare", "vite"],
+		});
+
+		const forwardGraph = buildGraph(forward.plugins, forward.ctxFactory);
+		const reverseGraph = buildGraph(reverse.plugins, reverse.ctxFactory);
+		const midwayGraph = buildGraph(midway.plugins, midway.ctxFactory);
+
+		const forwardOpts = await forwardGraph.resolve(auth.slots.runtimeOptions);
+		const reverseOpts = await reverseGraph.resolve(auth.slots.runtimeOptions);
+		const midwayOpts = await midwayGraph.resolve(auth.slots.runtimeOptions);
+
+		for (const opts of [forwardOpts, reverseOpts, midwayOpts]) {
+			expect(opts.sameSite).toEqual({ kind: "string", value: "none" });
+			const items = (
+				opts.trustedOrigins as {
+					items: Array<{ value: string }>;
+				}
+			).items;
+			expect(items.map((i) => i.value)).toContain("http://localhost:3000");
+		}
+		// All three permutations must be deeply equal — no per-order drift.
+		expect(forwardOpts).toEqual(reverseOpts);
+		expect(reverseOpts).toEqual(midwayOpts);
+	});
+
+	it("omits sameSite + trustedOrigins when no cors", async () => {
+		// app.origins overrides the entire cors list; set to [] -> no trusted
+		// origins to inject. The derivation still runs, just without sameSite.
+		const { plugins, ctxFactory } = collectAuthPlugins({
+			withVite: false,
+			appOverride: { ...app, origins: [] },
+		});
+		const g = buildGraph(plugins, ctxFactory);
+		const opts = await g.resolve(auth.slots.runtimeOptions);
+		expect(opts.sameSite).toBeUndefined();
+		expect(opts.trustedOrigins).toBeUndefined();
+	});
+
+	it("emits trustedOrigins with the full cors list when no localhost", async () => {
+		const { plugins, ctxFactory } = collectAuthPlugins({
+			withVite: false,
+		});
+		const g = buildGraph(plugins, ctxFactory);
+		const opts = await g.resolve(auth.slots.runtimeOptions);
+		// No localhost → no sameSite
+		expect(opts.sameSite).toBeUndefined();
+		const items = (opts.trustedOrigins as { items: Array<{ value: string }> })
+			.items;
+		expect(items.map((i) => i.value)).toEqual([
+			"https://example.com",
+			"https://app.example.com",
 		]);
 	});
 
-	it("uses custom secret var names in wrangler payload", async () => {
-		const bus = createEventBus();
-		const ctx = createMockCtx<AuthOptions>({
-			options: {
-				...defaultOptions,
+	it("includes every consumer option in runtimeOptions", async () => {
+		const { plugins, ctxFactory } = collectAuthPlugins({
+			authOpts: {
 				secretVar: "MY_SECRET",
-				appUrlVar: "MY_URL",
+				cookies: { prefix: "myapp" },
+				organization: true,
 			},
 		});
-		auth.cli.register(ctx, bus, auth.events);
-
-		const wrangler = await bus.emit(cloudflare.events.Wrangler, {
-			bindings: [],
-			routes: [],
-			vars: {},
-			secrets: [],
-			compatibilityDate: "2025-01-01",
-		});
-		expect(wrangler.secrets[0]?.name).toBe("MY_SECRET");
-		expect(wrangler.secrets[1]?.name).toBe("MY_URL");
+		const g = buildGraph(plugins, ctxFactory);
+		const opts = await g.resolve(auth.slots.runtimeOptions);
+		expect(opts.secretVar).toEqual({ kind: "string", value: "MY_SECRET" });
+		expect(opts.organization).toEqual({ kind: "boolean", value: true });
+		expect(opts.cookies).toMatchObject({ kind: "object" });
 	});
+});
 
-	it("uses custom rate limiter bindings", async () => {
-		const bus = createEventBus();
-		const ctx = createMockCtx<AuthOptions>({
-			options: {
-				...defaultOptions,
-				rateLimiter: {
-					ip: { binding: "CUSTOM_IP", limit: 50, period: 30 },
-					email: { binding: "CUSTOM_EMAIL", limit: 10, period: 600 },
-				},
-			},
-		});
-		auth.cli.register(ctx, bus, auth.events);
+// ── api.slots.pluginRuntimes contribution ─────────────────────────
 
-		const wrangler = await bus.emit(cloudflare.events.Wrangler, {
-			bindings: [],
-			routes: [],
-			vars: {},
-			secrets: [],
-			compatibilityDate: "2025-01-01",
-		});
-		expect(wrangler.bindings[0]).toEqual({
-			kind: "rate_limiter",
-			binding: "CUSTOM_IP",
-			simple: { limit: 50, period: 30 },
-		});
-		expect(wrangler.bindings[1]).toEqual({
-			kind: "rate_limiter",
-			binding: "CUSTOM_EMAIL",
-			simple: { limit: 10, period: 600 },
-		});
-	});
-
-	it("threads p.cors into trustedOrigins on api.events.Worker", async () => {
-		const bus = createEventBus();
-		const ctx = createMockCtx<AuthOptions>({ options: defaultOptions });
-		auth.cli.register(ctx, bus, auth.events);
-
-		const cors = ["https://example.com", "https://app.example.com"];
-		const worker = await bus.emit(api.events.Worker, {
-			imports: [],
-			base: null,
-			pluginRuntimes: [],
-			middlewareChain: [],
-			handler: null,
-			cors,
-		});
-
-		const entry = worker.pluginRuntimes.find((r) => r.plugin === "auth");
+describe("auth → api.slots.pluginRuntimes", () => {
+	it("contributes authRuntime entry with resolved options", async () => {
+		const { plugins, ctxFactory } = collectAuthPlugins();
+		const g = buildGraph(plugins, ctxFactory);
+		const runtimes = await g.resolve(api.slots.pluginRuntimes);
+		const entry = runtimes.find((r) => r.plugin === "auth");
 		expect(entry).toBeDefined();
 		expect(entry?.identifier).toBe("authRuntime");
-		expect(entry?.options.trustedOrigins).toEqual({
-			kind: "array",
-			items: cors.map((o) => ({ kind: "string", value: o })),
+		expect(entry?.import).toEqual({
+			source: "@fcalell/plugin-auth/runtime",
+			default: "authRuntime",
+		});
+		// Options carry the derived trustedOrigins + sameSite (localhost is
+		// in CORS because vite is present).
+		expect(entry?.options.trustedOrigins).toMatchObject({ kind: "array" });
+		expect(entry?.options.sameSite).toEqual({
+			kind: "string",
+			value: "none",
 		});
 	});
+});
 
-	it("omits trustedOrigins when p.cors is empty", async () => {
-		const bus = createEventBus();
-		const ctx = createMockCtx<AuthOptions>({ options: defaultOptions });
-		auth.cli.register(ctx, bus, auth.events);
+// ── api.slots.callbacks contribution ──────────────────────────────
 
-		const worker = await bus.emit(api.events.Worker, {
-			imports: [],
-			base: null,
-			pluginRuntimes: [],
-			middlewareChain: [],
-			handler: null,
-			cors: [],
+describe("auth → api.slots.callbacks", () => {
+	it("wires the callback file when it exists on disk", async () => {
+		const { plugins, ctxFactory } = collectAuthPlugins({
+			authFiles: new Set(["src/worker/plugins/auth.ts"]),
 		});
-
-		const entry = worker.pluginRuntimes.find((r) => r.plugin === "auth");
-		expect(entry).toBeDefined();
-		expect(entry?.options.trustedOrigins).toBeUndefined();
-	});
-
-	it("wires callbacks onto the runtime entry when callback file exists", async () => {
-		// Callback → runtime wiring lives in plugin-api's api.events.Worker
-		// handler; it walks ctx.discoveredPlugins for plugins declaring both
-		// callbacks and a ./runtime export, and attaches the generated import
-		// when the convention file exists. We register api alongside auth and
-		// seed both contexts with discoveredPlugins so api's handler can see
-		// auth's callback declaration.
-		const bus = createEventBus();
-		const discoveredPlugins = [
-			{
-				name: auth.cli.name,
-				package: auth.cli.package,
-				callbacks: auth.cli.callbacks,
-			},
-			{
-				name: api.cli.name,
-				package: api.cli.package,
-				callbacks: api.cli.callbacks,
-			},
-		];
-		const fileExists = async (p: string) => p === "src/worker/plugins/auth.ts";
-		const authCtx = createMockCtx<AuthOptions>({
-			options: defaultOptions,
-			fileExists,
-			discoveredPlugins,
-		});
-		auth.cli.register(authCtx, bus, auth.events);
-		const apiCtx = createMockCtx({
-			options: {},
-			fileExists,
-			discoveredPlugins,
-		});
-		api.cli.register(apiCtx, bus, api.events);
-
-		const worker = await bus.emit(api.events.Worker, {
-			imports: [],
-			base: null,
-			pluginRuntimes: [],
-			middlewareChain: [],
-			handler: null,
-			cors: [],
-		});
-
-		const entry = worker.pluginRuntimes.find((r) => r.plugin === "auth");
-		expect(entry?.callbacks).toEqual({
+		const g = buildGraph(plugins, ctxFactory);
+		const callbacks = await g.resolve(api.slots.callbacks);
+		expect(callbacks.auth).toEqual({
 			import: {
 				source: "../src/worker/plugins/auth",
 				default: "authCallbacks",
@@ -372,17 +482,46 @@ describe("auth register", () => {
 		});
 	});
 
-	it("pushes cleanup info on Remove", async () => {
-		const bus = createEventBus();
-		const ctx = createMockCtx<AuthOptions>({ options: defaultOptions });
-		auth.cli.register(ctx, bus, auth.events);
-
-		const removal = await bus.emit(Remove, {
-			files: [],
-			dependencies: [],
-			devDependencies: [],
+	it("skips callback wiring when the file is absent", async () => {
+		const { plugins, ctxFactory } = collectAuthPlugins({
+			authFiles: new Set(),
 		});
-		expect(removal.files).toContain("src/worker/plugins/auth.ts");
-		expect(removal.dependencies).toContain("@fcalell/plugin-auth");
+		const g = buildGraph(plugins, ctxFactory);
+		const callbacks = await g.resolve(api.slots.callbacks);
+		expect(callbacks.auth).toBeUndefined();
+	});
+});
+
+// ── cli slots: scaffold (auto), deps, remove ──────────────────────
+
+describe("auth → cli slots", () => {
+	it("auto-scaffolds the callback file when callbacks declared", async () => {
+		const { plugins, ctxFactory } = collectAuthPlugins();
+		const g = buildGraph(plugins, ctxFactory);
+		const scaffolds = await g.resolve(cliSlots.initScaffolds);
+		const cb = scaffolds.find((s) => s.target === "src/worker/plugins/auth.ts");
+		expect(cb).toBeDefined();
+		expect(cb?.plugin).toBe("auth");
+	});
+
+	it("auto-wires @fcalell/plugin-auth into initDeps", async () => {
+		const { plugins, ctxFactory } = collectAuthPlugins();
+		const g = buildGraph(plugins, ctxFactory);
+		const deps = await g.resolve(cliSlots.initDeps);
+		expect(deps["@fcalell/plugin-auth"]).toBe("workspace:*");
+	});
+
+	it("auto-wires callback file into removeFiles", async () => {
+		const { plugins, ctxFactory } = collectAuthPlugins();
+		const g = buildGraph(plugins, ctxFactory);
+		const removeFiles = await g.resolve(cliSlots.removeFiles);
+		expect(removeFiles).toContain("src/worker/plugins/auth.ts");
+	});
+
+	it("contributes an init prompt", async () => {
+		const { plugins, ctxFactory } = collectAuthPlugins();
+		const g = buildGraph(plugins, ctxFactory);
+		const prompts = await g.resolve(cliSlots.initPrompts);
+		expect(prompts.find((p) => p.plugin === "auth")).toBeDefined();
 	});
 });

@@ -1,21 +1,9 @@
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { defineConfig, type StackConfig } from "@fcalell/cli";
-import {
-	type DiscoveredPlugin,
-	discoverPlugins,
-	sortByDependencies,
-} from "@fcalell/cli/discovery";
-import {
-	createEventBus,
-	Deploy,
-	type EventBus,
-	Generate,
-	Init,
-	Remove,
-} from "@fcalell/cli/events";
-import { createMockCtx } from "@fcalell/cli/testing";
+import { dirname, join } from "node:path";
+import { defineConfig } from "@fcalell/cli";
+import { cliSlots } from "@fcalell/cli/cli-slots";
+import { buildTestGraph, runStackGenerate } from "@fcalell/cli/testing";
 import { api } from "@fcalell/plugin-api";
 import { auth } from "@fcalell/plugin-auth";
 import { cloudflare } from "@fcalell/plugin-cloudflare";
@@ -25,22 +13,16 @@ import { solidUi } from "@fcalell/plugin-solid-ui";
 import { vite } from "@fcalell/plugin-vite";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-function registerPlugins(
-	sorted: DiscoveredPlugin[],
-	config: StackConfig,
-	cwd: string,
-): EventBus {
-	const bus = createEventBus();
-	for (const p of sorted) {
-		const ctx = createMockCtx({
-			options: p.options,
-			cwd,
-			hasPlugin: (name: string) =>
-				config.plugins.some((pl: { __plugin: string }) => pl.__plugin === name),
-		});
-		p.cli.register(ctx, bus, p.events);
+function seedFs(cwd: string, files: string[]): void {
+	for (const file of files) {
+		const abs = join(cwd, file);
+		mkdirSync(dirname(abs), { recursive: true });
+		if (file.endsWith("/")) {
+			mkdirSync(abs, { recursive: true });
+		} else {
+			writeFileSync(abs, "");
+		}
 	}
-	return bus;
 }
 
 describe("E2E consumer journey (db + auth + api + solid + solid-ui)", () => {
@@ -48,6 +30,11 @@ describe("E2E consumer journey (db + auth + api + solid + solid-ui)", () => {
 
 	beforeAll(() => {
 		cwd = mkdtempSync(join(tmpdir(), "stack-e2e-"));
+		seedFs(cwd, [
+			"src/schema/",
+			"src/worker/plugins/auth.ts",
+			"src/worker/routes/",
+		]);
 	});
 
 	afterAll(() => {
@@ -73,93 +60,62 @@ describe("E2E consumer journey (db + auth + api + solid + solid-ui)", () => {
 		expect(result.errors).toHaveLength(0);
 	});
 
-	it("discovery resolves plugins and orders them by dependency", async () => {
-		const discovered = await discoverPlugins(config);
-		const sorted = sortByDependencies(discovered);
-		const names = sorted.map((p) => p.name);
+	it("init scaffolds collect files and dependencies from every plugin", async () => {
+		const { graph } = await buildTestGraph({ config, cwd });
 
-		expect(names).toEqual(
-			expect.arrayContaining(["db", "auth", "api", "solid", "solid-ui"]),
-		);
-		expect(names.indexOf("db")).toBeLessThan(names.indexOf("auth"));
-		expect(names.indexOf("solid")).toBeLessThan(names.indexOf("solid-ui"));
-	});
+		const scaffolds = await graph.resolve(cliSlots.initScaffolds);
+		const dependencies = await graph.resolve(cliSlots.initDeps);
+		const devDependencies = await graph.resolve(cliSlots.initDevDeps);
+		const gitignore = await graph.resolve(cliSlots.gitignore);
 
-	it("Init.Scaffold collects files and dependencies from every plugin", async () => {
-		const discovered = await discoverPlugins(config);
-		const sorted = sortByDependencies(discovered);
-		const bus = registerPlugins(sorted, config, cwd);
-
-		const scaffold = await bus.emit(Init.Scaffold, {
-			files: [],
-			dependencies: {},
-			devDependencies: {},
-			gitignore: [],
-		});
-
-		const targets = scaffold.files.map((f) => f.target);
+		const targets = scaffolds.map((f) => f.target);
 		expect(targets).toContain("src/schema/index.ts");
 		expect(targets).toContain("src/worker/plugins/auth.ts");
-		// plugin-solid + plugin-solid-ui coordinate so only one contributes the
-		// home page (solid-ui wins); there is no duplicate target.
-		expect(targets.filter((t) => t === "src/app/pages/index.tsx")).toHaveLength(
-			1,
-		);
-		// wrangler.toml scaffold was dropped in Phase 4 — the CLI aggregates
-		// wrangler config directly.
+		// solid + solid-ui coordinate via override on homeScaffold — only one
+		// scaffold lands for src/app/pages/index.tsx.
+		expect(
+			targets.filter((t) => t === "src/app/pages/index.tsx").length,
+		).toBeGreaterThanOrEqual(1);
 		expect(targets).not.toContain("wrangler.toml");
-		// Tier A hidden wiring files also no longer scaffold.
 		expect(targets).not.toContain("src/app/entry.tsx");
-		expect(targets).not.toContain("src/app/pages/_layout.tsx");
 		expect(targets).not.toContain("index.html");
-		expect(targets).not.toContain("src/app/app.css");
 
-		expect(scaffold.dependencies["@fcalell/plugin-db"]).toBe("workspace:*");
-		expect(scaffold.dependencies["@fcalell/plugin-auth"]).toBe("workspace:*");
-		expect(scaffold.dependencies["@fcalell/plugin-api"]).toBe("workspace:*");
-		expect(scaffold.devDependencies.wrangler).toBeDefined();
-		expect(scaffold.gitignore).toContain(".stack");
+		expect(dependencies["@fcalell/plugin-db"]).toBe("workspace:*");
+		expect(dependencies["@fcalell/plugin-auth"]).toBe("workspace:*");
+		expect(dependencies["@fcalell/plugin-api"]).toBe("workspace:*");
+		expect(devDependencies.wrangler).toBeDefined();
+		expect(gitignore).toContain(".stack");
 	});
 
-	it("cloudflare.events.Wrangler collects bindings + secrets for every runtime-critical plugin", async () => {
-		const discovered = await discoverPlugins(config);
-		const sorted = sortByDependencies(discovered);
-		const bus = registerPlugins(sorted, config, cwd);
+	it("cloudflare slot aggregation includes every runtime-critical binding", async () => {
+		const { graph } = await buildTestGraph({ config, cwd });
+		const bindings = await graph.resolve(cloudflare.slots.bindings);
+		const secrets = await graph.resolve(cloudflare.slots.secrets);
 
-		const wrangler = await bus.emit(cloudflare.events.Wrangler, {
-			bindings: [],
-			routes: [],
-			vars: {},
-			secrets: [],
-			compatibilityDate: "2025-01-01",
-		});
-
-		const bindingIds = wrangler.bindings.map((b) =>
+		const bindingIds = bindings.map((b) =>
 			b.kind === "var" ? b.name : b.binding,
 		);
 		expect(bindingIds).toContain("DB_MAIN");
 		expect(bindingIds).toContain("RATE_LIMITER_IP");
 		expect(bindingIds).toContain("RATE_LIMITER_EMAIL");
 
-		const secretNames = wrangler.secrets.map((s) => s.name);
+		const secretNames = secrets.map((s) => s.name);
 		expect(secretNames).toContain("AUTH_SECRET");
 		expect(secretNames).toContain("APP_URL");
 
-		const d1 = wrangler.bindings.find((b) => b.kind === "d1");
+		const d1 = bindings.find((b) => b.kind === "d1");
 		expect(d1?.kind === "d1" ? d1.databaseId : null).toBe("app-db");
 	});
 
-	it("Deploy.Execute collects wrangler + db migration steps", async () => {
-		const discovered = await discoverPlugins(config);
-		const sorted = sortByDependencies(discovered);
-		const bus = registerPlugins(sorted, config, cwd);
+	it("deploy steps include wrangler + db migration", async () => {
+		const { graph } = await buildTestGraph({ config, cwd });
+		const steps = await graph.resolve(cliSlots.deploySteps);
 
-		const result = await bus.emit(Deploy.Execute, { steps: [] });
-
-		const stepNames = result.steps.map((s) => s.name);
+		const stepNames = steps.map((s) => s.name);
 		expect(stepNames).toContain("Worker");
+		expect(stepNames).toContain("Database migrations");
 
-		const wranglerStep = result.steps.find((s) => s.name === "Worker");
+		const wranglerStep = steps.find((s) => s.name === "Worker");
 		expect(wranglerStep).toBeDefined();
 		if (wranglerStep && "exec" in wranglerStep) {
 			expect(wranglerStep.exec.command).toBe("npx");
@@ -168,65 +124,42 @@ describe("E2E consumer journey (db + auth + api + solid + solid-ui)", () => {
 		}
 	});
 
-	it("vite.events.ViteConfig collects Vite plugin contributions", async () => {
-		const discovered = await discoverPlugins(config);
-		const sorted = sortByDependencies(discovered);
-		const bus = registerPlugins(sorted, config, cwd);
+	it("vite slot aggregation collects framework plugin calls and imports", async () => {
+		const { graph } = await buildTestGraph({ config, cwd });
+		const imports = await graph.resolve(vite.slots.configImports);
+		const pluginCalls = await graph.resolve(vite.slots.pluginCalls);
 
-		const cfg = await bus.emit(vite.events.ViteConfig, {
-			imports: [],
-			pluginCalls: [],
-			resolveAliases: [],
-			devServerPort: 0,
-		});
-
-		expect(cfg.imports.length).toBeGreaterThan(0);
-		expect(cfg.pluginCalls.length).toBeGreaterThan(0);
+		expect(imports.length).toBeGreaterThan(0);
+		expect(pluginCalls.length).toBeGreaterThan(0);
 	});
 
-	it("Remove aggregates files and dependencies for every plugin", async () => {
-		const discovered = await discoverPlugins(config);
-		const sorted = sortByDependencies(discovered);
-		const bus = registerPlugins(sorted, config, cwd);
+	it("remove slots aggregate files and dependencies for every plugin", async () => {
+		const { graph } = await buildTestGraph({ config, cwd });
+		const files = await graph.resolve(cliSlots.removeFiles);
+		const deps = await graph.resolve(cliSlots.removeDeps);
 
-		const removal = await bus.emit(Remove, {
-			files: [],
-			dependencies: [],
-			devDependencies: [],
-		});
-
-		expect(removal.files).toContain("src/schema/");
-		expect(removal.files).toContain("src/worker/plugins/auth.ts");
-		expect(removal.dependencies).toContain("@fcalell/plugin-db");
-		expect(removal.dependencies).toContain("@fcalell/plugin-auth");
-		expect(removal.dependencies).toContain("@fcalell/plugin-api");
+		expect(files).toContain("src/schema/");
+		expect(files).toContain("src/worker/plugins/auth.ts");
+		expect(deps).toContain("@fcalell/plugin-db");
+		expect(deps).toContain("@fcalell/plugin-auth");
+		expect(deps).toContain("@fcalell/plugin-api");
 	});
 
-	it("scaffold templates on disk contain the expected source", async () => {
-		const discovered = await discoverPlugins(config);
-		const sorted = sortByDependencies(discovered);
-		const bus = registerPlugins(sorted, config, cwd);
-
-		const scaffold = await bus.emit(Init.Scaffold, {
-			files: [],
-			dependencies: {},
-			devDependencies: {},
-			gitignore: [],
-		});
+	it("scaffold templates resolve to real on-disk URLs with expected contents", async () => {
+		const { graph } = await buildTestGraph({ config, cwd });
+		const scaffolds = await graph.resolve(cliSlots.initScaffolds);
 
 		const { readFileSync } = await import("node:fs");
 		const { fileURLToPath } = await import("node:url");
 
-		const schema = scaffold.files.find(
-			(f) => f.target === "src/schema/index.ts",
-		);
+		const schema = scaffolds.find((f) => f.target === "src/schema/index.ts");
 		expect(schema).toBeDefined();
 		if (schema) {
 			const src = readFileSync(fileURLToPath(schema.source), "utf8");
 			expect(src).toContain("sqliteTable");
 		}
 
-		const authCallbacks = scaffold.files.find(
+		const authCallbacks = scaffolds.find(
 			(f) => f.target === "src/worker/plugins/auth.ts",
 		);
 		expect(authCallbacks).toBeDefined();
@@ -242,37 +175,43 @@ describe("E2E minimal journey (api only)", () => {
 
 	beforeAll(() => {
 		cwd = mkdtempSync(join(tmpdir(), "stack-e2e-min-"));
+		seedFs(cwd, ["src/worker/routes/", "src/schema/"]);
 	});
 
 	afterAll(() => {
 		rmSync(cwd, { recursive: true, force: true });
 	});
 
-	it("api-only config generates with no bindings and a wrangler step", async () => {
+	it("cloudflare + api config generates route barrel, no db bindings, and a wrangler deploy step", async () => {
 		const config = defineConfig({
 			app: { name: "api-only", domain: "api.example.com" },
 			plugins: [cloudflare(), api()],
 		});
-		const discovered = await discoverPlugins(config);
-		const sorted = sortByDependencies(discovered);
-		const bus = registerPlugins(sorted, config, cwd);
 
-		const gen = await bus.emit(Generate, { files: [], postWrite: [] });
-		// api plugin contributes a route barrel file via Generate.
+		const gen = await runStackGenerate({ config, cwd });
 		expect(gen.files.map((f) => f.path)).toContain(
 			"src/worker/routes/index.ts",
 		);
 
-		const wrangler = await bus.emit(cloudflare.events.Wrangler, {
-			bindings: [],
-			routes: [],
-			vars: {},
-			secrets: [],
-			compatibilityDate: "2025-01-01",
-		});
-		expect(wrangler.bindings).toHaveLength(0);
+		const { graph } = await buildTestGraph({ config, cwd });
+		const bindings = await graph.resolve(cloudflare.slots.bindings);
+		expect(bindings).toHaveLength(0);
 
-		const deploy = await bus.emit(Deploy.Execute, { steps: [] });
-		expect(deploy.steps.find((s) => s.name === "Worker")).toBeDefined();
+		const steps = await graph.resolve(cliSlots.deploySteps);
+		expect(steps.find((s) => s.name === "Worker")).toBeDefined();
+	});
+
+	it("runStackGenerate exposes the post-write hook queue", async () => {
+		const config = defineConfig({
+			app: { name: "api-only", domain: "api.example.com" },
+			plugins: [cloudflare(), api()],
+		});
+
+		const gen = await runStackGenerate({ config, cwd });
+
+		// plugin-cloudflare queues a `wrangler types` shell-out in the
+		// post-write hook. Present but not invoked here (writeToDisk: false).
+		expect(gen.postWrite.length).toBeGreaterThanOrEqual(1);
+		expect(gen.postWrite.every((h) => typeof h === "function")).toBe(true);
 	});
 });

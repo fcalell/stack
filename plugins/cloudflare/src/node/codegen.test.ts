@@ -1,4 +1,5 @@
 import { log } from "@clack/prompts";
+import { parse as parseToml } from "smol-toml";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { aggregateDevVars, aggregateWrangler } from "./codegen";
 
@@ -29,7 +30,8 @@ describe("aggregateWrangler", () => {
 			consumerWrangler: null,
 			payload: emptyPayload,
 		});
-		expect(result).toContain('main = "worker.ts"');
+		const parsed = parseToml(result) as { main?: string };
+		expect(parsed.main).toBe("worker.ts");
 	});
 
 	it("inserts main line when consumer wrangler.toml has none", () => {
@@ -39,8 +41,9 @@ describe("aggregateWrangler", () => {
 			payload: emptyPayload,
 		});
 
-		expect(result).toContain('main = "worker.ts"');
-		expect(result).toContain('name = "my-app"');
+		const parsed = parseToml(result) as { main?: string; name?: string };
+		expect(parsed.main).toBe("worker.ts");
+		expect(parsed.name).toBe("my-app");
 		expect(log.warn).not.toHaveBeenCalled();
 	});
 
@@ -51,7 +54,8 @@ describe("aggregateWrangler", () => {
 			payload: emptyPayload,
 		});
 
-		expect(result).toContain('main = ".stack/worker.ts"');
+		const parsed = parseToml(result) as { main?: string };
+		expect(parsed.main).toBe(".stack/worker.ts");
 		expect(log.warn).not.toHaveBeenCalled();
 	});
 
@@ -63,7 +67,8 @@ describe("aggregateWrangler", () => {
 			payload: emptyPayload,
 		});
 
-		expect(result).toContain('main = "src/other.ts"');
+		const parsed = parseToml(result) as { main?: string };
+		expect(parsed.main).toBe("src/other.ts");
 		expect(log.warn).toHaveBeenCalledTimes(1);
 	});
 
@@ -83,10 +88,14 @@ describe("aggregateWrangler", () => {
 			},
 		});
 
-		expect(result).toContain("[[d1_databases]]");
-		expect(result).toContain('binding = "DB_MAIN"');
-		expect(result).toContain('database_id = "abc-123"');
-		expect(result).toContain('database_name = "my-db"');
+		const parsed = parseToml(result) as Record<string, unknown>;
+		expect(parsed.d1_databases).toEqual([
+			{
+				binding: "DB_MAIN",
+				database_id: "abc-123",
+				database_name: "my-db",
+			},
+		]);
 	});
 
 	it("emits [[unsafe.bindings]] for rate_limiter", () => {
@@ -104,11 +113,17 @@ describe("aggregateWrangler", () => {
 			},
 		});
 
-		expect(result).toContain("[[unsafe.bindings]]");
-		expect(result).toContain('name = "RATE_LIMITER_IP"');
-		expect(result).toContain('type = "ratelimit"');
-		expect(result).toContain("limit = 100");
-		expect(result).toContain("period = 60");
+		const parsed = parseToml(result) as {
+			unsafe?: { bindings?: unknown[] };
+		};
+		expect(parsed.unsafe?.bindings).toEqual([
+			{
+				name: "RATE_LIMITER_IP",
+				type: "ratelimit",
+				limit: 100,
+				period: 60,
+			},
+		]);
 	});
 
 	it("emits [vars] for secrets (empty values) and var-bindings", () => {
@@ -121,9 +136,15 @@ describe("aggregateWrangler", () => {
 			},
 		});
 
-		expect(result).toContain("[vars]");
-		expect(result).toContain('MY_VAR = "hello"');
-		expect(result).toContain('AUTH_SECRET = ""');
+		const parsed = parseToml(result) as {
+			vars?: Record<string, string>;
+		};
+		// Secrets must land as empty strings (wrangler treats [vars] entries as
+		// public config; real secret values go in .dev.vars / `wrangler secret put`).
+		expect(parsed.vars).toEqual({
+			MY_VAR: "hello",
+			AUTH_SECRET: "",
+		});
 	});
 
 	it("emits [[kv_namespaces]] and [[r2_buckets]]", () => {
@@ -138,21 +159,26 @@ describe("aggregateWrangler", () => {
 			},
 		});
 
-		expect(result).toContain("[[kv_namespaces]]");
-		expect(result).toContain('id = "kv-id"');
-		expect(result).toContain("[[r2_buckets]]");
-		expect(result).toContain('bucket_name = "assets"');
+		const parsed = parseToml(result) as Record<string, unknown>;
+		expect(parsed.kv_namespaces).toEqual([{ binding: "MY_KV", id: "kv-id" }]);
+		expect(parsed.r2_buckets).toEqual([
+			{ binding: "MY_BUCKET", bucket_name: "assets" },
+		]);
 	});
 
-	it("generates default name when no consumer file exists", () => {
+	it("generates default name + compatibility_date when no consumer file exists", () => {
 		const result = aggregateWrangler({
 			consumerWrangler: null,
 			payload: emptyPayload,
 			name: "test-app",
 		});
 
-		expect(result).toContain('name = "test-app"');
-		expect(result).toContain("compatibility_date");
+		const parsed = parseToml(result) as {
+			name?: string;
+			compatibility_date?: string;
+		};
+		expect(parsed.name).toBe("test-app");
+		expect(parsed.compatibility_date).toBe("2025-01-01");
 	});
 });
 

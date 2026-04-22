@@ -1,201 +1,101 @@
-import { mkdtempSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { StackConfig } from "#config";
-import { Deploy } from "#events";
-import type { DiscoveredPlugin } from "#lib/discovery";
+import { describe, expect, it } from "vitest";
+import { plugin } from "#config";
+import { cliSlots } from "#lib/cli-slots";
 import { StepFailedError } from "#lib/errors";
+import type { DeployCheck, DeployStep } from "#specs";
+import { buildTestGraphFromPlugins } from "#testing";
+import { runDeploySteps } from "./deploy";
 
-// `spawnSync` has many properties (stdout, signal, etc.). Tests only assert
-// on `status`, so we build a minimal object cast through `unknown` — strictly
-// typing the full SpawnSyncReturns shape adds noise without value here.
-type SpawnResult = { status: number | null };
-const spawnMock = vi.fn<(...args: unknown[]) => SpawnResult>(() => ({
-	status: 0,
-}));
-
-vi.mock("node:child_process", () => ({
-	spawnSync: (...args: unknown[]) => spawnMock(...args),
-}));
-
-const buildMock = vi.fn<(configPath: string) => Promise<void>>(async () => {});
-vi.mock("#commands/build", () => ({
-	build: (...args: [string]) => buildMock(...args),
-}));
-
-let mockConfig: StackConfig = {
-	app: { name: "app", domain: "example.com" },
-	plugins: [],
-	validate: () => ({ valid: true, errors: [] }),
-};
-let mockDiscovered: DiscoveredPlugin[] = [];
-vi.mock("#lib/config", () => ({
-	loadConfig: vi.fn(async () => mockConfig),
-}));
-vi.mock("#lib/discovery", () => ({
-	discoverPlugins: vi.fn(async () => mockDiscovered),
-	sortByDependencies: (p: DiscoveredPlugin[]) => p,
-}));
-
-function makePlugin(
-	name: string,
-	register: DiscoveredPlugin["cli"]["register"] = () => {},
-): DiscoveredPlugin {
-	return {
-		name,
-		cli: {
-			name,
-			label: name,
-			package: `@fcalell/plugin-${name}`,
-			after: [],
-			callbacks: {},
-			commands: {},
-			register,
-		},
-		events: {},
-		options: {},
-	};
-}
-
-const { deploy } = await import("./deploy");
-
-describe("deploy()", () => {
-	let dir: string;
-	const originalCwd = process.cwd();
-	const originalIsTTY = process.stdin.isTTY;
-
-	beforeEach(() => {
-		spawnMock.mockReset();
-		spawnMock.mockImplementation(() => ({ status: 0 }));
-		buildMock.mockClear();
-		mockConfig = {
-			app: { name: "app", domain: "example.com" },
-			plugins: [],
-			validate: () => ({ valid: true, errors: [] }),
-		};
-		mockDiscovered = [];
-		dir = mkdtempSync(join(tmpdir(), "stack-deploy-"));
-		process.chdir(dir);
-		// Force non-interactive (no confirm prompt) for every test.
-		Object.defineProperty(process.stdin, "isTTY", {
-			value: false,
-			configurable: true,
+describe("deploy slot resolution", () => {
+	it("aggregates deployChecks from every plugin", async () => {
+		const db = plugin("dc-db", {
+			label: "DB",
+			contributes: [
+				cliSlots.deployChecks.contribute(
+					(): DeployCheck => ({
+						plugin: "db",
+						description: "Apply migrations",
+						items: [{ label: "0001_init" }],
+						action: async () => {},
+					}),
+				),
+			],
 		});
-	});
-
-	afterEach(() => {
-		process.chdir(originalCwd);
-		rmSync(dir, { recursive: true, force: true });
-		Object.defineProperty(process.stdin, "isTTY", {
-			value: originalIsTTY,
-			configurable: true,
+		const { graph } = buildTestGraphFromPlugins({
+			plugins: [{ factory: db }],
 		});
+		const checks = await graph.resolve(cliSlots.deployChecks);
+		expect(checks).toHaveLength(1);
+		expect(checks[0]?.plugin).toBe("db");
 	});
 
-	it("calls build first with the same config path", async () => {
-		await deploy({ config: "stack.config.ts" });
-		expect(buildMock).toHaveBeenCalledWith("stack.config.ts");
-	});
-
-	it("emits Deploy.Complete after executing steps", async () => {
-		const completed: string[] = [];
-		mockDiscovered = [
-			makePlugin("api", (_ctx, bus) => {
-				bus.on(Deploy.Complete, () => {
-					completed.push("done");
-				});
-			}),
-		];
-
-		await deploy({ config: "stack.config.ts" });
-		expect(completed).toEqual(["done"]);
-	});
-
-	it("executes deploy steps in phase order", async () => {
-		const order: string[] = [];
-		mockDiscovered = [
-			makePlugin("api", (_ctx, bus) => {
-				bus.on(Deploy.Execute, (p) => {
-					p.steps.push({
-						name: "post",
+	it("sorts deploySteps by phase regardless of plugin order", async () => {
+		const post = plugin("ds-post", {
+			label: "post",
+			contributes: [
+				cliSlots.deploySteps.contribute(
+					(): DeployStep => ({
+						name: "notify",
 						phase: "post",
-						run: async () => {
-							order.push("post");
-						},
-					});
-					p.steps.push({
-						name: "pre",
-						phase: "pre",
-						run: async () => {
-							order.push("pre");
-						},
-					});
-					p.steps.push({
-						name: "main",
+						run: async () => {},
+					}),
+				),
+			],
+		});
+		const main = plugin("ds-main", {
+			label: "main",
+			contributes: [
+				cliSlots.deploySteps.contribute(
+					(): DeployStep => ({
+						name: "wrangler",
 						phase: "main",
-						run: async () => {
-							order.push("main");
-						},
-					});
-				});
-			}),
-		];
+						run: async () => {},
+					}),
+				),
+			],
+		});
 
-		await deploy({ config: "stack.config.ts" });
-		expect(order).toEqual(["pre", "main", "post"]);
+		const { graph } = buildTestGraphFromPlugins({
+			plugins: [{ factory: post }, { factory: main }],
+		});
+		const steps = await graph.resolve(cliSlots.deploySteps);
+		expect(steps.map((s) => s.name)).toEqual(["wrangler", "notify"]);
+	});
+});
+
+describe("runDeploySteps", () => {
+	it("runs each step sequentially", async () => {
+		const order: string[] = [];
+		const steps: DeployStep[] = [
+			{
+				name: "a",
+				phase: "main",
+				run: async () => {
+					order.push("a");
+				},
+			},
+			{
+				name: "b",
+				phase: "main",
+				run: async () => {
+					order.push("b");
+				},
+			},
+		];
+		await runDeploySteps(steps, "/tmp");
+		expect(order).toEqual(["a", "b"]);
 	});
 
-	it("runs exec steps via spawnSync and throws StepFailedError on non-zero status", async () => {
-		spawnMock.mockImplementation(() => ({ status: 2 }));
-
-		mockDiscovered = [
-			makePlugin("api", (_ctx, bus) => {
-				bus.on(Deploy.Execute, (p) => {
-					p.steps.push({
-						name: "Worker",
-						phase: "main",
-						exec: { command: "npx", args: ["wrangler", "deploy"] },
-					});
-				});
-			}),
+	it("throws StepFailedError when exec fails", async () => {
+		const steps: DeployStep[] = [
+			{
+				name: "bad",
+				phase: "main",
+				exec: { command: "false", args: [] },
+			},
 		];
-
-		await expect(deploy({ config: "stack.config.ts" })).rejects.toBeInstanceOf(
+		await expect(runDeploySteps(steps, "/tmp")).rejects.toBeInstanceOf(
 			StepFailedError,
 		);
-		expect(spawnMock).toHaveBeenCalled();
-	});
-
-	it("proceeds without a confirm prompt when stdin is not a TTY, even with deploy plan checks", async () => {
-		// When a plugin contributes a Deploy.Plan check AND stdin is a TTY,
-		// deploy.ts would call `confirm`. Our beforeEach forces isTTY = false,
-		// so no confirm is needed and Deploy.Execute must still run.
-		const executed: string[] = [];
-
-		mockDiscovered = [
-			makePlugin("db", (_ctx, bus) => {
-				bus.on(Deploy.Plan, (p) => {
-					p.checks.push({
-						plugin: "db",
-						description: "migrations",
-						items: [{ label: "0001_init.sql" }],
-						action: async () => {},
-					});
-				});
-				bus.on(Deploy.Execute, (p) => {
-					p.steps.push({
-						name: "migrations",
-						phase: "pre",
-						run: async () => {
-							executed.push("migrate");
-						},
-					});
-				});
-			}),
-		];
-
-		await deploy({ config: "stack.config.ts" });
-		expect(executed).toEqual(["migrate"]);
 	});
 });

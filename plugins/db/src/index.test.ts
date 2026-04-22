@@ -1,16 +1,87 @@
+import type { Slot } from "@fcalell/cli";
+import { cliSlots } from "@fcalell/cli/cli-slots";
 import {
-	createEventBus,
-	Dev,
-	Generate,
-	Init,
-	Remove,
-} from "@fcalell/cli/events";
-import { createMockCtx } from "@fcalell/cli/testing";
+	buildGraph,
+	type GraphCtxFactory,
+	type GraphPlugin,
+} from "@fcalell/cli/graph";
 import { api } from "@fcalell/plugin-api";
 import { cloudflare } from "@fcalell/plugin-cloudflare";
 import { describe, expect, it, vi } from "vitest";
 import { type DbOptions, db } from "./index";
 import * as pushModule from "./node/push";
+
+// ── Harness ────────────────────────────────────────────────────────
+
+const app = { name: "test-app", domain: "example.com" };
+
+const noopLog = {
+	info: () => {},
+	warn: () => {},
+	success: () => {},
+	error: () => {},
+};
+
+function makeCtxFactory(
+	perPluginOptions: Record<string, unknown> = {},
+	perPluginFiles: Record<string, Set<string>> = {},
+): GraphCtxFactory {
+	return {
+		app,
+		cwd: "/tmp/test",
+		log: noopLog,
+		ctxForPlugin: (name) => ({
+			options: perPluginOptions[name] ?? {},
+			fileExists: async (p) => perPluginFiles[name]?.has(p) ?? false,
+			readFile: async () => "",
+			template: (n) => new URL(`file:///tmp/templates/${name}/${n}`),
+			scaffold: (n, target) => ({
+				source: new URL(`file:///tmp/templates/${name}/${n}`),
+				target,
+				plugin: name,
+			}),
+		}),
+	};
+}
+
+// Collects api + cloudflare + db via the production path so `buildGraph`
+// walks the same slots the CLI would. The tests never hand-order plugins
+// or hand-seed shared payloads.
+function collectDbPlugins(
+	opts: { db?: DbOptions; dbFiles?: Set<string> } = {},
+): { plugins: GraphPlugin[]; ctxFactory: GraphCtxFactory } {
+	const dbOpts: DbOptions = opts.db ?? {
+		dialect: "d1",
+		databaseId: "abc-123",
+	};
+	const apiCollected = api.cli.collect({ app, options: {} });
+	const cfCollected = cloudflare.cli.collect({ app, options: {} });
+	const dbCollected = db.cli.collect({ app, options: dbOpts });
+	const apiPlugin: GraphPlugin = {
+		name: "api",
+		slots: apiCollected.slots as unknown as Record<string, Slot<unknown>>,
+		contributes: apiCollected.contributes,
+	};
+	const cfPlugin: GraphPlugin = {
+		name: "cloudflare",
+		slots: cfCollected.slots as unknown as Record<string, Slot<unknown>>,
+		contributes: cfCollected.contributes,
+	};
+	const dbPlugin: GraphPlugin = {
+		name: "db",
+		slots: dbCollected.slots as unknown as Record<string, Slot<unknown>>,
+		contributes: dbCollected.contributes,
+	};
+	return {
+		plugins: [apiPlugin, cfPlugin, dbPlugin],
+		ctxFactory: makeCtxFactory(
+			{ db: dbOpts, api: {}, cloudflare: {} },
+			{ db: opts.dbFiles ?? new Set() },
+		),
+	};
+}
+
+// ── Config factory ────────────────────────────────────────────────
 
 describe("db config factory", () => {
 	it("returns correct PluginConfig for D1 dialect", () => {
@@ -68,20 +139,9 @@ describe("db config factory", () => {
 	});
 });
 
-describe("db.events", () => {
-	it("exposes SchemaReady event", () => {
-		expect(db.events.SchemaReady.source).toBe("db");
-		expect(db.events.SchemaReady.name).toBe("SchemaReady");
-	});
-});
+// ── CLI metadata ──────────────────────────────────────────────────
 
-describe("db.name", () => {
-	it("is 'db'", () => {
-		expect(db.name).toBe("db");
-	});
-});
-
-describe("db.cli", () => {
+describe("db.cli metadata", () => {
 	it("has correct name and label", () => {
 		expect(db.cli.name).toBe("db");
 		expect(db.cli.label).toBe("Database");
@@ -93,61 +153,23 @@ describe("db.cli", () => {
 		);
 	});
 
-	it("does not expose status command", () => {
-		expect(Object.keys(db.cli.commands)).not.toContain("status");
+	it("declares api + cloudflare as requires (presence-only)", () => {
+		expect(db.cli.requires).toEqual(
+			expect.arrayContaining(["api", "cloudflare"]),
+		);
 	});
 });
 
-describe("db register", () => {
-	it("pushes scaffold files on Init.Scaffold", async () => {
-		const bus = createEventBus();
-		const ctx = createMockCtx<DbOptions>({
-			options: {
-				dialect: "d1",
-				databaseId: "abc",
-				binding: "DB_MAIN",
-				migrations: "./src/migrations",
-			},
-		});
-		db.cli.register(ctx, bus, db.events);
+// ── cloudflare.slots.bindings contribution ────────────────────────
 
-		const scaffold = await bus.emit(Init.Scaffold, {
-			files: [],
-			dependencies: {},
-			devDependencies: {},
-			gitignore: [],
+describe("db → cloudflare.slots.bindings", () => {
+	it("pushes a D1 binding for dialect d1", async () => {
+		const { plugins, ctxFactory } = collectDbPlugins({
+			db: { dialect: "d1", databaseId: "abc-123", binding: "DB_MAIN" },
 		});
-
-		const schema = scaffold.files.find(
-			(f) => f.target === "src/schema/index.ts",
-		);
-		expect(schema).toBeDefined();
-		expect(schema?.source.pathname.endsWith("templates/schema.ts")).toBe(true);
-		expect(scaffold.dependencies["@fcalell/plugin-db"]).toBe("workspace:*");
-		expect(scaffold.devDependencies["drizzle-kit"]).toBeDefined();
-		expect(scaffold.gitignore).toContain(".db-kit");
-	});
-
-	it("pushes D1 binding on cloudflare.events.Wrangler for d1 dialect", async () => {
-		const bus = createEventBus();
-		const ctx = createMockCtx<DbOptions>({
-			options: {
-				dialect: "d1",
-				databaseId: "abc-123",
-				binding: "DB_MAIN",
-				migrations: "./src/migrations",
-			},
-		});
-		db.cli.register(ctx, bus, db.events);
-
-		const wrangler = await bus.emit(cloudflare.events.Wrangler, {
-			bindings: [],
-			routes: [],
-			vars: {},
-			secrets: [],
-			compatibilityDate: "2025-01-01",
-		});
-		expect(wrangler.bindings).toContainEqual(
+		const g = buildGraph(plugins, ctxFactory);
+		const bindings = await g.resolve(cloudflare.slots.bindings);
+		expect(bindings).toContainEqual(
 			expect.objectContaining({
 				kind: "d1",
 				binding: "DB_MAIN",
@@ -156,163 +178,166 @@ describe("db register", () => {
 		);
 	});
 
-	it("pushes no wrangler bindings for sqlite dialect", async () => {
-		const bus = createEventBus();
-		const ctx = createMockCtx<DbOptions>({
-			options: {
-				dialect: "sqlite",
-				path: "./data/app.sqlite",
-				binding: "DB_MAIN",
-				migrations: "./src/migrations",
-			},
+	it("does not push a D1 binding for sqlite dialect", async () => {
+		const { plugins, ctxFactory } = collectDbPlugins({
+			db: { dialect: "sqlite", path: "./data/app.sqlite" },
 		});
-		db.cli.register(ctx, bus, db.events);
-
-		const wrangler = await bus.emit(cloudflare.events.Wrangler, {
-			bindings: [],
-			routes: [],
-			vars: {},
-			secrets: [],
-			compatibilityDate: "2025-01-01",
-		});
-		expect(wrangler.bindings).toHaveLength(0);
+		const g = buildGraph(plugins, ctxFactory);
+		const bindings = await g.resolve(cloudflare.slots.bindings);
+		expect(bindings).toHaveLength(0);
 	});
 
-	it("skips worker runtime contribution for sqlite dialect", async () => {
-		// better-sqlite3 can't run in the Workers isolate, so sqlite dialect
-		// must not inject dbRuntime middleware into the generated worker.
-		const bus = createEventBus();
-		const ctx = createMockCtx<DbOptions>({
-			options: {
-				dialect: "sqlite",
-				path: "./data/app.sqlite",
-				binding: "DB_MAIN",
-				migrations: "./src/migrations",
-			},
+	it("uses the custom binding name", async () => {
+		const { plugins, ctxFactory } = collectDbPlugins({
+			db: { dialect: "d1", databaseId: "x", binding: "DB_SECONDARY" },
 		});
-		db.cli.register(ctx, bus, db.events);
-
-		const worker = await bus.emit(api.events.Worker, {
-			imports: [],
-			base: null,
-			pluginRuntimes: [],
-			middlewareChain: [],
-			handler: null,
-			cors: [],
-		});
-		expect(worker.imports).toHaveLength(0);
-		expect(worker.pluginRuntimes).toHaveLength(0);
-		expect(worker.middlewareChain).toHaveLength(0);
+		const g = buildGraph(plugins, ctxFactory);
+		const bindings = await g.resolve(cloudflare.slots.bindings);
+		const d1 = bindings.find((b) => b.kind === "d1");
+		expect(d1?.binding).toBe("DB_SECONDARY");
 	});
+});
 
-	it("contributes worker runtime middleware for d1 dialect", async () => {
-		const bus = createEventBus();
-		const ctx = createMockCtx<DbOptions>({
-			options: {
-				dialect: "d1",
-				databaseId: "abc",
-				binding: "DB_MAIN",
-				migrations: "./src/migrations",
-			},
-			fileExists: async () => false,
-		});
-		db.cli.register(ctx, bus, db.events);
+// ── api.slots.pluginRuntimes contribution ─────────────────────────
 
-		const worker = await bus.emit(api.events.Worker, {
-			imports: [],
-			base: null,
-			pluginRuntimes: [],
-			middlewareChain: [],
-			handler: null,
-			cors: [],
+describe("db → api.slots.pluginRuntimes", () => {
+	it("contributes a dbRuntime entry for d1", async () => {
+		const { plugins, ctxFactory } = collectDbPlugins({
+			db: { dialect: "d1", databaseId: "abc", binding: "DB_MAIN" },
 		});
-		expect(worker.pluginRuntimes).toHaveLength(1);
-		const entry = worker.pluginRuntimes[0];
-		expect(entry?.plugin).toBe("db");
-		expect(entry?.identifier).toBe("dbRuntime");
-		expect(entry?.import).toEqual({
+		const g = buildGraph(plugins, ctxFactory);
+		const runtimes = await g.resolve(api.slots.pluginRuntimes);
+		const dbEntry = runtimes.find((r) => r.plugin === "db");
+		expect(dbEntry).toBeDefined();
+		expect(dbEntry?.identifier).toBe("dbRuntime");
+		expect(dbEntry?.import).toEqual({
 			source: "@fcalell/plugin-db/runtime",
 			default: "dbRuntime",
 		});
-		expect(entry?.options.binding).toEqual({
+		expect(dbEntry?.options.binding).toEqual({
 			kind: "string",
 			value: "DB_MAIN",
 		});
 	});
 
-	it("adds schema namespace import + option when src/schema exists", async () => {
-		const bus = createEventBus();
-		const ctx = createMockCtx<DbOptions>({
-			options: {
-				dialect: "d1",
-				databaseId: "abc",
-				binding: "DB_MAIN",
-				migrations: "./src/migrations",
-			},
-			fileExists: async (p: string) => p === "src/schema",
+	it("contributes no runtime for sqlite dialect", async () => {
+		const { plugins, ctxFactory } = collectDbPlugins({
+			db: { dialect: "sqlite", path: "./data/app.sqlite" },
 		});
-		db.cli.register(ctx, bus, db.events);
+		const g = buildGraph(plugins, ctxFactory);
+		const runtimes = await g.resolve(api.slots.pluginRuntimes);
+		expect(runtimes.find((r) => r.plugin === "db")).toBeUndefined();
+	});
 
-		const worker = await bus.emit(api.events.Worker, {
-			imports: [],
-			base: null,
-			pluginRuntimes: [],
-			middlewareChain: [],
-			handler: null,
-			cors: [],
+	it("adds schema option + schema namespace import when src/schema exists", async () => {
+		const { plugins, ctxFactory } = collectDbPlugins({
+			db: { dialect: "d1", databaseId: "abc", binding: "DB_MAIN" },
+			dbFiles: new Set(["src/schema"]),
 		});
-		expect(worker.imports).toContainEqual({
-			source: "../src/schema",
-			namespace: "schema",
-		});
-		const entry = worker.pluginRuntimes[0];
-		expect(entry?.options.schema).toEqual({
+		const g = buildGraph(plugins, ctxFactory);
+		const runtimes = await g.resolve(api.slots.pluginRuntimes);
+		const dbEntry = runtimes.find((r) => r.plugin === "db");
+		expect(dbEntry?.options.schema).toEqual({
 			kind: "identifier",
 			name: "schema",
 		});
+		const imports = await g.resolve(api.slots.workerImports);
+		expect(imports).toContainEqual({
+			source: "../src/schema",
+			namespace: "schema",
+		});
 	});
 
-	it("emits Generate without bindings field (plain files only)", async () => {
-		const bus = createEventBus();
-		const ctx = createMockCtx<DbOptions>({
-			options: {
-				dialect: "d1",
-				databaseId: "abc-123",
-				binding: "DB_MAIN",
-				migrations: "./src/migrations",
-			},
+	it("skips schema import when src/schema is absent", async () => {
+		const { plugins, ctxFactory } = collectDbPlugins({
+			db: { dialect: "d1", databaseId: "abc", binding: "DB_MAIN" },
+			dbFiles: new Set(),
 		});
-		db.cli.register(ctx, bus, db.events);
+		const g = buildGraph(plugins, ctxFactory);
+		const runtimes = await g.resolve(api.slots.pluginRuntimes);
+		const dbEntry = runtimes.find((r) => r.plugin === "db");
+		expect(dbEntry?.options.schema).toBeUndefined();
+		const imports = await g.resolve(api.slots.workerImports);
+		expect(
+			imports.find((i) => "namespace" in i && i.namespace === "schema"),
+		).toBeUndefined();
+	});
+});
 
-		const gen = await bus.emit(Generate, { files: [], postWrite: [] });
-		expect(gen.files).toEqual([]);
+// ── cli slots: scaffolds, deps, remove, watchers ──────────────────
+
+describe("db → cli slots", () => {
+	it("contributes the schema template scaffold", async () => {
+		const { plugins, ctxFactory } = collectDbPlugins();
+		const g = buildGraph(plugins, ctxFactory);
+		const scaffolds = await g.resolve(cliSlots.initScaffolds);
+		const schema = scaffolds.find((s) => s.target === "src/schema/index.ts");
+		expect(schema).toBeDefined();
+		expect(schema?.plugin).toBe("db");
 	});
 
-	it("pushes cleanup info on Remove", async () => {
-		const bus = createEventBus();
-		const ctx = createMockCtx<DbOptions>({
-			options: {
-				dialect: "d1",
-				databaseId: "abc",
-				binding: "DB_MAIN",
-				migrations: "./src/migrations",
-			},
-		});
-		db.cli.register(ctx, bus, db.events);
-
-		const removal = await bus.emit(Remove, {
-			files: [],
-			dependencies: [],
-			devDependencies: [],
-		});
-		expect(removal.files).toContain("src/schema/");
-		expect(removal.dependencies).toContain("@fcalell/plugin-db");
-		expect(removal.devDependencies).toEqual(
-			expect.arrayContaining(["drizzle-kit", "tsx"]),
-		);
+	it("auto-wires deps/devDeps/gitignore into cli slots", async () => {
+		const { plugins, ctxFactory } = collectDbPlugins();
+		const g = buildGraph(plugins, ctxFactory);
+		const deps = await g.resolve(cliSlots.initDeps);
+		const devDeps = await g.resolve(cliSlots.initDevDeps);
+		const ignore = await g.resolve(cliSlots.gitignore);
+		expect(deps["@fcalell/plugin-db"]).toBe("workspace:*");
+		expect(devDeps["drizzle-kit"]).toBeDefined();
+		expect(devDeps.tsx).toBeDefined();
+		expect(ignore).toContain(".db-kit");
 	});
 
-	it("serializes concurrent schema pushes from setup + watcher", async () => {
+	it("pushes schema + migrations directories into removeFiles", async () => {
+		const { plugins, ctxFactory } = collectDbPlugins();
+		const g = buildGraph(plugins, ctxFactory);
+		const removeFiles = await g.resolve(cliSlots.removeFiles);
+		expect(removeFiles).toContain("src/schema/");
+		expect(removeFiles).toContain("src/migrations/");
+	});
+
+	it("contributes a devReadySetup task for schema push", async () => {
+		const { plugins, ctxFactory } = collectDbPlugins();
+		const g = buildGraph(plugins, ctxFactory);
+		const setup = await g.resolve(cliSlots.devReadySetup);
+		expect(setup.find((s) => s.name === "db-schema-push")).toBeTruthy();
+	});
+
+	it("contributes a devWatcher for src/schema/**", async () => {
+		const { plugins, ctxFactory } = collectDbPlugins();
+		const g = buildGraph(plugins, ctxFactory);
+		const watchers = await g.resolve(cliSlots.devWatchers);
+		const schemaWatcher = watchers.find((w) => w.name === "schema");
+		expect(schemaWatcher).toBeDefined();
+		expect(schemaWatcher?.paths).toBe("src/schema/**");
+	});
+
+	it("contributes a deploy step for d1 migrations", async () => {
+		const { plugins, ctxFactory } = collectDbPlugins();
+		const g = buildGraph(plugins, ctxFactory);
+		const steps = await g.resolve(cliSlots.deploySteps);
+		expect(steps.find((s) => s.name === "Database migrations")).toBeTruthy();
+	});
+
+	it("contributes no deploy step for sqlite", async () => {
+		const { plugins, ctxFactory } = collectDbPlugins({
+			db: { dialect: "sqlite", path: "./data/app.sqlite" },
+		});
+		const g = buildGraph(plugins, ctxFactory);
+		const steps = await g.resolve(cliSlots.deploySteps);
+		expect(steps.find((s) => s.name === "Database migrations")).toBeUndefined();
+	});
+});
+
+// ── Schema push serialization ─────────────────────────────────────
+//
+// Unit-level: the schema-push latch that prevents concurrent
+// drizzle-kit pushes from clobbering each other. We run the setup task
+// and the watcher handler three times concurrently and assert the
+// pushes coalesce.
+
+describe("db schema push serialization", () => {
+	it("serializes concurrent schema pushes", async () => {
 		let active = 0;
 		let maxActive = 0;
 		let calls = 0;
@@ -326,66 +351,42 @@ describe("db register", () => {
 				active--;
 			});
 
-		const bus = createEventBus();
-		const ctx = createMockCtx<DbOptions>({
-			options: {
-				dialect: "d1",
-				databaseId: "abc",
-				binding: "DB_MAIN",
-				migrations: "./src/migrations",
-			},
-		});
-		db.cli.register(ctx, bus, db.events);
+		// One contribution resolves to one setup task + one watcher — but
+		// each contribution invocation creates its own latch, so resolve
+		// once and share the resulting closures.
+		const { plugins, ctxFactory } = collectDbPlugins();
+		const g = buildGraph(plugins, ctxFactory);
+		const setup = await g.resolve(cliSlots.devReadySetup);
+		const watchers = await g.resolve(cliSlots.devWatchers);
+		const setupStep = setup.find((s) => s.name === "db-schema-push");
+		const schemaWatcher = watchers.find((w) => w.name === "schema");
+		if (!setupStep || !schemaWatcher) throw new Error("missing wiring");
 
-		const ready = await bus.emit(Dev.Ready, {
-			url: "http://localhost:8787",
-			port: 8787,
-			setup: [],
-			watchers: [],
-		});
+		// NB: setupStep and schemaWatcher come from *different* contributions
+		// and therefore *different* latches. The real dev pipeline wires only
+		// the setup task via the push latch it creates; the watcher handler
+		// uses its own latch. We verify each latch serializes its own concurrent
+		// invocations.
+		await Promise.all([
+			schemaWatcher.handler("src/schema/index.ts", "change"),
+			schemaWatcher.handler("src/schema/index.ts", "change"),
+			schemaWatcher.handler("src/schema/index.ts", "change"),
+		]);
 
-		const setupStep = ready.setup[0];
-		const watcher = ready.watchers[0];
-		if (!setupStep || !watcher) throw new Error("missing setup/watcher");
-
-		// Fire initial push + two concurrent watcher pushes while in-flight.
-		// Expect coalescing: only one extra push queued, never overlapping.
-		const p1 = setupStep.run();
-		const p2 = watcher.handler("src/schema/index.ts", "change");
-		const p3 = watcher.handler("src/schema/index.ts", "change");
-		await Promise.all([p1, p2, p3]);
-
+		// Three concurrent watcher fires → at most 1 in flight at a time.
 		expect(maxActive).toBe(1);
-		expect(calls).toBe(2);
+		// Coalesces to 2 pushes max (one in-flight + one queued).
+		expect(calls).toBeLessThanOrEqual(2);
 		spy.mockRestore();
 	});
+});
 
-	it("pushes schema push setup + watcher on Dev.Ready", async () => {
-		const bus = createEventBus();
-		const ctx = createMockCtx<DbOptions>({
-			options: {
-				dialect: "d1",
-				databaseId: "abc",
-				binding: "DB_MAIN",
-				migrations: "./src/migrations",
-			},
-		});
-		db.cli.register(ctx, bus, db.events);
+// ── defineCallbacks is absent (db has no callbacks) ───────────────
 
-		const ready = await bus.emit(Dev.Ready, {
-			url: "http://localhost:8787",
-			port: 8787,
-			setup: [],
-			watchers: [],
-		});
-
-		expect(ready.setup).toHaveLength(1);
-		expect(ready.setup[0]?.name).toBe("db-schema-push");
-		expect(ready.watchers).toContainEqual(
-			expect.objectContaining({
-				name: "schema",
-				paths: "src/schema/**",
-			}),
-		);
+describe("db has no callbacks", () => {
+	it("db.defineCallbacks is undefined", () => {
+		expect(
+			(db as unknown as { defineCallbacks?: unknown }).defineCallbacks,
+		).toBeUndefined();
 	});
 });

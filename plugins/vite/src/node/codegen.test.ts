@@ -16,11 +16,14 @@ describe("aggregateViteConfig", () => {
 			devServerPort: 3000,
 		});
 
-		expect(result).toContain('import { defineConfig } from "vite"');
-		expect(result).toContain('import tailwindcss from "@tailwindcss/vite"');
+		expect(result).toContain('import { defineConfig } from "vite";');
+		expect(result).toContain('import tailwindcss from "@tailwindcss/vite";');
 		expect(result).toContain("export default defineConfig(");
-		expect(result).toContain("plugins: [tailwindcss()");
-		expect(result).toContain("port: 3000");
+		// Call expression with no args (`tailwindcss()`) lands in the array
+		// alongside framework-preset providersPlugin calls added elsewhere.
+		expect(result).toMatch(/plugins:\s*\[[^\]]*tailwindcss\(\)/);
+		// Dev server port must be set on the `server` block, not the root.
+		expect(result).toMatch(/server:\s*\{[^}]*port:\s*3000/);
 	});
 
 	it("includes resolve.alias when aliases are provided", () => {
@@ -31,7 +34,10 @@ describe("aggregateViteConfig", () => {
 			devServerPort: 0,
 		});
 
-		expect(result).toContain("resolve: {");
-		expect(result).toContain('"@": "./src"');
+		// Alias must land inside the `resolve.alias` object, not as a bare
+		// key/value somewhere else in the config.
+		expect(result).toMatch(
+			/resolve:\s*\{[^}]*alias:\s*\{[^}]*"@":\s*"\.\/src"/,
+		);
 	});
 });

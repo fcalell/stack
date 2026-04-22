@@ -14,24 +14,29 @@ pnpm add @fcalell/plugin-vite
 
 ## How it works
 
-`plugin-vite` owns the Vite lifecycle. Framework plugins (like `plugin-solid`) inject their Vite plugins by contributing to the `vite.events.ViteConfig` event during `stack generate`. The CLI aggregates contributions, writes `.stack/vite.config.ts`, and `plugin-vite` spawns the Vite process during `Dev.Start` / `Build.Start`.
+`plugin-vite` owns the Vite lifecycle and exposes `vite.slots.configImports` + `vite.slots.pluginCalls` as the contribution surfaces. Framework plugins (like `plugin-solid`) inject their Vite plugins by contributing into those slots; `vite.slots.viteConfig` is a derived slot that aggregates everything into `.stack/vite.config.ts`. `plugin-vite` then contributes a `vite dev` process to `cliSlots.devProcesses` and a `vite build` step to `cliSlots.buildSteps`.
 
 Contributions are typed AST specs — `TsImportSpec` for imports and `TsExpression` for plugin calls — so plugin authors never concatenate source strings:
 
 ```ts
+import { vite } from "@fcalell/plugin-vite";
 import type { TsExpression, TsImportSpec } from "@fcalell/cli/ast";
 
-bus.on(vite.events.ViteConfig, (p) => {
-  p.imports.push({ source: "vite-plugin-solid", default: "solidPlugin" });
-  p.pluginCalls.push({
-    kind: "call",
-    callee: { kind: "identifier", name: "solidPlugin" },
-    args: [],
-  });
-});
+contributes: [
+  vite.slots.configImports.contribute(
+    (): TsImportSpec => ({ source: "vite-plugin-solid", default: "solidPlugin" }),
+  ),
+  vite.slots.pluginCalls.contribute(
+    (): TsExpression => ({
+      kind: "call",
+      callee: { kind: "identifier", name: "solidPlugin" },
+      args: [],
+    }),
+  ),
+],
 ```
 
-The generated config always includes Tailwind v4 and the providers virtual-module plugin as base plugins, with framework-contributed plugins appended after.
+The generated config always includes the providers virtual-module plugin as a base plugin (and Tailwind v4 once `plugin-solid-ui` is in the config), with framework-contributed plugins appended after.
 
 ## Config options
 
@@ -47,32 +52,25 @@ import { vite } from "@fcalell/plugin-vite";
 vite({ port: 4000 })
 ```
 
-## Events
+## Owned slots
 
-| Event | Emitted by | Purpose |
-|-------|------------|---------|
-| `ViteConfigured` | `Generate` | Signals that the Vite config has been generated. Framework plugins depend on this so downstream work that needs Vite wiring can await it from any command (`stack generate`, `stack dev`, `stack build`, `stack deploy`). |
+| Slot | Kind | Purpose |
+|------|------|---------|
+| `vite.slots.configImports` | `list<TsImportSpec>` | Imports for `.stack/vite.config.ts` |
+| `vite.slots.pluginCalls` | `list<TsExpression>` | Vite plugin call expressions |
+| `vite.slots.resolveAliases` | `list<{ find, replacement }>` | `resolve.alias` entries |
+| `vite.slots.devServerPort` | `value<number>` | Dev server port (defaults to `options.port ?? 3000`) |
+| `vite.slots.viteConfig` | `derived<string \| null>` | Final `.stack/vite.config.ts` source |
 
-## Lifecycle
+## Lifecycle contributions
 
-```
-Generate: vite.events.ViteConfig (framework plugins contribute typed imports + plugin calls; CLI writes .stack/vite.config.ts)
-          ViteConfigured (emitted after codegen — lets dependents run)
-Dev:      Dev.Start (spawn vite dev)
-Build:    Build.Start (push vite build step with output to dist/client)
-```
+| `cliSlots` slot | Behavior |
+|-----------------|----------|
+| `artifactFiles` | Writes `.stack/vite.config.ts` from `vite.slots.viteConfig` |
+| `devProcesses` | Spawns `vite dev --config .stack/vite.config.ts --port <devServerPort>` |
+| `buildSteps` | `vite build --config .stack/vite.config.ts --outDir dist/client` (`main` phase) |
 
-### Dev
-
-1. Framework plugins push `TsImportSpec`s and `TsExpression` plugin calls into the `vite.events.ViteConfig` payload during `stack generate`
-2. The CLI aggregates and writes `.stack/vite.config.ts` via the AST printer
-3. `ViteConfigured` fires during `Generate` so dependents (e.g. `plugin-solid`) can react regardless of the command
-4. On `Dev.Start`, the plugin spawns `vite dev` using the generated config
-
-### Build
-
-1. `vite.events.ViteConfig` contributions are aggregated at generate time (same flow as Dev)
-2. On `Build.Start`, the plugin pushes a `vite build` step (output to `dist/client`)
+`plugin-vite` also contributes its dev-server localhost origin to `api.slots.corsOrigins` (gated on `app.origins` not being set) so the auth + worker CORS allow-list automatically picks up the dev server without consumer config.
 
 ## Preset
 

@@ -77,6 +77,7 @@
 		"zod": "^4.3.6"
 	},
 	"devDependencies": {
+		"@fcalell/plugin-api": "workspace:*",
 		"@fcalell/typescript-config": "workspace:*",
 		"@tanstack/solid-form": "^1.28.6",
 		"solid-js": "^1.9.0",

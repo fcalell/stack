@@ -1,67 +1,144 @@
-import { createPlugin, type } from "@fcalell/cli";
-import { Build, Dev, Generate } from "@fcalell/cli/events";
+import { plugin, slot } from "@fcalell/cli";
+import type { TsExpression, TsImportSpec } from "@fcalell/cli/ast";
+import { cliSlots } from "@fcalell/cli/cli-slots";
 import { api } from "@fcalell/plugin-api";
 import { aggregateViteConfig } from "./node/codegen";
-import { type CodegenViteConfigPayload, viteOptionsSchema } from "./types";
+import { type ViteOptions, viteOptionsSchema } from "./types";
 
-export const vite = createPlugin("vite", {
-	label: "Vite",
-	events: {
-		ViteConfigured: type<void>(),
-		ViteConfig: type<CodegenViteConfigPayload>(),
+const SOURCE = "vite";
+
+// ── Slot declarations ──────────────────────────────────────────────
+
+// Sort config imports by source so the emitted vite.config.ts order is
+// independent of `config.plugins` array order.
+const configImports = slot.list<TsImportSpec>({
+	source: SOURCE,
+	name: "configImports",
+	sortBy: (a, b) => a.source.localeCompare(b.source),
+});
+
+// Order of plugin calls in Vite typically doesn't matter semantically for
+// the plugins contributed today (solid, tailwind, theme fonts, providers).
+// Sort by call callee identifier name so the emitted array is deterministic.
+function pluginCallName(expr: TsExpression): string {
+	if (expr.kind === "call" && expr.callee.kind === "identifier") {
+		return expr.callee.name;
+	}
+	return "";
+}
+const pluginCalls = slot.list<TsExpression>({
+	source: SOURCE,
+	name: "pluginCalls",
+	sortBy: (a, b) => pluginCallName(a).localeCompare(pluginCallName(b)),
+});
+
+const resolveAliases = slot.list<{ find: string; replacement: string }>({
+	source: SOURCE,
+	name: "resolveAliases",
+});
+
+// Resolved dev-server port. Defaults to 3000; overrideable via options.port.
+const devServerPort = slot.value<number>({
+	source: SOURCE,
+	name: "devServerPort",
+	seed: (ctx) => {
+		const opts = (ctx.options ?? {}) as ViteOptions;
+		return opts.port ?? 3000;
 	},
+});
+
+// Rendered `.stack/vite.config.ts` source. Pulled into `cli.slots.artifactFiles`
+// by the contribution below — gated on at least one plugin call or import
+// so a vite-less config never writes an empty file.
+const viteConfig = slot.derived<
+	string | null,
+	{
+		imports: typeof configImports;
+		plugins: typeof pluginCalls;
+		aliases: typeof resolveAliases;
+		port: typeof devServerPort;
+	}
+>({
+	source: SOURCE,
+	name: "viteConfig",
+	inputs: {
+		imports: configImports,
+		plugins: pluginCalls,
+		aliases: resolveAliases,
+		port: devServerPort,
+	},
+	compute: (inp) => {
+		if (inp.plugins.length === 0 && inp.imports.length === 0) return null;
+		return aggregateViteConfig({
+			imports: inp.imports,
+			pluginCalls: inp.plugins,
+			resolveAliases: inp.aliases,
+			devServerPort: inp.port,
+		});
+	},
+});
+
+export const vite = plugin<
+	"vite",
+	ViteOptions,
+	{
+		configImports: typeof configImports;
+		pluginCalls: typeof pluginCalls;
+		resolveAliases: typeof resolveAliases;
+		devServerPort: typeof devServerPort;
+		viteConfig: typeof viteConfig;
+	}
+>("vite", {
+	label: "Vite",
 
 	schema: viteOptionsSchema,
 
-	register(ctx, bus, events) {
-		bus.on(events.ViteConfig, (p) => {
-			const port = ctx.options?.port ?? 3000;
-			p.devServerPort = port;
-			p.imports.push({
+	slots: {
+		configImports,
+		pluginCalls,
+		resolveAliases,
+		devServerPort,
+		viteConfig,
+	},
+
+	contributes: (self) => [
+		// Framework preset — the providers virtual module plugin.
+		self.slots.configImports.contribute(
+			(): TsImportSpec => ({
 				source: "@fcalell/plugin-vite/preset",
 				named: ["providersPlugin"],
-			});
-			p.pluginCalls.push({
+			}),
+		),
+		self.slots.pluginCalls.contribute(
+			(): TsExpression => ({
 				kind: "call",
 				callee: { kind: "identifier", name: "providersPlugin" },
 				args: [],
-			});
-		});
+			}),
+		),
 
 		// Contribute the dev-server localhost origin to CORS unless the
-		// consumer has overridden `app.origins` entirely. Mirrors the
-		// pre-Phase-4 behavior the CLI used to inline.
-		bus.on(api.events.Worker, (p) => {
-			if (ctx.app.origins) return;
-			const port = ctx.options?.port ?? 3000;
-			const origin = `http://localhost:${port}`;
-			if (!p.cors.includes(origin)) p.cors.push(origin);
-		});
+		// consumer has overridden `app.origins` entirely. Reads
+		// `vite.slots.devServerPort` via ctx.resolve so the value follows
+		// options.port if the consumer bumps it.
+		api.slots.corsOrigins.contribute(async (ctx) => {
+			if (ctx.app.origins) return undefined;
+			const port = await ctx.resolve(self.slots.devServerPort);
+			return `http://localhost:${port}`;
+		}),
 
-		// ViteConfigured fires during Generate — after the ViteConfig payload has
-		// been collected — so downstream plugins (`after: [vite.events.ViteConfigured]`)
-		// see the signal across generate/dev/build alike. The file is emitted into
-		// Generate's `files` accumulator; the CLI writes them after Generate
-		// resolves.
-		bus.on(Generate, async (p) => {
-			const payload = await bus.emit(events.ViteConfig, {
-				imports: [],
-				pluginCalls: [],
-				resolveAliases: [],
-				devServerPort: 0,
-			});
-			if (payload.pluginCalls.length > 0 || payload.imports.length > 0) {
-				p.files.push({
-					path: ".stack/vite.config.ts",
-					content: aggregateViteConfig(payload),
-				});
-			}
-			await bus.emit(events.ViteConfigured);
-		});
+		// Emit `.stack/vite.config.ts` via cli.slots.artifactFiles. Null source
+		// (empty pluginCalls + empty imports) skips the write.
+		cliSlots.artifactFiles.contribute(async (ctx) => {
+			const src = await ctx.resolve(self.slots.viteConfig);
+			if (src === null) return undefined;
+			return { path: ".stack/vite.config.ts", content: src };
+		}),
 
-		bus.on(Dev.Start, (p) => {
-			const port = ctx.options?.port ?? 3000;
-			p.processes.push({
+		// Dev process.
+		cliSlots.devProcesses.contribute(async (ctx) => {
+			const port = await ctx.resolve(self.slots.devServerPort);
+			return {
 				name: "vite",
 				command: "npx",
 				args: [
@@ -74,27 +151,26 @@ export const vite = createPlugin("vite", {
 				],
 				readyPattern: /Local:/,
 				color: "cyan",
-			});
-		});
+			};
+		}),
 
-		bus.on(Build.Start, (p) => {
-			p.steps.push({
-				name: "vite-build",
-				phase: "main",
-				exec: {
-					command: "npx",
-					args: [
-						"vite",
-						"build",
-						"--config",
-						".stack/vite.config.ts",
-						"--outDir",
-						"dist/client",
-					],
-				},
-			});
-		});
-	},
+		// Build step.
+		cliSlots.buildSteps.contribute(() => ({
+			name: "vite-build",
+			phase: "main",
+			exec: {
+				command: "npx",
+				args: [
+					"vite",
+					"build",
+					"--config",
+					".stack/vite.config.ts",
+					"--outDir",
+					"dist/client",
+				],
+			},
+		})),
+	],
 });
 
 export type { ViteOptions } from "./types";

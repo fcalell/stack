@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
 import type { StackConfig } from "#config";
-import { defineEvent } from "#lib/event-bus";
 import {
 	type DiscoveredPlugin,
 	discoverPlugins,
@@ -10,21 +9,35 @@ import {
 	validateDependencies,
 } from "./discovery";
 
-function makeDiscovered(name: string, dependsOn?: string[]): DiscoveredPlugin {
+function makeDiscovered(
+	name: string,
+	requires: string[] = [],
+): DiscoveredPlugin {
+	const cli = {
+		name,
+		label: name,
+		package: `@fcalell/plugin-${name}`,
+		requires,
+		callbacks: {},
+		commands: {},
+		dependencies: {},
+		devDependencies: {},
+		gitignore: [] as readonly string[],
+		schema: undefined,
+		template: (n: string) => new URL(`file:///stub/${name}/${n}`),
+		scaffold: (n: string, target: string) => ({
+			source: new URL(`file:///stub/${name}/${n}`),
+			target,
+			plugin: name,
+		}),
+		collect: () => ({ slots: {}, contributes: [] }),
+	};
+	// Factory is structurally present but unused in these tests — stub it
+	// with any-ish casts because DiscoveredPlugin carries a fully-typed one.
 	return {
 		name,
-		cli: {
-			name,
-			label: name,
-			package: `@fcalell/plugin-${name}`,
-			after: (dependsOn ?? []).map((dep) =>
-				defineEvent<void>(dep, `${dep}.ready`),
-			),
-			callbacks: {},
-			commands: {},
-			register: () => {},
-		},
-		events: {},
+		cli,
+		factory: { cli } as unknown as DiscoveredPlugin["factory"],
 		options: {},
 	};
 }
@@ -68,7 +81,7 @@ describe("sortByDependencies", () => {
 	});
 
 	it("sorts a valid linear chain A -> B -> C correctly", () => {
-		// C depends on B, B depends on A. Sorted order must place A before B before C.
+		// C requires B, B requires A. Sorted order must place A before B before C.
 		const discovered = [
 			makeDiscovered("c", ["b"]),
 			makeDiscovered("b", ["a"]),
@@ -102,38 +115,16 @@ describe("sortByDependencies", () => {
 });
 
 describe("validateDependencies", () => {
-	it("throws when a plugin depends on an event from a missing plugin", () => {
-		// auth depends on db's SchemaReady event, but db is not in the list.
+	it("throws when a plugin `requires` a missing sibling", () => {
 		const discovered = [makeDiscovered("auth", ["db"])];
 
 		expect(() => validateDependencies(discovered)).toThrow(
-			/\[auth\] must run after event 'db\.ready' from plugin 'db'.*not in your config.*Add db\(\) to plugins array/,
+			/\[auth\] requires plugin 'db'.*not in your config.*Add db\(\) to plugins array/,
 		);
 	});
 
-	it("does not throw when all dependencies are present", () => {
+	it("does not throw when all required plugins are present", () => {
 		const discovered = [makeDiscovered("auth", ["db"]), makeDiscovered("db")];
-
-		expect(() => validateDependencies(discovered)).not.toThrow();
-	});
-
-	it("ignores 'core' dependencies", () => {
-		const discovered: DiscoveredPlugin[] = [
-			{
-				name: "a",
-				cli: {
-					name: "a",
-					label: "a",
-					package: "@fcalell/plugin-a",
-					after: [defineEvent<void>("core", "Init.Scaffold")],
-					callbacks: {},
-					commands: {},
-					register: () => {},
-				},
-				events: {},
-				options: {},
-			},
-		];
 
 		expect(() => validateDependencies(discovered)).not.toThrow();
 	});
@@ -160,9 +151,6 @@ describe("FIRST_PARTY_PLUGINS", () => {
 
 describe("discoverPlugins — third-party plugins via __package", () => {
 	it("imports the package named in __package instead of fabricating @fcalell/plugin-*", async () => {
-		// A consumer installed a third-party plugin published under an
-		// unrelated npm namespace. The plugin's config factory stamped
-		// __package onto its output; discovery must honour it.
 		const thirdPartyPackage = "@acme/stack-plugin-widget";
 		const importedPackages: string[] = [];
 
@@ -175,12 +163,20 @@ describe("discoverPlugins — third-party plugins via __package", () => {
 						name: "widget",
 						label: "Widget",
 						package: thirdPartyPackage,
-						after: [],
+						requires: [] as string[],
 						callbacks: {},
 						commands: {},
-						register: () => {},
+						dependencies: {},
+						devDependencies: {},
+						gitignore: [] as readonly string[],
+						template: (n: string) => new URL(`file:///stub/widget/${n}`),
+						scaffold: (n: string, target: string) => ({
+							source: new URL(`file:///stub/widget/${n}`),
+							target,
+							plugin: "widget",
+						}),
+						collect: () => ({ slots: {}, contributes: [] }),
 					},
-					events: {},
 				},
 			};
 		});
@@ -209,8 +205,6 @@ describe("discoverPlugins — third-party plugins via __package", () => {
 	});
 
 	it("falls back to @fcalell/plugin-<name> when __package is absent (back-compat)", async () => {
-		// Older configs (pre-__package) should still resolve via the legacy
-		// first-party convention without touching their call sites.
 		vi.doMock("@fcalell/plugin-legacy", () => ({
 			legacy: {
 				__plugin: "legacy",
@@ -218,12 +212,20 @@ describe("discoverPlugins — third-party plugins via __package", () => {
 					name: "legacy",
 					label: "Legacy",
 					package: "@fcalell/plugin-legacy",
-					after: [],
+					requires: [] as string[],
 					callbacks: {},
 					commands: {},
-					register: () => {},
+					dependencies: {},
+					devDependencies: {},
+					gitignore: [] as readonly string[],
+					template: (n: string) => new URL(`file:///stub/legacy/${n}`),
+					scaffold: (n: string, target: string) => ({
+						source: new URL(`file:///stub/legacy/${n}`),
+						target,
+						plugin: "legacy",
+					}),
+					collect: () => ({ slots: {}, contributes: [] }),
 				},
-				events: {},
 			},
 		}));
 
@@ -241,11 +243,8 @@ describe("discoverPlugins — third-party plugins via __package", () => {
 	});
 });
 
-describe("discoverPlugins — missing dependency", () => {
-	it("throws when a top-level plugin depends on an event from a plugin not in the config", async () => {
-		// "parent" is the top-level plugin the consumer put in their config.
-		// It must run after an event sourced from "ghost", which the consumer
-		// forgot to add. Discovery surfaces the actionable error.
+describe("discoverPlugins — missing required plugin", () => {
+	it("throws when a top-level plugin requires a sibling not in the config", async () => {
 		vi.doMock("@fcalell/plugin-parent", () => ({
 			parent: {
 				__plugin: "parent",
@@ -253,12 +252,20 @@ describe("discoverPlugins — missing dependency", () => {
 					name: "parent",
 					label: "Parent",
 					package: "@fcalell/plugin-parent",
-					after: [defineEvent<void>("ghost", "ghost.ready")],
+					requires: ["ghost"],
 					callbacks: {},
 					commands: {},
-					register: () => {},
+					dependencies: {},
+					devDependencies: {},
+					gitignore: [] as readonly string[],
+					template: (n: string) => new URL(`file:///stub/parent/${n}`),
+					scaffold: (n: string, target: string) => ({
+						source: new URL(`file:///stub/parent/${n}`),
+						target,
+						plugin: "parent",
+					}),
+					collect: () => ({ slots: {}, contributes: [] }),
 				},
-				events: {},
 			},
 		}));
 
@@ -269,7 +276,7 @@ describe("discoverPlugins — missing dependency", () => {
 		};
 
 		await expect(discoverPlugins(config)).rejects.toThrow(
-			/\[parent\] must run after event 'ghost\.ready' from plugin 'ghost'.*not in your config/,
+			/\[parent\] requires plugin 'ghost'.*not in your config/,
 		);
 
 		vi.doUnmock("@fcalell/plugin-parent");

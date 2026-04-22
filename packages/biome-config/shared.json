@@ -11,6 +11,7 @@
 			"!**/.wrangler",
 			"!**/.output",
 			"!**/.stack",
+			"!**/.claude/worktrees",
 			"!**/storybook-static",
 			"!**/coverage",
 			"!**/routeTree.gen.ts"

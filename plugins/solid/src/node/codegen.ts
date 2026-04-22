@@ -13,7 +13,7 @@ import type {
 } from "../types";
 
 // Render `.stack/entry.tsx`. Returns null when no plugin contributes a mount
-// expression — `plugin-solid` seeds it via solid.events.Entry.
+// expression — `plugin-solid` contributes the default via solid.slots.mountExpression.
 export function aggregateEntry(payload: CodegenEntryPayload): string | null {
 	if (!payload.mountExpression) return null;
 

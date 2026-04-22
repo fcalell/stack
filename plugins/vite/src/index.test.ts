@@ -1,7 +1,80 @@
-import { Build, createEventBus, Dev, Generate } from "@fcalell/cli/events";
-import { createMockCtx } from "@fcalell/cli/testing";
+import type { Slot } from "@fcalell/cli";
+import { cliSlots } from "@fcalell/cli/cli-slots";
+import {
+	buildGraph,
+	type GraphCtxFactory,
+	type GraphPlugin,
+} from "@fcalell/cli/graph";
+import { api } from "@fcalell/plugin-api";
 import { describe, expect, it } from "vitest";
 import { vite } from "./index";
+
+// ── Harness ────────────────────────────────────────────────────────
+
+const app = { name: "test-app", domain: "example.com" };
+
+const noopLog = {
+	info: () => {},
+	warn: () => {},
+	success: () => {},
+	error: () => {},
+};
+
+function makeCtxFactory(
+	perPluginOptions: Record<string, unknown> = {},
+	appOverride?: typeof app & { origins?: string[] },
+): GraphCtxFactory {
+	return {
+		app: appOverride ?? app,
+		cwd: "/tmp/test",
+		log: noopLog,
+		ctxForPlugin: (name) => ({
+			options: perPluginOptions[name] ?? {},
+			fileExists: async () => false,
+			readFile: async () => "",
+			template: (n) => new URL(`file:///tmp/templates/${name}/${n}`),
+			scaffold: (n, target) => ({
+				source: new URL(`file:///tmp/templates/${name}/${n}`),
+				target,
+				plugin: name,
+			}),
+		}),
+	};
+}
+
+// Pull the api + vite plugins' collected slots/contributions into GraphPlugin
+// entries — same production path the CLI walks.
+function collectVitePlugins(
+	extras: GraphPlugin[] = [],
+	viteOpts: Parameters<typeof vite>[0] = {},
+	apiOpts: Parameters<typeof api>[0] = {},
+	optsPerPlugin: Record<string, unknown> = {},
+	appOverride?: typeof app & { origins?: string[] },
+): { plugins: GraphPlugin[]; ctxFactory: GraphCtxFactory } {
+	const apiCollected = api.cli.collect({ app, options: apiOpts ?? {} });
+	const viteCollected = vite.cli.collect({ app, options: viteOpts ?? {} });
+	const apiPlugin: GraphPlugin = {
+		name: "api",
+		slots: apiCollected.slots as unknown as Record<string, Slot<unknown>>,
+		contributes: apiCollected.contributes,
+	};
+	const vitePlugin: GraphPlugin = {
+		name: "vite",
+		slots: viteCollected.slots as unknown as Record<string, Slot<unknown>>,
+		contributes: viteCollected.contributes,
+	};
+	const perPluginOptions: Record<string, unknown> = {
+		api: apiOpts ?? {},
+		vite: viteOpts ?? {},
+		...optsPerPlugin,
+	};
+	return {
+		plugins: [apiPlugin, vitePlugin, ...extras],
+		ctxFactory: makeCtxFactory(perPluginOptions, appOverride),
+	};
+}
+
+// ── Config factory ────────────────────────────────────────────────
 
 describe("vite config factory", () => {
 	it("returns PluginConfig with __plugin 'vite'", () => {
@@ -20,157 +93,142 @@ describe("vite config factory", () => {
 	});
 });
 
-describe("vite.events", () => {
-	it("exposes ViteConfigured event", () => {
-		expect(vite.events.ViteConfigured.source).toBe("vite");
-		expect(vite.events.ViteConfigured.name).toBe("ViteConfigured");
+describe("vite.slots", () => {
+	it("owns configImports, pluginCalls, resolveAliases, devServerPort, viteConfig", () => {
+		expect(vite.slots.configImports.source).toBe("vite");
+		expect(vite.slots.pluginCalls.source).toBe("vite");
+		expect(vite.slots.resolveAliases.source).toBe("vite");
+		expect(vite.slots.devServerPort.source).toBe("vite");
+		expect(vite.slots.viteConfig.source).toBe("vite");
 	});
 });
 
-describe("vite.cli", () => {
-	it("has correct name and label", () => {
-		expect(vite.cli.name).toBe("vite");
-		expect(vite.cli.label).toBe("Vite");
+// ── devServerPort ─────────────────────────────────────────────────
+
+describe("vite.slots.devServerPort", () => {
+	it("defaults to 3000", async () => {
+		const { plugins, ctxFactory } = collectVitePlugins();
+		const g = buildGraph(plugins, ctxFactory);
+		expect(await g.resolve(vite.slots.devServerPort)).toBe(3000);
 	});
 
-	it("has no after entries", () => {
-		expect(vite.cli.after).toHaveLength(0);
+	it("honours options.port", async () => {
+		const { plugins, ctxFactory } = collectVitePlugins([], { port: 4000 });
+		const g = buildGraph(plugins, ctxFactory);
+		expect(await g.resolve(vite.slots.devServerPort)).toBe(4000);
 	});
 });
 
-describe("vite register", () => {
-	it("pushes vite dev process on Dev.Start", async () => {
-		const bus = createEventBus();
-		const ctx = createMockCtx();
-		vite.cli.register(ctx, bus, vite.events);
+// ── localhost CORS contribution (bug #5) ──────────────────────────
 
-		const start = await bus.emit(Dev.Start, {
-			processes: [],
-			watchers: [],
-		});
+describe("vite → api.slots.corsOrigins contribution", () => {
+	it("adds localhost to api.slots.cors when app.origins is not set", async () => {
+		const { plugins, ctxFactory } = collectVitePlugins();
+		const g = buildGraph(plugins, ctxFactory);
+		const cors = await g.resolve(api.slots.cors);
+		expect(cors).toContain("http://localhost:3000");
+	});
 
-		expect(start.processes).toContainEqual(
-			expect.objectContaining({
-				name: "vite",
-				command: "npx",
-			}),
+	it("uses the configured port for localhost", async () => {
+		const { plugins, ctxFactory } = collectVitePlugins([], { port: 4000 });
+		const g = buildGraph(plugins, ctxFactory);
+		const cors = await g.resolve(api.slots.cors);
+		expect(cors).toContain("http://localhost:4000");
+	});
+
+	it("does not contribute localhost when app.origins is set", async () => {
+		const { plugins, ctxFactory } = collectVitePlugins(
+			[],
+			{},
+			{},
+			{},
+			{ ...app, origins: ["https://only.example.com"] },
 		);
+		const g = buildGraph(plugins, ctxFactory);
+		const cors = await g.resolve(api.slots.cors);
+		expect(cors).not.toContain("http://localhost:3000");
 	});
 
-	it("uses custom port from options on Dev.Start args", async () => {
-		const bus = createEventBus();
-		const ctx = createMockCtx({ options: { port: 4000 } });
-		vite.cli.register(ctx, bus, vite.events);
+	// Bug #5 order-independence: placing vite BEFORE or AFTER a sibling
+	// `api.slots.corsOrigins` contributor must yield the same cors result.
+	it("cors result is order-independent when another plugin also contributes to corsOrigins", async () => {
+		const extra: GraphPlugin = {
+			name: "other",
+			contributes: [
+				api.slots.corsOrigins.contribute(() => "https://other.example"),
+			],
+		};
+		const apiCollected = api.cli.collect({ app, options: {} });
+		const viteCollected = vite.cli.collect({ app, options: {} });
+		const apiP: GraphPlugin = {
+			name: "api",
+			slots: apiCollected.slots as unknown as Record<string, Slot<unknown>>,
+			contributes: apiCollected.contributes,
+		};
+		const viteP: GraphPlugin = {
+			name: "vite",
+			slots: viteCollected.slots as unknown as Record<string, Slot<unknown>>,
+			contributes: viteCollected.contributes,
+		};
 
-		const start = await bus.emit(Dev.Start, {
-			processes: [],
-			watchers: [],
-		});
-
-		const viteProcess = start.processes.find((p) => p.name === "vite");
-		expect(viteProcess?.args).toContain("4000");
+		const forward = buildGraph([apiP, viteP, extra], makeCtxFactory());
+		const reverse = buildGraph([apiP, extra, viteP], makeCtxFactory());
+		const corsF = await forward.resolve(api.slots.cors);
+		const corsR = await reverse.resolve(api.slots.cors);
+		for (const cors of [corsF, corsR]) {
+			expect(cors).toContain("http://localhost:3000");
+			expect(cors).toContain("https://other.example");
+		}
 	});
+});
 
-	it("contributes providers import on vite.events.ViteConfig", async () => {
-		const bus = createEventBus();
-		const ctx = createMockCtx();
-		vite.cli.register(ctx, bus, vite.events);
+// ── viteConfig ────────────────────────────────────────────────────
 
-		const cfg = await bus.emit(vite.events.ViteConfig, {
-			imports: [],
-			pluginCalls: [],
-			resolveAliases: [],
-			devServerPort: 0,
-		});
-
-		expect(cfg.imports).toContainEqual(
-			expect.objectContaining({
-				source: "@fcalell/plugin-vite/preset",
-				named: ["providersPlugin"],
-			}),
+describe("vite.slots.viteConfig", () => {
+	it("emits defineConfig + providersPlugin with own contributions", async () => {
+		const { plugins, ctxFactory } = collectVitePlugins();
+		const g = buildGraph(plugins, ctxFactory);
+		const src = await g.resolve(vite.slots.viteConfig);
+		expect(src).not.toBeNull();
+		if (!src) return;
+		expect(src).toContain('import { defineConfig } from "vite"');
+		expect(src).toContain(
+			'import { providersPlugin } from "@fcalell/plugin-vite/preset"',
 		);
-		expect(cfg.devServerPort).toBe(3000);
+		expect(src).toContain("providersPlugin()");
 	});
 
-	it("does not contribute tailwindcss (plugin-solid-ui owns tailwind)", async () => {
-		const bus = createEventBus();
-		const ctx = createMockCtx();
-		vite.cli.register(ctx, bus, vite.events);
-
-		const cfg = await bus.emit(vite.events.ViteConfig, {
-			imports: [],
-			pluginCalls: [],
-			resolveAliases: [],
-			devServerPort: 0,
-		});
-
-		expect(cfg.imports).not.toContainEqual(
-			expect.objectContaining({ source: "@tailwindcss/vite" }),
-		);
+	it("embeds the resolved devServerPort in the config", async () => {
+		const { plugins, ctxFactory } = collectVitePlugins([], { port: 4321 });
+		const g = buildGraph(plugins, ctxFactory);
+		const src = await g.resolve(vite.slots.viteConfig);
+		expect(src).toContain("port: 4321");
 	});
 
-	it("does not contribute themeFontsPlugin (plugin-solid-ui owns fonts)", async () => {
-		const bus = createEventBus();
-		const ctx = createMockCtx();
-		vite.cli.register(ctx, bus, vite.events);
+	it("emits .stack/vite.config.ts into cliSlots.artifactFiles", async () => {
+		const { plugins, ctxFactory } = collectVitePlugins();
+		const g = buildGraph(plugins, ctxFactory);
+		const files = await g.resolve(cliSlots.artifactFiles);
+		expect(files.map((f) => f.path)).toContain(".stack/vite.config.ts");
+	});
+});
 
-		const cfg = await bus.emit(vite.events.ViteConfig, {
-			imports: [],
-			pluginCalls: [],
-			resolveAliases: [],
-			devServerPort: 0,
-		});
+// ── dev + build ───────────────────────────────────────────────────
 
-		const fontsCall = cfg.pluginCalls.find(
-			(c) =>
-				c.kind === "call" &&
-				c.callee.kind === "identifier" &&
-				c.callee.name === "themeFontsPlugin",
-		);
-		expect(fontsCall).toBeUndefined();
+describe("vite dev + build contributions", () => {
+	it("contributes a dev process with the configured port", async () => {
+		const { plugins, ctxFactory } = collectVitePlugins([], { port: 4000 });
+		const g = buildGraph(plugins, ctxFactory);
+		const procs = await g.resolve(cliSlots.devProcesses);
+		const v = procs.find((p) => p.name === "vite");
+		expect(v).toBeTruthy();
+		expect(v?.args).toContain("4000");
 	});
 
-	it("uses custom port for vite.events.ViteConfig devServerPort", async () => {
-		const bus = createEventBus();
-		const ctx = createMockCtx({ options: { port: 4000 } });
-		vite.cli.register(ctx, bus, vite.events);
-
-		const cfg = await bus.emit(vite.events.ViteConfig, {
-			imports: [],
-			pluginCalls: [],
-			resolveAliases: [],
-			devServerPort: 0,
-		});
-
-		expect(cfg.devServerPort).toBe(4000);
-	});
-
-	it("emits ViteConfigured on Generate (not only Dev.Start)", async () => {
-		const bus = createEventBus();
-		const ctx = createMockCtx();
-		vite.cli.register(ctx, bus, vite.events);
-
-		let fired = false;
-		bus.on(vite.events.ViteConfigured, () => {
-			fired = true;
-		});
-
-		await bus.emit(Generate, { files: [], postWrite: [] });
-		expect(fired).toBe(true);
-	});
-
-	it("pushes vite build step on Build.Start", async () => {
-		const bus = createEventBus();
-		const ctx = createMockCtx();
-		vite.cli.register(ctx, bus, vite.events);
-
-		const start = await bus.emit(Build.Start, { steps: [] });
-
-		expect(start.steps).toContainEqual(
-			expect.objectContaining({
-				name: "vite-build",
-				phase: "main",
-			}),
-		);
+	it("contributes a build step via cliSlots.buildSteps", async () => {
+		const { plugins, ctxFactory } = collectVitePlugins();
+		const g = buildGraph(plugins, ctxFactory);
+		const steps = await g.resolve(cliSlots.buildSteps);
+		expect(steps.find((s) => s.name === "vite-build")).toBeTruthy();
 	});
 });

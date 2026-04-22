@@ -1,162 +1,193 @@
-import type { RegisterContext } from "@fcalell/cli";
-import { discoverPlugins, sortByDependencies } from "@fcalell/cli/discovery";
-import { createEventBus, Init } from "@fcalell/cli/events";
-import { createMockCtx } from "@fcalell/cli/testing";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { defineConfig } from "@fcalell/cli";
+import { cliSlots } from "@fcalell/cli/cli-slots";
+import { buildTestGraph } from "@fcalell/cli/testing";
 import { api } from "@fcalell/plugin-api";
-import { type AuthOptions, auth } from "@fcalell/plugin-auth";
+import { auth } from "@fcalell/plugin-auth";
 import { cloudflare } from "@fcalell/plugin-cloudflare";
-import { type DbOptions, db } from "@fcalell/plugin-db";
-import { describe, expect, it } from "vitest";
+import { db } from "@fcalell/plugin-db";
+import { vite } from "@fcalell/plugin-vite";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-// Build a non-interactive RegisterContext that mirrors the production
-// `createPromptContext({ nonInteractive: true })` helper — text returns the
-// default, select returns the first option, confirm returns false, multiselect
-// returns []. This is what `stack init --plugins db,auth` constructs when no
-// TTY is attached.
-function createNonInteractiveCtx<T>(options: T): RegisterContext<T> {
-	const prompt: RegisterContext<T>["prompt"] = {
-		text: async (_msg, opts) => opts?.default ?? "",
-		confirm: async () => false,
-		select: async <U>(
-			_msg: string,
-			opts: { label: string; value: U }[],
-		): Promise<U> => {
-			const first = opts[0];
-			if (!first) throw new Error("select called with no options");
-			return first.value;
-		},
-		multiselect: async <U>(): Promise<U[]> => [],
-	};
-	return createMockCtx({ options, prompt });
+// A non-interactive prompt stub: select picks the first option, text returns
+// the default, confirm returns false. Mirrors how `stack init --yes` wires
+// its prompt context in production.
+const nonInteractivePrompt = {
+	text: async (_msg: string, opts?: { default?: string }): Promise<string> =>
+		opts?.default ?? "",
+	confirm: async (): Promise<boolean> => false,
+	select: async <T>(
+		_msg: string,
+		opts: { label: string; value: T }[],
+	): Promise<T> => {
+		const first = opts[0];
+		if (!first) throw new Error("select called with no options");
+		return first.value;
+	},
+	multiselect: async <T>(): Promise<T[]> => [],
+};
+
+// Drive every prompt contribution through its `ask` handler just as `stack
+// init` does: resolve cli.slots.initPrompts → for each PromptSpec, invoke
+// `spec.ask(ctxWithPrompt, priors)`.
+async function collectPromptAnswers(
+	promptSpecs: Array<{
+		plugin: string;
+		ask: (
+			ctx: unknown,
+			priors: Record<string, unknown>,
+		) => Promise<Record<string, unknown>>;
+	}>,
+): Promise<Record<string, Record<string, unknown>>> {
+	const answers: Record<string, Record<string, unknown>> = {};
+	for (const spec of promptSpecs) {
+		const result = await spec.ask(
+			{ prompt: nonInteractivePrompt },
+			{ ...answers },
+		);
+		answers[spec.plugin] = result;
+	}
+	return answers;
 }
 
-const dbCtxOptions: DbOptions = { dialect: "d1", databaseId: "placeholder" };
-const authCtxOptions: AuthOptions = {};
+describe("initPrompts slot across multi-plugin configs", () => {
+	let cwd: string;
 
-describe("Init.Prompt in non-interactive mode", () => {
-	it("db plugin handler pushes dialect + databaseId into configOptions", async () => {
-		const bus = createEventBus();
-		const ctx = createNonInteractiveCtx(dbCtxOptions);
-		db.cli.register(ctx, bus, db.events);
+	beforeEach(() => {
+		cwd = mkdtempSync(join(tmpdir(), "stack-init-prompt-"));
+	});
 
-		const payload = await bus.emit(Init.Prompt, { configOptions: {} });
+	afterEach(() => {
+		rmSync(cwd, { recursive: true, force: true });
+	});
 
-		// First option in select is "d1"; text default is "YOUR_D1_DATABASE_ID".
-		expect(payload.configOptions.db).toEqual({
+	it("accumulates db + auth answers keyed by plugin name in a full config", async () => {
+		const { graph } = await buildTestGraph({
+			config: defineConfig({
+				app: { name: "app", domain: "app.example.com" },
+				plugins: [
+					cloudflare(),
+					api(),
+					db({ dialect: "d1", databaseId: "placeholder" }),
+					auth(),
+				],
+			}),
+			cwd,
+		});
+
+		const prompts = await graph.resolve(cliSlots.initPrompts);
+		expect(prompts.length).toBeGreaterThan(0);
+
+		const answers = await collectPromptAnswers(prompts);
+		expect(Object.keys(answers).sort()).toEqual(["auth", "db"]);
+		expect(answers.db).toMatchObject({ dialect: "d1" });
+		expect(answers.auth).toMatchObject({ cookies: { prefix: "app" } });
+	});
+
+	it("db prompt contribution yields dialect + databaseId defaults", async () => {
+		const { graph } = await buildTestGraph({
+			config: defineConfig({
+				app: { name: "app", domain: "example.com" },
+				plugins: [
+					cloudflare(),
+					api(),
+					db({ dialect: "d1", databaseId: "placeholder" }),
+				],
+			}),
+			cwd,
+		});
+
+		const prompts = await graph.resolve(cliSlots.initPrompts);
+		const dbPrompt = prompts.find((p) => p.plugin === "db");
+		expect(dbPrompt).toBeDefined();
+		if (!dbPrompt) return;
+
+		const answers = await dbPrompt.ask({ prompt: nonInteractivePrompt }, {});
+		expect(answers).toEqual({
 			dialect: "d1",
 			databaseId: "YOUR_D1_DATABASE_ID",
 		});
 	});
 
-	it("auth plugin handler pushes cookies + organization into configOptions", async () => {
-		const bus = createEventBus();
-		const ctx = createNonInteractiveCtx(authCtxOptions);
-		auth.cli.register(ctx, bus, auth.events);
+	it("auth prompt contribution yields cookies + organization defaults", async () => {
+		const { graph } = await buildTestGraph({
+			config: defineConfig({
+				app: { name: "app", domain: "example.com" },
+				plugins: [
+					cloudflare(),
+					api(),
+					db({ dialect: "d1", databaseId: "x" }),
+					auth(),
+				],
+			}),
+			cwd,
+		});
 
-		const payload = await bus.emit(Init.Prompt, { configOptions: {} });
+		const prompts = await graph.resolve(cliSlots.initPrompts);
+		const authPrompt = prompts.find((p) => p.plugin === "auth");
+		expect(authPrompt).toBeDefined();
+		if (!authPrompt) return;
 
-		// Cookie prefix default is "app"; confirm returns false in non-interactive.
-		expect(payload.configOptions.auth).toEqual({
+		const answers = await authPrompt.ask({ prompt: nonInteractivePrompt }, {});
+		expect(answers).toEqual({
 			cookies: { prefix: "app" },
 			organization: false,
 		});
 	});
 
-	it("emits across multiple plugins and accumulates answers keyed by plugin name", async () => {
-		const config = {
-			app: { name: "app", domain: "app.example.com" },
-			plugins: [
-				cloudflare(),
-				api(),
-				db({ dialect: "d1", databaseId: "placeholder" }),
-				auth({}),
-			],
-			validate: () => ({ valid: true, errors: [] }),
-		};
-		const discovered = await discoverPlugins(config);
-		const sorted = sortByDependencies(discovered);
-
-		const bus = createEventBus();
-		for (const p of sorted) {
-			const ctx = createNonInteractiveCtx(p.options);
-			p.cli.register(ctx, bus, p.events);
-		}
-
-		const payload = await bus.emit(Init.Prompt, { configOptions: {} });
-
-		expect(Object.keys(payload.configOptions).sort()).toEqual(["auth", "db"]);
-		expect(payload.configOptions.db).toMatchObject({ dialect: "d1" });
-		expect(payload.configOptions.auth).toMatchObject({
-			cookies: { prefix: "app" },
+	it("plugin order does not affect which prompts are collected", async () => {
+		const canonical = await buildTestGraph({
+			config: defineConfig({
+				app: { name: "app", domain: "example.com" },
+				plugins: [
+					cloudflare(),
+					api(),
+					db({ dialect: "d1", databaseId: "x" }),
+					auth(),
+				],
+			}),
+			cwd,
 		});
-	});
-});
-
-describe("Init.Prompt → pluginAnswers wiring (mirrors init.ts merge)", () => {
-	// This test mirrors the exact merge loop in `init.ts`:
-	//   const prompt = await bus.emit(Init.Prompt, { configOptions: {} });
-	//   for (const [name, answers] of Object.entries(prompt.configOptions)) {
-	//     if (pluginAnswers.has(name)) pluginAnswers.set(name, answers);
-	//   }
-	// It proves the plugin-supplied answers end up in the map consumed by
-	// `stackConfigTemplate`, which is what turns them into `db({ dialect: "d1" })`
-	// inside the scaffolded `stack.config.ts`.
-
-	it("pluginAnswers collects each plugin's configOptions after Init.Prompt", async () => {
-		const config = {
-			app: { name: "app", domain: "example.com" },
-			plugins: [
-				cloudflare(),
-				api(),
-				db({ dialect: "d1", databaseId: "abc" }),
-				auth({}),
-			],
-			validate: () => ({ valid: true, errors: [] }),
-		};
-		const discovered = await discoverPlugins(config);
-		const sorted = sortByDependencies(discovered);
-
-		const bus = createEventBus();
-		const pluginAnswers = new Map<string, Record<string, unknown>>();
-		for (const p of sorted) {
-			const ctx = createNonInteractiveCtx(p.options);
-			p.cli.register(ctx, bus, p.events);
-			pluginAnswers.set(p.name, {});
-		}
-
-		const promptPayload = await bus.emit(Init.Prompt, { configOptions: {} });
-		for (const [name, answers] of Object.entries(promptPayload.configOptions)) {
-			if (pluginAnswers.has(name)) pluginAnswers.set(name, answers);
-		}
-
-		expect(pluginAnswers.get("db")).toMatchObject({ dialect: "d1" });
-		expect(pluginAnswers.get("auth")).toMatchObject({
-			cookies: { prefix: "app" },
-			organization: false,
+		const shuffled = await buildTestGraph({
+			config: defineConfig({
+				app: { name: "app", domain: "example.com" },
+				plugins: [
+					auth(),
+					db({ dialect: "d1", databaseId: "x" }),
+					api(),
+					cloudflare(),
+				],
+			}),
+			cwd,
 		});
+
+		const canonicalPrompts = await canonical.graph.resolve(
+			cliSlots.initPrompts,
+		);
+		const shuffledPrompts = await shuffled.graph.resolve(cliSlots.initPrompts);
+
+		const names = (arr: typeof canonicalPrompts): string[] =>
+			arr.map((p) => p.plugin).sort();
+		expect(names(shuffledPrompts)).toEqual(names(canonicalPrompts));
+
+		const canonicalAnswers = await collectPromptAnswers(canonicalPrompts);
+		const shuffledAnswers = await collectPromptAnswers(shuffledPrompts);
+		expect(shuffledAnswers).toEqual(canonicalAnswers);
 	});
 
-	it("unselected plugins do not appear in pluginAnswers even if they register", async () => {
-		// If a plugin's Init.Prompt handler runs but the plugin wasn't
-		// pre-registered in `pluginAnswers` (because it wasn't selected),
-		// the init merge step should ignore that configOptions key.
-		const bus = createEventBus();
-		const pluginAnswers = new Map<string, Record<string, unknown>>();
-		pluginAnswers.set("db", {});
+	it("plugins that declare no prompt contribute nothing to initPrompts", async () => {
+		const { graph } = await buildTestGraph({
+			config: defineConfig({
+				app: { name: "app", domain: "example.com" },
+				plugins: [cloudflare(), api(), vite()],
+			}),
+			cwd,
+		});
 
-		// Register both but only "db" is "selected".
-		const ctxDb = createNonInteractiveCtx(dbCtxOptions);
-		db.cli.register(ctxDb, bus, db.events);
-		const ctxAuth = createNonInteractiveCtx(authCtxOptions);
-		auth.cli.register(ctxAuth, bus, auth.events);
-
-		const promptPayload = await bus.emit(Init.Prompt, { configOptions: {} });
-		for (const [name, answers] of Object.entries(promptPayload.configOptions)) {
-			if (pluginAnswers.has(name)) pluginAnswers.set(name, answers);
-		}
-
-		expect(pluginAnswers.has("db")).toBe(true);
-		expect(pluginAnswers.has("auth")).toBe(false);
-		expect(pluginAnswers.get("db")).toMatchObject({ dialect: "d1" });
+		const prompts = await graph.resolve(cliSlots.initPrompts);
+		// api/vite/cloudflare don't contribute to initPrompts today.
+		expect(prompts).toHaveLength(0);
 	});
 });

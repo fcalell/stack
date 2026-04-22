@@ -1,17 +1,17 @@
-import type { RegisterContext } from "@fcalell/cli";
-import {
-	createEventBus,
-	type Event,
-	type EventBus,
-	Init,
-	Remove,
-} from "@fcalell/cli/events";
-import { createMockCtx } from "@fcalell/cli/testing";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { defineConfig, type PluginConfig } from "@fcalell/cli";
+import { cliSlots } from "@fcalell/cli/cli-slots";
+import { buildTestGraph } from "@fcalell/cli/testing";
 import { type ApiOptions, api } from "@fcalell/plugin-api";
 import { type AuthOptions, auth } from "@fcalell/plugin-auth";
 import { cloudflare } from "@fcalell/plugin-cloudflare";
 import { type DbOptions, db } from "@fcalell/plugin-db";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+
+// Structural contract tests: each first-party plugin boots through the real
+// build-graph path and produces well-typed slot contributions.
 
 const dbOptions: DbOptions = {
 	dialect: "d1",
@@ -35,131 +35,104 @@ const authOptions: AuthOptions = {
 
 const apiOptions: ApiOptions = {};
 
-type PluginOptions = DbOptions | AuthOptions | ApiOptions;
-
-const optionsByName: Record<string, PluginOptions> = {
-	db: dbOptions,
-	auth: authOptions,
-	api: apiOptions,
-};
-
-interface AnyCliPlugin {
-	cli: {
-		name: string;
-		label: string;
-		register: (
-			ctx: RegisterContext<unknown>,
-			bus: EventBus,
-			events: Record<string, Event<unknown>>,
-		) => void;
-	};
-	events: Record<string, Event<unknown>>;
+interface TargetPluginSpec {
+	name: "db" | "auth" | "api";
+	label: string;
+	plugins: readonly PluginConfig[];
 }
 
-describe("createPlugin-based CLI plugin contracts", () => {
-	const newPlugins: Array<{
-		plugin: AnyCliPlugin;
-		expectedName: string;
-		expectedLabel: string;
-	}> = [
-		{
-			plugin: db as unknown as AnyCliPlugin,
-			expectedName: "db",
-			expectedLabel: "Database",
-		},
-		{
-			plugin: auth as unknown as AnyCliPlugin,
-			expectedName: "auth",
-			expectedLabel: "Auth",
-		},
-		{
-			plugin: api as unknown as AnyCliPlugin,
-			expectedName: "api",
-			expectedLabel: "API",
-		},
-	];
+const targets: TargetPluginSpec[] = [
+	{
+		name: "db",
+		label: "Database",
+		// Consumer-ordered: requires chain is cloudflare, api, db.
+		plugins: [cloudflare(), db(dbOptions), api()],
+	},
+	{
+		name: "auth",
+		label: "Auth",
+		plugins: [
+			cloudflare(),
+			db({ dialect: "d1", databaseId: "x" }),
+			auth(authOptions),
+			api(),
+		],
+	},
+	{
+		name: "api",
+		label: "API",
+		plugins: [cloudflare(), api(apiOptions)],
+	},
+];
 
-	describe.each(newPlugins)("$expectedName plugin", ({
-		plugin,
-		expectedName,
-		expectedLabel,
-	}) => {
-		it("has correct name", () => {
-			expect(plugin.cli.name).toBe(expectedName);
+describe("plugin CLI contracts", () => {
+	let cwd: string;
+
+	beforeEach(() => {
+		cwd = mkdtempSync(join(tmpdir(), "stack-contracts-"));
+	});
+
+	afterEach(() => {
+		rmSync(cwd, { recursive: true, force: true });
+	});
+
+	describe.each(targets)("$name plugin", (spec) => {
+		it(`has plugin metadata (name=${spec.name}, label=${spec.label})`, async () => {
+			const { collected } = await buildTestGraph({
+				config: defineConfig({
+					app: { name: "app", domain: "example.com" },
+					plugins: spec.plugins,
+				}),
+				cwd,
+			});
+			const plugin = collected.find((c) => c.discovered.name === spec.name);
+			expect(plugin).toBeDefined();
+			expect(plugin?.discovered.cli.name).toBe(spec.name);
+			expect(plugin?.discovered.cli.label).toBe(spec.label);
+			expect(typeof plugin?.discovered.cli.collect).toBe("function");
 		});
 
-		it("has correct label", () => {
-			expect(plugin.cli.label).toBe(expectedLabel);
-		});
-
-		it("has a register function", () => {
-			expect(typeof plugin.cli.register).toBe("function");
-		});
-
-		it("contributes bindings via cloudflare.events.Wrangler event", async () => {
-			const bus = createEventBus();
-			const options = optionsByName[expectedName] ?? {};
-
-			const ctx = createMockCtx({ options });
-			plugin.cli.register(ctx, bus, plugin.events);
-
-			const wrangler = await bus.emit(cloudflare.events.Wrangler, {
-				bindings: [],
-				routes: [],
-				vars: {},
-				secrets: [],
-				compatibilityDate: "2025-01-01",
+		it("contributes structurally-valid bindings", async () => {
+			const { graph } = await buildTestGraph({
+				config: defineConfig({
+					app: { name: "app", domain: "example.com" },
+					plugins: spec.plugins,
+				}),
+				cwd,
 			});
 
+			const bindings = await graph.resolve(cloudflare.slots.bindings);
+			const secrets = await graph.resolve(cloudflare.slots.secrets);
+
 			const validKinds = ["d1", "kv", "r2", "rate_limiter", "var"];
-			for (const binding of wrangler.bindings) {
+			for (const binding of bindings) {
 				expect(validKinds).toContain(binding.kind);
 				const id = binding.kind === "var" ? binding.name : binding.binding;
 				expect(typeof id).toBe("string");
 				expect(id.length).toBeGreaterThan(0);
 			}
-			for (const secret of wrangler.secrets) {
+			for (const secret of secrets) {
 				expect(typeof secret.name).toBe("string");
 				expect(secret.name.length).toBeGreaterThan(0);
 			}
 		});
 
-		it("contributes scaffold files via Init.Scaffold event", async () => {
-			const bus = createEventBus();
-			const options = optionsByName[expectedName] ?? {};
-
-			const ctx = createMockCtx({ options });
-			plugin.cli.register(ctx, bus, plugin.events);
-
-			const scaffold = await bus.emit(Init.Scaffold, {
-				files: [],
-				dependencies: {},
-				devDependencies: {},
-				gitignore: [],
+		it("removal info is well-formed strings", async () => {
+			const { graph } = await buildTestGraph({
+				config: defineConfig({
+					app: { name: "app", domain: "example.com" },
+					plugins: spec.plugins,
+				}),
+				cwd,
 			});
 
-			expect(scaffold.files.length).toBeGreaterThanOrEqual(0);
-			expect(Object.keys(scaffold.dependencies).length).toBeGreaterThanOrEqual(
-				0,
-			);
-		});
+			const files = await graph.resolve(cliSlots.removeFiles);
+			const deps = await graph.resolve(cliSlots.removeDeps);
+			const devDeps = await graph.resolve(cliSlots.removeDevDeps);
 
-		it("contributes removal info via Remove event", async () => {
-			const bus = createEventBus();
-			const options = optionsByName[expectedName] ?? {};
-
-			const ctx = createMockCtx({ options });
-			plugin.cli.register(ctx, bus, plugin.events);
-
-			const removal = await bus.emit(Remove, {
-				files: [],
-				dependencies: [],
-				devDependencies: [],
-			});
-
-			expect(removal.files.length).toBeGreaterThanOrEqual(0);
-			expect(removal.dependencies.length).toBeGreaterThanOrEqual(0);
-			expect(removal.devDependencies.length).toBeGreaterThanOrEqual(0);
+			for (const f of files) expect(typeof f).toBe("string");
+			for (const d of deps) expect(typeof d).toBe("string");
+			for (const d of devDeps) expect(typeof d).toBe("string");
 		});
 	});
 });

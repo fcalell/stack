@@ -1,12 +1,13 @@
-import { join } from "node:path";
+import { readFileSync, writeFileSync } from "node:fs";
+import { rm } from "node:fs/promises";
+import { join, resolve } from "node:path";
 import { log, outro } from "@clack/prompts";
-import { Remove } from "#events";
+import { buildGraphFromDiscovered } from "#lib/build-graph";
+import { cliSlots } from "#lib/cli-slots";
 import { loadConfig } from "#lib/config";
 import { removePluginCall } from "#lib/config-writer";
-import { discoverPlugins } from "#lib/discovery";
+import { type DiscoveredPlugin, discoverPlugins } from "#lib/discovery";
 import { MissingPluginError, StackError } from "#lib/errors";
-import { createEventBus } from "#lib/event-bus";
-import { createRegisterContext } from "#lib/registration";
 
 export async function remove(
 	pluginName: string,
@@ -25,9 +26,9 @@ export async function remove(
 
 	const discovered = await discoverPlugins(config);
 
-	// Check if any other plugin depends on this one
+	// Any sibling that declares `requires: [pluginName]` blocks removal.
 	const dependents = discovered.filter((p) =>
-		p.cli.after.some((d) => d.source === pluginName),
+		p.cli.requires.includes(pluginName),
 	);
 	if (dependents.length > 0) {
 		const names = dependents.map((p) => p.name).join(", ");
@@ -40,34 +41,67 @@ export async function remove(
 	const plugin = discovered.find((p) => p.name === pluginName);
 
 	if (plugin) {
-		const bus = createEventBus();
-		const ctx = createRegisterContext({
-			cwd,
-			options: plugin.options,
+		// Build a graph with ONLY the target plugin so removeFiles / removeDeps
+		// are scoped to its contributions. Other plugins can still contribute
+		// removals for OTHER plugins, but the common case is self-scoped.
+		const single = [plugin] satisfies DiscoveredPlugin[];
+		const { graph } = buildGraphFromDiscovered({
+			discovered: single,
 			app: config.app,
-			hasPlugin: (name) => config.plugins.some((pl) => pl.__plugin === name),
+			cwd,
 		});
 
-		plugin.cli.register(ctx, bus, plugin.events);
+		const [files, deps, devDeps] = await Promise.all([
+			graph.resolve(cliSlots.removeFiles),
+			graph.resolve(cliSlots.removeDeps),
+			graph.resolve(cliSlots.removeDevDeps),
+		]);
 
-		const result = await bus.emit(Remove, {
-			files: [],
-			dependencies: [],
-			devDependencies: [],
-		});
+		// Delete files (directories too — `rm -rf` semantics).
+		for (const path of files) {
+			try {
+				await rm(resolve(cwd, path), { recursive: true, force: true });
+			} catch {}
+		}
+		if (files.length > 0) {
+			log.info(`Removed files: ${files.join(", ")}`);
+		}
 
-		if (result.files.length > 0) {
-			log.info(`Files to remove: ${result.files.join(", ")}`);
-		}
-		if (result.dependencies.length > 0) {
-			log.info(`Packages to remove: ${result.dependencies.join(", ")}`);
-		}
-		if (result.devDependencies.length > 0) {
-			log.info(`Dev packages to remove: ${result.devDependencies.join(", ")}`);
-		}
+		// Strip package.json dependencies contributed by the plugin.
+		const pkgPath = join(cwd, "package.json");
+		try {
+			const pkg = JSON.parse(readFileSync(pkgPath, "utf-8")) as Record<
+				string,
+				unknown
+			>;
+			let changed = false;
+			for (const [field, names] of [
+				["dependencies", deps],
+				["devDependencies", devDeps],
+			] as const) {
+				const current = (pkg[field] ?? {}) as Record<string, string>;
+				for (const name of names) {
+					if (name in current) {
+						delete current[name];
+						changed = true;
+					}
+				}
+				if (Object.keys(current).length > 0) pkg[field] = current;
+			}
+			// Always drop the plugin package itself.
+			for (const field of ["dependencies", "devDependencies"] as const) {
+				const current = (pkg[field] ?? {}) as Record<string, string>;
+				if (plugin.cli.package in current) {
+					delete current[plugin.cli.package];
+					changed = true;
+				}
+			}
+			if (changed) {
+				writeFileSync(pkgPath, `${JSON.stringify(pkg, null, "\t")}\n`);
+			}
+		} catch {}
 	}
 
-	// Remove plugin from config file
 	const fullConfigPath = join(cwd, configPath);
 	await removePluginCall(fullConfigPath, pluginName);
 

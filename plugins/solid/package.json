@@ -24,6 +24,7 @@
 		"zod": "^4.3.6"
 	},
 	"devDependencies": {
+		"@fcalell/plugin-api": "workspace:*",
 		"@fcalell/typescript-config": "workspace:*",
 		"typescript": "^5.9.3",
 		"vite": "^7.0.4"

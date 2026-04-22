@@ -4,11 +4,10 @@ import {
 	formatPluginCommands,
 	parseCommandFlags,
 } from "#lib/command-router";
-import { createPlugin } from "#lib/create-plugin";
+import { plugin } from "#lib/create-plugin";
 
-const dbPlugin = createPlugin("db", {
+const dbPlugin = plugin("db", {
 	label: "Database",
-	events: ["SchemaReady"],
 	commands: {
 		push: {
 			description: "Push schema to local database",
@@ -30,12 +29,10 @@ const dbPlugin = createPlugin("db", {
 			handler: vi.fn(),
 		},
 	},
-	register() {},
 });
 
-const authPlugin = createPlugin("auth", {
+const authPlugin = plugin("auth", {
 	label: "Auth",
-	register() {},
 });
 
 const plugins = [dbPlugin.cli, authPlugin.cli];

@@ -106,12 +106,17 @@ describe("stack CLI subprocess e2e", () => {
 			true,
 		);
 
-		// Config imports the plugins we asked for
+		// Config imports the plugins we asked for — match the import statement,
+		// not just the package path (the path alone would appear in comments too).
 		const cfg = readFileSync(resolve(dir, "stack.config.ts"), "utf-8");
-		expect(cfg).toContain('from "@fcalell/plugin-db"');
-		expect(cfg).toContain('from "@fcalell/plugin-api"');
-		expect(cfg).toContain('from "@fcalell/plugin-solid"');
-		expect(cfg).toContain('domain: "example.com"');
+		expect(cfg).toMatch(/import\s+\{\s*db\s*\}\s+from\s+"@fcalell\/plugin-db"/);
+		expect(cfg).toMatch(
+			/import\s+\{\s*api\s*\}\s+from\s+"@fcalell\/plugin-api"/,
+		);
+		expect(cfg).toMatch(
+			/import\s+\{\s*solid\s*\}\s+from\s+"@fcalell\/plugin-solid"/,
+		);
+		expect(cfg).toMatch(/domain:\s*"example\.com"/);
 		expect(cfg).toMatch(/app:\s*\{/);
 	});
 
@@ -128,8 +133,14 @@ describe("stack CLI subprocess e2e", () => {
 		expect(existsSync(wranglerPath)).toBe(true);
 
 		const worker = readFileSync(workerPath, "utf-8");
-		expect(worker).toContain("@fcalell/plugin-api/runtime");
-		expect(worker).toContain("@fcalell/plugin-db/runtime");
+		// Pin runtime imports to full import statements, not package-path
+		// substrings — the latter can match comments or unrelated strings.
+		expect(worker).toContain(
+			'import createWorker from "@fcalell/plugin-api/runtime"',
+		);
+		expect(worker).toContain(
+			'import dbRuntime from "@fcalell/plugin-db/runtime"',
+		);
 		expect(worker).toContain("export default worker");
 
 		const wrangler = readFileSync(wranglerPath, "utf-8");
@@ -138,7 +149,15 @@ describe("stack CLI subprocess e2e", () => {
 		// override by providing their own wrangler.toml with a custom `main`.
 		expect(wrangler).toContain('main = "worker.ts"');
 		expect(wrangler).toContain("[[d1_databases]]");
-		expect(wrangler).toContain("DB_MAIN");
+		expect(wrangler).toMatch(/binding\s*=\s*"DB_MAIN"/);
+
+		// Bug #4 from REVIEW-71e4064.md: prior to this, no test actually exercised
+		// the `wrangler types` postWrite hook. Grep the emitted Env interface for
+		// the binding name so that a dropped contribution surfaces immediately.
+		const envDtsPath = resolve(dir, ".stack/worker-configuration.d.ts");
+		expect(existsSync(envDtsPath)).toBe(true);
+		const envDts = readFileSync(envDtsPath, "utf-8");
+		expect(envDts).toMatch(/DB_MAIN\s*:\s*D1Database/);
 	});
 
 	it("stack remove db drops db() from the config and regenerates without D1", {
@@ -165,7 +184,9 @@ describe("stack CLI subprocess e2e", () => {
 		expect(existsSync(wranglerPath)).toBe(true);
 		const wrangler = readFileSync(wranglerPath, "utf-8");
 		expect(wrangler).not.toContain("[[d1_databases]]");
-		expect(wrangler).not.toContain("DB_MAIN");
+		// Pin DB_MAIN absence to a binding declaration; bare substring hits
+		// could appear in comments.
+		expect(wrangler).not.toMatch(/binding\s*=\s*"DB_MAIN"/);
 	});
 });
 

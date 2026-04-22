@@ -1,45 +1,187 @@
-import { createPlugin, type } from "@fcalell/cli";
-import { Generate, Init, Remove } from "@fcalell/cli/events";
+import { plugin, slot } from "@fcalell/cli";
+import type {
+	HtmlInjection,
+	ProviderSpec,
+	ScaffoldSpec,
+	TsExpression,
+	TsImportSpec,
+} from "@fcalell/cli/ast";
+import { cliSlots } from "@fcalell/cli/cli-slots";
 import { vite } from "@fcalell/plugin-vite";
 import {
 	aggregateEntry,
 	aggregateHtml,
 	aggregateProviders,
 } from "./node/codegen";
-import { buildRoutesDts, writeRoutesDts } from "./node/routes-core";
-import type {
-	CodegenEntryPayload,
-	CodegenHtmlPayload,
-	CodegenRoutesDtsPayload,
-	CompositionProvidersPayload,
-	SolidOptions,
-} from "./types";
-import { solidOptionsSchema } from "./types";
+import { buildRoutesDts } from "./node/routes-core";
+import { type SolidOptions, solidOptionsSchema } from "./types";
 
-type RoutesConfig = { enabled: false } | { enabled: true; pagesDir: string };
+const SOURCE = "solid";
 
-// File-based routing is on by default. `routes: false` disables it entirely;
-// `routes: { pagesDir }` customises the directory.
-function resolveRoutesConfig(options: SolidOptions | undefined): RoutesConfig {
-	const raw = options?.routes;
-	if (raw === false) return { enabled: false };
-	const pagesDir =
-		raw && typeof raw === "object"
-			? (raw.pagesDir ?? "src/app/pages")
-			: "src/app/pages";
-	return { enabled: true, pagesDir };
-}
+// ── Slot declarations ──────────────────────────────────────────────
+//
+// plugin-solid owns every fragment of the frontend bootstrap: entry,
+// providers composition, HTML shell, and typed routes declarations. Peer
+// plugins (solid-ui today, a custom third-party theme tomorrow) contribute
+// into the list slots; the derived `*Source` slots compose them into the
+// files emitted under `.stack/`. There is no barrier event — ordering is
+// derived from dataflow.
 
-export const solid = createPlugin("solid", {
-	label: "SolidJS",
-	events: {
-		SolidConfigured: type<void>(),
-		Entry: type<CodegenEntryPayload>(),
-		Html: type<CodegenHtmlPayload>(),
-		Providers: type<CompositionProvidersPayload>(),
-		RoutesDts: type<CodegenRoutesDtsPayload>(),
+// Providers — solid-ui contributes MetaProvider + Toaster here. Sorted by
+// `order` ascending so lower-order providers become outer wrappers.
+const providers = slot.list<ProviderSpec>({
+	source: SOURCE,
+	name: "providers",
+	sortBy: (a, b) => a.order - b.order,
+});
+
+// Sort by source so the emitted entry.tsx import order is independent of
+// plugin iteration order.
+const entryImports = slot.list<TsImportSpec>({
+	source: SOURCE,
+	name: "entryImports",
+	sortBy: (a, b) => a.source.localeCompare(b.source),
+});
+
+// The root `render(() => ... , document.getElementById("app"))` call. A value
+// slot so a peer plugin could override the mount target (rare); solid itself
+// contributes the default. `override: true` lets a consumer-side plugin cede
+// cleanly without a duplicate-contribution error.
+const mountExpression = slot.value<TsExpression | null>({
+	source: SOURCE,
+	name: "mountExpression",
+	override: true,
+	seed: () => null,
+});
+
+// The HTML shell template file — solid contributes the canonical shell.html;
+// override lets a consumer plugin swap the shell without tripping dup detection.
+const htmlShell = slot.value<URL | null>({
+	source: SOURCE,
+	name: "htmlShell",
+	override: true,
+	seed: () => null,
+});
+
+const htmlHead = slot.list<HtmlInjection>({
+	source: SOURCE,
+	name: "htmlHead",
+});
+
+const htmlBodyEnd = slot.list<HtmlInjection>({
+	source: SOURCE,
+	name: "htmlBodyEnd",
+});
+
+// Resolved pages directory. `null` means file-based routing is disabled
+// entirely (consumer passed `routes: false`). Drives both the vite routes
+// plugin contribution and routesDtsSource.
+const routesPagesDir = slot.derived<string | null, Record<string, never>>({
+	source: SOURCE,
+	name: "routesPagesDir",
+	inputs: {},
+	compute: (_inputs, ctx) => {
+		const opts = (ctx.options ?? {}) as SolidOptions;
+		if (opts.routes === false) return null;
+		if (opts.routes && typeof opts.routes === "object") {
+			return opts.routes.pagesDir ?? "src/app/pages";
+		}
+		return "src/app/pages";
 	},
-	after: [vite.events.ViteConfigured],
+});
+
+// Rendered `.stack/entry.tsx`. Returns null when no mount expression is
+// contributed (worker-only project), which skips file emission.
+const entrySource = slot.derived<
+	string | null,
+	{ imports: typeof entryImports; mount: typeof mountExpression }
+>({
+	source: SOURCE,
+	name: "entrySource",
+	inputs: { imports: entryImports, mount: mountExpression },
+	compute: (inp) =>
+		aggregateEntry({
+			imports: inp.imports,
+			mountExpression: inp.mount,
+		}),
+});
+
+// Rendered `.stack/index.html`.
+const htmlSource = slot.derived<
+	string | null,
+	{
+		shell: typeof htmlShell;
+		head: typeof htmlHead;
+		bodyEnd: typeof htmlBodyEnd;
+	}
+>({
+	source: SOURCE,
+	name: "htmlSource",
+	inputs: { shell: htmlShell, head: htmlHead, bodyEnd: htmlBodyEnd },
+	compute: (inp) =>
+		aggregateHtml({
+			shell: inp.shell,
+			head: inp.head,
+			bodyEnd: inp.bodyEnd,
+		}),
+});
+
+// Rendered `.stack/virtual-providers.tsx`.
+const providersSource = slot.derived<
+	string | null,
+	{ providers: typeof providers }
+>({
+	source: SOURCE,
+	name: "providersSource",
+	inputs: { providers },
+	compute: (inp) => aggregateProviders({ providers: inp.providers }),
+});
+
+// Rendered `.stack/routes.d.ts`. Null when routing is disabled; otherwise
+// `buildRoutesDts` returns a valid empty stub even when src/app/pages is
+// missing — REVIEW #3 structural fix (no try/catch, no swallow).
+const routesDtsSource = slot.derived<
+	string | null,
+	{ pagesDir: typeof routesPagesDir }
+>({
+	source: SOURCE,
+	name: "routesDtsSource",
+	inputs: { pagesDir: routesPagesDir },
+	compute: (inp, ctx) => {
+		if (inp.pagesDir === null) return null;
+		return buildRoutesDts(ctx.cwd, inp.pagesDir);
+	},
+});
+
+// Home scaffold. `override: true` lets plugin-solid-ui cede this slot to its
+// own richer home page — REVIEW #21 structural fix, no `ctx.hasPlugin("solid-ui")`
+// string checks live in this plugin anymore.
+const homeScaffold = slot.value<ScaffoldSpec>({
+	source: SOURCE,
+	name: "homeScaffold",
+	override: true,
+	seed: (ctx) => ctx.scaffold("home.tsx", "src/app/pages/index.tsx"),
+});
+
+export const solid = plugin<
+	"solid",
+	SolidOptions,
+	{
+		providers: typeof providers;
+		entryImports: typeof entryImports;
+		mountExpression: typeof mountExpression;
+		htmlShell: typeof htmlShell;
+		htmlHead: typeof htmlHead;
+		htmlBodyEnd: typeof htmlBodyEnd;
+		routesPagesDir: typeof routesPagesDir;
+		entrySource: typeof entrySource;
+		htmlSource: typeof htmlSource;
+		providersSource: typeof providersSource;
+		routesDtsSource: typeof routesDtsSource;
+		homeScaffold: typeof homeScaffold;
+	}
+>("solid", {
+	label: "SolidJS",
 
 	schema: solidOptionsSchema,
 
@@ -48,39 +190,50 @@ export const solid = createPlugin("solid", {
 		"solid-js": "^1.9.0",
 	},
 
-	register(ctx, bus, events) {
-		bus.on(Init.Scaffold, (p) => {
-			// When plugin-solid-ui is present it contributes its own richer
-			// home scaffold with the same target. Skip our bare version so
-			// writeScaffoldSpecs never trips on a duplicate target.
-			if (!ctx.hasPlugin("solid-ui")) {
-				p.files.push(ctx.scaffold("home.tsx", "src/app/pages/index.tsx"));
-			}
-		});
+	slots: {
+		providers,
+		entryImports,
+		mountExpression,
+		htmlShell,
+		htmlHead,
+		htmlBodyEnd,
+		routesPagesDir,
+		entrySource,
+		htmlSource,
+		providersSource,
+		routesDtsSource,
+		homeScaffold,
+	},
 
-		bus.on(Remove, (p) => {
-			p.files.push("src/app/");
-		});
-
-		bus.on(vite.events.ViteConfig, (p) => {
-			p.imports.push({
+	contributes: (self) => [
+		// ── Vite integration ────────────────────────────────────────────
+		vite.slots.configImports.contribute(
+			(): TsImportSpec => ({
 				source: "vite-plugin-solid",
 				default: "solidPlugin",
-			});
-			p.pluginCalls.push({
+			}),
+		),
+		vite.slots.pluginCalls.contribute(
+			(): TsExpression => ({
 				kind: "call",
 				callee: { kind: "identifier", name: "solidPlugin" },
 				args: [],
-			});
+			}),
+		),
 
-			const routes = resolveRoutesConfig(ctx.options);
-			if (!routes.enabled) return;
-
-			p.imports.push({
+		// routesPlugin — gated on routing being enabled.
+		vite.slots.configImports.contribute(async (ctx) => {
+			const pagesDir = await ctx.resolve(self.slots.routesPagesDir);
+			if (pagesDir === null) return undefined;
+			return {
 				source: "@fcalell/plugin-solid/node/vite-routes",
 				named: ["routesPlugin"],
-			});
-			p.pluginCalls.push({
+			} as TsImportSpec;
+		}),
+		vite.slots.pluginCalls.contribute(async (ctx) => {
+			const pagesDir = await ctx.resolve(self.slots.routesPagesDir);
+			if (pagesDir === null) return undefined;
+			return {
 				kind: "call",
 				callee: { kind: "identifier", name: "routesPlugin" },
 				args: [
@@ -89,34 +242,41 @@ export const solid = createPlugin("solid", {
 						properties: [
 							{
 								key: "pagesDir",
-								value: { kind: "string", value: routes.pagesDir },
+								value: { kind: "string", value: pagesDir },
 							},
 						],
 					},
 				],
-			});
-		});
+			} as TsExpression;
+		}),
 
-		// Contributes the mount expression to plugin-solid's own Entry event.
-		bus.on(events.Entry, (p) => {
-			p.imports.push({ source: "./app.css", sideEffect: true });
-			p.imports.push({
-				source: "solid-js/web",
-				named: ["render"],
-			});
-			p.imports.push({
-				source: "@solidjs/router",
-				named: ["Router"],
-			});
-			p.imports.push({
+		// ── Entry source ────────────────────────────────────────────────
+		self.slots.entryImports.contribute(
+			(): TsImportSpec => ({ source: "./app.css", sideEffect: true }),
+		),
+		self.slots.entryImports.contribute(
+			(): TsImportSpec => ({ source: "solid-js/web", named: ["render"] }),
+		),
+		self.slots.entryImports.contribute(
+			(): TsImportSpec => ({ source: "@solidjs/router", named: ["Router"] }),
+		),
+		self.slots.entryImports.contribute(
+			(): TsImportSpec => ({
 				source: "virtual:fcalell-routes",
 				named: ["routes"],
-			});
-			p.imports.push({
+			}),
+		),
+		self.slots.entryImports.contribute(
+			(): TsImportSpec => ({
 				source: "virtual:stack-providers",
 				default: "Providers",
-			});
-			p.mountExpression = {
+			}),
+		),
+
+		// The default mount expression. Seeded as null; solid writes the
+		// canonical render call here.
+		self.slots.mountExpression.contribute(
+			(): TsExpression => ({
 				kind: "call",
 				callee: { kind: "identifier", name: "render" },
 				args: [
@@ -151,109 +311,78 @@ export const solid = createPlugin("solid", {
 						type: { kind: "reference", name: "HTMLElement" },
 					},
 				],
-			};
-		});
+			}),
+		),
 
-		// Contributes <head>/<body> defaults to plugin-solid's own Html event.
-		// Shell template lives in this plugin since solid owns the HTML pipeline.
-		bus.on(events.Html, (p) => {
-			const opts = ctx.options ?? {};
-			p.shell = ctx.template("shell.html");
-			p.head.push({
+		// ── HTML ─────────────────────────────────────────────────────────
+		self.slots.htmlShell.contribute((ctx): URL => ctx.template("shell.html")),
+
+		self.slots.htmlHead.contribute((ctx): HtmlInjection => {
+			const opts = (ctx.options ?? {}) as SolidOptions;
+			return {
 				kind: "html-attr",
 				name: "lang",
 				value: opts.lang ?? "en",
-			});
-			p.head.push({
-				kind: "title",
-				value: opts.title ?? ctx.app.name,
-			});
-			if (opts.description) {
-				p.head.push({
-					kind: "meta",
-					name: "description",
-					content: opts.description,
-				});
-			}
-			if (opts.themeColor) {
-				p.head.push({
-					kind: "meta",
-					name: "theme-color",
-					content: opts.themeColor,
-				});
-			}
-			if (opts.icon) {
-				p.head.push({
-					kind: "link",
-					rel: "icon",
-					href: opts.icon,
-				});
-			}
-			p.bodyEnd.push({
+			};
+		}),
+		self.slots.htmlHead.contribute((ctx): HtmlInjection => {
+			const opts = (ctx.options ?? {}) as SolidOptions;
+			return { kind: "title", value: opts.title ?? ctx.app.name };
+		}),
+		self.slots.htmlHead.contribute((ctx): HtmlInjection | undefined => {
+			const opts = (ctx.options ?? {}) as SolidOptions;
+			if (!opts.description) return undefined;
+			return { kind: "meta", name: "description", content: opts.description };
+		}),
+		self.slots.htmlHead.contribute((ctx): HtmlInjection | undefined => {
+			const opts = (ctx.options ?? {}) as SolidOptions;
+			if (!opts.themeColor) return undefined;
+			return { kind: "meta", name: "theme-color", content: opts.themeColor };
+		}),
+		self.slots.htmlHead.contribute((ctx): HtmlInjection | undefined => {
+			const opts = (ctx.options ?? {}) as SolidOptions;
+			if (!opts.icon) return undefined;
+			return { kind: "link", rel: "icon", href: opts.icon };
+		}),
+		self.slots.htmlBodyEnd.contribute(
+			(): HtmlInjection => ({
 				kind: "script",
 				type: "module",
 				src: "/entry.tsx",
-			});
-		});
+			}),
+		),
 
-		bus.on(Generate, async (p) => {
-			// Emit plugin-owned events, aggregate, push files into the shared
-			// accumulator. Ordering mirrors the previous generate.ts sequence
-			// so snapshot output stays stable.
-			const providersPayload = await bus.emit(events.Providers, {
-				providers: [],
-			});
-			const providersSource = aggregateProviders(providersPayload);
-			if (providersSource !== null) {
-				p.files.push({
-					path: ".stack/virtual-providers.tsx",
-					content: providersSource,
-				});
-			}
+		// ── Artifact files ──────────────────────────────────────────────
+		cliSlots.artifactFiles.contribute(async (ctx) => {
+			const src = await ctx.resolve(self.slots.entrySource);
+			if (src === null) return undefined;
+			return { path: ".stack/entry.tsx", content: src };
+		}),
+		cliSlots.artifactFiles.contribute(async (ctx) => {
+			const src = await ctx.resolve(self.slots.htmlSource);
+			if (src === null) return undefined;
+			return { path: ".stack/index.html", content: src };
+		}),
+		cliSlots.artifactFiles.contribute(async (ctx) => {
+			const src = await ctx.resolve(self.slots.providersSource);
+			if (src === null) return undefined;
+			return { path: ".stack/virtual-providers.tsx", content: src };
+		}),
+		cliSlots.artifactFiles.contribute(async (ctx) => {
+			const src = await ctx.resolve(self.slots.routesDtsSource);
+			if (src === null) return undefined;
+			return { path: ".stack/routes.d.ts", content: src };
+		}),
 
-			const entryPayload = await bus.emit(events.Entry, {
-				imports: [],
-				mountExpression: null,
-			});
-			const entrySource = aggregateEntry(entryPayload);
-			if (entrySource !== null) {
-				p.files.push({ path: ".stack/entry.tsx", content: entrySource });
-			}
+		// ── Home scaffold ───────────────────────────────────────────────
+		// Resolved from `homeScaffold` so solid-ui's override seamlessly wins.
+		cliSlots.initScaffolds.contribute(async (ctx) => {
+			return ctx.resolve(self.slots.homeScaffold);
+		}),
 
-			const htmlPayload = await bus.emit(events.Html, {
-				shell: null,
-				head: [],
-				bodyEnd: [],
-			});
-			const htmlSource = await aggregateHtml(htmlPayload);
-			if (htmlSource !== null) {
-				p.files.push({ path: ".stack/index.html", content: htmlSource });
-			}
-
-			const routes = resolveRoutesConfig(ctx.options);
-			const routesPayload = await bus.emit(events.RoutesDts, {
-				pagesDir: routes.enabled ? routes.pagesDir : null,
-			});
-			if (routesPayload.pagesDir) {
-				// Directory-presence check lives in buildRoutesDts; swallow the
-				// error so a fresh consumer without src/app/pages yet doesn't
-				// block `stack generate`. writeRoutesDts covers the happy path.
-				try {
-					const dts = buildRoutesDts(ctx.cwd, routesPayload.pagesDir);
-					p.files.push({ path: ".stack/routes.d.ts", content: dts });
-				} catch {
-					// pagesDir doesn't exist yet — nothing to write.
-				}
-				// Keep writeRoutesDts for parity with prior behavior (mkdirs
-				// .stack/ as a side effect when the CLI hasn't yet).
-				try {
-					writeRoutesDts(ctx.cwd, routesPayload.pagesDir);
-				} catch {}
-			}
-
-			await bus.emit(events.SolidConfigured);
-		});
-	},
+		// Remove cleans up consumer-owned src/app/.
+		cliSlots.removeFiles.contribute(() => "src/app/"),
+	],
 });
 
 export type { SolidOptions } from "./types";

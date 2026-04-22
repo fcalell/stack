@@ -1,14 +1,25 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { log, outro } from "@clack/prompts";
 import { builders } from "magicast";
-import { Init } from "#events";
-import { editConfig, hasPluginCall } from "#lib/config-writer";
-import { dependencyNames, loadAvailablePlugins } from "#lib/discovery";
+import { syntheticConfigFromSelection } from "#commands/init";
+import { defineConfig } from "#config";
+import { buildGraphFromDiscovered } from "#lib/build-graph";
+import { cliSlots } from "#lib/cli-slots";
+import { loadConfig } from "#lib/config";
+import { editConfig } from "#lib/config-writer";
+import {
+	type DiscoveredPlugin,
+	dependencyNames,
+	loadAvailablePlugins,
+} from "#lib/discovery";
 import { ConfigLoadError, MissingPluginError } from "#lib/errors";
-import { createEventBus } from "#lib/event-bus";
-import { createRegisterContext, syntheticAppConfig } from "#lib/registration";
-import { announceCreated, writeScaffoldSpecs } from "#lib/scaffold";
+import {
+	announceCreated,
+	ensureGitignore,
+	patchPackageJson,
+	writeScaffoldSpecs,
+} from "#lib/scaffold";
 
 export async function add(
 	pluginName: string,
@@ -27,22 +38,18 @@ export async function add(
 	const packageName = pluginInfo.cli.package;
 	const cwd = process.cwd();
 
-	// Check if plugin already exists in config
-	let hasPlugin = false;
-	const { loadConfig } = await import("#lib/config");
-	let config: Awaited<ReturnType<typeof loadConfig>> | null = null;
+	let existingConfig: Awaited<ReturnType<typeof loadConfig>> | null = null;
 	try {
-		config = await loadConfig(configPath);
+		existingConfig = await loadConfig(configPath);
 	} catch (err) {
-		// Config may not exist yet — only swallow load errors
 		if (!(err instanceof ConfigLoadError)) throw err;
 	}
 
-	if (config) {
-		hasPlugin = config.plugins.some((p) => p.__plugin === pluginName);
-
+	let hasPlugin = false;
+	if (existingConfig) {
+		hasPlugin = existingConfig.plugins.some((p) => p.__plugin === pluginName);
 		for (const req of dependencyNames(pluginInfo)) {
-			if (!config.plugins.some((p) => p.__plugin === req)) {
+			if (!existingConfig.plugins.some((p) => p.__plugin === req)) {
 				throw new MissingPluginError(
 					req,
 					`${pluginInfo.cli.label} requires "${req}". Run: stack add ${req}`,
@@ -56,48 +63,108 @@ export async function add(
 		return;
 	}
 
-	// Register plugin, collect prompt answers, scaffold files
 	let answers: Record<string, unknown> = {};
+
+	// Build a synthetic config that contains the existing plugins PLUS the
+	// new target plugin. This matches what the consumer's config will look
+	// like after `add` completes, so slot resolution sees real siblings.
+	const existingPluginNames = existingConfig
+		? existingConfig.plugins.map((p) => p.__plugin)
+		: [];
+	const mergedSelection = [...existingPluginNames];
+	if (!mergedSelection.includes(pluginName)) mergedSelection.push(pluginName);
+
+	const existingOptions = new Map<string, Record<string, unknown>>();
+	if (existingConfig) {
+		for (const p of existingConfig.plugins) {
+			existingOptions.set(
+				p.__plugin,
+				(p.options as Record<string, unknown>) ?? {},
+			);
+		}
+	}
+
 	const nonInteractive = !process.stdin.isTTY;
+	const app = existingConfig?.app ?? {
+		name: "app",
+		domain: "example.com",
+	};
+
+	// Build the graph against the merged selection. Every plugin runs — but
+	// we filter prompts / scaffolds / deps to the target plugin.
 	try {
-		const bus = createEventBus();
-		const ctx = createRegisterContext({
+		const synthetic = syntheticConfigFromSelection({
+			selectedPlugins: mergedSelection,
+			available: [
+				...available,
+				// The consumer config may have plugins not in `loadAvailablePlugins`
+				// (third-party). Fall through to the factory on those — but without
+				// loading them we can't contribute, so stick to first-party here.
+			],
+			app,
+			perPluginOptions: existingOptions,
+		});
+
+		const discovered = synthetic.plugins
+			.map((cfg) => {
+				const avail = available.find((a) => a.name === cfg.__plugin);
+				if (!avail) return null;
+				return { ...avail, options: cfg.options } satisfies DiscoveredPlugin;
+			})
+			.filter((d): d is DiscoveredPlugin => d !== null);
+
+		const { graph } = buildGraphFromDiscovered({
+			discovered,
+			app: synthetic.app,
 			cwd,
-			options: {},
-			app: config?.app ?? syntheticAppConfig(cwd),
-			hasPlugin: (name) => {
-				if (name === pluginName) return true;
-				try {
-					const configFile = readFileSync(join(cwd, configPath), "utf-8");
-					return hasPluginCall(configFile, name);
-				} catch {
-					return false;
-				}
-			},
-			nonInteractive,
 		});
 
-		pluginInfo.cli.register(ctx, bus, pluginInfo.events);
+		// Prompts — run only the target plugin's contributions.
+		const allPrompts = await graph.resolve(cliSlots.initPrompts);
+		for (const spec of allPrompts) {
+			if (spec.plugin !== pluginName) continue;
+			answers = nonInteractive ? {} : await spec.ask({}, {});
+		}
 
-		const promptPayload = await bus.emit(Init.Prompt, { configOptions: {} });
-		answers = promptPayload.configOptions[pluginName] ?? {};
+		// Scaffolds / deps / gitignore — target plugin only (by spec.plugin).
+		const [scaffolds, _initDeps, _initDevDeps, gitignore] = await Promise.all([
+			graph.resolve(cliSlots.initScaffolds),
+			graph.resolve(cliSlots.initDeps),
+			graph.resolve(cliSlots.initDevDeps),
+			graph.resolve(cliSlots.gitignore),
+		]);
 
-		const scaffold = await bus.emit(Init.Scaffold, {
-			files: [],
-			dependencies: {},
-			devDependencies: {},
-			gitignore: [],
-		});
-
-		const created = await writeScaffoldSpecs(scaffold.files, cwd);
+		const scopedScaffolds = scaffolds.filter((s) => s.plugin === pluginName);
+		const created = await writeScaffoldSpecs(scopedScaffolds, cwd);
 		announceCreated(created);
-	} catch {
+
+		// Only add deps contributed by the target plugin. `auto-contributions`
+		// on `plugin()` stamps these from `definition.dependencies` /
+		// `devDependencies`, so deps from sibling plugins would accidentally
+		// get re-added if we didn't filter. We match by walking the target's
+		// contributions explicitly.
+		const targetDeps = pluginInfo.cli.dependencies;
+		const targetDevDeps = pluginInfo.cli.devDependencies;
+		const scopedDeps: Record<string, string> = {
+			...targetDeps,
+			...targetDevDeps,
+		};
+		// Ensure the plugin package itself is listed.
+		scopedDeps[packageName] ??= "latest";
+		patchPackageJson(cwd, { dependencies: scopedDeps });
+
+		if (gitignore.length > 0) {
+			// Scoped-ish: every plugin that wanted gitignore adds its own
+			// entries. Unioned entries are fine — `ensureGitignore` dedupes.
+			ensureGitignore(...pluginInfo.cli.gitignore);
+		}
+	} catch (err) {
 		log.warn(
-			`Could not load ${packageName} — it will be set up after install.`,
+			`Could not load ${packageName} — it will be set up after install: ${err instanceof Error ? err.message : String(err)}`,
 		);
 	}
 
-	// Add plugin to config file
+	// Mutate stack.config.ts via magicast — preserves comments/formatting.
 	const fullConfigPath = join(cwd, configPath);
 	const importName = pluginName.replace(/-([a-z])/g, (_, c: string) =>
 		c.toUpperCase(),
@@ -131,3 +198,6 @@ export async function add(
 
 	outro(`Added ${pluginInfo.cli.label}`);
 }
+
+// Helper re-export used by init; kept import-local for readability.
+export { defineConfig };

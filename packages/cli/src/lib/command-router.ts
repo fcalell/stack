@@ -3,18 +3,22 @@ import type {
 	CommandDefinition,
 	FlagDefinition,
 	InternalCliPlugin,
+	LogContext,
+	PromptContext,
 } from "#lib/create-plugin";
 import { StackError } from "#lib/errors";
-import type { EventBus } from "#lib/event-bus";
+import type { Slot } from "#lib/slots";
+
+type AnyCliPlugin = InternalCliPlugin<unknown, Record<string, Slot<unknown>>>;
 
 export interface PluginCommandMatch {
-	plugin: InternalCliPlugin<unknown>;
+	plugin: AnyCliPlugin;
 	command: CommandDefinition<unknown, Record<string, unknown>>;
 	commandName: string;
 }
 
 export function findPluginCommand(
-	plugins: InternalCliPlugin<unknown>[],
+	plugins: AnyCliPlugin[],
 	pluginName: string,
 	commandName: string,
 ): PluginCommandMatch | null {
@@ -124,16 +128,14 @@ export function parseCommandFlags(
 export function createCommandContext<TOptions>(opts: {
 	options: TOptions;
 	cwd: string;
-	bus: EventBus;
-	log: CommandContext<TOptions>["log"];
-	prompt: CommandContext<TOptions>["prompt"];
+	resolve: <T>(slot: Slot<T>) => Promise<T>;
+	log: LogContext;
+	prompt: PromptContext;
 }): CommandContext<TOptions> {
 	return opts;
 }
 
-export function formatPluginCommands(
-	plugins: InternalCliPlugin<unknown>[],
-): string {
+export function formatPluginCommands(plugins: AnyCliPlugin[]): string {
 	const lines: string[] = [];
 	for (const plugin of plugins) {
 		const entries = Object.entries(plugin.commands);

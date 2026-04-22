@@ -9,15 +9,21 @@ import {
 import type { MiddlewarePayload, WorkerPayload } from "./types";
 
 // ── aggregateWorker ─────────────────────────────────────────────────
+//
+// Pure aggregator — ported unchanged from the event-bus era. Used as the
+// compute function for the derived `api.slots.workerSource` slot. Callbacks
+// are keyed by plugin name so the aggregator can splice them into the
+// matching runtime entry structurally, without any ordering dependency.
 
 export function aggregateWorker(payload: WorkerPayload): string {
 	const statements: TsStatement[] = [];
 
 	// Plugin runtimes live alongside middleware in the chain but are emitted
-	// separately so late handlers can mutate their options. The order is:
-	// base → pluginRuntimes (.use) → middlewareChain (.use) → handler. Plugin
-	// runtimes run first so composition middleware sees the context they
-	// inject (e.g. `c.var.db`, `c.var.auth`).
+	// separately so callbacks can be spliced in without touching the
+	// TsExpression tree. Order is: base → pluginRuntimes (.use) →
+	// middlewareChain (.use) → handler. Plugin runtimes run first so
+	// composition middleware sees the context they inject (e.g. `c.var.db`,
+	// `c.var.auth`).
 	const runtimeImports: TsImportSpec[] = [];
 	const callbackImports: TsImportSpec[] = [];
 
@@ -30,12 +36,13 @@ export function aggregateWorker(payload: WorkerPayload): string {
 				key,
 				value,
 			}));
-			if (rt.callbacks) {
+			const callback = payload.callbacks[rt.plugin];
+			if (callback) {
 				properties.push({
 					key: "callbacks",
-					value: { kind: "identifier", name: rt.callbacks.identifier },
+					value: { kind: "identifier", name: callback.identifier },
 				});
-				callbackImports.push(rt.callbacks.import);
+				callbackImports.push(callback.import);
 			}
 			const runtimeCall: TsExpression = {
 				kind: "call",
@@ -111,17 +118,18 @@ const MIDDLEWARE_PHASE_ORDER: Record<
 	"after-routes": 3,
 };
 
-// Returns the ordered middleware call expressions plus the imports needed for
-// them. Consumed by the worker pipeline: plugin-api emits api.events.Middleware
-// first, then seeds api.events.Worker's `imports` + `middlewareChain` with the
-// result before emitting the Worker event.
+// Returns the ordered middleware call expressions plus the imports needed
+// for them. Consumed by two derived slots: `api.slots.middlewareCalls` (the
+// calls themselves) and `api.slots.middlewareImports` (deduplicated imports
+// to pull into `workerImports`).
 //
-// Ordering: primary key is `phase` (before-cors < after-cors < before-routes <
-// after-routes); secondary key is `order` (ascending). Stable within ties.
-export function aggregateMiddleware(
-	payload: MiddlewarePayload,
-): { imports: TsImportSpec[]; calls: TsExpression[] } | null {
-	if (payload.entries.length === 0) return null;
+// Ordering: primary key is `phase` (before-cors < after-cors < before-routes
+// < after-routes); secondary key is `order` (ascending). Stable within ties.
+export function aggregateMiddleware(payload: MiddlewarePayload): {
+	imports: TsImportSpec[];
+	calls: TsExpression[];
+} {
+	if (payload.entries.length === 0) return { imports: [], calls: [] };
 
 	const indexed = payload.entries.map((entry, idx) => ({ entry, idx }));
 	indexed.sort((a, b) => {

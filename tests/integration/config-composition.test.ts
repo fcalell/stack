@@ -1,8 +1,10 @@
 import { defineConfig, getPlugin } from "@fcalell/cli";
 import { api } from "@fcalell/plugin-api";
 import { auth } from "@fcalell/plugin-auth";
+import { cloudflare } from "@fcalell/plugin-cloudflare";
 import { db } from "@fcalell/plugin-db";
 import { solid } from "@fcalell/plugin-solid";
+import { vite } from "@fcalell/plugin-vite";
 import { describe, expect, it } from "vitest";
 
 const app = { name: "app", domain: "example.com" };
@@ -12,9 +14,11 @@ describe("defineConfig with multiple plugin combinations", () => {
 		const config = defineConfig({
 			app,
 			plugins: [
+				cloudflare(),
 				db({ dialect: "d1", databaseId: "test-db-id" }),
 				auth(),
 				api(),
+				vite(),
 				solid(),
 			],
 		});
@@ -24,10 +28,10 @@ describe("defineConfig with multiple plugin combinations", () => {
 		expect(result.errors).toHaveLength(0);
 	});
 
-	it("frontend-only config (solid only) validates successfully", () => {
+	it("frontend-only config (vite + solid) validates successfully", () => {
 		const config = defineConfig({
 			app,
-			plugins: [solid()],
+			plugins: [vite(), solid()],
 		});
 
 		const result = config.validate();
@@ -35,10 +39,14 @@ describe("defineConfig with multiple plugin combinations", () => {
 		expect(result.errors).toHaveLength(0);
 	});
 
-	it("API-only config (db + api) validates successfully", () => {
+	it("API-only config (cloudflare + db + api) validates successfully", () => {
 		const config = defineConfig({
 			app,
-			plugins: [db({ dialect: "d1", databaseId: "test-db-id" }), api()],
+			plugins: [
+				cloudflare(),
+				db({ dialect: "d1", databaseId: "test-db-id" }),
+				api(),
+			],
 		});
 
 		const result = config.validate();
@@ -57,18 +65,7 @@ describe("defineConfig with multiple plugin combinations", () => {
 		expect(result.errors).toHaveLength(0);
 	});
 
-	it("auth without db passes config validation (dependency is event-based, checked at runtime)", () => {
-		const config = defineConfig({
-			app,
-			plugins: [auth(), api()],
-		});
-
-		const result = config.validate();
-		expect(result.valid).toBe(true);
-		expect(result.errors).toHaveLength(0);
-	});
-
-	it("duplicate plugin names are caught", () => {
+	it("duplicate plugin names are caught at defineConfig level", () => {
 		const config = defineConfig({
 			app,
 			plugins: [
@@ -87,21 +84,31 @@ describe("defineConfig with multiple plugin combinations", () => {
 	it("app.domain is preserved through config", () => {
 		const config = defineConfig({
 			app: { name: "myapp", domain: "myapp.example.com" },
-			plugins: [solid()],
+			plugins: [vite(), solid()],
 		});
 
 		expect(config.app.domain).toBe("myapp.example.com");
 	});
 
-	it("plugin order does not matter for validation (deps are checked by name)", () => {
+	it("plugin order does not matter for validation", () => {
 		const configAscending = defineConfig({
 			app,
-			plugins: [db({ dialect: "d1", databaseId: "test-id" }), auth(), api()],
+			plugins: [
+				cloudflare(),
+				db({ dialect: "d1", databaseId: "test-id" }),
+				auth(),
+				api(),
+			],
 		});
 
 		const configReversed = defineConfig({
 			app,
-			plugins: [api(), auth(), db({ dialect: "d1", databaseId: "test-id" })],
+			plugins: [
+				api(),
+				auth(),
+				db({ dialect: "d1", databaseId: "test-id" }),
+				cloudflare(),
+			],
 		});
 
 		expect(configAscending.validate().valid).toBe(true);
@@ -112,9 +119,11 @@ describe("defineConfig with multiple plugin combinations", () => {
 		const config = defineConfig({
 			app,
 			plugins: [
+				cloudflare(),
 				db({ dialect: "d1", databaseId: "my-db-id" }),
 				auth({ cookies: { prefix: "myapp" } }),
 				api({ prefix: "/api" }),
+				vite(),
 				solid(),
 			],
 		});
@@ -139,7 +148,7 @@ describe("defineConfig with multiple plugin combinations", () => {
 	it("getPlugin throws for missing plugin", () => {
 		const config = defineConfig({
 			app,
-			plugins: [solid()],
+			plugins: [vite(), solid()],
 		});
 
 		expect(() => getPlugin(config, "db")).toThrow('Plugin "db" not found');

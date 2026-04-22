@@ -31,7 +31,7 @@ export default defineConfig({
 });
 ```
 
-`plugin-solid` (and transitively `plugin-vite`) are auto-resolved as dependencies.
+`plugin-solid` and `plugin-vite` must be listed alongside `plugin-solid-ui` (`stack init` adds them automatically when you pick the design system).
 
 ### Import components
 
@@ -44,14 +44,13 @@ import { Form } from "@fcalell/plugin-solid-ui/components/form";
 
 ## How it works
 
-`plugin-solid-ui` registers after `plugin-solid` via `solid.events.SolidConfigured`. Its scaffold templates override the bare ones from `plugin-solid` (last writer wins); its codegen wires up the design-system CSS import, font tokens, and the `MetaProvider` / `Toaster` composition.
+`plugin-solid-ui` contributes typed values into the slots `plugin-solid` and `plugin-vite` own. There is no event ordering — its `solid.slots.homeScaffold` contribution overrides solid's default home-page seed via the `override: true` semantic on the value slot, and its provider/CSS contributions land structurally during graph resolution.
 
 ### Template override
 
-| Path | `plugin-solid` template | `plugin-solid-ui` template |
-|------|------------------------|---------------------------|
-| `src/app/pages/_layout.tsx` | Bare pass-through layout | Layout with `<Toaster />` |
-| `src/app/pages/index.tsx` | Plain `<h1>Welcome</h1>` | `Card` with `Card.Title` + `Card.Description` |
+| Path | `plugin-solid` template | `plugin-solid-ui` override |
+|------|-------------------------|---------------------------|
+| `src/app/pages/index.tsx` | Plain `<h1>Welcome</h1>` (seed of `solid.slots.homeScaffold`) | `Card` with `Card.Title` + `Card.Description` (overrides the seed) |
 
 ## Config options
 
@@ -84,15 +83,23 @@ solidUi({
 
 `FontEntry` is re-exported from `@fcalell/plugin-solid-ui`. The type and the `themeFontsPlugin` that consumes it both live in `@fcalell/plugin-solid-ui/node/fonts`.
 
-## Lifecycle
+## Owned slots
 
-### Init / Scaffold
+| Slot | Kind | Purpose |
+|------|------|---------|
+| `solidUi.slots.appCssImports` | `list<string>` | CSS `@import`s for `.stack/app.css` |
+| `solidUi.slots.appCssLayers` | `list<{ name, content }>` | CSS `@layer` blocks |
+| `solidUi.slots.fonts` | `derived<FontEntry[]>` | Resolved fonts (consumer options or `defaultFonts`) |
+| `solidUi.slots.appCssSource` | `derived<string \| null>` | Final `.stack/app.css` source |
 
-Pushes `src/app/pages/index.tsx` — a UI-rich home page using `Card` and `Text` components. Overrides the bare template from `plugin-solid`.
+## Slot contributions
 
-### Generate
-
-Contributes `themeFontsPlugin(fonts)` from `@fcalell/plugin-solid-ui/node/fonts` to `plugin-vite`'s `vite.events.ViteConfig`. Owns `solidUi.events.AppCss` and pushes `@fcalell/plugin-solid-ui/globals.css` into it, emitting a `--ui-font-*` CSS layer for each role-bound font. Adds `MetaProvider` + `Toaster` to `solid.events.Providers`.
+| Target slot | Behavior |
+|-------------|----------|
+| `vite.slots.configImports` + `pluginCalls` | Tailwind v4 plugin and `themeFontsPlugin(fonts)` |
+| `solid.slots.providers` | `MetaProvider` (wrap, `order: 0`) + `Toaster` (sibling) |
+| `solid.slots.homeScaffold` (override) | Design-system home page (`Card` + `Card.Title` + `Card.Description`) |
+| `cliSlots.artifactFiles` | Writes `.stack/app.css` from `solidUi.slots.appCssSource` |
 
 ### Remove
 

@@ -52,26 +52,29 @@ interface PluginIndexOptions {
 export function pluginIndexTemplate(options: PluginIndexOptions): string {
 	const { name, packageName, label } = options;
 	const varName = toCamelCase(name);
-	return `import { createPlugin } from "@fcalell/cli";
-import { Init } from "@fcalell/cli/events";
+	return `import { plugin, slot } from "@fcalell/cli";
 
 export interface ${pascalCase(name)}Options {
 \t// Add plugin-specific options here.
 }
 
-export const ${varName} = createPlugin("${name}", {
+// Example slot this plugin owns. Other plugins contribute to it; this
+// plugin derives / composes the final value.
+const example = slot.list<string>({ source: "${name}", name: "example" });
+
+export const ${varName} = plugin("${name}", {
 \tlabel: "${label}",
 \tpackage: "${packageName}",
 
-\tregister(ctx, bus, _events) {
-\t\tbus.on(Init.Scaffold, (p) => {
-\t\t\tp.files.push({
-\t\t\t\tpath: "src/${varName}/index.ts",
-\t\t\t\tcontent: \`// Scaffolded by ${packageName}.\\nexport const hello = "${name}";\\n\`,
-\t\t\t});
-\t\t\tp.dependencies["${packageName}"] = "^0.0.0";
-\t\t});
+\tslots: { example },
+
+\tdependencies: {
+\t\t"${packageName}": "^0.0.0",
 \t},
+
+\tcontributes: [
+\t\t// example.contribute(() => "hello"),
+\t],
 });
 `;
 }
@@ -86,9 +89,7 @@ export function pluginIndexTestTemplate(
 ): string {
 	const { name, packageName } = options;
 	const varName = toCamelCase(name);
-	return `import { createEventBus, Init } from "@fcalell/cli/events";
-import { createMockCtx } from "@fcalell/cli/testing";
-import { describe, expect, it } from "vitest";
+	return `import { describe, expect, it } from "vitest";
 import { ${varName}, type ${pascalCase(name)}Options } from "./index";
 
 describe("${varName} plugin", () => {
@@ -98,22 +99,18 @@ describe("${varName} plugin", () => {
 \t\texpect(${varName}.cli.package).toBe("${packageName}");
 \t});
 
-\tit("contributes a scaffold file on Init.Scaffold", async () => {
-\t\tconst bus = createEventBus();
-\t\tconst ctx = createMockCtx<${pascalCase(name)}Options>({ options: {} });
-\t\t${varName}.cli.register(ctx, bus, ${varName}.events);
+\tit("declares its example slot", () => {
+\t\texpect(${varName}.slots.example.source).toBe("${name}");
+\t\texpect(${varName}.slots.example.kind.type).toBe("list");
+\t});
 
-\t\tconst scaffold = await bus.emit(Init.Scaffold, {
-\t\t\tfiles: [],
-\t\t\tdependencies: {},
-\t\t\tdevDependencies: {},
-\t\t\tgitignore: [],
+\tit("auto-contributes its package to cli.slots.initDeps", () => {
+\t\tconst options: ${pascalCase(name)}Options = {};
+\t\tconst { contributes } = ${varName}.cli.collect({
+\t\t\tapp: { name: "test-app", domain: "example.com" },
+\t\t\toptions,
 \t\t});
-
-\t\texpect(scaffold.files).toContainEqual(
-\t\t\texpect.objectContaining({ path: "src/${varName}/index.ts" }),
-\t\t);
-\t\texpect(scaffold.dependencies["${packageName}"]).toBeDefined();
+\t\texpect(contributes.length).toBeGreaterThan(0);
 \t});
 });
 `;

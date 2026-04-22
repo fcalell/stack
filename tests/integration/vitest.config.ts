@@ -7,12 +7,18 @@ export default defineConfig({
 	resolve: {
 		alias: {
 			"@fcalell/cli/ast": resolve(root, "packages/cli/src/ast/index.ts"),
+			"@fcalell/cli/specs": resolve(root, "packages/cli/src/specs.ts"),
+			"@fcalell/cli/slots": resolve(root, "packages/cli/src/lib/slots.ts"),
+			"@fcalell/cli/cli-slots": resolve(
+				root,
+				"packages/cli/src/lib/cli-slots.ts",
+			),
+			"@fcalell/cli/graph": resolve(root, "packages/cli/src/lib/graph.ts"),
 			"@fcalell/cli/codegen": resolve(root, "packages/cli/src/lib/codegen.ts"),
 			"@fcalell/cli/discovery": resolve(
 				root,
 				"packages/cli/src/lib/discovery.ts",
 			),
-			"@fcalell/cli/events": resolve(root, "packages/cli/src/events.ts"),
 			"@fcalell/cli/errors": resolve(root, "packages/cli/src/lib/errors.ts"),
 			"@fcalell/cli/testing": resolve(root, "packages/cli/src/testing.ts"),
 			"@fcalell/cli": resolve(root, "packages/cli/src/config.ts"),
@@ -21,7 +27,6 @@ export default defineConfig({
 				root,
 				"packages/cli/src/lib/create-plugin.ts",
 			),
-			"#lib/event-bus": resolve(root, "packages/cli/src/lib/event-bus.ts"),
 			"@fcalell/plugin-cloudflare": resolve(
 				root,
 				"plugins/cloudflare/src/index.ts",

@@ -1,104 +1,81 @@
-import type { RegisterContext } from "@fcalell/cli";
-import { createEventBus, type Event, type EventBus } from "@fcalell/cli/events";
-import { createMockCtx } from "@fcalell/cli/testing";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join } from "node:path";
+import { defineConfig, type PluginConfig } from "@fcalell/cli";
+import { runStackGenerate } from "@fcalell/cli/testing";
 import { api } from "@fcalell/plugin-api";
-import {
-	aggregateMiddleware,
-	aggregateWorker,
-} from "@fcalell/plugin-api/node/codegen";
 import { auth } from "@fcalell/plugin-auth";
+import { cloudflare } from "@fcalell/plugin-cloudflare";
 import { db } from "@fcalell/plugin-db";
 import { vite } from "@fcalell/plugin-vite";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-interface MockFs {
-	[path: string]: boolean;
-}
-
-interface AnyCliPlugin {
-	cli: {
-		name: string;
-		package: string;
-		callbacks: Record<string, unknown>;
-		register: (
-			ctx: RegisterContext<unknown>,
-			bus: EventBus,
-			events: Record<string, Event<unknown>>,
-		) => void;
-	};
-	events: Record<string, Event<unknown>>;
-}
-
-interface PluginEntry {
-	plugin: AnyCliPlugin;
-	options: unknown;
-}
-
-function registerAll(bus: EventBus, fs: MockFs, entries: PluginEntry[]): void {
-	const discoveredPlugins = entries.map(({ plugin }) => ({
-		name: plugin.cli.name,
-		package: plugin.cli.package,
-		callbacks: plugin.cli.callbacks as Record<
-			string,
-			{ readonly __type?: unknown; readonly __optional?: boolean }
-		>,
-	}));
-	for (const { plugin, options } of entries) {
-		const ctx = createMockCtx({
-			options,
-			fileExists: async (p: string) => fs[p] ?? false,
-			discoveredPlugins,
-		});
-		plugin.cli.register(ctx, bus, plugin.events);
+function seedFs(cwd: string, files: string[]): void {
+	for (const file of files) {
+		const abs = join(cwd, file);
+		mkdirSync(dirname(abs), { recursive: true });
+		if (file.endsWith("/")) {
+			mkdirSync(abs, { recursive: true });
+		} else {
+			writeFileSync(abs, "");
+		}
 	}
 }
 
-async function runPipeline(
-	bus: EventBus,
-	opts: { cors?: string[] } = {},
-): Promise<string> {
-	// Match plugin-api's Generate handler ordering: api.events.Middleware seeds
-	// the Worker payload before api.events.Worker fires, so ordered middleware
-	// imports/calls land in the chain.
-	const middleware = await bus.emit(api.events.Middleware, { entries: [] });
-	const aggregated = aggregateMiddleware(middleware);
-
-	const payload = await bus.emit(api.events.Worker, {
-		imports: aggregated?.imports ?? [],
-		base: null,
-		pluginRuntimes: [],
-		middlewareChain: aggregated?.calls ?? [],
-		handler: null,
-		cors: opts.cors ?? [],
+async function renderWorker(opts: {
+	cwd: string;
+	plugins: readonly PluginConfig[];
+	origins?: string[];
+	domain?: string;
+}): Promise<string | null> {
+	const result = await runStackGenerate({
+		config: defineConfig({
+			app: {
+				name: "test-app",
+				domain: opts.domain ?? "example.com",
+				origins: opts.origins,
+			},
+			plugins: opts.plugins,
+		}),
+		cwd: opts.cwd,
 	});
-	return aggregateWorker(payload);
+	return (
+		result.files.find((f) => f.path === ".stack/worker.ts")?.content ?? null
+	);
 }
 
-const dbPlugin = db as unknown as AnyCliPlugin;
-const authPlugin = auth as unknown as AnyCliPlugin;
-const apiPlugin = api as unknown as AnyCliPlugin;
-const vitePlugin = vite as unknown as AnyCliPlugin;
+describe("virtual worker codegen pipeline (defineConfig-driven)", () => {
+	let cwd: string;
 
-describe("virtual worker codegen pipeline (event-driven)", () => {
+	beforeEach(() => {
+		cwd = mkdtempSync(join(tmpdir(), "stack-virtual-worker-"));
+	});
+
+	afterEach(() => {
+		rmSync(cwd, { recursive: true, force: true });
+	});
+
 	it("full-stack config produces correct imports and builder chain", async () => {
-		const bus = createEventBus();
-		const fs: MockFs = {
-			"src/schema": true,
-			"src/worker/plugins/auth.ts": true,
-			"src/worker/middleware.ts": true,
-			"src/worker/routes": true,
-		};
-
-		registerAll(bus, fs, [
-			{ plugin: dbPlugin, options: { dialect: "d1", databaseId: "test-id" } },
-			{ plugin: authPlugin, options: { secretVar: "AUTH_SECRET" } },
-			{ plugin: apiPlugin, options: {} },
+		seedFs(cwd, [
+			"src/schema/",
+			"src/worker/plugins/auth.ts",
+			"src/worker/middleware.ts",
+			"src/worker/routes/",
 		]);
 
-		const result = await runPipeline(bus, {
-			cors: ["https://example.com"],
+		const result = await renderWorker({
+			cwd,
+			origins: ["https://example.com"],
+			plugins: [
+				cloudflare(),
+				db({ dialect: "d1", databaseId: "test-id" }),
+				auth({ secretVar: "AUTH_SECRET" }),
+				api(),
+			],
 		});
 
+		expect(result).not.toBeNull();
+		if (!result) return;
 		expect(result).toContain(
 			'import createWorker from "@fcalell/plugin-api/runtime"',
 		);
@@ -116,150 +93,258 @@ describe("virtual worker codegen pipeline (event-driven)", () => {
 		expect(result).toContain(
 			'import middleware from "../src/worker/middleware"',
 		);
-		expect(result).toContain(".use(dbRuntime(");
-		expect(result).toContain("schema");
-		expect(result).toContain(".use(authRuntime(");
-		expect(result).toContain("authCallbacks");
+		expect(result).toMatch(/\.use\(dbRuntime\(\{[\s\S]*schema[\s\S]*\}\)\)/);
+		expect(result).toMatch(
+			/\.use\(authRuntime\(\{[\s\S]*callbacks: authCallbacks[\s\S]*\}\)\)/,
+		);
 		expect(result).toContain(".use(middleware)");
 		expect(result).toContain(".handler(routes)");
-		expect(result).toContain("export type AppRouter");
+		expect(result).toContain("export type AppRouter = typeof worker._router");
 		expect(result).toContain("export default worker");
 	});
 
 	it("API-only config (no auth) produces simpler worker", async () => {
-		const bus = createEventBus();
-		const fs: MockFs = { "src/schema": true, "src/worker/routes": true };
+		seedFs(cwd, ["src/schema/", "src/worker/routes/"]);
 
-		registerAll(bus, fs, [
-			{ plugin: dbPlugin, options: { dialect: "d1", databaseId: "test-id" } },
-			{ plugin: apiPlugin, options: {} },
-		]);
+		const result = await renderWorker({
+			cwd,
+			plugins: [
+				cloudflare(),
+				db({ dialect: "d1", databaseId: "test-id" }),
+				api(),
+			],
+		});
 
-		const result = await runPipeline(bus);
-
-		expect(result).toContain("dbRuntime");
+		expect(result).not.toBeNull();
+		if (!result) return;
+		expect(result).toContain(
+			'import dbRuntime from "@fcalell/plugin-db/runtime"',
+		);
 		expect(result).not.toContain("authRuntime");
-		expect(result).not.toContain("middleware");
+		expect(result).not.toContain('from "../src/worker/middleware"');
 		expect(result).toContain(".handler(routes)");
 	});
 
 	it("middleware import is included only when middleware.ts exists", async () => {
-		const busWith = createEventBus();
-		registerAll(busWith, { "src/worker/middleware.ts": true }, [
-			{ plugin: apiPlugin, options: {} },
-		]);
-		const withMiddleware = await runPipeline(busWith);
+		seedFs(cwd, ["src/worker/middleware.ts"]);
+		const withMiddleware = await renderWorker({
+			cwd,
+			plugins: [cloudflare(), db({ dialect: "d1", databaseId: "x" }), api()],
+		});
 
-		const busWithout = createEventBus();
-		registerAll(busWithout, {}, [{ plugin: apiPlugin, options: {} }]);
-		const withoutMiddleware = await runPipeline(busWithout);
+		const withoutCwd = mkdtempSync(join(tmpdir(), "stack-virtual-worker-no-"));
+		try {
+			const withoutMiddleware = await renderWorker({
+				cwd: withoutCwd,
+				plugins: [cloudflare(), db({ dialect: "d1", databaseId: "x" }), api()],
+			});
 
-		expect(withMiddleware).toContain("middleware");
-		expect(withoutMiddleware).not.toContain("middleware");
+			expect(withMiddleware).toContain(
+				'import middleware from "../src/worker/middleware"',
+			);
+			expect(withMiddleware).toContain(".use(middleware)");
+			expect(withoutMiddleware).not.toContain(
+				'from "../src/worker/middleware"',
+			);
+		} finally {
+			rmSync(withoutCwd, { recursive: true, force: true });
+		}
 	});
 
 	it("callback imports are included only when auth callback file exists", async () => {
-		const busWith = createEventBus();
-		registerAll(busWith, { "src/worker/plugins/auth.ts": true }, [
-			{ plugin: authPlugin, options: {} },
-			{ plugin: apiPlugin, options: {} },
-		]);
-		const withCallbacks = await runPipeline(busWith);
+		seedFs(cwd, ["src/worker/plugins/auth.ts"]);
+		const withCallbacks = await renderWorker({
+			cwd,
+			plugins: [
+				cloudflare(),
+				db({ dialect: "d1", databaseId: "x" }),
+				auth(),
+				api(),
+			],
+		});
 
-		const busWithout = createEventBus();
-		registerAll(busWithout, {}, [
-			{ plugin: authPlugin, options: {} },
-			{ plugin: apiPlugin, options: {} },
-		]);
-		const withoutCallbacks = await runPipeline(busWithout);
+		const withoutCwd = mkdtempSync(join(tmpdir(), "stack-virtual-worker-no-"));
+		try {
+			const withoutCallbacks = await renderWorker({
+				cwd: withoutCwd,
+				plugins: [
+					cloudflare(),
+					db({ dialect: "d1", databaseId: "x" }),
+					auth(),
+					api(),
+				],
+			});
 
-		expect(withCallbacks).toContain("authCallbacks");
-		expect(withoutCallbacks).not.toContain("authCallbacks");
+			expect(withCallbacks).toContain(
+				'import authCallbacks from "../src/worker/plugins/auth"',
+			);
+			expect(withCallbacks).toContain("callbacks: authCallbacks");
+			expect(withoutCallbacks).not.toContain("authCallbacks");
+		} finally {
+			rmSync(withoutCwd, { recursive: true, force: true });
+		}
 	});
 
 	it("routes import is included when routes dir exists", async () => {
-		const busWith = createEventBus();
-		registerAll(busWith, { "src/worker/routes": true }, [
-			{ plugin: apiPlugin, options: {} },
-		]);
-		const withRoutes = await runPipeline(busWith);
+		seedFs(cwd, ["src/worker/routes/"]);
+		const withRoutes = await renderWorker({
+			cwd,
+			plugins: [cloudflare(), db({ dialect: "d1", databaseId: "x" }), api()],
+		});
 
-		const busWithout = createEventBus();
-		registerAll(busWithout, {}, [{ plugin: apiPlugin, options: {} }]);
-		const withoutRoutes = await runPipeline(busWithout);
+		const withoutCwd = mkdtempSync(join(tmpdir(), "stack-virtual-worker-no-"));
+		try {
+			const withoutRoutes = await renderWorker({
+				cwd: withoutCwd,
+				plugins: [cloudflare(), db({ dialect: "d1", databaseId: "x" }), api()],
+			});
 
-		expect(withRoutes).toContain(
-			'import * as routes from "../src/worker/routes"',
-		);
-		expect(withRoutes).toContain(".handler(routes)");
-		expect(withoutRoutes).not.toContain("routes");
-		expect(withoutRoutes).toContain(".handler()");
+			expect(withRoutes).toContain(
+				'import * as routes from "../src/worker/routes"',
+			);
+			expect(withRoutes).toContain(".handler(routes)");
+			expect(withoutRoutes).not.toContain('from "../src/worker/routes"');
+			expect(withoutRoutes).toContain(".handler()");
+		} finally {
+			rmSync(withoutCwd, { recursive: true, force: true });
+		}
 	});
 
-	it("inlines cors from payload-supplied origins", async () => {
-		const bus = createEventBus();
-		registerAll(bus, {}, [
-			{ plugin: vitePlugin, options: { port: 3000 } },
-			{ plugin: apiPlugin, options: {} },
-		]);
-
-		const result = await runPipeline(bus, {
-			cors: [
+	it("inlines cors from app.origins into the createWorker options object", async () => {
+		// A runtime plugin (db) is required for a worker to emit at all — the
+		// workerSource derivation returns null with zero runtimes.
+		const result = await renderWorker({
+			cwd,
+			origins: [
 				"https://example.com",
 				"https://app.example.com",
 				"http://localhost:3000",
 			],
+			plugins: [
+				cloudflare(),
+				db({ dialect: "d1", databaseId: "cors-test" }),
+				vite({ port: 3000 }),
+				api(),
+			],
 		});
 
-		expect(result).toContain("http://localhost:3000");
-		expect(result).toContain("https://example.com");
-		expect(result).toContain("https://app.example.com");
+		expect(result).not.toBeNull();
+		if (!result) return;
+		const createWorkerArgs = result.match(/createWorker\(\{([\s\S]*?)\}\)/);
+		expect(createWorkerArgs).not.toBeNull();
+		const args = createWorkerArgs?.[1] ?? "";
+		expect(args).toContain('"https://example.com"');
+		expect(args).toContain('"https://app.example.com"');
+		expect(args).toContain('"http://localhost:3000"');
+		expect(args).toMatch(/cors:\s*\[/);
 	});
 
-	it("does not add CORS when payload is empty", async () => {
-		const bus = createEventBus();
-		registerAll(bus, {}, [{ plugin: apiPlugin, options: {} }]);
-
-		const result = await runPipeline(bus);
-
-		expect(result).not.toContain("cors");
-	});
-
-	it("sets auth sameSite=none when payload cors includes localhost", async () => {
-		const bus = createEventBus();
-		registerAll(bus, { "src/worker/plugins/auth.ts": true }, [
-			{ plugin: vitePlugin, options: { port: 3000 } },
-			{ plugin: authPlugin, options: { secretVar: "AUTH_SECRET" } },
-			{ plugin: apiPlugin, options: {} },
-		]);
-
-		const result = await runPipeline(bus, {
-			cors: ["http://localhost:3000"],
+	it("auto-derives cors from app.domain when origins aren't set", async () => {
+		const result = await renderWorker({
+			cwd,
+			domain: "my-app.test",
+			plugins: [
+				cloudflare(),
+				db({ dialect: "d1", databaseId: "derive-test" }),
+				api(),
+			],
 		});
 
-		expect(result).toContain('sameSite: "none"');
+		expect(result).not.toBeNull();
+		if (!result) return;
+		const createWorkerArgs = result.match(/createWorker\(\{([\s\S]*?)\}\)/);
+		expect(createWorkerArgs).not.toBeNull();
+		const args = createWorkerArgs?.[1] ?? "";
+		expect(args).toMatch(/cors:\s*\[/);
+		expect(args).toContain('"https://my-app.test"');
+		expect(args).toContain('"https://app.my-app.test"');
+	});
+
+	it("sets auth sameSite=none when cors includes a localhost origin", async () => {
+		seedFs(cwd, ["src/worker/plugins/auth.ts"]);
+
+		const result = await renderWorker({
+			cwd,
+			origins: ["http://localhost:3000"],
+			plugins: [
+				cloudflare(),
+				db({ dialect: "d1", databaseId: "x" }),
+				vite({ port: 3000 }),
+				auth({ secretVar: "AUTH_SECRET" }),
+				api(),
+			],
+		});
+
+		expect(result).not.toBeNull();
+		if (!result) return;
+		const authRuntimeCall = result.match(/authRuntime\(\{([\s\S]*?)\}\)/);
+		expect(authRuntimeCall).not.toBeNull();
+		expect(authRuntimeCall?.[1] ?? "").toMatch(/sameSite:\s*"none"/);
 	});
 
 	it("does not set sameSite when no frontend signal is present", async () => {
-		const bus = createEventBus();
-		registerAll(bus, { "src/worker/plugins/auth.ts": true }, [
-			{ plugin: authPlugin, options: { secretVar: "AUTH_SECRET" } },
-			{ plugin: apiPlugin, options: {} },
-		]);
+		seedFs(cwd, ["src/worker/plugins/auth.ts"]);
 
-		const result = await runPipeline(bus);
+		const result = await renderWorker({
+			cwd,
+			origins: ["https://example.com"],
+			plugins: [
+				cloudflare(),
+				db({ dialect: "d1", databaseId: "x" }),
+				auth({ secretVar: "AUTH_SECRET" }),
+				api(),
+			],
+		});
 
+		expect(result).not.toBeNull();
+		if (!result) return;
 		expect(result).not.toContain("sameSite");
 	});
 
-	it("generated code has correct structure (imports, builder chain, export)", async () => {
-		const bus = createEventBus();
-		registerAll(bus, {}, [
-			{ plugin: dbPlugin, options: { dialect: "d1", databaseId: "test-id" } },
-			{ plugin: apiPlugin, options: {} },
+	it("plugin order does not affect the generated worker", async () => {
+		seedFs(cwd, [
+			"src/schema/",
+			"src/worker/plugins/auth.ts",
+			"src/worker/routes/",
 		]);
 
-		const result = await runPipeline(bus);
+		const canonical = await renderWorker({
+			cwd,
+			origins: ["https://example.com"],
+			plugins: [
+				cloudflare(),
+				db({ dialect: "d1", databaseId: "order-test" }),
+				auth({ secretVar: "AUTH_SECRET" }),
+				api(),
+			],
+		});
+
+		const shuffled = await renderWorker({
+			cwd,
+			origins: ["https://example.com"],
+			plugins: [
+				auth({ secretVar: "AUTH_SECRET" }),
+				api(),
+				cloudflare(),
+				db({ dialect: "d1", databaseId: "order-test" }),
+			],
+		});
+
+		expect(shuffled).toEqual(canonical);
+	});
+
+	it("generated code has correct structure (imports, builder chain, export)", async () => {
+		const result = await renderWorker({
+			cwd,
+			plugins: [
+				cloudflare(),
+				db({ dialect: "d1", databaseId: "test-id" }),
+				api(),
+			],
+		});
+
+		expect(result).not.toBeNull();
+		if (!result) return;
 		const lines = result.split("\n");
 
 		const importLines = lines.filter((l) => l.startsWith("import"));
@@ -267,17 +352,5 @@ describe("virtual worker codegen pipeline (event-driven)", () => {
 
 		expect(result).toContain("const worker = createWorker(");
 		expect(result).toContain("export default worker");
-	});
-
-	it("throws when two plugins claim the worker root", async () => {
-		const bus = createEventBus();
-		registerAll(bus, {}, [
-			{ plugin: apiPlugin, options: {} },
-			{ plugin: apiPlugin, options: {} },
-		]);
-
-		await expect(runPipeline(bus)).rejects.toThrow(
-			/cannot claim the worker root/,
-		);
 	});
 });

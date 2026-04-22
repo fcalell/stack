@@ -1,390 +1,302 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { callback, createPlugin, type } from "#lib/create-plugin";
-import { createEventBus, defineEvent } from "#lib/event-bus";
-import { createMockCtx } from "#testing";
+import { cliSlots } from "#lib/cli-slots";
+import { callback, plugin } from "#lib/create-plugin";
+import { validateDependencies } from "#lib/discovery";
+import { StackError } from "#lib/errors";
+import { slot } from "#lib/slots";
 
-describe("createPlugin", () => {
-	describe("config factory (callable)", () => {
-		it("returns a callable that produces PluginConfig", () => {
-			const myPlugin = createPlugin("test", {
-				label: "Test",
-				register() {},
-			});
+const app = { name: "test-app", domain: "example.com" };
 
-			const config = myPlugin({ value: 42 });
-			expect(config.__plugin).toBe("test");
-			expect(config.options).toEqual({ value: 42 });
+describe("plugin() — config factory", () => {
+	it("returns a callable that produces PluginConfig", () => {
+		const myPlugin = plugin("test", {
+			label: "Test",
 		});
 
-		it("validates via the provided schema", () => {
-			const myPlugin = createPlugin("test", {
-				label: "Test",
-				schema: z.object({
-					port: z
-						.number()
-						.refine((p) => p > 0, { error: "Port must be positive" }),
-				}),
-				register() {},
-			});
-
-			expect(() => myPlugin({ port: -1 })).toThrow("Port must be positive");
-			expect(myPlugin({ port: 3000 }).options.port).toBe(3000);
-		});
-
-		it("can be called without arguments when the schema supplies defaults", () => {
-			const myPlugin = createPlugin("test", {
-				label: "Test",
-				schema: z.object({ value: z.number().default(1) }),
-				register() {},
-			});
-
-			const config = myPlugin();
-			expect(config.__plugin).toBe("test");
-			expect(config.options).toEqual({ value: 1 });
-		});
-
-		it("passes options through when no schema is defined", () => {
-			const myPlugin = createPlugin("test", {
-				label: "Test",
-				register() {},
-			});
-
-			expect(myPlugin().options).toEqual({});
-		});
-
-		it("stamps __package with the default @fcalell/plugin-<name> when not set", () => {
-			const myPlugin = createPlugin("db", {
-				label: "Database",
-				register() {},
-			});
-
-			const config = myPlugin();
-			expect(config.__package).toBe("@fcalell/plugin-db");
-			expect(myPlugin.cli.package).toBe("@fcalell/plugin-db");
-		});
-
-		it("honours an explicit `package` option for third-party plugins", () => {
-			const myPlugin = createPlugin("widget", {
-				label: "Widget",
-				package: "@acme/stack-plugin-widget",
-				register() {},
-			});
-
-			const config = myPlugin();
-			expect(config.__package).toBe("@acme/stack-plugin-widget");
-			expect(myPlugin.cli.package).toBe("@acme/stack-plugin-widget");
-		});
+		const config = myPlugin({ value: 42 });
+		expect(config.__plugin).toBe("test");
+		expect(config.options).toEqual({ value: 42 });
 	});
 
-	describe(".events", () => {
-		it("creates typed Event<void> tokens from string array", () => {
-			const myPlugin = createPlugin("db", {
-				label: "Database",
-				events: ["SchemaReady", "Migrated"],
-				register() {},
-			});
-
-			expect(myPlugin.events.SchemaReady.source).toBe("db");
-			expect(myPlugin.events.SchemaReady.name).toBe("SchemaReady");
-			expect(typeof myPlugin.events.SchemaReady.id).toBe("symbol");
-
-			expect(myPlugin.events.Migrated.source).toBe("db");
-			expect(myPlugin.events.Migrated.name).toBe("Migrated");
+	it("validates via the provided schema", () => {
+		const myPlugin = plugin("test", {
+			label: "Test",
+			schema: z.object({
+				port: z
+					.number()
+					.refine((p) => p > 0, { error: "Port must be positive" }),
+			}),
 		});
 
-		it("events have unique symbol ids", () => {
-			const myPlugin = createPlugin("db", {
-				label: "Database",
-				events: ["A", "B"],
-				register() {},
-			});
+		expect(() => myPlugin({ port: -1 })).toThrow("Port must be positive");
+		expect(myPlugin({ port: 3000 }).options.port).toBe(3000);
+	});
 
-			expect(myPlugin.events.A.id).not.toBe(myPlugin.events.B.id);
+	it("surfaces Zod errors as StackError(PLUGIN_CONFIG_INVALID)", () => {
+		const myPlugin = plugin("test", {
+			label: "Test",
+			schema: z.object({ port: z.number() }),
 		});
 
-		it("events is empty object when no events declared", () => {
-			const myPlugin = createPlugin("test", {
-				label: "Test",
-				register() {},
-			});
-
-			expect(myPlugin.events).toEqual({});
-		});
-
-		it("accepts a typed-payload map built with `type<T>()`", async () => {
-			interface WorkerPayload {
-				bindings: string[];
+		try {
+			myPlugin({ port: "not-a-number" as unknown as number });
+			expect.fail("should have thrown");
+		} catch (err) {
+			expect(err).toBeInstanceOf(StackError);
+			if (err instanceof StackError) {
+				expect(err.code).toBe("PLUGIN_CONFIG_INVALID");
+				expect(err.message).toMatch(/port/);
 			}
-
-			const myPlugin = createPlugin("worker-owner", {
-				label: "Worker Owner",
-				events: {
-					Worker: type<WorkerPayload>(),
-					Ready: type<void>(),
-				},
-				register() {},
-			});
-
-			expect(myPlugin.events.Worker.source).toBe("worker-owner");
-			expect(myPlugin.events.Worker.name).toBe("Worker");
-			expect(myPlugin.events.Ready.source).toBe("worker-owner");
-			expect(typeof myPlugin.events.Worker.id).toBe("symbol");
-			expect(myPlugin.events.Worker.id).not.toBe(myPlugin.events.Ready.id);
-
-			// End-to-end: emit a typed payload and receive it in a handler.
-			const bus = createEventBus();
-			const handler = vi.fn();
-			bus.on(myPlugin.events.Worker, handler);
-			const received = await bus.emit(myPlugin.events.Worker, {
-				bindings: ["DB_MAIN"],
-			});
-			expect(received).toEqual({ bindings: ["DB_MAIN"] });
-			expect(handler).toHaveBeenCalledWith({ bindings: ["DB_MAIN"] });
-		});
+		}
 	});
 
-	describe(".name", () => {
-		it("exposes the plugin name", () => {
-			const myPlugin = createPlugin("db", {
-				label: "Database",
-				register() {},
-			});
-
-			expect(myPlugin.name).toBe("db");
+	it("can be called without arguments when the schema supplies defaults", () => {
+		const myPlugin = plugin("test", {
+			label: "Test",
+			schema: z.object({ value: z.number().default(1) }),
 		});
+
+		const config = myPlugin();
+		expect(config.__plugin).toBe("test");
+		expect(config.options).toEqual({ value: 1 });
 	});
 
-	describe(".cli", () => {
-		it("exposes internal CLI plugin with correct metadata", () => {
-			const dep = defineEvent<void>("other", "Ready");
-			const myPlugin = createPlugin("db", {
-				label: "Database",
-				after: [dep],
-				register() {},
-			});
-
-			expect(myPlugin.cli.name).toBe("db");
-			expect(myPlugin.cli.label).toBe("Database");
-			expect(myPlugin.cli.after).toContain(dep);
+	it("passes options through when no schema is defined", () => {
+		const myPlugin = plugin("test", {
+			label: "Test",
 		});
 
-		it("register delegates to definition.register", () => {
-			const registerFn = vi.fn();
-			const myPlugin = createPlugin("test", {
-				label: "Test",
-				register: registerFn,
-			});
-
-			const ctx = createMockCtx({ options: {} });
-			const bus = createEventBus();
-
-			myPlugin.cli.register(ctx, bus, {});
-			// createPlugin stamps `plugin`/`template`/`scaffold` onto ctx before
-			// forwarding to the user's register function. Everything else passes
-			// through verbatim.
-			expect(registerFn).toHaveBeenCalledTimes(1);
-			const [receivedCtx, receivedBus, receivedEvents] =
-				registerFn.mock.calls[0] ?? [];
-			expect(receivedCtx).toMatchObject({
-				cwd: ctx.cwd,
-				options: ctx.options,
-				plugin: "test",
-			});
-			expect(typeof receivedCtx.template).toBe("function");
-			expect(typeof receivedCtx.scaffold).toBe("function");
-			expect(receivedBus).toBe(bus);
-			expect(receivedEvents).toEqual({});
-		});
-
-		it("exposes commands from definition", () => {
-			const handler = vi.fn();
-			const myPlugin = createPlugin("db", {
-				label: "Database",
-				commands: {
-					reset: {
-						description: "Reset local database",
-						handler,
-					},
-				},
-				register() {},
-			});
-
-			expect(myPlugin.cli.commands.reset).toBeDefined();
-			expect(myPlugin.cli.commands.reset?.description).toBe(
-				"Reset local database",
-			);
-		});
+		expect(myPlugin().options).toEqual({});
 	});
 
-	describe(".defineCallbacks", () => {
-		it("is present when callbacks are defined", () => {
-			const myPlugin = createPlugin("auth", {
-				label: "Auth",
-				callbacks: {
-					sendOTP: callback<{ email: string; code: string }>(),
-				},
-				register() {},
-			});
-
-			expect(myPlugin.defineCallbacks).toBeDefined();
+	it("stamps __package with the default @fcalell/plugin-<name> when not set", () => {
+		const myPlugin = plugin("db", {
+			label: "Database",
 		});
 
-		it("returns the implementation object unchanged", () => {
-			const myPlugin = createPlugin("auth", {
-				label: "Auth",
-				callbacks: {
-					sendOTP: callback<{ email: string; code: string }>(),
-				},
-				register() {},
-			});
-
-			const impl = {
-				sendOTP: async (_payload: { email: string; code: string }) => {
-					// no-op
-				},
-			};
-
-			const result = myPlugin.defineCallbacks(impl);
-			expect(result).toBe(impl);
-		});
-
-		it("is not present when no callbacks are defined", () => {
-			const myPlugin = createPlugin("test", {
-				label: "Test",
-				register() {},
-			});
-
-			expect("defineCallbacks" in myPlugin).toBe(false);
-		});
+		const config = myPlugin();
+		expect(config.__package).toBe("@fcalell/plugin-db");
+		expect(myPlugin.cli.package).toBe("@fcalell/plugin-db");
 	});
 
-	describe("event bus integration", () => {
-		it("plugin can register handlers and emit events via the bus", async () => {
-			const myPlugin = createPlugin("db", {
-				label: "Database",
-				events: ["SchemaReady"],
-				register(_ctx, bus, _events) {
-					bus.on(defineEvent<{ items: string[] }>("core", "generate"), (p) => {
-						p.items.push("db-contribution");
-					});
-				},
-			});
-
-			const bus = createEventBus();
-			const ctx = createMockCtx({ options: {} });
-			myPlugin.cli.register(ctx, bus, myPlugin.events);
+	it("honours an explicit `package` option for third-party plugins", () => {
+		const myPlugin = plugin("widget", {
+			label: "Widget",
+			package: "@acme/stack-plugin-widget",
 		});
 
-		it("plugins can listen to shared event references", async () => {
-			const sharedEvent = defineEvent<{ items: string[] }>("core", "generate");
+		const config = myPlugin();
+		expect(config.__package).toBe("@acme/stack-plugin-widget");
+		expect(myPlugin.cli.package).toBe("@acme/stack-plugin-widget");
+	});
+});
 
-			const pluginA = createPlugin("a", {
-				label: "A",
-				register(_ctx, bus) {
-					bus.on(sharedEvent, (p) => {
-						p.items.push("from-a");
-					});
-				},
-			});
-
-			const pluginB = createPlugin("b", {
-				label: "B",
-				register(_ctx, bus) {
-					bus.on(sharedEvent, (p) => {
-						p.items.push("from-b");
-					});
-				},
-			});
-
-			const bus = createEventBus();
-			pluginA.cli.register(createMockCtx({ options: {} }), bus, pluginA.events);
-			pluginB.cli.register(createMockCtx({ options: {} }), bus, pluginB.events);
-
-			const result = await bus.emit(sharedEvent, { items: [] });
-			expect(result.items).toEqual(["from-a", "from-b"]);
+describe("plugin().slots", () => {
+	it("exposes declared slots on the factory", () => {
+		const ready = slot.value<boolean>({
+			source: "db",
+			name: "ready",
+			seed: () => true,
+		});
+		const myPlugin = plugin("db", {
+			label: "Database",
+			slots: { ready },
 		});
 
-		it("plugin can emit its own events", async () => {
-			const myPlugin = createPlugin("db", {
-				label: "Database",
-				events: ["SchemaReady"],
-				register(_ctx, bus, events) {
-					bus.on(defineEvent<void>("core", "dev.ready"), async () => {
-						await bus.emit(events.SchemaReady, undefined);
-					});
-				},
-			});
-
-			// Create a consumer that listens to the plugin event
-			const schemaReadyHandler = vi.fn();
-			const bus = createEventBus();
-
-			myPlugin.cli.register(
-				createMockCtx({ options: {} }),
-				bus,
-				myPlugin.events,
-			);
-			bus.on(myPlugin.events.SchemaReady, schemaReadyHandler);
-
-			await bus.emit(myPlugin.events.SchemaReady, undefined);
-
-			expect(schemaReadyHandler).toHaveBeenCalledTimes(1);
-		});
+		expect(myPlugin.slots.ready).toBe(ready);
+		expect(myPlugin.slots.ready.source).toBe("db");
 	});
 
-	describe("cross-plugin dependencies", () => {
-		it("after references carry source information for graph resolution", () => {
-			const dbPlugin = createPlugin("db", {
-				label: "Database",
-				events: ["SchemaReady"],
-				register() {},
-			});
+	it("defaults slots to an empty object when none declared", () => {
+		const myPlugin = plugin("test", { label: "Test" });
+		expect(myPlugin.slots).toEqual({});
+	});
+});
 
-			const authPlugin = createPlugin("auth", {
-				label: "Auth",
-				after: [dbPlugin.events.SchemaReady],
-				register() {},
-			});
-
-			// The CLI uses event.source to build the dependency graph
-			expect(authPlugin.cli.after[0]?.source).toBe("db");
-			expect(authPlugin.cli.after[0]?.name).toBe("SchemaReady");
+describe("plugin().cli.collect", () => {
+	it("returns the declared slots and contributions", () => {
+		const schemaReady = slot.value<boolean>({
+			source: "db",
+			name: "schemaReady",
+			seed: () => true,
+		});
+		const bindings = slot.list<{ name: string }>({
+			source: "db",
+			name: "bindings",
+		});
+		const myPlugin = plugin("db", {
+			label: "Database",
+			slots: { schemaReady, bindings },
+			contributes: [bindings.contribute(() => ({ name: "DB_MAIN" }))],
 		});
 
-		it("dependency order determines handler execution order", async () => {
-			const sharedEvent = defineEvent<{ order: string[] }>(
-				"core",
-				"init.scaffold",
-			);
+		const { slots, contributes } = myPlugin.cli.collect({ app, options: {} });
+		expect(slots).toEqual({ schemaReady, bindings });
+		// User contribution + no auto-contribs (no deps/devDeps/gitignore).
+		expect(contributes).toHaveLength(1);
+		expect(contributes[0]?.slot).toBe(bindings);
+	});
 
-			const db = createPlugin("db", {
-				label: "Database",
-				events: ["SchemaReady"],
-				register(_ctx, bus) {
-					bus.on(sharedEvent, (p) => {
-						p.order.push("db");
-					});
-				},
-			});
-
-			const auth = createPlugin("auth", {
-				label: "Auth",
-				after: [db.events.SchemaReady],
-				register(_ctx, bus) {
-					bus.on(sharedEvent, (p) => {
-						p.order.push("auth");
-					});
-				},
-			});
-
-			const bus = createEventBus();
-			// Register in dependency order (db before auth)
-			db.cli.register(createMockCtx({ options: {} }), bus, db.events);
-			auth.cli.register(createMockCtx({ options: {} }), bus, auth.events);
-
-			const result = await bus.emit(sharedEvent, { order: [] });
-			expect(result.order).toEqual(["db", "auth"]);
+	it("passes a `self` helper to a function-form contributes", () => {
+		const own = slot.list<string>({ source: "me", name: "own" });
+		const seenSlots: unknown[] = [];
+		const myPlugin = plugin<"me", { port: number }, { own: typeof own }>("me", {
+			label: "Me",
+			slots: { own },
+			contributes: (self) => {
+				seenSlots.push(self.slots);
+				return [self.slots.own.contribute(() => `p:${self.options.port}`)];
+			},
 		});
+
+		const { contributes } = myPlugin.cli.collect({
+			app,
+			options: { port: 42 },
+		});
+		expect(seenSlots[0]).toEqual({ own });
+		expect(contributes).toHaveLength(1);
+	});
+
+	it("auto-contributes `dependencies` to cliSlots.initDeps (and removeDeps)", async () => {
+		const myPlugin = plugin("test", {
+			label: "Test",
+			dependencies: { "@some/pkg": "^1.0.0" },
+		});
+
+		const { contributes } = myPlugin.cli.collect({ app, options: {} });
+		const initDepsContrib = contributes.find(
+			(c) => c.slot.id === cliSlots.initDeps.id,
+		);
+		const removeDepsContrib = contributes.find(
+			(c) => c.slot.id === cliSlots.removeDeps.id,
+		);
+		expect(initDepsContrib).toBeDefined();
+		expect(removeDepsContrib).toBeDefined();
+		if (!initDepsContrib) throw new Error("initDeps contribution missing");
+
+		// The fn returns the concrete Record<string, string>.
+		const fakeCtx = {} as Parameters<typeof initDepsContrib.fn>[0];
+		const deps = await initDepsContrib.fn(fakeCtx);
+		expect(deps).toEqual({ "@some/pkg": "^1.0.0" });
+	});
+
+	it("auto-contributes `devDependencies` to cliSlots.initDevDeps", async () => {
+		const myPlugin = plugin("test", {
+			label: "Test",
+			devDependencies: { typescript: "^5.0.0" },
+		});
+
+		const { contributes } = myPlugin.cli.collect({ app, options: {} });
+		const devContrib = contributes.find(
+			(c) => c.slot.id === cliSlots.initDevDeps.id,
+		);
+		expect(devContrib).toBeDefined();
+		const value = await devContrib?.fn(
+			{} as Parameters<NonNullable<typeof devContrib>["fn"]>[0],
+		);
+		expect(value).toEqual({ typescript: "^5.0.0" });
+	});
+
+	it("auto-contributes `gitignore` to cliSlots.gitignore", async () => {
+		const myPlugin = plugin("test", {
+			label: "Test",
+			gitignore: [".stack/", "*.log"],
+		});
+
+		const { contributes } = myPlugin.cli.collect({ app, options: {} });
+		const giContrib = contributes.find(
+			(c) => c.slot.id === cliSlots.gitignore.id,
+		);
+		expect(giContrib).toBeDefined();
+		const value = await giContrib?.fn(
+			{} as Parameters<NonNullable<typeof giContrib>["fn"]>[0],
+		);
+		expect(value).toEqual([".stack/", "*.log"]);
+	});
+
+	it("does not auto-add a callbacks scaffold when the plugin has no `./runtime` export", () => {
+		// The test fixture plugins don't have their package.json available to
+		// the current test workspace, so `hasRuntimeExport` is false. A plugin
+		// with callbacks alone should still not add a scaffold contribution.
+		const myPlugin = plugin("auth-lite", {
+			label: "Auth Lite",
+			callbacks: {
+				sendOTP: callback<{ email: string; code: string }>(),
+			},
+		});
+
+		const { contributes } = myPlugin.cli.collect({ app, options: {} });
+		const scaffoldContrib = contributes.find(
+			(c) => c.slot.id === cliSlots.initScaffolds.id,
+		);
+		expect(scaffoldContrib).toBeUndefined();
+	});
+});
+
+describe("plugin().defineCallbacks", () => {
+	it("is present when callbacks are defined", () => {
+		const myPlugin = plugin("auth", {
+			label: "Auth",
+			callbacks: {
+				sendOTP: callback<{ email: string; code: string }>(),
+			},
+		});
+
+		expect(myPlugin.defineCallbacks).toBeDefined();
+	});
+
+	it("returns the implementation object unchanged", () => {
+		const myPlugin = plugin("auth", {
+			label: "Auth",
+			callbacks: {
+				sendOTP: callback<{ email: string; code: string }>(),
+			},
+		});
+
+		const impl = {
+			sendOTP: async (_payload: { email: string; code: string }) => {
+				// no-op
+			},
+		};
+
+		const result = myPlugin.defineCallbacks(impl);
+		expect(result).toBe(impl);
+	});
+
+	it("is not present when no callbacks are defined", () => {
+		const myPlugin = plugin("test", { label: "Test" });
+
+		expect("defineCallbacks" in myPlugin).toBe(false);
+	});
+});
+
+describe("plugin() + validateDependencies (via requires)", () => {
+	it("validateDependencies throws when a plugin `requires` an absent sibling", () => {
+		const authPlugin = plugin("auth", {
+			label: "Auth",
+			requires: ["db"],
+		});
+
+		expect(authPlugin.requires).toEqual(["db"]);
+		expect(authPlugin.cli.requires).toEqual(["db"]);
+
+		// Discovery-level validation: stamp a DiscoveredPlugin-shaped wrapper
+		// onto the validator. The test asserts that `requires` (not the old
+		// `after:` event graph) drives the missing-plugin error.
+		expect(() =>
+			validateDependencies([
+				{
+					name: "auth",
+					cli: authPlugin.cli as unknown as Parameters<
+						typeof validateDependencies
+					>[0][number]["cli"],
+					factory: authPlugin as unknown as Parameters<
+						typeof validateDependencies
+					>[0][number]["factory"],
+					options: {},
+				},
+			]),
+		).toThrow(/\[auth\] requires plugin 'db'/);
 	});
 });

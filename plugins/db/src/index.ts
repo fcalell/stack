@@ -1,6 +1,8 @@
 import { join } from "node:path";
-import { createPlugin } from "@fcalell/cli";
-import { Deploy, Dev, Init, Remove } from "@fcalell/cli/events";
+import { plugin } from "@fcalell/cli";
+import type { TsImportSpec } from "@fcalell/cli/ast";
+import { cliSlots } from "@fcalell/cli/cli-slots";
+import type { PluginRuntimeEntry } from "@fcalell/plugin-api";
 import { api } from "@fcalell/plugin-api";
 import { cloudflare } from "@fcalell/plugin-cloudflare";
 import {
@@ -9,14 +11,40 @@ import {
 	generateMigrations,
 	pushSchemaLocal,
 } from "./node/push";
-import { dbOptionsSchema } from "./types";
+import { type DbOptions, dbOptionsSchema } from "./types";
 
-export const db = createPlugin("db", {
+// Local module-scoped serializer so both the devReadySetup task and the
+// schema watcher's handler share the same in-flight / queued lock — without
+// it concurrent invocations would race on SQLite's file-level lock.
+function createSerializedPush(cwd: string, options: DbOptions) {
+	let currentPush: Promise<void> | null = null;
+	let queuedPush: Promise<void> | null = null;
+	return function serializedPush(): Promise<void> {
+		if (queuedPush) return queuedPush;
+		if (currentPush) {
+			queuedPush = currentPush.then(() => {
+				const next = pushSchemaLocal(cwd, options);
+				currentPush = next.finally(() => {
+					currentPush = null;
+				});
+				queuedPush = null;
+				return currentPush;
+			});
+			return queuedPush;
+		}
+		currentPush = pushSchemaLocal(cwd, options).finally(() => {
+			currentPush = null;
+		});
+		return currentPush;
+	};
+}
+
+export const db = plugin<"db", DbOptions>("db", {
 	label: "Database",
-	events: ["SchemaReady"],
-	after: [cloudflare.events.Wrangler, api.events.Worker],
 
 	schema: dbOptionsSchema,
+
+	requires: ["cloudflare", "api"],
 
 	dependencies: {
 		"@fcalell/plugin-db": "workspace:*",
@@ -87,97 +115,142 @@ export const db = createPlugin("db", {
 		},
 	},
 
-	register(ctx, bus, events) {
-		let currentPush: Promise<void> | null = null;
-		let queuedPush: Promise<void> | null = null;
-		const serializedPush = (): Promise<void> => {
-			if (queuedPush) return queuedPush;
-			if (currentPush) {
-				queuedPush = currentPush.then(() => {
-					const next = pushSchemaLocal(ctx.cwd, ctx.options);
-					currentPush = next.finally(() => {
-						currentPush = null;
+	contributes: [
+		// Init prompts: dialect + D1/SQLite-specific follow-up.
+		cliSlots.initPrompts.contribute((ctx) => ({
+			plugin: "db",
+			ask: async (innerCtx) => {
+				const c = innerCtx as typeof ctx;
+				const dialect = await (
+					c as unknown as {
+						prompt: {
+							select: <T>(
+								msg: string,
+								options: { label: string; value: T }[],
+							) => Promise<T>;
+							text: (
+								msg: string,
+								opts?: { default?: string },
+							) => Promise<string>;
+						};
+					}
+				).prompt.select("Database dialect:", [
+					{ label: "D1 (Cloudflare)", value: "d1" as const },
+					{ label: "SQLite (local)", value: "sqlite" as const },
+				]);
+				const answers: Record<string, unknown> = { dialect };
+				if (dialect === "d1") {
+					answers.databaseId = await (
+						c as unknown as {
+							prompt: {
+								text: (
+									msg: string,
+									opts?: { default?: string },
+								) => Promise<string>;
+							};
+						}
+					).prompt.text("D1 database ID:", {
+						default: "YOUR_D1_DATABASE_ID",
 					});
-					queuedPush = null;
-					return currentPush;
-				});
-				return queuedPush;
-			}
-			currentPush = pushSchemaLocal(ctx.cwd, ctx.options).finally(() => {
-				currentPush = null;
-			});
-			return currentPush;
-		};
+				} else {
+					answers.path = await (
+						c as unknown as {
+							prompt: {
+								text: (
+									msg: string,
+									opts?: { default?: string },
+								) => Promise<string>;
+							};
+						}
+					).prompt.text("SQLite file path:", {
+						default: "./data/app.sqlite",
+					});
+				}
+				return answers;
+			},
+		})),
 
-		bus.on(Init.Prompt, async (p) => {
-			const dialect = await ctx.prompt.select("Database dialect:", [
-				{ label: "D1 (Cloudflare)", value: "d1" as const },
-				{ label: "SQLite (local)", value: "sqlite" as const },
-			]);
-			const answers: Record<string, unknown> = { dialect };
-			if (dialect === "d1") {
-				answers.databaseId = await ctx.prompt.text("D1 database ID:", {
-					default: "YOUR_D1_DATABASE_ID",
-				});
-			} else {
-				answers.path = await ctx.prompt.text("SQLite file path:", {
-					default: "./data/app.sqlite",
-				});
-			}
-			p.configOptions.db = answers;
-		});
+		// Schema template scaffold (the callbacks auto-wire in create-plugin
+		// handles the callback file; `db` has no callbacks, only a schema).
+		cliSlots.initScaffolds.contribute((ctx) =>
+			ctx.scaffold("schema.ts", "src/schema/index.ts"),
+		),
 
-		bus.on(Init.Scaffold, (p) => {
-			p.files.push(ctx.scaffold("schema.ts", "src/schema/index.ts"));
-		});
-
-		bus.on(cloudflare.events.Wrangler, (p) => {
-			if (ctx.options?.dialect !== "d1") return;
-			const binding = ctx.options.binding ?? "DB_MAIN";
-			const databaseId = ctx.options.databaseId;
-			if (!databaseId) return;
-			p.bindings.push({
+		// D1 binding — only for the d1 dialect, and only when `databaseId`
+		// is set. Contribution is pure; wrangler aggregator reads all
+		// contributions at once.
+		cloudflare.slots.bindings.contribute((ctx) => {
+			const options = ctx.options as DbOptions;
+			if (options.dialect !== "d1") return undefined;
+			const databaseId = options.databaseId;
+			if (!databaseId) return undefined;
+			return {
 				kind: "d1",
-				binding,
+				binding: options.binding ?? "DB_MAIN",
 				databaseName: databaseId,
 				databaseId,
-			});
-		});
-
-		bus.on(api.events.Worker, async (p) => {
-			// The worker runtime currently targets Cloudflare D1 only. The sqlite
-			// dialect uses better-sqlite3 which cannot run in the Workers isolate,
-			// so we scaffold schema tooling without contributing runtime middleware.
-			if (ctx.options?.dialect !== "d1") return;
-			const rt = ctx.runtime(p);
-			// dbRuntime reads only {binding, schema}; replace the auto-seeded
-			// options with just the fields the runtime signature accepts.
-			rt.options = {
-				binding: { kind: "string", value: ctx.options.binding ?? "DB_MAIN" },
 			};
-			const hasSchema = await ctx.fileExists("src/schema");
-			if (hasSchema) {
-				p.imports.push({ source: "../src/schema", namespace: "schema" });
-				rt.options.schema = { kind: "identifier", name: "schema" };
-			}
-		});
+		}),
 
-		bus.on(Remove, (p) => {
-			p.files.push("src/schema/", "src/migrations/");
-		});
+		// Worker runtime entry — only for d1 (sqlite's better-sqlite3 can't
+		// run in the Workers isolate).
+		api.slots.pluginRuntimes.contribute(
+			async (ctx): Promise<PluginRuntimeEntry | undefined> => {
+				const options = ctx.options as DbOptions;
+				if (options.dialect !== "d1") return undefined;
+				const hasSchema = await ctx.fileExists("src/schema");
+				return {
+					plugin: "db",
+					import: {
+						source: "@fcalell/plugin-db/runtime",
+						default: "dbRuntime",
+					},
+					identifier: "dbRuntime",
+					options: {
+						binding: {
+							kind: "string",
+							value: options.binding ?? "DB_MAIN",
+						},
+						...(hasSchema
+							? { schema: { kind: "identifier", name: "schema" } as const }
+							: {}),
+					},
+				};
+			},
+		),
 
-		bus.on(Dev.Ready, (p) => {
-			p.setup.push({
+		// Schema namespace import — gated on the schema directory existing,
+		// same as the runtime entry's `schema` option.
+		api.slots.workerImports.contribute(
+			async (ctx): Promise<TsImportSpec | undefined> => {
+				const options = ctx.options as DbOptions;
+				if (options.dialect !== "d1") return undefined;
+				const hasSchema = await ctx.fileExists("src/schema");
+				if (!hasSchema) return undefined;
+				return { source: "../src/schema", namespace: "schema" };
+			},
+		),
+
+		// Local schema push at `stack dev` Ready time.
+		cliSlots.devReadySetup.contribute((ctx) => {
+			const options = ctx.options as DbOptions;
+			const serializedPush = createSerializedPush(ctx.cwd, options);
+			return {
 				name: "db-schema-push",
 				run: async () => {
 					ctx.log.info("Pushing schema to local database...");
 					await serializedPush();
 					ctx.log.success("Schema pushed");
-					await bus.emit(events.SchemaReady);
 				},
-			});
+			};
+		}),
 
-			p.watchers.push({
+		// Schema watcher — re-push when files change, serialized alongside
+		// the setup task via a module-level latch created per contribution.
+		cliSlots.devWatchers.contribute((ctx) => {
+			const options = ctx.options as DbOptions;
+			const serializedPush = createSerializedPush(ctx.cwd, options);
+			return {
 				name: "schema",
 				paths: "src/schema/**",
 				ignore: ["**/seed.ts"],
@@ -186,33 +259,38 @@ export const db = createPlugin("db", {
 					ctx.log.info("Schema change detected, re-pushing...");
 					await serializedPush();
 					ctx.log.success("Schema pushed");
-					await bus.emit(events.SchemaReady);
 				},
-			});
-		});
+			};
+		}),
 
-		bus.on(Deploy.Plan, async (p) => {
-			if (ctx.options.dialect !== "d1") return;
-			const migrations = await generateMigrations(ctx.cwd, ctx.options);
-			if (migrations.length > 0) {
-				p.checks.push({
-					plugin: "db",
-					description: `${migrations.length} pending migration(s)`,
-					items: migrations.map((m) => ({ label: m.name })),
-					action: () => applyMigrationsRemote(ctx.cwd, ctx.options),
-				});
-			}
-		});
+		// Deploy-time migration check — only for d1.
+		cliSlots.deployChecks.contribute(async (ctx) => {
+			const options = ctx.options as DbOptions;
+			if (options.dialect !== "d1") return undefined;
+			const migrations = await generateMigrations(ctx.cwd, options);
+			if (migrations.length === 0) return undefined;
+			return {
+				plugin: "db",
+				description: `${migrations.length} pending migration(s)`,
+				items: migrations.map((m) => ({ label: m.name })),
+				action: () => applyMigrationsRemote(ctx.cwd, options),
+			};
+		}),
 
-		bus.on(Deploy.Execute, (p) => {
-			if (ctx.options.dialect !== "d1") return;
-			p.steps.push({
+		// Deploy-time migration execution — only for d1.
+		cliSlots.deploySteps.contribute((ctx) => {
+			const options = ctx.options as DbOptions;
+			if (options.dialect !== "d1") return undefined;
+			return {
 				name: "Database migrations",
 				phase: "pre",
-				run: () => applyMigrationsRemote(ctx.cwd, ctx.options),
-			});
-		});
-	},
+				run: () => applyMigrationsRemote(ctx.cwd, options),
+			};
+		}),
+
+		// Clean up schema + migrations directories on `stack remove db`.
+		cliSlots.removeFiles.contribute(() => ["src/schema/", "src/migrations/"]),
+	],
 });
 
 export type { DbOptions } from "./types";

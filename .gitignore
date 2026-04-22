@@ -36,3 +36,6 @@ pnpm-debug.log*
 
 # db-kit generated files
 .db-kit/
+
+# Session-local agent worktrees
+.claude/worktrees/

@@ -8,7 +8,7 @@ export interface PluginConfig<
 	// Explicit npm package name used for runtime discovery. Optional for
 	// backward compatibility: when absent, discovery falls back to
 	// `@fcalell/plugin-${__plugin}`. Third-party plugins published under a
-	// different namespace must set this via `createPlugin(..., { package })`.
+	// different namespace must set this via `plugin(..., { package })`.
 	readonly __package?: string;
 	readonly options: TOptions;
 }
@@ -107,14 +107,14 @@ export function defineConfig<const T extends readonly PluginConfig[]>(input: {
 					errors.push({
 						plugin: "(unknown)",
 						message:
-							"Plugin entry is missing __plugin. Use the factory returned by createPlugin() instead of constructing config objects by hand.",
+							"Plugin entry is missing __plugin. Use the factory returned by plugin() instead of constructing config objects by hand.",
 					});
 					continue;
 				}
 				if (typeof plugin.__package !== "string" || plugin.__package === "") {
 					errors.push({
 						plugin: plugin.__plugin,
-						message: `Plugin "${plugin.__plugin}" is missing __package. Call its factory (e.g. ${plugin.__plugin}()) — createPlugin() stamps __package automatically; hand-authored entries must set it explicitly.`,
+						message: `Plugin "${plugin.__plugin}" is missing __package. Call its factory (e.g. ${plugin.__plugin}()) — plugin() stamps __package automatically; hand-authored entries must set it explicitly.`,
 					});
 				}
 				if (seen.has(plugin.__plugin)) {
@@ -131,16 +131,22 @@ export function defineConfig<const T extends readonly PluginConfig[]>(input: {
 	};
 }
 
-// ── New event-driven plugin system ──────────────────────────────────
+// ── Slot-based plugin system ────────────────────────────────────────
 
 export type {
 	CallbackMarker,
 	CommandContext,
 	CommandDefinition,
+	ContributionCtx,
 	FlagDefinition,
 	InternalCliPlugin,
-	PluginExport,
-	RegisterContext,
+	OptionalCallbackMarker,
+	PluginFactory,
 } from "#lib/create-plugin";
-export { callback, createPlugin, type } from "#lib/create-plugin";
-export type { Event, EventBus, EventTypeMarker } from "#lib/event-bus";
+export { callback, plugin } from "#lib/create-plugin";
+export type {
+	Contribution,
+	Slot,
+	SlotKind,
+} from "#lib/slots";
+export { slot } from "#lib/slots";

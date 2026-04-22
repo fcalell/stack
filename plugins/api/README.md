@@ -1,6 +1,6 @@
 # @fcalell/plugin-api
 
-API plugin for the `@fcalell/stack` framework. Wraps Hono + oRPC + Zod so consumers only define procedures. Provides the builder chain, procedure factory, typed RPC client, and event-driven CLI hooks for dev/build/deploy.
+API plugin for the `@fcalell/stack` framework. Wraps Hono + oRPC + Zod so consumers only define procedures. Provides the builder chain, procedure factory, typed RPC client, and slot-driven CLI hooks for dev/build/deploy.
 
 **Stack:** Hono + oRPC + Zod (all internal -- consumers don't import them)
 
@@ -234,32 +234,56 @@ Default reserved slugs: `admin`, `api`, `system`, `auth`, `new`, `settings`.
 
 ## Plugin implementation
 
-Built with `createPlugin` from `@fcalell/cli`:
+Built with `plugin` from `@fcalell/cli`. Owns every fragment of `.stack/worker.ts` as a slot; peer plugins (`db`, `auth`, `vite`, …) contribute via the typed slot tokens below.
 
 ```ts
-import { createPlugin } from "@fcalell/cli";
-import { Init, Generate, Remove, Dev } from "@fcalell/cli/events";
+import { plugin, slot } from "@fcalell/cli";
+import { cliSlots } from "@fcalell/cli/cli-slots";
 
-export const api = createPlugin("api", {
+export const api = plugin("api", {
   label: "API",
   schema: apiOptionsSchema,
-  register(ctx, bus) {
-    bus.on(Init.Scaffold, (p) => { ... });
-    bus.on(Generate, (p) => { ... });
-    bus.on(Remove, (p) => { ... });
-    bus.on(Dev.Start, (p) => { ... });
-  },
+  dependencies: { "@fcalell/plugin-api": "workspace:*" },
+  devDependencies: { wrangler: "^4.14.0" },
+  gitignore: [".wrangler", ".stack"],
+  slots: { workerImports, pluginRuntimes, /* ... */ workerSource },
+  contributes: (self) => [
+    cliSlots.artifactFiles.contribute(async (ctx) => {
+      const src = await ctx.resolve(self.slots.workerSource);
+      if (src === null) return undefined;
+      return { path: ".stack/worker.ts", content: src };
+    }),
+    // route barrel, dev process, route watcher, deploy step, remove cleanup …
+  ],
 });
 ```
 
-### Event handlers
+### Owned slots
 
-| Event | Behavior |
-|-------|----------|
-| `Init.Scaffold` | Creates `wrangler.toml`, adds deps (`@fcalell/plugin-api`, `wrangler`), gitignores `.wrangler`, `.stack` |
-| `Generate` | Generates `src/worker/routes/index.ts` barrel file from route files |
-| `Remove` | Declares `src/worker/routes/` and package deps for cleanup |
-| `Dev.Start` | Starts wrangler dev server, watches `src/worker/routes/` for file add/remove to regenerate the barrel (300ms debounce) |
+| Slot | Kind | Purpose |
+|------|------|---------|
+| `api.slots.workerImports` | `list<TsImportSpec>` | Imports for `.stack/worker.ts` |
+| `api.slots.pluginRuntimes` | `list<PluginRuntimeEntry>` | `.use(xRuntime({...}))` entries; `db` and `auth` push here |
+| `api.slots.middlewareEntries` | `list<MiddlewareSpec>` | Hono middleware (phase-ordered) |
+| `api.slots.middlewareCalls` | `derived<TsExpression[]>` | Sorted call expressions from `middlewareEntries` |
+| `api.slots.middlewareImports` | `derived<TsImportSpec[]>` | Deduplicated middleware imports |
+| `api.slots.routesHandler` | `value<{ identifier } \| null>` | Routes namespace identifier (seeded from `src/worker/routes` existence) |
+| `api.slots.corsOrigins` | `list<string>` | Extra origins (frontend plugins push localhost here) |
+| `api.slots.cors` | `derived<string[]>` | Final CORS list — `app.origins` verbatim, or `[https://domain, https://app.domain, ...corsOrigins]` |
+| `api.slots.callbacks` | `map<string, CallbackSpec>` | Plugin-name → callback identifier; spliced onto matching runtime |
+| `api.slots.workerBase` | `derived<TsExpression>` | The `createWorker({...})` call expression |
+| `api.slots.workerSource` | `derived<string \| null>` | Final `.stack/worker.ts` source; null when no runtimes are present |
+
+### Lifecycle contributions
+
+| `cliSlots` slot | Behavior |
+|-----------------|----------|
+| `initScaffolds` | Wrangler.toml + base routes scaffold |
+| `artifactFiles` | Writes `.stack/worker.ts` (when any runtime is present) and `src/worker/routes/index.ts` barrel |
+| `devProcesses` | Spawns `wrangler dev` (port 8787) |
+| `devWatchers` | Watches `src/worker/routes/**` and regenerates the barrel on add/unlink |
+| `deploySteps` | `wrangler deploy --config .stack/wrangler.toml` |
+| `removeFiles` | `src/worker/routes/` |
 
 ### Runtime
 

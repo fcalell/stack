@@ -1,6 +1,6 @@
 # @fcalell/plugin-db
 
-Database plugin for the `@fcalell/stack` framework. Wraps Drizzle ORM for Cloudflare D1 and SQLite with WeakMap-cached clients, schema helpers, and event-driven CLI hooks for dev/deploy workflows.
+Database plugin for the `@fcalell/stack` framework. Wraps Drizzle ORM for Cloudflare D1 and SQLite with WeakMap-cached clients, schema helpers, and slot-driven CLI hooks for dev/deploy workflows.
 
 ## Install
 
@@ -120,45 +120,53 @@ Customize via the `binding` option.
 
 ## Plugin implementation
 
-Built with `createPlugin` from `@fcalell/cli`:
+Built with `plugin` from `@fcalell/cli`. Has no owned slots; everything is a contribution to other plugins' slots or to `cliSlots.*`.
 
 ```ts
-import { createPlugin } from "@fcalell/cli";
-import { Init, Generate, Remove, Dev, Deploy } from "@fcalell/cli/events";
+import { plugin } from "@fcalell/cli";
+import { cliSlots } from "@fcalell/cli/cli-slots";
+import { cloudflare } from "@fcalell/plugin-cloudflare";
+import { api } from "@fcalell/plugin-api";
 
-export const db = createPlugin("db", {
+export const db = plugin("db", {
   label: "Database",
-  events: ["SchemaReady"],
-  commands: { push: { ... }, generate: { ... }, apply: { ... }, status: { ... }, reset: { ... } },
   schema: dbOptionsSchema,
-  register(ctx, bus, events) {
-    bus.on(Init.Scaffold, (p) => { ... });
-    bus.on(Generate, (p) => { ... });
-    bus.on(Remove, (p) => { ... });
-    bus.on(Dev.Ready, (p) => { ... });
-    bus.on(Deploy.Plan, (p) => { ... });
-  },
+  requires: ["cloudflare", "api"],
+  commands: { push: { /* ... */ }, generate: { /* ... */ }, apply: { /* ... */ }, reset: { /* ... */ } },
+  dependencies: { "@fcalell/plugin-db": "workspace:*" },
+  devDependencies: { "drizzle-kit": "^0.31.0", tsx: "^4.19.0" },
+  gitignore: [".db-kit"],
+  contributes: [
+    cloudflare.slots.bindings.contribute((ctx) => {
+      if (ctx.options.dialect !== "d1") return undefined;
+      return { kind: "d1", binding: ctx.options.binding ?? "DB_MAIN", databaseId: ctx.options.databaseId };
+    }),
+    api.slots.pluginRuntimes.contribute(async (ctx) => /* dbRuntime entry */),
+    cliSlots.devReadySetup.contribute((ctx) => ({ name: "db-schema-push", run: async () => { /* ... */ } })),
+    cliSlots.devWatchers.contribute((ctx) => ({ name: "schema", paths: "src/schema/**", /* ... */ })),
+    cliSlots.deployChecks.contribute(async (ctx) => /* pending migrations */),
+    cliSlots.deploySteps.contribute((ctx) => /* applyMigrationsRemote */),
+    cliSlots.initPrompts.contribute(/* dialect + databaseId/path */),
+    cliSlots.initScaffolds.contribute((ctx) => ctx.scaffold("schema.ts", "src/schema/index.ts")),
+    cliSlots.removeFiles.contribute(() => ["src/schema/", "src/migrations/"]),
+  ],
 });
 ```
 
-### Event handlers
+### Slot contributions
 
-| Event | Behavior |
-|-------|----------|
-| `Init.Prompt` | Asks for dialect (D1/SQLite), then database ID or file path |
-| `Init.Scaffold` | Writes `src/schema/index.ts` template, creates `src/migrations/`, adds deps, gitignores `.db-kit` |
-| `Generate` | Pushes D1 binding declaration onto the payload |
-| `Remove` | Declares `src/schema/`, `src/migrations/`, and package deps for cleanup |
-| `Dev.Ready` | Pushes schema to local database on start, watches `src/schema/` for changes (300ms debounce) |
-| `Deploy.Plan` | Generates and registers pending migration checks for remote D1 |
-
-### Events emitted
-
-| Event | When |
-|-------|------|
-| `db.events.SchemaReady` | After schema push completes (startup or watch trigger) |
-
-Other plugins (e.g. `auth`) order themselves against `db.events.SchemaReady` via `after: [db.events.SchemaReady]`.
+| Target slot | Behavior |
+|-------------|----------|
+| `cloudflare.slots.bindings` | D1 binding (when `dialect: "d1"` and `databaseId` set) |
+| `api.slots.pluginRuntimes` | `dbRuntime({ binding, schema })` runtime entry (d1 only) |
+| `api.slots.workerImports` | `import * as schema from "../src/schema"` (gated on schema dir existing) |
+| `cliSlots.initPrompts` | Asks for dialect, then database ID or SQLite path |
+| `cliSlots.initScaffolds` | Writes `src/schema/index.ts` from `templates/schema.ts` |
+| `cliSlots.devReadySetup` | Pushes schema to local DB once on start (serialized) |
+| `cliSlots.devWatchers` | Re-pushes on `src/schema/**` change (300ms debounce) |
+| `cliSlots.deployChecks` | Reports pending D1 migrations |
+| `cliSlots.deploySteps` | `applyMigrationsRemote` in the `pre` phase |
+| `cliSlots.removeFiles` | `src/schema/`, `src/migrations/` |
 
 ### Runtime
 

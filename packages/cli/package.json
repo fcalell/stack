@@ -11,8 +11,11 @@
 	"exports": {
 		".": "./src/config.ts",
 		"./ast": "./src/ast/index.ts",
-		"./events": "./src/events.ts",
+		"./specs": "./src/specs.ts",
 		"./errors": "./src/lib/errors.ts",
+		"./slots": "./src/lib/slots.ts",
+		"./cli-slots": "./src/lib/cli-slots.ts",
+		"./graph": "./src/lib/graph.ts",
 		"./runtime": "./src/runtime.ts",
 		"./codegen": "./src/lib/codegen.ts",
 		"./discovery": "./src/lib/discovery.ts",

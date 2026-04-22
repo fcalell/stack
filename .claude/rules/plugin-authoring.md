@@ -1,48 +1,56 @@
 # Plugin authoring
 
-Short, concrete guide for writing a `@fcalell/stack` plugin. Conventions on folder layout, hash imports, `worker/` vs `node/` split, and testing live in `.claude/rules/conventions.md` — not repeated here.
+Concrete guide for writing a `@fcalell/stack` plugin. Conventions on folder layout, hash imports, `worker/` vs `node/` split, and testing live in `.claude/rules/conventions.md` — not repeated here.
 
 ## Design paradigm
 
 A plugin's job is to take a domain (db, auth, UI, …) and make it invisible to the consumer. Keep these paradigms in mind every time you add a new plugin or feature:
 
 - **Automate by default.** If the plugin can generate, infer, default, or auto-wire a value, do it — don't expose an option. The target is zero hand-written glue in the consumer's repo. A new consumer-facing option is the last resort, and every option needs a sensible default.
-- **Contribute, don't coordinate.** You talk to the CLI, never to other plugins. Push typed payloads into the owning plugin's codegen events (`api.events.Worker`, `cloudflare.events.Wrangler`, `solid.events.Html`, …) and into the core `Generate` / `Init.*` / `Dev.*` / `Build.*` / `Deploy.*` / `Remove` events, then let each aggregator merge. If you need a value from another plugin, order yourself after an event it declares (`after: [otherPlugin.events.Foo]`) or read the shared payload you both contribute to. Never import another plugin's internals at runtime.
-- **Speak the shared contract.** `createPlugin`, `RegisterContext`, typed event payloads, and AST specs are the only surface. Don't introduce a sibling mechanism (custom file formats, plugin-to-plugin hooks, globals). A third-party plugin shipped outside this repo must be able to do everything a first-party plugin does with the same interface.
-- **Own the domain end-to-end.** Anything domain-specific — option types, codegen, runtime factories, CLI subcommands — lives in the plugin. Never leak a domain type into `@fcalell/cli`. If you catch yourself editing `packages/cli/src/` to land a feature, stop and move it.
+- **Contribute, don't coordinate.** You talk to the slot graph, never to other plugins. To hand a value to plugin B, contribute to one of B's slots (`B.slots.foo.contribute(fn)`). To read a value from plugin B, declare a derived slot with `inputs: { foo: B.slots.foo }`. Never import another plugin's internals at runtime; never call into another plugin's functions to coordinate timing.
+- **Speak the shared contract.** `plugin()`, `slot.*`, `ContributionCtx`, typed payloads, and AST specs are the only surface. Don't introduce a sibling mechanism (custom file formats, plugin-to-plugin hooks, globals). A third-party plugin shipped outside this repo must be able to do everything a first-party plugin does with the same interface.
+- **Own the domain end-to-end.** Anything domain-specific — option types, slot definitions, codegen aggregators, runtime factories, CLI subcommands — lives in the plugin. Never leak a domain type into `@fcalell/cli`. If you catch yourself editing `packages/cli/src/` to land a feature, stop and move it.
 
-## The `createPlugin` contract
+## The `plugin()` contract
 
 ```ts
-import { callback, createPlugin } from "@fcalell/cli";
-import { Dev, Generate, Init, Remove } from "@fcalell/cli/events";
+import { plugin, slot, callback } from "@fcalell/cli";
 
-export const auth = createPlugin("auth", {
+export const auth = plugin("auth", {
   label: "Authentication",
   package: undefined,            // default: `@fcalell/plugin-${name}`. Override for third-party.
-  events: ["SchemaReady"],       // plugin-scoped events others can depend on
-  after: [db.events.SchemaReady],
+
+  schema: authOptionsSchema,     // Zod schema — validates options + pins TOptions
+
+  requires: ["api", "cloudflare", "db"],   // presence-only sibling plugins (nicer error messages)
+
   callbacks: {
     sendOTP: callback<{ email: string; code: string }>(),
   },
+
   commands: {
-    push: {
-      description: "Push schema",
-      handler: async (ctx, flags) => { /* ... */ },
-    },
+    push: { description: "Push schema", handler: async (ctx, flags) => { /* ... */ } },
   },
-  schema: authOptionsSchema,           // Zod schema — validates + pins `TOptions`
-  register(ctx, bus, events) { /* event handlers */ },
+
+  dependencies: { "@fcalell/plugin-auth": "workspace:*" },  // auto-wired into cliSlots.initDeps
+  devDependencies: { /* ... */ },                            // auto-wired into cliSlots.initDevDeps
+  gitignore: [".wrangler"],                                  // auto-wired into cliSlots.gitignore
+
+  slots: {
+    runtimeOptions: /* slot.derived(...) */,
+  },
+
+  contributes: (self) => [
+    /* ... Contribution<T>[] ... */
+  ],
 });
 ```
 
-`register` is the heart of the plugin. It subscribes to lifecycle events and mutates the payload each one carries. `ctx` is a `RegisterContext` with `options`, `cwd`, `app`, `hasPlugin`, `readFile`, `fileExists`, `log`, `prompt`. `events` is the plugin's own typed event map (from `events: [...]`).
-
-The returned object is a callable config factory (`auth({ ... })`) plus metadata: `.events`, `.cli`, `.name`, and — if callbacks are declared — `.defineCallbacks(impl)` for consumer callback files.
+The returned `auth` is callable (`auth({ cookies: { prefix: "myapp" } })`) and exposes `.slots`, `.cli`, `.requires`, `.package`. When `callbacks` is declared, it also exposes `.defineCallbacks(impl)` for consumer callback files.
 
 ### Options via `schema`
 
-Plugin options are declared as a Zod schema. `createPlugin` validates the caller's input through it, applies defaults, and — because `schema?: z.ZodType<unknown, TOptions>` pins `TOptions` to `z.input<typeof schema>` — automatically types `ctx.options` and every command handler's `ctx.options`. No extra generic or annotation is needed in the plugin body.
+Plugin options are declared as a Zod schema. `plugin()` validates the caller's input through it, applies defaults, and — because `schema?: z.ZodType<unknown, TOptions>` pins `TOptions` to `z.input<typeof schema>` — automatically types `ctx.options` and every command handler's `ctx.options`. No extra generic or annotation is needed in the plugin body.
 
 ```ts
 // plugins/<name>/src/types.ts
@@ -56,190 +64,282 @@ export type AuthOptions = z.input<typeof authOptionsSchema>;
 
 A plugin that genuinely has no options omits the `schema` field entirely.
 
-## Event lifecycle at a glance
+## Slot primer
 
-| Event | Payload shape | When to listen |
-|---|---|---|
-| `Init.Prompt` | `{ configOptions }` | Interactive prompts during `stack init` / `stack add` |
-| `Init.Scaffold` | `{ files: ScaffoldSpec[]; dependencies; devDependencies; gitignore }` | Copy template files and declare npm deps |
-| `Generate` | `{ files: GeneratedFile[]; postWrite: Array<() => Promise<void>> }` | Emit plain generated files (and enqueue post-write hooks such as `wrangler types`) |
-| `api.events.Worker` | `{ imports; base; pluginRuntimes; middlewareChain; handler; cors }` | Contribute to `.stack/worker.ts` (owned by `plugin-api`) |
-| `api.events.Middleware` | `{ entries: MiddlewareSpec[] }` | Contribute Hono middleware to the worker chain (owned by `plugin-api`) |
-| `cloudflare.events.Wrangler` | `{ bindings: WranglerBindingSpec[]; routes; vars; secrets; compatibilityDate }` | Contribute `wrangler.toml` bindings / secrets. `plugin-cloudflare` owns this event, aggregates contributions into `.stack/wrangler.toml`, and shells out to `wrangler types` via `Generate.postWrite` to produce `.stack/worker-configuration.d.ts`. Declare `after: [cloudflare.events.Wrangler]` if your handler depends on the final binding set being assembled. |
-| `vite.events.ViteConfig` | `{ imports; pluginCalls; resolveAliases; devServerPort }` | Inject framework Vite plugins (owned by `plugin-vite`) |
-| `solid.events.Entry` | `{ imports; mountExpression }` | Control `.stack/entry.tsx` bootstrap (owned by `plugin-solid`) |
-| `solid.events.Html` | `{ shell; head: HtmlInjection[]; bodyEnd: HtmlInjection[] }` | Inject into `.stack/index.html` head/body (owned by `plugin-solid`) |
-| `solid.events.Providers` | `{ providers: ProviderSpec[] }` | Add JSX wrappers / siblings to `.stack/virtual-providers.tsx` (owned by `plugin-solid`) |
-| `solid.events.RoutesDts` | `{ pagesDir }` | Typed route declarations (owned by `plugin-solid`) |
-| `solidUi.events.AppCss` | `{ imports: string[]; layers }` | Contribute CSS imports to `.stack/app.css` (owned by `plugin-solid-ui`) |
-| `Dev.Start` | `{ processes: ProcessSpec[]; watchers: WatcherSpec[] }` | Spawn long-running dev processes, register FS watchers |
-| `Dev.Ready` | `{ setup; watchers; url; port }` | Run one-shot post-start tasks (e.g. schema push) |
-| `Build.Start` | `{ steps: BuildStep[] }` | Push pre/main/post build steps |
-| `Deploy.Plan` / `Deploy.Execute` / `Deploy.Complete` | See events.ts | Pre-deploy checks, deploy steps, finalization |
-| `Remove` | `{ files; dependencies }` | Files/packages to remove on `stack remove <plugin>` |
-
-## Contributing each spec kind
-
-All codegen payloads carry **typed specs**, not strings. The AST printer (`ts-morph` / `smol-toml` / `node-html-parser`) handles emission.
-
-### `ScaffoldSpec` — Tier B templates (copied once)
-
-Templates live on disk under `plugins/<name>/templates/` as lintable source files. Plugins push `ScaffoldSpec`s into `Init.Scaffold`; the CLI copies them create-once and fails on duplicate targets.
+Four slot kinds. Each takes `{ source, name }` for identity; the `source` should be the plugin's name.
 
 ```ts
-bus.on(Init.Scaffold, (p) => {
-  p.files.push({
-    source: new URL("../templates/schema.ts", import.meta.url),
-    target: "src/schema/index.ts",
-  });
-  p.dependencies["@fcalell/plugin-db"] = "workspace:*";
-});
+import { slot } from "@fcalell/cli";
+
+// list — many contributions concatenated; optional sortBy for deterministic ordering
+slot.list<TItem>({ source: "auth", name: "scopes", sortBy: (a, b) => a.localeCompare(b) })
+
+// map — many contributions merged; duplicate keys throw
+slot.map<TValue>({ source: "api", name: "callbacks" })
+
+// value — 0..1 contribution; duplicate throws unless override:true; optional seed when no contribution lands
+slot.value<T>({ source: "vite", name: "devServerPort", seed: (ctx) => 3000 })
+slot.value<T>({ source: "solid", name: "homeScaffold", override: true, seed: (ctx) => /* ... */ })
+
+// derived — computed from other slots; framework resolves inputs first; cycles caught at build time
+slot.derived<T, I>({
+  source: "auth",
+  name: "runtimeOptions",
+  inputs: { cors: api.slots.cors },
+  compute: (inp, ctx) => /* compute T from inp + ctx */,
+})
 ```
 
-### `TsImportSpec` — imports in generated TS
+## Contributing to a slot
 
-Four shapes: default, named, namespace, side-effect.
-
-```ts
-// default
-{ source: "@fcalell/plugin-db/runtime", default: "dbRuntime" }
-// named (optionally type-only + aliases)
-{ source: "@cloudflare/workers-types", named: ["D1Database"], typeOnly: true }
-// namespace
-{ source: "../src/schema", namespace: "schema" }
-// side-effect
-{ source: "tailwindcss", sideEffect: true }
-```
-
-### `TsExpression` — calls, literals, JSX
-
-Structured expression tree. Common patterns:
-
-```ts
-// A call expression used as middleware: dbRuntime({ binding: "DB_MAIN", schema })
-{
-  kind: "call",
-  callee: { kind: "identifier", name: "dbRuntime" },
-  args: [{
-    kind: "object",
-    properties: [
-      { key: "binding", value: { kind: "string", value: "DB_MAIN" } },
-      { key: "schema",  value: { kind: "identifier", name: "schema" }, shorthand: true },
-    ],
-  }],
-}
-
-// JSX element for a sibling provider: <Toaster />
-{ kind: "jsx", tag: "Toaster", props: [], children: [] }
-```
-
-### `WranglerBindingSpec` — typed wrangler bindings
-
-Contributed through the `cloudflare.events.Wrangler` event, owned by `plugin-cloudflare`. Any plugin that needs bindings, secrets, or vars imports `cloudflare` and declares `after: [cloudflare.events.Wrangler]` so its handler runs before the aggregator assembles `.stack/wrangler.toml`.
+Every `Slot<T>` has a `.contribute(fn)` method. `fn` receives a `ContributionCtx` and returns a value (or `undefined` to skip).
 
 ```ts
 import { cloudflare } from "@fcalell/plugin-cloudflare";
-// …
-bus.on(cloudflare.events.Wrangler, (p) => {
-  p.bindings.push({
-    kind: "d1",
-    binding: "DB_MAIN",
-    databaseName: ctx.options.databaseId,
-    databaseId: ctx.options.databaseId,
-  });
-  p.secrets.push({ name: "AUTH_SECRET", devDefault: "dev-secret-change-me" });
-});
+
+contributes: [
+  cloudflare.slots.bindings.contribute((ctx) => {
+    if (ctx.options.dialect !== "d1") return undefined;          // skip on sqlite
+    return {
+      kind: "d1",
+      binding: ctx.options.binding ?? "DB_MAIN",
+      databaseId: ctx.options.databaseId,
+    };
+  }),
+
+  // List slots also accept arrays — push many in one shot.
+  cloudflare.slots.secrets.contribute(() => [
+    { name: "AUTH_SECRET", devDefault: "dev-secret" },
+    { name: "APP_URL", devDefault: "http://localhost:3000" },
+  ]),
+],
 ```
 
-Binding kinds: `d1`, `kv`, `r2`, `rate_limiter`, `var`. Aggregator catches duplicate binding names and fails fast.
+**ContributionCtx** carries:
+- `app: AppConfig` — top-level identity (`name`, `domain`, `origins`).
+- `options: TOptions` — this plugin's validated options (typed via the plugin's schema).
+- `cwd: string` — consumer's working directory.
+- `fileExists(path)` / `readFile(path)` — relative to `cwd`.
+- `template(name): URL` — resolves a path inside this plugin's `templates/` directory.
+- `scaffold(name, target): ScaffoldSpec` — convenience for `{ source: template(name), target, plugin: thisName }`.
+- `log: { info, warn, success, error }` — Clack-style logging.
+- `resolve<T>(slot): Promise<T>` — pull any slot value during a contribution. Use sparingly; prefer declaring a derived slot when a value is structurally needed.
 
-### `HtmlInjection` — `<head>` / `<body>` injections
+A contribution returning `undefined` is silently skipped — the canonical pattern for conditional contributions.
 
-```ts
-import { solid } from "@fcalell/plugin-solid";
-// …
-bus.on(solid.events.Html, (p) => {
-  p.shell = new URL("../templates/shell.html", import.meta.url);
-  p.head.push({ kind: "title", value: ctx.options.title ?? ctx.app.name });
-  p.head.push({ kind: "html-attr", name: "lang", value: ctx.options.lang ?? "en" });
-  p.head.push({ kind: "meta", name: "theme-color", content: "#000" });
-  p.bodyEnd.push({ kind: "script", src: "/entry.tsx", type: "module" });
-});
-```
+## Deriving from other slots
 
-Kinds: `title`, `meta`, `link`, `script`, `html-attr`.
-
-### `ProviderSpec` — composition providers
-
-Wraps `virtual:stack-providers` children with a JSX component and/or renders siblings alongside. `order` controls nesting (lower = outer).
+A derived slot reads other slots as inputs. The framework guarantees inputs are fully resolved before `compute` runs, so cross-plugin reads are deterministic by construction.
 
 ```ts
-import { solid } from "@fcalell/plugin-solid";
-// …
-bus.on(solid.events.Providers, (p) => {
-  p.providers.push({
-    imports: [
-      { source: "@fcalell/plugin-solid-ui/meta", named: ["MetaProvider"] },
-      { source: "@fcalell/plugin-solid-ui/components/toast", named: ["Toaster"] },
-    ],
-    wrap: { identifier: "MetaProvider" },
-    siblings: [{ kind: "jsx", tag: "Toaster", props: [], children: [] }],
-    order: 100,
-  });
-});
-```
-
-### `MiddlewareSpec` — ordered Hono middleware
-
-Phase controls where in the chain it runs; `order` breaks ties within a phase.
-
-```ts
+import { slot } from "@fcalell/cli";
 import { api } from "@fcalell/plugin-api";
-// …
-bus.on(api.events.Middleware, async (p) => {
-  if (!(await ctx.fileExists("src/worker/middleware.ts"))) return;
-  p.entries.push({
-    imports: [{ source: "../src/worker/middleware", default: "middleware" }],
-    call: { kind: "identifier", name: "middleware" },
-    phase: "before-routes",
-    order: 100,
-  });
+
+const runtimeOptions = slot.derived<
+  Record<string, TsExpression>,
+  { cors: typeof api.slots.cors }
+>({
+  source: "auth",
+  name: "runtimeOptions",
+  inputs: { cors: api.slots.cors },
+  compute: (inp, ctx) => {
+    const props = literalToProps(ctx.options as Record<string, unknown>);
+    if (inp.cors.length > 0) {
+      props.trustedOrigins = { kind: "array", items: inp.cors.map((o) => ({ kind: "string", value: o })) };
+    }
+    if (inp.cors.some((o) => o.startsWith("http://localhost"))) {
+      props.sameSite = { kind: "string", value: "none" };
+    }
+    return props;
+  },
 });
 ```
 
-Phases: `before-cors`, `after-cors`, `before-routes`, `after-routes`.
+This is the structural answer to "how do I order myself after another plugin": you don't. You declare what you read, and the framework runs you when those reads are ready.
+
+## The slot catalog
+
+Each first-party plugin exports its slots as `<plugin>.slots.*`. Use these as both contribution targets and derivation inputs.
+
+### CLI lifecycle slots — `cliSlots` from `@fcalell/cli/cli-slots`
+
+The cross-cutting sinks every command consumes. Plugins contribute here for files, processes, and lifecycle hooks; rarely read from these.
+
+| Slot | Kind | Purpose |
+|------|------|---------|
+| `cliSlots.initPrompts` | `list<PromptSpec>` | Init/add interactive prompts |
+| `cliSlots.initScaffolds` | `list<ScaffoldSpec>` | Templates copied once into the consumer repo |
+| `cliSlots.initDeps` | `map<string, string>` | npm `dependencies` to add (auto-wired from `plugin({ dependencies })`) |
+| `cliSlots.initDevDeps` | `map<string, string>` | npm `devDependencies` to add (auto-wired from `plugin({ devDependencies })`) |
+| `cliSlots.gitignore` | `list<string>` | `.gitignore` entries (auto-wired from `plugin({ gitignore })`) |
+| `cliSlots.artifactFiles` | `list<GeneratedFile>` | `{ path, content }` files written under `.stack/` (or anywhere in cwd) |
+| `cliSlots.postWrite` | `list<() => Promise<void>>` | Hooks to run after artifact files land (e.g. `wrangler types`) |
+| `cliSlots.devProcesses` | `list<ProcessSpec>` | Long-running dev processes spawned in parallel |
+| `cliSlots.devWatchers` | `list<WatcherSpec>` | chokidar watchers attached during `stack dev` |
+| `cliSlots.devReadySetup` | `list<DevReadyTask>` | One-shot tasks run after processes report ready |
+| `cliSlots.buildSteps` | `list<BuildStep>` | Phase-sorted (`pre`/`main`/`post`) build steps |
+| `cliSlots.deployChecks` | `list<DeployCheck>` | Pre-deploy checks displayed and confirmed |
+| `cliSlots.deploySteps` | `list<DeployStep>` | Phase-sorted deploy steps |
+| `cliSlots.removeFiles` | `list<string>` | Paths removed on `stack remove <plugin>` |
+| `cliSlots.removeDeps` | `list<string>` | npm deps removed (auto-wired from `plugin({ dependencies })`) |
+| `cliSlots.removeDevDeps` | `list<string>` | npm devDeps removed (auto-wired from `plugin({ devDependencies })`) |
+
+### `api.slots.*` (plugin-api)
+
+| Slot | Kind | Purpose |
+|------|------|---------|
+| `workerImports` | `list<TsImportSpec>` | Imports for `.stack/worker.ts` |
+| `pluginRuntimes` | `list<PluginRuntimeEntry>` | Runtime entries that become `.use(xRuntime({...}))` calls |
+| `middlewareEntries` | `list<MiddlewareSpec>` | Hono middleware (phase-ordered) |
+| `middlewareCalls` | `derived<TsExpression[]>` | Sorted call expressions derived from `middlewareEntries` |
+| `middlewareImports` | `derived<TsImportSpec[]>` | Deduplicated imports for middleware |
+| `routesHandler` | `value<{ identifier } \| null>` | Routes namespace identifier (seeded from `src/worker/routes` existence) |
+| `corsOrigins` | `list<string>` | Extra CORS origins (frontend plugins push localhost here) |
+| `cors` | `derived<string[]>` | Final CORS list — `app.origins` verbatim, or `[https://domain, https://app.domain, ...corsOrigins]` |
+| `callbacks` | `map<string, CallbackSpec>` | Plugin-name → callback identifier; spliced onto matching runtime's options |
+| `workerBase` | `derived<TsExpression>` | The `createWorker({...})` call expression |
+| `workerSource` | `derived<string \| null>` | Final `.stack/worker.ts` source; null when no runtimes are present |
+
+### `cloudflare.slots.*` (plugin-cloudflare)
+
+| Slot | Kind | Purpose |
+|------|------|---------|
+| `bindings` | `list<WranglerBindingSpec>` | D1 / KV / R2 / rate_limiter / var bindings |
+| `routes` | `list<WranglerRouteSpec>` | Worker route patterns |
+| `vars` | `map<string, string>` | Plain-text `[vars]` |
+| `secrets` | `list<{ name, devDefault }>` | `.dev.vars` template entries |
+| `compatibilityDate` | `value<string>` | Defaults to today; override with `value` + `override:true` |
+| `wranglerToml` | `derived<string>` | Final `.stack/wrangler.toml` source (also triggers `wrangler types` via `postWrite`) |
+
+### `vite.slots.*` (plugin-vite)
+
+| Slot | Kind | Purpose |
+|------|------|---------|
+| `configImports` | `list<TsImportSpec>` | Imports for `.stack/vite.config.ts` |
+| `pluginCalls` | `list<TsExpression>` | Vite plugin call expressions |
+| `resolveAliases` | `list<{ find, replacement }>` | `resolve.alias` entries |
+| `devServerPort` | `value<number>` | Dev server port (defaults to options.port ?? 3000) |
+| `viteConfig` | `derived<string \| null>` | Final `.stack/vite.config.ts` source; null when nothing to emit |
+
+### `solid.slots.*` (plugin-solid)
+
+| Slot | Kind | Purpose |
+|------|------|---------|
+| `providers` | `list<ProviderSpec>` | JSX wrappers / siblings for `.stack/virtual-providers.tsx` (sorted by `order`) |
+| `entryImports` | `list<TsImportSpec>` | Imports for `.stack/entry.tsx` |
+| `mountExpression` | `value<TsExpression \| null>` | Root render call (override-able for custom mount) |
+| `htmlShell` | `value<URL \| null>` | HTML shell template URL |
+| `htmlHead` | `list<HtmlInjection>` | `<head>` injections (title, meta, link, script, html-attr) |
+| `htmlBodyEnd` | `list<HtmlInjection>` | End-of-body injections |
+| `routesPagesDir` | `derived<string \| null>` | Resolved pages directory or null when routing disabled |
+| `entrySource` | `derived<string \| null>` | Final `.stack/entry.tsx` |
+| `htmlSource` | `derived<string \| null>` | Final `.stack/index.html` |
+| `providersSource` | `derived<string \| null>` | Final `.stack/virtual-providers.tsx` |
+| `routesDtsSource` | `derived<string \| null>` | Final `.stack/routes.d.ts` |
+| `homeScaffold` | `value<ScaffoldSpec>` (`override`) | Scaffold for `src/app/pages/index.tsx`; solid-ui overrides with the design-system home |
+
+### `solidUi.slots.*` (plugin-solid-ui)
+
+| Slot | Kind | Purpose |
+|------|------|---------|
+| `appCssImports` | `list<string>` | CSS `@import`s aggregated into `.stack/app.css` |
+| `appCssLayers` | `list<{ name, content }>` | CSS `@layer` blocks |
+| `fonts` | `derived<FontEntry[]>` | Resolved fonts (consumer options or `defaultFonts`) |
+| `appCssSource` | `derived<string \| null>` | Final `.stack/app.css`; null when nothing landed |
+
+### `auth.slots.*` (plugin-auth)
+
+| Slot | Kind | Purpose |
+|------|------|---------|
+| `runtimeOptions` | `derived<Record<string, TsExpression>>` | Better Auth runtime options; reads `api.slots.cors` to derive `trustedOrigins` + `sameSite` |
+
+## Spec types
+
+The shapes carried by slot payloads. All exported from `@fcalell/cli/ast` (TS / TOML / HTML specs) or `@fcalell/cli/specs` (lifecycle specs).
+
+- `ScaffoldSpec` — `{ source: URL; target: string; plugin: string }`. Used for templates copied into the consumer repo. Build with `ctx.scaffold(name, target)`.
+- `TsImportSpec` — four shapes:
+  ```ts
+  { source: "@fcalell/plugin-db/runtime", default: "dbRuntime" }
+  { source: "@cloudflare/workers-types", named: ["D1Database"], typeOnly: true }
+  { source: "../src/schema", namespace: "schema" }
+  { source: "tailwindcss", sideEffect: true }
+  ```
+- `TsExpression` — structured AST node (`call`, `identifier`, `string`, `array`, `object`, `jsx`, `arrow`, `member`, `as`, …). Pattern:
+  ```ts
+  // dbRuntime({ binding: "DB_MAIN", schema })
+  {
+    kind: "call",
+    callee: { kind: "identifier", name: "dbRuntime" },
+    args: [{
+      kind: "object",
+      properties: [
+        { key: "binding", value: { kind: "string", value: "DB_MAIN" } },
+        { key: "schema",  value: { kind: "identifier", name: "schema" }, shorthand: true },
+      ],
+    }],
+  }
+
+  // <Toaster />
+  { kind: "jsx", tag: "Toaster", props: [], children: [] }
+  ```
+- `WranglerBindingSpec` — `d1` / `kv` / `r2` / `rate_limiter` / `var` shapes. Aggregator catches duplicate `binding` names and fails fast.
+- `HtmlInjection` — `title` / `meta` / `link` / `script` / `html-attr`.
+- `ProviderSpec` — `{ imports, wrap?, siblings?, order }` for JSX provider composition.
+- `MiddlewareSpec` — `{ imports, call, phase: "before-cors" | "after-cors" | "before-routes" | "after-routes", order }`.
+- `PluginRuntimeEntry` — `{ plugin, import, identifier, options? }` describing a `.use(xRuntime(opts))` call.
+- `ProcessSpec`, `WatcherSpec`, `BuildStep`, `DeployStep`, `DeployCheck`, `PromptSpec`, `DevReadyTask`, `GeneratedFile` — exported from `@fcalell/cli/specs`.
+
+## Why there's no ordering to think about
+
+The slot graph derives execution order from data dependencies. A derived slot waits for its `inputs`. A list slot waits for all contributions. A `cliSlots.artifactFiles` contribution that resolves `api.slots.workerSource` waits for every contribution to `workerImports` / `pluginRuntimes` / `callbacks` / `cors` to resolve first — including peer plugins' contributions. There is no `after:`, no handler-firing order, no barrier event. If you find yourself wanting to "run after plugin X did Y," declare a derived slot whose inputs include the value Y produced.
+
+## Templates
+
+Templates live on disk under `plugins/<name>/templates/` as lintable source files. List them in `package.json` `files` so they're published. Plugins push `ScaffoldSpec`s into `cliSlots.initScaffolds`; the CLI copies them once and fails on duplicate targets. Use `slot.value({ override: true })` if you need a slot-driven scaffold that another plugin can replace — see `solid.slots.homeScaffold`, which `plugin-solid-ui` overrides with its design-system home page.
+
+```ts
+contributes: [
+  cliSlots.initScaffolds.contribute((ctx) =>
+    ctx.scaffold("schema.ts", "src/schema/index.ts")
+  ),
+],
+```
 
 ## Testing
 
-Co-locate tests as `*.test.ts` next to the source. Drive handlers by emitting events against a real bus; assert on returned payload mutations.
+Drive tests through the real graph. Two helpers in `@fcalell/cli/testing`:
+
+- `runStackGenerate({ config })` — runs the full generate procedure against a `defineConfig({ ... })` fixture. Returns `{ files, postWrite }`.
+- `buildTestGraph({ config })` / `buildTestGraphFromPlugins({ plugins: [{ factory, options }] })` — returns `{ graph, collected }`. Use `graph.resolve(slot)` to assert on a specific slot value.
 
 ```ts
-import { createEventBus } from "@fcalell/cli/events";
-import { createMockCtx } from "@fcalell/cli/testing";
+import { buildTestGraphFromPlugins } from "@fcalell/cli/testing";
 import { cloudflare } from "@fcalell/plugin-cloudflare";
 import { describe, expect, it } from "vitest";
 import { db } from "./index";
 
-describe("plugin-db cloudflare.events.Wrangler", () => {
-  it("pushes a d1 binding when dialect is d1", async () => {
-    const bus = createEventBus();
-    const ctx = createMockCtx({
-      options: { dialect: "d1", databaseId: "abc", binding: "DB_MAIN" },
-    });
-    db.cli.register(ctx, bus, db.events);
-
-    const payload = await bus.emit(cloudflare.events.Wrangler, {
-      bindings: [], routes: [], vars: {}, secrets: [], compatibilityDate: "",
+describe("plugin-db cloudflare bindings", () => {
+  it("contributes a d1 binding when dialect is d1", async () => {
+    const { graph } = buildTestGraphFromPlugins({
+      plugins: [
+        { factory: cloudflare, options: {} },
+        { factory: db, options: { dialect: "d1", databaseId: "abc", binding: "DB_MAIN" } },
+      ],
     });
 
-    expect(payload.bindings).toContainEqual(
+    const bindings = await graph.resolve(cloudflare.slots.bindings);
+
+    expect(bindings).toContainEqual(
       expect.objectContaining({ kind: "d1", binding: "DB_MAIN", databaseId: "abc" }),
     );
   });
 });
 ```
 
-`createMockCtx` (from `@fcalell/cli/testing`) returns a fully-stubbed `RegisterContext`; pass `options` and any overrides you need. The plugin's `register` is invoked via `plugin.cli.register(...)`.
+Reordering the `plugins` array in any test must leave it green — the slot graph derives ordering from data dependencies, never from array position.
+
+`createMockCtx({ options })` is available for the rare unit test that builds a `ContributionCtx` directly. Use it sparingly: a mock ctx without `resolve` will explode on any contribution that crosses slots, which is usually the bug you wanted to catch.
 
 ## Checklist before publishing a plugin
 
@@ -247,5 +347,5 @@ describe("plugin-db cloudflare.events.Wrangler", () => {
 2. `node/` and `worker/` are split; no cross-imports.
 3. Runtime (if any) is exported from `./runtime` and takes plain options, not `PluginConfig`.
 4. Commands are routable via `stack <plugin> <command>`.
-5. Ordering is declared with typed event tokens (`after: [otherPlugin.events.SomeEvent]`), not string names.
-6. Every `register` handler is covered by a co-located test that emits the event and asserts on payload mutation.
+5. Cross-plugin dataflow is expressed via slot imports — `B.slots.foo.contribute(...)` to push, `slot.derived({ inputs: { foo: B.slots.foo }, ... })` to read. No `requires:` for ordering (it's presence-only).
+6. Every contribution is covered by a co-located test that builds a real graph (`buildTestGraphFromPlugins`) and asserts on the resolved slot value.

@@ -1,6 +1,6 @@
 # @fcalell/cli
 
-Plugin-driven CLI and configuration system for the `@fcalell/stack` framework. Provides `defineConfig()`, `createPlugin()`, the event bus, codegen, and the `stack` binary that scaffolds projects, manages plugins, generates code, and orchestrates dev/build/deploy workflows.
+Plugin-driven CLI and configuration system for the `@fcalell/stack` framework. Provides `defineConfig()`, `plugin()`, the slot graph engine, codegen, and the `stack` binary that scaffolds projects, manages plugins, generates code, and orchestrates dev/build/deploy workflows.
 
 **Binary:** `stack`
 
@@ -24,12 +24,12 @@ The interactive wizard asks which plugins to include:
 
 ```
 Which plugins do you want?
-  Database   (@fcalell/plugin-db)
-  Auth       (@fcalell/plugin-auth)
-  API        (@fcalell/plugin-api)
-  Vite       (@fcalell/plugin-vite)
-  Solid      (@fcalell/plugin-solid)
-  Solid UI   (@fcalell/plugin-solid-ui)
+  Database     (@fcalell/plugin-db)
+  Auth         (@fcalell/plugin-auth)
+  API          (@fcalell/plugin-api)
+  Vite         (@fcalell/plugin-vite)
+  Solid        (@fcalell/plugin-solid)
+  Solid UI     (@fcalell/plugin-solid-ui)
 ```
 
 Then prompts for plugin-specific config (dialect, cookie prefix, organizations) and scaffolds the project. Boilerplate (virtual worker, env types, wrangler config) is generated to `.stack/` automatically.
@@ -49,7 +49,7 @@ import { solid } from "@fcalell/plugin-solid";
 import { solidUi } from "@fcalell/plugin-solid-ui";
 
 export default defineConfig({
-  domain: "example.com",
+  app: { name: "my-app", domain: "example.com" },
   plugins: [
     db({ dialect: "d1", databaseId: "..." }),
     auth({ cookies: { prefix: "myapp" }, organization: true }),
@@ -61,7 +61,7 @@ export default defineConfig({
 });
 ```
 
-Returns a `StackConfig<T>` with a `.validate()` method that checks for duplicates and unsatisfied dependencies.
+Returns a `StackConfig<T>` with a `.validate()` method that checks for duplicates and unsatisfied `requires` declarations.
 
 ### Plugin extraction
 
@@ -74,68 +74,62 @@ const dbConfig = getPlugin(config, "db");
 
 ## Plugin system
 
-### `createPlugin()`
+### `plugin()`
 
-One constructor, one behavior function. This is the entire plugin contract:
+One factory, no register function. The plugin contract:
 
 ```ts
-import { createPlugin, callback } from "@fcalell/cli";
-import { Init, Generate, Remove, Dev, Deploy } from "@fcalell/cli/events";
+import { plugin, slot, callback } from "@fcalell/cli";
+import { cliSlots } from "@fcalell/cli/cli-slots";
+import { cloudflare } from "@fcalell/plugin-cloudflare";
 
-export const db = createPlugin("db", {
+export const db = plugin("db", {
   label: "Database",
-  events: ["SchemaReady"],
-  after: [],
-  callbacks: { ... },
-  commands: {
-    push: {
-      description: "Push schema to local database",
-      handler: async (ctx) => { ... },
-    },
-  },
-
   schema: dbOptionsSchema,
+  requires: ["cloudflare", "api"],
 
-  register(ctx, bus, events) {
-    bus.on(Init.Scaffold, (p) => {
-      p.files.push({ path: "src/schema/index.ts", content: "..." });
-      p.dependencies["@fcalell/plugin-db"] = "workspace:*";
-    });
+  dependencies: { "@fcalell/plugin-db": "workspace:*" },
+  devDependencies: { "drizzle-kit": "^0.31.0" },
+  gitignore: [".db-kit"],
 
-    bus.on(Generate, (p) => {
-      p.bindings.push({ name: "DB_MAIN", type: "d1", databaseId: "..." });
-    });
-
-    bus.on(Dev.Ready, (p) => {
-      p.setup.push({ name: "db-push", run: async () => { ... } });
-    });
-
-    bus.on(Deploy.Plan, (p) => {
-      p.checks.push({ plugin: "db", description: "...", action: async () => { ... } });
-    });
+  commands: {
+    push: { description: "Push schema to local database", handler: async (ctx) => { /* ... */ } },
   },
+
+  contributes: [
+    cloudflare.slots.bindings.contribute((ctx) => ({
+      kind: "d1",
+      binding: ctx.options.binding ?? "DB_MAIN",
+      databaseId: ctx.options.databaseId,
+    })),
+    cliSlots.devReadySetup.contribute((ctx) => ({
+      name: "db-schema-push",
+      run: async () => { /* push schema */ },
+    })),
+  ],
 });
 ```
 
-The returned `db` is both a config factory (`db({ dialect: "d1" })`) and a namespace with `.events`, `.cli`, and `.defineCallbacks` (if callbacks are declared).
+The returned `db` is both a config factory (`db({ dialect: "d1" })`) and a namespace with `.slots`, `.cli`, `.requires`, `.package`, and — when `callbacks` is declared — `.defineCallbacks(impl)`.
 
-### Event lifecycle
+### Slots: a 60-second primer
 
-Plugins subscribe to lifecycle events in their `register()` function. The CLI emits these events in order:
+Plugins coordinate through typed **slots** in a dataflow graph. Four kinds:
 
-```
-stack init / add:   Init.Prompt -> Init.Scaffold -> Generate
-stack dev:          Generate -> Dev.Start -> [wrangler] -> Dev.Ready
-stack build:        Generate -> Build.Start
-stack deploy:       Generate -> Build -> Deploy.Plan -> Deploy.Execute -> Deploy.Complete
-stack remove:       Remove -> Generate
-```
+| Builder | Semantics |
+|---------|-----------|
+| `slot.list<T>({ source, name, sortBy? })` | Many contributions concatenated; optional sort key |
+| `slot.map<V>({ source, name })` | Many contributions merged; duplicate keys throw |
+| `slot.value<T>({ source, name, seed?, override? })` | 0..1 contribution; duplicate throws unless `override:true` |
+| `slot.derived<T, I>({ inputs, compute })` | Computed from other slots; framework resolves inputs first |
 
-Each event carries a mutable payload. Plugins push files, bindings, processes, or steps onto the payload.
+Plugins **contribute** to other plugins' slots and **derive** from them. The framework resolves the graph topologically once per command, memoized. There is no event lifecycle, no `after:` field, and no plugin firing order to think about — data dependencies are the order. Cycles are caught at graph build time.
 
-### Ordering is declared via event imports
+For the full contract, slot catalog, and design paradigm, see [`.claude/rules/plugin-authoring.md`](../../.claude/rules/plugin-authoring.md).
 
-`after: [db.events.SchemaReady]` orders this plugin's handlers behind `db`'s `SchemaReady` event. The event token's `source` field tells the CLI which plugin defines it. TypeScript enforces the import; the CLI validates presence and computes topological order.
+### `requires`
+
+`requires: ["plugin"]` declares presence-only sibling-plugin names — used for nicer error messages when a sibling is missing from the consumer's config. It does NOT influence ordering. Cross-plugin ordering falls out of slot edges (a derived slot waits for its inputs; a list slot waits for all contributions).
 
 ### Plugin commands
 
@@ -149,42 +143,59 @@ stack db status         # Show migration status
 stack db reset          # Reset local database
 ```
 
+Each handler receives a `CommandContext`:
+
+```ts
+interface CommandContext<TOptions> {
+  options: TOptions;
+  cwd: string;
+  resolve<T>(slot: Slot<T>): Promise<T>;
+  log: { info, warn, success, error };
+  prompt: { text, confirm, select, multiselect };
+}
+```
+
+`ctx.resolve(slot)` is the escape hatch for a command handler that needs a slot value (e.g. reading the resolved CORS list to pass to a sub-process).
+
 ### Typed callbacks
 
 Plugins declare callback shapes with `callback<T>()`. The plugin export then provides a `defineCallbacks()` helper for consumer callback files:
 
 ```ts
 // Plugin definition
-export const auth = createPlugin("auth", {
+export const auth = plugin("auth", {
   callbacks: {
     sendOTP: callback<{ email: string; code: string }>(),
-    sendInvitation: callback<{ email: string; orgName: string }>(),
+    sendInvitation: callback.optional<{ email: string; orgName: string }>(),
   },
-  ...
+  // ...
 });
 
 // Consumer file (src/worker/plugins/auth.ts)
 import { auth } from "@fcalell/plugin-auth";
 export default auth.defineCallbacks({
-  sendOTP({ email, code }) { ... },
-  sendInvitation({ email, orgName }) { ... },
+  sendOTP({ email, code }) { /* ... */ },
+  sendInvitation({ email, orgName }) { /* ... */ },
 });
 ```
 
-### RegisterContext
+When a plugin declares both callbacks AND a `./runtime` subpath export, the framework auto-scaffolds `src/worker/plugins/<name>.ts` from a `templates/callbacks.ts` template.
 
-Provided to `register()`. Includes options, filesystem helpers, prompts, and `configure()` for mutating options during init prompts:
+### ContributionCtx
+
+Provided to every slot contribution and derivation:
 
 ```ts
-interface RegisterContext<TOptions> {
-  options: TOptions;
+interface ContributionCtx {
+  app: AppConfig;                                   // { name, domain, origins? }
+  options: TOptions;                                // this plugin's validated options
   cwd: string;
-  hasPlugin(name: string): boolean;
-  configure(options: Partial<TOptions>): void;
-  readFile(path: string): Promise<string>;
   fileExists(path: string): Promise<boolean>;
+  readFile(path: string): Promise<string>;
+  template(name: string): URL;                      // resolves into this plugin's templates/
+  scaffold(name: string, target: string): ScaffoldSpec;
   log: { info, warn, success, error };
-  prompt: { text, confirm, select, multiselect };
+  resolve<T>(slot: Slot<T>): Promise<T>;            // pull any slot value
 }
 ```
 
@@ -204,34 +215,38 @@ Interactive project scaffold. Creates the directory if it doesn't exist, or uses
 | `api` plugin | `src/worker/routes/`, `wrangler.toml` |
 | `solid` plugin | `src/app/pages/_layout.tsx`, `src/app/pages/index.tsx` |
 
-Dependencies are auto-resolved: selecting `auth` automatically adds `db`. Existing files are never overwritten. After scaffolding, `stack generate` runs to produce `.stack/` files.
+Required sibling plugins are auto-resolved: selecting `auth` automatically adds `db`, `api`, and `cloudflare`. Existing files are never overwritten. After scaffolding, `stack generate` runs to produce `.stack/` files.
 
 **What `stack generate` produces in `.stack/` (gitignored):**
 
-| File | When | Purpose |
-|------|------|---------|
-| `.stack/worker-configuration.d.ts` | Any plugin declares bindings | `Env` interface generated by `wrangler types` from `.stack/wrangler.toml` |
-| `.stack/worker.ts` | Any plugin has a `./runtime` export | Virtual worker entry (inlined options, convention-based) |
-| `.stack/wrangler.toml` | Worker exists | Merged wrangler config with all plugin bindings |
-| `.stack/vite.config.ts` | Frontend plugin present | Generated Vite config with framework plugins |
-| `.stack/routes.d.ts` | `solid` plugin enabled | Typed route builder declarations |
-| `src/worker/routes/index.ts` | `api` plugin enabled | Auto-generated barrel from route files |
-| `.dev.vars` | Plugins declare `secret` bindings | Template for local dev secrets |
+| File | Source slot | Purpose |
+|------|-------------|---------|
+| `.stack/worker-configuration.d.ts` | `cliSlots.postWrite` (cloudflare) | `Env` interface generated by `wrangler types` |
+| `.stack/worker.ts` | `api.slots.workerSource` | Virtual worker entry (inlined options, convention-based) |
+| `.stack/wrangler.toml` | `cloudflare.slots.wranglerToml` | Merged wrangler config with all plugin bindings |
+| `.stack/vite.config.ts` | `vite.slots.viteConfig` | Generated Vite config with framework plugins |
+| `.stack/entry.tsx` | `solid.slots.entrySource` | App bootstrap |
+| `.stack/index.html` | `solid.slots.htmlSource` | HTML shell |
+| `.stack/virtual-providers.tsx` | `solid.slots.providersSource` | Provider composition |
+| `.stack/app.css` | `solidUi.slots.appCssSource` | Aggregated stylesheet |
+| `.stack/routes.d.ts` | `solid.slots.routesDtsSource` | Typed route builder declarations |
+| `src/worker/routes/index.ts` | `api` artifact contribution | Auto-generated barrel from route files |
+| `.dev.vars` | `cloudflare.slots.secrets` | Template for local dev secrets |
 
 ### `stack add <plugin>`
 
-Add a plugin to an existing project. Emits `Init.Prompt` and `Init.Scaffold` for the plugin, adds it to `stack.config.ts`, and regenerates `.stack/` files.
+Add a plugin to an existing project. Resolves the plugin's `cliSlots.initPrompts` and `cliSlots.initScaffolds` contributions, patches `stack.config.ts`, and regenerates `.stack/`.
 
 ```bash
 stack add auth    # Prompts for cookie prefix, organizations; scaffolds callback file
 stack add solid   # Scaffolds pages directory with layout and index
 ```
 
-Checks `depends` before proceeding. If `auth` depends on `db.events.SchemaReady` and `db` is not configured, the CLI errors with a fix suggestion.
+Validates `requires` before proceeding. If `auth` requires `db` and `db` is not configured, the CLI errors with a fix suggestion.
 
 ### `stack remove <plugin>`
 
-Remove a plugin from the project. Checks that no other plugin depends on it, emits the `Remove` event (plugins declare files to delete and packages to remove), removes it from `stack.config.ts`, and regenerates.
+Remove a plugin from the project. Checks that no other plugin requires it, resolves the target plugin's contributions to `cliSlots.removeFiles` / `removeDeps` / `removeDevDeps`, removes it from `stack.config.ts`, and regenerates.
 
 ```bash
 stack remove auth
@@ -239,28 +254,27 @@ stack remove auth
 
 ### `stack generate`
 
-Regenerates all `.stack/` files from the current config. Validates the config, emits `Generate` (plugins push bindings and files), produces `worker.ts`, `wrangler.toml`, and `.dev.vars`, then shells out to `wrangler types` to emit `worker-configuration.d.ts`.
+Regenerates all `.stack/` files from the current config. Validates the config, resolves `cliSlots.artifactFiles` and writes each file, then resolves `cliSlots.postWrite` and awaits each hook (e.g. `wrangler types`).
 
 This runs automatically during `stack init`, `stack add`, `stack remove`, `stack dev`, and `stack build`. Run it manually after editing `stack.config.ts`.
 
 ### `stack dev [--studio]`
 
-Plugin-driven development mode. Emits `Generate`, then `Dev.Start` and `Dev.Ready`:
+Plugin-driven development mode. Runs `generate`, then resolves and orchestrates:
 
-- **`db` plugin:** pushes schema to local DB on startup, watches `src/schema/` for changes
-- **`api` plugin:** starts `wrangler dev`, watches `src/worker/routes/` and regenerates the barrel on file add/remove
-- **`solid` plugin:** starts the Vite dev server
-- **Built-in:** watches `stack.config.ts` and re-generates on change
+- `cliSlots.devProcesses` — long-running processes (wrangler dev, vite dev) spawned in parallel with prefixed/coloured output
+- `cliSlots.devReadySetup` — one-shot tasks that run after processes report ready (e.g. `db-schema-push`)
+- `cliSlots.devWatchers` — chokidar watchers (schema dir, route dir, `stack.config.ts`)
 
-Processes are color-coded and prefixed in the terminal. The `--studio` flag adds Drizzle Studio to the banner.
+The `--studio` flag adds Drizzle Studio to the banner.
 
 ### `stack build`
 
-Plugin-driven production build. Emits `Generate`, then `Build.Start`.
+Plugin-driven production build. Runs `generate`, then resolves `cliSlots.buildSteps` (sorted by `phase: pre | main | post` and `order`) and executes them sequentially.
 
 ### `stack deploy`
 
-Plugin-driven deploy. Runs `stack build` first, then emits `Deploy.Plan` (plugins register checks and migration steps), `Deploy.Execute`, and `Deploy.Complete`.
+Plugin-driven deploy. Runs `stack build` first, then resolves `cliSlots.deployChecks` (displayed and confirmed) and `cliSlots.deploySteps` (executed sequentially in phase order).
 
 ### `stack <plugin> <command>`
 
@@ -278,24 +292,21 @@ stack db reset
 | `--studio` | `false` | `dev` |
 | `--config <path>` | `stack.config.ts` | all commands except `init` |
 
-## Code generation
-
-The `generate` command produces several files:
-
-- **`worker.ts`** -- convention-based: detects `./runtime` exports in plugin packages, inlines plugin options as JS literals, imports schema and callback files when they exist
-- **`wrangler.toml`** -- merges the consumer's `wrangler.toml` (if present) with generated binding sections (D1, R2, KV, rate limiters, etc.)
-- **`worker-configuration.d.ts`** -- generated by `wrangler types` against `.stack/wrangler.toml`; provides the typed `Env` interface consumers import
-- **`.dev.vars`** -- generates a template for `secret`-type bindings (only if the file doesn't exist)
-- **Plugin-specific files** -- each plugin can push additional `GeneratedFile` entries onto the `Generate` payload
-
 ## Exports
 
 | Subpath | Purpose |
 |---------|---------|
-| `@fcalell/cli` | `defineConfig()`, `createPlugin()`, `callback()`, `getPlugin()`, `StackConfig`, `PluginConfig`, `BindingDeclaration`, `RegisterContext`, `CommandContext`, `CommandDefinition` |
-| `@fcalell/cli/events` | `defineEvent()`, `createEventBus()`, `Event`, `EventBus`, lifecycle events (`Init`, `Generate`, `Dev`, `Build`, `Deploy`, `Remove`), payload types |
-| `@fcalell/cli/codegen` | `generateVirtualWorker()`, `generateWranglerToml()`, `generateDevVars()`, `collectBindings()` |
-| `@fcalell/cli/discovery` | `discoverPlugins()`, `sortByDependencies()`, `loadAvailablePlugins()`, `FIRST_PARTY_PLUGINS`, `PLUGIN_NAMES` |
+| `@fcalell/cli` | `defineConfig()`, `plugin()`, `slot`, `callback()`, `getPlugin()`, `StackConfig`, `PluginConfig`, `ContributionCtx`, `CommandContext`, `CommandDefinition`, `Slot`, `Contribution` |
+| `@fcalell/cli/cli-slots` | `cliSlots` — CLI-owned lifecycle slots (`artifactFiles`, `devProcesses`, `buildSteps`, …) |
+| `@fcalell/cli/slots` | `slot.*` builders + `Slot`/`Contribution`/`ContributionCtx` types (re-exported on the main entry too) |
+| `@fcalell/cli/graph` | `buildGraph(plugins, ctxFactory)` — low-level graph engine (commands use this through `build-graph.ts`) |
+| `@fcalell/cli/specs` | Spec types: `GeneratedFile`, `ProcessSpec`, `WatcherSpec`, `BuildStep`, `DeployStep`, `DeployCheck`, `PromptSpec`, `DevReadyTask` |
+| `@fcalell/cli/ast` | TS / TOML / HTML spec types + printers + builder helpers |
+| `@fcalell/cli/discovery` | `discoverPlugins()`, `loadAvailablePlugins()`, `FIRST_PARTY_PLUGINS`, `PLUGIN_NAMES` |
+| `@fcalell/cli/testing` | `runStackGenerate()`, `buildTestGraph()`, `buildTestGraphFromPlugins()`, `createMockCtx()` |
+| `@fcalell/cli/runtime` | `RuntimePlugin` |
+| `@fcalell/cli/codegen` | Reusable codegen helpers |
+| `@fcalell/cli/errors` | `StackError`, `ConfigValidationError` |
 
 ## License
 

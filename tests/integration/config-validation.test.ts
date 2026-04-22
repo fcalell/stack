@@ -1,12 +1,18 @@
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { defineConfig } from "@fcalell/cli";
 import { ConfigValidationError } from "@fcalell/cli/errors";
+import { buildTestGraph } from "@fcalell/cli/testing";
 import { api } from "@fcalell/plugin-api";
 import { auth } from "@fcalell/plugin-auth";
+import { cloudflare } from "@fcalell/plugin-cloudflare";
 import { db } from "@fcalell/plugin-db";
 import { solid } from "@fcalell/plugin-solid";
-import { describe, expect, it } from "vitest";
+import { vite } from "@fcalell/plugin-vite";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-describe("plugin factory validation", () => {
+describe("plugin factory validation (Zod schema)", () => {
 	it("db throws for d1 dialect without databaseId", () => {
 		expect(() => db({ dialect: "d1" })).toThrow("databaseId");
 	});
@@ -28,25 +34,26 @@ describe("plugin factory validation", () => {
 	});
 });
 
-describe("cross-plugin dependency validation", () => {
-	it("auth without db passes config validation (checked at runtime)", () => {
-		const config = defineConfig({
-			app: { name: "app", domain: "example.com" },
-			plugins: [auth(), api()],
-		});
+describe("cross-plugin dependency validation (requires)", () => {
+	let cwd: string;
 
-		const result = config.validate();
-		expect(result.valid).toBe(true);
-		expect(result.errors).toHaveLength(0);
+	beforeEach(() => {
+		cwd = mkdtempSync(join(tmpdir(), "stack-validation-"));
 	});
 
-	it("full chain db + auth + api + solid validates together", () => {
+	afterEach(() => {
+		rmSync(cwd, { recursive: true, force: true });
+	});
+
+	it("full chain cloudflare + db + auth + api + vite + solid validates together", () => {
 		const config = defineConfig({
 			app: { name: "app", domain: "example.com" },
 			plugins: [
+				cloudflare(),
 				db({ dialect: "d1", databaseId: "test" }),
 				auth({ cookies: { prefix: "test" }, organization: true }),
 				api({ prefix: "/rpc" }),
+				vite(),
 				solid(),
 			],
 		});
@@ -56,9 +63,23 @@ describe("cross-plugin dependency validation", () => {
 		expect(result.errors).toHaveLength(0);
 	});
 
-	it("auth plugin declares dependency on db via cli.after", () => {
-		const sources = auth.cli.after.map((e) => e.source);
-		expect(sources).toContain("db");
+	it("auth declares requires on db, api, cloudflare (presence check)", () => {
+		// `requires` are the plugin names the CLI uses for actionable errors
+		// when a sibling is missing. Ordering is now derived from slot inputs.
+		expect([...auth.cli.requires]).toEqual(
+			expect.arrayContaining(["api", "cloudflare", "db"]),
+		);
+	});
+
+	it("auth without required siblings throws at graph build time with actionable message", async () => {
+		const config = defineConfig({
+			app: { name: "app", domain: "example.com" },
+			plugins: [auth()],
+		});
+
+		await expect(buildTestGraph({ config, cwd })).rejects.toThrow(
+			/\[auth\] requires plugin 'api'/,
+		);
 	});
 
 	it("duplicate plugin produces validation error", () => {
@@ -105,8 +126,6 @@ describe("typed error classes round-trip from validation results", () => {
 		const result = config.validate();
 		expect(result.valid).toBe(false);
 
-		// This is exactly the error `generate()` throws when validation fails —
-		// consumers and third-party orchestrators can catch it via instanceof.
 		const error = new ConfigValidationError(result.errors);
 		expect(error).toBeInstanceOf(ConfigValidationError);
 		expect(error.errors).toHaveLength(result.errors.length);

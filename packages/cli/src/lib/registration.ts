@@ -1,48 +1,67 @@
 import { access, readFile } from "node:fs/promises";
 import { basename, join } from "node:path";
-import type { AppConfig, StackConfig } from "#config";
-import type { DiscoveredPluginInfo, RegisterContext } from "#lib/create-plugin";
-import type { DiscoveredPlugin } from "#lib/discovery";
+import type { ScaffoldSpec } from "#ast";
+import type { AppConfig } from "#config";
 import { StackError } from "#lib/errors";
-import { createEventBus, type EventBus } from "#lib/event-bus";
-import { createLogContext, createPromptContext } from "#lib/prompt";
+import { createLogContext } from "#lib/prompt";
+import type { ContributionCtx, LogContext, Slot } from "#lib/slots";
 
-interface ContextOptions {
+// Context factory shared between the CLI commands (which build a real
+// contribution ctx per plugin to feed `buildGraph`) and test helpers.
+//
+// Historically this module also wired plugins onto a shared event bus —
+// that's now the graph engine's job. What remains is the per-plugin ctx
+// shape: `options`, `cwd`, filesystem helpers, log/prompt adapters, and
+// the graph-provided `resolve` helper.
+
+export interface RegisterContextOptions {
 	cwd: string;
 	options: unknown;
 	app: AppConfig;
-	hasPlugin: (name: string) => boolean;
-	discoveredPlugins?: DiscoveredPluginInfo[];
-	nonInteractive?: boolean;
+	log?: LogContext;
+	// Provided by the graph engine when a contribution actually runs. During
+	// non-graph flows (e.g. `stack add` collecting prompt answers before
+	// writing the config file), commands may pass a stub that throws.
+	resolve?: <T>(slot: Slot<T>) => Promise<T>;
+	// Plugin-specific template & scaffold resolvers. When the caller already
+	// has a plugin factory in hand, forward its resolvers here; otherwise
+	// the ContributionCtx falls back to throw-on-use stubs.
+	template?(name: string): URL;
+	scaffold?(name: string, target: string): ScaffoldSpec;
 }
 
-// `plugin`, `template`, and `scaffold` are overwritten by `createPlugin`'s
-// register wrapper before the plugin's user code runs. The placeholders here
-// exist solely to satisfy the RegisterContext type at this construction site.
-const placeholderTemplate = (_name: string): URL => {
+const stubResolve = <T>(_slot: Slot<T>): Promise<T> => {
 	throw new StackError(
-		"ctx.template() called before createPlugin stamped its resolver",
-		"PLUGIN_CONFIG_INVALID",
+		"ctx.resolve() called outside of a slot-graph resolution. " +
+			"Use buildGraph(...).resolve(...) to drive slot contributions.",
+		"CONTRIBUTION_CTX_NO_RESOLVE",
+	);
+};
+
+const stubTemplate = (templateName: string): URL => {
+	throw new StackError(
+		`ctx.template(${JSON.stringify(templateName)}) has no resolver stamped onto this ContributionCtx. ` +
+			"Use the plugin factory's collect() or buildGraph() to wire template resolution.",
+		"CONTRIBUTION_CTX_NO_TEMPLATE",
+	);
+};
+
+const stubScaffold = (templateName: string, _target: string): ScaffoldSpec => {
+	throw new StackError(
+		`ctx.scaffold(${JSON.stringify(templateName)}, …) has no resolver stamped onto this ContributionCtx. ` +
+			"Use the plugin factory's collect() or buildGraph() to wire scaffold resolution.",
+		"CONTRIBUTION_CTX_NO_SCAFFOLD",
 	);
 };
 
 export function createRegisterContext(
-	opts: ContextOptions,
-): RegisterContext<unknown> {
+	opts: RegisterContextOptions,
+): ContributionCtx {
 	return {
 		cwd: opts.cwd,
 		options: opts.options,
 		app: opts.app,
-		plugin: "",
-		discoveredPlugins: opts.discoveredPlugins ?? [],
-		hasPlugin: opts.hasPlugin,
-		template: placeholderTemplate,
-		scaffold: (_name: string, _target: string) => {
-			throw new StackError(
-				"ctx.scaffold() called before createPlugin stamped its resolver",
-				"PLUGIN_CONFIG_INVALID",
-			);
-		},
+		log: opts.log ?? createLogContext(),
 		readFile: async (path: string) => readFile(join(opts.cwd, path), "utf-8"),
 		fileExists: async (path: string) => {
 			try {
@@ -52,47 +71,17 @@ export function createRegisterContext(
 				return false;
 			}
 		},
-		runtime: () => {
-			throw new StackError(
-				"ctx.runtime() called before createPlugin stamped its helper",
-				"PLUGIN_CONFIG_INVALID",
-			);
-		},
-		log: createLogContext(),
-		prompt: createPromptContext({ nonInteractive: opts.nonInteractive }),
+		template: opts.template ?? stubTemplate,
+		scaffold: opts.scaffold ?? stubScaffold,
+		resolve: opts.resolve ?? stubResolve,
 	};
 }
 
-// Synthetic AppConfig used by `init` / `add` flows where the stack config isn't
-// yet fully loaded. `name` tracks the target directory. Plugins rarely rely on
-// `ctx.app` during init/add.
+// Synthetic AppConfig used by `init` / `add` flows where the stack config
+// isn't yet fully loaded. `name` tracks the target directory.
 export function syntheticAppConfig(cwd: string): AppConfig {
 	return {
 		name: basename(cwd),
 		domain: "example.com",
 	};
-}
-
-export function registerPlugins(
-	sorted: DiscoveredPlugin[],
-	config: StackConfig,
-	cwd: string,
-): EventBus {
-	const bus = createEventBus();
-	const discoveredPlugins: DiscoveredPluginInfo[] = sorted.map((p) => ({
-		name: p.cli.name,
-		package: p.cli.package,
-		callbacks: p.cli.callbacks,
-	}));
-	for (const p of sorted) {
-		const ctx = createRegisterContext({
-			cwd,
-			options: p.options,
-			app: config.app,
-			discoveredPlugins,
-			hasPlugin: (name) => config.plugins.some((pl) => pl.__plugin === name),
-		});
-		p.cli.register(ctx, bus, p.events);
-	}
-	return bus;
 }

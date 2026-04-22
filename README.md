@@ -55,7 +55,7 @@ export default defineConfig({
 });
 ```
 
-Plugins declare ordering via typed event tokens (`after: [db.events.SchemaReady]`). The CLI resolves them automatically, so the order above does not matter. Every plugin must be listed explicitly; `stack init` auto-adds missing dependencies (e.g. picking `solid` also adds `vite`).
+Plugins coordinate through typed slots in a dataflow graph — each plugin contributes typed values into other plugins' slots and derives values from them, and the framework resolves the graph topologically once per command. The order of plugins in the array does not matter. Every plugin must be listed explicitly; `stack init` auto-adds missing dependencies (e.g. picking `solid` also adds `vite`).
 
 ## CLI commands
 
@@ -75,7 +75,7 @@ Plugins declare ordering via typed event tokens (`after: [db.events.SchemaReady]
 
 | Package | Purpose |
 |---------|---------|
-| [`@fcalell/cli`](packages/cli) | `defineConfig()`, `createPlugin()`, `stack` CLI, event bus, codegen |
+| [`@fcalell/cli`](packages/cli) | `defineConfig()`, `plugin()`, `slot.*`, `stack` CLI, slot graph engine, codegen |
 | [`@fcalell/typescript-config`](packages/typescript-config) | Shared `tsconfig` presets |
 | [`@fcalell/biome-config`](packages/biome-config) | Shared Biome formatter and linter config |
 
@@ -101,7 +101,7 @@ pnpm exec stack plugin init my-plugin
 pnpm exec stack plugin init my-plugin --package @acme/stack-plugin-foo --dir ./packages/my-plugin
 ```
 
-The scaffold produces a `createPlugin()`-based skeleton, a vitest test wired to `@fcalell/cli/testing`, and a runtime stub exported from `./runtime`. Publish it under any npm name — consumers add it to `stack.config.ts` like any built-in plugin.
+The scaffold produces a `plugin()`-based skeleton, a vitest test wired to `@fcalell/cli/testing`, and a runtime stub exported from `./runtime`. Publish it under any npm name — consumers add it to `stack.config.ts` like any built-in plugin.
 
 ## Repository commands
 
@@ -113,7 +113,7 @@ pnpm test:watch       # Run tests in watch mode
 
 ## Architecture
 
-See [`CLAUDE.md`](CLAUDE.md) for the full architecture, lifecycle events, dependency graph, and generated-file layout. Coding conventions live in [`.claude/rules/conventions.md`](.claude/rules/conventions.md).
+See [`CLAUDE.md`](CLAUDE.md) for the full architecture, slot catalog, dependency graph, and generated-file layout. Coding conventions live in [`.claude/rules/conventions.md`](.claude/rules/conventions.md). Plugin authoring is documented in detail in [`.claude/rules/plugin-authoring.md`](.claude/rules/plugin-authoring.md).
 
 ## License
 

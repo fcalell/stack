@@ -1,57 +1,26 @@
 import { spawnSync } from "node:child_process";
-import { join } from "node:path";
 import { intro, log, outro } from "@clack/prompts";
-import { Build } from "#events";
-import { hasRuntimeExport } from "#lib/codegen";
+import { generateFromConfig } from "#commands/generate";
+import type { StackConfig } from "#config";
+import { buildGraphFromConfig } from "#lib/build-graph";
+import { cliSlots } from "#lib/cli-slots";
 import { loadConfig } from "#lib/config";
-import { discoverPlugins, sortByDependencies } from "#lib/discovery";
 import { StepFailedError } from "#lib/errors";
-import { sortStepsByPhase } from "#lib/executor";
-import { registerPlugins } from "#lib/registration";
+import type { BuildStep } from "#specs";
 
-export async function build(configPath: string): Promise<void> {
-	intro("stack build");
+export async function buildStepsFromConfig(
+	config: StackConfig,
+	cwd: string,
+): Promise<BuildStep[]> {
+	const { graph } = await buildGraphFromConfig({ config, cwd });
+	// Slot's own sortBy returns phase-sorted already.
+	return graph.resolve(cliSlots.buildSteps);
+}
 
-	// Generate
-	const { generate } = await import("#commands/generate");
-	await generate(configPath);
-
-	const config = await loadConfig(configPath);
-	const discovered = await discoverPlugins(config);
-	const sorted = sortByDependencies(discovered);
-	const cwd = process.cwd();
-
-	const bus = registerPlugins(sorted, config, cwd);
-
-	// Build.Start — collect steps
-	const buildResult = await bus.emit(Build.Start, { steps: [] });
-
-	// Check if any plugin has a worker runtime
-	const hasWorker = sorted.some((p) => hasRuntimeExport(p.cli.package));
-
-	// If hasWorker, add wrangler bundle step
-	if (hasWorker) {
-		buildResult.steps.push({
-			name: "Bundle worker",
-			phase: "post",
-			exec: {
-				command: "npx",
-				args: [
-					"wrangler",
-					"deploy",
-					"--dry-run",
-					"--outdir",
-					join(cwd, "dist"),
-					"--config",
-					join(cwd, ".stack", "wrangler.toml"),
-				],
-			},
-		});
-	}
-
-	// Sort steps by phase and execute sequentially
-	const steps = sortStepsByPhase(buildResult.steps);
-
+export async function runBuildSteps(
+	steps: BuildStep[],
+	cwd: string,
+): Promise<void> {
 	for (const step of steps) {
 		const phaseLabel =
 			step.phase === "pre"
@@ -63,16 +32,27 @@ export async function build(configPath: string): Promise<void> {
 
 		if ("run" in step) {
 			await step.run();
-		} else {
-			const result = spawnSync(step.exec.command, step.exec.args, {
-				stdio: "inherit",
-				cwd: step.exec.cwd ?? cwd,
-			});
-			if (result.status !== 0) {
-				throw new StepFailedError(step.name, result.status, step.exec.command);
-			}
+			continue;
+		}
+		const result = spawnSync(step.exec.command, step.exec.args, {
+			stdio: "inherit",
+			cwd: step.exec.cwd ?? cwd,
+		});
+		if (result.status !== 0) {
+			throw new StepFailedError(step.name, result.status, step.exec.command);
 		}
 	}
+}
+
+export async function build(configPath: string): Promise<void> {
+	intro("stack build");
+	const cwd = process.cwd();
+	const config = await loadConfig(configPath);
+
+	await generateFromConfig(config, cwd, { writeToDisk: true });
+
+	const steps = await buildStepsFromConfig(config, cwd);
+	await runBuildSteps(steps, cwd);
 
 	outro("Build complete");
 }

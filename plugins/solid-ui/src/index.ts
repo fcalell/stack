@@ -1,11 +1,18 @@
-import { createPlugin, type } from "@fcalell/cli";
-import type { TsExpression } from "@fcalell/cli/ast";
-import { Generate, Init } from "@fcalell/cli/events";
+import { plugin, slot } from "@fcalell/cli";
+import type {
+	ProviderSpec,
+	ScaffoldSpec,
+	TsExpression,
+	TsImportSpec,
+} from "@fcalell/cli/ast";
+import { cliSlots } from "@fcalell/cli/cli-slots";
 import { solid } from "@fcalell/plugin-solid";
 import { vite } from "@fcalell/plugin-vite";
 import { aggregateAppCss } from "./node/codegen";
 import { defaultFonts, type FontEntry } from "./node/fonts";
-import { type CodegenAppCssPayload, solidUiOptionsSchema } from "./types";
+import { type SolidUiOptions, solidUiOptionsSchema } from "./types";
+
+const SOURCE = "solid-ui";
 
 const ROLE_FALLBACKS: Record<NonNullable<FontEntry["role"]>, string[]> = {
 	sans: ["ui-sans-serif", "system-ui", "-apple-system", "sans-serif"],
@@ -74,12 +81,53 @@ function fontsToTokenCss(fonts: FontEntry[]): string | null {
 	return `:root {\n${decls.join("\n")}\n}`;
 }
 
-export const solidUi = createPlugin("solid-ui", {
-	label: "Design System",
-	events: {
-		AppCss: type<CodegenAppCssPayload>(),
+// ── Slot declarations ──────────────────────────────────────────────
+
+const appCssImports = slot.list<string>({
+	source: SOURCE,
+	name: "appCssImports",
+});
+
+const appCssLayers = slot.list<{ name: string; content: string }>({
+	source: SOURCE,
+	name: "appCssLayers",
+});
+
+// Resolved font entries. Derived from options only (no cross-slot inputs) so
+// every other contribution can read the same source of truth.
+const fonts = slot.derived<FontEntry[], Record<string, never>>({
+	source: SOURCE,
+	name: "fonts",
+	inputs: {},
+	compute: (_inp, ctx) => {
+		const opts = (ctx.options ?? {}) as SolidUiOptions;
+		return opts.fonts ?? defaultFonts;
 	},
-	after: [solid.events.SolidConfigured],
+});
+
+// Rendered `.stack/app.css`. Returns null when no imports or layers landed.
+const appCssSource = slot.derived<
+	string | null,
+	{ imports: typeof appCssImports; layers: typeof appCssLayers }
+>({
+	source: SOURCE,
+	name: "appCssSource",
+	inputs: { imports: appCssImports, layers: appCssLayers },
+	compute: (inp) =>
+		aggregateAppCss({ imports: inp.imports, layers: inp.layers }),
+});
+
+export const solidUi = plugin<
+	"solid-ui",
+	SolidUiOptions,
+	{
+		appCssImports: typeof appCssImports;
+		appCssLayers: typeof appCssLayers;
+		fonts: typeof fonts;
+		appCssSource: typeof appCssSource;
+	}
+>("solid-ui", {
+	label: "Design System",
 
 	schema: solidUiOptionsSchema,
 
@@ -90,67 +138,60 @@ export const solidUi = createPlugin("solid-ui", {
 		"@tailwindcss/vite": "^4.1.7",
 	},
 
-	register(ctx, bus, events) {
-		bus.on(Init.Scaffold, (p) => {
-			p.files.push(ctx.scaffold("home.tsx", "src/app/pages/index.tsx"));
-		});
+	slots: {
+		appCssImports,
+		appCssLayers,
+		fonts,
+		appCssSource,
+	},
 
-		bus.on(vite.events.ViteConfig, (p) => {
-			p.imports.push({
+	contributes: (self) => [
+		// ── Vite integration ────────────────────────────────────────────
+		vite.slots.configImports.contribute(
+			(): TsImportSpec => ({
 				source: "@tailwindcss/vite",
 				default: "tailwindcss",
-			});
-			p.pluginCalls.push({
+			}),
+		),
+		vite.slots.pluginCalls.contribute(
+			(): TsExpression => ({
 				kind: "call",
 				callee: { kind: "identifier", name: "tailwindcss" },
 				args: [],
-			});
-
-			const fonts = ctx.options?.fonts ?? defaultFonts;
-			p.imports.push({
+			}),
+		),
+		vite.slots.configImports.contribute(
+			(): TsImportSpec => ({
 				source: "@fcalell/plugin-solid-ui/node/fonts",
 				named: ["themeFontsPlugin"],
-			});
-			p.pluginCalls.push({
+			}),
+		),
+		vite.slots.pluginCalls.contribute(async (ctx): Promise<TsExpression> => {
+			const entries = await ctx.resolve(self.slots.fonts);
+			return {
 				kind: "call",
 				callee: { kind: "identifier", name: "themeFontsPlugin" },
 				args:
-					fonts.length > 0
-						? [{ kind: "array", items: fonts.map(fontEntryToExpression) }]
+					entries.length > 0
+						? [
+								{
+									kind: "array",
+									items: entries.map(fontEntryToExpression),
+								},
+							]
 						: [],
-			});
-		});
+			};
+		}),
 
-		bus.on(events.AppCss, (p) => {
-			p.imports.push("tailwindcss");
-			p.imports.push("@fcalell/plugin-solid-ui/globals.css");
-			const fonts = ctx.options?.fonts ?? defaultFonts;
-			const layer = fontsToTokenCss(fonts);
-			if (layer) p.layers.push({ name: "base", content: layer });
-		});
-
-		bus.on(Generate, async (p) => {
-			const appCssPayload = await bus.emit(events.AppCss, {
-				imports: [],
-				layers: [],
-			});
-			const appCssSource = aggregateAppCss(appCssPayload);
-			if (appCssSource !== null) {
-				p.files.push({ path: ".stack/app.css", content: appCssSource });
-			}
-		});
-
-		// MetaProvider wraps the app so <Title> / <Meta> from any page can
+		// ── Composition providers ───────────────────────────────────────
+		// MetaProvider wraps the app so <Title>/<Meta> from any page can
 		// contribute to <head>. Toaster renders as a sibling alongside the
-		// wrapped children so solid-sonner anchors at the root. order = 0 so
-		// MetaProvider stays outermost even as more providers compose in.
-		bus.on(solid.events.Providers, (p) => {
-			p.providers.push({
+		// wrapped children so solid-sonner anchors at the root. order = 0
+		// keeps MetaProvider outermost even as more providers compose in.
+		solid.slots.providers.contribute(
+			(): ProviderSpec => ({
 				imports: [
-					{
-						source: "@fcalell/plugin-solid-ui/meta",
-						named: ["MetaProvider"],
-					},
+					{ source: "@fcalell/plugin-solid-ui/meta", named: ["MetaProvider"] },
 					{
 						source: "@fcalell/plugin-solid-ui/components/toast",
 						named: ["Toaster"],
@@ -159,13 +200,38 @@ export const solidUi = createPlugin("solid-ui", {
 				wrap: { identifier: "MetaProvider" },
 				siblings: [{ kind: "jsx", tag: "Toaster", props: [], children: [] }],
 				order: 0,
-			});
-		});
+			}),
+		),
 
-		// No Remove handler needed: plugin-solid-ui has no consumer-owned
-		// surface to tear down — plugin-solid owns `src/app/` and the package
-		// itself is removed from `package.json` by the CLI remove command.
-	},
+		// ── App CSS ─────────────────────────────────────────────────────
+		self.slots.appCssImports.contribute(() => "tailwindcss"),
+		self.slots.appCssImports.contribute(
+			() => "@fcalell/plugin-solid-ui/globals.css",
+		),
+		self.slots.appCssLayers.contribute(async (ctx) => {
+			const entries = await ctx.resolve(self.slots.fonts);
+			const content = fontsToTokenCss(entries);
+			if (content === null) return undefined;
+			return { name: "base", content };
+		}),
+
+		// Emit `.stack/app.css`.
+		cliSlots.artifactFiles.contribute(async (ctx) => {
+			const src = await ctx.resolve(self.slots.appCssSource);
+			if (src === null) return undefined;
+			return { path: ".stack/app.css", content: src };
+		}),
+
+		// ── Home scaffold override ──────────────────────────────────────
+		// solid-ui owns the richer home page when the design system is in
+		// the config. The `override: true` on solid.slots.homeScaffold lets
+		// this contribution silently replace solid's bare seed — REVIEW #21
+		// fix. No `ctx.hasPlugin` check needed; the slot semantics handle it.
+		solid.slots.homeScaffold.contribute(
+			(ctx): ScaffoldSpec =>
+				ctx.scaffold("home.tsx", "src/app/pages/index.tsx"),
+		),
+	],
 });
 
 export type { SolidUiOptions } from "./types";

@@ -1,18 +1,20 @@
 import { existsSync, mkdirSync } from "node:fs";
 import { basename } from "node:path";
 import { intro, log, note, outro } from "@clack/prompts";
-import { Init } from "#events";
+import { defineConfig, type PluginConfig, type StackConfig } from "#config";
+import { buildGraphFromDiscovered } from "#lib/build-graph";
+import { cliSlots } from "#lib/cli-slots";
 import {
 	type DiscoveredPlugin,
 	dependencyNames,
 	loadAvailablePlugins,
 } from "#lib/discovery";
 import { MissingPluginError, StackError } from "#lib/errors";
-import { createEventBus } from "#lib/event-bus";
-import { ask, multi } from "#lib/prompt";
-import { createRegisterContext, syntheticAppConfig } from "#lib/registration";
+import { ask, createPromptContext, multi } from "#lib/prompt";
 import {
 	announceCreated,
+	ensureGitignore,
+	patchPackageJson,
 	writeIfMissingString,
 	writeScaffoldSpecs,
 } from "#lib/scaffold";
@@ -52,9 +54,6 @@ async function run(dir: string, options: InitOptions): Promise<void> {
 
 	const available = await loadAvailablePlugins();
 
-	// Non-interactive mode triggers when any flag is provided OR stdin is not a TTY.
-	// This keeps interactive `stack init` behaviour unchanged while letting CI and
-	// scripted flows drive scaffolding via flags.
 	const flagDriven =
 		options.plugins !== undefined ||
 		options.domain !== undefined ||
@@ -76,8 +75,6 @@ async function run(dir: string, options: InitOptions): Promise<void> {
 			})),
 		]);
 
-		// Auto-select required dependencies for interactive flow. Non-interactive
-		// selection already runs dependency resolution in resolvePluginSelection.
 		for (const name of [...selectedPlugins]) {
 			const info = available.find((p) => p.name === name);
 			if (info) {
@@ -100,7 +97,7 @@ async function run(dir: string, options: InitOptions): Promise<void> {
 	const hasSolid =
 		selectedPlugins.includes("solid") || selectedPlugins.includes("solid-ui");
 
-	// Scaffold base files
+	// Scaffold base files — CLI-owned, not plugin-contributed.
 	const baseEntries: Array<[string, string]> = [
 		[
 			"package.json",
@@ -119,60 +116,43 @@ async function run(dir: string, options: InitOptions): Promise<void> {
 	}
 	announceCreated(createdBase);
 
-	// Load and register each selected plugin via the event bus
-	const bus = createEventBus();
 	const pluginAnswers = new Map<string, Record<string, unknown>>();
+	for (const p of selectedPlugins) pluginAnswers.set(p, {});
 
-	for (const pluginName of selectedPlugins) {
-		const plugin = available.find((p) => p.name === pluginName);
-		if (!plugin) continue;
+	// Discovered plugins carry the factory + an `options: {}` placeholder.
+	// We don't yet have per-plugin options — prompts produce them. The
+	// slot graph reads `options` from `discovered`, not from a StackConfig,
+	// so skipping the synthetic factory call here avoids Zod errors for
+	// plugins whose options can't default to `{}` (e.g. db requires a
+	// dialect).
+	const selectedDiscovered = available.filter((p) =>
+		selectedPlugins.includes(p.name),
+	);
 
-		const ctx = createRegisterContext({
-			cwd: dir,
-			options: {},
-			app: { ...syntheticAppConfig(dir), name: appName, domain },
-			hasPlugin: (n) => selectedPlugins.includes(n),
-			nonInteractive,
-		});
-
-		plugin.cli.register(ctx, bus, plugin.events);
-		pluginAnswers.set(pluginName, {});
-	}
-
-	// Emit Init.Prompt so plugins can collect plugin-specific answers (dialect,
-	// cookie prefix, etc.) into `configOptions`. In non-interactive mode the
-	// prompt context resolves each call with defaults, so handlers still run.
-	const promptPayload = await bus.emit(Init.Prompt, {
-		configOptions: {},
+	// Resolve prompts via the slot graph. Each PromptSpec returns an answers
+	// object keyed by the plugin's own namespace.
+	const { graph: promptGraph } = buildGraphFromDiscovered({
+		discovered: selectedDiscovered,
+		app: { name: appName, domain },
+		cwd: dir,
 	});
+	const promptSpecs = await promptGraph.resolve(cliSlots.initPrompts);
 
-	for (const [pluginName, answers] of Object.entries(
-		promptPayload.configOptions,
-	)) {
-		if (!pluginAnswers.has(pluginName)) {
-			throw new StackError(
-				`Plugin "${pluginName}" emitted Init.Prompt answers but is not in the selected plugins. ` +
-					`Selected: ${[...pluginAnswers.keys()].join(", ")}. ` +
-					`Check the plugin's register() for a typo on configOptions.`,
-				"INIT_UNKNOWN_PLUGIN_ANSWERS",
-			);
+	const promptAdapter = createPromptContext({ nonInteractive });
+	for (const spec of promptSpecs) {
+		const priors: Record<string, unknown> = {};
+		for (const [plugin, answers] of pluginAnswers.entries()) {
+			priors[plugin] = answers;
 		}
-		pluginAnswers.set(pluginName, answers);
+		// Pass a minimal ctx exposing `prompt`; plugin-auth / plugin-db read it
+		// from there. Non-interactive mode resolves every prompt to a sensible
+		// default (see createPromptContext).
+		const answers = await spec.ask({ prompt: promptAdapter }, priors);
+		pluginAnswers.set(spec.plugin, answers);
 	}
 
-	// Emit scaffold event to let plugins contribute files
-	const scaffold = await bus.emit(Init.Scaffold, {
-		files: [],
-		dependencies: {},
-		devDependencies: {},
-		gitignore: [],
-	});
-
-	// Write plugin-contributed scaffold files (URL-sourced, no placeholder subst).
-	const createdPluginFiles = await writeScaffoldSpecs(scaffold.files, dir);
-	announceCreated(createdPluginFiles);
-
-	// Generate stack.config.ts
+	// Render stack.config.ts with the collected answers, then reload so the
+	// second graph pass sees the plugin's real options.
 	const configContent = stackConfigTemplate({
 		name: appName,
 		domain,
@@ -183,8 +163,45 @@ async function run(dir: string, options: InitOptions): Promise<void> {
 		announceCreated(["stack.config.ts"]);
 	}
 
-	// Run generate — failures here leave a broken .stack/, so surface them
-	// loudly rather than silently continuing into misleading "Next steps".
+	// Rebuild graph with the rendered options (each plugin's factory validates
+	// them via Zod) and resolve the init-time scaffold/dep/gitignore slots.
+	const configured = syntheticConfigFromSelection({
+		selectedPlugins,
+		available,
+		app: { name: appName, domain },
+		perPluginOptions: pluginAnswers,
+	});
+	const configuredDiscovered = configured.plugins.map((cfg) => {
+		const avail = available.find((a) => a.name === cfg.__plugin);
+		if (!avail) {
+			throw new StackError(
+				`Selected plugin '${cfg.__plugin}' went missing between passes.`,
+				"INIT_PLUGIN_MISSING",
+			);
+		}
+		return { ...avail, options: cfg.options } satisfies DiscoveredPlugin;
+	});
+	const { graph: initGraph } = buildGraphFromDiscovered({
+		discovered: configuredDiscovered,
+		app: configured.app,
+		cwd: dir,
+	});
+
+	const [scaffolds, deps, devDeps, gitignore] = await Promise.all([
+		initGraph.resolve(cliSlots.initScaffolds),
+		initGraph.resolve(cliSlots.initDeps),
+		initGraph.resolve(cliSlots.initDevDeps),
+		initGraph.resolve(cliSlots.gitignore),
+	]);
+
+	const created = await writeScaffoldSpecs(scaffolds, dir);
+	announceCreated(created);
+
+	patchPackageJson(dir, { dependencies: { ...deps, ...devDeps } });
+	if (gitignore.length > 0) ensureGitignore(...gitignore);
+
+	// Run the real generate path against the config we just wrote — this is
+	// the same code `stack generate` runs.
 	try {
 		const { generate } = await import("#commands/generate");
 		await generate("stack.config.ts");
@@ -205,9 +222,6 @@ async function run(dir: string, options: InitOptions): Promise<void> {
 	outro("Done!");
 }
 
-// Resolve `--plugins` CSV input into a valid, dependency-closed plugin list.
-// Unknown names exit with an error rather than getting silently dropped — the
-// consumer asked for something specific and we should not quietly ignore it.
 function resolvePluginSelection(
 	requested: string[],
 	available: DiscoveredPlugin[],
@@ -233,4 +247,28 @@ function resolvePluginSelection(
 		}
 	}
 	return selected;
+}
+
+// Build a StackConfig by calling each plugin's factory — the factory stamps
+// __plugin/__package and validates options against the plugin's schema.
+export function syntheticConfigFromSelection(opts: {
+	selectedPlugins: string[];
+	available: DiscoveredPlugin[];
+	app: { name: string; domain: string };
+	perPluginOptions?: Map<string, Record<string, unknown>>;
+}): StackConfig {
+	const configs: PluginConfig[] = [];
+	for (const name of opts.selectedPlugins) {
+		const info = opts.available.find((p) => p.name === name);
+		if (!info) continue;
+		const pluginOpts = opts.perPluginOptions?.get(name) ?? {};
+		// factory is callable — invoking it validates options and returns
+		// the PluginConfig entry defineConfig expects.
+		const cfg = info.factory(pluginOpts);
+		configs.push(cfg);
+	}
+	return defineConfig({
+		app: { name: opts.app.name, domain: opts.app.domain },
+		plugins: configs,
+	});
 }

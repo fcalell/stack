@@ -47,7 +47,7 @@ describe("aggregateWorker", () => {
 			pluginRuntimes: [],
 			middlewareChain: [mw],
 			handler: { identifier: "routes" },
-			cors: [],
+			callbacks: {},
 		});
 
 		expect(result).toContain(
@@ -73,7 +73,7 @@ describe("aggregateWorker", () => {
 			pluginRuntimes: [],
 			middlewareChain: [],
 			handler: null,
-			cors: [],
+			callbacks: {},
 		});
 
 		expect(result).not.toContain("createWorker");
@@ -91,7 +91,7 @@ describe("aggregateWorker", () => {
 			pluginRuntimes: [],
 			middlewareChain: [],
 			handler: null,
-			cors: [],
+			callbacks: {},
 		});
 
 		expect(result).toContain(".handler()");
@@ -108,7 +108,7 @@ describe("aggregateWorker", () => {
 			pluginRuntimes: [],
 			middlewareChain: [{ kind: "identifier", name: "middleware" }],
 			handler: null,
-			cors: [],
+			callbacks: {},
 		});
 
 		expect(result).toContain(".use(middleware)");
@@ -146,11 +146,13 @@ describe("aggregateWorker", () => {
 				},
 			],
 			handler: null,
-			cors: [],
+			callbacks: {},
 		});
 
 		expect(result).toContain('binding: "DB_MAIN"');
-		expect(result).toContain("schema");
+		// Shorthand property: the `schema` identifier must appear as a bare
+		// property (no `"schema":` with a value literal), not just anywhere.
+		expect(result).toMatch(/,\s*schema\s*[},]/);
 		expect(result).not.toContain('"schema":');
 	});
 
@@ -174,7 +176,7 @@ describe("aggregateWorker", () => {
 			],
 			middlewareChain: [{ kind: "identifier", name: "middleware" }],
 			handler: null,
-			cors: [],
+			callbacks: {},
 		});
 
 		expect(result).toContain('import dbRuntime from "@pkg/db/runtime"');
@@ -202,18 +204,19 @@ describe("aggregateWorker", () => {
 					options: {
 						secretVar: { kind: "string", value: "AUTH_SECRET" },
 					},
-					callbacks: {
-						import: {
-							source: "../src/worker/plugins/auth",
-							default: "authCallbacks",
-						},
-						identifier: "authCallbacks",
-					},
 				},
 			],
 			middlewareChain: [],
 			handler: null,
-			cors: [],
+			callbacks: {
+				auth: {
+					import: {
+						source: "../src/worker/plugins/auth",
+						default: "authCallbacks",
+					},
+					identifier: "authCallbacks",
+				},
+			},
 		});
 
 		expect(result).toContain(
@@ -222,13 +225,49 @@ describe("aggregateWorker", () => {
 		expect(result).toContain('secretVar: "AUTH_SECRET"');
 		expect(result).toContain("callbacks: authCallbacks");
 	});
+
+	it("ignores callback entries without a matching runtime (structural decoupling)", () => {
+		const result = aggregateWorker({
+			imports: [],
+			base: {
+				kind: "call",
+				callee: { kind: "identifier", name: "createWorker" },
+				args: [],
+			},
+			pluginRuntimes: [
+				{
+					plugin: "db",
+					import: { source: "@pkg/db/runtime", default: "dbRuntime" },
+					identifier: "dbRuntime",
+					options: {},
+				},
+			],
+			middlewareChain: [],
+			handler: null,
+			callbacks: {
+				// No auth runtime in pluginRuntimes — this callback entry is ignored.
+				auth: {
+					import: {
+						source: "../src/worker/plugins/auth",
+						default: "authCallbacks",
+					},
+					identifier: "authCallbacks",
+				},
+			},
+		});
+
+		expect(result).not.toContain("authCallbacks");
+	});
 });
 
 // ── aggregateMiddleware ────────────────────────────────────────────
 
 describe("aggregateMiddleware", () => {
-	it("returns null when no entries are contributed", () => {
-		expect(aggregateMiddleware({ entries: [] })).toBeNull();
+	it("returns empty calls/imports when no entries are contributed", () => {
+		expect(aggregateMiddleware({ entries: [] })).toEqual({
+			calls: [],
+			imports: [],
+		});
 	});
 
 	it("orders entries by phase (before-cors < after-cors < before-routes < after-routes)", () => {
@@ -259,8 +298,6 @@ describe("aggregateMiddleware", () => {
 			},
 		];
 		const result = aggregateMiddleware({ entries });
-		expect(result).not.toBeNull();
-		if (!result) return;
 		const names = result.calls.map((c) =>
 			c.kind === "identifier" ? c.name : "",
 		);
@@ -289,8 +326,6 @@ describe("aggregateMiddleware", () => {
 			},
 		];
 		const result = aggregateMiddleware({ entries });
-		expect(result).not.toBeNull();
-		if (!result) return;
 		const names = result.calls.map((c) =>
 			c.kind === "identifier" ? c.name : "",
 		);
@@ -319,8 +354,6 @@ describe("aggregateMiddleware", () => {
 			},
 		];
 		const result = aggregateMiddleware({ entries });
-		expect(result).not.toBeNull();
-		if (!result) return;
 		expect(result.imports).toHaveLength(2);
 		expect(result.imports.map((i) => i.source).sort()).toEqual([
 			"@pkg/a",

@@ -147,17 +147,21 @@ describe("emitRoutes", () => {
 		const { root } = buildTree(["_layout.tsx", "index.tsx"], pagesDir);
 		const { routesArray } = emitRoutes(root, projectRoot, undefined);
 
-		expect(routesArray).toContain('path: "/"');
-		expect(routesArray).toContain("children:");
-		expect(routesArray).toContain("_layout.tsx");
+		// Root path "/" must carry a `children:` array and the consumer's
+		// `_layout.tsx` as its component.
+		expect(routesArray).toMatch(/path:\s*"\/",\s*component:.*_layout\.tsx/);
+		expect(routesArray).toMatch(/children:\s*\[/);
 	});
 
 	it("wraps routes in a DefaultLayout when root has no layout", () => {
 		const { root } = buildTree(["index.tsx"], pagesDir);
 		const { routesArray } = emitRoutes(root, projectRoot, undefined);
 
-		expect(routesArray).toContain("component: DefaultLayout");
-		expect(routesArray).toContain("children:");
+		// DefaultLayout is a hard-coded identifier emitted by the virtual
+		// module; it must be referenced at the component position and no
+		// `_layout.tsx` reference must leak through.
+		expect(routesArray).toMatch(/component:\s*DefaultLayout/);
+		expect(routesArray).toMatch(/children:\s*\[/);
 		expect(routesArray).not.toContain("_layout.tsx");
 	});
 
@@ -166,14 +170,16 @@ describe("emitRoutes", () => {
 		const notFound = `${pagesDir}/_notFound.tsx`;
 		const { routesArray } = emitRoutes(root, projectRoot, notFound);
 
-		expect(routesArray).toContain('path: "*"');
+		// A literal `"*"` route entry is only emitted for notFound; must be
+		// structured as `path: "*", component: ...`.
+		expect(routesArray).toMatch(/path:\s*"\*",\s*component:/);
 	});
 
 	it("generates correct path for dynamic segments", () => {
 		const { root } = buildTree(["projects/[id].tsx"], pagesDir);
 		const { routesArray } = emitRoutes(root, projectRoot, undefined);
 
-		expect(routesArray).toContain("/projects/:id");
+		expect(routesArray).toMatch(/path:\s*"\/projects\/:id"/);
 	});
 });
 
@@ -228,12 +234,18 @@ describe("emitVirtualModule", () => {
 });
 
 describe("buildRoutesDts", () => {
-	it("throws when pagesDir does not exist", () => {
+	// REVIEW #3: the old implementation threw on a missing pagesDir, which
+	// crashed `stack generate` on a fresh project that hadn't scaffolded
+	// src/app/pages yet. The structural fix: return an empty but valid dts so
+	// generated files that `import type { routes } from "virtual:fcalell-routes"`
+	// still type-check. Never throw on a missing dir.
+	it("returns an empty stub when pagesDir does not exist", () => {
 		const cwd = mkdtempSync(join(tmpdir(), "plugin-solid-rdts-"));
 		try {
-			expect(() => buildRoutesDts(cwd, "src/app/pages")).toThrow(
-				/pages directory not found at "src\/app\/pages"/,
-			);
+			const dts = buildRoutesDts(cwd, "src/app/pages");
+			expect(dts).toContain(VIRTUAL_ROUTES_ID);
+			// The typed routes block renders as an empty `{  }` (no entries).
+			expect(dts).toContain("export const typedRoutes:");
 		} finally {
 			rmSync(cwd, { recursive: true, force: true });
 		}

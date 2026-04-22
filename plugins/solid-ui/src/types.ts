@@ -3,9 +3,10 @@ import type { FontEntry } from "./node/fonts";
 
 export type { FontEntry };
 
-// Payload for the plugin-solid-ui owned solidUi.events.AppCss event. Plugins
-// contribute raw `@import` URLs and `@layer` blocks; the aggregator renders
-// `.stack/app.css`.
+// Aggregated inputs for the `.stack/app.css` derivation. Plugins contribute
+// to `solidUi.slots.appCssImports` (raw `@import` URLs) and
+// `solidUi.slots.appCssLayers` (named `@layer` blocks); `aggregateAppCss`
+// renders them to the final CSS source.
 export interface CodegenAppCssPayload {
 	imports: string[];
 	layers: Array<{ name: string; content: string }>;

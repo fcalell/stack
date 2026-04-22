@@ -2,12 +2,13 @@ import { existsSync, type FSWatcher, watch } from "node:fs";
 import { join } from "node:path";
 import { intro, log } from "@clack/prompts";
 import pc from "picocolors";
-import { Dev } from "#events";
-import { hasRuntimeExport } from "#lib/codegen";
+import { generateFromConfig } from "#commands/generate";
+import type { StackConfig } from "#config";
+import { buildGraphFromConfig } from "#lib/build-graph";
+import { cliSlots } from "#lib/cli-slots";
 import { loadConfig } from "#lib/config";
-import { discoverPlugins, sortByDependencies } from "#lib/discovery";
 import { type ManagedProcess, onExit, spawnPrefixed } from "#lib/proc";
-import { registerPlugins } from "#lib/registration";
+import type { DevReadyTask, ProcessSpec, WatcherSpec } from "#specs";
 
 interface DevOptions {
 	studio: boolean;
@@ -22,89 +23,105 @@ const COLORS: Array<(s: string) => string> = [
 	pc.blue,
 ];
 
+export interface DevPlan {
+	processes: ProcessSpec[];
+	readySetup: DevReadyTask[];
+	watchers: WatcherSpec[];
+}
+
+export async function devPlanFromConfig(
+	config: StackConfig,
+	cwd: string,
+): Promise<DevPlan> {
+	const { graph } = await buildGraphFromConfig({ config, cwd });
+	const [processes, readySetup, watchers] = await Promise.all([
+		graph.resolve(cliSlots.devProcesses),
+		graph.resolve(cliSlots.devReadySetup),
+		graph.resolve(cliSlots.devWatchers),
+	]);
+	return { processes, readySetup, watchers };
+}
+
+// Wait until `proc.stdout` prints a line matching `readyPattern` or the
+// process exits. Resolves `true` on match, `false` if the process exits
+// first. Only called when a ProcessSpec declares a readyPattern.
+function waitForReady(proc: ManagedProcess, pattern: RegExp): Promise<boolean> {
+	return new Promise((resolve) => {
+		let settled = false;
+		const onLine = (buf: Buffer) => {
+			if (settled) return;
+			const text = buf.toString("utf-8");
+			if (pattern.test(text)) {
+				settled = true;
+				cleanup();
+				resolve(true);
+			}
+		};
+		const onExit = () => {
+			if (settled) return;
+			settled = true;
+			cleanup();
+			resolve(false);
+		};
+		const cleanup = () => {
+			proc.child.stdout?.off("data", onLine);
+			proc.child.stderr?.off("data", onLine);
+			proc.child.off("exit", onExit);
+		};
+		proc.child.stdout?.on("data", onLine);
+		proc.child.stderr?.on("data", onLine);
+		proc.child.on("exit", onExit);
+	});
+}
+
 export async function dev(options: DevOptions): Promise<void> {
 	intro("stack dev");
 
-	// Generate
-	const { generate } = await import("#commands/generate");
-	await generate(options.config);
+	const cwd = process.cwd();
+	const regenerate = async () => {
+		const config = await loadConfig(options.config);
+		await generateFromConfig(config, cwd, { writeToDisk: true });
+	};
+
+	await regenerate();
 
 	const config = await loadConfig(options.config);
-	const discovered = await discoverPlugins(config);
-	const sorted = sortByDependencies(discovered);
-	const cwd = process.cwd();
+	const { processes, readySetup, watchers } = await devPlanFromConfig(
+		config,
+		cwd,
+	);
 
-	const bus = registerPlugins(sorted, config, cwd);
-
-	// Check if any plugin has a worker runtime
-	const hasWorker = sorted.some((p) => hasRuntimeExport(p.cli.package));
-
-	// Dev.Start — collect processes and watchers
-	const devStart = await bus.emit(Dev.Start, {
-		processes: [],
-		watchers: [],
-	});
-
-	const allProcesses: ManagedProcess[] = [];
 	let colorIndex = 0;
+	const managed: ManagedProcess[] = [];
+	const readyWaits: Array<Promise<boolean>> = [];
 
-	// Spawn wrangler if any plugin has a worker
-	if (hasWorker) {
-		const wranglerConfig = join(cwd, ".stack", "wrangler.toml");
+	for (const spec of processes) {
 		const color = COLORS[colorIndex % COLORS.length];
 		if (color) colorIndex++;
-		allProcesses.push(
-			spawnPrefixed({
-				name: "wrangler",
-				color: color ?? pc.white,
-				command: "npx",
-				args: [
-					"wrangler",
-					"dev",
-					"--config",
-					wranglerConfig,
-					"--persist-to",
-					".stack/dev",
-				],
-				cwd,
-			}),
-		);
+		const proc = spawnPrefixed({
+			name: spec.name,
+			color: color ?? pc.white,
+			command: spec.command,
+			args: spec.args,
+			cwd,
+		});
+		managed.push(proc);
+		if (spec.readyPattern) {
+			readyWaits.push(waitForReady(proc, spec.readyPattern));
+		}
 	}
 
-	// Spawn plugin-contributed processes
-	for (const proc of devStart.processes) {
-		const color = COLORS[colorIndex % COLORS.length];
-		if (color) colorIndex++;
-		allProcesses.push(
-			spawnPrefixed({
-				name: proc.name,
-				color: color ?? pc.white,
-				command: proc.command,
-				args: proc.args,
-				cwd,
-			}),
-		);
+	if (readyWaits.length > 0) {
+		await Promise.all(readyWaits);
 	}
 
-	// Dev.Ready — collect setup tasks and post-ready watchers
-	const devReady = await bus.emit(Dev.Ready, {
-		url: "",
-		port: 0,
-		setup: [],
-		watchers: [],
-	});
-
-	// Run setup tasks sequentially
-	for (const task of devReady.setup) {
+	for (const task of readySetup) {
 		log.step(`Setup: ${task.name}`);
 		await task.run();
 	}
 
 	const fsWatchers: FSWatcher[] = [];
-
-	// Start all watchers (from both Dev.Start and Dev.Ready)
-	const allWatchers = [...devStart.watchers, ...devReady.watchers];
-	for (const w of allWatchers) {
+	for (const w of watchers) {
 		const fullPath = join(cwd, w.paths);
 		if (!existsSync(fullPath)) continue;
 		let debounceTimer: ReturnType<typeof setTimeout>;
@@ -123,7 +140,7 @@ export async function dev(options: DevOptions): Promise<void> {
 
 	log.info("Watching for changes...");
 
-	for (const proc of allProcesses) {
+	for (const proc of managed) {
 		proc.child.on("exit", (code) => {
 			if (code !== 0 && code !== null) {
 				log.warn(`[${proc.name}] exited with code ${code}`);
@@ -131,7 +148,6 @@ export async function dev(options: DevOptions): Promise<void> {
 		});
 	}
 
-	// Config watcher — re-generate on change
 	let configDebounce: ReturnType<typeof setTimeout>;
 	fsWatchers.push(
 		watch(cwd, (_event, filename) => {
@@ -140,7 +156,7 @@ export async function dev(options: DevOptions): Promise<void> {
 			configDebounce = setTimeout(async () => {
 				log.step("Config changed, regenerating...");
 				try {
-					await generate(options.config);
+					await regenerate();
 				} catch (err) {
 					log.warn(
 						`Regeneration failed: ${err instanceof Error ? err.message : String(err)}`,
@@ -150,7 +166,7 @@ export async function dev(options: DevOptions): Promise<void> {
 		}),
 	);
 
-	onExit(allProcesses, () => {
+	onExit(managed, () => {
 		for (const w of fsWatchers) w.close();
 	});
 }

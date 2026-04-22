@@ -1,6 +1,6 @@
 # @fcalell/plugin-auth
 
-Authentication plugin for the `@fcalell/stack` framework. Wraps Better Auth with OTP login, organization RBAC, and session management -- all driven by config. Depends on the `db` plugin via `db.events.SchemaReady`.
+Authentication plugin for the `@fcalell/stack` framework. Wraps Better Auth with OTP login, organization RBAC, and session management -- all driven by config. Requires the `api`, `cloudflare`, and `db` plugins; reads `api.slots.cors` to derive its `trustedOrigins` automatically.
 
 ## Install
 
@@ -39,7 +39,7 @@ export default defineConfig({
 });
 ```
 
-The `auth` plugin depends on `db` -- the CLI validates this via `after: [db.events.SchemaReady]`.
+The `auth` plugin requires `api`, `cloudflare`, and `db`. The CLI validates the presence of each. `trustedOrigins` and other CORS-derived options are computed inside `auth.slots.runtimeOptions`, a derived slot whose inputs include `api.slots.cors` — so the dataflow guarantees every cors contributor (e.g. `vite`'s localhost origin) is resolved before the auth runtime is rendered.
 
 ### 2. Define callbacks
 
@@ -135,7 +135,7 @@ type Session = InferSession<typeof config>;
 
 ## Bindings
 
-The plugin auto-declares four bindings (pushed onto the `Generate` payload):
+The plugin auto-declares four bindings (contributed via `cloudflare.slots.bindings` and `cloudflare.slots.secrets`):
 
 | Binding | Type | Default name | Dev default |
 |---------|------|--------------|-------------|
@@ -148,33 +148,57 @@ All binding names are customizable via config options.
 
 ## Plugin implementation
 
-Built with `createPlugin` from `@fcalell/cli`:
+Built with `plugin` from `@fcalell/cli`. Owns one slot — `auth.slots.runtimeOptions` — a derived slot that reads `api.slots.cors` so `trustedOrigins` and `sameSite` are always computed against the fully-resolved CORS list.
 
 ```ts
-import { createPlugin, callback } from "@fcalell/cli";
-import { Init, Generate, Remove } from "@fcalell/cli/events";
-import { db } from "@fcalell/plugin-db";
+import { plugin, slot, callback } from "@fcalell/cli";
+import { cliSlots } from "@fcalell/cli/cli-slots";
+import { api } from "@fcalell/plugin-api";
+import { cloudflare } from "@fcalell/plugin-cloudflare";
 
-export const auth = createPlugin("auth", {
+const runtimeOptions = slot.derived({
+  source: "auth",
+  name: "runtimeOptions",
+  inputs: { cors: api.slots.cors },
+  compute: (inp, ctx) => /* compose Better Auth options from inp.cors + ctx.options */,
+});
+
+export const auth = plugin("auth", {
   label: "Auth",
-  after: [db.events.SchemaReady],
+  schema: authOptionsSchema,
+  requires: ["api", "cloudflare", "db"],
   callbacks: {
     sendOTP: callback<{ email: string; code: string }>(),
-    sendInvitation: callback<{ email: string; orgName: string }>(),
+    sendInvitation: callback.optional<{ email: string; orgName: string }>(),
   },
-  schema: authOptionsSchema,
-  register(ctx, bus) { ... },
+  dependencies: { "@fcalell/plugin-auth": "workspace:*" },
+  slots: { runtimeOptions },
+  contributes: (self) => [
+    cloudflare.slots.bindings.contribute(/* rate limiter bindings */),
+    cloudflare.slots.secrets.contribute(/* AUTH_SECRET + APP_URL */),
+    api.slots.pluginRuntimes.contribute(async (ctx) => ({
+      plugin: "auth",
+      import: { source: "@fcalell/plugin-auth/runtime", default: "authRuntime" },
+      identifier: "authRuntime",
+      options: await ctx.resolve(self.slots.runtimeOptions),
+    })),
+    api.slots.callbacks.contribute(async (ctx) => /* gated on src/worker/plugins/auth.ts */),
+    cliSlots.initPrompts.contribute(/* cookie prefix + organization toggle */),
+  ],
 });
 ```
 
-### Event handlers
+### Slot contributions
 
-| Event | Behavior |
-|-------|----------|
-| `Init.Prompt` | Asks for cookie prefix and whether to include organizations |
-| `Init.Scaffold` | Writes `src/worker/plugins/auth.ts` callback template, adds `@fcalell/plugin-auth` dependency |
-| `Generate` | Pushes 4 binding declarations (auth secret, app URL, IP rate limiter, email rate limiter) |
-| `Remove` | Declares `src/worker/plugins/auth.ts` and `@fcalell/plugin-auth` for cleanup |
+| Target slot | Behavior |
+|-------------|----------|
+| `cloudflare.slots.bindings` | IP + email rate-limiter bindings |
+| `cloudflare.slots.secrets` | `AUTH_SECRET` + `APP_URL` (`.dev.vars` template) |
+| `api.slots.pluginRuntimes` | `authRuntime({ ... })` runtime entry; options resolved from `auth.slots.runtimeOptions` |
+| `api.slots.callbacks` | Wires `src/worker/plugins/auth.ts` onto the auth runtime when the file exists |
+| `cliSlots.initPrompts` | Cookie prefix + organization toggle |
+| `cliSlots.initScaffolds` (auto) | Scaffolds `src/worker/plugins/auth.ts` from `templates/callbacks.ts` |
+| `cliSlots.removeFiles` (auto) | `src/worker/plugins/auth.ts` |
 
 ### Runtime
 

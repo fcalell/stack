@@ -52,17 +52,14 @@ describe("initPlugin()", () => {
 		expect(tsconfig.include).toEqual(["src"]);
 
 		const index = readFileSync(indexPath, "utf-8");
-		expect(index).toContain('createPlugin("my-plugin"');
+		expect(index).toContain('plugin("my-plugin"');
 		expect(index).toContain('package: "stack-plugin-my-plugin"');
-		expect(index).toContain("Init.Scaffold");
 		expect(index).toContain("export const myPlugin");
+		expect(index).toContain("slots:");
 
 		const test = readFileSync(testPath, "utf-8");
-		expect(test).toContain('from "@fcalell/cli/testing"');
-		expect(test).toContain('from "@fcalell/cli/events"');
-		expect(test).toContain("createMockCtx");
-		expect(test).toContain("createEventBus");
-		expect(test).toContain("Init.Scaffold");
+		expect(test).toContain("cli.collect");
+		expect(test).toContain("slots.example");
 
 		const runtime = readFileSync(runtimePath, "utf-8");
 		expect(runtime).toContain('from "@fcalell/cli/runtime"');
@@ -123,6 +120,6 @@ describe("initPlugin()", () => {
 		expect(index).toContain("SomeThingOptions");
 
 		const test = readFileSync(join(target, "src/index.test.ts"), "utf-8");
-		expect(test).toContain("someThing.cli.register");
+		expect(test).toContain("someThing.cli.collect");
 	});
 });

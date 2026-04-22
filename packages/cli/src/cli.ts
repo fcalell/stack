@@ -131,35 +131,30 @@ async function main(): Promise<void> {
 		return;
 	}
 
-	// Try to match `stack <plugin> <command>`
+	// Plugin subcommands (`stack <plugin> <command>`) — build the slot graph
+	// once, look the command up, and hand it a CommandContext whose `resolve`
+	// is wired to the graph.
 	const pluginName = command;
 	const commandName = subcommand;
-
-	if (!commandName) {
-		usage();
-	}
+	if (!commandName) usage();
 
 	const { loadConfig } = await import("#lib/config");
-	const { discoverPlugins, sortByDependencies } = await import(
-		"#lib/discovery"
-	);
+	const { buildGraphFromConfig } = await import("#lib/build-graph");
 	const { findPluginCommand, parseCommandFlags, createCommandContext } =
 		await import("#lib/command-router");
-	const { registerPlugins } = await import("#lib/registration");
 	const { createLogContext, createPromptContext } = await import("#lib/prompt");
 
 	const config = await loadConfig(configPath);
-	const discovered = await discoverPlugins(config);
-	const sorted = sortByDependencies(discovered);
-
-	// Register plugins to set up the event bus and capture it for the command.
-	const bus = registerPlugins(sorted, config, process.cwd());
+	const { graph, sorted } = await buildGraphFromConfig({
+		config,
+		cwd: process.cwd(),
+	});
 
 	const pluginClis = sorted.map((p) => p.cli);
 	const match = findPluginCommand(pluginClis, pluginName, commandName);
 
 	if (!match) {
-		log.error(`Unknown command: stack ${pluginName} ${commandName}`);
+		log.error(`Unknown command: stack ${pluginName} ${commandName ?? ""}`);
 		usage();
 	}
 
@@ -169,7 +164,7 @@ async function main(): Promise<void> {
 	const ctx = createCommandContext({
 		options: plugin?.options ?? {},
 		cwd: process.cwd(),
-		bus,
+		resolve: (slot) => graph.resolve(slot),
 		log: createLogContext(),
 		prompt: createPromptContext(),
 	});
