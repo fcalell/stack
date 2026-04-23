@@ -61,12 +61,9 @@ export function aggregateWrangler(opts: {
 			);
 		}
 	} else {
-		const date =
-			opts.payload.compatibilityDate ||
-			new Date().toISOString().split("T")[0] ||
-			"";
 		root.name = sanitizeWranglerName(opts.name ?? "stack-app");
-		root.compatibility_date = date;
+		root.compatibility_date =
+			opts.payload.compatibilityDate || new Date().toISOString().slice(0, 10);
 		root.main = "worker.ts";
 	}
 

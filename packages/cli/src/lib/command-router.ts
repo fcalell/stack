@@ -9,7 +9,11 @@ import type {
 import { StackError } from "#lib/errors";
 import type { Slot } from "#lib/slots";
 
-type AnyCliPlugin = InternalCliPlugin<unknown, Record<string, Slot<unknown>>>;
+type AnyCliPlugin = InternalCliPlugin<
+	unknown,
+	Record<string, Slot<unknown>>,
+	unknown
+>;
 
 export interface PluginCommandMatch {
 	plugin: AnyCliPlugin;

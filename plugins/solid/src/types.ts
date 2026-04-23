@@ -8,7 +8,12 @@ import { z } from "zod";
 
 export const solidOptionsSchema = z.object({
 	routes: z
-		.union([z.literal(false), z.object({ pagesDir: z.string().optional() })])
+		.union([
+			z.literal(false),
+			z.object({
+				pagesDir: z.string().min(1, "pagesDir cannot be empty").optional(),
+			}),
+		])
 		.optional(),
 	title: z.string().optional(),
 	description: z.string().optional(),

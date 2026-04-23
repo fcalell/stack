@@ -89,7 +89,7 @@ function collectAuthPlugins(opts: CollectOpts = {}): {
 	const dbCollected = withDb
 		? db.cli.collect({
 				app,
-				options: { dialect: "d1", databaseId: "abc-123" },
+				options: db({ dialect: "d1", databaseId: "abc-123" }).options,
 			})
 		: null;
 	// Validate options through the factory so defaults (rateLimiter, secretVar,

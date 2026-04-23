@@ -70,8 +70,7 @@ database_name = "abc-123"
 exports[`generate pipeline snapshot > frontend-only: vite + solid without worker 1`] = `
 {
   "appCss": null,
-  "entry": "import "./app.css";
-import { Router } from "@solidjs/router";
+  "entry": "import { Router } from "@solidjs/router";
 import { render } from "solid-js/web";
 import { routes } from "virtual:fcalell-routes";
 import Providers from "virtual:stack-providers";

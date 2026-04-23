@@ -161,7 +161,7 @@ Each CLI command resolves a fixed set of root slots and acts on the result. Ther
 | `stack remove` | `cliSlots.removeFiles` + `removeDeps` + `removeDevDeps` filtered to target plugin → patch config → `generate` |
 | `stack <plugin> <command>` | Plugin's own `commands[name].handler(ctx)` — `ctx.resolve(slot)` is the escape hatch to pull arbitrary slot values |
 
-`cliSlots.artifactFiles` is the universal codegen sink. Plugins expose their own derived `*Source` slot (e.g. `api.slots.workerSource`) and emit a thin `cliSlots.artifactFiles.contribute(async (ctx) => ({ path, content: await ctx.resolve(self.slots.workerSource) }))`. The generate procedure is just "resolve every artifact file, write it, then run any postWrite hooks." `plugin-cloudflare` contributes a `postWrite` hook that shells out to `wrangler types` after `.stack/wrangler.toml` lands.
+`cliSlots.artifactFiles` is the universal codegen sink. Plugins expose their own derived `*Source` slot (e.g. `api.slots.workerSource`) and emit a one-liner via the shared helper: `emitArtifact(".stack/worker.ts", self.slots.workerSource)` — which resolves the source slot, returns `{ path, content }`, or skips when the source is `null`. The generate procedure is just "resolve every artifact file, write it, then run any postWrite hooks." `plugin-cloudflare` contributes a `postWrite` hook that shells out to `wrangler types` after `.stack/wrangler.toml` lands.
 
 ### Plugin commands
 

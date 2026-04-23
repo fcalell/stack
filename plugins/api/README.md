@@ -238,7 +238,7 @@ Built with `plugin` from `@fcalell/cli`. Owns every fragment of `.stack/worker.t
 
 ```ts
 import { plugin, slot } from "@fcalell/cli";
-import { cliSlots } from "@fcalell/cli/cli-slots";
+import { emitArtifact } from "@fcalell/cli/cli-slots";
 
 export const api = plugin("api", {
   label: "API",
@@ -248,11 +248,7 @@ export const api = plugin("api", {
   gitignore: [".wrangler", ".stack"],
   slots: { workerImports, pluginRuntimes, /* ... */ workerSource },
   contributes: (self) => [
-    cliSlots.artifactFiles.contribute(async (ctx) => {
-      const src = await ctx.resolve(self.slots.workerSource);
-      if (src === null) return undefined;
-      return { path: ".stack/worker.ts", content: src };
-    }),
+    emitArtifact(".stack/worker.ts", self.slots.workerSource),
     // route barrel, dev process, route watcher, deploy step, remove cleanup …
   ],
 });

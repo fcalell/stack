@@ -1,5 +1,5 @@
 import type { ScaffoldSpec } from "#ast";
-import { slot } from "#lib/slots";
+import { type Contribution, type Slot, slot } from "#lib/slots";
 import type {
 	BuildStep,
 	DeployCheck,
@@ -78,3 +78,18 @@ export const cliSlots = {
 } as const;
 
 export type CliSlots = typeof cliSlots;
+
+// Shorthand for the canonical "resolve a *Source slot, write it as an
+// artifact, skip on null" pattern. A null source means the upstream
+// derivation chose not to emit anything (e.g. no runtimes registered) — the
+// contribution returns undefined and the artifactFiles list drops it.
+export function emitArtifact(
+	path: string,
+	source: Slot<string | null>,
+): Contribution<GeneratedFile[]> {
+	return cliSlots.artifactFiles.contribute(async (ctx) => {
+		const content = await ctx.resolve(source);
+		if (content === null) return undefined;
+		return { path, content };
+	});
+}

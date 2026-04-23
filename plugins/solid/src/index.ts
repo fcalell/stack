@@ -6,7 +6,7 @@ import type {
 	TsExpression,
 	TsImportSpec,
 } from "@fcalell/cli/ast";
-import { cliSlots } from "@fcalell/cli/cli-slots";
+import { cliSlots, emitArtifact } from "@fcalell/cli/cli-slots";
 import { vite } from "@fcalell/plugin-vite";
 import {
 	aggregateEntry,
@@ -251,9 +251,9 @@ export const solid = plugin<
 		}),
 
 		// ── Entry source ────────────────────────────────────────────────
-		self.slots.entryImports.contribute(
-			(): TsImportSpec => ({ source: "./app.css", sideEffect: true }),
-		),
+		// `./app.css` is contributed by plugin-solid-ui — CSS is solid-ui's
+		// domain. A solid()-only consumer emits no app.css artifact and gets
+		// no entry-level import, keeping the build consistent.
 		self.slots.entryImports.contribute(
 			(): TsImportSpec => ({ source: "solid-js/web", named: ["render"] }),
 		),
@@ -353,26 +353,10 @@ export const solid = plugin<
 		),
 
 		// ── Artifact files ──────────────────────────────────────────────
-		cliSlots.artifactFiles.contribute(async (ctx) => {
-			const src = await ctx.resolve(self.slots.entrySource);
-			if (src === null) return undefined;
-			return { path: ".stack/entry.tsx", content: src };
-		}),
-		cliSlots.artifactFiles.contribute(async (ctx) => {
-			const src = await ctx.resolve(self.slots.htmlSource);
-			if (src === null) return undefined;
-			return { path: ".stack/index.html", content: src };
-		}),
-		cliSlots.artifactFiles.contribute(async (ctx) => {
-			const src = await ctx.resolve(self.slots.providersSource);
-			if (src === null) return undefined;
-			return { path: ".stack/virtual-providers.tsx", content: src };
-		}),
-		cliSlots.artifactFiles.contribute(async (ctx) => {
-			const src = await ctx.resolve(self.slots.routesDtsSource);
-			if (src === null) return undefined;
-			return { path: ".stack/routes.d.ts", content: src };
-		}),
+		emitArtifact(".stack/entry.tsx", self.slots.entrySource),
+		emitArtifact(".stack/index.html", self.slots.htmlSource),
+		emitArtifact(".stack/virtual-providers.tsx", self.slots.providersSource),
+		emitArtifact(".stack/routes.d.ts", self.slots.routesDtsSource),
 
 		// ── Home scaffold ───────────────────────────────────────────────
 		// Resolved from `homeScaffold` so solid-ui's override seamlessly wins.

@@ -184,6 +184,18 @@ The cross-cutting sinks every command consumes. Plugins contribute here for file
 | `cliSlots.removeDeps` | `list<string>` | npm deps removed (auto-wired from `plugin({ dependencies })`) |
 | `cliSlots.removeDevDeps` | `list<string>` | npm devDeps removed (auto-wired from `plugin({ devDependencies })`) |
 
+For the universal "resolve a `*Source` slot, write it under `.stack/`, skip on `null`" pattern, prefer the `emitArtifact` helper exported alongside `cliSlots`:
+
+```ts
+import { emitArtifact } from "@fcalell/cli/cli-slots";
+
+contributes: (self) => [
+  emitArtifact(".stack/worker.ts", self.slots.workerSource),
+],
+```
+
+It expands to a `cliSlots.artifactFiles.contribute` that resolves the source slot, returns `{ path, content }`, or skips when the source resolves to `null`. Drop down to the raw `cliSlots.artifactFiles.contribute(...)` form only when the contribution needs more than that — e.g. consulting `ctx.fileExists` before writing.
+
 ### `api.slots.*` (plugin-api)
 
 | Slot | Kind | Purpose |

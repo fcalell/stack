@@ -163,6 +163,67 @@ describe("literal", () => {
 		expect(literal(null)).toEqual({ kind: "null" });
 		expect(literal(undefined)).toEqual({ kind: "undefined" });
 	});
+
+	it("throws for Date instances", () => {
+		expect(() => literal(new Date())).toThrow(/Date/);
+	});
+
+	it("throws for functions", () => {
+		expect(() => literal(() => {})).toThrow(/function/);
+	});
+
+	it("throws for bigint", () => {
+		expect(() => literal(123n)).toThrow(/bigint/);
+	});
+
+	it("throws for symbol", () => {
+		expect(() => literal(Symbol("x"))).toThrow(/symbol/);
+	});
+
+	it("throws for Map instances", () => {
+		expect(() => literal(new Map())).toThrow(/Map/);
+	});
+
+	it("throws when a nested value is non-plain", () => {
+		expect(() => literal({ d: new Date() })).toThrow(/Date/);
+	});
+
+	it("accepts null-prototype plain objects", () => {
+		const obj = Object.create(null) as Record<string, unknown>;
+		obj.a = 1;
+		expect(literal(obj)).toEqual({
+			kind: "object",
+			properties: [{ key: "a", value: { kind: "number", value: 1 } }],
+		});
+	});
+
+	it("regression: still handles deep happy-path objects", () => {
+		expect(literal({ a: 1, b: { c: [1, 2, "x"] } })).toEqual({
+			kind: "object",
+			properties: [
+				{ key: "a", value: { kind: "number", value: 1 } },
+				{
+					key: "b",
+					value: {
+						kind: "object",
+						properties: [
+							{
+								key: "c",
+								value: {
+									kind: "array",
+									items: [
+										{ kind: "number", value: 1 },
+										{ kind: "number", value: 2 },
+										{ kind: "string", value: "x" },
+									],
+								},
+							},
+						],
+					},
+				},
+			],
+		});
+	});
 });
 
 describe("import builders", () => {

@@ -8,7 +8,8 @@ import { cloudflare } from "@fcalell/plugin-cloudflare";
 import type { z } from "zod";
 import { type AuthOptions, authOptionsSchema } from "./types";
 
-// Post-validation view of options: schema defaults guaranteed present.
+// Post-validation view: every schema default is materialised. Threaded into
+// `plugin()` as the 5th generic so `self.options` is the resolved shape.
 type ResolvedAuthOptions = z.output<typeof authOptionsSchema>;
 
 const SOURCE = "auth";
@@ -29,13 +30,11 @@ const runtimeOptions = slot.derived<
 	name: "runtimeOptions",
 	inputs: { cors: api.slots.cors },
 	compute: (inp, ctx) => {
-		const opts = ctx.options as ResolvedAuthOptions;
-
 		// Seed with every consumer-supplied option (secretVar, appUrlVar,
 		// cookies, session, user, organization, rateLimiter). `literalToProps`
 		// produces a Record<string, TsExpression> so we can splice in derived
 		// keys below without re-literalising the whole object.
-		const props = literalToProps(opts as unknown as Record<string, unknown>);
+		const props = literalToProps(ctx.options as Record<string, unknown>);
 
 		// trustedOrigins derives from the fully-resolved cors list — never
 		// consumer-configured, never racey.
@@ -68,7 +67,8 @@ export const auth = plugin<
 		sendInvitation: ReturnType<
 			typeof callback.optional<{ email: string; orgName: string }>
 		>;
-	}
+	},
+	ResolvedAuthOptions
 >("auth", {
 	label: "Auth",
 
@@ -116,36 +116,30 @@ export const auth = plugin<
 		})),
 
 		// Rate limiter bindings for IP + email.
-		cloudflare.slots.bindings.contribute((ctx) => {
-			const opts = ctx.options as ResolvedAuthOptions;
-			return [
-				{
-					kind: "rate_limiter" as const,
-					binding: opts.rateLimiter.ip.binding,
-					simple: {
-						limit: opts.rateLimiter.ip.limit,
-						period: opts.rateLimiter.ip.period,
-					},
+		cloudflare.slots.bindings.contribute(() => [
+			{
+				kind: "rate_limiter" as const,
+				binding: self.options.rateLimiter.ip.binding,
+				simple: {
+					limit: self.options.rateLimiter.ip.limit,
+					period: self.options.rateLimiter.ip.period,
 				},
-				{
-					kind: "rate_limiter" as const,
-					binding: opts.rateLimiter.email.binding,
-					simple: {
-						limit: opts.rateLimiter.email.limit,
-						period: opts.rateLimiter.email.period,
-					},
+			},
+			{
+				kind: "rate_limiter" as const,
+				binding: self.options.rateLimiter.email.binding,
+				simple: {
+					limit: self.options.rateLimiter.email.limit,
+					period: self.options.rateLimiter.email.period,
 				},
-			];
-		}),
+			},
+		]),
 
 		// Secrets: AUTH_SECRET + APP_URL (consumer-renameable via options).
-		cloudflare.slots.secrets.contribute((ctx) => {
-			const opts = ctx.options as ResolvedAuthOptions;
-			return [
-				{ name: opts.secretVar, devDefault: "dev-secret-change-me" },
-				{ name: opts.appUrlVar, devDefault: "http://localhost:3000" },
-			];
-		}),
+		cloudflare.slots.secrets.contribute(() => [
+			{ name: self.options.secretVar, devDefault: "dev-secret-change-me" },
+			{ name: self.options.appUrlVar, devDefault: "http://localhost:3000" },
+		]),
 
 		// Worker runtime entry. Resolves `runtimeOptions` inside the
 		// contribution — the graph guarantees cors is fully-resolved before

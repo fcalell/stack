@@ -27,9 +27,11 @@ export function aggregateEntry(payload: CodegenEntryPayload): string | null {
 }
 
 // Emits `.stack/virtual-providers.tsx`. Providers are sorted ascending by
-// `order` (lower = outer). Siblings render alongside the wrapped subtree,
-// inside the wrapper, so they share its context. Returns null when no
-// provider contributes — the Vite resolver then serves a pass-through stub.
+// `order` (lower = outer). Siblings render as additional children of the
+// wrapper, after the wrapped subtree — they share the wrapper's context
+// (e.g. `<Toaster />` placed inside `<ToastProvider />`). Returns null when
+// no provider contributes — the Vite resolver then serves a pass-through
+// stub.
 export function aggregateProviders(
 	payload: CompositionProvidersPayload,
 ): string | null {

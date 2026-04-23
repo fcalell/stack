@@ -174,7 +174,11 @@ export type ProviderSpec = {
 		identifier: string;
 		props?: Array<{ name: string; value: TsExpression }>;
 	};
-	siblings?: TsJsxExpression[]; // JSX elements rendered alongside
+	// JSX elements rendered as additional children of the wrapper, after the
+	// wrapped subtree. They are siblings of the wrapped tree (same parent),
+	// not siblings of the wrapper itself — so they can read from the
+	// wrapper's context (e.g. `<Toaster />` inside a `<ToastProvider />`).
+	siblings?: TsJsxExpression[];
 	order: number; // lower = outer wrapper
 };
 

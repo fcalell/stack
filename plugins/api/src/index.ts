@@ -6,7 +6,7 @@ import type {
 	TsExpression,
 	TsImportSpec,
 } from "@fcalell/cli/ast";
-import { cliSlots } from "@fcalell/cli/cli-slots";
+import { cliSlots, emitArtifact } from "@fcalell/cli/cli-slots";
 import { z } from "zod";
 import { generateRouteBarrel } from "./node/barrel";
 import { aggregateMiddleware, aggregateWorker } from "./node/codegen";
@@ -284,11 +284,7 @@ export const api = plugin<
 
 		// Emit the rendered worker file into cli.slots.artifactFiles. Null
 		// source (no runtimes in the config) skips the emission.
-		cliSlots.artifactFiles.contribute(async (ctx) => {
-			const src = await ctx.resolve(self.slots.workerSource);
-			if (src === null) return undefined;
-			return { path: ".stack/worker.ts", content: src };
-		}),
+		emitArtifact(".stack/worker.ts", self.slots.workerSource),
 
 		// Always regenerate the route barrel — cheap, order-independent.
 		cliSlots.artifactFiles.contribute((ctx) => ({

@@ -1,4 +1,4 @@
-import type { CodegenAppCssPayload } from "../types";
+import type { CodegenAppCssPayload, CssImport } from "../types";
 
 // Emits `.stack/app.css` as a sequence of `@import` statements followed by
 // `@layer` blocks. Returns null when no contributions exist so consumers
@@ -10,7 +10,7 @@ export function aggregateAppCss(payload: CodegenAppCssPayload): string | null {
 
 	const lines: string[] = [];
 	for (const imp of payload.imports) {
-		lines.push(`@import ${JSON.stringify(imp)};`);
+		lines.push(renderImport(imp));
 	}
 	if (payload.imports.length > 0 && payload.layers.length > 0) {
 		lines.push("");
@@ -22,4 +22,12 @@ export function aggregateAppCss(payload: CodegenAppCssPayload): string | null {
 	}
 
 	return `${lines.join("\n")}\n`;
+}
+
+function renderImport(imp: CssImport): string {
+	if (typeof imp === "string") return `@import ${JSON.stringify(imp)};`;
+	const parts = [`@import ${JSON.stringify(imp.url)}`];
+	if (imp.layer !== undefined) parts.push(`layer(${imp.layer})`);
+	if (imp.supports !== undefined) parts.push(`supports(${imp.supports})`);
+	return `${parts.join(" ")};`;
 }

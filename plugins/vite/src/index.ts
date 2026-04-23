@@ -1,6 +1,6 @@
 import { plugin, slot } from "@fcalell/cli";
 import type { TsExpression, TsImportSpec } from "@fcalell/cli/ast";
-import { cliSlots } from "@fcalell/cli/cli-slots";
+import { cliSlots, emitArtifact } from "@fcalell/cli/cli-slots";
 import { api } from "@fcalell/plugin-api";
 import { aggregateViteConfig } from "./node/codegen";
 import { type ViteOptions, viteOptionsSchema } from "./types";
@@ -129,11 +129,7 @@ export const vite = plugin<
 
 		// Emit `.stack/vite.config.ts` via cli.slots.artifactFiles. Null source
 		// (empty pluginCalls + empty imports) skips the write.
-		cliSlots.artifactFiles.contribute(async (ctx) => {
-			const src = await ctx.resolve(self.slots.viteConfig);
-			if (src === null) return undefined;
-			return { path: ".stack/vite.config.ts", content: src };
-		}),
+		emitArtifact(".stack/vite.config.ts", self.slots.viteConfig),
 
 		// Dev process.
 		cliSlots.devProcesses.contribute(async (ctx) => {

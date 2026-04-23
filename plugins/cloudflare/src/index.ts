@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { log } from "@clack/prompts";
 import { plugin, slot } from "@fcalell/cli";
-import { cliSlots } from "@fcalell/cli/cli-slots";
+import { cliSlots, emitArtifact } from "@fcalell/cli/cli-slots";
 import { aggregateDevVars, aggregateWrangler } from "./node/codegen";
 import {
 	type CloudflareOptions,
@@ -45,7 +45,7 @@ const secrets = slot.list<{ name: string; devDefault: string }>({
 const compatibilityDate = slot.value<string>({
 	source: SOURCE,
 	name: "compatibilityDate",
-	seed: () => new Date().toISOString().split("T")[0] ?? "",
+	seed: () => new Date().toISOString().slice(0, 10),
 });
 
 // Final wrangler.toml source. Pure derivation — no ordering dependency
@@ -116,10 +116,7 @@ export const cloudflare = plugin<
 	contributes: (self) => [
 		// Emit `.stack/wrangler.toml` — the derived slot handles every
 		// binding/route/var/secret contribution structurally.
-		cliSlots.artifactFiles.contribute(async (ctx) => {
-			const content = await ctx.resolve(self.slots.wranglerToml);
-			return { path: ".stack/wrangler.toml", content };
-		}),
+		emitArtifact(".stack/wrangler.toml", self.slots.wranglerToml),
 
 		// Emit `.dev.vars` from contributed secrets when there are any and the
 		// consumer hasn't already written one. Mirrors the behaviour of the

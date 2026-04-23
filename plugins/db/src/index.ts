@@ -39,7 +39,7 @@ function createSerializedPush(cwd: string, options: DbOptions) {
 	};
 }
 
-export const db = plugin<"db", DbOptions>("db", {
+export const db = plugin("db", {
 	label: "Database",
 
 	schema: dbOptionsSchema,
@@ -115,7 +115,7 @@ export const db = plugin<"db", DbOptions>("db", {
 		},
 	},
 
-	contributes: [
+	contributes: (self) => [
 		// Init prompts: dialect + D1/SQLite-specific follow-up.
 		cliSlots.initPrompts.contribute((ctx) => ({
 			plugin: "db",
@@ -179,14 +179,13 @@ export const db = plugin<"db", DbOptions>("db", {
 		// D1 binding — only for the d1 dialect, and only when `databaseId`
 		// is set. Contribution is pure; wrangler aggregator reads all
 		// contributions at once.
-		cloudflare.slots.bindings.contribute((ctx) => {
-			const options = ctx.options as DbOptions;
-			if (options.dialect !== "d1") return undefined;
-			const databaseId = options.databaseId;
+		cloudflare.slots.bindings.contribute(() => {
+			if (self.options.dialect !== "d1") return undefined;
+			const databaseId = self.options.databaseId;
 			if (!databaseId) return undefined;
 			return {
 				kind: "d1",
-				binding: options.binding ?? "DB_MAIN",
+				binding: self.options.binding,
 				databaseName: databaseId,
 				databaseId,
 			};
@@ -196,8 +195,7 @@ export const db = plugin<"db", DbOptions>("db", {
 		// run in the Workers isolate).
 		api.slots.pluginRuntimes.contribute(
 			async (ctx): Promise<PluginRuntimeEntry | undefined> => {
-				const options = ctx.options as DbOptions;
-				if (options.dialect !== "d1") return undefined;
+				if (self.options.dialect !== "d1") return undefined;
 				const hasSchema = await ctx.fileExists("src/schema");
 				return {
 					plugin: "db",
@@ -209,7 +207,7 @@ export const db = plugin<"db", DbOptions>("db", {
 					options: {
 						binding: {
 							kind: "string",
-							value: options.binding ?? "DB_MAIN",
+							value: self.options.binding,
 						},
 						...(hasSchema
 							? { schema: { kind: "identifier", name: "schema" } as const }
@@ -223,8 +221,7 @@ export const db = plugin<"db", DbOptions>("db", {
 		// same as the runtime entry's `schema` option.
 		api.slots.workerImports.contribute(
 			async (ctx): Promise<TsImportSpec | undefined> => {
-				const options = ctx.options as DbOptions;
-				if (options.dialect !== "d1") return undefined;
+				if (self.options.dialect !== "d1") return undefined;
 				const hasSchema = await ctx.fileExists("src/schema");
 				if (!hasSchema) return undefined;
 				return { source: "../src/schema", namespace: "schema" };
@@ -233,8 +230,7 @@ export const db = plugin<"db", DbOptions>("db", {
 
 		// Local schema push at `stack dev` Ready time.
 		cliSlots.devReadySetup.contribute((ctx) => {
-			const options = ctx.options as DbOptions;
-			const serializedPush = createSerializedPush(ctx.cwd, options);
+			const serializedPush = createSerializedPush(ctx.cwd, self.options);
 			return {
 				name: "db-schema-push",
 				run: async () => {
@@ -248,8 +244,7 @@ export const db = plugin<"db", DbOptions>("db", {
 		// Schema watcher — re-push when files change, serialized alongside
 		// the setup task via a module-level latch created per contribution.
 		cliSlots.devWatchers.contribute((ctx) => {
-			const options = ctx.options as DbOptions;
-			const serializedPush = createSerializedPush(ctx.cwd, options);
+			const serializedPush = createSerializedPush(ctx.cwd, self.options);
 			return {
 				name: "schema",
 				paths: "src/schema/**",
@@ -265,26 +260,24 @@ export const db = plugin<"db", DbOptions>("db", {
 
 		// Deploy-time migration check — only for d1.
 		cliSlots.deployChecks.contribute(async (ctx) => {
-			const options = ctx.options as DbOptions;
-			if (options.dialect !== "d1") return undefined;
-			const migrations = await generateMigrations(ctx.cwd, options);
+			if (self.options.dialect !== "d1") return undefined;
+			const migrations = await generateMigrations(ctx.cwd, self.options);
 			if (migrations.length === 0) return undefined;
 			return {
 				plugin: "db",
 				description: `${migrations.length} pending migration(s)`,
 				items: migrations.map((m) => ({ label: m.name })),
-				action: () => applyMigrationsRemote(ctx.cwd, options),
+				action: () => applyMigrationsRemote(ctx.cwd, self.options),
 			};
 		}),
 
 		// Deploy-time migration execution — only for d1.
 		cliSlots.deploySteps.contribute((ctx) => {
-			const options = ctx.options as DbOptions;
-			if (options.dialect !== "d1") return undefined;
+			if (self.options.dialect !== "d1") return undefined;
 			return {
 				name: "Database migrations",
 				phase: "pre",
-				run: () => applyMigrationsRemote(ctx.cwd, options),
+				run: () => applyMigrationsRemote(ctx.cwd, self.options),
 			};
 		}),
 

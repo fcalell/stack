@@ -113,6 +113,17 @@ describe("solid config factory", () => {
 		expect(config.options.routes).toEqual({ pagesDir: "src/pages" });
 	});
 
+	it("accepts a non-empty pagesDir", () => {
+		const config = solid({ routes: { pagesDir: "src/pages" } });
+		expect(config.options.routes).toEqual({ pagesDir: "src/pages" });
+	});
+
+	it("throws on empty pagesDir", () => {
+		expect(() => solid({ routes: { pagesDir: "" } })).toThrow(
+			/pagesDir cannot be empty/,
+		);
+	});
+
 	it("accepts routes: false to disable routing", () => {
 		const config = solid({ routes: false });
 		expect(config.options.routes).toBe(false);
@@ -344,6 +355,18 @@ describe("solid → cliSlots.artifactFiles", () => {
 		expect(entry?.content).toContain("<Providers>");
 		expect(entry?.content).toContain("<Router>");
 		expect(entry?.content).toContain("routes");
+	});
+
+	// REVIEW #2 fix — a solid()-only consumer (no solid-ui) must not import
+	// `./app.css` from entry.tsx, since no `.stack/app.css` artifact will be
+	// emitted. The CSS contribution lives on plugin-solid-ui now.
+	it("does NOT import './app.css' when solid-ui is not present", async () => {
+		const g = buildGraph(collectSolidPlugins(), makeCtxFactory());
+		const files = await g.resolve(cliSlots.artifactFiles);
+		const entry = files.find((f) => f.path === ".stack/entry.tsx");
+		expect(entry).toBeDefined();
+		expect(entry?.content).not.toContain('import "./app.css"');
+		expect(files.map((f) => f.path)).not.toContain(".stack/app.css");
 	});
 
 	it("omits routes.d.ts when routes: false", async () => {

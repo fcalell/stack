@@ -10,7 +10,7 @@ import type { Slot } from "#lib/slots";
 // the plugin's slots + contributions for the graph.
 export interface DiscoveredPlugin {
 	name: string;
-	cli: InternalCliPlugin<unknown, Record<string, Slot<unknown>>>;
+	cli: InternalCliPlugin<unknown, Record<string, Slot<unknown>>, unknown>;
 	factory: PluginFactory<
 		string,
 		unknown,

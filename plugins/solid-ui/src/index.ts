@@ -5,12 +5,16 @@ import type {
 	TsExpression,
 	TsImportSpec,
 } from "@fcalell/cli/ast";
-import { cliSlots } from "@fcalell/cli/cli-slots";
+import { emitArtifact } from "@fcalell/cli/cli-slots";
 import { solid } from "@fcalell/plugin-solid";
 import { vite } from "@fcalell/plugin-vite";
 import { aggregateAppCss } from "./node/codegen";
 import { defaultFonts, type FontEntry } from "./node/fonts";
-import { type SolidUiOptions, solidUiOptionsSchema } from "./types";
+import {
+	type CssImport,
+	type SolidUiOptions,
+	solidUiOptionsSchema,
+} from "./types";
 
 const SOURCE = "solid-ui";
 
@@ -83,7 +87,7 @@ function fontsToTokenCss(fonts: FontEntry[]): string | null {
 
 // ── Slot declarations ──────────────────────────────────────────────
 
-const appCssImports = slot.list<string>({
+const appCssImports = slot.list<CssImport>({
 	source: SOURCE,
 	name: "appCssImports",
 });
@@ -215,12 +219,15 @@ export const solidUi = plugin<
 			return { name: "base", content };
 		}),
 
+		// CSS is solid-ui's domain — pair the `import "./app.css"` in
+		// entry.tsx with the artifact emission so a solid()-only consumer
+		// neither imports nor emits a stylesheet.
+		solid.slots.entryImports.contribute(
+			(): TsImportSpec => ({ source: "./app.css", sideEffect: true }),
+		),
+
 		// Emit `.stack/app.css`.
-		cliSlots.artifactFiles.contribute(async (ctx) => {
-			const src = await ctx.resolve(self.slots.appCssSource);
-			if (src === null) return undefined;
-			return { path: ".stack/app.css", content: src };
-		}),
+		emitArtifact(".stack/app.css", self.slots.appCssSource),
 
 		// ── Home scaffold override ──────────────────────────────────────
 		// solid-ui owns the richer home page when the design system is in

@@ -10,6 +10,7 @@ import { cloudflare } from "@fcalell/plugin-cloudflare";
 import { describe, expect, it, vi } from "vitest";
 import { type DbOptions, db } from "./index";
 import * as pushModule from "./node/push";
+import { dbOptionsSchema } from "./types";
 
 // ── Harness ────────────────────────────────────────────────────────
 
@@ -54,9 +55,12 @@ function collectDbPlugins(
 		dialect: "d1",
 		databaseId: "abc-123",
 	};
+	// Resolve through the schema so collect() receives the post-validation
+	// (z.output) view it expects — defaults applied, no optional gaps.
+	const resolvedDbOpts = dbOptionsSchema.parse(dbOpts);
 	const apiCollected = api.cli.collect({ app, options: {} });
 	const cfCollected = cloudflare.cli.collect({ app, options: {} });
-	const dbCollected = db.cli.collect({ app, options: dbOpts });
+	const dbCollected = db.cli.collect({ app, options: resolvedDbOpts });
 	const apiPlugin: GraphPlugin = {
 		name: "api",
 		slots: apiCollected.slots as unknown as Record<string, Slot<unknown>>,

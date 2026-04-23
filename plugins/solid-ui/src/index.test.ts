@@ -13,7 +13,8 @@ import { solid } from "@fcalell/plugin-solid";
 import { vite } from "@fcalell/plugin-vite";
 import { describe, expect, it } from "vitest";
 import { solidUi } from "./index";
-import type { FontEntry } from "./node/fonts";
+import { defaultFonts, type FontEntry } from "./node/fonts";
+import { solidUiOptionsSchema } from "./types";
 
 // Resolve `@fcalell/plugin-solid`'s on-disk templates dir so `ctx.template()`
 // for the solid plugin returns the real shell.html. Without this the HTML
@@ -297,6 +298,21 @@ describe("solidUi.slots.appCssSource", () => {
 		const files = await g.resolve(cliSlots.artifactFiles);
 		expect(files.map((f) => f.path)).toContain(".stack/app.css");
 	});
+
+	// REVIEW #2 fix — solid-ui owns both the `.stack/app.css` artifact and
+	// the `import "./app.css"` line in entry.tsx. The two are contributed
+	// together so a solid()-only consumer never gets a dangling import.
+	it("contributes the './app.css' side-effect import into entry.tsx", async () => {
+		const { plugins, ctxFactory } = collectSolidUiPlugins();
+		const g = buildGraph(plugins, ctxFactory);
+		const entryImports = await g.resolve(solid.slots.entryImports);
+		expect(entryImports).toContainEqual(
+			expect.objectContaining({ source: "./app.css", sideEffect: true }),
+		);
+		const files = await g.resolve(cliSlots.artifactFiles);
+		const entry = files.find((f) => f.path === ".stack/entry.tsx");
+		expect(entry?.content).toContain('import "./app.css"');
+	});
 });
 
 // ── Provider contribution ─────────────────────────────────────────
@@ -386,5 +402,43 @@ describe("solidUi dependency declarations", () => {
 		const devDeps = await g.resolve(cliSlots.initDevDeps);
 		expect(deps.tailwindcss).toBeDefined();
 		expect(devDeps["@tailwindcss/vite"]).toBeDefined();
+	});
+});
+
+// ── REVIEW #6 — fontEntrySchema validation ────────────────────────
+
+describe("solidUiOptionsSchema fonts validation", () => {
+	it("accepts a valid fonts array", () => {
+		expect(() =>
+			solidUiOptionsSchema.parse({ fonts: [inter, jetbrains] }),
+		).not.toThrow();
+	});
+
+	it("rejects an entry missing required fields", () => {
+		expect(() =>
+			solidUiOptionsSchema.parse({ fonts: [{ family: "x" }] }),
+		).toThrow();
+	});
+
+	it("rejects an invalid style value", () => {
+		expect(() =>
+			solidUiOptionsSchema.parse({
+				fonts: [{ ...inter, style: "oblique" }],
+			}),
+		).toThrow();
+	});
+
+	it("rejects a malformed fallback (missing keys)", () => {
+		expect(() =>
+			solidUiOptionsSchema.parse({
+				fonts: [{ ...inter, fallback: { family: "sans-serif" } }],
+			}),
+		).toThrow();
+	});
+
+	it("parses defaultFonts cleanly", () => {
+		expect(() =>
+			solidUiOptionsSchema.parse({ fonts: defaultFonts }),
+		).not.toThrow();
 	});
 });

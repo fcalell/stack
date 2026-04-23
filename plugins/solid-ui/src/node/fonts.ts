@@ -1,34 +1,11 @@
 import { createRequire } from "node:module";
 import { basename } from "node:path";
 import type { Plugin, ResolvedConfig } from "vite";
+import type { FontEntry } from "../types";
 
-// Typed description of a webfont consumed by plugin-solid-ui.
-// Plugin-solid-ui accepts an array of these as its `fonts` option and
-// exposes the `themeFontsPlugin` runtime that preloads the woff2, declares
-// `@font-face` (with fallback metrics), and ties into the --ui-font-* tokens.
-export interface FontEntry {
-	// CSS family name used in `font-family` declarations (e.g. "Inter Variable").
-	family: string;
-	// Node module path or workspace-relative path to the actual woff2 file
-	// (e.g. "@fontsource-variable/inter/files/inter-latin-wght-normal.woff2").
-	specifier: string;
-	// A single weight ("400") or a variable-font range ("100 900").
-	weight: string;
-	style: "normal" | "italic";
-	// Binds this font to the matching --ui-font-* token (and, through the
-	// Tailwind theme, to the font-sans / font-mono / font-serif utilities).
-	role?: "sans" | "mono" | "serif";
-	// Fallback-font metrics used to generate a sibling `@font-face` that
-	// matches the webfont's metrics on top of a system family. Prevents CLS
-	// while the woff2 loads.
-	fallback: {
-		family: string;
-		ascentOverride: string;
-		descentOverride: string;
-		lineGapOverride: string;
-		sizeAdjust: string;
-	};
-}
+// Re-exported from types.ts so the existing
+// `@fcalell/plugin-solid-ui/node/fonts` subpath consumers keep working.
+export type { FontEntry };
 
 export const defaultFonts: FontEntry[] = [
 	{
@@ -147,6 +124,14 @@ export function themeFontsPlugin(fonts: FontEntry[] = defaultFonts): Plugin {
 
 				for (const font of fonts) {
 					const abs = resolveFontAbs(font.specifier);
+					if (!abs) {
+						config.logger.warn(
+							`[plugin-solid-ui] could not resolve font specifier ` +
+								`"${font.specifier}" for family "${font.family}". ` +
+								`The fallback @font-face will render but the woff2 will not preload — ` +
+								`check the package is installed and the path is correct.`,
+						);
+					}
 					let href: string | null = null;
 					if (abs) {
 						if (config.command === "build" && ctx.bundle) {
@@ -155,6 +140,12 @@ export function themeFontsPlugin(fonts: FontEntry[] = defaultFonts): Plugin {
 								config.base,
 								abs,
 							);
+							if (!href) {
+								config.logger.warn(
+									`[plugin-solid-ui] resolved "${font.specifier}" but no matching ` +
+										`asset was emitted to the bundle. Falling back to system font for "${font.family}".`,
+								);
+							}
 						} else {
 							href = `/@fs/${abs}`;
 						}

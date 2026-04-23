@@ -47,10 +47,7 @@ export function aggregateWorker(payload: WorkerPayload): string {
 			const runtimeCall: TsExpression = {
 				kind: "call",
 				callee: { kind: "identifier", name: rt.identifier },
-				args:
-					properties.length > 0
-						? [{ kind: "object", properties }]
-						: [{ kind: "object", properties: [] }],
+				args: [{ kind: "object", properties }],
 			};
 			chain = {
 				kind: "call",

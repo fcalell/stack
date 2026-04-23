@@ -125,8 +125,12 @@ type Primitive = string | number | boolean | null | undefined;
 
 // Converts an arbitrary JS value (plain object/array/primitive) into a
 // TsExpression. Used when plugins need to inline user-provided options
-// (from stack.config.ts) into generated code. Functions, classes, and
-// other non-serializable values are stringified as a fallback.
+// (from stack.config.ts) into generated code. Non-plain objects (Date,
+// Map, Set, class instances) and non-JSON primitives (function, bigint,
+// symbol) throw a TypeError — callers must produce a structured
+// TsExpression via the AST builders for those cases (e.g. `newExpr(id(
+// "Date"), [...])` for Dates, `id(name)` for identifiers, `str(value)`
+// for strings).
 export function literal(value: unknown): TsExpression {
 	if (value === null) return { kind: "null" };
 	if (value === undefined) return { kind: "undefined" };
@@ -137,13 +141,24 @@ export function literal(value: unknown): TsExpression {
 		return { kind: "array", items: value.map(literal) };
 	}
 	if (typeof value === "object") {
+		const proto = Object.getPrototypeOf(value);
+		if (proto !== null && proto !== Object.prototype) {
+			const name =
+				(value as { constructor?: { name?: string } }).constructor?.name ??
+				"object";
+			throw new TypeError(
+				`literal(): cannot convert non-plain object of type \`${name}\` to a TsExpression. Use a structured TsExpression (e.g. \`newExpr(id("Date"), [...])\` for Dates, \`id(name)\` for identifiers, \`str(value)\` for strings).`,
+			);
+		}
 		const properties: Array<{ key: string; value: TsExpression }> = [];
 		for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
 			properties.push({ key: k, value: literal(v) });
 		}
 		return { kind: "object", properties };
 	}
-	return { kind: "string", value: String(value) };
+	throw new TypeError(
+		`literal(): cannot convert value of type \`${typeof value}\` to a TsExpression. Use a structured TsExpression (e.g. \`newExpr(id("Date"), [...])\` for Dates, \`id(name)\` for identifiers, \`str(value)\` for strings).`,
+	);
 }
 
 // Converts a record of arbitrary JS values into a key→TsExpression map,
