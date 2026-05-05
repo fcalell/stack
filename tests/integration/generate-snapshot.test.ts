@@ -10,16 +10,7 @@ import { db } from "@fcalell/plugin-db";
 import { solid } from "@fcalell/plugin-solid";
 import { solidUi } from "@fcalell/plugin-solid-ui";
 import { vite } from "@fcalell/plugin-vite";
-import {
-	afterAll,
-	afterEach,
-	beforeAll,
-	beforeEach,
-	describe,
-	expect,
-	it,
-	vi,
-} from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 // End-to-end generate pipeline snapshot. Drives the real `stack generate`
 // code path via `runStackGenerate` — no hand-ordered plugin arrays, no
@@ -104,16 +95,9 @@ async function runGenerate(opts: {
 }
 
 describe("generate pipeline snapshot", () => {
-	// plugin-cloudflare seeds compatibility_date with today's ISO date.
-	// Freeze the clock so snapshots stay stable across days.
-	beforeAll(() => {
-		vi.useFakeTimers();
-		vi.setSystemTime(new Date("2025-01-01T00:00:00Z"));
-	});
-
-	afterAll(() => {
-		vi.useRealTimers();
-	});
+	// plugin-cloudflare now pins compatibility_date to a plugin-shipped
+	// constant, so there's no clock to freeze — snapshots are stable
+	// across days by construction. See plugins/cloudflare/src/types.ts.
 
 	let cwd: string;
 
@@ -186,6 +170,143 @@ describe("generate pipeline snapshot", () => {
 			plugins: [vite({ port: 3000 }), solid({ routes: false })],
 		});
 		expect(snapshot).toMatchSnapshot();
+	});
+
+	it("frontend-only: vite + solid + solid-ui without worker", async () => {
+		// Validates solid-ui slotting into solid without any worker plugins —
+		// app.css should aggregate Tailwind + plugin-solid-ui globals, and
+		// virtual-providers.tsx should pick up MetaProvider + Toaster.
+		const snapshot = await runGenerate({
+			cwd,
+			plugins: [vite({ port: 3000 }), solid({ routes: false }), solidUi()],
+		});
+		expect(snapshot).toMatchSnapshot();
+	});
+
+	it("worker-only with auth: no frontend, APP_URL fallback, derived CORS", async () => {
+		// No vite/solid plugins — no localhost origin contributed — so
+		// `app.domain` seeds CORS to [https://example.com, https://app.example.com].
+		// APP_URL has no frontend-derived default, so it stays an empty-string
+		// var (consumer fills it via `.dev.vars`).
+		seedFs(cwd, [
+			"src/schema/",
+			"src/worker/plugins/auth.ts",
+			"src/worker/routes/",
+		]);
+		const snapshot = await runGenerate({
+			cwd,
+			plugins: [
+				cloudflare(),
+				db({ dialect: "d1", databaseId: "abc-123" }),
+				auth({ secretVar: "AUTH_SECRET" }),
+				api(),
+			],
+		});
+		expect(snapshot).toMatchSnapshot();
+	});
+
+	it("auth with localhost in app.origins: sameSite=none end-to-end", async () => {
+		// When app.origins explicitly includes a localhost origin (without vite
+		// present), the auth runtimeOptions derivation must still pick up
+		// sameSite: "none" from the cors list. Proves the localhost signal is
+		// read from the CORS list, not from a plugin-identity check.
+		seedFs(cwd, [
+			"src/schema/",
+			"src/worker/plugins/auth.ts",
+			"src/worker/routes/",
+		]);
+		const snapshot = await runGenerate({
+			cwd,
+			origins: ["https://example.com", "http://localhost:5173"],
+			plugins: [
+				cloudflare(),
+				db({ dialect: "d1", databaseId: "abc-123" }),
+				auth({ secretVar: "AUTH_SECRET" }),
+				api(),
+			],
+		});
+		expect(snapshot).toMatchSnapshot();
+	});
+
+	it("full-stack with explicit app.origins drives auth sameSite=none end-to-end", async () => {
+		// Coverage gap requested: app.origins explicitly carries a localhost
+		// origin in a real full-stack app (vite + solid + solid-ui present
+		// AND a worker stack). Distinct from the worker-only fixture above
+		// because here the localhost contribution from vite would normally
+		// land on its own — proving the explicit origins list is used
+		// verbatim and still flows into auth's sameSite derivation.
+		seedFs(cwd, [
+			"src/schema/",
+			"src/worker/plugins/auth.ts",
+			"src/worker/middleware.ts",
+			"src/worker/routes/",
+		]);
+		const snapshot = await runGenerate({
+			cwd,
+			origins: ["https://example.com", "http://localhost:3000"],
+			plugins: [
+				cloudflare(),
+				db({ dialect: "d1", databaseId: "abc-123" }),
+				auth({ secretVar: "AUTH_SECRET" }),
+				api(),
+				vite({ port: 3000 }),
+				solid({ routes: false }),
+				solidUi(),
+			],
+		});
+		expect(snapshot).toMatchSnapshot();
+	});
+
+	it("all-plugins with empty app.origins: auth refuses to generate", async () => {
+		// `app.origins: []` is a deliberate misconfiguration — present (so the
+		// derived `cors` slot uses it verbatim per the `!== undefined`
+		// contract) but empty (so Better Auth would silently fail CSRF). The
+		// auth runtimeOptions derivation throws at generate time rather than
+		// emit an ambiguous worker. This locks in the contract described in
+		// plugin-auth/src/index.ts (Bug #1: empty-CORS contract).
+		seedFs(cwd, [
+			"src/schema/",
+			"src/worker/plugins/auth.ts",
+			"src/worker/routes/",
+		]);
+		await expect(
+			runGenerate({
+				cwd,
+				origins: [],
+				plugins: [
+					cloudflare(),
+					db({ dialect: "d1", databaseId: "abc-123" }),
+					auth({ secretVar: "AUTH_SECRET" }),
+					api(),
+					vite({ port: 3000 }),
+					solid({ routes: false }),
+					solidUi(),
+				],
+			}),
+		).rejects.toThrow(/no trusted origins are available/);
+	});
+
+	it("worker-only with empty app.origins: api emits empty CORS, auth refuses", async () => {
+		// Same misconfiguration on a worker-only stack. Verifies the empty
+		// allow-list contract is uniform — auth's empty-CORS throw doesn't
+		// depend on the presence/absence of vite.
+		seedFs(cwd, [
+			"src/schema/",
+			"src/worker/plugins/auth.ts",
+			"src/worker/routes/",
+		]);
+		await expect(
+			runGenerate({
+				cwd,
+				origins: [],
+				plugins: [
+					cloudflare(),
+					db({ dialect: "d1", databaseId: "abc-123" }),
+					auth({ secretVar: "AUTH_SECRET" }),
+					api(),
+				],
+			}),
+		).rejects.toThrow(/no trusted origins are available/);
 	});
 
 	// Plugin-order invariance: the slot graph is order-independent. Shuffling

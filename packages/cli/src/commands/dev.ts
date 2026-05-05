@@ -7,7 +7,7 @@ import type { StackConfig } from "#config";
 import { buildGraphFromConfig } from "#lib/build-graph";
 import { cliSlots } from "#lib/cli-slots";
 import { loadConfig } from "#lib/config";
-import { type ManagedProcess, onExit, spawnPrefixed } from "#lib/proc";
+import { type SupervisedProcess, supervise } from "#lib/proc";
 import type { DevReadyTask, ProcessSpec, WatcherSpec } from "#specs";
 
 interface DevOptions {
@@ -42,35 +42,39 @@ export async function devPlanFromConfig(
 	return { processes, readySetup, watchers };
 }
 
-// Wait until `proc.stdout` prints a line matching `readyPattern` or the
-// process exits. Resolves `true` on match, `false` if the process exits
-// first. Only called when a ProcessSpec declares a readyPattern.
-function waitForReady(proc: ManagedProcess, pattern: RegExp): Promise<boolean> {
+// Wait until the supervised child prints a line matching `readyPattern` on
+// stdout/stderr or the child exits. Resolves `true` on match, `false` if the
+// process exits before signaling ready. Re-attached to the new child after
+// each restart so `dev` doesn't get stuck on a stale handle.
+function waitForReady(
+	proc: SupervisedProcess,
+	pattern: RegExp,
+): Promise<boolean> {
 	return new Promise((resolve) => {
 		let settled = false;
-		const onLine = (buf: Buffer) => {
-			if (settled) return;
-			const text = buf.toString("utf-8");
-			if (pattern.test(text)) {
-				settled = true;
-				cleanup();
-				resolve(true);
-			}
-		};
-		const onExit = () => {
+		const settle = (matched: boolean) => {
 			if (settled) return;
 			settled = true;
 			cleanup();
-			resolve(false);
+			resolve(matched);
 		};
+		const onLine = (buf: Buffer) => {
+			if (pattern.test(buf.toString("utf-8"))) settle(true);
+		};
+		const child = proc.current();
+		const onExitEvent = () => settle(false);
 		const cleanup = () => {
-			proc.child.stdout?.off("data", onLine);
-			proc.child.stderr?.off("data", onLine);
-			proc.child.off("exit", onExit);
+			child?.stdout?.off("data", onLine);
+			child?.stderr?.off("data", onLine);
+			child?.off("exit", onExitEvent);
 		};
-		proc.child.stdout?.on("data", onLine);
-		proc.child.stderr?.on("data", onLine);
-		proc.child.on("exit", onExit);
+		if (!child) {
+			settle(false);
+			return;
+		}
+		child.stdout?.on("data", onLine);
+		child.stderr?.on("data", onLine);
+		child.on("exit", onExitEvent);
 	});
 }
 
@@ -92,20 +96,33 @@ export async function dev(options: DevOptions): Promise<void> {
 	);
 
 	let colorIndex = 0;
-	const managed: ManagedProcess[] = [];
+	const supervised: SupervisedProcess[] = [];
 	const readyWaits: Array<Promise<boolean>> = [];
 
 	for (const spec of processes) {
 		const color = COLORS[colorIndex % COLORS.length];
 		if (color) colorIndex++;
-		const proc = spawnPrefixed({
-			name: spec.name,
+		const proc = supervise({
+			spec,
 			color: color ?? pc.white,
-			command: spec.command,
-			args: spec.args,
 			cwd,
+			onLifecycle: (event) => {
+				if (event.portInUse) {
+					log.warn(
+						`[${spec.name}] port ${event.detectedPort ?? "unknown"} already in use; ` +
+							`see stderr for details.`,
+					);
+				} else if (event.code !== 0 && event.code !== null) {
+					log.warn(
+						`[${spec.name}] exited with code ${event.code}` +
+							(event.restartAttempt > 0
+								? ` (restart attempt ${event.restartAttempt})`
+								: ""),
+					);
+				}
+			},
 		});
-		managed.push(proc);
+		supervised.push(proc);
 		if (spec.readyPattern) {
 			readyWaits.push(waitForReady(proc, spec.readyPattern));
 		}
@@ -140,14 +157,6 @@ export async function dev(options: DevOptions): Promise<void> {
 
 	log.info("Watching for changes...");
 
-	for (const proc of managed) {
-		proc.child.on("exit", (code) => {
-			if (code !== 0 && code !== null) {
-				log.warn(`[${proc.name}] exited with code ${code}`);
-			}
-		});
-	}
-
 	let configDebounce: ReturnType<typeof setTimeout>;
 	fsWatchers.push(
 		watch(cwd, (_event, filename) => {
@@ -166,7 +175,15 @@ export async function dev(options: DevOptions): Promise<void> {
 		}),
 	);
 
-	onExit(managed, () => {
-		for (const w of fsWatchers) w.close();
-	});
+	const shutdown = () => {
+		for (const w of fsWatchers) {
+			try {
+				w.close();
+			} catch {}
+		}
+		for (const p of supervised) p.stop();
+		process.exit(0);
+	};
+	process.on("SIGINT", shutdown);
+	process.on("SIGTERM", shutdown);
 }

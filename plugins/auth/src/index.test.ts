@@ -34,6 +34,10 @@ import { type AuthOptions, auth } from "./index";
 // ── Harness ────────────────────────────────────────────────────────
 
 const app = { name: "test-app", domain: "example.com" };
+// Default baseline after `stack init` scaffolds the callback file. Tests
+// that exercise the "file missing" path pass `authFiles: new Set()`
+// explicitly.
+const DEFAULT_AUTH_FILES = new Set(["src/worker/plugins/auth.ts"]);
 
 const noopLog = {
 	info: () => {},
@@ -70,6 +74,7 @@ interface CollectOpts {
 	authFiles?: Set<string>;
 	withVite?: boolean;
 	withDb?: boolean;
+	viteOrigin?: string;
 	appOverride?: typeof app & { origins?: string[] };
 	// Control the order in which plugins appear in the resolved config; bug #5
 	// regressions would surface as the returned list changing behaviour.
@@ -110,7 +115,7 @@ function collectAuthPlugins(opts: CollectOpts = {}): {
 			slots: cfCollected.slots as unknown as Record<string, Slot<unknown>>,
 			contributes: cfCollected.contributes,
 		},
-		vite: withVite ? viteLikePlugin() : null,
+		vite: withVite ? viteLikePlugin(opts.viteOrigin) : null,
 		db: dbCollected
 			? {
 					name: "db",
@@ -143,7 +148,7 @@ function collectAuthPlugins(opts: CollectOpts = {}): {
 				auth: validatedAuthOpts,
 			},
 			{
-				auth: opts.authFiles ?? new Set(),
+				auth: opts.authFiles ?? DEFAULT_AUTH_FILES,
 			},
 			opts.appOverride,
 		),
@@ -200,6 +205,35 @@ describe("auth config factory", () => {
 			binding: "CUSTOM_IP",
 			limit: 50,
 			period: 30,
+		});
+	});
+
+	// Nested `.default()` calls on ip + email schemas must each fire
+	// independently when the consumer supplies one half. Regression check:
+	// partial consumer input must leave the un-supplied half fully defaulted.
+	it("applies nested rate-limiter defaults under partial consumer input", () => {
+		const ipOnly = auth({ rateLimiter: { ip: { binding: "CUSTOM_IP" } } });
+		expect(ipOnly.options.rateLimiter.ip).toEqual({
+			binding: "CUSTOM_IP",
+			limit: 100,
+			period: 60,
+		});
+		expect(ipOnly.options.rateLimiter.email).toEqual({
+			binding: "RATE_LIMITER_EMAIL",
+			limit: 5,
+			period: 300,
+		});
+
+		const emailOnly = auth({ rateLimiter: { email: { limit: 10 } } });
+		expect(emailOnly.options.rateLimiter.ip).toEqual({
+			binding: "RATE_LIMITER_IP",
+			limit: 100,
+			period: 60,
+		});
+		expect(emailOnly.options.rateLimiter.email).toEqual({
+			binding: "RATE_LIMITER_EMAIL",
+			limit: 10,
+			period: 300,
 		});
 	});
 
@@ -306,15 +340,46 @@ describe("auth → cloudflare bindings + secrets", () => {
 		});
 	});
 
-	it("contributes AUTH_SECRET + APP_URL secrets", async () => {
+	// Bug #3: pre-fix, APP_URL devDefault was hardcoded to
+	// "http://localhost:3000" — wrong for API-only apps, wrong when
+	// vite's port differs. Post-fix the devDefault is derived from
+	// `auth.slots.appUrlDevDefault`: frontend-present → first localhost
+	// cors entry, frontend-absent → `https://<app.domain>`.
+	it("APP_URL devDefault is the vite localhost origin when a frontend is present", async () => {
 		const { plugins, ctxFactory } = collectAuthPlugins();
 		const g = buildGraph(plugins, ctxFactory);
 		const secrets = await g.resolve(cloudflare.slots.secrets);
-		expect(secrets).toEqual(
-			expect.arrayContaining([
-				{ name: "AUTH_SECRET", devDefault: "dev-secret-change-me" },
-				{ name: "APP_URL", devDefault: "http://localhost:3000" },
-			]),
+		const appUrl = secrets.find((s) => s.name === "APP_URL");
+		expect(appUrl?.devDefault).toBe("http://localhost:3000");
+	});
+
+	it("APP_URL devDefault tracks a custom vite port (bug #3)", async () => {
+		const { plugins, ctxFactory } = collectAuthPlugins({
+			viteOrigin: "http://localhost:4173",
+		});
+		const g = buildGraph(plugins, ctxFactory);
+		const secrets = await g.resolve(cloudflare.slots.secrets);
+		const appUrl = secrets.find((s) => s.name === "APP_URL");
+		expect(appUrl?.devDefault).toBe("http://localhost:4173");
+	});
+
+	it("APP_URL devDefault falls back to prod domain for API-only apps (bug #3)", async () => {
+		// No vite plugin → no localhost contribution. The runtime still
+		// needs a base URL; `https://<app.domain>` is the sensible
+		// worker-only baseline.
+		const { plugins, ctxFactory } = collectAuthPlugins({ withVite: false });
+		const g = buildGraph(plugins, ctxFactory);
+		const secrets = await g.resolve(cloudflare.slots.secrets);
+		const appUrl = secrets.find((s) => s.name === "APP_URL");
+		expect(appUrl?.devDefault).toBe("https://example.com");
+	});
+
+	it("AUTH_SECRET dev default is stable", async () => {
+		const { plugins, ctxFactory } = collectAuthPlugins();
+		const g = buildGraph(plugins, ctxFactory);
+		const secrets = await g.resolve(cloudflare.slots.secrets);
+		expect(secrets.find((s) => s.name === "AUTH_SECRET")?.devDefault).toBe(
+			"dev-secret-change-me",
 		);
 	});
 
@@ -329,19 +394,40 @@ describe("auth → cloudflare bindings + secrets", () => {
 	});
 });
 
-// ── runtimeOptions derivation — BUG #5 STRUCTURAL FIX ─────────────
-//
-// Pre-rewrite, trustedOrigins + sameSite were computed inside a worker
-// codegen handler that read a partially-mutated cors array. If the
-// plugin order placed vite after auth, vite's localhost contribution
-// hadn't landed yet — trustedOrigins missed the localhost origin and
-// sameSite stayed absent. Consumers would see missing auth cookies in dev.
-//
-// Under the slot graph, `auth.slots.runtimeOptions` is a derived slot
-// whose `inputs.cors` is `api.slots.cors`. The graph resolver guarantees
-// every corsOrigins contribution (including vite's) is fully resolved
-// before the derivation's `compute` runs. The bug is structurally dead
-// — plugin array order cannot change the output.
+// ── auth.slots.appUrlDevDefault (bug #3) ──────────────────────────
+
+describe("auth.slots.appUrlDevDefault — bug #3 structural fix", () => {
+	it("prefers the first local origin from api.slots.cors", async () => {
+		const { plugins, ctxFactory } = collectAuthPlugins({
+			viteOrigin: "http://127.0.0.1:5173",
+		});
+		const g = buildGraph(plugins, ctxFactory);
+		const url = await g.resolve(auth.slots.appUrlDevDefault);
+		expect(url).toBe("http://127.0.0.1:5173");
+	});
+
+	it("falls back to https://<app.domain> when no local origin exists", async () => {
+		const { plugins, ctxFactory } = collectAuthPlugins({ withVite: false });
+		const g = buildGraph(plugins, ctxFactory);
+		const url = await g.resolve(auth.slots.appUrlDevDefault);
+		expect(url).toBe("https://example.com");
+	});
+
+	it("honours app.origins verbatim when they include a localhost entry", async () => {
+		const { plugins, ctxFactory } = collectAuthPlugins({
+			withVite: false,
+			appOverride: {
+				...app,
+				origins: ["https://prod.example.com", "http://localhost:8080"],
+			},
+		});
+		const g = buildGraph(plugins, ctxFactory);
+		const url = await g.resolve(auth.slots.appUrlDevDefault);
+		expect(url).toBe("http://localhost:8080");
+	});
+});
+
+// ── runtimeOptions derivation — bugs #1 + #2 + #5 ─────────────────
 
 describe("auth.slots.runtimeOptions — bug #5 order-independence", () => {
 	it("trustedOrigins + sameSite=none are present when vite contributes localhost", async () => {
@@ -395,27 +481,88 @@ describe("auth.slots.runtimeOptions — bug #5 order-independence", () => {
 		expect(reverseOpts).toEqual(midwayOpts);
 	});
 
-	it("omits sameSite + trustedOrigins when no cors", async () => {
-		// app.origins overrides the entire cors list; set to [] -> no trusted
-		// origins to inject. The derivation still runs, just without sameSite.
+	// Bug #1: empty cors used to silently omit `trustedOrigins`; Better
+	// Auth's undefined-trustedOrigins behaviour is ambiguous (deny-all
+	// vs allow-all depending on codepath). Fix: throw at generate-time
+	// with an actionable error enumerating the three fixes available
+	// to the consumer.
+	it("throws a helpful error when cors resolves to empty (bug #1)", async () => {
 		const { plugins, ctxFactory } = collectAuthPlugins({
 			withVite: false,
 			appOverride: { ...app, origins: [] },
 		});
 		const g = buildGraph(plugins, ctxFactory);
-		const opts = await g.resolve(auth.slots.runtimeOptions);
-		expect(opts.sameSite).toBeUndefined();
-		expect(opts.trustedOrigins).toBeUndefined();
+		await expect(g.resolve(auth.slots.runtimeOptions)).rejects.toThrow(
+			/no trusted origins are available/i,
+		);
 	});
 
-	it("emits trustedOrigins with the full cors list when no localhost", async () => {
+	it("error message enumerates app.domain / app.origins / vite fixes", async () => {
 		const { plugins, ctxFactory } = collectAuthPlugins({
 			withVite: false,
+			appOverride: { ...app, origins: [] },
+		});
+		const g = buildGraph(plugins, ctxFactory);
+		const err = await g.resolve(auth.slots.runtimeOptions).catch((e) => e);
+		expect(String(err.message)).toMatch(/app\.domain/);
+		expect(String(err.message)).toMatch(/app\.origins/);
+		expect(String(err.message)).toMatch(/vite/);
+	});
+
+	// Bug #2: localhost alias coverage. Regex previously only matched
+	// `localhost`. Post-fix we parse with `new URL` and inspect
+	// `.hostname` against a well-defined local-dev set.
+	it.each([
+		["http://localhost:3000"],
+		["https://localhost:3000"],
+		["http://127.0.0.1:3000"],
+		["http://[::1]:3000"],
+		["http://0.0.0.0:3000"],
+		["http://localhost.localdomain:3000"],
+		["http://my-app.localhost:3000"],
+		["http://x.localdomain:3000"],
+	])("treats %s as a local-dev origin (sameSite=none, bug #2)", async (origin) => {
+		const { plugins, ctxFactory } = collectAuthPlugins({ withVite: false });
+		// Drive the origin into cors via a bespoke vite-like plugin so
+		// the dataflow path matches the real vite contribution.
+		const pluginsWithOrigin = [
+			...plugins,
+			{
+				name: "custom-vite-like",
+				contributes: [
+					api.slots.corsOrigins.contribute((ctx) => {
+						if (ctx.app.origins) return undefined;
+						return origin;
+					}),
+				],
+			},
+		];
+		const g = buildGraph(pluginsWithOrigin, ctxFactory);
+		const opts = await g.resolve(auth.slots.runtimeOptions);
+		expect(opts.sameSite).toEqual({ kind: "string", value: "none" });
+		const items = (opts.trustedOrigins as { items: Array<{ value: string }> })
+			.items;
+		expect(items.map((i) => i.value)).toContain(origin);
+	});
+
+	it("does NOT flag remote origins as local (no sameSite=none)", async () => {
+		const { plugins, ctxFactory } = collectAuthPlugins({
+			withVite: false,
+			appOverride: {
+				...app,
+				origins: ["https://example.com", "https://api.example.com"],
+			},
 		});
 		const g = buildGraph(plugins, ctxFactory);
 		const opts = await g.resolve(auth.slots.runtimeOptions);
-		// No localhost → no sameSite
 		expect(opts.sameSite).toBeUndefined();
+	});
+
+	it("always emits an explicit trustedOrigins array (never undefined)", async () => {
+		const { plugins, ctxFactory } = collectAuthPlugins({ withVite: false });
+		const g = buildGraph(plugins, ctxFactory);
+		const opts = await g.resolve(auth.slots.runtimeOptions);
+		expect(opts.trustedOrigins).toMatchObject({ kind: "array" });
 		const items = (opts.trustedOrigins as { items: Array<{ value: string }> })
 			.items;
 		expect(items.map((i) => i.value)).toEqual([
@@ -437,6 +584,59 @@ describe("auth.slots.runtimeOptions — bug #5 order-independence", () => {
 		expect(opts.secretVar).toEqual({ kind: "string", value: "MY_SECRET" });
 		expect(opts.organization).toEqual({ kind: "boolean", value: true });
 		expect(opts.cookies).toMatchObject({ kind: "object" });
+	});
+
+	// Defense-in-depth: literalToProps would faithfully inline a
+	// consumer-provided `callbacks` key, which api's codegen also splices in
+	// via api.slots.callbacks. The runtime derivation must strip it so the
+	// two sides can't collide.
+	it("strips `callbacks` from consumer options (api plugin owns that key)", async () => {
+		// Deliberately off-schema input: a consumer passing `callbacks` in
+		// options should see it stripped from the emitted runtime.
+		const authOptsWithBadKey = {
+			callbacks: { sendOTP: "consumerSuppliedIdentifier" },
+			// biome-ignore lint/suspicious/noExplicitAny: exercising the defensive strip with off-schema input
+		} as any as AuthOptions;
+		const { plugins, ctxFactory } = collectAuthPlugins({
+			authOpts: authOptsWithBadKey,
+		});
+		const g = buildGraph(plugins, ctxFactory);
+		const opts = await g.resolve(auth.slots.runtimeOptions);
+		expect(opts.callbacks).toBeUndefined();
+	});
+
+	// literalToProps must faithfully carry every JSON primitive shape
+	// through to the generated options. Nested objects / arrays /
+	// booleans / strings must all survive the round-trip; a silent drop
+	// would surface as missing fields in the emitted worker.
+	it("faithfully inlines nested objects / arrays / booleans / strings", async () => {
+		const { plugins, ctxFactory } = collectAuthPlugins({
+			authOpts: {
+				organization: {
+					roles: { admin: { label: "Admin" } },
+					additionalFields: {
+						logo: { type: "string", required: true },
+					},
+				},
+			},
+		});
+		const g = buildGraph(plugins, ctxFactory);
+		const opts = await g.resolve(auth.slots.runtimeOptions);
+		expect(opts.organization).toMatchObject({ kind: "object" });
+		// Descend into the nested structure to confirm every level
+		// round-trips. `object | string | boolean` must all appear.
+		const seen = new Set<string>();
+		function walk(node: unknown): void {
+			if (node && typeof node === "object") {
+				const k = (node as { kind?: string }).kind;
+				if (typeof k === "string") seen.add(k);
+				for (const v of Object.values(node)) walk(v);
+			}
+		}
+		walk(opts.organization);
+		expect(seen.has("object")).toBe(true);
+		expect(seen.has("string")).toBe(true);
+		expect(seen.has("boolean")).toBe(true);
 	});
 });
 
@@ -467,10 +667,8 @@ describe("auth → api.slots.pluginRuntimes", () => {
 // ── api.slots.callbacks contribution ──────────────────────────────
 
 describe("auth → api.slots.callbacks", () => {
-	it("wires the callback file when it exists on disk", async () => {
-		const { plugins, ctxFactory } = collectAuthPlugins({
-			authFiles: new Set(["src/worker/plugins/auth.ts"]),
-		});
+	it("wires the callback file when it exists on disk (default path)", async () => {
+		const { plugins, ctxFactory } = collectAuthPlugins();
 		const g = buildGraph(plugins, ctxFactory);
 		const callbacks = await g.resolve(api.slots.callbacks);
 		expect(callbacks.auth).toEqual({
@@ -482,13 +680,28 @@ describe("auth → api.slots.callbacks", () => {
 		});
 	});
 
-	it("skips callback wiring when the file is absent", async () => {
+	// Architectural fix: plugin-auth declares a REQUIRED `sendOTP`
+	// callback. Silently skipping the wiring when the file is missing
+	// produces a worker that crashes on the first auth request.
+	// Throwing at generate is the honest signal.
+	it("throws when the callback file is missing", async () => {
 		const { plugins, ctxFactory } = collectAuthPlugins({
 			authFiles: new Set(),
 		});
 		const g = buildGraph(plugins, ctxFactory);
-		const callbacks = await g.resolve(api.slots.callbacks);
-		expect(callbacks.auth).toBeUndefined();
+		await expect(g.resolve(api.slots.callbacks)).rejects.toThrow(
+			/callback file.*is missing/,
+		);
+	});
+
+	// Structural robustness: path comes from `auth.slots.callbackFile`
+	// so consumers who restructure the worker can override it cleanly
+	// without touching plugin internals.
+	it("resolves the callback path via auth.slots.callbackFile", async () => {
+		const { plugins, ctxFactory } = collectAuthPlugins();
+		const g = buildGraph(plugins, ctxFactory);
+		const path = await g.resolve(auth.slots.callbackFile);
+		expect(path).toBe("src/worker/plugins/auth.ts");
 	});
 });
 

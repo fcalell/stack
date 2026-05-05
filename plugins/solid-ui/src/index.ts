@@ -99,6 +99,18 @@ const appCssLayers = slot.list<{ name: string; content: string }>({
 
 // Resolved font entries. Derived from options only (no cross-slot inputs) so
 // every other contribution can read the same source of truth.
+//
+// Semantics (deliberate):
+//   - `fonts` omitted / undefined   → use `defaultFonts` (JetBrains Mono).
+//   - `fonts: []` (explicit empty)  → use NO fonts. Zero @font-face blocks,
+//                                     no --ui-font-* tokens emitted, and
+//                                     `themeFontsPlugin([])` skips the
+//                                     <style> tag in the HTML head.
+//   - `fonts: [...]`                → use exactly those entries.
+//
+// The `??` here is load-bearing — we only swap in defaults when the value
+// is nullish, never when it's an empty array. Covered by the "fonts: []"
+// tests in index.test.ts / codegen.test.ts.
 const fonts = slot.derived<FontEntry[], Record<string, never>>({
 	source: SOURCE,
 	name: "fonts",
@@ -172,18 +184,19 @@ export const solidUi = plugin<
 		),
 		vite.slots.pluginCalls.contribute(async (ctx): Promise<TsExpression> => {
 			const entries = await ctx.resolve(self.slots.fonts);
+			// Always pass the array explicitly — even when empty — so
+			// `themeFontsPlugin`'s runtime default parameter never resurrects
+			// `defaultFonts` behind a consumer's `fonts: []`. The resolved
+			// `fonts` slot is the single source of truth.
 			return {
 				kind: "call",
 				callee: { kind: "identifier", name: "themeFontsPlugin" },
-				args:
-					entries.length > 0
-						? [
-								{
-									kind: "array",
-									items: entries.map(fontEntryToExpression),
-								},
-							]
-						: [],
+				args: [
+					{
+						kind: "array",
+						items: entries.map(fontEntryToExpression),
+					},
+				],
 			};
 		}),
 

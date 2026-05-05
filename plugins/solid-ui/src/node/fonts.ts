@@ -34,12 +34,36 @@ type BundleLike = Record<string, AssetLike>;
 
 const antiFoucScript = `(function(){try{var t=localStorage.getItem('theme');if(!t)t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';if(t==='dark')document.documentElement.classList.add('dark');}catch(e){}})();`;
 
-function resolveFontAbs(specifier: string): string | null {
+// Fails fast when a consumer-declared font specifier can't be resolved.
+// Emits an actionable multi-line error (family, specifier, likely causes)
+// rather than silently producing CSS that references a missing woff2 —
+// the previous warn-and-continue path left consumers staring at
+// unstyled text with nothing in the terminal to attribute it to.
+class MissingFontError extends Error {
+	constructor(font: FontEntry, cause: unknown) {
+		const detail = cause instanceof Error ? cause.message : String(cause);
+		super(
+			`[plugin-solid-ui] could not resolve font specifier ${JSON.stringify(
+				font.specifier,
+			)} for family ${JSON.stringify(font.family)}.\n` +
+				"  - Ensure the package providing the font file is installed in your workspace.\n" +
+				"  - Check the specifier path is correct (typos, wrong `files/` subpath, missing weight).\n" +
+				`  - Underlying resolver error: ${detail}`,
+		);
+		this.name = "MissingFontError";
+	}
+}
+
+// Returns the resolved absolute path, or throws MissingFontError with a
+// clear message. Consumer-declared fonts must resolve; we don't silently
+// fall back to system fonts and leave the consumer wondering why their
+// webfont never loads.
+function resolveFontAbs(font: FontEntry): string {
 	try {
 		const require = createRequire(import.meta.url);
-		return require.resolve(specifier);
-	} catch {
-		return null;
+		return require.resolve(font.specifier);
+	} catch (err) {
+		throw new MissingFontError(font, err);
 	}
 }
 
@@ -69,19 +93,17 @@ function findBundleUrl(
 }
 
 function buildFontFaceCss(
-	fonts: Array<{ font: FontEntry; href: string | null }>,
+	fonts: Array<{ font: FontEntry; href: string }>,
 ): string {
 	const blocks: string[] = [];
 	for (const { font, href } of fonts) {
-		if (href) {
-			blocks.push(`@font-face {
+		blocks.push(`@font-face {
 	font-family: '${font.family}';
 	src: url('${href}') format('woff2');
 	font-weight: ${font.weight};
 	font-style: ${font.style};
 	font-display: swap;
 }`);
-		}
 		blocks.push(`@font-face {
 	font-family: '${font.family} Fallback';
 	src: local('${font.fallback.family}');
@@ -94,7 +116,11 @@ function buildFontFaceCss(
 	return blocks.join("\n");
 }
 
-export function themeFontsPlugin(fonts: FontEntry[] = defaultFonts): Plugin {
+// The fonts argument is required — codegen always passes the resolved
+// slot value, and direct callers should import `defaultFonts` explicitly
+// rather than rely on a silent default. That keeps `fonts: []` meaning
+// "no fonts" all the way from consumer config to runtime.
+export function themeFontsPlugin(fonts: FontEntry[]): Plugin {
 	let config: ResolvedConfig;
 
 	return {
@@ -120,58 +146,63 @@ export function themeFontsPlugin(fonts: FontEntry[] = defaultFonts): Plugin {
 					},
 				];
 
-				const resolved: Array<{ font: FontEntry; href: string | null }> = [];
+				const resolved: Array<{ font: FontEntry; href: string }> = [];
 
 				for (const font of fonts) {
-					const abs = resolveFontAbs(font.specifier);
-					if (!abs) {
-						config.logger.warn(
-							`[plugin-solid-ui] could not resolve font specifier ` +
-								`"${font.specifier}" for family "${font.family}". ` +
-								`The fallback @font-face will render but the woff2 will not preload — ` +
-								`check the package is installed and the path is correct.`,
+					// Throws MissingFontError with an actionable message if the
+					// consumer's specifier is bogus. Better to surface that at
+					// build time than to emit CSS pointing at a missing woff2.
+					const abs = resolveFontAbs(font);
+					let href: string;
+					if (config.command === "build" && ctx.bundle) {
+						const fromBundle = findBundleUrl(
+							ctx.bundle as unknown as BundleLike,
+							config.base,
+							abs,
 						);
-					}
-					let href: string | null = null;
-					if (abs) {
-						if (config.command === "build" && ctx.bundle) {
-							href = findBundleUrl(
-								ctx.bundle as unknown as BundleLike,
-								config.base,
-								abs,
+						if (!fromBundle) {
+							// The specifier resolved to a real file on disk, but
+							// Vite didn't emit it into the bundle — typically
+							// because nothing imported the font CSS. This is an
+							// author-land configuration bug, not a runtime surprise.
+							throw new Error(
+								`[plugin-solid-ui] resolved ${JSON.stringify(
+									font.specifier,
+								)} for family ${JSON.stringify(font.family)}, ` +
+									"but no matching asset was emitted to the bundle. " +
+									"Ensure the font's package `.css` is imported somewhere " +
+									"(e.g. via Tailwind or an explicit `import`) so Vite bundles it.",
 							);
-							if (!href) {
-								config.logger.warn(
-									`[plugin-solid-ui] resolved "${font.specifier}" but no matching ` +
-										`asset was emitted to the bundle. Falling back to system font for "${font.family}".`,
-								);
-							}
-						} else {
-							href = `/@fs/${abs}`;
 						}
+						href = fromBundle;
+					} else {
+						href = `/@fs/${abs}`;
 					}
 					resolved.push({ font, href });
 
-					if (href) {
-						tags.push({
-							tag: "link",
-							injectTo: "head",
-							attrs: {
-								rel: "preload",
-								as: "font",
-								type: "font/woff2",
-								href,
-								crossorigin: "",
-							},
-						});
-					}
+					tags.push({
+						tag: "link",
+						injectTo: "head",
+						attrs: {
+							rel: "preload",
+							as: "font",
+							type: "font/woff2",
+							href,
+							crossorigin: "",
+						},
+					});
 				}
 
-				tags.push({
-					tag: "style",
-					injectTo: "head",
-					children: buildFontFaceCss(resolved),
-				});
+				// Skip the <style> tag entirely when no fonts are configured —
+				// `fonts: []` means "no fonts," and that should leave the
+				// document head clean instead of emitting an empty <style/>.
+				if (resolved.length > 0) {
+					tags.push({
+						tag: "style",
+						injectTo: "head",
+						children: buildFontFaceCss(resolved),
+					});
+				}
 
 				return tags;
 			},

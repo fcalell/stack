@@ -332,6 +332,39 @@ describe("aggregateMiddleware", () => {
 		expect(names).toEqual(["first", "second", "third"]);
 	});
 
+	// Insertion-order stability under identical (phase, order). The sort
+	// key falls back to the `idx` of arrival; without it, two middleware
+	// with the same phase + order could swap each pipeline run as JS
+	// engines aren't required to keep `Array.prototype.sort` stable on
+	// equal keys (modern engines are, but we don't rely on it).
+	it("preserves insertion order within identical (phase, order)", () => {
+		const entries: MiddlewareSpec[] = [
+			{
+				imports: [],
+				call: { kind: "identifier", name: "first" },
+				phase: "before-routes",
+				order: 100,
+			},
+			{
+				imports: [],
+				call: { kind: "identifier", name: "second" },
+				phase: "before-routes",
+				order: 100,
+			},
+			{
+				imports: [],
+				call: { kind: "identifier", name: "third" },
+				phase: "before-routes",
+				order: 100,
+			},
+		];
+		const result = aggregateMiddleware({ entries });
+		const names = result.calls.map((c) =>
+			c.kind === "identifier" ? c.name : "",
+		);
+		expect(names).toEqual(["first", "second", "third"]);
+	});
+
 	it("aggregates and dedupes imports across entries", () => {
 		const entries: MiddlewareSpec[] = [
 			{

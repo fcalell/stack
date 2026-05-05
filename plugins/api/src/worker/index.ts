@@ -5,7 +5,7 @@ import {
 	RequestHeadersPlugin,
 	ResponseHeadersPlugin,
 } from "@orpc/server/plugins";
-import { Hono } from "hono";
+import { Hono, type MiddlewareHandler } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { secureHeaders } from "hono/secure-headers";
@@ -40,10 +40,26 @@ interface FnEntry {
 	) => Record<string, unknown> | Promise<Record<string, unknown>>;
 }
 
-type UseEntry = PluginEntry | FnEntry;
+interface MiddlewareEntry {
+	middleware: MiddlewareHandler;
+}
+
+type UseEntry = PluginEntry | FnEntry | MiddlewareEntry;
 
 function isPluginEntry(entry: UseEntry): entry is PluginEntry {
 	return "plugin" in entry;
+}
+
+function isMiddlewareEntry(entry: UseEntry): entry is MiddlewareEntry {
+	return "middleware" in entry;
+}
+
+// Hono middleware is `(c, next) => Promise<Response | void>` (arity 2). A
+// context-injecting fn is `(ctx) => extra` (arity 1). Dispatch on `.length`
+// at runtime; consumers writing native Hono middleware just `export default`
+// it without wrapping.
+function isHonoMiddleware(fn: (...args: unknown[]) => unknown): boolean {
+	return fn.length >= 2;
 }
 
 export interface AppBuilder<TContext extends Record<string, unknown>> {
@@ -51,12 +67,14 @@ export interface AppBuilder<TContext extends Record<string, unknown>> {
 		plugin: RuntimePlugin<TName, TContext, TProvides>,
 	): AppBuilder<TContext & TProvides>;
 
+	use(middleware: MiddlewareHandler): AppBuilder<TContext>;
+
 	use<TExtra extends Record<string, unknown>>(
 		fn: (ctx: TContext) => TExtra | Promise<TExtra>,
 	): AppBuilder<TContext & TExtra>;
 
 	handler<TRoutes extends Record<string, unknown>>(
-		consumerRoutes: TRoutes,
+		consumerRoutes?: TRoutes,
 	): WorkerExport<TRoutes>;
 }
 
@@ -82,7 +100,7 @@ type ResolvedApiOptions = Required<Pick<ApiWorkerOptions, "prefix">> &
 
 // ---------- createWorker ----------
 
-export function createWorker(
+export default function createWorker(
 	options?: ApiWorkerOptions,
 ): AppBuilder<BaseContext> {
 	const apiOptions: ResolvedApiOptions = {
@@ -100,19 +118,23 @@ function createAppBuilder<TContext extends Record<string, unknown>>(
 		use(
 			pluginOrFn:
 				| RuntimePlugin<string>
+				| MiddlewareHandler
 				| ((
 						ctx: TContext,
 				  ) => Record<string, unknown> | Promise<Record<string, unknown>>),
 		) {
 			if (typeof pluginOrFn === "function") {
-				const newEntries: UseEntry[] = [
-					...entries,
-					{
-						fn: pluginOrFn as (
-							ctx: Record<string, unknown>,
-						) => Record<string, unknown> | Promise<Record<string, unknown>>,
-					},
-				];
+				const fn = pluginOrFn as (...args: unknown[]) => unknown;
+				const newEntries: UseEntry[] = isHonoMiddleware(fn)
+					? [...entries, { middleware: fn as MiddlewareHandler }]
+					: [
+							...entries,
+							{
+								fn: fn as (
+									ctx: Record<string, unknown>,
+								) => Record<string, unknown> | Promise<Record<string, unknown>>,
+							},
+						];
 				// biome-ignore lint/suspicious/noExplicitAny: context type grows dynamically
 				return createAppBuilder<any>(newEntries, apiOptions);
 			}
@@ -137,7 +159,7 @@ function createAppBuilder<TContext extends Record<string, unknown>>(
 		},
 
 		handler<TRoutes extends Record<string, unknown>>(
-			consumerRoutes: TRoutes,
+			consumerRoutes?: TRoutes,
 		): WorkerExport<TRoutes> {
 			const { prefix: rpcPrefix, cors: corsOrigin } = apiOptions;
 
@@ -153,7 +175,11 @@ function createAppBuilder<TContext extends Record<string, unknown>>(
 				}
 			}
 
-			const fullRouter = { ...pluginRoutes, ...consumerRoutes };
+			// `.handler()` (no arg) and `.handler({})` are equivalent: the worker
+			// is a runnable shell that 404s every RPC call. Validating this at
+			// construction time is intentional — it lets a worker boot before
+			// any consumer routes have been authored.
+			const fullRouter = { ...pluginRoutes, ...(consumerRoutes ?? {}) };
 
 			// biome-ignore lint/suspicious/noExplicitAny: oRPC RPCHandler expects internal router type
 			const rpcHandler = new RPCHandler(fullRouter as any, {
@@ -189,6 +215,22 @@ function createAppBuilder<TContext extends Record<string, unknown>>(
 			app.use("*", logger());
 			app.use("*", secureHeaders());
 
+			// Framework liveness route registered BEFORE the
+			// validateEnv/context middleware so it doesn't require bindings.
+			// Hono runs handlers in registration order: GET / responds and
+			// returns; the universal middleware below never runs for it.
+			app.get("/", (c) => c.json({ ok: true }));
+
+			// Mount consumer Hono middleware into the Hono chain in
+			// contribution order. They run AFTER the framework wrappers above
+			// (cors / logger / secureHeaders / liveness) and BEFORE context
+			// injection, matching the ordering plugins expect.
+			for (const entry of entries) {
+				if (isMiddlewareEntry(entry)) {
+					app.use("*", entry.middleware);
+				}
+			}
+
 			app.use("*", async (c, next) => {
 				const env = c.env;
 				const request = c.req.raw;
@@ -203,6 +245,7 @@ function createAppBuilder<TContext extends Record<string, unknown>>(
 					if (isPluginEntry(entry)) {
 						const provided = await entry.plugin.context(env, ctx);
 						ctx = { ...ctx, ...provided };
+					} else if (isMiddlewareEntry(entry)) {
 					} else {
 						const extra = await entry.fn(ctx);
 						ctx = { ...ctx, ...extra };
@@ -219,8 +262,6 @@ function createAppBuilder<TContext extends Record<string, unknown>>(
 				c.set("__stackCtx", ctx);
 				await next();
 			});
-
-			app.get("/", (c) => c.json({ ok: true }));
 
 			app.post(`${rpcPrefix}/*`, async (c) => {
 				const ctx = c.get("__stackCtx");

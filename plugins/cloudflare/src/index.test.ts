@@ -8,6 +8,7 @@ import {
 import { parse as parseToml } from "smol-toml";
 import { describe, expect, it } from "vitest";
 import { cloudflare } from "./index";
+import { DEFAULT_COMPATIBILITY_DATE } from "./types";
 
 // ── Harness ────────────────────────────────────────────────────────
 
@@ -78,11 +79,33 @@ describe("cloudflare.slots", () => {
 		expect(cloudflare.slots.wranglerToml.source).toBe("cloudflare");
 	});
 
-	it("compatibilityDate seeds to today's ISO date", async () => {
+	it("compatibilityDate seeds to the pinned default (clock-independent)", async () => {
 		const { plugins, ctxFactory } = collectCloudflarePlugins();
 		const g = buildGraph(plugins, ctxFactory);
-		const today = new Date().toISOString().split("T")[0];
-		expect(await g.resolve(cloudflare.slots.compatibilityDate)).toBe(today);
+		expect(await g.resolve(cloudflare.slots.compatibilityDate)).toBe(
+			DEFAULT_COMPATIBILITY_DATE,
+		);
+	});
+
+	it("compatibilityDate resolves to the same value twice within one graph", async () => {
+		const { plugins, ctxFactory } = collectCloudflarePlugins();
+		const g = buildGraph(plugins, ctxFactory);
+		const first = await g.resolve(cloudflare.slots.compatibilityDate);
+		const second = await g.resolve(cloudflare.slots.compatibilityDate);
+		expect(first).toBe(second);
+	});
+
+	it("compatibilityDate is stable across fresh graphs (determinism guard)", async () => {
+		// Two independent graphs — mirrors `stack generate` being invoked twice
+		// in separate processes on different days. The seed does not read the
+		// wall clock, so both resolves produce the same pinned date.
+		const first = collectCloudflarePlugins();
+		const second = collectCloudflarePlugins();
+		const g1 = buildGraph(first.plugins, first.ctxFactory);
+		const g2 = buildGraph(second.plugins, second.ctxFactory);
+		expect(await g1.resolve(cloudflare.slots.compatibilityDate)).toBe(
+			await g2.resolve(cloudflare.slots.compatibilityDate),
+		);
 	});
 });
 
@@ -249,5 +272,100 @@ describe("cloudflare → cli.slots", () => {
 		const postWrite = await g.resolve(cliSlots.postWrite);
 		expect(postWrite).toHaveLength(1);
 		expect(typeof postWrite[0]).toBe("function");
+	});
+});
+
+// ── Cross-plugin namespace collisions (real-graph) ────────────────
+//
+// Collisions happen when two different plugins register the same identifier
+// through different slots — e.g. a KV binding named `SHARED` from plugin A and
+// a secret named `SHARED` from plugin B. These land in the same `env.*`
+// namespace at runtime, so the wrangler derivation fails fast at resolve time
+// with both shapes in the error message.
+
+describe("cloudflare cross-plugin namespace collisions", () => {
+	it("fails resolving wranglerToml when a binding and a secret collide", async () => {
+		const pluginA: GraphPlugin = {
+			name: "plugin-a",
+			contributes: [
+				cloudflare.slots.bindings.contribute(() => ({
+					kind: "kv",
+					binding: "SHARED",
+					id: "kv-id",
+				})),
+			],
+		};
+		const pluginB: GraphPlugin = {
+			name: "plugin-b",
+			contributes: [
+				cloudflare.slots.secrets.contribute(() => ({
+					name: "SHARED",
+					devDefault: "dev",
+				})),
+			],
+		};
+		const { plugins, ctxFactory } = collectCloudflarePlugins([
+			pluginA,
+			pluginB,
+		]);
+		const g = buildGraph(plugins, ctxFactory);
+		await expect(g.resolve(cloudflare.slots.wranglerToml)).rejects.toThrow(
+			/"SHARED".*kv namespace, secret/s,
+		);
+	});
+
+	it("fails when two plugins contribute secrets with the same name", async () => {
+		const pluginA: GraphPlugin = {
+			name: "plugin-a",
+			contributes: [
+				cloudflare.slots.secrets.contribute(() => ({
+					name: "AUTH_SECRET",
+					devDefault: "a",
+				})),
+			],
+		};
+		const pluginB: GraphPlugin = {
+			name: "plugin-b",
+			contributes: [
+				cloudflare.slots.secrets.contribute(() => ({
+					name: "AUTH_SECRET",
+					devDefault: "b",
+				})),
+			],
+		};
+		const { plugins, ctxFactory } = collectCloudflarePlugins([
+			pluginA,
+			pluginB,
+		]);
+		const g = buildGraph(plugins, ctxFactory);
+		await expect(g.resolve(cloudflare.slots.wranglerToml)).rejects.toThrow(
+			/"AUTH_SECRET".*secret, secret/s,
+		);
+	});
+
+	it("fails when a vars map contribution collides with a secret", async () => {
+		const pluginA: GraphPlugin = {
+			name: "plugin-a",
+			contributes: [
+				cloudflare.slots.vars.contribute(() => ({ NODE_ENV: "prod" })),
+			],
+		};
+		const pluginB: GraphPlugin = {
+			name: "plugin-b",
+			contributes: [
+				cloudflare.slots.secrets.contribute(() => ({
+					name: "NODE_ENV",
+					devDefault: "dev",
+				})),
+			],
+		};
+		const { plugins, ctxFactory } = collectCloudflarePlugins([
+			pluginA,
+			pluginB,
+		]);
+		const g = buildGraph(plugins, ctxFactory);
+		await expect(g.resolve(cloudflare.slots.wranglerToml)).rejects.toThrow(
+			/"NODE_ENV".*secret, extra var/s,
+		);
 	});
 });

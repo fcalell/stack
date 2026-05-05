@@ -131,22 +131,38 @@ export const vite = plugin<
 		// (empty pluginCalls + empty imports) skips the write.
 		emitArtifact(".stack/vite.config.ts", self.slots.viteConfig),
 
-		// Dev process.
+		// Dev process. The generated `.stack/vite.config.ts` is the single
+		// source of truth for the dev port — passing `--port` here would let
+		// the CLI flag silently shadow the codegen value. Instead we pass
+		// `defaultPort` for the supervisor to introspect (logging,
+		// `EADDRINUSE` classification fallback) and provide an `onExit` hook
+		// that surfaces a clear next-step message on port collisions.
 		cliSlots.devProcesses.contribute(async (ctx) => {
 			const port = await ctx.resolve(self.slots.devServerPort);
+			const opts = (ctx.options ?? {}) as ViteOptions;
 			return {
 				name: "vite",
 				command: "npx",
-				args: [
-					"vite",
-					"dev",
-					"--config",
-					".stack/vite.config.ts",
-					"--port",
-					String(port),
-				],
+				args: ["vite", "dev", "--config", ".stack/vite.config.ts"],
+				defaultPort: port,
 				readyPattern: /Local:/,
 				color: "cyan",
+				// Default `restart: "never"` — Vite handles HMR; auto-restart
+				// on crash usually hides the real failure. Consumer can opt in.
+				restart: opts.restart ?? "never",
+				maxRestarts: opts.maxRestarts,
+				// Use the supervisor's default EADDRINUSE pattern. Explicitly
+				// returns `undefined` rather than relying on implicit-void
+				// because `() => void` isn't assignable to the spec's
+				// `() => { restart: boolean } | undefined` under strict TS.
+				onExit: (event) => {
+					if (!event.portInUse) return undefined;
+					const detected = event.detectedPort ?? port;
+					ctx.log.error(
+						`vite dev: port :${detected} is in use — set \`vite({ port: ... })\` in stack.config.ts or stop the process holding it.`,
+					);
+					return undefined;
+				},
 			};
 		}),
 

@@ -151,7 +151,12 @@ describe("virtual worker codegen pipeline (defineConfig-driven)", () => {
 		}
 	});
 
-	it("callback imports are included only when auth callback file exists", async () => {
+	it("callback imports are wired when the auth callback file exists", async () => {
+		// The "without callbacks" branch (no `src/worker/plugins/auth.ts`) is
+		// no longer a no-op — `plugin-auth` declares `sendOTP` as a required
+		// callback, so a missing file throws at generate time. That contract
+		// is locked in by `callback-wiring.test.ts > missing src/worker/plugins/auth.ts is a hard error`.
+		// Here we only assert the positive branch.
 		seedFs(cwd, ["src/worker/plugins/auth.ts"]);
 		const withCallbacks = await renderWorker({
 			cwd,
@@ -163,26 +168,10 @@ describe("virtual worker codegen pipeline (defineConfig-driven)", () => {
 			],
 		});
 
-		const withoutCwd = mkdtempSync(join(tmpdir(), "stack-virtual-worker-no-"));
-		try {
-			const withoutCallbacks = await renderWorker({
-				cwd: withoutCwd,
-				plugins: [
-					cloudflare(),
-					db({ dialect: "d1", databaseId: "x" }),
-					auth(),
-					api(),
-				],
-			});
-
-			expect(withCallbacks).toContain(
-				'import authCallbacks from "../src/worker/plugins/auth"',
-			);
-			expect(withCallbacks).toContain("callbacks: authCallbacks");
-			expect(withoutCallbacks).not.toContain("authCallbacks");
-		} finally {
-			rmSync(withoutCwd, { recursive: true, force: true });
-		}
+		expect(withCallbacks).toContain(
+			'import authCallbacks from "../src/worker/plugins/auth"',
+		);
+		expect(withCallbacks).toContain("callbacks: authCallbacks");
 	});
 
 	it("routes import is included when routes dir exists", async () => {

@@ -5,9 +5,11 @@ import {
 	type GraphCtxFactory,
 	type GraphPlugin,
 } from "@fcalell/cli/graph";
+import type { ProcessExit } from "@fcalell/cli/specs";
 import { api } from "@fcalell/plugin-api";
 import { describe, expect, it } from "vitest";
 import { vite } from "./index";
+import { viteOptionsSchema } from "./types";
 
 // ── Harness ────────────────────────────────────────────────────────
 
@@ -216,13 +218,161 @@ describe("vite.slots.viteConfig", () => {
 // ── dev + build ───────────────────────────────────────────────────
 
 describe("vite dev + build contributions", () => {
-	it("contributes a dev process with the configured port", async () => {
+	it("contributes a dev process with defaultPort matching the resolved port", async () => {
 		const { plugins, ctxFactory } = collectVitePlugins([], { port: 4000 });
 		const g = buildGraph(plugins, ctxFactory);
 		const procs = await g.resolve(cliSlots.devProcesses);
 		const v = procs.find((p) => p.name === "vite");
 		expect(v).toBeTruthy();
-		expect(v?.args).toContain("4000");
+		expect(v?.defaultPort).toBe(4000);
+	});
+
+	// The generated vite config is the single source of truth for the dev
+	// server port. Passing --port on the CLI would silently shadow the
+	// codegen value (Vite's CLI flag wins). Guard that by asserting the
+	// process never receives --port / a numeric port arg.
+	it("does not pass --port to the dev process (codegen is single source of truth)", async () => {
+		const { plugins, ctxFactory } = collectVitePlugins([], { port: 4321 });
+		const g = buildGraph(plugins, ctxFactory);
+		const procs = await g.resolve(cliSlots.devProcesses);
+		const v = procs.find((p) => p.name === "vite");
+		expect(v).toBeTruthy();
+		expect(v?.args).not.toContain("--port");
+		expect(v?.args).not.toContain("4321");
+	});
+
+	it("defaults restart policy to 'never'", async () => {
+		const { plugins, ctxFactory } = collectVitePlugins();
+		const g = buildGraph(plugins, ctxFactory);
+		const procs = await g.resolve(cliSlots.devProcesses);
+		const v = procs.find((p) => p.name === "vite");
+		expect(v?.restart).toBe("never");
+	});
+
+	it("honours options.restart + options.maxRestarts", async () => {
+		const { plugins, ctxFactory } = collectVitePlugins([], {
+			restart: "on-crash",
+			maxRestarts: 5,
+		});
+		const g = buildGraph(plugins, ctxFactory);
+		const procs = await g.resolve(cliSlots.devProcesses);
+		const v = procs.find((p) => p.name === "vite");
+		expect(v?.restart).toBe("on-crash");
+		expect(v?.maxRestarts).toBe(5);
+	});
+
+	it("onExit surfaces a port-conflict next-step message when portInUse is true", async () => {
+		const errors: string[] = [];
+		const factory: GraphCtxFactory = {
+			app,
+			cwd: "/tmp/test",
+			log: {
+				info: () => {},
+				warn: () => {},
+				success: () => {},
+				error: (msg) => {
+					errors.push(msg);
+				},
+			},
+			ctxForPlugin: (name) => ({
+				options: name === "vite" ? { port: 4000 } : {},
+				fileExists: async () => false,
+				readFile: async () => "",
+				template: (n) => new URL(`file:///tmp/templates/${name}/${n}`),
+				scaffold: (n, target) => ({
+					source: new URL(`file:///tmp/templates/${name}/${n}`),
+					target,
+					plugin: name,
+				}),
+			}),
+		};
+		const apiCollected = api.cli.collect({ app, options: {} });
+		const viteCollected = vite.cli.collect({ app, options: { port: 4000 } });
+		const apiP: GraphPlugin = {
+			name: "api",
+			slots: apiCollected.slots as unknown as Record<string, Slot<unknown>>,
+			contributes: apiCollected.contributes,
+		};
+		const viteP: GraphPlugin = {
+			name: "vite",
+			slots: viteCollected.slots as unknown as Record<string, Slot<unknown>>,
+			contributes: viteCollected.contributes,
+		};
+		const g = buildGraph([apiP, viteP], factory);
+		const procs = await g.resolve(cliSlots.devProcesses);
+		const v = procs.find((p) => p.name === "vite");
+		expect(v?.onExit).toBeTypeOf("function");
+
+		const exitEvent: ProcessExit = {
+			code: 1,
+			signal: null,
+			restartAttempt: 0,
+			portInUse: true,
+			detectedPort: 4000,
+			stderrTail: "EADDRINUSE",
+		};
+		v?.onExit?.(exitEvent);
+		expect(errors).toHaveLength(1);
+		expect(errors[0]).toContain(":4000");
+		expect(errors[0]).toContain("vite({ port:");
+	});
+
+	it("onExit is silent on non-port-conflict exits", async () => {
+		const errors: string[] = [];
+		const factory: GraphCtxFactory = {
+			app,
+			cwd: "/tmp/test",
+			log: {
+				info: () => {},
+				warn: () => {},
+				success: () => {},
+				error: (msg) => {
+					errors.push(msg);
+				},
+			},
+			ctxForPlugin: () => ({
+				options: {},
+				fileExists: async () => false,
+				readFile: async () => "",
+				template: (n) => new URL(`file:///tmp/templates/${n}`),
+				scaffold: (n, target) => ({
+					source: new URL(`file:///tmp/templates/${n}`),
+					target,
+					plugin: "vite",
+				}),
+			}),
+		};
+		const apiCollected = api.cli.collect({ app, options: {} });
+		const viteCollected = vite.cli.collect({ app, options: {} });
+		const g = buildGraph(
+			[
+				{
+					name: "api",
+					slots: apiCollected.slots as unknown as Record<string, Slot<unknown>>,
+					contributes: apiCollected.contributes,
+				},
+				{
+					name: "vite",
+					slots: viteCollected.slots as unknown as Record<
+						string,
+						Slot<unknown>
+					>,
+					contributes: viteCollected.contributes,
+				},
+			],
+			factory,
+		);
+		const procs = await g.resolve(cliSlots.devProcesses);
+		const v = procs.find((p) => p.name === "vite");
+		v?.onExit?.({
+			code: 1,
+			signal: null,
+			restartAttempt: 0,
+			portInUse: false,
+			detectedPort: null,
+			stderrTail: "some unrelated crash",
+		});
+		expect(errors).toHaveLength(0);
 	});
 
 	it("contributes a build step via cliSlots.buildSteps", async () => {
@@ -230,5 +380,130 @@ describe("vite dev + build contributions", () => {
 		const g = buildGraph(plugins, ctxFactory);
 		const steps = await g.resolve(cliSlots.buildSteps);
 		expect(steps.find((s) => s.name === "vite-build")).toBeTruthy();
+	});
+});
+
+// ── Schema validation ─────────────────────────────────────────────
+
+describe("viteOptionsSchema", () => {
+	it("rejects port 0", () => {
+		expect(() => viteOptionsSchema.parse({ port: 0 })).toThrow();
+	});
+
+	it("rejects negative port", () => {
+		expect(() => viteOptionsSchema.parse({ port: -1 })).toThrow();
+	});
+
+	it("rejects port > 65535", () => {
+		expect(() => viteOptionsSchema.parse({ port: 70000 })).toThrow();
+	});
+
+	it("rejects non-integer port", () => {
+		expect(() => viteOptionsSchema.parse({ port: 3000.5 })).toThrow();
+	});
+
+	it("accepts port 1 and 65535 (range edges)", () => {
+		expect(viteOptionsSchema.parse({ port: 1 }).port).toBe(1);
+		expect(viteOptionsSchema.parse({ port: 65535 }).port).toBe(65535);
+	});
+
+	it("accepts known restart policies and rejects unknown ones", () => {
+		expect(viteOptionsSchema.parse({ restart: "never" }).restart).toBe("never");
+		expect(viteOptionsSchema.parse({ restart: "on-crash" }).restart).toBe(
+			"on-crash",
+		);
+		expect(viteOptionsSchema.parse({ restart: "always" }).restart).toBe(
+			"always",
+		);
+		expect(() => viteOptionsSchema.parse({ restart: "sometimes" })).toThrow();
+	});
+});
+
+// ── viteConfig null-when-empty regression ─────────────────────────
+
+describe("vite.slots.viteConfig (no contributions)", () => {
+	// When every contribution is filtered out (the plugin's own preset
+	// import + plugin call still land normally — this regression test
+	// stands up an isolated graph that holds vite's slots WITHOUT vite's
+	// own self-contributions, simulating a bare "no plugins call into
+	// vite" topology). The derived slot must return null so emitArtifact
+	// skips writing `.stack/vite.config.ts` entirely.
+	it("returns null when no imports or plugin calls contribute", async () => {
+		const viteCollected = vite.cli.collect({ app, options: {} });
+		const slots = viteCollected.slots as unknown as Record<
+			string,
+			Slot<unknown>
+		>;
+		// Bare plugin entry — keep the slots so derivations resolve, drop
+		// every contribution so configImports + pluginCalls land empty.
+		const bareVite: GraphPlugin = {
+			name: "vite",
+			slots,
+			contributes: [],
+		};
+		const factory = makeCtxFactory({ vite: {} });
+		const g = buildGraph([bareVite], factory);
+		const src = await g.resolve(vite.slots.viteConfig);
+		expect(src).toBeNull();
+	});
+
+	it("does not emit .stack/vite.config.ts when viteConfig is null", async () => {
+		const viteCollected = vite.cli.collect({ app, options: {} });
+		const slots = viteCollected.slots as unknown as Record<
+			string,
+			Slot<unknown>
+		>;
+		// Keep the cliSlots.artifactFiles contribution (emitArtifact) but
+		// drop the configImports/pluginCalls self-contributions so the
+		// source resolves to null and the artifact is skipped.
+		const artifactOnlyVite: GraphPlugin = {
+			name: "vite",
+			slots,
+			contributes: viteCollected.contributes.filter(
+				(c) => c.slot.source === "cli" && c.slot.name === "artifactFiles",
+			),
+		};
+		const factory = makeCtxFactory({ vite: {} });
+		const g = buildGraph([artifactOnlyVite], factory);
+		const files = await g.resolve(cliSlots.artifactFiles);
+		expect(files.map((f) => f.path)).not.toContain(".stack/vite.config.ts");
+	});
+});
+
+// ── devServerPort override propagates to CORS (regression) ─────────
+
+describe("vite.slots.devServerPort override propagates to CORS", () => {
+	// Bug regression: the api.slots.corsOrigins contribution must read the
+	// resolved devServerPort slot, not options.port. A sibling plugin that
+	// overrides vite.slots.devServerPort must propagate to the CORS list.
+	it("a sibling overriding devServerPort updates the localhost CORS entry", async () => {
+		const overrider: GraphPlugin = {
+			name: "port-overrider",
+			contributes: [vite.slots.devServerPort.contribute(() => 5555)],
+		};
+		const apiCollected = api.cli.collect({ app, options: {} });
+		const viteCollected = vite.cli.collect({ app, options: { port: 3000 } });
+		const apiP: GraphPlugin = {
+			name: "api",
+			slots: apiCollected.slots as unknown as Record<string, Slot<unknown>>,
+			contributes: apiCollected.contributes,
+		};
+		const viteP: GraphPlugin = {
+			name: "vite",
+			slots: viteCollected.slots as unknown as Record<string, Slot<unknown>>,
+			contributes: viteCollected.contributes,
+		};
+		const g = buildGraph(
+			[apiP, viteP, overrider],
+			makeCtxFactory({ vite: { port: 3000 } }),
+		);
+
+		// Sanity: the override wins over the seed.
+		expect(await g.resolve(vite.slots.devServerPort)).toBe(5555);
+
+		// Regression: CORS reflects the override, not options.port (3000).
+		const cors = await g.resolve(api.slots.cors);
+		expect(cors).toContain("http://localhost:5555");
+		expect(cors).not.toContain("http://localhost:3000");
 	});
 });

@@ -1,7 +1,11 @@
 import { log } from "@clack/prompts";
 import { parse as parseToml } from "smol-toml";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { aggregateDevVars, aggregateWrangler } from "./codegen";
+import {
+	aggregateDevVars,
+	aggregateWrangler,
+	escapeDevVarValue,
+} from "./codegen";
 
 vi.mock("@clack/prompts", () => ({
 	log: {
@@ -72,7 +76,7 @@ describe("aggregateWrangler", () => {
 		expect(log.warn).toHaveBeenCalledTimes(1);
 	});
 
-	it("emits [[d1_databases]] with binding + database_id", () => {
+	it("emits [[d1_databases]] with binding + database_id + database_name", () => {
 		const result = aggregateWrangler({
 			consumerWrangler: null,
 			payload: {
@@ -89,6 +93,7 @@ describe("aggregateWrangler", () => {
 		});
 
 		const parsed = parseToml(result) as Record<string, unknown>;
+		// databaseName is required (tightened type), so it always renders.
 		expect(parsed.d1_databases).toEqual([
 			{
 				binding: "DB_MAIN",
@@ -124,6 +129,52 @@ describe("aggregateWrangler", () => {
 				period: 60,
 			},
 		]);
+	});
+
+	it("rejects rate_limiter with non-positive limit/period", () => {
+		expect(() =>
+			aggregateWrangler({
+				consumerWrangler: null,
+				payload: {
+					...emptyPayload,
+					bindings: [
+						{
+							kind: "rate_limiter",
+							binding: "RATE_LIMITER_IP",
+							simple: { limit: 0, period: 60 },
+						},
+					],
+				},
+			}),
+		).toThrow(/limit and period must be positive integers/);
+
+		expect(() =>
+			aggregateWrangler({
+				consumerWrangler: null,
+				payload: {
+					...emptyPayload,
+					bindings: [
+						{
+							kind: "rate_limiter",
+							binding: "RATE_LIMITER_IP",
+							simple: { limit: 100, period: -1 },
+						},
+					],
+				},
+			}),
+		).toThrow(/limit and period must be positive integers/);
+	});
+
+	it("rejects a route with no pattern", () => {
+		expect(() =>
+			aggregateWrangler({
+				consumerWrangler: null,
+				payload: {
+					...emptyPayload,
+					routes: [{ pattern: "" }],
+				},
+			}),
+		).toThrow(/pattern is required/);
 	});
 
 	it("emits [vars] for secrets (empty values) and var-bindings", () => {
@@ -166,6 +217,169 @@ describe("aggregateWrangler", () => {
 		]);
 	});
 
+	// ── Unified namespace-collision checks ────────────────────────────
+	//
+	// Every identifier that lands at the top of env.* (bindings + [vars] keys
+	// + secrets) shares one namespace. Collision across any two kinds is a
+	// fail-fast situation with a message that names both shapes.
+
+	describe("namespace collisions", () => {
+		it("throws when two bindings of the same kind share an identifier", () => {
+			expect(() =>
+				aggregateWrangler({
+					consumerWrangler: null,
+					payload: {
+						...emptyPayload,
+						bindings: [
+							{
+								kind: "d1",
+								binding: "DB_MAIN",
+								databaseId: "abc",
+								databaseName: "db",
+							},
+							{
+								kind: "d1",
+								binding: "DB_MAIN",
+								databaseId: "def",
+								databaseName: "db",
+							},
+						],
+					},
+				}),
+			).toThrow(/"DB_MAIN".*d1 binding, d1 binding/s);
+		});
+
+		it("throws when two bindings of different kinds share an identifier", () => {
+			expect(() =>
+				aggregateWrangler({
+					consumerWrangler: null,
+					payload: {
+						...emptyPayload,
+						bindings: [
+							{
+								kind: "d1",
+								binding: "DB",
+								databaseId: "abc",
+								databaseName: "db",
+							},
+							{ kind: "kv", binding: "DB", id: "kv-id" },
+						],
+					},
+				}),
+			).toThrow(/"DB".*d1 binding, kv namespace/s);
+		});
+
+		it("throws when a var and another binding share an identifier", () => {
+			expect(() =>
+				aggregateWrangler({
+					consumerWrangler: null,
+					payload: {
+						...emptyPayload,
+						bindings: [
+							{ kind: "kv", binding: "SHARED", id: "kv-id" },
+							{ kind: "var", name: "SHARED", value: "v" },
+						],
+					},
+				}),
+			).toThrow(/"SHARED".*kv namespace, var/s);
+		});
+
+		it("throws when a secret collides with a binding", () => {
+			expect(() =>
+				aggregateWrangler({
+					consumerWrangler: null,
+					payload: {
+						...emptyPayload,
+						bindings: [{ kind: "kv", binding: "TOKEN", id: "kv-id" }],
+						secrets: [{ name: "TOKEN", devDefault: "dev" }],
+					},
+				}),
+			).toThrow(/"TOKEN".*kv namespace, secret/s);
+		});
+
+		it("throws when a secret collides with a var binding", () => {
+			expect(() =>
+				aggregateWrangler({
+					consumerWrangler: null,
+					payload: {
+						...emptyPayload,
+						bindings: [{ kind: "var", name: "APP_URL", value: "prod" }],
+						secrets: [{ name: "APP_URL", devDefault: "dev" }],
+					},
+				}),
+			).toThrow(/"APP_URL".*var, secret/s);
+		});
+
+		it("throws when a secret collides with an extraVars entry", () => {
+			expect(() =>
+				aggregateWrangler({
+					consumerWrangler: null,
+					payload: {
+						...emptyPayload,
+						vars: { NODE_ENV: "prod" },
+						secrets: [{ name: "NODE_ENV", devDefault: "dev" }],
+					},
+				}),
+			).toThrow(/"NODE_ENV".*secret, extra var/s);
+		});
+
+		it("throws when two secrets share a name", () => {
+			expect(() =>
+				aggregateWrangler({
+					consumerWrangler: null,
+					payload: {
+						...emptyPayload,
+						secrets: [
+							{ name: "AUTH_SECRET", devDefault: "a" },
+							{ name: "AUTH_SECRET", devDefault: "b" },
+						],
+					},
+				}),
+			).toThrow(/"AUTH_SECRET".*secret, secret/s);
+		});
+
+		it("throws when an extraVars key collides with a binding", () => {
+			expect(() =>
+				aggregateWrangler({
+					consumerWrangler: null,
+					payload: {
+						...emptyPayload,
+						bindings: [{ kind: "kv", binding: "FEATURE_FLAG", id: "kv-id" }],
+						vars: { FEATURE_FLAG: "on" },
+					},
+				}),
+			).toThrow(/"FEATURE_FLAG".*kv namespace, extra var/s);
+		});
+
+		it("reports every distinct conflict in one error", () => {
+			let caught: Error | null = null;
+			try {
+				aggregateWrangler({
+					consumerWrangler: null,
+					payload: {
+						...emptyPayload,
+						bindings: [
+							{ kind: "kv", binding: "A", id: "a" },
+							{
+								kind: "d1",
+								binding: "A",
+								databaseId: "a",
+								databaseName: "a",
+							},
+							{ kind: "r2", binding: "B", bucketName: "b" },
+						],
+						secrets: [{ name: "B", devDefault: "dev" }],
+					},
+				});
+			} catch (err) {
+				caught = err as Error;
+			}
+			expect(caught).not.toBeNull();
+			expect(caught?.message).toMatch(/"A"/);
+			expect(caught?.message).toMatch(/"B"/);
+		});
+	});
+
 	it("generates default name + compatibility_date when no consumer file exists", () => {
 		const result = aggregateWrangler({
 			consumerWrangler: null,
@@ -195,5 +409,154 @@ describe("aggregateDevVars", () => {
 		expect(result).toBe(
 			"AUTH_SECRET=dev-secret-change-me\nAPP_URL=http://localhost:3000\n",
 		);
+	});
+
+	it("escapes special characters in devDefault values", () => {
+		const result = aggregateDevVars([
+			{ name: "SECRET", devDefault: 'hello "world"\nbye' },
+		]);
+		expect(result).toBe('SECRET="hello \\"world\\"\\nbye"\n');
+	});
+
+	it("escapes backslashes and carriage returns in devDefault values", () => {
+		const result = aggregateDevVars([
+			{ name: "SECRET", devDefault: "a\\b\r\nc" },
+		]);
+		expect(result).toBe('SECRET="a\\\\b\\r\\nc"\n');
+	});
+
+	it("quotes values containing equals signs", () => {
+		const result = aggregateDevVars([
+			{ name: "SECRET", devDefault: "key=value" },
+		]);
+		expect(result).toBe('SECRET="key=value"\n');
+	});
+});
+
+describe("escapeDevVarValue", () => {
+	it("leaves simple safe values unquoted", () => {
+		expect(escapeDevVarValue("simple")).toBe("simple");
+		expect(escapeDevVarValue("http://localhost:3000")).toBe(
+			"http://localhost:3000",
+		);
+		expect(escapeDevVarValue("a.b-c_d+e@f/g")).toBe("a.b-c_d+e@f/g");
+	});
+
+	it("quotes the empty string so dotenv doesn't treat it as undefined", () => {
+		expect(escapeDevVarValue("")).toBe('""');
+	});
+
+	it("quotes values with leading or trailing whitespace", () => {
+		expect(escapeDevVarValue(" leading")).toBe('" leading"');
+		expect(escapeDevVarValue("trailing ")).toBe('"trailing "');
+		expect(escapeDevVarValue("\t")).toBe('"\\t"');
+	});
+
+	it("encodes tabs as \\t", () => {
+		expect(escapeDevVarValue("a\tb")).toBe('"a\\tb"');
+	});
+
+	it("encodes form-feed and vertical-tab as \\f and \\v", () => {
+		// Defensive: dotenv-flavour parsers handle a literal \f or \v inside a
+		// double-quoted string inconsistently. Always emit the two-char escape.
+		expect(escapeDevVarValue("a\fb")).toBe('"a\\fb"');
+		expect(escapeDevVarValue("a\vb")).toBe('"a\\vb"');
+	});
+
+	it("encodes newlines and carriage returns", () => {
+		expect(escapeDevVarValue("a\nb")).toBe('"a\\nb"');
+		expect(escapeDevVarValue("a\rb")).toBe('"a\\rb"');
+		expect(escapeDevVarValue("a\r\nb")).toBe('"a\\r\\nb"');
+	});
+
+	it("escapes double quotes and backslashes", () => {
+		expect(escapeDevVarValue('say "hi"')).toBe('"say \\"hi\\""');
+		expect(escapeDevVarValue("C:\\path")).toBe('"C:\\\\path"');
+	});
+
+	it("quotes values containing =, #, $, or a space", () => {
+		expect(escapeDevVarValue("key=value")).toBe('"key=value"');
+		expect(escapeDevVarValue("with #comment")).toBe('"with #comment"');
+		expect(escapeDevVarValue("hello world")).toBe('"hello world"');
+		expect(escapeDevVarValue("$var")).toBe('"$var"');
+	});
+
+	it("round-trips every tricky value through a dotenv parser", () => {
+		// Cheap local dotenv parser that handles the output shape we produce.
+		// Single-pass escape decoder so two-char sequences are interpreted
+		// independently — naively chaining `.replace`s would expand `\\\\n`
+		// (literal `\n`) into a newline, which is wrong. The single-pass form
+		// also preserves the order-independence the encoder relies on.
+		const parse = (line: string): string => {
+			const eq = line.indexOf("=");
+			const raw = line.slice(eq + 1);
+			if (raw.startsWith('"') && raw.endsWith('"')) {
+				const inner = raw.slice(1, -1);
+				let out = "";
+				for (let i = 0; i < inner.length; i++) {
+					const ch = inner[i];
+					if (ch === "\\" && i + 1 < inner.length) {
+						const next = inner[i + 1];
+						i++;
+						switch (next) {
+							case "n":
+								out += "\n";
+								break;
+							case "r":
+								out += "\r";
+								break;
+							case "t":
+								out += "\t";
+								break;
+							case "f":
+								out += "\f";
+								break;
+							case "v":
+								out += "\v";
+								break;
+							case '"':
+								out += '"';
+								break;
+							case "\\":
+								out += "\\";
+								break;
+							default:
+								out += next;
+								break;
+						}
+					} else {
+						out += ch;
+					}
+				}
+				return out;
+			}
+			return raw;
+		};
+
+		const cases = [
+			"simple",
+			"",
+			" leading",
+			"trailing ",
+			"\t",
+			"a\tb",
+			"a\fb",
+			"a\vb",
+			"a\nb",
+			"a\rb",
+			"a\r\nb",
+			'say "hi"',
+			"C:\\path",
+			"key=value",
+			"with #comment",
+			"$var",
+			"hello world",
+		];
+
+		for (const value of cases) {
+			const encoded = escapeDevVarValue(value);
+			const line = `KEY=${encoded}`;
+			expect(parse(line)).toBe(value);
+		}
 	});
 });

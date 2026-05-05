@@ -104,17 +104,45 @@ const corsOrigins = slot.list<string>({
 	name: "corsOrigins",
 });
 
-// The final CORS list peer plugins actually read. When the consumer supplies
-// `app.origins` we honour it verbatim; otherwise we derive a default from the
-// domain and append any extras from `corsOrigins`.
+// The final CORS list peer plugins actually read.
+//
+// Override contract: `app.origins` is *present, even when empty* = override
+// verbatim; *absent* = derive defaults from `app.domain` and append any
+// extras contributed to `corsOrigins`. The check is `!== undefined`
+// deliberately — `[]` is a valid (and meaningful) override that the runtime
+// catches as a misconfiguration. Using truthiness (`if (origins)`) silently
+// swallows the empty-array case because `Boolean([]) === true`, but the
+// semantic must be explicit so future readers don't reintroduce a JS coercion
+// quirk as load-bearing behavior.
+//
+// Wildcard guard: mixing `"*"` with specific origins has undefined semantics
+// in the CORS spec (and across browser implementations). We refuse the mix at
+// codegen time so the failure is loud and traceable, not a runtime surprise.
 const cors = slot.derived<string[], { extras: typeof corsOrigins }>({
 	source: SOURCE,
 	name: "cors",
 	inputs: { extras: corsOrigins },
 	compute: (inp, ctx) => {
-		if (ctx.app.origins) return ctx.app.origins;
-		const base = [`https://${ctx.app.domain}`, `https://app.${ctx.app.domain}`];
-		return [...base, ...inp.extras];
+		const result =
+			ctx.app.origins !== undefined
+				? ctx.app.origins
+				: [
+						`https://${ctx.app.domain}`,
+						`https://app.${ctx.app.domain}`,
+						...inp.extras,
+					];
+		const hasWildcard = result.includes("*");
+		const hasSpecific = result.some((o) => o !== "*");
+		if (hasWildcard && hasSpecific) {
+			throw new Error(
+				`api.cors: "*" mixed with specific origins (${result
+					.filter((o) => o !== "*")
+					.join(
+						", ",
+					)}); wildcard semantics are undefined when combined with explicit origins.`,
+			);
+		}
+		return result;
 	},
 });
 
@@ -142,15 +170,17 @@ const workerBase = slot.derived<TsExpression, { cors: typeof cors }>({
 				value: { kind: "string", value: options.prefix },
 			});
 		}
-		if (inp.cors.length > 0) {
-			properties.push({
-				key: "cors",
-				value: {
-					kind: "array",
-					items: inp.cors.map((o) => ({ kind: "string", value: o })),
-				},
-			});
-		}
+		// Always emit cors — preserving an empty `[]` when the consumer
+		// explicitly opted out via `app.origins: []`. The runtime decides
+		// what to do (throw on empty, apply on non-empty); silently dropping
+		// an empty cors here would turn the override into a no-op.
+		properties.push({
+			key: "cors",
+			value: {
+				kind: "array",
+				items: inp.cors.map((o) => ({ kind: "string", value: o })),
+			},
+		});
 		return {
 			kind: "call",
 			callee: { kind: "identifier", name: "createWorker" },
@@ -256,11 +286,18 @@ export const api = plugin<
 			}),
 		),
 
-		// Routes namespace import, gated on the handler value slot's seed.
+		// Routes namespace import — single source of truth is the
+		// `routesHandler` slot. The seed there decides whether the consumer has
+		// a routes directory; the import contribution simply mirrors that
+		// decision. A naive `await ctx.fileExists(...)` here would race the
+		// seed if the filesystem ever returned different answers between the
+		// two reads, emitting either an import without a `.handler(routes)` call
+		// or a handler call without its import. Resolving the slot guarantees
+		// internal consistency by construction.
 		self.slots.workerImports.contribute(async (ctx) => {
-			const hasRoutes = await ctx.fileExists("src/worker/routes");
-			if (!hasRoutes) return undefined;
-			return { source: "../src/worker/routes", namespace: "routes" };
+			const handler = await ctx.resolve(self.slots.routesHandler);
+			if (!handler) return undefined;
+			return { source: "../src/worker/routes", namespace: handler.identifier };
 		}),
 
 		// Consumer middleware is an implicit contribution via the conventional

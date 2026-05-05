@@ -50,7 +50,13 @@ describe("aggregateProviders", () => {
 		expect(out).toContain("</ThemeProvider>");
 	});
 
-	it("nests wrappers outer-first by ascending order", () => {
+	// aggregateProviders trusts input order — the owning slot
+	// (`solid.slots.providers`) is where `sortBy: (a, b) => a.order - b.order`
+	// lives, and its `composeList` is stable. Input to the aggregator is the
+	// final ordering; index 0 becomes the outer wrapper, index n becomes the
+	// innermost. Duplicating the sort here would lose the stable-tiebreak
+	// guarantee the slot layer makes.
+	it("nests wrappers outer-first following input order", () => {
 		const outer: ProviderSpec = {
 			imports: [{ source: "@ui/outer", named: ["OuterProvider"] }],
 			wrap: { identifier: "OuterProvider" },
@@ -61,11 +67,38 @@ describe("aggregateProviders", () => {
 			wrap: { identifier: "InnerProvider" },
 			order: 20,
 		};
-		const out = aggregateProviders({ providers: [inner, outer] });
+		// Providers arrive pre-sorted from the slot — outer first.
+		const out = aggregateProviders({ providers: [outer, inner] });
 		expect(out).not.toBeNull();
 		if (!out) return;
 		expect(out).toMatch(
 			/<OuterProvider>[\s\S]*<InnerProvider>[\s\S]*\{props\.children\}[\s\S]*<\/InnerProvider>[\s\S]*<\/OuterProvider>/,
+		);
+	});
+
+	// The `providers` slot sorts by `order` ascending with a stable
+	// decorate-sort-undecorate tiebreak, so items that share an `order`
+	// render in contribution order. `aggregateProviders` MUST NOT re-sort —
+	// a second sort on an already-ordered array loses the tiebreak — so
+	// when two providers default to `order: 0`, the one contributed first
+	// becomes the outer wrapper here.
+	it("keeps contribution order for providers with identical `order`", () => {
+		const first: ProviderSpec = {
+			imports: [{ source: "@ui/first", named: ["First"] }],
+			wrap: { identifier: "First" },
+			order: 0,
+		};
+		const second: ProviderSpec = {
+			imports: [{ source: "@ui/second", named: ["Second"] }],
+			wrap: { identifier: "Second" },
+			order: 0,
+		};
+		const out = aggregateProviders({ providers: [first, second] });
+		expect(out).not.toBeNull();
+		if (!out) return;
+		// first wraps second (first is the outer wrapper, both at order: 0).
+		expect(out).toMatch(
+			/<First>[\s\S]*<Second>[\s\S]*\{props\.children\}[\s\S]*<\/Second>[\s\S]*<\/First>/,
 		);
 	});
 

@@ -22,7 +22,14 @@
 	},
 	"devDependencies": {
 		"@fcalell/typescript-config": "workspace:*",
+		"@solidjs/router": "^0.15.3",
+		"@tailwindcss/vite": "^4.1.11",
+		"hono": "^4.12.8",
+		"smol-toml": "^1.6.1",
+		"solid-js": "^1.9.9",
 		"typescript": "^5.9.3",
+		"vite": "^7.0.4",
+		"vite-plugin-solid": "^2.11.6",
 		"vitest": "^3.2.3"
 	}
 }

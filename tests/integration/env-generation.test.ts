@@ -138,7 +138,12 @@ describe("`.dev.vars` write-once behavior", () => {
 		expect(existsSync(devVarsPath)).toBe(true);
 		const content = readFileSync(devVarsPath, "utf-8");
 		expect(content).toContain("AUTH_SECRET=dev-secret-change-me");
-		expect(content).toContain("APP_URL=http://localhost:3000");
+		// `APP_URL`'s devDefault is derived from `api.slots.cors`: first
+		// localhost origin wins, otherwise prod-domain fallback. With no
+		// vite() in this fixture and no app.origins override, the fallback
+		// is `https://example.com` — the right baseline for a worker-only
+		// .dev.vars (consumer overrides per-environment in their own .dev.vars).
+		expect(content).toContain("APP_URL=https://example.com");
 	});
 
 	it("does not overwrite an existing .dev.vars on subsequent generates", async () => {

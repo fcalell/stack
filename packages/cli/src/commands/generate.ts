@@ -26,11 +26,26 @@ export async function generateFromConfig(
 	const rawFiles = await graph.resolve(cliSlots.artifactFiles);
 	const postWrite = await graph.resolve(cliSlots.postWrite);
 
-	// Dedupe files by path. Later contributions overwrite earlier ones — this
-	// matches the old behaviour where two plugins writing the same file would
-	// have the latter win. Duplicates with identical content collapse to one.
+	// Collapse duplicate artifact contributions to the same path. Identical
+	// content is fine — multiple `emitArtifact` helpers can resolve to the
+	// same string and that's a no-op. Conflicting content is a structural
+	// bug: two plugins fighting over the same generated file at runtime is
+	// guaranteed to produce one of two surprising outputs depending on
+	// resolver order. Throw with a clear error so the conflict is fixed at
+	// the contribution site, not papered over by silent last-write-wins.
 	const byPath = new Map<string, GeneratedFile>();
-	for (const file of rawFiles) byPath.set(file.path, file);
+	for (const file of rawFiles) {
+		const prior = byPath.get(file.path);
+		if (prior && prior.content !== file.content) {
+			throw new Error(
+				`generate: conflicting contributions for artifact "${file.path}". ` +
+					`Two plugins emitted different content for the same path. ` +
+					`Reconcile by routing both through a single owning slot, or by ` +
+					`scoping the contribution to a path the other plugin doesn't claim.`,
+			);
+		}
+		byPath.set(file.path, file);
+	}
 	const files = [...byPath.values()];
 
 	if (opts.writeToDisk) {

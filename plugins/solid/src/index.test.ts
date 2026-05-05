@@ -516,6 +516,37 @@ describe("solid.slots.homeScaffold (REVIEW #21 — override-scaffold)", () => {
 // ── Provider ordering ─────────────────────────────────────────────
 
 describe("solid.slots.providers sort", () => {
+	// Regression test: two providers that both default to `order: 0` must
+	// render deterministically in contribution order through the FULL
+	// providersSource pipeline (list-slot sort + codegen). If a future code
+	// path re-sorts with a non-stable comparator, the outer/inner wrapping
+	// flips and this test flags it.
+	it("preserves contribution order end-to-end when orders tie", async () => {
+		const peer: GraphPlugin = {
+			name: "peer",
+			contributes: [
+				solid.slots.providers.contribute(() => ({
+					imports: [{ source: "@ui/first", named: ["First"] }],
+					wrap: { identifier: "First" },
+					order: 0,
+				})),
+				solid.slots.providers.contribute(() => ({
+					imports: [{ source: "@ui/second", named: ["Second"] }],
+					wrap: { identifier: "Second" },
+					order: 0,
+				})),
+			],
+		};
+		const g = buildGraph(collectSolidPlugins([peer]), makeCtxFactory());
+		const src = await g.resolve(solid.slots.providersSource);
+		expect(src).not.toBeNull();
+		if (!src) return;
+		// `First` was contributed first, so it wraps `Second`.
+		expect(src).toMatch(
+			/<First>[\s\S]*<Second>[\s\S]*\{props\.children\}[\s\S]*<\/Second>[\s\S]*<\/First>/,
+		);
+	});
+
 	it("sorts contributions by order ascending, stable on ties", async () => {
 		const outer: ProviderSpec = {
 			imports: [{ source: "@ui/outer", named: ["OuterProvider"] }],

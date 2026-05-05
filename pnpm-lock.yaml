@@ -336,9 +336,30 @@ importers:
       '@fcalell/typescript-config':
         specifier: workspace:*
         version: link:../../packages/typescript-config
+      '@solidjs/router':
+        specifier: ^0.15.3
+        version: 0.15.4(solid-js@1.9.12)
+      '@tailwindcss/vite':
+        specifier: ^4.1.11
+        version: 4.2.2(vite@7.3.2(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(tsx@4.21.0))
+      hono:
+        specifier: ^4.12.8
+        version: 4.12.9
+      smol-toml:
+        specifier: ^1.6.1
+        version: 1.6.1
+      solid-js:
+        specifier: ^1.9.9
+        version: 1.9.12
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
+      vite:
+        specifier: ^7.0.4
+        version: 7.3.2(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(tsx@4.21.0)
+      vite-plugin-solid:
+        specifier: ^2.11.6
+        version: 2.11.12(solid-js@1.9.12)(vite@7.3.2(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(tsx@4.21.0))
       vitest:
         specifier: ^3.2.3
         version: 3.2.4(@types/node@25.5.0)(jiti@2.6.1)(lightningcss@1.32.0)(tsx@4.21.0)
@@ -1081,6 +1102,11 @@ packages:
     resolution: {integrity: sha512-zdIWBGpR9zGx1p1bzIPqF5Gs+Ks/BH8R6fWhmUa/dcK1L2rUC8BAcZJzNRYBQv74kScf1TSOs0EY//Vd/I0V8g==}
     peerDependencies:
       solid-js: '>=1.8.4'
+
+  '@solidjs/router@0.15.4':
+    resolution: {integrity: sha512-WOpgg9a9T638cR+5FGbFi/IV4l2FpmBs1GpIMSPa0Ce9vyJN7Wts+X2PqMf9IYn0zUj2MlSJtm1gp7/HI/n5TQ==}
+    peerDependencies:
+      solid-js: ^1.8.6
 
   '@solidjs/router@0.16.1':
     resolution: {integrity: sha512-IhyjedgC6LRpw/8CPGGI89FrV+r0xTHzOl2c4CRyzYQ1bLepJxbVI1LLKvsavMWY5TRBRacV7hAeOhuTXkjiqg==}
@@ -3150,6 +3176,10 @@ snapshots:
       solid-js: 1.9.12
 
   '@solidjs/meta@0.29.4(solid-js@1.9.12)':
+    dependencies:
+      solid-js: 1.9.12
+
+  '@solidjs/router@0.15.4(solid-js@1.9.12)':
     dependencies:
       solid-js: 1.9.12
 

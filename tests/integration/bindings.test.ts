@@ -119,9 +119,15 @@ describe("binding collection across plugins", () => {
 			name: "AUTH_SECRET",
 			devDefault: "dev-secret-change-me",
 		});
+		// `appUrlDevDefault` derives from `api.slots.cors`: the first localhost
+		// origin wins (only present when a frontend plugin like vite is in the
+		// config), otherwise it falls back to `https://${app.domain}`. With
+		// no vite plugin in this fixture, the prod-domain fallback is the
+		// correct devDefault — wrangler still lets the consumer override
+		// per-environment via `.dev.vars`.
 		expect(secrets).toContainEqual({
 			name: "APP_URL",
-			devDefault: "http://localhost:3000",
+			devDefault: "https://example.com",
 		});
 	});
 

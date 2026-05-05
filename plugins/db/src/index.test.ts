@@ -333,15 +333,109 @@ describe("db → cli slots", () => {
 	});
 });
 
+// ── D1 binding shape: migrations_dir round-trip ───────────────────
+//
+// The wrangler aggregator only emits `[[d1_databases]].migrations_dir`
+// when the binding spec carries `migrationsDir`. Without it, `wrangler
+// d1 migrations apply` silently no-ops at deploy time — a bug that has
+// historically only been caught by snapshot review. Lock it down here.
+
+describe("db → cloudflare.slots.bindings (migrations dir)", () => {
+	it("passes migrationsDir from the resolved options.migrations default", async () => {
+		const { plugins, ctxFactory } = collectDbPlugins({
+			db: { dialect: "d1", databaseId: "abc-123" },
+		});
+		const g = buildGraph(plugins, ctxFactory);
+		const bindings = await g.resolve(cloudflare.slots.bindings);
+		const d1 = bindings.find((b) => b.kind === "d1");
+		expect(d1).toBeDefined();
+		expect(d1).toMatchObject({ migrationsDir: "./src/migrations" });
+	});
+
+	it("passes a custom migrations path through to migrationsDir", async () => {
+		const { plugins, ctxFactory } = collectDbPlugins({
+			db: {
+				dialect: "d1",
+				databaseId: "abc",
+				migrations: "./custom/migrations",
+			},
+		});
+		const g = buildGraph(plugins, ctxFactory);
+		const bindings = await g.resolve(cloudflare.slots.bindings);
+		const d1 = bindings.find((b) => b.kind === "d1");
+		expect(d1).toMatchObject({ migrationsDir: "./custom/migrations" });
+	});
+});
+
 // ── Schema push serialization ─────────────────────────────────────
 //
-// Unit-level: the schema-push latch that prevents concurrent
-// drizzle-kit pushes from clobbering each other. We run the setup task
-// and the watcher handler three times concurrently and assert the
-// pushes coalesce.
+// The setup task (`devReadySetup`) and the schema watcher (`devWatchers`)
+// must share a single in-flight/queued latch per (graph, cwd) so concurrent
+// drizzle-kit pushes don't race on SQLite's file lock. The latch lives in a
+// closure built inside `contributes: (self) => { ... }`, so it is scoped to
+// a single graph build — two graphs over the same cwd see independent
+// latches (regression: a module-scoped `Map<cwd, ...>` would have leaked
+// across graphs and let an old watcher starve a new graph's pushes).
 
 describe("db schema push serialization", () => {
-	it("serializes concurrent schema pushes", async () => {
+	it("serializes concurrent setup + watcher in one graph", async () => {
+		let active = 0;
+		let maxActive = 0;
+		let calls = 0;
+		// The setup task fires first and is gated open by the test; while it
+		// is in flight we kick the watcher and assert the watcher waits
+		// behind the setup push (i.e. they share the same latch within the
+		// graph).
+		let releaseFirst!: () => void;
+		const firstReady = new Promise<void>((r) => {
+			releaseFirst = r;
+		});
+		const spy = vi
+			.spyOn(pushModule, "pushSchemaLocal")
+			.mockImplementation(async () => {
+				calls++;
+				active++;
+				maxActive = Math.max(maxActive, active);
+				if (calls === 1) {
+					await firstReady;
+				} else {
+					await new Promise((r) => setTimeout(r, 10));
+				}
+				active--;
+			});
+
+		const { plugins, ctxFactory } = collectDbPlugins();
+		const g = buildGraph(plugins, ctxFactory);
+		const setup = await g.resolve(cliSlots.devReadySetup);
+		const watchers = await g.resolve(cliSlots.devWatchers);
+		const setupStep = setup.find((s) => s.name === "db-schema-push");
+		const schemaWatcher = watchers.find((w) => w.name === "schema");
+		if (!setupStep || !schemaWatcher) throw new Error("missing wiring");
+
+		const setupPromise = setupStep.run();
+		// Yield so the setup push starts executing before the watcher fires.
+		await new Promise((r) => setImmediate(r));
+		const watcherPromise = schemaWatcher.handler(
+			"src/schema/index.ts",
+			"change",
+		);
+
+		// While the setup push is gated, the watcher must NOT have started a
+		// concurrent push — only the setup push is in flight.
+		expect(active).toBe(1);
+		expect(calls).toBe(1);
+
+		releaseFirst();
+		await Promise.all([setupPromise, watcherPromise]);
+
+		// Strict: never more than one drizzle-kit push at a time.
+		expect(maxActive).toBe(1);
+		// Setup + watcher share the same latch → exactly two pushes.
+		expect(calls).toBe(2);
+		spy.mockRestore();
+	});
+
+	it("serializes concurrent watcher-only invocations", async () => {
 		let active = 0;
 		let maxActive = 0;
 		let calls = 0;
@@ -351,36 +445,95 @@ describe("db schema push serialization", () => {
 				calls++;
 				active++;
 				maxActive = Math.max(maxActive, active);
-				await new Promise((r) => setTimeout(r, 30));
+				await new Promise((r) => setTimeout(r, 20));
 				active--;
 			});
 
-		// One contribution resolves to one setup task + one watcher — but
-		// each contribution invocation creates its own latch, so resolve
-		// once and share the resulting closures.
 		const { plugins, ctxFactory } = collectDbPlugins();
 		const g = buildGraph(plugins, ctxFactory);
-		const setup = await g.resolve(cliSlots.devReadySetup);
 		const watchers = await g.resolve(cliSlots.devWatchers);
-		const setupStep = setup.find((s) => s.name === "db-schema-push");
 		const schemaWatcher = watchers.find((w) => w.name === "schema");
-		if (!setupStep || !schemaWatcher) throw new Error("missing wiring");
+		if (!schemaWatcher) throw new Error("missing schema watcher");
 
-		// NB: setupStep and schemaWatcher come from *different* contributions
-		// and therefore *different* latches. The real dev pipeline wires only
-		// the setup task via the push latch it creates; the watcher handler
-		// uses its own latch. We verify each latch serializes its own concurrent
-		// invocations.
 		await Promise.all([
+			schemaWatcher.handler("src/schema/index.ts", "change"),
+			schemaWatcher.handler("src/schema/index.ts", "change"),
 			schemaWatcher.handler("src/schema/index.ts", "change"),
 			schemaWatcher.handler("src/schema/index.ts", "change"),
 			schemaWatcher.handler("src/schema/index.ts", "change"),
 		]);
 
-		// Three concurrent watcher fires → at most 1 in flight at a time.
+		// Five concurrent fires → at most one in flight at a time.
 		expect(maxActive).toBe(1);
-		// Coalesces to 2 pushes max (one in-flight + one queued).
+		// Coalesces to in-flight + at most one queued → at most 2 pushes.
 		expect(calls).toBeLessThanOrEqual(2);
+		spy.mockRestore();
+	});
+
+	it("graph-scoped: two graphs over the same cwd are independent", async () => {
+		// REGRESSION: a module-scoped `Map<cwd, serializer>` would queue
+		// graph B's push behind graph A's still-in-flight push, because
+		// both graphs share the same key. This test asserts the latch is
+		// graph-scoped — gating graph A's push must not block graph B at all.
+		// Both graphs run with the same cwd ("/tmp/test"); we discriminate
+		// the two pushes via call order, not cwd.
+		let releaseA!: () => void;
+		const aReady = new Promise<void>((r) => {
+			releaseA = r;
+		});
+		let totalCalls = 0;
+		let callsA = 0;
+		let callsB = 0;
+		// `phase` tracks which graph we're currently exercising — set to "B"
+		// before stepB.run() so the mock can attribute the call. This is
+		// safe because the test serializes phase transitions.
+		let phase: "A" | "B" = "A";
+
+		const spy = vi
+			.spyOn(pushModule, "pushSchemaLocal")
+			.mockImplementation(async () => {
+				totalCalls++;
+				if (phase === "A") {
+					callsA++;
+					await aReady;
+				} else {
+					callsB++;
+					await new Promise((r) => setTimeout(r, 5));
+				}
+			});
+
+		// Two graphs over the SAME cwd. A leak in the serializer cache
+		// would queue B behind A.
+		const a = collectDbPlugins();
+		const gA = buildGraph(a.plugins, a.ctxFactory);
+		const setupA = await gA.resolve(cliSlots.devReadySetup);
+		const stepA = setupA.find((s) => s.name === "db-schema-push");
+		if (!stepA) throw new Error("missing setup step A");
+
+		const b = collectDbPlugins();
+		const gB = buildGraph(b.plugins, b.ctxFactory);
+		const setupB = await gB.resolve(cliSlots.devReadySetup);
+		const stepB = setupB.find((s) => s.name === "db-schema-push");
+		if (!stepB) throw new Error("missing setup step B");
+
+		// Kick graph A first; it hangs on `aReady` (latch held by graph A).
+		const aPromise = stepA.run();
+		await new Promise((r) => setImmediate(r));
+		expect(callsA).toBe(1);
+		expect(totalCalls).toBe(1);
+
+		// Now run graph B. With a graph-scoped latch B's push starts
+		// immediately. A module-scoped `Map<cwd, ...>` would block here
+		// because B's serializer would be the SAME object as A's.
+		phase = "B";
+		await stepB.run();
+		expect(callsB).toBe(1);
+
+		// Release A and confirm A still ran exactly once.
+		releaseA();
+		await aPromise;
+		expect(callsA).toBe(1);
+
 		spy.mockRestore();
 	});
 });

@@ -1,6 +1,6 @@
 import type { RuntimePlugin } from "@fcalell/cli/runtime";
 import { describe, expect, it } from "vitest";
-import { createWorker } from "./worker/index";
+import createWorker from "./worker/index";
 
 describe("createWorker", () => {
 	it("returns an AppBuilder with use and handler methods", () => {
@@ -84,5 +84,29 @@ describe("createWorker", () => {
 		const builder = createWorker();
 		const worker = builder.handler({});
 		expect(worker._router).toBeDefined();
+	});
+
+	// Empty cors[] is a misconfiguration: the consumer (or some upstream
+	// derivation) opted into CORS but resolved to no origins. Silently
+	// skipping the middleware would leak browser-fail-with-no-diagnostic
+	// behavior — fail loud at construction time.
+	it("throws at construction when cors is an empty array", () => {
+		const builder = createWorker({ cors: [] });
+		expect(() => builder.handler({})).toThrow(/cors was provided but is empty/);
+	});
+
+	it("allows cors: undefined for non-browser workers", () => {
+		const builder = createWorker({ cors: undefined });
+		const worker = builder.handler({});
+		expect(typeof worker.fetch).toBe("function");
+	});
+
+	// Empty router is supported at construction; RPC requests then 404 through
+	// Hono's onError. The point of locking this in: `aggregateWorker` emits
+	// `.handler()` with no args when no routes exist, and that path must not
+	// crash at builder time.
+	it("does not throw when handler() is called with no consumer routes", () => {
+		const builder = createWorker();
+		expect(() => builder.handler({})).not.toThrow();
 	});
 });

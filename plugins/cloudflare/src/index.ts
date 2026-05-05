@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { log } from "@clack/prompts";
 import { plugin, slot } from "@fcalell/cli";
@@ -8,6 +8,7 @@ import { aggregateDevVars, aggregateWrangler } from "./node/codegen";
 import {
 	type CloudflareOptions,
 	cloudflareOptionsSchema,
+	DEFAULT_COMPATIBILITY_DATE,
 	type WranglerBindingSpec,
 	type WranglerRouteSpec,
 } from "./types";
@@ -40,12 +41,17 @@ const secrets = slot.list<{ name: string; devDefault: string }>({
 	name: "secrets",
 });
 
-// Default: today's date. Worker compat dates bump rarely; consumers can
-// override via a `value` override:true contribution if needed.
+// Pinned to a plugin-shipped constant so wrangler.toml generation is
+// deterministic from (config + plugin version), not today's wall clock.
+// Seeding with `new Date()` broke generate-to-generate reproducibility across
+// day boundaries (snapshot tests flaked, `wrangler types` output drifted
+// between runs, CI caches invalidated for no reason). Consumers who want a
+// newer date push a `cloudflare.slots.compatibilityDate` value with
+// `override: true`.
 const compatibilityDate = slot.value<string>({
 	source: SOURCE,
 	name: "compatibilityDate",
-	seed: () => new Date().toISOString().slice(0, 10),
+	seed: () => DEFAULT_COMPATIBILITY_DATE,
 });
 
 // Final wrangler.toml source. Pure derivation — no ordering dependency
@@ -129,24 +135,67 @@ export const cloudflare = plugin<
 			return { path: ".dev.vars", content };
 		}),
 
-		// After `.stack/wrangler.toml` is on disk, shell out to `wrangler
-		// types` to regenerate Env typings. Failures are non-fatal.
+		// After `.stack/wrangler.toml` is on disk, shell out to `wrangler types`
+		// to regenerate Env typings. Non-fatal by design: a missing binary or a
+		// wrangler crash downgrades to a warning with actionable next steps —
+		// the rest of `stack generate` still completes.
+		//
+		// On every failure path we delete any pre-existing
+		// `.stack/worker-configuration.d.ts`. Leaving a stale d.ts in place is
+		// the worst outcome — the consumer's typecheck silently passes against
+		// last-run's bindings while the real `env.*` shape has drifted. Removing
+		// it forces an immediate "Cannot find name 'Env'" error that points at
+		// the failed regen, instead of a phantom green typecheck.
 		cliSlots.postWrite.contribute((ctx) => async () => {
-			const result = spawnSync(
-				"npx",
-				[
-					"wrangler",
-					"types",
-					".stack/worker-configuration.d.ts",
-					"-c",
-					".stack/wrangler.toml",
-				],
-				{ cwd: ctx.cwd, stdio: "pipe" },
-			);
+			const dtsPath = join(ctx.cwd, ".stack/worker-configuration.d.ts");
+			const removeStaleDts = () => {
+				try {
+					rmSync(dtsPath, { force: true });
+				} catch {
+					/* best-effort — surfacing the wrangler error is the priority */
+				}
+			};
+
+			let result: ReturnType<typeof spawnSync>;
+			try {
+				result = spawnSync(
+					"npx",
+					[
+						"wrangler",
+						"types",
+						".stack/worker-configuration.d.ts",
+						"-c",
+						".stack/wrangler.toml",
+					],
+					{ cwd: ctx.cwd, stdio: "pipe" },
+				);
+			} catch (err) {
+				removeStaleDts();
+				const detail = err instanceof Error ? err.message : String(err);
+				log.warn(
+					`wrangler types could not run (Env typings removed to surface the failure): ${detail}. ` +
+						"Install wrangler (e.g. `pnpm add -D wrangler`) and re-run `stack generate`.",
+				);
+				return;
+			}
+			if (result.error) {
+				removeStaleDts();
+				const err = result.error as NodeJS.ErrnoException;
+				const hint =
+					err.code === "ENOENT"
+						? "npx not found on PATH; install Node.js or wrangler and re-run `stack generate`."
+						: err.message;
+				log.warn(
+					`wrangler types could not run (Env typings removed to surface the failure): ${hint}`,
+				);
+				return;
+			}
 			if (result.status !== 0) {
+				removeStaleDts();
 				const stderr = result.stderr?.toString().trim() ?? "";
 				log.warn(
-					`wrangler types failed (Env typings may be stale)${stderr ? `: ${stderr}` : ""}`,
+					`wrangler types failed (Env typings removed to surface the failure)${stderr ? `: ${stderr}` : ""}. ` +
+						"Run `pnpm exec wrangler types .stack/worker-configuration.d.ts -c .stack/wrangler.toml` manually to see the full error.",
 				);
 			}
 		}),

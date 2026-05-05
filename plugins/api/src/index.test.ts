@@ -104,54 +104,14 @@ describe("api.slots", () => {
 	});
 });
 
-// ── cors — bug #5 order-independence ──────────────────────────────
+// ── cors — order-independence ─────────────────────────────────────
+//
+// Reversing the plugin order must not change cors output — the slot
+// graph derives ordering from data dependencies. Locked in alongside
+// the explicit-override semantics so a future refactor doesn't tie the
+// derivation back to plugin array position.
 
-describe("api.slots.cors (bug #5 — order-independent)", () => {
-	it("resolves defaults when no origins contributed", async () => {
-		const g = buildGraph(collectPlugins(), makeCtxFactory());
-		const cors = await g.resolve(api.slots.cors);
-		expect(cors).toEqual(["https://example.com", "https://app.example.com"]);
-	});
-
-	it("appends contributed origins from corsOrigins", async () => {
-		const viteLike: GraphPlugin = {
-			name: "vite-like",
-			contributes: [
-				api.slots.corsOrigins.contribute(() => "http://localhost:3000"),
-			],
-		};
-		const g = buildGraph(collectPlugins([viteLike]), makeCtxFactory());
-		const cors = await g.resolve(api.slots.cors);
-		expect(cors).toContain("http://localhost:3000");
-		expect(cors).toContain("https://example.com");
-	});
-
-	it("honours app.origins override (ignoring extras)", async () => {
-		const viteLike: GraphPlugin = {
-			name: "vite-like",
-			contributes: [
-				api.slots.corsOrigins.contribute(() => "http://localhost:3000"),
-			],
-		};
-		const g = buildGraph(
-			collectPlugins([viteLike]),
-			makeCtxFactory(
-				{},
-				{},
-				{
-					...app,
-					origins: ["https://only.example.com"],
-				},
-			),
-		);
-		const cors = await g.resolve(api.slots.cors);
-		expect(cors).toEqual(["https://only.example.com"]);
-	});
-
-	// ── Order-independence: vite contributes AFTER another CORS contributor ──
-	// Reversing the plugin order must not change cors output. This proves the
-	// structural dataflow fix for REVIEW #5 — the old event bus was susceptible
-	// to handler ordering because cors was mutated on the Worker payload.
+describe("api.slots.cors (order-independent)", () => {
 	it("cors does not depend on plugin array order", async () => {
 		const early: GraphPlugin = {
 			name: "early",
@@ -175,12 +135,239 @@ describe("api.slots.cors (bug #5 — order-independent)", () => {
 		);
 		const forward = await forwardGraph.resolve(api.slots.cors);
 		const reverse = await reverseGraph.resolve(api.slots.cors);
-		// Both must contain localhost — this is the fix.
 		expect(forward).toContain("http://localhost:3000");
 		expect(reverse).toContain("http://localhost:3000");
-		// And both must contain the other contributor.
 		expect(forward).toContain("https://early.example");
 		expect(reverse).toContain("https://early.example");
+	});
+});
+
+// ── cors — explicit override semantics ────────────────────────────
+//
+// Contract: `app.origins` is *present, even when empty* = override verbatim;
+// *absent* = derived defaults from `app.domain` plus extras from
+// `corsOrigins`. The `[]` case is the load-bearing one — `Boolean([])` is
+// `true`, so any truthiness check would pass it through silently. These
+// tests pin the explicit `!== undefined` semantics so a future refactor
+// can't reintroduce the JS coercion surprise.
+
+describe("api.slots.cors (explicit override semantics)", () => {
+	it("undefined origins -> derived defaults", async () => {
+		const g = buildGraph(collectPlugins(), makeCtxFactory());
+		const cors = await g.resolve(api.slots.cors);
+		expect(cors).toEqual(["https://example.com", "https://app.example.com"]);
+	});
+
+	it("empty array origins -> empty CORS list (verbatim override)", async () => {
+		const viteLike: GraphPlugin = {
+			name: "vite-like",
+			contributes: [
+				api.slots.corsOrigins.contribute(() => "http://localhost:3000"),
+			],
+		};
+		const g = buildGraph(
+			collectPlugins([viteLike]),
+			makeCtxFactory({}, {}, { ...app, origins: [] }),
+		);
+		const cors = await g.resolve(api.slots.cors);
+		// Empty array is honored verbatim — extras are ignored.
+		expect(cors).toEqual([]);
+	});
+
+	it("single origin override -> verbatim, ignoring extras", async () => {
+		const viteLike: GraphPlugin = {
+			name: "vite-like",
+			contributes: [
+				api.slots.corsOrigins.contribute(() => "http://localhost:3000"),
+			],
+		};
+		const g = buildGraph(
+			collectPlugins([viteLike]),
+			makeCtxFactory({}, {}, { ...app, origins: ["https://only.example.com"] }),
+		);
+		const cors = await g.resolve(api.slots.cors);
+		expect(cors).toEqual(["https://only.example.com"]);
+	});
+
+	it("multi-origin override -> verbatim, in declaration order", async () => {
+		const g = buildGraph(
+			collectPlugins(),
+			makeCtxFactory(
+				{},
+				{},
+				{
+					...app,
+					origins: [
+						"https://a.example",
+						"https://b.example",
+						"https://c.example",
+					],
+				},
+			),
+		);
+		const cors = await g.resolve(api.slots.cors);
+		expect(cors).toEqual([
+			"https://a.example",
+			"https://b.example",
+			"https://c.example",
+		]);
+	});
+
+	it("['*'] override -> wildcard alone is allowed", async () => {
+		const g = buildGraph(
+			collectPlugins(),
+			makeCtxFactory({}, {}, { ...app, origins: ["*"] }),
+		);
+		const cors = await g.resolve(api.slots.cors);
+		expect(cors).toEqual(["*"]);
+	});
+
+	it("rejects '*' mixed with specific origins (override case)", async () => {
+		const g = buildGraph(
+			collectPlugins(),
+			makeCtxFactory({}, {}, { ...app, origins: ["*", "https://example.com"] }),
+		);
+		await expect(g.resolve(api.slots.cors)).rejects.toThrow(
+			/wildcard semantics are undefined/,
+		);
+	});
+
+	it("rejects '*' mixed with derived defaults via corsOrigins contribution", async () => {
+		const wildcardPlugin: GraphPlugin = {
+			name: "wildcard",
+			contributes: [api.slots.corsOrigins.contribute(() => "*")],
+		};
+		const g = buildGraph(collectPlugins([wildcardPlugin]), makeCtxFactory());
+		await expect(g.resolve(api.slots.cors)).rejects.toThrow(
+			/wildcard semantics are undefined/,
+		);
+	});
+
+	it("derived path mixed with corsOrigins contributions", async () => {
+		const viteLike: GraphPlugin = {
+			name: "vite-like",
+			contributes: [
+				api.slots.corsOrigins.contribute(() => "http://localhost:3000"),
+				api.slots.corsOrigins.contribute(() => "http://localhost:4000"),
+			],
+		};
+		const g = buildGraph(collectPlugins([viteLike]), makeCtxFactory());
+		const cors = await g.resolve(api.slots.cors);
+		expect(cors).toContain("https://example.com");
+		expect(cors).toContain("https://app.example.com");
+		expect(cors).toContain("http://localhost:3000");
+		expect(cors).toContain("http://localhost:4000");
+	});
+});
+
+// ── routesHandler is the single source of truth for routes ────────
+//
+// Bug #2: previously `routesHandler` (a value slot seeded from
+// fileExists("src/worker/routes")) and the workerImports contribution
+// each ran their own fileExists check. If the filesystem returned
+// different answers between the two reads, the emitted worker would
+// have an import without a `.handler(routes)` call (or vice versa).
+// The fix: the import contribution resolves `self.slots.routesHandler`
+// — a single point of decision — so the two values can never disagree.
+describe("api routes — single source of truth", () => {
+	it("import + handler are wired together when handler resolves to non-null", async () => {
+		const dbLike: GraphPlugin = {
+			name: "db",
+			contributes: [
+				api.slots.pluginRuntimes.contribute(
+					(): PluginRuntimeEntry => ({
+						plugin: "db",
+						import: { source: "@pkg/db/runtime", default: "dbRuntime" },
+						identifier: "dbRuntime",
+						options: {},
+					}),
+				),
+			],
+		};
+		const files = { api: new Set(["src/worker/routes"]) };
+		const g = buildGraph(collectPlugins([dbLike]), makeCtxFactory({}, files));
+		const src = await g.resolve(api.slots.workerSource);
+		expect(src).toContain('import * as routes from "../src/worker/routes"');
+		expect(src).toContain(".handler(routes)");
+	});
+
+	it("import + handler both absent when handler resolves to null", async () => {
+		const dbLike: GraphPlugin = {
+			name: "db",
+			contributes: [
+				api.slots.pluginRuntimes.contribute(
+					(): PluginRuntimeEntry => ({
+						plugin: "db",
+						import: { source: "@pkg/db/runtime", default: "dbRuntime" },
+						identifier: "dbRuntime",
+						options: {},
+					}),
+				),
+			],
+		};
+		const g = buildGraph(collectPlugins([dbLike]), makeCtxFactory());
+		const src = await g.resolve(api.slots.workerSource);
+		expect(src).not.toContain('import * as routes from "../src/worker/routes"');
+		expect(src).toContain(".handler()");
+	});
+
+	// Simulate an unstable fileExists: each call returns a different answer.
+	// Because the import contribution now resolves the routesHandler slot
+	// (which is memoized by the graph), both reads see the same value —
+	// the slot's seed runs exactly once. Without the fix, the import call
+	// would read true while the seed read false (or vice versa) and the
+	// worker source would carry an import without a matching handler call.
+	it("internal consistency under unstable fileExists", async () => {
+		const dbLike: GraphPlugin = {
+			name: "db",
+			contributes: [
+				api.slots.pluginRuntimes.contribute(
+					(): PluginRuntimeEntry => ({
+						plugin: "db",
+						import: { source: "@pkg/db/runtime", default: "dbRuntime" },
+						identifier: "dbRuntime",
+						options: {},
+					}),
+				),
+			],
+		};
+
+		// Flip on every call. If two independent reads happened, one would see
+		// true and the other false — a corrupted worker would emerge. With the
+		// slot acting as the single source of truth, the seed runs once and
+		// every downstream read sees the same answer.
+		let toggle = false;
+		const flippy: GraphCtxFactory = {
+			app,
+			cwd: "/tmp/test",
+			log: noopLog,
+			ctxForPlugin: (name) => ({
+				options: {},
+				fileExists: async (p) => {
+					if (p === "src/worker/routes") {
+						toggle = !toggle;
+						return toggle;
+					}
+					return false;
+				},
+				readFile: async () => "",
+				template: (n) => new URL(`file:///tmp/templates/${name}/${n}`),
+				scaffold: (n, target) => ({
+					source: new URL(`file:///tmp/templates/${name}/${n}`),
+					target,
+					plugin: name,
+				}),
+			}),
+		};
+
+		const g = buildGraph(collectPlugins([dbLike]), flippy);
+		const src = await g.resolve(api.slots.workerSource);
+		// Iff the import is present, the handler call references `routes`.
+		// Iff the import is absent, the handler is bare `.handler()`.
+		const hasImport =
+			src?.includes('import * as routes from "../src/worker/routes"') ?? false;
+		const hasHandler = src?.includes(".handler(routes)") ?? false;
+		expect(hasImport).toBe(hasHandler);
 	});
 });
 

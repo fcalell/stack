@@ -71,7 +71,12 @@ describe("callback auto-wiring (slot-graph dataflow)", () => {
 		);
 	});
 
-	it("skips callbacks when src/worker/plugins/auth.ts does not exist", async () => {
+	it("missing src/worker/plugins/auth.ts is a hard error (required callback)", async () => {
+		// Auth declares a required `sendOTP` callback. A missing callback file
+		// means the worker would crash on the first request — the plugin
+		// throws at generate time so the misconfiguration surfaces loudly.
+		// Pre-fix this used to silently emit a worker without `authCallbacks`,
+		// hence the previous "skips callbacks" assertion.
 		seedFs(cwd, ["src/schema/", "src/worker/routes/"]);
 
 		const config = defineConfig({
@@ -84,14 +89,9 @@ describe("callback auto-wiring (slot-graph dataflow)", () => {
 			],
 		});
 
-		const result = await runStackGenerate({ config, cwd });
-		const worker = result.files.find((f) => f.path === ".stack/worker.ts");
-		expect(worker).toBeDefined();
-		if (!worker) return;
-
-		// authRuntime still present, but no callbacks identifier.
-		expect(worker.content).toContain("authRuntime(");
-		expect(worker.content).not.toContain("authCallbacks");
+		await expect(runStackGenerate({ config, cwd })).rejects.toThrow(
+			/callback file `src\/worker\/plugins\/auth\.ts` is missing/,
+		);
 	});
 
 	it("plugin array order does not affect callback wiring", async () => {

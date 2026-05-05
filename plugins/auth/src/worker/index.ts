@@ -138,7 +138,7 @@ function getOrInitAuth(
 
 export default function authRuntime(
 	options: AuthRuntimeInput,
-): RuntimePlugin<"auth", { db: unknown }, { auth: AuthInstance }> {
+): RuntimePlugin<"auth", object, { auth: AuthInstance }> {
 	return {
 		name: "auth",
 		validateEnv(env: unknown) {
@@ -151,12 +151,14 @@ export default function authRuntime(
 			}
 		},
 		context(env, upstream) {
-			return { auth: getOrInitAuth(env, upstream.db, options) };
+			const u = upstream as { db: unknown };
+			return { auth: getOrInitAuth(env, u.db, options) };
 		},
 		fetch(request, _env, upstream) {
 			const url = new URL(request.url);
 			if (!url.pathname.startsWith(AUTH_PREFIX)) return null;
-			return upstream.auth.handler(request);
+			const u = upstream as { auth: AuthInstance };
+			return u.auth.handler(request);
 		},
 	};
 }

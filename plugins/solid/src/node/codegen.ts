@@ -26,18 +26,24 @@ export function aggregateEntry(payload: CodegenEntryPayload): string | null {
 	return rendered.endsWith("\n") ? rendered : `${rendered}\n`;
 }
 
-// Emits `.stack/virtual-providers.tsx`. Providers are sorted ascending by
-// `order` (lower = outer). Siblings render as additional children of the
-// wrapper, after the wrapped subtree — they share the wrapper's context
-// (e.g. `<Toaster />` placed inside `<ToastProvider />`). Returns null when
-// no provider contributes — the Vite resolver then serves a pass-through
-// stub.
+// Emits `.stack/virtual-providers.tsx`. Providers arrive pre-sorted ascending
+// by `order` (lower = outer) via the owning `solid.slots.providers` list slot,
+// whose `sortBy` runs through `composeList`'s stable decorate-sort-undecorate.
+// Items with equal `order` therefore keep contribution order — the single
+// source of truth for ordering is the slot declaration. We MUST NOT re-sort
+// here: a second sort on a differently-ordered array would lose the
+// contribution-order tiebreak the slot layer guarantees.
+//
+// Siblings render as additional children of the wrapper, after the wrapped
+// subtree — they share the wrapper's context (e.g. `<Toaster />` placed
+// inside `<ToastProvider />`). Returns null when no provider contributes —
+// the Vite resolver then serves a pass-through stub.
 export function aggregateProviders(
 	payload: CompositionProvidersPayload,
 ): string | null {
 	if (payload.providers.length === 0) return null;
 
-	const sorted = [...payload.providers].sort((a, b) => a.order - b.order);
+	const sorted = payload.providers;
 
 	let inner: TsExpression = {
 		kind: "member",

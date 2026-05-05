@@ -1,8 +1,16 @@
 import type { TsExpression, TsImportSpec } from "@fcalell/cli/ast";
 import { z } from "zod";
 
+// Restart policy for vite's dev process. Defaults to "never" because vite
+// already handles HMR; restarting on crash usually masks the underlying bug.
+// Exposed so a consumer can opt into "on-crash" / "always" if they have a
+// reason (e.g. flaky upstream dependency).
+const restartPolicySchema = z.enum(["never", "on-crash", "always"]);
+
 export const viteOptionsSchema = z.object({
-	port: z.number().optional(),
+	port: z.number().int().min(1).max(65535).optional(),
+	restart: restartPolicySchema.optional(),
+	maxRestarts: z.number().int().min(0).optional(),
 });
 
 export type ViteOptions = z.input<typeof viteOptionsSchema>;

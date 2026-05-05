@@ -194,6 +194,45 @@ describe("solidUi.slots.fonts", () => {
 			"JetBrains Mono Variable",
 		]);
 	});
+
+	// fonts: [] is explicit opt-out. Must NOT resurrect defaultFonts at any
+	// layer — neither the slot derivation nor the runtime default parameter
+	// on `themeFontsPlugin`. The generated vite config must pass [] through.
+	it("fonts: [] means no fonts (slot resolves to [], codegen passes [] explicitly)", async () => {
+		const { plugins, ctxFactory } = collectSolidUiPlugins({
+			solidUi: { fonts: [] },
+		});
+		const g = buildGraph(plugins, ctxFactory);
+		const entries = await g.resolve(solidUi.slots.fonts);
+		expect(entries).toEqual([]);
+
+		const calls = await g.resolve(vite.slots.pluginCalls);
+		const fontsCall = calls.find(
+			(c) =>
+				c.kind === "call" &&
+				c.callee.kind === "identifier" &&
+				c.callee.name === "themeFontsPlugin",
+		);
+		if (fontsCall?.kind !== "call") throw new Error("expected call");
+		// Must be exactly one argument: the empty array literal. An empty
+		// args list would hit `themeFontsPlugin`'s (formerly default)
+		// parameter at runtime and inject JetBrainsMono anyway.
+		expect(fontsCall.args).toHaveLength(1);
+		const arg = fontsCall.args[0];
+		if (arg?.kind !== "array") throw new Error("expected array arg");
+		expect(arg.items).toEqual([]);
+	});
+
+	// And when fonts: [], no --ui-font-* layer is emitted into app.css.
+	it("fonts: [] produces no :root { --ui-font-* } layer", async () => {
+		const { plugins, ctxFactory } = collectSolidUiPlugins({
+			solidUi: { fonts: [] },
+		});
+		const g = buildGraph(plugins, ctxFactory);
+		const css = await g.resolve(solidUi.slots.appCssSource);
+		if (!css) return;
+		expect(css).not.toContain("--ui-font-");
+	});
 });
 
 // ── Vite contributions ────────────────────────────────────────────
@@ -389,6 +428,51 @@ describe("REVIEW #21 — home scaffold override (solid vs solid-ui)", () => {
 			results.push(homes[0]?.plugin);
 		}
 		expect(new Set(results)).toEqual(new Set(["solid-ui"]));
+	});
+
+	// Bug report claimed solid-ui's homeScaffold contribution "fires even
+	// when solid-ui is disabled in config." It can't: contributions live
+	// on a plugin and the plugin is only collected when it's in
+	// config.plugins. The three cases below demonstrate the structural
+	// answer — this is case (c): solid-ui alone, no solid. solid-ui's
+	// contribution is registered against solid.slots.homeScaffold but
+	// nothing reads it (solid is what contributes to cliSlots.initScaffolds
+	// via that slot), so the home scaffold just doesn't land — no errors,
+	// no surprise files, no bogus CSS. The bug is a false positive.
+	it("solid-ui alone (no solid): no home scaffold lands; resolution does not error", async () => {
+		// Collect solid-ui without solid. Include api + vite so the graph
+		// has a full surface but no solid reader of homeScaffold.
+		const apiCollected = api.cli.collect({ app, options: {} });
+		const viteCollected = vite.cli.collect({ app, options: {} });
+		const solidUiCollected = solidUi.cli.collect({ app, options: {} });
+		const plugins = [
+			{
+				name: "api",
+				slots: apiCollected.slots as unknown as Record<string, Slot<unknown>>,
+				contributes: apiCollected.contributes,
+			},
+			{
+				name: "vite",
+				slots: viteCollected.slots as unknown as Record<string, Slot<unknown>>,
+				contributes: viteCollected.contributes,
+			},
+			{
+				name: "solid-ui",
+				slots: solidUiCollected.slots as unknown as Record<
+					string,
+					Slot<unknown>
+				>,
+				contributes: solidUiCollected.contributes,
+			},
+		];
+		const g = buildGraph(plugins, makeCtxFactory({ "solid-ui": {} }));
+		const scaffolds = await g.resolve(cliSlots.initScaffolds);
+		const homes = scaffolds.filter(
+			(s) => s.target === "src/app/pages/index.tsx",
+		);
+		// solid is what emits the index.tsx scaffold (by resolving
+		// homeScaffold). Without solid in the graph, nothing lands.
+		expect(homes).toHaveLength(0);
 	});
 });
 

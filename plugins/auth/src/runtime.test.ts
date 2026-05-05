@@ -109,7 +109,6 @@ describe("authRuntime", () => {
 				auth: unknown;
 			};
 			const result = await runtime.fetch?.(request, validEnv, {
-				db: mockDb,
 				...upstream,
 			});
 			expect(result).toBeNull();
