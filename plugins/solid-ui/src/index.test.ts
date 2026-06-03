@@ -14,7 +14,7 @@ import { vite } from "@fcalell/plugin-vite";
 import { describe, expect, it } from "vitest";
 import { solidUi } from "./index";
 import { defaultFonts, type FontEntry } from "./node/fonts";
-import { solidUiOptionsSchema } from "./types";
+import { cssImportSchema, cssLayerSchema, solidUiOptionsSchema } from "./types";
 
 // Resolve `@fcalell/plugin-solid`'s on-disk templates dir so `ctx.template()`
 // for the solid plugin returns the real shell.html. Without this the HTML
@@ -524,5 +524,131 @@ describe("solidUiOptionsSchema fonts validation", () => {
 		expect(() =>
 			solidUiOptionsSchema.parse({ fonts: defaultFonts }),
 		).not.toThrow();
+	});
+});
+
+// ── CSS slot-contribution validation ──────────────────────────────
+//
+// `appCssImports` and `appCssLayers` carry strings that are rendered
+// directly into the stylesheet. The slot schemas reject malformed
+// contributions on entry so the bad plugin gets a precise error
+// instead of producing an injectable stylesheet at render time.
+
+describe("cssImportSchema validation", () => {
+	it("accepts a bare-string import", () => {
+		expect(() => cssImportSchema.parse("tailwindcss")).not.toThrow();
+	});
+
+	it("accepts a structured import with valid layer + supports", () => {
+		expect(() =>
+			cssImportSchema.parse({
+				url: "tailwindcss",
+				layer: "theme",
+				supports: "(display: grid)",
+			}),
+		).not.toThrow();
+	});
+
+	it("rejects an empty bare-string url", () => {
+		expect(() => cssImportSchema.parse("")).toThrow();
+	});
+
+	it("rejects a structured import with an empty url", () => {
+		expect(() => cssImportSchema.parse({ url: "" })).toThrow();
+	});
+
+	it("rejects a non-ident layer() argument", () => {
+		expect(() =>
+			cssImportSchema.parse({ url: "x", layer: "evil; ident" }),
+		).toThrow(/layer/i);
+	});
+
+	it("rejects a supports() expression with a statement terminator", () => {
+		expect(() =>
+			cssImportSchema.parse({
+				url: "x",
+				supports: "(display: grid); @import url(http://x)",
+			}),
+		).toThrow(/supports/i);
+	});
+
+	it("rejects unbalanced supports() parentheses", () => {
+		expect(() =>
+			cssImportSchema.parse({ url: "x", supports: "(display: grid" }),
+		).toThrow(/supports/i);
+	});
+});
+
+describe("cssLayerSchema validation", () => {
+	it("accepts a layer with an ident name", () => {
+		expect(() =>
+			cssLayerSchema.parse({ name: "base", content: "/* */" }),
+		).not.toThrow();
+	});
+
+	it("rejects a layer name with a semicolon", () => {
+		expect(() =>
+			cssLayerSchema.parse({ name: "evil; @import url(x)", content: "" }),
+		).toThrow(/layer/i);
+	});
+
+	it("rejects a layer name starting with a digit", () => {
+		expect(() => cssLayerSchema.parse({ name: "1bad", content: "" })).toThrow(
+			/layer/i,
+		);
+	});
+
+	it("rejects a layer name with spaces", () => {
+		expect(() =>
+			cssLayerSchema.parse({ name: "has space", content: "" }),
+		).toThrow(/layer/i);
+	});
+});
+
+// ── Font family + URL CSS injection regression test ──────────────
+//
+// A consumer-supplied family with a quote/backslash, or an asset href
+// with a quote/paren, used to corrupt the @font-face block. The
+// rendered stylesheet must escape those characters AND the matching
+// `--ui-font-*` token in `:root`.
+
+describe("font CSS escape (regression)", () => {
+	const malicious: FontEntry = {
+		family: 'Evil"; }body{display:none}@font-face{font-family:"x',
+		specifier:
+			"@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2",
+		weight: "400",
+		style: "normal",
+		role: "mono",
+		fallback: {
+			family: 'sans"serif',
+			ascentOverride: "90%",
+			descentOverride: "22%",
+			lineGapOverride: "0%",
+			sizeAdjust: "100%",
+		},
+	};
+
+	it("escapes the family name in the :root --ui-font-* token", async () => {
+		const { plugins, ctxFactory } = collectSolidUiPlugins({
+			solidUi: { fonts: [malicious] },
+		});
+		const g = buildGraph(plugins, ctxFactory);
+		const css = await g.resolve(solidUi.slots.appCssSource);
+		expect(css).not.toBeNull();
+		if (!css) return;
+		// The escaped quote sequence (`\"`) must appear — that's what
+		// makes the stray `}body{` payload inert: it sits inside a
+		// quoted CSS string instead of breaking out of the token.
+		expect(css).toContain("--ui-font-mono:");
+		expect(css).toContain('\\"');
+		// Exactly one `--ui-font-mono` declaration. Without escaping,
+		// the embedded `@font-face{font-family:"x` in the hostile name
+		// would terminate the value early and either produce malformed
+		// CSS or extra declarations.
+		expect((css.match(/--ui-font-mono:/g) ?? []).length).toBe(1);
+		// The malicious sequence's leading quote ALWAYS appears as
+		// `\"`, never as a raw `"` immediately after `Evil`.
+		expect(css).not.toMatch(/Evil";/);
 	});
 });

@@ -8,7 +8,7 @@ import type {
 } from "@fcalell/cli/ast";
 import { cliSlots, emitArtifact } from "@fcalell/cli/cli-slots";
 import { z } from "zod";
-import { generateRouteBarrel } from "./node/barrel";
+import { generateRouteBarrel, hasRoutableFiles } from "./node/barrel";
 import { aggregateMiddleware, aggregateWorker } from "./node/codegen";
 import type {
 	CallbackSpec,
@@ -85,15 +85,19 @@ const middlewareImports = slot.derived<
 });
 
 // The handler is a value slot — api seeds it conditionally on whether the
-// consumer has a `src/worker/routes` directory. Other plugins may override
-// via `override: true` if they own the root handler shape.
+// consumer has at least one routable file under `src/worker/routes`. Other
+// plugins may override via `override: true` if they own the root handler
+// shape.
+//
+// Why "routable file" and not "directory exists": the worker imports from
+// `../src/worker/routes` (resolves to the generated `index.ts` barrel). If
+// the barrel skips emission (no routes), the import would dangle. Gate the
+// handler on the same predicate so handler + barrel + import are wired (or
+// not) together.
 const routesHandler = slot.value<{ identifier: string } | null>({
 	source: SOURCE,
 	name: "routesHandler",
-	seed: async (ctx) =>
-		(await ctx.fileExists("src/worker/routes"))
-			? { identifier: "routes" }
-			: null,
+	seed: (ctx) => (hasRoutableFiles(ctx.cwd) ? { identifier: "routes" } : null),
 });
 
 // Free-form extra CORS origins contributed by frontend plugins (e.g. vite's
@@ -189,6 +193,24 @@ const workerBase = slot.derived<TsExpression, { cors: typeof cors }>({
 	},
 });
 
+// The rendered `src/worker/routes/index.ts` barrel. Returns null when
+// there's nothing to barrel (no routes dir, or routes dir contains no
+// routable files). emitArtifact below skips the write on null — without
+// this gate the generator would emit a header-only stub into the
+// consumer's working tree on every `stack generate`, even for worker-only
+// / no-routes projects. Has no slot inputs because it reads `ctx.cwd`
+// directly via `generateRouteBarrel` / `hasRoutableFiles` — the routes
+// directory is part of the consumer's source tree, not slot data.
+const routeBarrelSource = slot.derived<string | null, Record<string, never>>({
+	source: SOURCE,
+	name: "routeBarrelSource",
+	inputs: {},
+	compute: (_inp, ctx) => {
+		if (!hasRoutableFiles(ctx.cwd)) return null;
+		return generateRouteBarrel(ctx.cwd);
+	},
+});
+
 // The rendered `.stack/worker.ts` source. Pulled into `cli.slots.artifactFiles`
 // by the auto-contribution below, gated on `pluginRuntimes` being non-empty
 // (with only the api plugin, no runtimes would land in the chain — emitting a
@@ -249,6 +271,7 @@ export const api = plugin<
 		callbacks: typeof callbacks;
 		workerBase: typeof workerBase;
 		workerSource: typeof workerSource;
+		routeBarrelSource: typeof routeBarrelSource;
 	}
 >("api", {
 	label: "API",
@@ -275,6 +298,7 @@ export const api = plugin<
 		callbacks,
 		workerBase,
 		workerSource,
+		routeBarrelSource,
 	},
 
 	contributes: (self) => [
@@ -323,11 +347,13 @@ export const api = plugin<
 		// source (no runtimes in the config) skips the emission.
 		emitArtifact(".stack/worker.ts", self.slots.workerSource),
 
-		// Always regenerate the route barrel — cheap, order-independent.
-		cliSlots.artifactFiles.contribute((ctx) => ({
-			path: "src/worker/routes/index.ts",
-			content: generateRouteBarrel(ctx.cwd),
-		})),
+		// Emit the route barrel via the universal source-slot pattern. The
+		// source returns null when there are no routable files, in which
+		// case emitArtifact skips the write — no more header-only stub
+		// landing in worker-only / no-routes consumer trees on every
+		// generate. routesHandler shares the same `hasRoutableFiles`
+		// predicate so import + handler + barrel agree on emission.
+		emitArtifact("src/worker/routes/index.ts", self.slots.routeBarrelSource),
 
 		// Dev wrangler process.
 		cliSlots.devProcesses.contribute(() => ({

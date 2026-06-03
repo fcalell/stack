@@ -35,6 +35,10 @@ const pluginCalls = slot.list<TsExpression>({
 const resolveAliases = slot.list<{ find: string; replacement: string }>({
 	source: SOURCE,
 	name: "resolveAliases",
+	// `find` is the key in the emitted Vite `resolve.alias` object; two
+	// contributions with the same `find` would silently overwrite when the
+	// TS object literal is rendered. Fail loudly at compose time instead.
+	uniqueBy: (a) => a.find,
 });
 
 // Resolved dev-server port. Defaults to 3000; overrideable via options.port.
@@ -121,8 +125,14 @@ export const vite = plugin<
 		// consumer has overridden `app.origins` entirely. Reads
 		// `vite.slots.devServerPort` via ctx.resolve so the value follows
 		// options.port if the consumer bumps it.
+		//
+		// Predicate: `!== undefined`, NOT truthiness. `app.origins: []` is a
+		// meaningful "no origins" override the consumer might use to lock the
+		// CORS allow-list down — silently appending localhost would defeat
+		// it. Mirror plugin-api's `cors` derivation (same predicate) so every
+		// reader of `app.origins` agrees on the override semantics.
 		api.slots.corsOrigins.contribute(async (ctx) => {
-			if (ctx.app.origins) return undefined;
+			if (ctx.app.origins !== undefined) return undefined;
 			const port = await ctx.resolve(self.slots.devServerPort);
 			return `http://localhost:${port}`;
 		}),

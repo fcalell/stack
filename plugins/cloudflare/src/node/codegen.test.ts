@@ -394,6 +394,315 @@ describe("aggregateWrangler", () => {
 		expect(parsed.name).toBe("test-app");
 		expect(parsed.compatibility_date).toBe("2025-01-01");
 	});
+
+	// ── Merge contract ─────────────────────────────────────────────────
+	//
+	// Three categories, encoded explicitly in code:
+	//   (1) framework-managed lists — consumer cannot specify; throws
+	//   (2) framework-defaulted scalars — consumer wins, else default
+	//   (3) consumer-only fields — pass-through verbatim
+	// `[vars]` is a hybrid: consumer keys pass through, framework keys
+	// overlay, collisions throw.
+
+	describe("merge contract: framework-defaulted scalars", () => {
+		it("fills compatibility_date when consumer wrangler.toml omits it (regression)", () => {
+			// Bug class: prior implementation only seeded compat_date in the
+			// no-consumer-file branch. A consumer file without it dropped the
+			// framework default and let wrangler silently fall back internally.
+			const consumer = 'name = "my-app"\n';
+			const result = aggregateWrangler({
+				consumerWrangler: consumer,
+				payload: emptyPayload,
+				name: "fallback",
+			});
+
+			const parsed = parseToml(result) as { compatibility_date?: string };
+			expect(parsed.compatibility_date).toBe("2025-01-01");
+		});
+
+		it("fills name when consumer wrangler.toml omits it", () => {
+			const consumer = 'compatibility_date = "2024-12-12"\n';
+			const result = aggregateWrangler({
+				consumerWrangler: consumer,
+				payload: emptyPayload,
+				name: "my-app",
+			});
+
+			const parsed = parseToml(result) as { name?: string };
+			expect(parsed.name).toBe("my-app");
+		});
+
+		it("preserves consumer-supplied name verbatim", () => {
+			const consumer = 'name = "consumer-wins"\n';
+			const result = aggregateWrangler({
+				consumerWrangler: consumer,
+				payload: emptyPayload,
+				name: "different-fallback",
+			});
+
+			const parsed = parseToml(result) as { name?: string };
+			expect(parsed.name).toBe("consumer-wins");
+		});
+
+		it("preserves consumer-supplied compatibility_date verbatim", () => {
+			const consumer = 'compatibility_date = "2024-06-15"\n';
+			const result = aggregateWrangler({
+				consumerWrangler: consumer,
+				payload: emptyPayload,
+			});
+
+			const parsed = parseToml(result) as { compatibility_date?: string };
+			expect(parsed.compatibility_date).toBe("2024-06-15");
+		});
+
+		it("rejects an invalid framework default compatibility_date", () => {
+			expect(() =>
+				aggregateWrangler({
+					consumerWrangler: null,
+					payload: { ...emptyPayload, compatibilityDate: "yesterday" },
+				}),
+			).toThrow(/must be YYYY-MM-DD/);
+		});
+
+		it("rejects a consumer-supplied invalid compatibility_date", () => {
+			expect(() =>
+				aggregateWrangler({
+					consumerWrangler: 'compatibility_date = "2024/06/15"\n',
+					payload: emptyPayload,
+				}),
+			).toThrow(/must be YYYY-MM-DD/);
+		});
+
+		it("rejects a non-string consumer-supplied name", () => {
+			expect(() =>
+				aggregateWrangler({
+					consumerWrangler: "name = 42\n",
+					payload: emptyPayload,
+				}),
+			).toThrow(/`name` must be a string/);
+		});
+	});
+
+	describe("merge contract: consumer pass-through", () => {
+		it("preserves arbitrary consumer-only fields like account_id", () => {
+			const consumer = 'account_id = "abc-123"\nworkers_dev = false\n';
+			const result = aggregateWrangler({
+				consumerWrangler: consumer,
+				payload: emptyPayload,
+				name: "my-app",
+			});
+
+			const parsed = parseToml(result) as {
+				account_id?: string;
+				workers_dev?: boolean;
+			};
+			expect(parsed.account_id).toBe("abc-123");
+			expect(parsed.workers_dev).toBe(false);
+		});
+
+		it("preserves consumer [build] / [dev] tables verbatim", () => {
+			const consumer = `[dev]
+ip = "127.0.0.1"
+port = 8787
+`;
+			const result = aggregateWrangler({
+				consumerWrangler: consumer,
+				payload: emptyPayload,
+				name: "my-app",
+			});
+
+			const parsed = parseToml(result) as {
+				dev?: { ip?: string; port?: number };
+			};
+			expect(parsed.dev).toEqual({ ip: "127.0.0.1", port: 8787 });
+		});
+	});
+
+	describe("merge contract: framework-managed sections", () => {
+		it("rejects consumer wrangler.toml that defines [[d1_databases]]", () => {
+			const consumer = `name = "my-app"
+[[d1_databases]]
+binding = "DB"
+database_id = "abc"
+database_name = "x"
+`;
+			expect(() =>
+				aggregateWrangler({
+					consumerWrangler: consumer,
+					payload: emptyPayload,
+				}),
+			).toThrow(/framework-managed section.*\[\[d1_databases\]\]/s);
+		});
+
+		it("rejects consumer wrangler.toml that defines [[kv_namespaces]]", () => {
+			const consumer = `[[kv_namespaces]]
+binding = "MY_KV"
+id = "kv-id"
+`;
+			expect(() =>
+				aggregateWrangler({
+					consumerWrangler: consumer,
+					payload: emptyPayload,
+				}),
+			).toThrow(/\[\[kv_namespaces\]\]/);
+		});
+
+		it("rejects consumer wrangler.toml that defines [[r2_buckets]]", () => {
+			const consumer = `[[r2_buckets]]
+binding = "MY_BUCKET"
+bucket_name = "assets"
+`;
+			expect(() =>
+				aggregateWrangler({
+					consumerWrangler: consumer,
+					payload: emptyPayload,
+				}),
+			).toThrow(/\[\[r2_buckets\]\]/);
+		});
+
+		it("rejects consumer wrangler.toml that defines [[unsafe.bindings]]", () => {
+			const consumer = `[[unsafe.bindings]]
+name = "RL"
+type = "ratelimit"
+`;
+			expect(() =>
+				aggregateWrangler({
+					consumerWrangler: consumer,
+					payload: emptyPayload,
+				}),
+			).toThrow(/unsafe\.bindings/);
+		});
+
+		it("rejects consumer wrangler.toml that defines [[routes]]", () => {
+			const consumer = `[[routes]]
+pattern = "example.com/*"
+`;
+			expect(() =>
+				aggregateWrangler({
+					consumerWrangler: consumer,
+					payload: emptyPayload,
+				}),
+			).toThrow(/\[\[routes\]\]/);
+		});
+
+		it("emits framework-managed lists driven entirely by plugin contributions", () => {
+			const consumer = `name = "my-app"
+account_id = "abc-123"
+`;
+			const result = aggregateWrangler({
+				consumerWrangler: consumer,
+				payload: {
+					...emptyPayload,
+					bindings: [
+						{
+							kind: "d1",
+							binding: "DB_MAIN",
+							databaseId: "abc",
+							databaseName: "x",
+						},
+					],
+				},
+			});
+
+			const parsed = parseToml(result) as {
+				name?: string;
+				account_id?: string;
+				d1_databases?: unknown[];
+				compatibility_date?: string;
+			};
+			expect(parsed.name).toBe("my-app");
+			expect(parsed.account_id).toBe("abc-123");
+			expect(parsed.compatibility_date).toBe("2025-01-01");
+			expect(parsed.d1_databases).toEqual([
+				{ binding: "DB_MAIN", database_id: "abc", database_name: "x" },
+			]);
+		});
+	});
+
+	describe("merge contract: [vars] hybrid overlay", () => {
+		it("passes consumer [vars] through verbatim when no framework keys collide", () => {
+			const consumer = `[vars]
+NODE_ENV = "production"
+LOG_LEVEL = "info"
+`;
+			const result = aggregateWrangler({
+				consumerWrangler: consumer,
+				payload: emptyPayload,
+			});
+
+			const parsed = parseToml(result) as { vars?: Record<string, string> };
+			expect(parsed.vars).toEqual({
+				NODE_ENV: "production",
+				LOG_LEVEL: "info",
+			});
+		});
+
+		it("merges consumer [vars] with framework var bindings", () => {
+			const consumer = `[vars]
+NODE_ENV = "production"
+`;
+			const result = aggregateWrangler({
+				consumerWrangler: consumer,
+				payload: {
+					...emptyPayload,
+					bindings: [{ kind: "var", name: "API_PREFIX", value: "/api" }],
+				},
+			});
+
+			const parsed = parseToml(result) as { vars?: Record<string, string> };
+			expect(parsed.vars).toEqual({
+				NODE_ENV: "production",
+				API_PREFIX: "/api",
+			});
+		});
+
+		it("rejects a consumer [vars] key that collides with a framework secret", () => {
+			const consumer = `[vars]
+AUTH_SECRET = "leaked-from-consumer"
+`;
+			expect(() =>
+				aggregateWrangler({
+					consumerWrangler: consumer,
+					payload: {
+						...emptyPayload,
+						secrets: [{ name: "AUTH_SECRET", devDefault: "dev" }],
+					},
+				}),
+			).toThrow(/AUTH_SECRET.*consumer wrangler\.toml \[vars\].*secret/s);
+		});
+
+		it("rejects a consumer [vars] key that collides with a framework var binding", () => {
+			const consumer = `[vars]
+API_PREFIX = "/v1"
+`;
+			expect(() =>
+				aggregateWrangler({
+					consumerWrangler: consumer,
+					payload: {
+						...emptyPayload,
+						bindings: [{ kind: "var", name: "API_PREFIX", value: "/api" }],
+					},
+				}),
+			).toThrow(
+				/API_PREFIX.*consumer wrangler\.toml \[vars\].*var binding/s,
+			);
+		});
+
+		it("rejects a consumer [vars] key that collides with a plugin-contributed extra var", () => {
+			const consumer = `[vars]
+FEATURE = "off"
+`;
+			expect(() =>
+				aggregateWrangler({
+					consumerWrangler: consumer,
+					payload: {
+						...emptyPayload,
+						vars: { FEATURE: "on" },
+					},
+				}),
+			).toThrow(/FEATURE.*consumer wrangler\.toml \[vars\].*extra var/s);
+		});
+	});
 });
 
 describe("aggregateDevVars", () => {

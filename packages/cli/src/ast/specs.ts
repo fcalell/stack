@@ -50,7 +50,10 @@ export type TsExpression =
 			children: Array<TsExpression | { kind: "text"; value: string }>;
 			selfClosing?: boolean;
 	  }
-	| { kind: "jsx-fragment"; children: TsExpression[] }
+	| {
+			kind: "jsx-fragment";
+			children: Array<TsExpression | { kind: "text"; value: string }>;
+	  }
 	| { kind: "template"; parts: Array<string | TsExpression> };
 
 export type TsTypeRef =

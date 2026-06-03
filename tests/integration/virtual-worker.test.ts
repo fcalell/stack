@@ -60,7 +60,7 @@ describe("virtual worker codegen pipeline (defineConfig-driven)", () => {
 			"src/schema/",
 			"src/worker/plugins/auth.ts",
 			"src/worker/middleware.ts",
-			"src/worker/routes/",
+			"src/worker/routes/users.ts",
 		]);
 
 		const result = await renderWorker({

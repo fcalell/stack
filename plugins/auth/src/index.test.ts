@@ -738,3 +738,123 @@ describe("auth → cli slots", () => {
 		expect(prompts.find((p) => p.plugin === "auth")).toBeDefined();
 	});
 });
+
+// ── Init-prompt defaults derive from `app.*` ───────────────────────
+//
+// CLAUDE.md documents `app.name` as the default cookie prefix. The
+// pre-fix prompt hardcoded "app", so every fresh project shipped with a
+// cookie name unrelated to the consumer's identity. The fix captures
+// `ctx.app.name` from the contribution ctx (the orchestrator only hands
+// `{ prompt }` into `ask`, so closing over the value at contribute time
+// is the right hand-off). Tests drive the prompt through a stub adapter
+// that returns whatever default it receives — ensuring the prompt
+// surface and the consumer's `app.*` values stay in lock-step.
+
+interface PromptStub {
+	calls: Array<{ msg: string; defaultValue: string | undefined }>;
+	answers: Record<string, string | boolean>;
+}
+
+function makePromptStub(answers: Record<string, string | boolean> = {}) {
+	const stub: PromptStub = { calls: [], answers };
+	const adapter = {
+		text: async (msg: string, opts?: { default?: string }) => {
+			stub.calls.push({ msg, defaultValue: opts?.default });
+			const override = answers[msg];
+			if (typeof override === "string") return override;
+			return opts?.default ?? "";
+		},
+		confirm: async (msg: string) => {
+			stub.calls.push({ msg, defaultValue: undefined });
+			const override = answers[msg];
+			return typeof override === "boolean" ? override : false;
+		},
+	};
+	return { stub, adapter };
+}
+
+describe("auth init-prompt defaults — bug #4 (cookie prefix from app.name)", () => {
+	it("cookie prefix default = ctx.app.name", async () => {
+		const { plugins, ctxFactory } = collectAuthPlugins({
+			appOverride: { name: "my-cool-app", domain: "example.com" },
+		});
+		const g = buildGraph(plugins, ctxFactory);
+		const prompts = await g.resolve(cliSlots.initPrompts);
+		const authPrompt = prompts.find((p) => p.plugin === "auth");
+		if (!authPrompt) throw new Error("missing auth prompt");
+
+		const { stub, adapter } = makePromptStub();
+		await authPrompt.ask({ prompt: adapter }, {});
+
+		const cookieCall = stub.calls.find((c) => c.msg === "Cookie prefix:");
+		expect(cookieCall?.defaultValue).toBe("my-cool-app");
+	});
+
+	it("cookie prefix default tracks a different app.name", async () => {
+		const { plugins, ctxFactory } = collectAuthPlugins({
+			appOverride: { name: "another-app", domain: "example.com" },
+		});
+		const g = buildGraph(plugins, ctxFactory);
+		const prompts = await g.resolve(cliSlots.initPrompts);
+		const authPrompt = prompts.find((p) => p.plugin === "auth");
+		if (!authPrompt) throw new Error("missing auth prompt");
+
+		const { stub, adapter } = makePromptStub();
+		await authPrompt.ask({ prompt: adapter }, {});
+
+		const cookieCall = stub.calls.find((c) => c.msg === "Cookie prefix:");
+		expect(cookieCall?.defaultValue).toBe("another-app");
+	});
+
+	it("returns the prompt-supplied prefix in the answers", async () => {
+		const { plugins, ctxFactory } = collectAuthPlugins({
+			appOverride: { name: "my-app", domain: "example.com" },
+		});
+		const g = buildGraph(plugins, ctxFactory);
+		const prompts = await g.resolve(cliSlots.initPrompts);
+		const authPrompt = prompts.find((p) => p.plugin === "auth");
+		if (!authPrompt) throw new Error("missing auth prompt");
+
+		// User accepts the default — answers should round-trip the app.name.
+		const { adapter } = makePromptStub();
+		const answers = await authPrompt.ask({ prompt: adapter }, {});
+		expect(answers).toEqual({
+			cookies: { prefix: "my-app" },
+			organization: false,
+		});
+	});
+
+	it("never hardcodes 'app' as the cookie prefix default", async () => {
+		// Regression: the pre-fix code shipped the literal string "app" as the
+		// default. Every distinct app.name must produce a distinct default.
+		const a = collectAuthPlugins({
+			appOverride: { name: "alpha", domain: "x.com" },
+		});
+		const b = collectAuthPlugins({
+			appOverride: { name: "bravo", domain: "x.com" },
+		});
+		const ga = buildGraph(a.plugins, a.ctxFactory);
+		const gb = buildGraph(b.plugins, b.ctxFactory);
+		const promptsA = await ga.resolve(cliSlots.initPrompts);
+		const promptsB = await gb.resolve(cliSlots.initPrompts);
+		const ap = promptsA.find((p) => p.plugin === "auth");
+		const bp = promptsB.find((p) => p.plugin === "auth");
+		if (!ap || !bp) throw new Error("missing prompts");
+
+		const sA = makePromptStub();
+		const sB = makePromptStub();
+		await ap.ask({ prompt: sA.adapter }, {});
+		await bp.ask({ prompt: sB.adapter }, {});
+
+		const aDefault = sA.stub.calls.find(
+			(c) => c.msg === "Cookie prefix:",
+		)?.defaultValue;
+		const bDefault = sB.stub.calls.find(
+			(c) => c.msg === "Cookie prefix:",
+		)?.defaultValue;
+		expect(aDefault).toBe("alpha");
+		expect(bDefault).toBe("bravo");
+		expect(aDefault).not.toBe("app");
+		expect(bDefault).not.toBe("app");
+	});
+});

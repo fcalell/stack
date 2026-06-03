@@ -145,6 +145,71 @@ describe("aggregateAppCss", () => {
 	});
 });
 
+// ── aggregateAppCss — escape & validation ──────────────────────────
+//
+// Bugs in scope: layer names and supports modifiers used to be
+// interpolated raw, allowing CSS injection. The aggregator now routes
+// every interpolation through the css-escape helpers and re-validates
+// at render time as defense-in-depth. These tests assert two things:
+//   (1) a malicious layer name is rejected with a precise error rather
+//       than rendered into the stylesheet,
+//   (2) a malicious supports expression is rejected likewise,
+//   (3) a structured @import URL with quote/backslash chars escapes
+//       safely in the rendered output.
+
+describe("aggregateAppCss — escape & validation", () => {
+	it("rejects an invalid @layer name", () => {
+		expect(() =>
+			aggregateAppCss({
+				imports: [],
+				layers: [{ name: "evil; @import url(http://x);", content: "" }],
+			}),
+		).toThrow(/css @layer name/);
+	});
+
+	it("rejects a malformed supports() expression in a structured @import", () => {
+		expect(() =>
+			aggregateAppCss({
+				imports: [
+					{ url: "tailwindcss", supports: "(display: grid); @import url(x)" },
+				],
+				layers: [],
+			}),
+		).toThrow(/supports/i);
+	});
+
+	it("rejects a non-ident layer() argument in a structured @import", () => {
+		expect(() =>
+			aggregateAppCss({
+				imports: [{ url: "tailwindcss", layer: "1bad ident" }],
+				layers: [],
+			}),
+		).toThrow(/layer/i);
+	});
+
+	it("escapes embedded quotes/backslashes in @import URLs", () => {
+		const src = aggregateAppCss({
+			imports: [`weird"path/with\\back.css`],
+			layers: [],
+		});
+		// Output is double-quoted with the embedded quote/backslash escaped.
+		expect(src).toBe(`@import "weird\\"path/with\\\\back.css";\n`);
+	});
+
+	it("escapes embedded quotes in layer content (passes through verbatim — content is opaque)", () => {
+		// Layer content is treated as opaque CSS — solid-ui's own roled-font
+		// emitter quotes through cssString. We pin the contract: aggregator
+		// trims and emits content as-is, since it must allow legitimate
+		// declarations. The token-css generator (in index.ts) is responsible
+		// for escaping inside its own emission.
+		const src = aggregateAppCss({
+			imports: [],
+			layers: [{ name: "base", content: "  /* inner */  " }],
+		});
+		expect(src).toBe("@layer base {\n/* inner */\n}\n");
+	});
+});
+
 // ── themeFontsPlugin — file-IO resilience ──────────────────────────
 //
 // A bogus specifier must fail loudly with an actionable error, not
@@ -203,5 +268,39 @@ describe("themeFontsPlugin file-IO resilience", () => {
 		expect(scripts).toHaveLength(1);
 		expect(styles).toHaveLength(0);
 		expect(preloads).toHaveLength(0);
+	});
+
+	// CSS injection regression: a family name with a stray quote used to
+	// break out of `font-family: '...';` and let arbitrary CSS land in the
+	// emitted @font-face block. The rendered <style> children must escape
+	// the quote and never contain a raw `}body{` payload.
+	it("escapes hostile family names in @font-face declarations", async () => {
+		const evil: FontEntry = {
+			family: 'Evil"; }body{display:none}@font-face{font-family:"x',
+			specifier:
+				"@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2",
+			weight: "400",
+			style: "normal",
+			fallback: {
+				family: 'sans"serif',
+				ascentOverride: "90%",
+				descentOverride: "22%",
+				lineGapOverride: "0%",
+				sizeAdjust: "100%",
+			},
+		};
+		const tags = await runTransform([evil]);
+		const style = tags.find((t) => t.tag === "style");
+		expect(style).toBeDefined();
+		const css = style?.children ?? "";
+		// The hostile sequence's leading quote MUST appear as the
+		// escaped `\"`, never as a raw `Evil"; }` breakout that
+		// terminates the surrounding `font-family:` declaration.
+		expect(css).toMatch(/Evil\\"/);
+		expect(css).not.toMatch(/Evil";/);
+		// The `local(...)` argument in the fallback @font-face is also
+		// a CSS <string>; the embedded `"` in `sans"serif` must escape
+		// for the same reason.
+		expect(css).toMatch(/local\("sans\\"serif"\)/);
 	});
 });

@@ -4,7 +4,15 @@ import type { AppConfig } from "#config";
 // ── Slot identity and kinds ─────────────────────────────────────────
 
 export type SlotKind<T> =
-	| { type: "list"; sortBy?: (a: ItemOf<T>, b: ItemOf<T>) => number }
+	| {
+			type: "list";
+			sortBy?: (a: ItemOf<T>, b: ItemOf<T>) => number;
+			// Per-item key extractor enforcing list-wide uniqueness. Returning
+			// `undefined` opts an item out of the check (lets a list mix unique-by-
+			// kind items with free-form items). Duplicate keys throw
+			// SlotConflictError, mirroring slot.map semantics — see composeList.
+			uniqueBy?: (item: ItemOf<T>) => string | undefined;
+	  }
 	| { type: "map" }
 	| {
 			type: "value";
@@ -142,6 +150,7 @@ interface SlotIdentity {
 
 interface ListOpts<T> extends SlotIdentity {
 	sortBy?: (a: T, b: T) => number;
+	uniqueBy?: (item: T) => string | undefined;
 }
 
 interface MapOpts extends SlotIdentity {}
@@ -185,6 +194,7 @@ function listSlot<T>(opts: ListOpts<T>): Slot<T[]> {
 		kind: {
 			type: "list",
 			sortBy: opts.sortBy as ((a: T, b: T) => number) | undefined,
+			uniqueBy: opts.uniqueBy as ((item: T) => string | undefined) | undefined,
 		} as SlotKind<T[]>,
 	});
 }
@@ -255,16 +265,47 @@ export function composeList<T>(
 	s: Slot<T[]>,
 	results: Array<{ plugin: string; value: unknown }>,
 ): T[] {
+	// Track per-item plugin attribution so uniqueBy errors can name both
+	// contributing plugins. A list contribution may return an array of items
+	// from a single plugin — every item in that array is attributed to the
+	// same plugin, and uniqueness is checked across the flattened result, not
+	// per call.
 	const out: T[] = [];
-	for (const { value } of results) {
+	const owners: string[] = [];
+	for (const { plugin, value } of results) {
 		if (value === undefined) continue;
 		if (Array.isArray(value)) {
-			for (const item of value) out.push(item as T);
+			for (const item of value) {
+				out.push(item as T);
+				owners.push(plugin);
+			}
 		} else {
 			out.push(value as T);
+			owners.push(plugin);
 		}
 	}
 	const kind = s.kind as Extract<SlotKind<T[]>, { type: "list" }>;
+	if (kind.uniqueBy) {
+		// Uniqueness is checked first so a downstream sort cannot mask which
+		// pair of contributions clashed. Items whose key returns `undefined`
+		// opt out — that's how heterogeneous lists (e.g. htmlHead) constrain
+		// only their singleton-shaped items.
+		const seen = new Map<string, string>();
+		for (let i = 0; i < out.length; i++) {
+			const key = (kind.uniqueBy as (item: T) => string | undefined)(
+				out[i] as T,
+			);
+			if (key === undefined) continue;
+			const prior = seen.get(key);
+			if (prior !== undefined) {
+				throw new SlotConflictError(`${s.source}:${s.name}`, key, [
+					prior,
+					owners[i] ?? "(unknown)",
+				]);
+			}
+			seen.set(key, owners[i] ?? "(unknown)");
+		}
+	}
 	if (kind.sortBy) {
 		// Stable sort via decorate-sort-undecorate so tie-breaking is deterministic.
 		out

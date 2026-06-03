@@ -66,6 +66,15 @@ const htmlShell = slot.value<URL | null>({
 const htmlHead = slot.list<HtmlInjection>({
 	source: SOURCE,
 	name: "htmlHead",
+	// HTML allows at most one <title> and one <html lang> attribute. Other
+	// kinds (meta/link/script) are free-form and opt out by returning
+	// undefined. Two plugins both contributing a title fail loudly at
+	// generate time instead of producing a malformed document.
+	uniqueBy: (item) => {
+		if (item.kind === "title") return "title";
+		if (item.kind === "html-attr") return `html-attr:${item.name}`;
+		return undefined;
+	},
 });
 
 const htmlBodyEnd = slot.list<HtmlInjection>({

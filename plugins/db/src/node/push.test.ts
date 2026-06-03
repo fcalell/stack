@@ -20,7 +20,18 @@ vi.mock("node:fs", () => ({
 	readdirSync: vi.fn(),
 	readFileSync: vi.fn(),
 	writeFileSync: vi.fn(),
+	// Stubs used by the migration lock primitive. These tests exercise
+	// drizzle-kit shell-out behaviour, not the lock — the lock has its own
+	// real-filesystem suite (`lock.test.ts`).
+	openSync: vi.fn(() => 1),
+	closeSync: vi.fn(),
+	writeSync: vi.fn(),
+	rmSync: vi.fn(),
 }));
+
+// The lock falls back to in-process serialization (the file-lock paths above
+// are stubbed). That's fine for these unit tests — they assert the shell-out
+// behaviour, not concurrency.
 
 // Cast to vi.fn to avoid overload assignability issues with Buffer types
 const mockedSpawnSync = spawnSync as unknown as ReturnType<typeof vi.fn>;

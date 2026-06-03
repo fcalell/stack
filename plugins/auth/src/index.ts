@@ -187,29 +187,39 @@ export const auth = plugin<
 
 	contributes: (self) => [
 		// Init prompts: cookie prefix + optional organization feature toggle.
-		cliSlots.initPrompts.contribute(() => ({
-			plugin: "auth",
-			ask: async (rawCtx) => {
-				// ContributionCtx carries `prompt` in its CLI shape (the ask
-				// function is invoked by command code with the real ctx). We
-				// cast narrowly to read prompt without widening the public
-				// PromptSpec surface.
-				const c = rawCtx as {
-					prompt: {
-						text: (msg: string, opts?: { default?: string }) => Promise<string>;
-						confirm: (msg: string) => Promise<boolean>;
+		// `app.name` is captured from the contribution ctx (the orchestrator
+		// only hands `prompt` into `ask`, so we close over the value here).
+		// CLAUDE.md documents `app.name` as the default cookie prefix —
+		// hardcoding "app" leaked the wrong value into every fresh project.
+		cliSlots.initPrompts.contribute((ctx) => {
+			const cookiePrefixDefault = ctx.app.name;
+			return {
+				plugin: "auth",
+				ask: async (rawCtx) => {
+					// ContributionCtx carries `prompt` in its CLI shape (the ask
+					// function is invoked by command code with the real ctx). We
+					// cast narrowly to read prompt without widening the public
+					// PromptSpec surface.
+					const c = rawCtx as {
+						prompt: {
+							text: (
+								msg: string,
+								opts?: { default?: string },
+							) => Promise<string>;
+							confirm: (msg: string) => Promise<boolean>;
+						};
 					};
-				};
-				const prefix = await c.prompt.text("Cookie prefix:", {
-					default: "app",
-				});
-				const organization = await c.prompt.confirm("Include organizations?");
-				return {
-					cookies: { prefix },
-					organization,
-				};
-			},
-		})),
+					const prefix = await c.prompt.text("Cookie prefix:", {
+						default: cookiePrefixDefault,
+					});
+					const organization = await c.prompt.confirm("Include organizations?");
+					return {
+						cookies: { prefix },
+						organization,
+					};
+				},
+			};
+		}),
 
 		// Rate limiter bindings for IP + email.
 		cloudflare.slots.bindings.contribute(() => [

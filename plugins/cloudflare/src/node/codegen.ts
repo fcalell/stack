@@ -5,11 +5,33 @@ import {
 	type TomlValue,
 } from "@fcalell/cli/ast";
 import { parse as parseToml } from "smol-toml";
-import {
-	type CodegenWranglerPayload,
-	DEFAULT_COMPATIBILITY_DATE,
-	type WranglerBindingSpec,
+import type {
+	CodegenWranglerPayload,
+	WranglerBindingSpec,
 } from "../types";
+
+// ── Wrangler.toml merge contract ─────────────────────────────────────
+//
+// (1) FRAMEWORK_MANAGED_LISTS — consumer cannot specify; if present in the
+//     consumer file we throw with an actionable message. The framework owns
+//     these tables end-to-end (driven by plugin contributions to
+//     cloudflare.slots.bindings / routes).
+// (2) FRAMEWORK_DEFAULTED_SCALARS — consumer wins if present; otherwise the
+//     framework supplies a default. (`name`, `compatibility_date`, `main`.)
+// (3) Everything else is consumer-only and passes through verbatim
+//     (e.g. `account_id`, `dev`, `build`, `assets`).
+//
+// `[vars]` is a hybrid: consumer keys pass through, framework keys (vars
+// from contributions, secrets-as-empty, var-bindings) overlay; collisions
+// across consumer/framework or across plugin contributions throw.
+
+const FRAMEWORK_MANAGED_LISTS = new Set<string>([
+	"d1_databases",
+	"kv_namespaces",
+	"r2_buckets",
+	"unsafe", // [unsafe.bindings] — rate_limiter
+	"routes",
+]);
 
 const GENERATED_MAIN_VALUES = new Set([
 	"worker.ts",
@@ -17,6 +39,11 @@ const GENERATED_MAIN_VALUES = new Set([
 	".stack/worker.ts",
 	"./.stack/worker.ts",
 ]);
+
+// YYYY-MM-DD — wrangler accepts only this exact form. Reject anything else
+// at generate time so `wrangler types` doesn't fail later with a less obvious
+// message.
+const COMPATIBILITY_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 // Wrangler rejects names that aren't lowercase alphanumeric with dashes. Consumer
 // app names (from `stack init`'s basename) can include dots, underscores, or
@@ -41,49 +68,68 @@ export function aggregateWrangler(opts: {
 	// binding and a `[vars]` key, or two plugins both register `AUTH_SECRET`.
 	assertNoNamespaceCollisions(opts.payload);
 
+	if (!COMPATIBILITY_DATE_RE.test(opts.payload.compatibilityDate)) {
+		throw new Error(
+			`Invalid compatibility_date "${opts.payload.compatibilityDate}": must be YYYY-MM-DD.`,
+		);
+	}
+
+	const consumerParsed = parseConsumerWrangler(opts.consumerWrangler);
+	rejectFrameworkManagedSections(consumerParsed);
+
 	const root: Record<string, TomlValue> = {};
-	const tables: Array<{ path: string[]; entries: Record<string, TomlValue> }> =
-		[];
 	const arrayTables: Array<{
 		path: string[];
 		entries: Record<string, TomlValue>;
 	}> = [];
 
-	if (opts.consumerWrangler) {
-		let parsed: Record<string, TomlValue>;
-		try {
-			parsed = parseToml(opts.consumerWrangler) as Record<string, TomlValue>;
-		} catch (err) {
-			const msg = err instanceof Error ? err.message : String(err);
-			throw new Error(`Failed to parse consumer wrangler.toml: ${msg}`);
-		}
-		for (const [k, v] of Object.entries(parsed)) {
-			root[k] = v;
-		}
-		if (root.main === undefined) {
-			root.main = "worker.ts";
-		} else if (
-			typeof root.main === "string" &&
-			!GENERATED_MAIN_VALUES.has(root.main)
-		) {
-			log.warn(
-				`Custom \`main\` detected in wrangler.toml (${root.main}); stack will not override it. Ensure it re-exports from .stack/worker.ts, or remove the line to let stack manage it.`,
-			);
-		}
-	} else {
-		root.name = sanitizeWranglerName(opts.name ?? "stack-app");
-		root.compatibility_date =
-			opts.payload.compatibilityDate || DEFAULT_COMPATIBILITY_DATE;
-		root.main = "worker.ts";
+	// (3) Consumer pass-through — copy every consumer key that isn't a
+	// framework-managed list. Framework-defaulted scalars survive this step
+	// (consumer wins) and are filled in by step (2) only when missing.
+	for (const [k, v] of Object.entries(consumerParsed)) {
+		if (FRAMEWORK_MANAGED_LISTS.has(k)) continue;
+		// `vars` is special: consumer keys pass through here, framework keys
+		// will overlay below with collision checks.
+		root[k] = v;
 	}
 
-	appendBindingsToTables(
-		root,
-		arrayTables,
-		opts.payload.bindings,
-		opts.payload.secrets,
-		opts.payload.vars,
-	);
+	// (2) Framework defaults — fill any framework-defaulted scalar the consumer
+	// didn't set. The bug fix lives here: previously `compatibility_date` and
+	// `name` were only populated when no consumer file existed at all.
+	const fallbackName = sanitizeWranglerName(opts.name ?? "stack-app");
+	if (root.name === undefined) {
+		root.name = fallbackName;
+	} else if (typeof root.name !== "string") {
+		throw new Error(
+			`Invalid wrangler.toml: \`name\` must be a string (got ${typeof root.name}).`,
+		);
+	}
+	if (root.compatibility_date === undefined) {
+		root.compatibility_date = opts.payload.compatibilityDate;
+	} else if (typeof root.compatibility_date !== "string") {
+		throw new Error(
+			`Invalid wrangler.toml: \`compatibility_date\` must be a string (got ${typeof root.compatibility_date}).`,
+		);
+	} else if (!COMPATIBILITY_DATE_RE.test(root.compatibility_date)) {
+		throw new Error(
+			`Invalid wrangler.toml: \`compatibility_date\` must be YYYY-MM-DD (got "${root.compatibility_date}").`,
+		);
+	}
+	if (root.main === undefined) {
+		root.main = "worker.ts";
+	} else if (
+		typeof root.main === "string" &&
+		!GENERATED_MAIN_VALUES.has(root.main)
+	) {
+		log.warn(
+			`Custom \`main\` detected in wrangler.toml (${root.main}); stack will not override it. Ensure it re-exports from .stack/worker.ts, or remove the line to let stack manage it.`,
+		);
+	}
+
+	// (1) Framework-managed list overlay — push every binding/route the plugins
+	// contributed. Consumer-side versions of these sections were rejected
+	// upstream by `rejectFrameworkManagedSections`, so we own these arrays.
+	appendBindingsToTables(opts.payload.bindings, arrayTables);
 
 	for (const route of opts.payload.routes) {
 		if (typeof route.pattern !== "string" || route.pattern.length === 0) {
@@ -100,9 +146,126 @@ export function aggregateWrangler(opts: {
 		arrayTables.push({ path: ["routes"], entries: entry });
 	}
 
-	const doc: TomlDocument = { root, tables, arrayTables };
+	// `[vars]` overlay — merge framework keys onto consumer keys, with cross-
+	// stream collision detection (consumer-vars × framework-vars × secrets ×
+	// var-bindings). Consumer vars survive only if they don't conflict.
+	overlayVars(root, opts.payload);
+
+	const doc: TomlDocument = { root, tables: [], arrayTables };
 	const out = renderToml(doc);
 	return out.endsWith("\n") ? out : `${out}\n`;
+}
+
+function parseConsumerWrangler(
+	source: string | null,
+): Record<string, TomlValue> {
+	if (!source) return {};
+	try {
+		return parseToml(source) as Record<string, TomlValue>;
+	} catch (err) {
+		const msg = err instanceof Error ? err.message : String(err);
+		throw new Error(`Failed to parse consumer wrangler.toml: ${msg}`);
+	}
+}
+
+function rejectFrameworkManagedSections(
+	parsed: Record<string, TomlValue>,
+): void {
+	const offenders: string[] = [];
+	for (const key of FRAMEWORK_MANAGED_LISTS) {
+		if (parsed[key] !== undefined) {
+			// `unsafe` is the parent of `[unsafe.bindings]`. Only flag it when the
+			// nested `bindings` array is actually present — leaving room for other
+			// `[unsafe.*]` sections wrangler may add later that we don't manage.
+			if (key === "unsafe") {
+				const u = parsed.unsafe;
+				if (
+					typeof u === "object" &&
+					u !== null &&
+					!Array.isArray(u) &&
+					Array.isArray((u as Record<string, TomlValue>).bindings)
+				) {
+					offenders.push("unsafe.bindings");
+				}
+				continue;
+			}
+			offenders.push(key);
+		}
+	}
+	if (offenders.length === 0) return;
+	throw new Error(
+		`wrangler.toml contains framework-managed section(s): ${offenders
+			.map((s) => `[[${s}]]`)
+			.join(
+				", ",
+			)}. Remove them and let plugins (db/auth/...) contribute these via stack.config.ts.`,
+	);
+}
+
+function overlayVars(
+	root: Record<string, TomlValue>,
+	payload: CodegenWranglerPayload,
+): void {
+	const consumerVarsRaw = root.vars;
+	const consumerVars: Record<string, TomlValue> =
+		consumerVarsRaw &&
+		typeof consumerVarsRaw === "object" &&
+		!Array.isArray(consumerVarsRaw)
+			? { ...(consumerVarsRaw as Record<string, TomlValue>) }
+			: {};
+
+	const frameworkVarBindings = payload.bindings.filter(
+		(b): b is Extract<WranglerBindingSpec, { kind: "var" }> => b.kind === "var",
+	);
+	const frameworkExtraVars = payload.vars;
+	const frameworkSecrets = payload.secrets;
+
+	const hasFrameworkVars =
+		frameworkVarBindings.length > 0 ||
+		Object.keys(frameworkExtraVars).length > 0 ||
+		frameworkSecrets.length > 0;
+
+	if (!hasFrameworkVars && Object.keys(consumerVars).length === 0) {
+		// Nothing to write; remove a trailing empty-vars artifact if any.
+		if (consumerVarsRaw === undefined) return;
+		root.vars = consumerVars;
+		return;
+	}
+
+	// Detect collisions between consumer-supplied vars and framework keys.
+	const collisions: Array<{ key: string; consumer: string; framework: string }> = [];
+	const recordCollision = (key: string, framework: string) => {
+		if (key in consumerVars) {
+			collisions.push({ key, consumer: "consumer var", framework });
+		}
+	};
+	for (const v of frameworkVarBindings) recordCollision(v.name, "var binding");
+	for (const k of Object.keys(frameworkExtraVars))
+		recordCollision(k, "extra var");
+	for (const s of frameworkSecrets) recordCollision(s.name, "secret");
+	if (collisions.length > 0) {
+		const lines = collisions.map(
+			(c) =>
+				`  - "${c.key}" (consumer wrangler.toml [vars] vs ${c.framework})`,
+		);
+		throw new Error(
+			`wrangler.toml [vars] collisions — each key must come from one source:\n${lines.join(
+				"\n",
+			)}\nRemove the consumer-side entry or rename the contributor.`,
+		);
+	}
+
+	const merged: Record<string, TomlValue> = { ...consumerVars };
+	for (const [k, v] of Object.entries(frameworkExtraVars)) {
+		merged[k] = v;
+	}
+	for (const v of frameworkVarBindings) {
+		merged[v.name] = v.value;
+	}
+	for (const s of frameworkSecrets) {
+		if (!(s.name in merged)) merged[s.name] = "";
+	}
+	root.vars = merged;
 }
 
 // ── Namespace collision detection ────────────────────────────────────
@@ -177,11 +340,8 @@ function assertNoNamespaceCollisions(payload: CodegenWranglerPayload): void {
 }
 
 function appendBindingsToTables(
-	root: Record<string, TomlValue>,
-	arrayTables: Array<{ path: string[]; entries: Record<string, TomlValue> }>,
 	bindings: WranglerBindingSpec[],
-	secrets: Array<{ name: string; devDefault: string }>,
-	extraVars: Record<string, string>,
+	arrayTables: Array<{ path: string[]; entries: Record<string, TomlValue> }>,
 ): void {
 	for (const b of bindings) {
 		if (b.kind !== "d1") continue;
@@ -232,32 +392,6 @@ function appendBindingsToTables(
 				period,
 			},
 		});
-	}
-
-	const varBindings = bindings.filter(
-		(b): b is Extract<WranglerBindingSpec, { kind: "var" }> => b.kind === "var",
-	);
-	const hasVarsSection =
-		varBindings.length > 0 ||
-		secrets.length > 0 ||
-		Object.keys(extraVars).length > 0;
-
-	if (hasVarsSection) {
-		const vars: Record<string, TomlValue> = { ...extraVars };
-		for (const v of varBindings) {
-			vars[v.name] = v.value;
-		}
-		for (const s of secrets) {
-			if (!(s.name in vars)) {
-				vars[s.name] = "";
-			}
-		}
-		const existing = root.vars;
-		if (existing && typeof existing === "object" && !Array.isArray(existing)) {
-			root.vars = { ...(existing as Record<string, TomlValue>), ...vars };
-		} else {
-			root.vars = vars;
-		}
 	}
 }
 

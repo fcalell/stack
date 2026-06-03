@@ -34,6 +34,9 @@ export const cliSlots = {
 	initScaffolds: slot.list<ScaffoldSpec>({
 		source: SOURCE,
 		name: "initScaffolds",
+		// Two plugins claiming the same target is a programming error — surface
+		// it at compose time rather than waiting for the writer to detect it.
+		uniqueBy: (s) => s.target,
 	}),
 	initDeps: slot.map<string>({ source: SOURCE, name: "initDeps" }),
 	initDevDeps: slot.map<string>({ source: SOURCE, name: "initDevDeps" }),
@@ -49,19 +52,26 @@ export const cliSlots = {
 	devProcesses: slot.list<ProcessSpec>({
 		source: SOURCE,
 		name: "devProcesses",
+		// Process names appear in the supervisor's log prefix; two processes
+		// sharing a name produce indistinguishable output and ambiguous
+		// shutdown/restart targeting.
+		uniqueBy: (p) => p.name,
 	}),
 	devWatchers: slot.list<WatcherSpec>({
 		source: SOURCE,
 		name: "devWatchers",
+		uniqueBy: (w) => w.name,
 	}),
 	devReadySetup: slot.list<DevReadyTask>({
 		source: SOURCE,
 		name: "devReadySetup",
+		uniqueBy: (t) => t.name,
 	}),
 	buildSteps: slot.list<BuildStep>({
 		source: SOURCE,
 		name: "buildSteps",
 		sortBy: comparePhaseOrder,
+		uniqueBy: (s) => s.name,
 	}),
 	deployChecks: slot.list<DeployCheck>({
 		source: SOURCE,
@@ -71,6 +81,7 @@ export const cliSlots = {
 		source: SOURCE,
 		name: "deploySteps",
 		sortBy: comparePhaseOrder,
+		uniqueBy: (s) => s.name,
 	}),
 	removeFiles: slot.list<string>({ source: SOURCE, name: "removeFiles" }),
 	removeDeps: slot.list<string>({ source: SOURCE, name: "removeDeps" }),

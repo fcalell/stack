@@ -8,6 +8,7 @@ import {
 } from "node:fs";
 import { join } from "node:path";
 import type { DbOptions } from "../types";
+import { migrationLockPath, withMigrationLock } from "./lock";
 
 function sqliteLocalUrl(options: DbOptions): string {
 	return options.dialect === "sqlite" && options.path
@@ -48,66 +49,81 @@ export async function pushSchemaLocal(
 	cwd: string,
 	options: DbOptions,
 ): Promise<void> {
-	const configDir = join(cwd, ".stack", "dev");
-	mkdirSync(configDir, { recursive: true });
+	// `drizzle-kit push` writes to the dev SQLite file; serialize cross-process
+	// to avoid SQLite's per-file lock surfacing as "database is locked" when
+	// `stack db push` is run while `stack dev`'s schema watcher fires.
+	return withMigrationLock(migrationLockPath(cwd), async () => {
+		const configDir = join(cwd, ".stack", "dev");
+		mkdirSync(configDir, { recursive: true });
 
-	const dbUrl = sqliteLocalUrl(options);
+		const dbUrl = sqliteLocalUrl(options);
 
-	const configPath = join(configDir, "drizzle.config.ts");
-	const configContent = `import { defineConfig } from "drizzle-kit";
+		const configPath = join(configDir, "drizzle.config.ts");
+		const configContent = `import { defineConfig } from "drizzle-kit";
 export default defineConfig({
   dialect: "sqlite",
   schema: "./src/schema/index.ts",
   dbCredentials: { url: ${JSON.stringify(dbUrl)} },
 });
 `;
-	writeDrizzleConfig(configPath, configContent);
+		writeDrizzleConfig(configPath, configContent);
 
-	runCommand("npx", ["drizzle-kit", "push", "--config", configPath], cwd);
+		runCommand("npx", ["drizzle-kit", "push", "--config", configPath], cwd);
+	});
 }
 
 export async function generateMigrations(
 	cwd: string,
 	options: DbOptions,
 ): Promise<Array<{ name: string; sql: string }>> {
-	const migrationsDir = join(cwd, options.migrations ?? "./src/migrations");
-	const existingFiles = new Set<string>();
-	if (existsSync(migrationsDir)) {
-		for (const f of readdirSync(migrationsDir)) {
-			existingFiles.add(f);
+	// The pre-fix race: this function snapshots the migrations dir, runs
+	// drizzle-kit generate, then snapshots again. A concurrent writer (e.g.
+	// `stack dev`'s schema watcher pushing schema, which can also trigger a
+	// migration write, or a parallel `stack db generate`) can drop a file
+	// into the dir mid-flight — the dir-snapshot diff would then attribute
+	// that file to *this* generate call's "new" set. Wrap the entire
+	// snapshot/generate/snapshot triple in an exclusive lock so no other
+	// migration-writing operation can interleave.
+	return withMigrationLock(migrationLockPath(cwd), async () => {
+		const migrationsDir = join(cwd, options.migrations ?? "./src/migrations");
+		const existingFiles = new Set<string>();
+		if (existsSync(migrationsDir)) {
+			for (const f of readdirSync(migrationsDir)) {
+				existingFiles.add(f);
+			}
 		}
-	}
 
-	const configDir = join(cwd, ".stack", "dev");
-	mkdirSync(configDir, { recursive: true });
+		const configDir = join(cwd, ".stack", "dev");
+		mkdirSync(configDir, { recursive: true });
 
-	const configPath = join(configDir, "drizzle-generate.config.ts");
-	const configContent = `import { defineConfig } from "drizzle-kit";
+		const configPath = join(configDir, "drizzle-generate.config.ts");
+		const configContent = `import { defineConfig } from "drizzle-kit";
 export default defineConfig({
   dialect: "sqlite",
   schema: "./src/schema/index.ts",
   out: ${JSON.stringify(options.migrations ?? "./src/migrations")},
 });
 `;
-	writeDrizzleConfig(configPath, configContent);
+		writeDrizzleConfig(configPath, configContent);
 
-	runCommand("npx", ["drizzle-kit", "generate", "--config", configPath], cwd);
+		runCommand("npx", ["drizzle-kit", "generate", "--config", configPath], cwd);
 
-	const newMigrations: Array<{ name: string; sql: string }> = [];
-	if (existsSync(migrationsDir)) {
-		for (const entry of readdirSync(migrationsDir)) {
-			if (existingFiles.has(entry)) continue;
-			const sqlPath = join(migrationsDir, entry);
-			if (entry.endsWith(".sql")) {
-				newMigrations.push({
-					name: entry,
-					sql: readFileSync(sqlPath, "utf-8"),
-				});
+		const newMigrations: Array<{ name: string; sql: string }> = [];
+		if (existsSync(migrationsDir)) {
+			for (const entry of readdirSync(migrationsDir)) {
+				if (existingFiles.has(entry)) continue;
+				const sqlPath = join(migrationsDir, entry);
+				if (entry.endsWith(".sql")) {
+					newMigrations.push({
+						name: entry,
+						sql: readFileSync(sqlPath, "utf-8"),
+					});
+				}
 			}
 		}
-	}
 
-	return newMigrations;
+		return newMigrations;
+	});
 }
 
 export async function applyMigrationsRemote(
@@ -123,23 +139,32 @@ export async function applyMigrationsRemote(
 		throw new Error("Cannot apply remote migrations: no databaseId configured");
 	}
 
-	runCommand(
-		"npx",
-		["wrangler", "d1", "migrations", "apply", databaseName, "--remote"],
-		cwd,
-	);
+	// Wrangler reads every file under `migrations_dir` to compute the
+	// pending list. Hold the lock so a concurrent `generateMigrations` can't
+	// write a half-flushed file into the dir while wrangler is enumerating.
+	return withMigrationLock(migrationLockPath(cwd), async () => {
+		runCommand(
+			"npx",
+			["wrangler", "d1", "migrations", "apply", databaseName, "--remote"],
+			cwd,
+		);
+	});
 }
 
 export async function applyMigrationsLocal(
 	cwd: string,
 	options: DbOptions,
 ): Promise<void> {
-	if (options.dialect === "sqlite") {
-		const configDir = join(cwd, ".stack", "dev");
-		mkdirSync(configDir, { recursive: true });
+	// Both branches read the migrations dir; the sqlite branch additionally
+	// writes journal entries against the local DB. Serialize against any
+	// other migration-writing path under the same lock.
+	return withMigrationLock(migrationLockPath(cwd), async () => {
+		if (options.dialect === "sqlite") {
+			const configDir = join(cwd, ".stack", "dev");
+			mkdirSync(configDir, { recursive: true });
 
-		const configPath = join(configDir, "drizzle-migrate.config.ts");
-		const configContent = `import { defineConfig } from "drizzle-kit";
+			const configPath = join(configDir, "drizzle-migrate.config.ts");
+			const configContent = `import { defineConfig } from "drizzle-kit";
 export default defineConfig({
   dialect: "sqlite",
   schema: "./src/schema/index.ts",
@@ -147,20 +172,27 @@ export default defineConfig({
   dbCredentials: { url: ${JSON.stringify(sqliteLocalUrl(options))} },
 });
 `;
-		writeDrizzleConfig(configPath, configContent);
+			writeDrizzleConfig(configPath, configContent);
 
-		runCommand("npx", ["drizzle-kit", "migrate", "--config", configPath], cwd);
-		return;
-	}
+			runCommand(
+				"npx",
+				["drizzle-kit", "migrate", "--config", configPath],
+				cwd,
+			);
+			return;
+		}
 
-	const databaseName = options.databaseId;
-	if (!databaseName) {
-		throw new Error("Cannot apply local migrations: no databaseId configured");
-	}
+		const databaseName = options.databaseId;
+		if (!databaseName) {
+			throw new Error(
+				"Cannot apply local migrations: no databaseId configured",
+			);
+		}
 
-	runCommand(
-		"npx",
-		["wrangler", "d1", "migrations", "apply", databaseName, "--local"],
-		cwd,
-	);
+		runCommand(
+			"npx",
+			["wrangler", "d1", "migrations", "apply", databaseName, "--local"],
+			cwd,
+		);
+	});
 }

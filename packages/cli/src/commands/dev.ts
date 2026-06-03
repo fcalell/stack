@@ -42,6 +42,52 @@ export async function devPlanFromConfig(
 	return { processes, readySetup, watchers };
 }
 
+// Attach an fs.watch handle for a single WatcherSpec, with debounce state
+// scoped to this watcher only. Each watcher coalesces its own bursts of FS
+// events; concurrent activity on a sibling watcher must not cancel this
+// watcher's pending fire (the previous "single shared timer" implementation
+// had every watcher's closure capture the same variable, so two watchers
+// firing within the debounce window would drop the first handler).
+//
+// Returns an array (possibly empty) so the caller can splat into its
+// FSWatcher list — empty when the watch path doesn't exist.
+export function attachWatcher(args: {
+	spec: WatcherSpec;
+	cwd: string;
+}): FSWatcher[] {
+	const { spec, cwd } = args;
+	const fullPath = join(cwd, spec.paths);
+	if (!existsSync(fullPath)) return [];
+	let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+	let pendingFilename: string | null = null;
+	const handle = watch(fullPath, { recursive: true }, (_event, filename) => {
+		if (!filename) return;
+		if (spec.ignore?.some((pattern: string) => filename.includes(pattern)))
+			return;
+		// Fire on the most recent filename in the burst — matches user intent
+		// (a flurry of saves across a directory should resolve to the latest
+		// touched file, not whichever happened to start the timer).
+		pendingFilename = filename;
+		if (debounceTimer !== null) clearTimeout(debounceTimer);
+		debounceTimer = setTimeout(() => {
+			const fname = pendingFilename;
+			debounceTimer = null;
+			pendingFilename = null;
+			if (fname === null) return;
+			// Handler may be async; surface rejections instead of swallowing
+			// them as unhandled promise rejections at the runtime level.
+			Promise.resolve(spec.handler(fname, "change")).catch((err) => {
+				log.warn(
+					`[${spec.name}] watcher handler failed: ${
+						err instanceof Error ? err.message : String(err)
+					}`,
+				);
+			});
+		}, spec.debounce ?? 300);
+	});
+	return [handle];
+}
+
 // Wait until the supervised child prints a line matching `readyPattern` on
 // stdout/stderr or the child exits. Resolves `true` on match, `false` if the
 // process exits before signaling ready. Re-attached to the new child after
@@ -139,20 +185,7 @@ export async function dev(options: DevOptions): Promise<void> {
 
 	const fsWatchers: FSWatcher[] = [];
 	for (const w of watchers) {
-		const fullPath = join(cwd, w.paths);
-		if (!existsSync(fullPath)) continue;
-		let debounceTimer: ReturnType<typeof setTimeout>;
-		fsWatchers.push(
-			watch(fullPath, { recursive: true }, (_event, filename) => {
-				if (!filename) return;
-				if (w.ignore?.some((pattern: string) => filename.includes(pattern)))
-					return;
-				clearTimeout(debounceTimer);
-				debounceTimer = setTimeout(async () => {
-					await w.handler(filename, "change");
-				}, w.debounce ?? 300);
-			}),
-		);
+		fsWatchers.push(...attachWatcher({ spec: w, cwd }));
 	}
 
 	log.info("Watching for changes...");

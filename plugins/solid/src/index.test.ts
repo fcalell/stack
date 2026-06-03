@@ -250,6 +250,71 @@ describe("solid.slots.htmlHead", () => {
 			expect.objectContaining({ kind: "script", src: "/entry.tsx" }),
 		);
 	});
+
+	it("rejects a duplicate <title> contribution from a peer plugin", async () => {
+		// Solid itself contributes one title from app.name. A peer pushing a
+		// second one would yield two <title> tags in the rendered HTML — HTML
+		// allows only one. uniqueBy on htmlHead must catch this at compose time.
+		const intruder: GraphPlugin = {
+			name: "intruder",
+			contributes: [
+				solid.slots.htmlHead.contribute(() => ({
+					kind: "title",
+					value: "Other Title",
+				})),
+			],
+		};
+		const g = buildGraph(collectSolidPlugins([intruder]), makeCtxFactory());
+		await expect(g.resolve(solid.slots.htmlHead)).rejects.toThrow(
+			/htmlHead.*duplicate key 'title'/,
+		);
+	});
+
+	it("rejects a duplicate `lang` html-attr contribution from a peer plugin", async () => {
+		const intruder: GraphPlugin = {
+			name: "intruder",
+			contributes: [
+				solid.slots.htmlHead.contribute(() => ({
+					kind: "html-attr",
+					name: "lang",
+					value: "fr",
+				})),
+			],
+		};
+		const g = buildGraph(collectSolidPlugins([intruder]), makeCtxFactory());
+		await expect(g.resolve(solid.slots.htmlHead)).rejects.toThrow(
+			/htmlHead.*duplicate key 'html-attr:lang'/,
+		);
+	});
+
+	it("permits multiple distinct meta/link contributions (uniqueBy returns undefined for them)", async () => {
+		// Two metas under different names must coexist. The uniqueBy check on
+		// htmlHead opts these out by returning undefined, so the list stays
+		// permissive for free-form items.
+		const intruder: GraphPlugin = {
+			name: "intruder",
+			contributes: [
+				solid.slots.htmlHead.contribute(() => ({
+					kind: "meta",
+					name: "viewport",
+					content: "width=device-width",
+				})),
+				solid.slots.htmlHead.contribute(() => ({
+					kind: "meta",
+					name: "robots",
+					content: "noindex",
+				})),
+			],
+		};
+		const g = buildGraph(collectSolidPlugins([intruder]), makeCtxFactory());
+		const head = await g.resolve(solid.slots.htmlHead);
+		expect(head).toContainEqual(
+			expect.objectContaining({ kind: "meta", name: "viewport" }),
+		);
+		expect(head).toContainEqual(
+			expect.objectContaining({ kind: "meta", name: "robots" }),
+		);
+	});
 });
 
 // ── Vite contributions ────────────────────────────────────────────

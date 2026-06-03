@@ -7,12 +7,32 @@ import fg from "fast-glob";
 // must stay literal (bundler constraint), so they duplicate this value.
 export const VIRTUAL_ROUTES_ID = "virtual:fcalell-routes";
 
+// What populates this node's URL. A node carries AT MOST ONE route file
+// (either `index.tsx` for the directory's index URL, or a leaf file for
+// the directory's parent URL — they target the same URL because of how
+// the file-based router collapses `dir/index.tsx` and `dir.tsx`). The
+// previous shape kept `indexFile` and `leafFile` as independent slots,
+// which made it possible — and trivially common with a typo — to
+// silently end up with both set on the same node, both registering to
+// the same URL. Encoding "what populates this URL" as a single
+// discriminated field makes the invalid state unrepresentable: the
+// SECOND assignment to `routeFile` for any node throws a precise error
+// naming both source paths.
+//
+// `layoutFile` legitimately co-exists with a `routeFile` (a layout
+// wraps the URL's component), so it stays a separate field.
+export type RouteFileSource = "leaf" | "index";
+
+export interface RouteFile {
+	source: RouteFileSource;
+	path: string;
+}
+
 export interface RouteNode {
 	segment: string;
 	paramName?: string;
 	isCatchAll?: boolean;
-	leafFile?: string;
-	indexFile?: string;
+	routeFile?: RouteFile;
 	layoutFile?: string;
 	children: Map<string, RouteNode>;
 }
@@ -51,6 +71,26 @@ export function keyForBuilder(node: RouteNode): string {
 	return node.segment;
 }
 
+// Set the route file on `node`, throwing when a different file already
+// occupies the slot. Caller passes both source paths so the error names
+// the offenders precisely — "Route collision at /projects: both
+// .../projects.tsx and .../projects/index.tsx populate the same URL".
+//
+// The same-path no-op case (rebuilds during dev) is silently allowed.
+function setRouteFile(node: RouteNode, file: RouteFile, url: string): void {
+	const existing = node.routeFile;
+	if (existing) {
+		if (existing.path === file.path) return;
+		throw new Error(
+			`Route collision at ${url || "/"}: both ${existing.path} and ${file.path} populate the same URL. ` +
+				"A directory can have either an `index.tsx` (URL = directory path) " +
+				"OR a sibling leaf file with the same name as the directory (e.g. `projects.tsx` next to `projects/`), " +
+				"but not both.",
+		);
+	}
+	node.routeFile = file;
+}
+
 export function buildTree(
 	files: string[],
 	absPagesDir: string,
@@ -76,6 +116,7 @@ export function buildTree(
 
 		// Walk into directory tree
 		let node = root;
+		let urlSoFar = "";
 		for (const rawDir of parts) {
 			const parsed = parseSegment(rawDir);
 			// Route groups produce empty segment — still create a sub-node so
@@ -89,6 +130,7 @@ export function buildTree(
 				node.children.set(key, next);
 			}
 			node = next;
+			urlSoFar = joinUrl(urlSoFar, parsed.segment);
 		}
 
 		if (basename === "_layout") {
@@ -96,11 +138,14 @@ export function buildTree(
 			continue;
 		}
 		if (basename === "index") {
-			node.indexFile = abs;
+			setRouteFile(node, { source: "index", path: abs }, urlSoFar);
 			continue;
 		}
 
-		// Regular leaf file: create a child node keyed by the filename
+		// Regular leaf file: create a child node keyed by the filename.
+		// Setting routeFile on that child fails immediately if a sibling
+		// directory already produced an `index.tsx` for the same URL —
+		// e.g. `projects.tsx` clashing with `projects/index.tsx`.
 		const parsed = parseSegment(basename);
 		const leafKey = basename;
 		let leafNode = node.children.get(leafKey);
@@ -110,12 +155,19 @@ export function buildTree(
 			leafNode.isCatchAll = parsed.isCatchAll;
 			node.children.set(leafKey, leafNode);
 		}
-		leafNode.leafFile = abs;
+		const leafUrl = joinUrl(urlSoFar, parsed.segment);
+		setRouteFile(leafNode, { source: "leaf", path: abs }, leafUrl);
 	}
 
-	// Group segments collapse to "" in URLs, so `(auth)/login.tsx` and
-	// `(public)/login.tsx` both resolve to `/login`. Detect by walking the
-	// tree and mapping each leaf/index source to its final URL path.
+	// Defense-in-depth: route groups collapse `(auth)/login.tsx` and
+	// `(public)/login.tsx` to two different nodes whose final URLs both
+	// resolve to `/login`. The setRouteFile guard above only fires when
+	// two files target the same NODE; this walk catches the cross-node
+	// case that's structurally only possible via groups. With the
+	// `routeFile` discriminant, every other collision is unrepresentable
+	// before this walk runs, so this path's job has narrowed — but
+	// keeping it makes the failure mode total instead of "structural
+	// collisions only."
 	assertNoRouteCollisions(root);
 
 	return { root, notFoundFile };
@@ -135,8 +187,7 @@ function assertNoRouteCollisions(root: RouteNode): void {
 	}
 
 	function walk(node: RouteNode, url: string): void {
-		if (node.indexFile) register(url || "/", node.indexFile);
-		if (node.leafFile) register(url || "/", node.leafFile);
+		if (node.routeFile) register(url || "/", node.routeFile.path);
 		for (const child of node.children.values()) {
 			walk(child, joinUrl(url, child.segment));
 		}
@@ -169,15 +220,9 @@ export function emitRoutes(
 	function emitChildren(node: RouteNode, parentPath: string): string[] {
 		const out: string[] = [];
 
-		if (node.indexFile) {
+		if (node.routeFile) {
 			out.push(
-				`{ path: ${JSON.stringify(parentPath || "/")}, component: ${jsonLoadGlob(node.indexFile, projectRoot)} }`,
-			);
-		}
-
-		if (node.leafFile) {
-			out.push(
-				`{ path: ${JSON.stringify(parentPath || "/")}, component: ${jsonLoadGlob(node.leafFile, projectRoot)} }`,
+				`{ path: ${JSON.stringify(parentPath || "/")}, component: ${jsonLoadGlob(node.routeFile.path, projectRoot)} }`,
 			);
 		}
 
@@ -238,16 +283,15 @@ export function emitTypedRoutes(root: RouteNode): {
 		params: string[],
 		url: string,
 	): void {
-		if (node.indexFile) {
+		if (node.routeFile) {
+			// Index files get the `index` builder key (so consumers reach
+			// `/projects` via `typedRoutes.projects.index()`); leaf files
+			// already had their basename folded into `keys` when the parent
+			// recursed into the leaf node.
+			const builderKeys =
+				node.routeFile.source === "index" ? [...keys, "index"] : [...keys];
 			leaves.push({
-				keys: [...keys, "index"],
-				params: [...params],
-				url: url || "/",
-			});
-		}
-		if (node.leafFile) {
-			leaves.push({
-				keys: [...keys],
+				keys: builderKeys,
 				params: [...params],
 				url: url || "/",
 			});

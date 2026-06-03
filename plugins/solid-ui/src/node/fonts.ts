@@ -2,6 +2,7 @@ import { createRequire } from "node:module";
 import { basename } from "node:path";
 import type { Plugin, ResolvedConfig } from "vite";
 import type { FontEntry } from "../types";
+import { cssString, cssUrl } from "./css-escape";
 
 // Re-exported from types.ts so the existing
 // `@fcalell/plugin-solid-ui/node/fonts` subpath consumers keep working.
@@ -97,16 +98,21 @@ function buildFontFaceCss(
 ): string {
 	const blocks: string[] = [];
 	for (const { font, href } of fonts) {
+		// Every consumer-supplied value crosses a CSS context boundary —
+		// family names land inside a `font-family:` declaration, URLs land
+		// inside `url(...)`. Without escaping, a stray quote or paren
+		// terminates the declaration early and the rest of the @font-face
+		// block becomes attacker- or accident-controlled CSS.
 		blocks.push(`@font-face {
-	font-family: '${font.family}';
-	src: url('${href}') format('woff2');
+	font-family: ${cssString(font.family)};
+	src: ${cssUrl(href)} format("woff2");
 	font-weight: ${font.weight};
 	font-style: ${font.style};
 	font-display: swap;
 }`);
 		blocks.push(`@font-face {
-	font-family: '${font.family} Fallback';
-	src: local('${font.fallback.family}');
+	font-family: ${cssString(`${font.family} Fallback`)};
+	src: local(${cssString(font.fallback.family)});
 	ascent-override: ${font.fallback.ascentOverride};
 	descent-override: ${font.fallback.descentOverride};
 	line-gap-override: ${font.fallback.lineGapOverride};

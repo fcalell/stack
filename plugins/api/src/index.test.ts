@@ -1,10 +1,13 @@
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { cliSlots } from "@fcalell/cli/cli-slots";
 import {
 	buildGraph,
 	type GraphCtxFactory,
 	type GraphPlugin,
 } from "@fcalell/cli/graph";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { type ApiOptions, api } from "./index";
 import type { PluginRuntimeEntry } from "./node/types";
 
@@ -19,14 +22,44 @@ const noopLog = {
 	error: () => {},
 };
 
+// Track scratch dirs so we can clean them up after each test.
+const scratchDirs: string[] = [];
+
+afterEach(() => {
+	while (scratchDirs.length > 0) {
+		const dir = scratchDirs.pop();
+		if (dir) rmSync(dir, { recursive: true, force: true });
+	}
+});
+
+// Stand up a real cwd with optional `src/worker/routes/<file>` entries so
+// the barrel + routesHandler path runs against the filesystem (which is
+// what production does). Mocking only `fileExists` no longer suffices —
+// `routesHandler` and the barrel slot share a `hasRoutableFiles(cwd)`
+// helper that does a real `readdirSync`. Pass route filenames here and we
+// wire everything together.
+function makeRealCwd(routeFiles: string[] = []): string {
+	const dir = mkdtempSync(join(tmpdir(), "api-test-"));
+	scratchDirs.push(dir);
+	if (routeFiles.length > 0) {
+		const routesDir = join(dir, "src", "worker", "routes");
+		mkdirSync(routesDir, { recursive: true });
+		for (const file of routeFiles) {
+			writeFileSync(join(routesDir, file), "// fixture");
+		}
+	}
+	return dir;
+}
+
 function makeCtxFactory(
 	perPluginOptions: Record<string, unknown> = {},
 	perPluginFiles: Record<string, Set<string>> = {},
 	appOverride?: typeof app & { origins?: string[] },
+	cwd: string = "/tmp/test",
 ): GraphCtxFactory {
 	return {
 		app: appOverride ?? app,
-		cwd: "/tmp/test",
+		cwd,
 		log: noopLog,
 		ctxForPlugin: (name) => ({
 			options: perPluginOptions[name] ?? {},
@@ -284,8 +317,11 @@ describe("api routes — single source of truth", () => {
 				),
 			],
 		};
-		const files = { api: new Set(["src/worker/routes"]) };
-		const g = buildGraph(collectPlugins([dbLike]), makeCtxFactory({}, files));
+		const cwd = makeRealCwd(["users.ts"]);
+		const g = buildGraph(
+			collectPlugins([dbLike]),
+			makeCtxFactory({}, {}, undefined, cwd),
+		);
 		const src = await g.resolve(api.slots.workerSource);
 		expect(src).toContain('import * as routes from "../src/worker/routes"');
 		expect(src).toContain(".handler(routes)");
@@ -311,13 +347,15 @@ describe("api routes — single source of truth", () => {
 		expect(src).toContain(".handler()");
 	});
 
-	// Simulate an unstable fileExists: each call returns a different answer.
-	// Because the import contribution now resolves the routesHandler slot
-	// (which is memoized by the graph), both reads see the same value —
-	// the slot's seed runs exactly once. Without the fix, the import call
-	// would read true while the seed read false (or vice versa) and the
-	// worker source would carry an import without a matching handler call.
-	it("internal consistency under unstable fileExists", async () => {
+	// Two independent filesystem reads inside the contribution chain would
+	// race — `routesHandler` and the `workerImports` contribution must agree
+	// on whether a routes directory exists. Because the import contribution
+	// resolves the `routesHandler` slot (memoized by the graph), both reads
+	// see the same value — the slot's seed runs exactly once even though
+	// downstream computations consume it many times. We pin that property
+	// here by asserting "import present iff handler present" — the only two
+	// internally-consistent shapes the worker source can take.
+	it("internal consistency: import present iff handler present", async () => {
 		const dbLike: GraphPlugin = {
 			name: "db",
 			contributes: [
@@ -331,39 +369,12 @@ describe("api routes — single source of truth", () => {
 				),
 			],
 		};
-
-		// Flip on every call. If two independent reads happened, one would see
-		// true and the other false — a corrupted worker would emerge. With the
-		// slot acting as the single source of truth, the seed runs once and
-		// every downstream read sees the same answer.
-		let toggle = false;
-		const flippy: GraphCtxFactory = {
-			app,
-			cwd: "/tmp/test",
-			log: noopLog,
-			ctxForPlugin: (name) => ({
-				options: {},
-				fileExists: async (p) => {
-					if (p === "src/worker/routes") {
-						toggle = !toggle;
-						return toggle;
-					}
-					return false;
-				},
-				readFile: async () => "",
-				template: (n) => new URL(`file:///tmp/templates/${name}/${n}`),
-				scaffold: (n, target) => ({
-					source: new URL(`file:///tmp/templates/${name}/${n}`),
-					target,
-					plugin: name,
-				}),
-			}),
-		};
-
-		const g = buildGraph(collectPlugins([dbLike]), flippy);
+		const cwd = makeRealCwd(["users.ts"]);
+		const g = buildGraph(
+			collectPlugins([dbLike]),
+			makeCtxFactory({}, {}, undefined, cwd),
+		);
 		const src = await g.resolve(api.slots.workerSource);
-		// Iff the import is present, the handler call references `routes`.
-		// Iff the import is absent, the handler is bare `.handler()`.
 		const hasImport =
 			src?.includes('import * as routes from "../src/worker/routes"') ?? false;
 		const hasHandler = src?.includes(".handler(routes)") ?? false;
@@ -544,7 +555,7 @@ describe("api middleware + routes", () => {
 		expect(src).toContain('import middleware from "../src/worker/middleware"');
 	});
 
-	it("routes handler seeds to routes when src/worker/routes exists", async () => {
+	it("routes handler seeds to routes when src/worker/routes has files", async () => {
 		const dbLike: GraphPlugin = {
 			name: "db",
 			contributes: [
@@ -558,8 +569,11 @@ describe("api middleware + routes", () => {
 				),
 			],
 		};
-		const files = { api: new Set(["src/worker/routes"]) };
-		const g = buildGraph(collectPlugins([dbLike]), makeCtxFactory({}, files));
+		const cwd = makeRealCwd(["users.ts"]);
+		const g = buildGraph(
+			collectPlugins([dbLike]),
+			makeCtxFactory({}, {}, undefined, cwd),
+		);
 		const src = await g.resolve(api.slots.workerSource);
 		expect(src).toContain(".handler(routes)");
 		expect(src).toContain('import * as routes from "../src/worker/routes"');
@@ -583,12 +597,14 @@ describe("api middleware + routes", () => {
 		const src = await g.resolve(api.slots.workerSource);
 		expect(src).toContain(".handler()");
 	});
-});
 
-// ── cli.slots — artifact files, dev processes, deploy steps ───────
-
-describe("api contributions into cli.slots", () => {
-	it("pushes worker.ts + route barrel into artifactFiles", async () => {
+	// Bug regression: previously the routesHandler seed checked only for
+	// the directory's existence. An empty `src/worker/routes/` directory
+	// would seed `routes` and emit `import * as routes from "../src/worker/routes"`,
+	// but the barrel artifact would skip emission (no routable files) —
+	// leaving a dangling import. Both must agree on the same predicate
+	// ("at least one routable file under routes/").
+	it("routes handler is null when src/worker/routes is empty", async () => {
 		const dbLike: GraphPlugin = {
 			name: "db",
 			contributes: [
@@ -602,7 +618,39 @@ describe("api contributions into cli.slots", () => {
 				),
 			],
 		};
-		const g = buildGraph(collectPlugins([dbLike]), makeCtxFactory());
+		const cwd = makeRealCwd([]); // creates cwd, no routes dir
+		const g = buildGraph(
+			collectPlugins([dbLike]),
+			makeCtxFactory({}, {}, undefined, cwd),
+		);
+		const src = await g.resolve(api.slots.workerSource);
+		expect(src).toContain(".handler()");
+		expect(src).not.toContain('import * as routes from "../src/worker/routes"');
+	});
+});
+
+// ── cli.slots — artifact files, dev processes, deploy steps ───────
+
+describe("api contributions into cli.slots", () => {
+	it("pushes worker.ts + route barrel into artifactFiles when routes are present", async () => {
+		const dbLike: GraphPlugin = {
+			name: "db",
+			contributes: [
+				api.slots.pluginRuntimes.contribute(
+					(): PluginRuntimeEntry => ({
+						plugin: "db",
+						import: { source: "@pkg/db/runtime", default: "dbRuntime" },
+						identifier: "dbRuntime",
+						options: {},
+					}),
+				),
+			],
+		};
+		const cwd = makeRealCwd(["users.ts"]);
+		const g = buildGraph(
+			collectPlugins([dbLike]),
+			makeCtxFactory({}, {}, undefined, cwd),
+		);
 		const files = await g.resolve(cliSlots.artifactFiles);
 		const paths = files.map((f) => f.path);
 		expect(paths).toContain(".stack/worker.ts");
@@ -614,8 +662,44 @@ describe("api contributions into cli.slots", () => {
 		const files = await g.resolve(cliSlots.artifactFiles);
 		const paths = files.map((f) => f.path);
 		expect(paths).not.toContain(".stack/worker.ts");
-		// Route barrel is still always emitted.
-		expect(paths).toContain("src/worker/routes/index.ts");
+	});
+
+	// Bug regression: previously the route barrel artifact was unconditionally
+	// emitted. The generator swallows the missing-dir error and produces a
+	// header-only stub — meaning a worker-only / no-routes consumer would
+	// get an empty `src/worker/routes/index.ts` written into their tree
+	// every time `stack generate` runs. The artifact source must return
+	// null when there are no routable files so emitArtifact skips it.
+	it("skips emitting route barrel when src/worker/routes does not exist", async () => {
+		const g = buildGraph(collectPlugins(), makeCtxFactory());
+		const files = await g.resolve(cliSlots.artifactFiles);
+		const paths = files.map((f) => f.path);
+		expect(paths).not.toContain("src/worker/routes/index.ts");
+	});
+
+	it("skips emitting route barrel when src/worker/routes is empty", async () => {
+		const cwd = makeRealCwd([]);
+		const g = buildGraph(
+			collectPlugins(),
+			makeCtxFactory({}, {}, undefined, cwd),
+		);
+		const files = await g.resolve(cliSlots.artifactFiles);
+		const paths = files.map((f) => f.path);
+		expect(paths).not.toContain("src/worker/routes/index.ts");
+	});
+
+	it("emits route barrel content when at least one route file exists", async () => {
+		const cwd = makeRealCwd(["users.tsx", "posts.ts"]);
+		const g = buildGraph(
+			collectPlugins(),
+			makeCtxFactory({}, {}, undefined, cwd),
+		);
+		const files = await g.resolve(cliSlots.artifactFiles);
+		const barrel = files.find((f) => f.path === "src/worker/routes/index.ts");
+		expect(barrel).toBeDefined();
+		// Bug regression: .tsx files must be included.
+		expect(barrel?.content).toContain('export * from "./users";');
+		expect(barrel?.content).toContain('export * from "./posts";');
 	});
 
 	it("contributes a dev process via cliSlots.devProcesses", async () => {

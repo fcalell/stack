@@ -154,6 +154,97 @@ function writeMemberName(writer: CodeBlockWriter, name: string): void {
 
 // ── Expression printing ─────────────────────────────────────────────
 
+// Precedence table for TsExpression. Higher = tighter binding. Used by
+// `wrapForMember` / `wrapForCall` / `wrapForCast` to decide when to
+// parenthesize an inner expression that would otherwise be misparsed
+// or change associativity.
+//
+// Numbers track the JS expression hierarchy (MDN "Operator precedence"):
+//   18: primaries — literals, identifiers, JSX, parenthesized exprs,
+//       template literals, object/array literals
+//   17: member access, function calls, `new Foo(...)` with args (all
+//       left-associative; bare `new Foo` is also safe to treat at 17
+//       for the "wrap when looser" check we do here)
+//   13: TypeScript `as` cast (looser than member/call, tighter than arrow)
+//    2: arrow function body — looser than nearly everything
+//
+// We don't model every operator here because the AST only needs to
+// disambiguate the "tighter context wraps a looser inner" case for
+// member / call / cast. If new TsExpression kinds are added, give them
+// a precedence here too.
+const PRECEDENCE: Record<TsExpression["kind"], number> = {
+	string: 18,
+	number: 18,
+	boolean: 18,
+	null: 18,
+	undefined: 18,
+	identifier: 18,
+	template: 18,
+	jsx: 18,
+	"jsx-fragment": 18,
+	object: 18,
+	array: 18,
+	member: 17,
+	call: 17,
+	new: 17,
+	as: 13,
+	arrow: 2,
+};
+
+const MEMBER_CALL_PRECEDENCE = 17;
+const AS_PRECEDENCE = 13;
+
+function writeWrapped(
+	writer: CodeBlockWriter,
+	expr: TsExpression,
+	wrap: boolean,
+): void {
+	if (wrap) writer.write("(");
+	writeExpression(writer, expr);
+	if (wrap) writer.write(")");
+}
+
+// Wrap `inner` when used in the object position of a `member` or callee
+// position of a `call`. Numeric literals are special-cased: `5.toString()`
+// is a parse error because the dot is read as a decimal — always wrap.
+function wrapForMember(writer: CodeBlockWriter, inner: TsExpression): void {
+	const wrap =
+		inner.kind === "number" || PRECEDENCE[inner.kind] < MEMBER_CALL_PRECEDENCE;
+	writeWrapped(writer, inner, wrap);
+}
+
+// Wrap `inner` when used as the operand of an `as` cast.
+function wrapForCast(writer: CodeBlockWriter, inner: TsExpression): void {
+	// `as` is left-associative — `x as A as B` parses as `(x as A) as B`,
+	// so a nested `as` on the left needs no parens.
+	if (inner.kind === "as") {
+		writeExpression(writer, inner);
+		return;
+	}
+	const wrap = PRECEDENCE[inner.kind] < AS_PRECEDENCE;
+	writeWrapped(writer, inner, wrap);
+}
+
+// Renders a JSX child consistently for both `jsx` and `jsx-fragment`
+// containers: text nodes are emitted verbatim, JSX elements/fragments
+// nest directly, and any other expression is embedded via braces.
+function writeJsxChild(
+	writer: CodeBlockWriter,
+	child: TsExpression | { kind: "text"; value: string },
+): void {
+	if (child.kind === "text") {
+		writer.write(child.value);
+		return;
+	}
+	if (child.kind === "jsx" || child.kind === "jsx-fragment") {
+		writeExpression(writer, child);
+		return;
+	}
+	writer.write("{");
+	writeExpression(writer, child);
+	writer.write("}");
+}
+
 function writeExpression(writer: CodeBlockWriter, expr: TsExpression): void {
 	switch (expr.kind) {
 		case "string":
@@ -175,12 +266,12 @@ function writeExpression(writer: CodeBlockWriter, expr: TsExpression): void {
 			writer.write(expr.name);
 			return;
 		case "member":
-			writeExpression(writer, expr.object);
+			wrapForMember(writer, expr.object);
 			writer.write(".");
 			writer.write(expr.property);
 			return;
 		case "call": {
-			writeExpression(writer, expr.callee);
+			wrapForMember(writer, expr.callee);
 			if (expr.typeArgs && expr.typeArgs.length > 0) {
 				writer.write("<");
 				expr.typeArgs.forEach((arg, i) => {
@@ -199,7 +290,7 @@ function writeExpression(writer: CodeBlockWriter, expr: TsExpression): void {
 		}
 		case "new": {
 			writer.write("new ");
-			writeExpression(writer, expr.callee);
+			wrapForMember(writer, expr.callee);
 			writer.write("(");
 			expr.args.forEach((arg, i) => {
 				if (i > 0) writer.write(", ");
@@ -265,7 +356,7 @@ function writeExpression(writer: CodeBlockWriter, expr: TsExpression): void {
 			return;
 		}
 		case "as": {
-			writeExpression(writer, expr.expression);
+			wrapForCast(writer, expr.expression);
 			writer.write(" as ");
 			writeType(writer, expr.type);
 			return;
@@ -296,19 +387,7 @@ function writeExpression(writer: CodeBlockWriter, expr: TsExpression): void {
 			}
 			writer.write(">");
 			for (const child of expr.children) {
-				if ("kind" in child && child.kind === "text") {
-					writer.write(child.value);
-				} else {
-					const childExpr = child as TsExpression;
-					// JSX elements / fragments nest directly; other expressions embed via braces.
-					if (childExpr.kind === "jsx" || childExpr.kind === "jsx-fragment") {
-						writeExpression(writer, childExpr);
-					} else {
-						writer.write("{");
-						writeExpression(writer, childExpr);
-						writer.write("}");
-					}
-				}
+				writeJsxChild(writer, child);
 			}
 			writer.write("</");
 			writer.write(expr.tag);
@@ -318,13 +397,7 @@ function writeExpression(writer: CodeBlockWriter, expr: TsExpression): void {
 		case "jsx-fragment": {
 			writer.write("<>");
 			for (const child of expr.children) {
-				if (child.kind === "jsx" || child.kind === "jsx-fragment") {
-					writeExpression(writer, child);
-				} else {
-					writer.write("{");
-					writeExpression(writer, child);
-					writer.write("}");
-				}
+				writeJsxChild(writer, child);
 			}
 			writer.write("</>");
 			return;

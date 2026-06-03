@@ -5,6 +5,7 @@ import { cliSlots } from "@fcalell/cli/cli-slots";
 import type { PluginRuntimeEntry } from "@fcalell/plugin-api";
 import { api } from "@fcalell/plugin-api";
 import { cloudflare } from "@fcalell/plugin-cloudflare";
+import { migrationLockPath, withMigrationLock } from "./node/lock";
 import {
 	applyMigrationsLocal,
 	applyMigrationsRemote,
@@ -109,10 +110,16 @@ export const db = plugin("db", {
 					);
 					if (!ok) return;
 				}
-				const { rmSync } = await import("node:fs");
-				rmSync(join(ctx.cwd, ".stack/dev"), {
-					recursive: true,
-					force: true,
+				// Wipes `.stack/dev` (which contains the local SQLite db AND the
+				// migration lock file). Hold the lock while we tear down so a
+				// concurrent push/generate doesn't write into a half-deleted
+				// directory.
+				await withMigrationLock(migrationLockPath(ctx.cwd), async () => {
+					const { rmSync } = await import("node:fs");
+					rmSync(join(ctx.cwd, ".stack/dev"), {
+						recursive: true,
+						force: true,
+					});
 				});
 				ctx.log.success("Local database deleted. Run `stack dev` to recreate.");
 			},

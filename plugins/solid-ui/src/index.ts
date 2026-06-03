@@ -9,9 +9,11 @@ import { emitArtifact } from "@fcalell/cli/cli-slots";
 import { solid } from "@fcalell/plugin-solid";
 import { vite } from "@fcalell/plugin-vite";
 import { aggregateAppCss } from "./node/codegen";
+import { cssString } from "./node/css-escape";
 import { defaultFonts, type FontEntry } from "./node/fonts";
 import {
 	type CssImport,
+	type CssLayer,
 	type SolidUiOptions,
 	solidUiOptionsSchema,
 } from "./types";
@@ -75,11 +77,16 @@ function fontsToTokenCss(fonts: FontEntry[]): string | null {
 
 	const decls: string[] = [];
 	for (const [role, font] of byRole) {
+		// Family names cross into a CSS custom-property value — quote-and-
+		// escape via cssString so a name like `Foo"Bar` can't break out of
+		// its CSS string and inject extra declarations.
 		const stack = [
-			`"${font.family}"`,
-			`"${font.family} Fallback"`,
+			cssString(font.family),
+			cssString(`${font.family} Fallback`),
 			...ROLE_FALLBACKS[role],
 		];
+		// `role` is constrained to the {sans,mono,serif} enum on FontEntry,
+		// so `--ui-font-${role}` is statically safe.
 		decls.push(`\t--ui-font-${role}: ${stack.join(", ")};`);
 	}
 	return `:root {\n${decls.join("\n")}\n}`;
@@ -92,7 +99,7 @@ const appCssImports = slot.list<CssImport>({
 	name: "appCssImports",
 });
 
-const appCssLayers = slot.list<{ name: string; content: string }>({
+const appCssLayers = slot.list<CssLayer>({
 	source: SOURCE,
 	name: "appCssLayers",
 });

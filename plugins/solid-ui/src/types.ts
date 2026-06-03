@@ -1,12 +1,46 @@
 import { z } from "zod";
+import { isCssIdent, isCssSupportsExpression } from "./node/css-escape";
 
 // A single `@import` line. The shorthand form (a bare string) becomes
 // `@import "<url>";`. The structured form lets plugins attach `layer(...)`
 // or `supports(...)` modifiers without escaping them inside the URL string
 // (e.g. Tailwind v4's `@import "tailwindcss" layer(theme)`).
-export type CssImport =
-	| string
-	| { url: string; layer?: string; supports?: string };
+//
+// Validation lives at the contribution boundary so the slot rejects
+// garbage inputs eagerly — the error then names the bad plugin instead
+// of producing mysterious CSS at render time.
+export const cssImportSchema = z.union([
+	z.string().min(1, "css @import url must be a non-empty string"),
+	z.object({
+		url: z.string().min(1, "css @import url must be a non-empty string"),
+		layer: z
+			.string()
+			.optional()
+			.refine(
+				(v) => v === undefined || isCssIdent(v),
+				"css @import layer(...) argument must be a CSS <ident>",
+			),
+		supports: z
+			.string()
+			.optional()
+			.refine(
+				(v) => v === undefined || isCssSupportsExpression(v),
+				"css @import supports(...) argument must be a balanced parenthesized feature query without ';' / '{' / '}'",
+			),
+	}),
+]);
+
+export type CssImport = z.input<typeof cssImportSchema>;
+
+// `@layer <name>` — name must be a CSS <ident>.
+export const cssLayerSchema = z.object({
+	name: z
+		.string()
+		.refine((v) => isCssIdent(v), "css @layer name must be a CSS <ident>"),
+	content: z.string(),
+});
+
+export type CssLayer = z.input<typeof cssLayerSchema>;
 
 // Aggregated inputs for the `.stack/app.css` derivation. Plugins contribute
 // to `solidUi.slots.appCssImports` (CSS `@import`s, shorthand or structured)
@@ -14,7 +48,7 @@ export type CssImport =
 // renders them to the final CSS source.
 export interface CodegenAppCssPayload {
 	imports: CssImport[];
-	layers: Array<{ name: string; content: string }>;
+	layers: CssLayer[];
 }
 
 // Typed schema for a webfont consumed by plugin-solid-ui. `themeFontsPlugin`

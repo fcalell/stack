@@ -105,6 +105,59 @@ describe("vite.slots", () => {
 	});
 });
 
+describe("vite.slots.resolveAliases uniqueness", () => {
+	it("rejects two contributions sharing the same `find` (would silently overwrite when emitted as a TS object literal)", async () => {
+		const a: GraphPlugin = {
+			name: "a",
+			contributes: [
+				vite.slots.resolveAliases.contribute(() => ({
+					find: "@",
+					replacement: "/srcA",
+				})),
+			],
+		};
+		const b: GraphPlugin = {
+			name: "b",
+			contributes: [
+				vite.slots.resolveAliases.contribute(() => ({
+					find: "@",
+					replacement: "/srcB",
+				})),
+			],
+		};
+		const { plugins, ctxFactory } = collectVitePlugins([a, b]);
+		const g = buildGraph(plugins, ctxFactory);
+		await expect(g.resolve(vite.slots.resolveAliases)).rejects.toThrow(
+			/resolveAliases.*duplicate key '@'/,
+		);
+	});
+
+	it("permits multiple distinct `find` entries", async () => {
+		const a: GraphPlugin = {
+			name: "a",
+			contributes: [
+				vite.slots.resolveAliases.contribute(() => ({
+					find: "@",
+					replacement: "/src",
+				})),
+			],
+		};
+		const b: GraphPlugin = {
+			name: "b",
+			contributes: [
+				vite.slots.resolveAliases.contribute(() => ({
+					find: "~",
+					replacement: "/root",
+				})),
+			],
+		};
+		const { plugins, ctxFactory } = collectVitePlugins([a, b]);
+		const g = buildGraph(plugins, ctxFactory);
+		const aliases = await g.resolve(vite.slots.resolveAliases);
+		expect(aliases.map((x) => x.find).sort()).toEqual(["@", "~"]);
+	});
+});
+
 // ── devServerPort ─────────────────────────────────────────────────
 
 describe("vite.slots.devServerPort", () => {
@@ -148,6 +201,25 @@ describe("vite → api.slots.corsOrigins contribution", () => {
 		);
 		const g = buildGraph(plugins, ctxFactory);
 		const cors = await g.resolve(api.slots.cors);
+		expect(cors).not.toContain("http://localhost:3000");
+	});
+
+	// Regression: empty `app.origins: []` is a meaningful "lock the
+	// allow-list to nothing" override. Truthiness checks (`if (origins)`)
+	// silently slip the empty array through and append localhost — which
+	// quietly breaks the consumer's intent. Predicate must be
+	// `!== undefined`, mirroring plugin-api's `cors` derivation.
+	it("does not contribute localhost when app.origins is the empty array", async () => {
+		const { plugins, ctxFactory } = collectVitePlugins(
+			[],
+			{},
+			{},
+			{},
+			{ ...app, origins: [] },
+		);
+		const g = buildGraph(plugins, ctxFactory);
+		const cors = await g.resolve(api.slots.cors);
+		expect(cors).toEqual([]);
 		expect(cors).not.toContain("http://localhost:3000");
 	});
 

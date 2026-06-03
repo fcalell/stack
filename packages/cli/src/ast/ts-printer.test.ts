@@ -248,6 +248,146 @@ describe("renderTsSourceFile — TsExpression kinds", () => {
 		).toBe("const x = x as unknown;");
 	});
 
+	it("member access on `as` expression parenthesizes the cast", () => {
+		expect(
+			renderExpr({
+				kind: "member",
+				object: {
+					kind: "as",
+					expression: { kind: "identifier", name: "env" },
+					type: { kind: "reference", name: "Cfg" },
+				},
+				property: "DB",
+			}),
+		).toBe("const x = (env as Cfg).DB;");
+	});
+
+	it("member access on arrow expression parenthesizes the arrow", () => {
+		expect(
+			renderExpr({
+				kind: "member",
+				object: {
+					kind: "arrow",
+					params: [],
+					body: { kind: "number", value: 1 },
+				},
+				property: "name",
+			}),
+		).toBe("const x = (() => 1).name;");
+	});
+
+	it("member access on `new` expression does not double-wrap", () => {
+		// `new Foo().bar` is the canonical form — `new` binds tightly enough
+		// that the engine parses `new Foo().bar` correctly without parens.
+		expect(
+			renderExpr({
+				kind: "member",
+				object: {
+					kind: "new",
+					callee: { kind: "identifier", name: "Foo" },
+					args: [],
+				},
+				property: "bar",
+			}),
+		).toBe("const x = new Foo().bar;");
+	});
+
+	it("member access on call expression does not parenthesize", () => {
+		expect(
+			renderExpr({
+				kind: "member",
+				object: {
+					kind: "call",
+					callee: { kind: "identifier", name: "f" },
+					args: [],
+				},
+				property: "x",
+			}),
+		).toBe("const x = f().x;");
+	});
+
+	it("member access on nested member does not parenthesize", () => {
+		expect(
+			renderExpr({
+				kind: "member",
+				object: {
+					kind: "member",
+					object: { kind: "identifier", name: "a" },
+					property: "b",
+				},
+				property: "c",
+			}),
+		).toBe("const x = a.b.c;");
+	});
+
+	it("member access on number literal parenthesizes", () => {
+		// `(5).toString()` — bare `5.toString()` is a parse error in TS.
+		expect(
+			renderExpr({
+				kind: "member",
+				object: { kind: "number", value: 5 },
+				property: "toString",
+			}),
+		).toBe("const x = (5).toString;");
+	});
+
+	it("call on `as` expression parenthesizes the cast", () => {
+		expect(
+			renderExpr({
+				kind: "call",
+				callee: {
+					kind: "as",
+					expression: { kind: "identifier", name: "fn" },
+					type: { kind: "reference", name: "Callable" },
+				},
+				args: [],
+			}),
+		).toBe("const x = (fn as Callable)();");
+	});
+
+	it("call on arrow expression parenthesizes the arrow", () => {
+		expect(
+			renderExpr({
+				kind: "call",
+				callee: {
+					kind: "arrow",
+					params: [],
+					body: { kind: "number", value: 1 },
+				},
+				args: [],
+			}),
+		).toBe("const x = (() => 1)();");
+	});
+
+	it("`as` whose inner is also `as` chains without extra parens", () => {
+		// `x as A as B` is left-associative and parses fine.
+		expect(
+			renderExpr({
+				kind: "as",
+				expression: {
+					kind: "as",
+					expression: { kind: "identifier", name: "x" },
+					type: { kind: "reference", name: "A" },
+				},
+				type: { kind: "reference", name: "B" },
+			}),
+		).toBe("const x = x as A as B;");
+	});
+
+	it("`as` of an arrow expression parenthesizes the arrow", () => {
+		expect(
+			renderExpr({
+				kind: "as",
+				expression: {
+					kind: "arrow",
+					params: [],
+					body: { kind: "number", value: 1 },
+				},
+				type: { kind: "reference", name: "Fn" },
+			}),
+		).toBe("const x = (() => 1) as Fn;");
+	});
+
 	it("jsx self-closing with props", () => {
 		expect(
 			renderExpr({
@@ -298,6 +438,18 @@ describe("renderTsSourceFile — TsExpression kinds", () => {
 				],
 			}),
 		).toBe("const x = <>{a}<b /></>;");
+	});
+
+	it("jsx fragment renders text children unwrapped (no braces)", () => {
+		expect(
+			renderExpr({
+				kind: "jsx-fragment",
+				children: [
+					{ kind: "text", value: "hi " },
+					{ kind: "jsx", tag: "b", props: [], children: [] },
+				],
+			}),
+		).toBe("const x = <>hi <b /></>;");
 	});
 
 	it("template literal with interpolations", () => {
