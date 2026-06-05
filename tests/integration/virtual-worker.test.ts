@@ -104,7 +104,7 @@ describe("virtual worker codegen pipeline (defineConfig-driven)", () => {
 	});
 
 	it("API-only config (no auth) produces simpler worker", async () => {
-		seedFs(cwd, ["src/schema/", "src/worker/routes/"]);
+		seedFs(cwd, ["src/schema/", "src/worker/routes/users.ts"]);
 
 		const result = await renderWorker({
 			cwd,
@@ -175,7 +175,7 @@ describe("virtual worker codegen pipeline (defineConfig-driven)", () => {
 	});
 
 	it("routes import is included when routes dir exists", async () => {
-		seedFs(cwd, ["src/worker/routes/"]);
+		seedFs(cwd, ["src/worker/routes/users.ts"]);
 		const withRoutes = await renderWorker({
 			cwd,
 			plugins: [cloudflare(), db({ dialect: "d1", databaseId: "x" }), api()],

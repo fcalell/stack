@@ -175,7 +175,7 @@ describe("E2E minimal journey (api only)", () => {
 
 	beforeAll(() => {
 		cwd = mkdtempSync(join(tmpdir(), "stack-e2e-min-"));
-		seedFs(cwd, ["src/worker/routes/", "src/schema/"]);
+		seedFs(cwd, ["src/worker/routes/users.ts", "src/schema/"]);
 	});
 
 	afterAll(() => {

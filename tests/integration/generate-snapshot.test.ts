@@ -114,7 +114,7 @@ describe("generate pipeline snapshot", () => {
 			"src/schema/",
 			"src/worker/plugins/auth.ts",
 			"src/worker/middleware.ts",
-			"src/worker/routes/",
+			"src/worker/routes/users.ts",
 		]);
 
 		const snapshot = await runGenerate({
@@ -138,7 +138,7 @@ describe("generate pipeline snapshot", () => {
 	});
 
 	it("db + api (no auth, no frontend): schema tooling + minimal worker", async () => {
-		seedFs(cwd, ["src/schema/"]);
+		seedFs(cwd, ["src/schema/", "src/worker/routes/users.ts"]);
 		const snapshot = await runGenerate({
 			cwd,
 			plugins: [
@@ -151,7 +151,7 @@ describe("generate pipeline snapshot", () => {
 	});
 
 	it("api-only: worker without frontend", async () => {
-		seedFs(cwd, ["src/schema/", "src/worker/routes/"]);
+		seedFs(cwd, ["src/schema/", "src/worker/routes/users.ts"]);
 		const snapshot = await runGenerate({
 			cwd,
 			origins: ["https://example.com"],
@@ -191,7 +191,7 @@ describe("generate pipeline snapshot", () => {
 		seedFs(cwd, [
 			"src/schema/",
 			"src/worker/plugins/auth.ts",
-			"src/worker/routes/",
+			"src/worker/routes/users.ts",
 		]);
 		const snapshot = await runGenerate({
 			cwd,
@@ -213,7 +213,7 @@ describe("generate pipeline snapshot", () => {
 		seedFs(cwd, [
 			"src/schema/",
 			"src/worker/plugins/auth.ts",
-			"src/worker/routes/",
+			"src/worker/routes/users.ts",
 		]);
 		const snapshot = await runGenerate({
 			cwd,
@@ -239,7 +239,7 @@ describe("generate pipeline snapshot", () => {
 			"src/schema/",
 			"src/worker/plugins/auth.ts",
 			"src/worker/middleware.ts",
-			"src/worker/routes/",
+			"src/worker/routes/users.ts",
 		]);
 		const snapshot = await runGenerate({
 			cwd,
@@ -267,7 +267,7 @@ describe("generate pipeline snapshot", () => {
 		seedFs(cwd, [
 			"src/schema/",
 			"src/worker/plugins/auth.ts",
-			"src/worker/routes/",
+			"src/worker/routes/users.ts",
 		]);
 		await expect(
 			runGenerate({
@@ -293,7 +293,7 @@ describe("generate pipeline snapshot", () => {
 		seedFs(cwd, [
 			"src/schema/",
 			"src/worker/plugins/auth.ts",
-			"src/worker/routes/",
+			"src/worker/routes/users.ts",
 		]);
 		await expect(
 			runGenerate({
@@ -316,7 +316,7 @@ describe("generate pipeline snapshot", () => {
 			"src/schema/",
 			"src/worker/plugins/auth.ts",
 			"src/worker/middleware.ts",
-			"src/worker/routes/",
+			"src/worker/routes/users.ts",
 		]);
 
 		const canonical = await runGenerate({
@@ -344,7 +344,7 @@ describe("generate pipeline snapshot", () => {
 			"src/schema/",
 			"src/worker/plugins/auth.ts",
 			"src/worker/middleware.ts",
-			"src/worker/routes/",
+			"src/worker/routes/users.ts",
 		]);
 		try {
 			const shuffled = await runGenerate({
