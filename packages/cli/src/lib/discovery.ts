@@ -30,13 +30,22 @@ export const FIRST_PARTY_PLUGINS = [
 	{ name: "auth", package: "@fcalell/plugin-auth" },
 	{ name: "api", package: "@fcalell/plugin-api" },
 	{ name: "vite", package: "@fcalell/plugin-vite" },
+	{ name: "expo", package: "@fcalell/plugin-expo" },
 	{ name: "solid", package: "@fcalell/plugin-solid" },
 	{ name: "solid-ui", package: "@fcalell/plugin-solid-ui" },
 ] as const satisfies ReadonlyArray<{ name: string; package: string }>;
 
 export const PLUGIN_NAMES = FIRST_PARTY_PLUGINS.map(
 	(p) => p.name,
-) as unknown as readonly ["db", "auth", "api", "vite", "solid", "solid-ui"];
+) as unknown as readonly [
+	"db",
+	"auth",
+	"api",
+	"vite",
+	"expo",
+	"solid",
+	"solid-ui",
+];
 
 export type PluginName = (typeof PLUGIN_NAMES)[number];
 

@@ -9,6 +9,7 @@ export default defineConfig({
 			"plugins/auth",
 			"plugins/api",
 			"plugins/vite",
+			"plugins/expo",
 			"plugins/solid",
 			"plugins/solid-ui",
 			"tests/integration",

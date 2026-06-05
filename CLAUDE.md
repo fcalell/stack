@@ -33,6 +33,7 @@ Plugins are self-contained feature units built with `plugin()`. Each declares a 
 | `@fcalell/plugin-auth` | Better Auth integration, RBAC, access control | `auth()` |
 | `@fcalell/plugin-api` | API framework: Hono + oRPC, procedure builder, typed client | `api()` |
 | `@fcalell/plugin-vite` | Framework-agnostic Vite lifecycle (providers virtual module) | `vite()` |
+| `@fcalell/plugin-expo` | Expo/React Native: Metro + app config + expo-router entry + EAS commands | `expo()` |
 | `@fcalell/plugin-solid` | SolidJS compilation, file-based routing, app bootstrap | `solid()` |
 | `@fcalell/plugin-solid-ui` | Design system: SolidJS + Kobalte + Tailwind v4 + CVA components, fonts, typography tokens | `solidUi()` |
 
@@ -46,6 +47,9 @@ Cross-plugin dataflow is expressed as typed slot imports — plugin A imports `p
 plugin-cloudflare ────────> cli (owns cloudflare.slots.bindings/secrets/vars/routes/wranglerToml)
 plugin-vite ──────────────> cli (owns vite.slots.configImports/pluginCalls/devServerPort/viteConfig;
                                  contributes to api.slots.corsOrigins for localhost dev)
+plugin-expo ──────────────> cli (owns expo.slots.metroConfig/expoConfig/entrySource/routesDtsSource,
+                                 providers, easBuildProfiles/easUpdateChannel, nativeSecureStorageAdapter;
+                                 contributes to api.slots.corsOrigins for the Metro dev origin)
 plugin-db ────────────────> cli, requires cloudflare + api
                                  (contributes to cloudflare.slots.bindings, api.slots.pluginRuntimes / workerImports)
 plugin-auth ──────────────> cli, requires api + cloudflare + db

@@ -87,6 +87,7 @@ Plugins coordinate through typed slots in a dataflow graph — each plugin contr
 | [`@fcalell/plugin-auth`](plugins/auth) | Better Auth integration, RBAC, access control | `auth()` |
 | [`@fcalell/plugin-api`](plugins/api) | Hono + oRPC, procedure builder, typed client | `api()` |
 | [`@fcalell/plugin-vite`](plugins/vite) | Framework-agnostic Vite lifecycle | `vite()` |
+| [`@fcalell/plugin-expo`](plugins/expo) | Expo/React Native — Metro + app config + expo-router entry + EAS commands | `expo()` |
 | [`@fcalell/plugin-solid`](plugins/solid) | SolidJS compilation, file-based routing, app bootstrap | `solid()` |
 | [`@fcalell/plugin-solid-ui`](plugins/solid-ui) | SolidJS design system — Kobalte + Tailwind v4 + CVA components, fonts, typography tokens | `solidUi()` |
 

@@ -1,0 +1,4 @@
+// The native Metro config is generated into .stack/metro.config.js by
+// `stack generate`. Configure Metro through stack.config.ts — this shim only
+// re-exports the generated config so Expo's root-file convention is satisfied.
+module.exports = require("./.stack/metro.config.js");

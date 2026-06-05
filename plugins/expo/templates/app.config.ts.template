@@ -1,0 +1,4 @@
+// The Expo app config is generated into .stack/app.config.ts by
+// `stack generate`. Configure the app through stack.config.ts — this shim only
+// re-exports the generated config so Expo's root-file convention is satisfied.
+export { default } from "./.stack/app.config";
