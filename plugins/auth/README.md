@@ -232,15 +232,15 @@ import {
 export const authClient = createAuthClient({
   baseURL: process.env.EXPO_PUBLIC_API_URL!,
   scheme: "wenauti",      // matches the Expo app scheme / plugin-expo `scheme`
-  storage: SecureStore,   // flows from plugin-expo.slots.nativeSecureStorageAdapter
+  storage: SecureStore,   // the secure key-value store tokens persist in
 });
 
 // In a screen: const client = useAuthClient(); signInWithGoogle(client);
 ```
 
 `storage` is injected (not imported here) so this layer never pulls native modules
-into Node/test importers; the secure-store module is chosen by
-`plugin-expo.slots.nativeSecureStorageAdapter` (default `expo-secure-store`).
+into Node/test importers; the consumer passes the secure-store module directly.
+With `plugin-native-ui` this file is scaffolded for you at `src/lib/auth.ts`.
 
 ## Exports
 

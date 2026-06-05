@@ -127,12 +127,14 @@ export async function add(
 		}
 
 		// Scaffolds / deps / gitignore — target plugin only (by spec.plugin).
-		const [scaffolds, _initDeps, _initDevDeps, gitignore] = await Promise.all([
-			graph.resolve(cliSlots.initScaffolds),
-			graph.resolve(cliSlots.initDeps),
-			graph.resolve(cliSlots.initDevDeps),
-			graph.resolve(cliSlots.gitignore),
-		]);
+		const [scaffolds, _initDeps, _initDevDeps, gitignore, packageJsonFields] =
+			await Promise.all([
+				graph.resolve(cliSlots.initScaffolds),
+				graph.resolve(cliSlots.initDeps),
+				graph.resolve(cliSlots.initDevDeps),
+				graph.resolve(cliSlots.gitignore),
+				graph.resolve(cliSlots.packageJsonFields),
+			]);
 
 		const scopedScaffolds = scaffolds.filter((s) => s.plugin === pluginName);
 		const created = await writeScaffoldSpecs(scopedScaffolds, cwd);
@@ -151,7 +153,13 @@ export async function add(
 		};
 		// Ensure the plugin package itself is listed.
 		scopedDeps[packageName] ??= "latest";
-		patchPackageJson(cwd, { dependencies: scopedDeps });
+		// `fields` is write-if-absent, so re-applying sibling-plugin fields here is
+		// a no-op (they already landed when those plugins were added). Only the
+		// newly added plugin's fields — e.g. Expo's `main` — actually get written.
+		patchPackageJson(cwd, {
+			dependencies: scopedDeps,
+			fields: packageJsonFields,
+		});
 
 		if (gitignore.length > 0) {
 			// Scoped-ish: every plugin that wanted gitignore adds its own

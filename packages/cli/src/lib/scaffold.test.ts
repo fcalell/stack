@@ -10,7 +10,7 @@ import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { ScaffoldError } from "#lib/errors";
-import { writeScaffoldSpecs } from "#lib/scaffold";
+import { patchPackageJson, writeScaffoldSpecs } from "#lib/scaffold";
 
 describe("writeScaffoldSpecs", () => {
 	let templatesDir: string;
@@ -110,5 +110,50 @@ describe("writeScaffoldSpecs", () => {
 		);
 
 		expect(existsSync(join(cwd, "nested/deep/file.ts"))).toBe(true);
+	});
+});
+
+describe("patchPackageJson fields", () => {
+	let cwd: string;
+
+	beforeEach(() => {
+		cwd = mkdtempSync(join(tmpdir(), "patch-pkg-"));
+	});
+
+	afterEach(() => {
+		rmSync(cwd, { recursive: true, force: true });
+	});
+
+	function writePkg(pkg: Record<string, unknown>): void {
+		writeFileSync(join(cwd, "package.json"), `${JSON.stringify(pkg)}\n`);
+	}
+
+	function readPkg(): Record<string, unknown> {
+		return JSON.parse(readFileSync(join(cwd, "package.json"), "utf8"));
+	}
+
+	it("writes a top-level field when it is absent", () => {
+		writePkg({ name: "app", version: "0.0.0" });
+
+		patchPackageJson(cwd, { fields: { main: ".stack/entry.tsx" } });
+
+		expect(readPkg().main).toBe(".stack/entry.tsx");
+	});
+
+	it("does not clobber a field the consumer already set", () => {
+		writePkg({ name: "app", main: "custom-entry.tsx" });
+
+		patchPackageJson(cwd, { fields: { main: ".stack/entry.tsx" } });
+
+		expect(readPkg().main).toBe("custom-entry.tsx");
+	});
+
+	it("is a no-op (no rewrite) when every field already exists", () => {
+		writePkg({ name: "app", main: "custom-entry.tsx" });
+		const before = readFileSync(join(cwd, "package.json"), "utf8");
+
+		patchPackageJson(cwd, { fields: { main: ".stack/entry.tsx" } });
+
+		expect(readFileSync(join(cwd, "package.json"), "utf8")).toBe(before);
 	});
 });

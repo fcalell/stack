@@ -25,9 +25,6 @@ export const expoOptionsSchema = z.object({
 	easProfiles: z.array(z.string().min(1)).min(1).optional(),
 	// Default EAS Update channel (`eas update --channel <name>`).
 	updateChannel: z.string().min(1).optional(),
-	// Secure storage module that the native auth client persists tokens in.
-	// Consumed by `plugin-auth/expo`; defaults to `expo-secure-store`.
-	secureStoreAdapter: z.string().min(1).optional(),
 });
 
 export type ExpoOptions = z.input<typeof expoOptionsSchema>;

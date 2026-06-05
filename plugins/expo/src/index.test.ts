@@ -136,7 +136,6 @@ describe("expo.slots", () => {
 			"routesPagesDir",
 			"easBuildProfiles",
 			"easUpdateChannel",
-			"nativeSecureStorageAdapter",
 		] as const) {
 			expect(expo.slots[name].source).toBe("expo");
 		}
@@ -212,7 +211,7 @@ describe("expo.slots.metroConfig", () => {
 		const { plugins, ctxFactory } = collectExpoPlugins();
 		const g = buildGraph(plugins, ctxFactory);
 		const src = await g.resolve(expo.slots.metroConfig);
-		expect(src).toContain("getDefaultConfig(__dirname)");
+		expect(src).toContain("getDefaultConfig(projectRoot)");
 		expect(src).toContain("module.exports = config;");
 	});
 
@@ -244,8 +243,28 @@ describe("expo.slots.expoConfig", () => {
 		expect(src).toContain('scheme: "wenauti"');
 		expect(src).toContain('"expo-router"');
 		expect(src).toContain("typedRoutes: true");
-		// bundle id derives from the reversed app domain.
+		// bundle id derives from the reversed app domain, collapsing the doubled
+		// leaf when the domain's last label already equals the slug.
 		expect(src).toContain("app.wenauti");
+		expect(src).not.toContain("app.wenauti.wenauti");
+	});
+
+	it("keeps the leaf for a generic domain and guards illegal segments", async () => {
+		const { plugins, ctxFactory } = collectExpoPlugins(
+			[],
+			{},
+			{},
+			{},
+			{
+				name: "MyApp",
+				domain: "1example.com",
+			},
+		);
+		const g = buildGraph(plugins, ctxFactory);
+		const src = await g.resolve(expo.slots.expoConfig);
+		// Domain label "1example" starts with a digit → prefixed to "a1example";
+		// the slug leaf ("myapp") differs from the SLD so it is retained.
+		expect(src).toContain("com.a1example.myapp");
 	});
 
 	it("honours a custom scheme", async () => {
@@ -346,10 +365,28 @@ describe("expo init scaffolds", () => {
 	});
 });
 
-// ── EAS + secure storage values ───────────────────────────────────
+// ── package.json main ─────────────────────────────────────────────
 
-describe("expo EAS + native storage slots", () => {
-	it("defaults EAS profiles, channel, and secure store", async () => {
+describe("expo → cliSlots.packageJsonFields", () => {
+	it("points main at the generated entry when routing is enabled", async () => {
+		const { plugins, ctxFactory } = collectExpoPlugins();
+		const g = buildGraph(plugins, ctxFactory);
+		const fields = await g.resolve(cliSlots.packageJsonFields);
+		expect(fields.main).toBe(".stack/entry.tsx");
+	});
+
+	it("omits main when routing is disabled (bare RN owns the entry)", async () => {
+		const { plugins, ctxFactory } = collectExpoPlugins([], { routes: false });
+		const g = buildGraph(plugins, ctxFactory);
+		const fields = await g.resolve(cliSlots.packageJsonFields);
+		expect(fields.main).toBeUndefined();
+	});
+});
+
+// ── EAS values ─────────────────────────────────────────────────────
+
+describe("expo EAS slots", () => {
+	it("defaults EAS profiles and channel", async () => {
 		const { plugins, ctxFactory } = collectExpoPlugins();
 		const g = buildGraph(plugins, ctxFactory);
 		expect(await g.resolve(expo.slots.easBuildProfiles)).toEqual([
@@ -358,23 +395,16 @@ describe("expo EAS + native storage slots", () => {
 			"production",
 		]);
 		expect(await g.resolve(expo.slots.easUpdateChannel)).toBe("production");
-		expect(await g.resolve(expo.slots.nativeSecureStorageAdapter)).toBe(
-			"expo-secure-store",
-		);
 	});
 
 	it("honours option overrides", async () => {
 		const { plugins, ctxFactory } = collectExpoPlugins([], {
 			easProfiles: ["staging"],
 			updateChannel: "beta",
-			secureStoreAdapter: "@my/secure",
 		});
 		const g = buildGraph(plugins, ctxFactory);
 		expect(await g.resolve(expo.slots.easBuildProfiles)).toEqual(["staging"]);
 		expect(await g.resolve(expo.slots.easUpdateChannel)).toBe("beta");
-		expect(await g.resolve(expo.slots.nativeSecureStorageAdapter)).toBe(
-			"@my/secure",
-		);
 	});
 });
 

@@ -171,6 +171,7 @@ The cross-cutting sinks every command consumes. Plugins contribute here for file
 | `cliSlots.initScaffolds` | `list<ScaffoldSpec>` | Templates copied once into the consumer repo |
 | `cliSlots.initDeps` | `map<string, string>` | npm `dependencies` to add (auto-wired from `plugin({ dependencies })`) |
 | `cliSlots.initDevDeps` | `map<string, string>` | npm `devDependencies` to add (auto-wired from `plugin({ devDependencies })`) |
+| `cliSlots.packageJsonFields` | `map<unknown>` | Top-level `package.json` fields (e.g. Expo's `main`). Written if-absent at init/add — never clobbers a consumer-set value; duplicate keys across plugins throw |
 | `cliSlots.gitignore` | `list<string>` | `.gitignore` entries (auto-wired from `plugin({ gitignore })`) |
 | `cliSlots.artifactFiles` | `list<GeneratedFile>` | `{ path, content }` files written under `.stack/` (or anywhere in cwd) |
 | `cliSlots.postWrite` | `list<() => Promise<void>>` | Hooks to run after artifact files land (e.g. `wrangler types`) |

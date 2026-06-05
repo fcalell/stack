@@ -87,26 +87,30 @@ matching `--font-<role>` token (so `font-sans` / `font-mono` resolve).
 
 ### 4. Native clients
 
-The Query/Auth providers are wired automatically; you only supply the configured
-client instances (the genuine per-app config — base URL, scheme, storage):
+The Query/Auth providers are wired automatically, and `stack init` / `stack add`
+scaffold editable starters at `src/lib/query.ts` and `src/lib/auth.ts` (copy-once,
+like the auth callback file). The query client works out of the box; the auth
+starter just needs the two genuinely per-app values filled in:
 
 ```ts
-// src/lib/auth.ts
+// src/lib/auth.ts (scaffolded)
 import * as SecureStore from "expo-secure-store";
 import { createAuthClient } from "@fcalell/plugin-auth/expo";
 export const authClient = createAuthClient({
-  baseURL: process.env.EXPO_PUBLIC_API_URL!,
-  scheme: "wenauti",
+  baseURL: process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:8787",
+  scheme: "app",          // match your app.config.ts deep-link scheme
   storage: SecureStore,
 });
 
-// src/lib/query.ts
+// src/lib/query.ts (scaffolded)
 import { createQueryClient } from "@fcalell/plugin-api/tanstack-query";
 export const queryClient = createQueryClient();
 ```
 
 The module paths default to `src/lib/auth` (`authClient`) and `src/lib/query`
-(`queryClient`); override via `nativeUi({ authClientModule, queryClientModule })`.
+(`queryClient`); point a provider at your own module via
+`nativeUi({ authClientModule, queryClientModule })` and that file's scaffold is
+skipped (it's yours to own).
 
 ### 5. Primitives
 

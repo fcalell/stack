@@ -110,6 +110,9 @@ export interface PackageJsonPatch {
 	imports?: Record<string, string>;
 	dependencies?: Record<string, string>;
 	scripts?: Record<string, string>;
+	// Arbitrary top-level fields (e.g. Expo's `main`). Written only when the key
+	// is absent, so a consumer-customized value is never overwritten.
+	fields?: Record<string, unknown>;
 }
 
 export function patchPackageJson(cwd: string, patch: PackageJsonPatch): void {
@@ -132,6 +135,14 @@ export function patchPackageJson(cwd: string, patch: PackageJsonPatch): void {
 		const missing = Object.entries(additions).filter(([k]) => !(k in existing));
 		if (missing.length > 0) {
 			pkg[field] = { ...existing, ...Object.fromEntries(missing) };
+			changed = true;
+		}
+	}
+
+	if (patch.fields) {
+		for (const [key, value] of Object.entries(patch.fields)) {
+			if (key in pkg) continue;
+			pkg[key] = value;
 			changed = true;
 		}
 	}

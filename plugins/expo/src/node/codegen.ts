@@ -55,9 +55,19 @@ export function aggregateMetroConfig(payload: CodegenMetroPayload): string {
 	}
 	lines.push("");
 
+	// This file is generated into `.stack/`, so `__dirname` is the consumer's
+	// `.stack/` dir — NOT the project root. Metro resolves modules and the
+	// entry's `require.context` app dir from `projectRoot`, so it must be the
+	// real root (one level up); otherwise `../src/app` sits outside the project
+	// and won't bundle. uniwind's `cssEntryFile`/`dtsFile` are likewise
+	// projectRoot-relative and point back into `.stack/`.
+	lines.push('const path = require("node:path");');
+	lines.push('const projectRoot = path.resolve(__dirname, "..");');
+	lines.push("");
+
 	// `const` when nothing reassigns it; `let` + reassignment for each wrapper.
 	const binding = wrappers.length > 0 ? "let" : "const";
-	lines.push(`${binding} config = getDefaultConfig(__dirname);`);
+	lines.push(`${binding} config = getDefaultConfig(projectRoot);`);
 	for (const wrapper of wrappers) {
 		const args =
 			wrapper.options === undefined

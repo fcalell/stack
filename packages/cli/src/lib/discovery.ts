@@ -35,19 +35,14 @@ export const FIRST_PARTY_PLUGINS = [
 	{ name: "solid-ui", package: "@fcalell/plugin-solid-ui" },
 ] as const satisfies ReadonlyArray<{ name: string; package: string }>;
 
+// Derive both the value and the type straight from `FIRST_PARTY_PLUGINS` so a
+// new plugin added to that array flows through automatically — no hand-kept
+// tuple to drift out of sync.
+export type PluginName = (typeof FIRST_PARTY_PLUGINS)[number]["name"];
+
 export const PLUGIN_NAMES = FIRST_PARTY_PLUGINS.map(
 	(p) => p.name,
-) as unknown as readonly [
-	"db",
-	"auth",
-	"api",
-	"vite",
-	"expo",
-	"solid",
-	"solid-ui",
-];
-
-export type PluginName = (typeof PLUGIN_NAMES)[number];
+) as readonly PluginName[];
 
 async function loadPlugin(
 	name: string,

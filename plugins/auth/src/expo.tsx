@@ -15,9 +15,9 @@ export interface AuthClientConfig {
 	// Deep-link scheme for the OAuth redirect back into the app. Matches the
 	// Expo app `scheme` (and `plugin-expo`'s `scheme` option).
 	scheme: string;
-	// Secure key-value store tokens are persisted in. The module flows from
-	// `plugin-expo.slots.nativeSecureStorageAdapter` (default `expo-secure-store`);
-	// the consumer passes the imported module so this layer stays storage-agnostic.
+	// Secure key-value store tokens are persisted in. The consumer passes the
+	// imported module (e.g. `expo-secure-store`) so this layer stays
+	// storage-agnostic and never pulls native modules into Node-side tests.
 	storage: ExpoClientStorage;
 	// Prefix for stored keys. Defaults to the scheme.
 	storagePrefix?: string;

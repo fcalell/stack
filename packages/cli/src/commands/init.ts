@@ -187,17 +187,22 @@ async function run(dir: string, options: InitOptions): Promise<void> {
 		cwd: dir,
 	});
 
-	const [scaffolds, deps, devDeps, gitignore] = await Promise.all([
-		initGraph.resolve(cliSlots.initScaffolds),
-		initGraph.resolve(cliSlots.initDeps),
-		initGraph.resolve(cliSlots.initDevDeps),
-		initGraph.resolve(cliSlots.gitignore),
-	]);
+	const [scaffolds, deps, devDeps, gitignore, packageJsonFields] =
+		await Promise.all([
+			initGraph.resolve(cliSlots.initScaffolds),
+			initGraph.resolve(cliSlots.initDeps),
+			initGraph.resolve(cliSlots.initDevDeps),
+			initGraph.resolve(cliSlots.gitignore),
+			initGraph.resolve(cliSlots.packageJsonFields),
+		]);
 
 	const created = await writeScaffoldSpecs(scaffolds, dir);
 	announceCreated(created);
 
-	patchPackageJson(dir, { dependencies: { ...deps, ...devDeps } });
+	patchPackageJson(dir, {
+		dependencies: { ...deps, ...devDeps },
+		fields: packageJsonFields,
+	});
 	if (gitignore.length > 0) ensureGitignore(...gitignore);
 
 	// Run the real generate path against the config we just wrote — this is

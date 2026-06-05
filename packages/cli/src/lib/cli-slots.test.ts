@@ -10,6 +10,7 @@ describe("cliSlots inventory", () => {
 		["initScaffolds", "list"],
 		["initDeps", "map"],
 		["initDevDeps", "map"],
+		["packageJsonFields", "map"],
 		["gitignore", "list"],
 		["artifactFiles", "list"],
 		["postWrite", "list"],

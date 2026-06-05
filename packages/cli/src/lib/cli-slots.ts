@@ -40,6 +40,14 @@ export const cliSlots = {
 	}),
 	initDeps: slot.map<string>({ source: SOURCE, name: "initDeps" }),
 	initDevDeps: slot.map<string>({ source: SOURCE, name: "initDevDeps" }),
+	// Arbitrary top-level package.json fields a plugin needs in the consumer
+	// manifest (e.g. Expo's `main`). Applied write-if-absent at init/add so a
+	// consumer-edited value is never clobbered. Duplicate keys across plugins
+	// throw — two plugins fighting over `main` is a real conflict, not a merge.
+	packageJsonFields: slot.map<unknown>({
+		source: SOURCE,
+		name: "packageJsonFields",
+	}),
 	gitignore: slot.list<string>({ source: SOURCE, name: "gitignore" }),
 	artifactFiles: slot.list<GeneratedFile>({
 		source: SOURCE,

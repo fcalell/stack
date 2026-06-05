@@ -15,7 +15,10 @@ describe("aggregateMetroConfig", () => {
 		expect(out).toContain(
 			'const { getDefaultConfig } = require("expo/metro-config");',
 		);
-		expect(out).toContain("const config = getDefaultConfig(__dirname);");
+		// projectRoot is the parent of `.stack/` (where this file is generated),
+		// so Metro can resolve the app source that lives outside `.stack/`.
+		expect(out).toContain('const projectRoot = path.resolve(__dirname, "..");');
+		expect(out).toContain("const config = getDefaultConfig(projectRoot);");
 		expect(out).toContain("module.exports = config;");
 		// No wrappers → no reassignment, so the binding stays `const`.
 		expect(out).not.toContain("let config");
@@ -34,7 +37,7 @@ describe("aggregateMetroConfig", () => {
 		expect(out).toContain(
 			'const { withUniwindConfig } = require("uniwind/metro");',
 		);
-		expect(out).toContain("let config = getDefaultConfig(__dirname);");
+		expect(out).toContain("let config = getDefaultConfig(projectRoot);");
 		expect(out).toContain("config = withUniwindConfig(config, {");
 		expect(out).toContain('"cssEntryFile": "./src/global.css"');
 	});

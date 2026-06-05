@@ -23,7 +23,10 @@ const DEFAULT_PORT = 8081;
 const DEFAULT_APP_DIR = "src/app";
 const DEFAULT_EAS_PROFILES = ["development", "preview", "production"];
 const DEFAULT_UPDATE_CHANNEL = "production";
-const DEFAULT_SECURE_STORE = "expo-secure-store";
+
+// The generated expo-router custom root. It calls `registerRootComponent` and
+// mounts the provider stack, so it must be the package's `main` to ever run.
+const ENTRY_ARTIFACT = ".stack/entry.tsx";
 
 // ── Identifier helpers ─────────────────────────────────────────────
 
@@ -36,19 +39,42 @@ function slugify(name: string): string {
 	);
 }
 
+// Make a string a legal Java/Android package segment: alphanumerics only, and —
+// since a segment must start with a letter — prefix a leading digit with `a`
+// (e.g. "1foo" → "a1foo"). Empty input falls back to "app".
+function packageSegment(raw: string): string {
+	const cleaned = raw.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+	if (cleaned.length === 0) return "app";
+	return /^[0-9]/.test(cleaned) ? `a${cleaned}` : cleaned;
+}
+
 // A leaf segment safe for both an iOS bundle identifier and an Android package
 // (the latter forbids hyphens), derived from the app slug.
 function packageLeaf(slug: string): string {
-	return slug.replace(/[^a-z0-9]/g, "") || "app";
+	return packageSegment(slug);
 }
 
 // Reverse a domain into a bundle-id prefix: "wenauti.app" → "app.wenauti".
 function reverseDomain(domain: string): string {
 	const segments = domain
 		.split(".")
-		.map((s) => s.replace(/[^a-zA-Z0-9]/g, "").toLowerCase())
-		.filter((s) => s.length > 0);
+		.map((s) => s.replace(/[^a-zA-Z0-9]/g, ""))
+		.filter((s) => s.length > 0)
+		.map(packageSegment);
 	return segments.length > 0 ? segments.reverse().join(".") : "app";
+}
+
+// Compose the bundle identifier from the reversed domain + app leaf, collapsing
+// a doubled leaf when the domain's last label already equals the slug (e.g.
+// domain "wenauti.app" + slug "wenauti" → "app.wenauti", not the redundant
+// "app.wenauti.wenauti"). Generic domains ("example.com" → "com.example.myapp")
+// keep the leaf.
+function buildBundleId(domain: string, slug: string): string {
+	const prefix = reverseDomain(domain);
+	const leaf = packageLeaf(slug);
+	const labels = prefix.split(".");
+	if (labels[labels.length - 1] === leaf) return prefix;
+	return `${prefix}.${leaf}`;
 }
 
 // ── Slot declarations ──────────────────────────────────────────────
@@ -147,18 +173,6 @@ const easUpdateChannel = slot.value<string>({
 	},
 });
 
-// Secure storage module the native auth client persists tokens in. Declared
-// here as the cross-plugin contract; `plugin-auth/expo` reads it. Default
-// `expo-secure-store`.
-const nativeSecureStorageAdapter = slot.value<string>({
-	source: SOURCE,
-	name: "nativeSecureStorageAdapter",
-	seed: (ctx) => {
-		const opts = (ctx.options ?? {}) as ExpoOptions;
-		return opts.secureStoreAdapter ?? DEFAULT_SECURE_STORE;
-	},
-});
-
 // ── Derived sources ────────────────────────────────────────────────
 
 const metroConfig = slot.derived<
@@ -183,7 +197,7 @@ const expoConfig = slot.derived<
 		const slug = slugify(ctx.app.name);
 		const opts = (ctx.options ?? {}) as ExpoOptions;
 		const routesEnabled = inp.pagesDir !== null;
-		const bundleId = `${reverseDomain(ctx.app.domain)}.${packageLeaf(slug)}`;
+		const bundleId = buildBundleId(ctx.app.domain, slug);
 		// expo-router is listed as a config plugin so its native deep-link setup
 		// runs during prebuild; only when routing is enabled.
 		const basePlugins: ExpoConfigPlugin[] = routesEnabled
@@ -255,7 +269,6 @@ export const expo = plugin<
 		routesPagesDir: typeof routesPagesDir;
 		easBuildProfiles: typeof easBuildProfiles;
 		easUpdateChannel: typeof easUpdateChannel;
-		nativeSecureStorageAdapter: typeof nativeSecureStorageAdapter;
 		metroConfig: typeof metroConfig;
 		expoConfig: typeof expoConfig;
 		entrySource: typeof entrySource;
@@ -290,7 +303,6 @@ export const expo = plugin<
 		routesPagesDir,
 		easBuildProfiles,
 		easUpdateChannel,
-		nativeSecureStorageAdapter,
 		metroConfig,
 		expoConfig,
 		entrySource,
@@ -412,8 +424,20 @@ export const expo = plugin<
 		// routes.d.ts is null (skipped) when routing is disabled.
 		emitArtifact(".stack/metro.config.js", self.slots.metroConfig),
 		emitArtifact(".stack/app.config.ts", self.slots.expoConfig),
-		emitArtifact(".stack/entry.tsx", self.slots.entrySource),
+		emitArtifact(ENTRY_ARTIFACT, self.slots.entrySource),
 		emitArtifact(".stack/routes.d.ts", self.slots.routesDtsSource),
+
+		// Point the consumer's package.json `main` at the generated entry so
+		// expo-router actually mounts it (and the provider stack) — without this,
+		// expo-router falls back to its default entry and every contributed
+		// provider is dead. Write-once. Skipped when routing is disabled: a
+		// bare-RN consumer (`routes: false`) owns their own entry, and no
+		// `.stack/entry.tsx` is generated to point at.
+		cliSlots.packageJsonFields.contribute(async (ctx) => {
+			const pagesDir = await ctx.resolve(self.slots.routesPagesDir);
+			if (pagesDir === null) return undefined;
+			return { main: ENTRY_ARTIFACT };
+		}),
 
 		// Root-level config files the consumer owns. The metro + app.config
 		// shims re-export from `.stack/`; babel.config + eas.json are real

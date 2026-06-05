@@ -2,9 +2,9 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { Text, View } from "react-native";
 import { cn } from "#lib/cn";
 
-// Presentational toast surface for v0. The imperative queue/host (the native
-// analog of solid-sonner's <Toaster />) lands in PR4; for the walking skeleton
-// a screen can render this directly inside its own overlay.
+// Presentational toast surface. The imperative queue/host (the native analog
+// of solid-sonner's <Toaster />) is still deferred; for now a screen can render
+// this directly inside its own overlay.
 const toast = cva(
 	"flex-row items-center gap-2 rounded-md border bg-canvas px-4 py-3",
 	{

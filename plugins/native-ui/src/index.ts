@@ -1,6 +1,6 @@
 import { plugin, slot } from "@fcalell/cli";
 import type { ProviderSpec, TsExpression } from "@fcalell/cli/ast";
-import { emitArtifact } from "@fcalell/cli/cli-slots";
+import { cliSlots, emitArtifact } from "@fcalell/cli/cli-slots";
 import { expo } from "@fcalell/plugin-expo";
 import { DEFAULT_BASE_TOKENS, DEFAULT_THEMES } from "./defaults";
 import { aggregateGlobalCss } from "./node/codegen";
@@ -14,12 +14,13 @@ import {
 const SOURCE = "native-ui";
 
 // Generated uniwind entry stylesheet + its build-time type output. Both land
-// under `.stack/` (already gitignored); paths below are written into the Metro
-// wrapper relative to the generated metro.config's projectRoot (`.stack/`),
-// matching how plugin-expo's entry.tsx reaches the app via `../src/app`.
+// under `.stack/` (already gitignored). The Metro wrapper paths are resolved
+// relative to Metro's projectRoot — the consumer root (see plugin-expo's
+// generated metro.config) — so they point back into `.stack/`. The stylesheet's
+// own `@source` roots stay relative to the file in `.stack/` (e.g. `../src`).
 const GLOBAL_CSS_ARTIFACT = ".stack/global.css";
-const UNIWIND_CSS_ENTRY = "./global.css";
-const UNIWIND_DTS = "./uniwind-types.d.ts";
+const UNIWIND_CSS_ENTRY = "./.stack/global.css";
+const UNIWIND_DTS = "./.stack/uniwind-types.d.ts";
 
 // uniwind ships `light` / `dark` / `system` out of the box; any other theme
 // name must be registered via the Metro `extraThemes` option.
@@ -220,6 +221,7 @@ export const nativeUi = plugin<
 		"@gorhom/bottom-sheet": "^5.2.14",
 		"lucide-react-native": "^1.17.0",
 		"expo-font": "~56.0.0",
+		"expo-secure-store": "~56.0.0",
 		"@tanstack/react-query": "^5.101.0",
 		"@orpc/tanstack-query": "^1.14.4",
 		"@better-auth/expo": "^1.6.14",
@@ -279,6 +281,29 @@ export const nativeUi = plugin<
 
 		// ── Emit the uniwind entry stylesheet ─────────────────────────────
 		emitArtifact(GLOBAL_CSS_ARTIFACT, self.slots.appCssSource),
+
+		// ── Scaffold the native client modules the entry imports ──────────
+		//
+		// The generated `.stack/entry.tsx` imports `queryClient` / `authClient`
+		// from `src/lib/{query,auth}.ts` (the provider defaults above). Without a
+		// scaffold those files don't exist and the app won't compile, so seed
+		// editable starters — copy-once, like the auth callback file. Skipped
+		// when the consumer points a provider at their own module via
+		// `queryClientModule` / `authClientModule`; that path is theirs to own.
+		cliSlots.initScaffolds.contribute((ctx) => {
+			const opts = (ctx.options ?? {}) as NativeUiOptions;
+			if (opts.queryClientModule) return undefined;
+			return ctx.scaffold("lib-query.ts", "src/lib/query.ts");
+		}),
+		cliSlots.initScaffolds.contribute((ctx) => {
+			const opts = (ctx.options ?? {}) as NativeUiOptions;
+			if (opts.authClientModule) return undefined;
+			return ctx.scaffold("lib-auth.ts", "src/lib/auth.ts");
+		}),
+		cliSlots.removeFiles.contribute(() => [
+			"src/lib/query.ts",
+			"src/lib/auth.ts",
+		]),
 	],
 });
 

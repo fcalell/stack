@@ -160,8 +160,8 @@ describe("native-ui Metro wiring", () => {
 			'const { withUniwindConfig } = require("uniwind/metro");',
 		);
 		expect(metro).toContain("withUniwindConfig(config,");
-		expect(metro).toContain('"cssEntryFile": "./global.css"');
-		expect(metro).toContain('"dtsFile": "./uniwind-types.d.ts"');
+		expect(metro).toContain('"cssEntryFile": "./.stack/global.css"');
+		expect(metro).toContain('"dtsFile": "./.stack/uniwind-types.d.ts"');
 	});
 
 	it("registers non-builtin theme names as extraThemes", async () => {
@@ -274,6 +274,48 @@ describe("native-ui fonts", () => {
 		const g = buildGraph(plugins, ctxFactory);
 		const appConfig = (await g.resolve(expo.slots.expoConfig)) ?? "";
 		expect(appConfig).not.toContain("expo-font");
+	});
+});
+
+// ── Consumer client scaffolds ──────────────────────────────────────
+
+describe("native-ui client scaffolds", () => {
+	async function nativeUiScaffolds(opts: NativeUiOptions = {}) {
+		const { plugins, ctxFactory } = collect(opts);
+		const g = buildGraph(plugins, ctxFactory);
+		const all = await g.resolve(cliSlots.initScaffolds);
+		return all.filter((s) => s.plugin === "native-ui").map((s) => s.target);
+	}
+
+	it("scaffolds the query + auth client modules the entry imports", async () => {
+		const targets = await nativeUiScaffolds();
+		expect(targets).toContain("src/lib/query.ts");
+		expect(targets).toContain("src/lib/auth.ts");
+	});
+
+	it("skips the query scaffold when the module is overridden", async () => {
+		const targets = await nativeUiScaffolds({
+			queryClientModule: { source: "../src/query", export: "qc" },
+		});
+		expect(targets).not.toContain("src/lib/query.ts");
+		// The non-overridden auth client is still scaffolded.
+		expect(targets).toContain("src/lib/auth.ts");
+	});
+
+	it("skips the auth scaffold when the module is overridden", async () => {
+		const targets = await nativeUiScaffolds({
+			authClientModule: { source: "../src/auth", export: "ac" },
+		});
+		expect(targets).not.toContain("src/lib/auth.ts");
+		expect(targets).toContain("src/lib/query.ts");
+	});
+
+	it("removes the scaffolded client modules on plugin removal", async () => {
+		const { plugins, ctxFactory } = collect();
+		const g = buildGraph(plugins, ctxFactory);
+		const removed = await g.resolve(cliSlots.removeFiles);
+		expect(removed).toContain("src/lib/query.ts");
+		expect(removed).toContain("src/lib/auth.ts");
 	});
 });
 
