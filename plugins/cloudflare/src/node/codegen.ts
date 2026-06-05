@@ -5,10 +5,7 @@ import {
 	type TomlValue,
 } from "@fcalell/cli/ast";
 import { parse as parseToml } from "smol-toml";
-import type {
-	CodegenWranglerPayload,
-	WranglerBindingSpec,
-} from "../types";
+import type { CodegenWranglerPayload, WranglerBindingSpec } from "../types";
 
 // ── Wrangler.toml merge contract ─────────────────────────────────────
 //
@@ -233,7 +230,11 @@ function overlayVars(
 	}
 
 	// Detect collisions between consumer-supplied vars and framework keys.
-	const collisions: Array<{ key: string; consumer: string; framework: string }> = [];
+	const collisions: Array<{
+		key: string;
+		consumer: string;
+		framework: string;
+	}> = [];
 	const recordCollision = (key: string, framework: string) => {
 		if (key in consumerVars) {
 			collisions.push({ key, consumer: "consumer var", framework });
@@ -245,8 +246,7 @@ function overlayVars(
 	for (const s of frameworkSecrets) recordCollision(s.name, "secret");
 	if (collisions.length > 0) {
 		const lines = collisions.map(
-			(c) =>
-				`  - "${c.key}" (consumer wrangler.toml [vars] vs ${c.framework})`,
+			(c) => `  - "${c.key}" (consumer wrangler.toml [vars] vs ${c.framework})`,
 		);
 		throw new Error(
 			`wrangler.toml [vars] collisions — each key must come from one source:\n${lines.join(

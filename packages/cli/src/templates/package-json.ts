@@ -15,7 +15,7 @@ export function packageJsonTemplate(options: PackageJsonOptions): string {
 	const hasWorker =
 		options.plugins.includes("api") || options.plugins.includes("db");
 	if (hasWorker) {
-		devDeps.wrangler = "^4.14.0";
+		devDeps.wrangler = "^4.98.0";
 	}
 
 	for (const name of options.plugins) {

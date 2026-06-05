@@ -683,9 +683,7 @@ API_PREFIX = "/v1"
 						bindings: [{ kind: "var", name: "API_PREFIX", value: "/api" }],
 					},
 				}),
-			).toThrow(
-				/API_PREFIX.*consumer wrangler\.toml \[vars\].*var binding/s,
-			);
+			).toThrow(/API_PREFIX.*consumer wrangler\.toml \[vars\].*var binding/s);
 		});
 
 		it("rejects a consumer [vars] key that collides with a plugin-contributed extra var", () => {

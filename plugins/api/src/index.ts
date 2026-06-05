@@ -282,7 +282,7 @@ export const api = plugin<
 		"@fcalell/plugin-api": "workspace:*",
 	},
 	devDependencies: {
-		wrangler: "^4.14.0",
+		wrangler: "^4.98.0",
 	},
 	gitignore: [".wrangler", ".stack"],
 

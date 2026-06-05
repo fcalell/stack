@@ -32,13 +32,13 @@ export function hasPluginCall(source: string, pluginName: string): boolean {
 		const mod = parseModule(source);
 		// biome-ignore lint/suspicious/noExplicitAny: magicast proxies are dynamically typed
 		const defaultExport = mod.exports.default as any;
-		if (!defaultExport || defaultExport.$type !== "function-call") return false;
+		if (defaultExport?.$type !== "function-call") return false;
 		const args = defaultExport.$args;
 		if (!args || args.length === 0) return false;
 		const config = args[0];
-		if (!config || config.$type !== "object") return false;
+		if (config?.$type !== "object") return false;
 		const plugins = config.plugins;
-		if (!plugins || plugins.$type !== "array") return false;
+		if (plugins?.$type !== "array") return false;
 		for (let i = 0; i < plugins.length; i++) {
 			const p = plugins[i];
 			if (p?.$type === "function-call" && p.$callee === callee) return true;
@@ -123,7 +123,7 @@ function getConfigObject(mod: ProxifiedModule, path: string): any {
 	// biome-ignore lint/suspicious/noExplicitAny: magicast proxies are dynamically typed
 	const defaultExport = mod.exports.default as any;
 
-	if (!defaultExport || defaultExport.$type !== "function-call") {
+	if (defaultExport?.$type !== "function-call") {
 		throw new EditConfigError(
 			path,
 			"expected `export default defineConfig({...})`",
@@ -136,7 +136,7 @@ function getConfigObject(mod: ProxifiedModule, path: string): any {
 	}
 
 	const config = args[0];
-	if (!config || config.$type !== "object") {
+	if (config?.$type !== "object") {
 		throw new EditConfigError(
 			path,
 			"defineConfig() was not called with an object literal",
