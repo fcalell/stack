@@ -167,6 +167,27 @@ export const api = createClient<AppRouter>({
 });
 ```
 
+For native (React Native / Expo), `@fcalell/plugin-api/tanstack-query` pairs the
+client with TanStack Query 5 (via `@orpc/tanstack-query`). It is runtime-only --
+no plugin contributions; the provider is wired into the generated entry by
+`@fcalell/plugin-native-ui` (which contributes it to `plugin-expo.slots.providers`):
+
+```tsx
+import { createClient } from "@fcalell/plugin-api/client";
+import {
+  createApiQueryUtils,
+  QueryProvider,
+  useQuery,
+} from "@fcalell/plugin-api/tanstack-query";
+import type { AppRouter } from "@repo/api";
+
+const client = createClient<AppRouter>({ url: process.env.EXPO_PUBLIC_API_URL });
+export const orpc = createApiQueryUtils(client);
+
+// Wrap the app with <QueryProvider>; in a screen:
+//   const { data } = useQuery(orpc.projects.list.queryOptions({ input: {} }));
+```
+
 ### 8. Errors
 
 ```ts
@@ -301,6 +322,7 @@ createWorker({ domain: "example.com", cors: ["https://example.com"], prefix: "/r
 | `@fcalell/plugin-api/runtime` | `createWorker()`, `AppBuilder`, `WorkerExport`, `ApiWorkerOptions` |
 | `@fcalell/cli/runtime` | `RuntimePlugin` |
 | `@fcalell/plugin-api/client` | `createClient()`, `RouterClient`, `ClientConfig` |
+| `@fcalell/plugin-api/tanstack-query` | `createQueryClient()`, `createApiQueryUtils()`, `QueryProvider`, query hooks -- native TanStack Query client (runtime-only) |
 | `@fcalell/plugin-api/schema` | `z` (Zod re-export), `ZodObject`, `ZodType`, `ZodRawShape` |
 | `@fcalell/plugin-api/lib/cursor` | `encodeCursor`, `decodeCursor`, `paginate`, `clampLimit`, constants |
 | `@fcalell/plugin-api/lib/slugify` | `slugify`, `isReservedSlug`, `createSlugify` |

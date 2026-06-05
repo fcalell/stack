@@ -7,6 +7,7 @@
 		".": "./src/index.ts",
 		"./runtime": "./src/worker/index.ts",
 		"./client": "./src/client.ts",
+		"./tanstack-query": "./src/tanstack-query.tsx",
 		"./schema": "./src/schema.ts",
 		"./node/codegen": "./src/node/codegen.ts",
 		"./node/types": "./src/node/types.ts",
@@ -30,8 +31,28 @@
 		"slugify": "^1.6.9",
 		"zod": "^4.3.6"
 	},
+	"peerDependencies": {
+		"@orpc/tanstack-query": "^1.14.4",
+		"@tanstack/react-query": "^5.97.0",
+		"react": "^19.2.0"
+	},
+	"peerDependenciesMeta": {
+		"@orpc/tanstack-query": {
+			"optional": true
+		},
+		"@tanstack/react-query": {
+			"optional": true
+		},
+		"react": {
+			"optional": true
+		}
+	},
 	"devDependencies": {
 		"@fcalell/typescript-config": "workspace:*",
+		"@orpc/tanstack-query": "^1.14.4",
+		"@tanstack/react-query": "^5.101.0",
+		"@types/react": "^19.2.16",
+		"react": "^19.2.7",
 		"typescript": "^5.9.3"
 	}
 }

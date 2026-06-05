@@ -6,6 +6,7 @@
 	"exports": {
 		".": "./src/index.ts",
 		"./runtime": "./src/worker/index.ts",
+		"./expo": "./src/expo.tsx",
 		"./access": "./src/access.ts",
 		"./infer": "./src/infer.ts"
 	},
@@ -25,8 +26,23 @@
 		"better-auth": "^1.6.14",
 		"zod": "^4.3.6"
 	},
+	"peerDependencies": {
+		"@better-auth/expo": "^1.6.14",
+		"react": "^19.2.0"
+	},
+	"peerDependenciesMeta": {
+		"@better-auth/expo": {
+			"optional": true
+		},
+		"react": {
+			"optional": true
+		}
+	},
 	"devDependencies": {
+		"@better-auth/expo": "^1.6.14",
 		"@fcalell/typescript-config": "workspace:*",
+		"@types/react": "^19.2.16",
+		"react": "^19.2.7",
 		"typescript": "^5.9.3"
 	}
 }

@@ -212,6 +212,36 @@ authRuntime({ secretVar: "AUTH_SECRET", ... }, callbacks)
 
 Receives `{ db }` from the upstream db plugin and provides `{ auth }` to downstream plugins.
 
+### Native client (Expo)
+
+The `./expo` subpath configures a `@better-auth/expo` client for React Native. It
+ships no plugin contributions -- it is runtime-only, the native mirror of
+`@fcalell/plugin-api/client`. (The provider is wired into the generated entry by
+`@fcalell/plugin-native-ui`, which contributes it to `plugin-expo.slots.providers`.)
+
+```tsx
+import * as SecureStore from "expo-secure-store";
+import {
+  AuthProvider,
+  createAuthClient,
+  signInWithApple,
+  signInWithGoogle,
+  useAuthClient,
+} from "@fcalell/plugin-auth/expo";
+
+export const authClient = createAuthClient({
+  baseURL: process.env.EXPO_PUBLIC_API_URL!,
+  scheme: "wenauti",      // matches the Expo app scheme / plugin-expo `scheme`
+  storage: SecureStore,   // flows from plugin-expo.slots.nativeSecureStorageAdapter
+});
+
+// In a screen: const client = useAuthClient(); signInWithGoogle(client);
+```
+
+`storage` is injected (not imported here) so this layer never pulls native modules
+into Node/test importers; the secure-store module is chosen by
+`plugin-expo.slots.nativeSecureStorageAdapter` (default `expo-secure-store`).
+
 ## Exports
 
 | Subpath | Purpose |
@@ -219,6 +249,7 @@ Receives `{ db }` from the upstream db plugin and provides `{ auth }` to downstr
 | `@fcalell/plugin-auth` | `auth()`, `AuthOptions` |
 | `@fcalell/plugin-auth/access` | `createAccessControl()`, `getStatements()`, `defaultOrgRoles` |
 | `@fcalell/plugin-auth/infer` | `InferUser<T>`, `InferSession<T>` -- type utilities derived from config |
+| `@fcalell/plugin-auth/expo` | `createAuthClient()`, `AuthProvider`, `useAuthClient()`, `signInWith{Apple,Google}()` -- native client (runtime-only) |
 | `@fcalell/plugin-auth/runtime` | `authRuntime()` -- runtime plugin factory |
 
 ## License

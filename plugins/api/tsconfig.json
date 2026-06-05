@@ -3,7 +3,9 @@
 	"compilerOptions": {
 		"declaration": false,
 		"declarationMap": false,
-		"lib": ["ESNext", "DOM", "DOM.Iterable"]
+		"lib": ["ESNext", "DOM", "DOM.Iterable"],
+		"jsx": "react-jsx",
+		"jsxImportSource": "react"
 	},
 	"include": ["src"]
 }
