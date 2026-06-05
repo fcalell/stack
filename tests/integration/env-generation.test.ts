@@ -121,6 +121,9 @@ describe("`.dev.vars` write-once behavior", () => {
 		rmSync(cwd, { recursive: true, force: true });
 	});
 
+	// These two generate via the cloudflare postWrite hook (`npx wrangler types`),
+	// same as the sibling describe above — so they need the same generous timeout,
+	// not the 5s default. The second runs generate twice and reliably crossed 5s.
 	it("writes .dev.vars on first generate with auth secrets", async () => {
 		const config = defineConfig({
 			app: { name: "devvars-fixture", domain: "example.com" },
@@ -144,7 +147,7 @@ describe("`.dev.vars` write-once behavior", () => {
 		// is `https://example.com` — the right baseline for a worker-only
 		// .dev.vars (consumer overrides per-environment in their own .dev.vars).
 		expect(content).toContain("APP_URL=https://example.com");
-	});
+	}, 240_000);
 
 	it("does not overwrite an existing .dev.vars on subsequent generates", async () => {
 		const config = defineConfig({
@@ -167,5 +170,5 @@ describe("`.dev.vars` write-once behavior", () => {
 		await runStackGenerate({ config, cwd, writeToDisk: true });
 
 		expect(readFileSync(devVarsPath, "utf-8")).toBe(customContent);
-	});
+	}, 240_000);
 });
