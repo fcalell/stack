@@ -1,6 +1,6 @@
-import { auth } from "@fcalell/plugin-auth";
+import type { AuthCallbacks } from "@fcalell/plugin-auth/runtime";
 
-export default auth.defineCallbacks({
+const callbacks: AuthCallbacks = {
 	sendOTP({ email, code }) {
 		// TODO: send OTP email
 		console.log(`OTP for ${email}: ${code}`);
@@ -9,4 +9,6 @@ export default auth.defineCallbacks({
 		// TODO: send invitation email
 		console.log(`Invitation for ${email} to ${orgName}`);
 	},
-});
+};
+
+export default callbacks;

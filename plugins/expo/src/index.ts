@@ -28,6 +28,14 @@ const DEFAULT_UPDATE_CHANNEL = "production";
 // mounts the provider stack, so it must be the package's `main` to ever run.
 const ENTRY_ARTIFACT = ".stack/entry.tsx";
 
+// Mirrors the `expo-env.d.ts` Expo's own tooling writes at a project root: a
+// single reference that pulls Expo's ambient types into the app's TS program
+// (require.context for the router entry, EXPO_PUBLIC_* env vars, etc.).
+// Emitted into `.stack/` so the consumer's `tsconfig.app.json` includes it
+// without a hand-managed file.
+const EXPO_ENV_ARTIFACT = ".stack/expo-env.d.ts";
+const EXPO_ENV_DTS = '/// <reference types="expo/types" />\n';
+
 // ── Identifier helpers ─────────────────────────────────────────────
 
 function slugify(name: string): string {
@@ -288,6 +296,9 @@ export const expo = plugin<
 	},
 	devDependencies: {
 		"eas-cli": "^20.0.0",
+		// React's types back the app's JSX (`react/jsx-runtime`); without it a
+		// consumer's `tsconfig.app.json` can't resolve the automatic runtime.
+		"@types/react": "~19.2.0",
 	},
 	// Expo cache + prebuild outputs (continuous native generation regenerates
 	// ios/ + android/ on demand via `stack expo prebuild`).
@@ -426,6 +437,13 @@ export const expo = plugin<
 		emitArtifact(".stack/app.config.ts", self.slots.expoConfig),
 		emitArtifact(ENTRY_ARTIFACT, self.slots.entrySource),
 		emitArtifact(".stack/routes.d.ts", self.slots.routesDtsSource),
+
+		// Always emit the ambient-types reference: harmless without routing and
+		// needed by `tsconfig.app.json` whenever Expo is present.
+		cliSlots.artifactFiles.contribute(() => ({
+			path: EXPO_ENV_ARTIFACT,
+			content: EXPO_ENV_DTS,
+		})),
 
 		// Point the consumer's package.json `main` at the generated entry so
 		// expo-router actually mounts it (and the provider stack) — without this,

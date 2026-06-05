@@ -229,6 +229,22 @@ describe("expo.slots.metroConfig", () => {
 		const files = await g.resolve(cliSlots.artifactFiles);
 		expect(files.map((f) => f.path)).toContain(".stack/metro.config.js");
 	});
+
+	it("emits .stack/expo-env.d.ts with the ambient-types reference", async () => {
+		// The app tsconfig includes this to resolve require.context + EXPO_PUBLIC.
+		const { plugins, ctxFactory } = collectExpoPlugins();
+		const g = buildGraph(plugins, ctxFactory);
+		const files = await g.resolve(cliSlots.artifactFiles);
+		const envDts = files.find((f) => f.path === ".stack/expo-env.d.ts");
+		expect(envDts?.content).toContain('reference types="expo/types"');
+	});
+
+	it("contributes @types/react so the app tsconfig resolves JSX types", async () => {
+		const { plugins, ctxFactory } = collectExpoPlugins();
+		const g = buildGraph(plugins, ctxFactory);
+		const devDeps = await g.resolve(cliSlots.initDevDeps);
+		expect(devDeps["@types/react"]).toBeDefined();
+	});
 });
 
 // ── expo config ───────────────────────────────────────────────────

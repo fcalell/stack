@@ -165,7 +165,12 @@ describe("E2E consumer journey (db + auth + api + solid + solid-ui)", () => {
 		expect(authCallbacks).toBeDefined();
 		if (authCallbacks) {
 			const src = readFileSync(fileURLToPath(authCallbacks.source), "utf8");
-			expect(src).toContain("auth.defineCallbacks");
+			// The callbacks type comes from the CLI-free /runtime subpath, not the
+			// build-time plugin index — importing the index drags node build code
+			// into the worker's type program (consumer framework-source leakage).
+			expect(src).toContain('from "@fcalell/plugin-auth/runtime"');
+			expect(src).toContain("AuthCallbacks");
+			expect(src).not.toContain('from "@fcalell/plugin-auth"');
 		}
 	});
 });

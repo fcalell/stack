@@ -96,6 +96,9 @@ async function run(dir: string, options: InitOptions): Promise<void> {
 	const name = basename(dir);
 	const hasSolid =
 		selectedPlugins.includes("solid") || selectedPlugins.includes("solid-ui");
+	const hasNative = selectedPlugins.includes("expo");
+	const hasWorker =
+		selectedPlugins.includes("api") || selectedPlugins.includes("db");
 
 	// Scaffold base files — CLI-owned, not plugin-contributed.
 	const baseEntries: Array<[string, string]> = [
@@ -106,7 +109,11 @@ async function run(dir: string, options: InitOptions): Promise<void> {
 				plugins: selectedPlugins,
 			}),
 		],
-		["tsconfig.json", tsconfigTemplate({ app: hasSolid })],
+		...tsconfigTemplate({
+			solid: hasSolid,
+			native: hasNative,
+			worker: hasWorker,
+		}),
 		["biome.json", biomeTemplate()],
 		[".gitignore", gitignoreTemplate({ plugins: selectedPlugins })],
 	];

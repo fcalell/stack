@@ -12,6 +12,14 @@ export function gitignoreTemplate(options: GitignoreOptions): string {
 		entries.push(".wrangler");
 		entries.push(".dev.vars");
 	}
+	// Native consumers type-check via the composite `tsc -b`, which writes
+	// incremental build-info files next to the configs.
+	const hasNativeWorker =
+		options.plugins.includes("expo") &&
+		(options.plugins.includes("api") || options.plugins.includes("db"));
+	if (hasNativeWorker) {
+		entries.push("*.tsbuildinfo");
+	}
 
 	return `${entries.join("\n")}\n`;
 }

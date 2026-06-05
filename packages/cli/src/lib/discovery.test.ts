@@ -4,6 +4,7 @@ import {
 	type DiscoveredPlugin,
 	discoverPlugins,
 	FIRST_PARTY_PLUGINS,
+	loadAvailablePlugins,
 	PLUGIN_NAMES,
 	sortByDependencies,
 	validateDependencies,
@@ -146,6 +147,19 @@ describe("FIRST_PARTY_PLUGINS", () => {
 		for (const entry of FIRST_PARTY_PLUGINS) {
 			expect(entry.package).toBe(`@fcalell/plugin-${entry.name}`);
 		}
+	});
+});
+
+describe("loadAvailablePlugins", () => {
+	it("loads cloudflare and native-ui so init/add can offer them", async () => {
+		// Behavioral guard, not a re-statement of the const: these two plugins
+		// shipped in plugins/ but were absent from the discovery list, so
+		// `stack init --plugins=…,native-ui` errored "unknown plugin" and
+		// explicit cloudflare selection failed. This actually imports each
+		// package, so it also catches a plugin whose export is malformed.
+		const names = (await loadAvailablePlugins()).map((p) => p.name);
+		expect(names).toContain("cloudflare");
+		expect(names).toContain("native-ui");
 	});
 });
 

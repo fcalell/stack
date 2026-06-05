@@ -6,6 +6,7 @@ import {
 	rmSync,
 	symlinkSync,
 } from "node:fs";
+import { createRequire } from "node:module";
 import { dirname, resolve } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
@@ -17,12 +18,20 @@ const INTEGRATION_ROOT = resolve(import.meta.dirname);
 const REPO_ROOT = resolve(INTEGRATION_ROOT, "../..");
 const CLI_ENTRY = resolve(REPO_ROOT, "packages/cli/src/cli.ts");
 const NODE_MODULES = resolve(INTEGRATION_ROOT, "node_modules");
-// Resolve tsx's cli script directly. Going through `npx` would shell out,
-// which is slower and flakier, and spawning plain `tsx` depends on PATH.
-const TSX_CLI = resolve(
-	REPO_ROOT,
-	"node_modules/.pnpm/tsx@4.21.0/node_modules/tsx/dist/cli.mjs",
+// Resolve tsx's cli script via its package.json `bin`, not a version-pinned
+// .pnpm path — the latter breaks whenever tsx is bumped (or when a combined
+// workspace resolves a different tsx version). Resolve from packages/cli,
+// which declares tsx as a devDependency. Going through `npx` would shell out
+// (slower, flakier) and spawning plain `tsx` depends on PATH.
+const cliRequire = createRequire(
+	resolve(REPO_ROOT, "packages/cli/package.json"),
 );
+const tsxPkgJson = cliRequire.resolve("tsx/package.json");
+const tsxPkg = JSON.parse(readFileSync(tsxPkgJson, "utf8")) as {
+	bin: string | { tsx: string };
+};
+const tsxBin = typeof tsxPkg.bin === "string" ? tsxPkg.bin : tsxPkg.bin.tsx;
+const TSX_CLI = resolve(dirname(tsxPkgJson), tsxBin);
 
 function makeTempDir(suffix: string): string {
 	// Deterministic name + timestamp keeps parallel vitest workers from

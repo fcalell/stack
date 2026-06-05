@@ -26,11 +26,13 @@ export interface DiscoveredPlugin {
 // appear via the consumer's `stack.config.ts` and its `__package` fields,
 // not here — discovery cannot enumerate them ahead of config load.
 export const FIRST_PARTY_PLUGINS = [
+	{ name: "cloudflare", package: "@fcalell/plugin-cloudflare" },
 	{ name: "db", package: "@fcalell/plugin-db" },
 	{ name: "auth", package: "@fcalell/plugin-auth" },
 	{ name: "api", package: "@fcalell/plugin-api" },
 	{ name: "vite", package: "@fcalell/plugin-vite" },
 	{ name: "expo", package: "@fcalell/plugin-expo" },
+	{ name: "native-ui", package: "@fcalell/plugin-native-ui" },
 	{ name: "solid", package: "@fcalell/plugin-solid" },
 	{ name: "solid-ui", package: "@fcalell/plugin-solid-ui" },
 ] as const satisfies ReadonlyArray<{ name: string; package: string }>;
