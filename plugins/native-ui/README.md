@@ -127,11 +127,22 @@ function Example() {
 }
 ```
 
-v0 ships ten primitives: `Button`, `Input`, `Card`, `RowItem`, `Pill`,
-`BottomSheet`, `Stepper`, `Toast`, `Skeleton`, `TabBar`. They use uniwind
-`className` reading the contributed tokens, so each renders in light and Notturno
-with no per-component theme code. (`Toast` is presentational in v0; its imperative
-host lands in PR4 alongside the remaining primitives.)
+The plugin ships 24 primitives. They use uniwind `className` reading the
+contributed tokens, so each renders in light and Notturno with no per-component
+theme code, and persona is encoded by **fill, never hue**.
+
+- **Actions** — `Button`, `Stepper`
+- **Inputs** — `Input`, `TextArea`, `Toggle`, `Checkbox`, `Segmented`,
+  `FilterChip`
+- **Containers & data** — `Card`, `RowItem`, `DefRow`, `Pill`, `Divider`
+- **Identity** — `Avatar`, `AvatarStack`
+- **Chrome** — `TabBar`, `NavBar`, `Footbar`
+- **Feedback** — `ProgressBar`, `Spinner`, `Skeleton`, `Toast`
+- **Overlays** — `BottomSheet`, `Dialog`
+
+`Toast` is presentational (a screen renders it in its own overlay); `Skeleton` is
+a static block. Their imperative host / shimmer are a later polish pass, not a
+blocker for any screen.
 
 ## Config options
 
@@ -189,7 +200,7 @@ the consumer `src/` and this plugin's primitives so their classNames are detecte
 |---------|---------|
 | `@fcalell/plugin-native-ui` | `nativeUi()`, `NativeUiOptions`, `ThemeSpec`, `NativeFontEntry` |
 | `@fcalell/plugin-native-ui/app` | `AppProviders` — UI-shell providers for tests / Storybook |
-| `@fcalell/plugin-native-ui/components/*` | `Button`, `Input`, `Card`, `RowItem`, `Pill`, `BottomSheet`, `Stepper`, `Toast`, `Skeleton`, `TabBar` |
+| `@fcalell/plugin-native-ui/components/*` | 24 primitives, one per `kebab-case` subpath (`.../components/row-item` → `RowItem`) — see the Primitives list above |
 | `@fcalell/plugin-native-ui/lib/cn` | `cn()` — className merge (clsx + tailwind-merge) |
 | `@fcalell/plugin-native-ui/lib/theme` | `Uniwind`, `useUniwind`, `useCSSVariable`, `setTheme`, `ThemeName` |
 
