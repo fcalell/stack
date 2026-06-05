@@ -1,0 +1,83 @@
+{
+	"name": "@fcalell/plugin-native-ui",
+	"version": "0.0.0",
+	"type": "module",
+	"sideEffects": false,
+	"imports": {
+		"#components/*": [
+			"./src/ui/components/*/index.tsx",
+			"./src/ui/components/*/index.ts"
+		],
+		"#lib/*": [
+			"./src/ui/lib/*.ts",
+			"./src/ui/lib/*.tsx"
+		]
+	},
+	"exports": {
+		".": "./src/index.ts",
+		"./app": "./src/ui/app/index.tsx",
+		"./components/*": [
+			"./src/ui/components/*/index.tsx",
+			"./src/ui/components/*/index.ts"
+		],
+		"./lib/*": [
+			"./src/ui/lib/*.ts",
+			"./src/ui/lib/*.tsx"
+		]
+	},
+	"files": [
+		"src",
+		"README.md"
+	],
+	"license": "MIT",
+	"scripts": {
+		"check-types": "tsc --noEmit --pretty",
+		"lint": "biome check --write --unsafe",
+		"check": "pnpm check-types && pnpm lint",
+		"test": "vitest run",
+		"clear": "rm -rf node_modules .turbo"
+	},
+	"peerDependencies": {
+		"@better-auth/expo": "^1.6.14",
+		"@gorhom/bottom-sheet": "^5.2.14",
+		"@orpc/tanstack-query": "^1.14.4",
+		"@tanstack/react-query": "^5.97.0",
+		"lucide-react-native": "^1.17.0",
+		"react": "^19.2.0",
+		"react-native": "^0.85.0",
+		"react-native-gesture-handler": "^3.0.0",
+		"react-native-keyboard-controller": "^1.18.0",
+		"react-native-reanimated": "^4.4.1",
+		"react-native-safe-area-context": "^5.6.0",
+		"uniwind": "^1.8.0"
+	},
+	"dependencies": {
+		"@fcalell/cli": "workspace:*",
+		"@fcalell/plugin-api": "workspace:*",
+		"@fcalell/plugin-auth": "workspace:*",
+		"@fcalell/plugin-expo": "workspace:*",
+		"class-variance-authority": "^0.7.1",
+		"clsx": "^2.1.1",
+		"tailwind-merge": "^3.5.0",
+		"zod": "^4.3.6"
+	},
+	"devDependencies": {
+		"@better-auth/expo": "^1.6.14",
+		"@fcalell/typescript-config": "workspace:*",
+		"@gorhom/bottom-sheet": "^5.2.14",
+		"@orpc/tanstack-query": "^1.14.4",
+		"@tanstack/react-query": "^5.101.0",
+		"@types/node": "^25.5.0",
+		"@types/react": "^19.2.16",
+		"lucide-react-native": "^1.17.0",
+		"react": "^19.2.7",
+		"react-native": "^0.85.3",
+		"react-native-gesture-handler": "^3.0.0",
+		"react-native-keyboard-controller": "^1.18.0",
+		"react-native-reanimated": "^4.4.1",
+		"react-native-safe-area-context": "^5.6.0",
+		"react-native-worklets": "^0.9.0",
+		"typescript": "^5.9.3",
+		"uniwind": "^1.8.0"
+	}
+}

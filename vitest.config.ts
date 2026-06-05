@@ -12,6 +12,7 @@ export default defineConfig({
 			"plugins/expo",
 			"plugins/solid",
 			"plugins/solid-ui",
+			"plugins/native-ui",
 			"tests/integration",
 		],
 	},

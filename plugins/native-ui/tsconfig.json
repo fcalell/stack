@@ -1,0 +1,11 @@
+{
+	"extends": "@fcalell/typescript-config/node-tsx.json",
+	"compilerOptions": {
+		"declaration": false,
+		"declarationMap": false,
+		"lib": ["ESNext", "DOM", "DOM.Iterable"],
+		"jsx": "react-jsx",
+		"jsxImportSource": "react"
+	},
+	"include": ["src"]
+}
