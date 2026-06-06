@@ -50,7 +50,7 @@ The returned `auth` is callable (`auth({ cookies: { prefix: "myapp" } })`) and e
 
 ### Options via `schema`
 
-Plugin options are declared as a Zod schema. `plugin()` validates the caller's input through it, applies defaults, and — because `schema?: z.ZodType<unknown, TOptions>` pins `TOptions` to `z.input<typeof schema>` — automatically types `ctx.options` and every command handler's `ctx.options`. No extra generic or annotation is needed in the plugin body.
+Plugin options are declared as a Zod schema. `plugin()` validates the caller's input through it, applies defaults, and — because `schema?: z.ZodType<unknown, TOptions>` pins `TOptions` to `z.input<typeof schema>` — types your options everywhere they're read with the *resolved* (post-default) shape: command handlers via `ctx.options`, contribution functions via the `self.options` helper, and a module-level `slot.derived`/`slot.value` via an annotated `ctx: ContributionCtx<XOptions>` on its `compute`/`seed`. The one place options stay `unknown` is a raw `ContributionCtx` inside a cross-plugin `.contribute(fn)` — there `ctx.options` belongs to the *contributing* plugin, so no single type is sound; read your own options through `self.options` instead.
 
 ```ts
 // plugins/<name>/src/types.ts
@@ -97,13 +97,13 @@ Every `Slot<T>` has a `.contribute(fn)` method. `fn` receives a `ContributionCtx
 ```ts
 import { cloudflare } from "@fcalell/plugin-cloudflare";
 
-contributes: [
-  cloudflare.slots.bindings.contribute((ctx) => {
-    if (ctx.options.dialect !== "d1") return undefined;          // skip on sqlite
+contributes: (self) => [
+  cloudflare.slots.bindings.contribute(() => {
+    if (self.options.dialect !== "d1") return undefined;         // skip on sqlite
     return {
       kind: "d1",
-      binding: ctx.options.binding ?? "DB_MAIN",
-      databaseId: ctx.options.databaseId,
+      binding: self.options.binding ?? "DB_MAIN",
+      databaseId: self.options.databaseId,
     };
   }),
 

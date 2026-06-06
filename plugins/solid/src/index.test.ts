@@ -71,7 +71,7 @@ function collectSolidPlugins(
 	extras: GraphPlugin[] = [],
 	opts: { solid?: SolidOptions } = {},
 ): GraphPlugin[] {
-	const apiCollected = api.cli.collect({ app, options: {} });
+	const apiCollected = api.cli.collect({ app, options: api().options });
 	const viteCollected = vite.cli.collect({ app, options: {} });
 	const solidCollected = solid.cli.collect({
 		app,
@@ -498,7 +498,7 @@ describe("solid.slots.homeScaffold (REVIEW #21 — override-scaffold)", () => {
 		const forward = buildGraph(collectSolidPlugins([peer]), makeCtxFactory());
 		// Put the peer first — consumer would never hand-order like this, but
 		// the slot graph is order-invariant. Keep solid last to prove it.
-		const apiCollected = api.cli.collect({ app, options: {} });
+		const apiCollected = api.cli.collect({ app, options: api().options });
 		const viteCollected = vite.cli.collect({ app, options: {} });
 		const solidCollected = solid.cli.collect({ app, options: {} });
 		const apiP: GraphPlugin = {

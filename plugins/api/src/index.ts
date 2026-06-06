@@ -1,5 +1,6 @@
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
+import type { ContributionCtx } from "@fcalell/cli";
 import { plugin, slot } from "@fcalell/cli";
 import type {
 	MiddlewareSpec,
@@ -63,25 +64,21 @@ const middlewareEntries = slot.list<MiddlewareSpec>({
 });
 
 // Derived view of middleware: sorted call expressions.
-const middlewareCalls = slot.derived<
-	TsExpression[],
-	{ entries: typeof middlewareEntries }
->({
+const middlewareCalls = slot.derived({
 	source: SOURCE,
 	name: "middlewareCalls",
 	inputs: { entries: middlewareEntries },
-	compute: (inp) => aggregateMiddleware({ entries: inp.entries }).calls,
+	compute: (inp): TsExpression[] =>
+		aggregateMiddleware({ entries: inp.entries }).calls,
 });
 
 // Derived view of middleware imports (deduplicated).
-const middlewareImports = slot.derived<
-	TsImportSpec[],
-	{ entries: typeof middlewareEntries }
->({
+const middlewareImports = slot.derived({
 	source: SOURCE,
 	name: "middlewareImports",
 	inputs: { entries: middlewareEntries },
-	compute: (inp) => aggregateMiddleware({ entries: inp.entries }).imports,
+	compute: (inp): TsImportSpec[] =>
+		aggregateMiddleware({ entries: inp.entries }).imports,
 });
 
 // The handler is a value slot — api seeds it conditionally on whether the
@@ -122,11 +119,11 @@ const corsOrigins = slot.list<string>({
 // Wildcard guard: mixing `"*"` with specific origins has undefined semantics
 // in the CORS spec (and across browser implementations). We refuse the mix at
 // codegen time so the failure is loud and traceable, not a runtime surprise.
-const cors = slot.derived<string[], { extras: typeof corsOrigins }>({
+const cors = slot.derived({
 	source: SOURCE,
 	name: "cors",
 	inputs: { extras: corsOrigins },
-	compute: (inp, ctx) => {
+	compute: (inp, ctx): string[] => {
 		const result =
 			ctx.app.origins !== undefined
 				? ctx.app.origins
@@ -161,12 +158,12 @@ const callbacks = slot.map<CallbackSpec>({
 
 // The root builder call. Derived from cors + options so worker options
 // (prefix / cors) are baked in purely from dataflow.
-const workerBase = slot.derived<TsExpression, { cors: typeof cors }>({
+const workerBase = slot.derived({
 	source: SOURCE,
 	name: "workerBase",
 	inputs: { cors },
-	compute: (inp, ctx) => {
-		const options = (ctx.options ?? {}) as ApiOptions;
+	compute: (inp, ctx: ContributionCtx<ApiOptions>): TsExpression => {
+		const options = ctx.options;
 		const properties: Array<{ key: string; value: TsExpression }> = [];
 		if (options.prefix) {
 			properties.push({
@@ -201,11 +198,10 @@ const workerBase = slot.derived<TsExpression, { cors: typeof cors }>({
 // / no-routes projects. Has no slot inputs because it reads `ctx.cwd`
 // directly via `generateRouteBarrel` / `hasRoutableFiles` — the routes
 // directory is part of the consumer's source tree, not slot data.
-const routeBarrelSource = slot.derived<string | null, Record<string, never>>({
+const routeBarrelSource = slot.derived({
 	source: SOURCE,
 	name: "routeBarrelSource",
-	inputs: {},
-	compute: (_inp, ctx) => {
+	compute: (_inp, ctx): string | null => {
 		if (!hasRoutableFiles(ctx.cwd)) return null;
 		return generateRouteBarrel(ctx.cwd);
 	},
@@ -215,18 +211,7 @@ const routeBarrelSource = slot.derived<string | null, Record<string, never>>({
 // by the auto-contribution below, gated on `pluginRuntimes` being non-empty
 // (with only the api plugin, no runtimes would land in the chain — emitting a
 // hollow worker would be confusing).
-const workerSource = slot.derived<
-	string | null,
-	{
-		imports: typeof workerImports;
-		base: typeof workerBase;
-		runtimes: typeof pluginRuntimes;
-		middlewareCalls: typeof middlewareCalls;
-		middlewareImports: typeof middlewareImports;
-		handler: typeof routesHandler;
-		callbacks: typeof callbacks;
-	}
->({
+const workerSource = slot.derived({
 	source: SOURCE,
 	name: "workerSource",
 	inputs: {
@@ -238,7 +223,7 @@ const workerSource = slot.derived<
 		handler: routesHandler,
 		callbacks,
 	},
-	compute: (inp) => {
+	compute: (inp): string | null => {
 		// With only plugin-api in the config, `pluginRuntimes` is empty — nothing
 		// would actually run. Return null so the file-emission contribution
 		// skips writing a hollow worker.
@@ -256,24 +241,7 @@ const workerSource = slot.derived<
 	},
 });
 
-export const api = plugin<
-	"api",
-	ApiOptions,
-	{
-		workerImports: typeof workerImports;
-		pluginRuntimes: typeof pluginRuntimes;
-		middlewareEntries: typeof middlewareEntries;
-		middlewareCalls: typeof middlewareCalls;
-		middlewareImports: typeof middlewareImports;
-		routesHandler: typeof routesHandler;
-		corsOrigins: typeof corsOrigins;
-		cors: typeof cors;
-		callbacks: typeof callbacks;
-		workerBase: typeof workerBase;
-		workerSource: typeof workerSource;
-		routeBarrelSource: typeof routeBarrelSource;
-	}
->("api", {
+export const api = plugin("api", {
 	label: "API",
 
 	schema: apiOptionsSchema,

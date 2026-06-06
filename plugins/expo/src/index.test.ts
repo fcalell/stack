@@ -55,7 +55,10 @@ function collectExpoPlugins(
 	optsPerPlugin: Record<string, unknown> = {},
 	appOverride?: typeof app & { origins?: string[] },
 ): { plugins: GraphPlugin[]; ctxFactory: GraphCtxFactory } {
-	const apiCollected = api.cli.collect({ app, options: apiOpts ?? {} });
+	const apiCollected = api.cli.collect({
+		app,
+		options: api(apiOpts ?? {}).options,
+	});
 	const expoCollected = expo.cli.collect({ app, options: expoOpts ?? {} });
 	const apiPlugin: GraphPlugin = {
 		name: "api",

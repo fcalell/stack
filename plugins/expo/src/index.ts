@@ -1,4 +1,5 @@
 import { spawnSync } from "node:child_process";
+import type { ContributionCtx } from "@fcalell/cli";
 import { plugin, slot } from "@fcalell/cli";
 import type { ProviderSpec, TsImportSpec } from "@fcalell/cli/ast";
 import { cliSlots, emitArtifact } from "@fcalell/cli/cli-slots";
@@ -134,11 +135,11 @@ const entryImports = slot.list<TsImportSpec>({
 
 // Resolved Metro dev-server port. Defaults to Expo's 8081; flows into the
 // localhost CORS origin contributed to plugin-api.
-const devServerPort = slot.value<number>({
+const devServerPort = slot.value<number, ExpoOptions>({
 	source: SOURCE,
 	name: "devServerPort",
 	seed: (ctx) => {
-		const opts = (ctx.options ?? {}) as ExpoOptions;
+		const opts = ctx.options;
 		return opts.port ?? DEFAULT_PORT;
 	},
 });
@@ -146,12 +147,11 @@ const devServerPort = slot.value<number>({
 // Resolved routes directory. `null` disables expo-router wiring entirely
 // (consumer passed `routes: false`). Drives entry.tsx's `require.context`
 // path, typed-routes generation, and routes.d.ts emission.
-const routesPagesDir = slot.derived<string | null, Record<string, never>>({
+const routesPagesDir = slot.derived({
 	source: SOURCE,
 	name: "routesPagesDir",
-	inputs: {},
-	compute: (_inputs, ctx) => {
-		const opts = (ctx.options ?? {}) as ExpoOptions;
+	compute: (_inputs, ctx: ContributionCtx<ExpoOptions>): string | null => {
+		const opts = ctx.options;
 		if (opts.routes === false) return null;
 		if (opts.routes && typeof opts.routes === "object") {
 			return opts.routes.appDir ?? DEFAULT_APP_DIR;
@@ -162,48 +162,42 @@ const routesPagesDir = slot.derived<string | null, Record<string, never>>({
 
 // EAS build profile names (`eas build --profile <name>`). Consumed by the
 // `expo build` command to validate the requested profile and pick a default.
-const easBuildProfiles = slot.value<string[]>({
+const easBuildProfiles = slot.value<string[], ExpoOptions>({
 	source: SOURCE,
 	name: "easBuildProfiles",
 	seed: (ctx) => {
-		const opts = (ctx.options ?? {}) as ExpoOptions;
+		const opts = ctx.options;
 		return opts.easProfiles ?? DEFAULT_EAS_PROFILES;
 	},
 });
 
 // Default EAS Update channel (`eas update --channel <name>`).
-const easUpdateChannel = slot.value<string>({
+const easUpdateChannel = slot.value<string, ExpoOptions>({
 	source: SOURCE,
 	name: "easUpdateChannel",
 	seed: (ctx) => {
-		const opts = (ctx.options ?? {}) as ExpoOptions;
+		const opts = ctx.options;
 		return opts.updateChannel ?? DEFAULT_UPDATE_CHANNEL;
 	},
 });
 
 // ── Derived sources ────────────────────────────────────────────────
 
-const metroConfig = slot.derived<
-	string | null,
-	{ requires: typeof metroConfigImports; wrappers: typeof metroPluginCalls }
->({
+const metroConfig = slot.derived({
 	source: SOURCE,
 	name: "metroConfig",
 	inputs: { requires: metroConfigImports, wrappers: metroPluginCalls },
-	compute: (inp) =>
+	compute: (inp): string | null =>
 		aggregateMetroConfig({ requires: inp.requires, wrappers: inp.wrappers }),
 });
 
-const expoConfig = slot.derived<
-	string | null,
-	{ plugins: typeof expoConfigPlugins; pagesDir: typeof routesPagesDir }
->({
+const expoConfig = slot.derived({
 	source: SOURCE,
 	name: "expoConfig",
 	inputs: { plugins: expoConfigPlugins, pagesDir: routesPagesDir },
-	compute: (inp, ctx) => {
+	compute: (inp, ctx: ContributionCtx<ExpoOptions>): string | null => {
 		const slug = slugify(ctx.app.name);
-		const opts = (ctx.options ?? {}) as ExpoOptions;
+		const opts = ctx.options;
 		const routesEnabled = inp.pagesDir !== null;
 		const bundleId = buildBundleId(ctx.app.domain, slug);
 		// expo-router is listed as a config plugin so its native deep-link setup
@@ -223,18 +217,11 @@ const expoConfig = slot.derived<
 	},
 });
 
-const entrySource = slot.derived<
-	string | null,
-	{
-		imports: typeof entryImports;
-		providers: typeof providers;
-		pagesDir: typeof routesPagesDir;
-	}
->({
+const entrySource = slot.derived({
 	source: SOURCE,
 	name: "entrySource",
 	inputs: { imports: entryImports, providers, pagesDir: routesPagesDir },
-	compute: (inp) =>
+	compute: (inp): string | null =>
 		aggregateEntry({
 			imports: inp.imports,
 			providers: inp.providers,
@@ -243,14 +230,12 @@ const entrySource = slot.derived<
 		}),
 });
 
-const routesDtsSource = slot.derived<
-	string | null,
-	{ pagesDir: typeof routesPagesDir }
->({
+const routesDtsSource = slot.derived({
 	source: SOURCE,
 	name: "routesDtsSource",
 	inputs: { pagesDir: routesPagesDir },
-	compute: (inp) => (inp.pagesDir === null ? null : buildRoutesDts()),
+	compute: (inp): string | null =>
+		inp.pagesDir === null ? null : buildRoutesDts(),
 });
 
 // ── Command helpers ────────────────────────────────────────────────
@@ -264,25 +249,7 @@ function runInherit(command: string, args: string[], cwd: string): RunResult {
 	return { ok: !result.error && result.status === 0 };
 }
 
-export const expo = plugin<
-	"expo",
-	ExpoOptions,
-	{
-		metroConfigImports: typeof metroConfigImports;
-		metroPluginCalls: typeof metroPluginCalls;
-		expoConfigPlugins: typeof expoConfigPlugins;
-		providers: typeof providers;
-		entryImports: typeof entryImports;
-		devServerPort: typeof devServerPort;
-		routesPagesDir: typeof routesPagesDir;
-		easBuildProfiles: typeof easBuildProfiles;
-		easUpdateChannel: typeof easUpdateChannel;
-		metroConfig: typeof metroConfig;
-		expoConfig: typeof expoConfig;
-		entrySource: typeof entrySource;
-		routesDtsSource: typeof routesDtsSource;
-	}
->("expo", {
+export const expo = plugin("expo", {
 	label: "Expo",
 
 	schema: expoOptionsSchema,

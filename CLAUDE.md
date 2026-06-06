@@ -114,7 +114,7 @@ export const auth = plugin("auth", {
 Key fields:
 
 - `label` — human label used in the CLI picker.
-- `schema` — Zod schema for plugin options. Pins `TOptions` to `z.input<typeof schema>`; `ctx.options` is typed automatically.
+- `schema` — Zod schema for plugin options. Pins `TOptions` to `z.input<typeof schema>`. Command handlers (`CommandContext`) and `self.options` inside `contributes` are typed from it automatically; a module-level `slot.derived`/`slot.value` types its `compute`/`seed` ctx by annotating `ctx: ContributionCtx<XOptions>`. A raw contribution ctx keeps `options: unknown` (it may carry a foreign plugin's options when contributing cross-plugin).
 - `requires` — presence-only sibling-plugin names. The CLI surfaces a missing entry with an actionable error; ordering is derived from slot edges, not from this list.
 - `slots` — slots owned by this plugin. Exposed on the returned factory as `.slots` so other plugins can contribute or derive.
 - `contributes` — array (or `(self) => array`) of `Contribution`s built via `someSlot.contribute(fn)`. The `self` argument carries the plugin's own slots so the plugin can reference them without forward-ref problems.

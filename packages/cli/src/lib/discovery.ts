@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import type { StackConfig } from "#config";
 import type { InternalCliPlugin, PluginFactory } from "#lib/create-plugin";
+import { toCamelCase } from "#lib/naming";
 import type { Slot } from "#lib/slots";
 
 // A loaded plugin tied to its per-config options. `factory` is the
@@ -72,7 +73,7 @@ async function loadPlugin(
 			);
 		}
 	}
-	const camelName = name.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
+	const camelName = toCamelCase(name);
 	const pluginExport = (mod[camelName] ?? mod[name] ?? mod.default) as
 		| PluginFactory<
 				string,
@@ -107,6 +108,35 @@ export async function loadAvailablePlugins(): Promise<DiscoveredPlugin[]> {
 // messages when a required sibling plugin is missing from the config.
 export function dependencyNames(plugin: DiscoveredPlugin): string[] {
 	return [...plugin.cli.requires];
+}
+
+// Transitive `requires` closure for a set of selected plugin names, resolved
+// against the available (first-party) plugins. Returns the selected names PLUS
+// every transitively-required sibling, deduped, with each plugin's requirements
+// ordered before it (post-order). Shared by `stack init` and `stack add` so
+// both auto-pull the *full* dependency chain, not just one level — picking
+// `auth` pulls `db`, and `db`'s own requirements in turn. Unknown names (e.g.
+// third-party plugins not in `available`) pass through as leaves.
+export function resolveRequiresClosure(
+	names: readonly string[],
+	available: readonly DiscoveredPlugin[],
+): string[] {
+	const byName = new Map(available.map((p) => [p.name, p]));
+	const ordered: string[] = [];
+	const seen = new Set<string>();
+
+	const visit = (name: string): void => {
+		if (seen.has(name)) return;
+		seen.add(name);
+		const plugin = byName.get(name);
+		if (plugin) {
+			for (const req of plugin.cli.requires) visit(req);
+		}
+		ordered.push(name);
+	};
+
+	for (const name of names) visit(name);
+	return ordered;
 }
 
 export async function discoverPlugins(
@@ -146,52 +176,4 @@ export function validateDependencies(plugins: DiscoveredPlugin[]): void {
 			}
 		}
 	}
-}
-
-// Topological sort by `requires` edges. The slot graph derives per-slot
-// ordering from data dependencies and no longer needs a global plugin
-// order, but some surfaces still benefit from a deterministic walk:
-//
-// - plugin subcommands (`stack <plugin> <command>`) that want to display
-//   sibling plugin metadata in a stable order
-// - nicer error messages in `stack add` / `stack remove`
-//
-// Phase D may drop this helper once command code settles.
-export function sortByDependencies(
-	plugins: DiscoveredPlugin[],
-): DiscoveredPlugin[] {
-	const pluginMap = new Map(plugins.map((p) => [p.name, p]));
-	const sorted: DiscoveredPlugin[] = [];
-	const visited = new Set<string>();
-	const visiting = new Set<string>();
-
-	function visit(name: string, path: string[]): void {
-		if (visited.has(name)) return;
-		if (visiting.has(name)) {
-			const cycleStart = path.indexOf(name);
-			const cycle = [...path.slice(cycleStart), name].join(" -> ");
-			throw new Error(
-				`Circular plugin dependency: ${cycle}. ` +
-					`Break the cycle by removing one of the 'requires' entries.`,
-			);
-		}
-
-		const plugin = pluginMap.get(name);
-		if (!plugin) return;
-
-		visiting.add(name);
-		const nextPath = [...path, name];
-		for (const req of plugin.cli.requires) {
-			visit(req, nextPath);
-		}
-		visiting.delete(name);
-		visited.add(name);
-		sorted.push(plugin);
-	}
-
-	for (const p of plugins) {
-		visit(p.name, []);
-	}
-
-	return sorted;
 }

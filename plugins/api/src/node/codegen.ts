@@ -100,7 +100,7 @@ export function aggregateWorker(payload: WorkerPayload): string {
 	};
 
 	const rendered = renderTsSourceFile(spec);
-	return rendered.endsWith("\n") ? rendered : `${rendered}\n`;
+	return rendered;
 }
 
 // ── aggregateMiddleware ─────────────────────────────────────────────

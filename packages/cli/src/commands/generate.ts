@@ -4,13 +4,11 @@ import type { StackConfig } from "#config";
 import { buildGraphFromConfig } from "#lib/build-graph";
 import { cliSlots } from "#lib/cli-slots";
 import { loadConfig } from "#lib/config";
-import type { DiscoveredPlugin } from "#lib/discovery";
 import type { GeneratedFile } from "#specs";
 
 export interface GenerateResult {
 	files: GeneratedFile[];
 	postWrite: Array<() => Promise<void>>;
-	sorted: Array<{ name: string }>;
 }
 
 // Resolve `cliSlots.artifactFiles` + `cliSlots.postWrite` from the graph.
@@ -21,7 +19,7 @@ export async function generateFromConfig(
 	cwd: string,
 	opts: { writeToDisk?: boolean } = {},
 ): Promise<GenerateResult> {
-	const { graph, sorted } = await buildGraphFromConfig({ config, cwd });
+	const { graph } = await buildGraphFromConfig({ config, cwd });
 
 	const rawFiles = await graph.resolve(cliSlots.artifactFiles);
 	const postWrite = await graph.resolve(cliSlots.postWrite);
@@ -34,7 +32,13 @@ export async function generateFromConfig(
 	// resolver order. Throw with a clear error so the conflict is fixed at
 	// the contribution site, not papered over by silent last-write-wins.
 	const byPath = new Map<string, GeneratedFile>();
-	for (const file of rawFiles) {
+	for (const raw of rawFiles) {
+		// Single source→file normalization: every artifact ends with exactly one
+		// trailing newline. Aggregators emit raw content; the rule lives here, at
+		// the write boundary, instead of being re-applied at every renderer.
+		const file = raw.content.endsWith("\n")
+			? raw
+			: { ...raw, content: `${raw.content}\n` };
 		const prior = byPath.get(file.path);
 		if (prior && prior.content !== file.content) {
 			throw new Error(
@@ -62,7 +66,6 @@ export async function generateFromConfig(
 	return {
 		files,
 		postWrite,
-		sorted: sorted.map((p: DiscoveredPlugin) => ({ name: p.name })),
 	};
 }
 

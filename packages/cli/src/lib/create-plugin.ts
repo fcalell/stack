@@ -88,8 +88,13 @@ export interface CommandDefinition<TOptions, TFlags = Record<string, never>> {
 // The `self` helper passed to a function-form `contributes` array lets a
 // plugin reference its own slots without stamping the plugin name on every
 // slot declaration. `options` is the post-validation view (z.output) — every
-// schema default is guaranteed present, so no `as ResolvedXOptions` cast is
-// needed at any contribution site.
+// schema default is guaranteed present, so contribution sites read
+// `self.options` with no cast. A module-level `slot.derived`/`slot.value`
+// (declared before `plugin()`, where `self` is out of scope) types its own
+// `compute`/`seed` by annotating the ctx — `ctx: ContributionCtx<XOptions>`.
+// A raw contribution ctx keeps `options: unknown` on purpose: a cross-plugin
+// contribution runs with the *contributing* plugin's options, so no single
+// type is sound there.
 export interface PluginSelf<TSlots, TResolvedOptions> {
 	slots: TSlots;
 	options: TResolvedOptions;
@@ -354,9 +359,16 @@ export function plugin<
 					})
 				: (definition.contributes ?? []);
 
+		// Stamp the contributing plugin's name here, where it's authoritatively
+		// known — `collect()` runs once per owning plugin. For a cross-plugin
+		// contribution (e.g. db → cloudflare.slots.bindings) the owner is `name`
+		// ("db"), so the contribution fn later sees db's options, not the target's.
 		return {
 			slots,
-			contributes: [...userContribs, ...autoContributions()],
+			contributes: [...userContribs, ...autoContributions()].map((c) => ({
+				...c,
+				plugin: name,
+			})),
 		};
 	}
 

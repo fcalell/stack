@@ -5,7 +5,6 @@ describe("renderToml", () => {
 	it("emits root scalars", () => {
 		const out = renderToml({
 			root: { name: "my-worker", count: 3, active: true },
-			tables: [],
 			arrayTables: [],
 		});
 		expect(out).toBe(
@@ -13,45 +12,27 @@ describe("renderToml", () => {
 		);
 	});
 
-	it("emits nested tables under a path", () => {
+	it("emits a [table] from a nested root object (how [vars] is produced)", () => {
 		const out = renderToml({
-			root: {},
-			tables: [
-				{ path: ["build"], entries: { command: "pnpm build" } },
-				{ path: ["build", "upload"], entries: { format: "service-worker" } },
-			],
+			root: { name: "app", vars: { ENV: "production" } },
 			arrayTables: [],
 		});
-		expect(out).toBe(
-			[
-				"[build]",
-				'command = "pnpm build"',
-				"",
-				"[build.upload]",
-				'format = "service-worker"',
-				"",
-			].join("\n"),
-		);
+		expect(out).toContain('name = "app"');
+		expect(out).toContain("[vars]");
+		expect(out).toContain('ENV = "production"');
 	});
 
-	it("emits array of tables", () => {
+	it("emits array-tables as [[path]]", () => {
 		const out = renderToml({
 			root: {},
-			tables: [],
 			arrayTables: [
 				{
 					path: ["d1_databases"],
-					entries: {
-						binding: "DB_MAIN",
-						database_id: "abc-123",
-					},
+					entries: { binding: "DB_MAIN", database_id: "abc-123" },
 				},
 				{
 					path: ["d1_databases"],
-					entries: {
-						binding: "DB_SECONDARY",
-						database_id: "def-456",
-					},
+					entries: { binding: "DB_SECONDARY", database_id: "def-456" },
 				},
 			],
 		});
@@ -69,43 +50,33 @@ describe("renderToml", () => {
 		);
 	});
 
-	it("emits mixed root + tables + array-tables", () => {
+	// Load-bearing: rate_limiter bindings emit a multi-segment array-table path
+	// `["unsafe", "bindings"]`, which must render as `[[unsafe.bindings]]`. This
+	// is the one job the path-walking layer exists for — a naive `path[0]`-only
+	// fold would emit a broken `[[unsafe]]`.
+	it("folds a multi-segment array-table path into [[a.b]]", () => {
 		const out = renderToml({
-			root: { name: "app", compatibility_date: "2024-01-01" },
-			tables: [
-				{
-					path: ["vars"],
-					entries: { ENV: "production" },
-				},
-			],
+			root: {},
 			arrayTables: [
 				{
-					path: ["routes"],
-					entries: { pattern: "app.example.com/*", zone_name: "example.com" },
+					path: ["unsafe", "bindings"],
+					entries: { name: "RATE_LIMITER", type: "ratelimit" },
 				},
 			],
 		});
-		expect(out).toContain('name = "app"');
-		expect(out).toContain('compatibility_date = "2024-01-01"');
-		expect(out).toContain("[vars]");
-		expect(out).toContain('ENV = "production"');
-		expect(out).toContain("[[routes]]");
-		expect(out).toContain('pattern = "app.example.com/*"');
+		expect(out).toContain("[[unsafe.bindings]]");
+		expect(out).toContain('name = "RATE_LIMITER"');
+		expect(out).not.toContain("[[unsafe]]\n");
 	});
 
-	it("emits a realistic wrangler.toml", () => {
+	it("emits a realistic wrangler.toml (root scalars + [vars] + array-tables)", () => {
 		const out = renderToml({
 			root: {
 				name: "my-worker",
 				main: ".stack/worker.ts",
 				compatibility_date: "2024-01-01",
+				vars: { PUBLIC_URL: "https://app.example.com" },
 			},
-			tables: [
-				{
-					path: ["vars"],
-					entries: { PUBLIC_URL: "https://app.example.com" },
-				},
-			],
 			arrayTables: [
 				{
 					path: ["d1_databases"],
@@ -115,51 +86,21 @@ describe("renderToml", () => {
 						database_id: "xxx",
 					},
 				},
-				{
-					path: ["kv_namespaces"],
-					entries: { binding: "CACHE", id: "yyy" },
-				},
+				{ path: ["kv_namespaces"], entries: { binding: "CACHE", id: "yyy" } },
 			],
 		});
-		expect(out).toBe(
-			[
-				'name = "my-worker"',
-				'main = ".stack/worker.ts"',
-				'compatibility_date = "2024-01-01"',
-				"",
-				"[vars]",
-				'PUBLIC_URL = "https://app.example.com"',
-				"",
-				"[[d1_databases]]",
-				'binding = "DB_MAIN"',
-				'database_name = "main"',
-				'database_id = "xxx"',
-				"",
-				"[[kv_namespaces]]",
-				'binding = "CACHE"',
-				'id = "yyy"',
-				"",
-			].join("\n"),
-		);
-	});
-
-	it("throws when a table path is empty", () => {
-		expect(() =>
-			renderToml({
-				root: {},
-				tables: [{ path: [], entries: {} }],
-				arrayTables: [],
-			}),
-		).toThrow(/non-empty/);
+		expect(out).toContain('name = "my-worker"');
+		expect(out).toContain("[vars]");
+		expect(out).toContain('PUBLIC_URL = "https://app.example.com"');
+		expect(out).toContain("[[d1_databases]]");
+		expect(out).toContain('database_id = "xxx"');
+		expect(out).toContain("[[kv_namespaces]]");
+		expect(out).toContain('id = "yyy"');
 	});
 
 	it("throws when an array-table path is empty", () => {
 		expect(() =>
-			renderToml({
-				root: {},
-				tables: [],
-				arrayTables: [{ path: [], entries: {} }],
-			}),
+			renderToml({ root: {}, arrayTables: [{ path: [], entries: {} }] }),
 		).toThrow(/non-empty/);
 	});
 });

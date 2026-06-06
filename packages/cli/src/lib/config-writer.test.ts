@@ -2,11 +2,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import {
-	EditConfigError,
-	hasPluginCall,
-	removePluginCall,
-} from "#lib/config-writer";
+import { EditConfigError, removePluginCall } from "#lib/config-writer";
 
 const baseConfig = `import { defineConfig } from "@fcalell/cli";
 import { db } from "@fcalell/plugin-db";
@@ -20,65 +16,6 @@ export default defineConfig({
 	],
 });
 `;
-
-describe("hasPluginCall", () => {
-	it("detects a plugin whose factory is called in the plugins array", () => {
-		expect(hasPluginCall(baseConfig, "db")).toBe(true);
-	});
-
-	it("converts kebab-case plugin slug to camelCase callee", () => {
-		expect(hasPluginCall(baseConfig, "solid-ui")).toBe(true);
-	});
-
-	it("returns false when the plugin is not present", () => {
-		expect(hasPluginCall(baseConfig, "auth")).toBe(false);
-	});
-
-	it("does not match substrings of other identifiers", () => {
-		const source = `import { defineConfig } from "@fcalell/cli";
-import { mydb } from "./custom";
-
-export default defineConfig({
-	domain: "example.com",
-	plugins: [mydb()],
-});
-`;
-		// Regression: the old regex treated "mydb(" as a match for "db".
-		expect(hasPluginCall(source, "db")).toBe(false);
-	});
-
-	it("does not match identifiers that merely mention the plugin name in code", () => {
-		const source = `import { defineConfig } from "@fcalell/cli";
-
-// comment mentioning db(
-const notAPlugin = "db(";
-
-export default defineConfig({
-	domain: "example.com",
-	plugins: [],
-});
-`;
-		expect(hasPluginCall(source, "db")).toBe(false);
-	});
-
-	it("returns false for unparseable input", () => {
-		expect(hasPluginCall("this is not typescript {{{", "db")).toBe(false);
-	});
-
-	it("returns false when defineConfig is not the default export", () => {
-		const source = `const config = defineConfig({ plugins: [db()] });
-export default config;
-`;
-		expect(hasPluginCall(source, "db")).toBe(false);
-	});
-
-	it("returns false when plugins is missing", () => {
-		const source = `import { defineConfig } from "@fcalell/cli";
-export default defineConfig({ domain: "example.com" });
-`;
-		expect(hasPluginCall(source, "db")).toBe(false);
-	});
-});
 
 describe("removePluginCall", () => {
 	let dir: string;

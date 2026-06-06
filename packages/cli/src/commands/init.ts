@@ -6,8 +6,8 @@ import { buildGraphFromDiscovered } from "#lib/build-graph";
 import { cliSlots } from "#lib/cli-slots";
 import {
 	type DiscoveredPlugin,
-	dependencyNames,
 	loadAvailablePlugins,
+	resolveRequiresClosure,
 } from "#lib/discovery";
 import { MissingPluginError, StackError } from "#lib/errors";
 import { ask, createPromptContext, multi } from "#lib/prompt";
@@ -75,18 +75,16 @@ async function run(dir: string, options: InitOptions): Promise<void> {
 			})),
 		]);
 
-		for (const name of [...selectedPlugins]) {
+		// Pull the full transitive `requires` closure (not just one level), so
+		// picking `auth` brings db/api/cloudflare and their deps too.
+		const picked = new Set(selectedPlugins);
+		selectedPlugins = resolveRequiresClosure(selectedPlugins, available);
+		for (const name of selectedPlugins) {
+			if (picked.has(name)) continue;
 			const info = available.find((p) => p.name === name);
-			if (info) {
-				for (const req of dependencyNames(info)) {
-					if (!selectedPlugins.includes(req)) {
-						log.warn(
-							`${info.cli.label} requires ${req} — adding automatically.`,
-						);
-						selectedPlugins.unshift(req);
-					}
-				}
-			}
+			log.warn(
+				`${info?.cli.label ?? name} added automatically (required by your selection).`,
+			);
 		}
 
 		appName = await ask("App name", basename(dir));
@@ -248,17 +246,9 @@ function resolvePluginSelection(
 		);
 	}
 
-	const selected = [...requested];
-	for (const name of [...selected]) {
-		const info = available.find((p) => p.name === name);
-		if (!info) continue;
-		for (const req of dependencyNames(info)) {
-			if (!selected.includes(req)) {
-				selected.unshift(req);
-			}
-		}
-	}
-	return selected;
+	// Pull the full transitive `requires` closure (not just one level) so a flag
+	// like `--plugins=auth` brings db/api/cloudflare and their deps too.
+	return resolveRequiresClosure(requested, available);
 }
 
 // Build a StackConfig by calling each plugin's factory — the factory stamps

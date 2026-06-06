@@ -65,26 +65,6 @@ export function announceCreated(created: readonly string[]): void {
 	}
 }
 
-export function requireFeature(label: string, ok: boolean, hint: string): void {
-	if (!ok) {
-		throw new ScaffoldError(`${label} is not configured. ${hint}`);
-	}
-}
-
-export function skipIfConfigured(label: string, configured: boolean): boolean {
-	if (configured) {
-		log.info(`${label} is already configured.`);
-		return true;
-	}
-	return false;
-}
-
-export function ensureDir(path: string): boolean {
-	if (existsSync(path)) return false;
-	mkdirSync(path, { recursive: true });
-	return true;
-}
-
 export function ensureGitignore(...entries: string[]): boolean {
 	const gitignorePath = join(process.cwd(), ".gitignore");
 	let added = false;

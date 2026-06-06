@@ -42,27 +42,18 @@ const resolveAliases = slot.list<{ find: string; replacement: string }>({
 });
 
 // Resolved dev-server port. Defaults to 3000; overrideable via options.port.
-const devServerPort = slot.value<number>({
+const devServerPort = slot.value<number, ViteOptions>({
 	source: SOURCE,
 	name: "devServerPort",
 	seed: (ctx) => {
-		const opts = (ctx.options ?? {}) as ViteOptions;
-		return opts.port ?? 3000;
+		return ctx.options.port ?? 3000;
 	},
 });
 
 // Rendered `.stack/vite.config.ts` source. Pulled into `cli.slots.artifactFiles`
 // by the contribution below — gated on at least one plugin call or import
 // so a vite-less config never writes an empty file.
-const viteConfig = slot.derived<
-	string | null,
-	{
-		imports: typeof configImports;
-		plugins: typeof pluginCalls;
-		aliases: typeof resolveAliases;
-		port: typeof devServerPort;
-	}
->({
+const viteConfig = slot.derived({
 	source: SOURCE,
 	name: "viteConfig",
 	inputs: {
@@ -71,7 +62,7 @@ const viteConfig = slot.derived<
 		aliases: resolveAliases,
 		port: devServerPort,
 	},
-	compute: (inp) => {
+	compute: (inp): string | null => {
 		if (inp.plugins.length === 0 && inp.imports.length === 0) return null;
 		return aggregateViteConfig({
 			imports: inp.imports,
@@ -82,17 +73,7 @@ const viteConfig = slot.derived<
 	},
 });
 
-export const vite = plugin<
-	"vite",
-	ViteOptions,
-	{
-		configImports: typeof configImports;
-		pluginCalls: typeof pluginCalls;
-		resolveAliases: typeof resolveAliases;
-		devServerPort: typeof devServerPort;
-		viteConfig: typeof viteConfig;
-	}
->("vite", {
+export const vite = plugin("vite", {
 	label: "Vite",
 
 	schema: viteOptionsSchema,
@@ -149,7 +130,7 @@ export const vite = plugin<
 		// that surfaces a clear next-step message on port collisions.
 		cliSlots.devProcesses.contribute(async (ctx) => {
 			const port = await ctx.resolve(self.slots.devServerPort);
-			const opts = (ctx.options ?? {}) as ViteOptions;
+			const opts = self.options;
 			return {
 				name: "vite",
 				command: "npx",

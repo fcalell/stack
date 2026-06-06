@@ -64,7 +64,7 @@ function collect(
 	reversed = false,
 ): { plugins: GraphPlugin[]; ctxFactory: GraphCtxFactory } {
 	const plugins = [
-		toPlugin("api", api.cli.collect({ app, options: {} })),
+		toPlugin("api", api.cli.collect({ app, options: api().options })),
 		toPlugin("expo", expo.cli.collect({ app, options: expoOpts ?? {} })),
 		toPlugin("native-ui", nativeUi.cli.collect({ app, options: nativeUiOpts })),
 	];

@@ -1,3 +1,4 @@
+import type { ContributionCtx } from "@fcalell/cli";
 import { plugin, slot } from "@fcalell/cli";
 import type {
 	HtmlInjection,
@@ -43,11 +44,12 @@ const entryImports = slot.list<TsImportSpec>({
 	sortBy: (a, b) => a.source.localeCompare(b.source),
 });
 
-// The root `render(() => ... , document.getElementById("app"))` call. A value
-// slot so a peer plugin could override the mount target (rare); solid itself
-// contributes the default. `override: true` lets a consumer-side plugin cede
-// cleanly without a duplicate-contribution error.
-const mountExpression = slot.value<TsExpression | null>({
+// The root `render(...)` call, as a verbatim source snippet. It never varies
+// by config, so it's a string rather than a hand-built AST tree. A value slot
+// so a peer plugin could override the mount target (rare); `override: true`
+// lets a consumer-side plugin cede cleanly without a duplicate-contribution
+// error. `null` (the seed) means "no mount" → entry.tsx is skipped.
+const mountExpression = slot.value<string | null>({
 	source: SOURCE,
 	name: "mountExpression",
 	override: true,
@@ -85,12 +87,11 @@ const htmlBodyEnd = slot.list<HtmlInjection>({
 // Resolved pages directory. `null` means file-based routing is disabled
 // entirely (consumer passed `routes: false`). Drives both the vite routes
 // plugin contribution and routesDtsSource.
-const routesPagesDir = slot.derived<string | null, Record<string, never>>({
+const routesPagesDir = slot.derived({
 	source: SOURCE,
 	name: "routesPagesDir",
-	inputs: {},
-	compute: (_inputs, ctx) => {
-		const opts = (ctx.options ?? {}) as SolidOptions;
+	compute: (_inputs, ctx: ContributionCtx<SolidOptions>): string | null => {
+		const opts = ctx.options;
 		if (opts.routes === false) return null;
 		if (opts.routes && typeof opts.routes === "object") {
 			return opts.routes.pagesDir ?? "src/app/pages";
@@ -101,14 +102,11 @@ const routesPagesDir = slot.derived<string | null, Record<string, never>>({
 
 // Rendered `.stack/entry.tsx`. Returns null when no mount expression is
 // contributed (worker-only project), which skips file emission.
-const entrySource = slot.derived<
-	string | null,
-	{ imports: typeof entryImports; mount: typeof mountExpression }
->({
+const entrySource = slot.derived({
 	source: SOURCE,
 	name: "entrySource",
 	inputs: { imports: entryImports, mount: mountExpression },
-	compute: (inp) =>
+	compute: (inp): string | null =>
 		aggregateEntry({
 			imports: inp.imports,
 			mountExpression: inp.mount,
@@ -116,18 +114,11 @@ const entrySource = slot.derived<
 });
 
 // Rendered `.stack/index.html`.
-const htmlSource = slot.derived<
-	string | null,
-	{
-		shell: typeof htmlShell;
-		head: typeof htmlHead;
-		bodyEnd: typeof htmlBodyEnd;
-	}
->({
+const htmlSource = slot.derived({
 	source: SOURCE,
 	name: "htmlSource",
 	inputs: { shell: htmlShell, head: htmlHead, bodyEnd: htmlBodyEnd },
-	compute: (inp) =>
+	compute: (inp): Promise<string | null> =>
 		aggregateHtml({
 			shell: inp.shell,
 			head: inp.head,
@@ -136,27 +127,22 @@ const htmlSource = slot.derived<
 });
 
 // Rendered `.stack/virtual-providers.tsx`.
-const providersSource = slot.derived<
-	string | null,
-	{ providers: typeof providers }
->({
+const providersSource = slot.derived({
 	source: SOURCE,
 	name: "providersSource",
 	inputs: { providers },
-	compute: (inp) => aggregateProviders({ providers: inp.providers }),
+	compute: (inp): string | null =>
+		aggregateProviders({ providers: inp.providers }),
 });
 
 // Rendered `.stack/routes.d.ts`. Null when routing is disabled; otherwise
 // `buildRoutesDts` returns a valid empty stub even when src/app/pages is
 // missing — REVIEW #3 structural fix (no try/catch, no swallow).
-const routesDtsSource = slot.derived<
-	string | null,
-	{ pagesDir: typeof routesPagesDir }
->({
+const routesDtsSource = slot.derived({
 	source: SOURCE,
 	name: "routesDtsSource",
 	inputs: { pagesDir: routesPagesDir },
-	compute: (inp, ctx) => {
+	compute: (inp, ctx): string | null => {
 		if (inp.pagesDir === null) return null;
 		return buildRoutesDts(ctx.cwd, inp.pagesDir);
 	},
@@ -172,27 +158,12 @@ const homeScaffold = slot.value<ScaffoldSpec>({
 	seed: (ctx) => ctx.scaffold("home.tsx", "src/app/pages/index.tsx"),
 });
 
-export const solid = plugin<
-	"solid",
-	SolidOptions,
-	{
-		providers: typeof providers;
-		entryImports: typeof entryImports;
-		mountExpression: typeof mountExpression;
-		htmlShell: typeof htmlShell;
-		htmlHead: typeof htmlHead;
-		htmlBodyEnd: typeof htmlBodyEnd;
-		routesPagesDir: typeof routesPagesDir;
-		entrySource: typeof entrySource;
-		htmlSource: typeof htmlSource;
-		providersSource: typeof providersSource;
-		routesDtsSource: typeof routesDtsSource;
-		homeScaffold: typeof homeScaffold;
-	}
->("solid", {
+export const solid = plugin("solid", {
 	label: "SolidJS",
 
 	schema: solidOptionsSchema,
+
+	requires: ["vite"],
 
 	dependencies: {
 		"@fcalell/plugin-solid": "workspace:*",
@@ -282,52 +253,18 @@ export const solid = plugin<
 			}),
 		),
 
-		// The default mount expression. Seeded as null; solid writes the
-		// canonical render call here.
+		// The default mount expression — a fixed snippet that never varies by
+		// config. Seeded as null; solid writes the canonical render call here.
 		self.slots.mountExpression.contribute(
-			(): TsExpression => ({
-				kind: "call",
-				callee: { kind: "identifier", name: "render" },
-				args: [
-					{
-						kind: "arrow",
-						params: [],
-						body: {
-							kind: "jsx",
-							tag: "Providers",
-							props: [],
-							children: [
-								{
-									kind: "jsx",
-									tag: "Router",
-									props: [],
-									children: [{ kind: "identifier", name: "routes" }],
-								},
-							],
-						},
-					},
-					{
-						kind: "as",
-						expression: {
-							kind: "call",
-							callee: {
-								kind: "member",
-								object: { kind: "identifier", name: "document" },
-								property: "getElementById",
-							},
-							args: [{ kind: "string", value: "app" }],
-						},
-						type: { kind: "reference", name: "HTMLElement" },
-					},
-				],
-			}),
+			(): string =>
+				'render(() => <Providers><Router>{routes}</Router></Providers>, document.getElementById("app") as HTMLElement)',
 		),
 
 		// ── HTML ─────────────────────────────────────────────────────────
 		self.slots.htmlShell.contribute((ctx): URL => ctx.template("shell.html")),
 
-		self.slots.htmlHead.contribute((ctx): HtmlInjection => {
-			const opts = (ctx.options ?? {}) as SolidOptions;
+		self.slots.htmlHead.contribute((): HtmlInjection => {
+			const opts = self.options;
 			return {
 				kind: "html-attr",
 				name: "lang",
@@ -335,21 +272,21 @@ export const solid = plugin<
 			};
 		}),
 		self.slots.htmlHead.contribute((ctx): HtmlInjection => {
-			const opts = (ctx.options ?? {}) as SolidOptions;
+			const opts = self.options;
 			return { kind: "title", value: opts.title ?? ctx.app.name };
 		}),
-		self.slots.htmlHead.contribute((ctx): HtmlInjection | undefined => {
-			const opts = (ctx.options ?? {}) as SolidOptions;
+		self.slots.htmlHead.contribute((): HtmlInjection | undefined => {
+			const opts = self.options;
 			if (!opts.description) return undefined;
 			return { kind: "meta", name: "description", content: opts.description };
 		}),
-		self.slots.htmlHead.contribute((ctx): HtmlInjection | undefined => {
-			const opts = (ctx.options ?? {}) as SolidOptions;
+		self.slots.htmlHead.contribute((): HtmlInjection | undefined => {
+			const opts = self.options;
 			if (!opts.themeColor) return undefined;
 			return { kind: "meta", name: "theme-color", content: opts.themeColor };
 		}),
-		self.slots.htmlHead.contribute((ctx): HtmlInjection | undefined => {
-			const opts = (ctx.options ?? {}) as SolidOptions;
+		self.slots.htmlHead.contribute((): HtmlInjection | undefined => {
+			const opts = self.options;
 			if (!opts.icon) return undefined;
 			return { kind: "link", rel: "icon", href: opts.icon };
 		}),

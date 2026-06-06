@@ -1,3 +1,4 @@
+import type { ContributionCtx } from "@fcalell/cli";
 import { plugin, slot } from "@fcalell/cli";
 import type {
 	ProviderSpec,
@@ -118,41 +119,30 @@ const appCssLayers = slot.list<CssLayer>({
 // The `??` here is load-bearing — we only swap in defaults when the value
 // is nullish, never when it's an empty array. Covered by the "fonts: []"
 // tests in index.test.ts / codegen.test.ts.
-const fonts = slot.derived<FontEntry[], Record<string, never>>({
+const fonts = slot.derived({
 	source: SOURCE,
 	name: "fonts",
-	inputs: {},
-	compute: (_inp, ctx) => {
-		const opts = (ctx.options ?? {}) as SolidUiOptions;
+	compute: (_inp, ctx: ContributionCtx<SolidUiOptions>): FontEntry[] => {
+		const opts = ctx.options;
 		return opts.fonts ?? defaultFonts;
 	},
 });
 
 // Rendered `.stack/app.css`. Returns null when no imports or layers landed.
-const appCssSource = slot.derived<
-	string | null,
-	{ imports: typeof appCssImports; layers: typeof appCssLayers }
->({
+const appCssSource = slot.derived({
 	source: SOURCE,
 	name: "appCssSource",
 	inputs: { imports: appCssImports, layers: appCssLayers },
-	compute: (inp) =>
+	compute: (inp): string | null =>
 		aggregateAppCss({ imports: inp.imports, layers: inp.layers }),
 });
 
-export const solidUi = plugin<
-	"solid-ui",
-	SolidUiOptions,
-	{
-		appCssImports: typeof appCssImports;
-		appCssLayers: typeof appCssLayers;
-		fonts: typeof fonts;
-		appCssSource: typeof appCssSource;
-	}
->("solid-ui", {
+export const solidUi = plugin("solid-ui", {
 	label: "Design System",
 
 	schema: solidUiOptionsSchema,
+
+	requires: ["solid", "vite"],
 
 	dependencies: {
 		tailwindcss: "^4.1.7",

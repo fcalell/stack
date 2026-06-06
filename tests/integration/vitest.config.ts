@@ -7,6 +7,7 @@ export default defineConfig({
 	resolve: {
 		alias: {
 			"@fcalell/cli/ast": resolve(root, "packages/cli/src/ast/index.ts"),
+			"@fcalell/cli/css": resolve(root, "packages/cli/src/css.ts"),
 			"@fcalell/cli/specs": resolve(root, "packages/cli/src/specs.ts"),
 			"@fcalell/cli/slots": resolve(root, "packages/cli/src/lib/slots.ts"),
 			"@fcalell/cli/cli-slots": resolve(

@@ -53,7 +53,6 @@ export function createMockCtx<T = Record<string, never>>(
 export interface GenerateResult {
 	files: Array<{ path: string; content: string }>;
 	postWrite: Array<() => Promise<void>>;
-	sorted: Array<{ name: string }>;
 }
 
 // Drives the real `generateFromConfig` path — any test that asserts on

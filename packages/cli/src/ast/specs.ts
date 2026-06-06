@@ -49,18 +49,10 @@ export type TsExpression =
 			props: Array<{ name: string; value?: TsExpression }>;
 			children: Array<TsExpression | { kind: "text"; value: string }>;
 			selfClosing?: boolean;
-	  }
-	| {
-			kind: "jsx-fragment";
-			children: Array<TsExpression | { kind: "text"; value: string }>;
-	  }
-	| { kind: "template"; parts: Array<string | TsExpression> };
+	  };
 
 export type TsTypeRef =
 	| { kind: "reference"; name: string; args?: TsTypeRef[] }
-	| { kind: "literal"; value: string | number | boolean }
-	| { kind: "union"; types: TsTypeRef[] }
-	| { kind: "intersection"; types: TsTypeRef[] }
 	| {
 			kind: "object";
 			members: Array<{
@@ -70,13 +62,7 @@ export type TsTypeRef =
 				readonly?: boolean;
 			}>;
 	  }
-	| { kind: "array"; element: TsTypeRef }
-	| { kind: "tuple"; elements: TsTypeRef[] }
-	| {
-			kind: "function";
-			params: Array<{ name: string; type: TsTypeRef }>;
-			returnType: TsTypeRef;
-	  };
+	| { kind: "array"; element: TsTypeRef };
 
 export type TsStatement =
 	| {
@@ -122,7 +108,6 @@ export type TomlValue =
 
 export type TomlDocument = {
 	root: Record<string, TomlValue>;
-	tables: Array<{ path: string[]; entries: Record<string, TomlValue> }>;
 	arrayTables: Array<{ path: string[]; entries: Record<string, TomlValue> }>;
 };
 
@@ -166,10 +151,7 @@ export type ScaffoldSpec = {
 // Only JSX-shaped expressions are valid children of the composed providers
 // tree. Allowing arbitrary TsExpression (e.g. string/number literals) would
 // emit nonsense output like `<MetaProvider>{props.children}"hi"</MetaProvider>`.
-export type TsJsxExpression = Extract<
-	TsExpression,
-	{ kind: "jsx" } | { kind: "jsx-fragment" }
->;
+export type TsJsxExpression = Extract<TsExpression, { kind: "jsx" }>;
 
 export type ProviderSpec = {
 	imports: TsImportSpec[];

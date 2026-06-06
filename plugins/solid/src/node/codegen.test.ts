@@ -13,20 +13,13 @@ describe("aggregateEntry", () => {
 				{ source: "solid-js/web", named: ["render"] },
 				{ source: "./App", default: "App" },
 			],
-			mountExpression: {
-				kind: "call",
-				callee: { kind: "identifier", name: "render" },
-				args: [
-					{ kind: "identifier", name: "App" },
-					{ kind: "identifier", name: "document.body" },
-				],
-			},
+			mountExpression: "render(App, document.body)",
 		});
 		expect(out).not.toBeNull();
 		if (!out) return;
 		expect(out).toContain('import { render } from "solid-js/web"');
 		expect(out).toContain('import App from "./App"');
-		expect(out).toContain("render(App, document.body)");
+		expect(out).toContain("render(App, document.body);");
 	});
 });
 

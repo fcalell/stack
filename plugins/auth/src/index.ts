@@ -1,3 +1,4 @@
+import type { ContributionCtx } from "@fcalell/cli";
 import { callback, plugin, slot } from "@fcalell/cli";
 import type { TsExpression } from "@fcalell/cli/ast";
 import { literalToProps } from "@fcalell/cli/ast";
@@ -6,7 +7,6 @@ import type { PluginRuntimeEntry } from "@fcalell/plugin-api";
 import { api } from "@fcalell/plugin-api";
 import { cloudflare } from "@fcalell/plugin-cloudflare";
 import {
-	type AuthOptions,
 	authOptionsSchema,
 	type ResolvedAuthOptions,
 	resolveSocialProviders,
@@ -56,14 +56,14 @@ function isLocalOrigin(origin: string): boolean {
 // cors ordering) is structurally impossible here — no payload to mutate,
 // no handler ordering, just dataflow.
 
-const runtimeOptions = slot.derived<
-	Record<string, TsExpression>,
-	{ cors: typeof api.slots.cors }
->({
+const runtimeOptions = slot.derived({
 	source: SOURCE,
 	name: "runtimeOptions",
 	inputs: { cors: api.slots.cors },
-	compute: (inp, ctx) => {
+	compute: (
+		inp,
+		ctx: ContributionCtx<ResolvedAuthOptions>,
+	): Record<string, TsExpression> => {
 		// Bug #1: empty-CORS contract. Better Auth silently treats
 		// `undefined` trustedOrigins as "allow nothing" on some paths and
 		// "fall back to baseURL" on others — both are footguns. Refuse to
@@ -96,7 +96,7 @@ const runtimeOptions = slot.derived<
 		// `true`/object input). Only var names are emitted; the runtime reads
 		// credentials from env. Drop the key entirely when no provider is set.
 		const resolvedProviders = resolveSocialProviders(
-			(ctx.options as ResolvedAuthOptions).socialProviders,
+			ctx.options.socialProviders,
 		);
 		if (Object.keys(resolvedProviders).length > 0) {
 			rawOptions.socialProviders = resolvedProviders;
@@ -136,11 +136,11 @@ const runtimeOptions = slot.derived<
 // frontend plugin is present, otherwise we fall back to the production
 // domain. Plugin-auth never imports plugin-vite — the handoff is
 // entirely through the shared `api.slots.cors` contract.
-const appUrlDevDefault = slot.derived<string, { cors: typeof api.slots.cors }>({
+const appUrlDevDefault = slot.derived({
 	source: SOURCE,
 	name: "appUrlDevDefault",
 	inputs: { cors: api.slots.cors },
-	compute: (inp, ctx) => {
+	compute: (inp, ctx): string => {
 		const local = inp.cors.find(isLocalOrigin);
 		if (local) return local;
 		// Worker-only / API-only: no frontend, no localhost contribution.
@@ -159,22 +159,7 @@ const callbackFile = slot.value<string>({
 	seed: () => CALLBACK_FILE,
 });
 
-export const auth = plugin<
-	"auth",
-	AuthOptions,
-	{
-		runtimeOptions: typeof runtimeOptions;
-		appUrlDevDefault: typeof appUrlDevDefault;
-		callbackFile: typeof callbackFile;
-	},
-	{
-		sendOTP: ReturnType<typeof callback<{ email: string; code: string }>>;
-		sendInvitation: ReturnType<
-			typeof callback.optional<{ email: string; orgName: string }>
-		>;
-	},
-	ResolvedAuthOptions
->("auth", {
+export const auth = plugin("auth", {
 	label: "Auth",
 
 	schema: authOptionsSchema,

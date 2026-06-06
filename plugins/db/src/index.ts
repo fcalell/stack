@@ -1,10 +1,16 @@
-import { join } from "node:path";
+import { basename, join } from "node:path";
 import { plugin } from "@fcalell/cli";
 import type { TsImportSpec } from "@fcalell/cli/ast";
 import { cliSlots } from "@fcalell/cli/cli-slots";
 import type { PluginRuntimeEntry } from "@fcalell/plugin-api";
 import { api } from "@fcalell/plugin-api";
 import { cloudflare } from "@fcalell/plugin-cloudflare";
+import {
+	assertDeployableDatabaseId,
+	createD1Database,
+	D1_PLACEHOLDER_ID,
+	isWranglerAuthed,
+} from "./node/d1";
 import { migrationLockPath, withMigrationLock } from "./node/lock";
 import {
 	applyMigrationsLocal,
@@ -14,13 +20,21 @@ import {
 } from "./node/push";
 import { type DbOptions, dbOptionsSchema } from "./types";
 
-// One serialized push per (cwd, options) — used to coalesce the devReadySetup
-// task and the schema watcher's handler so concurrent drizzle-kit pushes
-// don't race on SQLite's file-level lock. The closure that owns this helper
-// is built inside `contributes: (self) => { ... }` so its lifecycle is
-// scoped to a single `collect()` invocation (i.e. a single graph build).
-// Two graphs over the same cwd get independent latches; a long-running
-// watcher closing over it is GC'd with the graph that produced it.
+// A COALESCING latch for local schema re-pushes — NOT a serializer.
+//
+// Cross-process AND in-process *exclusion* is already owned by
+// `pushSchemaLocal`, which wraps `withMigrationLock` (file lock + an in-process
+// promise queue keyed on the lock path). So this latch deliberately does not
+// re-serialize; its one job is to coalesce: when the devReadySetup task and the
+// schema watcher fire in quick succession (or a save lands mid-push), collapse
+// them into at most one in-flight + one queued push instead of stacking up N
+// redundant drizzle-kit runs when only the latest schema matters. (Dropping
+// this latch would still be correct — `withMigrationLock` would queue every
+// call — but a busy editing session would run a backlog of pointless pushes.)
+//
+// Scoped to a single `collect()` (graph build) via the `contributes:
+// (self) => { ... }` closure: two graphs over the same cwd get independent
+// latches, and a long-running watcher's latch is GC'd with its graph.
 function createSerializedPush(cwd: string, options: DbOptions) {
 	let currentPush: Promise<void> | null = null;
 	let queuedPush: Promise<void> | null = null;
@@ -124,6 +138,38 @@ export const db = plugin("db", {
 				ctx.log.success("Local database deleted. Run `stack dev` to recreate.");
 			},
 		},
+		create: {
+			description: "Create a Cloudflare D1 database and print its id",
+			options: {
+				name: {
+					type: "string" as const,
+					description: "Database name (default: the project directory name)",
+				},
+			},
+			handler: async (ctx, flags) => {
+				if (ctx.options.dialect !== "d1") {
+					ctx.log.error("`stack db create` only applies to the d1 dialect.");
+					return;
+				}
+				if (!isWranglerAuthed()) {
+					ctx.log.error(
+						"Not authenticated with Cloudflare. Run `wrangler login` first.",
+					);
+					return;
+				}
+				const name = (flags.name as string | undefined) ?? basename(ctx.cwd);
+				ctx.log.info(`Creating D1 database "${name}"...`);
+				const result = createD1Database(name);
+				if (!result.ok) {
+					ctx.log.error(result.error);
+					return;
+				}
+				ctx.log.success(`Created D1 database "${result.name}"`);
+				ctx.log.info(
+					`Set it in stack.config.ts: db({ dialect: "d1", databaseId: "${result.id}" })`,
+				);
+			},
+		},
 	},
 
 	contributes: (self) => {
@@ -178,7 +224,7 @@ export const db = plugin("db", {
 								};
 							}
 						).prompt.text("D1 database ID:", {
-							default: "YOUR_D1_DATABASE_ID",
+							default: D1_PLACEHOLDER_ID,
 						});
 					} else {
 						answers.path = await (
@@ -292,6 +338,15 @@ export const db = plugin("db", {
 						ctx.log.success("Schema pushed");
 					},
 				};
+			}),
+
+			// Pre-deploy guard — fail fast (before build/migrations touch the
+			// cloud) if the d1 databaseId is still the placeholder or isn't a UUID.
+			// Resolves during deploy planning, ahead of any check action or step.
+			cliSlots.deployChecks.contribute(() => {
+				if (self.options.dialect !== "d1") return undefined;
+				assertDeployableDatabaseId(self.options.databaseId);
+				return undefined;
 			}),
 
 			// Deploy-time migration check — only for d1.

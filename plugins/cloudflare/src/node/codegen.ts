@@ -148,9 +148,9 @@ export function aggregateWrangler(opts: {
 	// var-bindings). Consumer vars survive only if they don't conflict.
 	overlayVars(root, opts.payload);
 
-	const doc: TomlDocument = { root, tables: [], arrayTables };
+	const doc: TomlDocument = { root, arrayTables };
 	const out = renderToml(doc);
-	return out.endsWith("\n") ? out : `${out}\n`;
+	return out;
 }
 
 function parseConsumerWrangler(

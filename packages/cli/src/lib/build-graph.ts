@@ -22,7 +22,10 @@ export interface BuildGraphFromConfigOptions {
 export interface BuildGraphFromConfigResult {
 	graph: Graph;
 	collected: CollectedPlugin[];
-	sorted: DiscoveredPlugin[];
+	// The discovered plugins in `config.plugins` order. No sort is applied —
+	// ordering is derived per-slot from data dependencies, so consumers here do
+	// only order-independent lookups (find-by-name, map-to-cli).
+	plugins: DiscoveredPlugin[];
 	app: AppConfig;
 }
 
@@ -107,7 +110,7 @@ export function buildGraphFromDiscovered(
 	return {
 		graph,
 		collected,
-		sorted: opts.discovered,
+		plugins: opts.discovered,
 		app: opts.app,
 	};
 }

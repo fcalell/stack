@@ -1,12 +1,10 @@
+import { toCamelCase } from "#lib/naming";
+
 interface StackConfigOptions {
 	name: string;
 	domain: string;
 	plugins: string[];
 	pluginAnswers: Map<string, Record<string, unknown>>;
-}
-
-function toCamelCase(name: string): string {
-	return name.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
 }
 
 export function stackConfigTemplate(options: StackConfigOptions): string {

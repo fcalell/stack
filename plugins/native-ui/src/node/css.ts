@@ -1,47 +1,20 @@
 // CSS escaping/validation for the native-ui `global.css` codegen.
 //
-// Mirrors the policy in plugin-solid-ui's css-escape: every interpolation point
-// that crosses the consumer trust boundary (theme names, token names, token
-// values) is validated or escaped so a hostile/careless token can't break out
-// of its CSS context. Token data flows in from the consumer's `themeTokens`
-// option (parsed from `marina.css`), so it is semi-trusted, not inert.
+// The string/ident escape primitives are a shared security boundary — see
+// `@fcalell/cli/css`. This file re-exports them with the plugin label, and
+// keeps the native-only validators that have NO web counterpart: custom-
+// property names and raw (unquoted) token VALUES.
+import {
+	cssIdent as cssIdentBase,
+	cssString,
+	isCssIdent,
+} from "@fcalell/cli/css";
 
-const STRING_ESCAPE_RE = /[\\"\n\r\f]/g;
-const STRING_ESCAPE_MAP: Record<string, string> = {
-	"\\": "\\\\",
-	'"': '\\"',
-	"\n": "\\A ",
-	"\r": "\\D ",
-	"\f": "\\C ",
-};
+const LABEL = "plugin-native-ui";
 
-// Returns a properly-quoted CSS <string> token (double-quoted, escaped). Used
-// for `@source`/`@import` paths and quoted font-family names.
-export function cssString(value: string): string {
-	const escaped = value.replace(
-		STRING_ESCAPE_RE,
-		(c) => STRING_ESCAPE_MAP[c] ?? c,
-	);
-	return `"${escaped}"`;
-}
+export { cssString, isCssIdent };
 
-// CSS <ident-token> (ASCII-only) — theme names and the semantic part of a
-// color token key (`canvas`, `ink-1`).
-const IDENT_RE = /^-?[A-Za-z_][A-Za-z0-9_-]*$/;
-
-export function isCssIdent(value: unknown): value is string {
-	return typeof value === "string" && IDENT_RE.test(value) && value !== "-";
-}
-
-export function cssIdent(value: string): string {
-	if (!isCssIdent(value)) {
-		throw new Error(
-			`[plugin-native-ui] invalid CSS identifier: ${JSON.stringify(value)}. ` +
-				"Expected an ASCII <ident-token>: start with a letter or '_', then letters, digits, '_' or '-'.",
-		);
-	}
-	return value;
-}
+export const cssIdent = (value: string): string => cssIdentBase(value, LABEL);
 
 // A custom-property NAME like `--spacing-2` or `--text-base` (the static
 // `@theme` base tokens carry their full `--` name).
@@ -50,7 +23,7 @@ const VAR_NAME_RE = /^--[A-Za-z_][A-Za-z0-9_-]*$/;
 export function cssVarName(value: string): string {
 	if (typeof value !== "string" || !VAR_NAME_RE.test(value)) {
 		throw new Error(
-			`[plugin-native-ui] invalid CSS custom-property name: ${JSON.stringify(value)}. ` +
+			`[${LABEL}] invalid CSS custom-property name: ${JSON.stringify(value)}. ` +
 				'Expected a "--"-prefixed <ident> (e.g. "--radius-md").',
 		);
 	}
@@ -66,11 +39,11 @@ const TOKEN_VALUE_ILLEGAL_RE = /[;{}\n\r\f]/;
 
 export function cssTokenValue(value: string): string {
 	if (typeof value !== "string" || value.trim().length === 0) {
-		throw new Error("[plugin-native-ui] cssTokenValue: empty value");
+		throw new Error(`[${LABEL}] cssTokenValue: empty value`);
 	}
 	if (TOKEN_VALUE_ILLEGAL_RE.test(value)) {
 		throw new Error(
-			`[plugin-native-ui] cssTokenValue: value contains illegal characters: ${JSON.stringify(value)}`,
+			`[${LABEL}] cssTokenValue: value contains illegal characters: ${JSON.stringify(value)}`,
 		);
 	}
 	return value.trim();

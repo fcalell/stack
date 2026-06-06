@@ -58,8 +58,8 @@ describe("initPlugin()", () => {
 		expect(index).toContain("slots:");
 
 		const test = readFileSync(testPath, "utf-8");
-		expect(test).toContain("cli.collect");
-		expect(test).toContain("slots.example");
+		expect(test).toContain("buildTestGraphFromPlugins");
+		expect(test).toContain("cliSlots.initDeps");
 
 		const runtime = readFileSync(runtimePath, "utf-8");
 		expect(runtime).toContain('from "@fcalell/cli/runtime"');
@@ -120,6 +120,6 @@ describe("initPlugin()", () => {
 		expect(index).toContain("SomeThingOptions");
 
 		const test = readFileSync(join(target, "src/index.test.ts"), "utf-8");
-		expect(test).toContain("someThing.cli.collect");
+		expect(test).toContain("factory: someThing");
 	});
 });

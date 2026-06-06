@@ -108,7 +108,7 @@ function collectSolidUiPlugins(
 		order?: "default" | "reversed" | "ui-first";
 	} = {},
 ): { plugins: GraphPlugin[]; ctxFactory: GraphCtxFactory } {
-	const apiCollected = api.cli.collect({ app, options: {} });
+	const apiCollected = api.cli.collect({ app, options: api().options });
 	const viteCollected = vite.cli.collect({ app, options: {} });
 	const solidCollected = solid.cli.collect({ app, options: {} });
 	const solidUiCollected = solidUi.cli.collect({
@@ -424,7 +424,7 @@ describe("REVIEW #21 — home scaffold override (solid vs solid-ui)", () => {
 	it("solid-ui alone (no solid): no home scaffold lands; resolution does not error", async () => {
 		// Collect solid-ui without solid. Include api + vite so the graph
 		// has a full surface but no solid reader of homeScaffold.
-		const apiCollected = api.cli.collect({ app, options: {} });
+		const apiCollected = api.cli.collect({ app, options: api().options });
 		const viteCollected = vite.cli.collect({ app, options: {} });
 		const solidUiCollected = solidUi.cli.collect({ app, options: {} });
 		const plugins = [

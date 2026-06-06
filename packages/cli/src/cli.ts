@@ -2,6 +2,7 @@
 import { resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { log } from "@clack/prompts";
+import type { CommandContext } from "#lib/create-plugin";
 import { ConfigValidationError, StackError } from "#lib/errors";
 
 // `strict: false` lets plugin-subcommand flags (e.g. `stack db apply --remote`)
@@ -140,17 +141,18 @@ async function main(): Promise<void> {
 
 	const { loadConfig } = await import("#lib/config");
 	const { buildGraphFromConfig } = await import("#lib/build-graph");
-	const { findPluginCommand, parseCommandFlags, createCommandContext } =
-		await import("#lib/command-router");
+	const { findPluginCommand, parseCommandFlags } = await import(
+		"#lib/command-router"
+	);
 	const { createLogContext, createPromptContext } = await import("#lib/prompt");
 
 	const config = await loadConfig(configPath);
-	const { graph, sorted } = await buildGraphFromConfig({
+	const { graph, plugins } = await buildGraphFromConfig({
 		config,
 		cwd: process.cwd(),
 	});
 
-	const pluginClis = sorted.map((p) => p.cli);
+	const pluginClis = plugins.map((p) => p.cli);
 	const match = findPluginCommand(pluginClis, pluginName, commandName);
 
 	if (!match) {
@@ -159,15 +161,15 @@ async function main(): Promise<void> {
 	}
 
 	const flags = parseCommandFlags(match.command, process.argv.slice(2));
-	const plugin = sorted.find((p) => p.name === pluginName);
+	const plugin = plugins.find((p) => p.name === pluginName);
 
-	const ctx = createCommandContext({
+	const ctx: CommandContext<unknown> = {
 		options: plugin?.options ?? {},
 		cwd: process.cwd(),
 		resolve: (slot) => graph.resolve(slot),
 		log: createLogContext(),
 		prompt: createPromptContext(),
-	});
+	};
 
 	await match.command.handler(ctx, flags);
 }

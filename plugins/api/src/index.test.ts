@@ -83,7 +83,7 @@ function collectPlugins(
 	extras: GraphPlugin[] = [],
 	opts: ApiOptions = {},
 ): GraphPlugin[] {
-	const collected = api.cli.collect({ app, options: opts });
+	const collected = api.cli.collect({ app, options: api(opts).options });
 	const apiPlugin: GraphPlugin = {
 		name: "api",
 		slots: collected.slots as unknown as Record<

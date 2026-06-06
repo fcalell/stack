@@ -89,7 +89,7 @@ function collectAuthPlugins(opts: CollectOpts = {}): {
 	const withDb = opts.withDb ?? true;
 	const authOpts: AuthOptions = opts.authOpts ?? {};
 
-	const apiCollected = api.cli.collect({ app, options: {} });
+	const apiCollected = api.cli.collect({ app, options: api().options });
 	const cfCollected = cloudflare.cli.collect({ app, options: {} });
 	const dbCollected = withDb
 		? db.cli.collect({

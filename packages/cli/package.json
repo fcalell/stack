@@ -11,6 +11,7 @@
 	"exports": {
 		".": "./src/config.ts",
 		"./ast": "./src/ast/index.ts",
+		"./css": "./src/css.ts",
 		"./specs": "./src/specs.ts",
 		"./errors": "./src/lib/errors.ts",
 		"./slots": "./src/lib/slots.ts",

@@ -422,59 +422,6 @@ describe("renderTsSourceFile — TsExpression kinds", () => {
 			}),
 		).toBe("const x = <div>hi <span>there</span></div>;");
 	});
-
-	it("jsx fragment with expression child", () => {
-		expect(
-			renderExpr({
-				kind: "jsx-fragment",
-				children: [
-					{ kind: "identifier", name: "a" },
-					{
-						kind: "jsx",
-						tag: "b",
-						props: [],
-						children: [],
-					},
-				],
-			}),
-		).toBe("const x = <>{a}<b /></>;");
-	});
-
-	it("jsx fragment renders text children unwrapped (no braces)", () => {
-		expect(
-			renderExpr({
-				kind: "jsx-fragment",
-				children: [
-					{ kind: "text", value: "hi " },
-					{ kind: "jsx", tag: "b", props: [], children: [] },
-				],
-			}),
-		).toBe("const x = <>hi <b /></>;");
-	});
-
-	it("template literal with interpolations", () => {
-		const dollar = "$";
-		expect(
-			renderExpr({
-				kind: "template",
-				parts: ["hello ", { kind: "identifier", name: "name" }, "!"],
-			}),
-		).toBe(`const x = \`hello ${dollar}{name}!\`;`);
-	});
-
-	it("template literal escapes backticks and interpolations", () => {
-		// Input literal part: a`b${c}d
-		// Expected output: const x = `a\`b\${c}d`;
-		const dollar = "$";
-		const input = `a\`b${dollar}{c}d`;
-		const expected = `const x = \`a\\\`b\\${dollar}{c}d\`;`;
-		expect(
-			renderExpr({
-				kind: "template",
-				parts: [input],
-			}),
-		).toBe(expected);
-	});
 });
 
 describe("renderTsSourceFile — TsTypeRef kinds", () => {
@@ -492,45 +439,6 @@ describe("renderTsSourceFile — TsTypeRef kinds", () => {
 				args: [{ kind: "reference", name: "number" }],
 			}),
 		).toBe("export type T = Array<number>;");
-	});
-
-	it("literal string", () => {
-		expect(renderType({ kind: "literal", value: "on" })).toBe(
-			'export type T = "on";',
-		);
-	});
-
-	it("literal number and boolean", () => {
-		expect(renderType({ kind: "literal", value: 5 })).toBe(
-			"export type T = 5;",
-		);
-		expect(renderType({ kind: "literal", value: false })).toBe(
-			"export type T = false;",
-		);
-	});
-
-	it("union", () => {
-		expect(
-			renderType({
-				kind: "union",
-				types: [
-					{ kind: "literal", value: "a" },
-					{ kind: "literal", value: "b" },
-				],
-			}),
-		).toBe('export type T = "a" | "b";');
-	});
-
-	it("intersection", () => {
-		expect(
-			renderType({
-				kind: "intersection",
-				types: [
-					{ kind: "reference", name: "A" },
-					{ kind: "reference", name: "B" },
-				],
-			}),
-		).toBe("export type T = A & B;");
 	});
 
 	it("object type with optional and readonly members", () => {
@@ -561,43 +469,6 @@ describe("renderTsSourceFile — TsTypeRef kinds", () => {
 				element: { kind: "reference", name: "string" },
 			}),
 		).toBe("export type T = string[];");
-	});
-
-	it("array of union parenthesizes", () => {
-		expect(
-			renderType({
-				kind: "array",
-				element: {
-					kind: "union",
-					types: [
-						{ kind: "reference", name: "a" },
-						{ kind: "reference", name: "b" },
-					],
-				},
-			}),
-		).toBe("export type T = (a | b)[];");
-	});
-
-	it("tuple type", () => {
-		expect(
-			renderType({
-				kind: "tuple",
-				elements: [
-					{ kind: "reference", name: "string" },
-					{ kind: "reference", name: "number" },
-				],
-			}),
-		).toBe("export type T = [string, number];");
-	});
-
-	it("function type", () => {
-		expect(
-			renderType({
-				kind: "function",
-				params: [{ name: "n", type: { kind: "reference", name: "number" } }],
-				returnType: { kind: "reference", name: "string" },
-			}),
-		).toBe("export type T = (n: number) => string;");
 	});
 });
 

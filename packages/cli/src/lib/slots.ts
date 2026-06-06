@@ -69,9 +69,15 @@ export interface LogContext {
 	error(msg: string): void;
 }
 
-export interface ContributionCtx {
+// `TOptions` types `options`. It defaults to `unknown` — which is the only
+// sound type for a *contribution* fn, whose ctx may carry the contributing
+// (foreign) plugin's options when contributing cross-plugin. A slot's own
+// `seed`/`compute` always runs with the owning plugin's options, so those
+// callbacks can opt into a precise type by annotating their `ctx` parameter
+// (e.g. `compute: (inp, ctx: ContributionCtx<MyOptions>) => …`).
+export interface ContributionCtx<TOptions = unknown> {
 	app: AppConfig;
-	options: unknown;
+	options: TOptions;
 	cwd: string;
 	fileExists(path: string): Promise<boolean>;
 	readFile(path: string): Promise<string>;
@@ -155,19 +161,24 @@ interface ListOpts<T> extends SlotIdentity {
 
 interface MapOpts extends SlotIdentity {}
 
-interface ValueOpts<T> extends SlotIdentity {
-	seed?: (ctx: ContributionCtx) => T | Promise<T>;
+interface ValueOpts<T, TOptions = unknown> extends SlotIdentity {
+	seed?: (ctx: ContributionCtx<TOptions>) => T | Promise<T>;
 	override?: boolean;
 }
 
 type Resolved<S> = S extends Slot<infer T> ? T : never;
 
-interface DerivedOpts<T, I extends Record<string, Slot<unknown>>>
-	extends SlotIdentity {
-	inputs: I;
+interface DerivedOpts<
+	T,
+	I extends Record<string, Slot<unknown>>,
+	TOptions = unknown,
+> extends SlotIdentity {
+	// Optional: a derived slot that composes only from `ctx` (options/cwd) and
+	// no other slots omits `inputs` entirely instead of writing `inputs: {}`.
+	inputs?: I;
 	compute: (
 		inputs: { [K in keyof I]: Resolved<I[K]> },
-		ctx: ContributionCtx,
+		ctx: ContributionCtx<TOptions>,
 	) => T | Promise<T>;
 }
 
@@ -175,10 +186,10 @@ function attachContribute<T>(base: Omit<Slot<T>, "contribute">): Slot<T> {
 	const slot = base as Slot<T>;
 	(slot as { contribute: Slot<T>["contribute"] }).contribute = (fn) => ({
 		slot,
-		// Plugin name is re-stamped by the plugin builder (Phase B) when the
-		// contribution is attached to a plugin. For standalone use the string
-		// is filled later by the graph builder from the slot's source or from
-		// a plugin wrapper.
+		// Placeholder owner. `.contribute()` runs at slot-declaration time and
+		// doesn't know which plugin will own it; `plugin().collect()` stamps the
+		// real contributing-plugin name (and the graph builder enforces it again
+		// for any contribution that reached it without going through collect()).
 		plugin: "",
 		fn: fn as (ctx: ContributionCtx) => unknown,
 	});
@@ -209,22 +220,8 @@ function mapSlot<V>(opts: MapOpts): Slot<Record<string, V>> {
 	});
 }
 
-function valueSlot<T>(opts: ValueOpts<T>): Slot<T> {
-	return attachContribute<T>({
-		__brand: "slot",
-		id: Symbol(`${opts.source}:${opts.name}`),
-		source: opts.source,
-		name: opts.name,
-		kind: {
-			type: "value",
-			seed: opts.seed,
-			override: opts.override ?? false,
-		},
-	});
-}
-
-function derivedSlot<T, I extends Record<string, Slot<unknown>>>(
-	opts: DerivedOpts<T, I>,
+function valueSlot<T, TOptions = unknown>(
+	opts: ValueOpts<T, TOptions>,
 ): Slot<T> {
 	return attachContribute<T>({
 		__brand: "slot",
@@ -232,8 +229,26 @@ function derivedSlot<T, I extends Record<string, Slot<unknown>>>(
 		source: opts.source,
 		name: opts.name,
 		kind: {
+			type: "value",
+			seed: opts.seed as ((ctx: ContributionCtx) => T | Promise<T>) | undefined,
+			override: opts.override ?? false,
+		},
+	});
+}
+
+function derivedSlot<
+	T,
+	I extends Record<string, Slot<unknown>> = Record<string, never>,
+	TOptions = unknown,
+>(opts: DerivedOpts<T, I, TOptions>): Slot<T> {
+	return attachContribute<T>({
+		__brand: "slot",
+		id: Symbol(`${opts.source}:${opts.name}`),
+		source: opts.source,
+		name: opts.name,
+		kind: {
 			type: "derived",
-			inputs: opts.inputs,
+			inputs: opts.inputs ?? {},
 			compute: opts.compute as (
 				inputs: Record<string, unknown>,
 				ctx: ContributionCtx,

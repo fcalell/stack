@@ -1,10 +1,7 @@
 import type {
-	CommandContext,
 	CommandDefinition,
 	FlagDefinition,
 	InternalCliPlugin,
-	LogContext,
-	PromptContext,
 } from "#lib/create-plugin";
 import { StackError } from "#lib/errors";
 import type { Slot } from "#lib/slots";
@@ -127,34 +124,4 @@ export function parseCommandFlags(
 	}
 
 	return flags;
-}
-
-export function createCommandContext<TOptions>(opts: {
-	options: TOptions;
-	cwd: string;
-	resolve: <T>(slot: Slot<T>) => Promise<T>;
-	log: LogContext;
-	prompt: PromptContext;
-}): CommandContext<TOptions> {
-	return opts;
-}
-
-export function formatPluginCommands(plugins: AnyCliPlugin[]): string {
-	const lines: string[] = [];
-	for (const plugin of plugins) {
-		const entries = Object.entries(plugin.commands);
-		if (entries.length === 0) continue;
-
-		for (const [cmdName, cmd] of entries) {
-			const flagStr = cmd.options
-				? Object.entries(cmd.options as Record<string, FlagDefinition>)
-						.map(([k, _v]) => `--${k}`)
-						.join(" ")
-				: "";
-
-			const full = `${plugin.name} ${cmdName}${flagStr ? ` [${flagStr}]` : ""}`;
-			lines.push(`  ${full.padEnd(28)} ${cmd.description}`);
-		}
-	}
-	return lines.join("\n");
 }

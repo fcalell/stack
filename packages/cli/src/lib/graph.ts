@@ -46,9 +46,6 @@ export interface GraphCtxFactory {
 
 export interface Graph {
 	resolve<T>(slot: Slot<T>): Promise<T>;
-	resolveMany<S extends readonly Slot<unknown>[]>(
-		slots: S,
-	): Promise<{ [K in keyof S]: S[K] extends Slot<infer T> ? T : never }>;
 }
 
 // ── buildGraph ──────────────────────────────────────────────────────
@@ -98,7 +95,6 @@ export function buildGraph(
 	}
 
 	// Validate derived slot inputs and detect cycles up-front via 3-color DFS.
-	// This mirrors the pattern in discovery.ts:132-174.
 	detectCycles(slotById);
 
 	// Memoized resolve. Stored as the Promise so parallel callers share it
@@ -109,8 +105,6 @@ export function buildGraph(
 		resolve<T>(target: Slot<T>): Promise<T> {
 			return resolveSlot(target) as Promise<T>;
 		},
-		resolveMany: (async (slots) =>
-			Promise.all(slots.map((s) => resolveSlot(s)))) as Graph["resolveMany"],
 	};
 
 	function makeCtx(pluginName: string): ContributionCtx {

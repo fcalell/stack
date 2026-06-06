@@ -4,7 +4,7 @@ import {
 	type DiscoveredPlugin,
 	discoverPlugins,
 	loadAvailablePlugins,
-	sortByDependencies,
+	resolveRequiresClosure,
 	validateDependencies,
 } from "./discovery";
 
@@ -41,75 +41,34 @@ function makeDiscovered(
 	};
 }
 
-describe("sortByDependencies", () => {
-	it("returns plugins in dependency order", () => {
-		const discovered = [
-			makeDiscovered("auth", ["db"]),
-			makeDiscovered("db"),
-			makeDiscovered("api"),
-		];
+describe("resolveRequiresClosure", () => {
+	const available = [
+		makeDiscovered("cloudflare"),
+		makeDiscovered("api"),
+		makeDiscovered("db", ["cloudflare", "api"]),
+		makeDiscovered("auth", ["api", "cloudflare", "db"]),
+	];
 
-		const sorted = sortByDependencies(discovered);
-		const names = sorted.map((p) => p.name);
-
-		expect(names.indexOf("db")).toBeLessThan(names.indexOf("auth"));
+	it("pulls the full transitive requires chain (not just one level)", () => {
+		const closure = resolveRequiresClosure(["auth"], available);
+		// auth → db → {cloudflare, api}: every transitive dep is present.
+		expect([...closure].sort()).toEqual(["api", "auth", "cloudflare", "db"]);
 	});
 
-	it("handles plugins with no dependencies", () => {
-		const discovered = [makeDiscovered("app"), makeDiscovered("db")];
-
-		const sorted = sortByDependencies(discovered);
-		expect(sorted).toHaveLength(2);
+	it("orders each plugin's dependencies before it", () => {
+		const closure = resolveRequiresClosure(["auth"], available);
+		expect(closure.indexOf("db")).toBeLessThan(closure.indexOf("auth"));
+		expect(closure.indexOf("cloudflare")).toBeLessThan(closure.indexOf("db"));
+		expect(closure.indexOf("api")).toBeLessThan(closure.indexOf("db"));
 	});
 
-	it("handles empty list", () => {
-		const sorted = sortByDependencies([]);
-		expect(sorted).toHaveLength(0);
+	it("dedupes a requirement reached through multiple paths", () => {
+		const closure = resolveRequiresClosure(["auth"], available);
+		expect(closure.filter((n) => n === "api")).toHaveLength(1);
 	});
 
-	it("does not duplicate plugins", () => {
-		const discovered = [
-			makeDiscovered("auth", ["db"]),
-			makeDiscovered("api", ["db"]),
-			makeDiscovered("db"),
-		];
-
-		const sorted = sortByDependencies(discovered);
-		const names = sorted.map((p) => p.name);
-		expect(new Set(names).size).toBe(names.length);
-	});
-
-	it("sorts a valid linear chain A -> B -> C correctly", () => {
-		// C requires B, B requires A. Sorted order must place A before B before C.
-		const discovered = [
-			makeDiscovered("c", ["b"]),
-			makeDiscovered("b", ["a"]),
-			makeDiscovered("a"),
-		];
-
-		const sorted = sortByDependencies(discovered);
-		const names = sorted.map((p) => p.name);
-		expect(names).toEqual(["a", "b", "c"]);
-	});
-
-	it("throws on a two-plugin mutual dependency cycle", () => {
-		const discovered = [makeDiscovered("a", ["b"]), makeDiscovered("b", ["a"])];
-
-		expect(() => sortByDependencies(discovered)).toThrow(
-			/Circular plugin dependency: a -> b -> a/,
-		);
-	});
-
-	it("throws on a three-plugin cycle and includes the full path", () => {
-		const discovered = [
-			makeDiscovered("a", ["b"]),
-			makeDiscovered("b", ["c"]),
-			makeDiscovered("c", ["a"]),
-		];
-
-		expect(() => sortByDependencies(discovered)).toThrow(
-			/Circular plugin dependency: a -> b -> c -> a/,
-		);
+	it("passes an unknown (e.g. third-party) name through as a leaf", () => {
+		expect(resolveRequiresClosure(["widget"], available)).toEqual(["widget"]);
 	});
 });
 

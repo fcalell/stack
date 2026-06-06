@@ -1,3 +1,5 @@
+import { toPascalCase as pascalCase, toCamelCase } from "#lib/naming";
+
 interface PluginPackageJsonOptions {
 	name: string;
 	packageName: string;
@@ -89,29 +91,31 @@ export function pluginIndexTestTemplate(
 ): string {
 	const { name, packageName } = options;
 	const varName = toCamelCase(name);
-	return `import { describe, expect, it } from "vitest";
-import { ${varName}, type ${pascalCase(name)}Options } from "./index";
+	return `import { cliSlots } from "@fcalell/cli/cli-slots";
+import { buildTestGraphFromPlugins } from "@fcalell/cli/testing";
+import { describe, expect, it } from "vitest";
+import { ${varName} } from "./index";
 
+// Drive every test through a real graph and assert on a resolved slot VALUE —
+// never on identity echoes (\`${varName}.name\`, a slot's \`source\`, \`label\`),
+// which break only on rename and protect nothing. See the "Don't write
+// low-value tests" rule: a good test names a behavior whose break a real
+// consumer would feel.
 describe("${varName} plugin", () => {
-\tit("has the expected name, label, and package", () => {
-\t\texpect(${varName}.name).toBe("${name}");
-\t\texpect(${varName}.cli.label).toBeTypeOf("string");
-\t\texpect(${varName}.cli.package).toBe("${packageName}");
-\t});
-
-\tit("declares its example slot", () => {
-\t\texpect(${varName}.slots.example.source).toBe("${name}");
-\t\texpect(${varName}.slots.example.kind.type).toBe("list");
-\t});
-
-\tit("auto-contributes its package to cli.slots.initDeps", () => {
-\t\tconst options: ${pascalCase(name)}Options = {};
-\t\tconst { contributes } = ${varName}.cli.collect({
-\t\t\tapp: { name: "test-app", domain: "example.com" },
-\t\t\toptions,
+\tit("auto-wires its package into cli.slots.initDeps", async () => {
+\t\tconst { graph } = buildTestGraphFromPlugins({
+\t\t\tplugins: [{ factory: ${varName}, options: {} }],
 \t\t});
-\t\texpect(contributes.length).toBeGreaterThan(0);
+
+\t\tconst deps = await graph.resolve(cliSlots.initDeps);
+
+\t\texpect(deps).toHaveProperty("${packageName}");
 \t});
+
+\t// Once you uncomment \`example.contribute(...)\` in index.ts, assert on its
+\t// effect here, e.g.:
+\t//   const items = await graph.resolve(${varName}.slots.example);
+\t//   expect(items).toContain("hello");
 });
 `;
 }
@@ -186,13 +190,4 @@ export default defineConfig({
 
 MIT
 `;
-}
-
-function toCamelCase(name: string): string {
-	return name.replace(/-([a-z0-9])/g, (_, c: string) => c.toUpperCase());
-}
-
-function pascalCase(name: string): string {
-	const camel = toCamelCase(name);
-	return camel.charAt(0).toUpperCase() + camel.slice(1);
 }

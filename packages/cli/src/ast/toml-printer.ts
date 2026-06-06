@@ -3,8 +3,8 @@ import type { TomlDocument, TomlValue } from "#ast/specs";
 
 // Build a nested JS object that smol-toml's stringify can serialize.
 // - `root` entries become top-level keys.
-// - `tables[].path` becomes a nested object at that path.
-// - `arrayTables[].path` becomes an array of objects at that path.
+// - `arrayTables[].path` becomes an array of objects at that path
+//   (e.g. `["unsafe", "bindings"]` → `[[unsafe.bindings]]`).
 
 type MutableTomlTable = { [key: string]: TomlValue };
 
@@ -61,19 +61,6 @@ function resolveParent(
 
 export function renderToml(doc: TomlDocument): string {
 	const out: MutableTomlTable = { ...doc.root };
-
-	for (const table of doc.tables) {
-		if (table.path.length === 0) {
-			throw new Error("TOML table path must be non-empty");
-		}
-		const parent = resolveParent(out, table.path);
-		const leaf = table.path[table.path.length - 1];
-		if (leaf === undefined) {
-			throw new Error("TOML table path contains an undefined leaf");
-		}
-		const target = ensureObject(parent, leaf);
-		Object.assign(target, table.entries);
-	}
 
 	for (const aot of doc.arrayTables) {
 		if (aot.path.length === 0) {

@@ -1,7 +1,6 @@
 import type {
 	HtmlInjection,
 	ProviderSpec,
-	TsExpression,
 	TsImportSpec,
 } from "@fcalell/cli/ast";
 import { z } from "zod";
@@ -28,7 +27,8 @@ export type SolidOptions = z.input<typeof solidOptionsSchema>;
 
 export interface CodegenEntryPayload {
 	imports: TsImportSpec[];
-	mountExpression: TsExpression | null;
+	// Verbatim source for the root render call (or null to skip entry.tsx).
+	mountExpression: string | null;
 }
 
 export interface CodegenHtmlPayload {

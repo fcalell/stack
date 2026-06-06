@@ -1,9 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import {
-	findPluginCommand,
-	formatPluginCommands,
-	parseCommandFlags,
-} from "#lib/command-router";
+import { findPluginCommand, parseCommandFlags } from "#lib/command-router";
 import { plugin } from "#lib/create-plugin";
 
 const dbPlugin = plugin("db", {
@@ -202,25 +198,5 @@ describe("parseCommandFlags", () => {
 		expect(() => parseCommandFlags(cmd, ["--port", "abc"])).toThrow(
 			/Flag "--port" expects a number, got "abc"/,
 		);
-	});
-});
-
-describe("formatPluginCommands", () => {
-	it("formats commands for display", () => {
-		const output = formatPluginCommands(plugins);
-		expect(output).toContain("db push");
-		expect(output).toContain("Push schema to local database");
-		expect(output).toContain("db reset");
-		expect(output).toContain("db apply");
-	});
-
-	it("skips plugins with no commands", () => {
-		const output = formatPluginCommands(plugins);
-		expect(output).not.toContain("auth");
-	});
-
-	it("returns empty string when no plugins have commands", () => {
-		const output = formatPluginCommands([authPlugin.cli]);
-		expect(output).toBe("");
 	});
 });

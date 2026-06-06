@@ -6,7 +6,6 @@ import { plugin, slot } from "@fcalell/cli";
 import { cliSlots, emitArtifact } from "@fcalell/cli/cli-slots";
 import { aggregateDevVars, aggregateWrangler } from "./node/codegen";
 import {
-	type CloudflareOptions,
 	cloudflareOptionsSchema,
 	DEFAULT_COMPATIBILITY_DATE,
 	type WranglerBindingSpec,
@@ -56,16 +55,7 @@ const compatibilityDate = slot.value<string>({
 
 // Final wrangler.toml source. Pure derivation — no ordering dependency
 // between contributions; the aggregator reads every input slot at once.
-const wranglerToml = slot.derived<
-	string,
-	{
-		bindings: typeof bindings;
-		routes: typeof routes;
-		vars: typeof vars;
-		secrets: typeof secrets;
-		compatibilityDate: typeof compatibilityDate;
-	}
->({
+const wranglerToml = slot.derived({
 	source: SOURCE,
 	name: "wranglerToml",
 	inputs: {
@@ -75,7 +65,7 @@ const wranglerToml = slot.derived<
 		secrets,
 		compatibilityDate,
 	},
-	compute: (inp, ctx) => {
+	compute: (inp, ctx): string => {
 		const consumerWranglerPath = join(ctx.cwd, "wrangler.toml");
 		const consumerWrangler = existsSync(consumerWranglerPath)
 			? readFileSync(consumerWranglerPath, "utf-8")
@@ -94,18 +84,7 @@ const wranglerToml = slot.derived<
 	},
 });
 
-export const cloudflare = plugin<
-	"cloudflare",
-	CloudflareOptions,
-	{
-		bindings: typeof bindings;
-		routes: typeof routes;
-		vars: typeof vars;
-		secrets: typeof secrets;
-		compatibilityDate: typeof compatibilityDate;
-		wranglerToml: typeof wranglerToml;
-	}
->("cloudflare", {
+export const cloudflare = plugin("cloudflare", {
 	label: "Cloudflare",
 
 	schema: cloudflareOptionsSchema,

@@ -58,7 +58,7 @@ function collectDbPlugins(
 	// Resolve through the schema so collect() receives the post-validation
 	// (z.output) view it expects — defaults applied, no optional gaps.
 	const resolvedDbOpts = dbOptionsSchema.parse(dbOpts);
-	const apiCollected = api.cli.collect({ app, options: {} });
+	const apiCollected = api.cli.collect({ app, options: api().options });
 	const cfCollected = cloudflare.cli.collect({ app, options: {} });
 	const dbCollected = db.cli.collect({ app, options: resolvedDbOpts });
 	const apiPlugin: GraphPlugin = {

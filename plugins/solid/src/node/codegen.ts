@@ -17,13 +17,13 @@ import type {
 export function aggregateEntry(payload: CodegenEntryPayload): string | null {
 	if (!payload.mountExpression) return null;
 
-	const spec: TsSourceFile = {
+	// The mount is a fixed source snippet, not an AST tree — render the imports
+	// through the printer (for dedup + canonical ordering) and append it.
+	const importsBlock = renderTsSourceFile({
 		imports: payload.imports,
-		statements: [{ kind: "expression", value: payload.mountExpression }],
-	};
-
-	const rendered = renderTsSourceFile(spec);
-	return rendered.endsWith("\n") ? rendered : `${rendered}\n`;
+		statements: [],
+	}).trimEnd();
+	return `${importsBlock}\n${payload.mountExpression};\n`;
 }
 
 // Emits `.stack/virtual-providers.tsx`. Providers arrive pre-sorted ascending
@@ -101,7 +101,7 @@ export function aggregateProviders(
 	};
 
 	const rendered = renderTsSourceFile(spec);
-	return rendered.endsWith("\n") ? rendered : `${rendered}\n`;
+	return rendered;
 }
 
 // Renders `.stack/index.html` by loading the shell template and splicing
@@ -118,5 +118,5 @@ export async function aggregateHtml(
 	};
 
 	const out = await renderHtml(doc);
-	return out.endsWith("\n") ? out : `${out}\n`;
+	return out;
 }

@@ -53,7 +53,10 @@ function collectVitePlugins(
 	optsPerPlugin: Record<string, unknown> = {},
 	appOverride?: typeof app & { origins?: string[] },
 ): { plugins: GraphPlugin[]; ctxFactory: GraphCtxFactory } {
-	const apiCollected = api.cli.collect({ app, options: apiOpts ?? {} });
+	const apiCollected = api.cli.collect({
+		app,
+		options: api(apiOpts ?? {}).options,
+	});
 	const viteCollected = vite.cli.collect({ app, options: viteOpts ?? {} });
 	const apiPlugin: GraphPlugin = {
 		name: "api",
@@ -203,7 +206,7 @@ describe("vite → api.slots.corsOrigins contribution", () => {
 				api.slots.corsOrigins.contribute(() => "https://other.example"),
 			],
 		};
-		const apiCollected = api.cli.collect({ app, options: {} });
+		const apiCollected = api.cli.collect({ app, options: api().options });
 		const viteCollected = vite.cli.collect({ app, options: {} });
 		const apiP: GraphPlugin = {
 			name: "api",
@@ -329,7 +332,7 @@ describe("vite dev + build contributions", () => {
 				}),
 			}),
 		};
-		const apiCollected = api.cli.collect({ app, options: {} });
+		const apiCollected = api.cli.collect({ app, options: api().options });
 		const viteCollected = vite.cli.collect({ app, options: { port: 4000 } });
 		const apiP: GraphPlugin = {
 			name: "api",
@@ -385,7 +388,7 @@ describe("vite dev + build contributions", () => {
 				}),
 			}),
 		};
-		const apiCollected = api.cli.collect({ app, options: {} });
+		const apiCollected = api.cli.collect({ app, options: api().options });
 		const viteCollected = vite.cli.collect({ app, options: {} });
 		const g = buildGraph(
 			[
@@ -524,7 +527,7 @@ describe("vite.slots.devServerPort override propagates to CORS", () => {
 			name: "port-overrider",
 			contributes: [vite.slots.devServerPort.contribute(() => 5555)],
 		};
-		const apiCollected = api.cli.collect({ app, options: {} });
+		const apiCollected = api.cli.collect({ app, options: api().options });
 		const viteCollected = vite.cli.collect({ app, options: { port: 3000 } });
 		const apiP: GraphPlugin = {
 			name: "api",

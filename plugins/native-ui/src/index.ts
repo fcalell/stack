@@ -1,3 +1,4 @@
+import type { ContributionCtx } from "@fcalell/cli";
 import { plugin, slot } from "@fcalell/cli";
 import type { ProviderSpec, TsExpression } from "@fcalell/cli/ast";
 import { cliSlots, emitArtifact } from "@fcalell/cli/cli-slots";
@@ -51,23 +52,21 @@ const UNIWIND_METRO_ORDER = 100;
 // Resolved themes — consumer `themeTokens` option or the neutral defaults.
 // Mirrors solid-ui's `fonts` derivation: `??` only swaps in defaults on nullish
 // (the option schema already forbids an empty array).
-const themeTokens = slot.derived<ThemeSpec[], Record<string, never>>({
+const themeTokens = slot.derived({
 	source: SOURCE,
 	name: "themeTokens",
-	inputs: {},
-	compute: (_inp, ctx) => {
-		const opts = (ctx.options ?? {}) as NativeUiOptions;
+	compute: (_inp, ctx: ContributionCtx<NativeUiOptions>): ThemeSpec[] => {
+		const opts = ctx.options;
 		return opts.themeTokens ?? DEFAULT_THEMES;
 	},
 });
 
 // Resolved fonts — consumer `fonts` option or none.
-const fonts = slot.derived<NativeFontEntry[], Record<string, never>>({
+const fonts = slot.derived({
 	source: SOURCE,
 	name: "fonts",
-	inputs: {},
-	compute: (_inp, ctx) => {
-		const opts = (ctx.options ?? {}) as NativeUiOptions;
+	compute: (_inp, ctx: ContributionCtx<NativeUiOptions>): NativeFontEntry[] => {
+		const opts = ctx.options;
 		return opts.fonts ?? [];
 	},
 });
@@ -80,18 +79,11 @@ const appCssImports = slot.list<string>({
 
 // Rendered `.stack/global.css`. Always emits — uniwind needs the entry file
 // whenever native-ui is in the config.
-const appCssSource = slot.derived<
-	string | null,
-	{
-		themes: typeof themeTokens;
-		fontEntries: typeof fonts;
-		imports: typeof appCssImports;
-	}
->({
+const appCssSource = slot.derived({
 	source: SOURCE,
 	name: "appCssSource",
 	inputs: { themes: themeTokens, fontEntries: fonts, imports: appCssImports },
-	compute: (inp) =>
+	compute: (inp): string | null =>
 		aggregateGlobalCss({
 			themes: inp.themes,
 			fonts: inp.fontEntries,
@@ -189,16 +181,7 @@ function authProvider(opts: NativeUiOptions): ProviderSpec {
 	};
 }
 
-export const nativeUi = plugin<
-	"native-ui",
-	NativeUiOptions,
-	{
-		themeTokens: typeof themeTokens;
-		fonts: typeof fonts;
-		appCssImports: typeof appCssImports;
-		appCssSource: typeof appCssSource;
-	}
->("native-ui", {
+export const nativeUi = plugin("native-ui", {
 	label: "Native Design System",
 
 	schema: nativeUiOptionsSchema,
@@ -272,12 +255,8 @@ export const nativeUi = plugin<
 		expo.slots.providers.contribute(() => keyboardProvider),
 		expo.slots.providers.contribute(() => safeAreaProvider),
 		expo.slots.providers.contribute(() => bottomSheetProvider),
-		expo.slots.providers.contribute((ctx) =>
-			queryProvider((ctx.options ?? {}) as NativeUiOptions),
-		),
-		expo.slots.providers.contribute((ctx) =>
-			authProvider((ctx.options ?? {}) as NativeUiOptions),
-		),
+		expo.slots.providers.contribute(() => queryProvider(self.options)),
+		expo.slots.providers.contribute(() => authProvider(self.options)),
 
 		// ── Emit the uniwind entry stylesheet ─────────────────────────────
 		emitArtifact(GLOBAL_CSS_ARTIFACT, self.slots.appCssSource),
@@ -291,13 +270,11 @@ export const nativeUi = plugin<
 		// when the consumer points a provider at their own module via
 		// `queryClientModule` / `authClientModule`; that path is theirs to own.
 		cliSlots.initScaffolds.contribute((ctx) => {
-			const opts = (ctx.options ?? {}) as NativeUiOptions;
-			if (opts.queryClientModule) return undefined;
+			if (self.options.queryClientModule) return undefined;
 			return ctx.scaffold("lib-query.ts", "src/lib/query.ts");
 		}),
 		cliSlots.initScaffolds.contribute((ctx) => {
-			const opts = (ctx.options ?? {}) as NativeUiOptions;
-			if (opts.authClientModule) return undefined;
+			if (self.options.authClientModule) return undefined;
 			return ctx.scaffold("lib-auth.ts", "src/lib/auth.ts");
 		}),
 		cliSlots.removeFiles.contribute(() => [

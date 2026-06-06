@@ -277,7 +277,7 @@ describe("buildGraph: derived slots", () => {
 
 // ── Memoization + parallelism ───────────────────────────────────────
 
-describe("buildGraph: memoization + resolveMany", () => {
+describe("buildGraph: memoization + parallelism", () => {
 	it("resolve(s) twice runs contributions once", async () => {
 		const v = slot.value<number>({
 			source: "owner",
@@ -311,11 +311,11 @@ describe("buildGraph: memoization + resolveMany", () => {
 		});
 		const owner = plugin("owner", { slots: { a, d } });
 		const g = buildGraph([owner], makeCtxFactory());
-		await g.resolveMany([d, d, d] as const);
+		await Promise.all([g.resolve(d), g.resolve(d), g.resolve(d)]);
 		expect(computeFn).toHaveBeenCalledTimes(1);
 	});
 
-	it("resolveMany resolves independent slots in parallel", async () => {
+	it("resolves independent slots in parallel", async () => {
 		const started = { a: 0, b: 0 };
 		let aResolve: (v: number) => void = () => {};
 		let bResolve: (v: number) => void = () => {};
@@ -339,7 +339,7 @@ describe("buildGraph: memoization + resolveMany", () => {
 		});
 		const owner = plugin("owner", { slots: { a, b } });
 		const g = buildGraph([owner], makeCtxFactory());
-		const pending = g.resolveMany([a, b] as const);
+		const pending = Promise.all([g.resolve(a), g.resolve(b)]);
 		// Give the microtask queue a nudge so both seeds have started.
 		await new Promise((r) => setTimeout(r, 5));
 		expect(started.a).toBeGreaterThan(0);

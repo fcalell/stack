@@ -1,52 +1,12 @@
 import { writeFile as fsWriteFile } from "node:fs/promises";
-import {
-	generateCode,
-	loadFile,
-	type ProxifiedModule,
-	parseModule,
-} from "magicast";
+import { generateCode, loadFile, type ProxifiedModule } from "magicast";
+import { toCamelCase } from "#lib/naming";
 
 interface ConfigAst {
 	mod: ProxifiedModule;
 	/** The object literal passed to `defineConfig({...})`. */
 	// biome-ignore lint/suspicious/noExplicitAny: magicast proxies are dynamically typed
 	config: any;
-}
-
-function toCamelCase(name: string): string {
-	return name.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase());
-}
-
-/**
- * Check whether the `plugins: [...]` array in `stack.config.ts` contains a
- * call to the given plugin's factory. Accepts the kebab-case plugin slug
- * (e.g. `"solid-ui"`) and matches against the camelCase callee (`solidUi`)
- * that the config template emits.
- *
- * Returns `false` when the file can't be parsed or doesn't match the expected
- * shape — callers treat missing/invalid configs as "plugin not present".
- */
-export function hasPluginCall(source: string, pluginName: string): boolean {
-	const callee = toCamelCase(pluginName);
-	try {
-		const mod = parseModule(source);
-		// biome-ignore lint/suspicious/noExplicitAny: magicast proxies are dynamically typed
-		const defaultExport = mod.exports.default as any;
-		if (defaultExport?.$type !== "function-call") return false;
-		const args = defaultExport.$args;
-		if (!args || args.length === 0) return false;
-		const config = args[0];
-		if (config?.$type !== "object") return false;
-		const plugins = config.plugins;
-		if (plugins?.$type !== "array") return false;
-		for (let i = 0; i < plugins.length; i++) {
-			const p = plugins[i];
-			if (p?.$type === "function-call" && p.$callee === callee) return true;
-		}
-		return false;
-	} catch {
-		return false;
-	}
 }
 
 /**

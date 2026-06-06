@@ -71,28 +71,6 @@ function writeType(writer: CodeBlockWriter, type: TsTypeRef): void {
 			}
 			return;
 		}
-		case "literal": {
-			if (typeof type.value === "string") {
-				writer.quote(type.value);
-			} else {
-				writer.write(String(type.value));
-			}
-			return;
-		}
-		case "union": {
-			type.types.forEach((t, i) => {
-				if (i > 0) writer.write(" | ");
-				writeType(writer, t);
-			});
-			return;
-		}
-		case "intersection": {
-			type.types.forEach((t, i) => {
-				if (i > 0) writer.write(" & ");
-				writeType(writer, t);
-			});
-			return;
-		}
 		case "object": {
 			writer.write("{");
 			if (type.members.length > 0) {
@@ -111,35 +89,15 @@ function writeType(writer: CodeBlockWriter, type: TsTypeRef): void {
 			return;
 		}
 		case "array": {
-			// Parenthesize complex element types to preserve precedence.
-			const needsParens =
-				type.element.kind === "union" || type.element.kind === "intersection";
-			if (needsParens) writer.write("(");
 			writeType(writer, type.element);
-			if (needsParens) writer.write(")");
 			writer.write("[]");
 			return;
 		}
-		case "tuple": {
-			writer.write("[");
-			type.elements.forEach((el, i) => {
-				if (i > 0) writer.write(", ");
-				writeType(writer, el);
-			});
-			writer.write("]");
-			return;
-		}
-		case "function": {
-			writer.write("(");
-			type.params.forEach((p, i) => {
-				if (i > 0) writer.write(", ");
-				writer.write(p.name);
-				writer.write(": ");
-				writeType(writer, p.type);
-			});
-			writer.write(") => ");
-			writeType(writer, type.returnType);
-			return;
+		default: {
+			const _exhaustive: never = type;
+			throw new Error(
+				`writeType: unhandled TsTypeRef kind '${(_exhaustive as { kind: string }).kind}'`,
+			);
 		}
 	}
 }
@@ -161,7 +119,7 @@ function writeMemberName(writer: CodeBlockWriter, name: string): void {
 //
 // Numbers track the JS expression hierarchy (MDN "Operator precedence"):
 //   18: primaries — literals, identifiers, JSX, parenthesized exprs,
-//       template literals, object/array literals
+//       object/array literals
 //   17: member access, function calls, `new Foo(...)` with args (all
 //       left-associative; bare `new Foo` is also safe to treat at 17
 //       for the "wrap when looser" check we do here)
@@ -179,9 +137,7 @@ const PRECEDENCE: Record<TsExpression["kind"], number> = {
 	null: 18,
 	undefined: 18,
 	identifier: 18,
-	template: 18,
 	jsx: 18,
-	"jsx-fragment": 18,
 	object: 18,
 	array: 18,
 	member: 17,
@@ -225,8 +181,7 @@ function wrapForCast(writer: CodeBlockWriter, inner: TsExpression): void {
 	writeWrapped(writer, inner, wrap);
 }
 
-// Renders a JSX child consistently for both `jsx` and `jsx-fragment`
-// containers: text nodes are emitted verbatim, JSX elements/fragments
+// Renders a JSX child: text nodes are emitted verbatim, nested JSX elements
 // nest directly, and any other expression is embedded via braces.
 function writeJsxChild(
 	writer: CodeBlockWriter,
@@ -236,7 +191,7 @@ function writeJsxChild(
 		writer.write(child.value);
 		return;
 	}
-	if (child.kind === "jsx" || child.kind === "jsx-fragment") {
+	if (child.kind === "jsx") {
 		writeExpression(writer, child);
 		return;
 	}
@@ -394,32 +349,11 @@ function writeExpression(writer: CodeBlockWriter, expr: TsExpression): void {
 			writer.write(">");
 			return;
 		}
-		case "jsx-fragment": {
-			writer.write("<>");
-			for (const child of expr.children) {
-				writeJsxChild(writer, child);
-			}
-			writer.write("</>");
-			return;
-		}
-		case "template": {
-			writer.write("`");
-			for (const part of expr.parts) {
-				if (typeof part === "string") {
-					// Escape backticks, ${, and backslashes within the literal.
-					const escaped = part
-						.replace(/\\/g, "\\\\")
-						.replace(/`/g, "\\`")
-						.replace(/\$\{/g, "\\${");
-					writer.write(escaped);
-				} else {
-					writer.write("${");
-					writeExpression(writer, part);
-					writer.write("}");
-				}
-			}
-			writer.write("`");
-			return;
+		default: {
+			const _exhaustive: never = expr;
+			throw new Error(
+				`writeExpression: unhandled TsExpression kind '${(_exhaustive as { kind: string }).kind}'`,
+			);
 		}
 	}
 }

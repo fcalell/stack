@@ -107,5 +107,5 @@ export function aggregateViteConfig(payload: CodegenViteConfigPayload): string {
 	};
 
 	const rendered = renderTsSourceFile(spec);
-	return rendered.endsWith("\n") ? rendered : `${rendered}\n`;
+	return rendered;
 }

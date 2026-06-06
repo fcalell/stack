@@ -82,6 +82,19 @@ describe("cross-plugin dependency validation (requires)", () => {
 		);
 	});
 
+	it("solid without vite throws an actionable error (was a silent broken build)", async () => {
+		// solid contributes to vite's slots; before it declared `requires: ["vite"]`
+		// a vite-less config generated nothing for vite and failed silently.
+		const config = defineConfig({
+			app: { name: "app", domain: "example.com" },
+			plugins: [solid()],
+		});
+
+		await expect(buildTestGraph({ config, cwd })).rejects.toThrow(
+			/\[solid\] requires plugin 'vite'/,
+		);
+	});
+
 	it("duplicate plugin produces validation error", () => {
 		const config = defineConfig({
 			app: { name: "app", domain: "example.com" },

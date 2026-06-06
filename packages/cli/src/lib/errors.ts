@@ -66,21 +66,3 @@ export class ScaffoldError extends StackError {
 		this.name = "ScaffoldError";
 	}
 }
-
-export class EventHandlerError extends StackError {
-	constructor(
-		public readonly eventSource: string,
-		public readonly eventName: string,
-		public readonly cause: unknown,
-	) {
-		const detail = cause instanceof Error ? cause.message : String(cause);
-		super(
-			`Event ${eventSource}:${eventName} handler failed: ${detail}`,
-			"EVENT_HANDLER",
-		);
-		this.name = "EventHandlerError";
-		if (cause instanceof Error && cause.stack) {
-			this.stack = cause.stack;
-		}
-	}
-}
