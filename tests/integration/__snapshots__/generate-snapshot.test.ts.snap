@@ -57,7 +57,7 @@ import createWorker from "@fcalell/plugin-api/runtime";
 import authRuntime from "@fcalell/plugin-auth/runtime";
 import dbRuntime from "@fcalell/plugin-db/runtime";
 import authCallbacks from "../src/worker/plugins/auth";
-const worker = createWorker({ prefix: "/rpc", cors: ["https://example.com", "http://localhost:5173"] }).use(authRuntime({ secretVar: "AUTH_SECRET", appUrlVar: "APP_URL", trustedOrigins: ["https://example.com", "http://localhost:5173"], sameSite: "none", callbacks: authCallbacks })).use(dbRuntime({ binding: "DB_MAIN", schema: schema })).handler(routes);
+const worker = createWorker({ prefix: "/rpc", cors: ["https://example.com", "http://localhost:5173"] }).use(authRuntime({ emailOtp: true, secretVar: "AUTH_SECRET", appUrlVar: "APP_URL", trustedOrigins: ["https://example.com", "http://localhost:5173"], sameSite: "none", callbacks: authCallbacks })).use(dbRuntime({ binding: "DB_MAIN", schema: schema })).handler(routes);
 export type AppRouter = typeof worker._router;
 export default worker;
 ",
@@ -264,7 +264,7 @@ import middleware from "../src/worker/middleware";
 import authRuntime from "@fcalell/plugin-auth/runtime";
 import dbRuntime from "@fcalell/plugin-db/runtime";
 import authCallbacks from "../src/worker/plugins/auth";
-const worker = createWorker({ prefix: "/rpc", cors: ["https://example.com", "http://localhost:3000"] }).use(authRuntime({ secretVar: "AUTH_SECRET", appUrlVar: "APP_URL", trustedOrigins: ["https://example.com", "http://localhost:3000"], sameSite: "none", callbacks: authCallbacks })).use(dbRuntime({ binding: "DB_MAIN", schema: schema })).use(middleware).handler(routes);
+const worker = createWorker({ prefix: "/rpc", cors: ["https://example.com", "http://localhost:3000"] }).use(authRuntime({ emailOtp: true, secretVar: "AUTH_SECRET", appUrlVar: "APP_URL", trustedOrigins: ["https://example.com", "http://localhost:3000"], sameSite: "none", callbacks: authCallbacks })).use(dbRuntime({ binding: "DB_MAIN", schema: schema })).use(middleware).handler(routes);
 export type AppRouter = typeof worker._router;
 export default worker;
 ",
@@ -354,7 +354,7 @@ import middleware from "../src/worker/middleware";
 import authRuntime from "@fcalell/plugin-auth/runtime";
 import dbRuntime from "@fcalell/plugin-db/runtime";
 import authCallbacks from "../src/worker/plugins/auth";
-const worker = createWorker({ prefix: "/rpc", cors: ["https://example.com", "https://app.example.com", "http://localhost:3000"] }).use(authRuntime({ secretVar: "AUTH_SECRET", appUrlVar: "APP_URL", trustedOrigins: ["https://example.com", "https://app.example.com", "http://localhost:3000"], sameSite: "none", callbacks: authCallbacks })).use(dbRuntime({ binding: "DB_MAIN", schema: schema })).use(middleware).handler(routes);
+const worker = createWorker({ prefix: "/rpc", cors: ["https://example.com", "https://app.example.com", "http://localhost:3000"] }).use(authRuntime({ emailOtp: true, secretVar: "AUTH_SECRET", appUrlVar: "APP_URL", trustedOrigins: ["https://example.com", "https://app.example.com", "http://localhost:3000"], sameSite: "none", callbacks: authCallbacks })).use(dbRuntime({ binding: "DB_MAIN", schema: schema })).use(middleware).handler(routes);
 export type AppRouter = typeof worker._router;
 export default worker;
 ",
@@ -408,7 +408,7 @@ import createWorker from "@fcalell/plugin-api/runtime";
 import authRuntime from "@fcalell/plugin-auth/runtime";
 import dbRuntime from "@fcalell/plugin-db/runtime";
 import authCallbacks from "../src/worker/plugins/auth";
-const worker = createWorker({ prefix: "/rpc", cors: ["https://example.com", "https://app.example.com"] }).use(authRuntime({ secretVar: "AUTH_SECRET", appUrlVar: "APP_URL", trustedOrigins: ["https://example.com", "https://app.example.com"], callbacks: authCallbacks })).use(dbRuntime({ binding: "DB_MAIN", schema: schema })).handler(routes);
+const worker = createWorker({ prefix: "/rpc", cors: ["https://example.com", "https://app.example.com"] }).use(authRuntime({ emailOtp: true, secretVar: "AUTH_SECRET", appUrlVar: "APP_URL", trustedOrigins: ["https://example.com", "https://app.example.com"], callbacks: authCallbacks })).use(dbRuntime({ binding: "DB_MAIN", schema: schema })).handler(routes);
 export type AppRouter = typeof worker._router;
 export default worker;
 ",

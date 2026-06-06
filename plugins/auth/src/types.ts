@@ -43,6 +43,18 @@ const organizationObjectSchema = z.object({
 	additionalFields: z.record(z.string(), fieldConfigSchema).optional(),
 });
 
+const socialProviderConfigSchema = z.object({
+	clientIdVar: z.string().optional(),
+	clientSecretVar: z.string().optional(),
+});
+
+const appleProviderConfigSchema = socialProviderConfigSchema.extend({
+	// Native (Expo) Apple Sign-In issues the ID token to the app bundle id;
+	// Better Auth needs it to validate native tokens. Optional — the
+	// browser-redirect OAuth flow doesn't require it.
+	appBundleIdentifier: z.string().optional(),
+});
+
 export const authOptionsSchema = z.object({
 	cookies: z
 		.object({
@@ -71,6 +83,19 @@ export const authOptionsSchema = z.object({
 		})
 		.optional(),
 	organization: z.union([z.boolean(), organizationObjectSchema]).optional(),
+	// Email one-time-password sign-in. On by default; OAuth-only consumers set
+	// `false` to drop the email-OTP plugin and its required callback file.
+	emailOtp: z.boolean().default(true),
+	// OAuth social providers. `true` enables a provider with conventional env
+	// var names (e.g. GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET); an object
+	// overrides the var names. The runtime reads credentials from env at request
+	// time — only the var names are baked into the generated worker.
+	socialProviders: z
+		.object({
+			google: z.union([z.boolean(), socialProviderConfigSchema]).optional(),
+			apple: z.union([z.boolean(), appleProviderConfigSchema]).optional(),
+		})
+		.optional(),
 	secretVar: z.string().default("AUTH_SECRET"),
 	appUrlVar: z.string().default("APP_URL"),
 	rateLimiter: z
@@ -86,6 +111,76 @@ export const authOptionsSchema = z.object({
 
 // Input type: user-supplied options (defaults remain optional at input).
 export type AuthOptions = z.input<typeof authOptionsSchema>;
+
+// Post-validation view: every schema default is materialised.
+export type ResolvedAuthOptions = z.output<typeof authOptionsSchema>;
+
+export type SocialProviderName = "google" | "apple";
+
+export interface ResolvedSocialProvider {
+	clientIdVar: string;
+	clientSecretVar: string;
+	appBundleIdentifier?: string;
+}
+
+const CONVENTIONAL_PROVIDER_VARS: Record<
+	SocialProviderName,
+	{ clientIdVar: string; clientSecretVar: string }
+> = {
+	google: {
+		clientIdVar: "GOOGLE_CLIENT_ID",
+		clientSecretVar: "GOOGLE_CLIENT_SECRET",
+	},
+	apple: {
+		clientIdVar: "APPLE_CLIENT_ID",
+		clientSecretVar: "APPLE_CLIENT_SECRET",
+	},
+};
+
+// Superset of both provider config shapes — Google never sets
+// `appBundleIdentifier`, so accepting it as optional lets a single typed helper
+// handle both without a cast.
+type ProviderConfigOverrides = {
+	clientIdVar?: string;
+	clientSecretVar?: string;
+	appBundleIdentifier?: string;
+};
+
+function resolveProvider(
+	cfg: boolean | ProviderConfigOverrides | undefined,
+	conventional: { clientIdVar: string; clientSecretVar: string },
+): ResolvedSocialProvider | undefined {
+	if (!cfg) return undefined;
+	const overrides = cfg === true ? undefined : cfg;
+	const resolved: ResolvedSocialProvider = {
+		clientIdVar: overrides?.clientIdVar ?? conventional.clientIdVar,
+		clientSecretVar: overrides?.clientSecretVar ?? conventional.clientSecretVar,
+	};
+	if (overrides?.appBundleIdentifier) {
+		resolved.appBundleIdentifier = overrides.appBundleIdentifier;
+	}
+	return resolved;
+}
+
+// Normalize the consumer's `socialProviders` option into resolved env-var
+// references. `true` enables a provider with conventional var names; an object
+// overrides them. Disabled / absent providers are omitted, so the result keys
+// are exactly the enabled providers — both the secrets contribution and the
+// baked runtime config iterate this.
+export function resolveSocialProviders(
+	input: ResolvedAuthOptions["socialProviders"],
+): Partial<Record<SocialProviderName, ResolvedSocialProvider>> {
+	const out: Partial<Record<SocialProviderName, ResolvedSocialProvider>> = {};
+	if (!input) return out;
+	const google = resolveProvider(
+		input.google,
+		CONVENTIONAL_PROVIDER_VARS.google,
+	);
+	if (google) out.google = google;
+	const apple = resolveProvider(input.apple, CONVENTIONAL_PROVIDER_VARS.apple);
+	if (apple) out.apple = apple;
+	return out;
+}
 
 export interface AuthRuntimeOptions {
 	secretVar: string;

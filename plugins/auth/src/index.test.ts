@@ -668,6 +668,105 @@ describe("auth → api.slots.callbacks", () => {
 		const path = await g.resolve(auth.slots.callbackFile);
 		expect(path).toBe("src/worker/plugins/auth.ts");
 	});
+
+	// OAuth-only consumers set `emailOtp: false` and ship no callbacks. The
+	// required-file check must relax to a skip — wiring a missing file would
+	// otherwise abort generate for a perfectly valid pure-OAuth app.
+	it("skips callback wiring (no throw) when emailOtp is false and the file is absent", async () => {
+		const { plugins, ctxFactory } = collectAuthPlugins({
+			authOpts: { emailOtp: false, socialProviders: { apple: true } },
+			authFiles: new Set(),
+		});
+		const g = buildGraph(plugins, ctxFactory);
+		const callbacks = await g.resolve(api.slots.callbacks);
+		expect(callbacks.auth).toBeUndefined();
+	});
+});
+
+// ── Social providers (OAuth) ──────────────────────────────────────
+
+describe("auth → social providers", () => {
+	it("contributes client-id + client-secret secrets per enabled provider", async () => {
+		const { plugins, ctxFactory } = collectAuthPlugins({
+			authOpts: {
+				emailOtp: false,
+				socialProviders: { apple: true, google: true },
+			},
+		});
+		const g = buildGraph(plugins, ctxFactory);
+		const secrets = await g.resolve(cloudflare.slots.secrets);
+		const names = secrets.map((s) => s.name);
+		expect(names).toContain("GOOGLE_CLIENT_ID");
+		expect(names).toContain("GOOGLE_CLIENT_SECRET");
+		expect(names).toContain("APPLE_CLIENT_ID");
+		expect(names).toContain("APPLE_CLIENT_SECRET");
+	});
+
+	it("does not contribute provider secrets when none are configured", async () => {
+		const { plugins, ctxFactory } = collectAuthPlugins();
+		const g = buildGraph(plugins, ctxFactory);
+		const secrets = await g.resolve(cloudflare.slots.secrets);
+		const names = secrets.map((s) => s.name);
+		expect(names).not.toContain("GOOGLE_CLIENT_ID");
+		expect(names).not.toContain("APPLE_CLIENT_ID");
+	});
+
+	it("honours custom env-var names for a provider", async () => {
+		const { plugins, ctxFactory } = collectAuthPlugins({
+			authOpts: {
+				socialProviders: {
+					google: {
+						clientIdVar: "MY_GOOGLE_ID",
+						clientSecretVar: "MY_GOOGLE_SECRET",
+					},
+				},
+			},
+		});
+		const g = buildGraph(plugins, ctxFactory);
+		const secrets = await g.resolve(cloudflare.slots.secrets);
+		const names = secrets.map((s) => s.name);
+		expect(names).toContain("MY_GOOGLE_ID");
+		expect(names).toContain("MY_GOOGLE_SECRET");
+		expect(names).not.toContain("GOOGLE_CLIENT_ID");
+	});
+
+	// The runtime reads credentials from env at request time, so only the
+	// resolved var NAMES (never secrets) may be baked into the worker.
+	it("bakes resolved provider var-names into runtimeOptions", async () => {
+		const { plugins, ctxFactory } = collectAuthPlugins({
+			authOpts: {
+				emailOtp: false,
+				socialProviders: { apple: true, google: true },
+			},
+		});
+		const g = buildGraph(plugins, ctxFactory);
+		const opts = await g.resolve(auth.slots.runtimeOptions);
+		expect(opts.emailOtp).toEqual({ kind: "boolean", value: false });
+		expect(opts.socialProviders).toMatchObject({ kind: "object" });
+		// Flatten the emitted object literal into key→value strings.
+		const props = (
+			opts.socialProviders as {
+				properties: Array<{ key: string; value: unknown }>;
+			}
+		).properties;
+		const google = props.find((p) => p.key === "google")?.value as {
+			properties: Array<{ key: string; value: { value: string } }>;
+		};
+		const googleVars = Object.fromEntries(
+			google.properties.map((p) => [p.key, p.value.value]),
+		);
+		expect(googleVars).toEqual({
+			clientIdVar: "GOOGLE_CLIENT_ID",
+			clientSecretVar: "GOOGLE_CLIENT_SECRET",
+		});
+	});
+
+	it("omits socialProviders from runtimeOptions when none configured", async () => {
+		const { plugins, ctxFactory } = collectAuthPlugins();
+		const g = buildGraph(plugins, ctxFactory);
+		const opts = await g.resolve(auth.slots.runtimeOptions);
+		expect(opts.socialProviders).toBeUndefined();
+	});
 });
 
 // ── cli slots: scaffold (auto), deps, remove ──────────────────────

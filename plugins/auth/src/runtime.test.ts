@@ -124,4 +124,72 @@ describe("authRuntime", () => {
 			expect(result).toBeInstanceOf(Response);
 		});
 	});
+
+	describe("social providers + emailOtp opt-out", () => {
+		const googleOpts = {
+			...baseOpts,
+			socialProviders: {
+				google: {
+					clientIdVar: "GOOGLE_CLIENT_ID",
+					clientSecretVar: "GOOGLE_CLIENT_SECRET",
+				},
+			},
+		};
+
+		it("validateEnv throws when a provider's client-id var is missing", () => {
+			const runtime = authRuntime(googleOpts);
+			expect(() => runtime.validateEnv?.(validEnv)).toThrow(
+				"Missing env var: GOOGLE_CLIENT_ID",
+			);
+		});
+
+		it("validateEnv throws when a provider's client-secret var is missing", () => {
+			const runtime = authRuntime(googleOpts);
+			expect(() =>
+				runtime.validateEnv?.({ ...validEnv, GOOGLE_CLIENT_ID: "id" }),
+			).toThrow("Missing env var: GOOGLE_CLIENT_SECRET");
+		});
+
+		it("validateEnv passes when provider vars are present", () => {
+			const runtime = authRuntime(googleOpts);
+			expect(() =>
+				runtime.validateEnv?.({
+					...validEnv,
+					GOOGLE_CLIENT_ID: "id",
+					GOOGLE_CLIENT_SECRET: "secret",
+				}),
+			).not.toThrow();
+		});
+
+		// The headline: betterAuth (minimal) must accept a forwarded
+		// `socialProviders` config built from env, with email-OTP disabled.
+		it("builds an auth instance with social providers and emailOtp off", () => {
+			const runtime = authRuntime({
+				...baseOpts,
+				emailOtp: false,
+				socialProviders: {
+					google: {
+						clientIdVar: "GOOGLE_CLIENT_ID",
+						clientSecretVar: "GOOGLE_CLIENT_SECRET",
+					},
+					apple: {
+						clientIdVar: "APPLE_CLIENT_ID",
+						clientSecretVar: "APPLE_CLIENT_SECRET",
+						appBundleIdentifier: "app.example",
+					},
+				},
+			});
+			const env = {
+				...validEnv,
+				GOOGLE_CLIENT_ID: "gid",
+				GOOGLE_CLIENT_SECRET: "gsecret",
+				APPLE_CLIENT_ID: "aid",
+				APPLE_CLIENT_SECRET: "asecret",
+			};
+			const result = runtime.context(env, { db: mockDb }) as {
+				auth: { handler: unknown };
+			};
+			expect(typeof result.auth.handler).toBe("function");
+		});
+	});
 });

@@ -1,10 +1,16 @@
 import type { RuntimePlugin } from "@fcalell/cli/runtime";
+import type { BetterAuthPlugin } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { betterAuth } from "better-auth/minimal";
+import { type BetterAuthOptions, betterAuth } from "better-auth/minimal";
 import { emailOTP } from "better-auth/plugins/email-otp";
 import { organization } from "better-auth/plugins/organization";
 import { defaultOrgRoles } from "../access";
-import type { AuthRuntimeOptions, FieldConfig } from "../types";
+import type {
+	AuthRuntimeOptions,
+	FieldConfig,
+	ResolvedSocialProvider,
+	SocialProviderName,
+} from "../types";
 
 export interface AuthCallbacks {
 	sendOTP: (payload: { email: string; code: string }) => void | Promise<void>;
@@ -32,6 +38,11 @@ export interface AuthRuntimeInput extends AuthRuntimeOptions {
 				roles?: Record<string, unknown>;
 				additionalFields?: Record<string, FieldConfig>;
 		  };
+	// On by default; `false` drops the email-OTP plugin (OAuth-only consumers).
+	emailOtp?: boolean;
+	// Resolved provider → env-var references (var names, never secrets — the
+	// runtime reads credentials from `env` at request time).
+	socialProviders?: Partial<Record<SocialProviderName, ResolvedSocialProvider>>;
 }
 
 // biome-ignore lint/suspicious/noExplicitAny: better-auth returns a highly-generic Auth type we only forward.
@@ -49,14 +60,17 @@ function buildAuth(
 	db: unknown,
 	options: AuthRuntimeInput,
 ): AuthInstance {
-	// biome-ignore lint/suspicious/noExplicitAny: better-auth plugin list is heterogeneous.
-	const plugins: any[] = [
-		emailOTP({
-			sendVerificationOTP: async ({ email, otp }) => {
-				await options.callbacks?.sendOTP({ email, code: otp });
-			},
-		}),
-	];
+	const plugins: BetterAuthPlugin[] = [];
+
+	if (options.emailOtp !== false) {
+		plugins.push(
+			emailOTP({
+				sendVerificationOTP: async ({ email, otp }) => {
+					await options.callbacks?.sendOTP({ email, code: otp });
+				},
+			}),
+		);
+	}
 
 	if (options.organization) {
 		const orgConfig =
@@ -86,10 +100,33 @@ function buildAuth(
 		);
 	}
 
+	// Read each configured provider's credentials from env (never baked into
+	// the worker — only the var names are). Apple optionally carries the app
+	// bundle id for native ID-token validation.
+	const socialProviders: NonNullable<BetterAuthOptions["socialProviders"]> = {};
+	const google = options.socialProviders?.google;
+	if (google) {
+		socialProviders.google = {
+			clientId: env[google.clientIdVar] as string,
+			clientSecret: env[google.clientSecretVar] as string,
+		};
+	}
+	const apple = options.socialProviders?.apple;
+	if (apple) {
+		socialProviders.apple = {
+			clientId: env[apple.clientIdVar] as string,
+			clientSecret: env[apple.clientSecretVar] as string,
+			appBundleIdentifier: apple.appBundleIdentifier,
+		};
+	}
+	const socialProvidersOption =
+		Object.keys(socialProviders).length > 0 ? socialProviders : undefined;
+
 	return betterAuth({
 		baseURL: env[options.appUrlVar] as string,
 		secret: env[options.secretVar] as string,
 		trustedOrigins: options.trustedOrigins,
+		socialProviders: socialProvidersOption,
 		// biome-ignore lint/suspicious/noExplicitAny: drizzleAdapter DB type is opaque.
 		database: drizzleAdapter(db as any, { provider: "sqlite" }),
 		advanced: {
@@ -148,6 +185,15 @@ export default function authRuntime(
 			}
 			if (!e[options.appUrlVar]) {
 				throw new Error(`Missing env var: ${options.appUrlVar}`);
+			}
+			for (const provider of Object.values(options.socialProviders ?? {})) {
+				if (!provider) continue;
+				if (!e[provider.clientIdVar]) {
+					throw new Error(`Missing env var: ${provider.clientIdVar}`);
+				}
+				if (!e[provider.clientSecretVar]) {
+					throw new Error(`Missing env var: ${provider.clientSecretVar}`);
+				}
 			}
 		},
 		context(env, upstream) {

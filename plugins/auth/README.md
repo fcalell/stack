@@ -1,6 +1,6 @@
 # @fcalell/plugin-auth
 
-Authentication plugin for the `@fcalell/stack` framework. Wraps Better Auth with OTP login, organization RBAC, and session management -- all driven by config. Requires the `api`, `cloudflare`, and `db` plugins; reads `api.slots.cors` to derive its `trustedOrigins` automatically.
+Authentication plugin for the `@fcalell/stack` framework. Wraps Better Auth with email-OTP login, OAuth social providers (Apple + Google), organization RBAC, and session management -- all driven by config. Requires the `api`, `cloudflare`, and `db` plugins; reads `api.slots.cors` to derive its `trustedOrigins` automatically.
 
 ## Install
 
@@ -63,6 +63,33 @@ export default auth.defineCallbacks({
 
 `auth.defineCallbacks()` is a typed identity function -- it enforces the callback shapes declared via `callback<T>()` in the plugin definition. `sendOTP` is required; `sendInvitation` is optional (only needed when organizations are enabled).
 
+When email-OTP is disabled (`emailOtp: false`, see OAuth-only below) there are no required callbacks -- the callback file is optional, and an OAuth-only app can omit it entirely.
+
+### OAuth social providers (Apple + Google)
+
+Enable social sign-in via the `socialProviders` option. `true` uses conventional
+env-var names (`GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`, `APPLE_CLIENT_ID` /
+`APPLE_CLIENT_SECRET`); an object overrides them. The plugin contributes those
+client-id / client-secret secrets to `.dev.vars`, and the runtime reads the
+credentials from `env` at request time -- only the var **names** are baked into
+the generated worker. Set `emailOtp: false` for an OAuth-only app (drops the
+email-OTP plugin and its required callback file):
+
+```ts
+auth({
+  emailOtp: false,
+  socialProviders: {
+    google: true,
+    apple: true,
+    // or override env-var names / add native Apple bundle id:
+    // apple: { clientIdVar: "APPLE_ID", appBundleIdentifier: "com.example.app" },
+  },
+}),
+```
+
+The native client helpers `signInWith{Apple,Google}()` live on the `./expo`
+subpath (see below). The server decides which providers are actually configured.
+
 ### 3. Organizations and RBAC
 
 ```ts
@@ -122,6 +149,9 @@ type Session = InferSession<typeof config>;
 | `session.additionalFields` | `Record<string, FieldConfig>` | -- | Extra session fields |
 | `user.additionalFields` | `Record<string, FieldConfig>` | -- | Extra user fields |
 | `organization` | `boolean \| { ac, roles, additionalFields }` | -- | Enable organizations |
+| `emailOtp` | `boolean` | `true` | Email one-time-password sign-in; `false` for OAuth-only |
+| `socialProviders.google` | `boolean \| { clientIdVar, clientSecretVar }` | -- | Enable Google OAuth (`true` = conventional var names) |
+| `socialProviders.apple` | `boolean \| { clientIdVar, clientSecretVar, appBundleIdentifier }` | -- | Enable Apple OAuth (`true` = conventional var names) |
 | `secretVar` | `string` | `"AUTH_SECRET"` | Env variable name for the auth secret |
 | `appUrlVar` | `string` | `"APP_URL"` | Env variable name for the app URL |
 | `rateLimiter.ip.binding` | `string` | `"RATE_LIMITER_IP"` | IP rate limiter binding name |
@@ -135,7 +165,7 @@ type Session = InferSession<typeof config>;
 
 ## Bindings
 
-The plugin auto-declares four bindings (contributed via `cloudflare.slots.bindings` and `cloudflare.slots.secrets`):
+The plugin auto-declares four bindings (contributed via `cloudflare.slots.bindings` and `cloudflare.slots.secrets`), plus a client-id + client-secret secret per enabled OAuth provider:
 
 | Binding | Type | Default name | Dev default |
 |---------|------|--------------|-------------|
@@ -143,6 +173,8 @@ The plugin auto-declares four bindings (contributed via `cloudflare.slots.bindin
 | App URL | `secret` | `APP_URL` | `"http://localhost:3000"` |
 | IP rate limiter | `rate_limiter` | `RATE_LIMITER_IP` | 100 req / 60s |
 | Email rate limiter | `rate_limiter` | `RATE_LIMITER_EMAIL` | 5 req / 300s |
+| OAuth client id | `secret` | `GOOGLE_CLIENT_ID` / `APPLE_CLIENT_ID` | `"dev-oauth-client-id"` (per enabled provider) |
+| OAuth client secret | `secret` | `GOOGLE_CLIENT_SECRET` / `APPLE_CLIENT_SECRET` | `"dev-oauth-client-secret"` (per enabled provider) |
 
 All binding names are customizable via config options.
 
@@ -193,9 +225,9 @@ export const auth = plugin("auth", {
 | Target slot | Behavior |
 |-------------|----------|
 | `cloudflare.slots.bindings` | IP + email rate-limiter bindings |
-| `cloudflare.slots.secrets` | `AUTH_SECRET` + `APP_URL` (`.dev.vars` template) |
+| `cloudflare.slots.secrets` | `AUTH_SECRET` + `APP_URL` + a client-id/secret pair per enabled OAuth provider (`.dev.vars` template) |
 | `api.slots.pluginRuntimes` | `authRuntime({ ... })` runtime entry; options resolved from `auth.slots.runtimeOptions` |
-| `api.slots.callbacks` | Wires `src/worker/plugins/auth.ts` onto the auth runtime when the file exists |
+| `api.slots.callbacks` | Wires `src/worker/plugins/auth.ts` onto the auth runtime when the file exists; required only when `emailOtp` is enabled |
 | `cliSlots.initPrompts` | Cookie prefix + organization toggle |
 | `cliSlots.initScaffolds` (auto) | Scaffolds `src/worker/plugins/auth.ts` from `templates/callbacks.ts` |
 | `cliSlots.removeFiles` (auto) | `src/worker/plugins/auth.ts` |

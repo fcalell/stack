@@ -5,12 +5,12 @@ import { cliSlots } from "@fcalell/cli/cli-slots";
 import type { PluginRuntimeEntry } from "@fcalell/plugin-api";
 import { api } from "@fcalell/plugin-api";
 import { cloudflare } from "@fcalell/plugin-cloudflare";
-import type { z } from "zod";
-import { type AuthOptions, authOptionsSchema } from "./types";
-
-// Post-validation view: every schema default is materialised. Threaded into
-// `plugin()` as the 5th generic so `self.options` is the resolved shape.
-type ResolvedAuthOptions = z.output<typeof authOptionsSchema>;
+import {
+	type AuthOptions,
+	authOptionsSchema,
+	type ResolvedAuthOptions,
+	resolveSocialProviders,
+} from "./types";
 
 const SOURCE = "auth";
 
@@ -92,6 +92,17 @@ const runtimeOptions = slot.derived<
 		const rawOptions = { ...(ctx.options as Record<string, unknown>) };
 		delete rawOptions.callbacks;
 		delete rawOptions.rateLimiter;
+		// Bake resolved provider → env-var references (never the raw
+		// `true`/object input). Only var names are emitted; the runtime reads
+		// credentials from env. Drop the key entirely when no provider is set.
+		const resolvedProviders = resolveSocialProviders(
+			(ctx.options as ResolvedAuthOptions).socialProviders,
+		);
+		if (Object.keys(resolvedProviders).length > 0) {
+			rawOptions.socialProviders = resolvedProviders;
+		} else {
+			delete rawOptions.socialProviders;
+		}
 		const props = literalToProps(rawOptions);
 
 		// trustedOrigins: always emit an explicit array. Empty is
@@ -247,9 +258,20 @@ export const auth = plugin<
 		// fallback (worker-only). Never hardcoded to port 3000.
 		cloudflare.slots.secrets.contribute(async (ctx) => {
 			const devAppUrl = await ctx.resolve(self.slots.appUrlDevDefault);
+			// One client-id + client-secret entry per enabled OAuth provider, so
+			// the generated `.dev.vars` template prompts for real credentials.
+			const providerSecrets = Object.values(
+				resolveSocialProviders(self.options.socialProviders),
+			)
+				.filter((p): p is NonNullable<typeof p> => p !== undefined)
+				.flatMap((p) => [
+					{ name: p.clientIdVar, devDefault: "dev-oauth-client-id" },
+					{ name: p.clientSecretVar, devDefault: "dev-oauth-client-secret" },
+				]);
 			return [
 				{ name: self.options.secretVar, devDefault: "dev-secret-change-me" },
 				{ name: self.options.appUrlVar, devDefault: devAppUrl },
+				...providerSecrets,
 			];
 		}),
 
@@ -282,6 +304,9 @@ export const auth = plugin<
 			const path = await ctx.resolve(self.slots.callbackFile);
 			const exists = await ctx.fileExists(path);
 			if (!exists) {
+				// OAuth-only consumers (`emailOtp: false`) have no required
+				// callbacks — skip wiring instead of forcing a dead file.
+				if (self.options.emailOtp === false) return undefined;
 				throw new Error(
 					`plugin-auth: callback file \`${path}\` is missing. ` +
 						"plugin-auth declares a required `sendOTP` callback that must be " +
