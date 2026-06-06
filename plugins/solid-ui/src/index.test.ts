@@ -154,24 +154,6 @@ function collectSolidUiPlugins(
 	return { plugins, ctxFactory: makeCtxFactory(perPluginOptions) };
 }
 
-// ── Config factory ────────────────────────────────────────────────
-
-describe("solidUi config factory", () => {
-	it("returns PluginConfig with __plugin 'solid-ui'", () => {
-		const config = solidUi();
-		expect(config.__plugin).toBe("solid-ui");
-	});
-});
-
-describe("solidUi.slots", () => {
-	it("owns appCssImports, appCssLayers, fonts, appCssSource", () => {
-		expect(solidUi.slots.appCssImports.source).toBe("solid-ui");
-		expect(solidUi.slots.appCssLayers.source).toBe("solid-ui");
-		expect(solidUi.slots.fonts.source).toBe("solid-ui");
-		expect(solidUi.slots.appCssSource.source).toBe("solid-ui");
-	});
-});
-
 // ── fonts derivation ──────────────────────────────────────────────
 
 describe("solidUi.slots.fonts", () => {

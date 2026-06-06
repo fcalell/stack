@@ -8,7 +8,6 @@ import {
 import { api } from "@fcalell/plugin-api";
 import { expo } from "@fcalell/plugin-expo";
 import { describe, expect, it } from "vitest";
-import { DEFAULT_THEMES } from "./defaults";
 import { nativeUi } from "./index";
 import type { NativeUiOptions } from "./types";
 
@@ -78,33 +77,6 @@ function collect(
 		}),
 	};
 }
-
-// ── Config factory ─────────────────────────────────────────────────
-
-describe("native-ui config factory", () => {
-	it("returns PluginConfig with __plugin 'native-ui'", () => {
-		expect(nativeUi().__plugin).toBe("native-ui");
-	});
-
-	it("defaults to empty options", () => {
-		expect(nativeUi().options).toEqual({});
-	});
-});
-
-describe("native-ui.slots", () => {
-	it("owns the design-system slots", () => {
-		for (const name of [
-			"themeTokens",
-			"fonts",
-			"appCssImports",
-			"appCssSource",
-		]) {
-			expect(nativeUi.slots[name as keyof typeof nativeUi.slots].source).toBe(
-				"native-ui",
-			);
-		}
-	});
-});
 
 // ── global.css emission ────────────────────────────────────────────
 
@@ -333,12 +305,5 @@ describe("native-ui order invariance", () => {
 		expect(await gr.resolve(nativeUi.slots.appCssSource)).toEqual(
 			await gf.resolve(nativeUi.slots.appCssSource),
 		);
-	});
-
-	it("ships neutral default themes", () => {
-		expect(DEFAULT_THEMES.some((t) => t.name === "light" && t.default)).toBe(
-			true,
-		);
-		expect(DEFAULT_THEMES.some((t) => t.name === "dark")).toBe(true);
 	});
 });

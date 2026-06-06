@@ -8,7 +8,7 @@ import {
 import { api } from "@fcalell/plugin-api";
 import { cloudflare } from "@fcalell/plugin-cloudflare";
 import { db } from "@fcalell/plugin-db";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
 // Mock vite-like plugin that contributes the localhost dev-port origin to
 // api.slots.corsOrigins. We don't import `@fcalell/plugin-vite` directly —
@@ -158,21 +158,6 @@ function collectAuthPlugins(opts: CollectOpts = {}): {
 // ── Config factory ────────────────────────────────────────────────
 
 describe("auth config factory", () => {
-	it("returns PluginConfig with __plugin 'auth'", () => {
-		const config = auth({});
-		expect(config.__plugin).toBe("auth");
-	});
-
-	it("defaults secretVar to AUTH_SECRET", () => {
-		const config = auth({});
-		expect(config.options.secretVar).toBe("AUTH_SECRET");
-	});
-
-	it("defaults appUrlVar to APP_URL", () => {
-		const config = auth({});
-		expect(config.options.appUrlVar).toBe("APP_URL");
-	});
-
 	it("defaults rate limiter IP binding and values", () => {
 		const config = auth({});
 		expect(config.options.rateLimiter?.ip).toEqual({
@@ -288,30 +273,10 @@ describe("auth config factory", () => {
 // ── CLI metadata ──────────────────────────────────────────────────
 
 describe("auth.cli", () => {
-	it("has correct name and label", () => {
-		expect(auth.cli.name).toBe("auth");
-		expect(auth.cli.label).toBe("Auth");
-	});
-
 	it("declares api + cloudflare + db as requires (presence-only)", () => {
 		expect(auth.cli.requires).toEqual(
 			expect.arrayContaining(["api", "cloudflare", "db"]),
 		);
-	});
-});
-
-describe("auth.defineCallbacks", () => {
-	it("is present", () => {
-		expect(auth.defineCallbacks).toBeDefined();
-		expect(typeof auth.defineCallbacks).toBe("function");
-	});
-
-	it("returns the callbacks object as-is", () => {
-		const cbs = {
-			sendOTP: vi.fn(),
-			sendInvitation: vi.fn(),
-		};
-		expect(auth.defineCallbacks(cbs)).toBe(cbs);
 	});
 });
 

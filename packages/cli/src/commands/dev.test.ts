@@ -5,59 +5,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { attachWatcher } from "#commands/dev";
 import { plugin } from "#config";
 import { cliSlots } from "#lib/cli-slots";
-import type { DevReadyTask, ProcessSpec, WatcherSpec } from "#specs";
+import type { ProcessSpec } from "#specs";
 import { buildTestGraphFromPlugins } from "#testing";
 
 describe("dev slot resolution", () => {
-	it("aggregates processes, watchers, and ready setup across plugins", async () => {
-		const apiLike = plugin("dev-api", {
-			label: "API",
-			contributes: [
-				cliSlots.devProcesses.contribute(
-					(): ProcessSpec => ({
-						name: "wrangler",
-						command: "npx",
-						args: ["wrangler", "dev"],
-						readyPattern: /Ready on/,
-					}),
-				),
-				cliSlots.devWatchers.contribute(
-					(): WatcherSpec => ({
-						name: "routes",
-						paths: "src/worker/routes/**",
-						handler: async () => {},
-					}),
-				),
-			],
-		});
-		const dbLike = plugin("dev-db", {
-			label: "DB",
-			contributes: [
-				cliSlots.devReadySetup.contribute(
-					(): DevReadyTask => ({
-						name: "schema push",
-						run: async () => {},
-					}),
-				),
-			],
-		});
-
-		const { graph } = buildTestGraphFromPlugins({
-			plugins: [{ factory: apiLike }, { factory: dbLike }],
-		});
-
-		const [procs, watchers, ready] = await Promise.all([
-			graph.resolve(cliSlots.devProcesses),
-			graph.resolve(cliSlots.devWatchers),
-			graph.resolve(cliSlots.devReadySetup),
-		]);
-
-		expect(procs.map((p) => p.name)).toEqual(["wrangler"]);
-		expect(procs[0]?.readyPattern?.test("Ready on 8787")).toBe(true);
-		expect(watchers.map((w) => w.name)).toEqual(["routes"]);
-		expect(ready.map((r) => r.name)).toEqual(["schema push"]);
-	});
-
 	it("returns no FSWatcher handles when the watch path does not exist", () => {
 		const root = mkdtempSync(join(tmpdir(), "stack-dev-watch-"));
 		try {

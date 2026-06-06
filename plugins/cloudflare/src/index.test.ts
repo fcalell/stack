@@ -70,15 +70,6 @@ describe("cloudflare config factory", () => {
 // ── Slot ownership ────────────────────────────────────────────────
 
 describe("cloudflare.slots", () => {
-	it("owns bindings, routes, vars, secrets, compatibilityDate, wranglerToml", () => {
-		expect(cloudflare.slots.bindings.source).toBe("cloudflare");
-		expect(cloudflare.slots.routes.source).toBe("cloudflare");
-		expect(cloudflare.slots.vars.source).toBe("cloudflare");
-		expect(cloudflare.slots.secrets.source).toBe("cloudflare");
-		expect(cloudflare.slots.compatibilityDate.source).toBe("cloudflare");
-		expect(cloudflare.slots.wranglerToml.source).toBe("cloudflare");
-	});
-
 	it("compatibilityDate seeds to the pinned default (clock-independent)", async () => {
 		const { plugins, ctxFactory } = collectCloudflarePlugins();
 		const g = buildGraph(plugins, ctxFactory);

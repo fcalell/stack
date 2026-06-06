@@ -14,11 +14,6 @@ const validEnv = {
 const mockDb = { mock: true };
 
 describe("authRuntime", () => {
-	it("name is 'auth'", () => {
-		const runtime = authRuntime(baseOpts);
-		expect(runtime.name).toBe("auth");
-	});
-
 	describe("validateEnv", () => {
 		it("throws when secret var is missing from env", () => {
 			const runtime = authRuntime(baseOpts);

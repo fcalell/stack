@@ -112,36 +112,6 @@ function uiExtras(): GraphPlugin {
 	};
 }
 
-// ── Config factory ────────────────────────────────────────────────
-
-describe("expo config factory", () => {
-	it("returns PluginConfig with __plugin 'expo'", () => {
-		expect(expo().__plugin).toBe("expo");
-	});
-
-	it("defaults to empty options and accepts a custom port", () => {
-		expect(expo().options).toEqual({});
-		expect(expo({ port: 19000 }).options.port).toBe(19000);
-	});
-});
-
-describe("expo.slots", () => {
-	it("owns the native bootstrap slots", () => {
-		for (const name of [
-			"metroConfig",
-			"expoConfig",
-			"entrySource",
-			"routesDtsSource",
-			"devServerPort",
-			"routesPagesDir",
-			"easBuildProfiles",
-			"easUpdateChannel",
-		] as const) {
-			expect(expo.slots[name].source).toBe("expo");
-		}
-	});
-});
-
 // ── devServerPort + CORS ──────────────────────────────────────────
 
 describe("expo.slots.devServerPort", () => {
@@ -421,32 +391,6 @@ describe("expo EAS slots", () => {
 		const g = buildGraph(plugins, ctxFactory);
 		expect(await g.resolve(expo.slots.easBuildProfiles)).toEqual(["staging"]);
 		expect(await g.resolve(expo.slots.easUpdateChannel)).toBe("beta");
-	});
-});
-
-// ── commands ──────────────────────────────────────────────────────
-
-describe("expo commands", () => {
-	it("exposes dev / prebuild / build / update", () => {
-		expect(Object.keys(expo.cli.commands).sort()).toEqual([
-			"build",
-			"dev",
-			"prebuild",
-			"update",
-		]);
-	});
-});
-
-// ── auto-wired footprint ──────────────────────────────────────────
-
-describe("expo footprint", () => {
-	it("gitignores the Expo cache + prebuild outputs", () => {
-		expect(expo.cli.gitignore).toContain(".expo");
-	});
-
-	it("brings expo + expo-router consumer deps", () => {
-		expect(expo.cli.dependencies.expo).toBeDefined();
-		expect(expo.cli.dependencies["expo-router"]).toBeDefined();
 	});
 });
 

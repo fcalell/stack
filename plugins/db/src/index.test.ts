@@ -146,11 +146,6 @@ describe("db config factory", () => {
 // ── CLI metadata ──────────────────────────────────────────────────
 
 describe("db.cli metadata", () => {
-	it("has correct name and label", () => {
-		expect(db.cli.name).toBe("db");
-		expect(db.cli.label).toBe("Database");
-	});
-
 	it("exposes commands", () => {
 		expect(Object.keys(db.cli.commands)).toEqual(
 			expect.arrayContaining(["push", "generate", "apply", "reset"]),
@@ -535,15 +530,5 @@ describe("db schema push serialization", () => {
 		expect(callsA).toBe(1);
 
 		spy.mockRestore();
-	});
-});
-
-// ── defineCallbacks is absent (db has no callbacks) ───────────────
-
-describe("db has no callbacks", () => {
-	it("db.defineCallbacks is undefined", () => {
-		expect(
-			(db as unknown as { defineCallbacks?: unknown }).defineCallbacks,
-		).toBeUndefined();
 	});
 });

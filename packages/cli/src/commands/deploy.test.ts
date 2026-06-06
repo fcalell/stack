@@ -2,33 +2,11 @@ import { describe, expect, it } from "vitest";
 import { plugin } from "#config";
 import { cliSlots } from "#lib/cli-slots";
 import { StepFailedError } from "#lib/errors";
-import type { DeployCheck, DeployStep } from "#specs";
+import type { DeployStep } from "#specs";
 import { buildTestGraphFromPlugins } from "#testing";
 import { runDeploySteps } from "./deploy";
 
 describe("deploy slot resolution", () => {
-	it("aggregates deployChecks from every plugin", async () => {
-		const db = plugin("dc-db", {
-			label: "DB",
-			contributes: [
-				cliSlots.deployChecks.contribute(
-					(): DeployCheck => ({
-						plugin: "db",
-						description: "Apply migrations",
-						items: [{ label: "0001_init" }],
-						action: async () => {},
-					}),
-				),
-			],
-		});
-		const { graph } = buildTestGraphFromPlugins({
-			plugins: [{ factory: db }],
-		});
-		const checks = await graph.resolve(cliSlots.deployChecks);
-		expect(checks).toHaveLength(1);
-		expect(checks[0]?.plugin).toBe("db");
-	});
-
 	it("sorts deploySteps by phase regardless of plugin order", async () => {
 		const post = plugin("ds-post", {
 			label: "post",

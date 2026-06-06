@@ -10,11 +10,6 @@ import dbRuntime from "./worker/index";
 const mockedCreateClient = vi.mocked(createClient);
 
 describe("dbRuntime", () => {
-	it("name is 'db'", () => {
-		const runtime = dbRuntime({ binding: "DB_MAIN", schema: { users: {} } });
-		expect(runtime.name).toBe("db");
-	});
-
 	describe("validateEnv", () => {
 		it("throws when binding is missing from env", () => {
 			const runtime = dbRuntime({ binding: "DB_MAIN", schema: {} });

@@ -5,35 +5,6 @@ import { slot } from "#lib/slots";
 import { buildTestGraphFromPlugins } from "#testing";
 
 describe("cliSlots inventory", () => {
-	const expected = [
-		["initPrompts", "list"],
-		["initScaffolds", "list"],
-		["initDeps", "map"],
-		["initDevDeps", "map"],
-		["packageJsonFields", "map"],
-		["gitignore", "list"],
-		["artifactFiles", "list"],
-		["postWrite", "list"],
-		["devProcesses", "list"],
-		["devWatchers", "list"],
-		["devReadySetup", "list"],
-		["buildSteps", "list"],
-		["deployChecks", "list"],
-		["deploySteps", "list"],
-		["removeFiles", "list"],
-		["removeDeps", "list"],
-		["removeDevDeps", "list"],
-	] as const;
-
-	for (const [name, kindType] of expected) {
-		it(`exposes ${name} with kind ${kindType} and source="cli"`, () => {
-			const token = cliSlots[name as keyof typeof cliSlots];
-			expect(token.source).toBe("cli");
-			expect(token.name).toBe(name);
-			expect(token.kind.type).toBe(kindType);
-		});
-	}
-
 	it("buildSteps and deploySteps declare a sortBy comparator", () => {
 		const build = cliSlots.buildSteps.kind;
 		const deploy = cliSlots.deploySteps.kind;

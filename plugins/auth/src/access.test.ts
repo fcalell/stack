@@ -11,11 +11,6 @@ describe("createAccessControl", () => {
 		expect(ac.statements).toBe(statements);
 	});
 
-	it("returns object with newRole function", () => {
-		const ac = createAccessControl({ project: ["create"] } as const);
-		expect(typeof ac.newRole).toBe("function");
-	});
-
 	it("newRole returns the permissions object", () => {
 		const ac = createAccessControl({
 			project: ["create", "read"],
@@ -60,27 +55,12 @@ describe("getStatements", () => {
 });
 
 describe("defaultOrgRoles", () => {
-	it("defines owner, admin, and member roles", () => {
-		expect(defaultOrgRoles).toHaveProperty("owner");
-		expect(defaultOrgRoles).toHaveProperty("admin");
-		expect(defaultOrgRoles).toHaveProperty("member");
-	});
-
 	it("owner role has all permissions", () => {
 		expect(defaultOrgRoles.owner).toEqual({
 			organization: ["update", "delete"],
 			member: ["create", "update", "delete"],
 			invitation: ["create", "cancel"],
 			team: ["create", "update", "delete"],
-		});
-	});
-
-	it("member role has empty permissions", () => {
-		expect(defaultOrgRoles.member).toEqual({
-			organization: [],
-			member: [],
-			invitation: [],
-			team: [],
 		});
 	});
 });

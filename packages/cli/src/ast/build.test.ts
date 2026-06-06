@@ -1,26 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-	arr,
-	arrow,
-	call,
-	id,
-	importDefault,
-	importNamed,
-	jsx,
-	literal,
-	mem,
-	num,
-	obj,
-	str,
-} from "#ast/build";
-
-describe("primitive builders", () => {
-	it("str / num / id", () => {
-		expect(str("hi")).toEqual({ kind: "string", value: "hi" });
-		expect(num(42)).toEqual({ kind: "number", value: 42 });
-		expect(id("foo")).toEqual({ kind: "identifier", name: "foo" });
-	});
-});
+import { arr, arrow, call, id, jsx, literal, mem, num, obj } from "#ast/build";
 
 describe("obj", () => {
 	it("coerces primitives in a record", () => {
@@ -222,21 +201,6 @@ describe("literal", () => {
 					},
 				},
 			],
-		});
-	});
-});
-
-describe("import builders", () => {
-	it("importDefault + importNamed", () => {
-		expect(importDefault("pkg", "Foo")).toEqual({
-			source: "pkg",
-			default: "Foo",
-			typeOnly: undefined,
-		});
-		expect(importNamed("pkg", ["Bar"], { typeOnly: true })).toEqual({
-			source: "pkg",
-			named: ["Bar"],
-			typeOnly: true,
 		});
 	});
 });

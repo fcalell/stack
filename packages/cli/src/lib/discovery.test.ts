@@ -3,9 +3,7 @@ import type { StackConfig } from "#config";
 import {
 	type DiscoveredPlugin,
 	discoverPlugins,
-	FIRST_PARTY_PLUGINS,
 	loadAvailablePlugins,
-	PLUGIN_NAMES,
 	sortByDependencies,
 	validateDependencies,
 } from "./discovery";
@@ -128,25 +126,6 @@ describe("validateDependencies", () => {
 		const discovered = [makeDiscovered("auth", ["db"]), makeDiscovered("db")];
 
 		expect(() => validateDependencies(discovered)).not.toThrow();
-	});
-});
-
-describe("PLUGIN_NAMES", () => {
-	it("contains the core plugins", () => {
-		expect(PLUGIN_NAMES).toContain("db");
-		expect(PLUGIN_NAMES).toContain("auth");
-		expect(PLUGIN_NAMES).toContain("api");
-		expect(PLUGIN_NAMES).toContain("vite");
-		expect(PLUGIN_NAMES).toContain("solid");
-		expect(PLUGIN_NAMES).toContain("solid-ui");
-	});
-});
-
-describe("FIRST_PARTY_PLUGINS", () => {
-	it("maps each first-party plugin name to its @fcalell/plugin-* package", () => {
-		for (const entry of FIRST_PARTY_PLUGINS) {
-			expect(entry.package).toBe(`@fcalell/plugin-${entry.name}`);
-		}
 	});
 });
 

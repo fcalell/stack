@@ -124,19 +124,6 @@ describe("api config factory", () => {
 	});
 });
 
-// ── Slot ownership ────────────────────────────────────────────────
-
-describe("api.slots", () => {
-	it("owns workerImports, pluginRuntimes, middlewareEntries, cors, callbacks", () => {
-		expect(api.slots.workerImports.source).toBe("api");
-		expect(api.slots.pluginRuntimes.source).toBe("api");
-		expect(api.slots.middlewareEntries.source).toBe("api");
-		expect(api.slots.cors.source).toBe("api");
-		expect(api.slots.callbacks.source).toBe("api");
-		expect(api.slots.workerSource.source).toBe("api");
-	});
-});
-
 // ── cors — order-independence ─────────────────────────────────────
 //
 // Reversing the plugin order must not change cors output — the slot

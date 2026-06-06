@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-	type Contribution,
 	composeList,
 	composeMap,
 	composeValue,
@@ -8,53 +7,6 @@ import {
 	SlotError,
 	slot,
 } from "#lib/slots";
-
-describe("slot builders", () => {
-	it("list slot: constructs a Slot<T[]> with a contribute helper", () => {
-		const s = slot.list<number>({ source: "p", name: "nums" });
-		expect(s.__brand).toBe("slot");
-		expect(s.source).toBe("p");
-		expect(s.name).toBe("nums");
-		expect(s.kind.type).toBe("list");
-		const contribution: Contribution<number[]> = s.contribute(() => 1);
-		expect(contribution.slot).toBe(s);
-		expect(typeof contribution.fn).toBe("function");
-	});
-
-	it("map slot: builds with correct kind", () => {
-		const s = slot.map<string>({ source: "p", name: "things" });
-		expect(s.kind.type).toBe("map");
-	});
-
-	it("value slot: preserves seed + override flags", () => {
-		const seed = () => "hi";
-		const s = slot.value<string>({
-			source: "p",
-			name: "v",
-			seed,
-			override: true,
-		});
-		expect(s.kind.type).toBe("value");
-		if (s.kind.type === "value") {
-			expect(s.kind.seed).toBe(seed);
-			expect(s.kind.override).toBe(true);
-		}
-	});
-
-	it("derived slot: captures inputs and compute", () => {
-		const a = slot.value<number>({ source: "p", name: "a", seed: () => 1 });
-		const s = slot.derived({
-			source: "p",
-			name: "d",
-			inputs: { a },
-			compute: (inp) => inp.a * 2,
-		});
-		expect(s.kind.type).toBe("derived");
-		if (s.kind.type === "derived") {
-			expect(s.kind.inputs.a).toBe(a);
-		}
-	});
-});
 
 describe("composeList", () => {
 	it("flattens mix of single + array + undefined contributions", () => {

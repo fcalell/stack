@@ -98,26 +98,6 @@ function collectSolidPlugins(
 // ── Config factory ────────────────────────────────────────────────
 
 describe("solid config factory", () => {
-	it("returns PluginConfig with __plugin 'solid'", () => {
-		const config = solid();
-		expect(config.__plugin).toBe("solid");
-	});
-
-	it("defaults to empty options", () => {
-		const config = solid();
-		expect(config.options).toEqual({});
-	});
-
-	it("accepts routes config", () => {
-		const config = solid({ routes: { pagesDir: "src/pages" } });
-		expect(config.options.routes).toEqual({ pagesDir: "src/pages" });
-	});
-
-	it("accepts a non-empty pagesDir", () => {
-		const config = solid({ routes: { pagesDir: "src/pages" } });
-		expect(config.options.routes).toEqual({ pagesDir: "src/pages" });
-	});
-
 	it("throws on empty pagesDir", () => {
 		expect(() => solid({ routes: { pagesDir: "" } })).toThrow(
 			/pagesDir cannot be empty/,
@@ -127,28 +107,6 @@ describe("solid config factory", () => {
 	it("accepts routes: false to disable routing", () => {
 		const config = solid({ routes: false });
 		expect(config.options.routes).toBe(false);
-	});
-});
-
-// ── Slot ownership ────────────────────────────────────────────────
-
-describe("solid.slots", () => {
-	it("owns providers, entryImports, mountExpression, htmlShell, htmlHead, htmlBodyEnd", () => {
-		expect(solid.slots.providers.source).toBe("solid");
-		expect(solid.slots.entryImports.source).toBe("solid");
-		expect(solid.slots.mountExpression.source).toBe("solid");
-		expect(solid.slots.htmlShell.source).toBe("solid");
-		expect(solid.slots.htmlHead.source).toBe("solid");
-		expect(solid.slots.htmlBodyEnd.source).toBe("solid");
-	});
-
-	it("owns the *Source derived slots + routesPagesDir + homeScaffold", () => {
-		expect(solid.slots.routesPagesDir.source).toBe("solid");
-		expect(solid.slots.entrySource.source).toBe("solid");
-		expect(solid.slots.htmlSource.source).toBe("solid");
-		expect(solid.slots.providersSource.source).toBe("solid");
-		expect(solid.slots.routesDtsSource.source).toBe("solid");
-		expect(solid.slots.homeScaffold.source).toBe("solid");
 	});
 });
 

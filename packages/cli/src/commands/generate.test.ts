@@ -5,7 +5,6 @@ import { afterEach, describe, expect, it } from "vitest";
 import { plugin } from "#config";
 import { cliSlots } from "#lib/cli-slots";
 import { ConfigLoadError, ConfigValidationError } from "#lib/errors";
-import type { GeneratedFile } from "#specs";
 import { buildTestGraphFromPlugins } from "#testing";
 import { generate } from "./generate";
 
@@ -14,56 +13,6 @@ import { generate } from "./generate";
 // `generateFromConfig` does internally, without the `discoverPlugins`
 // dynamic-import.
 describe("artifactFiles + postWrite resolution (the generate path)", () => {
-	it("concats artifact contributions from every plugin", async () => {
-		const fakeA = plugin("fake-a", {
-			label: "A",
-			contributes: [
-				cliSlots.artifactFiles.contribute(
-					(): GeneratedFile => ({ path: ".stack/a.txt", content: "a" }),
-				),
-			],
-		});
-		const fakeB = plugin("fake-b", {
-			label: "B",
-			contributes: [
-				cliSlots.artifactFiles.contribute(
-					(): GeneratedFile => ({ path: ".stack/b.txt", content: "b" }),
-				),
-			],
-		});
-
-		const { graph } = buildTestGraphFromPlugins({
-			plugins: [{ factory: fakeA }, { factory: fakeB }],
-		});
-		const files = await graph.resolve(cliSlots.artifactFiles);
-		expect(files).toHaveLength(2);
-		expect(files.map((f) => f.path).sort()).toEqual([
-			".stack/a.txt",
-			".stack/b.txt",
-		]);
-	});
-
-	it("collects postWrite hooks in resolution order", async () => {
-		const calls: string[] = [];
-		const fake = plugin("fake-pw", {
-			label: "PW",
-			contributes: [
-				cliSlots.postWrite.contribute(() => async () => {
-					calls.push("one");
-				}),
-				cliSlots.postWrite.contribute(() => async () => {
-					calls.push("two");
-				}),
-			],
-		});
-		const { graph } = buildTestGraphFromPlugins({
-			plugins: [{ factory: fake }],
-		});
-		const hooks = await graph.resolve(cliSlots.postWrite);
-		for (const h of hooks) await h();
-		expect(calls).toEqual(["one", "two"]);
-	});
-
 	it("resolves identically regardless of plugin order", async () => {
 		const fakeA = plugin("fake-ord-a", {
 			label: "A",

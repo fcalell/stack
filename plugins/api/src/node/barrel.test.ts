@@ -161,17 +161,3 @@ describe("generateRouteBarrel", () => {
 		expect(result).toContain('export * from "./users";');
 	});
 });
-
-describe("generateRouteBarrel — empty signal", () => {
-	// The artifact source must be distinguishable from a non-empty barrel
-	// so the CLI can skip the file emission when there's nothing to barrel.
-	// We surface that as "returns null when no routes contribute" — see the
-	// callsite in plugins/api/src/index.ts which uses emitArtifact.
-	it("exposes a way to detect 'no routes' (used by the source slot)", () => {
-		// Implementation detail: `generateRouteBarrel` returns header-only
-		// output for the empty case. The plugin's source slot wraps this
-		// and returns null instead — verified in plugins/api/src/index.test.ts.
-		const result = generateRouteBarrel(cwd);
-		expect(result).not.toContain("export * from");
-	});
-});

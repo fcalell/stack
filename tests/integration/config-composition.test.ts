@@ -81,15 +81,6 @@ describe("defineConfig with multiple plugin combinations", () => {
 		);
 	});
 
-	it("app.domain is preserved through config", () => {
-		const config = defineConfig({
-			app: { name: "myapp", domain: "myapp.example.com" },
-			plugins: [vite(), solid()],
-		});
-
-		expect(config.app.domain).toBe("myapp.example.com");
-	});
-
 	it("plugin order does not matter for validation", () => {
 		const configAscending = defineConfig({
 			app,

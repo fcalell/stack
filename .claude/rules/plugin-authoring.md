@@ -321,7 +321,7 @@ contributes: [
 
 ## Testing
 
-Drive tests through the real graph. Two helpers in `@fcalell/cli/testing`:
+Drive tests through the real graph, and only write tests that can actually fail on a real bug — see "Don't write low-value tests" in `CLAUDE.md`. Don't add a test that asserts a slot's `source`, a plugin's `__plugin`/`label`, a schema default echoed back, or that aggregation works; assert your contribution's *effect* on the resolved value. Two helpers in `@fcalell/cli/testing`:
 
 - `runStackGenerate({ config })` — runs the full generate procedure against a `defineConfig({ ... })` fixture. Returns `{ files, postWrite }`.
 - `buildTestGraph({ config })` / `buildTestGraphFromPlugins({ plugins: [{ factory, options }] })` — returns `{ graph, collected }`. Use `graph.resolve(slot)` to assert on a specific slot value.

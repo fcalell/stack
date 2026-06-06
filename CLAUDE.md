@@ -318,6 +318,22 @@ A test that passes while the production code is broken is worse than no test —
 
 When in doubt: if you deleted the test and kept the production change, would a real consumer still succeed? If the test can pass on inputs a real consumer can't produce, it's not testing what you think.
 
+### Don't write low-value tests
+
+Coverage is not the goal; catching regressions is. A test that can only fail when you rename an identifier protects nothing and dilutes the signal of the suite — it's worse than no test, because green now means less. Before writing one, ask: **what production bug would turn this red?** If the only answer is "renaming a symbol" or "deleting the test's own input," don't write it. Prefer a few tests that each guard real behavior over one-per-symbol coverage.
+
+Do not write:
+
+- **Constant / identity echoes.** Asserting a value the code merely declares and hands back: `slot.source === "auth"`, `config.__plugin === "vite"`, `runtime.name === "db"`, a plugin's `label`, the list of slots a plugin "owns", or a schema default restated (`secretVar` defaults to `"AUTH_SECRET"`). These re-type a literal and break only on rename.
+- **Shape-only `typeof` checks.** `expect(typeof builder.use).toBe("function")` / "is defined" on a freshly constructed value. Lone exception: a single smoke test guarding a real construction path nothing else exercises (an import that pulls native modules, a proxy that materializes lazily) — and only that one.
+- **Tautologies.** Re-implementing the production logic in the test body and comparing, or asserting a factory returns exactly the literal it was handed (`accepts a custom port` → returns that port; `accepts routes config` → returns that config).
+- **Generic framework behavior at the feature layer.** List/map slot concatenation, phase ordering, and order-independence are proven once in the engine's own tests (`slots.test.ts`, `graph.test.ts`). A plugin or command test that re-resolves a list slot just to watch contributions pile up adds nothing — assert *your* specific contribution and its effect, not that aggregation works.
+- **The same behavior twice.** When a stronger sibling already covers it (a phase-sort test subsumes a plain-concat test; a full structural assertion subsumes a "has at least N imports" one), keep the stronger and delete the weaker.
+
+And the title must name a behavior the assertion actually verifies — `defaults prefix to /rpc` that only asserts `_router` is defined is a lie; check the prefix or delete the test.
+
+Litmus test: **if you deleted this test, what real consumer scenario would silently break?** No answer → it's noise, not safety.
+
 ### Writing tests
 
 - Co-locate test files: `src/foo.ts` -> `src/foo.test.ts`

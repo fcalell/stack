@@ -321,25 +321,4 @@ describe("virtual worker codegen pipeline (defineConfig-driven)", () => {
 
 		expect(shuffled).toEqual(canonical);
 	});
-
-	it("generated code has correct structure (imports, builder chain, export)", async () => {
-		const result = await renderWorker({
-			cwd,
-			plugins: [
-				cloudflare(),
-				db({ dialect: "d1", databaseId: "test-id" }),
-				api(),
-			],
-		});
-
-		expect(result).not.toBeNull();
-		if (!result) return;
-		const lines = result.split("\n");
-
-		const importLines = lines.filter((l) => l.startsWith("import"));
-		expect(importLines.length).toBeGreaterThanOrEqual(2);
-
-		expect(result).toContain("const worker = createWorker(");
-		expect(result).toContain("export default worker");
-	});
 });

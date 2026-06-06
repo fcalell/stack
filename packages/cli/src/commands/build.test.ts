@@ -7,39 +7,6 @@ import { buildTestGraphFromPlugins } from "#testing";
 import { runBuildSteps } from "./build";
 
 describe("build slot resolution", () => {
-	it("collects buildSteps contributions from every plugin", async () => {
-		const vitePlugin = plugin("bs-vite", {
-			label: "Vite",
-			contributes: [
-				cliSlots.buildSteps.contribute(
-					(): BuildStep => ({
-						name: "vite build",
-						phase: "main",
-						run: async () => {},
-					}),
-				),
-			],
-		});
-		const cloudflarePlugin = plugin("bs-cloudflare", {
-			label: "CF",
-			contributes: [
-				cliSlots.buildSteps.contribute(
-					(): BuildStep => ({
-						name: "worker bundle",
-						phase: "post",
-						run: async () => {},
-					}),
-				),
-			],
-		});
-
-		const { graph } = buildTestGraphFromPlugins({
-			plugins: [{ factory: vitePlugin }, { factory: cloudflarePlugin }],
-		});
-		const steps = await graph.resolve(cliSlots.buildSteps);
-		expect(steps.map((s) => s.name)).toEqual(["vite build", "worker bundle"]);
-	});
-
 	it("sorts steps by phase regardless of plugin order", async () => {
 		const postPlugin = plugin("bs-post", {
 			label: "P",

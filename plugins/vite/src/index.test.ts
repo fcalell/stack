@@ -76,35 +76,6 @@ function collectVitePlugins(
 	};
 }
 
-// ── Config factory ────────────────────────────────────────────────
-
-describe("vite config factory", () => {
-	it("returns PluginConfig with __plugin 'vite'", () => {
-		const config = vite();
-		expect(config.__plugin).toBe("vite");
-	});
-
-	it("accepts custom port", () => {
-		const config = vite({ port: 4000 });
-		expect(config.options.port).toBe(4000);
-	});
-
-	it("defaults to empty options", () => {
-		const config = vite();
-		expect(config.options).toEqual({});
-	});
-});
-
-describe("vite.slots", () => {
-	it("owns configImports, pluginCalls, resolveAliases, devServerPort, viteConfig", () => {
-		expect(vite.slots.configImports.source).toBe("vite");
-		expect(vite.slots.pluginCalls.source).toBe("vite");
-		expect(vite.slots.resolveAliases.source).toBe("vite");
-		expect(vite.slots.devServerPort.source).toBe("vite");
-		expect(vite.slots.viteConfig.source).toBe("vite");
-	});
-});
-
 describe("vite.slots.resolveAliases uniqueness", () => {
 	it("rejects two contributions sharing the same `find` (would silently overwrite when emitted as a TS object literal)", async () => {
 		const a: GraphPlugin = {
