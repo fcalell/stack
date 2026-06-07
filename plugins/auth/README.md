@@ -1,6 +1,6 @@
 # @fcalell/plugin-auth
 
-Authentication plugin for the `@fcalell/stack` framework. Wraps Better Auth with email-OTP login, OAuth social providers (Apple + Google), organization RBAC, and session management -- all driven by config. Requires the `api`, `cloudflare`, and `db` plugins; reads `api.slots.cors` to derive its `trustedOrigins` automatically.
+Authentication plugin for the `@fcalell/stack` framework. Wraps Better Auth with email-OTP login, OAuth social providers (Apple + Google), organization RBAC, and session management -- all driven by config. Ships the Better Auth identity schema (`@fcalell/plugin-auth/schema`) and native-client wiring (`expo` option). Requires the `api`, `cloudflare`, and `db` plugins; reads `api.slots.cors` to derive its `trustedOrigins` automatically.
 
 ## Install
 
@@ -152,6 +152,7 @@ type Session = InferSession<typeof config>;
 | `emailOtp` | `boolean` | `true` | Email one-time-password sign-in; `false` for OAuth-only |
 | `socialProviders.google` | `boolean \| { clientIdVar, clientSecretVar }` | -- | Enable Google OAuth (`true` = conventional var names) |
 | `socialProviders.apple` | `boolean \| { clientIdVar, clientSecretVar, appBundleIdentifier }` | -- | Enable Apple OAuth (`true` = conventional var names) |
+| `expo` | `boolean \| { scheme }` | -- | Native (Expo) consumer: adds the server-side `expo()` plugin + the app deep-link scheme (`${app.name}://` + wildcard, or an explicit `scheme`) to `trustedOrigins` |
 | `secretVar` | `string` | `"AUTH_SECRET"` | Env variable name for the auth secret |
 | `appUrlVar` | `string` | `"APP_URL"` | Env variable name for the app URL |
 | `rateLimiter.ip.binding` | `string` | `"RATE_LIMITER_IP"` | IP rate limiter binding name |
@@ -177,6 +178,26 @@ The plugin auto-declares four bindings (contributed via `cloudflare.slots.bindin
 | OAuth client secret | `secret` | `GOOGLE_CLIENT_SECRET` / `APPLE_CLIENT_SECRET` | `"dev-oauth-client-secret"` (per enabled provider) |
 
 All binding names are customizable via config options.
+
+## Database schema
+
+Better Auth's core identity tables (`user` / `session` / `account` / `verification`) ship as Drizzle SQLite tables from the `@fcalell/plugin-auth/schema` subpath — the canonical `@better-auth/cli generate` shape, ported verbatim. The Drizzle adapter never issues DDL, so a consumer must re-export them so they are migrated and registered:
+
+```ts
+// src/schema/index.ts
+export * from "@fcalell/plugin-auth/schema";
+// ...your own tables
+```
+
+The worker runtime passes these tables to `drizzleAdapter({ schema })` explicitly, so model resolution does not depend on the consumer's export names. Migrate with `plugin-db`'s drizzle-kit flow (`stack db push` / `generate` / `apply`) — **never** `@better-auth/cli migrate` (it is Kysely-only and no-ops for Drizzle). Re-run `@better-auth/cli generate` and diff after a Better Auth bump or when a table-bearing plugin (organization, …) is enabled.
+
+## Runtime defaults
+
+The worker enables `session.cookieCache` (5 min) so most `getSession` calls skip a DB read, and sets `advanced.ipAddress.ipAddressHeaders: ["cf-connecting-ip"]` for the correct client IP behind Cloudflare.
+
+## Native (Expo)
+
+`auth({ expo: true })` adds Better Auth's server-side `expo()` plugin (required for the `@better-auth/expo` client) and the app deep-link scheme to `trustedOrigins` (`${app.name}://` + `${app.name}://*`, or pass `{ scheme }` to override) — the CSRF origin check runs even for native ID-token sign-in. `@better-auth/expo`'s server entry is worker-safe, so it is a plain dependency and the plugin is only added when `expo` is set.
 
 ## Plugin implementation
 

@@ -1,3 +1,4 @@
+import { expo } from "@better-auth/expo";
 import type { RuntimePlugin } from "@fcalell/cli/runtime";
 import type { BetterAuthPlugin } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
@@ -5,6 +6,7 @@ import { type BetterAuthOptions, betterAuth } from "better-auth/minimal";
 import { emailOTP } from "better-auth/plugins/email-otp";
 import { organization } from "better-auth/plugins/organization";
 import { defaultOrgRoles } from "../access";
+import { account, session, user, verification } from "../schema";
 import type {
 	AuthRuntimeOptions,
 	FieldConfig,
@@ -43,6 +45,10 @@ export interface AuthRuntimeInput extends AuthRuntimeOptions {
 	// Resolved provider → env-var references (var names, never secrets — the
 	// runtime reads credentials from `env` at request time).
 	socialProviders?: Partial<Record<SocialProviderName, ResolvedSocialProvider>>;
+	// Set by codegen when the consumer enables `expo`. Adds Better Auth's
+	// server-side expo() plugin (native client deep-link / cookie / origin
+	// handling); contributes no database tables.
+	expo?: boolean;
 }
 
 // biome-ignore lint/suspicious/noExplicitAny: better-auth returns a highly-generic Auth type we only forward.
@@ -100,6 +106,13 @@ function buildAuth(
 		);
 	}
 
+	// Native client support: Better Auth's server-side expo() plugin is
+	// required for the @better-auth/expo client (deep-link redirect, cookie
+	// handling, native origin trust). Contributes no database tables.
+	if (options.expo) {
+		plugins.push(expo());
+	}
+
 	// Read each configured provider's credentials from env (never baked into
 	// the worker — only the var names are). Apple optionally carries the app
 	// bundle id for native ID-token validation.
@@ -128,7 +141,12 @@ function buildAuth(
 		trustedOrigins: options.trustedOrigins,
 		socialProviders: socialProvidersOption,
 		// biome-ignore lint/suspicious/noExplicitAny: drizzleAdapter DB type is opaque.
-		database: drizzleAdapter(db as any, { provider: "sqlite" }),
+		database: drizzleAdapter(db as any, {
+			provider: "sqlite",
+			// Map Better Auth's models to the framework-owned tables explicitly, so
+			// resolution never depends on the consumer's schema export names.
+			schema: { user, session, account, verification },
+		}),
 		advanced: {
 			cookiePrefix: options.cookies?.prefix,
 			crossSubDomainCookies: options.cookies?.domain
@@ -140,15 +158,19 @@ function buildAuth(
 						secure: options.sameSite === "none",
 					}
 				: undefined,
+			// Cloudflare sets the canonical client IP here; without it
+			// session.ipAddress is wrong behind the CF edge.
+			ipAddress: { ipAddressHeaders: ["cf-connecting-ip"] },
 		},
-		session: options.session
-			? {
-					expiresIn: options.session.expiresIn,
-					updateAge: options.session.updateAge,
-					// biome-ignore lint/suspicious/noExplicitAny: additionalFields is user-provided.
-					additionalFields: options.session.additionalFields as any,
-				}
-			: undefined,
+		session: {
+			expiresIn: options.session?.expiresIn,
+			updateAge: options.session?.updateAge,
+			// biome-ignore lint/suspicious/noExplicitAny: additionalFields is user-provided.
+			additionalFields: options.session?.additionalFields as any,
+			// Signed session cache: skips a D1 read on getSession for most
+			// authenticated requests (Workers/D1 best practice), ~5 min freshness.
+			cookieCache: { enabled: true, maxAge: 300 },
+		},
 		user: options.user
 			? {
 					// biome-ignore lint/suspicious/noExplicitAny: additionalFields is user-provided.

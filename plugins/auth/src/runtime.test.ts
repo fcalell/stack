@@ -192,4 +192,51 @@ describe("authRuntime", () => {
 			expect(typeof result.auth.handler).toBe("function");
 		});
 	});
+
+	describe("native expo + production hardening", () => {
+		// A fresh env object per test: the runtime caches the auth instance per
+		// env (WeakMap), so reusing the shared `validEnv` would return whatever
+		// instance an earlier test built for it.
+		it("enables the server expo() plugin when `expo` is set", () => {
+			const runtime = authRuntime({ ...baseOpts, expo: true });
+			const { auth } = runtime.context({ ...validEnv }, { db: mockDb }) as {
+				auth: { options: { plugins?: Array<{ id?: string }> } };
+			};
+			const ids = (auth.options.plugins ?? []).map((p) => p.id);
+			expect(ids).toContain("expo");
+		});
+
+		it("does not add the expo() plugin by default", () => {
+			const runtime = authRuntime(baseOpts);
+			const { auth } = runtime.context({ ...validEnv }, { db: mockDb }) as {
+				auth: { options: { plugins?: Array<{ id?: string }> } };
+			};
+			const ids = (auth.options.plugins ?? []).map((p) => p.id);
+			expect(ids).not.toContain("expo");
+		});
+
+		it("enables the signed session cookie cache (avoids a D1 read per request)", () => {
+			const runtime = authRuntime(baseOpts);
+			const { auth } = runtime.context({ ...validEnv }, { db: mockDb }) as {
+				auth: {
+					options: { session?: { cookieCache?: { enabled?: boolean } } };
+				};
+			};
+			expect(auth.options.session?.cookieCache?.enabled).toBe(true);
+		});
+
+		it("reads the client IP from Cloudflare's cf-connecting-ip header", () => {
+			const runtime = authRuntime(baseOpts);
+			const { auth } = runtime.context({ ...validEnv }, { db: mockDb }) as {
+				auth: {
+					options: {
+						advanced?: { ipAddress?: { ipAddressHeaders?: string[] } };
+					};
+				};
+			};
+			expect(auth.options.advanced?.ipAddress?.ipAddressHeaders).toContain(
+				"cf-connecting-ip",
+			);
+		});
+	});
 });

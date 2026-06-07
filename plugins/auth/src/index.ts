@@ -103,14 +103,37 @@ const runtimeOptions = slot.derived({
 		} else {
 			delete rawOptions.socialProviders;
 		}
+		// Native (Expo) consumer: normalize the `expo` option to a boolean —
+		// the runtime only needs to know whether to enable Better Auth's
+		// server-side expo() plugin. The deep-link scheme is consumed below.
+		const expoOption = ctx.options.expo;
+		const expoEnabled = expoOption !== undefined && expoOption !== false;
+		if (expoEnabled) {
+			rawOptions.expo = true;
+		} else {
+			delete rawOptions.expo;
+		}
+
 		const props = literalToProps(rawOptions);
 
-		// trustedOrigins: always emit an explicit array. Empty is
-		// structurally impossible here (thrown above), so the consumer
-		// sees exactly what Better Auth sees at runtime.
+		// trustedOrigins: web CORS origins, plus the native deep-link scheme
+		// when `expo` is set (`${app.name}://` + wildcard by default, or an
+		// explicit `scheme` override). A custom scheme is not a valid HTTP CORS
+		// origin, so it flows here directly rather than through api.slots.cors —
+		// Better Auth's CSRF origin check rejects native requests otherwise, even
+		// for ID-token sign-in. Empty is structurally impossible (thrown above),
+		// so the consumer sees exactly what Better Auth sees at runtime.
+		const trustedOrigins = [...inp.cors];
+		if (expoEnabled) {
+			const scheme =
+				typeof expoOption === "object" && expoOption.scheme
+					? expoOption.scheme
+					: ctx.app.name;
+			trustedOrigins.push(`${scheme}://`, `${scheme}://*`);
+		}
 		props.trustedOrigins = {
 			kind: "array",
-			items: inp.cors.map((o) => ({ kind: "string", value: o })),
+			items: trustedOrigins.map((o) => ({ kind: "string", value: o })),
 		};
 
 		// Bug #2: Cross-origin localhost dev — browsers drop cookies

@@ -922,3 +922,57 @@ describe("auth init-prompt defaults — bug #4 (cookie prefix from app.name)", (
 		expect(bDefault).not.toBe("app");
 	});
 });
+
+// ── runtimeOptions — native (Expo) deep-link trustedOrigins ──────────
+
+describe("auth.slots.runtimeOptions — native expo", () => {
+	it("adds the app-scheme deep-link origins + bakes expo:true when enabled", async () => {
+		const { plugins, ctxFactory } = collectAuthPlugins({
+			authOpts: { expo: true },
+		});
+		const g = buildGraph(plugins, ctxFactory);
+		const opts = await g.resolve(auth.slots.runtimeOptions);
+
+		const values = (
+			opts.trustedOrigins as { items: Array<{ value: string }> }
+		).items.map((i) => i.value);
+		// app.name in the harness is "test-app".
+		expect(values).toContain("test-app://");
+		expect(values).toContain("test-app://*");
+		// Web origins are still present alongside the scheme.
+		expect(values).toContain("https://example.com");
+		// The runtime only needs the boolean — it gates the server expo() plugin.
+		expect(opts.expo).toMatchObject({ value: true });
+	});
+
+	it("honours an explicit scheme override", async () => {
+		const { plugins, ctxFactory } = collectAuthPlugins({
+			authOpts: { expo: { scheme: "wn" } },
+		});
+		const g = buildGraph(plugins, ctxFactory);
+		const opts = await g.resolve(auth.slots.runtimeOptions);
+
+		const values = (
+			opts.trustedOrigins as { items: Array<{ value: string }> }
+		).items.map((i) => i.value);
+		expect(values).toContain("wn://");
+		expect(values).toContain("wn://*");
+		expect(values).not.toContain("test-app://");
+		expect(opts.expo).toMatchObject({ value: true });
+	});
+
+	it("omits scheme origins + the expo flag for a non-native consumer", async () => {
+		const { plugins, ctxFactory } = collectAuthPlugins();
+		const g = buildGraph(plugins, ctxFactory);
+		const opts = await g.resolve(auth.slots.runtimeOptions);
+
+		const values = (
+			opts.trustedOrigins as { items: Array<{ value: string }> }
+		).items.map((i) => i.value);
+		// No bare custom-scheme origin (web origins carry a host after `://`).
+		expect(values.some((v) => v.endsWith("://") || v.endsWith("://*"))).toBe(
+			false,
+		);
+		expect(opts.expo).toBeUndefined();
+	});
+});

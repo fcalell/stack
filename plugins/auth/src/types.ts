@@ -96,6 +96,15 @@ export const authOptionsSchema = z.object({
 			apple: z.union([z.boolean(), appleProviderConfigSchema]).optional(),
 		})
 		.optional(),
+	// Native (Expo) consumer flag. When set, the worker enables Better Auth's
+	// server-side `expo()` plugin — required for a native client's deep-link /
+	// cookie / origin handling — and adds the app's deep-link scheme to
+	// `trustedOrigins` (`${app.name}://` and `${app.name}://*` by default, or an
+	// explicit `scheme` override). The CSRF origin check runs even for native
+	// ID-token sign-in, so the scheme must be trusted.
+	expo: z
+		.union([z.boolean(), z.object({ scheme: z.string().optional() })])
+		.optional(),
 	secretVar: z.string().default("AUTH_SECRET"),
 	appUrlVar: z.string().default("APP_URL"),
 	rateLimiter: z

@@ -6,6 +6,7 @@
 	"exports": {
 		".": "./src/index.ts",
 		"./runtime": "./src/worker/index.ts",
+		"./schema": "./src/schema.ts",
 		"./expo": "./src/expo.tsx",
 		"./access": "./src/access.ts",
 		"./infer": "./src/infer.ts"
@@ -19,6 +20,7 @@
 		"clear": "rm -rf node_modules .turbo"
 	},
 	"dependencies": {
+		"@better-auth/expo": "^1.6.14",
 		"@fcalell/cli": "workspace:*",
 		"@fcalell/plugin-api": "workspace:*",
 		"@fcalell/plugin-cloudflare": "workspace:*",
@@ -27,15 +29,11 @@
 		"zod": "^4.3.6"
 	},
 	"peerDependencies": {
-		"@better-auth/expo": "^1.6.14",
 		"@react-native-google-signin/google-signin": "^16.0.0",
 		"expo-apple-authentication": ">=56.0.0",
 		"react": "^19.2.0"
 	},
 	"peerDependenciesMeta": {
-		"@better-auth/expo": {
-			"optional": true
-		},
 		"@react-native-google-signin/google-signin": {
 			"optional": true
 		},
@@ -47,7 +45,6 @@
 		}
 	},
 	"devDependencies": {
-		"@better-auth/expo": "^1.6.14",
 		"@fcalell/typescript-config": "workspace:*",
 		"@react-native-google-signin/google-signin": "^16.1.2",
 		"@types/react": "^19.2.16",
