@@ -1,7 +1,7 @@
 import { cva, type VariantProps } from "class-variance-authority";
 import type { ReactNode } from "react";
 import { Text, View, type ViewProps } from "react-native";
-import { cn } from "#lib/cn";
+import { cn } from "../../lib/cn";
 
 // Like Button, persona reads through FILL: `solid` vs `outline` share the accent
 // token. Use for status / role / count chips.

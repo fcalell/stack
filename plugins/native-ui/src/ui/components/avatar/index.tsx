@@ -1,5 +1,5 @@
 import { Text, View, type ViewProps } from "react-native";
-import { cn } from "#lib/cn";
+import { cn } from "../../lib/cn";
 
 // Identity tints — colour encodes WHO, never persona/role. Theme-invariant by
 // design (a person's colour is the same in light and Notturno), so these are

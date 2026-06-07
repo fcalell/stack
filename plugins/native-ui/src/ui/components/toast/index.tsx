@@ -1,6 +1,6 @@
 import { cva, type VariantProps } from "class-variance-authority";
 import { Text, View } from "react-native";
-import { cn } from "#lib/cn";
+import { cn } from "../../lib/cn";
 
 // Presentational toast surface. The imperative queue/host (the native analog
 // of solid-sonner's <Toaster />) is still deferred; for now a screen can render

@@ -1,7 +1,7 @@
 import { cva, type VariantProps } from "class-variance-authority";
 import type { ReactNode } from "react";
 import { Pressable, type PressableProps, Text } from "react-native";
-import { cn } from "#lib/cn";
+import { cn } from "../../lib/cn";
 
 // Persona is encoded by FILL, never hue: `solid` (Skipper) vs `outline` (Ospite)
 // share the same accent token — the difference is presence of fill, not colour.

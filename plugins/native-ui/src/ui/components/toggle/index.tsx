@@ -1,5 +1,5 @@
 import { Pressable, View } from "react-native";
-import { cn } from "#lib/cn";
+import { cn } from "../../lib/cn";
 
 export interface ToggleProps {
 	value: boolean;

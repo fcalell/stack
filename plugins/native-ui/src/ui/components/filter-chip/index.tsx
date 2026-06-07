@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Pressable, type PressableProps, Text } from "react-native";
-import { cn } from "#lib/cn";
+import { cn } from "../../lib/cn";
 
 export interface FilterChipProps extends Omit<PressableProps, "children"> {
 	label: string;

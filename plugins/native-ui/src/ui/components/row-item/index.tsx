@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Pressable, type PressableProps, Text, View } from "react-native";
-import { cn } from "#lib/cn";
+import { cn } from "../../lib/cn";
 
 export interface RowItemProps extends Omit<PressableProps, "children"> {
 	label: string;

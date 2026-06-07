@@ -1,6 +1,6 @@
 import { cva, type VariantProps } from "class-variance-authority";
 import { TextInput, type TextInputProps } from "react-native";
-import { cn } from "#lib/cn";
+import { cn } from "../../lib/cn";
 
 // Multiline sibling of Input — same ring grammar, top-aligned text, taller min
 // height. `.err` swaps the edge ring for danger; pair with flabel / field-err.

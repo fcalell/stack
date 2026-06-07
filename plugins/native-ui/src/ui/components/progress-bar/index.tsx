@@ -1,5 +1,5 @@
 import { View, type ViewProps } from "react-native";
-import { cn } from "#lib/cn";
+import { cn } from "../../lib/cn";
 
 export interface ProgressBarProps extends Omit<ViewProps, "children"> {
 	// Fraction filled, 0–1. Clamped.

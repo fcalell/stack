@@ -1,6 +1,6 @@
 import { Children, isValidElement } from "react";
 import { View, type ViewProps } from "react-native";
-import { cn } from "#lib/cn";
+import { cn } from "../../lib/cn";
 
 export interface AvatarStackProps extends ViewProps {
 	// Overflow count rendered as a trailing "+N" affordance is the consumer's

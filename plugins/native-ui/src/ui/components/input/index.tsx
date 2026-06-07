@@ -1,6 +1,6 @@
 import { cva, type VariantProps } from "class-variance-authority";
 import { TextInput, type TextInputProps } from "react-native";
-import { cn } from "#lib/cn";
+import { cn } from "../../lib/cn";
 
 const input = cva(
 	"h-11 rounded-md border bg-canvas px-3 text-base text-ink-1",

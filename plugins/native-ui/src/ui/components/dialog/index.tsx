@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Modal, Pressable, Text, View } from "react-native";
-import { cn } from "#lib/cn";
+import { cn } from "../../lib/cn";
 
 export interface DialogProps {
 	visible: boolean;

@@ -1,5 +1,5 @@
 import { Pressable, Text, View } from "react-native";
-import { cn } from "#lib/cn";
+import { cn } from "../../lib/cn";
 
 export interface StepperProps {
 	value: number;

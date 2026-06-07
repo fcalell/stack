@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { cn } from "#lib/cn";
+import { cn } from "../../lib/cn";
 
 export interface FootbarProps {
 	children: ReactNode;

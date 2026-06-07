@@ -3,16 +3,6 @@
 	"version": "0.0.0",
 	"type": "module",
 	"sideEffects": false,
-	"imports": {
-		"#components/*": [
-			"./src/ui/components/*/index.tsx",
-			"./src/ui/components/*/index.ts"
-		],
-		"#lib/*": [
-			"./src/ui/lib/*.ts",
-			"./src/ui/lib/*.tsx"
-		]
-	},
 	"exports": {
 		".": "./src/index.ts",
 		"./app": "./src/ui/app/index.tsx",

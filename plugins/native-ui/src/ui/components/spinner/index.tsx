@@ -1,5 +1,5 @@
 import { ActivityIndicator, type ActivityIndicatorProps } from "react-native";
-import { useCSSVariable } from "#lib/theme";
+import { useCSSVariable } from "../../lib/theme";
 
 export interface SpinnerProps extends Omit<ActivityIndicatorProps, "color"> {
 	// Defaults to the active theme's ink-1. Pass a token-resolved colour when the
