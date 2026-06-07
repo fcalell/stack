@@ -405,6 +405,24 @@ export const expo = plugin("expo", {
 		emitArtifact(ENTRY_ARTIFACT, self.slots.entrySource),
 		emitArtifact(".stack/routes.d.ts", self.slots.routesDtsSource),
 
+		// Merge consumer-declared config plugins into the app.config `plugins`
+		// array, and install their native npm deps. The supported path for
+		// native modules (apple-authentication, google-signin, camera,
+		// notifications, …) to reach a generated Expo app.
+		self.slots.expoConfigPlugins.contribute(() =>
+			(self.options.configPlugins ?? []).map((p) => ({
+				name: p.name,
+				options: p.options,
+			})),
+		),
+		cliSlots.initDeps.contribute(() => {
+			const deps: Record<string, string> = {};
+			for (const p of self.options.configPlugins ?? []) {
+				if (p.dependencies) Object.assign(deps, p.dependencies);
+			}
+			return Object.keys(deps).length > 0 ? deps : undefined;
+		}),
+
 		// Always emit the ambient-types reference: harmless without routing and
 		// needed by `tsconfig.app.json` whenever Expo is present.
 		cliSlots.artifactFiles.contribute(() => ({

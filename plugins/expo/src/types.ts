@@ -3,6 +3,19 @@ import { z } from "zod";
 
 // ── Plugin options ─────────────────────────────────────────────────
 
+// A consumer-declared Expo config plugin: one entry for the generated
+// app.config `plugins` array plus the npm package(s) it needs installed.
+// `name` is the config-plugin id (usually the package name), `options` are
+// passed through verbatim, and `dependencies` are merged into the consumer's
+// package.json so the native module is installed alongside its config plugin.
+const configPluginSchema = z.object({
+	name: z.string().min(1),
+	options: z.record(z.string(), z.unknown()).optional(),
+	dependencies: z.record(z.string(), z.string()).optional(),
+});
+
+export type ConfigPluginSpec = z.infer<typeof configPluginSchema>;
+
 export const expoOptionsSchema = z.object({
 	// Metro dev-server port. Defaults to Expo's 8081; flows into the localhost
 	// CORS origin contributed to plugin-api.
@@ -25,6 +38,12 @@ export const expoOptionsSchema = z.object({
 	easProfiles: z.array(z.string().min(1)).min(1).optional(),
 	// Default EAS Update channel (`eas update --channel <name>`).
 	updateChannel: z.string().min(1).optional(),
+	// Extra Expo config plugins merged into the generated app.config `plugins`
+	// array — the supported path for native modules (e.g.
+	// `expo-apple-authentication`, `@react-native-google-signin/google-signin`,
+	// camera, notifications). Each entry's `dependencies` are installed into the
+	// consumer's package.json.
+	configPlugins: z.array(configPluginSchema).optional(),
 });
 
 export type ExpoOptions = z.input<typeof expoOptionsSchema>;

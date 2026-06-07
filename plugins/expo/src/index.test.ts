@@ -271,6 +271,58 @@ describe("expo.slots.expoConfig", () => {
 	});
 });
 
+// ── configPlugins option (native modules) ─────────────────────────
+
+describe("expo configPlugins option", () => {
+	it("merges consumer config plugins into the app.config plugins array", async () => {
+		const { plugins, ctxFactory } = collectExpoPlugins([], {
+			configPlugins: [
+				{ name: "expo-apple-authentication" },
+				{
+					name: "@react-native-google-signin/google-signin",
+					options: { iosUrlScheme: "com.googleusercontent.apps.test" },
+				},
+			],
+		});
+		const g = buildGraph(plugins, ctxFactory);
+		const src = await g.resolve(expo.slots.expoConfig);
+		expect(src).toContain('"expo-apple-authentication"');
+		expect(src).toContain('"@react-native-google-signin/google-signin"');
+		expect(src).toContain('"iosUrlScheme": "com.googleusercontent.apps.test"');
+	});
+
+	it("installs config-plugin dependencies via initDeps", async () => {
+		const { plugins, ctxFactory } = collectExpoPlugins([], {
+			configPlugins: [
+				{
+					name: "expo-apple-authentication",
+					dependencies: { "expo-apple-authentication": "~56.0.4" },
+				},
+				{
+					name: "@react-native-google-signin/google-signin",
+					options: { iosUrlScheme: "x" },
+					dependencies: {
+						"@react-native-google-signin/google-signin": "^16.0.0",
+					},
+				},
+			],
+		});
+		const g = buildGraph(plugins, ctxFactory);
+		const deps = await g.resolve(cliSlots.initDeps);
+		expect(deps["expo-apple-authentication"]).toBe("~56.0.4");
+		expect(deps["@react-native-google-signin/google-signin"]).toBe("^16.0.0");
+	});
+
+	it("contributes nothing when no config plugins are declared", async () => {
+		const { plugins, ctxFactory } = collectExpoPlugins();
+		const g = buildGraph(plugins, ctxFactory);
+		// expo-router is the only plugin entry; no consumer modules leak in.
+		const src = await g.resolve(expo.slots.expoConfig);
+		expect(src).not.toContain("google-signin");
+		expect(src).not.toContain("apple-authentication");
+	});
+});
+
 // ── entry ─────────────────────────────────────────────────────────
 
 describe("expo.slots.entrySource", () => {
