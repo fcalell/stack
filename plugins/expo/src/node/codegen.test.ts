@@ -7,7 +7,7 @@ import {
 	buildRoutesDts,
 } from "./codegen";
 
-// ── metro.config.js ────────────────────────────────────────────────
+// ── metro.config.cjs ───────────────────────────────────────────────
 
 describe("aggregateMetroConfig", () => {
 	it("emits a CommonJS config built on getDefaultConfig", () => {
@@ -70,7 +70,7 @@ describe("aggregateMetroConfig", () => {
 	});
 });
 
-// ── app.config.ts ──────────────────────────────────────────────────
+// ── app.config.cjs ─────────────────────────────────────────────────
 
 describe("aggregateExpoConfig", () => {
 	const base = {
@@ -83,10 +83,15 @@ describe("aggregateExpoConfig", () => {
 		typedRoutes: true,
 	};
 
-	it("emits a typed ExpoConfig with the core fields", () => {
+	it("emits an ExpoConfig as loadable CommonJS (not TS)", () => {
 		const out = aggregateExpoConfig(base);
-		expect(out).toContain('import type { ExpoConfig } from "expo/config";');
-		expect(out).toContain("const config: ExpoConfig = {");
+		// Must be Node-loadable as CommonJS: Expo's loader require()s this through
+		// Node, so no TS `import type` / type annotation may leak in. A JSDoc
+		// `@type` preserves the shape the `.ts` version carried.
+		expect(out).not.toContain("import type");
+		expect(out).not.toContain(": ExpoConfig");
+		expect(out).toContain('/** @type {import("expo/config").ExpoConfig} */');
+		expect(out).toContain("const config = {");
 		expect(out).toContain('name: "WeNauti"');
 		expect(out).toContain('slug: "wenauti"');
 		expect(out).toContain('scheme: "wenauti"');
@@ -95,7 +100,8 @@ describe("aggregateExpoConfig", () => {
 		// "automatic" so the app follows the OS light/dark setting.
 		expect(out).toContain('userInterfaceStyle: "automatic"');
 		expect(out).toContain("newArchEnabled: true");
-		expect(out).toContain("export default config;");
+		expect(out).toContain("module.exports = config;");
+		expect(out).not.toContain("export default config;");
 	});
 
 	it("lists expo-router and enables typed routes when routing is on", () => {

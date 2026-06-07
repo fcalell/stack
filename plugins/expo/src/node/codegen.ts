@@ -25,7 +25,12 @@ function renderJsLiteral(value: unknown, indent: string): string {
 	return json.replace(/\n/g, `\n${indent}`);
 }
 
-// ── metro.config.js (CommonJS) ─────────────────────────────────────
+// ── metro.config.cjs (CommonJS) ────────────────────────────────────
+//
+// Emitted as `.cjs` for the same reason as app.config: the root `metro.config.js`
+// shim `require()`s this through Node, and the consumer is `type: module`, so a
+// `.js` here would be parsed as ESM and its `require`/`module.exports` would
+// throw. `.cjs` is unconditionally CommonJS.
 
 const BASE_METRO_REQUIRE: MetroRequireSpec = {
 	names: ["getDefaultConfig"],
@@ -98,7 +103,17 @@ function dedupeMetroRequires(specs: MetroRequireSpec[]): MetroRequireSpec[] {
 	}));
 }
 
-// ── app.config.ts ──────────────────────────────────────────────────
+// ── app.config.cjs (CommonJS) ──────────────────────────────────────
+//
+// Emitted as `.cjs`, not `.ts` or `.js`. Expo's config loader
+// (`@expo/require-utils`) transpiles only the ROOT `app.config.ts` shim, then
+// `require()`s what it re-exports through Node. The consumer is always
+// `type: module` (the scaffold hardcodes it), so a `.js` dependency would be
+// parsed as ESM and its `module.exports` would throw, and a `.ts` can't be
+// `require()`d at all. `.cjs` is unconditionally CommonJS — the one extension
+// that loads here regardless of `package.json` `type`. A JSDoc `@type`
+// preserves the `ExpoConfig` shape the `.ts` annotation carried. (metro.config
+// + babel.config hit the same constraint — see their templates.)
 
 function renderConfigPlugin(plugin: ExpoConfigPlugin): string {
 	const value =
@@ -138,13 +153,12 @@ export function aggregateExpoConfig(payload: CodegenExpoConfigPayload): string {
 	const body = [
 		GENERATED_BANNER.trimEnd(),
 		"",
-		'import type { ExpoConfig } from "expo/config";',
-		"",
-		"const config: ExpoConfig = {",
+		'/** @type {import("expo/config").ExpoConfig} */',
+		"const config = {",
 		...props,
 		"};",
 		"",
-		"export default config;",
+		"module.exports = config;",
 	].join("\n");
 
 	return body;

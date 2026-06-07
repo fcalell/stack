@@ -50,11 +50,11 @@ export type ExpoOptions = z.input<typeof expoOptionsSchema>;
 
 // ── Metro config codegen ───────────────────────────────────────────
 //
-// `.stack/metro.config.js` is CommonJS (Metro loads it via `require`), so it
+// `.stack/metro.config.cjs` is CommonJS (Metro loads it via `require`), so it
 // is built as a string rather than through the ESM-only `renderTsSourceFile`
 // printer. These specs are the structured inputs the aggregator composes.
 
-// A destructured CJS require at the top of metro.config.js:
+// A destructured CJS require at the top of metro.config.cjs:
 //   const { getDefaultConfig } = require("expo/metro-config");
 export interface MetroRequireSpec {
 	names: string[];
@@ -78,9 +78,10 @@ export interface CodegenMetroPayload {
 
 // ── Expo app config codegen ────────────────────────────────────────
 //
-// `.stack/app.config.ts` needs a typed `(): ExpoConfig => ({ ...config })`
-// shape with an object spread — neither expressible via the ESM printer — so
-// it is also assembled as a string.
+// `.stack/app.config.cjs` holds an object with arbitrary nested plugin options
+// — not expressible via the ESM AST printer — so it is assembled as a string.
+// It is emitted as `.cjs` (not `.ts`/`.js`) because Expo's loader `require()`s
+// it through Node; see `aggregateExpoConfig` for the full rationale.
 //
 // A config-plugin entry renders to `"name"` or `["name", { …options }]` in the
 // app.config `plugins` array. Modelled as an object (not a `[name, options]`

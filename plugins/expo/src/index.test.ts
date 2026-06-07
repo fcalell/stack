@@ -196,11 +196,30 @@ describe("expo.slots.metroConfig", () => {
 		expect(src).toContain("config = withUniwindConfig(config, {");
 	});
 
-	it("emits .stack/metro.config.js into the artifact files", async () => {
+	it("emits .stack/metro.config.cjs into the artifact files", async () => {
 		const { plugins, ctxFactory } = collectExpoPlugins();
 		const g = buildGraph(plugins, ctxFactory);
 		const files = await g.resolve(cliSlots.artifactFiles);
-		expect(files.map((f) => f.path)).toContain(".stack/metro.config.js");
+		const paths = files.map((f) => f.path);
+		expect(paths).toContain(".stack/metro.config.cjs");
+		expect(paths).not.toContain(".stack/metro.config.js");
+	});
+
+	it("emits the app config as loadable CommonJS .stack/app.config.cjs, not .ts/.js", async () => {
+		// Regression: a `.ts`/`.js` here breaks `expo config`/`export`. Expo's
+		// loader transpiles only the root shim, then require()s this through Node;
+		// a `.ts` can't be required, and a `.js` in this `type: module` package is
+		// parsed as ESM and its `module.exports` throws. `.cjs` always loads.
+		const { plugins, ctxFactory } = collectExpoPlugins();
+		const g = buildGraph(plugins, ctxFactory);
+		const files = await g.resolve(cliSlots.artifactFiles);
+		const paths = files.map((f) => f.path);
+		expect(paths).toContain(".stack/app.config.cjs");
+		expect(paths).not.toContain(".stack/app.config.ts");
+		expect(paths).not.toContain(".stack/app.config.js");
+		const cfg = files.find((f) => f.path === ".stack/app.config.cjs");
+		expect(cfg?.content).toContain("module.exports = config;");
+		expect(cfg?.content).not.toContain("import type");
 	});
 
 	it("emits .stack/expo-env.d.ts with the ambient-types reference", async () => {
@@ -373,7 +392,7 @@ describe("expo with routes: false", () => {
 		const { plugins, ctxFactory } = collectExpoPlugins([], { routes: false });
 		const g = buildGraph(plugins, ctxFactory);
 		const paths = (await g.resolve(cliSlots.artifactFiles)).map((f) => f.path);
-		expect(paths).toContain(".stack/metro.config.js");
+		expect(paths).toContain(".stack/metro.config.cjs");
 		expect(paths).not.toContain(".stack/entry.tsx");
 		expect(paths).not.toContain(".stack/routes.d.ts");
 	});
@@ -401,7 +420,7 @@ describe("expo init scaffolds", () => {
 		);
 		expect(targets).toContain("metro.config.js");
 		expect(targets).toContain("app.config.ts");
-		expect(targets).toContain("babel.config.js");
+		expect(targets).toContain("babel.config.cjs");
 		expect(targets).toContain("eas.json");
 	});
 });

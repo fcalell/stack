@@ -399,9 +399,12 @@ export const expo = plugin("expo", {
 		}),
 
 		// Emit the four native artifacts. metro/app.config/entry always render;
-		// routes.d.ts is null (skipped) when routing is disabled.
-		emitArtifact(".stack/metro.config.js", self.slots.metroConfig),
-		emitArtifact(".stack/app.config.ts", self.slots.expoConfig),
+		// routes.d.ts is null (skipped) when routing is disabled. The two config
+		// files are `.cjs` (not `.js`): the root shims `require()` them through
+		// Node, and the consumer is `type: module`, so a `.js` would parse as ESM
+		// and break — see codegen's section headers.
+		emitArtifact(".stack/metro.config.cjs", self.slots.metroConfig),
+		emitArtifact(".stack/app.config.cjs", self.slots.expoConfig),
 		emitArtifact(ENTRY_ARTIFACT, self.slots.entrySource),
 		emitArtifact(".stack/routes.d.ts", self.slots.routesDtsSource),
 
@@ -451,8 +454,12 @@ export const expo = plugin("expo", {
 		cliSlots.initScaffolds.contribute((ctx) =>
 			ctx.scaffold("app.config.ts.template", "app.config.ts"),
 		),
+		// babel.config is `.cjs`, not `.js`: Babel's own loader `require()`s it
+		// through Node, and the consumer is `type: module`, so a `module.exports`
+		// in a `.js` would be parsed as ESM and throw. `.cjs` is auto-discovered
+		// by Babel and unconditionally CommonJS.
 		cliSlots.initScaffolds.contribute((ctx) =>
-			ctx.scaffold("babel.config.js.template", "babel.config.js"),
+			ctx.scaffold("babel.config.cjs.template", "babel.config.cjs"),
 		),
 		cliSlots.initScaffolds.contribute((ctx) =>
 			ctx.scaffold("eas.json.template", "eas.json"),
@@ -462,7 +469,7 @@ export const expo = plugin("expo", {
 		cliSlots.removeFiles.contribute(() => [
 			"metro.config.js",
 			"app.config.ts",
-			"babel.config.js",
+			"babel.config.cjs",
 			"eas.json",
 		]),
 	],
