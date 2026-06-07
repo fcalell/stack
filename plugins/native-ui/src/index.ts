@@ -203,6 +203,9 @@ export const nativeUi = plugin("native-ui", {
 		"react-native-keyboard-controller": "^1.18.0",
 		"@gorhom/bottom-sheet": "^5.2.14",
 		"lucide-react-native": "^1.17.0",
+		// lucide's required peer; also backs consumer brand glyphs. Without it a
+		// fresh consumer can't render any icon.
+		"react-native-svg": "^15.15.4",
 		"expo-font": "~56.0.0",
 		"expo-secure-store": "~56.0.0",
 		"@tanstack/react-query": "^5.101.0",

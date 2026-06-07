@@ -291,6 +291,20 @@ describe("native-ui client scaffolds", () => {
 	});
 });
 
+// ── Consumer init-deps ─────────────────────────────────────────────
+
+describe("native-ui consumer deps", () => {
+	it("contributes the icon toolchain (lucide + its react-native-svg peer)", async () => {
+		const { plugins, ctxFactory } = collect();
+		const g = buildGraph(plugins, ctxFactory);
+		const deps = await g.resolve(cliSlots.initDeps);
+		// lucide is icons-as-ReactNode-slots; react-native-svg is its required peer
+		// (and backs consumer brand glyphs) — both must land or no icon renders.
+		expect(deps["lucide-react-native"]).toBeDefined();
+		expect(deps["react-native-svg"]).toBeDefined();
+	});
+});
+
 // ── Order invariance ───────────────────────────────────────────────
 
 describe("native-ui order invariance", () => {
