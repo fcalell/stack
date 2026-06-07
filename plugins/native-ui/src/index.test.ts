@@ -303,6 +303,23 @@ describe("native-ui consumer deps", () => {
 		expect(deps["lucide-react-native"]).toBeDefined();
 		expect(deps["react-native-svg"]).toBeDefined();
 	});
+
+	it("contributes @better-auth/expo's bundle-time expo peers", async () => {
+		const { plugins, ctxFactory } = collect();
+		const g = buildGraph(plugins, ctxFactory);
+		const deps = await g.resolve(cliSlots.initDeps);
+		// @better-auth/expo's client imports these (static + dynamic); Metro can't
+		// bundle a native consumer without them even though they're optional peers.
+		expect(deps["@better-auth/expo"]).toBeDefined();
+		for (const m of [
+			"expo-constants",
+			"expo-linking",
+			"expo-network",
+			"expo-web-browser",
+		]) {
+			expect(deps[m]).toBeDefined();
+		}
+	});
 });
 
 // ── Order invariance ───────────────────────────────────────────────
