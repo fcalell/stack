@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { basename } from "node:path";
 import type { Plugin, ResolvedConfig } from "vite";
@@ -136,6 +137,28 @@ export function themeFontsPlugin(fonts: FontEntry[]): Plugin {
 			config = c;
 		},
 
+		// Nothing in the module graph imports the woff2 files — the
+		// @font-face CSS is injected as a raw <style> tag in
+		// transformIndexHtml below, not through an `import` Rollup can trace
+		// — so a build never bundles them on its own. Emit each configured
+		// font as a build asset explicitly; transformIndexHtml then finds it
+		// in `ctx.bundle` by original filename (`findBundleUrl`).
+		// `transformIndexHtml`'s hook `this` is only a
+		// `MinimalPluginContext` (no `emitFile`/`getFileName`), so the
+		// emission has to happen in a real Rollup hook like this one.
+		buildStart() {
+			if (config.command !== "build") return;
+			for (const font of fonts) {
+				const abs = resolveFontAbs(font);
+				this.emitFile({
+					type: "asset",
+					name: basename(abs),
+					originalFileName: abs,
+					source: readFileSync(abs),
+				});
+			}
+		},
+
 		transformIndexHtml: {
 			order: "post",
 			handler(_html, ctx) {
@@ -167,17 +190,17 @@ export function themeFontsPlugin(fonts: FontEntry[]): Plugin {
 							abs,
 						);
 						if (!fromBundle) {
-							// The specifier resolved to a real file on disk, but
-							// Vite didn't emit it into the bundle — typically
-							// because nothing imported the font CSS. This is an
-							// author-land configuration bug, not a runtime surprise.
+							// `buildStart` above emits every configured font before
+							// this hook runs, so this branch is an internal
+							// invariant violation (e.g. another plugin stripped the
+							// asset from the bundle), not an author-land mistake.
 							throw new Error(
-								`[plugin-solid-ui] resolved ${JSON.stringify(
+								`[plugin-solid-ui] internal error: resolved ${JSON.stringify(
 									font.specifier,
 								)} for family ${JSON.stringify(font.family)}, ` +
-									"but no matching asset was emitted to the bundle. " +
-									"Ensure the font's package `.css` is imported somewhere " +
-									"(e.g. via Tailwind or an explicit `import`) so Vite bundles it.",
+									"but it was not found in the emitted bundle even though " +
+									"buildStart emits it as an asset. This should not happen — " +
+									"please report a bug.",
 							);
 						}
 						href = fromBundle;

@@ -112,6 +112,14 @@ function handleHotUpdateOf(p: Plugin, ctx: { file: string }): unknown {
 	return undefined;
 }
 
+// pagesDir now resolves from `process.cwd()` (the invoking project root), not
+// from Vite's `config.root` — see routesPlugin's BUG1 fix comment. Every
+// describe block below chdirs into its fixture dir so the plugin under test
+// finds pages the way `stack dev`/`stack build` actually run it (cwd =
+// consumer project root); `configResolvedOf`'s `root` argument stays for
+// shape/realism but no longer drives pagesDir lookup.
+const ORIGINAL_CWD = process.cwd();
+
 describe("routesPlugin — path normalization", () => {
 	let cwd: string;
 	let pagesDir: string;
@@ -121,9 +129,11 @@ describe("routesPlugin — path normalization", () => {
 		pagesDir = join(cwd, "src/app/pages");
 		mkdirSync(pagesDir, { recursive: true });
 		writeFileSync(join(pagesDir, "index.tsx"), "export default () => null;");
+		process.chdir(cwd);
 	});
 
 	afterEach(() => {
+		process.chdir(ORIGINAL_CWD);
 		rmSync(cwd, { recursive: true, force: true });
 	});
 
@@ -249,9 +259,11 @@ describe("routesPlugin — per-instance missing-pages-dir warning", () => {
 	beforeEach(() => {
 		// cwd has no pages dir.
 		cwd = mkdtempSync(join(tmpdir(), "plugin-solid-missing-"));
+		process.chdir(cwd);
 	});
 
 	afterEach(() => {
+		process.chdir(ORIGINAL_CWD);
 		rmSync(cwd, { recursive: true, force: true });
 	});
 
@@ -300,9 +312,11 @@ describe("routesPlugin — load() output vs filesystem layout", () => {
 		cwd = mkdtempSync(join(tmpdir(), "plugin-solid-load-"));
 		pagesDir = join(cwd, "src/app/pages");
 		mkdirSync(pagesDir, { recursive: true });
+		process.chdir(cwd);
 	});
 
 	afterEach(() => {
+		process.chdir(ORIGINAL_CWD);
 		rmSync(cwd, { recursive: true, force: true });
 	});
 
@@ -355,5 +369,50 @@ describe("routesPlugin — load() output vs filesystem layout", () => {
 		expect(out).not.toMatch(/path:\s*"\/\(marketing\)/);
 		// The component load path still references the real on-disk file.
 		expect(out).toContain("(marketing)/about.tsx");
+	});
+});
+
+// BUG1 regression: `stack dev`/`stack build` always spawn Vite with cwd = the
+// consumer project root, while the generated `.stack/vite.config.ts` sets
+// Vite's `root` to `.stack`, a sibling directory that never contains the
+// pages fixture. If pagesDir were still resolved against `config.root`, this
+// test's route table would be empty. Chdir simulates the real invocation
+// (cwd = project root) while `config.root` is deliberately pointed at an
+// unrelated, pages-less directory.
+describe("routesPlugin — pagesDir resolves from cwd, not config.root", () => {
+	let projectRoot: string;
+	let unrelatedConfigRoot: string;
+
+	beforeEach(() => {
+		projectRoot = mkdtempSync(join(tmpdir(), "plugin-solid-cwdroot-proj-"));
+		const pagesDir = join(projectRoot, "src/app/pages");
+		mkdirSync(pagesDir, { recursive: true });
+		writeFileSync(join(pagesDir, "marker.tsx"), "export default () => null;");
+
+		// Simulates `.stack`: a sibling directory that does NOT contain
+		// src/app/pages.
+		unrelatedConfigRoot = mkdtempSync(
+			join(tmpdir(), "plugin-solid-cwdroot-stack-"),
+		);
+
+		process.chdir(projectRoot);
+	});
+
+	afterEach(() => {
+		process.chdir(ORIGINAL_CWD);
+		rmSync(projectRoot, { recursive: true, force: true });
+		rmSync(unrelatedConfigRoot, { recursive: true, force: true });
+	});
+
+	it("finds the pages fixture via cwd even when config.root points elsewhere", () => {
+		const plugin = routesPlugin({ pagesDir: "src/app/pages" });
+		configResolvedOf(plugin, {
+			root: unrelatedConfigRoot,
+			logger: makeLogger(),
+		});
+
+		const module = loadOf(plugin, "\0virtual:fcalell-routes");
+		expect(module).not.toBeNull();
+		expect(module).toContain("marker.tsx");
 	});
 });

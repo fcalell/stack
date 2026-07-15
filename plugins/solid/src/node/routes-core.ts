@@ -400,13 +400,27 @@ export function emitVirtualModule(
 	pagesDirRel: string = "src/app/pages",
 ): string {
 	const normalized = pagesDirRel.replace(/^\/+/, "").replace(/\/+$/, "");
-	const globPattern = `/${normalized}/**/*.{tsx,jsx}`;
+	// This module is itself virtual (no real file location), so Vite requires
+	// its `import.meta.glob` patterns to start with `/` — resolved by joining
+	// onto `config.root`, which the generated `.stack/vite.config.ts` always
+	// sets to `.stack`, one level below the consumer project root where pages
+	// actually live (see routesPlugin's BUG1 fix comment). `/../` escapes
+	// back up to that root. This also matches how Vite keys the resulting
+	// glob object — always `/${relative(config.root, file)}` regardless of
+	// the pattern used — which is exactly what `jsonLoadGlob` (fed
+	// `config.root`, not cwd) computes for the `load(...)` call below.
+	const globPattern = `/../${normalized}/**/*.{tsx,jsx}`;
+	// typedRoutes normally renders as an object tree (see emitTypedRoutes'
+	// emitRuntime). An empty string means "no routes" (missing pages dir)
+	// and must still emit a syntactically valid empty object — not blank
+	// space, which produced `export const typedRoutes = ;`, a syntax error.
+	const typedRoutesExpr = typedRoutesRuntime || "{}";
 	return `import { lazy } from "solid-js";
 const pages = import.meta.glob(${JSON.stringify(globPattern)});
 const load = (p) => lazy(() => pages[p]());
 const DefaultLayout = (props) => props.children;
 export const routes = ${routesArray};
-export const typedRoutes = ${typedRoutesRuntime};
+export const typedRoutes = ${typedRoutesExpr};
 `;
 }
 

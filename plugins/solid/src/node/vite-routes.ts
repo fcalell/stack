@@ -20,8 +20,8 @@ export interface RoutesPluginOptions {
 // `normalizePath` also converts, but only on Windows — doing the conversion
 // unconditionally here makes path comparisons separator-agnostic by
 // construction, and keeps simulated-Windows tests trivial on a POSIX CI host.
-// Every absolute path that enters this file — pagesDir (joined from Vite's
-// config.root + the user option), watcher events, handleHotUpdate's
+// Every absolute path that enters this file — pagesDir (joined from
+// `process.cwd()` + the user option), watcher events, handleHotUpdate's
 // ctx.file — flows through `toPosix` exactly once at the boundary, so
 // intra-plugin comparisons never need to think about slashes.
 function toPosix(p: string): string {
@@ -35,7 +35,18 @@ function joinPosix(...parts: string[]): string {
 
 export function routesPlugin(opts: RoutesPluginOptions = {}): Plugin {
 	const pagesDirRel = opts.pagesDir ?? "src/app/pages";
-	let projectRoot = process.cwd();
+	// `stack dev`/`stack build` always spawn vite with cwd = the consumer
+	// project root, but the generated `.stack/vite.config.ts` sets Vite's
+	// own `root` to `.stack` (see plugin-vite's codegen), one level below.
+	// Consumer sources — including the pages dir — live under the invoking
+	// cwd, never under `config.root`. `projectCwd` is what fast-glob and the
+	// dev-server watcher use to find real files on disk; `configRoot` is
+	// only used for the glob-key math in `emitRoutes`, which must match
+	// Vite's own root-relative `import.meta.glob` key convention (Vite
+	// always keys glob results relative to `config.root`, however the glob
+	// pattern reached the file — see routes-core's `emitVirtualModule`).
+	let projectCwd = process.cwd();
+	let configRoot = "";
 	let absPagesDir = "";
 	let cachedModule = "";
 	let server: ViteDevServer | null = null;
@@ -67,7 +78,7 @@ export function routesPlugin(opts: RoutesPluginOptions = {}): Plugin {
 		const { root, notFoundFile } = buildTree(files, absPagesDir);
 		const { routesArray, typedRoutesRuntime } = emitRoutes(
 			root,
-			projectRoot,
+			configRoot,
 			notFoundFile,
 		);
 		cachedModule = emitVirtualModule(
@@ -75,15 +86,16 @@ export function routesPlugin(opts: RoutesPluginOptions = {}): Plugin {
 			typedRoutesRuntime,
 			pagesDirRel,
 		);
-		writeRoutesDts(projectRoot, pagesDirRel);
+		writeRoutesDts(projectCwd, pagesDirRel);
 	}
 
 	return {
 		name: "fcalell:routes",
 
 		configResolved(config) {
-			projectRoot = toPosix(config.root);
-			absPagesDir = joinPosix(projectRoot, pagesDirRel);
+			projectCwd = toPosix(process.cwd());
+			configRoot = toPosix(config.root);
+			absPagesDir = joinPosix(projectCwd, pagesDirRel);
 			logger = config.logger;
 			rebuild();
 		},

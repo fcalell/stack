@@ -279,19 +279,52 @@ describe("emitVirtualModule", () => {
 		expect(module).toContain("const DefaultLayout = (props) => props.children");
 	});
 
+	// The leading `/../` is load-bearing, not decorative: this module is
+	// virtual (no real file location), so Vite requires its glob patterns to
+	// start with `/`, resolved by joining onto `config.root` — which the
+	// generated vite.config.ts always sets to `.stack`, one level below where
+	// pages actually live. Without the `../` escape, the pattern (and the
+	// glob keys Vite derives from it) would never reach real consumer files.
 	it("uses the default pages dir when none is provided", () => {
 		const module = emitVirtualModule("[]", "{}");
-		expect(module).toContain('"/src/app/pages/**/*.{tsx,jsx}"');
+		expect(module).toContain('"/../src/app/pages/**/*.{tsx,jsx}"');
 	});
 
 	it("honors a configurable pagesDir", () => {
 		const module = emitVirtualModule("[]", "{}", "app/routes");
-		expect(module).toContain('"/app/routes/**/*.{tsx,jsx}"');
+		expect(module).toContain('"/../app/routes/**/*.{tsx,jsx}"');
 	});
 
 	it("normalizes leading and trailing slashes in pagesDir", () => {
 		const module = emitVirtualModule("[]", "{}", "/custom/pages/");
-		expect(module).toContain('"/custom/pages/**/*.{tsx,jsx}"');
+		expect(module).toContain('"/../custom/pages/**/*.{tsx,jsx}"');
+	});
+
+	// BUG2 regression: the missing-pages-dir path in vite-routes.ts calls
+	// `emitVirtualModule(routesArray, "", pagesDirRel)` — an empty runtime
+	// string. The old code spliced that straight into
+	// `export const typedRoutes = ${typedRoutesRuntime};`, producing
+	// `export const typedRoutes = ;`, a syntax error that broke every import
+	// of the virtual module. Evaluate the emitted source for real (not a
+	// string assertion) to prove it's actually importable and degrades to an
+	// empty route table.
+	it("emits a syntactically valid, importable module when the runtime is empty", async () => {
+		const src = emitVirtualModule("[]", "");
+		// `import.meta.glob` and the `solid-js` bare specifier only resolve
+		// inside Vite's pipeline, not under plain Node — strip them so the
+		// module can be evaluated directly for a real (non-string) check of
+		// the two BUG2-relevant exports below. Neither strip touches the
+		// `typedRoutes`/`routes` lines under test.
+		const evaluable = src
+			.replace('import { lazy } from "solid-js";\n', "")
+			.replace(
+				/const pages = import\.meta\.glob\(.*\);\n/,
+				"const pages = {};\n",
+			);
+		const dataUrl = `data:text/javascript;base64,${Buffer.from(evaluable).toString("base64")}`;
+		const mod = await import(dataUrl);
+		expect(mod.typedRoutes).toEqual({});
+		expect(mod.routes).toEqual([]);
 	});
 });
 

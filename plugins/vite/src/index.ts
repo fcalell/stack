@@ -176,20 +176,16 @@ export const vite = plugin("vite", {
 			};
 		}),
 
-		// Build step.
+		// Build step. No --outDir: the generated config's
+		// `build.outDir: "../dist/client"` is the single source of truth; a
+		// relative CLI flag would resolve against config.root (.stack) and
+		// silently move the output to .stack/dist/client.
 		cliSlots.buildSteps.contribute(() => ({
 			name: "vite-build",
 			phase: "main",
 			exec: {
 				command: "npx",
-				args: [
-					"vite",
-					"build",
-					"--config",
-					".stack/vite.config.ts",
-					"--outDir",
-					"dist/client",
-				],
+				args: ["vite", "build", "--config", ".stack/vite.config.ts"],
 			},
 		})),
 	],
