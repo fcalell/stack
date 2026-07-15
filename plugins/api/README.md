@@ -55,6 +55,28 @@ export default worker;
 
 The builder chain (`createWorker(options).use(plugin).handler(routes)`) accumulates context from each `.use()` call. The final `.handler()` creates a Hono app with CORS, logging, secure headers, and the oRPC handler mounted at the configured prefix.
 
+The CLI also generates `.stack/procedure.ts` -- the `virtual:stack-procedure` target route files import in the next
+step, mapped via a `paths` entry in the consumer's `tsconfig.json`. It rebuilds the same `.use()` chain (minus
+callbacks/handler) purely so TypeScript can infer the exact request context type -- the const is never exported or
+called further:
+
+```ts
+// .stack/procedure.ts (generated)
+import * as schema from "../src/schema";
+import createWorker from "@fcalell/plugin-api/runtime";
+import type { AppBuilder } from "@fcalell/plugin-api/runtime";
+import dbRuntime from "@fcalell/plugin-db/runtime";
+import { createProcedure } from "@fcalell/plugin-api/procedure";
+
+const __chain = createWorker({ ... }).use(dbRuntime({ binding: "DB_MAIN", schema }));
+
+type ContextOf<B> = B extends AppBuilder<infer C> ? C : never;
+type WorkerContext = ContextOf<typeof __chain>;
+type RbacStatements = Record<string, readonly string[]>; // or auth's contributed statements
+
+export const procedure = createProcedure<WorkerContext, RbacStatements>();
+```
+
 ### 3. Write procedures
 
 ```ts
@@ -191,11 +213,15 @@ export const orpc = createApiQueryUtils(client);
 ### 8. Errors
 
 ```ts
-import { ApiError } from "@fcalell/plugin-api";
+import { ApiError } from "@fcalell/plugin-api/error";
 
 throw new ApiError("NOT_FOUND", { message: "Project not found" });
 throw new ApiError("FORBIDDEN", { message: "Insufficient permissions" });
 ```
+
+Import from `@fcalell/plugin-api/error`, not the package root -- a route file (bundled straight into the
+worker) pulling in the root export would drag in the plugin's Node-only codegen graph. `ApiError` is
+also re-exported from `@fcalell/plugin-api` for non-worker (config-side) code.
 
 ### 9. Router type export
 
@@ -290,13 +316,15 @@ export const api = plugin("api", {
 | `api.slots.callbacks` | `map<string, CallbackSpec>` | Plugin-name → callback identifier; spliced onto matching runtime |
 | `api.slots.workerBase` | `derived<TsExpression>` | The `createWorker({...})` call expression |
 | `api.slots.workerSource` | `derived<string \| null>` | Final `.stack/worker.ts` source; null when no runtimes are present |
+| `api.slots.rbacStatements` | `value<Record<string, readonly string[]> \| null>` (`override`) | RBAC action statements for `procedure({ rbac })`'s type-level autocomplete; `auth` contributes from `organization.ac.statements` |
+| `api.slots.procedureSource` | `derived<string \| null>` | Final `.stack/procedure.ts` source (`virtual:stack-procedure`'s target); null when no runtimes are present |
 
 ### Lifecycle contributions
 
 | `cliSlots` slot | Behavior |
 |-----------------|----------|
 | `initScaffolds` | Wrangler.toml + base routes scaffold |
-| `artifactFiles` | Writes `.stack/worker.ts` (when any runtime is present) and `src/worker/routes/index.ts` barrel |
+| `artifactFiles` | Writes `.stack/worker.ts` and `.stack/procedure.ts` (when any runtime is present) and `src/worker/routes/index.ts` barrel |
 | `devProcesses` | Spawns `wrangler dev` (port 8787) |
 | `devWatchers` | Watches `src/worker/routes/**` and regenerates the barrel on add/unlink |
 | `deploySteps` | `wrangler deploy --config .stack/wrangler.toml` |
@@ -320,6 +348,8 @@ createWorker({ domain: "example.com", cors: ["https://example.com"], prefix: "/r
 |---------|---------|
 | `@fcalell/plugin-api` | `api()`, `ApiOptions`, `ApiError`, `Middleware`, `InferRouter` |
 | `@fcalell/plugin-api/runtime` | `createWorker()`, `AppBuilder`, `WorkerExport`, `ApiWorkerOptions` |
+| `@fcalell/plugin-api/procedure` | `createProcedure()`, `Middleware`, `ProcedureConfig` -- what the generated `.stack/procedure.ts` (`virtual:stack-procedure`) imports |
+| `@fcalell/plugin-api/error` | `ApiError` -- worker-safe (no Node-only deps); import this from route files |
 | `@fcalell/cli/runtime` | `RuntimePlugin` |
 | `@fcalell/plugin-api/client` | `createClient()`, `RouterClient`, `ClientConfig` |
 | `@fcalell/plugin-api/tanstack-query` | `createQueryClient()`, `createApiQueryUtils()`, `QueryProvider`, query hooks -- native TanStack Query client (runtime-only) |

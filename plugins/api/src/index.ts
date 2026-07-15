@@ -8,13 +8,16 @@ import type {
 	TsImportSpec,
 } from "@fcalell/cli/ast";
 import { cliSlots, emitArtifact } from "@fcalell/cli/cli-slots";
+import { cloudflare } from "@fcalell/plugin-cloudflare";
 import { z } from "zod";
 import { generateRouteBarrel, hasRoutableFiles } from "./node/barrel";
 import { aggregateMiddleware, aggregateWorker } from "./node/codegen";
-import type {
-	CallbackSpec,
-	PluginRuntimeEntry,
-	WorkerPayload,
+import { aggregateProcedure } from "./node/procedure-codegen";
+import {
+	type CallbackSpec,
+	type PluginRuntimeEntry,
+	ROUTES_BARREL_IMPORT_SOURCE,
+	type WorkerPayload,
 } from "./node/types";
 
 export const apiOptionsSchema = z.object({
@@ -190,6 +193,21 @@ const workerBase = slot.derived({
 	},
 });
 
+// RBAC action statements for `procedure({ rbac: [...] })`'s type-level
+// autocomplete, handed over by plugin-auth (its `organization.ac.statements`
+// — plain JSON, resource -> allowed actions) when organization access
+// control is configured. `null` (the seed) means no plugin contributed one;
+// `.stack/procedure.ts` falls back to `Record<string, readonly string[]>`
+// (rbac still works, just without narrowed action-name autocomplete).
+// `override: true` because only one plugin's statements can be authoritative
+// — auth is the only first-party contributor today.
+const rbacStatements = slot.value<Record<string, readonly string[]> | null>({
+	source: SOURCE,
+	name: "rbacStatements",
+	override: true,
+	seed: () => null,
+});
+
 // The rendered `src/worker/routes/index.ts` barrel. Returns null when
 // there's nothing to barrel (no routes dir, or routes dir contains no
 // routable files). emitArtifact below skips the write on null — without
@@ -241,10 +259,48 @@ const workerSource = slot.derived({
 	},
 });
 
+// The rendered `.stack/procedure.ts` source — the `virtual:stack-procedure`
+// target a consumer's `src/worker/routes/*.ts` imports (mapped via a
+// tsconfig `paths` alias; see `packages/cli/src/templates/tsconfig.ts`).
+// Gated on `pluginRuntimes` the same way `workerSource` is: no runtimes,
+// no meaningful request context, no artifact. This is the ONLY place that
+// gate is checked — `aggregateProcedure` itself is ungated (it would happily
+// render a runtimes-less chain); the slot compute is the natural place to
+// decide whether the artifact exists at all.
+//
+// Mirrors `middlewareCalls`/`middlewareImports` alongside `pluginRuntimes` so
+// the rebuilt `__chain` in `.stack/procedure.ts` extends `TContext` exactly
+// the way the real worker's chain does — see `node/procedure-codegen.ts`.
+const procedureSource = slot.derived({
+	source: SOURCE,
+	name: "procedureSource",
+	inputs: {
+		base: workerBase,
+		runtimes: pluginRuntimes,
+		imports: workerImports,
+		middlewareCalls,
+		middlewareImports,
+		statements: rbacStatements,
+	},
+	compute: (inp): string | null => {
+		if (inp.runtimes.length === 0) return null;
+		return aggregateProcedure({
+			base: inp.base,
+			runtimes: inp.runtimes,
+			imports: inp.imports,
+			middlewareChain: inp.middlewareCalls,
+			middlewareImports: inp.middlewareImports,
+			statements: inp.statements,
+		});
+	},
+});
+
 export const api = plugin("api", {
 	label: "API",
 
 	schema: apiOptionsSchema,
+
+	requires: ["cloudflare"],
 
 	dependencies: {
 		"@fcalell/plugin-api": "workspace:*",
@@ -267,6 +323,8 @@ export const api = plugin("api", {
 		workerBase,
 		workerSource,
 		routeBarrelSource,
+		rbacStatements,
+		procedureSource,
 	},
 
 	contributes: (self) => [
@@ -289,7 +347,10 @@ export const api = plugin("api", {
 		self.slots.workerImports.contribute(async (ctx) => {
 			const handler = await ctx.resolve(self.slots.routesHandler);
 			if (!handler) return undefined;
-			return { source: "../src/worker/routes", namespace: handler.identifier };
+			return {
+				source: ROUTES_BARREL_IMPORT_SOURCE,
+				namespace: handler.identifier,
+			};
 		}),
 
 		// Consumer middleware is an implicit contribution via the conventional
@@ -311,9 +372,38 @@ export const api = plugin("api", {
 			} as MiddlewareSpec;
 		}),
 
+		// Dedicated blanket per-IP volume limiter for the whole /rpc tree (see
+		// `worker/index.ts`'s `RATE_LIMITER_RPC` constant). A fixed volume
+		// ceiling, not a consumer option: 1000 req/60s per IP is far above any
+		// legitimate single client but low enough to catch a runaway retry loop
+		// or scraper, and sized so a shared carrier-NAT IP (mobile networks,
+		// corporate proxies) never trips it. Kept structurally separate from
+		// plugin-auth's RATE_LIMITER_IP/RATE_LIMITER_EMAIL bindings and from any
+		// procedure's own `rateLimit: "ip"` middleware so none of them share —
+		// and none of them halve — another's budget.
+		cloudflare.slots.bindings.contribute(() => ({
+			kind: "rate_limiter" as const,
+			binding: "RATE_LIMITER_RPC",
+			simple: { limit: 1000, period: 60 },
+		})),
+
+		// `virtual:stack-procedure` -> `.stack/procedure.ts` tsconfig `paths`
+		// alias. Consumed by `stack init`'s tsconfig template (never by `stack
+		// generate` — tsconfig.json is scaffolded once). Own presence is the
+		// gate: no runtimes means no `.stack/procedure.ts` either, but the alias
+		// is harmless to declare in that case (it just never resolves).
+		cliSlots.tsconfigPaths.contribute(() => ({
+			"virtual:stack-procedure": ["./.stack/procedure.ts"],
+		})),
+
 		// Emit the rendered worker file into cli.slots.artifactFiles. Null
 		// source (no runtimes in the config) skips the emission.
 		emitArtifact(".stack/worker.ts", self.slots.workerSource),
+
+		// Emit the `virtual:stack-procedure` target — the consumer-facing
+		// `procedure` factory route files import. Same null-skip gate as
+		// workerSource (no runtimes, no artifact).
+		emitArtifact(".stack/procedure.ts", self.slots.procedureSource),
 
 		// Emit the route barrel via the universal source-slot pattern. The
 		// source returns null when there are no routable files, in which

@@ -309,7 +309,7 @@ type KeyExtractor = (
 
 // `X-Forwarded-For` may be a comma-separated list (client, proxy1, proxy2…).
 // The originating client is the first entry; trim per RFC 7239.
-function extractIp(headers: Headers): string {
+export function extractIp(headers: Headers): string {
 	const cfIp = headers.get("CF-Connecting-IP");
 	if (cfIp) return cfIp;
 	const fwd = headers.get("X-Forwarded-For");
@@ -380,6 +380,24 @@ function createRateLimitMiddleware(kind: RateLimitKind) {
 		}
 
 		return next({ context: {} });
+	};
+}
+
+// oRPC's RPCHandler flattens any non-ORPCError throw into an opaque
+// INTERNAL_SERVER_ERROR before it reaches Hono's onError, so a real bug (a
+// D1 error, a typo) leaves zero server-side trace. ORPCError throws are
+// intentional control flow (auth/rate-limit/validation failures) and must
+// stay silent.
+function createErrorLoggingMiddleware(): OrpcMiddlewareFn {
+	return async ({ next }, _input) => {
+		try {
+			return await next({ context: {} });
+		} catch (error) {
+			if (!(error instanceof ORPCError)) {
+				console.error("[api] Unexpected procedure error:", error);
+			}
+			throw error;
+		}
 	};
 }
 
@@ -638,6 +656,10 @@ export function createProcedure<
 	function procedure(config?: ProcedureConfig<TStatements>) {
 		const opts = (config ?? {}) as ProcedureConfig<TStatements> & BaseOptions;
 		let chain: OrpcChain = base;
+
+		// Root middleware, ahead of rate-limit/auth/org/rbac: logs unexpected
+		// (non-ORPCError) throws before oRPC flattens them into an opaque 500.
+		chain = chain.use(createErrorLoggingMiddleware());
 
 		// Each middleware factory declares its own required `context` shape
 		// (e.g. `{ reqHeaders, auth }` for auth, `{ session }` for org). The

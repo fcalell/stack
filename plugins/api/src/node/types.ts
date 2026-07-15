@@ -4,6 +4,14 @@ import type {
 	TsImportSpec,
 } from "@fcalell/cli/ast";
 
+// The route barrel's import source, as emitted into `api.slots.workerImports`
+// (see `index.ts`'s `routesHandler`-gated contribution) and consulted by
+// `procedure-codegen.ts` to exclude it from `.stack/procedure.ts`'s imports —
+// route files import `virtual:stack-procedure`, so procedure.ts importing the
+// route barrel back would be a cycle. One shared constant keeps both sides
+// from drifting apart.
+export const ROUTES_BARREL_IMPORT_SOURCE = "../src/worker/routes";
+
 // A plugin's runtime contribution to the worker chain. Captured structurally
 // so the worker derivation can attach callbacks and render options uniformly.
 //

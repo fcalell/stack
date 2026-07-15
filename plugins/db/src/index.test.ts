@@ -183,7 +183,8 @@ describe("db → cloudflare.slots.bindings", () => {
 		});
 		const g = buildGraph(plugins, ctxFactory);
 		const bindings = await g.resolve(cloudflare.slots.bindings);
-		expect(bindings).toHaveLength(0);
+		// api's blanket RATE_LIMITER_RPC may be present; db must add no d1.
+		expect(bindings.filter((b) => b.kind === "d1")).toHaveLength(0);
 	});
 
 	it("uses the custom binding name", async () => {

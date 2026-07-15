@@ -10,9 +10,23 @@ import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { secureHeaders } from "hono/secure-headers";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
-import { createProcedure } from "../procedure";
+import {
+	createProcedure,
+	extractIp,
+	type RateLimitBinding,
+} from "../procedure";
 
 export type { InferRouter } from "../types";
+
+// Env binding name for the blanket per-IP volume limiter — a dedicated
+// wrangler `rate_limiter` binding (contributed by plugin-api itself; see
+// `../index.ts`'s `cloudflare.slots.bindings` contribution), never shared
+// with the auth surface's `RATE_LIMITER_IP`/`RATE_LIMITER_EMAIL` bindings or
+// a procedure's own `rateLimit: "ip"` middleware. A shared binding would
+// double-draw the same budget (halving the effective limit for procedures
+// that also declare `rateLimit: "ip"`) and let /rpc volume starve
+// /api/auth's independent budget.
+export const RATE_LIMITER_RPC = "RATE_LIMITER_RPC";
 
 // ---------- Worker export ----------
 
@@ -54,6 +68,61 @@ function isMiddlewareEntry(entry: UseEntry): entry is MiddlewareEntry {
 	return "middleware" in entry;
 }
 
+// Stable-topologically sorts the `PluginEntry`s among `entries` by each
+// plugin's `dependsOn`, leaving fn/middleware entries in their original
+// positions and reinserting the reordered plugins into the positions plugin
+// entries already occupied. Independent plugins (no dependsOn edge between
+// them) keep their original relative `.use()` order — this is what lets the
+// generated worker sort `pluginRuntimes` alphabetically for deterministic
+// codegen while still running dependencies first at request time.
+function sortPluginEntries(entries: UseEntry[]): UseEntry[] {
+	const pluginPositions: number[] = [];
+	const pluginEntries: PluginEntry[] = [];
+	entries.forEach((entry, i) => {
+		if (isPluginEntry(entry)) {
+			pluginPositions.push(i);
+			pluginEntries.push(entry);
+		}
+	});
+
+	if (pluginEntries.length <= 1) return entries;
+
+	const byName = new Map(pluginEntries.map((e) => [e.plugin.name, e]));
+	const visited = new Set<string>();
+	const inStack = new Set<string>();
+	const sorted: PluginEntry[] = [];
+
+	function visit(entry: PluginEntry, stack: string[]): void {
+		const name = entry.plugin.name;
+		if (visited.has(name)) return;
+		if (inStack.has(name)) {
+			const cycleStart = stack.indexOf(name);
+			const cycle = [...stack.slice(cycleStart), name];
+			throw new Error(`Runtime plugin dependency cycle: ${cycle.join(" -> ")}`);
+		}
+		inStack.add(name);
+		for (const dep of entry.plugin.dependsOn ?? []) {
+			const depEntry = byName.get(dep);
+			// A dependsOn naming a plugin that isn't registered is ignored —
+			// presence is validated at config level by `requires`.
+			if (depEntry) visit(depEntry, [...stack, name]);
+		}
+		inStack.delete(name);
+		visited.add(name);
+		sorted.push(entry);
+	}
+
+	for (const entry of pluginEntries) {
+		visit(entry, []);
+	}
+
+	const result = [...entries];
+	pluginPositions.forEach((pos, i) => {
+		result[pos] = sorted[i] as PluginEntry;
+	});
+	return result;
+}
+
 // Hono middleware is `(c, next) => Promise<Response | void>` (arity 2). A
 // context-injecting fn is `(ctx) => extra` (arity 1). Dispatch on `.length`
 // at runtime; consumers writing native Hono middleware just `export default`
@@ -80,11 +149,14 @@ export interface AppBuilder<TContext extends Record<string, unknown>> {
 
 // ---------- Base context ----------
 
-type BaseContext = {
+export type BaseContext = {
 	env: unknown;
 	request: Request;
 	reqHeaders: Headers;
 	resHeaders: Headers;
+	// Hono's and wrangler's `ExecutionContext` types disagree on optional
+	// members; `waitUntil` is the only part of the contract procedures need.
+	executionCtx: { waitUntil(promise: Promise<unknown>): void };
 	[key: string]: unknown;
 };
 
@@ -163,7 +235,11 @@ function createAppBuilder<TContext extends Record<string, unknown>>(
 		): WorkerExport<TRoutes> {
 			const { prefix: rpcPrefix, cors: corsOrigin } = apiOptions;
 
-			const pluginEntries = entries.filter(isPluginEntry);
+			// Sort once at construction time so both the context-building loop
+			// and the fetch/routes loops below see plugins in dependency order,
+			// regardless of `.use()` registration order.
+			const sortedEntries = sortPluginEntries(entries);
+			const pluginEntries = sortedEntries.filter(isPluginEntry);
 
 			const procedure = createProcedure<TContext>();
 
@@ -225,7 +301,7 @@ function createAppBuilder<TContext extends Record<string, unknown>>(
 			// contribution order. They run AFTER the framework wrappers above
 			// (cors / logger / secureHeaders / liveness) and BEFORE context
 			// injection, matching the ordering plugins expect.
-			for (const entry of entries) {
+			for (const entry of sortedEntries) {
 				if (isMiddlewareEntry(entry)) {
 					app.use("*", entry.middleware);
 				}
@@ -239,14 +315,31 @@ function createAppBuilder<TContext extends Record<string, unknown>>(
 					entry.plugin.validateEnv?.(env);
 				}
 
-				let ctx: Record<string, unknown> = { env, request };
+				// `c.executionCtx` throws when the runtime supplied none (Node
+				// tests, `.handler({})` invoked without a Workers ctx). A no-op
+				// waitUntil is behaviorally correct outside Workers: the promise
+				// still runs, waitUntil only extends the worker's lifetime.
+				let executionCtx: { waitUntil(promise: Promise<unknown>): void };
+				try {
+					executionCtx = c.executionCtx;
+				} catch {
+					executionCtx = { waitUntil: () => {} };
+				}
 
-				for (const entry of entries) {
+				let ctx: Record<string, unknown> = {
+					env,
+					request,
+					executionCtx,
+					_devMode:
+						(env as Record<string, unknown> | null | undefined)?.STACK_DEV ===
+						"1",
+				};
+
+				for (const entry of sortedEntries) {
 					if (isPluginEntry(entry)) {
 						const provided = await entry.plugin.context(env, ctx);
 						ctx = { ...ctx, ...provided };
-					} else if (isMiddlewareEntry(entry)) {
-					} else {
+					} else if (!isMiddlewareEntry(entry)) {
 						const extra = await entry.fn(ctx);
 						ctx = { ...ctx, ...extra };
 					}
@@ -264,7 +357,37 @@ function createAppBuilder<TContext extends Record<string, unknown>>(
 			});
 
 			app.post(`${rpcPrefix}/*`, async (c) => {
+				// oRPC parses a request with a *missing* Content-Type as JSON, and
+				// SameSite=None (native support) means a browser can send one
+				// cross-site without a CORS preflight. Reject anything that isn't
+				// explicitly application/json before it reaches the RPC handler.
+				// Lowercased first: RFC 9110 treats the media type token
+				// case-insensitively ("Application/JSON" is valid JSON).
+				const contentType = c.req.header("content-type")?.toLowerCase();
+				if (!contentType?.startsWith("application/json")) {
+					return c.json({ code: "UNSUPPORTED_MEDIA_TYPE" }, 415);
+				}
+
 				const ctx = c.get("__stackCtx");
+
+				// Blanket per-IP volume limiter across the whole /rpc tree, on its
+				// own dedicated `RATE_LIMITER_RPC` binding (see the constant above)
+				// — never the per-procedure `ctx._rateLimiter` bindings, so this
+				// guard's budget never competes with `rateLimit: "ip"` procedures or
+				// the auth surface. Production-only; skips silently when no
+				// RATE_LIMITER_RPC binding is present (worker-only projects that
+				// haven't run `wrangler types` / deployed the binding yet).
+				const rpcLimiter = (
+					c.env as Record<string, unknown> | null | undefined
+				)?.[RATE_LIMITER_RPC] as RateLimitBinding | undefined;
+				if (rpcLimiter && !(ctx as { _devMode?: boolean })._devMode) {
+					const ip = extractIp(c.req.raw.headers);
+					const result = await rpcLimiter.limit({ key: ip });
+					if (!result.success) {
+						return c.json({ code: "TOO_MANY_REQUESTS" }, 429);
+					}
+				}
+
 				const { matched, response } = await rpcHandler.handle(c.req.raw, {
 					prefix: rpcPrefix,
 					context: ctx,

@@ -7,6 +7,7 @@ import {
 	type GraphCtxFactory,
 	type GraphPlugin,
 } from "@fcalell/cli/graph";
+import { cloudflare } from "@fcalell/plugin-cloudflare";
 import { afterEach, describe, expect, it } from "vitest";
 import { type ApiOptions, api } from "./index";
 import type { PluginRuntimeEntry } from "./node/types";
@@ -518,6 +519,114 @@ describe("api.slots.workerSource (bug #1 — callback wiring)", () => {
 	});
 });
 
+// ── procedureSource — virtual:stack-procedure target ──────────────
+
+describe("api.slots.procedureSource", () => {
+	it("returns null when no runtimes contributed (mirrors workerSource)", async () => {
+		const g = buildGraph(collectPlugins(), makeCtxFactory());
+		const src = await g.resolve(api.slots.procedureSource);
+		expect(src).toBeNull();
+	});
+
+	it("mirrors the worker's runtime chain and exports a typed `procedure`", async () => {
+		const dbLike: GraphPlugin = {
+			name: "db",
+			contributes: [
+				api.slots.pluginRuntimes.contribute(
+					(): PluginRuntimeEntry => ({
+						plugin: "db",
+						import: {
+							source: "@fcalell/plugin-db/runtime",
+							default: "dbRuntime",
+						},
+						identifier: "dbRuntime",
+						options: {
+							binding: { kind: "string", value: "DB_MAIN" },
+						},
+					}),
+				),
+				api.slots.workerImports.contribute(() => ({
+					source: "../src/schema",
+					namespace: "schema",
+				})),
+			],
+		};
+		const g = buildGraph(collectPlugins([dbLike]), makeCtxFactory());
+		const src = await g.resolve(api.slots.procedureSource);
+		expect(src).not.toBeNull();
+		expect(src).toContain(
+			'import createWorker from "@fcalell/plugin-api/runtime"',
+		);
+		expect(src).toContain('import * as schema from "../src/schema"');
+		expect(src).toContain('import dbRuntime from "@fcalell/plugin-db/runtime"');
+		expect(src).toContain(
+			'import { createProcedure } from "@fcalell/plugin-api/procedure"',
+		);
+		expect(src).toContain("const __chain = createWorker(");
+		expect(src).toContain(".use(dbRuntime(");
+		expect(src).toContain(
+			"export const procedure = createProcedure<WorkerContext, RbacStatements>();",
+		);
+		// Never imports the route barrel back — route files import
+		// virtual:stack-procedure, so that would be a cycle.
+		expect(src).not.toContain('"../src/worker/routes"');
+	});
+
+	it("renders auth's contributed RBAC statements when present", async () => {
+		const dbLike: GraphPlugin = {
+			name: "db",
+			contributes: [
+				api.slots.pluginRuntimes.contribute(
+					(): PluginRuntimeEntry => ({
+						plugin: "db",
+						import: {
+							source: "@fcalell/plugin-db/runtime",
+							default: "dbRuntime",
+						},
+						identifier: "dbRuntime",
+						options: {},
+					}),
+				),
+			],
+		};
+		const authLike: GraphPlugin = {
+			name: "auth",
+			contributes: [
+				api.slots.rbacStatements.contribute(() => ({
+					project: ["create", "delete"],
+				})),
+			],
+		};
+		const g = buildGraph(collectPlugins([dbLike, authLike]), makeCtxFactory());
+		const src = await g.resolve(api.slots.procedureSource);
+		expect(src).toContain('project: readonly ["create", "delete"];');
+	});
+
+	it("falls back to Record<string, readonly string[]> when nothing contributes rbacStatements", async () => {
+		const dbLike: GraphPlugin = {
+			name: "db",
+			contributes: [
+				api.slots.pluginRuntimes.contribute(
+					(): PluginRuntimeEntry => ({
+						plugin: "db",
+						import: {
+							source: "@fcalell/plugin-db/runtime",
+							default: "dbRuntime",
+						},
+						identifier: "dbRuntime",
+						options: {},
+					}),
+				),
+			],
+		};
+		const g = buildGraph(collectPlugins([dbLike]), makeCtxFactory());
+		const src = await g.resolve(api.slots.procedureSource);
+		expect(src).toContain(
+			"type RbacStatements = Record<string, readonly string[]>;",
+		);
+	});
+});
+
 // ── middleware + routes ───────────────────────────────────────────
 
 describe("api middleware + routes", () => {
@@ -540,6 +649,36 @@ describe("api middleware + routes", () => {
 		const src = await g.resolve(api.slots.workerSource);
 		expect(src).toContain(".use(middleware)");
 		expect(src).toContain('import middleware from "../src/worker/middleware"');
+	});
+
+	// M3: `.stack/procedure.ts`'s rebuilt `__chain` must mirror the real
+	// worker's `.use(...)` chain past the runtime entries too, so a
+	// context-injecting consumer middleware's extra keys land in
+	// `WorkerContext` (see `node/procedure-codegen.ts`). Regression guard for
+	// the bug where `procedure.ts` only rebuilt base + pluginRuntimes and
+	// silently dropped middleware-injected context.
+	it("mirrors consumer middleware into .stack/procedure.ts's __chain", async () => {
+		const dbLike: GraphPlugin = {
+			name: "db",
+			contributes: [
+				api.slots.pluginRuntimes.contribute(
+					(): PluginRuntimeEntry => ({
+						plugin: "db",
+						import: { source: "@pkg/db/runtime", default: "dbRuntime" },
+						identifier: "dbRuntime",
+						options: {},
+					}),
+				),
+			],
+		};
+		const files = { api: new Set(["src/worker/middleware.ts"]) };
+		const g = buildGraph(collectPlugins([dbLike]), makeCtxFactory({}, files));
+		const src = await g.resolve(api.slots.procedureSource);
+		expect(src).toContain('import middleware from "../src/worker/middleware"');
+		const dbIdx = src?.indexOf(".use(dbRuntime(") ?? -1;
+		const mwIdx = src?.indexOf(".use(middleware)") ?? -1;
+		expect(dbIdx).toBeGreaterThanOrEqual(0);
+		expect(mwIdx).toBeGreaterThan(dbIdx);
 	});
 
 	it("routes handler seeds to routes when src/worker/routes has files", async () => {
@@ -641,14 +780,16 @@ describe("api contributions into cli.slots", () => {
 		const files = await g.resolve(cliSlots.artifactFiles);
 		const paths = files.map((f) => f.path);
 		expect(paths).toContain(".stack/worker.ts");
+		expect(paths).toContain(".stack/procedure.ts");
 		expect(paths).toContain("src/worker/routes/index.ts");
 	});
 
-	it("skips emitting .stack/worker.ts when no runtimes contributed", async () => {
+	it("skips emitting .stack/worker.ts and .stack/procedure.ts when no runtimes contributed", async () => {
 		const g = buildGraph(collectPlugins(), makeCtxFactory());
 		const files = await g.resolve(cliSlots.artifactFiles);
 		const paths = files.map((f) => f.path);
 		expect(paths).not.toContain(".stack/worker.ts");
+		expect(paths).not.toContain(".stack/procedure.ts");
 	});
 
 	// Bug regression: previously the route barrel artifact was unconditionally
@@ -716,5 +857,74 @@ describe("api contributions into cli.slots", () => {
 		expect(devDeps.wrangler).toBeDefined();
 		expect(ignore).toContain(".wrangler");
 		expect(ignore).toContain(".stack");
+	});
+});
+
+// ── H1 — dedicated blanket-limiter binding ─────────────────────────
+
+describe("api → cloudflare.slots.bindings (RATE_LIMITER_RPC)", () => {
+	it("contributes its own rate_limiter binding, independent of any procedure/auth limiter", async () => {
+		const cfCollected = cloudflare.cli.collect({ app, options: {} });
+		const cfPlugin: GraphPlugin = {
+			name: "cloudflare",
+			slots: cfCollected.slots as unknown as Record<
+				string,
+				import("@fcalell/cli").Slot<unknown>
+			>,
+			contributes: cfCollected.contributes,
+		};
+		const g = buildGraph(collectPlugins([cfPlugin]), makeCtxFactory());
+		const bindings = await g.resolve(cloudflare.slots.bindings);
+		expect(bindings).toContainEqual(
+			expect.objectContaining({
+				kind: "rate_limiter",
+				binding: "RATE_LIMITER_RPC",
+				simple: { limit: 1000, period: 60 },
+			}),
+		);
+	});
+
+	it("still contributes RATE_LIMITER_RPC regardless of plugin registration order", async () => {
+		const cfCollected = cloudflare.cli.collect({ app, options: {} });
+		const cfPlugin: GraphPlugin = {
+			name: "cloudflare",
+			slots: cfCollected.slots as unknown as Record<
+				string,
+				import("@fcalell/cli").Slot<unknown>
+			>,
+			contributes: cfCollected.contributes,
+		};
+		// Build with cloudflare collected first, api second — mirrors
+		// `collectPlugins` putting api first normally; the reverse ordering here
+		// pins that the binding contribution never depended on array position.
+		const apiCollected = api.cli.collect({ app, options: api({}).options });
+		const apiPlugin: GraphPlugin = {
+			name: "api",
+			slots: apiCollected.slots as unknown as Record<
+				string,
+				import("@fcalell/cli").Slot<unknown>
+			>,
+			contributes: apiCollected.contributes,
+		};
+		const g = buildGraph([cfPlugin, apiPlugin], makeCtxFactory());
+		const bindings = await g.resolve(cloudflare.slots.bindings);
+		expect(bindings).toContainEqual(
+			expect.objectContaining({
+				kind: "rate_limiter",
+				binding: "RATE_LIMITER_RPC",
+			}),
+		);
+	});
+});
+
+// ── L2 — domain-agnostic tsconfig contribution ─────────────────────
+
+describe("api → cliSlots.tsconfigPaths", () => {
+	it("contributes the virtual:stack-procedure -> .stack/procedure.ts paths mapping", async () => {
+		const g = buildGraph(collectPlugins(), makeCtxFactory());
+		const paths = await g.resolve(cliSlots.tsconfigPaths);
+		expect(paths).toEqual({
+			"virtual:stack-procedure": ["./.stack/procedure.ts"],
+		});
 	});
 });

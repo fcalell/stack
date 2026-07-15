@@ -6,6 +6,8 @@
 	"exports": {
 		".": "./src/index.ts",
 		"./runtime": "./src/worker/index.ts",
+		"./procedure": "./src/procedure.ts",
+		"./error": "./src/error.ts",
 		"./client": "./src/client.ts",
 		"./tanstack-query": "./src/tanstack-query.tsx",
 		"./schema": "./src/schema.ts",
@@ -24,6 +26,7 @@
 	},
 	"dependencies": {
 		"@fcalell/cli": "workspace:*",
+		"@fcalell/plugin-cloudflare": "workspace:*",
 		"@orpc/client": "^1.14.4",
 		"@orpc/server": "^1.14.4",
 		"drizzle-orm": "^0.45.2",
