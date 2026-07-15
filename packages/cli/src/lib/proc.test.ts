@@ -83,6 +83,27 @@ describe("supervise — lifecycle classification", () => {
 		expect(exitEvent.portInUse).toBe(false);
 	});
 
+	it("spawns the child with spec.env merged over the parent env", async () => {
+		const script =
+			'process.stderr.write(process.env.STACK_DEV + "|" + (process.env.PATH ? "has-path" : "no-path") + "\\n"); process.exit(0);';
+
+		const exitEvent = await swallowIo(async () => {
+			const proc = supervise({
+				spec: {
+					name: "env-child",
+					command: process.execPath,
+					args: ["-e", script],
+					env: { STACK_DEV: "1" },
+				},
+				color: identity,
+				cwd: process.cwd(),
+			});
+			return proc.done;
+		});
+
+		expect(exitEvent.stderrTail).toContain("1|has-path");
+	});
+
 	it("captures a trailing slice of stderr for the exit event", async () => {
 		const script =
 			'process.stderr.write("first line\\nsecond line\\nThirdLineMarker\\n"); process.exit(7);';

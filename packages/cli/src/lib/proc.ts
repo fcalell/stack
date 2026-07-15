@@ -76,6 +76,7 @@ export function supervise(opts: SuperviseOptions): SupervisedProcess {
 		const child = spawn(spec.command, spec.args, {
 			stdio: ["ignore", "pipe", "pipe"],
 			cwd,
+			env: spec.env ? { ...process.env, ...spec.env } : undefined,
 		});
 		currentChild = child;
 

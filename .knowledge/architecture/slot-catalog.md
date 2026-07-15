@@ -161,4 +161,6 @@ or `@fcalell/cli/specs` (lifecycle specs).
 - `MiddlewareSpec`: `{ imports, call, phase: "before-cors" | "after-cors" | "before-routes" | "after-routes", order }`.
 - `PluginRuntimeEntry`: `{ plugin, import, identifier, options? }` describing a `.use(xRuntime(opts))` call.
 - `ProcessSpec`, `WatcherSpec`, `BuildStep`, `DeployStep`, `DeployCheck`, `PromptSpec`,
-  `DevReadyTask`, `GeneratedFile`: exported from `@fcalell/cli/specs`.
+  `DevReadyTask`, `GeneratedFile`: exported from `@fcalell/cli/specs`. `ProcessSpec.env` merges
+  extra environment variables over the parent env at spawn (per-process dev signals like
+  `STACK_DEV=1` on targets without `.dev.vars`).

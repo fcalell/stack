@@ -40,6 +40,10 @@ export interface ProcessSpec {
 	defaultPort?: number;
 	readyPattern?: RegExp;
 	color?: string;
+	// Extra environment variables merged over the parent process env at
+	// spawn. The generic carrier for per-process dev signals (e.g. a Node
+	// target's STACK_DEV=1, which has no `.dev.vars` equivalent).
+	env?: Record<string, string>;
 	// Default `"never"`. Most dev processes (vite, wrangler) want
 	// `"on-crash"`; we don't make that the default because most contributions
 	// are short-lived shell commands where surprise restarts would be wrong.
