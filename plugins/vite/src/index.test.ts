@@ -259,6 +259,57 @@ describe("vite.slots.viteConfig", () => {
 		const files = await g.resolve(cliSlots.artifactFiles);
 		expect(files.map((f) => f.path)).toContain(".stack/vite.config.ts");
 	});
+
+	it("renders serverProxy contributions into server.proxy", async () => {
+		const nodeLike: GraphPlugin = {
+			name: "node-like",
+			contributes: [
+				vite.slots.serverProxy.contribute(() => [
+					{ path: "/rpc", target: "http://localhost:8788" },
+					{ path: "/ws", target: "http://localhost:8788", ws: true },
+				]),
+			],
+		};
+		const { plugins, ctxFactory } = collectVitePlugins([nodeLike]);
+		const g = buildGraph(plugins, ctxFactory);
+		const src = await g.resolve(vite.slots.viteConfig);
+		expect(src).toContain("proxy:");
+		expect(src).toContain('"/rpc": {');
+		expect(src).toContain('target: "http://localhost:8788"');
+		expect(src).toContain('"/ws": {');
+		expect(src).toContain("ws: true");
+	});
+
+	it("omits server.proxy when nothing contributes proxy rules", async () => {
+		const { plugins, ctxFactory } = collectVitePlugins();
+		const g = buildGraph(plugins, ctxFactory);
+		const src = await g.resolve(vite.slots.viteConfig);
+		expect(src).not.toContain("proxy:");
+	});
+
+	it("fails loudly when two plugins proxy the same path", async () => {
+		const a: GraphPlugin = {
+			name: "a",
+			contributes: [
+				vite.slots.serverProxy.contribute(() => ({
+					path: "/rpc",
+					target: "http://localhost:1111",
+				})),
+			],
+		};
+		const b: GraphPlugin = {
+			name: "b",
+			contributes: [
+				vite.slots.serverProxy.contribute(() => ({
+					path: "/rpc",
+					target: "http://localhost:2222",
+				})),
+			],
+		};
+		const { plugins, ctxFactory } = collectVitePlugins([a, b]);
+		const g = buildGraph(plugins, ctxFactory);
+		await expect(g.resolve(vite.slots.viteConfig)).rejects.toThrow();
+	});
 });
 
 // ── dev + build ───────────────────────────────────────────────────

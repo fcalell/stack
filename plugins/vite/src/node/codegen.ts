@@ -56,18 +56,45 @@ export function aggregateViteConfig(payload: CodegenViteConfigPayload): string {
 		},
 	];
 
+	const serverProps: Array<{ key: string; value: TsExpression }> = [];
 	if (payload.devServerPort > 0) {
-		configProps.push({
-			key: "server",
+		serverProps.push({
+			key: "port",
+			value: { kind: "number", value: payload.devServerPort },
+		});
+	}
+	if (payload.serverProxy.length > 0) {
+		serverProps.push({
+			key: "proxy",
 			value: {
 				kind: "object",
-				properties: [
-					{
-						key: "port",
-						value: { kind: "number", value: payload.devServerPort },
+				properties: payload.serverProxy.map((entry) => ({
+					key: entry.path,
+					value: {
+						kind: "object",
+						properties: [
+							{
+								key: "target",
+								value: { kind: "string", value: entry.target },
+							},
+							...(entry.ws
+								? [
+										{
+											key: "ws" as const,
+											value: { kind: "boolean" as const, value: true },
+										},
+									]
+								: []),
+						],
 					},
-				],
+				})),
 			},
+		});
+	}
+	if (serverProps.length > 0) {
+		configProps.push({
+			key: "server",
+			value: { kind: "object", properties: serverProps },
 		});
 	}
 

@@ -14,6 +14,7 @@ describe("aggregateViteConfig", () => {
 			],
 			resolveAliases: [],
 			devServerPort: 3000,
+			serverProxy: [],
 		});
 
 		expect(result).toContain('import { defineConfig } from "vite";');
@@ -32,6 +33,7 @@ describe("aggregateViteConfig", () => {
 			pluginCalls: [],
 			resolveAliases: [{ find: "@", replacement: "./src" }],
 			devServerPort: 0,
+			serverProxy: [],
 		});
 
 		// Alias must land inside the `resolve.alias` object, not as a bare

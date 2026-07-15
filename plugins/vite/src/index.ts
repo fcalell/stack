@@ -3,7 +3,11 @@ import type { TsExpression, TsImportSpec } from "@fcalell/cli/ast";
 import { cliSlots, emitArtifact } from "@fcalell/cli/cli-slots";
 import { api } from "@fcalell/plugin-api";
 import { aggregateViteConfig } from "./node/codegen";
-import { type ViteOptions, viteOptionsSchema } from "./types";
+import {
+	type ServerProxyEntry,
+	type ViteOptions,
+	viteOptionsSchema,
+} from "./types";
 
 const SOURCE = "vite";
 
@@ -50,6 +54,18 @@ const devServerPort = slot.value<number, ViteOptions>({
 	},
 });
 
+// Dev-server proxy rules, rendered into the generated config's
+// `server.proxy`. Deploy-target plugins contribute their worker-owned
+// paths here so the browser stays same-origin in dev exactly like prod.
+const serverProxy = slot.list<ServerProxyEntry>({
+	source: SOURCE,
+	name: "serverProxy",
+	sortBy: (a, b) => a.path.localeCompare(b.path),
+	// `path` is the key in the emitted `server.proxy` object; duplicates
+	// would silently overwrite when rendered. Fail loudly at compose time.
+	uniqueBy: (e) => e.path,
+});
+
 // Rendered `.stack/vite.config.ts` source. Pulled into `cli.slots.artifactFiles`
 // by the contribution below — gated on at least one plugin call or import
 // so a vite-less config never writes an empty file.
@@ -61,6 +77,7 @@ const viteConfig = slot.derived({
 		plugins: pluginCalls,
 		aliases: resolveAliases,
 		port: devServerPort,
+		proxy: serverProxy,
 	},
 	compute: (inp): string | null => {
 		if (inp.plugins.length === 0 && inp.imports.length === 0) return null;
@@ -69,6 +86,7 @@ const viteConfig = slot.derived({
 			pluginCalls: inp.plugins,
 			resolveAliases: inp.aliases,
 			devServerPort: inp.port,
+			serverProxy: inp.proxy,
 		});
 	},
 });
@@ -83,6 +101,7 @@ export const vite = plugin("vite", {
 		pluginCalls,
 		resolveAliases,
 		devServerPort,
+		serverProxy,
 		viteConfig,
 	},
 
@@ -176,4 +195,4 @@ export const vite = plugin("vite", {
 	],
 });
 
-export type { ViteOptions } from "./types";
+export type { ServerProxyEntry, ViteOptions } from "./types";

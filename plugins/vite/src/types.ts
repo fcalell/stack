@@ -15,6 +15,14 @@ export const viteOptionsSchema = z.object({
 
 export type ViteOptions = z.input<typeof viteOptionsSchema>;
 
+// A dev-server proxy rule rendered into the generated config's
+// `server.proxy`. `ws: true` also forwards WebSocket upgrades.
+export interface ServerProxyEntry {
+	path: string;
+	target: string;
+	ws?: boolean;
+}
+
 // Pure aggregator input shape consumed by the `aggregateViteConfig` helper
 // (which lives in node/codegen.ts and plugs into the `vite.slots.viteConfig`
 // derivation). Kept as a first-class type so the aggregator stays testable
@@ -24,4 +32,5 @@ export interface CodegenViteConfigPayload {
 	pluginCalls: TsExpression[];
 	resolveAliases: Array<{ find: string; replacement: string }>;
 	devServerPort: number;
+	serverProxy: ServerProxyEntry[];
 }

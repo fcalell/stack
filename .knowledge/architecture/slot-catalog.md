@@ -87,6 +87,7 @@ e.g. consulting `ctx.fileExists` before writing.
 | `pluginCalls` | `list<TsExpression>` | Vite plugin call expressions |
 | `resolveAliases` | `list<{ find, replacement }>` | `resolve.alias` entries |
 | `devServerPort` | `value<number>` | Dev server port (defaults to options.port ?? 3000) |
+| `serverProxy` | `list<ServerProxyEntry>` (`uniqueBy: path`) | Dev-server proxy rules (`{ path, target, ws? }`) rendered into `server.proxy`; deploy targets contribute worker-owned paths so dev stays same-origin like prod |
 | `viteConfig` | `derived<string \| null>` | Final `.stack/vite.config.ts` source; null when nothing to emit |
 
 ## `solid.slots.*` (plugin-solid)
