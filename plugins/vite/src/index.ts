@@ -2,12 +2,12 @@ import { plugin, slot } from "@fcalell/cli";
 import type { TsExpression, TsImportSpec } from "@fcalell/cli/ast";
 import { cliSlots, emitArtifact } from "@fcalell/cli/cli-slots";
 import { api } from "@fcalell/plugin-api";
-import { aggregateViteConfig } from "./node/codegen";
+import { aggregateViteConfig } from "./node/codegen.ts";
 import {
 	type ServerProxyEntry,
 	type ViteOptions,
 	viteOptionsSchema,
-} from "./types";
+} from "./types.ts";
 
 const SOURCE = "vite";
 
@@ -195,4 +195,4 @@ export const vite = plugin("vite", {
 	],
 });
 
-export type { ServerProxyEntry, ViteOptions } from "./types";
+export type { ServerProxyEntry, ViteOptions } from "./types.ts";

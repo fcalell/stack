@@ -13,9 +13,9 @@ import {
 	aggregateEntry,
 	aggregateHtml,
 	aggregateProviders,
-} from "./node/codegen";
-import { buildRoutesDts } from "./node/routes-core";
-import { type SolidOptions, solidOptionsSchema } from "./types";
+} from "./node/codegen.ts";
+import { buildRoutesDts } from "./node/routes-core.ts";
+import { type SolidOptions, solidOptionsSchema } from "./types.ts";
 
 const SOURCE = "solid";
 
@@ -315,4 +315,4 @@ export const solid = plugin("solid", {
 	],
 });
 
-export type { SolidOptions } from "./types";
+export type { SolidOptions } from "./types.ts";

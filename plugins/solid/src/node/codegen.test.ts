@@ -1,6 +1,10 @@
 import type { ProviderSpec } from "@fcalell/cli/ast";
 import { describe, expect, it } from "vitest";
-import { aggregateEntry, aggregateHtml, aggregateProviders } from "./codegen";
+import {
+	aggregateEntry,
+	aggregateHtml,
+	aggregateProviders,
+} from "./codegen.ts";
 
 describe("aggregateEntry", () => {
 	it("returns null when no mount expression is contributed", () => {

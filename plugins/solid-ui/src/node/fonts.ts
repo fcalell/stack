@@ -1,8 +1,8 @@
 import { createRequire } from "node:module";
 import { basename } from "node:path";
 import type { Plugin, ResolvedConfig } from "vite";
-import type { FontEntry } from "../types";
-import { cssString, cssUrl } from "./css-escape";
+import type { FontEntry } from "../types.ts";
+import { cssString, cssUrl } from "./css-escape.ts";
 
 // Re-exported from types.ts so the existing
 // `@fcalell/plugin-solid-ui/node/fonts` subpath consumers keep working.

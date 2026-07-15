@@ -11,8 +11,8 @@ import {
 	Suspense,
 } from "solid-js";
 import { render } from "solid-js/web";
-import { EmptyState } from "../components/empty-state";
-import { Toaster } from "../components/toast";
+import { EmptyState } from "../components/empty-state/index.tsx";
+import { Toaster } from "../components/toast/index.tsx";
 
 export interface CreateAppOptions {
 	routes?: RouteDefinition[];

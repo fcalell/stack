@@ -10,7 +10,7 @@ import type {
 	CodegenEntryPayload,
 	CodegenHtmlPayload,
 	CompositionProvidersPayload,
-} from "../types";
+} from "../types.ts";
 
 // Render `.stack/entry.tsx`. Returns null when no plugin contributes a mount
 // expression — `plugin-solid` contributes the default via solid.slots.mountExpression.

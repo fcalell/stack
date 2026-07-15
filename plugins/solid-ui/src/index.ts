@@ -9,15 +9,15 @@ import type {
 import { emitArtifact } from "@fcalell/cli/cli-slots";
 import { solid } from "@fcalell/plugin-solid";
 import { vite } from "@fcalell/plugin-vite";
-import { aggregateAppCss } from "./node/codegen";
-import { cssString } from "./node/css-escape";
-import { defaultFonts, type FontEntry } from "./node/fonts";
+import { aggregateAppCss } from "./node/codegen.ts";
+import { cssString } from "./node/css-escape.ts";
+import { defaultFonts, type FontEntry } from "./node/fonts.ts";
 import {
 	type CssImport,
 	type CssLayer,
 	type SolidUiOptions,
 	solidUiOptionsSchema,
-} from "./types";
+} from "./types.ts";
 
 const SOURCE = "solid-ui";
 
@@ -251,4 +251,4 @@ export const solidUi = plugin("solid-ui", {
 	],
 });
 
-export type { SolidUiOptions } from "./types";
+export type { SolidUiOptions } from "./types.ts";

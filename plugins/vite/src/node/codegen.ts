@@ -4,7 +4,7 @@ import {
 	type TsImportSpec,
 	type TsSourceFile,
 } from "@fcalell/cli/ast";
-import type { CodegenViteConfigPayload } from "../types";
+import type { CodegenViteConfigPayload } from "../types.ts";
 
 export function aggregateViteConfig(payload: CodegenViteConfigPayload): string {
 	const imports: TsImportSpec[] = [

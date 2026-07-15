@@ -3,8 +3,8 @@ import {
 	type CssImport,
 	cssImportSchema,
 	cssLayerSchema,
-} from "../types";
-import { cssIdent, cssString, cssSupportsExpression } from "./css-escape";
+} from "../types.ts";
+import { cssIdent, cssString, cssSupportsExpression } from "./css-escape.ts";
 
 // Emits `.stack/app.css` as a sequence of `@import` statements followed by
 // `@layer` blocks. Returns null when no contributions exist so consumers

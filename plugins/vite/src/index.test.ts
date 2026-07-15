@@ -8,8 +8,8 @@ import {
 import type { ProcessExit } from "@fcalell/cli/specs";
 import { api } from "@fcalell/plugin-api";
 import { describe, expect, it } from "vitest";
-import { vite } from "./index";
-import { viteOptionsSchema } from "./types";
+import { vite } from "./index.ts";
+import { viteOptionsSchema } from "./types.ts";
 
 // ── Harness ────────────────────────────────────────────────────────
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { aggregateViteConfig } from "./codegen";
+import { aggregateViteConfig } from "./codegen.ts";
 
 describe("aggregateViteConfig", () => {
 	it("emits defineConfig import + plugins array + server port", () => {

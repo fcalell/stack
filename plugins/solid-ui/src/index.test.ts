@@ -12,9 +12,13 @@ import { api } from "@fcalell/plugin-api";
 import { solid } from "@fcalell/plugin-solid";
 import { vite } from "@fcalell/plugin-vite";
 import { describe, expect, it } from "vitest";
-import { solidUi } from "./index";
-import { defaultFonts, type FontEntry } from "./node/fonts";
-import { cssImportSchema, cssLayerSchema, solidUiOptionsSchema } from "./types";
+import { solidUi } from "./index.ts";
+import { defaultFonts, type FontEntry } from "./node/fonts.ts";
+import {
+	cssImportSchema,
+	cssLayerSchema,
+	solidUiOptionsSchema,
+} from "./types.ts";
 
 // Resolve `@fcalell/plugin-solid`'s on-disk templates dir so `ctx.template()`
 // for the solid plugin returns the real shell.html. Without this the HTML

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { isCssIdent, isCssSupportsExpression } from "./node/css-escape";
+import { isCssIdent, isCssSupportsExpression } from "./node/css-escape.ts";
 
 // A single `@import` line. The shorthand form (a bare string) becomes
 // `@import "<url>";`. The structured form lets plugins attach `layer(...)`

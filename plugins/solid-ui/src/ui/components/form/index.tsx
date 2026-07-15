@@ -298,7 +298,7 @@ export const Form = {
 };
 
 export { createForm } from "@tanstack/solid-form";
-export { useApiForm } from "./use-api-form";
+export { useApiForm } from "./use-api-form.ts";
 export type {
 	FormCheckboxProps,
 	FormEnumInputProps,

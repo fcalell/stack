@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { Logger, Plugin, ViteDevServer } from "vite";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { routesPlugin } from "./vite-routes";
+import { routesPlugin } from "./vite-routes.ts";
 
 // Minimal stubs for the bits of Vite we use. Kept intentionally shallow —
 // the point is to exercise the real path-handling + watcher-hookup logic in

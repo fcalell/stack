@@ -6,7 +6,7 @@ import {
 	cssUrl,
 	isCssIdent,
 	isCssSupportsExpression,
-} from "./css-escape";
+} from "./css-escape.ts";
 
 // Table-driven tests. The four primitives have small, well-defined
 // contracts; pinning the canonical happy and sad cases per primitive

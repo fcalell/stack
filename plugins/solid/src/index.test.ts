@@ -13,7 +13,7 @@ import {
 import { api } from "@fcalell/plugin-api";
 import { vite } from "@fcalell/plugin-vite";
 import { describe, expect, it } from "vitest";
-import { type SolidOptions, solid } from "./index";
+import { type SolidOptions, solid } from "./index.ts";
 
 // ── Harness ────────────────────────────────────────────────────────
 

@@ -1,8 +1,8 @@
 import type { ResolvedConfig } from "vite";
 import { describe, expect, it } from "vitest";
-import type { FontEntry } from "../types";
-import { aggregateAppCss } from "./codegen";
-import { defaultFonts, themeFontsPlugin } from "./fonts";
+import type { FontEntry } from "../types.ts";
+import { aggregateAppCss } from "./codegen.ts";
+import { defaultFonts, themeFontsPlugin } from "./fonts.ts";
 
 // ── Test helpers for themeFontsPlugin ──────────────────────────────
 

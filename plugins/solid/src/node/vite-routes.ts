@@ -8,7 +8,7 @@ import {
 	emitVirtualModule,
 	VIRTUAL_ROUTES_ID,
 	writeRoutesDts,
-} from "./routes-core";
+} from "./routes-core.ts";
 
 const RESOLVED_VIRTUAL_ID = `\0${VIRTUAL_ROUTES_ID}`;
 

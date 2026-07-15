@@ -12,7 +12,7 @@ import {
 	joinUrl,
 	parseSegment,
 	VIRTUAL_ROUTES_ID,
-} from "./routes-core";
+} from "./routes-core.ts";
 
 describe("parseSegment", () => {
 	it("returns empty segment for route groups", () => {
