@@ -14,7 +14,7 @@ import {
 	createProcedure,
 	extractIp,
 	type RateLimitBinding,
-} from "../procedure";
+} from "../procedure.ts";
 
 export type { InferRouter } from "../types";
 

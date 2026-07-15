@@ -1,4 +1,4 @@
-import type { WsHub } from "./ws-hub";
+import type { WsHub } from "./ws-hub.ts";
 
 export interface ServiceLogger {
 	info(message: string): void;

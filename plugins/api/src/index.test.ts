@@ -328,7 +328,9 @@ describe("api routes — single source of truth", () => {
 			makeCtxFactory({}, {}, undefined, cwd),
 		);
 		const src = await g.resolve(api.slots.workerSource);
-		expect(src).toContain('import * as routes from "../src/worker/routes"');
+		expect(src).toContain(
+			'import * as routes from "../src/worker/routes/index.ts"',
+		);
 		expect(src).toContain(".handler(routes)");
 	});
 
@@ -348,7 +350,9 @@ describe("api routes — single source of truth", () => {
 		};
 		const g = buildGraph(collectPlugins([dbLike]), makeCtxFactory());
 		const src = await g.resolve(api.slots.workerSource);
-		expect(src).not.toContain('import * as routes from "../src/worker/routes"');
+		expect(src).not.toContain(
+			'import * as routes from "../src/worker/routes/index.ts"',
+		);
 		expect(src).toContain(".handler()");
 	});
 
@@ -381,7 +385,9 @@ describe("api routes — single source of truth", () => {
 		);
 		const src = await g.resolve(api.slots.workerSource);
 		const hasImport =
-			src?.includes('import * as routes from "../src/worker/routes"') ?? false;
+			src?.includes(
+				'import * as routes from "../src/worker/routes/index.ts"',
+			) ?? false;
 		const hasHandler = src?.includes(".handler(routes)") ?? false;
 		expect(hasImport).toBe(hasHandler);
 	});
@@ -586,7 +592,7 @@ describe("api.slots.procedureSource", () => {
 		);
 		// Never imports the route barrel back — route files import
 		// virtual:stack-procedure, so that would be a cycle.
-		expect(src).not.toContain('"../src/worker/routes"');
+		expect(src).not.toContain('"../src/worker/routes');
 	});
 
 	it("renders auth's contributed RBAC statements when present", async () => {
@@ -719,7 +725,9 @@ describe("api middleware + routes", () => {
 		);
 		const src = await g.resolve(api.slots.workerSource);
 		expect(src).toContain(".handler(routes)");
-		expect(src).toContain('import * as routes from "../src/worker/routes"');
+		expect(src).toContain(
+			'import * as routes from "../src/worker/routes/index.ts"',
+		);
 	});
 
 	it("routes handler is null when src/worker/routes does not exist", async () => {
@@ -743,7 +751,7 @@ describe("api middleware + routes", () => {
 
 	// Bug regression: previously the routesHandler seed checked only for
 	// the directory's existence. An empty `src/worker/routes/` directory
-	// would seed `routes` and emit `import * as routes from "../src/worker/routes"`,
+	// would seed `routes` and emit `import * as routes from "../src/worker/routes/index.ts"`,
 	// but the barrel artifact would skip emission (no routable files) —
 	// leaving a dangling import. Both must agree on the same predicate
 	// ("at least one routable file under routes/").
@@ -768,7 +776,9 @@ describe("api middleware + routes", () => {
 		);
 		const src = await g.resolve(api.slots.workerSource);
 		expect(src).toContain(".handler()");
-		expect(src).not.toContain('import * as routes from "../src/worker/routes"');
+		expect(src).not.toContain(
+			'import * as routes from "../src/worker/routes/index.ts"',
+		);
 	});
 });
 
@@ -861,8 +871,8 @@ describe("api contributions into cli.slots", () => {
 		const barrel = files.find((f) => f.path === "src/worker/routes/index.ts");
 		expect(barrel).toBeDefined();
 		// Bug regression: .tsx files must be included.
-		expect(barrel?.content).toContain('export * from "./users";');
-		expect(barrel?.content).toContain('export * from "./posts";');
+		expect(barrel?.content).toContain('export * from "./users.tsx";');
+		expect(barrel?.content).toContain('export * from "./posts.ts";');
 	});
 
 	it("contributes a route watcher via cliSlots.devWatchers", async () => {

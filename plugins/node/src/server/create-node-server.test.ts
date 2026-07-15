@@ -3,8 +3,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import createWorker from "@fcalell/plugin-api/runtime";
 import { afterEach, describe, expect, it } from "vitest";
-import { createNodeServer, type NodeServer } from "./create-node-server";
-import { defineService } from "./service";
+import { createNodeServer, type NodeServer } from "./create-node-server.ts";
+import { defineService } from "./service.ts";
 
 const noopLog = { info: () => {}, error: () => {} };
 

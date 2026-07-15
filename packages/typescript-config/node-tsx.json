@@ -4,6 +4,8 @@
 	"compilerOptions": {
 		"outDir": "dist",
 		"module": "esnext",
-		"moduleResolution": "bundler"
+		"moduleResolution": "bundler",
+		"noEmit": true,
+		"allowImportingTsExtensions": true
 	}
 }

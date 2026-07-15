@@ -62,9 +62,12 @@ export function generateRouteBarrel(cwd: string): string {
 		);
 	}
 
-	const exports = [...byBasename.keys()]
-		.sort()
-		.map((name) => `export * from "./${name}";`)
+	// Re-export with the full filename: plain node (the plugin-node target)
+	// resolves no extensionless specifiers; tsx/esbuild/vite accept explicit
+	// .ts(x) extensions, so one form serves every target.
+	const exports = [...byBasename.entries()]
+		.sort(([a], [b]) => a.localeCompare(b))
+		.map(([, files]) => `export * from "./${files[0]}";`)
 		.join("\n");
 
 	return `${GENERATED_HEADER}\n${exports ? `${exports}\n` : ""}`;

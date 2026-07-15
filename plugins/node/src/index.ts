@@ -5,13 +5,13 @@ import { plugin, slot } from "@fcalell/cli";
 import { cliSlots, emitArtifact } from "@fcalell/cli/cli-slots";
 import { api } from "@fcalell/plugin-api";
 import { vite } from "@fcalell/plugin-vite";
-import { generateServiceBarrel, hasServiceFiles } from "./node/barrel";
-import { aggregateServer } from "./node/codegen";
+import { generateServiceBarrel, hasServiceFiles } from "./node/barrel.ts";
+import { aggregateServer } from "./node/codegen.ts";
 import {
 	type NodeOptions,
 	nodeOptionsSchema,
 	type ServiceEntry,
-} from "./types";
+} from "./types.ts";
 
 const SOURCE = "node";
 
@@ -61,16 +61,21 @@ const serverSource = slot.derived({
 	inputs: {
 		port: serverPort,
 		entries: services,
+		consumer: consumerServices,
 		worker: api.slots.workerSource,
 		prefixes: api.slots.routePrefixes,
 	},
 	compute: (inp): string | null => {
 		const hasWorker = inp.worker !== null;
-		if (!hasWorker && inp.entries.length === 0) return null;
+		const hasConsumerServices = inp.consumer !== null;
+		if (!hasWorker && !hasConsumerServices && inp.entries.length === 0) {
+			return null;
+		}
 		return aggregateServer({
 			port: inp.port,
 			hasWorker,
 			workerPaths: inp.prefixes,
+			hasConsumerServices,
 			services: inp.entries,
 		});
 	},
@@ -96,24 +101,6 @@ export const node = plugin("node", {
 	},
 
 	contributes: (self) => [
-		// Consumer services barrel → one services entry. Resolves the
-		// consumerServices seed so import + barrel emission stay wired (or
-		// not) together.
-		self.slots.services.contribute(async (ctx) => {
-			const consumer = await ctx.resolve(self.slots.consumerServices);
-			if (!consumer) return undefined;
-			return {
-				name: "consumer",
-				imports: [
-					{
-						source: "../src/server/services",
-						named: [consumer.identifier],
-					},
-				],
-				expression: { kind: "identifier", name: consumer.identifier },
-			} as ServiceEntry;
-		}),
-
 		emitArtifact(".stack/server.ts", self.slots.serverSource),
 		emitArtifact(
 			"src/server/services/index.ts",
@@ -177,4 +164,4 @@ export const node = plugin("node", {
 	],
 });
 
-export type { NodeOptions, ServiceEntry } from "./types";
+export type { NodeOptions, ServiceEntry } from "./types.ts";

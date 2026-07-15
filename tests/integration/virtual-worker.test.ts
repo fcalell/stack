@@ -89,7 +89,9 @@ describe("virtual worker codegen pipeline (defineConfig-driven)", () => {
 			'import authCallbacks from "../src/worker/plugins/auth"',
 		);
 		expect(result).toContain('import * as schema from "../src/schema"');
-		expect(result).toContain('import * as routes from "../src/worker/routes"');
+		expect(result).toContain(
+			'import * as routes from "../src/worker/routes/index.ts"',
+		);
 		expect(result).toContain(
 			'import middleware from "../src/worker/middleware"',
 		);
@@ -189,10 +191,10 @@ describe("virtual worker codegen pipeline (defineConfig-driven)", () => {
 			});
 
 			expect(withRoutes).toContain(
-				'import * as routes from "../src/worker/routes"',
+				'import * as routes from "../src/worker/routes/index.ts"',
 			);
 			expect(withRoutes).toContain(".handler(routes)");
-			expect(withoutRoutes).not.toContain('from "../src/worker/routes"');
+			expect(withoutRoutes).not.toContain('from "../src/worker/routes');
 			expect(withoutRoutes).toContain(".handler()");
 		} finally {
 			rmSync(withoutCwd, { recursive: true, force: true });

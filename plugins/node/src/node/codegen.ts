@@ -5,18 +5,32 @@ import {
 	type TsImportSpec,
 	type TsSourceFile,
 } from "@fcalell/cli/ast";
-import type { CodegenServerPayload } from "../types";
+import type { CodegenServerPayload } from "../types.ts";
+
+function moduleUrl(relativePath: string): TsExpression {
+	return {
+		kind: "new",
+		callee: { kind: "identifier", name: "URL" },
+		args: [
+			{ kind: "string", value: relativePath },
+			{
+				kind: "member",
+				object: { kind: "identifier", name: "import.meta" },
+				property: "url",
+			},
+		],
+	};
+}
 
 // Renders `.stack/server.ts`: a thin call into the runtime, so every moving
-// part (mounting, static serving, service lifecycle) lives in
-// `@fcalell/plugin-node/server` where it is testable, not in generated text.
+// part (module loading, mounting, static serving, service lifecycle) lives
+// in `@fcalell/plugin-node/server` where it is testable, not in generated
+// text. Worker/services are passed as module URLs, not imports — see
+// startNodeServer for why static imports cannot work here.
 export function aggregateServer(payload: CodegenServerPayload): string {
 	const imports: TsImportSpec[] = [
-		{ source: "@fcalell/plugin-node/server", named: ["createNodeServer"] },
+		{ source: "@fcalell/plugin-node/server", named: ["startNodeServer"] },
 	];
-	if (payload.hasWorker) {
-		imports.push({ source: "./worker", default: "worker" });
-	}
 	for (const entry of payload.services) {
 		imports.push(...entry.imports);
 	}
@@ -24,10 +38,12 @@ export function aggregateServer(payload: CodegenServerPayload): string {
 	const properties: Array<{ key: string; value: TsExpression }> = [
 		{ key: "port", value: { kind: "number", value: payload.port } },
 		{
-			key: "worker",
-			value: payload.hasWorker
-				? { kind: "identifier", name: "worker" }
-				: { kind: "null" },
+			key: "workerModule",
+			value: payload.hasWorker ? moduleUrl("./worker.ts") : { kind: "null" },
+		},
+		{
+			key: "procedureModule",
+			value: payload.hasWorker ? moduleUrl("./procedure.ts") : { kind: "null" },
 		},
 	];
 	if (payload.hasWorker) {
@@ -47,12 +63,20 @@ export function aggregateServer(payload: CodegenServerPayload): string {
 		value: { kind: "string", value: "dist/client" },
 	});
 	properties.push({
-		key: "services",
-		value: {
-			kind: "array",
-			items: payload.services.map((entry) => entry.expression),
-		},
+		key: "servicesModule",
+		value: payload.hasConsumerServices
+			? moduleUrl("../src/server/services/index.ts")
+			: { kind: "null" },
 	});
+	if (payload.services.length > 0) {
+		properties.push({
+			key: "services",
+			value: {
+				kind: "array",
+				items: payload.services.map((entry) => entry.expression),
+			},
+		});
+	}
 
 	const spec: TsSourceFile = {
 		imports: dedupeImports(imports),
@@ -61,16 +85,8 @@ export function aggregateServer(payload: CodegenServerPayload): string {
 				kind: "expression",
 				value: {
 					kind: "call",
-					callee: {
-						kind: "member",
-						object: {
-							kind: "call",
-							callee: { kind: "identifier", name: "createNodeServer" },
-							args: [{ kind: "object", properties }],
-						},
-						property: "start",
-					},
-					args: [],
+					callee: { kind: "identifier", name: "startNodeServer" },
+					args: [{ kind: "object", properties }],
 				},
 			},
 		],

@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { generateServiceBarrel, hasServiceFiles } from "./barrel";
+import { generateServiceBarrel, hasServiceFiles } from "./barrel.ts";
 
 const scratchDirs: string[] = [];
 
@@ -30,8 +30,8 @@ describe("generateServiceBarrel", () => {
 	it("imports each service's default export and lists them sorted", () => {
 		const cwd = makeCwd(["queue.ts", "board-watcher.ts"]);
 		const barrel = generateServiceBarrel(cwd);
-		expect(barrel).toContain('import boardWatcher from "./board-watcher";');
-		expect(barrel).toContain('import queue from "./queue";');
+		expect(barrel).toContain('import boardWatcher from "./board-watcher.ts";');
+		expect(barrel).toContain('import queue from "./queue.ts";');
 		expect(barrel).toContain("export const services = [boardWatcher, queue];");
 	});
 
@@ -43,7 +43,7 @@ describe("generateServiceBarrel", () => {
 			"index.ts",
 		]);
 		const barrel = generateServiceBarrel(cwd);
-		expect(barrel).toContain('import board from "./board";');
+		expect(barrel).toContain('import board from "./board.ts";');
 		expect(barrel).not.toContain("test");
 		expect(barrel).not.toContain("types");
 		expect(barrel).toContain("export const services = [board];");

@@ -2,8 +2,8 @@ import { serve, upgradeWebSocket } from "@hono/node-server";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { Hono } from "hono";
 import { WebSocketServer } from "ws";
-import type { ServiceLogger, ServiceSpec, ServiceStop } from "./service";
-import { createWsHub, type HubSocket } from "./ws-hub";
+import type { ServiceLogger, ServiceSpec, ServiceStop } from "./service.ts";
+import { createWsHub, type HubSocket } from "./ws-hub.ts";
 
 // The worker shape emitted by plugin-api's `.stack/worker.ts` (its
 // `WorkerExport`), reduced to what this target calls. On Node, `env` is

@@ -9,8 +9,11 @@ import type {
 // `procedure-codegen.ts` to exclude it from `.stack/procedure.ts`'s imports —
 // route files import `virtual:stack-procedure`, so procedure.ts importing the
 // route barrel back would be a cycle. One shared constant keeps both sides
-// from drifting apart.
-export const ROUTES_BARREL_IMPORT_SOURCE = "../src/worker/routes";
+// from drifting apart. Explicit index.ts, not the bare directory: plain node
+// (the plugin-node target) supports neither directory imports nor
+// extensionless specifiers, and tsx/esbuild resolve the explicit form
+// identically.
+export const ROUTES_BARREL_IMPORT_SOURCE = "../src/worker/routes/index.ts";
 
 // A plugin's runtime contribution to the worker chain. Captured structurally
 // so the worker derivation can attach callbacks and render options uniformly.

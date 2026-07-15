@@ -38,7 +38,7 @@ export function generateServiceBarrel(cwd: string): string {
 	const imports = entries
 		.map((file) => {
 			const base = file.replace(/\.ts$/, "");
-			return `import ${identifierFor(file)} from "./${base}";`;
+			return `import ${identifierFor(file)} from "./${base}.ts";`;
 		})
 		.join("\n");
 	const list = entries.map(identifierFor).join(", ");

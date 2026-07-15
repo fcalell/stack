@@ -1,7 +1,7 @@
 import type { z } from "zod";
-import type { ChannelDef, MessageSchemas, ServerFrame } from "../ws/index";
-import { clientFrameSchema } from "../ws/index";
-import type { ServiceLogger } from "./service";
+import type { ChannelDef, MessageSchemas, ServerFrame } from "../ws/index.ts";
+import { clientFrameSchema } from "../ws/index.ts";
+import type { ServiceLogger } from "./service.ts";
 
 // The slice of a live socket the hub needs. Structurally satisfied by
 // @hono/node-server's WSContext; the object's identity keys subscriptions.

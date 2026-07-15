@@ -183,7 +183,10 @@ declare module "virtual:stack-providers" {
 		baseUrl: cwd,
 		rootDir: cwd,
 		types: [],
-		allowImportingTsExtensions: false,
+		// Generated code imports explicit .ts specifiers (route barrel, worker's
+		// routes import) so plain node can resolve them; consumer presets enable
+		// the same flag.
+		allowImportingTsExtensions: true,
 		noUncheckedIndexedAccess: true,
 		moduleDetection: ts.ModuleDetectionKind.Force,
 		// Mirrors `packages/cli/src/templates/tsconfig.ts`'s `PROCEDURE_PATHS` —

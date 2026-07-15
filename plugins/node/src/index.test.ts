@@ -11,7 +11,7 @@ import {
 import { api } from "@fcalell/plugin-api";
 import { vite } from "@fcalell/plugin-vite";
 import { afterEach, describe, expect, it } from "vitest";
-import { node } from "./index";
+import { node } from "./index.ts";
 
 // ── Harness ────────────────────────────────────────────────────────
 
@@ -168,16 +168,15 @@ describe("node consumer services", () => {
 		const files = await g.resolve(cliSlots.artifactFiles);
 		const barrel = files.find((f) => f.path === "src/server/services/index.ts");
 		expect(barrel?.content).toContain(
-			'import boardWatcher from "./board-watcher";',
+			'import boardWatcher from "./board-watcher.ts";',
 		);
 		expect(barrel?.content).toContain(
 			"export const services = [boardWatcher];",
 		);
 		const server = files.find((f) => f.path === ".stack/server.ts");
 		expect(server?.content).toContain(
-			'import { services } from "../src/server/services";',
+			'servicesModule: new URL("../src/server/services/index.ts", import.meta.url)',
 		);
-		expect(server?.content).toContain("services: [services]");
 	});
 
 	it("skips the barrel and its import when no service files exist", async () => {
@@ -189,8 +188,7 @@ describe("node consumer services", () => {
 			"src/server/services/index.ts",
 		);
 		const server = files.find((f) => f.path === ".stack/server.ts");
-		expect(server?.content).not.toContain("src/server/services");
-		expect(server?.content).toContain("services: []");
+		expect(server?.content).toContain("servicesModule: null");
 	});
 
 	it("runs a services-only server when api emits no worker", async () => {
@@ -198,7 +196,7 @@ describe("node consumer services", () => {
 		const plugins = [toGraphPlugin("node", node), toGraphPlugin("api", api)];
 		const g = buildGraph(plugins, makeCtxFactory(cwd));
 		const src = await g.resolve(node.slots.serverSource);
-		expect(src).toContain("worker: null");
+		expect(src).toContain("workerModule: null");
 		expect(src).not.toContain("workerPaths");
 	});
 });

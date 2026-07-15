@@ -7,10 +7,11 @@ export const nodeOptionsSchema = z.object({
 
 export type NodeOptions = z.input<typeof nodeOptionsSchema>;
 
-// A codegen contribution to the generated server's `services` array. The
-// expression evaluates at runtime to a ServiceSpec or a ServiceSpec array
-// (the runtime flattens), so the consumer barrel can hand over its whole
-// `services` export as one entry.
+// A plugin's codegen contribution to the generated server's `services`
+// array: a statically imported ServiceSpec (or ServiceSpec[]) expression.
+// Static entries must not import "virtual:stack-procedure" (their modules
+// resolve before startNodeServer registers the hook); the consumer's own
+// services load through `servicesModule` instead.
 export interface ServiceEntry {
 	name: string;
 	imports: TsImportSpec[];
@@ -24,5 +25,6 @@ export interface CodegenServerPayload {
 	port: number;
 	hasWorker: boolean;
 	workerPaths: string[];
+	hasConsumerServices: boolean;
 	services: ServiceEntry[];
 }

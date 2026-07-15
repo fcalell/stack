@@ -1,6 +1,6 @@
 import type { z } from "zod";
-import type { ChannelDef, ClientFrame, MessageSchemas } from "../ws/index";
-import { serverFrameSchema } from "../ws/index";
+import type { ChannelDef, ClientFrame, MessageSchemas } from "../ws/index.ts";
+import { serverFrameSchema } from "../ws/index.ts";
 
 export type WsStatus = "connecting" | "open" | "closed";
 
@@ -37,10 +37,19 @@ const BACKOFF_CAP_MS = 5000;
 // subscription, so a server that snapshots on subscribe gives reconnect
 // consistency for free. Uses the global WebSocket (browser; Node >= 22 has
 // it natively, so the same client runs in tests).
+function defaultUrl(): string {
+	// Via globalThis so the module type-checks and loads outside the DOM;
+	// only the no-url default actually requires a browser.
+	const loc = (globalThis as { location?: { protocol: string; host: string } })
+		.location;
+	if (!loc) {
+		throw new Error("ws client: no url given and no browser location");
+	}
+	return `${loc.protocol === "https:" ? "wss" : "ws"}://${loc.host}/ws`;
+}
+
 export function createWsClient(options: { url?: string } = {}): WsClient {
-	const url =
-		options.url ??
-		`${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws`;
+	const url = options.url ?? defaultUrl();
 
 	const subscriptions = new Set<LiveSubscription>();
 	let socket: WebSocket | null = null;

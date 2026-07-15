@@ -32,8 +32,8 @@ afterEach(() => {
 describe("generateRouteBarrel", () => {
 	// Bug regression: previously the filter was `.endsWith(".ts")` which
 	// silently dropped `.tsx` route files (legal SolidJS-style JSX procedure
-	// modules). Both extensions must be picked up, with the `.tsx`/`.ts`
-	// suffix stripped from the export specifier.
+	// modules). Both extensions must be picked up, each re-exported with its
+	// full filename so plain node (the plugin-node target) can resolve it.
 	it("includes .ts and .tsx files in the barrel", () => {
 		makeRoutes({
 			"users.ts": "export const list = () => {};",
@@ -42,8 +42,8 @@ describe("generateRouteBarrel", () => {
 
 		const result = generateRouteBarrel(cwd);
 
-		expect(result).toContain('export * from "./users";');
-		expect(result).toContain('export * from "./posts";');
+		expect(result).toContain('export * from "./users.ts";');
+		expect(result).toContain('export * from "./posts.tsx";');
 	});
 
 	it("returns header-only output when the directory does not exist", () => {
@@ -72,8 +72,8 @@ describe("generateRouteBarrel", () => {
 
 		const result = generateRouteBarrel(cwd);
 
-		expect(result).toContain('export * from "./users";');
-		expect(result).not.toContain('export * from "./index"');
+		expect(result).toContain('export * from "./users.ts";');
+		expect(result).not.toContain('export * from "./index');
 	});
 
 	// Test files are not routes; declaration files are types-only outputs.
@@ -89,10 +89,10 @@ describe("generateRouteBarrel", () => {
 
 		const result = generateRouteBarrel(cwd);
 
-		expect(result).toContain('export * from "./users";');
-		expect(result).not.toContain('export * from "./users.test"');
+		expect(result).toContain('export * from "./users.ts";');
+		expect(result).not.toContain('export * from "./users.test');
 		expect(result).not.toContain('export * from "./posts.test"');
-		expect(result).not.toContain('export * from "./types"');
+		expect(result).not.toContain('export * from "./types');
 		// Lock down by counting export statements.
 		const exports = result.match(/export \* from/g) ?? [];
 		expect(exports).toHaveLength(1);
@@ -126,8 +126,8 @@ describe("generateRouteBarrel", () => {
 
 		const result = generateRouteBarrel(cwd);
 
-		expect(result).toContain('export * from "./users";');
-		expect(result).not.toContain('export * from "./admin/users"');
+		expect(result).toContain('export * from "./users.ts";');
+		expect(result).not.toContain('export * from "./admin/users');
 		expect(result).not.toContain('export * from "./admin"');
 	});
 
@@ -139,9 +139,9 @@ describe("generateRouteBarrel", () => {
 		});
 
 		const result = generateRouteBarrel(cwd);
-		const order = (result.match(/export \* from "\.\/(\w+)";/g) ?? []).map(
-			(m) => m.replace(/.*"\.\/(\w+)";/, "$1"),
-		);
+		const order = (
+			result.match(/export \* from "\.\/(\w+)\.tsx?";/g) ?? []
+		).map((m) => m.replace(/.*"\.\/(\w+)\.tsx?";/, "$1"));
 
 		expect(order).toEqual(["alpha", "mango", "zebra"]);
 	});
@@ -158,6 +158,6 @@ describe("generateRouteBarrel", () => {
 		const result = generateRouteBarrel(cwd);
 		const exports = result.match(/export \* from/g) ?? [];
 		expect(exports).toHaveLength(1);
-		expect(result).toContain('export * from "./users";');
+		expect(result).toContain('export * from "./users.ts";');
 	});
 });

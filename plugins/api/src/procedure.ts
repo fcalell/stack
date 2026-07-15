@@ -1,6 +1,6 @@
 import { ORPCError, os } from "@orpc/server";
 import { z } from "zod";
-import { clampLimit } from "./lib/cursor";
+import { clampLimit } from "./lib/cursor.ts";
 import type { Procedure } from "./types";
 
 type Promisable<T> = T | Promise<T>;

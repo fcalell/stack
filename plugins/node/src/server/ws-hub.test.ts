@@ -1,10 +1,10 @@
 import { createServer } from "node:net";
 import { afterEach, describe, expect, it } from "vitest";
 import { z } from "zod";
-import { defineChannel } from "../ws/index";
-import { createNodeServer, type NodeServer } from "./create-node-server";
-import { defineService } from "./service";
-import type { ChannelHandle } from "./ws-hub";
+import { defineChannel } from "../ws/index.ts";
+import { createNodeServer, type NodeServer } from "./create-node-server.ts";
+import { defineService } from "./service.ts";
+import type { ChannelHandle } from "./ws-hub.ts";
 
 const noopLog = { info: () => {}, error: () => {} };
 

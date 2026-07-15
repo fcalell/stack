@@ -46,13 +46,20 @@ true.
 ## Node target (`plugin-node`)
 
 `plugin-cloudflare` and `plugin-node` are alternative deploy targets for the same worker. On the
-node target, `.stack/server.ts` (composed by `node.slots.serverSource`) boots
-`createNodeServer` from `@fcalell/plugin-node/server`: an outer Hono app that mounts the worker's
+node target, `.stack/server.ts` (composed by `node.slots.serverSource`) calls
+`startNodeServer` from `@fcalell/plugin-node/server`: an outer Hono app that mounts the worker's
 fetch handler on every `api.slots.routePrefixes` path, serves `dist/client` statically with SPA
 fallback to its `index.html` (the fallback shadows the worker's `GET /` liveness route), and runs
 consumer background services (`src/server/services/<name>.ts`, each default-exporting a
 `defineService({ name, start })`; start may return a stop handle, stops run in reverse order on
 shutdown).
+
+The entry hands `startNodeServer` module URLs (`workerModule`/`procedureModule`/`servicesModule`)
+instead of importing them: route files import `virtual:stack-procedure`, which plain node cannot
+resolve (tsx/esbuild resolve it via tsconfig paths). Static imports resolve at link time, before
+any hook can register, so the boot calls `node:module`'s `registerHooks` to map
+`virtual:stack-procedure` to `.stack/procedure.ts` and only then dynamic-imports the worker and
+the services barrel.
 
 Node has no bindings: the worker gets `env = process.env`, `executionCtx` degrades to a no-op
 `waitUntil`, and binding-backed features (rate limiters) skip themselves when the binding is
