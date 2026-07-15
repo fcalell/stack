@@ -114,7 +114,7 @@ pnpm test:watch       # Run tests in watch mode
 
 ## Architecture
 
-See [`CLAUDE.md`](CLAUDE.md) for the full architecture, slot catalog, dependency graph, and generated-file layout. Coding conventions live in [`.claude/rules/conventions.md`](.claude/rules/conventions.md). Plugin authoring is documented in detail in [`.claude/rules/plugin-authoring.md`](.claude/rules/plugin-authoring.md).
+See [`.knowledge/index.md`](.knowledge/index.md) for the full architecture reference: philosophy, dependency graph, slot catalog, command procedures, and generated-file layout. Coding conventions live in [`.claude/playbooks/conventions.md`](.claude/playbooks/conventions.md). Plugin authoring is documented in detail in [`.claude/playbooks/plugin-authoring.md`](.claude/playbooks/plugin-authoring.md).
 
 ## License
 
