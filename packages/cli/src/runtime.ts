@@ -11,6 +11,12 @@ export interface RuntimePlugin<
 	TProvides = object,
 > {
 	name: TName;
+	// Names of other runtime plugins whose provided context this plugin reads
+	// in `context()`. `createWorker` topologically sorts `.use()` entries by
+	// this before building the request context, so declaring it replaces
+	// caring about registration order. A name that isn't registered is
+	// ignored — presence is validated at config level by `requires`.
+	dependsOn?: readonly string[];
 	validateEnv?(env: unknown): void;
 	context(env: unknown, upstream: TDeps): TProvides | Promise<TProvides>;
 	routes?(procedure: unknown): Record<string, unknown>;

@@ -98,6 +98,33 @@ async function run(dir: string, options: InitOptions): Promise<void> {
 	const hasWorker =
 		selectedPlugins.includes("api") || selectedPlugins.includes("db");
 
+	// Discovered plugins carry the factory + an `options: {}` placeholder.
+	// We don't yet have per-plugin options — prompts produce them. The
+	// slot graph reads `options` from `discovered`, not from a StackConfig,
+	// so skipping the synthetic factory call here avoids Zod errors for
+	// plugins whose options can't default to `{}` (e.g. db requires a
+	// dialect).
+	const selectedDiscovered = available.filter((p) =>
+		selectedPlugins.includes(p.name),
+	);
+
+	// Resolve prompts + the CLI-owned tsconfig contributions via the slot
+	// graph before writing any base scaffold. Per-plugin options aren't known
+	// yet (prompts produce them below), but `cliSlots.tsconfigPaths` /
+	// `cliSlots.tsconfigTypes` contributions never read `ctx.options` — a
+	// plugin's own presence in the graph is the gate — so resolving off the
+	// pre-prompt graph is safe. `tsconfigTemplate` itself stays domain-agnostic:
+	// it only decides *where* the contributed paths/types land (single config
+	// vs. the native split's app/worker projects), never *what* they contain.
+	const { graph: promptGraph } = buildGraphFromDiscovered({
+		discovered: selectedDiscovered,
+		app: { name: appName, domain },
+		cwd: dir,
+	});
+	const promptSpecs = await promptGraph.resolve(cliSlots.initPrompts);
+	const tsconfigPaths = await promptGraph.resolve(cliSlots.tsconfigPaths);
+	const tsconfigTypes = await promptGraph.resolve(cliSlots.tsconfigTypes);
+
 	// Scaffold base files — CLI-owned, not plugin-contributed.
 	const baseEntries: Array<[string, string]> = [
 		[
@@ -111,6 +138,8 @@ async function run(dir: string, options: InitOptions): Promise<void> {
 			solid: hasSolid,
 			native: hasNative,
 			worker: hasWorker,
+			procedurePaths: tsconfigPaths,
+			nativeTypes: tsconfigTypes,
 		}),
 		["biome.json", biomeTemplate()],
 		[".gitignore", gitignoreTemplate({ plugins: selectedPlugins })],
@@ -123,25 +152,6 @@ async function run(dir: string, options: InitOptions): Promise<void> {
 
 	const pluginAnswers = new Map<string, Record<string, unknown>>();
 	for (const p of selectedPlugins) pluginAnswers.set(p, {});
-
-	// Discovered plugins carry the factory + an `options: {}` placeholder.
-	// We don't yet have per-plugin options — prompts produce them. The
-	// slot graph reads `options` from `discovered`, not from a StackConfig,
-	// so skipping the synthetic factory call here avoids Zod errors for
-	// plugins whose options can't default to `{}` (e.g. db requires a
-	// dialect).
-	const selectedDiscovered = available.filter((p) =>
-		selectedPlugins.includes(p.name),
-	);
-
-	// Resolve prompts via the slot graph. Each PromptSpec returns an answers
-	// object keyed by the plugin's own namespace.
-	const { graph: promptGraph } = buildGraphFromDiscovered({
-		discovered: selectedDiscovered,
-		app: { name: appName, domain },
-		cwd: dir,
-	});
-	const promptSpecs = await promptGraph.resolve(cliSlots.initPrompts);
 
 	const promptAdapter = createPromptContext({ nonInteractive });
 	for (const spec of promptSpecs) {

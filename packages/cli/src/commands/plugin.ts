@@ -19,7 +19,7 @@ export interface InitPluginOptions {
 }
 
 // Scaffolds a minimal, working plugin skeleton that a third-party author can
-// publish as-is. Mirrors the conventions documented in .claude/rules/conventions.md:
+// publish as-is. Mirrors the conventions documented in .claude/playbooks/conventions.md:
 // subpath exports for "." and "./runtime", co-located tests, and no barrel index.
 export async function initPlugin(options: InitPluginOptions): Promise<void> {
 	const name = options.name.trim();
