@@ -26,6 +26,10 @@ export function aggregateAppCss(payload: CodegenAppCssPayload): string | null {
 	for (const imp of payload.imports) {
 		lines.push(renderImport(cssImportSchema.parse(imp) as CssImport));
 	}
+	// The generated stylesheet lives in .stack/, which is gitignored, so
+	// Tailwind's automatic content detection finds nothing there; the
+	// consumer's sources must be declared explicitly.
+	lines.push(`@source "../src";`);
 	if (payload.imports.length > 0 && payload.layers.length > 0) {
 		lines.push("");
 	}

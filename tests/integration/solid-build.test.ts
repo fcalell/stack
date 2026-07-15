@@ -85,9 +85,11 @@ beforeAll(async () => {
 
 	const pageAbs = resolve(WORKSPACE, "src/app/pages/index.tsx");
 	mkdirSync(resolve(pageAbs, ".."), { recursive: true });
+	// The page carries a utility class no stack source uses, so the CSS
+	// assertion below can only pass if Tailwind scanned the CONSUMER tree.
 	writeFileSync(
 		pageAbs,
-		`export default function Index() {\n\treturn <div>${MARKER}</div>;\n}\n`,
+		`export default function Index() {\n\treturn <div class="tracking-widest">${MARKER}</div>;\n}\n`,
 	);
 
 	const config = defineConfig({
@@ -149,5 +151,21 @@ describe("solid + solid-ui: real `vite build` end-to-end", () => {
 		const assetsDir = resolve(DIST_CLIENT, "assets");
 		const files = existsSync(assetsDir) ? readdirSync(assetsDir) : [];
 		expect(files.some((f) => f.endsWith(".woff2"))).toBe(true);
+	});
+
+	it("generates tailwind utilities from consumer sources and solid-ui components", () => {
+		const assetsDir = resolve(DIST_CLIENT, "assets");
+		const files = existsSync(assetsDir) ? readdirSync(assetsDir) : [];
+		const css = files
+			.filter((f) => f.endsWith(".css"))
+			.map((f) => readFileSync(resolve(assetsDir, f), "utf-8"))
+			.join("\n");
+		// From the seeded consumer page (via app.css's `@source "../src"`).
+		expect(css).toContain(".tracking-widest");
+		// From a solid-ui component (via globals.css's own `@source`); the
+		// Toaster mounted by virtual-providers keeps solid-ui sources in the
+		// scan set even for this minimal fixture.
+		expect(css).not.toBe("");
+		expect(css).toContain(".pointer-events-none");
 	});
 });

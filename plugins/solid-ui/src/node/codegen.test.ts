@@ -76,7 +76,7 @@ describe("aggregateAppCss", () => {
 			layers: [],
 		});
 		expect(src).toBe(
-			'@import "tailwindcss";\n@import "@fcalell/plugin-solid-ui/globals.css";\n',
+			'@import "tailwindcss";\n@import "@fcalell/plugin-solid-ui/globals.css";\n@source "../src";\n',
 		);
 	});
 
@@ -85,7 +85,9 @@ describe("aggregateAppCss", () => {
 			imports: [],
 			layers: [{ name: "base", content: ":root { color-scheme: dark; }" }],
 		});
-		expect(src).toBe("@layer base {\n:root { color-scheme: dark; }\n}\n");
+		expect(src).toBe(
+			'@source "../src";\n@layer base {\n:root { color-scheme: dark; }\n}\n',
+		);
 	});
 
 	it("preserves @import contribution order", () => {
@@ -98,6 +100,7 @@ describe("aggregateAppCss", () => {
 			'@import "first";',
 			'@import "second";',
 			'@import "third";',
+			'@source "../src";',
 		]);
 	});
 
@@ -124,7 +127,7 @@ describe("aggregateAppCss", () => {
 			layers: [{ name: "base", content: "/* base */" }],
 		});
 		expect(src).toBe(
-			'@import "tailwindcss";\n\n@layer base {\n/* base */\n}\n',
+			'@import "tailwindcss";\n@source "../src";\n\n@layer base {\n/* base */\n}\n',
 		);
 	});
 
@@ -140,7 +143,8 @@ describe("aggregateAppCss", () => {
 		expect(src).toBe(
 			'@import "tailwindcss" layer(theme);\n' +
 				'@import "foo.css" supports((display: grid));\n' +
-				'@import "bar.css" layer(utilities) supports((color: red));\n',
+				'@import "bar.css" layer(utilities) supports((color: red));\n' +
+				'@source "../src";\n',
 		);
 	});
 });
@@ -193,7 +197,9 @@ describe("aggregateAppCss — escape & validation", () => {
 			layers: [],
 		});
 		// Output is double-quoted with the embedded quote/backslash escaped.
-		expect(src).toBe(`@import "weird\\"path/with\\\\back.css";\n`);
+		expect(src).toBe(
+			`@import "weird\\"path/with\\\\back.css";\n@source "../src";\n`,
+		);
 	});
 
 	it("escapes embedded quotes in layer content (passes through verbatim — content is opaque)", () => {
@@ -206,7 +212,7 @@ describe("aggregateAppCss — escape & validation", () => {
 			imports: [],
 			layers: [{ name: "base", content: "  /* inner */  " }],
 		});
-		expect(src).toBe("@layer base {\n/* inner */\n}\n");
+		expect(src).toBe('@source "../src";\n@layer base {\n/* inner */\n}\n');
 	});
 });
 

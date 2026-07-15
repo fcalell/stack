@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+/* Tailwind's automatic content detection never reaches this package (it
+   scans from the consumer's vite root, the gitignored .stack/), so the
+   component sources are declared explicitly, relative to this file. */
+@source "./";
+
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* ============================================================
