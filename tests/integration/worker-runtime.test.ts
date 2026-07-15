@@ -428,8 +428,13 @@ describe("emitted worker with auth boots (no bindings)", () => {
 			],
 			seed: {
 				"src/schema/index.ts": "export const tables = {};\n",
-				"src/worker/plugins/auth.ts": `import { auth } from "@fcalell/plugin-auth";
-export default auth.defineCallbacks({});
+				"src/worker/plugins/auth.ts": `import type { AuthCallbacks } from "@fcalell/plugin-auth/runtime";
+
+const callbacks: AuthCallbacks = {
+	sendOTP: async () => {},
+};
+
+export default callbacks;
 `,
 			},
 		});

@@ -61,10 +61,27 @@ interface Fixture {
 async function typeCheckFixture(fixture: Fixture): Promise<string[]> {
 	const cwd = resolve(WORKSPACE, fixture.label);
 	mkdirSync(cwd, { recursive: true });
+	// Seed `.ts`/`.tsx` files (route handlers, callback files, middleware) are
+	// fed into the program as root files too, not just imported transitively
+	// from a generated root — `getSemanticDiagnostics()` checks every file in
+	// the program, but the `emittedSet` filter below only keeps diagnostics
+	// for files this function itself knows about. A seed file reachable only
+	// via `export *` (e.g. a route handler pulled in through the generated
+	// barrel) would otherwise type-check silently: TS parses and checks it as
+	// part of the program, but its diagnostics get dropped by the filter
+	// because the file's path was never recorded here.
+	const typescriptFiles: string[] = [];
 	for (const [path, content] of Object.entries(fixture.seed)) {
 		const abs = resolve(cwd, path);
 		mkdirSync(resolve(abs, ".."), { recursive: true });
 		writeFileSync(abs, content);
+		if (
+			path.endsWith(".ts") ||
+			path.endsWith(".tsx") ||
+			path.endsWith(".d.ts")
+		) {
+			typescriptFiles.push(abs);
+		}
 	}
 
 	const config = defineConfig({
@@ -80,7 +97,6 @@ async function typeCheckFixture(fixture: Fixture): Promise<string[]> {
 	// Write every emitted file to disk. Some artifacts (like .stack/app.css)
 	// don't type-check and are fine to skip — we only feed TS-consumable files
 	// into the program.
-	const typescriptFiles: string[] = [];
 	for (const file of result.files) {
 		const abs = resolve(cwd, file.path);
 		mkdirSync(resolve(abs, ".."), { recursive: true });
@@ -170,6 +186,10 @@ declare module "virtual:stack-providers" {
 		allowImportingTsExtensions: false,
 		noUncheckedIndexedAccess: true,
 		moduleDetection: ts.ModuleDetectionKind.Force,
+		// Mirrors `packages/cli/src/templates/tsconfig.ts`'s `PROCEDURE_PATHS` —
+		// route-file fixtures import `procedure` from the same virtual specifier
+		// a real consumer's tsconfig `paths` alias resolves to `.stack/procedure.ts`.
+		paths: { "virtual:stack-procedure": ["./.stack/procedure.ts"] },
 	};
 
 	const program = ts.createProgram({
@@ -250,8 +270,9 @@ describe("emitted artifacts type-check cleanly", () => {
 					"const middleware: MiddlewareHandler = async (_c, next) => { await next(); };\n" +
 					"export default middleware;\n",
 				"src/worker/plugins/auth.ts":
-					'import { auth } from "@fcalell/plugin-auth";\n' +
-					"export default auth.defineCallbacks({});\n",
+					'import type { AuthCallbacks } from "@fcalell/plugin-auth/runtime";\n' +
+					"const callbacks: AuthCallbacks = { sendOTP: async () => {} };\n" +
+					"export default callbacks;\n",
 			},
 		});
 		expect(diagnostics).toEqual([]);
@@ -280,10 +301,58 @@ describe("emitted artifacts type-check cleanly", () => {
 			],
 			seed: {
 				"src/schema/index.ts": "export const tables = {};\n",
-				"src/worker/routes/index.ts": "// empty barrel\n",
 				"src/worker/plugins/auth.ts":
-					'import { auth } from "@fcalell/plugin-auth";\n' +
-					"export default auth.defineCallbacks({});\n",
+					'import type { AuthCallbacks } from "@fcalell/plugin-auth/runtime";\n' +
+					"const callbacks: AuthCallbacks = { sendOTP: async () => {} };\n" +
+					"export default callbacks;\n",
+				// Real end-to-end assertion for `InferAuthContext`
+				// (plugins/api/src/procedure.ts): `authRuntime`'s context must carry
+				// a typed `$Infer.Session` (not `any`) so `procedure({ auth: true })`
+				// narrows `context.user.id` to `string`. Pre-fix, `AuthInstance` was
+				// `any`, which collapsed this to an untyped context and let a
+				// mistyped `context.user.id` slip past `tsc` silently — this
+				// assignment is the regression guard. `hasRoutableFiles` picks this
+				// file up, which generates a real barrel + `.stack/procedure.ts`.
+				"src/worker/routes/me.ts":
+					'import { procedure } from "virtual:stack-procedure";\n\n' +
+					"export const me = procedure({ auth: true }).handler(({ context }) => {\n" +
+					"\tconst id: string = context.user.id;\n" +
+					"\treturn { id };\n" +
+					"});\n",
+			},
+		});
+		expect(diagnostics).toEqual([]);
+	});
+
+	// M3: `.stack/procedure.ts`'s rebuilt `__chain` must mirror the real
+	// worker's middleware chain too, not just `pluginRuntimes` — a
+	// context-injecting middleware (arity-1 `(ctx) => extra`, see
+	// `AppBuilder.use`'s third overload) extends the request context, and a
+	// route handler reading that extra key must see its narrow type, not
+	// `unknown`/absent. Regression guard: pre-fix, `context.requestId` below
+	// would have failed to type-check (the key wasn't in `WorkerContext` at
+	// all) because `buildChain` only rebuilt base + pluginRuntimes.
+	it("a context-injecting src/worker/middleware.ts's extra key is typed on virtual:stack-procedure's context", async () => {
+		const diagnostics = await typeCheckFixture({
+			label: "middleware-context-injection",
+			plugins: [
+				cloudflare(),
+				db({ dialect: "d1", databaseId: "tc-mw-ctx" }),
+				api(),
+			],
+			seed: {
+				"src/schema/index.ts": "export const tables = {};\n",
+				"src/worker/middleware.ts":
+					'import type { BaseContext } from "@fcalell/plugin-api/runtime";\n\n' +
+					"export default function middleware(ctx: BaseContext) {\n" +
+					"\treturn { requestId: crypto.randomUUID() };\n" +
+					"}\n",
+				"src/worker/routes/ping.ts":
+					'import { procedure } from "virtual:stack-procedure";\n\n' +
+					"export const ping = procedure().handler(({ context }) => {\n" +
+					"\tconst id: string = context.requestId;\n" +
+					"\treturn { id };\n" +
+					"});\n",
 			},
 		});
 		expect(diagnostics).toEqual([]);
@@ -292,12 +361,14 @@ describe("emitted artifacts type-check cleanly", () => {
 	it("api-without-db (minimal worker) emits nothing; vacuous type-check", async () => {
 		// api-only with no runtimes landed emits no worker.ts. This is the
 		// "null workerSource" path — the test asserts the graph didn't
-		// accidentally emit something broken.
+		// accidentally emit something broken. `cloudflare()` is required
+		// because plugin-api contributes its own `RATE_LIMITER_RPC` binding
+		// (H1) — `api` now declares `requires: ["cloudflare"]`.
 		const cwd = resolve(WORKSPACE, "api-only");
 		mkdirSync(cwd, { recursive: true });
 		const config = defineConfig({
 			app: { name: "api-only", domain: "example.com" },
-			plugins: [api()],
+			plugins: [cloudflare(), api()],
 		});
 		const result = await runStackGenerate({ config, cwd });
 		const worker = result.files.find((f) => f.path === ".stack/worker.ts");

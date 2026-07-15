@@ -86,13 +86,13 @@ describe("binding collection across plugins", () => {
 		expect(bindings.filter((b) => b.kind === "d1")).toHaveLength(0);
 	});
 
-	it("auth plugin contributes 2 rate limiters + 2 secrets to cloudflare slots", async () => {
+	it("auth contributes its 2 rate limiters + 2 secrets; api adds the blanket RPC limiter", async () => {
 		const authOptions: AuthOptions = {
 			secretVar: "AUTH_SECRET",
 			appUrlVar: "APP_URL",
 			rateLimiter: {
 				ip: { binding: "RATE_LIMITER_IP", limit: 100, period: 60 },
-				email: { binding: "RATE_LIMITER_EMAIL", limit: 5, period: 300 },
+				email: { binding: "RATE_LIMITER_EMAIL", limit: 3, period: 60 },
 			},
 		};
 		const { bindings, secrets } = await resolveWrangler(cwd, [
@@ -103,17 +103,27 @@ describe("binding collection across plugins", () => {
 		]);
 
 		const rateLimiters = bindings.filter((b) => b.kind === "rate_limiter");
-		expect(rateLimiters).toHaveLength(2);
-		expect(rateLimiters[0]).toMatchObject({
-			kind: "rate_limiter",
-			binding: "RATE_LIMITER_IP",
-			simple: { limit: 100, period: 60 },
-		});
-		expect(rateLimiters[1]).toMatchObject({
-			kind: "rate_limiter",
-			binding: "RATE_LIMITER_EMAIL",
-			simple: { limit: 5, period: 300 },
-		});
+		expect(rateLimiters).toHaveLength(3);
+		expect(rateLimiters).toContainEqual(
+			expect.objectContaining({
+				kind: "rate_limiter",
+				binding: "RATE_LIMITER_IP",
+				simple: { limit: 100, period: 60 },
+			}),
+		);
+		expect(rateLimiters).toContainEqual(
+			expect.objectContaining({
+				kind: "rate_limiter",
+				binding: "RATE_LIMITER_EMAIL",
+				simple: { limit: 3, period: 60 },
+			}),
+		);
+		expect(rateLimiters).toContainEqual(
+			expect.objectContaining({
+				kind: "rate_limiter",
+				binding: "RATE_LIMITER_RPC",
+			}),
+		);
 
 		expect(secrets).toContainEqual({
 			name: "AUTH_SECRET",
@@ -131,13 +141,19 @@ describe("binding collection across plugins", () => {
 		});
 	});
 
-	it("api plugin contributes no wrangler bindings on its own", async () => {
+	it("api plugin contributes only the blanket RPC rate limiter on its own", async () => {
 		const apiOptions: ApiOptions = { prefix: "/rpc" };
 		const { bindings } = await resolveWrangler(cwd, [
 			cloudflare(),
 			api(apiOptions),
 		]);
-		expect(bindings).toHaveLength(0);
+		expect(bindings).toEqual([
+			expect.objectContaining({
+				kind: "rate_limiter",
+				binding: "RATE_LIMITER_RPC",
+				simple: { limit: 1000, period: 60 },
+			}),
+		]);
 	});
 
 	it("slot aggregation combines bindings and secrets from multiple plugins", async () => {
@@ -154,7 +170,7 @@ describe("binding collection across plugins", () => {
 				appUrlVar: "APP_URL",
 				rateLimiter: {
 					ip: { binding: "RATE_LIMITER_IP", limit: 100, period: 60 },
-					email: { binding: "RATE_LIMITER_EMAIL", limit: 5, period: 300 },
+					email: { binding: "RATE_LIMITER_EMAIL", limit: 3, period: 60 },
 				},
 			}),
 			api({ prefix: "/rpc" }),
@@ -178,8 +194,8 @@ describe("binding collection across plugins", () => {
 				secretVar: "MY_SECRET",
 				appUrlVar: "MY_APP_URL",
 				rateLimiter: {
-					ip: { binding: "MY_IP_LIMITER", limit: 50, period: 30 },
-					email: { binding: "MY_EMAIL_LIMITER", limit: 10, period: 600 },
+					ip: { binding: "MY_IP_LIMITER", limit: 50, period: 10 },
+					email: { binding: "MY_EMAIL_LIMITER", limit: 10, period: 60 },
 				},
 			}),
 			api(),
@@ -212,6 +228,17 @@ describe("binding collection across plugins", () => {
 			cloudflare(),
 		]);
 
-		expect(shuffled.bindings).toEqual(consumer.bindings);
+		// List-slot contributions arrive in plugin-array order, so compare as
+		// sets: the same bindings must be present either way. (The emitted
+		// wrangler.toml groups by kind, so intra-list order is cosmetic.)
+		const byBinding = (b: WranglerBindingSpec) =>
+			b.kind === "var" ? b.name : b.binding;
+		const sortedShuffled = [...shuffled.bindings].sort((a, b) =>
+			byBinding(a).localeCompare(byBinding(b)),
+		);
+		const sortedConsumer = [...consumer.bindings].sort((a, b) =>
+			byBinding(a).localeCompare(byBinding(b)),
+		);
+		expect(sortedShuffled).toEqual(sortedConsumer);
 	});
 });

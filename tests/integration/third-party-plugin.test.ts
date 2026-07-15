@@ -59,10 +59,11 @@ describe("Third-party plugin discovery", () => {
 		vi.doMock(THIRD_PARTY_PACKAGE, () => ({ widget }));
 
 		const { api } = await import("@fcalell/plugin-api");
+		const { cloudflare } = await import("@fcalell/plugin-cloudflare");
 
 		const config = defineConfig({
 			app: { name: "app", domain: "example.com" },
-			plugins: [api(), widget()],
+			plugins: [cloudflare(), api(), widget()],
 		});
 
 		const { collected } = await buildTestGraph({ config, cwd });

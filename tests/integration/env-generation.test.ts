@@ -149,7 +149,7 @@ describe("`.dev.vars` write-once behavior", () => {
 		expect(content).toContain("APP_URL=https://example.com");
 	}, 240_000);
 
-	it("does not overwrite an existing .dev.vars on subsequent generates", async () => {
+	it("appends STACK_DEV=1 to an existing .dev.vars missing it, preserving prior content", async () => {
 		const config = defineConfig({
 			app: { name: "devvars-fixture", domain: "example.com" },
 			plugins: [
@@ -165,6 +165,31 @@ describe("`.dev.vars` write-once behavior", () => {
 		const devVarsPath = join(cwd, ".dev.vars");
 		const customContent =
 			"AUTH_SECRET=my-real-dev-secret\nAPP_URL=http://localhost:5173\n";
+		writeFileSync(devVarsPath, customContent);
+
+		await runStackGenerate({ config, cwd, writeToDisk: true });
+
+		const content = readFileSync(devVarsPath, "utf-8");
+		expect(content.startsWith(customContent)).toBe(true);
+		expect(content).toContain("STACK_DEV=1");
+	}, 240_000);
+
+	it("does not overwrite an existing .dev.vars that already declares STACK_DEV", async () => {
+		const config = defineConfig({
+			app: { name: "devvars-fixture", domain: "example.com" },
+			plugins: [
+				cloudflare(),
+				db({ dialect: "d1", databaseId: "devvars-db" }),
+				auth({ secretVar: "AUTH_SECRET" }),
+				api(),
+			],
+		});
+
+		await runStackGenerate({ config, cwd, writeToDisk: true });
+
+		const devVarsPath = join(cwd, ".dev.vars");
+		const customContent =
+			"AUTH_SECRET=my-real-dev-secret\nAPP_URL=http://localhost:5173\nSTACK_DEV=0\n";
 		writeFileSync(devVarsPath, customContent);
 
 		await runStackGenerate({ config, cwd, writeToDisk: true });

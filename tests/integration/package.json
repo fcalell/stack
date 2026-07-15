@@ -21,10 +21,14 @@
 		"@fcalell/plugin-vite": "workspace:*"
 	},
 	"devDependencies": {
+		"@cloudflare/workers-types": "^4.20260603.1",
 		"@fcalell/typescript-config": "workspace:*",
 		"@solidjs/router": "^0.15.3",
 		"@tailwindcss/vite": "^4.1.11",
+		"drizzle-kit": "^0.31.4",
+		"esbuild": "0.27.3",
 		"hono": "^4.12.23",
+		"miniflare": "4.20260603.0",
 		"smol-toml": "^1.6.1",
 		"solid-js": "^1.9.9",
 		"typescript": "^5.9.3",

@@ -200,7 +200,11 @@ describe("E2E minimal journey (api only)", () => {
 
 		const { graph } = await buildTestGraph({ config, cwd });
 		const bindings = await graph.resolve(cloudflare.slots.bindings);
-		expect(bindings).toHaveLength(0);
+		// api contributes only its blanket RPC rate limiter; no db → no d1.
+		expect(bindings.filter((b) => b.kind === "d1")).toHaveLength(0);
+		expect(
+			bindings.map((b) => (b.kind === "var" ? b.name : b.binding)),
+		).toEqual(["RATE_LIMITER_RPC"]);
 
 		const steps = await graph.resolve(cliSlots.deploySteps);
 		expect(steps.find((s) => s.name === "Worker")).toBeDefined();

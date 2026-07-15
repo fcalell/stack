@@ -152,8 +152,9 @@ describe("wrangler.toml TOML-parse validation", () => {
 		// plugin-auth requires its callback file to exist (sendOTP).
 		writeFileSync(
 			join(cwd, "src/worker/plugins/auth.ts"),
-			'import { auth } from "@fcalell/plugin-auth";\n' +
-				"export default auth.defineCallbacks({});\n",
+			'import type { AuthCallbacks } from "@fcalell/plugin-auth/runtime";\n' +
+				"const callbacks: AuthCallbacks = { sendOTP: async () => {} };\n" +
+				"export default callbacks;\n",
 		);
 
 		const toml = await generateWrangler({
@@ -166,7 +167,7 @@ describe("wrangler.toml TOML-parse validation", () => {
 					secretVar: "AUTH_SECRET",
 					rateLimiter: {
 						ip: { binding: "RATE_LIMITER_IP", limit: 100, period: 60 },
-						email: { binding: "RATE_LIMITER_EMAIL", limit: 5, period: 300 },
+						email: { binding: "RATE_LIMITER_EMAIL", limit: 5, period: 10 },
 					},
 				}),
 				api(),
@@ -175,7 +176,16 @@ describe("wrangler.toml TOML-parse validation", () => {
 
 		const parsed = parseToml(toml) as ParsedWrangler;
 		const bindings = parsed.unsafe?.bindings ?? [];
-		expect(bindings).toHaveLength(2);
+		// auth's two limiters + api's blanket RATE_LIMITER_RPC.
+		expect(bindings).toHaveLength(3);
+
+		const rpc = bindings.find((b) => b.name === "RATE_LIMITER_RPC");
+		expect(rpc).toMatchObject({
+			name: "RATE_LIMITER_RPC",
+			type: "ratelimit",
+			limit: 1000,
+			period: 60,
+		});
 
 		const ip = bindings.find((b) => b.name === "RATE_LIMITER_IP");
 		expect(ip).toMatchObject({
@@ -190,7 +200,7 @@ describe("wrangler.toml TOML-parse validation", () => {
 			name: "RATE_LIMITER_EMAIL",
 			type: "ratelimit",
 			limit: 5,
-			period: 300,
+			period: 10,
 		});
 	});
 
@@ -200,8 +210,9 @@ describe("wrangler.toml TOML-parse validation", () => {
 		mkdirSync(join(cwd, "src/worker/plugins"), { recursive: true });
 		writeFileSync(
 			join(cwd, "src/worker/plugins/auth.ts"),
-			'import { auth } from "@fcalell/plugin-auth";\n' +
-				"export default auth.defineCallbacks({});\n",
+			'import type { AuthCallbacks } from "@fcalell/plugin-auth/runtime";\n' +
+				"const callbacks: AuthCallbacks = { sendOTP: async () => {} };\n" +
+				"export default callbacks;\n",
 		);
 
 		const toml = await generateWrangler({
