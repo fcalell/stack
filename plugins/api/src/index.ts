@@ -300,15 +300,10 @@ export const api = plugin("api", {
 
 	schema: apiOptionsSchema,
 
-	requires: ["cloudflare"],
-
 	dependencies: {
 		"@fcalell/plugin-api": "workspace:*",
 	},
-	devDependencies: {
-		wrangler: "^4.98.0",
-	},
-	gitignore: [".wrangler", ".stack"],
+	gitignore: [".stack"],
 
 	slots: {
 		workerImports,
@@ -413,16 +408,6 @@ export const api = plugin("api", {
 		// predicate so import + handler + barrel agree on emission.
 		emitArtifact("src/worker/routes/index.ts", self.slots.routeBarrelSource),
 
-		// Dev wrangler process.
-		cliSlots.devProcesses.contribute(() => ({
-			name: "api",
-			command: "npx",
-			args: ["wrangler", "dev", "--port", "8787", "--persist-to", ".stack/dev"],
-			defaultPort: 8787,
-			readyPattern: /Ready on/,
-			color: "yellow",
-		})),
-
 		// Route watcher — regenerates the barrel when route files appear/disappear.
 		cliSlots.devWatchers.contribute((ctx) => ({
 			name: "routes",
@@ -438,16 +423,6 @@ export const api = plugin("api", {
 					);
 					ctx.log.info("Route barrel regenerated");
 				}
-			},
-		})),
-
-		// Deploy step: push the worker up via wrangler.
-		cliSlots.deploySteps.contribute(() => ({
-			name: "Worker",
-			phase: "main",
-			exec: {
-				command: "npx",
-				args: ["wrangler", "deploy", "--config", ".stack/wrangler.toml"],
 			},
 		})),
 

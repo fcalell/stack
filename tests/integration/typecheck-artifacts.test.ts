@@ -359,11 +359,9 @@ describe("emitted artifacts type-check cleanly", () => {
 	});
 
 	it("api-without-db (minimal worker) emits nothing; vacuous type-check", async () => {
-		// api-only with no runtimes landed emits no worker.ts. This is the
-		// "null workerSource" path — the test asserts the graph didn't
-		// accidentally emit something broken. `cloudflare()` is required
-		// because plugin-api contributes its own `RATE_LIMITER_RPC` binding
-		// (H1) — `api` now declares `requires: ["cloudflare"]`.
+		// api-only with no runtimes and no routes emits no worker.ts. This is
+		// the "null workerSource" path — the test asserts the graph didn't
+		// accidentally emit something broken.
 		const cwd = resolve(WORKSPACE, "api-only");
 		mkdirSync(cwd, { recursive: true });
 		const config = defineConfig({

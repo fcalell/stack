@@ -96,6 +96,11 @@ export const cloudflare = plugin("cloudflare", {
 
 	schema: cloudflareOptionsSchema,
 
+	devDependencies: {
+		wrangler: "^4.98.0",
+	},
+	gitignore: [".wrangler"],
+
 	slots: {
 		bindings,
 		routes,
@@ -137,6 +142,26 @@ export const cloudflare = plugin("cloudflare", {
 				content: `${stackDevLine}${secretsContent}`,
 			};
 		}),
+
+		// Dev wrangler process — the worker target's local runtime.
+		cliSlots.devProcesses.contribute(() => ({
+			name: "wrangler",
+			command: "npx",
+			args: ["wrangler", "dev", "--port", "8787", "--persist-to", ".stack/dev"],
+			defaultPort: 8787,
+			readyPattern: /Ready on/,
+			color: "yellow",
+		})),
+
+		// Deploy step: push the worker up via wrangler.
+		cliSlots.deploySteps.contribute(() => ({
+			name: "Worker",
+			phase: "main",
+			exec: {
+				command: "npx",
+				args: ["wrangler", "deploy", "--config", ".stack/wrangler.toml"],
+			},
+		})),
 
 		// After `.stack/wrangler.toml` is on disk, shell out to `wrangler types`
 		// to regenerate Env typings. Non-fatal by design: a missing binary or a

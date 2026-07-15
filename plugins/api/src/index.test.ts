@@ -830,32 +830,17 @@ describe("api contributions into cli.slots", () => {
 		expect(barrel?.content).toContain('export * from "./posts";');
 	});
 
-	it("contributes a dev process via cliSlots.devProcesses", async () => {
-		const g = buildGraph(collectPlugins(), makeCtxFactory());
-		const procs = await g.resolve(cliSlots.devProcesses);
-		expect(procs.find((p) => p.name === "api")).toBeTruthy();
-	});
-
 	it("contributes a route watcher via cliSlots.devWatchers", async () => {
 		const g = buildGraph(collectPlugins(), makeCtxFactory());
 		const watchers = await g.resolve(cliSlots.devWatchers);
 		expect(watchers.find((w) => w.name === "routes")).toBeTruthy();
 	});
 
-	it("contributes a deploy step via cliSlots.deploySteps", async () => {
-		const g = buildGraph(collectPlugins(), makeCtxFactory());
-		const steps = await g.resolve(cliSlots.deploySteps);
-		expect(steps.find((s) => s.name === "Worker")).toBeTruthy();
-	});
-
-	it("auto-wires deps/devDeps/gitignore into cli slots", async () => {
+	it("auto-wires deps/gitignore into cli slots", async () => {
 		const g = buildGraph(collectPlugins(), makeCtxFactory());
 		const deps = await g.resolve(cliSlots.initDeps);
-		const devDeps = await g.resolve(cliSlots.initDevDeps);
 		const ignore = await g.resolve(cliSlots.gitignore);
 		expect(deps["@fcalell/plugin-api"]).toBe("workspace:*");
-		expect(devDeps.wrangler).toBeDefined();
-		expect(ignore).toContain(".wrangler");
 		expect(ignore).toContain(".stack");
 	});
 });

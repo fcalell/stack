@@ -336,6 +336,33 @@ describe("cloudflare → cli.slots", () => {
 		expect(postWrite).toHaveLength(1);
 		expect(typeof postWrite[0]).toBe("function");
 	});
+
+	it("contributes the wrangler dev process via cliSlots.devProcesses", async () => {
+		const { plugins, ctxFactory } = collectCloudflarePlugins();
+		const g = buildGraph(plugins, ctxFactory);
+		const procs = await g.resolve(cliSlots.devProcesses);
+		const wranglerProc = procs.find((p) => p.name === "wrangler");
+		expect(wranglerProc).toBeDefined();
+		expect(wranglerProc?.args).toContain("dev");
+	});
+
+	it("contributes the wrangler deploy step via cliSlots.deploySteps", async () => {
+		const { plugins, ctxFactory } = collectCloudflarePlugins();
+		const g = buildGraph(plugins, ctxFactory);
+		const steps = await g.resolve(cliSlots.deploySteps);
+		const worker = steps.find((s) => s.name === "Worker");
+		expect(worker).toBeDefined();
+		expect(worker && "exec" in worker && worker.exec.args).toContain("deploy");
+	});
+
+	it("auto-wires the wrangler devDep and .wrangler gitignore", async () => {
+		const { plugins, ctxFactory } = collectCloudflarePlugins();
+		const g = buildGraph(plugins, ctxFactory);
+		const devDeps = await g.resolve(cliSlots.initDevDeps);
+		const ignore = await g.resolve(cliSlots.gitignore);
+		expect(devDeps.wrangler).toBeDefined();
+		expect(ignore).toContain(".wrangler");
+	});
 });
 
 // ── Cross-plugin namespace collisions (real-graph) ────────────────
