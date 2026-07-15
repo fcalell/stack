@@ -290,6 +290,23 @@ describe("api.slots.cors (explicit override semantics)", () => {
 // have an import without a `.handler(routes)` call (or vice versa).
 // The fix: the import contribution resolves `self.slots.routesHandler`
 // — a single point of decision — so the two values can never disagree.
+describe("api.slots.routePrefixes", () => {
+	it("carries the default /rpc prefix for deploy targets", async () => {
+		const g = buildGraph(collectPlugins(), makeCtxFactory());
+		const prefixes = await g.resolve(api.slots.routePrefixes);
+		expect(prefixes).toEqual(["/rpc"]);
+	});
+
+	it("follows a custom api({ prefix })", async () => {
+		const g = buildGraph(
+			collectPlugins([], { prefix: "/api" }),
+			makeCtxFactory(),
+		);
+		const prefixes = await g.resolve(api.slots.routePrefixes);
+		expect(prefixes).toEqual(["/api"]);
+	});
+});
+
 describe("api routes — single source of truth", () => {
 	it("import + handler are wired together when handler resolves to non-null", async () => {
 		const dbLike: GraphPlugin = {
@@ -784,12 +801,30 @@ describe("api contributions into cli.slots", () => {
 		expect(paths).toContain("src/worker/routes/index.ts");
 	});
 
-	it("skips emitting .stack/worker.ts and .stack/procedure.ts when no runtimes contributed", async () => {
+	it("skips emitting .stack/worker.ts and .stack/procedure.ts when no runtimes and no routes", async () => {
 		const g = buildGraph(collectPlugins(), makeCtxFactory());
 		const files = await g.resolve(cliSlots.artifactFiles);
 		const paths = files.map((f) => f.path);
 		expect(paths).not.toContain(".stack/worker.ts");
 		expect(paths).not.toContain(".stack/procedure.ts");
+	});
+
+	// A consumer with routes but no runtime plugins (no db/auth) is a real
+	// worker: its procedures must be served. The gate is "nothing to run at
+	// all", not "no plugin runtimes".
+	it("emits worker.ts + procedure.ts for a routes-only project (no runtimes)", async () => {
+		const cwd = makeRealCwd(["board.ts"]);
+		const g = buildGraph(
+			collectPlugins(),
+			makeCtxFactory({}, {}, undefined, cwd),
+		);
+		const files = await g.resolve(cliSlots.artifactFiles);
+		const worker = files.find((f) => f.path === ".stack/worker.ts");
+		const procedure = files.find((f) => f.path === ".stack/procedure.ts");
+		expect(worker).toBeDefined();
+		expect(worker?.content).toContain(".handler(routes)");
+		expect(procedure).toBeDefined();
+		expect(procedure?.content).toContain("export const procedure");
 	});
 
 	// Bug regression: previously the route barrel artifact was unconditionally

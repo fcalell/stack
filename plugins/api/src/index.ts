@@ -108,6 +108,17 @@ const corsOrigins = slot.list<string>({
 	name: "corsOrigins",
 });
 
+// URL prefixes the worker owns. Deploy-target plugins read this to route
+// requests to the worker (a Node server mounts these paths on the worker
+// fetch handler; a proxy forwards them) without reaching into api's
+// options. api contributes its own `prefix`; a plugin that mounts extra
+// worker-owned paths (e.g. auth's /api/auth) contributes them here too.
+const routePrefixes = slot.list<string>({
+	source: SOURCE,
+	name: "routePrefixes",
+	sortBy: (a, b) => a.localeCompare(b),
+});
+
 // The final CORS list peer plugins actually read.
 //
 // Override contract: `app.origins` is *present, even when empty* = override
@@ -226,9 +237,8 @@ const routeBarrelSource = slot.derived({
 });
 
 // The rendered `.stack/worker.ts` source. Pulled into `cli.slots.artifactFiles`
-// by the auto-contribution below, gated on `pluginRuntimes` being non-empty
-// (with only the api plugin, no runtimes would land in the chain — emitting a
-// hollow worker would be confusing).
+// by the auto-contribution below, gated on the worker having anything to
+// run: at least one plugin runtime or at least one consumer route.
 const workerSource = slot.derived({
 	source: SOURCE,
 	name: "workerSource",
@@ -242,10 +252,11 @@ const workerSource = slot.derived({
 		callbacks,
 	},
 	compute: (inp): string | null => {
-		// With only plugin-api in the config, `pluginRuntimes` is empty — nothing
-		// would actually run. Return null so the file-emission contribution
-		// skips writing a hollow worker.
-		if (inp.runtimes.length === 0) return null;
+		// No runtimes AND no routes — nothing would actually run. Return null
+		// so the file-emission contribution skips writing a hollow worker.
+		// Routes alone are a real worker (a routes-only consumer with no
+		// db/auth still serves its procedures).
+		if (inp.runtimes.length === 0 && inp.handler === null) return null;
 
 		const payload: WorkerPayload = {
 			imports: [...inp.imports, ...inp.middlewareImports],
@@ -262,11 +273,11 @@ const workerSource = slot.derived({
 // The rendered `.stack/procedure.ts` source — the `virtual:stack-procedure`
 // target a consumer's `src/worker/routes/*.ts` imports (mapped via a
 // tsconfig `paths` alias; see `packages/cli/src/templates/tsconfig.ts`).
-// Gated on `pluginRuntimes` the same way `workerSource` is: no runtimes,
-// no meaningful request context, no artifact. This is the ONLY place that
-// gate is checked — `aggregateProcedure` itself is ungated (it would happily
-// render a runtimes-less chain); the slot compute is the natural place to
-// decide whether the artifact exists at all.
+// Gated the same way `workerSource` is: no runtimes and no routes, no
+// artifact. This is the ONLY place that gate is checked —
+// `aggregateProcedure` itself is ungated (it would happily render a
+// runtimes-less chain); the slot compute is the natural place to decide
+// whether the artifact exists at all.
 //
 // Mirrors `middlewareCalls`/`middlewareImports` alongside `pluginRuntimes` so
 // the rebuilt `__chain` in `.stack/procedure.ts` extends `TContext` exactly
@@ -281,9 +292,10 @@ const procedureSource = slot.derived({
 		middlewareCalls,
 		middlewareImports,
 		statements: rbacStatements,
+		handler: routesHandler,
 	},
 	compute: (inp): string | null => {
-		if (inp.runtimes.length === 0) return null;
+		if (inp.runtimes.length === 0 && inp.handler === null) return null;
 		return aggregateProcedure({
 			base: inp.base,
 			runtimes: inp.runtimes,
@@ -313,6 +325,7 @@ export const api = plugin("api", {
 		middlewareImports,
 		routesHandler,
 		corsOrigins,
+		routePrefixes,
 		cors,
 		callbacks,
 		workerBase,
@@ -323,6 +336,9 @@ export const api = plugin("api", {
 	},
 
 	contributes: (self) => [
+		// The oRPC prefix is a worker-owned URL space; deploy targets read
+		// routePrefixes to mount or forward it.
+		self.slots.routePrefixes.contribute(() => self.options.prefix),
 		// Always import `createWorker` — the base call uses it verbatim.
 		self.slots.workerImports.contribute(
 			(): TsImportSpec => ({

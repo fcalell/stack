@@ -59,12 +59,13 @@ e.g. consulting `ctx.fileExists` before writing.
 | `middlewareImports` | `derived<TsImportSpec[]>` | Deduplicated imports for middleware |
 | `routesHandler` | `value<{ identifier } \| null>` | Routes namespace identifier (seeded from `src/worker/routes` existence) |
 | `corsOrigins` | `list<string>` | Extra CORS origins (frontend plugins push localhost here) |
+| `routePrefixes` | `list<string>` | URL prefixes the worker owns (api contributes its `prefix`); deploy targets read this to mount/forward worker paths |
 | `cors` | `derived<string[]>` | Final CORS list — `app.origins` verbatim, or `[https://domain, https://app.domain, ...corsOrigins]` |
 | `callbacks` | `map<string, CallbackSpec>` | Plugin-name → callback identifier; spliced onto matching runtime's options |
 | `workerBase` | `derived<TsExpression>` | The `createWorker({...})` call expression |
-| `workerSource` | `derived<string \| null>` | Final `.stack/worker.ts` source; null when no runtimes are present |
+| `workerSource` | `derived<string \| null>` | Final `.stack/worker.ts` source; null when neither runtimes nor routes are present |
 | `rbacStatements` | `value<Record<string, readonly string[]> \| null>` (`override`) | RBAC action statements for `procedure({ rbac })`'s type-level autocomplete; `auth` contributes from `organization.ac.statements` |
-| `procedureSource` | `derived<string \| null>` | Final `.stack/procedure.ts` source (`virtual:stack-procedure`'s target); rebuilds the same runtime + middleware `.use()` chain as `workerSource` so `WorkerContext` matches the real request context; null when no runtimes are present |
+| `procedureSource` | `derived<string \| null>` | Final `.stack/procedure.ts` source (`virtual:stack-procedure`'s target); rebuilds the same runtime + middleware `.use()` chain as `workerSource` so `WorkerContext` matches the real request context; null when neither runtimes nor routes are present |
 
 ## `cloudflare.slots.*` (plugin-cloudflare)
 
