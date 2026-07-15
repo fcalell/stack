@@ -8,6 +8,7 @@ export default defineConfig({
 			"plugins/db",
 			"plugins/auth",
 			"plugins/api",
+			"plugins/node",
 			"plugins/vite",
 			"plugins/expo",
 			"plugins/solid",

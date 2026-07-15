@@ -26,6 +26,7 @@ runtime export.
 | `@fcalell/plugin-db` | Drizzle ORM clients (D1/SQLite), schema tooling, migrations | `db()` |
 | `@fcalell/plugin-auth` | Better Auth integration, RBAC, access control | `auth()` |
 | `@fcalell/plugin-api` | API framework: Hono + oRPC, procedure builder, typed client | `api()` |
+| `@fcalell/plugin-node` | Long-running Node server target: serves the worker + static SPA, background services, typed WebSocket surface | `node()` |
 | `@fcalell/plugin-vite` | Framework-agnostic Vite lifecycle (providers virtual module) | `vite()` |
 | `@fcalell/plugin-expo` | Expo/React Native: Metro + app config + expo-router entry + EAS commands | `expo()` |
 | `@fcalell/plugin-solid` | SolidJS compilation, file-based routing, app bootstrap | `solid()` |
@@ -53,6 +54,10 @@ plugin-auth ──────────────> cli, requires api + clou
                                  (owns auth.slots.runtimeOptions — derived from api.slots.cors;
                                   contributes to cloudflare.slots.bindings/secrets, api.slots.pluginRuntimes/callbacks)
 plugin-api ───────────────> cli (owns api.slots.workerImports/pluginRuntimes/middlewareEntries/cors/callbacks/workerSource)
+plugin-node ──────────────> cli, requires api
+                                 (owns node.slots.serverPort/services/serverSource;
+                                  derives from api.slots.workerSource/routePrefixes;
+                                  contributes to vite.slots.serverProxy for same-origin dev)
 plugin-solid ─────────────> cli, requires vite
                                  (owns solid.slots.providers/entry/html/routesDts;
                                   contributes to vite.slots.configImports/pluginCalls)

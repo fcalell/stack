@@ -276,7 +276,9 @@ describe("emitted artifacts type-check cleanly", () => {
 			},
 		});
 		expect(diagnostics).toEqual([]);
-	});
+		// The largest fixture: its tsc run sits near the default 5s budget and
+		// flakes under a loaded full-suite run.
+	}, 20_000);
 
 	it("frontend-only (vite + solid) emits type-safe entry.tsx + vite.config.ts", async () => {
 		const diagnostics = await typeCheckFixture({

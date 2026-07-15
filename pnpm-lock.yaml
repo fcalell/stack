@@ -311,6 +311,37 @@ importers:
         specifier: ^1.8.0
         version: 1.8.0(@expo/metro-config@56.0.13(expo@56.0.9)(typescript@5.9.3))(metro-cache@0.84.4)(metro-transform-worker@0.84.4)(metro@0.84.4)(react-native@0.85.3(@babel/core@7.29.0)(@react-native/metro-config@0.85.3(@babel/core@7.29.0))(@types/react@19.2.16)(react@19.2.7))(react@19.2.7)(tailwindcss@4.3.0)
 
+  plugins/node:
+    dependencies:
+      '@fcalell/cli':
+        specifier: workspace:*
+        version: link:../../packages/cli
+      '@fcalell/plugin-api':
+        specifier: workspace:*
+        version: link:../api
+      '@fcalell/plugin-vite':
+        specifier: workspace:*
+        version: link:../vite
+      '@hono/node-server':
+        specifier: ^2.0.9
+        version: 2.0.9(hono@4.12.23)
+      hono:
+        specifier: ^4.12.23
+        version: 4.12.23
+      zod:
+        specifier: ^4.3.6
+        version: 4.3.6
+    devDependencies:
+      '@fcalell/typescript-config':
+        specifier: workspace:*
+        version: link:../../packages/typescript-config
+      '@types/node':
+        specifier: ^25.5.0
+        version: 25.5.0
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
   plugins/solid:
     dependencies:
       '@fcalell/cli':
@@ -2002,6 +2033,12 @@ packages:
     peerDependencies:
       react: '*'
       react-native: '*'
+
+  '@hono/node-server@2.0.9':
+    resolution: {integrity: sha512-cNMw3ziCdDcx0+ldta60zvUL5XO0OLt521n2hjPp0PB0ugczDCEczXsf33qQbkKIXWGFQ03f0LC85u6YK8pCLA==}
+    engines: {node: '>=20'}
+    peerDependencies:
+      hono: ^4
 
   '@img/colour@1.1.0':
     resolution: {integrity: sha512-Td76q7j57o/tLVdgS746cYARfSyxk8iEfRxewL9h4OMzYhbW4TAcppl0mT4eyqXddh6L/jwoM75mo7ixa/pCeQ==}
@@ -6902,6 +6939,10 @@ snapshots:
       nanoid: 3.3.11
       react: 19.2.7
       react-native: 0.85.3(@babel/core@7.29.0)(@react-native/metro-config@0.85.3(@babel/core@7.29.0))(@types/react@19.2.16)(react@19.2.7)
+
+  '@hono/node-server@2.0.9(hono@4.12.23)':
+    dependencies:
+      hono: 4.12.23
 
   '@img/colour@1.1.0': {}
 

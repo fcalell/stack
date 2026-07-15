@@ -19,6 +19,9 @@ my-app/
         auth.ts              # auth.defineCallbacks() — runtime callbacks
       routes/                # business logic (procedures; barrel generated to index.ts)
       middleware.ts          # optional custom middleware (auto-wired via api.slots.middlewareEntries)
+    server/                  # node target only
+      services/              # background services (barrel generated to index.ts);
+                             # each module default-exports a defineService(...)
     app/
       pages/                 # file-based routes (business logic)
         index.tsx            # `_layout.tsx` is optional; plugin-solid ships a default
@@ -34,7 +37,13 @@ my-app/
     app.css                  # aggregated stylesheet from solidUi.slots.appCssSource
     virtual-providers.tsx    # composition surface from solid.slots.providersSource
     routes.d.ts              # typed route builder declarations from solid.slots.routesDtsSource
+    server.ts                # node target entry from node.slots.serverSource (run with `node .stack/server.ts`)
 ```
+
+On the node target (`node()` instead of `cloudflare()`), `wrangler.toml`,
+`worker-configuration.d.ts`, and `.stack/wrangler.toml` do not exist; `.stack/server.ts` serves
+the worker, the built client (`dist/client`), and the consumer's background services from one
+long-running process.
 
 ## Config
 

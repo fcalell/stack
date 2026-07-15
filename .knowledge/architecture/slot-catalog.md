@@ -79,6 +79,16 @@ e.g. consulting `ctx.fileExists` before writing.
 | `compatibilityFlags` | `list<string>` | Wrangler `compatibility_flags`; deduped + sorted, omitted when empty (e.g. auth contributes `nodejs_compat`) |
 | `wranglerToml` | `derived<string>` | Final `.stack/wrangler.toml` source (also triggers `wrangler types` via `postWrite`) |
 
+## `node.slots.*` (plugin-node)
+
+| Slot | Kind | Purpose |
+|------|------|---------|
+| `serverPort` | `value<number>` | Node server port (defaults to options.port ?? 8788) |
+| `services` | `list<ServiceEntry>` (`uniqueBy: name`) | Codegen entries (`{ name, imports, expression }`) for the generated server's `services` array; each expression evaluates to a ServiceSpec or ServiceSpec[]; the consumer barrel lands here as one entry |
+| `consumerServices` | `value<{ identifier } \| null>` | Consumer services barrel identifier (seeded from `src/server/services` contents) |
+| `serviceBarrelSource` | `derived<string \| null>` | Rendered `src/server/services/index.ts` barrel; null when no service modules exist |
+| `serverSource` | `derived<string \| null>` | Final `.stack/server.ts` source; reads `api.slots.workerSource` + `routePrefixes`; null when there is no worker and no services |
+
 ## `vite.slots.*` (plugin-vite)
 
 | Slot | Kind | Purpose |

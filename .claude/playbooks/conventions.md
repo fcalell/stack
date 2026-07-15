@@ -64,6 +64,11 @@ plugins/<name>/
 
 `worker/` files never import from `node/`. `node/` files never import from `worker/`.
 
+A plugin whose runtime is a consumer-run Node server (plugin-node) splits the same way with
+`server/` (Node runtime, exported as `./server`), `client/` (browser code), and `ws/` (isomorphic
+shared contract): `node/` (codegen) and `server/` never import each other, and `client/` and
+`server/` share only `ws/`.
+
 Runtime plugin (if any) is exported from the `./runtime` subpath. The CLI discovers it by checking
 `package.json` exports. Runtime factories take plain options, not `PluginConfig`.
 

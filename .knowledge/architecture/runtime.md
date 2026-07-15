@@ -43,6 +43,23 @@ wrangler/Miniflare local dev, so `_devMode` is false in production. Rate limitin
 `rateLimit` middleware, `plugin-auth`'s `/api/auth/*` limiter) is skipped whenever `_devMode` is
 true.
 
+## Node target (`plugin-node`)
+
+`plugin-cloudflare` and `plugin-node` are alternative deploy targets for the same worker. On the
+node target, `.stack/server.ts` (composed by `node.slots.serverSource`) boots
+`createNodeServer` from `@fcalell/plugin-node/server`: an outer Hono app that mounts the worker's
+fetch handler on every `api.slots.routePrefixes` path, serves `dist/client` statically with SPA
+fallback to its `index.html` (the fallback shadows the worker's `GET /` liveness route), and runs
+consumer background services (`src/server/services/<name>.ts`, each default-exporting a
+`defineService({ name, start })`; start may return a stop handle, stops run in reverse order on
+shutdown).
+
+Node has no bindings: the worker gets `env = process.env`, `executionCtx` degrades to a no-op
+`waitUntil`, and binding-backed features (rate limiters) skip themselves when the binding is
+absent. `STACK_DEV=1` arrives via `ProcessSpec.env` on the dev process, not `.dev.vars`. The
+server's TypeScript runs directly under the consumer's Node >= 24 (type stripping), so everything
+on the runtime import path must stay erasable-only syntax.
+
 ## `virtual:stack-procedure`
 
 `src/worker/routes/*.ts` files author procedures via `import { procedure } from "virtual:stack-procedure"`
