@@ -75,7 +75,7 @@ importers:
         version: 1.14.4(@opentelemetry/api@1.9.1)
       '@orpc/server':
         specifier: ^1.14.4
-        version: 1.14.4(@opentelemetry/api@1.9.1)(ws@8.20.1)
+        version: 1.14.4(@opentelemetry/api@1.9.1)(ws@8.21.1)
       drizzle-orm:
         specifier: ^0.45.2
         version: 0.45.2(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)(@prisma/client@5.22.0)(@types/better-sqlite3@7.6.13)(@types/pg@8.20.0)(better-sqlite3@12.8.0)(kysely@0.29.2)(pg@8.20.0)
@@ -328,6 +328,9 @@ importers:
       hono:
         specifier: ^4.12.23
         version: 4.12.23
+      ws:
+        specifier: ^8.21.1
+        version: 8.21.1
       zod:
         specifier: ^4.3.6
         version: 4.3.6
@@ -338,6 +341,9 @@ importers:
       '@types/node':
         specifier: ^25.5.0
         version: 25.5.0
+      '@types/ws':
+        specifier: ^8.18.1
+        version: 8.18.1
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -3010,6 +3016,9 @@ packages:
   '@types/react@19.2.16':
     resolution: {integrity: sha512-esJiCAnl0kfpNdE69f3So4WJUXy95dLZydX0KwK46riIHDzHM7O9Vtf9xCHW0PXIqvgqNrswl522kA/5yx+F4w==}
 
+  '@types/ws@8.18.1':
+    resolution: {integrity: sha512-ThVF6DCVhA8kUGy+aazFQ4kXQ7E1Ty7A3ypFOe0IcJV8O/M511G99AW24irKrW56Wt44yG9+ij8FaqoBGkuBXg==}
+
   '@types/yargs-parser@21.0.3':
     resolution: {integrity: sha512-I4q9QU9MQv4oEOz4tAHJtNz1cwuLxn2F3xcc2iV5WdqLPpUnj30aUuxt1mAxYTG+oe8CZMV/+6rU4S4gRDzqtQ==}
 
@@ -5465,6 +5474,18 @@ packages:
       utf-8-validate:
         optional: true
 
+  ws@8.21.1:
+    resolution: {integrity: sha512-+0NTnW77fFN/DjQi6k/Sq/Yvk4Sgajw7urW8V+asjXnRgDs9gyGkdb7EzgfhA4goXsRIZKE28fzIXBHEzhuiWw==}
+    engines: {node: '>=10.0.0'}
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: '>=5.0.2'
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
+
   xcode@3.0.1:
     resolution: {integrity: sha512-kCz5k7J7XbJtjABOvkc5lJmkiDh8VhjVCGNiqdKCscmVpdVUpEAyXv1xmCLkQJ5dsHqx3IPO4XW+NTDhU/fatA==}
     engines: {node: '>=10.0.0'}
@@ -6624,7 +6645,7 @@ snapshots:
       terminal-link: 2.1.1
       toqr: 0.1.1
       wrap-ansi: 7.0.0
-      ws: 8.20.1
+      ws: 8.21.1
       zod: 3.25.76
     optionalDependencies:
       react-native: 0.85.3(@babel/core@7.29.0)(@react-native/metro-config@0.85.3(@babel/core@7.29.0))(@types/react@19.2.16)(react@19.2.7)
@@ -7185,7 +7206,7 @@ snapshots:
 
   '@orpc/interop@1.14.4': {}
 
-  '@orpc/server@1.14.4(@opentelemetry/api@1.9.1)(ws@8.20.1)':
+  '@orpc/server@1.14.4(@opentelemetry/api@1.9.1)(ws@8.21.1)':
     dependencies:
       '@orpc/client': 1.14.4(@opentelemetry/api@1.9.1)
       '@orpc/contract': 1.14.4(@opentelemetry/api@1.9.1)
@@ -7199,7 +7220,7 @@ snapshots:
       '@orpc/standard-server-peer': 1.14.4(@opentelemetry/api@1.9.1)
       cookie: 1.1.1
     optionalDependencies:
-      ws: 8.20.1
+      ws: 8.21.1
     transitivePeerDependencies:
       - '@opentelemetry/api'
       - fastify
@@ -7845,6 +7866,10 @@ snapshots:
   '@types/react@19.2.16':
     dependencies:
       csstype: 3.2.3
+
+  '@types/ws@8.18.1':
+    dependencies:
+      '@types/node': 25.5.0
 
   '@types/yargs-parser@21.0.3': {}
 
@@ -10404,6 +10429,8 @@ snapshots:
   ws@7.5.11: {}
 
   ws@8.20.1: {}
+
+  ws@8.21.1: {}
 
   xcode@3.0.1:
     dependencies:

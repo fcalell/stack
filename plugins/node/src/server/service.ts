@@ -1,3 +1,5 @@
+import type { WsHub } from "./ws-hub";
+
 export interface ServiceLogger {
 	info(message: string): void;
 	error(message: string): void;
@@ -5,6 +7,9 @@ export interface ServiceLogger {
 
 export interface ServiceContext {
 	log: ServiceLogger;
+	// The typed WebSocket hub: register channels with `ws.channel(def, ...)`
+	// and broadcast through the returned handle.
+	ws: WsHub;
 }
 
 export type ServiceStop = () => void | Promise<void>;

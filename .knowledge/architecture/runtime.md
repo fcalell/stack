@@ -60,6 +60,15 @@ absent. `STACK_DEV=1` arrives via `ProcessSpec.env` on the dev process, not `.de
 server's TypeScript runs directly under the consumer's Node >= 24 (type stripping), so everything
 on the runtime import path must stay erasable-only syntax.
 
+The typed WebSocket surface lives on this target: `@fcalell/plugin-node/ws` (the isomorphic
+`defineChannel` contract), `./server`'s hub (`ctx.ws.channel(def, { onSubscribe, onMessage })` →
+`broadcast`/per-connection `send`), and `./client` (browser client, shared socket, auto-reconnect
+with resubscribe). Everything is zod-validated at both ends; invalid frames are dropped and
+logged. Gotcha: `@hono/node-ws` peer-pins `@hono/node-server` v1 and must not be used; node-server
+v2 ships its own `upgradeWebSocket` plus `serve({ websocket: { server } })` with a
+`ws` `WebSocketServer({ noServer: true })`. Graceful shutdown must `terminate()` the tracked WS
+clients before `server.close()` or close hangs on live sockets.
+
 ## `virtual:stack-procedure`
 
 `src/worker/routes/*.ts` files author procedures via `import { procedure } from "virtual:stack-procedure"`

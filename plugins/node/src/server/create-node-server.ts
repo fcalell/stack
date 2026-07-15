@@ -1,7 +1,9 @@
-import { serve } from "@hono/node-server";
+import { serve, upgradeWebSocket } from "@hono/node-server";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { Hono } from "hono";
+import { WebSocketServer } from "ws";
 import type { ServiceLogger, ServiceSpec, ServiceStop } from "./service";
+import { createWsHub, type HubSocket } from "./ws-hub";
 
 // The worker shape emitted by plugin-api's `.stack/worker.ts` (its
 // `WorkerExport`), reduced to what this target calls. On Node, `env` is
@@ -53,8 +55,24 @@ export function createNodeServer(options: NodeServerOptions): NodeServer {
 		log = consoleLog,
 	} = options;
 	const services = (options.services ?? []).flat();
+	const { hub, connectionHandlers } = createWsHub(log);
+	const wss = new WebSocketServer({ noServer: true });
 
 	const app = new Hono();
+
+	// The typed WS endpoint. Mounted first: neither the worker nor the SPA
+	// ever owns /ws.
+	app.get(
+		"/ws",
+		upgradeWebSocket(() => {
+			const handlers = connectionHandlers();
+			return {
+				onMessage: (event, ws) => handlers.onMessage(event, ws as HubSocket),
+				onClose: (event, ws) => handlers.onClose(event, ws as HubSocket),
+				onError: (event, ws) => handlers.onError(event, ws as HubSocket),
+			};
+		}),
+	);
 
 	if (worker) {
 		const dispatch = (request: Request) =>
@@ -76,7 +94,7 @@ export function createNodeServer(options: NodeServerOptions): NodeServer {
 
 	async function startServices(): Promise<void> {
 		for (const service of services) {
-			const stop = await service.start({ log });
+			const stop = await service.start({ log, ws: hub });
 			if (stop) stops.push({ name: service.name, stop });
 			log.info(`service ${service.name}: started`);
 		}
@@ -98,11 +116,14 @@ export function createNodeServer(options: NodeServerOptions): NodeServer {
 		if (shuttingDown) return;
 		shuttingDown = true;
 		await stopServices();
+		// Live WebSocket connections and idle keep-alive sockets would
+		// otherwise hold close() open indefinitely.
+		for (const socket of wss.clients) {
+			socket.terminate();
+		}
 		await new Promise<void>((resolve, reject) => {
 			if (!server) return resolve();
 			server.close((error) => (error ? reject(error) : resolve()));
-			// Idle keep-alive sockets would otherwise hold close() open for
-			// their full timeout.
 			if ("closeIdleConnections" in server) {
 				server.closeIdleConnections();
 			}
@@ -114,12 +135,20 @@ export function createNodeServer(options: NodeServerOptions): NodeServer {
 		try {
 			await startServices();
 			await new Promise<void>((resolve) => {
-				server = serve({ fetch: app.fetch, port }, (info) => {
-					// This line is the dev supervisor's ready signal — keep the
-					// wording in sync with the plugin's readyPattern.
-					log.info(`stack node: listening on http://localhost:${info.port}`);
-					resolve();
-				});
+				server = serve(
+					{
+						fetch: app.fetch,
+						port,
+						// noServer: upgrades route through the Hono /ws handler.
+						websocket: { server: wss },
+					},
+					(info) => {
+						// This line is the dev supervisor's ready signal — keep the
+						// wording in sync with the plugin's readyPattern.
+						log.info(`stack node: listening on http://localhost:${info.port}`);
+						resolve();
+					},
+				);
 			});
 			process.once("SIGINT", () => void shutdown());
 			process.once("SIGTERM", () => void shutdown());

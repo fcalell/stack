@@ -11,3 +11,9 @@ export type {
 	ServiceStop,
 } from "./service";
 export { defineService } from "./service";
+export type {
+	ChannelConnection,
+	ChannelHandle,
+	ChannelHandlers,
+	WsHub,
+} from "./ws-hub";

@@ -250,8 +250,15 @@ describe("node → vite.slots.serverProxy", () => {
 			path: "/rpc",
 			target: "http://localhost:8788",
 		});
+		expect(proxy).toContainEqual({
+			path: "/ws",
+			target: "http://localhost:8788",
+			ws: true,
+		});
 		const viteConfig = await g.resolve(vite.slots.viteConfig);
 		expect(viteConfig).toContain('"/rpc": {');
 		expect(viteConfig).toContain('target: "http://localhost:8788"');
+		expect(viteConfig).toContain('"/ws": {');
+		expect(viteConfig).toContain("ws: true");
 	});
 });

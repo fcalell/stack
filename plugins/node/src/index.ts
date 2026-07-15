@@ -146,10 +146,11 @@ export const node = plugin("node", {
 		vite.slots.serverProxy.contribute(async (ctx) => {
 			const port = await ctx.resolve(self.slots.serverPort);
 			const prefixes = await ctx.resolve(api.slots.routePrefixes);
-			return prefixes.map((path) => ({
-				path,
-				target: `http://localhost:${port}`,
-			}));
+			const target = `http://localhost:${port}`;
+			return [
+				...prefixes.map((path) => ({ path, target })),
+				{ path: "/ws", target, ws: true },
+			];
 		}),
 
 		// Services barrel watcher — regenerates when service files appear or
