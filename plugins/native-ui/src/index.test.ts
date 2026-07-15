@@ -322,6 +322,17 @@ describe("native-ui consumer deps", () => {
 	});
 });
 
+// ── L2 — domain-agnostic tsconfig contribution ─────────────────────
+
+describe("native-ui → cliSlots.tsconfigTypes", () => {
+	it("contributes uniwind/types", async () => {
+		const { plugins, ctxFactory } = collect();
+		const g = buildGraph(plugins, ctxFactory);
+		const types = await g.resolve(cliSlots.tsconfigTypes);
+		expect(types).toContain("uniwind/types");
+	});
+});
+
 // ── Order invariance ───────────────────────────────────────────────
 
 describe("native-ui order invariance", () => {

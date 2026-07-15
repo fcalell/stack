@@ -292,6 +292,14 @@ export const nativeUi = plugin("native-ui", {
 			"src/lib/query.ts",
 			"src/lib/auth.ts",
 		]),
+
+		// uniwind's global augmentation (className + the per-prop *ClassName
+		// variants) must load wherever native-ui's source is type-checked — the
+		// consumer compiles those `.tsx` directly (the plugin ships source, not
+		// declarations). Consumed by `stack init`'s tsconfig template via
+		// `cliSlots.tsconfigTypes`; own presence is the gate, so a plain Expo
+		// consumer without `nativeUi()` gets no dangling type reference.
+		cliSlots.tsconfigTypes.contribute(() => "uniwind/types"),
 	],
 });
 
