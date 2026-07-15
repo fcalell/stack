@@ -60,6 +60,43 @@ describe("createWorker", () => {
 		expect(typeof worker.fetch).toBe("function");
 	});
 
+	// A consumer routes barrel exporting a top-level key that collides with a
+	// plugin-registered route namespace (e.g. `auth`) would otherwise silently
+	// clobber the plugin's route under `{ ...pluginRoutes, ...consumerRoutes }`
+	// — fail loud at construction time instead, naming the key and the owner.
+	it("throws at construction when a consumer routes key collides with a plugin-registered route", () => {
+		const authLike: RuntimePlugin<"auth", object, Record<string, never>> = {
+			name: "auth",
+			context() {
+				return {};
+			},
+			routes() {
+				return { auth: { orgRules: () => ({ rules: [] }) } };
+			},
+		};
+		const builder = createWorker().use(authLike);
+		expect(() =>
+			builder.handler({ auth: { customRoute: () => ({}) } }),
+		).toThrow(
+			'createWorker: consumer routes key "auth" collides with a route namespace already registered by the "auth" plugin runtime.',
+		);
+	});
+
+	it("allows a consumer routes key that doesn't collide with any plugin-registered route", () => {
+		const authLike: RuntimePlugin<"auth", object, Record<string, never>> = {
+			name: "auth",
+			context() {
+				return {};
+			},
+			routes() {
+				return { auth: { orgRules: () => ({ rules: [] }) } };
+			},
+		};
+		const builder = createWorker().use(authLike);
+		const worker = builder.handler({ todos: { list: () => [] } });
+		expect(typeof worker.fetch).toBe("function");
+	});
+
 	// Empty cors[] is a misconfiguration: the consumer (or some upstream
 	// derivation) opted into CORS but resolved to no origins. Silently
 	// skipping the middleware would leak browser-fail-with-no-diagnostic
@@ -190,6 +227,167 @@ describe("createProcedure error logging", () => {
 		} finally {
 			spy.mockRestore();
 		}
+	});
+});
+
+// ---------- WS3 3.1: entity-based cache-invalidation headers ----------
+
+describe("createProcedure entity cache-invalidation headers (WS3.1)", () => {
+	it("stamps x-stack-reads (and only that) when a query declares reads", async () => {
+		const procedure = createProcedure<Record<string, unknown>>();
+		const worker = createWorker({ cors: undefined }).handler({
+			listTodos: procedure({ reads: ["todos"] }).handler(() => ({
+				ok: true,
+			})),
+		});
+		const res = await worker.fetch(rpcRequest("/rpc/listTodos"), {}, {});
+		expect(res.status).toBe(200);
+		expect(res.headers.get("x-stack-reads")).toBe("todos");
+		expect(res.headers.get("x-stack-writes")).toBeNull();
+	});
+
+	it("stamps x-stack-writes as a comma-joined list when a mutation declares writes", async () => {
+		const procedure = createProcedure<Record<string, unknown>>();
+		const worker = createWorker({ cors: undefined }).handler({
+			createTodo: procedure({ writes: ["todos", "users"] }).handler(() => ({
+				ok: true,
+			})),
+		});
+		const res = await worker.fetch(rpcRequest("/rpc/createTodo"), {}, {});
+		expect(res.status).toBe(200);
+		expect(res.headers.get("x-stack-writes")).toBe("todos,users");
+		expect(res.headers.get("x-stack-reads")).toBeNull();
+	});
+
+	it("carries neither header when reads/writes are absent", async () => {
+		const procedure = createProcedure<Record<string, unknown>>();
+		const worker = createWorker({ cors: undefined }).handler({
+			noop: procedure().handler(() => ({ ok: true })),
+		});
+		const res = await worker.fetch(rpcRequest("/rpc/noop"), {}, {});
+		expect(res.status).toBe(200);
+		expect(res.headers.get("x-stack-reads")).toBeNull();
+		expect(res.headers.get("x-stack-writes")).toBeNull();
+	});
+
+	it("does not stamp x-stack-reads on the error response when a procedure declaring reads throws", async () => {
+		const procedure = createProcedure<Record<string, unknown>>();
+		const worker = createWorker({ cors: undefined }).handler({
+			boom: procedure({ reads: ["todos"] }).handler(() => {
+				throw new Error("boom");
+			}),
+		});
+		const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+		try {
+			const res = await worker.fetch(rpcRequest("/rpc/boom"), {}, {});
+			expect(res.status).toBe(500);
+			expect(res.headers.get("x-stack-reads")).toBeNull();
+			expect(res.headers.get("x-stack-writes")).toBeNull();
+		} finally {
+			spy.mockRestore();
+		}
+	});
+});
+
+// `reads`/`writes` entity names reach `Headers.set` comma-joined -- an
+// illegal character must throw at `procedure()` construction time (module
+// init, loud), not after a mutation's handler has already committed.
+describe("createProcedure validates reads/writes entity names at construction (WS3.1 hardening)", () => {
+	const procedure = createProcedure<Record<string, unknown>>();
+
+	it("throws for an entity name containing a comma", () => {
+		expect(() => procedure({ reads: ["todos,users"] })).toThrow(
+			/invalid entity name "todos,users" in `reads`/,
+		);
+	});
+
+	it("throws for an entity name containing a space", () => {
+		expect(() => procedure({ writes: ["my todos"] })).toThrow(
+			/invalid entity name "my todos" in `writes`/,
+		);
+	});
+
+	it("throws for an empty-string entity name", () => {
+		expect(() => procedure({ reads: [""] })).toThrow(/invalid entity name ""/);
+	});
+
+	it("accepts entity names made of letters, digits, underscore, dot, and hyphen", () => {
+		expect(() =>
+			procedure({ reads: ["todos_v2", "org.member-roles", "Table123"] }),
+		).not.toThrow();
+	});
+});
+
+// ---------- WS6.2: can (org-level ability gate) ----------
+
+// A minimal `auth` context stand-in, injected via the top-level `.use((ctx)
+// => extra)` fn form (same as the `_devMode`/`_rateLimiter` tests above) so
+// `can`'s installed middleware chain (auth -> org -> rbac) runs against it
+// without booting a real better-auth instance.
+function authContext(hasPermission: (opts: unknown) => Promise<unknown>) {
+	return (_ctx: Record<string, unknown>) => ({
+		auth: {
+			api: {
+				getSession: async () => ({
+					user: { id: "u1" },
+					session: { id: "s1", activeOrganizationId: "org1" },
+				}),
+				hasPermission,
+			},
+		},
+	});
+}
+
+describe("createProcedure can (WS6.2 org-level gate)", () => {
+	it("calls hasPermission with { [resource]: [action] } and FORBIDDENs on failure", async () => {
+		const hasPermission = vi.fn(async () => ({ success: false }));
+		const procedure = createProcedure<Record<string, unknown>>();
+		const worker = createWorker({ cors: undefined })
+			.use(authContext(hasPermission))
+			.handler({
+				updateOrg: procedure({
+					auth: true,
+					org: true,
+					can: ["update", "organization"],
+				}).handler(() => ({ ok: true })),
+			});
+
+		const res = await worker.fetch(
+			rpcRequest("/rpc/updateOrg", { json: { organizationId: "org1" } }),
+			{},
+			{},
+		);
+
+		expect(hasPermission).toHaveBeenCalledWith(
+			expect.objectContaining({
+				body: { permissions: { organization: ["update"] } },
+			}),
+		);
+		expect(res.status).toBe(403);
+		expect(await res.json()).toMatchObject({ json: { code: "FORBIDDEN" } });
+	});
+
+	it("lets the handler run when hasPermission grants the action", async () => {
+		const hasPermission = vi.fn(async () => ({ success: true }));
+		const procedure = createProcedure<Record<string, unknown>>();
+		const worker = createWorker({ cors: undefined })
+			.use(authContext(hasPermission))
+			.handler({
+				updateOrg: procedure({
+					auth: true,
+					org: true,
+					can: ["update", "organization"],
+				}).handler(() => ({ ok: true })),
+			});
+
+		const res = await worker.fetch(
+			rpcRequest("/rpc/updateOrg", { json: { organizationId: "org1" } }),
+			{},
+			{},
+		);
+
+		expect(res.status).toBe(200);
+		expect(await res.json()).toMatchObject({ json: { ok: true } });
 	});
 });
 

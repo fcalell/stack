@@ -218,17 +218,20 @@ Handoff through the slot graph.
 ### 3.2 Entity vocabulary (`plugin-db` codegen)
 
 - `stack generate` emits an entity union type derived from the consumer's Drizzle schema
-  export names (`src/schema`), surfaced to the procedure builder the same way route types
-  reach `routes.d.ts` today (a generated `.stack/*.d.ts` + module augmentation). A typo'd
-  entity is a type error; a new table extends the union on the next generate.
+  export names (`src/schema`), surfaced through `api.slots.entities` and rendered inline
+  into the generated `.stack/procedure.ts` as `createProcedure`'s third generic — the
+  same mechanism `rbacStatements` uses, not a separate `.d.ts` + module augmentation. A
+  typo'd entity is a type error; a new table extends the union on the next generate.
 - Consumers never author the vocabulary. (Sailward hand-maintains `entities.ts`; we derive
   it.)
 
 ### 3.3 Client interceptor (`plugin-api` tanstack-query integration)
 
-- The generated client records each query's read-set from `x-stack-reads` (keyed by query
-  key) and, on every successful mutation, invalidates queries whose recorded reads
-  intersect the mutation's `x-stack-writes`.
+- `createClient`'s fetch layer records each procedure's read-set from `x-stack-reads`
+  (keyed by procedure path — declarations are static per procedure, and oRPC query keys
+  lead with the path segments) and, on every successful mutation, a framework-installed
+  `MutationCache` invalidates queries whose recorded reads intersect the mutation's
+  `x-stack-writes`; `meta.skipAutoInvalidation` opts a mutation out.
 - Applies identically to web (solid) and native (expo) clients — the integration lives in
   `plugin-api/tanstack-query`, which both consume.
 
@@ -273,10 +276,12 @@ middleware contribution, the client headers, and the floor config.
     platform, or a missing header **fails open** — the wall is a UX nudge, not a security
     control, and web callers carry no headers.
   - Below-floor → `426` with a plain JSON body (the client renders its own copy).
-- The generated expo API client stamps the two headers on every request (build number and
-  platform are available from `expo-constants`/`Platform` at runtime — auto-wired, no
-  consumer code) and maps a 426 response to an update-wall signal the app template
-  handles.
+- The scaffolded native API client (`src/lib/api.ts`, pre-wired at init like native-ui's
+  `lib-auth.ts`/`lib-query.ts` — there is no *generated* client) stamps the two headers on
+  every request via `@fcalell/plugin-expo/client`'s `createVersionGatedFetch()` (build
+  number from `expo-application`'s `nativeBuildVersion` — the compiled binary's truth,
+  which `expo-constants`' config mirror can drift from — platform from `Platform.OS`) and
+  surfaces a 426 through `onUpdateRequired(cb)` for the app to render an update wall.
 - `/api/auth/*` stays ungated: a stranded user must still be able to re-auth after
   updating.
 - (Stretch) Observability: count walled and headerless requests to an Analytics Engine
@@ -409,24 +414,32 @@ rules) mechanical and drift-free.
   and allowing a conditions argument would break the subset relationship the compile
   relies on.
 - A per-session **org ability** is compiled from the active member's role statements
-  (unconditional rules, so the compile is trivial and cacheable per role).
+  (unconditional rules, so the compile is trivial and cacheable per role). It ships to
+  the client through a framework-owned `auth.orgRules` procedure the auth runtime
+  registers via `RuntimePlugin.routes()` when organization is enabled; the router path
+  constant (`ORG_RULES_PATH`) lives in `plugin-api` so the dependency direction stays
+  auth → api.
 
 ### 6.3 Layered client authority — tanstack-query integration
 
-- `useAbility()` — org-level authority everywhere: unpacks the compiled org rules
-  (shipped once per session / active-org switch).
-- `useAbility(recordRulesQuery)` — org ∪ record: CASL rules compose by concatenation, so
-  the record layer (a `PackedRules` field on any query the consumer chooses) layers onto
-  the org rules in one ability instance. Subject namespaces cannot collide: org subjects
+- `useAbility()` — org-level authority everywhere: queries `auth.orgRules` through the
+  app's default oRPC client (`createClient` auto-registers the first client it creates;
+  `registerApiClient` overrides) and unpacks the compiled org rules (fetched once per
+  session; an active-org switch invalidates `ORG_RULES_QUERY_KEY`).
+- `useAbility(recordRules)` — org ∪ record: CASL rules compose by concatenation, so the
+  record layer (a `PackedRules` field the consumer passes off any query's data) layers
+  onto the org rules in one ability instance. Subject namespaces cannot collide: org subjects
   are framework-owned (`Organization`, `Member`, `Invitation`), record subjects are the
   consumer's domain types.
 - Hardening baked into the hook (both learned by sailward in production): **deny-all
   default** while rules are loading or absent, and the ability instance is memoized on the
   plain rules array — it is a class instance that defeats structural sharing, so it must
   never be selected from the query cache directly.
-- Ships in `plugin-api/tanstack-query` so solid and expo consumers both get it; composes
-  with WS3 for free — a role-changing mutation that declares `writes` on the membership
-  entity auto-refreshes the query carrying the packed rules.
+- The framework-agnostic core (`composeAbility`, client registry, `fetchOrgRules`) ships
+  in `plugin-api/ability-client`; the react hook in `plugin-api/tanstack-query` (expo)
+  and the solid accessor in `plugin-solid-ui`'s lib both wrap it. Composes with WS3 for
+  free — a role-changing mutation that declares `writes` on the membership entity
+  auto-refreshes the query carrying the packed rules.
 
 **Tests.** Unit: statements→rules compile produces an ability whose `can()` answers match
 `hasPermission` for every (role, resource, action) in the default org roles — the

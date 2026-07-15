@@ -46,9 +46,19 @@ export interface Slot<T> {
 type ItemOf<T> = T extends readonly (infer U)[] ? U : never;
 
 // What a contribution fn may return per slot kind. undefined always skips.
-export type ContributionValue<T> = T extends readonly (infer U)[]
+//
+// `T` is wrapped in a one-tuple on both sides of `extends` to defeat
+// conditional-type distribution. Without it, a naked `T extends readonly
+// (infer U)[] ? ... : ...` distributes over a union `T` member-by-member —
+// so a *value* slot whose value type merely includes an array member (e.g.
+// `readonly string[] | null`, see `api.slots.entities`) would incorrectly
+// match the list-slot branch on that member and decompose it into `U | U[]`
+// instead of leaving it as `T | undefined`. `listSlot`/`mapSlot` are the only
+// builders that actually construct a `T[]`/`Record<string, V>` *slot value
+// type*, so the tuple form only special-cases genuine list/map slots.
+export type ContributionValue<T> = [T] extends [readonly (infer U)[]]
 	? U | U[] | undefined
-	: T extends Record<string, infer V>
+	: [T] extends [Record<string, infer V>]
 		? Record<string, V> | undefined
 		: T | undefined;
 

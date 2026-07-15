@@ -19,9 +19,10 @@ const __chain = createWorker({ prefix: "/rpc", cors: ["https://example.com"] }).
 // exported or called further — only its type is used below.
 type ContextOf<B> = B extends AppBuilder<infer C> ? C : never;
 type WorkerContext = ContextOf<typeof __chain>;
-type RbacStatements = Record<string, readonly string[]>;
+type RbacStatements = Record<never, never>;
+type Entity = string;
 
-export const procedure = createProcedure<WorkerContext, RbacStatements>();
+export const procedure = createProcedure<WorkerContext, RbacStatements, Entity>();
 ",
       "path": ".stack/procedure.ts",
     },
@@ -82,9 +83,10 @@ const __chain = createWorker({ prefix: "/rpc", cors: ["https://example.com", "ht
 // exported or called further — only its type is used below.
 type ContextOf<B> = B extends AppBuilder<infer C> ? C : never;
 type WorkerContext = ContextOf<typeof __chain>;
-type RbacStatements = Record<string, readonly string[]>;
+type RbacStatements = Record<never, never>;
+type Entity = "account" | "session" | "user" | "verification";
 
-export const procedure = createProcedure<WorkerContext, RbacStatements>();
+export const procedure = createProcedure<WorkerContext, RbacStatements, Entity>();
 ",
       "path": ".stack/procedure.ts",
     },
@@ -163,9 +165,10 @@ const __chain = createWorker({ prefix: "/rpc", cors: ["https://example.com", "ht
 // exported or called further — only its type is used below.
 type ContextOf<B> = B extends AppBuilder<infer C> ? C : never;
 type WorkerContext = ContextOf<typeof __chain>;
-type RbacStatements = Record<string, readonly string[]>;
+type RbacStatements = Record<never, never>;
+type Entity = string;
 
-export const procedure = createProcedure<WorkerContext, RbacStatements>();
+export const procedure = createProcedure<WorkerContext, RbacStatements, Entity>();
 ",
       "path": ".stack/procedure.ts",
     },
@@ -210,6 +213,7 @@ exports[`generate pipeline snapshot > frontend-only: vite + solid + solid-ui wit
 {
   "appCss": "@import "tailwindcss";
 @import "@fcalell/plugin-solid-ui/globals.css";
+@source "../src";
 
 @layer base {
 :root {
@@ -291,6 +295,7 @@ exports[`generate pipeline snapshot > full-stack with explicit app.origins drive
 {
   "appCss": "@import "tailwindcss";
 @import "@fcalell/plugin-solid-ui/globals.css";
+@source "../src";
 
 @layer base {
 :root {
@@ -322,9 +327,10 @@ const __chain = createWorker({ prefix: "/rpc", cors: ["https://example.com", "ht
 // exported or called further — only its type is used below.
 type ContextOf<B> = B extends AppBuilder<infer C> ? C : never;
 type WorkerContext = ContextOf<typeof __chain>;
-type RbacStatements = Record<string, readonly string[]>;
+type RbacStatements = Record<never, never>;
+type Entity = "account" | "session" | "user" | "verification";
 
-export const procedure = createProcedure<WorkerContext, RbacStatements>();
+export const procedure = createProcedure<WorkerContext, RbacStatements, Entity>();
 ",
       "path": ".stack/procedure.ts",
     },
@@ -410,6 +416,7 @@ exports[`generate pipeline snapshot > full-stack: db + auth + api + vite + solid
 {
   "appCss": "@import "tailwindcss";
 @import "@fcalell/plugin-solid-ui/globals.css";
+@source "../src";
 
 @layer base {
 :root {
@@ -441,9 +448,10 @@ const __chain = createWorker({ prefix: "/rpc", cors: ["https://example.com", "ht
 // exported or called further — only its type is used below.
 type ContextOf<B> = B extends AppBuilder<infer C> ? C : never;
 type WorkerContext = ContextOf<typeof __chain>;
-type RbacStatements = Record<string, readonly string[]>;
+type RbacStatements = Record<never, never>;
+type Entity = "account" | "session" | "user" | "verification";
 
-export const procedure = createProcedure<WorkerContext, RbacStatements>();
+export const procedure = createProcedure<WorkerContext, RbacStatements, Entity>();
 ",
       "path": ".stack/procedure.ts",
     },
@@ -545,9 +553,10 @@ const __chain = createWorker({ prefix: "/rpc", cors: ["https://example.com", "ht
 // exported or called further — only its type is used below.
 type ContextOf<B> = B extends AppBuilder<infer C> ? C : never;
 type WorkerContext = ContextOf<typeof __chain>;
-type RbacStatements = Record<string, readonly string[]>;
+type RbacStatements = Record<never, never>;
+type Entity = "account" | "session" | "user" | "verification";
 
-export const procedure = createProcedure<WorkerContext, RbacStatements>();
+export const procedure = createProcedure<WorkerContext, RbacStatements, Entity>();
 ",
       "path": ".stack/procedure.ts",
     },

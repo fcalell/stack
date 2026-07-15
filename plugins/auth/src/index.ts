@@ -387,6 +387,23 @@ export const auth = plugin("auth", {
 					: undefined;
 			return customStatements ?? defaultOrgStatements;
 		}),
+
+		// Entity vocabulary handoff (WS3.2/WS1 fix, docs/prd/backend-hardening.md)
+		// — auth owns these Drizzle tables (`../schema/index.ts`,
+		// `../schema/organization.ts`) but a consumer's `src/schema/index.ts`
+		// only ever `export *`s them, which `extractSchemaEntities`
+		// (plugin-db) deliberately can't see through. Contributing the export
+		// names directly here is what makes `procedure({ reads: ["member"] })`
+		// (auth's own `orgRules` procedure) — and a consumer's role-changing
+		// mutations declaring `writes: ["member"]` — type-check and actually
+		// participate in cache invalidation.
+		api.slots.entities.contribute(() => {
+			const names = ["account", "session", "user", "verification"];
+			if (self.options.organization) {
+				names.push("invitation", "member", "organization");
+			}
+			return names;
+		}),
 	],
 });
 

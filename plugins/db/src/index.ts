@@ -11,6 +11,7 @@ import {
 	D1_PLACEHOLDER_ID,
 	isWranglerAuthed,
 } from "./node/d1";
+import { extractSchemaEntities } from "./node/entities";
 import { migrationLockPath, withMigrationLock } from "./node/lock";
 import {
 	applyMigrationsLocal,
@@ -303,6 +304,25 @@ export const db = plugin("db", {
 					return { source: "../src/schema", namespace: "schema" };
 				},
 			),
+
+			// Entity vocabulary handoff (WS3.2, docs/prd/backend-hardening.md) —
+			// derives `api.slots.entities` from the consumer's Drizzle schema
+			// export names, for BOTH dialects (the vocabulary describes the
+			// schema, not the runtime). `undefined` (no `src/schema` dir, or the
+			// schema file has no value exports) contributes nothing, leaving
+			// `.stack/procedure.ts`'s `Entity` fallback to whatever other
+			// plugins contribute (or `string` if none do). `extractSchemaEntities`
+			// intentionally skips `export * from "..."` re-exports (see its own
+			// doc comment), so a schema file that only re-exports
+			// `@fcalell/plugin-auth/schema` contributes nothing here — auth
+			// contributes its own table names directly to this same list, so
+			// there's no double-contribution to collide with.
+			api.slots.entities.contribute(async (ctx) => {
+				const hasSchema = await ctx.fileExists("src/schema");
+				if (!hasSchema) return undefined;
+				const names = extractSchemaEntities(ctx.cwd);
+				return names ? [...names] : undefined;
+			}),
 
 			// Local schema push at `stack dev` Ready time. Shares its latch with
 			// the schema watcher below via `getSharedPush(ctx.cwd)` so that a

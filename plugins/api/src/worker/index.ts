@@ -244,10 +244,32 @@ function createAppBuilder<TContext extends Record<string, unknown>>(
 			const procedure = createProcedure<TContext>();
 
 			let pluginRoutes: Record<string, unknown> = {};
+			// Tracks which plugin runtime registered each top-level route key, so
+			// a collision with a consumer routes key names the owner instead of
+			// silently letting `{ ...pluginRoutes, ...consumerRoutes }` clobber
+			// the plugin's route (e.g. a consumer routes barrel that happens to
+			// export `auth`, shadowing plugin-auth's `auth.orgRules`).
+			const routeOwners = new Map<string, string>();
 			for (const entry of pluginEntries) {
 				const routes = entry.plugin.routes?.(procedure);
 				if (routes) {
+					for (const key of Object.keys(routes)) {
+						routeOwners.set(key, entry.plugin.name);
+					}
 					pluginRoutes = { ...pluginRoutes, ...routes };
+				}
+			}
+
+			if (consumerRoutes) {
+				for (const key of Object.keys(consumerRoutes)) {
+					const owner = routeOwners.get(key);
+					if (owner) {
+						throw new Error(
+							`createWorker: consumer routes key "${key}" collides with a route ` +
+								`namespace already registered by the "${owner}" plugin runtime. ` +
+								"Rename the consumer routes export.",
+						);
+					}
 				}
 			}
 

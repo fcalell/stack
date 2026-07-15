@@ -1,3 +1,4 @@
+import { APIError } from "better-auth/api";
 import { describe, expect, it, vi } from "vitest";
 import authRuntime from "./worker/index";
 
@@ -525,6 +526,79 @@ describe("authRuntime", () => {
 			expect(auth.options.advanced?.ipAddress?.ipAddressHeaders).toContain(
 				"cf-connecting-ip",
 			);
+		});
+	});
+
+	// WS6.2 error narrowing: `routes()`'s `auth.orgRules` handler must only
+	// deny-all ({ rules: [] }) for the two "no ability to compile" cases
+	// better-auth's `getActiveMember` throws for; every other error (a D1
+	// outage, an unexpected bug) must surface as a real query error
+	// client-side, matching `fetchOrgRules`'s contract
+	// (`@fcalell/plugin-api/ability-client`).
+	describe("routes — auth.orgRules error narrowing (WS6.2)", () => {
+		// Mirrors `OrgRulesProcedureFactory`'s shape (`.query(fn)`), just handing
+		// back `fn` itself so the test can invoke the real handler directly with
+		// a controlled `auth.api.getActiveMember` stub — no need to build a real
+		// oRPC procedure to unit-test the error-narrowing branch.
+		function stubProcedureFactory() {
+			return { query: <TFn>(fn: TFn) => fn };
+		}
+
+		function buildOrgRulesHandler(
+			getActiveMember: () => Promise<{ role: string }>,
+		) {
+			const runtime = authRuntime({ ...baseOpts, organization: true });
+			const routes = runtime.routes?.(stubProcedureFactory) as {
+				auth: { orgRules: (opts: { context: unknown }) => Promise<unknown> };
+			};
+			const context = {
+				reqHeaders: new Headers(),
+				auth: { api: { getActiveMember } },
+			};
+			return () => routes.auth.orgRules({ context });
+		}
+
+		it("returns { rules: [] } when getActiveMember throws NO_ACTIVE_ORGANIZATION", async () => {
+			const call = buildOrgRulesHandler(() =>
+				Promise.reject(
+					new APIError("BAD_REQUEST", {
+						code: "NO_ACTIVE_ORGANIZATION",
+						message: "No active organization",
+					}),
+				),
+			);
+			await expect(call()).resolves.toEqual({ rules: [] });
+		});
+
+		it("returns { rules: [] } when getActiveMember throws MEMBER_NOT_FOUND", async () => {
+			const call = buildOrgRulesHandler(() =>
+				Promise.reject(
+					new APIError("BAD_REQUEST", {
+						code: "MEMBER_NOT_FOUND",
+						message: "Member not found",
+					}),
+				),
+			);
+			await expect(call()).resolves.toEqual({ rules: [] });
+		});
+
+		it("rethrows a same-shaped APIError with an unrelated code instead of denying", async () => {
+			const call = buildOrgRulesHandler(() =>
+				Promise.reject(
+					new APIError("INTERNAL_SERVER_ERROR", {
+						code: "SOME_OTHER_ERROR",
+						message: "boom",
+					}),
+				),
+			);
+			await expect(call()).rejects.toThrow("boom");
+		});
+
+		it("rethrows a non-APIError failure (e.g. a D1 outage) instead of denying", async () => {
+			const call = buildOrgRulesHandler(() =>
+				Promise.reject(new Error("D1 outage")),
+			);
+			await expect(call()).rejects.toThrow("D1 outage");
 		});
 	});
 

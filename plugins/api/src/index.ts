@@ -204,12 +204,15 @@ const workerBase = slot.derived({
 	},
 });
 
-// RBAC action statements for `procedure({ rbac: [...] })`'s type-level
-// autocomplete, handed over by plugin-auth (its `organization.ac.statements`
-// — plain JSON, resource -> allowed actions) when organization access
-// control is configured. `null` (the seed) means no plugin contributed one;
-// `.stack/procedure.ts` falls back to `Record<string, readonly string[]>`
-// (rbac still works, just without narrowed action-name autocomplete).
+// RBAC action statements for `procedure({ rbac: [...] })` / `procedure({ can:
+// [...] })`'s type-level autocomplete, handed over by plugin-auth (its
+// `organization.ac.statements` — plain JSON, resource -> allowed actions)
+// when organization access control is configured. `null` (the seed) means no
+// plugin contributed one; `.stack/procedure.ts` falls back to
+// `Record<never, never>`, which resolves `Rbac<...>`/`Can<...>` to `never` —
+// both options become un-settable rather than accepting an arbitrary string
+// that would TypeError at request time (no organization plugin means no
+// `hasPermission` to check against).
 // `override: true` because only one plugin's statements can be authoritative
 // — auth is the only first-party contributor today.
 const rbacStatements = slot.value<Record<string, readonly string[]> | null>({
@@ -217,6 +220,26 @@ const rbacStatements = slot.value<Record<string, readonly string[]> | null>({
 	name: "rbacStatements",
 	override: true,
 	seed: () => null,
+});
+
+// Entity vocabulary for `procedure({ reads, writes })`'s type-level
+// autocomplete (WS3.1, docs/prd/backend-hardening.md) — a UNION across every
+// plugin that owns a set of entity names: plugin-db contributes the
+// consumer's Drizzle schema table export names, plugin-auth contributes its
+// own runtime-owned tables (`account`/`session`/`user`/`verification`, plus
+// `invitation`/`member`/`organization` when `organization` is enabled) so
+// `procedure({ reads: ["member"] })` (e.g. auth's own `orgRules` procedure)
+// type-checks and participates in cache invalidation without the consumer
+// re-declaring auth's tables. `uniqueBy` fails loudly on a genuine name
+// collision between two contributors instead of silently letting one
+// shadow the other — mirrors `vite.slots.resolveAliases`. Empty list
+// (nothing contributed) falls back to `Entity = string` in
+// `.stack/procedure.ts` (reads/writes still work, just without narrowing).
+const entities = slot.list<string>({
+	source: SOURCE,
+	name: "entities",
+	sortBy: (a, b) => a.localeCompare(b),
+	uniqueBy: (e) => e,
 });
 
 // The rendered `src/worker/routes/index.ts` barrel. Returns null when
@@ -292,6 +315,7 @@ const procedureSource = slot.derived({
 		middlewareCalls,
 		middlewareImports,
 		statements: rbacStatements,
+		entities,
 		handler: routesHandler,
 	},
 	compute: (inp): string | null => {
@@ -303,6 +327,7 @@ const procedureSource = slot.derived({
 			middlewareChain: inp.middlewareCalls,
 			middlewareImports: inp.middlewareImports,
 			statements: inp.statements,
+			entities: inp.entities,
 		});
 	},
 });
@@ -332,6 +357,7 @@ export const api = plugin("api", {
 		workerSource,
 		routeBarrelSource,
 		rbacStatements,
+		entities,
 		procedureSource,
 	},
 

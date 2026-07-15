@@ -16,10 +16,24 @@ const configPluginSchema = z.object({
 
 export type ConfigPluginSpec = z.infer<typeof configPluginSchema>;
 
+// Per-platform native build floor (docs/prd/backend-hardening.md WS4). A
+// missing platform floors at 0 (dormant — every build of that platform
+// passes); this is a product decision bumped by hand alongside a breaking
+// native-facing API change, never inferred.
+const minNativeBuildSchema = z.object({
+	ios: z.number().int().min(0).optional(),
+	android: z.number().int().min(0).optional(),
+});
+
 export const expoOptionsSchema = z.object({
 	// Metro dev-server port. Defaults to Expo's 8081; flows into the localhost
 	// CORS origin contributed to plugin-api.
 	port: z.number().int().min(1).max(65535).optional(),
+	// Client version gate: walls native builds below the floor with 426
+	// Upgrade Required (see `./worker/version-gate`). Omitted entirely, or
+	// both platforms at/under 0, keeps the gate dormant and out of the
+	// emitted worker.
+	minNativeBuild: minNativeBuildSchema.optional(),
 	// File-based routing. `false` disables expo-router wiring entirely (rare —
 	// a bare-RN consumer). Otherwise `appDir` overrides the routes directory
 	// (default `src/app`), mirroring `solid({ routes: { pagesDir } })`.

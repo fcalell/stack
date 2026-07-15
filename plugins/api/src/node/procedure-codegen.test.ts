@@ -29,6 +29,7 @@ describe("aggregateProcedure", () => {
 			middlewareChain: [],
 			middlewareImports: [],
 			statements: null,
+			entities: [],
 		});
 		expect(result).not.toBeNull();
 		expect(result).toContain("const __chain = createWorker(");
@@ -59,6 +60,7 @@ describe("aggregateProcedure", () => {
 			middlewareChain: [],
 			middlewareImports: [],
 			statements: null,
+			entities: [],
 		});
 
 		expect(result).not.toBeNull();
@@ -85,8 +87,9 @@ describe("aggregateProcedure", () => {
 			"type ContextOf<B> = B extends AppBuilder<infer C> ? C : never;",
 		);
 		expect(result).toContain("type WorkerContext = ContextOf<typeof __chain>;");
+		expect(result).toContain("type Entity = string;");
 		expect(result).toContain(
-			"export const procedure = createProcedure<WorkerContext, RbacStatements>();",
+			"export const procedure = createProcedure<WorkerContext, RbacStatements, Entity>();",
 		);
 	});
 
@@ -111,6 +114,7 @@ describe("aggregateProcedure", () => {
 			middlewareChain: [],
 			middlewareImports: [],
 			statements: null,
+			entities: [],
 		});
 
 		expect(result).not.toBeNull();
@@ -143,6 +147,7 @@ describe("aggregateProcedure", () => {
 				{ source: "../src/worker/middleware", default: "middleware" },
 			],
 			statements: null,
+			entities: [],
 		});
 
 		expect(result).not.toBeNull();
@@ -180,13 +185,14 @@ describe("aggregateProcedure", () => {
 				{ source: ROUTES_BARREL_IMPORT_SOURCE, namespace: "routes" },
 			],
 			statements: null,
+			entities: [],
 		});
 
 		expect(result).not.toBeNull();
 		expect(result).not.toContain(ROUTES_BARREL_IMPORT_SOURCE);
 	});
 
-	it("falls back to Record<string, readonly string[]> when no statements are contributed", () => {
+	it("falls back to Record<never, never> when no statements are contributed", () => {
 		const result = aggregateProcedure({
 			base,
 			runtimes: [
@@ -204,11 +210,10 @@ describe("aggregateProcedure", () => {
 			middlewareChain: [],
 			middlewareImports: [],
 			statements: null,
+			entities: [],
 		});
 
-		expect(result).toContain(
-			"type RbacStatements = Record<string, readonly string[]>;",
-		);
+		expect(result).toContain("type RbacStatements = Record<never, never>;");
 	});
 
 	it("renders contributed RBAC statements as an inline literal type", () => {
@@ -232,9 +237,61 @@ describe("aggregateProcedure", () => {
 				project: ["create", "delete"],
 				member: ["invite"],
 			},
+			entities: [],
 		});
 
 		expect(result).toContain('project: readonly ["create", "delete"];');
 		expect(result).toContain('member: readonly ["invite"];');
+	});
+
+	it("renders the contributed entity vocabulary as a deduped string-literal union, preserving contributed order", () => {
+		const result = aggregateProcedure({
+			base,
+			runtimes: [
+				{
+					plugin: "db",
+					import: {
+						source: "@fcalell/plugin-db/runtime",
+						default: "dbRuntime",
+					},
+					identifier: "dbRuntime",
+					options: {},
+				},
+			],
+			imports: [],
+			middlewareChain: [],
+			middlewareImports: [],
+			statements: null,
+			entities: ["todos", "users", "todos"],
+		});
+
+		expect(result).toContain('type Entity = "todos" | "users";');
+		expect(result).toContain(
+			"export const procedure = createProcedure<WorkerContext, RbacStatements, Entity>();",
+		);
+	});
+
+	it("falls back to `type Entity = string` when entities is an empty array", () => {
+		const result = aggregateProcedure({
+			base,
+			runtimes: [
+				{
+					plugin: "db",
+					import: {
+						source: "@fcalell/plugin-db/runtime",
+						default: "dbRuntime",
+					},
+					identifier: "dbRuntime",
+					options: {},
+				},
+			],
+			imports: [],
+			middlewareChain: [],
+			middlewareImports: [],
+			statements: null,
+			entities: [],
+		});
+
+		expect(result).toContain("type Entity = string;");
 	});
 });

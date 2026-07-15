@@ -9,8 +9,11 @@
 		"./procedure": "./src/procedure.ts",
 		"./error": "./src/error.ts",
 		"./client": "./src/client.ts",
+		"./ability-client": "./src/ability-client.ts",
 		"./tanstack-query": "./src/tanstack-query.tsx",
+		"./query-invalidation": "./src/query-invalidation.ts",
 		"./schema": "./src/schema.ts",
+		"./types": "./src/types.ts",
 		"./node/codegen": "./src/node/codegen.ts",
 		"./node/types": "./src/node/types.ts",
 		"./lib/cursor": "./src/lib/cursor.ts",
@@ -25,6 +28,7 @@
 		"clear": "rm -rf node_modules .turbo"
 	},
 	"dependencies": {
+		"@casl/ability": "^7.0.1",
 		"@fcalell/cli": "workspace:*",
 		"@fcalell/plugin-cloudflare": "workspace:*",
 		"@orpc/client": "^1.14.4",
@@ -54,8 +58,11 @@
 		"@fcalell/typescript-config": "workspace:*",
 		"@orpc/tanstack-query": "^1.14.4",
 		"@tanstack/react-query": "^5.101.0",
+		"@testing-library/react": "^16.3.2",
 		"@types/react": "^19.2.16",
+		"happy-dom": "^20.10.6",
 		"react": "^19.2.7",
+		"react-dom": "^19.2.7",
 		"typescript": "^5.9.3"
 	}
 }

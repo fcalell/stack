@@ -1,12 +1,14 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { plugin } from "@fcalell/cli";
 import { cliSlots } from "@fcalell/cli/cli-slots";
 import {
 	buildGraph,
 	type GraphCtxFactory,
 	type GraphPlugin,
 } from "@fcalell/cli/graph";
+import { buildTestGraphFromPlugins } from "@fcalell/cli/testing";
 import { cloudflare } from "@fcalell/plugin-cloudflare";
 import { afterEach, describe, expect, it } from "vitest";
 import { type ApiOptions, api } from "./index";
@@ -588,7 +590,7 @@ describe("api.slots.procedureSource", () => {
 		expect(src).toContain("const __chain = createWorker(");
 		expect(src).toContain(".use(dbRuntime(");
 		expect(src).toContain(
-			"export const procedure = createProcedure<WorkerContext, RbacStatements>();",
+			"export const procedure = createProcedure<WorkerContext, RbacStatements, Entity>();",
 		);
 		// Never imports the route barrel back — route files import
 		// virtual:stack-procedure, so that would be a cycle.
@@ -625,7 +627,7 @@ describe("api.slots.procedureSource", () => {
 		expect(src).toContain('project: readonly ["create", "delete"];');
 	});
 
-	it("falls back to Record<string, readonly string[]> when nothing contributes rbacStatements", async () => {
+	it("falls back to Record<never, never> when nothing contributes rbacStatements", async () => {
 		const dbLike: GraphPlugin = {
 			name: "db",
 			contributes: [
@@ -644,8 +646,128 @@ describe("api.slots.procedureSource", () => {
 		};
 		const g = buildGraph(collectPlugins([dbLike]), makeCtxFactory());
 		const src = await g.resolve(api.slots.procedureSource);
+		expect(src).toContain("type RbacStatements = Record<never, never>;");
+	});
+
+	// WS3.1 (docs/prd/backend-hardening.md): the entity vocabulary for
+	// `procedure({ reads, writes })`'s type-level autocomplete. plugin-db
+	// contributes it in a separate task; here we only pin api's own
+	// null/empty fallback and that a third-party contribution renders.
+	it("falls back to `type Entity = string` when nothing contributes entities", async () => {
+		const dbLike: GraphPlugin = {
+			name: "db",
+			contributes: [
+				api.slots.pluginRuntimes.contribute(
+					(): PluginRuntimeEntry => ({
+						plugin: "db",
+						import: {
+							source: "@fcalell/plugin-db/runtime",
+							default: "dbRuntime",
+						},
+						identifier: "dbRuntime",
+						options: {},
+					}),
+				),
+			],
+		};
+		const g = buildGraph(collectPlugins([dbLike]), makeCtxFactory());
+		const src = await g.resolve(api.slots.procedureSource);
+		expect(src).toContain("type Entity = string;");
 		expect(src).toContain(
-			"type RbacStatements = Record<string, readonly string[]>;",
+			"export const procedure = createProcedure<WorkerContext, RbacStatements, Entity>();",
+		);
+	});
+
+	// Real-graph, third-party-plugin-shaped test (mirrors
+	// tests/integration/third-party-plugin.test.ts): a plugin built through
+	// the public `plugin()` factory, exactly like a real out-of-tree
+	// `plugin-db` would, contributes to `api.slots.entities` and the union
+	// renders in the generated `.stack/procedure.ts`.
+	it("renders a third-party plugin's contributed entity vocabulary as a string-literal union", async () => {
+		const cwd = makeRealCwd();
+		const widget = plugin<"widget", Record<string, never>>("widget", {
+			label: "Widget",
+			package: "@acme/stack-plugin-widget",
+			requires: ["api"],
+			contributes: [
+				api.slots.entities.contribute(() => ["todos", "users"]),
+				api.slots.pluginRuntimes.contribute(
+					(): PluginRuntimeEntry => ({
+						plugin: "widget",
+						import: {
+							source: "@acme/stack-plugin-widget/runtime",
+							default: "widgetRuntime",
+						},
+						identifier: "widgetRuntime",
+						options: {},
+					}),
+				),
+			],
+		});
+
+		const { graph } = buildTestGraphFromPlugins({
+			plugins: [{ factory: api, options: {} }, { factory: widget }],
+			app,
+			cwd,
+		});
+
+		const src = await graph.resolve(api.slots.procedureSource);
+		expect(src).toContain('type Entity = "todos" | "users";');
+		expect(src).toContain(
+			"export const procedure = createProcedure<WorkerContext, RbacStatements, Entity>();",
+		);
+	});
+});
+
+// ── entities: list slot semantics ──────────────────────────────────
+//
+// `api.slots.entities` is a list slot (WS1 fix): every plugin that owns
+// tables contributes its own names, and the final vocabulary is the sorted,
+// deduplicated union. `uniqueBy` makes a genuine name collision between two
+// contributors a loud error rather than one silently shadowing the other —
+// mirrors `vite.slots.resolveAliases`'s coverage.
+describe("api.slots.entities (list, order-independent)", () => {
+	it("unions and sorts entity names from multiple contributors regardless of contribution order", async () => {
+		const dbLike: GraphPlugin = {
+			name: "db",
+			contributes: [api.slots.entities.contribute(() => ["posts", "todos"])],
+		};
+		const authLike: GraphPlugin = {
+			name: "auth",
+			contributes: [api.slots.entities.contribute(() => ["account", "user"])],
+		};
+
+		const forward = buildGraph(
+			collectPlugins([dbLike, authLike]),
+			makeCtxFactory(),
+		);
+		const backward = buildGraph(
+			collectPlugins([authLike, dbLike]),
+			makeCtxFactory(),
+		);
+
+		const expected = ["account", "posts", "todos", "user"];
+		await expect(forward.resolve(api.slots.entities)).resolves.toEqual(
+			expected,
+		);
+		await expect(backward.resolve(api.slots.entities)).resolves.toEqual(
+			expected,
+		);
+	});
+
+	it("rejects two contributors naming the same entity instead of silently letting one shadow the other", async () => {
+		const a: GraphPlugin = {
+			name: "a",
+			contributes: [api.slots.entities.contribute(() => "member")],
+		};
+		const b: GraphPlugin = {
+			name: "b",
+			contributes: [api.slots.entities.contribute(() => "member")],
+		};
+
+		const g = buildGraph(collectPlugins([a, b]), makeCtxFactory());
+		await expect(g.resolve(api.slots.entities)).rejects.toThrow(
+			/entities.*duplicate key 'member'/,
 		);
 	});
 });

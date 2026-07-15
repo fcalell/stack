@@ -1,3 +1,6 @@
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import type { Slot } from "@fcalell/cli";
 import { cliSlots } from "@fcalell/cli/cli-slots";
 import {
@@ -7,7 +10,7 @@ import {
 } from "@fcalell/cli/graph";
 import { api } from "@fcalell/plugin-api";
 import { cloudflare } from "@fcalell/plugin-cloudflare";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { type DbOptions, db } from "./index";
 import * as pushModule from "./node/push";
 import { dbOptionsSchema } from "./types";
@@ -23,13 +26,38 @@ const noopLog = {
 	error: () => {},
 };
 
+// Track scratch dirs so we can clean them up after each test.
+const scratchDirs: string[] = [];
+
+afterEach(() => {
+	while (scratchDirs.length > 0) {
+		const dir = scratchDirs.pop();
+		if (dir) rmSync(dir, { recursive: true, force: true });
+	}
+});
+
+// Stands up a real cwd with an optional `src/schema/index.ts` fixture, since
+// `extractSchemaEntities` (like the barrel it mirrors) reads the real
+// filesystem — mocking `fileExists` alone doesn't exercise it.
+function makeRealCwd(schemaSource?: string): string {
+	const dir = mkdtempSync(join(tmpdir(), "plugin-db-test-"));
+	scratchDirs.push(dir);
+	if (schemaSource !== undefined) {
+		const schemaDir = join(dir, "src", "schema");
+		mkdirSync(schemaDir, { recursive: true });
+		writeFileSync(join(schemaDir, "index.ts"), schemaSource);
+	}
+	return dir;
+}
+
 function makeCtxFactory(
 	perPluginOptions: Record<string, unknown> = {},
 	perPluginFiles: Record<string, Set<string>> = {},
+	cwd = "/tmp/test",
 ): GraphCtxFactory {
 	return {
 		app,
-		cwd: "/tmp/test",
+		cwd,
 		log: noopLog,
 		ctxForPlugin: (name) => ({
 			options: perPluginOptions[name] ?? {},
@@ -49,7 +77,7 @@ function makeCtxFactory(
 // walks the same slots the CLI would. The tests never hand-order plugins
 // or hand-seed shared payloads.
 function collectDbPlugins(
-	opts: { db?: DbOptions; dbFiles?: Set<string> } = {},
+	opts: { db?: DbOptions; dbFiles?: Set<string>; cwd?: string } = {},
 ): { plugins: GraphPlugin[]; ctxFactory: GraphCtxFactory } {
 	const dbOpts: DbOptions = opts.db ?? {
 		dialect: "d1",
@@ -81,6 +109,7 @@ function collectDbPlugins(
 		ctxFactory: makeCtxFactory(
 			{ db: dbOpts, api: {}, cloudflare: {} },
 			{ db: opts.dbFiles ?? new Set() },
+			opts.cwd,
 		),
 	};
 }
@@ -261,6 +290,69 @@ describe("db → api.slots.pluginRuntimes", () => {
 		expect(
 			imports.find((i) => "namespace" in i && i.namespace === "schema"),
 		).toBeUndefined();
+	});
+});
+
+// ── db → api.slots.entities ────────────────────────────────────────
+//
+// Real-cwd tests: `extractSchemaEntities` reads the actual filesystem (like
+// the barrel it mirrors), so `fileExists` alone can't drive it — these tests
+// write a real `src/schema/index.ts` and point `ctx.cwd` at it.
+
+describe("db → api.slots.entities", () => {
+	it("derives the sorted entity vocabulary from schema value exports", async () => {
+		const cwd = makeRealCwd(
+			[
+				'export const users = sqliteTable("users", {});',
+				'export const posts = sqliteTable("posts", {});',
+				"export type NewUser = typeof users.$inferInsert;",
+			].join("\n"),
+		);
+		const { plugins, ctxFactory } = collectDbPlugins({
+			dbFiles: new Set(["src/schema"]),
+			cwd,
+		});
+		const g = buildGraph(plugins, ctxFactory);
+
+		const entities = await g.resolve(api.slots.entities);
+
+		expect(entities).toEqual(["posts", "users"]);
+	});
+
+	it("resolves to an empty list when there is no schema directory", async () => {
+		const cwd = makeRealCwd();
+		const { plugins, ctxFactory } = collectDbPlugins({
+			dbFiles: new Set(),
+			cwd,
+		});
+		const g = buildGraph(plugins, ctxFactory);
+
+		const entities = await g.resolve(api.slots.entities);
+
+		expect(entities).toEqual([]);
+	});
+
+	// Full-path evidence: the derived vocabulary reaches the generated
+	// `.stack/procedure.ts` as a narrowed `Entity` union (not just the raw
+	// slot value) — this is what makes a typo'd `reads`/`writes` entry a
+	// type error for a real consumer.
+	it("narrows the generated Entity union in .stack/procedure.ts", async () => {
+		const cwd = makeRealCwd(
+			[
+				'export const users = sqliteTable("users", {});',
+				'export const posts = sqliteTable("posts", {});',
+				"export type NewUser = typeof users.$inferInsert;",
+			].join("\n"),
+		);
+		const { plugins, ctxFactory } = collectDbPlugins({
+			dbFiles: new Set(["src/schema"]),
+			cwd,
+		});
+		const g = buildGraph(plugins, ctxFactory);
+
+		const procedureSource = await g.resolve(api.slots.procedureSource);
+
+		expect(procedureSource).toContain('type Entity = "posts" | "users";');
 	});
 });
 

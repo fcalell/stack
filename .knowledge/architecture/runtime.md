@@ -88,7 +88,7 @@ Vite. Both loaders that touch the worker (tsx for `stack dev`'s subprocess boot,
 `.stack/procedure.ts` rebuilds the same `.use()` chain `workerBase` + `pluginRuntimes` produce (minus
 callbacks/handler) as real, never-exported code, purely so `typeof` can extract the exact
 `TContext` a route handler's `context` will carry — the same trick `workerSource` uses for
-`AppRouter` (`typeof worker._router`). `TStatements` (for `procedure({ rbac })`'s autocomplete) comes
-from `api.slots.rbacStatements`, a plain-JSON handoff `auth` contributes from
-`organization.ac.statements`; absent that contribution it falls back to
-`Record<string, readonly string[]>`.
+`AppRouter` (`typeof worker._router`). `TStatements` (for `procedure({ rbac })` / `procedure({ can })`'s
+autocomplete) comes from `api.slots.rbacStatements`, a plain-JSON handoff `auth` contributes from
+`organization.ac.statements`; absent that contribution it falls back to `Record<never, never>`, which
+makes `rbac`/`can` un-settable rather than accepting an arbitrary string.

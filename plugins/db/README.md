@@ -55,6 +55,14 @@ export const projects = sqliteTable("projects", {
 });
 ```
 
+The schema's export names also join the entity vocabulary for `procedure({ reads, writes })`
+(`@fcalell/plugin-api`'s cache-invalidation headers): `projects` above narrows `reads`/`writes` to
+autocomplete and type-check against it. A new table extends the union on the next `stack generate`;
+consumers never write the vocabulary by hand. Plugin-owned tables (e.g. `plugin-auth`'s
+`user`/`session`/…) contribute their own names to the same vocabulary directly — `export *`-ing a
+plugin's schema subpath doesn't add its table names here (see the slot table below), but a
+procedure can still declare `reads`/`writes` against them.
+
 ### 3. Query at runtime
 
 When using `@fcalell/plugin-api`, the database client is provided automatically via the runtime plugin. For standalone use:
@@ -160,6 +168,7 @@ export const db = plugin("db", {
 | `cloudflare.slots.bindings` | D1 binding (when `dialect: "d1"` and `databaseId` set) |
 | `api.slots.pluginRuntimes` | `dbRuntime({ binding, schema })` runtime entry (d1 only) |
 | `api.slots.workerImports` | `import * as schema from "../src/schema"` (gated on schema dir existing) |
+| `api.slots.entities` | Sorted value-export names from `src/schema/index.ts` (both dialects) |
 | `cliSlots.initPrompts` | Asks for dialect, then database ID or SQLite path |
 | `cliSlots.initScaffolds` | Writes `src/schema/index.ts` from `templates/schema.ts` |
 | `cliSlots.devReadySetup` | Pushes schema to local DB once on start (serialized) |

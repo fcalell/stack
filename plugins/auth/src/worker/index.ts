@@ -1,10 +1,15 @@
 import { expo } from "@better-auth/expo";
+import { createMongoAbility } from "@casl/ability";
 import type { RuntimePlugin } from "@fcalell/cli/runtime";
+import { ORG_RULES_PATH } from "@fcalell/plugin-api/procedure";
 import type { BetterAuthPlugin } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { isAPIError } from "better-auth/api";
 import { type BetterAuthOptions, betterAuth } from "better-auth/minimal";
+import { role as buildAcRole } from "better-auth/plugins/access";
 import { emailOTP } from "better-auth/plugins/email-otp";
 import { organization } from "better-auth/plugins/organization";
+import { compileStatements, packAbility } from "../ability";
 import { defaultOrgRoles } from "../access";
 import type { InferSession, InferUser } from "../infer";
 import { account, session, user, verification } from "../schema";
@@ -104,6 +109,16 @@ export type AuthApi<TOptions extends AuthRuntimeInput = AuthRuntimeInput> = {
 					headers: Headers;
 					body: { permissions: Record<string, string[]> };
 				}) => Promise<{ success: boolean } | null>;
+				// Used by the `auth.orgRules` procedure (WS6.2, `routes()` below) to
+				// compile the caller's org ability. better-auth's real endpoint
+				// throws (not returns null) when there's no active organization or
+				// no member row — callers must catch, not null-check.
+				getActiveMember: (opts: { headers: Headers }) => Promise<{
+					id: string;
+					organizationId: string;
+					userId: string;
+					role: string;
+				}>;
 			}
 	: object);
 
@@ -169,9 +184,23 @@ function buildAuth(
 			organization({
 				// biome-ignore lint/suspicious/noExplicitAny: AccessControl type is internal to better-auth.
 				ac: orgConfig.ac as any,
-				roles: (orgConfig.roles ??
+				// better-auth's org plugin reads `.authorize()`/`.statements` off
+				// each `roles` entry directly (permission.mjs's `hasPermissionFn`),
+				// not the bare `{resource: actions[]}` record our own
+				// `createAccessControl().newRole()` (`../access.ts`, the documented
+				// consumer surface) and `defaultOrgRoles` return. Wrap every role
+				// through better-auth's real `role()` before handing it over, or
+				// `hasPermission` throws `TypeError: ...authorize is not a function`
+				// for every check.
+				roles: Object.fromEntries(
+					Object.entries(
+						(orgConfig.roles ?? defaultOrgRoles) as Record<
+							string,
+							Record<string, readonly string[]>
+						>,
+					).map(([name, grants]) => [name, buildAcRole(grants)]),
 					// biome-ignore lint/suspicious/noExplicitAny: roles shape is user-provided.
-					defaultOrgRoles) as any,
+				) as any,
 				schema: orgConfig.additionalFields
 					? {
 							organization: {
@@ -350,6 +379,75 @@ async function checkRateLimit(
 	return null;
 }
 
+// ---------- auth.orgRules (WS6.2) ----------
+//
+// `routes(procedure)` receives plugin-api's procedure factory as `unknown`
+// (`RuntimePlugin` is framework-agnostic, see `packages/cli/src/runtime.ts`).
+// Narrowing to just the `procedure({ auth: true }).query(handler)` surface
+// this file touches avoids importing plugin-api's full generic
+// procedure-builder machinery — the same "describe just the surface we
+// touch" approach `plugins/api/src/procedure.ts`'s own `OrpcChain` note
+// documents.
+interface OrgRulesContext {
+	reqHeaders: Headers;
+	auth: {
+		api: {
+			getActiveMember: (opts: { headers: Headers }) => Promise<{
+				role: string;
+			}>;
+		};
+	};
+}
+
+type OrgRulesProcedureFactory = (config: {
+	auth: true;
+	reads?: readonly string[];
+}) => {
+	query<TOutput>(
+		fn: (opts: { context: OrgRulesContext }) => Promise<TOutput>,
+	): unknown;
+};
+
+// A role's grants, either the bare `{resource: actions[]}` record our own
+// `createAccessControl().newRole()` (`../access.ts`) and `defaultOrgRoles`
+// return, or `.statements` on a real better-auth `Role` (a consumer who
+// imported `better-auth/plugins/access` directly instead of our wrapper).
+function grantsOf(role: unknown): Record<string, readonly string[]> | null {
+	if (!role || typeof role !== "object") return null;
+	if ("statements" in role) {
+		const statements = (role as { statements: unknown }).statements;
+		if (statements && typeof statements === "object") {
+			return statements as Record<string, readonly string[]>;
+		}
+	}
+	return role as Record<string, readonly string[]>;
+}
+
+// better-auth's member role is a comma-separated multi-role string
+// (`hasPermissionFn`/`leaveOrganization` in better-auth's organization
+// plugin both `.split(",")` it) — union the grants of every role that
+// matches. An unknown role name contributes nothing; if none match, the
+// merged record is empty and `compileStatements` -> `packAbility` naturally
+// yields `{ rules: [] }`.
+function resolveGrants(
+	roleField: string,
+	roles: Record<string, unknown>,
+): Record<string, readonly string[]> {
+	const merged = new Map<string, Set<string>>();
+	for (const name of roleField.split(",")) {
+		const grants = grantsOf(roles[name]);
+		if (!grants) continue;
+		for (const [resource, actions] of Object.entries(grants)) {
+			const set = merged.get(resource) ?? new Set<string>();
+			for (const action of actions) set.add(action);
+			merged.set(resource, set);
+		}
+	}
+	return Object.fromEntries(
+		[...merged].map(([resource, actions]) => [resource, [...actions]]),
+	);
+}
+
 export default function authRuntime<TOptions extends AuthRuntimeInput>(
 	options: TOptions,
 ): RuntimePlugin<
@@ -383,6 +481,66 @@ export default function authRuntime<TOptions extends AuthRuntimeInput>(
 					throw new Error(`Missing env var: ${provider.clientSecretVar}`);
 				}
 			}
+		},
+		// Framework-owned org-rules procedure (WS6.2,
+		// docs/prd/backend-hardening.md): ships the caller's compiled org
+		// ability so the `useAbility` client hook can drive UI affordances from
+		// the same rules `hasPermission` checks server-side. Only registered
+		// when organizations are enabled — no `organization` plugin means no
+		// member/role to compile rules from.
+		routes(procedure: unknown) {
+			if (!options.organization) return {};
+
+			// `reads: ["member"]` — the caller's compiled ability is derived
+			// from their member role, so a role-changing mutation that declares
+			// `writes: ["member"]` (e.g. `updateMemberRole`) auto-invalidates
+			// this query end-to-end via the generic entity-header cache-
+			// invalidation contract (WS3), with zero bespoke wiring. "member" is
+			// a legal `Entity` because auth contributes it to
+			// `api.slots.entities` (see `../index.ts`).
+			const orgRulesProcedure = (procedure as OrgRulesProcedureFactory)({
+				auth: true,
+				reads: ["member"],
+			}).query(async ({ context }) => {
+				let member: { role: string };
+				try {
+					member = await context.auth.api.getActiveMember({
+						headers: context.reqHeaders,
+					});
+				} catch (error) {
+					// better-auth's endpoint throws `APIError.from("BAD_REQUEST",
+					// ORGANIZATION_ERROR_CODES.NO_ACTIVE_ORGANIZATION |
+					// MEMBER_NOT_FOUND)` for exactly the two "no ability to
+					// compile" cases -- deny-all on the client, not a request
+					// error. Any other error (a D1 outage, an unexpected bug)
+					// rethrows: a real failure must surface as a query error
+					// client-side, matching `fetchOrgRules`'s contract
+					// (`@fcalell/plugin-api/ability-client`), never a silent
+					// deny-all.
+					if (
+						isAPIError(error) &&
+						(error.body?.code === "NO_ACTIVE_ORGANIZATION" ||
+							error.body?.code === "MEMBER_NOT_FOUND")
+					) {
+						return { rules: [] };
+					}
+					throw error;
+				}
+
+				const rolesConfig =
+					typeof options.organization === "object"
+						? options.organization.roles
+						: undefined;
+				const grants = resolveGrants(
+					member.role,
+					(rolesConfig ?? defaultOrgRoles) as Record<string, unknown>,
+				);
+				const ability = createMongoAbility(compileStatements(grants));
+				return { rules: packAbility(ability) };
+			});
+
+			const [routerKey, procedureKey] = ORG_RULES_PATH;
+			return { [routerKey]: { [procedureKey]: orgRulesProcedure } };
 		},
 		context(env, upstream) {
 			const u = upstream as { db: unknown };

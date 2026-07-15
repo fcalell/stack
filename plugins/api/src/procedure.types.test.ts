@@ -163,3 +163,134 @@ describe("procedure types", () => {
 			});
 	});
 });
+
+// WS3.1 (docs/prd/backend-hardening.md): `reads`/`writes` narrow against the
+// third `createProcedure` generic, the same way `rbac` narrows against
+// `TStatements` — a typo'd entity name is a type error, not a runtime miss.
+describe("procedure() reads/writes (WS3.1 entity vocabulary)", () => {
+	const entityProcedure = createProcedure<
+		BaseCtx,
+		Record<string, readonly string[]>,
+		"todos" | "users"
+	>();
+
+	it("accepts entity names from the declared vocabulary on public, auth-only, and org-scoped configs", () => {
+		entityProcedure({ reads: ["todos"] }).handler(() => {});
+		entityProcedure({ auth: true, writes: ["users"] }).handler(() => {});
+		entityProcedure({
+			auth: true,
+			org: true,
+			reads: ["todos"],
+			writes: ["users"],
+		}).handler(() => {});
+	});
+
+	it("rejects an entity name outside the declared vocabulary", () => {
+		// @ts-expect-error: "projects" is not in "todos" | "users"
+		entityProcedure({ reads: ["projects"] });
+	});
+
+	it("defaults the entity type param to `string` when unspecified", () => {
+		procedure({ reads: ["anything"] }).handler(() => {});
+	});
+});
+
+// WS6.2 (docs/prd/backend-hardening.md): `can: [action, resource]` -- action
+// first, the reverse of `rbac`'s `[resource, actions[]]` -- narrows against
+// the same `TStatements` generic `rbac` does. A tuple of exactly two
+// strings: no third (conditions) slot exists, so the org layer stays
+// unconditional by construction.
+describe("procedure() can (WS6.2 org-level gate)", () => {
+	type Statements = {
+		organization: readonly ["update", "delete"];
+		member: readonly ["create"];
+	};
+	const canProcedure = createProcedure<BaseCtx, Statements>();
+
+	it("accepts [action, resource] for a granted action", () => {
+		canProcedure({
+			auth: true,
+			org: true,
+			can: ["update", "organization"],
+		}).handler(() => {});
+		canProcedure({
+			auth: true,
+			org: true,
+			can: ["create", "member"],
+		}).handler(() => {});
+	});
+
+	it("rejects an action not declared for the resource", () => {
+		canProcedure({
+			auth: true,
+			org: true,
+			// @ts-expect-error: "delete" is not a declared "member" action
+			can: ["delete", "member"],
+		});
+	});
+
+	it("rejects an unknown resource", () => {
+		canProcedure({
+			auth: true,
+			org: true,
+			// @ts-expect-error: "project" is not a declared resource
+			can: ["update", "project"],
+		});
+	});
+
+	it("rejects the reversed [resource, action] order", () => {
+		canProcedure({
+			auth: true,
+			org: true,
+			// @ts-expect-error: can is [action, resource], not [resource, action]
+			can: ["organization", "update"],
+		});
+	});
+
+	it("rejects a 3-element tuple -- no conditions argument", () => {
+		canProcedure({
+			auth: true,
+			org: true,
+			// @ts-expect-error: can is a 2-tuple; conditions aren't expressible
+			can: ["update", "organization", { id: "x" }],
+		});
+	});
+
+	it("both `can` and `rbac` may be set on the same procedure", () => {
+		canProcedure({
+			auth: true,
+			org: true,
+			can: ["update", "organization"],
+			rbac: ["member", ["create"]],
+		}).handler(() => {});
+	});
+});
+
+// Type-hole closure: with no statements contributed (`Record<never, never>`,
+// `.stack/procedure.ts`'s fallback -- see `node/procedure-codegen.test.ts`),
+// both `rbac` and `can` resolve to `never` and become un-settable, instead of
+// accepting an arbitrary string that would TypeError at request time.
+describe("procedure() can/rbac are un-settable with no contributed statements", () => {
+	const noStatementsProcedure = createProcedure<
+		BaseCtx,
+		Record<never, never>
+	>();
+
+	it("rejects any `can` value", () => {
+		noStatementsProcedure({
+			auth: true,
+			org: true,
+			// @ts-expect-error: no statements contributed -> Can<...> is never
+			can: ["update", "organization"],
+		});
+	});
+
+	it("rejects any `rbac` value", () => {
+		noStatementsProcedure({
+			auth: true,
+			org: true,
+			// @ts-expect-error: no statements contributed -> Rbac<...> is never
+			rbac: ["organization", ["update"]],
+		});
+	});
+});

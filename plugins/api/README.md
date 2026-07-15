@@ -72,9 +72,10 @@ const __chain = createWorker({ ... }).use(dbRuntime({ binding: "DB_MAIN", schema
 
 type ContextOf<B> = B extends AppBuilder<infer C> ? C : never;
 type WorkerContext = ContextOf<typeof __chain>;
-type RbacStatements = Record<string, readonly string[]>; // or auth's contributed statements
+type RbacStatements = Record<never, never>; // or auth's contributed statements
+type Entity = string; // or a contributed "projects" | "tasks" union
 
-export const procedure = createProcedure<WorkerContext, RbacStatements>();
+export const procedure = createProcedure<WorkerContext, RbacStatements, Entity>();
 ```
 
 ### 3. Write procedures
@@ -96,11 +97,11 @@ export const projects = {
   create: procedure({
     auth: true,
     org: true,
-    rbac: ["project", ["create"]],
+    can: ["create", "project"],
   })
     .input(z.object({ name: z.string() }))
     .mutation(async ({ input, context }) => {
-      // RBAC is checked before the handler runs
+      // The org-level permission check runs before the handler.
     }),
 };
 ```
@@ -111,17 +112,51 @@ export const projects = {
 procedure()                                                    // public, no middleware
 procedure({ auth: true })                                      // requires session
 procedure({ auth: true, org: true })                           // + validates active organization
-procedure({ auth: true, org: true, rbac: ["project", ["create"]] })  // + permission check
+procedure({ auth: true, org: true, can: ["create", "project"] })    // + permission check
+procedure({ auth: true, org: true, rbac: ["project", ["create"]] }) // same check, resource-first spelling
 procedure({ rateLimit: "ip" })                                 // rate limit by IP
 procedure({ rateLimit: "email" })                              // rate limit by input.email
 procedure({ rateLimit: ["ip", "email"] })                      // both
 procedure({ auth: true, org: true, paginated: true })          // adds cursor/limit to input
+procedure({ reads: ["projects"] })                             // declares what it reads
+procedure({ auth: true, writes: ["projects"] })                // declares what it writes
 ```
 
 Dependencies are enforced at the type level:
 - `org: true` requires `auth: true`
-- `rbac` requires `auth: true` and `org: true`
-- `rbac` action names autocomplete against the statements defined in `config.auth.organization.ac`
+- `rbac`/`can` require `auth: true` and `org: true` -- both are the org-level gate over the same
+  statements; `can: [action, resource]` (action first) is the preferred spelling, since it reads the
+  same as a handler's `assertCan(ability, action, subject)` and the client's `ability.can(action,
+  subject)`. `rbac: [resource, actions[]]` (resource first, multiple actions) stays supported. Both
+  may be set on the same procedure; both middlewares run, each performing its own `hasPermission`
+  lookup against better-auth -- setting both costs a second permission check for no extra safety, so
+  `can` alone is the norm; only set both if you genuinely need both checks to run independently.
+  `can`'s tuple is exactly two strings -- conditions aren't expressible, since the org layer is
+  unconditional by construction (record-scoped, conditional rules are a handler-side `assertCan`
+  concern, see `@fcalell/plugin-auth/ability`).
+- `rbac`/`can` action and resource names autocomplete against the statements defined in
+  `config.auth.organization.ac`; absent a contributor, both are un-settable (`Record<never, never>`
+  -- see "Worker (generated)" above).
+- `reads`/`writes` names autocomplete against the entity vocabulary contributed to `api.slots.entities` (a union across every contributing plugin -- `plugin-db` contributes the consumer's Drizzle schema export names, `plugin-auth` contributes its own table names); absent any contributor, both fall back to plain `string`
+
+`reads`/`writes` are available on public, auth-only, and org-scoped configs alike. Declaring them
+costs nothing at runtime beyond a response header (below); it's the entity-based cache invalidation
+contract consumed by `@fcalell/plugin-api/tanstack-query`'s client interceptor.
+
+#### Cache invalidation headers
+
+A procedure that declares `reads` and/or `writes` gets a response header on success:
+`x-stack-reads: projects,tasks` and/or `x-stack-writes: projects`. A thrown error (including a
+`rateLimit`/`auth`/`rbac`/`can` failure) never carries either header, so a client never invalidates a
+query based on a request that didn't actually touch the entity. Declaring nothing is the default:
+the procedure runs exactly as before, no headers, no client-side effect.
+
+```ts
+import { STACK_READS_HEADER, STACK_WRITES_HEADER } from "@fcalell/plugin-api/procedure";
+```
+
+The two constants are how `@fcalell/plugin-api/tanstack-query`'s client interceptor reads the
+headers; a consumer never sets or reads them directly.
 
 ### 5. Termination: `.query()`, `.mutation()`, `.handler()`
 
@@ -169,14 +204,7 @@ const withProject: Middleware<
 
 ### 7. Client (frontend)
 
-When using `@fcalell/plugin-solid`, a typed client is available as a virtual module:
-
-```ts
-import { api } from "virtual:fcalell-api-client";
-// api.projects.list({ status: "active" }) -- fully typed
-```
-
-For custom configuration:
+`createClient` from `@fcalell/plugin-api/client` is the canonical way to build a typed client, on web and native alike:
 
 ```ts
 import { createClient } from "@fcalell/plugin-api/client";
@@ -209,6 +237,82 @@ export const orpc = createApiQueryUtils(client);
 // Wrap the app with <QueryProvider>; in a screen:
 //   const { data } = useQuery(orpc.projects.list.queryOptions({ input: {} }));
 ```
+
+`@fcalell/plugin-solid-ui`'s `createApp` wires the same pattern for web with `@tanstack/solid-query`.
+
+#### Automatic cache invalidation (WS3.3)
+
+`createClient` records each response's `x-stack-reads` / `x-stack-writes` headers (above), keyed by
+the procedure's path. `createQueryClient` (native) and `plugin-solid-ui`'s `createApp` (web) install
+a `MutationCache` that invalidates every cached query whose recorded reads intersect a succeeding
+mutation's recorded writes -- zero per-callsite client code:
+
+```ts
+// Server
+list: procedure({ reads: ["todos"] }).query(...)
+create: procedure({ writes: ["todos"] }).mutation(...)
+
+// Client: no invalidation code needed -- a successful `create` invalidates `list` automatically
+```
+
+A query with no `reads` never auto-invalidates; declaring `reads`/`writes` is the recommended
+pattern for any procedure with cross-feature cache dependencies. A mutation opts out with
+`meta: { skipAutoInvalidation: true }` on its `useMutation` options -- the correct choice when the
+mutation already updates the cache itself (optimistic updates, `setQueryData` in `onSuccess`).
+`plugin-solid-ui`'s `useMutation` (`@fcalell/plugin-solid-ui/lib/query`) stamps this automatically
+for mutations that declare `updates`.
+
+Supplying a custom `mutationCache` (native) or `queryClient` (web) to `createQueryClient` /
+`createApp` opts out of auto-invalidation entirely -- the caller owns invalidation then.
+
+#### Record-scoped abilities: `useAbility` (WS6.3)
+
+`useAbility` gives every screen org-level authorization for free -- no server call to write, no
+config:
+
+```tsx
+import { useAbility } from "@fcalell/plugin-api/tanstack-query";
+
+function DeleteOrgButton() {
+  const ability = useAbility();
+  return ability.can("delete", "organization") ? <Button>Delete</Button> : null;
+}
+```
+
+It fetches the caller's compiled org rules once per session (`staleTime: Infinity`) from the
+framework-owned org-rules route and turns them into a CASL `MongoAbility`. **Deny-all** while that
+fetch is loading or the caller has no active organization -- `ability.can(...)` returns `false`
+until real rules arrive, never a false positive.
+
+Layer record-scoped rules (a consumer procedure that returns `packAbility(ability)` alongside its
+data, `@fcalell/plugin-auth/ability`) by passing the packed rules field through:
+
+```tsx
+import { subject } from "@fcalell/plugin-auth/ability";
+
+const { data: expense } = useQuery(orpc.expenses.get.queryOptions({ input: { id } }));
+const ability = useAbility(expense?.rules);
+
+ability.can("update", subject("Expense", expense)); // instance-scoped check
+ability.can("update", "organization"); // org-level check, same instance
+```
+
+Org and record rules concatenate into one ability; their subjects never collide by construction
+(org subjects are the framework's lowercase resource names -- `"organization"`, `"member"`,
+`"invitation"`; record subjects are consumer domain types).
+
+**Never read the `MongoAbility` instance out of a query cache.** It's a class instance -- selecting
+it from `queryClient.getQueryData(...)` defeats structural sharing and reconstructs a new instance
+every render. `useAbility` already memoizes on the underlying rules arrays' identity, so calling it
+repeatedly with the same data is free.
+
+An active-org switch or a role change invalidates the org layer: `queryClient.invalidateQueries({
+queryKey: ORG_RULES_QUERY_KEY })`. A mutation that declares `writes` on an org subject (e.g.
+`writes: ["member"]` on a role-change mutation) invalidates it automatically, same as any other
+`reads`/`writes`-declared query.
+
+`@fcalell/plugin-solid-ui/lib/ability` ships the same primitive for web, accessor-style:
+`const ability = useAbility(() => recordRules()); ability().can(...)`.
 
 ### 8. Errors
 
@@ -316,7 +420,8 @@ export const api = plugin("api", {
 | `api.slots.callbacks` | `map<string, CallbackSpec>` | Plugin-name → callback identifier; spliced onto matching runtime |
 | `api.slots.workerBase` | `derived<TsExpression>` | The `createWorker({...})` call expression |
 | `api.slots.workerSource` | `derived<string \| null>` | Final `.stack/worker.ts` source; null when no runtimes are present |
-| `api.slots.rbacStatements` | `value<Record<string, readonly string[]> \| null>` (`override`) | RBAC action statements for `procedure({ rbac })`'s type-level autocomplete; `auth` contributes from `organization.ac.statements` |
+| `api.slots.rbacStatements` | `value<Record<string, readonly string[]> \| null>` (`override`) | RBAC action statements for `procedure({ rbac })` / `procedure({ can })`'s type-level autocomplete; `auth` contributes from `organization.ac.statements` |
+| `api.slots.entities` | `list<string>` | Entity vocabulary for `procedure({ reads, writes })`'s type-level autocomplete (sorted, deduplicated union); `db` contributes the consumer's Drizzle schema export names, `auth` contributes its own table names |
 | `api.slots.procedureSource` | `derived<string \| null>` | Final `.stack/procedure.ts` source (`virtual:stack-procedure`'s target); null when no runtimes are present |
 
 ### Lifecycle contributions
@@ -348,11 +453,13 @@ createWorker({ domain: "example.com", cors: ["https://example.com"], prefix: "/r
 |---------|---------|
 | `@fcalell/plugin-api` | `api()`, `ApiOptions`, `ApiError`, `Middleware`, `InferRouter` |
 | `@fcalell/plugin-api/runtime` | `createWorker()`, `AppBuilder`, `WorkerExport`, `ApiWorkerOptions` |
-| `@fcalell/plugin-api/procedure` | `createProcedure()`, `Middleware`, `ProcedureConfig` -- what the generated `.stack/procedure.ts` (`virtual:stack-procedure`) imports |
+| `@fcalell/plugin-api/procedure` | `createProcedure()`, `Middleware`, `ProcedureConfig`, `STACK_READS_HEADER`, `STACK_WRITES_HEADER` -- what the generated `.stack/procedure.ts` (`virtual:stack-procedure`) imports |
 | `@fcalell/plugin-api/error` | `ApiError` -- worker-safe (no Node-only deps); import this from route files |
 | `@fcalell/cli/runtime` | `RuntimePlugin` |
 | `@fcalell/plugin-api/client` | `createClient()`, `RouterClient`, `ClientConfig` |
-| `@fcalell/plugin-api/tanstack-query` | `createQueryClient()`, `createApiQueryUtils()`, `QueryProvider`, query hooks -- native TanStack Query client (runtime-only) |
+| `@fcalell/plugin-api/tanstack-query` | `createQueryClient()`, `createApiQueryUtils()`, `QueryProvider`, `useAbility()`, `ORG_RULES_QUERY_KEY`, query hooks -- native TanStack Query client (runtime-only) |
+| `@fcalell/plugin-api/query-invalidation` | `captureEntityHeaders()`, `invalidateForWrites()`, `handleMutationSuccess()`, `createEntityRegistry()` -- framework-agnostic auto-invalidation core (runtime-only) |
+| `@fcalell/plugin-api/ability-client` | `composeAbility()`, `fetchOrgRules()`, `registerApiClient()`, `ORG_RULES_QUERY_KEY`, `PackedRulesLike` -- framework-agnostic `useAbility()` core (runtime-only), consumed by `./tanstack-query` and `@fcalell/plugin-solid-ui/lib/ability` |
 | `@fcalell/plugin-api/schema` | `z` (Zod re-export), `ZodObject`, `ZodType`, `ZodRawShape` |
 | `@fcalell/plugin-api/lib/cursor` | `encodeCursor`, `decodeCursor`, `paginate`, `clampLimit`, constants |
 | `@fcalell/plugin-api/lib/slugify` | `slugify`, `isReservedSlug`, `createSlugify` |

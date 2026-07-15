@@ -16,6 +16,7 @@
 		"@fcalell/plugin-auth": "workspace:*",
 		"@fcalell/plugin-cloudflare": "workspace:*",
 		"@fcalell/plugin-db": "workspace:*",
+		"@fcalell/plugin-expo": "workspace:*",
 		"@fcalell/plugin-node": "workspace:*",
 		"@fcalell/plugin-solid": "workspace:*",
 		"@fcalell/plugin-solid-ui": "workspace:*",

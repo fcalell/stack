@@ -41,6 +41,18 @@ import { Card } from "@fcalell/plugin-solid-ui/components/card";
 import { Form } from "@fcalell/plugin-solid-ui/components/form";
 ```
 
+### Record-scoped abilities
+
+`useAbility` (`@fcalell/plugin-solid-ui/lib/ability`) is the solid analog of `@fcalell/plugin-api/tanstack-query`'s `useAbility` -- same deny-all-until-loaded, org ∪ record composition, memoized `MongoAbility` (full behavior in the `@fcalell/plugin-api` README). Solid-style: both the record-rules argument and the return value are accessors.
+
+```tsx
+import { useAbility } from "@fcalell/plugin-solid-ui/lib/ability";
+
+function DeleteOrgButton() {
+  const ability = useAbility();
+  return <Show when={ability().can("delete", "organization")}><Button>Delete</Button></Show>;
+}
+```
 
 ## How it works
 
@@ -118,7 +130,8 @@ Nothing to tear down: the design-system runtime lives inside this package and is
 | `@fcalell/plugin-solid-ui/router` | Typed `routes` builder + SolidJS Router primitives |
 | `@fcalell/plugin-solid-ui/components/*` | Component modules (e.g. `components/button`, `components/form`) |
 | `@fcalell/plugin-solid-ui/lib/cn` | `cn()` class merging utility |
-| `@fcalell/plugin-solid-ui/lib/query` | Safe `useQuery`/`useInfiniteQuery`, `useMutation`, `useQueryClient`, `combineQueries` |
+| `@fcalell/plugin-solid-ui/lib/query` | Safe `useQuery`/`useInfiniteQuery`, `useMutation`, `useQueryClient`, `combineQueries`, `createDefaultQueryClient` (auto-invalidating default, see `@fcalell/plugin-api` README) |
+| `@fcalell/plugin-solid-ui/lib/ability` | `useAbility()` — accessor-style record-scoped authorization (see below), `ORG_RULES_QUERY_KEY` |
 | `@fcalell/plugin-solid-ui/lib/theme` | `useTheme()` runtime light/dark toggle |
 
 Component documentation lives in [`docs/`](docs/).

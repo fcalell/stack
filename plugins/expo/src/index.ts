@@ -1,7 +1,11 @@
 import { spawnSync } from "node:child_process";
 import type { ContributionCtx } from "@fcalell/cli";
 import { plugin, slot } from "@fcalell/cli";
-import type { ProviderSpec, TsImportSpec } from "@fcalell/cli/ast";
+import type {
+	MiddlewareSpec,
+	ProviderSpec,
+	TsImportSpec,
+} from "@fcalell/cli/ast";
 import { cliSlots, emitArtifact } from "@fcalell/cli/cli-slots";
 import { api } from "@fcalell/plugin-api";
 import {
@@ -260,6 +264,10 @@ export const expo = plugin("expo", {
 		"expo-router": "~56.2.8",
 		react: "19.2.7",
 		"react-native": "0.85.3",
+		// `@fcalell/plugin-expo/client`'s `versionHeaders()` reads the compiled
+		// build number via `expo-application`, required for every generated
+		// `src/lib/api.ts`, not just consumers with a `minNativeBuild` floor.
+		"expo-application": "~56.0.0",
 	},
 	devDependencies: {
 		"eas-cli": "^20.0.0",
@@ -398,6 +406,47 @@ export const expo = plugin("expo", {
 			return `http://localhost:${port}`;
 		}),
 
+		// Client version gate (docs/prd/backend-hardening.md WS4): walls
+		// native builds below the configured floor with 426 Upgrade Required.
+		// Dormant (no contribution) when `minNativeBuild` is absent or both
+		// platforms are at the floor default of 0 — a dormant gate must not
+		// appear in the emitted worker at all. `after-cors`, `order: 0` so it
+		// runs before any other middleware (in particular before a
+		// rate-limit guard) — a walled client's retry storm must see 426,
+		// never a confusing 429.
+		api.slots.middlewareEntries.contribute((): MiddlewareSpec | undefined => {
+			const minNativeBuild = self.options.minNativeBuild;
+			const ios = minNativeBuild?.ios ?? 0;
+			const android = minNativeBuild?.android ?? 0;
+			if (!minNativeBuild || (ios === 0 && android === 0)) return undefined;
+			return {
+				imports: [
+					{
+						source: "@fcalell/plugin-expo/version-gate",
+						named: ["versionGate"],
+					},
+				],
+				call: {
+					kind: "call",
+					callee: { kind: "identifier", name: "versionGate" },
+					args: [
+						{
+							kind: "object",
+							properties: [
+								{ key: "ios", value: { kind: "number", value: ios } },
+								{
+									key: "android",
+									value: { kind: "number", value: android },
+								},
+							],
+						},
+					],
+				},
+				phase: "after-cors",
+				order: 0,
+			};
+		}),
+
 		// Emit the four native artifacts. metro/app.config/entry always render;
 		// routes.d.ts is null (skipped) when routing is disabled. The two config
 		// files are `.cjs` (not `.js`): the root shims `require()` them through
@@ -465,12 +514,22 @@ export const expo = plugin("expo", {
 			ctx.scaffold("eas.json.template", "eas.json"),
 		),
 
+		// The scaffolded native API client (docs/prd/backend-hardening.md
+		// WS4): a typed oRPC client stamped with the version-gate headers on
+		// every request via `createVersionGatedFetch()`. Copy-once, like
+		// `plugin-native-ui`'s `lib-query.ts`/`lib-auth.ts`: an editable
+		// starter, not a generated artifact.
+		cliSlots.initScaffolds.contribute((ctx) =>
+			ctx.scaffold("lib-api.ts", "src/lib/api.ts"),
+		),
+
 		// Clean up the scaffolded root config files on `stack remove expo`.
 		cliSlots.removeFiles.contribute(() => [
 			"metro.config.js",
 			"app.config.ts",
 			"babel.config.cjs",
 			"eas.json",
+			"src/lib/api.ts",
 		]),
 	],
 });

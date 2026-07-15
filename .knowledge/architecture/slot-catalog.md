@@ -64,7 +64,8 @@ e.g. consulting `ctx.fileExists` before writing.
 | `callbacks` | `map<string, CallbackSpec>` | Plugin-name → callback identifier; spliced onto matching runtime's options |
 | `workerBase` | `derived<TsExpression>` | The `createWorker({...})` call expression |
 | `workerSource` | `derived<string \| null>` | Final `.stack/worker.ts` source; null when neither runtimes nor routes are present |
-| `rbacStatements` | `value<Record<string, readonly string[]> \| null>` (`override`) | RBAC action statements for `procedure({ rbac })`'s type-level autocomplete; `auth` contributes from `organization.ac.statements` |
+| `rbacStatements` | `value<Record<string, readonly string[]> \| null>` (`override`) | RBAC action statements for `procedure({ rbac })` / `procedure({ can })`'s type-level autocomplete; `auth` contributes from `organization.ac.statements` |
+| `entities` | `list<string>` (sorted, `uniqueBy`) | Entity vocabulary for `procedure({ reads, writes })`'s type-level autocomplete (WS3 cache invalidation) — union across every contributing plugin; `db` contributes the consumer's Drizzle schema export names, `auth` contributes its own runtime-owned table names |
 | `procedureSource` | `derived<string \| null>` | Final `.stack/procedure.ts` source (`virtual:stack-procedure`'s target); rebuilds the same runtime + middleware `.use()` chain as `workerSource` so `WorkerContext` matches the real request context; null when neither runtimes nor routes are present |
 
 ## `cloudflare.slots.*` (plugin-cloudflare)

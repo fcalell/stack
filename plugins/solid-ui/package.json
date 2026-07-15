@@ -48,8 +48,8 @@
 		"clear": "rm -rf node_modules .turbo"
 	},
 	"peerDependencies": {
-		"solid-js": "^1.9",
-		"@tanstack/solid-form": "^1.28"
+		"@tanstack/solid-form": "^1.28",
+		"solid-js": "^1.9"
 	},
 	"peerDependenciesMeta": {
 		"@tanstack/solid-form": {
@@ -59,6 +59,7 @@
 	"dependencies": {
 		"@corvu/otp-field": "^0.1.4",
 		"@fcalell/cli": "workspace:*",
+		"@fcalell/plugin-api": "workspace:*",
 		"@fcalell/plugin-solid": "workspace:*",
 		"@fcalell/plugin-vite": "workspace:*",
 		"@fontsource-variable/jetbrains-mono": "^5.2.8",
@@ -77,7 +78,7 @@
 		"zod": "^4.3.6"
 	},
 	"devDependencies": {
-		"@fcalell/plugin-api": "workspace:*",
+		"@casl/ability": "^7.0.1",
 		"@fcalell/typescript-config": "workspace:*",
 		"@tanstack/solid-form": "^1.28.6",
 		"solid-js": "^1.9.0",

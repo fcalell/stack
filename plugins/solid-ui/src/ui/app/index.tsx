@@ -2,7 +2,7 @@
 import "../fonts";
 import { MetaProvider } from "@solidjs/meta";
 import { type RouteDefinition, Router } from "@solidjs/router";
-import { QueryClient, QueryClientProvider } from "@tanstack/solid-query";
+import { type QueryClient, QueryClientProvider } from "@tanstack/solid-query";
 import {
 	createResource,
 	ErrorBoundary,
@@ -11,6 +11,7 @@ import {
 	Suspense,
 } from "solid-js";
 import { render } from "solid-js/web";
+import { createDefaultQueryClient } from "#lib/query";
 import { EmptyState } from "../components/empty-state/index.tsx";
 import { Toaster } from "../components/toast/index.tsx";
 
@@ -29,7 +30,7 @@ export function createApp(options: CreateAppOptions = {}): void {
 		throw new Error(`Root element #${rootId} not found`);
 	}
 
-	const queryClient = options.queryClient ?? new QueryClient();
+	const queryClient = options.queryClient ?? createDefaultQueryClient();
 	const wrapProviders = options.providers ?? ((children) => children);
 
 	const [routes] = createResource(async () => {

@@ -33,6 +33,10 @@ export default defineConfig({
 				"plugins/cloudflare/src/index.ts",
 			),
 			"@fcalell/plugin-db": resolve(root, "plugins/db/src/index.ts"),
+			"@fcalell/plugin-auth/ability": resolve(
+				root,
+				"plugins/auth/src/ability/index.ts",
+			),
 			"@fcalell/plugin-auth": resolve(root, "plugins/auth/src/index.ts"),
 			"@fcalell/plugin-api/node/codegen": resolve(
 				root,

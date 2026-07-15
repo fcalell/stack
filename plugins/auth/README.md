@@ -126,6 +126,9 @@ Default roles (`owner`, `admin`, `member`) are available from `@fcalell/plugin-a
 import { defaultOrgRoles } from "@fcalell/plugin-auth/access";
 ```
 
+These statements also drive `procedure({ can: [action, resource] })`'s type-level autocomplete on
+the API side -- see `@fcalell/plugin-api`'s README for the procedure-config docs.
+
 ### 4. Type inference
 
 Derive user/session types from your config:
@@ -204,6 +207,8 @@ export * from "@fcalell/plugin-auth/schema/organization";
 
 The worker runtime only references these tables in `drizzleAdapter({ schema })` when `organization` is actually configured, so an app that never enables it never needs this re-export.
 
+These `export *`s only wire migrations/model resolution -- they don't add the tables' names to `procedure({ reads, writes })`'s entity vocabulary (`plugin-db` can't see through a re-export). `auth` contributes its own table names (`account`/`session`/`user`/`verification`, plus `invitation`/`member`/`organization` when `organization` is enabled) to that vocabulary directly, so `reads`/`writes` against them autocomplete and type-check with no extra config.
+
 ## Runtime defaults
 
 The worker enables `session.cookieCache` (5 min) so most `getSession` calls skip a DB read, and sets `advanced.ipAddress.ipAddressHeaders: ["cf-connecting-ip"]` for the correct client IP behind Cloudflare.
@@ -211,6 +216,82 @@ The worker enables `session.cookieCache` (5 min) so most `getSession` calls skip
 ## Native (Expo)
 
 `auth({ expo: true })` adds Better Auth's server-side `expo()` plugin (required for the `@better-auth/expo` client) and the app deep-link scheme to `trustedOrigins` (`${app.name}://` + `${app.name}://*`, or pass `{ scheme }` to override) — the CSRF origin check runs even for native ID-token sign-in. `@better-auth/expo`'s server entry is worker-safe, so it is a plain dependency and the plugin is only added when `expo` is set.
+
+## Record-scoped abilities
+
+`@fcalell/plugin-auth/ability` covers the authorization layer below org roles: per-record
+permissions built from domain data (a `bookings.role` row, an ownership column). CASL powers it
+under the hood but stays wrapped, the same rule as drizzle/hono/zod: never install or import
+`@casl/ability` directly. Everything you need is re-exported from this subpath.
+
+Declare your subject vocabulary once. Instance-checked subjects list the row fields their
+conditions may read; abstract subjects map to `never` and take no conditions:
+
+```ts
+// src/worker/lib/ability.ts
+import { defineAbility, subject } from "@fcalell/plugin-auth/ability";
+
+type Subjects = {
+  Expense: { paidById: string };   // instance-checked: conditions read these fields
+  Report: { authorId: string };
+  Billing: never;                  // abstract: string-only checks, conditions are a type error
+};
+
+// The documented handler pattern: a helper that loads the caller's seat in
+// the record (their row in the domain table) and builds the ability from it.
+// Ability construction stays in handlers on purpose; the rules depend on
+// domain data only the handler's queries know.
+export async function abilityFor(db: Db, userId: string, tripId: string) {
+  const seat = await db.query.bookings.findFirst({ /* userId + tripId */ });
+  const { can, build } = defineAbility<Subjects, "create" | "read" | "update" | "delete">();
+  if (seat?.role === "organizer") can("update", "Expense");
+  can("update", "Expense", { paidById: userId });   // ownership condition
+  can("read", "Report");
+  return { seat, ability: build() };
+}
+```
+
+In a handler, gate with `assertCan`. It returns when allowed and throws
+`ORPCError("FORBIDDEN")` when denied; pass `{ cloak: true }` at sites that must not reveal the
+resource exists, which throws `NOT_FOUND` instead. Tag a row with `subject()` for instance
+checks:
+
+```ts
+const { ability } = await abilityFor(db, context.user.id, input.tripId);
+assertCan(ability, "update", subject("Expense", expenseRow));
+assertCan(ability, "read", subject("Report", reportRow), { cloak: true });
+```
+
+To drive UI affordances from the same rules, ship the ability on a query output with
+`packAbility` and rebuild it client-side with `unpackAbility`. The packed form is a plain JSON
+array; type the wire field with `PackedRules` (a type-only export, safe in client bundles):
+
+```ts
+// server: procedure output
+return { trip, rules: packAbility(ability) };
+
+// client
+const ability = unpackAbility<AbilityFor<Subjects>>(data.rules);
+ability.can("update", subject("Expense", expense));
+```
+
+`compileStatements(grants)` converts an org role's statements record (`resource → actions`)
+into unconditional rules for the same ability model, so org-level and record-level checks share
+one vocabulary. The compile is one-directional: statements stay the source of truth for org
+roles, and better-auth's organization endpoints keep consulting them internally.
+
+**Forbidden names:** a resource named `"all"` or an action named `"manage"` throws. CASL reserves
+both as wildcards (`can("manage", "all")` grants everything); better-auth's statements model has no
+such concept and would treat them as literal names, silently over-granting client-side once
+compiled. Pick a specific resource/action name instead.
+
+### Org rules endpoint
+
+`auth({ organization: true })` registers a framework-owned `auth.orgRules` procedure: it reads the
+caller's active member, compiles their role's statements into rules the same way
+`compileStatements` does above, and ships them packed (`{ rules: PackedRules<...> }`). No active
+organization, or no membership, returns `{ rules: [] }` rather than an error. `@fcalell/plugin-api`'s
+`useAbility` client hook consumes it directly; you never call it yourself.
 
 ## Plugin implementation
 
@@ -276,7 +357,9 @@ import authRuntime from "@fcalell/plugin-auth/runtime";
 authRuntime({ secretVar: "AUTH_SECRET", ... }, callbacks)
 ```
 
-Receives `{ db }` from the upstream db plugin and provides `{ auth }` to downstream plugins.
+Receives `{ db }` from the upstream db plugin and provides `{ auth }` to downstream plugins. When
+`organization` is enabled it also registers the `auth.orgRules` procedure (see "Org rules endpoint"
+above) via the `routes()` hook of the `RuntimePlugin` contract.
 
 ### Native client (Expo)
 
@@ -328,6 +411,7 @@ Requires the server `emailOtp` option (on by default) and a `sendOTP` callback i
 | Subpath | Purpose |
 |---------|---------|
 | `@fcalell/plugin-auth` | `auth()`, `AuthOptions` |
+| `@fcalell/plugin-auth/ability` | `defineAbility()`, `subject()`, `assertCan()`, `packAbility()` / `unpackAbility()` / `PackedRules`, `compileStatements()` -- record-scoped authorization (isomorphic) |
 | `@fcalell/plugin-auth/access` | `createAccessControl()`, `getStatements()`, `defaultOrgRoles` |
 | `@fcalell/plugin-auth/infer` | `InferUser<T>`, `InferSession<T>` -- type utilities derived from config |
 | `@fcalell/plugin-auth/expo` | `createAuthClient()`, `AuthProvider`, `useAuthClient()`, `signInWith{Apple,Google}()`, `sendEmailOtp()` / `signInWithEmailOtp()` -- native client (runtime-only) |

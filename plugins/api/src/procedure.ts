@@ -2,6 +2,17 @@ import { ORPCError, os } from "@orpc/server";
 import { z } from "zod";
 import { clampLimit } from "./lib/cursor.ts";
 import type { Procedure } from "./types";
+import { STACK_READS_HEADER, STACK_WRITES_HEADER } from "./wire.ts";
+
+// Re-exported for `@fcalell/plugin-api/procedure` consumers (generated code,
+// plugins/auth's worker) — see `./wire.ts` for why these live there and not
+// here: client bundles need them without pulling in this file's
+// `@orpc/server` + zod + builder machinery.
+export {
+	ORG_RULES_PATH,
+	STACK_READS_HEADER,
+	STACK_WRITES_HEADER,
+} from "./wire.ts";
 
 type Promisable<T> = T | Promise<T>;
 type DefaultStatements = Record<string, readonly string[]>;
@@ -25,33 +36,62 @@ type Rbac<TStatements extends DefaultStatements> = {
 	];
 }[keyof TStatements & string];
 
-interface BaseOptions {
+// `can: [action, resource]` (action first) -- the org-level gate, sugar over
+// `rbac` (`rbac` is `[resource, actions[]]`, action last). A tuple of exactly
+// two strings: no third (conditions) element is structurally expressible, so
+// the org layer stays unconditional by construction (docs/prd/
+// backend-hardening.md WS6.2 non-goal -- statements have no conditions,
+// conditions belong to the record-scoped ability layer instead).
+type Can<TStatements extends DefaultStatements> = {
+	[R in keyof TStatements & string]: readonly [TStatements[R][number], R];
+}[keyof TStatements & string];
+
+interface BaseOptions<TEntity extends string = string> {
 	rateLimit?: RateLimitKind | readonly RateLimitKind[];
 	paginated?: boolean;
+	// Entities this procedure reads/writes, for automatic cache invalidation
+	// (docs/prd/backend-hardening.md WS3.1). Ships as `x-stack-reads` /
+	// `x-stack-writes` response headers — see `createEntityHeadersMiddleware`.
+	reads?: readonly TEntity[];
+	writes?: readonly TEntity[];
 }
 
-interface PublicOptions extends BaseOptions {
+interface PublicOptions<TEntity extends string = string>
+	extends BaseOptions<TEntity> {
 	auth?: false;
 	org?: never;
 	rbac?: never;
+	can?: never;
 }
 
-interface AuthOnlyOptions extends BaseOptions {
+interface AuthOnlyOptions<TEntity extends string = string>
+	extends BaseOptions<TEntity> {
 	auth: true;
 	org?: false;
 	rbac?: never;
+	can?: never;
 }
 
-interface OrgScopedOptions<TStatements extends DefaultStatements>
-	extends BaseOptions {
+interface OrgScopedOptions<
+	TStatements extends DefaultStatements,
+	TEntity extends string = string,
+> extends BaseOptions<TEntity> {
 	auth: true;
 	org: true;
 	rbac?: Rbac<TStatements>;
+	// Preferred spelling over `rbac` -- config gates, handler `assertCan`,
+	// and client `ability.can()` all read as actions-on-subjects. Both may be
+	// set; both middlewares run.
+	can?: Can<TStatements>;
 }
 
 export type ProcedureConfig<
 	TStatements extends DefaultStatements = DefaultStatements,
-> = PublicOptions | AuthOnlyOptions | OrgScopedOptions<TStatements>;
+	TEntity extends string = string,
+> =
+	| PublicOptions<TEntity>
+	| AuthOnlyOptions<TEntity>
+	| OrgScopedOptions<TStatements, TEntity>;
 
 // ---------- Rate limit types ----------
 
@@ -183,7 +223,8 @@ export interface ProcedureBuilder<
 export type ProcedureFactory<
 	TBase extends Record<string, unknown>,
 	TStatements extends DefaultStatements,
-> = <O extends ProcedureConfig<TStatements> = PublicOptions>(
+	TEntity extends string = string,
+> = <O extends ProcedureConfig<TStatements, TEntity> = PublicOptions<TEntity>>(
 	config?: O,
 ) => ProcedureBuilder<ResolvedContext<O, TBase>, InputAdditions<O>>;
 
@@ -398,6 +439,51 @@ function createErrorLoggingMiddleware(): OrpcMiddlewareFn {
 			}
 			throw error;
 		}
+	};
+}
+
+// `reads`/`writes` entity names reach `Headers.set` (below) comma-joined,
+// and comma is also the client-side split delimiter (`splitHeaderValue`,
+// `@fcalell/plugin-api/query-invalidation`). Validate at `procedure()`
+// construction time — module init, loud — rather than let an illegal
+// character reach `Headers.set` at request time, which would throw AFTER a
+// mutation's handler already committed.
+const ENTITY_NAME_RE = /^[A-Za-z0-9_.-]+$/;
+
+function assertValidEntityNames(
+	kind: "reads" | "writes",
+	entities: readonly string[],
+): void {
+	for (const name of entities) {
+		if (!ENTITY_NAME_RE.test(name)) {
+			throw new Error(
+				`procedure(): invalid entity name "${name}" in \`${kind}\` -- entity names become ` +
+					"comma-joined Headers values (x-stack-reads/x-stack-writes) and may only contain " +
+					'letters, digits, "_", ".", and "-". Rename the entity.',
+			);
+		}
+	}
+}
+
+// WS3.1 wire contract: stamps `x-stack-reads` / `x-stack-writes` on the
+// response only when the handler succeeds — a thrown error (ORPCError or
+// otherwise) propagates out of `next()` before either header is set, so a
+// failed request never claims to have touched its declared entities. Only
+// installed when the procedure declares at least one entity (see
+// `createProcedure` below); empty/absent `reads`/`writes` never reach here.
+function createEntityHeadersMiddleware(
+	reads: readonly string[],
+	writes: readonly string[],
+): OrpcMiddlewareFn<{ resHeaders: Headers }> {
+	return async ({ context, next }, _input) => {
+		const result = await next({ context: {} });
+		if (reads.length > 0) {
+			context.resHeaders.set(STACK_READS_HEADER, reads.join(","));
+		}
+		if (writes.length > 0) {
+			context.resHeaders.set(STACK_WRITES_HEADER, writes.join(","));
+		}
+		return result;
 	};
 }
 
@@ -648,18 +734,30 @@ function createBuilder<TContext extends Record<string, unknown>, TBaseInput>(
 export function createProcedure<
 	TContext extends Record<string, unknown>,
 	TStatements extends DefaultStatements = Record<string, string[]>,
->(): ProcedureFactory<TContext, TStatements> {
+	TEntity extends string = string,
+>(): ProcedureFactory<TContext, TStatements, TEntity> {
 	// oRPC's root `Builder` has 6 generics we don't surface; treat it as an
 	// `OrpcChain` from here on so the chain's structural type is stable.
 	const base = os.$context<TContext>() as unknown as OrpcChain;
 
-	function procedure(config?: ProcedureConfig<TStatements>) {
-		const opts = (config ?? {}) as ProcedureConfig<TStatements> & BaseOptions;
+	function procedure(config?: ProcedureConfig<TStatements, TEntity>) {
+		const opts = (config ?? {}) as ProcedureConfig<TStatements, TEntity> &
+			BaseOptions<TEntity>;
 		let chain: OrpcChain = base;
 
 		// Root middleware, ahead of rate-limit/auth/org/rbac: logs unexpected
 		// (non-ORPCError) throws before oRPC flattens them into an opaque 500.
 		chain = chain.use(createErrorLoggingMiddleware());
+
+		// WS3.1: right after error logging, so the header-setting middleware
+		// still sees (and rethrows past) any error the inner chain produces.
+		const reads = opts.reads ?? [];
+		const writes = opts.writes ?? [];
+		assertValidEntityNames("reads", reads);
+		assertValidEntityNames("writes", writes);
+		if (reads.length > 0 || writes.length > 0) {
+			chain = chain.use(createEntityHeadersMiddleware(reads, writes));
+		}
 
 		// Each middleware factory declares its own required `context` shape
 		// (e.g. `{ reqHeaders, auth }` for auth, `{ session }` for org). The
@@ -684,6 +782,13 @@ export function createProcedure<
 			chain = chain.use(createRbacMiddleware(resource, [...actions]));
 		}
 
+		// `can` is pure sugar over the same rbac middleware, action-first. If
+		// both `rbac` and `can` are set, both run (independent checks).
+		if ("can" in opts && opts.can) {
+			const [action, resource] = opts.can;
+			chain = chain.use(createRbacMiddleware(resource, [action]));
+		}
+
 		const isPaginated = opts.paginated === true;
 		let baseShape: z.ZodRawShape | null = null;
 		if (isOrg || isPaginated) {
@@ -696,5 +801,9 @@ export function createProcedure<
 		return createBuilder({ chain, baseShape, paginated: isPaginated });
 	}
 
-	return procedure as unknown as ProcedureFactory<TContext, TStatements>;
+	return procedure as unknown as ProcedureFactory<
+		TContext,
+		TStatements,
+		TEntity
+	>;
 }

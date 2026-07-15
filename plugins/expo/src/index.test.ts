@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import type { Slot } from "@fcalell/cli";
 import type { ProviderSpec } from "@fcalell/cli/ast";
 import { cliSlots } from "@fcalell/cli/cli-slots";
@@ -6,7 +8,8 @@ import {
 	type GraphCtxFactory,
 	type GraphPlugin,
 } from "@fcalell/cli/graph";
-import { api } from "@fcalell/plugin-api";
+import { buildTestGraphFromPlugins } from "@fcalell/cli/testing";
+import { api, type PluginRuntimeEntry } from "@fcalell/plugin-api";
 import { describe, expect, it } from "vitest";
 import { expo } from "./index";
 import { expoOptionsSchema } from "./types";
@@ -109,6 +112,27 @@ function uiExtras(): GraphPlugin {
 					],
 					wrap: { identifier: "SafeAreaProvider" },
 					order: 10,
+				}),
+			),
+		],
+	};
+}
+
+// A stand-in for db/auth: contributes a plugin runtime entry so
+// `api.slots.workerSource` has something to render (it resolves to `null`
+// with no runtimes and no routes, regardless of middleware contributions —
+// see plugin-api's `workerSource` derivation). Mirrors plugin-api's own
+// `dbLike` test fixture.
+function dbLikeRuntime(): GraphPlugin {
+	return {
+		name: "db",
+		contributes: [
+			api.slots.pluginRuntimes.contribute(
+				(): PluginRuntimeEntry => ({
+					plugin: "db",
+					import: { source: "@pkg/db/runtime", default: "dbRuntime" },
+					identifier: "dbRuntime",
+					options: {},
 				}),
 			),
 		],
@@ -425,6 +449,50 @@ describe("expo init scaffolds", () => {
 	});
 });
 
+// ── native API client scaffold (WS4 client half) ────────────────────
+
+describe("expo init scaffolds → src/lib/api.ts", () => {
+	it("scaffolds src/lib/api.ts", async () => {
+		const { plugins, ctxFactory } = collectExpoPlugins();
+		const g = buildGraph(plugins, ctxFactory);
+		const targets = (await g.resolve(cliSlots.initScaffolds)).map(
+			(s) => s.target,
+		);
+		expect(targets).toContain("src/lib/api.ts");
+	});
+
+	it("removes src/lib/api.ts on `stack remove expo`", async () => {
+		const { plugins, ctxFactory } = collectExpoPlugins();
+		const g = buildGraph(plugins, ctxFactory);
+		const files = await g.resolve(cliSlots.removeFiles);
+		expect(files).toContain("src/lib/api.ts");
+	});
+
+	it("resolves to the on-disk template stamping headers + the update signal", async () => {
+		// The hand-rolled harness above fakes `ctx.template`; real template
+		// resolution needs the production `plugin()` closure, so drive this one
+		// through `buildTestGraphFromPlugins` (real graph, real ctx) per
+		// `.claude/playbooks/testing.md`.
+		const { graph } = buildTestGraphFromPlugins({
+			plugins: [
+				{ factory: api, options: {} },
+				{ factory: expo, options: {} },
+			],
+		});
+		const scaffolds = await graph.resolve(cliSlots.initScaffolds);
+		const apiClient = scaffolds.find((s) => s.target === "src/lib/api.ts");
+		expect(apiClient).toBeDefined();
+		if (apiClient) {
+			const src = readFileSync(fileURLToPath(apiClient.source), "utf8");
+			expect(src).toContain(
+				'import { createVersionGatedFetch } from "@fcalell/plugin-expo/client";',
+			);
+			expect(src).toContain("createApiQueryUtils");
+			expect(src).toContain('from "../../.stack/worker"');
+		}
+	});
+});
+
 // ── package.json main ─────────────────────────────────────────────
 
 describe("expo → cliSlots.packageJsonFields", () => {
@@ -440,6 +508,38 @@ describe("expo → cliSlots.packageJsonFields", () => {
 		const g = buildGraph(plugins, ctxFactory);
 		const fields = await g.resolve(cliSlots.packageJsonFields);
 		expect(fields.main).toBeUndefined();
+	});
+});
+
+// ── client version gate (WS4) ──────────────────────────────────────
+
+describe("expo → api.slots.workerSource (client version gate)", () => {
+	it("wires the versionGate middleware when minNativeBuild is set", async () => {
+		const { plugins, ctxFactory } = collectExpoPlugins([dbLikeRuntime()], {
+			minNativeBuild: { ios: 10 },
+		});
+		const g = buildGraph(plugins, ctxFactory);
+		const src = await g.resolve(api.slots.workerSource);
+		expect(src).toContain(
+			'import { versionGate } from "@fcalell/plugin-expo/version-gate";',
+		);
+		expect(src).toContain(".use(versionGate({ ios: 10, android: 0 }))");
+	});
+
+	it("omits the versionGate middleware when minNativeBuild is unset", async () => {
+		const { plugins, ctxFactory } = collectExpoPlugins([dbLikeRuntime()]);
+		const g = buildGraph(plugins, ctxFactory);
+		const src = await g.resolve(api.slots.workerSource);
+		expect(src).not.toContain("versionGate");
+	});
+
+	it("omits the versionGate middleware when both floors are 0", async () => {
+		const { plugins, ctxFactory } = collectExpoPlugins([dbLikeRuntime()], {
+			minNativeBuild: { ios: 0, android: 0 },
+		});
+		const g = buildGraph(plugins, ctxFactory);
+		const src = await g.resolve(api.slots.workerSource);
+		expect(src).not.toContain("versionGate");
 	});
 });
 

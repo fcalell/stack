@@ -1,11 +1,32 @@
+import { handleMutationSuccess } from "@fcalell/plugin-api/query-invalidation";
 import {
 	useInfiniteQuery as _useInfiniteQuery,
 	useMutation as _useMutation,
 	useQuery as _useQuery,
 	type CreateMutationResult,
+	MutationCache,
+	QueryClient,
 	type QueryKey,
 	useQueryClient,
 } from "@tanstack/solid-query";
+
+// WS3.3 (docs/prd/backend-hardening.md): the default client `createApp`
+// builds when the caller supplies no `queryClient` auto-invalidates on every
+// mutation success, unless the mutation opted out via
+// `meta: { skipAutoInvalidation: true }` -- the pattern `useMutation` below
+// stamps for mutations with custom cache updaters. A consumer-supplied
+// `options.queryClient` is used as-is: they own invalidation then.
+export function createDefaultQueryClient(): QueryClient {
+	const queryClient: QueryClient = new QueryClient({
+		mutationCache: new MutationCache({
+			onSuccess: (_data, _variables, _onMutateResult, mutation) => {
+				if (mutation.meta?.skipAutoInvalidation) return;
+				handleMutationSuccess(queryClient, mutation.options.mutationKey);
+			},
+		}),
+	});
+	return queryClient;
+}
 
 function makeSafe<T extends { data: unknown; isPending: boolean }>(
 	query: T,

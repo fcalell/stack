@@ -1,7 +1,35 @@
-import { QueryClient } from "@tanstack/react-query";
+import { MutationCache, QueryClient } from "@tanstack/react-query";
 import { describe, expect, it } from "vitest";
+import { STACK_READS_HEADER, STACK_WRITES_HEADER } from "./procedure";
+import { captureEntityHeaders } from "./query-invalidation";
 import { createApiQueryUtils, createQueryClient } from "./tanstack-query";
-import type { RouterClient } from "./types";
+import type { Procedure, RouterClient } from "./types";
+
+// Fake router shape driving real `createApiQueryUtils` key generation for
+// the auto-invalidation tests below -- the proxy materializes `.queryKey()`
+// / `.mutationKey()` for any accessed path without needing a real client.
+// `RouterClient` only maps branded `Procedure<TIn, TOut>` members, so the
+// fake carries the same brand real generated routers do.
+type EntityFakeRouter = {
+	todos: {
+		list: Procedure<undefined, unknown[]>;
+		create: Procedure<{ title: string }, unknown>;
+	};
+	users: {
+		list: Procedure<undefined, unknown[]>;
+	};
+};
+
+function fakeEntityOrpc() {
+	// The oRPC utils proxy walks `client[prop]` at each path segment, so the
+	// stand-in needs real nested objects (their values are never called; only
+	// `.queryKey()` / `.mutationKey()` are exercised below).
+	const client = {
+		todos: { list: async () => [], create: async () => ({}) },
+		users: { list: async () => [] },
+	} as unknown as RouterClient<EntityFakeRouter>;
+	return createApiQueryUtils(client);
+}
 
 describe("createQueryClient", () => {
 	it("returns a QueryClient with mobile-friendly defaults", () => {
@@ -36,5 +64,108 @@ describe("createApiQueryUtils", () => {
 		};
 		expect(typeof utils.ping.queryOptions).toBe("function");
 		expect(typeof utils.ping.mutationOptions).toBe("function");
+	});
+});
+
+describe("createQueryClient auto-invalidation (WS3.3)", () => {
+	it("invalidates a query whose reads intersect a successful mutation's writes, leaves an unrelated query alone", async () => {
+		const orpc = fakeEntityOrpc();
+		const todosListKey = orpc.todos.list.queryKey();
+		const usersListKey = orpc.users.list.queryKey();
+		const todosCreateKey = orpc.todos.create.mutationKey();
+
+		captureEntityHeaders(
+			"todos/list",
+			new Headers({ [STACK_READS_HEADER]: "todos" }),
+		);
+		captureEntityHeaders(
+			"users/list",
+			new Headers({ [STACK_READS_HEADER]: "users" }),
+		);
+		captureEntityHeaders(
+			"todos/create",
+			new Headers({ [STACK_WRITES_HEADER]: "todos" }),
+		);
+
+		const queryClient = createQueryClient({
+			defaultOptions: { queries: { retry: false } },
+		});
+		queryClient.setQueryData(todosListKey, []);
+		queryClient.setQueryData(usersListKey, []);
+
+		// Non-component mutation execution path (TanStack Query v5): build a
+		// Mutation directly from the client's MutationCache and execute it, the
+		// same machinery `useMutation` drives under the hood.
+		const mutation = queryClient.getMutationCache().build(queryClient, {
+			mutationKey: todosCreateKey,
+			mutationFn: async () => ({ created: true }),
+		});
+		await mutation.execute(undefined);
+
+		expect(queryClient.getQueryState(todosListKey)?.isInvalidated).toBe(true);
+		expect(queryClient.getQueryState(usersListKey)?.isInvalidated).toBe(false);
+	});
+
+	it("does not invalidate when the mutation carries meta.skipAutoInvalidation", async () => {
+		const orpc = fakeEntityOrpc();
+		const todosListKey = orpc.todos.list.queryKey();
+		const todosCreateKey = orpc.todos.create.mutationKey();
+
+		captureEntityHeaders(
+			"todos/list",
+			new Headers({ [STACK_READS_HEADER]: "todos" }),
+		);
+		captureEntityHeaders(
+			"todos/create",
+			new Headers({ [STACK_WRITES_HEADER]: "todos" }),
+		);
+
+		const queryClient = createQueryClient({
+			defaultOptions: { queries: { retry: false } },
+		});
+		queryClient.setQueryData(todosListKey, []);
+
+		const mutation = queryClient.getMutationCache().build(queryClient, {
+			mutationKey: todosCreateKey,
+			mutationFn: async () => ({ created: true }),
+			meta: { skipAutoInvalidation: true },
+		});
+		await mutation.execute(undefined);
+
+		expect(queryClient.getQueryState(todosListKey)?.isInvalidated).toBe(false);
+	});
+
+	it("honours a caller-supplied mutationCache instead of installing the auto-invalidation one", async () => {
+		const orpc = fakeEntityOrpc();
+		const todosListKey = orpc.todos.list.queryKey();
+		const todosCreateKey = orpc.todos.create.mutationKey();
+
+		captureEntityHeaders(
+			"todos/list",
+			new Headers({ [STACK_READS_HEADER]: "todos" }),
+		);
+		captureEntityHeaders(
+			"todos/create",
+			new Headers({ [STACK_WRITES_HEADER]: "todos" }),
+		);
+
+		let sawSuccess = false;
+		const queryClient = createQueryClient({
+			mutationCache: new MutationCache({
+				onSuccess: () => {
+					sawSuccess = true;
+				},
+			}),
+		});
+		queryClient.setQueryData(todosListKey, []);
+
+		const mutation = queryClient.getMutationCache().build(queryClient, {
+			mutationKey: todosCreateKey,
+			mutationFn: async () => ({ created: true }),
+		});
+		await mutation.execute(undefined);
+
+		expect(sawSuccess).toBe(true);
+		expect(queryClient.getQueryState(todosListKey)?.isInvalidated).toBe(false);
 	});
 });

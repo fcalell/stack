@@ -58,9 +58,18 @@ export interface ProcedurePayload {
 	middlewareImports: TsImportSpec[];
 	// Auth's RBAC action statements, contributed via `api.slots.rbacStatements`
 	// (plain JSON: resource -> allowed actions). `null` when no plugin
-	// contributed — `rbac` on `procedure()` falls back to
-	// `Record<string, readonly string[]>` (no autocomplete narrowing).
+	// contributed — `rbac`/`can` on `procedure()` fall back to
+	// `Record<never, never>`, which resolves `Rbac<...>`/`Can<...>` to `never`
+	// (both options un-settable) rather than the untyped
+	// `Record<string, readonly string[]>` a consumer could previously pass
+	// anything to and TypeError at request time.
 	statements: Record<string, readonly string[]> | null;
+	// Entity vocabulary contributed via `api.slots.entities` (a union across
+	// every contributing plugin — plugin-db's Drizzle schema export names,
+	// plugin-auth's own runtime-owned table names, WS3.1). Empty when nothing
+	// contributed — `reads`/`writes` on `procedure()` fall back to `string`
+	// (no autocomplete narrowing).
+	entities: readonly string[];
 }
 
 const APP_BUILDER_IMPORT: TsImportSpec = {
@@ -80,17 +89,43 @@ const IDENT_RE = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
 // JSON data (resource -> readonly action-name tuple), not a cross-module
 // type import. Keeps codegen self-contained: no dependency on where the
 // consumer's access-control definition lives.
+//
+// No/empty contribution renders `Record<never, never>`, not the permissive
+// `Record<string, readonly string[]>` — `Rbac<Record<never, never>>` and
+// `Can<Record<never, never>>` (`../procedure.ts`) both resolve to `never`, so
+// `rbac`/`can` are un-settable rather than accepting any string and
+// TypeErroring against a `hasPermission` call with no organization plugin
+// registered.
 function renderStatementsType(
 	statements: Record<string, readonly string[]> | null,
 ): string {
-	if (statements === null) return "Record<string, readonly string[]>";
+	if (statements === null) return "Record<never, never>";
 	const entries = Object.entries(statements).map(([key, actions]) => {
 		const keyText = IDENT_RE.test(key) ? key : JSON.stringify(key);
 		const tuple = actions.map((a) => JSON.stringify(a)).join(", ");
 		return `\t${keyText}: readonly [${tuple}];`;
 	});
-	if (entries.length === 0) return "Record<string, readonly string[]>";
+	if (entries.length === 0) return "Record<never, never>";
 	return `{\n${entries.join("\n")}\n}`;
+}
+
+// Renders the entity vocabulary as an inline string-literal union — same
+// "plain data, no cross-module type import" approach as
+// `renderStatementsType`. Empty falls back to the domain-agnostic `string`
+// (api stays domain-agnostic; the slot itself already dedupes/sorts contributed
+// names — see `api.slots.entities` — this dedup is defense in depth for a raw
+// `AggregateProcedureInput` caller).
+function renderEntityType(entities: readonly string[]): string {
+	if (entities.length === 0) return "string";
+	const seen = new Set<string>();
+	const literals: string[] = [];
+	for (const name of entities) {
+		if (seen.has(name)) continue;
+		seen.add(name);
+		literals.push(JSON.stringify(name));
+	}
+	if (literals.length === 0) return "string";
+	return literals.join(" | ");
 }
 
 // Builds the `base.use(rt1({...})).use(rt2({...})).use(mw1)...` chain —
@@ -161,6 +196,7 @@ export function aggregateProcedure(payload: ProcedurePayload): string | null {
 	});
 
 	const statementsType = renderStatementsType(payload.statements);
+	const entityType = renderEntityType(payload.entities);
 
 	return `${importsText}
 // Type-only: \`__chain\` mirrors the runtime plugin composition in
@@ -170,7 +206,8 @@ export function aggregateProcedure(payload: ProcedurePayload): string | null {
 type ContextOf<B> = B extends AppBuilder<infer C> ? C : never;
 type WorkerContext = ContextOf<typeof __chain>;
 type RbacStatements = ${statementsType};
+type Entity = ${entityType};
 
-export const procedure = createProcedure<WorkerContext, RbacStatements>();
+export const procedure = createProcedure<WorkerContext, RbacStatements, Entity>();
 `;
 }
