@@ -8,7 +8,9 @@ import {
 import { api } from "@fcalell/plugin-api";
 import { cloudflare } from "@fcalell/plugin-cloudflare";
 import { db } from "@fcalell/plugin-db";
+import { parse as parseToml } from "smol-toml";
 import { describe, expect, it } from "vitest";
+import { createAccessControl, defaultOrgStatements } from "./access";
 
 // Mock vite-like plugin that contributes the localhost dev-port origin to
 // api.slots.corsOrigins. We don't import `@fcalell/plugin-vite` directly —
@@ -171,8 +173,8 @@ describe("auth config factory", () => {
 		const config = auth({});
 		expect(config.options.rateLimiter?.email).toEqual({
 			binding: "RATE_LIMITER_EMAIL",
-			limit: 5,
-			period: 300,
+			limit: 3,
+			period: 60,
 		});
 	});
 
@@ -205,8 +207,8 @@ describe("auth config factory", () => {
 		});
 		expect(ipOnly.options.rateLimiter.email).toEqual({
 			binding: "RATE_LIMITER_EMAIL",
-			limit: 5,
-			period: 300,
+			limit: 3,
+			period: 60,
 		});
 
 		const emailOnly = auth({ rateLimiter: { email: { limit: 10 } } });
@@ -218,7 +220,7 @@ describe("auth config factory", () => {
 		expect(emailOnly.options.rateLimiter.email).toEqual({
 			binding: "RATE_LIMITER_EMAIL",
 			limit: 10,
-			period: 300,
+			period: 60,
 		});
 	});
 
@@ -301,7 +303,7 @@ describe("auth → cloudflare bindings + secrets", () => {
 		expect(emailRl).toEqual({
 			kind: "rate_limiter",
 			binding: "RATE_LIMITER_EMAIL",
-			simple: { limit: 5, period: 300 },
+			simple: { limit: 3, period: 60 },
 		});
 	});
 
@@ -356,6 +358,39 @@ describe("auth → cloudflare bindings + secrets", () => {
 		const secrets = await g.resolve(cloudflare.slots.secrets);
 		expect(secrets.find((s) => s.name === "MY_SECRET")).toBeTruthy();
 		expect(secrets.find((s) => s.name === "MY_URL")).toBeTruthy();
+	});
+});
+
+// ── cloudflare.slots.compatibilityFlags contribution ──────────────
+//
+// better-auth needs `node:async_hooks`, only available under Workers'
+// `nodejs_compat` compatibility flag. Without this, a real `wrangler
+// deploy` ships a worker that crashes on first request.
+
+describe("auth → cloudflare compatibility flags", () => {
+	it("contributes nodejs_compat", async () => {
+		const { plugins, ctxFactory } = collectAuthPlugins();
+		const g = buildGraph(plugins, ctxFactory);
+		const flags = await g.resolve(cloudflare.slots.compatibilityFlags);
+		expect(flags).toContain("nodejs_compat");
+	});
+
+	it("wrangler.toml includes nodejs_compat when auth is configured", async () => {
+		const { plugins, ctxFactory } = collectAuthPlugins();
+		const g = buildGraph(plugins, ctxFactory);
+		const content = await g.resolve(cloudflare.slots.wranglerToml);
+		const parsed = parseToml(content) as { compatibility_flags?: string[] };
+		expect(parsed.compatibility_flags).toContain("nodejs_compat");
+	});
+
+	it("wrangler.toml omits compatibility_flags when auth is not configured", async () => {
+		const { plugins, ctxFactory } = collectAuthPlugins({
+			order: ["api", "cloudflare"],
+		});
+		const g = buildGraph(plugins, ctxFactory);
+		const content = await g.resolve(cloudflare.slots.wranglerToml);
+		const parsed = parseToml(content) as { compatibility_flags?: string[] };
+		expect(parsed.compatibility_flags).toBeUndefined();
 	});
 });
 
@@ -570,6 +605,47 @@ describe("auth.slots.runtimeOptions — bug #5 order-independence", () => {
 		expect(opts.callbacks).toBeUndefined();
 	});
 
+	// WS2.3: the runtime needs the binding NAMES (not limit/period) to read
+	// the wrangler ratelimit bindings off `env` and build `_rateLimiter`.
+	// Emitting the full config (with limit/period) would be inert — those are
+	// enforced by the binding itself — and would drift from the wrangler
+	// config's real values if either changed independently.
+	it("emits rateLimiter as binding-names-only (strips limit/period)", async () => {
+		const { plugins, ctxFactory } = collectAuthPlugins({
+			authOpts: {
+				rateLimiter: {
+					ip: { binding: "CUSTOM_IP", limit: 50, period: 30 },
+					email: { binding: "CUSTOM_EMAIL", limit: 3, period: 120 },
+				},
+			},
+		});
+		const g = buildGraph(plugins, ctxFactory);
+		const opts = await g.resolve(auth.slots.runtimeOptions);
+		expect(opts.rateLimiter).toMatchObject({ kind: "object" });
+		const props = (
+			opts.rateLimiter as {
+				properties: Array<{ key: string; value: unknown }>;
+			}
+		).properties;
+		const asRecord = (node: unknown): Array<{ key: string; value: unknown }> =>
+			(node as { properties: Array<{ key: string; value: unknown }> })
+				.properties;
+		const ip = Object.fromEntries(
+			asRecord(props.find((p) => p.key === "ip")?.value).map((p) => [
+				p.key,
+				(p.value as { value: string }).value,
+			]),
+		);
+		const email = Object.fromEntries(
+			asRecord(props.find((p) => p.key === "email")?.value).map((p) => [
+				p.key,
+				(p.value as { value: string }).value,
+			]),
+		);
+		expect(ip).toEqual({ binding: "CUSTOM_IP" });
+		expect(email).toEqual({ binding: "CUSTOM_EMAIL" });
+	});
+
 	// literalToProps must faithfully carry every JSON primitive shape
 	// through to the generated options. Nested objects / arrays /
 	// booleans / strings must all survive the round-trip; a silent drop
@@ -680,6 +756,51 @@ describe("auth → api.slots.callbacks", () => {
 		const g = buildGraph(plugins, ctxFactory);
 		const callbacks = await g.resolve(api.slots.callbacks);
 		expect(callbacks.auth).toBeUndefined();
+	});
+});
+
+// ── api.slots.rbacStatements contribution ──────────────────────────
+
+describe("auth → api.slots.rbacStatements", () => {
+	it("leaves rbacStatements at its null default when organization is off", async () => {
+		const { plugins, ctxFactory } = collectAuthPlugins();
+		const g = buildGraph(plugins, ctxFactory);
+		expect(await g.resolve(api.slots.rbacStatements)).toBeNull();
+	});
+
+	it("contributes the default org statements when organization is enabled without a custom ac", async () => {
+		const { plugins, ctxFactory } = collectAuthPlugins({
+			authOpts: { organization: true },
+		});
+		const g = buildGraph(plugins, ctxFactory);
+		expect(await g.resolve(api.slots.rbacStatements)).toEqual(
+			defaultOrgStatements,
+		);
+	});
+
+	it("prefers a custom organization.ac's statements over the defaults", async () => {
+		const customAc = createAccessControl({ project: ["create", "delete"] });
+		const { plugins, ctxFactory } = collectAuthPlugins({
+			authOpts: { organization: { ac: customAc } },
+		});
+		const g = buildGraph(plugins, ctxFactory);
+		expect(await g.resolve(api.slots.rbacStatements)).toEqual({
+			project: ["create", "delete"],
+		});
+	});
+
+	// End-to-end: the contributed statements narrow `.stack/procedure.ts`'s
+	// `RbacStatements` type literal (see `aggregateProcedure` /
+	// `renderStatementsType` in plugin-api), not just the intermediate slot
+	// value.
+	it("narrows .stack/procedure.ts's RbacStatements type from the contributed statements", async () => {
+		const { plugins, ctxFactory } = collectAuthPlugins({
+			authOpts: { organization: true },
+		});
+		const g = buildGraph(plugins, ctxFactory);
+		const source = await g.resolve(api.slots.procedureSource);
+		expect(source).toContain("type RbacStatements = {");
+		expect(source).toContain('organization: readonly ["update", "delete"];');
 	});
 });
 
@@ -805,7 +926,8 @@ describe("auth → cli slots", () => {
 
 // ── Init-prompt defaults derive from `app.*` ───────────────────────
 //
-// CLAUDE.md documents `app.name` as the default cookie prefix. The
+// `.knowledge/architecture/consumer-project.md` documents `app.name` as
+// the default cookie prefix. The
 // pre-fix prompt hardcoded "app", so every fresh project shipped with a
 // cookie name unrelated to the consumer's identity. The fix captures
 // `ctx.app.name` from the contribution ctx (the orchestrator only hands

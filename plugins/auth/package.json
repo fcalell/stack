@@ -6,7 +6,8 @@
 	"exports": {
 		".": "./src/index.ts",
 		"./runtime": "./src/worker/index.ts",
-		"./schema": "./src/schema.ts",
+		"./schema": "./src/schema/index.ts",
+		"./schema/organization": "./src/schema/organization.ts",
 		"./expo": "./src/expo.tsx",
 		"./access": "./src/access.ts",
 		"./infer": "./src/infer.ts"
@@ -50,6 +51,7 @@
 		"@types/react": "^19.2.16",
 		"expo-apple-authentication": "~56.0.4",
 		"react": "^19.2.7",
+		"smol-toml": "^1.6.1",
 		"typescript": "^5.9.3"
 	}
 }

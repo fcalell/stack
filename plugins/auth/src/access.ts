@@ -32,14 +32,20 @@ export function getStatements(
 	return ac?.statements;
 }
 
-const orgStatements = {
+// Full resource/action universe for the framework's default organization
+// roles — the same record `hasPermission` ultimately checks against at
+// runtime (each role's own `.statements`, built from this universe via
+// `newRole` below), and what `plugin-auth` contributes to
+// `api.slots.rbacStatements` for `procedure({ rbac: [...] })`'s type-level
+// autocomplete when the consumer hasn't supplied a custom `ac`.
+export const defaultOrgStatements = {
 	organization: ["update", "delete"],
 	member: ["create", "update", "delete"],
 	invitation: ["create", "cancel"],
 	team: ["create", "update", "delete"],
 } as const;
 
-const orgAc = createAccessControl(orgStatements);
+const orgAc = createAccessControl(defaultOrgStatements);
 
 export const defaultOrgRoles = {
 	owner: orgAc.newRole({

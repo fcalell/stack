@@ -23,19 +23,23 @@ const rateLimiterIpSchema = z
 	})
 	.default({ binding: "RATE_LIMITER_IP", limit: 100, period: 60 });
 
+// Cloudflare rate-limiter bindings only accept `period` 10 or 60 (seconds) —
+// https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/.
+// Default: 3 sends per 60s, an OTP-send abuse gate that still allows one quick
+// resend.
 const rateLimiterEmailSchema = z
 	.object({
 		binding: z.string().default("RATE_LIMITER_EMAIL"),
 		limit: z
 			.number()
 			.positive({ error: "auth: rateLimiter.limit must be a positive number" })
-			.default(5),
+			.default(3),
 		period: z
 			.number()
 			.positive({ error: "auth: rateLimiter.period must be a positive number" })
-			.default(300),
+			.default(60),
 	})
-	.default({ binding: "RATE_LIMITER_EMAIL", limit: 5, period: 300 });
+	.default({ binding: "RATE_LIMITER_EMAIL", limit: 3, period: 60 });
 
 const organizationObjectSchema = z.object({
 	ac: z.unknown().optional(),
@@ -114,7 +118,7 @@ export const authOptionsSchema = z.object({
 		})
 		.default({
 			ip: { binding: "RATE_LIMITER_IP", limit: 100, period: 60 },
-			email: { binding: "RATE_LIMITER_EMAIL", limit: 5, period: 300 },
+			email: { binding: "RATE_LIMITER_EMAIL", limit: 3, period: 60 },
 		}),
 });
 
@@ -194,4 +198,15 @@ export function resolveSocialProviders(
 export interface AuthRuntimeOptions {
 	secretVar: string;
 	appUrlVar: string;
+}
+
+// Single source for the consumer callback file's shape. Both the plugin
+// declaration (`callbacks:` in `./index.ts`, node-side) and the worker
+// runtime's `AuthCallbacks` type (`./worker/index.ts`) derive their payload
+// types from here, so the two can never drift apart. `sendOTP` is required
+// (email-OTP is on by default); `sendInvitation` is optional (only needed
+// once `organization` is enabled).
+export interface AuthCallbackPayloads {
+	sendOTP: { email: string; code: string };
+	sendInvitation: { email: string; orgName: string };
 }

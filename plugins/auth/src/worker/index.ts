@@ -6,20 +6,36 @@ import { type BetterAuthOptions, betterAuth } from "better-auth/minimal";
 import { emailOTP } from "better-auth/plugins/email-otp";
 import { organization } from "better-auth/plugins/organization";
 import { defaultOrgRoles } from "../access";
+import type { InferSession, InferUser } from "../infer";
 import { account, session, user, verification } from "../schema";
+import {
+	invitation,
+	member,
+	organization as organizationTable,
+} from "../schema/organization";
 import type {
+	AuthCallbackPayloads,
 	AuthRuntimeOptions,
 	FieldConfig,
 	ResolvedSocialProvider,
 	SocialProviderName,
 } from "../types";
+import { emailKey } from "./email-key";
 
+// Structural match with plugin-api's `RateLimitBinding` (procedure.ts) — not
+// imported directly since plugin-api doesn't expose it on a public subpath;
+// both sides only rely on this shape.
+interface RateLimitBinding {
+	limit(opts: { key: string }): Promise<{ success: boolean }>;
+}
+
+// Consumer-implemented email hooks. `AuthCallbackPayloads` (`../types`) is
+// the single source for the payload shapes — see that type's doc comment.
 export interface AuthCallbacks {
-	sendOTP: (payload: { email: string; code: string }) => void | Promise<void>;
-	sendInvitation?: (payload: {
-		email: string;
-		orgName: string;
-	}) => void | Promise<void>;
+	sendOTP: (payload: AuthCallbackPayloads["sendOTP"]) => void | Promise<void>;
+	sendInvitation?: (
+		payload: AuthCallbackPayloads["sendInvitation"],
+	) => void | Promise<void>;
 }
 
 export interface AuthRuntimeInput extends AuthRuntimeOptions {
@@ -49,23 +65,85 @@ export interface AuthRuntimeInput extends AuthRuntimeOptions {
 	// server-side expo() plugin (native client deep-link / cookie / origin
 	// handling); contributes no database tables.
 	expo?: boolean;
+	// Wrangler rate-limiter binding names, baked by the `runtimeOptions`
+	// derivation from the plugin's `rateLimiter` schema defaults. Limit/period
+	// aren't included here — they're enforced by the binding config itself,
+	// not read at request time.
+	rateLimiter?: { ip: { binding: string }; email: { binding: string } };
 }
 
-// biome-ignore lint/suspicious/noExplicitAny: better-auth returns a highly-generic Auth type we only forward.
-type AuthInstance = any;
+// Structural surface of the better-auth instance our code — and consumers'
+// `procedure({ auth: true })` handlers via `InferAuthContext`
+// (`plugins/api/src/procedure.ts`) — actually touch: `handler` (the fetch
+// entrypoint below) plus the two `api` methods `createProcedure`'s
+// auth/rbac middleware call. better-auth's own `Auth<Options>` requires the
+// literal `BetterAuthOptions` object passed to `betterAuth(...)`; `buildAuth`
+// below constructs that object from runtime conditionals (plugins pushed
+// based on `options.organization` / `.expo` / `.emailOtp`), so there's no
+// single literal `Options` to parameterize `Auth<Options>` with here. A
+// hand-declared, honest structural type beats `any` even though it's not
+// better-auth's own generic.
+//
+// `hasPermission` only exists at runtime once `buildAuth` registers the
+// organization plugin (`options.organization` truthy, see below). Declaring
+// it unconditionally let `procedure({ org: true, rbac: [...] })` type-check
+// against a non-organization auth config and TypeError at request time.
+// Gated on `TOptions["organization"]` (same `extends { organization: infer O }`
+// pattern `../infer.ts`'s `OrgSessionFields` uses) so the type matches what
+// `buildAuth` actually wires up.
+export type AuthApi<TOptions extends AuthRuntimeInput = AuthRuntimeInput> = {
+	getSession: (opts: { headers: Headers }) => Promise<{
+		user: Record<string, unknown>;
+		session: Record<string, unknown>;
+	} | null>;
+} & (TOptions extends { organization: infer O }
+	? O extends undefined | false
+		? object
+		: {
+				hasPermission: (opts: {
+					headers: Headers;
+					body: { permissions: Record<string, string[]> };
+				}) => Promise<{ success: boolean } | null>;
+			}
+	: object);
+
+// `$Infer.Session` is derived from `AuthRuntimeInput` via the SAME
+// `InferUser`/`InferSession` machinery `@fcalell/plugin-auth/infer` exposes
+// for the client (additionalFields, organization → `activeOrganizationId`) —
+// one derivation, two consumers, instead of re-deriving the branching twice.
+// `TOptions` is inferred from the literal object `.stack/procedure.ts` /
+// `.stack/worker.ts` pass to `authRuntime(...)` at the call site (codegen
+// always emits an inline object literal), so e.g. `organization: true`
+// stays a literal, not a widened `boolean`.
+export interface AuthInstance<
+	TOptions extends AuthRuntimeInput = AuthRuntimeInput,
+> {
+	handler: (request: Request) => Promise<Response>;
+	api: AuthApi<TOptions>;
+	$Infer: {
+		Session: {
+			user: InferUser<{ auth: TOptions }>;
+			session: InferSession<{ auth: TOptions }>;
+		};
+	};
+}
 
 const AUTH_PREFIX = "/api/auth";
 
 // Per-env cache: Workers hand the same `env` object reference across
 // requests within a worker instance, so a WeakMap keyed on it lets us
-// initialize better-auth exactly once per isolate.
-const cache = new WeakMap<object, AuthInstance>();
+// initialize better-auth exactly once per isolate. Typed off `buildAuth`'s
+// own inferred return (whatever better-auth infers from the literal built
+// below) — internal plumbing never needs the honest `AuthInstance<TOptions>`
+// contract above; only the value handed into `context()` does (see the cast
+// there).
+const cache = new WeakMap<object, ReturnType<typeof buildAuth>>();
 
 function buildAuth(
 	env: Record<string, unknown>,
 	db: unknown,
 	options: AuthRuntimeInput,
-): AuthInstance {
+) {
 	const plugins: BetterAuthPlugin[] = [];
 
 	if (options.emailOtp !== false) {
@@ -74,6 +152,12 @@ function buildAuth(
 				sendVerificationOTP: async ({ email, otp }) => {
 					await options.callbacks?.sendOTP({ email, code: otp });
 				},
+				// Pinned, not options: the attempt cap is the actual brute-force
+				// gate (the verify path is only IP-limited), so it must never
+				// drift on a dependency bump.
+				otpLength: 6,
+				expiresIn: 300,
+				allowedAttempts: 3,
 			}),
 		);
 	}
@@ -145,7 +229,19 @@ function buildAuth(
 			provider: "sqlite",
 			// Map Better Auth's models to the framework-owned tables explicitly, so
 			// resolution never depends on the consumer's schema export names.
-			schema: { user, session, account, verification },
+			// organization/member/invitation only when the plugin is actually
+			// registered — the consumer only migrates those tables (via
+			// `@fcalell/plugin-auth/schema/organization`) when `organization` is
+			// enabled, so the adapter must never reference them otherwise.
+			schema: {
+				user,
+				session,
+				account,
+				verification,
+				...(options.organization
+					? { organization: organizationTable, member, invitation }
+					: {}),
+			},
 		}),
 		advanced: {
 			cookiePrefix: options.cookies?.prefix,
@@ -169,7 +265,13 @@ function buildAuth(
 			additionalFields: options.session?.additionalFields as any,
 			// Signed session cache: skips a D1 read on getSession for most
 			// authenticated requests (Workers/D1 best practice), ~5 min freshness.
-			cookieCache: { enabled: true, maxAge: 300 },
+			// Off for native: the cache sets a second `session_data` cookie
+			// alongside `session_token`, and React Native reliably round-trips
+			// only one cookie — the device ends up sending session_data without
+			// session_token, so every authed request resolves to no session.
+			cookieCache: options.expo
+				? { enabled: false }
+				: { enabled: true, maxAge: 300 },
 		},
 		user: options.user
 			? {
@@ -185,7 +287,7 @@ function getOrInitAuth(
 	env: unknown,
 	db: unknown,
 	options: AuthRuntimeInput,
-): AuthInstance {
+): ReturnType<typeof buildAuth> {
 	const envObj = env as object;
 	let auth = cache.get(envObj);
 	if (!auth) {
@@ -195,11 +297,75 @@ function getOrInitAuth(
 	return auth;
 }
 
-export default function authRuntime(
-	options: AuthRuntimeInput,
-): RuntimePlugin<"auth", object, { auth: AuthInstance }> {
+// OTP send is the email-bombing amplifier — the only auth route that gets a
+// per-email limit on top of the blanket per-IP one.
+const OTP_SEND_SUFFIX = "/email-otp/send-verification-otp";
+
+function tooManyRequests(): Response {
+	return new Response(JSON.stringify({ code: "TOO_MANY_REQUESTS" }), {
+		status: 429,
+		headers: { "content-type": "application/json" },
+	});
+}
+
+// Reads `email` off a cloned request body — the original must still reach
+// Better Auth unconsumed. A body that fails to parse, or carries no
+// non-empty string `email`, isn't an error here: the per-email check is
+// simply skipped (the per-IP limit still applies).
+async function readRequestEmail(request: Request): Promise<string | null> {
+	try {
+		const body: unknown = await request.clone().json();
+		if (body && typeof body === "object" && "email" in body) {
+			const email = (body as { email: unknown }).email;
+			if (typeof email === "string" && email.length > 0) return email;
+		}
+	} catch {
+		// not JSON / no body — skip the per-email check
+	}
+	return null;
+}
+
+async function checkRateLimit(
+	request: Request,
+	url: URL,
+	rateLimiter: { ip?: RateLimitBinding; email?: RateLimitBinding } | undefined,
+): Promise<Response | null> {
+	if (!rateLimiter) return null;
+
+	if (rateLimiter.ip) {
+		// Cloudflare-set and unspoofable — deliberately not X-Forwarded-For.
+		const ip = request.headers.get("cf-connecting-ip") ?? "unknown";
+		const result = await rateLimiter.ip.limit({ key: ip });
+		if (!result.success) return tooManyRequests();
+	}
+
+	if (rateLimiter.email && url.pathname.endsWith(OTP_SEND_SUFFIX)) {
+		const email = await readRequestEmail(request);
+		if (email) {
+			const result = await rateLimiter.email.limit({ key: emailKey(email) });
+			if (!result.success) return tooManyRequests();
+		}
+	}
+
+	return null;
+}
+
+export default function authRuntime<TOptions extends AuthRuntimeInput>(
+	options: TOptions,
+): RuntimePlugin<
+	"auth",
+	object,
+	{
+		auth: AuthInstance<TOptions>;
+		_rateLimiter?: { ip?: RateLimitBinding; email?: RateLimitBinding };
+	}
+> {
 	return {
 		name: "auth",
+		// context() reads upstream.db (the drizzle client dbRuntime provides) —
+		// declare the edge so createWorker runs db's context first regardless of
+		// `.use()` registration order.
+		dependsOn: ["db"],
 		validateEnv(env: unknown) {
 			const e = env as Record<string, unknown>;
 			if (!e[options.secretVar]) {
@@ -220,12 +386,48 @@ export default function authRuntime(
 		},
 		context(env, upstream) {
 			const u = upstream as { db: unknown };
-			return { auth: getOrInitAuth(env, u.db, options) };
+			const e = env as Record<string, unknown>;
+
+			const rateLimiter: { ip?: RateLimitBinding; email?: RateLimitBinding } =
+				{};
+			const ipBinding = options.rateLimiter?.ip.binding;
+			if (ipBinding && e[ipBinding]) {
+				rateLimiter.ip = e[ipBinding] as RateLimitBinding;
+			}
+			const emailBinding = options.rateLimiter?.email.binding;
+			if (emailBinding && e[emailBinding]) {
+				rateLimiter.email = e[emailBinding] as RateLimitBinding;
+			}
+
+			return {
+				// `getOrInitAuth` returns whatever better-auth infers from the
+				// literal built inside `buildAuth` — it structurally satisfies
+				// `AuthApi` (handler + api.getSession/hasPermission) at runtime;
+				// this cast is the one place we assert the honest, hand-declared
+				// `AuthInstance<TOptions>` contract stands in for better-auth's own
+				// (differently-parameterized) inferred type.
+				auth: getOrInitAuth(
+					env,
+					u.db,
+					options,
+				) as unknown as AuthInstance<TOptions>,
+				...(rateLimiter.ip || rateLimiter.email
+					? { _rateLimiter: rateLimiter }
+					: {}),
+			};
 		},
-		fetch(request, _env, upstream) {
+		async fetch(request, _env, upstream) {
 			const url = new URL(request.url);
 			if (!url.pathname.startsWith(AUTH_PREFIX)) return null;
-			const u = upstream as { auth: AuthInstance };
+			const u = upstream as {
+				auth: AuthInstance<TOptions>;
+				_rateLimiter?: { ip?: RateLimitBinding; email?: RateLimitBinding };
+				_devMode?: boolean;
+			};
+			if (!u._devMode) {
+				const denied = await checkRateLimit(request, url, u._rateLimiter);
+				if (denied) return denied;
+			}
 			return u.auth.handler(request);
 		},
 	};

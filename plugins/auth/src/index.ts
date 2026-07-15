@@ -6,7 +6,9 @@ import { cliSlots } from "@fcalell/cli/cli-slots";
 import type { PluginRuntimeEntry } from "@fcalell/plugin-api";
 import { api } from "@fcalell/plugin-api";
 import { cloudflare } from "@fcalell/plugin-cloudflare";
+import { defaultOrgStatements, getStatements } from "./access";
 import {
+	type AuthCallbackPayloads,
 	authOptionsSchema,
 	type ResolvedAuthOptions,
 	resolveSocialProviders,
@@ -86,12 +88,16 @@ const runtimeOptions = slot.derived({
 		// without re-literalising the whole object.
 		//   • `callbacks` — owned by api.slots.callbacks and spliced in by
 		//     api's codegen; a consumer passing it in options would collide.
-		//   • `rateLimiter` — wrangler-binding config (limit/period are
-		//     enforced by the binding itself); the runtime accesses it via
-		//     env.RATE_LIMITER_*. Not part of AuthRuntimeInput.
 		const rawOptions = { ...(ctx.options as Record<string, unknown>) };
 		delete rawOptions.callbacks;
-		delete rawOptions.rateLimiter;
+		// `rateLimiter` — replace the full options object (limit/period are
+		// wrangler-binding config, enforced by the binding itself) with the
+		// binding names only, so the runtime knows which env keys to read for
+		// `_rateLimiter`. Schema defaults guarantee both are present.
+		rawOptions.rateLimiter = {
+			ip: { binding: ctx.options.rateLimiter.ip.binding },
+			email: { binding: ctx.options.rateLimiter.email.binding },
+		};
 		// Bake resolved provider → env-var references (never the raw
 		// `true`/object input). Only var names are emitted; the runtime reads
 		// credentials from env. Drop the key entirely when no provider is set.
@@ -189,9 +195,14 @@ export const auth = plugin("auth", {
 
 	requires: ["api", "cloudflare", "db"],
 
+	// Payload shapes come from `AuthCallbackPayloads` (./types) — the single
+	// source shared with the worker runtime's `AuthCallbacks` interface
+	// (./worker/index.ts), so `defineCallbacks`'s inferred type and the
+	// worker-safe `AuthCallbacks` type consumers import from `./runtime` can
+	// never drift apart.
 	callbacks: {
-		sendOTP: callback<{ email: string; code: string }>(),
-		sendInvitation: callback.optional<{ email: string; orgName: string }>(),
+		sendOTP: callback<AuthCallbackPayloads["sendOTP"]>(),
+		sendInvitation: callback.optional<AuthCallbackPayloads["sendInvitation"]>(),
 	},
 
 	dependencies: {
@@ -208,7 +219,7 @@ export const auth = plugin("auth", {
 		// Init prompts: cookie prefix + optional organization feature toggle.
 		// `app.name` is captured from the contribution ctx (the orchestrator
 		// only hands `prompt` into `ask`, so we close over the value here).
-		// CLAUDE.md documents `app.name` as the default cookie prefix —
+		// `.knowledge/architecture/consumer-project.md` documents `app.name` as the default cookie prefix —
 		// hardcoding "app" leaked the wrong value into every fresh project.
 		cliSlots.initPrompts.contribute((ctx) => {
 			const cookiePrefixDefault = ctx.app.name;
@@ -239,6 +250,11 @@ export const auth = plugin("auth", {
 				},
 			};
 		}),
+
+		// better-auth needs `node:async_hooks` at runtime, which the Workers
+		// runtime only exposes under `nodejs_compat`. Unconditional — every
+		// auth configuration needs it.
+		cloudflare.slots.compatibilityFlags.contribute(() => "nodejs_compat"),
 
 		// Rate limiter bindings for IP + email.
 		cloudflare.slots.bindings.contribute(() => [
@@ -343,6 +359,33 @@ export const auth = plugin("auth", {
 					identifier: "authCallbacks",
 				},
 			};
+		}),
+
+		// RBAC action-name autocomplete for `procedure({ rbac: [...] })`.
+		// Contributed only when organization access control is enabled —
+		// `organization` absent/`false` leaves `api.slots.rbacStatements` at
+		// its `null` default (rbac still works, just without narrowed
+		// autocomplete). A custom `organization.ac` (a better-auth
+		// `createAccessControl(...)` result) is authoritative when supplied;
+		// otherwise fall back to the plugin's own default statements
+		// (`access.ts`'s `defaultOrgStatements`, backing `defaultOrgRoles`).
+		// Matches what `hasPermission` actually checks at runtime: better-auth
+		// authorizes off each role's own `.statements` (built from this same
+		// universe via `newRole`), never a separate `ac.statements` lookup — so
+		// the default-statements case is exactly the runtime-checked
+		// resource/action universe, not a guess.
+		api.slots.rbacStatements.contribute(() => {
+			const org = self.options.organization;
+			if (!org) return undefined;
+			const customStatements =
+				typeof org === "object"
+					? getStatements(
+							org.ac as
+								| { statements?: Record<string, readonly string[]> }
+								| undefined,
+						)
+					: undefined;
+			return customStatements ?? defaultOrgStatements;
 		}),
 	],
 });

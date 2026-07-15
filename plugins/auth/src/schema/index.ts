@@ -14,7 +14,15 @@
 // `verification` is required even for OAuth-only: it stores the OAuth `state` /
 // PKCE `codeVerifier` across the sign-in round-trip. Regenerate + diff this file
 // with `@better-auth/cli generate` after a Better Auth bump or a table-bearing
-// plugin (organization, twoFactor, …) is enabled.
+// plugin (organization, twoFactor, …) is enabled — the organization plugin's own
+// tables (`organization` / `member` / `invitation`) live in `./organization.ts`,
+// shipped from the `@fcalell/plugin-auth/schema/organization` subpath and
+// re-exported by the consumer only when `organization` is enabled (see
+// plugins/auth/README.md). `session.activeOrganizationId` below is the one
+// organization-plugin field that lands here instead: it's a column on this
+// always-present table, not a new one, so it can't be gated behind the
+// separate subpath — nullable, so it's a no-op for consumers who never enable
+// organizations.
 import {
 	index,
 	integer,
@@ -58,6 +66,10 @@ export const session = sqliteTable(
 		userId: text("user_id")
 			.notNull()
 			.references(() => user.id, { onDelete: "cascade" }),
+		// Set by the organization plugin's active-organization session hooks;
+		// unused (always null) unless `organization` is enabled. No FK
+		// constraint — better-auth's own field def carries none either.
+		activeOrganizationId: text("active_organization_id"),
 	},
 	(table) => [index("session_userId_idx").on(table.userId)],
 );

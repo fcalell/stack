@@ -33,20 +33,61 @@ vi.mock("expo-apple-authentication", () => ({
 import {
 	type AuthClient,
 	createAuthClient,
+	sendEmailOtp,
 	signInWithApple,
 	signInWithAppleNative,
+	signInWithEmailOtp,
 	signInWithGoogle,
 	signInWithGoogleNative,
 } from "./expo";
 
 describe("createAuthClient", () => {
-	it("builds a client exposing social sign-in", () => {
+	it("builds a client exposing social + email-OTP sign-in", () => {
 		const client = createAuthClient({
 			baseURL: "https://api.test",
 			scheme: "wenauti",
 			storage: {} as never,
 		});
 		expect(typeof client.signIn.social).toBe("function");
+		expect(typeof client.signIn.emailOtp).toBe("function");
+		expect(typeof client.emailOtp.sendVerificationOtp).toBe("function");
+	});
+});
+
+describe("email OTP helpers", () => {
+	function fakeClient() {
+		const sendVerificationOtp = vi
+			.fn()
+			.mockResolvedValue({ data: { success: true }, error: null });
+		const emailOtp = vi.fn().mockResolvedValue({ data: {}, error: null });
+		const client = {
+			emailOtp: { sendVerificationOtp },
+			signIn: { emailOtp },
+		} as unknown as AuthClient;
+		return { client, sendVerificationOtp, emailOtp };
+	}
+
+	it("sendEmailOtp requests a sign-in OTP for the email", async () => {
+		const { client, sendVerificationOtp } = fakeClient();
+		await sendEmailOtp(client, "skipper@example.com");
+		expect(sendVerificationOtp).toHaveBeenCalledWith({
+			email: "skipper@example.com",
+			type: "sign-in",
+		});
+	});
+
+	it("signInWithEmailOtp includes the name only when provided", async () => {
+		const { client, emailOtp } = fakeClient();
+		await signInWithEmailOtp(client, {
+			email: "skipper@example.com",
+			otp: "123456",
+			name: "Mario",
+		});
+		expect(emailOtp).toHaveBeenCalledWith({
+			email: "skipper@example.com",
+			otp: "123456",
+			name: "Mario",
+		});
 	});
 });
 

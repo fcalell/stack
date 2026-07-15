@@ -1,4 +1,5 @@
 import { expoClient } from "@better-auth/expo/client";
+import { emailOTPClient } from "better-auth/client/plugins";
 import { createAuthClient as createBetterAuthClient } from "better-auth/react";
 import type { AppleAuthenticationScope } from "expo-apple-authentication";
 import { createContext, type ReactNode, useContext } from "react";
@@ -33,6 +34,10 @@ export function createAuthClient(config: AuthClientConfig) {
 				storagePrefix: config.storagePrefix ?? config.scheme,
 				storage: config.storage,
 			}),
+			// Passwordless email sign-in alongside the social providers. The server
+			// enables it via `emailOtp` (on by default); screens drive it through the
+			// `sendEmailOtp` / `signInWithEmailOtp` helpers below.
+			emailOTPClient(),
 		],
 	});
 }
@@ -189,5 +194,35 @@ export async function signInWithAppleNative(
 	return client.signIn.social({
 		provider: "apple",
 		idToken: { token: idToken, nonce: options?.nonce, user },
+	});
+}
+
+// ── Email OTP sign-in ───────────────────────────────────────────────
+//
+// A passwordless email option alongside the social providers: the worker emails
+// a one-time code (via the consumer's `sendOTP` callback), the user enters it,
+// and a session is issued. No deep link or native module — works in Expo Go and
+// before OAuth credentials exist. Enabled on the server by `emailOtp` (on by
+// default); `emailOTPClient()` (wired above) exposes the client methods.
+
+export function sendEmailOtp(client: AuthClient, email: string) {
+	return client.emailOtp.sendVerificationOtp({ email, type: "sign-in" });
+}
+
+export interface EmailOtpSignInOptions {
+	email: string;
+	otp: string;
+	// Display name, used only when this email registers for the first time.
+	name?: string;
+}
+
+export function signInWithEmailOtp(
+	client: AuthClient,
+	options: EmailOtpSignInOptions,
+) {
+	return client.signIn.emailOtp({
+		email: options.email,
+		otp: options.otp,
+		...(options.name ? { name: options.name } : {}),
 	});
 }

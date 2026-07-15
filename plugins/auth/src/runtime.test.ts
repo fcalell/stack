@@ -103,9 +103,20 @@ describe("authRuntime", () => {
 			const upstream = runtime.context(validEnv, { db: mockDb }) as {
 				auth: unknown;
 			};
-			const result = await runtime.fetch?.(request, validEnv, {
-				...upstream,
-			});
+			const result = await runtime.fetch?.(
+				request,
+				validEnv,
+				// `fetch`'s upstream param is typed against the honest
+				// `AuthInstance<TOptions>` contract (api/$Infer) real codegen
+				// always supplies; this test only exercises the non-auth-path
+				// short-circuit, so the mock upstream deliberately doesn't carry
+				// that shape. Cast through `unknown` — same escape hatch TS
+				// itself suggests for a narrowing assertion with no provable
+				// overlap.
+				{ ...upstream } as unknown as Parameters<
+					NonNullable<typeof runtime.fetch>
+				>[2],
+			);
 			expect(result).toBeNull();
 		});
 
@@ -117,11 +128,248 @@ describe("authRuntime", () => {
 			const upstream = {
 				db: mockDb,
 				auth: { handler },
-			};
+			} as unknown as Parameters<NonNullable<typeof runtime.fetch>>[2];
 			const request = new Request("http://localhost/api/auth/sign-in");
 			const result = await runtime.fetch?.(request, validEnv, upstream);
 			expect(handler).toHaveBeenCalledWith(request);
 			expect(result).toBeInstanceOf(Response);
+		});
+	});
+
+	// WS2.3: `_rateLimiter` is what `context()` hands to `fetch()` (and to the
+	// per-procedure oRPC middleware, via the same upstream ctx object).
+	describe("context — _rateLimiter", () => {
+		const rateLimiterOpts = {
+			...baseOpts,
+			rateLimiter: {
+				ip: { binding: "RATE_LIMITER_IP" },
+				email: { binding: "RATE_LIMITER_EMAIL" },
+			},
+		};
+
+		it("builds _rateLimiter from env when both bindings are present", () => {
+			const runtime = authRuntime(rateLimiterOpts);
+			const ipBinding = { limit: vi.fn() };
+			const emailBinding = { limit: vi.fn() };
+			const env = {
+				...validEnv,
+				RATE_LIMITER_IP: ipBinding,
+				RATE_LIMITER_EMAIL: emailBinding,
+			};
+			const result = runtime.context(env, { db: mockDb }) as {
+				_rateLimiter?: { ip?: unknown; email?: unknown };
+			};
+			expect(result._rateLimiter?.ip).toBe(ipBinding);
+			expect(result._rateLimiter?.email).toBe(emailBinding);
+		});
+
+		it("includes only the binding actually present in env", () => {
+			const runtime = authRuntime(rateLimiterOpts);
+			const ipBinding = { limit: vi.fn() };
+			const result = runtime.context(
+				{ ...validEnv, RATE_LIMITER_IP: ipBinding },
+				{ db: mockDb },
+			) as { _rateLimiter?: { ip?: unknown; email?: unknown } };
+			expect(result._rateLimiter?.ip).toBe(ipBinding);
+			expect(result._rateLimiter?.email).toBeUndefined();
+		});
+
+		it("omits _rateLimiter entirely when neither binding is present in env", () => {
+			const runtime = authRuntime(rateLimiterOpts);
+			const result = runtime.context({ ...validEnv }, { db: mockDb }) as {
+				_rateLimiter?: unknown;
+			};
+			expect(result._rateLimiter).toBeUndefined();
+		});
+
+		it("omits _rateLimiter when no rateLimiter option was configured at all", () => {
+			const runtime = authRuntime(baseOpts);
+			const env = { ...validEnv, RATE_LIMITER_IP: { limit: vi.fn() } };
+			const result = runtime.context(env, { db: mockDb }) as {
+				_rateLimiter?: unknown;
+			};
+			expect(result._rateLimiter).toBeUndefined();
+		});
+	});
+
+	// WS2.3: per-IP + per-email throttling of the Better Auth surface.
+	describe("fetch — rate limiting (WS2.3)", () => {
+		function successHandler() {
+			return vi.fn().mockResolvedValue(new Response("ok", { status: 200 }));
+		}
+
+		// `fetch`'s upstream param is typed against the honest
+		// `AuthInstance<TOptions>` contract (api/$Infer) real codegen always
+		// supplies; these tests exercise rate-limiting/handler-forwarding
+		// behavior with minimal `auth` stand-ins that don't carry that shape.
+		// Cast through `unknown` — same escape hatch TS itself suggests for a
+		// narrowing assertion with no provable overlap.
+		type FetchUpstream = Parameters<
+			NonNullable<ReturnType<typeof authRuntime<typeof baseOpts>>["fetch"]>
+		>[2];
+
+		it("returns 429 with TOO_MANY_REQUESTS when the ip limiter denies", async () => {
+			const runtime = authRuntime(baseOpts);
+			const ipLimit = vi.fn().mockResolvedValue({ success: false });
+			const upstream = {
+				auth: { handler: successHandler() },
+				_rateLimiter: { ip: { limit: ipLimit } },
+			} as unknown as FetchUpstream;
+			const request = new Request("http://localhost/api/auth/get-session", {
+				headers: { "cf-connecting-ip": "1.2.3.4" },
+			});
+			const result = await runtime.fetch?.(request, validEnv, upstream);
+			expect(result?.status).toBe(429);
+			expect(await result?.json()).toEqual({ code: "TOO_MANY_REQUESTS" });
+			expect(ipLimit).toHaveBeenCalledWith({ key: "1.2.3.4" });
+		});
+
+		it("keys the ip limiter on 'unknown' when cf-connecting-ip is missing", async () => {
+			const runtime = authRuntime(baseOpts);
+			const ipLimit = vi.fn().mockResolvedValue({ success: true });
+			const upstream = {
+				auth: { handler: successHandler() },
+				_rateLimiter: { ip: { limit: ipLimit } },
+			} as unknown as FetchUpstream;
+			const request = new Request("http://localhost/api/auth/get-session");
+			await runtime.fetch?.(request, validEnv, upstream);
+			expect(ipLimit).toHaveBeenCalledWith({ key: "unknown" });
+		});
+
+		it("never throttles in dev mode, even when the limiter would deny", async () => {
+			const runtime = authRuntime(baseOpts);
+			const ipLimit = vi.fn().mockResolvedValue({ success: false });
+			const handler = successHandler();
+			const upstream = {
+				auth: { handler },
+				_rateLimiter: { ip: { limit: ipLimit } },
+				_devMode: true,
+			} as unknown as FetchUpstream;
+			const request = new Request("http://localhost/api/auth/get-session");
+			const result = await runtime.fetch?.(request, validEnv, upstream);
+			expect(ipLimit).not.toHaveBeenCalled();
+			expect(handler).toHaveBeenCalled();
+			expect(result?.status).toBe(200);
+		});
+
+		it("skips throttling silently when no _rateLimiter is on the upstream ctx", async () => {
+			const runtime = authRuntime(baseOpts);
+			const handler = successHandler();
+			const upstream = { auth: { handler } } as unknown as FetchUpstream;
+			const request = new Request("http://localhost/api/auth/get-session");
+			const result = await runtime.fetch?.(request, validEnv, upstream);
+			expect(handler).toHaveBeenCalled();
+			expect(result?.status).toBe(200);
+		});
+
+		it("applies the email limiter on the OTP-send path, keyed by the folded email", async () => {
+			const runtime = authRuntime(baseOpts);
+			const ipLimit = vi.fn().mockResolvedValue({ success: true });
+			const emailLimit = vi.fn().mockResolvedValue({ success: false });
+			const handler = successHandler();
+			const upstream = {
+				auth: { handler },
+				_rateLimiter: { ip: { limit: ipLimit }, email: { limit: emailLimit } },
+			} as unknown as FetchUpstream;
+			const request = new Request(
+				"http://localhost/api/auth/email-otp/send-verification-otp",
+				{
+					method: "POST",
+					body: JSON.stringify({
+						email: "Victim+1@Gmail.com",
+						type: "sign-in",
+					}),
+					headers: { "content-type": "application/json" },
+				},
+			);
+			const result = await runtime.fetch?.(request, validEnv, upstream);
+			expect(result?.status).toBe(429);
+			expect(emailLimit).toHaveBeenCalledWith({ key: "victim@gmail.com" });
+			expect(handler).not.toHaveBeenCalled();
+		});
+
+		it("does not apply the email limiter on non-OTP-send auth routes", async () => {
+			const runtime = authRuntime(baseOpts);
+			const emailLimit = vi.fn().mockResolvedValue({ success: false });
+			const handler = successHandler();
+			const upstream = {
+				auth: { handler },
+				_rateLimiter: { email: { limit: emailLimit } },
+			} as unknown as FetchUpstream;
+			const request = new Request("http://localhost/api/auth/get-session");
+			const result = await runtime.fetch?.(request, validEnv, upstream);
+			expect(emailLimit).not.toHaveBeenCalled();
+			expect(result?.status).toBe(200);
+		});
+
+		it("skips the per-email check (request still proceeds) when the body isn't valid JSON", async () => {
+			const runtime = authRuntime(baseOpts);
+			const emailLimit = vi.fn().mockResolvedValue({ success: false });
+			const handler = successHandler();
+			const upstream = {
+				auth: { handler },
+				_rateLimiter: { email: { limit: emailLimit } },
+			} as unknown as FetchUpstream;
+			const request = new Request(
+				"http://localhost/api/auth/email-otp/send-verification-otp",
+				{
+					method: "POST",
+					body: "not json",
+					headers: { "content-type": "application/json" },
+				},
+			);
+			const result = await runtime.fetch?.(request, validEnv, upstream);
+			expect(emailLimit).not.toHaveBeenCalled();
+			expect(result?.status).toBe(200);
+		});
+
+		it("skips the per-email check when the body has no string email", async () => {
+			const runtime = authRuntime(baseOpts);
+			const emailLimit = vi.fn().mockResolvedValue({ success: false });
+			const handler = successHandler();
+			const upstream = {
+				auth: { handler },
+				_rateLimiter: { email: { limit: emailLimit } },
+			} as unknown as FetchUpstream;
+			const request = new Request(
+				"http://localhost/api/auth/email-otp/send-verification-otp",
+				{
+					method: "POST",
+					body: JSON.stringify({ type: "sign-in" }),
+					headers: { "content-type": "application/json" },
+				},
+			);
+			const result = await runtime.fetch?.(request, validEnv, upstream);
+			expect(emailLimit).not.toHaveBeenCalled();
+			expect(result?.status).toBe(200);
+		});
+
+		// Better Auth must still read the real body — cloning for the email
+		// check must never consume the original request stream.
+		it("forwards the original, unconsumed request body to auth.handler", async () => {
+			const runtime = authRuntime(baseOpts);
+			const emailLimit = vi.fn().mockResolvedValue({ success: true });
+			const handler = vi.fn(async (req: Request) => {
+				const body = await req.json();
+				return new Response(JSON.stringify(body), { status: 200 });
+			});
+			const upstream = {
+				auth: { handler },
+				_rateLimiter: { email: { limit: emailLimit } },
+			} as unknown as FetchUpstream;
+			const request = new Request(
+				"http://localhost/api/auth/email-otp/send-verification-otp",
+				{
+					method: "POST",
+					body: JSON.stringify({ email: "a@example.com", type: "sign-in" }),
+					headers: { "content-type": "application/json" },
+				},
+			);
+			const result = await runtime.fetch?.(request, validEnv, upstream);
+			expect(await result?.json()).toEqual({
+				email: "a@example.com",
+				type: "sign-in",
+			});
 		});
 	});
 
@@ -199,7 +447,14 @@ describe("authRuntime", () => {
 		// instance an earlier test built for it.
 		it("enables the server expo() plugin when `expo` is set", () => {
 			const runtime = authRuntime({ ...baseOpts, expo: true });
-			const { auth } = runtime.context({ ...validEnv }, { db: mockDb }) as {
+			// `context()`'s `auth` is typed as the honest `AuthInstance<TOptions>`
+			// contract (api/$Infer), not the real better-auth instance's actual
+			// `.options` — cast through `unknown` (as TS itself suggests) to reach
+			// into the real runtime value for this internals-level assertion.
+			const { auth } = runtime.context(
+				{ ...validEnv },
+				{ db: mockDb },
+			) as unknown as {
 				auth: { options: { plugins?: Array<{ id?: string }> } };
 			};
 			const ids = (auth.options.plugins ?? []).map((p) => p.id);
@@ -208,26 +463,59 @@ describe("authRuntime", () => {
 
 		it("does not add the expo() plugin by default", () => {
 			const runtime = authRuntime(baseOpts);
-			const { auth } = runtime.context({ ...validEnv }, { db: mockDb }) as {
+			const { auth } = runtime.context(
+				{ ...validEnv },
+				{ db: mockDb },
+			) as unknown as {
 				auth: { options: { plugins?: Array<{ id?: string }> } };
 			};
 			const ids = (auth.options.plugins ?? []).map((p) => p.id);
 			expect(ids).not.toContain("expo");
 		});
 
-		it("enables the signed session cookie cache (avoids a D1 read per request)", () => {
+		it("enables the signed session cookie cache with a 5min maxAge (avoids a D1 read per request)", () => {
 			const runtime = authRuntime(baseOpts);
-			const { auth } = runtime.context({ ...validEnv }, { db: mockDb }) as {
+			const { auth } = runtime.context(
+				{ ...validEnv },
+				{ db: mockDb },
+			) as unknown as {
 				auth: {
-					options: { session?: { cookieCache?: { enabled?: boolean } } };
+					options: {
+						session?: { cookieCache?: { enabled?: boolean; maxAge?: number } };
+					};
 				};
 			};
-			expect(auth.options.session?.cookieCache?.enabled).toBe(true);
+			expect(auth.options.session?.cookieCache).toEqual({
+				enabled: true,
+				maxAge: 300,
+			});
+		});
+
+		// WS2.1: cookieCache sets a second `session_data` cookie alongside
+		// `session_token`. React Native reliably round-trips only one cookie, so
+		// a native device ends up sending session_data without session_token —
+		// every authed request would resolve to no session with the cache on.
+		it("disables the session cookie cache for native (expo) consumers", () => {
+			const runtime = authRuntime({ ...baseOpts, expo: true });
+			const { auth } = runtime.context(
+				{ ...validEnv },
+				{ db: mockDb },
+			) as unknown as {
+				auth: {
+					options: {
+						session?: { cookieCache?: { enabled?: boolean; maxAge?: number } };
+					};
+				};
+			};
+			expect(auth.options.session?.cookieCache).toEqual({ enabled: false });
 		});
 
 		it("reads the client IP from Cloudflare's cf-connecting-ip header", () => {
 			const runtime = authRuntime(baseOpts);
-			const { auth } = runtime.context({ ...validEnv }, { db: mockDb }) as {
+			const { auth } = runtime.context(
+				{ ...validEnv },
+				{ db: mockDb },
+			) as unknown as {
 				auth: {
 					options: {
 						advanced?: { ipAddress?: { ipAddressHeaders?: string[] } };
@@ -237,6 +525,43 @@ describe("authRuntime", () => {
 			expect(auth.options.advanced?.ipAddress?.ipAddressHeaders).toContain(
 				"cf-connecting-ip",
 			);
+		});
+	});
+
+	// WS2.2: the attempt cap is the actual brute-force gate for OTP verify (the
+	// route is only IP-limited otherwise), so these must be pinned constants,
+	// never left to drift on a better-auth dependency bump.
+	describe("email-otp security parameters are pinned", () => {
+		it("pins otpLength/expiresIn/allowedAttempts on the registered email-otp plugin", () => {
+			const runtime = authRuntime({
+				...baseOpts,
+				callbacks: { sendOTP: vi.fn() },
+			});
+			const { auth } = runtime.context(
+				{ ...validEnv },
+				{ db: mockDb },
+			) as unknown as {
+				auth: {
+					options: {
+						plugins?: Array<{
+							id?: string;
+							options?: {
+								otpLength?: number;
+								expiresIn?: number;
+								allowedAttempts?: number;
+							};
+						}>;
+					};
+				};
+			};
+			const emailOtpPlugin = (auth.options.plugins ?? []).find(
+				(p) => p.id === "email-otp",
+			);
+			expect(emailOtpPlugin?.options).toMatchObject({
+				otpLength: 6,
+				expiresIn: 300,
+				allowedAttempts: 3,
+			});
 		});
 	});
 });

@@ -47,9 +47,9 @@ Runtime secrets and email callbacks live in a separate file, scaffolded automati
 
 ```ts
 // src/worker/plugins/auth.ts
-import { auth } from "@fcalell/plugin-auth";
+import type { AuthCallbacks } from "@fcalell/plugin-auth/runtime";
 
-export default auth.defineCallbacks({
+const callbacks: AuthCallbacks = {
   sendOTP({ email, code }) {
     // TODO: send OTP email
     console.log(`OTP for ${email}: ${code}`);
@@ -58,10 +58,12 @@ export default auth.defineCallbacks({
     // TODO: send invitation email
     console.log(`Invitation for ${email} to ${orgName}`);
   },
-});
+};
+
+export default callbacks;
 ```
 
-`auth.defineCallbacks()` is a typed identity function -- it enforces the callback shapes declared via `callback<T>()` in the plugin definition. `sendOTP` is required; `sendInvitation` is optional (only needed when organizations are enabled).
+This file is imported by the **worker**, so it must only pull in worker-safe modules -- `@fcalell/plugin-auth/runtime` is the runtime subpath, never the plugin's `.` entrypoint (that one drags in the Node-side CLI codegen toolchain). `AuthCallbacks` enforces the same callback shapes declared via `callback<T>()` in the plugin definition -- both derive from one shared type, so they can't drift apart. `sendOTP` is required; `sendInvitation` is optional (only needed when organizations are enabled).
 
 When email-OTP is disabled (`emailOtp: false`, see OAuth-only below) there are no required callbacks -- the callback file is optional, and an OAuth-only app can omit it entirely.
 
@@ -148,7 +150,7 @@ type Session = InferSession<typeof config>;
 | `session.updateAge` | `number` | -- | Session refresh interval in seconds |
 | `session.additionalFields` | `Record<string, FieldConfig>` | -- | Extra session fields |
 | `user.additionalFields` | `Record<string, FieldConfig>` | -- | Extra user fields |
-| `organization` | `boolean \| { ac, roles, additionalFields }` | -- | Enable organizations |
+| `organization` | `boolean \| { ac, roles, additionalFields }` | -- | Enable organizations; requires re-exporting `@fcalell/plugin-auth/schema/organization` (see Database schema) |
 | `emailOtp` | `boolean` | `true` | Email one-time-password sign-in; `false` for OAuth-only |
 | `socialProviders.google` | `boolean \| { clientIdVar, clientSecretVar }` | -- | Enable Google OAuth (`true` = conventional var names) |
 | `socialProviders.apple` | `boolean \| { clientIdVar, clientSecretVar, appBundleIdentifier }` | -- | Enable Apple OAuth (`true` = conventional var names) |
@@ -190,6 +192,17 @@ export * from "@fcalell/plugin-auth/schema";
 ```
 
 The worker runtime passes these tables to `drizzleAdapter({ schema })` explicitly, so model resolution does not depend on the consumer's export names. Migrate with `plugin-db`'s drizzle-kit flow (`stack db push` / `generate` / `apply`) — **never** `@better-auth/cli migrate` (it is Kysely-only and no-ops for Drizzle). Re-run `@better-auth/cli generate` and diff after a Better Auth bump or when a table-bearing plugin (organization, …) is enabled.
+
+When `organization` is enabled, the organization plugin's own tables (`organization` / `member` / `invitation`) ship separately from the `@fcalell/plugin-auth/schema/organization` subpath — re-export them alongside the base schema:
+
+```ts
+// src/schema/index.ts
+export * from "@fcalell/plugin-auth/schema";
+export * from "@fcalell/plugin-auth/schema/organization";
+// ...your own tables
+```
+
+The worker runtime only references these tables in `drizzleAdapter({ schema })` when `organization` is actually configured, so an app that never enables it never needs this re-export.
 
 ## Runtime defaults
 
@@ -295,6 +308,21 @@ export const authClient = createAuthClient({
 into Node/test importers; the consumer passes the secure-store module directly.
 With `plugin-native-ui` this file is scaffolded for you at `src/lib/auth.ts`.
 
+The client also wires `emailOTPClient()`, so a passwordless email option is
+available alongside the social providers (works in Expo Go and before OAuth
+credentials exist). It needs no scheme or native module — the worker emails a code
+via the `sendOTP` callback, the user enters it, a session is issued:
+
+```tsx
+import { sendEmailOtp, signInWithEmailOtp } from "@fcalell/plugin-auth/expo";
+
+await sendEmailOtp(client, email);                 // → user receives a code
+await signInWithEmailOtp(client, { email, otp });  // → session issued
+```
+
+Requires the server `emailOtp` option (on by default) and a `sendOTP` callback in
+`src/worker/plugins/auth.ts`.
+
 ## Exports
 
 | Subpath | Purpose |
@@ -302,8 +330,10 @@ With `plugin-native-ui` this file is scaffolded for you at `src/lib/auth.ts`.
 | `@fcalell/plugin-auth` | `auth()`, `AuthOptions` |
 | `@fcalell/plugin-auth/access` | `createAccessControl()`, `getStatements()`, `defaultOrgRoles` |
 | `@fcalell/plugin-auth/infer` | `InferUser<T>`, `InferSession<T>` -- type utilities derived from config |
-| `@fcalell/plugin-auth/expo` | `createAuthClient()`, `AuthProvider`, `useAuthClient()`, `signInWith{Apple,Google}()` -- native client (runtime-only) |
-| `@fcalell/plugin-auth/runtime` | `authRuntime()` -- runtime plugin factory |
+| `@fcalell/plugin-auth/expo` | `createAuthClient()`, `AuthProvider`, `useAuthClient()`, `signInWith{Apple,Google}()`, `sendEmailOtp()` / `signInWithEmailOtp()` -- native client (runtime-only) |
+| `@fcalell/plugin-auth/runtime` | `authRuntime()`, `AuthCallbacks` -- runtime plugin factory + worker-safe callback file typing |
+| `@fcalell/plugin-auth/schema` | `user`, `session`, `account`, `verification` -- core identity tables (always re-exported) |
+| `@fcalell/plugin-auth/schema/organization` | `organization`, `member`, `invitation` -- organization tables (re-exported only when `organization` is enabled) |
 
 ## License
 
