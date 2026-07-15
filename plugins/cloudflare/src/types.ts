@@ -33,6 +33,7 @@ export interface CodegenWranglerPayload {
 	vars: Record<string, string>;
 	secrets: Array<{ name: string; devDefault: string }>;
 	compatibilityDate: string;
+	compatibilityFlags: string[];
 }
 
 // Default Workers compatibility date. Pinned so wrangler.toml generation is

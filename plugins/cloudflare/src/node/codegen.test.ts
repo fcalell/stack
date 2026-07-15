@@ -27,6 +27,7 @@ describe("aggregateWrangler", () => {
 		vars: {},
 		secrets: [],
 		compatibilityDate: "2025-01-01",
+		compatibilityFlags: [],
 	};
 
 	it("sets main to worker.ts in a freshly generated config", () => {
@@ -163,6 +164,24 @@ describe("aggregateWrangler", () => {
 				},
 			}),
 		).toThrow(/limit and period must be positive integers/);
+	});
+
+	it("rejects rate_limiter with a period other than 10 or 60", () => {
+		expect(() =>
+			aggregateWrangler({
+				consumerWrangler: null,
+				payload: {
+					...emptyPayload,
+					bindings: [
+						{
+							kind: "rate_limiter",
+							binding: "RATE_LIMITER_EMAIL",
+							simple: { limit: 3, period: 300 },
+						},
+					],
+				},
+			}),
+		).toThrow(/RATE_LIMITER_EMAIL.*period must be 10 or 60/);
 	});
 
 	it("rejects a route with no pattern", () => {

@@ -12,7 +12,7 @@ import type { CodegenWranglerPayload, WranglerBindingSpec } from "../types";
 // (1) FRAMEWORK_MANAGED_LISTS — consumer cannot specify; if present in the
 //     consumer file we throw with an actionable message. The framework owns
 //     these tables end-to-end (driven by plugin contributions to
-//     cloudflare.slots.bindings / routes).
+//     cloudflare.slots.bindings / routes / compatibilityFlags).
 // (2) FRAMEWORK_DEFAULTED_SCALARS — consumer wins if present; otherwise the
 //     framework supplies a default. (`name`, `compatibility_date`, `main`.)
 // (3) Everything else is consumer-only and passes through verbatim
@@ -28,6 +28,7 @@ const FRAMEWORK_MANAGED_LISTS = new Set<string>([
 	"r2_buckets",
 	"unsafe", // [unsafe.bindings] — rate_limiter
 	"routes",
+	"compatibility_flags",
 ]);
 
 const GENERATED_MAIN_VALUES = new Set([
@@ -123,9 +124,19 @@ export function aggregateWrangler(opts: {
 		);
 	}
 
-	// (1) Framework-managed list overlay — push every binding/route the plugins
-	// contributed. Consumer-side versions of these sections were rejected
-	// upstream by `rejectFrameworkManagedSections`, so we own these arrays.
+	// (1) Framework-managed list overlay — push every binding/route/flag the
+	// plugins contributed. Consumer-side versions of these sections were
+	// rejected upstream by `rejectFrameworkManagedSections`, so we own these
+	// arrays. `compatibility_flags` is a flat array (not an array-of-tables),
+	// so it's assigned onto `root` directly rather than via `arrayTables`.
+	// Deduped + sorted so output is deterministic regardless of contribution
+	// order; omitted entirely when nothing was contributed.
+	if (opts.payload.compatibilityFlags.length > 0) {
+		root.compatibility_flags = [
+			...new Set(opts.payload.compatibilityFlags),
+		].sort();
+	}
+
 	appendBindingsToTables(opts.payload.bindings, arrayTables);
 
 	for (const route of opts.payload.routes) {
@@ -340,9 +351,18 @@ function assertNoNamespaceCollisions(payload: CodegenWranglerPayload): void {
 }
 
 function appendBindingsToTables(
-	bindings: WranglerBindingSpec[],
+	rawBindings: WranglerBindingSpec[],
 	arrayTables: Array<{ path: string[]; entries: Record<string, TomlValue> }>,
 ): void {
+	// Canonical order: list-slot contributions arrive in config plugin-array
+	// order, but generated output must be byte-identical however the consumer
+	// orders `plugins:`. Names are unique (duplicate check above), so sorting
+	// by name within each kind-grouped section is total.
+	const bindings = [...rawBindings].sort((a, b) => {
+		const nameOf = (x: WranglerBindingSpec) =>
+			x.kind === "var" ? x.name : x.binding;
+		return nameOf(a).localeCompare(nameOf(b));
+	});
 	for (const b of bindings) {
 		if (b.kind !== "d1") continue;
 		const entry: Record<string, TomlValue> = {
@@ -381,6 +401,12 @@ function appendBindingsToTables(
 		) {
 			throw new Error(
 				`Invalid rate_limiter "${b.binding}": limit and period must be positive integers (got limit=${limit}, period=${period}).`,
+			);
+		}
+		// Cloudflare rate-limiter bindings only accept period 10 or 60 (seconds).
+		if (period !== 10 && period !== 60) {
+			throw new Error(
+				`Invalid rate_limiter "${b.binding}": period must be 10 or 60 (got period=${period}).`,
 			);
 		}
 		arrayTables.push({

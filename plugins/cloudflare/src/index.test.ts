@@ -23,6 +23,9 @@ const noopLog = {
 
 function makeCtxFactory(
 	perPluginOptions: Record<string, unknown> = {},
+	// Simulated on-disk files, keyed by path — presence in the map means
+	// `fileExists` reports true and `readFile` returns the given content.
+	files: Record<string, string> = {},
 ): GraphCtxFactory {
 	return {
 		app,
@@ -30,8 +33,8 @@ function makeCtxFactory(
 		log: noopLog,
 		ctxForPlugin: (name) => ({
 			options: perPluginOptions[name] ?? {},
-			fileExists: async () => false,
-			readFile: async () => "",
+			fileExists: async (p) => p in files,
+			readFile: async (p) => files[p] ?? "",
 			template: (n) => new URL(`file:///tmp/templates/${name}/${n}`),
 			scaffold: (n, target) => ({
 				source: new URL(`file:///tmp/templates/${name}/${n}`),
@@ -42,7 +45,10 @@ function makeCtxFactory(
 	};
 }
 
-function collectCloudflarePlugins(extras: GraphPlugin[] = []): {
+function collectCloudflarePlugins(
+	extras: GraphPlugin[] = [],
+	files: Record<string, string> = {},
+): {
 	plugins: GraphPlugin[];
 	ctxFactory: GraphCtxFactory;
 } {
@@ -54,7 +60,7 @@ function collectCloudflarePlugins(extras: GraphPlugin[] = []): {
 	};
 	return {
 		plugins: [cfPlugin, ...extras],
-		ctxFactory: makeCtxFactory(),
+		ctxFactory: makeCtxFactory({}, files),
 	};
 }
 
@@ -115,6 +121,37 @@ describe("cloudflare.slots.wranglerToml", () => {
 		expect(parsed.name).toBe("test-app");
 		expect(parsed.main).toBe("worker.ts");
 		expect(parsed.compatibility_date).toBeDefined();
+	});
+
+	it("omits compatibility_flags when no plugin contributes one", async () => {
+		const { plugins, ctxFactory } = collectCloudflarePlugins();
+		const g = buildGraph(plugins, ctxFactory);
+		const content = await g.resolve(cloudflare.slots.wranglerToml);
+		const parsed = parseToml(content) as { compatibility_flags?: string[] };
+		expect(parsed.compatibility_flags).toBeUndefined();
+	});
+
+	it("dedupes + sorts compatibility_flags contributed by multiple plugins", async () => {
+		const a: GraphPlugin = {
+			name: "a",
+			contributes: [
+				cloudflare.slots.compatibilityFlags.contribute(() => [
+					"zzz_flag",
+					"nodejs_compat",
+				]),
+			],
+		};
+		const b: GraphPlugin = {
+			name: "b",
+			contributes: [
+				cloudflare.slots.compatibilityFlags.contribute(() => "nodejs_compat"),
+			],
+		};
+		const { plugins, ctxFactory } = collectCloudflarePlugins([a, b]);
+		const g = buildGraph(plugins, ctxFactory);
+		const content = await g.resolve(cloudflare.slots.wranglerToml);
+		const parsed = parseToml(content) as { compatibility_flags?: string[] };
+		expect(parsed.compatibility_flags).toEqual(["nodejs_compat", "zzz_flag"]);
 	});
 
 	it("embeds D1 bindings contributed by sibling plugins", async () => {
@@ -248,13 +285,48 @@ describe("cloudflare → cli.slots", () => {
 		const devVars = files.find((f) => f.path === ".dev.vars");
 		expect(devVars).toBeDefined();
 		expect(devVars?.content).toContain("AUTH_SECRET=dev-secret");
+		expect(devVars?.content).toContain("STACK_DEV=1");
 	});
 
-	it("skips .dev.vars when no secrets are contributed", async () => {
+	// STACK_DEV is the local-dev signal the worker runtime reads via
+	// `_devMode`; it must be present even for worker-only projects with no
+	// secrets contributed at all, and it must not be routed through the
+	// `secrets` slot (that would make it a deploy-time secret prompt).
+	it("always emits .dev.vars with STACK_DEV=1, even with no secrets contributed", async () => {
 		const { plugins, ctxFactory } = collectCloudflarePlugins();
 		const g = buildGraph(plugins, ctxFactory);
 		const files = await g.resolve(cliSlots.artifactFiles);
-		expect(files.find((f) => f.path === ".dev.vars")).toBeUndefined();
+		const devVars = files.find((f) => f.path === ".dev.vars");
+		expect(devVars).toBeDefined();
+		expect(devVars?.content).toContain("STACK_DEV=1");
+	});
+
+	// Pre-STACK_DEV consumers have a `.dev.vars` with no STACK_DEV line — the
+	// contribution must append it (never rewrite existing lines) so local dev
+	// stops throttling on the next `stack generate`.
+	it("appends STACK_DEV=1 to an existing .dev.vars missing it", async () => {
+		const { plugins, ctxFactory } = collectCloudflarePlugins([], {
+			".dev.vars": "SOME_SECRET=abc\n",
+		});
+		const g = buildGraph(plugins, ctxFactory);
+		const files = await g.resolve(cliSlots.artifactFiles);
+		const devVars = files.find((f) => f.path === ".dev.vars");
+		expect(devVars).toBeDefined();
+		expect(devVars?.content).toBe(
+			"SOME_SECRET=abc\n# STACK_DEV marks local dev; never set in production.\nSTACK_DEV=1\n",
+		);
+	});
+
+	// An explicit STACK_DEV (any value, including "0") is a consumer decision —
+	// never overwritten.
+	it("leaves an existing .dev.vars with STACK_DEV already present untouched", async () => {
+		const { plugins, ctxFactory } = collectCloudflarePlugins([], {
+			".dev.vars": "SOME_SECRET=abc\nSTACK_DEV=0\n",
+		});
+		const g = buildGraph(plugins, ctxFactory);
+		const files = await g.resolve(cliSlots.artifactFiles);
+		const devVars = files.find((f) => f.path === ".dev.vars");
+		expect(devVars).toBeUndefined();
 	});
 
 	it("contributes a postWrite hook (wrangler types shell-out)", async () => {

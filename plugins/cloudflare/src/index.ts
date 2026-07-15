@@ -40,6 +40,11 @@ const secrets = slot.list<{ name: string; devDefault: string }>({
 	name: "secrets",
 });
 
+const compatibilityFlags = slot.list<string>({
+	source: SOURCE,
+	name: "compatibilityFlags",
+});
+
 // Pinned to a plugin-shipped constant so wrangler.toml generation is
 // deterministic from (config + plugin version), not today's wall clock.
 // Seeding with `new Date()` broke generate-to-generate reproducibility across
@@ -64,6 +69,7 @@ const wranglerToml = slot.derived({
 		vars,
 		secrets,
 		compatibilityDate,
+		compatibilityFlags,
 	},
 	compute: (inp, ctx): string => {
 		const consumerWranglerPath = join(ctx.cwd, "wrangler.toml");
@@ -78,6 +84,7 @@ const wranglerToml = slot.derived({
 				vars: inp.vars,
 				secrets: inp.secrets,
 				compatibilityDate: inp.compatibilityDate,
+				compatibilityFlags: inp.compatibilityFlags,
 			},
 			name: ctx.app.name,
 		});
@@ -95,6 +102,7 @@ export const cloudflare = plugin("cloudflare", {
 		vars,
 		secrets,
 		compatibilityDate,
+		compatibilityFlags,
 		wranglerToml,
 	},
 
@@ -103,15 +111,31 @@ export const cloudflare = plugin("cloudflare", {
 		// binding/route/var/secret contribution structurally.
 		emitArtifact(".stack/wrangler.toml", self.slots.wranglerToml),
 
-		// Emit `.dev.vars` from contributed secrets when there are any and the
-		// consumer hasn't already written one. Mirrors the behaviour of the
-		// old Generate handler.
+		// Emit `.dev.vars` unless the consumer already has one — but a
+		// pre-existing file missing STACK_DEV still gets it appended, so
+		// projects generated before STACK_DEV existed pick it up instead of
+		// throttling forever in local dev. STACK_DEV never goes through the
+		// `secrets` slot — it must never become a `wrangler secret put` deploy
+		// prompt.
 		cliSlots.artifactFiles.contribute(async (ctx) => {
+			const stackDevLine =
+				"# STACK_DEV marks local dev; never set in production.\nSTACK_DEV=1\n";
+			const exists = await ctx.fileExists(".dev.vars");
+			if (exists) {
+				const existing = await ctx.readFile(".dev.vars");
+				if (/^STACK_DEV=/m.test(existing)) return undefined;
+				const separator = existing.endsWith("\n") ? "" : "\n";
+				return {
+					path: ".dev.vars",
+					content: `${existing}${separator}${stackDevLine}`,
+				};
+			}
 			const resolvedSecrets = await ctx.resolve(self.slots.secrets);
-			const content = aggregateDevVars(resolvedSecrets);
-			if (content === null) return undefined;
-			if (existsSync(join(ctx.cwd, ".dev.vars"))) return undefined;
-			return { path: ".dev.vars", content };
+			const secretsContent = aggregateDevVars(resolvedSecrets) ?? "";
+			return {
+				path: ".dev.vars",
+				content: `${stackDevLine}${secretsContent}`,
+			};
 		}),
 
 		// After `.stack/wrangler.toml` is on disk, shell out to `wrangler types`
