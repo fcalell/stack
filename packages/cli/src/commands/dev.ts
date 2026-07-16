@@ -1,5 +1,5 @@
-import { existsSync, type FSWatcher, watch } from "node:fs";
-import { join } from "node:path";
+import { existsSync, type FSWatcher, statSync, watch } from "node:fs";
+import { basename, join } from "node:path";
 import { intro, log } from "@clack/prompts";
 import pc from "picocolors";
 import { generateFromConfig } from "#commands/generate";
@@ -62,6 +62,19 @@ export function attachWatcher(args: {
 	let pendingFilename: string | null = null;
 	const handle = watch(fullPath, { recursive: true }, (_event, filename) => {
 		if (!filename) return;
+		// macOS FSEvents emits a directory-level event, keyed by the directory's
+		// name (the watch root reports under its own basename), alongside every
+		// per-file event. A directory name carries no file identity, so the
+		// `ignore` filter can't apply to it — a watcher whose handler writes into
+		// an ignored path would loop. Skip directory events; the per-file event
+		// they accompany still fires the handler.
+		try {
+			if (statSync(join(fullPath, filename)).isDirectory()) return;
+		} catch {
+			// Target doesn't exist: a real unlink (fire), or the watch root
+			// aliased to its own basename (skip).
+			if (filename === basename(fullPath)) return;
+		}
 		if (spec.ignore?.some((pattern: string) => filename.includes(pattern)))
 			return;
 		// Fire on the most recent filename in the burst — matches user intent

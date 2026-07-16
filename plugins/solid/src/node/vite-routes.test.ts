@@ -1,5 +1,11 @@
 import { EventEmitter } from "node:events";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import {
+	mkdirSync,
+	mkdtempSync,
+	realpathSync,
+	rmSync,
+	writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { Logger, Plugin, ViteDevServer } from "vite";
@@ -125,7 +131,11 @@ describe("routesPlugin — path normalization", () => {
 	let pagesDir: string;
 
 	beforeEach(() => {
-		cwd = mkdtempSync(join(tmpdir(), "plugin-solid-vr-"));
+		// realpathSync: macOS tmpdir is a symlink (/var → /private/var) while
+		// process.cwd() always returns the resolved path, and the plugin keys
+		// everything off cwd. Unresolved fixture paths would fail its
+		// startsWith checks for reasons no real consumer can reproduce.
+		cwd = realpathSync(mkdtempSync(join(tmpdir(), "plugin-solid-vr-")));
 		pagesDir = join(cwd, "src/app/pages");
 		mkdirSync(pagesDir, { recursive: true });
 		writeFileSync(join(pagesDir, "index.tsx"), "export default () => null;");
@@ -258,7 +268,7 @@ describe("routesPlugin — per-instance missing-pages-dir warning", () => {
 
 	beforeEach(() => {
 		// cwd has no pages dir.
-		cwd = mkdtempSync(join(tmpdir(), "plugin-solid-missing-"));
+		cwd = realpathSync(mkdtempSync(join(tmpdir(), "plugin-solid-missing-")));
 		process.chdir(cwd);
 	});
 
@@ -309,7 +319,7 @@ describe("routesPlugin — load() output vs filesystem layout", () => {
 	let pagesDir: string;
 
 	beforeEach(() => {
-		cwd = mkdtempSync(join(tmpdir(), "plugin-solid-load-"));
+		cwd = realpathSync(mkdtempSync(join(tmpdir(), "plugin-solid-load-")));
 		pagesDir = join(cwd, "src/app/pages");
 		mkdirSync(pagesDir, { recursive: true });
 		process.chdir(cwd);
@@ -384,15 +394,17 @@ describe("routesPlugin — pagesDir resolves from cwd, not config.root", () => {
 	let unrelatedConfigRoot: string;
 
 	beforeEach(() => {
-		projectRoot = mkdtempSync(join(tmpdir(), "plugin-solid-cwdroot-proj-"));
+		projectRoot = realpathSync(
+			mkdtempSync(join(tmpdir(), "plugin-solid-cwdroot-proj-")),
+		);
 		const pagesDir = join(projectRoot, "src/app/pages");
 		mkdirSync(pagesDir, { recursive: true });
 		writeFileSync(join(pagesDir, "marker.tsx"), "export default () => null;");
 
 		// Simulates `.stack`: a sibling directory that does NOT contain
 		// src/app/pages.
-		unrelatedConfigRoot = mkdtempSync(
-			join(tmpdir(), "plugin-solid-cwdroot-stack-"),
+		unrelatedConfigRoot = realpathSync(
+			mkdtempSync(join(tmpdir(), "plugin-solid-cwdroot-stack-")),
 		);
 
 		process.chdir(projectRoot);
