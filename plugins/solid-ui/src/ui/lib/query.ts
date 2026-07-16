@@ -10,7 +10,7 @@ import {
 	useQueryClient,
 } from "@tanstack/solid-query";
 
-// WS3.3 (docs/prd/backend-hardening.md): the default client `createApp`
+// WS3.3: the default client `createApp`
 // builds when the caller supplies no `queryClient` auto-invalidates on every
 // mutation success, unless the mutation opted out via
 // `meta: { skipAutoInvalidation: true }` -- the pattern `useMutation` below

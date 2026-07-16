@@ -164,7 +164,7 @@ describe("procedure types", () => {
 	});
 });
 
-// WS3.1 (docs/prd/backend-hardening.md): `reads`/`writes` narrow against the
+// WS3.1: `reads`/`writes` narrow against the
 // third `createProcedure` generic, the same way `rbac` narrows against
 // `TStatements` — a typo'd entity name is a type error, not a runtime miss.
 describe("procedure() reads/writes (WS3.1 entity vocabulary)", () => {
@@ -195,7 +195,7 @@ describe("procedure() reads/writes (WS3.1 entity vocabulary)", () => {
 	});
 });
 
-// WS6.2 (docs/prd/backend-hardening.md): `can: [action, resource]` -- action
+// WS6.2: `can: [action, resource]` -- action
 // first, the reverse of `rbac`'s `[resource, actions[]]` -- narrows against
 // the same `TStatements` generic `rbac` does. A tuple of exactly two
 // strings: no third (conditions) slot exists, so the org layer stays

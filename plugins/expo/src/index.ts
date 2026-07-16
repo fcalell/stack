@@ -406,7 +406,7 @@ export const expo = plugin("expo", {
 			return `http://localhost:${port}`;
 		}),
 
-		// Client version gate (docs/prd/backend-hardening.md WS4): walls
+		// Client version gate (WS4): walls
 		// native builds below the configured floor with 426 Upgrade Required.
 		// Dormant (no contribution) when `minNativeBuild` is absent or both
 		// platforms are at the floor default of 0 — a dormant gate must not
@@ -514,8 +514,8 @@ export const expo = plugin("expo", {
 			ctx.scaffold("eas.json.template", "eas.json"),
 		),
 
-		// The scaffolded native API client (docs/prd/backend-hardening.md
-		// WS4): a typed oRPC client stamped with the version-gate headers on
+		// The scaffolded native API client (WS4): a typed oRPC client stamped
+		// with the version-gate headers on
 		// every request via `createVersionGatedFetch()`. Copy-once, like
 		// `plugin-native-ui`'s `lib-query.ts`/`lib-auth.ts`: an editable
 		// starter, not a generated artifact.

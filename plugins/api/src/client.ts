@@ -52,7 +52,7 @@ export function createClient<TRouter>(
 				...init,
 				credentials: config?.credentials ?? "include",
 			});
-			// WS3.3 (docs/prd/backend-hardening.md): capture the entity headers
+			// WS3.3: capture the entity headers
 			// for cache invalidation. Never let a capture failure break the
 			// response passed back to the RPC link.
 			try {
@@ -69,7 +69,7 @@ export function createClient<TRouter>(
 
 	const client = createORPCClient<RouterClient<TRouter>>(link);
 
-	// WS6.3 (docs/prd/backend-hardening.md): the first client any consumer
+	// WS6.3: the first client any consumer
 	// creates becomes `useAbility()`'s default target, zero config. A later
 	// `createClient` call never overwrites it; an explicit `registerApiClient`
 	// always does (see ./ability-client.ts).

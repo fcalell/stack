@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 //
-// WS6.3 (docs/prd/backend-hardening.md) render-level coverage for the React
+// WS6.3 render-level coverage for the React
 // `useAbility` hook (item 10, PRD WS6.3 test bullet) — everything else in
 // this plugin exercises the framework-agnostic core (`ability-client.ts`,
 // `composeAbility`) directly; this file is the one place that actually

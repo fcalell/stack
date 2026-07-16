@@ -14,9 +14,6 @@ with ordered, independently-verifiable milestones and acceptance criteria.
 
 ## Active
 
-- [backend-hardening](./backend-hardening.md): runtime hardening for `plugin-api` / `plugin-auth`
-  (CSRF guard, error logging, OTP throttling, org tables), then entity-based cache invalidation, a
-  client version gate, and DB safety gates. Phased P0 → P2; P0 items ship one PR each.
 - [deploy-engine](./deploy-engine.md): reconcile, deploy lock, blocking gates, ordered run, and a
   reusable terminal UI for `stack deploy`, extracted from sailward's `tools/release`. Product-agnostic
   CLI machinery; `plugin-native-updates` consumes its surfaces.

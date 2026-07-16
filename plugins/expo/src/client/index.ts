@@ -19,7 +19,7 @@ function currentPlatform(): "ios" | "android" | null {
 
 // The wire contract's two headers, or `{}` when the build number/platform
 // can't be read. Never throws: the server-side gate fails open on missing
-// headers by design (docs/prd/backend-hardening.md WS4), so an undetectable
+// headers by design (WS4), so an undetectable
 // build degrades to "unwalled" rather than breaking every request.
 export function versionHeaders(): Record<string, string> {
 	const build = Application.nativeBuildVersion;

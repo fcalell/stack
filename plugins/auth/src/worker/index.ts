@@ -482,8 +482,8 @@ export default function authRuntime<TOptions extends AuthRuntimeInput>(
 				}
 			}
 		},
-		// Framework-owned org-rules procedure (WS6.2,
-		// docs/prd/backend-hardening.md): ships the caller's compiled org
+		// Framework-owned org-rules procedure (WS6.2): ships the caller's
+		// compiled org
 		// ability so the `useAbility` client hook can drive UI affordances from
 		// the same rules `hasPermission` checks server-side. Only registered
 		// when organizations are enabled — no `organization` plugin means no

@@ -7,7 +7,7 @@ import { createRoot } from "solid-js";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { useAbility } from "./ability";
 
-// WS6.3 (docs/prd/backend-hardening.md) render-level coverage for the Solid
+// WS6.3 render-level coverage for the Solid
 // `useAbility` primitive (item 10, PRD WS6.3 test bullet). No
 // `@solidjs/testing-library` is installed in this repo, and `useAbility`
 // itself only needs a real reactive owner + a `QueryClientContext` value to

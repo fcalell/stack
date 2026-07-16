@@ -4,8 +4,8 @@ import {
 	CLIENT_PLATFORM_HEADER,
 } from "../version-gate-shared";
 
-// Wire contract for the client version gate (docs/prd/backend-hardening.md
-// WS4). `@fcalell/plugin-expo/client` stamps these headers on every request
+// Wire contract for the client version gate (WS4). `@fcalell/plugin-expo/client`
+// stamps these headers on every request
 // from `expo-application` (build number) + `Platform.OS`; this module reads
 // them to decide whether to wall the request. Re-exported here so existing
 // importers of `@fcalell/plugin-expo/version-gate` see no change.

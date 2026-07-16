@@ -378,7 +378,7 @@ export const db = plugin("db", {
 				},
 			),
 
-			// Entity vocabulary handoff (WS3.2, docs/prd/backend-hardening.md) —
+			// Entity vocabulary handoff (WS3.2) —
 			// derives `api.slots.entities` from the consumer's Drizzle schema
 			// export names, for BOTH dialects (the vocabulary describes the
 			// schema, not the runtime). `undefined` (no `src/schema` dir, or the

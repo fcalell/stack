@@ -6,7 +6,7 @@ import { captureEntityHeaders } from "@fcalell/plugin-api/query-invalidation";
 import { describe, expect, it } from "vitest";
 import { createDefaultQueryClient } from "./query";
 
-// WS3.3 (docs/prd/backend-hardening.md): `createApp`'s default client (built
+// WS3.3: `createApp`'s default client (built
 // by `createDefaultQueryClient` when the caller supplies no `queryClient`)
 // gets the same auto-invalidation wiring as plugin-api's React client.
 // Exercised directly against the real `@tanstack/solid-query` `QueryClient`

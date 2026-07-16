@@ -9,7 +9,7 @@ import { type PackRule, unpackRules } from "@casl/ability/extra";
 import { ORPCError } from "@orpc/client";
 import { ORG_RULES_PATH } from "./wire.ts";
 
-// WS6.3 (docs/prd/backend-hardening.md): framework-agnostic core behind
+// WS6.3: framework-agnostic core behind
 // `useAbility()` for both react (expo, ./tanstack-query.tsx) and solid (web,
 // plugin-solid-ui's ui/lib/ability.ts). No react/solid imports here.
 

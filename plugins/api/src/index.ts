@@ -223,7 +223,7 @@ const rbacStatements = slot.value<Record<string, readonly string[]> | null>({
 });
 
 // Entity vocabulary for `procedure({ reads, writes })`'s type-level
-// autocomplete (WS3.1, docs/prd/backend-hardening.md) — a UNION across every
+// autocomplete (WS3.1) — a UNION across every
 // plugin that owns a set of entity names: plugin-db contributes the
 // consumer's Drizzle schema table export names, plugin-auth contributes its
 // own runtime-owned tables (`account`/`session`/`user`/`verification`, plus

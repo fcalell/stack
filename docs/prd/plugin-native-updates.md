@@ -33,7 +33,7 @@ before the first milestone since the package name is a durable surface.
 **Out:**
 
 - Native store builds and submission (EAS). That is `plugin-expo`'s deploy surface and pairs with the
-  client version gate (backend-hardening WS4).
+  shipped client version gate (`plugin-expo`).
 - The reconcile, lock, and TUI engine (deploy-engine PRD). This plugin consumes them.
 - Hot Updater's admin/console routes on the public worker (sailward keeps them off; the CLI talks to
   D1 and R2 directly).

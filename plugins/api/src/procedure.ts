@@ -40,7 +40,7 @@ type Rbac<TStatements extends DefaultStatements> = {
 // `rbac` (`rbac` is `[resource, actions[]]`, action last). A tuple of exactly
 // two strings: no third (conditions) element is structurally expressible, so
 // the org layer stays unconditional by construction (docs/prd/
-// backend-hardening.md WS6.2 non-goal -- statements have no conditions,
+// WS6.2 non-goal -- statements have no conditions,
 // conditions belong to the record-scoped ability layer instead).
 type Can<TStatements extends DefaultStatements> = {
 	[R in keyof TStatements & string]: readonly [TStatements[R][number], R];
@@ -50,7 +50,7 @@ interface BaseOptions<TEntity extends string = string> {
 	rateLimit?: RateLimitKind | readonly RateLimitKind[];
 	paginated?: boolean;
 	// Entities this procedure reads/writes, for automatic cache invalidation
-	// (docs/prd/backend-hardening.md WS3.1). Ships as `x-stack-reads` /
+	// (WS3.1). Ships as `x-stack-reads` /
 	// `x-stack-writes` response headers — see `createEntityHeadersMiddleware`.
 	reads?: readonly TEntity[];
 	writes?: readonly TEntity[];

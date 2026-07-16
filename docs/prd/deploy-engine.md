@@ -72,8 +72,8 @@ the holder; the lock clears after the first finishes and a later deploy proceeds
 
 Let a check refuse the deploy. Extend `DeployCheck` with a verdict: a check returns `blocking` with
 a reason, and the deploy aborts before any step runs. Informational checks keep today's shape. This
-unblocks backend-hardening WS5.1 (the destructive-migration gate is a blocking `deployChecks`
-contribution).
+gives the shipped destructive-migration gate (`plugin-db`'s `deployChecks` contribution) a graceful
+blocking verdict instead of its current throw-to-abort.
 
 **Test.** Integration: a check returning a blocking verdict aborts the deploy before steps run and
 prints the reason; a non-blocking check still runs its `action` and proceeds.

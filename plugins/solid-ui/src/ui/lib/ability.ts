@@ -6,7 +6,7 @@ import {
 } from "@fcalell/plugin-api/ability-client";
 import { useQuery } from "@tanstack/solid-query";
 
-// WS6.3 (docs/prd/backend-hardening.md): the solid analog of
+// WS6.3: the solid analog of
 // `@fcalell/plugin-api/tanstack-query`'s `useAbility`, built on the same
 // framework-agnostic core. Solid-style: the record layer and the return
 // value are both accessors, so the composed ability stays reactive to org

@@ -13,7 +13,7 @@ import type { AppRouter } from "../../.stack/worker";
 //
 // `fetch` stamps the native build number + platform on every request
 // (`@fcalell/plugin-expo/client`'s `versionHeaders()`) so a
-// `minNativeBuild` floor (docs/prd/backend-hardening.md WS4) can wall this
+// `minNativeBuild` floor (WS4) can wall this
 // build with 426 Upgrade Required. Subscribe to `onUpdateRequired` from the
 // same module to render an update-wall screen when that happens; this
 // client only carries the signal.

@@ -1,6 +1,6 @@
 import { STACK_READS_HEADER, STACK_WRITES_HEADER } from "./wire.ts";
 
-// WS3.3 (docs/prd/backend-hardening.md): the client-side half of entity-based
+// WS3.3: the client-side half of entity-based
 // cache invalidation. Framework-agnostic core -- no react/solid/node imports
 // -- consumed by `./client.ts` (capture point), `./tanstack-query.tsx`
 // (React wiring), and `plugin-solid-ui`'s app shell (Solid wiring).

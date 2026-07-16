@@ -41,7 +41,7 @@ const NATIVE_DEFAULTS: QueryClientConfig = {
 	},
 };
 
-// WS3.3 (docs/prd/backend-hardening.md): auto-invalidate on every mutation
+// WS3.3: auto-invalidate on every mutation
 // success unless the caller supplied its own `mutationCache` (they own
 // invalidation then) or the mutation opted out via
 // `meta: { skipAutoInvalidation: true }` (the pattern
@@ -100,7 +100,7 @@ export function QueryProvider(props: QueryProviderProps) {
 	);
 }
 
-// WS6.3 (docs/prd/backend-hardening.md): org-level authority everywhere,
+// WS6.3: org-level authority everywhere,
 // layered with a `PackedRules` field off any query the caller already has
 // (`useAbility(query.data.rules)`). Deny-all while the org rules query is
 // loading or errored -- `query.data` is `undefined` then, and

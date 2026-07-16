@@ -1,4 +1,4 @@
-// Record-scoped authorization (docs/prd/backend-hardening.md WS6.1 + the
+// Record-scoped authorization (WS6.1 + the
 // WS6.2 compile). A thin, typed wrapper over CASL's `MongoAbility` — CASL is
 // wrapped, never exposed: consumers must not install or import
 // `@casl/ability` directly, the same rule as drizzle/hono/zod. Isomorphic:

@@ -649,7 +649,7 @@ describe("api.slots.procedureSource", () => {
 		expect(src).toContain("type RbacStatements = Record<never, never>;");
 	});
 
-	// WS3.1 (docs/prd/backend-hardening.md): the entity vocabulary for
+	// WS3.1: the entity vocabulary for
 	// `procedure({ reads, writes })`'s type-level autocomplete. plugin-db
 	// contributes it in a separate task; here we only pin api's own
 	// null/empty fallback and that a third-party contribution renders.
