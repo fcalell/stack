@@ -74,6 +74,23 @@ Two consequences follow:
   before any version-gate floor raise, and the pre-release cohort stays un-wallable (accepted,
   measured by gate telemetry).
 
+## Decisions (2026-07-16, ui-core)
+
+- The two UI plugins theme in different languages: `plugin-solid-ui` ships a shadcn-vocabulary
+  sheet themed by CSS variable overrides, `plugin-native-ui` generates a Marina-vocabulary sheet
+  from a `themeTokens` hex record. [`ui-core.md`](./prd/ui-core.md) extracts the design-decision
+  layer into `packages/ui-core` (token contract, parametric OKLCH derivation, invariant CVA
+  matrices, shared `cn()`, design laws); both plugins render from it and accept one `theme` option
+  schema. `app.theme` was rejected: theme is UI-domain, `app` stays identity.
+- The sharing line: ui-core matrices hold platform-invariant cells only (fills, borders, ink,
+  padding rungs, radius, type role); interaction and state classes stay platform overlays.
+  Behavior, primitives, and a11y never share.
+- Marina's guardrails port as the contract: zeroed token namespaces (off-contract classes compile
+  to nothing), named spacing rungs, role-based type tokens, emphasis × tone variant axes. The
+  shadcn axis names in `plugin-solid-ui` retire; the API break is accepted.
+- ui-core runs parallel to the backend track (UI domain, no shared surfaces) and precedes any
+  React web UI plugin.
+
 ## Coverage map
 
 Sailward domain against stack status. "Tracked in" names the PRD workstream or the gap.
@@ -90,6 +107,7 @@ Sailward domain against stack status. "Tracked in" names the PRD workstream or t
 | CF deploy | wrangler | `plugin-cloudflare` | shipped; deploy-path faults in backend-parity WS1 |
 | Mobile | Expo + expo-router | `plugin-expo` + `native-ui` | shipped |
 | Web | SolidJS + Vite | `plugin-solid` / `solid-ui` / `vite` | shipped |
+| Design system | Marina (`global.css` + `src/ui` + design laws) | split vocabularies: `solid-ui` shadcn, `native-ui` Marina | ui-core PRD |
 | Dev multiplexer | mprocs | `stack dev` (supervise) | TUI upgrade in deploy-engine PRD |
 | Release orchestration | `tools/release` (Ink TUI) | linear `stack deploy` | deploy-engine PRD |
 | OTA updates | hot-updater | gap | plugin-native-updates PRD |
@@ -118,7 +136,9 @@ Notes on the partial rows:
   the [backend gap analysis](./analysis/sailward-backend-gaps.md); first in line, holds live
   consumer bugs). [`deploy-engine.md`](./prd/deploy-engine.md) (reconcile + lock + gates + enforced
   order + TUI, extracted from `tools/release`). [`plugin-native-updates.md`](./prd/plugin-native-updates.md)
-  (hot-updater domain; consumes the deploy-engine surfaces).
+  (hot-updater domain; consumes the deploy-engine surfaces). [`ui-core.md`](./prd/ui-core.md) (one
+  token contract + variant matrices + design laws for both UI plugins, extracted from Marina;
+  domain-parallel to the backend track).
 - **Parked:** i18n, observability (Sentry), and the follow-up plugin candidates below. Promote to a
   PRD only once sailward proves the shape, per the philosophy rule that a new consumer surface is the
   last resort.

@@ -13,8 +13,8 @@
 	},
 	"disableClaudeAiConnectors": true,
 	"deniedMcpServers": [
-		{ "serverName": "plugin:cloudflare:cloudflare-docs" },
-		{ "serverName": "plugin:cloudflare:cloudflare-bindings" },
-		{ "serverName": "plugin:cloudflare:cloudflare-builds" }
+		{ "serverName": "cloudflare-docs" },
+		{ "serverName": "cloudflare-bindings" },
+		{ "serverName": "cloudflare-builds" }
 	]
 }
