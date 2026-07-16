@@ -8,6 +8,10 @@ build
 .vite
 .stack
 
+# nix / direnv
+.direnv/
+.corepack/
+
 *.sqlite
 *.sqlite3
 *.db
