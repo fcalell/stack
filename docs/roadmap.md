@@ -55,37 +55,56 @@ Two consequences follow:
   the worker and seed share. This part ships unvalidated in-repo (no live wrangler here); smoke-test
   it against a real D1 before relying on d1 dev.
 
+## Decisions (2026-07-16, backend gap analysis)
+
+- The [sailward backend gap analysis](./analysis/sailward-backend-gaps.md) audited all six backend
+  domains code to code. The extraction is faithful (auth schemas column-identical bar one additive
+  column, same gate algorithms, matching dependency versions), but migration is blocked by four
+  clusters: the `x-sw-*` → `x-stack-*` wire rename, plugin-cloudflare deploy-path faults,
+  plugin-auth surface gaps, and the unvalidated production-D1 path. Findings carry stable IDs the
+  PRD references.
+- [`backend-parity.md`](./prd/backend-parity.md) is the PRD that closes them, sequenced ahead of
+  deploy-engine: several findings are live bugs in any stack consumer today (expo session-cookie
+  drop, rate-limiter codegen shape, secrets emitted as vars, session errors read as 401).
+- Env value validation and the analytics-engine binding kind are promoted from the parked list
+  into backend-parity WS6. Sailward proves both shapes live, so the promote-once-proven rule is
+  satisfied. Email and push stay parked; the analysis confirms they migrate as consumer code.
+- Wire compat (WIRE-1..3): header names stay `x-stack-*`, no rename option. Migrating consumers
+  mirror response headers in consumer middleware; sailward ships a dual-stamping client release
+  before any version-gate floor raise, and the pre-release cohort stays un-wallable (accepted,
+  measured by gate telemetry).
+
 ## Coverage map
 
 Sailward domain against stack status. "Tracked in" names the PRD workstream or the gap.
 
 | Domain | Sailward tech | Stack status | Tracked in |
 |--------|---------------|--------------|------------|
-| API / RPC | Hono + oRPC | `plugin-api` | shipped (hardening WS1) |
-| Auth | better-auth (+ expo) | `plugin-auth` | shipped (hardening WS2) |
-| Cache invalidation | oRPC `reads/writes` entity headers | `plugin-api` + `plugin-db` | shipped (hardening WS3) |
-| Native version gate | per-platform build floor, `426` | `plugin-expo` | shipped (hardening WS4) |
-| Authorization | CASL record-scoped abilities | `plugin-auth` + `plugin-api` | shipped (hardening WS6) |
-| DB safety | drizzle drift + destructive gates, seed | `plugin-db` | shipped (hardening WS5) |
-| DB workflow | `studio`, `watch:db:local`, `scenario` | gap | unplanned (see below) |
-| CF deploy | wrangler | `plugin-cloudflare` | shipped |
+| API / RPC | Hono + oRPC | `plugin-api` | shipped; parity gaps in backend-parity WS4/WS5 |
+| Auth | better-auth (+ expo) | `plugin-auth` | shipped; parity gaps in backend-parity WS3 |
+| Cache invalidation | oRPC `reads/writes` entity headers | `plugin-api` + `plugin-db` | shipped; wire compat in backend-parity WS5 |
+| Native version gate | per-platform build floor, `426` | `plugin-expo` | shipped; wire compat + telemetry in backend-parity WS5/WS6 |
+| Authorization | CASL record-scoped abilities | `plugin-auth` + `plugin-api` | shipped; ready with backend-parity WS4.4 |
+| DB safety | drizzle drift + destructive gates, seed | `plugin-db` | shipped; production path in backend-parity WS2 |
+| DB workflow | `studio`, `watch:db:local`, `scenario` | gap | unplanned (see below); d1 inner loop in backend-parity WS2.3 |
+| CF deploy | wrangler | `plugin-cloudflare` | shipped; deploy-path faults in backend-parity WS1 |
 | Mobile | Expo + expo-router | `plugin-expo` + `native-ui` | shipped |
 | Web | SolidJS + Vite | `plugin-solid` / `solid-ui` / `vite` | shipped |
 | Dev multiplexer | mprocs | `stack dev` (supervise) | TUI upgrade in deploy-engine PRD |
 | Release orchestration | `tools/release` (Ink TUI) | linear `stack deploy` | deploy-engine PRD |
 | OTA updates | hot-updater | gap | plugin-native-updates PRD |
 | Inner-loop gates | `check:proc-deps`, drift, destructive | `plugin-api` + `plugin-db` | shipped: WS3 `reads/writes` replaces proc-deps; WS5 drift + destructive |
-| Observability | Sentry (worker + mobile) | gap | parked (analytics-engine binding, a follow-up candidate below) |
+| Observability | Sentry (worker + mobile) | gap | Sentry parked; analytics-engine binding + gate telemetry in backend-parity WS6 |
 | i18n | expo-localization + `src/i18n` | gap | parked |
-| Email / push / env validation | CF Email, Expo push, env checks | gap | follow-up candidates (parked, below) |
+| Email / push / env validation | CF Email, Expo push, env checks | gap | email/push parked (below); env validation in backend-parity WS6.3 |
 | E2E | Maestro + storyboard + db scenarios | gap | unplanned (db scenario states deferred) |
 
 Notes on the partial rows:
 
 - **DB workflow.** The shipped db safety surface covers drift, destructive migrations, and seeding.
-  Sailward also ships `studio:db:local`, `watch:db:local`, and named `scenario` states. Named
-  scenarios are deferred; studio and watch are not yet tracked. Decide these when `plugin-db`
-  targets full consumer parity.
+  Sailward also ships `studio:db:local`, `watch:db:local`, and named `scenario` states. The d1
+  push/watch inner loop is backend-parity WS2.3; named scenarios are deferred and studio is not yet
+  tracked. Decide those when `plugin-db` targets full consumer parity.
 - **Inner-loop gates.** `check:proc-deps` exists in sailward only because the `reads/writes`
   annotation is a forgettable middleware. Stack makes the declaration a typed procedure option, so
   the gate is unnecessary. A generic cross-plugin `stack check` slot is out of scope; gates live in
@@ -95,7 +114,9 @@ Notes on the partial rows:
 
 - **Shipped and retired:** backend-hardening (WS1 through WS6). The parked follow-ups it recorded
   are folded into the next section.
-- **Drafted:** [`deploy-engine.md`](./prd/deploy-engine.md) (reconcile + lock + gates + enforced
+- **Drafted:** [`backend-parity.md`](./prd/backend-parity.md) (closes the blocking findings from
+  the [backend gap analysis](./analysis/sailward-backend-gaps.md); first in line, holds live
+  consumer bugs). [`deploy-engine.md`](./prd/deploy-engine.md) (reconcile + lock + gates + enforced
   order + TUI, extracted from `tools/release`). [`plugin-native-updates.md`](./prd/plugin-native-updates.md)
   (hot-updater domain; consumes the deploy-engine surfaces).
 - **Parked:** i18n, observability (Sentry), and the follow-up plugin candidates below. Promote to a
@@ -114,20 +135,21 @@ each waits until sailward proves the shape.
 - **Push notifications (`plugin-expo` or `plugin-push`).** A contributed `pushTokens` table and a
   `queuePush()` on the procedure context: `waitUntil` fire-and-forget (the `executionCtx` wiring
   shipped in WS1.3), 100-message Expo batching, automatic `DeviceNotRegistered` token pruning.
-- **Env value validation.** `validateEnv` checks presence only today. Extend `cloudflare.slots.secrets`
-  with an optional validation hint (min length, URL shape) and generate a once-per-isolate runtime
-  assertion. Consider the refuse-to-serve refinement: a non-production auth config on a non-localhost
-  URL fails fast.
-- **Analytics Engine binding kind on `plugin-cloudflare`.** A new binding kind that unblocks the
-  version-gate observability stretch (counting walled and header-less requests).
+
+Env value validation and the Analytics Engine binding kind, formerly parked here, are promoted
+into [backend-parity](./prd/backend-parity.md) WS6 (2026-07-16 decision above).
 
 ## Sequencing
 
 By leverage, not effort:
 
-1. Backport the shipped hardening and db gates to sailward so its eventual migration is a no-op.
-2. Open and execute the deploy-engine PRD, then `plugin-native-updates`. Largest and most
+1. Execute the [backend-parity](./prd/backend-parity.md) PRD. It gates the migration and holds
+   live consumer bugs; WS1/WS2 also de-risk the deploy path deploy-engine builds on.
+2. Backport the shipped hardening and db gates to sailward so its eventual migration is a no-op,
+   and ship the dual-stamping client release (backend-parity WS5's sailward-side half).
+3. Open and execute the deploy-engine PRD, then `plugin-native-updates`. Largest and most
    differentiated; the `tools/release` code is the design spec.
-3. Migrate sailward surface by surface as each plugin reaches parity.
-4. Decide the DB-workflow parity gap (studio, watch, named scenarios) when `plugin-db` targets full
+4. Migrate sailward surface by surface as each plugin reaches parity, backend order per the gap
+   analysis: db (history copy + additive auth migration) → worker shell → auth → clients.
+5. Decide the DB-workflow parity gap (studio, watch, named scenarios) when `plugin-db` targets full
    consumer parity.

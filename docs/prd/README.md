@@ -14,6 +14,11 @@ with ordered, independently-verifiable milestones and acceptance criteria.
 
 ## Active
 
+- [backend-parity](./backend-parity.md): close every blocking finding from the
+  [sailward backend gap analysis](../analysis/sailward-backend-gaps.md) so the live worker can
+  migrate: cloudflare deploy-path faults, the d1 production path, auth surface gaps, runtime
+  fixes, the wire-compat decision, and gate telemetry. Sequenced first; several findings are live
+  consumer bugs today.
 - [deploy-engine](./deploy-engine.md): reconcile, deploy lock, blocking gates, ordered run, and a
   reusable terminal UI for `stack deploy`, extracted from sailward's `tools/release`. Product-agnostic
   CLI machinery; `plugin-native-updates` consumes its surfaces.
