@@ -94,6 +94,42 @@ const db = createClient("./data/app.sqlite", schema);
 
 Both clients are cached (D1 via `WeakMap`, SQLite via `Map`) so it is safe to call `createClient` on every request without creating duplicate instances.
 
+### 4. Seed data (optional)
+
+Author `src/schema/seed.ts` with `defineSeed`/`seedTable` from `@fcalell/plugin-db/orm`. Rows are
+typed against each table's insert model — no column-name mapping, no SQL:
+
+```ts
+// src/schema/seed.ts
+import { defineSeed, seedTable } from "@fcalell/plugin-db/orm";
+import { projects } from "./index";
+
+export default defineSeed([
+  seedTable(projects, [
+    { id: "demo", name: "Demo project", createdAt: new Date() },
+  ]),
+]);
+```
+
+`stack db seed` applies it **idempotently**: rows upsert by primary key, then rows whose key left
+the seed are pruned (so user FK links survive via `ON DELETE SET NULL`); a primary-key-less table is
+replaced wholesale. The seed also runs automatically in `stack dev` (after schema apply, re-run when
+`seed.ts` changes) and on deploy (after migrations, when the file exists). `stack db seed --remote`
+targets the deployed D1.
+
+Every row must carry its primary key (that's what makes an upsert idempotent). Omit any other
+column to let its SQL `DEFAULT` apply.
+
+### Migration safety
+
+`stack db check` guards two failure modes and is also enforced as a pre-deploy gate:
+
+- **Drift** — `src/schema` changed but no migration was generated. Fix: `stack db generate`.
+- **Destructive change** — the newest migration drops a table, column, or view. A drop breaks the
+  live worker mid-rollout (old code still reads the dropped shape), so the deploy is blocked. Fix it
+  with expand/contract, or acknowledge an intentional drop by adding a `-- stack:allow-destructive`
+  line anywhere in that migration's `.sql`.
+
 ## Config options
 
 | Option | Type | Default | Description |
@@ -113,7 +149,9 @@ The plugin registers subcommands accessible via `stack db <command>`:
 | `stack db push` | Push schema to local database |
 | `stack db generate` | Generate migration files from schema diff |
 | `stack db apply [--remote]` | Apply pending migrations (local or remote D1) |
-| `stack db status` | Show applied vs pending migrations |
+| `stack db check` | Fail on schema drift or an unacknowledged destructive migration |
+| `stack db seed [--remote]` | Apply `src/schema/seed.ts` idempotently (local or remote D1) |
+| `stack db create` | Create a Cloudflare D1 database and print its id |
 | `stack db reset` | Reset local database (all data will be lost) |
 
 ## Bindings
@@ -140,7 +178,7 @@ export const db = plugin("db", {
   label: "Database",
   schema: dbOptionsSchema,
   requires: ["cloudflare", "api"],
-  commands: { push: { /* ... */ }, generate: { /* ... */ }, apply: { /* ... */ }, reset: { /* ... */ } },
+  commands: { push, generate, apply, check, seed, create, reset /* ... */ },
   dependencies: { "@fcalell/plugin-db": "workspace:*" },
   devDependencies: { "drizzle-kit": "^0.31.0", tsx: "^4.19.0" },
   gitignore: [".db-kit"],
@@ -150,10 +188,11 @@ export const db = plugin("db", {
       return { kind: "d1", binding: ctx.options.binding ?? "DB_MAIN", databaseId: ctx.options.databaseId };
     }),
     api.slots.pluginRuntimes.contribute(async (ctx) => /* dbRuntime entry */),
-    cliSlots.devReadySetup.contribute((ctx) => ({ name: "db-schema-push", run: async () => { /* ... */ } })),
-    cliSlots.devWatchers.contribute((ctx) => ({ name: "schema", paths: "src/schema/**", /* ... */ })),
-    cliSlots.deployChecks.contribute(async (ctx) => /* pending migrations */),
-    cliSlots.deploySteps.contribute((ctx) => /* applyMigrationsRemote */),
+    cliSlots.devReadySetup.contribute((ctx) => ({ name: "db-schema-apply", run: async () => { /* ... */ } })),
+    cliSlots.devReadySetup.contribute((ctx) => ({ name: "db-seed", run: async () => { /* ... */ } })),
+    cliSlots.devWatchers.contribute((ctx) => /* schema | migrations, plus a seed watcher */),
+    cliSlots.deployChecks.contribute(async (ctx) => /* pending migrations + destructive gate */),
+    cliSlots.deploySteps.contribute((ctx) => /* applyMigrationsRemote, then seed */),
     cliSlots.initPrompts.contribute(/* dialect + databaseId/path */),
     cliSlots.initScaffolds.contribute((ctx) => ctx.scaffold("schema.ts", "src/schema/index.ts")),
     cliSlots.removeFiles.contribute(() => ["src/schema/", "src/migrations/"]),
@@ -171,10 +210,10 @@ export const db = plugin("db", {
 | `api.slots.entities` | Sorted value-export names from `src/schema/index.ts` (both dialects) |
 | `cliSlots.initPrompts` | Asks for dialect, then database ID or SQLite path |
 | `cliSlots.initScaffolds` | Writes `src/schema/index.ts` from `templates/schema.ts` |
-| `cliSlots.devReadySetup` | Pushes schema to local DB once on start (serialized) |
-| `cliSlots.devWatchers` | Re-pushes on `src/schema/**` change (300ms debounce) |
-| `cliSlots.deployChecks` | Reports pending D1 migrations |
-| `cliSlots.deploySteps` | `applyMigrationsRemote` in the `pre` phase |
+| `cliSlots.devReadySetup` | Applies schema to the local DB, then seeds (sqlite pushes; d1 applies migrations into the miniflare D1 `wrangler dev` reads) |
+| `cliSlots.devWatchers` | sqlite: re-push on `src/schema/**`; d1: apply on `src/migrations/**`; re-seed on `src/schema/seed.ts` (300ms debounce) |
+| `cliSlots.deployChecks` | Pending D1 migrations, valid `databaseId`, and the destructive-migration hard gate |
+| `cliSlots.deploySteps` | `applyMigrationsRemote` then seed (when `seed.ts` exists), both `pre` phase |
 | `cliSlots.removeFiles` | `src/schema/`, `src/migrations/` |
 
 ### Runtime
@@ -195,7 +234,7 @@ Returns `{ db }` to downstream plugins via the builder's context accumulation.
 | Subpath | Purpose |
 |---------|---------|
 | `@fcalell/plugin-db` | `db()`, `DbOptions` |
-| `@fcalell/plugin-db/orm` | Drizzle table/column builders, operators, relations, aggregates |
+| `@fcalell/plugin-db/orm` | Drizzle table/column builders, operators, relations, aggregates, `defineSeed`/`seedTable` |
 | `@fcalell/plugin-db/d1` | `createClient()` for Cloudflare D1 |
 | `@fcalell/plugin-db/sqlite` | `createClient()` for SQLite (requires `better-sqlite3`) |
 | `@fcalell/plugin-db/runtime` | `dbRuntime()` -- runtime plugin factory |

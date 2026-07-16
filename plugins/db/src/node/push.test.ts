@@ -256,7 +256,16 @@ describe("applyMigrationsRemote", () => {
 
 		expect(mockedSpawnSync).toHaveBeenCalledWith(
 			"npx",
-			["wrangler", "d1", "migrations", "apply", "test-db-id", "--remote"],
+			[
+				"wrangler",
+				"d1",
+				"migrations",
+				"apply",
+				"test-db-id",
+				"--remote",
+				"--config",
+				".stack/wrangler.toml",
+			],
 			expect.objectContaining({ cwd: "/project" }),
 		);
 	});
@@ -303,7 +312,18 @@ describe("applyMigrationsLocal", () => {
 
 		expect(mockedSpawnSync).toHaveBeenCalledWith(
 			"npx",
-			["wrangler", "d1", "migrations", "apply", "test-db-id", "--local"],
+			[
+				"wrangler",
+				"d1",
+				"migrations",
+				"apply",
+				"test-db-id",
+				"--local",
+				"--persist-to",
+				".stack/dev",
+				"--config",
+				".stack/wrangler.toml",
+			],
 			expect.objectContaining({ cwd: "/project" }),
 		);
 	});

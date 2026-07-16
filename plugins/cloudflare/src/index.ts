@@ -143,11 +143,24 @@ export const cloudflare = plugin("cloudflare", {
 			};
 		}),
 
-		// Dev wrangler process — the worker target's local runtime.
+		// Dev wrangler process — the worker target's local runtime. `--config`
+		// points at the generated `.stack/wrangler.toml` (the consumer root has
+		// no wrangler config), and `--persist-to .stack/dev` fixes the local D1
+		// so schema pushes, seeds, and the running worker all share one
+		// miniflare database.
 		cliSlots.devProcesses.contribute(() => ({
 			name: "wrangler",
 			command: "npx",
-			args: ["wrangler", "dev", "--port", "8787", "--persist-to", ".stack/dev"],
+			args: [
+				"wrangler",
+				"dev",
+				"--config",
+				".stack/wrangler.toml",
+				"--port",
+				"8787",
+				"--persist-to",
+				".stack/dev",
+			],
 			defaultPort: 8787,
 			readyPattern: /Ready on/,
 			color: "yellow",

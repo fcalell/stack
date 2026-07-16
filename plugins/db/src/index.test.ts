@@ -388,20 +388,47 @@ describe("db → cli slots", () => {
 		expect(removeFiles).toContain("src/migrations/");
 	});
 
-	it("contributes a devReadySetup task for schema push", async () => {
+	it("contributes a devReadySetup schema-apply task then a seed task, in order", async () => {
 		const { plugins, ctxFactory } = collectDbPlugins();
 		const g = buildGraph(plugins, ctxFactory);
 		const setup = await g.resolve(cliSlots.devReadySetup);
-		expect(setup.find((s) => s.name === "db-schema-push")).toBeTruthy();
+		const schemaIdx = setup.findIndex((s) => s.name === "db-schema-apply");
+		const seedIdx = setup.findIndex((s) => s.name === "db-seed");
+		expect(schemaIdx).toBeGreaterThanOrEqual(0);
+		// Seed must run after the schema apply (readySetup runs in order).
+		expect(seedIdx).toBeGreaterThan(schemaIdx);
 	});
 
-	it("contributes a devWatcher for src/schema/**", async () => {
-		const { plugins, ctxFactory } = collectDbPlugins();
+	it("watches the migrations dir for d1 (applies generated migrations to the worker's D1)", async () => {
+		const { plugins, ctxFactory } = collectDbPlugins({
+			db: { dialect: "d1", databaseId: "abc-123" },
+		});
+		const g = buildGraph(plugins, ctxFactory);
+		const watchers = await g.resolve(cliSlots.devWatchers);
+		const migrationsWatcher = watchers.find((w) => w.name === "migrations");
+		expect(migrationsWatcher?.paths).toBe("src/migrations/**");
+		// The schema-push watcher is sqlite-only.
+		expect(watchers.find((w) => w.name === "schema")).toBeUndefined();
+	});
+
+	it("watches src/schema/** for sqlite (push-based)", async () => {
+		const { plugins, ctxFactory } = collectDbPlugins({
+			db: { dialect: "sqlite", path: "./data/app.sqlite" },
+		});
 		const g = buildGraph(plugins, ctxFactory);
 		const watchers = await g.resolve(cliSlots.devWatchers);
 		const schemaWatcher = watchers.find((w) => w.name === "schema");
-		expect(schemaWatcher).toBeDefined();
 		expect(schemaWatcher?.paths).toBe("src/schema/**");
+		expect(schemaWatcher?.ignore).toContain("**/seed.ts");
+	});
+
+	it("contributes a seed watcher on src/schema/seed.ts", async () => {
+		const { plugins, ctxFactory } = collectDbPlugins();
+		const g = buildGraph(plugins, ctxFactory);
+		const watchers = await g.resolve(cliSlots.devWatchers);
+		expect(watchers.find((w) => w.name === "seed")?.paths).toBe(
+			"src/schema/seed.ts",
+		);
 	});
 
 	it("contributes a deploy step for d1 migrations", async () => {
@@ -418,6 +445,105 @@ describe("db → cli slots", () => {
 		const g = buildGraph(plugins, ctxFactory);
 		const steps = await g.resolve(cliSlots.deploySteps);
 		expect(steps.find((s) => s.name === "Database migrations")).toBeUndefined();
+	});
+
+	it("contributes a seed deploy step after migrations when seed.ts exists", async () => {
+		const { plugins, ctxFactory } = collectDbPlugins({
+			dbFiles: new Set(["src/schema/seed.ts"]),
+		});
+		const g = buildGraph(plugins, ctxFactory);
+		const steps = await g.resolve(cliSlots.deploySteps);
+		const migrationsIdx = steps.findIndex(
+			(s) => s.name === "Database migrations",
+		);
+		const seedIdx = steps.findIndex((s) => s.name === "Database seed");
+		expect(migrationsIdx).toBeGreaterThanOrEqual(0);
+		expect(seedIdx).toBeGreaterThan(migrationsIdx);
+	});
+
+	it("contributes no seed deploy step without seed.ts", async () => {
+		const { plugins, ctxFactory } = collectDbPlugins();
+		const g = buildGraph(plugins, ctxFactory);
+		const steps = await g.resolve(cliSlots.deploySteps);
+		expect(steps.find((s) => s.name === "Database seed")).toBeUndefined();
+	});
+});
+
+// ── Destructive-migration hard gate wired into deployChecks ────────
+//
+// The gate logic has exhaustive coverage in `node/migration-safety.test.ts`;
+// this asserts it is actually wired as a `deployChecks` contribution, so a
+// dropping migration aborts deploy PLANNING (resolving the slot) before any
+// remote migration runs. `generateMigrations` (the sibling pending-migrations
+// check) is stubbed so resolving the slot doesn't shell out to drizzle-kit.
+
+// A real migrations dir whose newest migration drops `users.email`.
+function makeDroppingMigrationsCwd(acknowledged: boolean): string {
+	const cwd = mkdtempSync(join(tmpdir(), "db-deploy-drop-"));
+	scratchDirs.push(cwd);
+	const meta = join(cwd, "src", "migrations", "meta");
+	mkdirSync(meta, { recursive: true });
+	const snap = (columns: string[]) => ({
+		tables: {
+			users: {
+				name: "users",
+				columns: Object.fromEntries(columns.map((c) => [c, { name: c }])),
+			},
+		},
+	});
+	writeFileSync(
+		join(meta, "0000_snapshot.json"),
+		JSON.stringify(snap(["id", "email"])),
+	);
+	writeFileSync(join(meta, "0001_snapshot.json"), JSON.stringify(snap(["id"])));
+	writeFileSync(join(cwd, "src", "migrations", "0000_init.sql"), "");
+	writeFileSync(
+		join(cwd, "src", "migrations", "0001_drop.sql"),
+		acknowledged ? "-- stack:allow-destructive\n" : "",
+	);
+	writeFileSync(
+		join(meta, "_journal.json"),
+		JSON.stringify({
+			entries: [
+				{ idx: 0, tag: "0000_init" },
+				{ idx: 1, tag: "0001_drop" },
+			],
+		}),
+	);
+	return cwd;
+}
+
+describe("db deployChecks destructive gate", () => {
+	const validUuid = "00000000-0000-0000-0000-000000000001";
+
+	it("rejects deploy planning on an unacknowledged drop", async () => {
+		const spy = vi
+			.spyOn(pushModule, "generateMigrations")
+			.mockResolvedValue([]);
+		const cwd = makeDroppingMigrationsCwd(false);
+		const { plugins, ctxFactory } = collectDbPlugins({
+			db: { dialect: "d1", databaseId: validUuid },
+			cwd,
+		});
+		const g = buildGraph(plugins, ctxFactory);
+		await expect(g.resolve(cliSlots.deployChecks)).rejects.toThrow(
+			/Destructive migration/,
+		);
+		spy.mockRestore();
+	});
+
+	it("passes when the drop is acknowledged", async () => {
+		const spy = vi
+			.spyOn(pushModule, "generateMigrations")
+			.mockResolvedValue([]);
+		const cwd = makeDroppingMigrationsCwd(true);
+		const { plugins, ctxFactory } = collectDbPlugins({
+			db: { dialect: "d1", databaseId: validUuid },
+			cwd,
+		});
+		const g = buildGraph(plugins, ctxFactory);
+		await expect(g.resolve(cliSlots.deployChecks)).resolves.toBeDefined();
+		spy.mockRestore();
 	});
 });
 
@@ -492,11 +618,13 @@ describe("db schema push serialization", () => {
 				active--;
 			});
 
-		const { plugins, ctxFactory } = collectDbPlugins();
+		const { plugins, ctxFactory } = collectDbPlugins({
+			db: { dialect: "sqlite", path: "./data/app.sqlite" },
+		});
 		const g = buildGraph(plugins, ctxFactory);
 		const setup = await g.resolve(cliSlots.devReadySetup);
 		const watchers = await g.resolve(cliSlots.devWatchers);
-		const setupStep = setup.find((s) => s.name === "db-schema-push");
+		const setupStep = setup.find((s) => s.name === "db-schema-apply");
 		const schemaWatcher = watchers.find((w) => w.name === "schema");
 		if (!setupStep || !schemaWatcher) throw new Error("missing wiring");
 
@@ -537,7 +665,9 @@ describe("db schema push serialization", () => {
 				active--;
 			});
 
-		const { plugins, ctxFactory } = collectDbPlugins();
+		const { plugins, ctxFactory } = collectDbPlugins({
+			db: { dialect: "sqlite", path: "./data/app.sqlite" },
+		});
 		const g = buildGraph(plugins, ctxFactory);
 		const watchers = await g.resolve(cliSlots.devWatchers);
 		const schemaWatcher = watchers.find((w) => w.name === "schema");
@@ -592,16 +722,20 @@ describe("db schema push serialization", () => {
 
 		// Two graphs over the SAME cwd. A leak in the serializer cache
 		// would queue B behind A.
-		const a = collectDbPlugins();
+		const sqliteOpts: DbOptions = {
+			dialect: "sqlite",
+			path: "./data/app.sqlite",
+		};
+		const a = collectDbPlugins({ db: sqliteOpts });
 		const gA = buildGraph(a.plugins, a.ctxFactory);
 		const setupA = await gA.resolve(cliSlots.devReadySetup);
-		const stepA = setupA.find((s) => s.name === "db-schema-push");
+		const stepA = setupA.find((s) => s.name === "db-schema-apply");
 		if (!stepA) throw new Error("missing setup step A");
 
-		const b = collectDbPlugins();
+		const b = collectDbPlugins({ db: sqliteOpts });
 		const gB = buildGraph(b.plugins, b.ctxFactory);
 		const setupB = await gB.resolve(cliSlots.devReadySetup);
-		const stepB = setupB.find((s) => s.name === "db-schema-push");
+		const stepB = setupB.find((s) => s.name === "db-schema-apply");
 		if (!stepB) throw new Error("missing setup step B");
 
 		// Kick graph A first; it hangs on `aReady` (latch held by graph A).

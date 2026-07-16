@@ -1,4 +1,3 @@
-import { spawnSync } from "node:child_process";
 import {
 	existsSync,
 	mkdirSync,
@@ -8,7 +7,9 @@ import {
 } from "node:fs";
 import { join } from "node:path";
 import type { DbOptions } from "../types";
+import { runCommand } from "./exec";
 import { migrationLockPath, withMigrationLock } from "./lock";
+import { migrationsApply } from "./wrangler";
 
 function sqliteLocalUrl(options: DbOptions): string {
 	return options.dialect === "sqlite" && options.path
@@ -16,33 +17,18 @@ function sqliteLocalUrl(options: DbOptions): string {
 		: ".stack/dev/local.db";
 }
 
+// Whether the migrations dir holds at least one `.sql` file. Used to skip the
+// local d1 migrations-apply when the consumer hasn't generated a migration yet.
+export function migrationsExist(cwd: string, options: DbOptions): boolean {
+	const dir = join(cwd, options.migrations ?? "./src/migrations");
+	if (!existsSync(dir)) return false;
+	return readdirSync(dir).some((f) => f.endsWith(".sql"));
+}
+
 function writeDrizzleConfig(configPath: string, content: string): void {
 	const dir = join(configPath, "..");
 	mkdirSync(dir, { recursive: true });
 	writeFileSync(configPath, content, "utf-8");
-}
-
-function runCommand(
-	command: string,
-	args: string[],
-	cwd: string,
-): { stdout: string; stderr: string } {
-	const result = spawnSync(command, args, {
-		cwd,
-		stdio: "pipe",
-		env: { ...process.env },
-	});
-
-	const stdout = result.stdout?.toString().trim() ?? "";
-	const stderr = result.stderr?.toString().trim() ?? "";
-
-	if (result.status !== 0) {
-		throw new Error(
-			`Command failed: ${command} ${args.join(" ")}\n${stderr || stdout}`,
-		);
-	}
-
-	return { stdout, stderr };
 }
 
 export async function pushSchemaLocal(
@@ -143,11 +129,7 @@ export async function applyMigrationsRemote(
 	// pending list. Hold the lock so a concurrent `generateMigrations` can't
 	// write a half-flushed file into the dir while wrangler is enumerating.
 	return withMigrationLock(migrationLockPath(cwd), async () => {
-		runCommand(
-			"npx",
-			["wrangler", "d1", "migrations", "apply", databaseName, "--remote"],
-			cwd,
-		);
+		migrationsApply(cwd, databaseName, "remote");
 	});
 }
 
@@ -189,10 +171,8 @@ export default defineConfig({
 			);
 		}
 
-		runCommand(
-			"npx",
-			["wrangler", "d1", "migrations", "apply", databaseName, "--local"],
-			cwd,
-		);
+		// `--local --persist-to .stack/dev --config .stack/wrangler.toml` so the
+		// migration lands in the exact miniflare D1 that `wrangler dev` reads.
+		migrationsApply(cwd, databaseName, "local");
 	});
 }
