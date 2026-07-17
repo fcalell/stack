@@ -189,9 +189,11 @@ describe("createNodeServer — service lifecycle", () => {
 describe("createNodeServer — service http mounts", () => {
 	it("routes GET and POST under a mounted prefix without rewriting the path", async () => {
 		const seen: Array<{ method: string; path: string }> = [];
+		let exposedPort: number | undefined;
 		const mcp = defineService({
 			name: "mcp",
 			start: (ctx) => {
+				exposedPort = ctx.http.port;
 				ctx.http.mount("/mcp", (request) => {
 					seen.push({
 						method: request.method,
@@ -202,6 +204,7 @@ describe("createNodeServer — service http mounts", () => {
 			},
 		});
 		const { origin } = await startServer({ worker: null, services: [mcp] });
+		expect(String(exposedPort)).toBe(new URL(origin).port);
 
 		const get = await fetch(`${origin}/mcp/abc/def`);
 		expect(await get.text()).toBe("mounted");
@@ -270,18 +273,5 @@ describe("createNodeServer — service http mounts", () => {
 
 		expect(duplicate).toBeInstanceOf(Error);
 		expect(invalid).toBeInstanceOf(Error);
-	});
-
-	it("exposes the configured listen port to services", async () => {
-		const port = await freePort();
-		let seenPort: number | undefined;
-		const probe = defineService({
-			name: "probe",
-			start: (ctx) => {
-				seenPort = ctx.http.port;
-			},
-		});
-		await startServer({ worker: null, services: [probe], port });
-		expect(seenPort).toBe(port);
 	});
 });
