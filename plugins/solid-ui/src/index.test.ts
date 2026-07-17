@@ -281,6 +281,19 @@ describe("solidUi → vite.slots contributions", () => {
 			}),
 		);
 	});
+
+	it("allows its own workspace root in the rendered server.fs.allow", async () => {
+		const { plugins, ctxFactory } = collectSolidUiPlugins();
+		const g = buildGraph(plugins, ctxFactory);
+		const config = await g.resolve(vite.slots.viteConfig);
+
+		// The fonts are served from this package's real location; a linked
+		// stack checkout sits outside the consumer's workspace root, so the
+		// rendered config must allow it alongside the consumer's own root.
+		expect(config).toMatch(
+			/allow:\s*\[\s*searchForWorkspaceRoot\(process\.cwd\(\)\),\s*searchForWorkspaceRoot\(\s*fileURLToPath\(import\.meta\.resolve\("@fcalell\/plugin-solid-ui"\)\)/,
+		);
+	});
 });
 
 // ── App CSS derivation ────────────────────────────────────────────

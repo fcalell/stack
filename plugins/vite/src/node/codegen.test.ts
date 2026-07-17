@@ -15,6 +15,7 @@ describe("aggregateViteConfig", () => {
 			resolveAliases: [],
 			devServerPort: 3000,
 			serverProxy: [],
+			fsAllow: [],
 		});
 
 		expect(result).toContain('import { defineConfig } from "vite";');
@@ -34,6 +35,7 @@ describe("aggregateViteConfig", () => {
 			resolveAliases: [{ find: "@", replacement: "./src" }],
 			devServerPort: 0,
 			serverProxy: [],
+			fsAllow: [],
 		});
 
 		// Alias must land inside the `resolve.alias` object, not as a bare
@@ -41,5 +43,39 @@ describe("aggregateViteConfig", () => {
 		expect(result).toMatch(
 			/resolve:\s*\{[^}]*alias:\s*\{[^}]*"@":\s*"\.\/src"/,
 		);
+	});
+
+	it("renders server.fs.allow with the workspace-root base when entries exist", () => {
+		const result = aggregateViteConfig({
+			imports: [],
+			pluginCalls: [],
+			resolveAliases: [],
+			devServerPort: 3000,
+			serverProxy: [],
+			fsAllow: [{ kind: "string", value: "/linked/pkg" }],
+		});
+
+		expect(result).toContain(
+			'import { defineConfig, searchForWorkspaceRoot } from "vite";',
+		);
+		// A custom allow list disables Vite's workspace auto-detection, so the
+		// consumer's own root must be the first entry ahead of contributions.
+		expect(result).toMatch(
+			/fs:\s*\{[^}]*allow:\s*\[\s*searchForWorkspaceRoot\(process\.cwd\(\)\),\s*"\/linked\/pkg"/,
+		);
+	});
+
+	it("omits server.fs and the searchForWorkspaceRoot import without entries", () => {
+		const result = aggregateViteConfig({
+			imports: [],
+			pluginCalls: [],
+			resolveAliases: [],
+			devServerPort: 3000,
+			serverProxy: [],
+			fsAllow: [],
+		});
+
+		expect(result).not.toContain("searchForWorkspaceRoot");
+		expect(result).not.toContain("fs:");
 	});
 });

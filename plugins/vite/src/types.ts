@@ -33,4 +33,9 @@ export interface CodegenViteConfigPayload {
 	resolveAliases: Array<{ find: string; replacement: string }>;
 	devServerPort: number;
 	serverProxy: ServerProxyEntry[];
+	// Extra `server.fs.allow` path expressions. Any entry switches the
+	// rendered config to an explicit allow list, so the aggregator prepends
+	// the consumer's own workspace root (Vite disables its auto-detection
+	// the moment a custom list is set).
+	fsAllow: TsExpression[];
 }

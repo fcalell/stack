@@ -9,7 +9,13 @@ import type { CodegenViteConfigPayload } from "../types.ts";
 export function aggregateViteConfig(payload: CodegenViteConfigPayload): string {
 	const imports: TsImportSpec[] = [
 		{ source: "node:url", named: ["fileURLToPath"] },
-		{ source: "vite", named: ["defineConfig"] },
+		{
+			source: "vite",
+			named:
+				payload.fsAllow.length > 0
+					? ["defineConfig", "searchForWorkspaceRoot"]
+					: ["defineConfig"],
+		},
 		...payload.imports,
 	];
 
@@ -88,6 +94,43 @@ export function aggregateViteConfig(payload: CodegenViteConfigPayload): string {
 						],
 					},
 				})),
+			},
+		});
+	}
+	if (payload.fsAllow.length > 0) {
+		serverProps.push({
+			key: "fs",
+			value: {
+				kind: "object",
+				properties: [
+					{
+						key: "allow",
+						value: {
+							kind: "array",
+							items: [
+								{
+									kind: "call",
+									callee: {
+										kind: "identifier",
+										name: "searchForWorkspaceRoot",
+									},
+									args: [
+										{
+											kind: "call",
+											callee: {
+												kind: "member",
+												object: { kind: "identifier", name: "process" },
+												property: "cwd",
+											},
+											args: [],
+										},
+									],
+								},
+								...payload.fsAllow,
+							],
+						},
+					},
+				],
 			},
 		});
 	}

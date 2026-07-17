@@ -179,6 +179,37 @@ export const solidUi = plugin("solid-ui", {
 				named: ["themeFontsPlugin"],
 			}),
 		),
+		// Fonts are served straight out of this package's node_modules
+		// (@fontsource). When the stack is workspace-linked those files sit
+		// outside the consumer's workspace root and Vite's dev server 403s
+		// them, so allow this package's own workspace root. import.meta.resolve
+		// runs in the generated config and yields the real (symlink-resolved)
+		// location; installed from a registry it lands inside the consumer's
+		// already-allowed root and the entry is inert.
+		vite.slots.fsAllow.contribute(
+			(): TsExpression => ({
+				kind: "call",
+				callee: { kind: "identifier", name: "searchForWorkspaceRoot" },
+				args: [
+					{
+						kind: "call",
+						callee: { kind: "identifier", name: "fileURLToPath" },
+						args: [
+							{
+								kind: "call",
+								callee: {
+									kind: "member",
+									object: { kind: "identifier", name: "import.meta" },
+									property: "resolve",
+								},
+								args: [{ kind: "string", value: "@fcalell/plugin-solid-ui" }],
+							},
+						],
+					},
+				],
+			}),
+		),
+
 		vite.slots.pluginCalls.contribute(async (ctx): Promise<TsExpression> => {
 			const entries = await ctx.resolve(self.slots.fonts);
 			// Always pass the array explicitly — even when empty — so

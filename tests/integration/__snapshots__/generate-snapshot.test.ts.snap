@@ -246,12 +246,12 @@ import { Toaster } from "@fcalell/plugin-solid-ui/components/toast";
 export default (props: { children: JSX.Element }) => <MetaProvider>{props.children}<Toaster /></MetaProvider>;
 ",
   "viteConfig": "import { fileURLToPath } from "node:url";
-import { defineConfig } from "vite";
+import { defineConfig, searchForWorkspaceRoot } from "vite";
 import { themeFontsPlugin } from "@fcalell/plugin-solid-ui/node/fonts";
 import { providersPlugin } from "@fcalell/plugin-vite/preset";
 import tailwindcss from "@tailwindcss/vite";
 import solidPlugin from "vite-plugin-solid";
-export default defineConfig({ root: fileURLToPath(new URL(".", import.meta.url)), publicDir: "../public", build: { outDir: "../dist/client", emptyOutDir: true }, plugins: [providersPlugin(), solidPlugin(), tailwindcss(), themeFontsPlugin([{ family: "JetBrains Mono Variable", specifier: "@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2", weight: "100 800", style: "normal", role: "mono", fallback: { family: "monospace", ascentOverride: "90%", descentOverride: "22%", lineGapOverride: "0%", sizeAdjust: "100%" } }])], server: { port: 3000 } });
+export default defineConfig({ root: fileURLToPath(new URL(".", import.meta.url)), publicDir: "../public", build: { outDir: "../dist/client", emptyOutDir: true }, plugins: [providersPlugin(), solidPlugin(), tailwindcss(), themeFontsPlugin([{ family: "JetBrains Mono Variable", specifier: "@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2", weight: "100 800", style: "normal", role: "mono", fallback: { family: "monospace", ascentOverride: "90%", descentOverride: "22%", lineGapOverride: "0%", sizeAdjust: "100%" } }])], server: { port: 3000, fs: { allow: [searchForWorkspaceRoot(process.cwd()), searchForWorkspaceRoot(fileURLToPath(import.meta.resolve("@fcalell/plugin-solid-ui")))] } } });
 ",
   "worker": null,
   "wrangler": null,
@@ -358,12 +358,12 @@ import { Toaster } from "@fcalell/plugin-solid-ui/components/toast";
 export default (props: { children: JSX.Element }) => <MetaProvider>{props.children}<Toaster /></MetaProvider>;
 ",
   "viteConfig": "import { fileURLToPath } from "node:url";
-import { defineConfig } from "vite";
+import { defineConfig, searchForWorkspaceRoot } from "vite";
 import { themeFontsPlugin } from "@fcalell/plugin-solid-ui/node/fonts";
 import { providersPlugin } from "@fcalell/plugin-vite/preset";
 import tailwindcss from "@tailwindcss/vite";
 import solidPlugin from "vite-plugin-solid";
-export default defineConfig({ root: fileURLToPath(new URL(".", import.meta.url)), publicDir: "../public", build: { outDir: "../dist/client", emptyOutDir: true }, plugins: [providersPlugin(), solidPlugin(), tailwindcss(), themeFontsPlugin([{ family: "JetBrains Mono Variable", specifier: "@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2", weight: "100 800", style: "normal", role: "mono", fallback: { family: "monospace", ascentOverride: "90%", descentOverride: "22%", lineGapOverride: "0%", sizeAdjust: "100%" } }])], server: { port: 3000 } });
+export default defineConfig({ root: fileURLToPath(new URL(".", import.meta.url)), publicDir: "../public", build: { outDir: "../dist/client", emptyOutDir: true }, plugins: [providersPlugin(), solidPlugin(), tailwindcss(), themeFontsPlugin([{ family: "JetBrains Mono Variable", specifier: "@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2", weight: "100 800", style: "normal", role: "mono", fallback: { family: "monospace", ascentOverride: "90%", descentOverride: "22%", lineGapOverride: "0%", sizeAdjust: "100%" } }])], server: { port: 3000, fs: { allow: [searchForWorkspaceRoot(process.cwd()), searchForWorkspaceRoot(fileURLToPath(import.meta.resolve("@fcalell/plugin-solid-ui")))] } } });
 ",
   "worker": "import * as schema from "../src/schema";
 import * as routes from "../src/worker/routes/index.ts";
@@ -479,12 +479,12 @@ import { Toaster } from "@fcalell/plugin-solid-ui/components/toast";
 export default (props: { children: JSX.Element }) => <MetaProvider>{props.children}<Toaster /></MetaProvider>;
 ",
   "viteConfig": "import { fileURLToPath } from "node:url";
-import { defineConfig } from "vite";
+import { defineConfig, searchForWorkspaceRoot } from "vite";
 import { themeFontsPlugin } from "@fcalell/plugin-solid-ui/node/fonts";
 import { providersPlugin } from "@fcalell/plugin-vite/preset";
 import tailwindcss from "@tailwindcss/vite";
 import solidPlugin from "vite-plugin-solid";
-export default defineConfig({ root: fileURLToPath(new URL(".", import.meta.url)), publicDir: "../public", build: { outDir: "../dist/client", emptyOutDir: true }, plugins: [providersPlugin(), solidPlugin(), tailwindcss(), themeFontsPlugin([{ family: "JetBrains Mono Variable", specifier: "@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2", weight: "100 800", style: "normal", role: "mono", fallback: { family: "monospace", ascentOverride: "90%", descentOverride: "22%", lineGapOverride: "0%", sizeAdjust: "100%" } }])], server: { port: 3000 } });
+export default defineConfig({ root: fileURLToPath(new URL(".", import.meta.url)), publicDir: "../public", build: { outDir: "../dist/client", emptyOutDir: true }, plugins: [providersPlugin(), solidPlugin(), tailwindcss(), themeFontsPlugin([{ family: "JetBrains Mono Variable", specifier: "@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2", weight: "100 800", style: "normal", role: "mono", fallback: { family: "monospace", ascentOverride: "90%", descentOverride: "22%", lineGapOverride: "0%", sizeAdjust: "100%" } }])], server: { port: 3000, fs: { allow: [searchForWorkspaceRoot(process.cwd()), searchForWorkspaceRoot(fileURLToPath(import.meta.resolve("@fcalell/plugin-solid-ui")))] } } });
 ",
   "worker": "import * as schema from "../src/schema";
 import * as routes from "../src/worker/routes/index.ts";

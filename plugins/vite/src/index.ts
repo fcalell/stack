@@ -66,6 +66,15 @@ const serverProxy = slot.list<ServerProxyEntry>({
 	uniqueBy: (e) => e.path,
 });
 
+// Extra dev-server `server.fs.allow` path expressions. A plugin that serves
+// assets out of its own package (fonts, icons) contributes the expression
+// resolving its real location, so a workspace-linked stack checkout still
+// serves them in dev (Vite 403s paths outside the consumer's workspace root).
+const fsAllow = slot.list<TsExpression>({
+	source: SOURCE,
+	name: "fsAllow",
+});
+
 // Rendered `.stack/vite.config.ts` source. Pulled into `cli.slots.artifactFiles`
 // by the contribution below — gated on at least one plugin call or import
 // so a vite-less config never writes an empty file.
@@ -78,6 +87,7 @@ const viteConfig = slot.derived({
 		aliases: resolveAliases,
 		port: devServerPort,
 		proxy: serverProxy,
+		fsAllow,
 	},
 	compute: (inp): string | null => {
 		if (inp.plugins.length === 0 && inp.imports.length === 0) return null;
@@ -87,6 +97,7 @@ const viteConfig = slot.derived({
 			resolveAliases: inp.aliases,
 			devServerPort: inp.port,
 			serverProxy: inp.proxy,
+			fsAllow: inp.fsAllow,
 		});
 	},
 });
@@ -102,6 +113,7 @@ export const vite = plugin("vite", {
 		resolveAliases,
 		devServerPort,
 		serverProxy,
+		fsAllow,
 		viteConfig,
 	},
 
