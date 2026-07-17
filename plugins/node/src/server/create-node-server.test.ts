@@ -185,3 +185,103 @@ describe("createNodeServer — service lifecycle", () => {
 		expect(started).toEqual(["a", "b", "c"]);
 	});
 });
+
+describe("createNodeServer — service http mounts", () => {
+	it("routes GET and POST under a mounted prefix without rewriting the path", async () => {
+		const seen: Array<{ method: string; path: string }> = [];
+		const mcp = defineService({
+			name: "mcp",
+			start: (ctx) => {
+				ctx.http.mount("/mcp", (request) => {
+					seen.push({
+						method: request.method,
+						path: new URL(request.url).pathname,
+					});
+					return new Response("mounted", { status: 200 });
+				});
+			},
+		});
+		const { origin } = await startServer({ worker: null, services: [mcp] });
+
+		const get = await fetch(`${origin}/mcp/abc/def`);
+		expect(await get.text()).toBe("mounted");
+		const post = await fetch(`${origin}/mcp`, { method: "POST" });
+		expect(await post.text()).toBe("mounted");
+
+		expect(seen).toEqual([
+			{ method: "GET", path: "/mcp/abc/def" },
+			{ method: "POST", path: "/mcp" },
+		]);
+	});
+
+	it("lets a sibling path past a mount fall through to the SPA fallback", async () => {
+		const mcp = defineService({
+			name: "mcp",
+			start: (ctx) => {
+				ctx.http.mount("/mcp", () => new Response("mounted"));
+			},
+		});
+		const staticRoot = makeStaticRoot({ "index.html": "<html>spa</html>" });
+		const { origin } = await startServer({
+			worker: null,
+			services: [mcp],
+			staticRoot,
+		});
+
+		const res = await fetch(`${origin}/mcpx`);
+		expect(res.status).toBe(200);
+		expect(await res.text()).toBe("<html>spa</html>");
+	});
+
+	it("routes a nested request to the longest matching prefix", async () => {
+		const nested = defineService({
+			name: "nested",
+			start: (ctx) => {
+				ctx.http.mount("/mcp", () => new Response("outer"));
+				ctx.http.mount("/mcp/deep", () => new Response("inner"));
+			},
+		});
+		const { origin } = await startServer({ worker: null, services: [nested] });
+
+		expect(await (await fetch(`${origin}/mcp/deep/x`)).text()).toBe("inner");
+		expect(await (await fetch(`${origin}/mcp/other`)).text()).toBe("outer");
+	});
+
+	it("throws on a duplicate prefix and on an invalid prefix", async () => {
+		let duplicate: unknown;
+		let invalid: unknown;
+		const guard = defineService({
+			name: "guard",
+			start: (ctx) => {
+				ctx.http.mount("/mcp", () => new Response("ok"));
+				try {
+					ctx.http.mount("/mcp", () => new Response("dup"));
+				} catch (error) {
+					duplicate = error;
+				}
+				try {
+					ctx.http.mount("mcp", () => new Response("bad"));
+				} catch (error) {
+					invalid = error;
+				}
+			},
+		});
+		await startServer({ worker: null, services: [guard] });
+
+		expect(duplicate).toBeInstanceOf(Error);
+		expect(invalid).toBeInstanceOf(Error);
+	});
+
+	it("exposes the configured listen port to services", async () => {
+		const port = await freePort();
+		let seenPort: number | undefined;
+		const probe = defineService({
+			name: "probe",
+			start: (ctx) => {
+				seenPort = ctx.http.port;
+			},
+		});
+		await startServer({ worker: null, services: [probe], port });
+		expect(seenPort).toBe(port);
+	});
+});

@@ -54,6 +54,13 @@ consumer background services (`src/server/services/<name>.ts`, each default-expo
 `defineService({ name, start })`; start may return a stop handle, stops run in reverse order on
 shutdown).
 
+`start(ctx)` receives `{ log, ws, http }`. `http.port` is the server's listen port and
+`http.mount(prefix, handler)` registers a raw fetch-style route: every request whose path equals
+`prefix` or is under `prefix + "/"` goes to `handler` (longest registered prefix wins, duplicate
+throws), matched after `/ws` and before the worker/static/SPA, so a service can host its own HTTP
+subtree (e.g. an in-process MCP endpoint the spawned CLI reaches directly by port, not through the
+vite dev proxy).
+
 The entry hands `startNodeServer` module URLs (`workerModule`/`procedureModule`/`servicesModule`)
 instead of importing them: route files import `virtual:stack-procedure`, which plain node cannot
 resolve (tsx/esbuild resolve it via tsconfig paths). Static imports resolve at link time, before

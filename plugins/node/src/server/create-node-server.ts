@@ -60,6 +60,26 @@ export function createNodeServer(options: NodeServerOptions): NodeServer {
 
 	const app = new Hono();
 
+	type MountHandler = (request: Request) => Response | Promise<Response>;
+	const mounts = new Map<string, MountHandler>();
+	function mount(prefix: string, handler: MountHandler): void {
+		if (!prefix.startsWith("/") || prefix === "/" || prefix.endsWith("/")) {
+			throw new Error(`invalid mount prefix "${prefix}"`);
+		}
+		if (mounts.has(prefix)) {
+			throw new Error(`mount prefix "${prefix}" already registered`);
+		}
+		mounts.set(prefix, handler);
+	}
+	function matchMount(path: string): MountHandler | undefined {
+		let best: string | undefined;
+		for (const prefix of mounts.keys()) {
+			if (path !== prefix && !path.startsWith(`${prefix}/`)) continue;
+			if (best === undefined || prefix.length > best.length) best = prefix;
+		}
+		return best === undefined ? undefined : mounts.get(best);
+	}
+
 	// The typed WS endpoint. Mounted first: neither the worker nor the SPA
 	// ever owns /ws.
 	app.get(
@@ -73,6 +93,15 @@ export function createNodeServer(options: NodeServerOptions): NodeServer {
 			};
 		}),
 	);
+
+	// Service raw-route mounts, after /ws and before the worker/static/SPA:
+	// a longest-prefix match wins, so a service owns its subtree without a
+	// consumer mounting a worker prefix (documented, not guarded).
+	app.use("*", async (c, next) => {
+		const handler = matchMount(c.req.path);
+		if (handler) return handler(c.req.raw);
+		await next();
+	});
 
 	if (worker) {
 		const dispatch = (request: Request) =>
@@ -94,7 +123,7 @@ export function createNodeServer(options: NodeServerOptions): NodeServer {
 
 	async function startServices(): Promise<void> {
 		for (const service of services) {
-			const stop = await service.start({ log, ws: hub });
+			const stop = await service.start({ log, ws: hub, http: { port, mount } });
 			if (stop) stops.push({ name: service.name, stop });
 			log.info(`service ${service.name}: started`);
 		}

@@ -6,6 +6,7 @@ export type {
 export { createNodeServer } from "./create-node-server.ts";
 export type {
 	ServiceContext,
+	ServiceHttp,
 	ServiceLogger,
 	ServiceSpec,
 	ServiceStop,
