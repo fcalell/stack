@@ -18,7 +18,7 @@ function List(props: { class?: string; children: JSX.Element }) {
 	return (
 		<TabsPrimitive.List
 			class={cn(
-				"inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground",
+				"relative inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground",
 				props.class,
 			)}
 		>
@@ -69,7 +69,11 @@ function Content(props: {
 
 function Indicator() {
 	return (
-		<TabsPrimitive.Indicator class="absolute bg-primary transition-all duration-250 data-[orientation=horizontal]:-bottom-px data-[orientation=horizontal]:h-0.5 data-[orientation=vertical]:-right-px data-[orientation=vertical]:w-0.5" />
+		// Kobalte positions via translateX/translateY + width/height only, so the
+		// indicator must be anchored at the list's origin: inline-start for the
+		// horizontal translateX (start-0, matching Kobalte's RTL offset math) and
+		// top for the vertical translateY.
+		<TabsPrimitive.Indicator class="absolute bg-primary transition-all duration-250 data-[orientation=horizontal]:start-0 data-[orientation=horizontal]:-bottom-px data-[orientation=horizontal]:h-0.5 data-[orientation=vertical]:top-0 data-[orientation=vertical]:-right-px data-[orientation=vertical]:w-0.5" />
 	);
 }
 
