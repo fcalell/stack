@@ -45,6 +45,18 @@ const resolveAliases = slot.list<{ find: string; replacement: string }>({
 	uniqueBy: (a) => a.find,
 });
 
+// Bare specifiers rendered into `resolve.dedupe`. A plugin whose runtime must
+// be a singleton (solid-js and friends) contributes its specifiers here so
+// every importer — the consumer's own code and workspace-linked plugin
+// checkouts alike — resolves the one copy under the consumer's root. Two
+// plugins naming the same specifier is harmless (the codegen de-duplicates),
+// so no uniqueBy.
+const resolveDedupe = slot.list<string>({
+	source: SOURCE,
+	name: "resolveDedupe",
+	sortBy: (a, b) => a.localeCompare(b),
+});
+
 // Resolved dev-server port. Defaults to 3000; overrideable via options.port.
 const devServerPort = slot.value<number, ViteOptions>({
 	source: SOURCE,
@@ -85,6 +97,7 @@ const viteConfig = slot.derived({
 		imports: configImports,
 		plugins: pluginCalls,
 		aliases: resolveAliases,
+		dedupe: resolveDedupe,
 		port: devServerPort,
 		proxy: serverProxy,
 		fsAllow,
@@ -95,6 +108,7 @@ const viteConfig = slot.derived({
 			imports: inp.imports,
 			pluginCalls: inp.plugins,
 			resolveAliases: inp.aliases,
+			resolveDedupe: inp.dedupe,
 			devServerPort: inp.port,
 			serverProxy: inp.proxy,
 			fsAllow: inp.fsAllow,
@@ -111,6 +125,7 @@ export const vite = plugin("vite", {
 		configImports,
 		pluginCalls,
 		resolveAliases,
+		resolveDedupe,
 		devServerPort,
 		serverProxy,
 		fsAllow,

@@ -16,6 +16,7 @@ describe("aggregateViteConfig", () => {
 			devServerPort: 3000,
 			serverProxy: [],
 			fsAllow: [],
+			resolveDedupe: [],
 		});
 
 		expect(result).toContain('import { defineConfig } from "vite";');
@@ -36,6 +37,7 @@ describe("aggregateViteConfig", () => {
 			devServerPort: 0,
 			serverProxy: [],
 			fsAllow: [],
+			resolveDedupe: [],
 		});
 
 		// Alias must land inside the `resolve.alias` object, not as a bare
@@ -50,6 +52,7 @@ describe("aggregateViteConfig", () => {
 			imports: [],
 			pluginCalls: [],
 			resolveAliases: [],
+			resolveDedupe: [],
 			devServerPort: 3000,
 			serverProxy: [],
 			fsAllow: [{ kind: "string", value: "/linked/pkg" }],
@@ -73,6 +76,7 @@ describe("aggregateViteConfig", () => {
 			devServerPort: 3000,
 			serverProxy: [],
 			fsAllow: [],
+			resolveDedupe: [],
 		});
 
 		expect(result).not.toContain("searchForWorkspaceRoot");

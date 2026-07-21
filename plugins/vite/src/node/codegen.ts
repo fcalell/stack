@@ -141,24 +141,36 @@ export function aggregateViteConfig(payload: CodegenViteConfigPayload): string {
 		});
 	}
 
+	const resolveProps: Array<{ key: string; value: TsExpression }> = [];
 	if (payload.resolveAliases.length > 0) {
-		configProps.push({
-			key: "resolve",
+		resolveProps.push({
+			key: "alias",
 			value: {
 				kind: "object",
-				properties: [
-					{
-						key: "alias",
-						value: {
-							kind: "object",
-							properties: payload.resolveAliases.map((a) => ({
-								key: a.find,
-								value: { kind: "string", value: a.replacement },
-							})),
-						},
-					},
-				],
+				properties: payload.resolveAliases.map((a) => ({
+					key: a.find,
+					value: { kind: "string", value: a.replacement },
+				})),
 			},
+		});
+	}
+	const dedupe = [...new Set(payload.resolveDedupe)];
+	if (dedupe.length > 0) {
+		resolveProps.push({
+			key: "dedupe",
+			value: {
+				kind: "array",
+				items: dedupe.map((specifier) => ({
+					kind: "string",
+					value: specifier,
+				})),
+			},
+		});
+	}
+	if (resolveProps.length > 0) {
+		configProps.push({
+			key: "resolve",
+			value: { kind: "object", properties: resolveProps },
 		});
 	}
 

@@ -31,6 +31,10 @@ export interface CodegenViteConfigPayload {
 	imports: TsImportSpec[];
 	pluginCalls: TsExpression[];
 	resolveAliases: Array<{ find: string; replacement: string }>;
+	// Bare specifiers for `resolve.dedupe`: every import of one resolves from
+	// the consumer's root, so a workspace-linked plugin checkout can't pull a
+	// second copy of a singleton runtime into the production bundle.
+	resolveDedupe: string[];
 	devServerPort: number;
 	serverProxy: ServerProxyEntry[];
 	// Extra `server.fs.allow` path expressions. Any entry switches the

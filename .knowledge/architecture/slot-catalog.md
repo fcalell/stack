@@ -97,6 +97,7 @@ e.g. consulting `ctx.fileExists` before writing.
 | `configImports` | `list<TsImportSpec>` | Imports for `.stack/vite.config.ts` |
 | `pluginCalls` | `list<TsExpression>` | Vite plugin call expressions |
 | `resolveAliases` | `list<{ find, replacement }>` | `resolve.alias` entries |
+| `resolveDedupe` | `list<string>` | Bare specifiers rendered into `resolve.dedupe` (de-duplicated); plugins whose runtime must stay a singleton contribute here so workspace-linked checkouts can't ship a second copy in the production bundle. plugin-solid contributes the solid-js specifiers |
 | `devServerPort` | `value<number>` | Dev server port (defaults to options.port ?? 3000) |
 | `serverProxy` | `list<ServerProxyEntry>` (`uniqueBy: path`) | Dev-server proxy rules (`{ path, target, ws? }`) rendered into `server.proxy`; deploy targets contribute worker-owned paths so dev stays same-origin like prod |
 | `fsAllow` | `list<TsExpression>` | Extra `server.fs.allow` path expressions; plugins serving assets from their own package contribute their real location so a workspace-linked stack still serves them in dev. Any entry makes the rendered list explicit, prefixed with the consumer's workspace root |

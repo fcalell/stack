@@ -287,6 +287,33 @@ describe("vite.slots.viteConfig", () => {
 		expect(src).not.toContain("proxy:");
 	});
 
+	it("renders resolveDedupe contributions into resolve.dedupe, de-duplicated across plugins", async () => {
+		const a: GraphPlugin = {
+			name: "a",
+			contributes: [
+				vite.slots.resolveDedupe.contribute(() => ["solid-js", "left-pad"]),
+			],
+		};
+		const b: GraphPlugin = {
+			name: "b",
+			contributes: [vite.slots.resolveDedupe.contribute(() => "solid-js")],
+		};
+		const { plugins, ctxFactory } = collectVitePlugins([a, b]);
+		const g = buildGraph(plugins, ctxFactory);
+		const src = await g.resolve(vite.slots.viteConfig);
+		expect(src).toContain("dedupe: [");
+		expect(src).toContain('"left-pad"');
+		// Both plugins name solid-js; the emitted array carries it once.
+		expect(src?.match(/"solid-js"/g)).toHaveLength(1);
+	});
+
+	it("omits resolve.dedupe when nothing contributes specifiers", async () => {
+		const { plugins, ctxFactory } = collectVitePlugins();
+		const g = buildGraph(plugins, ctxFactory);
+		const src = await g.resolve(vite.slots.viteConfig);
+		expect(src).not.toContain("dedupe:");
+	});
+
 	it("fails loudly when two plugins proxy the same path", async () => {
 		const a: GraphPlugin = {
 			name: "a",
