@@ -94,11 +94,13 @@ Two consequences follow:
 ## Findings (2026-07-21, helm consumer)
 
 - Helm (`~/projects/helm`, a stack consumer on the node + vite path) hit a production-build blank
-  page: the `stack build` output served by the node server executes components (its first RPC
-  fires) but mounts nothing into the DOM, while the vite dev server renders the same code.
-  Untriaged; reproduction is any current helm checkout (`pnpm build`, serve, load the board).
-  Surfaced during automated UI verification of helm story 002-08, which fell back to the dev
-  server.
+  page: components executed (the first RPC fired) but nothing mounted, dev server fine, no
+  console errors. Root cause: `vite-plugin-solid` dedupes the solid-js specifiers only in dev
+  (`command === "serve"`), so Helm's `link:`-consumed plugins resolved a second solid-js copy
+  from the stack workspace and the production bundle shipped two reactive runtimes. Fixed: the
+  generated `vite.config.ts` now pins `resolve.dedupe` via the `vite.slots.resolveDedupe` slot,
+  with plugin-solid contributing the solid specifiers, covering dev and build alike. Verified
+  against helm: the built board renders under the node server.
 
 ## Coverage map
 

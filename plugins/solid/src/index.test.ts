@@ -335,6 +335,15 @@ describe("solid → vite.slots contributions", () => {
 		);
 		expect(routesCall).toBeUndefined();
 	});
+
+	it("pins solid's runtime specifiers into resolve.dedupe so a production build resolves one copy", async () => {
+		const g = buildGraph(collectSolidPlugins(), makeCtxFactory());
+		const src = await g.resolve(vite.slots.viteConfig);
+		expect(src).toContain("dedupe: [");
+		expect(src).toContain('"solid-js"');
+		expect(src).toContain('"solid-js/web"');
+		expect(src).toContain('"solid-js/store"');
+	});
 });
 
 // ── Artifact emissions ────────────────────────────────────────────

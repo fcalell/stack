@@ -251,7 +251,7 @@ import { themeFontsPlugin } from "@fcalell/plugin-solid-ui/node/fonts";
 import { providersPlugin } from "@fcalell/plugin-vite/preset";
 import tailwindcss from "@tailwindcss/vite";
 import solidPlugin from "vite-plugin-solid";
-export default defineConfig({ root: fileURLToPath(new URL(".", import.meta.url)), publicDir: "../public", build: { outDir: "../dist/client", emptyOutDir: true }, plugins: [providersPlugin(), solidPlugin(), tailwindcss(), themeFontsPlugin([{ family: "JetBrains Mono Variable", specifier: "@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2", weight: "100 800", style: "normal", role: "mono", fallback: { family: "monospace", ascentOverride: "90%", descentOverride: "22%", lineGapOverride: "0%", sizeAdjust: "100%" } }])], server: { port: 3000, fs: { allow: [searchForWorkspaceRoot(process.cwd()), searchForWorkspaceRoot(fileURLToPath(import.meta.resolve("@fcalell/plugin-solid-ui")))] } } });
+export default defineConfig({ root: fileURLToPath(new URL(".", import.meta.url)), publicDir: "../public", build: { outDir: "../dist/client", emptyOutDir: true }, plugins: [providersPlugin(), solidPlugin(), tailwindcss(), themeFontsPlugin([{ family: "JetBrains Mono Variable", specifier: "@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2", weight: "100 800", style: "normal", role: "mono", fallback: { family: "monospace", ascentOverride: "90%", descentOverride: "22%", lineGapOverride: "0%", sizeAdjust: "100%" } }])], server: { port: 3000, fs: { allow: [searchForWorkspaceRoot(process.cwd()), searchForWorkspaceRoot(fileURLToPath(import.meta.resolve("@fcalell/plugin-solid-ui")))] } }, resolve: { dedupe: ["solid-js", "solid-js/h", "solid-js/html", "solid-js/store", "solid-js/web"] } });
 ",
   "worker": null,
   "wrangler": null,
@@ -284,7 +284,7 @@ render(() => <Providers><Router>{routes}</Router></Providers>, document.getEleme
 import { defineConfig } from "vite";
 import { providersPlugin } from "@fcalell/plugin-vite/preset";
 import solidPlugin from "vite-plugin-solid";
-export default defineConfig({ root: fileURLToPath(new URL(".", import.meta.url)), publicDir: "../public", build: { outDir: "../dist/client", emptyOutDir: true }, plugins: [providersPlugin(), solidPlugin()], server: { port: 3000 } });
+export default defineConfig({ root: fileURLToPath(new URL(".", import.meta.url)), publicDir: "../public", build: { outDir: "../dist/client", emptyOutDir: true }, plugins: [providersPlugin(), solidPlugin()], server: { port: 3000 }, resolve: { dedupe: ["solid-js", "solid-js/h", "solid-js/html", "solid-js/store", "solid-js/web"] } });
 ",
   "worker": null,
   "wrangler": null,
@@ -363,7 +363,7 @@ import { themeFontsPlugin } from "@fcalell/plugin-solid-ui/node/fonts";
 import { providersPlugin } from "@fcalell/plugin-vite/preset";
 import tailwindcss from "@tailwindcss/vite";
 import solidPlugin from "vite-plugin-solid";
-export default defineConfig({ root: fileURLToPath(new URL(".", import.meta.url)), publicDir: "../public", build: { outDir: "../dist/client", emptyOutDir: true }, plugins: [providersPlugin(), solidPlugin(), tailwindcss(), themeFontsPlugin([{ family: "JetBrains Mono Variable", specifier: "@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2", weight: "100 800", style: "normal", role: "mono", fallback: { family: "monospace", ascentOverride: "90%", descentOverride: "22%", lineGapOverride: "0%", sizeAdjust: "100%" } }])], server: { port: 3000, fs: { allow: [searchForWorkspaceRoot(process.cwd()), searchForWorkspaceRoot(fileURLToPath(import.meta.resolve("@fcalell/plugin-solid-ui")))] } } });
+export default defineConfig({ root: fileURLToPath(new URL(".", import.meta.url)), publicDir: "../public", build: { outDir: "../dist/client", emptyOutDir: true }, plugins: [providersPlugin(), solidPlugin(), tailwindcss(), themeFontsPlugin([{ family: "JetBrains Mono Variable", specifier: "@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2", weight: "100 800", style: "normal", role: "mono", fallback: { family: "monospace", ascentOverride: "90%", descentOverride: "22%", lineGapOverride: "0%", sizeAdjust: "100%" } }])], server: { port: 3000, fs: { allow: [searchForWorkspaceRoot(process.cwd()), searchForWorkspaceRoot(fileURLToPath(import.meta.resolve("@fcalell/plugin-solid-ui")))] } }, resolve: { dedupe: ["solid-js", "solid-js/h", "solid-js/html", "solid-js/store", "solid-js/web"] } });
 ",
   "worker": "import * as schema from "../src/schema";
 import * as routes from "../src/worker/routes/index.ts";
@@ -484,7 +484,7 @@ import { themeFontsPlugin } from "@fcalell/plugin-solid-ui/node/fonts";
 import { providersPlugin } from "@fcalell/plugin-vite/preset";
 import tailwindcss from "@tailwindcss/vite";
 import solidPlugin from "vite-plugin-solid";
-export default defineConfig({ root: fileURLToPath(new URL(".", import.meta.url)), publicDir: "../public", build: { outDir: "../dist/client", emptyOutDir: true }, plugins: [providersPlugin(), solidPlugin(), tailwindcss(), themeFontsPlugin([{ family: "JetBrains Mono Variable", specifier: "@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2", weight: "100 800", style: "normal", role: "mono", fallback: { family: "monospace", ascentOverride: "90%", descentOverride: "22%", lineGapOverride: "0%", sizeAdjust: "100%" } }])], server: { port: 3000, fs: { allow: [searchForWorkspaceRoot(process.cwd()), searchForWorkspaceRoot(fileURLToPath(import.meta.resolve("@fcalell/plugin-solid-ui")))] } } });
+export default defineConfig({ root: fileURLToPath(new URL(".", import.meta.url)), publicDir: "../public", build: { outDir: "../dist/client", emptyOutDir: true }, plugins: [providersPlugin(), solidPlugin(), tailwindcss(), themeFontsPlugin([{ family: "JetBrains Mono Variable", specifier: "@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2", weight: "100 800", style: "normal", role: "mono", fallback: { family: "monospace", ascentOverride: "90%", descentOverride: "22%", lineGapOverride: "0%", sizeAdjust: "100%" } }])], server: { port: 3000, fs: { allow: [searchForWorkspaceRoot(process.cwd()), searchForWorkspaceRoot(fileURLToPath(import.meta.resolve("@fcalell/plugin-solid-ui")))] } }, resolve: { dedupe: ["solid-js", "solid-js/h", "solid-js/html", "solid-js/store", "solid-js/web"] } });
 ",
   "worker": "import * as schema from "../src/schema";
 import * as routes from "../src/worker/routes/index.ts";

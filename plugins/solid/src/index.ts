@@ -201,6 +201,22 @@ export const solid = plugin("solid", {
 			}),
 		),
 
+		// Solid's reactive runtime must be a singleton. vite-plugin-solid
+		// dedupes these specifiers itself, but only in dev (`command ===
+		// "serve"`), so a workspace-linked stack checkout — whose packages
+		// resolve their own solid-js copy — ships two runtimes in the
+		// production bundle: components execute in one while the router's
+		// insert effects run in the other, and the page renders blank with
+		// no errors. Pinning `resolve.dedupe` in the generated config covers
+		// dev and build alike.
+		vite.slots.resolveDedupe.contribute(() => [
+			"solid-js",
+			"solid-js/web",
+			"solid-js/store",
+			"solid-js/html",
+			"solid-js/h",
+		]),
+
 		// routesPlugin — gated on routing being enabled.
 		vite.slots.configImports.contribute(async (ctx) => {
 			const pagesDir = await ctx.resolve(self.slots.routesPagesDir);
