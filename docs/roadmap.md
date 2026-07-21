@@ -91,6 +91,15 @@ Two consequences follow:
 - ui-core runs parallel to the backend track (UI domain, no shared surfaces) and precedes any
   React web UI plugin.
 
+## Findings (2026-07-21, helm consumer)
+
+- Helm (`~/projects/helm`, a stack consumer on the node + vite path) hit a production-build blank
+  page: the `stack build` output served by the node server executes components (its first RPC
+  fires) but mounts nothing into the DOM, while the vite dev server renders the same code.
+  Untriaged; reproduction is any current helm checkout (`pnpm build`, serve, load the board).
+  Surfaced during automated UI verification of helm story 002-08, which fell back to the dev
+  server.
+
 ## Coverage map
 
 Sailward domain against stack status. "Tracked in" names the PRD workstream or the gap.
