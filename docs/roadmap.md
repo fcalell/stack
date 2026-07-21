@@ -101,6 +101,10 @@ Two consequences follow:
   generated `vite.config.ts` now pins `resolve.dedupe` via the `vite.slots.resolveDedupe` slot,
   with plugin-solid contributing the solid specifiers, covering dev and build alike. Verified
   against helm: the built board renders under the node server.
+- Minor: `stack generate` emits the consumer's tracked services barrel in a form the consumer's
+  Biome config rewraps, so every generate dirties the tree until the next format pass. Emitting
+  the file through the consumer's formatter (or matching its line width) would remove the
+  ping-pong.
 
 ## Coverage map
 
