@@ -23,7 +23,7 @@ import { buildGraphFromConfig } from "@fcalell/cli/build-graph";
 import { cssTokenValue, cssVarName } from "@fcalell/cli/css";
 import { solid } from "@fcalell/plugin-solid";
 import { vite } from "@fcalell/plugin-vite";
-import { deriveTheme } from "@fcalell/ui-core/derive";
+import { deriveTheme, type ResolvedTheme } from "@fcalell/ui-core/derive";
 import {
 	modeTokens,
 	shadowUtilities,
@@ -33,6 +33,8 @@ import type { Theme } from "@fcalell/ui-core/schema";
 import { PER_MODE_COLORS, SHADOW_LEVELS } from "@fcalell/ui-core/tokens";
 import { solidUi } from "../src/index.ts";
 import { aggregateAppCss } from "../src/node/codegen.ts";
+import * as solidUiCss from "../src/node/css-escape.ts";
+import { darkLayer } from "../src/node/theme.ts";
 import type { SolidUiOptions } from "../src/types.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -108,8 +110,8 @@ function normalize(value: string): string {
 
 // The body of the first block whose header matches, brace-balanced so a nested
 // rule (`@layer base { .dark { … } }`) comes back whole.
-function blockBody(css: string, header: string, from = 0): string {
-	const start = css.indexOf(header, from);
+function blockBody(css: string, header: string): string {
+	const start = css.indexOf(header);
 	assert(start >= 0, `emitted sheet has no "${header}"`);
 	const open = css.indexOf("{", start);
 	let depth = 0;
@@ -160,6 +162,15 @@ function rejection(run: () => unknown): string {
 	throw new Error("expected a throw, got none");
 }
 
+async function asyncRejection(run: () => Promise<unknown>): Promise<string> {
+	try {
+		await run();
+	} catch (error) {
+		return error instanceof Error ? error.message : String(error);
+	}
+	throw new Error("expected a rejection, got none");
+}
+
 // ── The sheet, through the real plugin graph ────────────────────────
 
 async function emit(options: SolidUiOptions): Promise<string> {
@@ -179,8 +190,11 @@ async function emit(options: SolidUiOptions): Promise<string> {
 // declares `@source "../src"`, so the fixture reproduces that shape. The
 // package resolves itself through a node_modules link, exactly as a consumer's
 // `@import "@fcalell/plugin-solid-ui/globals.css"` does.
-function prepareFixture(): { stackDir: string; srcDir: string } {
-	const stackDir = resolve(fixtureDir, ".stack");
+let stackDir: string | undefined;
+
+function prepareFixture(): string {
+	if (stackDir !== undefined) return stackDir;
+	stackDir = resolve(fixtureDir, ".stack");
 	const srcDir = resolve(fixtureDir, "src");
 	const linkDir = resolve(fixtureDir, "node_modules/@fcalell");
 	for (const dir of [stackDir, srcDir, linkDir])
@@ -201,13 +215,13 @@ function prepareFixture(): { stackDir: string; srcDir: string } {
 		resolve(srcDir, "probe.html"),
 		`<div class="${probes.join(" ")}"></div>\n`,
 	);
-	return { stackDir, srcDir };
+	return stackDir;
 }
 
 function build(sheet: string, name: string): string {
-	const { stackDir } = prepareFixture();
-	const inputPath = resolve(stackDir, `${name}.css`);
-	const outputPath = resolve(stackDir, `${name}.out.css`);
+	const dir = prepareFixture();
+	const inputPath = resolve(dir, `${name}.css`);
+	const outputPath = resolve(dir, `${name}.out.css`);
 	writeFileSync(inputPath, sheet);
 	const candidates = [
 		resolve(pkgDir, "node_modules/.bin/tailwindcss"),
@@ -216,7 +230,7 @@ function build(sheet: string, name: string): string {
 	const bin = candidates.find((path) => existsSync(path));
 	assert(bin, `no tailwindcss binary at ${candidates.join(" or ")}`);
 	execFileSync(bin, ["--input", inputPath, "--output", outputPath], {
-		cwd: stackDir,
+		cwd: dir,
 		stdio: "pipe",
 	});
 	return readFileSync(outputPath, "utf8");
@@ -262,6 +276,18 @@ const globals = readFileSync(globalsPath, "utf8");
 const built = build(sheet, "app");
 const builtNoFonts = build(noFonts, "app-no-fonts");
 
+// The pair reaches the graph from documented consumer config, so the rejection
+// is measured end to end rather than against the schema in isolation.
+const unbalancedPair = await asyncRejection(() =>
+	emit({
+		theme: {
+			overrides: {
+				scales: { "--radius-md": "calc(1px", "--radius-sheet": "2px)" },
+			},
+		},
+	}),
+);
+
 // ── Criteria ────────────────────────────────────────────────────────
 
 check("a2", "render order and the declaration boundary", () => {
@@ -292,8 +318,23 @@ check("a2", "render order and the declaration boundary", () => {
 		}
 	}
 
-	const base = { imports: [], layers: [] };
+	// A resolved theme carrying one poisoned dark color. Nothing reachable from
+	// the `theme` option produces this, since `OKLCH_RE` rejects it first, so
+	// the payload is built here to reach the render boundary directly.
+	const poisoned: ResolvedTheme = {
+		...resolved,
+		colors: {
+			...resolved.colors,
+			dark: { ...resolved.colors.dark, canvas: "red; }" },
+		},
+	};
+
+	const base = { imports: [], blocks: [], layers: [] };
 	const messages = [
+		// Through appCssBlocks: a malformed custom-property name, a malformed
+		// value, a malformed utility name, then a malformed plain property name.
+		// The last one is what keeps `cssProperty` from waving plain properties
+		// through unvalidated.
 		rejection(() =>
 			aggregateAppCss({
 				...base,
@@ -314,6 +355,24 @@ check("a2", "render order and the declaration boundary", () => {
 				],
 			}),
 		),
+		rejection(() =>
+			aggregateAppCss({
+				...base,
+				blocks: [
+					{
+						kind: "utility",
+						name: "shadow-1",
+						declarations: { "box shadow": "0 0 0" },
+					},
+				],
+			}),
+		),
+		// Through appCssLayers, whose content the aggregator passes through
+		// untouched. The dark block's own builder is therefore the boundary, and
+		// a hand-built rule string would let this poisoned value reach the sheet.
+		rejection(() =>
+			aggregateAppCss({ ...base, layers: [darkLayer(poisoned)] }),
+		),
 	];
 	for (const message of messages) {
 		assert(
@@ -321,7 +380,7 @@ check("a2", "render order and the declaration boundary", () => {
 			`error does not name solid-ui: ${message}`,
 		);
 	}
-	return `${inspected} declarations through cssVarName / cssTokenValue, 3 malformed inputs rejected by name`;
+	return `${inspected} declarations through cssVarName / cssTokenValue, ${messages.length} malformed payloads rejected by name`;
 });
 
 check("a3", "the @theme block is the contract, light-seeded", () => {
@@ -501,6 +560,27 @@ check("a10", "the validators are one shared boundary", () => {
 	);
 	rejection(() => cssTokenValue("red /* x"));
 	rejection(() => cssVarName("--bad name"));
+
+	// This plugin's wrapper must behave like the shared implementation, not
+	// merely import it: a stale copy would reject the widened name grammar and
+	// accept the value shapes the shared one has learned to refuse. native-ui's
+	// wrapper is checked by source below instead, since importing it across the
+	// package boundary puts a file outside this package's `rootDir`.
+	assert(
+		solidUiCss.cssVarName("--color-*") === "--color-*",
+		"plugin-solid-ui rejects --color-*",
+	);
+	for (const bad of ["red /* x", "calc(1px", "2px)"]) {
+		const message = rejection(() => solidUiCss.cssTokenValue(bad));
+		assert(
+			message.includes("plugin-solid-ui"),
+			`plugin-solid-ui does not name itself in ${JSON.stringify(bad)}: ${message}`,
+		);
+	}
+
+	// A copy has to carry its own pattern and its own throw whatever syntax
+	// declares it, so these three catch one in any form. Matching on
+	// `function cssVarName` would miss the arrow the wrappers themselves use.
 	for (const path of [
 		"src/node/css-escape.ts",
 		"../native-ui/src/node/css.ts",
@@ -510,15 +590,42 @@ check("a10", "the validators are one shared boundary", () => {
 			source.includes("@fcalell/cli/css"),
 			`${path} does not read the shared boundary`,
 		);
+		assert(
+			!/\bthrow\b/.test(source),
+			`${path} throws its own validation error`,
+		);
+		assert(
+			!/=\s*\/\^/.test(source),
+			`${path} declares its own validation pattern`,
+		);
 		for (const name of ["cssVarName", "cssTokenValue"]) {
 			assert(
-				!new RegExp(`function\\s+${name}\\b`).test(source),
-				`${path} declares its own ${name}`,
+				new RegExp(`${name}\\s*=[^;]*${name}Base\\(`).test(source),
+				`${path} does not delegate ${name} to the shared implementation`,
 			);
 		}
 	}
-	return "widened name grammar, comment delimiters rejected, no second copy";
+	return "widened name grammar, comment delimiters and unbalanced parens rejected, both wrappers delegate";
 });
+
+check(
+	"a10-parens",
+	"an unbalanced-paren pair is rejected before it builds",
+	() => {
+		// Each half is well-formed CSS on its own and both clear every other value
+		// rule. Together they fuse every declaration between them into one and the
+		// stylesheet builds clean with the whole block gone, so the pair is the case
+		// that has to fail, not just a single bad value.
+		for (const value of ["calc(1px", "2px)"]) {
+			rejection(() => cssTokenValue(value));
+		}
+		assert(
+			unbalancedPair.includes("--radius-md"),
+			`the theme schema does not name the offending key: ${unbalancedPair}`,
+		);
+		return "both halves rejected at the render boundary, and the pair by the theme schema";
+	},
+);
 
 // ── Report ──────────────────────────────────────────────────────────
 
