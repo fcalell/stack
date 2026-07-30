@@ -3,8 +3,8 @@
 //
 //   pnpm --filter @fcalell/plugin-native-ui verify
 //
-// Every Run A acceptance criterion of `.helm/board/epics/001-ui-core/` story
-// 04 is one check below, so a failing check id traces back to a criterion.
+// Every machine-checkable acceptance criterion of `.helm/board/epics/001-ui-core/`
+// story 04 is one check below, so a failing check id traces back to a criterion.
 // The sheet is rendered via `aggregateGlobalCss` with default options (no
 // consumer project exists to drive the graph), then compiled twice: through
 // uniwind's own dist compiler (the exact code path Metro runs, minus a
@@ -83,8 +83,8 @@ const SOURCES = [
 	"../node_modules/@fcalell/ui-core/src",
 ];
 
-// The retired vocabulary: candidates the components still carry until Run B
-// sweeps them, and the shadcn-era names a consumer might type. The namespace
+// The retired vocabulary: the candidates the sweep removed from the
+// components, and the shadcn-era names a consumer might type. The namespace
 // resets must compile every one of them to nothing.
 const RETIRED = [
 	"text-sm",
@@ -98,48 +98,193 @@ const RETIRED = [
 	"bg-black/50",
 ];
 
-// The target (post-sweep) native overlay allowlist: the platform classes the
-// Run B components compose over the matrix cells — the decision-6 press
-// grounds, display/alignment overlays, and the sweep's mapped contract
-// classes. Deliberately not read from the current sources, which still carry
-// retirees until Run B lands; B5 trues this list up against the swept
-// components.
+// The native overlay allowlist: every class the swept `src/ui` sources name —
+// the decision-6 press grounds, display/alignment overlays, and the sweep's
+// mapped contract classes. Spelled out as a second opinion; check b5 asserts
+// it equals the set enumerated from the sources, so a component edit that
+// adds or drops a class fails until the list moves with it.
 const NATIVE_OVERLAYS = [
 	// decision-6 press grounds + the pressed label ink
-	"active:bg-ink-3",
 	"active:bg-danger-soft",
+	"active:bg-ink-3",
 	"active:bg-surface-3",
 	"text-danger",
+	// contract colors
+	"bg-accent",
+	"bg-canvas",
+	"bg-edge",
+	"bg-ink-1",
+	"bg-scrim",
+	"bg-surface",
+	"border-canvas",
+	"border-danger",
+	"border-edge",
+	"border-ok",
+	"text-accent-ink",
+	"text-canvas",
+	"text-ink-1",
+	"text-ink-2",
+	"text-ink-3",
+	"text-oncover-fg",
+	// type roles and weights
+	"text-body",
+	"text-callout",
+	"text-caption",
+	"text-h3",
+	"text-micro",
+	"font-bold",
+	"font-mono",
+	"font-normal",
+	"font-semibold",
+	"tracking-widest",
+	"uppercase",
+	// radius rungs
+	"rounded-full",
+	"rounded-md",
+	"rounded-sheet",
+	"rounded-t-sheet",
 	// display / alignment (RN is flex by default; these ride the overlays)
 	"flex-1",
 	"flex-row",
+	"items-baseline",
 	"items-center",
 	"justify-center",
-	// state overlays
-	"disabled:opacity-50",
-	// the sweep's mapped targets (decision 12)
-	"text-micro",
-	"text-caption",
-	"text-callout",
-	"text-body",
-	"text-h3",
-	"rounded-md",
-	"rounded-xl",
-	"rounded-full",
-	"rounded-sheet",
-	"rounded-t-sheet",
-	"text-oncover-fg",
-	"text-accent-ink",
-	"bg-accent",
-	"bg-scrim",
-	"text-ink-3",
-	"min-h-11",
-	"font-semibold",
-	"gap-stack",
-	"gap-row",
-	"p-card",
-	"p-4",
+	"justify-end",
+	"justify-start",
+	"self-center",
+	"self-start",
+	"self-stretch",
+	"overflow-hidden",
+	"text-center",
+	// numeric dimensions and spacing (the numeric base is live by design)
+	"border",
+	"border-2",
+	"border-t",
+	"gap-1",
+	"gap-1.5",
+	"gap-2",
+	"gap-2.5",
+	"gap-3",
+	"gap-3.5",
+	"h-1",
+	"h-1.5",
+	"h-12",
+	"h-6",
+	"h-9",
+	"h-full",
+	"h-px",
+	"-ml-2",
+	"mb-1.5",
+	"mb-3",
+	"mb-3.5",
+	"min-h-12",
+	"min-h-20",
+	"min-w-8",
+	"mt-4",
+	"opacity-40",
+	"p-5",
+	"pb-8",
+	"pt-3",
+	"px-3",
+	"px-3.5",
+	"px-4",
+	"px-6",
+	"py-2",
+	"py-3",
+	"w-10",
+	"w-12",
+	"w-9",
+	"w-full",
+	"w-px",
 ];
+
+// ── The swept sources, enumerated ───────────────────────────────────
+
+function walk(dir: string, pattern: RegExp): string[] {
+	const out: string[] = [];
+	for (const entry of readdirSync(dir, { withFileTypes: true })) {
+		const path = resolve(dir, entry.name);
+		if (entry.isDirectory()) out.push(...walk(path, pattern));
+		else if (pattern.test(entry.name)) out.push(path);
+	}
+	return out;
+}
+
+// Prose is dropped first: a comment quoting a class otherwise reads as one.
+// Only whole comment lines are dropped, since a `//` inside a string is a URL.
+// A quoted object key goes too: the formatter puts no space before a key's
+// colon and always puts one in a ternary, which separates the two.
+function literals(source: string): string[] {
+	const code = source
+		.split("\n")
+		.filter((line) => !/^\s*(\/\/|\/\*|\*)/.test(line))
+		.join("\n");
+	return [
+		...[...code.matchAll(/"([^"\n]*)"(:?)/g)]
+			.filter((match) => match[2] !== ":")
+			.map((match) => match[1] ?? ""),
+		...[...code.matchAll(/`([^`]*)`/g)].map((match) => match[1] ?? ""),
+	];
+}
+
+// Utility roots the components' class literals draw from. A quoted token
+// counts as a class only when its root is named here, so prose strings
+// ("button", "#2A6FDB") never reach the build assertion. Arbitrary-value
+// tokens (`w-[104px]`) are chrome dimensions outside the class inventory.
+const CLASS_ROOTS = [
+	"bg",
+	"text",
+	"border",
+	"rounded",
+	"gap",
+	"p",
+	"px",
+	"py",
+	"pt",
+	"pb",
+	"m",
+	"mb",
+	"mt",
+	"ml",
+	"mr",
+	"-ml",
+	"h",
+	"w",
+	"min-h",
+	"min-w",
+	"max-h",
+	"flex",
+	"items",
+	"justify",
+	"self",
+	"overflow",
+	"font",
+	"leading",
+	"tracking",
+	"shadow",
+	"opacity",
+];
+const CLASS_EXACT = ["border", "uppercase"];
+
+function sourceClasses(): Set<string> {
+	const out = new Set<string>();
+	for (const path of walk(resolve(pkgDir, "src/ui"), /\.(ts|tsx)$/)) {
+		const source = readFileSync(path, "utf8");
+		for (const literal of literals(source)) {
+			for (const token of classes(literal)) {
+				if (token.includes("[") || token.includes("]")) continue;
+				const bare = token.slice(token.lastIndexOf(":") + 1);
+				if (
+					CLASS_EXACT.includes(bare) ||
+					CLASS_ROOTS.some((root) => bare.startsWith(`${root}-`))
+				) {
+					out.add(token);
+				}
+			}
+		}
+	}
+	return out;
+}
 
 // ── The sheet, rendered with default options ────────────────────────
 
@@ -620,32 +765,44 @@ check("a6", "the build resolves the inventory and kills the retired", () => {
 });
 
 check("a8", "every named --color-* token is an emitted @theme key", () => {
-	const files: string[] = [];
-	const walk = (dir: string): void => {
-		for (const entry of readdirSync(dir, { withFileTypes: true })) {
-			const path = resolve(dir, entry.name);
-			if (entry.isDirectory()) walk(path);
-			else if (/\.(ts|tsx|css)$/.test(entry.name)) files.push(path);
-		}
-	};
-	walk(resolve(pkgDir, "src"));
+	const files = walk(resolve(pkgDir, "src"), /\.(ts|tsx|css)$/);
 
+	// Context-free on purpose: a token reaches the runtime through
+	// `var(--color-*)` in CSS as easily as through a quoted name handed to
+	// `useCSSVariable`, and no single wrapper pattern sees both.
 	const orphans = new Set<string>();
 	let named = 0;
 	for (const path of files) {
 		const source = readFileSync(path, "utf8");
-		for (const match of source.matchAll(/var\(\s*(--color-[a-z0-9-]+)/g)) {
-			const name = match[1];
-			if (!name) continue;
+		for (const match of source.matchAll(/--color-[a-z0-9-]+/g)) {
 			named++;
-			if (!themeMap.has(name)) orphans.add(name);
+			if (!themeMap.has(match[0])) orphans.add(match[0]);
 		}
 	}
+	assert(named > 0, "no --color-* reference found anywhere in src");
 	assert(
 		orphans.size === 0,
 		`named tokens the @theme block does not emit: ${[...orphans].sort().join(", ")}`,
 	);
-	return `${named} var(--color-*) references across ${files.length} files, every one emitted`;
+	return `${named} --color-* references across ${files.length} files, every one emitted`;
+});
+
+check("b5", "the overlay allowlist mirrors the swept sources", () => {
+	const enumerated = sourceClasses();
+	assert(enumerated.size > 0, "no class was enumerated from src/ui");
+	const missing = [...enumerated].filter(
+		(name) => !NATIVE_OVERLAYS.includes(name),
+	);
+	assert(
+		missing.length === 0,
+		`the sources name classes the allowlist lacks: ${missing.sort().join(", ")}`,
+	);
+	const stale = NATIVE_OVERLAYS.filter((name) => !enumerated.has(name));
+	assert(
+		stale.length === 0,
+		`the allowlist carries classes no source names: ${stale.sort().join(", ")}`,
+	);
+	return `${enumerated.size} classes enumerated from src/ui, allowlist equal`;
 });
 
 // ── Report ──────────────────────────────────────────────────────────
