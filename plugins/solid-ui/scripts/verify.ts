@@ -1,17 +1,22 @@
-// Reproduction harness for the `.stack/app.css` emission spine.
+// Reproduction harness for the `.stack/app.css` emission spine and for the
+// component vocabulary that reads it.
 //
 //   pnpm --filter @fcalell/plugin-solid-ui verify
 //
-// Every acceptance criterion in `.helm/board/epics/001-ui-core/` story 03
-// section A is one check below, so a failing check id traces back to a
-// criterion. The sheet under test is resolved through the real plugin graph —
+// Every acceptance criterion in `.helm/board/epics/001-ui-core/` story 03 is
+// one check below, so a failing check id traces back to a criterion. The `a`
+// checks resolve the sheet through the real plugin graph —
 // `defineConfig` → `buildGraphFromConfig` → `solidUi.slots.appCssSource` — so
 // the contribution wiring is exercised, not just the renderer. A Tailwind
 // build over the emitted sheet then decides what the vocabulary resolves to.
+// The `b` checks read the plugin's own source, and every matrix cell they
+// compare against is produced by calling the ui-core cva rather than written
+// out here, so no check can drift from the matrix it describes.
 import { execFileSync } from "node:child_process";
 import {
 	existsSync,
 	mkdirSync,
+	readdirSync,
 	readFileSync,
 	symlinkSync,
 	writeFileSync,
@@ -30,7 +35,25 @@ import {
 	themeTokens,
 } from "@fcalell/ui-core/emit";
 import type { Theme } from "@fcalell/ui-core/schema";
-import { PER_MODE_COLORS, SHADOW_LEVELS } from "@fcalell/ui-core/tokens";
+import {
+	INVARIANT_COLORS,
+	PER_MODE_COLORS,
+	SHADOW_LEVELS,
+	TYPE_ROLES,
+} from "@fcalell/ui-core/tokens";
+import {
+	badge,
+	badgeContentTone,
+	badgeLabel,
+	button,
+	buttonContentTone,
+	buttonLabel,
+	buttonMuted,
+	card,
+	field,
+	text,
+	textStrong,
+} from "@fcalell/ui-core/variants";
 import { solidUi } from "../src/index.ts";
 import { aggregateAppCss } from "../src/node/codegen.ts";
 import * as solidUiCss from "../src/node/css-escape.ts";
@@ -626,6 +649,469 @@ check(
 		return "both halves rejected at the render boundary, and the pair by the theme schema";
 	},
 );
+
+// ── The component surface ───────────────────────────────────────────
+
+// The seven families rebuilt on the shared matrices.
+const REBUILT = [
+	"button",
+	"text",
+	"badge",
+	"card",
+	"input",
+	"textarea",
+	"select",
+];
+
+function walk(dir: string, extensions: string[]): string[] {
+	const out: string[] = [];
+	for (const entry of readdirSync(dir, { withFileTypes: true })) {
+		const path = resolve(dir, entry.name);
+		if (entry.isDirectory()) out.push(...walk(path, extensions));
+		else if (extensions.some((ext) => entry.name.endsWith(ext))) out.push(path);
+	}
+	return out;
+}
+
+function read(path: string): string {
+	return readFileSync(resolve(pkgDir, path), "utf8");
+}
+
+const SWEPT = ["src", "templates"].flatMap((dir) =>
+	walk(resolve(pkgDir, dir), [".ts", ".tsx", ".css"]),
+);
+
+const DOCS = walk(resolve(pkgDir, "docs"), [".md"]);
+
+const rebuiltSources = new Map(
+	REBUILT.map((name) => [name, read(`src/ui/components/${name}/index.tsx`)]),
+);
+
+// The retired vocabulary, as the enumerated patterns criterion b1 names. Bare
+// `accent` is absent on purpose: it is a contract token, not shadcn's.
+const RETIRED: Array<[string, RegExp]> = [
+	[
+		"a shadcn colour class",
+		/\b(bg|text|border|border-[lrtbxy]|ring|fill|stroke|from|to|via|outline|divide|placeholder|caret|shadow|decoration)-(primary|secondary|muted|destructive|success|warning|border|input|ring|background|foreground|card|popover)(-foreground)?\b/,
+	],
+	["accent-foreground", /\baccent-foreground\b/],
+	["a t-shirt type size", /\btext-(xs|sm|base|lg|xl|2xl|3xl|4xl|5xl)\b/],
+	["an off-scale radius", /\brounded-(xs|sm|lg)\b/],
+	["a t-shirt shadow", /\bshadow-(xs|sm|md|lg|xl)\b/],
+	["bg-black", /\bbg-black\b/],
+];
+
+const RETIRED_EXPORTS = [
+	"buttonVariants",
+	"badgeVariants",
+	"inputClasses",
+	"textareaClasses",
+	"selectTriggerVariants",
+];
+
+// ── The matrices, read back off the cvas ────────────────────────────
+
+type AnyCva = (props: Record<string, string>) => string;
+
+interface Family {
+	name: string;
+	cva: AnyCva;
+	axes: Record<string, readonly string[]>;
+}
+
+const TEXT_VARIANTS = [...TYPE_ROLES, "rowtitle"];
+const TEXT_TONES = [
+	"ink-1",
+	"ink-2",
+	"ink-3",
+	"ink-4",
+	"brand",
+	"interactive",
+	"ok",
+	"warn",
+	"danger",
+	"accent-ink",
+	"oncover-fg",
+	"oncover-ink",
+];
+const BADGE_TONES = [
+	"neutral",
+	"brand",
+	"interactive",
+	"ok",
+	"warn",
+	"danger",
+	"oncover",
+];
+const BUTTON_AXES = {
+	emphasis: ["primary", "secondary", "tertiary"],
+	tone: ["neutral", "danger"],
+	size: ["sm", "md", "lg"],
+};
+
+// The axis values are spelled here as a second opinion; every cell string is
+// produced by calling the cva, never written out. The label tables are tied
+// back to the real matrix by `buttonContentTone` / `badgeContentTone`, which
+// read the table objects directly.
+const FAMILIES: Family[] = [
+	{ name: "BUTTON", cva: button as AnyCva, axes: BUTTON_AXES },
+	{ name: "BUTTON_LABEL", cva: buttonLabel as AnyCva, axes: BUTTON_AXES },
+	{
+		name: "BUTTON_MUTED",
+		cva: buttonMuted as AnyCva,
+		axes: { emphasis: BUTTON_AXES.emphasis },
+	},
+	{
+		name: "TEXT",
+		cva: text as AnyCva,
+		axes: { variant: TEXT_VARIANTS, tone: TEXT_TONES },
+	},
+	{
+		name: "TEXT_STRONG",
+		cva: textStrong as AnyCva,
+		axes: { variant: TEXT_VARIANTS },
+	},
+	{ name: "BADGE", cva: badge as AnyCva, axes: { tone: BADGE_TONES } },
+	{
+		name: "BADGE_LABEL",
+		cva: badgeLabel as AnyCva,
+		axes: { tone: BADGE_TONES },
+	},
+	{
+		name: "CARD",
+		cva: card as AnyCva,
+		axes: { padding: ["card", "none"], ring: ["none", "warn"] },
+	},
+	{
+		name: "FIELD",
+		cva: field as AnyCva,
+		axes: {
+			state: ["default", "focused", "error"],
+			layout: ["input", "row"],
+		},
+	},
+];
+
+function classes(value: string): string[] {
+	return value.split(/\s+/).filter(Boolean);
+}
+
+// One axis value's cell is what its rendering adds over the rendering every
+// other value of that axis shares. A compound row folds into the axis it
+// keys off, which is what makes `bg-accent` reachable as BUTTON's primary cell.
+function matrixCells(): Map<string, Set<string>> {
+	const out = new Map<string, Set<string>>();
+	for (const family of FAMILIES) {
+		for (const [axis, values] of Object.entries(family.axes)) {
+			const sets = values.map(
+				(value) => new Set(classes(family.cva({ [axis]: value }))),
+			);
+			const first = sets[0];
+			if (!first) continue;
+			const shared = new Set(
+				[...first].filter((name) => sets.every((set) => set.has(name))),
+			);
+			values.forEach((value, index) => {
+				const set = sets[index];
+				if (!set) return;
+				const cell = new Set([...set].filter((name) => !shared.has(name)));
+				if (cell.size > 0) out.set(`${family.name}.${axis}.${value}`, cell);
+			});
+		}
+	}
+	return out;
+}
+
+const CELLS = matrixCells();
+const CELL_CLASSES = new Map<string, string>();
+for (const [path, cell] of CELLS) {
+	for (const name of cell)
+		if (!CELL_CLASSES.has(name)) CELL_CLASSES.set(name, path);
+}
+const CELL_ROOTS = new Set(
+	[...CELL_CLASSES.keys()].map((name) => name.split("-")[0]),
+);
+const CONTRACT_COLORS: string[] = [...PER_MODE_COLORS, ...INVARIANT_COLORS];
+
+// ── Source shredding ────────────────────────────────────────────────
+
+function literals(source: string): string[] {
+	return [
+		...[...source.matchAll(/"([^"\n]*)"/g)].map((match) => match[1] ?? ""),
+		...[...source.matchAll(/`([^`]*)`/g)].map((match) => match[1] ?? ""),
+	];
+}
+
+// The balanced argument text of every `name(` call, so a check can ask what
+// one `cn()` composes rather than whether two names appear in one file.
+function callArguments(source: string, callee: string): string[] {
+	const out: string[] = [];
+	const needle = `${callee}(`;
+	let index = source.indexOf(needle);
+	while (index >= 0) {
+		const before = source[index - 1] ?? " ";
+		if (!/[A-Za-z0-9_$]/.test(before)) {
+			let depth = 0;
+			for (let i = index + needle.length - 1; i < source.length; i++) {
+				if (source[i] === "(") depth++;
+				else if (source[i] === ")") {
+					depth--;
+					if (depth === 0) {
+						out.push(source.slice(index + needle.length, i));
+						break;
+					}
+				}
+			}
+		}
+		index = source.indexOf(needle, index + 1);
+	}
+	return out;
+}
+
+// The suffix after the last variant separator, with `[...]` spans skipped so
+// `data-[expanded]:` and `[&_svg]:` read as prefixes rather than as content.
+function variantSuffix(name: string): string | undefined {
+	let depth = 0;
+	let last = -1;
+	for (let i = 0; i < name.length; i++) {
+		const char = name[i];
+		if (char === "[") depth++;
+		else if (char === "]") depth--;
+		else if (char === ":" && depth === 0) last = i;
+	}
+	return last >= 0 ? name.slice(last + 1) : undefined;
+}
+
+function sameSet(left: Set<string>, right: Set<string>): boolean {
+	return left.size === right.size && [...left].every((name) => right.has(name));
+}
+
+// ── Criteria ────────────────────────────────────────────────────────
+
+check("b0", "the matrices read back off the cvas are the real ones", () => {
+	assert(CELLS.size > 0, "no matrix cell was recovered from any cva");
+	for (const emphasis of BUTTON_AXES.emphasis) {
+		for (const tone of BUTTON_AXES.tone) {
+			const ink = `text-${buttonContentTone(emphasis as never, tone as never)}`;
+			const cell = CELLS.get(`BUTTON_LABEL.emphasis.${emphasis}`);
+			const alternate = CELLS.get(`BUTTON_LABEL.tone.${tone}`);
+			assert(
+				cell?.has(ink) || alternate?.has(ink) || CELL_CLASSES.has(ink),
+				`BUTTON_LABEL ${emphasis}/${tone}: ${ink} is in no recovered cell`,
+			);
+		}
+	}
+	for (const tone of BADGE_TONES) {
+		const ink = `text-${badgeContentTone(tone as never)}`;
+		assert(
+			CELLS.get(`BADGE_LABEL.tone.${tone}`)?.has(ink),
+			`BADGE_LABEL ${tone}: expected ${ink}`,
+		);
+	}
+	return `${CELLS.size} cells over ${FAMILIES.length} matrices, ${CELL_CLASSES.size} distinct classes`;
+});
+
+check("b1", "the retired vocabulary is gone from src and templates", () => {
+	for (const [name, positive] of [
+		["bg-primary", RETIRED[0]],
+		["text-muted-foreground", RETIRED[0]],
+		["border-border", RETIRED[0]],
+	] as const) {
+		assert(positive?.[1].test(name), `the pattern misses ${name}`);
+	}
+	for (const name of ["bg-accent", "ring-accent", "text-accent-ink"]) {
+		assert(
+			!RETIRED[0]?.[1].test(name),
+			`the pattern matches the contract's ${name}`,
+		);
+	}
+
+	const hits: string[] = [];
+	for (const path of SWEPT) {
+		const source = readFileSync(path, "utf8");
+		for (const [what, pattern] of RETIRED) {
+			const found = source.match(new RegExp(pattern, "g"));
+			if (found) {
+				hits.push(`${relative(pkgDir, path)}: ${what} (${found.join(", ")})`);
+			}
+		}
+	}
+	assert(
+		hits.length === 0,
+		`retired vocabulary survives:\n  ${hits.join("\n  ")}`,
+	);
+	return `${SWEPT.length} files clear of ${RETIRED.length} retired patterns; the pattern spares bare accent`;
+});
+
+check("b2", "the rebuilt seven name a role, never a raw metric", () => {
+	const roles = new Set<string>(TYPE_ROLES);
+	const hits: string[] = [];
+	for (const [name, source] of rebuiltSources) {
+		for (const match of source.matchAll(/\b(leading|tracking)-([a-z0-9-]+)/g)) {
+			const [whole, , value] = match;
+			if (!value || !roles.has(value)) hits.push(`${name}: ${whole}`);
+		}
+	}
+	assert(hits.length === 0, `off-role metrics survive: ${hits.join(", ")}`);
+	return `${rebuiltSources.size} files carry leading/tracking only as a role name`;
+});
+
+check("b3", "the rebuilt seven render through the matrices", () => {
+	const required: Record<string, string[]> = {
+		button: ["button", "buttonLabel", "buttonMuted"],
+		text: ["text", "textStrong"],
+		badge: ["badge", "badgeLabel"],
+		card: ["card", "text"],
+		input: ["field"],
+		textarea: ["field"],
+		select: ["field", "text"],
+	};
+	for (const [name, source] of rebuiltSources) {
+		assert(
+			source.includes("@fcalell/ui-core/variants"),
+			`${name} does not import the matrices`,
+		);
+		for (const callee of required[name] ?? []) {
+			assert(
+				callArguments(source, callee).length > 0,
+				`${name} never calls ${callee}()`,
+			);
+		}
+	}
+
+	// The fill table carries no ink, so the two tables have to land on one node.
+	for (const [name, fill, label] of [
+		["button", "button", "buttonLabel"],
+		["badge", "badge", "badgeLabel"],
+	] as const) {
+		const source = rebuiltSources.get(name) ?? "";
+		const composed = callArguments(source, "cn").some(
+			(args) => args.includes(`${fill}(`) && args.includes(`${label}(`),
+		);
+		assert(
+			composed,
+			`${name} does not compose ${fill} and ${label} in one cn()`,
+		);
+	}
+
+	// A hand-copied cell would pass every other check, so each literal is
+	// compared against the cells as a set rather than as a string.
+	const copies: string[] = [];
+	for (const [name, source] of rebuiltSources) {
+		for (const literal of literals(source)) {
+			const tokens = new Set(classes(literal));
+			if (tokens.size === 0) continue;
+			for (const [path, cell] of CELLS) {
+				if (sameSet(tokens, cell))
+					copies.push(`${name}: "${literal}" is ${path}`);
+			}
+		}
+	}
+	assert(
+		copies.length === 0,
+		`a matrix cell is written out by hand:\n  ${copies.join("\n  ")}`,
+	);
+	return "seven files call their family's cvas, button and badge compose two tables on one node, no cell copied";
+});
+
+check("b4", "a prefixed class mirrors the cell it stands in for", () => {
+	const checked: string[] = [];
+	for (const [name, source] of rebuiltSources) {
+		for (const literal of literals(source)) {
+			for (const token of classes(literal)) {
+				const suffix = variantSuffix(token);
+				if (!suffix) continue;
+				const root = suffix.split("-")[0];
+				if (!root || !CELL_ROOTS.has(root)) continue;
+				const rest = suffix.slice(root.length + 1);
+				if (!CONTRACT_COLORS.includes(rest)) continue;
+				const cell = CELL_CLASSES.get(suffix);
+				assert(
+					cell !== undefined,
+					`${name}: ${token} paints ${suffix}, which no matrix cell holds`,
+				);
+				checked.push(`${token} → ${cell}`);
+			}
+		}
+	}
+
+	// The two the field surfaces cannot reach through a prop, named so the
+	// check fails loudly if either cell moves.
+	for (const [token, path] of [
+		["border-ink-1", "FIELD.state.focused"],
+		["border-danger", "FIELD.state.error"],
+	] as const) {
+		assert(CELLS.get(path)?.has(token), `${path} no longer holds ${token}`);
+	}
+	assert(
+		checked.some((entry) => entry.startsWith("focus-visible:border-ink-1")),
+		"no component reaches FIELD's focused cell by prefix",
+	);
+	assert(
+		checked.some((entry) => entry.startsWith("aria-invalid:border-danger")),
+		"no component reaches FIELD's error cell by prefix",
+	);
+	return `${checked.length} prefixed classes resolved against a matrix cell`;
+});
+
+check("b5", "the class functions are gone", () => {
+	const hits: string[] = [];
+	for (const path of [...SWEPT, ...DOCS, resolve(pkgDir, "README.md")]) {
+		const source = readFileSync(path, "utf8");
+		for (const name of RETIRED_EXPORTS) {
+			if (new RegExp(`\\b${name}\\b`).test(source)) {
+				hits.push(`${relative(pkgDir, path)}: ${name}`);
+			}
+		}
+	}
+	assert(
+		hits.length === 0,
+		`a retired class function survives: ${hits.join(", ")}`,
+	);
+	return `${RETIRED_EXPORTS.length} class functions absent from source, templates and docs`;
+});
+
+check("b6", "the docs match the APIs they document", () => {
+	const forbidden: Array<[string, RegExp]> = [
+		...RETIRED,
+		["a Text namespace member", /\bText\.[A-Z]/],
+		["a retired size", /size="(icon|default)"/],
+		["a Button variant axis", /<Button[^>]*variant=/],
+		["a Badge variant axis", /<Badge[^>]*variant=/],
+		["the Badge round prop", /<Badge[^>]*\bround\b/],
+	];
+	const hits: string[] = [];
+	for (const path of DOCS) {
+		const source = readFileSync(path, "utf8");
+		for (const [what, pattern] of forbidden) {
+			if (pattern.test(source)) hits.push(`${relative(pkgDir, path)}: ${what}`);
+		}
+	}
+	assert(
+		hits.length === 0,
+		`a docs page shows a retired API:\n  ${hits.join("\n  ")}`,
+	);
+
+	// Every page whose component changed shape says what the new shape is.
+	const updated: Array<[string, string[]]> = [
+		["button.md", ["emphasis", "tone", '`"md"`']],
+		["badge.md", ["tone", "rounded-full"]],
+		["text.md", ["variant", "strong", "mono"]],
+		["card.md", ["padding", "ring"]],
+		["input.md", ["FIELD", "no size axis"]],
+		["textarea.md", ["FIELD", "no size axis"]],
+		["select.md", ["FIELD", "no size axis"]],
+		["inset.md", ["tone"]],
+		["input-group.md", ["emphasis"]],
+	];
+	for (const [page, markers] of updated) {
+		const source = read(`docs/${page}`);
+		for (const marker of markers) {
+			assert(source.includes(marker), `docs/${page} never mentions ${marker}`);
+		}
+	}
+	return `${DOCS.length} pages clear of ${forbidden.length} retired patterns, ${updated.length} rewritten pages carry their new axes`;
+});
 
 // ── Report ──────────────────────────────────────────────────────────
 

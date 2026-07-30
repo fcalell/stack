@@ -204,7 +204,12 @@ function Select(props: SelectProps) {
 					{(state) => {
 						const selected = state.selectedOption();
 						return (
-							<span class={cn("flex-1 truncate", !selected && "text-ink-4")}>
+							<span
+								class={cn(
+									"flex-1 truncate",
+									!selected && text({ tone: "ink-4" }),
+								)}
+							>
 								{selected
 									? selected.label
 									: (props.placeholder ?? "Select an option")}
