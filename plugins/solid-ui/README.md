@@ -69,15 +69,18 @@ function DeleteOrgButton() {
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `fonts` | `FontEntry[]` | `defaultFonts` (JetBrains Mono as `mono`) | Webfonts to preload. Each entry is preloaded, gets an `@font-face` (real + fallback metrics), and — when `role` is set — rebinds the matching `--ui-font-*` token. |
-| `theme` | `Theme` (`@fcalell/ui-core/schema`) | the calibrated defaults | The design contract: `knobs` (six hues plus a neutral-chroma scalar), `overrides.colors` / `overrides.scales` for anything the knobs don't reach, and `defaultMode`. Every value resolves through `deriveTheme` and lands in the `@theme` block of `.stack/app.css`. |
+| `theme` | `Theme` | the calibrated defaults | The design contract: `knobs` (six hues plus a neutral-chroma scalar), `overrides.colors` / `overrides.scales` for anything the knobs don't reach, and `defaultMode`. Every value resolves through `deriveTheme` and lands in the `@theme` block of `.stack/app.css`. |
 
-`theme` is validated against ui-core's schema, so an unknown token name, a colour outside the
-`oklch(L C H)` shape, or a scale value carrying a `;` fails the build with the offending key named.
-`defaultMode` picks which palette seeds a native sheet; the web runtime resolves the mode from
-`localStorage` then `prefers-color-scheme`, so on this plugin it is inert and the `@theme` block
-always seeds light.
+### `theme`
+
+The schema rejects an unknown token name, a color outside the `oklch(L C H)` shape, and a scale
+value that would break out of its declaration, naming the offending key. `defaultMode` picks which
+palette seeds a native sheet; the web runtime resolves the mode from `localStorage` then
+`prefers-color-scheme`, so on this plugin it is inert and the `@theme` block always seeds light.
 
 ```ts
+import { solidUi } from "@fcalell/plugin-solid-ui";
+
 solidUi({
   theme: {
     knobs: { brandHue: 120, neutralChroma: 0 },
@@ -86,6 +89,10 @@ solidUi({
 });
 ```
 
+`Theme` is re-exported from `@fcalell/plugin-solid-ui`. The type and the derivation both live in
+`@fcalell/ui-core`, which this plugin renders its stylesheet from.
+
+### `fonts`
 
 ```ts
 import { solidUi } from "@fcalell/plugin-solid-ui";

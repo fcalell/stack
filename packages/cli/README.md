@@ -262,7 +262,7 @@ This runs automatically during `stack init`, `stack add`, `stack remove`, `stack
 
 Plugin-driven development mode. Runs `generate`, then resolves and orchestrates:
 
-- `cliSlots.devProcesses` — long-running processes (wrangler dev, vite dev) spawned in parallel with prefixed/coloured output
+- `cliSlots.devProcesses` — long-running processes (wrangler dev, vite dev) spawned in parallel with prefixed/colored output
 - `cliSlots.devReadySetup` — one-shot tasks that run after processes report ready (e.g. `db-schema-push`)
 - `cliSlots.devWatchers` — chokidar watchers (schema dir, route dir, `stack.config.ts`)
 
@@ -300,6 +300,8 @@ stack db reset
 | `@fcalell/cli/cli-slots` | `cliSlots` — CLI-owned lifecycle slots (`artifactFiles`, `devProcesses`, `buildSteps`, …) |
 | `@fcalell/cli/slots` | `slot.*` builders + `Slot`/`Contribution`/`ContributionCtx` types (re-exported on the main entry too) |
 | `@fcalell/cli/graph` | `buildGraph(plugins, ctxFactory)` — low-level graph engine (commands use this through `build-graph.ts`) |
+| `@fcalell/cli/build-graph` | `buildGraphFromConfig({ config, cwd })` / `buildGraphFromDiscovered()` — validate, discover, collect, then `buildGraph`. The route every command takes to a resolved graph |
+| `@fcalell/cli/css` | CSS escape and validation primitives: `cssString`, `cssUrl`, `cssIdent`, `cssVarName`, `cssTokenValue`, `cssSupportsExpression`. The shared render boundary both UI plugins wrap with their own label |
 | `@fcalell/cli/specs` | Spec types: `GeneratedFile`, `ProcessSpec`, `WatcherSpec`, `BuildStep`, `DeployStep`, `DeployCheck`, `PromptSpec`, `DevReadyTask` |
 | `@fcalell/cli/ast` | TS / TOML / HTML spec types + printers + builder helpers |
 | `@fcalell/cli/discovery` | `discoverPlugins()`, `loadAvailablePlugins()`, `FIRST_PARTY_PLUGINS`, `PLUGIN_NAMES` |
