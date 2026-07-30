@@ -1,47 +1,40 @@
 import { Polymorphic, type PolymorphicProps } from "@kobalte/core/polymorphic";
-import { cva, type VariantProps } from "class-variance-authority";
+import {
+	badge,
+	type BadgeTone,
+	badgeLabel,
+	text,
+	textStrong,
+} from "@fcalell/ui-core/variants";
 import type { ValidComponent } from "solid-js";
 import { splitProps } from "solid-js";
 import { cn } from "#lib/cn";
 
-const badgeVariants = cva(
-	"inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold transition-[color,background-color,border-color] duration-base ease-ui",
-	{
-		variants: {
-			variant: {
-				default: "border-transparent bg-primary text-primary-foreground",
-				secondary: "border-transparent bg-secondary text-secondary-foreground",
-				outline: "text-foreground",
-				destructive: "border-destructive/40 bg-destructive/20 text-destructive",
-				success: "border-success/40 bg-success/20 text-success",
-				warning: "border-warning/40 bg-warning/20 text-warning",
-			},
-		},
-		defaultVariants: {
-			variant: "default",
-		},
-	},
-);
+// Neither badge table carries a type role, so `micro` is composed alongside
+// them: 12px semibold, the size the pill has always been.
+const ROLE = { variant: "micro" } as const;
 
-type BadgeProps = VariantProps<typeof badgeVariants> & {
+const SHELL =
+	"inline-flex items-center transition-[color,background-color] duration-base ease-ui";
+
+type BadgeProps = {
+	tone?: BadgeTone;
 	class?: string;
-	round?: boolean;
 };
 
 function Badge<T extends ValidComponent = "div">(
 	props: PolymorphicProps<T, BadgeProps>,
 ) {
-	const [local, rest] = splitProps(props as BadgeProps, [
-		"class",
-		"variant",
-		"round",
-	]);
+	const [local, rest] = splitProps(props as BadgeProps, ["class", "tone"]);
 	return (
 		<Polymorphic
 			as="div"
 			class={cn(
-				badgeVariants({ variant: local.variant }),
-				local.round && "rounded-full",
+				badge({ tone: local.tone }),
+				badgeLabel({ tone: local.tone }),
+				text(ROLE),
+				textStrong(ROLE),
+				SHELL,
 				local.class,
 			)}
 			{...rest}
@@ -50,4 +43,4 @@ function Badge<T extends ValidComponent = "div">(
 }
 
 export type { BadgeProps };
-export { Badge, badgeVariants };
+export { Badge };

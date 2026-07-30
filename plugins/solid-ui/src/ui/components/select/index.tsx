@@ -1,6 +1,6 @@
 import type { PolymorphicProps } from "@kobalte/core/polymorphic";
 import * as SelectPrimitive from "@kobalte/core/select";
-import { cva, type VariantProps } from "class-variance-authority";
+import { field, text, textStrong } from "@fcalell/ui-core/variants";
 import { Check, ChevronDown } from "lucide-solid";
 import type { JSX, ValidComponent } from "solid-js";
 import { createMemo, splitProps } from "solid-js";
@@ -48,46 +48,41 @@ function findOption(
 
 // ─── Trigger (internal) ───
 
-const selectTriggerVariants = cva(
-	"flex w-full flex-row items-center justify-between gap-2 rounded-md border-2 border-input bg-muted font-mono text-sm text-foreground outline-none transition-all select-none text-left focus-visible:border-primary focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 aria-invalid:border-destructive aria-invalid:outline-2 aria-invalid:outline-destructive aria-invalid:outline-offset-2 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
-	{
-		variants: {
-			size: {
-				sm: "h-8 px-3 py-1 text-sm",
-				default: "h-10 px-4 py-2 text-sm",
-				lg: "h-12 px-4 py-3 text-base",
-			},
-		},
-		defaultVariants: { size: "default" },
-	},
-);
+// The trigger is a field surface laid out as a row, so it takes the matrix's
+// `row` layout rather than a size axis of its own.
+const TRIGGER_SHELL =
+	"flex w-full flex-row items-center justify-between font-mono text-callout text-ink-1 outline-none transition-all select-none text-left focus-visible:border-ink-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive aria-invalid:border-danger";
+
+const TRIGGER_MUTED = "bg-surface-3 text-ink-4 cursor-not-allowed";
 
 type TriggerProps<T extends ValidComponent = "button"> =
-	SelectPrimitive.SelectTriggerProps<T> &
-		VariantProps<typeof selectTriggerVariants> & {
-			class?: string;
-			children?: JSX.Element;
-		};
+	SelectPrimitive.SelectTriggerProps<T> & {
+		class?: string;
+		children?: JSX.Element;
+	};
 
 function Trigger<T extends ValidComponent = "button">(
 	props: PolymorphicProps<T, TriggerProps<T>>,
 ) {
 	const [local, rest] = splitProps(props as TriggerProps, [
 		"class",
-		"size",
 		"children",
+		"disabled",
 	]);
 	return (
 		<SelectPrimitive.Trigger
-			class={cn(selectTriggerVariants({ size: local.size }), local.class)}
+			disabled={local.disabled}
+			class={cn(
+				field({ state: "default", layout: "row" }),
+				TRIGGER_SHELL,
+				local.disabled && TRIGGER_MUTED,
+				local.class,
+			)}
 			{...rest}
 		>
 			{local.children}
 			<SelectPrimitive.Icon>
-				<ChevronDown
-					class="size-4 shrink-0 text-muted-foreground"
-					aria-hidden="true"
-				/>
+				<ChevronDown class="size-4 shrink-0 text-ink-3" aria-hidden="true" />
 			</SelectPrimitive.Icon>
 		</SelectPrimitive.Trigger>
 	);
@@ -100,7 +95,7 @@ function Content(props: { class?: string }) {
 		<SelectPrimitive.Portal>
 			<SelectPrimitive.Content
 				class={cn(
-					"z-50 overflow-hidden rounded-md border-2 border-border bg-popover text-popover-foreground outline-none origin-[var(--kb-select-content-transform-origin)] animate-content-hide data-[expanded]:animate-content-show",
+					"z-50 overflow-hidden rounded-md border-2 border-edge bg-surface text-ink-1 outline-none origin-[var(--kb-select-content-transform-origin)] animate-content-hide data-[expanded]:animate-content-show",
 					props.class,
 				)}
 			>
@@ -119,7 +114,7 @@ function Item(props: {
 	return (
 		<SelectPrimitive.Item
 			item={props.item}
-			class="relative flex w-full cursor-default flex-row items-center gap-2 px-4 py-2 text-sm outline-none transition-colors select-none hover:bg-muted data-highlighted:bg-muted data-disabled:pointer-events-none data-disabled:opacity-50"
+			class="relative flex w-full cursor-default flex-row items-center gap-2 px-4 py-2 text-callout outline-none transition-colors select-none hover:bg-surface-2 data-highlighted:bg-surface-2 data-disabled:pointer-events-none data-disabled:opacity-50"
 		>
 			<SelectPrimitive.ItemLabel class="flex flex-1 flex-row items-center gap-2">
 				<span class="flex-1">{props.children}</span>
@@ -136,7 +131,13 @@ function Item(props: {
 function Section(props: { label: string }) {
 	return (
 		<SelectPrimitive.Section class="mt-1 first:mt-0">
-			<SelectPrimitive.Label class="px-4 py-2 text-xs font-bold uppercase tracking-widest text-muted-foreground">
+			<SelectPrimitive.Label
+				class={cn(
+					text({ variant: "micro", tone: "ink-3" }),
+					textStrong({ variant: "micro" }),
+					"px-4 py-2 uppercase",
+				)}
+			>
 				{props.label}
 			</SelectPrimitive.Label>
 		</SelectPrimitive.Section>
@@ -151,7 +152,6 @@ type SelectProps = {
 	onValueChange?: (value: string) => void;
 	placeholder?: string;
 	disabled?: boolean;
-	size?: "sm" | "default" | "lg";
 	class?: string;
 	contentClass?: string;
 	"aria-invalid"?: boolean;
@@ -196,7 +196,7 @@ function Select(props: SelectProps) {
 			)}
 		>
 			<Trigger
-				size={props.size}
+				disabled={props.disabled}
 				class={props.class}
 				aria-invalid={props["aria-invalid"]}
 			>
@@ -205,7 +205,7 @@ function Select(props: SelectProps) {
 						const selected = state.selectedOption();
 						return (
 							<span
-								class={`flex-1 truncate ${!selected ? "text-muted-foreground" : ""}`}
+								class={cn("flex-1 truncate", !selected && "text-ink-4")}
 							>
 								{selected
 									? selected.label
@@ -223,4 +223,4 @@ function Select(props: SelectProps) {
 // ─── Exports ───
 
 export type { SelectOption, SelectOptionGroup, SelectOptions, SelectProps };
-export { Select, selectTriggerVariants };
+export { Select };

@@ -1,60 +1,69 @@
 import * as ButtonPrimitive from "@kobalte/core/button";
 import type { PolymorphicProps } from "@kobalte/core/polymorphic";
-import { cva, type VariantProps } from "class-variance-authority";
+import {
+	button,
+	type ButtonEmphasis,
+	buttonLabel,
+	buttonMuted,
+	BUTTON_MUTED_LABEL,
+	type ButtonSize,
+	type ButtonTone,
+} from "@fcalell/ui-core/variants";
 import type { JSX, ValidComponent } from "solid-js";
 import { splitProps } from "solid-js";
 import { cn } from "#lib/cn";
 
-const buttonVariants = cva(
-	"inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-[color,background-color,border-color] duration-150 ease-ui focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
-	{
-		variants: {
-			variant: {
-				default:
-					"bg-primary text-primary-foreground hover:bg-primary/90 active:bg-primary/80",
-				destructive:
-					"bg-destructive text-destructive-foreground hover:bg-destructive/90 active:bg-destructive/80",
-				outline:
-					"border border-input text-foreground hover:bg-accent hover:text-accent-foreground active:bg-accent/80",
-				secondary:
-					"bg-secondary text-secondary-foreground hover:bg-secondary/80 active:bg-secondary/70",
-				ghost:
-					"text-foreground hover:bg-accent hover:text-accent-foreground active:bg-accent/80",
-				link: "text-primary underline-offset-4 hover:underline active:text-primary/80",
-			},
-			size: {
-				default: "h-10 px-4 py-2 [&_svg]:size-4",
-				sm: "h-9 px-3 text-xs [&_svg]:size-4 relative after:absolute after:left-1/2 after:top-1/2 after:-translate-x-1/2 after:-translate-y-1/2 after:min-h-[44px] after:min-w-full",
-				lg: "h-11 px-8 [&_svg]:size-5",
-				icon: "size-10 [&_svg]:size-5",
-			},
-		},
-		defaultVariants: {
-			variant: "default",
-			size: "default",
-		},
-	},
-);
+// The fill matrix carries no ink, so the label table rides the same node.
+// Display, motion and the focus ring are web overlays composed after both.
+const SHELL =
+	"inline-flex cursor-pointer items-center justify-center whitespace-nowrap transition-[color,background-color,border-color,opacity] duration-fast ease-ui focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive [&_svg]:pointer-events-none [&_svg]:shrink-0";
+
+// Sized to this plugin's own glyph, which is why it stays out of the matrix.
+const GLYPH: Record<ButtonSize, string> = {
+	sm: "[&_svg]:size-4",
+	md: "[&_svg]:size-4",
+	lg: "[&_svg]:size-5",
+};
 
 type ButtonProps<T extends ValidComponent = "button"> =
-	ButtonPrimitive.ButtonRootProps<T> &
-		VariantProps<typeof buttonVariants> & {
-			class?: string;
-			children?: JSX.Element;
-		};
+	ButtonPrimitive.ButtonRootProps<T> & {
+		emphasis?: ButtonEmphasis;
+		tone?: ButtonTone;
+		size?: ButtonSize;
+		class?: string;
+		children?: JSX.Element;
+	};
 
 function Button<T extends ValidComponent = "button">(
 	props: PolymorphicProps<T, ButtonProps<T>>,
 ) {
 	const [local, rest] = splitProps(props as ButtonProps, [
-		"variant",
+		"emphasis",
+		"tone",
 		"size",
 		"class",
+		"disabled",
 	]);
+	const emphasis = () => local.emphasis ?? "primary";
+	const size = () => local.size ?? "md";
 	return (
 		<ButtonPrimitive.Root
+			disabled={local.disabled}
 			class={cn(
-				buttonVariants({ variant: local.variant, size: local.size }),
+				button({ emphasis: emphasis(), tone: local.tone, size: size() }),
+				buttonLabel({ emphasis: emphasis(), tone: local.tone, size: size() }),
+				SHELL,
+				GLYPH[size()],
+				local.disabled
+					? cn(
+							buttonMuted({ emphasis: emphasis() }),
+							BUTTON_MUTED_LABEL,
+							"pointer-events-none",
+						)
+					: cn(
+							"hover:opacity-90 active:opacity-80",
+							emphasis() === "tertiary" && "hover:bg-surface-2",
+						),
 				local.class,
 			)}
 			{...rest}
@@ -63,4 +72,4 @@ function Button<T extends ValidComponent = "button">(
 }
 
 export type { ButtonProps };
-export { Button, buttonVariants };
+export { Button };
