@@ -70,7 +70,7 @@ function defaultErrorFallback(err: Error, reset: () => void): JSX.Element {
 			<button
 				type="button"
 				onClick={reset}
-				class="text-sm underline underline-offset-4"
+				class="text-callout underline underline-offset-4"
 			>
 				Retry
 			</button>

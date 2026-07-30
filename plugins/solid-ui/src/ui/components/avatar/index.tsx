@@ -10,9 +10,9 @@ const avatarVariants = cva(
 	{
 		variants: {
 			size: {
-				sm: "size-8 text-xs",
-				default: "size-10 text-sm",
-				lg: "size-12 text-base",
+				sm: "size-8 text-micro",
+				default: "size-10 text-callout",
+				lg: "size-12 text-body",
 			},
 		},
 		defaultVariants: {
@@ -67,7 +67,7 @@ function Fallback<T extends ValidComponent = "span">(
 	return (
 		<ImagePrimitive.Fallback
 			class={cn(
-				"flex size-full items-center justify-center bg-muted font-mono text-foreground",
+				"flex size-full items-center justify-center bg-surface-2 font-mono text-ink-1",
 				local.class,
 			)}
 			{...rest}

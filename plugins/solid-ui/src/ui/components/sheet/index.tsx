@@ -1,3 +1,4 @@
+import type { ButtonTone } from "@fcalell/ui-core/variants";
 import * as SheetPrimitive from "@kobalte/core/dialog";
 import type { PolymorphicProps } from "@kobalte/core/polymorphic";
 import { cva, type VariantProps } from "class-variance-authority";
@@ -52,7 +53,7 @@ function Overlay<T extends ValidComponent = "div">(
 	return (
 		<SheetPrimitive.Overlay
 			class={cn(
-				"fixed inset-0 z-50 bg-background/80 data-[expanded]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[expanded]:fade-in-0",
+				"fixed inset-0 z-50 bg-scrim data-[expanded]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[expanded]:fade-in-0",
 				local.class,
 			)}
 			{...rest}
@@ -63,7 +64,7 @@ function Overlay<T extends ValidComponent = "div">(
 // ─── Content ───
 
 const sheetVariants = cva(
-	"fixed z-50 gap-4 bg-background p-6 transition duration-200 ease-ui data-[expanded]:animate-in data-[closed]:animate-out",
+	"fixed z-50 gap-4 bg-canvas p-6 transition duration-200 ease-ui data-[expanded]:animate-in data-[closed]:animate-out",
 	{
 		variants: {
 			position: {
@@ -117,7 +118,7 @@ function Content<T extends ValidComponent = "div">(
 				{...rest}
 			>
 				{local.children}
-				<SheetPrimitive.CloseButton class="absolute right-4 top-4 text-muted-foreground transition-[color,background-color,border-color] duration-base ease-ui hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2 disabled:pointer-events-none">
+				<SheetPrimitive.CloseButton class="absolute right-4 top-4 text-ink-3 transition-[color,background-color,border-color] duration-base ease-ui hover:text-ink-1 focus-visible:outline-2 focus-visible:outline-interactive focus-visible:outline-offset-2 disabled:pointer-events-none">
 					<X class="size-4" aria-hidden="true" />
 					<span class="sr-only">Close</span>
 				</SheetPrimitive.CloseButton>
@@ -162,7 +163,7 @@ function Title<T extends ValidComponent = "h2">(
 	const [local, rest] = splitProps(props as TitleProps, ["class"]);
 	return (
 		<SheetPrimitive.Title
-			class={cn("text-lg font-semibold text-foreground", local.class)}
+			class={cn("text-h3 font-semibold text-ink-1", local.class)}
 			{...rest}
 		/>
 	);
@@ -177,7 +178,7 @@ function Description<T extends ValidComponent = "p">(
 	const [local, rest] = splitProps(props as DescriptionProps, ["class"]);
 	return (
 		<SheetPrimitive.Description
-			class={cn("text-sm text-muted-foreground", local.class)}
+			class={cn("text-callout text-ink-3", local.class)}
 			{...rest}
 		/>
 	);
@@ -242,7 +243,7 @@ type ConfirmSheetProps = {
 	description: string;
 	confirmLabel?: string;
 	cancelLabel?: string;
-	variant?: "default" | "destructive";
+	tone?: ButtonTone;
 };
 
 function createConfirmSheet(options?: CreateSheetOptions) {
@@ -254,13 +255,10 @@ function createConfirmSheet(options?: CreateSheetOptions) {
 				</Header>
 				<Description>{props.description}</Description>
 				<Footer>
-					<Button variant="secondary" onClick={() => close(false)}>
+					<Button emphasis="secondary" onClick={() => close(false)}>
 						{props.cancelLabel ?? "Cancel"}
 					</Button>
-					<Button
-						variant={props.variant ?? "default"}
-						onClick={() => close(true)}
-					>
+					<Button tone={props.tone} onClick={() => close(true)}>
 						{props.confirmLabel ?? "Confirm"}
 					</Button>
 				</Footer>

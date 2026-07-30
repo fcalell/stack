@@ -7,7 +7,7 @@ import { Match, Show, Switch, splitProps } from "solid-js";
 import { cn } from "#lib/cn";
 
 const checkboxVariants = cva(
-	"shrink-0 rounded-xs border border-primary disabled:cursor-not-allowed disabled:opacity-50 peer-focus-visible:outline-2 peer-focus-visible:outline-ring peer-focus-visible:outline-offset-2 data-checked:border-none data-checked:bg-primary data-checked:text-primary-foreground data-indeterminate:border-none data-indeterminate:bg-primary data-indeterminate:text-primary-foreground",
+	"shrink-0 rounded-md border border-ink-1 disabled:cursor-not-allowed disabled:opacity-50 peer-focus-visible:outline-2 peer-focus-visible:outline-interactive peer-focus-visible:outline-offset-2 data-checked:border-none data-checked:bg-accent data-checked:text-accent-ink data-indeterminate:border-none data-indeterminate:bg-accent data-indeterminate:text-accent-ink",
 	{
 		variants: {
 			size: {
@@ -58,7 +58,7 @@ function Checkbox<T extends ValidComponent = "div">(
 				</CheckboxPrimitive.Indicator>
 			</CheckboxPrimitive.Control>
 			<Show when={local.label}>
-				<CheckboxPrimitive.Label class="select-none text-sm leading-none">
+				<CheckboxPrimitive.Label class="select-none text-callout leading-none">
 					{local.label}
 				</CheckboxPrimitive.Label>
 			</Show>

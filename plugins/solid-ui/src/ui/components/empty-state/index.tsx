@@ -37,19 +37,19 @@ function EmptyState(props: EmptyStateProps) {
 			{...rest}
 		>
 			<Show when={local.icon}>
-				<div aria-hidden="true" class="text-border [&_svg]:size-12">
+				<div aria-hidden="true" class="text-edge [&_svg]:size-12">
 					{local.icon}
 				</div>
 			</Show>
 			<div class="flex flex-col items-center gap-2">
 				<Polymorphic
 					as={local.titleAs ?? "h3"}
-					class="text-sm font-bold uppercase tracking-widest text-foreground"
+					class="text-callout font-bold uppercase tracking-widest text-ink-1"
 				>
 					{local.title}
 				</Polymorphic>
 				<Show when={local.description}>
-					<p class="text-sm text-muted-foreground">{local.description}</p>
+					<p class="text-callout text-ink-3">{local.description}</p>
 				</Show>
 			</div>
 			<Show when={resolved()}>

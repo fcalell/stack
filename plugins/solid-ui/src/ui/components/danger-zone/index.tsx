@@ -18,22 +18,22 @@ function DangerZone(props: DangerZoneProps) {
 
 	return (
 		<Inset
-			variant="destructive"
+			tone="danger"
 			class={cn("py-4", props.class)}
 			role="region"
 			aria-label="Danger zone"
 		>
 			<Polymorphic
 				as={tag()}
-				class="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-destructive"
+				class="flex items-center gap-1.5 text-micro font-bold uppercase tracking-widest text-danger"
 			>
 				<TriangleAlert class="size-3.5" aria-hidden="true" />
 				Danger Zone
 			</Polymorphic>
-			<p class="text-sm text-muted-foreground">{props.description}</p>
+			<p class="text-callout text-ink-3">{props.description}</p>
 			<div>
 				<Button
-					variant="destructive"
+					tone="danger"
 					size="sm"
 					onClick={props.onAction}
 					disabled={props.disabled}

@@ -35,13 +35,13 @@ function ItemSeparator(props: ComponentProps<"hr">) {
 // ─── Root ───
 
 const itemClasses = cva(
-	"group/item flex w-full flex-wrap items-center rounded-md text-xs outline-none transition-colors duration-100 hover:bg-muted focus-visible:border-ring focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
+	"group/item flex w-full flex-wrap items-center rounded-md text-caption outline-none transition-colors duration-100 hover:bg-surface-2 focus-visible:border-interactive focus-visible:outline-2 focus-visible:outline-interactive focus-visible:outline-offset-2",
 	{
 		variants: {
 			variant: {
 				default: "border border-transparent",
-				outline: "border-2 border-border",
-				muted: "border border-transparent bg-muted",
+				outline: "border-2 border-edge",
+				muted: "border border-transparent bg-surface-2",
 			},
 			size: {
 				default: "gap-2 px-3 py-2",
@@ -142,7 +142,7 @@ function Title(props: ComponentProps<"span">) {
 			data-slot="item-title"
 			id={local.id ?? titleId}
 			class={cn(
-				"flex w-fit flex-row items-center gap-2 text-xs font-medium underline-offset-4 line-clamp-1",
+				"flex w-fit flex-row items-center gap-2 text-caption font-medium underline-offset-4 line-clamp-1",
 				local.class,
 			)}
 			{...rest}
@@ -160,7 +160,7 @@ function Description(props: ComponentProps<"p">) {
 			data-slot="item-description"
 			id={local.id ?? descId}
 			class={cn(
-				"text-left text-xs/relaxed font-normal text-muted-foreground line-clamp-2 group-data-[size=xs]/item:text-xs/relaxed [&>a:hover]:text-primary [&>a]:underline [&>a]:underline-offset-4",
+				"text-left text-caption font-normal text-ink-3 line-clamp-2 group-data-[size=xs]/item:text-caption [&>a:hover]:text-ink-1 [&>a]:underline [&>a]:underline-offset-4",
 				local.class,
 			)}
 			{...rest}

@@ -14,7 +14,7 @@ function Root(props: RootProps) {
 			aria-orientation="horizontal"
 			aria-label={local["aria-label"] ?? "Section actions"}
 			class={cn(
-				"flex flex-wrap items-center justify-between gap-y-2 border-b border-border px-4 py-3 sm:px-6",
+				"flex flex-wrap items-center justify-between gap-y-2 border-b border-edge px-4 py-3 sm:px-6",
 				local.class,
 			)}
 			{...rest}

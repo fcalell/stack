@@ -1,3 +1,4 @@
+import type { ButtonEmphasis, ButtonTone } from "@fcalell/ui-core/variants";
 import { cva, type VariantProps } from "class-variance-authority";
 import type { ComponentProps } from "solid-js";
 import { mergeProps, splitProps } from "solid-js";
@@ -19,7 +20,7 @@ function Root(props: RootProps) {
 			data-slot="input-group"
 			aria-label={local.legend}
 			class={cn(
-				"relative flex h-8 w-full min-w-0 items-center rounded-md border-2 border-input bg-muted outline-none transition-colors has-[>textarea]:h-auto has-[[data-slot=input-group-control]:focus-visible]:border-primary has-[[data-slot][aria-invalid=true]]:border-destructive has-disabled:bg-card has-disabled:opacity-[0.38] has-[>[data-align=block-end]]:h-auto has-[>[data-align=block-end]]:flex-col has-[>[data-align=block-end]]:[&>input]:pt-3 has-[>[data-align=block-start]]:h-auto has-[>[data-align=block-start]]:flex-col has-[>[data-align=block-start]]:[&>input]:pb-3 has-[>[data-align=inline-end]]:[&>input]:pr-1.5 has-[>[data-align=inline-start]]:[&>input]:pl-1.5 in-data-[slot=combobox-content]:focus-within:border-inherit",
+				"relative flex h-8 w-full min-w-0 items-center rounded-md border-2 border-edge bg-surface-2 outline-none transition-colors has-[>textarea]:h-auto has-[[data-slot=input-group-control]:focus-visible]:border-ink-1 has-[[data-slot][aria-invalid=true]]:border-danger has-disabled:bg-surface has-disabled:opacity-[0.38] has-[>[data-align=block-end]]:h-auto has-[>[data-align=block-end]]:flex-col has-[>[data-align=block-end]]:[&>input]:pt-3 has-[>[data-align=block-start]]:h-auto has-[>[data-align=block-start]]:flex-col has-[>[data-align=block-start]]:[&>input]:pb-3 has-[>[data-align=inline-end]]:[&>input]:pr-1.5 has-[>[data-align=inline-start]]:[&>input]:pl-1.5 in-data-[slot=combobox-content]:focus-within:border-inherit",
 				local.class,
 			)}
 			{...rest}
@@ -30,7 +31,7 @@ function Root(props: RootProps) {
 // ─── Addon ───
 
 const addonClasses = cva(
-	"flex h-auto cursor-text flex-row items-center justify-center gap-2 py-2 text-xs font-medium text-muted-foreground select-none group-data-[disabled=true]/input-group:opacity-50 [&:not(:has(>button))]:cursor-text [&>kbd]:rounded-none [&>svg:not([class*='size-'])]:size-4",
+	"flex h-auto cursor-text flex-row items-center justify-center gap-2 py-2 text-micro font-medium text-ink-3 select-none group-data-[disabled=true]/input-group:opacity-50 [&:not(:has(>button))]:cursor-text [&>kbd]:rounded-none [&>svg:not([class*='size-'])]:size-4",
 	{
 		variants: {
 			align: {
@@ -68,7 +69,7 @@ function Addon(props: AddonProps) {
 // ─── GroupButton ───
 
 const groupButtonClasses = cva(
-	"flex flex-row items-center gap-2 rounded-none text-xs shadow-none",
+	"flex flex-row items-center gap-2 rounded-none text-micro shadow-none",
 	{
 		variants: {
 			size: {
@@ -89,7 +90,8 @@ type GroupButtonProps = Omit<
 	"size"
 > &
 	VariantProps<typeof groupButtonClasses> & {
-		variant?: "default" | "secondary" | "ghost" | "destructive" | "link";
+		emphasis?: ButtonEmphasis;
+		tone?: ButtonTone;
 		type?: "button" | "submit" | "reset";
 	};
 
@@ -97,7 +99,7 @@ function GroupButton(props: GroupButtonProps) {
 	const merged = mergeProps(
 		{
 			type: "button" as const,
-			variant: "ghost" as const,
+			emphasis: "tertiary" as const,
 			size: "xs" as const,
 		},
 		props,
@@ -105,13 +107,15 @@ function GroupButton(props: GroupButtonProps) {
 	const [local, rest] = splitProps(merged, [
 		"class",
 		"type",
-		"variant",
+		"emphasis",
+		"tone",
 		"size",
 	]);
 	return (
 		<Button
 			type={local.type}
-			variant={local.variant}
+			emphasis={local.emphasis}
+			tone={local.tone}
 			class={groupButtonClasses({
 				size: local.size,
 				className: local.class,
@@ -128,7 +132,7 @@ function GroupText(props: ComponentProps<"span">) {
 	return (
 		<span
 			class={cn(
-				"flex flex-row items-center gap-2 text-xs text-muted-foreground [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none",
+				"flex flex-row items-center gap-2 text-micro text-ink-3 [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none",
 				local.class,
 			)}
 			{...rest}

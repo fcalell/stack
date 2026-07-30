@@ -3,18 +3,16 @@ import { splitProps } from "solid-js";
 import { cn } from "#lib/cn";
 
 type InsetProps = ComponentProps<"div"> & {
-	variant?: "default" | "destructive";
+	tone?: "neutral" | "danger";
 };
 
 function Inset(props: InsetProps) {
-	const [local, rest] = splitProps(props, ["class", "variant", "children"]);
+	const [local, rest] = splitProps(props, ["class", "tone", "children"]);
 	return (
 		<div
 			class={cn(
 				"flex flex-col gap-3 border-l-2 pl-4",
-				local.variant === "destructive"
-					? "border-destructive"
-					: "border-border",
+				local.tone === "danger" ? "border-danger" : "border-edge",
 				local.class,
 			)}
 			{...rest}

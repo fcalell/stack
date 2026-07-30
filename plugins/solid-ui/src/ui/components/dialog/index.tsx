@@ -1,3 +1,4 @@
+import type { ButtonTone } from "@fcalell/ui-core/variants";
 import * as DialogPrimitive from "@kobalte/core/dialog";
 import type { PolymorphicProps } from "@kobalte/core/polymorphic";
 import { X } from "lucide-solid";
@@ -64,13 +65,13 @@ function Content<T extends ValidComponent = "div">(
 			<Overlay />
 			<DialogPrimitive.Content
 				class={cn(
-					"relative z-50 grid max-h-screen w-full max-w-lg gap-4 overflow-y-auto rounded-lg border bg-background p-6 duration-200 data-[expanded]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[expanded]:fade-in-0 data-[closed]:zoom-out-95 data-[expanded]:zoom-in-95 data-[closed]:slide-out-to-left-1/2 data-[closed]:slide-out-to-top-[48%] data-[expanded]:slide-in-from-left-1/2 data-[expanded]:slide-in-from-top-[48%]",
+					"relative z-50 grid max-h-screen w-full max-w-lg gap-4 overflow-y-auto rounded-xl border bg-canvas p-6 duration-200 data-[expanded]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[expanded]:fade-in-0 data-[closed]:zoom-out-95 data-[expanded]:zoom-in-95 data-[closed]:slide-out-to-left-1/2 data-[closed]:slide-out-to-top-[48%] data-[expanded]:slide-in-from-left-1/2 data-[expanded]:slide-in-from-top-[48%]",
 					local.class,
 				)}
 				{...rest}
 			>
 				{local.children}
-				<DialogPrimitive.CloseButton class="absolute right-3 top-3 flex size-8 items-center justify-center text-muted-foreground transition-[color,background-color,border-color] duration-base ease-ui hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2 disabled:pointer-events-none">
+				<DialogPrimitive.CloseButton class="absolute right-3 top-3 flex size-8 items-center justify-center text-ink-3 transition-[color,background-color,border-color] duration-base ease-ui hover:text-ink-1 focus-visible:outline-2 focus-visible:outline-interactive focus-visible:outline-offset-2 disabled:pointer-events-none">
 					<X class="size-4" aria-hidden="true" />
 					<span class="sr-only">Close</span>
 				</DialogPrimitive.CloseButton>
@@ -119,7 +120,7 @@ function Title<T extends ValidComponent = "h2">(
 	return (
 		<DialogPrimitive.Title
 			class={cn(
-				"text-lg font-semibold leading-none tracking-tight",
+				"text-h3 font-semibold leading-none tracking-tight",
 				local.class,
 			)}
 			{...rest}
@@ -136,7 +137,7 @@ function Description<T extends ValidComponent = "p">(
 	const [local, rest] = splitProps(props as DescriptionProps, ["class"]);
 	return (
 		<DialogPrimitive.Description
-			class={cn("text-sm text-muted-foreground", local.class)}
+			class={cn("text-callout text-ink-3", local.class)}
 			{...rest}
 		/>
 	);
@@ -195,7 +196,7 @@ type ConfirmDialogProps = {
 	description: string;
 	confirmLabel?: string;
 	cancelLabel?: string;
-	variant?: "default" | "destructive";
+	tone?: ButtonTone;
 };
 
 function createConfirmDialog(options?: CreateDialogOptions) {
@@ -207,13 +208,10 @@ function createConfirmDialog(options?: CreateDialogOptions) {
 				</Header>
 				<Description>{props.description}</Description>
 				<Footer>
-					<Button variant="secondary" onClick={() => close(false)}>
+					<Button emphasis="secondary" onClick={() => close(false)}>
 						{props.cancelLabel ?? "Cancel"}
 					</Button>
-					<Button
-						variant={props.variant ?? "default"}
-						onClick={() => close(true)}
-					>
+					<Button tone={props.tone} onClick={() => close(true)}>
 						{props.confirmLabel ?? "Confirm"}
 					</Button>
 				</Footer>
@@ -244,10 +242,10 @@ function createConfirmByNameDialog(options?: CreateDialogOptions) {
 				</Header>
 				<Description>{props.description}</Description>
 				<div class="flex flex-col gap-2">
-					<Text.Muted as="label" for={inputId}>
-						Type <span class="font-bold text-foreground">{props.name}</span> to
+					<Text as="label" variant="caption" tone="ink-3" for={inputId}>
+						Type <span class="font-bold text-ink-1">{props.name}</span> to
 						confirm
-					</Text.Muted>
+					</Text>
 					<Input
 						id={inputId}
 						value={value()}
@@ -256,11 +254,11 @@ function createConfirmByNameDialog(options?: CreateDialogOptions) {
 					/>
 				</div>
 				<Footer>
-					<Button variant="secondary" onClick={() => close(undefined)}>
+					<Button emphasis="secondary" onClick={() => close(undefined)}>
 						Cancel
 					</Button>
 					<Button
-						variant="destructive"
+						tone="danger"
 						disabled={!matches()}
 						onClick={() => close(true)}
 					>

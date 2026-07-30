@@ -35,7 +35,7 @@ function Header(props: ComponentProps<"header">) {
 	return (
 		<header
 			class={cn(
-				"flex min-h-12 items-center justify-between border-b-2 border-border px-6 py-3",
+				"flex min-h-12 items-center justify-between border-b-2 border-edge px-6 py-3",
 				local.class,
 			)}
 			{...rest}
@@ -52,7 +52,7 @@ function Title<T extends ValidComponent = "h2">(
 		<Polymorphic
 			as="h2"
 			id={ctx?.titleId}
-			class={cn("text-2xl font-bold uppercase tracking-widest", local.class)}
+			class={cn("text-h2 font-bold uppercase tracking-widest", local.class)}
 			{...rest}
 		/>
 	);

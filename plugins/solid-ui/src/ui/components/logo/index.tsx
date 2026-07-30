@@ -39,15 +39,15 @@ const logoContainerClasses = cva("inline-flex", {
 });
 
 const logoTextClasses = cva(
-	"whitespace-nowrap font-bold uppercase leading-none tracking-widest text-foreground transition-[clip-path,opacity] duration-200",
+	"whitespace-nowrap font-bold uppercase leading-none tracking-widest text-ink-1 transition-[clip-path,opacity] duration-200",
 	{
 		variants: {
 			size: {
-				sm: "text-base",
-				default: "text-lg",
-				lg: "text-2xl",
-				xl: "text-3xl",
-				"2xl": "text-4xl",
+				sm: "text-body",
+				default: "text-h3",
+				lg: "text-h2",
+				xl: "text-h1",
+				"2xl": "text-h1",
 			},
 			responsive: {
 				false: "",

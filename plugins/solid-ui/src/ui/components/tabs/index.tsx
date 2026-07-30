@@ -18,7 +18,7 @@ function List(props: { class?: string; children: JSX.Element }) {
 	return (
 		<TabsPrimitive.List
 			class={cn(
-				"relative inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground",
+				"relative inline-flex h-10 items-center justify-center rounded-md bg-surface-2 p-1 text-ink-3",
 				props.class,
 			)}
 		>
@@ -38,7 +38,7 @@ function Trigger(props: {
 		<TabsPrimitive.Trigger
 			value={props.value}
 			disabled={props.disabled}
-			class="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium transition-colors duration-base ease-ui focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2 disabled:pointer-events-none disabled:opacity-50 data-selected:bg-background data-selected:text-foreground"
+			class="inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-callout font-medium transition-colors duration-base ease-ui focus-visible:outline-2 focus-visible:outline-interactive focus-visible:outline-offset-2 disabled:pointer-events-none disabled:opacity-50 data-selected:bg-canvas data-selected:text-ink-1"
 		>
 			{props.children}
 		</TabsPrimitive.Trigger>
@@ -56,7 +56,7 @@ function Content(props: {
 		<TabsPrimitive.Content
 			value={props.value}
 			class={cn(
-				"mt-0 focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
+				"mt-0 focus-visible:outline-2 focus-visible:outline-interactive focus-visible:outline-offset-2",
 				props.class,
 			)}
 		>
@@ -73,7 +73,7 @@ function Indicator() {
 		// indicator must be anchored at the list's origin: inline-start for the
 		// horizontal translateX (start-0, matching Kobalte's RTL offset math) and
 		// top for the vertical translateY.
-		<TabsPrimitive.Indicator class="absolute bg-primary transition-all duration-250 data-[orientation=horizontal]:start-0 data-[orientation=horizontal]:-bottom-px data-[orientation=horizontal]:h-0.5 data-[orientation=vertical]:top-0 data-[orientation=vertical]:-right-px data-[orientation=vertical]:w-0.5" />
+		<TabsPrimitive.Indicator class="absolute bg-accent transition-all duration-250 data-[orientation=horizontal]:start-0 data-[orientation=horizontal]:-bottom-px data-[orientation=horizontal]:h-0.5 data-[orientation=vertical]:top-0 data-[orientation=vertical]:-right-px data-[orientation=vertical]:w-0.5" />
 	);
 }
 

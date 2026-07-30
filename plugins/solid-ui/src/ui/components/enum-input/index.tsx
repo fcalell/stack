@@ -63,19 +63,19 @@ function EnumInput(props: EnumInputProps) {
 	return (
 		<div
 			class={cn(
-				"flex min-h-10 flex-wrap items-center gap-1 rounded-md border-2 border-input bg-muted px-3 py-2 font-mono text-sm transition-all focus-within:border-primary",
+				"flex min-h-10 flex-wrap items-center gap-1 rounded-md border-2 border-edge bg-surface-2 px-3 py-2 font-mono text-callout transition-all focus-within:border-ink-1",
 				props.disabled &&
 					"pointer-events-none cursor-not-allowed opacity-[0.38]",
 			)}
 		>
 			<For each={props.values}>
 				{(value, index) => (
-					<span class="flex items-center gap-1 rounded-sm bg-border px-2 py-0.5 font-mono text-xs text-foreground">
+					<span class="flex items-center gap-1 rounded-md bg-edge px-2 py-0.5 font-mono text-micro text-ink-1">
 						{value}
 						<button
 							type="button"
 							onClick={() => removeValue(index())}
-							class="cursor-pointer text-foreground/70 transition-colors hover:text-foreground"
+							class="cursor-pointer text-ink-3 transition-colors hover:text-ink-1"
 							aria-label={`Remove ${value}`}
 						>
 							<X class="size-3" />
@@ -95,7 +95,7 @@ function EnumInput(props: EnumInputProps) {
 						: undefined
 				}
 				disabled={props.disabled}
-				class="min-w-[80px] flex-1 bg-transparent font-mono text-sm outline-none placeholder:text-muted-foreground"
+				class="min-w-[80px] flex-1 bg-transparent font-mono text-callout outline-none placeholder:text-ink-3"
 			/>
 		</div>
 	);

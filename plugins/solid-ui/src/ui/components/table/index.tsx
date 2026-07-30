@@ -13,7 +13,7 @@ function Root(props: RootProps) {
 	return (
 		<div class={cn("relative w-full overflow-auto", local.containerClass)}>
 			<table
-				class={cn("w-full caption-bottom text-sm", local.class)}
+				class={cn("w-full caption-bottom text-callout", local.class)}
 				{...rest}
 			/>
 		</div>
@@ -42,10 +42,7 @@ function TableFooter(props: ComponentProps<"tfoot">) {
 	const [local, rest] = splitProps(props, ["class"]);
 	return (
 		<tfoot
-			class={cn(
-				"border-t bg-muted/50 font-medium text-muted-foreground",
-				local.class,
-			)}
+			class={cn("border-t bg-surface-2 font-medium text-ink-3", local.class)}
 			{...rest}
 		/>
 	);
@@ -58,7 +55,7 @@ function Row(props: ComponentProps<"tr">) {
 	return (
 		<tr
 			class={cn(
-				"border-b hover:bg-muted/50 data-[state=selected]:bg-muted",
+				"border-b hover:bg-surface-2 data-[state=selected]:bg-surface-2",
 				local.class,
 			)}
 			{...rest}
@@ -74,7 +71,7 @@ function Head(props: ComponentProps<"th">) {
 		<th
 			scope="col"
 			class={cn(
-				"h-10 px-2 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0",
+				"h-10 px-2 text-left align-middle font-medium text-ink-3 [&:has([role=checkbox])]:pr-0",
 				local.class,
 			)}
 			{...rest}
@@ -100,7 +97,7 @@ function Caption(props: ComponentProps<"caption">) {
 	const [local, rest] = splitProps(props, ["class"]);
 	return (
 		<caption
-			class={cn("mt-4 text-sm text-muted-foreground", local.class)}
+			class={cn("mt-4 text-callout text-ink-3", local.class)}
 			{...rest}
 		/>
 	);

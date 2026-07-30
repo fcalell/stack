@@ -49,7 +49,7 @@ export function NavigationProgress(props: { loading: boolean }) {
 				classList={{ "opacity-0 transition-opacity duration-300": fading() }}
 			>
 				<div
-					class="h-full bg-primary transition-[width] duration-200 ease-out"
+					class="h-full bg-accent transition-[width] duration-200 ease-out"
 					style={{ width: `${width()}%` }}
 				/>
 			</div>

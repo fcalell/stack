@@ -153,7 +153,6 @@ type FormSelectProps = {
 	options: SelectOptions;
 	placeholder?: string;
 	disabled?: boolean;
-	size?: "sm" | "default" | "lg";
 	class?: string;
 	children?: (option: import("#components/select").SelectOption) => JSX.Element;
 };
@@ -175,7 +174,6 @@ function FormSelect(props: FormSelectProps) {
 				}}
 				placeholder={props.placeholder}
 				disabled={props.disabled}
-				size={props.size}
 				aria-invalid={hasErrors(props.field()) ? true : undefined}
 			>
 				{props.children}

@@ -1,11 +1,11 @@
-import { Polymorphic, type PolymorphicProps } from "@kobalte/core/polymorphic";
 import {
-	badge,
 	type BadgeTone,
+	badge,
 	badgeLabel,
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
+import { Polymorphic, type PolymorphicProps } from "@kobalte/core/polymorphic";
 import type { ValidComponent } from "solid-js";
 import { splitProps } from "solid-js";
 import { cn } from "#lib/cn";

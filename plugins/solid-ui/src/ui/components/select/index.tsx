@@ -1,6 +1,6 @@
+import { field, text, textStrong } from "@fcalell/ui-core/variants";
 import type { PolymorphicProps } from "@kobalte/core/polymorphic";
 import * as SelectPrimitive from "@kobalte/core/select";
-import { field, text, textStrong } from "@fcalell/ui-core/variants";
 import { Check, ChevronDown } from "lucide-solid";
 import type { JSX, ValidComponent } from "solid-js";
 import { createMemo, splitProps } from "solid-js";
@@ -204,9 +204,7 @@ function Select(props: SelectProps) {
 					{(state) => {
 						const selected = state.selectedOption();
 						return (
-							<span
-								class={cn("flex-1 truncate", !selected && "text-ink-4")}
-							>
+							<span class={cn("flex-1 truncate", !selected && "text-ink-4")}>
 								{selected
 									? selected.label
 									: (props.placeholder ?? "Select an option")}

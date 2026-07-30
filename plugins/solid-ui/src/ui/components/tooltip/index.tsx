@@ -17,7 +17,7 @@ function Content<T extends ValidComponent = "div">(
 		<TooltipPrimitive.Portal>
 			<TooltipPrimitive.Content
 				class={cn(
-					"z-50 origin-(--kb-popover-content-transform-origin) overflow-hidden rounded-md border bg-popover px-3 py-1.5 text-sm text-popover-foreground animate-content-hide data-[expanded]:animate-content-show",
+					"z-50 origin-(--kb-popover-content-transform-origin) overflow-hidden rounded-md border bg-surface px-3 py-1.5 text-callout text-ink-1 animate-content-hide data-[expanded]:animate-content-show",
 					local.class,
 				)}
 				{...rest}

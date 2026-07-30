@@ -63,7 +63,7 @@ function Loader(props: LoaderProps) {
 		<span
 			role="status"
 			aria-label={props.text}
-			class={cn("font-mono text-xs text-muted-foreground", props.class)}
+			class={cn("font-mono text-caption text-ink-3", props.class)}
 		>
 			{display()}
 		</span>

@@ -1,10 +1,10 @@
-import { Polymorphic, type PolymorphicProps } from "@kobalte/core/polymorphic";
 import {
-	card,
 	type CardPadding,
 	type CardRing,
+	card,
 	text,
 } from "@fcalell/ui-core/variants";
+import { Polymorphic, type PolymorphicProps } from "@kobalte/core/polymorphic";
 import type { ComponentProps, ValidComponent } from "solid-js";
 import { splitProps } from "solid-js";
 import { cn } from "#lib/cn";
@@ -35,9 +35,7 @@ function Root(props: RootProps) {
 
 function Header(props: ComponentProps<"div">) {
 	const [local, rest] = splitProps(props, ["class"]);
-	return (
-		<div class={cn("flex flex-col gap-pair", local.class)} {...rest} />
-	);
+	return <div class={cn("flex flex-col gap-pair", local.class)} {...rest} />;
 }
 
 function Title<T extends ValidComponent = "h3">(

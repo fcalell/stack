@@ -19,15 +19,15 @@ function Slot(props: { index: number }) {
 			data-active={isActive() || undefined}
 			aria-hidden="true"
 			class={cn(
-				"relative flex h-10 w-10 items-center justify-center rounded-md border-2 border-input bg-muted font-mono text-sm",
-				"data-active:z-10 data-active:outline-2 data-active:outline-ring data-active:outline-offset-2",
-				"group-aria-invalid:border-destructive",
+				"relative flex h-10 w-10 items-center justify-center rounded-md border-2 border-edge bg-surface-2 font-mono text-callout",
+				"data-active:z-10 data-active:outline-2 data-active:outline-interactive data-active:outline-offset-2",
+				"group-aria-invalid:border-danger",
 			)}
 		>
 			{char()}
 			<Show when={showFakeCaret()}>
 				<div class="pointer-events-none absolute inset-0 flex items-center justify-center">
-					<div class="h-4 w-px animate-caret-blink bg-foreground" />
+					<div class="h-4 w-px animate-caret-blink bg-ink-1" />
 				</div>
 			</Show>
 		</div>
@@ -39,7 +39,7 @@ function Slot(props: { index: number }) {
 function Separator() {
 	return (
 		<div class="flex items-center" aria-hidden="true">
-			<span class="text-muted-foreground">-</span>
+			<span class="text-ink-3">-</span>
 		</div>
 	);
 }

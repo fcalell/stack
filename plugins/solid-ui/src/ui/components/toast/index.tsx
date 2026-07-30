@@ -23,12 +23,12 @@ function Toaster(props: ToasterProps) {
 				},
 				classes: {
 					toast: "focus-visible:[box-shadow:0_0_0_2px_var(--color-ring)]",
-					success: "!border-l-[3px] !border-l-success",
-					error: "!border-l-[3px] !border-l-destructive",
-					warning: "!border-l-[3px] !border-l-warning",
-					info: "!border-l-[3px] !border-l-primary",
+					success: "!border-l-[3px] !border-l-ok",
+					error: "!border-l-[3px] !border-l-danger",
+					warning: "!border-l-[3px] !border-l-warn",
+					info: "!border-l-[3px] !border-l-ink-1",
 					closeButton:
-						"bg-card border-border text-muted-foreground hover:bg-muted hover:text-foreground",
+						"bg-surface border-edge text-ink-3 hover:bg-surface-2 hover:text-ink-1",
 				},
 			}}
 			{...rest}
