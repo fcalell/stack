@@ -64,7 +64,7 @@ type MenuItems = MenuItem[] | MenuGroup[];
 
 ```tsx
 <DropdownMenu
-  trigger={<Button variant="outline">Actions</Button>}
+  trigger={<Button emphasis="secondary">Actions</Button>}
   items={[
     { label: "Edit", onSelect: handleEdit },
     { label: "Duplicate", onSelect: handleDuplicate },
@@ -78,7 +78,7 @@ type MenuItems = MenuItem[] | MenuGroup[];
 
 ```tsx
 <DropdownMenu
-  trigger={<Button variant="ghost" size="icon"><MoreVertical /></Button>}
+  trigger={<Button emphasis="tertiary" class="aspect-square"><MoreVertical /></Button>}
   items={[
     { label: "Edit", icon: <Pencil />, shortcut: "⌘E", onSelect: handleEdit },
     { label: "Copy", icon: <Copy />, shortcut: "⌘C", onSelect: handleCopy },

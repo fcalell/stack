@@ -18,7 +18,7 @@ The element that activates the tooltip on hover/focus.
 
 ### Tooltip.Content
 
-Portal-rendered tooltip panel with border, popover background, and entry/exit animations.
+Portal-rendered tooltip panel with border, `surface` background, and entry/exit animations.
 
 | Prop | Type | Description |
 |------|------|-------------|
@@ -28,7 +28,7 @@ Portal-rendered tooltip panel with border, popover background, and entry/exit an
 
 ```tsx
 <Tooltip>
-  <Tooltip.Trigger as={Button} variant="ghost" size="icon">
+  <Tooltip.Trigger as={Button} emphasis="tertiary" class="aspect-square">
     <Info />
   </Tooltip.Trigger>
   <Tooltip.Content>More information about this feature.</Tooltip.Content>

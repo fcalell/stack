@@ -1,122 +1,82 @@
 # Text
 
-Typography primitives used by all other components for rendered text. No built-in margins — parent components handle spacing via `gap` or padding.
+The typography primitive every other component renders text through. One component, one role axis, no built-in margins: the parent handles spacing with a `gap` or an inset rung.
 
 ```tsx
 import { Text } from "@fcalell/plugin-solid-ui/components/text";
 ```
 
-## Common props
+## Props
 
-All sub-components accept:
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `variant` | `"display" \| "h1" \| "h2" \| "h3" \| "body" \| "callout" \| "caption" \| "micro" \| "rowtitle"` | `"body"` | The type role: size, weight, leading, tracking |
+| `tone` | `"ink-1" \| "ink-2" \| "ink-3" \| "ink-4" \| "brand" \| "interactive" \| "ok" \| "warn" \| "danger" \| "accent-ink" \| "oncover-fg" \| "oncover-ink"` | inherited | Ink colour |
+| `strong` | `boolean` | `false` | Lifts the role one weight step |
+| `mono` | `boolean` | `false` | Monospace family. Measured data only: money, counts, coordinates, times, IDs |
+| `as` | `ValidComponent` | `"p"` | The rendered HTML element |
+| `class` | `string` | -- | Additional Tailwind classes (merged via `cn()`) |
+| `...rest` | -- | -- | All HTML attributes for the rendered element |
 
-| Prop | Type | Description |
-|------|------|-------------|
-| `as` | `ValidComponent` | Override the rendered HTML element |
-| `class` | `string` | Additional Tailwind classes (merged via `cn()`) |
-| `...rest` | — | All HTML attributes for the rendered element |
+`variant` and `tone` are the axes of the shared `TEXT` matrix in `@fcalell/ui-core`, and `strong` reads `TEXT_STRONG`. Pick the role, never a raw size.
 
-## Sub-components
+## Roles
 
-### Text.H1
+| Role | Size | Weight | Use it for |
+|------|------|--------|------------|
+| `display` | 34px | bold | A single hero number or title |
+| `h1` | 28px | bold | The page title, once per page |
+| `h2` | 22px | semibold | A section heading |
+| `h3` | 18px | semibold | A subsection heading, a card title |
+| `rowtitle` | 16px | semibold | A row or list-item title |
+| `body` | 16px | medium | Paragraphs and general content |
+| `callout` | 14px | bold | A short emphasised line inside a surface |
+| `caption` | 13px | medium | Running meta, hints, errors, timestamps |
+| `micro` | 12px | medium | Labels only. Its tracking is why |
 
-Page title. Use once per page for the primary heading.
-
-Renders `<h1>` — `text-4xl`, bold, 1.1 line-height, tight tracking.
+The element and the role are separate choices, so a heading that must not enter the document outline still reads as one:
 
 ```tsx
-<Text.H1>Dashboard</Text.H1>
-<Text.H1 as="span">Styled as H1, renders as span</Text.H1>
+<Text as="h1" variant="h1">Dashboard</Text>
+<Text as="span" variant="h1">Styled as h1, renders as span</Text>
 ```
 
-### Text.H2
+## Tone
 
-Section heading. Use to divide major content areas.
-
-Renders `<h2>` — `text-3xl`, semibold, 1.15 line-height, tight tracking.
+Leave `tone` unset and the text inherits its ground's ink, which the base layer sets to `ink-1`. Set it to step down the hierarchy.
 
 ```tsx
-<Text.H2>Recent activity</Text.H2>
+<Text as="h1" variant="h1">Dashboard</Text>
+<Text variant="h3" tone="ink-2">Overview of your project's performance this week.</Text>
+<Text variant="caption" tone="ink-3">Maximum 5 MB per file.</Text>
 ```
 
-### Text.H3
+## Strong
 
-Subsection heading. Use within sections for grouping related content.
-
-Renders `<h3>` — `text-2xl`, semibold, 1.2 line-height, tight tracking.
+`strong` lifts the role one weight step. `display`, `h1` and `callout` already carry their peak weight, so it does nothing on those three.
 
 ```tsx
-<Text.H3>Team members</Text.H3>
+<Text variant="caption" strong>3 tasks remaining</Text>
 ```
 
-### Text.H4
+## Mono
 
-Minor heading. Use for card titles, list group headers, or inline labels that need heading weight.
-
-Renders `<h4>` — `text-xl`, semibold, 1.25 line-height, tight tracking.
+`mono` is for measured data: money, counts, coordinates, times, IDs. Never labels, chrome, or prose. A unit symbol fused to a measurement stays mono; a pluralizing noun the count modifies stays sans.
 
 ```tsx
-<Text.H4>Settings</Text.H4>
+<Text as="span" variant="callout" mono>1,204 ms</Text>
 ```
 
-### Text.P
+## Inline code
 
-Standard body text. Use for paragraphs and general content.
-
-Renders `<p>` — `text-base` (16px), 1.625 line-height (optimized for reading comfort).
+An inline code snippet is `as="code"` at the `callout` role with `mono`, plus the chip overlay:
 
 ```tsx
-<Text.P>Your project was created successfully.</Text.P>
-<Text.P class="max-w-prose">Constrained width for long-form reading.</Text.P>
-```
-
-### Text.Lead
-
-Introductory paragraph. Use below a page title or at the top of a section to provide context. Rendered in muted foreground to establish visual hierarchy below the heading.
-
-Renders `<p>` — `text-xl`, 1.625 line-height, `text-muted-foreground`.
-
-```tsx
-<Text.H1>Dashboard</Text.H1>
-<Text.Lead>Overview of your project's performance this week.</Text.Lead>
-```
-
-### Text.Large
-
-Emphasized body text. Use for callouts, key metrics labels, or content that needs more weight than a paragraph but isn't a heading.
-
-Renders `<p>` — `text-lg`, semibold, 1.375 line-height.
-
-```tsx
-<Text.Large>3 tasks remaining</Text.Large>
-```
-
-### Text.Small
-
-Fine print and auxiliary text. Use for timestamps, footnotes, or secondary metadata.
-
-Renders `<small>` — `text-sm` (14px), 1.5 line-height.
-
-```tsx
-<Text.Small>Created 3 days ago</Text.Small>
-```
-
-### Text.Muted
-
-De-emphasized helper text. Use for descriptions below form fields, empty state hints, or secondary information. Rendered in muted foreground.
-
-Renders `<p>` — `text-sm`, 1.5 line-height, `text-muted-foreground`.
-
-```tsx
-<Text.Muted>Maximum 5 MB per file.</Text.Muted>
-```
-
-### Text.Code
-
-Inline code snippet. Use within prose for variable names, commands, or short code references. Sized relative to its parent (`0.9em`) so it scales within any text context.
-
-Renders `<code>` — `text-[0.9em]`, mono font, `bg-muted`, `rounded-sm`, horizontal/vertical padding.
-
-```tsx
-<Text.P>Run <Text.Code>pnpm install</Text.Code> to get started.</Text.P>
+<Text>
+  Run{" "}
+  <Text as="code" variant="callout" mono class="bg-surface-2 rounded-md px-1 py-0.5">
+    pnpm install
+  </Text>{" "}
+  to get started.
+</Text>
 ```

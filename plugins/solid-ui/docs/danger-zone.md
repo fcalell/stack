@@ -1,6 +1,6 @@
 # DangerZone
 
-Destructive action block with warning icon, description, and action button. Wraps Inset with error variant.
+Destructive action block with warning icon, description, and action button. Wraps Inset at the `danger` tone.
 
 ```tsx
 import { DangerZone } from "@fcalell/plugin-solid-ui/components/danger-zone";

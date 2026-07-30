@@ -81,7 +81,7 @@ Note: `data` is an `Accessor<TData>` (getter function). Call `data()` to read th
 <QueryBoundary
   query={query}
   errorFallback={(error, retry) => (
-    <Alert variant="destructive">
+    <Alert tone="danger">
       <p>{error.message}</p>
       <Button onClick={retry}>Try again</Button>
     </Alert>

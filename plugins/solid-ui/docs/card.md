@@ -1,6 +1,6 @@
 # Card
 
-Bordered surface for grouping related content. Card background, rounded corners, with standard header/content/footer layout.
+The enclosure around a discrete record, a divided row list, or a tile. It takes the shared `CARD` matrix: `surface` fill, `rounded-xl`, and a `shadow-1` lift instead of a border.
 
 ```tsx
 import { Card } from "@fcalell/plugin-solid-ui/components/card";
@@ -10,19 +10,21 @@ import { Card } from "@fcalell/plugin-solid-ui/components/card";
 
 ### Card (Root)
 
-Renders `<div>` with `bg-card`, `border`, and `rounded-lg`.
+Renders `<div>`. Carries the whole inset, so every section below it is pure rhythm. Its web overlay is `flex flex-col gap-stack`, which separates the sections at 12px.
 
-| Prop | Type | Description |
-|------|------|-------------|
-| `class` | `string` | Additional Tailwind classes |
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `padding` | `"card" \| "none"` | `"card"` | The body inset, 16px or none |
+| `ring` | `"none" \| "warn"` | `"none"` | A 2px `warn-mark` ring for a card that needs attention |
+| `class` | `string` | -- | Additional Tailwind classes |
 
 ### Card.Header
 
-Flex column with `gap-1.5` and `p-6`. Place Title and Description here.
+Flex column at `gap-pair` (4px). Place Title and Description here.
 
 ### Card.Title
 
-Renders `<h3>` by default. Semibold, tight tracking, no line-height.
+Renders `<h3>` by default at the `h3` type role.
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
@@ -31,15 +33,15 @@ Renders `<h3>` by default. Semibold, tight tracking, no line-height.
 
 ### Card.Description
 
-Muted secondary text below the title.
+Renders `<p>` at the `caption` role in `ink-3`.
 
 ### Card.Content
 
-Main body area with `p-6 pt-0`.
+The body area. It carries no classes of its own; the root's inset and rhythm place it.
 
 ### Card.Footer
 
-Flex row at the bottom with `p-6 pt-0`. Use for action buttons.
+Flex row at the bottom. Use it for action buttons.
 
 ## Basic usage
 
@@ -50,7 +52,7 @@ Flex row at the bottom with `p-6 pt-0`. Use for action buttons.
     <Card.Description>Manage your project configuration.</Card.Description>
   </Card.Header>
   <Card.Content>
-    <p>Content goes here.</p>
+    <Text>Content goes here.</Text>
   </Card.Content>
   <Card.Footer>
     <Button>Save</Button>
@@ -62,8 +64,18 @@ Flex row at the bottom with `p-6 pt-0`. Use for action buttons.
 
 ```tsx
 <Card>
-  <Card.Content class="p-6">
-    <Text.P>Simple card with just content.</Text.P>
+  <Card.Content>
+    <Text>Simple card with just content.</Text>
   </Card.Content>
+</Card>
+```
+
+## Edge-to-edge content
+
+Set `padding="none"` when the content runs to the card's edge, such as a full-bleed image or a divided row list that draws its own insets.
+
+```tsx
+<Card padding="none">
+  <img src={cover} alt="" />
 </Card>
 ```

@@ -23,7 +23,6 @@ Borderless Input that fills remaining space. Passes through all Input props.
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `size` | `"sm" \| "default" \| "lg"` | `"default"` | Input height and padding |
 
 ### InputGroup.Textarea
 
@@ -39,17 +38,18 @@ Container for icons, text, or buttons positioned on any edge.
 
 ### InputGroup.Button
 
-Compact button styled for inline use. Ghost variant, no border radius.
+Compact button styled for inline use. Tertiary emphasis, no border radius.
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `size` | `"xs" \| "sm" \| "icon-xs" \| "icon-sm"` | `"xs"` | Button dimensions |
-| `variant` | `"default" \| "secondary" \| "ghost" \| "destructive" \| "link"` | `"ghost"` | Button style |
+| `emphasis` | `"primary" \| "secondary" \| "tertiary"` | `"tertiary"` | Button emphasis |
+| `tone` | `"neutral" \| "danger"` | `"neutral"` | Button tone |
 | `type` | `"button" \| "submit" \| "reset"` | `"button"` | HTML button type |
 
 ### InputGroup.Text
 
-Inline text or icon label. Muted foreground, extra-small.
+Inline text or icon label. `ink-3` ink, extra-small.
 
 ## Basic usage
 

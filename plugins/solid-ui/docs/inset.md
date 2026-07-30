@@ -1,6 +1,6 @@
 # Inset
 
-Left-bordered content block for indented annotations or nested information. Use for callouts, nested details, or error context.
+Left-bordered content block for indented annotations or nested information. Use it for callouts, nested details, or error context.
 
 ```tsx
 import { Inset } from "@fcalell/plugin-solid-ui/components/inset";
@@ -10,21 +10,21 @@ import { Inset } from "@fcalell/plugin-solid-ui/components/inset";
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `variant` | `"default" \| "destructive"` | `"default"` | Border color — default uses `border-border`, destructive uses `border-destructive` |
+| `tone` | `"neutral" \| "danger"` | `"neutral"` | Border colour: `edge` or `danger` |
 | `class` | `string` | -- | Additional Tailwind classes |
 
 ## Basic usage
 
 ```tsx
 <Inset>
-  <Text.Small>Additional context about this item.</Text.Small>
+  <Text variant="caption" tone="ink-3">Additional context about this item.</Text>
 </Inset>
 ```
 
-## Destructive variant
+## Danger tone
 
 ```tsx
-<Inset variant="destructive">
-  <Text.Small>This action cannot be undone.</Text.Small>
+<Inset tone="danger">
+  <Text variant="caption" tone="ink-3">This action cannot be undone.</Text>
 </Inset>
 ```

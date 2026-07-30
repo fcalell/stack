@@ -1,6 +1,6 @@
 # Badge
 
-Inline status indicator or label. Use to tag items with a category, status, or count.
+Inline status indicator or label. Use it to tag an item with a category, status, or count.
 
 ```tsx
 import { Badge } from "@fcalell/plugin-solid-ui/components/badge";
@@ -10,77 +10,86 @@ import { Badge } from "@fcalell/plugin-solid-ui/components/badge";
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `variant` | `"default" \| "secondary" \| "outline" \| "destructive" \| "success" \| "warning"` | `"default"` | Visual style |
-| `round` | `boolean` | `false` | Use `rounded-full` instead of `rounded-md` |
+| `tone` | `"neutral" \| "brand" \| "interactive" \| "ok" \| "warn" \| "danger" \| "oncover"` | `"neutral"` | Fill and label colour |
 | `as` | `ValidComponent` | `"div"` | Override the rendered element |
 | `class` | `string` | -- | Additional Tailwind classes (merged via `cn()`) |
 | `...rest` | -- | -- | All HTML attributes for the rendered element |
 
-## Variants
+`tone` is the axis of the shared `BADGE` matrix in `@fcalell/ui-core`. That table carries the fill only, so the component composes `BADGE` and `BADGE_LABEL` on the same node, plus the `micro` type role at semibold.
 
-### default
+The matrix base is `rounded-full`, so every badge is a pill. There is no round prop.
 
-Solid primary background. Use for primary categories or active states.
+## Tones
+
+### neutral
+
+`surface-2` fill with `ink-1` ink. Use it for secondary labels and metadata tags.
 
 ```tsx
-<Badge>New</Badge>
+<Badge>Draft</Badge>
 ```
 
-### secondary
+### brand
 
-Neutral muted background. Use for secondary labels or metadata tags.
+`brand-soft` fill. Passive structural chrome: a category, a section marker. It never carries status.
 
 ```tsx
-<Badge variant="secondary">Draft</Badge>
+<Badge tone="brand">Beta</Badge>
 ```
 
-### outline
+### interactive
 
-Border only, transparent background. Use for subtle categorization that doesn't compete with content.
+`interactive-soft` fill. Use it for a value that is current, live, or the reader's own.
 
 ```tsx
-<Badge variant="outline">v2.1.0</Badge>
+<Badge tone="interactive">You</Badge>
 ```
 
-### destructive
+### ok
 
-Tinted destructive background with border. Use for error states or critical labels.
+`ok-soft` fill. Settled, done, covered.
 
 ```tsx
-<Badge variant="destructive">Failed</Badge>
+<Badge tone="ok">Active</Badge>
 ```
 
-### success
+### warn
 
-Tinted success background with border. Use for positive states or completion indicators.
+`warn-soft` fill. Pending, caution, stale.
 
 ```tsx
-<Badge variant="success">Active</Badge>
+<Badge tone="warn">Expiring</Badge>
 ```
 
-### warning
+### danger
 
-Tinted warning background with border. Use for attention-needed states.
+`danger-soft` fill. Failure or a safety-critical state.
 
 ```tsx
-<Badge variant="warning">Expiring</Badge>
+<Badge tone="danger">Failed</Badge>
 ```
 
-## Round
+### oncover
 
-Pill shape for counters or compact labels:
+`oncover-surface` fill with `oncover-ink`. Use it for a pill floated over a photo or cover band, where the ground must not flip at night.
 
 ```tsx
-<Badge round>3</Badge>
-<Badge variant="success" round>Online</Badge>
+<Badge tone="oncover">4:32</Badge>
+```
+
+## Counters
+
+A count is a badge like any other. The pill shape comes from the matrix base.
+
+```tsx
+<Badge>3</Badge>
+<Badge tone="ok">12</Badge>
 ```
 
 ## Composition
 
-The `badgeVariants` export is available for applying badge styles to custom elements:
+No class function is exported. A badge look on another element goes through `as`:
 
 ```tsx
-import { badgeVariants } from "@fcalell/plugin-solid-ui/components/badge";
-
-<span class={badgeVariants({ variant: "success" })}>Active</span>
+<Badge as="span" tone="ok">Active</Badge>
 ```

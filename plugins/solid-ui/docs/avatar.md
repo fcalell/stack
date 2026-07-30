@@ -29,7 +29,7 @@ The `<img>` element. Renders only when the image loads successfully.
 
 ### Avatar.Fallback
 
-Shown while the image loads or if it fails. Centered monospace text on muted background.
+Shown while the image loads or if it fails. Centered monospace text on `surface-2` background.
 
 | Prop | Type | Description |
 |------|------|-------------|

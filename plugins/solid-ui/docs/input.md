@@ -1,6 +1,6 @@
 # Input
 
-Text input field with size variants. Monospace font, muted background, 2px border that highlights on focus. Supports `aria-invalid` for error states.
+Single-line text field. It takes the shared `FIELD` matrix at `layout="input"`: `rounded-control`, a 1px `edge` border, a `surface` fill, `px-3.5`, and a 48px minimum height. Monospace, `callout` type role. Supports `aria-invalid` for the error state.
 
 ```tsx
 import { Input } from "@fcalell/plugin-solid-ui/components/input";
@@ -10,36 +10,34 @@ import { Input } from "@fcalell/plugin-solid-ui/components/input";
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `size` | `"sm" \| "default" \| "lg"` | `"default"` | Height and padding |
 | `type` | `string` | `"text"` | HTML input type |
 | `class` | `string` | -- | Additional Tailwind classes (merged via `cn()`) |
-| `...rest` | -- | -- | All HTML input attributes |
+| `...rest` | -- | -- | All HTML input attributes, including the native `size` |
 
-## Sizes
-
-| Size | Height | Text |
-|------|--------|------|
-| `sm` | 32px (`h-8`) | 14px |
-| `default` | 40px (`h-10`) | 14px |
-| `lg` | 48px (`h-12`) | 16px |
+There is no size axis. `FIELD` has one height, and it is the 48px control floor: a shorter input sits below the tap target every platform requires.
 
 ## Basic usage
 
 ```tsx
 <Input placeholder="Enter your name" />
 <Input type="email" placeholder="you@example.com" />
-<Input size="sm" placeholder="Compact" />
 ```
 
 ## Error state
 
-Set `aria-invalid` for destructive border and outline:
+Set `aria-invalid` for a `danger` border:
 
 ```tsx
 <Input aria-invalid="true" value="bad value" />
 ```
 
+## Focus
+
+Focus moves the border to `ink-1` and draws an `interactive` outline two pixels off the control.
+
 ## Disabled
+
+A disabled input takes the `surface-3` fill and `ink-4` ink.
 
 ```tsx
 <Input disabled placeholder="Cannot edit" />
@@ -47,10 +45,4 @@ Set `aria-invalid` for destructive border and outline:
 
 ## Composition
 
-The `inputClasses` export is available for applying input styles to custom elements:
-
-```tsx
-import { inputClasses } from "@fcalell/plugin-solid-ui/components/input";
-
-<div class={inputClasses({ size: "default" })}>Custom input wrapper</div>
-```
+No class function is exported. A custom input surface is a primitive the consumer authors under `ui/`.

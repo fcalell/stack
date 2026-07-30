@@ -56,7 +56,6 @@ Dropdown select with field integration. Wraps the data-driven `Select` component
 | `options` | `SelectOptions` | -- | Options array (flat or grouped) |
 | `placeholder` | `string` | -- | Select placeholder |
 | `disabled` | `boolean` | -- | Disable the select |
-| `size` | `"sm" \| "default" \| "lg"` | `"default"` | Trigger size |
 | `class` | `string` | -- | Additional classes on the wrapper |
 | `children` | `(option: SelectOption) => JSX.Element` | -- | Custom item content render |
 

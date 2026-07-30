@@ -15,7 +15,6 @@ import { Select } from "@fcalell/plugin-solid-ui/components/select";
 | `onValueChange` | `(value: string) => void` | -- | Selection change handler |
 | `placeholder` | `string` | `"Select an option"` | Placeholder when no value selected |
 | `disabled` | `boolean` | `false` | Disable the select |
-| `size` | `"sm" \| "default" \| "lg"` | `"default"` | Trigger height/padding |
 | `class` | `string` | -- | Additional classes on the trigger |
 | `contentClass` | `string` | -- | Additional classes on the dropdown panel |
 | `aria-invalid` | `boolean` | -- | Invalid state for form integration |
@@ -93,22 +92,14 @@ Pass option groups and sections are rendered automatically with labels:
 />
 ```
 
-## Sizes
+## The trigger
 
-```tsx
-<Select options={options} size="sm" />
-<Select options={options} size="default" />
-<Select options={options} size="lg" />
-```
+The trigger takes the shared `FIELD` matrix at `layout="row"`: `rounded-control`, a 1px `edge` border, a `surface` fill, `px-3.5`, and a `gap-stack` row rhythm. There is no size axis. Focus moves the border to `ink-1`; `aria-invalid` moves it to `danger`; a disabled trigger takes the `surface-3` fill and `ink-4` ink.
 
 ## With form integration
 
-Works with `Form.Select` from `@fcalell/plugin-solid-ui/components/form` for TanStack Form integration. The `aria-invalid` prop enables destructive styling on validation errors.
+Works with `Form.Select` from `@fcalell/plugin-solid-ui/components/form` for TanStack Form integration. The `aria-invalid` prop turns on the error border.
 
 ## Exports
 
-The `selectTriggerVariants` CVA export is available for applying trigger styles to custom elements:
-
-```tsx
-import { selectTriggerVariants } from "@fcalell/plugin-solid-ui/components/select";
-```
+No class function is exported. A custom trigger surface is a primitive the consumer authors under `ui/`.

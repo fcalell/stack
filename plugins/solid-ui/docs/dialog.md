@@ -66,7 +66,7 @@ function App() {
       <Dialog.Description>This cannot be undone.</Dialog.Description>
     </Dialog.Header>
     <Dialog.Footer>
-      <Button variant="outline">Cancel</Button>
+      <Button emphasis="secondary">Cancel</Button>
       <Button>Confirm</Button>
     </Dialog.Footer>
   </Dialog.Content>

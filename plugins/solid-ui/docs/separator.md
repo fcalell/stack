@@ -20,9 +20,9 @@ import { Separator } from "@fcalell/plugin-solid-ui/components/separator";
 Full-width 1px line. Use between stacked content sections.
 
 ```tsx
-<Text.P>Above</Text.P>
+<Text>Above</Text>
 <Separator />
-<Text.P>Below</Text.P>
+<Text>Below</Text>
 ```
 
 ## Vertical
@@ -42,5 +42,5 @@ Full-height 1px line. Use between side-by-side elements. The parent must define 
 Override color or thickness via `class`:
 
 ```tsx
-<Separator class="bg-primary h-0.5" />
+<Separator class="bg-ink-1 h-0.5" />
 ```

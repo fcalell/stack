@@ -27,7 +27,7 @@ Scrollable container + `<table>`. Full width, bottom-aligned captions.
 
 ### Table.Footer
 
-`<tfoot>` — top border, muted background.
+`<tfoot>` — top border, `surface-2` background.
 
 ### Table.Row
 
@@ -35,7 +35,7 @@ Scrollable container + `<table>`. Full width, bottom-aligned captions.
 
 ### Table.Head
 
-`<th>` — left-aligned, muted foreground, medium weight.
+`<th>` — left-aligned, `ink-3` ink, medium weight.
 
 ### Table.Cell
 

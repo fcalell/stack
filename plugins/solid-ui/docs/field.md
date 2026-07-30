@@ -33,7 +33,7 @@ Flex column wrapper for the input and related elements. Use when the field has b
 
 ### Field.Description
 
-Helper text below the input. Muted foreground, extra-small. Links inside get underline styling automatically.
+Helper text below the input. `ink-3` ink, extra-small. Links inside get underline styling automatically.
 
 | Prop | Type | Description |
 |------|------|-------------|

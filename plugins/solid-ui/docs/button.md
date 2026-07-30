@@ -10,85 +10,79 @@ import { Button } from "@fcalell/plugin-solid-ui/components/button";
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `variant` | `"default" \| "destructive" \| "outline" \| "secondary" \| "ghost" \| "link"` | `"default"` | Visual style |
-| `size` | `"default" \| "sm" \| "lg" \| "icon"` | `"default"` | Height, padding, and icon sizing |
-| `disabled` | `boolean` | `false` | Disables interaction (reduces opacity, removes pointer events) |
+| `emphasis` | `"primary" \| "secondary" \| "tertiary"` | `"primary"` | How much weight the action carries |
+| `tone` | `"neutral" \| "danger"` | `"neutral"` | The consequence of the action |
+| `size` | `"sm" \| "md" \| "lg"` | `"md"` | Padding, type role, and icon sizing |
+| `disabled` | `boolean` | `false` | Swaps the fill and ink for the muted pair and removes pointer events |
 | `as` | `ValidComponent` | `"button"` | Override the rendered element |
-| `class` | `string` | — | Additional Tailwind classes (merged via `cn()`) |
-| `children` | `JSX.Element` | — | Button content |
-| `...rest` | — | — | All HTML button attributes and Kobalte ButtonRootProps |
+| `class` | `string` | -- | Additional Tailwind classes (merged via `cn()`) |
+| `children` | `JSX.Element` | -- | Button content |
+| `...rest` | -- | -- | All HTML button attributes and Kobalte ButtonRootProps |
 
-## Variants
+`emphasis` and `tone` are the two axes of the shared `BUTTON` matrix in `@fcalell/ui-core`. That table carries fills and borders only, so the component composes `BUTTON` and `BUTTON_LABEL` on the same node.
 
-### default
+## Emphasis
 
-Primary action. Solid primary background with primary-foreground text.
+### primary
+
+The one action a screen is asking for. Solid `accent` fill with an `accent-ink` label.
 
 ```tsx
 <Button>Save changes</Button>
 ```
 
-### destructive
-
-Dangerous or irreversible action. Solid destructive background.
-
-```tsx
-<Button variant="destructive">Delete project</Button>
-```
-
-### outline
-
-Secondary action with border. Transparent background, fills on hover.
-
-```tsx
-<Button variant="outline">Cancel</Button>
-```
-
 ### secondary
 
-Lower-emphasis alternative to default. Muted background.
+An action beside the primary one. Transparent with an `edge-2` border.
 
 ```tsx
-<Button variant="secondary">Export</Button>
+<Button emphasis="secondary">Cancel</Button>
 ```
 
-### ghost
+### tertiary
 
-Minimal chrome. Transparent until hovered — use in toolbars, sidebars, or as inline actions.
+Minimal chrome. Transparent until hovered, when it takes a `surface-2` ground. Use it in toolbars, sidebars, or as an inline action.
 
 ```tsx
-<Button variant="ghost">Edit</Button>
+<Button emphasis="tertiary">Edit</Button>
 ```
 
-### link
+## Tone
 
-Styled as an inline text link. No background or border, underline on hover.
+`tone="danger"` marks an irreversible action. It composes with every emphasis.
 
 ```tsx
-<Button variant="link">Learn more</Button>
+<Button tone="danger">Delete project</Button>
+<Button emphasis="secondary" tone="danger">Remove</Button>
 ```
 
 ## Sizes
 
-| Size | Height | Text | Icon | Notes |
-|------|--------|------|------|-------|
-| `default` | 40px (`h-10`) | 14px | 16px | Standard actions |
-| `sm` | 36px (`h-9`) | 12px | 16px | Compact UI. 44px invisible touch target for accessibility |
-| `lg` | 44px (`h-11`) | 14px | 20px | Prominent CTAs, wider horizontal padding |
-| `icon` | 40px (`size-10`) | — | 20px | Icon-only, square aspect ratio |
+| Size | Min height | Type role | Icon |
+|------|------------|-----------|------|
+| `sm` | 44px (`min-h-11`) | `caption` (13px) | 16px |
+| `md` | 44px (`min-h-11`) | `callout` (14px) | 16px |
+| `lg` | 48px (`min-h-12`) | `body` (16px) | 20px |
 
-The `sm` size includes an invisible pseudo-element that expands the touch target to 44px minimum, meeting accessibility guidelines without affecting visual layout.
+Every size clears the 44px tap floor through `min-h`, never a pinned `h`, so the label grows the control under OS font scaling instead of clipping inside it.
 
 ## With icons
 
-SVG icons are automatically sized per the button's `size` variant and have `pointer-events-none` and `shrink-0` applied.
+SVG icons are sized per the button's `size` and get `pointer-events-none` and `shrink-0`.
 
 ```tsx
 import { Plus, Trash2 } from "lucide-solid";
 
 <Button><Plus /> New project</Button>
-<Button variant="destructive" size="sm"><Trash2 /> Delete</Button>
-<Button variant="ghost" size="icon"><Plus /></Button>
+<Button tone="danger" size="sm"><Trash2 /> Delete</Button>
+```
+
+## Icon-only
+
+There is no icon size. An icon-only button takes a normal size plus an `aspect-square` overlay, so it keeps the tap floor that size already guarantees.
+
+```tsx
+<Button emphasis="tertiary" class="aspect-square"><Plus /></Button>
 ```
 
 ## Polymorphic
@@ -109,16 +103,14 @@ Other components compose with Button by importing it directly:
 import { Button } from "#components/button";
 
 // Inside SidebarTrigger
-<Button variant="ghost" size="icon" class="size-7">...</Button>
+<Button emphasis="tertiary" class="aspect-square">...</Button>
 
 // Inside DangerZone
-<Button variant="destructive" size="sm">...</Button>
+<Button tone="danger" size="sm">...</Button>
 ```
 
-The `buttonVariants` export is available for applying button styles to custom elements:
+No class function is exported. A link that should look like a button goes through Kobalte's `as`:
 
 ```tsx
-import { buttonVariants } from "@fcalell/plugin-solid-ui/components/button";
-
-<a class={buttonVariants({ variant: "outline" })} href="/docs">Docs</a>
+<Button as="a" emphasis="secondary" href="/docs">Docs</Button>
 ```

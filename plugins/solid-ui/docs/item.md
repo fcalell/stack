@@ -64,7 +64,7 @@ Full-width flex rows above/below the main content.
       <Item.Description>Uploaded 2 hours ago</Item.Description>
     </Item.Content>
     <Item.Actions>
-      <Button variant="ghost" size="icon"><Trash2 /></Button>
+      <Button emphasis="tertiary" class="aspect-square"><Trash2 /></Button>
     </Item.Actions>
   </Item>
 </Item.Group>

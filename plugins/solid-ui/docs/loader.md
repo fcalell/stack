@@ -17,7 +17,7 @@ import { Loader } from "@fcalell/plugin-solid-ui/components/loader";
 
 ```tsx
 <Loader text="Loading..." />
-<Loader text="Connecting to server" class="text-sm" />
+<Loader text="Connecting to server" class="text-callout" />
 ```
 
 ## Behavior
