@@ -67,8 +67,9 @@ where a design system erodes.
 - Marina's product-specific laws (persona-by-fill, the nautical palette). The generic laws port;
   the brand does not.
 - Icon-set unification (`lucide-solid` and `lucide-react-native` share glyph names). Parked.
-- Named themes beyond light and dark on web. `plugin-native-ui` keeps uniwind's extra themes; web
-  emission for named themes waits for a consumer that needs it.
+- Named themes beyond light and dark. Both UI plugins expose the one two-mode `theme` surface;
+  `plugin-native-ui` emits exactly the `light` / `dark` uniwind built-ins, and its `extraThemes`
+  plumbing is retired. Emission for a third named theme waits for a consumer that needs it.
 - Sailward's primitive roster. Its nine passes restructured 69 primitives against one product's
   needs; what ports is the canon and the gate, not the component list. A stack primitive changes
   shape only where the canon or the gate forces it.

@@ -298,15 +298,12 @@ importers:
       '@fcalell/plugin-expo':
         specifier: workspace:*
         version: link:../expo
+      '@fcalell/ui-core':
+        specifier: workspace:*
+        version: link:../../packages/ui-core
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
-      clsx:
-        specifier: ^2.1.1
-        version: 2.1.1
-      tailwind-merge:
-        specifier: ^3.5.0
-        version: 3.5.0
       zod:
         specifier: ^4.3.6
         version: 4.3.6

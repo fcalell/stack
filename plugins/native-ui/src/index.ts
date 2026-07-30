@@ -3,13 +3,12 @@ import { plugin, slot } from "@fcalell/cli";
 import type { ProviderSpec, TsExpression } from "@fcalell/cli/ast";
 import { cliSlots, emitArtifact } from "@fcalell/cli/cli-slots";
 import { expo } from "@fcalell/plugin-expo";
-import { DEFAULT_BASE_TOKENS, DEFAULT_THEMES } from "./defaults";
+import { deriveTheme } from "@fcalell/ui-core/derive";
 import { aggregateGlobalCss } from "./node/codegen";
 import {
 	type NativeFontEntry,
 	type NativeUiOptions,
 	nativeUiOptionsSchema,
-	type ThemeSpec,
 } from "./types";
 
 const SOURCE = "native-ui";
@@ -23,14 +22,16 @@ const GLOBAL_CSS_ARTIFACT = ".stack/global.css";
 const UNIWIND_CSS_ENTRY = "./.stack/global.css";
 const UNIWIND_DTS = "./.stack/uniwind-types.d.ts";
 
-// uniwind ships `light` / `dark` / `system` out of the box; any other theme
-// name must be registered via the Metro `extraThemes` option.
-const BUILTIN_THEMES = new Set(["light", "dark", "system"]);
-
 // `@source` roots are relative to global.css (in `.stack/`). uniwind scans for
 // classNames from the stylesheet's directory, so without these it would only
-// see `.stack/` and miss the consumer app + this plugin's primitives.
-const SOURCES = ["../src", "../node_modules/@fcalell/plugin-native-ui/src"];
+// see `.stack/` and miss the consumer app, this plugin's primitives, and the
+// matrix cell strings inside ui-core — a dependency package is never scanned
+// unless named.
+const SOURCES = [
+	"../src",
+	"../node_modules/@fcalell/plugin-native-ui/src",
+	"../node_modules/@fcalell/ui-core/src",
+];
 
 // The consumer configures the native clients in `src/lib/` (see the
 // native-provider-wiring decision); these defaults point the provider wiring at
@@ -49,16 +50,13 @@ const UNIWIND_METRO_ORDER = 100;
 
 // ── Slot declarations ──────────────────────────────────────────────
 
-// Resolved themes — consumer `themeTokens` option or the neutral defaults.
-// Mirrors solid-ui's `fonts` derivation: `??` only swaps in defaults on nullish
-// (the option schema already forbids an empty array).
-const themeTokens = slot.derived({
+// The design contract, resolved once. Mirrors solid-ui's `resolvedTheme`, so
+// one `theme` object themes both platforms.
+const resolvedTheme = slot.derived({
 	source: SOURCE,
-	name: "themeTokens",
-	compute: (_inp, ctx: ContributionCtx<NativeUiOptions>): ThemeSpec[] => {
-		const opts = ctx.options;
-		return opts.themeTokens ?? DEFAULT_THEMES;
-	},
+	name: "resolvedTheme",
+	compute: (_inp, ctx: ContributionCtx<NativeUiOptions>) =>
+		deriveTheme(ctx.options.theme),
 });
 
 // Resolved fonts — consumer `fonts` option or none.
@@ -82,12 +80,15 @@ const appCssImports = slot.list<string>({
 const appCssSource = slot.derived({
 	source: SOURCE,
 	name: "appCssSource",
-	inputs: { themes: themeTokens, fontEntries: fonts, imports: appCssImports },
+	inputs: {
+		resolved: resolvedTheme,
+		fontEntries: fonts,
+		imports: appCssImports,
+	},
 	compute: (inp): string | null =>
 		aggregateGlobalCss({
-			themes: inp.themes,
+			resolved: inp.resolved,
 			fonts: inp.fontEntries,
-			baseTokens: DEFAULT_BASE_TOKENS,
 			sources: SOURCES,
 			extraImports: inp.imports,
 		}),
@@ -195,6 +196,9 @@ export const nativeUi = plugin("native-ui", {
 	// `expo install` reconciles exact versions at consumer setup.
 	dependencies: {
 		"@fcalell/plugin-native-ui": "workspace:*",
+		// The `@source` root pointing into ui-core only resolves when the package
+		// sits in the consumer's node_modules.
+		"@fcalell/ui-core": "workspace:*",
 		uniwind: "^1.8.0",
 		"react-native-gesture-handler": "^3.0.0",
 		"react-native-reanimated": "^4.4.1",
@@ -222,7 +226,7 @@ export const nativeUi = plugin("native-ui", {
 	},
 
 	slots: {
-		themeTokens,
+		resolvedTheme,
 		fonts,
 		appCssImports,
 		appCssSource,
@@ -234,22 +238,11 @@ export const nativeUi = plugin("native-ui", {
 			names: ["withUniwindConfig"],
 			module: "uniwind/metro",
 		})),
-		expo.slots.metroPluginCalls.contribute(async (ctx) => {
-			const themes = await ctx.resolve(self.slots.themeTokens);
-			const extraThemes = themes
-				.map((t) => t.name)
-				.filter((name) => !BUILTIN_THEMES.has(name));
-			const options: Record<string, unknown> = {
-				cssEntryFile: UNIWIND_CSS_ENTRY,
-				dtsFile: UNIWIND_DTS,
-			};
-			if (extraThemes.length > 0) options.extraThemes = extraThemes;
-			return {
-				callee: "withUniwindConfig",
-				options,
-				order: UNIWIND_METRO_ORDER,
-			};
-		}),
+		expo.slots.metroPluginCalls.contribute(() => ({
+			callee: "withUniwindConfig",
+			options: { cssEntryFile: UNIWIND_CSS_ENTRY, dtsFile: UNIWIND_DTS },
+			order: UNIWIND_METRO_ORDER,
+		})),
 
 		// ── expo-font: embed contributed font files natively ──────────────
 		expo.slots.expoConfigPlugins.contribute(async (ctx) => {
@@ -303,4 +296,4 @@ export const nativeUi = plugin("native-ui", {
 	],
 });
 
-export type { NativeFontEntry, NativeUiOptions, ThemeSpec } from "./types";
+export type { NativeFontEntry, NativeUiOptions, Theme } from "./types";

@@ -1,27 +1,7 @@
+import { themeSchema } from "@fcalell/ui-core/schema";
 import { z } from "zod";
-import { isCssIdent } from "./node/css";
 
 // ── Plugin options ─────────────────────────────────────────────────
-
-// A design-system theme: the set of semantic color tokens applied when the
-// theme is active. The default theme's tokens also seed the `@theme` block, so
-// the `bg-*` / `text-*` utilities exist and the baseline renders without a
-// variant switch. `light` / `dark` reuse uniwind's built-ins (free system-sync
-// and the `dark:` variant); any other name is registered via `extraThemes`.
-export const themeSpecSchema = z.object({
-	// Theme key — also the uniwind theme name passed to `Uniwind.setTheme`.
-	name: z
-		.string()
-		.refine(isCssIdent, "theme name must be an ASCII CSS <ident>"),
-	// Marks the baseline theme whose values seed `@theme`. Exactly one theme
-	// should set this; the codegen falls back to the first theme otherwise.
-	default: z.boolean().optional(),
-	// Semantic color tokens keyed WITHOUT the `--color-` prefix (e.g. `canvas`,
-	// `ink-1`). Each becomes a `--color-<key>` custom property → `bg-<key>` etc.
-	colors: z.record(z.string(), z.string()),
-});
-
-export type ThemeSpec = z.input<typeof themeSpecSchema>;
 
 // A font family registered for the app. Contributes a `--font-<role>` token (so
 // `font-sans` / `font-mono` resolve) and, when `source` is set, an `expo-font`
@@ -50,9 +30,10 @@ export const clientModuleSchema = z.object({
 export type ClientModule = z.input<typeof clientModuleSchema>;
 
 export const nativeUiOptionsSchema = z.object({
-	// Design-system themes (light + Notturno for WeNauti). Omit to use the
-	// plugin's neutral defaults. At least one theme is required when provided.
-	themeTokens: z.array(themeSpecSchema).min(1).optional(),
+	// The ui-core design contract: knobs, per-token overrides and the mode that
+	// seeds the `@theme` block. Omitted, the calibrated defaults apply. A
+	// consumer with both platforms passes the same object to `solidUi`.
+	theme: themeSchema.optional(),
 	// Fonts to register. Omitted → no custom fonts (system defaults).
 	fonts: z.array(nativeFontSchema).optional(),
 	// Module exporting the configured native auth client (`createAuthClient`).
@@ -62,3 +43,7 @@ export const nativeUiOptionsSchema = z.object({
 });
 
 export type NativeUiOptions = z.input<typeof nativeUiOptionsSchema>;
+
+// The `theme` option's own type. It is ui-core's, re-exported here so a
+// consumer reaches it through the plugin it configures.
+export type { Theme } from "@fcalell/ui-core/schema";

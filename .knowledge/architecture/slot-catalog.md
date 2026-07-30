@@ -131,6 +131,15 @@ e.g. consulting `ctx.fileExists` before writing.
 | `resolvedTheme` | `derived<ResolvedTheme>` | The `theme` option run through `@fcalell/ui-core`'s `deriveTheme`, resolved once so every block contribution reads one value |
 | `appCssSource` | `derived<string \| null>` | Final `.stack/app.css`; null when nothing landed |
 
+## `nativeUi.slots.*` (plugin-native-ui)
+
+| Slot | Kind | Purpose |
+|------|------|---------|
+| `resolvedTheme` | `derived<ResolvedTheme>` | The `theme` option run through `@fcalell/ui-core`'s `deriveTheme`, resolved once. The same option shape as `solidUi`'s, so one object themes both platforms |
+| `fonts` | `derived<NativeFontEntry[]>` | Resolved fonts (consumer `fonts` option or none) |
+| `appCssImports` | `list<string>` | Extra CSS `@import`s aggregated into `.stack/global.css` beyond tailwindcss + uniwind |
+| `appCssSource` | `derived<string \| null>` | Final `.stack/global.css`: `@theme` from ui-core's records (namespace resets first), the shadow ladder as three `@utility` blocks, and `@variant light` / `@variant dark` color blocks under `@layer theme` |
+
 ## `auth.slots.*` (plugin-auth)
 
 | Slot | Kind | Purpose |

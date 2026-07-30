@@ -46,9 +46,8 @@
 		"@fcalell/plugin-api": "workspace:*",
 		"@fcalell/plugin-auth": "workspace:*",
 		"@fcalell/plugin-expo": "workspace:*",
+		"@fcalell/ui-core": "workspace:*",
 		"class-variance-authority": "^0.7.1",
-		"clsx": "^2.1.1",
-		"tailwind-merge": "^3.5.0",
 		"zod": "^4.3.6"
 	},
 	"devDependencies": {
