@@ -47,7 +47,7 @@ export type CssLayer = z.input<typeof cssLayerSchema>;
 // `@layer`. `theme` seeds the design tokens (`@theme { … }`); `utility`
 // declares one custom utility (`@utility shadow-1 { … }`). Both bodies are
 // declaration records, rendered property-by-property through the CSS render
-// boundary. The utility name is a CSS <ident>, since it becomes a class.
+// boundary.
 const cssDeclarationsSchema = z.record(z.string(), z.string());
 
 export const cssBlockSchema = z.discriminatedUnion("kind", [
@@ -57,9 +57,9 @@ export const cssBlockSchema = z.discriminatedUnion("kind", [
 	}),
 	z.object({
 		kind: z.literal("utility"),
-		name: z
-			.string()
-			.refine((v) => isCssIdent(v), "css @utility name must be a CSS <ident>"),
+		// Validated at the render boundary by `cssIdent`, so a malformed name
+		// throws an error that names the contributing plugin.
+		name: z.string(),
 		declarations: cssDeclarationsSchema,
 	}),
 ]);

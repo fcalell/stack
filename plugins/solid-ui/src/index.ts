@@ -150,7 +150,11 @@ const fonts = slot.derived({
 const appCssSource = slot.derived({
 	source: SOURCE,
 	name: "appCssSource",
-	inputs: { imports: appCssImports, blocks: appCssBlocks, layers: appCssLayers },
+	inputs: {
+		imports: appCssImports,
+		blocks: appCssBlocks,
+		layers: appCssLayers,
+	},
 	compute: (inp): string | null =>
 		aggregateAppCss({
 			imports: inp.imports,

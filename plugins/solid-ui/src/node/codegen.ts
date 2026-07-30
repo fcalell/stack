@@ -76,11 +76,9 @@ export function renderRule(
 	selector: string,
 	declarations: Record<string, string>,
 ): string {
-	return [
-		`${selector} {`,
-		...renderDeclarations(declarations, "\t"),
-		"}",
-	].join("\n");
+	return [`${selector} {`, ...renderDeclarations(declarations, "\t"), "}"].join(
+		"\n",
+	);
 }
 
 function renderDeclarations(

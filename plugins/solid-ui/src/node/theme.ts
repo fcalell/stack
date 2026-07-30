@@ -1,5 +1,9 @@
 import type { ResolvedTheme } from "@fcalell/ui-core/derive";
-import { modeTokens, shadowUtilities, themeTokens } from "@fcalell/ui-core/emit";
+import {
+	modeTokens,
+	shadowUtilities,
+	themeTokens,
+} from "@fcalell/ui-core/emit";
 import { FONT_FALLBACKS } from "@fcalell/ui-core/tokens";
 import type { CssBlock, CssLayer } from "../types.ts";
 import { renderRule } from "./codegen.ts";
