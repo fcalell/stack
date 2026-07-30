@@ -1,29 +1,45 @@
-import { cva, type VariantProps } from "class-variance-authority";
+import { type FieldState, field } from "@fcalell/ui-core/variants";
+import { useState } from "react";
 import { TextInput, type TextInputProps } from "react-native";
 import { cn } from "../../lib/cn";
 
-const input = cva(
-	"h-11 rounded-md border bg-canvas px-3 text-base text-ink-1",
-	{
-		variants: {
-			variant: {
-				default: "border-edge",
-				error: "border-danger",
-			},
-		},
-		defaultVariants: { variant: "default" },
-	},
-);
+export interface InputProps extends TextInputProps {
+	// `error` pins the danger border; web reaches the same cell via
+	// `aria-invalid:`. Left at `default`, focus tracking below moves the field
+	// onto the `focused` cell, the native counterpart of `focus-visible:`.
+	state?: FieldState;
+}
 
-export interface InputProps
-	extends TextInputProps,
-		VariantProps<typeof input> {}
-
-export function Input({ variant, className, ...rest }: InputProps) {
+export function Input({
+	state,
+	className,
+	onFocus,
+	onBlur,
+	...rest
+}: InputProps) {
+	const [focused, setFocused] = useState(false);
+	const resolved =
+		state !== undefined && state !== "default"
+			? state
+			: focused
+				? "focused"
+				: "default";
 	return (
 		<TextInput
-			className={cn(input({ variant }), className)}
-			placeholderTextColorClassName="text-ink-2"
+			className={cn(
+				field({ state: resolved, layout: "input" }),
+				"w-full text-callout text-ink-1",
+				className,
+			)}
+			placeholderTextColorClassName="text-ink-3"
+			onFocus={(event) => {
+				setFocused(true);
+				onFocus?.(event);
+			}}
+			onBlur={(event) => {
+				setFocused(false);
+				onBlur?.(event);
+			}}
 			{...rest}
 		/>
 	);

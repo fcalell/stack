@@ -1,33 +1,50 @@
-import { cva, type VariantProps } from "class-variance-authority";
+import { type FieldState, field } from "@fcalell/ui-core/variants";
+import { useState } from "react";
 import { TextInput, type TextInputProps } from "react-native";
 import { cn } from "../../lib/cn";
 
-// Multiline sibling of Input — same ring grammar, top-aligned text, taller min
-// height. `.err` swaps the edge ring for danger; pair with flabel / field-err.
-const textArea = cva(
-	"min-h-20 rounded-md border bg-canvas px-3 py-2 text-base text-ink-1",
-	{
-		variants: {
-			variant: {
-				default: "border-edge",
-				error: "border-danger",
-			},
-		},
-		defaultVariants: { variant: "default" },
-	},
-);
+// A multi-line surface outgrows the field's control floor and needs its own
+// vertical interior, so both ride the overlay as literal numerics.
+const BOX = "min-h-20 w-full py-2 text-callout text-ink-1";
 
-export interface TextAreaProps
-	extends TextInputProps,
-		VariantProps<typeof textArea> {}
+export interface TextAreaProps extends TextInputProps {
+	// Same state contract as Input: `error` pins the danger border, focus
+	// tracking moves the default onto the `focused` cell.
+	state?: FieldState;
+}
 
-export function TextArea({ variant, className, ...rest }: TextAreaProps) {
+export function TextArea({
+	state,
+	className,
+	onFocus,
+	onBlur,
+	...rest
+}: TextAreaProps) {
+	const [focused, setFocused] = useState(false);
+	const resolved =
+		state !== undefined && state !== "default"
+			? state
+			: focused
+				? "focused"
+				: "default";
 	return (
 		<TextInput
 			multiline
 			textAlignVertical="top"
-			className={cn(textArea({ variant }), className)}
-			placeholderTextColorClassName="text-ink-2"
+			className={cn(
+				field({ state: resolved, layout: "input" }),
+				BOX,
+				className,
+			)}
+			placeholderTextColorClassName="text-ink-3"
+			onFocus={(event) => {
+				setFocused(true);
+				onFocus?.(event);
+			}}
+			onBlur={(event) => {
+				setFocused(false);
+				onBlur?.(event);
+			}}
 			{...rest}
 		/>
 	);
