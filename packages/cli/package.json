@@ -17,6 +17,7 @@
 		"./slots": "./src/lib/slots.ts",
 		"./cli-slots": "./src/lib/cli-slots.ts",
 		"./graph": "./src/lib/graph.ts",
+		"./build-graph": "./src/lib/build-graph.ts",
 		"./runtime": "./src/runtime.ts",
 		"./codegen": "./src/lib/codegen.ts",
 		"./discovery": "./src/lib/discovery.ts"

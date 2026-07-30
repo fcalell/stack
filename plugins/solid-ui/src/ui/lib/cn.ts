@@ -1,6 +1,3 @@
-import { type ClassValue, clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
-
-export function cn(...inputs: ClassValue[]) {
-	return twMerge(clsx(inputs));
-}
+// The class merger is shared: `@fcalell/ui-core/cn` teaches tailwind-merge the
+// contract's five scales, so two rungs of one scale collapse to the last.
+export { cn } from "@fcalell/ui-core/cn";

@@ -9,10 +9,13 @@ import type {
 import { emitArtifact } from "@fcalell/cli/cli-slots";
 import { solid } from "@fcalell/plugin-solid";
 import { vite } from "@fcalell/plugin-vite";
+import { deriveTheme } from "@fcalell/ui-core/derive";
 import { aggregateAppCss } from "./node/codegen.ts";
 import { cssString } from "./node/css-escape.ts";
 import { defaultFonts, type FontEntry } from "./node/fonts.ts";
+import { darkLayer, shadowBlocks, themeBlock } from "./node/theme.ts";
 import {
+	type CssBlock,
 	type CssImport,
 	type CssLayer,
 	type SolidUiOptions,
@@ -100,9 +103,25 @@ const appCssImports = slot.list<CssImport>({
 	name: "appCssImports",
 });
 
+// Top-level `@theme` / `@utility` blocks. Separate from `appCssLayers`
+// because neither at-rule may sit inside a `@layer`.
+const appCssBlocks = slot.list<CssBlock>({
+	source: SOURCE,
+	name: "appCssBlocks",
+});
+
 const appCssLayers = slot.list<CssLayer>({
 	source: SOURCE,
 	name: "appCssLayers",
+});
+
+// The design contract, resolved once. Every block contribution reads this, so
+// knob resolution and override validation happen exactly one time.
+const resolvedTheme = slot.derived({
+	source: SOURCE,
+	name: "resolvedTheme",
+	compute: (_inp, ctx: ContributionCtx<SolidUiOptions>) =>
+		deriveTheme(ctx.options.theme),
 });
 
 // Resolved font entries. Derived from options only (no cross-slot inputs) so
@@ -131,9 +150,13 @@ const fonts = slot.derived({
 const appCssSource = slot.derived({
 	source: SOURCE,
 	name: "appCssSource",
-	inputs: { imports: appCssImports, layers: appCssLayers },
+	inputs: { imports: appCssImports, blocks: appCssBlocks, layers: appCssLayers },
 	compute: (inp): string | null =>
-		aggregateAppCss({ imports: inp.imports, layers: inp.layers }),
+		aggregateAppCss({
+			imports: inp.imports,
+			blocks: inp.blocks,
+			layers: inp.layers,
+		}),
 });
 
 export const solidUi = plugin("solid-ui", {
@@ -152,8 +175,10 @@ export const solidUi = plugin("solid-ui", {
 
 	slots: {
 		appCssImports,
+		appCssBlocks,
 		appCssLayers,
 		fonts,
+		resolvedTheme,
 		appCssSource,
 	},
 
@@ -252,12 +277,21 @@ export const solidUi = plugin("solid-ui", {
 		self.slots.appCssImports.contribute(
 			() => "@fcalell/plugin-solid-ui/globals.css",
 		),
+		self.slots.appCssBlocks.contribute(async (ctx) =>
+			themeBlock(await ctx.resolve(self.slots.resolvedTheme)),
+		),
+		self.slots.appCssBlocks.contribute(async (ctx) =>
+			shadowBlocks(await ctx.resolve(self.slots.resolvedTheme)),
+		),
 		self.slots.appCssLayers.contribute(async (ctx) => {
 			const entries = await ctx.resolve(self.slots.fonts);
 			const content = fontsToTokenCss(entries);
 			if (content === null) return undefined;
 			return { name: "base", content };
 		}),
+		self.slots.appCssLayers.contribute(async (ctx) =>
+			darkLayer(await ctx.resolve(self.slots.resolvedTheme)),
+		),
 
 		// CSS is solid-ui's domain — pair the `import "./app.css"` in
 		// entry.tsx with the artifact emission so a solid()-only consumer

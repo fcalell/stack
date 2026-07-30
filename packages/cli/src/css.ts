@@ -77,6 +77,45 @@ export function cssIdent(value: string, label = "@fcalell/cli"): string {
 	return value;
 }
 
+// ── Custom properties ───────────────────────────────────────────────
+
+// A custom-property NAME. Three shapes are legal:
+//   --radius-md                 a plain token name
+//   --text-h1--line-height      the Tailwind v4 modifier form
+//   --color-*                   a Tailwind v4 namespace reset key
+const VAR_NAME_RE = /^--[A-Za-z_][A-Za-z0-9_-]*(-\*)?$/;
+
+export function cssVarName(value: string, label = "@fcalell/cli"): string {
+	if (typeof value !== "string" || !VAR_NAME_RE.test(value)) {
+		throw new Error(
+			`[${label}] invalid CSS custom-property name: ${JSON.stringify(value)}. ` +
+				'Expected a "--"-prefixed <ident>, optionally ending in "-*" ' +
+				'(e.g. "--radius-md", "--text-h1--line-height", "--color-*").',
+		);
+	}
+	return value;
+}
+
+// A custom-property VALUE (color, length, font stack, shadow list). Unlike a
+// CSS <string> these are raw token streams — `oklch(0.2 0.05 220)`, `4px` — so
+// they must NOT be quoted: spaces, parens and commas are legal. Rejected are
+// only the sequences that would let a value escape its declaration: the
+// statement / block terminators, the line breaks that close a declaration, and
+// a comment delimiter, which would swallow the rest of the emitted block.
+const TOKEN_VALUE_ILLEGAL_RE = /[;{}\n\r\f]|\/\*|\*\//;
+
+export function cssTokenValue(value: string, label = "@fcalell/cli"): string {
+	if (typeof value !== "string" || value.trim().length === 0) {
+		throw new Error(`[${label}] cssTokenValue: empty value`);
+	}
+	if (TOKEN_VALUE_ILLEGAL_RE.test(value)) {
+		throw new Error(
+			`[${label}] cssTokenValue: value contains illegal characters: ${JSON.stringify(value)}`,
+		);
+	}
+	return value.trim();
+}
+
 // ── Supports conditions ─────────────────────────────────────────────
 
 // `@supports` / `@import ... supports(...)` arguments are nested feature

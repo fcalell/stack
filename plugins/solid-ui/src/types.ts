@@ -1,3 +1,4 @@
+import { themeSchema } from "@fcalell/ui-core/schema";
 import { z } from "zod";
 import { isCssIdent, isCssSupportsExpression } from "./node/css-escape.ts";
 
@@ -42,12 +43,37 @@ export const cssLayerSchema = z.object({
 
 export type CssLayer = z.input<typeof cssLayerSchema>;
 
+// A top-level block: the two Tailwind v4 at-rules that cannot sit inside a
+// `@layer`. `theme` seeds the design tokens (`@theme { … }`); `utility`
+// declares one custom utility (`@utility shadow-1 { … }`). Both bodies are
+// declaration records, rendered property-by-property through the CSS render
+// boundary. The utility name is a CSS <ident>, since it becomes a class.
+const cssDeclarationsSchema = z.record(z.string(), z.string());
+
+export const cssBlockSchema = z.discriminatedUnion("kind", [
+	z.object({
+		kind: z.literal("theme"),
+		declarations: cssDeclarationsSchema,
+	}),
+	z.object({
+		kind: z.literal("utility"),
+		name: z
+			.string()
+			.refine((v) => isCssIdent(v), "css @utility name must be a CSS <ident>"),
+		declarations: cssDeclarationsSchema,
+	}),
+]);
+
+export type CssBlock = z.input<typeof cssBlockSchema>;
+
 // Aggregated inputs for the `.stack/app.css` derivation. Plugins contribute
-// to `solidUi.slots.appCssImports` (CSS `@import`s, shorthand or structured)
-// and `solidUi.slots.appCssLayers` (named `@layer` blocks); `aggregateAppCss`
+// to `solidUi.slots.appCssImports` (CSS `@import`s, shorthand or structured),
+// `solidUi.slots.appCssBlocks` (top-level `@theme` / `@utility` blocks) and
+// `solidUi.slots.appCssLayers` (named `@layer` blocks); `aggregateAppCss`
 // renders them to the final CSS source.
 export interface CodegenAppCssPayload {
 	imports: CssImport[];
+	blocks: CssBlock[];
 	layers: CssLayer[];
 }
 
@@ -85,8 +111,14 @@ export type FontEntry = z.infer<typeof fontEntrySchema>;
 // set — rebinds the matching --ui-font-* token (sans / mono / serif) so the
 // Tailwind utilities and design-system tokens pick it up. Defaults to
 // `defaultFonts` (JetBrains Mono as mono).
+//
+// `theme` carries the ui-core design contract: knobs, per-token overrides and
+// the mode that seeds the `@theme` block. Omitted, the calibrated defaults
+// apply. `defaultMode` is inert on the web runtime, which resolves the mode
+// from `localStorage` then `prefers-color-scheme`.
 export const solidUiOptionsSchema = z.object({
 	fonts: z.array(fontEntrySchema).optional(),
+	theme: themeSchema.optional(),
 });
 
 export type SolidUiOptions = z.input<typeof solidUiOptionsSchema>;

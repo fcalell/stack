@@ -35,6 +35,7 @@
 	},
 	"files": [
 		"src",
+		"scripts",
 		"templates",
 		"docs",
 		"README.md"
@@ -44,6 +45,7 @@
 		"check-types": "tsc --noEmit --pretty",
 		"lint": "biome check --write --unsafe",
 		"check": "pnpm check-types && pnpm lint",
+		"verify": "tsx scripts/verify.ts",
 		"clear": "rm -rf node_modules .turbo"
 	},
 	"peerDependencies": {
@@ -61,6 +63,7 @@
 		"@fcalell/plugin-api": "workspace:*",
 		"@fcalell/plugin-solid": "workspace:*",
 		"@fcalell/plugin-vite": "workspace:*",
+		"@fcalell/ui-core": "workspace:*",
 		"@fontsource-variable/jetbrains-mono": "^5.2.8",
 		"@kobalte/core": "^0.13.11",
 		"@solidjs/meta": "^0.29.4",
@@ -79,9 +82,11 @@
 	"devDependencies": {
 		"@casl/ability": "^7.0.1",
 		"@fcalell/typescript-config": "workspace:*",
+		"@tailwindcss/cli": "^4.1.7",
 		"@types/node": "^25.5.0",
 		"@tanstack/solid-form": "^1.28.6",
 		"solid-js": "^1.9.0",
+		"tsx": "^4.19.0",
 		"typescript": "^5.9.3",
 		"vite": "^7.0.4"
 	}
