@@ -4,13 +4,18 @@ The design system both stack UI plugins render from: one closed token contract, 
 derivation, and the laws that say which token to pick. Everything it exports is build-time data, so
 each plugin renders its own CSS from the same records and ui-core stays framework-free.
 
-Four subpaths:
+Seven subpaths:
 
 - `@fcalell/ui-core/tokens`: the contract as data, including the calibrated default values.
 - `@fcalell/ui-core/schema`: the zod theme schema and the `Theme` input type.
 - `@fcalell/ui-core/derive`: `deriveTheme(theme)` resolves knobs and overrides into final values.
 - `@fcalell/ui-core/emit`: `themeTokens`, `modeTokens`, and `shadowUtilities` shape those values
   into the records a plugin renders.
+- `@fcalell/ui-core/cn`: `cn()`, the class merger, taught the contract's five scales.
+- `@fcalell/ui-core/variants`: the platform-invariant variant matrices, each one a config object
+  plus the cva built from it.
+- `@fcalell/ui-core/descriptors`: `Action`, `BadgeSpec`, `FooterSpec`, and the two footer members,
+  all framework-free types.
 
 The contract has two modes, `light` and `dark`. `themeTokens` seeds the default mode's colors into
 the `@theme` block as well, because Tailwind v4 generates no utility from a property declared only
@@ -217,3 +222,68 @@ namespace composes through Tailwind ring and inset variables that do not resolve
 Native's `boxShadow`. Each consumer wraps the three values in `@utility` itself: `shadow-1` is the
 baseline lift every working surface carries, `shadow-2` is for floating menus, `shadow-3` for
 dialogs and a floating action button. A working surface lifts with `shadow-1` and never a border.
+
+## The canon
+
+Five laws for a primitive's public API. They bind every primitive either UI plugin ships.
+
+1. **One name per concept.** Across all primitives the text is `label`, the in-flight flag is
+   `loading`, the change handler is `onChange`, the glyph is `icon`. A second name for a concept
+   already named is drift, so rename the newcomer.
+2. **A composed region is data, not a `ReactNode` prop.** Hand the owning primitive a descriptor
+   (`Action`, `BadgeSpec`, `FooterSpec`) and let it render the region under its own matrices. The
+   named slots that survive that rule are a closed registry, not a per-component invention.
+3. **Primitives compose primitives.** A primitive reaches for another primitive before it reaches
+   for a host element. Two primitives that share an anatomy become presets over one private core,
+   never two copies of the same markup.
+4. **A prop that changes which other props are legal is a sibling component, not a variant.** When
+   one value of a prop makes three other props required and another makes them meaningless, the
+   union is two components wearing one name. Split it and let the types say so.
+5. **A primitive takes no `class`, `className`, or `style` prop.** A look the matrices do not cover
+   has exactly two homes: the matrix grows, or the consumer authors its own primitive under `ui/`.
+   There is no per-call-site hatch, because a hatch is the thing that gets reached for.
+
+## The sharing line
+
+The matrices hold the cells that mean the same thing on both platforms: fills, borders, ink,
+padding rungs, radius, type role, font weight, and control minimum height. Weight is part of a type
+role, and the `TEXT_STRONG` table is nothing else. A tap-target floor is the strictest of the
+platform floors (Apple HIG 44pt, Material 48dp, WCAG 2.2 AA 24px), so leaving it per plugin means
+deriving one number twice. It is spelled `min-h` and never `h`, so the label can grow the control
+under OS font scaling.
+
+Everything below is a platform overlay, composed at the plugin through `cn()`:
+
+- **Display and alignment**: `flex`, `inline-flex`, `flex-row`, `items-*`, `justify-*`. React
+  Native lays out as flex by default and the web does not, so one shared value would be wrong on
+  one of them.
+- **Font family**: `font-sans` and its siblings. Families stay with the platform plugins; only the
+  fallback stacks are shared.
+- **Every interaction state**: `active:`, `hover:`, `focus-visible:`, `data-*`, `dark:`, `group-*`,
+  `peer-*`, `disabled:`.
+- **Geometry sized to one plugin's own glyph**, such as the inset a card reserves for its chevron.
+
+`gap-<rung>` stays inside the matrices. A gap is a spacing rung and a rung means the same thing on
+both platforms, and the field's two layouts carry different gaps keyed by the matrix's own axis:
+exiling it would force each plugin to rebuild that mapping by hand.
+
+Two rules govern what a cell may say. **Arbitrary values are illegal**, in both spellings: no `[`
+and no `(`. A cell that reaches for one makes the closed vocabulary negotiable, and the build
+cannot tell `border-[1.5px]` from a contract class. **A control's interior padding is always a
+literal numeric**, even where a rung happens to coincide: it is calibrated to the control's type
+size rather than to rhythm, so a button pads at `px-4 py-2` and never `px-gutter py-row`. Rungs
+govern rhythm gaps and container insets, which is why a card insets at `p-card` and the field's two
+layouts gap at `gap-row` and `gap-stack`.
+
+## Composing with cn
+
+`cn()` merges class inputs and resolves Tailwind conflicts, last wins. Its `tailwind-merge` config
+registers five contract scales under `theme`: the type roles as font sizes and again as leading,
+the tracked roles as tracking, the radius rungs, and the spacing rungs. Two members of one scale
+then collapse to the last, `rounded-t-control` beats `rounded-t-sheet`, and a type role beside a
+color leaves both standing.
+
+**Compose the type role before any later size class, never after.** `tailwind-merge` declares
+`font-size` as conflicting with `leading`, so registering the roles as font sizes makes
+`cn("leading-h1", "text-body")` return `text-body` alone and the role's line height is gone.
+`cn("text-body", "leading-h1")` keeps both.

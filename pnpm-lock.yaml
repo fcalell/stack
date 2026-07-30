@@ -57,6 +57,16 @@ importers:
   packages/typescript-config: {}
 
   packages/ui-core:
+    dependencies:
+      class-variance-authority:
+        specifier: ^0.7.1
+        version: 0.7.1
+      clsx:
+        specifier: ^2.1.1
+        version: 2.1.1
+      tailwind-merge:
+        specifier: ^3.5.0
+        version: 3.5.0
     devDependencies:
       '@fcalell/cli':
         specifier: workspace:*

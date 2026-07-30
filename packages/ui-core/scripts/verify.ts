@@ -8,10 +8,14 @@
 // drives a Tailwind build over the emitted `@theme` record, and exits non-zero
 // on any mismatch.
 import { execFileSync } from "node:child_process";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { isCssIdent } from "@fcalell/cli/css";
+import { clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
+import ts from "typescript";
+import { cn } from "#cn";
 import { deriveTheme } from "#derive";
 import { modeTokens, shadowUtilities, themeTokens } from "#emit";
 import {
@@ -30,6 +34,7 @@ import {
 	TYPE_ROLES,
 	type TypeRole,
 } from "#tokens";
+import * as matrices from "#variants";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const pkgDir = resolve(here, "..");
@@ -187,6 +192,148 @@ function emitted(key: string): string {
 	return value;
 }
 
+// ── The variant matrices, walked from the module ────────────────────
+
+interface MatrixConfig {
+	base: string;
+	variants: Record<string, Record<string, string>>;
+	compoundVariants?: Array<Record<string, string>>;
+	defaultVariants?: Record<string, string>;
+}
+
+type Renderer = (props: Record<string, string>) => string;
+
+// The two exports that return color token names for a plugin's own icon or
+// spinner component. They carry no classes, so the fixture never sees them.
+const TOKEN_TABLES = ["buttonContentTone", "badgeContentTone"];
+
+const configs = new Map<string, MatrixConfig>();
+const renderers = new Map<string, Renderer>();
+const classConstants = new Map<string, string>();
+for (const [name, value] of Object.entries(
+	matrices as unknown as Record<string, unknown>,
+)) {
+	if (typeof value === "function") {
+		renderers.set(name, value as Renderer);
+	} else if (typeof value === "string") {
+		classConstants.set(name, value);
+	} else if (
+		value !== null &&
+		typeof value === "object" &&
+		"variants" in value
+	) {
+		configs.set(name, value as MatrixConfig);
+	}
+}
+
+// A cva is named after the config it renders, so the pairing below is what
+// stops a table from reaching the module without reaching the enumerator.
+function cvaName(config: string): string {
+	return config
+		.toLowerCase()
+		.split("_")
+		.map((word, index) =>
+			index === 0 ? word : word.charAt(0).toUpperCase() + word.slice(1),
+		)
+		.join("");
+}
+
+function combinations(config: MatrixConfig): Array<Record<string, string>> {
+	let rows: Array<Record<string, string>> = [{}];
+	for (const axis of Object.keys(config.variants)) {
+		const next: Array<Record<string, string>> = [];
+		for (const row of rows) {
+			for (const key of Object.keys(config.variants[axis] ?? {})) {
+				next.push({ ...row, [axis]: key });
+			}
+		}
+		rows = next;
+	}
+	return rows;
+}
+
+function renderer(config: string): Renderer {
+	const render = renderers.get(cvaName(config));
+	assert(render, `${config} has no cva named ${cvaName(config)}`);
+	return render;
+}
+
+// Produced by calling each cva over the cartesian product of its own axes, so
+// the class set under test cannot drift from the matrices that emit it.
+let enumeratedClasses: Set<string> | undefined;
+
+function enumerated(): Set<string> {
+	if (enumeratedClasses) return enumeratedClasses;
+	const classes = new Set<string>();
+	const add = (value: string): void => {
+		for (const name of value.split(/\s+/)) if (name) classes.add(name);
+	};
+	for (const [name, config] of configs) {
+		const render = renderer(name);
+		for (const props of combinations(config)) add(render(props));
+	}
+	for (const value of classConstants.values()) add(value);
+	enumeratedClasses = classes;
+	return classes;
+}
+
+// ── The Tailwind fixture build ──────────────────────────────────────
+
+const fixtureDirFiles = ["classes.html", "enumerated.html"];
+
+let fixtureCss: string | undefined;
+
+function buildFixture(): string {
+	if (fixtureCss !== undefined) return fixtureCss;
+	writeFileSync(
+		resolve(fixtureDir, "enumerated.html"),
+		`<div class="${[...enumerated()].join(" ")}"></div>\n`,
+	);
+	const body = Object.entries(baseTheme)
+		.map(([key, value]) => `\t${key}: ${value};`)
+		.join("\n");
+	const utilities = Object.entries(shadowUtilities(base))
+		.map(([name, value]) => `@utility ${name} {\n\tbox-shadow: ${value};\n}`)
+		.join("\n");
+	const inputPath = resolve(fixtureDir, "generated.css");
+	const outputPath = resolve(fixtureDir, "generated.out.css");
+	writeFileSync(
+		inputPath,
+		[
+			'@import "tailwindcss" source(none);',
+			...fixtureDirFiles.map((name) => `@source "./${name}";`),
+			"",
+			`@theme {\n${body}\n}`,
+			"",
+			utilities,
+			"",
+		].join("\n"),
+	);
+
+	const candidates = [
+		resolve(pkgDir, "node_modules/.bin/tailwindcss"),
+		resolve(pkgDir, "../../node_modules/.bin/tailwindcss"),
+	];
+	const bin = candidates.find((path) => existsSync(path));
+	assert(bin, `no tailwindcss binary at ${candidates.join(" or ")}`);
+	execFileSync(bin, ["--input", inputPath, "--output", outputPath], {
+		cwd: fixtureDir,
+		stdio: "pipe",
+	});
+	fixtureCss = readFileSync(outputPath, "utf8");
+	return fixtureCss;
+}
+
+// Tailwind escapes `.`, `[`, `(` and their siblings in the selectors it emits
+// (`.px-3\.5 {`), so the raw class name has to be CSS-escaped before it is
+// regex-escaped or a class that did compile reads as missing.
+function rule(css: string, selector: string): string | undefined {
+	const escaped = selector
+		.replace(/[.[\]()/%:]/g, (char) => `\\${char}`)
+		.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+	return css.match(new RegExp(`\\.${escaped}\\s*\\{([^}]*)\\}`))?.[1];
+}
+
 // ── Criteria ────────────────────────────────────────────────────────
 
 check("c02", "package.json shape", () => {
@@ -206,12 +353,17 @@ check("c02", "package.json shape", () => {
 		Object.keys(pkg.exports ?? {})
 			.sort()
 			.join(" "),
-		"./derive ./emit ./schema ./tokens",
+		"./cn ./derive ./descriptors ./emit ./schema ./tokens ./variants",
 		"export subpaths",
 	);
 	assert(pkg.peerDependencies?.zod, "zod is not a peerDependency");
 	for (const name of ["tailwindcss", "@tailwindcss/cli"]) {
 		assert(pkg.devDependencies?.[name], `${name} is not a devDependency`);
+	}
+	// Pure functions with no shared identity, so a duplicated copy is harmless
+	// and a peer would force every consumer to restate them.
+	for (const name of ["class-variance-authority", "clsx", "tailwind-merge"]) {
+		assert(pkg.dependencies?.[name], `${name} is not a dependency`);
 	}
 	// What the criterion protects is that installing ui-core never pulls in the
 	// CLI. This script imports the CLI's ident check, so devDependencies is
@@ -219,7 +371,7 @@ check("c02", "package.json shape", () => {
 	for (const field of ["dependencies", "peerDependencies"] as const) {
 		assert(!pkg[field]?.["@fcalell/cli"], `@fcalell/cli appears in ${field}`);
 	}
-	return "4 subpaths, no root export, no runtime cli dependency";
+	return "7 subpaths, no root export, no runtime cli dependency";
 });
 
 check("c03", "tokens.ts declares the contract", () => {
@@ -690,45 +842,8 @@ check("c16", "one scales override moves both emitted type shapes", () => {
 });
 
 check("c14", "the Tailwind fixture builds on contract only", () => {
-	const body = Object.entries(baseTheme)
-		.map(([key, value]) => `\t${key}: ${value};`)
-		.join("\n");
-	const utilities = Object.entries(shadowUtilities(base))
-		.map(([name, value]) => `@utility ${name} {\n\tbox-shadow: ${value};\n}`)
-		.join("\n");
-	const inputPath = resolve(fixtureDir, "generated.css");
-	const outputPath = resolve(fixtureDir, "generated.out.css");
-	writeFileSync(
-		inputPath,
-		[
-			'@import "tailwindcss" source(none);',
-			'@source "./classes.html";',
-			"",
-			`@theme {\n${body}\n}`,
-			"",
-			utilities,
-			"",
-		].join("\n"),
-	);
-
-	const candidates = [
-		resolve(pkgDir, "node_modules/.bin/tailwindcss"),
-		resolve(pkgDir, "../../node_modules/.bin/tailwindcss"),
-	];
-	const bin = candidates.find((path) => existsSync(path));
-	assert(bin, `no tailwindcss binary at ${candidates.join(" or ")}`);
-	execFileSync(bin, ["--input", inputPath, "--output", outputPath], {
-		cwd: fixtureDir,
-		stdio: "pipe",
-	});
-	const out = readFileSync(outputPath, "utf8");
-
-	const rule = (selector: string): string | undefined => {
-		const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-		return out.match(new RegExp(`\\.${escaped}\\s*\\{([^}]*)\\}`))?.[1];
-	};
-
-	const textH1 = rule("text-h1");
+	const out = buildFixture();
+	const textH1 = rule(out, "text-h1");
 	assert(textH1, "text-h1 emitted no rule");
 	assert(textH1.includes("font-size"), "text-h1 carries no font-size");
 	assert(textH1.includes("line-height"), "text-h1 carries no line-height");
@@ -740,12 +855,15 @@ check("c14", "the Tailwind fixture builds on contract only", () => {
 		"gap-stack",
 		"rounded-control",
 	]) {
-		assert(rule(selector), `${selector} emitted no rule`);
+		assert(rule(out, selector), `${selector} emitted no rule`);
 	}
 	for (const selector of ["bg-red-500", "text-sm"]) {
-		assert(rule(selector) === undefined, `${selector} emitted a rule`);
+		assert(rule(out, selector) === undefined, `${selector} emitted a rule`);
 	}
-	const shadow = rule("shadow-1");
+	// The escaping fix has an oracle of its own: a class that compiles and
+	// carries a `.` must be found, or every dotted cell reports a false miss.
+	assert(rule(out, "px-3.5"), "px-3.5 emitted no rule");
+	const shadow = rule(out, "shadow-1");
 	assert(shadow, "shadow-1 emitted no rule");
 	requireEqual(
 		normalize(shadow.match(/box-shadow\s*:\s*([^;]+);/)?.[1] ?? ""),
@@ -790,6 +908,535 @@ check("c15", "the README carries the design laws, off the brand", () => {
 		"README does not name the namespaces the reset misses",
 	);
 	return "7 sections, 32 tokens named, no brand words";
+});
+
+// ── The cn merge cases, driven by the token lists ───────────────────
+
+function pairs<T extends string>(list: readonly T[]): Array<[T, T]> {
+	const out: Array<[T, T]> = [];
+	for (const [index, member] of list.entries()) {
+		const next = list[(index + 1) % list.length];
+		if (next) out.push([member, next]);
+	}
+	return out;
+}
+
+// One case per member of every driving list, so the check cannot pass by
+// covering one lucky pair. Each case is `[inputs, expected]`.
+const MERGE_CASES: Array<[string[], string]> = [];
+for (const [role, next] of pairs(TYPE_ROLES)) {
+	MERGE_CASES.push([[`text-${role}`, `text-${next}`], `text-${next}`]);
+	MERGE_CASES.push([[`leading-${role}`, `leading-${next}`], `leading-${next}`]);
+	MERGE_CASES.push([[`text-${role}`, "text-ink-2"], `text-${role} text-ink-2`]);
+}
+for (const [role, next] of pairs(TRACKED_ROLES)) {
+	MERGE_CASES.push([
+		[`tracking-${role}`, `tracking-${next}`],
+		`tracking-${next}`,
+	]);
+}
+for (const [rung, next] of pairs(RADIUS_RUNGS)) {
+	MERGE_CASES.push([[`rounded-${rung}`, `rounded-${next}`], `rounded-${next}`]);
+	MERGE_CASES.push([
+		[`rounded-t-${rung}`, `rounded-t-${next}`],
+		`rounded-t-${next}`,
+	]);
+}
+for (const [rung, next] of pairs(SPACING_RUNGS)) {
+	MERGE_CASES.push([[`p-${rung}`, `p-${next}`], `p-${next}`]);
+	MERGE_CASES.push([[`gap-${rung}`, `gap-${next}`], `gap-${next}`]);
+}
+// The numeric `--spacing` base stays live, so a rung and a numeric are one group.
+MERGE_CASES.push([["p-card", "p-4"], "p-4"]);
+
+check("c17", "cn dedupes inside each registered scale, never across", () => {
+	for (const [inputs, expected] of MERGE_CASES) {
+		requireEqual(cn(inputs), expected, inputs.join(" "));
+	}
+	const members =
+		TYPE_ROLES.length +
+		TRACKED_ROLES.length +
+		RADIUS_RUNGS.length +
+		SPACING_RUNGS.length;
+	return `${MERGE_CASES.length} cases over ${members} token-list members`;
+});
+
+check(
+	"c18",
+	"the font-size to leading interaction is the intended semantics",
+	() => {
+		requireEqual(
+			cn("leading-h1", "text-body"),
+			"text-body",
+			"role after leading",
+		);
+		requireEqual(
+			cn("text-body", "leading-h1"),
+			"text-body leading-h1",
+			"role before leading",
+		);
+		// Without the extension the same cases fail, so the config is proven to do
+		// work rather than assumed to.
+		const missed = MERGE_CASES.filter(
+			([inputs, expected]) => twMerge(clsx(inputs)) !== expected,
+		);
+		assert(
+			missed.length > 0,
+			"the unextended twMerge already passes every case",
+		);
+		return `a role after a leading deletes it; ${missed.length}/${MERGE_CASES.length} cases fail unextended`;
+	},
+);
+
+// ── The pinned matrices ─────────────────────────────────────────────
+
+interface PinnedMatrix {
+	base: string;
+	variants: Record<string, Record<string, string>>;
+	compoundVariants: Array<Record<string, string>>;
+}
+
+// No build check can tell a rung from a numeric, so every cell is spelled out
+// here as well and compared with the matrix that ships.
+const PINNED_MATRICES: Record<string, PinnedMatrix> = {
+	BUTTON: {
+		base: "gap-row rounded-control",
+		variants: {
+			emphasis: {
+				primary: "",
+				secondary: "border bg-transparent",
+				tertiary: "bg-transparent",
+			},
+			tone: { neutral: "", danger: "" },
+			size: {
+				sm: "min-h-11 px-3.5 py-1.5",
+				md: "min-h-11 px-4 py-2",
+				lg: "min-h-12 px-6 py-2.5",
+			},
+		},
+		compoundVariants: [
+			{ emphasis: "primary", tone: "neutral", class: "bg-accent" },
+			{ emphasis: "primary", tone: "danger", class: "bg-danger" },
+			{ emphasis: "secondary", tone: "neutral", class: "border-edge-2" },
+			{ emphasis: "secondary", tone: "danger", class: "border-danger" },
+			{ emphasis: "tertiary", tone: "neutral", class: "" },
+			{ emphasis: "tertiary", tone: "danger", class: "" },
+		],
+	},
+	BUTTON_LABEL: {
+		base: "font-semibold",
+		variants: {
+			emphasis: { primary: "", secondary: "", tertiary: "" },
+			tone: { neutral: "", danger: "" },
+			size: { sm: "text-caption", md: "text-callout", lg: "text-body" },
+		},
+		compoundVariants: [
+			{ emphasis: "primary", tone: "neutral", class: "text-accent-ink" },
+			{ emphasis: "primary", tone: "danger", class: "text-danger-ink" },
+			{ emphasis: "secondary", tone: "neutral", class: "text-ink-1" },
+			{ emphasis: "secondary", tone: "danger", class: "text-danger" },
+			{ emphasis: "tertiary", tone: "neutral", class: "text-ink-1" },
+			{ emphasis: "tertiary", tone: "danger", class: "text-danger" },
+		],
+	},
+	BUTTON_MUTED: {
+		base: "",
+		variants: {
+			emphasis: {
+				primary: "bg-surface-3",
+				secondary: "border-edge",
+				tertiary: "",
+			},
+		},
+		compoundVariants: [],
+	},
+	TEXT: {
+		base: "",
+		variants: {
+			variant: {
+				display: "text-display font-bold tracking-display leading-display",
+				h1: "text-h1 font-bold tracking-h1 leading-h1",
+				h2: "text-h2 font-semibold tracking-h2 leading-h2",
+				h3: "text-h3 font-semibold tracking-h3 leading-h3",
+				body: "text-body font-medium leading-body",
+				callout: "text-callout font-bold leading-callout",
+				caption: "text-caption font-medium leading-caption",
+				micro: "text-micro font-medium leading-micro tracking-micro",
+				rowtitle: "text-body font-semibold leading-body",
+			},
+			tone: {
+				"ink-1": "text-ink-1",
+				"ink-2": "text-ink-2",
+				"ink-3": "text-ink-3",
+				"ink-4": "text-ink-4",
+				brand: "text-brand",
+				interactive: "text-interactive",
+				ok: "text-ok",
+				warn: "text-warn",
+				danger: "text-danger",
+				"accent-ink": "text-accent-ink",
+				"oncover-fg": "text-oncover-fg",
+				"oncover-ink": "text-oncover-ink",
+			},
+		},
+		compoundVariants: [],
+	},
+	TEXT_STRONG: {
+		base: "",
+		variants: {
+			variant: {
+				display: "",
+				h1: "",
+				h2: "font-bold",
+				h3: "font-bold",
+				body: "font-semibold",
+				callout: "",
+				caption: "font-semibold",
+				micro: "font-semibold",
+				rowtitle: "font-bold",
+			},
+		},
+		compoundVariants: [],
+	},
+	BADGE: {
+		base: "rounded-full px-2.5 py-1",
+		variants: {
+			tone: {
+				neutral: "bg-surface-2",
+				brand: "bg-brand-soft",
+				interactive: "bg-interactive-soft",
+				ok: "bg-ok-soft",
+				warn: "bg-warn-soft",
+				danger: "bg-danger-soft",
+				oncover: "bg-oncover-surface",
+			},
+		},
+		compoundVariants: [],
+	},
+	BADGE_LABEL: {
+		base: "",
+		variants: {
+			tone: {
+				neutral: "text-ink-1",
+				brand: "text-brand",
+				interactive: "text-interactive",
+				ok: "text-ok",
+				warn: "text-warn",
+				danger: "text-danger",
+				oncover: "text-oncover-ink",
+			},
+		},
+		compoundVariants: [],
+	},
+	BADGE_DOT: {
+		base: "",
+		variants: {
+			tone: {
+				neutral: "bg-ink-1",
+				brand: "bg-brand",
+				interactive: "bg-interactive",
+				ok: "bg-ok",
+				warn: "bg-warn-mark",
+				danger: "bg-danger",
+				oncover: "bg-oncover-ink",
+			},
+		},
+		compoundVariants: [],
+	},
+	CARD: {
+		base: "overflow-hidden rounded-xl bg-surface shadow-1",
+		variants: {
+			padding: { card: "p-card", none: "" },
+			ring: { none: "", warn: "border-2 border-warn-mark" },
+		},
+		compoundVariants: [],
+	},
+	FIELD: {
+		base: "rounded-control border bg-surface px-3.5",
+		variants: {
+			state: {
+				default: "border-edge",
+				focused: "border-ink-1",
+				error: "border-danger",
+			},
+			layout: { input: "gap-row min-h-12", row: "gap-stack py-2" },
+		},
+		compoundVariants: [],
+	},
+};
+
+const PINNED_CONSTANTS: Record<string, string> = {
+	BUTTON_MUTED_LABEL: "text-ink-4",
+};
+
+check("c19", "every matrix cell is the pinned string", () => {
+	requireEqual(
+		[...configs.keys()].sort().join(" "),
+		Object.keys(PINNED_MATRICES).sort().join(" "),
+		"exported matrix configs",
+	);
+	requireEqual(
+		[...classConstants.keys()].sort().join(" "),
+		Object.keys(PINNED_CONSTANTS).sort().join(" "),
+		"exported class constants",
+	);
+	for (const [name, expected] of Object.entries(PINNED_CONSTANTS)) {
+		requireEqual(classConstants.get(name), expected, name);
+	}
+	let cells = 0;
+	for (const [name, pinned] of Object.entries(PINNED_MATRICES)) {
+		const config = configs.get(name);
+		assert(config, `${name} is not exported`);
+		requireEqual(config.base, pinned.base, `${name}.base`);
+		requireEqual(
+			Object.keys(config.variants).join(" "),
+			Object.keys(pinned.variants).join(" "),
+			`${name} axis names`,
+		);
+		for (const [axis, keys] of Object.entries(pinned.variants)) {
+			const actual = config.variants[axis];
+			assert(actual, `${name} has no ${axis} axis`);
+			requireEqual(
+				Object.keys(actual).join(" "),
+				Object.keys(keys).join(" "),
+				`${name}.${axis} keys`,
+			);
+			for (const [key, cell] of Object.entries(keys)) {
+				requireEqual(actual[key], cell, `${name}.${axis}.${key}`);
+				cells++;
+			}
+		}
+		const compounds = config.compoundVariants ?? [];
+		requireEqual(
+			compounds.length,
+			pinned.compoundVariants.length,
+			`${name} compound row count`,
+		);
+		for (const [index, row] of pinned.compoundVariants.entries()) {
+			requireEqual(
+				JSON.stringify(compounds[index]),
+				JSON.stringify(row),
+				`${name} compound row ${index}`,
+			);
+			cells++;
+		}
+	}
+	return `${cells} pinned cells over ${configs.size} matrices and 1 class constant`;
+});
+
+check("c20", "every class every matrix can emit resolves", () => {
+	const expected = new Set([...configs.keys()].map(cvaName));
+	for (const name of expected) {
+		assert(renderers.has(name), `no cva named ${name}`);
+	}
+	for (const name of renderers.keys()) {
+		assert(
+			expected.has(name) || TOKEN_TABLES.includes(name),
+			`${name} is a cva the enumerator cannot reach`,
+		);
+	}
+	const out = buildFixture();
+	const missing = [...enumerated()].filter((name) => !rule(out, name));
+	assert(missing.length === 0, `emitted no rule: ${missing.join(", ")}`);
+	return `${enumerated().size} classes from ${configs.size} matrices, every one on contract`;
+});
+
+const BANNED_CLASSES = ["flex", "inline-flex", "flex-row", "font-sans"];
+const BANNED_PREFIXES = ["items-", "justify-"];
+
+check("c21", "the enumerated set holds no platform overlay", () => {
+	const rungs = new Set<string>(SPACING_RUNGS);
+	for (const name of enumerated()) {
+		assert(!BANNED_CLASSES.includes(name), `${name} is a platform overlay`);
+		for (const prefix of BANNED_PREFIXES) {
+			assert(!name.startsWith(prefix), `${name} is a platform overlay`);
+		}
+		// `:` covers every interaction state, `dark:`, `group-`, `peer-` and
+		// `aria-`; `[` and `(` are the two spellings of an arbitrary value.
+		for (const char of [":", "[", "("]) {
+			assert(!name.includes(char), `${name} carries "${char}"`);
+		}
+		if (name.startsWith("gap-")) {
+			assert(
+				rungs.has(name.slice("gap-".length)),
+				`${name} is not a spacing rung`,
+			);
+		}
+	}
+	return `${enumerated().size} classes: no display, alignment, family, state or arbitrary value`;
+});
+
+const buttonContentTone = matrices.buttonContentTone as (
+	emphasis: string,
+	tone: string,
+) => string;
+const badgeContentTone = matrices.badgeContentTone as (tone: string) => string;
+
+check(
+	"c22",
+	"the token-name tables name contract colors and match their labels",
+	() => {
+		const colors = new Set<string>([...PER_MODE_COLORS, ...INVARIANT_COLORS]);
+		const button = configs.get("BUTTON");
+		const buttonLabel = configs.get("BUTTON_LABEL");
+		const badgeLabel = configs.get("BADGE_LABEL");
+		assert(
+			button && buttonLabel && badgeLabel,
+			"a label matrix is not exported",
+		);
+		let checked = 0;
+		for (const emphasis of Object.keys(button.variants.emphasis ?? {})) {
+			for (const tone of Object.keys(button.variants.tone ?? {})) {
+				const token = buttonContentTone(emphasis, tone);
+				assert(
+					colors.has(token),
+					`buttonContentTone(${emphasis}, ${tone}) is not a contract color: ${token}`,
+				);
+				const row = (buttonLabel.compoundVariants ?? []).find(
+					(entry) => entry.emphasis === emphasis && entry.tone === tone,
+				);
+				assert(row, `BUTTON_LABEL has no compound row for ${emphasis}/${tone}`);
+				requireEqual(
+					row.class,
+					`text-${token}`,
+					`BUTTON_LABEL ${emphasis}/${tone}`,
+				);
+				checked++;
+			}
+		}
+		for (const tone of Object.keys(badgeLabel.variants.tone ?? {})) {
+			const token = badgeContentTone(tone);
+			assert(
+				colors.has(token),
+				`badgeContentTone(${tone}) is not a contract color: ${token}`,
+			);
+			requireEqual(
+				badgeLabel.variants.tone?.[tone],
+				`text-${token}`,
+				`BADGE_LABEL ${tone}`,
+			);
+			checked++;
+		}
+		return `${checked} token names, each a contract color and each matching its label cell`;
+	},
+);
+
+check("c23", "descriptors.ts is types only, generic in TIcon", () => {
+	const source = readFileSync(resolve(pkgDir, "src/descriptors.ts"), "utf8");
+	const output = ts.transpileModule(source, {
+		compilerOptions: {
+			module: ts.ModuleKind.ESNext,
+			target: ts.ScriptTarget.ESNext,
+		},
+	}).outputText;
+	requireEqual(
+		output.replace(/export\s*\{\s*\}\s*;?/g, "").replace(/\s+/g, ""),
+		"",
+		"emitted JavaScript",
+	);
+	for (const statement of source.match(/^import .*/gm) ?? []) {
+		assert(statement.startsWith("import type "), `value import: ${statement}`);
+	}
+	for (const match of source.matchAll(/\bicon\??\s*:\s*([^;\n]+)/g)) {
+		requireEqual(match[1]?.trim(), "TIcon", `field "${match[0]}"`);
+	}
+	// Every declaration that mentions TIcon introduces it, and TIcon is the only
+	// type parameter in the file, so no local alias can stand in for the icon.
+	const headers = [
+		...source.matchAll(/^(?:export )?(?:interface|type) (\w+)(<[^>]*>)?/gm),
+	];
+	assert(headers.length > 0, "descriptors.ts declares no types");
+	for (const [index, header] of headers.entries()) {
+		const name = header[1];
+		const params = header[2] ?? "";
+		const body = source.slice(
+			(header.index ?? 0) + header[0].length,
+			headers[index + 1]?.index ?? source.length,
+		);
+		if (params) {
+			assert(
+				params.startsWith("<TIcon"),
+				`${name} declares a type parameter that is not TIcon: ${params}`,
+			);
+		}
+		requireEqual(
+			body.includes("TIcon"),
+			params.startsWith("<TIcon"),
+			`${name} mentions TIcon without declaring it, or declares it unused`,
+		);
+	}
+	for (const name of [
+		"Action",
+		"BadgeSpec",
+		"FooterSpec",
+		"FooterAction",
+		"FooterDestructive",
+	]) {
+		assert(
+			new RegExp(`^export (?:interface|type) ${name}\\b`, "m").test(source),
+			`${name} is not exported`,
+		);
+	}
+	const generic = headers.filter((header) => header[2]).length;
+	return `${headers.length} declarations, ${generic} generic in TIcon, no emitted JavaScript`;
+});
+
+check("c24", "no JSDoc block anywhere under src", () => {
+	const files = readdirSync(resolve(pkgDir, "src"), {
+		recursive: true,
+		encoding: "utf8",
+	}).filter((name) => name.endsWith(".ts"));
+	for (const name of files) {
+		const source = readFileSync(resolve(pkgDir, "src", name), "utf8");
+		assert(!source.includes("/**"), `${name} carries a JSDoc block`);
+	}
+	return `${files.length} modules, no /** in any of them`;
+});
+
+check("c25", "the README carries the canon and the sharing line", () => {
+	const readme = readFileSync(resolve(pkgDir, "README.md"), "utf8");
+	for (const heading of [
+		"## The canon",
+		"## The sharing line",
+		"## Composing with cn",
+	]) {
+		assert(readme.includes(heading), `README has no "${heading}" section`);
+	}
+	const laws = [
+		"One name per concept",
+		"A composed region is data, not a `ReactNode` prop",
+		"closed registry",
+		"Primitives compose primitives",
+		"presets over one private core",
+		"is a sibling component, not a variant",
+		"takes no `class`, `className`, or `style` prop",
+	];
+	const positions = laws.map((law) => {
+		const at = readme.indexOf(law);
+		assert(at >= 0, `README never states "${law}"`);
+		return at;
+	});
+	requireEqual(
+		positions[positions.length - 1],
+		Math.max(...positions),
+		"the class/className/style law is the last one",
+	);
+	for (const phrase of [
+		"control minimum height",
+		"font weight",
+		"`min-h` and never `h`",
+		"platform overlay",
+		"`gap-<rung>` stays inside the matrices",
+	]) {
+		assert(readme.includes(phrase), `the sharing line never names ${phrase}`);
+	}
+	assert(
+		readme.includes(
+			"Compose the type role before any later size class, never after.",
+		),
+		"README carries no compose-order rule",
+	);
+	return `${laws.length} law phrases in order, the sharing line's two additions, the compose-order rule`;
 });
 
 // ── Report ──────────────────────────────────────────────────────────
