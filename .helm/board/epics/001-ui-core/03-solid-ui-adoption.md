@@ -1,8 +1,30 @@
 ---
 id: 001-03
-status: ready
+status: in-progress
 depends: [001-01, 001-02]
 gate: {rounds: 2, flags: 16 + 17, outcome: all fixed, none dismissed}
+runs:
+  - n: A
+    scope: decisions 1-12, criteria A1-A10 + docs 1-3
+    outcome: merged 4e5b3db
+    review: {spec: 9 of 10 hold under mutation + A2 partial, standards: 2 must-fix, 8 worth noting}
+    verify: {solid-ui: 10/10, ui-core: 24/24, check: 12/12 types + 258 files lint clean from the real checkout}
+    live: stack generate in helm emits one @theme with the reset leading, three @utility shadow-N, .dark inside @layer base, 59 color declarations
+    bug-found-and-fixed: >
+      cssTokenValue admitted unbalanced parens. A single bad value fails the build loudly and so
+      does an unterminated quote, but a PAIR of consumer overrides.scales values — one opening,
+      a later one closing — built clean, exited 0, and emitted a stylesheet containing nothing
+      but the Tailwind banner. I reproduced it before requesting the fix and confirmed the fix
+      rejects both halves while nested oklch(), comma lists, var() fallbacks, cubic-bezier() and
+      animation shorthand all still pass.
+    contested-by-run-and-upheld: >
+      A2's "every property name through cssVarName" is unimplementable: cssVarName requires a --
+      prefix, and box-shadow and color-scheme are the two things A2's own sentence names. The
+      cssProperty dispatcher (-- to cssVarName, otherwise cssIdent) stands.
+    overruled-by-me: >
+      A reviewer asked to narrow defaultMode out of solid-ui's schema since it is inert on web.
+      The PRD requires a two-platform consumer to pass the same theme object to both plugins
+      (:96-99), so per-plugin narrowing breaks that contract. It stays a recorded gap.
 ---
 
 # plugin-solid-ui adoption
