@@ -1113,7 +1113,18 @@ check("b-resolves", "every class the rebuilt seven name compiles", () => {
 		dead.length === 0,
 		`classes that compile to nothing: ${dead.sort().join(", ")}`,
 	);
-	return `${named.size} classes named in the seven files all resolve`;
+
+	// The other half of the same hole. A cell is a class string inside ui-core
+	// that a cva composes at runtime, so nothing a component author writes puts
+	// it in front of Tailwind's scanner: globals.css has to source the package.
+	const unscanned = [...CELL_CLASSES.keys()].filter(
+		(name) => !emitted(built, name),
+	);
+	assert(
+		unscanned.length === 0,
+		`matrix cells the build never sees: ${unscanned.sort().join(", ")}`,
+	);
+	return `${named.size} classes named in the seven files and ${CELL_CLASSES.size} matrix cells all resolve`;
 });
 
 check("b5", "the class functions are gone", () => {

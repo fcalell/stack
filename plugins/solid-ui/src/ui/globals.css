@@ -8,6 +8,15 @@
    component sources are declared explicitly, relative to this file. */
 @source "./";
 
+/* The variant matrices are class strings inside `@fcalell/ui-core`, and a cva
+   composes them at runtime, so a build that never scans that package emits
+   nothing for `bg-brand-soft`, `leading-body` or any other cell no component
+   also spells literally. Two paths are listed because the package sits one
+   level away in an install and four in a workspace checkout; Tailwind ignores
+   a source path that does not exist, so the wrong one costs nothing. */
+@source "../../../ui-core/src";
+@source "../../../../packages/ui-core/src";
+
 @custom-variant dark (&:where(.dark, .dark *));
 
 @layer base {
