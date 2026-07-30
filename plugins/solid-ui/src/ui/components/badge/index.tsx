@@ -15,7 +15,7 @@ import { cn } from "#lib/cn";
 const ROLE = { variant: "micro" } as const;
 
 const SHELL =
-	"inline-flex items-center transition-[color,background-color] duration-base ease-ui";
+	"inline-flex items-center transition-[color,background-color] duration-(--duration-base) ease-ui";
 
 type BadgeProps = {
 	tone?: BadgeTone;

@@ -71,7 +71,7 @@ function Content<T extends ValidComponent = "div">(
 				{...rest}
 			>
 				{local.children}
-				<DialogPrimitive.CloseButton class="absolute right-3 top-3 flex size-8 items-center justify-center text-ink-3 transition-[color,background-color,border-color] duration-base ease-ui hover:text-ink-1 focus-visible:outline-2 focus-visible:outline-interactive focus-visible:outline-offset-2 disabled:pointer-events-none">
+				<DialogPrimitive.CloseButton class="absolute right-3 top-3 flex size-8 items-center justify-center text-ink-3 transition-[color,background-color,border-color] duration-(--duration-base) ease-ui hover:text-ink-1 focus-visible:outline-2 focus-visible:outline-interactive focus-visible:outline-offset-2 disabled:pointer-events-none">
 					<X class="size-4" aria-hidden="true" />
 					<span class="sr-only">Close</span>
 				</DialogPrimitive.CloseButton>

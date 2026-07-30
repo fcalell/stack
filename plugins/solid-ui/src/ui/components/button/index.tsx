@@ -16,7 +16,7 @@ import { cn } from "#lib/cn";
 // The fill matrix carries no ink, so the label table rides the same node.
 // Display, motion and the focus ring are web overlays composed after both.
 const SHELL =
-	"inline-flex cursor-pointer items-center justify-center whitespace-nowrap transition-[color,background-color,border-color,opacity] duration-fast ease-ui focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive [&_svg]:pointer-events-none [&_svg]:shrink-0";
+	"inline-flex cursor-pointer items-center justify-center whitespace-nowrap transition-[color,background-color,border-color,opacity] duration-(--duration-fast) ease-ui focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive [&_svg]:pointer-events-none [&_svg]:shrink-0";
 
 // Sized to this plugin's own glyph, which is why it stays out of the matrix.
 const GLYPH: Record<ButtonSize, string> = {

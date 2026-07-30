@@ -1054,6 +1054,68 @@ check("b4", "a prefixed class mirrors the cell it stands in for", () => {
 	return `${checked.length} prefixed classes resolved against a matrix cell`;
 });
 
+// Not an acceptance criterion. Tailwind drops a candidate it cannot resolve in
+// silence, so a class the namespace resets killed ships as a missing look with
+// no error: `duration-base` reads like a token and needs a `--duration-*`
+// namespace Tailwind has none of. The geometry gate is the real answer. Until
+// it lands the rebuilt seven are held to this, since they are what this story
+// rewrote. The class is looked up exactly as written, prefixes included,
+// because Tailwind emits only the candidates it actually saw.
+const LOOK_ROOTS = [
+	"bg",
+	"text",
+	"border",
+	"ring",
+	"outline",
+	"rounded",
+	"gap",
+	"p",
+	"px",
+	"py",
+	"min-h",
+	"max-h",
+	"shadow",
+	"font",
+	"leading",
+	"tracking",
+	"duration",
+	"ease",
+	"animate",
+	"aspect",
+];
+
+// A variant class emits as `.aria-invalid\:border-danger[aria-invalid="true"]`,
+// so the selector is matched by what may *not* follow it rather than by a fixed
+// delimiter. Blocking `\` is what keeps `bg-surface-2` from matching
+// `bg-surface-2\/50`.
+function emitted(css: string, name: string): boolean {
+	const escaped = name
+		.replace(/[.[\]()/%:!]/g, (char) => `\\${char}`)
+		.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+	return new RegExp(`\\.${escaped}(?![\\w\\\\-])`).test(css);
+}
+
+check("b-resolves", "every class the rebuilt seven name compiles", () => {
+	const named = new Set<string>();
+	for (const [, source] of rebuiltSources) {
+		for (const literal of literals(source)) {
+			for (const token of classes(literal)) {
+				if (token.includes("[") || token.includes("]")) continue;
+				const bare = token.slice(token.lastIndexOf(":") + 1);
+				if (LOOK_ROOTS.some((root) => bare.startsWith(`${root}-`))) {
+					named.add(token);
+				}
+			}
+		}
+	}
+	const dead = [...named].filter((name) => !emitted(built, name));
+	assert(
+		dead.length === 0,
+		`classes that compile to nothing: ${dead.sort().join(", ")}`,
+	);
+	return `${named.size} classes named in the seven files all resolve`;
+});
+
 check("b5", "the class functions are gone", () => {
 	const hits: string[] = [];
 	for (const path of [...SWEPT, ...DOCS, resolve(pkgDir, "README.md")]) {

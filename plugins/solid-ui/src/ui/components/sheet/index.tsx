@@ -118,7 +118,7 @@ function Content<T extends ValidComponent = "div">(
 				{...rest}
 			>
 				{local.children}
-				<SheetPrimitive.CloseButton class="absolute right-4 top-4 text-ink-3 transition-[color,background-color,border-color] duration-base ease-ui hover:text-ink-1 focus-visible:outline-2 focus-visible:outline-interactive focus-visible:outline-offset-2 disabled:pointer-events-none">
+				<SheetPrimitive.CloseButton class="absolute right-4 top-4 text-ink-3 transition-[color,background-color,border-color] duration-(--duration-base) ease-ui hover:text-ink-1 focus-visible:outline-2 focus-visible:outline-interactive focus-visible:outline-offset-2 disabled:pointer-events-none">
 					<X class="size-4" aria-hidden="true" />
 					<span class="sr-only">Close</span>
 				</SheetPrimitive.CloseButton>
