@@ -14,8 +14,8 @@ Seven subpaths:
 - `@fcalell/ui-core/cn`: `cn()`, the class merger, taught the contract's five scales.
 - `@fcalell/ui-core/variants`: the platform-invariant variant matrices, each one a config object
   plus the cva built from it.
-- `@fcalell/ui-core/descriptors`: `Action`, `BadgeSpec`, `FooterSpec`, and the two footer members,
-  all framework-free types.
+- `@fcalell/ui-core/descriptors`: `Action`, `BadgeSpec`, `FooterSpec`, `FooterAction` and
+  `FooterDestructive`, all framework-free types.
 
 The contract has two modes, `light` and `dark`. `themeTokens` seeds the default mode's colors into
 the `@theme` block as well, because Tailwind v4 generates no utility from a property declared only
@@ -283,7 +283,12 @@ the tracked roles as tracking, the radius rungs, and the spacing rungs. Two memb
 then collapse to the last, `rounded-t-control` beats `rounded-t-sheet`, and a type role beside a
 color leaves both standing.
 
-**Compose the type role before any later size class, never after.** `tailwind-merge` declares
-`font-size` as conflicting with `leading`, so registering the roles as font sizes makes
-`cn("leading-h1", "text-body")` return `text-body` alone and the role's line height is gone.
-`cn("text-body", "leading-h1")` keeps both.
+A role owns three properties, so the config also declares `font-size` as conflicting with both
+`leading-` and `tracking-`: a later role clears the earlier role's line height and letter spacing
+together. Stock `tailwind-merge` conflicts on `leading-` alone, which leaves a stale `tracking-h1`
+riding body text.
+
+**Compose the type role before any later size class, never after.** That conflict runs one way, so
+`cn("leading-h1", "text-body")` and `cn("tracking-h1", "text-body")` each return `text-body` alone
+and the earlier role's metrics are gone. `cn("text-body", "leading-h1")` keeps both, as does a
+role beside its own `tracking-`.

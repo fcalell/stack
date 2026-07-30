@@ -2,7 +2,7 @@
 // primitive renders it. `TIcon` is a type parameter because the icon is a
 // `lucide-solid` component on web and a `lucide-react-native` one on native,
 // and ui-core depends on neither.
-import type { BADGE } from "#variants";
+import type { BadgeTone, ButtonTone } from "#variants";
 
 export interface Action<TIcon = never> {
 	label: string;
@@ -13,24 +13,18 @@ export interface Action<TIcon = never> {
 }
 
 export interface BadgeSpec {
-	tone?: keyof (typeof BADGE)["variants"]["tone"];
+	tone?: BadgeTone;
 	label: string;
 }
 
-export interface FooterAction<TIcon = never> {
-	label: string;
-	onSelect: () => void;
-	loading?: boolean;
-	disabled?: boolean;
-	icon?: TIcon;
+export interface FooterAction<TIcon = never> extends Action<TIcon> {
 	iconPosition?: "leading" | "trailing";
-	testID?: string;
 }
 
 export interface FooterDestructive<TIcon = never> {
 	label: string;
 	icon?: TIcon;
-	tone?: "danger" | "neutral";
+	tone?: ButtonTone;
 	confirmTitle: string;
 	confirmBody: string;
 	confirmLabel?: string;
@@ -41,7 +35,7 @@ export interface FooterDestructive<TIcon = never> {
 	option?: { label: string; hint?: string };
 }
 
-interface FooterFields<TIcon> {
+interface FooterFields<TIcon = never> {
 	primary?: FooterAction<TIcon>;
 	secondary?: Action<TIcon>;
 	tertiary?: Action<TIcon>;
