@@ -48,8 +48,8 @@ const compatibilityFlags = slot.list<string>({
 // Pinned to a plugin-shipped constant so wrangler.toml generation is
 // deterministic from (config + plugin version), not today's wall clock.
 // Seeding with `new Date()` broke generate-to-generate reproducibility across
-// day boundaries (snapshot tests flaked, `wrangler types` output drifted
-// between runs, CI caches invalidated for no reason). Consumers who want a
+// day boundaries (`wrangler types` output drifted between runs, CI caches
+// invalidated for no reason). Consumers who want a
 // newer date push a `cloudflare.slots.compatibilityDate` value with
 // `override: true`.
 const compatibilityDate = slot.value<string>({

@@ -43,9 +43,9 @@ export interface CodegenWranglerPayload {
 //
 // Why pin in source (not a build step): the alternative is reading the wall
 // clock at generate-time, which makes wrangler.toml content depend on which
-// day `stack generate` runs. That breaks snapshot tests across midnight, dirty
-// `wrangler types` regeneration caches, and thrashes CI build caches for no
-// functional reason. A repo-versioned constant trades "automatic bumps" for
+// day `stack generate` runs. That dirties `wrangler types` regeneration
+// caches across midnight and thrashes CI build caches for no functional
+// reason. A repo-versioned constant trades "automatic bumps" for
 // bit-exact reproducibility, which is the more important property in practice
 // — compat dates are a stability contract, not a feature flag.
 export const DEFAULT_COMPATIBILITY_DATE = "2025-01-01";

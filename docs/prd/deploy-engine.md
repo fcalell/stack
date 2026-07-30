@@ -44,7 +44,9 @@ step-done). Porting it swaps the renderer, not the plugin contract.
 
 ## Milestones
 
-Ordered by dependency. Each is independently shippable and verifiable.
+Ordered by dependency. Each is independently shippable and verifiable. Each **Verify** block is a
+manual procedure against a scratch consumer project: run the commands, watch the terminal, confirm
+the stated result.
 
 ### M1 — Run-engine TUI, wired to `stack deploy`
 
@@ -55,9 +57,12 @@ Strip every sailward-specific type; the engine is driven by the generic event si
 `runDeploySteps` to emit into it. When `process.stdout` is not a TTY, fall back to the existing
 `@clack/prompts` step logs unchanged.
 
-**Test.** Unit: the sink reduces a scripted event stream to the expected step states and tail.
-Deploy integration: a run against stub steps renders the outcome banner on success and on a failing
-step; with a piped (non-TTY) stdout, output matches the current linear format.
+**Verify.** Run `stack deploy` in a terminal and watch the run view: steps move through
+pending, active, and done, the log tail follows the active step, and the elapsed timer advances.
+Make one step fail and confirm the outcome banner names it. Press ctrl+c mid-run and confirm the
+run aborts and the terminal is left clean. Pipe the same deploy through `| cat` and confirm the
+output matches the linear `@clack/prompts` format. Open the run's log file and confirm it holds the
+full output.
 
 ### M2 — Deploy lock
 
@@ -65,8 +70,9 @@ One deploy at a time. Port `release-lock.mjs`'s file-lock idea: acquire a lock f
 keyed on pid, refuse a second deploy with the holder's pid, release on exit. `plugin-db` already
 holds a migration lock during teardown; this is the repo-wide deploy lock above it.
 
-**Test.** Integration: a second `deploy` while a stub deploy holds the lock exits non-zero naming
-the holder; the lock clears after the first finishes and a later deploy proceeds.
+**Verify.** Start a slow `stack deploy` and, from a second terminal, run `stack deploy` again: it
+exits non-zero and names the holding pid. Let the first finish, then run a third: it proceeds. Kill
+the first with `kill -9` mid-run and confirm the next deploy still acquires the lock.
 
 ### M3 — Blocking gates
 
@@ -75,8 +81,9 @@ a reason, and the deploy aborts before any step runs. Informational checks keep 
 gives the shipped destructive-migration gate (`plugin-db`'s `deployChecks` contribution) a graceful
 blocking verdict instead of its current throw-to-abort.
 
-**Test.** Integration: a check returning a blocking verdict aborts the deploy before steps run and
-prints the reason; a non-blocking check still runs its `action` and proceeds.
+**Verify.** Commit a destructive migration without the ack marker and run `stack deploy`: it stops
+before the first step and prints the gate's reason. Ack the migration and confirm the same deploy
+runs. Add an informational check and confirm its `action` still runs and the deploy proceeds.
 
 ### M4 — Reconcile before deploy
 
@@ -91,9 +98,10 @@ Open design question to settle in the milestone: the released-marker store. Git 
 choice) keep it in the repo and need no extra binding; a KV marker avoids tag noise. Default to git
 tags unless the milestone surfaces a blocker.
 
-**Test.** Integration: a target whose marker equals the current commit is reported current and its
-step is skipped; a target ahead of its marker, or with pending migrations, is reported and runs.
-Deploy writes the marker only after the step succeeds.
+**Verify.** Deploy once, then run `stack deploy` again with no commits in between: every target
+reports current and its step is skipped. Commit a change to one target and confirm only that target
+reports drift and runs. Generate a pending migration and confirm the db target reports drift. Make
+a step fail and confirm its marker is not written, so the next deploy still reports drift.
 
 ### M5 — Ordered run with stop-on-failure
 
@@ -102,8 +110,9 @@ Make order explicit and stop on the first failure. Today `deploySteps` sort by p
 chain on any failure so a later target never ships against a half-broken earlier one. Add explicit
 ordering within a phase and stop-on-failure semantics to the run loop.
 
-**Test.** Integration: steps run in the declared order; a failing step halts the remaining steps and
-the outcome banner names the failed step.
+**Verify.** Run `stack deploy` and confirm the steps execute in the declared order. Make an early
+step fail: the remaining steps never start, the outcome banner names the failed step, and the
+command exits non-zero.
 
 ### M6 (follow-up) — `stack dev` multiplexer on the same engine
 
@@ -121,7 +130,8 @@ the engine's shape stays compatible.
 
 ## Acceptance
 
-Per milestone: implementation plus co-located tests land, tests drive the real command path (no
-string-only assertions), `pnpm test` and `pnpm check` pass. The dogfood signal for the PRD as a
+Per milestone: the implementation lands, the milestone's **Verify** steps run green against a
+scratch consumer project with the transcript recorded in the PR, and `pnpm check` passes. The
+dogfood signal for the PRD as a
 whole: sailward could replace `tools/release`'s run/lock/gate/order machinery with `stack deploy`,
 keeping only its product-specific dashboard.

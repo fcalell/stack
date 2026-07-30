@@ -1,8 +1,7 @@
 # Coding conventions
 
 > **Load when:** writing or editing any TypeScript in this repo. Baseline package, placement, and
-> style rules. Pair with `plugin-authoring.md` when the change touches a plugin's contract, and
-> `testing.md` before calling work done.
+> style rules. Pair with `plugin-authoring.md` when the change touches a plugin's contract.
 
 ## Package conventions
 
@@ -55,7 +54,6 @@ Each plugin lives in `plugins/<name>/` and is published as `@fcalell/plugin-<nam
 plugins/<name>/
   src/
     index.ts              ← plugin() result (main export ".")
-    index.test.ts
     types.ts              ← shared option types
     node/                 ← Node.js only — codegen aggregators, CLI helpers
     worker/               ← Cloudflare Workers only — runtime (exported as "./runtime")

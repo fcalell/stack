@@ -19,7 +19,7 @@ export interface RoutesPluginOptions {
 // Normalize to POSIX forward-slashes regardless of host platform. Vite's
 // `normalizePath` also converts, but only on Windows — doing the conversion
 // unconditionally here makes path comparisons separator-agnostic by
-// construction, and keeps simulated-Windows tests trivial on a POSIX CI host.
+// construction.
 // Every absolute path that enters this file — pagesDir (joined from
 // `process.cwd()` + the user option), watcher events, handleHotUpdate's
 // ctx.file — flows through `toPosix` exactly once at the boundary, so

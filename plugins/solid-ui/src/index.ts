@@ -117,8 +117,7 @@ const appCssLayers = slot.list<CssLayer>({
 //   - `fonts: [...]`                → use exactly those entries.
 //
 // The `??` here is load-bearing — we only swap in defaults when the value
-// is nullish, never when it's an empty array. Covered by the "fonts: []"
-// tests in index.test.ts / codegen.test.ts.
+// is nullish, never when it's an empty array.
 const fonts = slot.derived({
 	source: SOURCE,
 	name: "fonts",

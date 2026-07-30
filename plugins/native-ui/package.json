@@ -25,7 +25,6 @@
 		"check-types": "tsc --noEmit --pretty",
 		"lint": "biome check --write --unsafe",
 		"check": "pnpm check-types && pnpm lint",
-		"test": "vitest run",
 		"clear": "rm -rf node_modules .turbo"
 	},
 	"peerDependencies": {

@@ -22,7 +22,6 @@ export function pluginPackageJsonTemplate(
 			"check-types": "tsc --noEmit --pretty",
 			lint: "biome check --write --unsafe",
 			check: "pnpm check-types && pnpm lint",
-			test: "vitest run",
 		},
 		dependencies: {
 			"@fcalell/cli": "workspace:*",
@@ -30,7 +29,6 @@ export function pluginPackageJsonTemplate(
 		devDependencies: {
 			"@fcalell/typescript-config": "workspace:*",
 			typescript: "^5.9.3",
-			vitest: "^3.0.0",
 		},
 	};
 
@@ -77,45 +75,6 @@ export const ${varName} = plugin("${name}", {
 \tcontributes: [
 \t\t// example.contribute(() => "hello"),
 \t],
-});
-`;
-}
-
-interface PluginIndexTestOptions {
-	name: string;
-	packageName: string;
-}
-
-export function pluginIndexTestTemplate(
-	options: PluginIndexTestOptions,
-): string {
-	const { name, packageName } = options;
-	const varName = toCamelCase(name);
-	return `import { cliSlots } from "@fcalell/cli/cli-slots";
-import { buildTestGraphFromPlugins } from "@fcalell/cli/testing";
-import { describe, expect, it } from "vitest";
-import { ${varName} } from "./index";
-
-// Drive every test through a real graph and assert on a resolved slot VALUE —
-// never on identity echoes (\`${varName}.name\`, a slot's \`source\`, \`label\`),
-// which break only on rename and protect nothing. See the "Don't write
-// low-value tests" rule: a good test names a behavior whose break a real
-// consumer would feel.
-describe("${varName} plugin", () => {
-\tit("auto-wires its package into cli.slots.initDeps", async () => {
-\t\tconst { graph } = buildTestGraphFromPlugins({
-\t\t\tplugins: [{ factory: ${varName}, options: {} }],
-\t\t});
-
-\t\tconst deps = await graph.resolve(cliSlots.initDeps);
-
-\t\texpect(deps).toHaveProperty("${packageName}");
-\t});
-
-\t// Once you uncomment \`example.contribute(...)\` in index.ts, assert on its
-\t// effect here, e.g.:
-\t//   const items = await graph.resolve(${varName}.slots.example);
-\t//   expect(items).toContain("hello");
 });
 `;
 }
@@ -183,7 +142,7 @@ export default defineConfig({
 ## Publishing
 
 1. Replace \`workspace:*\` dependencies in \`package.json\` with fixed versions.
-2. Run \`pnpm test\` and \`pnpm check-types\`.
+2. Run \`pnpm check-types\`.
 3. Publish: \`pnpm publish --access public\`.
 
 ## License

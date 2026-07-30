@@ -43,8 +43,8 @@ export interface CallbackSpec {
 }
 
 // Models the .stack/worker.ts builder chain (internal to the worker source
-// derivation). Exposed for the `aggregateWorker` pure function so tests can
-// drive the aggregator with synthetic inputs.
+// derivation). Exposed as the input type of the `aggregateWorker` pure
+// function.
 export interface WorkerPayload {
 	imports: TsImportSpec[];
 	base: TsExpression | null;

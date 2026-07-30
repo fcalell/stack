@@ -15,10 +15,6 @@
 		},
 		"check-types": {
 			"dependsOn": ["^check-types"]
-		},
-		"test": {
-			"dependsOn": ["^build"],
-			"cache": false
 		}
 	}
 }

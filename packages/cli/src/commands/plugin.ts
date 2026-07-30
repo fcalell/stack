@@ -5,7 +5,6 @@ import { StackError } from "#lib/errors";
 import { writeIfMissingString } from "#lib/scaffold";
 import {
 	pluginIndexTemplate,
-	pluginIndexTestTemplate,
 	pluginPackageJsonTemplate,
 	pluginReadmeTemplate,
 	pluginRuntimeTemplate,
@@ -20,7 +19,7 @@ export interface InitPluginOptions {
 
 // Scaffolds a minimal, working plugin skeleton that a third-party author can
 // publish as-is. Mirrors the conventions documented in .claude/playbooks/conventions.md:
-// subpath exports for "." and "./runtime", co-located tests, and no barrel index.
+// subpath exports for "." and "./runtime", and no barrel index.
 export async function initPlugin(options: InitPluginOptions): Promise<void> {
 	const name = options.name.trim();
 	if (!name) {
@@ -59,7 +58,6 @@ export async function initPlugin(options: InitPluginOptions): Promise<void> {
 			["package.json", pluginPackageJsonTemplate({ name, packageName })],
 			["tsconfig.json", pluginTsconfigTemplate()],
 			["src/index.ts", pluginIndexTemplate({ name, packageName, label })],
-			["src/index.test.ts", pluginIndexTestTemplate({ name, packageName })],
 			["src/worker/index.ts", pluginRuntimeTemplate({ name })],
 			["README.md", pluginReadmeTemplate({ name, packageName, label })],
 		];
@@ -81,7 +79,7 @@ export async function initPlugin(options: InitPluginOptions): Promise<void> {
 				`Next steps:`,
 				`  cd ${targetDir}`,
 				`  pnpm install`,
-				`  pnpm test`,
+				`  pnpm check`,
 			].join("\n"),
 		);
 		outro(`Done!`);

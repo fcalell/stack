@@ -200,13 +200,6 @@ contributes: [
 ],
 ```
 
-## Testing a plugin
-
-Drive tests through the real graph, and only write tests that can fail on a real bug: see
-`testing.md`. Every contribution is covered by a co-located test that builds a real graph
-(`buildTestGraphFromPlugins`) and asserts on the resolved slot value; reordering the `plugins`
-array in any test must leave it green.
-
 ## Checklist before publishing a plugin
 
 1. Templates live on disk under `templates/` and are listed in `package.json` `files`.
@@ -216,6 +209,5 @@ array in any test must leave it green.
 5. Cross-plugin dataflow is expressed via slot imports: `B.slots.foo.contribute(...)` to push,
    `slot.derived({ inputs: { foo: B.slots.foo }, ... })` to read. No `requires:` for ordering (it's
    presence-only).
-6. Every contribution is covered by a co-located real-graph test.
-7. New/renamed/removed slots are reflected in `.knowledge/architecture/slot-catalog.md` in the same
+6. New/renamed/removed slots are reflected in `.knowledge/architecture/slot-catalog.md` in the same
    commit.

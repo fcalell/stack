@@ -1,0 +1,169 @@
+/**
+ * biome-ignore-all lint/suspicious/noDuplicateCustomProperties: the repetition
+ * is the point. Each per-mode token is declared three times on purpose, once in
+ * `@theme` so the utility exists at all and once per `@variant` block.
+ */
+
+/* The calibration ui-core reproduces, copied verbatim from the upstream
+   hand-tuned stylesheet (sailward `apps/mobile/global.css`). `verify.ts` reads
+   it as its oracle and renames the three brand-worded tokens onto the contract
+   vocabulary.
+
+   This file is the reference, not an output. Never edit a value here to make a
+   check pass: fix the contract in `src/tokens.ts` instead. Re-sync it only from
+   upstream, and re-run the script against the live file to confirm:
+   `pnpm --filter @fcalell/ui-core verify <path-to-upstream-global.css>`. */
+
+@theme {
+	--color-*: initial;
+	--radius-*: initial;
+	--text-*: initial;
+	--shadow-*: initial;
+
+	--spacing-room: 32px;
+	--spacing-section: 24px;
+	--spacing-stack: 12px;
+	--spacing-row: 8px;
+	--spacing-pair: 4px;
+	--spacing-gutter: 16px;
+	--spacing-card: 16px;
+
+	--radius-md: 10px;
+	--radius-control: 14px;
+	--radius-xl: 16px;
+	--radius-sheet: 24px;
+	--radius-full: 9999px;
+
+	--text-display: 34px;
+	--text-h1: 28px;
+	--text-h2: 22px;
+	--text-h3: 18px;
+	--text-body: 16px;
+	--text-callout: 14px;
+	--text-caption: 13px;
+	--text-micro: 12px;
+
+	--leading-display: 1.18;
+	--leading-h1: 1.29;
+	--leading-h2: 1.27;
+	--leading-h3: 1.33;
+	--leading-body: 1.5;
+	--leading-callout: 1.43;
+	--leading-caption: 1.23;
+	--leading-micro: 1.33;
+	--tracking-display: -0.025em;
+	--tracking-h1: -0.02em;
+	--tracking-h2: -0.015em;
+	--tracking-h3: -0.005em;
+	--tracking-micro: 0.03em;
+
+	--font-sans: "IBM Plex Sans";
+	--font-mono: "IBM Plex Mono";
+
+	--color-canvas: oklch(0.966 0.006 261);
+	--color-surface: oklch(1 0 0);
+	--color-surface-2: oklch(0.935 0.009 261);
+	--color-surface-3: oklch(0.905 0.012 261);
+	--color-thumb: oklch(1 0 0);
+	--color-edge: oklch(0.91 0.01 261);
+	--color-edge-2: oklch(0.85 0.014 261);
+	--color-ink-1: oklch(0.22 0.043 261);
+	--color-ink-2: oklch(0.44 0.036 261);
+	--color-ink-3: oklch(0.515 0.032 261);
+	--color-ink-4: oklch(0.75 0.02 261);
+	--color-brand: oklch(0.22 0.043 261);
+	--color-brand-soft: oklch(0.895 0.04 261);
+	--color-brand-deep: oklch(0.175 0.045 261);
+	--color-ok: oklch(0.5 0.105 160);
+	--color-ok-soft: oklch(0.92 0.04 160);
+	--color-warn: oklch(0.5 0.106 75);
+	--color-warn-soft: oklch(0.912 0.048 80);
+	--color-warn-mark: oklch(0.62 0.13 78);
+	--color-danger: oklch(0.5 0.18 28);
+	--color-danger-soft: oklch(0.915 0.045 28);
+	--color-danger-ink: oklch(0.966 0.006 261);
+	--color-marine: oklch(0.5 0.16 261);
+	--color-marine-soft: oklch(0.915 0.045 261);
+	--color-accent: oklch(0.22 0.043 261);
+	--color-accent-ink: oklch(0.966 0.006 261);
+	--color-scrim: oklch(0.22 0.043 261 / 0.8);
+
+	--color-oncover-fg: oklch(1 0 0);
+	--color-oncover-ink: oklch(0.22 0.043 261);
+	--color-oncover-surface: oklch(1 0 0);
+	--color-oncover-glass: oklch(1 0 0 / 0.149);
+	--color-oncover-navy: oklch(0.2 0.036 261 / 0.549);
+}
+
+@layer theme {
+	:root {
+		@variant light {
+			--color-canvas: oklch(0.966 0.006 261);
+			--color-surface: oklch(1 0 0);
+			--color-surface-2: oklch(0.935 0.009 261);
+			--color-surface-3: oklch(0.905 0.012 261);
+			--color-thumb: oklch(1 0 0);
+			--color-edge: oklch(0.91 0.01 261);
+			--color-edge-2: oklch(0.85 0.014 261);
+			--color-ink-1: oklch(0.22 0.043 261);
+			--color-ink-2: oklch(0.44 0.036 261);
+			--color-ink-3: oklch(0.515 0.032 261);
+			--color-ink-4: oklch(0.75 0.02 261);
+			--color-brand: oklch(0.22 0.043 261);
+			--color-brand-soft: oklch(0.895 0.04 261);
+			--color-brand-deep: oklch(0.175 0.045 261);
+			--color-ok: oklch(0.5 0.105 160);
+			--color-ok-soft: oklch(0.92 0.04 160);
+			--color-warn: oklch(0.5 0.106 75);
+			--color-warn-soft: oklch(0.912 0.048 80);
+			--color-warn-mark: oklch(0.62 0.13 78);
+			--color-danger: oklch(0.5 0.18 28);
+			--color-danger-soft: oklch(0.915 0.045 28);
+			--color-danger-ink: oklch(0.966 0.006 261);
+			--color-marine: oklch(0.5 0.16 261);
+			--color-marine-soft: oklch(0.915 0.045 261);
+			--color-accent: oklch(0.22 0.043 261);
+			--color-accent-ink: oklch(0.966 0.006 261);
+		}
+		@variant dark {
+			--color-canvas: oklch(0.2 0.034 261);
+			--color-surface: oklch(0.285 0.044 261);
+			--color-surface-2: oklch(0.35 0.052 261);
+			--color-surface-3: oklch(0.41 0.057 261);
+			--color-thumb: oklch(0.48 0.05 261);
+			--color-edge: oklch(0.37 0.056 261);
+			--color-edge-2: oklch(0.45 0.063 261);
+			--color-ink-1: oklch(0.967 0.008 261);
+			--color-ink-2: oklch(0.755 0.028 261);
+			--color-ink-3: oklch(0.66 0.033 261);
+			--color-ink-4: oklch(0.45 0.048 261);
+			--color-brand: oklch(0.72 0.075 275);
+			--color-brand-soft: oklch(0.37 0.095 261);
+			--color-brand-deep: oklch(0.262 0.066 261);
+			--color-ok: oklch(0.7 0.14 160);
+			--color-ok-soft: oklch(0.32 0.07 160);
+			--color-warn: oklch(0.7 0.14 75);
+			--color-warn-soft: oklch(0.32 0.06 75);
+			--color-warn-mark: oklch(0.7 0.14 75);
+			--color-danger: oklch(0.7 0.17 28);
+			--color-danger-soft: oklch(0.32 0.08 28);
+			--color-danger-ink: oklch(0.2 0.034 261);
+			--color-marine: oklch(0.7 0.155 261);
+			--color-marine-soft: oklch(0.32 0.1 261);
+			--color-accent: oklch(0.967 0.008 261);
+			--color-accent-ink: oklch(0.2 0.034 261);
+		}
+	}
+}
+
+@utility shadow-1 {
+	box-shadow:
+		0 1px 2px rgba(14, 26, 46, 0.04),
+		0 6px 18px rgba(14, 26, 46, 0.08);
+}
+@utility shadow-2 {
+	box-shadow: 0 7px 18px rgba(14, 26, 46, 0.13);
+}
+@utility shadow-3 {
+	box-shadow: 0 12px 28px rgba(14, 26, 46, 0.16);
+}

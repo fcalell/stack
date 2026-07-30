@@ -58,20 +58,27 @@ deploy-engine.
 ## Workstreams
 
 WS1 through WS4 are independent; WS5 depends on WS4.2; WS6 is independent. Every milestone ships
-implementation plus co-located tests, and `pnpm test` + `pnpm check` pass.
+implementation plus the **Verify** run recorded in its PR, and `pnpm check` passes. Each **Verify**
+block is a manual procedure against a scratch consumer project: run the commands, read the named
+artifact or response, confirm the stated result.
 
 ### WS1 — plugin-cloudflare deploy path
 
 **1.1 Rate-limiter binding shape (CF-3).** Emit the documented unsafe-binding form:
 `namespace_id` plus `simple = { limit, period }`. Verify with a real `wrangler deploy` against a
 throwaway worker; `wrangler types` alone proves nothing about deployability.
-**Test.** Codegen unit test asserts the nested shape; the live smoke test is recorded in the PR.
+**Verify.** Configure a rate limiter in the scratch consumer, run `stack generate`, and read
+`.stack/wrangler.toml`: the unsafe binding carries `namespace_id` and a nested
+`simple = { limit, period }`. Deploy that worker with `wrangler deploy` against a throwaway
+account and confirm it succeeds. Paste the transcript in the PR.
 
 **1.2 Secrets stop shadowing (CF-4).** Verify against a live worker whether an empty `[vars]` entry
 conflicts with a value set via `wrangler secret put`; if it does, stop emitting declared secrets
 into `[vars]` and cover dev via the existing `.dev.vars` generation.
-**Test.** Codegen unit test asserts secrets are absent from `[vars]` (or the verified-safe form);
-live smoke test recorded.
+**Verify.** Set a secret on the throwaway worker with `wrangler secret put`, run `stack generate`,
+and search `.stack/wrangler.toml` for that name: it is absent from `[vars]`, or present only in the
+form the live check proved safe. Boot `stack dev` and confirm the same secret still resolves from
+`.dev.vars`. Record the deployed worker reading the secret in the PR.
 
 **1.3 Consumer surface for routes and R2 (CF-1, CF-2).** Decision to settle in the milestone:
 merge consumer-owned entries in framework-managed lists (collision-checked, like `[vars]`) versus
@@ -79,8 +86,10 @@ new plugin options. Default to the merge: consumer wrangler.toml is an existing 
 philosophy makes a new option the last resort. The merge must compose with future slot
 contributors (plugin-native-updates contributes routes), so collisions between a consumer entry
 and a contributed entry stay hard errors.
-**Test.** Real-graph: a consumer wrangler.toml with `[[routes]]` and `[[r2_buckets]]` lands both in
-the generated config; a binding-name collision with a framework contribution throws.
+**Verify.** Add `[[routes]]` and `[[r2_buckets]]` to the consumer `wrangler.toml`, run
+`stack generate`, and confirm both survive into `.stack/wrangler.toml` next to the framework
+entries. Rename a consumer binding to collide with a framework-contributed one: `stack generate`
+exits non-zero and names the collision.
 
 ### WS2 — plugin-db production path
 
@@ -88,69 +97,85 @@ the generated config; a binding-name collision with a framework contribution thr
 `.stack/wrangler.toml`, then smoke-test the full path against a throwaway D1: local dev apply,
 remote apply, `database_name` as UUID, seed via `wrangler d1 execute`. The roadmap already mandates
 this before relying on d1 dev.
-**Test.** Unit test on the emitted `migrations_dir`; the live smoke-test transcript is recorded in
-the PR and the roadmap caveat is removed.
+**Verify.** Run `stack generate` in a d1 consumer and read `migrations_dir` in
+`.stack/wrangler.toml`: it resolves to the consumer's migrations folder when read from `.stack/`.
+Against a throwaway D1, apply locally, apply remotely through `stack deploy`, confirm
+`database_name` is the UUID, and seed via `wrangler d1 execute`. Record the transcript in the PR
+and remove the roadmap caveat.
 
 **2.2 Deploy posture: drift hard-fails, only committed SQL applies (DB-2).** Replace the
 deploy-time `generateMigrations` check with the drift gate: pending schema changes without a
 committed migration abort the deploy. The destructive gate then only ever evaluates committed
 migrations, closing the gate-ordering hole. Keep the pending-migrations confirm for what is
 committed.
-**Test.** Integration: uncommitted schema drift aborts the deploy before any step; a committed
-destructive migration without the ack marker still aborts; committed clean migrations apply.
+**Verify.** Edit a schema without generating a migration, then run `stack deploy`: it aborts before
+any deploy step and names the drift. Commit a destructive migration without the ack marker and
+confirm `stack deploy` still aborts. Commit a clean migration and confirm the deploy runs through.
 
 **2.3 D1 local iteration (DB-3).** Point `stack db push` and the schema watcher at the miniflare
 sqlite that `wrangler dev --persist-to .stack/dev` reads, matching sailward's inner loop. Until
 that lands, `push` on d1 must refuse with a pointer instead of writing to a file nothing reads.
-**Test.** Integration: a schema edit followed by push is visible to a miniflare-booted worker;
-push against d1 never writes `.stack/dev/local.db`.
+**Verify.** With `stack dev` running, add a column to a schema and run `stack db push`, then read
+that column through a worker route: the change is live without a restart. Confirm `.stack/dev/local.db`
+was never created. Before this milestone lands, `stack db push` on d1 exits with the pointer message
+and writes nothing.
 
 ### WS3 — plugin-auth surface
 
 **3.1 Expo client cookie prefix (AUTH-2).** Forward the consumer cookie prefix to `expoClient()`.
 One line plus a config field; session-critical for every native consumer.
-**Test.** Unit: the client passes `cookiePrefix` through; default remains better-auth's when unset.
+**Verify.** Set a cookie prefix in `stack.config.ts`, run `stack generate`, and read the emitted
+expo client: `expoClient()` receives that prefix. Drop the field and confirm nothing is passed.
+Sign in from the native app against a dev worker and confirm the session survives a reload.
 
 **3.2 Callbacks receive `env` (AUTH-4).** Extend the callback payload (or make the callbacks module
 a factory) so `sendOTP`/`sendInvitation` reach per-request bindings. Unblocks OTP email via the
 `EMAIL` send binding and the review-account skip.
-**Test.** Runtime: a `sendOTP` implementation reads a binding off the payload env under miniflare.
+**Verify.** Write a `sendOTP` callback that reads a binding off the payload env, boot `stack dev`,
+and request an OTP: the callback logs the binding instead of throwing on undefined.
 
 **3.3 User deletion (AUTH-1).** Expose better-auth's `deleteUser` with a consumer `beforeDelete`
 hook and `session.freshAge` support. The hook contents (veto, revocation, cleanup) stay consumer
 code.
-**Test.** Runtime: deletion runs the hook, a hook throw vetoes, `freshAge: 0` permits passwordless
-deletion.
+**Verify.** Against a dev worker, delete a user and confirm the `beforeDelete` hook runs. Make the
+hook throw and confirm the deletion is refused. With `freshAge: 0`, confirm a passwordless account
+deletes.
 
 **3.4 `generateOTP` passthrough (AUTH-3).** Let the consumer override OTP generation while the
 pinned security params stay pinned.
-**Test.** Runtime: a fixed-code override reaches the verify flow; params remain 6/300/3.
+**Verify.** Supply a `generateOTP` override returning a fixed code, request an OTP, and verify with
+that code. Read the emitted worker source: the pinned params are still 6/300/3.
 
 ### WS4 — runtime fixes (plugin-api, plugin-expo)
 
 **4.1 Session errors propagate (API-1).** In the auth middleware, rethrow non-`ORPCError` failures
 so an infra blip is a 500, not a 401 sign-out.
-**Test.** Runtime: a throwing session lookup yields 500; a missing session still yields 401.
+**Verify.** Break the session lookup (point the D1 binding at a bad id) and call an authed route:
+the response is 500. Call the same route with no session cookie: 401.
 
 **4.2 Consumer middleware after context (API-2).** Give consumer middleware a phase that runs after
 context injection so raw routes reach `db`/`auth`, and export the origin-CSRF helper. Decision in
 the milestone: second entry point versus moving the existing phase; default to a documented second
 phase so existing consumers keep their ordering.
-**Test.** Real-graph: a consumer route handler reads `db` from context; the helper rejects a
-disallowed origin.
+**Verify.** Register a consumer middleware in the post-context phase and log `db` from a raw route:
+it is defined. Call that route with a disallowed `Origin` header and confirm the exported CSRF
+helper rejects it.
 
 **4.3 Dev origins gated at runtime (API-3, AUTH-6).** Dev-server localhost origins join CORS and
 trustedOrigins only when the worker runs in dev (`STACK_DEV`), not baked at codegen. Decouple the
 cookie `sameSite` choice from localhost detection: derive it from the expo option explicitly.
-**Test.** Runtime: with `STACK_DEV` unset, localhost is absent from CORS and trustedOrigins and
-`sameSite` still matches the expo configuration; with it set, localhost is accepted.
+**Verify.** Boot the worker with `STACK_DEV` unset and send a preflight from
+`http://localhost:5173`: it is rejected, and the emitted cookie `sameSite` still matches the expo
+option. Set `STACK_DEV` and confirm the same preflight is accepted.
 
 **4.4 `assertCan` message override (AZ-1).** Optional message parameter; default copy unchanged.
-**Test.** Unit: override appears in the FORBIDDEN error; cloaking still yields NOT_FOUND.
+**Verify.** Call a route whose `assertCan` passes a message override and read the FORBIDDEN body:
+it carries the override. Call a cloaked route and confirm the response is still NOT_FOUND.
 
 **4.5 Auth contributes `/api/auth` to `api.slots.routePrefixes` (AUTH-8).** Closes the vite
 dev-proxy gap plugin-api's comment already expects.
-**Test.** Real-graph: the resolved prefixes include `/api/auth` when auth is present.
+**Verify.** With auth in the config, run `stack generate` and read the emitted vite config:
+`/api/auth` is proxied to the worker. Remove auth, regenerate, and confirm the prefix is gone.
 
 ### WS5 — wire compatibility (WIRE-1..3)
 
@@ -167,27 +192,32 @@ every consumer's legacy names):
 - **Gate scope (WIRE-3):** narrow the version gate to the resolved `api.slots.routePrefixes`
   instead of everything-but-auth, restoring sailward's `/rpc`-only scope without an option.
 
-**Test.** Runtime: a mirror middleware duplicates `x-stack-reads`/`x-stack-writes` onto legacy
-names; the gate returns 426 on a prefixed route and passes a consumer raw route untouched.
+**Verify.** Add the mirror middleware from the README recipe and read the response headers on an
+RPC call: `x-stack-reads`/`x-stack-writes` and the legacy names are both present. Send a request
+stamped with a below-floor client version to a prefixed route and get 426; send the same to a
+consumer raw route and it passes untouched.
 
 ### WS6 — observability and env parity (WIRE-4, API-4)
 
 **6.1 `analytics_engine` binding kind** on `WranglerBindingSpec`, contributable like the existing
 kinds.
-**Test.** Codegen: a contributed dataset renders `[[analytics_engine_datasets]]`.
+**Verify.** Contribute a dataset, run `stack generate`, and confirm
+`[[analytics_engine_datasets]]` appears in `.stack/wrangler.toml`.
 
 **6.2 Version-gate telemetry.** The gate writes walled and header-less counters to a contributed
 dataset when the binding is present, and stays silent when absent. Restores sailward's fail-open
 canary.
-**Test.** Runtime: a walled request and a header-less request each write a datapoint against a stub
-binding; no binding, no write, no error.
+**Verify.** With the dataset bound, send a walled request and a header-less request, then query the
+dataset: one datapoint each. Remove the binding and confirm both requests still succeed, with
+nothing written and no error logged.
 
 **6.3 Env value validation.** Extend `cloudflare.slots.secrets` with optional validation hints
 (min length, URL shape) and generate a once-per-isolate assertion, replacing presence-only checks.
 Include the refuse-to-serve refinement: a non-localhost `APP_URL` with dev-mode settings fails
 fast.
-**Test.** Runtime: a too-short secret fails the first request with a named error; valid env passes
-and validates once.
+**Verify.** Set a secret shorter than its declared minimum and send the first request: it fails with
+the named error. Fix the value and confirm requests pass and the assertion logs once per isolate.
+Set a non-localhost `APP_URL` with dev-mode settings and confirm the worker refuses to serve.
 
 ## Non-goals
 
@@ -198,9 +228,10 @@ and validates once.
 
 ## Acceptance
 
-Per milestone: implementation plus co-located tests land, tests drive the real graph or a
-miniflare-booted worker, `pnpm test` and `pnpm check` pass. WS1 and WS2 additionally record a live
-smoke test against throwaway Cloudflare resources, since both sit on the production deploy path.
+Per milestone: the implementation lands, the milestone's **Verify** steps run green against a
+scratch consumer project with the transcript recorded in the PR, and `pnpm check` passes. WS1 and
+WS2 run theirs against throwaway Cloudflare resources, since both sit on the production deploy
+path.
 The dogfood signal for the PRD as a whole: every blocking finding in the gap analysis is closed or
 sits on the accepted-differences list, and a staged in-place cutover of the live `sailward` worker
 is attemptable.

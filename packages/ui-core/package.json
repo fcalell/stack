@@ -1,0 +1,41 @@
+{
+	"name": "@fcalell/ui-core",
+	"version": "0.0.0",
+	"type": "module",
+	"sideEffects": false,
+	"imports": {
+		"#*": "./src/*.ts"
+	},
+	"exports": {
+		"./tokens": "./src/tokens.ts",
+		"./schema": "./src/schema.ts",
+		"./derive": "./src/derive.ts",
+		"./emit": "./src/emit.ts"
+	},
+	"files": [
+		"src",
+		"scripts",
+		"README.md"
+	],
+	"license": "MIT",
+	"scripts": {
+		"check-types": "tsc --noEmit --pretty",
+		"lint": "biome check --write --unsafe",
+		"check": "pnpm check-types && pnpm lint",
+		"verify": "tsx scripts/verify.ts",
+		"clear": "rm -rf node_modules .turbo"
+	},
+	"peerDependencies": {
+		"zod": "^4.0.0"
+	},
+	"devDependencies": {
+		"@fcalell/cli": "workspace:*",
+		"@fcalell/typescript-config": "workspace:*",
+		"@tailwindcss/cli": "^4.1.7",
+		"@types/node": "^25.5.0",
+		"tailwindcss": "^4.1.7",
+		"tsx": "^4.19.0",
+		"typescript": "^5.9.3",
+		"zod": "^4.3.6"
+	}
+}

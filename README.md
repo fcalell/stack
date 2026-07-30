@@ -102,14 +102,12 @@ pnpm exec stack plugin init my-plugin
 pnpm exec stack plugin init my-plugin --package @acme/stack-plugin-foo --dir ./packages/my-plugin
 ```
 
-The scaffold produces a `plugin()`-based skeleton, a vitest test wired to `@fcalell/cli/testing`, and a runtime stub exported from `./runtime`. Publish it under any npm name — consumers add it to `stack.config.ts` like any built-in plugin.
+The scaffold produces a `plugin()`-based skeleton and a runtime stub exported from `./runtime`. Publish it under any npm name — consumers add it to `stack.config.ts` like any built-in plugin.
 
 ## Repository commands
 
 ```bash
 pnpm check            # Lint (Biome) + type-check all packages
-pnpm test             # Run all tests once (vitest run)
-pnpm test:watch       # Run tests in watch mode
 ```
 
 ## Architecture

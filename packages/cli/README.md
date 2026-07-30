@@ -303,7 +303,6 @@ stack db reset
 | `@fcalell/cli/specs` | Spec types: `GeneratedFile`, `ProcessSpec`, `WatcherSpec`, `BuildStep`, `DeployStep`, `DeployCheck`, `PromptSpec`, `DevReadyTask` |
 | `@fcalell/cli/ast` | TS / TOML / HTML spec types + printers + builder helpers |
 | `@fcalell/cli/discovery` | `discoverPlugins()`, `loadAvailablePlugins()`, `FIRST_PARTY_PLUGINS`, `PLUGIN_NAMES` |
-| `@fcalell/cli/testing` | `runStackGenerate()`, `buildTestGraph()`, `buildTestGraphFromPlugins()`, `createMockCtx()` |
 | `@fcalell/cli/runtime` | `RuntimePlugin` |
 | `@fcalell/cli/codegen` | Reusable codegen helpers |
 | `@fcalell/cli/errors` | `StackError`, `ConfigValidationError` |

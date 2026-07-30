@@ -26,8 +26,9 @@ with ordered, independently-verifiable milestones and acceptance criteria.
   (self-hosted Hot Updater on Cloudflare): the update backend, the mobile client wiring, the publish
   step, a fingerprint-parity gate, and bundle-lifecycle subcommands.
 - [ui-core](./ui-core.md): one design-token contract, the invariant component variant matrices,
-  and the design laws in `packages/ui-core`, rendered by `plugin-solid-ui` and `plugin-native-ui`
-  so both platforms theme through one schema; extracted from sailward's Marina design system.
+  the primitive API canon, and the geometry gate in `packages/ui-core`, rendered and enforced by
+  `plugin-solid-ui` and `plugin-native-ui` so both platforms theme through one schema and neither
+  can be restyled past it; extracted from sailward's Marina design system and its className gate.
   Domain-parallel to the backend track.
 
 Add the next PRD here as a self-contained block (scope in/out → surfaces touched → ordered

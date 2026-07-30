@@ -2,8 +2,8 @@ import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { join, relative } from "node:path";
 import fg from "fast-glob";
 
-// Virtual module id shared by the Vite routes plugin, the generated
-// `routes.d.ts`, and the test assertions. Consumer-side `import` specifiers
+// Virtual module id shared by the Vite routes plugin and the generated
+// `routes.d.ts`. Consumer-side `import` specifiers
 // must stay literal (bundler constraint), so they duplicate this value.
 export const VIRTUAL_ROUTES_ID = "virtual:fcalell-routes";
 

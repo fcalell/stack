@@ -1,10 +1,9 @@
 # Architecture overview
 
 `@fcalell/stack` is a pnpm monorepo: `packages/` (core CLI + shared configs) and `plugins/` (one
-self-contained feature unit per domain), plus `tests/integration`. The CLI owns orchestration and
-the slot graph; every feature lives in the plugin that owns its domain (see
-[philosophy](../product/philosophy.md)). Per-change gate: `pnpm check` (Biome lint + type-check) and
-`pnpm test` (vitest).
+self-contained feature unit per domain). The CLI owns orchestration and the slot graph; every
+feature lives in the plugin that owns its domain (see
+[philosophy](../product/philosophy.md)). Per-change gate: `pnpm check` (Biome lint + type-check).
 
 ## Packages
 

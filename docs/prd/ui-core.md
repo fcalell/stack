@@ -19,6 +19,16 @@ variant matrices, the shared `cn()` merge config, and the written design laws. P
 keep everything behavioral: primitives, interaction states, accessibility, font loading, and their
 CSS entry wrappers.
 
+Tokens are one of three layers sailward's nine-pass convergence settled (roadmap findings,
+2026-07-30). The other two ship here too, because they decide what the token layer is worth: the
+**primitive API canon** (one name per concept, descriptors instead of `ReactNode` slots, presets
+over private cores) and the **geometry gate** on class attributes at call sites. Today 23 of 36
+`plugin-solid-ui` components forward `class` and 23 of 24 `plugin-native-ui` components forward
+`className`, each alongside a `style` prop inherited from the host element type. The zeroed token
+namespaces already stop an off-contract class from compiling to anything. What the gate adds is
+stopping *on-contract* looks (`bg-canvas`, `p-4`, `text-h1`) from landing at a call site, which is
+where a design system erodes.
+
 ## Scope
 
 **In:**
@@ -36,6 +46,16 @@ CSS entry wrappers.
   and accept one shared `theme` option schema.
 - The design-laws doc (tone-to-meaning matrix, rung and role rules, the closed laws) as the
   package README, folded into `.knowledge/` at retirement.
+- The primitive API canon: the shared descriptor types (`Action`, `BadgeSpec`, `FooterSpec`), the
+  naming rules, and the slot registry, written as law in the README and applied to both plugins'
+  component APIs.
+- The rhythm family (`Section` > `Stack` > `Row` > `Pair`) in both plugins, since the gate bans the
+  hand-rolled `flex-row gap-*` lockups that stand in for it today.
+- The geometry gate: the closed class vocabulary, the scanner at `@fcalell/ui-core/gate`, and a
+  pre-phase build step contributed by each UI plugin, so it runs on every consumer rather than only
+  newly scaffolded ones.
+- Closing the `class` and `className` props both plugins forward today, with nothing in their
+  place. A look a primitive does not offer is a matrix gap or a consumer primitive.
 
 **Out:**
 
@@ -49,6 +69,9 @@ CSS entry wrappers.
 - Icon-set unification (`lucide-solid` and `lucide-react-native` share glyph names). Parked.
 - Named themes beyond light and dark on web. `plugin-native-ui` keeps uniwind's extra themes; web
   emission for named themes waits for a consumer that needs it.
+- Sailward's primitive roster. Its nine passes restructured 69 primitives against one product's
+  needs; what ports is the canon and the gate, not the component list. A stack primitive changes
+  shape only where the canon or the gate forces it.
 
 ## Decisions
 
@@ -60,10 +83,16 @@ CSS entry wrappers.
   namespaces are zeroed, so an off-contract utility compiles to nothing. Numeric spacing stays
   live (dimension utilities like `min-h-11` derive from it), so rung usage for gaps and insets is
   law-enforced by the doc, not build-enforced.
-- **Values.** The parametric derivation survives: knobs (primary hue and chroma, gray tint, status
-  hues, spacing base, radius base, shadow strength) derive every OKLCH value, and the lightness
-  ladder is fixed from Marina's calibration so the documented AA contrast contracts hold for any
-  hue a consumer picks. The theme schema accepts per-token overrides for hand-tuned brands.
+- **Values.** The parametric derivation survives, over seven knobs: six hues (`neutralHue`,
+  `brandHue`, `interactiveHue`, `okHue`, `warnHue`, `dangerHue`) and `neutralChroma`, which scales
+  the chroma of every neutral-bound token. Lightness and per-token chroma are fixed from Marina's
+  calibration. The AA contrast contracts hold at the default hues and are the consumer's to
+  re-check after moving a knob, since chroma stays fixed while a hue roams and a value can leave
+  sRGB. Dropped: `spacingBase`, `radiusBase`, and `shadowStrength`; the rungs (32/24/12/8/4/16/16),
+  radii (10/14/16/24/9999), and hand-tuned shadow alphas derive from no base, so they are literals
+  in the contract. The theme schema accepts per-token overrides in two maps: `colors` (`shared` /
+  `light` / `dark`) and `scales` (full custom-property names), which covers a consumer needing
+  different rungs, radii, type sizes, leading, tracking, or shadows.
 - **Theming surface.** Each UI plugin accepts a `theme` option validated by ui-core's schema; a
   consumer with both platforms passes the same object to both plugins. Rejected: an `app.theme`
   field (`app` stays cross-cutting identity, theme is UI-domain) and hand-written CSS variable
@@ -73,17 +102,70 @@ CSS entry wrappers.
   `data-*` on web; `active:` press states on native) are platform overlays composed via `cn()`. RN
   does not inherit text color, so a matrix that tints content carries a per-slot label table; web
   consumes the label table too rather than diverging.
-- **Emission.** ui-core emits CSS bodies (the `@theme` block, per-theme variant blocks), never a
-  full stylesheet. Each plugin wraps them in its entry: `plugin-solid-ui` adds
+- **The boundary.** Primitives ship from `node_modules`, so the plugins' own primitives need no
+  carve-out. A consumer still needs somewhere to author product-specific primitives, so the gate
+  skips any path holding a `ui/` segment: `src/ui/**` on a single-platform consumer, `src/native/ui/**`
+  and its siblings on a split one. Everywhere else in a consumer's app source is call-site code,
+  where a class attribute is legal only on a raw host element and only from the closed geometry
+  vocabulary. The carve-out is a fixed convention, never config, and it is the boundary sailward
+  already draws, so ui-core's gate is a drop-in there.
+- **The other hatches.** `style` closes alongside `class` and `className`. On React Native it is the
+  primary way to restyle and the gate cannot see it, so leaving it open would make the boundary
+  decorative. Kobalte's polymorphic `as` stays open, documented as a hole: it carries the
+  accessibility composition 16 of 36 `plugin-solid-ui` components depend on, and a call site
+  reaching for `as={Custom}` has taken over the render deliberately. Consumer CSS targeting a
+  plugin's class names is a hole of the same kind.
+- **No escape valve on the primitive.** A look the matrices do not cover has exactly two homes: the
+  matrix grows, or the consumer authors its own primitive under `ui/`. There is no per-call-site
+  hatch, because a hatch is the thing that gets reached for. Sailward's rule is the same one
+  ("grow the owning primitive's variant table"), and its `ui/` directory is where a consumer-shaped
+  look lives. Rejected: a renamed `unsafeClass` prop, which keeps the hole and only makes it
+  countable; and exposing the variant matrices as slots, since slots resolve at generate time, the
+  primitives are imported straight from `node_modules`, and nothing in either plugin's `src/ui/`
+  reads generated data today. Bridging that needs a Vite virtual module on web plus a Metro
+  resolver on native, a larger mechanism than the problem it solves.
+- **Gate host.** `@fcalell/ui-core/gate` holds the scanner, and each UI plugin contributes a
+  pre-phase `cliSlots.buildSteps` entry that runs it over the app directory that plugin owns, with
+  the host list for its platform: lowercase intrinsics on web, `View` / `Pressable` / `ScrollView` /
+  `Animated.View` on native. Every consumer picks it up on upgrade. A `check:ui` script in
+  `packages/cli/src/templates/package-json.ts` would not, because `patchPackageJson` merges only
+  absent keys, so a consumer that already has a `check` script never gains the call. Rejected: a
+  `stack ui check` subcommand, which two UI plugins would both claim in a web plus native consumer;
+  and a Biome GritQL rule, which cannot express the allowlist (roadmap decision, 2026-07-30, with
+  the test evidence).
+- **Component naming.** `plugin-solid-ui` already ships a `section` compound (Root, Header, Title,
+  Content), so the rhythm family's outermost rung folds into it instead of colliding: `Section.Root`
+  gains the rung and axis, and `Stack` / `Row` / `Pair` are new. `plugin-native-ui` has no page
+  chrome, so its `Section` is the rung alone. The shared fact is the rung and the axis; the header
+  anatomy stays web-only. `plugin-solid-ui`'s `badge` renames to `pill`, matching the matrix and
+  `plugin-native-ui`'s existing component. Both breaks are accepted.
+- **The first matrix set.** Button, text, pill, card, and field: the cells that hold across
+  platforms. Neither plugin has all five today. `plugin-solid-ui` has no pill (it is today's badge)
+  and `plugin-native-ui` has neither a text nor a field component, so the missing ones are authored
+  during adoption and parity is a deliverable rather than an assumption.
+- **Allowlist, not denylist.** The vocabulary is a closed list and unknown classes fail. A denylist
+  of look prefixes passes every utility it has not been taught, which is how the boundary rots.
+- **Emission.** ui-core returns token records, never CSS text: `themeTokens` (the `@theme` record,
+  keyed by full `--name`), `modeTokens` (one mode's colors, keyed bare), and `shadowUtilities` (one
+  `box-shadow` value per level). A pre-rendered string cannot be validated per token, which would
+  delete the per-key check at `plugins/native-ui/src/node/codegen.ts`, and records mean ui-core
+  never renders a consumer-supplied string, so it needs no CSS escaping and no `@fcalell/cli`
+  dependency. Each plugin wraps the records in its entry: `plugin-solid-ui` adds
   `@import "tailwindcss"`, `@custom-variant dark`, `@source`, keyframes, and the base layer;
-  `plugin-native-ui` adds the `uniwind` import and emits the shadow ladder as `@utility` rules,
+  `plugin-native-ui` adds the `uniwind` import. Both wrap `shadowUtilities` in `@utility` rules,
   since the `--shadow-*` theme namespace does not resolve into RN's `boxShadow` (sailward's
-  finding).
+  finding). `aggregateAppCss` hosts neither `@theme` nor `@utility`, so M3 adds a top-level-block
+  slot for them.
 
 ## Surfaces touched
 
 - New `packages/ui-core` (`@fcalell/ui-core`): `tokens` (contract, derivation, schema), `emit`
-  (CSS bodies), `variants` (CVA matrices), `cn`.
+  (CSS bodies), `variants` (CVA matrices), `cn`, and the shared descriptor types. The scanner sits
+  behind a separate `./gate` export with `ts-morph` (already the repo's AST tool) as its dependency,
+  imported only from plugin `node/` code, so nothing on the app's import path grows.
+- Both UI plugins gain a `cliSlots.buildSteps` contribution (phase `pre`) that runs the gate. Names
+  are plugin-scoped, since `buildSteps` is `uniqueBy` name and a web plus native consumer carries
+  both.
 - `plugins/solid-ui`: token emission moves into the existing app-CSS codegen
   (`solidUi.slots.appCssSource`), driven by the new `theme` option; `globals.css` shrinks to the
   web wrapper; every component re-points at the new vocabulary; the first component set adopts the
@@ -93,12 +175,21 @@ CSS entry wrappers.
   `themeTokens` narrows from an open hex record to the shared schema; `codegen.ts` consumes
   ui-core's emit helpers; `ui/lib/cn.ts` re-exports ui-core's; the first component set adopts the
   shared matrices.
+- Every component's props type in both plugins. Closing `class` / `className` / `style` is not a
+  deletion: the props come in through the host element type (`ComponentProps<"section">`,
+  `Omit<PressableProps, "children">`), and on the 16 web components using Kobalte's `Polymorphic`,
+  dropping `class` from the own-props type *re-admits* it, since `PolymorphicProps<T, P>` resolves
+  to `P & Omit<ComponentProps<T>, keyof P>`. Each closed prop is declared `?: never` on the
+  own-props type, which both blocks it and gives the call site a readable error. The runtime
+  `splitProps` / destructure and the trailing `cn(..., local.class)` go with it.
 - No `@fcalell/cli` change. ui-core is imported by plugins, never orchestrated; removing it
   touches no core, so philosophy's quick test holds.
 
 ## Milestones
 
-Ordered by dependency. Each is independently shippable and verifiable.
+Ordered by dependency. Each is independently shippable and verifiable. Each **Verify** block is a
+manual procedure against a scratch consumer project: run the commands, read the emitted CSS or look
+at the rendered screen, confirm the stated result.
 
 ### M1: token contract, derivation, and laws
 
@@ -111,21 +202,40 @@ README: the tone-to-meaning matrix, surface rules (card against canvas), rung pi
 contains), type-role rules (roles only, mono for measured data), and the closed laws adapted from
 Marina. Settle the interactive-accent name here.
 
-**Test.** Unit: derivation snapshots for default knobs and for a hand-tuned override set. Compile
-fixture: a Tailwind build over a fixture file asserts every contract utility resolves
-(`bg-canvas`, `text-h1`, `gap-stack`, `rounded-control`, web-side `shadow-1`) and off-contract
-utilities (`bg-red-500`, `text-sm`) emit no CSS.
+**Verify.** Nothing imports ui-core until M3, so verification is a committed script rather than a
+generate run: `pnpm --filter @fcalell/ui-core verify <path-to-reference-global.css>`. It derives
+with default knobs and no overrides, diffs every emitted value against the reference stylesheet's
+`@variant light` and `@variant dark` blocks plus its non-color `@theme` entries, checks the knob
+behaviors (`brandHue` moves only the brand family, `neutralChroma` only the neutral-bound tokens,
+the `accent` / `accent-ink` aliases hold), checks that every bad override is rejected by key, and
+drives a Tailwind build over `themeTokens`' output wrapped in `@theme { }`: every contract utility
+resolves (`bg-canvas`, `text-h1`, `leading-h1`, `gap-stack`, `rounded-control`, `shadow-1`) and
+off-contract utilities (`bg-red-500`, `text-sm`) emit nothing.
 
-### M2: shared cn and the first variant matrices
+### M2: shared cn, the first variant matrices, and the API canon
 
 Port `cn()` with the extended `tailwind-merge` config (type-role classes registered as the
 font-size group, `rounded-control` in the radius group). Author the invariant matrices for button
 (emphasis × tone × size, plus the label table), text roles, pill, card, and field, spelling every
 legal cell in `compoundVariants` so the matrix cannot drift.
 
-**Test.** Unit: each matrix cell produces the expected classes; `cn()` keeps a type-role class and
-a color class from clobbering each other. The M1 compile fixture ingests every class every matrix
-can emit, proving the matrices on-contract.
+Export the shared descriptor types (`Action`, `BadgeSpec`, `FooterSpec`) and write the API canon
+into the README as law: one name per concept across primitives (`label`, `loading`, `onChange`,
+`icon`); a composed region is data, not a `ReactNode` prop, and the surviving named slots are a
+closed registry; primitives compose primitives, and two primitives sharing an anatomy become
+presets over a private core; a prop that changes which other props are legal is a sibling
+component, not a variant; a primitive takes no `class`, `className`, or `style` prop.
+Nothing is enforced yet, so the canon lands before the sweeps that apply it.
+
+Each descriptor type stays framework-free. `Action` carries `label`, `onSelect`, and an `icon` slot
+typed as a parameter, since the icon is a `lucide-solid` component on web and a
+`lucide-react-native` one on native, and ui-core depends on neither.
+
+**Verify.** Render a page holding every legal cell of the button, text, pill, card, and field
+matrices, then read the DOM classes: each cell matches its `compoundVariants` row. Pass a type-role
+class and a color class to `cn()` together and confirm neither clobbers the other. Run the M1
+Tailwind build over that page and confirm every class it emits resolves, so no cell is
+off-contract.
 
 ### M3: plugin-solid-ui adoption
 
@@ -135,21 +245,69 @@ vocabulary (`bg-primary` to `bg-accent`, `text-muted-foreground` to `text-ink-3`
 to `border-edge`, and so on); rebuild button, text, pill (today's badge), card, and field on the
 shared matrices with web interaction overlays; retire the shadcn axis names.
 
-**Test.** Component tests updated to the new APIs; a codegen test asserts the emitted app.css
-carries the themed token bodies; the compile fixture runs over the plugin source, so the scaffold
-home renders on tokens only.
+The class props stay open through this milestone. M5 closes them across both plugins at once.
+
+**Verify.** Set a `theme` option, run `stack generate`, and confirm `.stack/app.css` carries the
+themed token bodies. Boot `stack dev` and open the scaffold home: it renders correctly in light and
+in dark. Search the plugin source for the retired names (`bg-primary`, `text-muted-foreground`,
+`border-border`) and get no hits. Run the M1 Tailwind build over the plugin source and confirm no
+off-contract utility appears.
 
 ### M4: plugin-native-ui adoption
 
 Replace the neutral defaults with ui-core's derived defaults, narrow `themeTokens` to the shared
 schema, emit through ui-core's helpers (shadow ladder as `@utility`), re-export ui-core's `cn`,
 and adopt the shared matrices for button, pill, card, and field. Its components already speak the
-Marina vocabulary, so the sweep is small.
+Marina vocabulary, so the token sweep is small. Author the two components the matrix set names and
+the plugin lacks: text and field.
 
-**Test.** Codegen snapshot updated; matrix-consuming components render the expected classes; the
-option schema rejects an off-contract token key.
+**Verify.** Run `stack generate` in a native-ui consumer and confirm the emitted tokens match
+ui-core's derived defaults, with the shadow ladder emitted as `@utility`. Launch the app and confirm
+button, pill, card, and field render the same cells as the web app for the same props. Put an
+off-contract key in the `theme` option and confirm `stack generate` fails with a schema error
+naming it.
 
-### M5 (follow-up): remaining matrices
+### M5: the canon sweep, both plugins
+
+One pass across all 60 components, both plugins together, because the canon's whole claim is that
+the same fact carries the same name on both platforms and two separate milestones would drift.
+Declare `class`, `className`, and `style` as `?: never` on every own-props type, removing the
+matching `splitProps` / destructure and the trailing `cn(..., local.class)`. Nothing replaces them:
+where a plugin component was relying on a forwarded class to lay itself out, the geometry moves
+into the component or into the rhythm family below it. Collapse the `ReactNode` props the canon turns into descriptors, including
+`RowItem`'s `leading` and `trailing`. Add the rhythm family: `Stack`, `Row`, and `Pair` are new on
+both plugins, `Section.Root` gains the rung and axis on web, and `Section` is the rung alone on
+native.
+
+**Verify.** Grep both plugins for `class?:`, `className?:`, and `style?:` outside a `never`
+declaration and get no hits. In a scratch consumer, pass `class` to a plugin component and confirm
+the type error names the prop; pass `style` and confirm the same. Diff the two plugins' prop names
+across the shared component set: every shared fact matches. Boot both apps and confirm nothing
+regressed visually from M3 and M4.
+
+### M6: the geometry gate
+
+Land the gate once the class props are closed, because it is unenforceable while primitives forward
+them. Ship the closed geometry vocabulary (flex plumbing, alignment, positioning, and the
+`gap`/`min-h`/`max-w`/`w-full` sizing facts, with no numeric dimension, no padding, and no look) as
+ui-core data, and the scanner behind `@fcalell/ui-core/gate`. It reads every class literal in a
+class attribute, including the string arguments of `cn(...)` and the candidates of a ternary, and
+skips any path holding a `ui/` segment. Both plugins contribute the pre-phase build step that runs
+it over the app directory they own. Document the vocabulary and the escape route in the README: a
+look a call site needs is either a matrix cell or a consumer primitive under `ui/`, in that order.
+
+State the coverage plainly in the README. The scanner reads literals, so a class assembled through
+a variable, a prop, or a template literal passes silently. That is a guardrail against drift, not a
+sandbox, and the size of a consumer's `ui/` directory is the number that says whether the matrices
+are covering enough.
+
+**Verify.** In a scratch consumer, write a page with `class="flex-1 items-center"` on a raw host
+element and confirm `stack build` passes. Change it to `class="flex-1 bg-canvas"` and confirm the
+build fails naming the file, the line, and `bg-canvas`. Put the same class inside `src/ui/` and
+confirm it passes. Run `stack build` in helm, which was scaffolded before this PRD, and confirm the
+gate runs there without any edit to its `package.json`.
+
+### M7 (follow-up): remaining matrices
 
 Migrate further component families (checkbox, toggle, dialog chrome, skeleton, spinner) onto
 shared matrices as their invariant cells prove out. Recorded so the sharing line stays deliberate;
@@ -161,10 +319,19 @@ not part of this PRD's acceptance.
   class belongs in the platform overlay.
 - No runtime cost. Everything ui-core exports is build-time data and strings.
 - No new consumer surface beyond the one `theme` option shape shared by the two UI plugins.
+- No per-file skip list on the gate, and no configuration of it. The only exemption is the `ui/`
+  carve-out, which is a fixed convention. Adding anything else is a stop-and-ask.
+- No claim of total closure. `as` on the polymorphic web components, consumer CSS targeting plugin
+  class names, and any class built from a variable are open, named in the README, and out of the
+  gate's reach.
 
 ## Acceptance
 
-Per milestone: implementation plus co-located tests land, `pnpm check` and `pnpm test` pass. The
+Per milestone: the implementation lands, the milestone's **Verify** steps run green against a
+scratch consumer project with the transcript and screenshots recorded in the PR, and `pnpm check`
+passes. The
 dogfood signal for the PRD as a whole: sailward could replace `global.css`, `src/ui/lib/cn.ts`,
-and its button and pill matrices with ui-core exports, expressing its hand-tuned Marina values
-through the theme schema; a stack consumer building web plus native themes the brand once.
+its button and pill matrices, and `scripts/check-classnames.mjs` with ui-core exports, keeping its
+`src/ui/**` boundary unchanged and expressing its hand-tuned Marina values through the theme
+schema. A stack consumer building web plus native themes the brand once, and every look that lands
+outside the matrices is a primitive under `ui/`.

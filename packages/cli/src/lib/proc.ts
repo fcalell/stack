@@ -37,8 +37,8 @@ export interface SupervisedProcess {
 	stop(signal?: NodeJS.Signals): void;
 }
 
-// Exponential backoff capped at 10s. Exposed for tests + plugins that want
-// to reproduce supervisor timing without re-implementing it.
+// Exponential backoff capped at 10s. Exposed for plugins that want to
+// reproduce supervisor timing without re-implementing it.
 //   attempt=1 -> 250ms, 2 -> 500ms, 3 -> 1000ms, 4 -> 2000ms ... cap 10000ms
 export function restartBackoffMs(attempt: number): number {
 	if (attempt <= 0) return 0;

@@ -23,7 +23,7 @@ const STRING_ESCAPE_MAP: Record<string, string> = {
 };
 
 // Returns a properly-quoted CSS <string> token. Double-quoted so it composes
-// safely with single-quoted fragments in tests/snapshots.
+// safely with single-quoted fragments.
 //   cssString("Inter Variable")  → `"Inter Variable"`
 //   cssString('Foo"Bar')         → `"Foo\"Bar"`
 //   cssString("a\nb")            → `"a\\A b"`

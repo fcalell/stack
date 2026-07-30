@@ -104,8 +104,63 @@ Two consequences follow:
 - Minor: `stack generate` emitted the consumer's tracked services barrel in a form the consumer's
   Biome config rewrapped, so every generate dirtied the tree until the next format pass. Fixed:
   the barrel renders its list inline while it fits Biome's line width and one entry per line with
-  a trailing comma once it does not, and a test pipes the emitted barrel through Biome at four
-  service counts and asserts it comes back byte-identical.
+  a trailing comma once it does not. To check it by hand, run `stack generate` in a consumer at a
+  service count either side of the wrap threshold, then run the consumer's formatter: the tree
+  stays clean.
+
+## Findings (2026-07-30, sailward UI convergence)
+
+Sailward converged `apps/mobile/src/ui/primitives/` (69 files) over nine passes, ending with a
+build-enforced boundary between primitives and call sites. The token work stack already tracks in
+[ui-core](./prd/ui-core.md) is one of three layers. The other two are untracked:
+
+- **API canon.** One name per concept across primitives (`label`, `loading`, `onChange`, `icon`,
+  and a shared `Action` type). `ReactNode` slots collapsed into descriptors (`BadgeSpec`,
+  `FooterSpec`, a row's `value`/`meta`/`badge`/`action`), leaving three named slots as a closed
+  registry. Primitives compose primitives over private cores (`ListItem` and `ControlRow` over
+  `RowCore`). A prop that changes which *other* props are legal is a sibling component, never a
+  variant.
+- **The className gate.** Outside `src/ui/**`, a class attribute is legal only on a raw host
+  element and only from a closed geometry allowlist: flex plumbing, alignment, positioning, and the
+  `gap`/`min-h`/`max-w`/`w-full` sizing facts. No numeric dimensions, no padding, no fills. Every
+  primitive stopped forwarding `className`, and the skip list went from twelve entries to zero.
+  Adding an entry back is declared a stop-and-ask.
+
+Stack's plugins sit at the opposite end. 23 of 36 `plugin-solid-ui` components forward `class`, 23
+of 24 `plugin-native-ui` components forward `className`, and neither ships a rhythm family
+(`Section` > `Stack` > `Row` > `Pair`).
+
+The plugins' own primitives need no carve-out here, since they ship from `node_modules`. A consumer
+still needs somewhere to author product-specific primitives, so the gate keeps sailward's shape: any
+path holding a `ui/` segment is exempt, everything else in the app source is call-site code where a
+class attribute is geometry-only.
+
+There is no escape valve on the primitive. Sailward's rule is "grow the owning primitive's variant
+table", which a consumer cannot do, so the consumer-side half is the `ui/` carve-out above. The slot
+graph looked like the stack-native way to let a consumer grow a matrix, but slots resolve at generate
+time and the primitives are imported straight from `node_modules`, where nothing reads generated
+data today. A renamed `unsafeClass` prop was considered and rejected: it keeps the hole and only
+makes it countable.
+
+## Decisions (2026-07-30, className gate host)
+
+- The scanner ships from `@fcalell/ui-core/gate`, and each UI plugin contributes a pre-phase
+  `cliSlots.buildSteps` entry that runs it over the app directory that plugin owns, with its own
+  platform's host list. That keeps the gate inside its owning plugin per the settled rule while
+  letting a web plus native consumer carry two of them. It also reaches every existing consumer on
+  upgrade: a `check:ui` script in the scaffold template would not, because `patchPackageJson` merges
+  only absent keys, so helm's existing `check` script would never gain the call.
+- The gate covers class attributes. `style` closes at the type level on all 60 components instead,
+  since the scanner cannot see it and it is the primary restyling path on React Native. Kobalte's
+  polymorphic `as` (16 of 36 `plugin-solid-ui` components) stays open and is documented as a hole.
+- Biome GritQL was evaluated and rejected. Tested against the pinned Biome 2.4.16: a plugin path in
+  an extended config resolves against the consuming project root rather than the config declaring
+  it, so `packages/biome-config/shared.json` cannot reference its own `.grit` file; GritQL matches
+  JSX elements (`<$el $props />`) but neither a named attribute nor the string literals inside one;
+  and a pattern regex full-matches the whole attribute text, so an element carrying a second
+  attribute is unreachable. The regex engine has no lookaround, which leaves a denylist of look
+  prefixes that passes every class it has not been taught. Revisit if Biome's GritQL JSX support
+  deepens.
 
 ## Coverage map
 
@@ -123,7 +178,7 @@ Sailward domain against stack status. "Tracked in" names the PRD workstream or t
 | CF deploy | wrangler | `plugin-cloudflare` | shipped; deploy-path faults in backend-parity WS1 |
 | Mobile | Expo + expo-router | `plugin-expo` + `native-ui` | shipped |
 | Web | SolidJS + Vite | `plugin-solid` / `solid-ui` / `vite` | shipped |
-| Design system | Marina (`global.css` + `src/ui` + design laws) | split vocabularies: `solid-ui` shadcn, `native-ui` Marina | ui-core PRD |
+| Design system | Marina (`global.css` + `src/ui` + design laws) | split vocabularies: `solid-ui` shadcn, `native-ui` Marina; primitives forward classes | ui-core PRD (tokens, matrices, API canon, gate) |
 | Dev multiplexer | mprocs | `stack dev` (supervise) | TUI upgrade in deploy-engine PRD |
 | Release orchestration | `tools/release` (Ink TUI) | linear `stack deploy` | deploy-engine PRD |
 | OTA updates | hot-updater | gap | plugin-native-updates PRD |
@@ -153,8 +208,8 @@ Notes on the partial rows:
   consumer bugs). [`deploy-engine.md`](./prd/deploy-engine.md) (reconcile + lock + gates + enforced
   order + TUI, extracted from `tools/release`). [`plugin-native-updates.md`](./prd/plugin-native-updates.md)
   (hot-updater domain; consumes the deploy-engine surfaces). [`ui-core.md`](./prd/ui-core.md) (one
-  token contract + variant matrices + design laws for both UI plugins, extracted from Marina;
-  domain-parallel to the backend track).
+  token contract + variant matrices + design laws for both UI plugins, plus the primitive API canon
+  and the geometry gate, extracted from Marina; domain-parallel to the backend track).
 - **Parked:** i18n, observability (Sentry), and the follow-up plugin candidates below. Promote to a
   PRD only once sailward proves the shape, per the philosophy rule that a new consumer surface is the
   last resort.

@@ -57,7 +57,9 @@ before the first milestone since the package name is a durable surface.
 
 ## Milestones
 
-Ordered by dependency. Each is independently shippable.
+Ordered by dependency. Each is independently shippable. Each **Verify** block is a manual procedure
+against a scratch consumer project with `nativeUpdates()` configured: run the commands, read the
+named artifact or response, confirm the stated result.
 
 ### M1 — Update backend as a deploy target
 
@@ -66,9 +68,11 @@ routes off) with its own D1 and R2 bindings and vendored migrations, isolated fr
 It deploys through the existing `wrangler deploy` path (a `deploySteps` entry) and migrates through
 the existing D1 migration path.
 
-**Test.** Real-graph: config with `nativeUpdates()` emits the backend worker source, the `DB`/`BUCKET`
-bindings, and the custom-domain route into the generated wrangler config. Miniflare: the emitted
-worker answers an update-check request from a migrated D1 and streams a bundle through a signed URL.
+**Verify.** Run `stack generate` and read `.stack/`: the backend worker source is emitted, and the
+wrangler config carries the `DB` and `BUCKET` bindings plus the custom-domain route, separate from
+the main worker. Deploy it against throwaway Cloudflare resources, apply the vendored migrations,
+then curl the update-check endpoint: it answers from D1 and the returned signed URL streams the
+bundle. Confirm the admin routes return 404.
 
 ### M2 — Mobile client wiring
 
@@ -77,8 +81,11 @@ gitignored env file, optional Sentry source-map upload when a token is present) 
 runtime into `plugin-expo` so the app checks the backend at launch. The backend URL is stamped into
 the build automatically.
 
-**Test.** Real-graph: with `nativeUpdates()` present, the expo build carries the update runtime and
-the backend URL; the generated config selects the fingerprint strategy.
+**Verify.** Run `stack generate` and read `hot-updater.config.ts`: it selects the fingerprint
+strategy and reads its R2/D1 credentials from the gitignored env file. Confirm that file is
+gitignored. Build the app, launch it against the deployed backend, and confirm it checks for an
+update at launch with the stamped backend URL. Drop `nativeUpdates()` from the config, regenerate,
+and confirm the update runtime is gone from the build.
 
 ### M3 — OTA publish deploy step
 
@@ -86,8 +93,9 @@ Contribute a `deploySteps` entry that builds and publishes the JS bundle for the
 Publishing runs after the backend and the app-facing worker in the deploy order (veterans get the
 fix before a store build embeds the same commit), matching sailward's leg order.
 
-**Test.** Integration against a stub Hot Updater CLI: the publish step runs in the expected order and
-records the bundle for the configured channel.
+**Verify.** Run `stack deploy` and watch the step order: the publish step runs after the backend and
+the app-facing worker. Query the backend's D1 afterwards and confirm the bundle is recorded against
+the configured channel. Relaunch the installed app and confirm it picks the new bundle up.
 
 ### M4 — Fingerprint-parity gate
 
@@ -97,8 +105,10 @@ native side drifted. Sailward computes this by prebuilding at the commit in a te
 comparing canonicalized native inputs (`parity.ts`); port the comparison, keeping its pbxproj
 id-canonicalization so a benign prebuild re-run does not false-flag.
 
-**Test.** Unit: the canonicalizer treats a benign id renumber as identical and a real native change
-as different. Integration: a fingerprint mismatch blocks the publish; a match proceeds.
+**Verify.** Run `stack deploy` twice with no native changes in between, re-running the prebuild each
+time: the gate passes both times, so a benign pbxproj id renumber does not false-flag. Add a native
+dependency and deploy against the older build: the gate blocks the publish and names the drift.
+Rebuild the app at that commit and confirm the same deploy proceeds.
 
 ### M5 — Bundle lifecycle subcommands
 
@@ -107,9 +117,12 @@ force-update, and prune superseded bundles. Prune deletes a bundle's own R2 obje
 never a shared content-addressed asset, and deletes objects before the row so a failed run retries
 cleanly (sailward's `prune.ts` ordering).
 
-**Test.** Integration against a real local D1 and R2 stub: a rollout change updates the row; prune
-removes a superseded bundle's objects and row and refuses to touch a shared asset; a re-run after a
-simulated mid-prune failure completes.
+**Verify.** Against the deployed backend, ramp a rollout and confirm the D1 row reflects the new
+percentage. Disable a bundle and confirm the app stops receiving it; re-enable and confirm it
+returns. Force-update and confirm the app applies the bundle at launch. Publish a superseding
+bundle, prune, and confirm the old bundle's R2 objects and D1 row are gone while a
+content-addressed asset shared with the live bundle survives. Interrupt a prune mid-run, re-run it,
+and confirm it completes.
 
 ## Non-goals
 
@@ -120,8 +133,9 @@ simulated mid-prune failure completes.
 
 ## Acceptance
 
-Per milestone: implementation plus co-located tests land, tests drive the real graph or a
-miniflare-booted worker, `pnpm test` and `pnpm check` pass, and the plugin README documents the
-`nativeUpdates` option and the lifecycle subcommands. The dogfood signal: sailward could delete
+Per milestone: the implementation lands, the milestone's **Verify** steps run green against a
+scratch consumer project and throwaway Cloudflare resources with the transcript recorded in the PR,
+`pnpm check` passes, and the plugin README documents the `nativeUpdates` option and the lifecycle
+subcommands. The dogfood signal: sailward could delete
 `apps/ota`, `hot-updater.config.ts`, and the OTA half of `tools/release`, and get the same behavior
 from `plugin-native-updates`.

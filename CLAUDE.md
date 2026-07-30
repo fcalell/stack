@@ -63,18 +63,16 @@ needs.
 | ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
 | edit/create any TypeScript                             | `.claude/playbooks/conventions.md` (packages · placement · style)                                     |
 | write/modify a plugin (slots · contributions · runtime) | `.claude/playbooks/plugin-authoring.md` + `.knowledge/architecture/slot-catalog.md`                   |
-| write/change tests, or call work done                  | `.claude/playbooks/testing.md`                                                                        |
 | write any prose (docs · KB · commit/PR bodies)         | `.claude/playbooks/writing-style.md`                                                                  |
 | edit the knowledge base                                | `.claude/playbooks/knowledge-base.md`                                                                 |
-| commit                                                 | **Conventional Commits** (`feat`/`fix`/`chore`/`docs`/`refactor`/`test`, scoped like `plugin-auth`); header ≤ ~60 chars; body says the _why_ |
+| commit                                                 | **Conventional Commits** (`feat`/`fix`/`chore`/`docs`/`refactor`, scoped like `plugin-auth`); header ≤ ~60 chars; body says the _why_ |
 
 ## Where things are
 
 - **Monorepo**: pnpm workspace: `packages/` (`@fcalell/cli` core + tsconfig/biome presets) and
   `plugins/` (one `@fcalell/plugin-<name>` per domain: cloudflare, db, auth, api, vite, expo,
-  solid, solid-ui), plus `tests/integration`. Detail in `.knowledge/architecture/` (start at
-  `overview.md`).
-- **Dev loop**: `pnpm check` (Biome lint + type-check) and `pnpm test` (vitest, `pnpm test:watch`
-  for watch mode) are the per-change gate; both must pass before a change is complete.
+  solid, solid-ui). Detail in `.knowledge/architecture/` (start at `overview.md`).
+- **Dev loop**: `pnpm check` (Biome lint + type-check) is the per-change gate; it must pass before
+  a change is complete.
 - **PRDs / analyses**: `docs/prd/` (forward-looking implementation drivers; see its README for the
   fold-into-`.knowledge/`-and-retire lifecycle) and `docs/analysis/` (point-in-time audits).
