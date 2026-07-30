@@ -83,7 +83,15 @@ export default defineConfig({
       themeColor: "#000000",            // optional — <meta name="theme-color">
       lang: "en",                       // optional — <html lang>; defaults to "en"
     }),
-    solidUi(),
+    solidUi({
+      theme: {                          // optional — the ui-core design contract
+        knobs: { brandHue: 120 },       //   six hues + a neutral-chroma scalar
+        overrides: {                    //   anything the knobs don't reach
+          colors: { dark: { canvas: "oklch(0.2 0.034 261)" } },
+          scales: { "--radius-control": "8px" },
+        },
+      },
+    }),
   ],
 });
 ```

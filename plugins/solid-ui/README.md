@@ -69,6 +69,23 @@ function DeleteOrgButton() {
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `fonts` | `FontEntry[]` | `defaultFonts` (JetBrains Mono as `mono`) | Webfonts to preload. Each entry is preloaded, gets an `@font-face` (real + fallback metrics), and — when `role` is set — rebinds the matching `--ui-font-*` token. |
+| `theme` | `Theme` (`@fcalell/ui-core/schema`) | the calibrated defaults | The design contract: `knobs` (six hues plus a neutral-chroma scalar), `overrides.colors` / `overrides.scales` for anything the knobs don't reach, and `defaultMode`. Every value resolves through `deriveTheme` and lands in the `@theme` block of `.stack/app.css`. |
+
+`theme` is validated against ui-core's schema, so an unknown token name, a colour outside the
+`oklch(L C H)` shape, or a scale value carrying a `;` fails the build with the offending key named.
+`defaultMode` picks which palette seeds a native sheet; the web runtime resolves the mode from
+`localStorage` then `prefers-color-scheme`, so on this plugin it is inert and the `@theme` block
+always seeds light.
+
+```ts
+solidUi({
+  theme: {
+    knobs: { brandHue: 120, neutralChroma: 0 },
+    overrides: { scales: { "--radius-control": "8px" } },
+  },
+});
+```
+
 
 ```ts
 import { solidUi } from "@fcalell/plugin-solid-ui";
@@ -100,8 +117,10 @@ solidUi({
 | Slot | Kind | Purpose |
 |------|------|---------|
 | `solidUi.slots.appCssImports` | `list<string>` | CSS `@import`s for `.stack/app.css` |
+| `solidUi.slots.appCssBlocks` | `list<CssBlock>` | Top-level `@theme` / `@utility` blocks |
 | `solidUi.slots.appCssLayers` | `list<{ name, content }>` | CSS `@layer` blocks |
 | `solidUi.slots.fonts` | `derived<FontEntry[]>` | Resolved fonts (consumer options or `defaultFonts`) |
+| `solidUi.slots.resolvedTheme` | `derived<ResolvedTheme>` | The `theme` option through ui-core's `deriveTheme`, resolved once |
 | `solidUi.slots.appCssSource` | `derived<string \| null>` | Final `.stack/app.css` source |
 
 ## Slot contributions
@@ -122,7 +141,7 @@ Nothing to tear down: the design-system runtime lives inside this package and is
 | Subpath | Purpose |
 |---------|---------|
 | `@fcalell/plugin-solid-ui` | `solidUi()`, `SolidUiOptions`, `FontEntry` |
-| `@fcalell/plugin-solid-ui/globals.css` | Token system, Tailwind theme, base styles, animations |
+| `@fcalell/plugin-solid-ui/globals.css` | The parts of the sheet only the web owns: the component `@source`, the `dark` custom variant, the base layer, and the three keyframe blocks. The tokens come from `@fcalell/ui-core` through `.stack/app.css`, which imports `tailwindcss` before this file |
 | `@fcalell/plugin-solid-ui/fonts` | JetBrains Mono Variable registration (side-effect import) |
 | `@fcalell/plugin-solid-ui/node/fonts` | `FontEntry`, `defaultFonts`, `themeFontsPlugin()` (node-side Vite plugin) |
 | `@fcalell/plugin-solid-ui/app` | `createApp()` — mounts the root tree with router, query, meta, toaster, error boundary |

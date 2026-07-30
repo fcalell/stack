@@ -125,8 +125,10 @@ e.g. consulting `ctx.fileExists` before writing.
 | Slot | Kind | Purpose |
 |------|------|---------|
 | `appCssImports` | `list<string>` | CSS `@import`s aggregated into `.stack/app.css` |
-| `appCssLayers` | `list<{ name, content }>` | CSS `@layer` blocks |
+| `appCssBlocks` | `list<CssBlock>` | Top-level `@theme` / `@utility` blocks, rendered after `@source` and before the layers. Neither at-rule may sit inside a `@layer`, which is why they don't ride `appCssLayers` |
+| `appCssLayers` | `list<{ name, content }>` | CSS `@layer` blocks. Dark mode rides this slot as `@layer base`: `@theme` compiles into `@layer theme` and Tailwind sorts `base` after it, so a layered `.dark { … }` overrides the seeded values |
 | `fonts` | `derived<FontEntry[]>` | Resolved fonts (consumer options or `defaultFonts`) |
+| `resolvedTheme` | `derived<ResolvedTheme>` | The `theme` option run through `@fcalell/ui-core`'s `deriveTheme`, resolved once so every block contribution reads one value |
 | `appCssSource` | `derived<string \| null>` | Final `.stack/app.css`; null when nothing landed |
 
 ## `auth.slots.*` (plugin-auth)
@@ -137,8 +139,9 @@ e.g. consulting `ctx.fileExists` before writing.
 
 ## Spec types
 
-The shapes carried by slot payloads. All exported from `@fcalell/cli/ast` (TS / TOML / HTML specs)
-or `@fcalell/cli/specs` (lifecycle specs).
+The shapes carried by slot payloads. Most are exported from `@fcalell/cli/ast` (TS / TOML / HTML
+specs) or `@fcalell/cli/specs` (lifecycle specs); a payload that only one plugin's own slots carry
+lives with that plugin.
 
 - `ScaffoldSpec`: `{ source: URL; target: string; plugin: string }`. Used for templates copied into
   the consumer repo. Build with `ctx.scaffold(name, target)`.
@@ -168,6 +171,15 @@ or `@fcalell/cli/specs` (lifecycle specs).
   // <Toaster />
   { kind: "jsx", tag: "Toaster", props: [], children: [] }
   ```
+- `CssBlock`: `solidUi.slots.appCssBlocks`' payload, declared in `plugins/solid-ui/src/types.ts`.
+  One top-level CSS at-rule, in two shapes:
+  ```ts
+  { kind: "theme", declarations: { "--color-canvas": "oklch(0.99 0.004 261)" } }
+  { kind: "utility", name: "shadow-1", declarations: { "box-shadow": "0 1px 2px …" } }
+  ```
+  Every property name and value crosses the render boundary: a custom property through
+  `cssVarName`, a plain CSS property and the utility name through `cssIdent`, every value through
+  `cssTokenValue`.
 - `WranglerBindingSpec`: `d1` / `kv` / `r2` / `rate_limiter` / `var` shapes. Aggregator catches
   duplicate `binding` names and fails fast.
 - `HtmlInjection`: `title` / `meta` / `link` / `script` / `html-attr`.

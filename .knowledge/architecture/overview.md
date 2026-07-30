@@ -10,6 +10,7 @@ feature lives in the plugin that owns its domain (see
 | Package | Purpose |
 |---------|---------|
 | `@fcalell/cli` | `defineConfig()`, `plugin()`, `slot.*`, `stack` CLI, slot graph engine, codegen |
+| `@fcalell/ui-core` | The design contract both UI plugins render from: the token records, `deriveTheme`, the emit helpers, `cn()`, and the platform-invariant variant matrices. Framework-free build-time data |
 | `@fcalell/typescript-config` | tsconfig presets (base, solid-vite, node-tsx) |
 | `@fcalell/biome-config` | Shareable Biome formatter/linter config |
 
@@ -60,7 +61,7 @@ plugin-node ──────────────> cli, requires api
 plugin-solid ─────────────> cli, requires vite
                                  (owns solid.slots.providers/entry/html/routesDts;
                                   contributes to vite.slots.configImports/pluginCalls)
-plugin-solid-ui ──────────> cli, requires solid + vite
-                                 (owns solidUi.slots.appCss*;
+plugin-solid-ui ──────────> cli + ui-core, requires solid + vite
+                                 (owns solidUi.slots.appCss*/resolvedTheme;
                                   contributes to solid.slots.providers/homeScaffold, vite.slots.configImports/pluginCalls)
 ```
