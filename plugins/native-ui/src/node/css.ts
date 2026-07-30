@@ -8,12 +8,11 @@ import {
 	cssString,
 	cssTokenValue as cssTokenValueBase,
 	cssVarName as cssVarNameBase,
-	isCssIdent,
 } from "@fcalell/cli/css";
 
 const LABEL = "plugin-native-ui";
 
-export { cssString, isCssIdent };
+export { cssString };
 
 export const cssIdent = (value: string): string => cssIdentBase(value, LABEL);
 export const cssVarName = (value: string): string =>

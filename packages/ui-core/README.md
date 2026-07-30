@@ -1,8 +1,9 @@
 # @fcalell/ui-core
 
 The design system both stack UI plugins render from: one closed token contract, a parametric OKLCH
-derivation, and the laws that say which token to pick. Everything it exports is build-time data, so
-each plugin renders its own CSS from the same records and ui-core stays framework-free.
+derivation, and the laws that say which token to pick. The seven contract subpaths export
+build-time data only, so each plugin renders its own CSS from the same records and ui-core stays
+framework-free; the eighth, `./harness`, is internal Node tooling for the packages' verify scripts.
 
 Eight subpaths:
 

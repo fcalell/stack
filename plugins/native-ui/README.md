@@ -71,9 +71,7 @@ nativeUi({
 
 The surface has two modes, `light` and `dark`, emitted as the two uniwind
 built-in `@variant` blocks: free `Appearance` sync, the `dark:` variant, and
-`setTheme("light" | "dark" | "system")`. The earlier N-theme `themeTokens`
-option and the Metro `extraThemes` registration are retired; a third named
-theme waits for a consumer that needs it. Persona is encoded by **fill, not
+`setTheme("light" | "dark" | "system")`. Persona is encoded by **fill, not
 hue**: emphasis variants share the `accent` token.
 
 ### 3. Fonts
