@@ -51,6 +51,9 @@ leading key (`--leading-h1`) and one tracking key (`--tracking-h1`), and both em
 from it, so `--text-h1--line-height` moves with `--leading-h1` and cannot drift from it. Naming a
 modifier key directly is an error. A value carrying `;`, `{`, `}`, a line break, or a comment
 delimiter is rejected, since any of them would break out of the declaration it is rendered into.
+Unbalanced parens are rejected too: one override opening a `calc(` and a later one closing it read
+as well-formed CSS on their own, fuse every declaration between them into one, and take the whole
+block out of the built stylesheet without an error.
 
 ## Surfaces
 

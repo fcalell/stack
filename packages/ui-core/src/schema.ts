@@ -22,6 +22,27 @@ const OKLCH_RE =
 // and a comment delimiter, which would swallow the rest of the emitted block.
 const SCALE_VALUE_ILLEGAL_RE = /[;{}\n\r\f]|\/\*|\*\//;
 
+// Parens must balance. A single unbalanced value fails the CSS parser loudly,
+// but a pair does not: an unclosed `calc(` in one override and a stray `)` in
+// a later one fuse every declaration between them into one, and the stylesheet
+// builds clean with the whole block gone. Catching it here names the offending
+// key instead of leaving it to a render-time throw.
+//
+// This rule has a sibling: `cssTokenValue` in `packages/cli/src/css.ts` applies
+// the same check at the render boundary, because this package cannot depend on
+// the CLI. Keep the two in sync by hand.
+function parensBalanced(value: string): boolean {
+	let depth = 0;
+	for (const ch of value) {
+		if (ch === "(") depth++;
+		else if (ch === ")") {
+			depth--;
+			if (depth < 0) return false;
+		}
+	}
+	return depth === 0;
+}
+
 const hueSchema = z.number().min(0).lt(360);
 
 const knobsSchema = z.strictObject({
@@ -115,11 +136,15 @@ export const themeSchema = z
 				});
 				continue;
 			}
-			if (value.trim() === "" || SCALE_VALUE_ILLEGAL_RE.test(value)) {
+			if (
+				value.trim() === "" ||
+				SCALE_VALUE_ILLEGAL_RE.test(value) ||
+				!parensBalanced(value)
+			) {
 				ctx.addIssue({
 					code: "custom",
 					path: ["overrides", "scales", key],
-					message: `"${key}" value contains an illegal character or is empty, got ${JSON.stringify(value)}`,
+					message: `"${key}" value is empty, carries an illegal character, or has unbalanced parentheses, got ${JSON.stringify(value)}`,
 				});
 			}
 		}

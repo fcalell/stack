@@ -77,6 +77,29 @@ export function cssIdent(value: string, label = "@fcalell/cli"): string {
 	return value;
 }
 
+// ── Parenthesis balance ─────────────────────────────────────────────
+
+// A single unbalanced value fails the CSS parser loudly. A *pair* does not:
+// an unclosed `calc(` in one declaration and a stray `)` in a later one fuse
+// every declaration between them into one, and the stylesheet builds clean
+// with the whole block gone. Both halves are individually well-formed, so
+// nothing downstream catches it.
+//
+// This rule has a sibling: `packages/ui-core/src/schema.ts` applies the same
+// check to `overrides.scales`, because ui-core cannot depend on the CLI. Keep
+// the two in sync by hand.
+function parensBalanced(value: string): boolean {
+	let depth = 0;
+	for (const ch of value) {
+		if (ch === "(") depth++;
+		else if (ch === ")") {
+			depth--;
+			if (depth < 0) return false;
+		}
+	}
+	return depth === 0;
+}
+
 // ── Custom properties ───────────────────────────────────────────────
 
 // A custom-property NAME. Three shapes are legal:
@@ -99,9 +122,10 @@ export function cssVarName(value: string, label = "@fcalell/cli"): string {
 // A custom-property VALUE (color, length, font stack, shadow list). Unlike a
 // CSS <string> these are raw token streams — `oklch(0.2 0.05 220)`, `4px` — so
 // they must NOT be quoted: spaces, parens and commas are legal. Rejected are
-// only the sequences that would let a value escape its declaration: the
-// statement / block terminators, the line breaks that close a declaration, and
-// a comment delimiter, which would swallow the rest of the emitted block.
+// the sequences that would let a value escape its declaration: the statement /
+// block terminators, the line breaks that close a declaration, and a comment
+// delimiter, which would swallow the rest of the emitted block. Unbalanced
+// parens are rejected for the reason `parensBalanced` gives above.
 const TOKEN_VALUE_ILLEGAL_RE = /[;{}\n\r\f]|\/\*|\*\//;
 
 export function cssTokenValue(value: string, label = "@fcalell/cli"): string {
@@ -111,6 +135,11 @@ export function cssTokenValue(value: string, label = "@fcalell/cli"): string {
 	if (TOKEN_VALUE_ILLEGAL_RE.test(value)) {
 		throw new Error(
 			`[${label}] cssTokenValue: value contains illegal characters: ${JSON.stringify(value)}`,
+		);
+	}
+	if (!parensBalanced(value)) {
+		throw new Error(
+			`[${label}] cssTokenValue: value has unbalanced parentheses: ${JSON.stringify(value)}`,
 		);
 	}
 	return value.trim();
@@ -128,15 +157,7 @@ export function isCssSupportsExpression(value: unknown): value is string {
 	const trimmed = value.trim();
 	if (trimmed.length === 0) return false;
 	if (/[;{}]/.test(trimmed)) return false;
-	let depth = 0;
-	for (const ch of trimmed) {
-		if (ch === "(") depth++;
-		else if (ch === ")") {
-			depth--;
-			if (depth < 0) return false;
-		}
-	}
-	return depth === 0;
+	return parensBalanced(trimmed);
 }
 
 export function cssSupportsExpression(

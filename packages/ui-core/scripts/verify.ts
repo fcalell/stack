@@ -806,6 +806,17 @@ check("c13", "the schema rejects each bad override by key", () => {
 			{ overrides: { scales: { "--text-h1--line-height": "1.4" } } },
 			"--text-h1--line-height",
 		],
+		// The pair is the silent case: each half is well-formed CSS on its own,
+		// and together they swallow every declaration between them.
+		[
+			"a pair of scales values that open and close one paren",
+			{
+				overrides: {
+					scales: { "--radius-md": "calc(1px", "--radius-sheet": "2px)" },
+				},
+			},
+			"--radius-md",
+		],
 	];
 	for (const [label, input, key] of rejections) {
 		const message = rejection(input);
