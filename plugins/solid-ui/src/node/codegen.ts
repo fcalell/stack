@@ -54,7 +54,7 @@ export function aggregateAppCss(payload: CodegenAppCssPayload): string | null {
 				? "@theme {"
 				: `@utility ${cssIdent(block.name)} {`,
 		);
-		lines.push(...renderDeclarations(block.declarations, "\t"));
+		lines.push(...renderDeclarations(block.declarations));
 		lines.push("}");
 	}
 
@@ -69,25 +69,25 @@ export function aggregateAppCss(payload: CodegenAppCssPayload): string | null {
 	return `${lines.join("\n")}\n`;
 }
 
-// A `<selector> { … }` rule whose declarations cross the same render boundary
-// as a block's. `appCssLayers` passes layer content through untouched, so a
-// plugin contributing a token block builds it with this rather than by hand.
-export function renderRule(
-	selector: string,
+// A `.<class> { … }` rule whose class name and declarations cross the same
+// render boundary as a block's. `appCssLayers` passes layer content through
+// untouched, so a plugin contributing a token block builds it with this rather
+// than by hand.
+export function renderClassRule(
+	className: string,
 	declarations: Record<string, string>,
 ): string {
-	return [`${selector} {`, ...renderDeclarations(declarations, "\t"), "}"].join(
-		"\n",
-	);
+	return [
+		`.${cssIdent(className)} {`,
+		...renderDeclarations(declarations),
+		"}",
+	].join("\n");
 }
 
-function renderDeclarations(
-	declarations: Record<string, string>,
-	indent: string,
-): string[] {
+function renderDeclarations(declarations: Record<string, string>): string[] {
 	return Object.entries(declarations).map(
 		([property, value]) =>
-			`${indent}${cssProperty(property)}: ${cssTokenValue(value)};`,
+			`\t${cssProperty(property)}: ${cssTokenValue(value)};`,
 	);
 }
 

@@ -122,3 +122,7 @@ export const solidUiOptionsSchema = z.object({
 });
 
 export type SolidUiOptions = z.input<typeof solidUiOptionsSchema>;
+
+// The `theme` option's own type. It is ui-core's, re-exported here so a
+// consumer reaches it through the plugin it configures.
+export type { Theme } from "@fcalell/ui-core/schema";

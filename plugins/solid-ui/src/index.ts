@@ -319,4 +319,4 @@ export const solidUi = plugin("solid-ui", {
 	],
 });
 
-export type { SolidUiOptions } from "./types.ts";
+export type { SolidUiOptions, Theme } from "./types.ts";

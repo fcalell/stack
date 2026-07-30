@@ -6,7 +6,7 @@ import {
 } from "@fcalell/ui-core/emit";
 import { FONT_FALLBACKS } from "@fcalell/ui-core/tokens";
 import type { CssBlock, CssLayer } from "../types.ts";
-import { renderRule } from "./codegen.ts";
+import { renderClassRule } from "./codegen.ts";
 
 // The tokens the web owns on top of the shared contract. Motion is a web-only
 // concern, and font families stay with the platform plugins — ui-core shares
@@ -57,5 +57,5 @@ export function darkLayer(resolved: ResolvedTheme): CssLayer {
 	for (const [token, value] of Object.entries(modeTokens(resolved, "dark"))) {
 		declarations[`--color-${token}`] = value;
 	}
-	return { name: "base", content: renderRule(".dark", declarations) };
+	return { name: "base", content: renderClassRule("dark", declarations) };
 }
