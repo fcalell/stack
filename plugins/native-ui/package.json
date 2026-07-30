@@ -17,6 +17,7 @@
 	},
 	"files": [
 		"src",
+		"scripts",
 		"templates",
 		"README.md"
 	],
@@ -25,6 +26,7 @@
 		"check-types": "tsc --noEmit --pretty",
 		"lint": "biome check --write --unsafe",
 		"check": "pnpm check-types && pnpm lint",
+		"verify": "tsx scripts/verify.ts",
 		"clear": "rm -rf node_modules .turbo"
 	},
 	"peerDependencies": {
@@ -55,6 +57,7 @@
 		"@fcalell/typescript-config": "workspace:*",
 		"@gorhom/bottom-sheet": "^5.2.14",
 		"@orpc/tanstack-query": "^1.14.4",
+		"@tailwindcss/cli": "^4.1.7",
 		"@tanstack/react-query": "^5.101.0",
 		"@types/node": "^25.5.0",
 		"@types/react": "^19.2.16",
@@ -66,6 +69,8 @@
 		"react-native-reanimated": "^4.4.1",
 		"react-native-safe-area-context": "^5.6.0",
 		"react-native-worklets": "^0.9.0",
+		"tailwindcss": "^4.1.7",
+		"tsx": "^4.19.0",
 		"typescript": "^5.9.3",
 		"uniwind": "^1.8.0"
 	}
