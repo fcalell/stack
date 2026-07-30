@@ -41,7 +41,7 @@ where a design system erodes.
 - Parametric OKLCH value derivation with per-token overrides, so the framework default stays
   knob-driven and a hand-tuned brand (Marina) is expressible through the same schema.
 - Shared `cn()` (extended `tailwind-merge`) and invariant CVA matrices for the first component set:
-  button, text, pill, card, field.
+  button, text, badge, card, field.
 - Adoption by `plugin-solid-ui` and `plugin-native-ui`: both render their stylesheet from ui-core
   and accept one shared `theme` option schema.
 - The design-laws doc (tone-to-meaning matrix, rung and role rules, the closed laws) as the
@@ -98,10 +98,23 @@ where a design system erodes.
   field (`app` stays cross-cutting identity, theme is UI-domain) and hand-written CSS variable
   overrides as the documented surface (typed options over glue, per philosophy).
 - **Sharing line.** ui-core matrices hold the platform-invariant cells only: fills, borders, ink,
-  padding rungs, radius, type role. Interaction and state classes (`hover:`, `focus-visible:`,
-  `data-*` on web; `active:` press states on native) are platform overlays composed via `cn()`. RN
-  does not inherit text color, so a matrix that tints content carries a per-slot label table; web
-  consumes the label table too rather than diverging.
+  padding, gap rungs, control minimum height, radius, type role, font weight. Display and alignment
+  (`flex`, `flex-row`, `items-*`, `justify-*`), font families, and interaction and state classes
+  (`hover:`, `focus-visible:`, `data-*` on web; `active:` press states on native) are platform
+  overlays composed via `cn()`: RN is flex by default and web is not, so a shared `flex-row` would
+  be wrong on one of them. A gap is not display — it is a spacing rung meaning the same thing on
+  both platforms, and a matrix that keys two gaps off its own axis cannot exile them without making
+  each plugin rebuild that mapping. RN does not inherit text color, so a matrix that tints content
+  carries a per-slot label table; web consumes the label table too rather than diverging.
+- **Rungs are rhythm; control interiors are not.** The seven rungs govern gaps between things and
+  container insets. A control's interior padding is calibrated to its own type size, so it stays a
+  literal numeric even where a rung happens to coincide: a button is `px-4 py-2`, not
+  `px-gutter py-row`. Since the numeric `--spacing` base stays live, no build check can tell the two
+  apart — the matrices pin their cell strings and assert them verbatim instead.
+- **No arbitrary values in a matrix cell**, in either spelling (`[…]` or the `(--x)` shorthand). A
+  matrix cell that reaches for one passes every build check for the same reason `bg-[var(--x)]`
+  does, which would make the closed vocabulary the gate assumes negotiable. Where the calibrated
+  value is unreachable the cell rounds to the nearest contract step and the change is recorded.
 - **The boundary.** Primitives ship from `node_modules`, so the plugins' own primitives need no
   carve-out. A consumer still needs somewhere to author product-specific primitives, so the gate
   skips any path holding a `ui/` segment: `src/ui/**` on a single-platform consumer, `src/native/ui/**`
@@ -137,12 +150,14 @@ where a design system erodes.
   Content), so the rhythm family's outermost rung folds into it instead of colliding: `Section.Root`
   gains the rung and axis, and `Stack` / `Row` / `Pair` are new. `plugin-native-ui` has no page
   chrome, so its `Section` is the rung alone. The shared fact is the rung and the axis; the header
-  anatomy stays web-only. `plugin-solid-ui`'s `badge` renames to `pill`, matching the matrix and
-  `plugin-native-ui`'s existing component. Both breaks are accepted.
-- **The first matrix set.** Button, text, pill, card, and field: the cells that hold across
-  platforms. Neither plugin has all five today. `plugin-solid-ui` has no pill (it is today's badge)
-  and `plugin-native-ui` has neither a text nor a field component, so the missing ones are authored
-  during adoption and parity is a deliverable rather than an assumption.
+  anatomy stays web-only. `plugin-native-ui`'s `pill` renames to `badge`, matching the matrix and
+  `plugin-solid-ui`'s existing component: the descriptor is already `BadgeSpec`, and under the
+  canon's one-name-per-concept law the name carrying the concept wins over the one naming a shape.
+  Both breaks are accepted.
+- **The first matrix set.** Button, text, badge, card, and field: the cells that hold across
+  platforms. Neither plugin has all five today. `plugin-native-ui`'s badge is today's `pill`, and it
+  has neither a text nor a field component, so the missing ones are authored during adoption and
+  parity is a deliverable rather than an assumption.
 - **Allowlist, not denylist.** The vocabulary is a closed list and unknown classes fail. A denylist
   of look prefixes passes every utility it has not been taught, which is how the boundary rots.
 - **Emission.** ui-core returns token records, never CSS text: `themeTokens` (the `@theme` record,
@@ -214,10 +229,13 @@ off-contract utilities (`bg-red-500`, `text-sm`) emit nothing.
 
 ### M2: shared cn, the first variant matrices, and the API canon
 
-Port `cn()` with the extended `tailwind-merge` config (type-role classes registered as the
-font-size group, `rounded-control` in the radius group). Author the invariant matrices for button
-(emphasis × tone × size, plus the label table), text roles, pill, card, and field, spelling every
-legal cell in `compoundVariants` so the matrix cannot drift.
+Port `cn()` with the extended `tailwind-merge` config. Extend `theme`, not `classGroups`: five
+token lists register (type roles as `text` and `leading`, tracked roles as `tracking`, radius rungs,
+spacing rungs), and the theme route reaches all sixteen `rounded*` groups where the class-group
+route reaches only the base one. Registering the type roles makes `font-size` conflict with
+`leading`, so a type role composes before any later size class, never after. Author the invariant
+matrices for button (emphasis × tone × size, plus the label table), text roles, badge, card, and
+field, spelling every legal cell in `compoundVariants` so the matrix cannot drift.
 
 Export the shared descriptor types (`Action`, `BadgeSpec`, `FooterSpec`) and write the API canon
 into the README as law: one name per concept across primitives (`label`, `loading`, `onChange`,
@@ -231,18 +249,21 @@ Each descriptor type stays framework-free. `Action` carries `label`, `onSelect`,
 typed as a parameter, since the icon is a `lucide-solid` component on web and a
 `lucide-react-native` one on native, and ui-core depends on neither.
 
-**Verify.** Render a page holding every legal cell of the button, text, pill, card, and field
-matrices, then read the DOM classes: each cell matches its `compoundVariants` row. Pass a type-role
-class and a color class to `cn()` together and confirm neither clobbers the other. Run the M1
-Tailwind build over that page and confirm every class it emits resolves, so no cell is
-off-contract.
+**Verify.** No DOM is needed: a matrix is a pure function, so the M1 script grows the checks. Each
+family exports its config beside its cva, since `cva()` hides its config at runtime and an
+enumerator has no other way to walk the axes. Enumerate every cva over the product of its axes,
+calling the cva so the class set is produced by the matrix rather than listed next to it, and drive
+the M1 Tailwind build over the result: every class resolves, so no cell is off-contract. Assert each
+cell string verbatim, because the numeric spacing base stays live and no build check can tell a rung
+from a numeric. Pass a type-role class and a color class to `cn()` together and confirm neither
+clobbers the other.
 
 ### M3: plugin-solid-ui adoption
 
 Render the token bodies into `.stack/app.css` through the existing codegen, driven by the new
 `theme` option; shrink `globals.css` to the web wrapper. Sweep all components onto the new
 vocabulary (`bg-primary` to `bg-accent`, `text-muted-foreground` to `text-ink-3`, `border-border`
-to `border-edge`, and so on); rebuild button, text, pill (today's badge), card, and field on the
+to `border-edge`, and so on); rebuild button, text, badge, card, and field on the
 shared matrices with web interaction overlays; retire the shadcn axis names.
 
 The class props stay open through this milestone. M5 closes them across both plugins at once.
@@ -257,13 +278,13 @@ off-contract utility appears.
 
 Replace the neutral defaults with ui-core's derived defaults, narrow `themeTokens` to the shared
 schema, emit through ui-core's helpers (shadow ladder as `@utility`), re-export ui-core's `cn`,
-and adopt the shared matrices for button, pill, card, and field. Its components already speak the
+and adopt the shared matrices for button, badge, card, and field. Its components already speak the
 Marina vocabulary, so the token sweep is small. Author the two components the matrix set names and
 the plugin lacks: text and field.
 
 **Verify.** Run `stack generate` in a native-ui consumer and confirm the emitted tokens match
 ui-core's derived defaults, with the shadow ladder emitted as `@utility`. Launch the app and confirm
-button, pill, card, and field render the same cells as the web app for the same props. Put an
+button, badge, card, and field render the same cells as the web app for the same props. Put an
 off-contract key in the `theme` option and confirm `stack generate` fails with a schema error
 naming it.
 
@@ -331,7 +352,7 @@ Per milestone: the implementation lands, the milestone's **Verify** steps run gr
 scratch consumer project with the transcript and screenshots recorded in the PR, and `pnpm check`
 passes. The
 dogfood signal for the PRD as a whole: sailward could replace `global.css`, `src/ui/lib/cn.ts`,
-its button and pill matrices, and `scripts/check-classnames.mjs` with ui-core exports, keeping its
+its button and badge matrices, and `scripts/check-classnames.mjs` with ui-core exports, keeping its
 `src/ui/**` boundary unchanged and expressing its hand-tuned Marina values through the theme
 schema. A stack consumer building web plus native themes the brand once, and every look that lands
 outside the matrices is a primitive under `ui/`.
