@@ -133,18 +133,26 @@ function Example() {
 }
 ```
 
-The plugin ships 24 primitives. They use uniwind `className` reading the
+The plugin ships 26 primitives. They use uniwind `className` reading the
 contract tokens, so each renders in light and dark with no per-component
 theme code, and persona is encoded by **fill, never hue**.
 
 - **Actions** — `Button`, `Stepper`
-- **Inputs** — `Input`, `TextArea`, `Toggle`, `Checkbox`, `Segmented`,
+- **Inputs** — `Input`, `TextArea`, `Field`, `Toggle`, `Checkbox`, `Segmented`,
   `FilterChip`
-- **Containers & data** — `Card`, `RowItem`, `DefRow`, `Pill`, `Divider`
+- **Typography** — `Text`
+- **Containers & data** — `Card`, `RowItem`, `DefRow`, `Badge`, `Divider`
 - **Identity** — `Avatar`, `AvatarStack`
 - **Chrome** — `TabBar`, `NavBar`, `Footbar`
 - **Feedback** — `ProgressBar`, `Spinner`, `Skeleton`, `Toast`
 - **Overlays** — `BottomSheet`, `Dialog`
+
+`Button`, `Badge`, `Card`, `Text`, `Input` and `TextArea` compose their look
+from ui-core's shared variant matrices: the same cells the web plugin renders,
+behind the same props (`emphasis` / `tone` / `size` on `Button`, `tone` on
+`Badge`, `padding` / `ring` on `Card`, `variant` / `tone` / `strong` / `mono`
+on `Text`). `Text`'s `mono` prop maps to `font-mono`; without a registered
+mono font it degrades to the system face.
 
 `Toast` is presentational (a screen renders it in its own overlay); `Skeleton` is
 a static block. Their imperative host / shimmer are a later polish pass, not a
@@ -210,7 +218,7 @@ matrix cell strings so their classNames are detected.
 |---------|---------|
 | `@fcalell/plugin-native-ui` | `nativeUi()`, `NativeUiOptions`, `Theme`, `NativeFontEntry` |
 | `@fcalell/plugin-native-ui/app` | `AppProviders` — UI-shell providers for tests / Storybook |
-| `@fcalell/plugin-native-ui/components/*` | 24 primitives, one per `kebab-case` subpath (`.../components/row-item` → `RowItem`) — see the Primitives list above |
+| `@fcalell/plugin-native-ui/components/*` | 26 primitives, one per `kebab-case` subpath (`.../components/row-item` → `RowItem`) — see the Primitives list above |
 | `@fcalell/plugin-native-ui/lib/cn` | `cn()` — ui-core's className merge, taught the contract's scales |
 | `@fcalell/plugin-native-ui/lib/theme` | `Uniwind`, `useUniwind`, `useCSSVariable`, `setTheme`, `ThemeName` |
 
