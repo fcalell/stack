@@ -1,8 +1,28 @@
+import { execFileSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { generateServiceBarrel, hasServiceFiles } from "./barrel.ts";
+
+// The barrel lands in the consumer's tracked tree, so the real assertion is
+// that the consumer's formatter has nothing to say about it: anything else
+// dirties a tracked file on every `stack generate`.
+const require_ = createRequire(import.meta.url);
+const biomeBin = join(
+	dirname(require_.resolve("@biomejs/biome/package.json")),
+	"bin",
+	"biome",
+);
+
+function formatBarrel(source: string): string {
+	return execFileSync(
+		process.execPath,
+		[biomeBin, "format", "--stdin-file-path=index.ts"],
+		{ input: source, encoding: "utf8" },
+	);
+}
 
 const scratchDirs: string[] = [];
 
@@ -47,6 +67,32 @@ describe("generateServiceBarrel", () => {
 		expect(barrel).not.toContain("test");
 		expect(barrel).not.toContain("types");
 		expect(barrel).toContain("export const services = [board];");
+	});
+
+	it("emits a barrel the formatter leaves alone, however many services", () => {
+		for (const count of [1, 2, 8, 20]) {
+			const files = Array.from({ length: count }, (_, i) => `service-${i}.ts`);
+			const barrel = generateServiceBarrel(makeCwd(files));
+			expect(formatBarrel(barrel), `${count} services`).toBe(barrel);
+		}
+	});
+
+	it("breaks the list one per line once it outgrows the line width", () => {
+		const cwd = makeCwd(
+			[
+				"board",
+				"gate",
+				"mcp",
+				"meter",
+				"proposals",
+				"review",
+				"runs",
+				"sessions",
+			].map((name) => `${name}.ts`),
+		);
+		expect(generateServiceBarrel(cwd)).toContain(
+			"export const services = [\n\tboard,\n\tgate,\n",
+		);
 	});
 });
 

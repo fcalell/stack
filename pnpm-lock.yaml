@@ -362,6 +362,9 @@ importers:
         specifier: ^4.3.6
         version: 4.3.6
     devDependencies:
+      '@biomejs/biome':
+        specifier: ^2.4.16
+        version: 2.4.16
       '@fcalell/typescript-config':
         specifier: workspace:*
         version: link:../../packages/typescript-config

@@ -27,6 +27,21 @@ function identifierFor(file: string): string {
 	return base.replace(/-([a-z0-9])/g, (_, ch: string) => ch.toUpperCase());
 }
 
+// The barrel is tracked in the consumer's tree, not build output under
+// `.stack/`, so it must land in the shape the formatter already agrees with
+// or every `stack generate` dirties it until the next format pass. Biome
+// keeps an array inline while it fits its line width and otherwise breaks it
+// one entry per line with a trailing comma; 80 is Biome's default, which
+// `@fcalell/biome-config` does not change.
+const LINE_WIDTH = 80;
+
+function renderServices(identifiers: string[]): string {
+	const inline = `export const services = [${identifiers.join(", ")}];`;
+	if (inline.length <= LINE_WIDTH) return inline;
+	const lines = identifiers.map((identifier) => `\t${identifier},`).join("\n");
+	return `export const services = [\n${lines}\n];`;
+}
+
 export function generateServiceBarrel(cwd: string): string {
 	let entries: string[];
 	try {
@@ -41,9 +56,9 @@ export function generateServiceBarrel(cwd: string): string {
 			return `import ${identifierFor(file)} from "./${base}.ts";`;
 		})
 		.join("\n");
-	const list = entries.map(identifierFor).join(", ");
+	const services = renderServices(entries.map(identifierFor));
 
-	return `${GENERATED_HEADER}\n${imports}\n\nexport const services = [${list}];\n`;
+	return `${GENERATED_HEADER}\n${imports}\n\n${services}\n`;
 }
 
 // True when at least one service module exists. The plugin's source slots
