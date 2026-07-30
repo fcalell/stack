@@ -149,10 +149,16 @@ theme code, and persona is encoded by **fill, never hue**.
 
 `Button`, `Badge`, `Card`, `Text`, `Input` and `TextArea` compose their look
 from ui-core's shared variant matrices: the same cells the web plugin renders,
-behind the same props (`emphasis` / `tone` / `size` on `Button`, `tone` on
-`Badge`, `padding` / `ring` on `Card`, `variant` / `tone` / `strong` / `mono`
-on `Text`). `Text`'s `mono` prop maps to `font-mono`; without a registered
-mono font it degrades to the system face.
+behind the shared axis props (`emphasis` / `tone` / `size` on `Button`, `tone`
+on `Badge`, `padding` / `ring` on `Card`, `variant` / `tone` / `strong` /
+`mono` on `Text`). `Text`'s `mono` prop maps to `font-mono`; without a
+registered mono font it degrades to the system face. `Input` and `TextArea`
+take a native-only `state` prop (`"default" | "focused" | "error"`) and track
+focus themselves, where web reaches the same matrix cells through
+`focus-visible:` / `aria-invalid:` selectors. `useButtonContentColor(emphasis,
+tone)`, exported beside `Button`, resolves the label matrix's ink to a
+concrete color for an icon or `Spinner` inside a button: RN nodes take a color
+prop, never `currentColor`.
 
 `Toast` is presentational (a screen renders it in its own overlay); `Skeleton` is
 a static block. Their imperative host / shimmer are a later polish pass, not a

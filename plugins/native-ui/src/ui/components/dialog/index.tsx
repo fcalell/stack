@@ -11,7 +11,7 @@ export interface DialogProps {
 	icon?: ReactNode;
 	// `danger` tints the icon chip for destructive confirms; otherwise neutral.
 	tone?: "default" | "danger";
-	// Action buttons (typically a ghost cancel + a primary/danger confirm).
+	// Action buttons (typically a tertiary cancel + a primary/danger confirm).
 	children?: ReactNode;
 	className?: string;
 }

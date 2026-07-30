@@ -8,8 +8,8 @@ export interface FootbarProps {
 	className?: string;
 }
 
-// Sticky wizard action bar pinned below the scroll. Holds a ghost "Salva bozza"
-// + the step's primary (flex-1). Bottom padding clears the home indicator;
+// Sticky wizard action bar pinned below the scroll. Holds a tertiary "Salva
+// bozza" + the step's primary (flex-1). Bottom padding clears the home indicator;
 // keep the primary enabled and validate on tap — never park a dead disabled CTA.
 export function Footbar({ children, className }: FootbarProps) {
 	const insets = useSafeAreaInsets();

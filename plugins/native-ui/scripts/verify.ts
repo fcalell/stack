@@ -83,9 +83,9 @@ const SOURCES = [
 	"../node_modules/@fcalell/ui-core/src",
 ];
 
-// The retired vocabulary: the candidates the sweep removed from the
-// components, and the shadcn-era names a consumer might type. The namespace
-// resets must compile every one of them to nothing.
+// The retired vocabulary: names the components no longer carry, and the
+// shadcn-era names a consumer might type. The namespace resets must compile
+// every one of them to nothing.
 const RETIRED = [
 	"text-sm",
 	"text-base",
