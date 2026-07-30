@@ -148,7 +148,7 @@ Nothing to tear down: the design-system runtime lives inside this package and is
 | `@fcalell/plugin-solid-ui/meta` | `Title`, `Meta`, `Link`, `MetaProvider` — re-exported from `@solidjs/meta` |
 | `@fcalell/plugin-solid-ui/router` | Typed `routes` builder + SolidJS Router primitives |
 | `@fcalell/plugin-solid-ui/components/*` | Component modules (e.g. `components/button`, `components/form`) |
-| `@fcalell/plugin-solid-ui/lib/cn` | `cn()` class merging utility |
+| `@fcalell/plugin-solid-ui/lib/cn` | `cn()`, re-exported from `@fcalell/ui-core/cn`; its `tailwind-merge` knows the contract's five scales |
 | `@fcalell/plugin-solid-ui/lib/query` | Safe `useQuery`/`useInfiniteQuery`, `useMutation`, `useQueryClient`, `combineQueries`, `createDefaultQueryClient` (auto-invalidating default, see `@fcalell/plugin-api` README) |
 | `@fcalell/plugin-solid-ui/lib/ability` | `useAbility()` — accessor-style record-scoped authorization (see below), `ORG_RULES_QUERY_KEY` |
 | `@fcalell/plugin-solid-ui/lib/theme` | `useTheme()` runtime light/dark toggle |
