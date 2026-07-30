@@ -4,7 +4,7 @@ The design system both stack UI plugins render from: one closed token contract, 
 derivation, and the laws that say which token to pick. Everything it exports is build-time data, so
 each plugin renders its own CSS from the same records and ui-core stays framework-free.
 
-Seven subpaths:
+Eight subpaths:
 
 - `@fcalell/ui-core/tokens`: the contract as data, including the calibrated default values.
 - `@fcalell/ui-core/schema`: the zod theme schema and the `Theme` input type.
@@ -16,6 +16,9 @@ Seven subpaths:
   plus the cva built from it.
 - `@fcalell/ui-core/descriptors`: `Action`, `BadgeSpec`, `FooterSpec`, `FooterAction` and
   `FooterDestructive`, all framework-free types.
+- `@fcalell/ui-core/harness`: internal. The shared core of the packages' `scripts/verify.ts`
+  harnesses (check runner, CSS parsing, the Tailwind-CLI driver, matrix-cell enumeration).
+  devDependency-only tooling, not part of the design contract.
 
 The contract has two modes, `light` and `dark`. `themeTokens` seeds the default mode's colors into
 the `@theme` block as well, because Tailwind v4 generates no utility from a property declared only

@@ -13,7 +13,8 @@
 		"./emit": "./src/emit.ts",
 		"./cn": "./src/cn.ts",
 		"./variants": "./src/variants.ts",
-		"./descriptors": "./src/descriptors.ts"
+		"./descriptors": "./src/descriptors.ts",
+		"./harness": "./src/harness.ts"
 	},
 	"files": [
 		"src",

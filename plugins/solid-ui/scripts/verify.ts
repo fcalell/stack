@@ -12,7 +12,6 @@
 // The `b` checks read the plugin's own source, and every matrix cell they
 // compare against is produced by calling the ui-core cva rather than written
 // out here, so no check can drift from the matrix it describes.
-import { execFileSync } from "node:child_process";
 import {
 	existsSync,
 	mkdirSync,
@@ -34,6 +33,21 @@ import {
 	shadowUtilities,
 	themeTokens,
 } from "@fcalell/ui-core/emit";
+import {
+	type AnyCva,
+	assert,
+	blockBody,
+	check,
+	classes,
+	declarationMap,
+	declarations,
+	type Family,
+	matrixCells,
+	normalize,
+	report,
+	rule,
+	tailwindBuild,
+} from "@fcalell/ui-core/harness";
 import type { Theme } from "@fcalell/ui-core/schema";
 import {
 	INVARIANT_COLORS,
@@ -123,59 +137,6 @@ const ON_CONTRACT = [
 
 // ── Helpers ─────────────────────────────────────────────────────────
 
-function assert(condition: unknown, message: string): asserts condition {
-	if (!condition) throw new Error(message);
-}
-
-function normalize(value: string): string {
-	return value.replace(/\s+/g, " ").trim();
-}
-
-// The body of the first block whose header matches, brace-balanced so a nested
-// rule (`@layer base { .dark { … } }`) comes back whole.
-function blockBody(css: string, header: string): string {
-	const start = css.indexOf(header);
-	assert(start >= 0, `emitted sheet has no "${header}"`);
-	const open = css.indexOf("{", start);
-	let depth = 0;
-	for (let i = open; i < css.length; i++) {
-		if (css[i] === "{") depth++;
-		else if (css[i] === "}") {
-			depth--;
-			if (depth === 0) return css.slice(open + 1, i);
-		}
-	}
-	throw new Error(`unterminated "${header}" block`);
-}
-
-// Declarations in source order. Property names are not restricted to custom
-// properties: a `@utility` body and the mode block also carry plain CSS
-// properties.
-function declarations(body: string): Array<[string, string]> {
-	const out: Array<[string, string]> = [];
-	for (const match of body.matchAll(
-		/(--[A-Za-z0-9_*-]+|[a-z-]+)\s*:\s*([^;{}]+);/g,
-	)) {
-		const [, property, value] = match;
-		if (property && value) out.push([property, normalize(value)]);
-	}
-	return out;
-}
-
-function declarationMap(body: string): Map<string, string> {
-	return new Map(declarations(body));
-}
-
-// Tailwind escapes `.`, `[`, `(` and their siblings in the selectors it emits
-// (`.px-3\.5 {`), so the raw class name has to be CSS-escaped before it is
-// regex-escaped or a class that did compile reads as missing.
-function rule(css: string, selector: string): string | undefined {
-	const escaped = selector
-		.replace(/[.[\]()/%:]/g, (char) => `\\${char}`)
-		.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-	return css.match(new RegExp(`\\.${escaped}\\s*\\{([^}]*)\\}`))?.[1];
-}
-
 function rejection(run: () => unknown): string {
 	try {
 		run();
@@ -246,41 +207,7 @@ function build(sheet: string, name: string): string {
 	const inputPath = resolve(dir, `${name}.css`);
 	const outputPath = resolve(dir, `${name}.out.css`);
 	writeFileSync(inputPath, sheet);
-	const candidates = [
-		resolve(pkgDir, "node_modules/.bin/tailwindcss"),
-		resolve(pkgDir, "../../node_modules/.bin/tailwindcss"),
-	];
-	const bin = candidates.find((path) => existsSync(path));
-	assert(bin, `no tailwindcss binary at ${candidates.join(" or ")}`);
-	execFileSync(bin, ["--input", inputPath, "--output", outputPath], {
-		cwd: dir,
-		stdio: "pipe",
-	});
-	return readFileSync(outputPath, "utf8");
-}
-
-// ── Check harness ───────────────────────────────────────────────────
-
-interface Result {
-	id: string;
-	name: string;
-	ok: boolean;
-	detail: string;
-}
-
-const results: Result[] = [];
-
-function check(id: string, name: string, run: () => string): void {
-	try {
-		results.push({ id, name, ok: true, detail: run() });
-	} catch (error) {
-		results.push({
-			id,
-			name,
-			ok: false,
-			detail: error instanceof Error ? error.message : String(error),
-		});
-	}
+	return tailwindBuild(pkgDir, inputPath, outputPath, dir);
 }
 
 // ── Fixtures ────────────────────────────────────────────────────────
@@ -719,14 +646,6 @@ const RETIRED_EXPORTS = [
 
 // ── The matrices, read back off the cvas ────────────────────────────
 
-type AnyCva = (props: Record<string, string>) => string;
-
-interface Family {
-	name: string;
-	cva: AnyCva;
-	axes: Record<string, readonly string[]>;
-}
-
 const TEXT_VARIANTS = [...TYPE_ROLES, "rowtitle"];
 const TEXT_TONES = [
 	"ink-1",
@@ -800,37 +719,7 @@ const FAMILIES: Family[] = [
 	},
 ];
 
-function classes(value: string): string[] {
-	return value.split(/\s+/).filter(Boolean);
-}
-
-// One axis value's cell is what its rendering adds over the rendering every
-// other value of that axis shares. A compound row folds into the axis it
-// keys off, which is what makes `bg-accent` reachable as BUTTON's primary cell.
-function matrixCells(): Map<string, Set<string>> {
-	const out = new Map<string, Set<string>>();
-	for (const family of FAMILIES) {
-		for (const [axis, values] of Object.entries(family.axes)) {
-			const sets = values.map(
-				(value) => new Set(classes(family.cva({ [axis]: value }))),
-			);
-			const first = sets[0];
-			if (!first) continue;
-			const shared = new Set(
-				[...first].filter((name) => sets.every((set) => set.has(name))),
-			);
-			values.forEach((value, index) => {
-				const set = sets[index];
-				if (!set) return;
-				const cell = new Set([...set].filter((name) => !shared.has(name)));
-				if (cell.size > 0) out.set(`${family.name}.${axis}.${value}`, cell);
-			});
-		}
-	}
-	return out;
-}
-
-const CELLS = matrixCells();
+const CELLS = matrixCells(FAMILIES);
 const CELL_CLASSES = new Map<string, string>();
 for (const [path, cell] of CELLS) {
 	for (const name of cell)
@@ -1252,12 +1141,4 @@ check("b6", "the docs match the APIs they document", () => {
 
 // ── Report ──────────────────────────────────────────────────────────
 
-let failed = 0;
-for (const result of results) {
-	if (!result.ok) failed++;
-	console.log(
-		`${result.ok ? "PASS" : "FAIL"}  ${result.id}  ${result.name}\n        ${result.detail}`,
-	);
-}
-console.log(`\n${results.length - failed}/${results.length} checks passed`);
-process.exit(failed === 0 ? 0 : 1);
+report();

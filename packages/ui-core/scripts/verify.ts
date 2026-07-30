@@ -8,8 +8,7 @@
 // script derives with default knobs, diffs against the reference stylesheet,
 // drives a Tailwind build over the emitted `@theme` record plus every class the
 // matrices can emit, and exits non-zero on any mismatch.
-import { execFileSync } from "node:child_process";
-import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { isCssIdent } from "@fcalell/cli/css";
@@ -19,6 +18,16 @@ import ts from "typescript";
 import { cn } from "#cn";
 import { deriveTheme } from "#derive";
 import { modeTokens, shadowUtilities, themeTokens } from "#emit";
+import {
+	assert,
+	blockBody,
+	check,
+	declarationMap,
+	normalize,
+	report,
+	rule,
+	tailwindBuild,
+} from "#harness";
 import {
 	COLORS,
 	INVARIANT,
@@ -86,47 +95,15 @@ const RENAMES: Record<string, string> = {
 	"oncover-navy": "oncover-shade",
 };
 
-function normalize(value: string): string {
-	return value.replace(/\s+/g, " ").trim();
-}
-
-function assert(condition: unknown, message: string): asserts condition {
-	if (!condition) throw new Error(message);
-}
-
-function blockBody(css: string, header: string): string {
-	const start = css.indexOf(header);
-	assert(start >= 0, `reference stylesheet has no "${header}"`);
-	const open = css.indexOf("{", start);
-	let depth = 0;
-	for (let i = open; i < css.length; i++) {
-		if (css[i] === "{") depth++;
-		else if (css[i] === "}") {
-			depth--;
-			if (depth === 0) return css.slice(open + 1, i);
-		}
-	}
-	throw new Error(`unterminated "${header}" block`);
-}
-
-function declarations(body: string): Map<string, string> {
-	const out = new Map<string, string>();
-	for (const match of body.matchAll(/(--[A-Za-z0-9_*-]+)\s*:\s*([^;{}]+);/g)) {
-		const [, property, value] = match;
-		if (property && value) out.set(property, normalize(value));
-	}
-	return out;
-}
-
 const reference = readFileSync(referencePath, "utf8").replace(
 	/\/\*[\s\S]*?\*\//g,
 	"",
 );
-const themeBlock = declarations(blockBody(reference, "@theme"));
+const themeBlock = declarationMap(blockBody(reference, "@theme"));
 const referenceModes = new Map<Mode, Map<string, string>>();
 for (const mode of MODES) {
 	const tokens = new Map<string, string>();
-	for (const [property, value] of declarations(
+	for (const [property, value] of declarationMap(
 		blockBody(reference, `@variant ${mode}`),
 	)) {
 		if (!property.startsWith("--color-")) continue;
@@ -157,29 +134,7 @@ function fromVariant(mode: Mode): Map<string, string> {
 	return tokens;
 }
 
-// ── Check harness ───────────────────────────────────────────────────
-
-interface Result {
-	id: string;
-	name: string;
-	ok: boolean;
-	detail: string;
-}
-
-const results: Result[] = [];
-
-function check(id: string, name: string, run: () => string): void {
-	try {
-		results.push({ id, name, ok: true, detail: run() });
-	} catch (error) {
-		results.push({
-			id,
-			name,
-			ok: false,
-			detail: error instanceof Error ? error.message : String(error),
-		});
-	}
-}
+// ── Check helpers ───────────────────────────────────────────────────
 
 function requireEqual(actual: unknown, expected: unknown, what: string): void {
 	assert(
@@ -355,28 +310,8 @@ function buildFixture(): string {
 		].join("\n"),
 	);
 
-	const candidates = [
-		resolve(pkgDir, "node_modules/.bin/tailwindcss"),
-		resolve(pkgDir, "../../node_modules/.bin/tailwindcss"),
-	];
-	const bin = candidates.find((path) => existsSync(path));
-	assert(bin, `no tailwindcss binary at ${candidates.join(" or ")}`);
-	execFileSync(bin, ["--input", inputPath, "--output", outputPath], {
-		cwd: fixtureDir,
-		stdio: "pipe",
-	});
-	fixtureCss = readFileSync(outputPath, "utf8");
+	fixtureCss = tailwindBuild(pkgDir, inputPath, outputPath, fixtureDir);
 	return fixtureCss;
-}
-
-// Tailwind escapes `.`, `[`, `(` and their siblings in the selectors it emits
-// (`.px-3\.5 {`), so the raw class name has to be CSS-escaped before it is
-// regex-escaped or a class that did compile reads as missing.
-function rule(css: string, selector: string): string | undefined {
-	const escaped = selector
-		.replace(/[.[\]()/%:]/g, (char) => `\\${char}`)
-		.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-	return css.match(new RegExp(`\\.${escaped}\\s*\\{([^}]*)\\}`))?.[1];
 }
 
 // ── Criteria ────────────────────────────────────────────────────────
@@ -398,7 +333,7 @@ check("c02", "package.json shape", () => {
 		Object.keys(pkg.exports ?? {})
 			.sort()
 			.join(" "),
-		"./cn ./derive ./descriptors ./emit ./schema ./tokens ./variants",
+		"./cn ./derive ./descriptors ./emit ./harness ./schema ./tokens ./variants",
 		"export subpaths",
 	);
 	assert(pkg.peerDependencies?.zod, "zod is not a peerDependency");
@@ -416,7 +351,7 @@ check("c02", "package.json shape", () => {
 	for (const field of ["dependencies", "peerDependencies"] as const) {
 		assert(!pkg[field]?.["@fcalell/cli"], `@fcalell/cli appears in ${field}`);
 	}
-	return "7 subpaths, no root export, no runtime cli dependency";
+	return "8 subpaths, no root export, no runtime cli dependency";
 });
 
 check("c03", "tokens.ts declares the contract", () => {
@@ -1305,12 +1240,4 @@ check("c26", "every cell keeps the role first and its interior numeric", () => {
 // ── Report ──────────────────────────────────────────────────────────
 
 console.log(`reference: ${referencePath}\n`);
-let failed = 0;
-for (const result of results) {
-	if (!result.ok) failed++;
-	console.log(
-		`${result.ok ? "PASS" : "FAIL"}  ${result.id}  ${result.name}\n        ${result.detail}`,
-	);
-}
-console.log(`\n${results.length - failed}/${results.length} checks passed`);
-process.exit(failed === 0 ? 0 : 1);
+report();
