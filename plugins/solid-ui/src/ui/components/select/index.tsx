@@ -5,7 +5,7 @@ import { Check, ChevronDown } from "lucide-solid";
 import type { JSX, ValidComponent } from "solid-js";
 import { createMemo, splitProps } from "solid-js";
 import { cn } from "#lib/cn";
-import { fieldMutedClass, fieldShellClass } from "#lib/field";
+import { fieldMutedSelectorClass, fieldShellClass } from "#lib/field";
 
 // ─── Option types ───
 
@@ -66,16 +66,14 @@ function Trigger<T extends ValidComponent = "button">(
 	const [local, rest] = splitProps(props as TriggerProps, [
 		"class",
 		"children",
-		"disabled",
 	]);
 	return (
 		<SelectPrimitive.Trigger
-			disabled={local.disabled}
 			class={cn(
 				field({ state: "default", layout: "row" }),
 				fieldShellClass,
 				TRIGGER_BOX,
-				local.disabled && fieldMutedClass,
+				fieldMutedSelectorClass,
 				local.class,
 			)}
 			{...rest}
