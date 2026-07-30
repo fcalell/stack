@@ -27,7 +27,7 @@ export interface ToastProps extends VariantProps<typeof toast> {
 export function Toast({ variant, message, className }: ToastProps) {
 	return (
 		<View className={cn(toast({ variant }), className)}>
-			<Text className="flex-1 text-sm text-ink-1">{message}</Text>
+			<Text className="flex-1 text-callout text-ink-1">{message}</Text>
 		</View>
 	);
 }

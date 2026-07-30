@@ -11,7 +11,8 @@ export interface CheckboxProps {
 	className?: string;
 }
 
-// Round checklist box (Cambusa shopping/menu). Checked = ok fill + white tick;
+// Round checklist box (Cambusa shopping/menu). Checked = accent fill with the
+// `accent-ink` tick (the contract's guaranteed contrast pair, and web's);
 // unchecked = hairline edge ring. For true check-in-place lists only — a
 // navigational task row is a RowItem with a chevron, not this.
 export function Checkbox({
@@ -29,12 +30,14 @@ export function Checkbox({
 			onPress={() => onCheckedChange(!checked)}
 			className={cn(
 				"h-[22px] w-[22px] items-center justify-center rounded-full",
-				checked ? "bg-ok" : "border-[1.5px] border-edge",
+				checked ? "bg-accent" : "border-[1.5px] border-edge",
 				disabled && "opacity-40",
 				className,
 			)}
 		>
-			{checked ? (icon ?? <Text className="text-xs text-white">✓</Text>) : null}
+			{checked
+				? (icon ?? <Text className="text-micro text-accent-ink">✓</Text>)
+				: null}
 		</Pressable>
 	);
 }

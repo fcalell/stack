@@ -27,7 +27,7 @@ export const BottomSheet = forwardRef<
 		{...rest}
 	>
 		<BottomSheetView>
-			<View className="rounded-t-2xl bg-canvas px-4 pb-8 pt-3">
+			<View className="rounded-t-sheet bg-canvas px-4 pb-8 pt-3">
 				<View className="mb-3 h-1 w-10 self-center rounded-full bg-edge" />
 				{children}
 			</View>

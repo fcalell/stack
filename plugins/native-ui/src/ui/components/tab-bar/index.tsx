@@ -39,7 +39,10 @@ export function TabBar({ tabs, active, onChange, className }: TabBarProps) {
 					>
 						{tab.icon?.(isActive)}
 						<Text
-							className={cn("text-xs", isActive ? "text-ink-1" : "text-ink-2")}
+							className={cn(
+								"text-micro",
+								isActive ? "text-ink-1" : "text-ink-2",
+							)}
 						>
 							{tab.label}
 						</Text>

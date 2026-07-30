@@ -27,9 +27,9 @@ export function RowItem({
 		>
 			{leading}
 			<View className="flex-1">
-				<Text className="text-base text-ink-1">{label}</Text>
+				<Text className="text-body text-ink-1">{label}</Text>
 				{description ? (
-					<Text className="text-sm text-ink-2">{description}</Text>
+					<Text className="text-caption text-ink-2">{description}</Text>
 				) : null}
 			</View>
 			{trailing}

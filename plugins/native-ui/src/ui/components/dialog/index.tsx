@@ -38,12 +38,12 @@ export function Dialog({
 		>
 			<Pressable
 				onPress={onClose}
-				className="flex-1 items-center justify-center bg-black/50 px-6"
+				className="flex-1 items-center justify-center bg-scrim px-6"
 			>
 				{/* Stop propagation: taps on the card must not close the dialog. */}
 				<Pressable
 					onPress={() => {}}
-					className={cn("w-full rounded-2xl bg-canvas p-5", className)}
+					className={cn("w-full rounded-sheet bg-canvas p-5", className)}
 				>
 					{icon ? (
 						<View
@@ -55,11 +55,9 @@ export function Dialog({
 							{icon}
 						</View>
 					) : null}
-					<Text className="mb-1.5 text-lg font-extrabold text-ink-1">
-						{title}
-					</Text>
+					<Text className="mb-1.5 text-h3 font-bold text-ink-1">{title}</Text>
 					{description ? (
-						<Text className="text-sm text-ink-2">{description}</Text>
+						<Text className="text-callout text-ink-2">{description}</Text>
 					) : null}
 					{children ? (
 						<View className="mt-4 flex-row gap-3">{children}</View>

@@ -14,12 +14,14 @@ export interface DefRowProps {
 export function DefRow({ label, children, className }: DefRowProps) {
 	return (
 		<View className={cn("flex-row items-baseline gap-3.5", className)}>
-			<Text className="w-[104px] text-xs font-semibold text-ink-2">
+			<Text className="w-[104px] text-micro font-semibold text-ink-2">
 				{label}
 			</Text>
 			<View className="flex-1">
 				{typeof children === "string" ? (
-					<Text className="text-sm font-semibold text-ink-1">{children}</Text>
+					<Text className="text-callout font-semibold text-ink-1">
+						{children}
+					</Text>
 				) : (
 					children
 				)}

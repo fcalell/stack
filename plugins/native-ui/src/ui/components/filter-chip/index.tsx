@@ -31,7 +31,7 @@ export function FilterChip({
 			{leading}
 			<Text
 				className={cn(
-					"text-xs font-semibold",
+					"text-micro font-semibold",
 					active ? "text-canvas" : "text-ink-2",
 				)}
 			>

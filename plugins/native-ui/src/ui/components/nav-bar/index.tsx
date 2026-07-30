@@ -32,7 +32,7 @@ export function NavBar({
 			<Text
 				numberOfLines={1}
 				className={cn(
-					"flex-1 text-lg font-extrabold text-ink-1",
+					"flex-1 text-h3 font-bold text-ink-1",
 					center && "text-center",
 				)}
 			>

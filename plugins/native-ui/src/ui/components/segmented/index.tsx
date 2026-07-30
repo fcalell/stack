@@ -39,7 +39,7 @@ export function Segmented<T extends string>({
 					>
 						<Text
 							className={cn(
-								"text-xs",
+								"text-micro",
 								active ? "font-bold text-ink-1" : "font-semibold text-ink-2",
 							)}
 						>

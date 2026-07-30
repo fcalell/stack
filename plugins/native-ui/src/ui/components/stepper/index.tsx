@@ -11,7 +11,8 @@ export interface StepperProps {
 }
 
 // Numeric +/- control for quantities (posti, portions). Clamps to [min, max]
-// and disables the bound it has reached.
+// and disables the bound it has reached. The circles stay 36px visually;
+// `hitSlop` extends each tap target to the 44pt floor.
 export function Stepper({
 	value,
 	onChange,
@@ -27,25 +28,27 @@ export function Stepper({
 			<Pressable
 				accessibilityRole="button"
 				disabled={atMin}
+				hitSlop={4}
 				onPress={() => onChange(Math.max(min, value - step))}
 				className={cn(
 					"h-9 w-9 items-center justify-center rounded-full border border-edge",
 					atMin && "opacity-40",
 				)}
 			>
-				<Text className="text-lg text-ink-1">−</Text>
+				<Text className="text-h3 text-ink-1">−</Text>
 			</Pressable>
-			<Text className="min-w-8 text-center text-base text-ink-1">{value}</Text>
+			<Text className="min-w-8 text-center text-body text-ink-1">{value}</Text>
 			<Pressable
 				accessibilityRole="button"
 				disabled={atMax}
+				hitSlop={4}
 				onPress={() => onChange(Math.min(max, value + step))}
 				className={cn(
 					"h-9 w-9 items-center justify-center rounded-full border border-edge",
 					atMax && "opacity-40",
 				)}
 			>
-				<Text className="text-lg text-ink-1">+</Text>
+				<Text className="text-h3 text-ink-1">+</Text>
 			</Pressable>
 		</View>
 	);

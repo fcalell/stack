@@ -3,8 +3,9 @@ import { cn } from "../../lib/cn";
 
 // Identity tints — colour encodes WHO, never persona/role. Theme-invariant by
 // design (a person's colour is the same in light and Notturno), so these are
-// fixed hex, not theme tokens. White label reads on every tint. The gradient
-// `navy` tint in the design degrades to its solid azure stop on native.
+// fixed hex, not theme tokens; the initials ride `oncover-fg`, the invariant
+// ink for dark-invariant grounds. The gradient `navy` tint in the design
+// degrades to its solid azure stop on native.
 export type AvatarTint = "navy" | "green" | "sea" | "slate" | "clay" | "gray";
 
 const TINTS: Record<AvatarTint, string> = {
@@ -49,7 +50,7 @@ export function Avatar({
 			{initials ? (
 				<Text
 					style={{ fontSize: Math.round(size * 0.4) }}
-					className={cn("font-bold", tinted ? "text-white" : "text-ink-2")}
+					className={cn("font-bold", tinted ? "text-oncover-fg" : "text-ink-2")}
 				>
 					{initials}
 				</Text>
