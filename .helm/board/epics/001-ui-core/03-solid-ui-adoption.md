@@ -1,6 +1,7 @@
 ---
 id: 001-03
-status: in-progress
+status: done
+merged: b48ba43
 depends: [001-01, 001-02]
 gate: {rounds: 2, flags: 16 + 17, outcome: all fixed, none dismissed}
 runs:
@@ -25,6 +26,63 @@ runs:
       A reviewer asked to narrow defaultMode out of solid-ui's schema since it is inert on web.
       The PRD requires a two-platform consumer to pass the same theme object to both plugins
       (:96-99), so per-plugin narrowing breaks that contract. It stays a recorded gap.
+  - n: B
+    scope: decisions 13-21, criteria B1-B6
+    outcome: merged b48ba43
+    review: {spec: all criteria hold under mutation + 1 must-fix, standards: 6 must-fix, 12 worth noting}
+    verify: {solid-ui: 18/18, ui-core: 24/24, check: 12/12 types + 259 files lint clean from the real checkout}
+    live: >
+      stack generate in helm, then a real Tailwind build over the generated sheet: every matrix
+      cell emits, every retired class is gone, and the amended overlays are present. I verified
+      the CSS layer exhaustively but did NOT do a browser render, so the "renders correctly in
+      light and dark" half of the criterion rests on the emitted stylesheet, not on eyes.
+    found-by-run-not-by-the-gate: >
+      Matrix cell strings live in @fcalell/ui-core, which Tailwind never scanned, and a cva
+      composes them at runtime, so 31 of the 66 distinct cell classes emitted no CSS: every badge
+      fill, the danger button, all the type roles' leading and tracking. Two adversary rounds
+      missed this and the milestone would have shipped looking broken. Fixed with two @source
+      lines in globals.css. I verified the install-depth path in a real non-symlinked node_modules
+      tree with a control proving the lines are load-bearing.
+    my-errors-corrected-mid-run: >
+      Four of the six standards must-fixes traced to decision 15, which I wrote as a closed
+      overlay vocabulary without checking it against the README's contrast contracts. Placeholders
+      landed on ink-4, which the contract reserves for disabled and inert chrome only. Button hover
+      as whole-node opacity faded the control instead of highlighting it, gave the secondary
+      emphasis less contrast on hover, and composited the accent-ink-on-accent 4.5:1 pair away.
+      The field error state came out as a one-pixel hue shift. Decision 18's badge default -> brand
+      row was also wrong; the matrix's own neutral default is right and the code already had it.
+    matrix-grew: >
+      FIELD.layout.row gained min-h-11. The select trigger computed to ~38px against the 44px tap
+      floor, and the README puts that floor in the matrix precisely so it is not derived twice per
+      plugin. The "matrix grows" branch, not a plugin patch.
+    signed-off-by-me: >
+      bg-ink-2 / bg-ink-3 as primary hover grounds. Off-label against the README's tone table, but
+      accent is already an alias of ink-1 used as a fill, so this is one rung down the same ladder,
+      and the contract's own ink-2/ink-3 >= 4.5:1 on canvas guarantee plus contrast symmetry gives
+      the hover pair. The danger cell steps lighter because no darker danger exists.
+    overruled-by-me: >
+      Kept the run's Inset variant->tone rename (strictly a decision to ask for, but leaving
+      variant="destructive" preserves a retired vocabulary word in a public API). Deferred the
+      @source inline(...) alternative to M4, where native-ui hits the same problem through Metro.
+carried-forward:
+  - >
+    A hover/press ground table in ui-core (M7). The sharing line puts interaction states in the
+    plugin, so what would move is the ground TOKENS as data, not the prefixed classes. M4 gives the
+    second data point.
+  - >
+    The ~110 lines solid-ui's harness shares with ui-core's. M4 adds a third copy and settles where
+    the shared home belongs.
+  - >
+    The same validator rule now lives in three spellings across two packages that cannot depend on
+    each other (cli/src/css.ts, ui-core/src/schema.ts, ui-core/scripts/verify.ts). Cross-referenced,
+    but hand-synced.
+  - >
+    M5 debt confirmed live: dialog/index.tsx:123 composes leading-none tracking-tight after
+    text-h3, which per the compose-order law overrides h3's calibrated metrics. Same shape in
+    menu.ts and field.
+  - >
+    Adding a plugin dependency breaks a link:-protocol consumer until it reinstalls. helm hit this
+    on @fcalell/ui-core.
 ---
 
 # plugin-solid-ui adoption
@@ -248,13 +306,15 @@ says they are kept there because they have "NO web counterpart". This story is t
     - **Disabled** is a prop, not a prefix. Kobalte exposes `disabled`, so Button branches in JS:
       `props.disabled ? cn(buttonMuted({ emphasis }), BUTTON_MUTED_LABEL) : buttonLabel({…})`
       (`packages/ui-core/src/variants.ts:31,40`). No `disabled:opacity-50`.
-    - **Hover / active**: `hover:opacity-90 active:opacity-80`. Opacity names no token, so one
-      overlay covers every emphasis × tone cell without restating a fill.
+    - **Hover / active**: the ground moves, never the alpha — opacity fades the control instead of
+      highlighting it and composites the label out of its contrast contract. One ground per
+      emphasis × tone.
     - **Focus ring**: `focus-visible:outline-2 focus-visible:outline-offset-2
       focus-visible:outline-interactive`. The contract has no `ring` token; `interactive` is its
       interactive accent.
     - **Hover surface** on tertiary buttons and menu rows: `hover:bg-surface-2`.
-    - **Placeholder**: `placeholder:text-ink-4`.
+    - **Placeholder**: `placeholder:text-ink-3`. (`ink-4` is contract-reserved for disabled and
+      inert chrome; a placeholder is live content.)
     - **Invalid**: `aria-invalid:border-danger`.
 
 16. **`size="icon"` is not a matrix value.** Growing a shared axis with a web-only value is the
@@ -277,7 +337,7 @@ says they are kept there because they have "NO web counterpart". This story is t
 
     | today         | becomes            |
     | ------------- | ------------------ |
-    | `default`     | `tone="brand"`     |
+    | `default`     | `tone="neutral"` — the matrix default |
     | `secondary`   | `tone="neutral"`   |
     | `outline`     | `tone="neutral"`   |
     | `destructive` | `tone="danger"`    |
