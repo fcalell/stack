@@ -56,6 +56,12 @@ Minimal chrome. Transparent until hovered, when it takes a `surface-2` ground. U
 <Button emphasis="secondary" tone="danger">Remove</Button>
 ```
 
+## Hover and press
+
+The ground moves, never the alpha. A transparent emphasis gains a `surface-2` ground on hover and `surface-3` on press; the filled neutral emphasis steps down the ink ladder to `ink-2` then `ink-3`. Every danger cell lands on `danger-soft`, and the filled one switches its label to `text-danger` to match, since `danger-ink` is built for the solid fill.
+
+Fading the control instead would composite the label with its own fill and drop the `accent-ink` on `accent` contrast the contract guarantees, and it would give a bordered button less contrast on hover rather than more.
+
 ## Sizes
 
 | Size | Min height | Type role | Icon |

@@ -208,7 +208,9 @@ export const CARD = matrix({
 // ── Field ───────────────────────────────────────────────────────────
 
 // The two layouts gap differently on purpose: an input packs its leading media
-// at `row` (8px), a trigger row breathes at `stack` (12px).
+// at `row` (8px), a trigger row breathes at `stack` (12px). Both carry the tap
+// floor: a row lays out its own interior, so without a minimum it computes to
+// whatever its content asks for and lands under 44px.
 export const FIELD = matrix({
 	base: "rounded-control border bg-surface px-3.5",
 	variants: {
@@ -217,7 +219,7 @@ export const FIELD = matrix({
 			focused: "border-ink-1",
 			error: "border-danger",
 		},
-		layout: { input: "gap-row min-h-12", row: "gap-stack py-2" },
+		layout: { input: "gap-row min-h-12", row: "gap-stack min-h-11 py-2" },
 	},
 	defaultVariants: { state: "default", layout: "input" },
 });

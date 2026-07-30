@@ -5,6 +5,7 @@ import { Check, ChevronDown } from "lucide-solid";
 import type { JSX, ValidComponent } from "solid-js";
 import { createMemo, splitProps } from "solid-js";
 import { cn } from "#lib/cn";
+import { fieldMutedClass, fieldShellClass } from "#lib/field";
 
 // ─── Option types ───
 
@@ -50,10 +51,8 @@ function findOption(
 
 // The trigger is a field surface laid out as a row, so it takes the matrix's
 // `row` layout rather than a size axis of its own.
-const TRIGGER_SHELL =
-	"flex w-full flex-row items-center justify-between font-mono text-callout text-ink-1 outline-none transition-all select-none text-left focus-visible:border-ink-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive aria-invalid:border-danger";
-
-const TRIGGER_MUTED = "bg-surface-3 text-ink-4 cursor-not-allowed";
+const TRIGGER_BOX =
+	"flex w-full flex-row items-center justify-between select-none text-left";
 
 type TriggerProps<T extends ValidComponent = "button"> =
 	SelectPrimitive.SelectTriggerProps<T> & {
@@ -74,8 +73,9 @@ function Trigger<T extends ValidComponent = "button">(
 			disabled={local.disabled}
 			class={cn(
 				field({ state: "default", layout: "row" }),
-				TRIGGER_SHELL,
-				local.disabled && TRIGGER_MUTED,
+				fieldShellClass,
+				TRIGGER_BOX,
+				local.disabled && fieldMutedClass,
 				local.class,
 			)}
 			{...rest}
@@ -95,7 +95,7 @@ function Content(props: { class?: string }) {
 		<SelectPrimitive.Portal>
 			<SelectPrimitive.Content
 				class={cn(
-					"z-50 overflow-hidden rounded-md border-2 border-edge bg-surface text-ink-1 outline-none origin-[var(--kb-select-content-transform-origin)] animate-content-hide data-[expanded]:animate-content-show",
+					"z-50 overflow-hidden rounded-xl border-2 border-edge bg-surface text-ink-1 outline-none origin-[var(--kb-select-content-transform-origin)] animate-content-hide data-[expanded]:animate-content-show",
 					props.class,
 				)}
 			>
@@ -195,21 +195,12 @@ function Select(props: SelectProps) {
 				/>
 			)}
 		>
-			<Trigger
-				disabled={props.disabled}
-				class={props.class}
-				aria-invalid={props["aria-invalid"]}
-			>
+			<Trigger class={props.class} aria-invalid={props["aria-invalid"]}>
 				<SelectPrimitive.Value<SelectOption>>
 					{(state) => {
 						const selected = state.selectedOption();
 						return (
-							<span
-								class={cn(
-									"flex-1 truncate",
-									!selected && text({ tone: "ink-4" }),
-								)}
-							>
+							<span class={cn("flex-1 truncate", !selected && "text-ink-3")}>
 								{selected
 									? selected.label
 									: (props.placeholder ?? "Select an option")}

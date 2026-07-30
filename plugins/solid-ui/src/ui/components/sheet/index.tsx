@@ -68,12 +68,12 @@ const sheetVariants = cva(
 	{
 		variants: {
 			position: {
-				top: "inset-x-0 top-0 border-b data-[closed]:slide-out-to-top data-[expanded]:slide-in-from-top",
+				top: "inset-x-0 top-0 rounded-b-sheet border-b data-[closed]:slide-out-to-top data-[expanded]:slide-in-from-top",
 				bottom:
-					"inset-x-0 bottom-0 border-t data-[closed]:slide-out-to-bottom data-[expanded]:slide-in-from-bottom",
-				left: "inset-y-0 left-0 h-full w-3/4 border-r data-[closed]:slide-out-to-left data-[expanded]:slide-in-from-left",
+					"inset-x-0 bottom-0 rounded-t-sheet border-t data-[closed]:slide-out-to-bottom data-[expanded]:slide-in-from-bottom",
+				left: "inset-y-0 left-0 h-full w-3/4 rounded-r-sheet border-r data-[closed]:slide-out-to-left data-[expanded]:slide-in-from-left",
 				right:
-					"inset-y-0 right-0 h-full w-3/4 border-l data-[closed]:slide-out-to-right data-[expanded]:slide-in-from-right",
+					"inset-y-0 right-0 h-full w-3/4 rounded-l-sheet border-l data-[closed]:slide-out-to-right data-[expanded]:slide-in-from-right",
 			},
 			size: {
 				sm: "sm:max-w-sm",

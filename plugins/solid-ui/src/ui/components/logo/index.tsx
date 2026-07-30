@@ -47,7 +47,7 @@ const logoTextClasses = cva(
 				default: "text-h3",
 				lg: "text-h2",
 				xl: "text-h1",
-				"2xl": "text-h1",
+				"2xl": "text-display",
 			},
 			responsive: {
 				false: "",

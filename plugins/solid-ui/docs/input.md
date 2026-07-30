@@ -25,7 +25,7 @@ There is no size axis. `FIELD` has one height, and it is the 48px control floor:
 
 ## Error state
 
-Set `aria-invalid` for a `danger` border:
+Set `aria-invalid` for a `danger` border and a matching outline. Both move together, so the error is not carried by a one-pixel hue change alone:
 
 ```tsx
 <Input aria-invalid="true" value="bad value" />
@@ -33,7 +33,7 @@ Set `aria-invalid` for a `danger` border:
 
 ## Focus
 
-Focus moves the border to `ink-1` and draws an `interactive` outline two pixels off the control.
+Focus moves the border to `ink-1` and draws an `interactive` outline two pixels off the control. The placeholder sits at `ink-3`, the muted ink that still clears 4.5:1.
 
 ## Disabled
 

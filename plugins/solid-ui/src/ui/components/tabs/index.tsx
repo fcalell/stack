@@ -18,7 +18,7 @@ function List(props: { class?: string; children: JSX.Element }) {
 	return (
 		<TabsPrimitive.List
 			class={cn(
-				"relative inline-flex h-10 items-center justify-center rounded-md bg-surface-2 p-1 text-ink-3",
+				"relative inline-flex h-10 items-center justify-center rounded-control bg-surface-2 p-1 text-ink-3",
 				props.class,
 			)}
 		>

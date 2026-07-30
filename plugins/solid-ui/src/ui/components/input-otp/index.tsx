@@ -19,7 +19,7 @@ function Slot(props: { index: number }) {
 			data-active={isActive() || undefined}
 			aria-hidden="true"
 			class={cn(
-				"relative flex h-10 w-10 items-center justify-center rounded-md border-2 border-edge bg-surface-2 font-mono text-callout",
+				"relative flex h-10 w-10 items-center justify-center rounded-control border-2 border-edge bg-surface-2 font-mono text-callout",
 				"data-active:z-10 data-active:outline-2 data-active:outline-interactive data-active:outline-offset-2",
 				"group-aria-invalid:border-danger",
 			)}

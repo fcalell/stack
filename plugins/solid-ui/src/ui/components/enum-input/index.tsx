@@ -63,14 +63,14 @@ function EnumInput(props: EnumInputProps) {
 	return (
 		<div
 			class={cn(
-				"flex min-h-10 flex-wrap items-center gap-1 rounded-md border-2 border-edge bg-surface-2 px-3 py-2 font-mono text-callout transition-all focus-within:border-ink-1",
+				"flex min-h-10 flex-wrap items-center gap-1 rounded-control border-2 border-edge bg-surface-2 px-3 py-2 font-mono text-callout transition-all focus-within:border-ink-1",
 				props.disabled &&
 					"pointer-events-none cursor-not-allowed opacity-[0.38]",
 			)}
 		>
 			<For each={props.values}>
 				{(value, index) => (
-					<span class="flex items-center gap-1 rounded-md bg-edge px-2 py-0.5 font-mono text-micro text-ink-1">
+					<span class="flex items-center gap-1 rounded-full bg-edge px-2 py-0.5 font-mono text-micro text-ink-1">
 						{value}
 						<button
 							type="button"

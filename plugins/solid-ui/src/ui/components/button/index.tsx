@@ -16,13 +16,34 @@ import { cn } from "#lib/cn";
 // The fill matrix carries no ink, so the label table rides the same node.
 // Display, motion and the focus ring are web overlays composed after both.
 const SHELL =
-	"inline-flex cursor-pointer items-center justify-center whitespace-nowrap transition-[color,background-color,border-color,opacity] duration-(--duration-fast) ease-ui focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive [&_svg]:pointer-events-none [&_svg]:shrink-0";
+	"inline-flex cursor-pointer items-center justify-center whitespace-nowrap transition-[color,background-color,border-color] duration-(--duration-fast) ease-ui focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive [&_svg]:pointer-events-none [&_svg]:shrink-0";
 
 // Sized to this plugin's own glyph, which is why it stays out of the matrix.
 const GLYPH: Record<ButtonSize, string> = {
 	sm: "[&_svg]:size-4",
 	md: "[&_svg]:size-4",
 	lg: "[&_svg]:size-5",
+};
+
+// Hover and press move the ground, never the alpha. Fading a filled control
+// composites its label with its own fill, which drops the `accent-ink` on
+// `accent` 4.5:1 the contract guarantees, and it gives a transparent emphasis
+// less contrast rather than more. Every danger cell lands on `danger-soft`,
+// which the contract guarantees `danger` text clears; the filled cell switches
+// its ink to match, since `danger-ink` is built for the solid fill.
+const GROUND: Record<ButtonEmphasis, Record<ButtonTone, string>> = {
+	primary: {
+		neutral: "hover:bg-ink-2 active:bg-ink-3",
+		danger: "hover:bg-danger-soft hover:text-danger active:bg-danger-soft",
+	},
+	secondary: {
+		neutral: "hover:bg-surface-2 active:bg-surface-3",
+		danger: "hover:bg-danger-soft active:bg-danger-soft",
+	},
+	tertiary: {
+		neutral: "hover:bg-surface-2 active:bg-surface-3",
+		danger: "hover:bg-danger-soft active:bg-danger-soft",
+	},
 };
 
 type ButtonProps<T extends ValidComponent = "button"> =
@@ -45,6 +66,7 @@ function Button<T extends ValidComponent = "button">(
 		"disabled",
 	]);
 	const emphasis = () => local.emphasis ?? "primary";
+	const tone = () => local.tone ?? "neutral";
 	const size = () => local.size ?? "md";
 	return (
 		<ButtonPrimitive.Root
@@ -60,10 +82,7 @@ function Button<T extends ValidComponent = "button">(
 							BUTTON_MUTED_LABEL,
 							"pointer-events-none",
 						)
-					: cn(
-							"hover:opacity-90 active:opacity-80",
-							emphasis() === "tertiary" && "hover:bg-surface-2",
-						),
+					: GROUND[emphasis()][tone()],
 				local.class,
 			)}
 			{...rest}

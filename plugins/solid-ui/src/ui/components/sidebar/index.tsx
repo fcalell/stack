@@ -348,7 +348,9 @@ function SidebarInput(props: ComponentProps<typeof Input>) {
 	return (
 		<Input
 			class={cn(
-				"h-8 w-full bg-canvas focus-visible:outline-2 focus-visible:outline-interactive",
+				// The field matrix floors at 48px and this input keeps that floor:
+				// a pinned 32px would lose to it and render as dead weight.
+				"w-full bg-canvas focus-visible:outline-2 focus-visible:outline-interactive",
 				local.class,
 			)}
 			{...others}
@@ -426,7 +428,7 @@ function MenuItem(props: ComponentProps<"li">) {
 }
 
 const menuButtonVariants = cva(
-	"peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-callout outline-none transition-[width,height,padding] hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-interactive active:bg-surface-2 disabled:pointer-events-none disabled:opacity-50 group-has-data-[slot=sidebar-menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-interactive-soft data-[active=true]:font-medium data-[active=true]:text-interactive data-[state=open]:hover:bg-surface-2 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0",
+	"peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-control p-2 text-left text-callout outline-none transition-[width,height,padding] hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-interactive active:bg-surface-2 disabled:pointer-events-none disabled:opacity-50 group-has-data-[slot=sidebar-menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-interactive-soft data-[active=true]:font-medium data-[active=true]:text-interactive data-[state=open]:hover:bg-surface-2 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0",
 	{
 		variants: {
 			variant: {
@@ -603,7 +605,7 @@ function MenuSubButton<T extends ValidComponent = "a">(
 			data-size={local.size}
 			data-active={local.isActive}
 			class={cn(
-				"flex h-7 min-w-0 -translate-x-px items-center gap-2 overflow-hidden rounded-md px-2 text-ink-1 outline-none hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-interactive active:bg-surface-2 disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-ink-3",
+				"flex h-7 min-w-0 -translate-x-px items-center gap-2 overflow-hidden rounded-control px-2 text-ink-1 outline-none hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-interactive active:bg-surface-2 disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-ink-3",
 				"data-[active=true]:bg-interactive-soft data-[active=true]:text-interactive",
 				local.size === "sm" && "text-micro",
 				local.size === "md" && "text-callout",

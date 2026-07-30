@@ -62,7 +62,8 @@ function Description(props: ComponentProps<"p">) {
 }
 
 function Content(props: ComponentProps<"div">) {
-	return <div {...props} />;
+	const [local, rest] = splitProps(props, ["class"]);
+	return <div class={cn(local.class)} {...rest} />;
 }
 
 function Footer(props: ComponentProps<"div">) {

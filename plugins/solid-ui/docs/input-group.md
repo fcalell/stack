@@ -10,7 +10,7 @@ import { InputGroup } from "@fcalell/plugin-solid-ui/components/input-group";
 
 ### InputGroup (Root)
 
-Renders `<fieldset>`. Provides shared border, background, and focus/error state for all children.
+Renders `<fieldset>`. Provides the shared border, background, and focus/error state for all children. It carries the same `rounded-control` radius and 48px floor as a standalone Input, since it is the field surface its borderless Input sits inside.
 
 | Prop | Type | Description |
 |------|------|-------------|
@@ -42,7 +42,7 @@ Compact button styled for inline use. Tertiary emphasis, no border radius.
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `size` | `"xs" \| "sm" \| "icon-xs" \| "icon-sm"` | `"xs"` | Button dimensions |
+| `size` | `"xs" \| "sm" \| "icon-xs" \| "icon-sm"` | `"xs"` | Button dimensions. Each compact size clears the button matrix's own minimum height, so an addon stays inline instead of growing the group |
 | `emphasis` | `"primary" \| "secondary" \| "tertiary"` | `"tertiary"` | Button emphasis |
 | `tone` | `"neutral" \| "danger"` | `"neutral"` | Button tone |
 | `type` | `"button" \| "submit" \| "reset"` | `"button"` | HTML button type |

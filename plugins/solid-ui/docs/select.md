@@ -94,7 +94,7 @@ Pass option groups and sections are rendered automatically with labels:
 
 ## The trigger
 
-The trigger takes the shared `FIELD` matrix at `layout="row"`: `rounded-control`, a 1px `edge` border, a `surface` fill, `px-3.5`, and a `gap-stack` row rhythm. There is no size axis. Focus moves the border to `ink-1`; `aria-invalid` moves it to `danger`; a disabled trigger takes the `surface-3` fill and `ink-4` ink.
+The trigger takes the shared `FIELD` matrix at `layout="row"`: `rounded-control`, a 1px `edge` border, a `surface` fill, `px-3.5`, and a `gap-stack` row rhythm. There is no size axis. Focus moves the border to `ink-1` and draws an `interactive` outline; `aria-invalid` moves the border to `danger` and draws a matching outline; a disabled trigger takes the `surface-3` fill and `ink-4` ink.
 
 ## With form integration
 

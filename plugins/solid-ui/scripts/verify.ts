@@ -5,10 +5,10 @@
 //
 // Every acceptance criterion in `.helm/board/epics/001-ui-core/` story 03 is
 // one check below, so a failing check id traces back to a criterion. The `a`
-// checks resolve the sheet through the real plugin graph —
-// `defineConfig` → `buildGraphFromConfig` → `solidUi.slots.appCssSource` — so
-// the contribution wiring is exercised, not just the renderer. A Tailwind
-// build over the emitted sheet then decides what the vocabulary resolves to.
+// checks resolve the sheet through the real plugin graph (`defineConfig`, then
+// `buildGraphFromConfig`, then `solidUi.slots.appCssSource`), so the
+// contribution wiring is exercised and not just the renderer. A Tailwind build
+// over the emitted sheet then decides what the vocabulary resolves to.
 // The `b` checks read the plugin's own source, and every matrix cell they
 // compare against is produced by calling the ui-core cva rather than written
 // out here, so no check can drift from the matrix it describes.
@@ -687,6 +687,14 @@ const rebuiltSources = new Map(
 	REBUILT.map((name) => [name, read(`src/ui/components/${name}/index.tsx`)]),
 );
 
+// The three field surfaces share one overlay, so the class strings the seven
+// compose live partly in `lib/field.ts`. Every check that reads their class
+// strings reads that module with them.
+const styledSources = new Map([
+	...rebuiltSources,
+	["lib/field", read("src/ui/lib/field.ts")],
+]);
+
 // The retired vocabulary, as the enumerated patterns criterion b1 names. Bare
 // `accent` is absent on purpose: it is a contract token, not shadcn's.
 const RETIRED: Array<[string, RegExp]> = [
@@ -835,10 +843,21 @@ const CONTRACT_COLORS: string[] = [...PER_MODE_COLORS, ...INVARIANT_COLORS];
 
 // ── Source shredding ────────────────────────────────────────────────
 
+// Prose is dropped first: a comment quoting `font-family` otherwise reads as a
+// `font-` utility. Only whole comment lines are dropped, since a `//` inside a
+// string is a URL. A quoted object key goes too, for the same reason: the
+// formatter puts no space before a key's colon and always puts one in a
+// ternary, which separates the two.
 function literals(source: string): string[] {
+	const code = source
+		.split("\n")
+		.filter((line) => !/^\s*(\/\/|\/\*|\*)/.test(line))
+		.join("\n");
 	return [
-		...[...source.matchAll(/"([^"\n]*)"/g)].map((match) => match[1] ?? ""),
-		...[...source.matchAll(/`([^`]*)`/g)].map((match) => match[1] ?? ""),
+		...[...code.matchAll(/"([^"\n]*)"(:?)/g)]
+			.filter((match) => match[2] !== ":")
+			.map((match) => match[1] ?? ""),
+		...[...code.matchAll(/`([^`]*)`/g)].map((match) => match[1] ?? ""),
 	];
 }
 
@@ -946,14 +965,14 @@ check("b1", "the retired vocabulary is gone from src and templates", () => {
 check("b2", "the rebuilt seven name a role, never a raw metric", () => {
 	const roles = new Set<string>(TYPE_ROLES);
 	const hits: string[] = [];
-	for (const [name, source] of rebuiltSources) {
+	for (const [name, source] of styledSources) {
 		for (const match of source.matchAll(/\b(leading|tracking)-([a-z0-9-]+)/g)) {
 			const [whole, , value] = match;
 			if (!value || !roles.has(value)) hits.push(`${name}: ${whole}`);
 		}
 	}
 	assert(hits.length === 0, `off-role metrics survive: ${hits.join(", ")}`);
-	return `${rebuiltSources.size} files carry leading/tracking only as a role name`;
+	return `${styledSources.size} files carry leading/tracking only as a role name`;
 });
 
 check("b3", "the rebuilt seven render through the matrices", () => {
@@ -995,14 +1014,17 @@ check("b3", "the rebuilt seven render through the matrices", () => {
 	}
 
 	// A hand-copied cell would pass every other check, so each literal is
-	// compared against the cells as a set rather than as a string.
+	// compared against the cells as a set rather than as a string. Only cells of
+	// two classes or more are compared: a one-class cell such as TEXT's
+	// `text-ink-3` is a plain contract class, and forbidding it would forbid the
+	// vocabulary this milestone exists to adopt rather than a copied cell.
 	const copies: string[] = [];
-	for (const [name, source] of rebuiltSources) {
+	for (const [name, source] of styledSources) {
 		for (const literal of literals(source)) {
 			const tokens = new Set(classes(literal));
-			if (tokens.size === 0) continue;
+			if (tokens.size < 2) continue;
 			for (const [path, cell] of CELLS) {
-				if (sameSet(tokens, cell))
+				if (cell.size > 1 && sameSet(tokens, cell))
 					copies.push(`${name}: "${literal}" is ${path}`);
 			}
 		}
@@ -1014,9 +1036,18 @@ check("b3", "the rebuilt seven render through the matrices", () => {
 	return "seven files call their family's cvas, button and badge compose two tables on one node, no cell copied";
 });
 
+// The grounds a button moves to on hover and press. No matrix models a button's
+// interaction ground, and the ink ladder is the only in-contract step under a
+// filled neutral control, so these two are named here instead of silently
+// widening b4's rule. Each is asserted to be a contract class that no cell
+// holds and that the plugin actually reaches, so the list cannot grow by
+// accident or rot once a matrix covers it.
+const OVERLAY_GROUNDS = ["bg-ink-2", "bg-ink-3"];
+
 check("b4", "a prefixed class mirrors the cell it stands in for", () => {
 	const checked: string[] = [];
-	for (const [name, source] of rebuiltSources) {
+	const reached = new Set<string>();
+	for (const [name, source] of styledSources) {
 		for (const literal of literals(source)) {
 			for (const token of classes(literal)) {
 				const suffix = variantSuffix(token);
@@ -1025,6 +1056,10 @@ check("b4", "a prefixed class mirrors the cell it stands in for", () => {
 				if (!root || !CELL_ROOTS.has(root)) continue;
 				const rest = suffix.slice(root.length + 1);
 				if (!CONTRACT_COLORS.includes(rest)) continue;
+				if (OVERLAY_GROUNDS.includes(suffix)) {
+					reached.add(suffix);
+					continue;
+				}
 				const cell = CELL_CLASSES.get(suffix);
 				assert(
 					cell !== undefined,
@@ -1033,6 +1068,16 @@ check("b4", "a prefixed class mirrors the cell it stands in for", () => {
 				checked.push(`${token} → ${cell}`);
 			}
 		}
+	}
+
+	for (const ground of OVERLAY_GROUNDS) {
+		const rest = ground.slice(ground.indexOf("-") + 1);
+		assert(CONTRACT_COLORS.includes(rest), `${ground} is not a contract token`);
+		assert(
+			!CELL_CLASSES.has(ground),
+			`${ground} is a matrix cell now, so it does not belong on this list`,
+		);
+		assert(reached.has(ground), `${ground} is listed but never used`);
 	}
 
 	// The two the field surfaces cannot reach through a prop, named so the
@@ -1051,16 +1096,16 @@ check("b4", "a prefixed class mirrors the cell it stands in for", () => {
 		checked.some((entry) => entry.startsWith("aria-invalid:border-danger")),
 		"no component reaches FIELD's error cell by prefix",
 	);
-	return `${checked.length} prefixed classes resolved against a matrix cell`;
+	return `${checked.length} prefixed classes resolved against a matrix cell, ${OVERLAY_GROUNDS.length} named overlay grounds`;
 });
 
 // Not an acceptance criterion. Tailwind drops a candidate it cannot resolve in
 // silence, so a class the namespace resets killed ships as a missing look with
 // no error: `duration-base` reads like a token and needs a `--duration-*`
 // namespace Tailwind has none of. The geometry gate is the real answer. Until
-// it lands the rebuilt seven are held to this, since they are what this story
-// rewrote. The class is looked up exactly as written, prefixes included,
-// because Tailwind emits only the candidates it actually saw.
+// it lands every swept file is held to this. The class is looked up exactly as
+// written, prefixes included, because Tailwind emits only the candidates it
+// actually saw.
 const LOOK_ROOTS = [
 	"bg",
 	"text",
@@ -1095,9 +1140,10 @@ function emitted(css: string, name: string): boolean {
 	return new RegExp(`\\.${escaped}(?![\\w\\\\-])`).test(css);
 }
 
-check("b-resolves", "every class the rebuilt seven name compiles", () => {
+check("b-resolves", "every class the plugin names compiles", () => {
 	const named = new Set<string>();
-	for (const [, source] of rebuiltSources) {
+	for (const path of SWEPT) {
+		const source = readFileSync(path, "utf8");
 		for (const literal of literals(source)) {
 			for (const token of classes(literal)) {
 				if (token.includes("[") || token.includes("]")) continue;
@@ -1124,7 +1170,25 @@ check("b-resolves", "every class the rebuilt seven name compiles", () => {
 		unscanned.length === 0,
 		`matrix cells the build never sees: ${unscanned.sort().join(", ")}`,
 	);
-	return `${named.size} classes named in the seven files and ${CELL_CLASSES.size} matrix cells all resolve`;
+
+	// A custom property reaches the sheet through a JS style object or an
+	// arbitrary property as easily as through a class, and no class-name pattern
+	// sees either. Run A's `@theme` rewrite deleted the shadcn token names, so
+	// every `var(--color-*)` the plugin still spells has to be a key the block
+	// actually emits or it resolves to nothing.
+	const orphans = new Set<string>();
+	for (const path of SWEPT) {
+		const source = readFileSync(path, "utf8");
+		for (const match of source.matchAll(/var\(\s*(--color-[a-z0-9-]+)/g)) {
+			const name = match[1];
+			if (name && !themeMap.has(name)) orphans.add(name);
+		}
+	}
+	assert(
+		orphans.size === 0,
+		`named tokens the @theme block does not emit: ${[...orphans].sort().join(", ")}`,
+	);
+	return `${named.size} classes across ${SWEPT.length} files, ${CELL_CLASSES.size} matrix cells, and every named --color-* resolve`;
 });
 
 check("b5", "the class functions are gone", () => {

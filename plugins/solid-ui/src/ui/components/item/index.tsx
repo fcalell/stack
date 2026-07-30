@@ -35,7 +35,7 @@ function ItemSeparator(props: ComponentProps<"hr">) {
 // ─── Root ───
 
 const itemClasses = cva(
-	"group/item flex w-full flex-wrap items-center rounded-md text-caption outline-none transition-colors duration-100 hover:bg-surface-2 focus-visible:border-interactive focus-visible:outline-2 focus-visible:outline-interactive focus-visible:outline-offset-2",
+	"group/item flex w-full flex-wrap items-center rounded-control text-caption outline-none transition-colors duration-100 hover:bg-surface-2 focus-visible:border-interactive focus-visible:outline-2 focus-visible:outline-interactive focus-visible:outline-offset-2",
 	{
 		variants: {
 			variant: {

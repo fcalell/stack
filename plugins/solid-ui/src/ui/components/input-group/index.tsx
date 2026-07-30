@@ -20,7 +20,11 @@ function Root(props: RootProps) {
 			data-slot="input-group"
 			aria-label={local.legend}
 			class={cn(
-				"relative flex h-8 w-full min-w-0 items-center rounded-md border-2 border-edge bg-surface-2 outline-none transition-colors has-[>textarea]:h-auto has-[[data-slot=input-group-control]:focus-visible]:border-ink-1 has-[[data-slot][aria-invalid=true]]:border-danger has-disabled:bg-surface has-disabled:opacity-[0.38] has-[>[data-align=block-end]]:h-auto has-[>[data-align=block-end]]:flex-col has-[>[data-align=block-end]]:[&>input]:pt-3 has-[>[data-align=block-start]]:h-auto has-[>[data-align=block-start]]:flex-col has-[>[data-align=block-start]]:[&>input]:pb-3 has-[>[data-align=inline-end]]:[&>input]:pr-1.5 has-[>[data-align=inline-start]]:[&>input]:pl-1.5 in-data-[slot=combobox-content]:focus-within:border-inherit",
+				// The group is the field surface its borderless Input sits inside, so
+				// it carries that control's 48px floor. A pinned height would lose to
+				// the child's own `min-h` and render as dead weight, which is why the
+				// `h-auto` escapes that used to undo it are gone too.
+				"relative flex min-h-12 w-full min-w-0 items-center rounded-control border-2 border-edge bg-surface-2 outline-none transition-colors has-[[data-slot=input-group-control]:focus-visible]:border-ink-1 has-[[data-slot][aria-invalid=true]]:border-danger has-disabled:bg-surface has-disabled:opacity-[0.38] has-[>[data-align=block-end]]:flex-col has-[>[data-align=block-end]]:[&>input]:pt-3 has-[>[data-align=block-start]]:flex-col has-[>[data-align=block-start]]:[&>input]:pb-3 has-[>[data-align=inline-end]]:[&>input]:pr-1.5 has-[>[data-align=inline-start]]:[&>input]:pl-1.5 in-data-[slot=combobox-content]:focus-within:border-inherit",
 				local.class,
 			)}
 			{...rest}
@@ -68,15 +72,19 @@ function Addon(props: AddonProps) {
 
 // ─── GroupButton ───
 
+// An addon button is a secondary affordance inside a control that already
+// carries the tap floor, so each compact size clears the button matrix's own
+// `min-h` explicitly. Without that the height is emitted and inert, and a
+// 44px button renders inside a 48px group beside its input.
 const groupButtonClasses = cva(
 	"flex flex-row items-center gap-2 rounded-none text-micro shadow-none",
 	{
 		variants: {
 			size: {
-				xs: "h-6 gap-1 px-2 [&>svg:not([class*='size-'])]:size-3.5",
+				xs: "h-6 min-h-0 gap-1 px-2 [&>svg:not([class*='size-'])]:size-3.5",
 				sm: "",
-				"icon-xs": "size-6 p-0 has-[>svg]:p-0",
-				"icon-sm": "size-8 p-0 has-[>svg]:p-0",
+				"icon-xs": "size-6 min-h-0 p-0 has-[>svg]:p-0",
+				"icon-sm": "size-8 min-h-0 p-0 has-[>svg]:p-0",
 			},
 		},
 		defaultVariants: {
