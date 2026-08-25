@@ -9,7 +9,6 @@ import {
 	Switch,
 	untrack,
 } from "solid-js";
-import { Button } from "#components/button";
 import { EmptyState } from "#components/empty-state";
 import { Loader } from "#components/loader";
 
@@ -66,9 +65,7 @@ function QueryBoundary<TData, TError = Error>(
 			<Match when={state() === "pending"}>
 				{showLoading()
 					? (props.loadingFallback ?? (
-							<div
-								class="flex items-center justify-center py-8"
-							>
+							<div class="flex items-center justify-center py-8">
 								<Loader text={props.loadingText ?? "loading..."} />
 							</div>
 						))
@@ -81,18 +78,18 @@ function QueryBoundary<TData, TError = Error>(
 					)
 				) : (
 					<EmptyState
-						icon={<TriangleAlert />}
+						icon={TriangleAlert}
 						title="Failed to load"
 						description={
 							props.query.error instanceof Error
 								? props.query.error.message
 								: "An unexpected error occurred"
 						}
-					>
-						<Button size="sm" onClick={() => props.query.refetch()}>
-							Retry
-						</Button>
-					</EmptyState>
+						action={{
+							label: "Retry",
+							onSelect: () => props.query.refetch(),
+						}}
+					/>
 				)}
 			</Match>
 			<Match

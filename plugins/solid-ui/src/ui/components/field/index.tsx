@@ -1,3 +1,4 @@
+import { Polymorphic } from "@kobalte/core/polymorphic";
 import { CircleAlert } from "lucide-solid";
 import type { ComponentProps, ParentProps } from "solid-js";
 import { Show, splitProps } from "solid-js";
@@ -46,7 +47,8 @@ function FieldLabel(
 	},
 ) {
 	return (
-		<label
+		<Polymorphic
+			as="label"
 			data-slot="field-label"
 			class={cn(
 				labelClass,
@@ -72,7 +74,7 @@ function Description(
 		<p
 			data-slot="field-description"
 			class={cn(
-				"text-left text-caption font-normal leading-normal text-ink-3",
+				"text-left text-caption font-normal text-ink-3",
 				"last:mt-0",
 				"group-has-data-[orientation=horizontal]/field:text-balance",
 				"[&>a]:underline [&>a]:underline-offset-4 [&>a:hover]:text-ink-1",

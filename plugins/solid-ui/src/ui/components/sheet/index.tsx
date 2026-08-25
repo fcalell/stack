@@ -153,10 +153,7 @@ function Title<T extends ValidComponent = "h2">(
 	props: PolymorphicProps<T, TitleProps<T>>,
 ) {
 	return (
-		<SheetPrimitive.Title
-			class="text-h3 font-semibold text-ink-1"
-			{...props}
-		/>
+		<SheetPrimitive.Title class="text-h3 font-semibold text-ink-1" {...props} />
 	);
 }
 
@@ -171,10 +168,7 @@ function Description<T extends ValidComponent = "p">(
 	props: PolymorphicProps<T, DescriptionProps<T>>,
 ) {
 	return (
-		<SheetPrimitive.Description
-			class="text-callout text-ink-3"
-			{...props}
-		/>
+		<SheetPrimitive.Description class="text-callout text-ink-3" {...props} />
 	);
 }
 

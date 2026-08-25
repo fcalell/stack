@@ -2,7 +2,7 @@ import * as CheckboxPrimitive from "@kobalte/core/checkbox";
 import type { PolymorphicProps } from "@kobalte/core/polymorphic";
 import { cva, type VariantProps } from "class-variance-authority";
 import { Check, Minus } from "lucide-solid";
-import type { JSX, ValidComponent } from "solid-js";
+import type { ValidComponent } from "solid-js";
 import { Match, Show, Switch, splitProps } from "solid-js";
 
 const checkboxVariants = cva(
@@ -24,7 +24,7 @@ const checkboxVariants = cva(
 type CheckboxProps<T extends ValidComponent = "div"> =
 	CheckboxPrimitive.CheckboxRootProps<T> &
 		VariantProps<typeof checkboxVariants> & {
-			label?: JSX.Element;
+			label?: string;
 			class?: never;
 			style?: never;
 			classList?: never;
@@ -40,9 +40,7 @@ function Checkbox<T extends ValidComponent = "div">(
 			{...rest}
 		>
 			<CheckboxPrimitive.Input class="peer" />
-			<CheckboxPrimitive.Control
-				class={checkboxVariants({ size: local.size })}
-			>
+			<CheckboxPrimitive.Control class={checkboxVariants({ size: local.size })}>
 				<CheckboxPrimitive.Indicator>
 					<Switch>
 						<Match when={!rest.indeterminate}>
@@ -55,7 +53,7 @@ function Checkbox<T extends ValidComponent = "div">(
 				</CheckboxPrimitive.Indicator>
 			</CheckboxPrimitive.Control>
 			<Show when={local.label}>
-				<CheckboxPrimitive.Label class="select-none text-callout leading-none">
+				<CheckboxPrimitive.Label class="select-none text-callout">
 					{local.label}
 				</CheckboxPrimitive.Label>
 			</Show>

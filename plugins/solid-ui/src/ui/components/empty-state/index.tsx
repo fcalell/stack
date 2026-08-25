@@ -1,57 +1,59 @@
+import type { Action } from "@fcalell/ui-core/descriptors";
 import { Polymorphic } from "@kobalte/core/polymorphic";
-import type {
-	ComponentProps,
-	JSX,
-	ParentProps,
-	ValidComponent,
-} from "solid-js";
-import { children as resolveChildren, Show, splitProps } from "solid-js";
+import type { LucideIcon } from "lucide-solid";
+import type { ValidComponent } from "solid-js";
+import { Show } from "solid-js";
+import { Dynamic } from "solid-js/web";
+import { Button } from "#components/button";
 
-type EmptyStateProps = ParentProps<
-	ComponentProps<"div"> & {
-		icon?: JSX.Element;
-		title: string;
-		titleAs?: ValidComponent;
-		description?: string;
-		class?: never;
-		style?: never;
-		classList?: never;
-	}
->;
+type EmptyStateProps = {
+	icon?: LucideIcon;
+	title: string;
+	// The documented `as`-hole, not a class channel.
+	titleAs?: ValidComponent;
+	description?: string;
+	action?: Action<never>;
+	class?: never;
+	style?: never;
+	classList?: never;
+};
 
 function EmptyState(props: EmptyStateProps) {
-	const [local, rest] = splitProps(props, [
-		"icon",
-		"title",
-		"titleAs",
-		"description",
-		"children",
-	]);
-	const resolved = resolveChildren(() => local.children);
 	return (
 		<div
 			role="status"
 			class="flex flex-col items-center justify-center gap-4 py-16 text-center"
-			{...rest}
 		>
-			<Show when={local.icon}>
-				<div aria-hidden="true" class="text-edge [&_svg]:size-12">
-					{local.icon}
-				</div>
+			<Show when={props.icon}>
+				{(icon) => (
+					<div aria-hidden="true" class="text-edge">
+						<Dynamic component={icon()} class="size-12" />
+					</div>
+				)}
 			</Show>
 			<div class="flex flex-col items-center gap-2">
 				<Polymorphic
-					as={local.titleAs ?? "h3"}
+					as={props.titleAs ?? "h3"}
 					class="text-callout font-bold uppercase tracking-widest text-ink-1"
 				>
-					{local.title}
+					{props.title}
 				</Polymorphic>
-				<Show when={local.description}>
-					<p class="text-callout text-ink-3">{local.description}</p>
+				<Show when={props.description}>
+					<p class="text-callout text-ink-3">{props.description}</p>
 				</Show>
 			</div>
-			<Show when={resolved()}>
-				<div class="flex flex-row items-center gap-2">{resolved()}</div>
+			<Show when={props.action}>
+				{(action) => (
+					<Button
+						emphasis="secondary"
+						size="md"
+						loading={action().loading}
+						disabled={action().disabled}
+						onClick={() => action().onSelect()}
+					>
+						{action().label}
+					</Button>
+				)}
 			</Show>
 		</div>
 	);

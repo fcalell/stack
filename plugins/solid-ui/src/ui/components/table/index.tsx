@@ -109,10 +109,7 @@ function Cell(
 	},
 ) {
 	return (
-		<td
-			class="p-2 align-middle [&:has([role=checkbox])]:pr-0"
-			{...props}
-		/>
+		<td class="p-2 align-middle [&:has([role=checkbox])]:pr-0" {...props} />
 	);
 }
 

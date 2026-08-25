@@ -66,14 +66,10 @@ export function createApp(options: CreateAppOptions = {}): void {
 
 function defaultErrorFallback(err: Error, reset: () => void): JSX.Element {
 	return (
-		<EmptyState title="Something went wrong" description={err.message}>
-			<button
-				type="button"
-				onClick={reset}
-				class="text-callout underline underline-offset-4"
-			>
-				Retry
-			</button>
-		</EmptyState>
+		<EmptyState
+			title="Something went wrong"
+			description={err.message}
+			action={{ label: "Retry", onSelect: reset }}
+		/>
 	);
 }

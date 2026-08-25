@@ -20,11 +20,7 @@ function Root(
 	const titleId = createUniqueId();
 	return (
 		<SectionContext.Provider value={{ titleId }}>
-			<section
-				aria-labelledby={titleId}
-				class="flex flex-1 flex-col"
-				{...rest}
-			>
+			<section aria-labelledby={titleId} class="flex flex-1 flex-col" {...rest}>
 				{local.children}
 			</section>
 		</SectionContext.Provider>

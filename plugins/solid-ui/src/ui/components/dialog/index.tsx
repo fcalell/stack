@@ -95,7 +95,10 @@ function Header(
 	},
 ) {
 	return (
-		<div class="flex flex-col space-y-1.5 text-center sm:text-left" {...props} />
+		<div
+			class="flex flex-col space-y-1.5 text-center sm:text-left"
+			{...props}
+		/>
 	);
 }
 
@@ -126,12 +129,7 @@ type TitleProps<T extends ValidComponent = "h2"> =
 function Title<T extends ValidComponent = "h2">(
 	props: PolymorphicProps<T, TitleProps<T>>,
 ) {
-	return (
-		<DialogPrimitive.Title
-			class="text-h3 font-semibold leading-none tracking-tight"
-			{...props}
-		/>
-	);
+	return <DialogPrimitive.Title class="text-h3 font-semibold" {...props} />;
 }
 
 type DescriptionProps<T extends ValidComponent = "p"> =
@@ -144,7 +142,9 @@ type DescriptionProps<T extends ValidComponent = "p"> =
 function Description<T extends ValidComponent = "p">(
 	props: PolymorphicProps<T, DescriptionProps<T>>,
 ) {
-	return <DialogPrimitive.Description class="text-callout text-ink-3" {...props} />;
+	return (
+		<DialogPrimitive.Description class="text-callout text-ink-3" {...props} />
+	);
 }
 
 // ─── DialogProvider ───

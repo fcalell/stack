@@ -2,6 +2,7 @@ import * as MenuPrimitive from "@kobalte/core/context-menu";
 import { Check, ChevronRight, Circle } from "lucide-solid";
 import type { JSX } from "solid-js";
 import { For, Match, Switch } from "solid-js";
+import { Dynamic } from "solid-js/web";
 import type {
 	MenuAction,
 	MenuCheckbox,
@@ -89,7 +90,13 @@ function renderItem(item: MenuItem) {
 					return (
 						<MenuPrimitive.Sub gutter={2} shift={-5}>
 							<MenuPrimitive.SubTrigger class={cn(menuItemClass, "gap-2")}>
-								{sub.icon}
+								{sub.icon && (
+									<Dynamic
+										component={sub.icon}
+										class="size-4"
+										aria-hidden="true"
+									/>
+								)}
 								{sub.label}
 								<ChevronRight class="ml-auto size-4" aria-hidden="true" />
 							</MenuPrimitive.SubTrigger>
@@ -111,7 +118,13 @@ function renderItem(item: MenuItem) {
 							disabled={action.disabled}
 							class={cn(menuItemClass, "gap-2")}
 						>
-							{action.icon}
+							{action.icon && (
+								<Dynamic
+									component={action.icon}
+									class="size-4"
+									aria-hidden="true"
+								/>
+							)}
 							{action.label}
 							{action.shortcut && (
 								<kbd class={menuShortcutClass}>{action.shortcut}</kbd>

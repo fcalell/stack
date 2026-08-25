@@ -104,7 +104,12 @@ function GroupButton(props: GroupButtonProps) {
 		},
 		props,
 	);
-	const [local, rest] = splitProps(merged, ["type", "emphasis", "tone", "size"]);
+	const [local, rest] = splitProps(merged, [
+		"type",
+		"emphasis",
+		"tone",
+		"size",
+	]);
 	return (
 		<GroupButtonSizeContext.Provider value={() => local.size}>
 			<Button

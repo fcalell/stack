@@ -387,9 +387,7 @@ function Group(
 		classList?: never;
 	},
 ) {
-	return (
-		<div class="relative flex w-full min-w-0 flex-col p-2" {...props} />
-	);
+	return <div class="relative flex w-full min-w-0 flex-col p-2" {...props} />;
 }
 
 function GroupLabel<T extends ValidComponent = "div">(
@@ -533,12 +531,13 @@ function MenuButton<T extends ValidComponent = "button">(
 	);
 }
 
-type MenuActionProps<T extends ValidComponent = "button"> = ComponentProps<T> & {
-	showOnHover?: boolean;
-	class?: never;
-	style?: never;
-	classList?: never;
-};
+type MenuActionProps<T extends ValidComponent = "button"> =
+	ComponentProps<T> & {
+		showOnHover?: boolean;
+		class?: never;
+		style?: never;
+		classList?: never;
+	};
 
 function MenuAction<T extends ValidComponent = "button">(
 	rawProps: PolymorphicProps<T, MenuActionProps<T>>,

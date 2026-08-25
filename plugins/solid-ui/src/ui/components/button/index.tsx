@@ -9,8 +9,9 @@ import {
 } from "@fcalell/ui-core/variants";
 import * as ButtonPrimitive from "@kobalte/core/button";
 import type { PolymorphicProps } from "@kobalte/core/polymorphic";
+import { LoaderCircle } from "lucide-solid";
 import type { JSX, ValidComponent } from "solid-js";
-import { splitProps } from "solid-js";
+import { Show, splitProps } from "solid-js";
 import { cn } from "#lib/cn";
 import { groupButtonClasses, useGroupButtonSize } from "#lib/input-group";
 
@@ -52,6 +53,7 @@ type ButtonProps<T extends ValidComponent = "button"> =
 		emphasis?: ButtonEmphasis;
 		tone?: ButtonTone;
 		size?: ButtonSize;
+		loading?: boolean;
 		children?: JSX.Element;
 		class?: never;
 		style?: never;
@@ -66,6 +68,8 @@ function Button<T extends ValidComponent = "button">(
 		"tone",
 		"size",
 		"disabled",
+		"loading",
+		"children",
 	]);
 	const emphasis = () => local.emphasis ?? "primary";
 	const tone = () => local.tone ?? "neutral";
@@ -73,7 +77,7 @@ function Button<T extends ValidComponent = "button">(
 	const groupSize = useGroupButtonSize();
 	return (
 		<ButtonPrimitive.Root
-			disabled={local.disabled}
+			disabled={local.disabled || local.loading}
 			class={cn(
 				button({ emphasis: emphasis(), tone: local.tone, size: size() }),
 				buttonLabel({ emphasis: emphasis(), tone: local.tone, size: size() }),
@@ -86,10 +90,18 @@ function Button<T extends ValidComponent = "button">(
 							"pointer-events-none",
 						)
 					: GROUND[emphasis()][tone()],
+				local.loading && "pointer-events-none",
 				groupSize && groupButtonClasses({ size: groupSize() }),
 			)}
 			{...rest}
-		/>
+		>
+			{/* The glyph is anatomy, not a matrix cell: it spins beside the label
+			    in the label's own content tone via currentColor. */}
+			<Show when={local.loading}>
+				<LoaderCircle class="animate-spin" aria-hidden="true" />
+			</Show>
+			{local.children}
+		</ButtonPrimitive.Root>
 	);
 }
 
