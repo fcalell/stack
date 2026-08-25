@@ -4,7 +4,8 @@
 //   pnpm --filter @fcalell/plugin-native-ui verify
 //
 // Every machine-checkable acceptance criterion of `.helm/board/epics/001-ui-core/`
-// story 04 is one check below, so a failing check id traces back to a criterion.
+// stories 04 and 05 (the native run) is one check below, so a failing check id
+// traces back to a criterion.
 // The sheet is rendered via `aggregateGlobalCss` with default options (no
 // consumer project exists to drive the graph), then compiled twice: through
 // uniwind's own dist compiler (the exact code path Metro runs, minus a
@@ -13,6 +14,7 @@
 // it re-stamps uniwind's mutable in-package `uniwind.css` artifact from our
 // own emission (machine-shared pnpm-store state another project may have
 // stamped last), so the build reads a deterministic artifact.
+import { execFileSync } from "node:child_process";
 import {
 	existsSync,
 	mkdirSync,
@@ -32,6 +34,7 @@ import {
 } from "@fcalell/ui-core/emit";
 import {
 	assert,
+	binPath,
 	blockBody,
 	check,
 	classes,
@@ -59,6 +62,7 @@ import {
 	buttonMuted,
 	card,
 	field,
+	rhythm,
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
@@ -125,6 +129,7 @@ const NATIVE_OVERLAYS = [
 	"text-ink-1",
 	"text-ink-2",
 	"text-ink-3",
+	"text-interactive",
 	"text-oncover-fg",
 	// type roles and weights
 	"text-body",
@@ -377,6 +382,11 @@ const FAMILIES: Family[] = [
 			state: ["default", "focused", "error"],
 			layout: ["input", "row"],
 		},
+	},
+	{
+		name: "RHYTHM",
+		cva: rhythm as Family["cva"],
+		axes: { unit: ["section", "stack", "row", "pair"] },
 	},
 ];
 
@@ -769,7 +779,10 @@ check("a8", "every named --color-* token is an emitted @theme key", () => {
 
 	// Context-free on purpose: a token reaches the runtime through
 	// `var(--color-*)` in CSS as easily as through a quoted name handed to
-	// `useCSSVariable`, and no single wrapper pattern sees both.
+	// `useCSSVariable`, and no single wrapper pattern sees both. The spinner's
+	// `--color-${tone}` template evades this scan rather than tripping it
+	// (nothing follows the prefix for the regex to match); harmless because
+	// `ContentTone` is token-typed and ui-core pins every member.
 	const orphans = new Set<string>();
 	let named = 0;
 	for (const path of files) {
@@ -803,6 +816,136 @@ check("b5", "the overlay allowlist mirrors the swept sources", () => {
 		`the allowlist carries classes no source names: ${stale.sort().join(", ")}`,
 	);
 	return `${enumerated.size} classes enumerated from src/ui, allowlist equal`;
+});
+
+// ── The closure ─────────────────────────────────────────────────────
+
+const COMPONENT_FILES = walk(
+	resolve(pkgDir, "src/ui/components"),
+	/\.(ts|tsx)$/,
+);
+
+// Every transformation below preserves the line structure (a comment line
+// blanks to "", in-line spans blank to spaces), so a match offset in any
+// transformed string still maps to the real source line and a hit can quote
+// it verbatim instead of reconstructing text.
+function blank(span: string): string {
+	return span.replace(/[^\n]/g, " ");
+}
+
+// Comment lines drop (the closures are named in prose); string literals
+// empty out, since a quoted value is data rather than a reachable channel.
+function codeOf(source: string): string {
+	return source
+		.split("\n")
+		.map((line) => (/^\s*(\/\/|\/\*|\*)/.test(line) ? "" : line))
+		.join("\n")
+		.replace(/"[^"\n]*"/g, blank);
+}
+
+check("b6", "every closed prop is ?: never and no channel survives", () => {
+	const hits: string[] = [];
+	for (const path of COMPONENT_FILES) {
+		const raw = readFileSync(path, "utf8");
+		const rawLines = raw.split("\n");
+		const name = relative(pkgDir, path);
+		// `haystack` is whichever transformed string the match came from; its
+		// newlines are the source's, so the offset gives the real line number
+		// and the hit quotes the actual source line.
+		const flag = (haystack: string, offset: number, why: string): void => {
+			const line = haystack.slice(0, offset).split("\n").length;
+			const text = (rawLines[line - 1] ?? "").trim();
+			hits.push(`${name}:${line}: ${why}: ${text}`);
+		};
+		// Decision 1 closes uniformly, so the declaration is demanded in every
+		// component module instead of allow-listing exceptions.
+		if (path.endsWith("index.tsx")) {
+			for (const declaration of ["className?: never", "style?: never"]) {
+				if (!raw.includes(declaration)) {
+					hits.push(`${name}: no ${declaration} declaration`);
+				}
+			}
+		}
+		const code = codeOf(raw);
+		// Every optional declaration of className, style, or any uniwind
+		// *ClassName channel must be `?: never` (word-bounded, so an internal
+		// `placeholderTextColorClassName="…"` attribute never false-positives).
+		for (const match of code.matchAll(
+			/\b(?:[a-zA-Z]*[cC]lassName|style)\?:\s*(?!never\b)\S+/g,
+		)) {
+			flag(code, match.index ?? 0, "an open declaration");
+		}
+		// The `?: never` declarations and the component's own JSX class
+		// attributes are the two permitted forms; blank them, then no class
+		// channel token may remain (a destructured `className`, a
+		// props-sourced read inside cn(), a re-forward).
+		const permitted = code
+			.replace(/\b[a-zA-Z]*[cC]lassName\?:\s*never\b/g, blank)
+			.replace(/\b[a-zA-Z]*[cC]lassName=/g, blank);
+		for (const match of permitted.matchAll(/\b[a-zA-Z]*[cC]lassName\b/g)) {
+			flag(permitted, match.index ?? 0, "a surviving class channel");
+		}
+		// No props-sourced class or style read under any destructure alias.
+		for (const match of code.matchAll(
+			/\b(?:props|rest|local|others|merged)\.(?:className|style)\b/g,
+		)) {
+			flag(code, match.index ?? 0, "a props-sourced class value");
+		}
+		// A quoted-key declaration (`"className"?: string`) plus bracket access
+		// slips past every identifier scan above, so the quoted spelling is
+		// banned outright. Comments drop; quotes have to survive, so this scan
+		// runs on its own transform.
+		const quoted = raw
+			.split("\n")
+			.map((line) => (/^\s*(\/\/|\/\*|\*)/.test(line) ? "" : line))
+			.join("\n");
+		for (const match of quoted.matchAll(/"[a-zA-Z]*[cC]lassName"/g)) {
+			flag(quoted, match.index ?? 0, "a quoted closed-channel token");
+		}
+	}
+	assert(hits.length === 0, `the closure leaks:\n  ${hits.join("\n  ")}`);
+	return `${COMPONENT_FILES.length} component files: every declaration ?: never, no surviving channel token (quoted forms included), no props-sourced class`;
+});
+
+check("b7", "the closure fixture proves every prop at the type layer", () => {
+	const fixturePath = resolve(fixtureDir, "closure.tsx");
+	const source = readFileSync(fixturePath, "utf8");
+	const directives = source.match(/@ts-expect-error/g) ?? [];
+	assert(
+		directives.length >= 90,
+		`only ${directives.length} @ts-expect-error sites`,
+	);
+	for (const token of [
+		'className="x"',
+		"style={{",
+		'colorClassName="text-ink-1"',
+		'placeholderTextColorClassName="text-ink-1"',
+		'selectionColorClassName="text-ink-1"',
+		"backdropComponent",
+		"containerComponent",
+		"backgroundStyle",
+		"onCheckedChange",
+		'variant="success"',
+		'color="#fff"',
+	]) {
+		assert(source.includes(token), `the fixture never passes ${token}`);
+	}
+	// Every component dir is reached through its public subpath, so the
+	// closure is proven the way a consumer imports it.
+	for (const dir of readdirSync(resolve(pkgDir, "src/ui/components"))) {
+		assert(
+			source.includes(`/components/${dir}"`),
+			`the fixture never imports components/${dir}`,
+		);
+	}
+	// tsc over the package (scripts/ is inside the include) proves every
+	// directive fires and every un-annotated legal usage still compiles: a
+	// reopened prop turns a directive unused and fails the run.
+	execFileSync(binPath(pkgDir, "tsc"), ["--noEmit"], {
+		cwd: pkgDir,
+		stdio: "pipe",
+	});
+	return `${directives.length} closures under @ts-expect-error, tsc --noEmit exits 0`;
 });
 
 // ── Report ──────────────────────────────────────────────────────────
