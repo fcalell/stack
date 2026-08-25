@@ -145,6 +145,13 @@ solidUi({
 | `solid.slots.providers` | `MetaProvider` (wrap, `order: 0`) + `Toaster` (sibling) |
 | `solid.slots.homeScaffold` (override) | Design-system home page (`Card` + `Card.Title` + `Card.Description`) |
 | `cliSlots.artifactFiles` | Writes `.stack/app.css` from `solidUi.slots.appCssSource` |
+| `cliSlots.buildSteps` | `solid-ui-geometry-gate`, the pre-phase geometry gate |
+
+The `solid-ui-geometry-gate` build step runs before the Vite build on every `stack build`. It
+scans the consumer's `src/` tree (skipping any path with a `ui/` segment) with the web host rule
+and fails the build on any class outside the closed geometry vocabulary, or on a class attribute
+riding a non-intrinsic tag. The vocabulary, the host rule, and the coverage statement live in the
+`@fcalell/ui-core` README.
 
 ### Remove
 

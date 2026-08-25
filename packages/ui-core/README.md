@@ -3,9 +3,10 @@
 The design system both stack UI plugins render from: one closed token contract, a parametric OKLCH
 derivation, and the laws that say which token to pick. The seven contract subpaths export
 build-time data only, so each plugin renders its own CSS from the same records and ui-core stays
-framework-free; the eighth, `./harness`, is internal Node tooling for the packages' verify scripts.
+framework-free. The other two are Node-only: `./harness` is internal tooling for the packages'
+verify scripts, and `./gate` is the geometry scanner the UI plugins run at build time.
 
-Eight subpaths:
+Nine subpaths:
 
 - `@fcalell/ui-core/tokens`: the contract as data, including the calibrated default values.
 - `@fcalell/ui-core/schema`: the zod theme schema and the `Theme` input type.
@@ -20,6 +21,10 @@ Eight subpaths:
 - `@fcalell/ui-core/harness`: internal. The shared core of the packages' `scripts/verify.ts`
   harnesses (check runner, CSS parsing, the Tailwind-CLI driver, matrix-cell enumeration).
   devDependency-only tooling, not part of the design contract.
+- `@fcalell/ui-core/gate`: Node-only. The closed geometry vocabulary as data (`GEOMETRY`,
+  `NATIVE_GEOMETRY_HOSTS`) and `scanGeometry`, the scanner behind each UI plugin's pre-build
+  geometry gate. Importing it loads ts-morph, so it stays off every non-build path and out of the
+  design contract.
 
 The contract has two modes, `light` and `dark`. `themeTokens` seeds the default mode's colors into
 the `@theme` block as well, because Tailwind v4 generates no utility from a property declared only
@@ -317,3 +322,62 @@ riding body text.
 `cn("leading-h1", "text-body")` and `cn("tracking-h1", "text-body")` each return `text-body` alone
 and the earlier role's metrics are gone. `cn("text-body", "leading-h1")` keeps both, as does a
 role beside its own `tracking-`.
+
+## The geometry gate
+
+`@fcalell/ui-core/gate` closes the call-site boundary. Outside a `ui/` directory, consumer app
+code may put a class only on a raw host element, and only from the closed geometry vocabulary
+below; every look belongs to the matrices. Each UI plugin runs `scanGeometry` over the consumer's
+`src/` tree as a pre-phase build step, skipping any path with a `ui/` segment, so a violation
+fails `stack build` naming the file, the line, and the token.
+
+### The vocabulary
+
+One closed list for both platforms. The exacts:
+
+- flex plumbing: `flex`, `flex-1`, `flex-row`, `flex-col`, `flex-wrap`, `grow`, `shrink-0`.
+- positioning, the zero offsets only: `absolute`, `relative`, `inset-0`, `inset-x-0`,
+  `inset-y-0`, `top-0`, `bottom-0`, `left-0`, `right-0`.
+- sizing, the non-numeric members: `w-full`, `h-full`, `h-screen`, `min-w-0`, `min-h-0`,
+  `min-h-full`, `min-h-screen`, `max-w-full`, `max-w-none`.
+- overflow: `overflow-hidden`, `overflow-auto`, `overflow-x-auto`, `overflow-y-auto`,
+  `overflow-x-hidden`, `overflow-y-hidden`.
+- the seven `gap-<rung>` cells, derived from the spacing rungs.
+
+Four prefixes: `items-`, `justify-`, `self-`, `z-`. The `justify-` prefix also matches the
+grid-only tokens `justify-items-*` and `justify-self-*`; harmless, because they do nothing
+without `grid`, which is banned.
+
+Three unconditional bans inside any candidate token: `[`, `(`, and `:`. Arbitrary values are
+illegal in both spellings, and a variant prefix (`hover:`, `sm:`, `dark:`) on a geometry class
+has no legal reading, so the token as a whole is a violation before membership is checked.
+
+### The host rule
+
+Outside `ui/`, a class may sit only on a raw host element. On web that is a bare lowercase tag; a
+member-expression tag like `motion.div` is a component in JSX semantics whatever its case. On
+native the hosts are `View`, `Pressable`, `ScrollView`, and `Animated.View`, matched against the
+full dotted tag text. The check fires only on elements carrying a `class`, `className`, or
+`classList` attribute; a class-free component is no violation.
+
+### Named non-members
+
+The grid family, `inline-flex`, `sticky` and `fixed`, `grow-0` and bare `shrink`, the
+`hidden`/`block` display toggles (conditional render owns visibility), margins including
+`ml-auto` (`self-*` and `justify-*` cover it), all padding, numeric dimensions and offsets
+(`w-72`, `h-14`, `size-8`, `max-h-48`, `top-4`, `gap-4`), negative-prefixed tokens, and
+text-behavior classes (`truncate`, `whitespace-*`, `break-all`). Each is look or component
+geometry, whose home is a matrix cell or a `ui/` primitive.
+
+### The escape route and the coverage
+
+A look a call site needs is either a matrix cell or a consumer primitive under `ui/`, in that
+order. There is no per-call-site hatch.
+
+The scanner reads literals only. Candidates come from `class` and `className` attributes,
+`classList` object keys, and the arguments of `cn(...)`, through strings, no-substitution
+templates, both ternary branches, the right side of `&&`/`||`, arrays, object keys, and nested
+`cn` calls. A class assembled through a variable, a prop, a template literal, or an aliased or
+member `cn` call passes silently. That makes the gate a guardrail against drift, not a sandbox,
+and the size of a consumer's `ui/` directory is the number that says whether the matrices cover
+enough.

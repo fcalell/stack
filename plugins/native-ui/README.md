@@ -212,6 +212,13 @@ contributes the native UI wiring into `plugin-expo`.
 | `expo.slots.expoConfigPlugins` | `expo-font` config plugin (when fonts have a `source`) |
 | `expo.slots.providers` | Gesture / Keyboard / SafeArea / BottomSheetModal / Query / Auth providers |
 | `cliSlots.artifactFiles` (via `emitArtifact`) | `.stack/global.css` |
+| `cliSlots.buildSteps` | `native-ui-geometry-gate`, the pre-phase geometry gate |
+
+The `native-ui-geometry-gate` build step runs first on every `stack build`. It scans the
+consumer's `src/` tree (skipping any path with a `ui/` segment) with the native host list
+(`View`, `Pressable`, `ScrollView`, `Animated.View`) and fails the build on any class outside the
+closed geometry vocabulary, or on a class attribute riding an off-list tag. The vocabulary, the
+host rule, and the coverage statement live in the `@fcalell/ui-core` README.
 
 ### Styling: uniwind (CSS-first)
 
