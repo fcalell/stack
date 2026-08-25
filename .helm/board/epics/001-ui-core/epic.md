@@ -24,3 +24,4 @@ human drives the app).
 | 001-05 | M5        | the canon sweep, both plugins                      |
 | 001-06 | M6        | the geometry gate                                  |
 | 001-07 | M7        | remaining matrices (follow-up, out of acceptance)  |
+| 001-08 | —         | scroll and shell primitives (follow-up, out of acceptance) |
