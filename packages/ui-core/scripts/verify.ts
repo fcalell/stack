@@ -8,7 +8,7 @@
 // script derives with default knobs, diffs against the reference stylesheet,
 // drives a Tailwind build over the emitted `@theme` record plus every class the
 // matrices can emit, and exits non-zero on any mismatch.
-import { readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { isCssIdent } from "@fcalell/cli/css";
@@ -18,6 +18,7 @@ import ts from "typescript";
 import { cn } from "#cn";
 import { deriveTheme } from "#derive";
 import { modeTokens, shadowUtilities, themeTokens } from "#emit";
+import { GEOMETRY, NATIVE_GEOMETRY_HOSTS, scanGeometry } from "#gate";
 import {
 	assert,
 	blockBody,
@@ -336,7 +337,7 @@ check("c02", "package.json shape", () => {
 		Object.keys(pkg.exports ?? {})
 			.sort()
 			.join(" "),
-		"./cn ./derive ./descriptors ./emit ./harness ./schema ./tokens ./variants",
+		"./cn ./derive ./descriptors ./emit ./gate ./harness ./schema ./tokens ./variants",
 		"export subpaths",
 	);
 	assert(pkg.peerDependencies?.zod, "zod is not a peerDependency");
@@ -344,8 +345,14 @@ check("c02", "package.json shape", () => {
 		assert(pkg.devDependencies?.[name], `${name} is not a devDependency`);
 	}
 	// Pure functions with no shared identity, so a duplicated copy is harmless
-	// and a peer would force every consumer to restate them.
-	for (const name of ["class-variance-authority", "clsx", "tailwind-merge"]) {
+	// and a peer would force every consumer to restate them. ts-morph backs
+	// the `./gate` scanner, which only a build step ever loads.
+	for (const name of [
+		"class-variance-authority",
+		"clsx",
+		"tailwind-merge",
+		"ts-morph",
+	]) {
 		assert(pkg.dependencies?.[name], `${name} is not a dependency`);
 	}
 	// What the criterion protects is that installing ui-core never pulls in the
@@ -354,7 +361,7 @@ check("c02", "package.json shape", () => {
 	for (const field of ["dependencies", "peerDependencies"] as const) {
 		assert(!pkg[field]?.["@fcalell/cli"], `@fcalell/cli appears in ${field}`);
 	}
-	return "8 subpaths, no root export, no runtime cli dependency";
+	return "9 subpaths, no root export, no runtime cli dependency";
 });
 
 check("c03", "tokens.ts declares the contract", () => {
@@ -1282,6 +1289,182 @@ check("c28", "the README carries the slot registry, closed", () => {
 		assert(registry.includes(entry), `the registry never names ${entry}`);
 	}
 	return "registry subsection under The canon, every entry named, icon-param rule stated";
+});
+
+// The settled vocabulary, spelled out as a second opinion. The gap cells are
+// deliberately absent: they are the spacing rungs, asserted against
+// SPACING_RUNGS below so the derivation is what the check pins.
+const GEOMETRY_EXACTS = [
+	"flex",
+	"flex-1",
+	"flex-row",
+	"flex-col",
+	"flex-wrap",
+	"grow",
+	"shrink-0",
+	"absolute",
+	"relative",
+	"inset-0",
+	"inset-x-0",
+	"inset-y-0",
+	"top-0",
+	"bottom-0",
+	"left-0",
+	"right-0",
+	"w-full",
+	"h-full",
+	"h-screen",
+	"min-w-0",
+	"min-h-0",
+	"min-h-full",
+	"min-h-screen",
+	"max-w-full",
+	"max-w-none",
+	"overflow-hidden",
+	"overflow-auto",
+	"overflow-x-auto",
+	"overflow-y-auto",
+	"overflow-x-hidden",
+	"overflow-y-hidden",
+];
+
+const LOOK_PREFIXES = [
+	"bg-",
+	"text-",
+	"border-",
+	"p-",
+	"px-",
+	"py-",
+	"rounded-",
+	"shadow-",
+	"font-",
+];
+
+check(
+	"c29",
+	"the gate vocabulary is the settled list, gap cells derived",
+	() => {
+		const gaps = GEOMETRY.exact.filter((token) => token.startsWith("gap-"));
+		const rest = GEOMETRY.exact.filter((token) => !token.startsWith("gap-"));
+		requireEqual(rest.join(" "), GEOMETRY_EXACTS.join(" "), "exact members");
+		requireEqual(
+			gaps.join(" "),
+			SPACING_RUNGS.map((rung) => `gap-${rung}`).join(" "),
+			"gap cells",
+		);
+		requireEqual(
+			GEOMETRY.prefixes.join(" "),
+			"items- justify- self- z-",
+			"prefixes",
+		);
+		for (const entry of [...GEOMETRY.exact, ...GEOMETRY.prefixes]) {
+			const look = LOOK_PREFIXES.find((prefix) => entry.startsWith(prefix));
+			assert(look === undefined, `${entry} carries the look prefix ${look}`);
+		}
+		// Derived, not hand-listed: no `gap-` literal in the source. And the
+		// module stays isolated: ts-morph loads nowhere else under src/, and no
+		// src/ module imports the gate.
+		const gateSource = readFileSync(resolve(pkgDir, "src/gate.ts"), "utf8");
+		assert(!gateSource.includes('"gap-'), "gate.ts hand-lists a gap cell");
+		for (const name of readdirSync(resolve(pkgDir, "src"))) {
+			if (name === "gate.ts") continue;
+			const source = readFileSync(resolve(pkgDir, "src", name), "utf8");
+			assert(!source.includes("ts-morph"), `src/${name} imports ts-morph`);
+			assert(
+				!source.includes("#gate") && !source.includes("./gate"),
+				`src/${name} imports the gate module`,
+			);
+		}
+		return `${GEOMETRY.exact.length} exacts (${gaps.length} gap rungs derived), 4 prefixes, no look member, ts-morph confined to gate.ts`;
+	},
+);
+
+// The fixture's every violation, pinned. `kind` rides the serialization so a
+// host report can never pass as a membership one.
+const WEB_EXPECTED = [
+	"hosts.tsx:3 host Card",
+	"hosts.tsx:4 host motion.div",
+	"violations.tsx:1 class text-ink-3",
+	"violations.tsx:3 class bg-canvas",
+	"violations.tsx:4 class text-ink-2",
+	"violations.tsx:4 class truncate",
+	"violations.tsx:4 class p-card",
+	"violations.tsx:4 class gap-4",
+	"violations.tsx:5 class mx-auto",
+	"violations.tsx:5 class font-bold",
+	"violations.tsx:5 class sticky",
+	"violations.tsx:5 class underline",
+	"violations.tsx:6 class w-[104px]",
+	"violations.tsx:6 class bg-(--x)",
+	"violations.tsx:6 class hover:flex",
+	"violations.tsx:7 class shadow-2",
+	"violations.tsx:8 class rounded-lg",
+	"violations.tsx:9 class text-sm",
+	"violations.tsx:9 class hidden",
+];
+
+const NATIVE_EXPECTED = [
+	"app.tsx:4 host Text",
+	"app.tsx:5 class bg-surface",
+	"app.tsx:6 host div",
+];
+
+check("c30", "the scanner reports exactly the fixture's violations", () => {
+	const gateDir = resolve(fixtureDir, "gate");
+	for (const file of [
+		"web/pass.tsx",
+		"web/violations.tsx",
+		"web/hosts.tsx",
+		"web/ui/hidden.tsx",
+		"native/app.tsx",
+	]) {
+		assert(
+			existsSync(resolve(gateDir, file)),
+			`fixture ${file} is missing: is the gate tree tracked?`,
+		);
+	}
+	// The pass file carries the silent shapes (a variable, a prop read, an
+	// interpolated template, an aliased call, a member cn call, a class-free
+	// component), each holding a would-be violation, so the clean scan below
+	// is what proves the silence. Pin the lines so a fixture edit cannot gut
+	// the proof.
+	const pass = readFileSync(resolve(gateDir, "web/pass.tsx"), "utf8");
+	for (const marker of [
+		"{look}",
+		"props.class",
+		"class={`h-",
+		'merge("bg-canvas")',
+		'ui.cn("bg-canvas")',
+		"<Header",
+	]) {
+		assert(pass.includes(marker), `pass.tsx lost its ${marker} line`);
+	}
+	const hosts = readFileSync(resolve(gateDir, "web/hosts.tsx"), "utf8");
+	assert(
+		hosts.includes('<Card title="ok" />'),
+		"hosts.tsx lost its class-free component line",
+	);
+
+	const serialize = (violations: ReturnType<typeof scanGeometry>) =>
+		violations
+			.map(({ file, line, kind, token }) => `${file}:${line} ${kind} ${token}`)
+			.join("\n");
+	requireEqual(
+		serialize(scanGeometry(resolve(gateDir, "web"), "intrinsic")),
+		WEB_EXPECTED.join("\n"),
+		"web violations",
+	);
+	requireEqual(
+		serialize(scanGeometry(resolve(gateDir, "native"), NATIVE_GEOMETRY_HOSTS)),
+		NATIVE_EXPECTED.join("\n"),
+		"native violations",
+	);
+	requireEqual(
+		scanGeometry(resolve(gateDir, "missing"), "intrinsic").length,
+		0,
+		"violations under a missing root",
+	);
+	return `${WEB_EXPECTED.length} web + ${NATIVE_EXPECTED.length} native violations pinned, pass file clean, ui/ skipped, missing root empty`;
 });
 
 // ── Report ──────────────────────────────────────────────────────────
