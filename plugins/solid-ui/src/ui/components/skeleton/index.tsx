@@ -2,7 +2,7 @@ import { SKELETON } from "@fcalell/ui-core/variants";
 import { cn } from "#lib/cn";
 
 // A neutral placeholder block, sized by its own props (native's names; its
-// type there is RN's DimensionValue). The pulse is web-only motion overlay.
+// type there is RN's DimensionValue). The pulse is a web-only motion overlay.
 type SkeletonProps = {
 	width?: number | string;
 	height?: number | string;

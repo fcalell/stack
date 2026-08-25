@@ -930,7 +930,7 @@ check("b1", "the retired vocabulary is gone from src and templates", () => {
 	return `${SWEPT.length} files clear of ${RETIRED.length} retired patterns; the pattern spares bare accent`;
 });
 
-check("b2", "the rebuilt seven name a role, never a raw metric", () => {
+check("b2", "the rebuilt ten name a role, never a raw metric", () => {
 	const roles = new Set<string>(TYPE_ROLES);
 	const hits: string[] = [];
 	for (const [name, source] of styledSources) {
@@ -943,7 +943,7 @@ check("b2", "the rebuilt seven name a role, never a raw metric", () => {
 	return `${styledSources.size} files carry leading/tracking only as a role name`;
 });
 
-check("b3", "the rebuilt seven render through the matrices", () => {
+check("b3", "the rebuilt ten render through the matrices", () => {
 	const required: Record<string, string[]> = {
 		button: ["button", "buttonLabel", "buttonMuted"],
 		text: ["text", "textStrong"],
