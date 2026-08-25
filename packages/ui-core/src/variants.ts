@@ -12,11 +12,14 @@ import {
 	BUTTON_LABEL,
 	BUTTON_MUTED,
 	CARD,
+	CHECKBOX,
+	DIALOG,
 	FIELD,
 	type Matrix,
 	RHYTHM,
 	TEXT,
 	TEXT_STRONG,
+	TOGGLE,
 } from "#variant-tables";
 
 // The only way a cva is built here. Taking the whole matrix leaves no second
@@ -38,8 +41,17 @@ export const badgeDot = build(BADGE_DOT);
 export const card = build(CARD);
 export const field = build(FIELD);
 export const rhythm = build(RHYTHM);
+export const checkbox = build(CHECKBOX);
+export const toggle = build(TOGGLE);
+export const dialog = build(DIALOG);
 
 export const BUTTON_MUTED_LABEL = "text-ink-4";
+// The tick ink. RN inherits nothing, so the mark's color is its own constant.
+export const CHECKBOX_MARK = "text-accent-ink";
+export const TOGGLE_KNOB = "rounded-full bg-canvas";
+export const SKELETON = "rounded-md bg-surface";
+// Checkbox and toggle mute by fading; button swaps fills through BUTTON_MUTED.
+export const CONTROL_MUTED = "opacity-50";
 
 export type ButtonEmphasis = keyof (typeof BUTTON)["variants"]["emphasis"];
 export type ButtonTone = keyof (typeof BUTTON)["variants"]["tone"];
@@ -51,6 +63,9 @@ export type CardPadding = keyof (typeof CARD)["variants"]["padding"];
 export type CardRing = keyof (typeof CARD)["variants"]["ring"];
 export type FieldState = keyof (typeof FIELD)["variants"]["state"];
 export type FieldLayout = keyof (typeof FIELD)["variants"]["layout"];
+export type CheckboxState = keyof (typeof CHECKBOX)["variants"]["state"];
+export type ToggleState = keyof (typeof TOGGLE)["variants"]["state"];
+export type DialogPart = keyof (typeof DIALOG)["variants"]["part"];
 
 export type ContentTone = PerModeColor | InvariantColor;
 

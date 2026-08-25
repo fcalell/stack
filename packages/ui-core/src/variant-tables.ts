@@ -205,6 +205,46 @@ export const CARD = matrix({
 	defaultVariants: { padding: "card", ring: "none" },
 });
 
+// ── Checkbox ────────────────────────────────────────────────────────
+
+// No `border-none` in the checked cell: native recomputes the classes per
+// state, so the checked call simply lacks the border; web undoes it in its
+// selector overlay, which paints no color.
+export const CHECKBOX = matrix({
+	base: "rounded-md",
+	variants: {
+		state: { unchecked: "border border-ink-1", checked: "bg-accent" },
+	},
+	defaultVariants: { state: "unchecked" },
+});
+
+// ── Toggle ──────────────────────────────────────────────────────────
+
+// The on-track is `bg-accent`, matching the checkbox's checked fill, so the
+// two sibling controls read as one family under a themed accent.
+export const TOGGLE = matrix({
+	base: "rounded-full",
+	variants: {
+		state: { off: "bg-edge", on: "bg-accent" },
+	},
+	defaultVariants: { state: "off" },
+});
+
+// ── Dialog ──────────────────────────────────────────────────────────
+
+// The part is always named, like RHYTHM's unit, so there are no defaults. The
+// title carries no cell of its own: it is TEXT's h3 role at `ink-1`.
+export const DIALOG = matrix({
+	base: "",
+	variants: {
+		part: {
+			scrim: "bg-scrim",
+			panel: "rounded-xl border border-edge bg-canvas p-section",
+			description: "text-callout text-ink-3",
+		},
+	},
+});
+
 // ── Rhythm ──────────────────────────────────────────────────────────
 
 // The gap each member of the rhythm family bakes between its children. The

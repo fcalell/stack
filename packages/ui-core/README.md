@@ -280,7 +280,10 @@ padding rungs, radius, type role, font weight, and control minimum height. Weigh
 role, and the `TEXT_STRONG` table is nothing else. A tap-target floor is the strictest of the
 platform floors (Apple HIG 44pt, Material 48dp, WCAG 2.2 AA 24px), so leaving it per plugin means
 deriving one number twice. It is spelled `min-h` and never `h`, so the label can grow the control
-under OS font scaling.
+under OS font scaling. Muted-control opacity is on the line too: a disabled checkbox or toggle
+fades through `CONTROL_MUTED`, where a disabled button swaps fills through `BUTTON_MUTED`, and
+every consumer on both platforms applies the constant as a conditional call, so the value has one
+home and drift has nowhere to live.
 
 Everything below is a platform overlay, composed at the plugin through `cn()`:
 

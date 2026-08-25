@@ -55,11 +55,14 @@ import {
 	BUTTON_LABEL,
 	BUTTON_MUTED,
 	CARD,
+	CHECKBOX,
+	DIALOG,
 	FIELD,
 	type Matrix,
 	RHYTHM,
 	TEXT,
 	TEXT_STRONG,
+	TOGGLE,
 } from "#variant-tables";
 import {
 	BUTTON_MUTED_LABEL,
@@ -71,11 +74,18 @@ import {
 	buttonContentTone,
 	buttonLabel,
 	buttonMuted,
+	CHECKBOX_MARK,
+	CONTROL_MUTED,
 	card,
+	checkbox,
+	dialog,
 	field,
 	rhythm,
+	SKELETON,
+	TOGGLE_KNOB,
 	text,
 	textStrong,
+	toggle,
 } from "#variants";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -199,12 +209,19 @@ const MATRICES: readonly Registration[] = [
 	["CARD", CARD, card],
 	["FIELD", FIELD, field],
 	["RHYTHM", RHYTHM, rhythm],
+	["CHECKBOX", CHECKBOX, checkbox],
+	["TOGGLE", TOGGLE, toggle],
+	["DIALOG", DIALOG, dialog],
 ];
 
 // The class-bearing exports that are not matrices. Listed by value, so a rename
 // cannot silently drop one.
 const CLASS_CONSTANTS: ReadonlyArray<readonly [string, string]> = [
 	["BUTTON_MUTED_LABEL", BUTTON_MUTED_LABEL],
+	["CHECKBOX_MARK", CHECKBOX_MARK],
+	["TOGGLE_KNOB", TOGGLE_KNOB],
+	["SKELETON", SKELETON],
+	["CONTROL_MUTED", CONTROL_MUTED],
 ];
 
 // Each cva is keyed by its own literal axes; this walk is string-keyed, so the
