@@ -4,8 +4,7 @@
 // reopened prop turns into an unused directive and fails tsc --noEmit (the
 // b7 check, and the package type-check itself, since scripts/ sits inside
 // the tsconfig include).
-import type { Action } from "@fcalell/ui-core/descriptors";
-import { CircleAlert } from "lucide-react-native";
+
 import { Avatar } from "@fcalell/plugin-native-ui/components/avatar";
 import { AvatarStack } from "@fcalell/plugin-native-ui/components/avatar-stack";
 import { Badge } from "@fcalell/plugin-native-ui/components/badge";
@@ -36,6 +35,9 @@ import { Text } from "@fcalell/plugin-native-ui/components/text";
 import { Textarea } from "@fcalell/plugin-native-ui/components/textarea";
 import { Toast } from "@fcalell/plugin-native-ui/components/toast";
 import { Toggle } from "@fcalell/plugin-native-ui/components/toggle";
+import type { Action } from "@fcalell/ui-core/descriptors";
+import { CircleAlert } from "lucide-react-native";
+import type { ComponentProps } from "react";
 
 const noop = () => {};
 const confirm: Action<never> = { label: "Conferma", onSelect: noop };
@@ -43,6 +45,15 @@ const badAction: Action<never> = {
 	...confirm,
 	// @ts-expect-error Action<never> keeps the icon field unpassable until M7
 	icon: CircleAlert,
+};
+// A props object rather than a JSX attribute: biome's react domain bans the
+// JSX spelling (noChildrenProp), and the excess-property error is the same.
+const deadDialogChildren: ComponentProps<typeof Dialog> = {
+	visible: true,
+	onClose: noop,
+	title: "t",
+	// @ts-expect-error the actions region is Action data, not children
+	children: <Button>x</Button>,
 };
 
 export function closure() {
@@ -112,17 +123,20 @@ export function closure() {
 				// @ts-expect-error the handleComponent takeover slot is closed
 				handleComponent={null}
 			/>
+			{/* These three carry no `| null` in gorhom's type, so the probe value
+			    must be a component that would be LEGAL if the prop reopened, or
+			    the directive never turns unused. */}
 			<BottomSheet
 				// @ts-expect-error the backdropComponent takeover slot is closed
-				backdropComponent={null}
+				backdropComponent={() => null}
 			/>
 			<BottomSheet
 				// @ts-expect-error the footerComponent takeover slot is closed
-				footerComponent={null}
+				footerComponent={() => null}
 			/>
 			<BottomSheet
 				// @ts-expect-error the containerComponent takeover slot is closed
-				containerComponent={null}
+				containerComponent={() => null}
 			/>
 			<Button emphasis="secondary" tone="danger" size="lg" loading>
 				Elimina
@@ -214,13 +228,6 @@ export function closure() {
 				title="t"
 				// @ts-expect-error the icon is a component param, not an element
 				icon={<CircleAlert />}
-			/>
-			<Dialog
-				visible
-				onClose={noop}
-				title="t"
-				// @ts-expect-error the actions region is Action data, not children
-				children={<Button>x</Button>}
 			/>
 			<Field>
 				<Field.Label>Nome</Field.Label>
@@ -540,7 +547,7 @@ export function closure() {
 			/>
 			<TabBar
 				// @ts-expect-error the icon render prop collapsed to the icon param
-				tabs={[{ key: "a", label: "A", icon: (active: boolean) => null }]}
+				tabs={[{ key: "a", label: "A", icon: (_active: boolean) => null }]}
 				active="a"
 				onChange={noop}
 			/>
@@ -621,4 +628,4 @@ export function closure() {
 	);
 }
 
-export const carried = [badAction];
+export const carried = [badAction, deadDialogChildren];
