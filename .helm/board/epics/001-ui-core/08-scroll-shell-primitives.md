@@ -1,6 +1,7 @@
 ---
 id: 001-08
-status: refining
+status: done
+merged: de05a03
 depends: [001-06]
 gate:
   rounds: 2
@@ -210,3 +211,52 @@ merge.
 - `pinToBottom` covers the scroll-and-pin half of helm's two hand-rolled log effects (the panes
   themselves also need an inner Stack when they migrate); its threshold behavior is deliberately
   different from helm's unconditional pin, which loses the reader's place in history.
+
+## Run record
+
+One worktree run, 4 commits (`433df77` components + fixture, `5edd206` harness pin, `e6fa271`
+doc pages, `20e8649` ui-core prose), no contradictions, no deviations. Spec review: all 9
+decisions met, A1-A7 pass, nothing faked, 0 blocking, 0 serious, 1 minor (review-scope note on
+the root lint leg). Standards review: per-commit gates green at every intermediate commit, 0
+blocking, 0 serious, 1 minor (`pinToBottom` is mount-time only and nothing said so). Seat
+commits: `f4c1204` adds the mount-time clause to the doc page; `de05a03` replaces decision 4's
+scroll-listener mechanism after the live check caught it losing its race (below). Merge:
+fast-forward `04efc1b -> f4c1204`, seat fix atop.
+
+**Decision 4 amended at the seat.** The ratified mechanism kept `pinned` in a scroll listener,
+and the A9 live check reproduced the race: scroll events dispatch with the rendering steps, so
+an append reached the observer before the reader's scroll-up flipped the flag (deterministic in
+a throttled background tab) and the pane snapped back to the bottom permanently. The shipped
+mechanism derives pinned-ness inside the observer from the height as it was before the change
+(`scrollTop + clientHeight >= lastScrollHeight - PIN_THRESHOLD`), needs no scroll listener, and
+cannot race. `PIN_THRESHOLD = 40`, the mount pin, the observer config, and the onCleanup
+teardown are unchanged; b11's pins were never on the listener.
+
+## Close-out
+
+- Suites on master tip: solid-ui 23/23 (b11 included), ui-core 28/28, native-ui 11/11; root
+  `pnpm check` exit 0.
+- Guard mutations, both caught by b11: `PIN_THRESHOLD` 40 -> 48 fails "the pin threshold moved
+  off 40"; Frame `h-dvh` -> `h-screen` fails "Frame lost its class string".
+- A8 in the scratch consumer (M6's, live `link:` graph): the pass page (Frame > header row +
+  Section > ScrollArea pinToBottom > Stack + ScrollArea axis="x" > inner shrink-0 row) builds
+  exit 0 through gate and vite; adding raw `overflow-y-auto` to the header div fails exit 1 with
+  `src/app/pages/index.tsx:19  "overflow-y-auto" is not in the geometry vocabulary`; restored,
+  exit 0.
+- A9 live (Chrome on the dev server, measured via DOM): page not scrollable, Frame clientHeight
+  == viewport, the x strip scrollWidth > clientWidth; with the pane genuinely overflowing (60+
+  lines), distance-from-bottom stays <= 40 through appends; after `scrollTop = 0` the pane
+  stays at 0 while content keeps growing; after returning to the bottom it re-pins. The same
+  run against the pre-fix mechanism showed the snap-back (scrollTop 179 = bottom after the
+  scroll-away), which is what forced `de05a03`.
+
+## Carried forward
+
+- helm's migration now has its primitives: the census maps to Frame (1 site), ScrollArea y
+  (5 sites, two with pinToBottom + inner Stack), ScrollArea x (3 real strips), and helm `ui/`
+  primitives for the four capped look-carrying blocks. helm-side, carried since M3/M5.
+- The Sheet content layout mode (pinned chrome over a fill pane inside a drawer) is the named
+  follow-up if a first-party consumer needs it; until then drawers own their scroll.
+- The `Frame`-not-`Shell` name and the mount-time `pinToBottom` are vetoable at merge review;
+  both are one-sweep changes.
+- The biome-config worktree glob and the M5 biome-config item remain one combined fix.
