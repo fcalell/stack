@@ -25,8 +25,10 @@ function Root(
 			<section
 				aria-labelledby={titleId}
 				// The region rung: a Section's children are a screen's regions, so
-				// the column gaps at rhythm({ unit: "section" }).
-				class={cn(rhythm({ unit: "section" }), "flex flex-1 flex-col")}
+				// the column gaps at rhythm({ unit: "section" }). min-h-0 keeps a
+				// Section between Frame and a scroll pane shrinkable, or the pane
+				// grows past the clipped frame and never scrolls.
+				class={cn(rhythm({ unit: "section" }), "flex min-h-0 flex-1 flex-col")}
 				{...rest}
 			>
 				{local.children}

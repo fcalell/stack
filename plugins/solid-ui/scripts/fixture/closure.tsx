@@ -24,6 +24,7 @@ import { EmptyState } from "@fcalell/plugin-solid-ui/components/empty-state";
 import { EnumInput } from "@fcalell/plugin-solid-ui/components/enum-input";
 import { Field } from "@fcalell/plugin-solid-ui/components/field";
 import { Form } from "@fcalell/plugin-solid-ui/components/form";
+import { Frame } from "@fcalell/plugin-solid-ui/components/frame";
 import { Input } from "@fcalell/plugin-solid-ui/components/input";
 import { InputGroup } from "@fcalell/plugin-solid-ui/components/input-group";
 import { InputOTP } from "@fcalell/plugin-solid-ui/components/input-otp";
@@ -36,6 +37,7 @@ import { NavigationProgress } from "@fcalell/plugin-solid-ui/components/navigati
 import { Pair } from "@fcalell/plugin-solid-ui/components/pair";
 import { QueryBoundary } from "@fcalell/plugin-solid-ui/components/query-boundary";
 import { Row } from "@fcalell/plugin-solid-ui/components/row";
+import { ScrollArea } from "@fcalell/plugin-solid-ui/components/scroll-area";
 import { Section } from "@fcalell/plugin-solid-ui/components/section";
 import { SectionToolbar } from "@fcalell/plugin-solid-ui/components/section-toolbar";
 import { Select } from "@fcalell/plugin-solid-ui/components/select";
@@ -2294,6 +2296,58 @@ export function closure() {
 			>
 				p
 			</Pair>
+			<Frame
+			>
+				f
+			</Frame>
+			<Frame
+				// @ts-expect-error the class prop is closed
+				class="x"
+			>
+				f
+			</Frame>
+			<Frame
+				// @ts-expect-error the style prop is closed
+				style={{ color: "red" }}
+			>
+				f
+			</Frame>
+			<Frame
+				// @ts-expect-error the classList prop is closed
+				classList={{ x: true }}
+			>
+				f
+			</Frame>
+			<ScrollArea
+				axis="both"
+				pinToBottom
+			>
+				s
+			</ScrollArea>
+			<ScrollArea
+				axis="both"
+				pinToBottom
+				// @ts-expect-error the class prop is closed
+				class="x"
+			>
+				s
+			</ScrollArea>
+			<ScrollArea
+				axis="both"
+				pinToBottom
+				// @ts-expect-error the style prop is closed
+				style={{ color: "red" }}
+			>
+				s
+			</ScrollArea>
+			<ScrollArea
+				axis="both"
+				pinToBottom
+				// @ts-expect-error the classList prop is closed
+				classList={{ x: true }}
+			>
+				s
+			</ScrollArea>
 			<Table
 				bordered
 			>
