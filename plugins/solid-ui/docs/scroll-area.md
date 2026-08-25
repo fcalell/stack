@@ -55,4 +55,5 @@ Sheet and Dialog content are their own scroll owners (`max-h-screen overflow-y-a
 
 ## pinToBottom
 
-The pane starts at its end, follows appended content while the reader sits within 40px of the bottom, and stays put once they scroll up. Growth with no observed DOM mutation (late-loading media, async layout) does not re-pin. The prop pins the y axis and is meaningless under `axis="x"`.
+The pane starts at its end, follows appended content while the reader sits within 40px of the bottom, and stays put once they scroll up. Growth with no observed DOM mutation (late-loading media, async layout) does not re-pin. The prop pins the y axis and is meaningless under `axis="x"`. It is read once at mount:
+toggling it later neither starts nor stops the engine.
