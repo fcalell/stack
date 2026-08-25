@@ -4,7 +4,6 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { Check, Minus } from "lucide-solid";
 import type { JSX, ValidComponent } from "solid-js";
 import { Match, Show, Switch, splitProps } from "solid-js";
-import { cn } from "#lib/cn";
 
 const checkboxVariants = cva(
 	"shrink-0 rounded-md border border-ink-1 disabled:cursor-not-allowed disabled:opacity-50 peer-focus-visible:outline-2 peer-focus-visible:outline-interactive peer-focus-visible:outline-offset-2 data-checked:border-none data-checked:bg-accent data-checked:text-accent-ink data-indeterminate:border-none data-indeterminate:bg-accent data-indeterminate:text-accent-ink",
@@ -25,26 +24,24 @@ const checkboxVariants = cva(
 type CheckboxProps<T extends ValidComponent = "div"> =
 	CheckboxPrimitive.CheckboxRootProps<T> &
 		VariantProps<typeof checkboxVariants> & {
-			class?: string;
 			label?: JSX.Element;
+			class?: never;
+			style?: never;
+			classList?: never;
 		};
 
 function Checkbox<T extends ValidComponent = "div">(
 	props: PolymorphicProps<T, CheckboxProps<T>>,
 ) {
-	const [local, rest] = splitProps(props as CheckboxProps, [
-		"class",
-		"size",
-		"label",
-	]);
+	const [local, rest] = splitProps(props as CheckboxProps, ["size", "label"]);
 	return (
 		<CheckboxPrimitive.Root
-			class={cn("group relative flex items-start gap-2", local.class)}
+			class="group relative flex items-start gap-2"
 			{...rest}
 		>
 			<CheckboxPrimitive.Input class="peer" />
 			<CheckboxPrimitive.Control
-				class={cn(checkboxVariants({ size: local.size }))}
+				class={checkboxVariants({ size: local.size })}
 			>
 				<CheckboxPrimitive.Indicator>
 					<Switch>

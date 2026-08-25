@@ -6,22 +6,23 @@ import {
 	splitProps,
 	useContext,
 } from "solid-js";
-import { cn } from "#lib/cn";
 
 const SectionContext = createContext<{ titleId: string }>();
 
-type TextProps = {
-	class?: string;
-};
-
-function Root(props: ComponentProps<"section">) {
-	const [local, rest] = splitProps(props, ["class", "children"]);
+function Root(
+	props: ComponentProps<"section"> & {
+		class?: never;
+		style?: never;
+		classList?: never;
+	},
+) {
+	const [local, rest] = splitProps(props, ["children"]);
 	const titleId = createUniqueId();
 	return (
 		<SectionContext.Provider value={{ titleId }}>
 			<section
 				aria-labelledby={titleId}
-				class={cn("flex flex-1 flex-col", local.class)}
+				class="flex flex-1 flex-col"
 				{...rest}
 			>
 				{local.children}
@@ -30,42 +31,56 @@ function Root(props: ComponentProps<"section">) {
 	);
 }
 
-function Header(props: ComponentProps<"header">) {
-	const [local, rest] = splitProps(props, ["class"]);
+function Header(
+	props: ComponentProps<"header"> & {
+		class?: never;
+		style?: never;
+		classList?: never;
+	},
+) {
 	return (
 		<header
-			class={cn(
-				"flex min-h-12 items-center justify-between border-b-2 border-edge px-6 py-3",
-				local.class,
-			)}
-			{...rest}
+			class="flex min-h-12 items-center justify-between border-b-2 border-edge px-6 py-3"
+			{...props}
 		/>
 	);
 }
 
 function Title<T extends ValidComponent = "h2">(
-	props: PolymorphicProps<T, TextProps>,
+	props: PolymorphicProps<
+		T,
+		{ class?: never; style?: never; classList?: never }
+	>,
 ) {
-	const [local, rest] = splitProps(props as TextProps, ["class"]);
 	const ctx = useContext(SectionContext);
 	return (
 		<Polymorphic
 			as="h2"
 			id={ctx?.titleId}
-			class={cn("text-h2 font-bold uppercase tracking-widest", local.class)}
-			{...rest}
+			class="text-h2 font-bold uppercase tracking-widest"
+			{...props}
 		/>
 	);
 }
 
-function Content(props: ComponentProps<"div">) {
-	const [local, rest] = splitProps(props, ["class"]);
-	return <div class={cn("w-full px-6 py-6", local.class)} {...rest} />;
+function Content(
+	props: ComponentProps<"div"> & {
+		class?: never;
+		style?: never;
+		classList?: never;
+	},
+) {
+	return <div class="w-full px-6 py-6" {...props} />;
 }
 
-function Table(props: ComponentProps<"div">) {
-	const [local, rest] = splitProps(props, ["class"]);
-	return <div class={cn("w-full", local.class)} {...rest} />;
+function Table(
+	props: ComponentProps<"div"> & {
+		class?: never;
+		style?: never;
+		classList?: never;
+	},
+) {
+	return <div class="w-full" {...props} />;
 }
 
 export const Section = Object.assign(Root, {

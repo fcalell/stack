@@ -39,7 +39,7 @@ const logoContainerClasses = cva("inline-flex", {
 });
 
 const logoTextClasses = cva(
-	"whitespace-nowrap font-bold uppercase leading-none tracking-widest text-ink-1 transition-[clip-path,opacity] duration-200",
+	"whitespace-nowrap font-bold uppercase tracking-widest text-ink-1 transition-[clip-path,opacity] duration-200",
 	{
 		variants: {
 			size: {
@@ -67,11 +67,13 @@ type LogoProps = ComponentProps<"div"> &
 		icon: JSX.Element;
 		text?: JSX.Element;
 		responsive?: boolean;
+		class?: never;
+		style?: never;
+		classList?: never;
 	};
 
 function Logo(props: LogoProps) {
 	const [local, rest] = splitProps(props, [
-		"class",
 		"size",
 		"align",
 		"icon",
@@ -80,11 +82,7 @@ function Logo(props: LogoProps) {
 	]);
 	return (
 		<div
-			class={logoContainerClasses({
-				size: local.size,
-				align: local.align,
-				className: local.class,
-			})}
+			class={logoContainerClasses({ size: local.size, align: local.align })}
 			{...rest}
 		>
 			<div class={logoIconClasses({ size: local.size })}>{local.icon}</div>

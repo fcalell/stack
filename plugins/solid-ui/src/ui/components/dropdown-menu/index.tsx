@@ -192,8 +192,9 @@ function renderItems(items: MenuItems) {
 type DropdownMenuProps = {
 	trigger: JSX.Element;
 	items: MenuItems;
-	class?: string;
-	contentClass?: string;
+	class?: never;
+	style?: never;
+	classList?: never;
 };
 
 function DropdownMenu(props: DropdownMenuProps) {
@@ -203,7 +204,7 @@ function DropdownMenu(props: DropdownMenuProps) {
 				{props.trigger}
 			</MenuPrimitive.Trigger>
 			<MenuPrimitive.Portal>
-				<MenuPrimitive.Content class={cn(menuContentClass, props.contentClass)}>
+				<MenuPrimitive.Content class={menuContentClass}>
 					{renderItems(props.items)}
 				</MenuPrimitive.Content>
 			</MenuPrimitive.Portal>

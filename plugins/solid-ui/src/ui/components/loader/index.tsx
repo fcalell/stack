@@ -1,5 +1,4 @@
 import { createEffect, createSignal, onCleanup } from "solid-js";
-import { cn } from "#lib/cn";
 
 const CHARS = "0123456789abcdef.:/-_#";
 const TICK_MS = 50;
@@ -17,7 +16,9 @@ function scramble(text: string, resolved: number): string {
 
 type LoaderProps = {
 	text: string;
-	class?: string;
+	class?: never;
+	style?: never;
+	classList?: never;
 };
 
 function Loader(props: LoaderProps) {
@@ -63,7 +64,7 @@ function Loader(props: LoaderProps) {
 		<span
 			role="status"
 			aria-label={props.text}
-			class={cn("font-mono text-caption text-ink-3", props.class)}
+			class="font-mono text-caption text-ink-3"
 		>
 			{display()}
 		</span>

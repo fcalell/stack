@@ -1,7 +1,6 @@
 import * as TabsPrimitive from "@kobalte/core/tabs";
 import type { JSX } from "solid-js";
 import { For, splitProps } from "solid-js";
-import { cn } from "#lib/cn";
 
 // ─── Tab types ───
 
@@ -14,14 +13,9 @@ type Tab = {
 
 // ─── List (internal) ───
 
-function List(props: { class?: string; children: JSX.Element }) {
+function List(props: { children: JSX.Element }) {
 	return (
-		<TabsPrimitive.List
-			class={cn(
-				"relative inline-flex h-10 items-center justify-center rounded-control bg-surface-2 p-1 text-ink-3",
-				props.class,
-			)}
-		>
+		<TabsPrimitive.List class="relative inline-flex h-10 items-center justify-center rounded-control bg-surface-2 p-1 text-ink-3">
 			{props.children}
 		</TabsPrimitive.List>
 	);
@@ -47,18 +41,11 @@ function Trigger(props: {
 
 // ─── Content (internal) ───
 
-function Content(props: {
-	value: string;
-	class?: string;
-	children: JSX.Element;
-}) {
+function Content(props: { value: string; children: JSX.Element }) {
 	return (
 		<TabsPrimitive.Content
 			value={props.value}
-			class={cn(
-				"mt-0 focus-visible:outline-2 focus-visible:outline-interactive focus-visible:outline-offset-2",
-				props.class,
-			)}
+			class="mt-0 focus-visible:outline-2 focus-visible:outline-interactive focus-visible:outline-offset-2"
 		>
 			{props.children}
 		</TabsPrimitive.Content>
@@ -85,29 +72,22 @@ type TabsProps = {
 	defaultValue?: string;
 	onValueChange?: (value: string) => void;
 	orientation?: "horizontal" | "vertical";
-	class?: string;
-	listClass?: string;
-	contentClass?: string;
 	children?: (tab: Tab) => JSX.Element;
+	class?: never;
+	style?: never;
+	classList?: never;
 };
 
 function Tabs(props: TabsProps) {
 	const [local, rest] = splitProps(props, [
 		"tabs",
-		"class",
-		"listClass",
-		"contentClass",
 		"children",
 		"onValueChange",
 	]);
 
 	return (
-		<TabsPrimitive.Root
-			class={local.class}
-			onChange={local.onValueChange}
-			{...rest}
-		>
-			<List class={local.listClass}>
+		<TabsPrimitive.Root onChange={local.onValueChange} {...rest}>
+			<List>
 				<For each={local.tabs}>
 					{(tab) => (
 						<Trigger value={tab.value} disabled={tab.disabled}>
@@ -118,11 +98,7 @@ function Tabs(props: TabsProps) {
 				<Indicator />
 			</List>
 			<For each={local.tabs}>
-				{(tab) => (
-					<Content value={tab.value} class={local.contentClass}>
-						{tab.content}
-					</Content>
-				)}
+				{(tab) => <Content value={tab.value}>{tab.content}</Content>}
 			</For>
 		</TabsPrimitive.Root>
 	);

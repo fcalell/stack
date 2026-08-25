@@ -2,7 +2,20 @@ import type { ComponentProps } from "solid-js";
 import { splitProps } from "solid-js";
 import { Toaster as SolidSonnerToaster, toast } from "solid-sonner";
 
-type ToasterProps = ComponentProps<typeof SolidSonnerToaster>;
+// A denylist against a third-party type: solid-sonner's `class`, `className`,
+// `style` and its `toastOptions` / `icons` design-overwrite slots are omitted,
+// and the behavioral props keep flowing through the spread. An upgrade adding
+// a new styling prop reopens this silently; the look-adjacent residue that
+// stays open (`richColors`, `invert`, `theme`, mostly neutered by the forced
+// `unstyled`) is accepted and recorded.
+type ToasterProps = Omit<
+	ComponentProps<typeof SolidSonnerToaster>,
+	"class" | "className" | "style" | "toastOptions" | "icons"
+> & {
+	class?: never;
+	style?: never;
+	classList?: never;
+};
 
 function Toaster(props: ToasterProps) {
 	const [local, rest] = splitProps(props, ["theme", "position"]);

@@ -3,7 +3,6 @@ import type { PolymorphicProps } from "@kobalte/core/polymorphic";
 import { cva, type VariantProps } from "class-variance-authority";
 import type { ValidComponent } from "solid-js";
 import { splitProps } from "solid-js";
-import { cn } from "#lib/cn";
 
 const avatarVariants = cva(
 	"relative flex shrink-0 overflow-hidden rounded-full",
@@ -24,16 +23,18 @@ const avatarVariants = cva(
 type AvatarProps<T extends ValidComponent = "span"> =
 	ImagePrimitive.ImageRootProps<T> &
 		VariantProps<typeof avatarVariants> & {
-			class?: string;
+			class?: never;
+			style?: never;
+			classList?: never;
 		};
 
 function Root<T extends ValidComponent = "span">(
 	props: PolymorphicProps<T, AvatarProps<T>>,
 ) {
-	const [local, rest] = splitProps(props as AvatarProps, ["class", "size"]);
+	const [local, rest] = splitProps(props as AvatarProps, ["size"]);
 	return (
 		<ImagePrimitive.Root
-			class={cn(avatarVariants({ size: local.size }), local.class)}
+			class={avatarVariants({ size: local.size })}
 			{...rest}
 		/>
 	);
@@ -41,36 +42,37 @@ function Root<T extends ValidComponent = "span">(
 
 type ImageProps<T extends ValidComponent = "img"> =
 	ImagePrimitive.ImageImgProps<T> & {
-		class?: string;
 		alt: string;
+		class?: never;
+		style?: never;
+		classList?: never;
 	};
 
 function Image<T extends ValidComponent = "img">(
 	props: PolymorphicProps<T, ImageProps<T>>,
 ) {
-	const [local, rest] = splitProps(props as ImageProps, ["class"]);
 	return (
 		<ImagePrimitive.Img
-			class={cn("aspect-square size-full", local.class)}
-			{...rest}
+			class="aspect-square size-full"
+			{...(props as ImageProps)}
 		/>
 	);
 }
 
 type FallbackProps<T extends ValidComponent = "span"> =
-	ImagePrimitive.ImageFallbackProps<T> & { class?: string };
+	ImagePrimitive.ImageFallbackProps<T> & {
+		class?: never;
+		style?: never;
+		classList?: never;
+	};
 
 function Fallback<T extends ValidComponent = "span">(
 	props: PolymorphicProps<T, FallbackProps<T>>,
 ) {
-	const [local, rest] = splitProps(props as FallbackProps, ["class"]);
 	return (
 		<ImagePrimitive.Fallback
-			class={cn(
-				"flex size-full items-center justify-center bg-surface-2 font-mono text-ink-1",
-				local.class,
-			)}
-			{...rest}
+			class="flex size-full items-center justify-center bg-surface-2 font-mono text-ink-1"
+			{...(props as FallbackProps)}
 		/>
 	);
 }

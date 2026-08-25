@@ -14,7 +14,9 @@ type TextProps = {
 	tone?: TextTone;
 	strong?: boolean;
 	mono?: boolean;
-	class?: string;
+	class?: never;
+	style?: never;
+	classList?: never;
 };
 
 function Text<T extends ValidComponent = "p">(
@@ -25,7 +27,6 @@ function Text<T extends ValidComponent = "p">(
 		"tone",
 		"strong",
 		"mono",
-		"class",
 	]);
 	const variant = () => local.variant ?? "body";
 	return (
@@ -36,7 +37,6 @@ function Text<T extends ValidComponent = "p">(
 				local.strong && textStrong({ variant: variant() }),
 				// Font family is a platform overlay, so it never enters the matrix.
 				local.mono && "font-mono",
-				local.class,
 			)}
 			{...rest}
 		/>

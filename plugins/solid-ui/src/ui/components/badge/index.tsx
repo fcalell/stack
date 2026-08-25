@@ -19,13 +19,15 @@ const SHELL =
 
 type BadgeProps = {
 	tone?: BadgeTone;
-	class?: string;
+	class?: never;
+	style?: never;
+	classList?: never;
 };
 
 function Badge<T extends ValidComponent = "div">(
 	props: PolymorphicProps<T, BadgeProps>,
 ) {
-	const [local, rest] = splitProps(props as BadgeProps, ["class", "tone"]);
+	const [local, rest] = splitProps(props as BadgeProps, ["tone"]);
 	return (
 		<Polymorphic
 			as="div"
@@ -35,7 +37,6 @@ function Badge<T extends ValidComponent = "div">(
 				text(ROLE),
 				textStrong(ROLE),
 				SHELL,
-				local.class,
 			)}
 			{...rest}
 		/>

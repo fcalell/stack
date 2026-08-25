@@ -56,17 +56,13 @@ const TRIGGER_BOX =
 
 type TriggerProps<T extends ValidComponent = "button"> =
 	SelectPrimitive.SelectTriggerProps<T> & {
-		class?: string;
 		children?: JSX.Element;
 	};
 
 function Trigger<T extends ValidComponent = "button">(
 	props: PolymorphicProps<T, TriggerProps<T>>,
 ) {
-	const [local, rest] = splitProps(props as TriggerProps, [
-		"class",
-		"children",
-	]);
+	const [local, rest] = splitProps(props as TriggerProps, ["children"]);
 	return (
 		<SelectPrimitive.Trigger
 			class={cn(
@@ -74,7 +70,6 @@ function Trigger<T extends ValidComponent = "button">(
 				fieldShellClass,
 				TRIGGER_BOX,
 				fieldMutedSelectorClass,
-				local.class,
 			)}
 			{...rest}
 		>
@@ -88,15 +83,10 @@ function Trigger<T extends ValidComponent = "button">(
 
 // ─── Content (internal) ───
 
-function Content(props: { class?: string }) {
+function Content() {
 	return (
 		<SelectPrimitive.Portal>
-			<SelectPrimitive.Content
-				class={cn(
-					"z-50 overflow-hidden rounded-xl border-2 border-edge bg-surface text-ink-1 outline-none origin-[var(--kb-select-content-transform-origin)] animate-content-hide data-[expanded]:animate-content-show",
-					props.class,
-				)}
-			>
+			<SelectPrimitive.Content class="z-50 overflow-hidden rounded-xl border-2 border-edge bg-surface text-ink-1 outline-none origin-[var(--kb-select-content-transform-origin)] animate-content-hide data-[expanded]:animate-content-show">
 				<SelectPrimitive.Listbox class="max-h-60 overflow-x-hidden overflow-y-auto py-1" />
 			</SelectPrimitive.Content>
 		</SelectPrimitive.Portal>
@@ -150,11 +140,12 @@ type SelectProps = {
 	onValueChange?: (value: string) => void;
 	placeholder?: string;
 	disabled?: boolean;
-	class?: string;
-	contentClass?: string;
 	"aria-invalid"?: boolean;
 	disallowEmptySelection?: boolean;
 	children?: (option: SelectOption) => JSX.Element;
+	class?: never;
+	style?: never;
+	classList?: never;
 };
 
 function Select(props: SelectProps) {
@@ -193,7 +184,7 @@ function Select(props: SelectProps) {
 				/>
 			)}
 		>
-			<Trigger class={props.class} aria-invalid={props["aria-invalid"]}>
+			<Trigger aria-invalid={props["aria-invalid"]}>
 				<SelectPrimitive.Value<SelectOption>>
 					{(state) => {
 						const selected = state.selectedOption();
@@ -207,7 +198,7 @@ function Select(props: SelectProps) {
 					}}
 				</SelectPrimitive.Value>
 			</Trigger>
-			<Content class={props.contentClass} />
+			<Content />
 		</SelectPrimitive.Root>
 	);
 }

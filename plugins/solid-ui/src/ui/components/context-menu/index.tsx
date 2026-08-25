@@ -149,19 +149,18 @@ function renderItems(items: MenuItems) {
 
 type ContextMenuProps = {
 	items: MenuItems;
-	class?: string;
-	contentClass?: string;
 	children: JSX.Element;
+	class?: never;
+	style?: never;
+	classList?: never;
 };
 
 function ContextMenu(props: ContextMenuProps) {
 	return (
 		<MenuPrimitive.Root gutter={4}>
-			<MenuPrimitive.Trigger class={props.class}>
-				{props.children}
-			</MenuPrimitive.Trigger>
+			<MenuPrimitive.Trigger>{props.children}</MenuPrimitive.Trigger>
 			<MenuPrimitive.Portal>
-				<MenuPrimitive.Content class={cn(menuContentClass, props.contentClass)}>
+				<MenuPrimitive.Content class={menuContentClass}>
 					{renderItems(props.items)}
 				</MenuPrimitive.Content>
 			</MenuPrimitive.Portal>

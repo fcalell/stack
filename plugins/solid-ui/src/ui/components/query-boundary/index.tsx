@@ -12,7 +12,6 @@ import {
 import { Button } from "#components/button";
 import { EmptyState } from "#components/empty-state";
 import { Loader } from "#components/loader";
-import { cn } from "#lib/cn";
 
 type QueryLike<TData, TError> = {
 	data: TData | undefined;
@@ -31,8 +30,10 @@ type QueryBoundaryProps<TData, TError = Error> = {
 	errorFallback?: (error: TError, retry: () => void) => JSX.Element;
 	emptyWhen?: (data: TData) => boolean;
 	emptyFallback?: JSX.Element;
-	class?: string;
 	children: (data: Accessor<TData>) => JSX.Element;
+	class?: never;
+	style?: never;
+	classList?: never;
 };
 
 function QueryBoundary<TData, TError = Error>(
@@ -66,7 +67,7 @@ function QueryBoundary<TData, TError = Error>(
 				{showLoading()
 					? (props.loadingFallback ?? (
 							<div
-								class={cn("flex items-center justify-center py-8", props.class)}
+								class="flex items-center justify-center py-8"
 							>
 								<Loader text={props.loadingText ?? "loading..."} />
 							</div>

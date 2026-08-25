@@ -6,7 +6,6 @@ import type {
 	ValidComponent,
 } from "solid-js";
 import { children as resolveChildren, Show, splitProps } from "solid-js";
-import { cn } from "#lib/cn";
 
 type EmptyStateProps = ParentProps<
 	ComponentProps<"div"> & {
@@ -14,12 +13,14 @@ type EmptyStateProps = ParentProps<
 		title: string;
 		titleAs?: ValidComponent;
 		description?: string;
+		class?: never;
+		style?: never;
+		classList?: never;
 	}
 >;
 
 function EmptyState(props: EmptyStateProps) {
 	const [local, rest] = splitProps(props, [
-		"class",
 		"icon",
 		"title",
 		"titleAs",
@@ -30,10 +31,7 @@ function EmptyState(props: EmptyStateProps) {
 	return (
 		<div
 			role="status"
-			class={cn(
-				"flex flex-col items-center justify-center gap-4 py-16 text-center",
-				local.class,
-			)}
+			class="flex flex-col items-center justify-center gap-4 py-16 text-center"
 			{...rest}
 		>
 			<Show when={local.icon}>

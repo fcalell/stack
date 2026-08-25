@@ -1,6 +1,12 @@
 import { createEffect, createSignal, onCleanup, Show } from "solid-js";
+import { cn } from "#lib/cn";
 
-export function NavigationProgress(props: { loading: boolean }) {
+export function NavigationProgress(props: {
+	loading: boolean;
+	class?: never;
+	style?: never;
+	classList?: never;
+}) {
 	const [visible, setVisible] = createSignal(false);
 	const [width, setWidth] = createSignal(0);
 	const [fading, setFading] = createSignal(false);
@@ -45,8 +51,10 @@ export function NavigationProgress(props: { loading: boolean }) {
 				aria-valuemin={0}
 				aria-valuemax={100}
 				aria-valuenow={Math.round(width())}
-				class="h-0.5 w-full overflow-hidden"
-				classList={{ "opacity-0 transition-opacity duration-300": fading() }}
+				class={cn(
+					"h-0.5 w-full overflow-hidden",
+					fading() && "opacity-0 transition-opacity duration-300",
+				)}
 			>
 				<div
 					class="h-full bg-accent transition-[width] duration-200 ease-out"

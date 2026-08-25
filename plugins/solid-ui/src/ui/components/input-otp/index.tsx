@@ -53,9 +53,11 @@ type InputOTPProps = {
 	onValueChange?: (value: string) => void;
 	onComplete?: (value: string) => void;
 	disabled?: boolean;
-	class?: string;
 	id?: string;
 	"aria-invalid"?: boolean;
+	class?: never;
+	style?: never;
+	classList?: never;
 };
 
 function InputOTP(props: InputOTPProps) {
@@ -71,7 +73,7 @@ function InputOTP(props: InputOTPProps) {
 			value={props.value}
 			onValueChange={props.onValueChange}
 			onComplete={props.onComplete}
-			class={cn("group flex items-center has-disabled:opacity-50", props.class)}
+			class="group flex items-center has-disabled:opacity-50"
 			aria-invalid={props["aria-invalid"] || undefined}
 		>
 			{(() => {

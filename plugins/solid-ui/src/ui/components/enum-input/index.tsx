@@ -7,6 +7,9 @@ type EnumInputProps = {
 	onChange: (values: string[]) => void;
 	disabled?: boolean;
 	placeholder?: string;
+	class?: never;
+	style?: never;
+	classList?: never;
 };
 
 function EnumInput(props: EnumInputProps) {
