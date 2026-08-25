@@ -88,6 +88,22 @@ export interface GeometryViolation {
 	token: string;
 }
 
+// One source of truth for the failure text both plugins throw. `root` is the
+// path prefix the caller scanned under (files are root-relative), so the
+// report names the file, the line, and the token from the consumer's cwd.
+export function formatViolations(
+	violations: readonly GeometryViolation[],
+	root: string,
+): string {
+	return violations
+		.map(({ file, line, kind, token }) =>
+			kind === "host"
+				? `${root}/${file}:${line}  class attribute on non-host tag "${token}"`
+				: `${root}/${file}:${line}  "${token}" is not in the geometry vocabulary`,
+		)
+		.join("\n");
+}
+
 // Arbitrary values in both spellings, and any variant prefix: a geometry
 // class behind `hover:` has no legal reading, so the token as a whole is a
 // violation before membership is checked.

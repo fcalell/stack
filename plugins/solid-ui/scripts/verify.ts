@@ -1352,7 +1352,7 @@ check("b9", "the geometry gate is the pre step ahead of vite-build", () => {
 	// through a dynamic import, and nothing imports the subpath statically.
 	const gateSource = readFileSync(resolve(pkgDir, "src/node/gate.ts"), "utf8");
 	assert(
-		gateSource.includes('await import("@fcalell/ui-core/gate")'),
+		/await import\(\s*"@fcalell\/ui-core\/gate"\s*\)/.test(gateSource),
 		"gate.ts does not dynamic-import the scanner",
 	);
 	assert(

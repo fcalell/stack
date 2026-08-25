@@ -6,13 +6,10 @@ import { StackError } from "@fcalell/cli/errors";
 // only. The gate subpath is dynamic-imported so ts-morph loads during
 // `stack build` alone, never on config load, `generate`, or `dev`.
 export async function runGeometryGate(cwd: string): Promise<void> {
-	const { scanGeometry } = await import("@fcalell/ui-core/gate");
+	const { formatViolations, scanGeometry } = await import(
+		"@fcalell/ui-core/gate"
+	);
 	const violations = scanGeometry(join(cwd, "src"), "intrinsic");
 	if (violations.length === 0) return;
-	const lines = violations.map(({ file, line, kind, token }) =>
-		kind === "host"
-			? `src/${file}:${line}  class attribute on non-host tag "${token}"`
-			: `src/${file}:${line}  "${token}" is not in the geometry vocabulary`,
-	);
-	throw new StackError(lines.join("\n"), "GEOMETRY_GATE");
+	throw new StackError(formatViolations(violations, "src"), "GEOMETRY_GATE");
 }

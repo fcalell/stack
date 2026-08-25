@@ -971,7 +971,9 @@ check("b8", "the build-step contribution wires the real gate", () => {
 	const source = readFileSync(resolve(pkgDir, "src/index.ts"), "utf8");
 	const start = source.indexOf("cliSlots.buildSteps.contribute");
 	assert(start >= 0, "src/index.ts contributes no build step");
-	const contribution = source.slice(start, start + 240);
+	const end = source.indexOf("})),", start);
+	assert(end >= 0, "the build-step contribution never closes");
+	const contribution = source.slice(start, end);
 	for (const pin of [
 		'name: "native-ui-geometry-gate"',
 		'phase: "pre"',

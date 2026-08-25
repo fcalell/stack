@@ -378,6 +378,6 @@ The scanner reads literals only. Candidates come from `class` and `className` at
 `classList` object keys, and the arguments of `cn(...)`, through strings, no-substitution
 templates, both ternary branches, the right side of `&&`/`||`, arrays, object keys, and nested
 `cn` calls. A class assembled through a variable, a prop, a template literal, or an aliased or
-member `cn` call passes silently. That makes the gate a guardrail against drift, not a sandbox,
-and the size of a consumer's `ui/` directory is the number that says whether the matrices cover
-enough.
+member `cn` call passes silently. The gate is a guardrail against drift; a call site that wants
+around it has those open paths, and the size of a consumer's `ui/` directory is the number that
+says whether the matrices cover enough.
