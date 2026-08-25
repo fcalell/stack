@@ -1245,7 +1245,11 @@ check("c27", "every rhythm cell is exactly gap-<unit>", () => {
 	requireEqual(units.join(" "), "section stack row pair", "rhythm units");
 	requireEqual(RHYTHM.base, "", "RHYTHM.base");
 	for (const unit of units) {
-		requireEqual(rhythm({ unit: unit as never }), `gap-${unit}`, `rhythm(${unit})`);
+		requireEqual(
+			rhythm({ unit: unit as never }),
+			`gap-${unit}`,
+			`rhythm(${unit})`,
+		);
 	}
 	return `${units.length} units, each cell the bare gap utility`;
 });
