@@ -133,35 +133,48 @@ function Example() {
 }
 ```
 
-The plugin ships 26 primitives. They use uniwind `className` reading the
-contract tokens, so each renders in light and dark with no per-component
-theme code, and persona is encoded by **fill, never hue**.
+The plugin ships 30 primitives. They use uniwind `className` internally,
+reading the contract tokens, so each renders in light and dark with no
+per-component theme code, and persona is encoded by **fill, never hue**. Their
+public props carry none of it: `className` and `style` are declared `?: never`
+on every primitive, uniwind's per-prop `*ClassName` channels included. A look
+the matrices do not cover is a matrix change, or a primitive the consumer owns.
 
 - **Actions** — `Button`, `Stepper`
-- **Inputs** — `Input`, `TextArea`, `Field`, `Toggle`, `Checkbox`, `Segmented`,
+- **Inputs** — `Input`, `Textarea`, `Field`, `Toggle`, `Checkbox`, `Segmented`,
   `FilterChip`
 - **Typography** — `Text`
-- **Containers & data** — `Card`, `RowItem`, `DefRow`, `Badge`, `Divider`
+- **Rhythm** — `Section`, `Stack`, `Row`, `Pair`
+- **Containers & data** — `Card`, `RowItem`, `DefRow`, `Badge`, `Separator`
 - **Identity** — `Avatar`, `AvatarStack`
 - **Chrome** — `TabBar`, `NavBar`, `Footbar`
 - **Feedback** — `ProgressBar`, `Spinner`, `Skeleton`, `Toast`
 - **Overlays** — `BottomSheet`, `Dialog`
 
-`Button`, `Badge`, `Card`, `Text`, `Input` and `TextArea` compose their look
+`Button`, `Badge`, `Card`, `Text`, `Input` and `Textarea` compose their look
 from ui-core's shared variant matrices: the same cells the web plugin renders,
-behind the shared axis props (`emphasis` / `tone` / `size` on `Button`, `tone`
-on `Badge`, `padding` / `ring` on `Card`, `variant` / `tone` / `strong` /
-`mono` on `Text`). `Text`'s `mono` prop maps to `font-mono`; without a
-registered mono font it degrades to the system face. `Input` and `TextArea`
+behind the shared axis props (`emphasis` / `tone` / `size` / `loading` on
+`Button`, `tone` on `Badge`, `padding` / `ring` on `Card`, `variant` / `tone` /
+`strong` / `mono` on `Text`). `Text`'s `mono` prop maps to `font-mono`; without
+a registered mono font it degrades to the system face. `Input` and `Textarea`
 take a native-only `state` prop (`"default" | "focused" | "error"`) and track
 focus themselves, where web reaches the same matrix cells through
-`focus-visible:` / `aria-invalid:` selectors. `useButtonContentColor(emphasis,
-tone)`, exported beside `Button`, resolves the label matrix's ink to a
-concrete color for an icon or `Spinner` inside a button: RN nodes take a color
-prop, never `currentColor`.
+`focus-visible:` / `aria-invalid:` selectors. A busy `Button` renders its
+`Spinner` in the label's own ink, read back off the label matrix through
+ui-core's `buttonContentTone`.
 
-`Toast` is presentational (a screen renders it in its own overlay); `Skeleton` is
-a static block. Their imperative host / shimmer are a later polish pass, not a
+The rhythm four compose ui-core's `RHYTHM` cells: `Section` gaps a screen's
+regions at the section rung, `Stack` is a column of stacked units, `Row` lays
+peers inline, and `Pair` glues a micro-pair (`row` lays it inline). Composed
+regions are data, not element slots: `RowItem` takes `icon` / `value` /
+`badge` / `chevron`, `NavBar` takes `onBack` and an `Action`, `Dialog` renders
+its `primary` / `secondary` actions itself, and every `icon` prop is a
+`lucide-react-native` component the primitive renders at its own size and tone.
+
+`Toast` is presentational (a screen renders it in its own overlay), with a
+`tone` axis (`neutral` / `ok` / `danger`); `Skeleton` is a static block sized
+by `width` / `height`; `Spinner` spins in a `ContentTone` (default `ink-1`).
+The imperative toast host and the shimmer are a later polish pass, not a
 blocker for any screen.
 
 ## Config options
@@ -224,7 +237,7 @@ matrix cell strings so their classNames are detected.
 |---------|---------|
 | `@fcalell/plugin-native-ui` | `nativeUi()`, `NativeUiOptions`, `Theme`, `NativeFontEntry` |
 | `@fcalell/plugin-native-ui/app` | `AppProviders` — UI-shell providers for tests / Storybook |
-| `@fcalell/plugin-native-ui/components/*` | 26 primitives, one per `kebab-case` subpath (`.../components/row-item` → `RowItem`) — see the Primitives list above |
+| `@fcalell/plugin-native-ui/components/*` | 30 primitives, one per `kebab-case` subpath (`.../components/row-item` → `RowItem`) — see the Primitives list above |
 | `@fcalell/plugin-native-ui/lib/cn` | `cn()` — ui-core's className merge, taught the contract's scales |
 | `@fcalell/plugin-native-ui/lib/theme` | `Uniwind`, `useUniwind`, `useCSSVariable`, `setTheme`, `ThemeName` |
 
