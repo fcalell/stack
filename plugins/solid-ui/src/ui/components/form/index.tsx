@@ -30,14 +30,16 @@ type FormFieldProps = {
 	field: () => AnyFieldApi;
 	label: string;
 	description?: string;
-	class?: string;
 	htmlFor?: string;
 	children: JSX.Element;
+	class?: never;
+	style?: never;
+	classList?: never;
 };
 
 function FormField(props: FormFieldProps) {
 	return (
-		<Field class={props.class}>
+		<Field>
 			<Field.Label for={props.htmlFor}>{props.label}</Field.Label>
 			<Show when={props.description}>
 				<Field.Description>{props.description}</Field.Description>
@@ -62,9 +64,11 @@ type FormInputProps = {
 	type?: string;
 	disabled?: boolean;
 	autofocus?: boolean;
-	class?: string;
 	onBlur?: () => void;
 	onInput?: (value: string) => void;
+	class?: never;
+	style?: never;
+	classList?: never;
 };
 
 function FormInput(props: FormInputProps) {
@@ -75,7 +79,6 @@ function FormInput(props: FormInputProps) {
 			label={props.label}
 			description={props.description}
 			htmlFor={id}
-			class={props.class}
 		>
 			<Input
 				id={id}
@@ -108,9 +111,11 @@ type FormTextareaProps = {
 	description?: string;
 	placeholder?: string;
 	disabled?: boolean;
-	class?: string;
 	onBlur?: () => void;
 	onInput?: (value: string) => void;
+	class?: never;
+	style?: never;
+	classList?: never;
 };
 
 function FormTextarea(props: FormTextareaProps) {
@@ -121,7 +126,6 @@ function FormTextarea(props: FormTextareaProps) {
 			label={props.label}
 			description={props.description}
 			htmlFor={id}
-			class={props.class}
 		>
 			<Textarea
 				id={id}
@@ -153,8 +157,10 @@ type FormSelectProps = {
 	options: SelectOptions;
 	placeholder?: string;
 	disabled?: boolean;
-	class?: string;
 	children?: (option: import("#components/select").SelectOption) => JSX.Element;
+	class?: never;
+	style?: never;
+	classList?: never;
 };
 
 function FormSelect(props: FormSelectProps) {
@@ -163,7 +169,6 @@ function FormSelect(props: FormSelectProps) {
 			field={props.field}
 			label={props.label}
 			description={props.description}
-			class={props.class}
 		>
 			<Select
 				options={props.options}
@@ -189,12 +194,14 @@ type FormCheckboxProps = {
 	label: string;
 	description?: string;
 	disabled?: boolean;
-	class?: string;
+	class?: never;
+	style?: never;
+	classList?: never;
 };
 
 function FormCheckbox(props: FormCheckboxProps) {
 	return (
-		<Field class={props.class}>
+		<Field>
 			<Field.Content>
 				<Checkbox
 					label={props.label}
@@ -224,7 +231,9 @@ type FormInputOTPProps = {
 	description?: string;
 	maxLength: number;
 	onComplete?: () => void;
-	class?: string;
+	class?: never;
+	style?: never;
+	classList?: never;
 };
 
 function FormInputOTP(props: FormInputOTPProps) {
@@ -236,7 +245,6 @@ function FormInputOTP(props: FormInputOTPProps) {
 			label={props.label}
 			description={props.description}
 			htmlFor={id}
-			class={props.class}
 		>
 			<InputOTP
 				id={id}
@@ -259,7 +267,9 @@ type FormEnumInputProps = {
 	description?: string;
 	placeholder?: string;
 	disabled?: boolean;
-	class?: string;
+	class?: never;
+	style?: never;
+	classList?: never;
 };
 
 function FormEnumInput(props: FormEnumInputProps) {
@@ -268,7 +278,6 @@ function FormEnumInput(props: FormEnumInputProps) {
 			field={props.field}
 			label={props.label}
 			description={props.description}
-			class={props.class}
 		>
 			<EnumInput
 				values={props.field().state.value ?? []}

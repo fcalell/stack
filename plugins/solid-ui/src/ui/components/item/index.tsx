@@ -1,35 +1,34 @@
 import { cva, type VariantProps } from "class-variance-authority";
 import type { ComponentProps } from "solid-js";
 import { createUniqueId, mergeProps, splitProps } from "solid-js";
-import { Separator } from "#components/separator";
-import { cn } from "#lib/cn";
 
 // ─── Group ───
 
-function Group(props: ComponentProps<"ul">) {
-	const [local, rest] = splitProps(props, ["class"]);
+function Group(
+	props: ComponentProps<"ul"> & {
+		class?: never;
+		style?: never;
+		classList?: never;
+	},
+) {
 	return (
 		<ul
-			class={cn(
-				"flex w-full list-none flex-col gap-4 has-data-[size=sm]:gap-2 has-data-[size=xs]:gap-2",
-				local.class,
-			)}
-			{...rest}
+			class="flex w-full list-none flex-col gap-4 has-data-[size=sm]:gap-2 has-data-[size=xs]:gap-2"
+			{...props}
 		/>
 	);
 }
 
 // ─── ItemSeparator ───
 
-function ItemSeparator(props: ComponentProps<"hr">) {
-	const [local, rest] = splitProps(props, ["class"]);
-	return (
-		<Separator
-			orientation="horizontal"
-			class={cn("my-2", local.class)}
-			{...rest}
-		/>
-	);
+function ItemSeparator(
+	props: ComponentProps<"hr"> & {
+		class?: never;
+		style?: never;
+		classList?: never;
+	},
+) {
+	return <hr class="my-2 h-px w-full shrink-0 border-0 bg-edge" {...props} />;
 }
 
 // ─── Root ───
@@ -56,24 +55,25 @@ const itemClasses = cva(
 	},
 );
 
-type ItemProps = ComponentProps<"li"> & VariantProps<typeof itemClasses>;
+type ItemProps = ComponentProps<"li"> &
+	VariantProps<typeof itemClasses> & {
+		class?: never;
+		style?: never;
+		classList?: never;
+	};
 
 function Root(props: ItemProps) {
 	const merged = mergeProps(
 		{ variant: "default" as const, size: "default" as const },
 		props,
 	);
-	const [local, rest] = splitProps(merged, ["class", "variant", "size"]);
+	const [local, rest] = splitProps(merged, ["variant", "size"]);
 	return (
 		<li
 			data-slot="item"
 			data-variant={local.variant}
 			data-size={local.size}
-			class={itemClasses({
-				variant: local.variant,
-				size: local.size,
-				className: local.class,
-			})}
+			class={itemClasses({ variant: local.variant, size: local.size })}
 			{...rest}
 		/>
 	);
@@ -98,19 +98,21 @@ const itemMediaClasses = cva(
 	},
 );
 
-type MediaProps = ComponentProps<"div"> & VariantProps<typeof itemMediaClasses>;
+type MediaProps = ComponentProps<"div"> &
+	VariantProps<typeof itemMediaClasses> & {
+		class?: never;
+		style?: never;
+		classList?: never;
+	};
 
 function Media(props: MediaProps) {
 	const merged = mergeProps({ variant: "default" as const }, props);
-	const [local, rest] = splitProps(merged, ["class", "variant"]);
+	const [local, rest] = splitProps(merged, ["variant"]);
 	return (
 		<div
 			data-slot="item-media"
 			data-variant={local.variant}
-			class={itemMediaClasses({
-				variant: local.variant,
-				className: local.class,
-			})}
+			class={itemMediaClasses({ variant: local.variant })}
 			{...rest}
 		/>
 	);
@@ -118,33 +120,38 @@ function Media(props: MediaProps) {
 
 // ─── Content ───
 
-function ItemContent(props: ComponentProps<"div">) {
-	const [local, rest] = splitProps(props, ["class"]);
+function ItemContent(
+	props: ComponentProps<"div"> & {
+		class?: never;
+		style?: never;
+		classList?: never;
+	},
+) {
 	return (
 		<div
 			data-slot="item-content"
-			class={cn(
-				"flex flex-1 flex-col gap-1 group-data-[size=xs]/item:gap-0 [&+[data-slot=item-content]]:flex-none",
-				local.class,
-			)}
-			{...rest}
+			class="flex flex-1 flex-col gap-1 group-data-[size=xs]/item:gap-0 [&+[data-slot=item-content]]:flex-none"
+			{...props}
 		/>
 	);
 }
 
 // ─── Title ───
 
-function Title(props: ComponentProps<"span">) {
+function Title(
+	props: ComponentProps<"span"> & {
+		class?: never;
+		style?: never;
+		classList?: never;
+	},
+) {
 	const titleId = createUniqueId();
-	const [local, rest] = splitProps(props, ["class", "id"]);
+	const [local, rest] = splitProps(props, ["id"]);
 	return (
 		<span
 			data-slot="item-title"
 			id={local.id ?? titleId}
-			class={cn(
-				"flex w-fit flex-row items-center gap-2 text-caption font-medium underline-offset-4 line-clamp-1",
-				local.class,
-			)}
+			class="flex w-fit flex-row items-center gap-2 text-caption font-medium underline-offset-4 line-clamp-1"
 			{...rest}
 		/>
 	);
@@ -152,17 +159,20 @@ function Title(props: ComponentProps<"span">) {
 
 // ─── Description ───
 
-function Description(props: ComponentProps<"p">) {
+function Description(
+	props: ComponentProps<"p"> & {
+		class?: never;
+		style?: never;
+		classList?: never;
+	},
+) {
 	const descId = createUniqueId();
-	const [local, rest] = splitProps(props, ["class", "id"]);
+	const [local, rest] = splitProps(props, ["id"]);
 	return (
 		<p
 			data-slot="item-description"
 			id={local.id ?? descId}
-			class={cn(
-				"text-left text-caption font-normal text-ink-3 line-clamp-2 group-data-[size=xs]/item:text-caption [&>a:hover]:text-ink-1 [&>a]:underline [&>a]:underline-offset-4",
-				local.class,
-			)}
+			class="text-left text-caption font-normal text-ink-3 line-clamp-2 group-data-[size=xs]/item:text-caption [&>a:hover]:text-ink-1 [&>a]:underline [&>a]:underline-offset-4"
 			{...rest}
 		/>
 	);
@@ -170,45 +180,54 @@ function Description(props: ComponentProps<"p">) {
 
 // ─── Actions ───
 
-function Actions(props: ComponentProps<"div">) {
-	const [local, rest] = splitProps(props, ["class"]);
+function Actions(
+	props: ComponentProps<"div"> & {
+		class?: never;
+		style?: never;
+		classList?: never;
+	},
+) {
 	return (
 		<div
 			data-slot="item-actions"
-			class={cn("flex flex-row items-center gap-2", local.class)}
-			{...rest}
+			class="flex flex-row items-center gap-2"
+			{...props}
 		/>
 	);
 }
 
 // ─── Header ───
 
-function Header(props: ComponentProps<"div">) {
-	const [local, rest] = splitProps(props, ["class"]);
+function Header(
+	props: ComponentProps<"div"> & {
+		class?: never;
+		style?: never;
+		classList?: never;
+	},
+) {
 	return (
 		<div
 			data-slot="item-header"
-			class={cn(
-				"flex basis-full flex-row items-center justify-between gap-2",
-				local.class,
-			)}
-			{...rest}
+			class="flex basis-full flex-row items-center justify-between gap-2"
+			{...props}
 		/>
 	);
 }
 
 // ─── Footer ───
 
-function Footer(props: ComponentProps<"div">) {
-	const [local, rest] = splitProps(props, ["class"]);
+function Footer(
+	props: ComponentProps<"div"> & {
+		class?: never;
+		style?: never;
+		classList?: never;
+	},
+) {
 	return (
 		<div
 			data-slot="item-footer"
-			class={cn(
-				"flex basis-full flex-row items-center justify-between gap-2",
-				local.class,
-			)}
-			{...rest}
+			class="flex basis-full flex-row items-center justify-between gap-2"
+			{...props}
 		/>
 	);
 }

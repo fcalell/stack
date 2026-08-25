@@ -1,26 +1,43 @@
 import type { PolymorphicProps } from "@kobalte/core/polymorphic";
 import * as TooltipPrimitive from "@kobalte/core/tooltip";
 import type { ValidComponent } from "solid-js";
-import { splitProps } from "solid-js";
-import { cn } from "#lib/cn";
+
+// ─── Trigger ───
+
+type TriggerProps<T extends ValidComponent = "button"> =
+	TooltipPrimitive.TooltipTriggerProps<T> & {
+		class?: never;
+		style?: never;
+		classList?: never;
+	};
+
+function Trigger<T extends ValidComponent = "button">(
+	props: PolymorphicProps<T, TriggerProps<T>>,
+) {
+	return (
+		<TooltipPrimitive.Trigger
+			{...(props as TooltipPrimitive.TooltipTriggerProps)}
+		/>
+	);
+}
 
 // ─── Content ───
 
 type ContentProps<T extends ValidComponent = "div"> =
-	TooltipPrimitive.TooltipContentProps<T> & { class?: string };
+	TooltipPrimitive.TooltipContentProps<T> & {
+		class?: never;
+		style?: never;
+		classList?: never;
+	};
 
 function Content<T extends ValidComponent = "div">(
 	props: PolymorphicProps<T, ContentProps<T>>,
 ) {
-	const [local, rest] = splitProps(props as ContentProps, ["class"]);
 	return (
 		<TooltipPrimitive.Portal>
 			<TooltipPrimitive.Content
-				class={cn(
-					"z-50 origin-(--kb-popover-content-transform-origin) overflow-hidden rounded-md border bg-surface px-3 py-1.5 text-callout text-ink-1 animate-content-hide data-[expanded]:animate-content-show",
-					local.class,
-				)}
-				{...rest}
+				class="z-50 origin-(--kb-popover-content-transform-origin) overflow-hidden rounded-md border bg-surface px-3 py-1.5 text-callout text-ink-1 animate-content-hide data-[expanded]:animate-content-show"
+				{...props}
 			/>
 		</TooltipPrimitive.Portal>
 	);
@@ -35,6 +52,6 @@ function Root(props: TooltipPrimitive.TooltipRootProps) {
 // ─── Exports ───
 
 export const Tooltip = Object.assign(Root, {
-	Trigger: TooltipPrimitive.Trigger,
+	Trigger,
 	Content,
 });

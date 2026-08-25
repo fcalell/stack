@@ -5,15 +5,21 @@ import { cn } from "#lib/cn";
 // ─── Root ───
 
 type RootProps = ComponentProps<"table"> & {
-	containerClass?: string;
+	bordered?: boolean;
+	class?: never;
+	style?: never;
+	classList?: never;
 };
 
 function Root(props: RootProps) {
-	const [local, rest] = splitProps(props, ["class", "containerClass"]);
+	const [local, rest] = splitProps(props, ["bordered"]);
 	return (
-		<div class={cn("relative w-full overflow-auto", local.containerClass)}>
+		<div class="relative w-full overflow-auto">
 			<table
-				class={cn("w-full caption-bottom text-callout", local.class)}
+				class={cn(
+					"w-full caption-bottom text-callout",
+					local.bordered && "border",
+				)}
 				{...rest}
 			/>
 		</div>
@@ -22,85 +28,104 @@ function Root(props: RootProps) {
 
 // ─── Header ───
 
-function Header(props: ComponentProps<"thead">) {
-	const [local, rest] = splitProps(props, ["class"]);
-	return <thead class={cn("[&_tr]:border-b", local.class)} {...rest} />;
+function Header(
+	props: ComponentProps<"thead"> & {
+		class?: never;
+		style?: never;
+		classList?: never;
+	},
+) {
+	return <thead class="[&_tr]:border-b" {...props} />;
 }
 
 // ─── Body ───
 
-function Body(props: ComponentProps<"tbody">) {
-	const [local, rest] = splitProps(props, ["class"]);
-	return (
-		<tbody class={cn("[&_tr:last-child]:border-0", local.class)} {...rest} />
-	);
+function Body(
+	props: ComponentProps<"tbody"> & {
+		class?: never;
+		style?: never;
+		classList?: never;
+	},
+) {
+	return <tbody class="[&_tr:last-child]:border-0" {...props} />;
 }
 
 // ─── Footer ───
 
-function TableFooter(props: ComponentProps<"tfoot">) {
-	const [local, rest] = splitProps(props, ["class"]);
+function TableFooter(
+	props: ComponentProps<"tfoot"> & {
+		class?: never;
+		style?: never;
+		classList?: never;
+	},
+) {
 	return (
-		<tfoot
-			class={cn("border-t bg-surface-2 font-medium text-ink-3", local.class)}
-			{...rest}
-		/>
+		<tfoot class="border-t bg-surface-2 font-medium text-ink-3" {...props} />
 	);
 }
 
 // ─── Row ───
 
-function Row(props: ComponentProps<"tr">) {
-	const [local, rest] = splitProps(props, ["class"]);
+function Row(
+	props: ComponentProps<"tr"> & {
+		class?: never;
+		style?: never;
+		classList?: never;
+	},
+) {
 	return (
 		<tr
-			class={cn(
-				"border-b hover:bg-surface-2 data-[state=selected]:bg-surface-2",
-				local.class,
-			)}
-			{...rest}
+			class="border-b hover:bg-surface-2 data-[state=selected]:bg-surface-2"
+			{...props}
 		/>
 	);
 }
 
 // ─── Head ───
 
-function Head(props: ComponentProps<"th">) {
-	const [local, rest] = splitProps(props, ["class"]);
+function Head(
+	props: ComponentProps<"th"> & {
+		class?: never;
+		style?: never;
+		classList?: never;
+	},
+) {
 	return (
 		<th
 			scope="col"
-			class={cn(
-				"h-10 px-2 text-left align-middle font-medium text-ink-3 [&:has([role=checkbox])]:pr-0",
-				local.class,
-			)}
-			{...rest}
+			class="h-10 px-2 text-left align-middle font-medium text-ink-3 [&:has([role=checkbox])]:pr-0"
+			{...props}
 		/>
 	);
 }
 
 // ─── Cell ───
 
-function Cell(props: ComponentProps<"td">) {
-	const [local, rest] = splitProps(props, ["class"]);
+function Cell(
+	props: ComponentProps<"td"> & {
+		class?: never;
+		style?: never;
+		classList?: never;
+	},
+) {
 	return (
 		<td
-			class={cn("p-2 align-middle [&:has([role=checkbox])]:pr-0", local.class)}
-			{...rest}
+			class="p-2 align-middle [&:has([role=checkbox])]:pr-0"
+			{...props}
 		/>
 	);
 }
 
 // ─── Caption ───
 
-function Caption(props: ComponentProps<"caption">) {
-	const [local, rest] = splitProps(props, ["class"]);
-	return (
-		<caption
-			class={cn("mt-4 text-callout text-ink-3", local.class)}
-			{...rest}
-		/>
-	);
+function Caption(
+	props: ComponentProps<"caption"> & {
+		class?: never;
+		style?: never;
+		classList?: never;
+	},
+) {
+	return <caption class="mt-4 text-callout text-ink-3" {...props} />;
 }
 
 // ─── Exports ───

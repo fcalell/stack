@@ -10,7 +10,6 @@ import { Table } from "#components/table";
 
 declare module "@tanstack/solid-table" {
 	interface ColumnMeta<TData extends RowData, TValue> {
-		class?: string;
 		ariaSort?: () => "ascending" | "descending" | "none";
 	}
 }
@@ -20,6 +19,9 @@ interface DataTableProps<TData, TValue> {
 	data: TData[];
 	fallback?: JSX.Element;
 	caption?: string;
+	class?: never;
+	style?: never;
+	classList?: never;
 }
 
 export function DataTable<TData, TValue>(props: DataTableProps<TData, TValue>) {
@@ -34,7 +36,7 @@ export function DataTable<TData, TValue>(props: DataTableProps<TData, TValue>) {
 	});
 
 	return (
-		<Table class="border">
+		<Table bordered>
 			<Show when={props.caption}>
 				<Table.Caption>{props.caption}</Table.Caption>
 			</Show>
@@ -46,7 +48,6 @@ export function DataTable<TData, TValue>(props: DataTableProps<TData, TValue>) {
 								{(header) => (
 									<Table.Head
 										colSpan={header.colSpan}
-										class={header.column.columnDef.meta?.class}
 										aria-sort={header.column.columnDef.meta?.ariaSort?.()}
 									>
 										<Show when={!header.isPlaceholder}>
@@ -67,12 +68,12 @@ export function DataTable<TData, TValue>(props: DataTableProps<TData, TValue>) {
 					when={table.getRowModel().rows?.length}
 					fallback={
 						<Table.Row>
-							<Table.Cell
+							<td
 								colSpan={props.columns.length}
-								class="h-24 text-center"
+								class="h-24 p-2 text-center align-middle"
 							>
 								{props.fallback ?? "No results."}
-							</Table.Cell>
+							</td>
 						</Table.Row>
 					}
 				>
@@ -83,7 +84,7 @@ export function DataTable<TData, TValue>(props: DataTableProps<TData, TValue>) {
 							>
 								<For each={row.getVisibleCells()}>
 									{(cell) => (
-										<Table.Cell class={cell.column.columnDef.meta?.class}>
+										<Table.Cell>
 											{flexRender(
 												cell.column.columnDef.cell,
 												cell.getContext(),

@@ -7,7 +7,6 @@ import { createSignal, createUniqueId, For, Show, splitProps } from "solid-js";
 import { Button } from "#components/button";
 import { Input } from "#components/input";
 import { Text } from "#components/text";
-import { cn } from "#lib/cn";
 import {
 	createOverlayContext,
 	createOverlayHook,
@@ -27,20 +26,11 @@ function Portal(props: DialogPrimitive.DialogPortalProps) {
 	);
 }
 
-type OverlayProps<T extends ValidComponent = "div"> =
-	DialogPrimitive.DialogOverlayProps<T> & { class?: string };
-
-function Overlay<T extends ValidComponent = "div">(
-	props: PolymorphicProps<T, OverlayProps<T>>,
-) {
-	const [local, rest] = splitProps(props as OverlayProps, ["class"]);
+function Overlay(props: DialogPrimitive.DialogOverlayProps) {
 	return (
 		<DialogPrimitive.Overlay
-			class={cn(
-				"fixed inset-0 z-50 bg-scrim data-[expanded]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[expanded]:fade-in-0",
-				local.class,
-			)}
-			{...rest}
+			class="fixed inset-0 z-50 bg-scrim data-[expanded]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[expanded]:fade-in-0"
+			{...props}
 		/>
 	);
 }
@@ -49,25 +39,21 @@ function Overlay<T extends ValidComponent = "div">(
 
 type ContentProps<T extends ValidComponent = "div"> =
 	DialogPrimitive.DialogContentProps<T> & {
-		class?: string;
 		children?: JSX.Element;
+		class?: never;
+		style?: never;
+		classList?: never;
 	};
 
 function Content<T extends ValidComponent = "div">(
 	props: PolymorphicProps<T, ContentProps<T>>,
 ) {
-	const [local, rest] = splitProps(props as ContentProps, [
-		"class",
-		"children",
-	]);
+	const [local, rest] = splitProps(props as ContentProps, ["children"]);
 	return (
 		<Portal>
 			<Overlay />
 			<DialogPrimitive.Content
-				class={cn(
-					"relative z-50 grid max-h-screen w-full max-w-lg gap-4 overflow-y-auto rounded-xl border bg-canvas p-6 duration-200 data-[expanded]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[expanded]:fade-in-0 data-[closed]:zoom-out-95 data-[expanded]:zoom-in-95 data-[closed]:slide-out-to-left-1/2 data-[closed]:slide-out-to-top-[48%] data-[expanded]:slide-in-from-left-1/2 data-[expanded]:slide-in-from-top-[48%]",
-					local.class,
-				)}
+				class="relative z-50 grid max-h-screen w-full max-w-lg gap-4 overflow-y-auto rounded-xl border bg-canvas p-6 duration-200 data-[expanded]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[expanded]:fade-in-0 data-[closed]:zoom-out-95 data-[expanded]:zoom-in-95 data-[closed]:slide-out-to-left-1/2 data-[closed]:slide-out-to-top-[48%] data-[expanded]:slide-in-from-left-1/2 data-[expanded]:slide-in-from-top-[48%]"
 				{...rest}
 			>
 				{local.children}
@@ -80,30 +66,50 @@ function Content<T extends ValidComponent = "div">(
 	);
 }
 
-// ─── Header / Footer ───
+// ─── Trigger ───
 
-function Header(props: ComponentProps<"div">) {
-	const [local, rest] = splitProps(props, ["class"]);
+type TriggerProps<T extends ValidComponent = "button"> =
+	DialogPrimitive.DialogTriggerProps<T> & {
+		class?: never;
+		style?: never;
+		classList?: never;
+	};
+
+function Trigger<T extends ValidComponent = "button">(
+	props: PolymorphicProps<T, TriggerProps<T>>,
+) {
 	return (
-		<div
-			class={cn(
-				"flex flex-col space-y-1.5 text-center sm:text-left",
-				local.class,
-			)}
-			{...rest}
+		<DialogPrimitive.Trigger
+			{...(props as DialogPrimitive.DialogTriggerProps)}
 		/>
 	);
 }
 
-function Footer(props: ComponentProps<"div">) {
-	const [local, rest] = splitProps(props, ["class"]);
+// ─── Header / Footer ───
+
+function Header(
+	props: ComponentProps<"div"> & {
+		class?: never;
+		style?: never;
+		classList?: never;
+	},
+) {
+	return (
+		<div class="flex flex-col space-y-1.5 text-center sm:text-left" {...props} />
+	);
+}
+
+function Footer(
+	props: ComponentProps<"div"> & {
+		class?: never;
+		style?: never;
+		classList?: never;
+	},
+) {
 	return (
 		<div
-			class={cn(
-				"flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2",
-				local.class,
-			)}
-			{...rest}
+			class="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2"
+			{...props}
 		/>
 	);
 }
@@ -111,36 +117,34 @@ function Footer(props: ComponentProps<"div">) {
 // ─── Title / Description ───
 
 type TitleProps<T extends ValidComponent = "h2"> =
-	DialogPrimitive.DialogTitleProps<T> & { class?: string };
+	DialogPrimitive.DialogTitleProps<T> & {
+		class?: never;
+		style?: never;
+		classList?: never;
+	};
 
 function Title<T extends ValidComponent = "h2">(
 	props: PolymorphicProps<T, TitleProps<T>>,
 ) {
-	const [local, rest] = splitProps(props as TitleProps, ["class"]);
 	return (
 		<DialogPrimitive.Title
-			class={cn(
-				"text-h3 font-semibold leading-none tracking-tight",
-				local.class,
-			)}
-			{...rest}
+			class="text-h3 font-semibold leading-none tracking-tight"
+			{...props}
 		/>
 	);
 }
 
 type DescriptionProps<T extends ValidComponent = "p"> =
-	DialogPrimitive.DialogDescriptionProps<T> & { class?: string };
+	DialogPrimitive.DialogDescriptionProps<T> & {
+		class?: never;
+		style?: never;
+		classList?: never;
+	};
 
 function Description<T extends ValidComponent = "p">(
 	props: PolymorphicProps<T, DescriptionProps<T>>,
 ) {
-	const [local, rest] = splitProps(props as DescriptionProps, ["class"]);
-	return (
-		<DialogPrimitive.Description
-			class={cn("text-callout text-ink-3", local.class)}
-			{...rest}
-		/>
-	);
+	return <DialogPrimitive.Description class="text-callout text-ink-3" {...props} />;
 }
 
 // ─── DialogProvider ───
@@ -162,7 +166,6 @@ function DialogProvider(props: { children: JSX.Element }) {
 // ─── createDialog ───
 
 type CreateDialogOptions = {
-	contentClass?: string;
 	dialogProps?: Partial<{ preventScroll: boolean; modal: boolean }>;
 };
 
@@ -179,11 +182,7 @@ function createDialog<P = void, R = undefined>(
 			{...options?.dialogProps}
 		>
 			<Show when={s.state()} keyed>
-				{(current) => (
-					<Content class={options?.contentClass}>
-						{render(current.props, s.close)}
-					</Content>
-				)}
+				{(current) => <Content>{render(current.props, s.close)}</Content>}
 			</Show>
 		</DialogPrimitive.Root>
 	));
@@ -273,7 +272,7 @@ function createConfirmByNameDialog(options?: CreateDialogOptions) {
 // ─── Exports ───
 
 export const Dialog = Object.assign(DialogPrimitive.Root, {
-	Trigger: DialogPrimitive.Trigger,
+	Trigger,
 	Content,
 	Header,
 	Footer,

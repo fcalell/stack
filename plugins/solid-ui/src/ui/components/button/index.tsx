@@ -12,6 +12,7 @@ import type { PolymorphicProps } from "@kobalte/core/polymorphic";
 import type { JSX, ValidComponent } from "solid-js";
 import { splitProps } from "solid-js";
 import { cn } from "#lib/cn";
+import { groupButtonClasses, useGroupButtonSize } from "#lib/input-group";
 
 // The fill matrix carries no ink, so the label table rides the same node.
 // Display, motion and the focus ring are web overlays composed after both.
@@ -51,8 +52,10 @@ type ButtonProps<T extends ValidComponent = "button"> =
 		emphasis?: ButtonEmphasis;
 		tone?: ButtonTone;
 		size?: ButtonSize;
-		class?: string;
 		children?: JSX.Element;
+		class?: never;
+		style?: never;
+		classList?: never;
 	};
 
 function Button<T extends ValidComponent = "button">(
@@ -62,12 +65,12 @@ function Button<T extends ValidComponent = "button">(
 		"emphasis",
 		"tone",
 		"size",
-		"class",
 		"disabled",
 	]);
 	const emphasis = () => local.emphasis ?? "primary";
 	const tone = () => local.tone ?? "neutral";
 	const size = () => local.size ?? "md";
+	const groupSize = useGroupButtonSize();
 	return (
 		<ButtonPrimitive.Root
 			disabled={local.disabled}
@@ -83,7 +86,7 @@ function Button<T extends ValidComponent = "button">(
 							"pointer-events-none",
 						)
 					: GROUND[emphasis()][tone()],
-				local.class,
+				groupSize && groupButtonClasses({ size: groupSize() }),
 			)}
 			{...rest}
 		/>

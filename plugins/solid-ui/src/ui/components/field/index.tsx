@@ -1,81 +1,99 @@
 import { CircleAlert } from "lucide-solid";
 import type { ComponentProps, ParentProps } from "solid-js";
 import { Show, splitProps } from "solid-js";
-import { Label } from "#components/label";
 import { cn } from "#lib/cn";
+import { labelClass } from "#lib/label";
 
-function Root(props: ComponentProps<"fieldset">) {
-	const [local, rest] = splitProps(props, ["class"]);
+function Root(
+	props: ComponentProps<"fieldset"> & {
+		class?: never;
+		style?: never;
+		classList?: never;
+	},
+) {
 	return (
 		<fieldset
 			data-slot="field"
-			class={cn(
-				"group/field flex w-full flex-col gap-2 data-[invalid=true]:text-danger [&>.sr-only]:w-auto",
-				local.class,
-			)}
-			{...rest}
+			class="group/field flex w-full flex-col gap-2 data-[invalid=true]:text-danger [&>.sr-only]:w-auto"
+			{...props}
 		/>
 	);
 }
 
-function Content(props: ComponentProps<"div">) {
-	const [local, rest] = splitProps(props, ["class"]);
+function Content(
+	props: ComponentProps<"div"> & {
+		class?: never;
+		style?: never;
+		classList?: never;
+	},
+) {
 	return (
 		<div
 			data-slot="field-content"
-			class={cn(
-				"group/field-content flex flex-1 flex-col gap-0.5 leading-snug",
-				local.class,
-			)}
-			{...rest}
+			class="group/field-content flex flex-1 flex-col gap-0.5 leading-snug"
+			{...props}
 		/>
 	);
 }
 
-function FieldLabel(props: ComponentProps<"label">) {
-	const [local, rest] = splitProps(props, ["class"]);
+// The label element is rendered here rather than through `Label`: both compose
+// the same `labelClass` base, and the field-state lines ride on top of it.
+function FieldLabel(
+	props: ComponentProps<"label"> & {
+		class?: never;
+		style?: never;
+		classList?: never;
+	},
+) {
 	return (
-		<Label
+		<label
 			data-slot="field-label"
 			class={cn(
-				"flex w-fit flex-row items-stretch gap-2 leading-snug",
-				"text-ink-3 group-data-[disabled=true]/field:opacity-50",
+				labelClass,
+				"flex w-fit flex-row items-stretch gap-2",
+				"group-data-[disabled=true]/field:opacity-50",
 				"has-data-checked:border-ink-1 has-data-checked:bg-interactive-soft",
 				"has-[>[data-slot=field]]:w-full has-[>[data-slot=field]]:flex-col has-[>[data-slot=field]]:rounded-none has-[>[data-slot=field]]:border *:data-[slot=field]:p-2",
 				"group/field-label peer/field-label",
-				local.class,
 			)}
-			{...rest}
+			{...props}
 		/>
 	);
 }
 
-function Description(props: ComponentProps<"p">) {
-	const [local, rest] = splitProps(props, ["id", "class"]);
+function Description(
+	props: ComponentProps<"p"> & {
+		class?: never;
+		style?: never;
+		classList?: never;
+	},
+) {
 	return (
 		<p
-			id={local.id}
 			data-slot="field-description"
 			class={cn(
 				"text-left text-caption font-normal leading-normal text-ink-3",
 				"last:mt-0",
 				"group-has-data-[orientation=horizontal]/field:text-balance",
 				"[&>a]:underline [&>a]:underline-offset-4 [&>a:hover]:text-ink-1",
-				local.class,
 			)}
-			{...rest}
+			{...props}
 		/>
 	);
 }
 
-function Value(props: ParentProps<ComponentProps<"p">>) {
-	const [local, rest] = splitProps(props, ["class", "children"]);
+function Value(
+	props: ParentProps<
+		ComponentProps<"p"> & {
+			class?: never;
+			style?: never;
+			classList?: never;
+		}
+	>,
+) {
+	const [local, rest] = splitProps(props, ["children"]);
 	return (
-		<p
-			data-slot="field-value"
-			class={cn("text-callout", local.class)}
-			{...rest}
-		>
+		<p data-slot="field-value" class="text-callout" {...rest}>
 			<Show
 				when={local.children}
 				fallback={
@@ -93,15 +111,20 @@ function Value(props: ParentProps<ComponentProps<"p">>) {
 	);
 }
 
-function FieldError(props: ParentProps<ComponentProps<"output">>) {
-	const [local, rest] = splitProps(props, ["class", "children"]);
+function FieldError(
+	props: ParentProps<
+		ComponentProps<"output"> & {
+			class?: never;
+			style?: never;
+			classList?: never;
+		}
+	>,
+) {
+	const [local, rest] = splitProps(props, ["children"]);
 	return (
 		<output
 			data-slot="field-error"
-			class={cn(
-				"flex flex-row items-center gap-2 text-caption font-normal text-danger",
-				local.class,
-			)}
+			class="flex flex-row items-center gap-2 text-caption font-normal text-danger"
 			{...rest}
 		>
 			<CircleAlert class="size-4 shrink-0" aria-hidden="true" />

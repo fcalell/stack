@@ -1,7 +1,9 @@
+import * as SheetPrimitive from "@kobalte/core/dialog";
 import { Polymorphic, type PolymorphicProps } from "@kobalte/core/polymorphic";
+import * as TooltipPrimitive from "@kobalte/core/tooltip";
 import { cva, type VariantProps } from "class-variance-authority";
 import { PanelLeft } from "lucide-solid";
-import type { Accessor, ComponentProps, JSX, ValidComponent } from "solid-js";
+import type { Accessor, ComponentProps, ValidComponent } from "solid-js";
 import {
 	createContext,
 	createEffect,
@@ -14,14 +16,15 @@ import {
 	splitProps,
 	useContext,
 } from "solid-js";
-import type { ButtonProps } from "#components/button";
-import { Button } from "#components/button";
 import { Input } from "#components/input";
 import { Loader } from "#components/loader";
-import { Separator } from "#components/separator";
-import { Sheet } from "#components/sheet";
 import { Tooltip } from "#components/tooltip";
 import { cn } from "#lib/cn";
+import {
+	sheetOverlayClass,
+	sheetPortalVariants,
+	sheetVariants,
+} from "#lib/sheet";
 
 const MOBILE_BREAKPOINT = 768;
 const SIDEBAR_WIDTH = "16rem";
@@ -67,11 +70,13 @@ function useIsMobile(fallback = false) {
 
 // ─── Provider ───
 
-type ProviderProps = Omit<ComponentProps<"div">, "style"> & {
+type ProviderProps = ComponentProps<"div"> & {
 	defaultOpen?: boolean;
 	open?: boolean;
 	onOpenChange?: (open: boolean) => void;
-	style?: JSX.CSSProperties;
+	class?: never;
+	style?: never;
+	classList?: never;
 };
 
 function Provider(rawProps: ProviderProps) {
@@ -80,8 +85,6 @@ function Provider(rawProps: ProviderProps) {
 		"defaultOpen",
 		"open",
 		"onOpenChange",
-		"class",
-		"style",
 		"children",
 	]);
 
@@ -134,12 +137,8 @@ function Provider(rawProps: ProviderProps) {
 				style={{
 					"--sidebar-width": SIDEBAR_WIDTH,
 					"--sidebar-width-icon": SIDEBAR_WIDTH_ICON,
-					...local.style,
 				}}
-				class={cn(
-					"group/sidebar-wrapper flex min-h-svh w-full has-data-[variant=inset]:bg-surface",
-					local.class,
-				)}
+				class="group/sidebar-wrapper flex min-h-svh w-full has-data-[variant=inset]:bg-surface"
 				{...others}
 			>
 				{local.children}
@@ -154,6 +153,9 @@ type SidebarRootProps = ComponentProps<"div"> & {
 	side?: "left" | "right";
 	variant?: "sidebar" | "floating" | "inset";
 	collapsible?: "offcanvas" | "icon" | "none";
+	class?: never;
+	style?: never;
+	classList?: never;
 };
 
 function Root(rawProps: SidebarRootProps) {
@@ -165,7 +167,6 @@ function Root(rawProps: SidebarRootProps) {
 		"side",
 		"variant",
 		"collapsible",
-		"class",
 		"children",
 	]);
 
@@ -175,27 +176,35 @@ function Root(rawProps: SidebarRootProps) {
 		<Switch>
 			<Match when={local.collapsible === "none"}>
 				<div
-					class={cn(
-						"w-(--sidebar-width) flex h-full flex-col bg-surface",
-						local.class,
-					)}
+					class="w-(--sidebar-width) flex h-full flex-col bg-surface"
 					{...others}
 				>
 					{local.children}
 				</div>
 			</Match>
 			<Match when={isMobile()}>
-				<Sheet open={openMobile()} onOpenChange={setOpenMobile} {...others}>
-					<Sheet.Content
-						data-slot="sidebar"
-						data-mobile="true"
-						class="w-(--sidebar-width) bg-surface p-0 [&>button]:hidden"
-						style={{ "--sidebar-width": SIDEBAR_WIDTH_MOBILE }}
-						position={local.side}
-					>
-						<div class="flex size-full flex-col">{local.children}</div>
-					</Sheet.Content>
-				</Sheet>
+				{/* The sheet look composed from Kobalte's primitives directly: the
+				    closure leaves Sheet.Content no class to take, and the shared
+				    strings live in lib/sheet. */}
+				<SheetPrimitive.Root open={openMobile()} onOpenChange={setOpenMobile}>
+					<SheetPrimitive.Portal>
+						<div class={sheetPortalVariants({ position: local.side })}>
+							<SheetPrimitive.Overlay class={sheetOverlayClass} />
+							<SheetPrimitive.Content
+								data-slot="sidebar"
+								data-mobile="true"
+								class={cn(
+									sheetVariants({ position: local.side }),
+									"max-h-screen overflow-y-auto",
+									"w-(--sidebar-width) bg-surface p-0",
+								)}
+								style={{ "--sidebar-width": SIDEBAR_WIDTH_MOBILE }}
+							>
+								<div class="flex size-full flex-col">{local.children}</div>
+							</SheetPrimitive.Content>
+						</div>
+					</SheetPrimitive.Portal>
+				</SheetPrimitive.Root>
 			</Match>
 			<Match when={!isMobile()}>
 				<div
@@ -224,7 +233,6 @@ function Root(rawProps: SidebarRootProps) {
 							local.variant === "floating" || local.variant === "inset"
 								? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]"
 								: "group-data-[collapsible=icon]:w-(--sidebar-width-icon) group-data-[side=left]:border-r group-data-[side=right]:border-l",
-							local.class,
 						)}
 						{...others}
 					>
@@ -243,37 +251,42 @@ function Root(rawProps: SidebarRootProps) {
 
 // ─── Trigger ───
 
-type TriggerProps<T extends ValidComponent = "button"> = ButtonProps<T> & {
+type TriggerProps = {
 	onClick?: (event: MouseEvent) => void;
+	class?: never;
+	style?: never;
+	classList?: never;
 };
 
-function Trigger<T extends ValidComponent = "button">(props: TriggerProps<T>) {
-	const [local, others] = splitProps(props as TriggerProps, [
-		"class",
-		"onClick",
-	]);
+// A raw internal button rather than `Button`: inheriting ButtonProps was the
+// one place a component's class prop leaked out through another's public type.
+function Trigger(props: TriggerProps) {
 	const { toggleSidebar } = useSidebar();
 
 	return (
-		<Button
-			emphasis="tertiary"
-			class={cn("aspect-square", local.class)}
+		<button
+			type="button"
+			class="flex aspect-square min-h-11 cursor-pointer items-center justify-center rounded-control text-ink-1 transition-[color,background-color] duration-(--duration-fast) ease-ui hover:bg-surface-2 active:bg-surface-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive"
 			onClick={(event: MouseEvent) => {
-				local.onClick?.(event);
+				props.onClick?.(event);
 				toggleSidebar();
 			}}
-			{...others}
 		>
 			<PanelLeft class="size-4" aria-hidden="true" />
 			<span class="sr-only">Toggle Sidebar</span>
-		</Button>
+		</button>
 	);
 }
 
 // ─── Rail ───
 
-function Rail(props: ComponentProps<"button">) {
-	const [local, others] = splitProps(props, ["class"]);
+function Rail(
+	props: ComponentProps<"button"> & {
+		class?: never;
+		style?: never;
+		classList?: never;
+	},
+) {
 	const { toggleSidebar } = useSidebar();
 
 	return (
@@ -288,109 +301,121 @@ function Rail(props: ComponentProps<"button">) {
 				"group-data-[collapsible=offcanvas]:translate-x-0 group-data-[collapsible=offcanvas]:after:left-full group-data-[collapsible=offcanvas]:hover:bg-surface",
 				"[[data-side=left][data-collapsible=offcanvas]_&]:-right-2",
 				"[[data-side=right][data-collapsible=offcanvas]_&]:-left-2",
-				local.class,
 			)}
-			{...others}
+			{...props}
 		/>
 	);
 }
 
 // ─── Inset ───
 
-function SidebarInset(props: ComponentProps<"main">) {
-	const [local, others] = splitProps(props, ["class"]);
+function SidebarInset(
+	props: ComponentProps<"main"> & {
+		class?: never;
+		style?: never;
+		classList?: never;
+	},
+) {
 	return (
 		<main
 			class={cn(
 				"relative flex min-h-svh flex-1 flex-col bg-canvas",
 				"peer-data-[variant=inset]:min-h-[calc(100svh-(--spacing(4)))] md:peer-data-[variant=inset]:m-2 md:peer-data-[state=collapsed]:peer-data-[variant=inset]:ml-2 md:peer-data-[variant=inset]:ml-0",
-				local.class,
 			)}
-			{...others}
+			{...props}
 		/>
 	);
 }
 
 // ─── Simple layout parts ───
 
-function SidebarHeader(props: ComponentProps<"div">) {
-	const [local, others] = splitProps(props, ["class"]);
-	return <div class={cn("flex flex-col gap-2 p-2", local.class)} {...others} />;
+function SidebarHeader(
+	props: ComponentProps<"div"> & {
+		class?: never;
+		style?: never;
+		classList?: never;
+	},
+) {
+	return <div class="flex flex-col gap-2 p-2" {...props} />;
 }
 
-function SidebarFooter(props: ComponentProps<"div">) {
-	const [local, others] = splitProps(props, ["class"]);
-	return <div class={cn("flex flex-col gap-2 p-2", local.class)} {...others} />;
+function SidebarFooter(
+	props: ComponentProps<"div"> & {
+		class?: never;
+		style?: never;
+		classList?: never;
+	},
+) {
+	return <div class="flex flex-col gap-2 p-2" {...props} />;
 }
 
-function SidebarSeparator(props: ComponentProps<typeof Separator>) {
-	const [local, others] = splitProps(props, ["class"]);
-	return (
-		<Separator class={cn("mx-2 w-auto bg-edge", local.class)} {...others} />
-	);
+function SidebarSeparator(
+	props: ComponentProps<"hr"> & {
+		class?: never;
+		style?: never;
+		classList?: never;
+	},
+) {
+	return <hr class="mx-2 h-px w-auto shrink-0 border-0 bg-edge" {...props} />;
 }
 
-function SidebarContent(props: ComponentProps<"div">) {
-	const [local, others] = splitProps(props, ["class"]);
+function SidebarContent(
+	props: ComponentProps<"div"> & {
+		class?: never;
+		style?: never;
+		classList?: never;
+	},
+) {
 	return (
 		<div
-			class={cn(
-				"flex min-h-0 flex-1 flex-col gap-2 overflow-auto group-data-[collapsible=icon]:overflow-hidden",
-				local.class,
-			)}
-			{...others}
+			class="flex min-h-0 flex-1 flex-col gap-2 overflow-auto group-data-[collapsible=icon]:overflow-hidden"
+			{...props}
 		/>
 	);
 }
 
 function SidebarInput(props: ComponentProps<typeof Input>) {
-	const [local, others] = splitProps(props, ["class"]);
-	return (
-		<Input
-			class={cn(
-				// The field matrix floors at 48px and this input keeps that floor:
-				// a pinned 32px would lose to it and render as dead weight.
-				"w-full bg-canvas focus-visible:outline-2 focus-visible:outline-interactive",
-				local.class,
-			)}
-			{...others}
-		/>
-	);
+	return <Input {...props} />;
 }
 
 // ─── Group ───
 
-function Group(props: ComponentProps<"div">) {
-	const [local, others] = splitProps(props, ["class"]);
+function Group(
+	props: ComponentProps<"div"> & {
+		class?: never;
+		style?: never;
+		classList?: never;
+	},
+) {
 	return (
-		<div
-			class={cn("relative flex w-full min-w-0 flex-col p-2", local.class)}
-			{...others}
-		/>
+		<div class="relative flex w-full min-w-0 flex-col p-2" {...props} />
 	);
 }
 
 function GroupLabel<T extends ValidComponent = "div">(
-	props: PolymorphicProps<T, { class?: string }>,
+	props: PolymorphicProps<
+		T,
+		{ class?: never; style?: never; classList?: never }
+	>,
 ) {
-	const [local, others] = splitProps(props as { class?: string }, ["class"]);
 	return (
 		<Polymorphic
 			as="div"
 			class={cn(
 				"flex h-8 shrink-0 items-center px-2 text-micro font-medium text-ink-3 outline-none transition-[margin,opacity] duration-200 ease-linear focus-visible:outline-2 focus-visible:outline-interactive [&>svg]:size-4 [&>svg]:shrink-0",
 				"group-data-[collapsible=icon]:-mt-8 group-data-[collapsible=icon]:opacity-0",
-				local.class,
 			)}
-			{...others}
+			{...props}
 		/>
 	);
 }
 
 function GroupAction<T extends ValidComponent = "button">(
-	props: PolymorphicProps<T, { class?: string }>,
+	props: PolymorphicProps<
+		T,
+		{ class?: never; style?: never; classList?: never }
+	>,
 ) {
-	const [local, others] = splitProps(props as { class?: string }, ["class"]);
 	return (
 		<Polymorphic
 			as="button"
@@ -398,33 +423,42 @@ function GroupAction<T extends ValidComponent = "button">(
 				"absolute right-3 top-3.5 flex aspect-square w-6 items-center justify-center p-0 text-ink-1 outline-none transition-transform hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-interactive [&>svg]:size-4 [&>svg]:shrink-0",
 				"after:absolute after:-inset-2 after:md:hidden",
 				"group-data-[collapsible=icon]:hidden",
-				local.class,
 			)}
-			{...others}
+			{...props}
 		/>
 	);
 }
 
-function GroupContent(props: ComponentProps<"div">) {
-	const [local, others] = splitProps(props, ["class"]);
-	return <div class={cn("w-full text-callout", local.class)} {...others} />;
+function GroupContent(
+	props: ComponentProps<"div"> & {
+		class?: never;
+		style?: never;
+		classList?: never;
+	},
+) {
+	return <div class="w-full text-callout" {...props} />;
 }
 
 // ─── Menu ───
 
-function Menu(props: ComponentProps<"ul">) {
-	const [local, others] = splitProps(props, ["class"]);
-	return (
-		<ul
-			class={cn("flex w-full min-w-0 flex-col gap-1", local.class)}
-			{...others}
-		/>
-	);
+function Menu(
+	props: ComponentProps<"ul"> & {
+		class?: never;
+		style?: never;
+		classList?: never;
+	},
+) {
+	return <ul class="flex w-full min-w-0 flex-col gap-1" {...props} />;
 }
 
-function MenuItem(props: ComponentProps<"li">) {
-	const [local, others] = splitProps(props, ["class"]);
-	return <li class={cn("group/menu-item relative", local.class)} {...others} />;
+function MenuItem(
+	props: ComponentProps<"li"> & {
+		class?: never;
+		style?: never;
+		classList?: never;
+	},
+) {
+	return <li class="group/menu-item relative" {...props} />;
 }
 
 const menuButtonVariants = cva(
@@ -453,6 +487,9 @@ type MenuButtonProps<T extends ValidComponent = "button"> = ComponentProps<T> &
 	VariantProps<typeof menuButtonVariants> & {
 		isActive?: boolean;
 		tooltip?: string;
+		class?: never;
+		style?: never;
+		classList?: never;
 	};
 
 function MenuButton<T extends ValidComponent = "button">(
@@ -467,7 +504,6 @@ function MenuButton<T extends ValidComponent = "button">(
 		"tooltip",
 		"variant",
 		"size",
-		"class",
 	]);
 	const { isMobile, state } = useSidebar();
 
@@ -477,10 +513,7 @@ function MenuButton<T extends ValidComponent = "button">(
 			data-slot="sidebar-menu-button"
 			data-size={local.size}
 			data-active={local.isActive}
-			class={cn(
-				menuButtonVariants({ variant: local.variant, size: local.size }),
-				local.class,
-			)}
+			class={menuButtonVariants({ variant: local.variant, size: local.size })}
 			{...others}
 		/>
 	);
@@ -491,26 +524,27 @@ function MenuButton<T extends ValidComponent = "button">(
 			fallback={button}
 		>
 			<Tooltip placement="top">
-				<Tooltip.Trigger as="div" class="inline-flex">
+				<TooltipPrimitive.Trigger as="div" class="inline-flex">
 					{button}
-				</Tooltip.Trigger>
+				</TooltipPrimitive.Trigger>
 				<Tooltip.Content>{local.tooltip}</Tooltip.Content>
 			</Tooltip>
 		</Show>
 	);
 }
 
-type MenuActionProps<T extends ValidComponent = "button"> =
-	ComponentProps<T> & { showOnHover?: boolean };
+type MenuActionProps<T extends ValidComponent = "button"> = ComponentProps<T> & {
+	showOnHover?: boolean;
+	class?: never;
+	style?: never;
+	classList?: never;
+};
 
 function MenuAction<T extends ValidComponent = "button">(
 	rawProps: PolymorphicProps<T, MenuActionProps<T>>,
 ) {
 	const props = mergeProps({ showOnHover: false }, rawProps);
-	const [local, others] = splitProps(props as MenuActionProps, [
-		"class",
-		"showOnHover",
-	]);
+	const [local, others] = splitProps(props as MenuActionProps, ["showOnHover"]);
 
 	return (
 		<Polymorphic
@@ -525,15 +559,19 @@ function MenuAction<T extends ValidComponent = "button">(
 				"group-data-[collapsible=icon]:hidden",
 				local.showOnHover &&
 					"group-focus-within/menu-item:opacity-100 group-hover/menu-item:opacity-100 data-[state=open]:opacity-100 peer-data-[active=true]/menu-button:text-interactive md:opacity-0",
-				local.class,
 			)}
 			{...others}
 		/>
 	);
 }
 
-function MenuBadge(props: ComponentProps<"div">) {
-	const [local, others] = splitProps(props, ["class"]);
+function MenuBadge(
+	props: ComponentProps<"div"> & {
+		class?: never;
+		style?: never;
+		classList?: never;
+	},
+) {
 	return (
 		<div
 			class={cn(
@@ -543,49 +581,63 @@ function MenuBadge(props: ComponentProps<"div">) {
 				"peer-data-[size=default]/menu-button:top-1.5",
 				"peer-data-[size=lg]/menu-button:top-2.5",
 				"group-data-[collapsible=icon]:hidden",
-				local.class,
 			)}
-			{...others}
+			{...props}
 		/>
 	);
 }
 
-type MenuLoaderProps = ComponentProps<"div"> & { text?: string };
+type MenuLoaderProps = ComponentProps<"div"> & {
+	text?: string;
+	class?: never;
+	style?: never;
+	classList?: never;
+};
 
 function MenuLoader(rawProps: MenuLoaderProps) {
 	const props = mergeProps({ text: "loading..." }, rawProps);
-	const [local, others] = splitProps(props, ["class", "text"]);
+	const [local, others] = splitProps(props, ["text"]);
 	return (
-		<div
-			class={cn("flex h-8 items-center gap-2 px-2", local.class)}
-			{...others}
-		>
+		<div class="flex h-8 items-center gap-2 px-2" {...others}>
 			<Loader text={local.text} />
 		</div>
 	);
 }
 
-function MenuSub(props: ComponentProps<"ul">) {
-	const [local, others] = splitProps(props, ["class"]);
+function MenuSub(
+	props: ComponentProps<"ul"> & {
+		class?: never;
+		style?: never;
+		classList?: never;
+	},
+) {
 	return (
 		<ul
 			class={cn(
 				"mx-3.5 flex min-w-0 translate-x-px flex-col gap-1 border-l border-edge px-2.5 py-0.5",
 				"group-data-[collapsible=icon]:hidden",
-				local.class,
 			)}
-			{...others}
+			{...props}
 		/>
 	);
 }
 
-function MenuSubItem(props: ComponentProps<"li">) {
+function MenuSubItem(
+	props: ComponentProps<"li"> & {
+		class?: never;
+		style?: never;
+		classList?: never;
+	},
+) {
 	return <li {...props} />;
 }
 
 type MenuSubButtonProps<T extends ValidComponent = "a"> = ComponentProps<T> & {
 	size?: "sm" | "md";
 	isActive?: boolean;
+	class?: never;
+	style?: never;
+	classList?: never;
 };
 
 function MenuSubButton<T extends ValidComponent = "a">(
@@ -595,7 +647,6 @@ function MenuSubButton<T extends ValidComponent = "a">(
 	const [local, others] = splitProps(props as MenuSubButtonProps, [
 		"size",
 		"isActive",
-		"class",
 	]);
 
 	return (
@@ -610,7 +661,6 @@ function MenuSubButton<T extends ValidComponent = "a">(
 				local.size === "sm" && "text-micro",
 				local.size === "md" && "text-callout",
 				"group-data-[collapsible=icon]:hidden",
-				local.class,
 			)}
 			{...others}
 		/>

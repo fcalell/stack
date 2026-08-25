@@ -5,30 +5,36 @@ import { mergeProps, splitProps } from "solid-js";
 import { Button } from "#components/button";
 import { Input } from "#components/input";
 import { Textarea } from "#components/textarea";
-import { cn } from "#lib/cn";
+import {
+	type GroupButtonSize,
+	GroupButtonSizeContext,
+	InputGroupContext,
+} from "#lib/input-group";
 
 // ─── Root ───
 
 type RootProps = ComponentProps<"fieldset"> & {
 	legend?: string;
+	class?: never;
+	style?: never;
+	classList?: never;
 };
 
 function Root(props: RootProps) {
-	const [local, rest] = splitProps(props, ["class", "legend"]);
+	const [local, rest] = splitProps(props, ["legend"]);
 	return (
-		<fieldset
-			data-slot="input-group"
-			aria-label={local.legend}
-			class={cn(
+		<InputGroupContext.Provider value={true}>
+			<fieldset
+				data-slot="input-group"
+				aria-label={local.legend}
 				// The group is the field surface its borderless Input sits inside, so
 				// it carries that control's 48px floor. A pinned height would lose to
 				// the child's own `min-h` and render as dead weight, which is why the
 				// `h-auto` escapes that used to undo it are gone too.
-				"relative flex min-h-12 w-full min-w-0 items-center rounded-control border-2 border-edge bg-surface-2 outline-none transition-colors has-[[data-slot=input-group-control]:focus-visible]:border-ink-1 has-[[data-slot][aria-invalid=true]]:border-danger has-disabled:bg-surface has-disabled:opacity-[0.38] has-[>[data-align=block-end]]:flex-col has-[>[data-align=block-end]]:[&>input]:pt-3 has-[>[data-align=block-start]]:flex-col has-[>[data-align=block-start]]:[&>input]:pb-3 has-[>[data-align=inline-end]]:[&>input]:pr-1.5 has-[>[data-align=inline-start]]:[&>input]:pl-1.5 in-data-[slot=combobox-content]:focus-within:border-inherit",
-				local.class,
-			)}
-			{...rest}
-		/>
+				class="relative flex min-h-12 w-full min-w-0 items-center rounded-control border-2 border-edge bg-surface-2 outline-none transition-colors has-[[data-slot=input-group-control]:focus-visible]:border-ink-1 has-[[data-slot][aria-invalid=true]]:border-danger has-disabled:bg-surface has-disabled:opacity-[0.38] has-[>[data-align=block-end]]:flex-col has-[>[data-align=block-end]]:[&>input]:pt-3 has-[>[data-align=block-start]]:flex-col has-[>[data-align=block-start]]:[&>input]:pb-3 has-[>[data-align=inline-end]]:[&>input]:pr-1.5 has-[>[data-align=inline-start]]:[&>input]:pl-1.5 in-data-[slot=combobox-content]:focus-within:border-inherit"
+				{...rest}
+			/>
+		</InputGroupContext.Provider>
 	);
 }
 
@@ -55,16 +61,21 @@ const addonClasses = cva(
 	},
 );
 
-type AddonProps = ComponentProps<"div"> & VariantProps<typeof addonClasses>;
+type AddonProps = ComponentProps<"div"> &
+	VariantProps<typeof addonClasses> & {
+		class?: never;
+		style?: never;
+		classList?: never;
+	};
 
 function Addon(props: AddonProps) {
 	const merged = mergeProps({ align: "inline-start" as const }, props);
-	const [local, rest] = splitProps(merged, ["class", "align"]);
+	const [local, rest] = splitProps(merged, ["align"]);
 	return (
 		<div
 			data-slot="input-group-addon"
 			data-align={local.align}
-			class={addonClasses({ align: local.align, className: local.class })}
+			class={addonClasses({ align: local.align })}
 			{...rest}
 		/>
 	);
@@ -72,36 +83,17 @@ function Addon(props: AddonProps) {
 
 // ─── GroupButton ───
 
-// An addon button is a secondary affordance inside a control that already
-// carries the tap floor, so each compact size clears the button matrix's own
-// `min-h` explicitly. Without that the height is emitted and inert, and a
-// 44px button renders inside a 48px group beside its input.
-const groupButtonClasses = cva(
-	"flex flex-row items-center gap-2 rounded-none text-micro shadow-none",
-	{
-		variants: {
-			size: {
-				xs: "h-6 min-h-0 gap-1 px-2 [&>svg:not([class*='size-'])]:size-3.5",
-				sm: "",
-				"icon-xs": "size-6 min-h-0 p-0 has-[>svg]:p-0",
-				"icon-sm": "size-8 min-h-0 p-0 has-[>svg]:p-0",
-			},
-		},
-		defaultVariants: {
-			size: "xs",
-		},
-	},
-);
-
-type GroupButtonProps = Omit<
-	ComponentProps<"button"> & VariantProps<typeof groupButtonClasses>,
-	"size"
-> &
-	VariantProps<typeof groupButtonClasses> & {
-		emphasis?: ButtonEmphasis;
-		tone?: ButtonTone;
-		type?: "button" | "submit" | "reset";
-	};
+// The compact size reaches `Button` through the context, and the button
+// composes its own in-group overlay from it.
+type GroupButtonProps = Omit<ComponentProps<"button">, "size"> & {
+	size?: GroupButtonSize;
+	emphasis?: ButtonEmphasis;
+	tone?: ButtonTone;
+	type?: "button" | "submit" | "reset";
+	class?: never;
+	style?: never;
+	classList?: never;
+};
 
 function GroupButton(props: GroupButtonProps) {
 	const merged = mergeProps(
@@ -112,77 +104,46 @@ function GroupButton(props: GroupButtonProps) {
 		},
 		props,
 	);
-	const [local, rest] = splitProps(merged, [
-		"class",
-		"type",
-		"emphasis",
-		"tone",
-		"size",
-	]);
+	const [local, rest] = splitProps(merged, ["type", "emphasis", "tone", "size"]);
 	return (
-		<Button
-			type={local.type}
-			emphasis={local.emphasis}
-			tone={local.tone}
-			class={groupButtonClasses({
-				size: local.size,
-				className: local.class,
-			})}
-			{...rest}
-		/>
+		<GroupButtonSizeContext.Provider value={() => local.size}>
+			<Button
+				type={local.type}
+				emphasis={local.emphasis}
+				tone={local.tone}
+				{...rest}
+			/>
+		</GroupButtonSizeContext.Provider>
 	);
 }
 
 // ─── Text ───
 
-function GroupText(props: ComponentProps<"span">) {
-	const [local, rest] = splitProps(props, ["class"]);
+function GroupText(
+	props: ComponentProps<"span"> & {
+		class?: never;
+		style?: never;
+		classList?: never;
+	},
+) {
 	return (
 		<span
-			class={cn(
-				"flex flex-row items-center gap-2 text-micro text-ink-3 [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none",
-				local.class,
-			)}
-			{...rest}
+			class="flex flex-row items-center gap-2 text-micro text-ink-3 [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none"
+			{...props}
 		/>
 	);
 }
 
 // ─── GroupInput ───
 
-type GroupInputProps = Omit<ComponentProps<"input">, "size"> & {
-	size?: "sm" | "default" | "lg";
-};
-
-function GroupInput(props: GroupInputProps) {
-	const [local, rest] = splitProps(props, ["class", "size"]);
-	return (
-		<Input
-			data-slot="input-group-control"
-			size={local.size}
-			class={cn(
-				"flex-1 rounded-none border-0 bg-transparent shadow-none ring-0 focus-visible:ring-0 disabled:bg-transparent aria-invalid:ring-0",
-				local.class,
-			)}
-			{...rest}
-		/>
-	);
+function GroupInput(props: ComponentProps<typeof Input>) {
+	return <Input data-slot="input-group-control" {...props} />;
 }
 
 // ─── GroupTextarea ───
 
-function GroupTextarea(props: ComponentProps<"textarea">) {
-	const [local, rest] = splitProps(props, ["class"]);
-	return (
-		<Textarea
-			data-slot="input-group-control"
-			class={cn(
-				"flex-1 resize-none rounded-none border-0 bg-transparent py-2 shadow-none ring-0 focus-visible:ring-0 disabled:bg-transparent aria-invalid:ring-0",
-				local.class,
-			)}
-			{...rest}
-		/>
-	);
+function GroupTextarea(props: ComponentProps<typeof Textarea>) {
+	return <Textarea data-slot="input-group-control" {...props} />;
 }
 
 // ─── Exports ───
