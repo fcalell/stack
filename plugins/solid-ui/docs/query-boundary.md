@@ -13,7 +13,7 @@ No peer dependencies — uses a generic `QueryLike` interface compatible with Ta
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `query` | `QueryLike<TData, TError>` | -- | Query result object |
-| `loadingText` | `string` | `"loading..."` | Text for default loading spinner |
+| `loadingText` | `string` | `"loading..."` | Text the default `Loader` resolves to |
 | `loadingFallback` | `JSX.Element` | Centered `<Loader>` | Custom loading UI |
 | `gracePeriod` | `number` | `150` | Ms before showing loading UI |
 | `errorFallback` | `(error: TError, retry: () => void) => JSX.Element` | Error EmptyState + Retry | Custom error UI |
@@ -67,7 +67,13 @@ Note: `data` is an `Accessor<TData>` (getter function). Call `data()` to read th
 ```tsx
 <QueryBoundary
   query={query}
-  loadingFallback={<Skeleton count={5} />}
+  loadingFallback={
+    <Stack>
+      <Skeleton height={16} />
+      <Skeleton height={16} />
+      <Skeleton height={16} />
+    </Stack>
+  }
   gracePeriod={0}
 >
   {(data) => <List items={data()} />}

@@ -1,6 +1,6 @@
 # Loader
 
-Animated text scramble effect. Characters resolve left-to-right from random hex characters to the target text, then pause and restart.
+Animated text scramble effect. Characters resolve left-to-right from random hex characters to the target text, then pause and restart. `Loader` is the loading treatment for a pane and stays web-only; the spinning glyph for a busy control is `Spinner`.
 
 ```tsx
 import { Loader } from "@fcalell/plugin-solid-ui/components/loader";
