@@ -4,14 +4,15 @@ import {
 	type ButtonSize,
 	type ButtonTone,
 	button,
+	buttonContentTone,
 	buttonLabel,
 	buttonMuted,
 } from "@fcalell/ui-core/variants";
 import * as ButtonPrimitive from "@kobalte/core/button";
 import type { PolymorphicProps } from "@kobalte/core/polymorphic";
-import { LoaderCircle } from "lucide-solid";
 import type { JSX, ValidComponent } from "solid-js";
 import { Show, splitProps } from "solid-js";
+import { Spinner } from "#components/spinner";
 import { cn } from "#lib/cn";
 import { groupButtonClasses, useGroupButtonSize } from "#lib/input-group";
 
@@ -96,9 +97,10 @@ function Button<T extends ValidComponent = "button">(
 			{...rest}
 		>
 			{/* The glyph is anatomy, not a matrix cell: it spins beside the label
-			    in the label's own content tone via currentColor. */}
+			    in the label's own content tone, read back off the label matrix.
+			    Spinner's own size yields to the GLYPH map where they differ. */}
 			<Show when={local.loading}>
-				<LoaderCircle class="animate-spin" aria-hidden="true" />
+				<Spinner tone={buttonContentTone(emphasis(), tone())} />
 			</Show>
 			{local.children}
 		</ButtonPrimitive.Root>

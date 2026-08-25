@@ -1,6 +1,6 @@
 # Checkbox
 
-Toggle control with optional label. Built on Kobalte's Checkbox primitive for full keyboard support, ARIA attributes, and indeterminate state.
+Checklist control with optional label. Built on Kobalte's Checkbox primitive for full keyboard support, ARIA attributes, and indeterminate state. The box renders the shared `CHECKBOX` matrix: `rounded-md` with a `border-ink-1` ring unchecked, the `accent` fill with the `accent-ink` tick checked, the same cells the native plugin renders. Kobalte owns the checked state, so the checked cells ride `data-checked:` selectors; the disabled fade is the shared `CONTROL_MUTED` constant.
 
 ```tsx
 import { Checkbox } from "@fcalell/plugin-solid-ui/components/checkbox";
@@ -10,7 +10,7 @@ import { Checkbox } from "@fcalell/plugin-solid-ui/components/checkbox";
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `size` | `"sm" \| "default" \| "lg"` | `"default"` | Checkbox dimensions and icon size |
+| `size` | `"sm" \| "md" \| "lg"` | `"md"` | Checkbox dimensions and icon size |
 | `label` | `string` | -- | Optional label rendered next to the checkbox |
 | `checked` | `boolean` | -- | Controlled checked state |
 | `defaultChecked` | `boolean` | -- | Initial checked state (uncontrolled) |
@@ -24,7 +24,7 @@ import { Checkbox } from "@fcalell/plugin-solid-ui/components/checkbox";
 | Size | Dimensions | Icon |
 |------|-----------|------|
 | `sm` | 14px (`size-3.5`) | 14px |
-| `default` | 16px (`size-4`) | 16px |
+| `md` | 16px (`size-4`) | 16px |
 | `lg` | 20px (`size-5`) | 20px |
 
 ## Basic usage
@@ -36,7 +36,7 @@ import { Checkbox } from "@fcalell/plugin-solid-ui/components/checkbox";
 
 ## Indeterminate
 
-Shows a minus icon instead of a check — use for "select all" when only some items are selected:
+Shows a minus icon instead of a check. Use it for "select all" when only some items are selected:
 
 ```tsx
 <Checkbox indeterminate label="Select all" />
@@ -50,10 +50,4 @@ When used without a label (e.g. in a table row), ensure you provide an `aria-lab
 <Checkbox aria-label="Select row" />
 ```
 
-## Composition
-
-The `checkboxVariants` export is available for custom checkbox styling:
-
-```tsx
-import { checkboxVariants } from "@fcalell/plugin-solid-ui/components/checkbox";
-```
+A look the matrix does not cover has two homes: the `CHECKBOX` matrix grows in ui-core, or the consumer authors its own primitive under `ui/`.

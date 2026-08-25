@@ -44,12 +44,15 @@ import { Select } from "@fcalell/plugin-solid-ui/components/select";
 import { Separator } from "@fcalell/plugin-solid-ui/components/separator";
 import { createSheet, Sheet } from "@fcalell/plugin-solid-ui/components/sheet";
 import { Sidebar } from "@fcalell/plugin-solid-ui/components/sidebar";
+import { Skeleton } from "@fcalell/plugin-solid-ui/components/skeleton";
+import { Spinner } from "@fcalell/plugin-solid-ui/components/spinner";
 import { Stack } from "@fcalell/plugin-solid-ui/components/stack";
 import { Table } from "@fcalell/plugin-solid-ui/components/table";
 import { Tabs } from "@fcalell/plugin-solid-ui/components/tabs";
 import { Text } from "@fcalell/plugin-solid-ui/components/text";
 import { Textarea } from "@fcalell/plugin-solid-ui/components/textarea";
 import { Toaster } from "@fcalell/plugin-solid-ui/components/toast";
+import { Toggle } from "@fcalell/plugin-solid-ui/components/toggle";
 import { Tooltip } from "@fcalell/plugin-solid-ui/components/tooltip";
 
 const noop = () => {};
@@ -2226,6 +2229,36 @@ export function closure() {
 			>
 				b
 			</Sidebar.MenuSubButton>
+			<Skeleton
+				width={120} height="50%"
+			/>
+			<Skeleton
+				// @ts-expect-error the class prop is closed
+				class="x"
+			/>
+			<Skeleton
+				// @ts-expect-error the style prop is closed
+				style={{ color: "red" }}
+			/>
+			<Skeleton
+				// @ts-expect-error the classList prop is closed
+				classList={{ x: true }}
+			/>
+			<Spinner
+				tone="ink-2"
+			/>
+			<Spinner
+				// @ts-expect-error the class prop is closed
+				class="x"
+			/>
+			<Spinner
+				// @ts-expect-error the style prop is closed
+				style={{ color: "red" }}
+			/>
+			<Spinner
+				// @ts-expect-error the classList prop is closed
+				classList={{ x: true }}
+			/>
 			<Stack
 			>
 				s
@@ -2607,6 +2640,29 @@ export function closure() {
 				position="top-right"
 				// @ts-expect-error className never existed on the web and stays closed
 				className="x"
+			/>
+			<Toggle
+				checked onChange={noop} disabled
+			/>
+			<Toggle
+				checked onChange={noop}
+				// @ts-expect-error the class prop is closed
+				class="x"
+			/>
+			<Toggle
+				checked onChange={noop}
+				// @ts-expect-error the style prop is closed
+				style={{ color: "red" }}
+			/>
+			<Toggle
+				checked onChange={noop}
+				// @ts-expect-error the classList prop is closed
+				classList={{ x: true }}
+			/>
+			<Toggle
+				checked onChange={noop}
+				// @ts-expect-error Kobalte's uncontrolled surface stays out
+				defaultChecked
 			/>
 			<Tooltip.Trigger
 			>

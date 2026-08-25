@@ -68,10 +68,13 @@ import {
 	buttonLabel,
 	buttonMuted,
 	card,
+	checkbox,
+	dialog,
 	field,
 	rhythm,
 	text,
 	textStrong,
+	toggle,
 } from "@fcalell/ui-core/variants";
 import { solidUi } from "../src/index.ts";
 import { aggregateAppCss } from "../src/node/codegen.ts";
@@ -627,7 +630,8 @@ check(
 
 // ── The component surface ───────────────────────────────────────────
 
-// The seven families rebuilt on the shared matrices.
+// The families rebuilt on the shared matrices. Skeleton and spinner render
+// constants, not cvas, so they stay out and are covered by b7/b8 instead.
 const REBUILT = [
 	"button",
 	"text",
@@ -636,6 +640,9 @@ const REBUILT = [
 	"input",
 	"textarea",
 	"select",
+	"checkbox",
+	"toggle",
+	"dialog",
 ];
 
 function walk(dir: string, extensions: string[]): string[] {
@@ -690,6 +697,7 @@ const RETIRED_EXPORTS = [
 	"inputClasses",
 	"textareaClasses",
 	"selectTriggerVariants",
+	"checkboxVariants",
 ];
 
 // ── The matrices, read back off the cvas ────────────────────────────
@@ -770,7 +778,23 @@ const FAMILIES: Family[] = [
 		cva: rhythm as AnyCva,
 		axes: { unit: ["section", "stack", "row", "pair"] },
 	},
+	{
+		name: "CHECKBOX",
+		cva: checkbox as AnyCva,
+		axes: { state: ["unchecked", "checked"] },
+	},
+	{ name: "TOGGLE", cva: toggle as AnyCva, axes: { state: ["off", "on"] } },
+	{
+		name: "DIALOG",
+		cva: dialog as AnyCva,
+		axes: { part: ["scrim", "panel", "description"] },
+	},
 ];
+
+// The pinned family roster, the c19-compound-pin shape: a matrix that lands in
+// ui-core without landing here fails b0 by command instead of passing unseen.
+const FAMILY_ROSTER =
+	"BUTTON BUTTON_LABEL BUTTON_MUTED TEXT TEXT_STRONG BADGE BADGE_LABEL CARD FIELD RHYTHM CHECKBOX TOGGLE DIALOG";
 
 const CELLS = matrixCells(FAMILIES);
 const CELL_CLASSES = new Map<string, string>();
@@ -851,6 +875,8 @@ function sameSet(left: Set<string>, right: Set<string>): boolean {
 
 check("b0", "the matrices read back off the cvas are the real ones", () => {
 	assert(CELLS.size > 0, "no matrix cell was recovered from any cva");
+	const roster = FAMILIES.map((family) => family.name).join(" ");
+	assert(roster === FAMILY_ROSTER, `the family roster drifted: ${roster}`);
 	for (const emphasis of BUTTON_AXES.emphasis) {
 		for (const tone of BUTTON_AXES.tone) {
 			const ink = `text-${buttonContentTone(emphasis as never, tone as never)}`;
@@ -926,6 +952,9 @@ check("b3", "the rebuilt seven render through the matrices", () => {
 		input: ["field"],
 		textarea: ["field"],
 		select: ["field", "text"],
+		checkbox: ["checkbox"],
+		toggle: ["toggle"],
+		dialog: ["dialog", "text"],
 	};
 	for (const [name, source] of rebuiltSources) {
 		assert(
@@ -1184,6 +1213,8 @@ check("b6", "the docs match the APIs they document", () => {
 		["select.md", ["FIELD", "no size axis"]],
 		["inset.md", ["tone"]],
 		["input-group.md", ["emphasis"]],
+		["checkbox.md", ["state", '`"md"`']],
+		["dialog.md", ["tone", '`"neutral"`']],
 	];
 	for (const [page, markers] of updated) {
 		const source = read(`docs/${page}`);

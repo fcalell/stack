@@ -1,34 +1,36 @@
+import { CONTROL_MUTED, checkbox } from "@fcalell/ui-core/variants";
 import * as CheckboxPrimitive from "@kobalte/core/checkbox";
 import type { PolymorphicProps } from "@kobalte/core/polymorphic";
-import { cva, type VariantProps } from "class-variance-authority";
 import { Check, Minus } from "lucide-solid";
 import type { ValidComponent } from "solid-js";
 import { Match, Show, Switch, splitProps } from "solid-js";
+import { cn } from "#lib/cn";
 
-const checkboxVariants = cva(
-	"shrink-0 rounded-md border border-ink-1 disabled:cursor-not-allowed disabled:opacity-50 peer-focus-visible:outline-2 peer-focus-visible:outline-interactive peer-focus-visible:outline-offset-2 data-checked:border-none data-checked:bg-accent data-checked:text-accent-ink data-indeterminate:border-none data-indeterminate:bg-accent data-indeterminate:text-accent-ink",
-	{
-		variants: {
-			size: {
-				sm: "size-3.5 [&_svg]:size-3.5",
-				default: "size-4 [&_svg]:size-4",
-				lg: "size-5 [&_svg]:size-5",
-			},
-		},
-		defaultVariants: {
-			size: "default",
-		},
-	},
-);
+// Selector duplicates of the CHECKBOX checked cells: Kobalte owns the checked
+// state (uncontrolled included), so the cells ride data-* selectors instead of
+// a prop-computed call. `data-disabled:` because the Control is a div and
+// `:disabled` never matches it; the disabled fade itself is a conditional
+// CONTROL_MUTED call, since `disabled` is our own prop.
+const STATE_OVERLAY =
+	"data-checked:border-none data-checked:bg-accent data-checked:text-accent-ink data-indeterminate:border-none data-indeterminate:bg-accent data-indeterminate:text-accent-ink data-disabled:cursor-not-allowed peer-focus-visible:outline-2 peer-focus-visible:outline-interactive peer-focus-visible:outline-offset-2";
+
+type CheckboxSize = "sm" | "md" | "lg";
+
+// Sized to this plugin's own glyph, which is why it stays out of the matrix.
+const SIZE: Record<CheckboxSize, string> = {
+	sm: "size-3.5 [&_svg]:size-3.5",
+	md: "size-4 [&_svg]:size-4",
+	lg: "size-5 [&_svg]:size-5",
+};
 
 type CheckboxProps<T extends ValidComponent = "div"> =
-	CheckboxPrimitive.CheckboxRootProps<T> &
-		VariantProps<typeof checkboxVariants> & {
-			label?: string;
-			class?: never;
-			style?: never;
-			classList?: never;
-		};
+	CheckboxPrimitive.CheckboxRootProps<T> & {
+		size?: CheckboxSize;
+		label?: string;
+		class?: never;
+		style?: never;
+		classList?: never;
+	};
 
 function Checkbox<T extends ValidComponent = "div">(
 	props: PolymorphicProps<T, CheckboxProps<T>>,
@@ -40,7 +42,15 @@ function Checkbox<T extends ValidComponent = "div">(
 			{...rest}
 		>
 			<CheckboxPrimitive.Input class="peer" />
-			<CheckboxPrimitive.Control class={checkboxVariants({ size: local.size })}>
+			<CheckboxPrimitive.Control
+				class={cn(
+					checkbox(),
+					SIZE[local.size ?? "md"],
+					"shrink-0",
+					STATE_OVERLAY,
+					(props as CheckboxProps).disabled && CONTROL_MUTED,
+				)}
+			>
 				<CheckboxPrimitive.Indicator>
 					<Switch>
 						<Match when={!rest.indeterminate}>
@@ -62,4 +72,4 @@ function Checkbox<T extends ValidComponent = "div">(
 }
 
 export type { CheckboxProps };
-export { Checkbox, checkboxVariants };
+export { Checkbox };

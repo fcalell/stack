@@ -1,4 +1,4 @@
-import type { ButtonTone } from "@fcalell/ui-core/variants";
+import { type ButtonTone, dialog, text } from "@fcalell/ui-core/variants";
 import * as DialogPrimitive from "@kobalte/core/dialog";
 import type { PolymorphicProps } from "@kobalte/core/polymorphic";
 import { X } from "lucide-solid";
@@ -7,11 +7,20 @@ import { createSignal, createUniqueId, For, Show, splitProps } from "solid-js";
 import { Button } from "#components/button";
 import { Input } from "#components/input";
 import { Text } from "#components/text";
+import { cn } from "#lib/cn";
 import {
 	createOverlayContext,
 	createOverlayHook,
 	createProviderState,
 } from "#lib/overlay";
+
+// The chrome cells ride the DIALOG matrix; motion is a web overlay.
+
+const MOTION =
+	"data-[expanded]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[expanded]:fade-in-0";
+
+const CONTENT_MOTION =
+	"data-[expanded]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[expanded]:fade-in-0 data-[closed]:zoom-out-95 data-[expanded]:zoom-in-95 data-[closed]:slide-out-to-left-1/2 data-[closed]:slide-out-to-top-[48%] data-[expanded]:slide-in-from-left-1/2 data-[expanded]:slide-in-from-top-[48%]";
 
 // ─── Portal + Overlay (internal) ───
 
@@ -29,7 +38,7 @@ function Portal(props: DialogPrimitive.DialogPortalProps) {
 function Overlay(props: DialogPrimitive.DialogOverlayProps) {
 	return (
 		<DialogPrimitive.Overlay
-			class="fixed inset-0 z-50 bg-scrim data-[expanded]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[expanded]:fade-in-0"
+			class={cn(dialog({ part: "scrim" }), "fixed inset-0 z-50", MOTION)}
 			{...props}
 		/>
 	);
@@ -53,7 +62,11 @@ function Content<T extends ValidComponent = "div">(
 		<Portal>
 			<Overlay />
 			<DialogPrimitive.Content
-				class="relative z-50 grid max-h-screen w-full max-w-lg gap-4 overflow-y-auto rounded-xl border bg-canvas p-6 duration-200 data-[expanded]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[expanded]:fade-in-0 data-[closed]:zoom-out-95 data-[expanded]:zoom-in-95 data-[closed]:slide-out-to-left-1/2 data-[closed]:slide-out-to-top-[48%] data-[expanded]:slide-in-from-left-1/2 data-[expanded]:slide-in-from-top-[48%]"
+				class={cn(
+					dialog({ part: "panel" }),
+					"relative z-50 grid max-h-screen w-full max-w-lg gap-4 overflow-y-auto duration-200",
+					CONTENT_MOTION,
+				)}
 				{...rest}
 			>
 				{local.children}
@@ -129,7 +142,12 @@ type TitleProps<T extends ValidComponent = "h2"> =
 function Title<T extends ValidComponent = "h2">(
 	props: PolymorphicProps<T, TitleProps<T>>,
 ) {
-	return <DialogPrimitive.Title class="text-h3 font-semibold" {...props} />;
+	return (
+		<DialogPrimitive.Title
+			class={text({ variant: "h3", tone: "ink-1" })}
+			{...props}
+		/>
+	);
 }
 
 type DescriptionProps<T extends ValidComponent = "p"> =
@@ -143,7 +161,10 @@ function Description<T extends ValidComponent = "p">(
 	props: PolymorphicProps<T, DescriptionProps<T>>,
 ) {
 	return (
-		<DialogPrimitive.Description class="text-callout text-ink-3" {...props} />
+		<DialogPrimitive.Description
+			class={dialog({ part: "description" })}
+			{...props}
+		/>
 	);
 }
 

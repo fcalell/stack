@@ -1,6 +1,6 @@
 # Dialog
 
-Modal dialog overlay. Built on Kobalte's Dialog primitive for focus trapping, backdrop click-to-close, and Escape key handling.
+Modal dialog overlay. Built on Kobalte's Dialog primitive for focus trapping, backdrop click-to-close, and Escape key handling. The chrome renders the shared `DIALOG` matrix, the same cells the native plugin renders: the backdrop is the `scrim` cell, the panel is the `panel` cell (`rounded-xl`, a hairline `edge` border, `canvas` fill, `section` padding), the description is the `description` cell, and the title rides the `TEXT` h3 role.
 
 ```tsx
 import { Dialog, createDialog, createConfirmDialog, createConfirmByNameDialog } from "@fcalell/plugin-solid-ui/components/dialog";
@@ -34,11 +34,11 @@ Action buttons area. Column on mobile, row on sm+.
 
 ### Dialog.Title
 
-Renders `<h2>` via Kobalte. Semibold, tight tracking.
+Renders `<h2>` via Kobalte, on the `TEXT` h3 role at the `ink-1` tone.
 
 ### Dialog.Description
 
-Muted secondary text.
+Muted secondary text, the `DIALOG` description cell (callout size, `ink-3`).
 
 ### Dialog.Provider
 
@@ -125,9 +125,11 @@ type ConfirmDialogProps = {
   description: string;
   confirmLabel?: string;   // default "Confirm"
   cancelLabel?: string;    // default "Cancel"
-  variant?: "default" | "destructive";
+  tone?: "neutral" | "danger";
 };
 ```
+
+`tone` is the confirm button's `ButtonTone` and defaults to `"neutral"`.
 
 ```tsx
 const confirm = createConfirmDialog();
@@ -136,7 +138,7 @@ const ok = await confirm.open({
   title: "Delete project?",
   description: "This action cannot be undone.",
   confirmLabel: "Delete",
-  variant: "destructive",
+  tone: "danger",
 });
 if (ok) { /* delete */ }
 ```
