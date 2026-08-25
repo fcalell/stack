@@ -1,11 +1,13 @@
-import type { ReactNode } from "react";
+import type { LucideIcon } from "lucide-react-native";
 import { Pressable, type PressableProps, Text } from "react-native";
 import { cn } from "../../lib/cn";
+import { useTokenColor } from "../../lib/theme";
 
 export interface FilterChipProps extends Omit<PressableProps, "children"> {
 	label: string;
 	active?: boolean;
-	leading?: ReactNode;
+	// Leading glyph, rendered by the chip at its own size in the label's ink.
+	icon?: LucideIcon;
 }
 
 // Top-of-list filter chip. Active = ink-1 fill + canvas label (a filter, not a
@@ -13,10 +15,11 @@ export interface FilterChipProps extends Omit<PressableProps, "children"> {
 export function FilterChip({
 	label,
 	active,
-	leading,
+	icon: Icon,
 	className,
 	...rest
 }: FilterChipProps) {
+	const iconColor = useTokenColor(active ? "--color-canvas" : "--color-ink-2");
 	return (
 		<Pressable
 			accessibilityRole="button"
@@ -28,7 +31,7 @@ export function FilterChip({
 			)}
 			{...rest}
 		>
-			{leading}
+			{Icon ? <Icon size={14} color={iconColor} /> : null}
 			<Text
 				className={cn(
 					"text-micro font-semibold",

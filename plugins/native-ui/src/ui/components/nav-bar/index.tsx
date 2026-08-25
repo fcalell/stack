@@ -1,12 +1,18 @@
-import type { ReactNode } from "react";
-import { Text, View } from "react-native";
+import type { Action } from "@fcalell/ui-core/descriptors";
+import { ChevronLeft, X } from "lucide-react-native";
+import { Pressable, Text, View } from "react-native";
 import { cn } from "../../lib/cn";
+import { useTokenColor } from "../../lib/theme";
 
 export interface NavBarProps {
 	title: string;
-	// Back affordance — pass an IconButton; the leading slot reserves its width.
-	leading?: ReactNode;
-	trailing?: ReactNode;
+	// Renders the bar's own back affordance: a chevron, or an X for modal flows.
+	onBack?: () => void;
+	backVariant?: "back" | "close";
+	// The bar renders the action as its own internal pressable text: a Button's
+	// min-h-11 plus the bar's py-2 would grow the 48px bar to 60. `loading`
+	// dims and disables it.
+	action?: Action<never>;
 	// Centre the title (no leading/trailing imbalance). Defaults to left-aligned.
 	center?: boolean;
 	className?: string;
@@ -16,11 +22,15 @@ export interface NavBarProps {
 // remaining width and truncates to one line.
 export function NavBar({
 	title,
-	leading,
-	trailing,
+	onBack,
+	backVariant = "back",
+	action,
 	center,
 	className,
 }: NavBarProps) {
+	const ink1 = useTokenColor("--color-ink-1");
+	const BackGlyph = backVariant === "close" ? X : ChevronLeft;
+	const actionIdle = action ? !(action.disabled || action.loading) : false;
 	return (
 		<View
 			className={cn(
@@ -28,7 +38,13 @@ export function NavBar({
 				className,
 			)}
 		>
-			{leading}
+			{onBack ? (
+				// The 24px glyph plus 10 of hitSlop each side lands on the 44pt
+				// floor (the stepper precedent).
+				<Pressable accessibilityRole="button" hitSlop={10} onPress={onBack}>
+					<BackGlyph size={24} color={ink1} />
+				</Pressable>
+			) : null}
 			<Text
 				numberOfLines={1}
 				className={cn(
@@ -38,7 +54,19 @@ export function NavBar({
 			>
 				{title}
 			</Text>
-			{trailing}
+			{action ? (
+				<Pressable
+					accessibilityRole="button"
+					hitSlop={12}
+					disabled={!actionIdle}
+					onPress={action.onSelect}
+					className={cn(!actionIdle && "opacity-40")}
+				>
+					<Text className="text-callout font-semibold text-interactive">
+						{action.label}
+					</Text>
+				</Pressable>
+			) : null}
 		</View>
 	);
 }

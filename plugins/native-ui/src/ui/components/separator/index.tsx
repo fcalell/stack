@@ -1,17 +1,17 @@
 import { View, type ViewProps } from "react-native";
 import { cn } from "../../lib/cn";
 
-export interface DividerProps extends ViewProps {
+export interface SeparatorProps extends ViewProps {
 	orientation?: "horizontal" | "vertical";
 }
 
 // Hairline separator in the edge token. Horizontal spans its row; vertical
 // stretches to its parent's height (the StatStrip column rule).
-export function Divider({
+export function Separator({
 	orientation = "horizontal",
 	className,
 	...rest
-}: DividerProps) {
+}: SeparatorProps) {
 	return (
 		<View
 			className={cn(

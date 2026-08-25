@@ -9,13 +9,13 @@ const toast = cva(
 	"flex-row items-center gap-2 rounded-md border bg-canvas px-4 py-3",
 	{
 		variants: {
-			variant: {
-				default: "border-edge",
-				success: "border-ok",
+			tone: {
+				neutral: "border-edge",
+				ok: "border-ok",
 				danger: "border-danger",
 			},
 		},
-		defaultVariants: { variant: "default" },
+		defaultVariants: { tone: "neutral" },
 	},
 );
 
@@ -24,9 +24,9 @@ export interface ToastProps extends VariantProps<typeof toast> {
 	className?: string;
 }
 
-export function Toast({ variant, message, className }: ToastProps) {
+export function Toast({ tone, message, className }: ToastProps) {
 	return (
-		<View className={cn(toast({ variant }), className)}>
+		<View className={cn(toast({ tone }), className)}>
 			<Text className="flex-1 text-callout text-ink-1">{message}</Text>
 		</View>
 	);

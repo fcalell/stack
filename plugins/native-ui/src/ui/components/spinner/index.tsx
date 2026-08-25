@@ -1,16 +1,16 @@
+import type { ContentTone } from "@fcalell/ui-core/variants";
 import { ActivityIndicator, type ActivityIndicatorProps } from "react-native";
-import { useCSSVariable } from "../../lib/theme";
+import { useTokenColor } from "../../lib/theme";
 
 export interface SpinnerProps extends Omit<ActivityIndicatorProps, "color"> {
-	// Defaults to the active theme's ink-1. Pass a token-resolved colour when the
-	// spinner sits on a filled surface (e.g. accent-ink inside a busy Button).
-	color?: string;
+	// The content tone the glyph spins in, resolved against the active theme.
+	// A busy Button passes its own label tone through `buttonContentTone`.
+	tone?: ContentTone;
 }
 
 // Inline activity indicator. No full-screen spinner — prefer Skeleton for page
 // loads; use this inside a busy button (OAuth hand-off).
-export function Spinner({ color, size = "small", ...rest }: SpinnerProps) {
-	const ink = useCSSVariable("--color-ink-1");
-	const fallback = typeof ink === "string" ? ink : undefined;
-	return <ActivityIndicator color={color ?? fallback} size={size} {...rest} />;
+export function Spinner({ tone, size = "small", ...rest }: SpinnerProps) {
+	const color = useTokenColor(`--color-${tone ?? "ink-1"}`);
+	return <ActivityIndicator color={color} size={size} {...rest} />;
 }

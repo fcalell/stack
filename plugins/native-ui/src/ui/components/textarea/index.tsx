@@ -7,19 +7,19 @@ import { useFieldState } from "../../lib/field";
 // vertical interior, so both ride the overlay as literal numerics.
 const BOX = "min-h-20 w-full py-2 text-callout text-ink-1";
 
-export interface TextAreaProps extends TextInputProps {
+export interface TextareaProps extends TextInputProps {
 	// Same state contract as Input: `error` pins the danger border,
 	// `useFieldState` moves the default onto the `focused` cell.
 	state?: FieldState;
 }
 
-export function TextArea({
+export function Textarea({
 	state,
 	className,
 	onFocus,
 	onBlur,
 	...rest
-}: TextAreaProps) {
+}: TextareaProps) {
 	const tracked = useFieldState(state, onFocus, onBlur);
 	return (
 		<TextInput

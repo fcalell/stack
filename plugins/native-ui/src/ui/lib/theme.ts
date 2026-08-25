@@ -12,3 +12,10 @@ export type ThemeName = Parameters<typeof Uniwind.setTheme>[0];
 export function setTheme(name: ThemeName): void {
 	Uniwind.setTheme(name);
 }
+
+// A --color-* token resolved against the active theme, for the RN nodes that
+// take a color prop and never currentColor (lucide glyphs, ActivityIndicator).
+export function useTokenColor(name: `--color-${string}`): string | undefined {
+	const value = useCSSVariable(name);
+	return typeof value === "string" ? value : undefined;
+}

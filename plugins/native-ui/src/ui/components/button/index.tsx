@@ -11,7 +11,7 @@ import {
 import type { ReactNode } from "react";
 import { Pressable, type PressableProps, Text } from "react-native";
 import { cn } from "../../lib/cn";
-import { useCSSVariable } from "../../lib/theme";
+import { Spinner } from "../spinner";
 
 // The fill matrix rides the Pressable and the label matrix rides the Text:
 // RN Text inherits nothing, so the two tables cannot share a node as on web.
@@ -41,6 +41,7 @@ export interface ButtonProps extends Omit<PressableProps, "children"> {
 	emphasis?: ButtonEmphasis;
 	tone?: ButtonTone;
 	size?: ButtonSize;
+	loading?: boolean;
 	children?: ReactNode;
 }
 
@@ -48,6 +49,7 @@ export function Button({
 	emphasis,
 	tone,
 	size,
+	loading,
 	className,
 	children,
 	disabled,
@@ -58,7 +60,7 @@ export function Button({
 	return (
 		<Pressable
 			accessibilityRole="button"
-			disabled={disabled}
+			disabled={disabled || loading}
 			className={cn(
 				button({ emphasis: resolvedEmphasis, tone: resolvedTone, size }),
 				SHELL,
@@ -69,40 +71,37 @@ export function Button({
 			)}
 			{...rest}
 		>
-			{({ pressed }) =>
-				typeof children === "string" ? (
-					<Text
-						className={cn(
-							buttonLabel({
-								emphasis: resolvedEmphasis,
-								tone: resolvedTone,
-								size,
-							}),
-							disabled && BUTTON_MUTED_LABEL,
-							!disabled &&
-								pressed &&
-								resolvedEmphasis === "primary" &&
-								resolvedTone === "danger" &&
-								"text-danger",
-						)}
-					>
-						{children}
-					</Text>
-				) : (
-					children
-				)
-			}
+			{({ pressed }) => (
+				<>
+					{/* The glyph is anatomy, not a matrix cell: it spins beside the
+					    label in the label's own content tone, read back off the
+					    label matrix through ui-core's data path. */}
+					{loading ? (
+						<Spinner tone={buttonContentTone(resolvedEmphasis, resolvedTone)} />
+					) : null}
+					{typeof children === "string" ? (
+						<Text
+							className={cn(
+								buttonLabel({
+									emphasis: resolvedEmphasis,
+									tone: resolvedTone,
+									size,
+								}),
+								disabled && BUTTON_MUTED_LABEL,
+								!disabled &&
+									pressed &&
+									resolvedEmphasis === "primary" &&
+									resolvedTone === "danger" &&
+									"text-danger",
+							)}
+						>
+							{children}
+						</Text>
+					) : (
+						children
+					)}
+				</>
+			)}
 		</Pressable>
 	);
-}
-
-// The tint a consumer hands its own icon or Spinner inside a button. RN nodes
-// take a resolved color prop, never currentColor, so the label matrix's ink is
-// read back through `buttonContentTone` and resolved against the active theme.
-export function useButtonContentColor(
-	emphasis: ButtonEmphasis = "primary",
-	tone: ButtonTone = "neutral",
-): string | undefined {
-	const value = useCSSVariable(`--color-${buttonContentTone(emphasis, tone)}`);
-	return typeof value === "string" ? value : undefined;
 }

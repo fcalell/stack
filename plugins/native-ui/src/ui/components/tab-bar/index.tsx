@@ -1,13 +1,14 @@
-import type { ReactNode } from "react";
+import type { LucideIcon } from "lucide-react-native";
 import { Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { cn } from "../../lib/cn";
+import { useTokenColor } from "../../lib/theme";
 
 export interface TabBarItem {
 	key: string;
 	label: string;
-	// Render the tab icon; `active` lets it mirror the label's selected state.
-	icon?: (active: boolean) => ReactNode;
+	// The bar renders the glyph itself and resolves the active/inactive ink.
+	icon?: LucideIcon;
 }
 
 export interface TabBarProps {
@@ -22,6 +23,8 @@ export interface TabBarProps {
 // home-indicator safe-area inset.
 export function TabBar({ tabs, active, onChange, className }: TabBarProps) {
 	const insets = useSafeAreaInsets();
+	const ink1 = useTokenColor("--color-ink-1");
+	const ink2 = useTokenColor("--color-ink-2");
 	return (
 		<View
 			style={{ paddingBottom: insets.bottom }}
@@ -37,7 +40,9 @@ export function TabBar({ tabs, active, onChange, className }: TabBarProps) {
 						onPress={() => onChange(tab.key)}
 						className="flex-1 items-center gap-1 py-2"
 					>
-						{tab.icon?.(isActive)}
+						{tab.icon ? (
+							<tab.icon size={24} color={isActive ? ink1 : ink2} />
+						) : null}
 						<Text
 							className={cn(
 								"text-micro",

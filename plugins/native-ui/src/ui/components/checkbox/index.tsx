@@ -1,13 +1,10 @@
-import type { ReactNode } from "react";
 import { Pressable, Text } from "react-native";
 import { cn } from "../../lib/cn";
 
 export interface CheckboxProps {
 	checked: boolean;
-	onCheckedChange: (checked: boolean) => void;
+	onChange: (checked: boolean) => void;
 	disabled?: boolean;
-	// Override the default tick (e.g. a lucide <Check/>). Rendered only when checked.
-	icon?: ReactNode;
 	className?: string;
 }
 
@@ -17,9 +14,8 @@ export interface CheckboxProps {
 // navigational task row is a RowItem with a chevron, not this.
 export function Checkbox({
 	checked,
-	onCheckedChange,
+	onChange,
 	disabled,
-	icon,
 	className,
 }: CheckboxProps) {
 	return (
@@ -27,7 +23,7 @@ export function Checkbox({
 			accessibilityRole="checkbox"
 			accessibilityState={{ checked, disabled }}
 			disabled={disabled}
-			onPress={() => onCheckedChange(!checked)}
+			onPress={() => onChange(!checked)}
 			className={cn(
 				"h-[22px] w-[22px] items-center justify-center rounded-full",
 				checked ? "bg-accent" : "border-[1.5px] border-edge",
@@ -35,9 +31,9 @@ export function Checkbox({
 				className,
 			)}
 		>
-			{checked
-				? (icon ?? <Text className="text-micro text-accent-ink">✓</Text>)
-				: null}
+			{checked ? (
+				<Text className="text-micro text-accent-ink">✓</Text>
+			) : null}
 		</Pressable>
 	);
 }
