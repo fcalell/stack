@@ -205,6 +205,24 @@ export const CARD = matrix({
 	defaultVariants: { padding: "card", ring: "none" },
 });
 
+// ── Rhythm ──────────────────────────────────────────────────────────
+
+// The gap each member of the rhythm family bakes between its children. The
+// axis is the family's own vocabulary and every cell is exactly `gap-<unit>`,
+// a shape the harness pins, so the rung mapping lives here once instead of
+// being rebuilt as strings in each plugin.
+export const RHYTHM = matrix({
+	base: "",
+	variants: {
+		unit: {
+			section: "gap-section",
+			stack: "gap-stack",
+			row: "gap-row",
+			pair: "gap-pair",
+		},
+	},
+});
+
 // ── Field ───────────────────────────────────────────────────────────
 
 // The two layouts gap differently on purpose: an input packs its leading media

@@ -250,6 +250,24 @@ Five laws for a primitive's public API. They bind every primitive either UI plug
    has exactly two homes: the matrix grows, or the consumer authors its own primitive under `ui/`.
    There is no per-call-site hatch, because a hatch is the thing that gets reached for.
 
+### The slot registry
+
+The named slots law 2 leaves open, as a closed list. Anything composed that is not on it is
+descriptor data.
+
+- `children`: a primitive's own content region. Badge and button render string children into
+  their label text.
+- The render props: `children: (item) => element` on a data-driven container, and the render
+  argument of an overlay factory.
+- `content`: the per-item content of a data-driven container.
+- `trigger`: the anchor of an overlay.
+- `fallback`, `loadingFallback`, `errorFallback`, `emptyFallback`: boundary alternates.
+- `icon` and `text` on `logo`: brand media, the consumer's own mark.
+- `providers` and `errorFallback` on `createApp`: app-shell hooks.
+
+An icon is never an element slot. It is a component-typed param (`TIcon`, each platform's
+`LucideIcon`), and the owning primitive renders it at its own size and tone.
+
 ## The sharing line
 
 The matrices hold the cells that mean the same thing on both platforms: fills, borders, ink,

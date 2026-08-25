@@ -14,6 +14,7 @@ import {
 	CARD,
 	FIELD,
 	type Matrix,
+	RHYTHM,
 	TEXT,
 	TEXT_STRONG,
 } from "#variant-tables";
@@ -36,6 +37,7 @@ export const badgeLabel = build(BADGE_LABEL);
 export const badgeDot = build(BADGE_DOT);
 export const card = build(CARD);
 export const field = build(FIELD);
+export const rhythm = build(RHYTHM);
 
 export const BUTTON_MUTED_LABEL = "text-ink-4";
 

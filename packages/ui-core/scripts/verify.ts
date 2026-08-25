@@ -56,6 +56,7 @@ import {
 	CARD,
 	FIELD,
 	type Matrix,
+	RHYTHM,
 	TEXT,
 	TEXT_STRONG,
 } from "#variant-tables";
@@ -71,6 +72,7 @@ import {
 	buttonMuted,
 	card,
 	field,
+	rhythm,
 	text,
 	textStrong,
 } from "#variants";
@@ -195,6 +197,7 @@ const MATRICES: readonly Registration[] = [
 	["BADGE_DOT", BADGE_DOT, badgeDot],
 	["CARD", CARD, card],
 	["FIELD", FIELD, field],
+	["RHYTHM", RHYTHM, rhythm],
 ];
 
 // The class-bearing exports that are not matrices. Listed by value, so a rename
@@ -1235,6 +1238,48 @@ check("c26", "every cell keeps the role first and its interior numeric", () => {
 		}
 	}
 	return `${inspected} cells: interiors numeric, type role ahead of its leading and tracking`;
+});
+
+check("c27", "every rhythm cell is exactly gap-<unit>", () => {
+	const units = Object.keys(RHYTHM.variants.unit);
+	requireEqual(units.join(" "), "section stack row pair", "rhythm units");
+	requireEqual(RHYTHM.base, "", "RHYTHM.base");
+	for (const unit of units) {
+		requireEqual(rhythm({ unit: unit as never }), `gap-${unit}`, `rhythm(${unit})`);
+	}
+	return `${units.length} units, each cell the bare gap utility`;
+});
+
+check("c28", "the README carries the slot registry, closed", () => {
+	const readme = readFileSync(resolve(pkgDir, "README.md"), "utf8");
+	const canon = readme.indexOf("## The canon");
+	const heading = readme.indexOf("### The slot registry");
+	assert(heading >= 0, 'README has no "### The slot registry" subsection');
+	assert(
+		canon >= 0 && canon < heading,
+		"the registry does not sit under The canon",
+	);
+	const registry = readme.slice(heading);
+	for (const entry of [
+		"`children`",
+		"render prop",
+		"`content`",
+		"`trigger`",
+		"`fallback`",
+		"`loadingFallback`",
+		"`errorFallback`",
+		"`emptyFallback`",
+		"`icon`",
+		"`text`",
+		"`logo`",
+		"`providers`",
+		"`createApp`",
+		"`TIcon`",
+		"`LucideIcon`",
+	]) {
+		assert(registry.includes(entry), `the registry never names ${entry}`);
+	}
+	return "registry subsection under The canon, every entry named, icon-param rule stated";
 });
 
 // ── Report ──────────────────────────────────────────────────────────
