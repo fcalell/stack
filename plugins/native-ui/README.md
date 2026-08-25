@@ -239,7 +239,7 @@ matrix cell strings so their classNames are detected.
 | `@fcalell/plugin-native-ui/app` | `AppProviders` — UI-shell providers for tests / Storybook |
 | `@fcalell/plugin-native-ui/components/*` | 30 primitives, one per `kebab-case` subpath (`.../components/row-item` → `RowItem`) — see the Primitives list above |
 | `@fcalell/plugin-native-ui/lib/cn` | `cn()` — ui-core's className merge, taught the contract's scales |
-| `@fcalell/plugin-native-ui/lib/theme` | `Uniwind`, `useUniwind`, `useCSSVariable`, `setTheme`, `ThemeName` |
+| `@fcalell/plugin-native-ui/lib/theme` | `Uniwind`, `useUniwind`, `useCSSVariable`, `useTokenColor`, `setTheme`, `ThemeName` |
 
 > Native has no document `<head>` and embeds fonts at build time, so there is no
 > `./meta` or runtime `./fonts` export (the web `plugin-solid-ui` analogs); theme
