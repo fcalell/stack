@@ -45,8 +45,9 @@ export const GEOMETRY: {
 		"left-0",
 		"right-0",
 		// sizing: the w-full/min-h/max-w facts, non-numeric members only. Fill
-		// and viewport heights (`h-full`, `h-screen`) are component geometry
-		// for `ui/`.
+		// and viewport heights (`h-full`, `h-screen`) are component geometry:
+		// their home is a shipped pane (`ScrollArea` on web, the `ScrollView`
+		// host on native), with consumer `ui/` the fallback.
 		"w-full",
 		"min-w-0",
 		"min-h-0",
@@ -54,8 +55,9 @@ export const GEOMETRY: {
 		"min-h-screen",
 		"max-w-full",
 		"max-w-none",
-		// overflow: clipping only. A scrollable pane is a `ui/` primitive, so
-		// `overflow-auto` and the axis variants stay out.
+		// overflow: clipping only. A scrollable pane's home is a shipped pane
+		// (`ScrollArea` on web, the `ScrollView` host on native), with consumer
+		// `ui/` the fallback, so `overflow-auto` and the axis variants stay out.
 		"overflow-hidden",
 		...SPACING_RUNGS.map((rung) => `gap-${rung}`),
 	],
