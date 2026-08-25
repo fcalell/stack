@@ -31,17 +31,17 @@ function ScrollArea(props: ScrollAreaProps) {
 		const pin = () => {
 			pane.scrollTop = pane.scrollHeight;
 		};
-		// The observer callback fires after a change and cannot measure where
-		// the pane was, so the scroll listener records pinned-ness ahead of it.
-		let pinned = true;
-		const onScroll = () => {
-			pinned =
-				pane.scrollHeight - pane.scrollTop - pane.clientHeight <= PIN_THRESHOLD;
-		};
+		// Pinned-ness is derived in the observer from the height as it was
+		// before the change: scroll events dispatch with the rendering steps,
+		// so a listener-kept flag loses the race against an append (always in a
+		// throttled background tab) and snaps a reader back to the bottom.
+		let lastScrollHeight = pane.scrollHeight;
 		const observer = new MutationObserver(() => {
-			if (pinned) pin();
+			const wasPinned =
+				pane.scrollTop + pane.clientHeight >= lastScrollHeight - PIN_THRESHOLD;
+			lastScrollHeight = pane.scrollHeight;
+			if (wasPinned) pin();
 		});
-		pane.addEventListener("scroll", onScroll);
 		observer.observe(pane, {
 			childList: true,
 			subtree: true,
@@ -50,10 +50,8 @@ function ScrollArea(props: ScrollAreaProps) {
 		});
 		// A pane opened onto existing history starts at its end.
 		pin();
-		onCleanup(() => {
-			pane.removeEventListener("scroll", onScroll);
-			observer.disconnect();
-		});
+		lastScrollHeight = pane.scrollHeight;
+		onCleanup(() => observer.disconnect());
 	});
 	return (
 		<div ref={pane} class={AXIS[props.axis ?? "y"]}>
