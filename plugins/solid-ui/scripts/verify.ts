@@ -12,6 +12,7 @@
 // The `b` checks read the plugin's own source, and every matrix cell they
 // compare against is produced by calling the ui-core cva rather than written
 // out here, so no check can drift from the matrix it describes.
+import { execFileSync } from "node:child_process";
 import {
 	existsSync,
 	mkdirSync,
@@ -65,6 +66,7 @@ import {
 	buttonMuted,
 	card,
 	field,
+	rhythm,
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
@@ -717,6 +719,11 @@ const FAMILIES: Family[] = [
 			layout: ["input", "row"],
 		},
 	},
+	{
+		name: "RHYTHM",
+		cva: rhythm as AnyCva,
+		axes: { unit: ["section", "stack", "row", "pair"] },
+	},
 ];
 
 const CELLS = matrixCells(FAMILIES);
@@ -1137,6 +1144,112 @@ check("b6", "the docs match the APIs they document", () => {
 		}
 	}
 	return `${DOCS.length} pages clear of ${forbidden.length} retired patterns, ${updated.length} rewritten pages carry their new axes`;
+});
+
+// ── The closure ─────────────────────────────────────────────────────
+
+const COMPONENT_FILES = walk(resolve(pkgDir, "src/ui/components"), [
+	".ts",
+	".tsx",
+]);
+
+// Comment lines drop first (the toast component names the closed channels in
+// prose), then string literals empty out: toast's Omit denylist spells the
+// channel names as string literals, and a quoted key is the closure itself
+// rather than a reachable channel.
+function codeOf(source: string): string {
+	return source
+		.split("\n")
+		.filter((line) => !/^\s*(\/\/|\/\*|\*)/.test(line))
+		.join("\n")
+		.replace(/"[^"\n]*"/g, '""');
+}
+
+check("b7", "every closed prop is ?: never and no channel survives", () => {
+	const hits: string[] = [];
+	for (const path of COMPONENT_FILES) {
+		const raw = readFileSync(path, "utf8");
+		const name = relative(pkgDir, path);
+		// Decision 1 closes uniformly, components with no surface included, so
+		// the declaration is demanded in every component module instead of
+		// allow-listing exceptions.
+		if (path.endsWith("index.tsx")) {
+			for (const declaration of [
+				"class?: never",
+				"style?: never",
+				"classList?: never",
+			]) {
+				if (!raw.includes(declaration)) {
+					hits.push(`${name}: no ${declaration} declaration`);
+				}
+			}
+		}
+		const code = codeOf(raw);
+		// Every optional declaration of a closed prop, or of any /[a-z]Class/
+		// renamed hatch, must be `?: never`.
+		for (const match of code.matchAll(
+			/\b(?:[a-zA-Z]*[a-z]Class|class|style|classList)\?:\s*(?!never\b)\S+/g,
+		)) {
+			hits.push(`${name}: open declaration "${match[0]}"`);
+		}
+		// The `classList?: never` declaration is the one permitted classList
+		// form; strip it, then no closed-channel token may remain at all.
+		const stripped = code.replace(/\bclassList\?:\s*never\b/g, "");
+		for (const match of stripped.matchAll(
+			/\b(?:className|classList|contentClass|listClass|containerClass)\b/g,
+		)) {
+			hits.push(`${name}: the token "${match[0]}" survives`);
+		}
+		// No cn() call or class attribute may read a props-sourced class.
+		for (const match of code.matchAll(
+			/\b(?:local|props|rest|others|merged|rawProps)\.(?:class|className|classList)\b/g,
+		)) {
+			hits.push(`${name}: props-sourced class value "${match[0]}"`);
+		}
+	}
+	assert(hits.length === 0, `the closure leaks:\n  ${hits.join("\n  ")}`);
+	return `${COMPONENT_FILES.length} component files: every declaration ?: never, no surviving channel token, no props-sourced class`;
+});
+
+check("b8", "the closure fixture proves every prop at the type layer", () => {
+	const fixturePath = resolve(fixtureDir, "closure.tsx");
+	const source = readFileSync(fixturePath, "utf8");
+	const directives = source.match(/@ts-expect-error/g) ?? [];
+	assert(
+		directives.length >= 300,
+		`only ${directives.length} @ts-expect-error sites`,
+	);
+	for (const token of ['class="x"', "style={{", "classList={{"]) {
+		assert(source.includes(token), `the fixture never passes ${token}`);
+	}
+	for (const hatch of [
+		'containerClass="x"',
+		'listClass="x"',
+		'contentClass="x"',
+		"toastOptions={{}}",
+		"icons={{}}",
+	]) {
+		assert(source.includes(hatch), `the fixture never passes the dead ${hatch}`);
+	}
+	// Every component dir is reached through its public subpath, so the
+	// closure is proven the way a consumer imports it.
+	for (const dir of readdirSync(resolve(pkgDir, "src/ui/components"))) {
+		assert(
+			source.includes(`/components/${dir}"`),
+			`the fixture never imports components/${dir}`,
+		);
+	}
+	// tsc over the package (scripts/ is inside the include) proves every
+	// directive fires and every un-annotated legal usage still compiles: a
+	// reopened prop turns a directive unused and fails the run.
+	const candidates = [
+		resolve(pkgDir, "node_modules/.bin/tsc"),
+		resolve(pkgDir, "../../node_modules/.bin/tsc"),
+	];
+	const tsc = candidates.find((path) => existsSync(path));
+	assert(tsc, `no tsc binary at ${candidates.join(" or ")}`);
+	execFileSync(tsc, ["--noEmit"], { cwd: pkgDir, stdio: "pipe" });
+	return `${directives.length} closures under @ts-expect-error, tsc --noEmit exits 0`;
 });
 
 // ── Report ──────────────────────────────────────────────────────────
