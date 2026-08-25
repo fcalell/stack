@@ -95,22 +95,27 @@ export function report(): never {
 	process.exit(failed === 0 ? 0 : 1);
 }
 
-// ── Tailwind CLI build driver ───────────────────────────────────────
+// ── Tool binaries and the Tailwind CLI build driver ─────────────────
 
-// `pkgDir` anchors the binary search: the package's own node_modules, then the
+// `pkgDir` anchors the search: the package's own node_modules, then the
 // workspace root's.
+export function binPath(pkgDir: string, name: string): string {
+	const candidates = [
+		resolve(pkgDir, `node_modules/.bin/${name}`),
+		resolve(pkgDir, `../../node_modules/.bin/${name}`),
+	];
+	const bin = candidates.find((path) => existsSync(path));
+	assert(bin, `no ${name} binary at ${candidates.join(" or ")}`);
+	return bin;
+}
+
 export function tailwindBuild(
 	pkgDir: string,
 	inputPath: string,
 	outputPath: string,
 	cwd: string,
 ): string {
-	const candidates = [
-		resolve(pkgDir, "node_modules/.bin/tailwindcss"),
-		resolve(pkgDir, "../../node_modules/.bin/tailwindcss"),
-	];
-	const bin = candidates.find((path) => existsSync(path));
-	assert(bin, `no tailwindcss binary at ${candidates.join(" or ")}`);
+	const bin = binPath(pkgDir, "tailwindcss");
 	execFileSync(bin, ["--input", inputPath, "--output", outputPath], {
 		cwd,
 		stdio: "pipe",

@@ -1,6 +1,8 @@
 import { cva, type VariantProps } from "class-variance-authority";
 import type { ComponentProps } from "solid-js";
 import { createUniqueId, mergeProps, splitProps } from "solid-js";
+import { cn } from "#lib/cn";
+import { separatorClass } from "#lib/separator";
 
 // ─── Group ───
 
@@ -28,7 +30,7 @@ function ItemSeparator(
 		classList?: never;
 	},
 ) {
-	return <hr class="my-2 h-px w-full shrink-0 border-0 bg-edge" {...props} />;
+	return <hr class={cn(separatorClass, "my-2")} {...props} />;
 }
 
 // ─── Root ───

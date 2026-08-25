@@ -68,12 +68,13 @@ export function DataTable<TData, TValue>(props: DataTableProps<TData, TValue>) {
 					when={table.getRowModel().rows?.length}
 					fallback={
 						<Table.Row>
-							<td
-								colSpan={props.columns.length}
-								class="h-24 p-2 text-center align-middle"
-							>
-								{props.fallback ?? "No results."}
-							</td>
+							<Table.Cell colSpan={props.columns.length}>
+								{/* The cell stays closed; the empty-state geometry rides an
+								    inner layout element instead of a class hand-off. */}
+								<div class="flex h-24 items-center justify-center">
+									{props.fallback ?? "No results."}
+								</div>
+							</Table.Cell>
 						</Table.Row>
 					}
 				>

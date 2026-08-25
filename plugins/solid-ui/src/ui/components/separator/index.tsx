@@ -3,6 +3,7 @@ import * as SeparatorPrimitive from "@kobalte/core/separator";
 import type { ValidComponent } from "solid-js";
 import { splitProps } from "solid-js";
 import { cn } from "#lib/cn";
+import { separatorClass } from "#lib/separator";
 
 type SeparatorProps<T extends ValidComponent = "hr"> =
 	SeparatorPrimitive.SeparatorRootProps<T> & {
@@ -19,8 +20,8 @@ function Separator<T extends ValidComponent = "hr">(
 		<SeparatorPrimitive.Root
 			orientation={local.orientation ?? "horizontal"}
 			class={cn(
-				"shrink-0 bg-edge",
-				local.orientation === "vertical" ? "h-full w-px" : "h-px w-full",
+				separatorClass,
+				local.orientation === "vertical" && "h-full w-px",
 			)}
 			{...rest}
 		/>

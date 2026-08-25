@@ -37,6 +37,7 @@ import {
 import {
 	type AnyCva,
 	assert,
+	binPath,
 	blockBody,
 	check,
 	classes,
@@ -1153,23 +1154,45 @@ const COMPONENT_FILES = walk(resolve(pkgDir, "src/ui/components"), [
 	".tsx",
 ]);
 
-// Comment lines drop first (the toast component names the closed channels in
-// prose), then string literals empty out: toast's Omit denylist spells the
-// channel names as string literals, and a quoted key is the closure itself
-// rather than a reachable channel.
+// Every transformation below preserves the line structure (a comment line
+// blanks to "", in-line spans blank to spaces), so a match offset in any
+// transformed string still maps to the real source line and a hit can quote
+// it verbatim instead of reconstructing text.
+function blank(span: string): string {
+	return span.replace(/[^\n]/g, " ");
+}
+
+// Comment lines drop (the toast component names the closed channels in
+// prose); string literals empty out for the identifier scans, since a quoted
+// value is data rather than a reachable prop channel. The quoted spelling
+// itself is banned separately below.
 function codeOf(source: string): string {
 	return source
 		.split("\n")
-		.filter((line) => !/^\s*(\/\/|\/\*|\*)/.test(line))
+		.map((line) => (/^\s*(\/\/|\/\*|\*)/.test(line) ? "" : line))
 		.join("\n")
-		.replace(/"[^"\n]*"/g, '""');
+		.replace(/"[^"\n]*"/g, blank);
 }
+
+// toast's Omit denylist spells the closed channels as quoted keys; it is the
+// closure itself, and the one permitted home of the quoted spelling.
+const TOAST_OMIT_UNION =
+	'"class" | "className" | "style" | "toastOptions" | "icons"';
 
 check("b7", "every closed prop is ?: never and no channel survives", () => {
 	const hits: string[] = [];
 	for (const path of COMPONENT_FILES) {
 		const raw = readFileSync(path, "utf8");
+		const rawLines = raw.split("\n");
 		const name = relative(pkgDir, path);
+		// `haystack` is whichever transformed string the match came from; its
+		// newlines are the source's, so the offset gives the real line number
+		// and the hit quotes the actual source line.
+		const flag = (haystack: string, offset: number, why: string): void => {
+			const line = haystack.slice(0, offset).split("\n").length;
+			const text = (rawLines[line - 1] ?? "").trim();
+			hits.push(`${name}:${line}: ${why}: ${text}`);
+		};
 		// Decision 1 closes uniformly, components with no surface included, so
 		// the declaration is demanded in every component module instead of
 		// allow-listing exceptions.
@@ -1190,25 +1213,42 @@ check("b7", "every closed prop is ?: never and no channel survives", () => {
 		for (const match of code.matchAll(
 			/\b(?:[a-zA-Z]*[a-z]Class|class|style|classList)\?:\s*(?!never\b)\S+/g,
 		)) {
-			hits.push(`${name}: open declaration "${match[0]}"`);
+			flag(code, match.index ?? 0, "an open declaration");
 		}
 		// The `classList?: never` declaration is the one permitted classList
-		// form; strip it, then no closed-channel token may remain at all.
-		const stripped = code.replace(/\bclassList\?:\s*never\b/g, "");
-		for (const match of stripped.matchAll(
+		// form; blank it, then no closed-channel token may remain at all.
+		const permitted = code.replace(/\bclassList\?:\s*never\b/g, blank);
+		for (const match of permitted.matchAll(
 			/\b(?:className|classList|contentClass|listClass|containerClass)\b/g,
 		)) {
-			hits.push(`${name}: the token "${match[0]}" survives`);
+			flag(permitted, match.index ?? 0, "a surviving channel token");
 		}
-		// No cn() call or class attribute may read a props-sourced class.
+		// No cn() call or class attribute may read a props-sourced class. The
+		// alias list mirrors the names the components destructure props into
+		// (splitProps / mergeProps results); a component adopting a new alias
+		// must add it here, or its reads evade this scan.
 		for (const match of code.matchAll(
 			/\b(?:local|props|rest|others|merged|rawProps)\.(?:class|className|classList)\b/g,
 		)) {
-			hits.push(`${name}: props-sourced class value "${match[0]}"`);
+			flag(code, match.index ?? 0, "a props-sourced class value");
+		}
+		// A quoted-key declaration (`"className"?: string`) plus bracket access
+		// slips past every identifier scan above, so the quoted spelling is
+		// banned outright, toast's Omit union excepted. Comments drop; quotes
+		// have to survive, so this scan runs on its own transform.
+		const quoted = raw
+			.split("\n")
+			.map((line) => (/^\s*(\/\/|\/\*|\*)/.test(line) ? "" : line))
+			.join("\n")
+			.replace(TOAST_OMIT_UNION, blank);
+		for (const match of quoted.matchAll(
+			/"(?:className|contentClass|listClass|containerClass)"/g,
+		)) {
+			flag(quoted, match.index ?? 0, "a quoted closed-channel token");
 		}
 	}
 	assert(hits.length === 0, `the closure leaks:\n  ${hits.join("\n  ")}`);
-	return `${COMPONENT_FILES.length} component files: every declaration ?: never, no surviving channel token, no props-sourced class`;
+	return `${COMPONENT_FILES.length} component files: every declaration ?: never, no surviving channel token (quoted forms included), no props-sourced class`;
 });
 
 check("b8", "the closure fixture proves every prop at the type layer", () => {
@@ -1245,13 +1285,10 @@ check("b8", "the closure fixture proves every prop at the type layer", () => {
 	// tsc over the package (scripts/ is inside the include) proves every
 	// directive fires and every un-annotated legal usage still compiles: a
 	// reopened prop turns a directive unused and fails the run.
-	const candidates = [
-		resolve(pkgDir, "node_modules/.bin/tsc"),
-		resolve(pkgDir, "../../node_modules/.bin/tsc"),
-	];
-	const tsc = candidates.find((path) => existsSync(path));
-	assert(tsc, `no tsc binary at ${candidates.join(" or ")}`);
-	execFileSync(tsc, ["--noEmit"], { cwd: pkgDir, stdio: "pipe" });
+	execFileSync(binPath(pkgDir, "tsc"), ["--noEmit"], {
+		cwd: pkgDir,
+		stdio: "pipe",
+	});
 	return `${directives.length} closures under @ts-expect-error, tsc --noEmit exits 0`;
 });
 

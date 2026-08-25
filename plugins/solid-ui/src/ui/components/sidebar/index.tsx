@@ -20,6 +20,7 @@ import { Input } from "#components/input";
 import { Loader } from "#components/loader";
 import { Tooltip } from "#components/tooltip";
 import { cn } from "#lib/cn";
+import { separatorClass } from "#lib/separator";
 import {
 	sheetOverlayClass,
 	sheetPortalVariants,
@@ -356,7 +357,7 @@ function SidebarSeparator(
 		classList?: never;
 	},
 ) {
-	return <hr class="mx-2 h-px w-auto shrink-0 border-0 bg-edge" {...props} />;
+	return <hr class={cn(separatorClass, "mx-2 w-auto")} {...props} />;
 }
 
 function SidebarContent(

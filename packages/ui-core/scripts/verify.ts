@@ -1241,15 +1241,13 @@ check("c26", "every cell keeps the role first and its interior numeric", () => {
 });
 
 check("c27", "every rhythm cell is exactly gap-<unit>", () => {
-	const units = Object.keys(RHYTHM.variants.unit);
+	const units = Object.keys(RHYTHM.variants.unit) as Array<
+		keyof (typeof RHYTHM)["variants"]["unit"]
+	>;
 	requireEqual(units.join(" "), "section stack row pair", "rhythm units");
 	requireEqual(RHYTHM.base, "", "RHYTHM.base");
 	for (const unit of units) {
-		requireEqual(
-			rhythm({ unit: unit as never }),
-			`gap-${unit}`,
-			`rhythm(${unit})`,
-		);
+		requireEqual(rhythm({ unit }), `gap-${unit}`, `rhythm(${unit})`);
 	}
 	return `${units.length} units, each cell the bare gap utility`;
 });
