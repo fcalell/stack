@@ -1,3 +1,4 @@
+import { rhythm } from "@fcalell/ui-core/variants";
 import { Polymorphic, type PolymorphicProps } from "@kobalte/core/polymorphic";
 import type { ComponentProps, ValidComponent } from "solid-js";
 import {
@@ -6,6 +7,7 @@ import {
 	splitProps,
 	useContext,
 } from "solid-js";
+import { cn } from "#lib/cn";
 
 const SectionContext = createContext<{ titleId: string }>();
 
@@ -20,7 +22,13 @@ function Root(
 	const titleId = createUniqueId();
 	return (
 		<SectionContext.Provider value={{ titleId }}>
-			<section aria-labelledby={titleId} class="flex flex-1 flex-col" {...rest}>
+			<section
+				aria-labelledby={titleId}
+				// The region rung: a Section's children are a screen's regions, so
+				// the column gaps at rhythm({ unit: "section" }).
+				class={cn(rhythm({ unit: "section" }), "flex flex-1 flex-col")}
+				{...rest}
+			>
 				{local.children}
 			</section>
 		</SectionContext.Provider>
@@ -66,7 +74,8 @@ function Content(
 		classList?: never;
 	},
 ) {
-	return <div class="w-full px-6 py-6" {...props} />;
+	// pb only: the section gap above already carries the head-to-content 24.
+	return <div class="w-full px-6 pb-6" {...props} />;
 }
 
 function Table(
