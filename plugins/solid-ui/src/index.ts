@@ -6,13 +6,14 @@ import type {
 	TsExpression,
 	TsImportSpec,
 } from "@fcalell/cli/ast";
-import { emitArtifact } from "@fcalell/cli/cli-slots";
+import { cliSlots, emitArtifact } from "@fcalell/cli/cli-slots";
 import { solid } from "@fcalell/plugin-solid";
 import { vite } from "@fcalell/plugin-vite";
 import { deriveTheme } from "@fcalell/ui-core/derive";
 import { aggregateAppCss } from "./node/codegen.ts";
 import { cssString } from "./node/css-escape.ts";
 import { defaultFonts, type FontEntry } from "./node/fonts.ts";
+import { runGeometryGate } from "./node/gate.ts";
 import { darkLayer, shadowBlocks, themeBlock } from "./node/theme.ts";
 import {
 	type CssBlock,
@@ -306,6 +307,15 @@ export const solidUi = plugin("solid-ui", {
 
 		// Emit `.stack/app.css`.
 		emitArtifact(".stack/app.css", self.slots.appCssSource),
+
+		// ── Geometry gate ───────────────────────────────────────────────
+		// Pre-phase, so a call-site violation stops `stack build` before the
+		// Vite build spends a second on it.
+		cliSlots.buildSteps.contribute((ctx) => ({
+			name: "solid-ui-geometry-gate",
+			phase: "pre",
+			run: () => runGeometryGate(ctx.cwd),
+		})),
 
 		// ── Home scaffold override ──────────────────────────────────────
 		// solid-ui owns the richer home page when the design system is in

@@ -25,7 +25,9 @@ import { dirname, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "@fcalell/cli";
 import { buildGraphFromConfig } from "@fcalell/cli/build-graph";
+import { cliSlots } from "@fcalell/cli/cli-slots";
 import { cssTokenValue, cssVarName } from "@fcalell/cli/css";
+import { StackError } from "@fcalell/cli/errors";
 import { solid } from "@fcalell/plugin-solid";
 import { vite } from "@fcalell/plugin-vite";
 import { deriveTheme, type ResolvedTheme } from "@fcalell/ui-core/derive";
@@ -74,6 +76,7 @@ import {
 import { solidUi } from "../src/index.ts";
 import { aggregateAppCss } from "../src/node/codegen.ts";
 import * as solidUiCss from "../src/node/css-escape.ts";
+import { runGeometryGate } from "../src/node/gate.ts";
 import { darkLayer } from "../src/node/theme.ts";
 import type { SolidUiOptions } from "../src/types.ts";
 
@@ -240,6 +243,48 @@ const unbalancedPair = await asyncRejection(() =>
 		},
 	}),
 );
+
+// ── The geometry gate, resolved through the graph and executed ──────
+
+const gateFixtureDir = resolve(fixtureDir, "gate");
+
+// The graph's cwd is the failing consumer tree, so the resolved step's own
+// `run` is what throws below: the contribution wiring is exercised end to
+// end, not just the exported function.
+const gateSteps = await (async () => {
+	const config = defineConfig({
+		app: { name: "verify", domain: "example.com" },
+		plugins: [vite(), solid(), solidUi({})],
+	});
+	const { graph } = await buildGraphFromConfig({
+		config,
+		cwd: resolve(gateFixtureDir, "fail"),
+	});
+	return graph.resolve(cliSlots.buildSteps);
+})();
+
+const gateStep = gateSteps.find(
+	(step) => step.name === "solid-ui-geometry-gate",
+);
+const gateFailure =
+	gateStep && "run" in gateStep
+		? await gateStep.run().then(
+				() => undefined,
+				(error: unknown) => error,
+			)
+		: undefined;
+
+const gateOutcomes = new Map<string, string>();
+for (const tree of ["pass", "empty"]) {
+	gateOutcomes.set(
+		tree,
+		await runGeometryGate(resolve(gateFixtureDir, tree)).then(
+			() => "clean",
+			(error: unknown) =>
+				error instanceof Error ? error.message : String(error),
+		),
+	);
+}
 
 // ── Criteria ────────────────────────────────────────────────────────
 
@@ -1290,6 +1335,85 @@ check("b8", "the closure fixture proves every prop at the type layer", () => {
 		stdio: "pipe",
 	});
 	return `${directives.length} closures under @ts-expect-error, tsc --noEmit exits 0`;
+});
+
+check("b9", "the geometry gate is the pre step ahead of vite-build", () => {
+	assert(gateStep, "no solid-ui-geometry-gate step resolved");
+	assert(gateStep.phase === "pre", `phase: ${gateStep.phase}`);
+	assert("run" in gateStep, "the gate step is not a run step");
+	const gateIndex = gateSteps.indexOf(gateStep);
+	const viteIndex = gateSteps.findIndex((step) => step.name === "vite-build");
+	assert(viteIndex >= 0, "no vite-build step resolved");
+	assert(
+		gateIndex < viteIndex,
+		`the gate (${gateIndex}) does not sort before vite-build (${viteIndex})`,
+	);
+	// ts-morph loads only when a build runs: the scanner reaches gate.ts
+	// through a dynamic import, and nothing imports the subpath statically.
+	const gateSource = readFileSync(resolve(pkgDir, "src/node/gate.ts"), "utf8");
+	assert(
+		gateSource.includes('await import("@fcalell/ui-core/gate")'),
+		"gate.ts does not dynamic-import the scanner",
+	);
+	assert(
+		!gateSource.includes('from "@fcalell/ui-core/gate"'),
+		"gate.ts imports the gate subpath statically",
+	);
+	const indexSource = readFileSync(resolve(pkgDir, "src/index.ts"), "utf8");
+	assert(
+		!indexSource.includes("ui-core/gate"),
+		"src/index.ts touches the gate subpath",
+	);
+	return `${gateSteps.length} steps resolved: the pre gate at ${gateIndex}, vite-build at ${viteIndex}`;
+});
+
+check("b10", "the gate passes geometry and throws on the look", () => {
+	for (const file of [
+		"pass/src/page.tsx",
+		"pass/src/ui/look.tsx",
+		"fail/src/page.tsx",
+	]) {
+		assert(
+			existsSync(resolve(gateFixtureDir, file)),
+			`fixture ${file} is missing: is the gate tree tracked?`,
+		);
+	}
+	// The pass tree's src/ui holds the same look the fail tree throws on, so
+	// the clean pass is what proves the ui/ carve-out.
+	const look = readFileSync(
+		resolve(gateFixtureDir, "pass/src/ui/look.tsx"),
+		"utf8",
+	);
+	assert(
+		look.includes("flex-1 bg-canvas"),
+		"the ui/ carve-out fixture lost its look",
+	);
+	assert(
+		gateOutcomes.get("pass") === "clean",
+		`the pass tree reported: ${gateOutcomes.get("pass")}`,
+	);
+	assert(
+		!existsSync(resolve(gateFixtureDir, "empty/src")),
+		"the empty tree grew a src/",
+	);
+	assert(
+		gateOutcomes.get("empty") === "clean",
+		`the src-less tree reported: ${gateOutcomes.get("empty")}`,
+	);
+	assert(
+		gateFailure instanceof StackError,
+		`the resolved step did not throw a StackError: ${String(gateFailure)}`,
+	);
+	assert(gateFailure.code === "GEOMETRY_GATE", `code: ${gateFailure.code}`);
+	const expected = [
+		'src/page.tsx:2  "bg-canvas" is not in the geometry vocabulary',
+		'src/page.tsx:3  class attribute on non-host tag "Card"',
+	].join("\n");
+	assert(
+		gateFailure.message === expected,
+		`unexpected message:\n${gateFailure.message}`,
+	);
+	return "pass and src-less trees clean, the fail tree throws GEOMETRY_GATE naming both violations in one run";
 });
 
 // ── Report ──────────────────────────────────────────────────────────
