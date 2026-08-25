@@ -1312,8 +1312,6 @@ const GEOMETRY_EXACTS = [
 	"left-0",
 	"right-0",
 	"w-full",
-	"h-full",
-	"h-screen",
 	"min-w-0",
 	"min-h-0",
 	"min-h-full",
@@ -1321,11 +1319,6 @@ const GEOMETRY_EXACTS = [
 	"max-w-full",
 	"max-w-none",
 	"overflow-hidden",
-	"overflow-auto",
-	"overflow-x-auto",
-	"overflow-y-auto",
-	"overflow-x-hidden",
-	"overflow-y-hidden",
 ];
 
 const LOOK_PREFIXES = [

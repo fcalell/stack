@@ -17,10 +17,9 @@ import {
 } from "ts-morph";
 import { SPACING_RUNGS } from "#tokens";
 
-// One shared vocabulary for both platforms. Exacts only where the family has
-// a closed member set (`overflow-*` stays exact so `overflow-visible` and
-// `overflow-clip` fall out); the gap cells are the spacing rungs, derived so
-// the two lists cannot drift.
+// One shared vocabulary for both platforms: the PRD's geometry families with
+// their non-numeric members spelled out. The gap cells are the spacing rungs,
+// derived so the two lists cannot drift.
 export const GEOMETRY: {
 	exact: readonly string[];
 	prefixes: readonly string[];
@@ -45,23 +44,19 @@ export const GEOMETRY: {
 		"bottom-0",
 		"left-0",
 		"right-0",
-		// sizing: the non-numeric members spelled out.
+		// sizing: the w-full/min-h/max-w facts, non-numeric members only. Fill
+		// and viewport heights (`h-full`, `h-screen`) are component geometry
+		// for `ui/`.
 		"w-full",
-		"h-full",
-		"h-screen",
 		"min-w-0",
 		"min-h-0",
 		"min-h-full",
 		"min-h-screen",
 		"max-w-full",
 		"max-w-none",
-		// overflow: scroll plumbing, since the web has no ScrollView primitive.
+		// overflow: clipping only. A scrollable pane is a `ui/` primitive, so
+		// `overflow-auto` and the axis variants stay out.
 		"overflow-hidden",
-		"overflow-auto",
-		"overflow-x-auto",
-		"overflow-y-auto",
-		"overflow-x-hidden",
-		"overflow-y-hidden",
 		...SPACING_RUNGS.map((rung) => `gap-${rung}`),
 	],
 	prefixes: ["items-", "justify-", "self-", "z-"],

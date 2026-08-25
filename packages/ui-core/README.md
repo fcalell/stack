@@ -338,10 +338,9 @@ One closed list for both platforms. The exacts:
 - flex plumbing: `flex`, `flex-1`, `flex-row`, `flex-col`, `flex-wrap`, `grow`, `shrink-0`.
 - positioning, the zero offsets only: `absolute`, `relative`, `inset-0`, `inset-x-0`,
   `inset-y-0`, `top-0`, `bottom-0`, `left-0`, `right-0`.
-- sizing, the non-numeric members: `w-full`, `h-full`, `h-screen`, `min-w-0`, `min-h-0`,
-  `min-h-full`, `min-h-screen`, `max-w-full`, `max-w-none`.
-- overflow: `overflow-hidden`, `overflow-auto`, `overflow-x-auto`, `overflow-y-auto`,
-  `overflow-x-hidden`, `overflow-y-hidden`.
+- sizing, the non-numeric members: `w-full`, `min-w-0`, `min-h-0`, `min-h-full`,
+  `min-h-screen`, `max-w-full`, `max-w-none`.
+- overflow: `overflow-hidden` alone — clipping, not scrolling.
 - the seven `gap-<rung>` cells, derived from the spacing rungs.
 
 Four prefixes: `items-`, `justify-`, `self-`, `z-`. The `justify-` prefix also matches the
@@ -363,7 +362,9 @@ full dotted tag text. The check fires only on elements carrying a `class`, `clas
 ### Named non-members
 
 The grid family, `inline-flex`, `sticky` and `fixed`, `grow-0` and bare `shrink`, the
-`hidden`/`block` display toggles (conditional render owns visibility), margins including
+`hidden`/`block` display toggles (conditional render owns visibility), fill and viewport heights
+(`h-full`, `h-screen`), scroll overflow (`overflow-auto` and every axis variant — a scrollable
+pane is a `ui/` primitive), margins including
 `ml-auto` (`self-*` and `justify-*` cover it), all padding, numeric dimensions and offsets
 (`w-72`, `h-14`, `size-8`, `max-h-48`, `top-4`, `gap-4`), negative-prefixed tokens, and
 text-behavior classes (`truncate`, `whitespace-*`, `break-all`). Each is look or component
