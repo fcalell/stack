@@ -395,8 +395,10 @@ One worktree run, 6 commits (`bbde4be`..`a4c7730` after the seat reorder), plus 
 
 - helm's migration, now measured: 497 gate lines to clear before its `stack build` is green
   (helm-side, carried since M3/M5).
-- The three flagged vocabulary members (`h-full`, `h-screen`, the `overflow-*` scroll set)
-  shipped as decided; each is a one-line removal if vetoed.
+- ~~The three flagged vocabulary members (`h-full`, `h-screen`, the `overflow-*` scroll set)
+  shipped as decided; each is a one-line removal if vetoed.~~ **Vetoed and removed** (`1a3534c`):
+  the vocabulary is 31 exacts, sizing carries only the PRD's non-numeric facts, overflow keeps
+  `overflow-hidden` alone. helm's migration grows by its ~14 measured scroll/height lines.
 - `packages/biome-config/shared.json`'s `!**/.claude/worktrees` glob makes the root `pnpm check`
   lint leg exit 1 inside any worktree (0 files matched). Pre-existing; joins the M5 biome-config
   carried item as one real fix.
@@ -416,7 +418,7 @@ None blocking; the gate rounds added none that survived.
   (sailward precedent, fill chains), `h-screen` (the web app shell, measured once in helm), and
   the four `overflow-*` scroll members (web has no ScrollView component; without them every
   scrollable pane needs a `ui/` wrapper). Vetoable at merge; the vocabulary data makes removal a
-  one-line change each.
+  one-line change each. **Resolution: all three vetoed by the board and removed in `1a3534c`.**
 - The gate is stricter than sailward's own scanner (numeric offsets, numeric gaps, and numeric
   `min-h-*`/`max-w-*` all fail here and pass there), so the PRD's "drop-in for sailward" line
   holds for the boundary, not the list. Sailward adopting it is a migration.
