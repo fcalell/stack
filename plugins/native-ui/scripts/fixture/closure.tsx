@@ -611,18 +611,24 @@ export function closure() {
 				// @ts-expect-error the style prop is closed
 				style={{ width: 1 }}
 			/>
-			<Toggle value onValueChange={noop} disabled />
+			<Toggle checked onChange={noop} disabled />
 			<Toggle
-				value
-				onValueChange={noop}
+				checked
+				onChange={noop}
 				// @ts-expect-error the className prop is closed
 				className="x"
 			/>
 			<Toggle
-				value
-				onValueChange={noop}
+				checked
+				onChange={noop}
 				// @ts-expect-error the style prop is closed
 				style={{ width: 1 }}
+			/>
+			<Toggle
+				checked
+				onChange={noop}
+				// @ts-expect-error the handler is onChange (canon law 1)
+				onValueChange={noop}
 			/>
 		</>
 	);

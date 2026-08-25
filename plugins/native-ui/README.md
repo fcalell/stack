@@ -151,15 +151,20 @@ the matrices do not cover is a matrix change, or a primitive the consumer owns.
 - **Feedback** — `ProgressBar`, `Spinner`, `Skeleton`, `Toast`
 - **Overlays** — `BottomSheet`, `Dialog`
 
-`Button`, `Badge`, `Card`, `Text`, `Input` and `Textarea` compose their look
-from ui-core's shared variant matrices: the same cells the web plugin renders,
-behind the shared axis props (`emphasis` / `tone` / `size` / `loading` on
-`Button`, `tone` on `Badge`, `padding` / `ring` on `Card`, `variant` / `tone` /
-`strong` / `mono` on `Text`). `Text`'s `mono` prop maps to `font-mono`; without
-a registered mono font it degrades to the system face. `Input` and `Textarea`
+`Button`, `Badge`, `Card`, `Text`, `Input`, `Textarea`, `Checkbox`, `Toggle`,
+`Dialog` and `Skeleton` compose their look from ui-core's shared variant
+matrices and class constants: the same cells the web plugin renders, behind the
+shared axis props (`emphasis` / `tone` / `size` / `loading` on `Button`, `tone`
+on `Badge`, `padding` / `ring` on `Card`, `variant` / `tone` / `strong` /
+`mono` on `Text`). `Text`'s `mono` prop maps to `font-mono`; without a
+registered mono font it degrades to the system face. `Input` and `Textarea`
 take a native-only `state` prop (`"default" | "focused" | "error"`) and track
 focus themselves, where web reaches the same matrix cells through
-`focus-visible:` / `aria-invalid:` selectors. A busy `Button` renders its
+`focus-visible:` / `aria-invalid:` selectors. `Checkbox` and `Toggle` spell
+`checked` / `onChange` / `disabled` on both platforms and fade through the
+shared `CONTROL_MUTED` constant when disabled; `Dialog`'s scrim, panel and
+description are the `DIALOG` cells with its title on the `TEXT` h3 role;
+`Skeleton` renders the `SKELETON` constant. A busy `Button` renders its
 `Spinner` in the label's own ink, read back off the label matrix through
 ui-core's `buttonContentTone`.
 

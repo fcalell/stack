@@ -1,9 +1,10 @@
+import { CONTROL_MUTED, TOGGLE_KNOB, toggle } from "@fcalell/ui-core/variants";
 import { Pressable, View } from "react-native";
 import { cn } from "../../lib/cn";
 
 export interface ToggleProps {
-	value: boolean;
-	onValueChange: (value: boolean) => void;
+	checked: boolean;
+	onChange: (checked: boolean) => void;
 	disabled?: boolean;
 	className?: never;
 	style?: never;
@@ -11,21 +12,23 @@ export interface ToggleProps {
 
 // Binary switch (settings opt-ins, inline "lo prendo io"). The 40×24 visual is
 // the affordance; the ≥44px tap target is the row it sits in. The knob is the
-// canvas token (never #fff) so it stays visible on the ink-1 track in Notturno.
-export function Toggle({ value, onValueChange, disabled }: ToggleProps) {
+// TOGGLE_KNOB canvas fill (never #fff) so it stays visible on the accent
+// track in dark mode.
+export function Toggle({ checked, onChange, disabled }: ToggleProps) {
 	return (
 		<Pressable
 			accessibilityRole="switch"
-			accessibilityState={{ checked: value, disabled }}
+			accessibilityState={{ checked, disabled }}
 			disabled={disabled}
-			onPress={() => onValueChange(!value)}
+			onPress={() => onChange(!checked)}
 			className={cn(
-				"h-6 w-10 flex-row items-center rounded-full px-[3px]",
-				value ? "justify-end bg-ink-1" : "justify-start bg-edge",
-				disabled && "opacity-40",
+				toggle({ state: checked ? "on" : "off" }),
+				"h-6 w-10 flex-row items-center px-[3px]",
+				checked ? "justify-end" : "justify-start",
+				disabled && CONTROL_MUTED,
 			)}
 		>
-			<View className="h-[18px] w-[18px] rounded-full bg-canvas" />
+			<View className={cn(TOGGLE_KNOB, "h-[18px] w-[18px]")} />
 		</Pressable>
 	);
 }

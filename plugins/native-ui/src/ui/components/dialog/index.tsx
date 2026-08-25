@@ -1,4 +1,5 @@
 import type { Action } from "@fcalell/ui-core/descriptors";
+import { dialog, text } from "@fcalell/ui-core/variants";
 import type { LucideIcon } from "lucide-react-native";
 import { Modal, Pressable, Text, View } from "react-native";
 import { cn } from "../../lib/cn";
@@ -46,12 +47,15 @@ export function Dialog({
 		>
 			<Pressable
 				onPress={onClose}
-				className="flex-1 items-center justify-center bg-scrim px-6"
+				className={cn(
+					dialog({ part: "scrim" }),
+					"flex-1 items-center justify-center px-6",
+				)}
 			>
 				{/* Stop propagation: taps on the card must not close the dialog. */}
 				<Pressable
 					onPress={() => {}}
-					className="w-full rounded-sheet bg-canvas p-5"
+					className={cn(dialog({ part: "panel" }), "w-full")}
 				>
 					{Icon ? (
 						<View
@@ -63,9 +67,15 @@ export function Dialog({
 							<Icon size={24} color={iconColor} />
 						</View>
 					) : null}
-					<Text className="mb-1.5 text-h3 font-bold text-ink-1">{title}</Text>
+					<Text
+						className={cn("mb-1.5", text({ variant: "h3", tone: "ink-1" }))}
+					>
+						{title}
+					</Text>
 					{description ? (
-						<Text className="text-callout text-ink-2">{description}</Text>
+						<Text className={dialog({ part: "description" })}>
+							{description}
+						</Text>
 					) : null}
 					{primary || secondary ? (
 						<View className="mt-4 flex-row gap-3">

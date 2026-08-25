@@ -61,11 +61,18 @@ import {
 	button,
 	buttonLabel,
 	buttonMuted,
+	CHECKBOX_MARK,
+	CONTROL_MUTED,
 	card,
+	checkbox,
+	dialog,
 	field,
 	rhythm,
+	SKELETON,
+	TOGGLE_KNOB,
 	text,
 	textStrong,
+	toggle,
 } from "@fcalell/ui-core/variants";
 import { aggregateGlobalCss } from "../src/node/codegen.ts";
 import { runGeometryGate } from "../src/node/gate.ts";
@@ -116,17 +123,14 @@ const NATIVE_OVERLAYS = [
 	"active:bg-surface-3",
 	"text-danger",
 	// contract colors
-	"bg-accent",
 	"bg-canvas",
 	"bg-edge",
 	"bg-ink-1",
-	"bg-scrim",
 	"bg-surface",
 	"border-canvas",
 	"border-danger",
 	"border-edge",
 	"border-ok",
-	"text-accent-ink",
 	"text-canvas",
 	"text-ink-1",
 	"text-ink-2",
@@ -148,7 +152,6 @@ const NATIVE_OVERLAYS = [
 	// radius rungs
 	"rounded-full",
 	"rounded-md",
-	"rounded-sheet",
 	"rounded-t-sheet",
 	// display / alignment (RN is flex by default; these ride the overlays)
 	"flex-1",
@@ -189,7 +192,6 @@ const NATIVE_OVERLAYS = [
 	"min-w-8",
 	"mt-4",
 	"opacity-40",
-	"p-5",
 	"pb-8",
 	"pt-3",
 	"px-3",
@@ -390,6 +392,36 @@ const FAMILIES: Family[] = [
 		cva: rhythm as Family["cva"],
 		axes: { unit: ["section", "stack", "row", "pair"] },
 	},
+	{
+		name: "CHECKBOX",
+		cva: checkbox as Family["cva"],
+		axes: { state: ["unchecked", "checked"] },
+	},
+	{
+		name: "TOGGLE",
+		cva: toggle as Family["cva"],
+		axes: { state: ["off", "on"] },
+	},
+	{
+		name: "DIALOG",
+		cva: dialog as Family["cva"],
+		axes: { part: ["scrim", "panel", "description"] },
+	},
+];
+
+// The pinned family roster, the c19-compound-pin shape: a matrix that lands in
+// ui-core without landing here fails a6 by command instead of passing unseen.
+const FAMILY_ROSTER =
+	"BUTTON BUTTON_LABEL BUTTON_MUTED TEXT TEXT_STRONG BADGE BADGE_LABEL BADGE_DOT CARD FIELD RHYTHM CHECKBOX TOGGLE DIALOG";
+
+// The class-bearing constants beside the matrices, in the compile probe with
+// the cells so a6 fails if any stops resolving.
+const CLASS_CONSTANTS = [
+	BUTTON_MUTED_LABEL,
+	CHECKBOX_MARK,
+	TOGGLE_KNOB,
+	SKELETON,
+	CONTROL_MUTED,
 ];
 
 // Every class every cva can emit, over the cartesian product of its own axes,
@@ -408,7 +440,9 @@ function enumerated(): Set<string> {
 			for (const name of classes(family.cva(props))) out.add(name);
 		}
 	}
-	for (const name of classes(BUTTON_MUTED_LABEL)) out.add(name);
+	for (const constant of CLASS_CONSTANTS) {
+		for (const name of classes(constant)) out.add(name);
+	}
 	return out;
 }
 
@@ -772,6 +806,8 @@ check("a7", "uniwind's own compiler consumes the sheet", () => {
 });
 
 check("a6", "the build resolves the inventory and kills the retired", () => {
+	const roster = FAMILIES.map((family) => family.name).join(" ");
+	assert(roster === FAMILY_ROSTER, `the family roster drifted: ${roster}`);
 	// The escaping oracle: a class that compiles and carries a `.` must be
 	// found, or every dotted cell reports a false miss.
 	assert(rule(built, "px-3.5"), "px-3.5 emitted no rule");
@@ -944,6 +980,7 @@ check("b7", "the closure fixture proves every prop at the type layer", () => {
 		"containerComponent",
 		"backgroundStyle",
 		"onCheckedChange",
+		"onValueChange",
 		'variant="success"',
 		'color="#fff"',
 	]) {

@@ -1,3 +1,4 @@
+import { SKELETON } from "@fcalell/ui-core/variants";
 import { type DimensionValue, View, type ViewProps } from "react-native";
 
 // A neutral placeholder block, sized by its own props (numeric dimension is
@@ -12,11 +13,5 @@ export interface SkeletonProps extends ViewProps {
 }
 
 export function Skeleton({ width, height, ...rest }: SkeletonProps) {
-	return (
-		<View
-			style={{ width, height }}
-			className="rounded-md bg-surface"
-			{...rest}
-		/>
-	);
+	return <View style={{ width, height }} className={SKELETON} {...rest} />;
 }

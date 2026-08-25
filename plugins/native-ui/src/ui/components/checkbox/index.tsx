@@ -1,3 +1,8 @@
+import {
+	CHECKBOX_MARK,
+	CONTROL_MUTED,
+	checkbox,
+} from "@fcalell/ui-core/variants";
 import { Pressable, Text } from "react-native";
 import { cn } from "../../lib/cn";
 
@@ -9,10 +14,10 @@ export interface CheckboxProps {
 	style?: never;
 }
 
-// Round checklist box (Cambusa shopping/menu). Checked = accent fill with the
-// `accent-ink` tick (the contract's guaranteed contrast pair, and web's);
-// unchecked = hairline edge ring. For true check-in-place lists only — a
-// navigational task row is a RowItem with a chevron, not this.
+// Checklist box (Cambusa shopping/menu) on the shared CHECKBOX cells: checked
+// is the accent fill with the CHECKBOX_MARK tick (the contract's guaranteed
+// contrast pair), unchecked the ink-1 ring. For true check-in-place lists
+// only; a navigational task row is a RowItem with a chevron, not this.
 export function Checkbox({ checked, onChange, disabled }: CheckboxProps) {
 	return (
 		<Pressable
@@ -21,12 +26,14 @@ export function Checkbox({ checked, onChange, disabled }: CheckboxProps) {
 			disabled={disabled}
 			onPress={() => onChange(!checked)}
 			className={cn(
-				"h-[22px] w-[22px] items-center justify-center rounded-full",
-				checked ? "bg-accent" : "border-[1.5px] border-edge",
-				disabled && "opacity-40",
+				checkbox({ state: checked ? "checked" : "unchecked" }),
+				"h-[22px] w-[22px] items-center justify-center",
+				disabled && CONTROL_MUTED,
 			)}
 		>
-			{checked ? <Text className="text-micro text-accent-ink">✓</Text> : null}
+			{checked ? (
+				<Text className={cn("text-micro", CHECKBOX_MARK)}>✓</Text>
+			) : null}
 		</Pressable>
 	);
 }
