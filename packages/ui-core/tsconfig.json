@@ -1,4 +1,5 @@
 {
 	"extends": "@fcalell/typescript-config/node-tsx.json",
-	"include": ["src", "scripts"]
+	"include": ["src", "scripts"],
+	"exclude": ["scripts/fixture/gate"]
 }

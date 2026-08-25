@@ -1,4 +1,5 @@
 {
 	"extends": "@fcalell/typescript-config/solid-vite.json",
-	"include": ["src", "scripts"]
+	"include": ["src", "scripts"],
+	"exclude": ["scripts/fixture/gate"]
 }
