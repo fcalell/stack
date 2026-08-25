@@ -1,6 +1,7 @@
 ---
 id: 001-07
-status: ready
+status: done
+merged: 32297f7
 depends: [001-06]
 gate:
   rounds: 2
@@ -318,3 +319,54 @@ None for the run; the board can veto the flags at merge.
 - Web checkbox's size axis value `default` becomes `md`: a web API break aligning with `BUTTON`.
 - `Spinner` lands beside the existing web `Loader`; the recorded boundary (decision 8) is the
   one-name-per-concept answer, vetoable if the board would rather fold one into the other.
+
+## Run record
+
+One worktree run, 4 commits, rebased onto the gate commit at merge and fast-forwarded
+(`1e6deb9` ui-core matrices, `1346ffb` solid-ui families, `cbc3a47` native recuts, `70402c9`
+docs), no contradictions. Five reported deviations, every one judged in-brief by the spec
+review (docs commit placement forced by b5/b6 green history; checkbox keeps `shrink-0`; the
+focus triple as its own `cn` argument; Skeleton's px-string helper; native b7's `onValueChange`
+dead-prop probe). Spec review: decisions 1-11 verbatim, A1-A9 pass, 0 blocking, 0 serious, 2
+minor (the Button glyph swap trades `aria-hidden` for the Spinner's `role="status"`, the
+brief's own choice; the roster-pin shape leaves the inherent future-matrix hole). Standards
+review: per-commit gates re-run green at every commit, 0 blocking, 1 serious (b2/b3 labels
+still said "seven"), 2 minor (two commit headers at 67/69 chars, accepted as history; a
+dropped article). Seat commit `32297f7` fixes the labels and the article.
+
+## Close-out
+
+- Suites on master tip: ui-core 28/28 (c19 at 14 tables, compound pin untouched), solid-ui
+  23/23, native-ui 11/11; root `pnpm check` exit 0.
+- Guard mutations, both caught: dropping the CHECKBOX family from native `FAMILIES` fails a6
+  with "the family roster drifted" naming the truncated roster; pasting the literal
+  `"text-callout text-ink-3"` back over the web dialog's description cell fails b3.
+- A10 in the scratch consumer (build through the gate exit 0; live in Chrome, measured via
+  DOM): checkbox unchecked = 1px `ink-1` ring at 10px radius, checked = accent fill with the
+  border gone, disabled carries `opacity-50`; toggle off-track edge, on-track accent, disabled
+  at computed opacity 0.5, knob measured at both endpoints (x 4 to 20, the 16px travel) under
+  real clicks, and a real Space press toggles it; skeleton 160x16 pulsing on the surface fill;
+  spinner an svg with `role="status"` spinning in ink-1; the busy Button hosts the Spinner
+  with glyph color equal to the label ink (`buttonContentTone`); the dialog panel measures
+  16px radius, 1px edge border, 24px padding, canvas fill, `max-w` 512px with the grid/gap
+  overlay intact, under a `bg-scrim` overlay; the title computes weight 600 with live tracking
+  and leading; the description is ink-3 at weight 400, the cell `TEXT.callout` could not
+  express. One measurement artifact worth remembering: CSS transitions freeze at
+  `currentTime: 0` in a hidden tab, so knob motion only measures under a visible tab and real
+  input.
+
+## Carried forward
+
+- Epic 001 has no open story left. The PRD's fold-into-`.knowledge/`-and-retire step
+  (`docs/prd/README`) is the epic-close activity and stays with the board.
+- Vetoable at merge review: the native visual re-alignment cells (decision 1), the native
+  toggle prop rename, the `checkboxVariants` removal, checkbox's `default` to `md`, and the
+  Loader/Spinner boundary.
+- Native stepper and nav-bar keep `opacity-40`; alignment with `CONTROL_MUTED` rides whichever
+  story migrates stepper.
+- Web sheet and sidebar keep their copied dialog-chrome literals; folding them onto the
+  `DIALOG` cells is the named web-only follow-up.
+- The native five still have no on-device render; that debt stays owed to the first native
+  consumer, as since M4.
+- helm's migration (separate repo) now has checkbox, toggle, dialog chrome, skeleton and
+  spinner to draw on alongside 001-08's panes.
