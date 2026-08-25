@@ -26,9 +26,7 @@ export function Checkbox({ checked, onChange, disabled }: CheckboxProps) {
 				disabled && "opacity-40",
 			)}
 		>
-			{checked ? (
-				<Text className="text-micro text-accent-ink">✓</Text>
-			) : null}
+			{checked ? <Text className="text-micro text-accent-ink">✓</Text> : null}
 		</Pressable>
 	);
 }
