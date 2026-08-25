@@ -15,14 +15,10 @@ Renders `<fieldset>`. Provides the shared border, background, and focus/error st
 | Prop | Type | Description |
 |------|------|-------------|
 | `legend` | `string` | Accessible label (renders as `aria-label`) |
-| `class` | `string` | Additional Tailwind classes |
 
 ### InputGroup.Input
 
-Borderless Input that fills remaining space. Passes through all Input props.
-
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
+Borderless Input that fills remaining space. Passes through all Input props. The group provides a context flag, and Input strips its own shell (border, fill, ring) when it reads it.
 
 ### InputGroup.Textarea
 
@@ -38,7 +34,7 @@ Container for icons, text, or buttons positioned on any edge.
 
 ### InputGroup.Button
 
-Compact button styled for inline use. Tertiary emphasis, no border radius.
+Compact button styled for inline use. Tertiary emphasis, no border radius. The size reaches `Button` through a context, and the button composes its own in-group overlay from it.
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|

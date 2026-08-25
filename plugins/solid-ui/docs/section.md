@@ -10,7 +10,7 @@ import { Section } from "@fcalell/plugin-solid-ui/components/section";
 
 ### Section (Root)
 
-Renders `<section>` with `aria-labelledby` pointing to the title.
+Renders `<section>` with `aria-labelledby` pointing to the title. The column gaps at the `section` rung (`rhythm({ unit: "section" })`), so its children are a screen's regions.
 
 ### Section.Header
 
@@ -23,11 +23,10 @@ Renders `<h2>` by default. Bold, uppercase, wide tracking. Auto-linked via ID.
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `as` | `ValidComponent` | `"h2"` | Override the heading element |
-| `class` | `string` | -- | Additional Tailwind classes |
 
 ### Section.Content
 
-Padded content area (`px-6 py-6`).
+Padded content area (`px-6 pb-6`). The top inset comes from the root's section gap, so the header-to-content distance stays 24.
 
 ### Section.Table
 

@@ -28,7 +28,6 @@ Portal-rendered panel with overlay and close button. Slides in from the specifie
 |------|------|---------|-------------|
 | `position` | `"top" \| "bottom" \| "left" \| "right"` | `"right"` | Slide-in direction |
 | `size` | `"sm" \| "md" \| "lg" \| "xl" \| "full"` | `"sm"` | Max width (for left/right) |
-| `class` | `string` | -- | Additional Tailwind classes |
 
 ### Sheet.Header / Sheet.Footer / Sheet.Title / Sheet.Description
 
@@ -78,7 +77,6 @@ function createSheet<P = void, R = undefined>(
 |--------|------|---------|-------------|
 | `position` | `"top" \| "bottom" \| "left" \| "right"` | `"right"` | Slide-in direction |
 | `size` | `"sm" \| "md" \| "lg" \| "xl" \| "full"` | `"sm"` | Max width |
-| `contentClass` | `string` | -- | Additional classes on content |
 | `sheetProps` | `Partial<{ preventScroll, modal }>` | -- | Kobalte dialog root props |
 
 ```tsx

@@ -12,7 +12,6 @@ import { Label } from "@fcalell/plugin-solid-ui/components/label";
 |------|------|---------|-------------|
 | `for` | `string` | -- | Associates the label with a form field by ID |
 | `as` | `ValidComponent` | `"label"` | Override the rendered element |
-| `class` | `string` | -- | Additional Tailwind classes (merged via `cn()`) |
 | `...rest` | -- | -- | All HTML label attributes |
 
 ## Usage

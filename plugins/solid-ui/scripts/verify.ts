@@ -1229,7 +1229,10 @@ check("b8", "the closure fixture proves every prop at the type layer", () => {
 		"toastOptions={{}}",
 		"icons={{}}",
 	]) {
-		assert(source.includes(hatch), `the fixture never passes the dead ${hatch}`);
+		assert(
+			source.includes(hatch),
+			`the fixture never passes the dead ${hatch}`,
+		);
 	}
 	// Every component dir is reached through its public subpath, so the
 	// closure is proven the way a consumer imports it.

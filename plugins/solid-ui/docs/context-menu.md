@@ -11,8 +11,6 @@ import { ContextMenu } from "@fcalell/plugin-solid-ui/components/context-menu";
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `items` | `MenuItems` | -- | Array of items or item groups (same types as DropdownMenu) |
-| `class` | `string` | -- | Additional classes on the trigger area |
-| `contentClass` | `string` | -- | Additional classes on the menu panel |
 | `children` | `JSX.Element` | -- | The area that responds to right-click |
 
 ## Basic usage

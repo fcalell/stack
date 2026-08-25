@@ -15,7 +15,6 @@ Container with circular clip. Built on Kobalte's Image.Root.
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `size` | `"sm" \| "default" \| "lg"` | `"default"` | Avatar dimensions |
-| `class` | `string` | -- | Additional Tailwind classes |
 
 ### Avatar.Image
 
@@ -25,7 +24,6 @@ The `<img>` element. Renders only when the image loads successfully.
 |------|------|-------------|
 | `src` | `string` | Image URL |
 | `alt` | `string` | Required alt text |
-| `class` | `string` | Additional Tailwind classes |
 
 ### Avatar.Fallback
 
@@ -33,7 +31,6 @@ Shown while the image loads or if it fails. Centered monospace text on `surface-
 
 | Prop | Type | Description |
 |------|------|-------------|
-| `class` | `string` | Additional Tailwind classes |
 | `children` | `JSX.Element` | Fallback content (typically initials) |
 
 ## Sizes

@@ -41,6 +41,13 @@ import { Card } from "@fcalell/plugin-solid-ui/components/card";
 import { Form } from "@fcalell/plugin-solid-ui/components/form";
 ```
 
+Every component's props close `class`, `style`, and `classList` as `?: never`, per the canon in
+`@fcalell/ui-core` (law 5): a look the matrices do not cover has two homes, the matrix grows or the
+consumer authors its own primitive under `ui/`. There is no renamed hatch either; the old
+`contentClass` / `listClass` / `containerClass` props are gone. The rhythm family
+(`components/stack`, `components/row`, `components/pair`, and `Section`'s rung) lays out siblings
+at the shared spacing rungs.
+
 ### Record-scoped abilities
 
 `useAbility` (`@fcalell/plugin-solid-ui/lib/ability`) is the solid analog of `@fcalell/plugin-api/tanstack-query`'s `useAbility` -- same deny-all-until-loaded, org ∪ record composition, memoized `MongoAbility` (full behavior in the `@fcalell/plugin-api` README). Solid-style: both the record-rules argument and the return value are accessors.
@@ -154,7 +161,7 @@ Nothing to tear down: the design-system runtime lives inside this package and is
 | `@fcalell/plugin-solid-ui/app` | `createApp()` — mounts the root tree with router, query, meta, toaster, error boundary |
 | `@fcalell/plugin-solid-ui/meta` | `Title`, `Meta`, `Link`, `MetaProvider` — re-exported from `@solidjs/meta` |
 | `@fcalell/plugin-solid-ui/router` | Typed `routes` builder + SolidJS Router primitives |
-| `@fcalell/plugin-solid-ui/components/*` | Component modules (e.g. `components/button`, `components/form`) |
+| `@fcalell/plugin-solid-ui/components/*` | Component modules (e.g. `components/button`, `components/form`, `components/stack`) |
 | `@fcalell/plugin-solid-ui/lib/cn` | `cn()`, re-exported from `@fcalell/ui-core/cn`; its `tailwind-merge` knows the contract's five scales |
 | `@fcalell/plugin-solid-ui/lib/query` | Safe `useQuery`/`useInfiniteQuery`, `useMutation`, `useQueryClient`, `combineQueries`, `createDefaultQueryClient` (auto-invalidating default, see `@fcalell/plugin-api` README) |
 | `@fcalell/plugin-solid-ui/lib/ability` | `useAbility()` — accessor-style record-scoped authorization (see below), `ORG_RULES_QUERY_KEY` |

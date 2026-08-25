@@ -15,7 +15,6 @@ import { Text } from "@fcalell/plugin-solid-ui/components/text";
 | `strong` | `boolean` | `false` | Lifts the role one weight step |
 | `mono` | `boolean` | `false` | Monospace family. Measured data only: money, counts, coordinates, times, IDs |
 | `as` | `ValidComponent` | `"p"` | The rendered HTML element |
-| `class` | `string` | -- | Additional Tailwind classes (merged via `cn()`) |
 | `...rest` | -- | -- | All HTML attributes for the rendered element |
 
 `variant` and `tone` are the axes of the shared `TEXT` matrix in `@fcalell/ui-core`, and `strong` reads `TEXT_STRONG`. Pick the role, never a raw size.
@@ -74,7 +73,7 @@ An inline code snippet is `as="code"` at the `callout` role with `mono`, plus th
 ```tsx
 <Text>
   Run{" "}
-  <Text as="code" variant="callout" mono class="bg-surface-2 rounded-md px-1 py-0.5">
+  <Text as="code" variant="callout" mono>
     pnpm install
   </Text>{" "}
   to get started.

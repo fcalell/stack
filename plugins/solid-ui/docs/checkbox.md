@@ -11,13 +11,12 @@ import { Checkbox } from "@fcalell/plugin-solid-ui/components/checkbox";
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `size` | `"sm" \| "default" \| "lg"` | `"default"` | Checkbox dimensions and icon size |
-| `label` | `JSX.Element` | -- | Optional label rendered next to the checkbox |
+| `label` | `string` | -- | Optional label rendered next to the checkbox |
 | `checked` | `boolean` | -- | Controlled checked state |
 | `defaultChecked` | `boolean` | -- | Initial checked state (uncontrolled) |
 | `indeterminate` | `boolean` | -- | Show minus icon instead of check |
 | `disabled` | `boolean` | -- | Disable interaction |
 | `onChange` | `(checked: boolean) => void` | -- | Called when checked state changes |
-| `class` | `string` | -- | Additional Tailwind classes on the root (merged via `cn()`) |
 | `...rest` | -- | -- | All Kobalte CheckboxRootProps |
 
 ## Sizes

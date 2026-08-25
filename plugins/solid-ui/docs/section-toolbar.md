@@ -15,7 +15,6 @@ Renders `<div role="toolbar">` with horizontal orientation. Bottom border, respo
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `aria-label` | `string` | `"Section actions"` | Accessible label |
-| `class` | `string` | -- | Additional Tailwind classes |
 
 ### SectionToolbar.Left
 

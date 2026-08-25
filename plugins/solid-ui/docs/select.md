@@ -15,8 +15,6 @@ import { Select } from "@fcalell/plugin-solid-ui/components/select";
 | `onValueChange` | `(value: string) => void` | -- | Selection change handler |
 | `placeholder` | `string` | `"Select an option"` | Placeholder when no value selected |
 | `disabled` | `boolean` | `false` | Disable the select |
-| `class` | `string` | -- | Additional classes on the trigger |
-| `contentClass` | `string` | -- | Additional classes on the dropdown panel |
 | `aria-invalid` | `boolean` | -- | Invalid state for form integration |
 | `disallowEmptySelection` | `boolean` | `true` | Prevent deselecting |
 | `children` | `(option: SelectOption) => JSX.Element` | -- | Custom item content render |

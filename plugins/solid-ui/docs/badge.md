@@ -12,7 +12,6 @@ import { Badge } from "@fcalell/plugin-solid-ui/components/badge";
 |------|------|---------|-------------|
 | `tone` | `"neutral" \| "brand" \| "interactive" \| "ok" \| "warn" \| "danger" \| "oncover"` | `"neutral"` | Fill and label colour |
 | `as` | `ValidComponent` | `"div"` | Override the rendered element |
-| `class` | `string` | -- | Additional Tailwind classes (merged via `cn()`) |
 | `...rest` | -- | -- | All HTML attributes for the rendered element |
 
 `tone` is the axis of the shared `BADGE` matrix in `@fcalell/ui-core`. That table carries the fill only, so the component composes `BADGE` and `BADGE_LABEL` on the same node, plus the `micro` type role at semibold.

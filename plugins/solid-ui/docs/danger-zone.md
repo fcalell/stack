@@ -15,7 +15,6 @@ import { DangerZone } from "@fcalell/plugin-solid-ui/components/danger-zone";
 | `onAction` | `() => void` | -- | Called when the action button is clicked |
 | `disabled` | `boolean` | `false` | Disable the action button |
 | `headingLevel` | `2 \| 3 \| 4` | `3` | HTML heading level |
-| `class` | `string` | -- | Additional Tailwind classes |
 
 ## Basic usage
 

@@ -15,7 +15,6 @@ import { Logo } from "@fcalell/plugin-solid-ui/components/logo";
 | `size` | `"sm" \| "default" \| "lg" \| "xl" \| "2xl"` | `"default"` | Icon and text sizing |
 | `align` | `"start" \| "center" \| "end"` | `"center"` | Vertical alignment |
 | `responsive` | `boolean` | `false` | Hide text below `@[8rem]` container width |
-| `class` | `string` | -- | Additional Tailwind classes |
 
 ## Sizes
 

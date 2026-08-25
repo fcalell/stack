@@ -15,10 +15,9 @@ import { Tabs } from "@fcalell/plugin-solid-ui/components/tabs";
 | `defaultValue` | `string` | -- | Initial value (uncontrolled) |
 | `onValueChange` | `(value: string) => void` | -- | Selection change handler |
 | `orientation` | `"horizontal" \| "vertical"` | `"horizontal"` | Tab orientation |
-| `class` | `string` | -- | Additional classes on the root |
-| `listClass` | `string` | -- | Additional classes on the tab list |
-| `contentClass` | `string` | -- | Additional classes on all tab content panels |
 | `children` | `(tab: Tab) => JSX.Element` | -- | Custom trigger content render |
+
+The list and content panels carry no layout props: the defaults stand, and a different tabs look is a primitive the consumer authors under `ui/`.
 
 ## Tab type
 

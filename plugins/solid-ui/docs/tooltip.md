@@ -22,13 +22,12 @@ Portal-rendered tooltip panel with border, `surface` background, and entry/exit 
 
 | Prop | Type | Description |
 |------|------|-------------|
-| `class` | `string` | Additional Tailwind classes |
 
 ## Basic usage
 
 ```tsx
 <Tooltip>
-  <Tooltip.Trigger as={Button} emphasis="tertiary" class="aspect-square">
+  <Tooltip.Trigger as={Button} emphasis="tertiary">
     <Info />
   </Tooltip.Trigger>
   <Tooltip.Content>More information about this feature.</Tooltip.Content>

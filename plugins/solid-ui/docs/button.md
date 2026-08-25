@@ -12,10 +12,10 @@ import { Button } from "@fcalell/plugin-solid-ui/components/button";
 |------|------|---------|-------------|
 | `emphasis` | `"primary" \| "secondary" \| "tertiary"` | `"primary"` | How much weight the action carries |
 | `tone` | `"neutral" \| "danger"` | `"neutral"` | The consequence of the action |
+| `loading` | `boolean` | -- | Disables the press and spins a glyph beside the label in the label's content tone |
 | `size` | `"sm" \| "md" \| "lg"` | `"md"` | Padding, type role, and icon sizing |
 | `disabled` | `boolean` | `false` | Swaps the fill and ink for the muted pair and removes pointer events |
 | `as` | `ValidComponent` | `"button"` | Override the rendered element |
-| `class` | `string` | -- | Additional Tailwind classes (merged via `cn()`) |
 | `children` | `JSX.Element` | -- | Button content |
 | `...rest` | -- | -- | All HTML button attributes and Kobalte ButtonRootProps |
 
@@ -85,10 +85,10 @@ import { Plus, Trash2 } from "lucide-solid";
 
 ## Icon-only
 
-There is no icon size. An icon-only button takes a normal size plus an `aspect-square` overlay, so it keeps the tap floor that size already guarantees.
+There is no icon size and no class prop. An icon-only look is a consumer primitive under `ui/`; a glyph beside a label is just a child:
 
 ```tsx
-<Button emphasis="tertiary" class="aspect-square"><Plus /></Button>
+<Button emphasis="tertiary"><Plus /> Add</Button>
 ```
 
 ## Polymorphic
@@ -107,9 +107,6 @@ Other components compose with Button by importing it directly:
 
 ```tsx
 import { Button } from "#components/button";
-
-// Inside SidebarTrigger
-<Button emphasis="tertiary" class="aspect-square">...</Button>
 
 // Inside DangerZone
 <Button tone="danger" size="sm">...</Button>

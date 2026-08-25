@@ -15,6 +15,8 @@ Mount once at the app root. Renders all active toasts.
 | `theme` | `"dark" \| "light"` | `"dark"` | Color scheme |
 | `position` | `string` | `"top-right"` | Toast position |
 
+solid-sonner's `class`, `className`, `style`, `toastOptions`, and `icons` props are omitted from the type: the toast design is the component's own. The remaining behavioral props pass through.
+
 ```tsx
 <Toaster />
 ```
@@ -33,8 +35,4 @@ toast.info("New version available");
 
 ## Styling
 
-Toasts use unstyled mode with design system tokens. Status variants get a 3px colored left border:
-- `success` — success color
-- `error` — destructive color
-- `warning` — warning color
-- `info` — primary color
+Toasts use unstyled mode with design system tokens. Status variants get a 3px colored left border: `success` rides `ok`, `error` rides `danger`, `warning` rides `warn`, and `info` rides `ink-1`.

@@ -11,7 +11,6 @@ import { Textarea } from "@fcalell/plugin-solid-ui/components/textarea";
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `rows` | `number` | `3` | Initial visible rows |
-| `class` | `string` | -- | Additional Tailwind classes (merged via `cn()`) |
 | `...rest` | -- | -- | All HTML textarea attributes |
 
 There is no size axis, for the same reason Input has none: `FIELD` carries one control height and it is the tap floor.

@@ -1,6 +1,6 @@
 # EmptyState
 
-Centered placeholder for empty views. Shows an icon, title, optional description, and action buttons.
+Centered placeholder for empty views. Shows an icon, title, optional description, and one action.
 
 ```tsx
 import { EmptyState } from "@fcalell/plugin-solid-ui/components/empty-state";
@@ -10,12 +10,11 @@ import { EmptyState } from "@fcalell/plugin-solid-ui/components/empty-state";
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `icon` | `JSX.Element` | -- | Large decorative icon (auto-sized to 48px) |
+| `icon` | `LucideIcon` | -- | Decorative icon component, rendered at 48px |
 | `title` | `string` | -- | Required uppercase heading |
 | `titleAs` | `ValidComponent` | `"h3"` | Override the heading element |
 | `description` | `string` | -- | Optional muted description |
-| `children` | `JSX.Element` | -- | Action buttons |
-| `class` | `string` | -- | Additional Tailwind classes |
+| `action` | `Action<never>` | -- | Rendered as a secondary `md` button; `loading` and `disabled` flow through |
 
 ## Basic usage
 
@@ -23,13 +22,14 @@ import { EmptyState } from "@fcalell/plugin-solid-ui/components/empty-state";
 import { Inbox } from "lucide-solid";
 
 <EmptyState
-  icon={<Inbox />}
+  icon={Inbox}
   title="No projects"
   description="Create your first project to get started."
->
-  <Button>New project</Button>
-</EmptyState>
+  action={{ label: "New project", onSelect: createProject }}
+/>
 ```
+
+`Action` comes from `@fcalell/ui-core/descriptors`. The component renders the action region itself; there is no element children slot.
 
 ## Minimal
 

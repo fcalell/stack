@@ -16,7 +16,6 @@ import { InputOTP, REGEXP_ONLY_DIGITS } from "@fcalell/plugin-solid-ui/component
 | `onValueChange` | `(value: string) => void` | -- | Value change handler |
 | `onComplete` | `(value: string) => void` | -- | Called when all slots are filled |
 | `disabled` | `boolean` | `false` | Disable the input |
-| `class` | `string` | -- | Additional Tailwind classes |
 | `id` | `string` | -- | ID for the hidden input element |
 | `aria-invalid` | `boolean` | -- | Invalid state for form integration |
 

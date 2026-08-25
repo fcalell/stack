@@ -12,8 +12,6 @@ import { DropdownMenu } from "@fcalell/plugin-solid-ui/components/dropdown-menu"
 |------|------|---------|-------------|
 | `trigger` | `JSX.Element` | -- | The element that opens the menu |
 | `items` | `MenuItems` | -- | Array of items or item groups |
-| `class` | `string` | -- | Additional classes on the root |
-| `contentClass` | `string` | -- | Additional classes on the dropdown panel |
 
 ## Item types
 
@@ -21,7 +19,7 @@ import { DropdownMenu } from "@fcalell/plugin-solid-ui/components/dropdown-menu"
 // Default action item (type is omitted)
 type MenuAction = {
   label: string;
-  icon?: JSX.Element;
+  icon?: LucideIcon;
   onSelect?: () => void;
   disabled?: boolean;
   shortcut?: string;
@@ -48,7 +46,7 @@ type MenuRadioGroup = {
 type MenuSub = {
   type: "sub";
   label: string;
-  icon?: JSX.Element;
+  icon?: LucideIcon;
   items: MenuItem[];
 };
 ```
@@ -78,12 +76,12 @@ type MenuItems = MenuItem[] | MenuGroup[];
 
 ```tsx
 <DropdownMenu
-  trigger={<Button emphasis="tertiary" class="aspect-square"><MoreVertical /></Button>}
+  trigger={<Button emphasis="tertiary"><MoreVertical /></Button>}
   items={[
-    { label: "Edit", icon: <Pencil />, shortcut: "⌘E", onSelect: handleEdit },
-    { label: "Copy", icon: <Copy />, shortcut: "⌘C", onSelect: handleCopy },
+    { label: "Edit", icon: Pencil, shortcut: "⌘E", onSelect: handleEdit },
+    { label: "Copy", icon: Copy, shortcut: "⌘C", onSelect: handleCopy },
     { type: "separator" },
-    { label: "Delete", icon: <Trash />, onSelect: handleDelete },
+    { label: "Delete", icon: Trash, onSelect: handleDelete },
   ]}
 />
 ```
@@ -122,7 +120,7 @@ type MenuItems = MenuItem[] | MenuGroup[];
   trigger={<Button>Options</Button>}
   items={[
     { label: "Edit", onSelect: handleEdit },
-    { type: "sub", label: "Share", icon: <Share />, items: [
+    { type: "sub", label: "Share", icon: Share, items: [
       { label: "Email", onSelect: shareEmail },
       { label: "Link", onSelect: shareLink },
     ]},

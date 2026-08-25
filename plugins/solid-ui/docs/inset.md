@@ -11,7 +11,6 @@ import { Inset } from "@fcalell/plugin-solid-ui/components/inset";
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `tone` | `"neutral" \| "danger"` | `"neutral"` | Border colour: `edge` or `danger` |
-| `class` | `string` | -- | Additional Tailwind classes |
 
 ## Basic usage
 

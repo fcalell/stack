@@ -16,16 +16,14 @@ Renders `<fieldset>`. Sets `data-slot="field"` and provides `group/field` for de
 |------|------|-------------|
 | `data-invalid` | `"true"` | Switches text to destructive color |
 | `data-disabled` | `"true"` | Dims the label |
-| `class` | `string` | Additional Tailwind classes |
 
 ### Field.Label
 
-Uppercase label (wraps the Label component). Supports checked-state highlighting and nested field layouts via `data-slot` selectors.
+Uppercase label element composing the same base look as `Label`. Supports checked-state highlighting and nested field layouts via `data-slot` selectors.
 
 | Prop | Type | Description |
 |------|------|-------------|
 | `for` | `string` | Associates with a form field by ID |
-| `class` | `string` | Additional Tailwind classes |
 
 ### Field.Content
 
@@ -38,7 +36,6 @@ Helper text below the input. `ink-3` ink, extra-small. Links inside get underlin
 | Prop | Type | Description |
 |------|------|-------------|
 | `id` | `string` | For `aria-describedby` on the input |
-| `class` | `string` | Additional Tailwind classes |
 
 ### Field.Value
 

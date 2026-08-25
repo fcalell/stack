@@ -11,13 +11,12 @@ import { Loader } from "@fcalell/plugin-solid-ui/components/loader";
 | Prop | Type | Description |
 |------|------|-------------|
 | `text` | `string` | Target text to resolve to |
-| `class` | `string` | Additional Tailwind classes |
 
 ## Basic usage
 
 ```tsx
 <Loader text="Loading..." />
-<Loader text="Connecting to server" class="text-callout" />
+<Loader text="Connecting to server" />
 ```
 
 ## Behavior

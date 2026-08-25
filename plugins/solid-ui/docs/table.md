@@ -10,12 +10,11 @@ import { Table } from "@fcalell/plugin-solid-ui/components/table";
 
 ### Table (Root)
 
-Scrollable container + `<table>`. Full width, bottom-aligned captions.
+Scrollable container + `<table>`. Full width, bottom-aligned captions. The scroll container carries its own fixed classes.
 
 | Prop | Type | Description |
 |------|------|-------------|
-| `containerClass` | `string` | Classes on the outer scroll wrapper |
-| `class` | `string` | Classes on the `<table>` element |
+| `bordered` | `boolean` | Draw the outer table border (DataTable sets it) |
 
 ### Table.Header
 

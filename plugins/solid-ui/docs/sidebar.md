@@ -10,9 +10,9 @@ import { Sidebar, useSidebar } from "@fcalell/plugin-solid-ui/components/sidebar
 
 | Sub-component | Description |
 |---------------|-------------|
-| `Sidebar.Provider` | Context provider. Sets sidebar width CSS variables. Wrap your layout |
+| `Sidebar.Provider` | Context provider. The widths are internal constants (16rem, 3rem icon, 18rem mobile). Wrap your layout |
 | `Sidebar` (Root) | The sidebar panel. Props: `side`, `variant`, `collapsible` |
-| `Sidebar.Trigger` | Toggle button (ghost icon button) |
+| `Sidebar.Trigger` | Toggle button, an internal icon pressable. Props: `onClick` |
 | `Sidebar.Rail` | Invisible drag/click rail on the edge |
 | `Sidebar.Inset` | Main content area next to the sidebar |
 | `Sidebar.Header` / `Sidebar.Footer` | Top/bottom sections |

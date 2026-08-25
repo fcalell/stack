@@ -19,7 +19,6 @@ Base wrapper providing label, description, and error display. Used internally by
 | `field` | `() => AnyFieldApi` | -- | Field API accessor (must be a getter for reactivity) |
 | `label` | `string` | -- | Field label text |
 | `description` | `string` | -- | Optional help text below the label |
-| `class` | `string` | -- | Additional classes on the outer `<fieldset>` |
 | `htmlFor` | `string` | -- | Associates label with input by ID |
 | `children` | `JSX.Element` | -- | Field content (typically an input component) |
 
@@ -36,7 +35,6 @@ Text input with field integration.
 | `type` | `string` | -- | Input type (`text`, `email`, `password`, etc.) |
 | `disabled` | `boolean` | -- | Disable the input |
 | `autofocus` | `boolean` | -- | Auto-focus on mount |
-| `class` | `string` | -- | Additional classes on the wrapper |
 | `onBlur` | `() => void` | -- | Called after `field.handleBlur()` |
 | `onInput` | `(value: string) => void` | -- | Called after `field.handleChange()` |
 
@@ -56,7 +54,6 @@ Dropdown select with field integration. Wraps the data-driven `Select` component
 | `options` | `SelectOptions` | -- | Options array (flat or grouped) |
 | `placeholder` | `string` | -- | Select placeholder |
 | `disabled` | `boolean` | -- | Disable the select |
-| `class` | `string` | -- | Additional classes on the wrapper |
 | `children` | `(option: SelectOption) => JSX.Element` | -- | Custom item content render |
 
 ### Form.Checkbox
@@ -69,7 +66,6 @@ Checkbox with field integration. The checkbox renders its own inline label.
 | `label` | `string` | -- | Checkbox label (inline) |
 | `description` | `string` | -- | Help text |
 | `disabled` | `boolean` | -- | Disable the checkbox |
-| `class` | `string` | -- | Additional classes on the wrapper |
 
 ### Form.InputOTP
 
@@ -82,7 +78,6 @@ One-time password input. Renders digit slots split into two groups with a separa
 | `description` | `string` | -- | Help text |
 | `maxLength` | `number` | -- | Number of OTP digits |
 | `onComplete` | `() => void` | -- | Called when all digits are filled |
-| `class` | `string` | -- | Additional classes on the wrapper |
 
 ### Form.EnumInput
 
@@ -95,7 +90,6 @@ Tag/multi-value text input. Values are added by pressing Enter or typing commas.
 | `description` | `string` | -- | Help text |
 | `placeholder` | `string` | -- | Input placeholder |
 | `disabled` | `boolean` | -- | Disable the input |
-| `class` | `string` | -- | Additional classes on the wrapper |
 
 ## Basic usage
 

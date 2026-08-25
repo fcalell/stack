@@ -11,7 +11,6 @@ import { Input } from "@fcalell/plugin-solid-ui/components/input";
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `type` | `string` | `"text"` | HTML input type |
-| `class` | `string` | -- | Additional Tailwind classes (merged via `cn()`) |
 | `...rest` | -- | -- | All HTML input attributes, including the native `size` |
 
 There is no size axis. `FIELD` has one height, and it is the 48px control floor: a shorter input sits below the tap target every platform requires.

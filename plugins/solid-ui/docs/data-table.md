@@ -17,11 +17,10 @@ import { DataTable } from "@fcalell/plugin-solid-ui/components/data-table";
 
 ## Column meta
 
-Extends TanStack Table's `ColumnMeta` with:
+Extends TanStack Table's `ColumnMeta` with one field. The old `class` key is gone; a column look is not a per-call-site hatch.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `class` | `string` | Applied to both `<th>` and `<td>` |
 | `ariaSort` | `() => "ascending" \| "descending" \| "none"` | Dynamic sort indicator |
 
 ## Basic usage

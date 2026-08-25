@@ -16,7 +16,6 @@ Renders `<div>`. Carries the whole inset, so every section below it is pure rhyt
 |------|------|---------|-------------|
 | `padding` | `"card" \| "none"` | `"card"` | The body inset, 16px or none |
 | `ring` | `"none" \| "warn"` | `"none"` | A 2px `warn-mark` ring for a card that needs attention |
-| `class` | `string` | -- | Additional Tailwind classes |
 
 ### Card.Header
 
@@ -29,7 +28,6 @@ Renders `<h3>` by default at the `h3` type role.
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `as` | `ValidComponent` | `"h3"` | Override the rendered element |
-| `class` | `string` | -- | Additional Tailwind classes |
 
 ### Card.Description
 

@@ -19,7 +19,6 @@ No peer dependencies — uses a generic `QueryLike` interface compatible with Ta
 | `errorFallback` | `(error: TError, retry: () => void) => JSX.Element` | Error EmptyState + Retry | Custom error UI |
 | `emptyWhen` | `(data: TData) => boolean` | -- | Detects empty data |
 | `emptyFallback` | `JSX.Element` | -- | Shown when `emptyWhen` returns true |
-| `class` | `string` | -- | Classes on default loading wrapper |
 | `children` | `(data: Accessor<TData>) => JSX.Element` | -- | Render function for data state |
 
 ## QueryLike type

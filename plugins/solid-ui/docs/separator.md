@@ -12,7 +12,6 @@ import { Separator } from "@fcalell/plugin-solid-ui/components/separator";
 |------|------|---------|-------------|
 | `orientation` | `"horizontal" \| "vertical"` | `"horizontal"` | Direction of the divider |
 | `as` | `ValidComponent` | `"hr"` | Override the rendered element |
-| `class` | `string` | -- | Additional Tailwind classes (merged via `cn()`) |
 | `...rest` | -- | -- | All HTML attributes and Kobalte SeparatorRootProps |
 
 ## Horizontal (default)
@@ -35,12 +34,4 @@ Full-height 1px line. Use between side-by-side elements. The parent must define 
   <Separator orientation="vertical" />
   <span>Right</span>
 </div>
-```
-
-## Custom styling
-
-Override color or thickness via `class`:
-
-```tsx
-<Separator class="bg-ink-1 h-0.5" />
 ```

@@ -22,7 +22,6 @@ Portal-rendered modal with overlay, close button, and entry/exit animations.
 
 | Prop | Type | Description |
 |------|------|-------------|
-| `class` | `string` | Additional Tailwind classes |
 | `children` | `JSX.Element` | Dialog body |
 
 ### Dialog.Header
@@ -86,7 +85,6 @@ function createDialog<P = void, R = undefined>(
 
 | Option | Type | Description |
 |--------|------|-------------|
-| `contentClass` | `string` | Additional classes on `Dialog.Content` |
 | `dialogProps` | `Partial<{ preventScroll, modal }>` | Kobalte dialog root props |
 
 The render function receives the open props and a `close` callback. Call `close(result)` to resolve the promise. Backdrop click or Escape resolves with `undefined`. Exit animations play before the promise resolves.
