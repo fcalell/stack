@@ -12,8 +12,27 @@ import { View } from "react-native";
 // primitive. Wrapped in BottomSheetModalProvider by plugin-native-ui's wiring.
 const TRANSPARENT = { backgroundColor: "transparent" } as const;
 
-export interface BottomSheetProps extends Partial<BottomSheetModalProps> {
+// The closure is a denylist against gorhom's type: the style objects, and the
+// render-takeover slots that would replace the sheet's own design. A gorhom
+// upgrade adding a new styling prop reopens silently; the fixture pins
+// today's list. Behavioral props keep flowing.
+type GorhomStyling =
+	| "style"
+	| "backgroundStyle"
+	| "handleStyle"
+	| "handleIndicatorStyle"
+	| "containerStyle"
+	| "backgroundComponent"
+	| "handleComponent"
+	| "backdropComponent"
+	| "footerComponent"
+	| "containerComponent";
+
+export interface BottomSheetProps
+	extends Omit<Partial<BottomSheetModalProps>, GorhomStyling> {
 	children?: ReactNode;
+	className?: never;
+	style?: never;
 }
 
 export const BottomSheet = forwardRef<

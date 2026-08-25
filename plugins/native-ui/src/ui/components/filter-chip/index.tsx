@@ -8,6 +8,8 @@ export interface FilterChipProps extends Omit<PressableProps, "children"> {
 	active?: boolean;
 	// Leading glyph, rendered by the chip at its own size in the label's ink.
 	icon?: LucideIcon;
+	className?: never;
+	style?: never;
 }
 
 // Top-of-list filter chip. Active = ink-1 fill + canvas label (a filter, not a
@@ -16,7 +18,6 @@ export function FilterChip({
 	label,
 	active,
 	icon: Icon,
-	className,
 	...rest
 }: FilterChipProps) {
 	const iconColor = useTokenColor(active ? "--color-canvas" : "--color-ink-2");
@@ -27,7 +28,6 @@ export function FilterChip({
 			className={cn(
 				"flex-row items-center gap-1.5 self-start rounded-full px-3 py-[7px]",
 				active ? "bg-ink-1" : "bg-surface",
-				className,
 			)}
 			{...rest}
 		>

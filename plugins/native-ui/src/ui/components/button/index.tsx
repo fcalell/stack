@@ -43,6 +43,8 @@ export interface ButtonProps extends Omit<PressableProps, "children"> {
 	size?: ButtonSize;
 	loading?: boolean;
 	children?: ReactNode;
+	className?: never;
+	style?: never;
 }
 
 export function Button({
@@ -50,7 +52,6 @@ export function Button({
 	tone,
 	size,
 	loading,
-	className,
 	children,
 	disabled,
 	...rest
@@ -67,7 +68,6 @@ export function Button({
 				disabled
 					? buttonMuted({ emphasis: resolvedEmphasis })
 					: GROUND[resolvedEmphasis][resolvedTone],
-				className,
 			)}
 			{...rest}
 		>

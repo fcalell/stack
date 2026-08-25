@@ -15,7 +15,8 @@ export interface NavBarProps {
 	action?: Action<never>;
 	// Centre the title (no leading/trailing imbalance). Defaults to left-aligned.
 	center?: boolean;
-	className?: string;
+	className?: never;
+	style?: never;
 }
 
 // Compact header for pushed screens: back · title · action. The title takes the
@@ -26,18 +27,12 @@ export function NavBar({
 	backVariant = "back",
 	action,
 	center,
-	className,
 }: NavBarProps) {
 	const ink1 = useTokenColor("--color-ink-1");
 	const BackGlyph = backVariant === "close" ? X : ChevronLeft;
 	const actionIdle = action ? !(action.disabled || action.loading) : false;
 	return (
-		<View
-			className={cn(
-				"min-h-12 flex-row items-center gap-2.5 px-3.5 py-2",
-				className,
-			)}
-		>
+		<View className="min-h-12 flex-row items-center gap-2.5 px-3.5 py-2">
 			{onBack ? (
 				// The 24px glyph plus 10 of hitSlop each side lands on the 44pt
 				// floor (the stepper precedent).

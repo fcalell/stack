@@ -1,7 +1,6 @@
 import type { BadgeSpec } from "@fcalell/ui-core/descriptors";
 import { ChevronRight, type LucideIcon } from "lucide-react-native";
 import { Pressable, type PressableProps, Text, View } from "react-native";
-import { cn } from "../../lib/cn";
 import { useTokenColor } from "../../lib/theme";
 import { Badge } from "../badge";
 
@@ -15,6 +14,8 @@ export interface RowItemProps extends Omit<PressableProps, "children"> {
 	badge?: BadgeSpec;
 	// Trailing navigation affordance.
 	chevron?: boolean;
+	className?: never;
+	style?: never;
 }
 
 // A single list row: an optional leading glyph, a stacked label/description,
@@ -27,15 +28,11 @@ export function RowItem({
 	value,
 	badge,
 	chevron,
-	className,
 	...rest
 }: RowItemProps) {
 	const ink3 = useTokenColor("--color-ink-3");
 	return (
-		<Pressable
-			className={cn("flex-row items-center gap-3 px-4 py-3", className)}
-			{...rest}
-		>
+		<Pressable className="flex-row items-center gap-3 px-4 py-3" {...rest}>
 			{Icon ? <Icon size={20} color={ink3} /> : null}
 			<View className="flex-1">
 				<Text className="text-body text-ink-1">{label}</Text>

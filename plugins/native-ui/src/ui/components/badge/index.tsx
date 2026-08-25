@@ -17,16 +17,14 @@ const ROLE = { variant: "micro" } as const;
 export interface BadgeProps extends Omit<ViewProps, "children"> {
 	tone?: BadgeTone;
 	children?: ReactNode;
+	className?: never;
+	style?: never;
 }
 
-export function Badge({ tone, className, children, ...rest }: BadgeProps) {
+export function Badge({ tone, children, ...rest }: BadgeProps) {
 	return (
 		<View
-			className={cn(
-				badge({ tone }),
-				"flex-row items-center self-start",
-				className,
-			)}
+			className={cn(badge({ tone }), "flex-row items-center self-start")}
 			{...rest}
 		>
 			{typeof children === "string" ? (

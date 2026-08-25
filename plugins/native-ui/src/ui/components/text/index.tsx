@@ -12,16 +12,13 @@ export interface TextProps extends RNTextProps {
 	tone?: TextTone;
 	strong?: boolean;
 	mono?: boolean;
+	className?: never;
+	style?: never;
+	// uniwind's per-prop class channel on RN Text, closed with the rest.
+	selectionColorClassName?: never;
 }
 
-export function Text({
-	variant,
-	tone,
-	strong,
-	mono,
-	className,
-	...rest
-}: TextProps) {
+export function Text({ variant, tone, strong, mono, ...rest }: TextProps) {
 	const role = variant ?? "body";
 	return (
 		<RNText
@@ -33,7 +30,6 @@ export function Text({
 				// Font family is a platform overlay, so it never enters the matrix.
 				// Without a registered mono font this degrades to the system face.
 				mono && "font-mono",
-				className,
 			)}
 			{...rest}
 		/>

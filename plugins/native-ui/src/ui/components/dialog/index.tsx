@@ -18,7 +18,8 @@ export interface DialogProps {
 	// primary that takes the dialog's tone (a danger dialog confirms in danger).
 	primary?: Action<never>;
 	secondary?: Action<never>;
-	className?: string;
+	className?: never;
+	style?: never;
 }
 
 // Centred confirm dialog over a dimmed backdrop. Tapping the backdrop closes it.
@@ -33,7 +34,6 @@ export function Dialog({
 	tone = "default",
 	primary,
 	secondary,
-	className,
 }: DialogProps) {
 	const danger = tone === "danger";
 	const iconColor = useTokenColor(danger ? "--color-danger" : "--color-ink-1");
@@ -51,7 +51,7 @@ export function Dialog({
 				{/* Stop propagation: taps on the card must not close the dialog. */}
 				<Pressable
 					onPress={() => {}}
-					className={cn("w-full rounded-sheet bg-canvas p-5", className)}
+					className="w-full rounded-sheet bg-canvas p-5"
 				>
 					{Icon ? (
 						<View

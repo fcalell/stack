@@ -22,28 +22,21 @@ export interface AvatarProps extends Omit<ViewProps, "children"> {
 	size?: number;
 	// Identity colour. Omit for a neutral placeholder (e.g. an empty seat / add).
 	tint?: AvatarTint;
+	className?: never;
+	style?: never;
 }
 
-export function Avatar({
-	initials,
-	size = 40,
-	tint,
-	className,
-	style,
-	...rest
-}: AvatarProps) {
+export function Avatar({ initials, size = 40, tint, ...rest }: AvatarProps) {
 	const tinted = tint !== undefined;
 	return (
 		<View
 			style={[
 				{ width: size, height: size },
 				tinted ? { backgroundColor: TINTS[tint] } : null,
-				style,
 			]}
 			className={cn(
 				"items-center justify-center rounded-full",
 				tinted ? "" : "border border-edge bg-surface",
-				className,
 			)}
 			{...rest}
 		>

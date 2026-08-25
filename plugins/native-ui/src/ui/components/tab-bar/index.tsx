@@ -15,20 +15,21 @@ export interface TabBarProps {
 	tabs: TabBarItem[];
 	active: string;
 	onChange: (key: string) => void;
-	className?: string;
+	className?: never;
+	style?: never;
 }
 
 // Bottom tab bar for the four trip tabs (Oggi · Rotta · Cambusa · Soldi). Active
 // vs inactive reads through ink weight (ink-1 vs ink-2), not hue. Respects the
 // home-indicator safe-area inset.
-export function TabBar({ tabs, active, onChange, className }: TabBarProps) {
+export function TabBar({ tabs, active, onChange }: TabBarProps) {
 	const insets = useSafeAreaInsets();
 	const ink1 = useTokenColor("--color-ink-1");
 	const ink2 = useTokenColor("--color-ink-2");
 	return (
 		<View
 			style={{ paddingBottom: insets.bottom }}
-			className={cn("flex-row border-t border-edge bg-canvas", className)}
+			className="flex-row border-t border-edge bg-canvas"
 		>
 			{tabs.map((tab) => {
 				const isActive = tab.key === active;

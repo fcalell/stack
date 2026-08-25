@@ -1,5 +1,4 @@
 import { type DimensionValue, View, type ViewProps } from "react-native";
-import { cn } from "../../lib/cn";
 
 // A neutral placeholder block, sized by its own props (numeric dimension is
 // the sanctioned vocabulary; `avatar.size` is the precedent). The shimmer
@@ -8,13 +7,15 @@ import { cn } from "../../lib/cn";
 export interface SkeletonProps extends ViewProps {
 	width?: DimensionValue;
 	height?: DimensionValue;
+	className?: never;
+	style?: never;
 }
 
-export function Skeleton({ width, height, className, ...rest }: SkeletonProps) {
+export function Skeleton({ width, height, ...rest }: SkeletonProps) {
 	return (
 		<View
 			style={{ width, height }}
-			className={cn("rounded-md bg-surface", className)}
+			className="rounded-md bg-surface"
 			{...rest}
 		/>
 	);

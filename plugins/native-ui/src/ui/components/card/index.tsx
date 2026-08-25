@@ -4,13 +4,14 @@ import {
 	card,
 } from "@fcalell/ui-core/variants";
 import { View, type ViewProps } from "react-native";
-import { cn } from "../../lib/cn";
 
 export interface CardProps extends ViewProps {
 	padding?: CardPadding;
 	ring?: CardRing;
+	className?: never;
+	style?: never;
 }
 
-export function Card({ padding, ring, className, ...rest }: CardProps) {
-	return <View className={cn(card({ padding, ring }), className)} {...rest} />;
+export function Card({ padding, ring, ...rest }: CardProps) {
+	return <View className={card({ padding, ring })} {...rest} />;
 }

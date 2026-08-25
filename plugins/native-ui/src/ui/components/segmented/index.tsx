@@ -10,7 +10,8 @@ export interface SegmentedProps<T extends string> {
 	options: SegmentedOption<T>[];
 	value: T;
 	onValueChange: (value: T) => void;
-	className?: string;
+	className?: never;
+	style?: never;
 }
 
 // Pill-in-pill 2–3-way selector (division modes, berth type, meal moment). The
@@ -20,10 +21,9 @@ export function Segmented<T extends string>({
 	options,
 	value,
 	onValueChange,
-	className,
 }: SegmentedProps<T>) {
 	return (
-		<View className={cn("flex-row rounded-full bg-surface p-[3px]", className)}>
+		<View className="flex-row rounded-full bg-surface p-[3px]">
 			{options.map((opt) => {
 				const active = opt.value === value;
 				return (

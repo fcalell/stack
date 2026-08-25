@@ -8,22 +8,24 @@ export interface InputProps extends TextInputProps {
 	// `aria-invalid:`. Left at `default`, `useFieldState` moves the field onto
 	// the `focused` cell, the native counterpart of `focus-visible:`.
 	state?: FieldState;
+	className?: never;
+	style?: never;
+	// uniwind's per-prop class channels close with the closure; the component
+	// keeps setting placeholderTextColorClassName on its own element below.
+	placeholderTextColorClassName?: never;
+	cursorColorClassName?: never;
+	selectionColorClassName?: never;
+	selectionHandleColorClassName?: never;
+	underlineColorAndroidClassName?: never;
 }
 
-export function Input({
-	state,
-	className,
-	onFocus,
-	onBlur,
-	...rest
-}: InputProps) {
+export function Input({ state, onFocus, onBlur, ...rest }: InputProps) {
 	const tracked = useFieldState(state, onFocus, onBlur);
 	return (
 		<TextInput
 			className={cn(
 				field({ state: tracked.state, layout: "input" }),
 				"w-full text-callout text-ink-1",
-				className,
 			)}
 			placeholderTextColorClassName="text-ink-3"
 			onFocus={tracked.onFocus}

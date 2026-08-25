@@ -7,7 +7,8 @@ export interface StepperProps {
 	min?: number;
 	max?: number;
 	step?: number;
-	className?: string;
+	className?: never;
+	style?: never;
 }
 
 // Numeric +/- control for quantities (posti, portions). Clamps to [min, max]
@@ -19,12 +20,11 @@ export function Stepper({
 	min = 0,
 	max = Number.POSITIVE_INFINITY,
 	step = 1,
-	className,
 }: StepperProps) {
 	const atMin = value <= min;
 	const atMax = value >= max;
 	return (
-		<View className={cn("flex-row items-center gap-3", className)}>
+		<View className="flex-row items-center gap-3">
 			<Pressable
 				accessibilityRole="button"
 				disabled={atMin}
