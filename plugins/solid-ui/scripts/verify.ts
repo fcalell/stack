@@ -1061,6 +1061,8 @@ const LOOK_ROOTS = [
 	"py",
 	"min-h",
 	"max-h",
+	"h",
+	"overflow",
 	"shadow",
 	"font",
 	"leading",
@@ -1414,6 +1416,27 @@ check("b10", "the gate passes geometry and throws on the look", () => {
 		`unexpected message:\n${gateFailure.message}`,
 	);
 	return "pass and src-less trees clean, the fail tree throws GEOMETRY_GATE naming both violations in one run";
+});
+
+check("b11", "the scroll and frame geometry is pinned from source", () => {
+	const scrollArea = read("src/ui/components/scroll-area/index.tsx");
+	for (const cell of [
+		'"flex-1 min-h-0 min-w-0 overflow-y-auto"',
+		'"w-full min-w-0 overflow-x-auto"',
+		'"flex-1 min-h-0 min-w-0 overflow-auto"',
+	]) {
+		assert(scrollArea.includes(cell), `ScrollArea lost ${cell}`);
+	}
+	assert(
+		scrollArea.includes("PIN_THRESHOLD = 40"),
+		"the pin threshold moved off 40",
+	);
+	const frame = read("src/ui/components/frame/index.tsx");
+	assert(
+		frame.includes('"flex h-dvh min-h-0 flex-col overflow-hidden"'),
+		"Frame lost its class string",
+	);
+	return "three axis strings, the frame string and PIN_THRESHOLD = 40 pinned";
 });
 
 // ── Report ──────────────────────────────────────────────────────────
