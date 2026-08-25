@@ -5,6 +5,7 @@ import { cliSlots, emitArtifact } from "@fcalell/cli/cli-slots";
 import { expo } from "@fcalell/plugin-expo";
 import { deriveTheme } from "@fcalell/ui-core/derive";
 import { aggregateGlobalCss } from "./node/codegen";
+import { runGeometryGate } from "./node/gate";
 import {
 	type NativeFontEntry,
 	type NativeUiOptions,
@@ -264,6 +265,14 @@ export const nativeUi = plugin("native-ui", {
 
 		// ── Emit the uniwind entry stylesheet ─────────────────────────────
 		emitArtifact(GLOBAL_CSS_ARTIFACT, self.slots.appCssSource),
+
+		// ── Geometry gate ─────────────────────────────────────────────────
+		// Pre-phase; on a native-only consumer it is the first and only step.
+		cliSlots.buildSteps.contribute((ctx) => ({
+			name: "native-ui-geometry-gate",
+			phase: "pre",
+			run: () => runGeometryGate(ctx.cwd),
+		})),
 
 		// ── Scaffold the native client modules the entry imports ──────────
 		//
