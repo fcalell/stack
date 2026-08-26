@@ -1,13 +1,14 @@
 ---
 id: 001
 title: ui-core
-prd: docs/prd/ui-core.md
+prd: retired, folded into .knowledge/architecture/ui-core.md
 ---
 # ui-core, one design system rendered per platform
 
-The driver is [`docs/prd/ui-core.md`](../../../../docs/prd/ui-core.md). This epic is its seven
-milestones as stories; the PRD stays the source of scope, decisions, and acceptance, and each story
-holds the implementation brief for one milestone.
+The driver PRD shipped in full and is folded into
+[`.knowledge/architecture/ui-core.md`](../../../../.knowledge/architecture/ui-core.md). This epic
+was its seven milestones as stories, each story holding the implementation brief for one
+milestone.
 
 Stack has no test runner, so no criterion here carries a `(test)` tag. The available modes are
 `(command)` (`pnpm check`, a build, a generate run), `(file)` (read a named file), and `(live)` (a

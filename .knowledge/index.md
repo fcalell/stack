@@ -19,4 +19,5 @@ The *what/why* + gotchas (authoring mechanics live in `.claude/playbooks/plugin-
 - [slot-catalog](./architecture/slot-catalog.md): contributing to or deriving from any plugin's slots, or picking the spec type a payload carries (`TsImportSpec`, `TsExpression`, `WranglerBindingSpec`, …)
 - [commands](./architecture/commands.md): changing what a CLI command does, which root slots it resolves, or routing a plugin subcommand
 - [runtime](./architecture/runtime.md): touching worker codegen, a `/runtime` factory, or how `stack.config.ts` options reach the worker
+- [ui-core](./architecture/ui-core.md): touching the token contract or theme schema, a variant matrix, the primitive canon, or the geometry gate; deciding whether a cell is shared or a platform overlay
 - [consumer-project](./architecture/consumer-project.md): changing the scaffolded project shape, the `stack.config.ts` surface (`app` field, plugin options), or the generated `.stack/` files
