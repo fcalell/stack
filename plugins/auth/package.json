@@ -21,14 +21,14 @@
 		"clear": "rm -rf node_modules .turbo"
 	},
 	"dependencies": {
-		"@better-auth/expo": "^1.6.14",
+		"@better-auth/expo": "^1.7.2",
 		"@casl/ability": "^7.0.1",
 		"@fcalell/cli": "workspace:*",
 		"@fcalell/plugin-api": "workspace:*",
 		"@fcalell/plugin-cloudflare": "workspace:*",
 		"@fcalell/plugin-db": "workspace:*",
 		"@orpc/server": "^1.14.4",
-		"better-auth": "^1.6.14",
+		"better-auth": "^1.7.2",
 		"zod": "^4.3.6"
 	},
 	"peerDependencies": {
