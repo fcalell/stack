@@ -414,38 +414,55 @@ export const expo = plugin("expo", {
 		// runs before any other middleware (in particular before a
 		// rate-limit guard) — a walled client's retry storm must see 426,
 		// never a confusing 429.
-		api.slots.middlewareEntries.contribute((): MiddlewareSpec | undefined => {
-			const minNativeBuild = self.options.minNativeBuild;
-			const ios = minNativeBuild?.ios ?? 0;
-			const android = minNativeBuild?.android ?? 0;
-			if (!minNativeBuild || (ios === 0 && android === 0)) return undefined;
-			return {
-				imports: [
-					{
-						source: "@fcalell/plugin-expo/version-gate",
-						named: ["versionGate"],
-					},
-				],
-				call: {
-					kind: "call",
-					callee: { kind: "identifier", name: "versionGate" },
-					args: [
+		api.slots.middlewareEntries.contribute(
+			async (ctx): Promise<MiddlewareSpec | undefined> => {
+				const minNativeBuild = self.options.minNativeBuild;
+				const ios = minNativeBuild?.ios ?? 0;
+				const android = minNativeBuild?.android ?? 0;
+				if (!minNativeBuild || (ios === 0 && android === 0)) return undefined;
+				// Scope: the worker's own prefixes, baked at codegen. A raw
+				// consumer route is the consumer's surface, not the framework's,
+				// and walling it would 426 a stale client on an endpoint that
+				// never spoke the version contract.
+				const prefixes = await ctx.resolve(api.slots.routePrefixes);
+				return {
+					imports: [
 						{
-							kind: "object",
-							properties: [
-								{ key: "ios", value: { kind: "number", value: ios } },
-								{
-									key: "android",
-									value: { kind: "number", value: android },
-								},
-							],
+							source: "@fcalell/plugin-expo/version-gate",
+							named: ["versionGate"],
 						},
 					],
-				},
-				phase: "after-cors",
-				order: 0,
-			};
-		}),
+					call: {
+						kind: "call",
+						callee: { kind: "identifier", name: "versionGate" },
+						args: [
+							{
+								kind: "object",
+								properties: [
+									{ key: "ios", value: { kind: "number", value: ios } },
+									{
+										key: "android",
+										value: { kind: "number", value: android },
+									},
+									{
+										key: "prefixes",
+										value: {
+											kind: "array",
+											items: prefixes.map((prefix) => ({
+												kind: "string" as const,
+												value: prefix,
+											})),
+										},
+									},
+								],
+							},
+						],
+					},
+					phase: "after-cors",
+					order: 0,
+				};
+			},
+		),
 
 		// Emit the four native artifacts. metro/app.config/entry always render;
 		// routes.d.ts is null (skipped) when routing is disabled. The two config

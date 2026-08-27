@@ -60,7 +60,7 @@ e.g. consulting `ctx.fileExists` before writing.
 | `routesHandler` | `value<{ identifier } \| null>` | Routes namespace identifier (seeded from `src/worker/routes` existence) |
 | `corsOrigins` | `list<string>` | Extra production CORS origins |
 | `devCorsOrigins` | `list<string>` (sorted) | Dev-server origins (vite, metro); emitted as `createWorker({ devCors })` and honoured only when the worker runs with `STACK_DEV`, so a deploy never trusts localhost |
-| `routePrefixes` | `list<string>` | URL prefixes the worker owns (api contributes its `prefix`); deploy targets read this to mount/forward worker paths |
+| `routePrefixes` | `list<string>` | URL prefixes the worker owns (api contributes its `prefix`, auth its `/api/auth`); deploy targets read this to mount/forward worker paths, and plugin-expo's version gate walls only paths inside one |
 | `cors` | `derived<string[]>` | Final CORS list — `app.origins` verbatim, or `[https://domain, https://app.domain, ...corsOrigins]` |
 | `callbacks` | `map<string, CallbackSpec>` | Plugin-name → callback identifier; spliced onto matching runtime's options |
 | `workerBase` | `derived<TsExpression>` | The `createWorker({...})` call expression |

@@ -69,7 +69,9 @@ A request **fails open** (passes through untouched) when:
 - `x-stack-client-build` isn't all digits (`"1.2.3"`, `""`, non-numeric),
 - or `x-stack-client-platform` is neither `"ios"` nor `"android"`.
 
-The gate never walls `/api/auth/*` (a stranded user must still be able to re-auth after updating) or `/` (liveness). The wall is a UX nudge, not a security control: a request that can't be confidently read as "this is a stale native client" always passes.
+The gate only walls paths the worker itself owns, the resolved `api.slots.routePrefixes` (`/rpc/*` plus `/api/auth/*`), baked into the emitted call at codegen. A raw consumer route belongs to the consumer, so a stale client hitting it passes untouched. `/api/auth/*` is carved back out on top of that, because a stranded user must still be able to re-auth after updating, and `/` (liveness) falls outside every prefix. The wall is a UX nudge, not a security control: a request that can't be confidently read as "this is a stale native client" always passes.
+
+A build stamping header names other than the two above is invisible to the gate and is never walled. Ship a client release that stamps the current names before raising a floor.
 
 Below the floor, the gate short-circuits with:
 
@@ -137,7 +139,7 @@ Rendering the update-wall screen itself is app territory: call `onUpdateRequired
 | `expo.slots.entrySource` | `derived<string \| null>` | Final `.stack/entry.tsx` |
 | `expo.slots.routesDtsSource` | `derived<string \| null>` | Final `.stack/routes.d.ts` |
 
-`plugin-expo` also contributes its dev-server localhost origin to `api.slots.devCorsOrigins` (gated on `app.origins` not being set), which the worker honours only under `STACK_DEV`, and, when `minNativeBuild` is configured, the version-gate middleware to `api.slots.middlewareEntries`.
+`plugin-expo` also contributes its dev-server localhost origin to `api.slots.devCorsOrigins` (gated on `app.origins` not being set), which the worker honours only under `STACK_DEV`, and, when `minNativeBuild` is configured, the version-gate middleware to `api.slots.middlewareEntries` (resolving `api.slots.routePrefixes` for the gate's scope).
 
 ## Exports
 

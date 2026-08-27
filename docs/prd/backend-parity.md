@@ -185,20 +185,22 @@ dev-proxy gap plugin-api's comment already expects.
 **Verify.** With auth in the config, run `stack generate` and read the emitted vite config:
 `/api/auth` is proxied to the worker. Remove auth, regenerate, and confirm the prefix is gone.
 
-### WS5 — wire compatibility (WIRE-1..3)
+### WS5 — wire compatibility (WIRE-1..3) — shipped
 
-Depends on WS4.2. Decision to settle in the milestone; the default position, chosen against a
-header-name option (philosophy: options are the last resort, and the framework should not carry
-every consumer's legacy names):
+The default position held, chosen against a header-name option (philosophy: options are the last
+resort, and the framework should not carry every consumer's legacy names):
 
 - **Response headers (WIRE-1):** header names stay `x-stack-*`. A migrating consumer mirrors them
-  to legacy names in one consumer middleware (possible once WS4.2 lands). Document the recipe in
-  the plugin-api README's migration notes.
+  to legacy names in one consumer middleware; the recipe is in the plugin-api README under
+  Migration notes.
 - **Request headers (WIRE-2):** the gate keeps reading `x-stack-client-*` only. Sailward ships a
   client release stamping both header sets before any floor raise; builds older than that release
   stay un-wallable, an accepted residue measured by WS6 telemetry.
-- **Gate scope (WIRE-3):** narrow the version gate to the resolved `api.slots.routePrefixes`
-  instead of everything-but-auth, restoring sailward's `/rpc`-only scope without an option.
+- **Gate scope (WIRE-3):** the gate takes a `prefixes` list, baked at codegen from the resolved
+  `api.slots.routePrefixes`, and walls only paths inside one. `/api/auth/*` stays carved out on top
+  of that (a stranded user must still be able to re-auth), so with auth in the config the effective
+  scope is the RPC tree alone, matching sailward. Liveness needs no special case: `/` sits outside
+  every prefix.
 
 **Verify.** Add the mirror middleware from the README recipe and read the response headers on an
 RPC call: `x-stack-reads`/`x-stack-writes` and the legacy names are both present. Send a request

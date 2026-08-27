@@ -418,6 +418,43 @@ const { slugify: s, isReserved } = createSlugify(["admin", "api", "system"]);
 
 Default reserved slugs: `admin`, `api`, `system`, `auth`, `new`, `settings`.
 
+## Migration notes
+
+The response headers that carry cache invalidation are `x-stack-reads` and `x-stack-writes`
+(`STACK_READS_HEADER` / `STACK_WRITES_HEADER`). A worker replacing hand-rolled code whose deployed
+clients parse different names mirrors them in `src/worker/middleware.ts`, no framework option
+needed:
+
+```ts
+// src/worker/middleware.ts
+import {
+  STACK_READS_HEADER,
+  STACK_WRITES_HEADER,
+} from "@fcalell/plugin-api/procedure";
+import { createMiddleware } from "hono/factory";
+
+const LEGACY: Record<string, string> = {
+  [STACK_READS_HEADER]: "x-sw-reads",
+  [STACK_WRITES_HEADER]: "x-sw-writes",
+};
+
+export default createMiddleware(async (c, next) => {
+  await next();
+  for (const [current, legacy] of Object.entries(LEGACY)) {
+    const value = c.res.headers.get(current);
+    if (value) c.header(legacy, value);
+  }
+});
+```
+
+Both names then go out on every response, so clients already in the field keep invalidating while
+the new release rolls out. Delete the file once those builds are gone.
+
+Request headers do not work the same way. `plugin-expo`'s version gate reads
+`x-stack-client-build` and `x-stack-client-platform` only, and a build stamping other names is
+invisible to it, which means it fails open and is never walled. Ship a client release that stamps
+the current names before raising a floor; every build older than that release stays un-wallable.
+
 ## Plugin implementation
 
 Built with `plugin` from `@fcalell/cli`. Owns every fragment of `.stack/worker.ts` as a slot; peer plugins (`db`, `auth`, `vite`, …) contribute via the typed slot tokens below.

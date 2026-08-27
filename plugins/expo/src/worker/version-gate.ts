@@ -16,21 +16,30 @@ export { CLIENT_BUILD_HEADER, CLIENT_PLATFORM_HEADER };
 // must be digits before it's trusted.
 const BUILD_NUMBER_RE = /^\d+$/;
 
-// A stranded user must still be able to re-auth after updating, and
-// liveness must never depend on a client identifying itself.
+// A stranded user must still be able to re-auth after updating, so the auth
+// surface is never walled — even though it is one of the worker's own route
+// prefixes.
 const AUTH_PREFIX = "/api/auth";
 
-function isUngatedPath(pathname: string): boolean {
-	if (pathname === "/") return true;
-	// Exact match or a real sub-path (`/api/auth/get-session`) — NOT a mere
-	// prefix look-alike like `/api/authX`, which `startsWith("/api/auth")`
-	// would wrongly exempt.
-	return pathname === AUTH_PREFIX || pathname.startsWith(`${AUTH_PREFIX}/`);
+// Exact match or a real sub-path (`/rpc/trips.list`) — NOT a mere prefix
+// look-alike like `/rpcX`, which `startsWith("/rpc")` would wrongly match.
+function isWithin(pathname: string, prefix: string): boolean {
+	return pathname === prefix || pathname.startsWith(`${prefix}/`);
+}
+
+function isGatedPath(pathname: string, prefixes: string[]): boolean {
+	if (isWithin(pathname, AUTH_PREFIX)) return false;
+	return prefixes.some((prefix) => isWithin(pathname, prefix));
 }
 
 export interface VersionGateOptions {
 	ios: number;
 	android: number;
+	// The worker's own route prefixes (`api.slots.routePrefixes`). Only paths
+	// inside one are walled: a consumer's raw route is its own surface, and a
+	// stale client hitting it must not newly get a 426 it never asked for.
+	// Liveness (`/`) falls outside every prefix and so is never gated.
+	prefixes: string[];
 }
 
 // Hono middleware factory: walls a native client below `options[platform]`
@@ -40,7 +49,7 @@ export interface VersionGateOptions {
 // an ungated path.
 export function versionGate(options: VersionGateOptions): MiddlewareHandler {
 	return async (c, next) => {
-		if (isUngatedPath(c.req.path)) return next();
+		if (!isGatedPath(c.req.path, options.prefixes)) return next();
 
 		const build = c.req.header(CLIENT_BUILD_HEADER);
 		const platform = c.req.header(CLIENT_PLATFORM_HEADER);
