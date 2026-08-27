@@ -69,9 +69,10 @@ needs.
 
 ## Where things are
 
-- **Monorepo**: pnpm workspace: `packages/` (`@fcalell/cli` core + tsconfig/biome presets) and
-  `plugins/` (one `@fcalell/plugin-<name>` per domain: cloudflare, db, auth, api, vite, expo,
-  solid, solid-ui). Detail in `.knowledge/architecture/` (start at `overview.md`).
+- **Monorepo**: pnpm workspace: `packages/` (`@fcalell/cli` core, `@fcalell/ui-core` design
+  contract, tsconfig/biome presets) and `plugins/` (one `@fcalell/plugin-<name>` per domain:
+  cloudflare, db, auth, api, node, vite, expo, solid, solid-ui, native-ui). Detail in
+  `.knowledge/architecture/` (start at `overview.md`).
 - **Dev loop**: `pnpm check` (Biome lint + type-check) is the per-change gate; it must pass before
   a change is complete.
 - **PRDs / analyses**: `docs/prd/` (forward-looking implementation drivers; see its README for the
