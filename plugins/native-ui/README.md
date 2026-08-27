@@ -92,7 +92,7 @@ matching `--font-<role>` token (so `font-sans` / `font-mono` resolve).
 The Query/Auth providers are wired automatically, and `stack init` / `stack add`
 scaffold editable starters at `src/lib/query.ts` and `src/lib/auth.ts` (copy-once,
 like the auth callback file). The query client works out of the box; the auth
-starter just needs the two genuinely per-app values filled in:
+starter just needs the genuinely per-app values filled in:
 
 ```ts
 // src/lib/auth.ts (scaffolded)
@@ -101,6 +101,7 @@ import { createAuthClient } from "@fcalell/plugin-auth/expo";
 export const authClient = createAuthClient({
   baseURL: process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:8787",
   scheme: "app",          // match your app.config.ts deep-link scheme
+  cookiePrefix: "app",    // match auth({ cookies: { prefix } }) in stack.config.ts
   storage: SecureStore,
 });
 

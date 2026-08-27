@@ -383,12 +383,17 @@ import {
 
 export const authClient = createAuthClient({
   baseURL: process.env.EXPO_PUBLIC_API_URL!,
-  scheme: "wenauti",      // matches the Expo app scheme / plugin-expo `scheme`
-  storage: SecureStore,   // the secure key-value store tokens persist in
+  scheme: "wenauti",       // matches the Expo app scheme / plugin-expo `scheme`
+  cookiePrefix: "wenauti", // matches `auth({ cookies: { prefix } })`
+  storage: SecureStore,    // the secure key-value store tokens persist in
 });
 
 // In a screen: const client = useAuthClient(); signInWithGoogle(client);
 ```
+
+`cookiePrefix` must equal the `cookies.prefix` the worker is configured with. The client filters
+the server's `Set-Cookie` by that prefix, so a mismatch drops the session cookie on every device,
+silently, and the app reads as signed out.
 
 `storage` is injected (not imported here) so this layer never pulls native modules
 into Node/test importers; the consumer passes the secure-store module directly.

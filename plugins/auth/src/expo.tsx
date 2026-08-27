@@ -23,6 +23,12 @@ export interface AuthClientConfig {
 	storage: ExpoClientStorage;
 	// Prefix for stored keys. Defaults to the scheme.
 	storagePrefix?: string;
+	// Prefix of the session cookies the worker sets. Must equal the
+	// `auth({ cookies: { prefix } })` value in `stack.config.ts`, which `stack
+	// init` defaults to `app.name`. A mismatch is silent and total: the client
+	// filters the server's Set-Cookie by this prefix, so every device drops a
+	// still-valid session and the app reads as signed out.
+	cookiePrefix?: string;
 }
 
 export function createAuthClient(config: AuthClientConfig) {
@@ -33,6 +39,7 @@ export function createAuthClient(config: AuthClientConfig) {
 				scheme: config.scheme,
 				storagePrefix: config.storagePrefix ?? config.scheme,
 				storage: config.storage,
+				cookiePrefix: config.cookiePrefix,
 			}),
 			// Passwordless email sign-in alongside the social providers. The server
 			// enables it via `emailOtp` (on by default); screens drive it through the
