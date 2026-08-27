@@ -14,26 +14,43 @@ import type { Contribution, Slot } from "#lib/slots";
 // the literal `true`, the callback is dropped from required handlers and
 // added to the optional map in `InferCallbackPayloads`.
 
-export interface CallbackMarker<T> {
+// `R` is the handler's whole return type, not the resolved value: a callback
+// the framework awaits declares `void | Promise<void>` (the default), one read
+// synchronously declares exactly what it may return.
+export interface CallbackMarker<T, R = void | Promise<void>> {
 	readonly __type?: T;
+	readonly __return?: R;
 	readonly __optional?: boolean;
 }
 
-export type OptionalCallbackMarker<T> = CallbackMarker<T> & {
+export type OptionalCallbackMarker<
+	T,
+	R = void | Promise<void>,
+> = CallbackMarker<T, R> & {
 	readonly __optional: true;
 };
 
 interface CallbackFactory {
-	<T extends Record<string, unknown>>(): CallbackMarker<T>;
-	optional: <T extends Record<string, unknown>>() => OptionalCallbackMarker<T>;
+	<
+		T extends Record<string, unknown>,
+		R = void | Promise<void>,
+	>(): CallbackMarker<T, R>;
+	optional: <
+		T extends Record<string, unknown>,
+		R = void | Promise<void>,
+	>() => OptionalCallbackMarker<T, R>;
 }
 
 export const callback = Object.assign(
-	<T extends Record<string, unknown>>(): CallbackMarker<T> => ({}),
+	<
+		T extends Record<string, unknown>,
+		R = void | Promise<void>,
+	>(): CallbackMarker<T, R> => ({}),
 	{
 		optional: <
 			T extends Record<string, unknown>,
-		>(): OptionalCallbackMarker<T> => ({ __optional: true }) as const,
+			R = void | Promise<void>,
+		>(): OptionalCallbackMarker<T, R> => ({ __optional: true }) as const,
 	},
 ) as CallbackFactory;
 
@@ -110,7 +127,7 @@ export interface PluginDefinition<
 	TSlots extends Record<string, Slot<unknown>>,
 	TCallbacks extends Record<
 		string,
-		CallbackMarker<unknown> | OptionalCallbackMarker<unknown>
+		CallbackMarker<unknown, unknown> | OptionalCallbackMarker<unknown, unknown>
 	>,
 	TResolvedOptions = TOptions,
 > {
@@ -170,7 +187,7 @@ export interface InternalCliPlugin<TOptions, TSlots, TResolvedOptions> {
 	requires: readonly string[];
 	callbacks: Record<
 		string,
-		CallbackMarker<unknown> | OptionalCallbackMarker<unknown>
+		CallbackMarker<unknown, unknown> | OptionalCallbackMarker<unknown, unknown>
 	>;
 	commands: Record<
 		string,
@@ -212,19 +229,19 @@ export interface CollectCtx<TResolvedOptions> {
 type InferCallbackPayloads<
 	T extends Record<
 		string,
-		CallbackMarker<unknown> | OptionalCallbackMarker<unknown>
+		CallbackMarker<unknown, unknown> | OptionalCallbackMarker<unknown, unknown>
 	>,
 > = {
 	[K in keyof T as T[K] extends { readonly __optional: true }
 		? never
-		: K]: T[K] extends CallbackMarker<infer P>
-		? (payload: P) => void | Promise<void>
+		: K]: T[K] extends CallbackMarker<infer P, infer R>
+		? (payload: P) => R
 		: never;
 } & {
 	[K in keyof T as T[K] extends { readonly __optional: true }
 		? K
-		: never]?: T[K] extends CallbackMarker<infer P>
-		? (payload: P) => void | Promise<void>
+		: never]?: T[K] extends CallbackMarker<infer P, infer R>
+		? (payload: P) => R
 		: never;
 };
 
@@ -234,7 +251,7 @@ export type PluginFactory<
 	TSlots extends Record<string, Slot<unknown>>,
 	TCallbacks extends Record<
 		string,
-		CallbackMarker<unknown> | OptionalCallbackMarker<unknown>
+		CallbackMarker<unknown, unknown> | OptionalCallbackMarker<unknown, unknown>
 	>,
 	TResolvedOptions = TOptions,
 > = ((...args: [options: TOptions] | []) => {
@@ -264,7 +281,7 @@ export function plugin<
 	const TSlots extends Record<string, Slot<unknown>> = Record<string, never>,
 	TCallbacks extends Record<
 		string,
-		CallbackMarker<unknown> | OptionalCallbackMarker<unknown>
+		CallbackMarker<unknown, unknown> | OptionalCallbackMarker<unknown, unknown>
 	> = Record<string, never>,
 	TResolvedOptions = TOptions,
 >(
@@ -379,7 +396,8 @@ export function plugin<
 		requires: definition.requires ?? [],
 		callbacks: (definition.callbacks ?? {}) as Record<
 			string,
-			CallbackMarker<unknown> | OptionalCallbackMarker<unknown>
+			| CallbackMarker<unknown, unknown>
+			| OptionalCallbackMarker<unknown, unknown>
 		>,
 		commands: (definition.commands ?? {}) as Record<
 			string,

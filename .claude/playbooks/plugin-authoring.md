@@ -41,6 +41,10 @@ export const auth = plugin("auth", {
 
   callbacks: {
     sendOTP: callback<{ email: string; code: string }>(),
+    // Second type argument = the handler's return type. Defaults to
+    // `void | Promise<void>`; declare it when the framework reads the value
+    // synchronously instead of awaiting the call.
+    generateOTP: callback.optional<{ email: string }, string | undefined>(),
   },
 
   commands: {
