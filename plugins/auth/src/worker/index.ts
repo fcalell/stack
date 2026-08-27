@@ -21,6 +21,7 @@ import {
 import type {
 	AuthCallbackPayloads,
 	AuthRuntimeOptions,
+	AuthUser,
 	FieldConfig,
 	ResolvedSocialProvider,
 	SocialProviderName,
@@ -35,13 +36,34 @@ interface RateLimitBinding {
 	limit(opts: { key: string }): Promise<{ success: boolean }>;
 }
 
-// Consumer-implemented email hooks. `AuthCallbackPayloads` (`../types`) is
-// the single source for the payload shapes — see that type's doc comment.
-export interface AuthCallbacks {
-	sendOTP: (payload: AuthCallbackPayloads["sendOTP"]) => void | Promise<void>;
-	sendInvitation?: (
-		payload: AuthCallbackPayloads["sendInvitation"],
-	) => void | Promise<void>;
+// Consumer-implemented hooks. `AuthCallbackPayloads` (`../types`) is the
+// single source for the payload shapes — see that type's doc comment. Pass the
+// worker's own `Env` (`AuthCallbacks<Env>`) to type the `env` every payload
+// carries.
+//
+// Method syntax throughout, deliberately: it keeps the payload parameter
+// bivariant, so a consumer who narrows the env (`AuthCallbacks<Env>`) still
+// satisfies the `AuthCallbacks` the runtime input declares. The framework is
+// the only caller and always passes the real env.
+export interface AuthCallbacks<TEnv = unknown> {
+	sendOTP(payload: AuthCallbackPayloads<TEnv>["sendOTP"]): void | Promise<void>;
+	sendInvitation?(
+		payload: AuthCallbackPayloads<TEnv>["sendInvitation"],
+	): void | Promise<void>;
+	// Runs before better-auth deletes the row, and only when
+	// `user.deleteUser` is on. Throw to refuse the deletion (an `APIError`
+	// surfaces its own status; anything else is a 500). Revocation, storage
+	// cleanup, and PII scrubbing all belong here.
+	beforeDelete?(
+		payload: AuthCallbackPayloads<TEnv>["beforeDelete"],
+	): void | Promise<void>;
+	// Replaces the OTP better-auth would generate. Return `undefined` to fall
+	// back to the default for that request, which is how a fixed review-account
+	// code coexists with real codes. Synchronous: better-auth reads the return
+	// value directly.
+	generateOTP?(
+		payload: AuthCallbackPayloads<TEnv>["generateOTP"],
+	): string | undefined;
 }
 
 export interface AuthRuntimeInput extends AuthRuntimeOptions {
@@ -54,9 +76,13 @@ export interface AuthRuntimeInput extends AuthRuntimeOptions {
 	session?: {
 		expiresIn?: number;
 		updateAge?: number;
+		freshAge?: number;
 		additionalFields?: Record<string, FieldConfig>;
 	};
-	user?: { additionalFields?: Record<string, FieldConfig> };
+	user?: {
+		additionalFields?: Record<string, FieldConfig>;
+		deleteUser?: boolean;
+	};
 	organization?:
 		| boolean
 		| {
@@ -172,8 +198,15 @@ function buildAuth(
 		plugins.push(
 			emailOTP({
 				sendVerificationOTP: async ({ email, otp }) => {
-					await options.callbacks?.sendOTP({ email, code: otp });
+					await options.callbacks?.sendOTP({ email, code: otp, env });
 				},
+				// Only handed over when the consumer implements it: passing an
+				// always-undefined function would still shadow better-auth's own
+				// generator on every request.
+				generateOTP: options.callbacks?.generateOTP
+					? ({ email, type }) =>
+							options.callbacks?.generateOTP?.({ email, type, env })
+					: undefined,
 				// Pinned, not options: the attempt cap is the actual brute-force
 				// gate (the verify path is only IP-limited), so it must never
 				// drift on a dependency bump.
@@ -220,6 +253,7 @@ function buildAuth(
 					await options.callbacks?.sendInvitation?.({
 						email: data.email,
 						orgName: data.organization.name,
+						env,
 					});
 				},
 			}),
@@ -306,6 +340,7 @@ function buildAuth(
 		session: {
 			expiresIn: options.session?.expiresIn,
 			updateAge: options.session?.updateAge,
+			freshAge: options.session?.freshAge,
 			// biome-ignore lint/suspicious/noExplicitAny: additionalFields is user-provided.
 			additionalFields: options.session?.additionalFields as any,
 			// Signed session cache: skips a D1 read on getSession for most
@@ -322,6 +357,18 @@ function buildAuth(
 			? {
 					// biome-ignore lint/suspicious/noExplicitAny: additionalFields is user-provided.
 					additionalFields: options.user.additionalFields as any,
+					deleteUser: options.user.deleteUser
+						? {
+								enabled: true,
+								beforeDelete: async (user, request) => {
+									await options.callbacks?.beforeDelete?.({
+										user: user as AuthUser,
+										request,
+										env,
+									});
+								},
+							}
+						: undefined,
 				}
 			: undefined,
 		plugins,

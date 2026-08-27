@@ -1,5 +1,7 @@
 import type { AuthCallbacks } from "@fcalell/plugin-auth/runtime";
 
+// Type the parameter as your worker's `Env` (`AuthCallbacks<Env>`) to reach
+// bindings through the `env` every payload carries.
 const callbacks: AuthCallbacks = {
 	sendOTP({ email, code }) {
 		// TODO: send OTP email

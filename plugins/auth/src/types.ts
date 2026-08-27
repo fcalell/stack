@@ -82,12 +82,27 @@ export const authOptionsSchema = z.object({
 				})
 				.optional(),
 			updateAge: z.number().optional(),
+			// How recently the session must have been created for better-auth to
+			// treat it as fresh. Deleting an account needs a fresh session, and a
+			// passwordless (OTP or social only) account can never re-authenticate
+			// to refresh one, so those consumers set 0.
+			freshAge: z
+				.number()
+				.nonnegative({
+					error: "auth: session.freshAge must be zero or a positive number",
+				})
+				.optional(),
 			additionalFields: z.record(z.string(), fieldConfigSchema).optional(),
 		})
 		.optional(),
 	user: z
 		.object({
 			additionalFields: z.record(z.string(), fieldConfigSchema).optional(),
+			// Account deletion (App Store 5.1.1(v) requires it for a native app).
+			// Off unless asked for: the endpoint destroys rows. The consumer's
+			// `beforeDelete` callback vetoes or cleans up, and a session older
+			// than `session.freshAge` is refused.
+			deleteUser: z.boolean().optional(),
 		})
 		.optional(),
 	organization: z.union([z.boolean(), organizationObjectSchema]).optional(),
@@ -204,13 +219,40 @@ export interface AuthRuntimeOptions {
 	appUrlVar: string;
 }
 
+// better-auth's own `user` row as the deletion hook receives it. Mirrors
+// `BaseUser` (@better-auth/core's `userSchema`); the index signature carries
+// whatever `user.additionalFields` adds, which the consumer reads with a cast
+// to its own row type.
+export interface AuthUser {
+	id: string;
+	email: string;
+	emailVerified: boolean;
+	name: string;
+	image?: string | null;
+	createdAt: Date;
+	updatedAt: Date;
+	[key: string]: unknown;
+}
+
+// Why better-auth asks for an OTP. Only "sign-in" reaches a consumer that
+// runs email-OTP alone, but the override sees all four.
+export type OtpType =
+	| "sign-in"
+	| "email-verification"
+	| "forget-password"
+	| "change-email";
+
 // Single source for the consumer callback file's shape. Both the plugin
 // declaration (`callbacks:` in `./index.ts`, node-side) and the worker
 // runtime's `AuthCallbacks` type (`./worker/index.ts`) derive their payload
 // types from here, so the two can never drift apart. `sendOTP` is required
-// (email-OTP is on by default); `sendInvitation` is optional (only needed
-// once `organization` is enabled).
-export interface AuthCallbackPayloads {
-	sendOTP: { email: string; code: string };
-	sendInvitation: { email: string; orgName: string };
+// (email-OTP is on by default); the rest are optional, each gated on the
+// option that turns its feature on. Every payload carries `env`, so a
+// callback reaches per-request bindings (an email send binding, a queue)
+// instead of module scope.
+export interface AuthCallbackPayloads<TEnv = unknown> {
+	sendOTP: { email: string; code: string; env: TEnv };
+	sendInvitation: { email: string; orgName: string; env: TEnv };
+	beforeDelete: { user: AuthUser; request?: Request; env: TEnv };
+	generateOTP: { email: string; type: OtpType; env: TEnv };
 }

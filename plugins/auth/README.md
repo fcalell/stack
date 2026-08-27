@@ -49,10 +49,9 @@ Runtime secrets and email callbacks live in a separate file, scaffolded automati
 // src/worker/plugins/auth.ts
 import type { AuthCallbacks } from "@fcalell/plugin-auth/runtime";
 
-const callbacks: AuthCallbacks = {
-  sendOTP({ email, code }) {
-    // TODO: send OTP email
-    console.log(`OTP for ${email}: ${code}`);
+const callbacks: AuthCallbacks<Env> = {
+  async sendOTP({ email, code, env }) {
+    await env.EMAIL.send({ to: email, subject: "Your code", body: code });
   },
   sendInvitation({ email, orgName }) {
     // TODO: send invitation email
@@ -63,7 +62,19 @@ const callbacks: AuthCallbacks = {
 export default callbacks;
 ```
 
-This file is imported by the **worker**, so it must only pull in worker-safe modules -- `@fcalell/plugin-auth/runtime` is the runtime subpath, never the plugin's `.` entrypoint (that one drags in the Node-side CLI codegen toolchain). `AuthCallbacks` enforces the same callback shapes declared via `callback<T>()` in the plugin definition -- both derive from one shared type, so they can't drift apart. `sendOTP` is required; `sendInvitation` is optional (only needed when organizations are enabled).
+Every payload carries `env`, the same per-request bindings the worker sees, so a
+callback sends through an email binding or a queue instead of reaching for module scope. Pass the
+worker's `Env` as `AuthCallbacks<Env>` to type it; leave the parameter off and `env` is
+`unknown`.
+
+| Callback | Required | Runs when |
+|----------|----------|-----------|
+| `sendOTP` | yes, unless `emailOtp: false` | An email one-time password is issued |
+| `sendInvitation` | no | An organization invitation is sent |
+| `beforeDelete` | no | `user.deleteUser` is on and an account is about to be deleted. Throw to refuse: an `APIError` surfaces its own status, anything else is a 500. Revocation, storage cleanup, and PII scrubbing belong here |
+| `generateOTP` | no | An OTP is about to be generated. Return a string to override it, or `undefined` to fall back to the default for that request, which is how a fixed review-account code coexists with real ones. Read synchronously, so it cannot be `async` |
+
+This file is imported by the **worker**, so it must only pull in worker-safe modules -- `@fcalell/plugin-auth/runtime` is the runtime subpath, never the plugin's `.` entrypoint (that one drags in the Node-side CLI codegen toolchain). `AuthCallbacks` enforces the same callback shapes declared via `callback<T>()` in the plugin definition -- both derive from one shared type, so they can't drift apart.
 
 When email-OTP is disabled (`emailOtp: false`, see OAuth-only below) there are no required callbacks -- the callback file is optional, and an OAuth-only app can omit it entirely.
 
@@ -151,8 +162,10 @@ type Session = InferSession<typeof config>;
 | `cookies.domain` | `string` | -- | Cookie domain |
 | `session.expiresIn` | `number` | 7 days | Session expiry in seconds |
 | `session.updateAge` | `number` | -- | Session refresh interval in seconds |
+| `session.freshAge` | `number` | 1 day | How recently the session must have been created to count as fresh. Deleting an account needs a fresh session, and a passwordless account can never re-authenticate to refresh one, so those consumers set `0` |
 | `session.additionalFields` | `Record<string, FieldConfig>` | -- | Extra session fields |
 | `user.additionalFields` | `Record<string, FieldConfig>` | -- | Extra user fields |
+| `user.deleteUser` | `boolean` | `false` | Enable account deletion (`authClient.deleteUser()`), gated by the `beforeDelete` callback. App Store 5.1.1(v) requires it for a native app |
 | `organization` | `boolean \| { ac, roles, additionalFields }` | -- | Enable organizations; requires re-exporting `@fcalell/plugin-auth/schema/organization` (see Database schema) |
 | `emailOtp` | `boolean` | `true` | Email one-time-password sign-in; `false` for OAuth-only |
 | `socialProviders.google` | `boolean \| { clientIdVar, clientSecretVar }` | -- | Enable Google OAuth (`true` = conventional var names) |
@@ -318,8 +331,15 @@ export const auth = plugin("auth", {
   schema: authOptionsSchema,
   requires: ["api", "cloudflare", "db"],
   callbacks: {
-    sendOTP: callback<{ email: string; code: string }>(),
-    sendInvitation: callback.optional<{ email: string; orgName: string }>(),
+    sendOTP: callback<{ email: string; code: string; env: unknown }>(),
+    sendInvitation: callback.optional<{ email: string; orgName: string; env: unknown }>(),
+    beforeDelete: callback.optional<{ user: AuthUser; env: unknown }>(),
+    // Second type argument: the handler's return type, for a callback the
+    // framework reads synchronously instead of awaiting.
+    generateOTP: callback.optional<
+      { email: string; type: OtpType; env: unknown },
+      string | undefined
+    >(),
   },
   dependencies: { "@fcalell/plugin-auth": "workspace:*" },
   slots: { runtimeOptions },

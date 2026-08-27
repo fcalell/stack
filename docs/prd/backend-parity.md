@@ -120,7 +120,7 @@ that column through a worker route: the change is live without a restart. Confir
 was never created. Before this milestone lands, `stack db push` on d1 exits with the pointer message
 and writes nothing.
 
-### WS3 — plugin-auth surface
+### WS3 — plugin-auth surface — shipped
 
 **3.1 Expo client cookie prefix (AUTH-2).** Forward the consumer cookie prefix to `expoClient()`.
 One line plus a config field; session-critical for every native consumer.
@@ -131,18 +131,28 @@ Sign in from the native app against a dev worker and confirm the session survive
 **3.2 Callbacks receive `env` (AUTH-4).** Extend the callback payload (or make the callbacks module
 a factory) so `sendOTP`/`sendInvitation` reach per-request bindings. Unblocks OTP email via the
 `EMAIL` send binding and the review-account skip.
+**Settled:** the payload. `AuthCallbackPayloads<TEnv>` carries `env` on every callback, and
+`AuthCallbacks<Env>` types it against the worker's own `Env`; the default is `unknown`, so a
+consumer that ignores env is unaffected.
 **Verify.** Write a `sendOTP` callback that reads a binding off the payload env, boot `stack dev`,
 and request an OTP: the callback logs the binding instead of throwing on undefined.
 
 **3.3 User deletion (AUTH-1).** Expose better-auth's `deleteUser` with a consumer `beforeDelete`
 hook and `session.freshAge` support. The hook contents (veto, revocation, cleanup) stay consumer
 code.
+**Settled:** `user.deleteUser` (a boolean option, off by default) enables the endpoint,
+`session.freshAge` is a plain numeric option, and `beforeDelete` is a fourth entry in the
+callback file.
 **Verify.** Against a dev worker, delete a user and confirm the `beforeDelete` hook runs. Make the
 hook throw and confirm the deletion is refused. With `freshAge: 0`, confirm a passwordless account
 deletes.
 
 **3.4 `generateOTP` passthrough (AUTH-3).** Let the consumer override OTP generation while the
 pinned security params stay pinned.
+**Settled:** a callback, not an option, since it is consumer code. Returning `undefined` falls back
+to better-auth's generator for that request. Declaring it needed one core change: `callback<T, R>()`
+now takes the handler's return type, because this callback is read synchronously rather than
+awaited.
 **Verify.** Supply a `generateOTP` override returning a fixed code, request an OTP, and verify with
 that code. Read the emitted worker source: the pinned params are still 6/300/3.
 
