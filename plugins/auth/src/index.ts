@@ -170,6 +170,17 @@ const callbackFile = slot.value<string>({
 	seed: () => CALLBACK_FILE,
 });
 
+// The resolved session-cookie prefix. "better-auth" is better-auth's own
+// default on both the server and the expo client, so an unset option still
+// yields a matching pair. Peer plugins (native-ui's generated auth-client
+// constants) read this instead of hardcoding a prefix that silently drops
+// every session cookie on mismatch.
+const cookiePrefix = slot.value<string, ResolvedAuthOptions>({
+	source: SOURCE,
+	name: "cookiePrefix",
+	seed: (ctx) => ctx.options.cookies?.prefix ?? "better-auth",
+});
+
 export const auth = plugin("auth", {
 	label: "Auth",
 
@@ -205,6 +216,7 @@ export const auth = plugin("auth", {
 		runtimeOptions,
 		appUrlDevDefault,
 		callbackFile,
+		cookiePrefix,
 	},
 
 	contributes: (self) => [

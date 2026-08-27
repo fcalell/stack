@@ -129,8 +129,28 @@ e.g. consulting `ctx.fileExists` before writing.
 | `appCssBlocks` | `list<CssBlock>` | Top-level `@theme` / `@utility` blocks, rendered after `@source` and before the layers. Neither at-rule may sit inside a `@layer`, which is why they don't ride `appCssLayers` |
 | `appCssLayers` | `list<{ name, content }>` | CSS `@layer` blocks. Dark mode rides this slot as `@layer base`: `@theme` compiles into `@layer theme` and Tailwind sorts `base` after it, so a layered `.dark { … }` overrides the seeded values |
 | `fonts` | `derived<FontEntry[]>` | Resolved fonts (consumer options or `defaultFonts`) |
+| `nativeAuthSource` | `derived<string>` | `.stack/native-auth.ts` source: the resolved `scheme` and `cookiePrefix` constants the scaffolded `src/lib/auth.ts` imports, so the native client can never drift from the app config or the worker's cookie prefix |
 | `resolvedTheme` | `derived<ResolvedTheme>` | The `theme` option run through `@fcalell/ui-core`'s `deriveTheme`, resolved once so every block contribution reads one value |
 | `appCssSource` | `derived<string \| null>` | Final `.stack/app.css`; null when nothing landed |
+
+## `expo.slots.*` (plugin-expo)
+
+| Slot | Kind | Purpose |
+|------|------|---------|
+| `metroConfigImports` | `list<MetroRequireSpec>` | Requires for the generated `.stack/metro.config.cjs` |
+| `metroPluginCalls` | `list<MetroWrapperSpec>` | Wrapper calls composed around the Metro config (order-sorted) |
+| `expoConfigPlugins` | `list<ExpoConfigPlugin>` | Expo config plugins baked into `.stack/app.config.cjs` |
+| `providers` | `list<ProviderSpec>` | JSX providers composed around `<ExpoRoot>` in `.stack/entry.tsx` (lower order = outer, mirrors solid) |
+| `entryImports` | `list<TsImportSpec>` | Extra imports for `.stack/entry.tsx` |
+| `devServerPort` | `value<number>` | Metro dev-server port (`options.port` ?? default); also drives the localhost CORS origin contributed to plugin-api |
+| `scheme` | `value<string>` | Resolved deep-link scheme (`options.scheme` ?? app-name slug); read by native-ui's generated auth-client constants so the client matches the app config |
+| `routesPagesDir` | `derived<string \| null>` | expo-router pages dir; null when `routes: false` |
+| `easBuildProfiles` | `value<string[]>` | EAS build profile names the `expo build` command validates against |
+| `easUpdateChannel` | `value<string>` | Default EAS Update channel |
+| `metroConfig` | `derived<string \| null>` | Final `.stack/metro.config.cjs` source |
+| `expoConfig` | `derived<string \| null>` | Final `.stack/app.config.cjs` source (name, slug, scheme, bundle ids, config plugins, typed routes) |
+| `entrySource` | `derived<string \| null>` | Final `.stack/entry.tsx` source (imports + providers around `<ExpoRoot>`) |
+| `routesDtsSource` | `derived<string \| null>` | `.stack/routes.d.ts` source; null when routing is off |
 
 ## `nativeUi.slots.*` (plugin-native-ui)
 
@@ -146,6 +166,9 @@ e.g. consulting `ctx.fileExists` before writing.
 | Slot | Kind | Purpose |
 |------|------|---------|
 | `runtimeOptions` | `derived<Record<string, TsExpression>>` | Better Auth runtime options; reads `api.slots.cors` for `trustedOrigins` and `api.slots.devCorsOrigins` for `devTrustedOrigins` (dev-gated by the runtime) |
+| `appUrlDevDefault` | `derived<string>` | Canonical dev URL for `APP_URL`'s `.dev.vars` default: the first local origin in `api.slots.devCorsOrigins`, else `https://<domain>` |
+| `callbackFile` | `value<string>` | Consumer callback-file path (default `src/worker/plugins/auth.ts`); override for a restructured worker layout |
+| `cookiePrefix` | `value<string>` | Resolved session-cookie prefix (`cookies.prefix` ?? better-auth's `"better-auth"` default); read by native-ui's generated auth-client constants |
 
 ## Spec types
 

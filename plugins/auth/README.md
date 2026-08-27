@@ -408,6 +408,8 @@ export const authClient = createAuthClient({
   baseURL: process.env.EXPO_PUBLIC_API_URL!,
   scheme: "wenauti",       // matches the Expo app scheme / plugin-expo `scheme`
   cookiePrefix: "wenauti", // matches `auth({ cookies: { prefix } })`
+  // In a stack project, import both from the generated `.stack/native-auth.ts`
+  // instead of hand-copying them (the native-ui scaffold already does).
   storage: SecureStore,    // the secure key-value store tokens persist in
 });
 
@@ -416,7 +418,8 @@ export const authClient = createAuthClient({
 
 `cookiePrefix` must equal the `cookies.prefix` the worker is configured with. The client filters
 the server's `Set-Cookie` by that prefix, so a mismatch drops the session cookie on every device,
-silently, and the app reads as signed out.
+silently, and the app reads as signed out. The generated `.stack/native-auth.ts` exports the
+resolved `cookiePrefix` and `scheme`, so importing from there removes the sync burden.
 
 `storage` is injected (not imported here) so this layer never pulls native modules
 into Node/test importers; the consumer passes the secure-store module directly.

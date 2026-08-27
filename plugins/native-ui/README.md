@@ -98,10 +98,11 @@ starter just needs the genuinely per-app values filled in:
 // src/lib/auth.ts (scaffolded)
 import * as SecureStore from "expo-secure-store";
 import { createAuthClient } from "@fcalell/plugin-auth/expo";
+import { cookiePrefix, scheme } from "../../.stack/native-auth"; // generated
 export const authClient = createAuthClient({
   baseURL: process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:8787",
-  scheme: "app",          // match your app.config.ts deep-link scheme
-  cookiePrefix: "app",    // match auth({ cookies: { prefix } }) in stack.config.ts
+  scheme,       // always matches the app-config deep-link scheme
+  cookiePrefix, // always matches the worker's session-cookie prefix
   storage: SecureStore,
 });
 

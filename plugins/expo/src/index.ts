@@ -195,13 +195,22 @@ const metroConfig = slot.derived({
 		aggregateMetroConfig({ requires: inp.requires, wrappers: inp.wrappers }),
 });
 
+// The resolved deep-link scheme. A value slot so peer plugins (native-ui's
+// generated auth-client constants) read the same value expoConfig bakes into
+// the app config, instead of re-deriving it.
+const scheme = slot.value<string, ExpoOptions>({
+	source: SOURCE,
+	name: "scheme",
+	seed: (ctx) => ctx.options.scheme ?? slugify(ctx.app.name),
+});
+
 const expoConfig = slot.derived({
 	source: SOURCE,
 	name: "expoConfig",
-	inputs: { plugins: expoConfigPlugins, pagesDir: routesPagesDir },
+	inputs: { plugins: expoConfigPlugins, pagesDir: routesPagesDir, scheme },
 	compute: (inp, ctx: ContributionCtx<ExpoOptions>): string | null => {
 		const slug = slugify(ctx.app.name);
-		const opts = ctx.options;
+		const _opts = ctx.options;
 		const routesEnabled = inp.pagesDir !== null;
 		const bundleId = buildBundleId(ctx.app.domain, slug);
 		// expo-router is listed as a config plugin so its native deep-link setup
@@ -212,7 +221,7 @@ const expoConfig = slot.derived({
 		return aggregateExpoConfig({
 			name: ctx.app.name,
 			slug,
-			scheme: opts.scheme ?? slug,
+			scheme: inp.scheme,
 			bundleIdentifier: bundleId,
 			androidPackage: bundleId,
 			plugins: basePlugins,
@@ -286,6 +295,7 @@ export const expo = plugin("expo", {
 		providers,
 		entryImports,
 		devServerPort,
+		scheme,
 		routesPagesDir,
 		easBuildProfiles,
 		easUpdateChannel,
