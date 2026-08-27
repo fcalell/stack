@@ -253,13 +253,16 @@ export async function abilityFor(db: Db, userId: string, tripId: string) {
 
 In a handler, gate with `assertCan`. It returns when allowed and throws
 `ORPCError("FORBIDDEN")` when denied; pass `{ cloak: true }` at sites that must not reveal the
-resource exists, which throws `NOT_FOUND` instead. Tag a row with `subject()` for instance
-checks:
+resource exists, which throws `NOT_FOUND` instead. `{ message }` replaces the default English
+denial copy (cloaked sites ignore it). Tag a row with `subject()` for instance checks:
 
 ```ts
 const { ability } = await abilityFor(db, context.user.id, input.tripId);
 assertCan(ability, "update", subject("Expense", expenseRow));
 assertCan(ability, "read", subject("Report", reportRow), { cloak: true });
+assertCan(ability, "delete", subject("Expense", expenseRow), {
+  message: "Only the author can delete an expense",
+});
 ```
 
 To drive UI affordances from the same rules, ship the ability on a query output with

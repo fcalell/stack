@@ -101,13 +101,18 @@ export function assertCan<TAbility extends AnyMongoAbility>(
 	ability: TAbility,
 	action: Parameters<TAbility["can"]>[0],
 	subjectArg: Parameters<TAbility["can"]>[1],
-	opts?: { cloak?: boolean },
+	opts?: { cloak?: boolean; message?: string },
 ): void {
 	if (ability.can(action, subjectArg)) return;
+	// `message` is the denial copy the client renders, so a consumer whose UI
+	// is not in English can pass its own. Cloaked denials ignore it: their
+	// whole point is to be indistinguishable from a missing record.
 	if (opts?.cloak) {
 		throw new ORPCError("NOT_FOUND");
 	}
-	throw new ORPCError("FORBIDDEN", { message: "Insufficient permissions" });
+	throw new ORPCError("FORBIDDEN", {
+		message: opts?.message ?? "Insufficient permissions",
+	});
 }
 
 // ---------- pack / unpack ----------
