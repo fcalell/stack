@@ -16,10 +16,13 @@ import type { Contribution, Slot } from "#lib/slots";
 
 // `R` is the handler's whole return type, not the resolved value: a callback
 // the framework awaits declares `void | Promise<void>` (the default), one read
-// synchronously declares exactly what it may return.
+// synchronously declares exactly what it may return. `R` sits in a function
+// return position, not directly on the property: inferring through an
+// optional property strips `undefined` from the union, which would collapse
+// a declared `string | undefined` to `string`.
 export interface CallbackMarker<T, R = void | Promise<void>> {
 	readonly __type?: T;
-	readonly __return?: R;
+	readonly __return?: () => R;
 	readonly __optional?: boolean;
 }
 
@@ -264,7 +267,7 @@ export type PluginFactory<
 	requires: readonly string[];
 	slots: TSlots;
 	cli: InternalCliPlugin<TOptions, TSlots, TResolvedOptions>;
-} & (keyof TCallbacks extends never
+} & (TCallbacks extends Record<string, never>
 		? // biome-ignore lint/complexity/noBannedTypes: `{}` is a non-restrictive intersection that preserves the LHS; `Record<string, never>` would destroy it and `object` adds an unwanted constraint
 			{}
 		: {
