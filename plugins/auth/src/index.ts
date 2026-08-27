@@ -8,6 +8,7 @@ import { api } from "@fcalell/plugin-api";
 import { cloudflare } from "@fcalell/plugin-cloudflare";
 import { defaultOrgStatements, getStatements } from "./access";
 import {
+	AUTH_PREFIX,
 	type AuthCallbackPayloads,
 	authOptionsSchema,
 	type ResolvedAuthOptions,
@@ -298,6 +299,11 @@ export const auth = plugin("auth", {
 				...providerSecrets,
 			];
 		}),
+
+		// The auth surface is worker-owned but lives outside api's own
+		// prefix, so deploy targets (vite's dev proxy, the node server's mount
+		// table) only route it once it is declared here.
+		api.slots.routePrefixes.contribute(() => AUTH_PREFIX),
 
 		// Worker runtime entry. Resolves `runtimeOptions` inside the
 		// contribution — the graph guarantees cors is fully-resolved before

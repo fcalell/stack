@@ -1,5 +1,9 @@
 import { z } from "zod";
 
+// The path better-auth mounts under inside the worker. Shared so the runtime
+// and the codegen contribution to `api.slots.routePrefixes` can never drift.
+export const AUTH_PREFIX = "/api/auth";
+
 export const fieldConfigSchema = z.object({
 	type: z.enum(["string", "number", "boolean"]),
 	required: z.boolean().optional(),

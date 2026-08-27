@@ -25,6 +25,7 @@ import type {
 	ResolvedSocialProvider,
 	SocialProviderName,
 } from "../types";
+import { AUTH_PREFIX } from "../types";
 import { emailKey } from "./email-key";
 
 // Structural match with plugin-api's `RateLimitBinding` (procedure.ts) — not
@@ -142,8 +143,6 @@ export interface AuthInstance<
 		};
 	};
 }
-
-const AUTH_PREFIX = "/api/auth";
 
 // Per-env cache: Workers hand the same `env` object reference across
 // requests within a worker instance, so a WeakMap keyed on it lets us
