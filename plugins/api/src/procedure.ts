@@ -247,29 +247,27 @@ function createAuthMiddleware() {
 		};
 		next: (opts: { context: unknown }) => Promise<unknown>;
 	}) => {
-		try {
-			const sessionData = await context.auth.api.getSession({
-				headers: context.reqHeaders,
-			});
+		// Nothing here is caught. A session-store outage (D1 down, binding
+		// misconfigured) must surface as a 500: folding it into UNAUTHORIZED
+		// reads to the client as "your session is invalid" and triggers a
+		// sign-out storm across every client retrying at once. Only an absent or
+		// incomplete session is an auth failure.
+		const sessionData = await context.auth.api.getSession({
+			headers: context.reqHeaders,
+		});
 
-			if (!sessionData?.session || !sessionData?.user) {
-				throw new ORPCError("UNAUTHORIZED", {
-					message: "Authentication required",
-				});
-			}
-
-			return next({
-				context: {
-					user: sessionData.user,
-					session: sessionData.session,
-				},
-			});
-		} catch (error) {
-			if (error instanceof ORPCError) throw error;
+		if (!sessionData?.session || !sessionData?.user) {
 			throw new ORPCError("UNAUTHORIZED", {
-				message: "Authentication failed",
+				message: "Authentication required",
 			});
 		}
+
+		return next({
+			context: {
+				user: sessionData.user,
+				session: sessionData.session,
+			},
+		});
 	};
 }
 
