@@ -531,6 +531,9 @@ export function isForbiddenOrigin(c: Context): boolean {
 	const origin = c.req.header("origin");
 	if (!origin) return false;
 	const allowed = c.get("__stackOrigins") as string[] | undefined;
+	// Wildcard CORS admits every origin; the guard must agree with the CORS
+	// layer instead of judging all real browser origins forbidden.
+	if (allowed?.includes("*")) return false;
 	if (!allowed) {
 		throw new Error(
 			"isForbiddenOrigin: no origin list on this request. Register the middleware with .useAfterContext() (src/worker/middleware.context.ts), not .use().",

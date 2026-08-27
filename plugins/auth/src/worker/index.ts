@@ -70,7 +70,10 @@ export interface AuthCallbacks<TEnv = unknown> {
 	// Replaces the OTP better-auth would generate. Return `undefined` to fall
 	// back to the default for that request, which is how a fixed review-account
 	// code coexists with real codes. Synchronous: better-auth reads the return
-	// value directly.
+	// value directly. Runs for every `OtpType` (sign-in, verification,
+	// forget-password, change-email), so key an override on `type` as well as
+	// the email; method syntax keeps payloads bivariant, so a handler that
+	// narrows `type` compiles but still receives all four at runtime.
 	generateOTP?(
 		payload: AuthCallbackPayloads<TEnv>["generateOTP"],
 	): string | undefined;
