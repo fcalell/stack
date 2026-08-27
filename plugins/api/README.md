@@ -202,6 +202,41 @@ const withProject: Middleware<
 };
 ```
 
+### 6b. Worker middleware
+
+Two optional conventional files hold plain Hono middleware; both are picked up automatically.
+
+| File | Runs | Sees |
+|------|------|------|
+| `src/worker/middleware.ts` | after CORS/logging, before the plugin context is built | request only |
+| `src/worker/middleware.context.ts` | after the context is built, before any route | `stackContext(c)` |
+
+Put ctx-free guards in the first (they reject before the worker pays for a db client) and anything
+needing `db`/`auth` in the second — including the raw Hono routes it registers, which is how a
+non-RPC endpoint (a multipart upload, a webhook) reaches the same clients the procedures use. Type
+the context with the generated `WorkerContext`, imported type-only:
+
+```ts
+// src/worker/middleware.context.ts
+import { isForbiddenOrigin, stackContext } from "@fcalell/plugin-api/runtime";
+import type { WorkerContext } from "virtual:stack-procedure";
+import { createMiddleware } from "hono/factory";
+
+export default createMiddleware(async (c, next) => {
+  if (c.req.path === "/photos" && c.req.method === "POST") {
+    if (isForbiddenOrigin(c)) return c.json({ code: "FORBIDDEN" }, 403);
+    const { db } = stackContext<WorkerContext>(c);
+    // ...
+  }
+  await next();
+});
+```
+
+`isForbiddenOrigin` is the CSRF guard for those raw routes: the RPC tree gets one for free from its
+JSON-content-type check, a multipart upload does not. It refuses a request whose browser `Origin` is
+off the CORS allow-list, and passes one with no `Origin` at all (a browser cannot forge that
+cross-site; the native client sends none).
+
 ### 7. Client (frontend)
 
 `createClient` from `@fcalell/plugin-api/client` is the canonical way to build a typed client, on web and native alike:
@@ -411,11 +446,13 @@ export const api = plugin("api", {
 |------|------|---------|
 | `api.slots.workerImports` | `list<TsImportSpec>` | Imports for `.stack/worker.ts` |
 | `api.slots.pluginRuntimes` | `list<PluginRuntimeEntry>` | `.use(xRuntime({...}))` entries; `db` and `auth` push here |
-| `api.slots.middlewareEntries` | `list<MiddlewareSpec>` | Hono middleware (phase-ordered) |
-| `api.slots.middlewareCalls` | `derived<TsExpression[]>` | Sorted call expressions from `middlewareEntries` |
+| `api.slots.middlewareEntries` | `list<MiddlewareSpec>` | Hono middleware (phase-ordered); `after-context` mounts after context injection, every other phase before |
+| `api.slots.middlewareCalls` | `derived<MiddlewareCall[]>` | Sorted calls from `middlewareEntries`, each with the method that mounts it (`use` / `useAfterContext`) |
 | `api.slots.middlewareImports` | `derived<TsImportSpec[]>` | Deduplicated middleware imports |
 | `api.slots.routesHandler` | `value<{ identifier } \| null>` | Routes namespace identifier (seeded from `src/worker/routes` existence) |
-| `api.slots.corsOrigins` | `list<string>` | Extra origins (frontend plugins push localhost here) |
+| `api.slots.corsOrigins` | `list<string>` | Extra production origins |
+| `api.slots.devCorsOrigins` | `list<string>` | Dev-server origins (frontend plugins push localhost here); applied only under `STACK_DEV` |
+| `api.slots.routePrefixes` | `list<string>` | URL prefixes the worker owns (api pushes its `prefix`, auth its `/api/auth`); deploy targets read this to mount or forward worker paths |
 | `api.slots.cors` | `derived<string[]>` | Final CORS list — `app.origins` verbatim, or `[https://domain, https://app.domain, ...corsOrigins]` |
 | `api.slots.callbacks` | `map<string, CallbackSpec>` | Plugin-name → callback identifier; spliced onto matching runtime |
 | `api.slots.workerBase` | `derived<TsExpression>` | The `createWorker({...})` call expression |
@@ -452,7 +489,7 @@ createWorker({ domain: "example.com", cors: ["https://example.com"], prefix: "/r
 | Subpath | Purpose |
 |---------|---------|
 | `@fcalell/plugin-api` | `api()`, `ApiOptions`, `ApiError`, `Middleware`, `InferRouter` |
-| `@fcalell/plugin-api/runtime` | `createWorker()`, `AppBuilder`, `WorkerExport`, `ApiWorkerOptions` |
+| `@fcalell/plugin-api/runtime` | `createWorker()`, `AppBuilder`, `WorkerExport`, `ApiWorkerOptions`, `stackContext()`, `isForbiddenOrigin()` |
 | `@fcalell/plugin-api/procedure` | `createProcedure()`, `Middleware`, `ProcedureConfig`, `STACK_READS_HEADER`, `STACK_WRITES_HEADER` -- what the generated `.stack/procedure.ts` (`virtual:stack-procedure`) imports |
 | `@fcalell/plugin-api/error` | `ApiError` -- worker-safe (no Node-only deps); import this from route files |
 | `@fcalell/cli/runtime` | `RuntimePlugin` |

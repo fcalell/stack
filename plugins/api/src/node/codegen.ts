@@ -6,7 +6,7 @@ import {
 	type TsSourceFile,
 	type TsStatement,
 } from "@fcalell/cli/ast";
-import type { MiddlewarePayload, WorkerPayload } from "./types";
+import type { MiddlewareCall, MiddlewarePayload, WorkerPayload } from "./types";
 
 // ── aggregateWorker ─────────────────────────────────────────────────
 //
@@ -58,8 +58,8 @@ export function aggregateWorker(payload: WorkerPayload): string {
 		for (const mw of payload.middlewareChain) {
 			chain = {
 				kind: "call",
-				callee: { kind: "member", object: chain, property: "use" },
-				args: [mw],
+				callee: { kind: "member", object: chain, property: mw.method },
+				args: [mw.call],
 			};
 		}
 		if (payload.handler) {
@@ -113,6 +113,7 @@ const MIDDLEWARE_PHASE_ORDER: Record<
 	"after-cors": 1,
 	"before-routes": 2,
 	"after-routes": 3,
+	"after-context": 4,
 };
 
 // Returns the ordered middleware call expressions plus the imports needed
@@ -124,7 +125,7 @@ const MIDDLEWARE_PHASE_ORDER: Record<
 // < after-routes); secondary key is `order` (ascending). Stable within ties.
 export function aggregateMiddleware(payload: MiddlewarePayload): {
 	imports: TsImportSpec[];
-	calls: TsExpression[];
+	calls: MiddlewareCall[];
 } {
 	if (payload.entries.length === 0) return { imports: [], calls: [] };
 
@@ -137,7 +138,10 @@ export function aggregateMiddleware(payload: MiddlewarePayload): {
 		return a.idx - b.idx;
 	});
 
-	const calls = indexed.map(({ entry }) => entry.call);
+	const calls: MiddlewareCall[] = indexed.map(({ entry }) => ({
+		call: entry.call,
+		method: entry.phase === "after-context" ? "useAfterContext" : "use",
+	}));
 	const imports = dedupeImports(indexed.flatMap(({ entry }) => entry.imports));
 	return { imports, calls };
 }

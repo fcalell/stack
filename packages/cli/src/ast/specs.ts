@@ -170,6 +170,14 @@ export type ProviderSpec = {
 export type MiddlewareSpec = {
 	imports: TsImportSpec[];
 	call: TsExpression; // must be a call expression
-	phase: "before-cors" | "after-cors" | "before-routes" | "after-routes";
+	// Every phase but "after-context" mounts before the worker injects its
+	// plugin context; "after-context" mounts after, and is the only one whose
+	// middleware can read `db`/`auth`.
+	phase:
+		| "before-cors"
+		| "after-cors"
+		| "before-routes"
+		| "after-routes"
+		| "after-context";
 	order: number;
 };

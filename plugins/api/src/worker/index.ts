@@ -5,7 +5,7 @@ import {
 	RequestHeadersPlugin,
 	ResponseHeadersPlugin,
 } from "@orpc/server/plugins";
-import { Hono, type MiddlewareHandler } from "hono";
+import { type Context, Hono, type MiddlewareHandler } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { secureHeaders } from "hono/secure-headers";
@@ -56,6 +56,10 @@ interface FnEntry {
 
 interface MiddlewareEntry {
 	middleware: MiddlewareHandler;
+	// Where the entry mounts relative to context injection. Registered via
+	// `.useAfterContext()`, it runs once `__stackCtx` exists, so a raw Hono
+	// route reaches `db`/`auth` instead of rebuilding its own clients.
+	afterContext?: boolean;
 }
 
 type UseEntry = PluginEntry | FnEntry | MiddlewareEntry;
@@ -141,6 +145,8 @@ export interface AppBuilder<TContext extends Record<string, unknown>> {
 	use<TExtra extends Record<string, unknown>>(
 		fn: (ctx: TContext) => TExtra | Promise<TExtra>,
 	): AppBuilder<TContext & TExtra>;
+
+	useAfterContext(middleware: MiddlewareHandler): AppBuilder<TContext>;
 
 	handler<TRoutes extends Record<string, unknown>>(
 		consumerRoutes?: TRoutes,
@@ -239,6 +245,13 @@ function createAppBuilder<TContext extends Record<string, unknown>>(
 			return createAppBuilder<any>(newEntries, apiOptions);
 		},
 
+		useAfterContext(middleware: MiddlewareHandler) {
+			return createAppBuilder<TContext>(
+				[...entries, { middleware, afterContext: true }],
+				apiOptions,
+			);
+		},
+
 		handler<TRoutes extends Record<string, unknown>>(
 			consumerRoutes?: TRoutes,
 		): WorkerExport<TRoutes> {
@@ -305,7 +318,10 @@ function createAppBuilder<TContext extends Record<string, unknown>>(
 			});
 
 			const app = new Hono<{
-				Variables: { __stackCtx: Record<string, unknown> };
+				Variables: {
+					__stackCtx: Record<string, unknown>;
+					__stackOrigins: string[];
+				};
 			}>();
 
 			// CORS must run first so preflights and error responses always carry
@@ -352,7 +368,7 @@ function createAppBuilder<TContext extends Record<string, unknown>>(
 			// (cors / logger / secureHeaders / liveness) and BEFORE context
 			// injection, matching the ordering plugins expect.
 			for (const entry of sortedEntries) {
-				if (isMiddlewareEntry(entry)) {
+				if (isMiddlewareEntry(entry) && !entry.afterContext) {
 					app.use("*", entry.middleware);
 				}
 			}
@@ -400,9 +416,21 @@ function createAppBuilder<TContext extends Record<string, unknown>>(
 					if (claimed) return claimed;
 				}
 
+				c.set("__stackOrigins", effectiveOrigins(env));
 				c.set("__stackCtx", ctx);
 				await next();
 			});
+
+			// Post-context middleware. Mounted here — after injection, before
+			// any route — so it can read `__stackCtx` (see `stackContext`);
+			// everything above it runs with no context at all. A path a plugin
+			// runtime claims in its own `fetch` (auth's `/api/auth`) returns
+			// inside the middleware above and never reaches this.
+			for (const entry of sortedEntries) {
+				if (isMiddlewareEntry(entry) && entry.afterContext) {
+					app.use("*", entry.middleware);
+				}
+			}
 
 			app.post(`${rpcPrefix}/*`, async (c) => {
 				// oRPC parses a request with a *missing* Content-Type as JSON, and
@@ -473,4 +501,40 @@ function createAppBuilder<TContext extends Record<string, unknown>>(
 			};
 		},
 	} as AppBuilder<TContext>;
+}
+
+// ---------- Consumer helpers ----------
+
+// The injected plugin context (`db`, `auth`, `env`, …), for post-context
+// middleware and raw Hono routes. Annotate the call with the generated
+// `WorkerContext` to get the same typed context a procedure handler sees.
+export function stackContext<
+	TContext extends Record<string, unknown> = BaseContext,
+>(c: Context): TContext {
+	const ctx = c.get("__stackCtx") as TContext | undefined;
+	if (!ctx) {
+		throw new Error(
+			"stackContext: no context on this request. Register the middleware with .useAfterContext() (src/worker/middleware.context.ts), not .use().",
+		);
+	}
+	return ctx;
+}
+
+// CSRF guard for state-changing raw routes, which bypass the RPC tree's
+// JSON-content-type check (a multipart R2 upload, say). True when the request
+// carries a browser Origin that is not on the effective allow-list — which
+// includes the dev origins only under STACK_DEV, and is empty (so no browser
+// origin passes) on a worker configured without CORS at all. A request with NO
+// Origin passes: a browser cannot drive one cross-site, and the native client
+// sends none.
+export function isForbiddenOrigin(c: Context): boolean {
+	const origin = c.req.header("origin");
+	if (!origin) return false;
+	const allowed = c.get("__stackOrigins") as string[] | undefined;
+	if (!allowed) {
+		throw new Error(
+			"isForbiddenOrigin: no origin list on this request. Register the middleware with .useAfterContext() (src/worker/middleware.context.ts), not .use().",
+		);
+	}
+	return !allowed.includes(origin);
 }

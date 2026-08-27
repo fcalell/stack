@@ -49,10 +49,19 @@ export interface WorkerPayload {
 	imports: TsImportSpec[];
 	base: TsExpression | null;
 	pluginRuntimes: PluginRuntimeEntry[];
-	middlewareChain: TsExpression[];
+	middlewareChain: MiddlewareCall[];
 	handler: { identifier: string } | null;
 	// Keyed by plugin name, matching `PluginRuntimeEntry.plugin`.
 	callbacks: Record<string, CallbackSpec>;
+}
+
+// A middleware call plus the builder method that mounts it: `use` before the
+// worker injects its plugin context, `useAfterContext` after (the only side
+// that can read `db`/`auth`). One type so `worker.ts` and `procedure.ts`
+// rebuild the identical chain.
+export interface MiddlewareCall {
+	call: TsExpression;
+	method: "use" | "useAfterContext";
 }
 
 // Collects ordered middleware call expressions plus the imports they need.

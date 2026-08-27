@@ -18,7 +18,8 @@ my-app/
       plugins/
         auth.ts              # auth.defineCallbacks() — runtime callbacks
       routes/                # business logic (procedures; barrel generated to index.ts)
-      middleware.ts          # optional custom middleware (auto-wired via api.slots.middlewareEntries)
+      middleware.ts          # optional Hono middleware, before context injection (auto-wired via api.slots.middlewareEntries)
+      middleware.context.ts  # optional Hono middleware, after it — reaches db/auth via stackContext(c)
     server/                  # node target only
       services/              # background services (barrel generated to index.ts);
                              # each module default-exports a defineService(...)

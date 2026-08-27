@@ -54,11 +54,12 @@ e.g. consulting `ctx.fileExists` before writing.
 |------|------|---------|
 | `workerImports` | `list<TsImportSpec>` | Imports for `.stack/worker.ts` |
 | `pluginRuntimes` | `list<PluginRuntimeEntry>` | Runtime entries that become `.use(xRuntime({...}))` calls |
-| `middlewareEntries` | `list<MiddlewareSpec>` | Hono middleware (phase-ordered) |
-| `middlewareCalls` | `derived<TsExpression[]>` | Sorted call expressions derived from `middlewareEntries` |
+| `middlewareEntries` | `list<MiddlewareSpec>` | Hono middleware (phase-ordered); the `after-context` phase mounts after the worker injects its plugin context, every other phase before |
+| `middlewareCalls` | `derived<MiddlewareCall[]>` | Sorted calls derived from `middlewareEntries`, each with the builder method that mounts it (`use` / `useAfterContext`) |
 | `middlewareImports` | `derived<TsImportSpec[]>` | Deduplicated imports for middleware |
 | `routesHandler` | `value<{ identifier } \| null>` | Routes namespace identifier (seeded from `src/worker/routes` existence) |
-| `corsOrigins` | `list<string>` | Extra CORS origins (frontend plugins push localhost here) |
+| `corsOrigins` | `list<string>` | Extra production CORS origins |
+| `devCorsOrigins` | `list<string>` (sorted) | Dev-server origins (vite, metro); emitted as `createWorker({ devCors })` and honoured only when the worker runs with `STACK_DEV`, so a deploy never trusts localhost |
 | `routePrefixes` | `list<string>` | URL prefixes the worker owns (api contributes its `prefix`); deploy targets read this to mount/forward worker paths |
 | `cors` | `derived<string[]>` | Final CORS list — `app.origins` verbatim, or `[https://domain, https://app.domain, ...corsOrigins]` |
 | `callbacks` | `map<string, CallbackSpec>` | Plugin-name → callback identifier; spliced onto matching runtime's options |

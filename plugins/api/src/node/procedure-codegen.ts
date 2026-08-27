@@ -4,7 +4,11 @@ import {
 	type TsExpression,
 	type TsImportSpec,
 } from "@fcalell/cli/ast";
-import { type PluginRuntimeEntry, ROUTES_BARREL_IMPORT_SOURCE } from "./types";
+import {
+	type MiddlewareCall,
+	type PluginRuntimeEntry,
+	ROUTES_BARREL_IMPORT_SOURCE,
+} from "./types";
 
 // ── aggregateProcedure ────────────────────────────────────────────────
 //
@@ -50,7 +54,7 @@ export interface ProcedurePayload {
 	imports: TsImportSpec[];
 	// Same `middlewareCalls` the real worker's `.use(...)` chain mounts, in
 	// the same (phase + order sorted) sequence. See the cycle note above.
-	middlewareChain: TsExpression[];
+	middlewareChain: MiddlewareCall[];
 	// Imports the middleware call expressions need (e.g. the consumer's
 	// default-exported `middleware` identifier). Never the route barrel — a
 	// middleware file importing the barrel back would itself be a cycle, but
@@ -139,7 +143,7 @@ function renderEntityType(entities: readonly string[]): string {
 function buildChain(
 	base: TsExpression,
 	runtimes: PluginRuntimeEntry[],
-	middlewareChain: TsExpression[],
+	middlewareChain: MiddlewareCall[],
 ): { chain: TsExpression; imports: TsImportSpec[] } {
 	let chain = base;
 	const imports: TsImportSpec[] = [];
@@ -163,8 +167,8 @@ function buildChain(
 	for (const mw of middlewareChain) {
 		chain = {
 			kind: "call",
-			callee: { kind: "member", object: chain, property: "use" },
-			args: [mw],
+			callee: { kind: "member", object: chain, property: mw.method },
+			args: [mw.call],
 		};
 	}
 	return { chain, imports };
@@ -204,7 +208,10 @@ export function aggregateProcedure(payload: ProcedurePayload): string | null {
 // without re-deriving each runtime factory's generics by hand. Never
 // exported or called further — only its type is used below.
 type ContextOf<B> = B extends AppBuilder<infer C> ? C : never;
-type WorkerContext = ContextOf<typeof __chain>;
+// Exported so post-context middleware can type \`stackContext<WorkerContext>(c)\`.
+// Import it type-only: this module imports the middleware file back, and only
+// erasure keeps that from being a real cycle.
+export type WorkerContext = ContextOf<typeof __chain>;
 type RbacStatements = ${statementsType};
 type Entity = ${entityType};
 

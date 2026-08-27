@@ -15,6 +15,7 @@ import { aggregateMiddleware, aggregateWorker } from "./node/codegen";
 import { aggregateProcedure } from "./node/procedure-codegen";
 import {
 	type CallbackSpec,
+	type MiddlewareCall,
 	type PluginRuntimeEntry,
 	ROUTES_BARREL_IMPORT_SOURCE,
 	type WorkerPayload,
@@ -66,12 +67,13 @@ const middlewareEntries = slot.list<MiddlewareSpec>({
 	name: "middlewareEntries",
 });
 
-// Derived view of middleware: sorted call expressions.
+// Derived view of middleware: sorted calls, each carrying the builder method
+// that mounts it (`use` / `useAfterContext`).
 const middlewareCalls = slot.derived({
 	source: SOURCE,
 	name: "middlewareCalls",
 	inputs: { entries: middlewareEntries },
-	compute: (inp): TsExpression[] =>
+	compute: (inp): MiddlewareCall[] =>
 		aggregateMiddleware({ entries: inp.entries }).calls,
 });
 
@@ -413,9 +415,13 @@ export const api = plugin("api", {
 			};
 		}),
 
-		// Consumer middleware is an implicit contribution via the conventional
-		// file `src/worker/middleware.ts`. Published via `middlewareEntries` so
-		// third-party plugins can interleave middleware around it.
+		// Consumer middleware is an implicit contribution via two conventional
+		// files, each published via `middlewareEntries` so third-party plugins
+		// can interleave middleware around them.
+		//
+		// `middleware.ts` runs before context injection: the cheap, ctx-free
+		// guards (a header check, a redirect) that should reject a request
+		// before the worker pays for a db client.
 		self.slots.middlewareEntries.contribute(async (ctx) => {
 			const hasMiddleware = await ctx.fileExists("src/worker/middleware.ts");
 			if (!hasMiddleware) return undefined;
@@ -428,6 +434,25 @@ export const api = plugin("api", {
 				],
 				call: { kind: "identifier", name: "middleware" },
 				phase: "before-routes",
+				order: 100,
+			} as MiddlewareSpec;
+		}),
+
+		// `middleware.context.ts` runs after it, so it and the raw Hono routes
+		// it registers reach `db`/`auth` through `stackContext(c)` instead of
+		// rebuilding their own clients.
+		self.slots.middlewareEntries.contribute(async (ctx) => {
+			const has = await ctx.fileExists("src/worker/middleware.context.ts");
+			if (!has) return undefined;
+			return {
+				imports: [
+					{
+						source: "../src/worker/middleware.context",
+						default: "contextMiddleware",
+					},
+				],
+				call: { kind: "identifier", name: "contextMiddleware" },
+				phase: "after-context",
 				order: 100,
 			} as MiddlewareSpec;
 		}),

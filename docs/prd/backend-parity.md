@@ -146,7 +146,7 @@ pinned security params stay pinned.
 **Verify.** Supply a `generateOTP` override returning a fixed code, request an OTP, and verify with
 that code. Read the emitted worker source: the pinned params are still 6/300/3.
 
-### WS4 — runtime fixes (plugin-api, plugin-expo)
+### WS4 — runtime fixes (plugin-api, plugin-expo) — shipped
 
 **4.1 Session errors propagate (API-1).** In the auth middleware, rethrow non-`ORPCError` failures
 so an infra blip is a 500, not a 401 sign-out.
@@ -154,9 +154,12 @@ so an infra blip is a 500, not a 401 sign-out.
 the response is 500. Call the same route with no session cookie: 401.
 
 **4.2 Consumer middleware after context (API-2).** Give consumer middleware a phase that runs after
-context injection so raw routes reach `db`/`auth`, and export the origin-CSRF helper. Decision in
-the milestone: second entry point versus moving the existing phase; default to a documented second
-phase so existing consumers keep their ordering.
+context injection so raw routes reach `db`/`auth`, and export the origin-CSRF helper.
+**Settled:** the second entry point. `MiddlewareSpec` gained an `after-context` phase, the runtime a
+`.useAfterContext()` mount point, and the consumer a second conventional file,
+`src/worker/middleware.context.ts`; `src/worker/middleware.ts` keeps its pre-context ordering
+untouched. `stackContext(c)` and `isForbiddenOrigin(c)` ship from `@fcalell/plugin-api/runtime`,
+and `.stack/procedure.ts` now exports `WorkerContext` to type the first.
 **Verify.** Register a consumer middleware in the post-context phase and log `db` from a raw route:
 it is defined. Call that route with a disallowed `Origin` header and confirm the exported CSRF
 helper rejects it.
