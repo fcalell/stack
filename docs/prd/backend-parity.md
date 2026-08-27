@@ -120,7 +120,7 @@ that column through a worker route: the change is live without a restart. Confir
 was never created. Before this milestone lands, `stack db push` on d1 exits with the pointer message
 and writes nothing.
 
-### WS3 — plugin-auth surface — shipped
+### WS3 — plugin-auth surface (shipped; Verify runs pending)
 
 **3.1 Expo client cookie prefix (AUTH-2).** Forward the consumer cookie prefix to `expoClient()`.
 One line plus a config field; session-critical for every native consumer.
@@ -142,7 +142,9 @@ hook and `session.freshAge` support. The hook contents (veto, revocation, cleanu
 code.
 **Settled:** `user.deleteUser` (a boolean option, off by default) enables the endpoint,
 `session.freshAge` is a plain numeric option, and `beforeDelete` is a fourth entry in the
-callback file.
+callback file. Review follow-up: `freshAge: 0` disables the freshness check outright, so the
+passwordless path is the `sendDeleteVerification` callback (better-auth's emailed confirmation
+link, no freshness requirement) rather than `0`.
 **Verify.** Against a dev worker, delete a user and confirm the `beforeDelete` hook runs. Make the
 hook throw and confirm the deletion is refused. With `freshAge: 0`, confirm a passwordless account
 deletes.
@@ -156,7 +158,7 @@ awaited.
 **Verify.** Supply a `generateOTP` override returning a fixed code, request an OTP, and verify with
 that code. Read the emitted worker source: the pinned params are still 6/300/3.
 
-### WS4 — runtime fixes (plugin-api, plugin-expo) — shipped
+### WS4 — runtime fixes (plugin-api, plugin-expo) (shipped; Verify runs pending)
 
 **4.1 Session errors propagate (API-1).** In the auth middleware, rethrow non-`ORPCError` failures
 so an infra blip is a 500, not a 401 sign-out.
@@ -180,7 +182,7 @@ cookie `sameSite` choice from localhost detection: derive it from the expo optio
 **Settled:** a new `api.slots.devCorsOrigins` list carries the vite/metro origins, emitted as
 `createWorker({ devCors })` and `authRuntime({ devTrustedOrigins })` and appended by each runtime
 only under `STACK_DEV`. `sameSite: "none"` is baked from the expo option alone, and the auth
-runtime widens it to `none` while the dev origins are live — without that, a web consumer on
+runtime widens it to `none` while the dev origins are live; without that, a web consumer on
 cross-origin localhost dev would silently lose its session cookie.
 **Verify.** Boot the worker with `STACK_DEV` unset and send a preflight from
 `http://localhost:5173`: it is rejected, and the emitted cookie `sameSite` still matches the expo
@@ -195,7 +197,7 @@ dev-proxy gap plugin-api's comment already expects.
 **Verify.** With auth in the config, run `stack generate` and read the emitted vite config:
 `/api/auth` is proxied to the worker. Remove auth, regenerate, and confirm the prefix is gone.
 
-### WS5 — wire compatibility (WIRE-1..3) — shipped
+### WS5 — wire compatibility (WIRE-1..3) (shipped; Verify runs pending)
 
 The default position held, chosen against a header-name option (philosophy: options are the last
 resort, and the framework should not carry every consumer's legacy names):

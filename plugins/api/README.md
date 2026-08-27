@@ -212,7 +212,7 @@ Two optional conventional files hold plain Hono middleware; both are picked up a
 | `src/worker/middleware.context.ts` | after the context is built, before any route | `stackContext(c)` |
 
 Put ctx-free guards in the first (they reject before the worker pays for a db client) and anything
-needing `db`/`auth` in the second — including the raw Hono routes it registers, which is how a
+needing `db`/`auth` in the second, including the raw Hono routes it registers, which is how a
 non-RPC endpoint (a multipart upload, a webhook) reaches the same clients the procedures use. Type
 the context with the generated `WorkerContext`, imported type-only:
 

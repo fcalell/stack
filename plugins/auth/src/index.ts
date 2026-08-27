@@ -30,7 +30,7 @@ const CALLBACK_FILE = "src/worker/plugins/auth.ts";
 // `runtimeOptions` is a DERIVED slot: its inputs are `api.slots.cors` and
 // `api.slots.devCorsOrigins`, so the graph guarantees every origin
 // contribution (including vite's localhost) is resolved BEFORE this compute
-// runs. Bug #5 (auth cors ordering) is structurally impossible here — no
+// runs. Bug #5 (auth cors ordering) is structurally impossible here: no
 // payload to mutate, no handler ordering, just dataflow.
 
 const runtimeOptions = slot.derived({
@@ -117,7 +117,7 @@ const runtimeOptions = slot.derived({
 		};
 
 		// Dev-server origins ride separately and are applied by the runtime
-		// only under STACK_DEV — baking them in here is what let a production
+		// only under STACK_DEV; baking them in here is what let a production
 		// deploy trust localhost.
 		if (inp.devCors.length > 0) {
 			props.devTrustedOrigins = {

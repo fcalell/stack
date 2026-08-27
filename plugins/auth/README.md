@@ -178,8 +178,8 @@ type Session = InferSession<typeof config>;
 | `rateLimiter.ip.limit` | `number` | `100` | Max requests per period (IP) |
 | `rateLimiter.ip.period` | `number` | `60` | Period in seconds (IP) |
 | `rateLimiter.email.binding` | `string` | `"RATE_LIMITER_EMAIL"` | Email rate limiter binding name |
-| `rateLimiter.email.limit` | `number` | `5` | Max requests per period (email) |
-| `rateLimiter.email.period` | `number` | `300` | Period in seconds (email) |
+| `rateLimiter.email.limit` | `number` | `3` | Max requests per period (email) |
+| `rateLimiter.email.period` | `number` | `60` | Period in seconds (email) |
 
 `FieldConfig` shape: `{ type: "string" | "number" | "boolean", required?: boolean, defaultValue?: unknown, input?: boolean }`.
 
@@ -190,9 +190,9 @@ The plugin auto-declares four bindings (contributed via `cloudflare.slots.bindin
 | Binding | Type | Default name | Dev default |
 |---------|------|--------------|-------------|
 | Auth secret | `secret` | `AUTH_SECRET` | `"dev-secret-change-me"` |
-| App URL | `secret` | `APP_URL` | `"http://localhost:3000"` |
+| App URL | `secret` | `APP_URL` | first local dev origin, else `https://<domain>` |
 | IP rate limiter | `rate_limiter` | `RATE_LIMITER_IP` | 100 req / 60s |
-| Email rate limiter | `rate_limiter` | `RATE_LIMITER_EMAIL` | 5 req / 300s |
+| Email rate limiter | `rate_limiter` | `RATE_LIMITER_EMAIL` | 3 req / 60s |
 | OAuth client id | `secret` | `GOOGLE_CLIENT_ID` / `APPLE_CLIENT_ID` | `"dev-oauth-client-id"` (per enabled provider) |
 | OAuth client secret | `secret` | `GOOGLE_CLIENT_SECRET` / `APPLE_CLIENT_SECRET` | `"dev-oauth-client-secret"` (per enabled provider) |
 
@@ -312,7 +312,7 @@ organization, or no membership, returns `{ rules: [] }` rather than an error. `@
 
 ## Plugin implementation
 
-Built with `plugin` from `@fcalell/cli`. Owns one slot — `auth.slots.runtimeOptions` — a derived slot that reads `api.slots.cors` and `api.slots.devCorsOrigins` so `trustedOrigins` is always computed against the fully-resolved CORS list, with the dev-server origins kept in a separate `devTrustedOrigins` the runtime applies only under `STACK_DEV`. `sameSite: "none"` is baked for native consumers (always cross-site) and widened to `none` in dev, where the frontend origin and the worker are cross-origin.
+Built with `plugin` from `@fcalell/cli`. Owns four slots: `runtimeOptions` (derived; reads `api.slots.cors` and `api.slots.devCorsOrigins` so `trustedOrigins` is always computed against the fully-resolved CORS list, with the dev-server origins kept in a separate `devTrustedOrigins` the runtime applies only under `STACK_DEV`), `appUrlDevDefault` (the `.dev.vars` default for `APP_URL`, derived from the first local dev origin), `callbackFile` (the consumer callback-file path), and `cookiePrefix` (the resolved session-cookie prefix native-ui's generated constants read). `sameSite: "none"` is baked for native consumers (always cross-site) and widened to `none` in dev, where the frontend origin and the worker are cross-origin.
 
 ```ts
 import { plugin, slot, callback } from "@fcalell/cli";

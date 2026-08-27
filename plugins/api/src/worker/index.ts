@@ -343,7 +343,7 @@ function createAppBuilder<TContext extends Record<string, unknown>>(
 					cors({
 						// A function, not the array: the allow-list depends on
 						// env (dev origins), which Hono only hands over per
-						// request. Wildcard keeps the array form's meaning —
+						// request. Wildcard keeps the array form's meaning:
 						// `["*"]` answers every origin with `*`.
 						origin: (requestOrigin, c) => {
 							const allowed = effectiveOrigins(c.env);
@@ -421,8 +421,8 @@ function createAppBuilder<TContext extends Record<string, unknown>>(
 				await next();
 			});
 
-			// Post-context middleware. Mounted here — after injection, before
-			// any route — so it can read `__stackCtx` (see `stackContext`);
+			// Post-context middleware. Mounted here, after injection and
+			// before any route, so it can read `__stackCtx` (see `stackContext`);
 			// everything above it runs with no context at all. A path a plugin
 			// runtime claims in its own `fetch` (auth's `/api/auth`) returns
 			// inside the middleware above and never reaches this.
@@ -522,7 +522,7 @@ export function stackContext<
 
 // CSRF guard for state-changing raw routes, which bypass the RPC tree's
 // JSON-content-type check (a multipart R2 upload, say). True when the request
-// carries a browser Origin that is not on the effective allow-list — which
+// carries a browser Origin that is not on the effective allow-list, which
 // includes the dev origins only under STACK_DEV, and is empty (so no browser
 // origin passes) on a worker configured without CORS at all. A request with NO
 // Origin passes: a browser cannot drive one cross-site, and the native client

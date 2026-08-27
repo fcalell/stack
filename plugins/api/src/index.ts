@@ -113,7 +113,7 @@ const corsOrigins = slot.list<string>({
 
 // Dev-only origins: the localhost dev servers frontend plugins run (vite,
 // metro). Kept out of `cors` because that list is baked into the deployed
-// worker — a production deploy that accepts credentialed localhost origins is
+// worker: a production deploy that accepts credentialed localhost origins is
 // an open door. The runtime appends these only when `STACK_DEV` is set.
 const devCorsOrigins = slot.list<string>({
 	source: SOURCE,

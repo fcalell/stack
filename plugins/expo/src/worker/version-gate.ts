@@ -17,11 +17,11 @@ export { CLIENT_BUILD_HEADER, CLIENT_PLATFORM_HEADER };
 const BUILD_NUMBER_RE = /^\d+$/;
 
 // A stranded user must still be able to re-auth after updating, so the auth
-// surface is never walled — even though it is one of the worker's own route
+// surface is never walled, even though it is one of the worker's own route
 // prefixes.
 const AUTH_PREFIX = "/api/auth";
 
-// Exact match or a real sub-path (`/rpc/trips.list`) — NOT a mere prefix
+// Exact match or a real sub-path (`/rpc/trips.list`), not a mere prefix
 // look-alike like `/rpcX`, which `startsWith("/rpc")` would wrongly match.
 function isWithin(pathname: string, prefix: string): boolean {
 	return pathname === prefix || pathname.startsWith(`${prefix}/`);

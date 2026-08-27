@@ -38,7 +38,7 @@ interface RateLimitBinding {
 }
 
 // Consumer-implemented hooks. `AuthCallbackPayloads` (`../types`) is the
-// single source for the payload shapes — see that type's doc comment. Pass the
+// single source for the payload shapes; see that type's doc comment. Pass the
 // worker's own `Env` (`AuthCallbacks<Env>`) to type the `env` every payload
 // carries.
 //

@@ -45,7 +45,7 @@ true.
 
 The same flag gates the dev-server origins. `api.slots.devCorsOrigins` (vite's and metro's
 localhost) is emitted as `createWorker({ devCors })` and `authRuntime({ devTrustedOrigins })`,
-separate from the production lists, and each runtime appends it only when `STACK_DEV` is set —
+separate from the production lists, and each runtime appends it only when `STACK_DEV` is set,
 so the deployed worker refuses a credentialed localhost origin. Auth also widens its cookie
 `sameSite` to `none` while those dev origins are live.
 
