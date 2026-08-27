@@ -5,6 +5,7 @@ import { literalToProps } from "@fcalell/cli/ast";
 import { cliSlots } from "@fcalell/cli/cli-slots";
 import type { PluginRuntimeEntry } from "@fcalell/plugin-api";
 import { api } from "@fcalell/plugin-api";
+import { isLocalOrigin } from "@fcalell/plugin-api/lib/local-origin";
 import { cloudflare } from "@fcalell/plugin-cloudflare";
 import { defaultOrgStatements, getStatements } from "./access";
 import {
@@ -23,33 +24,6 @@ const SOURCE = "auth";
 // in sync. Exposed on `auth.slots.callbackFile` so advanced consumers can
 // override without string drift.
 const CALLBACK_FILE = "src/worker/plugins/auth.ts";
-
-// Local-dev hostnames that should trigger `sameSite=none` and count as a
-// "frontend-present dev origin" for APP_URL derivation. Matched against
-// `new URL(origin).hostname` — note that `URL` preserves IPv6 brackets on
-// `.hostname` ("[::1]" not "::1"), so we list the bracketed form too.
-const LOCAL_HOSTNAMES = new Set([
-	"localhost",
-	"127.0.0.1",
-	"[::1]",
-	"::1",
-	"0.0.0.0",
-]);
-
-function isLocalOrigin(origin: string): boolean {
-	try {
-		const { hostname } = new URL(origin);
-		if (LOCAL_HOSTNAMES.has(hostname)) return true;
-		// Covers `*.localhost` (RFC 6761 reserved), `*.localdomain`
-		// (common on Linux /etc/hosts), and `localhost.localdomain`.
-		if (hostname.endsWith(".localhost")) return true;
-		if (hostname.endsWith(".localdomain")) return true;
-		if (hostname === "localhost.localdomain") return true;
-		return false;
-	} catch {
-		return false;
-	}
-}
 
 // ── Slot declarations ──────────────────────────────────────────────
 //

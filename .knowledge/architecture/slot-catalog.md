@@ -59,9 +59,9 @@ e.g. consulting `ctx.fileExists` before writing.
 | `middlewareImports` | `derived<TsImportSpec[]>` | Deduplicated imports for middleware |
 | `routesHandler` | `value<{ identifier } \| null>` | Routes namespace identifier (seeded from `src/worker/routes` existence) |
 | `corsOrigins` | `list<string>` | Extra production CORS origins |
-| `devCorsOrigins` | `list<string>` (sorted) | Dev-server origins (vite, metro); emitted as `createWorker({ devCors })` and honoured only when the worker runs with `STACK_DEV`, so a deploy never trusts localhost |
+| `devCorsOrigins` | `list<string>` (sorted) | Dev-server origins (vite, metro, plus local origins api partitions out of an explicit `app.origins`); emitted as `createWorker({ devCors })` and honoured only when the worker runs with `STACK_DEV`, so a deploy never trusts localhost |
 | `routePrefixes` | `list<string>` | URL prefixes the worker owns (api contributes its `prefix`, auth its `/api/auth`); deploy targets read this to mount/forward worker paths, and plugin-expo's version gate walls only paths inside one |
-| `cors` | `derived<string[]>` | Final CORS list — `app.origins` verbatim, or `[https://domain, https://app.domain, ...corsOrigins]` |
+| `cors` | `derived<string[]>` | Final production CORS list: `app.origins` minus local origins, or `[https://domain, https://app.domain, ...corsOrigins]` |
 | `callbacks` | `map<string, CallbackSpec>` | Plugin-name → callback identifier; spliced onto matching runtime's options |
 | `workerBase` | `derived<TsExpression>` | The `createWorker({...})` call expression |
 | `workerSource` | `derived<string \| null>` | Final `.stack/worker.ts` source; null when neither runtimes nor routes are present |
@@ -194,7 +194,7 @@ lives with that plugin.
   duplicate `binding` names and fails fast.
 - `HtmlInjection`: `title` / `meta` / `link` / `script` / `html-attr`.
 - `ProviderSpec`: `{ imports, wrap?, siblings?, order }` for JSX provider composition.
-- `MiddlewareSpec`: `{ imports, call, phase: "before-cors" | "after-cors" | "before-routes" | "after-routes", order }`.
+- `MiddlewareSpec`: `{ imports, call, phase: "before-cors" | "after-cors" | "before-routes" | "after-routes" | "after-context", order }`.
 - `PluginRuntimeEntry`: `{ plugin, import, identifier, options? }` describing a `.use(xRuntime(opts))` call.
 - `ProcessSpec`, `WatcherSpec`, `BuildStep`, `DeployStep`, `DeployCheck`, `PromptSpec`,
   `DevReadyTask`, `GeneratedFile`: exported from `@fcalell/cli/specs`. `ProcessSpec.env` merges

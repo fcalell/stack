@@ -29,7 +29,7 @@ export default defineConfig({
 });
 ```
 
-The `api` plugin has no required dependencies -- it can be used standalone, though most setups pair it with `db` and `auth`. CORS origins are derived from `app.domain` (and the vite dev port, when a frontend plugin is active); override with `app.origins`.
+The `api` plugin has no required dependencies -- it can be used standalone, though most setups pair it with `db` and `auth`. CORS origins are derived from `app.domain` (and the vite dev port, when a frontend plugin is active); override with `app.origins`. Local origins in an explicit `app.origins` (localhost, 127.0.0.1, `*.localhost`) count as dev origins: they are honoured only under `STACK_DEV` and never reach the deployed allow-list.
 
 ### 2. Worker (generated)
 
@@ -490,7 +490,7 @@ export const api = plugin("api", {
 | `api.slots.corsOrigins` | `list<string>` | Extra production origins |
 | `api.slots.devCorsOrigins` | `list<string>` | Dev-server origins (frontend plugins push localhost here); applied only under `STACK_DEV` |
 | `api.slots.routePrefixes` | `list<string>` | URL prefixes the worker owns (api pushes its `prefix`, auth its `/api/auth`); deploy targets read this to mount or forward worker paths |
-| `api.slots.cors` | `derived<string[]>` | Final CORS list — `app.origins` verbatim, or `[https://domain, https://app.domain, ...corsOrigins]` |
+| `api.slots.cors` | `derived<string[]>` | Final production CORS list: `app.origins` minus local origins, or `[https://domain, https://app.domain, ...corsOrigins]` |
 | `api.slots.callbacks` | `map<string, CallbackSpec>` | Plugin-name → callback identifier; spliced onto matching runtime |
 | `api.slots.workerBase` | `derived<TsExpression>` | The `createWorker({...})` call expression |
 | `api.slots.workerSource` | `derived<string \| null>` | Final `.stack/worker.ts` source; null when no runtimes are present |

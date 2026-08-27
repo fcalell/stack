@@ -100,7 +100,7 @@ export default defineConfig({
 `app.name` flows into the generated `wrangler.toml` and is the fallback `<title>`; `app.domain`
 drives the seed of `api.slots.cors` (`https://${domain}` + `https://app.${domain}`, plus the vite
 dev-port localhost origin contributed by `plugin-vite` when present) and auth's derived
-`trustedOrigins`. Set `app.origins` to override the derived allow-list entirely. HTML `<head>`
+`trustedOrigins`. Set `app.origins` to override the derived allow-list entirely; local origins in the list are dev-only (honoured under `STACK_DEV`, stripped from the deploy). HTML `<head>`
 metadata is owned by `plugin-solid` via `solid.slots.htmlHead`; a worker-only project needs none of
 it.
 

@@ -10,6 +10,7 @@ import type {
 import { cliSlots, emitArtifact } from "@fcalell/cli/cli-slots";
 import { cloudflare } from "@fcalell/plugin-cloudflare";
 import { z } from "zod";
+import { isLocalOrigin } from "./lib/local-origin";
 import { generateRouteBarrel, hasRoutableFiles } from "./node/barrel";
 import { aggregateMiddleware, aggregateWorker } from "./node/codegen";
 import { aggregateProcedure } from "./node/procedure-codegen";
@@ -150,9 +151,13 @@ const cors = slot.derived({
 	name: "cors",
 	inputs: { extras: corsOrigins },
 	compute: (inp, ctx): string[] => {
+		// Local origins in an explicit list are dev origins: they move to
+		// `devCorsOrigins` (see the contribution below) so the deployed
+		// worker never trusts localhost, and the runtime re-admits them
+		// under STACK_DEV.
 		const result =
 			ctx.app.origins !== undefined
-				? ctx.app.origins
+				? ctx.app.origins.filter((origin) => !isLocalOrigin(origin))
 				: [
 						`https://${ctx.app.domain}`,
 						`https://app.${ctx.app.domain}`,
@@ -390,6 +395,13 @@ export const api = plugin("api", {
 		// The oRPC prefix is a worker-owned URL space; deploy targets read
 		// routePrefixes to mount or forward it.
 		self.slots.routePrefixes.contribute(() => self.options.prefix),
+		// The dev half of the explicit-origins partition: local origins the
+		// consumer listed in `app.origins` are honoured, but only under
+		// STACK_DEV. The `cors` derivation above strips them from the baked
+		// production list.
+		self.slots.devCorsOrigins.contribute((ctx) =>
+			ctx.app.origins?.filter(isLocalOrigin),
+		),
 		// Always import `createWorker` — the base call uses it verbatim.
 		self.slots.workerImports.contribute(
 			(): TsImportSpec => ({

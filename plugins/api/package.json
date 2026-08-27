@@ -17,6 +17,7 @@
 		"./node/codegen": "./src/node/codegen.ts",
 		"./node/types": "./src/node/types.ts",
 		"./lib/cursor": "./src/lib/cursor.ts",
+		"./lib/local-origin": "./src/lib/local-origin.ts",
 		"./lib/slugify": "./src/lib/slugify.ts"
 	},
 	"license": "MIT",
