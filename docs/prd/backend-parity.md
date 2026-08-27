@@ -120,7 +120,7 @@ that column through a worker route: the change is live without a restart. Confir
 was never created. Before this milestone lands, `stack db push` on d1 exits with the pointer message
 and writes nothing.
 
-### WS3 — plugin-auth surface (shipped; Verify runs pending)
+### WS3 — plugin-auth surface (shipped; verified 2026-08-27)
 
 **3.1 Expo client cookie prefix (AUTH-2).** Forward the consumer cookie prefix to `expoClient()`.
 One line plus a config field; session-critical for every native consumer.
@@ -158,7 +158,7 @@ awaited.
 **Verify.** Supply a `generateOTP` override returning a fixed code, request an OTP, and verify with
 that code. Read the emitted worker source: the pinned params are still 6/300/3.
 
-### WS4 — runtime fixes (plugin-api, plugin-expo) (shipped; Verify runs pending)
+### WS4 — runtime fixes (plugin-api, plugin-expo) (shipped; verified 2026-08-27)
 
 **4.1 Session errors propagate (API-1).** In the auth middleware, rethrow non-`ORPCError` failures
 so an infra blip is a 500, not a 401 sign-out.
@@ -197,7 +197,7 @@ dev-proxy gap plugin-api's comment already expects.
 **Verify.** With auth in the config, run `stack generate` and read the emitted vite config:
 `/api/auth` is proxied to the worker. Remove auth, regenerate, and confirm the prefix is gone.
 
-### WS5 — wire compatibility (WIRE-1..3) (shipped; Verify runs pending)
+### WS5 — wire compatibility (WIRE-1..3) (shipped; verified 2026-08-27)
 
 The default position held, chosen against a header-name option (philosophy: options are the last
 resort, and the framework should not carry every consumer's legacy names):
@@ -218,6 +218,27 @@ resort, and the framework should not carry every consumer's legacy names):
 RPC call: `x-stack-reads`/`x-stack-writes` and the legacy names are both present. Send a request
 stamped with a below-floor client version to a prefixed route and get 426; send the same to a
 consumer raw route and it passes untouched.
+
+### Verify run notes (2026-08-27)
+
+WS3, WS4, and WS5 ran green against three scratch consumers (web, native, node-target) on a local
+dev worker. Residue: 3.1's on-device sign-in and reload needs a real device or simulator; every
+other step in those blocks is covered. The runs also surfaced work the open workstreams should
+absorb:
+
+- **WS1.1 is a local-dev blocker too**: miniflare rejects the current ratelimit binding shape
+  (`simple` is required), so `wrangler dev` cannot boot an auth consumer until the shape ships.
+  The Verify runs hand-patched the emitted toml.
+- **WS2.1's `migrations_dir` is broken relative to `.stack/`**: wrangler resolves it against the
+  config file's directory, so `d1 migrations apply` looks in `.stack/src/migrations`. The runs
+  symlinked around it. `stack db push` also runs the sqlite push path regardless of dialect.
+- **Init gaps (new, unowned)**: with auth selected, the scaffolded `src/schema/index.ts` lacks the
+  documented `export * from "@fcalell/plugin-auth/schema"`, so the first dev run 500s on every
+  auth route; and the scaffolded consumer misses `drizzle-orm` and `better-sqlite3`, which
+  drizzle-kit needs at generate/push time.
+- **better-auth moved to ^1.7.2** during the runs: the 1.6.14 kysely adapter cannot bundle against
+  the kysely its own peer range resolves. The internals the auth worker leans on are
+  shape-identical in 1.7.2 and re-verified live.
 
 ### WS6 — observability and env parity (WIRE-4, API-4)
 
