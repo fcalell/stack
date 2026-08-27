@@ -58,6 +58,15 @@ export interface AuthCallbacks<TEnv = unknown> {
 	beforeDelete?(
 		payload: AuthCallbackPayloads<TEnv>["beforeDelete"],
 	): void | Promise<void>;
+	// The passwordless-safe deletion path. When implemented, POST
+	// /delete-user emails `url` (a confirmation link) instead of deleting,
+	// and the deletion happens on the link's callback with no session
+	// freshness requirement. Without it, a passwordless consumer is pushed
+	// to `session.freshAge: 0`, which lets any stolen session cookie of any
+	// age delete the account in one request.
+	sendDeleteVerification?(
+		payload: AuthCallbackPayloads<TEnv>["sendDeleteVerification"],
+	): void | Promise<void>;
 	// Replaces the OTP better-auth would generate. Return `undefined` to fall
 	// back to the default for that request, which is how a fixed review-account
 	// code coexists with real codes. Synchronous: better-auth reads the return
@@ -376,6 +385,25 @@ function buildAuth(
 										env,
 									});
 								},
+								// Conditional spread, same reason as generateOTP: an
+								// undefined-valued key would make better-auth treat the
+								// email-verification path as configured.
+								...(options.callbacks?.sendDeleteVerification
+									? {
+											sendDeleteAccountVerification: async (data: {
+												user: unknown;
+												url: string;
+												token: string;
+											}) => {
+												await options.callbacks?.sendDeleteVerification?.({
+													user: data.user as AuthUser,
+													url: data.url,
+													token: data.token,
+													env,
+												});
+											},
+										}
+									: {}),
 							}
 						: undefined,
 				}

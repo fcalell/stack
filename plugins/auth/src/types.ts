@@ -83,9 +83,11 @@ export const authOptionsSchema = z.object({
 				.optional(),
 			updateAge: z.number().optional(),
 			// How recently the session must have been created for better-auth to
-			// treat it as fresh. Deleting an account needs a fresh session, and a
-			// passwordless (OTP or social only) account can never re-authenticate
-			// to refresh one, so those consumers set 0.
+			// treat it as fresh; account deletion without email confirmation needs
+			// a fresh session. 0 disables the check entirely, so any stolen
+			// session cookie of any age can delete the account. Passwordless
+			// consumers should implement the `sendDeleteVerification` callback
+			// (email confirmation, no freshness requirement) instead of 0.
 			freshAge: z
 				.number()
 				.nonnegative({
@@ -100,7 +102,9 @@ export const authOptionsSchema = z.object({
 			additionalFields: z.record(z.string(), fieldConfigSchema).optional(),
 			// Account deletion (App Store 5.1.1(v) requires it for a native app).
 			// Off unless asked for: the endpoint destroys rows. The consumer's
-			// `beforeDelete` callback vetoes or cleans up, and a session older
+			// `beforeDelete` callback vetoes or cleans up. With the
+			// `sendDeleteVerification` callback implemented, deletion goes
+			// through an emailed confirmation link; without it, a session older
 			// than `session.freshAge` is refused.
 			deleteUser: z.boolean().optional(),
 		})
@@ -254,5 +258,11 @@ export interface AuthCallbackPayloads<TEnv = unknown> {
 	sendOTP: { email: string; code: string; env: TEnv };
 	sendInvitation: { email: string; orgName: string; env: TEnv };
 	beforeDelete: { user: AuthUser; request?: Request; env: TEnv };
+	sendDeleteVerification: {
+		user: AuthUser;
+		url: string;
+		token: string;
+		env: TEnv;
+	};
 	generateOTP: { email: string; type: OtpType; env: TEnv };
 }

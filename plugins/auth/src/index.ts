@@ -186,6 +186,8 @@ export const auth = plugin("auth", {
 		sendOTP: callback<AuthCallbackPayloads["sendOTP"]>(),
 		sendInvitation: callback.optional<AuthCallbackPayloads["sendInvitation"]>(),
 		beforeDelete: callback.optional<AuthCallbackPayloads["beforeDelete"]>(),
+		sendDeleteVerification:
+			callback.optional<AuthCallbackPayloads["sendDeleteVerification"]>(),
 		// Read synchronously by better-auth, and `undefined` means "use the
 		// default generator for this request", so the return type is declared
 		// rather than left at the framework's awaited default.

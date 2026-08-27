@@ -72,6 +72,7 @@ worker's `Env` as `AuthCallbacks<Env>` to type it; leave the parameter off and `
 | `sendOTP` | yes, unless `emailOtp: false` | An email one-time password is issued |
 | `sendInvitation` | no | An organization invitation is sent |
 | `beforeDelete` | no | `user.deleteUser` is on and an account is about to be deleted. Throw to refuse: an `APIError` surfaces its own status, anything else is a 500. Revocation, storage cleanup, and PII scrubbing belong here |
+| `sendDeleteVerification` | no | `user.deleteUser` is on and the consumer implements this callback. `deleteUser()` then emails `url` (a confirmation link) instead of deleting, the deletion happens when the link is opened, and no session freshness is required. This is the deletion path for passwordless apps |
 | `generateOTP` | no | An OTP is about to be generated. Return a string to override it, or `undefined` to fall back to the default for that request, which is how a fixed review-account code coexists with real ones. Read synchronously, so it cannot be `async` |
 
 This file is imported by the **worker**, so it must only pull in worker-safe modules -- `@fcalell/plugin-auth/runtime` is the runtime subpath, never the plugin's `.` entrypoint (that one drags in the Node-side CLI codegen toolchain). `AuthCallbacks` enforces the same callback shapes declared via `callback<T>()` in the plugin definition -- both derive from one shared type, so they can't drift apart.
@@ -162,10 +163,10 @@ type Session = InferSession<typeof config>;
 | `cookies.domain` | `string` | -- | Cookie domain |
 | `session.expiresIn` | `number` | 7 days | Session expiry in seconds |
 | `session.updateAge` | `number` | -- | Session refresh interval in seconds |
-| `session.freshAge` | `number` | 1 day | How recently the session must have been created to count as fresh. Deleting an account needs a fresh session, and a passwordless account can never re-authenticate to refresh one, so those consumers set `0` |
+| `session.freshAge` | `number` | 1 day (better-auth's default) | How recently the session must have been created to count as fresh; deletion without email confirmation needs a fresh session. `0` disables the check, letting a stolen session cookie of any age delete the account. Prefer the `sendDeleteVerification` callback for passwordless apps |
 | `session.additionalFields` | `Record<string, FieldConfig>` | -- | Extra session fields |
 | `user.additionalFields` | `Record<string, FieldConfig>` | -- | Extra user fields |
-| `user.deleteUser` | `boolean` | `false` | Enable account deletion (`authClient.deleteUser()`), gated by the `beforeDelete` callback. App Store 5.1.1(v) requires it for a native app |
+| `user.deleteUser` | `boolean` | `false` | Enable account deletion (`authClient.deleteUser()`), gated by the `beforeDelete` callback. With `sendDeleteVerification` implemented, deletion goes through an emailed confirmation link; without it, better-auth requires a fresh session. App Store 5.1.1(v) requires it for a native app |
 | `organization` | `boolean \| { ac, roles, additionalFields }` | -- | Enable organizations; requires re-exporting `@fcalell/plugin-auth/schema/organization` (see Database schema) |
 | `emailOtp` | `boolean` | `true` | Email one-time-password sign-in; `false` for OAuth-only |
 | `socialProviders.google` | `boolean \| { clientIdVar, clientSecretVar }` | -- | Enable Google OAuth (`true` = conventional var names) |
@@ -333,7 +334,9 @@ export const auth = plugin("auth", {
   callbacks: {
     sendOTP: callback<{ email: string; code: string; env: unknown }>(),
     sendInvitation: callback.optional<{ email: string; orgName: string; env: unknown }>(),
-    beforeDelete: callback.optional<{ user: AuthUser; env: unknown }>(),
+    beforeDelete: callback.optional<{ user: AuthUser; request?: Request; env: unknown }>(),
+    sendDeleteVerification:
+      callback.optional<{ user: AuthUser; url: string; token: string; env: unknown }>(),
     // Second type argument: the handler's return type, for a callback the
     // framework reads synchronously instead of awaiting.
     generateOTP: callback.optional<
