@@ -31,6 +31,7 @@ runtime export.
 | `@fcalell/plugin-expo` | Expo/React Native: Metro + app config + expo-router entry + EAS commands | `expo()` |
 | `@fcalell/plugin-solid` | SolidJS compilation, file-based routing, app bootstrap | `solid()` |
 | `@fcalell/plugin-solid-ui` | Design system: SolidJS + Kobalte + Tailwind v4 + CVA components, fonts, typography tokens | `solidUi()` |
+| `@fcalell/plugin-native-ui` | Design system: React Native + Expo + uniwind + CVA primitives, fonts, native providers, geometry gate | `nativeUi()` |
 
 ## Dependency graph
 
@@ -64,4 +65,9 @@ plugin-solid ─────────────> cli, requires vite
 plugin-solid-ui ──────────> cli + ui-core, requires solid + vite
                                  (owns solidUi.slots.appCss*/resolvedTheme;
                                   contributes to solid.slots.providers/homeScaffold, vite.slots.configImports/pluginCalls)
+plugin-native-ui ─────────> cli + ui-core, requires expo + api + auth
+                                 (owns nativeUi.slots.appCssImports/appCssSource/resolvedTheme/fonts;
+                                  contributes to expo.slots.metroConfigImports/metroPluginCalls/
+                                  expoConfigPlugins/providers, cliSlots.buildSteps/initScaffolds/
+                                  removeFiles/tsconfigTypes)
 ```
