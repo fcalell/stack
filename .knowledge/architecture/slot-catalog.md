@@ -144,7 +144,7 @@ e.g. consulting `ctx.fileExists` before writing.
 
 | Slot | Kind | Purpose |
 |------|------|---------|
-| `runtimeOptions` | `derived<Record<string, TsExpression>>` | Better Auth runtime options; reads `api.slots.cors` to derive `trustedOrigins` + `sameSite` |
+| `runtimeOptions` | `derived<Record<string, TsExpression>>` | Better Auth runtime options; reads `api.slots.cors` for `trustedOrigins` and `api.slots.devCorsOrigins` for `devTrustedOrigins` (dev-gated by the runtime) |
 
 ## Spec types
 

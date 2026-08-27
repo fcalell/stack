@@ -70,7 +70,7 @@ vite({ port: 4000 })
 | `devProcesses` | Spawns `vite dev --config .stack/vite.config.ts --port <devServerPort>` |
 | `buildSteps` | `vite build --config .stack/vite.config.ts --outDir dist/client` (`main` phase) |
 
-`plugin-vite` also contributes its dev-server localhost origin to `api.slots.corsOrigins` (gated on `app.origins` not being set) so the auth + worker CORS allow-list automatically picks up the dev server without consumer config.
+`plugin-vite` also contributes its dev-server localhost origin to `api.slots.devCorsOrigins` (gated on `app.origins` not being set) so the auth + worker CORS allow-list picks up the dev server without consumer config. That list applies only when the worker runs with `STACK_DEV`; a deploy never trusts localhost.
 
 ## Preset
 

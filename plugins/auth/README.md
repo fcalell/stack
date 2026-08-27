@@ -298,7 +298,7 @@ organization, or no membership, returns `{ rules: [] }` rather than an error. `@
 
 ## Plugin implementation
 
-Built with `plugin` from `@fcalell/cli`. Owns one slot — `auth.slots.runtimeOptions` — a derived slot that reads `api.slots.cors` so `trustedOrigins` and `sameSite` are always computed against the fully-resolved CORS list.
+Built with `plugin` from `@fcalell/cli`. Owns one slot — `auth.slots.runtimeOptions` — a derived slot that reads `api.slots.cors` and `api.slots.devCorsOrigins` so `trustedOrigins` is always computed against the fully-resolved CORS list, with the dev-server origins kept in a separate `devTrustedOrigins` the runtime applies only under `STACK_DEV`. `sameSite: "none"` is baked for native consumers (always cross-site) and widened to `none` in dev, where the frontend origin and the worker are cross-origin.
 
 ```ts
 import { plugin, slot, callback } from "@fcalell/cli";

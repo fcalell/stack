@@ -164,6 +164,11 @@ helper rejects it.
 **4.3 Dev origins gated at runtime (API-3, AUTH-6).** Dev-server localhost origins join CORS and
 trustedOrigins only when the worker runs in dev (`STACK_DEV`), not baked at codegen. Decouple the
 cookie `sameSite` choice from localhost detection: derive it from the expo option explicitly.
+**Settled:** a new `api.slots.devCorsOrigins` list carries the vite/metro origins, emitted as
+`createWorker({ devCors })` and `authRuntime({ devTrustedOrigins })` and appended by each runtime
+only under `STACK_DEV`. `sameSite: "none"` is baked from the expo option alone, and the auth
+runtime widens it to `none` while the dev origins are live — without that, a web consumer on
+cross-origin localhost dev would silently lose its session cookie.
 **Verify.** Boot the worker with `STACK_DEV` unset and send a preflight from
 `http://localhost:5173`: it is rejected, and the emitted cookie `sameSite` still matches the expo
 option. Set `STACK_DEV` and confirm the same preflight is accepted.

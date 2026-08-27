@@ -108,6 +108,16 @@ const corsOrigins = slot.list<string>({
 	name: "corsOrigins",
 });
 
+// Dev-only origins: the localhost dev servers frontend plugins run (vite,
+// metro). Kept out of `cors` because that list is baked into the deployed
+// worker — a production deploy that accepts credentialed localhost origins is
+// an open door. The runtime appends these only when `STACK_DEV` is set.
+const devCorsOrigins = slot.list<string>({
+	source: SOURCE,
+	name: "devCorsOrigins",
+	sortBy: (a, b) => a.localeCompare(b),
+});
+
 // URL prefixes the worker owns. Deploy-target plugins read this to route
 // requests to the worker (a Node server mounts these paths on the worker
 // fetch handler; a proxy forwards them) without reaching into api's
@@ -175,7 +185,7 @@ const callbacks = slot.map<CallbackSpec>({
 const workerBase = slot.derived({
 	source: SOURCE,
 	name: "workerBase",
-	inputs: { cors },
+	inputs: { cors, devCors: devCorsOrigins },
 	compute: (inp, ctx: ContributionCtx<ApiOptions>): TsExpression => {
 		const options = ctx.options;
 		const properties: Array<{ key: string; value: TsExpression }> = [];
@@ -196,6 +206,18 @@ const workerBase = slot.derived({
 				items: inp.cors.map((o) => ({ kind: "string", value: o })),
 			},
 		});
+		// Emitted separately from cors, and applied by the runtime only under
+		// STACK_DEV. Omitted entirely when empty so a worker with no dev
+		// frontend carries no dev surface at all.
+		if (inp.devCors.length > 0) {
+			properties.push({
+				key: "devCors",
+				value: {
+					kind: "array",
+					items: inp.devCors.map((o) => ({ kind: "string", value: o })),
+				},
+			});
+		}
 		return {
 			kind: "call",
 			callee: { kind: "identifier", name: "createWorker" },
@@ -350,6 +372,7 @@ export const api = plugin("api", {
 		middlewareImports,
 		routesHandler,
 		corsOrigins,
+		devCorsOrigins,
 		routePrefixes,
 		cors,
 		callbacks,

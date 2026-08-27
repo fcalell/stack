@@ -48,6 +48,8 @@ export interface AuthRuntimeInput extends AuthRuntimeOptions {
 	callbacks?: AuthCallbacks;
 	sameSite?: "strict" | "lax" | "none";
 	trustedOrigins?: string[];
+	// Dev-server origins, applied only when the worker runs with STACK_DEV.
+	devTrustedOrigins?: string[];
 	cookies?: { prefix?: string; domain?: string };
 	session?: {
 		expiresIn?: number;
@@ -153,6 +155,12 @@ export interface AuthInstance<
 // there).
 const cache = new WeakMap<object, ReturnType<typeof buildAuth>>();
 
+// Same predicate plugin-api puts on `ctx._devMode`, read straight off env:
+// `buildAuth` runs per env, before any request context exists.
+function isDevMode(env: Record<string, unknown>): boolean {
+	return env.STACK_DEV === "1";
+}
+
 function buildAuth(
 	env: Record<string, unknown>,
 	db: unknown,
@@ -247,10 +255,19 @@ function buildAuth(
 	const socialProvidersOption =
 		Object.keys(socialProviders).length > 0 ? socialProviders : undefined;
 
+	// Dev-server origins are trusted only under STACK_DEV, and only then do
+	// web cookies need sameSite=none: in dev the frontend origin and the
+	// worker are cross-origin, so a lax cookie is dropped. In production the
+	// baked value stands (none for native consumers, the browser default
+	// otherwise).
+	const devOrigins = isDevMode(env) ? (options.devTrustedOrigins ?? []) : [];
+	const trustedOrigins = [...(options.trustedOrigins ?? []), ...devOrigins];
+	const sameSite = devOrigins.length > 0 ? "none" : options.sameSite;
+
 	return betterAuth({
 		baseURL: env[options.appUrlVar] as string,
 		secret: env[options.secretVar] as string,
-		trustedOrigins: options.trustedOrigins,
+		trustedOrigins,
 		socialProviders: socialProvidersOption,
 		// biome-ignore lint/suspicious/noExplicitAny: drizzleAdapter DB type is opaque.
 		database: drizzleAdapter(db as any, {
@@ -276,10 +293,10 @@ function buildAuth(
 			crossSubDomainCookies: options.cookies?.domain
 				? { enabled: true, domain: options.cookies.domain }
 				: undefined,
-			defaultCookieAttributes: options.sameSite
+			defaultCookieAttributes: sameSite
 				? {
-						sameSite: options.sameSite,
-						secure: options.sameSite === "none",
+						sameSite,
+						secure: sameSite === "none",
 					}
 				: undefined,
 			// Cloudflare sets the canonical client IP here; without it

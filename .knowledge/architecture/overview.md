@@ -45,10 +45,10 @@ slot edges.
 
 plugin-cloudflare ────────> cli (owns cloudflare.slots.bindings/secrets/vars/routes/wranglerToml)
 plugin-vite ──────────────> cli (owns vite.slots.configImports/pluginCalls/devServerPort/viteConfig;
-                                 contributes to api.slots.corsOrigins for localhost dev)
+                                 contributes to api.slots.devCorsOrigins for localhost dev)
 plugin-expo ──────────────> cli (owns expo.slots.metroConfig/expoConfig/entrySource/routesDtsSource,
                                  providers, easBuildProfiles/easUpdateChannel;
-                                 contributes to api.slots.corsOrigins for the Metro dev origin)
+                                 contributes to api.slots.devCorsOrigins for the Metro dev origin)
 plugin-db ────────────────> cli, requires cloudflare + api
                                  (contributes to cloudflare.slots.bindings, api.slots.pluginRuntimes / workerImports)
 plugin-auth ──────────────> cli, requires api + cloudflare + db

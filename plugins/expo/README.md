@@ -137,7 +137,7 @@ Rendering the update-wall screen itself is app territory: call `onUpdateRequired
 | `expo.slots.entrySource` | `derived<string \| null>` | Final `.stack/entry.tsx` |
 | `expo.slots.routesDtsSource` | `derived<string \| null>` | Final `.stack/routes.d.ts` |
 
-`plugin-expo` also contributes its dev-server localhost origin to `api.slots.corsOrigins` (gated on `app.origins` not being set) and, when `minNativeBuild` is configured, the version-gate middleware to `api.slots.middlewareEntries`.
+`plugin-expo` also contributes its dev-server localhost origin to `api.slots.devCorsOrigins` (gated on `app.origins` not being set), which the worker honours only under `STACK_DEV`, and, when `minNativeBuild` is configured, the version-gate middleware to `api.slots.middlewareEntries`.
 
 ## Exports
 

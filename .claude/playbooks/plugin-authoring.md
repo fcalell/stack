@@ -161,18 +161,18 @@ import { api } from "@fcalell/plugin-api";
 
 const runtimeOptions = slot.derived<
   Record<string, TsExpression>,
-  { cors: typeof api.slots.cors }
+  { cors: typeof api.slots.cors; devCors: typeof api.slots.devCorsOrigins }
 >({
   source: "auth",
   name: "runtimeOptions",
-  inputs: { cors: api.slots.cors },
+  inputs: { cors: api.slots.cors, devCors: api.slots.devCorsOrigins },
   compute: (inp, ctx) => {
     const props = literalToProps(ctx.options as Record<string, unknown>);
     if (inp.cors.length > 0) {
       props.trustedOrigins = { kind: "array", items: inp.cors.map((o) => ({ kind: "string", value: o })) };
     }
-    if (inp.cors.some((o) => o.startsWith("http://localhost"))) {
-      props.sameSite = { kind: "string", value: "none" };
+    if (inp.devCors.length > 0) {
+      props.devTrustedOrigins = { kind: "array", items: inp.devCors.map((o) => ({ kind: "string", value: o })) };
     }
     return props;
   },

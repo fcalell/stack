@@ -43,6 +43,12 @@ wrangler/Miniflare local dev, so `_devMode` is false in production. Rate limitin
 `rateLimit` middleware, `plugin-auth`'s `/api/auth/*` limiter) is skipped whenever `_devMode` is
 true.
 
+The same flag gates the dev-server origins. `api.slots.devCorsOrigins` (vite's and metro's
+localhost) is emitted as `createWorker({ devCors })` and `authRuntime({ devTrustedOrigins })`,
+separate from the production lists, and each runtime appends it only when `STACK_DEV` is set —
+so the deployed worker refuses a credentialed localhost origin. Auth also widens its cookie
+`sameSite` to `none` while those dev origins are live.
+
 ## Node target (`plugin-node`)
 
 `plugin-cloudflare` and `plugin-node` are alternative deploy targets for the same worker. On the

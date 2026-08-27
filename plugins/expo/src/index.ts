@@ -396,11 +396,11 @@ export const expo = plugin("expo", {
 	},
 
 	contributes: (self) => [
-		// Contribute the Metro dev-server localhost origin to CORS unless the
-		// consumer has overridden `app.origins` entirely. Predicate is
+		// Contribute the Metro dev-server localhost origin to the dev-only CORS
+		// list unless the consumer has overridden `app.origins`. Predicate is
 		// `!== undefined` (not truthiness) so an explicit `app.origins: []`
 		// lockdown is honoured — mirrors plugin-vite + plugin-api.
-		api.slots.corsOrigins.contribute(async (ctx) => {
+		api.slots.devCorsOrigins.contribute(async (ctx) => {
 			if (ctx.app.origins !== undefined) return undefined;
 			const port = await ctx.resolve(self.slots.devServerPort);
 			return `http://localhost:${port}`;

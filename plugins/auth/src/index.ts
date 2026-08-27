@@ -53,16 +53,16 @@ function isLocalOrigin(origin: string): boolean {
 
 // ── Slot declarations ──────────────────────────────────────────────
 //
-// `runtimeOptions` is a DERIVED slot: its inputs include `api.slots.cors`,
-// so the graph guarantees every cors contribution (including vite's
-// localhost origin) is resolved BEFORE this compute runs. Bug #5 (auth
-// cors ordering) is structurally impossible here — no payload to mutate,
-// no handler ordering, just dataflow.
+// `runtimeOptions` is a DERIVED slot: its inputs are `api.slots.cors` and
+// `api.slots.devCorsOrigins`, so the graph guarantees every origin
+// contribution (including vite's localhost) is resolved BEFORE this compute
+// runs. Bug #5 (auth cors ordering) is structurally impossible here — no
+// payload to mutate, no handler ordering, just dataflow.
 
 const runtimeOptions = slot.derived({
 	source: SOURCE,
 	name: "runtimeOptions",
-	inputs: { cors: api.slots.cors },
+	inputs: { cors: api.slots.cors, devCors: api.slots.devCorsOrigins },
 	compute: (
 		inp,
 		ctx: ContributionCtx<ResolvedAuthOptions>,
@@ -78,8 +78,7 @@ const runtimeOptions = slot.derived({
 					"Better Auth requires at least one trusted origin for CSRF protection. " +
 					"Fix by one of:\n" +
 					"  • set `app.domain` in stack.config.ts (derives https://<domain> + https://app.<domain>)\n" +
-					"  • set `app.origins: [...]` to supply the allow-list explicitly\n" +
-					"  • add `vite()` to plugins for dev (contributes http://localhost:<port>)",
+					"  • set `app.origins: [...]` to supply the allow-list explicitly",
 			);
 		}
 
@@ -143,15 +142,23 @@ const runtimeOptions = slot.derived({
 			items: trustedOrigins.map((o) => ({ kind: "string", value: o })),
 		};
 
-		// Bug #2: Cross-origin localhost dev — browsers drop cookies
-		// cross-origin without sameSite=none. Coverage comes from
-		// `isLocalOrigin`, which parses hostname via `new URL` and checks
-		// against the LOCAL_HOSTNAMES set plus `.localhost` / `.localdomain`
-		// suffixes. Covers `127.0.0.1`, `[::1]`, `0.0.0.0`, `*.localhost`,
-		// `*.localdomain`, and http/https alike — alias coverage is
-		// structural, not regex-matched. The runtime pairs sameSite=none
+		// Dev-server origins ride separately and are applied by the runtime
+		// only under STACK_DEV — baking them in here is what let a production
+		// deploy trust localhost.
+		if (inp.devCors.length > 0) {
+			props.devTrustedOrigins = {
+				kind: "array",
+				items: inp.devCors.map((o) => ({ kind: "string", value: o })),
+			};
+		}
+
+		// A native client is always cross-site (custom scheme, no browser
+		// origin), so its cookies need sameSite=none in production too. Web
+		// consumers stay on the browser default; the runtime widens them to
+		// none in dev, where the vite origin and the worker are cross-origin
+		// and a lax cookie would be dropped. The runtime pairs sameSite=none
 		// with secure=true automatically.
-		if (inp.cors.some(isLocalOrigin)) {
+		if (expoEnabled) {
 			props.sameSite = { kind: "string", value: "none" };
 		}
 
@@ -162,16 +169,16 @@ const runtimeOptions = slot.derived({
 // Bug #3: canonical dev URL for `APP_URL`'s devDefault. Pre-fix it was
 // hardcoded to "http://localhost:3000" — wrong for API-only apps (no
 // frontend at all), wrong when vite's port is customised. This derived
-// slot reads `api.slots.cors`: the first local origin wins when a
+// slot reads `api.slots.devCorsOrigins`: the first local origin wins when a
 // frontend plugin is present, otherwise we fall back to the production
 // domain. Plugin-auth never imports plugin-vite — the handoff is
-// entirely through the shared `api.slots.cors` contract.
+// entirely through the shared slot contract.
 const appUrlDevDefault = slot.derived({
 	source: SOURCE,
 	name: "appUrlDevDefault",
-	inputs: { cors: api.slots.cors },
+	inputs: { devCors: api.slots.devCorsOrigins },
 	compute: (inp, ctx): string => {
-		const local = inp.cors.find(isLocalOrigin);
+		const local = inp.devCors.find(isLocalOrigin);
 		if (local) return local;
 		// Worker-only / API-only: no frontend, no localhost contribution.
 		// Prod domain is the right baseline for `.dev.vars` — Wrangler will

@@ -164,11 +164,20 @@ export type BaseContext = {
 
 export interface ApiWorkerOptions {
 	cors?: string[];
+	// Localhost dev-server origins. Honoured only when the worker runs with
+	// STACK_DEV set, so a production deploy never accepts them.
+	devCors?: string[];
 	prefix?: `/${string}`;
 }
 
 type ResolvedApiOptions = Required<Pick<ApiWorkerOptions, "prefix">> &
-	Pick<ApiWorkerOptions, "cors">;
+	Pick<ApiWorkerOptions, "cors" | "devCors">;
+
+// The single dev predicate every gate reads: set by `stack dev`, never by a
+// deploy. Also what `ctx._devMode` carries to procedures.
+function isDevMode(env: unknown): boolean {
+	return (env as Record<string, unknown> | null | undefined)?.STACK_DEV === "1";
+}
 
 // ---------- createWorker ----------
 
@@ -233,7 +242,18 @@ function createAppBuilder<TContext extends Record<string, unknown>>(
 		handler<TRoutes extends Record<string, unknown>>(
 			consumerRoutes?: TRoutes,
 		): WorkerExport<TRoutes> {
-			const { prefix: rpcPrefix, cors: corsOrigin } = apiOptions;
+			const {
+				prefix: rpcPrefix,
+				cors: corsOrigin,
+				devCors: devCorsOrigin,
+			} = apiOptions;
+
+			// Resolved per request, not at construction: the dev origins apply
+			// only under STACK_DEV, and the same list backs `isForbiddenOrigin`.
+			const effectiveOrigins = (env: unknown): string[] =>
+				devCorsOrigin?.length && isDevMode(env)
+					? [...(corsOrigin ?? []), ...devCorsOrigin]
+					: (corsOrigin ?? []);
 
 			// Sort once at construction time so both the context-building loop
 			// and the fetch/routes loops below see plugins in dependency order,
@@ -305,7 +325,15 @@ function createAppBuilder<TContext extends Record<string, unknown>>(
 				app.use(
 					"*",
 					cors({
-						origin: corsOrigin,
+						// A function, not the array: the allow-list depends on
+						// env (dev origins), which Hono only hands over per
+						// request. Wildcard keeps the array form's meaning —
+						// `["*"]` answers every origin with `*`.
+						origin: (requestOrigin, c) => {
+							const allowed = effectiveOrigins(c.env);
+							if (allowed.includes("*")) return "*";
+							return allowed.includes(requestOrigin) ? requestOrigin : null;
+						},
 						credentials: true,
 					}),
 				);
@@ -352,9 +380,7 @@ function createAppBuilder<TContext extends Record<string, unknown>>(
 					env,
 					request,
 					executionCtx,
-					_devMode:
-						(env as Record<string, unknown> | null | undefined)?.STACK_DEV ===
-						"1",
+					_devMode: isDevMode(env),
 				};
 
 				for (const entry of sortedEntries) {

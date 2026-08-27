@@ -148,8 +148,8 @@ export const vite = plugin("vite", {
 			}),
 		),
 
-		// Contribute the dev-server localhost origin to CORS unless the
-		// consumer has overridden `app.origins` entirely. Reads
+		// Contribute the dev-server localhost origin to the dev-only CORS list
+		// unless the consumer has overridden `app.origins` entirely. Reads
 		// `vite.slots.devServerPort` via ctx.resolve so the value follows
 		// options.port if the consumer bumps it.
 		//
@@ -158,7 +158,7 @@ export const vite = plugin("vite", {
 		// CORS allow-list down — silently appending localhost would defeat
 		// it. Mirror plugin-api's `cors` derivation (same predicate) so every
 		// reader of `app.origins` agrees on the override semantics.
-		api.slots.corsOrigins.contribute(async (ctx) => {
+		api.slots.devCorsOrigins.contribute(async (ctx) => {
 			if (ctx.app.origins !== undefined) return undefined;
 			const port = await ctx.resolve(self.slots.devServerPort);
 			return `http://localhost:${port}`;
