@@ -23,6 +23,7 @@ import type {
 	AuthRuntimeOptions,
 	AuthUser,
 	FieldConfig,
+	OtpType,
 	ResolvedSocialProvider,
 	SocialProviderName,
 } from "../types";
@@ -200,13 +201,21 @@ function buildAuth(
 				sendVerificationOTP: async ({ email, otp }) => {
 					await options.callbacks?.sendOTP({ email, code: otp, env });
 				},
-				// Only handed over when the consumer implements it: passing an
-				// always-undefined function would still shadow better-auth's own
-				// generator on every request.
-				generateOTP: options.callbacks?.generateOTP
-					? ({ email, type }) =>
-							options.callbacks?.generateOTP?.({ email, type, env })
-					: undefined,
+				// The key must be absent when the consumer has no callback:
+				// better-auth spreads these options over its defaults, so an
+				// explicit `generateOTP: undefined` overwrites the default
+				// generator and crashes every OTP send.
+				...(options.callbacks?.generateOTP
+					? {
+							generateOTP: ({
+								email,
+								type,
+							}: {
+								email: string;
+								type: OtpType;
+							}) => options.callbacks?.generateOTP?.({ email, type, env }),
+						}
+					: {}),
 				// Pinned, not options: the attempt cap is the actual brute-force
 				// gate (the verify path is only IP-limited), so it must never
 				// drift on a dependency bump.
