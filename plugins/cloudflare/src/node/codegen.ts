@@ -138,7 +138,7 @@ export function aggregateWrangler(opts: {
 		].sort();
 	}
 
-	appendBindingsToTables(opts.payload.bindings, arrayTables);
+	appendBindingsToTables(opts.payload.bindings, arrayTables, String(root.name));
 
 	for (const route of opts.payload.routes) {
 		if (typeof route.pattern !== "string" || route.pattern.length === 0) {
@@ -354,9 +354,24 @@ function assertNoNamespaceCollisions(payload: CodegenWranglerPayload): void {
 	);
 }
 
+// Rate-limit namespace ids are account-global: two workers sharing an id
+// share one counter bucket. Deriving the id from (worker name, binding name)
+// keeps it deterministic across generates while separating apps in the same
+// account. FNV-1a 32-bit, folded into wrangler's positive-integer range.
+function rateLimitNamespaceId(workerName: string, binding: string): string {
+	const input = `${workerName}/${binding}`;
+	let hash = 0x811c9dc5;
+	for (let i = 0; i < input.length; i++) {
+		hash ^= input.charCodeAt(i);
+		hash = Math.imul(hash, 0x01000193);
+	}
+	return String((hash >>> 0) % 2147483646 || 1);
+}
+
 function appendBindingsToTables(
 	rawBindings: WranglerBindingSpec[],
 	arrayTables: Array<{ path: string[]; entries: Record<string, TomlValue> }>,
+	workerName: string,
 ): void {
 	// Canonical order: list-slot contributions arrive in config plugin-array
 	// order, but generated output must be byte-identical however the consumer
@@ -426,13 +441,16 @@ function appendBindingsToTables(
 				`Invalid rate_limiter "${b.binding}": period must be 10 or 60 (got period=${period}).`,
 			);
 		}
+		// The documented (and miniflare-enforced) unsafe-binding form:
+		// namespace_id plus a nested simple table. The flat limit/period
+		// shape fails both `wrangler dev` and deploy validation (WS1.1).
 		arrayTables.push({
 			path: ["unsafe", "bindings"],
 			entries: {
 				name: b.binding,
 				type: "ratelimit",
-				limit,
-				period,
+				namespace_id: rateLimitNamespaceId(workerName, b.binding),
+				simple: { limit, period },
 			},
 		});
 	}
