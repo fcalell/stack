@@ -63,7 +63,7 @@ e.g. consulting `ctx.fileExists` before writing.
 | `routePrefixes` | `list<string>` | URL prefixes the worker owns (api contributes its `prefix`, auth its `/api/auth`); deploy targets read this to mount/forward worker paths, and plugin-expo's version gate walls only paths inside one |
 | `cors` | `derived<string[]>` | Final production CORS list: `app.origins` minus local origins, or `[https://domain, https://app.domain, ...corsOrigins]` |
 | `callbacks` | `map<string, CallbackSpec>` | Plugin-name → callback identifier; spliced onto matching runtime's options |
-| `workerBase` | `derived<TsExpression>` | The `createWorker({...})` call expression |
+| `workerBase` | `derived<TsExpression>` | The `createWorker({...})` call expression; reads `cloudflare.slots.secrets` to bake `envChecks` (WS6.3 env value assertions) |
 | `workerSource` | `derived<string \| null>` | Final `.stack/worker.ts` source; null when neither runtimes nor routes are present |
 | `rbacStatements` | `value<Record<string, readonly string[]> \| null>` (`override`) | RBAC action statements for `procedure({ rbac })` / `procedure({ can })`'s type-level autocomplete; `auth` contributes from `organization.ac.statements` |
 | `entities` | `list<string>` (sorted, `uniqueBy`) | Entity vocabulary for `procedure({ reads, writes })`'s type-level autocomplete (WS3 cache invalidation) — union across every contributing plugin; `db` contributes the consumer's Drizzle schema export names, `auth` contributes its own runtime-owned table names |
@@ -76,7 +76,7 @@ e.g. consulting `ctx.fileExists` before writing.
 | `bindings` | `list<WranglerBindingSpec>` | D1 / KV / R2 / analytics_engine / rate_limiter / var bindings |
 | `routes` | `list<WranglerRouteSpec>` | Worker route patterns |
 | `vars` | `map<string, string>` | Plain-text `[vars]` |
-| `secrets` | `list<{ name, devDefault }>` | `.dev.vars` template entries |
+| `secrets` | `list<WranglerSecretSpec>` | `.dev.vars` template entries: `{ name, devDefault, validate? }`. `validate` hints (`minLength` / `url` / `devLocalhost`) feed the worker's once-per-isolate env assertion — api's `workerBase` bakes them into `createWorker({ envChecks })`. A `devDefault` must satisfy its own hints or a fresh project refuses to serve |
 | `compatibilityDate` | `value<string>` | Defaults to today; override with `value` + `override:true` |
 | `compatibilityFlags` | `list<string>` | Wrangler `compatibility_flags`; deduped + sorted, omitted when empty (e.g. auth contributes `nodejs_compat`) |
 | `wranglerToml` | `derived<string>` | Final `.stack/wrangler.toml` source (also triggers `wrangler types` via `postWrite`) |

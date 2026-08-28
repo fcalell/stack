@@ -566,25 +566,10 @@ export default function authRuntime<TOptions extends AuthRuntimeInput>(
 		// context() reads upstream.db (the drizzle client dbRuntime provides) —
 		// declare the edge so createWorker runs db's context first regardless of
 		// `.use()` registration order.
+		// Env presence/value checks live in the generated worker's `envChecks`
+		// assertion (WS6.3), fed by this plugin's `cloudflare.slots.secrets`
+		// contribution — not in a per-request validateEnv here.
 		dependsOn: ["db"],
-		validateEnv(env: unknown) {
-			const e = env as Record<string, unknown>;
-			if (!e[options.secretVar]) {
-				throw new Error(`Missing env var: ${options.secretVar}`);
-			}
-			if (!e[options.appUrlVar]) {
-				throw new Error(`Missing env var: ${options.appUrlVar}`);
-			}
-			for (const provider of Object.values(options.socialProviders ?? {})) {
-				if (!provider) continue;
-				if (!e[provider.clientIdVar]) {
-					throw new Error(`Missing env var: ${provider.clientIdVar}`);
-				}
-				if (!e[provider.clientSecretVar]) {
-					throw new Error(`Missing env var: ${provider.clientSecretVar}`);
-				}
-			}
-		},
 		// Framework-owned org-rules procedure (WS6.2): ships the caller's
 		// compiled org
 		// ability so the `useAbility` client hook can drive UI affordances from

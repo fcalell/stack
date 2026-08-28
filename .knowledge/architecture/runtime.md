@@ -43,6 +43,13 @@ wrangler/Miniflare local dev, so `_devMode` is false in production. Rate limitin
 `rateLimit` middleware, `plugin-auth`'s `/api/auth/*` limiter) is skipped whenever `_devMode` is
 true.
 
+Env values are asserted once per isolate, on the first request: `createWorker({ envChecks })`
+carries every `cloudflare.slots.secrets` entry plus its validation hints (presence always;
+`minLength`, `url`, `devLocalhost` when declared), baked by `api.slots.workerBase`. A failed check
+throws by var name on every request until fixed; `devLocalhost` refuses to serve when `STACK_DEV`
+is set but the var's hostname is not local, so dev settings can't ride into a deploy. Binding
+presence stays a per-request `validateEnv` on the runtime plugin that owns the binding (db).
+
 The same flag gates the dev-server origins. `api.slots.devCorsOrigins` (vite's and metro's
 localhost) is emitted as `createWorker({ devCors })` and `authRuntime({ devTrustedOrigins })`,
 separate from the production lists, and each runtime appends it only when `STACK_DEV` is set,

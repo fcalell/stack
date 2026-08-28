@@ -297,8 +297,20 @@ export const auth = plugin("auth", {
 					{ name: p.clientSecretVar, devDefault: "dev-oauth-client-secret" },
 				]);
 			return [
-				{ name: self.options.secretVar, devDefault: "dev-secret-change-me" },
-				{ name: self.options.appUrlVar, devDefault: devAppUrl },
+				{
+					// Dev default satisfies its own minLength so a fresh project
+					// serves out of the box; better-auth warns below 32 chars.
+					name: self.options.secretVar,
+					devDefault: "dev-secret-change-me-32-chars-minimum",
+					validate: { minLength: 32 },
+				},
+				{
+					name: self.options.appUrlVar,
+					devDefault: devAppUrl,
+					// `devLocalhost`: a non-local APP_URL while STACK_DEV is set
+					// means dev settings leaked into a deploy — refuse to serve.
+					validate: { url: true, devLocalhost: true },
+				},
 				...providerSecrets,
 			];
 		}),

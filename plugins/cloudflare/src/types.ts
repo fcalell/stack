@@ -22,6 +22,22 @@ export type WranglerBindingSpec =
 	  }
 	| { kind: "var"; name: string; value: string };
 
+// Value checks the worker asserts once per isolate on the first request
+// (WS6.3). Presence is always checked; hints tighten it. `devLocalhost`
+// refuses to serve when STACK_DEV is set but the value's hostname is not
+// local — the canary for a deploy that accidentally shipped dev settings.
+export interface WranglerSecretValidation {
+	minLength?: number;
+	url?: boolean;
+	devLocalhost?: boolean;
+}
+
+export interface WranglerSecretSpec {
+	name: string;
+	devDefault: string;
+	validate?: WranglerSecretValidation;
+}
+
 export type WranglerRouteSpec = {
 	pattern: string;
 	zone?: string;
@@ -32,7 +48,7 @@ export interface CodegenWranglerPayload {
 	bindings: WranglerBindingSpec[];
 	routes: WranglerRouteSpec[];
 	vars: Record<string, string>;
-	secrets: Array<{ name: string; devDefault: string }>;
+	secrets: WranglerSecretSpec[];
 	compatibilityDate: string;
 	compatibilityFlags: string[];
 }

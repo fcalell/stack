@@ -168,21 +168,73 @@ export type BaseContext = {
 
 // ---------- ApiOptions (plain) ----------
 
+// One env var the worker asserts before serving (WS6.3). Baked at codegen
+// from `cloudflare.slots.secrets` and each entry's validation hints.
+// `devLocalhost` refuses to serve when STACK_DEV is set but the value's
+// hostname is not local: dev settings (rate limits off, localhost trusted)
+// must never reach a deploy pointed at a real URL.
+export interface EnvCheckSpec {
+	name: string;
+	minLength?: number;
+	url?: boolean;
+	devLocalhost?: boolean;
+}
+
 export interface ApiWorkerOptions {
 	cors?: string[];
 	// Localhost dev-server origins. Honoured only when the worker runs with
 	// STACK_DEV set, so a production deploy never accepts them.
 	devCors?: string[];
 	prefix?: `/${string}`;
+	envChecks?: EnvCheckSpec[];
 }
 
 type ResolvedApiOptions = Required<Pick<ApiWorkerOptions, "prefix">> &
-	Pick<ApiWorkerOptions, "cors" | "devCors">;
+	Pick<ApiWorkerOptions, "cors" | "devCors" | "envChecks">;
 
 // The single dev predicate every gate reads: set by `stack dev`, never by a
 // deploy. Also what `ctx._devMode` carries to procedures.
 function isDevMode(env: unknown): boolean {
 	return (env as Record<string, unknown> | null | undefined)?.STACK_DEV === "1";
+}
+
+const LOCAL_HOSTNAMES = new Set(["localhost", "127.0.0.1", "[::1]", "0.0.0.0"]);
+
+function isLocalHostname(hostname: string): boolean {
+	return LOCAL_HOSTNAMES.has(hostname) || hostname.endsWith(".localhost");
+}
+
+// Asserts every baked env check against the live env. Throws the first
+// violation by var name; the caller runs this once per isolate.
+function assertEnvChecks(checks: EnvCheckSpec[], env: unknown): void {
+	const e = env as Record<string, unknown> | null | undefined;
+	const devMode = isDevMode(env);
+	for (const check of checks) {
+		const value = e?.[check.name];
+		if (!value) {
+			throw new Error(`Missing env var: ${check.name}`);
+		}
+		if (typeof value !== "string") continue;
+		if (check.minLength !== undefined && value.length < check.minLength) {
+			throw new Error(
+				`Env var ${check.name} must be at least ${check.minLength} characters (got ${value.length})`,
+			);
+		}
+		if (check.url || check.devLocalhost) {
+			let parsed: URL;
+			try {
+				parsed = new URL(value);
+			} catch {
+				if (!check.url) continue;
+				throw new Error(`Env var ${check.name} must be a valid URL`);
+			}
+			if (check.devLocalhost && devMode && !isLocalHostname(parsed.hostname)) {
+				throw new Error(
+					`Env var ${check.name} points at ${parsed.hostname} while STACK_DEV is set; refusing to serve. Unset STACK_DEV outside local dev.`,
+				);
+			}
+		}
+	}
 }
 
 // ---------- createWorker ----------
@@ -259,7 +311,14 @@ function createAppBuilder<TContext extends Record<string, unknown>>(
 				prefix: rpcPrefix,
 				cors: corsOrigin,
 				devCors: devCorsOrigin,
+				envChecks,
 			} = apiOptions;
+
+			// Once per isolate: the first request pays for value validation
+			// (length / URL-shape / dev-localhost refusal), every later request
+			// skips it. A failed run never sets the flag, so a misconfigured
+			// isolate keeps failing loudly instead of caching the miss.
+			let envChecked = false;
 
 			// Resolved per request, not at construction: the dev origins apply
 			// only under STACK_DEV, and the same list backs `isForbiddenOrigin`.
@@ -376,6 +435,12 @@ function createAppBuilder<TContext extends Record<string, unknown>>(
 			app.use("*", async (c, next) => {
 				const env = c.env;
 				const request = c.req.raw;
+
+				if (!envChecked && envChecks && envChecks.length > 0) {
+					assertEnvChecks(envChecks, env);
+					envChecked = true;
+					console.info(`[api] env checks passed (${envChecks.length} vars)`);
+				}
 
 				for (const entry of pluginEntries) {
 					entry.plugin.validateEnv?.(env);

@@ -10,6 +10,7 @@ import {
 	DEFAULT_COMPATIBILITY_DATE,
 	type WranglerBindingSpec,
 	type WranglerRouteSpec,
+	type WranglerSecretSpec,
 } from "./types";
 
 const SOURCE = "cloudflare";
@@ -35,7 +36,7 @@ const vars = slot.map<string>({
 	name: "vars",
 });
 
-const secrets = slot.list<{ name: string; devDefault: string }>({
+const secrets = slot.list<WranglerSecretSpec>({
 	source: SOURCE,
 	name: "secrets",
 });
@@ -248,4 +249,6 @@ export type {
 	CodegenWranglerPayload,
 	WranglerBindingSpec,
 	WranglerRouteSpec,
+	WranglerSecretSpec,
+	WranglerSecretValidation,
 } from "./types";

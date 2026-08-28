@@ -192,7 +192,7 @@ const callbacks = slot.map<CallbackSpec>({
 const workerBase = slot.derived({
 	source: SOURCE,
 	name: "workerBase",
-	inputs: { cors, devCors: devCorsOrigins },
+	inputs: { cors, devCors: devCorsOrigins, secrets: cloudflare.slots.secrets },
 	compute: (inp, ctx: ContributionCtx<ApiOptions>): TsExpression => {
 		const options = ctx.options;
 		const properties: Array<{ key: string; value: TsExpression }> = [];
@@ -222,6 +222,43 @@ const workerBase = slot.derived({
 				value: {
 					kind: "array",
 					items: inp.devCors.map((o) => ({ kind: "string", value: o })),
+				},
+			});
+		}
+		// Env value assertions (WS6.3), baked from `cloudflare.slots.secrets`
+		// plus each entry's validation hints. The runtime asserts them once
+		// per isolate on the first request, replacing per-request
+		// presence-only checks. Flattened (hints beside `name`) so the
+		// emitted literal stays small.
+		if (inp.secrets.length > 0) {
+			properties.push({
+				key: "envChecks",
+				value: {
+					kind: "array",
+					items: inp.secrets.map((s) => {
+						const props: Array<{ key: string; value: TsExpression }> = [
+							{ key: "name", value: { kind: "string", value: s.name } },
+						];
+						if (s.validate?.minLength !== undefined) {
+							props.push({
+								key: "minLength",
+								value: { kind: "number", value: s.validate.minLength },
+							});
+						}
+						if (s.validate?.url) {
+							props.push({
+								key: "url",
+								value: { kind: "boolean", value: true },
+							});
+						}
+						if (s.validate?.devLocalhost) {
+							props.push({
+								key: "devLocalhost",
+								value: { kind: "boolean", value: true },
+							});
+						}
+						return { kind: "object" as const, properties: props };
+					}),
 				},
 			});
 		}
