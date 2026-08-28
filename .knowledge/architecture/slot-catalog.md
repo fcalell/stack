@@ -73,7 +73,7 @@ e.g. consulting `ctx.fileExists` before writing.
 
 | Slot | Kind | Purpose |
 |------|------|---------|
-| `bindings` | `list<WranglerBindingSpec>` | D1 / KV / R2 / rate_limiter / var bindings |
+| `bindings` | `list<WranglerBindingSpec>` | D1 / KV / R2 / analytics_engine / rate_limiter / var bindings |
 | `routes` | `list<WranglerRouteSpec>` | Worker route patterns |
 | `vars` | `map<string, string>` | Plain-text `[vars]` |
 | `secrets` | `list<{ name, devDefault }>` | `.dev.vars` template entries |
@@ -213,8 +213,8 @@ lives with that plugin.
   Every property name and value crosses the render boundary: a custom property through
   `cssVarName`, a plain CSS property and the utility name through `cssIdent`, every value through
   `cssTokenValue`.
-- `WranglerBindingSpec`: `d1` / `kv` / `r2` / `rate_limiter` / `var` shapes. Aggregator catches
-  duplicate `binding` names and fails fast.
+- `WranglerBindingSpec`: `d1` / `kv` / `r2` / `analytics_engine` / `rate_limiter` / `var` shapes.
+  Aggregator catches duplicate `binding` names and fails fast.
 - `HtmlInjection`: `title` / `meta` / `link` / `script` / `html-attr`.
 - `ProviderSpec`: `{ imports, wrap?, siblings?, order }` for JSX provider composition.
 - `MiddlewareSpec`: `{ imports, call, phase: "before-cors" | "after-cors" | "before-routes" | "after-routes" | "after-context", order }`.

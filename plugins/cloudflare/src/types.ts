@@ -14,6 +14,7 @@ export type WranglerBindingSpec =
 	  }
 	| { kind: "kv"; binding: string; id: string }
 	| { kind: "r2"; binding: string; bucketName: string }
+	| { kind: "analytics_engine"; binding: string; dataset: string }
 	| {
 			kind: "rate_limiter";
 			binding: string;

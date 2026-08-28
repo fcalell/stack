@@ -26,6 +26,7 @@ const FRAMEWORK_MANAGED_LISTS = new Set<string>([
 	"d1_databases",
 	"kv_namespaces",
 	"r2_buckets",
+	"analytics_engine_datasets",
 	"unsafe", // [unsafe.bindings] — rate_limiter
 	"routes",
 	"compatibility_flags",
@@ -291,6 +292,7 @@ type NamespaceKind =
 	| "d1 binding"
 	| "kv namespace"
 	| "r2 bucket"
+	| "analytics_engine dataset"
 	| "rate_limiter binding"
 	| "var"
 	| "secret"
@@ -308,6 +310,8 @@ function kindFor(binding: WranglerBindingSpec): NamespaceKind {
 			return "kv namespace";
 		case "r2":
 			return "r2 bucket";
+		case "analytics_engine":
+			return "analytics_engine dataset";
 		case "rate_limiter":
 			return "rate_limiter binding";
 		case "var":
@@ -387,6 +391,19 @@ function appendBindingsToTables(
 		arrayTables.push({
 			path: ["r2_buckets"],
 			entries: { binding: b.binding, bucket_name: b.bucketName },
+		});
+	}
+
+	for (const b of bindings) {
+		if (b.kind !== "analytics_engine") continue;
+		if (b.dataset.length === 0) {
+			throw new Error(
+				`Invalid analytics_engine "${b.binding}": dataset must be a non-empty string.`,
+			);
+		}
+		arrayTables.push({
+			path: ["analytics_engine_datasets"],
+			entries: { binding: b.binding, dataset: b.dataset },
 		});
 	}
 
