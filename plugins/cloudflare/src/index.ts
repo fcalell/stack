@@ -123,25 +123,38 @@ export const cloudflare = plugin("cloudflare", {
 		// throttling forever in local dev. STACK_DEV never goes through the
 		// `secrets` slot — it must never become a `wrangler secret put` deploy
 		// prompt.
+		//
+		// wrangler resolves `.dev.vars` relative to its config file, and the
+		// dev process runs `--config .stack/wrangler.toml`, so the consumer's
+		// root file is invisible to it. The root file stays the consumer's
+		// editing surface; every generate mirrors it into `.stack/.dev.vars`
+		// for wrangler to read.
 		cliSlots.artifactFiles.contribute(async (ctx) => {
 			const stackDevLine =
 				"# STACK_DEV marks local dev; never set in production.\nSTACK_DEV=1\n";
+			const files: Array<{ path: string; content: string }> = [];
+			let content: string;
 			const exists = await ctx.fileExists(".dev.vars");
 			if (exists) {
 				const existing = await ctx.readFile(".dev.vars");
-				if (/^STACK_DEV=/m.test(existing)) return undefined;
-				const separator = existing.endsWith("\n") ? "" : "\n";
-				return {
-					path: ".dev.vars",
-					content: `${existing}${separator}${stackDevLine}`,
-				};
+				if (/^STACK_DEV=/m.test(existing)) {
+					content = existing;
+				} else {
+					const separator = existing.endsWith("\n") ? "" : "\n";
+					content = `${existing}${separator}${stackDevLine}`;
+					files.push({ path: ".dev.vars", content });
+				}
+			} else {
+				const resolvedSecrets = await ctx.resolve(self.slots.secrets);
+				const secretsContent = aggregateDevVars(resolvedSecrets) ?? "";
+				content = `${stackDevLine}${secretsContent}`;
+				files.push({ path: ".dev.vars", content });
 			}
-			const resolvedSecrets = await ctx.resolve(self.slots.secrets);
-			const secretsContent = aggregateDevVars(resolvedSecrets) ?? "";
-			return {
-				path: ".dev.vars",
-				content: `${stackDevLine}${secretsContent}`,
-			};
+			files.push({
+				path: ".stack/.dev.vars",
+				content: `# Generated mirror of ../.dev.vars — edit that file, then re-run stack generate.\n${content}`,
+			});
+			return files;
 		}),
 
 		// Dev wrangler process — the worker target's local runtime. `--config`
