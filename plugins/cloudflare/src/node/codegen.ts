@@ -12,10 +12,14 @@ import type { CodegenWranglerPayload, WranglerBindingSpec } from "../types";
 // (1) FRAMEWORK_MANAGED_LISTS — consumer cannot specify; if present in the
 //     consumer file we throw with an actionable message. The framework owns
 //     these tables end-to-end (driven by plugin contributions to
-//     cloudflare.slots.bindings / routes / compatibilityFlags).
+//     cloudflare.slots.bindings / compatibilityFlags).
 // (2) FRAMEWORK_DEFAULTED_SCALARS — consumer wins if present; otherwise the
 //     framework supplies a default. (`name`, `compatibility_date`, `main`.)
-// (3) Everything else is consumer-only and passes through verbatim
+// (3) CONSUMER_MERGED_LISTS — `[[routes]]` and `[[r2_buckets]]` (WS1.3):
+//     consumer entries merge next to framework contributions, and a
+//     collision (route pattern, r2 binding name) is a hard error so a
+//     future slot contributor can never silently shadow a consumer entry.
+// (4) Everything else is consumer-only and passes through verbatim
 //     (e.g. `account_id`, `dev`, `build`, `assets`).
 //
 // `[vars]` is a hybrid: consumer keys pass through, framework keys (vars
@@ -25,12 +29,12 @@ import type { CodegenWranglerPayload, WranglerBindingSpec } from "../types";
 const FRAMEWORK_MANAGED_LISTS = new Set<string>([
 	"d1_databases",
 	"kv_namespaces",
-	"r2_buckets",
 	"analytics_engine_datasets",
 	"unsafe", // [unsafe.bindings] — rate_limiter
-	"routes",
 	"compatibility_flags",
 ]);
+
+const CONSUMER_MERGED_LISTS = new Set<string>(["routes", "r2_buckets"]);
 
 const GENERATED_MAIN_VALUES = new Set([
 	"worker.ts",
@@ -61,12 +65,6 @@ export function aggregateWrangler(opts: {
 	payload: CodegenWranglerPayload;
 	name?: string;
 }): string {
-	// Fail-fast on conflicts across the whole wrangler namespace before
-	// rendering any TOML. `[vars]` keys and top-level binding identifiers share
-	// one namespace at runtime — `env.DB` is ambiguous if `DB` is both a D1
-	// binding and a `[vars]` key, or two plugins both register `AUTH_SECRET`.
-	assertNoNamespaceCollisions(opts.payload);
-
 	if (!COMPATIBILITY_DATE_RE.test(opts.payload.compatibilityDate)) {
 		throw new Error(
 			`Invalid compatibility_date "${opts.payload.compatibilityDate}": must be YYYY-MM-DD.`,
@@ -75,6 +73,18 @@ export function aggregateWrangler(opts: {
 
 	const consumerParsed = parseConsumerWrangler(opts.consumerWrangler);
 	rejectFrameworkManagedSections(consumerParsed);
+	const consumerR2 = extractConsumerR2(consumerParsed);
+	const consumerRoutes = extractConsumerRoutes(consumerParsed);
+
+	// Fail-fast on conflicts across the whole wrangler namespace before
+	// rendering any TOML. `[vars]` keys and top-level binding identifiers share
+	// one namespace at runtime — `env.DB` is ambiguous if `DB` is both a D1
+	// binding and a `[vars]` key, or two plugins both register `AUTH_SECRET`.
+	// Consumer-merged r2 bindings live in the same namespace.
+	assertNoNamespaceCollisions(
+		opts.payload,
+		consumerR2.map((e) => String(e.binding)),
+	);
 
 	const root: Record<string, TomlValue> = {};
 	const arrayTables: Array<{
@@ -87,6 +97,7 @@ export function aggregateWrangler(opts: {
 	// (consumer wins) and are filled in by step (2) only when missing.
 	for (const [k, v] of Object.entries(consumerParsed)) {
 		if (FRAMEWORK_MANAGED_LISTS.has(k)) continue;
+		if (CONSUMER_MERGED_LISTS.has(k)) continue;
 		// `vars` is special: consumer keys pass through here, framework keys
 		// will overlay below with collision checks.
 		root[k] = v;
@@ -140,6 +151,29 @@ export function aggregateWrangler(opts: {
 
 	appendBindingsToTables(opts.payload.bindings, arrayTables, String(root.name));
 
+	// Consumer r2 entries render after the framework's, verbatim (extra keys
+	// like `jurisdiction` survive). Binding-name collisions were caught by
+	// the namespace check above.
+	for (const entry of consumerR2) {
+		arrayTables.push({ path: ["r2_buckets"], entries: entry });
+	}
+
+	const seenRoutePatterns = new Map<string, string>();
+	const pushRoute = (
+		entry: Record<string, TomlValue>,
+		originOf: string,
+	): void => {
+		const pattern = String(entry.pattern);
+		const prior = seenRoutePatterns.get(pattern);
+		if (prior) {
+			throw new Error(
+				`Duplicate wrangler route pattern "${pattern}" (${prior} vs ${originOf}). Remove one side.`,
+			);
+		}
+		seenRoutePatterns.set(pattern, originOf);
+		arrayTables.push({ path: ["routes"], entries: entry });
+	};
+
 	for (const route of opts.payload.routes) {
 		if (typeof route.pattern !== "string" || route.pattern.length === 0) {
 			throw new Error(
@@ -152,7 +186,11 @@ export function aggregateWrangler(opts: {
 		if (route.zone !== undefined) entry.zone = route.zone;
 		if (route.customDomain !== undefined)
 			entry.custom_domain = route.customDomain;
-		arrayTables.push({ path: ["routes"], entries: entry });
+		pushRoute(entry, "plugin contribution");
+	}
+
+	for (const entry of consumerRoutes) {
+		pushRoute(entry, "consumer wrangler.toml");
 	}
 
 	// `[vars]` overlay — merge framework keys onto consumer keys, with cross-
@@ -209,6 +247,69 @@ function rejectFrameworkManagedSections(
 				", ",
 			)}. Remove them and let plugins (db/auth/...) contribute these via stack.config.ts.`,
 	);
+}
+
+function extractConsumerR2(
+	parsed: Record<string, TomlValue>,
+): Array<Record<string, TomlValue>> {
+	const raw = parsed.r2_buckets;
+	if (raw === undefined) return [];
+	if (!Array.isArray(raw)) {
+		throw new Error(
+			"Invalid wrangler.toml: `r2_buckets` must be an array of tables ([[r2_buckets]]).",
+		);
+	}
+	return raw.map((e) => {
+		if (typeof e !== "object" || e === null || Array.isArray(e)) {
+			throw new Error(
+				"Invalid [[r2_buckets]] entry in wrangler.toml: each entry must be a table.",
+			);
+		}
+		const entry = e as Record<string, TomlValue>;
+		for (const key of ["binding", "bucket_name"] as const) {
+			if (typeof entry[key] !== "string" || entry[key].length === 0) {
+				throw new Error(
+					`Invalid [[r2_buckets]] entry in wrangler.toml: \`${key}\` is required and must be a non-empty string.`,
+				);
+			}
+		}
+		return entry;
+	});
+}
+
+function extractConsumerRoutes(
+	parsed: Record<string, TomlValue>,
+): Array<Record<string, TomlValue>> {
+	const raw = parsed.routes;
+	if (raw === undefined) return [];
+	if (!Array.isArray(raw)) {
+		throw new Error(
+			"Invalid wrangler.toml: `routes` must be an array ([[routes]] tables or route-pattern strings).",
+		);
+	}
+	return raw.map((e) => {
+		// wrangler's `routes = ["example.com/*"]` shorthand.
+		if (typeof e === "string") {
+			if (e.length === 0) {
+				throw new Error(
+					"Invalid routes entry in wrangler.toml: a route pattern must be non-empty.",
+				);
+			}
+			return { pattern: e };
+		}
+		if (typeof e !== "object" || e === null || Array.isArray(e)) {
+			throw new Error(
+				"Invalid [[routes]] entry in wrangler.toml: each entry must be a table or a pattern string.",
+			);
+		}
+		const entry = e as Record<string, TomlValue>;
+		if (typeof entry.pattern !== "string" || entry.pattern.length === 0) {
+			throw new Error(
+				"Invalid [[routes]] entry in wrangler.toml: `pattern` is required and must be a non-empty string.",
+			);
+		}
+		return entry;
+	});
 }
 
 function overlayVars(
@@ -292,6 +393,7 @@ type NamespaceKind =
 	| "d1 binding"
 	| "kv namespace"
 	| "r2 bucket"
+	| "r2 bucket (consumer wrangler.toml)"
 	| "analytics_engine dataset"
 	| "rate_limiter binding"
 	| "var"
@@ -323,7 +425,10 @@ function idFor(binding: WranglerBindingSpec): string {
 	return binding.kind === "var" ? binding.name : binding.binding;
 }
 
-function assertNoNamespaceCollisions(payload: CodegenWranglerPayload): void {
+function assertNoNamespaceCollisions(
+	payload: CodegenWranglerPayload,
+	consumerR2Bindings: string[],
+): void {
 	const seen = new Map<string, NamespaceEntry[]>();
 
 	const push = (id: string, entry: NamespaceEntry) => {
@@ -333,6 +438,8 @@ function assertNoNamespaceCollisions(payload: CodegenWranglerPayload): void {
 	};
 
 	for (const b of payload.bindings) push(idFor(b), { kind: kindFor(b) });
+	for (const b of consumerR2Bindings)
+		push(b, { kind: "r2 bucket (consumer wrangler.toml)" });
 	for (const s of payload.secrets) push(s.name, { kind: "secret" });
 	for (const name of Object.keys(payload.vars))
 		push(name, { kind: "extra var" });
@@ -350,7 +457,7 @@ function assertNoNamespaceCollisions(payload: CodegenWranglerPayload): void {
 	throw new Error(
 		`Duplicate wrangler identifier(s) — each name must be unique across bindings, vars, and secrets:\n${lines.join(
 			"\n",
-		)}\nRename one of the contributing plugins' identifiers.`,
+		)}\nRename one side (plugin identifier or consumer wrangler.toml entry).`,
 	);
 }
 
