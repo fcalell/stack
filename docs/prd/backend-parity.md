@@ -120,6 +120,41 @@ that column through a worker route: the change is live without a restart. Confir
 was never created. Before this milestone lands, `stack db push` on d1 exits with the pointer message
 and writes nothing.
 
+### Verify run notes (2026-08-28, WS1/WS2 local halves)
+
+Everything in WS1/WS2 that does not require a live Cloudflare resource is shipped and verified
+against the web scratch consumer; the live residue is one short session (deploy 1.1, probe 1.2,
+remote-apply/seed 2.1, and a real run-through for 2.2's final step) against throwaway resources in
+any account.
+
+- **1.1 shipped**: the emitted unsafe binding carries `namespace_id` (hashed from worker + binding
+  name, so two apps never share a counter bucket) and nested `simple`. `wrangler dev` boots the
+  generated toml with no hand-patch and `wrangler deploy --dry-run` validates it; the real deploy
+  is the live residue. The 2026-08-27 local-dev blocker note is resolved.
+- **1.2 untouched by design**: whether an empty `[vars]` entry shadows `wrangler secret put` is
+  server-side behavior; the milestone's decision waits for the live probe. Its `.dev.vars` half is
+  ready: generate now mirrors the root `.dev.vars` into `.stack/.dev.vars`, where wrangler
+  actually looks (this was silently breaking `stack dev` env for every worker consumer).
+- **1.3 shipped and verified** (decision: merge): consumer `[[routes]]`/`[[r2_buckets]]` survive
+  into the generated toml next to framework entries; a consumer r2 binding colliding with the D1
+  binding exits non-zero naming both sides.
+- **2.1 local half shipped**: `migrations_dir` emits relative to the config dir
+  (`../src/migrations`); `wrangler d1 migrations` enumerates the real dir with no symlink. Remote
+  apply, UUID `database_name`, and remote seed are the live residue.
+- **2.2 shipped and verified**: a drifted schema aborts `stack deploy` by name before any step; a
+  drizzle-generated drop without the ack marker aborts; clean state passes every gate and runs to
+  the remote wrangler call (the live boundary). The confirm lists committed migrations only; the
+  deploy-time `generateMigrations` path is gone, as is the double apply (check action + step).
+- **2.3 shipped and verified**: `stack db push` on d1 pushes into the exact miniflare sqlite the
+  running worker serves (filename derived via miniflare's durable-object hash of the databaseId);
+  a column added while the worker ran was readable through a procedure with no restart, and
+  `.stack/dev/local.db` was never created. The schema watcher now re-pushes for both dialects;
+  migrations remain the deploy path. En route this closed the 2026-08-27 init-gap deps
+  (drizzle-orm + better-sqlite3 now ship with the plugin), added the pnpm build approval for the
+  native addon (`allowBuilds` in `pnpm-workspace.yaml`; pnpm 10 ignores the package.json `pnpm`
+  field), and added a driver preflight because drizzle-kit exits 0 when better-sqlite3 is unbuilt.
+  Still open from 2026-08-27: the scaffolded schema's missing auth re-export.
+
 ### WS3 — plugin-auth surface (shipped; verified 2026-08-27)
 
 **3.1 Expo client cookie prefix (AUTH-2).** Forward the consumer cookie prefix to `expoClient()`.
