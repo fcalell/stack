@@ -36,6 +36,20 @@ export function migrationsApply(
 	);
 }
 
+export function executeSql(
+	cwd: string,
+	databaseName: string,
+	target: "local" | "remote",
+	command: string,
+): void {
+	const flags = target === "local" ? localD1Flags() : remoteD1Flags();
+	runCommand(
+		"npx",
+		["wrangler", "d1", "execute", databaseName, ...flags, "--command", command],
+		cwd,
+	);
+}
+
 export function executeSqlFile(
 	cwd: string,
 	databaseName: string,

@@ -190,8 +190,8 @@ export const db = plugin("db", {
     api.slots.pluginRuntimes.contribute(async (ctx) => /* dbRuntime entry */),
     cliSlots.devReadySetup.contribute((ctx) => ({ name: "db-schema-apply", run: async () => { /* ... */ } })),
     cliSlots.devReadySetup.contribute((ctx) => ({ name: "db-seed", run: async () => { /* ... */ } })),
-    cliSlots.devWatchers.contribute((ctx) => /* schema | migrations, plus a seed watcher */),
-    cliSlots.deployChecks.contribute(async (ctx) => /* pending migrations + destructive gate */),
+    cliSlots.devWatchers.contribute((ctx) => /* schema push watcher, plus a seed watcher */),
+    cliSlots.deployChecks.contribute(async (ctx) => /* drift + destructive gates, committed-migrations confirm */),
     cliSlots.deploySteps.contribute((ctx) => /* applyMigrationsRemote, then seed */),
     cliSlots.initPrompts.contribute(/* dialect + databaseId/path */),
     cliSlots.initScaffolds.contribute((ctx) => ctx.scaffold("schema.ts", "src/schema/index.ts")),
@@ -210,9 +210,9 @@ export const db = plugin("db", {
 | `api.slots.entities` | Sorted value-export names from `src/schema/index.ts` (both dialects) |
 | `cliSlots.initPrompts` | Asks for dialect, then database ID or SQLite path |
 | `cliSlots.initScaffolds` | Writes `src/schema/index.ts` from `templates/schema.ts` |
-| `cliSlots.devReadySetup` | Applies schema to the local DB, then seeds (sqlite pushes; d1 applies migrations into the miniflare D1 `wrangler dev` reads) |
-| `cliSlots.devWatchers` | sqlite: re-push on `src/schema/**`; d1: apply on `src/migrations/**`; re-seed on `src/schema/seed.ts` (300ms debounce) |
-| `cliSlots.deployChecks` | Pending D1 migrations, valid `databaseId`, and the destructive-migration hard gate |
+| `cliSlots.devReadySetup` | Pushes the schema into the local DB, then seeds (sqlite's file, or the miniflare D1 `wrangler dev` reads — a schema save is live without a migration or restart) |
+| `cliSlots.devWatchers` | Re-push on `src/schema/**` (both dialects); re-seed on `src/schema/seed.ts` (300ms debounce) |
+| `cliSlots.deployChecks` | Valid `databaseId`, the destructive-migration hard gate, the drift hard gate (schema change with no committed migration aborts), and the committed-migrations confirm |
 | `cliSlots.deploySteps` | `applyMigrationsRemote` then seed (when `seed.ts` exists), both `pre` phase |
 | `cliSlots.removeFiles` | `src/schema/`, `src/migrations/` |
 

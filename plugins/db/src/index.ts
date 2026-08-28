@@ -26,7 +26,6 @@ import {
 	applyMigrationsRemote,
 	generateMigrations,
 	listMigrationFiles,
-	migrationsExist,
 	pushSchemaLocal,
 } from "./node/push";
 import { applySeed } from "./node/seed";
@@ -80,9 +79,15 @@ export const db = plugin("db", {
 
 	dependencies: {
 		"@fcalell/plugin-db": "workspace:*",
+		// drizzle-kit resolves drizzle-orm from the consumer at
+		// generate/push time; the plugin's own copy doesn't satisfy it.
+		"drizzle-orm": "^0.45.2",
 	},
 	devDependencies: {
 		"drizzle-kit": "^0.31.0",
+		// drizzle-kit's sqlite driver for `stack db push` — both dialects
+		// push into a local sqlite file (miniflare's for d1).
+		"better-sqlite3": "^12.0.0",
 		tsx: "^4.19.0",
 	},
 	gitignore: [".db-kit"],
@@ -245,14 +250,14 @@ export const db = plugin("db", {
 		// `getSharedSchemaApply(cwd)` so they share a single in-flight/queued
 		// lock per cwd within a graph.
 		//
-		// The local schema-apply op is dialect-specific: sqlite pushes the
-		// schema straight into its local file with drizzle-kit; d1 applies
-		// migrations into the miniflare-backed D1 that `wrangler dev` reads, so
-		// the running worker actually sees the schema.
+		// Local dev is push-based for BOTH dialects (WS2.3): drizzle-kit
+		// pushes the schema straight into the local database — sqlite's file,
+		// or the miniflare-backed D1 that `wrangler dev` reads — so a schema
+		// save is live without generating a migration or restarting.
+		// Migrations exist for the remote deploy path; `stack db apply` still
+		// applies committed ones locally for journal parity when wanted.
 		const applySchemaLocal = (cwd: string): Promise<void> =>
-			self.options.dialect === "d1"
-				? applyMigrationsLocal(cwd, self.options)
-				: pushSchemaLocal(cwd, self.options);
+			pushSchemaLocal(cwd, self.options);
 
 		const schemaSerializers = new Map<string, () => Promise<void>>();
 		const getSharedSchemaApply = (cwd: string): (() => Promise<void>) => {
@@ -324,6 +329,35 @@ export const db = plugin("db", {
 			cliSlots.initScaffolds.contribute((ctx) =>
 				ctx.scaffold("schema.ts", "src/schema/index.ts"),
 			),
+
+			// pnpm v10 blocks dependency build scripts unless approved in
+			// pnpm-workspace.yaml (the package.json `pnpm` field is no longer
+			// read). Without the approval better-sqlite3's native addon never
+			// builds and every local push fails. Both spellings are emitted:
+			// `allowBuilds` is current pnpm's setting, `onlyBuiltDependencies`
+			// covers earlier v10. A file that already names better-sqlite3 is
+			// consumer-managed and stays untouched; one with an approval
+			// section missing better-sqlite3 gets a warning instead of a
+			// blind append (a duplicate YAML key would corrupt it).
+			cliSlots.artifactFiles.contribute(async (ctx) => {
+				const block =
+					"allowBuilds:\n  better-sqlite3: true\nonlyBuiltDependencies:\n  - better-sqlite3\n";
+				const exists = await ctx.fileExists("pnpm-workspace.yaml");
+				if (!exists) return { path: "pnpm-workspace.yaml", content: block };
+				const existing = await ctx.readFile("pnpm-workspace.yaml");
+				if (existing.includes("better-sqlite3")) return undefined;
+				if (/^(allowBuilds|onlyBuiltDependencies)\s*:/m.test(existing)) {
+					ctx.log.warn(
+						"pnpm-workspace.yaml has a build-approval section without better-sqlite3; add it (allowBuilds: better-sqlite3: true) or local db pushes will fail.",
+					);
+					return undefined;
+				}
+				const sep = existing.endsWith("\n") ? "" : "\n";
+				return {
+					path: "pnpm-workspace.yaml",
+					content: `${existing}${sep}${block}`,
+				};
+			}),
 
 			// D1 binding — only for the d1 dialect, and only when `databaseId`
 			// is set. Contribution is pure; wrangler aggregator reads all
@@ -399,25 +433,14 @@ export const db = plugin("db", {
 			}),
 
 			// Local schema apply at `stack dev` Ready time. Shares its latch with
-			// the schema/migrations watcher below via `getSharedSchemaApply(cwd)`
-			// so that a re-apply triggered by a file change while the initial
-			// apply is still in flight queues behind it instead of racing. For
-			// d1 without any migrations yet, there's nothing to apply — nudge the
-			// consumer to generate one (it then applies automatically).
+			// the schema watcher below via `getSharedSchemaApply(cwd)` so that a
+			// re-apply triggered by a file change while the initial apply is
+			// still in flight queues behind it instead of racing.
 			cliSlots.devReadySetup.contribute((ctx) => {
 				const serializedSchema = getSharedSchemaApply(ctx.cwd);
 				return {
 					name: "db-schema-apply",
 					run: async () => {
-						if (
-							self.options.dialect === "d1" &&
-							!migrationsExist(ctx.cwd, self.options)
-						) {
-							ctx.log.warn(
-								"No migrations yet — run `stack db generate`; new migrations apply automatically.",
-							);
-							return;
-						}
 						ctx.log.info("Applying schema to local database...");
 						await serializedSchema();
 						ctx.log.success("Schema applied");
@@ -438,26 +461,13 @@ export const db = plugin("db", {
 				},
 			})),
 
-			// Schema/migrations watcher — re-apply when the source of truth
-			// changes. sqlite watches the schema (push-based); d1 watches the
-			// migrations dir, so a freshly generated migration applies to the
-			// running worker's D1. Shares the serialized helper with
-			// `devReadySetup` (same graph, same cwd → same latch); a stale
-			// watcher from a previous graph cannot starve the current graph.
+			// Schema watcher — push-based for both dialects (WS2.3): a schema
+			// save re-pushes into the local database the running worker reads.
+			// Shares the serialized helper with `devReadySetup` (same graph,
+			// same cwd → same latch); a stale watcher from a previous graph
+			// cannot starve the current graph.
 			cliSlots.devWatchers.contribute((ctx) => {
 				const serializedSchema = getSharedSchemaApply(ctx.cwd);
-				if (self.options.dialect === "d1") {
-					return {
-						name: "migrations",
-						paths: "src/migrations/**",
-						debounce: 300,
-						handler: async () => {
-							ctx.log.info("Migration change detected, applying...");
-							await serializedSchema();
-							ctx.log.success("Migrations applied");
-						},
-					};
-				}
 				return {
 					name: "schema",
 					paths: "src/schema/**",
