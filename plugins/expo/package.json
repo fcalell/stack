@@ -23,6 +23,7 @@
 	"dependencies": {
 		"@fcalell/cli": "workspace:*",
 		"@fcalell/plugin-api": "workspace:*",
+		"@fcalell/plugin-cloudflare": "workspace:*",
 		"hono": "^4.12.23",
 		"zod": "^4.3.6"
 	},

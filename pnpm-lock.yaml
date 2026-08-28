@@ -264,6 +264,9 @@ importers:
       '@fcalell/plugin-api':
         specifier: workspace:*
         version: link:../api
+      '@fcalell/plugin-cloudflare':
+        specifier: workspace:*
+        version: link:../cloudflare
       hono:
         specifier: ^4.12.23
         version: 4.12.23

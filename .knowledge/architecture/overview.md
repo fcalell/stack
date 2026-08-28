@@ -48,7 +48,9 @@ plugin-vite ──────────────> cli (owns vite.slots.con
                                  contributes to api.slots.devCorsOrigins for localhost dev)
 plugin-expo ──────────────> cli (owns expo.slots.metroConfig/expoConfig/entrySource/routesDtsSource,
                                  providers, easBuildProfiles/easUpdateChannel;
-                                 contributes to api.slots.devCorsOrigins for the Metro dev origin)
+                                 contributes to api.slots.devCorsOrigins for the Metro dev origin,
+                                 api.slots.middlewareEntries + cloudflare.slots.bindings for the
+                                 version gate and its telemetry dataset)
 plugin-db ────────────────> cli, requires cloudflare + api
                                  (contributes to cloudflare.slots.bindings, api.slots.pluginRuntimes / workerImports)
 plugin-auth ──────────────> cli, requires api + cloudflare + db

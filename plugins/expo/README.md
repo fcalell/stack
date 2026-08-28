@@ -81,6 +81,10 @@ Below the floor, the gate short-circuits with:
 
 `426` and stops the request before it reaches CORS's downstream middleware, per-procedure rate limits, or the procedure itself, so a walled client's retry storm sees `426` and never a confusing `429`.
 
+### Telemetry
+
+While the gate is active, the plugin binds an Analytics Engine dataset (`VERSION_GATE_METRICS`, dataset `<app-slug>_version_gate`) and the gate counts two events on gated paths: `walled` (a 426 served) and `headerless` (a fail-open pass: missing or malformed headers, so also every web-browser request on a mixed consumer). Each datapoint carries `[event, platform, build]` as blobs with `event` as the index; `headerless` rows with an empty platform blob are the canary for clients the gate cannot wall. When the binding is absent from the env (node target, a local config without the section) the gate writes nothing and never errors.
+
 ## Native client
 
 `stack init`/`stack add` scaffolds `src/lib/api.ts`: a typed oRPC client (`@fcalell/plugin-api/client`) wired to `.stack/worker`'s `AppRouter` and stamped with the version-gate headers on every request. No config is required. The two headers go out regardless of whether `minNativeBuild` is set, so the gate can be turned on later without a client change.
@@ -139,7 +143,7 @@ Rendering the update-wall screen itself is app territory: call `onUpdateRequired
 | `expo.slots.entrySource` | `derived<string \| null>` | Final `.stack/entry.tsx` |
 | `expo.slots.routesDtsSource` | `derived<string \| null>` | Final `.stack/routes.d.ts` |
 
-`plugin-expo` also contributes its dev-server localhost origin to `api.slots.devCorsOrigins` (gated on `app.origins` not being set), which the worker honours only under `STACK_DEV`, and, when `minNativeBuild` is configured, the version-gate middleware to `api.slots.middlewareEntries` (resolving `api.slots.routePrefixes` for the gate's scope).
+`plugin-expo` also contributes its dev-server localhost origin to `api.slots.devCorsOrigins` (gated on `app.origins` not being set), which the worker honours only under `STACK_DEV`, and, when `minNativeBuild` is configured, the version-gate middleware to `api.slots.middlewareEntries` (resolving `api.slots.routePrefixes` for the gate's scope) plus its telemetry dataset to `cloudflare.slots.bindings`.
 
 ## Exports
 

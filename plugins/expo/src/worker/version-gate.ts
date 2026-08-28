@@ -40,6 +40,43 @@ export interface VersionGateOptions {
 	// stale client hitting it must not newly get a 426 it never asked for.
 	// Liveness (`/`) falls outside every prefix and so is never gated.
 	prefixes: string[];
+	// Env binding name of an Analytics Engine dataset (WS6.2). When the
+	// binding is live, the gate counts walled and fail-open (header-less /
+	// malformed) requests — the canary that measures how many clients the
+	// gate cannot wall. Absent binding = no telemetry, never an error.
+	metricsBinding?: string;
+}
+
+// Structural slice of Cloudflare's AnalyticsEngineDataset — the worker types
+// aren't a dependency here, and only writeDataPoint is used.
+interface MetricsDataset {
+	writeDataPoint(point: {
+		blobs?: string[];
+		doubles?: number[];
+		indexes?: string[];
+	}): void;
+}
+
+function writeMetric(
+	env: unknown,
+	binding: string | undefined,
+	event: "walled" | "headerless",
+	platform: string | undefined,
+	build: string | undefined,
+): void {
+	if (!binding) return;
+	const dataset = (env as Record<string, unknown> | null | undefined)?.[
+		binding
+	] as MetricsDataset | undefined;
+	if (typeof dataset?.writeDataPoint !== "function") return;
+	try {
+		dataset.writeDataPoint({
+			blobs: [event, platform ?? "", build ?? ""],
+			indexes: [event],
+		});
+	} catch {
+		// Telemetry must never take down the request path.
+	}
 }
 
 // Hono middleware factory: walls a native client below `options[platform]`
@@ -53,7 +90,10 @@ export function versionGate(options: VersionGateOptions): MiddlewareHandler {
 
 		const build = c.req.header(CLIENT_BUILD_HEADER);
 		const platform = c.req.header(CLIENT_PLATFORM_HEADER);
-		if (!build || !platform || !BUILD_NUMBER_RE.test(build)) return next();
+		if (!build || !platform || !BUILD_NUMBER_RE.test(build)) {
+			writeMetric(c.env, options.metricsBinding, "headerless", platform, build);
+			return next();
+		}
 
 		const floor =
 			platform === "ios"
@@ -61,9 +101,13 @@ export function versionGate(options: VersionGateOptions): MiddlewareHandler {
 				: platform === "android"
 					? options.android
 					: null;
-		if (floor === null) return next();
+		if (floor === null) {
+			writeMetric(c.env, options.metricsBinding, "headerless", platform, build);
+			return next();
+		}
 
 		if (Number(build) < floor) {
+			writeMetric(c.env, options.metricsBinding, "walled", platform, build);
 			return c.json(
 				{
 					code: "UPGRADE_REQUIRED",

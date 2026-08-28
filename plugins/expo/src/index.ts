@@ -8,6 +8,7 @@ import type {
 } from "@fcalell/cli/ast";
 import { cliSlots, emitArtifact } from "@fcalell/cli/cli-slots";
 import { api } from "@fcalell/plugin-api";
+import { cloudflare } from "@fcalell/plugin-cloudflare";
 import {
 	aggregateEntry,
 	aggregateExpoConfig,
@@ -28,6 +29,32 @@ const DEFAULT_PORT = 8081;
 const DEFAULT_APP_DIR = "src/app";
 const DEFAULT_EAS_PROFILES = ["development", "preview", "production"];
 const DEFAULT_UPDATE_CHANNEL = "production";
+
+// Version-gate telemetry (WS6.2): the Analytics Engine binding the gate
+// writes its walled / header-less counters to. The dataset name carries the
+// app slug — dataset names are account-global, and two apps sharing one
+// would mix their canaries.
+const VERSION_GATE_METRICS_BINDING = "VERSION_GATE_METRICS";
+
+function versionGateDataset(appName: string): string {
+	const slug = appName
+		.toLowerCase()
+		.replace(/[^a-z0-9_]+/g, "_")
+		.replace(/^_+|_+$/g, "")
+		.replace(/_{2,}/g, "_");
+	return `${slug || "stack_app"}_version_gate`;
+}
+
+// The gate is active only when a floor is configured; a dormant gate must
+// not appear in the emitted worker or claim a binding.
+function versionGateFloors(
+	minNativeBuild: { ios?: number; android?: number } | undefined,
+): { ios: number; android: number } | undefined {
+	const ios = minNativeBuild?.ios ?? 0;
+	const android = minNativeBuild?.android ?? 0;
+	if (!minNativeBuild || (ios === 0 && android === 0)) return undefined;
+	return { ios, android };
+}
 
 // The generated expo-router custom root. It calls `registerRootComponent` and
 // mounts the provider stack, so it must be the package's `main` to ever run.
@@ -426,10 +453,9 @@ export const expo = plugin("expo", {
 		// never a confusing 429.
 		api.slots.middlewareEntries.contribute(
 			async (ctx): Promise<MiddlewareSpec | undefined> => {
-				const minNativeBuild = self.options.minNativeBuild;
-				const ios = minNativeBuild?.ios ?? 0;
-				const android = minNativeBuild?.android ?? 0;
-				if (!minNativeBuild || (ios === 0 && android === 0)) return undefined;
+				const floors = versionGateFloors(self.options.minNativeBuild);
+				if (!floors) return undefined;
+				const { ios, android } = floors;
 				// Scope: the worker's own prefixes, baked at codegen. A raw
 				// consumer route is the consumer's surface, not the framework's,
 				// and walling it would 426 a stale client on an endpoint that
@@ -464,6 +490,13 @@ export const expo = plugin("expo", {
 											})),
 										},
 									},
+									{
+										key: "metricsBinding",
+										value: {
+											kind: "string",
+											value: VERSION_GATE_METRICS_BINDING,
+										},
+									},
 								],
 							},
 						],
@@ -473,6 +506,20 @@ export const expo = plugin("expo", {
 				};
 			},
 		),
+
+		// The gate's telemetry dataset (WS6.2), bound only while the gate is
+		// active. The runtime probes `env[VERSION_GATE_METRICS]` and stays
+		// silent when the binding is absent (node target, local dev without
+		// the section), so the contribution and the write path fail open
+		// independently.
+		cloudflare.slots.bindings.contribute((ctx) => {
+			if (!versionGateFloors(self.options.minNativeBuild)) return undefined;
+			return {
+				kind: "analytics_engine",
+				binding: VERSION_GATE_METRICS_BINDING,
+				dataset: versionGateDataset(ctx.app.name),
+			};
+		}),
 
 		// Emit the four native artifacts. metro/app.config/entry always render;
 		// routes.d.ts is null (skipped) when routing is disabled. The two config
