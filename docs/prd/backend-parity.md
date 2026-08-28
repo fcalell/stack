@@ -240,7 +240,7 @@ absorb:
   the kysely its own peer range resolves. The internals the auth worker leans on are
   shape-identical in 1.7.2 and re-verified live.
 
-### WS6 — observability and env parity (WIRE-4, API-4)
+### WS6 — observability and env parity (WIRE-4, API-4) (shipped; verified 2026-08-28)
 
 **6.1 `analytics_engine` binding kind** on `WranglerBindingSpec`, contributable like the existing
 kinds.
@@ -261,6 +261,23 @@ fast.
 **Verify.** Set a secret shorter than its declared minimum and send the first request: it fails with
 the named error. Fix the value and confirm requests pass and the assertion logs once per isolate.
 Set a non-localhost `APP_URL` with dev-mode settings and confirm the worker refuses to serve.
+
+### Verify run notes (2026-08-28, WS6)
+
+WS6 ran green against the existing scratch consumers. 6.1/6.2: `stack generate` on the native
+consumer emits `[[analytics_engine_datasets]]` (binding `VERSION_GATE_METRICS`, dataset
+`verify_native_version_gate`) and miniflare binds it locally; a below-floor request 426s and a
+header-less one passes with zero errors, identically after removing the section from the toml.
+Local Analytics Engine accepts writes but has no query surface, so the one-datapoint-each count ran
+against a captured `writeDataPoint` driving the middleware directly: one `walled` and one
+`headerless` point (malformed headers count as `headerless`), nothing for at-floor or ungated
+requests, and an absent or throwing binding writes nothing and never errors. Querying the real
+dataset needs a deployed worker (WS1 residue). 6.3 on the web consumer: a 20-char `AUTH_SECRET`
+fails the first request with the named minLength error while `/` liveness stays up; the fixed value
+serves and logs `env checks passed (2 vars)` exactly once across repeated requests; a removed
+`APP_URL`, a malformed one, and a production `APP_URL` with `STACK_DEV` set each fail by name (the
+last refuses to serve); the same production URL without `STACK_DEV` serves. The runs re-used the
+WS1.1 ratelimit toml hand-patch; that finding stands.
 
 ## Non-goals
 
