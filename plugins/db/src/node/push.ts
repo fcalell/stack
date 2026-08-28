@@ -17,12 +17,19 @@ function sqliteLocalUrl(options: DbOptions): string {
 		: ".stack/dev/local.db";
 }
 
+// The committed `.sql` migrations, sorted so listings are deterministic.
+export function listMigrationFiles(cwd: string, options: DbOptions): string[] {
+	const dir = join(cwd, options.migrations ?? "./src/migrations");
+	if (!existsSync(dir)) return [];
+	return readdirSync(dir)
+		.filter((f) => f.endsWith(".sql"))
+		.sort();
+}
+
 // Whether the migrations dir holds at least one `.sql` file. Used to skip the
 // local d1 migrations-apply when the consumer hasn't generated a migration yet.
 export function migrationsExist(cwd: string, options: DbOptions): boolean {
-	const dir = join(cwd, options.migrations ?? "./src/migrations");
-	if (!existsSync(dir)) return false;
-	return readdirSync(dir).some((f) => f.endsWith(".sql"));
+	return listMigrationFiles(cwd, options).length > 0;
 }
 
 function writeDrizzleConfig(configPath: string, content: string): void {

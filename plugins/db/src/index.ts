@@ -25,6 +25,7 @@ import {
 	applyMigrationsLocal,
 	applyMigrationsRemote,
 	generateMigrations,
+	listMigrationFiles,
 	migrationsExist,
 	pushSchemaLocal,
 } from "./node/push";
@@ -505,16 +506,35 @@ export const db = plugin("db", {
 				return undefined;
 			}),
 
-			// Deploy-time migration check — only for d1.
-			cliSlots.deployChecks.contribute(async (ctx) => {
+			// WS2.2 drift hard gate — schema changes without a committed
+			// migration abort the deploy before any step. Deploy never
+			// generates migrations; only committed SQL ever applies, so the
+			// destructive gate above only ever evaluates committed files.
+			cliSlots.deployChecks.contribute((ctx) => {
 				if (self.options.dialect !== "d1") return undefined;
-				const migrations = await generateMigrations(ctx.cwd, self.options);
-				if (migrations.length === 0) return undefined;
+				if (detectSchemaDrift(ctx.cwd, self.options)) {
+					throw new StackError(
+						"Schema drift: `src/schema` has changes with no committed migration. Run `stack db generate` and commit the migration before deploying.",
+						"DB_DRIFT",
+					);
+				}
+				return undefined;
+			}),
+
+			// Pending-migrations confirm — lists the committed migrations for
+			// the deploy plan; the pre-phase step below applies only those
+			// still pending remotely (wrangler's journal decides).
+			cliSlots.deployChecks.contribute((ctx) => {
+				if (self.options.dialect !== "d1") return undefined;
+				const files = listMigrationFiles(ctx.cwd, self.options);
+				if (files.length === 0) return undefined;
 				return {
 					plugin: "db",
-					description: `${migrations.length} pending migration(s)`,
-					items: migrations.map((m) => ({ label: m.name })),
-					action: () => applyMigrationsRemote(ctx.cwd, self.options),
+					description: `${files.length} committed migration(s); pending ones apply before the worker deploys`,
+					items: files.map((name) => ({ label: name })),
+					// The "Database migrations" pre-phase deploy step owns the
+					// apply; a second apply here would just double the call.
+					action: async () => {},
 				};
 			}),
 
