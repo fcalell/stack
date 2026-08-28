@@ -1,3 +1,4 @@
+import { isAbsolute, posix } from "node:path";
 import { log } from "@clack/prompts";
 import {
 	renderToml,
@@ -496,7 +497,14 @@ function appendBindingsToTables(
 			database_id: b.databaseId,
 			database_name: b.databaseName,
 		};
-		if (b.migrationsDir) entry.migrations_dir = b.migrationsDir;
+		// `migrationsDir` on the spec is consumer-root-relative; wrangler
+		// resolves `migrations_dir` against the config file's directory, and
+		// this aggregator emits the config to `.stack/wrangler.toml` (WS2.1).
+		if (b.migrationsDir) {
+			entry.migrations_dir = isAbsolute(b.migrationsDir)
+				? b.migrationsDir
+				: posix.join("..", posix.normalize(b.migrationsDir));
+		}
 		arrayTables.push({ path: ["d1_databases"], entries: entry });
 	}
 
