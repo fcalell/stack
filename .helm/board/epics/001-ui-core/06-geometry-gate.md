@@ -249,7 +249,7 @@ gate-host bullets (`:119-149`).
     passes silently; the gate is a guardrail against drift with those open paths named; the size
     of a consumer's `ui/` directory is the number that says whether the matrices cover enough).
     Each plugin README
-    gains one short paragraph naming its build step. No `.knowledge/` edits: no slot is added,
+    gains one short paragraph naming its build step. No `.helm/knowledge/` edits: no slot is added,
     renamed, or removed.
 
 ## Steps
@@ -290,7 +290,7 @@ scripts/verify.ts, scripts/fixture/.gitignore, scripts/fixture/gate/*, README.md
 `plugins/native-ui/{src/index.ts, src/node/gate.ts, tsconfig.json, scripts/verify.ts,
 scripts/fixture/.gitignore, scripts/fixture/gate/*, README.md}`;
 `packages/biome-config/shared.json`; root lockfile (ts-morph hoist). No component file changes;
-no `@fcalell/cli` change; no `.knowledge/` change.
+no `@fcalell/cli` change; no `.helm/knowledge/` change.
 
 ## Acceptance criteria
 

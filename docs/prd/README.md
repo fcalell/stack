@@ -1,9 +1,9 @@
 # PRDs
 
 Forward-looking implementation drivers: *what we're about to build and in what order*. Distinct
-from `.knowledge/` (the durable present-tense *what/why* reference): a PRD is a working plan that,
-once shipped, is **folded into `.knowledge/` and retired**. Update the matching `architecture/`
-entries (per `.claude/playbooks/knowledge-base.md`), then delete the file.
+from `.helm/knowledge/` (the durable present-tense *what/why* reference): a PRD is a working plan that,
+once shipped, is **folded into `.helm/knowledge/` and retired**. Update the matching `architecture/`
+entries (per `.helm/agents/knowledge-base.md`), then delete the file.
 
 The layer above these drivers is [`../roadmap.md`](../roadmap.md): the sailward → stack extraction
 model, the cross-cutting decisions, the coverage map, and this PRD pipeline. Read it for *why* a PRD

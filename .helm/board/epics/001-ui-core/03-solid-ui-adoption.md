@@ -505,12 +505,12 @@ needs. The mechanism is the run's call; the outcome is not.
 
 ### Documentation (Run A for the slots, Run B for the components)
 
-1. `.knowledge/architecture/slot-catalog.md`'s solid-ui table (`:123-131`) lists `appCssBlocks` and
+1. `.helm/knowledge/architecture/slot-catalog.md`'s solid-ui table (`:123-131`) lists `appCssBlocks` and
    the resolved-theme slot, and its spec-type section registers the block payload type, per
-   `.claude/playbooks/plugin-authoring.md:212-213`. (file)
+   `.helm/agents/plugin-authoring.md:212-213`. (file)
 2. `plugins/solid-ui/README.md` documents the `theme` option in its options table (`:71`), and its
    `globals.css` description (`:125`) matches what the file now holds. (file)
-3. `.knowledge/architecture/consumer-project.md`'s annotated `stack.config.ts` (`:55-88`) carries
+3. `.helm/knowledge/architecture/consumer-project.md`'s annotated `stack.config.ts` (`:55-88`) carries
    the `theme` option, since that doc is CLAUDE.md's named trigger for the `stack.config.ts`
    surface. (file)
 

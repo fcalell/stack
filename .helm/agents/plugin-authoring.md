@@ -2,8 +2,8 @@
 
 > **Load when:** writing or modifying a plugin: its `plugin()` definition, slots, contributions,
 > commands, callbacks, templates, or runtime. Folder layout and placement rules live in
-> `conventions.md`; slot semantics in `.knowledge/architecture/slot-graph.md`; the full slot
-> registry and spec types in `.knowledge/architecture/slot-catalog.md`.
+> `conventions.md`; slot semantics in `.helm/knowledge/architecture/slot-graph.md`; the full slot
+> registry and spec types in `.helm/knowledge/architecture/slot-catalog.md`.
 
 ## Design paradigm
 
@@ -185,7 +185,7 @@ const runtimeOptions = slot.derived<
 
 This is the structural answer to "how do I order myself after another plugin": you don't. You
 declare what you read, and the framework runs you when those reads are ready
-(`.knowledge/architecture/slot-graph.md`).
+(`.helm/knowledge/architecture/slot-graph.md`).
 
 ## Templates
 
@@ -213,5 +213,5 @@ contributes: [
 5. Cross-plugin dataflow is expressed via slot imports: `B.slots.foo.contribute(...)` to push,
    `slot.derived({ inputs: { foo: B.slots.foo }, ... })` to read. No `requires:` for ordering (it's
    presence-only).
-6. New/renamed/removed slots are reflected in `.knowledge/architecture/slot-catalog.md` in the same
+6. New/renamed/removed slots are reflected in `.helm/knowledge/architecture/slot-catalog.md` in the same
    commit.

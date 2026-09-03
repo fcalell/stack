@@ -28,7 +28,7 @@ export default worker;
 
 Runtime code lives in each plugin's `src/worker/` and is published from the `./runtime` subpath;
 the CLI discovers it by checking `package.json` exports. `worker/` files never import from `node/`
-and vice versa (see `.claude/playbooks/conventions.md`).
+and vice versa (see `.helm/agents/conventions.md`).
 
 A `RuntimePlugin` declares `dependsOn: readonly string[]` (other plugins' `name`s) when it reads
 another plugin's `context()` output. `createWorker`'s `.handler()` topologically sorts the `.use()`

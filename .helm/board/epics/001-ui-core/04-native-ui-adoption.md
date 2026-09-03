@@ -135,7 +135,7 @@ The plugin today:
   `h-12 w-12` squares are icon chrome with their own disposition (decision 12).
 - No consumer anywhere passes `nativeUi()` (checked every `stack.config.ts` under `~/projects`),
   so the API breaks land at zero cost and no live app exists to boot.
-- The slot catalog has **no `nativeUi.slots.*` section** (`.knowledge/architecture/slot-catalog.md`
+- The slot catalog has **no `nativeUi.slots.*` section** (`.helm/knowledge/architecture/slot-catalog.md`
   headings end at `auth`); the changed slots must register there in the same commit
   (`plugin-authoring.md` rule). `expo.slots.*` is missing too — pre-existing drift, flagged below,
   not this story's scope.
@@ -310,7 +310,7 @@ components, lib/cn), `plugins/native-ui/package.json` (+ui-core dep, harness dev
 script), `plugins/native-ui/README.md`, `packages/ui-core/package.json` (+`./harness` export),
 new `packages/ui-core/src/harness.ts`, `packages/ui-core/scripts/verify.ts` (refactor + c02
 exports-pin update), `plugins/solid-ui/scripts/verify.ts` (refactor onto the shared harness),
-`.knowledge/architecture/slot-catalog.md` (new section), `docs/prd/ui-core.md` (Out-line
+`.helm/knowledge/architecture/slot-catalog.md` (new section), `docs/prd/ui-core.md` (Out-line
 amendment, decision 1), `pnpm-lock.yaml`. No `@fcalell/cli` change. No consumer exists to
 migrate.
 

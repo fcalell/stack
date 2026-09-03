@@ -1,9 +1,10 @@
 # Knowledge base conventions
 
-> **Load when:** adding, editing, splitting, or relocating anything under `.knowledge/`.
+> **Load when:** adding, editing, splitting, or relocating anything under `.helm/knowledge/`.
 
-`.knowledge/` is the living source of truth for *what `@fcalell/stack` is and why* (product
-philosophy, architecture). Keep it current. Its index is imported into every session via
+`.helm/knowledge/` describes *what `@fcalell/stack` is and why* (product philosophy, architecture)
+as built. Keep it current, and when the work shows a better shape than an entry records, propose
+it rather than match the entry. Its index is imported into every session via
 `CLAUDE.md`.
 
 - Each entry is a standalone `.md` file in the right subfolder (`product/`, `architecture/`).
@@ -19,7 +20,7 @@ philosophy, architecture). Keep it current. Its index is imported into every ses
   entry with a relative path (`[slot-graph](../architecture/slot-graph.md)`); reference a section
   *within* a file by its heading name (`§Spec types`). **Never** cite a numbered section (`§9`):
   numbers break silently when content is added, removed, or reordered.
-- **Always update `.knowledge/index.md`** (the always-loaded navigation map) when adding, renaming,
+- **Always update `.helm/knowledge/index.md`** (the always-loaded navigation map) when adding, renaming,
   removing, or relocating an entry.
 - Prefer **updating an existing entry** over creating a new one when topics overlap.
 - **Decisions are recorded inline** in the doc they govern (framework rationale in
@@ -33,7 +34,7 @@ philosophy, architecture). Keep it current. Its index is imported into every ses
 - **Capture only what the code can't tell you**: invariants, the *why* behind non-obvious choices,
   gotchas, and designed-but-not-yet-built intent. Don't recite column lists, file trees, or
   dependency versions that mirror the source. The one deliberate exception is
-  [slot-catalog](../../.knowledge/architecture/slot-catalog.md): it's the cross-plugin contract
+  [slot-catalog](../knowledge/architecture/slot-catalog.md): it's the cross-plugin contract
   registry, so it must stay complete and current.
 - When a plugin's slot surface changes (a slot added, renamed, removed, or its payload shape
   changed), update `architecture/slot-catalog.md` in the same commit. When the dependency graph or

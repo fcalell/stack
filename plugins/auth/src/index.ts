@@ -223,7 +223,7 @@ export const auth = plugin("auth", {
 		// Init prompts: cookie prefix + optional organization feature toggle.
 		// `app.name` is captured from the contribution ctx (the orchestrator
 		// only hands `prompt` into `ask`, so we close over the value here).
-		// `.knowledge/architecture/consumer-project.md` documents `app.name` as the default cookie prefix —
+		// `.helm/knowledge/architecture/consumer-project.md` documents `app.name` as the default cookie prefix —
 		// hardcoding "app" leaked the wrong value into every fresh project.
 		cliSlots.initPrompts.contribute((ctx) => {
 			const cookiePrefixDefault = ctx.app.name;

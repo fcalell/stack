@@ -19,7 +19,7 @@ TypeScript configs extend `@fcalell/typescript-config`, never define compiler op
 ## Where a new feature or config surface belongs
 
 Before adding any option, type, or file, decide who owns the domain. The default answer is **a
-plugin, not core**. Full rationale: `.knowledge/product/philosophy.md`.
+plugin, not core**. Full rationale: `.helm/knowledge/product/philosophy.md`.
 
 - **`@fcalell/cli` (core) is domain-agnostic.** Orchestration, slot graph, codegen, `defineConfig`,
   `plugin`, `slot.*`, AST specs. Never add domain types here (`FontEntry`, `AuthProvider`,

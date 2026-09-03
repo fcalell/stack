@@ -125,7 +125,7 @@ Plugins coordinate through typed **slots** in a dataflow graph. Four kinds:
 
 Plugins **contribute** to other plugins' slots and **derive** from them. The framework resolves the graph topologically once per command, memoized. There is no event lifecycle, no `after:` field, and no plugin firing order to think about — data dependencies are the order. Cycles are caught at graph build time.
 
-For the full contract and design paradigm, see [`.claude/playbooks/plugin-authoring.md`](../../.claude/playbooks/plugin-authoring.md); the slot catalog lives in [`.knowledge/architecture/slot-catalog.md`](../../.knowledge/architecture/slot-catalog.md).
+For the full contract and design paradigm, see [`.helm/agents/plugin-authoring.md`](../../.helm/agents/plugin-authoring.md); the slot catalog lives in [`.helm/knowledge/architecture/slot-catalog.md`](../../.helm/knowledge/architecture/slot-catalog.md).
 
 ### `requires`
 

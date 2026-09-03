@@ -3,7 +3,7 @@
 The slot graph is the framework's only coordination mechanism. Every cross-plugin value travels
 through a typed slot; the engine resolves the graph topologically, memoized once per command. This
 file covers the semantics; authoring mechanics (how to declare, contribute, derive) live in
-`.claude/playbooks/plugin-authoring.md`, and the full registry of first-party slots in
+`.helm/agents/plugin-authoring.md`, and the full registry of first-party slots in
 [slot-catalog](./slot-catalog.md).
 
 ## The four slot kinds

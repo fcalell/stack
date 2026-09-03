@@ -152,7 +152,7 @@ committed and clean). The reference design system is sailward at `/home/fcalell/
   no `"."`, `"imports": {"#*": "./src/*.ts"}`.
 - `class-variance-authority` `^0.7.1` is already a dependency of both plugins
   (`plugins/solid-ui/package.json:71`, `plugins/native-ui/package.json:49`).
-- **Every sailward descriptor and prop is JSDoc-annotated.** `.claude/playbooks/conventions.md:82`
+- **Every sailward descriptor and prop is JSDoc-annotated.** `.helm/agents/conventions.md:82`
   forbids JSDoc here. The port strips it; only non-obvious cells keep a `//` comment.
 - `sw/src/ui/primitives/action.ts` is four fields — `label`, `onPress`, `disabled?`, `loading?` —
   and **no `icon`**. `sw/src/ui/primitives/footer.tsx:9-53` defines `FooterAction` (`label`,

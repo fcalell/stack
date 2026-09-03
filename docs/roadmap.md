@@ -78,7 +78,7 @@ Two consequences follow:
 
 - The two UI plugins theme in different languages: `plugin-solid-ui` ships a shadcn-vocabulary
   sheet themed by CSS variable overrides, `plugin-native-ui` generates a Marina-vocabulary sheet
-  from a `themeTokens` hex record. [ui-core](../.knowledge/architecture/ui-core.md) (PRD shipped and folded) extracts the design-decision
+  from a `themeTokens` hex record. [ui-core](../.helm/knowledge/architecture/ui-core.md) (PRD shipped and folded) extracts the design-decision
   layer into `packages/ui-core` (token contract, parametric OKLCH derivation, invariant CVA
   matrices, shared `cn()`, design laws); both plugins render from it and accept one `theme` option
   schema. `app.theme` was rejected: theme is UI-domain, `app` stays identity.
@@ -112,7 +112,7 @@ Two consequences follow:
 
 Sailward converged `apps/mobile/src/ui/primitives/` (69 files) over nine passes, ending with a
 build-enforced boundary between primitives and call sites. The token work stack already tracks in
-[ui-core](../.knowledge/architecture/ui-core.md) is one of three layers. The other two are untracked:
+[ui-core](../.helm/knowledge/architecture/ui-core.md) is one of three layers. The other two are untracked:
 
 - **API canon.** One name per concept across primitives (`label`, `loading`, `onChange`, `icon`,
   and a shared `Action` type). `ReactNode` slots collapsed into descriptors (`BadgeSpec`,
@@ -203,7 +203,7 @@ Notes on the partial rows:
 
 - **Shipped and retired:** backend-hardening (WS1 through WS6). The parked follow-ups it recorded
   are folded into the next section. ui-core (M1 through M7 plus two follow-up stories), folded
-  into [`.knowledge/architecture/ui-core.md`](../.knowledge/architecture/ui-core.md).
+  into [`.helm/knowledge/architecture/ui-core.md`](../.helm/knowledge/architecture/ui-core.md).
 - **Drafted:** [`backend-parity.md`](./prd/backend-parity.md) (closes the blocking findings from
   the [backend gap analysis](./analysis/sailward-backend-gaps.md); first in line, holds live
   consumer bugs). [`deploy-engine.md`](./prd/deploy-engine.md) (reconcile + lock + gates + enforced

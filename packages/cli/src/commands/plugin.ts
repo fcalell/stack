@@ -18,7 +18,7 @@ export interface InitPluginOptions {
 }
 
 // Scaffolds a minimal, working plugin skeleton that a third-party author can
-// publish as-is. Mirrors the conventions documented in .claude/playbooks/conventions.md:
+// publish as-is. Mirrors the conventions documented in .helm/agents/conventions.md:
 // subpath exports for "." and "./runtime", and no barrel index.
 export async function initPlugin(options: InitPluginOptions): Promise<void> {
 	const name = options.name.trim();

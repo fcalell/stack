@@ -112,7 +112,7 @@ pnpm check            # Lint (Biome) + type-check all packages
 
 ## Architecture
 
-See [`.knowledge/index.md`](.knowledge/index.md) for the full architecture reference: philosophy, dependency graph, slot catalog, command procedures, and generated-file layout. Coding conventions live in [`.claude/playbooks/conventions.md`](.claude/playbooks/conventions.md). Plugin authoring is documented in detail in [`.claude/playbooks/plugin-authoring.md`](.claude/playbooks/plugin-authoring.md).
+See [`.helm/knowledge/index.md`](.helm/knowledge/index.md) for the full architecture reference: philosophy, dependency graph, slot catalog, command procedures, and generated-file layout. Coding conventions live in [`.helm/agents/conventions.md`](.helm/agents/conventions.md). Plugin authoring is documented in detail in [`.helm/agents/plugin-authoring.md`](.helm/agents/plugin-authoring.md).
 
 ## License
 

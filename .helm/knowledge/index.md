@@ -1,10 +1,10 @@
 # Knowledge Base Index
 
-The always-loaded **navigation map** for `.knowledge/`: update on any entry add/rename/remove.
+The always-loaded **navigation map** for `.helm/knowledge/`: update on any entry add/rename/remove.
 Domain docs are read on demand, so a session pulls only the leaf it needs. **Each entry's trailing
 text is a load trigger, the work that should make you open that leaf, not a summary of its
 contents.** Entries are durable present-tense *what/why* reference, what the code can't tell you,
-not column lists or build history (authoring rules: `.claude/playbooks/knowledge-base.md`).
+not column lists or build history (authoring rules: `.helm/agents/knowledge-base.md`).
 
 ## Product
 
@@ -12,7 +12,7 @@ not column lists or build history (authoring rules: `.claude/playbooks/knowledge
 
 ## Architecture
 
-The *what/why* + gotchas (authoring mechanics live in `.claude/playbooks/plugin-authoring.md`).
+The *what/why* + gotchas (authoring mechanics live in `.helm/agents/plugin-authoring.md`).
 
 - [overview](./architecture/overview.md): getting your bearings: the packages, the plugin list, the cross-plugin dependency graph
 - [slot-graph](./architecture/slot-graph.md): reasoning about slot kinds, resolution semantics, contribution vs derivation, or anything that smells like plugin ordering

@@ -1,12 +1,12 @@
 ---
 id: 001
 title: ui-core
-prd: retired, folded into .knowledge/architecture/ui-core.md
+prd: retired, folded into .helm/knowledge/architecture/ui-core.md
 ---
 # ui-core, one design system rendered per platform
 
 The driver PRD shipped in full and is folded into
-[`.knowledge/architecture/ui-core.md`](../../../../.knowledge/architecture/ui-core.md). This epic
+[`.helm/knowledge/architecture/ui-core.md`](../../../../.helm/knowledge/architecture/ui-core.md). This epic
 was its seven milestones as stories, each story holding the implementation brief for one
 milestone.
 

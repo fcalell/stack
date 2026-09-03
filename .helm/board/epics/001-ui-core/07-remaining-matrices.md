@@ -357,7 +357,7 @@ dropped article). Seat commit `32297f7` fixes the labels and the article.
 
 ## Carried forward
 
-- Epic 001 has no open story left. The PRD's fold-into-`.knowledge/`-and-retire step
+- Epic 001 has no open story left. The PRD's fold-into-`.helm/knowledge/`-and-retire step
   (`docs/prd/README`) is the epic-close activity and stays with the board.
 - Vetoable at merge review: the native visual re-alignment cells (decision 1), the native
   toggle prop rename, the `checkboxVariants` removal, checkbox's `default` to `md`, and the

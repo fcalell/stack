@@ -63,7 +63,7 @@ migration is the first consumer.
   `:220,:230` `h-svh`). No component uses `dvh` today.
 - sailward's layout law: every layout concern has one owner; scroll is "one engine", a descendant
   never mounts a second scroller (sailward repo,
-  `~/projects/sailward/.knowledge/architecture/layout-ownership.md:3-8,36`). Its
+  `~/projects/sailward/.helm/knowledge/architecture/layout-ownership.md:3-8,36`). Its
   mobile `ScreenShell` owns body scroll behind a `scroll?: boolean`; its web app has no shell at
   all (static pages, body scrolls under `min-height:100vh`).
 - `LOOK_ROOTS` (`verify.ts:1051-1072`) lacks `overflow` and `h`, so overflow and viewport-height

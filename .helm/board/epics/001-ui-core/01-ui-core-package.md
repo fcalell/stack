@@ -51,7 +51,7 @@ exactly and proves the emitted tokens generate the utilities they claim to.
 
 **Measured facts** (verified against `bca325a`). The reference design system is
 `/home/fcalell/projects/sailward/apps/mobile/global.css` (`global.css` below) with its rationale in
-`/home/fcalell/projects/sailward/.knowledge/design/design-system.md` (`design-system.md` below).
+`/home/fcalell/projects/sailward/.helm/knowledge/design/design-system.md` (`design-system.md` below).
 
 - `packages/biome-config/package.json` and `packages/typescript-config/package.json` are the
   preset-library precedent: `private: true`, `sideEffects: false`, subpath-only exports, a `clear`
@@ -60,7 +60,7 @@ exactly and proves the emitted tokens generate the utilities they claim to.
   will depend on ui-core.
 - `packages/cli/package.json:6-10` is the `imports` block and `:11-23` the `exports` block, one
   subpath per module, `.ts` source referenced directly, no build step.
-  `.claude/playbooks/conventions.md:10-11` reads "never a barrel index **that re-exports
+  `.helm/agents/conventions.md:10-11` reads "never a barrel index **that re-exports
   everything**"; ui-core ships no `"."` export because it has no single entry worth naming, a design
   choice here rather than the rule.
 - `packages/cli/package.json` declares `zod` as a **peerDependency** (`^4.0.0`), not a dependency,
@@ -298,7 +298,7 @@ generalized off the brand, plus the rung picking rules (rhythm steps down one ru
 level; an inset is at least the same-axis gap it contains), the contrast contract stated at each
 token it constrains with the free-hue caveat above, and a section on what the zeroing does not catch
 (`--leading-*` and `--tracking-*` stay live, and utilities built from a variable are invisible to
-it). It follows `.claude/playbooks/writing-style.md`.
+it). It follows `.helm/agents/writing-style.md`.
 
 ## Blast radius
 
@@ -310,7 +310,7 @@ it). It follows `.claude/playbooks/writing-style.md`.
   since it currently says "Run `stack generate` and read `.stack/app.css`" and nothing imports
   ui-core until M3.
 - Root `pnpm-lock.yaml`.
-- Untouched: `packages/cli`, both UI plugins, every other plugin, `.knowledge/`.
+- Untouched: `packages/cli`, both UI plugins, every other plugin, `.helm/knowledge/`.
 
 ## Acceptance criteria
 
@@ -385,7 +385,7 @@ it). It follows `.claude/playbooks/writing-style.md`.
 - Verifying the type-role tokens under uniwind. This story emits both the modifier form and the
   `--leading-*` / `--tracking-*` namespaces precisely because uniwind's handling of the modifier
   form is unestablished; which one native actually consumes is settled in M4 against a running app.
-- Folding the README into `.knowledge/`. That happens when the PRD retires.
+- Folding the README into `.helm/knowledge/`. That happens when the PRD retires.
 
 ## Open questions
 
