@@ -20,8 +20,7 @@ loading its rules, and read only what the task needs.
 
 | About to…                                               | Read                                                                                |
 | ------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| edit/create any TypeScript                              | `.helm/agents/conventions.md` (packages · placement · style)                        |
+| edit/create any TypeScript                              | `.helm/agents/conventions.md` (packages · placement)                                |
 | write/modify a plugin (slots · contributions · runtime) | `.helm/agents/plugin-authoring.md` + `.helm/knowledge/architecture/slot-catalog.md` |
-| write any prose (docs · KB · commit/PR bodies)          | `.helm/agents/writing-style.md`                                                     |
 | edit the knowledge base                                 | `.helm/agents/knowledge-base.md`                                                    |
 | commit                                                  | scope like `plugin-auth`                                                            |

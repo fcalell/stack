@@ -1,7 +1,6 @@
 # Coding conventions
 
-> **Load when:** writing or editing any TypeScript in this repo. Baseline package, placement, and
-> style rules. Pair with `plugin-authoring.md` when the change touches a plugin's contract.
+> **Load when:** writing or editing any TypeScript in this repo. Package and placement rules. Pair with `plugin-authoring.md` when the change touches a plugin's contract.
 
 ## Package conventions
 
@@ -76,12 +75,3 @@ Config factory function name matches plugin name: `db()`, `auth()`, `api()`, `so
 Third-party plugins published outside the `@fcalell/plugin-*` namespace must pass an explicit
 `package` option; first-party plugins omit it and fall back to the `@fcalell/plugin-${name}`
 default.
-
-## Code style
-
-Only comment non-obvious code; never use JSDoc.
-
-Keep exports minimal: only expose what consumers actually need.
-
-Prefer factory functions over classes for configuration (e.g. `createAuthClient()` not
-`new AuthClient()`).
