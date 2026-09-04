@@ -75,7 +75,7 @@ function Root(rawProps: DockedPanelProps) {
 			data-side={local.side}
 			style={{ width: `${width()}px`, ...local.style }}
 			class={cn(
-				"relative flex h-full shrink-0 flex-col bg-background",
+				"relative flex h-full shrink-0 flex-col bg-canvas",
 				local.side === "right" ? "border-l" : "border-r",
 				local.class,
 			)}
@@ -96,7 +96,7 @@ function Root(rawProps: DockedPanelProps) {
 				onKeyDown={onHandleKeyDown}
 				class={cn(
 					"absolute inset-y-0 z-10 w-2 cursor-col-resize touch-none select-none outline-none",
-					"after:absolute after:inset-y-0 after:left-1/2 after:w-0.5 after:transition-[background-color] after:duration-base after:ease-ui hover:after:bg-border focus-visible:after:bg-ring",
+					"after:absolute after:inset-y-0 after:left-1/2 after:w-0.5 after:transition-[background-color] after:duration-base after:ease-ui hover:after:bg-edge-2 focus-visible:after:bg-interactive",
 					local.side === "right" ? "-left-1" : "-right-1",
 				)}
 			/>

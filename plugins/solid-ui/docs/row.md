@@ -11,6 +11,7 @@ import { Row } from "@fcalell/plugin-solid-ui/components/row";
 | Prop | Type | Description |
 |------|------|-------------|
 | `children` | `JSX.Element` | The grouped items |
+| `wrap` | `boolean` | Let the items break onto further lines at the same gap: a chip row, a tag cluster |
 
 ## Usage
 
@@ -18,6 +19,12 @@ import { Row } from "@fcalell/plugin-solid-ui/components/row";
 <Row>
   <Badge tone="ok">Paid</Badge>
   <Badge>Draft</Badge>
+</Row>
+```
+
+```tsx
+<Row wrap>
+  <For each={tags()}>{(tag) => <Badge>{tag}</Badge>}</For>
 </Row>
 ```
 

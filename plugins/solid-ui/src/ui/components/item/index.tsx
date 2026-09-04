@@ -153,7 +153,7 @@ function Title(
 		<span
 			data-slot="item-title"
 			id={local.id ?? titleId}
-			class="flex w-fit flex-row items-center gap-2 text-caption font-medium underline-offset-4 line-clamp-1"
+			class="flex w-fit flex-row items-center gap-2 text-left text-caption font-medium underline-offset-4 line-clamp-1"
 			{...rest}
 		/>
 	);
