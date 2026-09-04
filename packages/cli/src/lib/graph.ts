@@ -66,6 +66,16 @@ export function buildGraph(
 		}
 	}
 
+	// A slot referenced (contributed to, derived from, resolved) whose plugin
+	// is absent from the config is still a valid slot, owned by its `source`
+	// and resolving to its empty composition. This is how a plugin reads a
+	// peer the consumer left out: the list is `[]`, the map is `{}`.
+	function register(s: Slot<unknown>): void {
+		if (slotById.has(s.id)) return;
+		slotById.set(s.id, s);
+		slotOwner.set(s.id, s.source);
+	}
+
 	// Collect contributions keyed by slot id. Auto-stamp plugin name from the
 	// contributing plugin (overrides whatever the builder put there).
 	const contributions = new Map<symbol, Contribution<unknown>[]>();
@@ -79,10 +89,7 @@ export function buildGraph(
 					"SLOT_DERIVED_CONTRIBUTION",
 				);
 			}
-			if (!slotById.has(slot.id)) {
-				slotById.set(slot.id, slot);
-				slotOwner.set(slot.id, slot.source);
-			}
+			register(slot);
 			const stamped: Contribution<unknown> = {
 				slot,
 				plugin: plugin.name,
@@ -94,8 +101,8 @@ export function buildGraph(
 		}
 	}
 
-	// Validate derived slot inputs and detect cycles up-front via 3-color DFS.
-	detectCycles(slotById);
+	// Detect derived-input cycles up-front via 3-color DFS.
+	detectCycles(slotById, register);
 
 	// Memoized resolve. Stored as the Promise so parallel callers share it
 	// and each slot's compute/contributions fire exactly once.
@@ -125,12 +132,7 @@ export function buildGraph(
 	function resolveSlot<T>(s: Slot<T>): Promise<T> {
 		const hit = cache.get(s.id) as Promise<T> | undefined;
 		if (hit) return hit;
-		// Register the slot if a contribution referenced one that no plugin
-		// declared — still fine, it's just owned by its `source`.
-		if (!slotById.has(s.id)) {
-			slotById.set(s.id, s);
-			if (!slotOwner.has(s.id)) slotOwner.set(s.id, s.source);
-		}
+		register(s);
 		const promise = computeSlot(s);
 		cache.set(s.id, promise);
 		return promise;
@@ -209,9 +211,12 @@ function wrapResolutionError(
 }
 
 // 3-color DFS over derived-input edges. Throws SlotCycleError with the cycle
-// path; throws a clear error if a derived slot references an input that was
-// not declared on any plugin.
-function detectCycles(slotById: Map<symbol, Slot<unknown>>): void {
+// path. An input no plugin declared is registered on the way through, so the
+// walk (and later resolution) treats it as that peer's empty slot.
+function detectCycles(
+	slotById: Map<symbol, Slot<unknown>>,
+	register: (s: Slot<unknown>) => void,
+): void {
 	const WHITE = 0;
 	const GRAY = 1;
 	const BLACK = 2;
@@ -230,16 +235,8 @@ function detectCycles(slotById: Map<symbol, Slot<unknown>>): void {
 		}
 		color.set(s.id, GRAY);
 		if (s.kind.type === "derived") {
-			for (const [inputKey, input] of Object.entries(s.kind.inputs)) {
-				if (!slotById.has(input.id)) {
-					// Register the referenced slot so further traversal works — but
-					// warn the user by throwing a clear error for unknown derived
-					// inputs. This catches the "input slot not in graph" case.
-					throw new SlotError(
-						`Derived slot '${labelOf(s)}' references input '${inputKey}' -> '${labelOf(input)}' which is not declared by any plugin.`,
-						"SLOT_UNKNOWN_INPUT",
-					);
-				}
+			for (const input of Object.values(s.kind.inputs)) {
+				register(input);
 				visit(input, [...path, s]);
 			}
 		}

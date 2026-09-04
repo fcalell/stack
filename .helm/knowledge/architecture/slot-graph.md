@@ -38,6 +38,11 @@ cloudflare.slots.bindings.contribute(() => ({ kind: "d1", binding: "DB_MAIN", da
 A contribution returning `undefined` is silently skipped: the canonical pattern for conditional
 contributions (`if (!ctx.fileExists(...)) return undefined;`).
 
+A slot whose plugin is absent from the consumer's config is still a valid slot, owned by its
+`source` and resolving to its empty composition (`[]` for a list, `{}` for a map, the seed for a
+value). Contributing to it is a no-op; deriving from it reads that empty value. This is how `api`
+runs on `node` while deriving from `cloudflare.slots.secrets`.
+
 **Deriving** reads other slots as inputs:
 
 ```ts
