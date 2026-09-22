@@ -3,7 +3,7 @@
 // only authoring helper the AST layer ships — for everything else plugins write
 // the raw `TsExpression` discriminated union directly (see @fcalell/cli/ast).
 
-import type { TsExpression } from "#ast/specs";
+import type { TsExpression } from "./specs.ts";
 
 // Converts an arbitrary JS value (plain object/array/primitive) into a
 // TsExpression. Used when plugins need to inline user-provided options

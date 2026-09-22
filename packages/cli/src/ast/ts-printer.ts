@@ -6,7 +6,7 @@ import type {
 	TsSourceFile,
 	TsStatement,
 	TsTypeRef,
-} from "#ast/specs";
+} from "./specs.ts";
 
 // Reserved identifier names that never need quoting as object/interface keys.
 const IDENT_RE = /^[A-Za-z_$][A-Za-z0-9_$]*$/;

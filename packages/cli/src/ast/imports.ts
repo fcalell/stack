@@ -1,4 +1,4 @@
-import type { TsImportSpec } from "#ast/specs";
+import type { TsImportSpec } from "./specs.ts";
 
 // Merge contributions to `.stack/*.ts` import statements. Plugins emit imports
 // independently during codegen aggregation; merging guarantees one well-formed

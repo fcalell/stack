@@ -2,26 +2,26 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { log, outro } from "@clack/prompts";
 import { builders } from "magicast";
-import { syntheticConfigFromSelection } from "#commands/init";
-import { defineConfig } from "#config";
-import { buildGraphFromDiscovered } from "#lib/build-graph";
-import { cliSlots } from "#lib/cli-slots";
-import { loadConfig } from "#lib/config";
-import { editConfig } from "#lib/config-writer";
+import { defineConfig } from "../config.ts";
+import { buildGraphFromDiscovered } from "../lib/build-graph.ts";
+import { cliSlots } from "../lib/cli-slots.ts";
+import { loadConfig } from "../lib/config.ts";
+import { editConfig } from "../lib/config-writer.ts";
 import {
 	type DiscoveredPlugin,
 	loadAvailablePlugins,
 	resolveRequiresClosure,
-} from "#lib/discovery";
-import { ConfigLoadError, MissingPluginError } from "#lib/errors";
-import { toCamelCase } from "#lib/naming";
-import { createPromptContext } from "#lib/prompt";
+} from "../lib/discovery.ts";
+import { ConfigLoadError, MissingPluginError } from "../lib/errors.ts";
+import { toCamelCase } from "../lib/naming.ts";
+import { createPromptContext } from "../lib/prompt.ts";
 import {
 	announceCreated,
 	ensureGitignore,
 	patchPackageJson,
 	writeScaffoldSpecs,
-} from "#lib/scaffold";
+} from "../lib/scaffold.ts";
+import { syntheticConfigFromSelection } from "./init.ts";
 
 export async function add(
 	pluginName: string,
@@ -202,7 +202,7 @@ export async function add(
 		});
 	}
 
-	const { generate } = await import("#commands/generate");
+	const { generate } = await import("./generate.ts");
 	try {
 		await generate(configPath);
 	} catch {

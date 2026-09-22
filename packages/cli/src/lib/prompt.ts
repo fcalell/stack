@@ -7,7 +7,7 @@ import {
 	select,
 	text,
 } from "@clack/prompts";
-import type { CommandContext } from "#lib/create-plugin";
+import type { CommandContext } from "./create-plugin.ts";
 
 function unwrap<T>(value: T | symbol): T {
 	if (isCancel(value)) {

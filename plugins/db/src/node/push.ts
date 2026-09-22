@@ -8,10 +8,10 @@ import {
 } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, join, resolve } from "node:path";
-import type { DbOptions } from "../types";
-import { runCommand } from "./exec";
-import { migrationLockPath, withMigrationLock } from "./lock";
-import { executeSql, migrationsApply } from "./wrangler";
+import type { DbOptions } from "../types.ts";
+import { runCommand } from "./exec.ts";
+import { migrationLockPath, withMigrationLock } from "./lock.ts";
+import { executeSql, migrationsApply } from "./wrangler.ts";
 
 // drizzle-kit neither creates the file's directory nor fails without it
 // (a push into a missing `./data` reports success and writes nothing), so

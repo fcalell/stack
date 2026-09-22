@@ -24,10 +24,10 @@ interface TsconfigOptions {
 //
 // `virtual:stack-procedure` resolves to the generated `.stack/procedure.ts`
 // via a tsconfig `paths` alias rather than a bundler virtual-module plugin:
-// the worker never runs through Vite, but both loaders that touch it (tsx for
-// `stack dev`'s subprocess boot, esbuild for `wrangler`/deploy bundling)
-// resolve tsconfig `paths` natively, and `paths` needs no `baseUrl` to
-// resolve relative to the tsconfig's own directory (TS 4.1+).
+// the worker never runs through Vite. esbuild (`wrangler` dev and deploy
+// bundling) resolves tsconfig `paths` natively, the node target maps the
+// specifier with a `registerHooks` resolve hook, and `paths` needs no
+// `baseUrl` to resolve relative to the tsconfig's own directory (TS 4.1+).
 export function tsconfigTemplate(
 	options: TsconfigOptions,
 ): Array<[string, string]> {

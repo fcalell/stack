@@ -1,10 +1,10 @@
 import { createRequire } from "node:module";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
-import type { StackConfig } from "#config";
-import type { InternalCliPlugin, PluginFactory } from "#lib/create-plugin";
-import { toCamelCase } from "#lib/naming";
-import type { Slot } from "#lib/slots";
+import type { StackConfig } from "../config.ts";
+import type { InternalCliPlugin, PluginFactory } from "./create-plugin.ts";
+import { toCamelCase } from "./naming.ts";
+import type { Slot } from "./slots.ts";
 
 // A loaded plugin tied to its per-config options. `factory` is the
 // `plugin()` result — commands call `factory.cli.collect(ctx)` to gather

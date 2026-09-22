@@ -1,12 +1,12 @@
 import { spawnSync } from "node:child_process";
 import { intro, log, outro } from "@clack/prompts";
-import { generateFromConfig } from "#commands/generate";
-import type { StackConfig } from "#config";
-import { buildGraphFromConfig } from "#lib/build-graph";
-import { cliSlots } from "#lib/cli-slots";
-import { loadConfig } from "#lib/config";
-import { StepFailedError } from "#lib/errors";
-import type { BuildStep } from "#specs";
+import type { StackConfig } from "../config.ts";
+import { buildGraphFromConfig } from "../lib/build-graph.ts";
+import { cliSlots } from "../lib/cli-slots.ts";
+import { loadConfig } from "../lib/config.ts";
+import { StepFailedError } from "../lib/errors.ts";
+import type { BuildStep } from "../specs.ts";
+import { generateFromConfig } from "./generate.ts";
 
 export async function buildStepsFromConfig(
 	config: StackConfig,

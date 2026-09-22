@@ -1,4 +1,4 @@
-import { runCommand } from "./exec";
+import { runCommand } from "./exec.ts";
 
 // The generated wrangler config and the dev persistence dir. Every local
 // wrangler invocation (dev, migrations apply, d1 execute) must agree on BOTH so

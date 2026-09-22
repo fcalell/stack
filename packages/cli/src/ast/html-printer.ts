@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { HTMLElement, parse, TextNode } from "node-html-parser";
-import type { HtmlDocument, HtmlInjection } from "#ast/specs";
+import type { HtmlDocument, HtmlInjection } from "./specs.ts";
 
 // Tags that must not be void-closed in HTML5 output.
 const BLOCK_ELEMENT_TAGS: Record<string, boolean> = {

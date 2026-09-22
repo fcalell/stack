@@ -1,9 +1,9 @@
 // Public surface for @fcalell/cli/ast.
 // Spec types + printers for TypeScript/TSX, TOML, and HTML generated files.
 
-export { literalToProps } from "#ast/build";
-export { renderHtml } from "#ast/html-printer";
-export { dedupeImports } from "#ast/imports";
+export { literalToProps } from "./build.ts";
+export { renderHtml } from "./html-printer.ts";
+export { dedupeImports } from "./imports.ts";
 export type {
 	HtmlDocument,
 	HtmlInjection,
@@ -18,6 +18,6 @@ export type {
 	TsSourceFile,
 	TsStatement,
 	TsTypeRef,
-} from "#ast/specs";
-export { renderToml } from "#ast/toml-printer";
-export { renderTsSourceFile } from "#ast/ts-printer";
+} from "./specs.ts";
+export { renderToml } from "./toml-printer.ts";
+export { renderTsSourceFile } from "./ts-printer.ts";

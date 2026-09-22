@@ -1,3 +1,14 @@
+// Siblings by package name, never relative: this file ships as source for the
+// bundler while `./client` ships compiled from dist, so a relative import would
+// load a second copy of the registered client and the entity registry.
+import {
+	composeAbility,
+	fetchOrgRules,
+	ORG_RULES_QUERY_KEY,
+	type PackedRulesLike,
+} from "@fcalell/plugin-api/ability-client";
+import { handleMutationSuccess } from "@fcalell/plugin-api/query-invalidation";
+import type { RouterClient } from "@fcalell/plugin-api/types";
 import { createTanstackQueryUtils } from "@orpc/tanstack-query";
 import {
 	MutationCache,
@@ -7,15 +18,10 @@ import {
 	useQuery,
 } from "@tanstack/react-query";
 import { type ReactNode, useState } from "react";
-import {
-	composeAbility,
-	fetchOrgRules,
-	ORG_RULES_QUERY_KEY,
-	type PackedRulesLike,
-} from "./ability-client";
-import { handleMutationSuccess } from "./query-invalidation";
-import type { RouterClient } from "./types";
 
+export type { PackedRulesLike } from "@fcalell/plugin-api/ability-client";
+export { ORG_RULES_QUERY_KEY } from "@fcalell/plugin-api/ability-client";
+export type { RouterClient } from "@fcalell/plugin-api/types";
 export {
 	QueryClient,
 	QueryClientProvider,
@@ -25,9 +31,6 @@ export {
 	useQueryClient,
 	useSuspenseQuery,
 } from "@tanstack/react-query";
-export type { PackedRulesLike } from "./ability-client";
-export { ORG_RULES_QUERY_KEY } from "./ability-client";
-export type { RouterClient } from "./types";
 
 // Mobile-friendly defaults: a single retry (flaky cellular shouldn't hammer the
 // worker) and a short freshness window so navigating between screens doesn't

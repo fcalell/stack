@@ -9,7 +9,7 @@ import {
 	writeFileSync,
 } from "node:fs";
 import { join } from "node:path";
-import type { DbOptions } from "../types";
+import type { DbOptions } from "../types.ts";
 
 // A migration acknowledged as an intentional, reviewed drop carries this
 // marker anywhere in its `.sql` (a plain comment line). Kept as a bare token so

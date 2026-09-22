@@ -16,7 +16,7 @@ import {
 	type RateLimitBinding,
 } from "../procedure.ts";
 
-export type { InferRouter } from "../types";
+export type { InferRouter } from "../types.ts";
 
 // Env binding name for the blanket per-IP volume limiter — a dedicated
 // wrangler `rate_limiter` binding (contributed by plugin-cloudflare, the

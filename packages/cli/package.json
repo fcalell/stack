@@ -3,34 +3,72 @@
 	"version": "0.0.0",
 	"type": "module",
 	"sideEffects": false,
-	"imports": {
-		"#ast": "./src/ast/index.ts",
-		"#ast/*": "./src/ast/*.ts",
-		"#*": "./src/*.ts"
-	},
 	"exports": {
-		".": "./src/config.ts",
-		"./ast": "./src/ast/index.ts",
-		"./css": "./src/css.ts",
-		"./specs": "./src/specs.ts",
-		"./errors": "./src/lib/errors.ts",
-		"./slots": "./src/lib/slots.ts",
-		"./cli-slots": "./src/lib/cli-slots.ts",
-		"./graph": "./src/lib/graph.ts",
-		"./build-graph": "./src/lib/build-graph.ts",
-		"./runtime": "./src/runtime.ts",
-		"./codegen": "./src/lib/codegen.ts",
-		"./discovery": "./src/lib/discovery.ts"
+		".": {
+			"types": "./dist/config.d.ts",
+			"default": "./dist/config.js"
+		},
+		"./ast": {
+			"types": "./dist/ast/index.d.ts",
+			"default": "./dist/ast/index.js"
+		},
+		"./css": {
+			"types": "./dist/css.d.ts",
+			"default": "./dist/css.js"
+		},
+		"./specs": {
+			"types": "./dist/specs.d.ts",
+			"default": "./dist/specs.js"
+		},
+		"./errors": {
+			"types": "./dist/lib/errors.d.ts",
+			"default": "./dist/lib/errors.js"
+		},
+		"./slots": {
+			"types": "./dist/lib/slots.d.ts",
+			"default": "./dist/lib/slots.js"
+		},
+		"./cli-slots": {
+			"types": "./dist/lib/cli-slots.d.ts",
+			"default": "./dist/lib/cli-slots.js"
+		},
+		"./graph": {
+			"types": "./dist/lib/graph.d.ts",
+			"default": "./dist/lib/graph.js"
+		},
+		"./build-graph": {
+			"types": "./dist/lib/build-graph.d.ts",
+			"default": "./dist/lib/build-graph.js"
+		},
+		"./runtime": {
+			"types": "./dist/runtime.d.ts",
+			"default": "./dist/runtime.js"
+		},
+		"./codegen": {
+			"types": "./dist/lib/codegen.d.ts",
+			"default": "./dist/lib/codegen.js"
+		},
+		"./discovery": {
+			"types": "./dist/lib/discovery.d.ts",
+			"default": "./dist/lib/discovery.js"
+		}
 	},
 	"bin": {
-		"stack": "./src/cli.ts"
+		"stack": "./dist/cli.js"
 	},
+	"files": [
+		"dist",
+		"src",
+		"README.md"
+	],
 	"license": "MIT",
 	"scripts": {
+		"build": "tsc -p tsconfig.build.json",
+		"prepare": "pnpm build",
 		"check-types": "tsc --noEmit --pretty",
 		"lint": "biome check --write --unsafe",
 		"check": "pnpm check-types && pnpm lint",
-		"clear": "rm -rf node_modules .turbo"
+		"clear": "rm -rf dist node_modules .turbo"
 	},
 	"dependencies": {
 		"@clack/prompts": "^0.11.0",
@@ -41,13 +79,11 @@
 		"ts-morph": "^28.0.0"
 	},
 	"peerDependencies": {
-		"tsx": ">=4.0.0",
 		"zod": "^4.0.0"
 	},
 	"devDependencies": {
 		"@fcalell/typescript-config": "workspace:*",
 		"@types/node": "^25.5.0",
-		"tsx": "^4.19.0",
 		"typescript": "^5.9.3",
 		"zod": "^4.3.6"
 	}

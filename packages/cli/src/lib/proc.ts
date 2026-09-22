@@ -1,6 +1,6 @@
 import { type ChildProcess, spawn } from "node:child_process";
 import { createInterface } from "node:readline";
-import type { ProcessExit, ProcessSpec } from "#specs";
+import type { ProcessExit, ProcessSpec } from "../specs.ts";
 
 // ── supervise() ────────────────────────────────────────────────────────────
 

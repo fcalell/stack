@@ -1,10 +1,10 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
-import type { StackConfig } from "#config";
-import { buildGraphFromConfig } from "#lib/build-graph";
-import { cliSlots } from "#lib/cli-slots";
-import { loadConfig } from "#lib/config";
-import type { GeneratedFile } from "#specs";
+import type { StackConfig } from "../config.ts";
+import { buildGraphFromConfig } from "../lib/build-graph.ts";
+import { cliSlots } from "../lib/cli-slots.ts";
+import { loadConfig } from "../lib/config.ts";
+import type { GeneratedFile } from "../specs.ts";
 
 export interface GenerateResult {
 	files: GeneratedFile[];

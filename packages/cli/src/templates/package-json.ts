@@ -12,9 +12,6 @@ export function packageJsonTemplate(options: PackageJsonOptions): string {
 		// biome-config only carries config; the `lint`/`check` scripts need the
 		// Biome binary itself on the consumer's PATH.
 		"@biomejs/biome": "^2.4.16",
-		// The `stack` bin runs via tsx (shebang). tsx is a peerDependency of
-		// @fcalell/cli, so the consumer must provide it or the bin can't launch.
-		tsx: "^4.19.0",
 		typescript: "^5.9.3",
 	};
 

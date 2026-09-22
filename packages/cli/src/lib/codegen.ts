@@ -1,4 +1,4 @@
-import { findPackageInfo } from "#lib/package-info";
+import { findPackageInfo } from "./package-info.ts";
 
 // ── Runtime-export discovery ────────────────────────────────────────
 //

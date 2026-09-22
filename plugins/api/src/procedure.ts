@@ -1,7 +1,7 @@
 import { ORPCError, os } from "@orpc/server";
 import { z } from "zod";
 import { clampLimit } from "./lib/cursor.ts";
-import type { Procedure } from "./types";
+import type { Procedure } from "./types.ts";
 import { STACK_READS_HEADER, STACK_WRITES_HEADER } from "./wire.ts";
 
 // Re-exported for `@fcalell/plugin-api/procedure` consumers (generated code,

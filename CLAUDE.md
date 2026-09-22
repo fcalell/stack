@@ -13,7 +13,7 @@ so there is no plugin firing order to think about.
   contract, tsconfig/biome presets, `@fcalell/auth-testing` private test support) and `plugins/`
   (one `@fcalell/plugin-<name>` per domain: cloudflare, db, auth, api, node, vite, expo, solid,
   solid-ui, native-ui). Detail in `.helm/knowledge/architecture/` (start at `overview.md`).
-- **Dev loop**: `pnpm check` (type-check, every package's `node --test`, Biome lint) is the
+- **Dev loop**: `pnpm check` (build, type-check, every package's `node --test`, Biome lint) is the
   per-change gate; it must pass before a change is complete.
 - **PRDs / analyses**: `docs/prd/` (forward-looking implementation drivers; see its README for the
   fold-into-`.helm/knowledge/`-and-retire lifecycle) and `docs/analysis/` (point-in-time audits).

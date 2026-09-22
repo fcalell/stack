@@ -1,5 +1,5 @@
 import { stringify } from "smol-toml";
-import type { TomlDocument, TomlValue } from "#ast/specs";
+import type { TomlDocument, TomlValue } from "./specs.ts";
 
 // Build a nested JS object that smol-toml's stringify can serialize.
 // - `root` entries become top-level keys.

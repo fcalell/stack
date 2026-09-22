@@ -15,7 +15,7 @@ import {
 	SyntaxKind,
 	ts,
 } from "ts-morph";
-import { SPACING_RUNGS } from "#tokens";
+import { SPACING_RUNGS } from "./tokens.ts";
 
 // One shared vocabulary for both platforms: the PRD's geometry families with
 // their non-numeric members spelled out. The gap cells are the spacing rungs,

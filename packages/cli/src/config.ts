@@ -142,11 +142,11 @@ export type {
 	InternalCliPlugin,
 	OptionalCallbackMarker,
 	PluginFactory,
-} from "#lib/create-plugin";
-export { callback, plugin } from "#lib/create-plugin";
+} from "./lib/create-plugin.ts";
+export { callback, plugin } from "./lib/create-plugin.ts";
 export type {
 	Contribution,
 	Slot,
 	SlotKind,
-} from "#lib/slots";
-export { slot } from "#lib/slots";
+} from "./lib/slots.ts";
+export { slot } from "./lib/slots.ts";

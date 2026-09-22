@@ -1,9 +1,9 @@
-#!/usr/bin/env tsx
+#!/usr/bin/env node
 import { resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { log } from "@clack/prompts";
-import type { CommandContext } from "#lib/create-plugin";
-import { ConfigValidationError, StackError } from "#lib/errors";
+import type { CommandContext } from "./lib/create-plugin.ts";
+import { ConfigValidationError, StackError } from "./lib/errors.ts";
 
 // `strict: false` lets plugin-subcommand flags (e.g. `stack db apply --remote`)
 // pass through top-level parsing without an "unknown option" error; the
@@ -74,7 +74,7 @@ async function main(): Promise<void> {
 			);
 			process.exit(1);
 		}
-		const { initPlugin } = await import("#commands/plugin");
+		const { initPlugin } = await import("./commands/plugin.ts");
 		await initPlugin({
 			name: pluginName,
 			package: typeof values.package === "string" ? values.package : undefined,
@@ -86,7 +86,7 @@ async function main(): Promise<void> {
 	if (CORE_COMMANDS.has(command)) {
 		if (command === "init") {
 			const dir = subcommand ? resolve(subcommand) : process.cwd();
-			const { init } = await import("#commands/init");
+			const { init } = await import("./commands/init.ts");
 			const pluginsValue = values.plugins;
 			const domainValue = values.domain;
 			const yesValue = values.yes;
@@ -107,26 +107,26 @@ async function main(): Promise<void> {
 				log.error("Usage: stack add <plugin>");
 				process.exit(1);
 			}
-			const { add } = await import("#commands/add");
+			const { add } = await import("./commands/add.ts");
 			await add(subcommand, configPath);
 		} else if (command === "remove") {
 			if (!subcommand) {
 				log.error("Usage: stack remove <plugin>");
 				process.exit(1);
 			}
-			const { remove } = await import("#commands/remove");
+			const { remove } = await import("./commands/remove.ts");
 			await remove(subcommand, configPath);
 		} else if (command === "generate") {
-			const { generate } = await import("#commands/generate");
+			const { generate } = await import("./commands/generate.ts");
 			await generate(configPath);
 		} else if (command === "dev") {
-			const { dev } = await import("#commands/dev");
+			const { dev } = await import("./commands/dev.ts");
 			await dev({ studio: values.studio === true, config: configPath });
 		} else if (command === "build") {
-			const { build } = await import("#commands/build");
+			const { build } = await import("./commands/build.ts");
 			await build(configPath);
 		} else if (command === "deploy") {
-			const { deploy } = await import("#commands/deploy");
+			const { deploy } = await import("./commands/deploy.ts");
 			await deploy({ config: configPath });
 		}
 		return;
@@ -139,12 +139,14 @@ async function main(): Promise<void> {
 	const commandName = subcommand;
 	if (!commandName) usage();
 
-	const { loadConfig } = await import("#lib/config");
-	const { buildGraphFromConfig } = await import("#lib/build-graph");
+	const { loadConfig } = await import("./lib/config.ts");
+	const { buildGraphFromConfig } = await import("./lib/build-graph.ts");
 	const { findPluginCommand, parseCommandFlags } = await import(
-		"#lib/command-router"
+		"./lib/command-router.ts"
 	);
-	const { createLogContext, createPromptContext } = await import("#lib/prompt");
+	const { createLogContext, createPromptContext } = await import(
+		"./lib/prompt.ts"
+	);
 
 	const config = await loadConfig(configPath);
 	const { graph, plugins } = await buildGraphFromConfig({

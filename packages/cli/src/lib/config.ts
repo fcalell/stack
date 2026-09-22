@@ -1,6 +1,6 @@
 import { resolve } from "node:path";
-import type { StackConfig } from "#config";
-import { ConfigLoadError } from "#lib/errors";
+import type { StackConfig } from "../config.ts";
+import { ConfigLoadError } from "./errors.ts";
 
 export async function loadConfig(configPath: string): Promise<StackConfig> {
 	const resolved = resolve(configPath);

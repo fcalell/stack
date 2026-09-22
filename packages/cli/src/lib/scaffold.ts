@@ -8,8 +8,8 @@ import {
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { log } from "@clack/prompts";
-import type { ScaffoldSpec } from "#ast";
-import { ScaffoldError } from "#lib/errors";
+import type { ScaffoldSpec } from "../ast/index.ts";
+import { ScaffoldError } from "./errors.ts";
 
 // Legacy accommodation for the CLI's own base-file templates (package.json,
 // tsconfig.json, biome.json, .gitignore, stack.config.ts). Base templates are

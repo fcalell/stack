@@ -5,8 +5,8 @@ import {
 	themeTokens,
 } from "@fcalell/ui-core/emit";
 import { FONT_FALLBACKS, MODES } from "@fcalell/ui-core/tokens";
-import { type NativeFontEntry, nativeFontSchema } from "../types";
-import { cssString } from "./css";
+import { type NativeFontEntry, nativeFontSchema } from "../types.ts";
+import { cssString } from "./css.ts";
 
 // First font wins per role — later duplicates are ignored, matching how the
 // `--font-<role>` token can only hold one family. Re-validates each entry

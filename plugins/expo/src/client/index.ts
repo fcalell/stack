@@ -3,7 +3,7 @@ import { Platform } from "react-native";
 import {
 	CLIENT_BUILD_HEADER,
 	CLIENT_PLATFORM_HEADER,
-} from "../version-gate-shared";
+} from "../version-gate-shared.ts";
 
 // `Application.nativeBuildVersion` reads the compiled binary's build number
 // (iOS `CFBundleVersion` / Android `versionCode`) directly off the native

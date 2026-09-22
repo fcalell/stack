@@ -2,7 +2,7 @@
 // primitive renders it. `TIcon` is a type parameter because the icon is a
 // `lucide-solid` component on web and a `lucide-react-native` one on native,
 // and ui-core depends on neither.
-import type { BadgeTone, ButtonTone } from "#variants";
+import type { BadgeTone, ButtonTone } from "./variants.ts";
 
 export interface Action<TIcon = never> {
 	label: string;

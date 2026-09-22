@@ -4,27 +4,73 @@
 	"type": "module",
 	"sideEffects": false,
 	"exports": {
-		".": "./src/index.ts",
-		"./runtime": "./src/worker/index.ts",
-		"./procedure": "./src/procedure.ts",
-		"./error": "./src/error.ts",
-		"./client": "./src/client.ts",
-		"./ability-client": "./src/ability-client.ts",
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		},
+		"./runtime": {
+			"types": "./dist/worker/index.d.ts",
+			"default": "./dist/worker/index.js"
+		},
+		"./procedure": {
+			"types": "./dist/procedure.d.ts",
+			"default": "./dist/procedure.js"
+		},
+		"./error": {
+			"types": "./dist/error.d.ts",
+			"default": "./dist/error.js"
+		},
+		"./client": {
+			"types": "./dist/client.d.ts",
+			"default": "./dist/client.js"
+		},
+		"./ability-client": {
+			"types": "./dist/ability-client.d.ts",
+			"default": "./dist/ability-client.js"
+		},
 		"./tanstack-query": "./src/tanstack-query.tsx",
-		"./query-invalidation": "./src/query-invalidation.ts",
-		"./schema": "./src/schema.ts",
-		"./types": "./src/types.ts",
-		"./node/codegen": "./src/node/codegen.ts",
-		"./node/types": "./src/node/types.ts",
-		"./lib/cursor": "./src/lib/cursor.ts",
-		"./lib/slugify": "./src/lib/slugify.ts"
+		"./query-invalidation": {
+			"types": "./dist/query-invalidation.d.ts",
+			"default": "./dist/query-invalidation.js"
+		},
+		"./schema": {
+			"types": "./dist/schema.d.ts",
+			"default": "./dist/schema.js"
+		},
+		"./types": {
+			"types": "./dist/types.d.ts",
+			"default": "./dist/types.js"
+		},
+		"./node/codegen": {
+			"types": "./dist/node/codegen.d.ts",
+			"default": "./dist/node/codegen.js"
+		},
+		"./node/types": {
+			"types": "./dist/node/types.d.ts",
+			"default": "./dist/node/types.js"
+		},
+		"./lib/cursor": {
+			"types": "./dist/lib/cursor.d.ts",
+			"default": "./dist/lib/cursor.js"
+		},
+		"./lib/slugify": {
+			"types": "./dist/lib/slugify.d.ts",
+			"default": "./dist/lib/slugify.js"
+		}
 	},
+	"files": [
+		"dist",
+		"src",
+		"README.md"
+	],
 	"license": "MIT",
 	"scripts": {
+		"build": "tsc -p tsconfig.build.json",
+		"prepare": "pnpm build",
 		"check-types": "tsc --noEmit --pretty",
 		"lint": "biome check --write --unsafe",
 		"check": "pnpm check-types && pnpm lint",
-		"clear": "rm -rf node_modules .turbo"
+		"clear": "rm -rf dist node_modules .turbo"
 	},
 	"dependencies": {
 		"@casl/ability": "^7.0.1",

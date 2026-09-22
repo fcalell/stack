@@ -1,4 +1,4 @@
-import { toCamelCase } from "#lib/naming";
+import { toCamelCase } from "../lib/naming.ts";
 
 interface StackConfigOptions {
 	name: string;

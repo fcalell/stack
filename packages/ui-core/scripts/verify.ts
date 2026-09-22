@@ -15,10 +15,10 @@ import { isCssIdent } from "@fcalell/cli/css";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import ts from "typescript";
-import { cn } from "#cn";
-import { deriveTheme } from "#derive";
-import { modeTokens, shadowUtilities, themeTokens } from "#emit";
-import { GEOMETRY, NATIVE_GEOMETRY_HOSTS, scanGeometry } from "#gate";
+import { cn } from "../src/cn.ts";
+import { deriveTheme } from "../src/derive.ts";
+import { modeTokens, shadowUtilities, themeTokens } from "../src/emit.ts";
+import { GEOMETRY, NATIVE_GEOMETRY_HOSTS, scanGeometry } from "../src/gate.ts";
 import {
 	assert,
 	blockBody,
@@ -28,7 +28,7 @@ import {
 	report,
 	rule,
 	tailwindBuild,
-} from "#harness";
+} from "../src/harness.ts";
 import {
 	COLORS,
 	INVARIANT,
@@ -44,8 +44,8 @@ import {
 	type TrackedRole,
 	TYPE_ROLES,
 	type TypeRole,
-} from "#tokens";
-import * as tables from "#variant-tables";
+} from "../src/tokens.ts";
+import * as tables from "../src/variant-tables.ts";
 import {
 	type Axes,
 	BADGE,
@@ -63,7 +63,7 @@ import {
 	TEXT,
 	TEXT_STRONG,
 	TOGGLE,
-} from "#variant-tables";
+} from "../src/variant-tables.ts";
 import {
 	BUTTON_MUTED_LABEL,
 	badge,
@@ -86,7 +86,7 @@ import {
 	text,
 	textStrong,
 	toggle,
-} from "#variants";
+} from "../src/variants.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const pkgDir = resolve(here, "..");

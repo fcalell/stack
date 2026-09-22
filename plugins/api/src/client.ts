@@ -1,10 +1,10 @@
 import { createORPCClient } from "@orpc/client";
 import { RPCLink } from "@orpc/client/fetch";
-import { getRegisteredApiClient, registerApiClient } from "./ability-client";
-import { captureEntityHeaders } from "./query-invalidation";
-import type { RouterClient } from "./types";
+import { getRegisteredApiClient, registerApiClient } from "./ability-client.ts";
+import { captureEntityHeaders } from "./query-invalidation.ts";
+import type { RouterClient } from "./types.ts";
 
-export type { RouterClient } from "./types";
+export type { RouterClient } from "./types.ts";
 
 export interface ClientConfig {
 	url?: string;

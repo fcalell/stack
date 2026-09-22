@@ -7,18 +7,37 @@
 		"node": ">=24"
 	},
 	"exports": {
-		".": "./src/index.ts",
-		"./server": "./src/server/index.ts",
-		"./ws": "./src/ws/index.ts",
-		"./client": "./src/client/index.ts"
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		},
+		"./server": {
+			"types": "./dist/server/index.d.ts",
+			"default": "./dist/server/index.js"
+		},
+		"./ws": {
+			"types": "./dist/ws/index.d.ts",
+			"default": "./dist/ws/index.js"
+		},
+		"./client": {
+			"types": "./dist/client/index.d.ts",
+			"default": "./dist/client/index.js"
+		}
 	},
+	"files": [
+		"dist",
+		"src",
+		"README.md"
+	],
 	"license": "MIT",
 	"scripts": {
+		"build": "tsc -p tsconfig.build.json",
+		"prepare": "pnpm build",
 		"check-types": "tsc --noEmit --pretty",
 		"lint": "biome check --write --unsafe",
 		"check": "pnpm check-types && pnpm lint",
 		"test": "node --test 'test/**/*.test.ts'",
-		"clear": "rm -rf node_modules .turbo"
+		"clear": "rm -rf dist node_modules .turbo"
 	},
 	"dependencies": {
 		"@fcalell/cli": "workspace:*",

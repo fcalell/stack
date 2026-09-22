@@ -107,8 +107,15 @@ The scaffold produces a `plugin()`-based skeleton and a runtime stub exported fr
 ## Repository commands
 
 ```bash
-pnpm check            # Lint (Biome) + type-check all packages
+pnpm check            # Build, type-check, test every package, then lint (Biome)
+pnpm turbo run build  # Compile every package's src/ to dist/
 ```
+
+Every package ships compiled JavaScript in `dist/` for what Node runs (Node strips no types under
+`node_modules`); `.tsx`, `.css` and `src/ui/` entries stay source for the consumer's bundler.
+`pnpm install` builds everything through each package's `prepare`, so a `link:` consumer sees
+`dist/` after an install here, and `pnpm turbo run build` after a source change. Taking stack by git
+commit: [consumer-project](.helm/knowledge/architecture/consumer-project.md#by-git-commit).
 
 ## Architecture
 

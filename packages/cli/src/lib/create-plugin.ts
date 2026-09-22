@@ -1,12 +1,12 @@
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import type { z } from "zod";
-import type { ScaffoldSpec } from "#ast";
-import type { AppConfig } from "#config";
-import { cliSlots } from "#lib/cli-slots";
-import { StackError } from "#lib/errors";
-import { findPackageInfo } from "#lib/package-info";
-import type { Contribution, Slot } from "#lib/slots";
+import type { ScaffoldSpec } from "../ast/index.ts";
+import type { AppConfig } from "../config.ts";
+import { cliSlots } from "./cli-slots.ts";
+import { StackError } from "./errors.ts";
+import { findPackageInfo } from "./package-info.ts";
+import type { Contribution, Slot } from "./slots.ts";
 
 // ── Callback marker ────────────────────────────────────────────────
 //
@@ -475,4 +475,4 @@ export function plugin<
 // The slot-based contract uses `ContributionCtx` (declared in `#lib/slots`)
 // everywhere `RegisterContext` used to appear. Re-export it so callers that
 // import from `#lib/create-plugin` for a ctx type keep working.
-export type { ContributionCtx } from "#lib/slots";
+export type { ContributionCtx } from "./slots.ts";

@@ -18,9 +18,18 @@ type ClientPlugins<O extends AuthClientOptions> = [
 	...(O["emailOtp"] extends false ? [] : [ReturnType<typeof emailOTPClient>]),
 ];
 
+// Named, not inferred: the inferred type reaches better-auth's own zod copy,
+// which declaration emit cannot name from this package.
+type BetterAuthClient<O extends AuthClientOptions> = ReturnType<
+	typeof createBetterAuthClient<{
+		baseURL: string | undefined;
+		plugins: ClientPlugins<O>;
+	}>
+>;
+
 export function createAuthClient<const O extends AuthClientOptions>(
 	options: O,
-) {
+): BetterAuthClient<O> {
 	const plugins = [
 		...(options.passkey ? [passkeyClient()] : []),
 		...(options.emailOtp === false ? [] : [emailOTPClient()]),

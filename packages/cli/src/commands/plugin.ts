@@ -1,15 +1,16 @@
 import { existsSync, mkdirSync } from "node:fs";
 import { basename, resolve } from "node:path";
 import { log, outro } from "@clack/prompts";
-import { StackError } from "#lib/errors";
-import { writeIfMissingString } from "#lib/scaffold";
+import { StackError } from "../lib/errors.ts";
+import { writeIfMissingString } from "../lib/scaffold.ts";
 import {
 	pluginIndexTemplate,
 	pluginPackageJsonTemplate,
 	pluginReadmeTemplate,
 	pluginRuntimeTemplate,
+	pluginTsconfigBuildTemplate,
 	pluginTsconfigTemplate,
-} from "#templates/plugin";
+} from "../templates/plugin.ts";
 
 export interface InitPluginOptions {
 	name: string;
@@ -57,6 +58,7 @@ export async function initPlugin(options: InitPluginOptions): Promise<void> {
 		const entries: Array<[string, string]> = [
 			["package.json", pluginPackageJsonTemplate({ name, packageName })],
 			["tsconfig.json", pluginTsconfigTemplate()],
+			["tsconfig.build.json", pluginTsconfigBuildTemplate()],
 			["src/index.ts", pluginIndexTemplate({ name, packageName, label })],
 			["src/worker/index.ts", pluginRuntimeTemplate({ name })],
 			["README.md", pluginReadmeTemplate({ name, packageName, label })],

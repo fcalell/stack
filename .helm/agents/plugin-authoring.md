@@ -212,9 +212,13 @@ contributes: [
 
 ## Checklist before publishing a plugin
 
-1. Templates live on disk under `templates/` and are listed in `package.json` `files`.
+1. Templates live on disk under `templates/` and are listed in `package.json` `files`, next to
+   `dist` and `src`.
 2. `node/` and `worker/` are split; no cross-imports.
 3. Runtime (if any) is exported from `./runtime` and takes plain options, not `PluginConfig`.
+   Every entry Node loads (`.`, `./runtime`, `node/*`) exports compiled `dist` with its `types`;
+   only `.tsx`, `.css` and `src/ui/` entries export source. The package has `tsconfig.build.json`,
+   `build` and `prepare` (`conventions.md`, "Build and exports").
 4. Commands are routable via `stack <plugin> <command>`.
 5. Cross-plugin dataflow is expressed via slot imports: `B.slots.foo.contribute(...)` to push,
    `slot.derived({ inputs: { foo: B.slots.foo }, ... })` to read. No `requires:` for ordering (it's

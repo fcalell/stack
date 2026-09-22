@@ -115,3 +115,51 @@ it.
 Every plugin the consumer depends on must be listed explicitly; there is no implicit-resolution
 layer. `plugin-solid` requires `plugin-vite`, so both appear in the config. `stack init` auto-adds
 the missing dependency when you pick `solid` in the interactive picker.
+
+`stack` loads `stack.config.ts` and `src/schema/seed.ts` with a plain `import()` under Node's
+type stripping, so both stay erasable-only syntax and name the file of every relative import.
+
+## Installing stack
+
+Every package ships JavaScript in `dist/` for everything Node runs: Node refuses to strip types
+under `node_modules` (`ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING`) and has no flag for it.
+Bundler-compiled entries (`.tsx`, `.css`, `src/ui/`) resolve to source.
+
+### By git commit
+
+A consumer takes each package as a subpath of one commit:
+
+```json
+"@fcalell/plugin-db": "github:fcalell/stack#<sha>&path:/plugins/db"
+```
+
+pnpm fetches the commit, installs the whole stack workspace in the clone (with the root's pinned
+pnpm) and runs the package's `prepare`; that install runs every workspace project's `prepare` in
+dependency order, so the package and its `@fcalell/*` dependencies are built before pnpm packs
+the package's `files`. The consumer's `pnpm-workspace.yaml` carries:
+
+```yaml
+overrides:                       # every @fcalell/* name in the closure, same commit
+  "@fcalell/cli": "github:fcalell/stack#<sha>&path:/packages/cli"
+  "@fcalell/plugin-api": "github:fcalell/stack#<sha>&path:/plugins/api"
+  "@fcalell/plugin-cloudflare": "github:fcalell/stack#<sha>&path:/plugins/cloudflare"
+blockExoticSubdeps: false        # the git packages depend on each other by git spec
+allowBuilds:                     # each git package's prepare, plus the native builds
+  "@fcalell/plugin-db@<resolution>": true
+  "@fcalell/cli@<resolution>": true
+  "@fcalell/plugin-api@<resolution>": true
+  "@fcalell/plugin-cloudflare@<resolution>": true
+  better-sqlite3: true
+  esbuild: true
+```
+
+The overrides exist because a git tarball keeps the `workspace:*` ranges between stack packages;
+a published npm version resolves them and the overrides go. A git package's `allowBuilds` key is
+its name plus the resolution pnpm prints in its `GIT_DEP_PREPARE_NOT_ALLOWED` hint; the bare name
+is refused.
+
+### By `link:`
+
+A `link:` consumer resolves the stack checkout's `dist/` too, so the checkout is built first and
+rebuilt after a source change: `pnpm install` there runs every `prepare`, and
+`pnpm turbo run build` rebuilds.

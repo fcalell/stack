@@ -1,11 +1,11 @@
 import { access, readFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { AppConfig, StackConfig } from "#config";
-import { type DiscoveredPlugin, discoverPlugins } from "#lib/discovery";
-import { ConfigValidationError } from "#lib/errors";
-import { buildGraph, type Graph } from "#lib/graph";
-import { createLogContext } from "#lib/prompt";
-import type { Contribution, LogContext, Slot } from "#lib/slots";
+import type { AppConfig, StackConfig } from "../config.ts";
+import { type DiscoveredPlugin, discoverPlugins } from "./discovery.ts";
+import { ConfigValidationError } from "./errors.ts";
+import { buildGraph, type Graph } from "./graph.ts";
+import { createLogContext } from "./prompt.ts";
+import type { Contribution, LogContext, Slot } from "./slots.ts";
 
 export interface CollectedPlugin {
 	discovered: DiscoveredPlugin;

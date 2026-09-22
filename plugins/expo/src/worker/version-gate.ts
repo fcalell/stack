@@ -2,7 +2,7 @@ import type { MiddlewareHandler } from "hono";
 import {
 	CLIENT_BUILD_HEADER,
 	CLIENT_PLATFORM_HEADER,
-} from "../version-gate-shared";
+} from "../version-gate-shared.ts";
 
 // Wire contract for the client version gate (WS4). `@fcalell/plugin-expo/client`
 // stamps these headers on every request

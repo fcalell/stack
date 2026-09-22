@@ -3,9 +3,9 @@ import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { getTableColumns, getTableName } from "drizzle-orm";
 import { getTableConfig, type SQLiteTable } from "drizzle-orm/sqlite-core";
-import type { SeedEntry } from "../orm";
-import type { DbOptions } from "../types";
-import { executeSqlFile } from "./wrangler";
+import type { SeedEntry } from "../orm.ts";
+import type { DbOptions } from "../types.ts";
+import { executeSqlFile } from "./wrangler.ts";
 
 // D1 caps a single prepared statement at 100 bound parameters. We inline
 // literals (wrangler `d1 execute --file` takes no bound params), so the cap
@@ -208,8 +208,8 @@ export function tableToSpec(
 	return { table: tableName, pkColumns: [...pkNames], rows: specRows };
 }
 
-// Import the consumer's `src/schema/seed.ts` (runs under tsx like the rest of
-// the CLI) and introspect it. Returns `null` when no seed file exists.
+// Import the consumer's `src/schema/seed.ts` (node strips its types, as it
+// does for `stack.config.ts`) and introspect it. Returns `null` when no seed file exists.
 export async function loadSeedSpecs(
 	cwd: string,
 ): Promise<TableSeedSpec[] | null> {

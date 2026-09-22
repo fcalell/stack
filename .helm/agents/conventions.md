@@ -9,21 +9,43 @@ Each package must be small, single-purpose, and independently consumable.
 Packages export via subpath exports in package.json, never a barrel index that re-exports
 everything.
 
-Use `#` hash imports for internal paths within a package. Use subpath exports for the public API.
+Use subpath exports for the public API. Code Node runs imports its own modules by relative path
+with the `.ts` extension: the build rewrites relative specifiers only, so a `#` import would reach
+the consumer as a `.ts` path. `#` hash imports stay in bundler-compiled code (`src/ui/`).
 
 All packages use `workspace:*` to depend on sibling `@fcalell/*` packages.
 
 TypeScript configs extend `@fcalell/typescript-config`, never define compiler options directly.
 
+## Build and exports
+
+A package ships JavaScript for everything Node runs, because Node refuses to strip types under
+`node_modules`. Its `tsconfig.build.json` extends its own `tsconfig.json` plus
+`@fcalell/typescript-config/build.json`, which compiles `src/` to `dist/` under `nodenext` (an
+extensionless relative import fails the build) and leaves out `src/ui/` and `.tsx`. Scripts:
+`"build": "tsc -p tsconfig.build.json"` and `"prepare": "pnpm build"`, which builds a git-pinned
+install; `files` lists `dist` and `src`; `clear` removes `dist`.
+
+Each `exports` entry a bundler compiles (`.tsx`, `.css`, anything under `src/ui/`, the
+`./components/*` and `./lib/*` patterns) points at source; every other entry is
+`{ "types": "./dist/<path>.d.ts", "default": "./dist/<path>.js" }`. A source entry reaches a
+sibling module that also ships compiled through the package's own name, never a relative path,
+or the bundle holds two copies of that module.
+
+A sibling `@fcalell/*` import resolves through its `exports`, so type-checking and tests need the
+dependencies' `dist`: turbo runs `^build` before `check-types` and `test`, and the package's own
+`build` before its `check-types` (a source entry's self-name import). Root `pnpm check` is
+`turbo run build check-types test`, then Biome.
+
 ## Tests
 
 A package with tests keeps them in `test/*.test.ts`, lists `test` in its tsconfig `include`,
 and runs them with `"test": "node --test 'test/**/*.test.ts'"` (node's own glob: node 24 loads a
-bare directory argument as a module). Turbo's `test` task depends on `^test`, so a change in a
+bare directory argument as a module). Turbo's `test` task depends on `^build`, so a change in a
 dependency re-runs its dependents. A package without tests has no script and turbo skips it.
 
-Tests run under plain node with type stripping, so everything they import (runtime code and
-codegen alike) stays erasable-only (no parameter properties, no enums) and names the `.ts` file
+Tests import their own package's `src/` by relative path and run under plain node with type
+stripping, so everything they import from it (runtime code and codegen alike) stays erasable-only (no parameter properties, no enums) and names the `.ts` file
 of every value import. A test builds the real runtime factories with literal options, as the
 generated worker would, and drives `worker.fetch`; it never spawns `stack` or a scratch
 consumer. Test support two packages share lives in a private workspace package

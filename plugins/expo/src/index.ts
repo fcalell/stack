@@ -14,14 +14,14 @@ import {
 	aggregateExpoConfig,
 	aggregateMetroConfig,
 	buildRoutesDts,
-} from "./node/codegen";
+} from "./node/codegen.ts";
 import {
 	type ExpoConfigPlugin,
 	type ExpoOptions,
 	expoOptionsSchema,
 	type MetroRequireSpec,
 	type MetroWrapperSpec,
-} from "./types";
+} from "./types.ts";
 
 const SOURCE = "expo";
 
@@ -608,4 +608,4 @@ export const expo = plugin("expo", {
 	],
 });
 
-export type { ExpoOptions } from "./types";
+export type { ExpoOptions } from "./types.ts";

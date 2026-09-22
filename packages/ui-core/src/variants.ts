@@ -2,7 +2,7 @@
 // declares its props with, and the two color-token helpers. The tables
 // themselves stay internal to the package.
 import { cva } from "class-variance-authority";
-import { type InvariantColor, LABEL, type PerModeColor } from "#tokens";
+import { type InvariantColor, LABEL, type PerModeColor } from "./tokens.ts";
 import {
 	type Axes,
 	BADGE,
@@ -20,7 +20,7 @@ import {
 	TEXT,
 	TEXT_STRONG,
 	TOGGLE,
-} from "#variant-tables";
+} from "./variant-tables.ts";
 
 // The only way a cva is built here. Taking the whole matrix leaves no second
 // argument to get wrong, so a cva cannot end up rendering another table's cells

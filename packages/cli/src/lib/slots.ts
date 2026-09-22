@@ -1,5 +1,5 @@
-import type { ScaffoldSpec } from "#ast";
-import type { AppConfig } from "#config";
+import type { ScaffoldSpec } from "../ast/index.ts";
+import type { AppConfig } from "../config.ts";
 
 // ── Slot identity and kinds ─────────────────────────────────────────
 

@@ -1,5 +1,4 @@
-import type { ScaffoldSpec } from "#ast";
-import { type Contribution, type Slot, slot } from "#lib/slots";
+import type { ScaffoldSpec } from "../ast/index.ts";
 import type {
 	BuildStep,
 	DeployCheck,
@@ -9,7 +8,8 @@ import type {
 	ProcessSpec,
 	PromptSpec,
 	WatcherSpec,
-} from "#specs";
+} from "../specs.ts";
+import { type Contribution, type Slot, slot } from "./slots.ts";
 
 // CLI-owned slot tokens — every value the core `stack` CLI consumes from
 // plugins flows through one of these. The lifecycle is fixed: each command

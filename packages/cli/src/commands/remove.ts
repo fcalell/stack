@@ -2,12 +2,12 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { rm } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { log, outro } from "@clack/prompts";
-import { buildGraphFromDiscovered } from "#lib/build-graph";
-import { cliSlots } from "#lib/cli-slots";
-import { loadConfig } from "#lib/config";
-import { removePluginCall } from "#lib/config-writer";
-import { type DiscoveredPlugin, discoverPlugins } from "#lib/discovery";
-import { MissingPluginError, StackError } from "#lib/errors";
+import { buildGraphFromDiscovered } from "../lib/build-graph.ts";
+import { cliSlots } from "../lib/cli-slots.ts";
+import { loadConfig } from "../lib/config.ts";
+import { removePluginCall } from "../lib/config-writer.ts";
+import { type DiscoveredPlugin, discoverPlugins } from "../lib/discovery.ts";
+import { MissingPluginError, StackError } from "../lib/errors.ts";
 
 // Remove `keys` from `pkg[field]` (when it's a plain object). Returns true if
 // `pkg` was modified at all (any key removal AND/OR a whole-field deletion
@@ -179,7 +179,7 @@ export async function remove(
 	// `generate` would just hit the same load error and overwrite our useful
 	// log line with a confusing "could not regenerate" warning.
 	if (discovered) {
-		const { generate } = await import("#commands/generate");
+		const { generate } = await import("./generate.ts");
 		try {
 			await generate(configPath);
 		} catch {

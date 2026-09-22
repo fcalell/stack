@@ -93,9 +93,10 @@ the services barrel.
 Node has no bindings: the worker gets `env = process.env`, `executionCtx` degrades to a no-op
 `waitUntil`, and binding-backed features (rate limiters) skip themselves when the binding is
 absent. `STACK_DEV=1` and the `devDefault` of every `api.slots.env` var the shell leaves unset
-arrive via `ProcessSpec.env` on the dev process, not `.dev.vars`. The server's TypeScript runs
-directly under the consumer's Node >= 24 (type stripping), so everything on the runtime import
-path stays erasable-only syntax (no parameter properties, no enums) and names the file of every
+arrive via `ProcessSpec.env` on the dev process, not `.dev.vars`. The consumer's TypeScript
+(`.stack/`, `src/`) runs directly under Node >= 24 (type stripping) while the stack packages it
+imports load compiled from `dist/`, so everything of the consumer's on the runtime import path
+stays erasable-only syntax (no parameter properties, no enums) and names the file of every
 value import (`./types.ts`, `../src/schema/index.ts`): node resolves neither a missing extension
 nor a directory (`ERR_UNSUPPORTED_DIR_IMPORT`). The generated worker imports the sqlite schema
 as `../src/schema/index.ts` for that reason, and a node consumer's route files name their files
@@ -157,8 +158,8 @@ clients before `server.close()` or close hangs on live sockets.
 (plugin-api README, "Write procedures"). That specifier resolves through a tsconfig `paths` alias
 (`packages/cli/src/templates/tsconfig.ts`) to `api.slots.procedureSource`'s generated
 `.stack/procedure.ts` — not a bundler virtual-module plugin, since the worker never runs through
-Vite. Both loaders that touch the worker (tsx for `stack dev`'s subprocess boot, esbuild for
-`wrangler`/deploy bundling) resolve tsconfig `paths` natively.
+Vite. esbuild (`wrangler` dev and deploy bundling) resolves tsconfig `paths` natively; the node
+target maps the specifier with a `registerHooks` resolve hook (above).
 
 `.stack/procedure.ts` rebuilds the same `.use()` chain `workerBase` + `pluginRuntimes` produce (minus
 callbacks/handler) as real, never-exported code, purely so `typeof` can extract the exact

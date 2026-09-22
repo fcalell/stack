@@ -1,4 +1,4 @@
-import { toPascalCase as pascalCase, toCamelCase } from "#lib/naming";
+import { toPascalCase as pascalCase, toCamelCase } from "../lib/naming.ts";
 
 interface PluginPackageJsonOptions {
 	name: string;
@@ -14,11 +14,17 @@ export function pluginPackageJsonTemplate(
 		type: "module",
 		sideEffects: false,
 		exports: {
-			".": "./src/index.ts",
-			"./runtime": "./src/worker/index.ts",
+			".": { types: "./dist/index.d.ts", default: "./dist/index.js" },
+			"./runtime": {
+				types: "./dist/worker/index.d.ts",
+				default: "./dist/worker/index.js",
+			},
 		},
+		files: ["dist", "src", "README.md"],
 		license: "MIT",
 		scripts: {
+			build: "tsc -p tsconfig.build.json",
+			prepare: "pnpm build",
 			"check-types": "tsc --noEmit --pretty",
 			lint: "biome check --write --unsafe",
 			check: "pnpm check-types && pnpm lint",
@@ -39,6 +45,13 @@ export function pluginTsconfigTemplate(): string {
 	const config = {
 		extends: "@fcalell/typescript-config/node-tsx.json",
 		include: ["src"],
+	};
+	return `${JSON.stringify(config, null, "\t")}\n`;
+}
+
+export function pluginTsconfigBuildTemplate(): string {
+	const config = {
+		extends: ["./tsconfig.json", "@fcalell/typescript-config/build.json"],
 	};
 	return `${JSON.stringify(config, null, "\t")}\n`;
 }
@@ -143,7 +156,7 @@ export default defineConfig({
 
 1. Replace \`workspace:*\` dependencies in \`package.json\` with fixed versions.
 2. Run \`pnpm check-types\`.
-3. Publish: \`pnpm publish --access public\`.
+3. Publish: \`pnpm publish --access public\` (\`prepare\` builds \`dist\` first).
 
 ## License
 

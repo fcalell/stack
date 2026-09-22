@@ -5,13 +5,13 @@ import { cliSlots, emitArtifact } from "@fcalell/cli/cli-slots";
 import { auth } from "@fcalell/plugin-auth";
 import { expo } from "@fcalell/plugin-expo";
 import { deriveTheme } from "@fcalell/ui-core/derive";
-import { aggregateGlobalCss } from "./node/codegen";
-import { runGeometryGate } from "./node/gate";
+import { aggregateGlobalCss } from "./node/codegen.ts";
+import { runGeometryGate } from "./node/gate.ts";
 import {
 	type NativeFontEntry,
 	type NativeUiOptions,
 	nativeUiOptionsSchema,
-} from "./types";
+} from "./types.ts";
 
 const SOURCE = "native-ui";
 
@@ -328,4 +328,4 @@ export const nativeUi = plugin("native-ui", {
 	],
 });
 
-export type { NativeFontEntry, NativeUiOptions, Theme } from "./types";
+export type { NativeFontEntry, NativeUiOptions, Theme } from "./types.ts";

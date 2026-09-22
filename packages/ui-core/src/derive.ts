@@ -1,4 +1,4 @@
-import { parseTheme, type Theme } from "#schema";
+import { parseTheme, type Theme } from "./schema.ts";
 import {
 	COLORS,
 	type ColorValue,
@@ -16,7 +16,7 @@ import {
 	type PerModeColor,
 	SCALE_DEFAULTS,
 	type ScaleKey,
-} from "#tokens";
+} from "./tokens.ts";
 
 // Final value strings, one per token. Emit helpers read this and never the raw
 // `Theme`, so knob resolution happens exactly once.

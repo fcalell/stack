@@ -3,8 +3,8 @@
 `@fcalell/stack` is a pnpm monorepo: `packages/` (core CLI + shared configs) and `plugins/` (one
 self-contained feature unit per domain). The CLI owns orchestration and the slot graph; every
 feature lives in the plugin that owns its domain (see
-[philosophy](../product/philosophy.md)). Per-change gate: `pnpm check` (type-check, every
-package's `node --test`, Biome lint).
+[philosophy](../product/philosophy.md)). Per-change gate: `pnpm check` (build, type-check,
+every package's `node --test`, Biome lint).
 
 ## Packages
 
@@ -12,7 +12,7 @@ package's `node --test`, Biome lint).
 |---------|---------|
 | `@fcalell/cli` | `defineConfig()`, `plugin()`, `slot.*`, `stack` CLI, slot graph engine, codegen |
 | `@fcalell/ui-core` | The design contract both UI plugins render from: the token records, `deriveTheme`, the emit helpers, `cn()`, and the platform-invariant variant matrices. Framework-free build-time data |
-| `@fcalell/typescript-config` | tsconfig presets (base, solid-vite, node-tsx) |
+| `@fcalell/typescript-config` | tsconfig presets (base, solid-vite, node-tsx) and the `build` emit overlay |
 | `@fcalell/biome-config` | Shareable Biome formatter/linter config |
 | `@fcalell/auth-testing` | Private, never published: the test support the sign-in tests share (a software WebAuthn authenticator, a cookie jar, session minting, table creation from drizzle schemas) |
 

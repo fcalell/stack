@@ -4,15 +4,28 @@
 	"type": "module",
 	"sideEffects": false,
 	"exports": {
-		".": "./src/index.ts",
-		"./preset": "./src/node/preset.ts"
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		},
+		"./preset": {
+			"types": "./dist/node/preset.d.ts",
+			"default": "./dist/node/preset.js"
+		}
 	},
+	"files": [
+		"dist",
+		"src",
+		"README.md"
+	],
 	"license": "MIT",
 	"scripts": {
+		"build": "tsc -p tsconfig.build.json",
+		"prepare": "pnpm build",
 		"check-types": "tsc --noEmit --pretty",
 		"lint": "biome check --write --unsafe",
 		"check": "pnpm check-types && pnpm lint",
-		"clear": "rm -rf node_modules .turbo"
+		"clear": "rm -rf dist node_modules .turbo"
 	},
 	"dependencies": {
 		"@fcalell/cli": "workspace:*",

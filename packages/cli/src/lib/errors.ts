@@ -1,4 +1,4 @@
-import type { ValidationError } from "#config";
+import type { ValidationError } from "../config.ts";
 
 export class StackError extends Error {
 	readonly code: string;

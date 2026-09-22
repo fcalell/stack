@@ -1,6 +1,6 @@
 import { writeFile as fsWriteFile } from "node:fs/promises";
 import { generateCode, loadFile, type ProxifiedModule } from "magicast";
-import { toCamelCase } from "#lib/naming";
+import { toCamelCase } from "./naming.ts";
 
 interface ConfigAst {
 	mod: ProxifiedModule;

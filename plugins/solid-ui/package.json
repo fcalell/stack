@@ -17,10 +17,16 @@
 		]
 	},
 	"exports": {
-		".": "./src/index.ts",
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		},
 		"./globals.css": "./src/ui/globals.css",
 		"./fonts": "./src/ui/fonts.ts",
-		"./node/fonts": "./src/node/fonts.ts",
+		"./node/fonts": {
+			"types": "./dist/node/fonts.d.ts",
+			"default": "./dist/node/fonts.js"
+		},
 		"./app": "./src/ui/app/index.tsx",
 		"./meta": "./src/ui/meta/index.ts",
 		"./router": "./src/ui/router/index.ts",
@@ -34,6 +40,7 @@
 		]
 	},
 	"files": [
+		"dist",
 		"src",
 		"scripts",
 		"templates",
@@ -42,11 +49,13 @@
 	],
 	"license": "MIT",
 	"scripts": {
+		"build": "tsc -p tsconfig.build.json",
+		"prepare": "pnpm build",
 		"check-types": "tsc --noEmit --pretty",
 		"lint": "biome check --write --unsafe",
 		"check": "pnpm check-types && pnpm lint",
 		"verify": "tsx scripts/verify.ts",
-		"clear": "rm -rf node_modules .turbo"
+		"clear": "rm -rf dist node_modules .turbo"
 	},
 	"peerDependencies": {
 		"@tanstack/solid-form": "^1.28",

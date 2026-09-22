@@ -5,7 +5,7 @@ import {
 	MODES,
 	PER_MODE_COLORS,
 	SCALE_DEFAULTS,
-} from "#tokens";
+} from "./tokens.ts";
 
 // The accepted subset is the one the derivation itself emits: three unsigned
 // decimal components and an optional unsigned decimal alpha. Percentages,

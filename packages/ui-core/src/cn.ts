@@ -5,7 +5,7 @@ import {
 	SPACING_RUNGS,
 	TRACKED_ROLES,
 	TYPE_ROLES,
-} from "#tokens";
+} from "./tokens.ts";
 
 // tailwind-merge ships no knowledge of the contract's scales, so `text-h1`
 // reads as a color and `p-card` as an unknown class: two rungs of one scale

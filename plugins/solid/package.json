@@ -4,16 +4,33 @@
 	"type": "module",
 	"sideEffects": false,
 	"exports": {
-		".": "./src/index.ts",
-		"./codegen": "./src/node/codegen.ts",
-		"./node/vite-routes": "./src/node/vite-routes.ts"
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		},
+		"./codegen": {
+			"types": "./dist/node/codegen.d.ts",
+			"default": "./dist/node/codegen.js"
+		},
+		"./node/vite-routes": {
+			"types": "./dist/node/vite-routes.d.ts",
+			"default": "./dist/node/vite-routes.js"
+		}
 	},
+	"files": [
+		"dist",
+		"src",
+		"templates",
+		"README.md"
+	],
 	"license": "MIT",
 	"scripts": {
+		"build": "tsc -p tsconfig.build.json",
+		"prepare": "pnpm build",
 		"check-types": "tsc --noEmit --pretty",
 		"lint": "biome check --write --unsafe",
 		"check": "pnpm check-types && pnpm lint",
-		"clear": "rm -rf node_modules .turbo"
+		"clear": "rm -rf dist node_modules .turbo"
 	},
 	"dependencies": {
 		"@fcalell/cli": "workspace:*",

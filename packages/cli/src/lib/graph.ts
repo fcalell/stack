@@ -1,5 +1,5 @@
-import type { ScaffoldSpec } from "#ast";
-import type { AppConfig } from "#config";
+import type { ScaffoldSpec } from "../ast/index.ts";
+import type { AppConfig } from "../config.ts";
 import {
 	type Contribution,
 	type ContributionCtx,
@@ -11,7 +11,7 @@ import {
 	SlotCycleError,
 	SlotError,
 	SlotResolutionError,
-} from "#lib/slots";
+} from "./slots.ts";
 
 // ── Plugin shape consumed by buildGraph ─────────────────────────────
 //

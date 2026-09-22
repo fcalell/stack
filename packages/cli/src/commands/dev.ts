@@ -2,13 +2,13 @@ import { existsSync, type FSWatcher, statSync, watch } from "node:fs";
 import { basename, join } from "node:path";
 import { intro, log } from "@clack/prompts";
 import pc from "picocolors";
-import { generateFromConfig } from "#commands/generate";
-import type { StackConfig } from "#config";
-import { buildGraphFromConfig } from "#lib/build-graph";
-import { cliSlots } from "#lib/cli-slots";
-import { loadConfig } from "#lib/config";
-import { type SupervisedProcess, supervise } from "#lib/proc";
-import type { DevReadyTask, ProcessSpec, WatcherSpec } from "#specs";
+import type { StackConfig } from "../config.ts";
+import { buildGraphFromConfig } from "../lib/build-graph.ts";
+import { cliSlots } from "../lib/cli-slots.ts";
+import { loadConfig } from "../lib/config.ts";
+import { type SupervisedProcess, supervise } from "../lib/proc.ts";
+import type { DevReadyTask, ProcessSpec, WatcherSpec } from "../specs.ts";
+import { generateFromConfig } from "./generate.ts";
 
 interface DevOptions {
 	studio: boolean;

@@ -1,13 +1,13 @@
 import { spawnSync } from "node:child_process";
 import { intro, log, outro } from "@clack/prompts";
-import { build as runBuild } from "#commands/build";
-import type { StackConfig } from "#config";
-import { buildGraphFromConfig } from "#lib/build-graph";
-import { cliSlots } from "#lib/cli-slots";
-import { loadConfig } from "#lib/config";
-import { StepFailedError } from "#lib/errors";
-import { confirm } from "#lib/prompt";
-import type { DeployCheck, DeployStep } from "#specs";
+import type { StackConfig } from "../config.ts";
+import { buildGraphFromConfig } from "../lib/build-graph.ts";
+import { cliSlots } from "../lib/cli-slots.ts";
+import { loadConfig } from "../lib/config.ts";
+import { StepFailedError } from "../lib/errors.ts";
+import { confirm } from "../lib/prompt.ts";
+import type { DeployCheck, DeployStep } from "../specs.ts";
+import { build as runBuild } from "./build.ts";
 
 interface DeployOptions {
 	config: string;

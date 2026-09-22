@@ -1,7 +1,7 @@
 import type { ResolvedTheme } from "@fcalell/ui-core/derive";
-import type { NativeFontEntry } from "../types";
-import { cssIdent, cssString, cssTokenValue, cssVarName } from "./css";
-import { modeBlocks, shadowBlocks, themeDeclarations } from "./theme";
+import type { NativeFontEntry } from "../types.ts";
+import { cssIdent, cssString, cssTokenValue, cssVarName } from "./css.ts";
+import { modeBlocks, shadowBlocks, themeDeclarations } from "./theme.ts";
 
 // Inputs for the `.stack/global.css` derivation. `plugin-native-ui` resolves
 // the consumer's `theme` option through ui-core's `deriveTheme` and renders

@@ -1,6 +1,6 @@
 import type { RuntimePlugin } from "@fcalell/cli/runtime";
 import type { AnyD1Database, DrizzleD1Database } from "drizzle-orm/d1";
-import { createClient } from "../d1/client";
+import { createClient } from "../d1/client.ts";
 
 export default function dbRuntime<
 	TSchema extends Record<string, unknown> = Record<string, unknown>,

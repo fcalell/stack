@@ -4,24 +4,59 @@
 	"type": "module",
 	"sideEffects": false,
 	"exports": {
-		".": "./src/index.ts",
-		"./ability": "./src/ability/index.ts",
-		"./runtime": "./src/worker/index.ts",
-		"./schema": "./src/schema/index.ts",
-		"./schema/organization": "./src/schema/organization.ts",
-		"./schema/passkey": "./src/schema/passkey.ts",
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		},
+		"./ability": {
+			"types": "./dist/ability/index.d.ts",
+			"default": "./dist/ability/index.js"
+		},
+		"./runtime": {
+			"types": "./dist/worker/index.d.ts",
+			"default": "./dist/worker/index.js"
+		},
+		"./schema": {
+			"types": "./dist/schema/index.d.ts",
+			"default": "./dist/schema/index.js"
+		},
+		"./schema/organization": {
+			"types": "./dist/schema/organization.d.ts",
+			"default": "./dist/schema/organization.js"
+		},
+		"./schema/passkey": {
+			"types": "./dist/schema/passkey.d.ts",
+			"default": "./dist/schema/passkey.js"
+		},
 		"./expo": "./src/expo.tsx",
-		"./client": "./src/client.ts",
-		"./access": "./src/access.ts",
-		"./infer": "./src/infer.ts"
+		"./client": {
+			"types": "./dist/client.d.ts",
+			"default": "./dist/client.js"
+		},
+		"./access": {
+			"types": "./dist/access.d.ts",
+			"default": "./dist/access.js"
+		},
+		"./infer": {
+			"types": "./dist/infer.d.ts",
+			"default": "./dist/infer.js"
+		}
 	},
+	"files": [
+		"dist",
+		"src",
+		"templates",
+		"README.md"
+	],
 	"license": "MIT",
 	"scripts": {
+		"build": "tsc -p tsconfig.build.json",
+		"prepare": "pnpm build",
 		"check-types": "tsc --noEmit --pretty",
 		"lint": "biome check --write --unsafe",
 		"check": "pnpm check-types && pnpm lint",
 		"test": "node --test 'test/**/*.test.ts'",
-		"clear": "rm -rf node_modules .turbo"
+		"clear": "rm -rf dist node_modules .turbo"
 	},
 	"dependencies": {
 		"@better-auth/expo": "^1.7.2",

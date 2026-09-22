@@ -2,9 +2,9 @@ import type {
 	CommandDefinition,
 	FlagDefinition,
 	InternalCliPlugin,
-} from "#lib/create-plugin";
-import { StackError } from "#lib/errors";
-import type { Slot } from "#lib/slots";
+} from "./create-plugin.ts";
+import { StackError } from "./errors.ts";
+import type { Slot } from "./slots.ts";
 
 type AnyCliPlugin = InternalCliPlugin<
 	unknown,

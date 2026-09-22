@@ -11,25 +11,25 @@ import {
 	createD1Database,
 	D1_PLACEHOLDER_ID,
 	isWranglerAuthed,
-} from "./node/d1";
-import { extractSchemaEntities } from "./node/entities";
-import { migrationLockPath, withMigrationLock } from "./node/lock";
+} from "./node/d1.ts";
+import { extractSchemaEntities } from "./node/entities.ts";
+import { migrationLockPath, withMigrationLock } from "./node/lock.ts";
 import {
 	assertNoUnacknowledgedDrops,
 	detectLatestDrops,
 	detectSchemaDrift,
 	formatDropReport,
 	hasDrops,
-} from "./node/migration-safety";
+} from "./node/migration-safety.ts";
 import {
 	applyMigrationsLocal,
 	applyMigrationsRemote,
 	generateMigrations,
 	listMigrationFiles,
 	pushSchemaLocal,
-} from "./node/push";
-import { applySeed } from "./node/seed";
-import { dbOptionsSchema } from "./types";
+} from "./node/push.ts";
+import { applySeed } from "./node/seed.ts";
+import { dbOptionsSchema } from "./types.ts";
 
 // A COALESCING latch for local schema re-applies — NOT a serializer.
 //
@@ -88,7 +88,6 @@ export const db = plugin("db", {
 		// drizzle-kit's sqlite driver for `stack db push` — both dialects
 		// push into a local sqlite file (miniflare's for d1).
 		"better-sqlite3": "^12.0.0",
-		tsx: "^4.19.0",
 	},
 	gitignore: [".db-kit"],
 
@@ -610,4 +609,4 @@ export const db = plugin("db", {
 	},
 });
 
-export type { DbOptions } from "./types";
+export type { DbOptions } from "./types.ts";

@@ -4,20 +4,46 @@
 	"type": "module",
 	"sideEffects": false,
 	"exports": {
-		".": "./src/index.ts",
-		"./runtime": "./src/worker/index.ts",
-		"./runtime/sqlite": "./src/server/index.ts",
-		"./orm": "./src/orm.ts",
-		"./d1": "./src/d1/client.ts",
-		"./sqlite": "./src/sqlite/client.ts"
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		},
+		"./runtime": {
+			"types": "./dist/worker/index.d.ts",
+			"default": "./dist/worker/index.js"
+		},
+		"./runtime/sqlite": {
+			"types": "./dist/server/index.d.ts",
+			"default": "./dist/server/index.js"
+		},
+		"./orm": {
+			"types": "./dist/orm.d.ts",
+			"default": "./dist/orm.js"
+		},
+		"./d1": {
+			"types": "./dist/d1/client.d.ts",
+			"default": "./dist/d1/client.js"
+		},
+		"./sqlite": {
+			"types": "./dist/sqlite/client.d.ts",
+			"default": "./dist/sqlite/client.js"
+		}
 	},
+	"files": [
+		"dist",
+		"src",
+		"templates",
+		"README.md"
+	],
 	"license": "MIT",
 	"scripts": {
+		"build": "tsc -p tsconfig.build.json",
+		"prepare": "pnpm build",
 		"check-types": "tsc --noEmit --pretty",
 		"lint": "biome check --write --unsafe",
 		"check": "pnpm check-types && pnpm lint",
 		"test": "node --test 'test/**/*.test.ts'",
-		"clear": "rm -rf node_modules .turbo"
+		"clear": "rm -rf dist node_modules .turbo"
 	},
 	"dependencies": {
 		"@fcalell/cli": "workspace:*",

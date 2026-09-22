@@ -1,4 +1,4 @@
-import type { ResolvedTheme } from "#derive";
+import type { ResolvedTheme } from "./derive.ts";
 import {
 	INVARIANT_COLORS,
 	type Mode,
@@ -10,7 +10,7 @@ import {
 	TRACKED_ROLES,
 	TYPE_ROLES,
 	ZEROED_NAMESPACES,
-} from "#tokens";
+} from "./tokens.ts";
 
 export type ShadowUtility = `shadow-${ShadowLevel}`;
 

@@ -1,28 +1,32 @@
 import { existsSync, mkdirSync } from "node:fs";
 import { basename } from "node:path";
 import { intro, log, note, outro } from "@clack/prompts";
-import { defineConfig, type PluginConfig, type StackConfig } from "#config";
-import { buildGraphFromDiscovered } from "#lib/build-graph";
-import { cliSlots } from "#lib/cli-slots";
+import {
+	defineConfig,
+	type PluginConfig,
+	type StackConfig,
+} from "../config.ts";
+import { buildGraphFromDiscovered } from "../lib/build-graph.ts";
+import { cliSlots } from "../lib/cli-slots.ts";
 import {
 	type DiscoveredPlugin,
 	loadAvailablePlugins,
 	resolveRequiresClosure,
-} from "#lib/discovery";
-import { MissingPluginError, StackError } from "#lib/errors";
-import { ask, createPromptContext, multi } from "#lib/prompt";
+} from "../lib/discovery.ts";
+import { MissingPluginError, StackError } from "../lib/errors.ts";
+import { ask, createPromptContext, multi } from "../lib/prompt.ts";
 import {
 	announceCreated,
 	ensureGitignore,
 	patchPackageJson,
 	writeIfMissingString,
 	writeScaffoldSpecs,
-} from "#lib/scaffold";
-import { biomeTemplate } from "#templates/biome";
-import { gitignoreTemplate } from "#templates/gitignore";
-import { packageJsonTemplate } from "#templates/package-json";
-import { stackConfigTemplate } from "#templates/stack-config";
-import { tsconfigTemplate } from "#templates/tsconfig";
+} from "../lib/scaffold.ts";
+import { biomeTemplate } from "../templates/biome.ts";
+import { gitignoreTemplate } from "../templates/gitignore.ts";
+import { packageJsonTemplate } from "../templates/package-json.ts";
+import { stackConfigTemplate } from "../templates/stack-config.ts";
+import { tsconfigTemplate } from "../templates/tsconfig.ts";
 
 export interface InitOptions {
 	plugins?: string[];
@@ -223,7 +227,7 @@ async function run(dir: string, options: InitOptions): Promise<void> {
 	// Run the real generate path against the config we just wrote — this is
 	// the same code `stack generate` runs.
 	try {
-		const { generate } = await import("#commands/generate");
+		const { generate } = await import("./generate.ts");
 		await generate("stack.config.ts");
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error);

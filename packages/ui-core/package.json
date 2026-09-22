@@ -3,32 +3,59 @@
 	"version": "0.0.0",
 	"type": "module",
 	"sideEffects": false,
-	"imports": {
-		"#*": "./src/*.ts"
-	},
 	"exports": {
-		"./tokens": "./src/tokens.ts",
-		"./schema": "./src/schema.ts",
-		"./derive": "./src/derive.ts",
-		"./emit": "./src/emit.ts",
-		"./cn": "./src/cn.ts",
-		"./variants": "./src/variants.ts",
-		"./descriptors": "./src/descriptors.ts",
-		"./harness": "./src/harness.ts",
-		"./gate": "./src/gate.ts"
+		"./tokens": {
+			"types": "./dist/tokens.d.ts",
+			"default": "./dist/tokens.js"
+		},
+		"./schema": {
+			"types": "./dist/schema.d.ts",
+			"default": "./dist/schema.js"
+		},
+		"./derive": {
+			"types": "./dist/derive.d.ts",
+			"default": "./dist/derive.js"
+		},
+		"./emit": {
+			"types": "./dist/emit.d.ts",
+			"default": "./dist/emit.js"
+		},
+		"./cn": {
+			"types": "./dist/cn.d.ts",
+			"default": "./dist/cn.js"
+		},
+		"./variants": {
+			"types": "./dist/variants.d.ts",
+			"default": "./dist/variants.js"
+		},
+		"./descriptors": {
+			"types": "./dist/descriptors.d.ts",
+			"default": "./dist/descriptors.js"
+		},
+		"./harness": {
+			"types": "./dist/harness.d.ts",
+			"default": "./dist/harness.js"
+		},
+		"./gate": {
+			"types": "./dist/gate.d.ts",
+			"default": "./dist/gate.js"
+		}
 	},
 	"files": [
+		"dist",
 		"src",
 		"scripts",
 		"README.md"
 	],
 	"license": "MIT",
 	"scripts": {
+		"build": "tsc -p tsconfig.build.json",
+		"prepare": "pnpm build",
 		"check-types": "tsc --noEmit --pretty",
 		"lint": "biome check --write --unsafe",
 		"check": "pnpm check-types && pnpm lint",
 		"verify": "tsx scripts/verify.ts",
-		"clear": "rm -rf node_modules .turbo"
+		"clear": "rm -rf dist node_modules .turbo"
 	},
 	"dependencies": {
 		"class-variance-authority": "^0.7.1",
