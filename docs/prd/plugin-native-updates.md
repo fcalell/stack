@@ -45,7 +45,7 @@ before the first milestone since the package name is a durable surface.
 - `cloudflare.slots.bindings`: contribute the update backend's D1 (`DB`) and R2 (`BUCKET`) bindings.
 - `cloudflare.slots.routes`: contribute the update backend's custom-domain route (the URL is baked
   into every build, so it must be a durable own-zone hostname, per sailward's wrangler note).
-- `cloudflare.slots.secrets`: `JWT_SECRET` for signed bundle URLs.
+- `api.slots.env`: `JWT_SECRET` for signed bundle URLs.
 - `cliSlots.artifactFiles`: the backend worker source and the mobile `hot-updater.config.ts`.
 - `cliSlots.deploySteps`: the OTA bundle publish step.
 - `cliSlots.deployChecks`: the fingerprint-parity gate as a blocking check (depends on deploy-engine

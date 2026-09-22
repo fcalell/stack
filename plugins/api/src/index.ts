@@ -8,19 +8,19 @@ import type {
 	TsImportSpec,
 } from "@fcalell/cli/ast";
 import { cliSlots, emitArtifact } from "@fcalell/cli/cli-slots";
-import { cloudflare } from "@fcalell/plugin-cloudflare";
 import { z } from "zod";
-import { isLocalOrigin } from "./lib/local-origin";
-import { generateRouteBarrel, hasRoutableFiles } from "./node/barrel";
-import { aggregateMiddleware, aggregateWorker } from "./node/codegen";
-import { aggregateProcedure } from "./node/procedure-codegen";
+import { isLocalOrigin } from "./lib/local-origin.ts";
+import { generateRouteBarrel, hasRoutableFiles } from "./node/barrel.ts";
+import { aggregateMiddleware, aggregateWorker } from "./node/codegen.ts";
+import { aggregateProcedure } from "./node/procedure-codegen.ts";
 import {
 	type CallbackSpec,
 	type MiddlewareCall,
 	type PluginRuntimeEntry,
 	ROUTES_BARREL_IMPORT_SOURCE,
 	type WorkerPayload,
-} from "./node/types";
+} from "./node/types.ts";
+import type { EnvSpec } from "./types.ts";
 
 export const apiOptionsSchema = z.object({
 	prefix: z
@@ -121,6 +121,17 @@ const devCorsOrigins = slot.list<string>({
 	sortBy: (a, b) => a.localeCompare(b),
 });
 
+// Dev-only origins of the deploy targets' own dev processes (the node
+// server, wrangler). Kept apart from `devCorsOrigins` so the frontends'
+// origins always come first: every dev list is `[...devCorsOrigins,
+// ...devTargetOrigins]`, and APP_URL's dev default is a frontend's origin
+// whenever there is one.
+const devTargetOrigins = slot.list<string>({
+	source: SOURCE,
+	name: "devTargetOrigins",
+	sortBy: (a, b) => a.localeCompare(b),
+});
+
 // URL prefixes the worker owns. Deploy-target plugins read this to route
 // requests to the worker (a Node server mounts these paths on the worker
 // fetch handler; a proxy forwards them) without reaching into api's
@@ -187,12 +198,29 @@ const callbacks = slot.map<CallbackSpec>({
 	name: "callbacks",
 });
 
+// Env vars the worker reads, each declared once by the plugin that reads it.
+// Deploy targets render the list (cloudflare into `.dev.vars` and `[vars]`,
+// node into the dev process env); `workerBase` bakes it into `envChecks` on
+// both. A duplicate name is an error: two plugins disagreeing on a
+// `devDefault` is a misconfiguration. Unsorted, so `.dev.vars` keeps the
+// declaring plugin's order.
+const env = slot.list<EnvSpec>({
+	source: SOURCE,
+	name: "env",
+	uniqueBy: (e) => e.name,
+});
+
 // The root builder call. Derived from cors + options so worker options
 // (prefix / cors) are baked in purely from dataflow.
 const workerBase = slot.derived({
 	source: SOURCE,
 	name: "workerBase",
-	inputs: { cors, devCors: devCorsOrigins, secrets: cloudflare.slots.secrets },
+	inputs: {
+		cors,
+		devCors: devCorsOrigins,
+		devTargets: devTargetOrigins,
+		env,
+	},
 	compute: (inp, ctx: ContributionCtx<ApiOptions>): TsExpression => {
 		const options = ctx.options;
 		const properties: Array<{ key: string; value: TsExpression }> = [];
@@ -215,27 +243,28 @@ const workerBase = slot.derived({
 		});
 		// Emitted separately from cors, and applied by the runtime only under
 		// STACK_DEV. Omitted entirely when empty so a worker with no dev
-		// frontend carries no dev surface at all.
-		if (inp.devCors.length > 0) {
+		// origin carries no dev surface at all.
+		const devCors = [...inp.devCors, ...inp.devTargets];
+		if (devCors.length > 0) {
 			properties.push({
 				key: "devCors",
 				value: {
 					kind: "array",
-					items: inp.devCors.map((o) => ({ kind: "string", value: o })),
+					items: devCors.map((o) => ({ kind: "string", value: o })),
 				},
 			});
 		}
-		// Env value assertions (WS6.3), baked from `cloudflare.slots.secrets`
+		// Env value assertions (WS6.3), baked from `env`
 		// plus each entry's validation hints. The runtime asserts them once
 		// per isolate on the first request, replacing per-request
 		// presence-only checks. Flattened (hints beside `name`) so the
 		// emitted literal stays small.
-		if (inp.secrets.length > 0) {
+		if (inp.env.length > 0) {
 			properties.push({
 				key: "envChecks",
 				value: {
 					kind: "array",
-					items: inp.secrets.map((s) => {
+					items: inp.env.map((s) => {
 						const props: Array<{ key: string; value: TsExpression }> = [
 							{ key: "name", value: { kind: "string", value: s.name } },
 						];
@@ -417,9 +446,11 @@ export const api = plugin("api", {
 		routesHandler,
 		corsOrigins,
 		devCorsOrigins,
+		devTargetOrigins,
 		routePrefixes,
 		cors,
 		callbacks,
+		env,
 		workerBase,
 		workerSource,
 		routeBarrelSource,
@@ -506,21 +537,6 @@ export const api = plugin("api", {
 			} as MiddlewareSpec;
 		}),
 
-		// Dedicated blanket per-IP volume limiter for the whole /rpc tree (see
-		// `worker/index.ts`'s `RATE_LIMITER_RPC` constant). A fixed volume
-		// ceiling, not a consumer option: 1000 req/60s per IP is far above any
-		// legitimate single client but low enough to catch a runaway retry loop
-		// or scraper, and sized so a shared carrier-NAT IP (mobile networks,
-		// corporate proxies) never trips it. Kept structurally separate from
-		// plugin-auth's RATE_LIMITER_IP/RATE_LIMITER_EMAIL bindings and from any
-		// procedure's own `rateLimit: "ip"` middleware so none of them share —
-		// and none of them halve — another's budget.
-		cloudflare.slots.bindings.contribute(() => ({
-			kind: "rate_limiter" as const,
-			binding: "RATE_LIMITER_RPC",
-			simple: { limit: 1000, period: 60 },
-		})),
-
 		// `virtual:stack-procedure` -> `.stack/procedure.ts` tsconfig `paths`
 		// alias. Consumed by `stack init`'s tsconfig template (never by `stack
 		// generate` — tsconfig.json is scaffolded once). Own presence is the
@@ -570,7 +586,7 @@ export const api = plugin("api", {
 	],
 });
 
-export { ApiError } from "./error";
-export type { CallbackSpec, PluginRuntimeEntry } from "./node/types";
-export type { Middleware } from "./procedure";
-export type { InferRouter } from "./types";
+export { ApiError } from "./error.ts";
+export type { CallbackSpec, PluginRuntimeEntry } from "./node/types.ts";
+export type { Middleware } from "./procedure.ts";
+export type { InferRouter } from "./types.ts";

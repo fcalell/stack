@@ -63,6 +63,31 @@ const appleProviderConfigSchema = socialProviderConfigSchema.extend({
 	appBundleIdentifier: z.string().optional(),
 });
 
+const passkeyObjectSchema = z.object({
+	// The WebAuthn relying-party id: the domain credentials are bound to.
+	// Defaults to `app.domain`, a registrable suffix of every derived origin.
+	rpID: z.string().optional(),
+	// The name the authenticator shows the user. Defaults to `app.name`.
+	rpName: z.string().optional(),
+	// Origins a ceremony may come from. Defaults to the worker's resolved
+	// production CORS list.
+	origin: z.union([z.string(), z.array(z.string())]).optional(),
+	// Passed through to the registration options; better-auth's defaults are
+	// `residentKey: "preferred"` and `userVerification: "preferred"`.
+	authenticatorSelection: z
+		.object({
+			authenticatorAttachment: z
+				.enum(["platform", "cross-platform"])
+				.optional(),
+			requireResidentKey: z.boolean().optional(),
+			residentKey: z.enum(["discouraged", "preferred", "required"]).optional(),
+			userVerification: z
+				.enum(["discouraged", "preferred", "required"])
+				.optional(),
+		})
+		.optional(),
+});
+
 export const authOptionsSchema = z.object({
 	cookies: z
 		.object({
@@ -132,6 +157,10 @@ export const authOptionsSchema = z.object({
 	expo: z
 		.union([z.boolean(), z.object({ scheme: z.string().optional() })])
 		.optional(),
+	// Passkey (WebAuthn) sign-in through `@better-auth/passkey`. Off by
+	// default; `{}` enables it with every field derived. The consumer migrates
+	// the `passkey` table by re-exporting `@fcalell/plugin-auth/schema/passkey`.
+	passkey: z.union([z.literal(false), passkeyObjectSchema]).default(false),
 	secretVar: z.string().default("AUTH_SECRET"),
 	appUrlVar: z.string().default("APP_URL"),
 	rateLimiter: z
@@ -249,9 +278,9 @@ export type OtpType =
 // Single source for the consumer callback file's shape. Both the plugin
 // declaration (`callbacks:` in `./index.ts`, node-side) and the worker
 // runtime's `AuthCallbacks` type (`./worker/index.ts`) derive their payload
-// types from here, so the two can never drift apart. `sendOTP` is required
-// (email-OTP is on by default); the rest are optional, each gated on the
-// option that turns its feature on. Every payload carries `env`, so a
+// types from here, so the two can never drift apart. Every callback is
+// optional in the type, each gated on the option that turns its feature on;
+// `sendOTP` is required at runtime while `emailOtp` (on by default) is. Every payload carries `env`, so a
 // callback reaches per-request bindings (an email send binding, a queue)
 // instead of module scope.
 export interface AuthCallbackPayloads<TEnv = unknown> {

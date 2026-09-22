@@ -6,7 +6,11 @@ import {
 	type TsSourceFile,
 	type TsStatement,
 } from "@fcalell/cli/ast";
-import type { MiddlewareCall, MiddlewarePayload, WorkerPayload } from "./types";
+import type {
+	MiddlewareCall,
+	MiddlewarePayload,
+	WorkerPayload,
+} from "./types.ts";
 
 // ── aggregateWorker ─────────────────────────────────────────────────
 //

@@ -36,25 +36,34 @@ chain by `dependsOn` before running any `context()`/`fetch()`, so a dependency's
 builds first regardless of `.use()` registration order. This is the runtime analog of a slot's
 `inputs`. `authRuntime` declares `dependsOn: ["db"]` since it reads `upstream.db`.
 
-`.dev.vars` carries `STACK_DEV=1` (contributed by `plugin-cloudflare`, never through the `secrets`
-slot, so it's never prompted as a deploy secret). `createWorker` derives `_devMode` from
+`.dev.vars` carries `STACK_DEV=1` (contributed by `plugin-cloudflare`, never through `api.slots.env`,
+so it's never prompted as a deploy secret). `createWorker` derives `_devMode` from
 `env.STACK_DEV === "1"` and threads it through the base context; `.dev.vars` only loads under
 wrangler/Miniflare local dev, so `_devMode` is false in production. Rate limiting (`plugin-api`'s
 `rateLimit` middleware, `plugin-auth`'s `/api/auth/*` limiter) is skipped whenever `_devMode` is
 true.
 
+Env vars the worker reads are declared on `api.slots.env` by the plugin that reads them, never
+by a deploy target: cloudflare renders the list into `.dev.vars` and `[vars]`, node sets each
+var the shell leaves unset to its `devDefault` in the dev process, and both bake the same
+`envChecks`. A static-only cloudflare deploy (no api) reads the slot as `[]`.
+
 Env values are asserted once per isolate, on the first request: `createWorker({ envChecks })`
-carries every `cloudflare.slots.secrets` entry plus its validation hints (presence always;
+carries every `api.slots.env` entry plus its validation hints (presence always;
 `minLength`, `url`, `devLocalhost` when declared), baked by `api.slots.workerBase`. A failed check
 throws by var name on every request until fixed; `devLocalhost` refuses to serve when `STACK_DEV`
 is set but the var's hostname is not local, so dev settings can't ride into a deploy. Binding
 presence stays a per-request `validateEnv` on the runtime plugin that owns the binding (db).
 
-The same flag gates the dev-server origins. `api.slots.devCorsOrigins` (vite's and metro's
-localhost) is emitted as `createWorker({ devCors })` and `authRuntime({ devTrustedOrigins })`,
-separate from the production lists, and each runtime appends it only when `STACK_DEV` is set,
-so the deployed worker refuses a credentialed localhost origin. Auth also widens its cookie
-`sameSite` to `none` while those dev origins are live.
+The same flag gates the dev origins. `api.slots.devCorsOrigins` holds the localhost origin of
+each frontend dev server (vite, metro) and `api.slots.devTargetOrigins` that of each deploy
+target's dev process (the node server, wrangler). The two, frontends first, are emitted as
+`createWorker({ devCors })` and `authRuntime({ devTrustedOrigins })`, separate from the
+production lists, and each runtime appends them only when `STACK_DEV` is set, so the deployed
+worker refuses a credentialed localhost origin. Auth also widens its cookie `sameSite` to `none`
+while those dev origins are live. `APP_URL`'s dev default is the first frontend origin, else the
+first deploy-target origin, so a project with no frontend still passes its `devLocalhost` check
+under `stack dev`.
 
 ## Node target (`plugin-node`)
 
@@ -83,9 +92,55 @@ the services barrel.
 
 Node has no bindings: the worker gets `env = process.env`, `executionCtx` degrades to a no-op
 `waitUntil`, and binding-backed features (rate limiters) skip themselves when the binding is
-absent. `STACK_DEV=1` arrives via `ProcessSpec.env` on the dev process, not `.dev.vars`. The
-server's TypeScript runs directly under the consumer's Node >= 24 (type stripping), so everything
-on the runtime import path must stay erasable-only syntax.
+absent. `STACK_DEV=1` and the `devDefault` of every `api.slots.env` var the shell leaves unset
+arrive via `ProcessSpec.env` on the dev process, not `.dev.vars`. The server's TypeScript runs
+directly under the consumer's Node >= 24 (type stripping), so everything on the runtime import
+path stays erasable-only syntax (no parameter properties, no enums) and names the file of every
+value import (`./types.ts`, `../src/schema/index.ts`): node resolves neither a missing extension
+nor a directory (`ERR_UNSUPPORTED_DIR_IMPORT`). The generated worker imports the sqlite schema
+as `../src/schema/index.ts` for that reason, and a node consumer's route files name their files
+the same way; the d1 import stays `../src/schema`, which esbuild resolves.
+
+### Database on the node target
+
+`db({ dialect: "sqlite" })` runs through `@fcalell/plugin-db/runtime/sqlite` (`src/server/`), a
+module separate from the D1 `./runtime` so a Workers bundle never pulls in a native driver. The
+driver is `better-sqlite3` through plugin-db's own `createClient` (a plain dependency of the
+plugin): the pinned `drizzle-orm@0.45.2` ships no `node:sqlite` driver. The installation decides
+where the file lives: the runtime opens the file the `fileVar` env var names (default `DB_FILE`),
+once per process, and `path` is only that var's `devDefault`. Both `validateEnv` and `context`
+refuse a missing var by name, because better-sqlite3 opens an anonymous temporary database for an
+undefined path and would serve an empty database silently. The context is `{ db }` exactly as on
+D1, so a procedure is the same code on both dialects.
+
+`stack db push` (and the sqlite local migrate) create the file's directory before drizzle-kit
+runs: drizzle-kit neither creates it nor fails without it, reporting success while writing
+nothing.
+
+### Auth on the node target, passkeys, consumer plugins
+
+`plugin-auth` requires `api` and `db` only; its rate-limiter bindings and `nodejs_compat` flag
+are cloudflare contributions that stay inert on node, where the limiter skips itself. Every value
+import on its runtime path names its file, so `authRuntime` loads under plain node.
+
+`auth({ passkey })` adds `@better-auth/passkey`'s `passkey()` configured, not wrapped. Codegen
+bakes every default: `rpID` from `app.domain` (a registrable suffix of the derived origins, as
+WebAuthn requires of the relying party), `rpName` from `app.name`, `origin` from the resolved
+production CORS list. A `localhost` ceremony matches neither, so codegen also bakes
+`passkey.devOrigin` (the dev origins) and the runtime, under `STACK_DEV`, passes
+`rpID: "localhost"` and those origins to `passkey()` instead, as it does for
+`devTrustedOrigins`. `@better-auth/passkey` is pinned to the exact `better-auth` version: each
+release peer-requires its own version of `better-auth` and `@better-auth/core`.
+
+The callbacks file is the consumer's seam into better-auth's own extension mechanism:
+`AuthCallbacks.plugins` are registered after the framework's plugins, and the file is wired
+whenever it exists. Every callback is optional in `AuthCallbacks`; with `emailOtp` on, generate
+refuses a missing file and the runtime refuses to build better-auth without `sendOTP`, naming
+it, while `emailOtp: false` requires neither. `drizzleAdapter`'s schema
+map starts from the drizzle client's full schema (the consumer's `src/schema`) and then names the
+framework's tables explicitly (`organization` and `passkey` tables only when enabled), so a
+consumer plugin's model resolves to the consumer's table of that name while the framework's
+models never depend on the consumer's export names.
 
 The typed WebSocket surface lives on this target: `@fcalell/plugin-node/ws` (the isomorphic
 `defineChannel` contract), `./server`'s hub (`ctx.ws.channel(def, { onSubscribe, onMessage })` →

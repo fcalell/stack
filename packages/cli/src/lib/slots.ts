@@ -100,32 +100,32 @@ export interface ContributionCtx<TOptions = unknown> {
 // ── Errors ──────────────────────────────────────────────────────────
 
 export class SlotError extends Error {
-	constructor(
-		message: string,
-		public readonly code: string,
-	) {
+	readonly code: string;
+	constructor(message: string, code: string) {
 		super(message);
+		this.code = code;
 		this.name = "SlotError";
 	}
 }
 
 export class SlotCycleError extends SlotError {
-	constructor(public readonly cycle: string[]) {
+	readonly cycle: string[];
+	constructor(cycle: string[]) {
 		super(
 			`Slot dependency cycle detected: ${cycle.join(" -> ")}. ` +
 				`Break the cycle by removing one of the 'inputs' entries on a derived slot.`,
 			"SLOT_CYCLE",
 		);
+		this.cycle = cycle;
 		this.name = "SlotCycleError";
 	}
 }
 
 export class SlotConflictError extends SlotError {
-	constructor(
-		public readonly slotName: string,
-		public readonly key: string | null,
-		public readonly contributors: string[],
-	) {
+	readonly slotName: string;
+	readonly key: string | null;
+	readonly contributors: string[];
+	constructor(slotName: string, key: string | null, contributors: string[]) {
 		super(
 			key === null
 				? `Slot '${slotName}' received multiple contributions from ${contributors
@@ -138,18 +138,27 @@ export class SlotConflictError extends SlotError {
 						.join(", ")}.`,
 			"SLOT_CONFLICT",
 		);
+		this.slotName = slotName;
+		this.key = key;
+		this.contributors = contributors;
 		this.name = "SlotConflictError";
 	}
 }
 
 export class SlotResolutionError extends SlotError {
+	readonly slotName: string;
+	readonly plugin: string | null;
+	readonly cause: unknown;
 	constructor(
 		message: string,
-		public readonly slotName: string,
-		public readonly plugin: string | null,
-		public readonly cause: unknown,
+		slotName: string,
+		plugin: string | null,
+		cause: unknown,
 	) {
 		super(message, "SLOT_RESOLUTION");
+		this.slotName = slotName;
+		this.plugin = plugin;
+		this.cause = cause;
 		this.name = "SlotResolutionError";
 		if (cause instanceof Error && cause.stack) {
 			this.stack = cause.stack;

@@ -1,6 +1,6 @@
 import { basename, join } from "node:path";
 import { plugin } from "@fcalell/cli";
-import type { TsImportSpec } from "@fcalell/cli/ast";
+import type { TsExpression, TsImportSpec } from "@fcalell/cli/ast";
 import { cliSlots } from "@fcalell/cli/cli-slots";
 import { StackError } from "@fcalell/cli/errors";
 import type { PluginRuntimeEntry } from "@fcalell/plugin-api";
@@ -75,7 +75,7 @@ export const db = plugin("db", {
 
 	schema: dbOptionsSchema,
 
-	requires: ["cloudflare", "api"],
+	requires: ["api"],
 
 	dependencies: {
 		"@fcalell/plugin-db": "workspace:*",
@@ -376,12 +376,38 @@ export const db = plugin("db", {
 				};
 			}),
 
-			// Worker runtime entry — only for d1 (sqlite's better-sqlite3 can't
-			// run in the Workers isolate).
+			// The sqlite runtime opens the file its env var names; the
+			// configured `path` is that var's dev default.
+			api.slots.env.contribute(() => {
+				if (self.options.dialect !== "sqlite" || !self.options.path) {
+					return undefined;
+				}
+				return { name: self.options.fileVar, devDefault: self.options.path };
+			}),
+
+			// Worker runtime entry, one module per dialect: `./runtime` is D1's,
+			// and sqlite's better-sqlite3 lives in `./runtime/sqlite` so a
+			// Workers bundle never pulls in the native driver.
 			api.slots.pluginRuntimes.contribute(
-				async (ctx): Promise<PluginRuntimeEntry | undefined> => {
-					if (self.options.dialect !== "d1") return undefined;
+				async (ctx): Promise<PluginRuntimeEntry> => {
 					const hasSchema = await ctx.fileExists("src/schema");
+					const schema: Record<string, TsExpression> = hasSchema
+						? { schema: { kind: "identifier", name: "schema" } }
+						: {};
+					if (self.options.dialect === "sqlite") {
+						return {
+							plugin: "db",
+							import: {
+								source: "@fcalell/plugin-db/runtime/sqlite",
+								default: "dbRuntime",
+							},
+							identifier: "dbRuntime",
+							options: {
+								fileVar: { kind: "string", value: self.options.fileVar },
+								...schema,
+							},
+						};
+					}
 					return {
 						plugin: "db",
 						import: {
@@ -394,22 +420,27 @@ export const db = plugin("db", {
 								kind: "string",
 								value: self.options.binding,
 							},
-							...(hasSchema
-								? { schema: { kind: "identifier", name: "schema" } as const }
-								: {}),
+							...schema,
 						},
 					};
 				},
 			),
 
 			// Schema namespace import — gated on the schema directory existing,
-			// same as the runtime entry's `schema` option.
+			// same as the runtime entry's `schema` option. The sqlite runtime
+			// only runs on the node target, whose ESM resolver refuses a
+			// directory import, so that dialect names the file.
 			api.slots.workerImports.contribute(
 				async (ctx): Promise<TsImportSpec | undefined> => {
-					if (self.options.dialect !== "d1") return undefined;
 					const hasSchema = await ctx.fileExists("src/schema");
 					if (!hasSchema) return undefined;
-					return { source: "../src/schema", namespace: "schema" };
+					return {
+						source:
+							self.options.dialect === "sqlite"
+								? "../src/schema/index.ts"
+								: "../src/schema",
+						namespace: "schema",
+					};
 				},
 			),
 

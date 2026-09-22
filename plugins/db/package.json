@@ -6,6 +6,7 @@
 	"exports": {
 		".": "./src/index.ts",
 		"./runtime": "./src/worker/index.ts",
+		"./runtime/sqlite": "./src/server/index.ts",
 		"./orm": "./src/orm.ts",
 		"./d1": "./src/d1/client.ts",
 		"./sqlite": "./src/sqlite/client.ts"
@@ -15,27 +16,20 @@
 		"check-types": "tsc --noEmit --pretty",
 		"lint": "biome check --write --unsafe",
 		"check": "pnpm check-types && pnpm lint",
+		"test": "node --test 'test/**/*.test.ts'",
 		"clear": "rm -rf node_modules .turbo"
 	},
 	"dependencies": {
 		"@fcalell/cli": "workspace:*",
 		"@fcalell/plugin-api": "workspace:*",
 		"@fcalell/plugin-cloudflare": "workspace:*",
+		"better-sqlite3": "^12.8.0",
 		"drizzle-orm": "^0.45.2",
 		"zod": "^4.3.6"
-	},
-	"peerDependencies": {
-		"better-sqlite3": "^12.0.0"
-	},
-	"peerDependenciesMeta": {
-		"better-sqlite3": {
-			"optional": true
-		}
 	},
 	"devDependencies": {
 		"@fcalell/typescript-config": "workspace:*",
 		"@types/better-sqlite3": "^7.6.13",
-		"better-sqlite3": "^12.8.0",
 		"typescript": "^5.9.3"
 	}
 }

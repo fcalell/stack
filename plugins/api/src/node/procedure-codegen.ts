@@ -8,7 +8,7 @@ import {
 	type MiddlewareCall,
 	type PluginRuntimeEntry,
 	ROUTES_BARREL_IMPORT_SOURCE,
-} from "./types";
+} from "./types.ts";
 
 // ── aggregateProcedure ────────────────────────────────────────────────
 //

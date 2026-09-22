@@ -3,7 +3,8 @@
 `@fcalell/stack` is a pnpm monorepo: `packages/` (core CLI + shared configs) and `plugins/` (one
 self-contained feature unit per domain). The CLI owns orchestration and the slot graph; every
 feature lives in the plugin that owns its domain (see
-[philosophy](../product/philosophy.md)). Per-change gate: `pnpm check` (Biome lint + type-check).
+[philosophy](../product/philosophy.md)). Per-change gate: `pnpm check` (type-check, every
+package's `node --test`, Biome lint).
 
 ## Packages
 
@@ -13,6 +14,7 @@ feature lives in the plugin that owns its domain (see
 | `@fcalell/ui-core` | The design contract both UI plugins render from: the token records, `deriveTheme`, the emit helpers, `cn()`, and the platform-invariant variant matrices. Framework-free build-time data |
 | `@fcalell/typescript-config` | tsconfig presets (base, solid-vite, node-tsx) |
 | `@fcalell/biome-config` | Shareable Biome formatter/linter config |
+| `@fcalell/auth-testing` | Private, never published: the test support the sign-in tests share (a software WebAuthn authenticator, a cookie jar, session minting, table creation from drizzle schemas) |
 
 ## Plugins
 
@@ -23,8 +25,8 @@ runtime export.
 | Plugin | Purpose | Config factory |
 |--------|---------|----------------|
 | `@fcalell/plugin-cloudflare` | Cloudflare bindings, wrangler.toml codegen, `wrangler types` Env generation | `cloudflare()` |
-| `@fcalell/plugin-db` | Drizzle ORM clients (D1/SQLite), schema tooling, migrations | `db()` |
-| `@fcalell/plugin-auth` | Better Auth integration, RBAC, access control | `auth()` |
+| `@fcalell/plugin-db` | Drizzle ORM clients and runtimes (D1 on cloudflare, SQLite on node), schema tooling, migrations | `db()` |
+| `@fcalell/plugin-auth` | Better Auth integration (email OTP, OAuth, passkeys, consumer plugins), RBAC, access control, web and native clients | `auth()` |
 | `@fcalell/plugin-api` | API framework: Hono + oRPC, procedure builder, typed client | `api()` |
 | `@fcalell/plugin-node` | Long-running Node server target: serves the worker + static SPA, background services, typed WebSocket surface | `node()` |
 | `@fcalell/plugin-vite` | Framework-agnostic Vite lifecycle (providers virtual module) | `vite()` |
@@ -43,7 +45,8 @@ slot edges.
 ```
 @fcalell/cli               (core — defineConfig, plugin, slot.*, slot graph, CLI)
 
-plugin-cloudflare ────────> cli (owns cloudflare.slots.bindings/secrets/vars/routes/wranglerToml)
+plugin-cloudflare ────────> cli (owns cloudflare.slots.bindings/vars/routes/wranglerToml;
+                                 derives from api.slots.env / routePrefixes, empty without api)
 plugin-vite ──────────────> cli (owns vite.slots.configImports/pluginCalls/devServerPort/viteConfig;
                                  contributes to api.slots.devCorsOrigins for localhost dev)
 plugin-expo ──────────────> cli (owns expo.slots.metroConfig/expoConfig/entrySource/routesDtsSource,
@@ -51,15 +54,17 @@ plugin-expo ──────────────> cli (owns expo.slots.met
                                  contributes to api.slots.devCorsOrigins for the Metro dev origin,
                                  api.slots.middlewareEntries + cloudflare.slots.bindings for the
                                  version gate and its telemetry dataset)
-plugin-db ────────────────> cli, requires cloudflare + api
-                                 (contributes to cloudflare.slots.bindings, api.slots.pluginRuntimes / workerImports)
-plugin-auth ──────────────> cli, requires api + cloudflare + db
+plugin-db ────────────────> cli, requires api
+                                 (contributes to cloudflare.slots.bindings, api.slots.env (sqlite's DB_FILE),
+                                  api.slots.pluginRuntimes / workerImports)
+plugin-auth ──────────────> cli, requires api + db
                                  (owns auth.slots.runtimeOptions — derived from api.slots.cors;
-                                  contributes to cloudflare.slots.bindings/secrets, api.slots.pluginRuntimes/callbacks)
-plugin-api ───────────────> cli (owns api.slots.workerImports/pluginRuntimes/middlewareEntries/cors/callbacks/workerSource)
+                                  contributes to cloudflare.slots.bindings, api.slots.env/pluginRuntimes/callbacks)
+plugin-api ───────────────> cli (owns api.slots.workerImports/pluginRuntimes/middlewareEntries/cors/callbacks/env/workerSource;
+                                 never imports a deploy target)
 plugin-node ──────────────> cli, requires api
                                  (owns node.slots.serverPort/services/serverSource;
-                                  derives from api.slots.workerSource/routePrefixes;
+                                  derives from api.slots.workerSource/routePrefixes/env;
                                   contributes to vite.slots.serverProxy for same-origin dev)
 plugin-solid ─────────────> cli, requires vite
                                  (owns solid.slots.providers/entry/html/routesDts;

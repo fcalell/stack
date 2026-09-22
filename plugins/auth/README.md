@@ -1,6 +1,6 @@
 # @fcalell/plugin-auth
 
-Authentication plugin for the `@fcalell/stack` framework. Wraps Better Auth with email-OTP login, OAuth social providers (Apple + Google), organization RBAC, and session management -- all driven by config. Ships the Better Auth identity schema (`@fcalell/plugin-auth/schema`) and native-client wiring (`expo` option). Requires the `api`, `cloudflare`, and `db` plugins; reads `api.slots.cors` to derive its `trustedOrigins` automatically.
+Authentication plugin for the `@fcalell/stack` framework. Wraps Better Auth with email-OTP login, OAuth social providers (Apple + Google), passkeys, organization RBAC, and session management -- all driven by config. Ships the Better Auth identity schema (`@fcalell/plugin-auth/schema`), a web client (`./client`) and native-client wiring (`expo` option). Requires the `api` and `db` plugins and runs on either deploy target; reads `api.slots.cors` to derive its `trustedOrigins` automatically.
 
 ## Install
 
@@ -39,7 +39,7 @@ export default defineConfig({
 });
 ```
 
-The `auth` plugin requires `api`, `cloudflare`, and `db`. The CLI validates the presence of each. `trustedOrigins` and other CORS-derived options are computed inside `auth.slots.runtimeOptions`, a derived slot whose inputs include `api.slots.cors` — so the dataflow guarantees every cors contributor (e.g. `vite`'s localhost origin) is resolved before the auth runtime is rendered.
+The `auth` plugin requires `api` and `db`. The CLI validates the presence of each. On the cloudflare target it also contributes its rate-limiter bindings and `nodejs_compat`; on the node target those contributions are inert and the limiter skips itself, as every binding-backed feature does there. `trustedOrigins` and other CORS-derived options are computed inside `auth.slots.runtimeOptions`, a derived slot whose inputs include `api.slots.cors` — so the dataflow guarantees every cors contributor (e.g. `vite`'s localhost origin) is resolved before the auth runtime is rendered.
 
 ### 2. Define callbacks
 
@@ -77,7 +77,21 @@ worker's `Env` as `AuthCallbacks<Env>` to type it; leave the parameter off and `
 
 This file is imported by the **worker**, so it must only pull in worker-safe modules -- `@fcalell/plugin-auth/runtime` is the runtime subpath, never the plugin's `.` entrypoint (that one drags in the Node-side CLI codegen toolchain). `AuthCallbacks` enforces the same callback shapes declared via `callback<T>()` in the plugin definition -- both derive from one shared type, so they can't drift apart.
 
-When email-OTP is disabled (`emailOtp: false`, see OAuth-only below) there are no required callbacks -- the callback file is optional, and an OAuth-only app can omit it entirely.
+When email-OTP is disabled (`emailOtp: false`, see OAuth-only below) there are no required callbacks -- the callback file is optional, and an OAuth-only app can omit it entirely. When the file exists it is wired either way, and it need not define `sendOTP`. With email-OTP on, a missing file fails `stack generate`, and a file without `sendOTP` makes the worker refuse to build its auth instance, naming the missing callback.
+
+### Your own better-auth plugins
+
+A sign-in flow the framework does not ship (a one-time link, an enrolment token, recovery codes) is a better-auth plugin you write and hand over on the callbacks file's `plugins` field. They are registered after the framework's own plugins, so they reach everything better-auth's extension mechanism offers: endpoints under `/api/auth`, hooks, and tables.
+
+```ts
+// src/worker/plugins/auth.ts
+const callbacks: AuthCallbacks<Env> = {
+  sendOTP({ email, code }) { /* ... */ },
+  plugins: [enrolmentLink()],
+};
+```
+
+A table a plugin declares lives in your own schema (`src/schema/index.ts`), exported under the plugin's model name; the adapter resolves it from there.
 
 ### OAuth social providers (Apple + Google)
 
@@ -103,6 +117,27 @@ auth({
 
 The native client helpers `signInWith{Apple,Google}()` live on the `./expo`
 subpath (see below). The server decides which providers are actually configured.
+
+### Passkeys
+
+`passkey: {}` turns on Better Auth's own passkey plugin (`@better-auth/passkey`), every
+setting derived: `rpID` from `app.domain`, `rpName` from `app.name`, and the accepted
+`origin`s from the worker's resolved production CORS list. Override any of them, or pass
+`authenticatorSelection`, on the same object:
+
+```ts
+auth({ passkey: { rpID: "example.com" } }),
+```
+
+Under `stack dev` (`STACK_DEV` set) the worker runs the ceremony with `rpID: "localhost"` and
+the dev origins (the frontend's and the deploy target's localhost) in place of the production
+values, which a localhost page can never match; a passkey enrolled in dev is a localhost
+credential.
+
+Re-export the `passkey` table (see Database schema) and sign in from the browser with the
+web client (`createAuthClient({ passkey: true })`, see below). Enrolling a passkey needs a session
+younger than `session.freshAge`, so a user signs in some other way first; `generate-register-options` then
+`verify-registration` store the credential, and `signIn.passkey()` signs in with it after.
 
 ### 3. Organizations and RBAC
 
@@ -171,6 +206,7 @@ type Session = InferSession<typeof config>;
 | `emailOtp` | `boolean` | `true` | Email one-time-password sign-in; `false` for OAuth-only |
 | `socialProviders.google` | `boolean \| { clientIdVar, clientSecretVar }` | -- | Enable Google OAuth (`true` = conventional var names) |
 | `socialProviders.apple` | `boolean \| { clientIdVar, clientSecretVar, appBundleIdentifier }` | -- | Enable Apple OAuth (`true` = conventional var names) |
+| `passkey` | `false \| { rpID, rpName, origin, authenticatorSelection }` | `false` | Passkey sign-in; each field defaults as derived above (`rpID` = `app.domain`, `rpName` = `app.name`, `origin` = the production CORS list). Requires re-exporting `@fcalell/plugin-auth/schema/passkey` |
 | `expo` | `boolean \| { scheme }` | -- | Native (Expo) consumer: adds the server-side `expo()` plugin + the app deep-link scheme (`${app.name}://` + wildcard, or an explicit `scheme`) to `trustedOrigins` |
 | `secretVar` | `string` | `"AUTH_SECRET"` | Env variable name for the auth secret |
 | `appUrlVar` | `string` | `"APP_URL"` | Env variable name for the app URL |
@@ -185,12 +221,12 @@ type Session = InferSession<typeof config>;
 
 ## Bindings
 
-The plugin auto-declares four bindings (contributed via `cloudflare.slots.bindings` and `cloudflare.slots.secrets`), plus a client-id + client-secret secret per enabled OAuth provider:
+The plugin auto-declares four bindings (contributed via `cloudflare.slots.bindings` and `api.slots.env`), plus a client-id + client-secret secret per enabled OAuth provider:
 
 | Binding | Type | Default name | Dev default |
 |---------|------|--------------|-------------|
 | Auth secret | `secret` | `AUTH_SECRET` | `"dev-secret-change-me"` |
-| App URL | `secret` | `APP_URL` | first local dev origin, else `https://<domain>` |
+| App URL | `secret` | `APP_URL` | first frontend dev origin, else the deploy target's, else `https://<domain>` |
 | IP rate limiter | `rate_limiter` | `RATE_LIMITER_IP` | 100 req / 60s |
 | Email rate limiter | `rate_limiter` | `RATE_LIMITER_EMAIL` | 3 req / 60s |
 | OAuth client id | `secret` | `GOOGLE_CLIENT_ID` / `APPLE_CLIENT_ID` | `"dev-oauth-client-id"` (per enabled provider) |
@@ -221,7 +257,16 @@ export * from "@fcalell/plugin-auth/schema/organization";
 
 The worker runtime only references these tables in `drizzleAdapter({ schema })` when `organization` is actually configured, so an app that never enables it never needs this re-export.
 
-These `export *`s only wire migrations/model resolution -- they don't add the tables' names to `procedure({ reads, writes })`'s entity vocabulary (`plugin-db` can't see through a re-export). `auth` contributes its own table names (`account`/`session`/`user`/`verification`, plus `invitation`/`member`/`organization` when `organization` is enabled) to that vocabulary directly, so `reads`/`writes` against them autocomplete and type-check with no extra config.
+Passkeys follow the same rule: with `passkey` enabled, re-export its table too.
+
+```ts
+// src/schema/index.ts
+export * from "@fcalell/plugin-auth/schema";
+export * from "@fcalell/plugin-auth/schema/passkey";
+// ...your own tables
+```
+
+These `export *`s only wire migrations/model resolution -- they don't add the tables' names to `procedure({ reads, writes })`'s entity vocabulary (`plugin-db` can't see through a re-export). `auth` contributes its own table names (`account`/`session`/`user`/`verification`, plus `invitation`/`member`/`organization` when `organization` is enabled and `passkey` when `passkey` is) to that vocabulary directly, so `reads`/`writes` against them autocomplete and type-check with no extra config.
 
 ## Runtime defaults
 
@@ -312,7 +357,7 @@ organization, or no membership, returns `{ rules: [] }` rather than an error. `@
 
 ## Plugin implementation
 
-Built with `plugin` from `@fcalell/cli`. Owns four slots: `runtimeOptions` (derived; reads `api.slots.cors` and `api.slots.devCorsOrigins` so `trustedOrigins` is always computed against the fully-resolved CORS list, with the dev-server origins kept in a separate `devTrustedOrigins` the runtime applies only under `STACK_DEV`), `appUrlDevDefault` (the `.dev.vars` default for `APP_URL`, derived from the first local dev origin), `callbackFile` (the consumer callback-file path), and `cookiePrefix` (the resolved session-cookie prefix native-ui's generated constants read). `sameSite: "none"` is baked for native consumers (always cross-site) and widened to `none` in dev, where the frontend origin and the worker are cross-origin.
+Built with `plugin` from `@fcalell/cli`. Owns four slots: `runtimeOptions` (derived; reads `api.slots.cors`, `api.slots.devCorsOrigins` and `api.slots.devTargetOrigins` so `trustedOrigins` is always computed against the fully-resolved CORS list, with the dev origins, frontends' first, kept in a separate `devTrustedOrigins` the runtime applies only under `STACK_DEV`), `appUrlDevDefault` (the `.dev.vars` default for `APP_URL`: the first frontend dev origin, else the deploy target's), `callbackFile` (the consumer callback-file path), and `cookiePrefix` (the resolved session-cookie prefix native-ui's generated constants read). `sameSite: "none"` is baked for native consumers (always cross-site) and widened to `none` in dev, where the frontend origin and the worker are cross-origin.
 
 ```ts
 import { plugin, slot, callback } from "@fcalell/cli";
@@ -330,9 +375,10 @@ const runtimeOptions = slot.derived({
 export const auth = plugin("auth", {
   label: "Auth",
   schema: authOptionsSchema,
-  requires: ["api", "cloudflare", "db"],
+  requires: ["api", "db"],
   callbacks: {
-    sendOTP: callback<{ email: string; code: string; env: unknown }>(),
+    // Required at runtime while `emailOtp` is on.
+    sendOTP: callback.optional<{ email: string; code: string; env: unknown }>(),
     sendInvitation: callback.optional<{ email: string; orgName: string; env: unknown }>(),
     beforeDelete: callback.optional<{ user: AuthUser; request?: Request; env: unknown }>(),
     sendDeleteVerification:
@@ -348,7 +394,7 @@ export const auth = plugin("auth", {
   slots: { runtimeOptions },
   contributes: (self) => [
     cloudflare.slots.bindings.contribute(/* rate limiter bindings */),
-    cloudflare.slots.secrets.contribute(/* AUTH_SECRET + APP_URL */),
+    api.slots.env.contribute(/* AUTH_SECRET + APP_URL */),
     api.slots.pluginRuntimes.contribute(async (ctx) => ({
       plugin: "auth",
       import: { source: "@fcalell/plugin-auth/runtime", default: "authRuntime" },
@@ -366,9 +412,10 @@ export const auth = plugin("auth", {
 | Target slot | Behavior |
 |-------------|----------|
 | `cloudflare.slots.bindings` | IP + email rate-limiter bindings |
-| `cloudflare.slots.secrets` | `AUTH_SECRET` + `APP_URL` + a client-id/secret pair per enabled OAuth provider (`.dev.vars` template) |
+| `api.slots.env` | `AUTH_SECRET` + `APP_URL` + a client-id/secret pair per enabled OAuth provider (`.dev.vars` template on cloudflare, dev-process defaults on node, `envChecks` on both) |
 | `api.slots.pluginRuntimes` | `authRuntime({ ... })` runtime entry; options resolved from `auth.slots.runtimeOptions` |
-| `api.slots.callbacks` | Wires `src/worker/plugins/auth.ts` onto the auth runtime when the file exists; required only when `emailOtp` is enabled |
+| `api.slots.callbacks` | Wires `src/worker/plugins/auth.ts` onto the auth runtime whenever the file exists; required only when `emailOtp` is enabled |
+| `api.slots.entities` | The auth tables' export names (`passkey` and the organization tables only when enabled) |
 | `cliSlots.initPrompts` | Cookie prefix + organization toggle |
 | `cliSlots.initScaffolds` (auto) | Scaffolds `src/worker/plugins/auth.ts` from `templates/callbacks.ts` |
 | `cliSlots.removeFiles` (auto) | `src/worker/plugins/auth.ts` |
@@ -386,6 +433,23 @@ authRuntime({ secretVar: "AUTH_SECRET", ... }, callbacks)
 Receives `{ db }` from the upstream db plugin and provides `{ auth }` to downstream plugins. When
 `organization` is enabled it also registers the `auth.orgRules` procedure (see "Org rules endpoint"
 above) via the `routes()` hook of the `RuntimePlugin` contract.
+
+### Web client
+
+`./client` configures a `better-auth/client` instance for the browser, framework-agnostic (wrap it in
+your own SolidJS resources). The flags must match the server's options: `passkey` adds
+`passkeyClient()` (`signIn.passkey()`, `passkey.addPasskey()`, ...), and `emailOtp` (on by default,
+as on the server) adds `emailOTPClient()`. `baseURL` defaults to the page's own origin.
+
+```ts
+import { createAuthClient } from "@fcalell/plugin-auth/client";
+
+export const authClient = createAuthClient({ passkey: true, emailOtp: false });
+export type AuthClient = typeof authClient;
+
+await authClient.passkey.addPasskey();   // on a fresh session
+await authClient.signIn.passkey();
+```
 
 ### Native client (Expo)
 
@@ -448,10 +512,12 @@ Requires the server `emailOtp` option (on by default) and a `sendOTP` callback i
 | `@fcalell/plugin-auth/ability` | `defineAbility()`, `subject()`, `assertCan()`, `packAbility()` / `unpackAbility()` / `PackedRules`, `compileStatements()` -- record-scoped authorization (isomorphic) |
 | `@fcalell/plugin-auth/access` | `createAccessControl()`, `getStatements()`, `defaultOrgRoles` |
 | `@fcalell/plugin-auth/infer` | `InferUser<T>`, `InferSession<T>` -- type utilities derived from config |
+| `@fcalell/plugin-auth/client` | `createAuthClient({ baseURL?, passkey?, emailOtp? })`, `AuthClient` -- web client on `better-auth/client` |
 | `@fcalell/plugin-auth/expo` | `createAuthClient()`, `AuthProvider`, `useAuthClient()`, `signInWith{Apple,Google}()`, `sendEmailOtp()` / `signInWithEmailOtp()` -- native client (runtime-only) |
-| `@fcalell/plugin-auth/runtime` | `authRuntime()`, `AuthCallbacks` -- runtime plugin factory + worker-safe callback file typing |
+| `@fcalell/plugin-auth/runtime` | `authRuntime()`, `AuthCallbacks` (including `plugins`) -- runtime plugin factory + worker-safe callback file typing |
 | `@fcalell/plugin-auth/schema` | `user`, `session`, `account`, `verification` -- core identity tables (always re-exported) |
 | `@fcalell/plugin-auth/schema/organization` | `organization`, `member`, `invitation` -- organization tables (re-exported only when `organization` is enabled) |
+| `@fcalell/plugin-auth/schema/passkey` | `passkey` -- the passkey table (re-exported only when `passkey` is enabled) |
 
 ## License
 

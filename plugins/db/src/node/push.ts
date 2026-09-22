@@ -7,16 +7,22 @@ import {
 	writeFileSync,
 } from "node:fs";
 import { createRequire } from "node:module";
-import { join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import type { DbOptions } from "../types";
 import { runCommand } from "./exec";
 import { migrationLockPath, withMigrationLock } from "./lock";
 import { executeSql, migrationsApply } from "./wrangler";
 
-function sqliteLocalUrl(options: DbOptions): string {
-	return options.dialect === "sqlite" && options.path
-		? options.path
-		: ".stack/dev/local.db";
+// drizzle-kit neither creates the file's directory nor fails without it
+// (a push into a missing `./data` reports success and writes nothing), so
+// the directory is made first.
+function sqliteLocalUrl(cwd: string, options: DbOptions): string {
+	const url =
+		options.dialect === "sqlite" && options.path
+			? options.path
+			: ".stack/dev/local.db";
+	mkdirSync(dirname(resolve(cwd, url)), { recursive: true });
+	return url;
 }
 
 // Where miniflare persists a local D1 under `--persist-to .stack/dev`: one
@@ -118,7 +124,7 @@ export async function pushSchemaLocal(
 		const dbUrl =
 			options.dialect === "d1"
 				? ensureMiniflareD1(cwd, options.databaseId ?? "")
-				: sqliteLocalUrl(options);
+				: sqliteLocalUrl(cwd, options);
 
 		const configPath = join(configDir, "drizzle.config.ts");
 		const configContent = `import { defineConfig } from "drizzle-kit";
@@ -228,7 +234,7 @@ export default defineConfig({
   dialect: "sqlite",
   schema: "./src/schema/index.ts",
   out: ${JSON.stringify(options.migrations ?? "./src/migrations")},
-  dbCredentials: { url: ${JSON.stringify(sqliteLocalUrl(options))} },
+  dbCredentials: { url: ${JSON.stringify(sqliteLocalUrl(cwd, options))} },
 });
 `;
 			writeDrizzleConfig(configPath, configContent);

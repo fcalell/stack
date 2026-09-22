@@ -5,16 +5,15 @@ import { literalToProps } from "@fcalell/cli/ast";
 import { cliSlots } from "@fcalell/cli/cli-slots";
 import type { PluginRuntimeEntry } from "@fcalell/plugin-api";
 import { api } from "@fcalell/plugin-api";
-import { isLocalOrigin } from "@fcalell/plugin-api/lib/local-origin";
 import { cloudflare } from "@fcalell/plugin-cloudflare";
-import { defaultOrgStatements, getStatements } from "./access";
+import { defaultOrgStatements, getStatements } from "./access.ts";
 import {
 	AUTH_PREFIX,
 	type AuthCallbackPayloads,
 	authOptionsSchema,
 	type ResolvedAuthOptions,
 	resolveSocialProviders,
-} from "./types";
+} from "./types.ts";
 
 const SOURCE = "auth";
 
@@ -27,16 +26,20 @@ const CALLBACK_FILE = "src/worker/plugins/auth.ts";
 
 // ── Slot declarations ──────────────────────────────────────────────
 //
-// `runtimeOptions` is a DERIVED slot: its inputs are `api.slots.cors` and
-// `api.slots.devCorsOrigins`, so the graph guarantees every origin
-// contribution (including vite's localhost) is resolved BEFORE this compute
-// runs. Bug #5 (auth cors ordering) is structurally impossible here: no
+// `runtimeOptions` is a DERIVED slot: its inputs are `api.slots.cors`,
+// `api.slots.devCorsOrigins` and `api.slots.devTargetOrigins`, so the graph
+// guarantees every origin contribution (including vite's localhost) is
+// resolved BEFORE this compute runs. Bug #5 (auth cors ordering) is structurally impossible here: no
 // payload to mutate, no handler ordering, just dataflow.
 
 const runtimeOptions = slot.derived({
 	source: SOURCE,
 	name: "runtimeOptions",
-	inputs: { cors: api.slots.cors, devCors: api.slots.devCorsOrigins },
+	inputs: {
+		cors: api.slots.cors,
+		devCors: api.slots.devCorsOrigins,
+		devTargets: api.slots.devTargetOrigins,
+	},
 	compute: (
 		inp,
 		ctx: ContributionCtx<ResolvedAuthOptions>,
@@ -94,6 +97,28 @@ const runtimeOptions = slot.derived({
 			delete rawOptions.expo;
 		}
 
+		// Passkeys: bake every derived default, so the runtime never guesses.
+		// `app.domain` is a registrable suffix of the derived origins, which
+		// WebAuthn requires of the relying-party id. `devOrigin` is the dev
+		// half: under STACK_DEV the runtime swaps in `rpID: "localhost"` and
+		// these origins, since a localhost ceremony matches neither production
+		// value.
+		const devOrigins = [...inp.devCors, ...inp.devTargets];
+		const passkey = ctx.options.passkey;
+		if (passkey) {
+			rawOptions.passkey = {
+				rpID: passkey.rpID ?? ctx.app.domain,
+				rpName: passkey.rpName ?? ctx.app.name,
+				origin: passkey.origin ?? inp.cors,
+				...(devOrigins.length > 0 ? { devOrigin: devOrigins } : {}),
+				...(passkey.authenticatorSelection
+					? { authenticatorSelection: passkey.authenticatorSelection }
+					: {}),
+			};
+		} else {
+			delete rawOptions.passkey;
+		}
+
 		const props = literalToProps(rawOptions);
 
 		// trustedOrigins: web CORS origins, plus the native deep-link scheme
@@ -119,10 +144,10 @@ const runtimeOptions = slot.derived({
 		// Dev-server origins ride separately and are applied by the runtime
 		// only under STACK_DEV; baking them in here is what let a production
 		// deploy trust localhost.
-		if (inp.devCors.length > 0) {
+		if (devOrigins.length > 0) {
 			props.devTrustedOrigins = {
 				kind: "array",
-				items: inp.devCors.map((o) => ({ kind: "string", value: o })),
+				items: devOrigins.map((o) => ({ kind: "string", value: o })),
 			};
 		}
 
@@ -140,25 +165,22 @@ const runtimeOptions = slot.derived({
 	},
 });
 
-// Bug #3: canonical dev URL for `APP_URL`'s devDefault. Pre-fix it was
-// hardcoded to "http://localhost:3000" — wrong for API-only apps (no
-// frontend at all), wrong when vite's port is customised. This derived
-// slot reads `api.slots.devCorsOrigins`: the first local origin wins when a
-// frontend plugin is present, otherwise we fall back to the production
-// domain. Plugin-auth never imports plugin-vite — the handoff is
-// entirely through the shared slot contract.
+// Canonical dev URL for `APP_URL`'s devDefault: the first frontend origin
+// (`api.slots.devCorsOrigins`: vite, metro, or the local entries of an
+// explicit `app.origins`), else the first deploy-target origin
+// (`api.slots.devTargetOrigins`: the node server, wrangler). Only an
+// explicit `app.origins` with no local entry leaves both empty, and then the
+// production domain is the value. Plugin-auth never imports a frontend or a
+// deploy target: the handoff is the shared slots.
 const appUrlDevDefault = slot.derived({
 	source: SOURCE,
 	name: "appUrlDevDefault",
-	inputs: { devCors: api.slots.devCorsOrigins },
-	compute: (inp, ctx): string => {
-		const local = inp.devCors.find(isLocalOrigin);
-		if (local) return local;
-		// Worker-only / API-only: no frontend, no localhost contribution.
-		// Prod domain is the right baseline for `.dev.vars` — Wrangler will
-		// still let the consumer override per-environment.
-		return `https://${ctx.app.domain}`;
+	inputs: {
+		devCors: api.slots.devCorsOrigins,
+		devTargets: api.slots.devTargetOrigins,
 	},
+	compute: (inp, ctx): string =>
+		inp.devCors[0] ?? inp.devTargets[0] ?? `https://${ctx.app.domain}`,
 });
 
 // Resolvable callback-file location. Value slot with a seed default;
@@ -186,7 +208,7 @@ export const auth = plugin("auth", {
 
 	schema: authOptionsSchema,
 
-	requires: ["api", "cloudflare", "db"],
+	requires: ["api", "db"],
 
 	// Payload shapes come from `AuthCallbackPayloads` (./types) — the single
 	// source shared with the worker runtime's `AuthCallbacks` interface
@@ -194,7 +216,9 @@ export const auth = plugin("auth", {
 	// worker-safe `AuthCallbacks` type consumers import from `./runtime` can
 	// never drift apart.
 	callbacks: {
-		sendOTP: callback<AuthCallbackPayloads["sendOTP"]>(),
+		// Required only while `emailOtp` is on; the runtime refuses to build
+		// better-auth without it then.
+		sendOTP: callback.optional<AuthCallbackPayloads["sendOTP"]>(),
 		sendInvitation: callback.optional<AuthCallbackPayloads["sendInvitation"]>(),
 		beforeDelete: callback.optional<AuthCallbackPayloads["beforeDelete"]>(),
 		sendDeleteVerification:
@@ -280,11 +304,10 @@ export const auth = plugin("auth", {
 			},
 		]),
 
-		// Secrets: AUTH_SECRET + APP_URL (consumer-renameable via options).
-		// APP_URL's devDefault comes from `appUrlDevDefault` — first
-		// localhost cors contribution (frontend-present) or prod domain
-		// fallback (worker-only). Never hardcoded to port 3000.
-		cloudflare.slots.secrets.contribute(async (ctx) => {
+		// Env: AUTH_SECRET + APP_URL (consumer-renameable via options).
+		// APP_URL's devDefault comes from `appUrlDevDefault`, the first
+		// frontend dev origin, else the deploy target's.
+		api.slots.env.contribute(async (ctx) => {
 			const devAppUrl = await ctx.resolve(self.slots.appUrlDevDefault);
 			// One client-id + client-secret entry per enabled OAuth provider, so
 			// the generated `.dev.vars` template prompts for real credentials.
@@ -340,23 +363,23 @@ export const auth = plugin("auth", {
 		),
 
 		// Callbacks: wire the consumer's callback file onto the auth runtime
-		// entry. The plugin declares a REQUIRED `sendOTP` callback, so a
-		// missing file is a misconfiguration, not an optional skip —
-		// throwing here beats generating a worker that would crash on the
-		// first request. Path is resolved via `auth.slots.callbackFile` so
-		// consumers who restructure the repo can point at a new location.
+		// entry whenever it exists. With `emailOtp` on, `sendOTP` is required,
+		// so a missing file is a misconfiguration: throwing here beats
+		// generating a worker that refuses its first request. Path is resolved
+		// via `auth.slots.callbackFile` so consumers who restructure the repo
+		// can point at a new location.
 		api.slots.callbacks.contribute(async (ctx) => {
 			const path = await ctx.resolve(self.slots.callbackFile);
 			const exists = await ctx.fileExists(path);
 			if (!exists) {
-				// OAuth-only consumers (`emailOtp: false`) have no required
-				// callbacks — skip wiring instead of forcing a dead file.
+				// Without email OTP no callback is required: skip wiring
+				// instead of forcing a dead file.
 				if (self.options.emailOtp === false) return undefined;
 				throw new Error(
 					`plugin-auth: callback file \`${path}\` is missing. ` +
-						"plugin-auth declares a required `sendOTP` callback that must be " +
-						"implemented by the consumer. Run `stack init` / `stack add auth` " +
-						"to scaffold the file, or restore it from your templates.",
+						"With `emailOtp` on, the consumer implements the `sendOTP` " +
+						"callback there. Run `stack init` / `stack add auth` to scaffold " +
+						"the file, or set `emailOtp: false`.",
 				);
 			}
 			// Strip the `src/` prefix when computing the import source —
@@ -411,7 +434,7 @@ export const auth = plugin("auth", {
 
 		// Entity vocabulary handoff (WS3.2/WS1 fix)
 		// — auth owns these Drizzle tables (`../schema/index.ts`,
-		// `../schema/organization.ts`) but a consumer's `src/schema/index.ts`
+		// `../schema/organization.ts`, `../schema/passkey.ts`) but a consumer's `src/schema/index.ts`
 		// only ever `export *`s them, which `extractSchemaEntities`
 		// (plugin-db) deliberately can't see through. Contributing the export
 		// names directly here is what makes `procedure({ reads: ["member"] })`
@@ -423,9 +446,10 @@ export const auth = plugin("auth", {
 			if (self.options.organization) {
 				names.push("invitation", "member", "organization");
 			}
+			if (self.options.passkey) names.push("passkey");
 			return names;
 		}),
 	],
 });
 
-export type { AuthOptions } from "./types";
+export type { AuthOptions } from "./types.ts";

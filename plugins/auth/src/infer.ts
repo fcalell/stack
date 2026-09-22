@@ -1,4 +1,4 @@
-import type { FieldConfig } from "./types";
+import type { FieldConfig } from "./types.ts";
 
 type FieldType<F extends FieldConfig> = F["type"] extends "string"
 	? string

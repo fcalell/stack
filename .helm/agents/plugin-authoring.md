@@ -37,7 +37,7 @@ export const auth = plugin("auth", {
 
   schema: authOptionsSchema,     // Zod schema — validates options + pins TOptions
 
-  requires: ["api", "cloudflare", "db"],   // presence-only sibling plugins (nicer error messages)
+  requires: ["api", "db"],   // presence-only sibling plugins (nicer error messages)
 
   callbacks: {
     sendOTP: callback<{ email: string; code: string }>(),
@@ -118,6 +118,7 @@ Every `Slot<T>` has a `.contribute(fn)` method. `fn` receives a `ContributionCtx
 value, or `undefined` to skip (the canonical pattern for conditional contributions).
 
 ```ts
+import { api } from "@fcalell/plugin-api";
 import { cloudflare } from "@fcalell/plugin-cloudflare";
 
 contributes: (self) => [
@@ -131,7 +132,7 @@ contributes: (self) => [
   }),
 
   // List slots also accept arrays — push many in one shot.
-  cloudflare.slots.secrets.contribute(() => [
+  api.slots.env.contribute(() => [
     { name: "AUTH_SECRET", devDefault: "dev-secret" },
     { name: "APP_URL", devDefault: "http://localhost:3000" },
   ]),
@@ -165,18 +166,23 @@ import { api } from "@fcalell/plugin-api";
 
 const runtimeOptions = slot.derived<
   Record<string, TsExpression>,
-  { cors: typeof api.slots.cors; devCors: typeof api.slots.devCorsOrigins }
+  {
+    cors: typeof api.slots.cors;
+    devCors: typeof api.slots.devCorsOrigins;
+    devTargets: typeof api.slots.devTargetOrigins;
+  }
 >({
   source: "auth",
   name: "runtimeOptions",
-  inputs: { cors: api.slots.cors, devCors: api.slots.devCorsOrigins },
+  inputs: { cors: api.slots.cors, devCors: api.slots.devCorsOrigins, devTargets: api.slots.devTargetOrigins },
   compute: (inp, ctx) => {
     const props = literalToProps(ctx.options as Record<string, unknown>);
     if (inp.cors.length > 0) {
       props.trustedOrigins = { kind: "array", items: inp.cors.map((o) => ({ kind: "string", value: o })) };
     }
-    if (inp.devCors.length > 0) {
-      props.devTrustedOrigins = { kind: "array", items: inp.devCors.map((o) => ({ kind: "string", value: o })) };
+    const devOrigins = [...inp.devCors, ...inp.devTargets];
+    if (devOrigins.length > 0) {
+      props.devTrustedOrigins = { kind: "array", items: devOrigins.map((o) => ({ kind: "string", value: o })) };
     }
     return props;
   },

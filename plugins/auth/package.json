@@ -9,7 +9,9 @@
 		"./runtime": "./src/worker/index.ts",
 		"./schema": "./src/schema/index.ts",
 		"./schema/organization": "./src/schema/organization.ts",
+		"./schema/passkey": "./src/schema/passkey.ts",
 		"./expo": "./src/expo.tsx",
+		"./client": "./src/client.ts",
 		"./access": "./src/access.ts",
 		"./infer": "./src/infer.ts"
 	},
@@ -18,10 +20,12 @@
 		"check-types": "tsc --noEmit --pretty",
 		"lint": "biome check --write --unsafe",
 		"check": "pnpm check-types && pnpm lint",
+		"test": "node --test 'test/**/*.test.ts'",
 		"clear": "rm -rf node_modules .turbo"
 	},
 	"dependencies": {
 		"@better-auth/expo": "^1.7.2",
+		"@better-auth/passkey": "1.7.2",
 		"@casl/ability": "^7.0.1",
 		"@fcalell/cli": "workspace:*",
 		"@fcalell/plugin-api": "workspace:*",
@@ -48,6 +52,7 @@
 		}
 	},
 	"devDependencies": {
+		"@fcalell/auth-testing": "workspace:*",
 		"@fcalell/typescript-config": "workspace:*",
 		"@types/node": "^25.5.0",
 		"@react-native-google-signin/google-signin": "^16.1.2",

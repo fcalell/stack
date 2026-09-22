@@ -15,6 +15,20 @@ All packages use `workspace:*` to depend on sibling `@fcalell/*` packages.
 
 TypeScript configs extend `@fcalell/typescript-config`, never define compiler options directly.
 
+## Tests
+
+A package with tests keeps them in `test/*.test.ts`, lists `test` in its tsconfig `include`,
+and runs them with `"test": "node --test 'test/**/*.test.ts'"` (node's own glob: node 24 loads a
+bare directory argument as a module). Turbo's `test` task depends on `^test`, so a change in a
+dependency re-runs its dependents. A package without tests has no script and turbo skips it.
+
+Tests run under plain node with type stripping, so everything they import (runtime code and
+codegen alike) stays erasable-only (no parameter properties, no enums) and names the `.ts` file
+of every value import. A test builds the real runtime factories with literal options, as the
+generated worker would, and drives `worker.fetch`; it never spawns `stack` or a scratch
+consumer. Test support two packages share lives in a private workspace package
+(`@fcalell/auth-testing`), never in a relative import across packages.
+
 ## Where a new feature or config surface belongs
 
 Before adding any option, type, or file, decide who owns the domain. The default answer is **a

@@ -40,8 +40,9 @@ contributions (`if (!ctx.fileExists(...)) return undefined;`).
 
 A slot whose plugin is absent from the consumer's config is still a valid slot, owned by its
 `source` and resolving to its empty composition (`[]` for a list, `{}` for a map, the seed for a
-value). Contributing to it is a no-op; deriving from it reads that empty value. This is how `api`
-runs on `node` while deriving from `cloudflare.slots.secrets`.
+value). Contributing to it is a no-op; deriving from it reads that empty value. This is how `db` and
+`auth` run on `node` while contributing to `cloudflare.slots.bindings`, and how `cloudflare` runs
+without `api` while deriving from `api.slots.env`.
 
 **Deriving** reads other slots as inputs:
 

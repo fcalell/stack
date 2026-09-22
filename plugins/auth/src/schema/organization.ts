@@ -21,7 +21,7 @@ import {
 	sqliteTable,
 	text,
 } from "@fcalell/plugin-db/orm";
-import { user } from "./index";
+import { user } from "./index.ts";
 
 export const organization = sqliteTable("organization", {
 	id: text("id").primaryKey(),

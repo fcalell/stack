@@ -17,7 +17,6 @@
 		"./node/codegen": "./src/node/codegen.ts",
 		"./node/types": "./src/node/types.ts",
 		"./lib/cursor": "./src/lib/cursor.ts",
-		"./lib/local-origin": "./src/lib/local-origin.ts",
 		"./lib/slugify": "./src/lib/slugify.ts"
 	},
 	"license": "MIT",
@@ -30,7 +29,6 @@
 	"dependencies": {
 		"@casl/ability": "^7.0.1",
 		"@fcalell/cli": "workspace:*",
-		"@fcalell/plugin-cloudflare": "workspace:*",
 		"@orpc/client": "^1.14.4",
 		"@orpc/server": "^1.14.4",
 		"drizzle-orm": "^0.45.2",

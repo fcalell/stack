@@ -1,4 +1,5 @@
 import { expo } from "@better-auth/expo";
+import { type PasskeyOptions, passkey } from "@better-auth/passkey";
 import { createMongoAbility } from "@casl/ability";
 import type { RuntimePlugin } from "@fcalell/cli/runtime";
 import { ORG_RULES_PATH } from "@fcalell/plugin-api/procedure";
@@ -9,15 +10,16 @@ import { type BetterAuthOptions, betterAuth } from "better-auth/minimal";
 import { role as buildAcRole } from "better-auth/plugins/access";
 import { emailOTP } from "better-auth/plugins/email-otp";
 import { organization } from "better-auth/plugins/organization";
-import { compileStatements, packAbility } from "../ability";
-import { defaultOrgRoles } from "../access";
-import type { InferSession, InferUser } from "../infer";
-import { account, session, user, verification } from "../schema";
+import { compileStatements, packAbility } from "../ability/index.ts";
+import { defaultOrgRoles } from "../access.ts";
+import type { InferSession, InferUser } from "../infer.ts";
+import { account, session, user, verification } from "../schema/index.ts";
 import {
 	invitation,
 	member,
 	organization as organizationTable,
-} from "../schema/organization";
+} from "../schema/organization.ts";
+import { passkey as passkeyTable } from "../schema/passkey.ts";
 import type {
 	AuthCallbackPayloads,
 	AuthRuntimeOptions,
@@ -26,9 +28,9 @@ import type {
 	OtpType,
 	ResolvedSocialProvider,
 	SocialProviderName,
-} from "../types";
-import { AUTH_PREFIX } from "../types";
-import { emailKey } from "./email-key";
+} from "../types.ts";
+import { AUTH_PREFIX } from "../types.ts";
+import { emailKey } from "./email-key.ts";
 
 // Structural match with plugin-api's `RateLimitBinding` (procedure.ts) — not
 // imported directly since plugin-api doesn't expose it on a public subpath;
@@ -47,7 +49,10 @@ interface RateLimitBinding {
 // satisfies the `AuthCallbacks` the runtime input declares. The framework is
 // the only caller and always passes the real env.
 export interface AuthCallbacks<TEnv = unknown> {
-	sendOTP(payload: AuthCallbackPayloads<TEnv>["sendOTP"]): void | Promise<void>;
+	// Required while `emailOtp` is on: the runtime refuses to build without it.
+	sendOTP?(
+		payload: AuthCallbackPayloads<TEnv>["sendOTP"],
+	): void | Promise<void>;
 	sendInvitation?(
 		payload: AuthCallbackPayloads<TEnv>["sendInvitation"],
 	): void | Promise<void>;
@@ -77,6 +82,11 @@ export interface AuthCallbacks<TEnv = unknown> {
 	generateOTP?(
 		payload: AuthCallbackPayloads<TEnv>["generateOTP"],
 	): string | undefined;
+	// The consumer's own better-auth plugins, registered after the
+	// framework's: a sign-in flow the framework does not ship (endpoints,
+	// tables, hooks) is written here. A table a plugin declares lives in the
+	// consumer's schema under the model's name.
+	plugins?: BetterAuthPlugin[];
 }
 
 export interface AuthRuntimeInput extends AuthRuntimeOptions {
@@ -112,6 +122,16 @@ export interface AuthRuntimeInput extends AuthRuntimeOptions {
 	// server-side expo() plugin (native client deep-link / cookie / origin
 	// handling); contributes no database tables.
 	expo?: boolean;
+	// Set by codegen when the consumer enables `passkey`, every default
+	// already derived.
+	passkey?: {
+		rpID: string;
+		rpName: string;
+		origin: string | string[];
+		// The dev origins, swapped in with `rpID: "localhost"` under STACK_DEV.
+		devOrigin?: string[];
+		authenticatorSelection?: PasskeyOptions["authenticatorSelection"];
+	};
 	// Wrangler rate-limiter binding names, baked by the `runtimeOptions`
 	// derivation from the plugin's `rateLimiter` schema defaults. Limit/period
 	// aren't included here — they're enforced by the binding config itself,
@@ -200,6 +220,17 @@ function isDevMode(env: Record<string, unknown>): boolean {
 	return env.STACK_DEV === "1";
 }
 
+// With email OTP on, better-auth would issue codes nobody receives.
+class MissingSendOtpError extends Error {
+	constructor() {
+		super(
+			"plugin-auth: `emailOtp` is on but the callbacks file defines no `sendOTP`. " +
+				"Implement `sendOTP` in src/worker/plugins/auth.ts, or set `emailOtp: false`.",
+		);
+		this.name = "MissingSendOtpError";
+	}
+}
+
 function buildAuth(
 	env: Record<string, unknown>,
 	db: unknown,
@@ -208,10 +239,12 @@ function buildAuth(
 	const plugins: BetterAuthPlugin[] = [];
 
 	if (options.emailOtp !== false) {
+		const sendOTP = options.callbacks?.sendOTP;
+		if (!sendOTP) throw new MissingSendOtpError();
 		plugins.push(
 			emailOTP({
 				sendVerificationOTP: async ({ email, otp }) => {
-					await options.callbacks?.sendOTP({ email, code: otp, env });
+					await sendOTP({ email, code: otp, env });
 				},
 				// The key must be absent when the consumer has no callback:
 				// better-auth spreads these options over its defaults, so an
@@ -288,6 +321,21 @@ function buildAuth(
 		plugins.push(expo());
 	}
 
+	if (options.passkey) {
+		// A localhost ceremony matches neither the production rpID nor its
+		// origins, so dev swaps in both.
+		const { devOrigin, ...production } = options.passkey;
+		plugins.push(
+			passkey(
+				devOrigin && isDevMode(env)
+					? { ...production, rpID: "localhost", origin: devOrigin }
+					: production,
+			),
+		);
+	}
+
+	plugins.push(...(options.callbacks?.plugins ?? []));
+
 	// Read each configured provider's credentials from env (never baked into
 	// the worker — only the var names are). Apple optionally carries the app
 	// bundle id for native ID-token validation.
@@ -332,8 +380,13 @@ function buildAuth(
 			// organization/member/invitation only when the plugin is actually
 			// registered — the consumer only migrates those tables (via
 			// `@fcalell/plugin-auth/schema/organization`) when `organization` is
-			// enabled, so the adapter must never reference them otherwise.
+			// enabled, so the adapter must never reference them otherwise. Same
+			// for `passkey`. The consumer's own schema (the drizzle client's)
+			// comes first, so a model a `callbacks.plugins` entry declares
+			// resolves to the consumer's table of that name.
 			schema: {
+				...(db as { _?: { fullSchema?: Record<string, unknown> } })._
+					?.fullSchema,
 				user,
 				session,
 				account,
@@ -341,6 +394,7 @@ function buildAuth(
 				...(options.organization
 					? { organization: organizationTable, member, invitation }
 					: {}),
+				...(options.passkey ? { passkey: passkeyTable } : {}),
 			},
 		}),
 		advanced: {
@@ -567,7 +621,7 @@ export default function authRuntime<TOptions extends AuthRuntimeInput>(
 		// declare the edge so createWorker runs db's context first regardless of
 		// `.use()` registration order.
 		// Env presence/value checks live in the generated worker's `envChecks`
-		// assertion (WS6.3), fed by this plugin's `cloudflare.slots.secrets`
+		// assertion (WS6.3), fed by this plugin's `api.slots.env`
 		// contribution — not in a per-request validateEnv here.
 		dependsOn: ["db"],
 		// Framework-owned org-rules procedure (WS6.2): ships the caller's

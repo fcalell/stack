@@ -1,6 +1,7 @@
 {
-	"name": "@fcalell/plugin-cloudflare",
+	"name": "@fcalell/auth-testing",
 	"version": "0.0.0",
+	"private": true,
 	"type": "module",
 	"sideEffects": false,
 	"exports": {
@@ -14,11 +15,9 @@
 		"clear": "rm -rf node_modules .turbo"
 	},
 	"dependencies": {
-		"@clack/prompts": "^0.11.0",
-		"@fcalell/cli": "workspace:*",
-		"@fcalell/plugin-api": "workspace:*",
-		"smol-toml": "^1.4.2",
-		"zod": "^4.3.6"
+		"@fcalell/plugin-db": "workspace:*",
+		"better-auth": "^1.7.2",
+		"drizzle-kit": "^0.31.10"
 	},
 	"devDependencies": {
 		"@fcalell/typescript-config": "workspace:*",

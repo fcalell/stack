@@ -231,7 +231,7 @@ Required sibling plugins are auto-resolved: selecting `auth` automatically adds 
 | `.stack/app.css` | `solidUi.slots.appCssSource` | Aggregated stylesheet |
 | `.stack/routes.d.ts` | `solid.slots.routesDtsSource` | Typed route builder declarations |
 | `src/worker/routes/index.ts` | `api` artifact contribution | Auto-generated barrel from route files |
-| `.dev.vars` | `cloudflare.slots.secrets` | Template for local dev secrets |
+| `.dev.vars` | `api.slots.env` (rendered by `cloudflare`) | Template for local dev secrets |
 
 ### `stack add <plugin>`
 

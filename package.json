@@ -4,7 +4,7 @@
 	"scripts": {
 		"lint": "biome check --write --unsafe",
 		"check-types": "turbo run check-types",
-		"check": "turbo run check-types && pnpm lint",
+		"check": "turbo run check-types && turbo run test && pnpm lint",
 		"clear": "pnpm -r --if-present run clear && rm -rf node_modules .turbo"
 	},
 	"devDependencies": {

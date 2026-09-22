@@ -289,7 +289,7 @@ canary.
 dataset: one datapoint each. Remove the binding and confirm both requests still succeed, with
 nothing written and no error logged.
 
-**6.3 Env value validation.** Extend `cloudflare.slots.secrets` with optional validation hints
+**6.3 Env value validation.** Extend `api.slots.env` with optional validation hints
 (min length, URL shape) and generate a once-per-isolate assertion, replacing presence-only checks.
 Include the refuse-to-serve refinement: a non-localhost `APP_URL` with dev-mode settings fails
 fast.

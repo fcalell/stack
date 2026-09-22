@@ -5,5 +5,5 @@
 		"declarationMap": false,
 		"lib": ["ESNext", "DOM"]
 	},
-	"include": ["src"]
+	"include": ["src", "test"]
 }

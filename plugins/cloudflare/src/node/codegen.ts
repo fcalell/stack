@@ -6,7 +6,7 @@ import {
 	type TomlValue,
 } from "@fcalell/cli/ast";
 import { parse as parseToml } from "smol-toml";
-import type { CodegenWranglerPayload, WranglerBindingSpec } from "../types";
+import type { CodegenWranglerPayload, WranglerBindingSpec } from "../types.ts";
 
 // ── Wrangler.toml merge contract ─────────────────────────────────────
 //

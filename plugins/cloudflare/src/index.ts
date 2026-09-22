@@ -4,22 +4,27 @@ import { join } from "node:path";
 import { log } from "@clack/prompts";
 import { plugin, slot } from "@fcalell/cli";
 import { cliSlots, emitArtifact } from "@fcalell/cli/cli-slots";
-import { aggregateDevVars, aggregateWrangler } from "./node/codegen";
+import { api } from "@fcalell/plugin-api";
+import { aggregateDevVars, aggregateWrangler } from "./node/codegen.ts";
 import {
 	cloudflareOptionsSchema,
 	DEFAULT_COMPATIBILITY_DATE,
 	type WranglerBindingSpec,
 	type WranglerRouteSpec,
-	type WranglerSecretSpec,
-} from "./types";
+} from "./types.ts";
 
 const SOURCE = "cloudflare";
 
+// `wrangler dev`'s listen port, passed explicitly so the dev process and the
+// worker's dev origin agree.
+const WRANGLER_DEV_PORT = 8787;
+
 // ── Slot declarations ──────────────────────────────────────────────
 //
-// Plugins that need cloudflare bindings / secrets / vars contribute directly
-// into these list/map slots; `wranglerToml` is a derived slot that composes
-// them into the final `.stack/wrangler.toml` source.
+// Plugins that need cloudflare bindings / vars contribute directly into
+// these list/map slots; `wranglerToml` is a derived slot that composes them,
+// with the worker's `api.slots.env` declarations, into the final
+// `.stack/wrangler.toml` source.
 
 const bindings = slot.list<WranglerBindingSpec>({
 	source: SOURCE,
@@ -34,11 +39,6 @@ const routes = slot.list<WranglerRouteSpec>({
 const vars = slot.map<string>({
 	source: SOURCE,
 	name: "vars",
-});
-
-const secrets = slot.list<WranglerSecretSpec>({
-	source: SOURCE,
-	name: "secrets",
 });
 
 const compatibilityFlags = slot.list<string>({
@@ -68,7 +68,7 @@ const wranglerToml = slot.derived({
 		bindings,
 		routes,
 		vars,
-		secrets,
+		env: api.slots.env,
 		compatibilityDate,
 		compatibilityFlags,
 	},
@@ -83,7 +83,7 @@ const wranglerToml = slot.derived({
 				bindings: inp.bindings,
 				routes: inp.routes,
 				vars: inp.vars,
-				secrets: inp.secrets,
+				secrets: inp.env,
 				compatibilityDate: inp.compatibilityDate,
 				compatibilityFlags: inp.compatibilityFlags,
 			},
@@ -106,7 +106,6 @@ export const cloudflare = plugin("cloudflare", {
 		bindings,
 		routes,
 		vars,
-		secrets,
 		compatibilityDate,
 		compatibilityFlags,
 		wranglerToml,
@@ -114,15 +113,37 @@ export const cloudflare = plugin("cloudflare", {
 
 	contributes: (self) => [
 		// Emit `.stack/wrangler.toml` — the derived slot handles every
-		// binding/route/var/secret contribution structurally.
+		// binding/route/var/env contribution structurally.
 		emitArtifact(".stack/wrangler.toml", self.slots.wranglerToml),
+
+		// Dedicated blanket per-IP volume limiter for the api worker's whole
+		// /rpc tree; the name is plugin-api's `RATE_LIMITER_RPC` runtime
+		// constant. A fixed volume ceiling, not a consumer option: 1000 req/60s
+		// per IP is far above any legitimate single client but low enough to
+		// catch a runaway retry loop or scraper, and sized so a shared
+		// carrier-NAT IP (mobile networks, corporate proxies) never trips it.
+		// Kept structurally separate from plugin-auth's
+		// RATE_LIMITER_IP/RATE_LIMITER_EMAIL bindings and from any procedure's
+		// own `rateLimit: "ip"` middleware so none of them share — and none of
+		// them halve — another's budget. A deploy with no worker-owned paths
+		// (no api) has no /rpc tree to limit.
+		self.slots.bindings.contribute(async (ctx) => {
+			if ((await ctx.resolve(api.slots.routePrefixes)).length === 0) {
+				return undefined;
+			}
+			return {
+				kind: "rate_limiter" as const,
+				binding: "RATE_LIMITER_RPC",
+				simple: { limit: 1000, period: 60 },
+			};
+		}),
 
 		// Emit `.dev.vars` unless the consumer already has one — but a
 		// pre-existing file missing STACK_DEV still gets it appended, so
 		// projects generated before STACK_DEV existed pick it up instead of
-		// throttling forever in local dev. STACK_DEV never goes through the
-		// `secrets` slot — it must never become a `wrangler secret put` deploy
-		// prompt.
+		// throttling forever in local dev. STACK_DEV never goes through
+		// `api.slots.env` — it must never become a `wrangler secret put`
+		// deploy prompt.
 		//
 		// wrangler resolves `.dev.vars` relative to its config file, and the
 		// dev process runs `--config .stack/wrangler.toml`, so the consumer's
@@ -145,9 +166,8 @@ export const cloudflare = plugin("cloudflare", {
 					files.push({ path: ".dev.vars", content });
 				}
 			} else {
-				const resolvedSecrets = await ctx.resolve(self.slots.secrets);
-				const secretsContent = aggregateDevVars(resolvedSecrets) ?? "";
-				content = `${stackDevLine}${secretsContent}`;
+				const env = await ctx.resolve(api.slots.env);
+				content = `${stackDevLine}${aggregateDevVars(env) ?? ""}`;
 				files.push({ path: ".dev.vars", content });
 			}
 			files.push({
@@ -156,6 +176,17 @@ export const cloudflare = plugin("cloudflare", {
 			});
 			return files;
 		}),
+
+		// The worker's own dev origin: with no frontend plugin it is the only
+		// one, so APP_URL's dev default and the dev trusted origins derive
+		// from it. `app.origins` overrides the dev list too, as it does for
+		// vite and expo. It rides the deploy-target list, so a frontend's
+		// origin always comes first.
+		api.slots.devTargetOrigins.contribute((ctx) =>
+			ctx.app.origins !== undefined
+				? undefined
+				: `http://localhost:${WRANGLER_DEV_PORT}`,
+		),
 
 		// Dev wrangler process — the worker target's local runtime. `--config`
 		// points at the generated `.stack/wrangler.toml` (the consumer root has
@@ -171,11 +202,11 @@ export const cloudflare = plugin("cloudflare", {
 				"--config",
 				".stack/wrangler.toml",
 				"--port",
-				"8787",
+				String(WRANGLER_DEV_PORT),
 				"--persist-to",
 				".stack/dev",
 			],
-			defaultPort: 8787,
+			defaultPort: WRANGLER_DEV_PORT,
 			readyPattern: /Ready on/,
 			color: "yellow",
 		})),
@@ -262,6 +293,4 @@ export type {
 	CodegenWranglerPayload,
 	WranglerBindingSpec,
 	WranglerRouteSpec,
-	WranglerSecretSpec,
-	WranglerSecretValidation,
-} from "./types";
+} from "./types.ts";

@@ -109,12 +109,20 @@ export const node = plugin("node", {
 
 		// Dev process: run the generated server directly under the consumer's
 		// node (type stripping; no build step). STACK_DEV=1 mirrors wrangler's
-		// .dev.vars signal so the worker runtime enters dev mode.
+		// .dev.vars signal so the worker runtime enters dev mode, and each
+		// declared env var the shell leaves unset gets its `devDefault`, as
+		// `.dev.vars` gives it on cloudflare.
 		cliSlots.devProcesses.contribute(async (ctx) => {
 			if ((await ctx.resolve(self.slots.serverSource)) === null) {
 				return undefined;
 			}
 			const port = await ctx.resolve(self.slots.serverPort);
+			const env: Record<string, string> = { STACK_DEV: "1" };
+			for (const spec of await ctx.resolve(api.slots.env)) {
+				if (process.env[spec.name] === undefined) {
+					env[spec.name] = spec.devDefault;
+				}
+			}
 			return {
 				name: "node",
 				command: "node",
@@ -122,8 +130,19 @@ export const node = plugin("node", {
 				defaultPort: port,
 				readyPattern: /listening on/i,
 				color: "green",
-				env: { STACK_DEV: "1" },
+				env,
 			};
+		}),
+
+		// The server's own origin is a dev origin: with no frontend plugin it is
+		// the only one, so APP_URL's dev default and the dev trusted origins
+		// derive from it. `app.origins` overrides the dev list too, as it does
+		// for vite and expo. It rides the deploy-target list, so a frontend's
+		// origin always comes first.
+		api.slots.devTargetOrigins.contribute(async (ctx) => {
+			if (ctx.app.origins !== undefined) return undefined;
+			const port = await ctx.resolve(self.slots.serverPort);
+			return `http://localhost:${port}`;
 		}),
 
 		// Same-origin dev: the vite dev server proxies worker-owned paths to

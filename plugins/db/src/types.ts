@@ -11,6 +11,7 @@ export const dbOptionsSchema = z
 		path: z.string().optional(),
 		migrations: z.string().default("./src/migrations"),
 		binding: z.string().default("DB_MAIN"),
+		fileVar: z.string().default("DB_FILE"),
 	})
 	.superRefine((opts, ctx) => {
 		if (opts.dialect === "d1" && !opts.databaseId) {

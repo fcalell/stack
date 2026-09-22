@@ -8,7 +8,7 @@ Database plugin for the `@fcalell/stack` framework. Wraps Drizzle ORM for Cloudf
 pnpm add @fcalell/plugin-db
 ```
 
-Feature-specific dependencies (`better-sqlite3`) are optional peer deps -- install only if you use SQLite.
+`better-sqlite3` ships with the plugin: `stack db push` and the sqlite runtime both use it.
 
 ## Usage
 
@@ -136,9 +136,10 @@ column to let its SQL `DEFAULT` apply.
 |--------|------|---------|-------------|
 | `dialect` | `"d1" \| "sqlite"` | -- | Required. Database dialect. |
 | `databaseId` | `string` | -- | Required for D1. |
-| `path` | `string` | -- | Required for SQLite. |
+| `path` | `string` | -- | Required for SQLite: the `fileVar` dev default and the file `stack db push` targets (its directory is created first). |
 | `migrations` | `string` | `"./src/migrations"` | Migrations directory. |
 | `binding` | `string` | `"DB_MAIN"` | D1 binding name in `wrangler.toml` / env. |
+| `fileVar` | `string` | `"DB_FILE"` | SQLite: the env var the runtime reads the database file from. `path` is its dev default. |
 
 ## Commands
 
@@ -177,7 +178,7 @@ import { api } from "@fcalell/plugin-api";
 export const db = plugin("db", {
   label: "Database",
   schema: dbOptionsSchema,
-  requires: ["cloudflare", "api"],
+  requires: ["api"],
   commands: { push, generate, apply, check, seed, create, reset /* ... */ },
   dependencies: { "@fcalell/plugin-db": "workspace:*" },
   devDependencies: { "drizzle-kit": "^0.31.0", tsx: "^4.19.0" },
@@ -205,8 +206,9 @@ export const db = plugin("db", {
 | Target slot | Behavior |
 |-------------|----------|
 | `cloudflare.slots.bindings` | D1 binding (when `dialect: "d1"` and `databaseId` set) |
-| `api.slots.pluginRuntimes` | `dbRuntime({ binding, schema })` runtime entry (d1 only) |
-| `api.slots.workerImports` | `import * as schema from "../src/schema"` (gated on schema dir existing) |
+| `api.slots.env` | `{ name: fileVar, devDefault: path }` (sqlite only) |
+| `api.slots.pluginRuntimes` | `dbRuntime({ binding, schema })` from `./runtime` (d1), `dbRuntime({ fileVar, schema })` from `./runtime/sqlite` (sqlite) |
+| `api.slots.workerImports` | `import * as schema from "../src/schema"` (`../src/schema/index.ts` on sqlite, whose runtime runs under node), gated on the schema dir existing |
 | `api.slots.entities` | Sorted value-export names from `src/schema/index.ts` (both dialects) |
 | `cliSlots.initPrompts` | Asks for dialect, then database ID or SQLite path |
 | `cliSlots.initScaffolds` | Writes `src/schema/index.ts` from `templates/schema.ts` |
@@ -227,6 +229,16 @@ import dbRuntime from "@fcalell/plugin-db/runtime";
 dbRuntime({ binding: "DB_MAIN", schema })
 ```
 
+The sqlite dialect's runtime lives on `./runtime/sqlite` so a Workers bundle never pulls in the
+native driver. It opens the file the `fileVar` env var names, once per process, and refuses a
+missing var by name:
+
+```ts
+import dbRuntime from "@fcalell/plugin-db/runtime/sqlite";
+
+dbRuntime({ fileVar: "DB_FILE", schema })
+```
+
 Returns `{ db }` to downstream plugins via the builder's context accumulation.
 
 ## Exports
@@ -237,7 +249,8 @@ Returns `{ db }` to downstream plugins via the builder's context accumulation.
 | `@fcalell/plugin-db/orm` | Drizzle table/column builders, operators, relations, aggregates, `defineSeed`/`seedTable` |
 | `@fcalell/plugin-db/d1` | `createClient()` for Cloudflare D1 |
 | `@fcalell/plugin-db/sqlite` | `createClient()` for SQLite (requires `better-sqlite3`) |
-| `@fcalell/plugin-db/runtime` | `dbRuntime()` -- runtime plugin factory |
+| `@fcalell/plugin-db/runtime` | `dbRuntime()` -- D1 runtime plugin factory |
+| `@fcalell/plugin-db/runtime/sqlite` | `dbRuntime()` -- SQLite runtime plugin factory (node target) |
 
 ## License
 

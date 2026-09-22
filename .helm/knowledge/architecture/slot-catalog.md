@@ -59,27 +59,28 @@ e.g. consulting `ctx.fileExists` before writing.
 | `middlewareImports` | `derived<TsImportSpec[]>` | Deduplicated imports for middleware |
 | `routesHandler` | `value<{ identifier } \| null>` | Routes namespace identifier (seeded from `src/worker/routes` existence) |
 | `corsOrigins` | `list<string>` | Extra production CORS origins |
-| `devCorsOrigins` | `list<string>` (sorted) | Dev-server origins (vite, metro, plus local origins api partitions out of an explicit `app.origins`); emitted as `createWorker({ devCors })` and honoured only when the worker runs with `STACK_DEV`, so a deploy never trusts localhost |
+| `devCorsOrigins` | `list<string>` (sorted) | Frontend dev origins: each frontend dev server's (vite, metro) localhost when `app.origins` is absent, else the local origins api partitions out of it; emitted with `devTargetOrigins` after it as `createWorker({ devCors })` and honoured only when the worker runs with `STACK_DEV`, so a deploy never trusts localhost |
+| `devTargetOrigins` | `list<string>` (sorted) | Deploy-target dev origins: each deploy target's dev process's (node server, wrangler) localhost when `app.origins` is absent; same dev-only gating, always after `devCorsOrigins` in every dev list |
 | `routePrefixes` | `list<string>` | URL prefixes the worker owns (api contributes its `prefix`, auth its `/api/auth`); deploy targets read this to mount/forward worker paths, and plugin-expo's version gate walls only paths inside one |
 | `cors` | `derived<string[]>` | Final production CORS list: `app.origins` minus local origins, or `[https://domain, https://app.domain, ...corsOrigins]` |
 | `callbacks` | `map<string, CallbackSpec>` | Plugin-name → callback identifier; spliced onto matching runtime's options |
-| `workerBase` | `derived<TsExpression>` | The `createWorker({...})` call expression; reads `cloudflare.slots.secrets` to bake `envChecks` (WS6.3 env value assertions) |
+| `env` | `list<EnvSpec>` (`uniqueBy: name`) | Env vars the worker reads: `{ name, devDefault, validate? }`, declared once by the plugin that reads it (auth: `AUTH_SECRET`, `APP_URL`, OAuth client pairs). `validate` hints (`minLength` / `url` / `devLocalhost`) feed the worker's once-per-isolate env assertion. Deploy targets render it: cloudflare into `.dev.vars` and empty `[vars]` entries, node into the dev process env for each var the shell leaves unset. A `devDefault` must satisfy its own hints or a fresh project refuses to serve; a duplicate name is an error |
+| `workerBase` | `derived<TsExpression>` | The `createWorker({...})` call expression; reads `env` to bake `envChecks` (WS6.3 env value assertions) on both deploy targets |
 | `workerSource` | `derived<string \| null>` | Final `.stack/worker.ts` source; null when neither runtimes nor routes are present |
 | `rbacStatements` | `value<Record<string, readonly string[]> \| null>` (`override`) | RBAC action statements for `procedure({ rbac })` / `procedure({ can })`'s type-level autocomplete; `auth` contributes from `organization.ac.statements` |
-| `entities` | `list<string>` (sorted, `uniqueBy`) | Entity vocabulary for `procedure({ reads, writes })`'s type-level autocomplete (WS3 cache invalidation) — union across every contributing plugin; `db` contributes the consumer's Drizzle schema export names, `auth` contributes its own runtime-owned table names |
+| `entities` | `list<string>` (sorted, `uniqueBy`) | Entity vocabulary for `procedure({ reads, writes })`'s type-level autocomplete (WS3 cache invalidation) — union across every contributing plugin; `db` contributes the consumer's Drizzle schema export names, `auth` contributes its own runtime-owned table names (`passkey` and the organization tables only when enabled) |
 | `procedureSource` | `derived<string \| null>` | Final `.stack/procedure.ts` source (`virtual:stack-procedure`'s target); rebuilds the same runtime + middleware `.use()` chain as `workerSource` so `WorkerContext` matches the real request context; null when neither runtimes nor routes are present |
 
 ## `cloudflare.slots.*` (plugin-cloudflare)
 
 | Slot | Kind | Purpose |
 |------|------|---------|
-| `bindings` | `list<WranglerBindingSpec>` | D1 / KV / R2 / analytics_engine / rate_limiter / var bindings |
+| `bindings` | `list<WranglerBindingSpec>` | D1 / KV / R2 / analytics_engine / rate_limiter / var bindings; cloudflare itself contributes the api worker's `RATE_LIMITER_RPC` whenever `api.slots.routePrefixes` is non-empty (plugin-api cannot: cloudflare imports api for `env`, and the reverse import would cycle) |
 | `routes` | `list<WranglerRouteSpec>` | Worker route patterns |
 | `vars` | `map<string, string>` | Plain-text `[vars]` |
-| `secrets` | `list<WranglerSecretSpec>` | `.dev.vars` template entries: `{ name, devDefault, validate? }`. `validate` hints (`minLength` / `url` / `devLocalhost`) feed the worker's once-per-isolate env assertion — api's `workerBase` bakes them into `createWorker({ envChecks })`. A `devDefault` must satisfy its own hints or a fresh project refuses to serve |
 | `compatibilityDate` | `value<string>` | Defaults to today; override with `value` + `override:true` |
 | `compatibilityFlags` | `list<string>` | Wrangler `compatibility_flags`; deduped + sorted, omitted when empty (e.g. auth contributes `nodejs_compat`) |
-| `wranglerToml` | `derived<string>` | Final `.stack/wrangler.toml` source (also triggers `wrangler types` via `postWrite`) |
+| `wranglerToml` | `derived<string>` | Final `.stack/wrangler.toml` source; reads `api.slots.env` to declare each var as an empty `[vars]` entry (also triggers `wrangler types` via `postWrite`) |
 
 ## `node.slots.*` (plugin-node)
 
@@ -165,8 +166,8 @@ e.g. consulting `ctx.fileExists` before writing.
 
 | Slot | Kind | Purpose |
 |------|------|---------|
-| `runtimeOptions` | `derived<Record<string, TsExpression>>` | Better Auth runtime options; reads `api.slots.cors` for `trustedOrigins` and `api.slots.devCorsOrigins` for `devTrustedOrigins` (dev-gated by the runtime) |
-| `appUrlDevDefault` | `derived<string>` | Canonical dev URL for `APP_URL`'s `.dev.vars` default: the first local origin in `api.slots.devCorsOrigins`, else `https://<domain>` |
+| `runtimeOptions` | `derived<Record<string, TsExpression>>` | Better Auth runtime options; reads `api.slots.cors` for `trustedOrigins` and the default passkey `origin`, and `api.slots.devCorsOrigins` then `api.slots.devTargetOrigins` for `devTrustedOrigins` and passkey `devOrigin` (both dev-gated by the runtime); bakes passkey `rpID`/`rpName` from `app` |
+| `appUrlDevDefault` | `derived<string>` | Canonical dev URL for `APP_URL`'s dev default: the first `api.slots.devCorsOrigins` entry (a frontend's), else the first `api.slots.devTargetOrigins` entry (the deploy target's), else `https://<domain>` |
 | `callbackFile` | `value<string>` | Consumer callback-file path (default `src/worker/plugins/auth.ts`); override for a restructured worker layout |
 | `cookiePrefix` | `value<string>` | Resolved session-cookie prefix (`cookies.prefix` ?? better-auth's `"better-auth"` default); read by native-ui's generated auth-client constants |
 
@@ -213,6 +214,8 @@ lives with that plugin.
   Every property name and value crosses the render boundary: a custom property through
   `cssVarName`, a plain CSS property and the utility name through `cssIdent`, every value through
   `cssTokenValue`.
+- `EnvSpec`: `api.slots.env`'s payload, declared in `plugins/api/src/types.ts` (exported on
+  `@fcalell/plugin-api/types`): `{ name, devDefault, validate?: EnvValidation }`.
 - `WranglerBindingSpec`: `d1` / `kv` / `r2` / `analytics_engine` / `rate_limiter` / `var` shapes.
   Aggregator catches duplicate `binding` names and fails fast.
 - `HtmlInjection`: `title` / `meta` / `link` / `script` / `html-attr`.
@@ -222,4 +225,5 @@ lives with that plugin.
 - `ProcessSpec`, `WatcherSpec`, `BuildStep`, `DeployStep`, `DeployCheck`, `PromptSpec`,
   `DevReadyTask`, `GeneratedFile`: exported from `@fcalell/cli/specs`. `ProcessSpec.env` merges
   extra environment variables over the parent env at spawn (per-process dev signals like
-  `STACK_DEV=1` on targets without `.dev.vars`).
+  `STACK_DEV=1` on targets without `.dev.vars`; node's dev process also carries the
+  `devDefault` of each `api.slots.env` var the shell leaves unset).

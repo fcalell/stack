@@ -15,9 +15,11 @@ background services registered by the consumer.
 
 ## Dev
 
-`stack dev` supervises `node --watch .stack/server.ts` with `STACK_DEV=1` and
-proxies the worker paths through the vite dev server, so the browser stays
-same-origin in dev exactly like prod.
+`stack dev` supervises `node --watch .stack/server.ts` with `STACK_DEV=1`, plus the
+`devDefault` of every `api.slots.env` var the shell leaves unset, and proxies the worker paths
+through the vite dev server, so the browser stays same-origin in dev exactly like prod. The
+server's own `http://localhost:<port>` joins `api.slots.devTargetOrigins`: it is a dev trusted
+origin after every frontend's, and `APP_URL`'s dev default when there is no frontend.
 
 ## Config
 

@@ -19,8 +19,8 @@ import {
 export type { InferRouter } from "../types";
 
 // Env binding name for the blanket per-IP volume limiter — a dedicated
-// wrangler `rate_limiter` binding (contributed by plugin-api itself; see
-// `../index.ts`'s `cloudflare.slots.bindings` contribution), never shared
+// wrangler `rate_limiter` binding (contributed by plugin-cloudflare, the
+// deploy target that provisions it; this name is the contract), never shared
 // with the auth surface's `RATE_LIMITER_IP`/`RATE_LIMITER_EMAIL` bindings or
 // a procedure's own `rateLimit: "ip"` middleware. A shared binding would
 // double-draw the same budget (halving the effective limit for procedures
@@ -169,7 +169,7 @@ export type BaseContext = {
 // ---------- ApiOptions (plain) ----------
 
 // One env var the worker asserts before serving (WS6.3). Baked at codegen
-// from `cloudflare.slots.secrets` and each entry's validation hints.
+// from `api.slots.env` and each entry's validation hints.
 // `devLocalhost` refuses to serve when STACK_DEV is set but the value's
 // hostname is not local: dev settings (rate limits off, localhost trusted)
 // must never reach a deploy pointed at a real URL.

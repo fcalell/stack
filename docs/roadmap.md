@@ -204,6 +204,10 @@ Notes on the partial rows:
 - **Shipped and retired:** backend-hardening (WS1 through WS6). The parked follow-ups it recorded
   are folded into the next section. ui-core (M1 through M7 plus two follow-up stories), folded
   into [`.helm/knowledge/architecture/ui-core.md`](../.helm/knowledge/architecture/ui-core.md).
+  node-target-identity (M0 through M4: `api.slots.env`, the sqlite runtime, auth without
+  Cloudflare with passkeys, a web client and the consumer-plugin seam, and the end-to-end node
+  check), folded into [`runtime.md`](../.helm/knowledge/architecture/runtime.md) and
+  [`consumer-project.md`](../.helm/knowledge/architecture/consumer-project.md).
 - **Drafted:** [`backend-parity.md`](./prd/backend-parity.md) (closes the blocking findings from
   the [backend gap analysis](./analysis/sailward-backend-gaps.md); first in line, holds live
   consumer bugs). [`deploy-engine.md`](./prd/deploy-engine.md) (reconcile + lock + gates + enforced
