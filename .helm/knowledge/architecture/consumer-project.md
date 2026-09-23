@@ -145,18 +145,18 @@ overrides:                       # every @fcalell/* name in the closure, same co
   "@fcalell/plugin-cloudflare": "github:fcalell/stack#<sha>&path:/plugins/cloudflare"
 blockExoticSubdeps: false        # the git packages depend on each other by git spec
 allowBuilds:                     # each git package's prepare, plus the native builds
-  "@fcalell/plugin-db@<resolution>": true
-  "@fcalell/cli@<resolution>": true
-  "@fcalell/plugin-api@<resolution>": true
-  "@fcalell/plugin-cloudflare@<resolution>": true
+  "@fcalell/plugin-db@https://codeload.github.com/fcalell/stack/tar.gz/<sha>#path:/plugins/db": true
+  "@fcalell/cli@https://codeload.github.com/fcalell/stack/tar.gz/<sha>#path:/packages/cli": true
+  "@fcalell/plugin-api@https://codeload.github.com/fcalell/stack/tar.gz/<sha>#path:/plugins/api": true
+  "@fcalell/plugin-cloudflare@https://codeload.github.com/fcalell/stack/tar.gz/<sha>#path:/plugins/cloudflare": true
   better-sqlite3: true
   esbuild: true
 ```
 
 The overrides exist because a git tarball keeps the `workspace:*` ranges between stack packages;
 a published npm version resolves them and the overrides go. A git package's `allowBuilds` key is
-its name plus the resolution pnpm prints in its `GIT_DEP_PREPARE_NOT_ALLOWED` hint; the bare name
-is refused.
+its name plus its resolved tarball URL (for a `github:` spec, the `codeload` URL above), which pnpm
+prints in its `GIT_DEP_PREPARE_NOT_ALLOWED` hint; the bare name and the `github:` spec are refused.
 
 ### By `link:`
 
