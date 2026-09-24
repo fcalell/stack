@@ -1,3 +1,4 @@
+import { createRequire } from "node:module";
 import { plugin, slot } from "@fcalell/cli";
 import type { TsExpression, TsImportSpec } from "@fcalell/cli/ast";
 import { cliSlots, emitArtifact } from "@fcalell/cli/cli-slots";
@@ -10,6 +11,10 @@ import {
 } from "./types.ts";
 
 const SOURCE = "vite";
+
+// Vite is this plugin's own dependency, run by its resolved bin: a
+// consumer declares no vite, and no PATH or registry lookup stands in.
+const VITE_BIN = createRequire(import.meta.url).resolve("vite/bin/vite.js");
 
 // ── Slot declarations ──────────────────────────────────────────────
 
@@ -179,8 +184,8 @@ export const vite = plugin("vite", {
 			const opts = self.options;
 			return {
 				name: "vite",
-				command: "npx",
-				args: ["vite", "dev", "--config", ".stack/vite.config.ts"],
+				command: process.execPath,
+				args: [VITE_BIN, "dev", "--config", ".stack/vite.config.ts"],
 				defaultPort: port,
 				readyPattern: /Local:/,
 				color: "cyan",
@@ -211,8 +216,8 @@ export const vite = plugin("vite", {
 			name: "vite-build",
 			phase: "main",
 			exec: {
-				command: "npx",
-				args: ["vite", "build", "--config", ".stack/vite.config.ts"],
+				command: process.execPath,
+				args: [VITE_BIN, "build", "--config", ".stack/vite.config.ts"],
 			},
 		})),
 	],
