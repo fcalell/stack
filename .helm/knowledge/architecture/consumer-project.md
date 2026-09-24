@@ -11,7 +11,7 @@ my-app/
   biome.json
   stack.config.ts            # defineConfig({ app, plugins: [db(...), auth(), api(), solid(), solidUi()] })
   wrangler.toml              # consumer-owned base; .stack/wrangler.toml merges it (consumer [[routes]]/[[r2_buckets]] merge next to plugin contributions, collision = hard error; d1/kv/analytics_engine/unsafe/compatibility_flags stay framework-only)
-  pnpm-workspace.yaml        # db writes the better-sqlite3 build approval here if absent (pnpm's settings home)
+  pnpm-workspace.yaml        # db writes the better-sqlite3 build approval into the nearest one above the consumer (pnpm's settings home), so a workspace member shares its root's
   src/
     schema/                  # Drizzle tables (business logic); index.ts re-exports auth's tables:
                              # @fcalell/plugin-auth/schema always, /schema/organization and
@@ -138,7 +138,11 @@ A consumer takes each package as a subpath of one commit:
 pnpm fetches the commit, installs the whole stack workspace in the clone (with the root's pinned
 pnpm) and runs the package's `prepare`; that install runs every workspace project's `prepare` in
 dependency order, so the package and its `@fcalell/*` dependencies are built before pnpm packs
-the package's `files`. The consumer's `pnpm-workspace.yaml` carries:
+the package's `files`. Each built package's `files` also carries its `tsconfig.json` and
+`tsconfig.build.json`, so a consumer whose install runs no script (nixpkgs' pnpm fetcher) can run
+`tsc -p tsconfig.build.json` itself over the packed sources, with `typescript` and
+`@fcalell/typescript-config` resolved from the consumer's root. The consumer's
+`pnpm-workspace.yaml` carries:
 
 ```yaml
 overrides:                       # every @fcalell/* name in the closure, same commit

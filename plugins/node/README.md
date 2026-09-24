@@ -24,7 +24,8 @@ origin after every frontend's, and `APP_URL`'s dev default when there is no fron
 ## Config
 
 ```ts
-node({ port: 8788 }); // port is the only option
+node({ port: 8788 }); // binds every interface
+node({ port: 8788, host: "127.0.0.1" }); // loopback alone
 ```
 
 ## Production

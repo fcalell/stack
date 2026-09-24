@@ -3,6 +3,9 @@ import { z } from "zod";
 
 export const nodeOptionsSchema = z.object({
 	port: z.number().int().min(1).max(65535).default(8788),
+	// The address the server binds. Unset binds every interface; a server
+	// behind a proxy, or one that must stay off the network, names loopback.
+	host: z.string().min(1).optional(),
 });
 
 export type NodeOptions = z.input<typeof nodeOptionsSchema>;
@@ -23,6 +26,7 @@ export interface ServiceEntry {
 // aggregator stays testable in isolation.
 export interface CodegenServerPayload {
 	port: number;
+	host: string | null;
 	hasWorker: boolean;
 	workerPaths: string[];
 	hasConsumerServices: boolean;

@@ -22,6 +22,13 @@ const serverPort = slot.value<number, NodeOptions>({
 	seed: (ctx) => ctx.options.port ?? 8788,
 });
 
+// The address the server binds; null binds every interface.
+const serverHost = slot.value<string | null, NodeOptions>({
+	source: SOURCE,
+	name: "serverHost",
+	seed: (ctx) => ctx.options.host ?? null,
+});
+
 // Codegen entries for the generated server's `services` array. The consumer
 // barrel lands here as one entry; other plugins can contribute their own
 // background services the same way.
@@ -60,6 +67,7 @@ const serverSource = slot.derived({
 	name: "serverSource",
 	inputs: {
 		port: serverPort,
+		host: serverHost,
 		entries: services,
 		consumer: consumerServices,
 		worker: api.slots.workerSource,
@@ -73,6 +81,7 @@ const serverSource = slot.derived({
 		}
 		return aggregateServer({
 			port: inp.port,
+			host: inp.host,
 			hasWorker,
 			workerPaths: inp.prefixes,
 			hasConsumerServices,
@@ -94,6 +103,7 @@ export const node = plugin("node", {
 
 	slots: {
 		serverPort,
+		serverHost,
 		services,
 		consumerServices,
 		serviceBarrelSource,

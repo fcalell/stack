@@ -33,7 +33,9 @@
 		"dist",
 		"src",
 		"templates",
-		"README.md"
+		"README.md",
+		"tsconfig.json",
+		"tsconfig.build.json"
 	],
 	"license": "MIT",
 	"scripts": {

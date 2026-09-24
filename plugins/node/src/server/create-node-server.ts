@@ -19,6 +19,8 @@ export interface NodeWorker {
 
 export interface NodeServerOptions {
 	port: number;
+	// The address to bind; unset binds every interface.
+	host?: string;
 	worker: NodeWorker | null;
 	// URL prefixes routed to the worker (from api.slots.routePrefixes).
 	workerPaths?: string[];
@@ -48,6 +50,7 @@ const consoleLog: ServiceLogger = {
 export function createNodeServer(options: NodeServerOptions): NodeServer {
 	const {
 		port,
+		host,
 		worker,
 		workerPaths = [],
 		staticRoot = "dist/client",
@@ -168,13 +171,16 @@ export function createNodeServer(options: NodeServerOptions): NodeServer {
 					{
 						fetch: app.fetch,
 						port,
+						hostname: host,
 						// noServer: upgrades route through the Hono /ws handler.
 						websocket: { server: wss },
 					},
 					(info) => {
 						// This line is the dev supervisor's ready signal — keep the
 						// wording in sync with the plugin's readyPattern.
-						log.info(`stack node: listening on http://localhost:${info.port}`);
+						log.info(
+							`stack node: listening on http://${host ?? "localhost"}:${info.port}`,
+						);
 						resolve();
 					},
 				);

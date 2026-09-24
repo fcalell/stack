@@ -1,4 +1,6 @@
-import { basename, join } from "node:path";
+import { existsSync } from "node:fs";
+import { readFile } from "node:fs/promises";
+import { basename, dirname, join, relative } from "node:path";
 import { plugin } from "@fcalell/cli";
 import type { TsExpression, TsImportSpec } from "@fcalell/cli/ast";
 import { cliSlots } from "@fcalell/cli/cli-slots";
@@ -68,6 +70,18 @@ function createSerialized(op: () => Promise<void>): () => Promise<void> {
 		});
 		return current;
 	};
+}
+
+// The nearest pnpm-workspace.yaml at or above the directory, or null.
+export function pnpmSettingsHome(from: string): string | null {
+	let dir = from;
+	for (;;) {
+		const candidate = join(dir, "pnpm-workspace.yaml");
+		if (existsSync(candidate)) return candidate;
+		const parent = dirname(dir);
+		if (parent === dir) return null;
+		dir = parent;
+	}
 }
 
 export const db = plugin("db", {
@@ -334,28 +348,32 @@ export const db = plugin("db", {
 			// read). Without the approval better-sqlite3's native addon never
 			// builds and every local push fails. Both spellings are emitted:
 			// `allowBuilds` is current pnpm's setting, `onlyBuiltDependencies`
-			// covers earlier v10. A file that already names better-sqlite3 is
-			// consumer-managed and stays untouched; one with an approval
-			// section missing better-sqlite3 gets a warning instead of a
-			// blind append (a duplicate YAML key would corrupt it).
+			// covers earlier v10. The file is pnpm's settings home, so it is
+			// the nearest one above the consumer: a consumer that is one
+			// package of a workspace shares its root's, and a second file in
+			// the package would make the package a workspace of its own. A
+			// file that already names better-sqlite3 is consumer-managed and
+			// stays untouched; one with an approval section missing
+			// better-sqlite3 gets a warning instead of a blind append (a
+			// duplicate YAML key would corrupt it).
 			cliSlots.artifactFiles.contribute(async (ctx) => {
 				const block =
 					"allowBuilds:\n  better-sqlite3: true\nonlyBuiltDependencies:\n  - better-sqlite3\n";
-				const exists = await ctx.fileExists("pnpm-workspace.yaml");
-				if (!exists) return { path: "pnpm-workspace.yaml", content: block };
-				const existing = await ctx.readFile("pnpm-workspace.yaml");
+				const home = pnpmSettingsHome(ctx.cwd);
+				if (home === null) {
+					return { path: "pnpm-workspace.yaml", content: block };
+				}
+				const path = relative(ctx.cwd, home) || "pnpm-workspace.yaml";
+				const existing = await readFile(home, "utf8");
 				if (existing.includes("better-sqlite3")) return undefined;
 				if (/^(allowBuilds|onlyBuiltDependencies)\s*:/m.test(existing)) {
 					ctx.log.warn(
-						"pnpm-workspace.yaml has a build-approval section without better-sqlite3; add it (allowBuilds: better-sqlite3: true) or local db pushes will fail.",
+						`${path} has a build-approval section without better-sqlite3; add it (allowBuilds: better-sqlite3: true) or local db pushes will fail.`,
 					);
 					return undefined;
 				}
 				const sep = existing.endsWith("\n") ? "" : "\n";
-				return {
-					path: "pnpm-workspace.yaml",
-					content: `${existing}${sep}${block}`,
-				};
+				return { path, content: `${existing}${sep}${block}` };
 			}),
 
 			// D1 binding — only for the d1 dialect, and only when `databaseId`

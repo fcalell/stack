@@ -87,6 +87,7 @@ e.g. consulting `ctx.fileExists` before writing.
 | Slot | Kind | Purpose |
 |------|------|---------|
 | `serverPort` | `value<number>` | Node server port (defaults to options.port ?? 8788) |
+| `serverHost` | `value<string \| null>` | The address the server binds (options.host); null binds every interface |
 | `services` | `list<ServiceEntry>` (`uniqueBy: name`) | Codegen entries (`{ name, imports, expression }`) for the generated server's `services` array; each expression evaluates to a ServiceSpec or ServiceSpec[]; the consumer barrel lands here as one entry |
 | `consumerServices` | `value<{ identifier } \| null>` | Consumer services barrel identifier (seeded from `src/server/services` contents) |
 | `serviceBarrelSource` | `derived<string \| null>` | Rendered `src/server/services/index.ts` barrel; null when no service modules exist |

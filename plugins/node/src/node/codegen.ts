@@ -37,6 +37,14 @@ export function aggregateServer(payload: CodegenServerPayload): string {
 
 	const properties: Array<{ key: string; value: TsExpression }> = [
 		{ key: "port", value: { kind: "number", value: payload.port } },
+	];
+	if (payload.host !== null) {
+		properties.push({
+			key: "host",
+			value: { kind: "string", value: payload.host },
+		});
+	}
+	properties.push(
 		{
 			key: "workerModule",
 			value: payload.hasWorker ? moduleUrl("./worker.ts") : { kind: "null" },
@@ -45,7 +53,7 @@ export function aggregateServer(payload: CodegenServerPayload): string {
 			key: "procedureModule",
 			value: payload.hasWorker ? moduleUrl("./procedure.ts") : { kind: "null" },
 		},
-	];
+	);
 	if (payload.hasWorker) {
 		properties.push({
 			key: "workerPaths",

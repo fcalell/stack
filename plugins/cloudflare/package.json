@@ -11,7 +11,9 @@
 	},
 	"files": [
 		"dist",
-		"src"
+		"src",
+		"tsconfig.json",
+		"tsconfig.build.json"
 	],
 	"license": "MIT",
 	"scripts": {
