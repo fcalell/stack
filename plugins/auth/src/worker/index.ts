@@ -35,7 +35,7 @@ import { emailKey } from "./email-key.ts";
 // Structural match with plugin-api's `RateLimitBinding` (procedure.ts) — not
 // imported directly since plugin-api doesn't expose it on a public subpath;
 // both sides only rely on this shape.
-interface RateLimitBinding {
+export interface RateLimitBinding {
 	limit(opts: { key: string }): Promise<{ success: boolean }>;
 }
 
