@@ -101,7 +101,7 @@ export const db = plugin("db", {
 		"drizzle-kit": "^0.31.0",
 		// drizzle-kit's sqlite driver for `stack db push` — both dialects
 		// push into a local sqlite file (miniflare's for d1).
-		"better-sqlite3": "^12.0.0",
+		"better-sqlite3": "^13.0.0",
 	},
 	gitignore: [".db-kit"],
 

@@ -181,7 +181,7 @@ export const db = plugin("db", {
   requires: ["api"],
   commands: { push, generate, apply, check, seed, create, reset /* ... */ },
   dependencies: { "@fcalell/plugin-db": "workspace:*" },
-  devDependencies: { "drizzle-kit": "^0.31.0", "better-sqlite3": "^12.0.0" },
+  devDependencies: { "drizzle-kit": "^0.31.0", "better-sqlite3": "^13.0.0" },
   gitignore: [".db-kit"],
   contributes: [
     cloudflare.slots.bindings.contribute((ctx) => {
