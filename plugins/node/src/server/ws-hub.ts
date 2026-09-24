@@ -13,6 +13,10 @@ export interface HubSocket {
 const OPEN = 1;
 
 export interface ChannelConnection<S extends MessageSchemas> {
+	// Stable for the socket's life: what a handler keys per-connection
+	// state on (presence, a watch), the same across every message and the
+	// unsubscribe.
+	id: string;
 	send<K extends keyof S & string>(type: K, payload: z.input<S[K]>): void;
 }
 
@@ -22,6 +26,9 @@ export interface ChannelHandlers<
 > {
 	// Runs per subscribing connection — the snapshot-on-subscribe hook.
 	onSubscribe?(conn: ChannelConnection<S>): void | Promise<void>;
+	// Runs once when a subscribed connection unsubscribes or its socket
+	// closes, so per-connection state never outlives the socket.
+	onUnsubscribe?(conn: ChannelConnection<S>): void | Promise<void>;
 	onMessage?: {
 		[K in keyof C]?: (
 			payload: z.output<C[K]>,
@@ -62,6 +69,17 @@ export interface WsHubInternal {
 
 export function createWsHub(log: ServiceLogger): WsHubInternal {
 	const channels = new Map<string, RegisteredChannel>();
+	const ids = new WeakMap<HubSocket, string>();
+	let nextId = 0;
+	function idOf(socket: HubSocket): string {
+		let id = ids.get(socket);
+		if (id === undefined) {
+			nextId += 1;
+			id = `c${nextId}`;
+			ids.set(socket, id);
+		}
+		return id;
+	}
 
 	function frameFor(ch: string, type: string, payload: unknown): string {
 		const frame: ServerFrame = { t: "msg", ch, type, payload };
@@ -73,6 +91,7 @@ export function createWsHub(log: ServiceLogger): WsHubInternal {
 		socket: HubSocket,
 	): ChannelConnection<MessageSchemas> {
 		return {
+			id: idOf(socket),
 			send(type, payload) {
 				const schema = registered.def.server[type];
 				if (!schema) {
@@ -113,10 +132,19 @@ export function createWsHub(log: ServiceLogger): WsHubInternal {
 		},
 	};
 
+	function unsubscribe(registered: RegisteredChannel, socket: HubSocket): void {
+		if (!registered.sockets.delete(socket)) return;
+		void Promise.resolve(
+			registered.handlers.onUnsubscribe?.(connectionFor(registered, socket)),
+		).catch((error) => {
+			log.error(
+				`ws channel ${registered.def.name}: onUnsubscribe failed: ${String(error)}`,
+			);
+		});
+	}
+
 	function dropSocket(socket: HubSocket): void {
-		for (const registered of channels.values()) {
-			registered.sockets.delete(socket);
-		}
+		for (const registered of channels.values()) unsubscribe(registered, socket);
 	}
 
 	async function handleFrame(raw: unknown, socket: HubSocket): Promise<void> {
@@ -146,7 +174,7 @@ export function createWsHub(log: ServiceLogger): WsHubInternal {
 			return;
 		}
 		if (frame.data.t === "unsub") {
-			registered.sockets.delete(socket);
+			unsubscribe(registered, socket);
 			return;
 		}
 		const handler = registered.handlers.onMessage?.[frame.data.type];

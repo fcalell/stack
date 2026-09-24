@@ -15,7 +15,7 @@ import {
 	aggregateProviders,
 } from "./node/codegen.ts";
 import { buildRoutesDts } from "./node/routes-core.ts";
-import { type SolidOptions, solidOptionsSchema } from "./types.ts";
+import { type Mount, type SolidOptions, solidOptionsSchema } from "./types.ts";
 
 const SOURCE = "solid";
 
@@ -44,12 +44,13 @@ const entryImports = slot.list<TsImportSpec>({
 	sortBy: (a, b) => a.source.localeCompare(b.source),
 });
 
-// The root `render(...)` call, as a verbatim source snippet. It never varies
-// by config, so it's a string rather than a hand-built AST tree. A value slot
-// so a peer plugin could override the mount target (rare); `override: true`
-// lets a consumer-side plugin cede cleanly without a duplicate-contribution
-// error. `null` (the seed) means "no mount" → entry.tsx is skipped.
-const mountExpression = slot.value<string | null>({
+// The root mount: a verbatim source snippet with the imports it needs. It
+// never varies by config, so it's a string rather than a hand-built AST
+// tree. A value slot so a peer plugin can replace the mount (the design
+// system mounts its own app); `override: true` lets it cede cleanly without
+// a duplicate-contribution error. `null` (the seed) means "no mount" →
+// entry.tsx is skipped.
+const mountExpression = slot.value<Mount | null>({
 	source: SOURCE,
 	name: "mountExpression",
 	override: true,
@@ -109,7 +110,7 @@ const entrySource = slot.derived({
 	compute: (inp): string | null =>
 		aggregateEntry({
 			imports: inp.imports,
-			mountExpression: inp.mount,
+			mount: inp.mount,
 		}),
 });
 
@@ -250,30 +251,20 @@ export const solid = plugin("solid", {
 		// `./app.css` is contributed by plugin-solid-ui — CSS is solid-ui's
 		// domain. A solid()-only consumer emits no app.css artifact and gets
 		// no entry-level import, keeping the build consistent.
-		self.slots.entryImports.contribute(
-			(): TsImportSpec => ({ source: "solid-js/web", named: ["render"] }),
-		),
-		self.slots.entryImports.contribute(
-			(): TsImportSpec => ({ source: "@solidjs/router", named: ["Router"] }),
-		),
-		self.slots.entryImports.contribute(
-			(): TsImportSpec => ({
-				source: "virtual:fcalell-routes",
-				named: ["routes"],
-			}),
-		),
-		self.slots.entryImports.contribute(
-			(): TsImportSpec => ({
-				source: "virtual:stack-providers",
-				default: "Providers",
-			}),
-		),
-
-		// The default mount expression — a fixed snippet that never varies by
-		// config. Seeded as null; solid writes the canonical render call here.
+		// The default mount — a fixed snippet that never varies by config,
+		// with the imports it needs. Seeded as null; solid writes the
+		// canonical render call here, and the design system replaces it.
 		self.slots.mountExpression.contribute(
-			(): string =>
-				'render(() => <Providers><Router>{routes}</Router></Providers>, document.getElementById("app") as HTMLElement)',
+			(): Mount => ({
+				imports: [
+					{ source: "solid-js/web", named: ["render"] },
+					{ source: "@solidjs/router", named: ["Router"] },
+					{ source: "virtual:fcalell-routes", named: ["routes"] },
+					{ source: "virtual:stack-providers", default: "Providers" },
+				],
+				expression:
+					'render(() => <Providers><Router>{routes}</Router></Providers>, document.getElementById("app") as HTMLElement)',
+			}),
 		),
 
 		// ── HTML ─────────────────────────────────────────────────────────
@@ -331,4 +322,4 @@ export const solid = plugin("solid", {
 	],
 });
 
-export type { SolidOptions } from "./types.ts";
+export type { Mount, SolidOptions } from "./types.ts";

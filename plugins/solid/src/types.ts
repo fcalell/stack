@@ -25,10 +25,18 @@ export type SolidOptions = z.input<typeof solidOptionsSchema>;
 
 // ── Codegen payload types (owned by plugin-solid) ───────────────────
 
+// The root mount: a verbatim source expression and the imports it needs,
+// so the plugin that mounts brings its own and no other plugin's imports
+// go unused in the entry.
+export interface Mount {
+	imports: TsImportSpec[];
+	expression: string;
+}
+
 export interface CodegenEntryPayload {
 	imports: TsImportSpec[];
-	// Verbatim source for the root render call (or null to skip entry.tsx).
-	mountExpression: string | null;
+	// The mount, or null to skip entry.tsx.
+	mount: Mount | null;
 }
 
 export interface CodegenHtmlPayload {

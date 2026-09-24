@@ -87,7 +87,7 @@ solid({ routes: false })
 |------|------|---------|
 | `solid.slots.providers` | `list<ProviderSpec>` | JSX wrappers / siblings composed into `.stack/virtual-providers.tsx` (sorted by `order`) |
 | `solid.slots.entryImports` | `list<TsImportSpec>` | Imports for `.stack/entry.tsx` |
-| `solid.slots.mountExpression` | `value<TsExpression \| null>` | Root render call (override-able for custom mount) |
+| `solid.slots.mountExpression` | `value<Mount \| null>` | The root mount: a verbatim expression with the imports it needs; `plugin-solid-ui` replaces it with `createApp` |
 | `solid.slots.htmlShell` | `value<URL \| null>` | HTML shell template URL (override-able) |
 | `solid.slots.htmlHead` | `list<HtmlInjection>` | `<head>` injections |
 | `solid.slots.htmlBodyEnd` | `list<HtmlInjection>` | End-of-body injections |

@@ -47,9 +47,11 @@ out of its declaration, and a `words` object missing a key, naming the offender.
 
 ## The runtime
 
-`createApp` (`@fcalell/plugin-solid-ui/app`) mounts the router, the query client, the meta
-provider, the consumer's icon set (`icons: IconSet`, a name to a `lucide-solid` glyph, read by
-`Icon`, a row's marks and the shell's places) and, when given, `words`. `useWords()`
+`createApp` (`@fcalell/plugin-solid-ui/app`) is the generated entry's mount: the router, the
+query client, the meta provider, the error boundary and the consumer's icon set. The icon set is
+`src/app/icons.ts`, a default export of `IconSet` (a name to a `lucide-solid` glyph, read by
+`Icon`, a row's marks and the shell's places), imported by the entry when the file exists. The
+composed providers (`words` among them) wrap the app. `useWords()`
 (`lib/words`), `useIcon(name)` (`lib/icons`) and `toast(sentence, act?)` (`lib/toast`) are the
 three runtime hooks; the `Shell` draws the toast queue.
 

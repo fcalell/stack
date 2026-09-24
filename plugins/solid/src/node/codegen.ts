@@ -15,15 +15,15 @@ import type {
 // Render `.stack/entry.tsx`. Returns null when no plugin contributes a mount
 // expression — `plugin-solid` contributes the default via solid.slots.mountExpression.
 export function aggregateEntry(payload: CodegenEntryPayload): string | null {
-	if (!payload.mountExpression) return null;
+	if (!payload.mount) return null;
 
 	// The mount is a fixed source snippet, not an AST tree — render the imports
 	// through the printer (for dedup + canonical ordering) and append it.
 	const importsBlock = renderTsSourceFile({
-		imports: payload.imports,
+		imports: dedupeImports([...payload.imports, ...payload.mount.imports]),
 		statements: [],
 	}).trimEnd();
-	return `${importsBlock}\n${payload.mountExpression};\n`;
+	return `${importsBlock}\n${payload.mount.expression};\n`;
 }
 
 // Emits `.stack/virtual-providers.tsx`. Providers arrive pre-sorted ascending

@@ -144,9 +144,11 @@ consumer plugin's model resolves to the consumer's table of that name while the 
 models never depend on the consumer's export names.
 
 The typed WebSocket surface lives on this target: `@fcalell/plugin-node/ws` (the isomorphic
-`defineChannel` contract), `./server`'s hub (`ctx.ws.channel(def, { onSubscribe, onMessage })` →
-`broadcast`/per-connection `send`), and `./client` (browser client, shared socket, auto-reconnect
-with resubscribe). Everything is zod-validated at both ends; invalid frames are dropped and
+`defineChannel` contract), `./server`'s hub (`ctx.ws.channel(def, { onSubscribe, onUnsubscribe,
+onMessage })` → `broadcast`/per-connection `send`; a connection carries an `id` stable for the
+socket's life, and `onUnsubscribe` runs once on an unsub or the socket's close, so per-connection
+state such as presence never outlives the socket), and `./client` (browser client, shared socket,
+auto-reconnect with resubscribe). Everything is zod-validated at both ends; invalid frames are dropped and
 logged. Gotcha: `@hono/node-ws` peer-pins `@hono/node-server` v1 and must not be used; node-server
 v2 ships its own `upgradeWebSocket` plus `serve({ websocket: { server } })` with a
 `ws` `WebSocketServer({ noServer: true })`. Graceful shutdown must `terminate()` the tracked WS

@@ -7,7 +7,7 @@ import type {
 	TsImportSpec,
 } from "@fcalell/cli/ast";
 import { cliSlots, emitArtifact } from "@fcalell/cli/cli-slots";
-import { solid } from "@fcalell/plugin-solid";
+import { type Mount, solid } from "@fcalell/plugin-solid";
 import { vite } from "@fcalell/plugin-vite";
 import { deriveTheme } from "@fcalell/ui-core/derive";
 import { WORD_KEYS, type Words } from "@fcalell/ui-core/tokens";
@@ -24,6 +24,9 @@ import {
 } from "./types.ts";
 
 const SOURCE = "solid-ui";
+
+// The consumer's icon set, imported by the generated entry when present.
+export const ICONS_FILE = "src/app/icons.ts";
 
 function fontEntryToExpression(font: FontEntry): TsExpression {
 	const props: Array<{ key: string; value: TsExpression }> = [
@@ -235,19 +238,32 @@ export const solidUi = plugin("solid-ui", {
 			};
 		}),
 
-		// ── Composition providers ───────────────────────────────────────
-		// MetaProvider wraps the app so <Title>/<Meta> from any page can
-		// contribute to <head>. order = 0 keeps it outermost as more providers
-		// compose in.
-		solid.slots.providers.contribute(
-			(): ProviderSpec => ({
+		// ── The mount ───────────────────────────────────────────────────
+		// The design system's app is `createApp` (`./app`): the router, the
+		// query client, the meta provider, the icon set and the error
+		// boundary. It replaces solid's bare render, takes the composed
+		// providers as its wrapper, and reads the consumer's icons from
+		// `src/app/icons.ts` when that file exists: a closed set, a name to
+		// a lucide-solid glyph, which `Icon`, a row's marks and the shell's
+		// places look up.
+		solid.slots.mountExpression.contribute(async (ctx): Promise<Mount> => {
+			const icons = await ctx.fileExists(ICONS_FILE);
+			return {
 				imports: [
-					{ source: "@fcalell/plugin-solid-ui/meta", named: ["MetaProvider"] },
+					{ source: "@fcalell/plugin-solid-ui/app", named: ["createApp"] },
+					{ source: "virtual:stack-providers", default: "Providers" },
+					...(icons
+						? [
+								{
+									source: `../${ICONS_FILE.replace(/\.tsx?$/, "")}`,
+									default: "icons",
+								},
+							]
+						: []),
 				],
-				wrap: { identifier: "MetaProvider" },
-				order: 0,
-			}),
-		),
+				expression: `createApp({ providers: (children) => <Providers>{children}</Providers>${icons ? ", icons" : ""} })`,
+			};
+		}),
 		// The consumer's words, mounted once; absent, the context speaks English.
 		solid.slots.providers.contribute((): ProviderSpec | undefined => {
 			const words = self.options.words;
