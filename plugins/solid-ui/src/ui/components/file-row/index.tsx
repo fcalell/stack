@@ -2,9 +2,9 @@ import { row, text } from "@fcalell/ui-core/variants";
 import { A } from "@solidjs/router";
 import { Check } from "lucide-solid";
 import { Match, Show, Switch } from "solid-js";
-import type { Closed } from "#lib/closed";
-import { cn } from "#lib/cn";
-import { LoadingRows } from "#lib/loading";
+import type { Closed } from "#lib/closed.ts";
+import { cn } from "#lib/cn.ts";
+import { LoadingRows } from "#lib/loading.tsx";
 
 // A row for a group: a ring that becomes a tick when seen, the path in mono,
 // the counts trailing.

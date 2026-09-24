@@ -1,8 +1,8 @@
 import { rhythm } from "@fcalell/ui-core/variants";
 import type { JSX } from "solid-js";
-import type { Closed } from "#lib/closed";
-import { cn } from "#lib/cn";
-import { ColumnsContext } from "#lib/columns";
+import type { Closed } from "#lib/closed.ts";
+import { cn } from "#lib/cn.ts";
+import { ColumnsContext } from "#lib/columns.ts";
 
 // The same sections side by side, each a column wide, scrolling sideways past
 // the width; a `ListRow` inside is drawn as a card. Under desktop the sections

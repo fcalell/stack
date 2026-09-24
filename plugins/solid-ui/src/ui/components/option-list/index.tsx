@@ -2,9 +2,9 @@ import type { Option } from "@fcalell/ui-core/descriptors";
 import { checkbox, row, text, textStrong } from "@fcalell/ui-core/variants";
 import * as RadioGroup from "@kobalte/core/radio-group";
 import { For, type JSX, Show } from "solid-js";
-import type { Closed } from "#lib/closed";
-import { cn } from "#lib/cn";
-import { useWords } from "#lib/words";
+import type { Closed } from "#lib/closed.ts";
+import { cn } from "#lib/cn.ts";
+import { useWords } from "#lib/words.tsx";
 
 // Radio rows with a description line, the recommended one marked; the
 // children sit under the chosen option.

@@ -2,9 +2,9 @@ import type { Part } from "@fcalell/ui-core/descriptors";
 import type { StatusState } from "@fcalell/ui-core/tokens";
 import { GROUP, text } from "@fcalell/ui-core/variants";
 import { For, Show } from "solid-js";
-import type { Closed } from "#lib/closed";
-import { cn } from "#lib/cn";
-import { Parts } from "#lib/parts";
+import type { Closed } from "#lib/closed.ts";
+import { cn } from "#lib/cn.ts";
+import { Parts } from "#lib/parts.tsx";
 import { Status } from "../status/index.tsx";
 
 export type Fact = Part | { status: StatusState; label?: string };

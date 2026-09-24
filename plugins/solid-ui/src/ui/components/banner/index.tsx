@@ -1,8 +1,8 @@
 import type { Act } from "@fcalell/ui-core/descriptors";
 import { type BannerKind, banner } from "@fcalell/ui-core/variants";
 import { Show } from "solid-js";
-import type { Closed } from "#lib/closed";
-import { cn } from "#lib/cn";
+import type { Closed } from "#lib/closed.ts";
+import { cn } from "#lib/cn.ts";
 
 // Full width under the top bar on the kind's soft fill: the shell's for the
 // app's state, a screen's or a sheet's for its own.

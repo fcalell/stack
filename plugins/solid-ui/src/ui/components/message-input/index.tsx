@@ -2,10 +2,10 @@ import type { Attachment, Notice } from "@fcalell/ui-core/descriptors";
 import { COUNT, field, text } from "@fcalell/ui-core/variants";
 import { ArrowUp, Plus, Square } from "lucide-solid";
 import { For, Show } from "solid-js";
-import { Circle } from "#lib/circle";
-import type { Closed } from "#lib/closed";
-import { cn } from "#lib/cn";
-import { useWords } from "#lib/words";
+import { Circle } from "#lib/circle.tsx";
+import type { Closed } from "#lib/closed.ts";
+import { cn } from "#lib/cn.ts";
+import { useWords } from "#lib/words.tsx";
 
 // A plus for files, the text in a pill, one circle that sends or stops; the
 // notice under it. Dictation is the keyboard's.

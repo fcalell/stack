@@ -1,8 +1,8 @@
 import { text, textStrong } from "@fcalell/ui-core/variants";
 import { createUniqueId, type JSX, Show } from "solid-js";
-import type { Closed } from "#lib/closed";
-import { cn } from "#lib/cn";
-import { FieldContext } from "#lib/field";
+import type { Closed } from "#lib/closed.ts";
+import { cn } from "#lib/cn.ts";
+import { FieldContext } from "#lib/field.ts";
 
 // A labelled typing control in a form: the label over the control, the
 // description under the label, the error under the control.

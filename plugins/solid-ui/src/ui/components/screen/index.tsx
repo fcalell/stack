@@ -10,11 +10,11 @@ import {
 	onMount,
 	Show,
 } from "solid-js";
-import { BarContext } from "#lib/bar";
-import { CIRCLE, Circle, GLYPH } from "#lib/circle";
-import type { Closed } from "#lib/closed";
-import { cn } from "#lib/cn";
-import { useWords } from "#lib/words";
+import { BarContext } from "#lib/bar.ts";
+import { CIRCLE, Circle, GLYPH } from "#lib/circle.tsx";
+import type { Closed } from "#lib/closed.ts";
+import { cn } from "#lib/cn.ts";
+import { useWords } from "#lib/words.tsx";
 import { IconButton } from "../icon-button/index.tsx";
 import { ListRow } from "../list-row/index.tsx";
 import { Sheet } from "../sheet/index.tsx";

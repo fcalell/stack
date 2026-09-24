@@ -1,7 +1,7 @@
 import { GROUP } from "@fcalell/ui-core/variants";
 import { For } from "solid-js";
-import { cn } from "#lib/cn";
-import { useWords } from "#lib/words";
+import { cn } from "#lib/cn.ts";
+import { useWords } from "#lib/words.tsx";
 
 // The loading form every container and content molecule draws: three row
 // forms. On the surface each is a group-filled block; inside a group, where

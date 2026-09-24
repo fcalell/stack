@@ -1,8 +1,8 @@
 import { CHECKBOX_MARK, checkbox, text } from "@fcalell/ui-core/variants";
 import * as CheckboxPrimitive from "@kobalte/core/checkbox";
 import { Check } from "lucide-solid";
-import type { Closed } from "#lib/closed";
-import { cn } from "#lib/cn";
+import type { Closed } from "#lib/closed.ts";
+import { cn } from "#lib/cn.ts";
 
 // The label is part of the atom so the hit area is the whole 44 px line.
 export type CheckboxProps = Closed & {

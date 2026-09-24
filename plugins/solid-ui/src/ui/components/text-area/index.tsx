@@ -1,8 +1,8 @@
 import { field, text } from "@fcalell/ui-core/variants";
 import { Show } from "solid-js";
-import type { Closed } from "#lib/closed";
-import { cn } from "#lib/cn";
-import { useField } from "#lib/field";
+import type { Closed } from "#lib/closed.ts";
+import { cn } from "#lib/cn.ts";
+import { useField } from "#lib/field.ts";
 
 // Multi-line typing. `source` is mono and keeps indentation; `budget` is a
 // word budget and draws a counter under the field.

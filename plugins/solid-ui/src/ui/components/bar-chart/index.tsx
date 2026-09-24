@@ -1,9 +1,9 @@
 import type { BarSeries } from "@fcalell/ui-core/descriptors";
 import { METER_TRACK, text } from "@fcalell/ui-core/variants";
 import { createMemo, For, Show } from "solid-js";
-import type { Closed } from "#lib/closed";
-import { cn } from "#lib/cn";
-import { LoadingRows } from "#lib/loading";
+import type { Closed } from "#lib/closed.ts";
+import { cn } from "#lib/cn.ts";
+import { LoadingRows } from "#lib/loading.tsx";
 
 // One labelled bar per series item, stacked by its parts, the value beside it
 // with the unit, the time under it.

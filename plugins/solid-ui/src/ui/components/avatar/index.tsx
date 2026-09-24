@@ -1,7 +1,7 @@
 import { avatar, avatarStep } from "@fcalell/ui-core/variants";
 import { Show } from "solid-js";
-import type { Closed } from "#lib/closed";
-import { cn } from "#lib/cn";
+import type { Closed } from "#lib/closed.ts";
+import { cn } from "#lib/cn.ts";
 
 // A circle sized by the type role around it: the image, else the name's
 // initials on a fill from the avatar ladder picked by the name, so one name

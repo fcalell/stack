@@ -1,9 +1,9 @@
 import { GROUP, HAIRLINE } from "@fcalell/ui-core/variants";
 import type { JSX } from "solid-js";
 import { Show } from "solid-js";
-import type { Closed } from "#lib/closed";
-import { cn } from "#lib/cn";
-import { LoadingRows } from "#lib/loading";
+import type { Closed } from "#lib/closed.ts";
+import { cn } from "#lib/cn.ts";
+import { LoadingRows } from "#lib/loading.tsx";
 
 // Rows that are a record: a group-filled box with hairlines between rows.
 export type GroupProps = Closed & {

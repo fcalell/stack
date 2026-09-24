@@ -1,10 +1,10 @@
 import type { StatusState } from "@fcalell/ui-core/tokens";
 import { STATUS_CHIP, status } from "@fcalell/ui-core/variants";
 import { Show } from "solid-js";
-import type { Closed } from "#lib/closed";
-import { cn } from "#lib/cn";
-import { StatusGlyph } from "#lib/status-glyph";
-import { useWords } from "#lib/words";
+import type { Closed } from "#lib/closed.ts";
+import { cn } from "#lib/cn.ts";
+import { StatusGlyph } from "#lib/status-glyph.tsx";
+import { useWords } from "#lib/words.tsx";
 
 // An icon and a word; the consumer maps its own states onto the six and the
 // color follows the state. With `onOpen` it is a 44 px chip.

@@ -9,9 +9,9 @@ import {
 	Show,
 	useContext,
 } from "solid-js";
-import type { Closed } from "#lib/closed";
-import { cn } from "#lib/cn";
-import { LoadingRows } from "#lib/loading";
+import type { Closed } from "#lib/closed.ts";
+import { cn } from "#lib/cn.ts";
+import { LoadingRows } from "#lib/loading.tsx";
 import { Count } from "../count/index.tsx";
 
 // A titled region of a screen: the label header with its count and act, the

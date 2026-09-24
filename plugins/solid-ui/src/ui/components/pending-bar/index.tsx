@@ -1,8 +1,8 @@
 import type { Act } from "@fcalell/ui-core/descriptors";
 import { PENDING_BAR, PENDING_FILL, text } from "@fcalell/ui-core/variants";
 import { createSignal, onCleanup, onMount, Show } from "solid-js";
-import type { Closed } from "#lib/closed";
-import { cn } from "#lib/cn";
+import type { Closed } from "#lib/closed.ts";
+import { cn } from "#lib/cn.ts";
 import { Spinner } from "../spinner/index.tsx";
 
 // One line with a spinner, or a countdown that fills the bar toward a server

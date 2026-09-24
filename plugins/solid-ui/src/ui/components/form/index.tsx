@@ -1,8 +1,8 @@
 import { rhythm } from "@fcalell/ui-core/variants";
 import type { JSX } from "solid-js";
-import { BarContext } from "#lib/bar";
-import type { Closed } from "#lib/closed";
-import { cn } from "#lib/cn";
+import { BarContext } from "#lib/bar.ts";
+import type { Closed } from "#lib/closed.ts";
+import { cn } from "#lib/cn.ts";
 
 // Fields at `stack`; its `ActionBar` last and in flow, so it scrolls with the
 // fields and the keyboard never covers it.

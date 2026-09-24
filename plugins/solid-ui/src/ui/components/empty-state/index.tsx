@@ -2,8 +2,8 @@ import type { Act } from "@fcalell/ui-core/descriptors";
 import { text } from "@fcalell/ui-core/variants";
 import type { JSX } from "solid-js";
 import { Show } from "solid-js";
-import type { Closed } from "#lib/closed";
-import { cn } from "#lib/cn";
+import type { Closed } from "#lib/closed.ts";
+import { cn } from "#lib/cn.ts";
 import { Button } from "../button/index.tsx";
 
 // One sentence and the way to make the first one; with `title` it centers as

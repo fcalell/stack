@@ -2,9 +2,9 @@ import type { Act } from "@fcalell/ui-core/descriptors";
 import { field, text } from "@fcalell/ui-core/variants";
 import { Search } from "lucide-solid";
 import { Show } from "solid-js";
-import type { Closed } from "#lib/closed";
-import { cn } from "#lib/cn";
-import { useField } from "#lib/field";
+import type { Closed } from "#lib/closed.ts";
+import { cn } from "#lib/cn.ts";
+import { useField } from "#lib/field.ts";
 
 export type InputKind = "text" | "search" | "secret" | "code" | "number";
 

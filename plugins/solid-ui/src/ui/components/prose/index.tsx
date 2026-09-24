@@ -1,8 +1,8 @@
 import { text } from "@fcalell/ui-core/variants";
 import { createMemo, Show } from "solid-js";
-import type { Closed } from "#lib/closed";
-import { cn } from "#lib/cn";
-import { LoadingRows } from "#lib/loading";
+import type { Closed } from "#lib/closed.ts";
+import { cn } from "#lib/cn.ts";
+import { LoadingRows } from "#lib/loading.tsx";
 import { renderMarkdown } from "./markdown.ts";
 
 // Rendered markdown at `body`, measured at the reading width; code fences

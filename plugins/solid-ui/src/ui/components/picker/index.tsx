@@ -3,9 +3,9 @@ import { GROUP, row, text } from "@fcalell/ui-core/variants";
 import * as PopoverPrimitive from "@kobalte/core/popover";
 import { Check, ChevronDown } from "lucide-solid";
 import { createMemo, createSignal, For, Show } from "solid-js";
-import type { Closed } from "#lib/closed";
-import { cn } from "#lib/cn";
-import { useWords } from "#lib/words";
+import type { Closed } from "#lib/closed.ts";
+import { cn } from "#lib/cn.ts";
+import { useWords } from "#lib/words.tsx";
 import { Input } from "../input/index.tsx";
 import { Sheet } from "../sheet/index.tsx";
 

@@ -1,9 +1,9 @@
 import type { ComparisonRow } from "@fcalell/ui-core/descriptors";
 import { COUNT, GROUP, HAIRLINE, row, text } from "@fcalell/ui-core/variants";
 import { createMemo, createSignal, For, Show } from "solid-js";
-import type { Closed } from "#lib/closed";
-import { cn } from "#lib/cn";
-import { LoadingRows } from "#lib/loading";
+import type { Closed } from "#lib/closed.ts";
+import { cn } from "#lib/cn.ts";
+import { LoadingRows } from "#lib/loading.tsx";
 import { SegmentedControl } from "../segmented-control/index.tsx";
 
 // A group of labelled rows with two or three cells. From desktop the cells

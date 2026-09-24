@@ -3,10 +3,10 @@ import { PLACE_ROW_SELECTED, place } from "@fcalell/ui-core/variants";
 import { A, useLocation } from "@solidjs/router";
 import { For, type JSX, Show } from "solid-js";
 import { Dynamic } from "solid-js/web";
-import type { Closed } from "#lib/closed";
-import { cn } from "#lib/cn";
-import { useIcon } from "#lib/icons";
-import { dismissToast, toasts } from "#lib/toast";
+import type { Closed } from "#lib/closed.ts";
+import { cn } from "#lib/cn.ts";
+import { useIcon } from "#lib/icons.tsx";
+import { dismissToast, toasts } from "#lib/toast.ts";
 import { Count } from "../count/index.tsx";
 import { Toast } from "../toast/index.tsx";
 

@@ -1,9 +1,9 @@
 import { text } from "@fcalell/ui-core/variants";
 import { diffWords } from "diff";
 import { createMemo, For, Show } from "solid-js";
-import type { Closed } from "#lib/closed";
-import { cn } from "#lib/cn";
-import { LoadingRows } from "#lib/loading";
+import type { Closed } from "#lib/closed.ts";
+import { cn } from "#lib/cn.ts";
+import { LoadingRows } from "#lib/loading.tsx";
 
 // Prose with an added run on the ok soft and a removed one on the danger
 // soft, struck through.

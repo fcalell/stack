@@ -1,7 +1,7 @@
 import type { JSX } from "solid-js";
 import { Show } from "solid-js";
-import type { Closed } from "#lib/closed";
-import { LoadingRows } from "#lib/loading";
+import type { Closed } from "#lib/closed.ts";
+import { LoadingRows } from "#lib/loading.tsx";
 
 // Rows that are a feed: on the surface with no box and no hairlines, each at
 // least 44 px.

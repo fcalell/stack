@@ -4,12 +4,12 @@ import { GROUP, row, text, textStrong } from "@fcalell/ui-core/variants";
 import { A } from "@solidjs/router";
 import { For, type JSX, Match, Show, Switch } from "solid-js";
 import { Dynamic } from "solid-js/web";
-import type { Closed } from "#lib/closed";
-import { cn } from "#lib/cn";
-import { useInColumns } from "#lib/columns";
-import { useIcon } from "#lib/icons";
-import { Parts } from "#lib/parts";
-import { StatusGlyph } from "#lib/status-glyph";
+import type { Closed } from "#lib/closed.ts";
+import { cn } from "#lib/cn.ts";
+import { useInColumns } from "#lib/columns.ts";
+import { useIcon } from "#lib/icons.tsx";
+import { Parts } from "#lib/parts.tsx";
+import { StatusGlyph } from "#lib/status-glyph.tsx";
 import { Count } from "../count/index.tsx";
 
 export type Leading = { icon: string } | { status: StatusState };

@@ -1,7 +1,7 @@
 import { rhythm } from "@fcalell/ui-core/variants";
 import type { JSX } from "solid-js";
-import type { Closed } from "#lib/closed";
-import { cn } from "#lib/cn";
+import type { Closed } from "#lib/closed.ts";
+import { cn } from "#lib/cn.ts";
 
 // One row of controls over a list: a picker, a segmented control, a search
 // field, a switch.

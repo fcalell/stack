@@ -1,9 +1,9 @@
 import type { Act } from "@fcalell/ui-core/descriptors";
 import { TOAST } from "@fcalell/ui-core/variants";
 import { Show } from "solid-js";
-import type { Closed } from "#lib/closed";
-import { cn } from "#lib/cn";
-import { toast } from "#lib/toast";
+import type { Closed } from "#lib/closed.ts";
+import { cn } from "#lib/cn.ts";
+import { toast } from "#lib/toast.ts";
 
 // The dark pill above the bar; client-owned, so never an undo. `toast()`
 // queues one and the `Shell` draws the queue.

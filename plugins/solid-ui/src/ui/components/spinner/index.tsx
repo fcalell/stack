@@ -1,6 +1,6 @@
 import { LoaderCircle } from "lucide-solid";
-import type { Closed } from "#lib/closed";
-import { useWords } from "#lib/words";
+import type { Closed } from "#lib/closed.ts";
+import { useWords } from "#lib/words.tsx";
 
 // The spinning glyph for a busy control, in the ink around it.
 export type SpinnerProps = Closed;

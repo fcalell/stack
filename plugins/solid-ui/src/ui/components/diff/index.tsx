@@ -1,9 +1,9 @@
 import type { DiffLine, Hunk } from "@fcalell/ui-core/descriptors";
 import { CODE, DIFF_GUTTER, diffLine } from "@fcalell/ui-core/variants";
 import { createMemo, For, Show } from "solid-js";
-import type { Closed } from "#lib/closed";
-import { cn } from "#lib/cn";
-import { LoadingRows } from "#lib/loading";
+import type { Closed } from "#lib/closed.ts";
+import { cn } from "#lib/cn.ts";
+import { LoadingRows } from "#lib/loading.tsx";
 
 // Mono with a line-number gutter pinned left; added lines on the ok soft,
 // removed on the danger soft, hunk headers on the group fill. `split` is two

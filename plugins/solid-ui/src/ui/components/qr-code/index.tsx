@@ -1,7 +1,7 @@
 import qrcode from "qrcode-generator";
 import { createMemo, For, Show } from "solid-js";
-import type { Closed } from "#lib/closed";
-import { LoadingRows } from "#lib/loading";
+import type { Closed } from "#lib/closed.ts";
+import { LoadingRows } from "#lib/loading.tsx";
 
 // A square code in ink on the surface; a meta line is the consumer's, beneath.
 export type QrCodeProps = Closed & {

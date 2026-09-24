@@ -1,8 +1,8 @@
 import { rhythm } from "@fcalell/ui-core/variants";
 import type { JSX } from "solid-js";
-import { useBarPlacement } from "#lib/bar";
-import type { Closed } from "#lib/closed";
-import { cn } from "#lib/cn";
+import { useBarPlacement } from "#lib/bar.ts";
+import type { Closed } from "#lib/closed.ts";
+import { cn } from "#lib/cn.ts";
 
 // Buttons only, at most three, primary first; one `PendingBar` in their
 // place. Pinned above the home indicator as a `Screen`'s child, in flow as a

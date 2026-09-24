@@ -1,9 +1,9 @@
 import { CODE, text } from "@fcalell/ui-core/variants";
 import { createMemo, createSignal, Show } from "solid-js";
-import type { Closed } from "#lib/closed";
-import { cn } from "#lib/cn";
-import { LoadingRows } from "#lib/loading";
-import { useWords } from "#lib/words";
+import type { Closed } from "#lib/closed.ts";
+import { cn } from "#lib/cn.ts";
+import { LoadingRows } from "#lib/loading.tsx";
+import { useWords } from "#lib/words.tsx";
 
 // Mono, scrolling sideways, never wrapping. `tail` is the number of last
 // lines shown before a tap unfolds the rest; `copy` draws the copy act.

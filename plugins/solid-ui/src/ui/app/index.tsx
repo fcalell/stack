@@ -13,9 +13,9 @@ import {
 	Suspense,
 } from "solid-js";
 import { render } from "solid-js/web";
-import { type IconSet, IconsProvider } from "#lib/icons";
-import { createDefaultQueryClient } from "#lib/query";
-import { WordsProvider } from "#lib/words";
+import { type IconSet, IconsProvider } from "#lib/icons.tsx";
+import { createDefaultQueryClient } from "#lib/query.ts";
+import { WordsProvider } from "#lib/words.tsx";
 import { EmptyState } from "../components/empty-state/index.tsx";
 
 export interface CreateAppOptions {

@@ -3,11 +3,11 @@ import * as DialogPrimitive from "@kobalte/core/dialog";
 import { ChevronLeft, X } from "lucide-solid";
 import type { JSX } from "solid-js";
 import { Show } from "solid-js";
-import { BarContext } from "#lib/bar";
-import { Circle } from "#lib/circle";
-import type { Closed } from "#lib/closed";
-import { cn } from "#lib/cn";
-import { useWords } from "#lib/words";
+import { BarContext } from "#lib/bar.ts";
+import { Circle } from "#lib/circle.tsx";
+import type { Closed } from "#lib/closed.ts";
+import { cn } from "#lib/cn.ts";
+import { useWords } from "#lib/words.tsx";
 
 export interface SheetSubmit {
 	label: string;

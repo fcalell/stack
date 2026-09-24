@@ -1,7 +1,7 @@
 import { type TextRole, text } from "@fcalell/ui-core/variants";
 import type { JSX } from "solid-js";
 import { Dynamic } from "solid-js/web";
-import type { Closed } from "#lib/closed";
+import type { Closed } from "#lib/closed.ts";
 
 // The only way to set type: the role carries its size, leading, weight, ink
 // and family. Headings take a heading element, the rest a paragraph.

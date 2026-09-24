@@ -1,7 +1,7 @@
 import { ICON_BUTTON } from "@fcalell/ui-core/variants";
 import type { LucideIcon } from "lucide-solid";
 import { Dynamic } from "solid-js/web";
-import { cn } from "#lib/cn";
+import { cn } from "#lib/cn.ts";
 
 // The 44 px circle behind every icon-only act the plugin draws itself: back,
 // close, more, the row's more. `IconButton` is the same circle with the

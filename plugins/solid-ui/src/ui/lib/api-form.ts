@@ -1,6 +1,6 @@
 import { createForm, type StandardSchemaV1 } from "@tanstack/solid-form";
-import { useMutation } from "#lib/query";
-import { toast } from "#lib/toast";
+import { useMutation } from "#lib/query.ts";
+import { toast } from "#lib/toast.ts";
 
 interface UseApiFormOptions<TData, TOutput> {
 	// biome-ignore lint/suspicious/noExplicitAny: schema output may differ from input (transforms)

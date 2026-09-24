@@ -3,9 +3,9 @@ import type { StatusState } from "@fcalell/ui-core/tokens";
 import { row, text } from "@fcalell/ui-core/variants";
 import { A } from "@solidjs/router";
 import { createSignal, type JSX, Match, Show, Switch } from "solid-js";
-import type { Closed } from "#lib/closed";
-import { cn } from "#lib/cn";
-import { useWords } from "#lib/words";
+import type { Closed } from "#lib/closed.ts";
+import { cn } from "#lib/cn.ts";
+import { useWords } from "#lib/words.tsx";
 import { Status } from "../status/index.tsx";
 
 export type DefinitionValue =

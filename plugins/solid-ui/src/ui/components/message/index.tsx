@@ -1,8 +1,8 @@
 import { type MessageAuthor, message, text } from "@fcalell/ui-core/variants";
 import { Show } from "solid-js";
-import type { Closed } from "#lib/closed";
-import { cn } from "#lib/cn";
-import { LoadingRows } from "#lib/loading";
+import type { Closed } from "#lib/closed.ts";
+import { cn } from "#lib/cn.ts";
+import { LoadingRows } from "#lib/loading.tsx";
 import { Prose } from "../prose/index.tsx";
 
 // One message of a thread: `you` in a soft bubble right, `other` as prose on

@@ -10,7 +10,7 @@ import {
 	X,
 } from "lucide-solid";
 import { Dynamic } from "solid-js/web";
-import { cn } from "#lib/cn";
+import { cn } from "#lib/cn.ts";
 
 // The glyph of each of the six states, the plugin's own since the state is
 // the contract's. The word beside it is `words[state]` or the label.

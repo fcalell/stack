@@ -2,8 +2,8 @@ import type { Option } from "@fcalell/ui-core/descriptors";
 import { SEGMENTED_CONTROL, segment } from "@fcalell/ui-core/variants";
 import * as RadioGroup from "@kobalte/core/radio-group";
 import { For } from "solid-js";
-import type { Closed } from "#lib/closed";
-import { cn } from "#lib/cn";
+import type { Closed } from "#lib/closed.ts";
+import { cn } from "#lib/cn.ts";
 
 // A state the control rests on, never a trigger: one pill per option, the
 // chosen one raised.

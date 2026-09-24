@@ -8,8 +8,8 @@ import {
 	text,
 } from "@fcalell/ui-core/variants";
 import { Show } from "solid-js";
-import type { Closed } from "#lib/closed";
-import { cn } from "#lib/cn";
+import type { Closed } from "#lib/closed.ts";
+import { cn } from "#lib/cn.ts";
 import { Spinner } from "../spinner/index.tsx";
 
 // A pill with words. Full width in an action bar, its content's width in a

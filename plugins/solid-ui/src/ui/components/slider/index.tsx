@@ -1,7 +1,7 @@
 import { METER_FILL, METER_TRACK, text } from "@fcalell/ui-core/variants";
 import * as SliderPrimitive from "@kobalte/core/slider";
-import type { Closed } from "#lib/closed";
-import { cn } from "#lib/cn";
+import type { Closed } from "#lib/closed.ts";
+import { cn } from "#lib/cn.ts";
 
 // A labelled track, 44 px tall, the value drawn beside the thumb.
 export type SliderProps = Closed & {

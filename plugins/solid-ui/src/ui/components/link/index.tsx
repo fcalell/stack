@@ -1,6 +1,6 @@
 import { A } from "@solidjs/router";
 import type { JSX } from "solid-js";
-import type { Closed } from "#lib/closed";
+import type { Closed } from "#lib/closed.ts";
 
 // Inline, inside `body` or `meta`; never a screen's only act.
 export type LinkProps = Closed & {

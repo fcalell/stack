@@ -1,7 +1,7 @@
 import type { JSX } from "solid-js";
 import { Show } from "solid-js";
-import type { Closed } from "#lib/closed";
-import { cn } from "#lib/cn";
+import type { Closed } from "#lib/closed.ts";
+import { cn } from "#lib/cn.ts";
 
 // The desktop's columns, composed per place by the consumer: `list` at the
 // list width, `main` filling, `pane` beside them from wide and pushing over
