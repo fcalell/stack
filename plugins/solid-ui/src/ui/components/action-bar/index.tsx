@@ -1,0 +1,27 @@
+import { rhythm } from "@fcalell/ui-core/variants";
+import type { JSX } from "solid-js";
+import { useBarPlacement } from "#lib/bar";
+import type { Closed } from "#lib/closed";
+import { cn } from "#lib/cn";
+
+// Buttons only, at most three, primary first; one `PendingBar` in their
+// place. Pinned above the home indicator as a `Screen`'s child, in flow as a
+// `Form`'s or a `Sheet`'s; full-width stacked on the phone, at their content's
+// width in one wrapping row from desktop.
+export type ActionBarProps = Closed & { children?: JSX.Element };
+
+export function ActionBar(props: ActionBarProps) {
+	const placement = useBarPlacement();
+	return (
+		<div
+			class={cn(
+				rhythm({ unit: "row" }),
+				"flex flex-col *:w-full desktop:flex-row desktop:flex-wrap desktop:*:w-auto",
+				placement === "pinned" &&
+					"sticky bottom-0 -mx-inset mt-auto bg-surface px-inset pt-stack pb-[max(env(safe-area-inset-bottom),var(--spacing-stack))] tablet:-mx-section tablet:px-section",
+			)}
+		>
+			{props.children}
+		</div>
+	);
+}

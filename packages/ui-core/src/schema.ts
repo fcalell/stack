@@ -1,10 +1,14 @@
 import { z } from "zod";
 import {
+	BREAKPOINTS,
 	INVARIANT_COLORS,
 	LABEL,
 	MODES,
 	PER_MODE_COLORS,
-	SCALE_DEFAULTS,
+	PRIMARIES,
+	SCALE_KEYS,
+	WIDTHS,
+	WORD_KEYS,
 } from "./tokens.ts";
 
 // The accepted subset is the one the derivation itself emits: three unsigned
@@ -12,12 +16,12 @@ import {
 // `none`, and angle units are rejected, so an override stays comparable with a
 // derived value. Digits are required, so `oklch(. . .)` is rejected: a
 // malformed oklch compiles to black rather than failing the build, which is why
-// the check sits here and not at the emit. The README states the subset.
+// the check sits here and not at the emit.
 const OKLCH_RE =
 	/^oklch\(\s*\d+(\.\d+)?(\s+\d+(\.\d+)?){2}\s*(\/\s*\d+(\.\d+)?\s*)?\)$/;
 
-// A scale value is a raw token stream (`32px`, `1.29`, a shadow list), so only
-// the sequences that would break out of the declaration are rejected: the
+// A scale value is a raw token stream (`32px`, a shadow list), so only the
+// sequences that would break out of the declaration are rejected: the
 // statement and block terminators, the line breaks that close a declaration,
 // and a comment delimiter, which would swallow the rest of the emitted block.
 const SCALE_VALUE_ILLEGAL_RE = /[;{}\n\r\f]|\/\*|\*\//;
@@ -43,17 +47,8 @@ function parensBalanced(value: string): boolean {
 	return depth === 0;
 }
 
-const hueSchema = z.number().min(0).lt(360);
-
-const knobsSchema = z.strictObject({
-	neutralHue: hueSchema.optional(),
-	brandHue: hueSchema.optional(),
-	interactiveHue: hueSchema.optional(),
-	okHue: hueSchema.optional(),
-	warnHue: hueSchema.optional(),
-	dangerHue: hueSchema.optional(),
-	neutralChroma: z.number().min(0).max(2).optional(),
-});
+const hue = z.number().min(0).lt(360).optional();
+const px = z.number().int().positive().optional();
 
 const colorMapSchema = z.record(z.string(), z.string());
 
@@ -70,6 +65,7 @@ const overridesSchema = z.strictObject({
 
 const PER_MODE_SET: ReadonlySet<string> = new Set(PER_MODE_COLORS);
 const INVARIANT_SET: ReadonlySet<string> = new Set(INVARIANT_COLORS);
+const SCALE_SET: ReadonlySet<string> = new Set(SCALE_KEYS);
 
 function checkColorGroup(
 	ctx: z.RefinementCtx,
@@ -100,11 +96,41 @@ function checkColorGroup(
 	}
 }
 
+function pxRecord<const K extends readonly string[]>(keys: K) {
+	return z
+		.strictObject(
+			Object.fromEntries(keys.map((key) => [key, px])) as Record<
+				K[number],
+				typeof px
+			>,
+		)
+		.optional();
+}
+
+// The knobs, flat: every scale derives from one of them, so a theme sets a
+// knob and never a token. `overrides` stays for the single token off its ratio.
 export const themeSchema = z
 	.strictObject({
+		accentHue: hue,
+		neutralHue: hue,
+		neutralChroma: z.number().min(0).max(2).optional(),
+		okHue: hue,
+		warnHue: hue,
+		dangerHue: hue,
+		primary: z.enum(PRIMARIES).optional(),
+		space: px,
+		radius: px,
+		text: px,
+		fonts: z
+			.strictObject({
+				sans: z.string().min(1).optional(),
+				mono: z.string().min(1).optional(),
+			})
+			.optional(),
+		widths: pxRecord(WIDTHS),
+		breakpoints: pxRecord(BREAKPOINTS),
 		// Which mode seeds the `@theme` block, so the color utilities exist.
 		defaultMode: z.enum(MODES).default("light"),
-		knobs: knobsSchema.optional(),
 		overrides: overridesSchema.optional(),
 	})
 	.superRefine((theme, ctx) => {
@@ -128,7 +154,7 @@ export const themeSchema = z
 			);
 		}
 		for (const [key, value] of Object.entries(theme.overrides?.scales ?? {})) {
-			if (!(key in SCALE_DEFAULTS)) {
+			if (!SCALE_SET.has(key)) {
 				ctx.addIssue({
 					code: "custom",
 					path: ["overrides", "scales", key],
@@ -152,6 +178,14 @@ export const themeSchema = z
 
 export type Theme = z.input<typeof themeSchema>;
 export type ParsedTheme = z.output<typeof themeSchema>;
+
+// Every key required, so a translation that misses a word fails at the type
+// and at the schema, never in the interface.
+export const wordsSchema = z.strictObject(
+	Object.fromEntries(
+		WORD_KEYS.map((key) => [key, z.string().min(1)]),
+	) as Record<(typeof WORD_KEYS)[number], z.ZodString>,
+);
 
 // Throws an Error whose message names every offending key by its path, so a
 // consumer reads which token or knob it got wrong without decoding a ZodError.

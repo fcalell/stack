@@ -1,5 +1,7 @@
 /// <reference path="./virtual.d.ts" />
 import "../fonts";
+import type { Words } from "@fcalell/ui-core/tokens";
+import { ENGLISH } from "@fcalell/ui-core/tokens";
 import { MetaProvider } from "@solidjs/meta";
 import { type RouteDefinition, Router } from "@solidjs/router";
 import { type QueryClient, QueryClientProvider } from "@tanstack/solid-query";
@@ -11,9 +13,10 @@ import {
 	Suspense,
 } from "solid-js";
 import { render } from "solid-js/web";
+import { type IconSet, IconsProvider } from "#lib/icons";
 import { createDefaultQueryClient } from "#lib/query";
+import { WordsProvider } from "#lib/words";
 import { EmptyState } from "../components/empty-state/index.tsx";
-import { Toaster } from "../components/toast/index.tsx";
 
 export interface CreateAppOptions {
 	routes?: RouteDefinition[];
@@ -21,6 +24,14 @@ export interface CreateAppOptions {
 	queryClient?: QueryClient;
 	errorFallback?: (err: Error, reset: () => void) => JSX.Element;
 	rootId?: string;
+	// The consumer's closed icon set, read by `Icon`, a row's marks and the
+	// shell's places.
+	icons?: IconSet;
+	// The words the molecules speak; omitted, English. The generated entry
+	// mounts the same provider from the plugin option.
+	words?: Words;
+	// The sentence the default error fallback draws under its title.
+	errorTitle?: string;
 }
 
 export function createApp(options: CreateAppOptions = {}): void {
@@ -39,24 +50,34 @@ export function createApp(options: CreateAppOptions = {}): void {
 		return mod.routes;
 	});
 
+	const withWords = (children: JSX.Element) =>
+		options.words ? (
+			<WordsProvider words={options.words}>{children}</WordsProvider>
+		) : (
+			children
+		);
+
 	render(
 		() => (
 			<ErrorBoundary
 				fallback={(err, reset) =>
-					(options.errorFallback ?? defaultErrorFallback)(err, reset)
+					(options.errorFallback ?? defaultErrorFallback(options))(err, reset)
 				}
 			>
 				{wrapProviders(
-					<QueryClientProvider client={queryClient}>
-						<MetaProvider>
-							<Suspense>
-								<Show when={routes()}>
-									{(resolved) => <Router>{resolved()}</Router>}
-								</Show>
-							</Suspense>
-							<Toaster />
-						</MetaProvider>
-					</QueryClientProvider>,
+					withWords(
+						<IconsProvider icons={options.icons ?? {}}>
+							<QueryClientProvider client={queryClient}>
+								<MetaProvider>
+									<Suspense>
+										<Show when={routes()}>
+											{(resolved) => <Router>{resolved()}</Router>}
+										</Show>
+									</Suspense>
+								</MetaProvider>
+							</QueryClientProvider>
+						</IconsProvider>,
+					),
 				)}
 			</ErrorBoundary>
 		),
@@ -64,12 +85,14 @@ export function createApp(options: CreateAppOptions = {}): void {
 	);
 }
 
-function defaultErrorFallback(err: Error, reset: () => void): JSX.Element {
-	return (
+// The error sentence is the thrown message; the title is the consumer's word
+// and the act's label is `words.retry`.
+function defaultErrorFallback(options: CreateAppOptions) {
+	return (err: Error, reset: () => void): JSX.Element => (
 		<EmptyState
-			title="Something went wrong"
-			description={err.message}
-			action={{ label: "Retry", onSelect: reset }}
+			title={options.errorTitle ?? err.name}
+			sentence={err.message}
+			act={{ label: (options.words ?? ENGLISH).retry, onAct: reset }}
 		/>
 	);
 }

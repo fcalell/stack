@@ -3,22 +3,34 @@ import type { ReactNode } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { type IconSet, IconsProvider } from "../lib/icons";
+import { type Words, WordsProvider } from "../lib/words";
 
 const FLEX_FILL = { flex: 1 } as const;
 
-// The UI-shell providers, composed for use OUTSIDE the generated entry (tests,
-// Storybook, a screenshot harness). The real app entry composes the same stack
-// — plus Auth + Query — through plugin-expo's `providers` slot; this is the
-// manual equivalent of just the design-system layer. uniwind theming needs no
-// provider (it is CSS-first), so there is intentionally no ThemeProvider here.
-export function AppProviders({ children }: { children: ReactNode }) {
-	return (
+// The UI-shell providers, composed for use outside the generated entry
+// (tests, a screenshot harness). The real app entry composes the same stack,
+// plus Auth and Query, through plugin-expo's `providers` slot. uniwind theming
+// needs no provider (it is CSS-first), so there is no ThemeProvider here.
+export function AppProviders({
+	children,
+	words,
+	icons,
+}: {
+	children: ReactNode;
+	words?: Words;
+	icons?: IconSet;
+}) {
+	const themed = (
 		<GestureHandlerRootView style={FLEX_FILL}>
 			<KeyboardProvider>
 				<SafeAreaProvider>
-					<BottomSheetModalProvider>{children}</BottomSheetModalProvider>
+					<BottomSheetModalProvider>
+						<IconsProvider icons={icons ?? {}}>{children}</IconsProvider>
+					</BottomSheetModalProvider>
 				</SafeAreaProvider>
 			</KeyboardProvider>
 		</GestureHandlerRootView>
 	);
+	return words ? <WordsProvider words={words}>{themed}</WordsProvider> : themed;
 }

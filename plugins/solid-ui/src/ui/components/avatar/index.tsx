@@ -1,85 +1,38 @@
-import * as ImagePrimitive from "@kobalte/core/image";
-import type { PolymorphicProps } from "@kobalte/core/polymorphic";
-import { cva, type VariantProps } from "class-variance-authority";
-import type { ValidComponent } from "solid-js";
-import { splitProps } from "solid-js";
+import { avatar, avatarStep } from "@fcalell/ui-core/variants";
+import { Show } from "solid-js";
+import type { Closed } from "#lib/closed";
+import { cn } from "#lib/cn";
 
-const avatarVariants = cva(
-	"relative flex shrink-0 overflow-hidden rounded-full",
-	{
-		variants: {
-			size: {
-				sm: "size-8 text-micro",
-				default: "size-10 text-callout",
-				lg: "size-12 text-body",
-			},
-		},
-		defaultVariants: {
-			size: "default",
-		},
-	},
-);
+// A circle sized by the type role around it: the image, else the name's
+// initials on a fill from the avatar ladder picked by the name, so one name
+// keeps one color.
+export type AvatarProps = Closed & {
+	name: string;
+	src?: string;
+};
 
-type AvatarProps<T extends ValidComponent = "span"> =
-	ImagePrimitive.ImageRootProps<T> &
-		VariantProps<typeof avatarVariants> & {
-			class?: never;
-			style?: never;
-			classList?: never;
-		};
-
-function Root<T extends ValidComponent = "span">(
-	props: PolymorphicProps<T, AvatarProps<T>>,
-) {
-	const [local, rest] = splitProps(props as AvatarProps, ["size"]);
-	return (
-		<ImagePrimitive.Root
-			class={avatarVariants({ size: local.size })}
-			{...rest}
-		/>
-	);
+function initials(name: string): string {
+	return name
+		.split(/\s+/)
+		.filter(Boolean)
+		.slice(0, 2)
+		.map((word) => word[0]?.toUpperCase() ?? "")
+		.join("");
 }
 
-type ImageProps<T extends ValidComponent = "img"> =
-	ImagePrimitive.ImageImgProps<T> & {
-		alt: string;
-		class?: never;
-		style?: never;
-		classList?: never;
-	};
-
-function Image<T extends ValidComponent = "img">(
-	props: PolymorphicProps<T, ImageProps<T>>,
-) {
+export function Avatar(props: AvatarProps) {
 	return (
-		<ImagePrimitive.Img
-			class="aspect-square size-full"
-			{...(props as ImageProps)}
-		/>
+		<span
+			role="img"
+			aria-label={props.name}
+			class={cn(
+				avatar({ step: avatarStep(props.name) }),
+				"inline-flex size-[2em] shrink-0 items-center justify-center overflow-hidden font-medium text-[0.75em]",
+			)}
+		>
+			<Show when={props.src} fallback={initials(props.name)}>
+				{(src) => <img src={src()} alt="" class="size-full object-cover" />}
+			</Show>
+		</span>
 	);
 }
-
-type FallbackProps<T extends ValidComponent = "span"> =
-	ImagePrimitive.ImageFallbackProps<T> & {
-		class?: never;
-		style?: never;
-		classList?: never;
-	};
-
-function Fallback<T extends ValidComponent = "span">(
-	props: PolymorphicProps<T, FallbackProps<T>>,
-) {
-	return (
-		<ImagePrimitive.Fallback
-			class="flex size-full items-center justify-center bg-surface-2 font-mono text-ink-1"
-			{...(props as FallbackProps)}
-		/>
-	);
-}
-
-export const Avatar = Object.assign(Root, {
-	Image,
-	Fallback,
-});
-
-export { avatarVariants };

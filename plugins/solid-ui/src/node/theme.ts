@@ -4,25 +4,18 @@ import {
 	shadowUtilities,
 	themeTokens,
 } from "@fcalell/ui-core/emit";
-import { FONT_FALLBACKS } from "@fcalell/ui-core/tokens";
 import type { CssBlock, CssLayer } from "../types.ts";
 import { renderClassRule } from "./codegen.ts";
 
-// The tokens the web owns on top of the shared contract. Motion is a web-only
-// concern, and font families stay with the platform plugins — ui-core shares
-// only the fallback stacks. Each family reads the `--ui-font-*` token
-// `themeFontsPlugin` rebinds, falling back to the shared stack so a consumer
-// running `fonts: []` still gets a real family.
+// The tokens the web owns on top of the shared contract: motion. The font
+// families are the contract's (`--font-sans`, `--font-mono` from the theme's
+// `fonts` knob), so nothing font-shaped lives here.
 const WEB_ONLY: Record<string, string> = {
 	"--ease-ui": "cubic-bezier(0.4, 0, 0.2, 1)",
 	"--duration-fast": "100ms",
 	"--duration-base": "150ms",
 	"--animate-content-show": "content-show 150ms var(--ease-ui)",
 	"--animate-content-hide": "content-hide 150ms var(--ease-ui)",
-	"--animate-caret-blink": "caret-blink 1.25s ease-out infinite",
-	"--font-sans": `var(--ui-font-sans, ${FONT_FALLBACKS.sans})`,
-	"--font-mono": `var(--ui-font-mono, ${FONT_FALLBACKS.mono})`,
-	"--font-serif": `var(--ui-font-serif, ${FONT_FALLBACKS.serif})`,
 };
 
 // The `@theme` block always seeds the light palette. `themeTokens` seeds

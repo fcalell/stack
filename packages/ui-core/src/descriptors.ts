@@ -1,51 +1,95 @@
 // Framework-free descriptors: a composed region is data, so the owning
-// primitive renders it. `TIcon` is a type parameter because the icon is a
+// molecule renders it. `TIcon` is a type parameter because the icon is a
 // `lucide-solid` component on web and a `lucide-react-native` one on native,
 // and ui-core depends on neither.
-import type { BadgeTone, ButtonTone } from "./variants.ts";
+import type { StatusState, Words } from "./tokens.ts";
 
-export interface Action<TIcon = never> {
+export type { StatusState, Words };
+
+// A labelled text act, 44 px, with an optional `blocked` reason drawn under it.
+export interface Act {
 	label: string;
-	onSelect: () => void;
-	disabled?: boolean;
+	onAct: () => void;
+	blocked?: string;
 	loading?: boolean;
-	icon?: TIcon;
 }
 
-export interface BadgeSpec {
-	tone?: BadgeTone;
+// An icon-only act: the label is read aloud, never drawn.
+export interface IconAct<TIcon = never> {
+	icon: TIcon;
+	label: string;
+	onAct: () => void;
+}
+
+// A model-written name: typographic quotes around it, drawn in the slot's own
+// role; cut at 40 characters in a `meta` part, wrapped to two lines in a title.
+export interface Quoted {
+	quoted: string;
+}
+
+export type Part = string | Quoted;
+
+// A mark on a row: an icon from the consumer's set, its label read aloud.
+export interface Mark<TIcon = never> {
+	icon: TIcon;
 	label: string;
 }
 
-export interface FooterAction<TIcon = never> extends Action<TIcon> {
-	iconPosition?: "leading" | "trailing";
-}
-
-export interface FooterDestructive<TIcon = never> {
+export interface Option {
+	value: string;
 	label: string;
-	icon?: TIcon;
-	tone?: ButtonTone;
-	confirmTitle: string;
-	confirmBody: string;
-	confirmLabel?: string;
-	loading?: boolean;
-	disabled?: boolean;
-	// Receives the `option` toggle's value, `false` when there is no option.
-	onConfirm: (optionChecked: boolean) => void;
-	option?: { label: string; hint?: string };
+	description?: string;
+	recommended?: boolean;
 }
 
-interface FooterFields<TIcon = never> {
-	primary?: FooterAction<TIcon>;
-	secondary?: Action<TIcon>;
-	tertiary?: Action<TIcon>;
-	destructive?: FooterDestructive<TIcon>;
+// A place in the shell: a route, a label, an icon, an optional count.
+export interface PlaceSpec<TIcon = never> {
+	route: string;
+	label: string;
+	icon: TIcon;
+	count?: number;
 }
 
-// At least one field must be set, which the union spells out rather than
-// leaving every field optional.
-export type FooterSpec<TIcon = never> =
-	| (FooterFields<TIcon> & { primary: FooterAction<TIcon> })
-	| (FooterFields<TIcon> & { secondary: Action<TIcon> })
-	| (FooterFields<TIcon> & { tertiary: Action<TIcon> })
-	| (FooterFields<TIcon> & { destructive: FooterDestructive<TIcon> });
+// One line of a diff hunk; `before` and `after` are line numbers.
+export interface DiffLine {
+	kind: "context" | "added" | "removed";
+	text: string;
+	before?: number;
+	after?: number;
+}
+
+export interface Hunk {
+	header: string;
+	lines: DiffLine[];
+}
+
+export interface ComparisonCell {
+	label: string;
+	value: string;
+}
+
+export interface ComparisonRow {
+	label: string;
+	cells: ComparisonCell[];
+	chips?: Array<{ label: string }>;
+}
+
+// One bar: a label, its total, the parts it stacks by one dimension, the time
+// under it.
+export interface BarSeries {
+	label: string;
+	value: number;
+	parts?: Array<{ label: string; value: number }>;
+	at?: string;
+}
+
+export interface Attachment {
+	id: string;
+	name: string;
+}
+
+// A sentence and an act under a message input.
+export interface Notice {
+	sentence: string;
+	act?: Act;
+}

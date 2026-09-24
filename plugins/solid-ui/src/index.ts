@@ -10,8 +10,8 @@ import { cliSlots, emitArtifact } from "@fcalell/cli/cli-slots";
 import { solid } from "@fcalell/plugin-solid";
 import { vite } from "@fcalell/plugin-vite";
 import { deriveTheme } from "@fcalell/ui-core/derive";
+import { WORD_KEYS, type Words } from "@fcalell/ui-core/tokens";
 import { aggregateAppCss } from "./node/codegen.ts";
-import { cssString } from "./node/css-escape.ts";
 import { defaultFonts, type FontEntry } from "./node/fonts.ts";
 import { runGeometryGate } from "./node/gate.ts";
 import { darkLayer, shadowBlocks, themeBlock } from "./node/theme.ts";
@@ -25,12 +25,6 @@ import {
 
 const SOURCE = "solid-ui";
 
-const ROLE_FALLBACKS: Record<NonNullable<FontEntry["role"]>, string[]> = {
-	sans: ["ui-sans-serif", "system-ui", "-apple-system", "sans-serif"],
-	mono: ["ui-monospace", '"Cascadia Code"', '"Source Code Pro"', "monospace"],
-	serif: ["ui-serif", "Georgia", "Cambria", '"Times New Roman"', "serif"],
-};
-
 function fontEntryToExpression(font: FontEntry): TsExpression {
 	const props: Array<{ key: string; value: TsExpression }> = [
 		{ key: "family", value: { kind: "string", value: font.family } },
@@ -38,9 +32,6 @@ function fontEntryToExpression(font: FontEntry): TsExpression {
 		{ key: "weight", value: { kind: "string", value: font.weight } },
 		{ key: "style", value: { kind: "string", value: font.style } },
 	];
-	if (font.role) {
-		props.push({ key: "role", value: { kind: "string", value: font.role } });
-	}
 	props.push({
 		key: "fallback",
 		value: {
@@ -72,29 +63,16 @@ function fontEntryToExpression(font: FontEntry): TsExpression {
 	return { kind: "object", properties: props };
 }
 
-function fontsToTokenCss(fonts: FontEntry[]): string | null {
-	const byRole = new Map<NonNullable<FontEntry["role"]>, FontEntry>();
-	for (const font of fonts) {
-		if (!font.role || byRole.has(font.role)) continue;
-		byRole.set(font.role, font);
-	}
-	if (byRole.size === 0) return null;
-
-	const decls: string[] = [];
-	for (const [role, font] of byRole) {
-		// Family names cross into a CSS custom-property value — quote-and-
-		// escape via cssString so a name like `Foo"Bar` can't break out of
-		// its CSS string and inject extra declarations.
-		const stack = [
-			cssString(font.family),
-			cssString(`${font.family} Fallback`),
-			...ROLE_FALLBACKS[role],
-		];
-		// `role` is constrained to the {sans,mono,serif} enum on FontEntry,
-		// so `--ui-font-${role}` is statically safe.
-		decls.push(`\t--ui-font-${role}: ${stack.join(", ")};`);
-	}
-	return `:root {\n${decls.join("\n")}\n}`;
+// The consumer's `words` as a literal object expression, so the generated
+// entry mounts the provider with no glue file.
+function wordsToExpression(words: Words): TsExpression {
+	return {
+		kind: "object",
+		properties: WORD_KEYS.map((key) => ({
+			key,
+			value: { kind: "string", value: words[key] },
+		})),
+	};
 }
 
 // ── Slot declarations ──────────────────────────────────────────────
@@ -259,23 +237,35 @@ export const solidUi = plugin("solid-ui", {
 
 		// ── Composition providers ───────────────────────────────────────
 		// MetaProvider wraps the app so <Title>/<Meta> from any page can
-		// contribute to <head>. Toaster renders as a sibling alongside the
-		// wrapped children so solid-sonner anchors at the root. order = 0
-		// keeps MetaProvider outermost even as more providers compose in.
+		// contribute to <head>. order = 0 keeps it outermost as more providers
+		// compose in.
 		solid.slots.providers.contribute(
 			(): ProviderSpec => ({
 				imports: [
 					{ source: "@fcalell/plugin-solid-ui/meta", named: ["MetaProvider"] },
-					{
-						source: "@fcalell/plugin-solid-ui/components/toast",
-						named: ["Toaster"],
-					},
 				],
 				wrap: { identifier: "MetaProvider" },
-				siblings: [{ kind: "jsx", tag: "Toaster", props: [], children: [] }],
 				order: 0,
 			}),
 		),
+		// The consumer's words, mounted once; absent, the context speaks English.
+		solid.slots.providers.contribute((): ProviderSpec | undefined => {
+			const words = self.options.words;
+			if (!words) return undefined;
+			return {
+				imports: [
+					{
+						source: "@fcalell/plugin-solid-ui/lib/words",
+						named: ["WordsProvider"],
+					},
+				],
+				wrap: {
+					identifier: "WordsProvider",
+					props: [{ name: "words", value: wordsToExpression(words) }],
+				},
+				order: 1,
+			};
+		}),
 
 		// ── App CSS ─────────────────────────────────────────────────────
 		self.slots.appCssImports.contribute(() => "tailwindcss"),
@@ -288,12 +278,6 @@ export const solidUi = plugin("solid-ui", {
 		self.slots.appCssBlocks.contribute(async (ctx) =>
 			shadowBlocks(await ctx.resolve(self.slots.resolvedTheme)),
 		),
-		self.slots.appCssLayers.contribute(async (ctx) => {
-			const entries = await ctx.resolve(self.slots.fonts);
-			const content = fontsToTokenCss(entries);
-			if (content === null) return undefined;
-			return { name: "base", content };
-		}),
 		self.slots.appCssLayers.contribute(async (ctx) =>
 			darkLayer(await ctx.resolve(self.slots.resolvedTheme)),
 		),
@@ -329,4 +313,4 @@ export const solidUi = plugin("solid-ui", {
 	],
 });
 
-export type { SolidUiOptions, Theme } from "./types.ts";
+export type { SolidUiOptions, Theme, Words } from "./types.ts";

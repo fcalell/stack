@@ -1,19 +1,15 @@
-// Reproduction harness for the `.stack/global.css` emission and the uniwind
-// pipeline that consumes it.
+// Reproduction harness for the `.stack/global.css` emission, the uniwind
+// pipeline that consumes it, and the roster the components are held to.
 //
 //   pnpm --filter @fcalell/plugin-native-ui verify
 //
-// Every machine-checkable acceptance criterion of `.helm/board/epics/001-ui-core/`
-// stories 04 and 05 (the native run) is one check below, so a failing check id
-// traces back to a criterion.
 // The sheet is rendered via `aggregateGlobalCss` with default options (no
 // consumer project exists to drive the graph), then compiled twice: through
 // uniwind's own dist compiler (the exact code path Metro runs, minus a
 // device), and through a Tailwind CLI build that decides what the vocabulary
 // resolves to. The pipeline check runs before the Tailwind build on purpose:
 // it re-stamps uniwind's mutable in-package `uniwind.css` artifact from our
-// own emission (machine-shared pnpm-store state another project may have
-// stamped last), so the build reads a deterministic artifact.
+// own emission, so the build reads a deterministic artifact.
 import { execFileSync } from "node:child_process";
 import {
 	existsSync,
@@ -48,55 +44,38 @@ import {
 	tailwindBuild,
 } from "@fcalell/ui-core/harness";
 import {
+	CLOSED_PROPS,
+	componentDir,
+	rosterEntries,
+} from "@fcalell/ui-core/roster";
+import {
+	ENGLISH,
 	PER_MODE_COLORS,
 	SHADOW_LEVELS,
+	SPACING_RUNGS,
+	STATUS_STATES,
 	TYPE_ROLES,
 	ZEROED_NAMESPACES,
 } from "@fcalell/ui-core/tokens";
-import {
-	BUTTON_MUTED_LABEL,
-	badge,
-	badgeDot,
-	badgeLabel,
-	button,
-	buttonLabel,
-	buttonMuted,
-	CHECKBOX_MARK,
-	CONTROL_MUTED,
-	card,
-	checkbox,
-	dialog,
-	field,
-	rhythm,
-	SKELETON,
-	TOGGLE_KNOB,
-	text,
-	textStrong,
-	toggle,
-} from "@fcalell/ui-core/variants";
+import * as variants from "@fcalell/ui-core/variants";
+import { Node, Project } from "ts-morph";
 import { aggregateGlobalCss } from "../src/node/codegen.ts";
 import { runGeometryGate } from "../src/node/gate.ts";
-import {
-	type NativeFontEntry,
-	nativeUiOptionsSchema,
-	type Theme,
-} from "../src/types.ts";
+import { nativeUiOptionsSchema, type Theme } from "../src/types.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const pkgDir = resolve(here, "..");
 const fixtureDir = resolve(here, "fixture");
 
 // The production `@source` roots, restated as a second opinion; a3 pins
-// `src/index.ts` to the same three strings so the two cannot drift. The
-// fixture mirrors the consumer layout (global.css one level under the root,
-// the packages linked into node_modules), so the same strings resolve here.
+// `src/index.ts` to the same three strings so the two cannot drift.
 const SOURCES = [
 	"../src",
 	"../node_modules/@fcalell/plugin-native-ui/src",
 	"../node_modules/@fcalell/ui-core/src",
 ];
 
-// The retired vocabulary: names the components no longer carry, and the
+// The retired vocabulary: the names the components no longer carry, and the
 // shadcn-era names a consumer might type. The namespace resets must compile
 // every one of them to nothing.
 const RETIRED = [
@@ -104,107 +83,122 @@ const RETIRED = [
 	"text-base",
 	"text-xs",
 	"text-lg",
+	"text-h1",
+	"text-h3",
+	"text-callout",
+	"text-caption",
+	"text-micro",
 	"rounded-lg",
 	"rounded-2xl",
+	"rounded-md",
+	"rounded-control",
+	"rounded-xl",
+	"shadow-1",
+	"shadow-2",
+	"shadow-3",
+	"p-card",
+	"text-ink-1",
+	"text-ink-2",
+	"text-ink-3",
+	"text-ink-4",
+	"bg-surface-2",
+	"bg-surface-3",
+	"border-edge-2",
+	"bg-brand",
+	"text-interactive",
+	"text-accent-ink",
 	"text-white",
 	"bg-primary",
 	"bg-black/50",
 ];
 
-// The native overlay allowlist: every class the swept `src/ui` sources name —
-// the decision-6 press grounds, display/alignment overlays, and the sweep's
-// mapped contract classes. Spelled out as a second opinion; check b5 asserts
-// it equals the set enumerated from the sources, so a component edit that
-// adds or drops a class fails until the list moves with it.
+// The native overlay allowlist: every class the swept `src/ui` sources name,
+// spelled out as a second opinion; check b5 asserts it equals the set
+// enumerated from the sources, so a component edit that adds or drops a class
+// fails until the list moves with it.
 const NATIVE_OVERLAYS = [
-	// decision-6 press grounds + the pressed label ink
-	"active:bg-danger-soft",
-	"active:bg-ink-3",
-	"active:bg-surface-3",
-	"text-danger",
-	// contract colors
+	"absolute",
+	"active:bg-edge",
+	"active:bg-ink-meta",
+	"aspect-square",
 	"bg-canvas",
-	"bg-edge",
-	"bg-ink-1",
-	"bg-surface",
-	"border-canvas",
-	"border-danger",
+	"bg-danger-soft",
+	"bg-group",
+	"bg-ok-soft",
+	"bg-on-accent",
 	"border-edge",
-	"border-ok",
-	"text-canvas",
-	"text-ink-1",
-	"text-ink-2",
-	"text-ink-3",
-	"text-interactive",
-	"text-oncover-fg",
-	// type roles and weights
-	"text-body",
-	"text-callout",
-	"text-caption",
-	"text-h3",
-	"text-micro",
-	"font-bold",
-	"font-mono",
-	"font-normal",
-	"font-semibold",
-	"tracking-widest",
-	"uppercase",
-	// radius rungs
-	"rounded-full",
-	"rounded-md",
-	"rounded-t-sheet",
-	// display / alignment (RN is flex by default; these ride the overlays)
+	"border-l-2",
+	"border-t",
+	"bottom-0",
 	"flex-1",
 	"flex-row",
-	"items-baseline",
+	"flex-wrap",
+	"font-medium",
+	"gap-pair",
+	"gap-row",
+	"gap-section",
+	"gap-stack",
+	"h-1",
+	"h-2",
+	"h-8",
+	"inset-x-0",
+	"inset-y-0",
+	"italic",
 	"items-center",
+	"items-end",
+	"items-start",
+	"items-stretch",
+	"justify-between",
 	"justify-center",
 	"justify-end",
-	"justify-start",
+	"left-0",
+	"line-through",
+	"max-w-full",
+	"min-h-11",
+	"min-h-20",
+	"min-w-0",
+	"opacity-0",
+	"opacity-50",
+	"overflow-hidden",
+	"p-inset",
+	"pb-room",
+	"pb-section",
+	"pb-stack",
+	"pl-stack",
+	"pt-stack",
+	"px-0",
+	"px-0.5",
+	"px-4",
+	"px-inset",
+	"px-stack",
+	"py-0",
+	"py-2",
+	"py-room",
+	"py-row",
+	"right-0",
+	"rounded-full",
+	"rounded-group",
 	"self-center",
 	"self-start",
-	"self-stretch",
-	"overflow-hidden",
+	"shadow-float",
+	"shadow-sheet",
+	"shrink",
+	"size-2",
+	"size-6",
+	"size-7",
+	"size-8",
 	"text-center",
-	// numeric dimensions and spacing (the numeric base is live by design)
-	"border",
-	"border-2",
-	"border-t",
-	"gap-1",
-	"gap-1.5",
-	"gap-2",
-	"gap-2.5",
-	"gap-3",
-	"gap-3.5",
-	"h-1",
-	"h-1.5",
-	"h-12",
-	"h-6",
-	"h-9",
-	"h-full",
-	"h-px",
-	"-ml-2",
-	"mb-1.5",
-	"mb-3",
-	"mb-3.5",
-	"min-h-12",
-	"min-h-20",
-	"min-w-8",
-	"mt-4",
-	"opacity-40",
-	"pb-8",
-	"pt-3",
-	"px-3",
-	"px-3.5",
-	"px-4",
-	"px-6",
-	"py-2",
-	"py-3",
-	"w-10",
-	"w-12",
-	"w-9",
+	"text-danger",
+	"text-ink",
+	"text-ink-faint",
+	"text-ok",
+	"text-right",
+	"text-tint",
+	"underline",
+	"uppercase",
+	"w-13",
+	"w-8",
 	"w-full",
-	"w-px",
 ];
 
 // ── The swept sources, enumerated ───────────────────────────────────
@@ -237,9 +231,8 @@ function literals(source: string): string[] {
 }
 
 // Utility roots the components' class literals draw from. A quoted token
-// counts as a class only when its root is named here, so prose strings
-// ("button", "#2A6FDB") never reach the build assertion. Arbitrary-value
-// tokens (`w-[104px]`) are chrome dimensions outside the class inventory.
+// counts as a class only when its root is named here, so prose strings never
+// reach the build assertion.
 const CLASS_ROOTS = [
 	"bg",
 	"text",
@@ -251,16 +244,16 @@ const CLASS_ROOTS = [
 	"py",
 	"pt",
 	"pb",
+	"pl",
 	"m",
 	"mb",
 	"mt",
-	"ml",
-	"mr",
-	"-ml",
 	"h",
 	"w",
+	"size",
 	"min-h",
 	"min-w",
+	"max-w",
 	"max-h",
 	"flex",
 	"items",
@@ -272,8 +265,26 @@ const CLASS_ROOTS = [
 	"tracking",
 	"shadow",
 	"opacity",
+	"inset",
+	"left",
+	"right",
+	"bottom",
+	"top",
+	"aspect",
 ];
-const CLASS_EXACT = ["border", "uppercase"];
+const CLASS_EXACT = [
+	"border",
+	"uppercase",
+	"italic",
+	"underline",
+	"line-through",
+	"absolute",
+	"relative",
+	"flex",
+	"shrink",
+	"grow",
+	"hidden",
+];
 
 function sourceClasses(): Set<string> {
 	const out = new Set<string>();
@@ -297,10 +308,9 @@ function sourceClasses(): Set<string> {
 
 // ── The sheet, rendered with default options ────────────────────────
 
-function emit(theme?: Theme, fonts: NativeFontEntry[] = []): string {
+function emit(theme?: Theme): string {
 	return aggregateGlobalCss({
 		resolved: deriveTheme(theme),
-		fonts,
 		sources: SOURCES,
 		extraImports: [],
 	});
@@ -313,120 +323,113 @@ const themeMap = new Map(themeDecls);
 
 // ── The matrices, called for their full class inventory ─────────────
 
-const TEXT_VARIANTS = [...TYPE_ROLES, "rowtitle"];
-const TEXT_TONES = [
-	"ink-1",
-	"ink-2",
-	"ink-3",
-	"ink-4",
-	"brand",
-	"interactive",
-	"ok",
-	"warn",
-	"danger",
-	"accent-ink",
-	"oncover-fg",
-	"oncover-ink",
-];
-const BADGE_TONES = [
-	"neutral",
-	"brand",
-	"interactive",
-	"ok",
-	"warn",
-	"danger",
-	"oncover",
-];
-const BUTTON_AXES = {
-	emphasis: ["primary", "secondary", "tertiary"],
-	tone: ["neutral", "danger"],
-	size: ["sm", "md", "lg"],
-};
+const AVATAR_STEPS = ["1", "2", "3", "4", "5", "6", "7", "8"];
 
 // The axis values are spelled here as a second opinion; every cell string is
 // produced by calling the cva, never written out.
 const FAMILIES: Family[] = [
-	{ name: "BUTTON", cva: button as Family["cva"], axes: BUTTON_AXES },
-	{
-		name: "BUTTON_LABEL",
-		cva: buttonLabel as Family["cva"],
-		axes: BUTTON_AXES,
-	},
-	{
-		name: "BUTTON_MUTED",
-		cva: buttonMuted as Family["cva"],
-		axes: { emphasis: BUTTON_AXES.emphasis },
-	},
 	{
 		name: "TEXT",
-		cva: text as Family["cva"],
-		axes: { variant: TEXT_VARIANTS, tone: TEXT_TONES },
+		cva: variants.text as Family["cva"],
+		axes: { role: TYPE_ROLES },
 	},
 	{
 		name: "TEXT_STRONG",
-		cva: textStrong as Family["cva"],
-		axes: { variant: TEXT_VARIANTS },
+		cva: variants.textStrong as Family["cva"],
+		axes: { role: TYPE_ROLES },
 	},
-	{ name: "BADGE", cva: badge as Family["cva"], axes: { tone: BADGE_TONES } },
 	{
-		name: "BADGE_LABEL",
-		cva: badgeLabel as Family["cva"],
-		axes: { tone: BADGE_TONES },
+		name: "BUTTON",
+		cva: variants.button as Family["cva"],
+		axes: { act: ["primary", "secondary", "destructive"] },
 	},
-	{ name: "BADGE_DOT", cva: badgeDot as Family["cva"], axes: {} },
 	{
-		name: "CARD",
-		cva: card as Family["cva"],
-		axes: { padding: ["card", "none"], ring: ["none", "warn"] },
+		name: "BUTTON_LABEL",
+		cva: variants.buttonLabel as Family["cva"],
+		axes: { act: ["primary", "secondary", "destructive"] },
+	},
+	{
+		name: "STATUS",
+		cva: variants.status as Family["cva"],
+		axes: { state: STATUS_STATES },
 	},
 	{
 		name: "FIELD",
-		cva: field as Family["cva"],
+		cva: variants.field as Family["cva"],
 		axes: {
+			kind: ["text", "search", "code"],
 			state: ["default", "focused", "error"],
-			layout: ["input", "row"],
 		},
 	},
 	{
-		name: "RHYTHM",
-		cva: rhythm as Family["cva"],
-		axes: { unit: ["section", "stack", "row", "pair"] },
+		name: "ROW",
+		cva: variants.row as Family["cva"],
+		axes: { state: ["rest", "pressed", "selected"] },
 	},
 	{
-		name: "CHECKBOX",
-		cva: checkbox as Family["cva"],
-		axes: { state: ["unchecked", "checked"] },
-	},
-	{
-		name: "TOGGLE",
-		cva: toggle as Family["cva"],
+		name: "SWITCH",
+		cva: variants.switchTrack as Family["cva"],
 		axes: { state: ["off", "on"] },
 	},
 	{
-		name: "DIALOG",
-		cva: dialog as Family["cva"],
-		axes: { part: ["scrim", "panel", "description"] },
+		name: "CHECKBOX",
+		cva: variants.checkbox as Family["cva"],
+		axes: { state: ["unchecked", "checked"] },
+	},
+	{
+		name: "SEGMENT",
+		cva: variants.segment as Family["cva"],
+		axes: { state: ["idle", "selected"] },
+	},
+	{
+		name: "BANNER",
+		cva: variants.banner as Family["cva"],
+		axes: { kind: ["note", "warn", "danger"] },
+	},
+	{
+		name: "DIFF_LINE",
+		cva: variants.diffLine as Family["cva"],
+		axes: { kind: ["context", "added", "removed", "header"] },
+	},
+	{
+		name: "MESSAGE",
+		cva: variants.message as Family["cva"],
+		axes: { author: ["you", "other", "system"] },
+	},
+	{
+		name: "AVATAR",
+		cva: variants.avatar as Family["cva"],
+		axes: { step: AVATAR_STEPS },
+	},
+	{
+		name: "PLACE",
+		cva: variants.place as Family["cva"],
+		axes: { state: ["idle", "selected"] },
+	},
+	{
+		name: "RHYTHM",
+		cva: variants.rhythm as Family["cva"],
+		axes: { unit: SPACING_RUNGS },
 	},
 ];
 
-// The pinned family roster, the c19-compound-pin shape: a matrix that lands in
-// ui-core without landing here fails a6 by command instead of passing unseen.
 const FAMILY_ROSTER =
-	"BUTTON BUTTON_LABEL BUTTON_MUTED TEXT TEXT_STRONG BADGE BADGE_LABEL BADGE_DOT CARD FIELD RHYTHM CHECKBOX TOGGLE DIALOG";
+	"TEXT TEXT_STRONG BUTTON BUTTON_LABEL STATUS FIELD ROW SWITCH CHECKBOX SEGMENT BANNER DIFF_LINE MESSAGE AVATAR PLACE RHYTHM";
 
-// The class-bearing constants beside the matrices, in the compile probe with
-// the cells so a6 fails if any stops resolving.
-const CLASS_CONSTANTS = [
-	BUTTON_MUTED_LABEL,
-	CHECKBOX_MARK,
-	TOGGLE_KNOB,
-	SKELETON,
-	CONTROL_MUTED,
-];
+// The class-bearing constants beside the matrices, read off the module so a
+// new one cannot skip the compile probe.
+const CLASS_CONSTANTS = Object.entries(
+	variants as unknown as Record<string, unknown>,
+)
+	.filter(
+		(entry): entry is [string, string] =>
+			typeof entry[1] === "string" && /^[A-Z_]+$/.test(entry[0]),
+	)
+	.map(([, value]) => value);
 
 // Every class every cva can emit, over the cartesian product of its own axes,
 // plus the class-bearing constants. The Tailwind build must resolve each one
-// through the ui-core `@source` root — none of them rides the probe file.
+// through the ui-core `@source` root; none of them rides the probe file.
 function enumerated(): Set<string> {
 	const out = new Set<string>();
 	for (const family of FAMILIES) {
@@ -529,8 +532,6 @@ async function compilePipeline(): Promise<Compiled> {
 			},
 			"ios",
 		);
-		// What `transformer.ts` does on every build: regenerate the package's own
-		// `uniwind.css` artifact from our entry stylesheet, then compile.
 		await bundlerConfig.generateArtifacts(resolve(uniwindRoot, "uniwind.css"));
 		const code: string = await compileCSS(bundlerConfig);
 		return new Function("rt", `return ${code}`)({
@@ -554,7 +555,7 @@ const built = tailwindBuild(
 	stackDir,
 );
 
-// A variant class emits as `.active\:bg-ink-3:active`, so the selector is
+// A variant class emits as `.active\:bg-edge:active`, so the selector is
 // matched by what may *not* follow it rather than by a fixed delimiter.
 function emitted(css: string, name: string): boolean {
 	const escaped = name
@@ -594,9 +595,6 @@ function styleValue(
 
 // ── The geometry gate over its fixture trees ────────────────────────
 
-// The real `runGeometryGate` body executes here; this suite never builds a
-// graph (no consumer project exists to drive it), so b8 pins the contribution
-// wiring in source instead.
 const gateFixtureDir = resolve(fixtureDir, "gate");
 const gateOutcomes = new Map<string, unknown>();
 for (const tree of ["pass", "fail", "empty"]) {
@@ -629,6 +627,10 @@ check("a3", "the emitted sheet has the contract shape", () => {
 	}
 	const extra = [...themeMap.keys()].filter((name) => !(name in expected));
 	assert(extra.length === 0, `@theme carries unexpected keys: ${extra}`);
+	assert(
+		themeMap.get("--font-mono")?.includes('"JetBrains Mono Variable"'),
+		`--font-mono does not carry the knob's family: ${themeMap.get("--font-mono")}`,
+	);
 
 	const utilities = shadowUtilities(resolved);
 	for (const level of SHADOW_LEVELS) {
@@ -640,7 +642,7 @@ check("a3", "the emitted sheet has the contract shape", () => {
 	}
 	assert(
 		(sheet.match(/@utility /g) ?? []).length === SHADOW_LEVELS.length,
-		"the sheet carries a fourth @utility block",
+		"the sheet carries an extra @utility block",
 	);
 
 	const layer = blockBody(sheet, "@layer theme");
@@ -666,16 +668,16 @@ check("a3", "the emitted sheet has the contract shape", () => {
 		keySets.push([...colors.keys()].sort().join(" "));
 	}
 	assert(keySets[0] === keySets[1], "the two @variant key sets differ");
-	const variants = new Set(
+	const variantNames = new Set(
 		[...sheet.matchAll(/@variant ([a-z-]+)/g)].map((match) => match[1]),
 	);
 	assert(
-		variants.size === 2 && variants.has("light") && variants.has("dark"),
-		`expected exactly the light and dark variants, got: ${[...variants]}`,
+		variantNames.size === 2 &&
+			variantNames.has("light") &&
+			variantNames.has("dark"),
+		`expected exactly the light and dark variants, got: ${[...variantNames]}`,
 	);
 
-	// The `@source` roots, in the sheet and pinned in index.ts so the fixture's
-	// restated list cannot drift from production.
 	const indexSource = readFileSync(resolve(pkgDir, "src/index.ts"), "utf8");
 	for (const src of SOURCES) {
 		assert(sheet.includes(`@source "${src}";`), `no @source for ${src}`);
@@ -684,7 +686,7 @@ check("a3", "the emitted sheet has the contract shape", () => {
 			`src/index.ts does not name the ${src} source`,
 		);
 	}
-	return `${Object.keys(expected).length} @theme keys behind the ${ZEROED_NAMESPACES.length} resets, 3 shadow utilities, 2 equal variant blocks, 3 pinned sources`;
+	return `${Object.keys(expected).length} @theme keys behind the ${ZEROED_NAMESPACES.length} resets, ${SHADOW_LEVELS.length} shadow utilities, 2 equal variant blocks of ${PER_MODE_COLORS.length}, 3 pinned sources`;
 });
 
 check("a4", "the schema rejects off-contract keys by name", () => {
@@ -714,11 +716,23 @@ check("a4", "the schema rejects off-contract keys by name", () => {
 		),
 		`no zod issue names "--radius-lg": ${JSON.stringify(scale.error.issues)}`,
 	);
-	return "primary and --radius-lg rejected, each named in its issue";
+
+	const { send: _send, ...short } = ENGLISH;
+	const words = nativeUiOptionsSchema.safeParse({ words: short });
+	assert(!words.success, "a words object missing a key was accepted");
+	assert(
+		words.error.issues.some((issue) => issue.path.includes("send")),
+		`no zod issue names "send": ${JSON.stringify(words.error.issues)}`,
+	);
+	assert(
+		nativeUiOptionsSchema.safeParse({ words: ENGLISH }).success,
+		"the English words were rejected",
+	);
+	return "primary, --radius-lg and a missing word rejected, each named in its issue";
 });
 
-check("a5", "a knob move touches only the brand family", () => {
-	const moved = emit({ knobs: { brandHue: 30 } });
+check("a5", "a knob move touches only its roles", () => {
+	const moved = emit({ accentHue: 30 });
 	const before = sheet.split("\n");
 	const after = moved.split("\n");
 	assert(
@@ -729,15 +743,16 @@ check("a5", "a knob move touches only the brand family", () => {
 	before.forEach((line, index) => {
 		if (line !== after[index]) diffs.push(index);
 	});
-	assert(diffs.length > 0, "brandHue: 30 changed nothing");
+	assert(diffs.length > 0, "accentHue: 30 changed nothing");
 	for (const index of diffs) {
+		const line = before[index] ?? "";
 		assert(
-			before[index]?.includes("--color-brand") &&
-				after[index]?.includes("--color-brand"),
-			`a non-brand line moved: ${before[index]} -> ${after[index]}`,
+			/--color-(tint|avatar-\d):/.test(line) &&
+				/--color-(tint|avatar-\d):/.test(after[index] ?? ""),
+			`a line off tint and the avatar ladder moved: ${line} -> ${after[index]}`,
 		);
 	}
-	return `${diffs.length} lines moved, every one a --color-brand* declaration`;
+	return `${diffs.length} lines moved, every one a --color-tint or --color-avatar-* declaration`;
 });
 
 check("a7", "uniwind's own compiler consumes the sheet", () => {
@@ -745,31 +760,32 @@ check("a7", "uniwind's own compiler consumes the sheet", () => {
 	const light = themeScope(compiledCss, "light");
 	const dark = themeScope(compiledCss, "dark");
 
-	const fontSize = styleValue(compiledCss, "text-h1", "fontSize", light);
+	const fontSize = styleValue(compiledCss, "text-title", "fontSize", light);
 	assert(
-		fontSize === Number.parseFloat(resolved.scales["--text-h1"]),
-		`text-h1 fontSize: ${fontSize}`,
+		fontSize === Number.parseFloat(resolved.scales["--text-title"]),
+		`text-title fontSize: ${fontSize}`,
 	);
-	const lineHeight = styleValue(compiledCss, "text-h1", "lineHeight", light);
+	const lineHeight = styleValue(compiledCss, "text-title", "lineHeight", light);
 	assert(
-		lineHeight === Number.parseFloat(resolved.scales["--leading-h1"]),
-		`text-h1 lineHeight: ${lineHeight}`,
+		lineHeight === Number.parseFloat(resolved.scales["--leading-title"]),
+		`text-title lineHeight: ${lineHeight}`,
 	);
 	const letterSpacing = styleValue(
 		compiledCss,
-		"text-h1",
+		"text-title",
 		"letterSpacing",
 		light,
 	);
 	assert(
 		typeof letterSpacing === "number" && letterSpacing < 0,
-		`text-h1 letterSpacing: ${letterSpacing}`,
+		`text-title letterSpacing: ${letterSpacing}`,
 	);
 
-	const boxShadow = styleValue(compiledCss, "shadow-1", "boxShadow", light);
+	const boxShadow = styleValue(compiledCss, "shadow-float", "boxShadow", light);
+	// uniwind folds the rgba color to hex; the offsets and blur survive.
 	assert(
-		typeof boxShadow === "string" && boxShadow.includes(","),
-		`shadow-1 boxShadow: ${boxShadow}`,
+		typeof boxShadow === "string" && boxShadow.startsWith("0 7 18"),
+		`shadow-float boxShadow: ${boxShadow}`,
 	);
 
 	const canvasLight = styleValue(
@@ -792,8 +808,8 @@ check("a7", "uniwind's own compiler consumes the sheet", () => {
 	);
 
 	const accent = styleValue(compiledCss, "bg-accent", "backgroundColor", light);
-	const ink = styleValue(compiledCss, "text-ink-1", "color", light);
-	assert(accent === ink, `alias law broken: bg-accent ${accent}, ink-1 ${ink}`);
+	const ink = styleValue(compiledCss, "text-ink", "color", light);
+	assert(accent === ink, `alias law broken: bg-accent ${accent}, ink ${ink}`);
 
 	const alive = RETIRED.filter(
 		(name) => compiledCss.stylesheet[name] !== undefined,
@@ -802,15 +818,13 @@ check("a7", "uniwind's own compiler consumes the sheet", () => {
 		alive.length === 0,
 		`retired classes survive the pipeline: ${alive.join(", ")}`,
 	);
-	return `text-h1 {${fontSize}/${lineHeight}}, bg-canvas ${canvasLight} light / ${canvasDark} dark, alias law holds, ${RETIRED.length} retired absent`;
+	return `text-title {${fontSize}/${lineHeight}}, bg-canvas ${canvasLight} light / ${canvasDark} dark, alias law holds, ${RETIRED.length} retired absent`;
 });
 
 check("a6", "the build resolves the inventory and kills the retired", () => {
 	const roster = FAMILIES.map((family) => family.name).join(" ");
 	assert(roster === FAMILY_ROSTER, `the family roster drifted: ${roster}`);
-	// The escaping oracle: a class that compiles and carries a `.` must be
-	// found, or every dotted cell reports a false miss.
-	assert(rule(built, "px-3.5"), "px-3.5 emitted no rule");
+	assert(rule(built, "px-5"), "px-5 emitted no rule");
 	const dead = [...INVENTORY].filter((name) => !emitted(built, name));
 	assert(
 		dead.length === 0,
@@ -831,13 +845,6 @@ check("a6", "the build resolves the inventory and kills the retired", () => {
 
 check("a8", "every named --color-* token is an emitted @theme key", () => {
 	const files = walk(resolve(pkgDir, "src"), /\.(ts|tsx|css)$/);
-
-	// Context-free on purpose: a token reaches the runtime through
-	// `var(--color-*)` in CSS as easily as through a quoted name handed to
-	// `useCSSVariable`, and no single wrapper pattern sees both. The spinner's
-	// `--color-${tone}` template evades this scan rather than tripping it
-	// (nothing follows the prefix for the regex to match); harmless because
-	// `ContentTone` is token-typed and ui-core pins every member.
 	const orphans = new Set<string>();
 	let named = 0;
 	for (const path of files) {
@@ -856,152 +863,250 @@ check("a8", "every named --color-* token is an emitted @theme key", () => {
 });
 
 check("b5", "the overlay allowlist mirrors the swept sources", () => {
-	const enumerated = sourceClasses();
-	assert(enumerated.size > 0, "no class was enumerated from src/ui");
-	const missing = [...enumerated].filter(
-		(name) => !NATIVE_OVERLAYS.includes(name),
-	);
+	const swept = sourceClasses();
+	assert(swept.size > 0, "no class was enumerated from src/ui");
+	const missing = [...swept].filter((name) => !NATIVE_OVERLAYS.includes(name));
 	assert(
 		missing.length === 0,
 		`the sources name classes the allowlist lacks: ${missing.sort().join(", ")}`,
 	);
-	const stale = NATIVE_OVERLAYS.filter((name) => !enumerated.has(name));
+	const stale = NATIVE_OVERLAYS.filter((name) => !swept.has(name));
 	assert(
 		stale.length === 0,
 		`the allowlist carries classes no source names: ${stale.sort().join(", ")}`,
 	);
-	return `${enumerated.size} classes enumerated from src/ui, allowlist equal`;
+	return `${swept.size} classes enumerated from src/ui, allowlist equal`;
 });
 
 // ── The closure ─────────────────────────────────────────────────────
 
-const COMPONENT_FILES = walk(
-	resolve(pkgDir, "src/ui/components"),
-	/\.(ts|tsx)$/,
-);
+const COMPONENT_DIR = resolve(pkgDir, "src/ui/components");
+const COMPONENT_FILES = walk(COMPONENT_DIR, /\.(ts|tsx)$/);
 
-// Every transformation below preserves the line structure (a comment line
-// blanks to "", in-line spans blank to spaces), so a match offset in any
-// transformed string still maps to the real source line and a hit can quote
-// it verbatim instead of reconstructing text.
 function blank(span: string): string {
 	return span.replace(/[^\n]/g, " ");
 }
 
-// Comment lines drop (the closures are named in prose); string literals
-// empty out, since a quoted value is data rather than a reachable channel.
-function codeOf(source: string): string {
+function withoutComments(source: string): string {
 	return source
 		.split("\n")
 		.map((line) => (/^\s*(\/\/|\/\*|\*)/.test(line) ? "" : line))
-		.join("\n")
-		.replace(/"[^"\n]*"/g, blank);
+		.join("\n");
 }
 
-check("b6", "every closed prop is ?: never and no channel survives", () => {
-	const hits: string[] = [];
-	for (const path of COMPONENT_FILES) {
-		const raw = readFileSync(path, "utf8");
-		const rawLines = raw.split("\n");
-		const name = relative(pkgDir, path);
-		// `haystack` is whichever transformed string the match came from; its
-		// newlines are the source's, so the offset gives the real line number
-		// and the hit quotes the actual source line.
-		const flag = (haystack: string, offset: number, why: string): void => {
-			const line = haystack.slice(0, offset).split("\n").length;
-			const text = (rawLines[line - 1] ?? "").trim();
-			hits.push(`${name}:${line}: ${why}: ${text}`);
-		};
-		// Decision 1 closes uniformly, so the declaration is demanded in every
-		// component module instead of allow-listing exceptions.
-		if (path.endsWith("index.tsx")) {
-			for (const declaration of ["className?: never", "style?: never"]) {
-				if (!raw.includes(declaration)) {
-					hits.push(`${name}: no ${declaration} declaration`);
-				}
+function codeOf(source: string): string {
+	return withoutComments(source).replace(/"[^"\n]*"/g, blank);
+}
+
+check(
+	"b6",
+	"every component closes through Closed and no channel survives",
+	() => {
+		const hits: string[] = [];
+		for (const path of COMPONENT_FILES) {
+			const raw = readFileSync(path, "utf8");
+			const rawLines = raw.split("\n");
+			const name = relative(pkgDir, path);
+			const flag = (haystack: string, offset: number, why: string): void => {
+				const line = haystack.slice(0, offset).split("\n").length;
+				const text = (rawLines[line - 1] ?? "").trim();
+				hits.push(`${name}:${line}: ${why}: ${text}`);
+			};
+			if (path.endsWith("index.tsx") && !raw.includes("extends Closed")) {
+				hits.push(`${name}: the props type does not extend Closed`);
+			}
+			const code = codeOf(raw);
+			for (const match of code.matchAll(
+				/\b(?:[a-zA-Z]*[cC]lassName|style)\?:\s*(?!never\b)\S+/g,
+			)) {
+				flag(code, match.index ?? 0, "an open declaration");
+			}
+			// The component's own JSX class attributes are the one permitted form;
+			// blank them, then no class channel token may remain.
+			const permitted = code.replace(/\b[a-zA-Z]*[cC]lassName=/g, blank);
+			for (const match of permitted.matchAll(/\b[a-zA-Z]*[cC]lassName\b/g)) {
+				flag(permitted, match.index ?? 0, "a surviving class channel");
+			}
+			for (const match of code.matchAll(
+				/\b(?:props|rest|local|others|merged)\.(?:className|style)\b/g,
+			)) {
+				flag(code, match.index ?? 0, "a props-sourced class value");
+			}
+			for (const match of withoutComments(raw).matchAll(
+				/"[a-zA-Z]*[cC]lassName"/g,
+			)) {
+				flag(
+					withoutComments(raw),
+					match.index ?? 0,
+					"a quoted closed-channel token",
+				);
 			}
 		}
-		const code = codeOf(raw);
-		// Every optional declaration of className, style, or any uniwind
-		// *ClassName channel must be `?: never` (word-bounded, so an internal
-		// `placeholderTextColorClassName="…"` attribute never false-positives).
-		for (const match of code.matchAll(
-			/\b(?:[a-zA-Z]*[cC]lassName|style)\?:\s*(?!never\b)\S+/g,
-		)) {
-			flag(code, match.index ?? 0, "an open declaration");
-		}
-		// The `?: never` declarations and the component's own JSX class
-		// attributes are the two permitted forms; blank them, then no class
-		// channel token may remain (a destructured `className`, a
-		// props-sourced read inside cn(), a re-forward).
-		const permitted = code
-			.replace(/\b[a-zA-Z]*[cC]lassName\?:\s*never\b/g, blank)
-			.replace(/\b[a-zA-Z]*[cC]lassName=/g, blank);
-		for (const match of permitted.matchAll(/\b[a-zA-Z]*[cC]lassName\b/g)) {
-			flag(permitted, match.index ?? 0, "a surviving class channel");
-		}
-		// No props-sourced class or style read under any destructure alias.
-		for (const match of code.matchAll(
-			/\b(?:props|rest|local|others|merged)\.(?:className|style)\b/g,
-		)) {
-			flag(code, match.index ?? 0, "a props-sourced class value");
-		}
-		// A quoted-key declaration (`"className"?: string`) plus bracket access
-		// slips past every identifier scan above, so the quoted spelling is
-		// banned outright. Comments drop; quotes have to survive, so this scan
-		// runs on its own transform.
-		const quoted = raw
-			.split("\n")
-			.map((line) => (/^\s*(\/\/|\/\*|\*)/.test(line) ? "" : line))
-			.join("\n");
-		for (const match of quoted.matchAll(/"[a-zA-Z]*[cC]lassName"/g)) {
-			flag(quoted, match.index ?? 0, "a quoted closed-channel token");
-		}
-	}
-	assert(hits.length === 0, `the closure leaks:\n  ${hits.join("\n  ")}`);
-	return `${COMPONENT_FILES.length} component files: every declaration ?: never, no surviving channel token (quoted forms included), no props-sourced class`;
-});
+		assert(hits.length === 0, `the closure leaks:\n  ${hits.join("\n  ")}`);
+		return `${COMPONENT_FILES.length} component files: every props type extends Closed, no surviving channel token, no props-sourced class`;
+	},
+);
 
 check("b7", "the closure fixture proves every prop at the type layer", () => {
 	const fixturePath = resolve(fixtureDir, "closure.tsx");
 	const source = readFileSync(fixturePath, "utf8");
 	const directives = source.match(/@ts-expect-error/g) ?? [];
+	const components = rosterEntries().length;
 	assert(
-		directives.length >= 90,
-		`only ${directives.length} @ts-expect-error sites`,
+		directives.length >= components * 7,
+		`only ${directives.length} @ts-expect-error sites for ${components} components`,
 	);
 	for (const token of [
 		'className="x"',
 		"style={{",
-		'colorClassName="text-ink-1"',
-		'placeholderTextColorClassName="text-ink-1"',
-		'selectionColorClassName="text-ink-1"',
-		"backdropComponent",
-		"containerComponent",
-		"backgroundStyle",
-		"onCheckedChange",
-		"onValueChange",
-		'variant="success"',
-		'color="#fff"',
+		'class="x"',
+		"classList={{}}",
+		'colorClassName="text-ink"',
+		'placeholderTextColorClassName="text-ink"',
+		'selectionColorClassName="text-ink"',
 	]) {
 		assert(source.includes(token), `the fixture never passes ${token}`);
 	}
-	// Every component dir is reached through its public subpath, so the
-	// closure is proven the way a consumer imports it.
-	for (const dir of readdirSync(resolve(pkgDir, "src/ui/components"))) {
+	for (const dir of readdirSync(COMPONENT_DIR)) {
 		assert(
 			source.includes(`/components/${dir}"`),
 			`the fixture never imports components/${dir}`,
 		);
 	}
-	// tsc over the package (scripts/ is inside the include) proves every
-	// directive fires and every un-annotated legal usage still compiles: a
-	// reopened prop turns a directive unused and fails the run.
 	execFileSync(binPath(pkgDir, "tsc"), ["--noEmit"], {
 		cwd: pkgDir,
 		stdio: "pipe",
 	});
 	return `${directives.length} closures under @ts-expect-error, tsc --noEmit exits 0`;
+});
+
+check("b-roster", "every component carries exactly its roster props", () => {
+	const project = new Project({
+		tsConfigFilePath: resolve(pkgDir, "tsconfig.json"),
+		skipAddingFilesFromTsConfig: true,
+	});
+	const dirs = new Set(readdirSync(COMPONENT_DIR));
+	const seen = new Set<string>();
+	let props = 0;
+	for (const [, name, expected] of rosterEntries()) {
+		const dir = componentDir(name);
+		seen.add(dir);
+		const file = resolve(COMPONENT_DIR, dir, "index.tsx");
+		assert(
+			dirs.has(dir) && existsSync(file),
+			`${name}: no src/ui/components/${dir}/index.tsx`,
+		);
+		const sourceFile = project.addSourceFileAtPath(file);
+		const exported = sourceFile.getExportedDeclarations();
+		assert(
+			exported.has(name),
+			`${name}: components/${dir} does not export ${name}`,
+		);
+		const propsDecl = exported.get(`${name}Props`)?.[0];
+		assert(
+			propsDecl,
+			`${name}: components/${dir} does not export ${name}Props`,
+		);
+		// A union (Sheet's two shapes) is read member by member. A prop is
+		// closed only when every declaration of it is `never`; Sheet's `submit`
+		// is `never` in one member and a value in the other, so it stays open.
+		const type = propsDecl.getType();
+		const members = type.isUnion() ? type.getUnionTypes() : [type];
+		const byName = new Map<string, boolean[]>();
+		for (const member of members) {
+			for (const symbol of member.getProperties()) {
+				const never = symbol
+					.getDeclarations()
+					.map(
+						(decl) =>
+							Node.isPropertySignature(decl) &&
+							decl.getTypeNode()?.getText() === "never",
+					);
+				byName.set(symbol.getName(), [
+					...(byName.get(symbol.getName()) ?? []),
+					...never,
+				]);
+			}
+		}
+		const open: string[] = [];
+		const closed: string[] = [];
+		for (const [prop, flags] of byName) {
+			(flags.every(Boolean) ? closed : open).push(prop);
+		}
+		assert(
+			open.sort().join(" ") === [...expected].sort().join(" "),
+			`${name}: props are [${open.join(", ")}], the roster says [${expected.join(", ")}]`,
+		);
+		for (const channel of CLOSED_PROPS) {
+			assert(closed.includes(channel), `${name}: ${channel} is not closed`);
+		}
+		props += open.length;
+	}
+	const extra = [...dirs].filter((dir) => !seen.has(dir));
+	assert(
+		extra.length === 0,
+		`component directories off the roster: ${extra.join(", ")}`,
+	);
+	return `${seen.size} components, ${props} props, every one the roster's, every style channel closed`;
+});
+
+check("b-words", "no word is drawn from a literal", () => {
+	const hits: string[] = [];
+	for (const path of COMPONENT_FILES) {
+		const source = withoutComments(readFileSync(path, "utf8"));
+		const name = relative(pkgDir, path);
+		// JSX text: letters between a `>` and a `<`, on one line or on a line of
+		// their own, outside braces.
+		for (const match of source.matchAll(
+			/(?<![=\w])>[ \t]*[^<>{}\n]*[A-Za-z][^<>{}\n]*[ \t]*<|(?<![=\w])>[ \t]*\n[ \t]*[A-Za-z][^<>{}\n]*\n[ \t]*</g,
+		)) {
+			const line = source.slice(0, match.index).split("\n").length;
+			hits.push(`${name}:${line}: JSX text ${JSON.stringify(match[0].trim())}`);
+		}
+		for (const match of source.matchAll(/accessibilityLabel="[^"]*"/g)) {
+			const line = source.slice(0, match.index).split("\n").length;
+			hits.push(`${name}:${line}: ${match[0]}`);
+		}
+	}
+	assert(
+		hits.length === 0,
+		`a word is drawn from a literal:\n  ${hits.join("\n  ")}`,
+	);
+	return `${COMPONENT_FILES.length} component files draw no literal word`;
+});
+
+const PRODUCT_NOUNS = [
+	"stead",
+	"inbox",
+	"lane",
+	"job",
+	"epic",
+	"card",
+	"story",
+	"brief",
+	"repo",
+	"sailward",
+	"trip",
+	"marina",
+	"oggi",
+	"rotta",
+	"cambusa",
+	"soldi",
+];
+
+check("b-nouns", "no product noun in src", () => {
+	const pattern = new RegExp(`\\b(${PRODUCT_NOUNS.join("|")})\\b`, "i");
+	const hits: string[] = [];
+	for (const path of walk(resolve(pkgDir, "src"), /\.(ts|tsx)$/)) {
+		const lines = withoutComments(readFileSync(path, "utf8")).split("\n");
+		lines.forEach((line, index) => {
+			const match = pattern.exec(line);
+			if (match)
+				hits.push(`${relative(pkgDir, path)}:${index + 1}: ${match[0]}`);
+		});
+	}
+	assert(hits.length === 0, `a product noun survives:\n  ${hits.join("\n  ")}`);
+	return `${PRODUCT_NOUNS.length} nouns absent from src`;
 });
 
 check("b8", "the build-step contribution wires the real gate", () => {
@@ -1019,11 +1124,9 @@ check("b8", "the build-step contribution wires the real gate", () => {
 		assert(contribution.includes(pin), `the contribution lacks ${pin}`);
 	}
 	assert(
-		source.includes('from "./node/gate"'),
+		source.includes('from "./node/gate.ts"'),
 		"src/index.ts does not import ./node/gate",
 	);
-	// ts-morph loads only when a build runs: the scanner reaches gate.ts
-	// through a dynamic import, with the native host list.
 	assert(
 		!source.includes("ui-core/gate"),
 		"src/index.ts touches the gate subpath",
@@ -1042,7 +1145,13 @@ check("b8", "the build-step contribution wires the real gate", () => {
 		gateSource.includes("NATIVE_GEOMETRY_HOSTS"),
 		"gate.ts does not scan with the native host list",
 	);
-	return "one pre step, pinned name, run wired to runGeometryGate(ctx.cwd), scanner dynamic-imported";
+	// The words provider lands in the entry only when the consumer set words.
+	assert(
+		source.includes('named: ["WordsProvider"]') &&
+			source.includes("if (!opts.words) return undefined;"),
+		"src/index.ts does not contribute the WordsProvider on the words option",
+	);
+	return "one pre step, pinned name, run wired to runGeometryGate(ctx.cwd), scanner dynamic-imported, words provider gated";
 });
 
 check("b9", "the gate passes geometry and throws on the look", () => {
@@ -1056,8 +1165,6 @@ check("b9", "the gate passes geometry and throws on the look", () => {
 			`fixture ${file} is missing: is the gate tree tracked?`,
 		);
 	}
-	// The pass tree's src/ui holds the same look the fail tree throws on, so
-	// the clean pass is what proves the ui/ carve-out.
 	const look = readFileSync(
 		resolve(gateFixtureDir, "pass/src/ui/look.tsx"),
 		"utf8",
@@ -1086,7 +1193,7 @@ check("b9", "the gate passes geometry and throws on the look", () => {
 	assert(failure.code === "GEOMETRY_GATE", `code: ${failure.code}`);
 	const expected = [
 		'src/screen.tsx:2  "bg-canvas" is not in the geometry vocabulary',
-		'src/screen.tsx:3  class attribute on non-host tag "Text"',
+		'src/screen.tsx:3  class attribute on non-host tag "Group"',
 	].join("\n");
 	assert(
 		failure.message === expected,

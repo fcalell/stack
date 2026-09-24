@@ -1,107 +1,72 @@
 import {
+	BUTTON_MUTED,
 	BUTTON_MUTED_LABEL,
-	type ButtonEmphasis,
-	type ButtonSize,
-	type ButtonTone,
+	type ButtonAct,
 	button,
 	buttonContentTone,
 	buttonLabel,
-	buttonMuted,
+	text,
 } from "@fcalell/ui-core/variants";
-import type { ReactNode } from "react";
-import { Pressable, type PressableProps, Text } from "react-native";
+import {
+	ActivityIndicator,
+	Pressable,
+	Text as RNText,
+	View,
+} from "react-native";
+import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import { Spinner } from "../spinner";
+import { useTokenColor } from "../../lib/theme";
 
-// The fill matrix rides the Pressable and the label matrix rides the Text:
-// RN Text inherits nothing, so the two tables cannot share a node as on web.
-const SHELL = "flex-row items-center justify-center";
-
-// The press grounds are the `active:` half of web's hover/press table — native
-// has no hover. The primary/danger cell also needs its label ink swapped while
-// pressed: `danger-ink` is the canvas value, near-invisible on `danger-soft`,
-// and uniwind's `active:` flag rides the pressed node itself, never the label
-// Text, so the swap goes through Pressable's `pressed` render state below.
-const GROUND: Record<ButtonEmphasis, Record<ButtonTone, string>> = {
-	primary: {
-		neutral: "active:bg-ink-3",
-		danger: "active:bg-danger-soft",
-	},
-	secondary: {
-		neutral: "active:bg-surface-3",
-		danger: "active:bg-danger-soft",
-	},
-	tertiary: {
-		neutral: "active:bg-surface-3",
-		danger: "active:bg-danger-soft",
-	},
-};
-
-export interface ButtonProps extends Omit<PressableProps, "children"> {
-	emphasis?: ButtonEmphasis;
-	tone?: ButtonTone;
-	size?: ButtonSize;
+export interface ButtonProps extends Closed {
+	act?: ButtonAct;
+	label: string;
+	onAct?: () => void;
 	loading?: boolean;
-	children?: ReactNode;
-	className?: never;
-	style?: never;
+	blocked?: string;
 }
 
-export function Button({
-	emphasis,
-	tone,
-	size,
-	loading,
-	children,
-	disabled,
-	...rest
-}: ButtonProps) {
-	const resolvedEmphasis = emphasis ?? "primary";
-	const resolvedTone = tone ?? "neutral";
+// The press ground moves the fill, never the alpha, so the label keeps its
+// contrast: the primary steps down the ink ladder, the others onto the edge.
+const GROUND: Record<ButtonAct, string> = {
+	primary: "active:bg-ink-meta",
+	secondary: "active:bg-edge",
+	destructive: "active:bg-edge",
+};
+
+// A pill with words. Its container decides its width: full in an action bar,
+// its content's in a toolbar. A blocked button says why, under it.
+export function Button({ act, label, onAct, loading, blocked }: ButtonProps) {
+	const kind = act ?? "primary";
+	const muted = blocked !== undefined;
+	const spinner = useTokenColor(`--color-${buttonContentTone(kind)}`);
 	return (
-		<Pressable
-			accessibilityRole="button"
-			disabled={disabled || loading}
-			className={cn(
-				button({ emphasis: resolvedEmphasis, tone: resolvedTone, size }),
-				SHELL,
-				disabled
-					? buttonMuted({ emphasis: resolvedEmphasis })
-					: GROUND[resolvedEmphasis][resolvedTone],
-			)}
-			{...rest}
-		>
-			{({ pressed }) => (
-				<>
-					{/* The glyph is anatomy, not a matrix cell: it spins beside the
-					    label in the label's own content tone, read back off the
-					    label matrix through ui-core's data path. */}
-					{loading ? (
-						<Spinner tone={buttonContentTone(resolvedEmphasis, resolvedTone)} />
-					) : null}
-					{typeof children === "string" ? (
-						<Text
-							className={cn(
-								buttonLabel({
-									emphasis: resolvedEmphasis,
-									tone: resolvedTone,
-									size,
-								}),
-								disabled && BUTTON_MUTED_LABEL,
-								!disabled &&
-									pressed &&
-									resolvedEmphasis === "primary" &&
-									resolvedTone === "danger" &&
-									"text-danger",
-							)}
-						>
-							{children}
-						</Text>
-					) : (
-						children
+		<View className="gap-pair">
+			<Pressable
+				accessibilityRole="button"
+				accessibilityState={{ disabled: muted || loading, busy: loading }}
+				disabled={muted || loading}
+				onPress={onAct}
+				className={cn(
+					button({ act: kind }),
+					"flex-row items-center justify-center",
+					muted ? BUTTON_MUTED : GROUND[kind],
+				)}
+			>
+				{loading ? <ActivityIndicator color={spinner} /> : null}
+				<RNText
+					className={cn(
+						buttonLabel({ act: kind }),
+						muted && BUTTON_MUTED_LABEL,
 					)}
-				</>
-			)}
-		</Pressable>
+				>
+					{label}
+				</RNText>
+			</Pressable>
+			{muted ? (
+				<RNText className={cn(text({ role: "meta" }), "text-center")}>
+					{blocked}
+				</RNText>
+			) : null}
+		</View>
 	);
 }

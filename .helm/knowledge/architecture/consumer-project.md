@@ -94,12 +94,14 @@ export default defineConfig({
     }),
     solidUi({
       theme: {                          // optional — the ui-core design contract
-        knobs: { brandHue: 120 },       //   six hues + a neutral-chroma scalar
+        accentHue: 120,                 //   the knobs: hues, primary, space, radius, text,
+        primary: "accent",              //   fonts, widths, breakpoints
         overrides: {                    //   anything the knobs don't reach
           colors: { dark: { canvas: "oklch(0.2 0.034 261)" } },
-          scales: { "--radius-control": "8px" },
+          scales: { "--radius-group": "8px" },
         },
       },
+      words: { ...english, back: "Zurück" },  // optional — every key required, English default
     }),
   ],
 });

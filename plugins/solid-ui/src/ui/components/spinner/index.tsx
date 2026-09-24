@@ -1,27 +1,17 @@
-import type { ContentTone } from "@fcalell/ui-core/variants";
 import { LoaderCircle } from "lucide-solid";
+import type { Closed } from "#lib/closed";
+import { useWords } from "#lib/words";
 
-// The spinning glyph for a busy control; the text-scramble Loader is the
-// loading treatment for a pane. A tone cell would be platform-conditional
-// (native colors a prop, not a class), so the tone rides the token variable
-// directly, the web mirror of native's useTokenColor, and no class is
-// assembled from it.
-type SpinnerProps = {
-	tone?: ContentTone;
-	class?: never;
-	style?: never;
-	classList?: never;
-};
+// The spinning glyph for a busy control, in the ink around it.
+export type SpinnerProps = Closed;
 
-function Spinner(props: SpinnerProps) {
+export function Spinner(_props: SpinnerProps) {
+	const words = useWords();
 	return (
 		<LoaderCircle
-			class="size-4 animate-spin"
+			class="size-[1.25em] shrink-0 animate-spin"
 			role="status"
-			style={{ color: `var(--color-${props.tone ?? "ink-1"})` }}
+			aria-label={words.loading}
 		/>
 	);
 }
-
-export type { SpinnerProps };
-export { Spinner };

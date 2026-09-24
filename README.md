@@ -7,7 +7,7 @@ A plugin-driven full-stack framework for SolidJS, Hono, and Cloudflare Workers. 
 - **Database** — Drizzle ORM for Cloudflare D1 and SQLite (`@fcalell/plugin-db`).
 - **Auth** — Better Auth integration, RBAC, access control (`@fcalell/plugin-auth`).
 - **API** — Hono + oRPC behind a procedure builder with auth, rate limiting, and a typed client (`@fcalell/plugin-api`).
-- **UI** — SolidJS + Kobalte + Tailwind v4 + CVA design system (`@fcalell/plugin-solid`, `@fcalell/plugin-solid-ui`).
+- **UI** — one design system on two platforms: `@fcalell/ui-core`'s roster in SolidJS + Tailwind v4 (`@fcalell/plugin-solid-ui`) and in React Native + uniwind (`@fcalell/plugin-native-ui`).
 - **Tooling** — One `stack` CLI for init, dev, build, deploy. TypeScript and Biome presets included.
 
 Consumers never install or import `drizzle-orm`, `hono`, `zod`, `@kobalte/core`, `vite`, or `tailwindcss` directly. Plugins wrap their domain and re-export only what is needed.
@@ -89,7 +89,8 @@ Plugins coordinate through typed slots in a dataflow graph — each plugin contr
 | [`@fcalell/plugin-vite`](plugins/vite) | Framework-agnostic Vite lifecycle | `vite()` |
 | [`@fcalell/plugin-expo`](plugins/expo) | Expo/React Native — Metro + app config + expo-router entry + EAS commands | `expo()` |
 | [`@fcalell/plugin-solid`](plugins/solid) | SolidJS compilation, file-based routing, app bootstrap | `solid()` |
-| [`@fcalell/plugin-solid-ui`](plugins/solid-ui) | SolidJS design system — Kobalte + Tailwind v4 + CVA components, fonts, typography tokens | `solidUi()` |
+| [`@fcalell/plugin-solid-ui`](plugins/solid-ui) | The design system on the web: the ui-core roster in SolidJS + Tailwind v4, the shell at every width, fonts, words | `solidUi()` |
+| [`@fcalell/plugin-native-ui`](plugins/native-ui) | The design system on the phone: the ui-core roster in React Native + Expo + uniwind, the phone layout at every width, fonts, words | `nativeUi()` |
 
 See each plugin's README for config options, commands, event handlers, and runtime exports.
 

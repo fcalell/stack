@@ -1,63 +1,47 @@
-import type { Action } from "@fcalell/ui-core/descriptors";
-import { Polymorphic } from "@kobalte/core/polymorphic";
-import type { LucideIcon } from "lucide-solid";
-import type { ValidComponent } from "solid-js";
+import type { Act } from "@fcalell/ui-core/descriptors";
+import { text } from "@fcalell/ui-core/variants";
+import type { JSX } from "solid-js";
 import { Show } from "solid-js";
-import { Dynamic } from "solid-js/web";
-import { Button } from "#components/button";
+import type { Closed } from "#lib/closed";
+import { cn } from "#lib/cn";
+import { Button } from "../button/index.tsx";
 
-type EmptyStateProps = {
-	icon?: LucideIcon;
-	title: string;
-	// The documented `as`-hole, not a class channel.
-	titleAs?: ValidComponent;
-	description?: string;
-	action?: Action<never>;
-	class?: never;
-	style?: never;
-	classList?: never;
+// One sentence and the way to make the first one; with `title` it centers as
+// a first screen. What the screen still has to show goes in the children.
+export type EmptyStateProps = Closed & {
+	title?: string;
+	sentence: string;
+	act?: Act;
+	children?: JSX.Element;
 };
 
-function EmptyState(props: EmptyStateProps) {
+export function EmptyState(props: EmptyStateProps) {
 	return (
 		<div
 			role="status"
-			class="flex flex-col items-center justify-center gap-4 py-16 text-center"
+			class={cn(
+				"flex flex-col items-center gap-stack py-section text-center",
+				props.title && "min-h-0 flex-1 justify-center",
+			)}
 		>
-			<Show when={props.icon}>
-				{(icon) => (
-					<div aria-hidden="true" class="text-edge">
-						<Dynamic component={icon()} class="size-12" />
-					</div>
-				)}
+			<Show when={props.title}>
+				<h1 class={text({ role: "title" })}>{props.title}</h1>
 			</Show>
-			<div class="flex flex-col items-center gap-2">
-				<Polymorphic
-					as={props.titleAs ?? "h3"}
-					class="text-callout font-bold uppercase tracking-widest text-ink-1"
-				>
-					{props.title}
-				</Polymorphic>
-				<Show when={props.description}>
-					<p class="text-callout text-ink-3">{props.description}</p>
-				</Show>
-			</div>
-			<Show when={props.action}>
-				{(action) => (
+			<p class={cn(text({ role: "meta" }), "max-w-reading")}>
+				{props.sentence}
+			</p>
+			<Show when={props.act}>
+				{(act) => (
 					<Button
-						emphasis="secondary"
-						size="md"
-						loading={action().loading}
-						disabled={action().disabled}
-						onClick={() => action().onSelect()}
-					>
-						{action().label}
-					</Button>
+						act="secondary"
+						label={act().label}
+						onAct={act().onAct}
+						blocked={act().blocked}
+						loading={act().loading}
+					/>
 				)}
 			</Show>
+			{props.children}
 		</div>
 	);
 }
-
-export type { EmptyStateProps };
-export { EmptyState };

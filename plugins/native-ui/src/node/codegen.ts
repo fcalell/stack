@@ -1,5 +1,4 @@
 import type { ResolvedTheme } from "@fcalell/ui-core/derive";
-import type { NativeFontEntry } from "../types.ts";
 import { cssIdent, cssString, cssTokenValue, cssVarName } from "./css.ts";
 import { modeBlocks, shadowBlocks, themeDeclarations } from "./theme.ts";
 
@@ -8,7 +7,6 @@ import { modeBlocks, shadowBlocks, themeDeclarations } from "./theme.ts";
 // the single uniwind entry stylesheet from it.
 export interface CodegenGlobalCssPayload {
 	resolved: ResolvedTheme;
-	fonts: NativeFontEntry[];
 	// `@source` paths (relative to `.stack/`, where global.css lands) telling
 	// uniwind where to scan for classNames — the consumer src, this plugin, and
 	// ui-core (the matrix cell strings live there).
@@ -23,7 +21,7 @@ const GENERATED_BANNER =
 // Renders the uniwind entry stylesheet:
 //   @import 'tailwindcss'; @import 'uniwind';    (mandatory)
 //   @source ...                                   (className scan roots)
-//   @theme { resets, scales, colors, font tokens }
+//   @theme { resets, scales, families, colors }
 //   @utility shadow-<level> { box-shadow: … }     (× 3)
 //   @layer theme { :root { @variant light|dark { color overrides } } }
 //
@@ -47,7 +45,7 @@ export function aggregateGlobalCss(payload: CodegenGlobalCssPayload): string {
 	if (payload.sources.length > 0) lines.push("");
 
 	lines.push("@theme {");
-	const declarations = themeDeclarations(payload.resolved, payload.fonts);
+	const declarations = themeDeclarations(payload.resolved);
 	for (const [name, value] of Object.entries(declarations)) {
 		lines.push(`\t${cssVarName(name)}: ${cssTokenValue(value)};`);
 	}

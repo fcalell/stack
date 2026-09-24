@@ -1,6 +1,7 @@
 // The closed token contract, as data. Every default value here is the
-// calibrated one, so a zero-override derivation reproduces the reference
-// design system byte for byte.
+// calibrated one: Marina's hues, lightness and chroma, renamed by meaning, so
+// a zero-override derivation reproduces the reference design system's values
+// under the roles that replaced its tokens.
 
 // Prefixes every error this package throws.
 export const LABEL = "@fcalell/ui-core";
@@ -11,69 +12,97 @@ export type Mode = (typeof MODES)[number];
 // ── Knobs ───────────────────────────────────────────────────────────
 
 export const HUE_KNOBS = [
+	"accentHue",
 	"neutralHue",
-	"brandHue",
-	"interactiveHue",
 	"okHue",
 	"warnHue",
 	"dangerHue",
 ] as const;
 export type HueKnob = (typeof HUE_KNOBS)[number];
 
+// What the primary act, a switch that is on and the selected place are filled
+// with: `ink` aliases `accent` and `accent-soft` onto the ink ladder, `accent`
+// binds them to `accentHue`.
+export const PRIMARIES = ["ink", "accent"] as const;
+export type Primary = (typeof PRIMARIES)[number];
+
+export const WIDTHS = ["rail", "list", "column", "sheet", "reading"] as const;
+export type Width = (typeof WIDTHS)[number];
+
+export const BREAKPOINTS = ["tablet", "desktop", "wide"] as const;
+export type Breakpoint = (typeof BREAKPOINTS)[number];
+
+export const FONT_ROLES = ["sans", "mono"] as const;
+export type FontRole = (typeof FONT_ROLES)[number];
+
 // `neutralChroma` multiplies the declared chroma of every token bound to
 // `neutralHue`, and nothing else. 0 makes the neutral ladder achromatic.
-export type Knobs = Record<HueKnob | "neutralChroma", number>;
+// `space`, `radius` and `text` are the bases every rung, radius and type role
+// is a ratio of. `fonts` names the two families; the files that carry them
+// are each plugin's `fonts` option. A missing `sans` is the platform's stack.
+export interface Knobs {
+	accentHue: number;
+	neutralHue: number;
+	neutralChroma: number;
+	okHue: number;
+	warnHue: number;
+	dangerHue: number;
+	primary: Primary;
+	space: number;
+	radius: number;
+	text: number;
+	fonts: { sans?: string; mono: string };
+	widths: Record<Width, number>;
+	breakpoints: Record<Breakpoint, number>;
+}
 
 export const KNOB_DEFAULTS: Knobs = {
+	accentHue: 261,
 	neutralHue: 261,
-	brandHue: 261,
-	interactiveHue: 261,
+	neutralChroma: 1,
 	okHue: 160,
 	warnHue: 75,
 	dangerHue: 28,
-	neutralChroma: 1,
+	primary: "ink",
+	space: 4,
+	radius: 14,
+	text: 16,
+	fonts: { mono: "JetBrains Mono Variable" },
+	widths: { rail: 220, list: 360, column: 300, sheet: 560, reading: 720 },
+	breakpoints: { tablet: 768, desktop: 1024, wide: 1440 },
 };
 
 // ── Colors ──────────────────────────────────────────────────────────
 
+export const AVATAR_STEPS = [1, 2, 3, 4, 5, 6, 7, 8] as const;
+export type AvatarStep = (typeof AVATAR_STEPS)[number];
+export type AvatarColor = `avatar-${AvatarStep}`;
+
 export const PER_MODE_COLORS = [
 	"canvas",
 	"surface",
-	"surface-2",
-	"surface-3",
-	"thumb",
+	"group",
 	"edge",
-	"edge-2",
-	"ink-1",
-	"ink-2",
-	"ink-3",
-	"ink-4",
+	"ink",
+	"ink-meta",
+	"ink-faint",
 	"accent",
-	"accent-ink",
-	"brand",
-	"brand-soft",
-	"brand-deep",
-	"interactive",
-	"interactive-soft",
+	"accent-soft",
+	"on-accent",
+	"tint",
 	"ok",
 	"ok-soft",
 	"warn",
 	"warn-soft",
-	"warn-mark",
 	"danger",
 	"danger-soft",
-	"danger-ink",
+	...AVATAR_STEPS.map((step): AvatarColor => `avatar-${step}`),
 ] as const;
 export type PerModeColor = (typeof PER_MODE_COLORS)[number];
 
-export const INVARIANT_COLORS = [
-	"scrim",
-	"oncover-fg",
-	"oncover-ink",
-	"oncover-surface",
-	"oncover-glass",
-	"oncover-shade",
-] as const;
+// `scrim` is the veil behind a sheet; `thumb` is the switch's knob, white in
+// both modes so it sits above its track at night: the one literal color.
+export const INVARIANT_COLORS = ["scrim", "thumb"] as const;
 export type InvariantColor = (typeof INVARIANT_COLORS)[number];
 
 // A literal hue, or a knob plus a fixed offset in degrees. Offsets carry the
@@ -90,22 +119,23 @@ export interface InvariantColorValue extends ColorValue {
 	alpha?: number;
 }
 
-// `accent` / `accent-ink` are the primary-fill pair, defined as the `ink-1` /
-// `canvas` values rather than colors of their own, so the law survives every
-// knob setting.
 export type ColorDeclaration =
 	| { alias: PerModeColor }
 	| { light: ColorValue; dark: ColorValue };
 
 const neutral = (offset = 0): HueBinding => ({ knob: "neutralHue", offset });
+const accent = (offset = 0): HueBinding => ({ knob: "accentHue", offset });
 
-// The set `neutralChroma` scales. Tokens land in it by binding, not by name, so
-// `danger-ink` and `scrim` are members.
+// The set `neutralChroma` scales. Tokens land in it by binding, not by name.
 export function isNeutralBound(hue: HueBinding): boolean {
 	return typeof hue !== "number" && hue.knob === "neutralHue";
 }
 
-export const COLORS: Record<PerModeColor, ColorDeclaration> = {
+// Every role whose value is the same under both primaries.
+export const COLORS: Record<
+	Exclude<PerModeColor, "accent" | "accent-soft" | AvatarColor>,
+	ColorDeclaration
+> = {
 	canvas: {
 		light: { l: 0.966, c: 0.006, hue: neutral() },
 		dark: { l: 0.2, c: 0.034, hue: neutral() },
@@ -114,65 +144,32 @@ export const COLORS: Record<PerModeColor, ColorDeclaration> = {
 		light: { l: 1, c: 0, hue: neutral() },
 		dark: { l: 0.285, c: 0.044, hue: neutral() },
 	},
-	"surface-2": {
+	group: {
 		light: { l: 0.935, c: 0.009, hue: neutral() },
 		dark: { l: 0.35, c: 0.052, hue: neutral() },
-	},
-	"surface-3": {
-		light: { l: 0.905, c: 0.012, hue: neutral() },
-		dark: { l: 0.41, c: 0.057, hue: neutral() },
-	},
-	thumb: {
-		light: { l: 1, c: 0, hue: neutral() },
-		dark: { l: 0.48, c: 0.05, hue: neutral() },
 	},
 	edge: {
 		light: { l: 0.91, c: 0.01, hue: neutral() },
 		dark: { l: 0.37, c: 0.056, hue: neutral() },
 	},
-	"edge-2": {
-		light: { l: 0.85, c: 0.014, hue: neutral() },
-		dark: { l: 0.45, c: 0.063, hue: neutral() },
-	},
-	"ink-1": {
+	ink: {
 		light: { l: 0.22, c: 0.043, hue: neutral() },
 		dark: { l: 0.967, c: 0.008, hue: neutral() },
 	},
-	"ink-2": {
+	"ink-meta": {
 		light: { l: 0.44, c: 0.036, hue: neutral() },
 		dark: { l: 0.755, c: 0.028, hue: neutral() },
 	},
-	"ink-3": {
-		light: { l: 0.515, c: 0.032, hue: neutral() },
-		dark: { l: 0.66, c: 0.033, hue: neutral() },
-	},
-	"ink-4": {
+	"ink-faint": {
 		light: { l: 0.75, c: 0.02, hue: neutral() },
 		dark: { l: 0.45, c: 0.048, hue: neutral() },
 	},
-	accent: { alias: "ink-1" },
-	"accent-ink": { alias: "canvas" },
-	brand: {
-		light: { l: 0.22, c: 0.043, hue: { knob: "brandHue", offset: 0 } },
-		// The dark accent steps off the interactive axis so the two accents stay
-		// two at night, and it tracks `brandHue` rather than pinning a literal.
-		dark: { l: 0.72, c: 0.075, hue: { knob: "brandHue", offset: 14 } },
-	},
-	"brand-soft": {
-		light: { l: 0.895, c: 0.04, hue: { knob: "brandHue", offset: 0 } },
-		dark: { l: 0.37, c: 0.095, hue: { knob: "brandHue", offset: 0 } },
-	},
-	"brand-deep": {
-		light: { l: 0.175, c: 0.045, hue: { knob: "brandHue", offset: 0 } },
-		dark: { l: 0.262, c: 0.066, hue: { knob: "brandHue", offset: 0 } },
-	},
-	interactive: {
-		light: { l: 0.5, c: 0.16, hue: { knob: "interactiveHue", offset: 0 } },
-		dark: { l: 0.7, c: 0.155, hue: { knob: "interactiveHue", offset: 0 } },
-	},
-	"interactive-soft": {
-		light: { l: 0.915, c: 0.045, hue: { knob: "interactiveHue", offset: 0 } },
-		dark: { l: 0.32, c: 0.1, hue: { knob: "interactiveHue", offset: 0 } },
+	// Text on `accent`: the canvas value keeps AA in both modes under either
+	// primary, by the ladder's symmetry.
+	"on-accent": { alias: "canvas" },
+	tint: {
+		light: { l: 0.5, c: 0.16, hue: accent() },
+		dark: { l: 0.7, c: 0.155, hue: accent() },
 	},
 	ok: {
 		light: { l: 0.5, c: 0.105, hue: { knob: "okHue", offset: 0 } },
@@ -190,10 +187,6 @@ export const COLORS: Record<PerModeColor, ColorDeclaration> = {
 		light: { l: 0.912, c: 0.048, hue: { knob: "warnHue", offset: 5 } },
 		dark: { l: 0.32, c: 0.06, hue: { knob: "warnHue", offset: 0 } },
 	},
-	"warn-mark": {
-		light: { l: 0.62, c: 0.13, hue: { knob: "warnHue", offset: 3 } },
-		dark: { l: 0.7, c: 0.14, hue: { knob: "warnHue", offset: 0 } },
-	},
 	danger: {
 		light: { l: 0.5, c: 0.18, hue: { knob: "dangerHue", offset: 0 } },
 		dark: { l: 0.7, c: 0.17, hue: { knob: "dangerHue", offset: 0 } },
@@ -202,157 +195,274 @@ export const COLORS: Record<PerModeColor, ColorDeclaration> = {
 		light: { l: 0.915, c: 0.045, hue: { knob: "dangerHue", offset: 0 } },
 		dark: { l: 0.32, c: 0.08, hue: { knob: "dangerHue", offset: 0 } },
 	},
-	// The canvas value of each mode, so it is neutral-bound despite the name.
-	"danger-ink": {
-		light: { l: 0.966, c: 0.006, hue: neutral() },
-		dark: { l: 0.2, c: 0.034, hue: neutral() },
+};
+
+// The two roles `primary` decides. Under `ink` the act fill is the ink ladder
+// and its soft is the neutral-bound soft; under `accent` both bind to
+// `accentHue`, the soft at `tint`'s soft values.
+export const PRIMARY_COLORS: Record<
+	Primary,
+	Record<"accent" | "accent-soft", ColorDeclaration>
+> = {
+	ink: {
+		accent: { alias: "ink" },
+		"accent-soft": {
+			light: { l: 0.895, c: 0.04, hue: neutral() },
+			dark: { l: 0.37, c: 0.095, hue: neutral() },
+		},
+	},
+	accent: {
+		accent: { alias: "tint" },
+		"accent-soft": {
+			light: { l: 0.915, c: 0.045, hue: accent() },
+			dark: { l: 0.32, c: 0.1, hue: accent() },
+		},
 	},
 };
 
-// Surfaces that stay dark in both modes, plus the veil. They carry no per-mode
-// override on purpose, so they never invert.
-export const INVARIANT: Record<InvariantColor, InvariantColorValue> = {
-	scrim: { l: 0.22, c: 0.043, hue: neutral(), alpha: 0.8 },
-	"oncover-fg": { l: 1, c: 0, hue: 0 },
-	"oncover-ink": { l: 0.22, c: 0.043, hue: neutral() },
-	"oncover-surface": { l: 1, c: 0, hue: 0 },
-	"oncover-glass": { l: 1, c: 0, hue: 0, alpha: 0.149 },
-	"oncover-shade": { l: 0.2, c: 0.036, hue: neutral(), alpha: 0.549 },
+// One lightness and chroma, the hue stepped 45° from `accentHue` per rung, so
+// a fill per name is a token and never a computed hue.
+export const AVATAR_STEP_DEGREES = 45;
+export const AVATAR_VALUE: Record<Mode, { l: number; c: number }> = {
+	light: { l: 0.88, c: 0.06 },
+	dark: { l: 0.38, c: 0.09 },
 };
 
-// ── Scales ──────────────────────────────────────────────────────────
+export const INVARIANT: Record<InvariantColor, InvariantColorValue> = {
+	scrim: { l: 0.22, c: 0.043, hue: neutral(), alpha: 0.8 },
+	thumb: { l: 1, c: 0, hue: 0 },
+};
+
+// ── Scales, each a ratio of one knob ────────────────────────────────
 
 export const SPACING_RUNGS = [
-	"room",
-	"section",
-	"stack",
-	"row",
 	"pair",
-	"gutter",
-	"card",
+	"row",
+	"stack",
+	"inset",
+	"section",
+	"room",
 ] as const;
 export type SpacingRung = (typeof SPACING_RUNGS)[number];
 
-export const SPACING: Record<SpacingRung, string> = {
-	room: "32px",
-	section: "24px",
-	stack: "12px",
-	row: "8px",
-	pair: "4px",
-	gutter: "16px",
-	card: "16px",
+// Multiples of `space`.
+export const SPACING_RATIO: Record<SpacingRung, number> = {
+	pair: 1,
+	row: 2,
+	stack: 3,
+	inset: 4,
+	section: 6,
+	room: 8,
 };
 
-export const RADIUS_RUNGS = ["md", "control", "xl", "sheet", "full"] as const;
+export const RADIUS_RUNGS = ["group", "sheet", "full"] as const;
 export type RadiusRung = (typeof RADIUS_RUNGS)[number];
 
-export const RADIUS: Record<RadiusRung, string> = {
-	md: "10px",
-	control: "14px",
-	xl: "16px",
-	sheet: "24px",
-	full: "9999px",
+// `group` is `radius` itself, `sheet` is 1.75× rounded down, `full` is a pill.
+export const RADIUS_RATIO: Record<Exclude<RadiusRung, "full">, number> = {
+	group: 1,
+	sheet: 1.75,
 };
 
 export const TYPE_ROLES = [
 	"display",
-	"h1",
-	"h2",
-	"h3",
+	"title",
+	"heading",
 	"body",
-	"callout",
-	"caption",
-	"micro",
+	"meta",
+	"label",
+	"mono",
 ] as const;
 export type TypeRole = (typeof TYPE_ROLES)[number];
 
-// Five of the eight roles carry tracking. The list is its own name list so the
-// tracking map is total and the emitters need no per-role presence check.
-export const TRACKED_ROLES = ["display", "h1", "h2", "h3", "micro"] as const;
+// Three roles carry tracking. The list is its own name list so the tracking
+// map is total and the emitters need no per-role presence check.
+export const TRACKED_ROLES = ["display", "title", "heading"] as const;
 export type TrackedRole = (typeof TRACKED_ROLES)[number];
 
-// `leading` is unitless: a multiplier that scales with OS font scaling instead
-// of pinning a pixel line box.
-export interface TypeScaleEntry {
-	size: string;
-	leading: string;
+export type FontWeight = "regular" | "medium" | "semibold" | "bold";
+
+// `size` is a ratio of `text`, rounded to the whole pixel; `leading` is a
+// ratio of the size, its line box rounded to the even pixel. Ink is a color
+// role, family a font role.
+export interface TypeRoleSpec {
+	size: number;
+	leading: number;
+	weight: FontWeight;
+	ink: "ink" | "ink-meta";
+	family: FontRole;
 }
 
-export const TYPE_SCALE: Record<TypeRole, TypeScaleEntry> = {
-	display: { size: "34px", leading: "1.18" },
-	h1: { size: "28px", leading: "1.29" },
-	h2: { size: "22px", leading: "1.27" },
-	h3: { size: "18px", leading: "1.33" },
-	body: { size: "16px", leading: "1.5" },
-	callout: { size: "14px", leading: "1.43" },
-	caption: { size: "13px", leading: "1.23" },
-	micro: { size: "12px", leading: "1.33" },
+export const TYPE_SCALE: Record<TypeRole, TypeRoleSpec> = {
+	display: {
+		size: 2.125,
+		leading: 1.18,
+		weight: "bold",
+		ink: "ink",
+		family: "sans",
+	},
+	title: {
+		size: 1.75,
+		leading: 1.29,
+		weight: "bold",
+		ink: "ink",
+		family: "sans",
+	},
+	heading: {
+		size: 1.125,
+		leading: 1.33,
+		weight: "semibold",
+		ink: "ink",
+		family: "sans",
+	},
+	body: {
+		size: 1,
+		leading: 1.5,
+		weight: "regular",
+		ink: "ink",
+		family: "sans",
+	},
+	meta: {
+		size: 0.875,
+		leading: 1.43,
+		weight: "regular",
+		ink: "ink-meta",
+		family: "sans",
+	},
+	label: {
+		size: 0.8125,
+		leading: 1.23,
+		weight: "medium",
+		ink: "ink-meta",
+		family: "sans",
+	},
+	mono: {
+		size: 0.875,
+		leading: 1.43,
+		weight: "regular",
+		ink: "ink",
+		family: "mono",
+	},
 };
 
 export const TYPE_TRACKING: Record<TrackedRole, string> = {
 	display: "-0.025em",
-	h1: "-0.02em",
-	h2: "-0.015em",
-	h3: "-0.005em",
-	micro: "0.03em",
+	title: "-0.02em",
+	heading: "-0.005em",
 };
 
-export const SHADOW_LEVELS = ["1", "2", "3"] as const;
+export const SHADOW_LEVELS = ["float", "sheet"] as const;
 export type ShadowLevel = (typeof SHADOW_LEVELS)[number];
 
-export const SHADOWS: Record<ShadowLevel, string> = {
-	"1": "0 1px 2px rgba(14, 26, 46, 0.04), 0 6px 18px rgba(14, 26, 46, 0.08)",
-	"2": "0 7px 18px rgba(14, 26, 46, 0.13)",
-	"3": "0 12px 28px rgba(14, 26, 46, 0.16)",
+// Offsets, blur and alpha per level; the color is the light ink at
+// `neutralHue`, converted to sRGB by the derivation because React Native's
+// `boxShadow` takes no oklch.
+export const SHADOW_GEOMETRY: Record<
+	ShadowLevel,
+	{ y: number; blur: number; alpha: number }
+> = {
+	float: { y: 7, blur: 18, alpha: 0.13 },
+	sheet: { y: 12, blur: 28, alpha: 0.16 },
 };
 
-// The four namespaces reset to `initial`, so an off-contract utility compiles
-// to nothing. `--leading-*`, `--tracking-*` and the numeric `--spacing` base
-// stay live: see the README on what the reset does not catch.
+// Namespaces reset to `initial`, so an off-contract utility compiles to
+// nothing. The numeric `--spacing` base and the `--font-weight-*` ladder stay
+// live: controls pad on numerics and the roles name their weights.
 export const ZEROED_NAMESPACES = [
 	"--color-*",
 	"--radius-*",
 	"--text-*",
+	"--leading-*",
+	"--tracking-*",
 	"--shadow-*",
+	"--font-*",
+	"--container-*",
+	"--breakpoint-*",
 ] as const;
 
-// Font families stay with the platform plugins; only the fallback stacks are
-// shared, so both plugins append the same tail.
-export const FONT_FALLBACKS = {
+// The stacks each family falls back to on both platforms; `sans` alone is the
+// platform's stack when the knob names no family.
+export const FONT_FALLBACKS: Record<FontRole, string> = {
 	sans: "ui-sans-serif, system-ui, sans-serif",
 	mono: "ui-monospace, SFMono-Regular, monospace",
-	serif: "ui-serif, Georgia, serif",
-} as const;
+};
 
 // Every non-color token, keyed by its full custom-property name. This is also
 // the closed key set `overrides.scales` accepts. A role's leading and tracking
 // appear once each: `themeTokens` renders both emitted shapes (the Tailwind v4
-// modifier `--text-h1--line-height` and the standalone `--leading-h1`) from
-// this one entry, so one override moves both and they cannot disagree.
+// modifier `--text-title--line-height` and the standalone `--leading-title`)
+// from this one entry, so one override moves both and they cannot disagree.
 export type ScaleKey =
 	| `--spacing-${SpacingRung}`
 	| `--radius-${RadiusRung}`
 	| `--text-${TypeRole}`
 	| `--leading-${TypeRole}`
 	| `--tracking-${TrackedRole}`
-	| `--shadow-${ShadowLevel}`;
+	| `--shadow-${ShadowLevel}`
+	| `--container-${Width}`
+	| `--breakpoint-${Breakpoint}`;
 
-function scaleDefaults(): Record<ScaleKey, string> {
-	const scales = {} as Record<ScaleKey, string>;
-	for (const rung of SPACING_RUNGS) scales[`--spacing-${rung}`] = SPACING[rung];
-	for (const rung of RADIUS_RUNGS) scales[`--radius-${rung}`] = RADIUS[rung];
-	for (const role of TYPE_ROLES)
-		scales[`--text-${role}`] = TYPE_SCALE[role].size;
-	for (const role of TYPE_ROLES) {
-		scales[`--leading-${role}`] = TYPE_SCALE[role].leading;
-	}
-	for (const role of TRACKED_ROLES) {
-		scales[`--tracking-${role}`] = TYPE_TRACKING[role];
-	}
-	for (const level of SHADOW_LEVELS) {
-		scales[`--shadow-${level}`] = SHADOWS[level];
-	}
-	return scales;
-}
+export const SCALE_KEYS: readonly ScaleKey[] = [
+	...SPACING_RUNGS.map((rung): ScaleKey => `--spacing-${rung}`),
+	...RADIUS_RUNGS.map((rung): ScaleKey => `--radius-${rung}`),
+	...TYPE_ROLES.map((role): ScaleKey => `--text-${role}`),
+	...TYPE_ROLES.map((role): ScaleKey => `--leading-${role}`),
+	...TRACKED_ROLES.map((role): ScaleKey => `--tracking-${role}`),
+	...SHADOW_LEVELS.map((level): ScaleKey => `--shadow-${level}`),
+	...WIDTHS.map((width): ScaleKey => `--container-${width}`),
+	...BREAKPOINTS.map((bp): ScaleKey => `--breakpoint-${bp}`),
+];
 
-export const SCALE_DEFAULTS: Record<ScaleKey, string> = scaleDefaults();
+// ── Words ───────────────────────────────────────────────────────────
+
+// Every word a molecule draws or reads aloud on its own. A consumer's sentence
+// is a prop on the molecule that draws it, never a key here.
+export const STATUS_STATES = [
+	"active",
+	"waiting",
+	"done",
+	"attention",
+	"failed",
+	"idle",
+] as const;
+export type StatusState = (typeof STATUS_STATES)[number];
+
+export const WORD_KEYS = [
+	...STATUS_STATES,
+	"recommended",
+	"copy",
+	"copied",
+	"back",
+	"close",
+	"more",
+	"send",
+	"stop",
+	"attach",
+	"search",
+	"loading",
+	"retry",
+] as const;
+export type WordKey = (typeof WORD_KEYS)[number];
+
+export type Words = Record<WordKey, string>;
+
+export const ENGLISH: Words = {
+	active: "Active",
+	waiting: "Waiting",
+	done: "Done",
+	attention: "Attention",
+	failed: "Failed",
+	idle: "Idle",
+	recommended: "Recommended",
+	copy: "Copy",
+	copied: "Copied",
+	back: "Back",
+	close: "Close",
+	more: "More",
+	send: "Send",
+	stop: "Stop",
+	attach: "Attach",
+	search: "Search",
+	loading: "Loading",
+	retry: "Retry",
+};

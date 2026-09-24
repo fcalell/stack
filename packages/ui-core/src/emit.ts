@@ -1,5 +1,7 @@
 import type { ResolvedTheme } from "./derive.ts";
 import {
+	BREAKPOINTS,
+	FONT_ROLES,
 	INVARIANT_COLORS,
 	type Mode,
 	PER_MODE_COLORS,
@@ -9,19 +11,20 @@ import {
 	SPACING_RUNGS,
 	TRACKED_ROLES,
 	TYPE_ROLES,
+	WIDTHS,
 	ZEROED_NAMESPACES,
 } from "./tokens.ts";
 
 export type ShadowUtility = `shadow-${ShadowLevel}`;
 
 // The `@theme` record, keyed by full custom-property name. It carries the
-// default mode's colors as well as the mode-invariant six: in Tailwind v4 a
+// default mode's colors as well as the mode-invariant two: in Tailwind v4 a
 // property declared only inside a `@variant` block generates no utility, so
 // without them `bg-canvas` would not exist.
 //
 // Each type role renders twice, from one resolved value: the Tailwind v4
-// modifier so `text-h1` carries its own leading on web, and the standalone
-// namespace so the unitless multiplier stays available on native.
+// modifier so `text-title` carries its own leading on web, and the standalone
+// namespace so `leading-title` exists on its own.
 export function themeTokens(resolved: ResolvedTheme): Record<string, string> {
 	const tokens: Record<string, string> = {};
 	for (const namespace of ZEROED_NAMESPACES) tokens[namespace] = "initial";
@@ -46,6 +49,15 @@ export function themeTokens(resolved: ResolvedTheme): Record<string, string> {
 	for (const role of TRACKED_ROLES) {
 		tokens[`--tracking-${role}`] = resolved.scales[`--tracking-${role}`];
 	}
+	for (const width of WIDTHS) {
+		tokens[`--container-${width}`] = resolved.scales[`--container-${width}`];
+	}
+	for (const bp of BREAKPOINTS) {
+		tokens[`--breakpoint-${bp}`] = resolved.scales[`--breakpoint-${bp}`];
+	}
+	for (const role of FONT_ROLES) {
+		tokens[`--font-${role}`] = resolved.fonts[role];
+	}
 	for (const token of INVARIANT_COLORS) {
 		tokens[`--color-${token}`] = resolved.invariantColors[token];
 	}
@@ -55,8 +67,8 @@ export function themeTokens(resolved: ResolvedTheme): Record<string, string> {
 	return tokens;
 }
 
-// One mode's colors, keyed by bare token name (`canvas`, `ink-1`) because the
-// per-theme codegen path prefixes `--color-` itself. Never the invariant six:
+// One mode's colors, keyed by bare token name (`canvas`, `ink`) because the
+// per-theme codegen path prefixes `--color-` itself. Never the invariant two:
 // they carry no per-mode override.
 export function modeTokens(
 	resolved: ResolvedTheme,

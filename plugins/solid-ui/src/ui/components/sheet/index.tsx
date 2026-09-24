@@ -1,274 +1,128 @@
-import type { ButtonTone } from "@fcalell/ui-core/variants";
-import * as SheetPrimitive from "@kobalte/core/dialog";
-import type { PolymorphicProps } from "@kobalte/core/polymorphic";
-import type { VariantProps } from "class-variance-authority";
-import { X } from "lucide-solid";
-import type { ComponentProps, JSX, ValidComponent } from "solid-js";
-import { For, Show, splitProps } from "solid-js";
-import { Button } from "#components/button";
+import { SCRIM, SHEET, text } from "@fcalell/ui-core/variants";
+import * as DialogPrimitive from "@kobalte/core/dialog";
+import { ChevronLeft, X } from "lucide-solid";
+import type { JSX } from "solid-js";
+import { Show } from "solid-js";
+import { BarContext } from "#lib/bar";
+import { Circle } from "#lib/circle";
+import type { Closed } from "#lib/closed";
 import { cn } from "#lib/cn";
-import {
-	createOverlayContext,
-	createOverlayHook,
-	createProviderState,
-} from "#lib/overlay";
-import {
-	sheetOverlayClass,
-	sheetPortalVariants,
-	sheetVariants,
-} from "#lib/sheet";
+import { useWords } from "#lib/words";
 
-// ─── Portal (internal) ───
-
-type PortalProps = SheetPrimitive.DialogPortalProps &
-	VariantProps<typeof sheetPortalVariants>;
-
-function Portal(props: PortalProps) {
-	const [local, rest] = splitProps(props, ["position", "children"]);
-	return (
-		<SheetPrimitive.Portal {...rest}>
-			<div class={sheetPortalVariants({ position: local.position })}>
-				{local.children}
-			</div>
-		</SheetPrimitive.Portal>
-	);
+export interface SheetSubmit {
+	label: string;
+	onAct: () => void;
+	blocked?: string;
 }
 
-// ─── Overlay (internal) ───
-
-function Overlay(props: SheetPrimitive.DialogOverlayProps) {
-	return <SheetPrimitive.Overlay class={sheetOverlayClass} {...props} />;
-}
-
-// ─── Content ───
-
-type ContentProps<T extends ValidComponent = "div"> =
-	SheetPrimitive.DialogContentProps<T> &
-		VariantProps<typeof sheetVariants> & {
-			children?: JSX.Element;
-			class?: never;
-			style?: never;
-			classList?: never;
-			hideCloseButton?: boolean;
-		};
-
-function Content<T extends ValidComponent = "div">(
-	props: PolymorphicProps<T, ContentProps<T>>,
-) {
-	const [local, rest] = splitProps(props as ContentProps, [
-		"position",
-		"size",
-		"children",
-		"hideCloseButton",
-	]);
-	return (
-		<Portal position={local.position}>
-			<Overlay />
-			<SheetPrimitive.Content
-				class={cn(
-					sheetVariants({ position: local.position, size: local.size }),
-					"max-h-screen overflow-y-auto",
-				)}
-				{...rest}
-			>
-				{local.children}
-				<Show when={!local.hideCloseButton}>
-					<SheetPrimitive.CloseButton class="absolute right-4 top-4 text-ink-3 transition-[color,background-color,border-color] duration-(--duration-base) ease-ui hover:text-ink-1 focus-visible:outline-2 focus-visible:outline-interactive focus-visible:outline-offset-2 disabled:pointer-events-none">
-						<X class="size-4" aria-hidden="true" />
-						<span class="sr-only">Close</span>
-					</SheetPrimitive.CloseButton>
-				</Show>
-			</SheetPrimitive.Content>
-		</Portal>
-	);
-}
-
-// ─── Trigger / Close ───
-
-type TriggerProps<T extends ValidComponent = "button"> =
-	SheetPrimitive.DialogTriggerProps<T> & {
-		class?: never;
-		style?: never;
-		classList?: never;
-	};
-
-function Trigger<T extends ValidComponent = "button">(
-	props: PolymorphicProps<T, TriggerProps<T>>,
-) {
-	return (
-		<SheetPrimitive.Trigger {...(props as SheetPrimitive.DialogTriggerProps)} />
-	);
-}
-
-type CloseProps<T extends ValidComponent = "button"> =
-	SheetPrimitive.DialogCloseButtonProps<T> & {
-		class?: never;
-		style?: never;
-		classList?: never;
-	};
-
-function Close<T extends ValidComponent = "button">(
-	props: PolymorphicProps<T, CloseProps<T>>,
-) {
-	return (
-		<SheetPrimitive.CloseButton
-			{...(props as SheetPrimitive.DialogCloseButtonProps)}
-		/>
-	);
-}
-
-// ─── Header / Footer ───
-
-function Header(
-	props: ComponentProps<"div"> & {
-		class?: never;
-		style?: never;
-		classList?: never;
-	},
-) {
-	return <div class="flex flex-col space-y-2 text-left" {...props} />;
-}
-
-function Footer(
-	props: ComponentProps<"div"> & {
-		class?: never;
-		style?: never;
-		classList?: never;
-	},
-) {
-	return (
-		<div
-			class="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2"
-			{...props}
-		/>
-	);
-}
-
-// ─── Title / Description ───
-
-type TitleProps<T extends ValidComponent = "h2"> =
-	SheetPrimitive.DialogTitleProps<T> & {
-		class?: never;
-		style?: never;
-		classList?: never;
-	};
-
-function Title<T extends ValidComponent = "h2">(
-	props: PolymorphicProps<T, TitleProps<T>>,
-) {
-	return (
-		<SheetPrimitive.Title class="text-h3 font-semibold text-ink-1" {...props} />
-	);
-}
-
-type DescriptionProps<T extends ValidComponent = "p"> =
-	SheetPrimitive.DialogDescriptionProps<T> & {
-		class?: never;
-		style?: never;
-		classList?: never;
-	};
-
-function Description<T extends ValidComponent = "p">(
-	props: PolymorphicProps<T, DescriptionProps<T>>,
-) {
-	return (
-		<SheetPrimitive.Description class="text-callout text-ink-3" {...props} />
-	);
-}
-
-// ─── SheetProvider ───
-
-const { Context: SheetContext, useCtx: useSheetCtx } =
-	createOverlayContext("Sheet");
-
-function SheetProvider(props: { children: JSX.Element }) {
-	const { entries, context } = createProviderState();
-
-	return (
-		<SheetContext.Provider value={context}>
-			{props.children}
-			<For each={entries()}>{(entry) => entry.component()}</For>
-		</SheetContext.Provider>
-	);
-}
-
-// ─── createSheet ───
-
-type CreateSheetOptions = {
-	position?: "top" | "bottom" | "left" | "right";
-	size?: "sm" | "md" | "lg" | "xl" | "full";
-	sheetProps?: Partial<{ preventScroll: boolean; modal: boolean }>;
-};
-
-function createSheet<P = void, R = undefined>(
-	render: (props: P, close: (result?: R) => void) => JSX.Element,
-	options?: CreateSheetOptions,
-): { open: (props: P) => Promise<R | undefined> } {
-	const ctx = useSheetCtx();
-
-	return createOverlayHook<P, R>(ctx, (s) => (
-		<SheetPrimitive.Root
-			open={s.isOpen()}
-			onOpenChange={s.handleOpenChange}
-			{...options?.sheetProps}
-		>
-			<Show when={s.state()} keyed>
-				{(current) => (
-					<Content
-						position={options?.position ?? "right"}
-						size={options?.size ?? "sm"}
-					>
-						{render(current.props, s.close)}
-					</Content>
-				)}
-			</Show>
-		</SheetPrimitive.Root>
-	));
-}
-
-// ─── createConfirmSheet ───
-
-type ConfirmSheetProps = {
+// A sheet: a close circle left (a back circle with `back`), the title, and
+// `submit` top right where a keyboard would cover a bar; a decision sheet
+// puts an `ActionBar` in its children instead, and the two exclude each
+// other. Content-tall from the bottom on the phone; centered at the sheet
+// width from tablet.
+export type SheetProps = Closed & {
+	open: boolean;
+	onClose: () => void;
 	title: string;
-	description: string;
-	confirmLabel?: string;
-	cancelLabel?: string;
-	tone?: ButtonTone;
+	description?: string;
+	back?: () => void;
+	submit?: SheetSubmit;
+	foot?: JSX.Element;
+	children?: JSX.Element;
 };
 
-function createConfirmSheet(options?: CreateSheetOptions) {
-	return createSheet<ConfirmSheetProps, boolean>((props, close) => {
-		return (
-			<>
-				<Header>
-					<Title>{props.title}</Title>
-				</Header>
-				<Description>{props.description}</Description>
-				<Footer>
-					<Button emphasis="secondary" onClick={() => close(false)}>
-						{props.cancelLabel ?? "Cancel"}
-					</Button>
-					<Button tone={props.tone} onClick={() => close(true)}>
-						{props.confirmLabel ?? "Confirm"}
-					</Button>
-				</Footer>
-			</>
-		);
-	}, options);
+export function Sheet(props: SheetProps) {
+	const words = useWords();
+	return (
+		<DialogPrimitive.Root
+			open={props.open}
+			onOpenChange={(open) => {
+				if (!open) props.onClose();
+			}}
+		>
+			<DialogPrimitive.Portal>
+				<DialogPrimitive.Overlay
+					class={cn(
+						SCRIM,
+						"fixed inset-0 z-50 data-[expanded]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[expanded]:fade-in-0",
+					)}
+				/>
+				<div class="fixed inset-0 z-50 flex items-end justify-center tablet:items-center tablet:p-section">
+					<DialogPrimitive.Content
+						class={cn(
+							SHEET,
+							"flex max-h-[90dvh] w-full flex-col overflow-hidden outline-none tablet:max-w-sheet tablet:shadow-sheet",
+							"tablet:rounded-sheet",
+						)}
+					>
+						<BarContext.Provider value="flow">
+							<header class="flex min-h-14 items-center gap-row px-inset">
+								<Show
+									when={props.back}
+									fallback={
+										<Circle
+											glyph={X}
+											label={words.close}
+											onAct={props.onClose}
+										/>
+									}
+								>
+									{(back) => (
+										<Circle
+											glyph={ChevronLeft}
+											label={words.back}
+											onAct={back()}
+										/>
+									)}
+								</Show>
+								<DialogPrimitive.Title
+									class={cn(
+										text({ role: "heading" }),
+										"min-w-0 flex-1 truncate",
+									)}
+								>
+									{props.title}
+								</DialogPrimitive.Title>
+								<Show when={props.submit}>
+									{(submit) => (
+										<button
+											type="button"
+											disabled={submit().blocked !== undefined}
+											onClick={() => submit().onAct()}
+											class={cn(
+												text({ role: "body" }),
+												"min-h-11 shrink-0 cursor-pointer px-row font-medium text-tint disabled:text-ink-faint",
+											)}
+										>
+											{submit().label}
+										</button>
+									)}
+								</Show>
+							</header>
+							<Show when={props.submit?.blocked}>
+								<p class={cn(text({ role: "meta" }), "px-inset text-right")}>
+									{props.submit?.blocked}
+								</p>
+							</Show>
+							<Show when={props.description}>
+								<DialogPrimitive.Description
+									class={cn(text({ role: "meta" }), "px-inset pb-stack")}
+								>
+									{props.description}
+								</DialogPrimitive.Description>
+							</Show>
+							<div class="flex min-h-0 flex-1 flex-col gap-stack overflow-y-auto px-inset pb-[max(env(safe-area-inset-bottom),var(--spacing-inset))]">
+								{props.children}
+							</div>
+							<Show when={props.foot}>
+								<div class="px-inset pb-[max(env(safe-area-inset-bottom),var(--spacing-inset))]">
+									{props.foot}
+								</div>
+							</Show>
+						</BarContext.Provider>
+					</DialogPrimitive.Content>
+				</div>
+			</DialogPrimitive.Portal>
+		</DialogPrimitive.Root>
+	);
 }
-
-// ─── Exports ───
-
-export const Sheet = Object.assign(SheetPrimitive.Root, {
-	Trigger,
-	Close,
-	Content,
-	Header,
-	Footer,
-	Title,
-	Description,
-	Provider: SheetProvider,
-});
-
-export type { ConfirmSheetProps, CreateSheetOptions };
-export { createConfirmSheet, createSheet };

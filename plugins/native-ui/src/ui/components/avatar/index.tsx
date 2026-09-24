@@ -1,53 +1,44 @@
-import { Text, View, type ViewProps } from "react-native";
+import { avatar, avatarStep, text } from "@fcalell/ui-core/variants";
+import { Image, Text as RNText, View } from "react-native";
+import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 
-// Identity tints — colour encodes WHO, never persona/role. Theme-invariant by
-// design (a person's colour is the same in light and Notturno), so these are
-// fixed hex, not theme tokens; the initials ride `oncover-fg`, the invariant
-// ink for dark-invariant grounds. The gradient `navy` tint in the design
-// degrades to its solid azure stop on native.
-export type AvatarTint = "navy" | "green" | "sea" | "slate" | "clay" | "gray";
-
-const TINTS: Record<AvatarTint, string> = {
-	navy: "#2A6FDB",
-	green: "#2A8C5F",
-	sea: "#2E7D8A",
-	slate: "#42618C",
-	clay: "#C76A4A",
-	gray: "#7A8593",
-};
-
-export interface AvatarProps extends Omit<ViewProps, "children"> {
-	initials?: string;
-	size?: number;
-	// Identity colour. Omit for a neutral placeholder (e.g. an empty seat / add).
-	tint?: AvatarTint;
-	className?: never;
-	style?: never;
+export interface AvatarProps extends Closed {
+	name: string;
+	src?: string;
 }
 
-export function Avatar({ initials, size = 40, tint, ...rest }: AvatarProps) {
-	const tinted = tint !== undefined;
+function initials(name: string): string {
+	return name
+		.split(/\s+/)
+		.filter(Boolean)
+		.slice(0, 2)
+		.map((word) => word[0]?.toUpperCase() ?? "")
+		.join("");
+}
+
+// A circle: the image, else the name's initials on the ladder step its hash
+// picks, so one name keeps one fill.
+export function Avatar({ name, src }: AvatarProps) {
 	return (
 		<View
-			style={[
-				{ width: size, height: size },
-				tinted ? { backgroundColor: TINTS[tint] } : null,
-			]}
+			accessibilityLabel={name}
 			className={cn(
-				"items-center justify-center rounded-full",
-				tinted ? "" : "border border-edge bg-surface",
+				avatar({ step: avatarStep(name) }),
+				"size-8 items-center justify-center overflow-hidden",
 			)}
-			{...rest}
 		>
-			{initials ? (
-				<Text
-					style={{ fontSize: Math.round(size * 0.4) }}
-					className={cn("font-bold", tinted ? "text-oncover-fg" : "text-ink-2")}
-				>
-					{initials}
-				</Text>
-			) : null}
+			{src ? (
+				<Image
+					source={{ uri: src }}
+					className="size-8"
+					accessibilityIgnoresInvertColors
+				/>
+			) : (
+				<RNText className={cn(text({ role: "label" }), "text-ink")}>
+					{initials(name)}
+				</RNText>
+			)}
 		</View>
 	);
 }

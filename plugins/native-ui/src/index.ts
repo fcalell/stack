@@ -62,14 +62,12 @@ const resolvedTheme = slot.derived({
 		deriveTheme(ctx.options.theme),
 });
 
-// Resolved fonts — consumer `fonts` option or none.
+// The font files to embed: the consumer's `fonts` option or none.
 const fonts = slot.derived({
 	source: SOURCE,
 	name: "fonts",
-	compute: (_inp, ctx: ContributionCtx<NativeUiOptions>): NativeFontEntry[] => {
-		const opts = ctx.options;
-		return opts.fonts ?? [];
-	},
+	compute: (_inp, ctx: ContributionCtx<NativeUiOptions>): NativeFontEntry[] =>
+		ctx.options.fonts ?? [],
 });
 
 // Extra CSS `@import`s aggregated into global.css (beyond tailwindcss+uniwind).
@@ -83,15 +81,10 @@ const appCssImports = slot.list<string>({
 const appCssSource = slot.derived({
 	source: SOURCE,
 	name: "appCssSource",
-	inputs: {
-		resolved: resolvedTheme,
-		fontEntries: fonts,
-		imports: appCssImports,
-	},
+	inputs: { resolved: resolvedTheme, imports: appCssImports },
 	compute: (inp): string | null =>
 		aggregateGlobalCss({
 			resolved: inp.resolved,
-			fonts: inp.fontEntries,
 			sources: SOURCES,
 			extraImports: inp.imports,
 		}),
@@ -147,6 +140,37 @@ const bottomSheetProvider: ProviderSpec = {
 	wrap: { identifier: "BottomSheetModalProvider" },
 	order: 30,
 };
+
+// The consumer's words, wrapped around the app so every molecule reads them
+// through `useWords()`. Absent, the context's English default applies and no
+// provider is generated.
+function wordsProvider(opts: NativeUiOptions): ProviderSpec | undefined {
+	if (!opts.words) return undefined;
+	return {
+		imports: [
+			{
+				source: "@fcalell/plugin-native-ui/lib/words",
+				named: ["WordsProvider"],
+			},
+		],
+		wrap: {
+			identifier: "WordsProvider",
+			props: [
+				{
+					name: "words",
+					value: {
+						kind: "object",
+						properties: Object.entries(opts.words).map(([key, value]) => ({
+							key,
+							value: { kind: "string", value },
+						})),
+					},
+				},
+			],
+		},
+		order: 35,
+	};
+}
 
 function queryProvider(opts: NativeUiOptions): ProviderSpec {
 	const mod = opts.queryClientModule ?? DEFAULT_QUERY_MODULE;
@@ -233,6 +257,8 @@ export const nativeUi = plugin("native-ui", {
 		// fresh consumer can't render any icon.
 		"react-native-svg": "^15.15.4",
 		"expo-font": "~56.0.0",
+		// The copy acts (Code, a copyable DefinitionRow) write the clipboard.
+		"expo-clipboard": "~56.0.3",
 		"expo-secure-store": "~56.0.0",
 		"@tanstack/react-query": "^5.101.0",
 		"@orpc/tanstack-query": "^1.14.4",
@@ -270,9 +296,7 @@ export const nativeUi = plugin("native-ui", {
 		// ── expo-font: embed contributed font files natively ──────────────
 		expo.slots.expoConfigPlugins.contribute(async (ctx) => {
 			const fontEntries = await ctx.resolve(self.slots.fonts);
-			const files = fontEntries
-				.map((f) => f.source)
-				.filter((src): src is string => typeof src === "string");
+			const files = fontEntries.map((font) => font.source);
 			if (files.length === 0) return undefined;
 			return { name: "expo-font", options: { fonts: files } };
 		}),
@@ -282,6 +306,7 @@ export const nativeUi = plugin("native-ui", {
 		expo.slots.providers.contribute(() => keyboardProvider),
 		expo.slots.providers.contribute(() => safeAreaProvider),
 		expo.slots.providers.contribute(() => bottomSheetProvider),
+		expo.slots.providers.contribute(() => wordsProvider(self.options)),
 		expo.slots.providers.contribute(() => queryProvider(self.options)),
 		expo.slots.providers.contribute(() => authProvider(self.options)),
 
@@ -328,4 +353,9 @@ export const nativeUi = plugin("native-ui", {
 	],
 });
 
-export type { NativeFontEntry, NativeUiOptions, Theme } from "./types.ts";
+export type {
+	NativeFontEntry,
+	NativeUiOptions,
+	Theme,
+	Words,
+} from "./types.ts";

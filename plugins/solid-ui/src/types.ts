@@ -1,4 +1,4 @@
-import { themeSchema } from "@fcalell/ui-core/schema";
+import { themeSchema, wordsSchema } from "@fcalell/ui-core/schema";
 import { z } from "zod";
 import { isCssIdent, isCssSupportsExpression } from "./node/css-escape.ts";
 
@@ -45,7 +45,7 @@ export type CssLayer = z.input<typeof cssLayerSchema>;
 
 // A top-level block: the two Tailwind v4 at-rules that cannot sit inside a
 // `@layer`. `theme` seeds the design tokens (`@theme { … }`); `utility`
-// declares one custom utility (`@utility shadow-1 { … }`). Both bodies are
+// declares one custom utility (`@utility shadow-float { … }`). Both bodies are
 // declaration records, rendered property-by-property through the CSS render
 // boundary.
 const cssDeclarationsSchema = z.record(z.string(), z.string());
@@ -77,9 +77,10 @@ export interface CodegenAppCssPayload {
 	layers: CssLayer[];
 }
 
-// Typed schema for a webfont consumed by plugin-solid-ui. `themeFontsPlugin`
-// preloads the woff2, declares `@font-face` (with fallback metrics), and —
-// when `role` is set — rebinds the matching --ui-font-* token.
+// A webfont file consumed by plugin-solid-ui. `themeFontsPlugin` preloads the
+// woff2 and declares `@font-face` (with fallback metrics). Which family the
+// contract binds to `sans` or `mono` is the theme's `fonts` knob; an entry
+// here only makes a family's file load.
 export const fontEntrySchema = z.object({
 	// CSS family name used in `font-family` declarations (e.g. "Inter Variable").
 	family: z.string(),
@@ -89,9 +90,6 @@ export const fontEntrySchema = z.object({
 	// A single weight ("400") or a variable-font range ("100 900").
 	weight: z.string(),
 	style: z.enum(["normal", "italic"]),
-	// Binds this font to the matching --ui-font-* token (and, through the
-	// Tailwind theme, to the font-sans / font-mono / font-serif utilities).
-	role: z.enum(["sans", "mono", "serif"]).optional(),
 	// Fallback-font metrics used to generate a sibling `@font-face` that
 	// matches the webfont's metrics on top of a system family. Prevents CLS
 	// while the woff2 loads.
@@ -106,19 +104,21 @@ export const fontEntrySchema = z.object({
 
 export type FontEntry = z.infer<typeof fontEntrySchema>;
 
-// `fonts` is an array of FontEntry. Each entry is preloaded, gets an
-// `@font-face` (real + fallback metrics) declaration, and — when `role` is
-// set — rebinds the matching --ui-font-* token (sans / mono / serif) so the
-// Tailwind utilities and design-system tokens pick it up. Defaults to
-// `defaultFonts` (JetBrains Mono as mono).
+// `fonts` is the font files to load: each entry is preloaded and gets an
+// `@font-face` (real + fallback metrics). Defaults to `defaultFonts`
+// (JetBrains Mono Variable, the contract's default `mono` family).
 //
-// `theme` carries the ui-core design contract: knobs, per-token overrides and
-// the mode that seeds the `@theme` block. Omitted, the calibrated defaults
-// apply. `defaultMode` is inert on the web runtime, which resolves the mode
-// from `localStorage` then `prefers-color-scheme`.
+// `theme` carries the ui-core design contract: the knobs, per-token
+// overrides and the mode that seeds the `@theme` block. Omitted, the
+// calibrated defaults apply. `defaultMode` is inert on the web runtime, which
+// resolves the mode from `localStorage` then `prefers-color-scheme`.
+//
+// `words` is every word a molecule draws on its own, every key required;
+// omitted, the components speak English.
 export const solidUiOptionsSchema = z.object({
 	fonts: z.array(fontEntrySchema).optional(),
 	theme: themeSchema.optional(),
+	words: wordsSchema.optional(),
 });
 
 export type SolidUiOptions = z.input<typeof solidUiOptionsSchema>;
@@ -126,3 +126,4 @@ export type SolidUiOptions = z.input<typeof solidUiOptionsSchema>;
 // The `theme` option's own type. It is ui-core's, re-exported here so a
 // consumer reaches it through the plugin it configures.
 export type { Theme } from "@fcalell/ui-core/schema";
+export type { Words } from "@fcalell/ui-core/tokens";

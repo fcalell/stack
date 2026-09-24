@@ -16,7 +16,6 @@ export const defaultFonts: FontEntry[] = [
 			"@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2",
 		weight: "100 800",
 		style: "normal",
-		role: "mono",
 		fallback: {
 			family: "monospace",
 			ascentOverride: "90%",

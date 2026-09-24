@@ -1,47 +1,30 @@
-import {
-	type TextTone,
-	type TextVariant,
-	text,
-	textStrong,
-} from "@fcalell/ui-core/variants";
-import { Polymorphic, type PolymorphicProps } from "@kobalte/core/polymorphic";
-import type { ValidComponent } from "solid-js";
-import { splitProps } from "solid-js";
-import { cn } from "#lib/cn";
+import { type TextRole, text } from "@fcalell/ui-core/variants";
+import type { JSX } from "solid-js";
+import { Dynamic } from "solid-js/web";
+import type { Closed } from "#lib/closed";
 
-type TextProps = {
-	variant?: TextVariant;
-	tone?: TextTone;
-	strong?: boolean;
-	mono?: boolean;
-	class?: never;
-	style?: never;
-	classList?: never;
+// The only way to set type: the role carries its size, leading, weight, ink
+// and family. Headings take a heading element, the rest a paragraph.
+export type TextProps = Closed & {
+	role?: TextRole;
+	children?: JSX.Element;
 };
 
-function Text<T extends ValidComponent = "p">(
-	props: PolymorphicProps<T, TextProps>,
-) {
-	const [local, rest] = splitProps(props as TextProps, [
-		"variant",
-		"tone",
-		"strong",
-		"mono",
-	]);
-	const variant = () => local.variant ?? "body";
+const ELEMENT: Record<TextRole, "h1" | "h2" | "p"> = {
+	display: "h1",
+	title: "h1",
+	heading: "h2",
+	body: "p",
+	meta: "p",
+	label: "p",
+	mono: "p",
+};
+
+export function Text(props: TextProps) {
+	const role = () => props.role ?? "body";
 	return (
-		<Polymorphic
-			as="p"
-			class={cn(
-				text({ variant: variant(), tone: local.tone }),
-				local.strong && textStrong({ variant: variant() }),
-				// Font family is a platform overlay, so it never enters the matrix.
-				local.mono && "font-mono",
-			)}
-			{...rest}
-		/>
+		<Dynamic component={ELEMENT[role()]} class={text({ role: role() })}>
+			{props.children}
+		</Dynamic>
 	);
 }
-
-export type { TextProps };
-export { Text };

@@ -4,9 +4,8 @@
 // the matrix it describes. Internal to the package, with no subpath export.
 //
 // Every cell is a class both a web and a native renderer can take: fills,
-// borders, ink, rungs, radius, type role, font weight, control minimum height.
-// Display, alignment, font family and every interaction state stay with the
-// plugins.
+// borders, ink, rungs, radius, type role, weight, family, control minimum
+// size. Display, alignment and every interaction state stay with the plugins.
 
 export type Axes = Record<string, Record<string, string>>;
 
@@ -23,261 +22,236 @@ function matrix<T extends Axes>(config: Matrix<T>): Matrix<T> {
 	return config;
 }
 
-// ── Button ──────────────────────────────────────────────────────────
-
-// Two orthogonal axes: `emphasis` is action importance, `tone` is consequence.
-// All six cells are spelled out so a reader sees which ones are deliberately
-// empty and the matrix cannot drift.
-export const BUTTON = matrix({
-	base: "gap-row rounded-control",
-	variants: {
-		emphasis: {
-			primary: "",
-			secondary: "border bg-transparent",
-			tertiary: "bg-transparent",
-		},
-		tone: { neutral: "", danger: "" },
-		// min-h, never h: the label must be able to grow the control under OS
-		// font scaling instead of clipping inside a pinned height.
-		size: {
-			sm: "min-h-11 px-3.5 py-1.5",
-			md: "min-h-11 px-4 py-2",
-			lg: "min-h-12 px-6 py-2.5",
-		},
-	},
-	compoundVariants: [
-		{ emphasis: "primary", tone: "neutral", class: "bg-accent" },
-		{ emphasis: "primary", tone: "danger", class: "bg-danger" },
-		{ emphasis: "secondary", tone: "neutral", class: "border-edge-2" },
-		{ emphasis: "secondary", tone: "danger", class: "border-danger" },
-		{ emphasis: "tertiary", tone: "neutral", class: "" },
-		{ emphasis: "tertiary", tone: "danger", class: "" },
-	],
-	defaultVariants: { emphasis: "primary", tone: "neutral", size: "md" },
-});
-
-export const BUTTON_LABEL = matrix({
-	base: "font-semibold",
-	variants: {
-		emphasis: { primary: "", secondary: "", tertiary: "" },
-		tone: { neutral: "", danger: "" },
-		size: { sm: "text-caption", md: "text-callout", lg: "text-body" },
-	},
-	compoundVariants: [
-		{ emphasis: "primary", tone: "neutral", class: "text-accent-ink" },
-		{ emphasis: "primary", tone: "danger", class: "text-danger-ink" },
-		{ emphasis: "secondary", tone: "neutral", class: "text-ink-1" },
-		{ emphasis: "secondary", tone: "danger", class: "text-danger" },
-		{ emphasis: "tertiary", tone: "neutral", class: "text-ink-1" },
-		{ emphasis: "tertiary", tone: "danger", class: "text-danger" },
-	],
-	defaultVariants: { emphasis: "primary", tone: "neutral", size: "md" },
-});
-
-// Muted chrome for a true disabled. A transparent tertiary mutes through its
-// label alone, which is why its cell is empty.
-export const BUTTON_MUTED = matrix({
-	base: "",
-	variants: {
-		emphasis: {
-			primary: "bg-surface-3",
-			secondary: "border-edge",
-			tertiary: "",
-		},
-	},
-});
-
 // ── Text ────────────────────────────────────────────────────────────
 
-// `rowtitle` composes the `body` size at a heavier weight.
+// The role is the only way to set type; its ink and family ride with it.
+// Every cell is spelled out: Tailwind reads source text, so a cell built from
+// a template would compile to nothing in a consumer build. c19 pins each cell
+// to TYPE_SCALE, so the two cannot drift.
 export const TEXT = matrix({
 	base: "",
 	variants: {
-		variant: {
-			display: "text-display font-bold tracking-display leading-display",
-			h1: "text-h1 font-bold tracking-h1 leading-h1",
-			h2: "text-h2 font-semibold tracking-h2 leading-h2",
-			h3: "text-h3 font-semibold tracking-h3 leading-h3",
-			body: "text-body font-medium leading-body",
-			callout: "text-callout font-bold leading-callout",
-			caption: "text-caption font-medium leading-caption",
-			micro: "text-micro font-medium leading-micro tracking-micro",
-			rowtitle: "text-body font-semibold leading-body",
-		},
-		tone: {
-			"ink-1": "text-ink-1",
-			"ink-2": "text-ink-2",
-			"ink-3": "text-ink-3",
-			"ink-4": "text-ink-4",
-			brand: "text-brand",
-			interactive: "text-interactive",
-			ok: "text-ok",
-			warn: "text-warn",
-			danger: "text-danger",
-			"accent-ink": "text-accent-ink",
-			"oncover-fg": "text-oncover-fg",
-			"oncover-ink": "text-oncover-ink",
+		role: {
+			display:
+				"text-display leading-display tracking-display font-bold text-ink",
+			title: "text-title leading-title tracking-title font-bold text-ink",
+			heading:
+				"text-heading leading-heading tracking-heading font-semibold text-ink",
+			body: "text-body leading-body font-normal text-ink",
+			meta: "text-meta leading-meta font-normal text-ink-meta",
+			label: "text-label leading-label font-medium text-ink-meta",
+			mono: "text-mono leading-mono font-normal text-ink font-mono",
 		},
 	},
+	defaultVariants: { role: "body" },
 });
 
-// `strong` lifts a role one weight step. `display`, `h1` and `callout` already
-// carry their peak weight, so their cells are empty.
+// One step up per role, for a row's title and a definition's label.
+// `display`, `title` and `heading` already carry their peak weight.
 export const TEXT_STRONG = matrix({
 	base: "",
 	variants: {
-		variant: {
+		role: {
 			display: "",
-			h1: "",
-			h2: "font-bold",
-			h3: "font-bold",
-			body: "font-semibold",
-			callout: "",
-			caption: "font-semibold",
-			micro: "font-semibold",
-			rowtitle: "font-bold",
+			title: "",
+			heading: "font-bold",
+			body: "font-medium",
+			meta: "font-medium",
+			label: "font-semibold",
+			mono: "font-medium",
 		},
 	},
 });
 
-// ── Badge ───────────────────────────────────────────────────────────
+// ── Button ──────────────────────────────────────────────────────────
 
-export const BADGE = matrix({
-	base: "rounded-full px-2.5 py-1",
+// `act` is the button's kind: the primary act is filled, the other two sit on
+// the group fill and differ by their label's ink. min-h, never h: the label
+// must be able to grow the control under OS font scaling.
+export const BUTTON = matrix({
+	base: "rounded-full min-h-11 px-5 py-2 gap-row",
 	variants: {
-		tone: {
-			neutral: "bg-surface-2",
-			brand: "bg-brand-soft",
-			interactive: "bg-interactive-soft",
-			ok: "bg-ok-soft",
-			warn: "bg-warn-soft",
-			danger: "bg-danger-soft",
-			oncover: "bg-oncover-surface",
+		act: {
+			primary: "bg-accent",
+			secondary: "bg-group",
+			destructive: "bg-group",
 		},
 	},
-	defaultVariants: { tone: "neutral" },
+	defaultVariants: { act: "primary" },
 });
 
-export const BADGE_LABEL = matrix({
-	base: "",
+export const BUTTON_LABEL = matrix({
+	base: "text-body leading-body font-medium",
 	variants: {
-		tone: {
-			neutral: "text-ink-1",
-			brand: "text-brand",
-			interactive: "text-interactive",
-			ok: "text-ok",
-			warn: "text-warn",
-			danger: "text-danger",
-			oncover: "text-oncover-ink",
+		act: {
+			primary: "text-on-accent",
+			secondary: "text-ink",
+			destructive: "text-danger",
 		},
 	},
-	defaultVariants: { tone: "neutral" },
+	defaultVariants: { act: "primary" },
 });
 
-// The dot carries the tone as a mark, so `warn` rides `warn-mark` for the 3:1
-// non-text floor while the label above it keeps the AA `warn` ink.
-export const BADGE_DOT = matrix({
-	base: "",
+// ── Status ──────────────────────────────────────────────────────────
+
+export const STATUS = matrix({
+	base: "text-meta leading-meta font-medium gap-pair",
 	variants: {
-		tone: {
-			neutral: "bg-ink-1",
-			brand: "bg-brand",
-			interactive: "bg-interactive",
-			ok: "bg-ok",
-			warn: "bg-warn-mark",
-			danger: "bg-danger",
-			oncover: "bg-oncover-ink",
-		},
-	},
-	defaultVariants: { tone: "neutral" },
-});
-
-// ── Card ────────────────────────────────────────────────────────────
-
-// `overflow-hidden` clips the corners. RN renders the `shadow-1` lift on a
-// layer outside that clip, so fill, clip and shadow ride one view.
-export const CARD = matrix({
-	base: "overflow-hidden rounded-xl bg-surface shadow-1",
-	variants: {
-		padding: { card: "p-card", none: "" },
-		ring: { none: "", warn: "border-2 border-warn-mark" },
-	},
-	defaultVariants: { padding: "card", ring: "none" },
-});
-
-// ── Checkbox ────────────────────────────────────────────────────────
-
-// No `border-none` in the checked cell: native recomputes the classes per
-// state, so the checked call simply lacks the border; web undoes it in its
-// selector overlay, which paints no color.
-export const CHECKBOX = matrix({
-	base: "rounded-md",
-	variants: {
-		state: { unchecked: "border border-ink-1", checked: "bg-accent" },
-	},
-	defaultVariants: { state: "unchecked" },
-});
-
-// ── Toggle ──────────────────────────────────────────────────────────
-
-// The on-track is `bg-accent`, matching the checkbox's checked fill, so the
-// two sibling controls read as one family under a themed accent.
-export const TOGGLE = matrix({
-	base: "rounded-full",
-	variants: {
-		state: { off: "bg-edge", on: "bg-accent" },
-	},
-	defaultVariants: { state: "off" },
-});
-
-// ── Dialog ──────────────────────────────────────────────────────────
-
-// The part is always named, like RHYTHM's unit, so there are no defaults. The
-// title carries no cell of its own: it is TEXT's h3 role at `ink-1`.
-export const DIALOG = matrix({
-	base: "",
-	variants: {
-		part: {
-			scrim: "bg-scrim",
-			panel: "rounded-xl border border-edge bg-canvas p-section",
-			description: "text-callout text-ink-3",
-		},
-	},
-});
-
-// ── Rhythm ──────────────────────────────────────────────────────────
-
-// The gap each member of the rhythm family bakes between its children. The
-// axis is the family's own vocabulary and every cell is exactly `gap-<unit>`,
-// a shape the harness pins, so the rung mapping lives here once instead of
-// being rebuilt as strings in each plugin.
-export const RHYTHM = matrix({
-	base: "",
-	variants: {
-		unit: {
-			section: "gap-section",
-			stack: "gap-stack",
-			row: "gap-row",
-			pair: "gap-pair",
+		state: {
+			active: "text-tint",
+			waiting: "text-ink-meta",
+			done: "text-ok",
+			attention: "text-warn",
+			failed: "text-danger",
+			idle: "text-ink-faint",
 		},
 	},
 });
 
 // ── Field ───────────────────────────────────────────────────────────
 
-// The two layouts gap differently on purpose: an input packs its leading media
-// at `row` (8px), a trigger row breathes at `stack` (12px). Both carry the tap
-// floor: a row lays out its own interior, so without a minimum it computes to
-// whatever its content asks for and lands under 44px.
+// A typing control's surface. `search` is a pill, `text` takes the group
+// radius, `code` is the same box in the mono role. The border is transparent
+// at rest so focus and error change no geometry.
 export const FIELD = matrix({
-	base: "rounded-control border bg-surface px-3.5",
+	base: "border bg-group px-4 text-ink",
 	variants: {
+		kind: {
+			text: "rounded-group min-h-11 py-2 text-body leading-body",
+			search: "rounded-full min-h-11 text-body leading-body",
+			code: "rounded-group min-h-11 py-2 text-mono leading-mono font-mono",
+		},
 		state: {
-			default: "border-edge",
-			focused: "border-ink-1",
+			default: "border-transparent",
+			focused: "border-tint",
 			error: "border-danger",
 		},
-		layout: { input: "gap-row min-h-12", row: "gap-stack min-h-11 py-2" },
 	},
-	defaultVariants: { state: "default", layout: "input" },
+	defaultVariants: { kind: "text", state: "default" },
+});
+
+// ── Row ─────────────────────────────────────────────────────────────
+
+// A row in a group or a list: the touch floor, the group's inset, the rhythm
+// between its atoms; pressed on `edge`, selected on `accent-soft`.
+export const ROW = matrix({
+	base: "min-h-11 px-inset py-stack gap-stack",
+	variants: {
+		state: { rest: "", pressed: "bg-edge", selected: "bg-accent-soft" },
+	},
+	defaultVariants: { state: "rest" },
+});
+
+// ── Switch and checkbox ─────────────────────────────────────────────
+
+// The on fill is `accent` for both, so the two controls read as one family.
+export const SWITCH = matrix({
+	base: "rounded-full",
+	variants: { state: { off: "bg-edge", on: "bg-accent" } },
+	defaultVariants: { state: "off" },
+});
+
+export const CHECKBOX = matrix({
+	base: "rounded-full",
+	variants: {
+		state: { unchecked: "border border-ink-faint", checked: "bg-accent" },
+	},
+	defaultVariants: { state: "unchecked" },
+});
+
+// ── Segmented control ───────────────────────────────────────────────
+
+export const SEGMENT = matrix({
+	base: "rounded-full min-h-9 px-3 text-meta leading-meta font-medium",
+	variants: {
+		state: { idle: "text-ink-meta", selected: "bg-surface text-ink" },
+	},
+	defaultVariants: { state: "idle" },
+});
+
+// ── Banner ──────────────────────────────────────────────────────────
+
+export const BANNER = matrix({
+	base: "px-inset py-stack gap-row text-meta leading-meta text-ink",
+	variants: {
+		kind: {
+			note: "bg-accent-soft",
+			warn: "bg-warn-soft",
+			danger: "bg-danger-soft",
+		},
+	},
+	defaultVariants: { kind: "note" },
+});
+
+// ── Diff ────────────────────────────────────────────────────────────
+
+export const DIFF_LINE = matrix({
+	base: "text-mono leading-mono font-mono text-ink",
+	variants: {
+		kind: {
+			context: "",
+			added: "bg-ok-soft",
+			removed: "bg-danger-soft",
+			header: "bg-group text-ink-meta",
+		},
+	},
+	defaultVariants: { kind: "context" },
+});
+
+// ── Message ─────────────────────────────────────────────────────────
+
+export const MESSAGE = matrix({
+	base: "",
+	variants: {
+		author: {
+			you: "rounded-sheet bg-group px-inset py-stack",
+			other: "",
+			system: "text-meta leading-meta text-ink-meta",
+		},
+	},
+});
+
+// ── Avatar ──────────────────────────────────────────────────────────
+
+export const AVATAR = matrix({
+	base: "rounded-full text-ink",
+	variants: {
+		step: {
+			"1": "bg-avatar-1",
+			"2": "bg-avatar-2",
+			"3": "bg-avatar-3",
+			"4": "bg-avatar-4",
+			"5": "bg-avatar-5",
+			"6": "bg-avatar-6",
+			"7": "bg-avatar-7",
+			"8": "bg-avatar-8",
+		},
+	},
+});
+
+// ── Place ───────────────────────────────────────────────────────────
+
+// A place in the tab bar or the sidebar: the selected one is inked `accent`.
+export const PLACE = matrix({
+	base: "text-label leading-label font-medium",
+	variants: { state: { idle: "text-ink-meta", selected: "text-accent" } },
+	defaultVariants: { state: "idle" },
+});
+
+// ── Rhythm ──────────────────────────────────────────────────────────
+
+// The gap a container bakes between its children. Every cell is exactly
+// `gap-<rung>`, a shape the harness pins, so the rung mapping lives here once.
+export const RHYTHM = matrix({
+	base: "",
+	variants: {
+		unit: {
+			pair: "gap-pair",
+			row: "gap-row",
+			stack: "gap-stack",
+			inset: "gap-inset",
+			section: "gap-section",
+			room: "gap-room",
+		},
+	},
 });

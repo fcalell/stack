@@ -1,5 +1,5 @@
 const screen = () => (
 	<View className="flex-1 bg-canvas">
-		<Text className="items-center" />
+		<Group className="p-4" />
 	</View>
 );

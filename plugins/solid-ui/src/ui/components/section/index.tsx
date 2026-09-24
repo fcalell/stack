@@ -1,98 +1,89 @@
-import { rhythm } from "@fcalell/ui-core/variants";
-import { Polymorphic, type PolymorphicProps } from "@kobalte/core/polymorphic";
-import type { ComponentProps, ValidComponent } from "solid-js";
+import type { Act } from "@fcalell/ui-core/descriptors";
+import { text } from "@fcalell/ui-core/variants";
+import { ChevronDown } from "lucide-solid";
 import {
 	createContext,
+	createSignal,
 	createUniqueId,
-	splitProps,
+	type JSX,
+	Show,
 	useContext,
 } from "solid-js";
+import type { Closed } from "#lib/closed";
 import { cn } from "#lib/cn";
+import { LoadingRows } from "#lib/loading";
+import { Count } from "../count/index.tsx";
 
-const SectionContext = createContext<{ titleId: string }>();
+// A titled region of a screen: the label header with its count and act, the
+// space above it (`section`; `stack` when nested), folding.
+export type SectionProps = Closed & {
+	title: string;
+	count?: number;
+	description?: string;
+	folded?: boolean;
+	act?: Act;
+	loading?: boolean;
+	children?: JSX.Element;
+};
 
-function Root(
-	props: ComponentProps<"section"> & {
-		class?: never;
-		style?: never;
-		classList?: never;
-	},
-) {
-	const [local, rest] = splitProps(props, ["children"]);
-	const titleId = createUniqueId();
+const Nested = createContext(false);
+
+export function Section(props: SectionProps) {
+	const nested = useContext(Nested);
+	const [open, setOpen] = createSignal(!props.folded);
+	const id = createUniqueId();
 	return (
-		<SectionContext.Provider value={{ titleId }}>
+		<Nested.Provider value={true}>
 			<section
-				aria-labelledby={titleId}
-				// The region rung: a Section's children are a screen's regions, so
-				// the column gaps at rhythm({ unit: "section" }). min-h-0 keeps a
-				// Section between Frame and a scroll pane shrinkable, or the pane
-				// grows past the clipped frame and never scrolls.
-				class={cn(rhythm({ unit: "section" }), "flex min-h-0 flex-1 flex-col")}
-				{...rest}
+				aria-labelledby={id}
+				class={cn("flex flex-col gap-row", nested ? "pt-stack" : "pt-section")}
 			>
-				{local.children}
+				<div class="flex min-h-11 items-center justify-between gap-row">
+					<button
+						type="button"
+						aria-expanded={open()}
+						onClick={() => setOpen((value) => !value)}
+						class="flex min-w-0 cursor-pointer items-center gap-pair text-left"
+					>
+						<h2 id={id} class={cn(text({ role: "label" }), "truncate")}>
+							{props.title}
+						</h2>
+						<Show when={props.count !== undefined}>
+							<Count value={props.count ?? 0} />
+						</Show>
+						<ChevronDown
+							class={cn(
+								"size-4 shrink-0 text-ink-faint transition-transform duration-(--duration-base) ease-ui",
+								open() || "-rotate-90",
+							)}
+							aria-hidden="true"
+						/>
+					</button>
+					<Show when={props.act}>
+						{(act) => (
+							<button
+								type="button"
+								disabled={act().blocked !== undefined}
+								onClick={() => act().onAct()}
+								class={cn(
+									text({ role: "meta" }),
+									"min-h-11 shrink-0 cursor-pointer font-medium text-tint disabled:text-ink-faint",
+								)}
+							>
+								{act().label}
+							</button>
+						)}
+					</Show>
+				</div>
+				<Show when={props.description}>
+					<p class={text({ role: "meta" })}>{props.description}</p>
+				</Show>
+				<Show when={open()}>
+					<Show when={!props.loading} fallback={<LoadingRows />}>
+						{props.children}
+					</Show>
+				</Show>
 			</section>
-		</SectionContext.Provider>
+		</Nested.Provider>
 	);
 }
-
-function Header(
-	props: ComponentProps<"header"> & {
-		class?: never;
-		style?: never;
-		classList?: never;
-	},
-) {
-	return (
-		<header
-			class="flex min-h-12 items-center justify-between border-b-2 border-edge px-6 py-3"
-			{...props}
-		/>
-	);
-}
-
-function Title<T extends ValidComponent = "h2">(
-	props: PolymorphicProps<
-		T,
-		{ class?: never; style?: never; classList?: never }
-	>,
-) {
-	const ctx = useContext(SectionContext);
-	return (
-		<Polymorphic
-			as="h2"
-			id={ctx?.titleId}
-			class="text-h2 font-bold uppercase tracking-widest"
-			{...props}
-		/>
-	);
-}
-
-function Content(
-	props: ComponentProps<"div"> & {
-		class?: never;
-		style?: never;
-		classList?: never;
-	},
-) {
-	// pb only: the section gap above already carries the head-to-content 24.
-	return <div class="w-full px-6 pb-6" {...props} />;
-}
-
-function Table(
-	props: ComponentProps<"div"> & {
-		class?: never;
-		style?: never;
-		classList?: never;
-	},
-) {
-	return <div class="w-full" {...props} />;
-}
-
-export const Section = Object.assign(Root, {
-	Header,
-	Title,
-	Content,
-	Table,
-});

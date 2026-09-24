@@ -1,21 +1,16 @@
-import type { ContentTone } from "@fcalell/ui-core/variants";
-import { ActivityIndicator, type ActivityIndicatorProps } from "react-native";
+import { ActivityIndicator } from "react-native";
+import type { Closed } from "../../lib/closed";
 import { useTokenColor } from "../../lib/theme";
+import { useWords } from "../../lib/words";
 
-export interface SpinnerProps extends Omit<ActivityIndicatorProps, "color"> {
-	// The content tone the glyph spins in, resolved against the active theme.
-	// A busy Button passes its own label tone through `buttonContentTone`.
-	tone?: ContentTone;
-	className?: never;
-	style?: never;
-	// uniwind augments ActivityIndicatorProps with this channel; open, it
-	// would defeat the tone collapse single-handedly.
-	colorClassName?: never;
-}
+export interface SpinnerProps extends Closed {}
 
-// Inline activity indicator. No full-screen spinner — prefer Skeleton for page
-// loads; use this inside a busy button (OAuth hand-off).
-export function Spinner({ tone, size = "small", ...rest }: SpinnerProps) {
-	const color = useTokenColor(`--color-${tone ?? "ink-1"}`);
-	return <ActivityIndicator color={color} size={size} {...rest} />;
+export function Spinner(_props: SpinnerProps) {
+	const words = useWords();
+	return (
+		<ActivityIndicator
+			color={useTokenColor("--color-ink-meta")}
+			accessibilityLabel={words.loading}
+		/>
+	);
 }

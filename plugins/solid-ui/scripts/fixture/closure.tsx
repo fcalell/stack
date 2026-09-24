@@ -1,2713 +1,497 @@
-// The closure, proven at the type layer. Every exported component takes its
-// legal props un-annotated, then class, style, classList and each dead hatch
-// under @ts-expect-error, so a reopened prop turns into an unused directive
-// and fails tsc --noEmit (the b8 check, and the package type-check itself,
-// since scripts/ sits inside the tsconfig include).
-import type { Action } from "@fcalell/ui-core/descriptors";
-import type { AnyFieldApi } from "@tanstack/solid-form";
-import { CircleAlert } from "lucide-solid";
-import { Avatar } from "@fcalell/plugin-solid-ui/components/avatar";
-import { Badge } from "@fcalell/plugin-solid-ui/components/badge";
-import { Button } from "@fcalell/plugin-solid-ui/components/button";
-import { Card } from "@fcalell/plugin-solid-ui/components/card";
-import { Checkbox } from "@fcalell/plugin-solid-ui/components/checkbox";
-import { ContextMenu } from "@fcalell/plugin-solid-ui/components/context-menu";
-import { DangerZone } from "@fcalell/plugin-solid-ui/components/danger-zone";
-import { DataTable } from "@fcalell/plugin-solid-ui/components/data-table";
-import {
-	createDialog,
-	Dialog,
-} from "@fcalell/plugin-solid-ui/components/dialog";
-import type { MenuItem } from "@fcalell/plugin-solid-ui/components/dropdown-menu";
-import { DropdownMenu } from "@fcalell/plugin-solid-ui/components/dropdown-menu";
-import { EmptyState } from "@fcalell/plugin-solid-ui/components/empty-state";
-import { EnumInput } from "@fcalell/plugin-solid-ui/components/enum-input";
-import { Field } from "@fcalell/plugin-solid-ui/components/field";
-import { Form } from "@fcalell/plugin-solid-ui/components/form";
-import { Frame } from "@fcalell/plugin-solid-ui/components/frame";
-import { Input } from "@fcalell/plugin-solid-ui/components/input";
-import { InputGroup } from "@fcalell/plugin-solid-ui/components/input-group";
-import { InputOTP } from "@fcalell/plugin-solid-ui/components/input-otp";
-import { Inset } from "@fcalell/plugin-solid-ui/components/inset";
-import { Item } from "@fcalell/plugin-solid-ui/components/item";
-import { Label } from "@fcalell/plugin-solid-ui/components/label";
-import { Loader } from "@fcalell/plugin-solid-ui/components/loader";
-import { Logo } from "@fcalell/plugin-solid-ui/components/logo";
-import { NavigationProgress } from "@fcalell/plugin-solid-ui/components/navigation-progress";
-import { Pair } from "@fcalell/plugin-solid-ui/components/pair";
-import { QueryBoundary } from "@fcalell/plugin-solid-ui/components/query-boundary";
-import { Row } from "@fcalell/plugin-solid-ui/components/row";
-import { ScrollArea } from "@fcalell/plugin-solid-ui/components/scroll-area";
-import { Section } from "@fcalell/plugin-solid-ui/components/section";
-import { SectionToolbar } from "@fcalell/plugin-solid-ui/components/section-toolbar";
-import { Select } from "@fcalell/plugin-solid-ui/components/select";
-import { Separator } from "@fcalell/plugin-solid-ui/components/separator";
-import { createSheet, Sheet } from "@fcalell/plugin-solid-ui/components/sheet";
-import { Sidebar } from "@fcalell/plugin-solid-ui/components/sidebar";
-import { Skeleton } from "@fcalell/plugin-solid-ui/components/skeleton";
-import { Spinner } from "@fcalell/plugin-solid-ui/components/spinner";
-import { Stack } from "@fcalell/plugin-solid-ui/components/stack";
-import { Table } from "@fcalell/plugin-solid-ui/components/table";
-import { Tabs } from "@fcalell/plugin-solid-ui/components/tabs";
+// The closure, proven at the type layer. Every component takes its legal
+// props un-annotated, then `class`, `style`, `classList` and `className` each
+// under an expect-error directive, so a reopened channel turns into an unused directive and
+// fails tsc --noEmit (the b8 check, and the package type-check itself, since
+// scripts/ sits inside the tsconfig include).
+import type { Act, IconAct, Option, PlaceSpec } from "@fcalell/ui-core/descriptors";
 import { Text } from "@fcalell/plugin-solid-ui/components/text";
-import { Textarea } from "@fcalell/plugin-solid-ui/components/textarea";
-import { Toaster } from "@fcalell/plugin-solid-ui/components/toast";
-import { Toggle } from "@fcalell/plugin-solid-ui/components/toggle";
-import { Tooltip } from "@fcalell/plugin-solid-ui/components/tooltip";
+import { Icon } from "@fcalell/plugin-solid-ui/components/icon";
+import { Button } from "@fcalell/plugin-solid-ui/components/button";
+import { IconButton } from "@fcalell/plugin-solid-ui/components/icon-button";
+import { Count } from "@fcalell/plugin-solid-ui/components/count";
+import { Status } from "@fcalell/plugin-solid-ui/components/status";
+import { Input } from "@fcalell/plugin-solid-ui/components/input";
+import { TextArea } from "@fcalell/plugin-solid-ui/components/text-area";
+import { Slider } from "@fcalell/plugin-solid-ui/components/slider";
+import { Switch } from "@fcalell/plugin-solid-ui/components/switch";
+import { Checkbox } from "@fcalell/plugin-solid-ui/components/checkbox";
+import { Spinner } from "@fcalell/plugin-solid-ui/components/spinner";
+import { Avatar } from "@fcalell/plugin-solid-ui/components/avatar";
+import { Link } from "@fcalell/plugin-solid-ui/components/link";
+import { Place } from "@fcalell/plugin-solid-ui/components/place";
+import { Screen } from "@fcalell/plugin-solid-ui/components/screen";
+import { Split } from "@fcalell/plugin-solid-ui/components/split";
+import { Section } from "@fcalell/plugin-solid-ui/components/section";
+import { Group } from "@fcalell/plugin-solid-ui/components/group";
+import { List } from "@fcalell/plugin-solid-ui/components/list";
+import { Form } from "@fcalell/plugin-solid-ui/components/form";
+import { Toolbar } from "@fcalell/plugin-solid-ui/components/toolbar";
+import { ActionBar } from "@fcalell/plugin-solid-ui/components/action-bar";
+import { Columns } from "@fcalell/plugin-solid-ui/components/columns";
+import { Shell } from "@fcalell/plugin-solid-ui/components/shell";
+import { ListRow } from "@fcalell/plugin-solid-ui/components/list-row";
+import { DefinitionRow } from "@fcalell/plugin-solid-ui/components/definition-row";
+import { FormField } from "@fcalell/plugin-solid-ui/components/form-field";
+import { ItemHeader } from "@fcalell/plugin-solid-ui/components/item-header";
+import { SegmentedControl } from "@fcalell/plugin-solid-ui/components/segmented-control";
+import { Sheet } from "@fcalell/plugin-solid-ui/components/sheet";
+import { Picker } from "@fcalell/plugin-solid-ui/components/picker";
+import { OptionList } from "@fcalell/plugin-solid-ui/components/option-list";
+import { EmptyState } from "@fcalell/plugin-solid-ui/components/empty-state";
+import { Toast } from "@fcalell/plugin-solid-ui/components/toast";
+import { Banner } from "@fcalell/plugin-solid-ui/components/banner";
+import { PendingBar } from "@fcalell/plugin-solid-ui/components/pending-bar";
+import { Prose } from "@fcalell/plugin-solid-ui/components/prose";
+import { Code } from "@fcalell/plugin-solid-ui/components/code";
+import { Diff } from "@fcalell/plugin-solid-ui/components/diff";
+import { FileRow } from "@fcalell/plugin-solid-ui/components/file-row";
+import { ProseDiff } from "@fcalell/plugin-solid-ui/components/prose-diff";
+import { Comparison } from "@fcalell/plugin-solid-ui/components/comparison";
+import { Message } from "@fcalell/plugin-solid-ui/components/message";
+import { MessageInput } from "@fcalell/plugin-solid-ui/components/message-input";
+import { Meter } from "@fcalell/plugin-solid-ui/components/meter";
+import { BarChart } from "@fcalell/plugin-solid-ui/components/bar-chart";
+import { QrCode } from "@fcalell/plugin-solid-ui/components/qr-code";
 
 const noop = () => {};
-const anchor = () => <span>a</span>;
-const fakeField = () => ({}) as AnyFieldApi;
-const retry: Action<never> = { label: "Retry", onSelect: noop };
-const menuItems: MenuItem[] = [
-	{ label: "a", icon: CircleAlert, onSelect: noop },
-	// @ts-expect-error a menu icon is a component param, not an element
-	{ label: "b", icon: anchor() },
-];
-const fakeQuery = {
-	data: undefined as string | undefined,
-	isPending: true,
-	isError: false,
-	error: null,
-	refetch: noop,
-};
-const badMeta: import("@tanstack/solid-table").ColumnMeta<unknown, unknown> = {
-	// @ts-expect-error the ColumnMeta class key is deleted
-	class: "x",
-};
-const badAction: Action<never> = {
-	...retry,
-	// @ts-expect-error Action<never> keeps the icon field unpassable until M7
-	icon: CircleAlert,
-};
+const act: Act = { label: "x", onAct: noop };
+const iconAct: IconAct<string> = { icon: "x", label: "x", onAct: noop };
+const option: Option = { value: "x", label: "x" };
+const placeSpec: PlaceSpec<string> = { route: "/", label: "x", icon: "x" };
 
-export function hooks() {
-	const dialog = createDialog(() => null, {
-		// @ts-expect-error the createDialog contentClass hatch is dead
-		contentClass: "x",
-	});
-	const sheet = createSheet(() => null, {
-		// @ts-expect-error the createSheet contentClass hatch is dead
-		contentClass: "x",
-	});
-	return [dialog, sheet, badMeta, badAction];
-}
-
-export function closure() {
-	return (
-		<>
-			<Avatar
-			/>
-			<Avatar
-				// @ts-expect-error the class prop is closed
-				class="x"
-			/>
-			<Avatar
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			/>
-			<Avatar
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			/>
-			<Avatar.Image
-				alt="a" src="/x.png"
-			/>
-			<Avatar.Image
-				alt="a" src="/x.png"
-				// @ts-expect-error the class prop is closed
-				class="x"
-			/>
-			<Avatar.Image
-				alt="a" src="/x.png"
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			/>
-			<Avatar.Image
-				alt="a" src="/x.png"
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			/>
-			<Avatar.Fallback
-			>
-				A
-			</Avatar.Fallback>
-			<Avatar.Fallback
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				A
-			</Avatar.Fallback>
-			<Avatar.Fallback
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				A
-			</Avatar.Fallback>
-			<Avatar.Fallback
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				A
-			</Avatar.Fallback>
-			<Badge
-				tone="ok"
-			>
-				B
-			</Badge>
-			<Badge
-				tone="ok"
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				B
-			</Badge>
-			<Badge
-				tone="ok"
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				B
-			</Badge>
-			<Badge
-				tone="ok"
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				B
-			</Badge>
-			<Button
-				loading
-			>
-				ok
-			</Button>
-			<Button
-				loading
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				ok
-			</Button>
-			<Button
-				loading
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				ok
-			</Button>
-			<Button
-				loading
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				ok
-			</Button>
-			<Card
-				padding="none" ring="warn"
-			>
-				c
-			</Card>
-			<Card
-				padding="none" ring="warn"
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				c
-			</Card>
-			<Card
-				padding="none" ring="warn"
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				c
-			</Card>
-			<Card
-				padding="none" ring="warn"
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				c
-			</Card>
-			<Card.Header
-			>
-				h
-			</Card.Header>
-			<Card.Header
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				h
-			</Card.Header>
-			<Card.Header
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				h
-			</Card.Header>
-			<Card.Header
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				h
-			</Card.Header>
-			<Card.Title
-			>
-				t
-			</Card.Title>
-			<Card.Title
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				t
-			</Card.Title>
-			<Card.Title
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				t
-			</Card.Title>
-			<Card.Title
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				t
-			</Card.Title>
-			<Card.Description
-			>
-				d
-			</Card.Description>
-			<Card.Description
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				d
-			</Card.Description>
-			<Card.Description
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				d
-			</Card.Description>
-			<Card.Description
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				d
-			</Card.Description>
-			<Card.Content
-			>
-				c
-			</Card.Content>
-			<Card.Content
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				c
-			</Card.Content>
-			<Card.Content
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				c
-			</Card.Content>
-			<Card.Content
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				c
-			</Card.Content>
-			<Card.Footer
-			>
-				f
-			</Card.Footer>
-			<Card.Footer
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				f
-			</Card.Footer>
-			<Card.Footer
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				f
-			</Card.Footer>
-			<Card.Footer
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				f
-			</Card.Footer>
-			<Checkbox
-				label="ok"
-			/>
-			<Checkbox
-				label="ok"
-				// @ts-expect-error the class prop is closed
-				class="x"
-			/>
-			<Checkbox
-				label="ok"
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			/>
-			<Checkbox
-				label="ok"
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			/>
-			<Checkbox
-				// @ts-expect-error label narrowed to string
-				label={anchor()}
-			/>
-			<ContextMenu
-				items={[]}
-			>
-				area
-			</ContextMenu>
-			<ContextMenu
-				items={[]}
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				area
-			</ContextMenu>
-			<ContextMenu
-				items={[]}
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				area
-			</ContextMenu>
-			<ContextMenu
-				items={[]}
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				area
-			</ContextMenu>
-			<ContextMenu
-				items={[]}
-				// @ts-expect-error the contentClass hatch is dead
-				contentClass="x"
-			>
-				area
-			</ContextMenu>
-			<DangerZone
-				description="d" actionLabel="a" onAction={noop}
-			/>
-			<DangerZone
-				description="d" actionLabel="a" onAction={noop}
-				// @ts-expect-error the class prop is closed
-				class="x"
-			/>
-			<DangerZone
-				description="d" actionLabel="a" onAction={noop}
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			/>
-			<DangerZone
-				description="d" actionLabel="a" onAction={noop}
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			/>
-			<DataTable
-				columns={[]} data={[]}
-			/>
-			<DataTable
-				columns={[]} data={[]}
-				// @ts-expect-error the class prop is closed
-				class="x"
-			/>
-			<DataTable
-				columns={[]} data={[]}
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			/>
-			<DataTable
-				columns={[]} data={[]}
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			/>
-			<Dialog.Trigger
-			>
-				t
-			</Dialog.Trigger>
-			<Dialog.Trigger
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				t
-			</Dialog.Trigger>
-			<Dialog.Trigger
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				t
-			</Dialog.Trigger>
-			<Dialog.Trigger
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				t
-			</Dialog.Trigger>
-			<Dialog.Content
-			>
-				c
-			</Dialog.Content>
-			<Dialog.Content
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				c
-			</Dialog.Content>
-			<Dialog.Content
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				c
-			</Dialog.Content>
-			<Dialog.Content
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				c
-			</Dialog.Content>
-			<Dialog.Header
-			>
-				h
-			</Dialog.Header>
-			<Dialog.Header
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				h
-			</Dialog.Header>
-			<Dialog.Header
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				h
-			</Dialog.Header>
-			<Dialog.Header
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				h
-			</Dialog.Header>
-			<Dialog.Footer
-			>
-				f
-			</Dialog.Footer>
-			<Dialog.Footer
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				f
-			</Dialog.Footer>
-			<Dialog.Footer
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				f
-			</Dialog.Footer>
-			<Dialog.Footer
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				f
-			</Dialog.Footer>
-			<Dialog.Title
-			>
-				t
-			</Dialog.Title>
-			<Dialog.Title
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				t
-			</Dialog.Title>
-			<Dialog.Title
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				t
-			</Dialog.Title>
-			<Dialog.Title
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				t
-			</Dialog.Title>
-			<Dialog.Description
-			>
-				d
-			</Dialog.Description>
-			<Dialog.Description
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				d
-			</Dialog.Description>
-			<Dialog.Description
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				d
-			</Dialog.Description>
-			<Dialog.Description
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				d
-			</Dialog.Description>
-			<DropdownMenu
-				trigger={anchor()} items={menuItems}
-			/>
-			<DropdownMenu
-				trigger={anchor()} items={menuItems}
-				// @ts-expect-error the class prop is closed
-				class="x"
-			/>
-			<DropdownMenu
-				trigger={anchor()} items={menuItems}
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			/>
-			<DropdownMenu
-				trigger={anchor()} items={menuItems}
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			/>
-			<DropdownMenu
-				trigger={anchor()} items={menuItems}
-				// @ts-expect-error the contentClass hatch is dead
-				contentClass="x"
-			/>
-			<EmptyState
-				title="t" icon={CircleAlert} action={retry}
-			/>
-			<EmptyState
-				title="t" icon={CircleAlert} action={retry}
-				// @ts-expect-error the class prop is closed
-				class="x"
-			/>
-			<EmptyState
-				title="t" icon={CircleAlert} action={retry}
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			/>
-			<EmptyState
-				title="t" icon={CircleAlert} action={retry}
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			/>
-			<EmptyState
-				title="t"
-				// @ts-expect-error icon is a component param, not an element
-				icon={anchor()}
-			/>
-			<EmptyState
-				title="t" icon={CircleAlert} action={retry}
-				// @ts-expect-error the element children region is collapsed into action
-				children={anchor()}
-			/>
-			<EnumInput
-				values={[]} onChange={noop}
-			/>
-			<EnumInput
-				values={[]} onChange={noop}
-				// @ts-expect-error the class prop is closed
-				class="x"
-			/>
-			<EnumInput
-				values={[]} onChange={noop}
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			/>
-			<EnumInput
-				values={[]} onChange={noop}
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			/>
-			<Field
-			>
-				f
-			</Field>
-			<Field
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				f
-			</Field>
-			<Field
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				f
-			</Field>
-			<Field
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				f
-			</Field>
-			<Field.Content
-			>
-				c
-			</Field.Content>
-			<Field.Content
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				c
-			</Field.Content>
-			<Field.Content
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				c
-			</Field.Content>
-			<Field.Content
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				c
-			</Field.Content>
-			<Field.Label
-				for="x"
-			>
-				l
-			</Field.Label>
-			<Field.Label
-				for="x"
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				l
-			</Field.Label>
-			<Field.Label
-				for="x"
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				l
-			</Field.Label>
-			<Field.Label
-				for="x"
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				l
-			</Field.Label>
-			<Field.Description
-			>
-				d
-			</Field.Description>
-			<Field.Description
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				d
-			</Field.Description>
-			<Field.Description
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				d
-			</Field.Description>
-			<Field.Description
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				d
-			</Field.Description>
-			<Field.Value
-			>
-				v
-			</Field.Value>
-			<Field.Value
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				v
-			</Field.Value>
-			<Field.Value
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				v
-			</Field.Value>
-			<Field.Value
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				v
-			</Field.Value>
-			<Field.Error
-			>
-				e
-			</Field.Error>
-			<Field.Error
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				e
-			</Field.Error>
-			<Field.Error
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				e
-			</Field.Error>
-			<Field.Error
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				e
-			</Field.Error>
-			<Form.Field
-				field={fakeField} label="l"
-			>
-				x
-			</Form.Field>
-			<Form.Field
-				field={fakeField} label="l"
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				x
-			</Form.Field>
-			<Form.Field
-				field={fakeField} label="l"
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				x
-			</Form.Field>
-			<Form.Field
-				field={fakeField} label="l"
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				x
-			</Form.Field>
-			<Form.Input
-				field={fakeField} label="l"
-			/>
-			<Form.Input
-				field={fakeField} label="l"
-				// @ts-expect-error the class prop is closed
-				class="x"
-			/>
-			<Form.Input
-				field={fakeField} label="l"
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			/>
-			<Form.Input
-				field={fakeField} label="l"
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			/>
-			<Form.Textarea
-				field={fakeField} label="l"
-			/>
-			<Form.Textarea
-				field={fakeField} label="l"
-				// @ts-expect-error the class prop is closed
-				class="x"
-			/>
-			<Form.Textarea
-				field={fakeField} label="l"
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			/>
-			<Form.Textarea
-				field={fakeField} label="l"
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			/>
-			<Form.Select
-				field={fakeField} label="l" options={[]}
-			/>
-			<Form.Select
-				field={fakeField} label="l" options={[]}
-				// @ts-expect-error the class prop is closed
-				class="x"
-			/>
-			<Form.Select
-				field={fakeField} label="l" options={[]}
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			/>
-			<Form.Select
-				field={fakeField} label="l" options={[]}
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			/>
-			<Form.Checkbox
-				field={fakeField} label="l"
-			/>
-			<Form.Checkbox
-				field={fakeField} label="l"
-				// @ts-expect-error the class prop is closed
-				class="x"
-			/>
-			<Form.Checkbox
-				field={fakeField} label="l"
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			/>
-			<Form.Checkbox
-				field={fakeField} label="l"
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			/>
-			<Form.InputOTP
-				field={fakeField} label="l" maxLength={6}
-			/>
-			<Form.InputOTP
-				field={fakeField} label="l" maxLength={6}
-				// @ts-expect-error the class prop is closed
-				class="x"
-			/>
-			<Form.InputOTP
-				field={fakeField} label="l" maxLength={6}
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			/>
-			<Form.InputOTP
-				field={fakeField} label="l" maxLength={6}
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			/>
-			<Form.EnumInput
-				field={fakeField} label="l"
-			/>
-			<Form.EnumInput
-				field={fakeField} label="l"
-				// @ts-expect-error the class prop is closed
-				class="x"
-			/>
-			<Form.EnumInput
-				field={fakeField} label="l"
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			/>
-			<Form.EnumInput
-				field={fakeField} label="l"
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			/>
-			<Input
-				value="v"
-			/>
-			<Input
-				value="v"
-				// @ts-expect-error the class prop is closed
-				class="x"
-			/>
-			<Input
-				value="v"
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			/>
-			<Input
-				value="v"
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			/>
-			<InputGroup
-				legend="g"
-			>
-				g
-			</InputGroup>
-			<InputGroup
-				legend="g"
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				g
-			</InputGroup>
-			<InputGroup
-				legend="g"
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				g
-			</InputGroup>
-			<InputGroup
-				legend="g"
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				g
-			</InputGroup>
-			<InputGroup.Addon
-				align="inline-end"
-			>
-				a
-			</InputGroup.Addon>
-			<InputGroup.Addon
-				align="inline-end"
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				a
-			</InputGroup.Addon>
-			<InputGroup.Addon
-				align="inline-end"
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				a
-			</InputGroup.Addon>
-			<InputGroup.Addon
-				align="inline-end"
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				a
-			</InputGroup.Addon>
-			<InputGroup.Button
-				size="icon-xs"
-			>
-				b
-			</InputGroup.Button>
-			<InputGroup.Button
-				size="icon-xs"
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				b
-			</InputGroup.Button>
-			<InputGroup.Button
-				size="icon-xs"
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				b
-			</InputGroup.Button>
-			<InputGroup.Button
-				size="icon-xs"
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				b
-			</InputGroup.Button>
-			<InputGroup.Text
-			>
-				t
-			</InputGroup.Text>
-			<InputGroup.Text
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				t
-			</InputGroup.Text>
-			<InputGroup.Text
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				t
-			</InputGroup.Text>
-			<InputGroup.Text
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				t
-			</InputGroup.Text>
-			<InputGroup.Input
-			/>
-			<InputGroup.Input
-				// @ts-expect-error the class prop is closed
-				class="x"
-			/>
-			<InputGroup.Input
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			/>
-			<InputGroup.Input
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			/>
-			<InputGroup.Textarea
-			/>
-			<InputGroup.Textarea
-				// @ts-expect-error the class prop is closed
-				class="x"
-			/>
-			<InputGroup.Textarea
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			/>
-			<InputGroup.Textarea
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			/>
-			<InputOTP
-				maxLength={6}
-			/>
-			<InputOTP
-				maxLength={6}
-				// @ts-expect-error the class prop is closed
-				class="x"
-			/>
-			<InputOTP
-				maxLength={6}
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			/>
-			<InputOTP
-				maxLength={6}
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			/>
-			<Inset
-				tone="danger"
-			>
-				i
-			</Inset>
-			<Inset
-				tone="danger"
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				i
-			</Inset>
-			<Inset
-				tone="danger"
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				i
-			</Inset>
-			<Inset
-				tone="danger"
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				i
-			</Inset>
-			<Item
-				variant="outline" size="sm"
-			>
-				i
-			</Item>
-			<Item
-				variant="outline" size="sm"
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				i
-			</Item>
-			<Item
-				variant="outline" size="sm"
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				i
-			</Item>
-			<Item
-				variant="outline" size="sm"
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				i
-			</Item>
-			<Item.Group
-			/>
-			<Item.Group
-				// @ts-expect-error the class prop is closed
-				class="x"
-			/>
-			<Item.Group
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			/>
-			<Item.Group
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			/>
-			<Item.Separator
-			/>
-			<Item.Separator
-				// @ts-expect-error the class prop is closed
-				class="x"
-			/>
-			<Item.Separator
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			/>
-			<Item.Separator
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			/>
-			<Item.Media
-				variant="icon"
-			/>
-			<Item.Media
-				variant="icon"
-				// @ts-expect-error the class prop is closed
-				class="x"
-			/>
-			<Item.Media
-				variant="icon"
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			/>
-			<Item.Media
-				variant="icon"
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			/>
-			<Item.Content
-			>
-				c
-			</Item.Content>
-			<Item.Content
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				c
-			</Item.Content>
-			<Item.Content
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				c
-			</Item.Content>
-			<Item.Content
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				c
-			</Item.Content>
-			<Item.Title
-			>
-				t
-			</Item.Title>
-			<Item.Title
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				t
-			</Item.Title>
-			<Item.Title
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				t
-			</Item.Title>
-			<Item.Title
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				t
-			</Item.Title>
-			<Item.Description
-			>
-				d
-			</Item.Description>
-			<Item.Description
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				d
-			</Item.Description>
-			<Item.Description
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				d
-			</Item.Description>
-			<Item.Description
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				d
-			</Item.Description>
-			<Item.Actions
-			/>
-			<Item.Actions
-				// @ts-expect-error the class prop is closed
-				class="x"
-			/>
-			<Item.Actions
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			/>
-			<Item.Actions
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			/>
-			<Item.Header
-			>
-				h
-			</Item.Header>
-			<Item.Header
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				h
-			</Item.Header>
-			<Item.Header
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				h
-			</Item.Header>
-			<Item.Header
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				h
-			</Item.Header>
-			<Item.Footer
-			>
-				f
-			</Item.Footer>
-			<Item.Footer
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				f
-			</Item.Footer>
-			<Item.Footer
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				f
-			</Item.Footer>
-			<Item.Footer
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				f
-			</Item.Footer>
-			<Label
-				for="x"
-			>
-				l
-			</Label>
-			<Label
-				for="x"
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				l
-			</Label>
-			<Label
-				for="x"
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				l
-			</Label>
-			<Label
-				for="x"
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				l
-			</Label>
-			<Loader
-				text="t"
-			/>
-			<Loader
-				text="t"
-				// @ts-expect-error the class prop is closed
-				class="x"
-			/>
-			<Loader
-				text="t"
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			/>
-			<Loader
-				text="t"
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			/>
-			<Logo
-				icon={anchor()}
-			/>
-			<Logo
-				icon={anchor()}
-				// @ts-expect-error the class prop is closed
-				class="x"
-			/>
-			<Logo
-				icon={anchor()}
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			/>
-			<Logo
-				icon={anchor()}
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			/>
-			<NavigationProgress
-				loading
-			/>
-			<NavigationProgress
-				loading
-				// @ts-expect-error the class prop is closed
-				class="x"
-			/>
-			<NavigationProgress
-				loading
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			/>
-			<NavigationProgress
-				loading
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			/>
-			<QueryBoundary
-				query={fakeQuery}
-			>
-				{(data) => <span>{data()}</span>}
-			</QueryBoundary>
-			<QueryBoundary
-				query={fakeQuery}
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				{(data) => <span>{data()}</span>}
-			</QueryBoundary>
-			<QueryBoundary
-				query={fakeQuery}
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				{(data) => <span>{data()}</span>}
-			</QueryBoundary>
-			<QueryBoundary
-				query={fakeQuery}
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				{(data) => <span>{data()}</span>}
-			</QueryBoundary>
-			<Section
-			>
-				s
-			</Section>
-			<Section
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				s
-			</Section>
-			<Section
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				s
-			</Section>
-			<Section
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				s
-			</Section>
-			<Section.Header
-			>
-				h
-			</Section.Header>
-			<Section.Header
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				h
-			</Section.Header>
-			<Section.Header
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				h
-			</Section.Header>
-			<Section.Header
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				h
-			</Section.Header>
-			<Section.Title
-			>
-				t
-			</Section.Title>
-			<Section.Title
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				t
-			</Section.Title>
-			<Section.Title
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				t
-			</Section.Title>
-			<Section.Title
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				t
-			</Section.Title>
-			<Section.Content
-			>
-				c
-			</Section.Content>
-			<Section.Content
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				c
-			</Section.Content>
-			<Section.Content
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				c
-			</Section.Content>
-			<Section.Content
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				c
-			</Section.Content>
-			<Section.Table
-			/>
-			<Section.Table
-				// @ts-expect-error the class prop is closed
-				class="x"
-			/>
-			<Section.Table
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			/>
-			<Section.Table
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			/>
-			<SectionToolbar
-			>
-				t
-			</SectionToolbar>
-			<SectionToolbar
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				t
-			</SectionToolbar>
-			<SectionToolbar
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				t
-			</SectionToolbar>
-			<SectionToolbar
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				t
-			</SectionToolbar>
-			<SectionToolbar.Left
-			>
-				l
-			</SectionToolbar.Left>
-			<SectionToolbar.Left
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				l
-			</SectionToolbar.Left>
-			<SectionToolbar.Left
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				l
-			</SectionToolbar.Left>
-			<SectionToolbar.Left
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				l
-			</SectionToolbar.Left>
-			<SectionToolbar.Right
-			>
-				r
-			</SectionToolbar.Right>
-			<SectionToolbar.Right
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				r
-			</SectionToolbar.Right>
-			<SectionToolbar.Right
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				r
-			</SectionToolbar.Right>
-			<SectionToolbar.Right
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				r
-			</SectionToolbar.Right>
-			<Select
-				options={[]}
-			/>
-			<Select
-				options={[]}
-				// @ts-expect-error the class prop is closed
-				class="x"
-			/>
-			<Select
-				options={[]}
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			/>
-			<Select
-				options={[]}
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			/>
-			<Select
-				options={[]}
-				// @ts-expect-error the contentClass hatch is dead
-				contentClass="x"
-			/>
-			<Separator
-				orientation="vertical"
-			/>
-			<Separator
-				orientation="vertical"
-				// @ts-expect-error the class prop is closed
-				class="x"
-			/>
-			<Separator
-				orientation="vertical"
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			/>
-			<Separator
-				orientation="vertical"
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			/>
-			<Sheet.Trigger
-			>
-				t
-			</Sheet.Trigger>
-			<Sheet.Trigger
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				t
-			</Sheet.Trigger>
-			<Sheet.Trigger
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				t
-			</Sheet.Trigger>
-			<Sheet.Trigger
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				t
-			</Sheet.Trigger>
-			<Sheet.Close
-			>
-				c
-			</Sheet.Close>
-			<Sheet.Close
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				c
-			</Sheet.Close>
-			<Sheet.Close
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				c
-			</Sheet.Close>
-			<Sheet.Close
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				c
-			</Sheet.Close>
-			<Sheet.Content
-				position="left" size="lg"
-			>
-				c
-			</Sheet.Content>
-			<Sheet.Content
-				position="left" size="lg"
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				c
-			</Sheet.Content>
-			<Sheet.Content
-				position="left" size="lg"
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				c
-			</Sheet.Content>
-			<Sheet.Content
-				position="left" size="lg"
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				c
-			</Sheet.Content>
-			<Sheet.Header
-			>
-				h
-			</Sheet.Header>
-			<Sheet.Header
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				h
-			</Sheet.Header>
-			<Sheet.Header
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				h
-			</Sheet.Header>
-			<Sheet.Header
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				h
-			</Sheet.Header>
-			<Sheet.Footer
-			>
-				f
-			</Sheet.Footer>
-			<Sheet.Footer
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				f
-			</Sheet.Footer>
-			<Sheet.Footer
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				f
-			</Sheet.Footer>
-			<Sheet.Footer
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				f
-			</Sheet.Footer>
-			<Sheet.Title
-			>
-				t
-			</Sheet.Title>
-			<Sheet.Title
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				t
-			</Sheet.Title>
-			<Sheet.Title
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				t
-			</Sheet.Title>
-			<Sheet.Title
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				t
-			</Sheet.Title>
-			<Sheet.Description
-			>
-				d
-			</Sheet.Description>
-			<Sheet.Description
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				d
-			</Sheet.Description>
-			<Sheet.Description
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				d
-			</Sheet.Description>
-			<Sheet.Description
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				d
-			</Sheet.Description>
-			<Sidebar.Provider
-			>
-				p
-			</Sidebar.Provider>
-			<Sidebar.Provider
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				p
-			</Sidebar.Provider>
-			<Sidebar.Provider
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				p
-			</Sidebar.Provider>
-			<Sidebar.Provider
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				p
-			</Sidebar.Provider>
-			<Sidebar
-				side="right" variant="floating"
-			>
-				s
-			</Sidebar>
-			<Sidebar
-				side="right" variant="floating"
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				s
-			</Sidebar>
-			<Sidebar
-				side="right" variant="floating"
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				s
-			</Sidebar>
-			<Sidebar
-				side="right" variant="floating"
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				s
-			</Sidebar>
-			<Sidebar.Trigger
-			/>
-			<Sidebar.Trigger
-				// @ts-expect-error the class prop is closed
-				class="x"
-			/>
-			<Sidebar.Trigger
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			/>
-			<Sidebar.Trigger
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			/>
-			<Sidebar.Rail
-			/>
-			<Sidebar.Rail
-				// @ts-expect-error the class prop is closed
-				class="x"
-			/>
-			<Sidebar.Rail
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			/>
-			<Sidebar.Rail
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			/>
-			<Sidebar.Inset
-			>
-				i
-			</Sidebar.Inset>
-			<Sidebar.Inset
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				i
-			</Sidebar.Inset>
-			<Sidebar.Inset
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				i
-			</Sidebar.Inset>
-			<Sidebar.Inset
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				i
-			</Sidebar.Inset>
-			<Sidebar.Header
-			>
-				h
-			</Sidebar.Header>
-			<Sidebar.Header
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				h
-			</Sidebar.Header>
-			<Sidebar.Header
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				h
-			</Sidebar.Header>
-			<Sidebar.Header
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				h
-			</Sidebar.Header>
-			<Sidebar.Footer
-			>
-				f
-			</Sidebar.Footer>
-			<Sidebar.Footer
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				f
-			</Sidebar.Footer>
-			<Sidebar.Footer
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				f
-			</Sidebar.Footer>
-			<Sidebar.Footer
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				f
-			</Sidebar.Footer>
-			<Sidebar.Separator
-			/>
-			<Sidebar.Separator
-				// @ts-expect-error the class prop is closed
-				class="x"
-			/>
-			<Sidebar.Separator
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			/>
-			<Sidebar.Separator
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			/>
-			<Sidebar.Content
-			>
-				c
-			</Sidebar.Content>
-			<Sidebar.Content
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				c
-			</Sidebar.Content>
-			<Sidebar.Content
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				c
-			</Sidebar.Content>
-			<Sidebar.Content
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				c
-			</Sidebar.Content>
-			<Sidebar.Input
-			/>
-			<Sidebar.Input
-				// @ts-expect-error the class prop is closed
-				class="x"
-			/>
-			<Sidebar.Input
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			/>
-			<Sidebar.Input
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			/>
-			<Sidebar.Group
-			>
-				g
-			</Sidebar.Group>
-			<Sidebar.Group
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				g
-			</Sidebar.Group>
-			<Sidebar.Group
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				g
-			</Sidebar.Group>
-			<Sidebar.Group
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				g
-			</Sidebar.Group>
-			<Sidebar.GroupLabel
-			>
-				l
-			</Sidebar.GroupLabel>
-			<Sidebar.GroupLabel
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				l
-			</Sidebar.GroupLabel>
-			<Sidebar.GroupLabel
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				l
-			</Sidebar.GroupLabel>
-			<Sidebar.GroupLabel
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				l
-			</Sidebar.GroupLabel>
-			<Sidebar.GroupAction
-			/>
-			<Sidebar.GroupAction
-				// @ts-expect-error the class prop is closed
-				class="x"
-			/>
-			<Sidebar.GroupAction
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			/>
-			<Sidebar.GroupAction
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			/>
-			<Sidebar.GroupContent
-			>
-				c
-			</Sidebar.GroupContent>
-			<Sidebar.GroupContent
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				c
-			</Sidebar.GroupContent>
-			<Sidebar.GroupContent
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				c
-			</Sidebar.GroupContent>
-			<Sidebar.GroupContent
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				c
-			</Sidebar.GroupContent>
-			<Sidebar.Menu
-			>
-				m
-			</Sidebar.Menu>
-			<Sidebar.Menu
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				m
-			</Sidebar.Menu>
-			<Sidebar.Menu
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				m
-			</Sidebar.Menu>
-			<Sidebar.Menu
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				m
-			</Sidebar.Menu>
-			<Sidebar.MenuItem
-			>
-				i
-			</Sidebar.MenuItem>
-			<Sidebar.MenuItem
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				i
-			</Sidebar.MenuItem>
-			<Sidebar.MenuItem
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				i
-			</Sidebar.MenuItem>
-			<Sidebar.MenuItem
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				i
-			</Sidebar.MenuItem>
-			<Sidebar.MenuButton
-				size="lg" isActive
-			>
-				b
-			</Sidebar.MenuButton>
-			<Sidebar.MenuButton
-				size="lg" isActive
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				b
-			</Sidebar.MenuButton>
-			<Sidebar.MenuButton
-				size="lg" isActive
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				b
-			</Sidebar.MenuButton>
-			<Sidebar.MenuButton
-				size="lg" isActive
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				b
-			</Sidebar.MenuButton>
-			<Sidebar.MenuAction
-				showOnHover
-			/>
-			<Sidebar.MenuAction
-				showOnHover
-				// @ts-expect-error the class prop is closed
-				class="x"
-			/>
-			<Sidebar.MenuAction
-				showOnHover
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			/>
-			<Sidebar.MenuAction
-				showOnHover
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			/>
-			<Sidebar.MenuBadge
-			>
-				b
-			</Sidebar.MenuBadge>
-			<Sidebar.MenuBadge
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				b
-			</Sidebar.MenuBadge>
-			<Sidebar.MenuBadge
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				b
-			</Sidebar.MenuBadge>
-			<Sidebar.MenuBadge
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				b
-			</Sidebar.MenuBadge>
-			<Sidebar.MenuLoader
-				text="l"
-			/>
-			<Sidebar.MenuLoader
-				text="l"
-				// @ts-expect-error the class prop is closed
-				class="x"
-			/>
-			<Sidebar.MenuLoader
-				text="l"
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			/>
-			<Sidebar.MenuLoader
-				text="l"
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			/>
-			<Sidebar.MenuSub
-			>
-				s
-			</Sidebar.MenuSub>
-			<Sidebar.MenuSub
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				s
-			</Sidebar.MenuSub>
-			<Sidebar.MenuSub
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				s
-			</Sidebar.MenuSub>
-			<Sidebar.MenuSub
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				s
-			</Sidebar.MenuSub>
-			<Sidebar.MenuSubItem
-			>
-				i
-			</Sidebar.MenuSubItem>
-			<Sidebar.MenuSubItem
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				i
-			</Sidebar.MenuSubItem>
-			<Sidebar.MenuSubItem
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				i
-			</Sidebar.MenuSubItem>
-			<Sidebar.MenuSubItem
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				i
-			</Sidebar.MenuSubItem>
-			<Sidebar.MenuSubButton
-				size="sm"
-			>
-				b
-			</Sidebar.MenuSubButton>
-			<Sidebar.MenuSubButton
-				size="sm"
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				b
-			</Sidebar.MenuSubButton>
-			<Sidebar.MenuSubButton
-				size="sm"
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				b
-			</Sidebar.MenuSubButton>
-			<Sidebar.MenuSubButton
-				size="sm"
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				b
-			</Sidebar.MenuSubButton>
-			<Skeleton
-				width={120} height="50%"
-			/>
-			<Skeleton
-				// @ts-expect-error the class prop is closed
-				class="x"
-			/>
-			<Skeleton
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			/>
-			<Skeleton
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			/>
-			<Spinner
-				tone="ink-2"
-			/>
-			<Spinner
-				// @ts-expect-error the class prop is closed
-				class="x"
-			/>
-			<Spinner
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			/>
-			<Spinner
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			/>
-			<Stack
-			>
-				s
-			</Stack>
-			<Stack
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				s
-			</Stack>
-			<Stack
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				s
-			</Stack>
-			<Stack
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				s
-			</Stack>
-			<Row
-			>
-				r
-			</Row>
-			<Row
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				r
-			</Row>
-			<Row
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				r
-			</Row>
-			<Row
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				r
-			</Row>
-			<Pair
-				row
-			>
-				p
-			</Pair>
-			<Pair
-				row
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				p
-			</Pair>
-			<Pair
-				row
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				p
-			</Pair>
-			<Pair
-				row
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				p
-			</Pair>
-			<Frame
-			>
-				f
-			</Frame>
-			<Frame
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				f
-			</Frame>
-			<Frame
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				f
-			</Frame>
-			<Frame
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				f
-			</Frame>
-			<ScrollArea
-				axis="both"
-				pinToBottom
-			>
-				s
-			</ScrollArea>
-			<ScrollArea
-				axis="both"
-				pinToBottom
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				s
-			</ScrollArea>
-			<ScrollArea
-				axis="both"
-				pinToBottom
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				s
-			</ScrollArea>
-			<ScrollArea
-				axis="both"
-				pinToBottom
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				s
-			</ScrollArea>
-			<Table
-				bordered
-			>
-				t
-			</Table>
-			<Table
-				bordered
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				t
-			</Table>
-			<Table
-				bordered
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				t
-			</Table>
-			<Table
-				bordered
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				t
-			</Table>
-			<Table
-				bordered
-				// @ts-expect-error the containerClass hatch is dead
-				containerClass="x"
-			>
-				t
-			</Table>
-			<Table.Header
-			/>
-			<Table.Header
-				// @ts-expect-error the class prop is closed
-				class="x"
-			/>
-			<Table.Header
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			/>
-			<Table.Header
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			/>
-			<Table.Body
-			/>
-			<Table.Body
-				// @ts-expect-error the class prop is closed
-				class="x"
-			/>
-			<Table.Body
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			/>
-			<Table.Body
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			/>
-			<Table.Footer
-			/>
-			<Table.Footer
-				// @ts-expect-error the class prop is closed
-				class="x"
-			/>
-			<Table.Footer
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			/>
-			<Table.Footer
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			/>
-			<Table.Row
-			/>
-			<Table.Row
-				// @ts-expect-error the class prop is closed
-				class="x"
-			/>
-			<Table.Row
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			/>
-			<Table.Row
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			/>
-			<Table.Head
-			>
-				h
-			</Table.Head>
-			<Table.Head
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				h
-			</Table.Head>
-			<Table.Head
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				h
-			</Table.Head>
-			<Table.Head
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				h
-			</Table.Head>
-			<Table.Cell
-			>
-				c
-			</Table.Cell>
-			<Table.Cell
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				c
-			</Table.Cell>
-			<Table.Cell
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				c
-			</Table.Cell>
-			<Table.Cell
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				c
-			</Table.Cell>
-			<Table.Caption
-			>
-				c
-			</Table.Caption>
-			<Table.Caption
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				c
-			</Table.Caption>
-			<Table.Caption
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				c
-			</Table.Caption>
-			<Table.Caption
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				c
-			</Table.Caption>
-			<Tabs
-				tabs={[]}
-			/>
-			<Tabs
-				tabs={[]}
-				// @ts-expect-error the class prop is closed
-				class="x"
-			/>
-			<Tabs
-				tabs={[]}
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			/>
-			<Tabs
-				tabs={[]}
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			/>
-			<Tabs
-				tabs={[]}
-				// @ts-expect-error the listClass hatch is dead
-				listClass="x"
-			/>
-			<Tabs
-				tabs={[]}
-				// @ts-expect-error the contentClass hatch is dead
-				contentClass="x"
-			/>
-			<Text
-				variant="h1" tone="ink-2" strong mono
-			>
-				t
-			</Text>
-			<Text
-				variant="h1" tone="ink-2" strong mono
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				t
-			</Text>
-			<Text
-				variant="h1" tone="ink-2" strong mono
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				t
-			</Text>
-			<Text
-				variant="h1" tone="ink-2" strong mono
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				t
-			</Text>
-			<Textarea
-				value="v"
-			/>
-			<Textarea
-				value="v"
-				// @ts-expect-error the class prop is closed
-				class="x"
-			/>
-			<Textarea
-				value="v"
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			/>
-			<Textarea
-				value="v"
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			/>
-			<Toaster
-				position="top-right"
-			/>
-			<Toaster
-				position="top-right"
-				// @ts-expect-error the class prop is closed
-				class="x"
-			/>
-			<Toaster
-				position="top-right"
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			/>
-			<Toaster
-				position="top-right"
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			/>
-			<Toaster
-				position="top-right"
-				// @ts-expect-error the toastOptions design-overwrite slot is closed
-				toastOptions={{}}
-			/>
-			<Toaster
-				position="top-right"
-				// @ts-expect-error the icons element slots are closed
-				icons={{}}
-			/>
-			<Toaster
-				position="top-right"
-				// @ts-expect-error className never existed on the web and stays closed
-				className="x"
-			/>
-			<Toggle
-				checked onChange={noop} disabled
-			/>
-			<Toggle
-				checked onChange={noop}
-				// @ts-expect-error the class prop is closed
-				class="x"
-			/>
-			<Toggle
-				checked onChange={noop}
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			/>
-			<Toggle
-				checked onChange={noop}
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			/>
-			<Toggle
-				checked onChange={noop}
-				// @ts-expect-error Kobalte's uncontrolled surface stays out
-				defaultChecked
-			/>
-			<Tooltip.Trigger
-			>
-				t
-			</Tooltip.Trigger>
-			<Tooltip.Trigger
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				t
-			</Tooltip.Trigger>
-			<Tooltip.Trigger
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				t
-			</Tooltip.Trigger>
-			<Tooltip.Trigger
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				t
-			</Tooltip.Trigger>
-			<Tooltip.Content
-			>
-				c
-			</Tooltip.Content>
-			<Tooltip.Content
-				// @ts-expect-error the class prop is closed
-				class="x"
-			>
-				c
-			</Tooltip.Content>
-			<Tooltip.Content
-				// @ts-expect-error the style prop is closed
-				style={{ color: "red" }}
-			>
-				c
-			</Tooltip.Content>
-			<Tooltip.Content
-				// @ts-expect-error the classList prop is closed
-				classList={{ x: true }}
-			>
-				c
-			</Tooltip.Content>
-		</>
-	);
-}
+export const closure = (
+	<>
+		<Text role="body">x</Text>
+		{/* @ts-expect-error closed channel */}
+		<Text class="x" />
+		{/* @ts-expect-error closed channel */}
+		<Text style={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Text classList={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Text className="x" />
+		<Icon name="x" />
+		{/* @ts-expect-error closed channel */}
+		<Icon name="x" class="x" />
+		{/* @ts-expect-error closed channel */}
+		<Icon name="x" style={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Icon name="x" classList={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Icon name="x" className="x" />
+		<Button label="x" onAct={noop} act="secondary" loading blocked="x" />
+		{/* @ts-expect-error closed channel */}
+		<Button label="x" class="x" />
+		{/* @ts-expect-error closed channel */}
+		<Button label="x" style={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Button label="x" classList={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Button label="x" className="x" />
+		<IconButton icon="x" label="x" onAct={noop} />
+		{/* @ts-expect-error closed channel */}
+		<IconButton icon="x" label="x" class="x" />
+		{/* @ts-expect-error closed channel */}
+		<IconButton icon="x" label="x" style={{}} />
+		{/* @ts-expect-error closed channel */}
+		<IconButton icon="x" label="x" classList={{}} />
+		{/* @ts-expect-error closed channel */}
+		<IconButton icon="x" label="x" className="x" />
+		<Count value={1} />
+		{/* @ts-expect-error closed channel */}
+		<Count value={1} class="x" />
+		{/* @ts-expect-error closed channel */}
+		<Count value={1} style={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Count value={1} classList={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Count value={1} className="x" />
+		<Status state="active" label="x" onOpen={noop} />
+		{/* @ts-expect-error closed channel */}
+		<Status state="active" class="x" />
+		{/* @ts-expect-error closed channel */}
+		<Status state="active" style={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Status state="active" classList={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Status state="active" className="x" />
+		<Input kind="search" value="" onChange={noop} placeholder="x" act={act} />
+		{/* @ts-expect-error closed channel */}
+		<Input value="" onChange={noop} class="x" />
+		{/* @ts-expect-error closed channel */}
+		<Input value="" onChange={noop} style={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Input value="" onChange={noop} classList={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Input value="" onChange={noop} className="x" />
+		<TextArea kind="source" value="" onChange={noop} placeholder="x" budget={3} />
+		{/* @ts-expect-error closed channel */}
+		<TextArea value="" onChange={noop} class="x" />
+		{/* @ts-expect-error closed channel */}
+		<TextArea value="" onChange={noop} style={{}} />
+		{/* @ts-expect-error closed channel */}
+		<TextArea value="" onChange={noop} classList={{}} />
+		{/* @ts-expect-error closed channel */}
+		<TextArea value="" onChange={noop} className="x" />
+		<Slider label="x" value={1} onChange={noop} min={0} max={9} step={1} />
+		{/* @ts-expect-error closed channel */}
+		<Slider label="x" value={1} onChange={noop} class="x" />
+		{/* @ts-expect-error closed channel */}
+		<Slider label="x" value={1} onChange={noop} style={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Slider label="x" value={1} onChange={noop} classList={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Slider label="x" value={1} onChange={noop} className="x" />
+		<Switch checked onChange={noop} label="x" />
+		{/* @ts-expect-error closed channel */}
+		<Switch checked onChange={noop} class="x" />
+		{/* @ts-expect-error closed channel */}
+		<Switch checked onChange={noop} style={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Switch checked onChange={noop} classList={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Switch checked onChange={noop} className="x" />
+		<Checkbox checked onChange={noop} label="x" />
+		{/* @ts-expect-error closed channel */}
+		<Checkbox checked onChange={noop} class="x" />
+		{/* @ts-expect-error closed channel */}
+		<Checkbox checked onChange={noop} style={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Checkbox checked onChange={noop} classList={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Checkbox checked onChange={noop} className="x" />
+		<Spinner />
+		{/* @ts-expect-error closed channel */}
+		<Spinner class="x" />
+		{/* @ts-expect-error closed channel */}
+		<Spinner style={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Spinner classList={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Spinner className="x" />
+		<Avatar name="x" src="x" />
+		{/* @ts-expect-error closed channel */}
+		<Avatar name="x" class="x" />
+		{/* @ts-expect-error closed channel */}
+		<Avatar name="x" style={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Avatar name="x" classList={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Avatar name="x" className="x" />
+		<Link href="/">x</Link>
+		{/* @ts-expect-error closed channel */}
+		<Link href="/" class="x" />
+		{/* @ts-expect-error closed channel */}
+		<Link href="/" style={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Link href="/" classList={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Link href="/" className="x" />
+		<Place title="x" actions={[iconAct]} act={act}>x</Place>
+		{/* @ts-expect-error closed channel */}
+		<Place title="x" class="x" />
+		{/* @ts-expect-error closed channel */}
+		<Place title="x" style={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Place title="x" classList={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Place title="x" className="x" />
+		<Screen title="x" back="/" actions={[iconAct]}>x</Screen>
+		{/* @ts-expect-error closed channel */}
+		<Screen title="x" class="x" />
+		{/* @ts-expect-error closed channel */}
+		<Screen title="x" style={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Screen title="x" classList={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Screen title="x" className="x" />
+		<Split list={<span />} main={<span />} pane={<span />} />
+		{/* @ts-expect-error closed channel */}
+		<Split class="x" />
+		{/* @ts-expect-error closed channel */}
+		<Split style={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Split classList={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Split className="x" />
+		<Section title="x" count={1} description="x" folded act={act} loading>x</Section>
+		{/* @ts-expect-error closed channel */}
+		<Section title="x" class="x" />
+		{/* @ts-expect-error closed channel */}
+		<Section title="x" style={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Section title="x" classList={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Section title="x" className="x" />
+		<Group loading>x</Group>
+		{/* @ts-expect-error closed channel */}
+		<Group class="x" />
+		{/* @ts-expect-error closed channel */}
+		<Group style={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Group classList={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Group className="x" />
+		<List loading>x</List>
+		{/* @ts-expect-error closed channel */}
+		<List class="x" />
+		{/* @ts-expect-error closed channel */}
+		<List style={{}} />
+		{/* @ts-expect-error closed channel */}
+		<List classList={{}} />
+		{/* @ts-expect-error closed channel */}
+		<List className="x" />
+		<Form onSubmit={noop}>x</Form>
+		{/* @ts-expect-error closed channel */}
+		<Form onSubmit={noop} class="x" />
+		{/* @ts-expect-error closed channel */}
+		<Form onSubmit={noop} style={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Form onSubmit={noop} classList={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Form onSubmit={noop} className="x" />
+		<Toolbar >x</Toolbar>
+		{/* @ts-expect-error closed channel */}
+		<Toolbar class="x" />
+		{/* @ts-expect-error closed channel */}
+		<Toolbar style={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Toolbar classList={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Toolbar className="x" />
+		<ActionBar >x</ActionBar>
+		{/* @ts-expect-error closed channel */}
+		<ActionBar class="x" />
+		{/* @ts-expect-error closed channel */}
+		<ActionBar style={{}} />
+		{/* @ts-expect-error closed channel */}
+		<ActionBar classList={{}} />
+		{/* @ts-expect-error closed channel */}
+		<ActionBar className="x" />
+		<Columns >x</Columns>
+		{/* @ts-expect-error closed channel */}
+		<Columns class="x" />
+		{/* @ts-expect-error closed channel */}
+		<Columns style={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Columns classList={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Columns className="x" />
+		<Shell places={[placeSpec]} banner={<span />}>x</Shell>
+		{/* @ts-expect-error closed channel */}
+		<Shell places={[]} class="x" />
+		{/* @ts-expect-error closed channel */}
+		<Shell places={[]} style={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Shell places={[]} classList={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Shell places={[]} className="x" />
+		<ListRow leading={{ icon: "x" }} title={{ quoted: "x" }} meta={[["x"], ["x"]]} trailing={{ age: "2 h" }} marks={[{ icon: "x", label: "x" }]} act={act} href="/" onOpen={noop} />
+		{/* @ts-expect-error closed channel */}
+		<ListRow title="x" class="x" />
+		{/* @ts-expect-error closed channel */}
+		<ListRow title="x" style={{}} />
+		{/* @ts-expect-error closed channel */}
+		<ListRow title="x" classList={{}} />
+		{/* @ts-expect-error closed channel */}
+		<ListRow title="x" className="x" />
+		<DefinitionRow label="x" description="x" value={{ status: "done" }} copyable act={act} href="/" onOpen={noop} />
+		{/* @ts-expect-error closed channel */}
+		<DefinitionRow label="x" class="x" />
+		{/* @ts-expect-error closed channel */}
+		<DefinitionRow label="x" style={{}} />
+		{/* @ts-expect-error closed channel */}
+		<DefinitionRow label="x" classList={{}} />
+		{/* @ts-expect-error closed channel */}
+		<DefinitionRow label="x" className="x" />
+		<FormField label="x" description="x" error="x">x</FormField>
+		{/* @ts-expect-error closed channel */}
+		<FormField label="x" class="x" />
+		{/* @ts-expect-error closed channel */}
+		<FormField label="x" style={{}} />
+		{/* @ts-expect-error closed channel */}
+		<FormField label="x" classList={{}} />
+		{/* @ts-expect-error closed channel */}
+		<FormField label="x" className="x" />
+		<ItemHeader overline={["x"]} title="x" facts={["x", { status: "done" }]} loading />
+		{/* @ts-expect-error closed channel */}
+		<ItemHeader title="x" class="x" />
+		{/* @ts-expect-error closed channel */}
+		<ItemHeader title="x" style={{}} />
+		{/* @ts-expect-error closed channel */}
+		<ItemHeader title="x" classList={{}} />
+		{/* @ts-expect-error closed channel */}
+		<ItemHeader title="x" className="x" />
+		<SegmentedControl options={[option]} value="x" onChange={noop} />
+		{/* @ts-expect-error closed channel */}
+		<SegmentedControl options={[]} value="x" onChange={noop} class="x" />
+		{/* @ts-expect-error closed channel */}
+		<SegmentedControl options={[]} value="x" onChange={noop} style={{}} />
+		{/* @ts-expect-error closed channel */}
+		<SegmentedControl options={[]} value="x" onChange={noop} classList={{}} />
+		{/* @ts-expect-error closed channel */}
+		<SegmentedControl options={[]} value="x" onChange={noop} className="x" />
+		<Sheet open onClose={noop} title="x" description="x" back={noop} submit={{ label: "x", onAct: noop, blocked: "x" }} foot={<span />}>x</Sheet>
+		{/* @ts-expect-error closed channel */}
+		<Sheet open onClose={noop} title="x" class="x" />
+		{/* @ts-expect-error closed channel */}
+		<Sheet open onClose={noop} title="x" style={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Sheet open onClose={noop} title="x" classList={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Sheet open onClose={noop} title="x" className="x" />
+		<Picker label="x" options={[option]} value="x" onChange={noop} />
+		{/* @ts-expect-error closed channel */}
+		<Picker label="x" options={[]} value="x" onChange={noop} class="x" />
+		{/* @ts-expect-error closed channel */}
+		<Picker label="x" options={[]} value="x" onChange={noop} style={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Picker label="x" options={[]} value="x" onChange={noop} classList={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Picker label="x" options={[]} value="x" onChange={noop} className="x" />
+		<OptionList options={[option]} value="x" onChange={noop}>x</OptionList>
+		{/* @ts-expect-error closed channel */}
+		<OptionList options={[]} onChange={noop} class="x" />
+		{/* @ts-expect-error closed channel */}
+		<OptionList options={[]} onChange={noop} style={{}} />
+		{/* @ts-expect-error closed channel */}
+		<OptionList options={[]} onChange={noop} classList={{}} />
+		{/* @ts-expect-error closed channel */}
+		<OptionList options={[]} onChange={noop} className="x" />
+		<EmptyState title="x" sentence="x" act={act}>x</EmptyState>
+		{/* @ts-expect-error closed channel */}
+		<EmptyState sentence="x" class="x" />
+		{/* @ts-expect-error closed channel */}
+		<EmptyState sentence="x" style={{}} />
+		{/* @ts-expect-error closed channel */}
+		<EmptyState sentence="x" classList={{}} />
+		{/* @ts-expect-error closed channel */}
+		<EmptyState sentence="x" className="x" />
+		<Toast sentence="x" act={act} />
+		{/* @ts-expect-error closed channel */}
+		<Toast sentence="x" class="x" />
+		{/* @ts-expect-error closed channel */}
+		<Toast sentence="x" style={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Toast sentence="x" classList={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Toast sentence="x" className="x" />
+		<Banner kind="warn" sentence="x" act={act} />
+		{/* @ts-expect-error closed channel */}
+		<Banner sentence="x" class="x" />
+		{/* @ts-expect-error closed channel */}
+		<Banner sentence="x" style={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Banner sentence="x" classList={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Banner sentence="x" className="x" />
+		<PendingBar sentence="x" until={new Date()} act={act} />
+		{/* @ts-expect-error closed channel */}
+		<PendingBar sentence="x" class="x" />
+		{/* @ts-expect-error closed channel */}
+		<PendingBar sentence="x" style={{}} />
+		{/* @ts-expect-error closed channel */}
+		<PendingBar sentence="x" classList={{}} />
+		{/* @ts-expect-error closed channel */}
+		<PendingBar sentence="x" className="x" />
+		<Prose markdown="x" loading />
+		{/* @ts-expect-error closed channel */}
+		<Prose markdown="x" class="x" />
+		{/* @ts-expect-error closed channel */}
+		<Prose markdown="x" style={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Prose markdown="x" classList={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Prose markdown="x" className="x" />
+		<Code text="x" tail={2} copy loading />
+		{/* @ts-expect-error closed channel */}
+		<Code text="x" class="x" />
+		{/* @ts-expect-error closed channel */}
+		<Code text="x" style={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Code text="x" classList={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Code text="x" className="x" />
+		<Diff hunks={[]} layout="split" loading />
+		{/* @ts-expect-error closed channel */}
+		<Diff hunks={[]} class="x" />
+		{/* @ts-expect-error closed channel */}
+		<Diff hunks={[]} style={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Diff hunks={[]} classList={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Diff hunks={[]} className="x" />
+		<FileRow path="x" added={1} removed={1} seen href="/" onOpen={noop} loading />
+		{/* @ts-expect-error closed channel */}
+		<FileRow path="x" class="x" />
+		{/* @ts-expect-error closed channel */}
+		<FileRow path="x" style={{}} />
+		{/* @ts-expect-error closed channel */}
+		<FileRow path="x" classList={{}} />
+		{/* @ts-expect-error closed channel */}
+		<FileRow path="x" className="x" />
+		<ProseDiff before="x" after="x" loading />
+		{/* @ts-expect-error closed channel */}
+		<ProseDiff before="x" after="x" class="x" />
+		{/* @ts-expect-error closed channel */}
+		<ProseDiff before="x" after="x" style={{}} />
+		{/* @ts-expect-error closed channel */}
+		<ProseDiff before="x" after="x" classList={{}} />
+		{/* @ts-expect-error closed channel */}
+		<ProseDiff before="x" after="x" className="x" />
+		<Comparison rows={[]} loading />
+		{/* @ts-expect-error closed channel */}
+		<Comparison rows={[]} class="x" />
+		{/* @ts-expect-error closed channel */}
+		<Comparison rows={[]} style={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Comparison rows={[]} classList={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Comparison rows={[]} className="x" />
+		<Message author="you" name="x" body="x" at="x" loading />
+		{/* @ts-expect-error closed channel */}
+		<Message author="you" body="x" class="x" />
+		{/* @ts-expect-error closed channel */}
+		<Message author="you" body="x" style={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Message author="you" body="x" classList={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Message author="you" body="x" className="x" />
+		<MessageInput value="" onChange={noop} attachments={[]} onAttach={noop} placeholder="x" notice={{ sentence: "x", act }} working onSend={noop} onStop={noop} />
+		{/* @ts-expect-error closed channel */}
+		<MessageInput value="" onChange={noop} onSend={noop} class="x" />
+		{/* @ts-expect-error closed channel */}
+		<MessageInput value="" onChange={noop} onSend={noop} style={{}} />
+		{/* @ts-expect-error closed channel */}
+		<MessageInput value="" onChange={noop} onSend={noop} classList={{}} />
+		{/* @ts-expect-error closed channel */}
+		<MessageInput value="" onChange={noop} onSend={noop} className="x" />
+		<Meter label="x" value={1} max={2} meta="x" loading />
+		{/* @ts-expect-error closed channel */}
+		<Meter label="x" value={1} max={2} class="x" />
+		{/* @ts-expect-error closed channel */}
+		<Meter label="x" value={1} max={2} style={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Meter label="x" value={1} max={2} classList={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Meter label="x" value={1} max={2} className="x" />
+		<BarChart series={[]} unit="x" loading />
+		{/* @ts-expect-error closed channel */}
+		<BarChart series={[]} unit="x" class="x" />
+		{/* @ts-expect-error closed channel */}
+		<BarChart series={[]} unit="x" style={{}} />
+		{/* @ts-expect-error closed channel */}
+		<BarChart series={[]} unit="x" classList={{}} />
+		{/* @ts-expect-error closed channel */}
+		<BarChart series={[]} unit="x" className="x" />
+		<QrCode value="x" loading />
+		{/* @ts-expect-error closed channel */}
+		<QrCode value="x" class="x" />
+		{/* @ts-expect-error closed channel */}
+		<QrCode value="x" style={{}} />
+		{/* @ts-expect-error closed channel */}
+		<QrCode value="x" classList={{}} />
+		{/* @ts-expect-error closed channel */}
+		<QrCode value="x" className="x" />
+	</>
+);

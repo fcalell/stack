@@ -1,7 +1,13 @@
-import { parseTheme, type Theme } from "./schema.ts";
+import { type ParsedTheme, parseTheme, type Theme } from "./schema.ts";
 import {
+	AVATAR_STEP_DEGREES,
+	AVATAR_VALUE,
+	BREAKPOINTS,
 	COLORS,
+	type ColorDeclaration,
 	type ColorValue,
+	FONT_FALLBACKS,
+	type FontRole,
 	type HueBinding,
 	INVARIANT,
 	INVARIANT_COLORS,
@@ -14,17 +20,31 @@ import {
 	type Mode,
 	PER_MODE_COLORS,
 	type PerModeColor,
-	SCALE_DEFAULTS,
+	PRIMARY_COLORS,
+	RADIUS_RATIO,
+	SCALE_KEYS,
 	type ScaleKey,
+	SHADOW_GEOMETRY,
+	SHADOW_LEVELS,
+	SPACING_RATIO,
+	SPACING_RUNGS,
+	TRACKED_ROLES,
+	TYPE_ROLES,
+	TYPE_SCALE,
+	TYPE_TRACKING,
+	WIDTHS,
 } from "./tokens.ts";
 
 // Final value strings, one per token. Emit helpers read this and never the raw
 // `Theme`, so knob resolution happens exactly once.
 export interface ResolvedTheme {
 	defaultMode: Mode;
+	knobs: Knobs;
 	colors: Record<Mode, Record<PerModeColor, string>>;
 	invariantColors: Record<InvariantColor, string>;
 	scales: Record<ScaleKey, string>;
+	// The two family stacks, the knob's family ahead of the platform fallback.
+	fonts: Record<FontRole, string>;
 }
 
 // Three decimals with trailing zeros stripped reproduces every reference value
@@ -52,6 +72,22 @@ function resolveColor(value: ColorValue, knobs: Knobs, alpha?: number): string {
 		: `oklch(${base} / ${num(alpha)})`;
 }
 
+function declarationOf(token: PerModeColor, knobs: Knobs): ColorDeclaration {
+	if (token === "accent" || token === "accent-soft") {
+		return PRIMARY_COLORS[knobs.primary][token];
+	}
+	const step = /^avatar-(\d)$/.exec(token)?.[1];
+	if (step !== undefined) {
+		const offset = (Number(step) - 1) * AVATAR_STEP_DEGREES;
+		const hue: HueBinding = { knob: "accentHue", offset };
+		return {
+			light: { ...AVATAR_VALUE.light, hue },
+			dark: { ...AVATAR_VALUE.dark, hue },
+		};
+	}
+	return COLORS[token as keyof typeof COLORS];
+}
+
 function resolveMode(
 	mode: Mode,
 	knobs: Knobs,
@@ -60,7 +96,7 @@ function resolveMode(
 	const out = {} as Record<PerModeColor, string>;
 	const aliases: Array<[PerModeColor, PerModeColor]> = [];
 	for (const token of PER_MODE_COLORS) {
-		const declaration = COLORS[token];
+		const declaration = declarationOf(token, knobs);
 		if ("alias" in declaration) {
 			aliases.push([token, declaration.alias]);
 			continue;
@@ -72,7 +108,7 @@ function resolveMode(
 	// itself still wins. One hop only: an alias of an alias would resolve
 	// against a token this loop has not written yet.
 	for (const [token, source] of aliases) {
-		if ("alias" in COLORS[source]) {
+		if ("alias" in declarationOf(source, knobs)) {
 			throw new Error(
 				`[${LABEL}] ${token} aliases ${source}, which is itself an alias`,
 			);
@@ -82,12 +118,118 @@ function resolveMode(
 	return out;
 }
 
+// ── OKLCH to sRGB, for the shadow colors ────────────────────────────
+
+// Björn Ottosson's reference matrices. Only the shadows cross this path: a
+// color token stays oklch, but React Native's `boxShadow` parses no oklch.
+function oklchToRgb(l: number, c: number, h: number): [number, number, number] {
+	const a = c * Math.cos((h * Math.PI) / 180);
+	const b = c * Math.sin((h * Math.PI) / 180);
+	const l1 = (l + 0.3963377774 * a + 0.2158037573 * b) ** 3;
+	const m1 = (l - 0.1055613458 * a - 0.0638541728 * b) ** 3;
+	const s1 = (l - 0.0894841775 * a - 1.291485548 * b) ** 3;
+	const linear = [
+		4.0767416621 * l1 - 3.3077115913 * m1 + 0.2309699292 * s1,
+		-1.2684380046 * l1 + 2.6097574011 * m1 - 0.3413193965 * s1,
+		-0.0041960863 * l1 - 0.7034186147 * m1 + 1.707614701 * s1,
+	];
+	const [r, g, bl] = linear.map((value) => {
+		const x = Math.min(1, Math.max(0, value));
+		const gamma = x <= 0.0031308 ? 12.92 * x : 1.055 * x ** (1 / 2.4) - 0.055;
+		return Math.round(gamma * 255);
+	});
+	return [r ?? 0, g ?? 0, bl ?? 0];
+}
+
+// ── The scales ──────────────────────────────────────────────────────
+
+function roundEven(value: number): number {
+	return 2 * Math.round(value / 2);
+}
+
+function scalesFor(knobs: Knobs): Record<ScaleKey, string> {
+	const scales = {} as Record<ScaleKey, string>;
+	for (const rung of SPACING_RUNGS) {
+		scales[`--spacing-${rung}`] = `${knobs.space * SPACING_RATIO[rung]}px`;
+	}
+	scales["--radius-group"] =
+		`${Math.floor(knobs.radius * RADIUS_RATIO.group)}px`;
+	scales["--radius-sheet"] =
+		`${Math.floor(knobs.radius * RADIUS_RATIO.sheet)}px`;
+	scales["--radius-full"] = "9999px";
+	for (const role of TYPE_ROLES) {
+		const size = Math.round(knobs.text * TYPE_SCALE[role].size);
+		scales[`--text-${role}`] = `${size}px`;
+		scales[`--leading-${role}`] =
+			`${roundEven(size * TYPE_SCALE[role].leading)}px`;
+	}
+	for (const role of TRACKED_ROLES) {
+		scales[`--tracking-${role}`] = TYPE_TRACKING[role];
+	}
+	const ink = COLORS.ink;
+	const shadowInk = "light" in ink ? ink.light : undefined;
+	if (shadowInk === undefined) throw new Error(`[${LABEL}] ink is an alias`);
+	const [r, g, b] = oklchToRgb(
+		shadowInk.l,
+		shadowInk.c * knobs.neutralChroma,
+		resolveHue(shadowInk.hue, knobs),
+	);
+	for (const level of SHADOW_LEVELS) {
+		const { y, blur, alpha } = SHADOW_GEOMETRY[level];
+		scales[`--shadow-${level}`] =
+			`0 ${y}px ${blur}px rgba(${r}, ${g}, ${b}, ${alpha})`;
+	}
+	for (const width of WIDTHS) {
+		scales[`--container-${width}`] = `${knobs.widths[width]}px`;
+	}
+	for (const bp of BREAKPOINTS) {
+		scales[`--breakpoint-${bp}`] = `${knobs.breakpoints[bp]}px`;
+	}
+	return scales;
+}
+
+function knobsOf(parsed: ParsedTheme): Knobs {
+	const knobs: Knobs = {
+		accentHue: parsed.accentHue ?? KNOB_DEFAULTS.accentHue,
+		neutralHue: parsed.neutralHue ?? KNOB_DEFAULTS.neutralHue,
+		neutralChroma: parsed.neutralChroma ?? KNOB_DEFAULTS.neutralChroma,
+		okHue: parsed.okHue ?? KNOB_DEFAULTS.okHue,
+		warnHue: parsed.warnHue ?? KNOB_DEFAULTS.warnHue,
+		dangerHue: parsed.dangerHue ?? KNOB_DEFAULTS.dangerHue,
+		primary: parsed.primary ?? KNOB_DEFAULTS.primary,
+		space: parsed.space ?? KNOB_DEFAULTS.space,
+		radius: parsed.radius ?? KNOB_DEFAULTS.radius,
+		text: parsed.text ?? KNOB_DEFAULTS.text,
+		fonts: {
+			sans: parsed.fonts?.sans ?? KNOB_DEFAULTS.fonts.sans,
+			mono: parsed.fonts?.mono ?? KNOB_DEFAULTS.fonts.mono,
+		},
+		widths: { ...KNOB_DEFAULTS.widths },
+		breakpoints: { ...KNOB_DEFAULTS.breakpoints },
+	};
+	for (const width of WIDTHS) {
+		const value = parsed.widths?.[width];
+		if (value !== undefined) knobs.widths[width] = value;
+	}
+	for (const bp of BREAKPOINTS) {
+		const value = parsed.breakpoints?.[bp];
+		if (value !== undefined) knobs.breakpoints[bp] = value;
+	}
+	return knobs;
+}
+
+// A family name crosses into a `font-family` value, so it is quoted and its
+// quote and backslash escaped: no other character can end a CSS string.
+function fontStack(family: string | undefined, role: FontRole): string {
+	const fallback = FONT_FALLBACKS[role];
+	if (family === undefined) return fallback;
+	const quoted = `"${family.replace(/[\\"]/g, (ch) => `\\${ch}`)}"`;
+	return `${quoted}, ${fallback}`;
+}
+
 export function deriveTheme(theme: Theme = {}): ResolvedTheme {
 	const parsed = parseTheme(theme);
-	const knobs: Knobs = { ...KNOB_DEFAULTS };
-	for (const [key, value] of Object.entries(parsed.knobs ?? {})) {
-		if (value !== undefined) knobs[key as keyof Knobs] = value;
-	}
+	const knobs = knobsOf(parsed);
 
 	const colorOverrides = parsed.overrides?.colors;
 	const colors = {} as Record<Mode, Record<PerModeColor, string>>;
@@ -103,12 +245,25 @@ export function deriveTheme(theme: Theme = {}): ResolvedTheme {
 			shared[token] ?? resolveColor(declaration, knobs, declaration.alpha);
 	}
 
-	// Every override key is checked against `SCALE_DEFAULTS` by the schema, so
-	// the cast holds and the map stays total.
-	const scales: Record<ScaleKey, string> = { ...SCALE_DEFAULTS };
+	// Every override key is checked against `SCALE_KEYS` by the schema, so the
+	// cast holds and the map stays total.
+	const scales = scalesFor(knobs);
 	for (const [key, value] of Object.entries(parsed.overrides?.scales ?? {})) {
 		scales[key as ScaleKey] = value;
 	}
+	for (const key of SCALE_KEYS) {
+		if (scales[key] === undefined) throw new Error(`[${LABEL}] no ${key}`);
+	}
 
-	return { defaultMode: parsed.defaultMode, colors, invariantColors, scales };
+	return {
+		defaultMode: parsed.defaultMode,
+		knobs,
+		colors,
+		invariantColors,
+		scales,
+		fonts: {
+			sans: fontStack(knobs.fonts.sans, "sans"),
+			mono: fontStack(knobs.fonts.mono, "mono"),
+		},
+	};
 }

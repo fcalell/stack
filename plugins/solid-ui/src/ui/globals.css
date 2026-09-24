@@ -10,10 +10,9 @@
 
 /* The variant matrices are class strings inside `@fcalell/ui-core`, and a cva
    composes them at runtime, so a build that never scans that package emits
-   nothing for `bg-brand-soft`, `leading-body` or any other cell no component
-   also spells literally. Two paths are listed because the package sits one
-   level away in an install and four in a workspace checkout; Tailwind ignores
-   a source path that does not exist, so the wrong one costs nothing. */
+   nothing for a cell no component also spells literally. Two paths are listed
+   because the package sits one level away in an install and four in a
+   workspace checkout; Tailwind ignores a source path that does not exist. */
 @source "../../../ui-core/src";
 @source "../../../../packages/ui-core/src";
 
@@ -30,9 +29,13 @@
 		border-color: var(--color-edge);
 	}
 
+	html {
+		font-family: var(--font-sans);
+	}
+
 	body {
 		background-color: var(--color-canvas);
-		color: var(--color-ink-1);
+		color: var(--color-ink);
 		-webkit-font-smoothing: antialiased;
 		-moz-osx-font-smoothing: grayscale;
 	}
@@ -57,17 +60,5 @@
 	to {
 		opacity: 0;
 		transform: scale(0.96);
-	}
-}
-
-@keyframes caret-blink {
-	0%,
-	70%,
-	100% {
-		opacity: 1;
-	}
-	20%,
-	50% {
-		opacity: 0;
 	}
 }

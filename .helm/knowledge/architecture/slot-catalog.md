@@ -129,7 +129,7 @@ e.g. consulting `ctx.fileExists` before writing.
 | `appCssImports` | `list<string>` | CSS `@import`s aggregated into `.stack/app.css` |
 | `appCssBlocks` | `list<CssBlock>` | Top-level `@theme` / `@utility` blocks, rendered after `@source` and before the layers. Neither at-rule may sit inside a `@layer`, which is why they don't ride `appCssLayers` |
 | `appCssLayers` | `list<{ name, content }>` | CSS `@layer` blocks. Dark mode rides this slot as `@layer base`: `@theme` compiles into `@layer theme` and Tailwind sorts `base` after it, so a layered `.dark { … }` overrides the seeded values |
-| `fonts` | `derived<FontEntry[]>` | Resolved fonts (consumer options or `defaultFonts`) |
+| `fonts` | `derived<FontEntry[]>` | Resolved font files (consumer options or `defaultFonts`, JetBrains Mono Variable). The families the roles bind to are the theme's `fonts` knob, emitted by ui-core |
 | `nativeAuthSource` | `derived<string>` | `.stack/native-auth.ts` source: the resolved `scheme` and `cookiePrefix` constants the scaffolded `src/lib/auth.ts` imports, so the native client can never drift from the app config or the worker's cookie prefix |
 | `resolvedTheme` | `derived<ResolvedTheme>` | The `theme` option run through `@fcalell/ui-core`'s `deriveTheme`, resolved once so every block contribution reads one value |
 | `appCssSource` | `derived<string \| null>` | Final `.stack/app.css`; null when nothing landed |
@@ -158,9 +158,9 @@ e.g. consulting `ctx.fileExists` before writing.
 | Slot | Kind | Purpose |
 |------|------|---------|
 | `resolvedTheme` | `derived<ResolvedTheme>` | The `theme` option run through `@fcalell/ui-core`'s `deriveTheme`, resolved once. The same option shape as `solidUi`'s, so one object themes both platforms |
-| `fonts` | `derived<NativeFontEntry[]>` | Resolved fonts (consumer `fonts` option or none) |
+| `fonts` | `derived<NativeFontEntry[]>` | Resolved font files (`{ family, source }`, consumer option or none); each `source` is embedded through expo-font. The families are the theme's `fonts` knob |
 | `appCssImports` | `list<string>` | Extra CSS `@import`s aggregated into `.stack/global.css` beyond tailwindcss + uniwind |
-| `appCssSource` | `derived<string \| null>` | Final `.stack/global.css`: `@theme` from ui-core's records (namespace resets first), the shadow ladder as three `@utility` blocks, and `@variant light` / `@variant dark` color blocks under `@layer theme` |
+| `appCssSource` | `derived<string \| null>` | Final `.stack/global.css`: `@theme` from ui-core's records (namespace resets first), the two shadows as `@utility` blocks, and `@variant light` / `@variant dark` color blocks under `@layer theme` |
 
 ## `auth.slots.*` (plugin-auth)
 
@@ -209,7 +209,7 @@ lives with that plugin.
   One top-level CSS at-rule, in two shapes:
   ```ts
   { kind: "theme", declarations: { "--color-canvas": "oklch(0.99 0.004 261)" } }
-  { kind: "utility", name: "shadow-1", declarations: { "box-shadow": "0 1px 2px …" } }
+  { kind: "utility", name: "shadow-float", declarations: { "box-shadow": "0 7px 18px …" } }
   ```
   Every property name and value crosses the render boundary: a custom property through
   `cssVarName`, a plain CSS property and the utility name through `cssIdent`, every value through

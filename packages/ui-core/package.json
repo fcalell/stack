@@ -3,6 +3,9 @@
 	"version": "0.0.0",
 	"type": "module",
 	"sideEffects": false,
+	"imports": {
+		"#*": "./src/*.ts"
+	},
 	"exports": {
 		"./tokens": {
 			"types": "./dist/tokens.d.ts",
@@ -31,6 +34,10 @@
 		"./descriptors": {
 			"types": "./dist/descriptors.d.ts",
 			"default": "./dist/descriptors.js"
+		},
+		"./roster": {
+			"types": "./dist/roster.d.ts",
+			"default": "./dist/roster.js"
 		},
 		"./harness": {
 			"types": "./dist/harness.d.ts",

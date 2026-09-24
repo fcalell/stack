@@ -1,11 +1,11 @@
 # @fcalell/plugin-native-ui
 
-React Native design-system plugin for the `@fcalell/stack` framework. The native
-sibling of `@fcalell/plugin-solid-ui`: it owns styling (uniwind / Tailwind v4),
-theme tokens, fonts, and the app's provider composition, and ships a set of
-uniwind-styled primitives. Requires `expo` (it contributes into
-`plugin-expo`'s slots) plus `api` + `auth` (the wired Query/Auth providers import
-their native subpaths).
+React Native design-system plugin for the `@fcalell/stack` framework: the native sibling of
+`@fcalell/plugin-solid-ui`. It renders `@fcalell/ui-core`'s contract into the uniwind stylesheet,
+embeds the font files, composes the app's providers, runs the geometry gate at build, and ships
+the roster: 48 components in four layers, the same names and props as the web plugin. Requires
+`expo` (it contributes into `plugin-expo`'s slots) plus `api` and `auth` (the wired Query and Auth
+providers import their native subpaths).
 
 ## Install
 
@@ -15,8 +15,6 @@ pnpm add @fcalell/plugin-native-ui
 
 ## Usage
 
-### 1. Add to config
-
 ```ts
 // stack.config.ts
 import { defineConfig } from "@fcalell/cli";
@@ -24,241 +22,143 @@ import { api } from "@fcalell/plugin-api";
 import { auth } from "@fcalell/plugin-auth";
 import { expo } from "@fcalell/plugin-expo";
 import { nativeUi } from "@fcalell/plugin-native-ui";
-import { fonts } from "./src/ui/fonts";
 
 export default defineConfig({
-  app: { name: "WeNauti", domain: "wenauti.app" },
+  app: { name: "my-app", domain: "example.com" },
   plugins: [
-    // ...cloudflare, db,
     api(),
     auth(),
-    expo({ scheme: "wenauti" }),
-    nativeUi({ theme: { knobs: { brandHue: 210 } }, fonts }),
+    expo({ scheme: "myapp" }),
+    nativeUi({
+      theme: { accentHue: 200, primary: "accent" },
+      fonts: [{ family: "JetBrains Mono Variable", source: "./assets/JetBrainsMono.ttf" }],
+    }),
   ],
 });
 ```
 
-`nativeUi` contributes everything the native UI layer needs into `plugin-expo`:
+`nativeUi` contributes everything the native UI layer needs into `plugin-expo`: the
+`withUniwindConfig` Metro wrapper pointing at the generated `.stack/global.css`, an `expo-font`
+config plugin embedding the font files, the provider stack around the app root
+(`GestureHandlerRootView` → `KeyboardProvider` → `SafeAreaProvider` → `BottomSheetModalProvider` →
+`WordsProvider` when `words` is set → `QueryProvider` → `AuthProvider`), and the pre-build
+geometry gate. Theming is CSS-first: switch modes at runtime with `setTheme("dark")` from
+`@fcalell/plugin-native-ui/lib/theme`.
 
-- the `withUniwindConfig` Metro wrapper (outermost), pointing at the generated
-  `.stack/global.css` + `.stack/uniwind-types.d.ts`;
-- an `expo-font` config plugin embedding the configured font files;
-- the provider stack wrapping the app root (outer → inner):
-  `GestureHandlerRootView` → `KeyboardProvider` → `SafeAreaProvider` →
-  `BottomSheetModalProvider` → `QueryProvider` → `AuthProvider`.
-
-There is **no ThemeProvider** — uniwind theming is CSS-first. Switch themes at
-runtime with `Uniwind.setTheme("dark")` (also drives RN's `Appearance`).
-
-### 2. Theme (the design surface)
-
-`theme` is `@fcalell/ui-core`'s design contract: seven knobs (six hues plus
-`neutralChroma`) and per-token overrides, validated by ui-core's schema. A
-consumer with both platforms passes the same object to `solidUi` and
-`nativeUi`; omit it for the calibrated defaults. The emitted `.stack/global.css`
-zeroes the `--color-*`, `--radius-*`, `--text-*` and `--shadow-*` namespaces,
-so an off-contract utility (`text-sm`, `rounded-lg`, `bg-red-500`) compiles to
-nothing, exactly as on web.
-
-```ts
-nativeUi({
-  theme: {
-    knobs: { brandHue: 210 },
-    overrides: { colors: { light: { canvas: "oklch(0.98 0.004 261)" } } },
-  },
-});
-```
-
-The surface has two modes, `light` and `dark`, emitted as the two uniwind
-built-in `@variant` blocks: free `Appearance` sync, the `dark:` variant, and
-`setTheme("light" | "dark" | "system")`. Persona is encoded by **fill, not
-hue**: emphasis variants share the `accent` token.
-
-### 3. Fonts
-
-```ts
-// src/ui/fonts.ts
-export const fonts = [
-  { family: "Plus Jakarta Sans", role: "sans", source: "./assets/fonts/PlusJakartaSans.ttf" },
-  { family: "Geist Mono", role: "mono", source: "./assets/fonts/GeistMono.ttf" },
-];
-```
-
-Each font with a `source` is embedded natively via `expo-font` and bound to the
-matching `--font-<role>` token (so `font-sans` / `font-mono` resolve).
-
-### 4. Native clients
-
-The Query/Auth providers are wired automatically, and `stack init` / `stack add`
-scaffold editable starters at `src/lib/query.ts` and `src/lib/auth.ts` (copy-once,
-like the auth callback file). The query client works out of the box; the auth
-starter just needs the genuinely per-app values filled in:
-
-```ts
-// src/lib/auth.ts (scaffolded)
-import * as SecureStore from "expo-secure-store";
-import { createAuthClient } from "@fcalell/plugin-auth/expo";
-import { cookiePrefix, scheme } from "../../.stack/native-auth"; // generated
-export const authClient = createAuthClient({
-  baseURL: process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:8787",
-  scheme,       // always matches the app-config deep-link scheme
-  cookiePrefix, // always matches the worker's session-cookie prefix
-  storage: SecureStore,
-});
-
-// src/lib/query.ts (scaffolded)
-import { createQueryClient } from "@fcalell/plugin-api/tanstack-query";
-export const queryClient = createQueryClient();
-```
-
-The module paths default to `src/lib/auth` (`authClient`) and `src/lib/query`
-(`queryClient`); point a provider at your own module via
-`nativeUi({ authClientModule, queryClientModule })` and that file's scaffold is
-skipped (it's yours to own).
-
-### 5. Primitives
-
-```tsx
-import { Button } from "@fcalell/plugin-native-ui/components/button";
-import { Card } from "@fcalell/plugin-native-ui/components/card";
-import { setTheme, useUniwind } from "@fcalell/plugin-native-ui/lib/theme";
-
-function Example() {
-  const { theme } = useUniwind();
-  return (
-    <Card>
-      <Button onPress={() => setTheme(theme === "dark" ? "light" : "dark")}>
-        Cambia tema
-      </Button>
-    </Card>
-  );
-}
-```
-
-The plugin ships 30 primitives. They use uniwind `className` internally,
-reading the contract tokens, so each renders in light and dark with no
-per-component theme code, and persona is encoded by **fill, never hue**. Their
-public props carry none of it: `className` and `style` are declared `?: never`
-on every primitive, uniwind's per-prop `*ClassName` channels included. A look
-the matrices do not cover is a matrix change, or a primitive the consumer owns.
-
-- **Actions** — `Button`, `Stepper`
-- **Inputs** — `Input`, `Textarea`, `Field`, `Toggle`, `Checkbox`, `Segmented`,
-  `FilterChip`
-- **Typography** — `Text`
-- **Rhythm** — `Section`, `Stack`, `Row`, `Pair`
-- **Containers & data** — `Card`, `RowItem`, `DefRow`, `Badge`, `Separator`
-- **Identity** — `Avatar`, `AvatarStack`
-- **Chrome** — `TabBar`, `NavBar`, `Footbar`
-- **Feedback** — `ProgressBar`, `Spinner`, `Skeleton`, `Toast`
-- **Overlays** — `BottomSheet`, `Dialog`
-
-`Button`, `Badge`, `Card`, `Text`, `Input`, `Textarea`, `Checkbox`, `Toggle`,
-`Dialog` and `Skeleton` compose their look from ui-core's shared variant
-matrices and class constants: the same cells the web plugin renders, behind the
-shared axis props (`emphasis` / `tone` / `size` / `loading` on `Button`, `tone`
-on `Badge`, `padding` / `ring` on `Card`, `variant` / `tone` / `strong` /
-`mono` on `Text`). `Text`'s `mono` prop maps to `font-mono`; without a
-registered mono font it degrades to the system face. `Input` and `Textarea`
-take a native-only `state` prop (`"default" | "focused" | "error"`) and track
-focus themselves, where web reaches the same matrix cells through
-`focus-visible:` / `aria-invalid:` selectors. `Checkbox` and `Toggle` spell
-`checked` / `onChange` / `disabled` on both platforms and fade through the
-shared `CONTROL_MUTED` constant when disabled; `Dialog`'s scrim, panel and
-description are the `DIALOG` cells with its title on the `TEXT` h3 role;
-`Skeleton` renders the `SKELETON` constant. A busy `Button` renders its
-`Spinner` in the label's own ink, read back off the label matrix through
-ui-core's `buttonContentTone`.
-
-The rhythm four compose ui-core's `RHYTHM` cells: `Section` gaps a screen's
-regions at the section rung, `Stack` is a column of stacked units, `Row` lays
-peers inline, and `Pair` glues a micro-pair (`row` lays it inline). Composed
-regions are data, not element slots: `RowItem` takes `icon` / `value` /
-`badge` / `chevron`, `NavBar` takes `onBack` and an `Action`, `Dialog` renders
-its `primary` / `secondary` actions itself, and every `icon` prop is a
-`lucide-react-native` component the primitive renders at its own size and tone.
-
-`Toast` is presentational (a screen renders it in its own overlay), with a
-`tone` axis (`neutral` / `ok` / `danger`); `Skeleton` is a static block sized
-by `width` / `height`; `Spinner` spins in a `ContentTone` (default `ink-1`).
-The imperative toast host and the shimmer are a later polish pass, not a
-blocker for any screen.
+The app's icon set is a runtime map: wrap the screens in `IconsProvider` from
+`@fcalell/plugin-native-ui/lib/icons` with `{ name: LucideIcon }`, and every `icon` prop names a
+key of it.
 
 ## Config options
 
 | Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `theme` | `Theme` | calibrated defaults | ui-core knobs + per-token overrides (shared with `solidUi`) |
-| `fonts` | `NativeFontEntry[]` | `[]` | Fonts to embed + bind to `--font-<role>` |
-| `authClientModule` | `{ source, export }` | `../src/lib/auth` / `authClient` | Where the auth client is imported from |
-| `queryClientModule` | `{ source, export }` | `../src/lib/query` / `queryClient` | Where the query client is imported from |
+| --- | --- | --- | --- |
+| `theme` | `Theme` | the calibrated defaults | ui-core's contract: the knobs (`accentHue`, `neutralHue`, `neutralChroma`, `okHue`, `warnHue`, `dangerHue`, `primary`, `space`, `radius`, `text`, `fonts`, `widths`, `breakpoints`), `overrides.colors` / `overrides.scales` for the single token off its ratio, and `defaultMode`. A consumer with both platforms passes the same object to `solidUi`. |
+| `words` | `Words` | English | Every word a molecule draws on its own; every key required, so a translation that misses one fails `tsc`. |
+| `fonts` | `{ family, source }[]` | none | Font files to embed through expo-font. The families are named by `theme.fonts` (`sans`, `mono`); an entry only brings the file. |
+| `authClientModule`, `queryClientModule` | `{ source, export }` | `src/lib/auth`, `src/lib/query` | Where the generated entry imports the native clients from. |
 
-`Theme`: `@fcalell/ui-core/schema`'s input type, re-exported here.
-`NativeFontEntry`: `{ family: string; role: "sans" | "mono" | "serif"; source?: string }`.
+### The words
 
-## Plugin implementation
+`active`, `waiting`, `done`, `attention`, `failed`, `idle` (the six `Status` words),
+`recommended`, `copy`, `copied`, `back`, `close`, `more`, `send`, `stop`, `attach`, `search`,
+`loading`, `retry`. A sentence that belongs to the app is a prop on the molecule that draws it
+(`placeholder`, `notice`, every `sentence`, every `label`), never a word here.
 
-Built with `plugin` from `@fcalell/cli`. Owns the design-system slots and
-contributes the native UI wiring into `plugin-expo`.
+## The roster
 
-### Owned slots
+Every component is imported from its own subpath, `@fcalell/plugin-native-ui/components/<name>`
+in kebab case (`components/list-row`). Every props type closes `class`, `className`, `classList`,
+`style` and uniwind's per-prop class channels as `?: never`; a look the matrices do not cover is a
+matrix cell in ui-core or a primitive under the app's `ui/`, never a prop. The prop names are the
+roster in `@fcalell/ui-core/roster`, the same on both platforms; the verify suite reads each
+component's props type against it.
 
-| Slot | Kind | Purpose |
-|------|------|---------|
-| `resolvedTheme` | `derived<ResolvedTheme>` | The `theme` option through ui-core's `deriveTheme`, resolved once |
-| `fonts` | `derived<NativeFontEntry[]>` | Consumer `fonts` option |
-| `appCssImports` | `list<string>` | Extra `@import`s beyond tailwindcss + uniwind |
-| `appCssSource` | `derived<string \| null>` | Final `.stack/global.css` |
+`native-ui` draws the phone layout at every width: `Split` shows one slot (the deepest present),
+`Columns` stacks, `Diff` is unified, `Sheet` is a bottom sheet, `Shell` draws the tab bar and no
+sidebar. Pull to refresh is the phone's.
 
-### Slot contributions
+### Atoms
 
-| Target slot | Behavior |
-|-------------|----------|
-| `expo.slots.metroConfigImports` | `require("uniwind/metro")` for `withUniwindConfig` |
-| `expo.slots.metroPluginCalls` | `withUniwindConfig(config, { cssEntryFile, dtsFile })` — outermost wrapper |
-| `expo.slots.expoConfigPlugins` | `expo-font` config plugin (when fonts have a `source`) |
-| `expo.slots.providers` | Gesture / Keyboard / SafeArea / BottomSheetModal / Query / Auth providers |
-| `cliSlots.artifactFiles` (via `emitArtifact`) | `.stack/global.css` |
-| `cliSlots.buildSteps` | `native-ui-geometry-gate`, the pre-phase geometry gate |
+| Component | Props |
+| --- | --- |
+| `Text` | `role` (`display`, `title`, `heading`, `body`, `meta`, `label`, `mono`), children |
+| `Icon` | `name`, from the app's icon set |
+| `Button` | `act` (`primary`, `secondary`, `destructive`), `label`, `onAct`, `loading`, `blocked` (the reason, drawn under it) |
+| `IconButton` | `icon`, `label` (read aloud), `onAct` |
+| `Count` | `value` |
+| `Status` | `state` (`active`, `waiting`, `done`, `attention`, `failed`, `idle`), `label`, `onOpen` |
+| `Input` | `kind` (`text`, `search`, `secret`, `code`, `number`), `value`, `onChange`, `placeholder`, `act` |
+| `TextArea` | `kind` (`prose`, `source`), `value`, `onChange`, `placeholder`, `budget` (words) |
+| `Slider` | `label`, `value`, `onChange`, `min`, `max`, `step` |
+| `Switch`, `Checkbox` | `checked`, `onChange`, `label` |
+| `Spinner` | none |
+| `Avatar` | `name`, `src` |
+| `Link` | `href`, children |
 
-The `native-ui-geometry-gate` build step runs first on every `stack build`. It scans the
-consumer's `src/` tree (skipping any path with a `ui/` segment) with the native host list
-(`View`, `Pressable`, `ScrollView`, `Animated.View`) and fails the build on any class outside the
-closed geometry vocabulary, or on a class attribute riding an off-list tag. The vocabulary, the
-host rule, and the coverage statement live in the `@fcalell/ui-core` README.
+### Layout molecules
 
-### Styling: uniwind (CSS-first)
+| Component | Props |
+| --- | --- |
+| `Place` | `title`, `actions` (at most two circles; the rest open under a more circle), `act`, children |
+| `Screen` | `title`, `back` (a route), `actions`, children; an `ActionBar` child is pinned above the home indicator |
+| `Split` | `list`, `main`, `pane` |
+| `Section` | `title`, `count`, `description`, `folded`, `act`, `loading`, children |
+| `Group`, `List` | `loading`, children |
+| `Form` | `onSubmit`, children |
+| `Toolbar`, `ActionBar`, `Columns` | children |
+| `Shell` | `places` (`{ route, label, icon, count }`), `banner`, children |
 
-uniwind 1.8 compiles Tailwind v4 `className` to native StyleSheet at build time
-(no runtime style engine, no Babel preset). The generated `.stack/global.css` is
-the single token surface — `@import 'tailwindcss'; @import 'uniwind';` followed
-by `@source` scan roots, an `@theme` block rendered from ui-core's records
-(namespace resets first), the shadow ladder as three `@utility shadow-*` blocks
-(the `--shadow-*` namespace does not resolve into RN's `boxShadow`), and
-`@layer theme { :root { @variant light … @variant dark … } }` carrying the 26
-per-mode colors each. Because it lives in `.stack/`, the `@source` directives
-point uniwind at the consumer `src/`, this plugin's primitives, and ui-core's
-matrix cell strings so their classNames are detected.
+### Shared molecules
 
-> The exact uniwind `cssEntryFile` / `@source` path resolution is verified on a
-> device build during WeNauti Milestone 0 (per the roadmap, device behavior is the
-> M0 bring-up gate); the plugin-level wiring is covered by the graph + codegen
-> tests here.
+| Component | Props |
+| --- | --- |
+| `ListRow` | `leading` (`{ icon }` or `{ status }`), `title`, `meta` (parts, one or two lines), `trailing` (`{ age }`, `{ count }` or `{ value }`), `marks` (`{ icon, label }[]`), `act`, `href` or `onOpen` |
+| `DefinitionRow` | `label`, `description`, `value` (a string, `{ status, label }` or an in-place control), `copyable`, `act`, `href` or `onOpen` |
+| `FormField` | `label`, `description`, `error`, one typing control as children |
+| `ItemHeader` | `overline` (parts), `title`, `facts` (parts and statuses), `loading` |
+| `SegmentedControl` | `options` (`{ value, label }[]`), `value`, `onChange` |
+| `Sheet` | `open`, `onClose`, `title`, `description`, `back`, `submit` (`{ label, onAct, blocked }`, top right), `foot`, children; `submit` and an `ActionBar` child exclude each other |
+| `Picker` | `label`, `options` (`{ value, label, description }[]`), `value`, `onChange`; a search field above six options |
+| `OptionList` | `options` (`{ value, label, description, recommended }[]`), `value`, `onChange`, children under the chosen option |
+| `EmptyState` | `title`, `sentence`, `act`, children |
+| `Toast` | `sentence`, `act`; `toast(sentence, act)` queues one and the `Shell` draws the queue |
+| `Banner` | `kind` (`note`, `warn`, `danger`), `sentence`, `act` |
+| `PendingBar` | `sentence`, `until` (a `Date`; a countdown fills the bar), `act` |
 
-## Exports
+A part is a string or `{ quoted: string }`: typographic quotes around it, cut at 40 characters in
+a `meta` line, wrapped to two lines in a title.
 
-| Subpath | Purpose |
-|---------|---------|
-| `@fcalell/plugin-native-ui` | `nativeUi()`, `NativeUiOptions`, `Theme`, `NativeFontEntry` |
-| `@fcalell/plugin-native-ui/app` | `AppProviders` — UI-shell providers for tests / Storybook |
-| `@fcalell/plugin-native-ui/components/*` | 30 primitives, one per `kebab-case` subpath (`.../components/row-item` → `RowItem`) — see the Primitives list above |
-| `@fcalell/plugin-native-ui/lib/cn` | `cn()` — ui-core's className merge, taught the contract's scales |
-| `@fcalell/plugin-native-ui/lib/theme` | `Uniwind`, `useUniwind`, `useCSSVariable`, `useTokenColor`, `setTheme`, `ThemeName` |
+### Content molecules
 
-> Native has no document `<head>` and embeds fonts at build time, so there is no
-> `./meta` or runtime `./fonts` export (the web `plugin-solid-ui` analogs); theme
-> utilities live in `./lib/theme` and fonts flow through the `fonts` option.
+All take `loading` and draw three row forms.
 
-## License
+| Component | Props |
+| --- | --- |
+| `Prose` | `markdown` |
+| `Code` | `text`, `tail` (lines shown before a tap unfolds the rest), `copy` |
+| `Diff` | `hunks`, `layout` (the phone draws unified) |
+| `FileRow` | `path`, `added`, `removed`, `seen`, `href` or `onOpen` |
+| `ProseDiff` | `before`, `after` |
+| `Comparison` | `rows` (`{ label, cells: [{ label, value }], chips }`) |
+| `Message` | `author` (`you`, `other`, `system`), `name`, `body`, `at` |
+| `MessageInput` | `value`, `onChange`, `attachments`, `onAttach`, `placeholder`, `notice` (`{ sentence, act }`), `working`, `onSend`, `onStop` |
+| `Meter` | `label`, `value`, `max`, `meta` |
+| `BarChart` | `series` (`{ label, value, parts, at }[]`), `unit` |
+| `QrCode` | `value` |
 
-MIT
+## The boundary
+
+A class attribute outside the app's `ui/` directory may sit only on `View`, `Pressable`,
+`ScrollView` or `Animated.View`, and only from the closed geometry vocabulary in ui-core's gate;
+`stack build` fails on anything else, naming the file, the line and the token. A molecule whose
+props are the app's nouns lives in the app's `ui/`, composed from these molecules and never from a
+host element. Nothing here carries a product noun in a prop, an enum word or a string.
+
+## Verify
+
+`pnpm --filter @fcalell/plugin-native-ui verify` renders the sheet, compiles it through uniwind's
+own compiler and a Tailwind build, reads the matrices back off ui-core's cvas, holds the overlay
+allowlist equal to the swept sources, proves the closure with the fixture under
+`scripts/fixture/closure.tsx`, reads every component's props type against the roster, and runs
+the geometry gate over its fixture trees.

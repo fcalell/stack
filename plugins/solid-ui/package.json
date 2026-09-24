@@ -44,7 +44,6 @@
 		"src",
 		"scripts",
 		"templates",
-		"docs",
 		"README.md"
 	],
 	"license": "MIT",
@@ -67,7 +66,6 @@
 		}
 	},
 	"dependencies": {
-		"@corvu/otp-field": "^0.1.4",
 		"@fcalell/cli": "workspace:*",
 		"@fcalell/plugin-api": "workspace:*",
 		"@fcalell/plugin-solid": "workspace:*",
@@ -79,13 +77,13 @@
 		"@solidjs/router": "^0.16.1",
 		"@tailwindcss/vite": "^4.1.7",
 		"@tanstack/solid-query": "^5.97.0",
-		"@tanstack/solid-table": "^8.21.3",
 		"class-variance-authority": "^0.7.1",
 		"lucide-solid": "^0.577.0",
 		"marked": "^18.0.7",
-		"solid-sonner": "^0.3.1",
 		"tailwindcss": "^4.1.7",
-		"zod": "^4.3.6"
+		"zod": "^4.3.6",
+		"diff": "^8.0.2",
+		"qrcode-generator": "^2.0.4"
 	},
 	"devDependencies": {
 		"@casl/ability": "^7.0.1",
@@ -96,6 +94,7 @@
 		"solid-js": "^1.9.0",
 		"tsx": "^4.19.0",
 		"typescript": "^5.9.3",
-		"vite": "^7.0.4"
+		"vite": "^7.0.4",
+		"ts-morph": "^28.0.0"
 	}
 }

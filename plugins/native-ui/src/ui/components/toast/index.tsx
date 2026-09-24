@@ -1,33 +1,37 @@
-import { cva, type VariantProps } from "class-variance-authority";
-import { Text, View } from "react-native";
+import type { Act } from "@fcalell/ui-core/descriptors";
+import { TOAST } from "@fcalell/ui-core/variants";
+import { Pressable, Text as RNText, View } from "react-native";
+import type { Closed } from "../../lib/closed";
+import { cn } from "../../lib/cn";
+import { toast, useToasts } from "../../lib/toast";
 
-// Presentational toast surface. The imperative queue/host (the native analog
-// of solid-sonner's <Toaster />) is still deferred; for now a screen can render
-// this directly inside its own overlay.
-const toast = cva(
-	"flex-row items-center gap-2 rounded-md border bg-canvas px-4 py-3",
-	{
-		variants: {
-			tone: {
-				neutral: "border-edge",
-				ok: "border-ok",
-				danger: "border-danger",
-			},
-		},
-		defaultVariants: { tone: "neutral" },
-	},
-);
-
-export interface ToastProps extends VariantProps<typeof toast> {
-	message: string;
-	className?: never;
-	style?: never;
+export interface ToastProps extends Closed {
+	sentence: string;
+	act?: Act;
 }
 
-export function Toast({ tone, message }: ToastProps) {
+// The dark pill above the bar. Client-owned, so never an undo. `toast()`
+// queues one; the Shell renders the queue.
+export function Toast({ sentence, act }: ToastProps) {
 	return (
-		<View className={toast({ tone })}>
-			<Text className="flex-1 text-callout text-ink-1">{message}</Text>
+		<View
+			accessibilityLiveRegion="polite"
+			className={cn(TOAST, "flex-row items-center self-center shadow-float")}
+		>
+			<RNText className={cn(TOAST, "shrink px-0 py-0")}>{sentence}</RNText>
+			{act ? (
+				<Pressable
+					accessibilityRole="button"
+					onPress={act.onAct}
+					className="min-h-11 justify-center"
+				>
+					<RNText className={cn(TOAST, "px-0 py-0 font-medium")}>
+						{act.label}
+					</RNText>
+				</Pressable>
+			) : null}
 		</View>
 	);
 }
+
+export { toast, useToasts };

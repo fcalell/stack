@@ -1,111 +1,67 @@
 import {
+	BUTTON_MUTED,
 	BUTTON_MUTED_LABEL,
-	type ButtonEmphasis,
-	type ButtonSize,
-	type ButtonTone,
+	type ButtonAct,
 	button,
 	buttonContentTone,
 	buttonLabel,
-	buttonMuted,
+	text,
 } from "@fcalell/ui-core/variants";
-import * as ButtonPrimitive from "@kobalte/core/button";
-import type { PolymorphicProps } from "@kobalte/core/polymorphic";
-import type { JSX, ValidComponent } from "solid-js";
-import { Show, splitProps } from "solid-js";
-import { Spinner } from "#components/spinner";
+import { Show } from "solid-js";
+import type { Closed } from "#lib/closed";
 import { cn } from "#lib/cn";
-import { groupButtonClasses, useGroupButtonSize } from "#lib/input-group";
+import { Spinner } from "../spinner/index.tsx";
 
-// The fill matrix carries no ink, so the label table rides the same node.
-// Display, motion and the focus ring are web overlays composed after both.
+// A pill with words. Full width in an action bar, its content's width in a
+// toolbar: the container decides. `blocked` is the reason, drawn under it,
+// and the button is disabled while it holds.
+export type ButtonProps = Closed & {
+	act?: ButtonAct;
+	label: string;
+	onAct?: () => void;
+	loading?: boolean;
+	blocked?: string;
+};
+
+// Hover and press move the ground, never the alpha: fading a filled control
+// composites its label with its own fill and drops the contrast the contract
+// guarantees.
+const GROUND: Record<ButtonAct, string> = {
+	primary: "hover:bg-ink-meta active:bg-ink-meta",
+	secondary: "hover:bg-edge active:bg-edge",
+	destructive: "hover:bg-danger-soft active:bg-danger-soft",
+};
+
 const SHELL =
-	"inline-flex cursor-pointer items-center justify-center whitespace-nowrap transition-[color,background-color,border-color] duration-(--duration-fast) ease-ui focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive [&_svg]:pointer-events-none [&_svg]:shrink-0";
+	"inline-flex cursor-pointer items-center justify-center whitespace-nowrap transition-colors duration-(--duration-fast) ease-ui focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-tint disabled:cursor-not-allowed";
 
-// Sized to this plugin's own glyph, which is why it stays out of the matrix.
-const GLYPH: Record<ButtonSize, string> = {
-	sm: "[&_svg]:size-4",
-	md: "[&_svg]:size-4",
-	lg: "[&_svg]:size-5",
-};
-
-// Hover and press move the ground, never the alpha. Fading a filled control
-// composites its label with its own fill, which drops the `accent-ink` on
-// `accent` 4.5:1 the contract guarantees, and it gives a transparent emphasis
-// less contrast rather than more. Every danger cell lands on `danger-soft`,
-// which the contract guarantees `danger` text clears; the filled cell switches
-// its ink to match, since `danger-ink` is built for the solid fill.
-const GROUND: Record<ButtonEmphasis, Record<ButtonTone, string>> = {
-	primary: {
-		neutral: "hover:bg-ink-2 active:bg-ink-3",
-		danger: "hover:bg-danger-soft hover:text-danger active:bg-danger-soft",
-	},
-	secondary: {
-		neutral: "hover:bg-surface-2 active:bg-surface-3",
-		danger: "hover:bg-danger-soft active:bg-danger-soft",
-	},
-	tertiary: {
-		neutral: "hover:bg-surface-2 active:bg-surface-3",
-		danger: "hover:bg-danger-soft active:bg-danger-soft",
-	},
-};
-
-type ButtonProps<T extends ValidComponent = "button"> =
-	ButtonPrimitive.ButtonRootProps<T> & {
-		emphasis?: ButtonEmphasis;
-		tone?: ButtonTone;
-		size?: ButtonSize;
-		loading?: boolean;
-		children?: JSX.Element;
-		class?: never;
-		style?: never;
-		classList?: never;
-	};
-
-function Button<T extends ValidComponent = "button">(
-	props: PolymorphicProps<T, ButtonProps<T>>,
-) {
-	const [local, rest] = splitProps(props as ButtonProps, [
-		"emphasis",
-		"tone",
-		"size",
-		"disabled",
-		"loading",
-		"children",
-	]);
-	const emphasis = () => local.emphasis ?? "primary";
-	const tone = () => local.tone ?? "neutral";
-	const size = () => local.size ?? "md";
-	const groupSize = useGroupButtonSize();
+export function Button(props: ButtonProps) {
+	const act = () => props.act ?? "primary";
+	const blocked = () => props.blocked !== undefined;
 	return (
-		<ButtonPrimitive.Root
-			disabled={local.disabled || local.loading}
-			class={cn(
-				button({ emphasis: emphasis(), tone: local.tone, size: size() }),
-				buttonLabel({ emphasis: emphasis(), tone: local.tone, size: size() }),
-				SHELL,
-				GLYPH[size()],
-				local.disabled
-					? cn(
-							buttonMuted({ emphasis: emphasis() }),
-							BUTTON_MUTED_LABEL,
-							"pointer-events-none",
-						)
-					: GROUND[emphasis()][tone()],
-				local.loading && "pointer-events-none",
-				groupSize && groupButtonClasses({ size: groupSize() }),
-			)}
-			{...rest}
-		>
-			{/* The glyph is anatomy, not a matrix cell: it spins beside the label
-			    in the label's own content tone, read back off the label matrix.
-			    Spinner's own size yields to the GLYPH map where they differ. */}
-			<Show when={local.loading}>
-				<Spinner tone={buttonContentTone(emphasis(), tone())} />
+		<div class="flex flex-col gap-pair">
+			<button
+				type="button"
+				disabled={blocked() || props.loading}
+				onClick={() => props.onAct?.()}
+				class={cn(
+					button({ act: act() }),
+					buttonLabel({ act: act() }),
+					SHELL,
+					blocked() ? cn(BUTTON_MUTED, BUTTON_MUTED_LABEL) : GROUND[act()],
+				)}
+			>
+				<Show when={props.loading}>
+					<Spinner />
+				</Show>
+				{props.label}
+			</button>
+			<Show when={props.blocked}>
+				<p class={cn(text({ role: "meta" }), "text-center")}>{props.blocked}</p>
 			</Show>
-			{local.children}
-		</ButtonPrimitive.Root>
+		</div>
 	);
 }
 
-export type { ButtonProps };
-export { Button };
+// The tone a busy button's spinner inherits, for a consumer's `ui/`.
+export { buttonContentTone };

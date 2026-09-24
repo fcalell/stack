@@ -11,7 +11,7 @@ every package's `node --test`, Biome lint).
 | Package | Purpose |
 |---------|---------|
 | `@fcalell/cli` | `defineConfig()`, `plugin()`, `slot.*`, `stack` CLI, slot graph engine, codegen |
-| `@fcalell/ui-core` | The design contract both UI plugins render from: the token records, `deriveTheme`, the emit helpers, `cn()`, and the platform-invariant variant matrices. Framework-free build-time data |
+| `@fcalell/ui-core` | The design contract both UI plugins render from: the knob-derived token records, `deriveTheme`, the emit helpers, `words`, `cn()`, the platform-invariant variant matrices and the component roster. Framework-free build-time data |
 | `@fcalell/typescript-config` | tsconfig presets (base, solid-vite, node-tsx) and the `build` emit overlay |
 | `@fcalell/biome-config` | Shareable Biome formatter/linter config |
 | `@fcalell/auth-testing` | Private, never published: the test support the sign-in tests share (a software WebAuthn authenticator, a cookie jar, session minting, table creation from drizzle schemas) |
@@ -32,8 +32,8 @@ runtime export.
 | `@fcalell/plugin-vite` | Framework-agnostic Vite lifecycle (providers virtual module) | `vite()` |
 | `@fcalell/plugin-expo` | Expo/React Native: Metro + app config + expo-router entry + EAS commands | `expo()` |
 | `@fcalell/plugin-solid` | SolidJS compilation, file-based routing, app bootstrap | `solid()` |
-| `@fcalell/plugin-solid-ui` | Design system: SolidJS + Kobalte + Tailwind v4 + CVA components, fonts, typography tokens | `solidUi()` |
-| `@fcalell/plugin-native-ui` | Design system: React Native + Expo + uniwind + CVA primitives, fonts, native providers, geometry gate | `nativeUi()` |
+| `@fcalell/plugin-solid-ui` | Design system on the web: the ui-core roster in SolidJS + Kobalte + Tailwind v4, the shell at every width, fonts, words, geometry gate | `solidUi()` |
+| `@fcalell/plugin-native-ui` | Design system on the phone: the ui-core roster in React Native + Expo + uniwind, the phone layout at every width, fonts, words, native providers, geometry gate | `nativeUi()` |
 
 ## Dependency graph
 

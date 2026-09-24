@@ -1,39 +1,35 @@
-import {
-	CHECKBOX_MARK,
-	CONTROL_MUTED,
-	checkbox,
-} from "@fcalell/ui-core/variants";
-import { Pressable, Text } from "react-native";
+import { checkbox, text } from "@fcalell/ui-core/variants";
+import { Check } from "lucide-react-native";
+import { Pressable, Text as RNText, View } from "react-native";
+import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
+import { Glyph } from "../../lib/glyph";
 
-export interface CheckboxProps {
+export interface CheckboxProps extends Closed {
 	checked: boolean;
 	onChange: (checked: boolean) => void;
-	disabled?: boolean;
-	className?: never;
-	style?: never;
+	label: string;
 }
 
-// Checklist box (Cambusa shopping/menu) on the shared CHECKBOX cells: checked
-// is the accent fill with the CHECKBOX_MARK tick (the contract's guaranteed
-// contrast pair), unchecked the ink-1 ring. For true check-in-place lists
-// only; a navigational task row is a RowItem with a chevron, not this.
-export function Checkbox({ checked, onChange, disabled }: CheckboxProps) {
+// A circle that fills with the accent; the label is the rest of the line.
+export function Checkbox({ checked, onChange, label }: CheckboxProps) {
 	return (
 		<Pressable
 			accessibilityRole="checkbox"
-			accessibilityState={{ checked, disabled }}
-			disabled={disabled}
+			accessibilityState={{ checked }}
+			accessibilityLabel={label}
 			onPress={() => onChange(!checked)}
-			className={cn(
-				checkbox({ state: checked ? "checked" : "unchecked" }),
-				"h-[22px] w-[22px] items-center justify-center",
-				disabled && CONTROL_MUTED,
-			)}
+			className="min-h-11 flex-row items-center gap-stack"
 		>
-			{checked ? (
-				<Text className={cn("text-micro", CHECKBOX_MARK)}>✓</Text>
-			) : null}
+			<View
+				className={cn(
+					checkbox({ state: checked ? "checked" : "unchecked" }),
+					"size-6 items-center justify-center",
+				)}
+			>
+				{checked ? <Glyph icon={Check} tone="on-accent" size={16} /> : null}
+			</View>
+			<RNText className={cn(text({ role: "body" }), "flex-1")}>{label}</RNText>
 		</Pressable>
 	);
 }
