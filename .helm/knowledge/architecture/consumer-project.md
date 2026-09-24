@@ -11,7 +11,6 @@ my-app/
   biome.json
   stack.config.ts            # defineConfig({ app, plugins: [db(...), auth(), api(), solid(), solidUi()] })
   wrangler.toml              # consumer-owned base; .stack/wrangler.toml merges it (consumer [[routes]]/[[r2_buckets]] merge next to plugin contributions, collision = hard error; d1/kv/analytics_engine/unsafe/compatibility_flags stay framework-only)
-  pnpm-workspace.yaml        # db writes the better-sqlite3 build approval into the nearest one above the consumer (pnpm's settings home), so a workspace member shares its root's
   src/
     schema/                  # Drizzle tables (business logic); index.ts re-exports auth's tables:
                              # @fcalell/plugin-auth/schema always, /schema/organization and
@@ -150,12 +149,11 @@ overrides:                       # every @fcalell/* name in the closure, same co
   "@fcalell/plugin-api": "github:fcalell/stack#<sha>&path:/plugins/api"
   "@fcalell/plugin-cloudflare": "github:fcalell/stack#<sha>&path:/plugins/cloudflare"
 blockExoticSubdeps: false        # the git packages depend on each other by git spec
-allowBuilds:                     # each git package's prepare, plus the native builds
+allowBuilds:                     # each git package's prepare, plus esbuild's install
   "@fcalell/plugin-db@https://codeload.github.com/fcalell/stack/tar.gz/<sha>#path:/plugins/db": true
   "@fcalell/cli@https://codeload.github.com/fcalell/stack/tar.gz/<sha>#path:/packages/cli": true
   "@fcalell/plugin-api@https://codeload.github.com/fcalell/stack/tar.gz/<sha>#path:/plugins/api": true
   "@fcalell/plugin-cloudflare@https://codeload.github.com/fcalell/stack/tar.gz/<sha>#path:/plugins/cloudflare": true
-  better-sqlite3: true
   esbuild: true
 ```
 

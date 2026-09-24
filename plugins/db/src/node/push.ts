@@ -79,22 +79,23 @@ export function migrationsExist(cwd: string, options: DbOptions): boolean {
 	return listMigrationFiles(cwd, options).length > 0;
 }
 
-// drizzle-kit exits 0 even when its sqlite driver fails to load (the
-// better-sqlite3 native addon builds in a postinstall script that pnpm v10
-// blocks unless approved), so a broken push would report success. Load the
-// consumer's copy up front and fail with the fix instead.
+// drizzle-kit exits 0 even when its sqlite driver fails to load, so a
+// broken push would report success. Load the consumer's copy up front and
+// fail with the fix instead. better-sqlite3 13 ships a prebuilt binary for
+// linux, darwin and win32 on x64 and arm64 and loads it first; elsewhere
+// it is built from source.
 function assertSqliteDriver(cwd: string): void {
 	const requireFromConsumer = createRequire(join(cwd, "package.json"));
 	try {
-		// Constructing a Database is the real probe — v12 loads its native
-		// binding lazily, so a bare require() passes even when unbuilt.
+		// Constructing a Database is the real probe: the binding loads
+		// lazily, so a bare require() passes even with no binary.
 		const Database = requireFromConsumer("better-sqlite3");
 		new Database(":memory:").close();
 	} catch (err) {
 		const detail =
 			err instanceof Error ? err.message.split("\n")[0] : String(err);
 		throw new Error(
-			`better-sqlite3 failed to load (${detail}). Build it first: \`pnpm rebuild better-sqlite3\` (pnpm may need the build approved via \`pnpm approve-builds\` or a pnpm.onlyBuiltDependencies entry), then retry.`,
+			`better-sqlite3 failed to load (${detail}). Off its prebuilt platforms, build it: approve the build (allowBuilds: better-sqlite3: true in pnpm-workspace.yaml) and run \`pnpm rebuild better-sqlite3\`, then retry.`,
 		);
 	}
 }
