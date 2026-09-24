@@ -393,7 +393,9 @@ export const auth = plugin("auth", {
 						`to \`.stack/worker.ts\` and cannot reach paths outside \`src/\`.`,
 				);
 			}
-			const importSource = `../${path.replace(/\.tsx?$/, "")}`;
+			// The extension stays: the Node target runs the generated worker as
+			// written, and ESM resolves no extensionless path.
+			const importSource = `../${path}`;
 			return {
 				auth: {
 					import: {
