@@ -2,6 +2,7 @@
 // declares its props with, and the single-cell constants. The tables
 // themselves stay internal to the package.
 import { cva } from "class-variance-authority";
+import type { ClassValue } from "clsx";
 import type { InvariantColor, PerModeColor } from "./tokens.ts";
 import {
 	AVATAR,
@@ -24,12 +25,30 @@ import {
 	TEXT_STRONG,
 } from "./variant-tables.ts";
 
+// A variant's props: one optional pick per axis, and the class or the
+// className a caller merges in, never both. The shape is cva's own, spelled
+// here so the declarations this file emits name this package's types alone:
+// cva keeps its prop types in a `types` module the emit would otherwise have
+// to import by path, which is not portable and fails wherever the package is
+// built inside a pnpm virtual store.
+export type ClassProp =
+	| { class: ClassValue; className?: never }
+	| { class?: never; className: ClassValue }
+	| { class?: never; className?: never };
+export type VariantProps<T extends Axes> = {
+	[K in keyof T]?: keyof T[K] | null | undefined;
+} & ClassProp;
+export type Variant<T extends Axes> = (props?: VariantProps<T>) => string;
+
 // The only way a cva is built here. Taking the whole matrix leaves no second
 // argument to get wrong, so a cva cannot end up rendering another table's cells
-// or dropping its own base. cva's own config type is conditional on a concrete
-// axis set, which is why one generic helper has to widen it.
-function build<T extends Axes>(table: Matrix<T>): ReturnType<typeof cva<T>> {
-	return cva<T>(table.base, table as unknown as Parameters<typeof cva<T>>[1]);
+// or dropping its own base. cva's own config and prop types are conditional
+// on a concrete axis set, which is why one generic helper has to widen both.
+function build<T extends Axes>(table: Matrix<T>): Variant<T> {
+	return cva<T>(
+		table.base,
+		table as unknown as Parameters<typeof cva<T>>[1],
+	) as Variant<T>;
 }
 
 export const text = build(TEXT);
