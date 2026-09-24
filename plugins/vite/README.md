@@ -10,7 +10,7 @@ Framework-agnostic Vite lifecycle plugin for the `@fcalell/stack` framework. Pro
 pnpm add @fcalell/plugin-vite
 ```
 
-`stack init` adds this automatically when you pick `solid` in the interactive picker; `stack add solid` does the same for an existing project.
+`stack init` adds this automatically when you pick `solid` in the interactive picker; `stack add solid` does the same for an existing project. The consumer declares `vite` itself (the plugin's `devDependencies`, which `stack init` writes): the generated config imports it, and the dev process and the build step run the consumer's own bin, resolved from its directory, so no PATH or registry lookup stands in.
 
 ## How it works
 

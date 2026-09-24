@@ -13,15 +13,19 @@ import {
 
 const SOURCE = "vite";
 
-// Vite is this plugin's own dependency, run by its own bin: a consumer
-// declares no vite, and no PATH or registry lookup stands in. The bin is
-// not an exported subpath, so it is read from the package's manifest.
-const require = createRequire(import.meta.url);
-const VITE_PACKAGE = require.resolve("vite/package.json");
-const VITE_BIN = join(
-	dirname(VITE_PACKAGE),
-	(require(VITE_PACKAGE) as { bin: { vite: string } }).bin.vite,
-);
+// The consumer declares vite (this plugin's `devDependencies`) and its
+// generated config imports it, so the one vite that runs is the
+// consumer's, resolved from its own directory: no PATH or registry lookup
+// stands in. The bin is not an exported subpath, so it is read from the
+// package's manifest.
+function viteBin(cwd: string): string {
+	const require = createRequire(join(cwd, "package.json"));
+	const manifest = require.resolve("vite/package.json");
+	return join(
+		dirname(manifest),
+		(require(manifest) as { bin: { vite: string } }).bin.vite,
+	);
+}
 
 // ── Slot declarations ──────────────────────────────────────────────
 
@@ -129,6 +133,11 @@ const viteConfig = slot.derived({
 });
 
 export const vite = plugin("vite", {
+	// The consumer runs vite: its generated config imports it and the dev
+	// process and the build step run its bin.
+	devDependencies: {
+		vite: "^7.0.4",
+	},
 	label: "Vite",
 
 	schema: viteOptionsSchema,
@@ -192,7 +201,7 @@ export const vite = plugin("vite", {
 			return {
 				name: "vite",
 				command: process.execPath,
-				args: [VITE_BIN, "dev", "--config", ".stack/vite.config.ts"],
+				args: [viteBin(ctx.cwd), "dev", "--config", ".stack/vite.config.ts"],
 				defaultPort: port,
 				readyPattern: /Local:/,
 				color: "cyan",
@@ -219,12 +228,12 @@ export const vite = plugin("vite", {
 		// `build.outDir: "../dist/client"` is the single source of truth; a
 		// relative CLI flag would resolve against config.root (.stack) and
 		// silently move the output to .stack/dist/client.
-		cliSlots.buildSteps.contribute(() => ({
+		cliSlots.buildSteps.contribute((ctx) => ({
 			name: "vite-build",
 			phase: "main",
 			exec: {
 				command: process.execPath,
-				args: [VITE_BIN, "build", "--config", ".stack/vite.config.ts"],
+				args: [viteBin(ctx.cwd), "build", "--config", ".stack/vite.config.ts"],
 			},
 		})),
 	],

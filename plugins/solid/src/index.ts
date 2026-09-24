@@ -170,6 +170,10 @@ export const solid = plugin("solid", {
 		"@fcalell/plugin-solid": "workspace:*",
 		"solid-js": "^1.9.0",
 	},
+	// The generated vite config imports it from the consumer.
+	devDependencies: {
+		"vite-plugin-solid": "^2.11.0",
+	},
 
 	slots: {
 		providers,

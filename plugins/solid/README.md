@@ -10,7 +10,7 @@ SolidJS framework plugin for the `@fcalell/stack` framework. Provides SolidJS co
 pnpm add @fcalell/plugin-solid
 ```
 
-Peer dependency: `solid-js ^1.9`.
+Peer dependency: `solid-js ^1.9`. The consumer declares `vite-plugin-solid` too (the plugin's `devDependencies`, which `stack init` writes), since the generated vite config imports it.
 
 ## Usage
 
