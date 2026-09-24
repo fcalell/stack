@@ -1,4 +1,5 @@
 import { createRequire } from "node:module";
+import { dirname, join } from "node:path";
 import { plugin, slot } from "@fcalell/cli";
 import type { TsExpression, TsImportSpec } from "@fcalell/cli/ast";
 import { cliSlots, emitArtifact } from "@fcalell/cli/cli-slots";
@@ -12,9 +13,15 @@ import {
 
 const SOURCE = "vite";
 
-// Vite is this plugin's own dependency, run by its resolved bin: a
-// consumer declares no vite, and no PATH or registry lookup stands in.
-const VITE_BIN = createRequire(import.meta.url).resolve("vite/bin/vite.js");
+// Vite is this plugin's own dependency, run by its own bin: a consumer
+// declares no vite, and no PATH or registry lookup stands in. The bin is
+// not an exported subpath, so it is read from the package's manifest.
+const require = createRequire(import.meta.url);
+const VITE_PACKAGE = require.resolve("vite/package.json");
+const VITE_BIN = join(
+	dirname(VITE_PACKAGE),
+	(require(VITE_PACKAGE) as { bin: { vite: string } }).bin.vite,
+);
 
 // ── Slot declarations ──────────────────────────────────────────────
 
