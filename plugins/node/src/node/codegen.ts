@@ -45,6 +45,8 @@ export function aggregateServer(payload: CodegenServerPayload): string {
 		});
 	}
 	properties.push(
+		{ key: "maxBody", value: { kind: "number", value: payload.bounds.body } },
+		{ key: "maxFrame", value: { kind: "number", value: payload.bounds.frame } },
 		{
 			key: "workerModule",
 			value: payload.hasWorker ? moduleUrl("./worker.ts") : { kind: "null" },

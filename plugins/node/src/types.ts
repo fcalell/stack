@@ -6,9 +6,26 @@ export const nodeOptionsSchema = z.object({
 	// The address the server binds. Unset binds every interface; a server
 	// behind a proxy, or one that must stay off the network, names loopback.
 	host: z.string().min(1).optional(),
+	// Bytes: a request body over `body` is refused with 413, and a
+	// WebSocket frame over `frame` closes its socket.
+	bounds: z
+		.object({
+			body: z
+				.number()
+				.int()
+				.positive()
+				.default(16 * 1024 * 1024),
+			frame: z
+				.number()
+				.int()
+				.positive()
+				.default(1024 * 1024),
+		})
+		.default({ body: 16 * 1024 * 1024, frame: 1024 * 1024 }),
 });
 
 export type NodeOptions = z.input<typeof nodeOptionsSchema>;
+export type NodeOptionsResolved = z.output<typeof nodeOptionsSchema>;
 
 // A plugin's codegen contribution to the generated server's `services`
 // array: a statically imported ServiceSpec (or ServiceSpec[]) expression.
@@ -27,6 +44,7 @@ export interface ServiceEntry {
 export interface CodegenServerPayload {
 	port: number;
 	host: string | null;
+	bounds: { body: number; frame: number };
 	hasWorker: boolean;
 	workerPaths: string[];
 	hasConsumerServices: boolean;

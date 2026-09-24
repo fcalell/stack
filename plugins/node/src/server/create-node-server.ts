@@ -1,6 +1,7 @@
 import { serve, upgradeWebSocket } from "@hono/node-server";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { Hono } from "hono";
+import { bodyLimit } from "hono/body-limit";
 import { WebSocketServer } from "ws";
 import type { ServiceLogger, ServiceSpec, ServiceStop } from "./service.ts";
 import { createWsHub, type HubSocket } from "./ws-hub.ts";
@@ -21,6 +22,10 @@ export interface NodeServerOptions {
 	port: number;
 	// The address to bind; unset binds every interface.
 	host?: string;
+	// A request body over this many bytes is refused with 413.
+	maxBody?: number;
+	// A WebSocket frame over this many bytes closes its socket.
+	maxFrame?: number;
 	worker: NodeWorker | null;
 	// URL prefixes routed to the worker (from api.slots.routePrefixes).
 	workerPaths?: string[];
@@ -59,9 +64,14 @@ export function createNodeServer(options: NodeServerOptions): NodeServer {
 	} = options;
 	const services = (options.services ?? []).flat();
 	const { hub, connectionHandlers } = createWsHub(log);
-	const wss = new WebSocketServer({ noServer: true });
+	const wss = new WebSocketServer({
+		noServer: true,
+		...(options.maxFrame !== undefined && { maxPayload: options.maxFrame }),
+	});
 
 	const app = new Hono();
+	if (options.maxBody !== undefined)
+		app.use("*", bodyLimit({ maxSize: options.maxBody }));
 
 	type MountHandler = (request: Request) => Response | Promise<Response>;
 	const mounts = new Map<string, MountHandler>();

@@ -148,7 +148,9 @@ The typed WebSocket surface lives on this target: `@fcalell/plugin-node/ws` (the
 onMessage })` → `broadcast`/per-connection `send`; a connection carries an `id` stable for the
 socket's life, and `onUnsubscribe` runs once on an unsub or the socket's close, so per-connection
 state such as presence never outlives the socket), and `./client` (browser client, shared socket,
-auto-reconnect with resubscribe). Everything is zod-validated at both ends; invalid frames are dropped and
+auto-reconnect with resubscribe). The target bounds its transports from `node({ bounds })`: a body
+over `body` bytes is refused with 413 by Hono's body limit, and a frame over `frame` bytes closes
+its socket through `ws`'s `maxPayload`. Everything is zod-validated at both ends; invalid frames are dropped and
 logged. Gotcha: `@hono/node-ws` peer-pins `@hono/node-server` v1 and must not be used; node-server
 v2 ships its own `upgradeWebSocket` plus `serve({ websocket: { server } })` with a
 `ws` `WebSocketServer({ noServer: true })`. Graceful shutdown must `terminate()` the tracked WS

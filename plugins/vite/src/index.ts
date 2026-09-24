@@ -19,11 +19,19 @@ const SOURCE = "vite";
 // stands in. The bin is not an exported subpath, so it is read from the
 // package's manifest.
 function viteBin(cwd: string): string {
-	const require = createRequire(join(cwd, "package.json"));
-	const manifest = require.resolve("vite/package.json");
+	const own = createRequire(import.meta.url);
+	const consumer = createRequire(join(cwd, "package.json"));
+	let manifest: string;
+	try {
+		manifest = consumer.resolve("vite/package.json");
+	} catch {
+		// A consumer that has not installed its vite yet, or a graph built
+		// with no consumer directory, runs the plugin's own.
+		manifest = own.resolve("vite/package.json");
+	}
 	return join(
 		dirname(manifest),
-		(require(manifest) as { bin: { vite: string } }).bin.vite,
+		(own(manifest) as { bin: { vite: string } }).bin.vite,
 	);
 }
 

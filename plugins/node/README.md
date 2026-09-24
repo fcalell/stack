@@ -26,6 +26,7 @@ origin after every frontend's, and `APP_URL`'s dev default when there is no fron
 ```ts
 node({ port: 8788 }); // binds every interface
 node({ port: 8788, host: "127.0.0.1" }); // loopback alone: the local origins of app.origins are the deployed list
+node({ port: 8788, bounds: { body: 16 * 1024 * 1024, frame: 1024 * 1024 } }); // the defaults: a body over `body` bytes is 413, a frame over `frame` closes its socket
 ```
 
 ## Production

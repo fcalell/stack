@@ -10,6 +10,7 @@ import { generateServiceBarrel, hasServiceFiles } from "./node/barrel.ts";
 import { aggregateServer } from "./node/codegen.ts";
 import {
 	type NodeOptions,
+	type NodeOptionsResolved,
 	nodeOptionsSchema,
 	type ServiceEntry,
 } from "./types.ts";
@@ -63,12 +64,23 @@ const serviceBarrelSource = slot.derived({
 
 // The rendered `.stack/server.ts` source. Null when there is nothing to
 // serve or run: no worker (api emitted none) and no services.
+// The transport bounds the server enforces, from the config.
+const serverBounds = slot.value<
+	{ body: number; frame: number },
+	NodeOptionsResolved
+>({
+	source: SOURCE,
+	name: "serverBounds",
+	seed: (ctx) => ctx.options.bounds,
+});
+
 const serverSource = slot.derived({
 	source: SOURCE,
 	name: "serverSource",
 	inputs: {
 		port: serverPort,
 		host: serverHost,
+		bounds: serverBounds,
 		entries: services,
 		consumer: consumerServices,
 		worker: api.slots.workerSource,
@@ -83,6 +95,7 @@ const serverSource = slot.derived({
 		return aggregateServer({
 			port: inp.port,
 			host: inp.host,
+			bounds: inp.bounds,
 			hasWorker,
 			workerPaths: inp.prefixes,
 			hasConsumerServices,
@@ -105,6 +118,7 @@ export const node = plugin("node", {
 	slots: {
 		serverPort,
 		serverHost,
+		serverBounds,
 		services,
 		consumerServices,
 		serviceBarrelSource,
