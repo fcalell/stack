@@ -132,6 +132,16 @@ const devTargetOrigins = slot.list<string>({
 	sortBy: (a, b) => a.localeCompare(b),
 });
 
+// Where local origins in `app.origins` belong. `dev`: they are dev origins,
+// stripped from the deployed allow-list and re-admitted under STACK_DEV.
+// `deployed`: the deploy target itself is local (the node server bound to
+// loopback), so they are the deployed allow-list. The target contributes.
+const localOrigins = slot.value<"dev" | "deployed">({
+	source: SOURCE,
+	name: "localOrigins",
+	seed: () => "dev",
+});
+
 // URL prefixes the worker owns. Deploy-target plugins read this to route
 // requests to the worker (a Node server mounts these paths on the worker
 // fetch handler; a proxy forwards them) without reaching into api's
@@ -160,15 +170,17 @@ const routePrefixes = slot.list<string>({
 const cors = slot.derived({
 	source: SOURCE,
 	name: "cors",
-	inputs: { extras: corsOrigins },
+	inputs: { extras: corsOrigins, local: localOrigins },
 	compute: (inp, ctx): string[] => {
-		// Local origins in an explicit list are dev origins: they move to
-		// `devCorsOrigins` (see the contribution below) so the deployed
-		// worker never trusts localhost, and the runtime re-admits them
-		// under STACK_DEV.
+		// Local origins in an explicit list are dev origins unless the
+		// target is local itself: they move to `devCorsOrigins` (see the
+		// contribution below) so a deployed worker never trusts localhost,
+		// and the runtime re-admits them under STACK_DEV.
 		const result =
 			ctx.app.origins !== undefined
-				? ctx.app.origins.filter((origin) => !isLocalOrigin(origin))
+				? ctx.app.origins.filter(
+						(origin) => inp.local === "deployed" || !isLocalOrigin(origin),
+					)
 				: [
 						`https://${ctx.app.domain}`,
 						`https://app.${ctx.app.domain}`,
@@ -455,6 +467,7 @@ export const api = plugin("api", {
 		workerSource,
 		routeBarrelSource,
 		rbacStatements,
+		localOrigins,
 		entities,
 		procedureSource,
 	},
@@ -467,8 +480,10 @@ export const api = plugin("api", {
 		// consumer listed in `app.origins` are honoured, but only under
 		// STACK_DEV. The `cors` derivation above strips them from the baked
 		// production list.
-		self.slots.devCorsOrigins.contribute((ctx) =>
-			ctx.app.origins?.filter(isLocalOrigin),
+		self.slots.devCorsOrigins.contribute(async (ctx) =>
+			(await ctx.resolve(self.slots.localOrigins)) === "dev"
+				? ctx.app.origins?.filter(isLocalOrigin)
+				: undefined,
 		),
 		// Always import `createWorker` — the base call uses it verbatim.
 		self.slots.workerImports.contribute(

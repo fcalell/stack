@@ -4,6 +4,7 @@ import type { ContributionCtx } from "@fcalell/cli";
 import { plugin, slot } from "@fcalell/cli";
 import { cliSlots, emitArtifact } from "@fcalell/cli/cli-slots";
 import { api } from "@fcalell/plugin-api";
+import { isLocalOrigin } from "@fcalell/plugin-api/local-origin";
 import { vite } from "@fcalell/plugin-vite";
 import { generateServiceBarrel, hasServiceFiles } from "./node/barrel.ts";
 import { aggregateServer } from "./node/codegen.ts";
@@ -142,6 +143,15 @@ export const node = plugin("node", {
 				color: "green",
 				env,
 			};
+		}),
+
+		// A server bound to loopback is a local deployment: the local origins
+		// in `app.origins` are its deployed allow-list, not dev origins.
+		api.slots.localOrigins.contribute(async (ctx) => {
+			const host = await ctx.resolve(self.slots.serverHost);
+			return host !== null && isLocalOrigin(`http://${host}`)
+				? "deployed"
+				: undefined;
 		}),
 
 		// The server's own origin is a dev origin: with no frontend plugin it is

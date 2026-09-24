@@ -29,7 +29,7 @@ export default defineConfig({
 });
 ```
 
-The `api` plugin has no required dependencies -- it can be used standalone, though most setups pair it with `db` and `auth`. CORS origins are derived from `app.domain` (and the vite dev port, when a frontend plugin is active); override with `app.origins`. Local origins in an explicit `app.origins` (localhost, 127.0.0.1, `*.localhost`) count as dev origins: they are honoured only under `STACK_DEV` and never reach the deployed allow-list.
+The `api` plugin has no required dependencies -- it can be used standalone, though most setups pair it with `db` and `auth`. CORS origins are derived from `app.domain` (and the vite dev port, when a frontend plugin is active); override with `app.origins`. Local origins in an explicit `app.origins` (localhost, 127.0.0.1, `*.localhost`) count as dev origins: they are honoured only under `STACK_DEV` and never reach the deployed allow-list, unless the deploy target is local itself (`node({ host: "127.0.0.1" })` sets `api.slots.localOrigins` to `deployed`), in which case they are the deployed list.
 
 ### 2. Worker (generated)
 
@@ -491,7 +491,8 @@ export const api = plugin("api", {
 | `api.slots.devCorsOrigins` | `list<string>` | Frontend dev origins (vite and expo push their localhost here, api the local entries of `app.origins`); applied only under `STACK_DEV` |
 | `api.slots.devTargetOrigins` | `list<string>` | Deploy-target dev origins (node and cloudflare push their dev process's localhost here); baked after `devCorsOrigins` as `createWorker({ devCors })`, applied only under `STACK_DEV` |
 | `api.slots.routePrefixes` | `list<string>` | URL prefixes the worker owns (api pushes its `prefix`, auth its `/api/auth`); deploy targets read this to mount or forward worker paths |
-| `api.slots.cors` | `derived<string[]>` | Final production CORS list: `app.origins` minus local origins, or `[https://domain, https://app.domain, ...corsOrigins]` |
+| `api.slots.localOrigins` | `value<"dev" \| "deployed">` | Whether the local origins of `app.origins` are dev origins or the deployed list; a local deploy target (node on loopback) sets `deployed` |
+| `api.slots.cors` | `derived<string[]>` | Final production CORS list: `app.origins` minus local origins (kept under `localOrigins: deployed`), or `[https://domain, https://app.domain, ...corsOrigins]` |
 | `api.slots.callbacks` | `map<string, CallbackSpec>` | Plugin-name → callback identifier; spliced onto matching runtime |
 | `api.slots.env` | `list<EnvSpec>` (`uniqueBy: name`) | Env vars the worker reads (`{ name, devDefault, validate? }`), declared by the plugin that reads them; cloudflare renders `.dev.vars`, node sets unset vars to `devDefault` in the dev process |
 | `api.slots.workerBase` | `derived<TsExpression>` | The `createWorker({...})` call expression; bakes `env` into `envChecks` |

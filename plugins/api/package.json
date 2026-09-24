@@ -56,6 +56,10 @@
 		"./lib/slugify": {
 			"types": "./dist/lib/slugify.d.ts",
 			"default": "./dist/lib/slugify.js"
+		},
+		"./local-origin": {
+			"types": "./dist/lib/local-origin.d.ts",
+			"default": "./dist/lib/local-origin.js"
 		}
 	},
 	"files": [

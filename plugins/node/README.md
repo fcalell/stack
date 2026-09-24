@@ -25,7 +25,7 @@ origin after every frontend's, and `APP_URL`'s dev default when there is no fron
 
 ```ts
 node({ port: 8788 }); // binds every interface
-node({ port: 8788, host: "127.0.0.1" }); // loopback alone
+node({ port: 8788, host: "127.0.0.1" }); // loopback alone: the local origins of app.origins are the deployed list
 ```
 
 ## Production
