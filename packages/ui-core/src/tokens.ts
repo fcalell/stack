@@ -167,13 +167,16 @@ export const COLORS: Record<
 	// Text on `accent`: the canvas value keeps AA in both modes under either
 	// primary, by the ladder's symmetry.
 	"on-accent": { alias: "canvas" },
+	// The four marks' dark values sit above the calibration's 0.7 so each
+	// clears 4.5:1 on `group` as well as `surface`: a status, an act and a
+	// destructive label are drawn inside groups.
 	tint: {
 		light: { l: 0.5, c: 0.16, hue: accent() },
-		dark: { l: 0.7, c: 0.155, hue: accent() },
+		dark: { l: 0.75, c: 0.155, hue: accent() },
 	},
 	ok: {
 		light: { l: 0.5, c: 0.105, hue: { knob: "okHue", offset: 0 } },
-		dark: { l: 0.7, c: 0.14, hue: { knob: "okHue", offset: 0 } },
+		dark: { l: 0.75, c: 0.14, hue: { knob: "okHue", offset: 0 } },
 	},
 	"ok-soft": {
 		light: { l: 0.92, c: 0.04, hue: { knob: "okHue", offset: 0 } },
@@ -181,7 +184,7 @@ export const COLORS: Record<
 	},
 	warn: {
 		light: { l: 0.5, c: 0.106, hue: { knob: "warnHue", offset: 0 } },
-		dark: { l: 0.7, c: 0.14, hue: { knob: "warnHue", offset: 0 } },
+		dark: { l: 0.75, c: 0.14, hue: { knob: "warnHue", offset: 0 } },
 	},
 	"warn-soft": {
 		light: { l: 0.912, c: 0.048, hue: { knob: "warnHue", offset: 5 } },
@@ -189,7 +192,7 @@ export const COLORS: Record<
 	},
 	danger: {
 		light: { l: 0.5, c: 0.18, hue: { knob: "dangerHue", offset: 0 } },
-		dark: { l: 0.7, c: 0.17, hue: { knob: "dangerHue", offset: 0 } },
+		dark: { l: 0.76, c: 0.17, hue: { knob: "dangerHue", offset: 0 } },
 	},
 	"danger-soft": {
 		light: { l: 0.915, c: 0.045, hue: { knob: "dangerHue", offset: 0 } },

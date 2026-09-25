@@ -27,6 +27,7 @@ import {
 	rule,
 	tailwindBuild,
 } from "../src/harness.ts";
+import { oklchToLinear } from "../src/oklch.ts";
 import { CLOSED_PROPS, componentDir, rosterEntries } from "../src/roster.ts";
 import { wordsSchema } from "../src/schema.ts";
 import {
@@ -130,6 +131,16 @@ const ROLE_SOURCE: Record<Exclude<PerModeColor, `avatar-${number}`>, string> = {
 	"warn-soft": "warn-soft",
 	danger: "danger",
 	"danger-soft": "danger-soft",
+};
+
+// The values the contract departs from the calibration on, each for a
+// measured reason: the reference's dark marks clear 4.5:1 on `surface` but
+// not on `group`, where statuses, acts and destructive labels are drawn.
+const DEPARTED: Record<string, string> = {
+	"dark.tint": "oklch(0.75 0.155 261)",
+	"dark.ok": "oklch(0.75 0.14 160)",
+	"dark.warn": "oklch(0.75 0.14 75)",
+	"dark.danger": "oklch(0.76 0.17 28)",
 };
 
 const reference = readFileSync(referencePath, "utf8").replace(
@@ -429,7 +440,7 @@ check("c05", "default knobs reproduce the reference under the roles", () => {
 	for (const mode of MODES) {
 		const actual = modeTokens(base, mode);
 		for (const [role, source] of Object.entries(ROLE_SOURCE)) {
-			const expected = fromVariant(mode, source);
+			const expected = DEPARTED[`${mode}.${role}`] ?? fromVariant(mode, source);
 			if (actual[role] !== expected) {
 				diff.push(`${mode}.${role}: ${expected} -> ${actual[role]}`);
 			}
@@ -446,7 +457,7 @@ check("c05", "default knobs reproduce the reference under the roles", () => {
 		referenceTheme.get("--color-scrim"),
 		"--color-scrim",
 	);
-	return `${Object.keys(ROLE_SOURCE).length * 2} per-mode values match the reference, thumb and scrim literal`;
+	return `${Object.keys(ROLE_SOURCE).length * 2 - Object.keys(DEPARTED).length} per-mode values match the reference and ${Object.keys(DEPARTED).length} depart as listed, thumb and scrim literal`;
 });
 
 check("c06", "every scale is its ratio of the knob", () => {
@@ -1539,6 +1550,58 @@ check("c31", "words: English is total and the schema is closed", () => {
 	const extra = wordsSchema.safeParse({ ...ENGLISH, ok: "OK" });
 	assert(!extra.success, "an extra word was accepted");
 	return `${WORD_KEYS.length} words, sentence case, missing and extra keys rejected`;
+});
+
+// WCAG 2 contrast between two emitted `oklch(L C H)` values.
+function contrast(fg: string, bg: string): number {
+	const luminance = (value: string) => {
+		const parts = /^oklch\(([\d.]+) ([\d.]+)(?: ([\d.]+))?\)$/.exec(value);
+		assert(parts, `not an opaque oklch value: ${value}`);
+		const [r, g, b] = oklchToLinear(
+			Number(parts[1]),
+			Number(parts[2]),
+			Number(parts[3] ?? 0),
+		);
+		return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+	};
+	const [a, b] = [luminance(fg), luminance(bg)].sort((x, y) => y - x);
+	return ((a ?? 0) + 0.05) / ((b ?? 0) + 0.05);
+}
+
+check("c32", "the contrast contracts hold at the default knobs", () => {
+	const pairs: Array<[string, string[]]> = [
+		["ink", ["canvas", "surface", "group"]],
+		["ink-meta", ["canvas", "surface", "group"]],
+		["ok", ["surface", "group", "ok-soft"]],
+		["warn", ["surface", "group", "warn-soft"]],
+		["danger", ["surface", "group", "danger-soft"]],
+		["tint", ["surface", "group"]],
+		["on-accent", ["accent"]],
+		["ink", AVATAR_STEPS.map((step) => `avatar-${step}`)],
+	];
+	const short: string[] = [];
+	let count = 0;
+	for (const primary of ["ink", "accent"] as const) {
+		const theme = deriveTheme({ primary });
+		for (const mode of MODES) {
+			const values = modeTokens(theme, mode);
+			for (const [fg, grounds] of pairs) {
+				for (const bg of grounds) {
+					const fgValue = values[fg];
+					const bgValue = values[bg];
+					assert(fgValue && bgValue, `no ${fg} or ${bg} in ${mode}`);
+					const ratio = contrast(fgValue, bgValue);
+					count++;
+					if (ratio < 4.5)
+						short.push(
+							`${primary} ${mode} ${fg} on ${bg}: ${ratio.toFixed(2)}`,
+						);
+				}
+			}
+		}
+	}
+	assert(short.length === 0, `under 4.5:1: ${short.join(", ")}`);
+	return `${count} pairs at 4.5:1 or more under both primaries in both modes`;
 });
 
 // ── Report ──────────────────────────────────────────────────────────

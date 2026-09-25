@@ -66,30 +66,40 @@ export const TEXT_STRONG = matrix({
 // ── Button ──────────────────────────────────────────────────────────
 
 // `act` is the button's kind: the primary act is filled, the other two sit on
-// the group fill and differ by their label's ink. min-h, never h: the label
-// must be able to grow the control under OS font scaling.
+// the group fill and differ by their label's ink. `fit` is its container's:
+// 44 px in the body, compact in a top bar, where the plugin keeps the 44 px
+// hit area around the smaller pill. min-h, never h: the label must be able to
+// grow the control under OS font scaling.
 export const BUTTON = matrix({
-	base: "rounded-full min-h-11 px-5 py-2 gap-row",
+	base: "rounded-full gap-row",
 	variants: {
 		act: {
 			primary: "bg-accent",
 			secondary: "bg-group",
 			destructive: "bg-group",
 		},
+		fit: {
+			body: "min-h-11 px-5 py-2",
+			bar: "min-h-8 px-3.5 py-1",
+		},
 	},
-	defaultVariants: { act: "primary" },
+	defaultVariants: { act: "primary", fit: "body" },
 });
 
 export const BUTTON_LABEL = matrix({
-	base: "text-body leading-body font-medium",
+	base: "font-medium",
 	variants: {
 		act: {
 			primary: "text-on-accent",
 			secondary: "text-ink",
 			destructive: "text-danger",
 		},
+		fit: {
+			body: "text-body leading-body",
+			bar: "text-meta leading-meta",
+		},
 	},
-	defaultVariants: { act: "primary" },
+	defaultVariants: { act: "primary", fit: "body" },
 });
 
 // ── Status ──────────────────────────────────────────────────────────

@@ -23,8 +23,10 @@ stead's `design/07-interface.md`.
   filled with), `space` (the rungs), `radius` (the radii), `text` (the type roles, sizes rounded
   to the pixel and line boxes to the even pixel), `fonts` (the two family names), `widths` (the
   five `--container-*` values) and `breakpoints` (the three device classes). Lightness and
-  per-token chroma are fixed from the calibration; the AA contracts hold at the defaults, and
-  moving a knob puts the re-check on the consumer. The two shadows derive from `neutralHue`,
+  per-token chroma are fixed from the calibration, but for the dark `tint`, `ok`, `warn` and
+  `danger`, set lighter so a mark drawn inside a group keeps 4.5:1; the AA contracts hold at the
+  defaults, the verify script measures each pair, and moving a knob puts the re-check on the
+  consumer. The two shadows derive from `neutralHue`,
   converted to sRGB in the derivation because React Native's `boxShadow` takes no oklch. Density
   is a theme, never a breakpoint: no scale changes at a width.
 - Color roles are named by use (`canvas`, `surface`, `group`, `edge`, `ink`, `ink-meta`,

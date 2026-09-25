@@ -72,6 +72,9 @@ export const rhythm = build(RHYTHM);
 export const BUTTON_MUTED = "bg-group";
 export const BUTTON_MUTED_LABEL = "text-ink-faint";
 export const ICON_BUTTON = "rounded-full min-h-11 min-w-11 bg-group text-ink";
+// The same circle in a top bar: drawn compact, its 44 px hit area kept by the
+// plugin around it.
+export const ICON_BUTTON_BAR = "rounded-full min-h-8 min-w-8 bg-group text-ink";
 export const COUNT =
 	"rounded-full bg-group min-w-6 px-2 text-label leading-label font-medium text-tint";
 export const STATUS_CHIP = "rounded-full bg-group min-h-11 px-3";
@@ -98,6 +101,7 @@ export const CONTROL_MUTED = "opacity-50";
 
 export type TextRole = keyof (typeof TEXT)["variants"]["role"];
 export type ButtonAct = keyof (typeof BUTTON)["variants"]["act"];
+export type ButtonFit = keyof (typeof BUTTON)["variants"]["fit"];
 export type FieldKind = keyof (typeof FIELD)["variants"]["kind"];
 export type FieldState = keyof (typeof FIELD)["variants"]["state"];
 export type RowState = keyof (typeof ROW)["variants"]["state"];

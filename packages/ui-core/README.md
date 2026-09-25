@@ -126,11 +126,12 @@ because React Native's `boxShadow` takes no oklch.
 
 ## Contrast contracts
 
-At the default knobs: `ink` on `canvas`, `surface` and `group` clears 4.5:1 in both modes;
-`ink-meta` clears 4.5:1 on `canvas` and `surface`; `on-accent` on `accent` clears 4.5:1 under
-either primary; `ok` on `ok-soft`, `warn` on `warn-soft` and `danger` on `danger-soft` clear 4.5:1, as does
-each on `surface`; `ink` on every `avatar-n` clears 4.5:1. Moving a knob puts the re-check on the
-consumer.
+At the default knobs, in both modes and under either primary, each pair clears 4.5:1: `ink` and
+`ink-meta` on `canvas`, `surface` and `group`; `ok`, `warn` and `danger` on `surface`, on `group`
+and on `ok-soft`, `warn-soft` and `danger-soft` in turn; `tint` on `surface` and `group`; `on-accent` on `accent`; `ink` on every
+`avatar-n`. The verify script measures every pair. The dark `tint`, `ok`, `warn` and `danger` sit
+lighter than the calibration so that a status, an act or a destructive label inside a group
+keeps the ratio. Moving a knob puts the re-check on the consumer.
 
 ## What the reset does not catch
 
