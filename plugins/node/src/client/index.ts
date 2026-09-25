@@ -33,9 +33,11 @@ const BACKOFF_BASE_MS = 250;
 const BACKOFF_CAP_MS = 5000;
 
 // One shared socket per client, auto-reconnecting with capped exponential
-// backoff. On every (re)open the client re-sends `sub` for each live
-// subscription, so a server that snapshots on subscribe gives reconnect
-// consistency for free. Uses the global WebSocket (browser; Node >= 22 has
+// backoff. Any number of subscriptions may share a channel: every frame on
+// it reaches each of them, a new one sends `sub` so the server snapshots
+// again, and `unsub` goes only when the channel's last one leaves. On every
+// (re)open the client re-sends `sub` once per channel, so a server that
+// snapshots on subscribe gives reconnect consistency for free. Uses the global WebSocket (browser; Node >= 22 has
 // it natively, so the same client runs in tests).
 function defaultUrl(): string {
 	// Via globalThis so the module type-checks and loads outside the DOM;
@@ -84,11 +86,12 @@ export function createWsClient(options: { url?: string } = {}): WsClient {
 			console.error("ws client: dropped malformed frame");
 			return;
 		}
+		// A snapshot for one subscriber is a fresh state for every other.
 		for (const sub of subscriptions) {
 			if (sub.def.name !== frame.data.ch) continue;
 			const schema = sub.def.server[frame.data.type];
 			const handler = sub.handlers.onMessage[frame.data.type];
-			if (!schema || !handler) return;
+			if (!schema || !handler) continue;
 			const payload = schema.safeParse(frame.data.payload);
 			if (!payload.success) {
 				console.error(
@@ -97,9 +100,10 @@ export function createWsClient(options: { url?: string } = {}): WsClient {
 				return;
 			}
 			handler(payload.data);
-			return;
 		}
 	}
+
+	const channelsOf = () => new Set([...subscriptions].map((s) => s.def.name));
 
 	function connect(): void {
 		if (closed) return;
@@ -108,8 +112,8 @@ export function createWsClient(options: { url?: string } = {}): WsClient {
 		socket = ws;
 		ws.addEventListener("open", () => {
 			attempt = 0;
-			for (const sub of subscriptions) {
-				ws.send(JSON.stringify({ t: "sub", ch: sub.def.name }));
+			for (const ch of channelsOf()) {
+				ws.send(JSON.stringify({ t: "sub", ch }));
 			}
 			notify("open");
 		});
@@ -163,7 +167,8 @@ export function createWsClient(options: { url?: string } = {}): WsClient {
 					});
 				},
 				unsubscribe() {
-					subscriptions.delete(live);
+					if (!subscriptions.delete(live)) return;
+					if (channelsOf().has(def.name)) return;
 					if (socket && socket.readyState === WebSocket.OPEN) {
 						sendFrame({ t: "unsub", ch: def.name });
 					}
