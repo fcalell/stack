@@ -10,10 +10,12 @@ import {
 import { Show } from "solid-js";
 import type { Closed } from "#lib/closed.ts";
 import { cn } from "#lib/cn.ts";
+import { BAR_HIT, useFit } from "#lib/fit.ts";
 import { Spinner } from "../spinner/index.tsx";
 
 // A pill with words. Full width in an action bar, its content's width in a
-// toolbar: the container decides. `blocked` is the reason, drawn under it,
+// toolbar, compact in a top bar with its 44 px hit area kept: the container
+// decides. `blocked` is the reason, drawn under it,
 // and the button is disabled while it holds.
 export type ButtonProps = Closed & {
 	act?: ButtonAct;
@@ -37,6 +39,7 @@ const SHELL =
 
 export function Button(props: ButtonProps) {
 	const act = () => props.act ?? "primary";
+	const fit = useFit();
 	const blocked = () => props.blocked !== undefined;
 	return (
 		<div class="flex flex-col gap-pair">
@@ -45,9 +48,10 @@ export function Button(props: ButtonProps) {
 				disabled={blocked() || props.loading}
 				onClick={() => props.onAct?.()}
 				class={cn(
-					button({ act: act() }),
-					buttonLabel({ act: act() }),
+					button({ act: act(), fit }),
+					buttonLabel({ act: act(), fit }),
 					SHELL,
+					fit === "bar" && BAR_HIT,
 					blocked() ? cn(BUTTON_MUTED, BUTTON_MUTED_LABEL) : GROUND[act()],
 				)}
 			>

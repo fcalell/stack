@@ -3,7 +3,9 @@ import * as SliderPrimitive from "@kobalte/core/slider";
 import type { Closed } from "#lib/closed.ts";
 import { cn } from "#lib/cn.ts";
 
-// A labelled track, 44 px tall, the value drawn beside the thumb.
+// A labelled track: a thin bar inside a 44 px hit area, the value drawn
+// beside the label. The thumb is the one control; no native input sits in
+// it, since the value reaches the consumer through `onChange`.
 export type SliderProps = Closed & {
 	label: string;
 	value: number;
@@ -31,15 +33,11 @@ export function Slider(props: SliderProps) {
 					class={cn(text({ role: "meta" }), "tabular-nums")}
 				/>
 			</div>
-			<SliderPrimitive.Track
-				class={cn(METER_TRACK, "relative flex h-11 items-center")}
-			>
-				<div class="relative h-2 w-full overflow-hidden rounded-full">
+			<SliderPrimitive.Track class="relative flex h-11 items-center">
+				<div class={cn(METER_TRACK, "relative h-2 w-full overflow-hidden")}>
 					<SliderPrimitive.Fill class={cn(METER_FILL, "absolute inset-y-0")} />
 				</div>
-				<SliderPrimitive.Thumb class="absolute top-1/2 size-6 -translate-y-1/2 rounded-full bg-thumb shadow-float focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-tint">
-					<SliderPrimitive.Input />
-				</SliderPrimitive.Thumb>
+				<SliderPrimitive.Thumb class="absolute top-1/2 size-6 -translate-y-1/2 rounded-full bg-thumb shadow-float focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-tint" />
 			</SliderPrimitive.Track>
 		</SliderPrimitive.Root>
 	);

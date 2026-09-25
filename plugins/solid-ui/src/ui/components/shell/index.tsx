@@ -61,7 +61,9 @@ export function Shell(props: ShellProps) {
 					)}
 				</For>
 			</nav>
-			<div class="relative flex min-h-0 flex-1 flex-col bg-surface">
+			{/* min-w-0: beside the rail the column takes the width left, never
+			    its content's widest line. */}
+			<div class="relative flex min-h-0 min-w-0 flex-1 flex-col bg-surface">
 				{props.banner}
 				<main class="flex min-h-0 flex-1 flex-col">{props.children}</main>
 				<div class="pointer-events-none absolute inset-x-0 bottom-inset z-50 flex flex-col items-center gap-row">

@@ -4,6 +4,7 @@ import { GROUP, row, text, textStrong } from "@fcalell/ui-core/variants";
 import { A } from "@solidjs/router";
 import { For, type JSX, Match, Show, Switch } from "solid-js";
 import { Dynamic } from "solid-js/web";
+import { ageOf, momentOf, useClock } from "#lib/age.ts";
 import type { Closed } from "#lib/closed.ts";
 import { cn } from "#lib/cn.ts";
 import { useInColumns } from "#lib/columns.ts";
@@ -13,6 +14,7 @@ import { StatusGlyph } from "#lib/status-glyph.tsx";
 import { Count } from "../count/index.tsx";
 
 export type Leading = { icon: string } | { status: StatusState };
+// `age` is an ISO moment, drawn as its age and kept current.
 export type Trailing = { age: string } | { count: number } | { value: string };
 
 // A row of a list or a group: no chevron, no divider. `href` routes, `onOpen`
@@ -46,6 +48,7 @@ function MarkGlyph(props: { mark: Mark<string> }) {
 
 export function ListRow(props: ListRowProps) {
 	const inColumns = useInColumns();
+	const clock = useClock();
 	const interactive = () =>
 		props.href !== undefined || props.onOpen !== undefined;
 	const shell = () =>
@@ -116,11 +119,26 @@ export function ListRow(props: ListRowProps) {
 							)}
 						</Match>
 						<Match when={!("count" in trailing())}>
-							<span class={cn(text({ role: "meta" }), "shrink-0 tabular-nums")}>
-								{"age" in trailing()
-									? (trailing() as { age: string }).age
-									: (trailing() as { value: string }).value}
-							</span>
+							<Show
+								when={"age" in trailing() && (trailing() as { age: string })}
+								fallback={
+									<span
+										class={cn(text({ role: "meta" }), "shrink-0 tabular-nums")}
+									>
+										{(trailing() as { value: string }).value}
+									</span>
+								}
+							>
+								{(age) => (
+									<time
+										datetime={age().age}
+										title={momentOf(age().age)}
+										class={cn(text({ role: "meta" }), "shrink-0 tabular-nums")}
+									>
+										{ageOf(age().age, clock())}
+									</time>
+								)}
+							</Show>
 						</Match>
 					</Switch>
 				)}
@@ -139,7 +157,7 @@ export function ListRow(props: ListRowProps) {
 					}}
 					class={cn(
 						text({ role: "meta" }),
-						"min-h-11 shrink-0 cursor-pointer px-row font-medium text-tint disabled:text-ink-faint",
+						"-my-stack min-h-11 shrink-0 cursor-pointer px-row font-medium text-tint disabled:text-ink-faint",
 					)}
 				>
 					{act().label}
@@ -148,7 +166,7 @@ export function ListRow(props: ListRowProps) {
 		</Show>
 	);
 	return (
-		<li class="flex items-center">
+		<div class="flex items-center">
 			<Switch
 				fallback={
 					<div class={shell()}>
@@ -174,6 +192,6 @@ export function ListRow(props: ListRowProps) {
 					)}
 				</Match>
 			</Switch>
-		</li>
+		</div>
 	);
 }

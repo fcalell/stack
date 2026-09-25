@@ -8,7 +8,9 @@ import { cn } from "#lib/cn.ts";
 import { useWords } from "#lib/words.tsx";
 
 // A plus for files, the text in a pill, one circle that sends or stops; the
-// notice under it. Dictation is the keyboard's.
+// notice under it. Dictation is the keyboard's. While `working` the circle
+// stops the turn, until there is text to send: a message typed meanwhile is
+// sent like any other, and the consumer's notice says when it arrives.
 export type MessageInputProps = Closed & {
 	value: string;
 	onChange: (value: string) => void;
@@ -59,12 +61,7 @@ export function MessageInput(props: MessageInputProps) {
 							event.currentTarget.style.height = `${event.currentTarget.scrollHeight}px`;
 						}}
 						onKeyDown={(event) => {
-							if (
-								event.key === "Enter" &&
-								!event.shiftKey &&
-								!empty() &&
-								!props.working
-							) {
+							if (event.key === "Enter" && !event.shiftKey && !empty()) {
 								event.preventDefault();
 								props.onSend();
 							}
@@ -73,7 +70,7 @@ export function MessageInput(props: MessageInputProps) {
 					/>
 				</div>
 				<Show
-					when={props.working}
+					when={props.working && empty()}
 					fallback={
 						<Circle
 							glyph={ArrowUp}

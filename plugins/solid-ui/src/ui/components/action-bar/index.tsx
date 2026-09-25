@@ -18,7 +18,7 @@ export function ActionBar(props: ActionBarProps) {
 				rhythm({ unit: "row" }),
 				"flex flex-col *:w-full desktop:flex-row desktop:flex-wrap desktop:*:w-auto",
 				placement === "pinned" &&
-					"sticky bottom-0 -mx-inset mt-auto bg-surface px-inset pt-stack pb-[max(env(safe-area-inset-bottom),var(--spacing-stack))] tablet:-mx-section tablet:px-section",
+					"sticky bottom-0 -mx-inset mt-auto -mb-section bg-surface px-inset pt-stack pb-[max(env(safe-area-inset-bottom),var(--spacing-stack))] tablet:-mx-section tablet:px-section",
 			)}
 		>
 			{props.children}

@@ -1,9 +1,10 @@
 import type { Part } from "@fcalell/ui-core/descriptors";
 import type { StatusState } from "@fcalell/ui-core/tokens";
 import { GROUP, text } from "@fcalell/ui-core/variants";
-import { For, Show } from "solid-js";
+import { createEffect, createSignal, For, onCleanup, Show } from "solid-js";
 import type { Closed } from "#lib/closed.ts";
 import { cn } from "#lib/cn.ts";
+import { useHeadingClaim } from "#lib/heading.ts";
 import { Parts } from "#lib/parts.tsx";
 import { Status } from "../status/index.tsx";
 
@@ -11,6 +12,8 @@ export type Fact = Part | { status: StatusState; label?: string };
 
 // An id over a bold title, properties below: the overline's parts joined by a
 // middle dot, the title wrapping to two lines, a row of statuses and meta.
+// Inside a `Screen` the title is the page's one heading: the header claims
+// it from the screen, loading included, so the title never draws twice.
 export type ItemHeaderProps = Closed & {
 	overline?: Part[];
 	title: Part;
@@ -23,6 +26,11 @@ function isStatus(fact: Fact): fact is { status: StatusState; label?: string } {
 }
 
 export function ItemHeader(props: ItemHeaderProps) {
+	const claim = useHeadingClaim();
+	const [heading, setHeading] = createSignal<HTMLHeadingElement>();
+	claim?.(null);
+	createEffect(() => claim?.(heading() ?? null));
+	onCleanup(() => claim?.(undefined));
 	return (
 		<Show
 			when={!props.loading}
@@ -40,7 +48,10 @@ export function ItemHeader(props: ItemHeaderProps) {
 						<Parts parts={props.overline ?? []} cut />
 					</p>
 				</Show>
-				<h1 class={cn(text({ role: "title" }), "line-clamp-2")}>
+				<h1
+					ref={setHeading}
+					class={cn(text({ role: "title" }), "line-clamp-2")}
+				>
 					<Parts parts={[props.title]} />
 				</h1>
 				<Show when={props.facts?.length}>

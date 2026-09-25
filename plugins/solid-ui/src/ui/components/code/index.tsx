@@ -6,7 +6,8 @@ import { LoadingRows } from "#lib/loading.tsx";
 import { useWords } from "#lib/words.tsx";
 
 // Mono, scrolling sideways, never wrapping. `tail` is the number of last
-// lines shown before a tap unfolds the rest; `copy` draws the copy act.
+// lines shown before a tap unfolds the rest; `copy` draws the copy act
+// beside the text, never over it: centred on one line, at the top of more.
 export type CodeProps = Closed & {
 	text: string;
 	tail?: number;
@@ -33,7 +34,7 @@ export function Code(props: CodeProps) {
 	};
 	return (
 		<Show when={!props.loading} fallback={<LoadingRows />}>
-			<div class={cn(CODE, "relative flex flex-col gap-row")}>
+			<div class={cn(CODE, "flex flex-col gap-row")}>
 				<Show when={folded()}>
 					<button
 						type="button"
@@ -46,23 +47,35 @@ export function Code(props: CodeProps) {
 						… {hidden()}
 					</button>
 				</Show>
-				<pre
-					class={cn(text({ role: "mono" }), "overflow-x-auto whitespace-pre")}
+				<div
+					class={cn(
+						"flex gap-row",
+						shown().length === 1 ? "items-center" : "items-start",
+					)}
 				>
-					{shown().join("\n")}
-				</pre>
-				<Show when={props.copy}>
-					<button
-						type="button"
-						onClick={() => void copy()}
+					{/* Scrolling sideways, it takes focus so a keyboard can scroll it. */}
+					<pre
+						tabindex="0"
 						class={cn(
-							text({ role: "meta" }),
-							"absolute top-row right-row cursor-pointer rounded-full bg-surface px-row font-medium text-tint",
+							text({ role: "mono" }),
+							"min-w-0 flex-1 overflow-x-auto whitespace-pre",
 						)}
 					>
-						{copied() ? words.copied : words.copy}
-					</button>
-				</Show>
+						{shown().join("\n")}
+					</pre>
+					<Show when={props.copy}>
+						<button
+							type="button"
+							onClick={() => void copy()}
+							class={cn(
+								text({ role: "meta" }),
+								"-my-stack -mr-row min-h-11 shrink-0 cursor-pointer px-row font-medium text-tint",
+							)}
+						>
+							{copied() ? words.copied : words.copy}
+						</button>
+					</Show>
+				</div>
 			</div>
 		</Show>
 	);

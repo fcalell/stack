@@ -67,7 +67,9 @@ export function Input(props: InputProps) {
 						onClick={() => act().onAct()}
 						class={cn(
 							text({ role: "meta" }),
-							"shrink-0 cursor-pointer font-medium text-tint disabled:text-ink-faint",
+							// The field's own padding given to the act, so its hit
+							// area is the field's right end at the 44 px floor.
+							"-my-2 -mr-4 min-h-11 shrink-0 cursor-pointer px-4 font-medium text-tint disabled:text-ink-faint",
 						)}
 					>
 						{act().label}

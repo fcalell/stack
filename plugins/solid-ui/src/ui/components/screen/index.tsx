@@ -3,24 +3,29 @@ import { text } from "@fcalell/ui-core/variants";
 import { A } from "@solidjs/router";
 import { ChevronLeft, Ellipsis } from "lucide-solid";
 import {
+	createEffect,
 	createSignal,
 	For,
 	type JSX,
 	onCleanup,
-	onMount,
 	Show,
 } from "solid-js";
 import { BarContext } from "#lib/bar.ts";
-import { CIRCLE, Circle, GLYPH } from "#lib/circle.tsx";
+import { Circle, circle, glyph } from "#lib/circle.tsx";
 import type { Closed } from "#lib/closed.ts";
 import { cn } from "#lib/cn.ts";
+import { FitContext } from "#lib/fit.ts";
+import { HeadingContext } from "#lib/heading.ts";
+import { MeasureContext, measured } from "#lib/measure.ts";
 import { useWords } from "#lib/words.tsx";
 import { IconButton } from "../icon-button/index.tsx";
 import { ListRow } from "../list-row/index.tsx";
 import { Sheet } from "../sheet/index.tsx";
 
 // A screen pushed over a place: a back circle, the compact title once the
-// large one scrolls away, its actions; no tab bar. On the phone it covers the
+// large one scrolls away, its actions; no tab bar. An `ItemHeader` inside
+// claims the large title, so an item has one heading. The body is measured
+// at the reading width, centred. On the phone it covers the
 // shell; from tablet it sits in its slot. A pinned `ActionBar` child sits
 // above the home indicator.
 export type ScreenProps = Closed & {
@@ -36,78 +41,106 @@ export function Screen(props: ScreenProps) {
 	const words = useWords();
 	const [compact, setCompact] = createSignal(false);
 	const [more, setMore] = createSignal(false);
-	let heading: HTMLHeadingElement | undefined;
-	onMount(() => {
-		if (!heading) return;
+	const [whole, setWhole] = createSignal(false);
+	const [own, setOwn] = createSignal<HTMLHeadingElement>();
+	const [claimed, setClaimed] = createSignal<HTMLElement | null | undefined>();
+	// The compact title follows whichever heading is the page's: the screen's
+	// own, or the one an item header claimed.
+	createEffect(() => {
+		const target = claimed() === undefined ? own() : claimed();
+		if (!target) return;
 		const observer = new IntersectionObserver(([entry]) => {
 			setCompact(entry ? !entry.isIntersecting : false);
 		});
-		observer.observe(heading);
+		observer.observe(target);
 		onCleanup(() => observer.disconnect());
 	});
 	const shown = () => (props.actions ?? []).slice(0, SHOWN);
 	const rest = () => (props.actions ?? []).slice(SHOWN);
 	return (
 		<BarContext.Provider value="pinned">
-			<div class="fixed inset-0 z-40 flex flex-col bg-surface tablet:static tablet:z-auto tablet:min-h-0 tablet:flex-1">
-				<header class="flex min-h-14 items-center gap-row px-inset tablet:px-section">
-					<Show when={props.back}>
-						{(back) => (
-							<A href={back()} aria-label={words.back} class={CIRCLE}>
-								<ChevronLeft class={GLYPH} aria-hidden="true" />
-							</A>
-						)}
-					</Show>
-					{/* The compact title repeats the h1 for the eye once it has
+			<HeadingContext.Provider value={setClaimed}>
+				<MeasureContext.Provider value={setWhole}>
+					<div class="fixed inset-0 z-40 flex flex-col bg-surface tablet:static tablet:z-auto tablet:min-h-0 tablet:flex-1">
+						<FitContext.Provider value="bar">
+							<header class="flex min-h-14 items-center gap-row px-inset tablet:px-section">
+								<Show when={props.back}>
+									{(back) => (
+										<A
+											href={back()}
+											aria-label={words.back}
+											class={circle("bar")}
+										>
+											<ChevronLeft class={glyph("bar")} aria-hidden="true" />
+										</A>
+									)}
+								</Show>
+								{/* The compact title repeats the h1 for the eye once it has
 					    scrolled away; the h1 stays the accessible title. */}
-					<span
-						aria-hidden="true"
-						class={cn(
-							text({ role: "heading" }),
-							"min-w-0 flex-1 truncate transition-opacity duration-(--duration-base) ease-ui",
-							compact() ? "opacity-100" : "opacity-0",
-						)}
-					>
-						{props.title}
-					</span>
-					<For each={shown()}>
-						{(action) => (
-							<IconButton
-								icon={action.icon}
-								label={action.label}
-								onAct={action.onAct}
-							/>
-						)}
-					</For>
-					<Show when={rest().length > 0}>
-						<Circle
-							glyph={Ellipsis}
-							label={words.more}
-							onAct={() => setMore(true)}
-						/>
-					</Show>
-				</header>
-				<div class="flex min-h-0 flex-1 flex-col gap-section overflow-y-auto px-inset tablet:px-section">
-					<h1 ref={heading} class={text({ role: "title" })}>
-						{props.title}
-					</h1>
-					{props.children}
-				</div>
-				<Sheet open={more()} onClose={() => setMore(false)} title={props.title}>
-					<For each={rest()}>
-						{(action) => (
-							<ListRow
-								leading={{ icon: action.icon }}
-								title={action.label}
-								onOpen={() => {
-									setMore(false);
-									action.onAct();
-								}}
-							/>
-						)}
-					</For>
-				</Sheet>
-			</div>
+								<span
+									aria-hidden="true"
+									class={cn(
+										text({ role: "heading" }),
+										"min-w-0 flex-1 truncate transition-opacity duration-(--duration-base) ease-ui",
+										compact() ? "opacity-100" : "opacity-0",
+									)}
+								>
+									{props.title}
+								</span>
+								<For each={shown()}>
+									{(action) => (
+										<IconButton
+											icon={action.icon}
+											label={action.label}
+											onAct={action.onAct}
+										/>
+									)}
+								</For>
+								<Show when={rest().length > 0}>
+									<Circle
+										glyph={Ellipsis}
+										label={words.more}
+										onAct={() => setMore(true)}
+									/>
+								</Show>
+							</header>
+						</FitContext.Provider>
+						<div class="flex min-h-0 flex-1 flex-col overflow-y-auto px-inset pb-section tablet:px-section">
+							<div
+								class={cn(
+									"flex flex-1 shrink-0 flex-col gap-section *:shrink-0",
+									measured(whole()),
+								)}
+							>
+								<Show when={claimed() === undefined}>
+									<h1 ref={setOwn} class={text({ role: "title" })}>
+										{props.title}
+									</h1>
+								</Show>
+								{props.children}
+							</div>
+						</div>
+						<Sheet
+							open={more()}
+							onClose={() => setMore(false)}
+							title={props.title}
+						>
+							<For each={rest()}>
+								{(action) => (
+									<ListRow
+										leading={{ icon: action.icon }}
+										title={action.label}
+										onOpen={() => {
+											setMore(false);
+											action.onAct();
+										}}
+									/>
+								)}
+							</For>
+						</Sheet>
+					</div>
+				</MeasureContext.Provider>
+			</HeadingContext.Provider>
 		</BarContext.Provider>
 	);
 }

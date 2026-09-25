@@ -1,5 +1,6 @@
 import { type MessageAuthor, message, text } from "@fcalell/ui-core/variants";
 import { Show } from "solid-js";
+import { ageOf, momentOf, useClock } from "#lib/age.ts";
 import type { Closed } from "#lib/closed.ts";
 import { cn } from "#lib/cn.ts";
 import { LoadingRows } from "#lib/loading.tsx";
@@ -12,11 +13,13 @@ export type MessageProps = Closed & {
 	author: MessageAuthor;
 	name?: string;
 	body: string;
+	// An ISO moment, drawn as its age.
 	at?: string;
 	loading?: boolean;
 };
 
 export function Message(props: MessageProps) {
+	const clock = useClock();
 	return (
 		<Show when={!props.loading} fallback={<LoadingRows />}>
 			<article
@@ -44,7 +47,15 @@ export function Message(props: MessageProps) {
 					</Show>
 				</div>
 				<Show when={props.at}>
-					<p class={cn(text({ role: "meta" }), "tabular-nums")}>{props.at}</p>
+					{(at) => (
+						<time
+							datetime={at()}
+							title={momentOf(at())}
+							class={cn(text({ role: "meta" }), "tabular-nums")}
+						>
+							{ageOf(at(), clock())}
+						</time>
+					)}
 				</Show>
 			</article>
 		</Show>

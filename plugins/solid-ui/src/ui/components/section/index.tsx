@@ -14,8 +14,11 @@ import { cn } from "#lib/cn.ts";
 import { LoadingRows } from "#lib/loading.tsx";
 import { Count } from "../count/index.tsx";
 
-// A titled region of a screen: the label header with its count and act, the
-// space above it (`section`; `stack` when nested), folding.
+// A titled region of a screen: the label header with its count and act.
+// `folded` makes it fold, starting folded when true and open when false;
+// without it the header is a plain label. The space above it is its
+// container's gap; a nested section, which sits in its parent's tight
+// rhythm, takes `stack` above it.
 export type SectionProps = Closed & {
 	title: string;
 	count?: number;
@@ -31,34 +34,47 @@ const Nested = createContext(false);
 export function Section(props: SectionProps) {
 	const nested = useContext(Nested);
 	const [open, setOpen] = createSignal(!props.folded);
+	const foldable = () => props.folded !== undefined;
 	const id = createUniqueId();
+	const label = () => (
+		<>
+			<h2 id={id} class={cn(text({ role: "label" }), "truncate")}>
+				{props.title}
+			</h2>
+			<Show when={props.count !== undefined}>
+				<Count value={props.count ?? 0} />
+			</Show>
+		</>
+	);
 	return (
 		<Nested.Provider value={true}>
 			<section
 				aria-labelledby={id}
-				class={cn("flex flex-col gap-row", nested ? "pt-stack" : "pt-section")}
+				class={cn("flex flex-col gap-row", nested && "pt-stack")}
 			>
 				<div class="flex min-h-11 items-center justify-between gap-row">
-					<button
-						type="button"
-						aria-expanded={open()}
-						onClick={() => setOpen((value) => !value)}
-						class="flex min-w-0 cursor-pointer items-center gap-pair text-left"
+					<Show
+						when={foldable()}
+						fallback={
+							<div class="flex min-w-0 items-center gap-pair">{label()}</div>
+						}
 					>
-						<h2 id={id} class={cn(text({ role: "label" }), "truncate")}>
-							{props.title}
-						</h2>
-						<Show when={props.count !== undefined}>
-							<Count value={props.count ?? 0} />
-						</Show>
-						<ChevronDown
-							class={cn(
-								"size-4 shrink-0 text-ink-faint transition-transform duration-(--duration-base) ease-ui",
-								open() || "-rotate-90",
-							)}
-							aria-hidden="true"
-						/>
-					</button>
+						<button
+							type="button"
+							aria-expanded={open()}
+							onClick={() => setOpen((value) => !value)}
+							class="flex min-h-11 min-w-0 cursor-pointer items-center gap-pair self-stretch text-left"
+						>
+							{label()}
+							<ChevronDown
+								class={cn(
+									"size-4 shrink-0 text-ink-faint transition-transform duration-(--duration-base) ease-ui",
+									open() || "-rotate-90",
+								)}
+								aria-hidden="true"
+							/>
+						</button>
+					</Show>
 					<Show when={props.act}>
 						{(act) => (
 							<button

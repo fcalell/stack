@@ -15,6 +15,8 @@ export type DefinitionValue =
 
 // A labelled fact in a group: label and description left, the value or the
 // in-place control right. `copyable` puts a copy act beside a string value.
+// A value longer than its side wraps inside it, at any character, so a key
+// or an address never runs under the label.
 export type DefinitionRowProps = Closed & {
 	label: string;
 	description?: string;
@@ -27,8 +29,10 @@ export type DefinitionRowProps = Closed & {
 
 const COPIED_MS = 2000;
 
+// The row's vertical padding is given to the act, so its 44 px hit area
+// leaves the row as tall as one with no act.
 const ACT =
-	"min-h-11 shrink-0 cursor-pointer px-row font-medium text-tint disabled:text-ink-faint";
+	"-my-stack min-h-11 shrink-0 cursor-pointer px-row font-medium text-tint disabled:text-ink-faint";
 
 function isStatus(
 	value: DefinitionValue,
@@ -56,14 +60,14 @@ export function DefinitionRow(props: DefinitionRowProps) {
 	};
 	const body = () => (
 		<>
-			<span class="flex min-w-0 flex-1 flex-col">
+			<span class="flex min-w-0 flex-1 basis-2/5 flex-col">
 				<span class={text({ role: "body" })}>{props.label}</span>
 				<Show when={props.description}>
 					<span class={text({ role: "meta" })}>{props.description}</span>
 				</Show>
 			</span>
 			<Show when={props.value !== undefined}>
-				<span class="flex shrink-0 items-center gap-row">
+				<span class="flex min-w-0 max-w-3/5 items-center justify-end gap-row text-right wrap-anywhere">
 					<Switch fallback={props.value as JSX.Element}>
 						<Match when={typeof props.value === "string" && props.value}>
 							{(value) => (

@@ -36,6 +36,13 @@ const marked = new Marked({
 			const title = token.title ? ` title="${escapeHtml(token.title)}"` : "";
 			return `<a href="${href}"${title} target="_blank" rel="noopener noreferrer">${text}</a>`;
 		},
+		// A fence scrolls sideways, so it takes focus for the keyboard.
+		code(token) {
+			const lang = token.lang?.match(/^\S+/)?.[0];
+			const cls = lang ? ` class="language-${escapeHtml(lang)}"` : "";
+			const body = `${token.text.replace(/\n$/, "")}\n`;
+			return `<pre tabindex="0"><code${cls}>${token.escaped ? body : escapeHtml(body)}</code></pre>\n`;
+		},
 		image(token) {
 			const src = safeUrl(token.href);
 			if (src === null) return escapeHtml(token.text);
