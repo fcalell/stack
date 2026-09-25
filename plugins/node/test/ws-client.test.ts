@@ -79,3 +79,27 @@ test("subscriptions sharing a channel each get its frames, and the channel is le
 		globalThis.WebSocket = real;
 	}
 });
+
+test("reconnect opens a closed socket at once and resubscribes, and does nothing while one is open", () => {
+	const real = globalThis.WebSocket;
+	globalThis.WebSocket = FakeSocket as unknown as typeof WebSocket;
+	try {
+		const client = createWsClient({ url: "ws://test/ws" });
+		const first = FakeSocket.last as FakeSocket;
+		client.subscribe(inbox, { onMessage: {} });
+		first.emit("open");
+		client.reconnect();
+		assert.equal(FakeSocket.last, first, "an open socket is kept");
+
+		// Closed: the backoff would wait; reconnect opens a socket now.
+		first.emit("close");
+		client.reconnect();
+		const second = FakeSocket.last as FakeSocket;
+		assert.notEqual(second, first);
+		second.emit("open");
+		assert.deepEqual(second.sent, [{ t: "sub", ch: "inbox" }]);
+		client.close();
+	} finally {
+		globalThis.WebSocket = real;
+	}
+});

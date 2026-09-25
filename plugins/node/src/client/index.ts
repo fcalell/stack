@@ -21,6 +21,10 @@ export interface WsClient {
 		def: ChannelDef<S, C>,
 		handlers: SubscriptionHandlers<S>,
 	): Subscription<C>;
+	// Tries the socket now, skipping what is left of the backoff; a no-op
+	// while it is open or opening. A retry that keeps every draft, where a
+	// reload would lose them.
+	reconnect(): void;
 	close(): void;
 }
 
@@ -174,6 +178,15 @@ export function createWsClient(options: { url?: string } = {}): WsClient {
 					}
 				},
 			};
+		},
+		reconnect() {
+			if (closed || socket) return;
+			if (reconnectTimer) {
+				clearTimeout(reconnectTimer);
+				reconnectTimer = null;
+			}
+			attempt = 0;
+			connect();
 		},
 		close() {
 			closed = true;
