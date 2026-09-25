@@ -1,3 +1,4 @@
+import { ApiError } from "@fcalell/plugin-api/error";
 import { handleMutationSuccess } from "@fcalell/plugin-api/query-invalidation";
 import {
 	useInfiniteQuery as _useInfiniteQuery,
@@ -201,9 +202,17 @@ function useMutation<TVars, TData>(
 				}
 				const suppressed = opts.onError?.(error, variables);
 				if (!suppressed) {
-					const message = opts.errorMessage ?? "Operation failed.";
-					// The message is for the person: a toast, which the Shell
-					// draws, unless the caller shows it its own way.
+					// A refusal the procedure phrased (an ApiError with a code of
+					// its own) is shown as phrased; the caller's message covers
+					// the rest, as a toast the Shell draws, unless the caller
+					// shows it its own way.
+					const phrased =
+						error instanceof ApiError &&
+						error.code !== "INTERNAL_SERVER_ERROR" &&
+						error.message
+							? error.message
+							: undefined;
+					const message = phrased ?? opts.errorMessage ?? "Operation failed.";
 					(opts.errorHandler ?? toast)(message);
 				}
 			},
