@@ -4,8 +4,10 @@ import type { Closed } from "#lib/closed.ts";
 import { cn } from "#lib/cn.ts";
 
 // A labelled track: a thin bar inside a 44 px hit area, the value drawn
-// beside the label. The thumb is the one control; no native input sits in
-// it, since the value reaches the consumer through `onChange`.
+// beside the label in its `unit`, an Intl unit identifier such as
+// "percent", formatted for the browser's locale. The thumb is the one
+// control; no native input sits in it, since the value reaches the consumer
+// through `onChange`.
 export type SliderProps = Closed & {
 	label: string;
 	value: number;
@@ -13,6 +15,7 @@ export type SliderProps = Closed & {
 	min?: number;
 	max?: number;
 	step?: number;
+	unit?: string;
 };
 
 export function Slider(props: SliderProps) {
@@ -23,6 +26,12 @@ export function Slider(props: SliderProps) {
 			minValue={props.min ?? 0}
 			maxValue={props.max ?? 100}
 			step={props.step ?? 1}
+			getValueLabel={({ values }) =>
+				new Intl.NumberFormat(
+					undefined,
+					props.unit ? { style: "unit", unit: props.unit } : {},
+				).format(values[0] ?? props.value)
+			}
 			class="flex w-full flex-col gap-pair"
 		>
 			<div class="flex items-center justify-between gap-row">

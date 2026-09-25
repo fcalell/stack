@@ -2,12 +2,13 @@ import { SCRIM, SHEET, text } from "@fcalell/ui-core/variants";
 import * as DialogPrimitive from "@kobalte/core/dialog";
 import { ChevronLeft, X } from "lucide-solid";
 import type { JSX } from "solid-js";
-import { Show } from "solid-js";
+import { createEffect, createSignal, createUniqueId, Show } from "solid-js";
 import { BarContext } from "#lib/bar.ts";
 import { Circle } from "#lib/circle.tsx";
 import type { Closed } from "#lib/closed.ts";
 import { cn } from "#lib/cn.ts";
 import { FitContext } from "#lib/fit.ts";
+import { TouchedContext } from "#lib/touched.ts";
 import { useWords } from "#lib/words.tsx";
 
 export interface SheetSubmit {
@@ -20,7 +21,9 @@ export interface SheetSubmit {
 // `submit` top right where a keyboard would cover a bar; a decision sheet
 // puts an `ActionBar` in its children instead, and the two exclude each
 // other. Content-tall from the bottom on the phone; centered at the sheet
-// width from tablet.
+// width from tablet. It opens with focus on its first field, else on its
+// close circle; a blocked submit says its reason once tapped or once a field
+// has taken input.
 export type SheetProps = Closed & {
 	open: boolean;
 	onClose: () => void;
@@ -32,8 +35,24 @@ export type SheetProps = Closed & {
 	children?: JSX.Element;
 };
 
+const FIELD = "input:not([type=hidden]), textarea";
+
 export function Sheet(props: SheetProps) {
 	const words = useWords();
+	const reason = createUniqueId();
+	let content: HTMLElement | undefined;
+	const [touched, setTouched] = createSignal(false);
+	const [tapped, setTapped] = createSignal(false);
+	const blocked = () => props.submit?.blocked !== undefined;
+	const said = () => blocked() && (tapped() || touched());
+	createEffect(() => {
+		if (props.open) return;
+		setTouched(false);
+		setTapped(false);
+	});
+	createEffect(() => {
+		if (!blocked()) setTapped(false);
+	});
 	return (
 		<DialogPrimitive.Root
 			open={props.open}
@@ -50,6 +69,14 @@ export function Sheet(props: SheetProps) {
 				/>
 				<div class="fixed inset-0 z-50 flex items-end justify-center tablet:items-center tablet:p-section">
 					<DialogPrimitive.Content
+						onInput={() => setTouched(true)}
+						ref={content}
+						onOpenAutoFocus={(event) => {
+							const field = content?.querySelector<HTMLElement>(FIELD);
+							if (!field) return;
+							event.preventDefault();
+							field.focus();
+						}}
 						class={cn(
 							SHEET,
 							"flex max-h-[90dvh] w-full flex-col overflow-hidden outline-none tablet:max-w-sheet tablet:shadow-sheet",
@@ -57,71 +84,80 @@ export function Sheet(props: SheetProps) {
 						)}
 					>
 						<BarContext.Provider value="flow">
-							<FitContext.Provider value="bar">
-								<header class="flex min-h-14 items-center gap-row px-inset">
-									<Show
-										when={props.back}
-										fallback={
-											<Circle
-												glyph={X}
-												label={words.close}
-												onAct={props.onClose}
-											/>
-										}
+							<TouchedContext.Provider value={touched}>
+								<FitContext.Provider value="bar">
+									<header class="flex min-h-14 items-center gap-row px-inset">
+										<Show
+											when={props.back}
+											fallback={
+												<Circle
+													glyph={X}
+													label={words.close}
+													onAct={props.onClose}
+												/>
+											}
+										>
+											{(back) => (
+												<Circle
+													glyph={ChevronLeft}
+													label={words.back}
+													onAct={back()}
+												/>
+											)}
+										</Show>
+										<DialogPrimitive.Title
+											class={cn(
+												text({ role: "heading" }),
+												"min-w-0 flex-1 truncate",
+											)}
+										>
+											{props.title}
+										</DialogPrimitive.Title>
+										<Show when={props.submit}>
+											{(submit) => (
+												<button
+													type="button"
+													aria-disabled={blocked() || undefined}
+													aria-describedby={said() ? reason : undefined}
+													onClick={() => {
+														if (blocked()) setTapped(true);
+														else submit().onAct();
+													}}
+													class={cn(
+														text({ role: "body" }),
+														"min-h-11 shrink-0 cursor-pointer px-row font-medium text-tint aria-disabled:cursor-not-allowed aria-disabled:text-ink-faint",
+													)}
+												>
+													{submit().label}
+												</button>
+											)}
+										</Show>
+									</header>
+								</FitContext.Provider>
+								<Show when={said()}>
+									<p
+										id={reason}
+										class={cn(text({ role: "meta" }), "px-inset text-right")}
 									>
-										{(back) => (
-											<Circle
-												glyph={ChevronLeft}
-												label={words.back}
-												onAct={back()}
-											/>
-										)}
-									</Show>
-									<DialogPrimitive.Title
-										class={cn(
-											text({ role: "heading" }),
-											"min-w-0 flex-1 truncate",
-										)}
+										{props.submit?.blocked}
+									</p>
+								</Show>
+								<Show when={props.description}>
+									<DialogPrimitive.Description
+										class={cn(text({ role: "meta" }), "px-inset pb-stack")}
 									>
-										{props.title}
-									</DialogPrimitive.Title>
-									<Show when={props.submit}>
-										{(submit) => (
-											<button
-												type="button"
-												disabled={submit().blocked !== undefined}
-												onClick={() => submit().onAct()}
-												class={cn(
-													text({ role: "body" }),
-													"min-h-11 shrink-0 cursor-pointer px-row font-medium text-tint disabled:text-ink-faint",
-												)}
-											>
-												{submit().label}
-											</button>
-										)}
-									</Show>
-								</header>
-							</FitContext.Provider>
-							<Show when={props.submit?.blocked}>
-								<p class={cn(text({ role: "meta" }), "px-inset text-right")}>
-									{props.submit?.blocked}
-								</p>
-							</Show>
-							<Show when={props.description}>
-								<DialogPrimitive.Description
-									class={cn(text({ role: "meta" }), "px-inset pb-stack")}
-								>
-									{props.description}
-								</DialogPrimitive.Description>
-							</Show>
-							<div class="flex min-h-0 flex-1 flex-col gap-stack overflow-y-auto px-inset pb-[max(env(safe-area-inset-bottom),var(--spacing-inset))] *:shrink-0">
-								{props.children}
-							</div>
-							<Show when={props.foot}>
-								<div class="px-inset pb-[max(env(safe-area-inset-bottom),var(--spacing-inset))]">
-									{props.foot}
+										{props.description}
+									</DialogPrimitive.Description>
+								</Show>
+								<div class="flex min-h-0 flex-1 flex-col gap-stack overflow-y-auto px-inset pb-[max(env(safe-area-inset-bottom),var(--spacing-inset))] *:shrink-0">
+									{props.children}
 								</div>
-							</Show>
+								<Show when={props.foot}>
+									<div class="px-inset pb-[max(env(safe-area-inset-bottom),var(--spacing-inset))]">
+										{props.foot}
+									</div>
+								</Show>
+							</TouchedContext.Provider>
 						</BarContext.Provider>
 					</DialogPrimitive.Content>
 				</div>

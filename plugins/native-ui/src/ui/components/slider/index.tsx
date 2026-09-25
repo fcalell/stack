@@ -21,11 +21,13 @@ export interface SliderProps extends Closed {
 	min: number;
 	max: number;
 	step?: number;
+	unit?: string;
 }
 
 const THUMB = 28;
 
-// A 44 px track with the value drawn beside it.
+// A 44 px track with the value drawn beside it in its `unit`, an Intl unit
+// identifier such as "percent", formatted for the device's locale.
 export function Slider({
 	label,
 	value,
@@ -33,6 +35,7 @@ export function Slider({
 	min,
 	max,
 	step,
+	unit,
 }: SliderProps) {
 	const [width, setWidth] = useState(0);
 	const latest = useRef({ width, min, max, step, onChange });
@@ -63,7 +66,12 @@ export function Slider({
 		<View className="gap-pair">
 			<View className="flex-row items-center justify-between gap-row">
 				<RNText className={text({ role: "body" })}>{label}</RNText>
-				<RNText className={text({ role: "meta" })}>{value}</RNText>
+				<RNText className={text({ role: "meta" })}>
+					{new Intl.NumberFormat(
+						undefined,
+						unit ? { style: "unit", unit } : {},
+					).format(value)}
+				</RNText>
 			</View>
 			<View
 				accessibilityRole="adjustable"

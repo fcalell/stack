@@ -5,10 +5,10 @@ import {
 	statusContentTone,
 } from "@fcalell/ui-core/variants";
 import {
+	Circle,
 	CircleAlert,
 	CircleCheck,
 	CircleDot,
-	CirclePause,
 	CircleX,
 	Clock,
 	type LucideIcon,
@@ -31,7 +31,7 @@ const MARK: Record<StatusState, LucideIcon> = {
 	done: CircleCheck,
 	attention: CircleAlert,
 	failed: CircleX,
-	idle: CirclePause,
+	idle: Circle,
 };
 
 // An icon and a word; the color follows the state. With `onOpen` it is a chip.

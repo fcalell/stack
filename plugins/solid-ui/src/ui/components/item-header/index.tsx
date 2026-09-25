@@ -14,7 +14,7 @@ export type Fact =
 	| { status: StatusState; label?: string; onOpen?: () => void };
 
 // An id over a bold title, properties below: the overline's parts joined by a
-// middle dot, the title wrapping to two lines, a row of statuses and meta.
+// middle dot, the title wrapping in full, a row of statuses and meta.
 // Inside a `Screen` the title is the page's one heading: the header claims
 // it from the screen, loading included, so the title never draws twice.
 export type ItemHeaderProps = Closed & {
@@ -53,10 +53,7 @@ export function ItemHeader(props: ItemHeaderProps) {
 						<Parts parts={props.overline ?? []} cut />
 					</p>
 				</Show>
-				<h1
-					ref={setHeading}
-					class={cn(text({ role: "title" }), "line-clamp-2")}
-				>
+				<h1 ref={setHeading} class={text({ role: "title" })}>
 					<Parts parts={[props.title]} />
 				</h1>
 				<Show when={props.facts?.length}>

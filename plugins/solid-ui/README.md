@@ -68,13 +68,13 @@ own three-row form. `Part` is a string or `{ quoted }`, drawn in typographic quo
 | --- | --- | --- |
 | `Text` | `role`, children | the only way to set type; ink and family follow the role |
 | `Icon` | `name` | from the consumer's icon set, sized by the role around it |
-| `Button` | `act` (`primary` \| `secondary` \| `destructive`), `label`, `onAct`, `loading`, `blocked` | a pill; `blocked` is the reason under it |
+| `Button` | `act` (`primary` \| `secondary` \| `destructive`), `label`, `onAct`, `loading`, `blocked` | a pill; `blocked` is the reason, under it once tapped or once its form or sheet has taken input |
 | `IconButton` | `icon`, `label`, `onAct` | a 44 px circle; the label is read aloud |
 | `Count` | `value` | a number in a pill |
 | `Status` | `state`, `label`, `onOpen` | a glyph and the state's word; a chip with `onOpen` |
 | `Input` | `kind` (`text` \| `search` \| `secret` \| `code` \| `number`), `value`, `onChange`, `placeholder`, `act` | `search` is a pill; `act` sits inside the field |
 | `TextArea` | `kind` (`prose` \| `source`), `value`, `onChange`, `placeholder`, `budget` | `source` is mono; `budget` draws a word counter |
-| `Slider` | `label`, `value`, `onChange`, `min`, `max`, `step` | the value beside the thumb |
+| `Slider` | `label`, `value`, `onChange`, `min`, `max`, `step`, `unit` | the value beside the label, in `unit` (an Intl unit identifier such as `percent`) |
 | `Switch`, `Checkbox` | `checked`, `onChange`, `label` | the label is the hit line |
 | `Spinner` | | in the ink around it |
 | `Avatar` | `name`, `src` | initials on the ladder fill picked by the name |

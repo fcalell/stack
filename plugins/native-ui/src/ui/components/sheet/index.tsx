@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Circle } from "../../lib/circle";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
+import { TouchedContext } from "../../lib/touched";
 import { useWords } from "../../lib/words";
 
 export interface SheetSubmit {
@@ -69,11 +70,16 @@ export function Sheet({
 	const insets = useSafeAreaInsets();
 	const ref = useRef<BottomSheetModal>(null);
 	const [tall, setTall] = useState(false);
+	const [touched, setTouched] = useState(false);
 	const grow = useCallback(() => setTall(true), []);
+	const touch = useCallback(() => setTouched(true), []);
 	const submit = "submit" in rest ? rest.submit : undefined;
 	useEffect(() => {
 		if (open) ref.current?.present();
-		else ref.current?.dismiss();
+		else {
+			ref.current?.dismiss();
+			setTouched(false);
+		}
 	}, [open]);
 	const snapPoints = useMemo(() => (tall ? FULL : undefined), [tall]);
 	return (
@@ -87,45 +93,66 @@ export function Sheet({
 		>
 			<BottomSheetView>
 				<GrowContext.Provider value={grow}>
-					<View
-						style={{ paddingBottom: insets.bottom + 8 }}
-						className={cn(SHEET, "gap-stack px-inset pt-stack shadow-sheet")}
-					>
-						<View className="min-h-11 flex-row items-center gap-row">
-							{back ? (
-								<Circle icon={ChevronLeft} label={words.back} onAct={back} />
-							) : (
-								<Circle icon={X} label={words.close} onAct={onClose} />
-							)}
-							<RNText
-								numberOfLines={1}
-								className={cn(text({ role: "heading" }), "flex-1")}
-							>
-								{title}
-							</RNText>
-							{submit ? <SubmitAct submit={submit} /> : null}
+					<TouchedContext.Provider value={{ touched, touch }}>
+						<View
+							style={{ paddingBottom: insets.bottom + 8 }}
+							className={cn(SHEET, "gap-stack px-inset pt-stack shadow-sheet")}
+						>
+							<View className="min-h-11 flex-row items-center gap-row">
+								{back ? (
+									<Circle icon={ChevronLeft} label={words.back} onAct={back} />
+								) : (
+									<Circle icon={X} label={words.close} onAct={onClose} />
+								)}
+								<RNText
+									numberOfLines={1}
+									className={cn(text({ role: "heading" }), "flex-1")}
+								>
+									{title}
+								</RNText>
+								{submit ? (
+									<SubmitAct submit={submit} touched={touched} />
+								) : null}
+							</View>
+							{description ? (
+								<RNText className={text({ role: "meta" })}>
+									{description}
+								</RNText>
+							) : null}
+							{children}
+							{foot}
 						</View>
-						{description ? (
-							<RNText className={text({ role: "meta" })}>{description}</RNText>
-						) : null}
-						{children}
-						{foot}
-					</View>
+					</TouchedContext.Provider>
 				</GrowContext.Provider>
 			</BottomSheetView>
 		</BottomSheetModal>
 	);
 }
 
-function SubmitAct({ submit }: { submit: SheetSubmit }) {
-	const muted = submit.blocked !== undefined || submit.loading;
+// A blocked submit says its reason under it once pressed or once a field in
+// the sheet has taken input.
+function SubmitAct({
+	submit,
+	touched,
+}: {
+	submit: SheetSubmit;
+	touched: boolean;
+}) {
+	const blocked = submit.blocked !== undefined;
+	const muted = blocked || submit.loading;
+	const [pressed, setPressed] = useState(false);
+	useEffect(() => {
+		if (!blocked) setPressed(false);
+	}, [blocked]);
+	const said = blocked && (pressed || touched);
 	return (
 		<View className="items-end gap-pair">
 			<Pressable
 				accessibilityRole="button"
 				accessibilityState={{ disabled: muted }}
-				disabled={muted}
-				onPress={submit.onAct}
+				accessibilityHint={said ? submit.blocked : undefined}
+				disabled={submit.loading}
+				onPress={() => (blocked ? setPressed(true) : submit.onAct())}
 				className="min-h-11 justify-center"
 			>
 				<RNText
@@ -138,6 +165,9 @@ function SubmitAct({ submit }: { submit: SheetSubmit }) {
 					{submit.label}
 				</RNText>
 			</Pressable>
+			{said ? (
+				<RNText className={text({ role: "meta" })}>{submit.blocked}</RNText>
+			) : null}
 		</View>
 	);
 }

@@ -84,7 +84,7 @@ export function Picker(props: PickerProps) {
 			class={cn(
 				GROUP,
 				text({ role: "body" }),
-				"inline-flex min-h-11 cursor-pointer items-center gap-row rounded-full px-4 transition-colors duration-(--duration-fast) ease-ui hover:bg-edge focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-tint",
+				"inline-flex min-h-11 max-w-full cursor-pointer items-center gap-row rounded-full px-4 transition-colors duration-(--duration-fast) ease-ui hover:bg-edge focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-tint",
 			)}
 		>
 			<span class="truncate">{current()?.label ?? props.label}</span>
@@ -100,7 +100,11 @@ export function Picker(props: PickerProps) {
 					onOpenChange={setOpen}
 					placement="bottom-start"
 				>
-					<PopoverPrimitive.Anchor>{control}</PopoverPrimitive.Anchor>
+					{/* The anchor wraps the control, so it carries the bound that
+					    lets a long value truncate inside a row. */}
+					<PopoverPrimitive.Anchor class="min-w-0 max-w-full">
+						{control}
+					</PopoverPrimitive.Anchor>
 					<PopoverPrimitive.Portal>
 						<PopoverPrimitive.Content
 							class={cn(

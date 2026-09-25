@@ -14,7 +14,9 @@ export interface EmptyStateProps extends Closed {
 }
 
 // One sentence and the way to make the first one; with a title it centers as
-// a first screen. What the screen still has to show goes in the children.
+// a first screen. Alone in a body it centres in the space the body leaves;
+// what the screen still has to show goes in the children, and then it stays
+// at the top above them.
 export function EmptyState({
 	title,
 	sentence,
@@ -26,7 +28,7 @@ export function EmptyState({
 			accessibilityRole="summary"
 			className={cn(
 				"items-center gap-stack py-room",
-				title !== undefined && "flex-1 justify-center",
+				(title !== undefined || !children) && "flex-1 justify-center",
 			)}
 		>
 			{title !== undefined ? (

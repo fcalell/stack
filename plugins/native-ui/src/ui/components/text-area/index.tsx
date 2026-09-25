@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Text as RNText, TextInput, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
+import { useTouched } from "../../lib/touched";
 import { useSheetGrow } from "../sheet";
 
 export interface TextAreaProps extends Closed {
@@ -27,6 +28,7 @@ export function TextArea({
 	budget,
 }: TextAreaProps) {
 	const [focused, setFocused] = useState(false);
+	const { touch } = useTouched();
 	const source = kind === "source";
 	const grow = useSheetGrow();
 	useEffect(() => grow?.(), [grow]);
@@ -46,7 +48,10 @@ export function TextArea({
 				)}
 				placeholderTextColorClassName={FIELD_PLACEHOLDER}
 				value={value}
-				onChangeText={onChange}
+				onChangeText={(next) => {
+					touch();
+					onChange(next);
+				}}
 				placeholder={placeholder}
 				autoCapitalize={source ? "none" : "sentences"}
 				autoCorrect={!source}

@@ -9,6 +9,7 @@ import { useState } from "react";
 import { Pressable, Text as RNText, TextInput, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
+import { useTouched } from "../../lib/touched";
 import { useWords } from "../../lib/words";
 
 export type InputKind = "text" | "search" | "secret" | "code" | "number";
@@ -34,6 +35,7 @@ const SURFACE: Record<InputKind, FieldKind> = {
 export function Input({ kind, value, onChange, placeholder, act }: InputProps) {
 	const words = useWords();
 	const [focused, setFocused] = useState(false);
+	const { touch } = useTouched();
 	const which = kind ?? "text";
 	return (
 		<View
@@ -49,7 +51,10 @@ export function Input({ kind, value, onChange, placeholder, act }: InputProps) {
 				)}
 				placeholderTextColorClassName={FIELD_PLACEHOLDER}
 				value={value}
-				onChangeText={onChange}
+				onChangeText={(next) => {
+					touch();
+					onChange(next);
+				}}
 				placeholder={
 					placeholder ?? (which === "search" ? words.search : undefined)
 				}

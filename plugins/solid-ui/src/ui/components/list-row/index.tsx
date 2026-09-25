@@ -12,7 +12,6 @@ import { useInColumns } from "#lib/columns.ts";
 import { useIcon } from "#lib/icons.tsx";
 import { Parts } from "#lib/parts.tsx";
 import { StatusGlyph } from "#lib/status-glyph.tsx";
-import { Count } from "../count/index.tsx";
 
 export type Leading = { icon: string } | { status: StatusState };
 // `age` is an ISO moment, drawn as its age and kept current.
@@ -119,8 +118,10 @@ export function ListRow(props: ListRowProps) {
 					<Switch>
 						<Match when={"count" in trailing() && trailing()}>
 							{(count) => (
-								<span class="shrink-0">
-									<Count value={(count() as { count: number }).count} />
+								<span
+									class={cn(text({ role: "meta" }), "shrink-0 tabular-nums")}
+								>
+									{(count() as { count: number }).count}
 								</span>
 							)}
 						</Match>

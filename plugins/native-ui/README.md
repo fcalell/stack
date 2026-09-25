@@ -84,13 +84,13 @@ sidebar. Pull to refresh is the phone's.
 | --- | --- |
 | `Text` | `role` (`display`, `title`, `heading`, `body`, `meta`, `label`, `mono`), children |
 | `Icon` | `name`, from the app's icon set |
-| `Button` | `act` (`primary`, `secondary`, `destructive`), `label`, `onAct`, `loading`, `blocked` (the reason, drawn under it) |
+| `Button` | `act` (`primary`, `secondary`, `destructive`), `label`, `onAct`, `loading`, `blocked` (the reason, drawn under it once pressed or once its form or sheet has taken input) |
 | `IconButton` | `icon`, `label` (read aloud), `onAct` |
 | `Count` | `value` |
 | `Status` | `state` (`active`, `waiting`, `done`, `attention`, `failed`, `idle`), `label`, `onOpen` |
 | `Input` | `kind` (`text`, `search`, `secret`, `code`, `number`), `value`, `onChange`, `placeholder`, `act` |
 | `TextArea` | `kind` (`prose`, `source`), `value`, `onChange`, `placeholder`, `budget` (words) |
-| `Slider` | `label`, `value`, `onChange`, `min`, `max`, `step` |
+| `Slider` | `label`, `value`, `onChange`, `min`, `max`, `step`, `unit` (an Intl unit identifier such as `percent`) |
 | `Switch`, `Checkbox` | `checked`, `onChange`, `label` |
 | `Spinner` | none |
 | `Avatar` | `name`, `src` |

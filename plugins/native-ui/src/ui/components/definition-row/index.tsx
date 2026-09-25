@@ -35,8 +35,8 @@ function isStatus(
 	return typeof value === "object" && value !== null && "status" in value;
 }
 
-// A labelled fact: label and description left, the value or the in-place
-// control right.
+// A labelled fact: the label left, the value or the in-place control right,
+// and the description under both at the row's width.
 export function DefinitionRow({
 	label,
 	description,
@@ -54,31 +54,37 @@ export function DefinitionRow({
 			onPress={open}
 			className={cn(
 				row({ state: "rest" }),
-				"flex-row items-center",
+				"justify-center gap-pair",
 				open && "active:bg-edge",
 			)}
 		>
-			<View className="min-w-0 flex-1 gap-pair">
+			<View className="flex-row items-center gap-stack">
 				<RNText
-					className={cn(text({ role: "body" }), textStrong({ role: "body" }))}
+					className={cn(
+						text({ role: "body" }),
+						textStrong({ role: "body" }),
+						"flex-1",
+					)}
 				>
 					{label}
 				</RNText>
-				{description ? (
-					<RNText className={text({ role: "meta" })}>{description}</RNText>
+				{typeof value === "string" ? (
+					<RNText className={cn(text({ role: "meta" }), "shrink text-right")}>
+						{value}
+					</RNText>
+				) : isStatus(value) ? (
+					<Status state={value.status} label={value.label} />
+				) : (
+					value
+				)}
+				{copyable && typeof value === "string" ? (
+					<CopyAct value={value} />
 				) : null}
+				{act ? <RowAct act={act} /> : null}
 			</View>
-			{typeof value === "string" ? (
-				<RNText className={cn(text({ role: "meta" }), "shrink text-right")}>
-					{value}
-				</RNText>
-			) : isStatus(value) ? (
-				<Status state={value.status} label={value.label} />
-			) : (
-				value
-			)}
-			{copyable && typeof value === "string" ? <CopyAct value={value} /> : null}
-			{act ? <RowAct act={act} /> : null}
+			{description ? (
+				<RNText className={text({ role: "meta" })}>{description}</RNText>
+			) : null}
 		</Pressable>
 	);
 }

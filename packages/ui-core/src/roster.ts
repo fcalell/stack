@@ -25,7 +25,7 @@ export const ROSTER: Record<Layer, Record<string, readonly string[]>> = {
 		Status: ["state", "label", "onOpen"],
 		Input: ["kind", "value", "onChange", "placeholder", "act"],
 		TextArea: ["kind", "value", "onChange", "placeholder", "budget"],
-		Slider: ["label", "value", "onChange", "min", "max", "step"],
+		Slider: ["label", "value", "onChange", "min", "max", "step", "unit"],
 		Switch: ["checked", "onChange", "label"],
 		Checkbox: ["checked", "onChange", "label"],
 		Spinner: [],

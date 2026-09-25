@@ -6,6 +6,7 @@ import { Text as RNText, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Circle } from "../../lib/circle";
 import type { Closed } from "../../lib/closed";
+import { cn } from "../../lib/cn";
 import { Scroll } from "../../lib/hosts";
 import { MoreSheet } from "../../lib/more";
 import { useWords } from "../../lib/words";
@@ -24,8 +25,9 @@ export interface PlaceProps extends Closed {
 // At most two circles in the top bar; the rest open under a more circle.
 const BAR_ACTIONS = 2;
 
-// A place in the shell: the large title in the body, the side inset, the
-// scroll, and the primary act as a pill floating above the tab bar.
+// A place in the shell: the large title on the top bar's row beside its
+// circles, the side inset, the scroll, and the primary act as a pill
+// floating above the tab bar.
 export function Place({
 	title,
 	actions,
@@ -47,10 +49,17 @@ export function Place({
 		<View className="flex-1 bg-canvas">
 			<Scroll
 				className="flex-1"
-				contentContainerClassName="gap-section px-inset pb-room"
+				contentContainerClassName="grow gap-section px-inset pb-room"
 				contentContainerStyle={{ paddingTop: insets.top }}
 			>
-				<View className="min-h-11 flex-row items-center justify-end gap-row">
+				<View className="min-h-11 flex-row items-center gap-row">
+					<RNText
+						accessibilityRole="header"
+						numberOfLines={1}
+						className={cn(text({ role: "title" }), "flex-1")}
+					>
+						{title}
+					</RNText>
 					{shown.map((action) => (
 						<IconButton key={action.label} {...action} />
 					))}
@@ -62,7 +71,6 @@ export function Place({
 						/>
 					) : null}
 				</View>
-				<RNText className={text({ role: "title" })}>{title}</RNText>
 				{children}
 			</Scroll>
 			{act ? (

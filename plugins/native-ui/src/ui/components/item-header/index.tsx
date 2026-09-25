@@ -1,7 +1,9 @@
 import type { Part, StatusState } from "@fcalell/ui-core/descriptors";
 import { text } from "@fcalell/ui-core/variants";
+import { useEffect } from "react";
 import { Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
+import { useHeadingClaim } from "../../lib/heading";
 import { LoadingRows } from "../../lib/loading";
 import { joinParts, META_CUT, partText } from "../../lib/parts";
 import { Status } from "../status";
@@ -24,13 +26,20 @@ function factKey(fact: Fact): string {
 		: partText(fact);
 }
 
-// An item's head: an overline over a bold title, the facts in a row below.
+// An item's head: an overline over a bold title wrapping in full, the facts
+// in a row below. Inside a `Screen` the title is the page's heading: the
+// header claims it, loading included, so the title never draws twice.
 export function ItemHeader({
 	overline,
 	title,
 	facts,
 	loading,
 }: ItemHeaderProps) {
+	const claim = useHeadingClaim();
+	useEffect(() => {
+		claim?.(true);
+		return () => claim?.(false);
+	}, [claim]);
 	if (loading) return <LoadingRows />;
 	return (
 		<View className="gap-pair">
@@ -39,7 +48,7 @@ export function ItemHeader({
 					{joinParts(overline, META_CUT)}
 				</RNText>
 			) : null}
-			<RNText numberOfLines={2} className={text({ role: "title" })}>
+			<RNText accessibilityRole="header" className={text({ role: "title" })}>
 				{partText(title)}
 			</RNText>
 			{facts && facts.length > 0 ? (

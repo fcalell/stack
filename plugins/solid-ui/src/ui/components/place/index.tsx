@@ -13,9 +13,10 @@ import { IconButton } from "../icon-button/index.tsx";
 import { ListRow } from "../list-row/index.tsx";
 import { Sheet } from "../sheet/index.tsx";
 
-// A place of the shell: the large title in the body, at most two actions as
-// circles with the rest under a more circle, and the place's primary act as a
-// pill floating above the tab bar on the phone, in the top bar from tablet.
+// A place of the shell: the large title on the top bar's row, at most two
+// actions as circles beside it with the rest under a more circle, and the
+// place's primary act as a pill floating above the tab bar on the phone, in
+// the top bar from tablet.
 // The body is measured at the reading width, centred, unless a `Columns`
 // inside claims the whole column.
 export type PlaceProps = Closed & {
@@ -39,36 +40,45 @@ export function Place(props: PlaceProps) {
 		<MeasureContext.Provider value={setWhole}>
 			<div class="relative flex min-h-0 flex-1 flex-col">
 				<FitContext.Provider value="bar">
-					<header class="flex min-h-14 items-center justify-end gap-row px-inset tablet:px-section">
-						<Show when={props.act}>
-							{(act) => (
-								<div class="hidden tablet:block">
-									<Button
-										act="primary"
-										label={act().label}
-										onAct={act().onAct}
-										blocked={act().blocked}
-										loading={act().loading}
+					{/* The row is measured as the body is, so the title and the act
+				    stand over the content's edges. */}
+					<header class="flex min-h-14 px-inset tablet:px-section">
+						<div class={cn("flex items-center gap-row", measured(whole()))}>
+							<h1
+								class={cn(text({ role: "title" }), "min-w-0 flex-1 truncate")}
+							>
+								{props.title}
+							</h1>
+							<Show when={props.act}>
+								{(act) => (
+									<div class="hidden tablet:block">
+										<Button
+											act="primary"
+											label={act().label}
+											onAct={act().onAct}
+											blocked={act().blocked}
+											loading={act().loading}
+										/>
+									</div>
+								)}
+							</Show>
+							<For each={shown()}>
+								{(action) => (
+									<IconButton
+										icon={action.icon}
+										label={action.label}
+										onAct={action.onAct}
 									/>
-								</div>
-							)}
-						</Show>
-						<For each={shown()}>
-							{(action) => (
-								<IconButton
-									icon={action.icon}
-									label={action.label}
-									onAct={action.onAct}
+								)}
+							</For>
+							<Show when={rest().length + (props.more?.length ?? 0) > 0}>
+								<Circle
+									glyph={Ellipsis}
+									label={words.more}
+									onAct={() => setMore(true)}
 								/>
-							)}
-						</For>
-						<Show when={rest().length + (props.more?.length ?? 0) > 0}>
-							<Circle
-								glyph={Ellipsis}
-								label={words.more}
-								onAct={() => setMore(true)}
-							/>
-						</Show>
+							</Show>
+						</div>
 					</header>
 				</FitContext.Provider>
 				{/* On the phone the act floats over the body's end: the body keeps
@@ -82,11 +92,10 @@ export function Place(props: PlaceProps) {
 				>
 					<div
 						class={cn(
-							"flex shrink-0 flex-col gap-section *:shrink-0",
+							"flex flex-1 shrink-0 flex-col gap-section *:shrink-0",
 							measured(whole()),
 						)}
 					>
-						<h1 class={text({ role: "title" })}>{props.title}</h1>
 						{props.children}
 					</div>
 				</div>

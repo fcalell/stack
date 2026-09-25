@@ -138,6 +138,7 @@ const NATIVE_OVERLAYS = [
 	"gap-row",
 	"gap-section",
 	"gap-stack",
+	"grow",
 	"h-1",
 	"h-2",
 	"h-8",

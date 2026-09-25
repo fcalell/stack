@@ -2,11 +2,11 @@ import type { StatusState } from "@fcalell/ui-core/tokens";
 import { status } from "@fcalell/ui-core/variants";
 import {
 	Check,
+	Circle,
 	CircleAlert,
 	CircleDashed,
 	Clock,
 	type LucideIcon,
-	Minus,
 	X,
 } from "lucide-solid";
 import { Dynamic } from "solid-js/web";
@@ -20,7 +20,7 @@ export const STATUS_GLYPH: Record<StatusState, LucideIcon> = {
 	done: Check,
 	attention: CircleAlert,
 	failed: X,
-	idle: Minus,
+	idle: Circle,
 };
 
 export function StatusGlyph(props: { state: StatusState }) {

@@ -11,7 +11,8 @@ full-width bar, and nothing on the desktop is denser than on the phone.
 
 One control or one piece of text, no layout of their own; the same props on both platforms. An
 act prop is `act` on every molecule that takes one: a labelled text act, 44 px, with an optional
-`blocked` reason drawn under it. `Text` is the only way to set type and its ink follows the role.
+`blocked` reason, drawn under it once the act is tapped or its `Form` or `Sheet` has taken input,
+so an untouched form opens with its act disabled and silent. `Text` is the only way to set type and its ink follows the role.
 `Icon` is sized by the type role around it and named from the consumer's closed icon set, a
 runtime map the app provides. `Button` is a pill with words, full width in an action bar and its
 content's width in a toolbar, which the container decides; in a top bar (a `Place`'s, a
@@ -34,8 +35,8 @@ a list on the phone, or alone; the parent composes.
 
 | Molecule | Owns | Anchor |
 | --- | --- | --- |
-| `Place` | the large title in the body, the side inset, the scroll, the body measured at `widths.reading` and centred unless a `Columns` inside claims the column, the tab bar below on the phone, at most two actions as circles with the rest and the labelled `more` acts under the more circle, and `act` as a pill floating above the bar bottom right with room kept under the last row, in the top bar on the desktop | Linear Mobile's tab screens, Linear web's settings column |
-| `Screen` | the top bar with the back circle and the compact title once the page's heading scrolls away, the side inset, the scroll, the body measured at `widths.reading` and centred; its own large title until an `ItemHeader` inside claims the heading; its actions as at most two circles, the rest and the labelled `more` acts (an end, a removal: never a move) under the more circle; no tab bar; a pinned `ActionBar` or `MessageInput` child above the home indicator | Linear Mobile's issue page |
+| `Place` | the large title on the top bar's row beside its circles, the side inset, the scroll, the body measured at `widths.reading` and centred unless a `Columns` inside claims the column, the tab bar below on the phone, at most two actions as circles with the rest and the labelled `more` acts under the more circle, and `act` as a pill floating above the bar bottom right with room kept under the last row, in the top bar on the desktop | Linear Mobile's tab screens, Linear web's settings column |
+| `Screen` | the top bar with the back circle and the title compact and centred, the side inset, the scroll, the body measured at `widths.reading` and centred; an `ItemHeader` inside claims the heading, and the top bar's title then shows once it scrolls away; its actions as at most two circles, the rest and the labelled `more` acts (an end, a removal: never a move) under the more circle; no tab bar; a pinned `ActionBar` or `MessageInput` child above the home indicator | Linear Mobile's issue page, GitHub iOS's and Claude iOS's settings |
 | `Split` | the desktop's columns: `list` at `widths.list`, `main` filling, `pane` folding away under `breakpoints.wide` and pushing over `main` when it folds; under `breakpoints.desktop` one slot at a time, the deepest present. Composed per place by the consumer, never by the shell | Linear web |
 | `Section` | the `label` header at the 44 px floor, folding, the header's `Count`, its loading form; the space above it is its container's gap, and a nested section takes `stack` | Linear Mobile's sections |
 | `Group` | a `group`-filled box, `edge` hairlines between rows, rows inset `inset`; three row forms when loading | iOS grouped lists |
@@ -56,15 +57,15 @@ entry never sits over a pinned bar.
 
 | Molecule | Anatomy | Anchor |
 | --- | --- | --- |
-| `ListRow` | a leading icon or status, a one-line `body` medium title, one or two meta lines of parts joined by a middle dot, a trailing age (an ISO moment drawn as "4m", "3h", "2d" or a date in the browser's locale, kept current), count or value, marks read aloud, one act, `href` or `onOpen`; no chevron, no divider | Linear Mobile's inbox and issue rows |
-| `DefinitionRow` | label and description left, the value, a `Status` or an in-place control right, a long value wrapping inside its three fifths; `copyable` | Linear web's settings rows |
+| `ListRow` | a leading icon or status, a one-line `body` medium title, one or two meta lines of parts joined by a middle dot, a trailing age (an ISO moment drawn as "4m", "3h", "2d" or a date in the browser's locale, kept current), count or value in `meta`, marks read aloud, one act, `href` or `onOpen`; no chevron, no divider | Linear Mobile's inbox and issue rows |
+| `DefinitionRow` | the label left, the value, a `Status` or an in-place control right, and the description under both at the row's width; the value takes its own width up to three fifths and wraps inside it past that; `copyable` | Linear web's settings rows, Claude iOS's settings for the description |
 | `FormField` | label, description, one typing control, the error line | Linear web's settings rows, stacked |
-| `ItemHeader` | an overline of parts, a title that wraps to two lines and is the page's one heading inside a `Screen`, a row of facts, a status fact with `onOpen` a chip that opens its explanation | Linear Mobile's issue page |
+| `ItemHeader` | an overline of parts, a title that wraps in full and is the page's one heading inside a `Screen`, a row of facts, a status fact with `onOpen` a chip that opens its explanation | Linear Mobile's issue page |
 | `SegmentedControl` | a state the control rests on, never a trigger | Linear Mobile's Assigned, Created, Subscribed |
-| `Sheet` | a close circle left, the title, `submit` right where a keyboard would cover a bar, or an `ActionBar` child for a decision, the two exclusive in the types; content-tall, full height with a `TextArea`; `sheet` corners; centered at `widths.sheet` on the desktop | Linear Mobile's and Claude's sheets |
+| `Sheet` | a close circle left, the title, `submit` right where a keyboard would cover a bar, or an `ActionBar` child for a decision, the two exclusive in the types; focus on its first field when it opens; content-tall, full height with a `TextArea`; `sheet` corners; centered at `widths.sheet` on the desktop | Linear Mobile's and Claude's sheets |
 | `Picker` | a control showing its value; a tap opens one-line rows with a tick, up to six, a searchable `Sheet` above six. A pick, never a form | Linear Mobile's status card, Claude's model picker |
 | `OptionList` | radio rows with a description line, the recommended one marked with `words.recommended`, children under the chosen option | Claude iOS's model picker rows |
-| `EmptyState` | one sentence and the way to make the first one; with `title` it centers as a first screen | |
+| `EmptyState` | one sentence and the way to make the first one; with `title` it centers as a first screen, alone in a body it centres in the space left, with children it stays above them | Claude iOS's empty project |
 | `Toast` | a dark pill above the bar; client-owned, so never an undo; the `Shell` hosts the queue | Linear Mobile |
 | `Banner` | full width under the top bar on the kind's `-soft` fill; placed by the shell for the app's state, by a screen or a sheet for its own, the screen's under the shell's | |
 | `PendingBar` | one line with a spinner or a server-deadline countdown and one act, in an `ActionBar`'s place, a `Sheet`'s foot, above a `MessageInput`, or as a row of a thread | GitHub iOS's merge state, Claude's usage bar |
