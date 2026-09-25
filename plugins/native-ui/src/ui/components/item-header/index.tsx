@@ -6,7 +6,10 @@ import { LoadingRows } from "../../lib/loading";
 import { joinParts, META_CUT, partText } from "../../lib/parts";
 import { Status } from "../status";
 
-export type Fact = Part | { status: StatusState; label?: string };
+// A status fact with `onOpen` is a chip that opens what it means.
+export type Fact =
+	| Part
+	| { status: StatusState; label?: string; onOpen?: () => void };
 
 export interface ItemHeaderProps extends Closed {
 	overline?: readonly Part[];
@@ -47,6 +50,7 @@ export function ItemHeader({
 								key={factKey(fact)}
 								state={fact.status}
 								label={fact.label}
+								onOpen={fact.onOpen}
 							/>
 						) : (
 							<RNText key={factKey(fact)} className={text({ role: "meta" })}>

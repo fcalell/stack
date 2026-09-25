@@ -1,6 +1,7 @@
 import { GROUP, HAIRLINE } from "@fcalell/ui-core/variants";
 import type { JSX } from "solid-js";
 import { Show } from "solid-js";
+import { BoxedContext } from "#lib/boxed.ts";
 import type { Closed } from "#lib/closed.ts";
 import { cn } from "#lib/cn.ts";
 import { LoadingRows } from "#lib/loading.tsx";
@@ -21,7 +22,9 @@ export function Group(props: GroupProps) {
 			)}
 		>
 			<Show when={!props.loading} fallback={<LoadingRows inGroup />}>
-				{props.children}
+				<BoxedContext.Provider value={true}>
+					{props.children}
+				</BoxedContext.Provider>
 			</Show>
 		</div>
 	);

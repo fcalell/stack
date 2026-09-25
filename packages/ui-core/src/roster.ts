@@ -33,8 +33,8 @@ export const ROSTER: Record<Layer, Record<string, readonly string[]>> = {
 		Link: ["href", "children"],
 	},
 	layout: {
-		Place: ["title", "actions", "act", "children"],
-		Screen: ["title", "back", "actions", "children"],
+		Place: ["title", "actions", "act", "more", "children"],
+		Screen: ["title", "back", "actions", "more", "children"],
 		Split: ["list", "main", "pane"],
 		Section: [
 			"title",

@@ -6,8 +6,9 @@ import type { Closed } from "#lib/closed.ts";
 import { cn } from "#lib/cn.ts";
 import { Button } from "../button/index.tsx";
 
-// One sentence and the way to make the first one; with `title` it centers as
-// a first screen. What the screen still has to show goes in the children.
+// One sentence and the way to make the first one; with `title` it is a
+// first screen, centred in the viewport. What the screen still has to show
+// goes in the children.
 export type EmptyStateProps = Closed & {
 	title?: string;
 	sentence: string;
@@ -21,7 +22,9 @@ export function EmptyState(props: EmptyStateProps) {
 			role="status"
 			class={cn(
 				"flex flex-col items-center gap-stack py-section text-center",
-				props.title && "min-h-0 flex-1 justify-center",
+				// A first screen stands alone outside the shell, so it fills the
+				// viewport itself to centre.
+				props.title && "min-h-dvh justify-center px-inset",
 			)}
 		>
 			<Show when={props.title}>

@@ -2,6 +2,7 @@ import type { Attachment, Notice } from "@fcalell/ui-core/descriptors";
 import { COUNT, field, text } from "@fcalell/ui-core/variants";
 import { ArrowUp, Plus, Square } from "lucide-solid";
 import { For, Show } from "solid-js";
+import { PINNED, useBarPlacement } from "#lib/bar.ts";
 import { Circle } from "#lib/circle.tsx";
 import type { Closed } from "#lib/closed.ts";
 import { cn } from "#lib/cn.ts";
@@ -10,7 +11,9 @@ import { useWords } from "#lib/words.tsx";
 // A plus for files, the text in a pill, one circle that sends or stops; the
 // notice under it. Dictation is the keyboard's. While `working` the circle
 // stops the turn, until there is text to send: a message typed meanwhile is
-// sent like any other, and the consumer's notice says when it arrives.
+// sent like any other, and the consumer's notice says when it arrives. As a
+// `Screen`'s child it pins to the bottom like an action bar, so a thread
+// scrolls under it.
 export type MessageInputProps = Closed & {
 	value: string;
 	onChange: (value: string) => void;
@@ -26,8 +29,9 @@ export type MessageInputProps = Closed & {
 export function MessageInput(props: MessageInputProps) {
 	const words = useWords();
 	const empty = () => props.value.trim().length === 0;
+	const placement = useBarPlacement();
 	return (
-		<div class="flex flex-col gap-row">
+		<div class={cn("flex flex-col gap-row", placement === "pinned" && PINNED)}>
 			<Show when={props.attachments?.length}>
 				<div class="flex flex-wrap gap-pair">
 					<For each={props.attachments}>

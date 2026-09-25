@@ -9,6 +9,7 @@ import {
 	Show,
 	useContext,
 } from "solid-js";
+import { BarContext } from "#lib/bar.ts";
 import type { Closed } from "#lib/closed.ts";
 import { cn } from "#lib/cn.ts";
 import { LoadingRows } from "#lib/loading.tsx";
@@ -18,7 +19,8 @@ import { Count } from "../count/index.tsx";
 // `folded` makes it fold, starting folded when true and open when false;
 // without it the header is a plain label. The space above it is its
 // container's gap; a nested section, which sits in its parent's tight
-// rhythm, takes `stack` above it.
+// rhythm, takes `stack` above it. An `ActionBar` inside is the section's
+// own, in flow at its end, never pinned to the screen.
 export type SectionProps = Closed & {
 	title: string;
 	count?: number;
@@ -96,7 +98,9 @@ export function Section(props: SectionProps) {
 				</Show>
 				<Show when={open()}>
 					<Show when={!props.loading} fallback={<LoadingRows />}>
-						{props.children}
+						<BarContext.Provider value="flow">
+							{props.children}
+						</BarContext.Provider>
 					</Show>
 				</Show>
 			</section>

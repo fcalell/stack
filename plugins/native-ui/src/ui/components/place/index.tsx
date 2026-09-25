@@ -7,17 +7,17 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Circle } from "../../lib/circle";
 import type { Closed } from "../../lib/closed";
 import { Scroll } from "../../lib/hosts";
+import { MoreSheet } from "../../lib/more";
 import { useWords } from "../../lib/words";
 import { Button } from "../button";
 import { IconButton } from "../icon-button";
-import { List } from "../list";
-import { ListRow } from "../list-row";
-import { Sheet } from "../sheet";
 
 export interface PlaceProps extends Closed {
 	title: string;
 	actions?: IconAct<string>[];
 	act?: Act;
+	// Labelled acts under the more circle, after the actions past two.
+	more?: Act[];
 	children?: ReactNode;
 }
 
@@ -26,12 +26,22 @@ const BAR_ACTIONS = 2;
 
 // A place in the shell: the large title in the body, the side inset, the
 // scroll, and the primary act as a pill floating above the tab bar.
-export function Place({ title, actions, act, children }: PlaceProps) {
+export function Place({
+	title,
+	actions,
+	act,
+	more: moreActs,
+	children,
+}: PlaceProps) {
 	const insets = useSafeAreaInsets();
 	const words = useWords();
 	const [more, setMore] = useState(false);
 	const all = actions ?? [];
-	const shown = all.length > BAR_ACTIONS ? all.slice(0, BAR_ACTIONS - 1) : all;
+	const extra = moreActs ?? [];
+	const shown =
+		all.length > BAR_ACTIONS || extra.length > 0
+			? all.slice(0, BAR_ACTIONS - 1)
+			: all;
 	const rest = all.slice(shown.length);
 	return (
 		<View className="flex-1 bg-canvas">
@@ -44,7 +54,7 @@ export function Place({ title, actions, act, children }: PlaceProps) {
 					{shown.map((action) => (
 						<IconButton key={action.label} {...action} />
 					))}
-					{rest.length > 0 ? (
+					{rest.length + extra.length > 0 ? (
 						<Circle
 							icon={Ellipsis}
 							label={words.more}
@@ -60,23 +70,13 @@ export function Place({ title, actions, act, children }: PlaceProps) {
 					<Button act="primary" {...act} />
 				</View>
 			) : null}
-			{rest.length > 0 ? (
-				<Sheet open={more} onClose={() => setMore(false)} title={title}>
-					<List>
-						{rest.map((action) => (
-							<ListRow
-								key={action.label}
-								leading={{ icon: action.icon }}
-								title={action.label}
-								onOpen={() => {
-									setMore(false);
-									action.onAct();
-								}}
-							/>
-						))}
-					</List>
-				</Sheet>
-			) : null}
+			<MoreSheet
+				title={title}
+				open={more}
+				onClose={() => setMore(false)}
+				actions={rest}
+				more={extra}
+			/>
 		</View>
 	);
 }

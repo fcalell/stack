@@ -1,6 +1,6 @@
 import { rhythm } from "@fcalell/ui-core/variants";
 import type { JSX } from "solid-js";
-import { useBarPlacement } from "#lib/bar.ts";
+import { PINNED, useBarPlacement } from "#lib/bar.ts";
 import type { Closed } from "#lib/closed.ts";
 import { cn } from "#lib/cn.ts";
 
@@ -17,8 +17,7 @@ export function ActionBar(props: ActionBarProps) {
 			class={cn(
 				rhythm({ unit: "row" }),
 				"flex flex-col *:w-full desktop:flex-row desktop:flex-wrap desktop:*:w-auto",
-				placement === "pinned" &&
-					"sticky bottom-0 -mx-inset mt-auto -mb-section bg-surface px-inset pt-stack pb-[max(env(safe-area-inset-bottom),var(--spacing-stack))] tablet:-mx-section tablet:px-section",
+				placement === "pinned" && PINNED,
 			)}
 		>
 			{props.children}

@@ -28,7 +28,7 @@ export function Meter({ label, value, max, meta, loading }: MeterProps) {
 			<View className="flex-row items-center justify-between gap-row">
 				<RNText className={text({ role: "body" })}>{label}</RNText>
 				<RNText className={text({ role: "meta" })}>
-					{value} / {max}
+					{Math.round(ratio * 100)}%
 				</RNText>
 			</View>
 			<View

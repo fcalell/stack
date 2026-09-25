@@ -8,7 +8,10 @@ import { useHeadingClaim } from "#lib/heading.ts";
 import { Parts } from "#lib/parts.tsx";
 import { Status } from "../status/index.tsx";
 
-export type Fact = Part | { status: StatusState; label?: string };
+// A status fact with `onOpen` is a chip that opens what it means.
+export type Fact =
+	| Part
+	| { status: StatusState; label?: string; onOpen?: () => void };
 
 // An id over a bold title, properties below: the overline's parts joined by a
 // middle dot, the title wrapping to two lines, a row of statuses and meta.
@@ -21,7 +24,9 @@ export type ItemHeaderProps = Closed & {
 	loading?: boolean;
 };
 
-function isStatus(fact: Fact): fact is { status: StatusState; label?: string } {
+function isStatus(
+	fact: Fact,
+): fact is { status: StatusState; label?: string; onOpen?: () => void } {
 	return typeof fact === "object" && "status" in fact;
 }
 
@@ -72,7 +77,11 @@ export function ItemHeader(props: ItemHeaderProps) {
 										fallback={<Parts parts={[fact as Part]} cut />}
 									>
 										{(status) => (
-											<Status state={status().status} label={status().label} />
+											<Status
+												state={status().status}
+												label={status().label}
+												onOpen={status().onOpen}
+											/>
 										)}
 									</Show>
 								</>

@@ -5,6 +5,7 @@ import { A } from "@solidjs/router";
 import { For, type JSX, Match, Show, Switch } from "solid-js";
 import { Dynamic } from "solid-js/web";
 import { ageOf, momentOf, useClock } from "#lib/age.ts";
+import { useBoxed } from "#lib/boxed.ts";
 import type { Closed } from "#lib/closed.ts";
 import { cn } from "#lib/cn.ts";
 import { useInColumns } from "#lib/columns.ts";
@@ -48,6 +49,10 @@ function MarkGlyph(props: { mark: Mark<string> }) {
 
 export function ListRow(props: ListRowProps) {
 	const inColumns = useInColumns();
+	const boxed = useBoxed();
+	// On the bare surface the row's text aligns with the content and its
+	// fill bleeds into the side inset.
+	const bare = () => !boxed && !inColumns;
 	const clock = useClock();
 	const interactive = () =>
 		props.href !== undefined || props.onOpen !== undefined;
@@ -58,6 +63,7 @@ export function ListRow(props: ListRowProps) {
 			interactive() &&
 				"cursor-pointer transition-colors duration-(--duration-fast) ease-ui hover:bg-edge active:bg-edge focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-tint",
 			inColumns && cn(GROUP, "hover:bg-edge"),
+			bare() && "rounded-group",
 		);
 	const body = () => (
 		<>
@@ -166,7 +172,7 @@ export function ListRow(props: ListRowProps) {
 		</Show>
 	);
 	return (
-		<div class="flex items-center">
+		<div class={cn("flex items-center", bare() && "-mx-inset")}>
 			<Switch
 				fallback={
 					<div class={shell()}>

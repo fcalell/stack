@@ -10,3 +10,10 @@ export const BarContext = createContext<BarPlacement>("flow");
 export function useBarPlacement(): BarPlacement {
 	return useContext(BarContext);
 }
+
+// A bar pinned as a `Screen`'s child: the body's last element, stuck to the
+// bottom of the scroll on the surface, bleeding to the body's edges and
+// clearing the home indicator. The `ActionBar` and the `MessageInput` pin
+// this way.
+export const PINNED =
+	"sticky bottom-0 -mx-inset mt-auto -mb-section bg-surface px-inset pt-stack pb-[max(env(safe-area-inset-bottom),var(--spacing-stack))] tablet:-mx-section tablet:px-section";

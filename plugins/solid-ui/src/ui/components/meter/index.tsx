@@ -4,7 +4,7 @@ import type { Closed } from "#lib/closed.ts";
 import { cn } from "#lib/cn.ts";
 import { LoadingRows } from "#lib/loading.tsx";
 
-// A labelled fill with the value beside it.
+// A labelled fill with its share of the whole beside it, as a percentage.
 export type MeterProps = Closed & {
 	label: string;
 	value: number;
@@ -22,9 +22,17 @@ export function Meter(props: MeterProps) {
 				<div class="flex items-center justify-between gap-row">
 					<span class={text({ role: "body" })}>{props.label}</span>
 					<span class={cn(text({ role: "meta" }), "tabular-nums")}>
-						{props.value} / {props.max}
+						{Math.round(ratio() * 100)}%
 					</span>
 				</div>
+				{/* The drawn fill is for the eye; the native meter is what is read. */}
+				<meter
+					class="sr-only"
+					aria-label={props.label}
+					min={0}
+					max={props.max}
+					value={props.value}
+				/>
 				<div
 					aria-hidden="true"
 					class={cn(METER_TRACK, "h-2 w-full overflow-hidden")}

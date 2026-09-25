@@ -22,6 +22,8 @@ export type PlaceProps = Closed & {
 	title: string;
 	actions?: IconAct<string>[];
 	act?: Act;
+	// Labelled acts under the more circle, after the actions past two.
+	more?: Act[];
 	children?: JSX.Element;
 };
 
@@ -60,7 +62,7 @@ export function Place(props: PlaceProps) {
 								/>
 							)}
 						</For>
-						<Show when={rest().length > 0}>
+						<Show when={rest().length + (props.more?.length ?? 0) > 0}>
 							<Circle
 								glyph={Ellipsis}
 								label={words.more}
@@ -111,6 +113,22 @@ export function Place(props: PlaceProps) {
 									setMore(false);
 									action.onAct();
 								}}
+							/>
+						)}
+					</For>
+					<For each={props.more ?? []}>
+						{(act) => (
+							<ListRow
+								title={act.label}
+								meta={act.blocked ? [act.blocked] : undefined}
+								onOpen={
+									act.blocked === undefined
+										? () => {
+												setMore(false);
+												act.onAct();
+											}
+										: undefined
+								}
 							/>
 						)}
 					</For>

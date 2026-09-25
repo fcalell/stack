@@ -1,4 +1,4 @@
-import type { IconAct } from "@fcalell/ui-core/descriptors";
+import type { Act, IconAct } from "@fcalell/ui-core/descriptors";
 import { text } from "@fcalell/ui-core/variants";
 import { A } from "@solidjs/router";
 import { ChevronLeft, Ellipsis } from "lucide-solid";
@@ -27,11 +27,15 @@ import { Sheet } from "../sheet/index.tsx";
 // claims the large title, so an item has one heading. The body is measured
 // at the reading width, centred. On the phone it covers the
 // shell; from tablet it sits in its slot. A pinned `ActionBar` child sits
-// above the home indicator.
+// above the home indicator. `more` acts are labelled rows under the more
+// circle, never circles of their own.
 export type ScreenProps = Closed & {
 	title: string;
 	back?: string;
 	actions?: IconAct<string>[];
+	// Labelled acts under the more circle, after the actions past two: the
+	// place for an act that is not a move, such as ending or removing.
+	more?: Act[];
 	children?: JSX.Element;
 };
 
@@ -96,7 +100,7 @@ export function Screen(props: ScreenProps) {
 										/>
 									)}
 								</For>
-								<Show when={rest().length > 0}>
+								<Show when={rest().length + (props.more?.length ?? 0) > 0}>
 									<Circle
 										glyph={Ellipsis}
 										label={words.more}
@@ -134,6 +138,22 @@ export function Screen(props: ScreenProps) {
 											setMore(false);
 											action.onAct();
 										}}
+									/>
+								)}
+							</For>
+							<For each={props.more ?? []}>
+								{(act) => (
+									<ListRow
+										title={act.label}
+										meta={act.blocked ? [act.blocked] : undefined}
+										onOpen={
+											act.blocked === undefined
+												? () => {
+														setMore(false);
+														act.onAct();
+													}
+												: undefined
+										}
 									/>
 								)}
 							</For>

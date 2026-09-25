@@ -34,15 +34,15 @@ a list on the phone, or alone; the parent composes.
 
 | Molecule | Owns | Anchor |
 | --- | --- | --- |
-| `Place` | the large title in the body, the side inset, the scroll, the body measured at `widths.reading` and centred unless a `Columns` inside claims the column, the tab bar below on the phone, at most two actions as circles with the rest under `more`, and `act` as a pill floating above the bar bottom right with room kept under the last row, in the top bar on the desktop | Linear Mobile's tab screens, Linear web's settings column |
-| `Screen` | the top bar with the back circle and the compact title once the page's heading scrolls away, the side inset, the scroll, the body measured at `widths.reading` and centred; its own large title until an `ItemHeader` inside claims the heading; no tab bar; a pinned `ActionBar` child above the home indicator | Linear Mobile's issue page |
+| `Place` | the large title in the body, the side inset, the scroll, the body measured at `widths.reading` and centred unless a `Columns` inside claims the column, the tab bar below on the phone, at most two actions as circles with the rest and the labelled `more` acts under the more circle, and `act` as a pill floating above the bar bottom right with room kept under the last row, in the top bar on the desktop | Linear Mobile's tab screens, Linear web's settings column |
+| `Screen` | the top bar with the back circle and the compact title once the page's heading scrolls away, the side inset, the scroll, the body measured at `widths.reading` and centred; its own large title until an `ItemHeader` inside claims the heading; its actions as at most two circles, the rest and the labelled `more` acts (an end, a removal: never a move) under the more circle; no tab bar; a pinned `ActionBar` or `MessageInput` child above the home indicator | Linear Mobile's issue page |
 | `Split` | the desktop's columns: `list` at `widths.list`, `main` filling, `pane` folding away under `breakpoints.wide` and pushing over `main` when it folds; under `breakpoints.desktop` one slot at a time, the deepest present. Composed per place by the consumer, never by the shell | Linear web |
 | `Section` | the `label` header at the 44 px floor, folding, the header's `Count`, its loading form; the space above it is its container's gap, and a nested section takes `stack` | Linear Mobile's sections |
 | `Group` | a `group`-filled box, `edge` hairlines between rows, rows inset `inset`; three row forms when loading | iOS grouped lists |
 | `List` | rows on the surface with no box and no hairlines, each at least 44 px; the list semantics, each child one item whatever it is | Linear Mobile's inbox |
 | `Form` | fields at `stack`; its `ActionBar` last and in flow, so it scrolls with the fields and the keyboard never covers it | |
 | `Toolbar` | one row of controls over a list | |
-| `ActionBar` | pinned above the home indicator as a `Screen`'s child, in flow as a `Form`'s or a `Sheet`'s; full-width buttons stacked with the primary first on the phone, at their content's width in one row on the desktop; at most three, one `PendingBar` in their place | GitHub iOS's merge box |
+| `ActionBar` | pinned above the home indicator as a `Screen`'s child, in flow as a `Form`'s, a `Section`'s or a `Sheet`'s; full-width buttons stacked with the primary first on the phone, at their content's width in one row on the desktop; at most three, one `PendingBar` in their place | GitHub iOS's merge box |
 | `Columns` | the same sections side by side, each `widths.column`, scrolling sideways, over the `Place`'s whole column; a `ListRow` inside is a card. On native and under `breakpoints.desktop` the sections stack | Linear's board |
 | `Shell` | the frame at every width from one list of places: the tab bar under `breakpoints.tablet`, the `widths.rail` sidebar on `canvas` from it; the app's `Banner`; the toast queue | Linear's sidebar, iOS's tab bar |
 
@@ -59,7 +59,7 @@ entry never sits over a pinned bar.
 | `ListRow` | a leading icon or status, a one-line `body` medium title, one or two meta lines of parts joined by a middle dot, a trailing age (an ISO moment drawn as "4m", "3h", "2d" or a date in the browser's locale, kept current), count or value, marks read aloud, one act, `href` or `onOpen`; no chevron, no divider | Linear Mobile's inbox and issue rows |
 | `DefinitionRow` | label and description left, the value, a `Status` or an in-place control right, a long value wrapping inside its three fifths; `copyable` | Linear web's settings rows |
 | `FormField` | label, description, one typing control, the error line | Linear web's settings rows, stacked |
-| `ItemHeader` | an overline of parts, a title that wraps to two lines and is the page's one heading inside a `Screen`, a row of facts | Linear Mobile's issue page |
+| `ItemHeader` | an overline of parts, a title that wraps to two lines and is the page's one heading inside a `Screen`, a row of facts, a status fact with `onOpen` a chip that opens its explanation | Linear Mobile's issue page |
 | `SegmentedControl` | a state the control rests on, never a trigger | Linear Mobile's Assigned, Created, Subscribed |
 | `Sheet` | a close circle left, the title, `submit` right where a keyboard would cover a bar, or an `ActionBar` child for a decision, the two exclusive in the types; content-tall, full height with a `TextArea`; `sheet` corners; centered at `widths.sheet` on the desktop | Linear Mobile's and Claude's sheets |
 | `Picker` | a control showing its value; a tap opens one-line rows with a tick, up to six, a searchable `Sheet` above six. A pick, never a form | Linear Mobile's status card, Claude's model picker |
@@ -88,8 +88,8 @@ whose cells sit side by side from `breakpoints.desktop`, the newest right, and s
 `SegmentedControl` below it. `Message` follows Claude iOS: `you` in a soft bubble right, `other`
 as `Prose` on the surface, `system` one centered meta line, its `at` drawn as an age. `MessageInput` is a plus for files,
 the text in a pill, one circle that sends, or stops the turn while `working` and the draft is
-empty; dictation is the keyboard's. `Meter` is a
-labelled fill in `tint`. `BarChart` is one labelled bar per series item, SVG on native. `QrCode`
+empty; dictation is the keyboard's; a `Screen`'s child pins to the bottom like an action bar. `Meter` is a
+labelled fill in `tint` with its share as a percentage, read as a native meter. `BarChart` is one labelled bar per series item, SVG on native. `QrCode`
 is a square code.
 
 A thread is a `List` whose rows are `Message`s, folded `Section`s, `Group`s and a `PendingBar`.
