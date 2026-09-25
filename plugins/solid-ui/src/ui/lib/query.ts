@@ -9,6 +9,7 @@ import {
 	type QueryKey,
 	useQueryClient,
 } from "@tanstack/solid-query";
+import { toast } from "#lib/toast.ts";
 
 // WS3.3: the default client `createApp`
 // builds when the caller supplies no `queryClient` auto-invalidates on every
@@ -201,11 +202,9 @@ function useMutation<TVars, TData>(
 				const suppressed = opts.onError?.(error, variables);
 				if (!suppressed) {
 					const message = opts.errorMessage ?? "Operation failed.";
-					if (opts.errorHandler) {
-						opts.errorHandler(message);
-					} else {
-						console.error(message);
-					}
+					// The message is for the person: a toast, which the Shell
+					// draws, unless the caller shows it its own way.
+					(opts.errorHandler ?? toast)(message);
 				}
 			},
 		};
