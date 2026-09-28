@@ -83,9 +83,8 @@ Each draws one kind of content and owns its interior; all take `loading`. `Prose
 wraps, folds past `tail` lines, takes focus to scroll by keyboard, and draws its copy act with
 `words.copy` beside the text, never over it. `Diff` is mono with a
 line-number gutter pinned left on web and scrolling with the lines on native, added on
-`ok-soft`, removed on `danger-soft`, hunk headers on `group`; it goes side by side once its own
-width holds two panes of sixty characters, never by the viewport's, and a file that only adds or
-only removes stays unified. `FileRow` is a row for a `Group` with a ring in `ink-meta` that becomes
+`ok-soft`, removed on `danger-soft`, hunk headers on `group`, in one column at every width,
+since the pane that holds it is never wide enough for two readable sides. `FileRow` is a row for a `Group` with a ring in `ink-meta` that becomes
 a tick in `ok` when seen. `ProseDiff` is `Prose` with an added sentence on
 `ok-soft` and a removed one struck through on `danger-soft`. `Comparison` is a `Group` of rows
 whose cells sit side by side from `breakpoints.desktop`, the newest right, and stack under a

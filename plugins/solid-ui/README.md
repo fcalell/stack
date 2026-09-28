@@ -119,7 +119,7 @@ own three-row form. `Part` is a string or `{ quoted }`, drawn in typographic quo
 | --- | --- |
 | `Prose` | `markdown`, `loading` |
 | `Code` | `text`, `tail`, `copy`, `loading` |
-| `Diff` | `hunks`, `loading`; side by side once its own width holds two sixty-character panes |
+| `Diff` | `hunks`, `loading`; one column at every width |
 | `FileRow` | `path`, `added`, `removed`, `seen`, `href`, `onOpen`, `loading` |
 | `ProseDiff` | `before`, `after`, `loading` |
 | `Comparison` | `rows`, `loading` |
