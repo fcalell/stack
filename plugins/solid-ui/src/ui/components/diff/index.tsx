@@ -1,13 +1,6 @@
 import type { DiffLine, Hunk } from "@fcalell/ui-core/descriptors";
 import { CODE, DIFF_GUTTER, diffLine } from "@fcalell/ui-core/variants";
-import {
-	createMemo,
-	createSignal,
-	For,
-	onCleanup,
-	onMount,
-	Show,
-} from "solid-js";
+import { createMemo, createSignal, For, onCleanup, Show } from "solid-js";
 import type { Closed } from "#lib/closed.ts";
 import { cn } from "#lib/cn.ts";
 import { RING_INSET } from "#lib/interact.ts";
@@ -77,10 +70,10 @@ function pairs(lines: DiffLine[]): Pair[] {
 }
 
 export function Diff(props: DiffProps) {
-	let box!: HTMLDivElement;
 	let probe!: HTMLDivElement;
 	const [wide, setWide] = createSignal(false);
-	onMount(() => {
+	// Measured once the block exists, which is after its loading form.
+	const measure = (box: HTMLDivElement) => {
 		// A pane is the gutter and SIDE characters of the mono face, read off a
 		// probe line so the threshold follows the theme's font and size.
 		const pane = () => {
@@ -94,7 +87,7 @@ export function Diff(props: DiffProps) {
 		});
 		observer.observe(box);
 		onCleanup(() => observer.disconnect());
-	});
+	};
 	const oneSided = createMemo(() => {
 		const kinds = new Set(
 			props.hunks.flatMap((hunk) => hunk.lines.map((line) => line.kind)),
@@ -111,7 +104,7 @@ export function Diff(props: DiffProps) {
 		<Show when={!props.loading} fallback={<LoadingRows />}>
 			{/* The surface keeps its corners; the scroller inside it takes focus
 			    so a keyboard can scroll it. */}
-			<div ref={box} class={cn(CODE, "relative overflow-hidden p-0")}>
+			<div ref={measure} class={cn(CODE, "relative overflow-hidden p-0")}>
 				<div
 					ref={probe}
 					aria-hidden="true"
