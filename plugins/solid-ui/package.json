@@ -49,6 +49,7 @@
 		"check-types": "tsc --noEmit --pretty",
 		"lint": "biome check --write --unsafe",
 		"check": "pnpm check-types && pnpm lint",
+		"test": "node --test 'test/**/*.test.ts'",
 		"verify": "tsx scripts/verify.ts",
 		"clear": "rm -rf dist node_modules .turbo"
 	},
@@ -64,6 +65,7 @@
 	"dependencies": {
 		"@fcalell/cli": "workspace:*",
 		"@fcalell/plugin-api": "workspace:*",
+		"@fcalell/plugin-auth": "workspace:*",
 		"@fcalell/plugin-solid": "workspace:*",
 		"@fcalell/plugin-vite": "workspace:*",
 		"@fcalell/ui-core": "workspace:*",
@@ -84,6 +86,7 @@
 	},
 	"devDependencies": {
 		"@casl/ability": "^7.0.1",
+		"@fcalell/plugin-db": "workspace:*",
 		"@fcalell/typescript-config": "workspace:*",
 		"@tailwindcss/cli": "^4.1.7",
 		"@types/node": "^25.5.0",

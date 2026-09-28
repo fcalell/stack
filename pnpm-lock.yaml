@@ -218,6 +218,9 @@ importers:
       react:
         specifier: ^19.2.7
         version: 19.2.7
+      solid-js:
+        specifier: ^1.9.0
+        version: 1.9.12
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -509,6 +512,9 @@ importers:
       '@fcalell/plugin-api':
         specifier: workspace:*
         version: link:../api
+      '@fcalell/plugin-auth':
+        specifier: workspace:*
+        version: link:../auth
       '@fcalell/plugin-solid':
         specifier: workspace:*
         version: link:../solid
@@ -564,6 +570,9 @@ importers:
       '@casl/ability':
         specifier: ^7.0.1
         version: 7.0.1
+      '@fcalell/plugin-db':
+        specifier: workspace:*
+        version: link:../db
       '@fcalell/typescript-config':
         specifier: workspace:*
         version: link:../../packages/typescript-config

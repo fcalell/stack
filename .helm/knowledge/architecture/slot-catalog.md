@@ -65,7 +65,7 @@ e.g. consulting `ctx.fileExists` before writing.
 | `localOrigins` | `value<"dev" \| "deployed">` | Where the local origins of `app.origins` belong; seeded `dev`, set to `deployed` by a deploy target that is local itself (node bound to loopback) |
 | `cors` | `derived<string[]>` | Final production CORS list: `app.origins` minus local origins (kept when `localOrigins` is `deployed`), or `[https://domain, https://app.domain, ...corsOrigins]` |
 | `callbacks` | `map<string, CallbackSpec>` | Plugin-name → callback identifier; spliced onto matching runtime's options |
-| `env` | `list<EnvSpec>` (`uniqueBy: name`) | Env vars the worker reads: `{ name, devDefault, validate? }`, declared once by the plugin that reads it (auth: `AUTH_SECRET`, `APP_URL`, OAuth client pairs). `validate` hints (`minLength` / `url` / `devLocalhost`) feed the worker's once-per-isolate env assertion. Deploy targets render it: cloudflare into `.dev.vars` and empty `[vars]` entries, node into the dev process env for each var the shell leaves unset. A `devDefault` must satisfy its own hints or a fresh project refuses to serve; a duplicate name is an error |
+| `env` | `list<EnvSpec>` (`uniqueBy: name`) | Env vars the worker reads: `{ name, devDefault, validate? }`, declared once by the plugin that reads it (auth: `AUTH_SECRET`, `APP_URL`, OAuth client pairs; api: the consumer's own vars from its `env` option). `validate` hints (`minLength` / `url` / `devLocalhost`) feed the worker's once-per-isolate env assertion. Deploy targets render it: cloudflare into `.dev.vars` and empty `[vars]` entries, node into the dev process env for each var the shell leaves unset. A `devDefault` must satisfy its own hints or a fresh project refuses to serve; a duplicate name is an error |
 | `workerBase` | `derived<TsExpression>` | The `createWorker({...})` call expression; reads `env` to bake `envChecks` (WS6.3 env value assertions) on both deploy targets |
 | `workerSource` | `derived<string \| null>` | Final `.stack/worker.ts` source; null when neither runtimes nor routes are present |
 | `rbacStatements` | `value<Record<string, readonly string[]> \| null>` (`override`) | RBAC action statements for `procedure({ rbac })` / `procedure({ can })`'s type-level autocomplete; `auth` contributes from `organization.ac.statements` |
@@ -135,6 +135,7 @@ e.g. consulting `ctx.fileExists` before writing.
 | `nativeAuthSource` | `derived<string>` | `.stack/native-auth.ts` source: the resolved `scheme` and `cookiePrefix` constants the scaffolded `src/lib/auth.ts` imports, so the native client can never drift from the app config or the worker's cookie prefix |
 | `resolvedTheme` | `derived<ResolvedTheme>` | The `theme` option run through `@fcalell/ui-core`'s `deriveTheme`, resolved once so every block contribution reads one value |
 | `appCssSource` | `derived<string \| null>` | Final `.stack/app.css`; null when nothing landed |
+| `authClientSource` | `derived<string \| null>` | `.stack/auth-client.ts` source: `createAuthClient` called with `auth.slots.clientFlags`, so the web client enables exactly the better-auth plugins the worker runs; null without auth |
 
 ## `expo.slots.*` (plugin-expo)
 
@@ -172,6 +173,7 @@ e.g. consulting `ctx.fileExists` before writing.
 | `appUrlDevDefault` | `derived<string>` | Canonical dev URL for `APP_URL`'s dev default: the first `api.slots.devCorsOrigins` entry (a frontend's), else the first `api.slots.devTargetOrigins` entry (the deploy target's), else `https://<domain>` |
 | `callbackFile` | `value<string>` | Consumer callback-file path (default `src/worker/plugins/auth.ts`); override for a restructured worker layout |
 | `cookiePrefix` | `value<string>` | Resolved session-cookie prefix (`cookies.prefix` ?? better-auth's `"better-auth"` default); read by native-ui's generated auth-client constants |
+| `clientFlags` | `value<AuthClientFlags \| null>` | The web client's `{ passkey, emailOtp, organization }`, from the options; seeded null and filled by auth's own contribution, so a reader without auth in the config sees null. Read by solid-ui's `authClientSource` |
 
 ## Spec types
 

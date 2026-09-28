@@ -72,6 +72,32 @@ export default (props) => (
 );
 ```
 
+`ScopeBoundary` (`lib/scope`) resolves a URL slug to a scope's row (see plugin-auth's Scopes) and
+provides the chain to its children. It nests: a project boundary under an organization boundary
+sends the organization's id with its slug. It draws nothing while the lookup is pending and
+`notFound` when there is no such row or the viewer is no member; any other error reaches the app's
+error boundary. `useScope(scope)` returns a row, defined for every child; `useMember()` returns the
+viewer's membership; `lastScope()` returns the last address a boundary resolved in this browser,
+for the "open where I left off" redirect.
+
+```tsx
+// src/app/pages/(app)/[org]/projects/[project]/_layout.tsx
+import { ScopeBoundary } from "@fcalell/plugin-solid-ui/lib/scope";
+import { project } from "../../../../../shared/scopes.ts";
+
+export default (props) => (
+  <ScopeBoundary scope={project} slug={useParams().project} notFound={<ProjectNotFound />}>
+    {props.children}
+  </ScopeBoundary>
+);
+
+// any child
+const row = useScope(project); // Accessor<the project row>
+```
+
+`useAbility` (`lib/ability`) takes the organization explicitly:
+`useAbility(() => useScope(organization)().id)`.
+
 ## The roster
 
 Every component takes exactly the props below and closes `class`, `className`, `classList` and
