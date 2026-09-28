@@ -40,15 +40,17 @@ Every scale derives from one base, so a theme sets a knob and never a token.
 | `accentHue`, `neutralHue`, `neutralChroma`, `okHue`, `warnHue`, `dangerHue` | 261, 261, 1, 160, 75, 28 | every color role in OKLCH, light and dark, the lightness and chroma ladder fixed from the calibration; the two shadows, from `neutralHue` |
 | `primary` | `ink` | what the primary act, a switch that is on and the selected place are filled with: `ink` aliases `accent` to the ink ladder and `accent-soft` to its neutral soft; `accent` binds both to `accentHue` |
 | `space` | 4 | the rungs |
-| `radius` | 14 | the radii |
+| `radius` | 14 | the radii; 0 squares everything, the pills and circles too |
 | `text` | 16 | the type roles; each size rounds to the whole pixel, each line box to the even pixel |
+| `elevation` | `soft` | how a raised surface separates: `soft` casts the two shadows, `flat` draws a 1px ring in `edge` instead |
+| `defaultMode` | unset | the mode a viewer with no stored choice starts in, ahead of the system preference; unset, the system decides |
 | `fonts` | `sans` unset, `mono` "JetBrains Mono Variable" | the two families as `--font-sans` and `--font-mono`, each ahead of its platform fallback stack; the files are each plugin's `fonts` option |
 | `widths` | `rail` 220, `list` 360, `column` 300, `sheet` 560, `reading` 720 | `--container-*`, so `w-rail` and `max-w-reading` |
 | `breakpoints` | `tablet` 768, `desktop` 1024, `wide` 1440 | `--breakpoint-*`, so `tablet:` and `desktop:` are the only responsive variants |
 
 Hues are in `[0, 360)`; `neutralChroma` in `[0, 2]` multiplies the declared chroma of every token
-bound to `neutralHue` and nothing else. `space`, `radius`, `text`, every width and every
-breakpoint are positive integers. Density is a theme, never a breakpoint: a product that wants
+bound to `neutralHue` and nothing else. `space`, `text`, every width and every
+breakpoint are positive integers; `radius` may be 0. Density is a theme, never a breakpoint: a product that wants
 more rows lowers `text` and `space`, and no scale changes at a width. The touch floor is 44 px and
 not a knob.
 
@@ -119,10 +121,12 @@ Rungs are multiples of `space`, internal to the molecules; the names say what th
 row's vertical padding), `inset` 4 (the screen's side inset, a group's interior), `section` 6
 (sections of a screen), `room` 8 (the item header from its body on the desktop). Radii come from
 `radius`: `group` at 1× for groups, inputs, code, pickers and menus; `sheet` at 1.75× rounded down
-for a sheet's corners; `full` for buttons, chips, a search field, a count. Elevation is two
-shadows by use: `float` for a picker's list, a menu and a toast; `sheet` for a sheet. Groups,
-rows and cards are flat. Each shadow's color is the light ink at `neutralHue`, converted to sRGB
-because React Native's `boxShadow` takes no oklch.
+for a sheet's corners; `full` for buttons, chips, a search field, a count, 0 when `radius` is.
+Elevation is two utilities by use: `shadow-float` for a picker's list, a menu, a toast, the
+selected segment and a thumb; `shadow-sheet` for a sheet. Groups, rows and cards are flat. Under
+`soft` each casts a shadow whose color is the light ink at `neutralHue`, converted to sRGB because
+React Native's `boxShadow` takes no oklch; under `flat` each draws a 1px `edge` border instead,
+the channel every hairline uses on both platforms, so no component changes.
 
 ## Contrast contracts
 

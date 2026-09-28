@@ -22,9 +22,11 @@ stead's `design/07-interface.md`.
   character for character: `!==` never becomes `≢`.
 - Every scale derives from a knob: six color knobs (`accentHue`, `neutralHue`, `neutralChroma`,
   `okHue`, `warnHue`, `dangerHue`) plus `primary` (`ink` | `accent`, what the primary act is
-  filled with), `space` (the rungs), `radius` (the radii), `text` (the type roles, sizes rounded
+  filled with), `space` (the rungs), `radius` (the radii; 0 squares the pills too), `text` (the type roles, sizes rounded
   to the pixel and line boxes to the even pixel), `fonts` (the two family names), `widths` (the
-  five `--container-*` values) and `breakpoints` (the three device classes). Lightness and
+  five `--container-*` values), `breakpoints` (the three device classes), `elevation` (`soft`
+  shadows or a `flat` 1px `edge` ring) and `defaultMode` (the starting mode ahead of the system
+  preference). Lightness and
   per-token chroma are fixed from the calibration, but for the dark `tint`, `ok`, `warn` and
   `danger`, set lighter so a mark drawn inside a group keeps 4.5:1; the AA contracts hold at the
   defaults, the verify script measures each pair, and moving a knob puts the re-check on the

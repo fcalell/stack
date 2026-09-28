@@ -2,16 +2,18 @@
 // molecule renders it. `TIcon` is a type parameter because the icon is a
 // `lucide-solid` component on web and a `lucide-react-native` one on native,
 // and ui-core depends on neither.
-import type { StatusState, Words } from "./tokens.ts";
+import type { SpinnerKind, StatusState, Words } from "./tokens.ts";
 
-export type { StatusState, Words };
+export type { SpinnerKind, StatusState, Words };
 
 // A labelled text act, 44 px, with an optional `blocked` reason drawn under it.
+// `spinner` is the busy glyph its button draws while `loading`.
 export interface Act {
 	label: string;
 	onAct: () => void;
 	blocked?: string;
 	loading?: boolean;
+	spinner?: SpinnerKind;
 }
 
 // An icon-only act: the label is read aloud, never drawn.

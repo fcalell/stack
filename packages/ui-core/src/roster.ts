@@ -19,7 +19,7 @@ export const ROSTER: Record<Layer, Record<string, readonly string[]>> = {
 	atom: {
 		Text: ["role", "children"],
 		Icon: ["name"],
-		Button: ["act", "label", "onAct", "loading", "blocked"],
+		Button: ["act", "label", "onAct", "loading", "spinner", "blocked"],
 		IconButton: ["icon", "label", "onAct"],
 		Count: ["value"],
 		Status: ["state", "label", "onOpen"],
@@ -28,7 +28,7 @@ export const ROSTER: Record<Layer, Record<string, readonly string[]>> = {
 		Slider: ["label", "value", "onChange", "min", "max", "step", "unit"],
 		Switch: ["checked", "onChange", "label"],
 		Checkbox: ["checked", "onChange", "label"],
-		Spinner: [],
+		Spinner: ["kind"],
 		Avatar: ["name", "src"],
 		Link: ["href", "children"],
 	},
@@ -92,7 +92,7 @@ export const ROSTER: Record<Layer, Record<string, readonly string[]>> = {
 		EmptyState: ["title", "sentence", "act", "children"],
 		Toast: ["sentence", "act"],
 		Banner: ["kind", "sentence", "act"],
-		PendingBar: ["sentence", "until", "act"],
+		PendingBar: ["sentence", "until", "spinner", "act"],
 	},
 	content: {
 		Prose: ["markdown", "loading"],

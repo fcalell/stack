@@ -1,6 +1,7 @@
 import { z } from "zod";
 import {
 	BREAKPOINTS,
+	ELEVATIONS,
 	INVARIANT_COLORS,
 	LABEL,
 	MODES,
@@ -119,8 +120,10 @@ export const themeSchema = z
 		dangerHue: hue,
 		primary: z.enum(PRIMARIES).optional(),
 		space: px,
-		radius: px,
+		// 0 is legal and squares everything, the pills and circles too.
+		radius: z.number().int().nonnegative().optional(),
 		text: px,
+		elevation: z.enum(ELEVATIONS).optional(),
 		fonts: z
 			.strictObject({
 				sans: z.string().min(1).optional(),
@@ -129,8 +132,9 @@ export const themeSchema = z
 			.optional(),
 		widths: pxRecord(WIDTHS),
 		breakpoints: pxRecord(BREAKPOINTS),
-		// Which mode seeds the `@theme` block, so the color utilities exist.
-		defaultMode: z.enum(MODES).default("light"),
+		// The mode a viewer with no stored choice starts in, ahead of the
+		// system preference. Omitted, the system preference decides.
+		defaultMode: z.enum(MODES).optional(),
 		overrides: overridesSchema.optional(),
 	})
 	.superRefine((theme, ctx) => {

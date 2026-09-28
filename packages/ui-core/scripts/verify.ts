@@ -335,7 +335,12 @@ function buildFixture(): string {
 		.map(([key, value]) => `\t${key}: ${value};`)
 		.join("\n");
 	const utilities = Object.entries(shadowUtilities(base))
-		.map(([name, value]) => `@utility ${name} {\n\tbox-shadow: ${value};\n}`)
+		.map(
+			([name, declarations]) =>
+				`@utility ${name} {\n${Object.entries(declarations)
+					.map(([property, value]) => `\t${property}: ${value};\n`)
+					.join("")}}`,
+		)
 		.join("\n");
 	const inputPath = resolve(fixtureDir, "generated.css");
 	const outputPath = resolve(fixtureDir, "generated.out.css");
@@ -558,8 +563,8 @@ check("c07", "the shadows derive from neutralHue as sRGB", () => {
 		"shadow keys",
 	);
 	const SHAPE = /^0 (\d+)px (\d+)px rgba\((\d+), (\d+), (\d+), (0\.\d+)\)$/;
-	const float = SHAPE.exec(utilities["shadow-float"]);
-	const sheet = SHAPE.exec(utilities["shadow-sheet"]);
+	const float = SHAPE.exec(utilities["shadow-float"]["box-shadow"] ?? "");
+	const sheet = SHAPE.exec(utilities["shadow-sheet"]["box-shadow"] ?? "");
 	assert(float && sheet, `a shadow is off shape: ${JSON.stringify(utilities)}`);
 	requireEqual(`${float[1]} ${float[2]} ${float[6]}`, "7 18 0.13", "float");
 	requireEqual(`${sheet[1]} ${sheet[2]} ${sheet[6]}`, "12 28 0.16", "sheet");
@@ -579,11 +584,40 @@ check("c07", "the shadows derive from neutralHue as sRGB", () => {
 	}
 	const rehued = shadowUtilities(deriveTheme({ neutralHue: 30 }));
 	assert(
-		rehued["shadow-float"] !== utilities["shadow-float"],
+		rehued["shadow-float"]["box-shadow"] !==
+			utilities["shadow-float"]["box-shadow"],
 		"neutralHue does not move the shadow color",
 	);
-	return `${utilities["shadow-float"]} / ${utilities["shadow-sheet"]}`;
+	return `${utilities["shadow-float"]["box-shadow"]} / ${utilities["shadow-sheet"]["box-shadow"]}`;
 });
+
+check(
+	"c07-flat",
+	"radius 0 squares the pills and flat elevation rings in edge",
+	() => {
+		const square = deriveTheme({ radius: 0, elevation: "flat" });
+		const tokens = themeTokens(square);
+		requireEqual(tokens["--radius-full"], "0px", "--radius-full at radius 0");
+		requireEqual(tokens["--radius-group"], "0px", "--radius-group at radius 0");
+		requireEqual(
+			themeTokens(base)["--radius-full"],
+			"9999px",
+			"--radius-full above 0",
+		);
+		const utilities = shadowUtilities(square);
+		for (const level of ["shadow-float", "shadow-sheet"] as const) {
+			requireEqual(
+				JSON.stringify(utilities[level]),
+				JSON.stringify({
+					"border-width": "1px",
+					"border-color": "var(--color-edge)",
+				}),
+				`${level} under flat`,
+			);
+		}
+		return "radius 0 → full 0px; flat → 1px edge ring, no shadow";
+	},
+);
 
 check("c08", "themeTokens and modeTokens carry the right keys", () => {
 	const expected = new Set<string>(ZEROED_NAMESPACES);
@@ -922,7 +956,7 @@ check("c14", "the Tailwind fixture builds on contract only", () => {
 	assert(shadow, "shadow-float emitted no rule");
 	requireEqual(
 		normalize(shadow.match(/box-shadow\s*:\s*([^;]+);/)?.[1] ?? ""),
-		shadowUtilities(base)["shadow-float"],
+		shadowUtilities(base)["shadow-float"]["box-shadow"],
 		"shadow-float box-shadow",
 	);
 	return `${out.length} bytes of CSS, off-contract utilities empty, tablet: is 768`;

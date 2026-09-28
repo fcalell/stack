@@ -19,9 +19,10 @@ import {
 export type ShadowUtility = `shadow-${ShadowLevel}`;
 
 // The `@theme` record, keyed by full custom-property name. It carries the
-// default mode's colors as well as the mode-invariant two: in Tailwind v4 a
-// property declared only inside a `@variant` block generates no utility, so
-// without them `bg-canvas` would not exist.
+// light colors as well as the mode-invariant two: in Tailwind v4 a property
+// declared only inside a `@variant` block generates no utility, so without
+// them `bg-canvas` would not exist. Which mode seeds it never shows: each
+// platform switches every color through the active mode's variables.
 //
 // Each type role renders twice, from one resolved value: the Tailwind v4
 // modifier so `text-title` carries its own leading on web, and the standalone
@@ -64,7 +65,7 @@ export function themeTokens(resolved: ResolvedTheme): Record<string, string> {
 		tokens[`--color-${token}`] = resolved.invariantColors[token];
 	}
 	for (const token of PER_MODE_COLORS) {
-		tokens[`--color-${token}`] = resolved.colors[resolved.defaultMode][token];
+		tokens[`--color-${token}`] = resolved.colors.light[token];
 	}
 	return tokens;
 }
@@ -83,15 +84,24 @@ export function modeTokens(
 	return tokens;
 }
 
-// One `box-shadow` value per level. The `--shadow-*` theme namespace does not
-// resolve into React Native's `boxShadow`, so each consumer wraps these in
-// `@utility` itself.
+// The declarations of each elevation utility. The `--shadow-*` theme
+// namespace does not resolve into React Native's `boxShadow`, so each
+// consumer wraps these in `@utility` itself. `flat` casts no shadow and draws
+// the 1px `edge` ring as a border, the channel every hairline already uses on
+// both platforms.
 export function shadowUtilities(
 	resolved: ResolvedTheme,
-): Record<ShadowUtility, string> {
-	const utilities = {} as Record<ShadowUtility, string>;
+): Record<ShadowUtility, Record<string, string>> {
+	const utilities = {} as Record<ShadowUtility, Record<string, string>>;
 	for (const level of SHADOW_LEVELS) {
-		utilities[`shadow-${level}`] = resolved.scales[`--shadow-${level}`];
+		const shadow = resolved.scales[`--shadow-${level}`];
+		utilities[`shadow-${level}`] =
+			resolved.knobs.elevation === "flat"
+				? {
+						"border-width": "1px",
+						"border-color": "var(--color-edge)",
+					}
+				: { "box-shadow": shadow };
 	}
 	return utilities;
 }

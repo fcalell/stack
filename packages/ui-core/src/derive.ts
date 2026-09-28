@@ -39,7 +39,9 @@ import {
 // Final value strings, one per token. Emit helpers read this and never the raw
 // `Theme`, so knob resolution happens exactly once.
 export interface ResolvedTheme {
-	defaultMode: Mode;
+	// The mode a viewer with no stored choice starts in; absent, the system
+	// preference decides.
+	defaultMode: Mode | undefined;
 	knobs: Knobs;
 	colors: Record<Mode, Record<PerModeColor, string>>;
 	invariantColors: Record<InvariantColor, string>;
@@ -134,7 +136,8 @@ function scalesFor(knobs: Knobs): Record<ScaleKey, string> {
 		`${Math.floor(knobs.radius * RADIUS_RATIO.group)}px`;
 	scales["--radius-sheet"] =
 		`${Math.floor(knobs.radius * RADIUS_RATIO.sheet)}px`;
-	scales["--radius-full"] = "9999px";
+	// 0 squares everything: the pills and circles follow the knob to 0.
+	scales["--radius-full"] = knobs.radius === 0 ? "0px" : "9999px";
 	for (const role of TYPE_ROLES) {
 		const size = Math.round(knobs.text * TYPE_SCALE[role].size);
 		scales[`--text-${role}`] = `${size}px`;
@@ -155,7 +158,9 @@ function scalesFor(knobs: Knobs): Record<ScaleKey, string> {
 	for (const level of SHADOW_LEVELS) {
 		const { y, blur, alpha } = SHADOW_GEOMETRY[level];
 		scales[`--shadow-${level}`] =
-			`0 ${y}px ${blur}px rgba(${r}, ${g}, ${b}, ${alpha})`;
+			knobs.elevation === "flat"
+				? "none"
+				: `0 ${y}px ${blur}px rgba(${r}, ${g}, ${b}, ${alpha})`;
 	}
 	for (const width of WIDTHS) {
 		scales[`--container-${width}`] = `${knobs.widths[width]}px`;
@@ -178,6 +183,7 @@ function knobsOf(parsed: ParsedTheme): Knobs {
 		space: parsed.space ?? KNOB_DEFAULTS.space,
 		radius: parsed.radius ?? KNOB_DEFAULTS.radius,
 		text: parsed.text ?? KNOB_DEFAULTS.text,
+		elevation: parsed.elevation ?? KNOB_DEFAULTS.elevation,
 		fonts: {
 			sans: parsed.fonts?.sans ?? KNOB_DEFAULTS.fonts.sans,
 			mono: parsed.fonts?.mono ?? KNOB_DEFAULTS.fonts.mono,

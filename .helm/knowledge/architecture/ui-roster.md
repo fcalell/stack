@@ -12,7 +12,9 @@ full-width bar, and nothing on the desktop is denser than on the phone.
 One control or one piece of text, no layout of their own; the same props on both platforms. An
 act prop is `act` on every molecule that takes one: a labelled text act, 44 px, with an optional
 `blocked` reason, drawn under it once the act is tapped or its `Form` or `Sheet` has taken input,
-so an untouched form opens with its act disabled and silent. `Text` is the only way to set type and its ink follows the role.
+so an untouched form opens with its act disabled and silent; while `loading` its button draws the
+busy glyph the act names (`spinner`: `circle` spins, `scramble` cycles mono glyphs). `Text` is the
+only way to set type and its ink follows the role.
 `Icon` is sized by the type role around it and named from the consumer's closed icon set, a
 runtime map the app provides. `Button` is a pill with words, full width in an action bar and its
 content's width in a toolbar, which the container decides; in a top bar (a `Place`'s, a
@@ -70,7 +72,7 @@ entry never sits over a pinned bar.
 | `EmptyState` | one sentence and the way to make the first one; with `title` it centers as a first screen, alone in a body it centres in the space left, with children it stays above them | Claude iOS's empty project |
 | `Toast` | a dark pill above the bar; client-owned, so never an undo; the `Shell` hosts the queue | Linear Mobile |
 | `Banner` | full width under the top bar on the kind's `-soft` fill; placed by the shell for the app's state, by a screen or a sheet for its own, the screen's under the shell's | |
-| `PendingBar` | one line with a spinner or a server-deadline countdown and one act, in an `ActionBar`'s place, a `Sheet`'s foot, above a `MessageInput`, or as a row of a thread | GitHub iOS's merge state, Claude's usage bar |
+| `PendingBar` | one line with a spinner (its `spinner` kind) or a server-deadline countdown and one act, in an `ActionBar`'s place, a `Sheet`'s foot, above a `MessageInput`, or as a row of a thread | GitHub iOS's merge state, Claude's usage bar |
 
 Retired: `Card` (a `Group`), `Item` (a `ListRow`), `Pair` (a `DefinitionRow`), `SectionToolbar`,
 `Tabs` (a `SegmentedControl`), `Dialog`, `DropdownMenu` and `ContextMenu` (a `Sheet`),

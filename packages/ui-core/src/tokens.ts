@@ -26,6 +26,24 @@ export type HueKnob = (typeof HUE_KNOBS)[number];
 export const PRIMARIES = ["ink", "accent"] as const;
 export type Primary = (typeof PRIMARIES)[number];
 
+// How a raised surface (a sheet, a toast, a popover, the selected segment, a
+// thumb) separates from what is under it: `soft` casts the two shadows,
+// `flat` draws a 1px ring in `edge` instead, so depth is a hairline.
+export const ELEVATIONS = ["soft", "flat"] as const;
+export type Elevation = (typeof ELEVATIONS)[number];
+
+// The busy glyph: `circle` spins, `scramble` cycles mono glyphs in place. A
+// call site picks it (`Spinner kind`, an act's `spinner`).
+export const SPINNER_KINDS = ["circle", "scramble"] as const;
+export type SpinnerKind = (typeof SPINNER_KINDS)[number];
+
+// The scramble's alphabet, width and pace, shared so both platforms draw the
+// same loader. Under reduced motion it holds `SCRAMBLE_STILL`.
+export const SCRAMBLE_GLYPHS = "ABCDEFGHJKLMNPQRSTUVWXYZ0123456789#%&*+=?";
+export const SCRAMBLE_LENGTH = 3;
+export const SCRAMBLE_INTERVAL_MS = 70;
+export const SCRAMBLE_STILL = "···";
+
 export const WIDTHS = ["rail", "list", "column", "sheet", "reading"] as const;
 export type Width = (typeof WIDTHS)[number];
 
@@ -38,8 +56,9 @@ export type FontRole = (typeof FONT_ROLES)[number];
 // `neutralChroma` multiplies the declared chroma of every token bound to
 // `neutralHue`, and nothing else. 0 makes the neutral ladder achromatic.
 // `space`, `radius` and `text` are the bases every rung, radius and type role
-// is a ratio of. `fonts` names the two families; the files that carry them
-// are each plugin's `fonts` option. A missing `sans` is the platform's stack.
+// is a ratio of; `radius: 0` squares everything, the pills and circles too.
+// `fonts` names the two families; the files that carry them are each
+// plugin's `fonts` option. A missing `sans` is the platform's stack.
 export interface Knobs {
 	accentHue: number;
 	neutralHue: number;
@@ -51,6 +70,7 @@ export interface Knobs {
 	space: number;
 	radius: number;
 	text: number;
+	elevation: Elevation;
 	fonts: { sans?: string; mono: string };
 	widths: Record<Width, number>;
 	breakpoints: Record<Breakpoint, number>;
@@ -67,6 +87,7 @@ export const KNOB_DEFAULTS: Knobs = {
 	space: 4,
 	radius: 14,
 	text: 16,
+	elevation: "soft",
 	fonts: { mono: "JetBrains Mono Variable" },
 	widths: { rail: 220, list: 360, column: 300, sheet: 560, reading: 720 },
 	breakpoints: { tablet: 768, desktop: 1024, wide: 1440 },
