@@ -20,7 +20,9 @@ import { createAuthEndpoint } from "better-auth/api";
 import { setSessionCookie } from "better-auth/cookies";
 import { z } from "zod";
 import * as authSchema from "../src/schema/index.ts";
+import * as organizationSchema from "../src/schema/organization.ts";
 import * as passkeySchema from "../src/schema/passkey.ts";
+import type { AuthCallbackPayloads } from "../src/types.ts";
 import authRuntime, { type AuthRuntimeInput } from "../src/worker/index.ts";
 
 const ORIGIN = "http://localhost";
@@ -139,6 +141,71 @@ test("under STACK_DEV a passkey ceremony runs against the localhost dev origin",
 	const signIn = await signInWithPasskey(send, authenticator);
 	assert.equal(signIn.status, 200, await signIn.text());
 	assert.equal(await sessionUser(send), "ada@example.com");
+});
+
+test("sendOTP receives why the code was issued", async () => {
+	const sent: AuthCallbackPayloads["sendOTP"][] = [];
+	const { fetchPath } = await setup(authSchema, {
+		emailOtp: true,
+		callbacks: { sendOTP: (payload) => void sent.push(payload) },
+	});
+
+	const send = browser(fetchPath, ORIGIN, new CookieJar());
+	const response = await send("/api/auth/email-otp/send-verification-otp", {
+		method: "POST",
+		body: JSON.stringify({ email: "ada@example.com", type: "sign-in" }),
+	});
+	assert.equal(response.status, 200, await response.text());
+	assert.equal(sent.length, 1);
+	assert.equal(sent[0]?.email, "ada@example.com");
+	assert.equal(sent[0]?.type, "sign-in");
+	assert.match(sent[0]?.code ?? "", /^\d{6}$/);
+});
+
+test("sendInvitation receives the invitation, the organization and the inviter", async () => {
+	const sent: AuthCallbackPayloads["sendInvitation"][] = [];
+	const { client, instance, fetchPath } = await setup(
+		{ ...authSchema, ...organizationSchema },
+		{
+			organization: true,
+			callbacks: { sendInvitation: (payload) => void sent.push(payload) },
+		},
+	);
+
+	const [cookieName, cookieValue] = await mintSessionCookie(instance, "u1");
+	const jar = new CookieJar();
+	jar.cookies.set(cookieName, cookieValue);
+	const send = browser(fetchPath, ORIGIN, jar);
+	const created = await send("/api/auth/organization/create", {
+		method: "POST",
+		body: JSON.stringify({ name: "Acme", slug: "acme" }),
+	});
+	const body = await created.text();
+	assert.equal(created.status, 200, body);
+	const organization = JSON.parse(body) as { id: string };
+
+	const invited = await send("/api/auth/organization/invite-member", {
+		method: "POST",
+		body: JSON.stringify({
+			email: "grace@example.com",
+			role: "admin",
+			organizationId: organization.id,
+		}),
+	});
+	assert.equal(invited.status, 200, await invited.text());
+	const [row] = client.select().from(organizationSchema.invitation).all();
+	assert.deepEqual(
+		sent.map(({ env: _env, ...payload }) => payload),
+		[
+			{
+				invitationId: row?.id,
+				email: "grace@example.com",
+				role: "admin",
+				organization: { id: organization.id, name: "Acme", slug: "acme" },
+				inviter: { id: "u1", name: "Ada", email: "ada@example.com" },
+			},
+		],
+	);
 });
 
 test("with email OTP on, a callbacks file without sendOTP refuses to build", async () => {

@@ -1,12 +1,13 @@
 import type { ContributionCtx } from "@fcalell/cli";
 import { callback, plugin, slot } from "@fcalell/cli";
-import type { TsExpression } from "@fcalell/cli/ast";
+import type { TsExpression, TsImportSpec } from "@fcalell/cli/ast";
 import { literalToProps } from "@fcalell/cli/ast";
 import { cliSlots } from "@fcalell/cli/cli-slots";
 import type { PluginRuntimeEntry } from "@fcalell/plugin-api";
 import { api } from "@fcalell/plugin-api";
 import { cloudflare } from "@fcalell/plugin-cloudflare";
 import { defaultOrgStatements, getStatements } from "./access.ts";
+import type { AuthClientOptions } from "./client.ts";
 import {
 	AUTH_PREFIX,
 	type AuthCallbackPayloads,
@@ -24,6 +25,20 @@ const SOURCE = "auth";
 // override without string drift.
 const CALLBACK_FILE = "src/worker/plugins/auth.ts";
 
+// The consumer's scope descriptors (`defineScope`), isomorphic so the worker
+// and the web import the same objects. With organizations on, the generated
+// worker hands the module to the runtime, which serves a `bySlug` lookup per
+// scope with a slug.
+const SCOPES_FILE = "src/shared/scopes.ts";
+const SCOPES_IDENTIFIER = "scopes";
+
+async function wiresScopes(
+	ctx: { fileExists(path: string): Promise<boolean> },
+	options: ResolvedAuthOptions,
+): Promise<boolean> {
+	return Boolean(options.organization) && (await ctx.fileExists(SCOPES_FILE));
+}
+
 // ── Slot declarations ──────────────────────────────────────────────
 //
 // `runtimeOptions` is a DERIVED slot: its inputs are `api.slots.cors`,
@@ -40,10 +55,10 @@ const runtimeOptions = slot.derived({
 		devCors: api.slots.devCorsOrigins,
 		devTargets: api.slots.devTargetOrigins,
 	},
-	compute: (
+	compute: async (
 		inp,
 		ctx: ContributionCtx<ResolvedAuthOptions>,
-	): Record<string, TsExpression> => {
+	): Promise<Record<string, TsExpression>> => {
 		// Bug #1: empty-CORS contract. Better Auth silently treats
 		// `undefined` trustedOrigins as "allow nothing" on some paths and
 		// "fall back to baseURL" on others — both are footguns. Refuse to
@@ -161,6 +176,12 @@ const runtimeOptions = slot.derived({
 			props.sameSite = { kind: "string", value: "none" };
 		}
 
+		// Paired with the namespace import contributed to
+		// `api.slots.workerImports` below.
+		if (await wiresScopes(ctx, ctx.options)) {
+			props.scopes = { kind: "identifier", name: SCOPES_IDENTIFIER };
+		}
+
 		return props;
 	},
 });
@@ -203,6 +224,18 @@ const cookiePrefix = slot.value<string, ResolvedAuthOptions>({
 	seed: (ctx) => ctx.options.cookies?.prefix ?? "better-auth",
 });
 
+// The web client's flags, derived from the options so the client and the
+// server enable the same better-auth plugins. Seeded null and filled by
+// auth's own contribution, so a frontend reading it without auth in the
+// config sees null. solid-ui generates `.stack/auth-client.ts` from it.
+export type AuthClientFlags = Required<Omit<AuthClientOptions, "baseURL">>;
+
+const clientFlags = slot.value<AuthClientFlags | null>({
+	source: SOURCE,
+	name: "clientFlags",
+	seed: () => null,
+});
+
 export const auth = plugin("auth", {
 	label: "Auth",
 
@@ -241,6 +274,7 @@ export const auth = plugin("auth", {
 		appUrlDevDefault,
 		callbackFile,
 		cookiePrefix,
+		clientFlags,
 	},
 
 	contributes: (self) => [
@@ -342,6 +376,21 @@ export const auth = plugin("auth", {
 		// prefix, so deploy targets (vite's dev proxy, the node server's mount
 		// table) only route it once it is declared here.
 		api.slots.routePrefixes.contribute(() => AUTH_PREFIX),
+
+		// The extension stays, as on the callbacks import: the node target runs
+		// the generated worker as written.
+		api.slots.workerImports.contribute(
+			async (ctx): Promise<TsImportSpec | undefined> =>
+				(await wiresScopes(ctx, self.options))
+					? { source: `../${SCOPES_FILE}`, namespace: SCOPES_IDENTIFIER }
+					: undefined,
+		),
+
+		self.slots.clientFlags.contribute(() => ({
+			passkey: self.options.passkey !== false,
+			emailOtp: self.options.emailOtp,
+			organization: Boolean(self.options.organization),
+		})),
 
 		// Worker runtime entry. Resolves `runtimeOptions` inside the
 		// contribution — the graph guarantees cors is fully-resolved before

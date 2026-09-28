@@ -8,9 +8,11 @@ const callbacks: AuthCallbacks = {
 		// TODO: send OTP email
 		console.log(`OTP for ${email}: ${code}`);
 	},
-	sendInvitation({ email, orgName }) {
-		// TODO: send invitation email
-		console.log(`Invitation for ${email} to ${orgName}`);
+	sendInvitation({ invitationId, email, organization }) {
+		// TODO: send invitation email linking to your accept page
+		console.log(
+			`Invitation ${invitationId} for ${email} to ${organization.name}`,
+		);
 	},
 	// Your own better-auth plugins, registered after the framework's:
 	// plugins: [myEnrolmentLink()],

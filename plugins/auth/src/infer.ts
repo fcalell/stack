@@ -1,23 +1,6 @@
-import type { FieldConfig } from "./types.ts";
-
-type FieldType<F extends FieldConfig> = F["type"] extends "string"
-	? string
-	: F["type"] extends "number"
-		? number
-		: F["type"] extends "boolean"
-			? boolean
-			: never;
-
-type InferAdditionalFields<T> =
-	T extends Record<string, FieldConfig>
-		? {
-				[K in keyof T]: T[K] extends { required: true }
-					? FieldType<T[K]>
-					: FieldType<T[K]> | null;
-			}
-		: Record<never, never>;
-
-type BaseUser = {
+// The user as the session carries it: better-auth's base user, the same for
+// every configuration.
+export type SessionUser = {
 	id: string;
 	name: string;
 	email: string;
@@ -51,21 +34,5 @@ type OrgSessionFields<TOptions> = TOptions extends { organization: infer O }
 		: { activeOrganizationId: string | null }
 	: Record<never, never>;
 
-export type InferUser<TConfig extends { auth?: unknown }> = BaseUser &
-	(ExtractAuthOptions<TConfig> extends {
-		user: {
-			additionalFields: infer F extends Record<string, FieldConfig>;
-		};
-	}
-		? InferAdditionalFields<F>
-		: Record<never, never>);
-
 export type InferSession<TConfig extends { auth?: unknown }> = BaseSession &
-	OrgSessionFields<ExtractAuthOptions<TConfig>> &
-	(ExtractAuthOptions<TConfig> extends {
-		session: {
-			additionalFields: infer F extends Record<string, FieldConfig>;
-		};
-	}
-		? InferAdditionalFields<F>
-		: Record<never, never>);
+	OrgSessionFields<ExtractAuthOptions<TConfig>>;

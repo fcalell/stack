@@ -23,17 +23,8 @@ export default defineConfig({
     db({ dialect: "d1", databaseId: "9a619a0b-..." }),
     auth({
       cookies: { prefix: "myapp", domain: ".example.com" },
-      session: {
-        expiresIn: 60 * 60 * 24 * 7,
-        additionalFields: {
-          activeProjectId: { type: "string" },
-        },
-      },
-      user: {
-        additionalFields: {
-          timezone: { type: "string" },
-        },
-      },
+      session: { expiresIn: 60 * 60 * 24 * 7 },
+      organization: true,
     }),
   ],
 });
@@ -53,9 +44,9 @@ const callbacks: AuthCallbacks<Env> = {
   async sendOTP({ email, code, env }) {
     await env.EMAIL.send({ to: email, subject: "Your code", body: code });
   },
-  sendInvitation({ email, orgName }) {
-    // TODO: send invitation email
-    console.log(`Invitation for ${email} to ${orgName}`);
+  async sendInvitation({ invitationId, email, organization, inviter, env }) {
+    const url = `${env.APP_URL}/invitations/${invitationId}`;
+    await env.EMAIL.send({ to: email, subject: `${inviter.name} invited you to ${organization.name}`, body: url });
   },
 };
 
@@ -69,8 +60,8 @@ worker's `Env` as `AuthCallbacks<Env>` to type it; leave the parameter off and `
 
 | Callback | Required | Runs when |
 |----------|----------|-----------|
-| `sendOTP` | yes, unless `emailOtp: false` | An email one-time password is issued |
-| `sendInvitation` | no | An organization invitation is sent |
+| `sendOTP` | yes, unless `emailOtp: false` | An email one-time password is issued. `type` says why (`sign-in`, `email-verification`, `forget-password`, `change-email`), so the email's copy can match |
+| `sendInvitation` | no | An organization invitation is sent. The payload carries `invitationId` (what the accept link names), the invited `role`, the `organization` (`id`, `name`, `slug`) and the `inviter` (`id`, `name`, `email`). The invitation expires after better-auth's 48 hours |
 | `beforeDelete` | no | `user.deleteUser` is on and an account is about to be deleted. Throw to refuse: an `APIError` surfaces its own status, anything else is a 500. Revocation, storage cleanup, and PII scrubbing belong here |
 | `sendDeleteVerification` | no | `user.deleteUser` is on and the consumer implements this callback. `deleteUser()` then emails `url` (a confirmation link) instead of deleting, the deletion happens when the link is opened, and no session freshness is required. This is the deletion path for passwordless apps |
 | `generateOTP` | no | An OTP is about to be generated. Return a string to override it, or `undefined` to fall back to the default for that request, which is how a fixed review-account code coexists with real ones. Read synchronously, so it cannot be `async` |
@@ -135,7 +126,7 @@ values, which a localhost page can never match; a passkey enrolled in dev is a l
 credential.
 
 Re-export the `passkey` table (see Database schema) and sign in from the browser with the
-web client (`createAuthClient({ passkey: true })`, see below). Enrolling a passkey needs a session
+generated web client (see Web client below). Enrolling a passkey needs a session
 younger than `session.freshAge`, so a user signs in some other way first; `generate-register-options` then
 `verify-registration` store the credential, and `signIn.passkey()` signs in with it after.
 
@@ -178,17 +169,18 @@ the API side -- see `@fcalell/plugin-api`'s README for the procedure-config docs
 
 ### 4. Type inference
 
-Derive user/session types from your config:
+Type the session's user and derive the session from your config:
 
 ```ts
-import type { InferUser, InferSession } from "@fcalell/plugin-auth/infer";
+import type { InferSession, SessionUser } from "@fcalell/plugin-auth/infer";
 import type config from "./stack.config";
 
-type User = InferUser<typeof config>;
 type Session = InferSession<typeof config>;
 ```
 
-`InferUser` starts from the Better Auth base user (`id`, `name`, `email`, `emailVerified`, `image`, `createdAt`, `updatedAt`) and adds any `additionalFields` from `auth.user`. `InferSession` does the same for sessions, and includes `activeOrganizationId` when the organization plugin is configured.
+`SessionUser` is the Better Auth base user (`id`, `name`, `email`, `emailVerified`, `image`, `createdAt`, `updatedAt`). `InferSession` is the base session, plus `activeOrganizationId` when the organization plugin is configured.
+
+The identity tables are the plugin's, so they carry no columns of yours. Data you keep per user or per organization (a timezone, settings) lives in your own table keyed by `user.id` or `organization.id`, with an `onDelete: "cascade"` reference so it goes with its owner.
 
 ## Config options
 
@@ -199,10 +191,8 @@ type Session = InferSession<typeof config>;
 | `session.expiresIn` | `number` | 7 days | Session expiry in seconds |
 | `session.updateAge` | `number` | -- | Session refresh interval in seconds |
 | `session.freshAge` | `number` | 1 day (better-auth's default) | How recently the session must have been created to count as fresh; deletion without email confirmation needs a fresh session. `0` disables the check, letting a stolen session cookie of any age delete the account. Prefer the `sendDeleteVerification` callback for passwordless apps |
-| `session.additionalFields` | `Record<string, FieldConfig>` | -- | Extra session fields |
-| `user.additionalFields` | `Record<string, FieldConfig>` | -- | Extra user fields |
 | `user.deleteUser` | `boolean` | `false` | Enable account deletion (`authClient.deleteUser()`), gated by the `beforeDelete` callback. With `sendDeleteVerification` implemented, deletion goes through an emailed confirmation link; without it, better-auth requires a fresh session. App Store 5.1.1(v) requires it for a native app |
-| `organization` | `boolean \| { ac, roles, additionalFields }` | -- | Enable organizations; requires re-exporting `@fcalell/plugin-auth/schema/organization` (see Database schema) |
+| `organization` | `boolean \| { ac, roles }` | -- | Enable organizations; requires re-exporting `@fcalell/plugin-auth/schema/organization` (see Database schema) |
 | `emailOtp` | `boolean` | `true` | Email one-time-password sign-in; `false` for OAuth-only |
 | `socialProviders.google` | `boolean \| { clientIdVar, clientSecretVar }` | -- | Enable Google OAuth (`true` = conventional var names) |
 | `socialProviders.apple` | `boolean \| { clientIdVar, clientSecretVar, appBundleIdentifier }` | -- | Enable Apple OAuth (`true` = conventional var names) |
@@ -216,8 +206,6 @@ type Session = InferSession<typeof config>;
 | `rateLimiter.email.binding` | `string` | `"RATE_LIMITER_EMAIL"` | Email rate limiter binding name |
 | `rateLimiter.email.limit` | `number` | `3` | Max requests per period (email) |
 | `rateLimiter.email.period` | `number` | `60` | Period in seconds (email) |
-
-`FieldConfig` shape: `{ type: "string" | "number" | "boolean", required?: boolean, defaultValue?: unknown, input?: boolean }`.
 
 ## Bindings
 
@@ -349,11 +337,54 @@ compiled. Pick a specific resource/action name instead.
 
 ### Org rules endpoint
 
-`auth({ organization: true })` registers a framework-owned `auth.orgRules` procedure: it reads the
-caller's active member, compiles their role's statements into rules the same way
-`compileStatements` does above, and ships them packed (`{ rules: PackedRules<...> }`). No active
-organization, or no membership, returns `{ rules: [] }` rather than an error. `@fcalell/plugin-api`'s
-`useAbility` client hook consumes it directly; you never call it yourself.
+`auth({ organization: true })` registers a framework-owned `auth.orgRules` procedure, scoped to
+`organization`: it takes an `organizationId`, reads the caller's role there, compiles its
+statements into rules the same way `compileStatements` does above, and ships them packed
+(`{ rules: PackedRules<...> }`). A caller who is no member gets `NOT_FOUND`, which the client reads
+as deny-all. `@fcalell/plugin-api`'s `useAbility(organizationId)` consumes it directly; you never
+call it yourself.
+
+### Scopes
+
+A scope is one tenancy level a procedure acts inside. The organization is the root scope; a
+consumer table under it, or under another scope, becomes one with `defineScope`. Declare them in an
+isomorphic module, so the worker's procedures and the web's boundaries import the same objects:
+
+```ts
+// src/shared/scopes.ts
+import { defineScope, organization } from "@fcalell/plugin-auth/scope";
+import * as schema from "../schema";
+
+export const project = defineScope({
+  name: "project",
+  table: schema.project,
+  parent: [organization, schema.project.organizationId],
+  slug: schema.project.slug,
+});
+
+export const page = defineScope({
+  name: "page",
+  table: schema.page,
+  parent: [project, schema.page.projectId],
+});
+```
+
+`procedure({ auth: true, scope: page })` then takes only `pageId`: the page, its project, its
+organization and the caller's `member` row are loaded per request, one indexed lookup per level,
+and land in the context as `page`, `project`, `organization` and `member`. The parents come from
+the rows, so a client cannot pair a page with another project, and a missing row answers the same
+`NOT_FOUND` as a caller who is no member of the organization at the top. `can` checks that
+member's role. Nothing is read from, or written to, the session's active organization.
+
+The table needs an `id` primary key; the parent and slug columns must be its own; the names
+`organization` and `member` are taken. Roles live on the organization membership and every nested
+scope inherits them.
+
+With `organization` on and `src/shared/scopes.ts` present, the generated worker hands that module
+to the runtime, which serves a lookup per scope with a slug: `auth.scope.<name>.bySlug`, taking
+`{ slug }` for the organization and `{ slug, parentId }` below it (a slug is unique within its
+parent). It answers the same chain a scoped procedure gets (`{ organization, member, project }`
+for a project) or `NOT_FOUND`. solid-ui's `ScopeBoundary` calls it; you never do.
 
 ## Plugin implementation
 
@@ -378,8 +409,15 @@ export const auth = plugin("auth", {
   requires: ["api", "db"],
   callbacks: {
     // Required at runtime while `emailOtp` is on.
-    sendOTP: callback.optional<{ email: string; code: string; env: unknown }>(),
-    sendInvitation: callback.optional<{ email: string; orgName: string; env: unknown }>(),
+    sendOTP: callback.optional<{ email: string; code: string; type: OtpType; env: unknown }>(),
+    sendInvitation: callback.optional<{
+      invitationId: string;
+      email: string;
+      role: string;
+      organization: { id: string; name: string; slug: string };
+      inviter: { id: string; name: string; email: string };
+      env: unknown;
+    }>(),
     beforeDelete: callback.optional<{ user: AuthUser; request?: Request; env: unknown }>(),
     sendDeleteVerification:
       callback.optional<{ user: AuthUser; url: string; token: string; env: unknown }>(),
@@ -436,16 +474,16 @@ above) via the `routes()` hook of the `RuntimePlugin` contract.
 
 ### Web client
 
-`./client` configures a `better-auth/client` instance for the browser, framework-agnostic (wrap it in
-your own SolidJS resources). The flags must match the server's options: `passkey` adds
-`passkeyClient()` (`signIn.passkey()`, `passkey.addPasskey()`, ...), and `emailOtp` (on by default,
-as on the server) adds `emailOTPClient()`. `baseURL` defaults to the page's own origin.
+`./client` configures better-auth's SolidJS client, so `authClient.useSession()` is an accessor.
+With `solid-ui` in the config you never call it yourself: the plugin generates
+`.stack/auth-client.ts` with the flags your `auth` options imply, so the client enables exactly the
+plugins the worker runs. `passkey` adds `passkeyClient()` (`signIn.passkey()`,
+`passkey.addPasskey()`, ...), `emailOtp` adds `emailOTPClient()`, and `organization` adds
+`organizationClient()` (`organization.create()`, `organization.inviteMember()`,
+`organization.acceptInvitation()`, ...). `baseURL` defaults to the page's own origin.
 
 ```ts
-import { createAuthClient } from "@fcalell/plugin-auth/client";
-
-export const authClient = createAuthClient({ passkey: true, emailOtp: false });
-export type AuthClient = typeof authClient;
+import { authClient } from "../../.stack/auth-client.ts";
 
 await authClient.passkey.addPasskey();   // on a fresh session
 await authClient.signIn.passkey();
@@ -511,8 +549,9 @@ Requires the server `emailOtp` option (on by default) and a `sendOTP` callback i
 | `@fcalell/plugin-auth` | `auth()`, `AuthOptions` |
 | `@fcalell/plugin-auth/ability` | `defineAbility()`, `subject()`, `assertCan()`, `packAbility()` / `unpackAbility()` / `PackedRules`, `compileStatements()` -- record-scoped authorization (isomorphic) |
 | `@fcalell/plugin-auth/access` | `createAccessControl()`, `getStatements()`, `defaultOrgRoles` |
-| `@fcalell/plugin-auth/infer` | `InferUser<T>`, `InferSession<T>` -- type utilities derived from config |
-| `@fcalell/plugin-auth/client` | `createAuthClient({ baseURL?, passkey?, emailOtp? })`, `AuthClient` -- web client on `better-auth/client` |
+| `@fcalell/plugin-auth/scope` | `defineScope()`, `organization`, `Scope`, `ScopeContext` -- isomorphic scope descriptors |
+| `@fcalell/plugin-auth/infer` | `SessionUser`, `InferSession<T>` -- the session's user and the session derived from config |
+| `@fcalell/plugin-auth/client` | `createAuthClient({ baseURL?, passkey?, emailOtp?, organization? })`, `AuthClient` -- web client on `better-auth/solid`; solid-ui generates the call in `.stack/auth-client.ts` |
 | `@fcalell/plugin-auth/expo` | `createAuthClient()`, `AuthProvider`, `useAuthClient()`, `signInWith{Apple,Google}()`, `sendEmailOtp()` / `signInWithEmailOtp()` -- native client (runtime-only) |
 | `@fcalell/plugin-auth/runtime` | `authRuntime()`, `AuthCallbacks` (including `plugins`) -- runtime plugin factory + worker-safe callback file typing |
 | `@fcalell/plugin-auth/schema` | `user`, `session`, `account`, `verification` -- core identity tables (always re-exported) |

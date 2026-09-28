@@ -2,17 +2,21 @@ import { expo } from "@better-auth/expo";
 import { type PasskeyOptions, passkey } from "@better-auth/passkey";
 import { createMongoAbility } from "@casl/ability";
 import type { RuntimePlugin } from "@fcalell/cli/runtime";
-import { ORG_RULES_PATH } from "@fcalell/plugin-api/procedure";
+import {
+	ORG_RULES_PATH,
+	SCOPE_ROUTES_PATH,
+} from "@fcalell/plugin-api/procedure";
+import { ORPCError } from "@orpc/server";
 import type { BetterAuthPlugin } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { isAPIError } from "better-auth/api";
 import { type BetterAuthOptions, betterAuth } from "better-auth/minimal";
 import { role as buildAcRole } from "better-auth/plugins/access";
 import { emailOTP } from "better-auth/plugins/email-otp";
 import { organization } from "better-auth/plugins/organization";
+import { z } from "zod";
 import { compileStatements, packAbility } from "../ability/index.ts";
 import { defaultOrgRoles } from "../access.ts";
-import type { InferSession, InferUser } from "../infer.ts";
+import type { InferSession, SessionUser } from "../infer.ts";
 import { account, session, user, verification } from "../schema/index.ts";
 import {
 	invitation,
@@ -20,17 +24,22 @@ import {
 	organization as organizationTable,
 } from "../schema/organization.ts";
 import { passkey as passkeyTable } from "../schema/passkey.ts";
+import {
+	type MemberRow,
+	organization as organizationScope,
+	type Scope,
+} from "../scope.ts";
 import type {
 	AuthCallbackPayloads,
 	AuthRuntimeOptions,
 	AuthUser,
-	FieldConfig,
 	OtpType,
 	ResolvedSocialProvider,
 	SocialProviderName,
 } from "../types.ts";
 import { AUTH_PREFIX } from "../types.ts";
 import { emailKey } from "./email-key.ts";
+import { createTenancy, resolveGrants, type Tenancy } from "./tenancy.ts";
 
 // Structural match with plugin-api's `RateLimitBinding` (procedure.ts) — not
 // imported directly since plugin-api doesn't expose it on a public subpath;
@@ -100,10 +109,8 @@ export interface AuthRuntimeInput extends AuthRuntimeOptions {
 		expiresIn?: number;
 		updateAge?: number;
 		freshAge?: number;
-		additionalFields?: Record<string, FieldConfig>;
 	};
 	user?: {
-		additionalFields?: Record<string, FieldConfig>;
 		deleteUser?: boolean;
 	};
 	organization?:
@@ -111,7 +118,6 @@ export interface AuthRuntimeInput extends AuthRuntimeOptions {
 		| {
 				ac?: unknown;
 				roles?: Record<string, unknown>;
-				additionalFields?: Record<string, FieldConfig>;
 		  };
 	// On by default; `false` drops the email-OTP plugin (OAuth-only consumers).
 	emailOtp?: boolean;
@@ -137,57 +143,38 @@ export interface AuthRuntimeInput extends AuthRuntimeOptions {
 	// aren't included here — they're enforced by the binding config itself,
 	// not read at request time.
 	rateLimiter?: { ip: { binding: string }; email: { binding: string } };
+	// The consumer's `src/shared/scopes.ts` module namespace, when it exists:
+	// every scope descriptor it exports gets a `bySlug` lookup.
+	scopes?: Record<string, unknown>;
 }
 
-// Structural surface of the better-auth instance our code — and consumers'
+// Structural surface of the better-auth instance our code, and consumers'
 // `procedure({ auth: true })` handlers via `InferAuthContext`
-// (`plugins/api/src/procedure.ts`) — actually touch: `handler` (the fetch
-// entrypoint below) plus the two `api` methods `createProcedure`'s
-// auth/rbac middleware call. better-auth's own `Auth<Options>` requires the
-// literal `BetterAuthOptions` object passed to `betterAuth(...)`; `buildAuth`
-// below constructs that object from runtime conditionals (plugins pushed
-// based on `options.organization` / `.expo` / `.emailOtp`), so there's no
-// single literal `Options` to parameterize `Auth<Options>` with here. A
-// hand-declared, honest structural type beats `any` even though it's not
-// better-auth's own generic.
-//
-// `hasPermission` only exists at runtime once `buildAuth` registers the
-// organization plugin (`options.organization` truthy, see below). Declaring
-// it unconditionally let `procedure({ org: true, rbac: [...] })` type-check
-// against a non-organization auth config and TypeError at request time.
-// Gated on `TOptions["organization"]` (same `extends { organization: infer O }`
-// pattern `../infer.ts`'s `OrgSessionFields` uses) so the type matches what
-// `buildAuth` actually wires up.
-export type AuthApi<TOptions extends AuthRuntimeInput = AuthRuntimeInput> = {
+// (`plugins/api/src/procedure.ts`), actually touch: `handler` (the fetch
+// entrypoint below) and the session lookup the auth middleware calls.
+// better-auth's own `Auth<Options>` requires the literal `BetterAuthOptions`
+// object passed to `betterAuth(...)`; `buildAuth` below constructs that
+// object from runtime conditionals, so there's no single literal `Options`
+// to parameterize `Auth<Options>` with here.
+export type AuthApi = {
 	getSession: (opts: { headers: Headers }) => Promise<{
 		user: Record<string, unknown>;
 		session: Record<string, unknown>;
 	} | null>;
-} & (TOptions extends { organization: infer O }
+};
+
+// The tenancy capability exists only with organizations on, so a `scope`
+// procedure type-checks only against a config that can resolve it.
+type TenancyContext<TOptions> = TOptions extends { organization: infer O }
 	? O extends undefined | false
 		? object
-		: {
-				hasPermission: (opts: {
-					headers: Headers;
-					body: { permissions: Record<string, string[]> };
-				}) => Promise<{ success: boolean } | null>;
-				// Used by the `auth.orgRules` procedure (WS6.2, `routes()` below) to
-				// compile the caller's org ability. better-auth's real endpoint
-				// throws (not returns null) when there's no active organization or
-				// no member row — callers must catch, not null-check.
-				getActiveMember: (opts: { headers: Headers }) => Promise<{
-					id: string;
-					organizationId: string;
-					userId: string;
-					role: string;
-				}>;
-			}
-	: object);
+		: { tenancy: Tenancy }
+	: object;
 
 // `$Infer.Session` is derived from `AuthRuntimeInput` via the SAME
-// `InferUser`/`InferSession` machinery `@fcalell/plugin-auth/infer` exposes
-// for the client (additionalFields, organization → `activeOrganizationId`) —
-// one derivation, two consumers, instead of re-deriving the branching twice.
+// `SessionUser`/`InferSession` types `@fcalell/plugin-auth/infer` exposes
+// for the client (organization → `activeOrganizationId`), one derivation,
+// two consumers, instead of re-deriving the branching twice.
 // `TOptions` is inferred from the literal object `.stack/procedure.ts` /
 // `.stack/worker.ts` pass to `authRuntime(...)` at the call site (codegen
 // always emits an inline object literal), so e.g. `organization: true`
@@ -196,10 +183,10 @@ export interface AuthInstance<
 	TOptions extends AuthRuntimeInput = AuthRuntimeInput,
 > {
 	handler: (request: Request) => Promise<Response>;
-	api: AuthApi<TOptions>;
+	api: AuthApi;
 	$Infer: {
 		Session: {
-			user: InferUser<{ auth: TOptions }>;
+			user: SessionUser;
 			session: InferSession<{ auth: TOptions }>;
 		};
 	};
@@ -243,8 +230,8 @@ function buildAuth(
 		if (!sendOTP) throw new MissingSendOtpError();
 		plugins.push(
 			emailOTP({
-				sendVerificationOTP: async ({ email, otp }) => {
-					await sendOTP({ email, code: otp, env });
+				sendVerificationOTP: async ({ email, otp, type }) => {
+					await sendOTP({ email, code: otp, type, env });
 				},
 				// The key must be absent when the consumer has no callback:
 				// better-auth spreads these options over its defaults, so an
@@ -295,18 +282,21 @@ function buildAuth(
 					).map(([name, grants]) => [name, buildAcRole(grants)]),
 					// biome-ignore lint/suspicious/noExplicitAny: roles shape is user-provided.
 				) as any,
-				schema: orgConfig.additionalFields
-					? {
-							organization: {
-								// biome-ignore lint/suspicious/noExplicitAny: additionalFields is narrowed by the schema.
-								additionalFields: orgConfig.additionalFields as any,
-							},
-						}
-					: undefined,
 				async sendInvitationEmail(data) {
 					await options.callbacks?.sendInvitation?.({
+						invitationId: data.id,
 						email: data.email,
-						orgName: data.organization.name,
+						role: data.role,
+						organization: {
+							id: data.organization.id,
+							name: data.organization.name,
+							slug: data.organization.slug,
+						},
+						inviter: {
+							id: data.inviter.user.id,
+							name: data.inviter.user.name,
+							email: data.inviter.user.email,
+						},
 						env,
 					});
 				},
@@ -416,8 +406,6 @@ function buildAuth(
 			expiresIn: options.session?.expiresIn,
 			updateAge: options.session?.updateAge,
 			freshAge: options.session?.freshAge,
-			// biome-ignore lint/suspicious/noExplicitAny: additionalFields is user-provided.
-			additionalFields: options.session?.additionalFields as any,
 			// Signed session cache: skips a D1 read on getSession for most
 			// authenticated requests (Workers/D1 best practice), ~5 min freshness.
 			// Off for native: the cache sets a second `session_data` cookie
@@ -430,8 +418,6 @@ function buildAuth(
 		},
 		user: options.user
 			? {
-					// biome-ignore lint/suspicious/noExplicitAny: additionalFields is user-provided.
-					additionalFields: options.user.additionalFields as any,
 					deleteUser: options.user.deleteUser
 						? {
 								enabled: true,
@@ -536,73 +522,59 @@ async function checkRateLimit(
 	return null;
 }
 
-// ---------- auth.orgRules (WS6.2) ----------
+// ---------- auth.orgRules and auth.scope.<name>.bySlug ----------
 //
 // `routes(procedure)` receives plugin-api's procedure factory as `unknown`
 // (`RuntimePlugin` is framework-agnostic, see `packages/cli/src/runtime.ts`).
-// Narrowing to just the `procedure({ auth: true }).query(handler)` surface
-// this file touches avoids importing plugin-api's full generic
-// procedure-builder machinery — the same "describe just the surface we
-// touch" approach `plugins/api/src/procedure.ts`'s own `OrpcChain` note
-// documents.
-interface OrgRulesContext {
-	reqHeaders: Headers;
-	auth: {
-		api: {
-			getActiveMember: (opts: { headers: Headers }) => Promise<{
-				role: string;
-			}>;
-		};
-	};
-}
-
-type OrgRulesProcedureFactory = (config: {
+// Narrowing to just the surface this file touches avoids importing
+// plugin-api's full generic procedure-builder machinery.
+type AuthRouteFactory = (config: {
 	auth: true;
+	scope?: typeof organizationScope;
 	reads?: readonly string[];
 }) => {
 	query<TOutput>(
-		fn: (opts: { context: OrgRulesContext }) => Promise<TOutput>,
+		fn: (opts: { context: { member: MemberRow } }) => Promise<TOutput>,
 	): unknown;
+	input(schema: z.ZodType): {
+		query<TOutput>(
+			fn: (opts: {
+				input: { slug: string; parentId?: string };
+				context: { user: { id: string }; tenancy: Tenancy };
+			}) => Promise<TOutput>,
+		): unknown;
+	};
 };
 
-// A role's grants, either the bare `{resource: actions[]}` record our own
-// `createAccessControl().newRole()` (`../access.ts`) and `defaultOrgRoles`
-// return, or `.statements` on a real better-auth `Role` (a consumer who
-// imported `better-auth/plugins/access` directly instead of our wrapper).
-function grantsOf(role: unknown): Record<string, readonly string[]> | null {
-	if (!role || typeof role !== "object") return null;
-	if ("statements" in role) {
-		const statements = (role as { statements: unknown }).statements;
-		if (statements && typeof statements === "object") {
-			return statements as Record<string, readonly string[]>;
-		}
-	}
-	return role as Record<string, readonly string[]>;
-}
+// A slug names the organization on its own; below it, a slug is unique only
+// within its parent, whose id comes along.
+const ORGANIZATION_LOOKUP = z.object({ slug: z.string().min(1) });
+const SCOPE_LOOKUP = z.object({
+	slug: z.string().min(1),
+	parentId: z.string().min(1),
+});
 
-// better-auth's member role is a comma-separated multi-role string
-// (`hasPermissionFn`/`leaveOrganization` in better-auth's organization
-// plugin both `.split(",")` it) — union the grants of every role that
-// matches. An unknown role name contributes nothing; if none match, the
-// merged record is empty and `compileStatements` -> `packAbility` naturally
-// yields `{ rules: [] }`.
-function resolveGrants(
-	roleField: string,
-	roles: Record<string, unknown>,
-): Record<string, readonly string[]> {
-	const merged = new Map<string, Set<string>>();
-	for (const name of roleField.split(",")) {
-		const grants = grantsOf(roles[name]);
-		if (!grants) continue;
-		for (const [resource, actions] of Object.entries(grants)) {
-			const set = merged.get(resource) ?? new Set<string>();
-			for (const action of actions) set.add(action);
-			merged.set(resource, set);
-		}
-	}
-	return Object.fromEntries(
-		[...merged].map(([resource, actions]) => [resource, [...actions]]),
+// The scope descriptors a consumer's `src/shared/scopes.ts` exports, read off
+// the module namespace codegen hands over.
+function consumerScopes(module: Record<string, unknown> | undefined): Scope[] {
+	const scopes = Object.values(module ?? {}).filter(
+		(value): value is Scope =>
+			typeof value === "object" &&
+			value !== null &&
+			"name" in value &&
+			"table" in value &&
+			"parent" in value,
 	);
+	const names = new Set<string>();
+	for (const scope of scopes) {
+		if (names.has(scope.name)) {
+			throw new Error(
+				`plugin-auth: two scopes are named "${scope.name}"; scope names are unique.`,
+			);
+		}
+		names.add(scope.name);
+	}
+	return scopes;
 }
 
 export default function authRuntime<TOptions extends AuthRuntimeInput>(
@@ -613,8 +585,15 @@ export default function authRuntime<TOptions extends AuthRuntimeInput>(
 	{
 		auth: AuthInstance<TOptions>;
 		_rateLimiter?: { ip?: RateLimitBinding; email?: RateLimitBinding };
-	}
+	} & TenancyContext<TOptions>
 > {
+	const roles = (
+		typeof options.organization === "object" && options.organization.roles
+			? options.organization.roles
+			: defaultOrgRoles
+	) as Record<string, unknown>;
+	const scopes = consumerScopes(options.scopes);
+
 	return {
 		name: "auth",
 		// context() reads upstream.db (the drizzle client dbRuntime provides) —
@@ -624,65 +603,62 @@ export default function authRuntime<TOptions extends AuthRuntimeInput>(
 		// assertion (WS6.3), fed by this plugin's `api.slots.env`
 		// contribution — not in a per-request validateEnv here.
 		dependsOn: ["db"],
-		// Framework-owned org-rules procedure (WS6.2): ships the caller's
-		// compiled org
-		// ability so the `useAbility` client hook can drive UI affordances from
-		// the same rules `hasPermission` checks server-side. Only registered
-		// when organizations are enabled — no `organization` plugin means no
-		// member/role to compile rules from.
+		// Framework-owned procedures, registered only with organizations on:
+		// the caller's compiled ability in the organization the input names,
+		// so `useAbility` drives UI affordances from the same grants `can`
+		// checks server-side; and per scope with a slug, the lookup
+		// `ScopeBoundary` resolves a URL slug with.
 		routes(procedure: unknown) {
 			if (!options.organization) return {};
+			const factory = procedure as AuthRouteFactory;
 
-			// `reads: ["member"]` — the caller's compiled ability is derived
-			// from their member role, so a role-changing mutation that declares
-			// `writes: ["member"]` (e.g. `updateMemberRole`) auto-invalidates
-			// this query end-to-end via the generic entity-header cache-
-			// invalidation contract (WS3), with zero bespoke wiring. "member" is
-			// a legal `Entity` because auth contributes it to
-			// `api.slots.entities` (see `../index.ts`).
-			const orgRulesProcedure = (procedure as OrgRulesProcedureFactory)({
+			// `reads: ["member"]`: a role-changing mutation that declares
+			// `writes: ["member"]` invalidates this query through the
+			// entity-header contract. "member" is a legal `Entity` because auth
+			// contributes it to `api.slots.entities` (see `../index.ts`).
+			const orgRules = factory({
 				auth: true,
+				scope: organizationScope,
 				reads: ["member"],
 			}).query(async ({ context }) => {
-				let member: { role: string };
-				try {
-					member = await context.auth.api.getActiveMember({
-						headers: context.reqHeaders,
-					});
-				} catch (error) {
-					// better-auth's endpoint throws `APIError.from("BAD_REQUEST",
-					// ORGANIZATION_ERROR_CODES.NO_ACTIVE_ORGANIZATION |
-					// MEMBER_NOT_FOUND)` for exactly the two "no ability to
-					// compile" cases -- deny-all on the client, not a request
-					// error. Any other error (a D1 outage, an unexpected bug)
-					// rethrows: a real failure must surface as a query error
-					// client-side, matching `fetchOrgRules`'s contract
-					// (`@fcalell/plugin-api/ability-client`), never a silent
-					// deny-all.
-					if (
-						isAPIError(error) &&
-						(error.body?.code === "NO_ACTIVE_ORGANIZATION" ||
-							error.body?.code === "MEMBER_NOT_FOUND")
-					) {
-						return { rules: [] };
-					}
-					throw error;
-				}
-
-				const rolesConfig =
-					typeof options.organization === "object"
-						? options.organization.roles
-						: undefined;
-				const grants = resolveGrants(
-					member.role,
-					(rolesConfig ?? defaultOrgRoles) as Record<string, unknown>,
-				);
+				const grants = resolveGrants(context.member.role, roles);
 				const ability = createMongoAbility(compileStatements(grants));
 				return { rules: packAbility(ability) };
 			});
 
-			const [routerKey, procedureKey] = ORG_RULES_PATH;
-			return { [routerKey]: { [procedureKey]: orgRulesProcedure } };
+			const lookups = Object.fromEntries(
+				[organizationScope, ...scopes]
+					.filter((scope) => scope.slug !== null)
+					.map((scope) => [
+						scope.name,
+						{
+							bySlug: factory({ auth: true })
+								.input(scope.parent ? SCOPE_LOOKUP : ORGANIZATION_LOOKUP)
+								.query(async ({ input, context }) => {
+									const found = await context.tenancy.bySlug(
+										scope,
+										input.slug,
+										input.parentId,
+										context.user.id,
+									);
+									if (!found) {
+										throw new ORPCError("NOT_FOUND", {
+											message: `No such ${scope.name}`,
+										});
+									}
+									return found;
+								}),
+						},
+					]),
+			);
+
+			// Both paths share their router key, `auth`.
+			return {
+				[ORG_RULES_PATH[0]]: {
+					[ORG_RULES_PATH[1]]: orgRules,
+					[SCOPE_ROUTES_PATH[1]]: lookups,
+				},
+			};
 		},
 		context(env, upstream) {
 			const u = upstream as { db: unknown };
@@ -701,20 +677,25 @@ export default function authRuntime<TOptions extends AuthRuntimeInput>(
 
 			return {
 				// `getOrInitAuth` returns whatever better-auth infers from the
-				// literal built inside `buildAuth` — it structurally satisfies
-				// `AuthApi` (handler + api.getSession/hasPermission) at runtime;
-				// this cast is the one place we assert the honest, hand-declared
-				// `AuthInstance<TOptions>` contract stands in for better-auth's own
-				// (differently-parameterized) inferred type.
+				// literal built inside `buildAuth`; it structurally satisfies
+				// `AuthApi` at runtime. This cast is the one place the
+				// hand-declared `AuthInstance<TOptions>` contract stands in for
+				// better-auth's own (differently-parameterized) inferred type.
 				auth: getOrInitAuth(
 					env,
 					u.db,
 					options,
 				) as unknown as AuthInstance<TOptions>,
+				...(options.organization
+					? { tenancy: createTenancy(u.db, roles) }
+					: {}),
 				...(rateLimiter.ip || rateLimiter.email
 					? { _rateLimiter: rateLimiter }
 					: {}),
-			};
+			} as {
+				auth: AuthInstance<TOptions>;
+				_rateLimiter?: { ip?: RateLimitBinding; email?: RateLimitBinding };
+			} & TenancyContext<TOptions>;
 		},
 		async fetch(request, _env, upstream) {
 			const url = new URL(request.url);

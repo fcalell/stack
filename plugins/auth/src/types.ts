@@ -4,15 +4,6 @@ import { z } from "zod";
 // and the codegen contribution to `api.slots.routePrefixes` can never drift.
 export const AUTH_PREFIX = "/api/auth";
 
-export const fieldConfigSchema = z.object({
-	type: z.enum(["string", "number", "boolean"]),
-	required: z.boolean().optional(),
-	defaultValue: z.unknown().optional(),
-	input: z.boolean().optional(),
-});
-
-export type FieldConfig = z.infer<typeof fieldConfigSchema>;
-
 const rateLimiterIpSchema = z
 	.object({
 		binding: z.string().default("RATE_LIMITER_IP"),
@@ -48,7 +39,6 @@ const rateLimiterEmailSchema = z
 const organizationObjectSchema = z.object({
 	ac: z.unknown().optional(),
 	roles: z.record(z.string(), z.unknown()).optional(),
-	additionalFields: z.record(z.string(), fieldConfigSchema).optional(),
 });
 
 const socialProviderConfigSchema = z.object({
@@ -119,12 +109,13 @@ export const authOptionsSchema = z.object({
 					error: "auth: session.freshAge must be zero or a positive number",
 				})
 				.optional(),
-			additionalFields: z.record(z.string(), fieldConfigSchema).optional(),
 		})
 		.optional(),
+	// The plugin owns the identity tables, so they carry no consumer columns:
+	// data a consumer keeps per user or per organization lives in its own
+	// table, keyed by that id.
 	user: z
 		.object({
-			additionalFields: z.record(z.string(), fieldConfigSchema).optional(),
 			// Account deletion (App Store 5.1.1(v) requires it for a native app).
 			// Off unless asked for: the endpoint destroys rows. The consumer's
 			// `beforeDelete` callback vetoes or cleans up. With the
@@ -253,9 +244,7 @@ export interface AuthRuntimeOptions {
 }
 
 // better-auth's own `user` row as the deletion hook receives it. Mirrors
-// `BaseUser` (@better-auth/core's `userSchema`); the index signature carries
-// whatever `user.additionalFields` adds, which the consumer reads with a cast
-// to its own row type.
+// `BaseUser` (@better-auth/core's `userSchema`).
 export interface AuthUser {
 	id: string;
 	email: string;
@@ -264,7 +253,6 @@ export interface AuthUser {
 	image?: string | null;
 	createdAt: Date;
 	updatedAt: Date;
-	[key: string]: unknown;
 }
 
 // Why better-auth asks for an OTP. Only "sign-in" reaches a consumer that
@@ -284,8 +272,17 @@ export type OtpType =
 // callback reaches per-request bindings (an email send binding, a queue)
 // instead of module scope.
 export interface AuthCallbackPayloads<TEnv = unknown> {
-	sendOTP: { email: string; code: string; env: TEnv };
-	sendInvitation: { email: string; orgName: string; env: TEnv };
+	sendOTP: { email: string; code: string; type: OtpType; env: TEnv };
+	// `invitationId` is what the accept link carries: the invitee signs in and
+	// accepts the invitation by id.
+	sendInvitation: {
+		invitationId: string;
+		email: string;
+		role: string;
+		organization: { id: string; name: string; slug: string };
+		inviter: { id: string; name: string; email: string };
+		env: TEnv;
+	};
 	beforeDelete: { user: AuthUser; request?: Request; env: TEnv };
 	sendDeleteVerification: {
 		user: AuthUser;
