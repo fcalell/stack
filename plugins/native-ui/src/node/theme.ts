@@ -7,7 +7,7 @@ import {
 import { MODES } from "@fcalell/ui-core/tokens";
 
 // The `@theme` record: the namespace resets lead, then the scales, the
-// families and the invariant and default-mode colors. On native every color
+// families and the invariant and light colors. On native every color
 // utility resolves through the active theme's scoped variables, so which mode
 // seeds `@theme` never shows at runtime.
 export function themeDeclarations(
@@ -16,9 +16,12 @@ export function themeDeclarations(
 	return themeTokens(resolved);
 }
 
-// `--shadow-*` is one of the reset namespaces, so the ladder ships as
-// top-level `@utility` blocks, name → box-shadow value.
-export function shadowBlocks(resolved: ResolvedTheme): Array<[string, string]> {
+// `--shadow-*` is one of the reset namespaces, so the elevation ladder ships
+// as top-level `@utility` blocks, name → declarations: a shadow, or under
+// `elevation: "flat"` the `edge` ring.
+export function shadowBlocks(
+	resolved: ResolvedTheme,
+): Array<[string, Record<string, string>]> {
 	return Object.entries(shadowUtilities(resolved));
 }
 

@@ -134,6 +134,7 @@ const NATIVE_OVERLAYS = [
 	"flex-row",
 	"flex-wrap",
 	"font-medium",
+	"font-mono",
 	"gap-pair",
 	"gap-row",
 	"gap-section",
@@ -636,10 +637,14 @@ check("a3", "the emitted sheet has the contract shape", () => {
 	const utilities = shadowUtilities(resolved);
 	for (const level of SHADOW_LEVELS) {
 		const body = declarationMap(blockBody(sheet, `@utility shadow-${level}`));
-		assert(
-			body.get("box-shadow") === normalize(utilities[`shadow-${level}`]),
-			`@utility shadow-${level} does not carry its contract value`,
-		);
+		for (const [property, value] of Object.entries(
+			utilities[`shadow-${level}`],
+		)) {
+			assert(
+				body.get(property) === normalize(value),
+				`@utility shadow-${level} does not carry its contract ${property}`,
+			);
+		}
 	}
 	assert(
 		(sheet.match(/@utility /g) ?? []).length === SHADOW_LEVELS.length,

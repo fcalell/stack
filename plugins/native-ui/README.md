@@ -53,7 +53,7 @@ key of it.
 
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
-| `theme` | `Theme` | the calibrated defaults | ui-core's contract: the knobs (`accentHue`, `neutralHue`, `neutralChroma`, `okHue`, `warnHue`, `dangerHue`, `primary`, `space`, `radius`, `text`, `fonts`, `widths`, `breakpoints`), `overrides.colors` / `overrides.scales` for the single token off its ratio, and `defaultMode`. A consumer with both platforms passes the same object to `solidUi`. |
+| `theme` | `Theme` | the calibrated defaults | ui-core's contract: the knobs (`accentHue`, `neutralHue`, `neutralChroma`, `okHue`, `warnHue`, `dangerHue`, `primary`, `space`, `radius` (0 squares everything), `text`, `elevation` (`soft` \| `flat`), `fonts`, `widths`, `breakpoints`), `overrides.colors` / `overrides.scales` for the single token off its ratio, and `defaultMode` (set, the app starts in that mode through a generated `Uniwind.setTheme` call; unset, it follows the system). A consumer with both platforms passes the same object to `solidUi`. |
 | `words` | `Words` | English | Every word a molecule draws on its own; every key required, so a translation that misses one fails `tsc`. |
 | `fonts` | `{ family, source }[]` | none | Font files to embed through expo-font. The families are named by `theme.fonts` (`sans`, `mono`); an entry only brings the file. |
 | `authClientModule`, `queryClientModule` | `{ source, export }` | `src/lib/auth`, `src/lib/query` | Where the generated entry imports the native clients from. |
@@ -84,7 +84,7 @@ sidebar. Pull to refresh is the phone's.
 | --- | --- |
 | `Text` | `role` (`display`, `title`, `heading`, `body`, `meta`, `label`, `mono`), children |
 | `Icon` | `name`, from the app's icon set |
-| `Button` | `act` (`primary`, `secondary`, `destructive`), `label`, `onAct`, `loading`, `blocked` (the reason, drawn under it once pressed or once its form or sheet has taken input) |
+| `Button` | `act` (`primary`, `secondary`, `destructive`), `label`, `onAct`, `loading`, `spinner` (the busy glyph), `blocked` (the reason, drawn under it once pressed or once its form or sheet has taken input) |
 | `IconButton` | `icon`, `label` (read aloud), `onAct` |
 | `Count` | `value` |
 | `Status` | `state` (`active`, `waiting`, `done`, `attention`, `failed`, `idle`), `label`, `onOpen` |
@@ -92,7 +92,7 @@ sidebar. Pull to refresh is the phone's.
 | `TextArea` | `kind` (`prose`, `source`), `value`, `onChange`, `placeholder`, `budget` (words) |
 | `Slider` | `label`, `value`, `onChange`, `min`, `max`, `step`, `unit` (an Intl unit identifier such as `percent`) |
 | `Switch`, `Checkbox` | `checked`, `onChange`, `label` |
-| `Spinner` | none |
+| `Spinner` | `kind` (`circle` \| `scramble`; `scramble` cycles mono glyphs and holds still under reduced motion) |
 | `Avatar` | `name`, `src` |
 | `Link` | `href`, children |
 
@@ -124,7 +124,7 @@ sidebar. Pull to refresh is the phone's.
 | `EmptyState` | `title`, `sentence`, `act`, children |
 | `Toast` | `sentence`, `act`; `toast(sentence, act)` queues one and the `Shell` draws the queue |
 | `Banner` | `kind` (`note`, `warn`, `danger`), `sentence`, `act` |
-| `PendingBar` | `sentence`, `until` (a `Date`; a countdown fills the bar), `act` |
+| `PendingBar` | `sentence`, `until` (a `Date`; a countdown fills the bar), `spinner`, `act` |
 
 A part is a string or `{ quoted: string }`: typographic quotes around it, cut at 40 characters in
 a `meta` line, wrapped to two lines in a title.

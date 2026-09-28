@@ -1,3 +1,4 @@
+import type { SpinnerKind } from "@fcalell/ui-core/tokens";
 import {
 	BUTTON_MUTED,
 	BUTTON_MUTED_LABEL,
@@ -8,12 +9,8 @@ import {
 	text,
 } from "@fcalell/ui-core/variants";
 import { useEffect, useState } from "react";
-import {
-	ActivityIndicator,
-	Pressable,
-	Text as RNText,
-	View,
-} from "react-native";
+import { Pressable, Text as RNText, View } from "react-native";
+import { BusyGlyph } from "../../lib/busy";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { useTokenColor } from "../../lib/theme";
@@ -24,6 +21,8 @@ export interface ButtonProps extends Closed {
 	label: string;
 	onAct?: () => void;
 	loading?: boolean;
+	// The busy glyph drawn while `loading`.
+	spinner?: SpinnerKind;
 	blocked?: string;
 }
 
@@ -38,7 +37,14 @@ const GROUND: Record<ButtonAct, string> = {
 // A pill with words. Its container decides its width: full in an action bar,
 // its content's in a toolbar. A blocked button says why under it once
 // pressed or once its form or sheet is touched.
-export function Button({ act, label, onAct, loading, blocked }: ButtonProps) {
+export function Button({
+	act,
+	label,
+	onAct,
+	loading,
+	spinner,
+	blocked,
+}: ButtonProps) {
 	const kind = act ?? "primary";
 	const muted = blocked !== undefined;
 	const { touched } = useTouched();
@@ -47,7 +53,7 @@ export function Button({ act, label, onAct, loading, blocked }: ButtonProps) {
 		if (!muted) setPressed(false);
 	}, [muted]);
 	const said = muted && (pressed || touched);
-	const spinner = useTokenColor(`--color-${buttonContentTone(kind)}`);
+	const busyColor = useTokenColor(`--color-${buttonContentTone(kind)}`);
 	return (
 		<View className="gap-pair">
 			<Pressable
@@ -62,7 +68,7 @@ export function Button({ act, label, onAct, loading, blocked }: ButtonProps) {
 					muted ? BUTTON_MUTED : GROUND[kind],
 				)}
 			>
-				{loading ? <ActivityIndicator color={spinner} /> : null}
+				{loading ? <BusyGlyph kind={spinner} color={busyColor} /> : null}
 				<RNText
 					className={cn(
 						buttonLabel({ act: kind }),

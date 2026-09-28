@@ -52,9 +52,11 @@ export function aggregateGlobalCss(payload: CodegenGlobalCssPayload): string {
 	lines.push("}");
 	lines.push("");
 
-	for (const [name, value] of shadowBlocks(payload.resolved)) {
+	for (const [name, declarations] of shadowBlocks(payload.resolved)) {
 		lines.push(`@utility ${cssIdent(name)} {`);
-		lines.push(`\tbox-shadow: ${cssTokenValue(value)};`);
+		for (const [property, value] of Object.entries(declarations)) {
+			lines.push(`\t${property}: ${cssTokenValue(value)};`);
+		}
 		lines.push("}");
 		lines.push("");
 	}
