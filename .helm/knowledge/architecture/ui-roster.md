@@ -59,7 +59,7 @@ entry never sits over a pinned bar.
 
 | Molecule | Anatomy | Anchor |
 | --- | --- | --- |
-| `ListRow` | a leading icon or status, a one-line `body` medium title, one or two meta lines of parts joined by a middle dot, a trailing age (an ISO moment drawn as "4m", "3h", "2d" or a date in the browser's locale, kept current), count or value in `meta`, marks read aloud, one act, `href` or `onOpen`; no chevron, no divider | Linear Mobile's inbox and issue rows |
+| `ListRow` | a leading icon or status, a one-line `body` medium title, one or two meta lines of parts joined by a middle dot, a trailing age (an ISO moment drawn as "4m", "3h", "2d" or a date in the browser's locale, kept current), count or value in `meta`, marks read aloud, one act, `href` or `onOpen`; no chevron, no divider; the row whose `href` is the current route draws `accent-soft`, the open item of a `Split`'s list | Linear Mobile's inbox and issue rows |
 | `DefinitionRow` | the label left, the value, a `Status` or an in-place control right, and the description under both at the row's width; the value takes its own width up to three fifths and wraps inside it past that; `copyable` | Linear web's settings rows, Claude iOS's settings for the description |
 | `FormField` | label, description, one typing control, the error line | Linear web's settings rows, stacked |
 | `ItemHeader` | an overline of parts, a title that wraps in full and is the page's one heading inside a `Screen`, a row of facts, a status fact with `onOpen` a chip that opens its explanation | Linear Mobile's issue page |

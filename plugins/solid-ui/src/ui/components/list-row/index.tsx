@@ -19,7 +19,8 @@ export type Leading = { icon: string } | { status: StatusState };
 export type Trailing = { age: string } | { count: number } | { value: string };
 
 // A row of a list or a group: no chevron, no divider. `href` routes, `onOpen`
-// opens; a row with neither is a line.
+// opens; a row with neither is a line. A row whose `href` is the current
+// route, or leads to it, is the open one and draws selected.
 export type ListRowProps = Closed & {
 	leading?: Leading;
 	title: Part;
@@ -190,7 +191,11 @@ export function ListRow(props: ListRowProps) {
 			>
 				<Match when={props.href}>
 					{(href) => (
-						<A href={href()} class={shell()}>
+						<A
+							href={href()}
+							class={shell()}
+							activeClass={row({ state: "selected" })}
+						>
 							{body()}
 							{act()}
 						</A>
