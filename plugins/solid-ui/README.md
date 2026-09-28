@@ -98,6 +98,10 @@ const row = useScope(project); // Accessor<the project row>
 `useAbility` (`lib/ability`) takes the organization explicitly:
 `useAbility(() => useScope(organization)().id)`.
 
+`@fcalell/plugin-solid-ui/router` is the router with the generated `routes` builders, plus
+`useRouteParams(builder)`, `useSearch(schema)` and `useLeaveGuard(dirty)`; plugin-solid's README
+(Use typed routes) shows them.
+
 ## The roster
 
 Every component takes exactly the props below and closes `class`, `className`, `classList` and
