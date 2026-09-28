@@ -67,6 +67,47 @@ navigate(routes.projects.settings({ id: "123" }));
 
 Missing or extra params are compile errors. Renaming a page file updates the builder, surfacing every stale call site.
 
+A page reads its params through its own builder, so they are typed the same way:
+
+```tsx
+import { routes, useRouteParams } from "@fcalell/plugin-solid-ui/router";
+
+const params = useRouteParams(routes.projects.detail);
+params().id; // string
+```
+
+A page that exports a `search` schema (a zod object, or any Standard Schema) gets a typed second
+argument on its builder, serialized into the query string, and reads it back parsed:
+
+```tsx
+// src/app/pages/[org]/canvas.tsx
+import { z } from "@fcalell/plugin-api/schema";
+import { useSearch } from "@fcalell/plugin-solid-ui/router";
+
+export const search = z.object({ journey: z.string().optional() });
+
+export default function Canvas() {
+  const focus = useSearch(search);
+  focus().journey; // string | undefined
+}
+
+// elsewhere
+navigate(routes.org.canvas({ org: "acme" }, { journey: "checkout" }), { replace: true });
+```
+
+Values arrive as strings, so a number coerces (`z.coerce.number()`). A value the schema rejects is
+dropped and the rest still parse, so a hand-typed URL never crashes the page; a schema with a
+required key throws, since no URL without it can load the page.
+
+`useLeaveGuard(dirty)` holds in-app navigation while `dirty()` and exposes `pending()`, `leave()`
+and `stay()` for a confirming `Sheet` in the screen's own words; closing or reloading the tab gets
+the browser's own prompt.
+
+```tsx
+const guard = useLeaveGuard(() => draft.dirty);
+<Sheet open={guard.pending()} submit={{ label: "Discard", onAct: guard.leave }} onClose={guard.stay} />
+```
+
 ## Config options
 
 | Option | Type | Default | Description |

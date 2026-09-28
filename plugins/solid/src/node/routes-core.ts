@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, relative } from "node:path";
 import fg from "fast-glob";
 
@@ -212,10 +212,13 @@ interface RoutesOutput {
 	typedRoutesTypes: string;
 }
 
+// `typesDir` is where the typed-routes declaration lands (`.stack`): a page
+// that exports `search` is referenced from there by relative path.
 export function emitRoutes(
 	root: RouteNode,
 	projectRoot: string,
 	notFoundFile: string | undefined,
+	typesDir?: string,
 ): RoutesOutput {
 	// The router joins a child's path onto its layout's, so each path is
 	// written relative to the nearest enclosing layout's URL (`base`).
@@ -257,7 +260,7 @@ export function emitRoutes(
 		routesArray = `${arr}${routesArray === "[]" ? "" : ", "}{ path: "*", component: ${jsonLoadGlob(notFoundFile, projectRoot)} }]`;
 	}
 
-	const { runtime, types } = emitTypedRoutes(root);
+	const { runtime, types } = emitTypedRoutes(root, typesDir);
 	return {
 		routesArray,
 		typedRoutesRuntime: runtime,
@@ -270,7 +273,18 @@ function jsonLoadGlob(abs: string, projectRoot: string): string {
 	return `load(${JSON.stringify(rel)})`;
 }
 
-export function emitTypedRoutes(root: RouteNode): {
+// A page that exports `search` (a Standard Schema such as a zod object)
+// gets a typed, serialized search argument on its builder and reads it back
+// with `useSearch`.
+function exportsSearch(file: string): boolean {
+	if (!existsSync(file)) return false;
+	return /^export\s+const\s+search\b/m.test(readFileSync(file, "utf8"));
+}
+
+export function emitTypedRoutes(
+	root: RouteNode,
+	typesDir?: string,
+): {
 	runtime: string;
 	types: string;
 } {
@@ -278,6 +292,8 @@ export function emitTypedRoutes(root: RouteNode): {
 		keys: string[];
 		params: string[];
 		url: string;
+		file: string;
+		search: boolean;
 	}
 
 	const leaves: Leaf[] = [];
@@ -299,6 +315,8 @@ export function emitTypedRoutes(root: RouteNode): {
 				keys: builderKeys,
 				params: [...params],
 				url: url || "/",
+				file: node.routeFile.path,
+				search: exportsSearch(node.routeFile.path),
 			});
 		}
 
@@ -355,15 +373,30 @@ export function emitTypedRoutes(root: RouteNode): {
 	}
 
 	function emitRuntimeFn(leaf: Leaf): string {
-		if (leaf.params.length === 0) {
-			return `() => ${JSON.stringify(leaf.url)}`;
+		let url = JSON.stringify(leaf.url);
+		if (leaf.params.length > 0) {
+			let templated = leaf.url;
+			for (const p of leaf.params) {
+				templated = templated.replaceAll(`:${p}`, `\${params.${p}}`);
+				templated = templated.replaceAll(`*${p}`, `\${params.${p}}`);
+			}
+			url = `\`${templated}\``;
 		}
-		let templated = leaf.url;
-		for (const p of leaf.params) {
-			templated = templated.replaceAll(`:${p}`, `\${params.${p}}`);
-			templated = templated.replaceAll(`*${p}`, `\${params.${p}}`);
-		}
-		return `(params) => \`${templated}\``;
+		const args = [
+			...(leaf.params.length > 0 ? ["params"] : []),
+			...(leaf.search ? ["search"] : []),
+		];
+		const body = leaf.search ? `withSearch(${url}, search)` : url;
+		return `(${args.join(", ")}) => ${body}`;
+	}
+
+	// The page module's `search` schema, read from where the declaration
+	// lands. Without a `typesDir` (the runtime-only call) the type is unused.
+	function searchType(file: string): string {
+		if (!typesDir) return "Record<string, unknown>";
+		const rel = relative(typesDir, file).replaceAll("\\", "/");
+		const spec = rel.startsWith(".") ? rel : `./${rel}`;
+		return `SearchInput<(typeof import(${JSON.stringify(spec)}))["search"]>`;
 	}
 
 	function emitTypes(tree: Record<string, unknown>): string {
@@ -375,16 +408,15 @@ export function emitTypedRoutes(root: RouteNode): {
 				"__leaf" in (v as Record<string, unknown>)
 			) {
 				const leaf = (v as { __leaf: Leaf }).__leaf;
-				if (leaf.params.length === 0) {
-					parts.push(`${JSON.stringify(k)}: () => string;`);
-				} else {
+				const args: string[] = [];
+				if (leaf.params.length > 0) {
 					const paramObj = leaf.params
 						.map((p) => `${p}: string | number`)
 						.join("; ");
-					parts.push(
-						`${JSON.stringify(k)}: (params: { ${paramObj} }) => string;`,
-					);
+					args.push(`params: { ${paramObj} }`);
 				}
+				if (leaf.search) args.push(`search?: ${searchType(leaf.file)}`);
+				parts.push(`${JSON.stringify(k)}: (${args.join(", ")}) => string;`);
 			} else {
 				parts.push(
 					`${JSON.stringify(k)}: ${emitTypes(v as Record<string, unknown>)};`,
@@ -424,6 +456,14 @@ export function emitVirtualModule(
 const pages = import.meta.glob(${JSON.stringify(globPattern)});
 const load = (p) => lazy(() => pages[p]());
 const DefaultLayout = (props) => props.children;
+const withSearch = (url, search) => {
+	const query = new URLSearchParams();
+	for (const [key, value] of Object.entries(search ?? {})) {
+		if (value !== undefined && value !== null) query.append(key, String(value));
+	}
+	const text = query.toString();
+	return text ? url + "?" + text : url;
+};
 export const routes = ${routesArray};
 export const typedRoutes = ${typedRoutesExpr};
 `;
@@ -433,6 +473,13 @@ export function emitDts(typedRoutesTypes: string): string {
 	return `// Generated by @fcalell/plugin-solid — do not edit.
 declare module "${VIRTUAL_ROUTES_ID}" {
 \timport type { RouteDefinition } from "@solidjs/router";
+\t// A page's \`search\` schema input, read through Standard Schema so the
+\t// declaration names no validation library.
+\ttype SearchInput<S> = S extends { "~standard": { types?: infer T } }
+\t\t? NonNullable<T> extends { input: infer I }
+\t\t\t? I
+\t\t\t: never
+\t\t: never;
 \texport const routes: RouteDefinition[];
 \texport const typedRoutes: ${typedRoutesTypes};
 }
@@ -453,7 +500,12 @@ export function buildRoutesDts(cwd: string, pagesDirRel: string): string {
 		? fg.sync(["**/*.tsx", "**/*.jsx"], { cwd: absPagesDir }).sort()
 		: [];
 	const { root } = buildTree(files, absPagesDir);
-	const { typedRoutesTypes } = emitRoutes(root, cwd, undefined);
+	const { typedRoutesTypes } = emitRoutes(
+		root,
+		cwd,
+		undefined,
+		join(cwd, ".stack"),
+	);
 	return emitDts(typedRoutesTypes);
 }
 
