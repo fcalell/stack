@@ -217,31 +217,36 @@ export function emitRoutes(
 	projectRoot: string,
 	notFoundFile: string | undefined,
 ): RoutesOutput {
-	function emitChildren(node: RouteNode, parentPath: string): string[] {
+	// The router joins a child's path onto its layout's, so each path is
+	// written relative to the nearest enclosing layout's URL (`base`).
+	const relativeTo = (url: string, base: string) =>
+		base === "/" ? url || "/" : url.slice(base.length) || "/";
+
+	function emitChildren(node: RouteNode, url: string, base: string): string[] {
 		const out: string[] = [];
 
 		if (node.routeFile) {
 			out.push(
-				`{ path: ${JSON.stringify(parentPath || "/")}, component: ${jsonLoadGlob(node.routeFile.path, projectRoot)} }`,
+				`{ path: ${JSON.stringify(relativeTo(url, base))}, component: ${jsonLoadGlob(node.routeFile.path, projectRoot)} }`,
 			);
 		}
 
 		for (const child of node.children.values()) {
-			const childUrl = joinUrl(parentPath, child.segment);
+			const childUrl = joinUrl(url, child.segment);
 			if (child.layoutFile) {
-				const grandchildren = emitChildren(child, childUrl);
+				const grandchildren = emitChildren(child, childUrl, childUrl || "/");
 				out.push(
-					`{ path: ${JSON.stringify(childUrl || "/")}, component: ${jsonLoadGlob(child.layoutFile, projectRoot)}, children: [${grandchildren.join(", ")}] }`,
+					`{ path: ${JSON.stringify(relativeTo(childUrl, base))}, component: ${jsonLoadGlob(child.layoutFile, projectRoot)}, children: [${grandchildren.join(", ")}] }`,
 				);
 			} else {
-				out.push(...emitChildren(child, childUrl));
+				out.push(...emitChildren(child, childUrl, base));
 			}
 		}
 
 		return out;
 	}
 
-	const children = emitChildren(root, "/");
+	const children = emitChildren(root, "/", "/");
 	const layoutComponent = root.layoutFile
 		? jsonLoadGlob(root.layoutFile, projectRoot)
 		: "DefaultLayout";
