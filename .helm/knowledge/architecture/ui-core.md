@@ -71,7 +71,7 @@ prop on the molecule that draws it, never a key.
   shared `flex-row` would be wrong on one). On the web the overlays are one set in `solid-ui`'s `lib/interact.ts`:
   a hover and press wash of `ink` at 8% layered over whatever fill is there, so it reads on a
   surface, a group and a button alike (the `edge` hairline was too close to `group` to show),
-  one `tint` focus ring for every focusable thing, and an underline on a text act. A type role's cell carries its ink and, for `mono`,
+  one `tint` focus ring for every focusable thing, and an underline on a text act. A scroller that holds nothing focusable takes focus itself (`lib/reach.ts`), so a keyboard can scroll it. A type role's cell carries its ink and, for `mono`,
   its family, since RN Text inherits nothing and both platforms bind `--font-mono`.
 - No arbitrary values in a cell, in either spelling. A control's interior padding stays a literal
   numeric; a row and a surface inset on rungs.

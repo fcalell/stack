@@ -8,8 +8,9 @@ import { Circle } from "#lib/circle.tsx";
 import type { Closed } from "#lib/closed.ts";
 import { cn } from "#lib/cn.ts";
 import { FitContext } from "#lib/fit.ts";
-import { TEXT_ACT } from "#lib/interact.ts";
+import { RING_INSET, TEXT_ACT } from "#lib/interact.ts";
 import { Inline } from "#lib/parts.tsx";
+import { reachable } from "#lib/reach.ts";
 import { TouchedContext } from "#lib/touched.ts";
 import { useWords } from "#lib/words.tsx";
 
@@ -167,7 +168,13 @@ export function Sheet(props: SheetProps) {
 										{props.description}
 									</DialogPrimitive.Description>
 								</Show>
-								<div class="flex min-h-0 flex-1 flex-col gap-stack overflow-y-auto px-inset pb-[max(env(safe-area-inset-bottom),var(--spacing-inset))] *:shrink-0">
+								<div
+									ref={reachable}
+									class={cn(
+										"flex min-h-0 flex-1 flex-col gap-stack overflow-y-auto px-inset pb-[max(env(safe-area-inset-bottom),var(--spacing-inset))] *:shrink-0",
+										RING_INSET,
+									)}
+								>
 									{props.children}
 								</div>
 								<Show when={props.foot}>

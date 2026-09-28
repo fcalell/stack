@@ -6,7 +6,9 @@ import { Circle } from "#lib/circle.tsx";
 import type { Closed } from "#lib/closed.ts";
 import { cn } from "#lib/cn.ts";
 import { FitContext } from "#lib/fit.ts";
+import { RING_INSET } from "#lib/interact.ts";
 import { MeasureContext, measured } from "#lib/measure.ts";
+import { reachable } from "#lib/reach.ts";
 import { useWords } from "#lib/words.tsx";
 import { Button } from "../button/index.tsx";
 import { IconButton } from "../icon-button/index.tsx";
@@ -84,8 +86,10 @@ export function Place(props: PlaceProps) {
 				{/* On the phone the act floats over the body's end: the body keeps
 			    room under its last row for the pill and its inset. */}
 				<div
+					ref={reachable}
 					class={cn(
 						"flex min-h-0 flex-1 flex-col overflow-y-auto px-inset pb-section tablet:px-section",
+						RING_INSET,
 						props.act &&
 							"pb-[calc(var(--spacing-section)+var(--spacing-inset)+44px)] tablet:pb-section",
 					)}

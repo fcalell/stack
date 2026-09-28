@@ -17,7 +17,9 @@ import { cn } from "#lib/cn.ts";
 import { FitContext } from "#lib/fit.ts";
 import { useCover } from "#lib/frame.ts";
 import { HeadingContext } from "#lib/heading.ts";
+import { RING_INSET } from "#lib/interact.ts";
 import { MeasureContext, measured } from "#lib/measure.ts";
+import { reachable } from "#lib/reach.ts";
 import { useWords } from "#lib/words.tsx";
 import { IconButton } from "../icon-button/index.tsx";
 import { ListRow } from "../list-row/index.tsx";
@@ -131,7 +133,13 @@ export function Screen(props: ScreenProps) {
 								</div>
 							</header>
 						</FitContext.Provider>
-						<div class="flex min-h-0 flex-1 flex-col overflow-y-auto px-inset pb-section tablet:px-section">
+						<div
+							ref={reachable}
+							class={cn(
+								"flex min-h-0 flex-1 flex-col overflow-y-auto px-inset pb-section tablet:px-section",
+								RING_INSET,
+							)}
+						>
 							<div
 								class={cn(
 									"flex flex-1 shrink-0 flex-col gap-section *:shrink-0",
