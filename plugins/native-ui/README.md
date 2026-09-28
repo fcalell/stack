@@ -102,7 +102,7 @@ sidebar. Pull to refresh is the phone's.
 | --- | --- |
 | `Place` | `title`, `actions` (at most two circles; the rest open under a more circle), `act`, children |
 | `Screen` | `title`, `back` (a route), `actions`, children; an `ActionBar` child is pinned above the home indicator |
-| `Split` | `list`, `main`, `pane` |
+| `Split` | `list`, `main`, `pane`, `empty` (the desktop's, never drawn) |
 | `Section` | `title`, `count`, `description`, `folded`, `act`, `loading`, children |
 | `Group`, `List` | `loading`, children |
 | `Form` | `onSubmit`, children |

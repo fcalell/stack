@@ -6,11 +6,14 @@ import { cn } from "#lib/cn.ts";
 // The desktop's columns, composed per place by the consumer: `list` at the
 // list width, `main` filling, `pane` beside them from wide and pushing over
 // `main` under it. Under desktop one slot at a time, the deepest present, so
-// the phone sees a stack of screens.
+// the phone sees a stack of screens. `empty` fills `main`'s column from
+// desktop while neither `main` nor `pane` is present ("Pick an item."); under
+// desktop the list is the place, so it never draws.
 export type SplitProps = Closed & {
 	list?: JSX.Element;
 	main?: JSX.Element;
 	pane?: JSX.Element;
+	empty?: JSX.Element;
 };
 
 export function Split(props: SplitProps) {
@@ -26,6 +29,11 @@ export function Split(props: SplitProps) {
 					)}
 				>
 					{props.list}
+				</div>
+			</Show>
+			<Show when={props.empty && !hasMain() && !hasPane()}>
+				<div class="hidden min-h-0 min-w-0 flex-1 flex-col desktop:flex">
+					{props.empty}
 				</div>
 			</Show>
 			<Show when={props.main}>

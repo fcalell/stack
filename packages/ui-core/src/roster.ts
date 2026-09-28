@@ -35,7 +35,7 @@ export const ROSTER: Record<Layer, Record<string, readonly string[]>> = {
 	layout: {
 		Place: ["title", "actions", "act", "more", "children"],
 		Screen: ["title", "back", "actions", "more", "children"],
-		Split: ["list", "main", "pane"],
+		Split: ["list", "main", "pane", "empty"],
 		Section: [
 			"title",
 			"count",
