@@ -134,7 +134,7 @@ own three-row form. `Part` is a string or `{ quoted }`, drawn in typographic quo
 | `Place` | `title`, `actions` (`IconAct[]`, two shown, the rest under more), `act`, children | the large title, the scroll, the floating act |
 | `Screen` | `title`, `back` (a route), `actions`, children | the back circle, the compact title on scroll; covers the shell on the phone |
 | `Split` | `list`, `main`, `pane`, `empty` | the columns from desktop, one slot under it; `empty` fills `main` from desktop while nothing is picked |
-| `Section` | `title`, `count`, `description`, `folded`, `onOpen`, `act`, `loading`, children | the label header, folding; `onOpen` fires when a folded section opens |
+| `Section` | `title`, `count`, `description`, `folded`, `onToggle`, `act`, `loading`, children | the label header, folding; a foldable one is a group, never a landmark, and `onToggle` reports its new state |
 | `Group` | `loading`, children | the group box with hairlines |
 | `List` | `loading`, children | rows on the surface |
 | `Form` | `onSubmit`, children | fields at `stack`, its bar in flow |

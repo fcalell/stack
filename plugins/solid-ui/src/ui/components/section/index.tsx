@@ -27,9 +27,10 @@ export type SectionProps = Closed & {
 	count?: number;
 	description?: string;
 	folded?: boolean;
-	// Called when a folded section is opened: what the consumer does with
-	// what the section then shows, such as marking it read.
-	onOpen?: () => void;
+	// Called as a foldable section opens or closes, with its new state: what
+	// the consumer does with what it showed, such as marking it read once
+	// it folds again.
+	onToggle?: (open: boolean) => void;
 	act?: Act;
 	loading?: boolean;
 	children?: JSX.Element;
@@ -54,8 +55,12 @@ export function Section(props: SectionProps) {
 	);
 	return (
 		<Nested.Provider value={true}>
+			{/* A foldable section is a disclosure group, not a landmark: a screen
+			    may fold several under one name ("Did 2 things"), and landmarks
+			    must be unique. */}
 			<section
 				aria-labelledby={id}
+				role={foldable() ? "group" : undefined}
 				class={cn("flex flex-col gap-row", nested && "pt-stack")}
 			>
 				{/* The description is the label's own line, a pair below it, so it
@@ -74,7 +79,7 @@ export function Section(props: SectionProps) {
 								onClick={() => {
 									const next = !open();
 									setOpen(next);
-									if (next) props.onOpen?.();
+									props.onToggle?.(next);
 								}}
 								class={cn(
 									"flex min-h-11 min-w-0 cursor-pointer items-center gap-pair self-start text-left",
