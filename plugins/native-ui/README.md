@@ -103,7 +103,7 @@ sidebar. Pull to refresh is the phone's.
 | `Place` | `title`, `actions` (at most two circles; the rest open under a more circle), `act`, children |
 | `Screen` | `title`, `back` (a route), `actions`, children; an `ActionBar` child is pinned above the home indicator |
 | `Split` | `list`, `main`, `pane`, `empty` (the desktop's, never drawn) |
-| `Section` | `title`, `count`, `description`, `folded`, `act`, `loading`, children |
+| `Section` | `title`, `count`, `description`, `folded` (set, it folds: the label is a button with a chevron), `onToggle` (its new state on each open and close), `act`, `loading`, children |
 | `Group`, `List` | `loading`, children |
 | `Form` | `onSubmit`, children |
 | `Toolbar`, `ActionBar`, `Columns` | children |
@@ -141,7 +141,7 @@ All take `loading` and draw three row forms.
 | `FileRow` | `path`, `added`, `removed`, `seen`, `href` or `onOpen` |
 | `ProseDiff` | `before`, `after` |
 | `Comparison` | `rows` (`{ label, cells: [{ label, value }], chips }`) |
-| `Message` | `author` (`you`, `other`, `system`), `name`, `body`, `at` |
+| `Message` | `author` (`you`, `other`, `system`), `name`, `body`, `at`, `onOpen` (a `system` line that opens something becomes the act), `loading` |
 | `MessageInput` | `value`, `onChange`, `attachments`, `onAttach`, `placeholder`, `notice` (`{ sentence, act }`), `working`, `onSend`, `onStop` |
 | `Meter` | `label`, `value`, `max`, `meta` |
 | `BarChart` | `series` (`{ label, value, parts, at }[]`), `unit` |
