@@ -1,7 +1,7 @@
 import type { Attachment, Notice } from "@fcalell/ui-core/descriptors";
 import { COUNT, field, text } from "@fcalell/ui-core/variants";
 import { ArrowUp, Plus, Square } from "lucide-solid";
-import { createEffect, For, on, Show } from "solid-js";
+import { createEffect, For, on, onCleanup, onMount, Show } from "solid-js";
 import { PINNED, useBarPlacement } from "#lib/bar.ts";
 import { Circle } from "#lib/circle.tsx";
 import type { Closed } from "#lib/closed.ts";
@@ -35,17 +35,25 @@ export function MessageInput(props: MessageInputProps) {
 	let root!: HTMLDivElement;
 	useLift(() => (placement === "pinned" ? root : undefined));
 	// The field grows with its text up to its cap, whether the operator typed
-	// it or the consumer set it (a prefilled draft, a draft cleared on send).
+	// it or the consumer set it (a prefilled draft, a draft cleared on send),
+	// and fits again when its width moves, since a text set before the field
+	// had its width wraps anew once it has one.
 	let area!: HTMLTextAreaElement;
-	createEffect(
-		on(
-			() => props.value,
-			() => {
-				area.style.height = "auto";
-				area.style.height = `${area.scrollHeight}px`;
-			},
-		),
-	);
+	const fit = () => {
+		area.style.height = "auto";
+		area.style.height = `${area.scrollHeight}px`;
+	};
+	createEffect(on(() => props.value, fit));
+	onMount(() => {
+		let width = 0;
+		const observer = new ResizeObserver(([entry]) => {
+			if (!entry || entry.contentRect.width === width) return;
+			width = entry.contentRect.width;
+			fit();
+		});
+		observer.observe(area);
+		onCleanup(() => observer.disconnect());
+	});
 	return (
 		<div
 			ref={root}
