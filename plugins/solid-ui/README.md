@@ -55,6 +55,23 @@ composed providers (`words` among them) wrap the app. `useWords()`
 (`lib/words`), `useIcon(name)` (`lib/icons`) and `toast(sentence, act?)` (`lib/toast`) are the
 three runtime hooks; the `Shell` draws the toast queue.
 
+With `auth` in the config the plugin generates `.stack/auth-client.ts`, the web auth client with
+the flags the `auth` options imply. `SessionBoundary` (`lib/session`) guards a layout with it: the
+children render with a session, nothing draws while the first answer is pending, and a viewer
+without a session goes to `signIn` with the address they asked for as `redirect`.
+
+```tsx
+// src/app/pages/(app)/_layout.tsx
+import { SessionBoundary } from "@fcalell/plugin-solid-ui/lib/session";
+import { authClient } from "../../../../.stack/auth-client.ts";
+
+export default (props) => (
+  <SessionBoundary session={authClient.useSession()} signIn="/login">
+    {props.children}
+  </SessionBoundary>
+);
+```
+
 ## The roster
 
 Every component takes exactly the props below and closes `class`, `className`, `classList` and
@@ -87,7 +104,7 @@ own three-row form. `Part` is a string or `{ quoted }`, drawn in typographic quo
 | `Place` | `title`, `actions` (`IconAct[]`, two shown, the rest under more), `act`, children | the large title, the scroll, the floating act |
 | `Screen` | `title`, `back` (a route), `actions`, children | the back circle, the compact title on scroll; covers the shell on the phone |
 | `Split` | `list`, `main`, `pane`, `empty` | the columns from desktop, one slot under it; `empty` fills `main` from desktop while nothing is picked |
-| `Section` | `title`, `count`, `description`, `folded`, `act`, `loading`, children | the label header, folding |
+| `Section` | `title`, `count`, `description`, `folded`, `onOpen`, `act`, `loading`, children | the label header, folding; `onOpen` fires when a folded section opens |
 | `Group` | `loading`, children | the group box with hairlines |
 | `List` | `loading`, children | rows on the surface |
 | `Form` | `onSubmit`, children | fields at `stack`, its bar in flow |
@@ -123,7 +140,7 @@ own three-row form. `Part` is a string or `{ quoted }`, drawn in typographic quo
 | `FileRow` | `path`, `added`, `removed`, `seen`, `href`, `onOpen`, `loading` |
 | `ProseDiff` | `before`, `after`, `loading` |
 | `Comparison` | `rows`, `loading` |
-| `Message` | `author` (`you` \| `other` \| `system`), `name`, `body`, `at`, `loading` |
+| `Message` | `author` (`you` \| `other` \| `system`), `name`, `body`, `at`, `onOpen`, `loading` |
 | `MessageInput` | `value`, `onChange`, `attachments`, `onAttach`, `placeholder`, `notice`, `working`, `onSend`, `onStop` |
 | `Meter` | `label`, `value`, `max`, `meta`, `loading` |
 | `BarChart` | `series`, `unit`, `loading` |

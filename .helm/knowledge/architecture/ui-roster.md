@@ -47,7 +47,7 @@ a list on the phone, or alone; the parent composes.
 | `Toolbar` | one row of controls over a list | |
 | `ActionBar` | pinned above the home indicator as a `Screen`'s child, in flow as a `Form`'s, a `Section`'s or a `Sheet`'s; full-width buttons stacked with the primary first on the phone, at their content's width in one row on the desktop; pinned, it sits behind a hairline and lifts the toasts by its height; at most three, one `PendingBar` in their place | GitHub iOS's merge box |
 | `Columns` | the same sections side by side, each `widths.column`, scrolling sideways, over the `Place`'s whole column; a `ListRow` inside is a card. On native and under `breakpoints.desktop` the sections stack | Linear's board |
-| `Shell` | the frame at every width from one list of places: the tab bar under `breakpoints.tablet`, the `widths.rail` sidebar on `canvas` from it; the app's `Banner`, which a `Screen` fixed over the column on the phone starts under; the tab bar a `Screen` covers goes inert; the toast queue | Linear's sidebar, iOS's tab bar |
+| `Shell` | the frame at every width from one list of places: the tab bar under `breakpoints.tablet`, the `widths.rail` sidebar on `canvas` from it; the selected place is the one whose route is the longest prefix of the address, so a place at `/` holds every address no other claims; the app's `Banner`, which a `Screen` fixed over the column on the phone starts under; the tab bar a `Screen` covers goes inert; the toast queue | Linear's sidebar, iOS's tab bar |
 
 Rows go in a `Group` when they are a record and in a `List` when they are a feed. A control that
 edits in place (`Switch`, `Checkbox`, `Picker`) is always the value of a `DefinitionRow` in a

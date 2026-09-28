@@ -46,9 +46,18 @@ function PlaceGlyph(props: { name: string; selected: boolean }) {
 
 export function Shell(props: ShellProps) {
 	const location = useLocation();
+	// The place whose route is the longest prefix of the address, so a place
+	// at "/" stays selected under every address no other place claims.
+	const holds = (route: string) =>
+		location.pathname === route ||
+		location.pathname.startsWith(route.endsWith("/") ? route : `${route}/`);
 	const selected = (spec: PlaceSpec<string>) =>
-		location.pathname === spec.route ||
-		location.pathname.startsWith(`${spec.route}/`);
+		props.places
+			.filter((s) => holds(s.route))
+			.reduce<PlaceSpec<string> | undefined>(
+				(best, s) => (best && best.route.length >= s.route.length ? best : s),
+				undefined,
+			) === spec;
 	const [covers, setCovers] = createSignal(0);
 	const [lift, setLift] = createSignal(0);
 	const [bannerHeight, setBannerHeight] = createSignal(0);

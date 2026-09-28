@@ -3,6 +3,7 @@ import { Show } from "solid-js";
 import { ageOf, momentOf, useClock } from "#lib/age.ts";
 import type { Closed } from "#lib/closed.ts";
 import { cn } from "#lib/cn.ts";
+import { RING } from "#lib/interact.ts";
 import { LoadingRows } from "#lib/loading.tsx";
 import { Prose } from "../prose/index.tsx";
 
@@ -15,6 +16,9 @@ export type MessageProps = Closed & {
 	body: string;
 	// An ISO moment, drawn as its age.
 	at?: string;
+	// A system line that opens something, such as a relay's provenance: the
+	// line becomes the act.
+	onOpen?: () => void;
 	loading?: boolean;
 };
 
@@ -41,7 +45,17 @@ export function Message(props: MessageProps) {
 				>
 					<Show
 						when={props.author === "other"}
-						fallback={<span>{props.body}</span>}
+						fallback={
+							<Show when={props.onOpen} fallback={<span>{props.body}</span>}>
+								<button
+									type="button"
+									onClick={() => props.onOpen?.()}
+									class={cn("min-h-11 cursor-pointer rounded-group", RING)}
+								>
+									{props.body}
+								</button>
+							</Show>
+						}
 					>
 						<Prose markdown={props.body} />
 					</Show>

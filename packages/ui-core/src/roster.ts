@@ -41,6 +41,7 @@ export const ROSTER: Record<Layer, Record<string, readonly string[]>> = {
 			"count",
 			"description",
 			"folded",
+			"onOpen",
 			"act",
 			"loading",
 			"children",
@@ -100,7 +101,7 @@ export const ROSTER: Record<Layer, Record<string, readonly string[]>> = {
 		FileRow: ["path", "added", "removed", "seen", "href", "onOpen", "loading"],
 		ProseDiff: ["before", "after", "loading"],
 		Comparison: ["rows", "loading"],
-		Message: ["author", "name", "body", "at", "loading"],
+		Message: ["author", "name", "body", "at", "onOpen", "loading"],
 		MessageInput: [
 			"value",
 			"onChange",

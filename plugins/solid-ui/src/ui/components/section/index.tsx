@@ -27,6 +27,9 @@ export type SectionProps = Closed & {
 	count?: number;
 	description?: string;
 	folded?: boolean;
+	// Called when a folded section is opened: what the consumer does with
+	// what the section then shows, such as marking it read.
+	onOpen?: () => void;
 	act?: Act;
 	loading?: boolean;
 	children?: JSX.Element;
@@ -68,7 +71,11 @@ export function Section(props: SectionProps) {
 							<button
 								type="button"
 								aria-expanded={open()}
-								onClick={() => setOpen((value) => !value)}
+								onClick={() => {
+									const next = !open();
+									setOpen(next);
+									if (next) props.onOpen?.();
+								}}
 								class={cn(
 									"flex min-h-11 min-w-0 cursor-pointer items-center gap-pair self-start text-left",
 									RING,
