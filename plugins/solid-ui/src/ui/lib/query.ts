@@ -1,5 +1,7 @@
 import { ApiError } from "@fcalell/plugin-api/error";
 import { handleMutationSuccess } from "@fcalell/plugin-api/query-invalidation";
+import type { RouterClient } from "@fcalell/plugin-api/types";
+import { createTanstackQueryUtils } from "@orpc/tanstack-query";
 import {
 	useInfiniteQuery as _useInfiniteQuery,
 	useMutation as _useMutation,
@@ -28,6 +30,14 @@ export function createDefaultQueryClient(): QueryClient {
 		}),
 	});
 	return queryClient;
+}
+
+// Wrap a typed oRPC client with TanStack Query helpers (`.queryOptions`,
+// `.mutationOptions`, `.key`). Their keys carry the procedure path the
+// server's entity headers are captured under, so a mutation's declared
+// writes invalidate every query that read them, with no hand-written key.
+export function createApiQueryUtils<TRouter>(client: RouterClient<TRouter>) {
+	return createTanstackQueryUtils(client);
 }
 
 function makeSafe<T extends { data: unknown; isPending: boolean }>(

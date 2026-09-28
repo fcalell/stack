@@ -69,6 +69,7 @@
 		"@fcalell/ui-core": "workspace:*",
 		"@fontsource-variable/jetbrains-mono": "^5.2.8",
 		"@kobalte/core": "^0.13.11",
+		"@orpc/tanstack-query": "^1.14.4",
 		"@solidjs/meta": "^0.29.4",
 		"@solidjs/router": "^0.16.1",
 		"@tailwindcss/vite": "^4.1.7",
