@@ -1,7 +1,10 @@
 import { ApiError } from "@fcalell/plugin-api/error";
 import { handleMutationSuccess } from "@fcalell/plugin-api/query-invalidation";
 import type { RouterClient } from "@fcalell/plugin-api/types";
-import { createTanstackQueryUtils } from "@orpc/tanstack-query";
+import {
+	createTanstackQueryUtils,
+	type RouterUtils,
+} from "@orpc/tanstack-query";
 import {
 	useInfiniteQuery as _useInfiniteQuery,
 	useMutation as _useMutation,
@@ -36,7 +39,13 @@ export function createDefaultQueryClient(): QueryClient {
 // `.mutationOptions`, `.key`). Their keys carry the procedure path the
 // server's entity headers are captured under, so a mutation's declared
 // writes invalidate every query that read them, with no hand-written key.
-export function createApiQueryUtils<TRouter>(client: RouterClient<TRouter>) {
+// The helpers' type, named here so a consumer's `q` exports without
+// reaching into oRPC's own package.
+export type ApiQueryUtils<TRouter> = RouterUtils<RouterClient<TRouter>>;
+
+export function createApiQueryUtils<TRouter>(
+	client: RouterClient<TRouter>,
+): ApiQueryUtils<TRouter> {
 	return createTanstackQueryUtils(client);
 }
 
