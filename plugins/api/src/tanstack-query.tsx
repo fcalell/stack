@@ -4,7 +4,7 @@
 import {
 	composeAbility,
 	fetchOrgRules,
-	ORG_RULES_QUERY_KEY,
+	orgRulesQueryKey,
 	type PackedRulesLike,
 } from "@fcalell/plugin-api/ability-client";
 import { handleMutationSuccess } from "@fcalell/plugin-api/query-invalidation";
@@ -20,7 +20,10 @@ import {
 import { type ReactNode, useState } from "react";
 
 export type { PackedRulesLike } from "@fcalell/plugin-api/ability-client";
-export { ORG_RULES_QUERY_KEY } from "@fcalell/plugin-api/ability-client";
+export {
+	ORG_RULES_QUERY_KEY,
+	orgRulesQueryKey,
+} from "@fcalell/plugin-api/ability-client";
 export type { RouterClient } from "@fcalell/plugin-api/types";
 export {
 	QueryClient,
@@ -111,20 +114,24 @@ export function QueryProvider(props: QueryProviderProps) {
 // a record layer passed in that window still answers its own checks, since
 // it's real data the caller already has, not something still loading.
 //
-// The org rules query is per-session (`staleTime: Infinity`): an active-org
-// switch or a role change requires invalidating `ORG_RULES_QUERY_KEY`
-// explicitly, unless the change was itself a mutation that declared
-// `writes` on an org subject (auto-invalidated for free, see
-// `./ability-client.ts`'s `ORG_RULES_QUERY_KEY` comment).
+// The rules are the caller's role in `organizationId`, cached per
+// organization (`staleTime: Infinity`); a role change invalidates them when
+// its mutation declares `writes` on an org subject (see
+// `./ability-client.ts`'s `ORG_RULES_QUERY_KEY` comment). No organization
+// yet: deny-all, with no request.
 //
 // The composed `MongoAbility` is a class instance and must never be read out
 // of the query cache directly (it isn't -- `useQuery` here only ever caches
 // the plain packed-rules array; composition happens on every call, memoized
 // by array identity in `composeAbility`).
-export function useAbility(recordRules?: PackedRulesLike) {
+export function useAbility(
+	organizationId: string | undefined,
+	recordRules?: PackedRulesLike,
+) {
 	const query = useQuery({
-		queryKey: ORG_RULES_QUERY_KEY,
-		queryFn: fetchOrgRules,
+		queryKey: orgRulesQueryKey(organizationId ?? ""),
+		queryFn: () => fetchOrgRules(organizationId ?? ""),
+		enabled: organizationId !== undefined,
 		staleTime: Infinity,
 	});
 	return composeAbility(query.data, recordRules);

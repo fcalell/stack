@@ -15,3 +15,8 @@ export const STACK_WRITES_HEADER = "x-stack-writes";
 // is enabled; the `useAbility` client hook queries it. Owned here (not in
 // plugin-auth) so the dependency direction stays auth -> api.
 export const ORG_RULES_PATH = ["auth", "orgRules"] as const;
+
+// Router prefix of the framework-owned scope lookups: plugin-auth registers
+// `[...SCOPE_ROUTES_PATH, <scope name>, "bySlug"]` per scope with a slug, and
+// solid-ui's `ScopeBoundary` calls it. Owned here for the same reason.
+export const SCOPE_ROUTES_PATH = ["auth", "scope"] as const;

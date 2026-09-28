@@ -7,7 +7,7 @@ import { plugin } from "@fcalell/cli";
 import { buildGraphFromDiscovered } from "@fcalell/cli/build-graph";
 import { cliSlots } from "@fcalell/cli/cli-slots";
 import type { DiscoveredPlugin } from "@fcalell/cli/discovery";
-import { api } from "@fcalell/plugin-api";
+import { type ApiOptions, api } from "@fcalell/plugin-api";
 import { node } from "../src/index.ts";
 
 // Declares two env vars and a runtime, so api emits a worker and node
@@ -28,9 +28,11 @@ const probe = plugin("probe", {
 	],
 });
 
-async function nodeProcessEnv(): Promise<Record<string, string> | undefined> {
+async function nodeProcessEnv(
+	apiOptions: ApiOptions = {},
+): Promise<Record<string, string> | undefined> {
 	const discovered = [api, node, probe].map((factory) => {
-		const config = factory();
+		const config = factory === api ? api(apiOptions) : factory();
 		return {
 			name: config.__plugin,
 			cli: factory.cli,
@@ -59,4 +61,13 @@ test("the dev process leaves a var the shell sets to the shell's value", async (
 	const env = await nodeProcessEnv();
 	assert.equal(env?.STACK_TEST_SET, undefined);
 	assert.equal({ ...process.env, ...env }.STACK_TEST_SET, "from-shell");
+});
+
+test("a var the consumer declares on api reaches the dev process like a plugin's", async () => {
+	delete process.env.STACK_TEST_CONSUMER;
+	const env = await nodeProcessEnv({
+		env: [{ name: "STACK_TEST_CONSUMER", devDefault: "consumer-default" }],
+	});
+	assert.equal(env?.STACK_TEST_CONSUMER, "consumer-default");
+	assert.equal(env?.STACK_TEST_UNSET, "from-default");
 });

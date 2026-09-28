@@ -7,7 +7,7 @@ import {
 } from "@casl/ability";
 import { type PackRule, unpackRules } from "@casl/ability/extra";
 import { ORPCError } from "@orpc/client";
-import { ORG_RULES_PATH } from "./wire.ts";
+import { ORG_RULES_PATH, SCOPE_ROUTES_PATH } from "./wire.ts";
 
 // WS6.3: framework-agnostic core behind
 // `useAbility()` for both react (expo, ./tanstack-query.tsx) and solid (web,
@@ -52,49 +52,81 @@ export function getRegisteredApiClient(): unknown {
 	return registeredApiClient;
 }
 
-function resolveRoute(client: unknown, path: readonly string[]): unknown {
-	return path.reduce<unknown>((node, segment) => {
-		if (node === null || node === undefined) return undefined;
-		return (node as Record<string, unknown>)[segment];
-	}, client);
+// A framework-owned route (one a runtime plugin registers, outside the
+// consumer's typed router) on the registered client. An `@orpc/client`
+// client is a `Proxy` whose `get` builds a callable child per path segment,
+// so walking the path yields the callable route.
+function registeredRoute(
+	path: readonly string[],
+	caller: string,
+): (input: unknown) => Promise<unknown> {
+	const client = getRegisteredApiClient();
+	if (client === undefined) {
+		throw new Error(
+			`${caller}: no api client registered -- call \`createClient(...)\` ` +
+				`(@fcalell/plugin-api/client) before ${caller} runs.`,
+		);
+	}
+	return path.reduce<unknown>(
+		(node, segment) => (node as Record<string, unknown>)[segment],
+		client,
+	) as (input: unknown) => Promise<unknown>;
 }
 
 // ---------- Org rules fetch ----------
 
-// Walks `ORG_RULES_PATH` on the registered client proxy (an `@orpc/client`
-// client is a `Proxy` whose `get` recursively builds a callable child proxy
-// per path segment -- `client.auth.orgRules` is itself callable, and
-// invoking it performs the RPC) and calls it with an empty input.
-export async function fetchOrgRules(): Promise<PackedRulesLike> {
-	const client = getRegisteredApiClient();
-	if (client === undefined) {
-		// `useAbility`'s query runs with `staleTime: Infinity` -- returning `[]`
-		// here would cache a false deny-all forever instead of surfacing the
-		// real misconfiguration. Throwing puts the query into error state
-		// (retries, and `composeAbility` still denies-all while errored), the
-		// same as any other `fetchOrgRules` failure.
-		throw new Error(
-			"fetchOrgRules: no api client registered -- call `createClient(...)` " +
-				"(@fcalell/plugin-api/client) before `useAbility()` runs.",
-		);
-	}
-
-	const route = resolveRoute(client, ORG_RULES_PATH);
-	if (typeof route !== "function") return [];
-
+// The caller's rules in one organization: their role there, never the
+// session's active organization. `useAbility`'s query runs with
+// `staleTime: Infinity`, so a missing client throws rather than caching a
+// false deny-all forever; the query's error state (retries, deny-all
+// meanwhile) surfaces it.
+export async function fetchOrgRules(
+	organizationId: string,
+): Promise<PackedRulesLike> {
+	const route = registeredRoute(ORG_RULES_PATH, "useAbility()");
 	try {
-		const response = (await (route as (input: unknown) => Promise<unknown>)(
-			{},
-		)) as { rules: PackedRulesLike };
+		const response = (await route({ organizationId })) as {
+			rules: PackedRulesLike;
+		};
 		return response.rules;
 	} catch (error) {
-		// Org routes are only registered server-side when organization support
-		// is enabled -- a NOT_FOUND there means "no org layer for this auth",
-		// not a real failure. Every other error propagates: a real outage must
+		// NOT_FOUND means no org layer (the route exists only with organizations
+		// on) or no membership of this organization: both deny everything, and
+		// neither is a real failure. Every other error propagates: a real outage must
 		// surface through the query's error state, never a silent deny-all.
 		if (error instanceof ORPCError && error.code === "NOT_FOUND") return [];
 		throw error;
 	}
+}
+
+// ---------- Scope lookup ----------
+
+export interface ScopeLookupInput {
+	slug: string;
+	parentId?: string;
+}
+
+function scopeLookupPath(scope: string) {
+	return [...SCOPE_ROUTES_PATH, scope, "bySlug"] as const;
+}
+
+// Shaped like the org rules key, so entity invalidation and prefix
+// invalidation treat a lookup as any other oRPC-backed query.
+export function scopeQueryKey(scope: string, input: ScopeLookupInput) {
+	return [scopeLookupPath(scope), { input }] as const;
+}
+
+// Resolves a URL slug to its scope's chain: the rows from the organization
+// down, and the caller's `member` row. Slugs are unique within their parent,
+// so every scope below the organization names its parent's id. NOT_FOUND
+// (no such row, or the caller is no member) propagates for the boundary to
+// draw.
+export async function fetchScope(
+	scope: string,
+	input: ScopeLookupInput,
+): Promise<Record<string, unknown>> {
+	const route = registeredRoute(scopeLookupPath(scope), "ScopeBoundary");
+	return (await route(input)) as Record<string, unknown>;
 }
 
 // ---------- Ability composition ----------
@@ -149,11 +181,15 @@ export function composeAbility(
 
 // ---------- Query key ----------
 
-// Shaped like `@orpc/tanstack-query`'s operation keys (`[path, ...]`) so the
-// entity-based invalidation registry (./query-invalidation.ts) recognizes it
-// for free: a mutation that declares `writes` on an org subject (e.g.
-// "member") auto-invalidates this query, same as any other oRPC-backed
-// query -- no bespoke wiring. Also the handle for explicit invalidation
-// (active-org switch, role change) via
+// Shaped like `@orpc/tanstack-query`'s operation keys (`[path, { input }]`)
+// so the entity-based invalidation registry (./query-invalidation.ts), which
+// matches on the path, recognizes it for free: a mutation that declares
+// `writes` on an org subject (e.g. "member") invalidates every
+// organization's rules, as any other oRPC-backed query. The bare path is the
+// prefix for explicit invalidation of all of them:
 // `queryClient.invalidateQueries({ queryKey: ORG_RULES_QUERY_KEY })`.
 export const ORG_RULES_QUERY_KEY = [ORG_RULES_PATH] as const;
+
+export function orgRulesQueryKey(organizationId: string) {
+	return [ORG_RULES_PATH, { input: { organizationId } }] as const;
+}

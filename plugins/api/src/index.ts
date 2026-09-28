@@ -22,6 +22,18 @@ import {
 } from "./node/types.ts";
 import type { EnvSpec } from "./types.ts";
 
+const envSpecSchema = z.object({
+	name: z.string().min(1),
+	devDefault: z.string(),
+	validate: z
+		.object({
+			minLength: z.number().int().positive().optional(),
+			url: z.boolean().optional(),
+			devLocalhost: z.boolean().optional(),
+		})
+		.optional(),
+}) satisfies z.ZodType<EnvSpec>;
+
 export const apiOptionsSchema = z.object({
 	prefix: z
 		.string()
@@ -29,6 +41,10 @@ export const apiOptionsSchema = z.object({
 			error: "api: prefix must start with /",
 		})
 		.default("/rpc"),
+	// Env vars the consumer's own worker code reads (an email provider key),
+	// declared like a plugin's so every deploy target and the env assertion
+	// see them.
+	env: z.array(envSpecSchema).default([]),
 });
 
 export type ApiOptions = z.input<typeof apiOptionsSchema>;
@@ -476,6 +492,7 @@ export const api = plugin("api", {
 		// The oRPC prefix is a worker-owned URL space; deploy targets read
 		// routePrefixes to mount or forward it.
 		self.slots.routePrefixes.contribute(() => self.options.prefix),
+		self.slots.env.contribute(() => self.options.env),
 		// The dev half of the explicit-origins partition: local origins the
 		// consumer listed in `app.origins` are honoured, but only under
 		// STACK_DEV. The `cors` derivation above strips them from the baked

@@ -83,25 +83,27 @@ export const procedure = createProcedure<WorkerContext, RbacStatements, Entity>(
 ```ts
 // src/worker/routes/projects.ts
 import { z } from "@fcalell/plugin-api/schema";
+import { organization } from "@fcalell/plugin-auth/scope";
 import { procedure } from "virtual:stack-procedure";
 
 export const projects = {
-  list: procedure({ auth: true, org: true, paginated: true })
+  list: procedure({ auth: true, scope: organization, paginated: true })
     .input(z.object({ status: z.enum(["active", "archived"]).optional() }))
     .query(async ({ input, context }) => {
       // context.db, context.user, context.session -- all typed
-      // context.organizationId -- injected by org: true
-      // input.cursor, input.limit -- injected by paginated: true
+      // input.organizationId -- added by the scope
+      // context.organization, context.member -- the resolved rows
+      // input.cursor, input.limit -- added by paginated: true
     }),
 
   create: procedure({
     auth: true,
-    org: true,
+    scope: organization,
     can: ["create", "project"],
   })
     .input(z.object({ name: z.string() }))
     .mutation(async ({ input, context }) => {
-      // The org-level permission check runs before the handler.
+      // The caller's role in that organization is checked before the handler.
     }),
 };
 ```
@@ -111,29 +113,36 @@ export const projects = {
 ```ts
 procedure()                                                    // public, no middleware
 procedure({ auth: true })                                      // requires session
-procedure({ auth: true, org: true })                           // + validates active organization
-procedure({ auth: true, org: true, can: ["create", "project"] })    // + permission check
-procedure({ auth: true, org: true, rbac: ["project", ["create"]] }) // same check, resource-first spelling
+procedure({ auth: true, scope: organization })                // + organizationId in, membership checked
+procedure({ auth: true, scope: page })                        // + pageId in, the page's chain resolved
+procedure({ auth: true, scope: organization, can: ["create", "project"] })    // + permission check
+procedure({ auth: true, scope: organization, rbac: ["project", ["create"]] }) // same check, resource-first
 procedure({ rateLimit: "ip" })                                 // rate limit by IP
 procedure({ rateLimit: "email" })                              // rate limit by input.email
 procedure({ rateLimit: ["ip", "email"] })                      // both
-procedure({ auth: true, org: true, paginated: true })          // adds cursor/limit to input
+procedure({ auth: true, scope: organization, paginated: true }) // adds cursor/limit to input
 procedure({ reads: ["projects"] })                             // declares what it reads
 procedure({ auth: true, writes: ["projects"] })                // declares what it writes
 ```
 
+`scope` takes a scope descriptor from `@fcalell/plugin-auth/scope`: the root `organization`, or one
+the consumer declares with `defineScope` (see plugin-auth's README). The procedure's input gains
+`<name>Id`; per request the row, every level above it and the caller's `member` row of the
+organization at the top are loaded into the context, one indexed lookup per level. A missing row
+and a caller who is no member answer the same `NOT_FOUND`. Nothing is read from the session's
+active organization. plugin-api knows scopes only structurally: the resolver is on the request
+context, put there by plugin-auth's runtime when `organization` is on.
+
 Dependencies are enforced at the type level:
-- `org: true` requires `auth: true`
-- `rbac`/`can` require `auth: true` and `org: true` -- both are the org-level gate over the same
-  statements; `can: [action, resource]` (action first) is the preferred spelling, since it reads the
-  same as a handler's `assertCan(ability, action, subject)` and the client's `ability.can(action,
-  subject)`. `rbac: [resource, actions[]]` (resource first, multiple actions) stays supported. Both
-  may be set on the same procedure; both middlewares run, each performing its own `hasPermission`
-  lookup against better-auth -- setting both costs a second permission check for no extra safety, so
-  `can` alone is the norm; only set both if you genuinely need both checks to run independently.
-  `can`'s tuple is exactly two strings -- conditions aren't expressible, since the org layer is
-  unconditional by construction (record-scoped, conditional rules are a handler-side `assertCan`
-  concern, see `@fcalell/plugin-auth/ability`).
+- `scope` requires `auth: true`
+- `rbac`/`can` require `auth: true` and a `scope` -- both check the caller's role in the scope's
+  organization against the roles the auth config declares, locally, with no second lookup.
+  `can: [action, resource]` (action first) is the preferred spelling, since it reads the same as a
+  handler's `assertCan(ability, action, subject)` and the client's `ability.can(action, subject)`.
+  `rbac: [resource, actions[]]` (resource first, multiple actions) stays supported; both may be set
+  and both run. `can`'s tuple is exactly two strings -- conditions aren't expressible, since the org
+  layer is unconditional by construction (record-scoped, conditional rules are a handler-side
+  `assertCan` concern, see `@fcalell/plugin-auth/ability`).
 - `rbac`/`can` action and resource names autocomplete against the statements defined in
   `config.auth.organization.ac`; absent a contributor, both are un-settable (`Record<never, never>`
   -- see "Worker (generated)" above).
@@ -308,16 +317,17 @@ config:
 ```tsx
 import { useAbility } from "@fcalell/plugin-api/tanstack-query";
 
-function DeleteOrgButton() {
-  const ability = useAbility();
+function DeleteOrgButton({ organizationId }: { organizationId: string }) {
+  const ability = useAbility(organizationId);
   return ability.can("delete", "organization") ? <Button>Delete</Button> : null;
 }
 ```
 
-It fetches the caller's compiled org rules once per session (`staleTime: Infinity`) from the
-framework-owned org-rules route and turns them into a CASL `MongoAbility`. **Deny-all** while that
-fetch is loading or the caller has no active organization -- `ability.can(...)` returns `false`
-until real rules arrive, never a false positive.
+It fetches the caller's compiled rules in that organization once (`staleTime: Infinity`, cached
+per organization) from the framework-owned org-rules route and turns them into a CASL
+`MongoAbility`. The organization is always the one passed, never the session's. **Deny-all**
+while that fetch is loading, while the id is `undefined`, or when the caller is no member --
+`ability.can(...)` returns `false` until real rules arrive, never a false positive.
 
 Layer record-scoped rules (a consumer procedure that returns `packAbility(ability)` alongside its
 data, `@fcalell/plugin-auth/ability`) by passing the packed rules field through:
@@ -326,7 +336,7 @@ data, `@fcalell/plugin-auth/ability`) by passing the packed rules field through:
 import { subject } from "@fcalell/plugin-auth/ability";
 
 const { data: expense } = useQuery(orpc.expenses.get.queryOptions({ input: { id } }));
-const ability = useAbility(expense?.rules);
+const ability = useAbility(organizationId, expense?.rules);
 
 ability.can("update", subject("Expense", expense)); // instance-scoped check
 ability.can("update", "organization"); // org-level check, same instance
@@ -341,13 +351,13 @@ it from `queryClient.getQueryData(...)` defeats structural sharing and reconstru
 every render. `useAbility` already memoizes on the underlying rules arrays' identity, so calling it
 repeatedly with the same data is free.
 
-An active-org switch or a role change invalidates the org layer: `queryClient.invalidateQueries({
-queryKey: ORG_RULES_QUERY_KEY })`. A mutation that declares `writes` on an org subject (e.g.
-`writes: ["member"]` on a role-change mutation) invalidates it automatically, same as any other
-`reads`/`writes`-declared query.
+A role change invalidates the org layer: a mutation that declares `writes` on an org subject (e.g.
+`writes: ["member"]` on a role-change mutation) invalidates every organization's rules
+automatically, same as any other `reads`/`writes`-declared query. `ORG_RULES_QUERY_KEY` is the
+prefix for invalidating them by hand; `orgRulesQueryKey(organizationId)` is one organization's.
 
 `@fcalell/plugin-solid-ui/lib/ability` ships the same primitive for web, accessor-style:
-`const ability = useAbility(() => recordRules()); ability().can(...)`.
+`const ability = useAbility(() => org().id, () => recordRules()); ability().can(...)`.
 
 ### 8. Errors
 
@@ -382,6 +392,11 @@ export type AppRouter = InferRouter<typeof worker>;
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `prefix` | `string` (must start with `/`) | `"/rpc"` | RPC handler path prefix |
+| `env` | `Array<{ name, devDefault, validate? }>` | `[]` | Env vars your own worker code reads. Each joins the ones plugins declare: `.dev.vars` and an empty `[vars]` entry on cloudflare (so `Env` types it), the dev process env on node, and the worker's first-request assertion. `validate` takes the same `minLength` / `url` / `devLocalhost` hints. A name a plugin already declares is an error |
+
+```ts
+api({ env: [{ name: "RESEND_API_KEY", devDefault: "re_dev" }] })
+```
 
 CORS origins and API domain are derived from `app.domain` / `app.origins` (top-level config), not from the plugin options.
 
@@ -494,7 +509,7 @@ export const api = plugin("api", {
 | `api.slots.localOrigins` | `value<"dev" \| "deployed">` | Whether the local origins of `app.origins` are dev origins or the deployed list; a local deploy target (node on loopback) sets `deployed` |
 | `api.slots.cors` | `derived<string[]>` | Final production CORS list: `app.origins` minus local origins (kept under `localOrigins: deployed`), or `[https://domain, https://app.domain, ...corsOrigins]` |
 | `api.slots.callbacks` | `map<string, CallbackSpec>` | Plugin-name → callback identifier; spliced onto matching runtime |
-| `api.slots.env` | `list<EnvSpec>` (`uniqueBy: name`) | Env vars the worker reads (`{ name, devDefault, validate? }`), declared by the plugin that reads them; cloudflare renders `.dev.vars`, node sets unset vars to `devDefault` in the dev process |
+| `api.slots.env` | `list<EnvSpec>` (`uniqueBy: name`) | Env vars the worker reads (`{ name, devDefault, validate? }`), declared by the plugin that reads them (api contributes the consumer's `env` option); cloudflare renders `.dev.vars`, node sets unset vars to `devDefault` in the dev process |
 | `api.slots.workerBase` | `derived<TsExpression>` | The `createWorker({...})` call expression; bakes `env` into `envChecks` |
 | `api.slots.workerSource` | `derived<string \| null>` | Final `.stack/worker.ts` source; null when no runtimes are present |
 | `api.slots.rbacStatements` | `value<Record<string, readonly string[]> \| null>` (`override`) | RBAC action statements for `procedure({ rbac })` / `procedure({ can })`'s type-level autocomplete; `auth` contributes from `organization.ac.statements` |
@@ -534,9 +549,9 @@ createWorker({ domain: "example.com", cors: ["https://example.com"], prefix: "/r
 | `@fcalell/plugin-api/error` | `ApiError` -- worker-safe (no Node-only deps); import this from route files |
 | `@fcalell/cli/runtime` | `RuntimePlugin` |
 | `@fcalell/plugin-api/client` | `createClient()`, `RouterClient`, `ClientConfig` |
-| `@fcalell/plugin-api/tanstack-query` | `createQueryClient()`, `createApiQueryUtils()`, `QueryProvider`, `useAbility()`, `ORG_RULES_QUERY_KEY`, query hooks -- native TanStack Query client (runtime-only) |
+| `@fcalell/plugin-api/tanstack-query` | `createQueryClient()`, `createApiQueryUtils()`, `QueryProvider`, `useAbility(organizationId, recordRules?)`, `ORG_RULES_QUERY_KEY`, `orgRulesQueryKey()`, query hooks -- native TanStack Query client (runtime-only) |
 | `@fcalell/plugin-api/query-invalidation` | `captureEntityHeaders()`, `invalidateForWrites()`, `handleMutationSuccess()`, `createEntityRegistry()` -- framework-agnostic auto-invalidation core (runtime-only) |
-| `@fcalell/plugin-api/ability-client` | `composeAbility()`, `fetchOrgRules()`, `registerApiClient()`, `ORG_RULES_QUERY_KEY`, `PackedRulesLike` -- framework-agnostic `useAbility()` core (runtime-only), consumed by `./tanstack-query` and `@fcalell/plugin-solid-ui/lib/ability` |
+| `@fcalell/plugin-api/ability-client` | `composeAbility()`, `fetchOrgRules(organizationId)`, `registerApiClient()`, `ORG_RULES_QUERY_KEY`, `orgRulesQueryKey()`, `PackedRulesLike` -- framework-agnostic `useAbility()` core (runtime-only), consumed by `./tanstack-query` and `@fcalell/plugin-solid-ui/lib/ability` |
 | `@fcalell/plugin-api/schema` | `z` (Zod re-export), `ZodObject`, `ZodType`, `ZodRawShape` |
 | `@fcalell/plugin-api/lib/cursor` | `encodeCursor`, `decodeCursor`, `paginate`, `clampLimit`, constants |
 | `@fcalell/plugin-api/lib/slugify` | `slugify`, `isReservedSlug`, `createSlugify` |

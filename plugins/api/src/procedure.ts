@@ -10,6 +10,7 @@ import { STACK_READS_HEADER, STACK_WRITES_HEADER } from "./wire.ts";
 // `@orpc/server` + zod + builder machinery.
 export {
 	ORG_RULES_PATH,
+	SCOPE_ROUTES_PATH,
 	STACK_READS_HEADER,
 	STACK_WRITES_HEADER,
 } from "./wire.ts";
@@ -56,10 +57,20 @@ interface BaseOptions<TEntity extends string = string> {
 	writes?: readonly TEntity[];
 }
 
+// A tenancy level, as the procedure factory sees it: plugin-auth's scope
+// descriptors (`defineScope`, the root `organization`) satisfy it. The input
+// key is `${name}Id`; the phantom `__context` is what resolving the chain
+// adds to the request context. plugin-api never imports plugin-auth, so the
+// descriptor and its resolver (`TenancyContext`) are both structural.
+export interface ScopeLike<TName extends string = string, TContext = unknown> {
+	readonly name: TName;
+	readonly __context?: TContext;
+}
+
 interface PublicOptions<TEntity extends string = string>
 	extends BaseOptions<TEntity> {
 	auth?: false;
-	org?: never;
+	scope?: never;
 	rbac?: never;
 	can?: never;
 }
@@ -67,21 +78,25 @@ interface PublicOptions<TEntity extends string = string>
 interface AuthOnlyOptions<TEntity extends string = string>
 	extends BaseOptions<TEntity> {
 	auth: true;
-	org?: false;
+	scope?: never;
 	rbac?: never;
 	can?: never;
 }
 
-interface OrgScopedOptions<
+interface ScopedOptions<
 	TStatements extends DefaultStatements,
 	TEntity extends string = string,
 > extends BaseOptions<TEntity> {
 	auth: true;
-	org: true;
+	// The scope the procedure acts inside. Its id arrives in the input, the
+	// chain up to the organization resolves per request, and a missing row or
+	// a non-member caller answers NOT_FOUND.
+	scope: ScopeLike;
 	rbac?: Rbac<TStatements>;
 	// Preferred spelling over `rbac` -- config gates, handler `assertCan`,
 	// and client `ability.can()` all read as actions-on-subjects. Both may be
-	// set; both middlewares run.
+	// set; both middlewares run. Checked against the caller's role in the
+	// scope's organization.
 	can?: Can<TStatements>;
 }
 
@@ -91,7 +106,7 @@ export type ProcedureConfig<
 > =
 	| PublicOptions<TEntity>
 	| AuthOnlyOptions<TEntity>
-	| OrgScopedOptions<TStatements, TEntity>;
+	| ScopedOptions<TStatements, TEntity>;
 
 // ---------- Rate limit types ----------
 
@@ -121,15 +136,19 @@ type InferAuthContext<TContext> = TContext extends {
 
 type ResolvedContext<O, TBase extends Record<string, unknown>> = TBase &
 	(O extends { auth: true } ? InferAuthContext<TBase> : unknown) &
-	(O extends { org: true } ? { organizationId: string } : unknown);
+	(O extends { scope: ScopeLike<string, infer C> } ? C : unknown);
 
-type InputAdditions<O> = O extends { org: true; paginated: true }
-	? { organizationId: string; cursor?: string; limit?: number }
-	: O extends { org: true }
-		? { organizationId: string }
-		: O extends { paginated: true }
-			? { cursor?: string; limit?: number }
-			: undefined;
+type ScopeInput<O> = O extends { scope: ScopeLike<infer N> }
+	? { [K in `${N}Id`]: string }
+	: unknown;
+
+type PageInput<O> = O extends { paginated: true }
+	? { cursor?: string; limit?: number }
+	: unknown;
+
+type InputAdditions<O> = O extends { scope: ScopeLike } | { paginated: true }
+	? ScopeInput<O> & PageInput<O>
+	: undefined;
 
 type MergedInput<TBaseInput, TSchemaOut> = TBaseInput extends undefined
 	? TSchemaOut
@@ -271,72 +290,66 @@ function createAuthMiddleware() {
 	};
 }
 
-function createOrgConsistencyMiddleware() {
-	// `input` is typed as `unknown` here so the middleware fits the generic
-	// `OrpcMiddlewareFn<TCtx>` shape (where input is `unknown`). We check the
-	// `organizationId` field at runtime — the surrounding builder already
-	// injects `ORG_SHAPE` into the input schema when `org: true`, so the field
-	// is always present in practice; the null-branch is defensive only.
+// The request context's tenancy capability, put there by plugin-auth's
+// runtime when organizations are on. Structural, so api never imports auth.
+type TenancyContext = {
+	tenancy: {
+		resolve(
+			scope: ScopeLike,
+			id: string,
+			userId: string,
+		): Promise<Record<string, unknown> | null>;
+		can(role: string, permissions: Record<string, readonly string[]>): boolean;
+	};
+};
+
+function scopeInputKey(scope: ScopeLike): string {
+	return `${scope.name}Id`;
+}
+
+// Resolves the scope the input names and every level above it, and adds
+// their rows (and the caller's `member`) to the context. An absent row and a
+// caller who is no member answer the same NOT_FOUND, so a guessed id never
+// confirms that a row exists.
+function createScopeMiddleware(scope: ScopeLike) {
+	const key = scopeInputKey(scope);
 	return async (
 		{
 			context,
 			next,
 		}: {
-			context: { session: { activeOrganizationId?: string | null } };
+			context: { user: { id: string } } & TenancyContext;
 			next: (opts: { context: unknown }) => Promise<unknown>;
 		},
 		input: unknown,
 	) => {
-		const { activeOrganizationId } = context.session;
-		if (!activeOrganizationId) {
-			throw new ORPCError("BAD_REQUEST", {
-				message: "No active organization found in session",
-			});
+		const id = (input as Record<string, unknown>)[key];
+		const resolved =
+			typeof id === "string"
+				? await context.tenancy.resolve(scope, id, context.user.id)
+				: null;
+		if (!resolved) {
+			throw new ORPCError("NOT_FOUND", { message: `No such ${scope.name}` });
 		}
-
-		const inputOrgId =
-			input && typeof input === "object" && "organizationId" in input
-				? (input as { organizationId: unknown }).organizationId
-				: undefined;
-		if (inputOrgId !== activeOrganizationId) {
-			throw new ORPCError("FORBIDDEN", {
-				message: "Organization ID mismatch",
-			});
-		}
-
-		return next({ context: { organizationId: activeOrganizationId } });
+		return next({ context: resolved });
 	};
 }
 
-function createRbacMiddleware(resource: string, actions: string[]) {
+// The caller's role in the scope's organization, checked locally against
+// the roles the auth config declares.
+function createPermissionMiddleware(resource: string, actions: string[]) {
 	return async ({
 		context,
 		next,
 	}: {
-		context: {
-			reqHeaders: Headers;
-			auth: {
-				api: {
-					hasPermission: (opts: {
-						headers: Headers;
-						body: { permissions: Record<string, string[]> };
-					}) => Promise<{ success: boolean } | null>;
-				};
-			};
-		};
+		context: { member: { role: string } } & TenancyContext;
 		next: (opts: { context: unknown }) => Promise<unknown>;
 	}) => {
-		const result = await context.auth.api.hasPermission({
-			headers: context.reqHeaders,
-			body: { permissions: { [resource]: actions } },
-		});
-
-		if (!result?.success) {
+		if (!context.tenancy.can(context.member.role, { [resource]: actions })) {
 			throw new ORPCError("FORBIDDEN", {
 				message: "Insufficient permissions",
 			});
 		}
-
 		return next({ context: {} });
 	};
 }
@@ -490,10 +503,6 @@ function createEntityHeadersMiddleware(
 const PAGINATION_SHAPE = {
 	cursor: z.string().optional(),
 	limit: z.number().min(1).max(100).default(20),
-};
-
-const ORG_SHAPE = {
-	organizationId: z.string().min(1),
 };
 
 function toOrpcMiddleware<
@@ -770,28 +779,28 @@ export function createProcedure<
 			chain = chain.use(createAuthMiddleware());
 		}
 
-		const isOrg = "org" in opts && opts.org === true;
-		if (isOrg) {
-			chain = chain.use(createOrgConsistencyMiddleware());
+		const scope = "scope" in opts ? opts.scope : undefined;
+		if (scope) {
+			chain = chain.use(createScopeMiddleware(scope));
 		}
 
 		if ("rbac" in opts && opts.rbac) {
 			const [resource, actions] = opts.rbac;
-			chain = chain.use(createRbacMiddleware(resource, [...actions]));
+			chain = chain.use(createPermissionMiddleware(resource, [...actions]));
 		}
 
-		// `can` is pure sugar over the same rbac middleware, action-first. If
-		// both `rbac` and `can` are set, both run (independent checks).
+		// `can` is sugar over the same check, action-first. If both `rbac` and
+		// `can` are set, both run (independent checks).
 		if ("can" in opts && opts.can) {
 			const [action, resource] = opts.can;
-			chain = chain.use(createRbacMiddleware(resource, [action]));
+			chain = chain.use(createPermissionMiddleware(resource, [action]));
 		}
 
 		const isPaginated = opts.paginated === true;
 		let baseShape: z.ZodRawShape | null = null;
-		if (isOrg || isPaginated) {
+		if (scope || isPaginated) {
 			baseShape = {
-				...(isOrg ? ORG_SHAPE : {}),
+				...(scope ? { [scopeInputKey(scope)]: z.string().min(1) } : {}),
 				...(isPaginated ? PAGINATION_SHAPE : {}),
 			};
 		}
