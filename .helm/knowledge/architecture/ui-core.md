@@ -18,6 +18,8 @@ stead's `design/07-interface.md`.
   and `wide:` are the only responsive variants. The numeric `--spacing` base stays live because
   dimension utilities derive from it, so no build check can tell a rung from a numeric; the
   matrices pin their cell strings verbatim and the geometry gate keeps numerics off call sites.
+- `mono` draws with its ligatures off (`--font-mono--font-feature-settings`), so code reads
+  character for character: `!==` never becomes `≢`.
 - Every scale derives from a knob: six color knobs (`accentHue`, `neutralHue`, `neutralChroma`,
   `okHue`, `warnHue`, `dangerHue`) plus `primary` (`ink` | `accent`, what the primary act is
   filled with), `space` (the rungs), `radius` (the radii), `text` (the type roles, sizes rounded
@@ -66,7 +68,10 @@ prop on the molecule that draws it, never a key.
 - Matrices hold the platform-invariant cells only: fills, borders, ink, rungs, radius, type role,
   weight, family, and a control's minimum size. Display, alignment, and every interaction state
   are platform overlays composed through `cn()` (RN is flex by default and web is not, so a
-  shared `flex-row` would be wrong on one). A type role's cell carries its ink and, for `mono`,
+  shared `flex-row` would be wrong on one). On the web the overlays are one set in `solid-ui`'s `lib/interact.ts`:
+  a hover and press wash of `ink` at 8% layered over whatever fill is there, so it reads on a
+  surface, a group and a button alike (the `edge` hairline was too close to `group` to show),
+  one `tint` focus ring for every focusable thing, and an underline on a text act. A type role's cell carries its ink and, for `mono`,
   its family, since RN Text inherits nothing and both platforms bind `--font-mono`.
 - No arbitrary values in a cell, in either spelling. A control's interior padding stays a literal
   numeric; a row and a surface inset on rungs.

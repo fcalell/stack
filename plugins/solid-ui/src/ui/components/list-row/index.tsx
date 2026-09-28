@@ -10,6 +10,7 @@ import type { Closed } from "#lib/closed.ts";
 import { cn } from "#lib/cn.ts";
 import { useInColumns } from "#lib/columns.ts";
 import { useIcon } from "#lib/icons.tsx";
+import { RING_INSET, TEXT_ACT, WASH } from "#lib/interact.ts";
 import { Parts } from "#lib/parts.tsx";
 import { StatusGlyph } from "#lib/status-glyph.tsx";
 
@@ -60,8 +61,12 @@ export function ListRow(props: ListRowProps) {
 			row({ state: "rest" }),
 			"flex w-full items-center text-left",
 			interactive() &&
-				"cursor-pointer transition-colors duration-(--duration-fast) ease-ui hover:bg-edge active:bg-edge focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-tint",
-			inColumns && cn(GROUP, "hover:bg-edge"),
+				cn(
+					"cursor-pointer transition-colors duration-(--duration-fast) ease-ui",
+					WASH,
+					RING_INSET,
+				),
+			inColumns && GROUP,
 			bare() && "rounded-group",
 		);
 	const body = () => (
@@ -164,7 +169,8 @@ export function ListRow(props: ListRowProps) {
 					}}
 					class={cn(
 						text({ role: "meta" }),
-						"-my-stack min-h-11 shrink-0 cursor-pointer px-row font-medium text-tint disabled:text-ink-faint",
+						"-my-stack min-h-11 shrink-0 px-row",
+						TEXT_ACT,
 					)}
 				>
 					{act().label}

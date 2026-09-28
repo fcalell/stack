@@ -1,11 +1,13 @@
 import type { Attachment, Notice } from "@fcalell/ui-core/descriptors";
 import { COUNT, field, text } from "@fcalell/ui-core/variants";
 import { ArrowUp, Plus, Square } from "lucide-solid";
-import { For, Show } from "solid-js";
+import { createEffect, For, on, Show } from "solid-js";
 import { PINNED, useBarPlacement } from "#lib/bar.ts";
 import { Circle } from "#lib/circle.tsx";
 import type { Closed } from "#lib/closed.ts";
 import { cn } from "#lib/cn.ts";
+import { useLift } from "#lib/frame.ts";
+import { TEXT_ACT } from "#lib/interact.ts";
 import { useWords } from "#lib/words.tsx";
 
 // A plus for files, the text in a pill, one circle that sends or stops; the
@@ -30,8 +32,25 @@ export function MessageInput(props: MessageInputProps) {
 	const words = useWords();
 	const empty = () => props.value.trim().length === 0;
 	const placement = useBarPlacement();
+	let root!: HTMLDivElement;
+	useLift(() => (placement === "pinned" ? root : undefined));
+	// The field grows with its text up to its cap, whether the operator typed
+	// it or the consumer set it (a prefilled draft, a draft cleared on send).
+	let area!: HTMLTextAreaElement;
+	createEffect(
+		on(
+			() => props.value,
+			() => {
+				area.style.height = "auto";
+				area.style.height = `${area.scrollHeight}px`;
+			},
+		),
+	);
 	return (
-		<div class={cn("flex flex-col gap-row", placement === "pinned" && PINNED)}>
+		<div
+			ref={root}
+			class={cn("flex flex-col gap-row", placement === "pinned" && PINNED)}
+		>
 			<Show when={props.attachments?.length}>
 				<div class="flex flex-wrap gap-pair">
 					<For each={props.attachments}>
@@ -49,21 +68,24 @@ export function MessageInput(props: MessageInputProps) {
 						<Circle glyph={Plus} label={words.attach} onAct={onAttach()} />
 					)}
 				</Show>
+				{/* A tap on the field's padding focuses the text. */}
 				<div
 					class={cn(
 						field({ kind: "search", state: "default" }),
 						"flex min-w-0 flex-1 items-center focus-within:border-tint",
 					)}
+					onPointerDown={(event) => {
+						if (event.target !== event.currentTarget) return;
+						event.preventDefault();
+						area.focus();
+					}}
 				>
 					<textarea
+						ref={area}
 						rows={1}
 						value={props.value}
 						placeholder={props.placeholder}
-						onInput={(event) => {
-							props.onChange(event.currentTarget.value);
-							event.currentTarget.style.height = "auto";
-							event.currentTarget.style.height = `${event.currentTarget.scrollHeight}px`;
-						}}
+						onInput={(event) => props.onChange(event.currentTarget.value)}
 						onKeyDown={(event) => {
 							if (event.key === "Enter" && !event.shiftKey && !empty()) {
 								event.preventDefault();
@@ -102,7 +124,7 @@ export function MessageInput(props: MessageInputProps) {
 									type="button"
 									disabled={act().blocked !== undefined}
 									onClick={() => act().onAct()}
-									class="shrink-0 cursor-pointer font-medium text-tint disabled:text-ink-faint"
+									class={cn("min-h-11 shrink-0", TEXT_ACT)}
 								>
 									{act().label}
 								</button>

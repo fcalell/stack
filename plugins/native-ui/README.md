@@ -88,7 +88,7 @@ sidebar. Pull to refresh is the phone's.
 | `IconButton` | `icon`, `label` (read aloud), `onAct` |
 | `Count` | `value` |
 | `Status` | `state` (`active`, `waiting`, `done`, `attention`, `failed`, `idle`), `label`, `onOpen` |
-| `Input` | `kind` (`text`, `search`, `secret`, `code`, `number`), `value`, `onChange`, `placeholder`, `act` |
+| `Input` | `kind` (`text`, `search`, `secret`, `code`, `source`, `number`), `value`, `onChange`, `placeholder`, `unit`, `act` |
 | `TextArea` | `kind` (`prose`, `source`), `value`, `onChange`, `placeholder`, `budget` (words) |
 | `Slider` | `label`, `value`, `onChange`, `min`, `max`, `step`, `unit` (an Intl unit identifier such as `percent`) |
 | `Switch`, `Checkbox` | `checked`, `onChange`, `label` |
@@ -137,7 +137,7 @@ All take `loading` and draw three row forms.
 | --- | --- |
 | `Prose` | `markdown` |
 | `Code` | `text`, `tail` (lines shown before a tap unfolds the rest), `copy` |
-| `Diff` | `hunks`, `layout` (the phone draws unified) |
+| `Diff` | `hunks` (the phone draws unified) |
 | `FileRow` | `path`, `added`, `removed`, `seen`, `href` or `onOpen` |
 | `ProseDiff` | `before`, `after` |
 | `Comparison` | `rows` (`{ label, cells: [{ label, value }], chips }`) |

@@ -7,7 +7,6 @@ import { LoadingRows } from "../../lib/loading";
 
 export interface DiffProps extends Closed {
 	hunks: readonly Hunk[];
-	layout?: "unified" | "split";
 	loading?: boolean;
 }
 
@@ -19,7 +18,7 @@ function hunkKey(hunk: Hunk): string {
 }
 
 // Mono with a line-number gutter that scrolls with the lines; added lines on
-// ok-soft, removed on danger-soft. The phone draws unified whatever `layout`.
+// ok-soft, removed on danger-soft. The phone draws unified.
 export function Diff({ hunks, loading }: DiffProps) {
 	if (loading) return <LoadingRows />;
 	return (

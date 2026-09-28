@@ -2,6 +2,7 @@ import { CODE, text } from "@fcalell/ui-core/variants";
 import { createMemo, createSignal, Show } from "solid-js";
 import type { Closed } from "#lib/closed.ts";
 import { cn } from "#lib/cn.ts";
+import { RING, TEXT_ACT } from "#lib/interact.ts";
 import { LoadingRows } from "#lib/loading.tsx";
 import { useWords } from "#lib/words.tsx";
 
@@ -39,10 +40,7 @@ export function Code(props: CodeProps) {
 					<button
 						type="button"
 						onClick={() => setUnfolded(true)}
-						class={cn(
-							text({ role: "meta" }),
-							"cursor-pointer self-start text-tint",
-						)}
+						class={cn(text({ role: "meta" }), "self-start", TEXT_ACT)}
 					>
 						… {hidden()}
 					</button>
@@ -59,6 +57,7 @@ export function Code(props: CodeProps) {
 						class={cn(
 							text({ role: "mono" }),
 							"min-w-0 flex-1 overflow-x-auto whitespace-pre",
+							RING,
 						)}
 					>
 						{shown().join("\n")}
@@ -69,7 +68,8 @@ export function Code(props: CodeProps) {
 							onClick={() => void copy()}
 							class={cn(
 								text({ role: "meta" }),
-								"-my-stack -mr-row min-h-11 shrink-0 cursor-pointer px-row font-medium text-tint",
+								"-my-stack -mr-row min-h-11 shrink-0 px-row",
+								TEXT_ACT,
 							)}
 						>
 							{copied() ? words.copied : words.copy}

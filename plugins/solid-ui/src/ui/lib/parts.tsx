@@ -11,17 +11,40 @@ function quotedText(text: string, cut: boolean): string {
 	return `“${inner}”`;
 }
 
+// Text with its backtick spans drawn as inline code, as `Prose` draws them:
+// mono on the group fill, never broken inside, so `--strict` never splits
+// after its dashes.
+const CODE_SPAN = /`([^`]+)`/;
+
+export function Inline(props: { text: string }): JSX.Element {
+	return (
+		<For each={props.text.split(CODE_SPAN)}>
+			{(piece, index) =>
+				index() % 2 === 1 ? (
+					<code class="whitespace-nowrap rounded-group bg-group px-1 font-mono text-mono">
+						{piece}
+					</code>
+				) : (
+					piece
+				)
+			}
+		</For>
+	);
+}
+
 // Parts joined by a middle dot; a `Quoted` part in typographic quotes, drawn
-// in the slot's own role, so this renders no class of its own.
+// in the slot's own role; a text part's backtick spans as inline code.
 export function Parts(props: { parts: Part[]; cut?: boolean }): JSX.Element {
 	return (
 		<For each={props.parts}>
 			{(part, index) => (
 				<>
 					<Show when={index() > 0}> · </Show>
-					{typeof part === "string"
-						? part
-						: quotedText(part.quoted, props.cut ?? false)}
+					{typeof part === "string" ? (
+						<Inline text={part} />
+					) : (
+						quotedText(part.quoted, props.cut ?? false)
+					)}
 				</>
 			)}
 		</For>

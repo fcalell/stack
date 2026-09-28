@@ -16,7 +16,7 @@ export function Checkbox(props: CheckboxProps) {
 		<CheckboxPrimitive.Root
 			checked={props.checked}
 			onChange={props.onChange}
-			class="flex min-h-11 w-full cursor-pointer items-center justify-between gap-row"
+			class="relative flex min-h-11 w-full cursor-pointer items-center justify-between gap-row"
 		>
 			<CheckboxPrimitive.Input class="peer" />
 			<CheckboxPrimitive.Label class={text({ role: "body" })}>

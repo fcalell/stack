@@ -5,6 +5,7 @@ import { A } from "@solidjs/router";
 import { createSignal, type JSX, Match, Show, Switch } from "solid-js";
 import type { Closed } from "#lib/closed.ts";
 import { cn } from "#lib/cn.ts";
+import { RING_INSET, TEXT_ACT, WASH } from "#lib/interact.ts";
 import { useWords } from "#lib/words.tsx";
 import { Status } from "../status/index.tsx";
 
@@ -33,8 +34,7 @@ const COPIED_MS = 2000;
 
 // The row's vertical padding is given to the act, so its 44 px hit area
 // leaves the row as tall as one with no act.
-const ACT =
-	"-my-stack min-h-11 shrink-0 cursor-pointer px-row font-medium text-tint disabled:text-ink-faint";
+const ACT = cn("-my-stack min-h-11 shrink-0 px-row", TEXT_ACT);
 
 function isStatus(
 	value: DefinitionValue,
@@ -52,7 +52,11 @@ export function DefinitionRow(props: DefinitionRowProps) {
 			row({ state: "rest" }),
 			"flex w-full flex-col justify-center gap-pair text-left",
 			interactive() &&
-				"cursor-pointer transition-colors duration-(--duration-fast) ease-ui hover:bg-edge active:bg-edge focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-tint",
+				cn(
+					"cursor-pointer transition-colors duration-(--duration-fast) ease-ui",
+					WASH,
+					RING_INSET,
+				),
 		);
 	const copy = async () => {
 		if (typeof props.value !== "string") return;

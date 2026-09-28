@@ -20,7 +20,9 @@ content's width in a toolbar, which the container decides; in a top bar (a `Plac
 around it. `IconButton` is a 44 px circle for moving and nothing else, compact in a top bar the
 same way. `Count` is a number in a pill. `Status` is an icon and a word, the
 consumer mapping its own states onto six, and a 44 px chip with `onOpen`. `Input` kinds: `search`
-is a pill, the rest take the group radius, `number` opens the numeric keyboard. `TextArea`
+is a pill, the rest take the group radius, `number` opens the numeric keyboard and draws its
+`unit` after the value, `source` is text a machine reads (a command, a path, a host), mono and
+never corrected or capitalized; a tap anywhere on the field focuses it. `TextArea`
 `source` is mono and keeps indentation; `budget` draws a word counter. `Switch` and `Checkbox`
 carry their label so the hit area is the whole line. `Avatar` draws an image or the name's
 initials on one of eight `avatar-n` fills picked by a hash of the name. `Link` is inline and
@@ -43,9 +45,9 @@ a list on the phone, or alone; the parent composes.
 | `List` | rows on the surface with no box and no hairlines, each at least 44 px; the list semantics, each child one item whatever it is | Linear Mobile's inbox |
 | `Form` | fields at `stack`; its `ActionBar` last and in flow, so it scrolls with the fields and the keyboard never covers it | |
 | `Toolbar` | one row of controls over a list | |
-| `ActionBar` | pinned above the home indicator as a `Screen`'s child, in flow as a `Form`'s, a `Section`'s or a `Sheet`'s; full-width buttons stacked with the primary first on the phone, at their content's width in one row on the desktop; at most three, one `PendingBar` in their place | GitHub iOS's merge box |
+| `ActionBar` | pinned above the home indicator as a `Screen`'s child, in flow as a `Form`'s, a `Section`'s or a `Sheet`'s; full-width buttons stacked with the primary first on the phone, at their content's width in one row on the desktop; pinned, it sits behind a hairline and lifts the toasts by its height; at most three, one `PendingBar` in their place | GitHub iOS's merge box |
 | `Columns` | the same sections side by side, each `widths.column`, scrolling sideways, over the `Place`'s whole column; a `ListRow` inside is a card. On native and under `breakpoints.desktop` the sections stack | Linear's board |
-| `Shell` | the frame at every width from one list of places: the tab bar under `breakpoints.tablet`, the `widths.rail` sidebar on `canvas` from it; the app's `Banner`; the toast queue | Linear's sidebar, iOS's tab bar |
+| `Shell` | the frame at every width from one list of places: the tab bar under `breakpoints.tablet`, the `widths.rail` sidebar on `canvas` from it; the app's `Banner`, which a `Screen` fixed over the column on the phone starts under; the tab bar a `Screen` covers goes inert; the toast queue | Linear's sidebar, iOS's tab bar |
 
 Rows go in a `Group` when they are a record and in a `List` when they are a feed. A control that
 edits in place (`Switch`, `Checkbox`, `Picker`) is always the value of a `DefinitionRow` in a
@@ -62,7 +64,7 @@ entry never sits over a pinned bar.
 | `FormField` | label, description, one typing control, the error line | Linear web's settings rows, stacked |
 | `ItemHeader` | an overline of parts, a title that wraps in full and is the page's one heading inside a `Screen`, a row of facts, a status fact with `onOpen` a chip that opens its explanation | Linear Mobile's issue page |
 | `SegmentedControl` | a state the control rests on, never a trigger | Linear Mobile's Assigned, Created, Subscribed |
-| `Sheet` | a close circle left, the title, `submit` right where a keyboard would cover a bar, or an `ActionBar` child for a decision, the two exclusive in the types; focus on its first field when it opens; content-tall, full height with a `TextArea`; `sheet` corners; centered at `widths.sheet` on the desktop | Linear Mobile's and Claude's sheets |
+| `Sheet` | a close circle left, the title, `submit` right where a keyboard would cover a bar, or an `ActionBar` child for a decision, the two exclusive in the types; focus on its first field when it opens and back on what held it when it closes; the title wraps to two lines; content-tall, full height with a `TextArea`; `sheet` corners; centered at `widths.sheet` on the desktop | Linear Mobile's and Claude's sheets |
 | `Picker` | a control showing its value; a tap opens one-line rows with a tick, up to six, a searchable `Sheet` above six. A pick, never a form | Linear Mobile's status card, Claude's model picker |
 | `OptionList` | radio rows with a description line, the recommended one marked with `words.recommended`, children under the chosen option | Claude iOS's model picker rows |
 | `EmptyState` | one sentence and the way to make the first one; with `title` it centers as a first screen, alone in a body it centres in the space left, with children it stays above them | Claude iOS's empty project |
@@ -81,9 +83,10 @@ Each draws one kind of content and owns its interior; all take `loading`. `Prose
 wraps, folds past `tail` lines, takes focus to scroll by keyboard, and draws its copy act with
 `words.copy` beside the text, never over it. `Diff` is mono with a
 line-number gutter pinned left on web and scrolling with the lines on native, added on
-`ok-soft`, removed on `danger-soft`, hunk headers on `group`; `split` is picked by the parent from
-the molecule's own width, never the viewport's. `FileRow` is a row for a `Group` with a ring in
-`edge` that becomes a tick in `ok` when seen. `ProseDiff` is `Prose` with an added sentence on
+`ok-soft`, removed on `danger-soft`, hunk headers on `group`; it goes side by side once its own
+width holds two panes of sixty characters, never by the viewport's, and a file that only adds or
+only removes stays unified. `FileRow` is a row for a `Group` with a ring in `ink-meta` that becomes
+a tick in `ok` when seen. `ProseDiff` is `Prose` with an added sentence on
 `ok-soft` and a removed one struck through on `danger-soft`. `Comparison` is a `Group` of rows
 whose cells sit side by side from `breakpoints.desktop`, the newest right, and stack under a
 `SegmentedControl` below it. `Message` follows Claude iOS: `you` in a soft bubble right, `other`

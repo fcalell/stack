@@ -383,6 +383,10 @@ export const ZEROED_NAMESPACES = [
 	"--breakpoint-*",
 ] as const;
 
+// Code reads character for character: the mono family's ligatures stay off,
+// so `!==` never draws as `≢` and `->` never as an arrow.
+export const MONO_FEATURES = '"liga" 0, "calt" 0';
+
 // The stacks each family falls back to on both platforms; `sans` alone is the
 // platform's stack when the knob names no family.
 export const FONT_FALLBACKS: Record<FontRole, string> = {

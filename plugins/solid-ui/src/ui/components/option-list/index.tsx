@@ -4,6 +4,7 @@ import * as RadioGroup from "@kobalte/core/radio-group";
 import { For, type JSX, Show } from "solid-js";
 import type { Closed } from "#lib/closed.ts";
 import { cn } from "#lib/cn.ts";
+import { WASH } from "#lib/interact.ts";
 import { useWords } from "#lib/words.tsx";
 
 // Radio rows with a description line, the recommended one marked; the
@@ -28,12 +29,13 @@ export function OptionList(props: OptionListProps) {
 					const chosen = () => option.value === props.value;
 					return (
 						<>
-							<RadioGroup.Item value={option.value}>
+							<RadioGroup.Item value={option.value} class="relative">
 								<RadioGroup.ItemInput class="peer" />
 								<RadioGroup.ItemLabel
 									class={cn(
 										row({ state: chosen() ? "selected" : "rest" }),
-										"flex w-full cursor-pointer items-center rounded-group text-left transition-colors duration-(--duration-fast) ease-ui hover:bg-edge peer-focus-visible:outline-2 peer-focus-visible:-outline-offset-2 peer-focus-visible:outline-tint",
+										"flex w-full cursor-pointer items-center rounded-group text-left transition-colors duration-(--duration-fast) ease-ui peer-focus-visible:outline-2 peer-focus-visible:-outline-offset-2 peer-focus-visible:outline-tint",
+										WASH,
 									)}
 								>
 									<RadioGroup.ItemControl

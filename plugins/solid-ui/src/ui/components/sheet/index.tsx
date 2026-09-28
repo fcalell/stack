@@ -8,6 +8,8 @@ import { Circle } from "#lib/circle.tsx";
 import type { Closed } from "#lib/closed.ts";
 import { cn } from "#lib/cn.ts";
 import { FitContext } from "#lib/fit.ts";
+import { TEXT_ACT } from "#lib/interact.ts";
+import { Inline } from "#lib/parts.tsx";
 import { TouchedContext } from "#lib/touched.ts";
 import { useWords } from "#lib/words.tsx";
 
@@ -22,8 +24,9 @@ export interface SheetSubmit {
 // puts an `ActionBar` in its children instead, and the two exclude each
 // other. Content-tall from the bottom on the phone; centered at the sheet
 // width from tablet. It opens with focus on its first field, else on its
-// close circle; a blocked submit says its reason once tapped or once a field
-// has taken input.
+// close circle, and gives focus back to what held it when it opened; the
+// title wraps to two lines. A blocked submit says its reason once tapped or
+// once a field has taken input.
 export type SheetProps = Closed & {
 	open: boolean;
 	onClose: () => void;
@@ -45,8 +48,17 @@ export function Sheet(props: SheetProps) {
 	const [tapped, setTapped] = createSignal(false);
 	const blocked = () => props.submit?.blocked !== undefined;
 	const said = () => blocked() && (tapped() || touched());
+	// What held focus when the sheet opened, given it back on close.
+	let opener: HTMLElement | undefined;
 	createEffect(() => {
-		if (props.open) return;
+		if (props.open) {
+			const active = document.activeElement;
+			opener =
+				active instanceof HTMLElement && active !== document.body
+					? active
+					: undefined;
+			return;
+		}
 		setTouched(false);
 		setTapped(false);
 	});
@@ -71,6 +83,11 @@ export function Sheet(props: SheetProps) {
 					<DialogPrimitive.Content
 						onInput={() => setTouched(true)}
 						ref={content}
+						onCloseAutoFocus={(event) => {
+							if (!opener?.isConnected) return;
+							event.preventDefault();
+							opener.focus();
+						}}
 						onOpenAutoFocus={(event) => {
 							const field = content?.querySelector<HTMLElement>(FIELD);
 							if (!field) return;
@@ -108,10 +125,10 @@ export function Sheet(props: SheetProps) {
 										<DialogPrimitive.Title
 											class={cn(
 												text({ role: "heading" }),
-												"min-w-0 flex-1 truncate",
+												"line-clamp-2 min-w-0 flex-1",
 											)}
 										>
-											{props.title}
+											<Inline text={props.title} />
 										</DialogPrimitive.Title>
 										<Show when={props.submit}>
 											{(submit) => (
@@ -125,7 +142,8 @@ export function Sheet(props: SheetProps) {
 													}}
 													class={cn(
 														text({ role: "body" }),
-														"min-h-11 shrink-0 cursor-pointer px-row font-medium text-tint aria-disabled:cursor-not-allowed aria-disabled:text-ink-faint",
+														"min-h-11 shrink-0 px-row",
+														TEXT_ACT,
 													)}
 												>
 													{submit().label}

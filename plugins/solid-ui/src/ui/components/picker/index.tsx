@@ -5,6 +5,7 @@ import { Check, ChevronDown } from "lucide-solid";
 import { createMemo, createSignal, For, Show } from "solid-js";
 import type { Closed } from "#lib/closed.ts";
 import { cn } from "#lib/cn.ts";
+import { RING, RING_INSET, WASH } from "#lib/interact.ts";
 import { useWords } from "#lib/words.tsx";
 import { Input } from "../input/index.tsx";
 import { Sheet } from "../sheet/index.tsx";
@@ -21,8 +22,11 @@ export type PickerProps = Closed & {
 
 const ANCHORED_MAX = 6;
 
-const ROW =
-	"flex w-full cursor-pointer items-center text-left transition-colors duration-(--duration-fast) ease-ui hover:bg-edge focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-tint";
+const ROW = cn(
+	"flex w-full cursor-pointer items-center text-left transition-colors duration-(--duration-fast) ease-ui",
+	WASH,
+	RING_INSET,
+);
 
 function Rows(props: {
 	options: Option[];
@@ -84,7 +88,9 @@ export function Picker(props: PickerProps) {
 			class={cn(
 				GROUP,
 				text({ role: "body" }),
-				"inline-flex min-h-11 max-w-full cursor-pointer items-center gap-row rounded-full px-4 transition-colors duration-(--duration-fast) ease-ui hover:bg-edge focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-tint",
+				"inline-flex min-h-11 max-w-full cursor-pointer items-center gap-row rounded-full px-4 transition-colors duration-(--duration-fast) ease-ui",
+				WASH,
+				RING,
 			)}
 		>
 			<span class="truncate">{current()?.label ?? props.label}</span>

@@ -12,9 +12,10 @@ export function useBarPlacement(): BarPlacement {
 }
 
 // A bar pinned as a `Screen`'s child: the body's last element, stuck to the
-// bottom of the scroll on the surface, bleeding to the body's edges and
-// clearing the home indicator. The `ActionBar` and the `MessageInput` pin
+// bottom of the scroll on the surface behind a hairline, so what scrolls
+// under it reads as passing beneath a surface, bleeding to the body's edges
+// and clearing the home indicator. The `ActionBar` and the `MessageInput` pin
 // this way. A sticky edge sits inside the scroller's padding, so the bar's
 // offset is minus that padding to meet the scroller's bottom edge.
 export const PINNED =
-	"sticky -bottom-section -mx-inset mt-auto -mb-section bg-surface px-inset pt-stack pb-[max(env(safe-area-inset-bottom),var(--spacing-stack))] tablet:-mx-section tablet:px-section";
+	"sticky -bottom-section -mx-inset mt-auto -mb-section border-t bg-surface px-inset pt-stack pb-[max(env(safe-area-inset-bottom),var(--spacing-stack))] tablet:-mx-section tablet:px-section";

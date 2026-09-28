@@ -42,7 +42,7 @@ export function FileRow({
 				open && "active:bg-edge",
 			)}
 		>
-			<Glyph icon={seen ? CircleCheck : Ring} tone={seen ? "ok" : "edge"} />
+			<Glyph icon={seen ? CircleCheck : Ring} tone={seen ? "ok" : "ink-meta"} />
 			<RNText
 				numberOfLines={1}
 				className={cn(text({ role: "mono" }), "min-w-0 flex-1")}

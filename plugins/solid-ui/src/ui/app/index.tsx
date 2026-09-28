@@ -86,13 +86,16 @@ export function createApp(options: CreateAppOptions = {}): void {
 }
 
 // The error sentence is the thrown message; the title is the consumer's word
-// and the act's label is `words.retry`.
+// and the act's label is `words.retry`. It draws on the canvas, since no
+// shell is mounted to paint one.
 function defaultErrorFallback(options: CreateAppOptions) {
 	return (err: Error, reset: () => void): JSX.Element => (
-		<EmptyState
-			title={options.errorTitle ?? err.name}
-			sentence={err.message}
-			act={{ label: (options.words ?? ENGLISH).retry, onAct: reset }}
-		/>
+		<div class="flex min-h-dvh flex-col bg-canvas">
+			<EmptyState
+				title={options.errorTitle ?? err.name}
+				sentence={err.message}
+				act={{ label: (options.words ?? ENGLISH).retry, onAct: reset }}
+			/>
+		</div>
 	);
 }

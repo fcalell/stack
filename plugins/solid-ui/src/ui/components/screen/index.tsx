@@ -15,6 +15,7 @@ import { Circle, circle, glyph } from "#lib/circle.tsx";
 import type { Closed } from "#lib/closed.ts";
 import { cn } from "#lib/cn.ts";
 import { FitContext } from "#lib/fit.ts";
+import { useCover } from "#lib/frame.ts";
 import { HeadingContext } from "#lib/heading.ts";
 import { MeasureContext, measured } from "#lib/measure.ts";
 import { useWords } from "#lib/words.tsx";
@@ -44,6 +45,7 @@ const SHOWN = 2;
 
 export function Screen(props: ScreenProps) {
 	const words = useWords();
+	useCover();
 	const [compact, setCompact] = createSignal(false);
 	const [more, setMore] = createSignal(false);
 	const [whole, setWhole] = createSignal(false);
@@ -65,7 +67,7 @@ export function Screen(props: ScreenProps) {
 		<BarContext.Provider value="pinned">
 			<HeadingContext.Provider value={setClaimed}>
 				<MeasureContext.Provider value={setWhole}>
-					<div class="fixed inset-0 z-40 flex flex-col bg-surface tablet:static tablet:z-auto tablet:min-h-0 tablet:flex-1">
+					<div class="fixed inset-x-0 top-(--banner-height) bottom-0 z-40 flex flex-col bg-surface tablet:static tablet:z-auto tablet:min-h-0 tablet:flex-1">
 						<FitContext.Provider value="bar">
 							{/* Three columns keep the title centred whatever the sides
 				    hold: each side is at least its content, the title shrinks. */}

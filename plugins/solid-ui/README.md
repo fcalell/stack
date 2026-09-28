@@ -72,7 +72,7 @@ own three-row form. `Part` is a string or `{ quoted }`, drawn in typographic quo
 | `IconButton` | `icon`, `label`, `onAct` | a 44 px circle; the label is read aloud |
 | `Count` | `value` | a number in a pill |
 | `Status` | `state`, `label`, `onOpen` | a glyph and the state's word; a chip with `onOpen` |
-| `Input` | `kind` (`text` \| `search` \| `secret` \| `code` \| `number`), `value`, `onChange`, `placeholder`, `act` | `search` is a pill; `act` sits inside the field |
+| `Input` | `kind` (`text` \| `search` \| `secret` \| `code` \| `source` \| `number`), `value`, `onChange`, `placeholder`, `unit`, `act` | `search` is a pill; `source` is mono, never corrected; `unit` follows a `number`; `act` sits inside the field |
 | `TextArea` | `kind` (`prose` \| `source`), `value`, `onChange`, `placeholder`, `budget` | `source` is mono; `budget` draws a word counter |
 | `Slider` | `label`, `value`, `onChange`, `min`, `max`, `step`, `unit` | the value beside the label, in `unit` (an Intl unit identifier such as `percent`) |
 | `Switch`, `Checkbox` | `checked`, `onChange`, `label` | the label is the hit line |
@@ -119,7 +119,7 @@ own three-row form. `Part` is a string or `{ quoted }`, drawn in typographic quo
 | --- | --- |
 | `Prose` | `markdown`, `loading` |
 | `Code` | `text`, `tail`, `copy`, `loading` |
-| `Diff` | `hunks`, `layout` (`unified` \| `split`), `loading` |
+| `Diff` | `hunks`, `loading`; side by side once its own width holds two sixty-character panes |
 | `FileRow` | `path`, `added`, `removed`, `seen`, `href`, `onOpen`, `loading` |
 | `ProseDiff` | `before`, `after`, `loading` |
 | `Comparison` | `rows`, `loading` |

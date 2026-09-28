@@ -23,7 +23,7 @@ export const ROSTER: Record<Layer, Record<string, readonly string[]>> = {
 		IconButton: ["icon", "label", "onAct"],
 		Count: ["value"],
 		Status: ["state", "label", "onOpen"],
-		Input: ["kind", "value", "onChange", "placeholder", "act"],
+		Input: ["kind", "value", "onChange", "placeholder", "unit", "act"],
 		TextArea: ["kind", "value", "onChange", "placeholder", "budget"],
 		Slider: ["label", "value", "onChange", "min", "max", "step", "unit"],
 		Switch: ["checked", "onChange", "label"],
@@ -96,7 +96,7 @@ export const ROSTER: Record<Layer, Record<string, readonly string[]>> = {
 	content: {
 		Prose: ["markdown", "loading"],
 		Code: ["text", "tail", "copy", "loading"],
-		Diff: ["hunks", "layout", "loading"],
+		Diff: ["hunks", "loading"],
 		FileRow: ["path", "added", "removed", "seen", "href", "onOpen", "loading"],
 		ProseDiff: ["before", "after", "loading"],
 		Comparison: ["rows", "loading"],

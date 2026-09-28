@@ -113,7 +113,7 @@ export const STATUS = matrix({
 			done: "text-ok",
 			attention: "text-warn",
 			failed: "text-danger",
-			idle: "text-ink-faint",
+			idle: "text-ink-meta",
 		},
 	},
 });

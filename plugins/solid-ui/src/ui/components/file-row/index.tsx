@@ -4,6 +4,7 @@ import { Check } from "lucide-solid";
 import { Match, Show, Switch } from "solid-js";
 import type { Closed } from "#lib/closed.ts";
 import { cn } from "#lib/cn.ts";
+import { RING_INSET, WASH } from "#lib/interact.ts";
 import { LoadingRows } from "#lib/loading.tsx";
 
 // A row for a group: a ring that becomes a tick when seen, the path in mono,
@@ -21,14 +22,16 @@ export type FileRowProps = Closed & {
 export function FileRow(props: FileRowProps) {
 	const shell = cn(
 		row({ state: "rest" }),
-		"flex w-full cursor-pointer items-center text-left transition-colors duration-(--duration-fast) ease-ui hover:bg-edge active:bg-edge focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-tint",
+		"flex w-full cursor-pointer items-center text-left transition-colors duration-(--duration-fast) ease-ui",
+		WASH,
+		RING_INSET,
 	);
 	const body = () => (
 		<>
 			<span
 				class={cn(
 					"inline-flex size-5 shrink-0 items-center justify-center rounded-full",
-					props.seen ? "bg-ok-soft text-ok" : "border border-edge",
+					props.seen ? "bg-ok-soft text-ok" : "border border-ink-meta",
 				)}
 				aria-hidden="true"
 			>

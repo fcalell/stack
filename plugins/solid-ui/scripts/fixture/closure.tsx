@@ -412,7 +412,7 @@ export const closure = (
 		<Code text="x" classList={{}} />
 		{/* @ts-expect-error closed channel */}
 		<Code text="x" className="x" />
-		<Diff hunks={[]} layout="split" loading />
+		<Diff hunks={[]} loading />
 		{/* @ts-expect-error closed channel */}
 		<Diff hunks={[]} class="x" />
 		{/* @ts-expect-error closed channel */}

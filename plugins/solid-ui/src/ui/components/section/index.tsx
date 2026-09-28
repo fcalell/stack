@@ -12,6 +12,7 @@ import {
 import { BarContext } from "#lib/bar.ts";
 import type { Closed } from "#lib/closed.ts";
 import { cn } from "#lib/cn.ts";
+import { RING, TEXT_ACT } from "#lib/interact.ts";
 import { LoadingRows } from "#lib/loading.tsx";
 import { Count } from "../count/index.tsx";
 
@@ -54,29 +55,39 @@ export function Section(props: SectionProps) {
 				aria-labelledby={id}
 				class={cn("flex flex-col gap-row", nested && "pt-stack")}
 			>
+				{/* The description is the label's own line, a pair below it, so it
+				    never reads as the section's content. */}
 				<div class="flex min-h-11 items-center justify-between gap-row">
-					<Show
-						when={foldable()}
-						fallback={
-							<div class="flex min-w-0 items-center gap-pair">{label()}</div>
-						}
-					>
-						<button
-							type="button"
-							aria-expanded={open()}
-							onClick={() => setOpen((value) => !value)}
-							class="flex min-h-11 min-w-0 cursor-pointer items-center gap-pair self-stretch text-left"
+					<div class="flex min-w-0 flex-col gap-pair">
+						<Show
+							when={foldable()}
+							fallback={
+								<div class="flex min-w-0 items-center gap-pair">{label()}</div>
+							}
 						>
-							{label()}
-							<ChevronDown
+							<button
+								type="button"
+								aria-expanded={open()}
+								onClick={() => setOpen((value) => !value)}
 								class={cn(
-									"size-4 shrink-0 text-ink-faint transition-transform duration-(--duration-base) ease-ui",
-									open() || "-rotate-90",
+									"flex min-h-11 min-w-0 cursor-pointer items-center gap-pair self-start text-left",
+									RING,
 								)}
-								aria-hidden="true"
-							/>
-						</button>
-					</Show>
+							>
+								{label()}
+								<ChevronDown
+									class={cn(
+										"size-4 shrink-0 text-ink-faint transition-transform duration-(--duration-base) ease-ui",
+										open() || "-rotate-90",
+									)}
+									aria-hidden="true"
+								/>
+							</button>
+						</Show>
+						<Show when={props.description}>
+							<p class={text({ role: "meta" })}>{props.description}</p>
+						</Show>
+					</div>
 					<Show when={props.act}>
 						{(act) => (
 							<button
@@ -85,7 +96,8 @@ export function Section(props: SectionProps) {
 								onClick={() => act().onAct()}
 								class={cn(
 									text({ role: "meta" }),
-									"min-h-11 shrink-0 cursor-pointer font-medium text-tint disabled:text-ink-faint",
+									"min-h-11 shrink-0",
+									TEXT_ACT,
 								)}
 							>
 								{act().label}
@@ -93,9 +105,6 @@ export function Section(props: SectionProps) {
 						)}
 					</Show>
 				</div>
-				<Show when={props.description}>
-					<p class={text({ role: "meta" })}>{props.description}</p>
-				</Show>
 				<Show when={open()}>
 					<Show when={!props.loading} fallback={<LoadingRows />}>
 						<BarContext.Provider value="flow">

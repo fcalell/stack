@@ -532,6 +532,11 @@ check("c06", "every scale is its ratio of the knob", () => {
 		"--font-mono",
 	);
 	requireEqual(
+		emitted("--font-mono--font-feature-settings"),
+		'"liga" 0, "calt" 0',
+		"mono ligatures off",
+	);
+	requireEqual(
 		emitted("--font-sans"),
 		"ui-sans-serif, system-ui, sans-serif",
 		"--font-sans",
@@ -600,6 +605,7 @@ check("c08", "themeTokens and modeTokens carry the right keys", () => {
 	for (const bp of BREAKPOINTS) expected.add(`--breakpoint-${bp}`);
 	expected.add("--font-sans");
 	expected.add("--font-mono");
+	expected.add("--font-mono--font-feature-settings");
 	for (const token of INVARIANT_COLORS) expected.add(`--color-${token}`);
 	for (const token of PER_MODE_COLORS) expected.add(`--color-${token}`);
 	const actual = new Set(Object.keys(baseTheme));
@@ -1570,7 +1576,9 @@ function contrast(fg: string, bg: string): number {
 
 check("c32", "the contrast contracts hold at the default knobs", () => {
 	const pairs: Array<[string, string[]]> = [
-		["ink", ["canvas", "surface", "group"]],
+		// A diff's text sits on the added and removed fills.
+		["ink", ["canvas", "surface", "group", "ok-soft", "danger-soft"]],
+		// Also the idle status and a file row's unopened ring.
 		["ink-meta", ["canvas", "surface", "group"]],
 		["ok", ["surface", "group", "ok-soft"]],
 		["warn", ["surface", "group", "warn-soft"]],

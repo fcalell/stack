@@ -11,6 +11,7 @@ import { createEffect, createSignal, createUniqueId, Show } from "solid-js";
 import type { Closed } from "#lib/closed.ts";
 import { cn } from "#lib/cn.ts";
 import { BAR_HIT, useFit } from "#lib/fit.ts";
+import { RING, WASH } from "#lib/interact.ts";
 import { useTouched } from "#lib/touched.ts";
 import { Spinner } from "../spinner/index.tsx";
 
@@ -32,12 +33,14 @@ export type ButtonProps = Closed & {
 // guarantees.
 const GROUND: Record<ButtonAct, string> = {
 	primary: "hover:bg-ink-meta active:bg-ink-meta",
-	secondary: "hover:bg-edge active:bg-edge",
+	secondary: WASH,
 	destructive: "hover:bg-danger-soft active:bg-danger-soft",
 };
 
-const SHELL =
-	"inline-flex cursor-pointer items-center justify-center whitespace-nowrap transition-colors duration-(--duration-fast) ease-ui focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-tint disabled:cursor-not-allowed aria-disabled:cursor-not-allowed";
+const SHELL = cn(
+	"inline-flex cursor-pointer items-center justify-center whitespace-nowrap transition-colors duration-(--duration-fast) ease-ui disabled:cursor-not-allowed aria-disabled:cursor-not-allowed",
+	RING,
+);
 
 export function Button(props: ButtonProps) {
 	const act = () => props.act ?? "primary";

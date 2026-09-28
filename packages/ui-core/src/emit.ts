@@ -3,6 +3,7 @@ import {
 	BREAKPOINTS,
 	FONT_ROLES,
 	INVARIANT_COLORS,
+	MONO_FEATURES,
 	type Mode,
 	PER_MODE_COLORS,
 	RADIUS_RUNGS,
@@ -58,6 +59,7 @@ export function themeTokens(resolved: ResolvedTheme): Record<string, string> {
 	for (const role of FONT_ROLES) {
 		tokens[`--font-${role}`] = resolved.fonts[role];
 	}
+	tokens["--font-mono--font-feature-settings"] = MONO_FEATURES;
 	for (const token of INVARIANT_COLORS) {
 		tokens[`--color-${token}`] = resolved.invariantColors[token];
 	}

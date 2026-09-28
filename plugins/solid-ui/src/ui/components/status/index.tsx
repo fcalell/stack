@@ -3,6 +3,7 @@ import { STATUS_CHIP, status } from "@fcalell/ui-core/variants";
 import { Show } from "solid-js";
 import type { Closed } from "#lib/closed.ts";
 import { cn } from "#lib/cn.ts";
+import { RING, WASH } from "#lib/interact.ts";
 import { StatusGlyph } from "#lib/status-glyph.tsx";
 import { useWords } from "#lib/words.tsx";
 
@@ -40,7 +41,9 @@ export function Status(props: StatusProps) {
 				class={cn(
 					status({ state: props.state }),
 					STATUS_CHIP,
-					"inline-flex cursor-pointer items-center transition-colors duration-(--duration-fast) ease-ui hover:bg-edge focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-tint",
+					"inline-flex cursor-pointer items-center transition-colors duration-(--duration-fast) ease-ui",
+					WASH,
+					RING,
 				)}
 			>
 				{inner()}

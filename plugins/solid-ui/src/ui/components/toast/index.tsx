@@ -3,6 +3,7 @@ import { TOAST } from "@fcalell/ui-core/variants";
 import { Show } from "solid-js";
 import type { Closed } from "#lib/closed.ts";
 import { cn } from "#lib/cn.ts";
+import { RING } from "#lib/interact.ts";
 import { toast } from "#lib/toast.ts";
 
 // The dark pill above the bar; client-owned, so never an undo. `toast()`
@@ -21,7 +22,10 @@ export function Toast(props: ToastProps) {
 					<button
 						type="button"
 						onClick={() => act().onAct()}
-						class="cursor-pointer font-medium underline underline-offset-4"
+						class={cn(
+							"cursor-pointer font-medium underline underline-offset-4",
+							RING,
+						)}
 					>
 						{act().label}
 					</button>

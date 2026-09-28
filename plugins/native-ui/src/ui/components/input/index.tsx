@@ -12,13 +12,20 @@ import { cn } from "../../lib/cn";
 import { useTouched } from "../../lib/touched";
 import { useWords } from "../../lib/words";
 
-export type InputKind = "text" | "search" | "secret" | "code" | "number";
+export type InputKind =
+	| "text"
+	| "search"
+	| "secret"
+	| "code"
+	| "source"
+	| "number";
 
 export interface InputProps extends Closed {
 	kind?: InputKind;
 	value: string;
 	onChange: (value: string) => void;
 	placeholder?: string;
+	unit?: string;
 	act?: Act;
 }
 
@@ -27,12 +34,22 @@ const SURFACE: Record<InputKind, FieldKind> = {
 	search: "search",
 	secret: "text",
 	code: "code",
+	source: "code",
 	number: "text",
 };
 
 // One line of typing. `search` is a pill, the rest take the group radius;
-// `number` opens the numeric keyboard; `act` is a trailing text act.
-export function Input({ kind, value, onChange, placeholder, act }: InputProps) {
+// `number` opens the numeric keyboard and draws `unit` after the value;
+// `source` is text a machine reads (a command, a path, a host), mono and
+// never corrected or capitalized; `act` is a trailing text act.
+export function Input({
+	kind,
+	value,
+	onChange,
+	placeholder,
+	unit,
+	act,
+}: InputProps) {
 	const words = useWords();
 	const [focused, setFocused] = useState(false);
 	const { touch } = useTouched();
@@ -46,7 +63,7 @@ export function Input({ kind, value, onChange, placeholder, act }: InputProps) {
 		>
 			<TextInput
 				className={cn(
-					text({ role: which === "code" ? "mono" : "body" }),
+					text({ role: SURFACE[which] === "code" ? "mono" : "body" }),
 					"flex-1 py-0",
 				)}
 				placeholderTextColorClassName={FIELD_PLACEHOLDER}
@@ -61,12 +78,17 @@ export function Input({ kind, value, onChange, placeholder, act }: InputProps) {
 				secureTextEntry={which === "secret"}
 				keyboardType={which === "number" ? "decimal-pad" : "default"}
 				autoCapitalize={
-					which === "code" || which === "secret" ? "none" : "sentences"
+					which === "code" || which === "secret" || which === "source"
+						? "none"
+						: "sentences"
 				}
 				autoCorrect={which === "text"}
 				onFocus={() => setFocused(true)}
 				onBlur={() => setFocused(false)}
 			/>
+			{which === "number" && unit ? (
+				<RNText className={text({ role: "meta" })}>{unit}</RNText>
+			) : null}
 			{act ? (
 				<Pressable
 					accessibilityRole="button"
