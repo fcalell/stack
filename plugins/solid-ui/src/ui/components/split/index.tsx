@@ -1,5 +1,5 @@
 import type { JSX } from "solid-js";
-import { Show } from "solid-js";
+import { children, Show } from "solid-js";
 import type { Closed } from "#lib/closed.ts";
 import { cn } from "#lib/cn.ts";
 
@@ -17,38 +17,44 @@ export type SplitProps = Closed & {
 };
 
 export function Split(props: SplitProps) {
-	const hasMain = () => props.main !== undefined;
-	const hasPane = () => props.pane !== undefined;
+	// Each slot is resolved once and kept: reading a JSX prop builds it again,
+	// and a screen built twice runs its reads and its effects twice.
+	const list = children(() => props.list);
+	const main = children(() => props.main);
+	const pane = children(() => props.pane);
+	const empty = children(() => props.empty);
+	const hasMain = () => main() !== undefined && main() !== null;
+	const hasPane = () => pane() !== undefined && pane() !== null;
 	return (
 		<div class="flex min-h-0 flex-1">
-			<Show when={props.list}>
+			<Show when={list()}>
 				<div
 					class={cn(
 						"min-h-0 min-w-0 flex-col desktop:flex desktop:w-list desktop:shrink-0 desktop:border-r",
 						hasMain() || hasPane() ? "hidden" : "flex flex-1",
 					)}
 				>
-					{props.list}
+					{list()}
 				</div>
 			</Show>
-			<Show when={props.empty && !hasMain() && !hasPane()}>
+			<Show when={empty() && !hasMain() && !hasPane()}>
 				<div class="hidden min-h-0 min-w-0 flex-1 flex-col desktop:flex">
-					{props.empty}
+					{empty()}
 				</div>
 			</Show>
-			<Show when={props.main}>
+			<Show when={hasMain()}>
 				<div
 					class={cn(
 						"min-h-0 min-w-0 flex-1 flex-col",
 						hasPane() ? "hidden wide:flex" : "flex",
 					)}
 				>
-					{props.main}
+					{main()}
 				</div>
 			</Show>
-			<Show when={props.pane}>
+			<Show when={hasPane()}>
 				<div class="flex min-h-0 min-w-0 flex-1 flex-col wide:w-list wide:flex-none wide:border-l">
-					{props.pane}
+					{pane()}
 				</div>
 			</Show>
 		</div>
