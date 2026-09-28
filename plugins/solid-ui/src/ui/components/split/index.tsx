@@ -30,7 +30,7 @@ export function Split(props: SplitProps) {
 			<Show when={list()}>
 				<div
 					class={cn(
-						"min-h-0 min-w-0 flex-col desktop:flex desktop:w-list desktop:shrink-0 desktop:border-r",
+						"min-h-0 min-w-0 flex-col desktop:flex desktop:w-list desktop:flex-none desktop:border-r",
 						hasMain() || hasPane() ? "hidden" : "flex flex-1",
 					)}
 				>
