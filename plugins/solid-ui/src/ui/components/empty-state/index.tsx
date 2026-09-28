@@ -44,6 +44,7 @@ export function EmptyState(props: EmptyStateProps) {
 						onAct={act().onAct}
 						blocked={act().blocked}
 						loading={act().loading}
+						spinner={act().spinner}
 					/>
 				)}
 			</Show>

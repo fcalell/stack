@@ -1,4 +1,5 @@
 import type { Act } from "@fcalell/ui-core/descriptors";
+import type { SpinnerKind } from "@fcalell/ui-core/tokens";
 import { PENDING_BAR, PENDING_FILL, text } from "@fcalell/ui-core/variants";
 import { createSignal, onCleanup, onMount, Show } from "solid-js";
 import type { Closed } from "#lib/closed.ts";
@@ -12,6 +13,8 @@ import { Spinner } from "../spinner/index.tsx";
 export type PendingBarProps = Closed & {
 	sentence: string;
 	until?: Date;
+	// The busy glyph drawn while no deadline is set.
+	spinner?: SpinnerKind;
 	act?: Act;
 };
 
@@ -45,7 +48,7 @@ export function PendingBar(props: PendingBarProps) {
 			</Show>
 			<span class="relative flex min-w-0 flex-1 items-center gap-row">
 				<Show when={!props.until}>
-					<Spinner />
+					<Spinner kind={props.spinner} />
 				</Show>
 				<span class={cn(text({ role: "meta" }), "truncate text-ink")}>
 					{props.sentence}

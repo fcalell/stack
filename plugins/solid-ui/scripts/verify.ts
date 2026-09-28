@@ -93,6 +93,7 @@ import { Node, Project, SyntaxKind } from "ts-morph";
 import { aggregateAppCss } from "../src/node/codegen.ts";
 import * as solidUiCss from "../src/node/css-escape.ts";
 import { runGeometryGate } from "../src/node/gate.ts";
+import { modeScript } from "../src/node/mode.ts";
 import { darkLayer } from "../src/node/theme.ts";
 import { type SolidUiOptions, solidUiOptionsSchema } from "../src/types.ts";
 
@@ -251,6 +252,9 @@ const resolved = deriveTheme(THEME);
 
 const sheet = await emit({ theme: THEME });
 const darkSeeded = await emit({ theme: { ...THEME, defaultMode: "dark" } });
+const squareFlat = await emit({
+	theme: { ...THEME, radius: 0, elevation: "flat" },
+});
 const noFonts = await emit({ theme: THEME, fonts: [] });
 const reFonted = await emit({
 	theme: { ...THEME, fonts: { sans: "Inter Variable", mono: "Menlo" } },
@@ -493,10 +497,12 @@ check("a5", "the two shadows ship as utilities", () => {
 	const values = shadowUtilities(resolved);
 	for (const level of SHADOW_LEVELS) {
 		const body = declarationMap(blockBody(sheet, `@utility shadow-${level}`));
-		assert(
-			body.get("box-shadow") === normalize(values[`shadow-${level}`]),
-			`@utility shadow-${level} does not carry its contract value`,
-		);
+		for (const [property, value] of Object.entries(values[`shadow-${level}`])) {
+			assert(
+				body.get(property) === normalize(value),
+				`@utility shadow-${level} does not carry its contract ${property}`,
+			);
+		}
 		const emitted = rule(built, `shadow-${level}`);
 		assert(
 			emitted?.includes("box-shadow"),
@@ -509,6 +515,60 @@ check("a5", "the two shadows ship as utilities", () => {
 	);
 	return "shadow-float and shadow-sheet emit a box-shadow";
 });
+
+check(
+	"a5-flat",
+	"radius 0 squares the pills and flat elevation draws the edge ring",
+	() => {
+		const theme = declarationMap(blockBody(squareFlat, "@theme"));
+		assert(
+			theme.get("--radius-full") === "0px",
+			"--radius-full stays round at radius 0",
+		);
+		assert(
+			theme.get("--radius-group") === "0px",
+			"--radius-group stays round at radius 0",
+		);
+		for (const level of SHADOW_LEVELS) {
+			const body = declarationMap(
+				blockBody(squareFlat, `@utility shadow-${level}`),
+			);
+			assert(
+				!body.has("box-shadow"),
+				`flat shadow-${level} still casts a shadow`,
+			);
+			assert(
+				body.get("border-width") === "1px",
+				`flat shadow-${level} draws no ring`,
+			);
+			assert(
+				body.get("border-color") === "var(--color-edge)",
+				`flat shadow-${level} rings in another color`,
+			);
+		}
+		return "--radius-full 0px; shadow-float and shadow-sheet ring in edge with no shadow";
+	},
+);
+
+check(
+	"a5-mode",
+	"the first-paint mode falls back to defaultMode ahead of the system",
+	() => {
+		assert(
+			modeScript("dark").includes('t="dark"'),
+			"defaultMode is not the fallback",
+		);
+		assert(
+			!modeScript("dark").includes("prefers-color-scheme"),
+			"defaultMode still defers to the system preference",
+		);
+		assert(
+			modeScript(undefined).includes("prefers-color-scheme"),
+			"without defaultMode the system preference is not the fallback",
+		);
+		return "stored choice, then defaultMode, then prefers-color-scheme";
+	},
+);
 
 check("a6", "the build resolves the contract and nothing else", () => {
 	const alive = OFF_CONTRACT.filter((name) => rule(built, name) !== undefined);

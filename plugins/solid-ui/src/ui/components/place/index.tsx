@@ -60,6 +60,7 @@ export function Place(props: PlaceProps) {
 											onAct={act().onAct}
 											blocked={act().blocked}
 											loading={act().loading}
+											spinner={act().spinner}
 										/>
 									</div>
 								)}
@@ -112,6 +113,7 @@ export function Place(props: PlaceProps) {
 								onAct={act().onAct}
 								blocked={act().blocked}
 								loading={act().loading}
+								spinner={act().spinner}
 							/>
 						</div>
 					)}

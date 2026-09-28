@@ -210,6 +210,22 @@ export const solidUi = plugin("solid-ui", {
 				named: ["themeFontsPlugin"],
 			}),
 		),
+		// The mode before first paint, with the theme's `defaultMode` baked in
+		// as the fallback for a viewer with no stored choice.
+		vite.slots.configImports.contribute(
+			(): TsImportSpec => ({
+				source: "@fcalell/plugin-solid-ui/node/mode",
+				named: ["themeModePlugin"],
+			}),
+		),
+		vite.slots.pluginCalls.contribute(async (ctx): Promise<TsExpression> => {
+			const { defaultMode } = await ctx.resolve(self.slots.resolvedTheme);
+			return {
+				kind: "call",
+				callee: { kind: "identifier", name: "themeModePlugin" },
+				args: defaultMode ? [{ kind: "string", value: defaultMode }] : [],
+			};
+		}),
 		// Fonts are served straight out of this package's node_modules
 		// (@fontsource). When the stack is workspace-linked those files sit
 		// outside the consumer's workspace root and Vite's dev server 403s

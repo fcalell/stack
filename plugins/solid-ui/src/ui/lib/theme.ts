@@ -9,10 +9,11 @@ function applyTheme(next: Theme): void {
 	localStorage.setItem("theme", next);
 }
 
+// The mode script (`node/mode.ts`) already chose before first paint: the
+// stored choice, the theme's `defaultMode`, then the system preference. Its
+// `dark` class is the answer, so the two never disagree.
 function resolveInitialTheme(): Theme {
-	const stored = localStorage.getItem("theme") as Theme | null;
-	if (stored === "light" || stored === "dark") return stored;
-	return matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+	return document.documentElement.classList.contains("dark") ? "dark" : "light";
 }
 
 export function useTheme(): [() => Theme, (next: Theme) => void] {

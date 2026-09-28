@@ -18,27 +18,22 @@ const WEB_ONLY: Record<string, string> = {
 	"--animate-content-hide": "content-hide 150ms var(--ease-ui)",
 };
 
-// The `@theme` block always seeds the light palette. `themeTokens` seeds
-// whichever mode `defaultMode` names, and the web has a `dark` custom variant
-// but no `light` one, so a `defaultMode: "dark"` theme would otherwise emit a
-// sheet with no reachable light mode. Overwriting a key leaves it at its
-// original position, so the reset keys still lead.
+// The `@theme` block seeds the light palette (the web has a `dark` custom
+// variant and no `light` one), then the web's motion tokens.
 export function themeBlock(resolved: ResolvedTheme): CssBlock {
-	const declarations = themeTokens(resolved);
-	for (const [token, value] of Object.entries(modeTokens(resolved, "light"))) {
-		declarations[`--color-${token}`] = value;
-	}
-	return { kind: "theme", declarations: { ...declarations, ...WEB_ONLY } };
+	return {
+		kind: "theme",
+		declarations: { ...themeTokens(resolved), ...WEB_ONLY },
+	};
 }
 
-// `--shadow-*` is one of the reset namespaces, so the ladder ships as three
-// custom utilities instead.
+// `--shadow-*` is one of the reset namespaces, so the elevation ladder ships
+// as custom utilities instead: a shadow, or under `elevation: "flat"` the
+// `edge` ring.
 export function shadowBlocks(resolved: ResolvedTheme): CssBlock[] {
-	return Object.entries(shadowUtilities(resolved)).map(([name, value]) => ({
-		kind: "utility",
-		name,
-		declarations: { "box-shadow": value },
-	}));
+	return Object.entries(shadowUtilities(resolved)).map(
+		([name, declarations]) => ({ kind: "utility", name, declarations }),
+	);
 }
 
 // Dark mode rides `@layer base`, not a third block kind: `@theme` compiles

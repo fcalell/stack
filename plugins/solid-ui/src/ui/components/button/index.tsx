@@ -1,3 +1,4 @@
+import type { SpinnerKind } from "@fcalell/ui-core/tokens";
 import {
 	BUTTON_MUTED,
 	BUTTON_MUTED_LABEL,
@@ -25,6 +26,8 @@ export type ButtonProps = Closed & {
 	label: string;
 	onAct?: () => void;
 	loading?: boolean;
+	// The busy glyph drawn while `loading`.
+	spinner?: SpinnerKind;
 	blocked?: string;
 };
 
@@ -74,7 +77,7 @@ export function Button(props: ButtonProps) {
 				)}
 			>
 				<Show when={props.loading}>
-					<Spinner />
+					<Spinner kind={props.spinner} />
 				</Show>
 				{props.label}
 			</button>

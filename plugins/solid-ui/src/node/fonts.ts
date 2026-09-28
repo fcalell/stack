@@ -33,8 +33,6 @@ interface AssetLike {
 }
 type BundleLike = Record<string, AssetLike>;
 
-const antiFoucScript = `(function(){try{var t=localStorage.getItem('theme');if(!t)t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';if(t==='dark')document.documentElement.classList.add('dark');}catch(e){}})();`;
-
 // Fails fast when a consumer-declared font specifier can't be resolved.
 // Emits an actionable multi-line error (family, specifier, likely causes)
 // rather than silently producing CSS that references a missing woff2 —
@@ -166,13 +164,7 @@ export function themeFontsPlugin(fonts: FontEntry[]): Plugin {
 					injectTo: "head" | "head-prepend";
 					attrs?: Record<string, string | boolean>;
 					children?: string;
-				}> = [
-					{
-						tag: "script",
-						injectTo: "head-prepend",
-						children: antiFoucScript,
-					},
-				];
+				}> = [];
 
 				const resolved: Array<{ font: FontEntry; href: string }> = [];
 

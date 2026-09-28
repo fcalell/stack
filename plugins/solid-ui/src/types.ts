@@ -108,10 +108,9 @@ export type FontEntry = z.infer<typeof fontEntrySchema>;
 // `@font-face` (real + fallback metrics). Defaults to `defaultFonts`
 // (JetBrains Mono Variable, the contract's default `mono` family).
 //
-// `theme` carries the ui-core design contract: the knobs, per-token
-// overrides and the mode that seeds the `@theme` block. Omitted, the
-// calibrated defaults apply. `defaultMode` is inert on the web runtime, which
-// resolves the mode from `localStorage` then `prefers-color-scheme`.
+// `theme` carries the ui-core design contract: the knobs and per-token
+// overrides. Omitted, the calibrated defaults apply. Its `defaultMode` is the
+// mode a viewer with no stored choice starts in, ahead of `prefers-color-scheme`.
 //
 // `words` is every word a molecule draws on its own, every key required;
 // omitted, the components speak English.

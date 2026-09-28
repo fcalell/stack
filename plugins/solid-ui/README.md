@@ -29,7 +29,7 @@ export default defineConfig({
 
 | Option | Type | Default | What it does |
 | --- | --- | --- | --- |
-| `theme` | `Theme` | the calibrated defaults | The ui-core contract, flat knobs: `accentHue`, `neutralHue`, `neutralChroma`, `okHue`, `warnHue`, `dangerHue`, `primary` (`ink` \| `accent`), `space`, `radius`, `text`, `fonts` (`{ sans?, mono? }` family names), `widths`, `breakpoints`, `defaultMode`, `overrides`. Every value resolves through `deriveTheme` and lands in the `@theme` block of `.stack/app.css`. |
+| `theme` | `Theme` | the calibrated defaults | The ui-core contract, flat knobs: `accentHue`, `neutralHue`, `neutralChroma`, `okHue`, `warnHue`, `dangerHue`, `primary` (`ink` \| `accent`), `space`, `radius` (0 squares everything), `text`, `elevation` (`soft` \| `flat`), `fonts` (`{ sans?, mono? }` family names), `widths`, `breakpoints`, `defaultMode` (a viewer with no stored choice starts in it, ahead of `prefers-color-scheme`), `overrides`. Every value resolves through `deriveTheme` and lands in the `@theme` block of `.stack/app.css`. |
 | `words` | `Words` | English | Every word a molecule draws on its own, every key required: the six status words, `recommended`, `copy`, `copied`, `back`, `close`, `more`, `send`, `stop`, `attach`, `search`, `loading`, `retry`. Mounted into the generated entry as a `WordsProvider`. |
 | `fonts` | `FontEntry[]` | `defaultFonts` (JetBrains Mono Variable) | The font files to load: each is preloaded and gets an `@font-face` with fallback metrics. Which family the contract binds to `sans` or `mono` is `theme.fonts`. |
 
@@ -105,7 +105,7 @@ const row = useScope(project); // Accessor<the project row>
 ## The roster
 
 Every component takes exactly the props below and closes `class`, `className`, `classList` and
-`style` as `?: never`. A prop named `act` is an `Act` (`{ label, onAct, blocked?, loading? }`)
+`style` as `?: never`. A prop named `act` is an `Act` (`{ label, onAct, blocked?, loading?, spinner? }`)
 unless it is a `Button`'s kind; `href` routes and `onOpen` opens; `loading` draws the molecule's
 own three-row form. `Part` is a string or `{ quoted }`, drawn in typographic quotes.
 
@@ -115,7 +115,7 @@ own three-row form. `Part` is a string or `{ quoted }`, drawn in typographic quo
 | --- | --- | --- |
 | `Text` | `role`, children | the only way to set type; ink and family follow the role |
 | `Icon` | `name` | from the consumer's icon set, sized by the role around it |
-| `Button` | `act` (`primary` \| `secondary` \| `destructive`), `label`, `onAct`, `loading`, `blocked` | a pill; `blocked` is the reason, under it once tapped or once its form or sheet has taken input |
+| `Button` | `act` (`primary` \| `secondary` \| `destructive`), `label`, `onAct`, `loading`, `spinner` (the busy glyph), `blocked` | a pill; `blocked` is the reason, under it once tapped or once its form or sheet has taken input |
 | `IconButton` | `icon`, `label`, `onAct` | a 44 px circle; the label is read aloud |
 | `Count` | `value` | a number in a pill |
 | `Status` | `state`, `label`, `onOpen` | a glyph and the state's word; a chip with `onOpen` |
@@ -123,7 +123,7 @@ own three-row form. `Part` is a string or `{ quoted }`, drawn in typographic quo
 | `TextArea` | `kind` (`prose` \| `source`), `value`, `onChange`, `placeholder`, `budget` | `source` is mono; `budget` draws a word counter |
 | `Slider` | `label`, `value`, `onChange`, `min`, `max`, `step`, `unit` | the value beside the label, in `unit` (an Intl unit identifier such as `percent`) |
 | `Switch`, `Checkbox` | `checked`, `onChange`, `label` | the label is the hit line |
-| `Spinner` | | in the ink around it |
+| `Spinner` | `kind` (`circle` \| `scramble`) | in the ink around it; `scramble` cycles mono glyphs and holds still under reduced motion |
 | `Avatar` | `name`, `src` | initials on the ladder fill picked by the name |
 | `Link` | `href`, children | inline |
 
@@ -158,7 +158,7 @@ own three-row form. `Part` is a string or `{ quoted }`, drawn in typographic quo
 | `EmptyState` | `title`, `sentence`, `act`, children |
 | `Toast` | `sentence`, `act` |
 | `Banner` | `kind` (`note` \| `warn` \| `danger`), `sentence`, `act` |
-| `PendingBar` | `sentence`, `until` (a `Date`), `act` |
+| `PendingBar` | `sentence`, `until` (a `Date`), `spinner`, `act` |
 
 ### Content molecules
 

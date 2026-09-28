@@ -21,6 +21,10 @@
 			"types": "./dist/node/fonts.d.ts",
 			"default": "./dist/node/fonts.js"
 		},
+		"./node/mode": {
+			"types": "./dist/node/mode.d.ts",
+			"default": "./dist/node/mode.js"
+		},
 		"./app": "./src/ui/app/index.tsx",
 		"./meta": "./src/ui/meta/index.ts",
 		"./router": "./src/ui/router/index.ts",
