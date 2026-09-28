@@ -56,6 +56,11 @@ export {
 import type { InferInsertModel } from "drizzle-orm";
 import type { SQLiteTable } from "drizzle-orm/sqlite-core";
 
+// The table and row types a plugin's typed surface names (plugin-auth's
+// scopes).
+export type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+export type { SQLiteColumn, SQLiteTable } from "drizzle-orm/sqlite-core";
+
 // Seed authoring surface for `src/schema/seed.ts`. `seedTable` pins each row to
 // its table's insert model (typed against the schema, no column mapping, no
 // SQL); `defineSeed` collects the entries. `stack db seed` introspects these
