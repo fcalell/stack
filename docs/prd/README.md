@@ -25,6 +25,10 @@ with ordered, independently-verifiable milestones and acceptance criteria.
 - [plugin-native-updates](./plugin-native-updates.md): over-the-air JS updates for the native app
   (self-hosted Hot Updater on Cloudflare): the update backend, the mobile client wiring, the publish
   step, a fingerprint-parity gate, and bundle-lifecycle subcommands.
+- [tenancy](./tenancy.md): stateless, URL-addressed tenancy for a SaaS consumer: a generated web
+  auth client with organizations, a session boundary, the organization as the root scope,
+  `defineScope` for nested tables, and a `ScopeBoundary` resolving URL slugs. Driven by the
+  Martechthings migration.
 
 Add the next PRD here as a self-contained block (scope in/out → surfaces touched → ordered
 milestones), then retire it the same way once shipped. Point-in-time audits live in

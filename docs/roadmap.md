@@ -212,7 +212,9 @@ Notes on the partial rows:
   the [backend gap analysis](./analysis/sailward-backend-gaps.md); first in line, holds live
   consumer bugs). [`deploy-engine.md`](./prd/deploy-engine.md) (reconcile + lock + gates + enforced
   order + TUI, extracted from `tools/release`). [`plugin-native-updates.md`](./prd/plugin-native-updates.md)
-  (hot-updater domain; consumes the deploy-engine surfaces).
+  (hot-updater domain; consumes the deploy-engine surfaces). [`tenancy.md`](./prd/tenancy.md)
+  (web auth, session boundary, organization and consumer scopes; Martechthings is its first
+  consumer).
 - **Parked:** i18n, observability (Sentry), and the follow-up plugin candidates below. Promote to a
   PRD only once sailward proves the shape, per the philosophy rule that a new consumer surface is the
   last resort.
