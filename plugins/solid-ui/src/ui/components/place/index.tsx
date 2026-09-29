@@ -1,6 +1,6 @@
 import type { Act, IconAct } from "@fcalell/ui-core/descriptors";
 import { text } from "@fcalell/ui-core/variants";
-import { For, type JSX, Show, useContext } from "solid-js";
+import { createMemo, For, type JSX, Show, useContext } from "solid-js";
 import type { Closed } from "#lib/closed.ts";
 import { cn } from "#lib/cn.ts";
 import { FitContext } from "#lib/fit.ts";
@@ -17,7 +17,8 @@ import { IconButton } from "../icon-button/index.tsx";
 // actions as circles beside it with the rest under a more circle, and the
 // place's primary act as a pill floating above the tab bar on the phone, in
 // the top bar from tablet. Under tablet the shell's `switcher` starts the top
-// bar's row, since the sidebar that holds it from tablet is not drawn.
+// bar's row, since the sidebar that holds it from tablet is not drawn, and
+// the title wraps on its own line under it; a title is never truncated.
 // The body is measured at the reading width, centred, unless a `Columns`
 // inside claims the whole column. With `bleed` the body is the column's
 // whole remaining box, with no side inset, no measure and no scroll, so a
@@ -44,21 +45,36 @@ export function Place(props: PlaceProps) {
 	const rest = () => (props.actions ?? []).slice(SHOWN);
 	// A bled body spans the column, so the top bar's row does too.
 	const span = () => whole() || props.bleed === true;
+	// Read once: each read of a JSX prop draws it anew.
+	const switcher = createMemo(() => frame?.switcher());
 	return (
 		<MeasureContext.Provider value={claims.claim}>
 			<div class="relative flex min-h-0 flex-1 flex-col">
 				<FitContext.Provider value="bar">
 					{/* The row is measured as the body is, so the title and the act
-				    stand over the content's edges. */}
+				    stand over the content's edges. Under tablet a switcher and the
+				    circles take the first line and the title its own line under
+				    them: a title wraps, never truncates. */}
 					<header class="flex min-h-14 px-inset tablet:px-section">
-						<div class={cn("flex items-center gap-row", measured(span()))}>
-							<Show when={frame?.switcher()}>
+						<div
+							class={cn(
+								"flex flex-wrap items-center gap-x-row",
+								measured(span()),
+							)}
+						>
+							<Show when={switcher()}>
 								{(switcher) => (
-									<div class="shrink-0 tablet:hidden">{switcher()}</div>
+									<div class="min-w-0 flex-1 tablet:hidden">{switcher()}</div>
 								)}
 							</Show>
 							<h1
-								class={cn(text({ role: "title" }), "min-w-0 flex-1 truncate")}
+								class={cn(
+									text({ role: "title" }),
+									"min-w-0 grow wrap-break-word",
+									switcher()
+										? "order-last basis-full pb-row tablet:order-none tablet:basis-0 tablet:pb-0"
+										: "basis-0",
+								)}
 							>
 								{props.title}
 							</h1>

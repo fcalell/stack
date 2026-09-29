@@ -17,7 +17,6 @@ export type InputKind =
 	| "text"
 	| "search"
 	| "secret"
-	| "code"
 	| "source"
 	| "number"
 	| "email";
@@ -36,7 +35,6 @@ const SURFACE: Record<InputKind, FieldKind> = {
 	text: "text",
 	search: "search",
 	secret: "text",
-	code: "code",
 	source: "code",
 	number: "text",
 	email: "text",
@@ -98,10 +96,7 @@ export function Input({
 				autoComplete={which === "email" ? "email" : undefined}
 				textContentType={which === "email" ? "emailAddress" : undefined}
 				autoCapitalize={
-					which === "code" ||
-					which === "secret" ||
-					which === "source" ||
-					which === "email"
+					which === "secret" || which === "source" || which === "email"
 						? "none"
 						: "sentences"
 				}

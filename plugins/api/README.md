@@ -364,7 +364,10 @@ automatically, same as any other `reads`/`writes`-declared query. `ORG_RULES_QUE
 prefix for invalidating them by hand; `orgRulesQueryKey(organizationId)` is one organization's.
 
 `@fcalell/plugin-solid-ui/lib/ability` ships the same primitive for web, accessor-style:
-`const ability = useAbility(() => org().id, () => recordRules()); ability().can(...)`.
+`const ability = useAbility(() => org().id, () => recordRules()); ability().can(...)`, plus
+`ability.pending()`, true while the organization's rules are fetched for the first time, for a
+caller that acts on a denial (a redirect) rather than hiding an affordance. This hook returns the
+`MongoAbility` itself, a shared memoized instance, so it carries no such flag.
 
 ### 8. Errors
 

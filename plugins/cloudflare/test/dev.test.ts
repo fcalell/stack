@@ -62,6 +62,16 @@ test("the vite dev server proxies every worker-owned path to wrangler dev", asyn
 	assert.deepEqual(proxy, [{ path: "/rpc", target: "http://localhost:8787" }]);
 });
 
+// wrangler writes its dev bundle under `.stack/.wrangler/tmp/`, inside
+// Vite's root; a watcher event there full-reloads the page.
+test("the vite dev server's watcher skips wrangler's scratch directory", async () => {
+	const config = await artifact(devGraph(), ".stack/vite.config.ts");
+	assert.match(
+		config ?? "",
+		/watch: \{ ignored: \["\*\*\/\.wrangler\/\*\*"\] \}/,
+	);
+});
+
 test("an existing .dev.vars is topped up with the vars it lacks", async () => {
 	const graph = devGraph("STACK_DEV=1\nAPI_OTHER=keep\n");
 	const root = await artifact(graph, ".dev.vars");

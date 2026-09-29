@@ -134,6 +134,27 @@ export function aggregateViteConfig(payload: CodegenViteConfigPayload): string {
 			},
 		});
 	}
+	const watchIgnored = [...new Set(payload.watchIgnored)];
+	if (watchIgnored.length > 0) {
+		serverProps.push({
+			key: "watch",
+			value: {
+				kind: "object",
+				properties: [
+					{
+						key: "ignored",
+						value: {
+							kind: "array",
+							items: watchIgnored.map((glob) => ({
+								kind: "string",
+								value: glob,
+							})),
+						},
+					},
+				],
+			},
+		});
+	}
 	if (serverProps.length > 0) {
 		configProps.push({
 			key: "server",

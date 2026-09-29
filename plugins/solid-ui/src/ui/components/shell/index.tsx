@@ -1,6 +1,7 @@
 import type { PlaceSpec } from "@fcalell/ui-core/descriptors";
 import { PLACE_ROW_SELECTED, place } from "@fcalell/ui-core/variants";
 import { useLocation } from "@solidjs/router";
+import { Ellipsis } from "lucide-solid";
 import {
 	createEffect,
 	createMemo,
@@ -17,9 +18,11 @@ import { cn } from "#lib/cn.ts";
 import { FrameContext } from "#lib/frame.ts";
 import { useIcon } from "#lib/icons.tsx";
 import { RING, RING_INSET, WASH } from "#lib/interact.ts";
-import { selectedRoute } from "#lib/places.ts";
+import { selectedRoute, tabsOf } from "#lib/places.ts";
 import { placeToasts } from "#lib/toast.ts";
+import { useWords } from "#lib/words.tsx";
 import { Count } from "../count/index.tsx";
+import { Sheet } from "../sheet/index.tsx";
 
 // The frame at every width: the places as the system's tab bar under tablet
 // and as the labelled sidebar from tablet, the app's banner under the top bar,
@@ -30,7 +33,10 @@ import { Count } from "../count/index.tsx";
 // organization, a project): the head of the sidebar from tablet and, under
 // it, the start of each `Place`'s top bar, never a `Screen`'s. A `Screen` fixed over the column on the phone starts under the
 // banner, so the app's state stays in sight, and the tab bar it covers goes
-// inert; the toasts sit above a pinned bar.
+// inert; the toasts sit above a pinned bar. The tab bar's fill spans the
+// screen and its tabs keep the column's side inset; it holds at most five
+// tabs, so past five places the first four are tabs and the rest are rows of
+// a sheet under a fifth, `more`, drawn selected while one of them is.
 export type ShellProps = Closed & {
 	places: PlaceSpec<string>[];
 	banner?: JSX.Element;
@@ -51,7 +57,43 @@ function PlaceGlyph(props: { name: string; selected: boolean }) {
 	);
 }
 
+// A place in the sidebar, and under the phone's `more` tab.
+function PlaceRow(props: {
+	spec: PlaceSpec<string>;
+	selected: boolean;
+	onPick?: () => void;
+}) {
+	return (
+		<a
+			href={props.spec.route}
+			aria-current={props.selected ? "page" : undefined}
+			onClick={() => props.onPick?.()}
+			class={cn(
+				place({ state: props.selected ? "selected" : "idle" }),
+				"flex min-h-floor items-center gap-row rounded-group px-stack",
+				WASH,
+				RING,
+				props.selected && PLACE_ROW_SELECTED,
+			)}
+		>
+			<PlaceGlyph name={props.spec.icon} selected={props.selected} />
+			<span class="flex-1 text-body">{props.spec.label}</span>
+			<Show when={props.spec.count}>
+				{(count) => <Count value={count()} />}
+			</Show>
+		</a>
+	);
+}
+
+const tab = (selected: boolean) =>
+	cn(
+		place({ state: selected ? "selected" : "idle" }),
+		"relative flex min-h-11 min-w-0 flex-1 flex-col items-center justify-center gap-pair py-row",
+		RING_INSET,
+	);
+
 export function Shell(props: ShellProps) {
+	const words = useWords();
 	const location = useLocation();
 	const current = createMemo(() =>
 		selectedRoute(
@@ -60,6 +102,9 @@ export function Shell(props: ShellProps) {
 		),
 	);
 	const selected = (spec: PlaceSpec<string>) => current() === spec.route;
+	const tabs = createMemo(() => tabsOf(props.places));
+	const moreSelected = () => tabs().more.some(selected);
+	const [moreOpen, setMoreOpen] = createSignal(false);
 	const [covers, setCovers] = createSignal(0);
 	const [lift, setLift] = createSignal(0);
 	const [bannerHeight, setBannerHeight] = createSignal(0);
@@ -127,25 +172,7 @@ export function Shell(props: ShellProps) {
 						{(switcher) => <div class="pb-row">{switcher()}</div>}
 					</Show>
 					<For each={props.places}>
-						{(spec) => (
-							<a
-								href={spec.route}
-								aria-current={selected(spec) ? "page" : undefined}
-								class={cn(
-									place({ state: selected(spec) ? "selected" : "idle" }),
-									"flex min-h-floor items-center gap-row rounded-group px-stack",
-									WASH,
-									RING,
-									selected(spec) && PLACE_ROW_SELECTED,
-								)}
-							>
-								<PlaceGlyph name={spec.icon} selected={selected(spec)} />
-								<span class="flex-1 text-body">{spec.label}</span>
-								<Show when={spec.count}>
-									{(count) => <Count value={count()} />}
-								</Show>
-							</a>
-						)}
+						{(spec) => <PlaceRow spec={spec} selected={selected(spec)} />}
 					</For>
 				</nav>
 				{/* min-w-0: beside the rail the column takes the width left, never
@@ -157,20 +184,18 @@ export function Shell(props: ShellProps) {
 					<div ref={banner}>{props.banner}</div>
 					<main class="flex min-h-0 flex-1 flex-col">{props.children}</main>
 				</div>
+				{/* The bar's fill spans the screen; its tabs keep the column's side
+				    inset. */}
 				<nav
 					inert={covered() || undefined}
-					class="flex border-t bg-canvas pb-[env(safe-area-inset-bottom)] tablet:hidden"
+					class="flex border-t bg-canvas px-inset pb-[env(safe-area-inset-bottom)] tablet:hidden"
 				>
-					<For each={props.places}>
+					<For each={tabs().tabs}>
 						{(spec) => (
 							<a
 								href={spec.route}
 								aria-current={selected(spec) ? "page" : undefined}
-								class={cn(
-									place({ state: selected(spec) ? "selected" : "idle" }),
-									"relative flex min-h-11 flex-1 flex-col items-center justify-center gap-pair py-row",
-									RING_INSET,
-								)}
+								class={tab(selected(spec))}
 							>
 								<PlaceGlyph name={spec.icon} selected={selected(spec)} />
 								<span>{spec.label}</span>
@@ -184,6 +209,40 @@ export function Shell(props: ShellProps) {
 							</a>
 						)}
 					</For>
+					<Show when={tabs().more.length > 0}>
+						<button
+							type="button"
+							aria-haspopup="dialog"
+							onClick={() => setMoreOpen(true)}
+							class={cn(tab(moreSelected()), "cursor-pointer")}
+						>
+							<Ellipsis
+								class={cn(
+									"size-6 shrink-0",
+									place({ state: moreSelected() ? "selected" : "idle" }),
+								)}
+								aria-hidden="true"
+							/>
+							<span>{words.more}</span>
+						</button>
+						<Sheet
+							open={moreOpen()}
+							onClose={() => setMoreOpen(false)}
+							title={words.more}
+						>
+							<nav class="flex flex-col gap-pair">
+								<For each={tabs().more}>
+									{(spec) => (
+										<PlaceRow
+											spec={spec}
+											selected={selected(spec)}
+											onPick={() => setMoreOpen(false)}
+										/>
+									)}
+								</For>
+							</nav>
+						</Sheet>
+					</Show>
 				</nav>
 			</div>
 		</FrameContext.Provider>

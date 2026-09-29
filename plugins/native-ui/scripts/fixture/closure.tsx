@@ -63,6 +63,7 @@ import {
 } from "@fcalell/plugin-native-ui/components/query-boundary";
 import type {
 	FieldBinding,
+	OptionGroup,
 	TableColumn,
 } from "@fcalell/ui-core/descriptors";
 import type { UseQueryResult } from "@tanstack/react-query";
@@ -70,6 +71,8 @@ import type { UseQueryResult } from "@tanstack/react-query";
 const noop = () => {};
 declare const text: FieldBinding<string>;
 declare const values: FieldBinding<string[]>;
+declare const role: FieldBinding<"owner" | "viewer">;
+declare const group: OptionGroup;
 declare const count: QueryLike<number>;
 declare const names: QueryLike<string[]>;
 declare const live: UseQueryResult<{ id: string }[], Error>;
@@ -901,7 +904,29 @@ export const closure = (
 			{(control) => (
 				<Picker
 					label="a"
-					options={[{ label: "a", options: [{ value: "a", label: "a" }] }]}
+					options={[group]}
+					{...control}
+				/>
+			)}
+		</FormField>
+		<FormField label="a" field={role}>
+			{(control) => (
+				<Picker
+					label="a"
+					options={[
+						{ value: "owner", label: "a" },
+						{ value: "viewer", label: "a" },
+					]}
+					{...control}
+				/>
+			)}
+		</FormField>
+		<FormField label="a" field={role}>
+			{(control) => (
+				// @ts-expect-error: an option outside the field's enum
+				<Picker
+					label="a"
+					options={[{ value: "guest", label: "a" }]}
 					{...control}
 				/>
 			)}

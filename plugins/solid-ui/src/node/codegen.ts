@@ -41,9 +41,10 @@ export function aggregateAppCss(payload: CodegenAppCssPayload): string | null {
 	for (const imp of payload.imports) {
 		lines.push(renderImport(cssImportSchema.parse(imp) as CssImport));
 	}
-	// The generated stylesheet lives in .stack/, which is gitignored, so
-	// Tailwind's automatic content detection finds nothing there; the
-	// consumer's sources must be declared explicitly.
+	// Tailwind's automatic content detection roots at this sheet's directory,
+	// `.stack/`, and would scan every generated file there (the worker types,
+	// wrangler's bundle). The `tailwindcss` import turns it off with
+	// `source(none)`, so the consumer's sources are declared explicitly.
 	lines.push(`@source "../src";`);
 
 	for (const raw of payload.blocks) {
@@ -113,5 +114,6 @@ function renderImport(imp: CssImport): string {
 	if (imp.supports !== undefined) {
 		parts.push(`supports(${cssSupportsExpression(imp.supports)})`);
 	}
+	if (imp.source !== undefined) parts.push(`source(${imp.source})`);
 	return `${parts.join(" ")};`;
 }

@@ -106,6 +106,7 @@ e.g. consulting `ctx.fileExists` before writing.
 | `devServerPort` | `value<number>` | Dev server port (defaults to options.port ?? 3000) |
 | `serverProxy` | `list<ServerProxyEntry>` (`uniqueBy: path`) | Dev-server proxy rules (`{ path, target, ws? }`) rendered into `server.proxy`; deploy targets contribute worker-owned paths so dev stays same-origin like prod |
 | `fsAllow` | `list<TsExpression>` | Extra `server.fs.allow` path expressions; plugins serving assets from their own package contribute their real location so a workspace-linked stack still serves them in dev. Any entry makes the rendered list explicit, prefixed with the consumer's workspace root |
+| `watchIgnored` | `list<string>` (sorted) | Globs rendered into `server.watch.ignored`, added to Vite's own defaults; a plugin whose tool writes scratch files under Vite's root contributes their glob so the writes never reach hot-update handling. plugin-cloudflare contributes `**/.wrangler/**` (wrangler's dev bundle in `.stack/.wrangler/tmp/`) |
 | `viteConfig` | `derived<string \| null>` | Final `.stack/vite.config.ts` source; null when nothing to emit |
 
 ## `solid.slots.*` (plugin-solid)
@@ -130,7 +131,7 @@ e.g. consulting `ctx.fileExists` before writing.
 
 | Slot | Kind | Purpose |
 |------|------|---------|
-| `appCssImports` | `list<string>` | CSS `@import`s aggregated into `.stack/app.css` |
+| `appCssImports` | `list<CssImport>` | CSS `@import`s aggregated into `.stack/app.css`: a URL, or `{ url, layer?, supports?, source? }`. solid-ui imports `tailwindcss` with `source: "none"`, so Tailwind scans only the sheet's `@source` declarations (the consumer's `src`, the design system's components and ui-core), never the generated files in `.stack/` |
 | `appCssBlocks` | `list<CssBlock>` | Top-level `@theme` / `@utility` blocks, rendered after `@source` and before the layers. Neither at-rule may sit inside a `@layer`, which is why they don't ride `appCssLayers` |
 | `appCssLayers` | `list<{ name, content }>` | CSS `@layer` blocks. Dark mode rides this slot as `@layer base`: `@theme` compiles into `@layer theme` and Tailwind sorts `base` after it, so a layered `.dark { … }` overrides the seeded values |
 | `fonts` | `derived<FontEntry[]>` | Resolved font files (consumer options or `defaultFonts`, JetBrains Mono Variable). The families the roles bind to are the theme's `fonts` knob, emitted by ui-core |

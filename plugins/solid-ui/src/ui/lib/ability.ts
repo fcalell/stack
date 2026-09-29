@@ -7,6 +7,21 @@ import {
 } from "@fcalell/plugin-api/ability-client";
 import { useQuery } from "@tanstack/solid-query";
 
+// The query behind `useAbility`: the caller's rules in one organization,
+// cached per organization for the session, disabled until the organization
+// is known.
+export function orgRulesQueryOptions(
+	organizationId: string | undefined,
+	fetch: (organizationId: string) => Promise<PackedRulesLike>,
+) {
+	return {
+		queryKey: orgRulesQueryKey(organizationId ?? ""),
+		queryFn: () => fetch(organizationId ?? ""),
+		enabled: organizationId !== undefined,
+		staleTime: Infinity,
+	};
+}
+
 // The solid analog of `@fcalell/plugin-api/tanstack-query`'s `useAbility`,
 // built on the same framework-agnostic core. Solid-style: the organization,
 // the record layer and the return value are accessors, so the composed
@@ -19,21 +34,22 @@ import { useQuery } from "@tanstack/solid-query";
 // doc comment in `ability-client.ts`). Never read the composed
 // `MongoAbility` out of a query cache: this primitive composes it fresh on
 // every access, memoized by rules-array identity.
+//
+// `pending()` tells that window apart from a real deny for a caller that
+// acts on a denial (a redirect): true only while an organization's rules are
+// fetched for the first time (TanStack's `isLoading`), false once they
+// answered or failed, on a background refetch, and with no organization.
 export function useAbility(
 	organizationId: () => string | undefined,
 	recordRules?: () => PackedRulesLike | undefined,
 ) {
-	const query = useQuery(() => {
-		const id = organizationId();
-		return {
-			queryKey: orgRulesQueryKey(id ?? ""),
-			queryFn: () => fetchOrgRules(id ?? ""),
-			enabled: id !== undefined,
-			staleTime: Infinity,
-		};
-	});
+	const query = useQuery(() =>
+		orgRulesQueryOptions(organizationId(), fetchOrgRules),
+	);
 
-	return () => composeAbility(query.data, recordRules?.());
+	return Object.assign(() => composeAbility(query.data, recordRules?.()), {
+		pending: () => query.isLoading,
+	});
 }
 
 export type { PackedRulesLike };

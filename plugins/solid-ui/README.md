@@ -258,7 +258,11 @@ const row = useScope(project); // Accessor<the project row>
 ```
 
 `useAbility` (`lib/ability`) takes the organization explicitly:
-`useAbility(() => useScope(organization)().id)`.
+`useAbility(() => useScope(organization)().id)`. `ability()` is deny-all while the organization's
+rules load, which hides an affordance safely but reads as a denial; `ability.pending()` is true
+exactly while those rules are fetched for the first time (false once they answered or failed, on a
+background refetch, and with no organization), so a guard that acts on a denial waits for it:
+`if (!ability.pending() && ability().cannot("create", "project")) navigate(...)`.
 
 `@fcalell/plugin-solid-ui/router` is the router with the generated `routes` builders, plus
 `useRouteParams(builder)`, `useSearch(schema)` and `useLeaveGuard(dirty)`; plugin-solid's README
@@ -282,7 +286,7 @@ own three-row form. `Part` is a string or `{ quoted }`, drawn in typographic quo
 | `Count` | `value` | a number in a pill |
 | `Status` | `state`, `label`, `onOpen` | a glyph and the state's word; a chip with `onOpen` |
 | `Chip` | `label`, `family` (`1` to `6`) | a data value's tag on its family's `chip-n` fill; the consumer gives each family of values one; no act |
-| `Input` | `kind` (`text` \| `search` \| `secret` \| `code` \| `source` \| `number` \| `email`), `value`, `onChange`, `onCommit`, `placeholder`, `unit`, `act` | `search` is a pill; `source` is mono, never corrected; `email` is `type=email` with the email keyboard and `autocomplete=email`, never corrected or capitalized; `unit` follows a `number`; `act` sits inside the field; `onCommit` hears the value when the viewer leaves the field or presses Enter having changed it since focus, never when unchanged, and with it Escape puts back the value at focus |
+| `Input` | `kind` (`text` \| `search` \| `secret` \| `source` \| `number` \| `email`), `value`, `onChange`, `onCommit`, `placeholder`, `unit`, `act` | `search` is a pill; `source` is mono, never corrected; `email` is `type=email` with the email keyboard and `autocomplete=email`, never corrected or capitalized; `unit` follows a `number`; `act` sits inside the field; `onCommit` hears the value when the viewer leaves the field or presses Enter having changed it since focus, never when unchanged, and with it Escape puts back the value at focus |
 | `TextArea` | `kind` (`prose` \| `source`), `value`, `onChange`, `onCommit`, `placeholder`, `budget` | `source` is mono; `budget` draws a word counter; `onCommit` as `Input`'s on leaving the field, Enter being a new line |
 | `InputOtp` | `length`, `value`, `onChange`, `onComplete`, `loading` | `length` boxes over one input (`inputmode="numeric"`, `autocomplete="one-time-code"`), so a pasted or suggested code fills every box; the arrows move between boxes and a digit on a filled box replaces it; `onComplete` hears the full code; `loading` holds it read-only while the code is checked, keeping its focus; it takes focus when it is drawn unless the viewer is in another element, so the code step a sent code opens needs no tap; inside a `FormField` it takes the field's id and error |
 | `EnumInput` | `value` (`string[]`), `onChange`, `placeholder` | each value on a `source` cell with a remove act, then a `source` field that adds on its act or Enter; a value already listed is refused, `words.duplicate` under the field |
@@ -296,7 +300,7 @@ own three-row form. `Part` is a string or `{ quoted }`, drawn in typographic quo
 
 | Molecule | Props | Owns |
 | --- | --- | --- |
-| `Place` | `title`, `actions` (`IconAct[]`, two shown, the rest under more), `act`, `more` (labelled `Act`s under the more circle), `bleed`, children | the large title, the scroll, the floating act; `bleed` hands the body the whole box under the top bar with no inset, no measure and no scroll, for a child that pans and scrolls itself (a canvas) |
+| `Place` | `title`, `actions` (`IconAct[]`, two shown, the rest under more), `act`, `more` (labelled `Act`s under the more circle), `bleed`, children | the large title, which wraps and is never truncated, on its own line under the switcher and the circles under tablet; the scroll, the floating act; `bleed` hands the body the whole box under the top bar with no inset, no measure and no scroll, for a child that pans and scrolls itself (a canvas) |
 | `Screen` | `title`, `back` (a route), `actions`, children | the back circle, the compact title on scroll; covers the shell on the phone |
 | `Split` | `list`, `main`, `pane`, `empty` | the columns from desktop, one slot under it; the pane pushes `main` narrower from desktop, or from wide beside a `list`, and folds over it under that; `empty` fills `main` from desktop while nothing is picked |
 | `Section` | `title`, `count`, `description`, `folded`, `onToggle`, `act`, `loading`, children | the label header, folding; a foldable one is a group, never a landmark, and `onToggle` reports its new state |
@@ -306,19 +310,19 @@ own three-row form. `Part` is a string or `{ quoted }`, drawn in typographic quo
 | `Toolbar` | children | one row of controls |
 | `ActionBar` | children | pinned under a `Screen`, in flow under a `Form` or a `Sheet` |
 | `Columns` | children | sections side by side from desktop |
-| `Shell` | `places` (`PlaceSpec[]`), `banner`, `switcher`, children | the tab bar, the sidebar, the toast queue, the `confirm()` decisions; the place whose route is the longest prefix of the address is selected, drawn `accent-soft` in the sidebar and read as `aria-current`; `switcher` (an organization or project switcher) heads the sidebar from tablet and starts each `Place`'s top bar under it |
+| `Shell` | `places` (`PlaceSpec[]`), `banner`, `switcher`, children | the tab bar (its tabs at the side inset, at most five: past five places the first four and a `more` tab whose sheet holds the rest, drawn selected while one of them is), the sidebar, the toast queue, the `confirm()` decisions; the place whose route is the longest prefix of the address is selected, drawn `accent-soft` in the sidebar and read as `aria-current`; `switcher` (an organization or project switcher) heads the sidebar from tablet and starts each `Place`'s top bar under it |
 
 ### Shared molecules
 
 | Molecule | Props |
 | --- | --- |
 | `ListRow` | `leading` (`{ icon }` \| `{ status }`), `title`, `meta` (parts, one or two lines), `trailing` (`{ age }` \| `{ count }` \| `{ value }`), `marks`, `act`, `more` (the row's `Menu` items, a more circle at its end beside what opens the row), `href`, `onOpen` |
-| `DefinitionRow` | `label`, `description`, `value` (a string, `{ status }` or a control), `copyable`, `act`, `href`, `onOpen` |
+| `DefinitionRow` | `label`, `description`, `value` (a string, `{ status }` or a control), `copyable`, `act`, `href`, `onOpen`; a `Picker` value stacks the row under tablet: the label and the description, then the picker across the row with the act at its end |
 | `FormField` | `label`, `description`, `error`, `field` (a `FieldBinding`; then children is `(control) => …` and the error is the form's; an autosaving binding hands the control `onCommit`), children |
 | `ItemHeader` | `overline`, `title`, `facts`, `loading` |
 | `SegmentedControl` | `options`, `value`, `onChange` |
 | `Sheet` | `open`, `onClose`, `title`, `description`, `back`, `submit` (`{ label, onAct, blocked }`), `foot`, children |
-| `Picker` | `label`, `options` (`Option[]` or `OptionGroup[]`), `value`, `onChange`; in a `FormField` it takes the field's surface, label and error; a press on the open control closes its list |
+| `Picker` | `label`, `options` (`Option<V>[]` or `OptionGroup<V>[]`), `value`, `onChange`; generic over its value `V`, read off `options` alone, so an enum's options pick that enum: a bound enum field is one spread with no cast, and a value or handler outside the options is a type error; an option whose value is `null` is the empty choice, drawn in `ink-faint`, which makes `V` nullable, so a nullable enum field is the same spread and `onChange` hears `null`; in a `FormField` it takes the field's surface, label and error; a press on the open control closes its list |
 | `Menu` | `label` (read aloud on its more circle, the sheet's title), `items` (`MenuItem[]`, or `MenuItem[][]` for groups under separators: `{ label, onAct, icon?, destructive?, blocked? }`); anchored under the circle from tablet, a `Sheet` under it; arrows, Enter, Escape, focus back on the circle; the more circle of `Place` and `Screen` is the same menu |
 | `QueryBoundary` | `query` (one query or a tuple), `sentence`, children (`(data) => …`, an accessor) |
 | `OptionList` | `options`, `value`, `onChange`, children |
@@ -334,7 +338,7 @@ own three-row form. `Part` is a string or `{ quoted }`, drawn in typographic quo
 | `Prose` | `markdown`, `loading` |
 | `Code` | `text`, `title` (a file's name, the tool the text goes into; the copy act sits in its row), `tail`, `copy`, `loading` |
 | `Diff` | `hunks`, or `before` and `after` (two texts diffed by line, three lines of context), `loading`; one column at every width |
-| `Table` | `columns` (`TableColumn[]`: `key`, `label`, `kind` (`text` \| `source` \| `number` \| `chip` with `family` \| `check` \| `status` \| `age`), `width` (a `widths` rung or `1/4` to `3/4`), `align`, `sortable`, `edit` (`{ control: "input" }`, `{ control: "picker", options }` or `{ control: "checkbox" }`, typed by the kind)), `rows` (`{ id, cells }[]`), `selected` (the open row's id, on `accent-soft`), `onOpen(id)`, `onEdit(id, key, value)` (once per commit that changed the value), `empty` (the `EmptyState` under the header), `loading`; a click or Enter edits a cell whose column has `edit` in place, Enter or blur commits, Escape cancels; the arrows move the focused cell, Tab steps across; 32 px rows under `density: "desktop"`, 44 on touch |
+| `Table` | `columns` (`TableColumn[]`: `key`, `label`, `kind` (`text` \| `source` \| `number` \| `chip` with `family` \| `check` \| `status` \| `age`), `width` (a `widths` rung or `1/4` to `3/4`), `align`, `sortable`, `edit` (`{ control: "input" }`, `{ control: "picker", options }`, a `null` option clearing the cell, or `{ control: "checkbox" }`, typed by the kind)), `rows` (`{ id, cells }[]`), `selected` (the open row's id, on `accent-soft`), `onOpen(id)`, `onEdit(id, key, value)` (once per commit that changed the value, `null` for a cleared cell), `empty` (the `EmptyState` under the header), `loading`; a click or Enter edits a cell whose column has `edit` in place, Enter or blur commits, Escape cancels; the arrows move the focused cell, Tab steps across; 32 px rows under `density: "desktop"`, 44 on touch; under tablet the rows are a `List` of `ListRow`s from the same columns, as on native (the first column the title, the first `status` the leading glyph, the first `age` the trailing age, the rest the meta line), a tap opening the row |
 | `FileRow` | `path`, `added`, `removed`, `seen`, `href`, `onOpen`, `loading` |
 | `ProseDiff` | `before`, `after`, `loading` |
 | `Comparison` | `rows`, `loading` |
@@ -357,7 +361,7 @@ that order. No component draws a sentence of its own: every sentence is a prop, 
 
 `plugin-solid-ui` contributes typed values into the slots `plugin-solid` and `plugin-vite` own:
 the Tailwind Vite plugin, the fonts plugin, the `MetaProvider` and `WordsProvider` providers,
-the `.stack/app.css` artifact (contract tokens, two shadow utilities, the dark layer, the compact sizes under `(pointer: fine)` when `density` is `desktop`, a safelist
+the `.stack/app.css` artifact (`tailwindcss` imported with `source(none)` so only the consumer's `src`, this package's components and ui-core are scanned, contract tokens, two shadow utilities, the dark layer, the compact sizes under `(pointer: fine)` when `density` is `desktop`, a safelist
 of the role and rung cells the matrices compose at runtime), the pre-build geometry gate, and
 the home-page scaffold. `pnpm --filter @fcalell/plugin-solid-ui verify` reproduces every claim
 above against the real plugin graph, a Tailwind build, and the roster.

@@ -21,7 +21,11 @@ renders the plugin-api worker's wrangler config from what the other plugins cont
 `stack dev` runs `wrangler dev` on `http://localhost:8787`, with its local state (D1, KV, caches)
 persisted under `.wrangler/state`, gitignored with `.wrangler`. It stays outside `.stack/`, Vite's
 root, because the worker writes it on every request and each write Vite sees is a full reload.
-plugin-db's local D1 commands read the same directory (`LOCAL_PERSIST`).
+plugin-db's local D1 commands read the same directory (`LOCAL_PERSIST`). wrangler's scratch
+`.wrangler/` sits beside its config, so the bundle it rewrites on every worker edit lands in
+`.stack/.wrangler/tmp/`, inside Vite's root, where Tailwind's automatic source detection scans it
+and answers its change with a full reload; the plugin contributes `**/.wrangler/**` to
+`vite.slots.watchIgnored`, so a worker edit leaves the open page as it is.
 
 With `vite` in the config, the vite dev server proxies every worker-owned path
 (`api.slots.routePrefixes`: api's `prefix`, auth's `/api/auth`) to it, so the browser calls the

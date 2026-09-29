@@ -111,6 +111,17 @@ const fsAllow = slot.list<TsExpression>({
 	name: "fsAllow",
 });
 
+// Globs the dev server's watcher skips, rendered into `server.watch.ignored`.
+// A plugin whose tool writes scratch files under Vite's root (`.stack/`)
+// contributes their glob, so those writes never reach Vite's hot-update
+// handling (a plugin hook there may answer an unknown file with a full
+// reload).
+const watchIgnored = slot.list<string>({
+	source: SOURCE,
+	name: "watchIgnored",
+	sortBy: (a, b) => a.localeCompare(b),
+});
+
 // Rendered `.stack/vite.config.ts` source. Pulled into `cli.slots.artifactFiles`
 // by the contribution below — gated on at least one plugin call or import
 // so a vite-less config never writes an empty file.
@@ -125,6 +136,7 @@ const viteConfig = slot.derived({
 		port: devServerPort,
 		proxy: serverProxy,
 		fsAllow,
+		watchIgnored,
 	},
 	compute: (inp): string | null => {
 		if (inp.plugins.length === 0 && inp.imports.length === 0) return null;
@@ -136,6 +148,7 @@ const viteConfig = slot.derived({
 			devServerPort: inp.port,
 			serverProxy: inp.proxy,
 			fsAllow: inp.fsAllow,
+			watchIgnored: inp.watchIgnored,
 		});
 	},
 });
@@ -158,6 +171,7 @@ export const vite = plugin("vite", {
 		devServerPort,
 		serverProxy,
 		fsAllow,
+		watchIgnored,
 		viteConfig,
 	},
 

@@ -227,6 +227,14 @@ export const cloudflare = plugin("cloudflare", {
 			return prefixes.map((path) => ({ path, target }));
 		}),
 
+		// wrangler keeps its scratch `.wrangler/` beside its config, so the dev
+		// bundle it rewrites on every worker edit lands in
+		// `.stack/.wrangler/tmp/`, inside Vite's root. Tailwind's automatic
+		// source detection scans that bundle and answers a change to a file it
+		// scanned, but no module imports, with a full page reload; Vite's
+		// watcher never sees the directory.
+		vite.slots.watchIgnored.contribute(() => "**/.wrangler/**"),
+
 		// Dev wrangler process — the worker target's local runtime. `--config`
 		// points at the generated `.stack/wrangler.toml` (the consumer root has
 		// no wrangler config), and `--persist-to` fixes the local D1 so schema

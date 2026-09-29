@@ -2,12 +2,13 @@ import type { Act, StatusState } from "@fcalell/ui-core/descriptors";
 import { row, text, textStrong } from "@fcalell/ui-core/variants";
 import * as Clipboard from "expo-clipboard";
 import { Check, Copy } from "lucide-react-native";
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useState } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import { Circle } from "../../lib/circle";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { navigate } from "../../lib/navigate";
+import { RowContext } from "../../lib/row";
 import { useWords } from "../../lib/words";
 import { RowAct } from "../list-row";
 import { Status } from "../status";
@@ -36,7 +37,10 @@ function isStatus(
 }
 
 // A labelled fact: the label left, the value or the in-place control right,
-// and the description under both at the row's width.
+// and the description under both at the row's width. A control whose width
+// is its words (a `Picker`) claims the row (`lib/row.ts`), and the row then
+// stacks, as the web's does under tablet: the label and the description,
+// then the control across the row with the act at its end.
 export function DefinitionRow({
 	label,
 	description,
@@ -46,7 +50,28 @@ export function DefinitionRow({
 	href,
 	onOpen,
 }: DefinitionRowProps) {
+	const [stacked, setStacked] = useState(false);
+	const claim = useCallback((next: boolean) => setStacked(next), []);
 	const open = href !== undefined ? () => navigate(href) : onOpen;
+	const shown = (
+		<RowContext.Provider value={claim}>
+			{typeof value === "string" ? (
+				<RNText className={cn(text({ role: "meta" }), "shrink text-right")}>
+					{value}
+				</RNText>
+			) : isStatus(value) ? (
+				<Status state={value.status} label={value.label} />
+			) : (
+				value
+			)}
+		</RowContext.Provider>
+	);
+	const acts = (
+		<>
+			{copyable && typeof value === "string" ? <CopyAct value={value} /> : null}
+			{act ? <RowAct act={act} /> : null}
+		</>
+	);
 	return (
 		<Pressable
 			accessibilityRole={open ? "button" : undefined}
@@ -68,22 +93,17 @@ export function DefinitionRow({
 				>
 					{label}
 				</RNText>
-				{typeof value === "string" ? (
-					<RNText className={cn(text({ role: "meta" }), "shrink text-right")}>
-						{value}
-					</RNText>
-				) : isStatus(value) ? (
-					<Status state={value.status} label={value.label} />
-				) : (
-					value
-				)}
-				{copyable && typeof value === "string" ? (
-					<CopyAct value={value} />
-				) : null}
-				{act ? <RowAct act={act} /> : null}
+				{stacked ? null : shown}
+				{stacked ? null : acts}
 			</View>
 			{description ? (
 				<RNText className={text({ role: "meta" })}>{description}</RNText>
+			) : null}
+			{stacked ? (
+				<View className="flex-row items-center gap-stack">
+					<View className="min-w-0 flex-1">{shown}</View>
+					{acts}
+				</View>
 			) : null}
 		</Pressable>
 	);

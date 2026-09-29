@@ -1116,6 +1116,32 @@ check("b-nouns", "no product noun in src", () => {
 	return `${PRODUCT_NOUNS.length} nouns absent from src`;
 });
 
+// The picker's two facts the types cannot hold: it claims a definition row,
+// which then stacks, as the web's does under tablet, and its empty choice
+// (an option whose value is null) reads as a placeholder.
+check(
+	"b-picker",
+	"a picker stacks its row and draws its empty choice faint",
+	() => {
+		const component = (name: string) =>
+			readFileSync(resolve(COMPONENT_DIR, name, "index.tsx"), "utf8");
+		const picker = component("picker");
+		assert(
+			/<RowContext\.Provider/.test(component("definition-row")) &&
+				/\buseRowClaim\(\)/.test(picker),
+			"a picker in a definition row does not claim the row",
+		);
+		assert(
+			/option\.value === null && FIELD_PLACEHOLDER/.test(picker) &&
+				/\(current\?\.value \?\? null\) === null && FIELD_PLACEHOLDER/.test(
+					picker,
+				),
+			"the empty choice does not draw as a placeholder in the list and on the control",
+		);
+		return "Picker claims the DefinitionRow; a null option and an empty control draw FIELD_PLACEHOLDER";
+	},
+);
+
 check("b8", "the build-step contribution wires the real gate", () => {
 	const source = readFileSync(resolve(pkgDir, "src/index.ts"), "utf8");
 	const start = source.indexOf("cliSlots.buildSteps.contribute");

@@ -237,8 +237,16 @@ function prepareFixture(): string {
 		resolve(srcDir, "probe.html"),
 		`<div class="${probes.join(" ")}"></div>\n`,
 	);
+	// A generated file beside the sheet, as a consumer's `.stack/` holds the
+	// worker types and wrangler's bundle, spelling a class nothing else does.
+	writeFileSync(
+		resolve(stackDir, "generated.ts"),
+		`export const stray = "${STRAY}";\n`,
+	);
 	return stackDir;
 }
+
+const STRAY = "w-[417px]";
 
 function build(sheet: string, name: string): string {
 	const dir = prepareFixture();
@@ -644,6 +652,23 @@ check("a7", "the sheet carries exactly one preflight", () => {
 		`expected 1 preflight box-sizing reset, found ${matches.length}`,
 	);
 	return "one preflight";
+});
+
+check("a7-sources", "only the declared sources are scanned", () => {
+	const detecting = '@import "tailwindcss";';
+	assert(
+		sheet.startsWith('@import "tailwindcss" source(none);\n'),
+		"the tailwindcss import leaves automatic content detection on",
+	);
+	assert(
+		emitted(build(sheet.replace(/^[^\n]*/, detecting), "app-detect"), STRAY),
+		"automatic detection no longer reaches .stack/, so the probe proves nothing",
+	);
+	assert(
+		!emitted(built, STRAY),
+		`a class only .stack/ spells compiles: ${STRAY}`,
+	);
+	return `${STRAY} in .stack/ compiles under automatic detection and not under source(none)`;
 });
 
 check("a8", "globals.css keeps only what the web owns", () => {
@@ -1213,6 +1238,56 @@ check("b-shell", "the shell selects a place by its route, once", () => {
 		"the shell draws its places with the router's A",
 	);
 	return "selectedRoute() picks the place by route; aria-current and accent-soft read the same pick";
+});
+
+// The phone forms: under tablet a place's title takes its own line and wraps,
+// the tab bar holds at most five tabs, a picked row stacks, and a table is a
+// list of rows. The rules themselves are `test/places.test.ts` and
+// `test/table-list.test.ts`.
+check("b-phone", "each molecule has its phone form", () => {
+	const place = read("src/ui/components/place/index.tsx");
+	const title = place.slice(place.indexOf("<h1"), place.indexOf("</h1>"));
+	assert(!/\btruncate\b/.test(title), "the place's title truncates");
+	assert(
+		/order-last basis-full/.test(title),
+		"the place's title shares the switcher's line under tablet",
+	);
+	assert(
+		callArguments(read("src/ui/components/shell/index.tsx"), "tabsOf").length >
+			0,
+		"the tab bar does not cap its tabs through tabsOf()",
+	);
+	assert(
+		/<RowContext\.Provider/.test(
+			read("src/ui/components/definition-row/index.tsx"),
+		) &&
+			callArguments(read("src/ui/components/picker/index.tsx"), "useRowClaim")
+				.length > 0,
+		"a picker in a definition row does not claim the row",
+	);
+	const table = read("src/ui/components/table/index.tsx");
+	assert(
+		callArguments(table, "listedRow").length > 0 &&
+			/"flex flex-col tablet:hidden"/.test(table) &&
+			/"hidden flex-col overflow-x-auto tablet:flex"/.test(table),
+		"the table draws its grid under tablet",
+	);
+	return "the title wraps on its own line, five tabs at most, a picked row stacks, a table lists under tablet";
+});
+
+// A picker's empty choice (an option whose value is null) reads as a
+// placeholder in its list and on its control. Its typing is
+// `test/picker.test.ts`.
+check("b-empty-choice", "a picker draws its empty choice faint", () => {
+	const picker = read("src/ui/components/picker/index.tsx");
+	assert(
+		/option\.value === null && FIELD_PLACEHOLDER/.test(picker) &&
+			/\(current\(\)\?\.value \?\? null\) === null && FIELD_PLACEHOLDER/.test(
+				picker,
+			),
+		"the empty choice does not draw as a placeholder in the list and on the control",
+	);
+	return "a null option and an empty control draw FIELD_PLACEHOLDER";
 });
 
 // A document shows its first `<title>`: the shell's static one stays ahead of

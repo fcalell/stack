@@ -1,4 +1,5 @@
 import type {
+	CellPick,
 	CellValue,
 	ColumnWidth,
 	Option,
@@ -33,8 +34,11 @@ import { cn } from "#lib/cn.ts";
 import { RING, RING_INSET, WASH } from "#lib/interact.ts";
 import { LoadingRows } from "#lib/loading.tsx";
 import { useWholeWidth } from "#lib/measure.ts";
+import { listedRow } from "#lib/table-list.ts";
 import { Chip } from "../chip/index.tsx";
 import { Input } from "../input/index.tsx";
+import { List } from "../list/index.tsx";
+import { ListRow } from "../list-row/index.tsx";
 import { Picker } from "../picker/index.tsx";
 import { Status } from "../status/index.tsx";
 
@@ -42,13 +46,16 @@ import { Status } from "../status/index.tsx";
 // drawn by its column's kind. The row whose id is `selected` is the open
 // one, on `accent-soft` as a `Split` list's open item is. A click on a cell
 // opens its row through `onOpen`, unless the column edits: then the cell
-// becomes its control in place (an `Input` of the column's kind, a `Picker`,
-// a tick), commits on Enter or blur, cancels on Escape, and calls `onEdit`
-// once per commit that changed the value. The grid is one tab stop: the
+// becomes its control in place (an `Input` of the column's kind, a `Picker`
+// whose `null` option clears the cell, a tick), commits on Enter or blur,
+// cancels on Escape, and calls `onEdit` once per commit that changed the
+// value, `null` for a cleared cell. The grid is one tab stop: the
 // arrows move the focused cell, Tab and Shift+Tab step across it, Enter
 // edits or opens. A `sortable` column sorts on its header, ascending,
 // descending, then back to the rows' order. With no rows the header stands
-// over `empty`. Inside a `Place` the table takes the whole column.
+// over `empty`. Inside a `Place` the table takes the whole column. Under
+// tablet a grid has no room: the rows are a list of `ListRow`s drawn from the
+// same columns (`lib/table-list.ts`), as on native, a tap opening the row.
 export type TableProps = Closed & {
 	columns: TableColumn[];
 	rows: TableRow[];
@@ -80,11 +87,11 @@ const atEnd = (column: TableColumn) =>
 	(column.align ?? (column.kind === "number" ? "end" : "start")) === "end";
 
 // The options a picked column draws its values' labels from.
-function optionsOf(column: TableColumn): readonly Option[] {
+function optionsOf(column: TableColumn): readonly Option<string | null>[] {
 	if (column.edit?.control !== "picker") return [];
 	const first = column.edit.options[0];
 	if (first === undefined || !("options" in first))
-		return column.edit.options as Option[];
+		return column.edit.options as Option<string | null>[];
 	return column.edit.options.flatMap((group) =>
 		"options" in group ? group.options : [],
 	);
@@ -287,7 +294,7 @@ export function Table(props: TableProps) {
 		if (!same(editing(), spot)) return;
 		setEditing(undefined);
 		const row = props.rows.find((each) => each.id === spot.id);
-		if (row && row.cells[spot.key] !== value)
+		if (row && (row.cells[spot.key] ?? null) !== value)
 			props.onEdit?.(spot.id, spot.key, value);
 		if (refocus) place(spot);
 	};
@@ -491,8 +498,8 @@ export function Table(props: TableProps) {
 							<CellContext.Provider value={{ close: () => cancel(spot, true) }}>
 								<Picker
 									label={column.label}
-									options={(edit() as { options: Option[] }).options}
-									value={typeof cell() === "string" ? String(cell()) : ""}
+									options={(edit() as CellPick).options}
+									value={typeof cell() === "string" ? String(cell()) : null}
 									onChange={(value) => commit(spot, value, true)}
 								/>
 							</CellContext.Provider>
@@ -507,33 +514,59 @@ export function Table(props: TableProps) {
 	};
 
 	return (
-		<div class="flex flex-col overflow-x-auto">
-			{/* biome-ignore lint/a11y/noNoninteractiveElementToInteractiveRole: the grid pattern, a table whose cells take focus, move by the arrows and edit in place */}
-			<table role="grid" class="flex w-full flex-col">
-				<thead class="flex flex-col">{header()}</thead>
-				<Show when={!props.loading && rows().length > 0}>
-					<tbody class="flex flex-col">
+		<div class="flex flex-col">
+			{/* From tablet the grid; under it the rows as a list, where a grid
+			    has no room. */}
+			<div class="hidden flex-col overflow-x-auto tablet:flex">
+				{/* biome-ignore lint/a11y/noNoninteractiveElementToInteractiveRole: the grid pattern, a table whose cells take focus, move by the arrows and edit in place */}
+				<table role="grid" class="flex w-full flex-col">
+					<thead class="flex flex-col">{header()}</thead>
+					<Show when={!props.loading && rows().length > 0}>
+						<tbody class="flex flex-col">
+							<For each={rows()}>
+								{(row) => (
+									<tr
+										aria-selected={row.id === props.selected}
+										class={cn(
+											tableRow({
+												state: row.id === props.selected ? "selected" : "rest",
+											}),
+											"flex w-full transition-colors duration-(--duration-fast) ease-ui",
+											props.onOpen && WASH,
+										)}
+									>
+										<For each={props.columns}>
+											{(column) => cellOf(row, column)}
+										</For>
+									</tr>
+								)}
+							</For>
+						</tbody>
+					</Show>
+				</table>
+			</div>
+			<Show when={!props.loading && rows().length > 0}>
+				<div class="flex flex-col tablet:hidden">
+					<List>
 						<For each={rows()}>
-							{(row) => (
-								<tr
-									aria-selected={row.id === props.selected}
-									class={cn(
-										tableRow({
-											state: row.id === props.selected ? "selected" : "rest",
-										}),
-										"flex w-full transition-colors duration-(--duration-fast) ease-ui",
-										props.onOpen && WASH,
-									)}
-								>
-									<For each={props.columns}>
-										{(column) => cellOf(row, column)}
-									</For>
-								</tr>
-							)}
+							{(row) => {
+								const listed = () => listedRow(props.columns, row);
+								return (
+									<ListRow
+										title={listed().title}
+										leading={listed().leading}
+										meta={listed().meta}
+										trailing={listed().trailing}
+										onOpen={
+											props.onOpen ? () => props.onOpen?.(row.id) : undefined
+										}
+									/>
+								);
+							}}
 						</For>
-					</tbody>
-				</Show>
-			</table>
+					</List>
+				</div>
+			</Show>
 			<Show when={props.loading}>
 				<LoadingRows />
 			</Show>

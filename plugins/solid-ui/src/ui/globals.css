@@ -3,9 +3,9 @@
    `.stack/app.css` from `@fcalell/ui-core`, which also imports `tailwindcss`
    before this file. Importing it again here would emit preflight twice. */
 
-/* Tailwind's automatic content detection never reaches this package (it
-   scans from the consumer's vite root, the gitignored .stack/), so the
-   component sources are declared explicitly, relative to this file. */
+/* `.stack/app.css` imports `tailwindcss` with `source(none)`, so no automatic
+   content detection runs; the component sources are declared explicitly,
+   relative to this file. */
 @source "./";
 
 /* The variant matrices are class strings inside `@fcalell/ui-core`, and a cva

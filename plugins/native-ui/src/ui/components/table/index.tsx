@@ -23,7 +23,7 @@ export interface TableProps extends Closed {
 }
 
 // The options a picked column draws its values' labels from.
-function optionsOf(column: TableColumn): readonly Option[] {
+function optionsOf(column: TableColumn): readonly Option<string | null>[] {
 	if (column.edit?.control !== "picker") return [];
 	return column.edit.options.flatMap((entry) =>
 		"options" in entry ? entry.options : [entry],

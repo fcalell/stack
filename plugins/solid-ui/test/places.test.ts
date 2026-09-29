@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { selectedRoute } from "../src/ui/lib/places.ts";
+import { selectedRoute, tabsOf } from "../src/ui/lib/places.ts";
 
 const ORG = ["/acme", "/acme/settings"];
 
@@ -21,4 +21,18 @@ test("a place at / holds every address no other place claims", () => {
 
 test("a prefix counts only at a segment boundary", () => {
 	assert.equal(selectedRoute(ORG, "/acmecorp"), undefined);
+});
+
+test("five places or fewer are all tabs", () => {
+	const five = ["a", "b", "c", "d", "e"];
+	assert.deepEqual(tabsOf(five), { tabs: five, more: [] });
+	assert.deepEqual(tabsOf(["a"]), { tabs: ["a"], more: [] });
+});
+
+test("past five, four tabs and the rest under more", () => {
+	const seven = ["a", "b", "c", "d", "e", "f", "g"];
+	assert.deepEqual(tabsOf(seven), {
+		tabs: ["a", "b", "c", "d"],
+		more: ["e", "f", "g"],
+	});
 });

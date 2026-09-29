@@ -1,5 +1,11 @@
 import type { Option, OptionGroup } from "@fcalell/ui-core/descriptors";
-import { field, GROUP, row, text } from "@fcalell/ui-core/variants";
+import {
+	FIELD_PLACEHOLDER,
+	field,
+	GROUP,
+	row,
+	text,
+} from "@fcalell/ui-core/variants";
 import * as PopoverPrimitive from "@kobalte/core/popover";
 import { Check, ChevronDown } from "lucide-solid";
 import { createMemo, createSignal, createUniqueId, For, Show } from "solid-js";
@@ -8,6 +14,7 @@ import type { Closed } from "#lib/closed.ts";
 import { cn } from "#lib/cn.ts";
 import { useField } from "#lib/field.ts";
 import { RING, RING_INSET, WASH } from "#lib/interact.ts";
+import { useRowClaim } from "#lib/row.ts";
 import { useWords } from "#lib/words.tsx";
 import { Input } from "../input/index.tsx";
 import { Sheet } from "../sheet/index.tsx";
@@ -17,12 +24,18 @@ import { Sheet } from "../sheet/index.tsx";
 // may come in groups, each under its label in the list and the sheet. The
 // value of a `DefinitionRow` when the pick applies at once; the control of a
 // `FormField` when it is part of what a form submits, where it takes the
-// field's surface, its label and its error.
-export type PickerProps = Closed & {
+// field's surface, its label and its error. `V` is read off the options
+// alone, so an enum's options pick that enum: a bound enum field spreads
+// its control in without a cast, and a value outside the options is a type
+// error. An option whose value is `null` is the empty choice: it makes the
+// pick nullable (a nullable enum field spreads in the same way), `onChange`
+// hears `null` for it, and it reads as a placeholder, in `ink-faint`, in the
+// list and on the control, as the control does with no value at all.
+export type PickerProps<V extends string | null = string> = Closed & {
 	label: string;
-	options: readonly Option[] | readonly OptionGroup[];
-	value: string;
-	onChange: (value: string) => void;
+	options: readonly Option<V>[] | readonly OptionGroup<V>[];
+	value: NoInfer<V>;
+	onChange: (value: NoInfer<V>) => void;
 };
 
 const ANCHORED_MAX = 6;
@@ -34,20 +47,25 @@ const ROW = cn(
 );
 
 // The options as groups: a flat list is one group with no label.
-type Grouped = { label?: string; options: readonly Option[] };
+type Grouped<V extends string | null> = {
+	label?: string;
+	options: readonly Option<V>[];
+};
 
-function grouped(options: PickerProps["options"]): readonly Grouped[] {
+function grouped<V extends string | null>(
+	options: PickerProps<V>["options"],
+): readonly Grouped<V>[] {
 	const first = options[0];
 	if (first === undefined || !("options" in first)) {
-		return [{ options: options as readonly Option[] }];
+		return [{ options: options as readonly Option<V>[] }];
 	}
-	return options as readonly OptionGroup[];
+	return options as readonly OptionGroup<V>[];
 }
 
-function Rows(props: {
-	groups: readonly Grouped[];
-	value: string;
-	onPick: (value: string) => void;
+function Rows<V extends string | null>(props: {
+	groups: readonly Grouped<V>[];
+	value: V;
+	onPick: (value: V) => void;
 }) {
 	return (
 		<div class="flex flex-col">
@@ -85,6 +103,7 @@ function Rows(props: {
 													<span
 														class={cn(
 															text({ role: "body" }),
+															option.value === null && FIELD_PLACEHOLDER,
 															"flex-1 truncate",
 														)}
 													>
@@ -110,10 +129,13 @@ function Rows(props: {
 	);
 }
 
-export function Picker(props: PickerProps) {
+export function Picker<V extends string | null = string>(
+	props: PickerProps<V>,
+) {
 	const words = useWords();
 	const ctx = useField();
 	const cell = useCell();
+	const inRow = useRowClaim();
 	// Editing a table cell, the picker opens as it mounts and hands the cell
 	// back once it closes.
 	const [open, setOpenSignal] = createSignal(cell !== undefined);
@@ -136,13 +158,14 @@ export function Picker(props: PickerProps) {
 			),
 		}));
 	});
-	const pick = (value: string) => {
+	const pick = (value: V) => {
 		props.onChange(value);
 		setOpen(false);
 		setQuery("");
 	};
 	// In a field the label names the control through its `for`; alone, its
-	// own label does. `min-w-0` lets a long value truncate inside a row.
+	// own label does. `min-w-0` lets a long value truncate inside a row, which
+	// under tablet the control spans.
 	const controlClass = () =>
 		cn(
 			ctx
@@ -154,6 +177,7 @@ export function Picker(props: PickerProps) {
 						GROUP,
 						text({ role: "body" }),
 						"inline-flex min-h-floor min-w-0 max-w-full rounded-full px-4",
+						inRow && "w-full tablet:w-auto",
 						RING,
 					),
 			"cursor-pointer items-center gap-row text-left transition-colors duration-(--duration-fast) ease-ui",
@@ -161,7 +185,14 @@ export function Picker(props: PickerProps) {
 		);
 	const face = () => (
 		<>
-			<span class={cn("min-w-0 truncate", ctx && "flex-1")}>
+			<span
+				class={cn(
+					"min-w-0 truncate",
+					(current()?.value ?? null) === null && FIELD_PLACEHOLDER,
+					ctx && "flex-1",
+					inRow && "flex-1 tablet:flex-none",
+				)}
+			>
 				{current()?.label ?? props.label}
 			</span>
 			<ChevronDown class="size-4 shrink-0 text-ink-meta" aria-hidden="true" />

@@ -12,18 +12,16 @@ export type InputKind =
 	| "text"
 	| "search"
 	| "secret"
-	| "code"
 	| "source"
 	| "number"
 	| "email";
 
 // A one-line typing control. `search` is a pill, the rest take the group
 // radius; `number` opens the numeric keyboard and draws `unit` after the
-// value; `code` is a one-time code; `source` is typed text a machine reads
-// (a command, a path, a host), mono and never corrected or capitalized;
-// `email` is an address: the email keyboard, the browser's saved address,
-// never corrected or capitalized; `act` is a trailing text act inside the
-// field. Inside a `FormField` it
+// value; `source` is typed text a machine reads (a command, a path, a host),
+// mono and never corrected or capitalized; `email` is an address: the email
+// keyboard, the browser's saved address, never corrected or capitalized;
+// `act` is a trailing text act inside the field. Inside a `FormField` it
 // takes the field's id and error. `onCommit` hears the value once the viewer
 // is done with it: on leaving the field or on Enter, only when it changed
 // since the field took focus; with it, Escape puts back the value at focus.
@@ -41,7 +39,6 @@ const TYPE: Record<InputKind, string> = {
 	text: "text",
 	search: "search",
 	secret: "password",
-	code: "text",
 	source: "text",
 	number: "text",
 	email: "email",
@@ -55,11 +52,7 @@ export const FIELD_SHELL =
 export function Input(props: InputProps) {
 	const kind = () => props.kind ?? "text";
 	const surface = () =>
-		kind() === "search"
-			? "search"
-			: kind() === "code" || kind() === "source"
-				? "code"
-				: "text";
+		kind() === "search" ? "search" : kind() === "source" ? "code" : "text";
 	const source = () => kind() === "source";
 	// Typed exactly as it reads: no correction, no capital, no spellcheck.
 	const verbatim = () => source() || kind() === "email";
@@ -94,13 +87,7 @@ export function Input(props: InputProps) {
 							: undefined
 				}
 				autocomplete={
-					kind() === "code"
-						? "one-time-code"
-						: kind() === "email"
-							? "email"
-							: source()
-								? "off"
-								: undefined
+					kind() === "email" ? "email" : source() ? "off" : undefined
 				}
 				spellcheck={verbatim() ? false : undefined}
 				autocapitalize={verbatim() ? "off" : undefined}

@@ -17,3 +17,18 @@ export function selectedRoute(
 			undefined,
 		);
 }
+
+// The phone's tab bar holds at most five tabs, the system's rule: with more
+// places the first four stay tabs and the rest go under a fifth, `more`.
+export const TABS = 5;
+
+export function tabsOf<T>(places: readonly T[]): {
+	tabs: readonly T[];
+	more: readonly T[];
+} {
+	if (places.length <= TABS) return { tabs: places, more: [] };
+	return {
+		tabs: places.slice(0, TABS - 1),
+		more: places.slice(TABS - 1),
+	};
+}

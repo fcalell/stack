@@ -333,7 +333,10 @@ export const solidUi = plugin("solid-ui", {
 		}),
 
 		// ── App CSS ─────────────────────────────────────────────────────
-		self.slots.appCssImports.contribute(() => "tailwindcss"),
+		self.slots.appCssImports.contribute(() => ({
+			url: "tailwindcss",
+			source: "none",
+		})),
 		self.slots.appCssImports.contribute(
 			() => "@fcalell/plugin-solid-ui/globals.css",
 		),

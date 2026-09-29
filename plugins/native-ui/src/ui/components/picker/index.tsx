@@ -1,20 +1,26 @@
 import type { Option, OptionGroup } from "@fcalell/ui-core/descriptors";
-import { GROUP, row, text } from "@fcalell/ui-core/variants";
+import { FIELD_PLACEHOLDER, GROUP, row, text } from "@fcalell/ui-core/variants";
 import { Check, ChevronDown } from "lucide-react-native";
 import { useState } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { Glyph } from "../../lib/glyph";
+import { useRowClaim } from "../../lib/row";
 import { Input } from "../input";
 import { List } from "../list";
 import { Sheet } from "../sheet";
 
-export interface PickerProps extends Closed {
+// `V` is read off the options alone, so an enum's options pick that enum and
+// a value outside them is a type error. An option whose value is `null` is
+// the empty choice: it makes the pick nullable, `onChange` hears `null` for
+// it, and it reads as a placeholder, in `ink-faint`, in the sheet and on the
+// control, as the control does with no value at all.
+export interface PickerProps<V extends string | null = string> extends Closed {
 	label: string;
-	options: readonly Option[] | readonly OptionGroup[];
-	value?: string;
-	onChange: (value: string) => void;
+	options: readonly Option<V>[] | readonly OptionGroup<V>[];
+	value?: NoInfer<V>;
+	onChange: (value: NoInfer<V>) => void;
 }
 
 // Up to this many options the sheet is a plain list; above it, a search field
@@ -22,21 +28,32 @@ export interface PickerProps extends Closed {
 const SEARCHABLE_ABOVE = 6;
 
 // The options as groups: a flat list is one group with no label.
-type Grouped = { label?: string; options: readonly Option[] };
+type Grouped<V extends string | null> = {
+	label?: string;
+	options: readonly Option<V>[];
+};
 
-function grouped(options: PickerProps["options"]): readonly Grouped[] {
+function grouped<V extends string | null>(
+	options: PickerProps<V>["options"],
+): readonly Grouped<V>[] {
 	const first = options[0];
 	if (first === undefined || !("options" in first)) {
-		return [{ options: options as readonly Option[] }];
+		return [{ options: options as readonly Option<V>[] }];
 	}
-	return options as readonly OptionGroup[];
+	return options as readonly OptionGroup<V>[];
 }
 
 // A control showing its value; a tap opens one-line rows with a tick, under
 // their group's label when the options come in groups. The value of a
 // `DefinitionRow` when the pick applies at once; the control of a
 // `FormField` when it is part of what a form submits.
-export function Picker({ label, options, value, onChange }: PickerProps) {
+export function Picker<V extends string | null = string>({
+	label,
+	options,
+	value,
+	onChange,
+}: PickerProps<V>) {
+	useRowClaim();
 	const [open, setOpen] = useState(false);
 	const [query, setQuery] = useState("");
 	const groups = grouped(options);
@@ -64,7 +81,13 @@ export function Picker({ label, options, value, onChange }: PickerProps) {
 					"min-h-11 flex-row items-center gap-row px-4 active:bg-edge",
 				)}
 			>
-				<RNText className={cn(text({ role: "body" }), "flex-1")}>
+				<RNText
+					className={cn(
+						text({ role: "body" }),
+						(current?.value ?? null) === null && FIELD_PLACEHOLDER,
+						"flex-1",
+					)}
+				>
 					{current?.label ?? label}
 				</RNText>
 				<Glyph icon={ChevronDown} tone="ink-meta" size={16} />
@@ -89,7 +112,7 @@ export function Picker({ label, options, value, onChange }: PickerProps) {
 									const selected = option.value === value;
 									return (
 										<Pressable
-											key={option.value}
+											key={String(option.value)}
 											accessibilityRole="radio"
 											accessibilityState={{ selected }}
 											onPress={() => {
@@ -104,7 +127,10 @@ export function Picker({ label, options, value, onChange }: PickerProps) {
 											<View className="min-w-0 flex-1 gap-pair">
 												<RNText
 													numberOfLines={1}
-													className={text({ role: "body" })}
+													className={cn(
+														text({ role: "body" }),
+														option.value === null && FIELD_PLACEHOLDER,
+													)}
 												>
 													{option.label}
 												</RNText>

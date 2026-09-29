@@ -43,17 +43,21 @@ export interface Mark<TIcon = never> {
 	label: string;
 }
 
-export interface Option {
-	value: string;
+// `V` narrows the value to an enum's literals, so a `Picker` over them
+// picks that enum. An option whose value is `null` is the empty choice (a
+// "Not set"), and it is the only way `null` joins `V`: a pick is nullable
+// because its options offer the empty choice, never by a flag.
+export interface Option<V extends string | null = string> {
+	value: V;
 	label: string;
 	description?: string;
 	recommended?: boolean;
 }
 
 // Options under a group label, in a `Picker`'s list and its searchable sheet.
-export interface OptionGroup {
+export interface OptionGroup<V extends string | null = string> {
 	label: string;
-	options: Option[];
+	options: Option<V>[];
 }
 
 // What a typing control inside a bound `FormField` takes: the field's value,
@@ -165,14 +169,15 @@ export interface Notice {
 export type ColumnWidth = Width | "1/4" | "1/3" | "1/2" | "2/3" | "3/4";
 
 // How a cell edits in place: typed into the `Input` of its column's kind,
-// picked from options, or ticked.
+// picked from options, or ticked. A picked cell is cleared by an option
+// whose value is `null`.
 export interface CellInput {
 	control: "input";
 }
 
 export interface CellPick {
 	control: "picker";
-	options: Option[] | OptionGroup[];
+	options: Option<string | null>[] | OptionGroup<string | null>[];
 }
 
 export interface CellCheck {
@@ -209,8 +214,9 @@ export interface StatusCell {
 // `age`), a number, a boolean (`check`) or a status; null is an empty cell.
 export type TableCell = string | number | boolean | StatusCell | null;
 
-// What one committed edit hands back: the column's new value.
-export type CellValue = string | number | boolean;
+// What one committed edit hands back: the column's new value, null for a
+// picked cell cleared by its empty choice.
+export type CellValue = string | number | boolean | null;
 
 export interface TableRow {
 	id: string;

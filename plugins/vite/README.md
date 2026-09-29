@@ -60,6 +60,7 @@ vite({ port: 4000 })
 | `vite.slots.pluginCalls` | `list<TsExpression>` | Vite plugin call expressions |
 | `vite.slots.resolveAliases` | `list<{ find, replacement }>` | `resolve.alias` entries |
 | `vite.slots.devServerPort` | `value<number>` | Dev server port (defaults to `options.port ?? 3000`) |
+| `vite.slots.watchIgnored` | `list<string>` | Globs rendered into `server.watch.ignored`, added to Vite's defaults; a plugin whose tool writes scratch files under `.stack/` contributes their glob |
 | `vite.slots.viteConfig` | `derived<string \| null>` | Final `.stack/vite.config.ts` source |
 
 ## Lifecycle contributions

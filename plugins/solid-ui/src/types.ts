@@ -3,9 +3,9 @@ import { z } from "zod";
 import { isCssIdent, isCssSupportsExpression } from "./node/css-escape.ts";
 
 // A single `@import` line. The shorthand form (a bare string) becomes
-// `@import "<url>";`. The structured form lets plugins attach `layer(...)`
-// or `supports(...)` modifiers without escaping them inside the URL string
-// (e.g. Tailwind v4's `@import "tailwindcss" layer(theme)`).
+// `@import "<url>";`. The structured form lets plugins attach `layer(...)`,
+// `supports(...)` or Tailwind v4's `source(none)` modifiers without escaping
+// them inside the URL string (e.g. `@import "tailwindcss" layer(theme)`).
 //
 // Validation lives at the contribution boundary so the slot rejects
 // garbage inputs eagerly — the error then names the bad plugin instead
@@ -28,6 +28,9 @@ export const cssImportSchema = z.union([
 				(v) => v === undefined || isCssSupportsExpression(v),
 				"css @import supports(...) argument must be a balanced parenthesized feature query without ';' / '{' / '}'",
 			),
+		// Tailwind v4's `source(none)`: no automatic content detection, so only
+		// the sheet's `@source` declarations are scanned.
+		source: z.literal("none").optional(),
 	}),
 ]);
 

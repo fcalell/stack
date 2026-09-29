@@ -174,7 +174,8 @@ These statements also drive `procedure({ can: [action, resource] })`'s type-leve
 the API side -- see `@fcalell/plugin-api`'s README for the procedure-config docs.
 
 An organization is served at `/<slug>`, so the server refuses a slug the app itself holds, on
-`organization.create` and on an `organization.update` that sets one: plugin-api's
+`organization.create`, on an `organization.update` that sets one, and on
+`organization.checkSlug`, which would otherwise answer such a slug free: plugin-api's
 `RESERVED_SLUGS` and, with `solid-ui` in the config, every static first segment of your pages
 (`login`, `settings`, a group's pages included, a param never). No option: the list is derived
 from the pages at `stack generate`. The refusal is a 400 with code `ORGANIZATION_SLUG_RESERVED`

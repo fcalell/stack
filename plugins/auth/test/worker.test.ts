@@ -359,3 +359,32 @@ test("an organization slug the app's routes hold is refused on create and update
 	});
 	assert.equal(unchanged.status, 200, await unchanged.text());
 });
+
+test("check-slug refuses a slug the app's routes hold with the create's refusal", async () => {
+	const { instance, fetchPath } = await setup(
+		{ ...authSchema, ...organizationSchema },
+		{ organization: true, reservedSlugs: ["login", "settings"] },
+	);
+	const [cookieName, cookieValue] = await mintSessionCookie(instance, "u1");
+	const jar = new CookieJar();
+	jar.cookies.set(cookieName, cookieValue);
+	const send = browser(fetchPath, ORIGIN, jar);
+
+	const refused = await send("/api/auth/organization/check-slug", {
+		method: "POST",
+		body: JSON.stringify({ slug: "login" }),
+	});
+	assert.equal(refused.status, 400);
+	assert.deepEqual(await refused.json(), {
+		code: "ORGANIZATION_SLUG_RESERVED",
+		message: "The address /login is reserved. Choose another.",
+		fieldErrors: { slug: "The address /login is reserved. Choose another." },
+	});
+
+	const free = await send("/api/auth/organization/check-slug", {
+		method: "POST",
+		body: JSON.stringify({ slug: "acme" }),
+	});
+	assert.equal(free.status, 200, await free.clone().text());
+	assert.deepEqual(await free.json(), { status: true });
+});

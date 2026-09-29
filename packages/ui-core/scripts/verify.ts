@@ -1401,11 +1401,14 @@ check(
 			const params = header[1];
 			if (params === undefined) continue;
 			// The icon is the one framework type a descriptor may carry; a field
-			// binding is generic in the value its field holds, which is data.
+			// binding is generic in the value its field holds, and an option in
+			// the string it picks or the empty choice's null, both data.
 			assert(
 				/^<TIcon = never>$/.test(params) ||
-					(/^<V>$/.test(params) && /\bField\w+<V>/.test(header[0])),
-				`type parameters must be exactly <TIcon = never>, or <V> on a field binding, got ${params}`,
+					(/^<V>$/.test(params) && /\bField\w+<V>/.test(header[0])) ||
+					(/^<V extends string \| null = string>$/.test(params) &&
+						/\bOption\w*</.test(header[0])),
+				`type parameters must be exactly <TIcon = never>, <V> on a field binding, or <V extends string | null = string> on an option, got ${params}`,
 			);
 		}
 		for (const name of [

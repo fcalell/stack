@@ -10,7 +10,7 @@ import { getTableName } from "@fcalell/plugin-db/orm";
 import { ORPCError } from "@orpc/server";
 import type { BetterAuthPlugin } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { APIError } from "better-auth/api";
+import { APIError, createAuthMiddleware } from "better-auth/api";
 import { type BetterAuthOptions, betterAuth } from "better-auth/minimal";
 import {
 	role as buildAcRole,
@@ -242,6 +242,25 @@ function refuseReservedSlug(
 	});
 }
 
+// better-auth's `/organization/check-slug` answers only whether an
+// organization holds the slug, so a reserved one would read as free until
+// the create refused it: this refuses it there first, with the same answer.
+function reservedSlugCheck(reserved: ReadonlySet<string>): BetterAuthPlugin {
+	return {
+		id: "reserved-slugs",
+		hooks: {
+			before: [
+				{
+					matcher: (ctx) => ctx.path === "/organization/check-slug",
+					handler: createAuthMiddleware(async (ctx) =>
+						refuseReservedSlug(reserved, ctx.body?.slug),
+					),
+				},
+			],
+		},
+	};
+}
+
 class MissingSendOtpError extends Error {
 	constructor() {
 		super(
@@ -309,6 +328,7 @@ function buildAuth(
 		> = orgConfig.roles ?? defaultOrgRoles;
 		const reserved = new Set(options.reservedSlugs ?? []);
 		plugins.push(
+			reservedSlugCheck(reserved),
 			organization({
 				// better-auth checks a slug is free, never that the app's own
 				// routes leave it free: both writes that set one refuse it here.

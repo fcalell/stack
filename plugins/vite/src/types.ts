@@ -42,4 +42,7 @@ export interface CodegenViteConfigPayload {
 	// the consumer's own workspace root (Vite disables its auto-detection
 	// the moment a custom list is set).
 	fsAllow: TsExpression[];
+	// Globs rendered into `server.watch.ignored`, which Vite adds to its own
+	// defaults (`.git`, `node_modules`, its cache dir).
+	watchIgnored: string[];
 }

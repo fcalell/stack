@@ -95,7 +95,7 @@ sidebar. Pull to refresh is the phone's.
 | `Count` | `value` |
 | `Status` | `state` (`active`, `waiting`, `done`, `attention`, `failed`, `idle`), `label`, `onOpen` |
 | `Chip` | `label`, `family` (`1` to `6`, the `chip-n` fill the app gives a family of values); no act |
-| `Input` | `kind` (`text`, `search`, `secret`, `code`, `source`, `number`, `email`: the email keyboard, the system's saved address, never corrected or capitalized), `value`, `onChange`, `onCommit` (the value once the viewer leaves the field or presses return, only when it changed since focus; a hardware Escape then puts back the value at focus), `placeholder`, `unit`, `act` |
+| `Input` | `kind` (`text`, `search`, `secret`, `source`, `number`, `email`: the email keyboard, the system's saved address, never corrected or capitalized), `value`, `onChange`, `onCommit` (the value once the viewer leaves the field or presses return, only when it changed since focus; a hardware Escape then puts back the value at focus), `placeholder`, `unit`, `act` |
 | `TextArea` | `kind` (`prose`, `source`), `value`, `onChange`, `onCommit` (the value once the viewer leaves the field having changed it; return is a new line), `placeholder`, `budget` (words) |
 | `InputOtp` | `length` (boxes), `value` (the digits), `onChange`, `onComplete` (the code once its last digit lands), `loading` (holds the boxes while the code is checked); it takes focus when it is drawn unless another input holds it, so the code step a sent code opens needs no tap; one invisible input over the boxes: the number pad, the system's one-time-code suggestion, a pasted code; inside a `FormField` its error is the field's line |
 | `EnumInput` | `value` (`string[]`), `onChange`, `placeholder`; each value on a `source` cell with a remove act, then a `source` field whose act adds the draft; a value already listed is refused, `words.duplicate` under the field |
@@ -123,12 +123,12 @@ sidebar. Pull to refresh is the phone's.
 | Component | Props |
 | --- | --- |
 | `ListRow` | `leading` (`{ icon }` or `{ status }`), `title`, `meta` (parts, one or two lines), `trailing` (`{ age }`, `{ count }` or `{ value }`), `marks` (`{ icon, label }[]`), `act`, `more` (the row's `Menu` items, a more circle at its end), `href` or `onOpen` |
-| `DefinitionRow` | `label`, `description`, `value` (a string, `{ status, label }` or an in-place control), `copyable`, `act`, `href` or `onOpen` |
+| `DefinitionRow` | `label`, `description`, `value` (a string, `{ status, label }` or an in-place control), `copyable`, `act`, `href` or `onOpen`; a `Picker` value stacks the row, as the web's under tablet: the label and the description, then the picker across the row with the act at its end |
 | `FormField` | `label`, `description`, `error`, `field` (a `FieldBinding`: the error is the field's and children is `(control) => …`, the control's value, handler and, for an autosaving binding, `onCommit`), one typing control as children |
 | `ItemHeader` | `overline` (parts), `title`, `facts` (parts and statuses), `loading` |
 | `SegmentedControl` | `options` (`{ value, label }[]`), `value`, `onChange` |
 | `Sheet` | `open`, `onClose`, `title`, `description`, `back`, `submit` (`{ label, onAct, blocked }`, top right), `foot`, children; `submit` and an `ActionBar` child exclude each other |
-| `Picker` | `label`, `options` (`{ value, label, description }[]`, or `{ label, options }[]` groups, each under its label), `value`, `onChange`; a search field above six options |
+| `Picker` | `label`, `options` (`{ value, label, description }[]`, or `{ label, options }[]` groups, each under its label), `value`, `onChange`; generic over its value, read off `options` alone, so an enum's options pick that enum and a value outside them is a type error; an option whose value is `null` is the empty choice, drawn in `ink-faint`, which makes the pick nullable and `onChange` hear `null`; a search field above six options |
 | `Menu` | `label` (read aloud on its more circle, the sheet's title), `items` (`{ label, onAct, icon, destructive, blocked }[]`, or a list of such lists for groups under hairlines); the phone's menu is a sheet of one-line acts, a destructive one in `danger`, a blocked one faded with its reason under it; the more circle of `Place` and `Screen` is the same sheet |
 | `QueryBoundary` | `query` (a `useQuery` result or a tuple of them), `sentence`, children (`(data) => …`, one value per query): the loading form while pending, the `EmptyState` with a retry act on error |
 | `OptionList` | `options` (`{ value, label, description, recommended }[]`), `value`, `onChange`, children under the chosen option |
