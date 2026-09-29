@@ -29,7 +29,15 @@
 	},
 	"assist": { "actions": { "source": { "organizeImports": "on" } } },
 	"linter": {
-		"enabled": true
+		"enabled": true,
+		"rules": {
+			"a11y": {
+				"useValidAriaRole": {
+					"level": "error",
+					"options": { "ignoreNonDom": true }
+				}
+			}
+		}
 	},
 	"css": {
 		"parser": {
