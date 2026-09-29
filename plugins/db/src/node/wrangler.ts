@@ -1,11 +1,12 @@
+import { LOCAL_PERSIST } from "@fcalell/plugin-cloudflare";
 import { runCommand } from "./exec.ts";
 
-// The generated wrangler config and the dev persistence dir. Every local
-// wrangler invocation (dev, migrations apply, d1 execute) must agree on BOTH so
-// schema, seed, and the running worker share one miniflare D1. `wrangler dev`
-// is spawned with the same `--config`/`--persist-to` in plugin-cloudflare.
+// The generated wrangler config and plugin-cloudflare's dev persistence dir.
+// Every local wrangler invocation (dev, migrations apply, d1 execute) must
+// agree on BOTH so schema, seed, and the running worker share one miniflare
+// D1. `wrangler dev` is spawned with the same `--config`/`--persist-to` in
+// plugin-cloudflare.
 export const WRANGLER_CONFIG = ".stack/wrangler.toml";
-export const LOCAL_PERSIST = ".stack/dev";
 
 // Flags that target the local miniflare-backed D1 that `wrangler dev` reads.
 export function localD1Flags(): string[] {

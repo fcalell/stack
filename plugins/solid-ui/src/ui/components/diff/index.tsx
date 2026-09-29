@@ -1,18 +1,22 @@
 import type { DiffLine, Hunk } from "@fcalell/ui-core/descriptors";
 import { CODE, DIFF_GUTTER, diffLine } from "@fcalell/ui-core/variants";
-import { For, Show } from "solid-js";
+import { createMemo, For, Show } from "solid-js";
 import type { Closed } from "#lib/closed.ts";
 import { cn } from "#lib/cn.ts";
 import { RING_INSET } from "#lib/interact.ts";
+import { lineHunks } from "#lib/line-diff.ts";
 import { LoadingRows } from "#lib/loading.tsx";
 
 // Mono with a line-number gutter pinned left; added lines on the ok soft,
 // removed on the danger soft, hunk headers on the group fill. One column at
-// every width: a pane is never wide enough for two readable sides.
-export type DiffProps = Closed & {
-	hunks: Hunk[];
-	loading?: boolean;
-};
+// every width: a pane is never wide enough for two readable sides. The lines
+// come as `hunks`, or as two texts a machine reads, `before` and `after` (a
+// JSON document observed beside the one specified), diffed here by line.
+export type DiffProps = Closed &
+	(
+		| { hunks: Hunk[]; before?: never; after?: never; loading?: boolean }
+		| { hunks?: never; before: string; after: string; loading?: boolean }
+	);
 
 const GUTTER = cn(
 	DIFF_GUTTER,
@@ -33,13 +37,16 @@ function Line(props: { line: DiffLine }) {
 }
 
 export function Diff(props: DiffProps) {
+	const hunks = createMemo(
+		() => props.hunks ?? lineHunks(props.before ?? "", props.after ?? ""),
+	);
 	return (
 		<Show when={!props.loading} fallback={<LoadingRows />}>
 			{/* The surface keeps its corners; the scroller inside it takes focus
 			    so a keyboard can scroll it. */}
 			<div class={cn(CODE, "overflow-hidden p-0")}>
 				<div tabindex="0" class={cn("overflow-x-auto", RING_INSET)}>
-					<For each={props.hunks}>
+					<For each={hunks()}>
 						{(hunk) => (
 							<>
 								<div class={cn(diffLine({ kind: "header" }), "px-row")}>

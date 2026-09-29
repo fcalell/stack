@@ -9,14 +9,17 @@
 			"default": "./dist/index.js"
 		},
 		"./app": "./src/ui/app/index.tsx",
-		"./components/*": [
-			"./src/ui/components/*/index.tsx",
-			"./src/ui/components/*/index.ts"
-		],
-		"./lib/*": [
-			"./src/ui/lib/*.ts",
-			"./src/ui/lib/*.tsx"
-		]
+		"./components/*": "./src/ui/components/*/index.tsx",
+		"./lib/busy": "./src/ui/lib/busy.tsx",
+		"./lib/circle": "./src/ui/lib/circle.tsx",
+		"./lib/glyph": "./src/ui/lib/glyph.tsx",
+		"./lib/hosts": "./src/ui/lib/hosts.tsx",
+		"./lib/icons": "./src/ui/lib/icons.tsx",
+		"./lib/loading": "./src/ui/lib/loading.tsx",
+		"./lib/more": "./src/ui/lib/more.tsx",
+		"./lib/parts": "./src/ui/lib/parts.tsx",
+		"./lib/words": "./src/ui/lib/words.tsx",
+		"./lib/*": "./src/ui/lib/*.ts"
 	},
 	"files": [
 		"dist",
@@ -72,7 +75,7 @@
 		"@gorhom/bottom-sheet": "^5.2.14",
 		"@orpc/tanstack-query": "^1.14.4",
 		"@tailwindcss/cli": "^4.1.7",
-		"@tanstack/react-query": "^5.101.0",
+		"@tanstack/react-query": "^5.104.0",
 		"@types/node": "^25.5.0",
 		"@types/react": "^19.2.16",
 		"lucide-react-native": "^1.17.0",

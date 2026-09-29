@@ -8,27 +8,36 @@ import { cn } from "../../lib/cn";
 import { Glyph } from "../../lib/glyph";
 import { useIcon } from "../../lib/icons";
 import { navigate, usePathname } from "../../lib/navigate";
+import { SwitcherContext } from "../../lib/switcher";
 import { dismissToast, useToasts } from "../../lib/toast";
 import { Count } from "../count";
 import { Toast } from "../toast";
+import { Confirmations } from "./confirmation";
 
 export interface ShellProps extends Closed {
 	places: readonly PlaceSpec<string>[];
 	banner?: ReactNode;
+	switcher?: ReactNode;
 	children?: ReactNode;
 }
 
 // The frame: the banner under the top, the content, the toast queue above
-// the bar, and the system-style tab bar with a hairline, icon over label and
-// a count where a place has one.
-export function Shell({ places, banner, children }: ShellProps) {
+// the bar, the `confirm()` decisions as a sheet, and the system-style tab bar with a hairline, icon over label and
+// a count where a place has one. `switcher` (what switches what the app is
+// looking at) starts each `Place`'s top bar, never a `Screen`'s: the tab
+// bar holds places only.
+export function Shell({ places, banner, switcher, children }: ShellProps) {
 	const insets = useSafeAreaInsets();
 	const pathname = usePathname();
 	const toasts = useToasts();
 	return (
 		<View className="flex-1 bg-canvas">
 			{banner ? <View style={{ paddingTop: insets.top }}>{banner}</View> : null}
-			<View className="flex-1">{children}</View>
+			<View className="flex-1">
+				<SwitcherContext.Provider value={switcher}>
+					{children}
+				</SwitcherContext.Provider>
+			</View>
 			{toasts.length > 0 ? (
 				<View
 					pointerEvents="box-none"
@@ -36,7 +45,11 @@ export function Shell({ places, banner, children }: ShellProps) {
 				>
 					{toasts.map((entry) => (
 						<Pressable key={entry.id} onPress={() => dismissToast(entry.id)}>
-							<Toast sentence={entry.sentence} act={entry.act} />
+							<Toast
+								sentence={entry.sentence}
+								state={entry.state}
+								act={entry.act}
+							/>
 						</Pressable>
 					))}
 				</View>
@@ -56,6 +69,7 @@ export function Shell({ places, banner, children }: ShellProps) {
 					/>
 				))}
 			</View>
+			<Confirmations />
 		</View>
 	);
 }

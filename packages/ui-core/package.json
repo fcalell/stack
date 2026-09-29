@@ -23,6 +23,10 @@
 			"types": "./dist/emit.d.ts",
 			"default": "./dist/emit.js"
 		},
+		"./commit": {
+			"types": "./dist/commit.d.ts",
+			"default": "./dist/commit.js"
+		},
 		"./cn": {
 			"types": "./dist/cn.d.ts",
 			"default": "./dist/cn.js"
@@ -63,6 +67,7 @@
 		"check-types": "tsc --noEmit --pretty",
 		"lint": "biome check --write --unsafe",
 		"check": "pnpm check-types && pnpm lint",
+		"test": "node --test 'test/**/*.test.ts'",
 		"verify": "tsx scripts/verify.ts",
 		"clear": "rm -rf dist node_modules .turbo"
 	},

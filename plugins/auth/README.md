@@ -60,7 +60,7 @@ worker's `Env` as `AuthCallbacks<Env>` to type it; leave the parameter off and `
 
 | Callback | Required | Runs when |
 |----------|----------|-----------|
-| `sendOTP` | yes, unless `emailOtp: false` | An email one-time password is issued. `type` says why (`sign-in`, `email-verification`, `forget-password`, `change-email`), so the email's copy can match |
+| `sendOTP` | yes, unless `emailOtp: false` | An email one-time password is issued. `type` says why (`sign-in`, `email-verification`, `forget-password`, `change-email`; typed `OtpType` from `@fcalell/plugin-auth/runtime`), so the email's copy can match |
 | `sendInvitation` | no | An organization invitation is sent. The payload carries `invitationId` (what the accept link names), the invited `role`, the `organization` (`id`, `name`, `slug`) and the `inviter` (`id`, `name`, `email`). The invitation expires after better-auth's 48 hours |
 | `beforeDelete` | no | `user.deleteUser` is on and an account is about to be deleted. Throw to refuse: an `APIError` surfaces its own status, anything else is a 500. Revocation, storage cleanup, and PII scrubbing belong here |
 | `sendDeleteVerification` | no | `user.deleteUser` is on and the consumer implements this callback. `deleteUser()` then emails `url` (a confirmation link) instead of deleting, the deletion happens when the link is opened, and no session freshness is required. This is the deletion path for passwordless apps |
@@ -158,6 +158,12 @@ auth({
 })
 ```
 
+The config holds `ac` and the roles, but only `ac`'s statements and each role's grants reach the
+generated worker and web client (`newRole` is a function no literal can carry); each rebuilds every
+role with better-auth's own access control from them. The web client's organization methods take
+the configured role names, so `authClient.organization.inviteMember({ role: "editor" })`
+type-checks and a role outside `roles` fails.
+
 Default roles (`owner`, `admin`, `member`) are available from `@fcalell/plugin-auth/access`:
 
 ```ts
@@ -166,6 +172,15 @@ import { defaultOrgRoles } from "@fcalell/plugin-auth/access";
 
 These statements also drive `procedure({ can: [action, resource] })`'s type-level autocomplete on
 the API side -- see `@fcalell/plugin-api`'s README for the procedure-config docs.
+
+An organization is served at `/<slug>`, so the server refuses a slug the app itself holds, on
+`organization.create` and on an `organization.update` that sets one: plugin-api's
+`RESERVED_SLUGS` and, with `solid-ui` in the config, every static first segment of your pages
+(`login`, `settings`, a group's pages included, a param never). No option: the list is derived
+from the pages at `stack generate`. The refusal is a 400 with code `ORGANIZATION_SLUG_RESERVED`
+and `fieldErrors: { slug }`, which the web client's answer carries; `useMutation` and `useApiForm`
+throw it with `data.fieldErrors`, so a form with a `slug` field shows it there, and a form that
+derives the slug from another field (a name) maps it onto that field.
 
 ### 4. Type inference
 
@@ -244,6 +259,8 @@ export * from "@fcalell/plugin-auth/schema/organization";
 ```
 
 The worker runtime only references these tables in `drizzleAdapter({ schema })` when `organization` is actually configured, so an app that never enables it never needs this re-export.
+
+`member.organizationId` and `invitation.organizationId` reference `organization` with no `ON DELETE` action, as better-auth's own field definitions do: better-auth's `organization.delete` removes the organization's `member` and `invitation` rows itself, then the `organization` row, so your own tables that reference `organization.id` with `onDelete: "cascade"` go with it. Delete an organization through that endpoint; a raw `DELETE FROM organization` fails on the member and invitation foreign keys. `session.activeOrganizationId` carries no foreign key: the endpoint clears it on the caller's session only, and other members' sessions keep the deleted id until they switch organization, which stack's scopes never read.
 
 Passkeys follow the same rule: with `passkey` enabled, re-export its table too.
 
@@ -384,11 +401,14 @@ With `organization` on and `src/shared/scopes.ts` present, the generated worker 
 to the runtime, which serves a lookup per scope with a slug: `auth.scope.<name>.bySlug`, taking
 `{ slug }` for the organization and `{ slug, parentId }` below it (a slug is unique within its
 parent). It answers the same chain a scoped procedure gets (`{ organization, member, project }`
-for a project) or `NOT_FOUND`. solid-ui's `ScopeBoundary` calls it; you never do.
+for a project) or `NOT_FOUND`. It declares `reads` on the membership and on each table of its
+chain by the table's SQL name (`member`, `organization`, `project`), so a mutation declaring
+`writes: ["project"]` refreshes the resolved scope: export each scope's table under its SQL name
+for its entity to match. solid-ui's `ScopeBoundary` calls it; you never do.
 
 ## Plugin implementation
 
-Built with `plugin` from `@fcalell/cli`. Owns four slots: `runtimeOptions` (derived; reads `api.slots.cors`, `api.slots.devCorsOrigins` and `api.slots.devTargetOrigins` so `trustedOrigins` is always computed against the fully-resolved CORS list, with the dev origins, frontends' first, kept in a separate `devTrustedOrigins` the runtime applies only under `STACK_DEV`), `appUrlDevDefault` (the `.dev.vars` default for `APP_URL`: the first frontend dev origin, else the deploy target's), `callbackFile` (the consumer callback-file path), and `cookiePrefix` (the resolved session-cookie prefix native-ui's generated constants read). `sameSite: "none"` is baked for native consumers (always cross-site) and widened to `none` in dev, where the frontend origin and the worker are cross-origin.
+Built with `plugin` from `@fcalell/cli`. Owns six slots: `runtimeOptions` (derived; reads `api.slots.cors`, `api.slots.devCorsOrigins` and `api.slots.devTargetOrigins` so `trustedOrigins` is always computed against the fully-resolved CORS list, with the dev origins, frontends' first, kept in a separate `devTrustedOrigins` the runtime applies only under `STACK_DEV`), `appUrlDevDefault` (the `.dev.vars` default for `APP_URL`: the first frontend dev origin, else the deploy target's), `callbackFile` (the consumer callback-file path), `cookiePrefix` (the resolved session-cookie prefix native-ui's generated constants read), `clientFlags` (the web client's flags), and `reservedSlugs` (a list: the top-level routes a frontend contributes, which `runtimeOptions` bakes beside `RESERVED_SLUGS` as the organization slugs the runtime refuses). `sameSite: "none"` is baked for native consumers (always cross-site) and widened to `none` in dev, where the frontend origin and the worker are cross-origin.
 
 ```ts
 import { plugin, slot, callback } from "@fcalell/cli";
@@ -480,7 +500,8 @@ With `solid-ui` in the config you never call it yourself: the plugin generates
 plugins the worker runs. `passkey` adds `passkeyClient()` (`signIn.passkey()`,
 `passkey.addPasskey()`, ...), `emailOtp` adds `emailOTPClient()`, and `organization` adds
 `organizationClient()` (`organization.create()`, `organization.inviteMember()`,
-`organization.acceptInvitation()`, ...). `baseURL` defaults to the page's own origin.
+`organization.acceptInvitation()`, ...), with the configured access control's statements and roles
+when `organization` is `{ ac, roles }` (better-auth's default roles when it is `true`). `baseURL` defaults to the page's own origin.
 
 ```ts
 import { authClient } from "../../.stack/auth-client.ts";
@@ -553,7 +574,7 @@ Requires the server `emailOtp` option (on by default) and a `sendOTP` callback i
 | `@fcalell/plugin-auth/infer` | `SessionUser`, `InferSession<T>` -- the session's user and the session derived from config |
 | `@fcalell/plugin-auth/client` | `createAuthClient({ baseURL?, passkey?, emailOtp?, organization? })`, `AuthClient` -- web client on `better-auth/solid`; solid-ui generates the call in `.stack/auth-client.ts` |
 | `@fcalell/plugin-auth/expo` | `createAuthClient()`, `AuthProvider`, `useAuthClient()`, `signInWith{Apple,Google}()`, `sendEmailOtp()` / `signInWithEmailOtp()` -- native client (runtime-only) |
-| `@fcalell/plugin-auth/runtime` | `authRuntime()`, `AuthCallbacks` (including `plugins`) -- runtime plugin factory + worker-safe callback file typing |
+| `@fcalell/plugin-auth/runtime` | `authRuntime()`, `AuthCallbacks` (including `plugins`), `Tenancy` (the context's scope resolver, exported so the worker project's declaration emit can name it) -- runtime plugin factory + worker-safe callback file typing |
 | `@fcalell/plugin-auth/schema` | `user`, `session`, `account`, `verification` -- core identity tables (always re-exported) |
 | `@fcalell/plugin-auth/schema/organization` | `organization`, `member`, `invitation` -- organization tables (re-exported only when `organization` is enabled) |
 | `@fcalell/plugin-auth/schema/passkey` | `passkey` -- the passkey table (re-exported only when `passkey` is enabled) |

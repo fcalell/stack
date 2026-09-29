@@ -515,3 +515,24 @@ export function writeRoutesDts(cwd: string, pagesDirRel: string): void {
 	mkdirSync(dtsDir, { recursive: true });
 	writeFileSync(join(dtsDir, "routes.d.ts"), dts);
 }
+
+// The static first segments of every URL the pages serve (`login`,
+// `settings`), through route groups and never a param: the addresses a
+// top-level slug would shadow. Sorted, one per segment; an empty list when the
+// pages directory does not exist yet.
+export function topLevelSegments(cwd: string, pagesDirRel: string): string[] {
+	const absPagesDir = join(cwd, pagesDirRel);
+	const files = existsSync(absPagesDir)
+		? fg.sync(["**/*.tsx", "**/*.jsx"], { cwd: absPagesDir }).sort()
+		: [];
+	const { root } = buildTree(files, absPagesDir);
+	const segments = new Set<string>();
+	const collect = (node: RouteNode) => {
+		for (const child of node.children.values()) {
+			if (child.segment === "" && !child.paramName) collect(child);
+			else if (!child.paramName) segments.add(child.segment);
+		}
+	};
+	collect(root);
+	return [...segments].sort();
+}

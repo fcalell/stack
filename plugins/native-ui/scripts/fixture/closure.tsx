@@ -12,6 +12,7 @@ import { Count } from "@fcalell/plugin-native-ui/components/count";
 import { Status } from "@fcalell/plugin-native-ui/components/status";
 import { Input } from "@fcalell/plugin-native-ui/components/input";
 import { TextArea } from "@fcalell/plugin-native-ui/components/text-area";
+import { InputOtp } from "@fcalell/plugin-native-ui/components/input-otp";
 import { Slider } from "@fcalell/plugin-native-ui/components/slider";
 import { Switch } from "@fcalell/plugin-native-ui/components/switch";
 import { Checkbox } from "@fcalell/plugin-native-ui/components/checkbox";
@@ -52,8 +53,30 @@ import { MessageInput } from "@fcalell/plugin-native-ui/components/message-input
 import { Meter } from "@fcalell/plugin-native-ui/components/meter";
 import { BarChart } from "@fcalell/plugin-native-ui/components/bar-chart";
 import { QrCode } from "@fcalell/plugin-native-ui/components/qr-code";
+import { Chip } from "@fcalell/plugin-native-ui/components/chip";
+import { EnumInput } from "@fcalell/plugin-native-ui/components/enum-input";
+import { Table } from "@fcalell/plugin-native-ui/components/table";
+import { Menu } from "@fcalell/plugin-native-ui/components/menu";
+import {
+	type QueryLike,
+	QueryBoundary,
+} from "@fcalell/plugin-native-ui/components/query-boundary";
+import type {
+	FieldBinding,
+	TableColumn,
+} from "@fcalell/ui-core/descriptors";
+import type { UseQueryResult } from "@tanstack/react-query";
 
 const noop = () => {};
+declare const text: FieldBinding<string>;
+declare const values: FieldBinding<string[]>;
+declare const count: QueryLike<number>;
+declare const names: QueryLike<string[]>;
+declare const live: UseQueryResult<{ id: string }[], Error>;
+const columns: TableColumn[] = [
+	{ key: "name", label: "a", edit: { control: "input" } },
+	{ key: "state", label: "a", kind: "status" },
+];
 
 export const closure = (
 	<>
@@ -177,6 +200,21 @@ export const closure = (
 		<TextArea value="" onChange={noop} selectionColorClassName="text-ink" />
 		{/* @ts-expect-error: closed channel */}
 		<TextArea value="" onChange={noop} placeholderTextColorClassName="text-ink" />
+		<InputOtp length={6} value="" onChange={noop} onComplete={noop} loading />
+		{/* @ts-expect-error: closed channel */}
+		<InputOtp length={6} value="" onChange={noop} className="x" />
+		{/* @ts-expect-error: closed channel */}
+		<InputOtp length={6} value="" onChange={noop} style={{ flex: 1 }} />
+		{/* @ts-expect-error: closed channel */}
+		<InputOtp length={6} value="" onChange={noop} class="x" />
+		{/* @ts-expect-error: closed channel */}
+		<InputOtp length={6} value="" onChange={noop} classList={{}} />
+		{/* @ts-expect-error: closed channel */}
+		<InputOtp length={6} value="" onChange={noop} colorClassName="text-ink" />
+		{/* @ts-expect-error: closed channel */}
+		<InputOtp length={6} value="" onChange={noop} selectionColorClassName="text-ink" />
+		{/* @ts-expect-error: closed channel */}
+		<InputOtp length={6} value="" onChange={noop} placeholderTextColorClassName="text-ink" />
 		<Slider label="a" value={1} onChange={noop} min={0} max={2} />
 		{/* @ts-expect-error: closed channel */}
 		<Slider label="a" value={1} onChange={noop} min={0} max={2} className="x" />
@@ -657,6 +695,44 @@ export const closure = (
 		<Diff hunks={[]} selectionColorClassName="text-ink" />
 		{/* @ts-expect-error: closed channel */}
 		<Diff hunks={[]} placeholderTextColorClassName="text-ink" />
+		<Menu label="a" items={[[{ label: "a", onAct: noop, icon: "a" }], [{ label: "a", onAct: noop, destructive: true, blocked: "a" }]]} />
+		{/* @ts-expect-error: closed channel */}
+		<Menu label="a" items={[]} className="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Menu label="a" items={[]} style={{ flex: 1 }} />
+		{/* @ts-expect-error: closed channel */}
+		<Menu label="a" items={[]} class="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Menu label="a" items={[]} classList={{}} />
+		{/* @ts-expect-error: closed channel */}
+		<Menu label="a" items={[]} colorClassName="text-ink" />
+		{/* @ts-expect-error: closed channel */}
+		<Menu label="a" items={[]} selectionColorClassName="text-ink" />
+		{/* @ts-expect-error: closed channel */}
+		<Menu label="a" items={[]} placeholderTextColorClassName="text-ink" />
+		<Diff before="a" after="b" />
+		{/* @ts-expect-error: hunks and two texts exclude each other */}
+		<Diff hunks={[]} before="a" after="b" />
+		<Code text="a" title="a" copy />
+		<Place title="a" bleed />
+		<ListRow title="a" more={[{ label: "a", onAct: noop }]} />
+		<Table columns={columns} rows={[]} selected="a" onOpen={noop} onEdit={noop} empty={null} loading />
+		{/* @ts-expect-error: a status column never edits */}
+		<Table columns={[{ key: "a", label: "a", kind: "status", edit: { control: "input" } }]} rows={[]} />
+		{/* @ts-expect-error: closed channel */}
+		<Table columns={[]} rows={[]} className="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Table columns={[]} rows={[]} style={{ flex: 1 }} />
+		{/* @ts-expect-error: closed channel */}
+		<Table columns={[]} rows={[]} class="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Table columns={[]} rows={[]} classList={{}} />
+		{/* @ts-expect-error: closed channel */}
+		<Table columns={[]} rows={[]} colorClassName="text-ink" />
+		{/* @ts-expect-error: closed channel */}
+		<Table columns={[]} rows={[]} selectionColorClassName="text-ink" />
+		{/* @ts-expect-error: closed channel */}
+		<Table columns={[]} rows={[]} placeholderTextColorClassName="text-ink" />
 		<FileRow path="a" added={1} removed={0} />
 		{/* @ts-expect-error: closed channel */}
 		<FileRow path="a" added={1} removed={0} className="x" />
@@ -762,6 +838,78 @@ export const closure = (
 		<BarChart series={[]} selectionColorClassName="text-ink" />
 		{/* @ts-expect-error: closed channel */}
 		<BarChart series={[]} placeholderTextColorClassName="text-ink" />
+		<Chip label="a" family={1} />
+		{/* @ts-expect-error: closed channel */}
+		<Chip label="a" family={1} className="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Chip label="a" family={1} style={{ flex: 1 }} />
+		{/* @ts-expect-error: closed channel */}
+		<Chip label="a" family={1} class="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Chip label="a" family={1} classList={{}} />
+		{/* @ts-expect-error: closed channel */}
+		<Chip label="a" family={1} colorClassName="text-ink" />
+		{/* @ts-expect-error: closed channel */}
+		<Chip label="a" family={1} selectionColorClassName="text-ink" />
+		{/* @ts-expect-error: closed channel */}
+		<Chip label="a" family={1} placeholderTextColorClassName="text-ink" />
+		{/* @ts-expect-error: a family is one of the six */}
+		<Chip label="a" family={7} />
+		<EnumInput value={["a"]} onChange={noop} placeholder="a" />
+		{/* @ts-expect-error: closed channel */}
+		<EnumInput value={[]} onChange={noop} className="x" />
+		{/* @ts-expect-error: closed channel */}
+		<EnumInput value={[]} onChange={noop} style={{ flex: 1 }} />
+		{/* @ts-expect-error: closed channel */}
+		<EnumInput value={[]} onChange={noop} class="x" />
+		{/* @ts-expect-error: closed channel */}
+		<EnumInput value={[]} onChange={noop} classList={{}} />
+		{/* @ts-expect-error: closed channel */}
+		<EnumInput value={[]} onChange={noop} colorClassName="text-ink" />
+		{/* @ts-expect-error: closed channel */}
+		<EnumInput value={[]} onChange={noop} selectionColorClassName="text-ink" />
+		{/* @ts-expect-error: closed channel */}
+		<EnumInput value={[]} onChange={noop} placeholderTextColorClassName="text-ink" />
+		<QueryBoundary query={count} sentence="a">{(n) => <Count value={n} />}</QueryBoundary>
+		{/* @ts-expect-error: closed channel */}
+		<QueryBoundary query={count} sentence="a" children={() => null} className="x" />
+		{/* @ts-expect-error: closed channel */}
+		<QueryBoundary query={count} sentence="a" children={() => null} style={{ flex: 1 }} />
+		{/* @ts-expect-error: closed channel */}
+		<QueryBoundary query={count} sentence="a" children={() => null} class="x" />
+		{/* @ts-expect-error: closed channel */}
+		<QueryBoundary query={count} sentence="a" children={() => null} classList={{}} />
+		{/* @ts-expect-error: closed channel */}
+		<QueryBoundary query={count} sentence="a" children={() => null} colorClassName="text-ink" />
+		{/* @ts-expect-error: closed channel */}
+		<QueryBoundary query={count} sentence="a" children={() => null} selectionColorClassName="text-ink" />
+		{/* @ts-expect-error: closed channel */}
+		<QueryBoundary query={count} sentence="a" children={() => null} placeholderTextColorClassName="text-ink" />
+		<QueryBoundary query={[live, count]} sentence="a">
+			{([rows, n]) => <Count value={rows.length + n} />}
+		</QueryBoundary>
+		<QueryBoundary query={[count, names]} sentence="a">
+			{([n, list]) => <Count value={n + list.length} />}
+		</QueryBoundary>
+		<FormField label="a" field={text}>
+			{(control) => <Input kind="source" {...control} />}
+		</FormField>
+		<FormField label="a" field={values}>
+			{(control) => <EnumInput {...control} />}
+		</FormField>
+		<FormField label="a" field={text}>
+			{(control) => (
+				<Picker
+					label="a"
+					options={[{ label: "a", options: [{ value: "a", label: "a" }] }]}
+					{...control}
+				/>
+			)}
+		</FormField>
+		<FormField label="a" field={text}>
+			{/* @ts-expect-error: the control takes the field's own type */}
+			{(control) => <Switch checked={control.value} onChange={noop} />}
+		</FormField>
 		<QrCode value="a" />
 		{/* @ts-expect-error: closed channel */}
 		<QrCode value="a" className="x" />

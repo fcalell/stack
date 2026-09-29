@@ -10,6 +10,17 @@
 // consumer only re-exports (and only migrates) this table when
 // `auth({ passkey })` is enabled, exactly as `./organization.ts` is; see
 // plugins/auth/README.md. Regenerate and diff after a Better Auth bump.
+
+// The drizzle types the emitted declarations spell, named here so they are
+// spelled through plugin-db, the one package drizzle resolves from. Unnamed,
+// tsc writes `import("drizzle-orm/...")`, which a consumer cannot resolve
+// from this package, and every table and row read through it is `any`.
+// biome-ignore lint/correctness/noUnusedImports: read by the declaration emit
+import type {
+	One,
+	Relations,
+	SQLiteTableWithColumns,
+} from "@fcalell/plugin-db/orm";
 import {
 	index,
 	integer,

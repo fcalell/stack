@@ -46,7 +46,8 @@ slot edges.
 @fcalell/cli               (core — defineConfig, plugin, slot.*, slot graph, CLI)
 
 plugin-cloudflare ────────> cli (owns cloudflare.slots.bindings/vars/routes/wranglerToml;
-                                 derives from api.slots.env / routePrefixes, empty without api)
+                                 derives from api.slots.env / routePrefixes, empty without api;
+                                 contributes to vite.slots.serverProxy for same-origin dev)
 plugin-vite ──────────────> cli (owns vite.slots.configImports/pluginCalls/devServerPort/viteConfig;
                                  contributes to api.slots.devCorsOrigins for localhost dev)
 plugin-expo ──────────────> cli (owns expo.slots.metroConfig/expoConfig/entrySource/routesDtsSource,

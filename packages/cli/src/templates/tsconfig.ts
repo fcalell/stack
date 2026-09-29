@@ -1,12 +1,37 @@
-interface TsconfigOptions {
+// Which environments the consumer spans, from its plugin names: the one
+// decision behind both the files `stack init` writes and the tsconfig the
+// worker's bundler reads (`workerTsconfig`).
+export interface TsconfigLayout {
 	solid: boolean;
 	native: boolean;
 	worker: boolean;
+}
+
+export function tsconfigLayout(plugins: readonly string[]): TsconfigLayout {
+	return {
+		solid: plugins.includes("solid") || plugins.includes("solid-ui"),
+		native: plugins.includes("expo"),
+		worker: plugins.includes("api") || plugins.includes("db"),
+	};
+}
+
+function isSplit(layout: TsconfigLayout): boolean {
+	return layout.worker && (layout.native || layout.solid);
+}
+
+// The consumer tsconfig that compiles the worker's sources, the one holding
+// the `virtual:stack-procedure` alias: the worker project under the split,
+// else the single root config.
+export function workerTsconfig(layout: TsconfigLayout): string {
+	return isSplit(layout) ? "tsconfig.worker.json" : "tsconfig.json";
+}
+
+interface TsconfigOptions extends TsconfigLayout {
 	// `compilerOptions.paths` entries plugins contribute via
 	// `cliSlots.tsconfigPaths` (e.g. plugin-api's `virtual:stack-procedure` ->
 	// `.stack/procedure.ts` alias). Domain-owned data — core only decides
-	// *where* it lands (single config vs. the native split's worker project),
-	// never *what* the mapping contains.
+	// *where* it lands (single config vs. the split's worker project), never
+	// *what* the mapping contains.
 	procedurePaths: Record<string, string[]>;
 	// `compilerOptions.types` entries plugins contribute via
 	// `cliSlots.tsconfigTypes` (e.g. plugin-native-ui's `uniwind/types` global
@@ -14,13 +39,25 @@ interface TsconfigOptions {
 	nativeTypes: string[];
 }
 
-// Native consumers span two TypeScript environments that cannot share one
-// config: the Expo app (JSX, react-native lib, bundler resolution) and the
-// Cloudflare worker (workerd globals from the generated
-// `worker-configuration.d.ts`, no DOM). They are split into two composite
-// projects under a solution `tsconfig.json` so `tsc -b` checks both and
-// editors pick the right env per file. Non-native consumers keep a single
-// config. Returns `[filename, content]` pairs so init can write them all.
+// A consumer with both an app and a worker spans two TypeScript environments
+// that cannot share one program: the app (DOM, or react-native) and the
+// worker (workerd globals from the generated `worker-configuration.d.ts`, no
+// DOM). One program merges both sets of globals and they collide: the Workers
+// runtime declares HTMLRewriter's `Element` as a global interface, so DOM's
+// `Element.append` takes only `string | ReadableStream | Response`. The two
+// are split into projects under a solution `tsconfig.json`, so `tsc -b`
+// checks both and editors pick the right env per file. Every other consumer
+// keeps a single config. Returns `[filename, content]` pairs so init can
+// write them all.
+//
+// The app still needs the worker's types: the typed API client takes the
+// router type (`.stack/worker`'s `AppRouter`), whose procedure inputs and
+// outputs are inferred from worker sources that only type-check under the
+// Workers globals. So the worker project emits declarations into
+// `.stack/types/` and the app references it: `tsc -b` builds the worker
+// first, and an app import of a worker file resolves to its declaration, so
+// no worker source enters the app's program. The declarations carry the
+// procedures' plain input and output types, never the request context.
 //
 // `virtual:stack-procedure` resolves to the generated `.stack/procedure.ts`
 // via a tsconfig `paths` alias rather than a bundler virtual-module plugin:
@@ -28,11 +65,22 @@ interface TsconfigOptions {
 // bundling) resolves tsconfig `paths` natively, the node target maps the
 // specifier with a `registerHooks` resolve hook, and `paths` needs no
 // `baseUrl` to resolve relative to the tsconfig's own directory (TS 4.1+).
+// esbuild otherwise reads the tsconfig nearest each file, under the split the
+// solution config with no `paths`, so the CLI names `workerTsconfig` to the
+// bundler through `cliSlots.workerTsconfig`.
 export function tsconfigTemplate(
 	options: TsconfigOptions,
 ): Array<[string, string]> {
+	if (isSplit(options)) {
+		const base = options.native ? nativeApp(options.nativeTypes) : solidApp();
+		return [
+			["tsconfig.json", render(SOLUTION)],
+			["tsconfig.app.json", render(appProject(base))],
+			["tsconfig.worker.json", render(workerProject(options))],
+		];
+	}
 	if (options.native) {
-		return options.worker ? nativeSplit(options) : nativeAppOnly(options);
+		return [["tsconfig.json", render(nativeApp(options.nativeTypes))]];
 	}
 
 	const single = {
@@ -42,59 +90,106 @@ export function tsconfigTemplate(
 		compilerOptions: options.worker
 			? { paths: options.procedurePaths }
 			: undefined,
-		include: ["src", ".stack"],
+		// The generated declarations at the `.stack/` root (`Env`, typed
+		// routes) are the only generated files the consumer's type-check
+		// loads; the rest are bundler inputs that reach `tsc` only through an
+		// import (`virtual:stack-procedure`, `worker-configuration.d.ts`'s
+		// `import("./worker")`). A bare `.stack` entry matches nothing: `tsc`
+		// reads an include whose last segment holds a `.` as a file name, not
+		// a directory.
+		include: ["src", ".stack/*.d.ts"],
 	};
 	return [["tsconfig.json", render(single)]];
 }
 
-function nativeSplit(options: TsconfigOptions): Array<[string, string]> {
-	const solution = {
-		files: [],
-		references: [
-			{ path: "./tsconfig.app.json" },
-			{ path: "./tsconfig.worker.json" },
-		],
+const SOLUTION = {
+	files: [],
+	references: [
+		{ path: "./tsconfig.app.json" },
+		{ path: "./tsconfig.worker.json" },
+	],
+};
+
+interface Project {
+	extends: string;
+	compilerOptions: Record<string, unknown>;
+	include: string[];
+	exclude?: string[];
+	references?: Array<{ path: string }>;
+}
+
+// Everything but the worker's tree, which it reads only through the worker
+// project's declarations. The app never emits, so its own declaration
+// diagnostics are off. Editors follow a project reference to its sources by
+// default, which would type those sources under the app's globals; the
+// redirect is off so they read the declarations, as `tsc -b` does, current
+// as of the last build. `tsc -b` writes the build info even under `noEmit`;
+// it lands in `node_modules/.tmp`, ignored already.
+function appProject(config: Project): Project {
+	return {
+		...config,
+		compilerOptions: {
+			...config.compilerOptions,
+			noEmit: true,
+			declaration: false,
+			declarationMap: false,
+			disableSourceOfProjectReferenceRedirect: true,
+			tsBuildInfoFile: "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+		},
+		exclude: ["src/worker"],
+		references: [{ path: "./tsconfig.worker.json" }],
 	};
-	const worker = {
+}
+
+// The worker's sources, the schema, the isomorphic shared code, the generated
+// worker files and the `Env` declarations, with no ambient package types. A
+// referenced project lists every file its program loads, so `src/shared`
+// (which the schema and routes import) is its own and the app reads it
+// through its declarations too. The shared trees' tests run under node and
+// are checked with the app, whose program loads `@types/node`.
+// `declarationMap` lets an editor jump from the app to a procedure's source.
+// The build info sits with the declarations, so removing `.stack/` rebuilds
+// them rather than leaving `tsc -b` to call a project with no output current.
+function workerProject(options: TsconfigOptions): Project {
+	return {
 		extends: "@fcalell/typescript-config/node-tsx.json",
 		compilerOptions: {
-			composite: true,
-			// `node-tsx` (via base) disables incremental, which composite
-			// forbids; the explicit build-info path keeps it out of the shared
-			// typescript-config package's `dist`.
-			incremental: true,
-			noEmit: true,
-			tsBuildInfoFile: "./tsconfig.worker.tsbuildinfo",
 			types: [],
 			paths: options.procedurePaths,
+			composite: true,
+			// `node-tsx` (via base) disables incremental, which composite
+			// forbids.
+			incremental: true,
+			noEmit: false,
+			emitDeclarationOnly: true,
+			declarationMap: true,
+			outDir: "./.stack/types",
+			tsBuildInfoFile: "./.stack/types/tsconfig.worker.tsbuildinfo",
 		},
 		include: [
 			"src/worker",
 			"src/schema",
+			"src/shared",
 			".stack/worker.ts",
 			".stack/procedure.ts",
 			".stack/worker-configuration.d.ts",
 		],
+		exclude: ["src/schema/**/*.test.ts", "src/shared/**/*.test.ts"],
 	};
-	return [
-		["tsconfig.json", render(solution)],
-		["tsconfig.app.json", render(appProject(true, options.nativeTypes))],
-		["tsconfig.worker.json", render(worker)],
-	];
 }
 
-function nativeAppOnly(options: TsconfigOptions): Array<[string, string]> {
-	return [["tsconfig.json", render(appProject(false, options.nativeTypes))]];
+function solidApp(): Project {
+	return {
+		extends: "@fcalell/typescript-config/solid-vite.json",
+		compilerOptions: {},
+		include: ["src", ".stack/routes.d.ts"],
+	};
 }
 
-function appProject(
-	composite: boolean,
-	types: string[],
-): Record<string, unknown> {
+function nativeApp(types: string[]): Project {
 	return {
 		extends: "expo/tsconfig.base",
 		compilerOptions: {
-			...(composite ? { composite: true } : {}),
 			noEmit: true,
 			strict: true,
 			noUncheckedIndexedAccess: true,
@@ -107,21 +202,12 @@ function appProject(
 			// plugin contributes one (e.g. `expo()` without `nativeUi()`).
 			types,
 		},
-		include: composite
-			? [
-					"src/app",
-					"src/ui",
-					"src/lib",
-					".stack/entry.tsx",
-					".stack/routes.d.ts",
-					".stack/expo-env.d.ts",
-				]
-			: [
-					"src",
-					".stack/entry.tsx",
-					".stack/routes.d.ts",
-					".stack/expo-env.d.ts",
-				],
+		include: [
+			"src",
+			".stack/entry.tsx",
+			".stack/routes.d.ts",
+			".stack/expo-env.d.ts",
+		],
 	};
 }
 

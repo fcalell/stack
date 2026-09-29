@@ -4,9 +4,15 @@ import {
 	AVATAR_STEP_DEGREES,
 	AVATAR_VALUE,
 	BREAKPOINTS,
+	CHIP_OFFSET_DEGREES,
+	CHIP_STEP_DEGREES,
+	CHIP_VALUE,
 	COLORS,
 	type ColorDeclaration,
 	type ColorValue,
+	DENSITY_GEOMETRY,
+	DENSITY_SIZES,
+	type DensitySize,
 	FONT_FALLBACKS,
 	type FontRole,
 	type HueBinding,
@@ -48,6 +54,9 @@ export interface ResolvedTheme {
 	scales: Record<ScaleKey, string>;
 	// The two family stacks, the knob's family ahead of the platform fallback.
 	fonts: Record<FontRole, string>;
+	// The density sizes, both sets: `touch` is what every platform seeds,
+	// `compact` what a fine pointer takes under `density: "desktop"`.
+	sizes: Record<"touch" | "compact", Record<DensitySize, string>>;
 }
 
 // Three decimals with trailing zeros stripped reproduces every reference value
@@ -86,6 +95,16 @@ function declarationOf(token: PerModeColor, knobs: Knobs): ColorDeclaration {
 		return {
 			light: { ...AVATAR_VALUE.light, hue },
 			dark: { ...AVATAR_VALUE.dark, hue },
+		};
+	}
+	const family = /^chip-(\d)$/.exec(token)?.[1];
+	if (family !== undefined) {
+		const offset =
+			(Number(family) - 1) * CHIP_STEP_DEGREES + CHIP_OFFSET_DEGREES;
+		const hue: HueBinding = { knob: "accentHue", offset };
+		return {
+			light: { ...CHIP_VALUE.light, hue },
+			dark: { ...CHIP_VALUE.dark, hue },
 		};
 	}
 	return COLORS[token as keyof typeof COLORS];
@@ -171,6 +190,19 @@ function scalesFor(knobs: Knobs): Record<ScaleKey, string> {
 	return scales;
 }
 
+function sizesFor(
+	knobs: Knobs,
+	set: "touch" | "compact",
+): Record<DensitySize, string> {
+	const sizes = {} as Record<DensitySize, string>;
+	for (const size of DENSITY_SIZES) {
+		const value = DENSITY_GEOMETRY[set][size];
+		const px = typeof value === "number" ? value : knobs.space * value.space;
+		sizes[size] = `${px}px`;
+	}
+	return sizes;
+}
+
 function knobsOf(parsed: ParsedTheme): Knobs {
 	const knobs: Knobs = {
 		accentHue: parsed.accentHue ?? KNOB_DEFAULTS.accentHue,
@@ -184,6 +216,7 @@ function knobsOf(parsed: ParsedTheme): Knobs {
 		radius: parsed.radius ?? KNOB_DEFAULTS.radius,
 		text: parsed.text ?? KNOB_DEFAULTS.text,
 		elevation: parsed.elevation ?? KNOB_DEFAULTS.elevation,
+		density: parsed.density ?? KNOB_DEFAULTS.density,
 		fonts: {
 			sans: parsed.fonts?.sans ?? KNOB_DEFAULTS.fonts.sans,
 			mono: parsed.fonts?.mono ?? KNOB_DEFAULTS.fonts.mono,
@@ -248,6 +281,10 @@ export function deriveTheme(theme: Theme = {}): ResolvedTheme {
 		fonts: {
 			sans: fontStack(knobs.fonts.sans, "sans"),
 			mono: fontStack(knobs.fonts.mono, "mono"),
+		},
+		sizes: {
+			touch: sizesFor(knobs, "touch"),
+			compact: sizesFor(knobs, "compact"),
 		},
 	};
 }

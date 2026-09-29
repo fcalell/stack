@@ -143,6 +143,7 @@ const NATIVE_OVERLAYS = [
 	"h-1",
 	"h-2",
 	"h-8",
+	"inset-0",
 	"inset-x-0",
 	"inset-y-0",
 	"italic",
@@ -753,12 +754,12 @@ check("a5", "a knob move touches only its roles", () => {
 	for (const index of diffs) {
 		const line = before[index] ?? "";
 		assert(
-			/--color-(tint|avatar-\d):/.test(line) &&
-				/--color-(tint|avatar-\d):/.test(after[index] ?? ""),
-			`a line off tint and the avatar ladder moved: ${line} -> ${after[index]}`,
+			/--color-(tint|avatar-\d|chip-\d):/.test(line) &&
+				/--color-(tint|avatar-\d|chip-\d):/.test(after[index] ?? ""),
+			`a line off tint and the avatar and chip ladders moved: ${line} -> ${after[index]}`,
 		);
 	}
-	return `${diffs.length} lines moved, every one a --color-tint or --color-avatar-* declaration`;
+	return `${diffs.length} lines moved, every one a --color-tint, --color-avatar-* or --color-chip-* declaration`;
 });
 
 check("a7", "uniwind's own compiler consumes the sheet", () => {
@@ -1206,6 +1207,46 @@ check("b9", "the gate passes geometry and throws on the look", () => {
 		`unexpected message:\n${failure.message}`,
 	);
 	return "pass and src-less trees clean, the fail tree throws GEOMETRY_GATE naming both violations in one run";
+});
+
+// ── The exports, as a consumer resolves them ────────────────────────
+
+// Every component and every lib module, resolved by plain node (no tsx
+// hooks, which add extensions of their own) through the package's
+// `exports`. A resolver takes the first target of an export array, so only a
+// real resolution to an existing file proves a subpath reaches its module.
+check("b-exports", "every subpath reaches its file through exports", () => {
+	const libDir = resolve(pkgDir, "src/ui/lib");
+	const expected = new Map<string, string>();
+	for (const name of readdirSync(libDir)) {
+		expected.set(`lib/${name.replace(/\.tsx?$/, "")}`, resolve(libDir, name));
+	}
+	for (const dir of readdirSync(COMPONENT_DIR)) {
+		expected.set(`components/${dir}`, resolve(COMPONENT_DIR, dir, "index.tsx"));
+	}
+	const script = `const out = {}; for (const s of ${JSON.stringify([...expected.keys()])}) { try { out[s] = import.meta.resolve("@fcalell/plugin-native-ui/" + s); } catch { out[s] = null; } } console.log(JSON.stringify(out));`;
+	const output = execFileSync(
+		process.execPath,
+		["--input-type=module", "-e", script],
+		{
+			cwd: pkgDir,
+			encoding: "utf8",
+			env: { ...process.env, NODE_OPTIONS: "" },
+		},
+	);
+	const resolved = JSON.parse(output) as Record<string, string | null>;
+	const broken: string[] = [];
+	for (const [subpath, file] of expected) {
+		const url = resolved[subpath];
+		const path = url ? fileURLToPath(url) : undefined;
+		if (path !== file || !existsSync(path))
+			broken.push(`${subpath} -> ${path ?? "nothing"}`);
+	}
+	assert(
+		broken.length === 0,
+		`subpaths a consumer cannot import:\n  ${broken.join("\n  ")}`,
+	);
+	return `${expected.size} lib and component subpaths, each resolved to its own file`;
 });
 
 // ── Report ──────────────────────────────────────────────────────────

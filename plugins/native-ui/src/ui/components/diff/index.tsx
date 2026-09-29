@@ -3,12 +3,18 @@ import { DIFF_GUTTER, diffLine, GROUP, text } from "@fcalell/ui-core/variants";
 import { Text as RNText, ScrollView, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
+import { lineHunks } from "../../lib/line-diff";
 import { LoadingRows } from "../../lib/loading";
 
-export interface DiffProps extends Closed {
-	hunks: readonly Hunk[];
+interface DiffBase extends Closed {
 	loading?: boolean;
 }
+
+// The lines come as `hunks`, or as two texts a machine reads, `before` and
+// `after`, diffed here by line.
+export type DiffProps =
+	| (DiffBase & { hunks: readonly Hunk[]; before?: never; after?: never })
+	| (DiffBase & { hunks?: never; before: string; after: string });
 
 // A hunk is keyed by its header and its first line numbers, which no two
 // hunks of one diff share.
@@ -19,8 +25,9 @@ function hunkKey(hunk: Hunk): string {
 
 // Mono with a line-number gutter that scrolls with the lines; added lines on
 // ok-soft, removed on danger-soft. The phone draws unified.
-export function Diff({ hunks, loading }: DiffProps) {
+export function Diff({ hunks: given, before, after, loading }: DiffProps) {
 	if (loading) return <LoadingRows />;
+	const hunks = given ?? lineHunks(before ?? "", after ?? "");
 	return (
 		<ScrollView
 			horizontal

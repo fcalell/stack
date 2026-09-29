@@ -84,6 +84,21 @@ export function renderClassRule(
 	].join("\n");
 }
 
+// A `:root` rule inside one media query, built across the same boundary: a
+// token block a device class sets, such as the compact density sizes.
+export function renderMediaRootRule(
+	query: string,
+	declarations: Record<string, string>,
+): string {
+	return [
+		`@media ${query} {`,
+		":root {",
+		...renderDeclarations(declarations),
+		"}",
+		"}",
+	].join("\n");
+}
+
 function renderDeclarations(declarations: Record<string, string>): string[] {
 	return Object.entries(declarations).map(
 		([property, value]) =>

@@ -246,7 +246,7 @@ Returns `{ db }` to downstream plugins via the builder's context accumulation.
 | Subpath | Purpose |
 |---------|---------|
 | `@fcalell/plugin-db` | `db()`, `DbOptions` |
-| `@fcalell/plugin-db/orm` | Drizzle table/column builders, operators, relations, aggregates, `defineSeed`/`seedTable` |
+| `@fcalell/plugin-db/orm` | Drizzle table/column builders, table constraints (`check`, `unique`, `primaryKey`, `foreignKey`, `index`, `uniqueIndex`), operators, relations, aggregates, table and view introspection (`getTableColumns`, `getTableName`, `getTableConfig`, `isTable`, `getViewName`, `getViewSelectedFields`, `getViewConfig`, `isView`), `defineSeed`/`seedTable` |
 | `@fcalell/plugin-db/d1` | `createClient()` for Cloudflare D1 |
 | `@fcalell/plugin-db/sqlite` | `createClient()` for SQLite (requires `better-sqlite3`) |
 | `@fcalell/plugin-db/runtime` | `dbRuntime()` -- D1 runtime plugin factory |

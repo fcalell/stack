@@ -8,7 +8,7 @@ import { RING, WASH } from "#lib/interact.ts";
 
 // The circle behind every icon-only act the plugin draws itself: back,
 // close, more, the row's more. `IconButton` is the same circle with the
-// consumer's glyph. The label is read aloud, never drawn. 44 px in the body;
+// consumer's glyph. The label is read aloud, never drawn. The floor in the body;
 // in a top bar it draws compact and keeps the 44 px hit area.
 const CIRCLE_SHELL = cn(
 	"inline-flex shrink-0 cursor-pointer items-center justify-center transition-colors duration-(--duration-fast) ease-ui disabled:cursor-not-allowed",
@@ -19,7 +19,7 @@ const CIRCLE_SHELL = cn(
 export const circle = (fit: ButtonFit) =>
 	fit === "bar"
 		? cn(ICON_BUTTON_BAR, CIRCLE_SHELL, "size-8", BAR_HIT)
-		: cn(ICON_BUTTON, CIRCLE_SHELL, "size-11");
+		: cn(ICON_BUTTON, CIRCLE_SHELL, "size-floor");
 
 export const glyph = (fit: ButtonFit) =>
 	fit === "bar" ? "size-4 shrink-0" : "size-5 shrink-0";

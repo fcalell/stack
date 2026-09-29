@@ -1,8 +1,6 @@
-// Conditions
-// Ordering
-// Aggregates
-// Relations
-// SQL template tag
+// Conditions, ordering, aggregates, relations, the SQL template tag, and the
+// table and view introspection a helper reads a table through (its columns,
+// its name, whether a value is one).
 export {
 	and,
 	asc,
@@ -13,12 +11,18 @@ export {
 	desc,
 	eq,
 	exists,
+	getTableColumns,
+	getTableName,
+	getViewName,
+	getViewSelectedFields,
 	gt,
 	gte,
 	ilike,
 	inArray,
 	isNotNull,
 	isNull,
+	isTable,
+	isView,
 	like,
 	lt,
 	lte,
@@ -37,10 +41,13 @@ export {
 	sum,
 } from "drizzle-orm";
 
-// Table definition
+// Table definition, and its introspection (indexes, keys, checks)
 export {
 	blob,
+	check,
 	foreignKey,
+	getTableConfig,
+	getViewConfig,
 	index,
 	integer,
 	numeric,
@@ -50,16 +57,31 @@ export {
 	sqliteTableCreator,
 	sqliteView,
 	text,
+	unique,
 	uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 
 import type { InferInsertModel } from "drizzle-orm";
 import type { SQLiteTable } from "drizzle-orm/sqlite-core";
 
-// The table and row types a plugin's typed surface names (plugin-auth's
-// scopes).
-export type { InferInsertModel, InferSelectModel } from "drizzle-orm";
-export type { SQLiteColumn, SQLiteTable } from "drizzle-orm/sqlite-core";
+// The table, relation and row types a plugin's typed surface names
+// (plugin-auth's tables and scopes). A plugin's emitted declarations name a
+// drizzle type through this module, the one it depends on; drizzle itself
+// resolves from plugin-db alone, so a type missing here is emitted as a
+// `drizzle-orm` import that resolves to nothing in a consumer, and every row
+// read through it is `any`.
+export type {
+	InferInsertModel,
+	InferSelectModel,
+	Many,
+	One,
+	Relations,
+} from "drizzle-orm";
+export type {
+	SQLiteColumn,
+	SQLiteTable,
+	SQLiteTableWithColumns,
+} from "drizzle-orm/sqlite-core";
 
 // Seed authoring surface for `src/schema/seed.ts`. `seedTable` pins each row to
 // its table's insert model (typed against the schema, no column mapping, no

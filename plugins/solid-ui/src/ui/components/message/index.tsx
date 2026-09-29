@@ -50,7 +50,7 @@ export function Message(props: MessageProps) {
 								<button
 									type="button"
 									onClick={() => props.onOpen?.()}
-									class={cn("min-h-11 cursor-pointer rounded-group", RING)}
+									class={cn("min-h-floor cursor-pointer rounded-group", RING)}
 								>
 									{props.body}
 								</button>

@@ -1,7 +1,7 @@
 import type { Act, IconAct } from "@fcalell/ui-core/descriptors";
 import { text } from "@fcalell/ui-core/variants";
 import { A } from "@solidjs/router";
-import { ChevronLeft, Ellipsis } from "lucide-solid";
+import { ChevronLeft } from "lucide-solid";
 import {
 	createEffect,
 	createSignal,
@@ -11,19 +11,18 @@ import {
 	Show,
 } from "solid-js";
 import { BarContext } from "#lib/bar.ts";
-import { Circle, circle, glyph } from "#lib/circle.tsx";
+import { circle, glyph } from "#lib/circle.tsx";
 import type { Closed } from "#lib/closed.ts";
 import { cn } from "#lib/cn.ts";
 import { FitContext } from "#lib/fit.ts";
 import { useCover } from "#lib/frame.ts";
 import { HeadingContext } from "#lib/heading.ts";
 import { RING_INSET } from "#lib/interact.ts";
-import { MeasureContext, measured } from "#lib/measure.ts";
+import { createWidthClaims, MeasureContext, measured } from "#lib/measure.ts";
+import { barItems, MenuCircle } from "#lib/menu.tsx";
 import { reachable } from "#lib/reach.ts";
 import { useWords } from "#lib/words.tsx";
 import { IconButton } from "../icon-button/index.tsx";
-import { ListRow } from "../list-row/index.tsx";
-import { Sheet } from "../sheet/index.tsx";
 
 // A screen pushed over a place: a back circle, the title compact and centred
 // in the top bar, its actions; no tab bar. An `ItemHeader` inside claims the
@@ -49,8 +48,8 @@ export function Screen(props: ScreenProps) {
 	const words = useWords();
 	useCover();
 	const [compact, setCompact] = createSignal(false);
-	const [more, setMore] = createSignal(false);
-	const [whole, setWhole] = createSignal(false);
+	const claims = createWidthClaims();
+	const whole = claims.whole;
 	const [claimed, setClaimed] = createSignal<HTMLElement | null | undefined>();
 	// Under a claim the top bar's title shows once the item's heading has
 	// scrolled away; with no claim it is the heading and always shows.
@@ -68,7 +67,7 @@ export function Screen(props: ScreenProps) {
 	return (
 		<BarContext.Provider value="pinned">
 			<HeadingContext.Provider value={setClaimed}>
-				<MeasureContext.Provider value={setWhole}>
+				<MeasureContext.Provider value={claims.claim}>
 					<div class="fixed inset-x-0 top-(--banner-height) bottom-0 z-40 flex flex-col bg-surface tablet:static tablet:z-auto tablet:min-h-0 tablet:flex-1">
 						<FitContext.Provider value="bar">
 							{/* Three columns keep the title centred whatever the sides
@@ -124,10 +123,10 @@ export function Screen(props: ScreenProps) {
 										)}
 									</For>
 									<Show when={rest().length + (props.more?.length ?? 0) > 0}>
-										<Circle
-											glyph={Ellipsis}
+										<MenuCircle
 											label={words.more}
-											onAct={() => setMore(true)}
+											title={props.title}
+											items={barItems(rest(), props.more ?? [])}
 										/>
 									</Show>
 								</div>
@@ -149,40 +148,6 @@ export function Screen(props: ScreenProps) {
 								{props.children}
 							</div>
 						</div>
-						<Sheet
-							open={more()}
-							onClose={() => setMore(false)}
-							title={props.title}
-						>
-							<For each={rest()}>
-								{(action) => (
-									<ListRow
-										leading={{ icon: action.icon }}
-										title={action.label}
-										onOpen={() => {
-											setMore(false);
-											action.onAct();
-										}}
-									/>
-								)}
-							</For>
-							<For each={props.more ?? []}>
-								{(act) => (
-									<ListRow
-										title={act.label}
-										meta={act.blocked ? [act.blocked] : undefined}
-										onOpen={
-											act.blocked === undefined
-												? () => {
-														setMore(false);
-														act.onAct();
-													}
-												: undefined
-										}
-									/>
-								)}
-							</For>
-						</Sheet>
 					</div>
 				</MeasureContext.Provider>
 			</HeadingContext.Provider>

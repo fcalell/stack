@@ -8,19 +8,23 @@ records and ui-core stays framework-free. Two subpaths are Node-only: `./harness
 tooling for the packages' verify scripts, and `./gate` is the geometry scanner the UI plugins run
 at build time.
 
-Ten subpaths:
+Eleven subpaths:
 
 - `@fcalell/ui-core/tokens`: the contract as data, including the calibrated defaults and the
   English `words`.
 - `@fcalell/ui-core/schema`: the zod `themeSchema` and `wordsSchema`, and the `Theme` input type.
 - `@fcalell/ui-core/derive`: `deriveTheme(theme)` resolves knobs and overrides into final values.
-- `@fcalell/ui-core/emit`: `themeTokens`, `modeTokens`, and `shadowUtilities` shape those values
-  into the records a plugin renders.
+- `@fcalell/ui-core/emit`: `themeTokens`, `modeTokens`, `compactTokens`, and `shadowUtilities`
+  shape those values into the records a plugin renders.
 - `@fcalell/ui-core/cn`: `cn()`, the class merger, taught the contract's six scales.
 - `@fcalell/ui-core/variants`: the platform-invariant variant matrices, each a cva built from a
   table, and the single-cell constants beside them.
-- `@fcalell/ui-core/descriptors`: `Act`, `IconAct`, `Part`, `Mark`, `Option`, `PlaceSpec`, `Hunk`
-  and the other framework-free types a prop carries.
+- `@fcalell/ui-core/descriptors`: `Act`, `IconAct`, `Part`, `Mark`, `Option`, `OptionGroup`,
+  `PlaceSpec`, `Hunk`, `FieldBinding`, `Confirmation`, `MenuItem`, `TableColumn`, `TableRow`,
+  `CellEdit` and the other framework-free types a prop carries.
+- `@fcalell/ui-core/commit`: `commitMoment()`, when a typing control's value is final: on
+  leaving the field or Enter, only when it changed since focus, Escape restoring the value at
+  focus. Both plugins' `Input` and `TextArea` drive their `onCommit` with it.
 - `@fcalell/ui-core/roster`: the component roster as data (`ROSTER`, `CLOSED_PROPS`), the layer
   and prop names of every component both plugins ship.
 - `@fcalell/ui-core/harness`: internal. The shared core of the packages' `scripts/verify.ts`.
@@ -43,6 +47,7 @@ Every scale derives from one base, so a theme sets a knob and never a token.
 | `radius` | 14 | the radii; 0 squares everything, the pills and circles too |
 | `text` | 16 | the type roles; each size rounds to the whole pixel, each line box to the even pixel |
 | `elevation` | `soft` | how a raised surface separates: `soft` casts the two shadows, `flat` draws a 1px ring in `edge` instead |
+| `density` | `touch` | how dense the controls draw: `touch` keeps the 44 px floor everywhere; `desktop` moves the four density sizes to their compact set where the primary pointer is fine, so rows, buttons, fields, circles, chips and section headers stand on a 32 px floor, and touch keeps 44 |
 | `defaultMode` | unset | the mode a viewer with no stored choice starts in, ahead of the system preference; unset, the system decides |
 | `fonts` | `sans` unset, `mono` "JetBrains Mono Variable" | the two families as `--font-sans` and `--font-mono`, each ahead of its platform fallback stack; the files are each plugin's `fonts` option |
 | `widths` | `rail` 220, `list` 360, `column` 300, `sheet` 560, `reading` 720 | `--container-*`, so `w-rail` and `max-w-reading` |
@@ -50,12 +55,13 @@ Every scale derives from one base, so a theme sets a knob and never a token.
 
 Hues are in `[0, 360)`; `neutralChroma` in `[0, 2]` multiplies the declared chroma of every token
 bound to `neutralHue` and nothing else. `space`, `text`, every width and every
-breakpoint are positive integers; `radius` may be 0. Density is a theme, never a breakpoint: a product that wants
-more rows lowers `text` and `space`, and no scale changes at a width. The touch floor is 44 px and
-not a knob.
+breakpoint are positive integers; `radius` may be 0. Density is a theme, never a breakpoint: no scale changes at a
+width. The floor is 44 px on touch and is not a knob: `density: "desktop"`
+lowers it to 32 on a fine pointer only, and a product that wants more text per row lowers `text`
+and `space`.
 
 Anything the knobs do not reach goes through `overrides`. `overrides.colors` splits into `shared`
-(`scrim` and `thumb`), `light`, and `dark` (the 25 per-mode roles); a value must be
+(`scrim` and `thumb`), `light`, and `dark` (the 31 per-mode roles); a value must be
 `oklch(L C H)` or `oklch(L C H / A)` with unsigned decimal components. `overrides.scales` is keyed
 by full custom-property name (`--spacing-inset`, `--leading-title`, `--shadow-float`,
 `--container-sheet`, `--breakpoint-wide`); each type role has one leading key and one tracking
@@ -67,7 +73,8 @@ declaration it is rendered into. Every rejection names the offending key.
 
 Every word a molecule draws or reads aloud on its own comes from `words`, a typed object passed
 once beside `theme`: the six `Status` words, `recommended`, `copy`, `copied`, `back`, `close`,
-`more`, `send`, `stop`, `attach`, `search`, `loading`, `retry`. `Words` requires every key and
+`more`, `send`, `stop`, `attach`, `search`, `loading`, `retry`, `add`, `remove`, `duplicate`
+(an `EnumInput`'s refusal of a value already listed). `Words` requires every key and
 `wordsSchema` is closed, so a translation that misses a word fails `tsc` and the schema, never the
 interface. `ENGLISH` is the default. A sentence that belongs to the consumer is a prop on the
 molecule that draws it (`placeholder`, `notice`, every `sentence`, every `label`), never a key.
@@ -90,6 +97,10 @@ One accent hue, near-achromatic greys, three state hues.
   a destructive act's text.
 - `avatar-1` to `avatar-8`: an `Avatar`'s fill, stepped 45° from `accentHue` at one lightness and
   chroma, picked by a hash of the name, so a fill per name is a token and never a computed hue.
+- `chip-1` to `chip-6`: a `Chip`'s fill, one per data family, stepped 60° from `accentHue` plus
+  30° at one lightness and chroma, so the nearest family sits 30° off the accent and none wears
+  it. A chip is a fill under `ink`, where a status is an icon and a word in its state's ink, so
+  the two never read as one.
 - `scrim`: behind a sheet. `thumb`: the switch's knob, white in both modes, the one literal.
 
 Status colors: `active` → `tint`, `waiting` → `ink-meta`, `done` → `ok`, `attention` → `warn`,
@@ -119,7 +130,17 @@ not zoom on focus. `display`, `title` and `heading` carry tracking.
 Rungs are multiples of `space`, internal to the molecules; the names say what they separate:
 `pair` 1 (a label from its value), `row` 2 (atoms side by side), `stack` 3 (fields of a form, a
 row's vertical padding), `inset` 4 (the screen's side inset, a group's interior), `section` 6
-(sections of a screen), `room` 8 (the item header from its body on the desktop). Radii come from
+(sections of a screen), `room` 8 (the item header from its body on the desktop). The density sizes sit in the same `--spacing-*` namespace but are not rungs, since
+nothing is spaced by them: `floor` (the minimum height of a control, a row and a header, a circle's
+side; 44, compact 32), `row-y` (a row's vertical padding; `stack`, compact `pair`), `control-y` (a
+button's, a field's and a chip's vertical padding; 8, compact 4, so a chip lands on 32 and 24) and `segment` (a segment inside its padded
+control; 36, compact 24). Every platform seeds the touch set; `compactTokens` is the compact set
+under `density: "desktop"`, which the web renders under `(pointer: fine)`. The compact set lands a
+one-line `body` row, button and field on 32: a 24 px line box plus twice 4. A table cell
+(`TABLE_CELL`) is a field's box, the floor, `control-y` and the field's side padding behind a
+transparent side border, so the `Input` that edits it in place keeps the row's height. The type scale does not
+move with density: `body` at 16 is the iOS no-zoom size, a touch fact, and it fits the compact
+floor as it is. Radii come from
 `radius`: `group` at 1× for groups, inputs, code, pickers and menus; `sheet` at 1.75× rounded down
 for a sheet's corners; `full` for buttons, chips, a search field, a count, 0 when `radius` is.
 Elevation is two utilities by use: `shadow-float` for a picker's list, a menu, a toast, the
@@ -132,10 +153,12 @@ the channel every hairline uses on both platforms, so no component changes.
 
 At the default knobs, in both modes and under either primary, each pair clears 4.5:1: `ink` and
 `ink-meta` on `canvas`, `surface` and `group`; `ok`, `warn` and `danger` on `surface`, on `group`
-and on `ok-soft`, `warn-soft` and `danger-soft` in turn; `tint` on `surface` and `group`; `on-accent` on `accent`; `ink` on every
-`avatar-n`. The verify script measures every pair. The dark `tint`, `ok`, `warn` and `danger` sit
+and on `ok-soft`, `warn-soft` and `danger-soft` in turn; `tint` on `surface` and `group`; `ink`, `ink-meta`, `ok`, `warn`, `danger` and `tint` on `accent-soft`, a selected row that
+holds a `Status`; `on-accent` on `accent`; `ink` on every
+`avatar-n` and every `chip-n`. The verify script measures every pair. The dark `tint`, `ok`, `warn` and `danger` sit
 lighter than the calibration so that a status, an act or a destructive label inside a group
-keeps the ratio. Moving a knob puts the re-check on the consumer.
+keeps the ratio, and `accent-soft` sits lighter in light mode (and, under `ink`, darker in dark
+mode) so that a `Status` inside a selected row does. Moving a knob puts the re-check on the consumer.
 
 ## What the reset does not catch
 
@@ -164,7 +187,7 @@ The canon binds every component either UI plugin ships:
 
 ## The roster
 
-`ROSTER` in `@fcalell/ui-core/roster` is the closed list: 48 components in four layers (atoms,
+`ROSTER` in `@fcalell/ui-core/roster` is the closed list: 54 components in four layers (atoms,
 layout molecules, shared molecules, content molecules), each with its prop names, the same in both
 plugins. A plugin's verify suite reads every component's exported props type against it, so a
 prop added on one platform, a prop renamed, or a style channel reopened fails by name. The
@@ -176,8 +199,9 @@ Matrices hold the platform-invariant cells only: fills, borders, ink, rungs, rad
 font weight, font family, and a control minimum height or width. Display, alignment, and every
 interaction state are platform overlays composed through `cn()` after the matrix (React Native is
 flex by default and the web is not, so a shared `flex-row` would be wrong on one). No arbitrary
-value in a cell, in either spelling. A control's interior padding stays a literal numeric; a row
-and a surface inset on rungs. No behavior in ui-core, ever.
+value in a cell, in either spelling. A control's horizontal padding stays a literal numeric; its
+vertical padding and every minimum height are density sizes; a row and a surface inset on rungs.
+No behavior in ui-core, ever.
 
 ## Composing with cn
 

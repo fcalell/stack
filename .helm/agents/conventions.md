@@ -30,7 +30,11 @@ Each `exports` entry a bundler compiles (`.tsx`, `.css`, anything under `src/ui/
 `./components/*` and `./lib/*` patterns) points at source; every other entry is
 `{ "types": "./dist/<path>.d.ts", "default": "./dist/<path>.js" }`. A source entry reaches a
 sibling module that also ships compiled through the package's own name, never a relative path,
-or the bundle holds two copies of that module.
+or the bundle holds two copies of that module. An entry's target is one string, never an array: a
+bundler takes an array's first target whether or not the file exists, where tsc tries each, so an
+array type-checks and fails the consumer's build. A pattern names one extension
+(`"./lib/*": "./src/ui/lib/*.ts"`) and each module of the other extension gets its own entry
+(`"./lib/words": "./src/ui/lib/words.tsx"`); each UI plugin's verify resolves every subpath.
 
 A sibling `@fcalell/*` import resolves through its `exports`, so type-checking and tests need the
 dependencies' `dist`: turbo runs `^build` before `check-types` and `test`, and the package's own

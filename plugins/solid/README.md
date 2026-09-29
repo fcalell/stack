@@ -65,7 +65,7 @@ const navigate = useNavigate();
 navigate(routes.projects.settings({ id: "123" }));
 ```
 
-Missing or extra params are compile errors. Renaming a page file updates the builder, surfacing every stale call site.
+Missing or extra params are compile errors. Renaming a page file updates the builder, surfacing every stale call site. The builders' types are `.stack/routes.d.ts`, the one declaration of `virtual:fcalell-routes` the consumer's type-check reads.
 
 A page reads its params through its own builder, so they are typed the same way:
 
@@ -137,6 +137,7 @@ solid({ routes: false })
 | `solid.slots.htmlSource` | `derived<string \| null>` | Final `.stack/index.html` source |
 | `solid.slots.providersSource` | `derived<string \| null>` | Final `.stack/virtual-providers.tsx` source |
 | `solid.slots.routesDtsSource` | `derived<string \| null>` | Final `.stack/routes.d.ts` source |
+| `solid.slots.topLevelRoutes` | `derived<string[]>` | The static first segments of the pages' URLs (through groups, never a param); `plugin-solid-ui` hands them to plugin-auth as reserved organization slugs |
 | `solid.slots.homeScaffold` | `value<ScaffoldSpec>` (`override`) | Home-page scaffold; `plugin-solid-ui` overrides it cleanly |
 
 ## Dependencies

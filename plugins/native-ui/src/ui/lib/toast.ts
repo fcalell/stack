@@ -1,12 +1,19 @@
 import type { Act } from "@fcalell/ui-core/descriptors";
+import type { ToastState } from "@fcalell/ui-core/variants";
 import { useSyncExternalStore } from "react";
 
 // The toast queue. `toast()` is called from anywhere; the `Shell` renders the
 // queue. Client-owned, so never an undo: a toast's act is a route or a retry.
-export interface ToastEntry {
+// `state` says how the act it reports ended (`failed` for a refused edit,
+// `done` for a finished one); without it the toast is the plain dark pill.
+export interface ToastOptions {
+	state?: ToastState;
+	act?: Act;
+}
+
+export interface ToastEntry extends ToastOptions {
 	id: number;
 	sentence: string;
-	act?: Act;
 }
 
 const TOAST_MS = 4000;
@@ -19,9 +26,9 @@ function emit(): void {
 	for (const listener of listeners) listener();
 }
 
-export function toast(sentence: string, act?: Act): void {
+export function toast(sentence: string, options: ToastOptions = {}): void {
 	const id = nextId++;
-	entries = [...entries, { id, sentence, act }];
+	entries = [...entries, { id, sentence, ...options }];
 	emit();
 	setTimeout(() => dismissToast(id), TOAST_MS);
 }

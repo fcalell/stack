@@ -62,7 +62,7 @@ export function PendingBar(props: PendingBarProps) {
 						onClick={() => act().onAct()}
 						class={cn(
 							text({ role: "meta" }),
-							"relative -mr-inset min-h-11 shrink-0 self-stretch px-inset",
+							"relative -mr-inset min-h-floor shrink-0 self-stretch px-inset",
 							TEXT_ACT,
 						)}
 					>

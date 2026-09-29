@@ -7,6 +7,7 @@ import { buildGraphFromDiscovered } from "@fcalell/cli/build-graph";
 import type { DiscoveredPlugin } from "@fcalell/cli/discovery";
 import { api } from "@fcalell/plugin-api";
 import { db } from "@fcalell/plugin-db";
+import { createAccessControl } from "../src/access.ts";
 import { auth } from "../src/index.ts";
 import type { AuthOptions } from "../src/types.ts";
 
@@ -52,4 +53,65 @@ test("with organizations the worker hands the scopes module to the auth runtime"
 test("without organizations the scopes module stays out of the worker", async () => {
 	const source = await generatedWorker({ emailOtp: false });
 	assert.doesNotMatch(source, /shared\/scopes/);
+});
+
+test("an organization access control generates as its statements and role grants", async () => {
+	const ac = createAccessControl({
+		organization: ["update"],
+		project: ["read", "update"],
+	});
+	const source = await generatedWorker({
+		emailOtp: false,
+		organization: {
+			ac,
+			roles: {
+				owner: ac.newRole({ organization: ["update"], project: ["read"] }),
+			},
+		},
+	});
+	assert.match(
+		source,
+		/organization: \{\s*statements: \{\s*organization: \["update"\],\s*project: \["read", "update"\],?\s*\},\s*roles: \{\s*owner: \{\s*organization: \["update"\],\s*project: \["read"\],?\s*\},?\s*\},?\s*\}/,
+	);
+	assert.doesNotMatch(source, /newRole/);
+});
+
+test("the web client's flags carry the same access control as the worker", async () => {
+	const ac = createAccessControl({ project: ["read", "update"] });
+	const cwd = mkdtempSync(join(tmpdir(), "stack-auth-codegen-"));
+	const { graph } = buildGraphFromDiscovered({
+		discovered: [
+			discover(api, api()),
+			discover(db, db({ dialect: "sqlite", path: "app.sqlite" })),
+			discover(
+				auth,
+				auth({
+					emailOtp: false,
+					organization: {
+						ac,
+						roles: { editor: ac.newRole({ project: ["read"] }) },
+					},
+				}),
+			),
+		],
+		app: { name: "codegen", domain: "example.com" },
+		cwd,
+	});
+	const flags = await graph.resolve(auth.slots.clientFlags);
+	assert.deepEqual(flags?.organization, {
+		statements: { project: ["read", "update"] },
+		roles: { editor: { project: ["read"] } },
+	});
+});
+
+test("with organizations the worker refuses plugin-api's reserved slugs; without them no list", async () => {
+	const source = await generatedWorker({ emailOtp: false, organization: true });
+	assert.match(
+		source,
+		/reservedSlugs: \["admin", "api", "auth", "new", "settings", "system"\]/,
+	);
+	assert.doesNotMatch(
+		await generatedWorker({ emailOtp: false }),
+		/reservedSlugs/,
+	);
 });

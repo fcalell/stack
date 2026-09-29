@@ -1,0 +1,56 @@
+import { useEffect, useState } from "react";
+import {
+	type ConfirmEntry,
+	settleConfirmation,
+	useConfirmations,
+} from "../../lib/confirm";
+import { ActionBar } from "../action-bar";
+import { Button } from "../button";
+import { Form } from "../form";
+import { FormField } from "../form-field";
+import { Input } from "../input";
+import { Sheet } from "../sheet";
+
+// The first queued decision as a sheet: the sentence under the title, the
+// name field when the act asks for one, and the act, blocked with its reason
+// until the typed name matches. The last decision stays drawn while the sheet
+// slides away.
+export function Confirmations() {
+	const current = useConfirmations()[0];
+	const [shown, setShown] = useState<ConfirmEntry | undefined>(current);
+	const [typed, setTyped] = useState("");
+	useEffect(() => {
+		if (current) setShown(current);
+		setTyped("");
+	}, [current]);
+	if (!shown) return null;
+	const name = shown.confirmName;
+	const matches = name === undefined || typed.trim() === name.value;
+	const take = () => {
+		if (matches) settleConfirmation(shown.id, true);
+	};
+	return (
+		<Sheet
+			open={current !== undefined}
+			onClose={() => settleConfirmation(shown.id, false)}
+			title={shown.title}
+			description={shown.sentence}
+		>
+			<Form onSubmit={take}>
+				{name ? (
+					<FormField label={name.label}>
+						<Input kind="source" value={typed} onChange={setTyped} />
+					</FormField>
+				) : null}
+				<ActionBar>
+					<Button
+						act={shown.act.destructive ? "destructive" : "primary"}
+						label={shown.act.label}
+						blocked={matches ? undefined : name?.blocked}
+						onAct={take}
+					/>
+				</ActionBar>
+			</Form>
+		</Sheet>
+	);
+}

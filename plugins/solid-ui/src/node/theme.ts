@@ -1,11 +1,12 @@
 import type { ResolvedTheme } from "@fcalell/ui-core/derive";
 import {
+	compactTokens,
 	modeTokens,
 	shadowUtilities,
 	themeTokens,
 } from "@fcalell/ui-core/emit";
 import type { CssBlock, CssLayer } from "../types.ts";
-import { renderClassRule } from "./codegen.ts";
+import { renderClassRule, renderMediaRootRule } from "./codegen.ts";
 
 // The tokens the web owns on top of the shared contract: motion. The font
 // families are the contract's (`--font-sans`, `--font-mono` from the theme's
@@ -34,6 +35,22 @@ export function shadowBlocks(resolved: ResolvedTheme): CssBlock[] {
 	return Object.entries(shadowUtilities(resolved)).map(
 		([name, declarations]) => ({ kind: "utility", name, declarations }),
 	);
+}
+
+// `density: "desktop"` draws the controls compact where the primary pointer
+// is fine: the compact sizes override the seeded touch ones in `@layer base`,
+// the same cascade the dark layer rides, so every cell that names a size
+// (`min-h-floor`, `py-row-y`) follows with no class of its own. A touch
+// screen, a phone and a tablet keep the 44 px floor. Nothing under `touch`.
+export const FINE_POINTER = "(pointer: fine)";
+
+export function compactLayer(resolved: ResolvedTheme): CssLayer | undefined {
+	const declarations = compactTokens(resolved);
+	if (Object.keys(declarations).length === 0) return undefined;
+	return {
+		name: "base",
+		content: renderMediaRootRule(FINE_POINTER, declarations),
+	};
 }
 
 // Dark mode rides `@layer base`, not a third block kind: `@theme` compiles

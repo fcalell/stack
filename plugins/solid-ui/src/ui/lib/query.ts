@@ -1,5 +1,8 @@
 import { ApiError } from "@fcalell/plugin-api/error";
-import { handleMutationSuccess } from "@fcalell/plugin-api/query-invalidation";
+import {
+	handleMutationSuccess,
+	invalidateForWrites,
+} from "@fcalell/plugin-api/query-invalidation";
 import type { RouterClient } from "@fcalell/plugin-api/types";
 import {
 	createTanstackQueryUtils,
@@ -10,25 +13,32 @@ import {
 	useMutation as _useMutation,
 	useQuery as _useQuery,
 	type CreateMutationResult,
+	type dataTagSymbol,
 	MutationCache,
+	type MutationFunction,
+	type MutationFunctionContext,
 	QueryClient,
 	type QueryKey,
 	useQueryClient,
 } from "@tanstack/solid-query";
+import { type Answered, answered } from "#lib/refusal.ts";
 import { toast } from "#lib/toast.ts";
 
-// WS3.3: the default client `createApp`
-// builds when the caller supplies no `queryClient` auto-invalidates on every
-// mutation success, unless the mutation opted out via
-// `meta: { skipAutoInvalidation: true }` -- the pattern `useMutation` below
-// stamps for mutations with custom cache updaters. A consumer-supplied
-// `options.queryClient` is used as-is: they own invalidation then.
+// The default client `createApp` builds when the caller supplies no
+// `queryClient` auto-invalidates on every mutation success, unless the
+// mutation opted out via `meta: { skipAutoInvalidation: true }`: the
+// writes the procedure declared, and the `writes` a source outside the API
+// names (`meta.writes`, set by `useMutation`). A
+// consumer-supplied `options.queryClient` is used as-is: they own
+// invalidation then.
 export function createDefaultQueryClient(): QueryClient {
 	const queryClient: QueryClient = new QueryClient({
 		mutationCache: new MutationCache({
 			onSuccess: (_data, _variables, _onMutateResult, mutation) => {
 				if (mutation.meta?.skipAutoInvalidation) return;
 				handleMutationSuccess(queryClient, mutation.options.mutationKey);
+				const writes = mutation.meta?.writes;
+				if (Array.isArray(writes)) invalidateForWrites(queryClient, writes);
 			},
 		}),
 	});
@@ -122,122 +132,171 @@ function combineQueries<T extends QueryLike<unknown, unknown>[]>(
 	};
 }
 
-type MutationSource = {
+// What `mutation` returns: oRPC's `.mutationOptions()`, or any object with
+// the same two fields. `useMutation` reads its variables and its answer off
+// `mutationFn`, so a call site names no type. A call outside the API (a
+// better-auth client call) has no procedure to declare its writes, so it
+// names them: the entity names a procedure's `writes` would. A better-auth
+// call's `{ data, error }` answer is unwrapped (`Answered`): the mutation's
+// data is `data`, and a refusal is its error.
+type MutationSource<TVars, TData> = {
 	mutationKey?: QueryKey;
-	// biome-ignore lint/suspicious/noExplicitAny: oRPC mutation functions have varying signatures
-	mutationFn?: (...args: any[]) => Promise<any>;
+	mutationFn?: MutationFunction<TData, TVars>;
+	writes?: readonly string[];
 };
 
-type QueryUpdate<TVars, TData> = {
-	queryKey: () => QueryKey;
-	// biome-ignore lint/suspicious/noExplicitAny: query data is heterogeneous across callers
-	updater?: (old: any[], vars: TVars) => any[];
-	// biome-ignore lint/suspicious/noExplicitAny: query data is heterogeneous across callers
-	onSuccessUpdater?: (old: any[], data: TData, vars: TVars) => any[];
+// A cached query the mutation changes, typed by the query's data through its
+// tagged key (`q.x.queryKey(...)`), so a list and a single record are
+// described the same way. An update that finds nothing cached leaves the
+// cache alone.
+// biome-ignore lint/suspicious/noExplicitAny: the default for a call site that names only `TVars` and `TData`
+type QueryUpdate<TVars, TData, TQuery = any> = {
+	queryKey: () => QueryKey & { [dataTagSymbol]: TQuery };
+	// Optimistic: applied as the mutation starts, rolled back if it fails.
+	updater?: (old: TQuery, vars: TVars) => TQuery;
+	// Applied with the server's answer.
+	onSuccessUpdater?: (old: TQuery, data: TData, vars: TVars) => TQuery;
 };
 
-type MutationOptions<TVars, TData> = {
-	mutation: () => MutationSource;
-	updates?: QueryUpdate<TVars, TData>[];
-	onSuccess?: (data: TData, vars: TVars) => void;
+// Each position's query data is its own type parameter, inferred from its
+// key: TypeScript infers a tuple position directly, where a mapped tuple
+// loses every element whose updater leaves its parameters untyped.
+// TODO: four updates per mutation; add a position when a mutation changes a
+// fifth cached query.
+type QueryUpdates<TVars, TData, Q1, Q2, Q3, Q4> = readonly [
+	QueryUpdate<TVars, TData, Q1>?,
+	QueryUpdate<TVars, TData, Q2>?,
+	QueryUpdate<TVars, TData, Q3>?,
+	QueryUpdate<TVars, TData, Q4>?,
+];
+
+// The update positions' data defaults to `any`, for a call site that names
+// `TVars` and `TData` itself.
+type MutationOptions<
+	TVars,
+	TData,
+	// biome-ignore lint/suspicious/noExplicitAny: see `QueryUpdate`
+	Q1 = any,
+	// biome-ignore lint/suspicious/noExplicitAny: see `QueryUpdate`
+	Q2 = any,
+	// biome-ignore lint/suspicious/noExplicitAny: see `QueryUpdate`
+	Q3 = any,
+	// biome-ignore lint/suspicious/noExplicitAny: see `QueryUpdate`
+	Q4 = any,
+> = {
+	mutation: () => MutationSource<TVars, TData>;
+	updates?: QueryUpdates<TVars, Answered<TData>, Q1, Q2, Q3, Q4>;
+	onSuccess?: (data: Answered<TData>, vars: TVars) => void;
 	onError?: (error: unknown, vars: TVars) => boolean | undefined;
 	errorMessage?: string;
 	errorHandler?: (message: string) => void;
 };
 
-function useMutation<TVars, TData>(
-	options: () => MutationOptions<TVars, TData>,
-): CreateMutationResult<TData, unknown, TVars> {
+// A mutation through the API. Its procedure's declared `writes` invalidate
+// every query that read them, as every mutation's do
+// (`createDefaultQueryClient`); `updates` change the cache in addition,
+// never instead, so the invalidation still refetches what the server holds.
+function useMutation<
+	TVars,
+	TData,
+	// biome-ignore lint/suspicious/noExplicitAny: see `QueryUpdate`
+	Q1 = any,
+	// biome-ignore lint/suspicious/noExplicitAny: see `QueryUpdate`
+	Q2 = any,
+	// biome-ignore lint/suspicious/noExplicitAny: see `QueryUpdate`
+	Q3 = any,
+	// biome-ignore lint/suspicious/noExplicitAny: see `QueryUpdate`
+	Q4 = any,
+>(
+	options: () => MutationOptions<TVars, TData, Q1, Q2, Q3, Q4>,
+): CreateMutationResult<Answered<TData>, unknown, TVars> {
 	const queryClient = useQueryClient();
+	return _useMutation(() => mutationObserverOptions(options(), queryClient));
+}
 
-	return _useMutation(() => {
-		const opts = options();
-		const updates = opts.updates ?? [];
-		const { mutationKey, mutationFn } = opts.mutation();
-		const hasOptimistic = updates.some((u) => u.updater);
-		const hasCacheUpdates =
-			hasOptimistic || updates.some((u) => u.onSuccessUpdater);
+// The TanStack options `useMutation` hands solid-query, apart so a test
+// drives them through a plain `MutationObserver`.
+function mutationObserverOptions<TVars, TData, Q1, Q2, Q3, Q4>(
+	opts: MutationOptions<TVars, TData, Q1, Q2, Q3, Q4>,
+	queryClient: QueryClient,
+) {
+	const updates = (opts.updates ?? []).filter(
+		(update) => update !== undefined,
+	) as QueryUpdate<TVars, Answered<TData>, unknown>[];
+	const { mutationKey, mutationFn, writes } = opts.mutation();
+	const optimistic = updates.filter((u) => u.updater);
 
-		return {
-			mutationKey,
-			mutationFn,
-			meta: hasCacheUpdates ? { skipAutoInvalidation: true } : undefined,
-			onMutate: hasOptimistic
+	return {
+		mutationKey,
+		// A better-auth call resolves `{ data, error }`: its refusal rejects
+		// and its success unwraps to `data`, so the error path and the
+		// caller's `onSuccess` see what an API call's would.
+		mutationFn: mutationFn
+			? async (variables: TVars, context: MutationFunctionContext) =>
+					answered(await mutationFn(variables, context))
+			: undefined,
+		meta: writes ? { writes } : undefined,
+		onMutate:
+			optimistic.length > 0
 				? async (variables: TVars) => {
 						const snapshots = new Map<string, unknown>();
-
 						await Promise.all(
-							updates
-								.filter((u) => u.updater)
-								.map((u) =>
-									queryClient.cancelQueries({ queryKey: u.queryKey() }),
-								),
+							optimistic.map((u) =>
+								queryClient.cancelQueries({ queryKey: u.queryKey() }),
+							),
 						);
-
-						for (const update of updates) {
-							if (!update.updater) continue;
+						for (const update of optimistic) {
 							const key = update.queryKey();
-							const keyStr = JSON.stringify(key);
-							snapshots.set(keyStr, queryClient.getQueryData(key));
-							// biome-ignore lint/suspicious/noExplicitAny: query cache stores untyped data
-							queryClient.setQueryData(key, (old: any[] | undefined) =>
-								update.updater?.(old ?? [], variables),
+							snapshots.set(JSON.stringify(key), queryClient.getQueryData(key));
+							queryClient.setQueryData<unknown>(key, (old: unknown) =>
+								old === undefined
+									? undefined
+									: update.updater?.(old, variables),
 							);
 						}
-
 						return { snapshots };
 					}
 				: undefined,
-			onSuccess: (
-				data: TData,
-				variables: TVars,
-				_context: { snapshots: Map<string, unknown> } | undefined,
-			) => {
-				for (const update of updates) {
-					if (!update.onSuccessUpdater) continue;
-					const key = update.queryKey();
-					// biome-ignore lint/suspicious/noExplicitAny: query cache stores untyped data
-					queryClient.setQueryData(key, (old: any[] | undefined) =>
-						update.onSuccessUpdater?.(old ?? [], data, variables),
-					);
-				}
-				opts.onSuccess?.(data, variables);
-			},
-			onError: (
-				error: unknown,
-				variables: TVars,
-				context: { snapshots: Map<string, unknown> } | undefined,
-			) => {
-				if (context?.snapshots) {
-					for (const update of updates) {
-						if (!update.updater) continue;
-						const key = update.queryKey();
-						const keyStr = JSON.stringify(key);
-						const snapshot = context.snapshots.get(keyStr);
-						if (snapshot !== undefined) {
-							queryClient.setQueryData(key, snapshot);
-						}
-					}
-				}
-				const suppressed = opts.onError?.(error, variables);
-				if (!suppressed) {
-					// A refusal the procedure phrased (an ApiError with a code of
-					// its own) is shown as phrased; the caller's message covers
-					// the rest, as a toast the Shell draws, unless the caller
-					// shows it its own way.
-					const phrased =
-						error instanceof ApiError &&
-						error.code !== "INTERNAL_SERVER_ERROR" &&
-						error.message
-							? error.message
-							: undefined;
-					const message = phrased ?? opts.errorMessage ?? "Operation failed.";
-					(opts.errorHandler ?? toast)(message);
-				}
-			},
-		};
-	});
+		onSuccess: (data: Answered<TData>, variables: TVars) => {
+			for (const update of updates) {
+				if (!update.onSuccessUpdater) continue;
+				queryClient.setQueryData<unknown>(update.queryKey(), (old: unknown) =>
+					old === undefined
+						? undefined
+						: update.onSuccessUpdater?.(old, data, variables),
+				);
+			}
+			opts.onSuccess?.(data, variables);
+		},
+		onError: (
+			error: unknown,
+			variables: TVars,
+			context: { snapshots: Map<string, unknown> } | undefined,
+		) => {
+			for (const update of optimistic) {
+				const key = update.queryKey();
+				const snapshot = context?.snapshots.get(JSON.stringify(key));
+				if (snapshot !== undefined) queryClient.setQueryData(key, snapshot);
+			}
+			const suppressed = opts.onError?.(error, variables);
+			if (!suppressed) {
+				// A refusal the procedure phrased (an ApiError with a code of
+				// its own) is shown as phrased; the caller's message covers
+				// the rest, as a `failed` toast, unless the caller shows
+				// it its own way.
+				const phrased =
+					error instanceof ApiError &&
+					error.code !== "INTERNAL_SERVER_ERROR" &&
+					error.message
+						? error.message
+						: undefined;
+				const message = phrased ?? opts.errorMessage ?? "Operation failed.";
+				if (opts.errorHandler) opts.errorHandler(message);
+				else toast(message, { state: "failed" });
+			}
+		},
+	};
 }
 
 export type { MutationOptions, MutationSource, QueryLike, QueryUpdate };
-export { combineQueries, useMutation };
+export { combineQueries, mutationObserverOptions, useMutation };

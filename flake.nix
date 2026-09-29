@@ -35,7 +35,9 @@
 
           shellHook = ''
             # Enable corepack so `pnpm` resolves to the repo-pinned version.
-            export COREPACK_HOME="$PWD/.corepack"
+            # Anchored at the repo root: a shell entered from a subdirectory
+            # would otherwise install a second corepack home there.
+            export COREPACK_HOME="$(git rev-parse --show-toplevel 2>/dev/null || echo "$PWD")/.corepack"
             mkdir -p "$COREPACK_HOME"
             corepack enable --install-directory "$COREPACK_HOME" 2>/dev/null || true
             export PATH="$COREPACK_HOME:$PATH"

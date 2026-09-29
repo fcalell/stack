@@ -4,7 +4,7 @@ import type { Closed } from "#lib/closed.ts";
 import { LoadingRows } from "#lib/loading.tsx";
 
 // Rows that are a feed: on the surface with no box and no hairlines, each at
-// least 44 px. The list owns the semantics: each child is one item, whatever
+// least the floor. The list owns the semantics: each child is one item, whatever
 // it is (a row, a message, a folded section, a group).
 export type ListProps = Closed & {
 	loading?: boolean;

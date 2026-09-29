@@ -248,11 +248,12 @@ cross-site; the native client sends none).
 
 ### 7. Client (frontend)
 
-`createClient` from `@fcalell/plugin-api/client` is the canonical way to build a typed client, on web and native alike:
+`createClient` from `@fcalell/plugin-api/client` is the canonical way to build a typed client, on web and native alike. It takes the generated worker's `AppRouter`, imported type-only. In a consumer with an app and a worker, the app's tsconfig project references the worker's, which emits declarations into `.stack/types/`, so the import resolves to the router's declaration: each procedure's input and output type, and none of the worker sources that only type-check under the Workers globals (`.helm/knowledge/architecture/consumer-project.md`).
 
 ```ts
+// src/app/lib/api.ts
 import { createClient } from "@fcalell/plugin-api/client";
-import type { AppRouter } from "@repo/api";
+import type { AppRouter } from "../../../.stack/worker";
 
 export const api = createClient<AppRouter>({
   url: "/rpc",       // default
@@ -273,7 +274,7 @@ import {
   QueryProvider,
   useQuery,
 } from "@fcalell/plugin-api/tanstack-query";
-import type { AppRouter } from "@repo/api";
+import type { AppRouter } from "../../.stack/worker";
 
 const client = createClient<AppRouter>({ url: process.env.EXPO_PUBLIC_API_URL });
 export const orpc = createApiQueryUtils(client);
@@ -301,10 +302,16 @@ create: procedure({ writes: ["todos"] }).mutation(...)
 
 A query with no `reads` never auto-invalidates; declaring `reads`/`writes` is the recommended
 pattern for any procedure with cross-feature cache dependencies. A mutation opts out with
-`meta: { skipAutoInvalidation: true }` on its `useMutation` options -- the correct choice when the
-mutation already updates the cache itself (optimistic updates, `setQueryData` in `onSuccess`).
-`plugin-solid-ui`'s `useMutation` (`@fcalell/plugin-solid-ui/lib/query`) stamps this automatically
-for mutations that declare `updates`.
+`meta: { skipAutoInvalidation: true }` on its TanStack `useMutation` options, which only a
+mutation that owns every cache it changes wants. `plugin-solid-ui`'s `useMutation`
+(`@fcalell/plugin-solid-ui/lib/query`) never opts out: its `updates` (optimistic or on success)
+change the cache in addition to the invalidation, so the refetch still lands what the server holds.
+A call outside the API (a better-auth client call) has no procedure to declare writes, so its
+source names them, `{ mutationFn, writes: ["organization"] }`, and the web default client
+invalidates them the same way. A query outside the API records no reads from a response, so it
+declares them on its TanStack options as `meta: { reads: ["member", "invitation"] }`;
+`invalidateForWrites` matches a query's declared `meta.reads` before the reads recorded for its
+key, so a declared query refetches on those writes like an API query.
 
 Supplying a custom `mutationCache` (native) or `queryClient` (web) to `createQueryClient` /
 `createApp` opts out of auto-invalidation entirely -- the caller owns invalidation then.
@@ -422,16 +429,20 @@ Limits are clamped to 1--100 (default 20).
 ### Slugify
 
 ```ts
-import { slugify, isReservedSlug, createSlugify } from "@fcalell/plugin-api/lib/slugify";
+import { slugify, isReservedSlug, createSlugify, RESERVED_SLUGS } from "@fcalell/plugin-api/lib/slugify";
 
-slugify("My Project")     // "my-project"
-isReservedSlug("admin")   // true
+slugify("My Project")       // "my-project"
+slugify("shop.example.com") // "shop-example-com": a dot is a word boundary
+isReservedSlug("admin")     // true
 
 // Custom reserved list
 const { slugify: s, isReserved } = createSlugify(["admin", "api", "system"]);
 ```
 
-Default reserved slugs: `admin`, `api`, `system`, `auth`, `new`, `settings`.
+`slugify` never refuses: a procedure checks `isReservedSlug(slug)` and answers a reserved one as
+its own field error. Default reserved slugs (`RESERVED_SLUGS`): `admin`, `api`, `system`, `auth`,
+`new`, `settings`. An organization slug is refused on the server by plugin-auth: these, plus
+every top-level route of the app (its Organizations section).
 
 ## Migration notes
 
@@ -554,7 +565,7 @@ createWorker({ domain: "example.com", cors: ["https://example.com"], prefix: "/r
 | `@fcalell/plugin-api/ability-client` | `composeAbility()`, `fetchOrgRules(organizationId)`, `registerApiClient()`, `ORG_RULES_QUERY_KEY`, `orgRulesQueryKey()`, `PackedRulesLike` -- framework-agnostic `useAbility()` core (runtime-only), consumed by `./tanstack-query` and `@fcalell/plugin-solid-ui/lib/ability` |
 | `@fcalell/plugin-api/schema` | `z` (Zod re-export), `ZodObject`, `ZodType`, `ZodRawShape` |
 | `@fcalell/plugin-api/lib/cursor` | `encodeCursor`, `decodeCursor`, `paginate`, `clampLimit`, constants |
-| `@fcalell/plugin-api/lib/slugify` | `slugify`, `isReservedSlug`, `createSlugify` |
+| `@fcalell/plugin-api/lib/slugify` | `slugify`, `isReservedSlug`, `createSlugify`, `RESERVED_SLUGS` |
 
 ## License
 

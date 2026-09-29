@@ -1,3 +1,4 @@
+import { commitMoment } from "@fcalell/ui-core/commit";
 import type { Act } from "@fcalell/ui-core/descriptors";
 import {
 	FIELD_PLACEHOLDER,
@@ -18,12 +19,14 @@ export type InputKind =
 	| "secret"
 	| "code"
 	| "source"
-	| "number";
+	| "number"
+	| "email";
 
 export interface InputProps extends Closed {
 	kind?: InputKind;
 	value: string;
 	onChange: (value: string) => void;
+	onCommit?: (value: string) => void;
 	placeholder?: string;
 	unit?: string;
 	act?: Act;
@@ -36,22 +39,31 @@ const SURFACE: Record<InputKind, FieldKind> = {
 	code: "code",
 	source: "code",
 	number: "text",
+	email: "text",
 };
 
 // One line of typing. `search` is a pill, the rest take the group radius;
 // `number` opens the numeric keyboard and draws `unit` after the value;
 // `source` is text a machine reads (a command, a path, a host), mono and
-// never corrected or capitalized; `act` is a trailing text act.
+// never corrected or capitalized; `email` opens the email keyboard, offers
+// the address the system knows and is never corrected or capitalized;
+// `act` is a trailing text act. `onCommit` hears the value once the viewer is
+// done with it: on leaving the field or on the keyboard's return, only when it
+// changed since the field took focus; with it, a hardware Escape puts back
+// the value at focus.
 export function Input({
 	kind,
 	value,
 	onChange,
+	onCommit,
 	placeholder,
 	unit,
 	act,
 }: InputProps) {
 	const words = useWords();
 	const [focused, setFocused] = useState(false);
+	const [moment] = useState(() => commitMoment<string>());
+	const commit = (next: string) => onCommit?.(next);
 	const { touch } = useTouched();
 	const which = kind ?? "text";
 	return (
@@ -76,15 +88,37 @@ export function Input({
 					placeholder ?? (which === "search" ? words.search : undefined)
 				}
 				secureTextEntry={which === "secret"}
-				keyboardType={which === "number" ? "decimal-pad" : "default"}
+				keyboardType={
+					which === "number"
+						? "decimal-pad"
+						: which === "email"
+							? "email-address"
+							: "default"
+				}
+				autoComplete={which === "email" ? "email" : undefined}
+				textContentType={which === "email" ? "emailAddress" : undefined}
 				autoCapitalize={
-					which === "code" || which === "secret" || which === "source"
+					which === "code" ||
+					which === "secret" ||
+					which === "source" ||
+					which === "email"
 						? "none"
 						: "sentences"
 				}
 				autoCorrect={which === "text"}
-				onFocus={() => setFocused(true)}
-				onBlur={() => setFocused(false)}
+				onFocus={() => {
+					setFocused(true);
+					moment.focus(value);
+				}}
+				onBlur={() => {
+					setFocused(false);
+					moment.leave(value, commit);
+				}}
+				onSubmitEditing={() => moment.commit(value, commit)}
+				onKeyPress={(event) => {
+					if (onCommit && event.nativeEvent.key === "Escape")
+						moment.cancel(value, onChange);
+				}}
 			/>
 			{which === "number" && unit ? (
 				<RNText className={text({ role: "meta" })}>{unit}</RNText>

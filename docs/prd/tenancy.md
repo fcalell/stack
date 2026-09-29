@@ -166,8 +166,22 @@ element on `NOT_FOUND` (every sentence is the consumer's), and provides the chai
 receive ids explicitly (`api.pages.list({ projectId: project().id })`), never by hidden injection,
 so the schema validates them and cache invalidation sees them.
 
-Each boundary records the address it resolved in browser storage, and `lastScope()` returns it
-for the `/` redirect. Nothing about scopes is stored in the session; better-auth still owns
+The deepest boundary that resolved records its scope's address (the URL up to its slug) in browser
+storage under the signed-in user's id, which `SessionBoundary` provides, and
+`useLastScope().address()` returns it for the `/` redirect: two users on one browser never read
+each other's, and the session ending (a sign-out, an expiry, another user signing in) forgets the
+one that user left. A boundary that resolves to `NOT_FOUND` forgets that address when it is its
+own or under it, and `useLastScope().forget()` forgets it when the viewer deletes or leaves the
+scope, so `/` never leads back to a scope that is gone. A boundary on a route that passes through
+a scope (an onboarding step) takes `remember={false}` and records nothing, nor lets a boundary
+above it record; a scope descriptor names no route, and one scope is served at more than one
+address (`/acme`, `/onboarding/acme`), so only the route knows whether it is a place to return
+to.
+
+An organization is served at `/<slug>`, so plugin-auth refuses, on the server, an organization
+slug the app holds: plugin-api's `RESERVED_SLUGS` and every top-level route of the pages, which
+plugin-solid derives and solid-ui hands to `auth.slots.reservedSlugs`. The refusal is a field
+error on `slug`. Nothing about scopes is stored in the session; better-auth still owns
 `session.activeOrganizationId`, and stack stops reading it.
 
 ### Org rules
@@ -225,7 +239,7 @@ column from another table is refused. The resolver issues one select per level b
 
 ### M5: bySlug and the web boundary
 
-Generated `bySlug` procedures, `ScopeBoundary`, `useScope`, `useMember`, `lastScope`. The scopes
+Generated `bySlug` procedures, `ScopeBoundary`, `useScope`, `useMember`, `useLastScope`. The scopes
 module is wired into the runtime entry here, so the runtime knows which scopes to serve lookups
 for.
 
@@ -234,7 +248,11 @@ a non-member gets `NOT_FOUND`; a project slug resolves within its parent; a scop
 has no lookup. Codegen tests (auth `codegen.test.ts`): with organizations the generated worker
 imports `src/shared/scopes.ts` and hands it to the runtime, without them it does not. `scopeLookup`
 tests: the organization is looked up by slug alone, a nested scope sends its parent's id, a missing
-parent boundary has no lookup, and only `NOT_FOUND` is the boundary's to draw. The components are
+parent boundary has no lookup, and only `NOT_FOUND` is the boundary's to draw; two viewers'
+remembered addresses stay apart, a boundary records only as a resolved place (`remember` not
+false) for a signed-in viewer, and `nextViewer` signs out the held viewer when the session ends
+(`session-gate.test.ts`). Worker tests: a reserved or top-level-route slug is refused on create and
+update as a field error; codegen and graph tests bake the list from the pages. The components are
 covered by type-check only. The lookup is called by path on the registered client, so its row type
 comes from the descriptor, not from `AppRouter`.
 

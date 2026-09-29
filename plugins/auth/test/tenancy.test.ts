@@ -163,7 +163,12 @@ async function setup() {
 				body: JSON.stringify({ json: input }),
 			});
 			const body = (await response.json()) as { json: unknown };
-			return { status: response.status, data: body.json };
+			const reads = response.headers.get("x-stack-reads");
+			return {
+				status: response.status,
+				data: body.json,
+				...(reads === null ? {} : { reads }),
+			};
 		};
 	}
 	return { as };
@@ -286,6 +291,20 @@ test("a slug below the organization resolves within its parent", async () => {
 		).status,
 		404,
 	);
+});
+
+test("a lookup reads its chain's tables and the membership", async () => {
+	const { as } = await setup();
+	const ada = await as("ada");
+	const organizationLookup = await ada("auth/scope/organization/bySlug", {
+		slug: "acme",
+	});
+	assert.equal(organizationLookup.reads, "member,organization");
+	const projectLookup = await ada("auth/scope/project/bySlug", {
+		slug: "site",
+		parentId: "acme",
+	});
+	assert.equal(projectLookup.reads, "member,organization,project");
 });
 
 test("a scope without a slug has no lookup", async () => {

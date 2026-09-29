@@ -31,6 +31,7 @@ lifecycle hooks; rarely read from these.
 | `cliSlots.removeDevDeps` | `list<string>` | npm devDeps removed (auto-wired from `plugin({ devDependencies })`) |
 | `cliSlots.tsconfigPaths` | `map<string, string[]>` | Consumer tsconfig `compilerOptions.paths` entries (e.g. api's `virtual:stack-procedure` alias). Read once by `stack init`'s tsconfig template, never by `stack generate` |
 | `cliSlots.tsconfigTypes` | `list<string>` | Consumer tsconfig `compilerOptions.types` entries (e.g. native-ui's `uniwind/types`). Same consumption point as `tsconfigPaths` |
+| `cliSlots.workerTsconfig` | `value<string>` | The consumer tsconfig (root-relative) holding the worker's `paths`: `tsconfig.worker.json` under the split, else `tsconfig.json`. Contributed by the CLI from the layout `stack init`'s template writes; cloudflare passes it to every bundling wrangler command |
 
 For the universal "resolve a `*Source` slot, write it under `.stack/`, skip on `null`" pattern,
 prefer the `emitArtifact` helper exported alongside `cliSlots`:
@@ -122,6 +123,7 @@ e.g. consulting `ctx.fileExists` before writing.
 | `htmlSource` | `derived<string \| null>` | Final `.stack/index.html` |
 | `providersSource` | `derived<string \| null>` | Final `.stack/virtual-providers.tsx` |
 | `routesDtsSource` | `derived<string \| null>` | Final `.stack/routes.d.ts` |
+| `topLevelRoutes` | `derived<string[]>` | The static first segments of the pages' URLs (through groups, never a param), sorted; empty when routing is off. solid-ui hands them to `auth.slots.reservedSlugs` |
 | `homeScaffold` | `value<ScaffoldSpec>` (`override`) | Scaffold for `src/app/pages/index.tsx`; solid-ui overrides with the design-system home |
 
 ## `solidUi.slots.*` (plugin-solid-ui)
@@ -170,11 +172,12 @@ e.g. consulting `ctx.fileExists` before writing.
 
 | Slot | Kind | Purpose |
 |------|------|---------|
-| `runtimeOptions` | `derived<Record<string, TsExpression>>` | Better Auth runtime options; reads `api.slots.cors` for `trustedOrigins` and the default passkey `origin`, and `api.slots.devCorsOrigins` then `api.slots.devTargetOrigins` for `devTrustedOrigins` and passkey `devOrigin` (both dev-gated by the runtime); bakes passkey `rpID`/`rpName` from `app` |
+| `runtimeOptions` | `derived<Record<string, TsExpression>>` | Better Auth runtime options; reads `api.slots.cors` for `trustedOrigins` and the default passkey `origin`, and `api.slots.devCorsOrigins` then `api.slots.devTargetOrigins` for `devTrustedOrigins` and passkey `devOrigin` (both dev-gated by the runtime), and `auth.slots.reservedSlugs` for `reservedSlugs`; bakes passkey `rpID`/`rpName` from `app` |
 | `appUrlDevDefault` | `derived<string>` | Canonical dev URL for `APP_URL`'s dev default: the first `api.slots.devCorsOrigins` entry (a frontend's), else the first `api.slots.devTargetOrigins` entry (the deploy target's), else `https://<domain>` |
 | `callbackFile` | `value<string>` | Consumer callback-file path (default `src/worker/plugins/auth.ts`); override for a restructured worker layout |
 | `cookiePrefix` | `value<string>` | Resolved session-cookie prefix (`cookies.prefix` ?? better-auth's `"better-auth"` default); read by native-ui's generated auth-client constants |
-| `clientFlags` | `value<AuthClientFlags \| null>` | The web client's `{ passkey, emailOtp, organization }`, from the options; seeded null and filled by auth's own contribution, so a reader without auth in the config sees null. Read by solid-ui's `authClientSource` |
+| `clientFlags` | `value<AuthClientFlags \| null>` | The web client's `{ passkey, emailOtp, organization }`, from the options, `organization` carrying the access control's statements and role grants as the worker gets them; seeded null and filled by auth's own contribution, so a reader without auth in the config sees null. Read by solid-ui's `authClientSource` |
+| `reservedSlugs` | `list<string>` | The app's top-level routes, which an organization slug may not take (an organization is served at `/<slug>`); solid-ui contributes `solid.slots.topLevelRoutes`. With organizations on, `runtimeOptions` bakes them beside plugin-api's `RESERVED_SLUGS` and the runtime refuses them on organization create and update |
 
 ## Spec types
 

@@ -13,6 +13,18 @@
 // consumer-facing re-export instructions. None of better-auth's own field
 // defs for these tables set `onDelete: "cascade"` (unlike `session.userId` /
 // `account.userId` in `./index.ts`), so the FKs below carry none either.
+
+// The drizzle types the emitted declarations spell, named here so they are
+// spelled through plugin-db, the one package drizzle resolves from. Unnamed,
+// tsc writes `import("drizzle-orm/...")`, which a consumer cannot resolve
+// from this package, and every table and row read through it is `any`.
+// biome-ignore lint/correctness/noUnusedImports: read by the declaration emit
+import type {
+	Many,
+	One,
+	Relations,
+	SQLiteTableWithColumns,
+} from "@fcalell/plugin-db/orm";
 import {
 	index,
 	integer,

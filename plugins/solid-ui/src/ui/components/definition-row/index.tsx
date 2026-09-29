@@ -32,9 +32,9 @@ export type DefinitionRowProps = Closed & {
 
 const COPIED_MS = 2000;
 
-// The row's vertical padding is given to the act, so its 44 px hit area
+// The row's vertical padding is given to the act, so its hit area at the floor
 // leaves the row as tall as one with no act.
-const ACT = cn("-my-stack min-h-11 shrink-0 px-row", TEXT_ACT);
+const ACT = cn("-my-row-y min-h-floor shrink-0 px-row", TEXT_ACT);
 
 function isStatus(
 	value: DefinitionValue,

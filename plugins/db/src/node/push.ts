@@ -8,6 +8,7 @@ import {
 } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, join, resolve } from "node:path";
+import { LOCAL_PERSIST } from "@fcalell/plugin-cloudflare";
 import type { DbOptions } from "../types.ts";
 import { runCommand } from "./exec.ts";
 import { migrationLockPath, withMigrationLock } from "./lock.ts";
@@ -20,19 +21,19 @@ function sqliteLocalUrl(cwd: string, options: DbOptions): string {
 	const url =
 		options.dialect === "sqlite" && options.path
 			? options.path
-			: ".stack/dev/local.db";
+			: ".db-kit/local.db";
 	mkdirSync(dirname(resolve(cwd, url)), { recursive: true });
 	return url;
 }
 
-// Where miniflare persists a local D1 under `--persist-to .stack/dev`: one
-// sqlite file per database id, named by miniflare's deterministic
-// durable-object id (`durableObjectNamespaceIdFromName`): HMAC-SHA256 keyed
-// on sha256("miniflare-D1DatabaseObject"), first 16 bytes over the database
-// id, then 16 bytes over that digest. Deriving the exact filename (instead
-// of globbing the dir) stays correct when old persist state holds databases
-// from a previous `databaseId`.
-const MINIFLARE_D1_DIR = ".stack/dev/v3/d1/miniflare-D1DatabaseObject";
+// Where miniflare persists a local D1 under plugin-cloudflare's
+// `--persist-to`: one sqlite file per database id, named by miniflare's
+// deterministic durable-object id (`durableObjectNamespaceIdFromName`):
+// HMAC-SHA256 keyed on sha256("miniflare-D1DatabaseObject"), first 16 bytes
+// over the database id, then 16 bytes over that digest. Deriving the exact
+// filename (instead of globbing the dir) stays correct when old persist
+// state holds databases from a previous `databaseId`.
+const MINIFLARE_D1_DIR = `${LOCAL_PERSIST}/v3/d1/miniflare-D1DatabaseObject`;
 
 function miniflareD1Path(cwd: string, databaseId: string): string {
 	const key = createHash("sha256")
@@ -115,7 +116,7 @@ export async function pushSchemaLocal(
 	// `stack db push` is run while `stack dev`'s schema watcher fires.
 	assertSqliteDriver(cwd);
 	return withMigrationLock(migrationLockPath(cwd), async () => {
-		const configDir = join(cwd, ".stack", "dev");
+		const configDir = join(cwd, ".db-kit");
 		mkdirSync(configDir, { recursive: true });
 
 		// The d1 dialect pushes into the exact miniflare sqlite the running
@@ -162,7 +163,7 @@ export async function generateMigrations(
 			}
 		}
 
-		const configDir = join(cwd, ".stack", "dev");
+		const configDir = join(cwd, ".db-kit");
 		mkdirSync(configDir, { recursive: true });
 
 		const configPath = join(configDir, "drizzle-generate.config.ts");
@@ -226,7 +227,7 @@ export async function applyMigrationsLocal(
 	return withMigrationLock(migrationLockPath(cwd), async () => {
 		if (options.dialect === "sqlite") {
 			assertSqliteDriver(cwd);
-			const configDir = join(cwd, ".stack", "dev");
+			const configDir = join(cwd, ".db-kit");
 			mkdirSync(configDir, { recursive: true });
 
 			const configPath = join(configDir, "drizzle-migrate.config.ts");
@@ -255,8 +256,9 @@ export default defineConfig({
 			);
 		}
 
-		// `--local --persist-to .stack/dev --config .stack/wrangler.toml` so the
-		// migration lands in the exact miniflare D1 that `wrangler dev` reads.
+		// `localD1Flags()` (plugin-cloudflare's `--persist-to` and
+		// `.stack/wrangler.toml`) so the migration lands in the exact
+		// miniflare D1 that `wrangler dev` reads.
 		migrationsApply(cwd, databaseName, "local");
 	});
 }

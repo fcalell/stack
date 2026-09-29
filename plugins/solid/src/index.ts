@@ -14,7 +14,7 @@ import {
 	aggregateHtml,
 	aggregateProviders,
 } from "./node/codegen.ts";
-import { buildRoutesDts } from "./node/routes-core.ts";
+import { buildRoutesDts, topLevelSegments } from "./node/routes-core.ts";
 import { type Mount, type SolidOptions, solidOptionsSchema } from "./types.ts";
 
 const SOURCE = "solid";
@@ -149,6 +149,17 @@ const routesDtsSource = slot.derived({
 	},
 });
 
+// The static first segments of the app's URLs (`login`, `settings`), for a
+// peer that hands out top-level addresses (an organization's slug) and must
+// not shadow a page. Empty when routing is off.
+const topLevelRoutes = slot.derived({
+	source: SOURCE,
+	name: "topLevelRoutes",
+	inputs: { pagesDir: routesPagesDir },
+	compute: (inp, ctx): string[] =>
+		inp.pagesDir === null ? [] : topLevelSegments(ctx.cwd, inp.pagesDir),
+});
+
 // Home scaffold. `override: true` lets plugin-solid-ui cede this slot to its
 // own richer home page — REVIEW #21 structural fix, no `ctx.hasPlugin("solid-ui")`
 // string checks live in this plugin anymore.
@@ -187,6 +198,7 @@ export const solid = plugin("solid", {
 		htmlSource,
 		providersSource,
 		routesDtsSource,
+		topLevelRoutes,
 		homeScaffold,
 	},
 

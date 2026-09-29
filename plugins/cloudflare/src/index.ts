@@ -2,9 +2,10 @@ import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { log } from "@clack/prompts";
-import { plugin, slot } from "@fcalell/cli";
+import { type ContributionCtx, plugin, slot } from "@fcalell/cli";
 import { cliSlots, emitArtifact } from "@fcalell/cli/cli-slots";
 import { api } from "@fcalell/plugin-api";
+import { vite } from "@fcalell/plugin-vite";
 import { aggregateDevVars, aggregateWrangler } from "./node/codegen.ts";
 import {
 	cloudflareOptionsSchema,
@@ -18,6 +19,11 @@ const SOURCE = "cloudflare";
 // `wrangler dev`'s listen port, passed explicitly so the dev process and the
 // worker's dev origin agree.
 const WRANGLER_DEV_PORT = 8787;
+
+// Where miniflare keeps the local worker's state (D1, KV, caches, traces):
+// wrangler's own `.wrangler/state`, at the consumer root. plugin-db's local
+// D1 commands pass the same `--persist-to`.
+export const LOCAL_PERSIST = ".wrangler/state";
 
 // ── Slot declarations ──────────────────────────────────────────────
 //
@@ -92,6 +98,24 @@ const wranglerToml = slot.derived({
 	},
 });
 
+// The config and tsconfig every bundling wrangler command reads. The consumer
+// root has no wrangler config, so `--config` names the generated one. esbuild
+// reads the tsconfig nearest each file unless told otherwise, which under the
+// split is the solution `tsconfig.json` with no `paths`, so
+// `virtual:stack-procedure` would not resolve: `--tsconfig` names the one
+// holding them. It is absolute because wrangler hands it to esbuild, which
+// resolves a relative one against the config's directory, `.stack/`, and the
+// config file's own `tsconfig` key fails the same way.
+async function wranglerConfigArgs(ctx: ContributionCtx): Promise<string[]> {
+	const tsconfig = await ctx.resolve(cliSlots.workerTsconfig);
+	return [
+		"--config",
+		".stack/wrangler.toml",
+		"--tsconfig",
+		join(ctx.cwd, tsconfig),
+	];
+}
+
 export const cloudflare = plugin("cloudflare", {
 	label: "Cloudflare",
 
@@ -138,12 +162,13 @@ export const cloudflare = plugin("cloudflare", {
 			};
 		}),
 
-		// Emit `.dev.vars` unless the consumer already has one — but a
-		// pre-existing file missing STACK_DEV still gets it appended, so
-		// projects generated before STACK_DEV existed pick it up instead of
-		// throttling forever in local dev. STACK_DEV never goes through
-		// `api.slots.env` — it must never become a `wrangler secret put`
-		// deploy prompt.
+		// Emit `.dev.vars` unless the consumer already has one; an existing
+		// file is topped up with STACK_DEV and every declared var it lacks, at
+		// its dev default, so a var declared after the file was written still
+		// reaches the dev worker, and `wrangler types` (which types a var in
+		// `.dev.vars` as `string`, one only in `[vars]` as its literal `""`)
+		// types it as a string. STACK_DEV never goes through `api.slots.env` —
+		// it must never become a `wrangler secret put` deploy prompt.
 		//
 		// wrangler resolves `.dev.vars` relative to its config file, and the
 		// dev process runs `--config .stack/wrangler.toml`, so the consumer's
@@ -153,20 +178,24 @@ export const cloudflare = plugin("cloudflare", {
 		cliSlots.artifactFiles.contribute(async (ctx) => {
 			const stackDevLine =
 				"# STACK_DEV marks local dev; never set in production.\nSTACK_DEV=1\n";
+			const env = await ctx.resolve(api.slots.env);
 			const files: Array<{ path: string; content: string }> = [];
 			let content: string;
-			const exists = await ctx.fileExists(".dev.vars");
-			if (exists) {
+			if (await ctx.fileExists(".dev.vars")) {
 				const existing = await ctx.readFile(".dev.vars");
-				if (/^STACK_DEV=/m.test(existing)) {
-					content = existing;
-				} else {
-					const separator = existing.endsWith("\n") ? "" : "\n";
-					content = `${existing}${separator}${stackDevLine}`;
+				const declared = (name: string) =>
+					new RegExp(`^${name}=`, "m").test(existing);
+				const missing = `${declared("STACK_DEV") ? "" : stackDevLine}${
+					aggregateDevVars(env.filter((e) => !declared(e.name))) ?? ""
+				}`;
+				content = existing;
+				if (missing) {
+					const separator =
+						existing === "" || existing.endsWith("\n") ? "" : "\n";
+					content = `${existing}${separator}${missing}`;
 					files.push({ path: ".dev.vars", content });
 				}
 			} else {
-				const env = await ctx.resolve(api.slots.env);
 				content = `${stackDevLine}${aggregateDevVars(env) ?? ""}`;
 				files.push({ path: ".dev.vars", content });
 			}
@@ -188,23 +217,33 @@ export const cloudflare = plugin("cloudflare", {
 				: `http://localhost:${WRANGLER_DEV_PORT}`,
 		),
 
+		// Same-origin dev: the vite dev server proxies worker-owned paths to
+		// `wrangler dev`, so the RPC and auth clients' relative URLs reach the
+		// worker and its session cookie is first-party. Inert without vite in
+		// the config.
+		vite.slots.serverProxy.contribute(async (ctx) => {
+			const prefixes = await ctx.resolve(api.slots.routePrefixes);
+			const target = `http://localhost:${WRANGLER_DEV_PORT}`;
+			return prefixes.map((path) => ({ path, target }));
+		}),
+
 		// Dev wrangler process — the worker target's local runtime. `--config`
 		// points at the generated `.stack/wrangler.toml` (the consumer root has
-		// no wrangler config), and `--persist-to .stack/dev` fixes the local D1
-		// so schema pushes, seeds, and the running worker all share one
-		// miniflare database.
-		cliSlots.devProcesses.contribute(() => ({
+		// no wrangler config), and `--persist-to` fixes the local D1 so schema
+		// pushes, seeds, and the running worker all share one miniflare
+		// database. The state lives outside `.stack/`, which is Vite's root:
+		// every request writes it, and each write Vite sees is a full reload.
+		cliSlots.devProcesses.contribute(async (ctx) => ({
 			name: "wrangler",
 			command: "npx",
 			args: [
 				"wrangler",
 				"dev",
-				"--config",
-				".stack/wrangler.toml",
+				...(await wranglerConfigArgs(ctx)),
 				"--port",
 				String(WRANGLER_DEV_PORT),
 				"--persist-to",
-				".stack/dev",
+				LOCAL_PERSIST,
 			],
 			defaultPort: WRANGLER_DEV_PORT,
 			readyPattern: /Ready on/,
@@ -212,12 +251,12 @@ export const cloudflare = plugin("cloudflare", {
 		})),
 
 		// Deploy step: push the worker up via wrangler.
-		cliSlots.deploySteps.contribute(() => ({
+		cliSlots.deploySteps.contribute(async (ctx) => ({
 			name: "Worker",
 			phase: "main",
 			exec: {
 				command: "npx",
-				args: ["wrangler", "deploy", "--config", ".stack/wrangler.toml"],
+				args: ["wrangler", "deploy", ...(await wranglerConfigArgs(ctx))],
 			},
 		})),
 

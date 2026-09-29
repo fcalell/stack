@@ -8,7 +8,7 @@ import { StatusGlyph } from "#lib/status-glyph.tsx";
 import { useWords } from "#lib/words.tsx";
 
 // An icon and a word; the consumer maps its own states onto the six and the
-// color follows the state. With `onOpen` it is a 44 px chip.
+// color follows the state. With `onOpen` it is a chip at the floor.
 export type StatusProps = Closed & {
 	state: StatusState;
 	label?: string;

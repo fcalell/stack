@@ -3,7 +3,7 @@ import * as SliderPrimitive from "@kobalte/core/slider";
 import type { Closed } from "#lib/closed.ts";
 import { cn } from "#lib/cn.ts";
 
-// A labelled track: a thin bar inside a 44 px hit area, the value drawn
+// A labelled track: a thin bar inside a hit area at the floor, the value drawn
 // beside the label in its `unit`, an Intl unit identifier such as
 // "percent", formatted for the browser's locale. The thumb is the one
 // control; no native input sits in it, since the value reaches the consumer
@@ -42,7 +42,7 @@ export function Slider(props: SliderProps) {
 					class={cn(text({ role: "meta" }), "tabular-nums")}
 				/>
 			</div>
-			<SliderPrimitive.Track class="relative flex h-11 items-center">
+			<SliderPrimitive.Track class="relative flex h-floor items-center">
 				<div class={cn(METER_TRACK, "relative h-2 w-full overflow-hidden")}>
 					<SliderPrimitive.Fill class={cn(METER_FILL, "absolute inset-y-0")} />
 				</div>

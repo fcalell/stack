@@ -25,27 +25,42 @@ stead's `design/07-interface.md`.
   filled with), `space` (the rungs), `radius` (the radii; 0 squares the pills too), `text` (the type roles, sizes rounded
   to the pixel and line boxes to the even pixel), `fonts` (the two family names), `widths` (the
   five `--container-*` values), `breakpoints` (the three device classes), `elevation` (`soft`
-  shadows or a `flat` 1px `edge` ring) and `defaultMode` (the starting mode ahead of the system
+  shadows or a `flat` 1px `edge` ring), `density` (`touch`, or `desktop`: compact controls on a
+  fine pointer) and `defaultMode` (the starting mode ahead of the system
   preference). Lightness and
   per-token chroma are fixed from the calibration, but for the dark `tint`, `ok`, `warn` and
   `danger`, set lighter so a mark drawn inside a group keeps 4.5:1; the AA contracts hold at the
   defaults, the verify script measures each pair, and moving a knob puts the re-check on the
   consumer. The two shadows derive from `neutralHue`,
   converted to sRGB in the derivation because React Native's `boxShadow` takes no oklch. Density
-  is a theme, never a breakpoint: no scale changes at a width.
+  is a theme, never a breakpoint: no scale changes at a width. `density` picks, by the
+  pointer, which devices draw compact: four `--spacing-*` sizes (`floor`, `row-y`, `control-y`,
+  `segment`) hold every control minimum and vertical padding, both platforms seed their touch
+  values, and under `desktop` the web overrides them with the compact set in a `(pointer: fine)`
+  `:root` rule in `@layer base`, the cascade the dark layer rides, so no cell and no component
+  carries a density class. Native is touch-only and ignores the knob. Rejected: a `fine:` variant
+  in the cells (an interaction condition in a shared cell, meaningless on native) and a smaller
+  type scale on the desktop (`body` at 16 is a touch fact that already fits the 32 px floor, and
+  one scale holds at every width).
 - Color roles are named by use (`canvas`, `surface`, `group`, `edge`, `ink`, `ink-meta`,
   `ink-faint`, `accent`, `accent-soft`, `on-accent`, `tint`, the three states with `-soft`, eight
-  `avatar-n` steps off `accentHue`), plus two invariants: `scrim` and `thumb`, the switch's knob,
+  `avatar-n` steps off `accentHue`, six `chip-n` data families 60° apart and 30° off `accentHue`),
+  plus two invariants: `scrim` and `thumb`, the switch's knob,
   the one literal color. `accent` and `accent-soft` are aliases decided by `primary`;
   `on-accent` aliases `canvas`, which keeps AA in both modes by the ladder's symmetry. Rejected:
-  a hue computed per avatar name (neither a token nor a cell).
+  a hue computed per avatar name (neither a token nor a cell). The chip ladder is its own, not the
+  avatar steps: an avatar's first step is the accent's hue, and a family must never wear the accent
+  the frame keeps for acts, selection and focus. Six, not eight, because 45° apart two families at
+  the fills' low chroma are hard to tell apart, and a screen shows four or five families. Rejected:
+  a hue per chip value (a family on one hue is what makes a chip learnable) and `Status` with a
+  family mode (a state and a data value are two concepts, so two names).
 - Per-token overrides ride two schema maps: `colors` (`shared`/`light`/`dark`) and `scales`
   (full custom-property names). One `theme` option, validated by ui-core's zod schema; a
   two-platform consumer passes the same object to `solidUi` and `nativeUi`. Rejected: an
   `app.theme` field (theme is UI-domain, `app` stays identity) and documented CSS-variable
   overrides (typed options over glue).
 - Emission returns token records, never CSS text (`themeTokens`, `modeTokens`,
-  `shadowUtilities`): records validate per key, need no escaping, and keep ui-core free of
+  `compactTokens`, `shadowUtilities`): records validate per key, need no escaping, and keep ui-core free of
   `@fcalell/cli`. Each plugin wraps the records in its own entry; both wrap the two shadows in
   `@utility` rules because the `--shadow-*` theme namespace does not resolve into RN's
   `boxShadow`.
@@ -57,7 +72,7 @@ stead's `design/07-interface.md`.
 ## Words
 
 Every word a molecule draws or reads aloud on its own (the six `Status` words, `recommended`,
-`copy`, `copied`, `back`, `close`, `more`, `send`, `stop`, `attach`, `search`, `loading`, `retry`) comes
+`copy`, `copied`, `back`, `close`, `more`, `send`, `stop`, `attach`, `search`, `loading`, `retry`, `add`, `remove`, `duplicate`) comes
 from `words`, a closed typed object with English defaults. The `Words` type requires every key
 and `wordsSchema` is strict, so a translation missing a word fails `tsc` and the schema. It is a
 plugin option beside `theme`; each plugin contributes a `WordsProvider` into the generated entry
@@ -75,20 +90,34 @@ prop on the molecule that draws it, never a key.
   surface, a group and a button alike (the `edge` hairline was too close to `group` to show),
   one `tint` focus ring for every focusable thing, and an underline on a text act. A scroller that holds nothing focusable takes focus itself (`lib/reach.ts`), so a keyboard can scroll it. A type role's cell carries its ink and, for `mono`,
   its family, since RN Text inherits nothing and both platforms bind `--font-mono`.
-- No arbitrary values in a cell, in either spelling. A control's interior padding stays a literal
-  numeric; a row and a surface inset on rungs.
+- No arbitrary values in a cell, in either spelling. A control's horizontal padding stays a literal
+  numeric; its vertical padding and every minimum height are density sizes; a row and a surface
+  inset on rungs.
 - No behavior in ui-core, ever. A cell that needs a platform conditional belongs in the overlay;
   the spinner is the recorded example (native colors a prop, not a class, so it ships with no
-  matrix and `ContentTone` is its shared contract).
+  matrix and `ContentTone` is its shared contract). So is a line diff: `Diff`'s `before` and
+  `after` are diffed in each plugin with the `diff` package both already carry, never here.
+- A table cell is the field's box (`TABLE_CELL`: the floor, `py-control-y`, `px-4` behind a
+  transparent `border-x`), pinned against `FIELD` by the density check, so a cell and the `Input`
+  that edits it in place put their text in one place and the row keeps its height at either
+  density. The row (`TABLE_ROW`) is a hairline and the open row's `accent-soft`; `ink`,
+  `ink-meta`, `ok`, `warn`, `danger` and `tint` are pinned at 4.5:1 on it, since a selected row
+  holds a `Status`; `accent-soft` departs from the calibration's lightness for exactly that.
 
 ## The canon, the roster and the closed props
 
 - The canon binds every component either UI plugin ships: one name per concept (`label`,
   `loading`, `onChange`, `onAct`, `act`, `blocked`, `sentence`), composed regions as typed
-  descriptors (`Act`, `Mark`, `PlaceSpec`, `Option`, `Part`) instead of node slots, and no
+  descriptors (`Act`, `Mark`, `PlaceSpec`, `Option`, `OptionGroup`, `Part`, `FieldBinding`,
+  `Confirmation`, `MenuItem`, `TableColumn`, `TableRow`) instead of node slots, and no
   `class` / `className` / `classList` / `style` prop. Laws live in the README under `## The
-  canon`.
-- The roster is data: `ROSTER` in `packages/ui-core/src/roster.ts` names 48 components in four
+  canon`. A descriptor is generic only in `TIcon` (the icon is the one framework type) or, for a
+  field binding, in the value its field holds, which is data: `FieldBinding<V>` is how a bound
+  `FormField` types its control by the field, and `useApiForm(...).bind(name)` produces it on the
+  web from TanStack Form's store, one binding per name under the form's owner. Rejected: optional
+  `value` and `onChange` on every control read from the field's context, which would compile a
+  control with no value anywhere and could not type a boolean field against an `Input`.
+- The roster is data: `ROSTER` in `packages/ui-core/src/roster.ts` names 54 components in four
   layers (atoms, layout molecules, shared molecules, content molecules) with their prop names,
   the same in both plugins. Each plugin's verify suite reads every component's exported props type
   against it with ts-morph, so a prop added on one platform, renamed, or a style channel reopened

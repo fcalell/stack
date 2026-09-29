@@ -26,7 +26,7 @@ import { biomeTemplate } from "../templates/biome.ts";
 import { gitignoreTemplate } from "../templates/gitignore.ts";
 import { packageJsonTemplate } from "../templates/package-json.ts";
 import { stackConfigTemplate } from "../templates/stack-config.ts";
-import { tsconfigTemplate } from "../templates/tsconfig.ts";
+import { tsconfigLayout, tsconfigTemplate } from "../templates/tsconfig.ts";
 
 export interface InitOptions {
 	plugins?: string[];
@@ -96,11 +96,6 @@ async function run(dir: string, options: InitOptions): Promise<void> {
 	}
 
 	const name = basename(dir);
-	const hasSolid =
-		selectedPlugins.includes("solid") || selectedPlugins.includes("solid-ui");
-	const hasNative = selectedPlugins.includes("expo");
-	const hasWorker =
-		selectedPlugins.includes("api") || selectedPlugins.includes("db");
 
 	// Discovered plugins carry the factory + an `options: {}` placeholder.
 	// We don't yet have per-plugin options — prompts produce them. The
@@ -119,7 +114,7 @@ async function run(dir: string, options: InitOptions): Promise<void> {
 	// plugin's own presence in the graph is the gate — so resolving off the
 	// pre-prompt graph is safe. `tsconfigTemplate` itself stays domain-agnostic:
 	// it only decides *where* the contributed paths/types land (single config
-	// vs. the native split's app/worker projects), never *what* they contain.
+	// vs. the split's app/worker projects), never *what* they contain.
 	const { graph: promptGraph } = buildGraphFromDiscovered({
 		discovered: selectedDiscovered,
 		app: { name: appName, domain },
@@ -139,9 +134,7 @@ async function run(dir: string, options: InitOptions): Promise<void> {
 			}),
 		],
 		...tsconfigTemplate({
-			solid: hasSolid,
-			native: hasNative,
-			worker: hasWorker,
+			...tsconfigLayout(selectedPlugins),
 			procedurePaths: tsconfigPaths,
 			nativeTypes: tsconfigTypes,
 		}),

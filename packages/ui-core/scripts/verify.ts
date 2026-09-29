@@ -15,7 +15,12 @@ import { twMerge } from "tailwind-merge";
 import ts from "typescript";
 import { cn } from "../src/cn.ts";
 import { deriveTheme } from "../src/derive.ts";
-import { modeTokens, shadowUtilities, themeTokens } from "../src/emit.ts";
+import {
+	compactTokens,
+	modeTokens,
+	shadowUtilities,
+	themeTokens,
+} from "../src/emit.ts";
 import { GEOMETRY, NATIVE_GEOMETRY_HOSTS, scanGeometry } from "../src/gate.ts";
 import {
 	assert,
@@ -33,7 +38,9 @@ import { wordsSchema } from "../src/schema.ts";
 import {
 	AVATAR_STEPS,
 	BREAKPOINTS,
+	CHIP_FAMILIES,
 	COLORS,
+	DENSITY_SIZES,
 	ENGLISH,
 	INVARIANT,
 	INVARIANT_COLORS,
@@ -63,18 +70,22 @@ import {
 	BUTTON,
 	BUTTON_LABEL,
 	CHECKBOX,
+	CHIP,
 	DIFF_LINE,
 	FIELD,
 	type Matrix,
 	MESSAGE,
+	OTP_BOX,
 	PLACE,
 	RHYTHM,
 	ROW,
 	SEGMENT,
 	STATUS,
 	SWITCH,
+	TABLE_ROW,
 	TEXT,
 	TEXT_STRONG,
+	TOAST_STATE,
 } from "../src/variant-tables.ts";
 import * as variants from "../src/variants.ts";
 import {
@@ -85,9 +96,11 @@ import {
 	buttonContentTone,
 	buttonLabel,
 	checkbox,
+	chip,
 	diffLine,
 	field,
 	message,
+	otpBox,
 	place,
 	rhythm,
 	row,
@@ -95,8 +108,11 @@ import {
 	status,
 	statusContentTone,
 	switchTrack,
+	TABLE_CELL,
+	tableRow,
 	text,
 	textStrong,
+	toastState,
 } from "../src/variants.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -113,7 +129,10 @@ const ESCAPES_A_DECLARATION = /[;{}]|\/\*|\*\//;
 // Each role names the reference token whose value it kept: `accent` under
 // the default `ink` primary is the reference's ink-aliased accent, `tint`
 // its interactive hue.
-const ROLE_SOURCE: Record<Exclude<PerModeColor, `avatar-${number}`>, string> = {
+const ROLE_SOURCE: Record<
+	Exclude<PerModeColor, `avatar-${number}` | `chip-${number}`>,
+	string
+> = {
 	canvas: "canvas",
 	surface: "surface",
 	group: "surface-2",
@@ -135,12 +154,16 @@ const ROLE_SOURCE: Record<Exclude<PerModeColor, `avatar-${number}`>, string> = {
 
 // The values the contract departs from the calibration on, each for a
 // measured reason: the reference's dark marks clear 4.5:1 on `surface` but
-// not on `group`, where statuses, acts and destructive labels are drawn.
+// not on `group`, where statuses, acts and destructive labels are drawn; and
+// the reference's `brand-soft`, a selected row, holds those marks under 4.5:1
+// until it is lighter in light mode and darker in dark mode.
 const DEPARTED: Record<string, string> = {
 	"dark.tint": "oklch(0.75 0.155 261)",
 	"dark.ok": "oklch(0.75 0.14 160)",
 	"dark.warn": "oklch(0.75 0.14 75)",
 	"dark.danger": "oklch(0.76 0.17 28)",
+	"light.accent-soft": "oklch(0.925 0.04 261)",
+	"dark.accent-soft": "oklch(0.34 0.095 261)",
 };
 
 const reference = readFileSync(referencePath, "utf8").replace(
@@ -224,14 +247,18 @@ const MATRICES: readonly Registration[] = [
 	["BUTTON_LABEL", BUTTON_LABEL, buttonLabel],
 	["STATUS", STATUS, status],
 	["FIELD", FIELD, field],
+	["OTP_BOX", OTP_BOX, otpBox],
 	["ROW", ROW, row],
 	["SWITCH", SWITCH, switchTrack],
+	["TABLE_ROW", TABLE_ROW, tableRow],
 	["CHECKBOX", CHECKBOX, checkbox],
 	["SEGMENT", SEGMENT, segment],
 	["BANNER", BANNER, banner],
+	["TOAST_STATE", TOAST_STATE, toastState],
 	["DIFF_LINE", DIFF_LINE, diffLine],
 	["MESSAGE", MESSAGE, message],
 	["AVATAR", AVATAR, avatar],
+	["CHIP", CHIP, chip],
 	["PLACE", PLACE, place],
 	["RHYTHM", RHYTHM, rhythm],
 ];
@@ -380,7 +407,7 @@ check("c02", "package.json shape", () => {
 		Object.keys(pkg.exports ?? {})
 			.sort()
 			.join(" "),
-		"./cn ./derive ./descriptors ./emit ./gate ./harness ./roster ./schema ./tokens ./variants",
+		"./cn ./commit ./derive ./descriptors ./emit ./gate ./harness ./roster ./schema ./tokens ./variants",
 		"export subpaths",
 	);
 	assert(pkg.peerDependencies?.zod, "zod is not a peerDependency");
@@ -400,11 +427,11 @@ check("c02", "package.json shape", () => {
 	for (const field of ["dependencies", "peerDependencies"] as const) {
 		assert(!pkg[field]?.["@fcalell/cli"], `@fcalell/cli appears in ${field}`);
 	}
-	return "10 subpaths, no root export, no runtime cli dependency";
+	return "11 subpaths, no root export, no runtime cli dependency";
 });
 
 check("c03", "tokens.ts declares the contract", () => {
-	requireEqual(PER_MODE_COLORS.length, 25, "per-mode color count");
+	requireEqual(PER_MODE_COLORS.length, 31, "per-mode color count");
 	requireEqual(INVARIANT_COLORS.length, 2, "mode-invariant color count");
 	requireEqual(TYPE_ROLES.length, 7, "type role count");
 	requireEqual(SPACING_RUNGS.length, 6, "spacing rung count");
@@ -412,7 +439,7 @@ check("c03", "tokens.ts declares the contract", () => {
 	requireEqual(SHADOW_LEVELS.length, 2, "shadow level count");
 	requireEqual(WIDTHS.length, 5, "width count");
 	requireEqual(BREAKPOINTS.length, 3, "breakpoint count");
-	requireEqual(WORD_KEYS.length, 18, "word count");
+	requireEqual(WORD_KEYS.length, 21, "word count");
 	for (const [token, declaration] of Object.entries(COLORS)) {
 		if ("alias" in declaration) {
 			assert(
@@ -437,7 +464,7 @@ check("c03", "tokens.ts declares the contract", () => {
 	for (const word of ["marine", "navy", "brand", "interactive"]) {
 		assert(!/\b${word}\b/.test(source), `tokens.ts names "${word}"`);
 	}
-	return "25 per-mode + 2 invariant colors, 7 roles, 6 rungs, 3 radii, 2 shadows, 5 widths, 3 breakpoints, 18 words";
+	return "31 per-mode + 2 invariant colors, 7 roles, 6 rungs, 3 radii, 2 shadows, 5 widths, 3 breakpoints, 21 words";
 });
 
 check("c05", "default knobs reproduce the reference under the roles", () => {
@@ -555,6 +582,86 @@ check("c06", "every scale is its ratio of the knob", () => {
 	return "6 rungs, 3 radii, 7 sizes with even line boxes, 3 trackings, 5 widths, 3 breakpoints, 2 families, all from the knobs";
 });
 
+check(
+	"c06-density",
+	"touch seeds today's floor, desktop adds only the compact set",
+	() => {
+		const touch = {
+			"--spacing-floor": "44px",
+			"--spacing-row-y": `${KNOB_DEFAULTS.space * 3}px`,
+			"--spacing-control-y": "8px",
+			"--spacing-segment": "36px",
+		};
+		for (const [key, value] of Object.entries(touch)) {
+			requireEqual(emitted(key), value, `touch ${key}`);
+		}
+		// The touch row pad is the `stack` rung the row padded on before.
+		requireEqual(
+			emitted("--spacing-row-y"),
+			emitted("--spacing-stack"),
+			"touch row-y is stack",
+		);
+		requireEqual(
+			JSON.stringify(compactTokens(base)),
+			"{}",
+			"the default density emits no compact set",
+		);
+		const desktop = deriveTheme({ density: "desktop" });
+		requireEqual(
+			JSON.stringify(themeTokens(desktop)),
+			JSON.stringify(baseTheme),
+			"desktop leaves the seeded tokens as they are",
+		);
+		const compact = compactTokens(desktop);
+		requireEqual(
+			JSON.stringify(compact),
+			JSON.stringify({
+				"--spacing-floor": "32px",
+				"--spacing-row-y": `${KNOB_DEFAULTS.space}px`,
+				"--spacing-control-y": "4px",
+				"--spacing-segment": "24px",
+			}),
+			"the compact set",
+		);
+		// A one-line body row, button and field land on the compact floor.
+		const line = Number.parseInt(emitted("--leading-body"), 10);
+		for (const pad of ["--spacing-row-y", "--spacing-control-y"]) {
+			requireEqual(
+				line + 2 * Number.parseInt(compact[pad] ?? "", 10),
+				32,
+				`body line plus ${pad}`,
+			);
+		}
+		requireEqual(
+			compactTokens(deriveTheme({ density: "desktop", space: 8 }))[
+				"--spacing-row-y"
+			],
+			"8px",
+			"compact row-y follows space",
+		);
+		assert(
+			rejection({ density: "dense" }).includes("density"),
+			"an unknown density is not rejected by key",
+		);
+		// A table cell stands on the density sizes a field stands on and pads
+		// across by the field's side padding behind a side-only border, so the
+		// cell and the `Input` that edits it in place keep one row height and
+		// one text position: 32 compact, 44 on touch.
+		const cell = new Set(TABLE_CELL.split(" "));
+		const text = new Set(FIELD.variants.kind.text.split(" "));
+		for (const name of ["min-h-floor", "py-control-y"]) {
+			assert(cell.has(name), `TABLE_CELL lacks ${name}`);
+			assert(text.has(name), `FIELD.kind.text lacks ${name}`);
+		}
+		assert(FIELD.base.includes("px-4"), "FIELD.base lost its px-4");
+		assert(
+			cell.has("px-4") && cell.has("border-x") && !cell.has("border"),
+			"TABLE_CELL does not pad as the field does behind side borders only",
+		);
+		return "touch 44/12/8/36 as before, compact 32/4/4/24 under desktop only, a table cell on a field's geometry";
+	},
+);
+
 check("c07", "the shadows derive from neutralHue as sRGB", () => {
 	const utilities = shadowUtilities(base);
 	requireEqual(
@@ -635,6 +742,7 @@ check("c08", "themeTokens and modeTokens carry the right keys", () => {
 		expected.add(`--text-${role}--letter-spacing`);
 		expected.add(`--tracking-${role}`);
 	}
+	for (const size of DENSITY_SIZES) expected.add(`--spacing-${size}`);
 	for (const width of WIDTHS) expected.add(`--container-${width}`);
 	for (const bp of BREAKPOINTS) expected.add(`--breakpoint-${bp}`);
 	expected.add("--font-sans");
@@ -664,7 +772,7 @@ check("c08", "themeTokens and modeTokens carry the right keys", () => {
 		);
 	}
 
-	requireEqual(Object.keys(baseLight).length, 25, "modeTokens entry count");
+	requireEqual(Object.keys(baseLight).length, 31, "modeTokens entry count");
 	for (const token of PER_MODE_COLORS) {
 		assert(baseLight[token] !== undefined, `modeTokens is missing ${token}`);
 	}
@@ -737,6 +845,7 @@ check("c11", "accentHue and primary move only their roles", () => {
 	const expected = MODES.flatMap((mode) => [
 		`${mode}:tint`,
 		...AVATAR_STEPS.map((step) => `${mode}:avatar-${step}`),
+		...CHIP_FAMILIES.map((family) => `${mode}:chip-${family}`),
 	]);
 	requireEqual(
 		changed.sort().join(","),
@@ -748,6 +857,24 @@ check("c11", "accentHue and primary move only their roles", () => {
 		"oklch(0.88 0.06 290)",
 		"avatar-3 steps 90° off accentHue 200",
 	);
+	requireEqual(
+		modeTokens(moved, "light")["chip-1"],
+		"oklch(0.9 0.07 230)",
+		"chip-1 sits 30° off accentHue 200",
+	);
+	// No family ever wears the accent: every chip hue sits at least 30° off
+	// accentHue, whatever the knob says.
+	for (const accentHue of [0, 90, 200, 261, 359]) {
+		const light = modeTokens(deriveTheme({ accentHue }), "light");
+		for (const family of CHIP_FAMILIES) {
+			const hue = Number(light[`chip-${family}`]?.split(" ")[2]?.slice(0, -1));
+			const apart = Math.abs(((hue - accentHue + 540) % 360) - 180);
+			assert(
+				apart >= 30,
+				`chip-${family} is ${apart}° off accentHue ${accentHue}`,
+			);
+		}
+	}
 	// Under either primary, `accent` is its source and `on-accent` is canvas.
 	for (const theme of [
 		{},
@@ -775,7 +902,7 @@ check("c11", "accentHue and primary move only their roles", () => {
 	const accented = deriveTheme({ primary: "accent" });
 	requireEqual(
 		modeTokens(accented, "light")["accent-soft"],
-		"oklch(0.915 0.045 261)",
+		"oklch(0.925 0.045 261)",
 		"accent-soft under primary accent",
 	);
 	assert(
@@ -784,7 +911,7 @@ check("c11", "accentHue and primary move only their roles", () => {
 		] !== modeTokens(accented, "dark")["accent-soft"],
 		"accent-soft does not follow accentHue under primary accent",
 	);
-	return "tint and the 8 avatar steps move, accent and on-accent alias under both primaries";
+	return "tint, the 8 avatar steps and the 6 chip families move, no family on the accent, accent and on-accent alias under both primaries";
 });
 
 check("c12", "neutralChroma 0 zeroes only the neutral-bound tokens", () => {
@@ -815,6 +942,7 @@ check("c12", "neutralChroma 0 zeroes only the neutral-bound tokens", () => {
 			"danger",
 			"danger-soft",
 			"avatar-1",
+			"chip-1",
 		]) {
 			requireEqual(after[token], before[token], `${mode}.${token} untouched`);
 		}
@@ -929,6 +1057,7 @@ check("c14", "the Tailwind fixture builds on contract only", () => {
 		"bg-canvas",
 		"bg-accent",
 		"bg-avatar-8",
+		"bg-chip-6",
 		"gap-stack",
 		"p-inset",
 		"rounded-group",
@@ -988,7 +1117,11 @@ check("c15", "the README carries the design laws, off the brand", () => {
 		assert(readme.includes(heading), `README has no "${heading}" section`);
 	}
 	for (const token of [...PER_MODE_COLORS, ...INVARIANT_COLORS]) {
-		const name = token.startsWith("avatar-") ? "avatar-1" : token;
+		const name = token.startsWith("avatar-")
+			? "avatar-1"
+			: token.startsWith("chip-")
+				? "chip-1"
+				: token;
 		assert(readme.includes(`\`${name}\``), `README never names ${token}`);
 	}
 	return "7 sections, every color role named, no brand words";
@@ -1235,59 +1368,80 @@ check("c22", "the content tones are contract colors", () => {
 	return `${checked} token names, every one a contract color`;
 });
 
-check("c23", "descriptors.ts is types only, generic in TIcon", () => {
-	const source = readFileSync(resolve(pkgDir, "src/descriptors.ts"), "utf8");
-	const output = ts.transpileModule(source, {
-		compilerOptions: {
-			module: ts.ModuleKind.ESNext,
-			target: ts.ScriptTarget.ESNext,
-		},
-	}).outputText;
-	requireEqual(
-		output.replace(/export\s*\{\s*\}\s*;?/g, "").replace(/\s+/g, ""),
-		"",
-		"emitted JavaScript",
-	);
-	for (const statement of source.match(/^import .*/gm) ?? []) {
-		assert(statement.startsWith("import type "), `value import: ${statement}`);
-	}
-	for (const match of source.matchAll(/\bicon\??\s*:\s*([^;\n]+)/g)) {
-		requireEqual(match[1]?.trim(), "TIcon", `field "${match[0]}"`);
-	}
-	const headers = [
-		...source.matchAll(/^(?:export )?(?:interface|type) \w+(<[^>]*>)?/gm),
-	];
-	assert(headers.length > 0, "descriptors.ts declares no types");
-	for (const header of headers) {
-		const params = header[1];
-		if (params === undefined) continue;
-		assert(
-			/^<TIcon = never>$/.test(params),
-			`type parameters must be exactly <TIcon = never>, got ${params}`,
+check(
+	"c23",
+	"descriptors.ts is types only, generic in TIcon or a value",
+	() => {
+		const source = readFileSync(resolve(pkgDir, "src/descriptors.ts"), "utf8");
+		const output = ts.transpileModule(source, {
+			compilerOptions: {
+				module: ts.ModuleKind.ESNext,
+				target: ts.ScriptTarget.ESNext,
+			},
+		}).outputText;
+		requireEqual(
+			output.replace(/export\s*\{\s*\}\s*;?/g, "").replace(/\s+/g, ""),
+			"",
+			"emitted JavaScript",
 		);
-	}
-	for (const name of [
-		"Act",
-		"IconAct",
-		"Quoted",
-		"Part",
-		"Mark",
-		"Option",
-		"PlaceSpec",
-		"Hunk",
-		"ComparisonRow",
-		"BarSeries",
-		"Attachment",
-		"Notice",
-	]) {
-		assert(
-			new RegExp(`^export (?:interface|type) ${name}\\b`, "m").test(source),
-			`${name} is not exported`,
-		);
-	}
-	const generic = headers.filter((header) => header[1]).length;
-	return `${headers.length} declarations, ${generic} generic in TIcon, no emitted JavaScript`;
-});
+		for (const statement of source.match(/^import .*/gm) ?? []) {
+			assert(
+				statement.startsWith("import type "),
+				`value import: ${statement}`,
+			);
+		}
+		for (const match of source.matchAll(/\bicon\??\s*:\s*([^;\n]+)/g)) {
+			requireEqual(match[1]?.trim(), "TIcon", `field "${match[0]}"`);
+		}
+		const headers = [
+			...source.matchAll(/^(?:export )?(?:interface|type) \w+(<[^>]*>)?/gm),
+		];
+		assert(headers.length > 0, "descriptors.ts declares no types");
+		for (const header of headers) {
+			const params = header[1];
+			if (params === undefined) continue;
+			// The icon is the one framework type a descriptor may carry; a field
+			// binding is generic in the value its field holds, which is data.
+			assert(
+				/^<TIcon = never>$/.test(params) ||
+					(/^<V>$/.test(params) && /\bField\w+<V>/.test(header[0])),
+				`type parameters must be exactly <TIcon = never>, or <V> on a field binding, got ${params}`,
+			);
+		}
+		for (const name of [
+			"Act",
+			"IconAct",
+			"Quoted",
+			"Part",
+			"Mark",
+			"Option",
+			"PlaceSpec",
+			"Hunk",
+			"ComparisonRow",
+			"BarSeries",
+			"Attachment",
+			"Notice",
+			"OptionGroup",
+			"FieldControl",
+			"FieldBinding",
+			"Confirmation",
+			"MenuItem",
+			"ColumnWidth",
+			"CellEdit",
+			"TableColumn",
+			"TableCell",
+			"CellValue",
+			"TableRow",
+		]) {
+			assert(
+				new RegExp(`^export (?:interface|type) ${name}\\b`, "m").test(source),
+				`${name} is not exported`,
+			);
+		}
+		const generic = headers.filter((header) => header[1]).length;
+		return `${headers.length} declarations, ${generic} generic in TIcon or a field's value, no emitted JavaScript`;
+	},
+);
 
 check("c24", "no JSDoc block anywhere under src", () => {
 	const files = readdirSync(resolve(pkgDir, "src"), {
@@ -1379,7 +1533,7 @@ check(
 	"the roster is closed, camelCase, and off the style channels",
 	() => {
 		const entries = rosterEntries();
-		requireEqual(entries.length, 48, "component count");
+		requireEqual(entries.length, 54, "component count");
 		const names = new Set<string>();
 		for (const [, name, props] of entries) {
 			assert(/^[A-Z][A-Za-z]+$/.test(name), `${name} is not PascalCase`);
@@ -1618,8 +1772,17 @@ check("c32", "the contrast contracts hold at the default knobs", () => {
 		["warn", ["surface", "group", "warn-soft"]],
 		["danger", ["surface", "group", "danger-soft"]],
 		["tint", ["surface", "group"]],
+		// The open row of a list or a table: its text, its meta, and a
+		// `Status` or an act drawn in it.
+		["ink", ["accent-soft"]],
+		["ink-meta", ["accent-soft"]],
+		["ok", ["accent-soft"]],
+		["warn", ["accent-soft"]],
+		["danger", ["accent-soft"]],
+		["tint", ["accent-soft"]],
 		["on-accent", ["accent"]],
 		["ink", AVATAR_STEPS.map((step) => `avatar-${step}`)],
+		["ink", CHIP_FAMILIES.map((family) => `chip-${family}`)],
 	];
 	const short: string[] = [];
 	let count = 0;

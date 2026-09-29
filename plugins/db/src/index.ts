@@ -5,7 +5,7 @@ import { cliSlots } from "@fcalell/cli/cli-slots";
 import { StackError } from "@fcalell/cli/errors";
 import type { PluginRuntimeEntry } from "@fcalell/plugin-api";
 import { api } from "@fcalell/plugin-api";
-import { cloudflare } from "@fcalell/plugin-cloudflare";
+import { cloudflare, LOCAL_PERSIST } from "@fcalell/plugin-cloudflare";
 import {
 	assertDeployableDatabaseId,
 	createD1Database,
@@ -141,13 +141,12 @@ export const db = plugin("db", {
 					);
 					if (!ok) return;
 				}
-				// Wipes `.stack/dev` (which contains the local SQLite db AND the
-				// migration lock file). Hold the lock while we tear down so a
-				// concurrent push/generate doesn't write into a half-deleted
-				// directory.
+				// Wipes the local worker state, the local D1 with it. Hold the
+				// lock while we tear down so a concurrent push/generate doesn't
+				// write into a half-deleted directory.
 				await withMigrationLock(migrationLockPath(ctx.cwd), async () => {
 					const { rmSync } = await import("node:fs");
-					rmSync(join(ctx.cwd, ".stack/dev"), {
+					rmSync(join(ctx.cwd, LOCAL_PERSIST), {
 						recursive: true,
 						force: true,
 					});

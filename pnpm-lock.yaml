@@ -147,10 +147,10 @@ importers:
         version: link:../../packages/typescript-config
       '@orpc/tanstack-query':
         specifier: ^1.14.4
-        version: 1.14.4(@opentelemetry/api@1.9.1)(@orpc/client@1.14.4(@opentelemetry/api@1.9.1))(@tanstack/query-core@5.101.0)
+        version: 1.14.4(@opentelemetry/api@1.9.1)(@orpc/client@1.14.4(@opentelemetry/api@1.9.1))(@tanstack/query-core@5.104.0)
       '@tanstack/react-query':
-        specifier: ^5.101.0
-        version: 5.101.0(react@19.2.7)
+        specifier: ^5.104.0
+        version: 5.104.0(react@19.2.7)
       '@types/node':
         specifier: ^25.5.0
         version: 25.5.0
@@ -236,6 +236,9 @@ importers:
       '@fcalell/plugin-api':
         specifier: workspace:*
         version: link:../api
+      '@fcalell/plugin-vite':
+        specifier: workspace:*
+        version: link:../vite
       smol-toml:
         specifier: ^1.4.2
         version: 1.6.1
@@ -362,13 +365,13 @@ importers:
         version: 5.2.14(@types/react@19.2.16)(react-native-gesture-handler@3.0.0(react-native@0.85.3(@babel/core@7.29.0)(@react-native/metro-config@0.85.3(@babel/core@7.29.0))(@types/react@19.2.16)(react@19.2.7))(react@19.2.7))(react-native-reanimated@4.4.1(react-native-worklets@0.9.1(@babel/core@7.29.0)(@react-native/metro-config@0.85.3(@babel/core@7.29.0))(react-native@0.85.3(@babel/core@7.29.0)(@react-native/metro-config@0.85.3(@babel/core@7.29.0))(@types/react@19.2.16)(react@19.2.7))(react@19.2.7))(react-native@0.85.3(@babel/core@7.29.0)(@react-native/metro-config@0.85.3(@babel/core@7.29.0))(@types/react@19.2.16)(react@19.2.7))(react@19.2.7))(react-native@0.85.3(@babel/core@7.29.0)(@react-native/metro-config@0.85.3(@babel/core@7.29.0))(@types/react@19.2.16)(react@19.2.7))(react@19.2.7)
       '@orpc/tanstack-query':
         specifier: ^1.14.4
-        version: 1.14.4(@opentelemetry/api@1.9.1)(@orpc/client@1.14.4(@opentelemetry/api@1.9.1))(@tanstack/query-core@5.101.0)
+        version: 1.14.4(@opentelemetry/api@1.9.1)(@orpc/client@1.14.4(@opentelemetry/api@1.9.1))(@tanstack/query-core@5.104.0)
       '@tailwindcss/cli':
         specifier: ^4.1.7
         version: 4.3.3
       '@tanstack/react-query':
-        specifier: ^5.101.0
-        version: 5.101.0(react@19.2.7)
+        specifier: ^5.104.0
+        version: 5.104.0(react@19.2.7)
       '@types/diff':
         specifier: ^8.0.0
         version: 8.0.0
@@ -532,7 +535,7 @@ importers:
         version: 0.13.11(solid-js@1.9.12)
       '@orpc/tanstack-query':
         specifier: ^1.14.4
-        version: 1.14.4(@opentelemetry/api@1.9.1)(@orpc/client@1.14.4(@opentelemetry/api@1.9.1))(@tanstack/query-core@5.101.0)
+        version: 1.14.4(@opentelemetry/api@1.9.1)(@orpc/client@1.14.4(@opentelemetry/api@1.9.1))(@tanstack/query-core@5.104.0)
       '@solidjs/meta':
         specifier: ^0.29.4
         version: 0.29.4(solid-js@1.9.12)
@@ -543,8 +546,8 @@ importers:
         specifier: ^4.1.7
         version: 4.2.2(vite@7.3.2(@types/node@25.5.0)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.48.0)(tsx@4.21.0)(yaml@2.9.0))
       '@tanstack/solid-query':
-        specifier: ^5.97.0
-        version: 5.97.0(solid-js@1.9.12)
+        specifier: ^5.101.0
+        version: 5.104.0(solid-js@1.9.12)
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -3113,14 +3116,11 @@ packages:
     resolution: {integrity: sha512-y/xtNPNt/YeyoVxE/JCx+T7yjEzpezmbb+toK8DDD1P4m7Kzs5YR956+7OKexG3f8aXgC3rLZl7b1V+yNUSy5w==}
     engines: {node: '>=18'}
 
-  '@tanstack/query-core@5.101.0':
-    resolution: {integrity: sha512-cQetA74EB+seWySv1TTKr828TnP0u39m6LykwDXIo84SNortpDkp30TMEjkqtYCNP9c40uT/iwl6MLiufEt0Ow==}
+  '@tanstack/query-core@5.104.0':
+    resolution: {integrity: sha512-JrC2r/JQlXt7khBSdUpsgxNvybzOg+aITa+ARRMlP2AFo93Y8vIqz077rp+e61mJetSZ0T6AJbwW1JHer1vrPQ==}
 
-  '@tanstack/query-core@5.97.0':
-    resolution: {integrity: sha512-QdpLP5VzVMgo4VtaPppRA2W04UFjIqX+bxke/ZJhE5cfd5UPkRzqIAJQt9uXkQJjqE8LBOMbKv7f8HCsZltXlg==}
-
-  '@tanstack/react-query@5.101.0':
-    resolution: {integrity: sha512-rLlJXSpkqfizLWgkR5+eLeIk0MvTx/meEIR7LRjxic+qxiQP8zVjq7BqQkiCMNLQBlLfuOLqqr6KO5GtrDlmSg==}
+  '@tanstack/react-query@5.104.0':
+    resolution: {integrity: sha512-e1TZmDCQnWIfiDVryIHeA6Idj+Lfx1hORLOhXS/l5wcgvtVD4yYqbTDl378sGQKIi2cSgb0TEMC9cKK8GGoJEw==}
     peerDependencies:
       react: ^18 || ^19
 
@@ -3129,8 +3129,8 @@ packages:
     peerDependencies:
       solid-js: '>=1.9.9'
 
-  '@tanstack/solid-query@5.97.0':
-    resolution: {integrity: sha512-Qy0wbtiEKd2TEQHWWk3cYGC8Go/L2GCik9sBAEEEWmZjk2Y/S787ZUVOLbCyefKbCClILZ2j+SpCxbx+QjIXcA==}
+  '@tanstack/solid-query@5.104.0':
+    resolution: {integrity: sha512-kQ+SFieGCve1up0Z4wHPXT2q2cu7AKFLtzRzViBoFwUQ8PMFd2DSjE38LnsbV0+3+O4N8RiS3xYkXM2hvJI49Q==}
     peerDependencies:
       solid-js: ^1.6.0
 
@@ -7544,11 +7544,11 @@ snapshots:
     transitivePeerDependencies:
       - '@opentelemetry/api'
 
-  '@orpc/tanstack-query@1.14.4(@opentelemetry/api@1.9.1)(@orpc/client@1.14.4(@opentelemetry/api@1.9.1))(@tanstack/query-core@5.101.0)':
+  '@orpc/tanstack-query@1.14.4(@opentelemetry/api@1.9.1)(@orpc/client@1.14.4(@opentelemetry/api@1.9.1))(@tanstack/query-core@5.104.0)':
     dependencies:
       '@orpc/client': 1.14.4(@opentelemetry/api@1.9.1)
       '@orpc/shared': 1.14.4(@opentelemetry/api@1.9.1)
-      '@tanstack/query-core': 5.101.0
+      '@tanstack/query-core': 5.104.0
     transitivePeerDependencies:
       - '@opentelemetry/api'
 
@@ -8426,13 +8426,11 @@ snapshots:
 
   '@tanstack/pacer-lite@0.1.1': {}
 
-  '@tanstack/query-core@5.101.0': {}
+  '@tanstack/query-core@5.104.0': {}
 
-  '@tanstack/query-core@5.97.0': {}
-
-  '@tanstack/react-query@5.101.0(react@19.2.7)':
+  '@tanstack/react-query@5.104.0(react@19.2.7)':
     dependencies:
-      '@tanstack/query-core': 5.101.0
+      '@tanstack/query-core': 5.104.0
       react: 19.2.7
 
   '@tanstack/solid-form@1.28.6(solid-js@1.9.12)':
@@ -8441,9 +8439,9 @@ snapshots:
       '@tanstack/solid-store': 0.9.3(solid-js@1.9.12)
       solid-js: 1.9.12
 
-  '@tanstack/solid-query@5.97.0(solid-js@1.9.12)':
+  '@tanstack/solid-query@5.104.0(solid-js@1.9.12)':
     dependencies:
-      '@tanstack/query-core': 5.97.0
+      '@tanstack/query-core': 5.104.0
       solid-js: 1.9.12
 
   '@tanstack/solid-store@0.9.3(solid-js@1.9.12)':

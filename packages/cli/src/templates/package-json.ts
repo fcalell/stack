@@ -54,9 +54,10 @@ export function packageJsonTemplate(options: PackageJsonOptions): string {
 		dev: "stack dev",
 		build: "stack build",
 		deploy: "stack deploy",
-		// Native consumers run the composite solution via `tsc -b`; everyone
-		// else type-checks the single project with `--noEmit`.
-		"check-types": hasNative && hasWorker ? "tsc -b" : "tsc --noEmit",
+		// An app with a worker is a solution of two projects, which only
+		// `tsc -b` checks: `--noEmit` on its `files: []` root checks nothing.
+		"check-types":
+			(hasNative || hasSolid) && hasWorker ? "tsc -b" : "tsc --noEmit",
 		lint: "biome check --write --unsafe",
 		check: "pnpm check-types && pnpm lint",
 	};

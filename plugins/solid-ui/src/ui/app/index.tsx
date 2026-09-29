@@ -1,22 +1,18 @@
-/// <reference path="./virtual.d.ts" />
 import "../fonts";
 import type { Words } from "@fcalell/ui-core/tokens";
 import { ENGLISH } from "@fcalell/ui-core/tokens";
-import { MetaProvider } from "@solidjs/meta";
+import { MetaProvider, Title } from "@solidjs/meta";
 import { type RouteDefinition, Router } from "@solidjs/router";
 import { type QueryClient, QueryClientProvider } from "@tanstack/solid-query";
-import {
-	createResource,
-	ErrorBoundary,
-	type JSX,
-	Show,
-	Suspense,
-} from "solid-js";
+import { createResource, ErrorBoundary, type JSX, Show } from "solid-js";
 import { render } from "solid-js/web";
 import { type IconSet, IconsProvider } from "#lib/icons.tsx";
 import { createDefaultQueryClient } from "#lib/query.ts";
+import { takeStaticTitle } from "#lib/title.ts";
 import { WordsProvider } from "#lib/words.tsx";
 import { EmptyState } from "../components/empty-state/index.tsx";
+import { Confirmations } from "./confirmations.tsx";
+import { Toasts } from "./toasts.tsx";
 
 export interface CreateAppOptions {
 	routes?: RouteDefinition[];
@@ -42,6 +38,7 @@ export function createApp(options: CreateAppOptions = {}): void {
 	}
 
 	const queryClient = options.queryClient ?? createDefaultQueryClient();
+	const baseTitle = takeStaticTitle(document.head);
 	const wrapProviders = options.providers ?? ((children) => children);
 
 	const [routes] = createResource(async () => {
@@ -57,6 +54,12 @@ export function createApp(options: CreateAppOptions = {}): void {
 			children
 		);
 
+	// No `Suspense` above the router: solid-query reads a query's data
+	// through a resource, and a query first read while cached keeps its reader
+	// subscribed to that resource's reloads, so every later refetch would
+	// suspend the boundary and take its whole subtree out of the page for a
+	// tick, focus with it. `QueryBoundary` and `ScopeBoundary` draw loading
+	// themselves; a lazy page draws nothing until its code arrives.
 	render(
 		() => (
 			<ErrorBoundary
@@ -69,11 +72,19 @@ export function createApp(options: CreateAppOptions = {}): void {
 						<IconsProvider icons={options.icons ?? {}}>
 							<QueryClientProvider client={queryClient}>
 								<MetaProvider>
-									<Suspense>
+									<Title>{baseTitle}</Title>
+									{/* The page column a `Shell` gives its place: the
+									    viewport's height on the surface, a flex column, no
+									    banner, so a `Place` or a `Screen` with no shell fills
+									    it as it fills the shell's; a `Shell` fills it with its
+									    own frame. */}
+									<div class="flex h-dvh flex-col bg-surface [--banner-height:0px]">
 										<Show when={routes()}>
 											{(resolved) => <Router>{resolved()}</Router>}
 										</Show>
-									</Suspense>
+									</div>
+									<Toasts />
+									<Confirmations />
 								</MetaProvider>
 							</QueryClientProvider>
 						</IconsProvider>,

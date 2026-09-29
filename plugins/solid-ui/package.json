@@ -28,14 +28,17 @@
 		"./app": "./src/ui/app/index.tsx",
 		"./meta": "./src/ui/meta/index.ts",
 		"./router": "./src/ui/router/index.ts",
-		"./components/*": [
-			"./src/ui/components/*/index.tsx",
-			"./src/ui/components/*/index.ts"
-		],
-		"./lib/*": [
-			"./src/ui/lib/*.ts",
-			"./src/ui/lib/*.tsx"
-		]
+		"./components/*": "./src/ui/components/*/index.tsx",
+		"./lib/circle": "./src/ui/lib/circle.tsx",
+		"./lib/icons": "./src/ui/lib/icons.tsx",
+		"./lib/loading": "./src/ui/lib/loading.tsx",
+		"./lib/menu": "./src/ui/lib/menu.tsx",
+		"./lib/parts": "./src/ui/lib/parts.tsx",
+		"./lib/scope": "./src/ui/lib/scope.tsx",
+		"./lib/session": "./src/ui/lib/session.tsx",
+		"./lib/status-glyph": "./src/ui/lib/status-glyph.tsx",
+		"./lib/words": "./src/ui/lib/words.tsx",
+		"./lib/*": "./src/ui/lib/*.ts"
 	},
 	"files": [
 		"dist",
@@ -79,7 +82,7 @@
 		"@solidjs/meta": "^0.29.4",
 		"@solidjs/router": "^0.16.1",
 		"@tailwindcss/vite": "^4.1.7",
-		"@tanstack/solid-query": "^5.97.0",
+		"@tanstack/solid-query": "^5.101.0",
 		"class-variance-authority": "^0.7.1",
 		"lucide-solid": "^0.577.0",
 		"marked": "^18.0.7",

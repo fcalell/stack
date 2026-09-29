@@ -3,7 +3,25 @@
 // under an expect-error directive, so a reopened channel turns into an unused directive and
 // fails tsc --noEmit (the b8 check, and the package type-check itself, since
 // scripts/ sits inside the tsconfig include).
-import type { Act, IconAct, Option, PlaceSpec } from "@fcalell/ui-core/descriptors";
+import type {
+	Act,
+	FieldBinding,
+	IconAct,
+	Option,
+	OptionGroup,
+	PlaceSpec,
+	TableColumn,
+	TableRow,
+} from "@fcalell/ui-core/descriptors";
+import type {
+	CreateQueryResult,
+	QueryLike,
+} from "@fcalell/plugin-solid-ui/lib/query";
+import { useApiForm } from "@fcalell/plugin-solid-ui/lib/api-form";
+import type { StandardSchemaV1 } from "@tanstack/solid-form";
+import { Chip } from "@fcalell/plugin-solid-ui/components/chip";
+import { EnumInput } from "@fcalell/plugin-solid-ui/components/enum-input";
+import { QueryBoundary } from "@fcalell/plugin-solid-ui/components/query-boundary";
 import { Text } from "@fcalell/plugin-solid-ui/components/text";
 import { Icon } from "@fcalell/plugin-solid-ui/components/icon";
 import { Button } from "@fcalell/plugin-solid-ui/components/button";
@@ -12,6 +30,7 @@ import { Count } from "@fcalell/plugin-solid-ui/components/count";
 import { Status } from "@fcalell/plugin-solid-ui/components/status";
 import { Input } from "@fcalell/plugin-solid-ui/components/input";
 import { TextArea } from "@fcalell/plugin-solid-ui/components/text-area";
+import { InputOtp } from "@fcalell/plugin-solid-ui/components/input-otp";
 import { Slider } from "@fcalell/plugin-solid-ui/components/slider";
 import { Switch } from "@fcalell/plugin-solid-ui/components/switch";
 import { Checkbox } from "@fcalell/plugin-solid-ui/components/checkbox";
@@ -44,6 +63,8 @@ import { PendingBar } from "@fcalell/plugin-solid-ui/components/pending-bar";
 import { Prose } from "@fcalell/plugin-solid-ui/components/prose";
 import { Code } from "@fcalell/plugin-solid-ui/components/code";
 import { Diff } from "@fcalell/plugin-solid-ui/components/diff";
+import { Table } from "@fcalell/plugin-solid-ui/components/table";
+import { Menu } from "@fcalell/plugin-solid-ui/components/menu";
 import { FileRow } from "@fcalell/plugin-solid-ui/components/file-row";
 import { ProseDiff } from "@fcalell/plugin-solid-ui/components/prose-diff";
 import { Comparison } from "@fcalell/plugin-solid-ui/components/comparison";
@@ -58,6 +79,54 @@ const act: Act = { label: "x", onAct: noop };
 const iconAct: IconAct<string> = { icon: "x", label: "x", onAct: noop };
 const option: Option = { value: "x", label: "x" };
 const placeSpec: PlaceSpec<string> = { route: "/", label: "x", icon: "x" };
+const optionGroup: OptionGroup = { label: "x", options: [option] };
+const columns: TableColumn[] = [
+	{ key: "name", label: "x", width: "1/3", sortable: true, edit: { control: "input" } },
+	{ key: "type", label: "x", kind: "chip", family: 2, edit: { control: "picker", options: [option] } },
+	{ key: "on", label: "x", kind: "check", edit: { control: "checkbox" } },
+	{ key: "state", label: "x", kind: "status" },
+];
+const tableRows: TableRow[] = [{ id: "x", cells: { name: "x", type: "x", on: true, state: { status: "done" } } }];
+declare const text: FieldBinding<string>;
+declare const values: FieldBinding<string[]>;
+declare const count: QueryLike<number, Error>;
+declare const names: QueryLike<string[], Error>;
+declare const live: CreateQueryResult<{ id: string }[], Error>;
+
+type Draft = { name: string; on: boolean; values: string[] };
+declare const schema: StandardSchemaV1<Draft>;
+
+// `bind(name)` types each control by the form's data.
+export function Bound() {
+	const form = useApiForm({
+		schema,
+		defaultValues: { name: "", on: false, values: [] } as Draft,
+		mutation: () => ({ mutationFn: async () => 1 }),
+	});
+	return (
+		<Form onSubmit={form.handleSubmit}>
+			<FormField label="x" field={form.bind("name")}>
+				{(control) => <Input {...control} />}
+			</FormField>
+			<FormField label="x" field={form.bind("on")}>
+				{(control) => (
+					<Switch checked={control.value} onChange={control.onChange} />
+				)}
+			</FormField>
+			<FormField label="x" field={form.bind("values")}>
+				{(control) => <EnumInput {...control} />}
+			</FormField>
+			<FormField label="x" field={form.bind("on")}>
+				{/* @ts-expect-error a boolean field is no text control */}
+				{(control) => <Input {...control} />}
+			</FormField>
+			{/* @ts-expect-error a name the form does not hold */}
+			<FormField label="x" field={form.bind("nope")}>
+				{() => null}
+			</FormField>
+		</Form>
+	);
+}
 
 export const closure = (
 	<>
@@ -133,6 +202,15 @@ export const closure = (
 		<TextArea value="" onChange={noop} classList={{}} />
 		{/* @ts-expect-error closed channel */}
 		<TextArea value="" onChange={noop} className="x" />
+		<InputOtp length={6} value="" onChange={noop} onComplete={noop} loading />
+		{/* @ts-expect-error closed channel */}
+		<InputOtp length={6} value="" onChange={noop} class="x" />
+		{/* @ts-expect-error closed channel */}
+		<InputOtp length={6} value="" onChange={noop} style={{}} />
+		{/* @ts-expect-error closed channel */}
+		<InputOtp length={6} value="" onChange={noop} classList={{}} />
+		{/* @ts-expect-error closed channel */}
+		<InputOtp length={6} value="" onChange={noop} className="x" />
 		<Slider label="x" value={1} onChange={noop} min={0} max={9} step={1} />
 		{/* @ts-expect-error closed channel */}
 		<Slider label="x" value={1} onChange={noop} class="x" />
@@ -421,6 +499,34 @@ export const closure = (
 		<Diff hunks={[]} classList={{}} />
 		{/* @ts-expect-error closed channel */}
 		<Diff hunks={[]} className="x" />
+		<Menu label="x" items={[[{ label: "x", onAct: noop, icon: "x" }], [{ label: "x", onAct: noop, destructive: true, blocked: "x" }]]} />
+		{/* @ts-expect-error closed channel */}
+		<Menu label="x" items={[]} class="x" />
+		{/* @ts-expect-error closed channel */}
+		<Menu label="x" items={[]} style={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Menu label="x" items={[]} classList={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Menu label="x" items={[]} className="x" />
+		<Diff before="x" after="y" />
+		{/* @ts-expect-error hunks and two texts exclude each other */}
+		<Diff hunks={[]} before="x" after="y" />
+		<Code text="x" title="x" copy />
+		<Place title="x" bleed />
+		<ListRow title="x" more={[{ label: "x", onAct: noop }]} />
+		<Table columns={columns} rows={tableRows} selected="x" onOpen={noop} onEdit={noop} empty={<EmptyState sentence="x" />} loading />
+		{/* @ts-expect-error a status column never edits */}
+		<Table columns={[{ key: "x", label: "x", kind: "status", edit: { control: "input" } }]} rows={[]} />
+		{/* @ts-expect-error a chip column is picked, never typed */}
+		<Table columns={[{ key: "x", label: "x", kind: "chip", family: 1, edit: { control: "input" } }]} rows={[]} />
+		{/* @ts-expect-error closed channel */}
+		<Table columns={[]} rows={[]} class="x" />
+		{/* @ts-expect-error closed channel */}
+		<Table columns={[]} rows={[]} style={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Table columns={[]} rows={[]} classList={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Table columns={[]} rows={[]} className="x" />
 		<FileRow path="x" added={1} removed={1} seen href="/" onOpen={noop} loading />
 		{/* @ts-expect-error closed channel */}
 		<FileRow path="x" class="x" />
@@ -484,6 +590,67 @@ export const closure = (
 		<BarChart series={[]} unit="x" classList={{}} />
 		{/* @ts-expect-error closed channel */}
 		<BarChart series={[]} unit="x" className="x" />
+		<Chip label="x" family={1} />
+		{/* @ts-expect-error closed channel */}
+		<Chip label="x" family={1} class="x" />
+		{/* @ts-expect-error closed channel */}
+		<Chip label="x" family={1} style={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Chip label="x" family={1} classList={{}} />
+		{/* @ts-expect-error closed channel */}
+		<Chip label="x" family={1} className="x" />
+		{/* @ts-expect-error a family is one of the six */}
+		<Chip label="x" family={7} />
+		{/* @ts-expect-error a chip carries no act */}
+		<Chip label="x" family={1} onOpen={noop} />
+		<EnumInput value={["x"]} onChange={noop} placeholder="x" />
+		{/* @ts-expect-error closed channel */}
+		<EnumInput value={[]} onChange={noop} class="x" />
+		{/* @ts-expect-error closed channel */}
+		<EnumInput value={[]} onChange={noop} style={{}} />
+		{/* @ts-expect-error closed channel */}
+		<EnumInput value={[]} onChange={noop} classList={{}} />
+		{/* @ts-expect-error closed channel */}
+		<EnumInput value={[]} onChange={noop} className="x" />
+		<QueryBoundary query={count} sentence="x">{(n) => <Count value={n()} />}</QueryBoundary>
+		{/* @ts-expect-error closed channel */}
+		<QueryBoundary query={count} sentence="x" children={() => null} class="x" />
+		{/* @ts-expect-error closed channel */}
+		<QueryBoundary query={count} sentence="x" children={() => null} style={{}} />
+		{/* @ts-expect-error closed channel */}
+		<QueryBoundary query={count} sentence="x" children={() => null} classList={{}} />
+		{/* @ts-expect-error closed channel */}
+		<QueryBoundary query={count} sentence="x" children={() => null} className="x" />
+		{/* A useQuery result is a query, its data narrowed. */}
+		<QueryBoundary query={[live, count]} sentence="x">
+			{(data) => <Count value={data()[0].length + data()[1]} />}
+		</QueryBoundary>
+		{/* Several queries hand their data in order. */}
+		<QueryBoundary query={[count, names]} sentence="x">
+			{(data) => <Count value={data()[0] + data()[1].length} />}
+		</QueryBoundary>
+		<QueryBoundary query={count} sentence="x">
+			{/* @ts-expect-error the data is the query's own type */}
+			{(n) => <Input value={n()} onChange={noop} />}
+		</QueryBoundary>
+		{/* A bound field hands its control the field's value and handler. */}
+		<FormField label="x" field={text}>
+			{(control) => <Input kind="source" {...control} />}
+		</FormField>
+		<FormField label="x" field={values}>
+			{(control) => <EnumInput {...control} />}
+		</FormField>
+		<FormField label="x" field={text}>
+			{(control) => <Picker label="x" options={[optionGroup]} {...control} />}
+		</FormField>
+		<FormField label="x" field={text}>
+			{/* @ts-expect-error the control takes the field's own type */}
+			{(control) => <Switch checked={control.value} onChange={control.onChange} />}
+		</FormField>
+		{/* @ts-expect-error a bound field's error is the form's */}
+		<FormField label="x" field={text} error="x">
+			{(control) => <Input {...control} />}
+		</FormField>
 		<QrCode value="x" loading />
 		{/* @ts-expect-error closed channel */}
 		<QrCode value="x" class="x" />

@@ -12,6 +12,7 @@ import { useWords } from "../../lib/words";
 
 export interface CodeProps extends Closed {
 	text: string;
+	title?: string;
 	tail?: number;
 	copy?: boolean;
 	loading?: boolean;
@@ -19,9 +20,11 @@ export interface CodeProps extends Closed {
 
 const COPIED_MS = 2000;
 
-// Mono, scrolls sideways, never wraps. `tail` shows the last lines until a
-// tap unfolds the rest; `copy` draws the copy act.
-export function Code({ text: source, tail, copy, loading }: CodeProps) {
+// Mono, scrolls sideways, never wraps. `title` heads the block with what the
+// text is (a file's name, the tool it goes into); `tail` shows the last
+// lines until a tap unfolds the rest; `copy` draws the copy act, in the
+// title's row when there is one, else under the text.
+export function Code({ text: source, title, tail, copy, loading }: CodeProps) {
 	const words = useWords();
 	const [unfolded, setUnfolded] = useState(false);
 	const [copied, setCopied] = useState(false);
@@ -34,8 +37,33 @@ export function Code({ text: source, tail, copy, loading }: CodeProps) {
 	const lines = source.split("\n");
 	const folded = tail !== undefined && !unfolded && lines.length > tail;
 	const shown = folded ? lines.slice(lines.length - tail) : lines;
+	const copyAct = copy ? (
+		<View className="flex-row items-center justify-end gap-row">
+			{copied ? (
+				<RNText className={text({ role: "meta" })}>{words.copied}</RNText>
+			) : null}
+			<Circle
+				icon={copied ? Check : Copy}
+				label={copied ? words.copied : words.copy}
+				onAct={() => {
+					Clipboard.setStringAsync(source).then(() => setCopied(true));
+				}}
+			/>
+		</View>
+	) : null;
 	return (
 		<View className={cn(CODE, "gap-row")}>
+			{title ? (
+				<View className="flex-row items-center gap-row">
+					<RNText
+						numberOfLines={1}
+						className={cn(text({ role: "meta" }), "flex-1")}
+					>
+						{title}
+					</RNText>
+					{copyAct}
+				</View>
+			) : null}
 			{folded ? (
 				<Pressable
 					accessibilityRole="button"
@@ -52,20 +80,7 @@ export function Code({ text: source, tail, copy, loading }: CodeProps) {
 			<ScrollView horizontal showsHorizontalScrollIndicator={false}>
 				<RNText className={text({ role: "mono" })}>{shown.join("\n")}</RNText>
 			</ScrollView>
-			{copy ? (
-				<View className="flex-row items-center justify-end gap-row">
-					{copied ? (
-						<RNText className={text({ role: "meta" })}>{words.copied}</RNText>
-					) : null}
-					<Circle
-						icon={copied ? Check : Copy}
-						label={copied ? words.copied : words.copy}
-						onAct={() => {
-							Clipboard.setStringAsync(source).then(() => setCopied(true));
-						}}
-					/>
-				</View>
-			) : null}
+			{title ? null : copyAct}
 		</View>
 	);
 }

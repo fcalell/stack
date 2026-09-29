@@ -1,6 +1,7 @@
 import type { ResolvedTheme } from "./derive.ts";
 import {
 	BREAKPOINTS,
+	DENSITY_SIZES,
 	FONT_ROLES,
 	INVARIANT_COLORS,
 	MONO_FEATURES,
@@ -51,6 +52,9 @@ export function themeTokens(resolved: ResolvedTheme): Record<string, string> {
 	for (const role of TRACKED_ROLES) {
 		tokens[`--tracking-${role}`] = resolved.scales[`--tracking-${role}`];
 	}
+	for (const size of DENSITY_SIZES) {
+		tokens[`--spacing-${size}`] = resolved.sizes.touch[size];
+	}
 	for (const width of WIDTHS) {
 		tokens[`--container-${width}`] = resolved.scales[`--container-${width}`];
 	}
@@ -66,6 +70,20 @@ export function themeTokens(resolved: ResolvedTheme): Record<string, string> {
 	}
 	for (const token of PER_MODE_COLORS) {
 		tokens[`--color-${token}`] = resolved.colors.light[token];
+	}
+	return tokens;
+}
+
+// The density sizes a fine pointer takes, keyed by full custom-property
+// name: the compact set under `density: "desktop"`, nothing under `touch`.
+// Only the web renders it, inside its own pointer query; `themeTokens`
+// already seeds the touch set on both platforms, so every cell that names a
+// size resolves either way.
+export function compactTokens(resolved: ResolvedTheme): Record<string, string> {
+	const tokens: Record<string, string> = {};
+	if (resolved.knobs.density !== "desktop") return tokens;
+	for (const size of DENSITY_SIZES) {
+		tokens[`--spacing-${size}`] = resolved.sizes.compact[size];
 	}
 	return tokens;
 }

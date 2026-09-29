@@ -1,32 +1,35 @@
 import type { Act, IconAct } from "@fcalell/ui-core/descriptors";
 import { text } from "@fcalell/ui-core/variants";
-import { Ellipsis } from "lucide-solid";
-import { createSignal, For, type JSX, Show } from "solid-js";
-import { Circle } from "#lib/circle.tsx";
+import { For, type JSX, Show, useContext } from "solid-js";
 import type { Closed } from "#lib/closed.ts";
 import { cn } from "#lib/cn.ts";
 import { FitContext } from "#lib/fit.ts";
+import { FrameContext } from "#lib/frame.ts";
 import { RING_INSET } from "#lib/interact.ts";
-import { MeasureContext, measured } from "#lib/measure.ts";
+import { createWidthClaims, MeasureContext, measured } from "#lib/measure.ts";
+import { barItems, MenuCircle } from "#lib/menu.tsx";
 import { reachable } from "#lib/reach.ts";
 import { useWords } from "#lib/words.tsx";
 import { Button } from "../button/index.tsx";
 import { IconButton } from "../icon-button/index.tsx";
-import { ListRow } from "../list-row/index.tsx";
-import { Sheet } from "../sheet/index.tsx";
 
 // A place of the shell: the large title on the top bar's row, at most two
 // actions as circles beside it with the rest under a more circle, and the
 // place's primary act as a pill floating above the tab bar on the phone, in
-// the top bar from tablet.
+// the top bar from tablet. Under tablet the shell's `switcher` starts the top
+// bar's row, since the sidebar that holds it from tablet is not drawn.
 // The body is measured at the reading width, centred, unless a `Columns`
-// inside claims the whole column.
+// inside claims the whole column. With `bleed` the body is the column's
+// whole remaining box, with no side inset, no measure and no scroll, so a
+// child that pans or scrolls itself (a canvas) owns every pixel under the
+// top bar.
 export type PlaceProps = Closed & {
 	title: string;
 	actions?: IconAct<string>[];
 	act?: Act;
 	// Labelled acts under the more circle, after the actions past two.
 	more?: Act[];
+	bleed?: boolean;
 	children?: JSX.Element;
 };
 
@@ -34,18 +37,26 @@ const SHOWN = 2;
 
 export function Place(props: PlaceProps) {
 	const words = useWords();
-	const [more, setMore] = createSignal(false);
-	const [whole, setWhole] = createSignal(false);
+	const frame = useContext(FrameContext);
+	const claims = createWidthClaims();
+	const whole = claims.whole;
 	const shown = () => (props.actions ?? []).slice(0, SHOWN);
 	const rest = () => (props.actions ?? []).slice(SHOWN);
+	// A bled body spans the column, so the top bar's row does too.
+	const span = () => whole() || props.bleed === true;
 	return (
-		<MeasureContext.Provider value={setWhole}>
+		<MeasureContext.Provider value={claims.claim}>
 			<div class="relative flex min-h-0 flex-1 flex-col">
 				<FitContext.Provider value="bar">
 					{/* The row is measured as the body is, so the title and the act
 				    stand over the content's edges. */}
 					<header class="flex min-h-14 px-inset tablet:px-section">
-						<div class={cn("flex items-center gap-row", measured(whole()))}>
+						<div class={cn("flex items-center gap-row", measured(span()))}>
+							<Show when={frame?.switcher()}>
+								{(switcher) => (
+									<div class="shrink-0 tablet:hidden">{switcher()}</div>
+								)}
+							</Show>
 							<h1
 								class={cn(text({ role: "title" }), "min-w-0 flex-1 truncate")}
 							>
@@ -75,35 +86,44 @@ export function Place(props: PlaceProps) {
 								)}
 							</For>
 							<Show when={rest().length + (props.more?.length ?? 0) > 0}>
-								<Circle
-									glyph={Ellipsis}
+								<MenuCircle
 									label={words.more}
-									onAct={() => setMore(true)}
+									title={props.title}
+									items={barItems(rest(), props.more ?? [])}
 								/>
 							</Show>
 						</div>
 					</header>
 				</FitContext.Provider>
-				{/* On the phone the act floats over the body's end: the body keeps
-			    room under its last row for the pill and its inset. */}
-				<div
-					ref={reachable}
-					class={cn(
-						"flex min-h-0 flex-1 flex-col overflow-y-auto px-inset pb-section tablet:px-section",
-						RING_INSET,
-						props.act &&
-							"pb-[calc(var(--spacing-section)+var(--spacing-inset)+44px)] tablet:pb-section",
-					)}
+				<Show
+					when={props.bleed}
+					fallback={
+						// On the phone the act floats over the body's end: the body
+						// keeps room under its last row for the pill and its inset.
+						<div
+							ref={reachable}
+							class={cn(
+								"flex min-h-0 flex-1 flex-col overflow-y-auto px-inset pb-section tablet:px-section",
+								RING_INSET,
+								props.act &&
+									"pb-[calc(var(--spacing-section)+var(--spacing-inset)+44px)] tablet:pb-section",
+							)}
+						>
+							<div
+								class={cn(
+									"flex flex-1 shrink-0 flex-col gap-section *:shrink-0",
+									measured(whole()),
+								)}
+							>
+								{props.children}
+							</div>
+						</div>
+					}
 				>
-					<div
-						class={cn(
-							"flex flex-1 shrink-0 flex-col gap-section *:shrink-0",
-							measured(whole()),
-						)}
-					>
+					<div class="relative flex min-h-0 flex-1 flex-col overflow-hidden">
 						{props.children}
 					</div>
-				</div>
+				</Show>
 				<Show when={props.act}>
 					{(act) => (
 						<div class="absolute right-inset bottom-inset tablet:hidden">
@@ -118,36 +138,6 @@ export function Place(props: PlaceProps) {
 						</div>
 					)}
 				</Show>
-				<Sheet open={more()} onClose={() => setMore(false)} title={props.title}>
-					<For each={rest()}>
-						{(action) => (
-							<ListRow
-								leading={{ icon: action.icon }}
-								title={action.label}
-								onOpen={() => {
-									setMore(false);
-									action.onAct();
-								}}
-							/>
-						)}
-					</For>
-					<For each={props.more ?? []}>
-						{(act) => (
-							<ListRow
-								title={act.label}
-								meta={act.blocked ? [act.blocked] : undefined}
-								onOpen={
-									act.blocked === undefined
-										? () => {
-												setMore(false);
-												act.onAct();
-											}
-										: undefined
-								}
-							/>
-						)}
-					</For>
-				</Sheet>
 			</div>
 		</MeasureContext.Provider>
 	);

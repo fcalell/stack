@@ -1,5 +1,3 @@
-/// <reference path="../app/virtual.d.ts" />
-
 export { typedRoutes as routes } from "virtual:fcalell-routes";
 export {
 	A,

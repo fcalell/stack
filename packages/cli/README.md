@@ -214,6 +214,7 @@ Interactive project scaffold. Creates the directory if it doesn't exist, or uses
 | `auth` plugin | `src/worker/plugins/auth.ts` (callback template) |
 | `api` plugin | `src/worker/routes/`, `wrangler.toml` |
 | `solid` plugin | `src/app/pages/_layout.tsx`, `src/app/pages/index.tsx` |
+| An app (`solid` or `expo`) with a worker (`api` or `db`) | `tsconfig.app.json` and `tsconfig.worker.json` under a solution `tsconfig.json`, and a `check-types` of `tsc -b`: the DOM and the Workers runtime each stay out of the other's program. The worker project emits declarations into `.stack/types/` and the app references it, so the app types `AppRouter` without loading a worker source |
 
 Required sibling plugins are auto-resolved: selecting `auth` automatically adds `db`, `api`, and `cloudflare`. Existing files are never overwritten. After scaffolding, `stack generate` runs to produce `.stack/` files.
 

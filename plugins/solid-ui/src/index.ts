@@ -15,7 +15,12 @@ import { WORD_KEYS, type Words } from "@fcalell/ui-core/tokens";
 import { aggregateAppCss } from "./node/codegen.ts";
 import { defaultFonts, type FontEntry } from "./node/fonts.ts";
 import { runGeometryGate } from "./node/gate.ts";
-import { darkLayer, shadowBlocks, themeBlock } from "./node/theme.ts";
+import {
+	compactLayer,
+	darkLayer,
+	shadowBlocks,
+	themeBlock,
+} from "./node/theme.ts";
 import {
 	type CssBlock,
 	type CssImport,
@@ -275,6 +280,13 @@ export const solidUi = plugin("solid-ui", {
 			};
 		}),
 
+		// An organization is served at `/<slug>`, which the app's pages share,
+		// so their first segments are slugs auth refuses. This plugin reads
+		// both the pages and auth; neither of those reads the other.
+		auth.slots.reservedSlugs.contribute((ctx) =>
+			ctx.resolve(solid.slots.topLevelRoutes),
+		),
+
 		// ── The mount ───────────────────────────────────────────────────
 		// The design system's app is `createApp` (`./app`): the router, the
 		// query client, the meta provider, the icon set and the error
@@ -333,6 +345,9 @@ export const solidUi = plugin("solid-ui", {
 		),
 		self.slots.appCssLayers.contribute(async (ctx) =>
 			darkLayer(await ctx.resolve(self.slots.resolvedTheme)),
+		),
+		self.slots.appCssLayers.contribute(async (ctx) =>
+			compactLayer(await ctx.resolve(self.slots.resolvedTheme)),
 		),
 
 		// CSS is solid-ui's domain — pair the `import "./app.css"` in

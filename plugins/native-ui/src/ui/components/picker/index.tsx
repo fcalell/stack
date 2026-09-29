@@ -1,4 +1,4 @@
-import type { Option } from "@fcalell/ui-core/descriptors";
+import type { Option, OptionGroup } from "@fcalell/ui-core/descriptors";
 import { GROUP, row, text } from "@fcalell/ui-core/variants";
 import { Check, ChevronDown } from "lucide-react-native";
 import { useState } from "react";
@@ -12,7 +12,7 @@ import { Sheet } from "../sheet";
 
 export interface PickerProps extends Closed {
 	label: string;
-	options: readonly Option[];
+	options: readonly Option[] | readonly OptionGroup[];
 	value?: string;
 	onChange: (value: string) => void;
 }
@@ -21,18 +21,37 @@ export interface PickerProps extends Closed {
 // sits on top.
 const SEARCHABLE_ABOVE = 6;
 
-// A control showing its value; a tap opens one-line rows with a tick. A pick,
-// never a form.
+// The options as groups: a flat list is one group with no label.
+type Grouped = { label?: string; options: readonly Option[] };
+
+function grouped(options: PickerProps["options"]): readonly Grouped[] {
+	const first = options[0];
+	if (first === undefined || !("options" in first)) {
+		return [{ options: options as readonly Option[] }];
+	}
+	return options as readonly OptionGroup[];
+}
+
+// A control showing its value; a tap opens one-line rows with a tick, under
+// their group's label when the options come in groups. The value of a
+// `DefinitionRow` when the pick applies at once; the control of a
+// `FormField` when it is part of what a form submits.
 export function Picker({ label, options, value, onChange }: PickerProps) {
 	const [open, setOpen] = useState(false);
 	const [query, setQuery] = useState("");
-	const current = options.find((option) => option.value === value);
-	const searchable = options.length > SEARCHABLE_ABOVE;
+	const groups = grouped(options);
+	const all = groups.flatMap((group) => [...group.options]);
+	const current = all.find((option) => option.value === value);
+	const searchable = all.length > SEARCHABLE_ABOVE;
+	const needle = query.trim().toLowerCase();
 	const shown = searchable
-		? options.filter((option) =>
-				option.label.toLowerCase().includes(query.trim().toLowerCase()),
-			)
-		: options;
+		? groups.map((group) => ({
+				label: group.label,
+				options: group.options.filter((option) =>
+					option.label.toLowerCase().includes(needle),
+				),
+			}))
+		: groups;
 	return (
 		<>
 			<Pressable
@@ -54,41 +73,58 @@ export function Picker({ label, options, value, onChange }: PickerProps) {
 				{searchable ? (
 					<Input kind="search" value={query} onChange={setQuery} />
 				) : null}
-				<List>
-					{shown.map((option) => {
-						const selected = option.value === value;
-						return (
-							<Pressable
-								key={option.value}
-								accessibilityRole="radio"
-								accessibilityState={{ selected }}
-								onPress={() => {
-									onChange(option.value);
-									setOpen(false);
-								}}
-								className={cn(
-									row({ state: "rest" }),
-									"flex-row items-center active:bg-edge",
-								)}
-							>
-								<View className="min-w-0 flex-1 gap-pair">
-									<RNText numberOfLines={1} className={text({ role: "body" })}>
-										{option.label}
-									</RNText>
-									{option.description ? (
-										<RNText
-											numberOfLines={1}
-											className={text({ role: "meta" })}
+				{shown.map((group, at) =>
+					group.options.length === 0 ? null : (
+						<View key={group.label ?? at} className="gap-pair">
+							{group.label ? (
+								<RNText
+									accessibilityRole="header"
+									className={cn(text({ role: "label" }), "px-inset")}
+								>
+									{group.label}
+								</RNText>
+							) : null}
+							<List>
+								{group.options.map((option) => {
+									const selected = option.value === value;
+									return (
+										<Pressable
+											key={option.value}
+											accessibilityRole="radio"
+											accessibilityState={{ selected }}
+											onPress={() => {
+												onChange(option.value);
+												setOpen(false);
+											}}
+											className={cn(
+												row({ state: "rest" }),
+												"flex-row items-center active:bg-edge",
+											)}
 										>
-											{option.description}
-										</RNText>
-									) : null}
-								</View>
-								{selected ? <Glyph icon={Check} tone="tint" /> : null}
-							</Pressable>
-						);
-					})}
-				</List>
+											<View className="min-w-0 flex-1 gap-pair">
+												<RNText
+													numberOfLines={1}
+													className={text({ role: "body" })}
+												>
+													{option.label}
+												</RNText>
+												{option.description ? (
+													<RNText
+														numberOfLines={1}
+														className={text({ role: "meta" })}
+													>
+														{option.description}
+													</RNText>
+												) : null}
+											</View>
+											{selected ? <Glyph icon={Check} tone="tint" /> : null}
+										</Pressable>
+									);
+								})}
+							</List>
+						</View>
+					),
+				)}
 			</Sheet>
 		</>
 	);

@@ -265,3 +265,97 @@ test("a consumer plugin from the callbacks file serves under /api/auth", async (
 	);
 	assert.equal(await sessionUser(send), "ada@example.com");
 });
+
+test("an organization's own roles decide what its members may do", async () => {
+	const { instance, fetchPath } = await setup(
+		{ ...authSchema, ...organizationSchema },
+		{
+			organization: {
+				statements: {
+					organization: ["update", "delete"],
+					invitation: ["create", "cancel"],
+				},
+				// The creator's role, granted no invitations.
+				roles: { owner: { organization: ["update", "delete"] } },
+			},
+		},
+	);
+
+	const [cookieName, cookieValue] = await mintSessionCookie(instance, "u1");
+	const jar = new CookieJar();
+	jar.cookies.set(cookieName, cookieValue);
+	const send = browser(fetchPath, ORIGIN, jar);
+	const created = await send("/api/auth/organization/create", {
+		method: "POST",
+		body: JSON.stringify({ name: "Acme", slug: "acme" }),
+	});
+	const organization = (await created.json()) as { id: string };
+
+	const invited = await send("/api/auth/organization/invite-member", {
+		method: "POST",
+		body: JSON.stringify({
+			email: "grace@example.com",
+			role: "owner",
+			organizationId: organization.id,
+		}),
+	});
+	assert.equal(invited.status, 403, await invited.text());
+	const updated = await send("/api/auth/organization/update", {
+		method: "POST",
+		body: JSON.stringify({
+			organizationId: organization.id,
+			data: { name: "Acme Inc" },
+		}),
+	});
+	assert.equal(updated.status, 200, await updated.text());
+});
+
+test("an organization slug the app's routes hold is refused on create and update, as a field error", async () => {
+	const { instance, fetchPath } = await setup(
+		{ ...authSchema, ...organizationSchema },
+		{ organization: true, reservedSlugs: ["login", "settings"] },
+	);
+	const [cookieName, cookieValue] = await mintSessionCookie(instance, "u1");
+	const jar = new CookieJar();
+	jar.cookies.set(cookieName, cookieValue);
+	const send = browser(fetchPath, ORIGIN, jar);
+
+	const refused = await send("/api/auth/organization/create", {
+		method: "POST",
+		body: JSON.stringify({ name: "Login", slug: "login" }),
+	});
+	assert.equal(refused.status, 400);
+	assert.deepEqual(await refused.json(), {
+		code: "ORGANIZATION_SLUG_RESERVED",
+		message: "The address /login is reserved. Choose another.",
+		fieldErrors: { slug: "The address /login is reserved. Choose another." },
+	});
+
+	const created = await send("/api/auth/organization/create", {
+		method: "POST",
+		body: JSON.stringify({ name: "Acme", slug: "acme" }),
+	});
+	assert.equal(created.status, 200, await created.clone().text());
+	const organization = (await created.json()) as { id: string };
+
+	const renamed = await send("/api/auth/organization/update", {
+		method: "POST",
+		body: JSON.stringify({
+			organizationId: organization.id,
+			data: { slug: "settings" },
+		}),
+	});
+	assert.equal(renamed.status, 400);
+	assert.equal(
+		((await renamed.json()) as { code: string }).code,
+		"ORGANIZATION_SLUG_RESERVED",
+	);
+	const unchanged = await send("/api/auth/organization/update", {
+		method: "POST",
+		body: JSON.stringify({
+			organizationId: organization.id,
+			data: { name: "Acme Inc" },
+		}),
+	});
+	assert.equal(unchanged.status, 200, await unchanged.text());
+});

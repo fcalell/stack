@@ -29,7 +29,7 @@ export function Banner(props: BannerProps) {
 						type="button"
 						disabled={act().blocked !== undefined}
 						onClick={() => act().onAct()}
-						class={cn("min-h-11 shrink-0", TEXT_ACT)}
+						class={cn("min-h-floor shrink-0", TEXT_ACT)}
 					>
 						{act().label}
 					</button>

@@ -3,7 +3,7 @@ import * as SwitchPrimitive from "@kobalte/core/switch";
 import type { Closed } from "#lib/closed.ts";
 import { cn } from "#lib/cn.ts";
 
-// The label is part of the atom so the hit area is the whole 44 px line.
+// The label is part of the atom so the hit area is the whole line at the floor.
 export type SwitchProps = Closed & {
 	checked: boolean;
 	onChange: (checked: boolean) => void;
@@ -15,7 +15,7 @@ export function Switch(props: SwitchProps) {
 		<SwitchPrimitive.Root
 			checked={props.checked}
 			onChange={props.onChange}
-			class="relative flex min-h-11 w-full cursor-pointer items-center justify-between gap-row"
+			class="relative flex min-h-floor w-full cursor-pointer items-center justify-between gap-row"
 		>
 			<SwitchPrimitive.Input class="peer" />
 			<SwitchPrimitive.Label class={text({ role: "body" })}>

@@ -4,7 +4,7 @@ import { Check } from "lucide-solid";
 import type { Closed } from "#lib/closed.ts";
 import { cn } from "#lib/cn.ts";
 
-// The label is part of the atom so the hit area is the whole 44 px line.
+// The label is part of the atom so the hit area is the whole line at the floor.
 export type CheckboxProps = Closed & {
 	checked: boolean;
 	onChange: (checked: boolean) => void;
@@ -16,7 +16,7 @@ export function Checkbox(props: CheckboxProps) {
 		<CheckboxPrimitive.Root
 			checked={props.checked}
 			onChange={props.onChange}
-			class="relative flex min-h-11 w-full cursor-pointer items-center justify-between gap-row"
+			class="relative flex min-h-floor w-full cursor-pointer items-center justify-between gap-row"
 		>
 			<CheckboxPrimitive.Input class="peer" />
 			<CheckboxPrimitive.Label class={text({ role: "body" })}>

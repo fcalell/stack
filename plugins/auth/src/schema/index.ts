@@ -23,6 +23,18 @@
 // always-present table, not a new one, so it can't be gated behind the
 // separate subpath — nullable, so it's a no-op for consumers who never enable
 // organizations.
+
+// The drizzle types the emitted declarations spell, named here so they are
+// spelled through plugin-db, the one package drizzle resolves from. Unnamed,
+// tsc writes `import("drizzle-orm/...")`, which a consumer cannot resolve
+// from this package, and every table and row read through it is `any`.
+// biome-ignore lint/correctness/noUnusedImports: read by the declaration emit
+import type {
+	Many,
+	One,
+	Relations,
+	SQLiteTableWithColumns,
+} from "@fcalell/plugin-db/orm";
 import {
 	index,
 	integer,

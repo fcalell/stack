@@ -13,11 +13,11 @@ export function LoadingRows(props: { inGroup?: boolean }) {
 			<For each={[0, 1, 2]}>
 				{() =>
 					props.inGroup ? (
-						<div class="flex min-h-11 items-center px-inset">
+						<div class="flex min-h-floor items-center px-inset">
 							<div class="h-3 w-3/5 rounded-full bg-edge" />
 						</div>
 					) : (
-						<div class="flex min-h-11 items-center">
+						<div class="flex min-h-floor items-center">
 							<div class={cn(GROUP, "h-8 w-full")} />
 						</div>
 					)

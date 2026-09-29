@@ -1,7 +1,7 @@
 import type { ButtonFit } from "@fcalell/ui-core/variants";
 import { createContext, useContext } from "solid-js";
 
-// Where a control sits: the body, at the 44 px floor, or a top bar, where a
+// Where a control sits: the body, at the floor, or a top bar, where a
 // button or a circle draws compact. A top bar provides `bar`; everything else
 // reads the default.
 export const FitContext = createContext<ButtonFit>("body");

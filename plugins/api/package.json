@@ -76,6 +76,7 @@
 		"check-types": "tsc --noEmit --pretty",
 		"lint": "biome check --write --unsafe",
 		"check": "pnpm check-types && pnpm lint",
+		"test": "node --test 'test/**/*.test.ts'",
 		"clear": "rm -rf dist node_modules .turbo"
 	},
 	"dependencies": {
@@ -107,7 +108,7 @@
 	"devDependencies": {
 		"@fcalell/typescript-config": "workspace:*",
 		"@orpc/tanstack-query": "^1.14.4",
-		"@tanstack/react-query": "^5.101.0",
+		"@tanstack/react-query": "^5.104.0",
 		"@types/node": "^25.5.0",
 		"@types/react": "^19.2.16",
 		"react": "^19.2.7",

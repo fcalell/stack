@@ -6,11 +6,14 @@ import { RING, TEXT_ACT } from "#lib/interact.ts";
 import { LoadingRows } from "#lib/loading.tsx";
 import { useWords } from "#lib/words.tsx";
 
-// Mono, scrolling sideways, never wrapping. `tail` is the number of last
-// lines shown before a tap unfolds the rest; `copy` draws the copy act
-// beside the text, never over it: centred on one line, at the top of more.
+// Mono, scrolling sideways, never wrapping. `title` heads the block with what
+// the text is (a file's name, the tool it goes into); `tail` is the number of
+// last lines shown before a tap unfolds the rest; `copy` draws the copy act
+// beside the text, never over it: in the title's row when there is one,
+// else centred on one line and at the top of more.
 export type CodeProps = Closed & {
 	text: string;
+	title?: string;
 	tail?: number;
 	copy?: boolean;
 	loading?: boolean;
@@ -33,9 +36,34 @@ export function Code(props: CodeProps) {
 		setCopied(true);
 		setTimeout(() => setCopied(false), COPIED_MS);
 	};
+	const copyAct = () => (
+		<button
+			type="button"
+			onClick={() => void copy()}
+			class={cn(
+				text({ role: "meta" }),
+				"-my-stack -mr-row min-h-floor shrink-0 px-row",
+				TEXT_ACT,
+			)}
+		>
+			{copied() ? words.copied : words.copy}
+		</button>
+	);
 	return (
 		<Show when={!props.loading} fallback={<LoadingRows />}>
-			<div class={cn(CODE, "flex flex-col gap-row")}>
+			<figure class={cn(CODE, "flex flex-col gap-row")}>
+				<Show when={props.title}>
+					{(title) => (
+						<figcaption class="flex min-h-6 items-center gap-row">
+							<span
+								class={cn(text({ role: "meta" }), "min-w-0 flex-1 truncate")}
+							>
+								{title()}
+							</span>
+							<Show when={props.copy}>{copyAct()}</Show>
+						</figcaption>
+					)}
+				</Show>
 				<Show when={folded()}>
 					<button
 						type="button"
@@ -62,21 +90,9 @@ export function Code(props: CodeProps) {
 					>
 						{shown().join("\n")}
 					</pre>
-					<Show when={props.copy}>
-						<button
-							type="button"
-							onClick={() => void copy()}
-							class={cn(
-								text({ role: "meta" }),
-								"-my-stack -mr-row min-h-11 shrink-0 px-row",
-								TEXT_ACT,
-							)}
-						>
-							{copied() ? words.copied : words.copy}
-						</button>
-					</Show>
+					<Show when={props.copy && !props.title}>{copyAct()}</Show>
 				</div>
-			</div>
+			</figure>
 		</Show>
 	);
 }

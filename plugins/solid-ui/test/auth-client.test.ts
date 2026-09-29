@@ -73,3 +73,44 @@ test("without organizations the client leaves the organization plugin off", asyn
 test("without auth in the config no client is generated", async () => {
 	assert.equal(await generatedAuthClient(null), undefined);
 });
+
+test("the web auth client carries the configured roles, as the worker does", async () => {
+	const source = await generatedAuthClient({
+		organization: {
+			ac: { statements: { project: ["read"] }, newRole: () => ({}) },
+			roles: { editor: { project: ["read"] } },
+		},
+	});
+	assert.match(
+		source ?? "",
+		/"organization":\{"statements":\{"project":\["read"\]\},"roles":\{"editor":\{"project":\["read"\]\}\}\}/,
+	);
+});
+
+test("the app's top-level routes reach the worker as reserved organization slugs", async () => {
+	const cwd = mkdtempSync(join(tmpdir(), "stack-reserved-"));
+	for (const file of [
+		"src/app/pages/login.tsx",
+		"src/app/pages/(app)/onboarding/organization.tsx",
+		"src/app/pages/(app)/[org]/index.tsx",
+	]) {
+		mkdirSync(join(cwd, file, ".."), { recursive: true });
+		writeFileSync(join(cwd, file), "export default () => null;\n");
+	}
+	const { graph } = buildGraphFromDiscovered({
+		discovered: [
+			discover(api, api()),
+			discover(db, db({ dialect: "sqlite", path: "app.sqlite" })),
+			discover(solid, solid()),
+			discover(vite, vite()),
+			discover(solidUi, solidUi()),
+			discover(auth, auth({ emailOtp: false, organization: true })),
+		],
+		app: { name: "reserved", domain: "example.com" },
+		cwd,
+	});
+	assert.match(
+		(await graph.resolve(api.slots.workerSource)) ?? "",
+		/reservedSlugs: \["admin", "api", "auth", "login", "new", "onboarding", "settings", "system"\]/,
+	);
+});

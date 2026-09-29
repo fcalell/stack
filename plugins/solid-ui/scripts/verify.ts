@@ -34,6 +34,7 @@ import { solidUi } from "@fcalell/plugin-solid-ui";
 import { vite } from "@fcalell/plugin-vite";
 import { deriveTheme, type ResolvedTheme } from "@fcalell/ui-core/derive";
 import {
+	compactTokens,
 	modeTokens,
 	shadowUtilities,
 	themeTokens,
@@ -76,6 +77,7 @@ import {
 	buttonContentTone,
 	buttonLabel,
 	checkbox,
+	chip,
 	diffLine,
 	field,
 	message,
@@ -86,6 +88,7 @@ import {
 	status,
 	statusContentTone,
 	switchTrack,
+	tableRow,
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
@@ -255,6 +258,7 @@ const darkSeeded = await emit({ theme: { ...THEME, defaultMode: "dark" } });
 const squareFlat = await emit({
 	theme: { ...THEME, radius: 0, elevation: "flat" },
 });
+const desktopDense = await emit({ theme: { ...THEME, density: "desktop" } });
 const noFonts = await emit({ theme: THEME, fonts: [] });
 const reFonted = await emit({
 	theme: { ...THEME, fonts: { sans: "Inter Variable", mono: "Menlo" } },
@@ -547,6 +551,47 @@ check(
 			);
 		}
 		return "--radius-full 0px; shadow-float and shadow-sheet ring in edge with no shadow";
+	},
+);
+
+check(
+	"a5-density",
+	"desktop density compacts the sizes on a fine pointer only",
+	() => {
+		assert(
+			!sheet.includes("pointer"),
+			"the default density emits a pointer query",
+		);
+		assert(
+			/@layer base \{\s*@media \(pointer: fine\) \{\s*:root \{/.test(
+				desktopDense,
+			),
+			"the compact sizes are not a :root rule under (pointer: fine) in @layer base",
+		);
+		const compact = declarationMap(blockBody(desktopDense, ":root"));
+		for (const [key, value] of Object.entries(
+			compactTokens(deriveTheme({ ...THEME, density: "desktop" })),
+		)) {
+			assert(
+				compact.get(key) === value,
+				`compact ${key}: expected ${value}, got ${compact.get(key)}`,
+			);
+		}
+		assert(compact.get("--spacing-floor") === "32px", "compact floor");
+		assert(
+			blockBody(desktopDense, "@theme") === blockBody(sheet, "@theme"),
+			"density moves the seeded @theme block",
+		);
+		assert(
+			themeMap.get("--spacing-floor") === "44px",
+			"the seeded floor is not 44px",
+		);
+		const floor = rule(build(desktopDense, "app-desktop"), "min-h-floor");
+		assert(
+			floor?.includes("var(--spacing-floor)"),
+			"min-h-floor does not read the density token",
+		);
+		return "touch seeds 44px; desktop adds (pointer: fine) { :root { 4 sizes } } in @layer base";
 	},
 );
 
@@ -866,6 +911,16 @@ const FAMILIES: Family[] = [
 		axes: { state: ["unchecked", "checked"] },
 	},
 	{
+		name: "CHIP",
+		cva: chip as AnyCva,
+		axes: { family: ["1", "2", "3", "4", "5", "6"] },
+	},
+	{
+		name: "TABLE_ROW",
+		cva: tableRow as AnyCva,
+		axes: { state: ["rest", "selected"] },
+	},
+	{
 		name: "SEGMENT",
 		cva: segment as AnyCva,
 		axes: { state: ["idle", "selected"] },
@@ -899,7 +954,7 @@ const FAMILIES: Family[] = [
 ];
 
 const FAMILY_ROSTER =
-	"TEXT TEXT_STRONG BUTTON BUTTON_LABEL STATUS FIELD ROW SWITCH CHECKBOX SEGMENT BANNER DIFF_LINE MESSAGE AVATAR PLACE RHYTHM";
+	"TEXT TEXT_STRONG BUTTON BUTTON_LABEL STATUS FIELD ROW SWITCH CHECKBOX CHIP TABLE_ROW SEGMENT BANNER DIFF_LINE MESSAGE AVATAR PLACE RHYTHM";
 
 const CELLS = matrixCells(FAMILIES);
 const CELL_CLASSES = new Map<string, string>();
@@ -1084,8 +1139,11 @@ check(
 			"text-area": ["field"],
 			switch: ["switchTrack"],
 			checkbox: ["checkbox"],
+			chip: ["chip"],
+			"enum-input": ["field", "text"],
 			avatar: ["avatar"],
 			"list-row": ["row", "text", "textStrong"],
+			table: ["tableRow", "text"],
 			"definition-row": ["row", "text"],
 			"segmented-control": ["segment"],
 			banner: ["banner"],
@@ -1133,6 +1191,92 @@ check(
 			`a matrix cell is written out by hand:\n  ${copies.join("\n  ")}`,
 		);
 		return `${Object.keys(required).length} files call their family's cvas, button composes two tables on one node, no cell copied`;
+	},
+);
+
+// A consumer's `places` is a fresh array on every read, so a place picked by
+// its object is never the one drawn; and the router's `A` sets aria-current
+// to its own exact match, which a place holding a prefix of the address is
+// not. The rule itself is `test/places.test.ts`.
+check("b-shell", "the shell selects a place by its route, once", () => {
+	const source = read("src/ui/components/shell/index.tsx");
+	assert(
+		callArguments(source, "selectedRoute").length > 0,
+		"the shell does not choose its place through selectedRoute()",
+	);
+	assert(
+		!/===\s*spec\b(?!\.)/.test(source),
+		"the shell compares a place by identity",
+	);
+	assert(
+		!/<A\b/.test(source),
+		"the shell draws its places with the router's A",
+	);
+	return "selectedRoute() picks the place by route; aria-current and accent-soft read the same pick";
+});
+
+// A document shows its first `<title>`: the shell's static one stays ahead of
+// every `Title` unless the head manager takes it over. The takeover itself is
+// `test/title.test.ts`.
+check(
+	"b-title",
+	"the app root hands the static title to the head manager",
+	() => {
+		const source = read("src/ui/app/index.tsx");
+		assert(
+			callArguments(source, "takeStaticTitle").length > 0,
+			"createApp leaves the static <title> ahead of every Title",
+		);
+		const provider = source.slice(
+			source.indexOf("<MetaProvider>"),
+			source.indexOf("</MetaProvider>"),
+		);
+		assert(
+			/<Title>\{baseTitle\}<\/Title>/.test(provider),
+			"the static title's text is no Title under the MetaProvider",
+		);
+		return "the static <title> is removed and drawn back as the base Title";
+	},
+);
+
+// A `Place` or a `Screen` fills the column it is given and never sizes the
+// page itself (a child never knows its parent), so the page column a shell-less
+// page draws in is the app root's: the viewport's height on the surface, the
+// flex column the shell's own column is, and no banner above it.
+check(
+	"b-root-frame",
+	"the app root gives the router the page column a shell would",
+	() => {
+		const source = read("src/ui/app/index.tsx");
+		const at = source.indexOf("<Show when={routes()}>");
+		assert(at > 0, "createApp mounts no router under routes()");
+		const opening = [
+			...source.slice(0, at).matchAll(/<div class="([^"]+)">/g),
+		].at(-1)?.[1];
+		assert(opening, "the router sits in no frame of the app root");
+		const frame = new Set(classes(opening));
+		for (const need of [
+			"flex",
+			"h-dvh",
+			"flex-col",
+			"bg-surface",
+			"[--banner-height:0px]",
+		]) {
+			assert(frame.has(need), `the app root's frame lacks ${need}`);
+		}
+		const shell = read("src/ui/components/shell/index.tsx");
+		assert(
+			shell.includes('class="flex h-dvh flex-col bg-canvas tablet:flex-row"'),
+			"the shell's own frame changed",
+		);
+		for (const name of ["place", "screen"]) {
+			const own = read(`src/ui/components/${name}/index.tsx`);
+			assert(
+				!/\b(min-)?h-(dvh|screen)\b/.test(own),
+				`${name} sizes itself to the viewport`,
+			);
+		}
+		return `the router's frame is "${opening}"; the shell keeps its own`;
 	},
 );
 
@@ -1499,10 +1643,89 @@ check("b-nouns", "no product noun in src", () => {
 	return `${NOUNS.length} nouns absent from src`;
 });
 
+// solid-query reads a query's data through a resource, and a query first
+// read while already cached keeps its reader subscribed to that resource's
+// reloads: under a `Suspense` every later refetch suspends the boundary and
+// takes its whole subtree out of the page for a tick, focus with it.
+check("b-suspense", "no Suspense boundary in src", () => {
+	const pattern = /<Suspense\b|\bSuspense\s*[,}]/;
+	assert(pattern.test("<Suspense>"), "the pattern misses the JSX");
+	assert(
+		pattern.test('import { Show, Suspense } from "solid-js";'),
+		"the pattern misses the import",
+	);
+	const hits: string[] = [];
+	for (const path of walk(resolve(pkgDir, "src"), [".ts", ".tsx"])) {
+		const lines = readFileSync(path, "utf8").split("\n");
+		lines.forEach((line, index) => {
+			if (/^\s*(\/\/|\/\*|\*)/.test(line)) return;
+			if (pattern.test(line))
+				hits.push(`${relative(pkgDir, path)}:${index + 1}`);
+		});
+	}
+	assert(
+		hits.length === 0,
+		`a Suspense boundary survives:\n  ${hits.join("\n  ")}`,
+	);
+	return "no file under src mounts a Suspense";
+});
+
 // The fixture's ts-morph program is also the roster's type oracle: pin that
 // `SyntaxKind` resolved, so a ts-morph upgrade that changes the AST shape
 // fails here and not silently in b-words.
 assert(typeof SyntaxKind.JsxText === "number", "ts-morph lost JsxText");
+
+// ── The exports, as a consumer's bundler reads them ─────────────────
+
+// Every component and every lib module, resolved by Vite's own resolver
+// through the package's `exports`, the way a consumer build imports it. tsc
+// resolves an export array by trying each target, Vite by taking the first,
+// so only a real bundler resolution proves a subpath reaches its file.
+const exportResolutions = await (async () => {
+	const { createServer } = await import("vite");
+	const server = await createServer({
+		root: pkgDir,
+		configFile: false,
+		logLevel: "silent",
+		server: { middlewareMode: true, hmr: false },
+		optimizeDeps: { noDiscovery: true, include: [] },
+	});
+	const importer = resolve(pkgDir, "src/ui/app/index.tsx");
+	const out: Array<[string, string, string | undefined]> = [];
+	const libDir = resolve(pkgDir, "src/ui/lib");
+	for (const name of readdirSync(libDir)) {
+		const module = name.replace(/\.tsx?$/, "");
+		const resolved = await server.pluginContainer.resolveId(
+			`@fcalell/plugin-solid-ui/lib/${module}`,
+			importer,
+		);
+		out.push([`lib/${module}`, resolve(libDir, name), resolved?.id]);
+	}
+	for (const dir of readdirSync(COMPONENTS_DIR)) {
+		const resolved = await server.pluginContainer.resolveId(
+			`@fcalell/plugin-solid-ui/components/${dir}`,
+			importer,
+		);
+		out.push([
+			`components/${dir}`,
+			resolve(COMPONENTS_DIR, dir, "index.tsx"),
+			resolved?.id,
+		]);
+	}
+	await server.close();
+	return out;
+})();
+
+check("b-exports", "every subpath reaches its file through Vite", () => {
+	const broken = exportResolutions
+		.filter(([, file, resolved]) => resolved !== file)
+		.map(([subpath, , resolved]) => `${subpath} -> ${resolved ?? "nothing"}`);
+	assert(
+		broken.length === 0,
+		`subpaths a consumer build cannot import:\n  ${broken.join("\n  ")}`,
+	);
+	return `${exportResolutions.length} lib and component subpaths, each resolved by Vite to its own file`;
+});
 
 // ── Report ──────────────────────────────────────────────────────────
 

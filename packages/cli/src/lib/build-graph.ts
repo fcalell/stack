@@ -1,6 +1,8 @@
 import { access, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { AppConfig, StackConfig } from "../config.ts";
+import { tsconfigLayout, workerTsconfig } from "../templates/tsconfig.ts";
+import { cliSlots } from "./cli-slots.ts";
 import { type DiscoveredPlugin, discoverPlugins } from "./discovery.ts";
 import { ConfigValidationError } from "./errors.ts";
 import { buildGraph, type Graph } from "./graph.ts";
@@ -68,12 +70,25 @@ export function buildGraphFromDiscovered(
 	const log = opts.log ?? createLogContext();
 	const cwd = opts.cwd;
 
+	// The CLI's own contributions: facts only core knows, here which tsconfig
+	// `stack init` wrote for the worker.
+	const layout = tsconfigLayout(opts.discovered.map((d) => d.name));
+	const core = {
+		name: "cli",
+		contributes: [
+			cliSlots.workerTsconfig.contribute(() => workerTsconfig(layout)),
+		],
+	};
+
 	const graph = buildGraph(
-		collected.map((c) => ({
-			name: c.discovered.name,
-			slots: c.slots,
-			contributes: c.contributes,
-		})),
+		[
+			...collected.map((c) => ({
+				name: c.discovered.name,
+				slots: c.slots,
+				contributes: c.contributes,
+			})),
+			core,
+		],
 		{
 			app: opts.app,
 			cwd,

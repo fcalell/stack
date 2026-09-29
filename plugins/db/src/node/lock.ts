@@ -208,8 +208,8 @@ export async function withMigrationLock<T>(
 	}
 }
 
-// Default lock path for the migrations directory. Lives under `.stack/dev`
-// so it's gitignored alongside other generated dev artifacts.
+// Default lock path for the migrations directory. Lives under `.db-kit`,
+// plugin-db's gitignored dev directory.
 export function migrationLockPath(cwd: string): string {
-	return `${cwd}/.stack/dev/migration.lock`;
+	return `${cwd}/.db-kit/migration.lock`;
 }

@@ -20,14 +20,31 @@ interface EntityEntry {
 // `QueryClient` -- both satisfy this without plugin-api depending on either.
 export interface InvalidatableQueryClient {
 	invalidateQueries(filters: {
-		predicate: (query: { queryKey: readonly unknown[] }) => boolean;
+		predicate: (query: {
+			queryKey: readonly unknown[];
+			meta?: Record<string, unknown> | undefined;
+		}) => boolean;
 	}): unknown;
+}
+
+// What a query outside the API (a better-auth client call) reads, declared
+// on its options as `meta: { reads: [...] }`: the entity names a
+// procedure's `reads` would, and the counterpart of a mutation source's
+// `writes`. An API query's reads come from its response headers instead.
+function declaredReads(
+	meta: Record<string, unknown> | undefined,
+): readonly string[] | undefined {
+	const reads = meta?.reads;
+	return Array.isArray(reads) &&
+		reads.every((entity) => typeof entity === "string")
+		? reads
+		: undefined;
 }
 
 export interface EntityRegistry {
 	/** Parses `x-stack-reads` / `x-stack-writes` off `headers` for `pathKey`. An absent header leaves that side untouched. */
 	capture(pathKey: string, headers: Headers): void;
-	/** Invalidates every cached query whose recorded reads intersect `writes`. */
+	/** Invalidates every cached query whose recorded or declared (`meta.reads`) reads intersect `writes`. */
 	invalidateForWrites(
 		queryClient: InvalidatableQueryClient,
 		writes: readonly string[],
@@ -84,8 +101,9 @@ export function createEntityRegistry(): EntityRegistry {
 		queryClient.invalidateQueries({
 			predicate: (query) => {
 				const pathKey = pathKeyFromOperationKey(query.queryKey);
-				if (!pathKey) return false;
-				const reads = entries.get(pathKey)?.reads;
+				const reads =
+					declaredReads(query.meta) ??
+					(pathKey ? entries.get(pathKey)?.reads : undefined);
 				return reads?.some((entity) => writeSet.has(entity)) ?? false;
 			},
 		});

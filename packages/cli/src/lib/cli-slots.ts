@@ -103,6 +103,15 @@ export const cliSlots = {
 	// needs globally in scope (e.g. plugin-native-ui's uniwind className
 	// augmentation). Same consumption point as `tsconfigPaths`.
 	tsconfigTypes: slot.list<string>({ source: SOURCE, name: "tsconfigTypes" }),
+	// The consumer tsconfig, relative to its root, that a bundler compiling
+	// the worker reads (its `paths` carry `tsconfigPaths`): the worker project
+	// when `stack init` splits the config, else the single root one. The CLI
+	// contributes it from the same layout the tsconfig template writes.
+	workerTsconfig: slot.value<string>({
+		source: SOURCE,
+		name: "workerTsconfig",
+		seed: () => "tsconfig.json",
+	}),
 } as const;
 
 export type CliSlots = typeof cliSlots;

@@ -5,9 +5,10 @@ import { literalToProps } from "@fcalell/cli/ast";
 import { cliSlots } from "@fcalell/cli/cli-slots";
 import type { PluginRuntimeEntry } from "@fcalell/plugin-api";
 import { api } from "@fcalell/plugin-api";
+import { RESERVED_SLUGS } from "@fcalell/plugin-api/lib/slugify";
 import { cloudflare } from "@fcalell/plugin-cloudflare";
 import { defaultOrgStatements, getStatements } from "./access.ts";
-import type { AuthClientOptions } from "./client.ts";
+import type { AuthClientOptions, OrganizationAccess } from "./client.ts";
 import {
 	AUTH_PREFIX,
 	type AuthCallbackPayloads,
@@ -32,6 +33,26 @@ const CALLBACK_FILE = "src/worker/plugins/auth.ts";
 const SCOPES_FILE = "src/shared/scopes.ts";
 const SCOPES_IDENTIFIER = "scopes";
 
+// `ac` carries `newRole`, a function no literal can hold, so only its
+// statements reach generated code, beside each role's grants: the worker and
+// the web client each rebuild the access control and the roles from them.
+function organizationAccess(
+	org: ResolvedAuthOptions["organization"],
+): OrganizationAccess | boolean {
+	if (typeof org !== "object") return Boolean(org);
+	const statements = getStatements(
+		org.ac as { statements?: Record<string, readonly string[]> } | undefined,
+	);
+	return {
+		...(statements ? { statements } : {}),
+		...(org.roles
+			? {
+					roles: org.roles as Record<string, Record<string, readonly string[]>>,
+				}
+			: {}),
+	};
+}
+
 async function wiresScopes(
 	ctx: { fileExists(path: string): Promise<boolean> },
 	options: ResolvedAuthOptions,
@@ -47,6 +68,16 @@ async function wiresScopes(
 // resolved BEFORE this compute runs. Bug #5 (auth cors ordering) is structurally impossible here: no
 // payload to mutate, no handler ordering, just dataflow.
 
+// The addresses an organization's slug may not take, beside plugin-api's
+// `RESERVED_SLUGS`: an organization is served at `/<slug>`, so a slug that
+// names one of the app's own top-level routes would shadow it. A frontend
+// plugin contributes its routes' first segments (solid-ui does, from
+// plugin-solid's pages); auth never reads a frontend's routes itself.
+const reservedSlugs = slot.list<string>({
+	source: SOURCE,
+	name: "reservedSlugs",
+});
+
 const runtimeOptions = slot.derived({
 	source: SOURCE,
 	name: "runtimeOptions",
@@ -54,6 +85,7 @@ const runtimeOptions = slot.derived({
 		cors: api.slots.cors,
 		devCors: api.slots.devCorsOrigins,
 		devTargets: api.slots.devTargetOrigins,
+		reserved: reservedSlugs,
 	},
 	compute: async (
 		inp,
@@ -132,6 +164,16 @@ const runtimeOptions = slot.derived({
 			};
 		} else {
 			delete rawOptions.passkey;
+		}
+
+		if (typeof ctx.options.organization === "object") {
+			rawOptions.organization = organizationAccess(ctx.options.organization);
+		}
+		// The slugs the runtime refuses on organization create and update.
+		if (ctx.options.organization) {
+			rawOptions.reservedSlugs = [
+				...new Set([...RESERVED_SLUGS, ...inp.reserved]),
+			].sort();
 		}
 
 		const props = literalToProps(rawOptions);
@@ -275,6 +317,7 @@ export const auth = plugin("auth", {
 		callbackFile,
 		cookiePrefix,
 		clientFlags,
+		reservedSlugs,
 	},
 
 	contributes: (self) => [
@@ -389,7 +432,7 @@ export const auth = plugin("auth", {
 		self.slots.clientFlags.contribute(() => ({
 			passkey: self.options.passkey !== false,
 			emailOtp: self.options.emailOtp,
-			organization: Boolean(self.options.organization),
+			organization: organizationAccess(self.options.organization),
 		})),
 
 		// Worker runtime entry. Resolves `runtimeOptions` inside the

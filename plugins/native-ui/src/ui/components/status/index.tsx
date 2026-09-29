@@ -25,7 +25,7 @@ export interface StatusProps extends Closed {
 	onOpen?: () => void;
 }
 
-const MARK: Record<StatusState, LucideIcon> = {
+export const STATUS_MARK: Record<StatusState, LucideIcon> = {
 	active: CircleDot,
 	waiting: Clock,
 	done: CircleCheck,
@@ -40,7 +40,11 @@ export function Status({ state, label, onOpen }: StatusProps) {
 	const word = label ?? words[state];
 	const inner = (
 		<>
-			<Glyph icon={MARK[state]} tone={statusContentTone(state)} size={16} />
+			<Glyph
+				icon={STATUS_MARK[state]}
+				tone={statusContentTone(state)}
+				size={16}
+			/>
 			<RNText className={status({ state })}>{word}</RNText>
 		</>
 	);

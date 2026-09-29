@@ -1,6 +1,7 @@
 import { type ClassValue, clsx } from "clsx";
 import { extendTailwindMerge } from "tailwind-merge";
 import {
+	DENSITY_SIZES,
 	RADIUS_RUNGS,
 	SPACING_RUNGS,
 	TRACKED_ROLES,
@@ -12,8 +13,9 @@ import {
 // reads as a color and `p-inset` as an unknown class: two rungs of one scale
 // both survive a merge. Registering them under `theme` puts them where the
 // default config already looks, which reaches all sixteen `rounded*` groups
-// instead of the single group an added class group can name. The six lists
-// are the driving token lists themselves.
+// instead of the single group an added class group can name. The lists are
+// the driving token lists themselves; the density sizes ride the spacing
+// scale beside the rungs, so `py-row-y` and `py-stack` collapse.
 //
 // A type role owns its size, its leading and its tracking, so a later role has
 // to clear all three. 3.5.0 conflicts `font-size` with `leading` alone, which
@@ -25,7 +27,7 @@ const twMerge = extendTailwindMerge({
 			leading: [...TYPE_ROLES],
 			tracking: [...TRACKED_ROLES],
 			radius: [...RADIUS_RUNGS],
-			spacing: [...SPACING_RUNGS],
+			spacing: [...SPACING_RUNGS, ...DENSITY_SIZES],
 			container: [...WIDTHS],
 		},
 	},

@@ -11,18 +11,22 @@ import {
 	BUTTON,
 	BUTTON_LABEL,
 	CHECKBOX,
+	CHIP,
 	DIFF_LINE,
 	FIELD,
 	type Matrix,
 	MESSAGE,
+	OTP_BOX,
 	PLACE,
 	RHYTHM,
 	ROW,
 	SEGMENT,
 	STATUS,
 	SWITCH,
+	TABLE_ROW,
 	TEXT,
 	TEXT_STRONG,
+	TOAST_STATE,
 } from "./variant-tables.ts";
 
 // A variant's props: one optional pick per axis, and the class or the
@@ -57,11 +61,15 @@ export const button = build(BUTTON);
 export const buttonLabel = build(BUTTON_LABEL);
 export const status = build(STATUS);
 export const field = build(FIELD);
+export const otpBox = build(OTP_BOX);
 export const row = build(ROW);
 export const switchTrack = build(SWITCH);
+export const tableRow = build(TABLE_ROW);
 export const checkbox = build(CHECKBOX);
+export const chip = build(CHIP);
 export const segment = build(SEGMENT);
 export const banner = build(BANNER);
+export const toastState = build(TOAST_STATE);
 export const diffLine = build(DIFF_LINE);
 export const message = build(MESSAGE);
 export const avatar = build(AVATAR);
@@ -71,13 +79,14 @@ export const rhythm = build(RHYTHM);
 // Single cells: one class string each, shared verbatim by both plugins.
 export const BUTTON_MUTED = "bg-group";
 export const BUTTON_MUTED_LABEL = "text-ink-faint";
-export const ICON_BUTTON = "rounded-full min-h-11 min-w-11 bg-group text-ink";
+export const ICON_BUTTON =
+	"rounded-full min-h-floor min-w-floor bg-group text-ink";
 // The same circle in a top bar: drawn compact, its 44 px hit area kept by the
 // plugin around it.
 export const ICON_BUTTON_BAR = "rounded-full min-h-8 min-w-8 bg-group text-ink";
 export const COUNT =
 	"rounded-full bg-group min-w-6 px-2 text-label leading-label font-medium text-tint";
-export const STATUS_CHIP = "rounded-full bg-group min-h-11 px-3";
+export const STATUS_CHIP = "rounded-full bg-group min-h-floor px-3";
 export const FIELD_PLACEHOLDER = "text-ink-faint";
 export const GROUP = "rounded-group bg-group";
 export const HAIRLINE = "border-edge";
@@ -89,12 +98,18 @@ export const TOAST =
 export const SHEET = "bg-surface rounded-t-sheet";
 export const SHEET_CENTERED = "rounded-sheet";
 export const SCRIM = "bg-scrim";
-export const PENDING_BAR = "rounded-full bg-group min-h-11 px-inset gap-row";
+export const PENDING_BAR = "rounded-full bg-group min-h-floor px-inset gap-row";
 export const PENDING_FILL = "rounded-full bg-accent-soft";
 export const METER_TRACK = "rounded-full bg-group";
 export const METER_FILL = "rounded-full bg-tint";
 export const DIFF_GUTTER = "text-ink-faint";
 export const CODE = "rounded-group bg-group p-stack";
+// A data table's cell: the floor, a field's vertical padding, and a field's
+// side padding behind a transparent side border, so a cell and the `Input`
+// that edits it in place put their text in one place and the row keeps its
+// height: 32 under the compact set, 44 on touch.
+export const TABLE_CELL =
+	"min-h-floor border-x border-transparent px-4 py-control-y";
 export const PLACE_ROW_SELECTED = "bg-accent-soft";
 // Switch and checkbox mute by fading; a button swaps fills through BUTTON_MUTED.
 export const CONTROL_MUTED = "opacity-50";
@@ -104,14 +119,18 @@ export type ButtonAct = keyof (typeof BUTTON)["variants"]["act"];
 export type ButtonFit = keyof (typeof BUTTON)["variants"]["fit"];
 export type FieldKind = keyof (typeof FIELD)["variants"]["kind"];
 export type FieldState = keyof (typeof FIELD)["variants"]["state"];
+export type OtpBoxState = keyof (typeof OTP_BOX)["variants"]["state"];
 export type RowState = keyof (typeof ROW)["variants"]["state"];
 export type SwitchState = keyof (typeof SWITCH)["variants"]["state"];
+export type TableRowState = keyof (typeof TABLE_ROW)["variants"]["state"];
 export type CheckboxState = keyof (typeof CHECKBOX)["variants"]["state"];
 export type SegmentState = keyof (typeof SEGMENT)["variants"]["state"];
 export type BannerKind = keyof (typeof BANNER)["variants"]["kind"];
+export type ToastState = keyof (typeof TOAST_STATE)["variants"]["state"];
 export type DiffLineKind = keyof (typeof DIFF_LINE)["variants"]["kind"];
 export type MessageAuthor = keyof (typeof MESSAGE)["variants"]["author"];
 export type AvatarStep = keyof (typeof AVATAR)["variants"]["step"];
+export type ChipCell = keyof (typeof CHIP)["variants"]["family"];
 export type PlaceState = keyof (typeof PLACE)["variants"]["state"];
 export type RhythmUnit = keyof (typeof RHYTHM)["variants"]["unit"];
 

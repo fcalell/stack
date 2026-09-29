@@ -44,6 +44,39 @@ export const SCRAMBLE_LENGTH = 3;
 export const SCRAMBLE_INTERVAL_MS = 70;
 export const SCRAMBLE_STILL = "···";
 
+// How dense the controls draw. `touch` keeps every control, row and header at
+// the 44 px floor on every device; `desktop` draws them compact where the
+// primary pointer is fine (a mouse or a trackpad) and keeps the floor on
+// touch. Native is touch-only and draws `touch` whatever the knob says.
+export const DENSITIES = ["touch", "desktop"] as const;
+export type Density = (typeof DENSITIES)[number];
+
+// The sizes density moves, each a `--spacing-*` token so a cell names it the
+// way it names a rung (`min-h-floor`, `py-row-y`): `floor` is the minimum
+// height of a control, a row and a header, and a circle's side; `row-y` a
+// row's vertical padding; `control-y` a button's and a field's vertical
+// padding; `segment` a segment's height inside its padded control. They are
+// not rungs (nothing is spaced by them) and not a knob.
+export const DENSITY_SIZES = [
+	"floor",
+	"row-y",
+	"control-y",
+	"segment",
+] as const;
+export type DensitySize = (typeof DENSITY_SIZES)[number];
+
+// The two sets: `touch` everywhere by default, `compact` on a fine pointer
+// under `density: "desktop"`. A number is pixels; `{ space }` is a multiple
+// of the `space` knob. Compact lands a one-line `body` row, button and field
+// on the 32 px floor: a 24 px line box plus twice 4.
+export const DENSITY_GEOMETRY: Record<
+	"touch" | "compact",
+	Record<DensitySize, number | { space: number }>
+> = {
+	touch: { floor: 44, "row-y": { space: 3 }, "control-y": 8, segment: 36 },
+	compact: { floor: 32, "row-y": { space: 1 }, "control-y": 4, segment: 24 },
+};
+
 export const WIDTHS = ["rail", "list", "column", "sheet", "reading"] as const;
 export type Width = (typeof WIDTHS)[number];
 
@@ -71,6 +104,7 @@ export interface Knobs {
 	radius: number;
 	text: number;
 	elevation: Elevation;
+	density: Density;
 	fonts: { sans?: string; mono: string };
 	widths: Record<Width, number>;
 	breakpoints: Record<Breakpoint, number>;
@@ -88,6 +122,7 @@ export const KNOB_DEFAULTS: Knobs = {
 	radius: 14,
 	text: 16,
 	elevation: "soft",
+	density: "touch",
 	fonts: { mono: "JetBrains Mono Variable" },
 	widths: { rail: 220, list: 360, column: 300, sheet: 560, reading: 720 },
 	breakpoints: { tablet: 768, desktop: 1024, wide: 1440 },
@@ -98,6 +133,13 @@ export const KNOB_DEFAULTS: Knobs = {
 export const AVATAR_STEPS = [1, 2, 3, 4, 5, 6, 7, 8] as const;
 export type AvatarStep = (typeof AVATAR_STEPS)[number];
 export type AvatarColor = `avatar-${AvatarStep}`;
+
+// A chip's fill, one per data family (a type, a source, a destination), so
+// a chip's meaning is learnable across screens. Six hues 60° apart and
+// offset 30° from `accentHue`, so no family ever wears the accent.
+export const CHIP_FAMILIES = [1, 2, 3, 4, 5, 6] as const;
+export type ChipFamily = (typeof CHIP_FAMILIES)[number];
+export type ChipColor = `chip-${ChipFamily}`;
 
 export const PER_MODE_COLORS = [
 	"canvas",
@@ -118,6 +160,7 @@ export const PER_MODE_COLORS = [
 	"danger",
 	"danger-soft",
 	...AVATAR_STEPS.map((step): AvatarColor => `avatar-${step}`),
+	...CHIP_FAMILIES.map((family): ChipColor => `chip-${family}`),
 ] as const;
 export type PerModeColor = (typeof PER_MODE_COLORS)[number];
 
@@ -154,7 +197,7 @@ export function isNeutralBound(hue: HueBinding): boolean {
 
 // Every role whose value is the same under both primaries.
 export const COLORS: Record<
-	Exclude<PerModeColor, "accent" | "accent-soft" | AvatarColor>,
+	Exclude<PerModeColor, "accent" | "accent-soft" | AvatarColor | ChipColor>,
 	ColorDeclaration
 > = {
 	canvas: {
@@ -223,7 +266,10 @@ export const COLORS: Record<
 
 // The two roles `primary` decides. Under `ink` the act fill is the ink ladder
 // and its soft is the neutral-bound soft; under `accent` both bind to
-// `accentHue`, the soft at `tint`'s soft values.
+// `accentHue`, the soft at `tint`'s soft chroma. `accent-soft` is a selected
+// row, where a `Status` or an act is drawn, so its lightness lets `ok`,
+// `warn`, `danger` and `tint` clear 4.5:1 on it: lighter than the
+// calibration's in light mode and, under `ink`, darker in dark mode.
 export const PRIMARY_COLORS: Record<
 	Primary,
 	Record<"accent" | "accent-soft", ColorDeclaration>
@@ -231,14 +277,14 @@ export const PRIMARY_COLORS: Record<
 	ink: {
 		accent: { alias: "ink" },
 		"accent-soft": {
-			light: { l: 0.895, c: 0.04, hue: neutral() },
-			dark: { l: 0.37, c: 0.095, hue: neutral() },
+			light: { l: 0.925, c: 0.04, hue: neutral() },
+			dark: { l: 0.34, c: 0.095, hue: neutral() },
 		},
 	},
 	accent: {
 		accent: { alias: "tint" },
 		"accent-soft": {
-			light: { l: 0.915, c: 0.045, hue: accent() },
+			light: { l: 0.925, c: 0.045, hue: accent() },
 			dark: { l: 0.32, c: 0.1, hue: accent() },
 		},
 	},
@@ -250,6 +296,16 @@ export const AVATAR_STEP_DEGREES = 45;
 export const AVATAR_VALUE: Record<Mode, { l: number; c: number }> = {
 	light: { l: 0.88, c: 0.06 },
 	dark: { l: 0.38, c: 0.09 },
+};
+
+// One lightness and chroma per mode, the hue stepped 60° per family from
+// `accentHue` plus 30°, so the nearest family sits 30° off the accent and
+// `ink` reads on every fill in both modes.
+export const CHIP_STEP_DEGREES = 60;
+export const CHIP_OFFSET_DEGREES = 30;
+export const CHIP_VALUE: Record<Mode, { l: number; c: number }> = {
+	light: { l: 0.9, c: 0.07 },
+	dark: { l: 0.36, c: 0.09 },
 };
 
 export const INVARIANT: Record<InvariantColor, InvariantColorValue> = {
@@ -469,6 +525,9 @@ export const WORD_KEYS = [
 	"search",
 	"loading",
 	"retry",
+	"add",
+	"remove",
+	"duplicate",
 ] as const;
 export type WordKey = (typeof WORD_KEYS)[number];
 
@@ -493,4 +552,7 @@ export const ENGLISH: Words = {
 	search: "Search",
 	loading: "Loading",
 	retry: "Retry",
+	add: "Add",
+	remove: "Remove",
+	duplicate: "Already in the list",
 };

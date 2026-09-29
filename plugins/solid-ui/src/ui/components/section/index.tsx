@@ -65,7 +65,7 @@ export function Section(props: SectionProps) {
 			>
 				{/* The description is the label's own line, a pair below it, so it
 				    never reads as the section's content. */}
-				<div class="flex min-h-11 items-center justify-between gap-row">
+				<div class="flex min-h-floor items-center justify-between gap-row">
 					<div class="flex min-w-0 flex-col gap-pair">
 						<Show
 							when={foldable()}
@@ -82,7 +82,7 @@ export function Section(props: SectionProps) {
 									props.onToggle?.(next);
 								}}
 								class={cn(
-									"flex min-h-11 min-w-0 cursor-pointer items-center gap-pair self-start text-left",
+									"flex min-h-floor min-w-0 cursor-pointer items-center gap-pair self-start text-left",
 									RING,
 								)}
 							>
@@ -108,7 +108,7 @@ export function Section(props: SectionProps) {
 								onClick={() => act().onAct()}
 								class={cn(
 									text({ role: "meta" }),
-									"min-h-11 shrink-0",
+									"min-h-floor shrink-0",
 									TEXT_ACT,
 								)}
 							>

@@ -1,3 +1,4 @@
+import { commitMoment } from "@fcalell/ui-core/commit";
 import type { Act } from "@fcalell/ui-core/descriptors";
 import { field, text } from "@fcalell/ui-core/variants";
 import { Search } from "lucide-solid";
@@ -13,18 +14,24 @@ export type InputKind =
 	| "secret"
 	| "code"
 	| "source"
-	| "number";
+	| "number"
+	| "email";
 
 // A one-line typing control. `search` is a pill, the rest take the group
 // radius; `number` opens the numeric keyboard and draws `unit` after the
 // value; `code` is a one-time code; `source` is typed text a machine reads
 // (a command, a path, a host), mono and never corrected or capitalized;
-// `act` is a trailing text act inside the field. Inside a `FormField` it
-// takes the field's id and error.
+// `email` is an address: the email keyboard, the browser's saved address,
+// never corrected or capitalized; `act` is a trailing text act inside the
+// field. Inside a `FormField` it
+// takes the field's id and error. `onCommit` hears the value once the viewer
+// is done with it: on leaving the field or on Enter, only when it changed
+// since the field took focus; with it, Escape puts back the value at focus.
 export type InputProps = Closed & {
 	kind?: InputKind;
 	value: string;
 	onChange: (value: string) => void;
+	onCommit?: (value: string) => void;
 	placeholder?: string;
 	unit?: string;
 	act?: Act;
@@ -37,6 +44,7 @@ const TYPE: Record<InputKind, string> = {
 	code: "text",
 	source: "text",
 	number: "text",
+	email: "email",
 };
 
 // The focused and error cells are reached by selector: the wrapper is the
@@ -53,10 +61,14 @@ export function Input(props: InputProps) {
 				? "code"
 				: "text";
 	const source = () => kind() === "source";
+	// Typed exactly as it reads: no correction, no capital, no spellcheck.
+	const verbatim = () => source() || kind() === "email";
 	const ctx = useField();
+	const moment = commitMoment<string>();
+	const commit = (value: string) => props.onCommit?.(value);
 	let input!: HTMLInputElement;
 	return (
-		// A tap on the field's padding focuses the input, so the whole 44 px
+		// A tap on the field's padding focuses the input, so the whole
 		// surface is the target.
 		<div
 			class={cn(field({ kind: surface(), state: "default" }), FIELD_SHELL)}
@@ -74,17 +86,43 @@ export function Input(props: InputProps) {
 				ref={input}
 				id={ctx?.id}
 				type={TYPE[kind()]}
-				inputmode={kind() === "number" ? "decimal" : undefined}
-				autocomplete={
-					kind() === "code" ? "one-time-code" : source() ? "off" : undefined
+				inputmode={
+					kind() === "number"
+						? "decimal"
+						: kind() === "email"
+							? "email"
+							: undefined
 				}
-				spellcheck={source() ? false : undefined}
-				autocapitalize={source() ? "off" : undefined}
-				autocorrect={source() ? "off" : undefined}
+				autocomplete={
+					kind() === "code"
+						? "one-time-code"
+						: kind() === "email"
+							? "email"
+							: source()
+								? "off"
+								: undefined
+				}
+				spellcheck={verbatim() ? false : undefined}
+				autocapitalize={verbatim() ? "off" : undefined}
+				autocorrect={verbatim() ? "off" : undefined}
 				value={props.value}
 				placeholder={props.placeholder}
 				aria-invalid={ctx?.invalid() ? "true" : undefined}
 				onInput={(event) => props.onChange(event.currentTarget.value)}
+				onFocus={(event) => moment.focus(event.currentTarget.value)}
+				onBlur={(event) => moment.leave(event.currentTarget.value, commit)}
+				onKeyDown={(event) => {
+					if (!props.onCommit || event.isComposing) return;
+					const value = event.currentTarget.value;
+					if (event.key === "Enter") {
+						// The commit is the form's submit, so the form's own
+						// implicit submission would send it twice.
+						event.preventDefault();
+						moment.commit(value, commit);
+					} else if (event.key === "Escape") {
+						moment.cancel(value, props.onChange);
+					}
+				}}
 				class={cn(
 					"min-w-0 flex-1 bg-transparent outline-none",
 					"placeholder:text-ink-faint",
@@ -102,8 +140,8 @@ export function Input(props: InputProps) {
 						class={cn(
 							text({ role: "meta" }),
 							// The field's own padding given to the act, so its hit
-							// area is the field's right end at the 44 px floor.
-							"-my-2 -mr-4 min-h-11 shrink-0 px-4",
+							// area is the field's right end at the floor.
+							"-my-control-y -mr-4 min-h-floor shrink-0 px-4",
 							TEXT_ACT,
 						)}
 					>

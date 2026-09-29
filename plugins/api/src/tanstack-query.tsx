@@ -47,12 +47,9 @@ const NATIVE_DEFAULTS: QueryClientConfig = {
 	},
 };
 
-// WS3.3: auto-invalidate on every mutation
-// success unless the caller supplied its own `mutationCache` (they own
-// invalidation then) or the mutation opted out via
-// `meta: { skipAutoInvalidation: true }` (the pattern
-// `plugin-solid-ui`'s `useMutation` stamps for mutations with custom cache
-// updaters).
+// Auto-invalidate on every mutation success unless the caller supplied its
+// own `mutationCache` (they own invalidation then) or the mutation opted out
+// via `meta: { skipAutoInvalidation: true }`.
 function createAutoInvalidationMutationCache(
 	getQueryClient: () => QueryClient,
 ): MutationCache {

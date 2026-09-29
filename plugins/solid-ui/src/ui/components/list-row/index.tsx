@@ -11,8 +11,10 @@ import { cn } from "#lib/cn.ts";
 import { useInColumns } from "#lib/columns.ts";
 import { useIcon } from "#lib/icons.tsx";
 import { RING_INSET, TEXT_ACT, WASH } from "#lib/interact.ts";
-import { Parts } from "#lib/parts.tsx";
+import { MenuCircle, type MenuItems } from "#lib/menu.tsx";
+import { Parts, partsText } from "#lib/parts.tsx";
 import { StatusGlyph } from "#lib/status-glyph.tsx";
+import { useWords } from "#lib/words.tsx";
 
 export type Leading = { icon: string } | { status: StatusState };
 // `age` is an ISO moment, drawn as its age and kept current.
@@ -20,7 +22,9 @@ export type Trailing = { age: string } | { count: number } | { value: string };
 
 // A row of a list or a group: no chevron, no divider. `href` routes, `onOpen`
 // opens; a row with neither is a line. A row whose `href` is the current
-// route, or leads to it, is the open one and draws selected.
+// route, or leads to it, is the open one and draws selected. `more` is the
+// row's own acts under a more circle at its end, beside the row, never inside
+// what opens it.
 export type ListRowProps = Closed & {
 	leading?: Leading;
 	title: Part;
@@ -28,6 +32,7 @@ export type ListRowProps = Closed & {
 	trailing?: Trailing;
 	marks?: Mark<string>[];
 	act?: Act;
+	more?: MenuItems;
 	href?: string;
 	onOpen?: () => void;
 };
@@ -49,6 +54,7 @@ function MarkGlyph(props: { mark: Mark<string> }) {
 }
 
 export function ListRow(props: ListRowProps) {
+	const words = useWords();
 	const inColumns = useInColumns();
 	const boxed = useBoxed();
 	// On the bare surface the row's text aligns with the content and its
@@ -170,7 +176,7 @@ export function ListRow(props: ListRowProps) {
 					}}
 					class={cn(
 						text({ role: "meta" }),
-						"-my-stack min-h-11 shrink-0 px-row",
+						"-my-row-y min-h-floor shrink-0 px-row",
 						TEXT_ACT,
 					)}
 				>
@@ -210,6 +216,17 @@ export function ListRow(props: ListRowProps) {
 					)}
 				</Match>
 			</Switch>
+			<Show when={props.more}>
+				{(items) => (
+					<span class="shrink-0 pl-row">
+						<MenuCircle
+							label={words.more}
+							title={partsText([props.title])}
+							items={items()}
+						/>
+					</span>
+				)}
+			</Show>
 		</div>
 	);
 }

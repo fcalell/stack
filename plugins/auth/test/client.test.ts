@@ -22,3 +22,53 @@ test("without the flag the organization methods are absent from the type", () =>
 	// @ts-expect-error the organization plugin is off
 	assert.ok(client.organization);
 });
+
+// The consumer's access control as codegen bakes it into
+// `.stack/auth-client.ts`.
+const access = {
+	statements: { project: ["read", "update"] },
+	roles: {
+		owner: { project: ["read", "update"] },
+		editor: { project: ["read"] },
+	},
+} as const;
+
+// Checked by the package's type-check and never run: the organization
+// methods take the configured roles, and better-auth's default `member` is
+// not one of them.
+export function configuredRoles() {
+	const client = createAuthClient({ organization: access });
+	void client.organization.inviteMember({
+		email: "a@example.com",
+		role: "editor",
+	});
+	void client.organization.updateMemberRole({
+		memberId: "m1",
+		role: "owner",
+	});
+	void client.organization.inviteMember({
+		email: "a@example.com",
+		// @ts-expect-error `member` is not a configured role
+		role: "member",
+	});
+}
+
+test("the configured access control builds the organization methods", () => {
+	const client = createAuthClient({ organization: access });
+	assert.equal(typeof client.organization.inviteMember, "function");
+	assert.equal(typeof client.organization.checkRolePermission, "function");
+	assert.equal(
+		client.organization.checkRolePermission({
+			role: "editor",
+			permissions: { project: ["read"] },
+		}),
+		true,
+	);
+	assert.equal(
+		client.organization.checkRolePermission({
+			role: "editor",
+			permissions: { project: ["update"] },
+		}),
+		false,
+	);
+});

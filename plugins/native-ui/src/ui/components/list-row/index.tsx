@@ -10,8 +10,10 @@ import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { Glyph } from "../../lib/glyph";
 import { useIcon } from "../../lib/icons";
+import { MenuCircle, type MenuItems } from "../../lib/more";
 import { navigate } from "../../lib/navigate";
 import { joinParts, META_CUT, partText } from "../../lib/parts";
+import { useWords } from "../../lib/words";
 import { Status } from "../status";
 
 export type RowLeading = { icon: string } | { status: StatusState };
@@ -27,6 +29,7 @@ export interface ListRowProps extends Closed {
 	trailing?: RowTrailing;
 	marks?: Mark<string>[];
 	act?: Act;
+	more?: MenuItems;
 	href?: string;
 	onOpen?: () => void;
 }
@@ -41,6 +44,7 @@ function metaLines(
 }
 
 // A row of a list or a group: no chevron, no divider; `href` draws nothing.
+// `more` is the row's own acts under a more circle at its end.
 export function ListRow({
 	leading,
 	title,
@@ -48,9 +52,11 @@ export function ListRow({
 	trailing,
 	marks,
 	act,
+	more,
 	href,
 	onOpen,
 }: ListRowProps) {
+	const words = useWords();
 	const open = href !== undefined ? () => navigate(href) : onOpen;
 	return (
 		<Pressable
@@ -86,6 +92,9 @@ export function ListRow({
 			))}
 			{trailing ? <Trailing trailing={trailing} /> : null}
 			{act ? <RowAct act={act} /> : null}
+			{more ? (
+				<MenuCircle label={words.more} title={partText(title)} items={more} />
+			) : null}
 		</Pressable>
 	);
 }

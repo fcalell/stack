@@ -1,6 +1,7 @@
 import { z } from "zod";
 import {
 	BREAKPOINTS,
+	DENSITIES,
 	ELEVATIONS,
 	INVARIANT_COLORS,
 	LABEL,
@@ -124,6 +125,7 @@ export const themeSchema = z
 		radius: z.number().int().nonnegative().optional(),
 		text: px,
 		elevation: z.enum(ELEVATIONS).optional(),
+		density: z.enum(DENSITIES).optional(),
 		fonts: z
 			.strictObject({
 				sans: z.string().min(1).optional(),

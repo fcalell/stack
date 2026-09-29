@@ -7,6 +7,7 @@ import {
 	buildTree,
 	emitRoutes,
 	emitVirtualModule,
+	topLevelSegments,
 } from "../src/node/routes-core.ts";
 
 const paths = (routesArray: string) =>
@@ -75,4 +76,28 @@ test("the generated module appends only the search values that are set", () => {
 		"/a?journey=x",
 	);
 	assert.equal(withSearch("/a", {}), "/a");
+});
+
+test("the top-level segments are the static first segments, through groups and never a param", () => {
+	const cwd = mkdtempSync(join(tmpdir(), "stack-routes-"));
+	for (const file of [
+		"src/app/pages/login.tsx",
+		"src/app/pages/_notFound.tsx",
+		"src/app/pages/invitations/[id].tsx",
+		"src/app/pages/(app)/_layout.tsx",
+		"src/app/pages/(app)/index.tsx",
+		"src/app/pages/(app)/settings.tsx",
+		"src/app/pages/(app)/onboarding/[org]/project.tsx",
+		"src/app/pages/(app)/[org]/settings.tsx",
+	]) {
+		mkdirSync(join(cwd, file, ".."), { recursive: true });
+		writeFileSync(join(cwd, file), "export default () => null;\n");
+	}
+	assert.deepEqual(topLevelSegments(cwd, "src/app/pages"), [
+		"invitations",
+		"login",
+		"onboarding",
+		"settings",
+	]);
+	assert.deepEqual(topLevelSegments(cwd, "src/app/missing"), []);
 });

@@ -67,7 +67,7 @@ export const TEXT_STRONG = matrix({
 
 // `act` is the button's kind: the primary act is filled, the other two sit on
 // the group fill and differ by their label's ink. `fit` is its container's:
-// 44 px in the body, compact in a top bar, where the plugin keeps the 44 px
+// at the floor in the body, compact in a top bar, where the plugin keeps the 44 px
 // hit area around the smaller pill. min-h, never h: the label must be able to
 // grow the control under OS font scaling.
 export const BUTTON = matrix({
@@ -79,7 +79,7 @@ export const BUTTON = matrix({
 			destructive: "bg-group",
 		},
 		fit: {
-			body: "min-h-11 px-5 py-2",
+			body: "min-h-floor px-5 py-control-y",
 			bar: "min-h-8 px-3.5 py-1",
 		},
 	},
@@ -118,6 +118,26 @@ export const STATUS = matrix({
 	},
 });
 
+// ── Chip ────────────────────────────────────────────────────────
+
+// A data value's tag: its family's fill under `ink`, so the family is
+// learnable across screens and never mistaken for a status, which is an
+// icon and a word in its state's ink. It pads as a control does, so it
+// follows density: 32 on touch, 24 under the compact set.
+export const CHIP = matrix({
+	base: "rounded-full px-2.5 py-control-y text-label leading-label font-medium text-ink",
+	variants: {
+		family: {
+			"1": "bg-chip-1",
+			"2": "bg-chip-2",
+			"3": "bg-chip-3",
+			"4": "bg-chip-4",
+			"5": "bg-chip-5",
+			"6": "bg-chip-6",
+		},
+	},
+});
+
 // ── Field ───────────────────────────────────────────────────────────
 
 // A typing control's surface. `search` is a pill, `text` takes the group
@@ -127,9 +147,9 @@ export const FIELD = matrix({
 	base: "border bg-group px-4 text-ink",
 	variants: {
 		kind: {
-			text: "rounded-group min-h-11 py-2 text-body leading-body",
-			search: "rounded-full min-h-11 text-body leading-body",
-			code: "rounded-group min-h-11 py-2 text-mono leading-mono font-mono",
+			text: "rounded-group min-h-floor py-control-y text-body leading-body",
+			search: "rounded-full min-h-floor text-body leading-body",
+			code: "rounded-group min-h-floor py-control-y text-mono leading-mono font-mono",
 		},
 		state: {
 			default: "border-transparent",
@@ -140,14 +160,44 @@ export const FIELD = matrix({
 	defaultVariants: { kind: "text", state: "default" },
 });
 
+// ── One-time code ───────────────────────────────────────────────
+
+// One box per character of a one-time code: the field's fill and radius, a
+// square at the floor. The box the next character lands in is `focused`
+// while the code has focus; an invalid code rings every box in `danger`.
+// The character is the `heading` role, set on the text itself.
+export const OTP_BOX = matrix({
+	base: "rounded-group border bg-group min-h-floor min-w-floor",
+	variants: {
+		state: {
+			default: "border-transparent",
+			focused: "border-tint",
+			error: "border-danger",
+		},
+	},
+	defaultVariants: { state: "default" },
+});
+
 // ── Row ─────────────────────────────────────────────────────────────
 
 // A row in a group or a list: the touch floor, the group's inset, the rhythm
 // between its atoms; pressed on `edge`, selected on `accent-soft`.
 export const ROW = matrix({
-	base: "min-h-11 px-inset py-stack gap-stack",
+	base: "min-h-floor px-inset py-row-y gap-stack",
 	variants: {
 		state: { rest: "", pressed: "bg-edge", selected: "bg-accent-soft" },
+	},
+	defaultVariants: { state: "rest" },
+});
+
+// ── Table ───────────────────────────────────────────────────────────
+
+// A row of a data table: a hairline under it, the open row on `accent-soft`
+// as a `Split` list's open item is. Its height is its cells', `TABLE_CELL`.
+export const TABLE_ROW = matrix({
+	base: "border-b border-edge",
+	variants: {
+		state: { rest: "", selected: "bg-accent-soft" },
 	},
 	defaultVariants: { state: "rest" },
 });
@@ -172,7 +222,7 @@ export const CHECKBOX = matrix({
 // ── Segmented control ───────────────────────────────────────────────
 
 export const SEGMENT = matrix({
-	base: "rounded-full min-h-9 px-3 text-meta leading-meta font-medium",
+	base: "rounded-full min-h-segment px-3 text-meta leading-meta font-medium",
 	variants: {
 		state: { idle: "text-ink-meta", selected: "bg-surface text-ink" },
 	},
@@ -191,6 +241,23 @@ export const BANNER = matrix({
 		},
 	},
 	defaultVariants: { kind: "note" },
+});
+
+// ── Toast ───────────────────────────────────────────────────────
+
+// A toast that reports how an act ended, composed after `TOAST`, the dark
+// pill every other toast is: three of the six status states, each on its
+// `-soft` fill under `ink`, the fill the banner draws a state on. A refused
+// edit reads `failed`, a finished act `done`.
+export const TOAST_STATE = matrix({
+	base: "",
+	variants: {
+		state: {
+			done: "bg-ok-soft text-ink",
+			attention: "bg-warn-soft text-ink",
+			failed: "bg-danger-soft text-ink",
+		},
+	},
 });
 
 // ── Diff ────────────────────────────────────────────────────────────

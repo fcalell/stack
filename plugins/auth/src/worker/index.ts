@@ -6,11 +6,16 @@ import {
 	ORG_RULES_PATH,
 	SCOPE_ROUTES_PATH,
 } from "@fcalell/plugin-api/procedure";
+import { getTableName } from "@fcalell/plugin-db/orm";
 import { ORPCError } from "@orpc/server";
 import type { BetterAuthPlugin } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { APIError } from "better-auth/api";
 import { type BetterAuthOptions, betterAuth } from "better-auth/minimal";
-import { role as buildAcRole } from "better-auth/plugins/access";
+import {
+	role as buildAcRole,
+	createAccessControl as createBetterAuthAccessControl,
+} from "better-auth/plugins/access";
 import { emailOTP } from "better-auth/plugins/email-otp";
 import { organization } from "better-auth/plugins/organization";
 import { z } from "zod";
@@ -40,6 +45,11 @@ import type {
 import { AUTH_PREFIX } from "../types.ts";
 import { emailKey } from "./email-key.ts";
 import { createTenancy, resolveGrants, type Tenancy } from "./tenancy.ts";
+
+export type { OtpType } from "../types.ts";
+// The request context carries a `Tenancy`, so a declaration emit of the
+// consumer's generated `.stack/procedure.ts` names it through this subpath.
+export type { Tenancy } from "./tenancy.ts";
 
 // Structural match with plugin-api's `RateLimitBinding` (procedure.ts) — not
 // imported directly since plugin-api doesn't expose it on a public subpath;
@@ -113,11 +123,13 @@ export interface AuthRuntimeInput extends AuthRuntimeOptions {
 	user?: {
 		deleteUser?: boolean;
 	};
+	// Codegen reduces the consumer's `{ ac, roles }` to plain records: the
+	// statements of `ac` and each role's grants.
 	organization?:
 		| boolean
 		| {
-				ac?: unknown;
-				roles?: Record<string, unknown>;
+				statements?: Record<string, readonly string[]>;
+				roles?: Record<string, Record<string, readonly string[]>>;
 		  };
 	// On by default; `false` drops the email-OTP plugin (OAuth-only consumers).
 	emailOtp?: boolean;
@@ -143,6 +155,10 @@ export interface AuthRuntimeInput extends AuthRuntimeOptions {
 	// aren't included here — they're enforced by the binding config itself,
 	// not read at request time.
 	rateLimiter?: { ip: { binding: string }; email: { binding: string } };
+	// The slugs an organization may not take, baked by codegen with
+	// organizations on: plugin-api's reserved words and the app's top-level
+	// routes, since an organization is served at `/<slug>`.
+	reservedSlugs?: readonly string[];
 	// The consumer's `src/shared/scopes.ts` module namespace, when it exists:
 	// every scope descriptor it exports gets a `bySlug` lookup.
 	scopes?: Record<string, unknown>;
@@ -208,6 +224,24 @@ function isDevMode(env: Record<string, unknown>): boolean {
 }
 
 // With email OTP on, better-auth would issue codes nobody receives.
+// The code and field error an organization slug the app's routes hold is
+// refused with. A form reads `fieldErrors` off the answer, as it reads an
+// API procedure's refusal, and shows it under the field that made the slug.
+const ORGANIZATION_SLUG_RESERVED = "ORGANIZATION_SLUG_RESERVED";
+
+function refuseReservedSlug(
+	reserved: ReadonlySet<string>,
+	slug: unknown,
+): void {
+	if (typeof slug !== "string" || !reserved.has(slug)) return;
+	const message = `The address /${slug} is reserved. Choose another.`;
+	throw new APIError("BAD_REQUEST", {
+		code: ORGANIZATION_SLUG_RESERVED,
+		message,
+		fieldErrors: { slug: message },
+	});
+}
+
 class MissingSendOtpError extends Error {
 	constructor() {
 		super(
@@ -261,25 +295,36 @@ function buildAuth(
 	if (options.organization) {
 		const orgConfig =
 			typeof options.organization === "object" ? options.organization : {};
+		// better-auth's org plugin reads `.authorize()`/`.statements` off each
+		// `roles` entry directly (permission.mjs's `hasPermissionFn`), not the
+		// bare `{resource: actions[]}` records codegen bakes, so every role is
+		// rebuilt through better-auth's own access control. Its `ac` is read
+		// only under dynamic access control, which stays off.
+		const ac = orgConfig.statements
+			? createBetterAuthAccessControl(orgConfig.statements)
+			: undefined;
+		const grantsByRole: Record<
+			string,
+			Record<string, readonly string[]>
+		> = orgConfig.roles ?? defaultOrgRoles;
+		const reserved = new Set(options.reservedSlugs ?? []);
 		plugins.push(
 			organization({
+				// better-auth checks a slug is free, never that the app's own
+				// routes leave it free: both writes that set one refuse it here.
+				organizationHooks: {
+					beforeCreateOrganization: async ({ organization }) =>
+						refuseReservedSlug(reserved, organization.slug),
+					beforeUpdateOrganization: async ({ organization }) =>
+						refuseReservedSlug(reserved, organization.slug),
+				},
 				// biome-ignore lint/suspicious/noExplicitAny: AccessControl type is internal to better-auth.
-				ac: orgConfig.ac as any,
-				// better-auth's org plugin reads `.authorize()`/`.statements` off
-				// each `roles` entry directly (permission.mjs's `hasPermissionFn`),
-				// not the bare `{resource: actions[]}` record our own
-				// `createAccessControl().newRole()` (`../access.ts`, the documented
-				// consumer surface) and `defaultOrgRoles` return. Wrap every role
-				// through better-auth's real `role()` before handing it over, or
-				// `hasPermission` throws `TypeError: ...authorize is not a function`
-				// for every check.
+				ac: ac as any,
 				roles: Object.fromEntries(
-					Object.entries(
-						(orgConfig.roles ?? defaultOrgRoles) as Record<
-							string,
-							Record<string, readonly string[]>
-						>,
-					).map(([name, grants]) => [name, buildAcRole(grants)]),
+					Object.entries(grantsByRole).map(([name, grants]) => [
+						name,
+						buildAcRole(grants),
+					]),
 					// biome-ignore lint/suspicious/noExplicitAny: roles shape is user-provided.
 				) as any,
 				async sendInvitationEmail(data) {
@@ -554,6 +599,17 @@ const SCOPE_LOOKUP = z.object({
 	parentId: z.string().min(1),
 });
 
+// The entities a scope's lookup reads: each table of its chain by its SQL
+// name, which is its entity when the schema exports the table under that
+// name, and the membership the organization level resolves.
+function scopeReads(scope: Scope): string[] {
+	const reads = ["member"];
+	for (let level: Scope | undefined = scope; level; level = level.parent?.[0]) {
+		reads.push(getTableName(level.table));
+	}
+	return reads.sort();
+}
+
 // The scope descriptors a consumer's `src/shared/scopes.ts` exports, read off
 // the module namespace codegen hands over.
 function consumerScopes(module: Record<string, unknown> | undefined): Scope[] {
@@ -626,13 +682,16 @@ export default function authRuntime<TOptions extends AuthRuntimeInput>(
 				return { rules: packAbility(ability) };
 			});
 
+			// A lookup reads its chain's tables and the caller's membership, so a
+			// mutation that declares `writes` on any of them (a renamed project, a
+			// changed role) invalidates the scope it resolved.
 			const lookups = Object.fromEntries(
 				[organizationScope, ...scopes]
 					.filter((scope) => scope.slug !== null)
 					.map((scope) => [
 						scope.name,
 						{
-							bySlug: factory({ auth: true })
+							bySlug: factory({ auth: true, reads: scopeReads(scope) })
 								.input(scope.parent ? SCOPE_LOOKUP : ORGANIZATION_LOOKUP)
 								.query(async ({ input, context }) => {
 									const found = await context.tenancy.bySlug(
