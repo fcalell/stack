@@ -126,6 +126,8 @@ export const themeSchema = z
 		text: px,
 		elevation: z.enum(ELEVATIONS).optional(),
 		density: z.enum(DENSITIES).optional(),
+		// Milliseconds; 0 stills every transition.
+		motion: z.number().int().nonnegative().optional(),
 		fonts: z
 			.strictObject({
 				sans: z.string().min(1).optional(),

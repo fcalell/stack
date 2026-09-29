@@ -1,9 +1,9 @@
 # @fcalell/plugin-native-ui
 
-React Native design-system plugin for the `@fcalell/stack` framework: the native sibling of
-`@fcalell/plugin-solid-ui`. It renders `@fcalell/ui-core`'s contract into the uniwind stylesheet,
-embeds the font files, composes the app's providers, runs the geometry gate at build, and ships
-the roster: 54 components in four layers, the same names and props as the web plugin. Requires
+React Native design-system plugin for the `@fcalell/stack` framework. It renders
+`@fcalell/ui-core`'s contract into the uniwind stylesheet, embeds the font files, composes the
+app's providers, runs the geometry gate at build, and ships the roster: 54 components in four
+layers. Requires
 `expo` (it contributes into `plugin-expo`'s slots) plus `api` and `auth` (the wired Query and Auth
 providers import their native subpaths).
 
@@ -53,7 +53,7 @@ key of it.
 
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
-| `theme` | `Theme` | the calibrated defaults | ui-core's contract: the knobs (`accentHue`, `neutralHue`, `neutralChroma`, `okHue`, `warnHue`, `dangerHue`, `primary`, `space`, `radius` (0 squares everything), `text`, `elevation` (`soft` \| `flat`), `density` (accepted and ignored: native is touch-only, so every control keeps the 44 px floor), `fonts`, `widths`, `breakpoints`), `overrides.colors` / `overrides.scales` for the single token off its ratio, and `defaultMode` (set, the app starts in that mode through a generated `Uniwind.setTheme` call; unset, it follows the system). A consumer with both platforms passes the same object to `solidUi`. |
+| `theme` | `Theme` | the calibrated defaults | ui-core's contract: the knobs (`accentHue`, `neutralHue`, `neutralChroma`, `okHue`, `warnHue`, `dangerHue`, `primary`, `space`, `radius` (0 squares everything), `text`, `elevation` (`soft` \| `flat`), `density` (accepted and ignored: native is touch-only, so every control keeps the 44 px floor), `fonts`, `widths`, `breakpoints`), `overrides.colors` / `overrides.scales` for the single token off its ratio, and `defaultMode` (set, the app starts in that mode through a generated `Uniwind.setTheme` call; unset, it follows the system). |
 | `words` | `Words` | English | Every word a molecule draws on its own; every key required, so a translation that misses one fails `tsc`. |
 | `fonts` | `{ family, source }[]` | none | Font files to embed through expo-font. The families are named by `theme.fonts` (`sans`, `mono`); an entry only brings the file. |
 | `authClientModule`, `queryClientModule` | `{ source, export }` | `src/lib/auth`, `src/lib/query` | Where the generated entry imports the native clients from. |

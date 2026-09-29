@@ -1,6 +1,6 @@
 // Framework-free descriptors: a composed region is data, so the owning
 // molecule renders it. `TIcon` is a type parameter because the icon is a
-// `lucide-solid` component on web and a `lucide-react-native` one on native,
+// `lucide-react` component on web and a `lucide-react-native` one on native,
 // and ui-core depends on neither.
 import type {
 	ChipFamily,

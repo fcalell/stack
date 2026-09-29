@@ -119,8 +119,8 @@ function buildBundleId(domain: string, slug: string): string {
 
 // ── Slot declarations ──────────────────────────────────────────────
 //
-// plugin-expo owns the native bootstrap the way plugin-vite + plugin-solid
-// own the web one: metro config, the Expo app config, the entry, and typed
+// plugin-expo owns the native bootstrap the way plugin-vite and the web
+// plugin own the web one: metro config, the Expo app config, the entry, and typed
 // routes. Peer plugins (native-ui, auth/expo, api/tanstack-query) contribute
 // into the list slots; the derived `*Config`/`*Source` slots compose them
 // into the files emitted under `.stack/`. Ordering is pure dataflow.
@@ -151,7 +151,7 @@ const expoConfigPlugins = slot.list<ExpoConfigPlugin>({
 
 // Providers wrapped around the expo-router root in entry.tsx — native-ui /
 // auth-expo / api-tanstack-query contribute here. Sorted ascending by `order`
-// so lower-order providers become outer wrappers (mirrors solid).
+// so lower-order providers become outer wrappers.
 const providers = slot.list<ProviderSpec>({
 	source: SOURCE,
 	name: "providers",

@@ -5,7 +5,7 @@ import type { Plugin } from "vite";
 // Pass-through stub for when no plugin contributed providers. plugin-vite is
 // framework-agnostic, so the stub must not import any framework runtime —
 // the consumer's JSX transform compiles `props.children` with whatever
-// pragma is active (Solid, React, Preact, …).
+// pragma is active (React, Preact, …).
 const PROVIDERS_STUB = `export default function Providers(props) {
 	return props.children;
 }

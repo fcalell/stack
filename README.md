@@ -1,16 +1,17 @@
 # @fcalell/stack
 
-A plugin-driven full-stack framework for SolidJS, Hono, and Cloudflare Workers. The stack ships database, API, UI, and tooling behind a single `stack` CLI so a project only contains business logic.
+A plugin-driven full-stack framework for Hono and Cloudflare Workers, with React on the web and React Native on the phone. The stack ships database, API, UI, and tooling behind a single `stack` CLI so a project only contains business logic.
 
 ## What you get
 
 - **Database** — Drizzle ORM for Cloudflare D1 and SQLite (`@fcalell/plugin-db`).
 - **Auth** — Better Auth integration, RBAC, access control (`@fcalell/plugin-auth`).
 - **API** — Hono + oRPC behind a procedure builder with auth, rate limiting, and a typed client (`@fcalell/plugin-api`).
-- **UI** — one design system on two platforms: `@fcalell/ui-core`'s roster in SolidJS + Tailwind v4 (`@fcalell/plugin-solid-ui`) and in React Native + uniwind (`@fcalell/plugin-native-ui`).
+- **Web** — React on Vite with TanStack Router file routes, the React Compiler, and the HTML shell (`@fcalell/plugin-react`).
+- **UI** — one design system, `@fcalell/ui-core`: on the web its stylesheet, fonts, words and showcase over Tailwind v4 (`@fcalell/plugin-react-ui`), on the phone its roster in React Native + uniwind (`@fcalell/plugin-native-ui`).
 - **Tooling** — One `stack` CLI for init, dev, build, deploy. TypeScript and Biome presets included.
 
-Consumers never install or import `drizzle-orm`, `hono`, `zod`, `@kobalte/core`, `vite`, or `tailwindcss` directly. Plugins wrap their domain and re-export only what is needed.
+Consumers never install or import `drizzle-orm`, `hono`, `zod`, `vite`, or `tailwindcss` directly. Plugins wrap their domain and re-export only what is needed.
 
 ## Quick start
 
@@ -39,8 +40,7 @@ import { db } from "@fcalell/plugin-db";
 import { auth } from "@fcalell/plugin-auth";
 import { api } from "@fcalell/plugin-api";
 import { vite } from "@fcalell/plugin-vite";
-import { solid } from "@fcalell/plugin-solid";
-import { solidUi } from "@fcalell/plugin-solid-ui";
+import { react } from "@fcalell/plugin-react";
 
 export default defineConfig({
   app: { name: "my-app", domain: "example.com" },
@@ -49,13 +49,12 @@ export default defineConfig({
     auth({ cookies: { prefix: "myapp" }, organization: true }),
     api(),
     vite(),
-    solid(),
-    solidUi(),
+    react({ description: "My app" }),
   ],
 });
 ```
 
-Plugins coordinate through typed slots in a dataflow graph — each plugin contributes typed values into other plugins' slots and derives values from them, and the framework resolves the graph topologically once per command. The order of plugins in the array does not matter. Every plugin must be listed explicitly; `stack init` auto-adds missing dependencies (e.g. picking `solid` also adds `vite`).
+Plugins coordinate through typed slots in a dataflow graph — each plugin contributes typed values into other plugins' slots and derives values from them, and the framework resolves the graph topologically once per command. The order of plugins in the array does not matter. Every plugin must be listed explicitly; `stack init` auto-adds missing dependencies (e.g. picking `native-ui` also adds `expo`).
 
 ## CLI commands
 
@@ -87,9 +86,9 @@ Plugins coordinate through typed slots in a dataflow graph — each plugin contr
 | [`@fcalell/plugin-auth`](plugins/auth) | Better Auth integration, RBAC, access control | `auth()` |
 | [`@fcalell/plugin-api`](plugins/api) | Hono + oRPC, procedure builder, typed client | `api()` |
 | [`@fcalell/plugin-vite`](plugins/vite) | Framework-agnostic Vite lifecycle | `vite()` |
+| [`@fcalell/plugin-react`](plugins/react) | React on the web: Vite + React Compiler, TanStack Router file routes, the app entry, providers, and the HTML shell with its `<head>` metadata | `react()` |
+| [`@fcalell/plugin-react-ui`](plugins/react-ui) | The design system on the web: `.stack/app.css` from the ui-core contract on Tailwind v4, fonts, the mode script, words, the geometry gate, and the roster showcase | `reactUi()` |
 | [`@fcalell/plugin-expo`](plugins/expo) | Expo/React Native — Metro + app config + expo-router entry + EAS commands | `expo()` |
-| [`@fcalell/plugin-solid`](plugins/solid) | SolidJS compilation, file-based routing, app bootstrap | `solid()` |
-| [`@fcalell/plugin-solid-ui`](plugins/solid-ui) | The design system on the web: the ui-core roster in SolidJS + Tailwind v4, the shell at every width, fonts, words | `solidUi()` |
 | [`@fcalell/plugin-native-ui`](plugins/native-ui) | The design system on the phone: the ui-core roster in React Native + Expo + uniwind, the phone layout at every width, fonts, words | `nativeUi()` |
 
 See each plugin's README for config options, commands, event handlers, and runtime exports.

@@ -71,8 +71,8 @@ async function wiresScopes(
 // The addresses an organization's slug may not take, beside plugin-api's
 // `RESERVED_SLUGS`: an organization is served at `/<slug>`, so a slug that
 // names one of the app's own top-level routes would shadow it. A frontend
-// plugin contributes its routes' first segments (solid-ui does, from
-// plugin-solid's pages); auth never reads a frontend's routes itself.
+// plugin contributes its routes' first segments; auth never reads a
+// frontend's routes itself.
 const reservedSlugs = slot.list<string>({
 	source: SOURCE,
 	name: "reservedSlugs",
@@ -269,7 +269,7 @@ const cookiePrefix = slot.value<string, ResolvedAuthOptions>({
 // The web client's flags, derived from the options so the client and the
 // server enable the same better-auth plugins. Seeded null and filled by
 // auth's own contribution, so a frontend reading it without auth in the
-// config sees null. solid-ui generates `.stack/auth-client.ts` from it.
+// config sees null. The web plugin generates `.stack/auth-client.ts` from it.
 export type AuthClientFlags = Required<Omit<AuthClientOptions, "baseURL">>;
 
 const clientFlags = slot.value<AuthClientFlags | null>({

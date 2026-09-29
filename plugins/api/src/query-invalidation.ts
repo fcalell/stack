@@ -1,9 +1,9 @@
 import { STACK_READS_HEADER, STACK_WRITES_HEADER } from "./wire.ts";
 
 // WS3.3: the client-side half of entity-based
-// cache invalidation. Framework-agnostic core -- no react/solid/node imports
-// -- consumed by `./client.ts` (capture point), `./tanstack-query.tsx`
-// (React wiring), and `plugin-solid-ui`'s app shell (Solid wiring).
+// cache invalidation. Framework-agnostic core -- no react/node imports --
+// consumed by `./client.ts` (capture point), `./tanstack-query.tsx` (React
+// wiring), and the web plugin's app shell.
 //
 // Query/mutation keys are oRPC's `@orpc/tanstack-query` shape:
 // `[path: readonly string[], { input?, type?, fnOptions? }]`. The path
@@ -16,8 +16,8 @@ interface EntityEntry {
 	writes: string[];
 }
 
-// Structural subset of `@tanstack/react-query` and `@tanstack/solid-query`'s
-// `QueryClient` -- both satisfy this without plugin-api depending on either.
+// Structural subset of `@tanstack/react-query`'s `QueryClient`, so plugin-api
+// depends on no query library.
 export interface InvalidatableQueryClient {
 	invalidateQueries(filters: {
 		predicate: (query: {
@@ -123,7 +123,7 @@ export function createEntityRegistry(): EntityRegistry {
 	return { capture, invalidateForWrites, handleMutationSuccess };
 }
 
-// The registry `./client.ts`, `./tanstack-query.tsx`, and `plugin-solid-ui`
+// The registry `./client.ts`, `./tanstack-query.tsx`, and the web plugin
 // share by default. Tests that need isolation from other tests' captured
 // headers build their own via `createEntityRegistry()` instead.
 //

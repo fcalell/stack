@@ -46,7 +46,7 @@ const configImports = slot.list<TsImportSpec>({
 });
 
 // Order of plugin calls in Vite typically doesn't matter semantically for
-// the plugins contributed today (solid, tailwind, theme fonts, providers).
+// the plugins contributed today (the framework, tailwind, theme fonts, providers).
 // Sort by call callee identifier name so the emitted array is deterministic.
 function pluginCallName(expr: TsExpression): string {
 	if (expr.kind === "call" && expr.callee.kind === "identifier") {
@@ -70,7 +70,7 @@ const resolveAliases = slot.list<{ find: string; replacement: string }>({
 });
 
 // Bare specifiers rendered into `resolve.dedupe`. A plugin whose runtime must
-// be a singleton (solid-js and friends) contributes its specifiers here so
+// be a singleton (a framework runtime) contributes its specifiers here so
 // every importer — the consumer's own code and workspace-linked plugin
 // checkouts alike — resolves the one copy under the consumer's root. Two
 // plugins naming the same specifier is harmless (the codegen de-duplicates),

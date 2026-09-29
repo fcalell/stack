@@ -198,9 +198,8 @@ declare what you read, and the framework runs you when those reads are ready
 Templates live on disk under `plugins/<name>/templates/` as lintable source files. List them in
 `package.json` `files` so they're published. Plugins push `ScaffoldSpec`s into
 `cliSlots.initScaffolds`; the CLI copies them once and fails on duplicate targets. Use
-`slot.value({ override: true })` if you need a slot-driven scaffold that another plugin can replace
-(see `solid.slots.homeScaffold`, which `plugin-solid-ui` overrides with the design-system home
-page).
+`slot.value({ override: true })` if you need a slot-driven scaffold that another plugin can
+replace.
 
 ```ts
 contributes: [

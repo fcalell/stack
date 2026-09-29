@@ -10,8 +10,8 @@ import { ORPCError } from "@orpc/client";
 import { ORG_RULES_PATH, SCOPE_ROUTES_PATH } from "./wire.ts";
 
 // WS6.3: framework-agnostic core behind
-// `useAbility()` for both react (expo, ./tanstack-query.tsx) and solid (web,
-// plugin-solid-ui's ui/lib/ability.ts). No react/solid imports here.
+// `useAbility()` on every platform (`./tanstack-query.tsx` on native, the
+// web plugin's ability hook). No framework imports here.
 
 // The wire shape is CASL's `packRules` array. It's opaque JSON at this
 // layer -- plugin-api depends on the dependency direction (auth -> api), so

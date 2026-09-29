@@ -13,8 +13,14 @@ import {
 	DENSITY_GEOMETRY,
 	DENSITY_SIZES,
 	type DensitySize,
+	DURATION_RATIO,
+	DURATIONS,
+	type Duration,
+	EASING,
+	type Easing,
 	FONT_FALLBACKS,
 	type FontRole,
+	fallbackFace,
 	type HueBinding,
 	INVARIANT,
 	INVARIANT_COLORS,
@@ -52,11 +58,20 @@ export interface ResolvedTheme {
 	colors: Record<Mode, Record<PerModeColor, string>>;
 	invariantColors: Record<InvariantColor, string>;
 	scales: Record<ScaleKey, string>;
-	// The two family stacks, the knob's family ahead of the platform fallback.
+	// The two family stacks: the knob's family, its metric fallback face, then
+	// the platform fallback.
 	fonts: Record<FontRole, string>;
 	// The density sizes, both sets: `touch` is what every platform seeds,
 	// `compact` what a fine pointer takes under `density: "desktop"`.
 	sizes: Record<"touch" | "compact", Record<DensitySize, string>>;
+	// Numbers, so a platform that animates outside CSS (a native timing
+	// call) reads the same record the web renders as custom properties:
+	// each duration in milliseconds, each easing as its four cubic-bezier
+	// control values.
+	motion: {
+		durations: Record<Duration, number>;
+		easings: Record<Easing, readonly [number, number, number, number]>;
+	};
 }
 
 // Three decimals with trailing zeros stripped reproduces every reference value
@@ -217,6 +232,7 @@ function knobsOf(parsed: ParsedTheme): Knobs {
 		text: parsed.text ?? KNOB_DEFAULTS.text,
 		elevation: parsed.elevation ?? KNOB_DEFAULTS.elevation,
 		density: parsed.density ?? KNOB_DEFAULTS.density,
+		motion: parsed.motion ?? KNOB_DEFAULTS.motion,
 		fonts: {
 			sans: parsed.fonts?.sans ?? KNOB_DEFAULTS.fonts.sans,
 			mono: parsed.fonts?.mono ?? KNOB_DEFAULTS.fonts.mono,
@@ -237,11 +253,23 @@ function knobsOf(parsed: ParsedTheme): Knobs {
 
 // A family name crosses into a `font-family` value, so it is quoted and its
 // quote and backslash escaped: no other character can end a CSS string.
+function quoted(family: string): string {
+	return `"${family.replace(/[\\"]/g, (ch) => `\\${ch}`)}"`;
+}
+
+// The family, its metric fallback face, then the platform stack.
 function fontStack(family: string | undefined, role: FontRole): string {
 	const fallback = FONT_FALLBACKS[role];
 	if (family === undefined) return fallback;
-	const quoted = `"${family.replace(/[\\"]/g, (ch) => `\\${ch}`)}"`;
-	return `${quoted}, ${fallback}`;
+	return `${quoted(family)}, ${quoted(fallbackFace(family))}, ${fallback}`;
+}
+
+function durationsFor(knobs: Knobs): Record<Duration, number> {
+	const durations = {} as Record<Duration, number>;
+	for (const rung of DURATIONS) {
+		durations[rung] = Math.round(knobs.motion * DURATION_RATIO[rung]);
+	}
+	return durations;
 }
 
 export function deriveTheme(theme: Theme = {}): ResolvedTheme {
@@ -286,5 +314,6 @@ export function deriveTheme(theme: Theme = {}): ResolvedTheme {
 			touch: sizesFor(knobs, "touch"),
 			compact: sizesFor(knobs, "compact"),
 		},
+		motion: { durations: durationsFor(knobs), easings: { ...EASING } },
 	};
 }

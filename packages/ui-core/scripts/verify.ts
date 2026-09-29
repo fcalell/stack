@@ -17,7 +17,9 @@ import { cn } from "../src/cn.ts";
 import { deriveTheme } from "../src/derive.ts";
 import {
 	compactTokens,
+	densityTokens,
 	modeTokens,
+	reducedMotionTokens,
 	shadowUtilities,
 	themeTokens,
 } from "../src/emit.ts";
@@ -33,7 +35,12 @@ import {
 	tailwindBuild,
 } from "../src/harness.ts";
 import { oklchToLinear } from "../src/oklch.ts";
-import { CLOSED_PROPS, componentDir, rosterEntries } from "../src/roster.ts";
+import {
+	CLOSED_PROPS,
+	componentDir,
+	rosterEntries,
+	STATES,
+} from "../src/roster.ts";
 import { wordsSchema } from "../src/schema.ts";
 import {
 	AVATAR_STEPS,
@@ -41,7 +48,12 @@ import {
 	CHIP_FAMILIES,
 	COLORS,
 	DENSITY_SIZES,
+	DURATION_RATIO,
+	DURATIONS,
+	EASING,
+	EASINGS,
 	ENGLISH,
+	fallbackFace,
 	INVARIANT,
 	INVARIANT_COLORS,
 	isNeutralBound,
@@ -98,6 +110,7 @@ import {
 	checkbox,
 	chip,
 	diffLine,
+	FAMILIES,
 	field,
 	message,
 	otpBox,
@@ -560,8 +573,13 @@ check("c06", "every scale is its ratio of the knob", () => {
 	}
 	requireEqual(
 		emitted("--font-mono"),
-		'"JetBrains Mono Variable", ui-monospace, SFMono-Regular, monospace',
-		"--font-mono",
+		'"JetBrains Mono Variable", "JetBrains Mono Variable Fallback", ui-monospace, SFMono-Regular, monospace',
+		"--font-mono names its fallback face second",
+	);
+	requireEqual(
+		fallbackFace("Inter Variable"),
+		"Inter Variable Fallback",
+		"the fallback face rule",
 	);
 	requireEqual(
 		emitted("--font-mono--font-feature-settings"),
@@ -579,7 +597,16 @@ check("c06", "every scale is its ratio of the knob", () => {
 	requireEqual(dense["--text-title"], "25px", "text 14 title rounds");
 	requireEqual(dense["--spacing-inset"], "32px", "space 8 inset");
 	requireEqual(dense["--radius-sheet"], "14px", "radius 8 sheet floors");
-	return "6 rungs, 3 radii, 7 sizes with even line boxes, 3 trackings, 5 widths, 3 breakpoints, 2 families, all from the knobs";
+	for (const rung of DURATIONS) {
+		requireEqual(
+			emitted(`--transition-duration-${rung}`),
+			`${Math.round(KNOB_DEFAULTS.motion * DURATION_RATIO[rung])}ms`,
+			`duration ${rung}`,
+		);
+	}
+	const slow = themeTokens(deriveTheme({ motion: 300 }));
+	requireEqual(slow["--transition-duration-slow"], "450ms", "motion 300 slow");
+	return "6 rungs, 3 radii, 7 sizes with even line boxes, 3 trackings, 5 widths, 3 breakpoints, 2 families with their fallback faces, 4 durations, all from the knobs";
 });
 
 check(
@@ -632,6 +659,18 @@ check(
 				`body line plus ${pad}`,
 			);
 		}
+		// The on-demand sets ignore the knob: `touch` is the seeded set and
+		// `compact` the one `desktop` adds, under either density.
+		requireEqual(
+			JSON.stringify(densityTokens(base, "compact")),
+			JSON.stringify(compact),
+			"the compact set on demand under touch",
+		);
+		for (const [key, value] of Object.entries(
+			densityTokens(desktop, "touch"),
+		)) {
+			requireEqual(value, emitted(key), `the touch set on demand, ${key}`);
+		}
 		requireEqual(
 			compactTokens(deriveTheme({ density: "desktop", space: 8 }))[
 				"--spacing-row-y"
@@ -658,7 +697,7 @@ check(
 			cell.has("px-4") && cell.has("border-x") && !cell.has("border"),
 			"TABLE_CELL does not pad as the field does behind side borders only",
 		);
-		return "touch 44/12/8/36 as before, compact 32/4/4/24 under desktop only, a table cell on a field's geometry";
+		return "touch 44/12/8/36 as before, compact 32/4/4/24 under desktop only and either set on demand, a table cell on a field's geometry";
 	},
 );
 
@@ -748,6 +787,10 @@ check("c08", "themeTokens and modeTokens carry the right keys", () => {
 	expected.add("--font-sans");
 	expected.add("--font-mono");
 	expected.add("--font-mono--font-feature-settings");
+	for (const rung of DURATIONS) expected.add(`--transition-duration-${rung}`);
+	for (const easing of EASINGS) expected.add(`--ease-${easing}`);
+	expected.add("--default-transition-duration");
+	expected.add("--default-transition-timing-function");
 	for (const token of INVARIANT_COLORS) expected.add(`--color-${token}`);
 	for (const token of PER_MODE_COLORS) expected.add(`--color-${token}`);
 	const actual = new Set(Object.keys(baseTheme));
@@ -1088,7 +1131,20 @@ check("c14", "the Tailwind fixture builds on contract only", () => {
 		shadowUtilities(base)["shadow-float"]["box-shadow"],
 		"shadow-float box-shadow",
 	);
-	return `${out.length} bytes of CSS, off-contract utilities empty, tablet: is 768`;
+	const duration = rule(out, "duration-base");
+	assert(
+		duration?.includes("var(--transition-duration-base)"),
+		"duration-base does not read its rung",
+	);
+	assert(
+		rule(out, "ease-out")?.includes("var(--ease-out)"),
+		"ease-out does not read its curve",
+	);
+	assert(
+		out.includes("--ease-out: cubic-bezier(0.33, 1, 0.68, 1)"),
+		"--ease-out is not the contract's curve",
+	);
+	return `${out.length} bytes of CSS, off-contract utilities empty, tablet: is 768, duration and ease on their rungs`;
 });
 
 check("c15", "the README carries the design laws, off the brand", () => {
@@ -1275,6 +1331,29 @@ check("c19", "every cva renders exactly its own table", () => {
 	}
 	for (const name of registered) {
 		assert(exported.has(name), `${name} is registered but not exported`);
+	}
+	// The public family registry is this one, in order, each family's axes
+	// its table's.
+	requireEqual(
+		FAMILIES.map((family) => family.name).join(" "),
+		MATRICES.map(([name]) => name).join(" "),
+		"FAMILIES",
+	);
+	for (const family of FAMILIES) {
+		const table = MATRICES.find(([name]) => name === family.name)?.[1];
+		assert(table, `${family.name} has no table`);
+		requireEqual(
+			JSON.stringify(family.axes),
+			JSON.stringify(
+				Object.fromEntries(
+					Object.entries(table.variants).map(([axis, cells]) => [
+						axis,
+						Object.keys(cells),
+					]),
+				),
+			),
+			`${family.name} axes`,
+		);
 	}
 	// The text cells are literals for Tailwind's scanner; each is pinned to
 	// TYPE_SCALE so the table and the tokens cannot disagree.
@@ -1538,7 +1617,7 @@ check(
 		const entries = rosterEntries();
 		requireEqual(entries.length, 54, "component count");
 		const names = new Set<string>();
-		for (const [, name, props] of entries) {
+		for (const [, name, { props }] of entries) {
 			assert(/^[A-Z][A-Za-z]+$/.test(name), `${name} is not PascalCase`);
 			assert(!names.has(name), `${name} is listed twice`);
 			names.add(name);
@@ -1810,6 +1889,89 @@ check("c32", "the contrast contracts hold at the default knobs", () => {
 	}
 	assert(short.length === 0, `under 4.5:1: ${short.join(", ")}`);
 	return `${count} pairs at 4.5:1 or more under both primaries in both modes`;
+});
+
+check(
+	"c33",
+	"motion: one curve family, a bounded scale, stilled on request",
+	() => {
+		const durations = Object.values(base.motion.durations);
+		for (const ms of durations) {
+			assert(
+				ms >= 100 && ms <= 300,
+				`a default duration leaves 100–300: ${ms}`,
+			);
+		}
+		for (const easing of EASINGS) {
+			const points = EASING[easing];
+			assert(
+				points.every((value) => value >= 0 && value <= 1),
+				`${easing} leaves the unit square, so it overshoots`,
+			);
+			requireEqual(
+				baseTheme[`--ease-${easing}`],
+				`cubic-bezier(${points.join(", ")})`,
+				`--ease-${easing}`,
+			);
+		}
+		const reduced = reducedMotionTokens();
+		requireEqual(
+			Object.keys(reduced).join(" "),
+			DURATIONS.map((rung) => `--transition-duration-${rung}`).join(" "),
+			"reduced motion covers every rung",
+		);
+		assert(
+			Object.values(reduced).every((value) => value === "0ms"),
+			"reduced motion leaves a duration above 0",
+		);
+		requireEqual(
+			baseTheme["--default-transition-duration"],
+			"var(--transition-duration-base)",
+			"a bare transition reads the base rung",
+		);
+		const rungs = new Set(DURATIONS.map((rung) => `duration-${rung}`));
+		const easings = new Set(EASINGS.map((easing) => `ease-${easing}`));
+		for (const name of enumerated()) {
+			if (name.startsWith("duration-")) {
+				assert(rungs.has(name), `${name} is a literal duration`);
+			}
+			if (name.startsWith("ease-")) {
+				assert(easings.has(name), `${name} is not a contract curve`);
+			}
+		}
+		return `${DURATIONS.length} durations ${durations.join("/")} ms, ${EASINGS.length} cubic curves, reduced motion zeroes every rung, no literal duration in a cell`;
+	},
+);
+
+check("c34", "the roster draws every family and names only real states", () => {
+	const families = new Set(FAMILIES.map((family) => family.name));
+	const drawn = new Set<string>();
+	for (const [, name, entry] of rosterEntries()) {
+		for (const family of entry.draws) {
+			assert(families.has(family), `${name} draws unregistered ${family}`);
+			drawn.add(family);
+		}
+		assert(entry.states.includes("rest"), `${name} has no rest state`);
+		requireEqual(
+			new Set(entry.states).size,
+			entry.states.length,
+			`${name} lists a state twice`,
+		);
+		for (const state of entry.states) {
+			assert(STATES.includes(state), `${name} names unknown state ${state}`);
+		}
+		for (const prop of ["loading", "empty"] as const) {
+			if (entry.props.includes(prop)) {
+				assert(
+					entry.states.includes(prop),
+					`${name} takes \`${prop}\` but has no ${prop} state`,
+				);
+			}
+		}
+	}
+	const undrawn = [...families].filter((family) => !drawn.has(family));
+	assert(undrawn.length === 0, `no component draws ${undrawn.join(", ")}`);
+	return `${families.size} families each drawn, every state one of ${STATES.length}`;
 });
 
 // ── Report ──────────────────────────────────────────────────────────

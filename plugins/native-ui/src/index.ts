@@ -54,8 +54,8 @@ const UNIWIND_METRO_ORDER = 100;
 
 // ── Slot declarations ──────────────────────────────────────────────
 
-// The design contract, resolved once. Mirrors solid-ui's `resolvedTheme`, so
-// one `theme` object themes both platforms.
+// The design contract, resolved once; one `theme` object themes both
+// platforms.
 const resolvedTheme = slot.derived({
 	source: SOURCE,
 	name: "resolvedTheme",

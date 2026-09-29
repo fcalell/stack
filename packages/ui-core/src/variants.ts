@@ -1,6 +1,7 @@
 // The public matrix layer: one cva per table, the axis types a component
-// declares its props with, and the single-cell constants. The tables
-// themselves stay internal to the package.
+// declares its props with, the single-cell constants, and the family registry
+// with its cell enumeration. The tables themselves stay internal to the
+// package.
 import { cva } from "class-variance-authority";
 import type { ClassValue } from "clsx";
 import type { InvariantColor, PerModeColor } from "./tokens.ts";
@@ -75,6 +76,93 @@ export const message = build(MESSAGE);
 export const avatar = build(AVATAR);
 export const place = build(PLACE);
 export const rhythm = build(RHYTHM);
+
+// ── The family registry and its cells ──────────────────────────────
+
+export type AnyCva = (props: Record<string, string>) => string;
+
+export interface Family {
+	name: string;
+	cva: AnyCva;
+	axes: Record<string, readonly string[]>;
+}
+
+// A registered matrix: its table's name, its cva, and each axis with the keys
+// its table declares, read off the table so the two cannot drift.
+function family<T extends Axes>(
+	name: string,
+	table: Matrix<T>,
+	variant: Variant<T>,
+): Family {
+	return {
+		name,
+		// A cva takes any subset of its axes; the registry calls it one axis at
+		// a time with a key the table declares.
+		cva: variant as unknown as AnyCva,
+		axes: Object.fromEntries(
+			Object.entries(table.variants).map(([axis, cells]) => [
+				axis,
+				Object.keys(cells),
+			]),
+		),
+	};
+}
+
+// Every matrix this module builds, under its table's name.
+export const FAMILIES: readonly Family[] = [
+	family("TEXT", TEXT, text),
+	family("TEXT_STRONG", TEXT_STRONG, textStrong),
+	family("BUTTON", BUTTON, button),
+	family("BUTTON_LABEL", BUTTON_LABEL, buttonLabel),
+	family("STATUS", STATUS, status),
+	family("FIELD", FIELD, field),
+	family("OTP_BOX", OTP_BOX, otpBox),
+	family("ROW", ROW, row),
+	family("SWITCH", SWITCH, switchTrack),
+	family("TABLE_ROW", TABLE_ROW, tableRow),
+	family("CHECKBOX", CHECKBOX, checkbox),
+	family("SEGMENT", SEGMENT, segment),
+	family("BANNER", BANNER, banner),
+	family("TOAST_STATE", TOAST_STATE, toastState),
+	family("DIFF_LINE", DIFF_LINE, diffLine),
+	family("MESSAGE", MESSAGE, message),
+	family("AVATAR", AVATAR, avatar),
+	family("CHIP", CHIP, chip),
+	family("PLACE", PLACE, place),
+	family("RHYTHM", RHYTHM, rhythm),
+];
+
+export function classes(value: string): string[] {
+	return value.split(/\s+/).filter(Boolean);
+}
+
+// One axis value's cell is what its rendering adds over the rendering every
+// other value of that axis shares. A compound row folds into the axis it
+// keys off, which is what makes `bg-accent` reachable as BUTTON's primary cell.
+export function matrixCells(
+	families: readonly Family[],
+): Map<string, Set<string>> {
+	const out = new Map<string, Set<string>>();
+	for (const family of families) {
+		for (const [axis, values] of Object.entries(family.axes)) {
+			const sets = values.map(
+				(value) => new Set(classes(family.cva({ [axis]: value }))),
+			);
+			const first = sets[0];
+			if (!first) continue;
+			const shared = new Set(
+				[...first].filter((name) => sets.every((set) => set.has(name))),
+			);
+			values.forEach((value, index) => {
+				const set = sets[index];
+				if (!set) return;
+				const cell = new Set([...set].filter((name) => !shared.has(name)));
+				if (cell.size > 0) out.set(`${family.name}.${axis}.${value}`, cell);
+			});
+		}
+	}
+	return out;
+}
 
 // Single cells: one class string each, shared verbatim by both plugins.
 export const BUTTON_MUTED = "bg-group";

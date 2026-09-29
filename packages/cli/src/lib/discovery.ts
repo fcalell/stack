@@ -33,10 +33,10 @@ export const FIRST_PARTY_PLUGINS = [
 	{ name: "api", package: "@fcalell/plugin-api" },
 	{ name: "node", package: "@fcalell/plugin-node" },
 	{ name: "vite", package: "@fcalell/plugin-vite" },
+	{ name: "react", package: "@fcalell/plugin-react" },
+	{ name: "react-ui", package: "@fcalell/plugin-react-ui" },
 	{ name: "expo", package: "@fcalell/plugin-expo" },
 	{ name: "native-ui", package: "@fcalell/plugin-native-ui" },
-	{ name: "solid", package: "@fcalell/plugin-solid" },
-	{ name: "solid-ui", package: "@fcalell/plugin-solid-ui" },
 ] as const satisfies ReadonlyArray<{ name: string; package: string }>;
 
 // Derive both the value and the type straight from `FIRST_PARTY_PLUGINS` so a

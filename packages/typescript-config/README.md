@@ -18,22 +18,21 @@ Foundation config. All other presets extend this.
 - `target: ES2022`, `module: node18`, `moduleResolution: node16`
 - `noUncheckedIndexedAccess: true`
 
-### `solid-vite.json`
-
-For SolidJS apps built with Vite.
-
-- Extends `base.json`
-- `jsx: preserve`, `jsxImportSource: solid-js`
-- `module: ESNext`, `moduleResolution: Bundler`
-- `lib: ESNext, DOM, DOM.Iterable`
-- `noEmit: true`
-
 ### `node-tsx.json`
 
 Type-checking for Node.js packages and consumers.
 
 - Extends `base.json`
 - `module: esnext`, `moduleResolution: bundler`, `noEmit: true`, `allowImportingTsExtensions: true`
+
+### `web-vite.json`
+
+Type-checking for a web app Vite bundles: the consumer app `stack init` writes when `vite` is in
+the config.
+
+- Extends `base.json`
+- `lib: ESNext, DOM, DOM.Iterable`, `module: esnext`, `moduleResolution: bundler`
+- `jsx: react-jsx`, `noEmit: true`, `allowImportingTsExtensions: true`
 
 ### `build.json`
 
@@ -46,13 +45,6 @@ nothing, so the package keeps its `lib` and `jsx`.
 - `declaration`, `declarationMap`, `sourceMap`, `verbatimModuleSyntax`, `isolatedModules`
 
 ## Usage
-
-```json
-{
-  "extends": "@fcalell/typescript-config/solid-vite.json",
-  "include": ["src"]
-}
-```
 
 ```json
 {

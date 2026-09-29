@@ -12,7 +12,7 @@ interface ConfigAst {
 /**
  * Remove the call to the given plugin's factory from the `plugins: [...]`
  * array in `stack.config.ts`. Accepts the kebab-case plugin slug
- * (e.g. `"solid-ui"`) and matches against the camelCase callee (`solidUi`).
+ * (e.g. `"native-ui"`) and matches against the camelCase callee (`nativeUi`).
  *
  * No-op when the plugin isn't present. Throws `EditConfigError` when the
  * config file shape can't be edited in place.

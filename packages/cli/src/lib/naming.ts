@@ -1,5 +1,5 @@
-// Converts a kebab-case plugin slug (e.g. "solid-ui", "native-ui") into the
-// camelCase factory/identifier name the config + scaffolding emit ("solidUi").
+// Converts a kebab-case plugin slug (e.g. "native-ui") into the camelCase
+// factory/identifier name the config + scaffolding emit ("nativeUi").
 // Digit-aware so a slug like "plugin-2d" maps to a valid identifier ("plugin2d")
 // rather than leaving a stray hyphen. This is the single source of truth for the
 // slug→identifier transform — config writing, discovery, and scaffolding all

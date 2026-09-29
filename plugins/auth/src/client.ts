@@ -8,8 +8,8 @@ import {
 } from "better-auth/plugins/access";
 import {
 	createAuthClient as createBetterAuthClient,
-	type SolidAuthClient,
-} from "better-auth/solid";
+	type ReactAuthClient,
+} from "better-auth/react";
 
 // The consumer's organization access control as codegen bakes it for the
 // worker too: the statements of `ac` and each role's grants, plain records
@@ -19,8 +19,8 @@ export interface OrganizationAccess {
 	roles?: Record<string, Record<string, readonly string[]>>;
 }
 
-// The web client: better-auth's Solid client, so `useSession()` is an
-// accessor. solid-ui generates the call in `.stack/auth-client.ts` from the
+// The web client: better-auth's React client, so `useSession()` is a hook.
+// The web plugin generates the call in `.stack/auth-client.ts` from the
 // `auth` options, so every flag matches the server's.
 export interface AuthClientOptions {
 	// Origin of the worker's `/api/auth`. Omitted, the client calls `/api/auth`
@@ -63,7 +63,7 @@ type ClientPlugins<O extends AuthClientOptions> = [
 
 // Named, not inferred: the inferred type reaches better-auth's own zod copy,
 // which declaration emit cannot name from this package.
-type BetterAuthClient<O extends AuthClientOptions> = SolidAuthClient<{
+type BetterAuthClient<O extends AuthClientOptions> = ReactAuthClient<{
 	baseURL: string | undefined;
 	plugins: ClientPlugins<O>;
 }>;

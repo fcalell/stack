@@ -43,3 +43,4 @@ pnpm-debug.log*
 
 # Session-local agent worktrees
 .claude/worktrees/
+.playwright-mcp/

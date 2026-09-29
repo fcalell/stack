@@ -92,6 +92,8 @@ export type FontRole = (typeof FONT_ROLES)[number];
 // is a ratio of; `radius: 0` squares everything, the pills and circles too.
 // `fonts` names the two families; the files that carry them are each
 // plugin's `fonts` option. A missing `sans` is the platform's stack.
+// `motion` is the base duration in milliseconds every duration rung is a
+// ratio of; 0 stills every transition.
 export interface Knobs {
 	accentHue: number;
 	neutralHue: number;
@@ -105,6 +107,7 @@ export interface Knobs {
 	text: number;
 	elevation: Elevation;
 	density: Density;
+	motion: number;
 	fonts: { sans?: string; mono: string };
 	widths: Record<Width, number>;
 	breakpoints: Record<Breakpoint, number>;
@@ -123,6 +126,7 @@ export const KNOB_DEFAULTS: Knobs = {
 	text: 16,
 	elevation: "soft",
 	density: "touch",
+	motion: 200,
 	fonts: { mono: "JetBrains Mono Variable" },
 	widths: { rail: 220, list: 360, column: 300, sheet: 560, reading: 720 },
 	breakpoints: { tablet: 768, desktop: 1024, wide: 1440 },
@@ -445,9 +449,39 @@ export const SHADOW_GEOMETRY: Record<
 	sheet: { y: 12, blur: 28, alpha: 0.16 },
 };
 
+// ── Motion ──────────────────────────────────────────────────────────
+
+export const DURATIONS = ["instant", "fast", "base", "slow"] as const;
+export type Duration = (typeof DURATIONS)[number];
+
+// Multiples of `motion`, each rounded to the whole millisecond: at 200 the
+// scale is 100, 150, 200 and 300, the band a micro-interaction lives in.
+export const DURATION_RATIO: Record<Duration, number> = {
+	instant: 0.5,
+	fast: 0.75,
+	base: 1,
+	slow: 1.5,
+};
+
+export const EASINGS = ["out", "in", "in-out"] as const;
+export type Easing = (typeof EASINGS)[number];
+
+// One family, the cubic (easings.net's easeOutCubic, easeInCubic,
+// easeInOutCubic), as the four cubic-bezier control values: `out` for what
+// enters or answers a touch, `in` for what leaves, `in-out` for what
+// moves between two places. No curve overshoots.
+export const EASING: Record<Easing, readonly [number, number, number, number]> =
+	{
+		out: [0.33, 1, 0.68, 1],
+		in: [0.32, 0, 0.67, 0],
+		"in-out": [0.65, 0, 0.35, 1],
+	};
+
 // Namespaces reset to `initial`, so an off-contract utility compiles to
 // nothing. The numeric `--spacing` base and the `--font-weight-*` ladder stay
-// live: controls pad on numerics and the roles name their weights.
+// live: controls pad on numerics and the roles name their weights. A bare
+// `duration-150` stays live too: Tailwind turns a number into milliseconds
+// without reading the theme, so only a duration rung is contract.
 export const ZEROED_NAMESPACES = [
 	"--color-*",
 	"--radius-*",
@@ -458,6 +492,8 @@ export const ZEROED_NAMESPACES = [
 	"--font-*",
 	"--container-*",
 	"--breakpoint-*",
+	"--transition-duration-*",
+	"--ease-*",
 ] as const;
 
 // Code reads character for character: the mono family's ligatures stay off,
@@ -470,6 +506,14 @@ export const FONT_FALLBACKS: Record<FontRole, string> = {
 	sans: "ui-sans-serif, system-ui, sans-serif",
 	mono: "ui-monospace, SFMono-Regular, monospace",
 };
+
+// The face a family's metric fallback is declared under: a local platform
+// font sized to the family's box, so the swap moves nothing. The web plugin
+// declares it beside the family's own face and the family stack names it
+// second; a platform that declares no such face skips the name.
+export function fallbackFace(family: string): string {
+	return `${family} Fallback`;
+}
 
 // Every non-color token, keyed by its full custom-property name. This is also
 // the closed key set `overrides.scales` accepts. A role's leading and tracking

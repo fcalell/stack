@@ -14,19 +14,20 @@ Eleven subpaths:
   English `words`.
 - `@fcalell/ui-core/schema`: the zod `themeSchema` and `wordsSchema`, and the `Theme` input type.
 - `@fcalell/ui-core/derive`: `deriveTheme(theme)` resolves knobs and overrides into final values.
-- `@fcalell/ui-core/emit`: `themeTokens`, `modeTokens`, `compactTokens`, and `shadowUtilities`
-  shape those values into the records a plugin renders.
+- `@fcalell/ui-core/emit`: `themeTokens`, `modeTokens`, `compactTokens`, `densityTokens`,
+  `reducedMotionTokens` and `shadowUtilities` shape those values into the records a plugin renders.
 - `@fcalell/ui-core/cn`: `cn()`, the class merger, taught the contract's six scales.
 - `@fcalell/ui-core/variants`: the platform-invariant variant matrices, each a cva built from a
-  table, and the single-cell constants beside them.
+  table, the single-cell constants beside them, and `FAMILIES`, every matrix by name with its axes,
+  which `matrixCells` enumerates into cells.
 - `@fcalell/ui-core/descriptors`: `Act`, `IconAct`, `Part`, `Mark`, `Option`, `OptionGroup`,
   `PlaceSpec`, `Hunk`, `FieldBinding`, `Confirmation`, `MenuItem`, `TableColumn`, `TableRow`,
   `CellEdit` and the other framework-free types a prop carries.
 - `@fcalell/ui-core/commit`: `commitMoment()`, when a typing control's value is final: on
   leaving the field or Enter, only when it changed since focus, Escape restoring the value at
   focus. Both plugins' `Input` and `TextArea` drive their `onCommit` with it.
-- `@fcalell/ui-core/roster`: the component roster as data (`ROSTER`, `CLOSED_PROPS`), the layer
-  and prop names of every component both plugins ship.
+- `@fcalell/ui-core/roster`: the component roster as data (`ROSTER`, `STATES`, `CLOSED_PROPS`): the
+  layer, prop names, drawn families and states of every component both plugins ship.
 - `@fcalell/ui-core/harness`: internal. The shared core of the packages' `scripts/verify.ts`.
 - `@fcalell/ui-core/gate`: Node-only. The closed geometry vocabulary as data and `scanGeometry`,
   the scanner behind each UI plugin's pre-build geometry gate. Importing it loads ts-morph.
@@ -34,6 +35,15 @@ Eleven subpaths:
 The contract has two modes, `light` and `dark`. `themeTokens` seeds the default mode's colors into
 the `@theme` block as well, because Tailwind v4 generates no utility from a property declared only
 inside a variant block.
+
+## DESIGN.md
+
+The repo root's `DESIGN.md` is the contract in the [DESIGN.md format](https://github.com/google-labs-code/design.md):
+the default theme's tokens as front matter, each matrix cell and single cell as a component (dark
+values and their components suffixed `-dark`), and the roster with its drawn families and states.
+`src/design-md.ts` emits it and `pnpm --filter @fcalell/ui-core design-md` writes it. The package's
+`test` fails when the committed file differs from the emitter's output or when `design.md lint`
+reports an error, so it is never edited by hand.
 
 ## The knobs
 
@@ -48,14 +58,15 @@ Every scale derives from one base, so a theme sets a knob and never a token.
 | `text` | 16 | the type roles; each size rounds to the whole pixel, each line box to the even pixel |
 | `elevation` | `soft` | how a raised surface separates: `soft` casts the two shadows, `flat` draws a 1px ring in `edge` instead |
 | `density` | `touch` | how dense the controls draw: `touch` keeps the 44 px floor everywhere; `desktop` moves the four density sizes to their compact set where the primary pointer is fine, so rows, buttons, fields, circles, chips and section headers stand on a 32 px floor, and touch keeps 44 |
+| `motion` | 200 | the four duration rungs in milliseconds; 0 stills every transition |
 | `defaultMode` | unset | the mode a viewer with no stored choice starts in, ahead of the system preference; unset, the system decides |
-| `fonts` | `sans` unset, `mono` "JetBrains Mono Variable" | the two families as `--font-sans` and `--font-mono`, each ahead of its platform fallback stack; the files are each plugin's `fonts` option |
+| `fonts` | `sans` unset, `mono` "JetBrains Mono Variable" | the two families as `--font-sans` and `--font-mono`, each followed by its metric fallback face (`fallbackFace(family)`, the family name plus ` Fallback`) and then its platform fallback stack; the files are each plugin's `fonts` option |
 | `widths` | `rail` 220, `list` 360, `column` 300, `sheet` 560, `reading` 720 | `--container-*`, so `w-rail` and `max-w-reading` |
 | `breakpoints` | `tablet` 768, `desktop` 1024, `wide` 1440 | `--breakpoint-*`, so `tablet:` and `desktop:` are the only responsive variants |
 
 Hues are in `[0, 360)`; `neutralChroma` in `[0, 2]` multiplies the declared chroma of every token
 bound to `neutralHue` and nothing else. `space`, `text`, every width and every
-breakpoint are positive integers; `radius` may be 0. Density is a theme, never a breakpoint: no scale changes at a
+breakpoint are positive integers; `radius` and `motion` may be 0. Density is a theme, never a breakpoint: no scale changes at a
 width. The floor is 44 px on touch and is not a knob: `density: "desktop"`
 lowers it to 32 on a fine pointer only, and a product that wants more text per row lowers `text`
 and `space`.
@@ -135,7 +146,9 @@ nothing is spaced by them: `floor` (the minimum height of a control, a row and a
 side; 44, compact 32), `row-y` (a row's vertical padding; `stack`, compact `pair`), `control-y` (a
 button's, a field's and a chip's vertical padding; 8, compact 4, so a chip lands on 32 and 24) and `segment` (a segment inside its padded
 control; 36, compact 24). Every platform seeds the touch set; `compactTokens` is the compact set
-under `density: "desktop"`, which the web renders under `(pointer: fine)`. The compact set lands a
+under `density: "desktop"`, which the web renders under `(pointer: fine)`, and `densityTokens`
+is either set whatever the knob, which the web renders under a `data-density` attribute on the
+root (`desktop` compact, `touch` the touch set back under a fine pointer). The compact set lands a
 one-line `body` row, button and field on 32: a 24 px line box plus twice 4. A table cell
 (`TABLE_CELL`) is a field's box, the floor, `control-y` and the field's side padding behind a
 transparent side border, so the `Input` that edits it in place keeps the row's height. The type scale does not
@@ -148,6 +161,20 @@ selected segment and a thumb; `shadow-sheet` for a sheet. Groups, rows and cards
 `soft` each casts a shadow whose color is the light ink at `neutralHue`, converted to sRGB because
 React Native's `boxShadow` takes no oklch; under `flat` each draws a 1px `edge` border instead,
 the channel every hairline uses on both platforms, so no component changes.
+
+## Motion
+
+One duration scale and one curve family. The rungs are ratios of `motion`, each rounded to the
+millisecond: `instant` 0.5 (100), `fast` 0.75 (150), `base` 1 (200), `slow` 1.5 (300), emitted as
+`--transition-duration-*`, the namespace Tailwind's `duration-*` reads, so `duration-fast` is a
+rung. The curves are the cubic family, emitted as `--ease-*`: `out` `cubic-bezier(0.33, 1, 0.68,
+1)` for what enters or answers a touch, `in` `cubic-bezier(0.32, 0, 0.67, 0)` for what leaves,
+`in-out` `cubic-bezier(0.65, 0, 0.35, 1)` for what moves; none overshoots. A bare `transition`
+takes `base` and `out` through the variables. `reducedMotionTokens` sets every rung to 0ms, which
+the web renders under `prefers-reduced-motion: reduce`. Motion lives in the matrices, never at a
+call site: no cell carries a duration that is not a rung. `deriveTheme` also returns the scale
+as numbers (`motion.durations` in milliseconds, `motion.easings` as the four control values), for
+a platform that times an animation outside CSS.
 
 ## Contrast contracts
 
@@ -162,12 +189,14 @@ mode) so that a `Status` inside a selected row does. Moving a knob puts the re-c
 
 ## What the reset does not catch
 
-Nine namespaces reset to `initial`: `--color-*`, `--radius-*`, `--text-*`, `--leading-*`,
-`--tracking-*`, `--shadow-*`, `--font-*`, `--container-*`, `--breakpoint-*`. The numeric
+Eleven namespaces reset to `initial`: `--color-*`, `--radius-*`, `--text-*`, `--leading-*`,
+`--tracking-*`, `--shadow-*`, `--font-*`, `--container-*`, `--breakpoint-*`,
+`--transition-duration-*`, `--ease-*`. The numeric
 `--spacing` base stays live because dimension utilities derive from it, so no build check can tell
 a rung from a numeric; the matrices pin their cell strings verbatim instead. `--font-weight-*`
-stays live because the roles name their weights. The geometry gate is what keeps a numeric off a
-call site.
+stays live because the roles name their weights. A bare `duration-150` stays live because
+Tailwind turns a number into milliseconds without reading the theme. The geometry gate is what
+keeps a numeric off a call site.
 
 ## The canon
 
@@ -188,8 +217,11 @@ The canon binds every component either UI plugin ships:
 ## The roster
 
 `ROSTER` in `@fcalell/ui-core/roster` is the closed list: 54 components in four layers (atoms,
-layout molecules, shared molecules, content molecules), each with its prop names, the same in both
-plugins. A plugin's verify suite reads every component's exported props type against it, so a
+layout molecules, shared molecules, content molecules), each with its prop names, the matrix
+families it draws (`draws`, each a `FAMILIES` name) and the states it has a form for (`states`, from
+`STATES`: `rest`, `hover`, `focus`, `active`, `disabled`, `loading`, `error`, `selected`, `empty`),
+the same in both plugins. Every family is drawn by at least one component, and a component that
+takes `loading` or `empty` lists that state. A plugin's verify suite reads every component's exported props type against it, so a
 prop added on one platform, a prop renamed, or a style channel reopened fails by name. The
 directory of a component is its name in kebab case (`componentDir("ListRow")` is `list-row`).
 

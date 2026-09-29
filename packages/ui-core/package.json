@@ -67,9 +67,10 @@
 		"check-types": "tsc --noEmit --pretty",
 		"lint": "biome check --write --unsafe",
 		"check": "pnpm check-types && pnpm lint",
-		"test": "node --test 'test/**/*.test.ts'",
+		"test": "node --test 'test/**/*.test.ts' && design.md lint ../../DESIGN.md",
 		"verify": "tsx scripts/verify.ts",
-		"clear": "rm -rf dist node_modules .turbo"
+		"clear": "rm -rf dist node_modules .turbo",
+		"design-md": "tsx scripts/design-md.ts"
 	},
 	"dependencies": {
 		"class-variance-authority": "^0.7.1",
@@ -83,6 +84,7 @@
 	"devDependencies": {
 		"@fcalell/cli": "workspace:*",
 		"@fcalell/typescript-config": "workspace:*",
+		"@google/design.md": "^0.4.0",
 		"@tailwindcss/cli": "^4.1.7",
 		"@types/node": "^25.5.0",
 		"tailwindcss": "^4.1.7",

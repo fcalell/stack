@@ -176,9 +176,9 @@ the API side -- see `@fcalell/plugin-api`'s README for the procedure-config docs
 An organization is served at `/<slug>`, so the server refuses a slug the app itself holds, on
 `organization.create`, on an `organization.update` that sets one, and on
 `organization.checkSlug`, which would otherwise answer such a slug free: plugin-api's
-`RESERVED_SLUGS` and, with `solid-ui` in the config, every static first segment of your pages
-(`login`, `settings`, a group's pages included, a param never). No option: the list is derived
-from the pages at `stack generate`. The refusal is a 400 with code `ORGANIZATION_SLUG_RESERVED`
+`RESERVED_SLUGS` and every top-level route a frontend plugin contributes to
+`auth.slots.reservedSlugs` (`login`, `settings`, a group's pages included, a param never). No
+option: the list is derived from the pages at `stack generate`. The refusal is a 400 with code `ORGANIZATION_SLUG_RESERVED`
 and `fieldErrors: { slug }`, which the web client's answer carries; `useMutation` and `useApiForm`
 throw it with `data.fieldErrors`, so a form with a `slug` field shows it there, and a form that
 derives the slug from another field (a name) maps it onto that field.
@@ -405,7 +405,7 @@ parent). It answers the same chain a scoped procedure gets (`{ organization, mem
 for a project) or `NOT_FOUND`. It declares `reads` on the membership and on each table of its
 chain by the table's SQL name (`member`, `organization`, `project`), so a mutation declaring
 `writes: ["project"]` refreshes the resolved scope: export each scope's table under its SQL name
-for its entity to match. solid-ui's `ScopeBoundary` calls it; you never do.
+for its entity to match.
 
 ## Plugin implementation
 
@@ -495,17 +495,17 @@ above) via the `routes()` hook of the `RuntimePlugin` contract.
 
 ### Web client
 
-`./client` configures better-auth's SolidJS client, so `authClient.useSession()` is an accessor.
-With `solid-ui` in the config you never call it yourself: the plugin generates
-`.stack/auth-client.ts` with the flags your `auth` options imply, so the client enables exactly the
-plugins the worker runs. `passkey` adds `passkeyClient()` (`signIn.passkey()`,
+`./client` configures better-auth's React client (`better-auth/react`), so `authClient.useSession()`
+is a hook. `passkey` adds `passkeyClient()` (`signIn.passkey()`,
 `passkey.addPasskey()`, ...), `emailOtp` adds `emailOTPClient()`, and `organization` adds
 `organizationClient()` (`organization.create()`, `organization.inviteMember()`,
 `organization.acceptInvitation()`, ...), with the configured access control's statements and roles
 when `organization` is `{ ac, roles }` (better-auth's default roles when it is `true`). `baseURL` defaults to the page's own origin.
 
 ```ts
-import { authClient } from "../../.stack/auth-client.ts";
+import { createAuthClient } from "@fcalell/plugin-auth/client";
+
+const authClient = createAuthClient({ passkey: true });
 
 await authClient.passkey.addPasskey();   // on a fresh session
 await authClient.signIn.passkey();
@@ -573,7 +573,7 @@ Requires the server `emailOtp` option (on by default) and a `sendOTP` callback i
 | `@fcalell/plugin-auth/access` | `createAccessControl()`, `getStatements()`, `defaultOrgRoles` |
 | `@fcalell/plugin-auth/scope` | `defineScope()`, `organization`, `Scope`, `ScopeContext` -- isomorphic scope descriptors |
 | `@fcalell/plugin-auth/infer` | `SessionUser`, `InferSession<T>` -- the session's user and the session derived from config |
-| `@fcalell/plugin-auth/client` | `createAuthClient({ baseURL?, passkey?, emailOtp?, organization? })`, `AuthClient` -- web client on `better-auth/solid`; solid-ui generates the call in `.stack/auth-client.ts` |
+| `@fcalell/plugin-auth/client` | `createAuthClient({ baseURL?, passkey?, emailOtp?, organization? })`, `AuthClient` -- web client on `better-auth/react` |
 | `@fcalell/plugin-auth/expo` | `createAuthClient()`, `AuthProvider`, `useAuthClient()`, `signInWith{Apple,Google}()`, `sendEmailOtp()` / `signInWithEmailOtp()` -- native client (runtime-only) |
 | `@fcalell/plugin-auth/runtime` | `authRuntime()`, `AuthCallbacks` (including `plugins`), `Tenancy` (the context's scope resolver, exported so the worker project's declaration emit can name it) -- runtime plugin factory + worker-safe callback file typing |
 | `@fcalell/plugin-auth/schema` | `user`, `session`, `account`, `verification` -- core identity tables (always re-exported) |

@@ -30,8 +30,13 @@
             # Project LSP servers — nvim's vim.lsp.enable picks these up on PATH.
             pkgs.vtsls # TypeScript / TSX
             pkgs.vscode-langservers-extracted # cssls, html, jsonls
-            pkgs.tailwindcss-language-server # plugin-solid-ui tailwind surface
+            pkgs.tailwindcss-language-server # the web plugin's tailwind surface
           ];
+
+          # Playwright's downloaded Chromium does not start on NixOS: the showcase's
+          # gates run nixpkgs' browsers, and `@playwright/test` pins this driver's version.
+          PLAYWRIGHT_BROWSERS_PATH = pkgs.playwright-driver.browsers;
+          PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS = "1";
 
           shellHook = ''
             # Enable corepack so `pnpm` resolves to the repo-pinned version.

@@ -1,7 +1,8 @@
 # Architecture overview
 
-`@fcalell/stack` is a pnpm monorepo: `packages/` (core CLI + shared configs) and `plugins/` (one
-self-contained feature unit per domain). The CLI owns orchestration and the slot graph; every
+`@fcalell/stack` is a pnpm monorepo: `packages/` (core CLI + shared configs), `plugins/` (one
+self-contained feature unit per domain) and `apps/` (`showcase`, a private consumer that renders
+the roster's showcase page). The CLI owns orchestration and the slot graph; every
 feature lives in the plugin that owns its domain (see
 [philosophy](../product/philosophy.md)). Per-change gate: `pnpm check` (build, type-check,
 every package's `node --test`, Biome lint).
@@ -12,7 +13,7 @@ every package's `node --test`, Biome lint).
 |---------|---------|
 | `@fcalell/cli` | `defineConfig()`, `plugin()`, `slot.*`, `stack` CLI, slot graph engine, codegen |
 | `@fcalell/ui-core` | The design contract both UI plugins render from: the knob-derived token records, `deriveTheme`, the emit helpers, `words`, `cn()`, the platform-invariant variant matrices and the component roster. Framework-free build-time data |
-| `@fcalell/typescript-config` | tsconfig presets (base, solid-vite, node-tsx) and the `build` emit overlay |
+| `@fcalell/typescript-config` | tsconfig presets (base, node-tsx, web-vite) and the `build` emit overlay |
 | `@fcalell/biome-config` | Shareable Biome formatter/linter config |
 | `@fcalell/auth-testing` | Private, never published: the test support the sign-in tests share (a software WebAuthn authenticator, a cookie jar, session minting, table creation from drizzle schemas) |
 
@@ -30,9 +31,9 @@ runtime export.
 | `@fcalell/plugin-api` | API framework: Hono + oRPC, procedure builder, typed client | `api()` |
 | `@fcalell/plugin-node` | Long-running Node server target: serves the worker + static SPA, background services, typed WebSocket surface | `node()` |
 | `@fcalell/plugin-vite` | Framework-agnostic Vite lifecycle (providers virtual module) | `vite()` |
+| `@fcalell/plugin-react` | React on the web: Vite + React Compiler, TanStack Router file routes, app entry, providers, HTML shell and `<head>` metadata | `react()` |
+| `@fcalell/plugin-react-ui` | Design system on the web: `.stack/app.css` from the ui-core contract on Tailwind v4, fonts, the mode script, words, the geometry gate, and the roster showcase page | `reactUi()` |
 | `@fcalell/plugin-expo` | Expo/React Native: Metro + app config + expo-router entry + EAS commands | `expo()` |
-| `@fcalell/plugin-solid` | SolidJS compilation, file-based routing, app bootstrap | `solid()` |
-| `@fcalell/plugin-solid-ui` | Design system on the web: the ui-core roster in SolidJS + Kobalte + Tailwind v4, the shell at every width, fonts, words, geometry gate | `solidUi()` |
 | `@fcalell/plugin-native-ui` | Design system on the phone: the ui-core roster in React Native + Expo + uniwind, the phone layout at every width, fonts, words, native providers, geometry gate | `nativeUi()` |
 
 ## Dependency graph
@@ -50,6 +51,18 @@ plugin-cloudflare ────────> cli (owns cloudflare.slots.bindings/
                                  contributes to vite.slots.serverProxy for same-origin dev)
 plugin-vite ──────────────> cli (owns vite.slots.configImports/pluginCalls/devServerPort/viteConfig;
                                  contributes to api.slots.devCorsOrigins for localhost dev)
+plugin-react ─────────────> cli, requires vite
+                                 (owns react.slots.providers/entryImports/mountExpression/htmlShell/
+                                  htmlHead/htmlBodyEnd/routesDir/entrySource/htmlSource/providersSource/
+                                  routesDtsSource/topLevelRoutes/homeScaffold;
+                                  contributes to vite.slots.configImports/pluginCalls/resolveDedupe,
+                                  cliSlots.postWrite (the route tree)/initScaffolds/removeFiles)
+plugin-react-ui ──────────> cli + ui-core, requires react + vite
+                                 (owns reactUi.slots.appCssImports/appCssBlocks/appCssLayers/fonts/
+                                  resolvedTheme/appCssSource;
+                                  contributes to vite.slots.configImports/pluginCalls/fsAllow,
+                                  react.slots.providers/entryImports, auth.slots.reservedSlugs
+                                  (from react.slots.topLevelRoutes), cliSlots.buildSteps)
 plugin-expo ──────────────> cli (owns expo.slots.metroConfig/expoConfig/entrySource/routesDtsSource,
                                  providers, easBuildProfiles/easUpdateChannel;
                                  contributes to api.slots.devCorsOrigins for the Metro dev origin,
@@ -67,12 +80,6 @@ plugin-node ──────────────> cli, requires api
                                  (owns node.slots.serverPort/services/serverSource;
                                   derives from api.slots.workerSource/routePrefixes/env;
                                   contributes to vite.slots.serverProxy for same-origin dev)
-plugin-solid ─────────────> cli, requires vite
-                                 (owns solid.slots.providers/entry/html/routesDts;
-                                  contributes to vite.slots.configImports/pluginCalls)
-plugin-solid-ui ──────────> cli + ui-core, requires solid + vite
-                                 (owns solidUi.slots.appCss*/resolvedTheme;
-                                  contributes to solid.slots.providers/homeScaffold, vite.slots.configImports/pluginCalls)
 plugin-native-ui ─────────> cli + ui-core, requires expo + api + auth
                                  (owns nativeUi.slots.appCssImports/appCssSource/resolvedTheme/fonts;
                                   contributes to expo.slots.metroConfigImports/metroPluginCalls/

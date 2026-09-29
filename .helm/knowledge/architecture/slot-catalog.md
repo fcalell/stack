@@ -19,7 +19,7 @@ lifecycle hooks; rarely read from these.
 | `cliSlots.packageJsonFields` | `map<unknown>` | Top-level `package.json` fields (e.g. Expo's `main`). Written if-absent at init/add, never clobbers a consumer-set value; duplicate keys across plugins throw |
 | `cliSlots.gitignore` | `list<string>` | `.gitignore` entries (auto-wired from `plugin({ gitignore })`) |
 | `cliSlots.artifactFiles` | `list<GeneratedFile>` | `{ path, content }` files written under `.stack/` (or anywhere in cwd) |
-| `cliSlots.postWrite` | `list<() => Promise<void>>` | Hooks to run after artifact files land (e.g. `wrangler types`) |
+| `cliSlots.postWrite` | `list<() => Promise<void>>` | Hooks to run after artifact files land (e.g. `wrangler types`, TanStack Router's route tree) |
 | `cliSlots.devProcesses` | `list<ProcessSpec>` | Long-running dev processes spawned in parallel |
 | `cliSlots.devWatchers` | `list<WatcherSpec>` | chokidar watchers attached during `stack dev` |
 | `cliSlots.devReadySetup` | `list<DevReadyTask>` | One-shot tasks run after processes report ready |
@@ -100,44 +100,43 @@ e.g. consulting `ctx.fileExists` before writing.
 | Slot | Kind | Purpose |
 |------|------|---------|
 | `configImports` | `list<TsImportSpec>` | Imports for `.stack/vite.config.ts` |
-| `pluginCalls` | `list<TsExpression>` | Vite plugin call expressions |
+| `pluginCalls` | `list<TsExpression>` (sorted by callee name) | Vite plugin call expressions; a plugin whose Vite plugins must run in a set order contributes them as one array expression (Vite flattens it), as plugin-react does with `tanstackRouter()` before `react()` |
 | `resolveAliases` | `list<{ find, replacement }>` | `resolve.alias` entries |
-| `resolveDedupe` | `list<string>` | Bare specifiers rendered into `resolve.dedupe` (de-duplicated); plugins whose runtime must stay a singleton contribute here so workspace-linked checkouts can't ship a second copy in the production bundle. plugin-solid contributes the solid-js specifiers |
+| `resolveDedupe` | `list<string>` | Bare specifiers rendered into `resolve.dedupe` (de-duplicated); plugins whose runtime must stay a singleton contribute here so workspace-linked checkouts can't ship a second copy in the production bundle. plugin-react contributes `react` and `react-dom` |
 | `devServerPort` | `value<number>` | Dev server port (defaults to options.port ?? 3000) |
 | `serverProxy` | `list<ServerProxyEntry>` (`uniqueBy: path`) | Dev-server proxy rules (`{ path, target, ws? }`) rendered into `server.proxy`; deploy targets contribute worker-owned paths so dev stays same-origin like prod |
 | `fsAllow` | `list<TsExpression>` | Extra `server.fs.allow` path expressions; plugins serving assets from their own package contribute their real location so a workspace-linked stack still serves them in dev. Any entry makes the rendered list explicit, prefixed with the consumer's workspace root |
 | `watchIgnored` | `list<string>` (sorted) | Globs rendered into `server.watch.ignored`, added to Vite's own defaults; a plugin whose tool writes scratch files under Vite's root contributes their glob so the writes never reach hot-update handling. plugin-cloudflare contributes `**/.wrangler/**` (wrangler's dev bundle in `.stack/.wrangler/tmp/`) |
 | `viteConfig` | `derived<string \| null>` | Final `.stack/vite.config.ts` source; null when nothing to emit |
 
-## `solid.slots.*` (plugin-solid)
+## `react.slots.*` (plugin-react)
 
 | Slot | Kind | Purpose |
 |------|------|---------|
-| `providers` | `list<ProviderSpec>` | JSX wrappers / siblings for `.stack/virtual-providers.tsx` (sorted by `order`) |
-| `entryImports` | `list<TsImportSpec>` | Imports for `.stack/entry.tsx` |
-| `mountExpression` | `value<TsExpression \| null>` | Root render call (override-able for custom mount) |
-| `htmlShell` | `value<URL \| null>` | HTML shell template URL |
-| `htmlHead` | `list<HtmlInjection>` | `<head>` injections (title, meta, link, script, html-attr) |
-| `htmlBodyEnd` | `list<HtmlInjection>` | End-of-body injections |
-| `routesPagesDir` | `derived<string \| null>` | Resolved pages directory or null when routing disabled |
+| `providers` | `list<ProviderSpec>` | JSX wrappers / siblings for `.stack/virtual-providers.tsx` (sorted by `order`, lower = outer), served as `virtual:stack-providers` |
+| `entryImports` | `list<TsImportSpec>` | Extra imports for `.stack/entry.tsx` |
+| `mountExpression` | `value<Mount \| null>` (`override`) | The root mount: verbatim statements plus their imports. react seeds the TanStack router inside `<StrictMode><Providers>` when routing is on; a peer replaces it for a custom mount. Null skips `entry.tsx` and its script tag |
+| `htmlShell` | `value<URL \| null>` (`override`) | HTML shell template URL |
+| `htmlHead` | `list<HtmlInjection>` (one `title`, one of each `html-attr`) | `<head>` injections (title, meta, link, script, html-attr); react contributes `lang`, the title (`title` ?? `app.name`), `description`, `themeColor`, `icon` |
+| `htmlBodyEnd` | `list<HtmlInjection>` | End-of-body injections; react adds the `/entry.tsx` module script when there is an entry |
+| `routesDir` | `derived<string \| null>` | The routes directory relative to the project root (`routes.dir` ?? `src/app/routes`); null when `routes: false` |
 | `entrySource` | `derived<string \| null>` | Final `.stack/entry.tsx` |
 | `htmlSource` | `derived<string \| null>` | Final `.stack/index.html` |
-| `providersSource` | `derived<string \| null>` | Final `.stack/virtual-providers.tsx` |
-| `routesDtsSource` | `derived<string \| null>` | Final `.stack/routes.d.ts` |
-| `topLevelRoutes` | `derived<string[]>` | The static first segments of the pages' URLs (through groups, never a param), sorted; empty when routing is off. solid-ui hands them to `auth.slots.reservedSlugs` |
-| `homeScaffold` | `value<ScaffoldSpec>` (`override`) | Scaffold for `src/app/pages/index.tsx`; solid-ui overrides with the design-system home |
+| `providersSource` | `derived<string \| null>` | Final `.stack/virtual-providers.tsx`; null leaves plugin-vite's pass-through stub |
+| `routesDtsSource` | `derived<string \| null>` | Final `.stack/routes.d.ts`: the router's `Register` over `.stack/routeTree.gen.ts`, which pulls the tree into the consumer's type-check; null when routing is off |
+| `topLevelRoutes` | `derived<string[]>` | The static first segments of the routes' URLs under TanStack's file convention (through pathless layouts and groups, never a param), sorted; empty when routing is off. react-ui hands them to `auth.slots.reservedSlugs` |
+| `homeScaffold` | `value<ScaffoldSpec \| null>` (`override`) | Scaffold for `<routesDir>/index.tsx`; null when routing is off; a design-system plugin overrides it with its own home |
 
-## `solidUi.slots.*` (plugin-solid-ui)
+## `reactUi.slots.*` (plugin-react-ui)
 
 | Slot | Kind | Purpose |
 |------|------|---------|
-| `appCssImports` | `list<CssImport>` | CSS `@import`s aggregated into `.stack/app.css`: a URL, or `{ url, layer?, supports?, source? }`. solid-ui imports `tailwindcss` with `source: "none"`, so Tailwind scans only the sheet's `@source` declarations (the consumer's `src`, the design system's components and ui-core), never the generated files in `.stack/` |
+| `appCssImports` | `list<CssImport>` | CSS `@import`s aggregated into `.stack/app.css`: a URL, or `{ url, layer?, supports?, source? }`. react-ui imports `tailwindcss` with `source: "none"`, so Tailwind scans only the sheet's `@source` declarations (the consumer's `src`, the plugin's `src/ui` and ui-core), never the generated files in `.stack/` |
 | `appCssBlocks` | `list<CssBlock>` | Top-level `@theme` / `@utility` blocks, rendered after `@source` and before the layers. Neither at-rule may sit inside a `@layer`, which is why they don't ride `appCssLayers` |
-| `appCssLayers` | `list<{ name, content }>` | CSS `@layer` blocks. Dark mode rides this slot as `@layer base`: `@theme` compiles into `@layer theme` and Tailwind sorts `base` after it, so a layered `.dark { … }` overrides the seeded values |
-| `fonts` | `derived<FontEntry[]>` | Resolved font files (consumer options or `defaultFonts`, JetBrains Mono Variable). The families the roles bind to are the theme's `fonts` knob, emitted by ui-core |
-| `resolvedTheme` | `derived<ResolvedTheme>` | The `theme` option run through `@fcalell/ui-core`'s `deriveTheme`, resolved once so every block contribution reads one value |
+| `appCssLayers` | `list<{ name, content }>` | CSS `@layer` blocks. Dark mode and density ride this slot as `@layer base`: `@theme` compiles into `@layer theme` and Tailwind sorts `base` after it, so a layered `.dark { … }` or `:root[data-density="desktop"] { … }` overrides the seeded values |
+| `fonts` | `derived<FontEntry[]>` | Resolved font files (consumer options or `defaultFonts`: Inter Variable with its `opsz` axis, JetBrains Mono Variable); `[]` loads none. The families the roles bind to are the theme's `fonts` knob, emitted by ui-core |
+| `resolvedTheme` | `derived<ResolvedTheme>` | The `theme` option run through `@fcalell/ui-core`'s `deriveTheme`, resolved once so every block contribution reads one value; reads `fonts` so `sans` defaults to Inter when its file loads and the theme names no `sans` |
 | `appCssSource` | `derived<string \| null>` | Final `.stack/app.css`; null when nothing landed |
-| `authClientSource` | `derived<string \| null>` | `.stack/auth-client.ts` source: `createAuthClient` called with `auth.slots.clientFlags`, so the web client enables exactly the better-auth plugins the worker runs; null without auth |
 
 ## `expo.slots.*` (plugin-expo)
 
@@ -146,7 +145,7 @@ e.g. consulting `ctx.fileExists` before writing.
 | `metroConfigImports` | `list<MetroRequireSpec>` | Requires for the generated `.stack/metro.config.cjs` |
 | `metroPluginCalls` | `list<MetroWrapperSpec>` | Wrapper calls composed around the Metro config (order-sorted) |
 | `expoConfigPlugins` | `list<ExpoConfigPlugin>` | Expo config plugins baked into `.stack/app.config.cjs` |
-| `providers` | `list<ProviderSpec>` | JSX providers composed around `<ExpoRoot>` in `.stack/entry.tsx` (lower order = outer, mirrors solid) |
+| `providers` | `list<ProviderSpec>` | JSX providers composed around `<ExpoRoot>` in `.stack/entry.tsx` (lower order = outer) |
 | `entryImports` | `list<TsImportSpec>` | Extra imports for `.stack/entry.tsx` |
 | `devServerPort` | `value<number>` | Metro dev-server port (`options.port` ?? default); also drives the localhost CORS origin contributed to plugin-api |
 | `scheme` | `value<string>` | Resolved deep-link scheme (`options.scheme` ?? app-name slug); read by native-ui's generated auth-client constants so the client matches the app config |
@@ -162,7 +161,7 @@ e.g. consulting `ctx.fileExists` before writing.
 
 | Slot | Kind | Purpose |
 |------|------|---------|
-| `resolvedTheme` | `derived<ResolvedTheme>` | The `theme` option run through `@fcalell/ui-core`'s `deriveTheme`, resolved once. The same option shape as `solidUi`'s, so one object themes both platforms |
+| `resolvedTheme` | `derived<ResolvedTheme>` | The `theme` option run through `@fcalell/ui-core`'s `deriveTheme`, resolved once |
 | `fonts` | `derived<NativeFontEntry[]>` | Resolved font files (`{ family, source }`, consumer option or none); each `source` is embedded through expo-font. The families are the theme's `fonts` knob |
 | `appCssImports` | `list<string>` | Extra CSS `@import`s aggregated into `.stack/global.css` beyond tailwindcss + uniwind |
 | `appCssSource` | `derived<string \| null>` | Final `.stack/global.css`: `@theme` from ui-core's records (namespace resets first), the two elevation utilities as `@utility` blocks, and `@variant light` / `@variant dark` color blocks under `@layer theme` |
@@ -177,8 +176,8 @@ e.g. consulting `ctx.fileExists` before writing.
 | `appUrlDevDefault` | `derived<string>` | Canonical dev URL for `APP_URL`'s dev default: the first `api.slots.devCorsOrigins` entry (a frontend's), else the first `api.slots.devTargetOrigins` entry (the deploy target's), else `https://<domain>` |
 | `callbackFile` | `value<string>` | Consumer callback-file path (default `src/worker/plugins/auth.ts`); override for a restructured worker layout |
 | `cookiePrefix` | `value<string>` | Resolved session-cookie prefix (`cookies.prefix` ?? better-auth's `"better-auth"` default); read by native-ui's generated auth-client constants |
-| `clientFlags` | `value<AuthClientFlags \| null>` | The web client's `{ passkey, emailOtp, organization }`, from the options, `organization` carrying the access control's statements and role grants as the worker gets them; seeded null and filled by auth's own contribution, so a reader without auth in the config sees null. Read by solid-ui's `authClientSource` |
-| `reservedSlugs` | `list<string>` | The app's top-level routes, which an organization slug may not take (an organization is served at `/<slug>`); solid-ui contributes `solid.slots.topLevelRoutes`. With organizations on, `runtimeOptions` bakes them beside plugin-api's `RESERVED_SLUGS` and the runtime refuses them on organization create and update |
+| `clientFlags` | `value<AuthClientFlags \| null>` | The web client's `{ passkey, emailOtp, organization }`, from the options, `organization` carrying the access control's statements and role grants as the worker gets them; seeded null and filled by auth's own contribution, so a reader without auth in the config sees null |
+| `reservedSlugs` | `list<string>` | The app's top-level routes, which an organization slug may not take (an organization is served at `/<slug>`). With organizations on, `runtimeOptions` bakes them beside plugin-api's `RESERVED_SLUGS` and the runtime refuses them on organization create and update |
 
 ## Spec types
 
@@ -214,15 +213,6 @@ lives with that plugin.
   // <Toaster />
   { kind: "jsx", tag: "Toaster", props: [], children: [] }
   ```
-- `CssBlock`: `solidUi.slots.appCssBlocks`' payload, declared in `plugins/solid-ui/src/types.ts`.
-  One top-level CSS at-rule, in two shapes:
-  ```ts
-  { kind: "theme", declarations: { "--color-canvas": "oklch(0.99 0.004 261)" } }
-  { kind: "utility", name: "shadow-float", declarations: { "box-shadow": "0 7px 18px …" } }
-  ```
-  Every property name and value crosses the render boundary: a custom property through
-  `cssVarName`, a plain CSS property and the utility name through `cssIdent`, every value through
-  `cssTokenValue`.
 - `EnvSpec`: `api.slots.env`'s payload, declared in `plugins/api/src/types.ts` (exported on
   `@fcalell/plugin-api/types`): `{ name, devDefault, validate?: EnvValidation }`.
 - `WranglerBindingSpec`: `d1` / `kv` / `r2` / `analytics_engine` / `rate_limiter` / `var` shapes.

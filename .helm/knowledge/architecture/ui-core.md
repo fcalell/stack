@@ -4,17 +4,15 @@
 parametric derivation, the words the molecules speak, the shared `cn()` merge config, the
 platform-invariant variant matrices, the component roster, the shared descriptor types, and the
 geometry gate. It is a preset library like `biome-config`: no `plugin()` factory, no slots, and no
-framework dependency, so a future `plugin-react-ui` adopts it unchanged. The normative laws (the
+framework dependency. The normative laws (the
 canon, the sharing line, the `cn` ordering rule, the roster) live in the package README and are
-pinned by the package's verify suite; this entry holds the architecture and its rationale. The
-calibration is Marina's, renamed by meaning; the structure follows the anchors recorded in
-stead's `design/07-interface.md`.
+pinned by the package's verify suite; this entry holds the architecture and its rationale.
 
 ## Tokens and theming
 
-- The contract is a closed list. Nine namespaces are zeroed (`--color-*`, `--radius-*`,
+- The contract is a closed list. Eleven namespaces are zeroed (`--color-*`, `--radius-*`,
   `--text-*`, `--leading-*`, `--tracking-*`, `--shadow-*`, `--font-*`, `--container-*`,
-  `--breakpoint-*`), so an off-contract utility compiles to nothing and `tablet:`, `desktop:`
+  `--breakpoint-*`, `--transition-duration-*`, `--ease-*`), so an off-contract utility compiles to nothing and `tablet:`, `desktop:`
   and `wide:` are the only responsive variants. The numeric `--spacing` base stays live because
   dimension utilities derive from it, so no build check can tell a rung from a numeric; the
   matrices pin their cell strings verbatim and the geometry gate keeps numerics off call sites.
@@ -25,7 +23,10 @@ stead's `design/07-interface.md`.
   filled with), `space` (the rungs), `radius` (the radii; 0 squares the pills too), `text` (the type roles, sizes rounded
   to the pixel and line boxes to the even pixel), `fonts` (the two family names), `widths` (the
   five `--container-*` values), `breakpoints` (the three device classes), `elevation` (`soft`
-  shadows or a `flat` 1px `edge` ring), `density` (`touch`, or `desktop`: compact controls on a
+  shadows or a `flat` 1px `edge` ring), `motion` (the base duration the four `--transition-duration-*`
+  rungs are ratios of, beside one cubic ease-out family as `--ease-*`, all zeroed under
+  `prefers-reduced-motion`; the namespace is Tailwind's own, since its `duration-*` reads
+  `--transition-duration-*` and a bare number never reaches the theme), `density` (`touch`, or `desktop`: compact controls on a
   fine pointer) and `defaultMode` (the starting mode ahead of the system
   preference). Lightness and
   per-token chroma are fixed from the calibration, but for the dark `tint`, `ok`, `warn` and
@@ -38,7 +39,9 @@ stead's `design/07-interface.md`.
   `segment`) hold every control minimum and vertical padding, both platforms seed their touch
   values, and under `desktop` the web overrides them with the compact set in a `(pointer: fine)`
   `:root` rule in `@layer base`, the cascade the dark layer rides, so no cell and no component
-  carries a density class. Native is touch-only and ignores the knob. Rejected: a `fine:` variant
+  carries a density class. Whatever the knob, a `data-density` attribute on the web root pins a
+  density (`desktop` the compact set, `touch` the touch set back under a fine pointer), so a
+  screenshot addresses either on any device. Native is touch-only and ignores the knob. Rejected: a `fine:` variant
   in the cells (an interaction condition in a shared cell, meaningless on native) and a smaller
   type scale on the desktop (`body` at 16 is a touch fact that already fits the 32 px floor, and
   one scale holds at every width).
@@ -56,17 +59,20 @@ stead's `design/07-interface.md`.
   family mode (a state and a data value are two concepts, so two names).
 - Per-token overrides ride two schema maps: `colors` (`shared`/`light`/`dark`) and `scales`
   (full custom-property names). One `theme` option, validated by ui-core's zod schema; a
-  two-platform consumer passes the same object to `solidUi` and `nativeUi`. Rejected: an
+  two-platform consumer passes the same object to each UI plugin. Rejected: an
   `app.theme` field (theme is UI-domain, `app` stays identity) and documented CSS-variable
   overrides (typed options over glue).
 - Emission returns token records, never CSS text (`themeTokens`, `modeTokens`,
-  `compactTokens`, `shadowUtilities`): records validate per key, need no escaping, and keep ui-core free of
+  `compactTokens`, `reducedMotionTokens`, `shadowUtilities`): records validate per key, need no escaping, and keep ui-core free of
   `@fcalell/cli`. Each plugin wraps the records in its own entry; both wrap the two shadows in
   `@utility` rules because the `--shadow-*` theme namespace does not resolve into RN's
-  `boxShadow`.
+  `boxShadow`. The web keys each mode on a class scope, `.dark` on the root and `.light` below it
+  restoring the light set, so a light subtree renders light under a dark page.
 - Fonts split by fact: the theme names the families (`--font-sans`, `--font-mono`, each ahead of
   its platform fallback), each plugin's `fonts` option carries the files (a woff2 with fallback
-  metrics on web, an expo-font source on native). Rejected: a `role` on the file entry, which
+  metrics on web, an expo-font source on native). The metric fallback face's name is one rule,
+  `fallbackFace(family)` in `./tokens`, which the family stack names second and the web plugin
+  declares its `@font-face` under, so the two cannot disagree. Rejected: a `role` on the file entry, which
   put the same fact in two places and let the two disagree.
 
 ## Words
@@ -82,13 +88,13 @@ prop on the molecule that draws it, never a key.
 
 ## Matrices and the sharing line
 
+- `FAMILIES` (`./variants`) registers every matrix by its table's name with its axes read off the
+  table, and `matrixCells` enumerates them into cells (`BUTTON.act.primary`): the verify suites and
+  react-ui's showcase read the same list.
 - Matrices hold the platform-invariant cells only: fills, borders, ink, rungs, radius, type role,
   weight, family, and a control's minimum size. Display, alignment, and every interaction state
   are platform overlays composed through `cn()` (RN is flex by default and web is not, so a
-  shared `flex-row` would be wrong on one). On the web the overlays are one set in `solid-ui`'s `lib/interact.ts`:
-  a hover and press wash of `ink` at 8% layered over whatever fill is there, so it reads on a
-  surface, a group and a button alike (the `edge` hairline was too close to `group` to show),
-  one `tint` focus ring for every focusable thing, and an underline on a text act. A scroller that holds nothing focusable takes focus itself (`lib/reach.ts`), so a keyboard can scroll it. A type role's cell carries its ink and, for `mono`,
+  shared `flex-row` would be wrong on one). A type role's cell carries its ink and, for `mono`,
   its family, since RN Text inherits nothing and both platforms bind `--font-mono`.
 - No arbitrary values in a cell, in either spelling. A control's horizontal padding stays a literal
   numeric; its vertical padding and every minimum height are density sizes; a row and a surface
@@ -119,7 +125,8 @@ prop on the molecule that draws it, never a key.
   control with no value anywhere and could not type a boolean field against an `Input`.
 - The roster is data: `ROSTER` in `packages/ui-core/src/roster.ts` names 54 components in four
   layers (atoms, layout molecules, shared molecules, content molecules) with their prop names,
-  the same in both plugins. Each plugin's verify suite reads every component's exported props type
+  the matrix families each draws and the states it has a form for, the same in both plugins; the
+  showcase draws exactly those cells and states. Each plugin's verify suite reads every component's exported props type
   against it with ts-morph, so a prop added on one platform, renamed, or a style channel reopened
   fails by name. A component's directory is `componentDir(name)` (`ListRow` → `list-row`).
 - Closure mechanics: every closed prop is declared `?: never` on a plain object type, never on a
@@ -150,11 +157,11 @@ prop on the molecule that draws it, never a key.
 
 ## Enforcement
 
-Three verify suites (ui-core, solid-ui, native-ui) are the design system's enforcement layer:
+Two verify suites (ui-core and native-ui) are the design system's enforcement layer:
 the derivation diffed against the calibration's reference stylesheet under the renamed roles,
 matrices asserted verbatim over their full axis products, the roster compared against every
 component's props type, closure fixtures that compile every component's `?: never` props, word
 and product-noun scans over the sources, class-literal set-equality against the native overlay
-allowlist, retired-vocabulary and cell-paste-back guards on web, and the gate fixtures. A new
+allowlist, and the gate fixtures. A new
 matrix that skips a registry, a component the roster does not name, a literal that duplicates a
 cell, or a drawn word outside `words` each fails a named check.

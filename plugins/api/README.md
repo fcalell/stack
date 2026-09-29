@@ -283,12 +283,10 @@ export const orpc = createApiQueryUtils(client);
 //   const { data } = useQuery(orpc.projects.list.queryOptions({ input: {} }));
 ```
 
-`@fcalell/plugin-solid-ui`'s `createApp` wires the same pattern for web with `@tanstack/solid-query`.
-
 #### Automatic cache invalidation (WS3.3)
 
 `createClient` records each response's `x-stack-reads` / `x-stack-writes` headers (above), keyed by
-the procedure's path. `createQueryClient` (native) and `plugin-solid-ui`'s `createApp` (web) install
+the procedure's path. `createQueryClient` installs
 a `MutationCache` that invalidates every cached query whose recorded reads intersect a succeeding
 mutation's recorded writes -- zero per-callsite client code:
 
@@ -303,18 +301,12 @@ create: procedure({ writes: ["todos"] }).mutation(...)
 A query with no `reads` never auto-invalidates; declaring `reads`/`writes` is the recommended
 pattern for any procedure with cross-feature cache dependencies. A mutation opts out with
 `meta: { skipAutoInvalidation: true }` on its TanStack `useMutation` options, which only a
-mutation that owns every cache it changes wants. `plugin-solid-ui`'s `useMutation`
-(`@fcalell/plugin-solid-ui/lib/query`) never opts out: its `updates` (optimistic or on success)
-change the cache in addition to the invalidation, so the refetch still lands what the server holds.
-A call outside the API (a better-auth client call) has no procedure to declare writes, so its
-source names them, `{ mutationFn, writes: ["organization"] }`, and the web default client
-invalidates them the same way. A query outside the API records no reads from a response, so it
-declares them on its TanStack options as `meta: { reads: ["member", "invitation"] }`;
+mutation that owns every cache it changes wants. A query outside the API records no reads from a
+response, so it declares them on its TanStack options as `meta: { reads: ["member", "invitation"] }`;
 `invalidateForWrites` matches a query's declared `meta.reads` before the reads recorded for its
 key, so a declared query refetches on those writes like an API query.
 
-Supplying a custom `mutationCache` (native) or `queryClient` (web) to `createQueryClient` /
-`createApp` opts out of auto-invalidation entirely -- the caller owns invalidation then.
+Supplying a custom `mutationCache` to `createQueryClient` opts out of auto-invalidation entirely -- the caller owns invalidation then.
 
 #### Record-scoped abilities: `useAbility` (WS6.3)
 
@@ -362,12 +354,6 @@ A role change invalidates the org layer: a mutation that declares `writes` on an
 `writes: ["member"]` on a role-change mutation) invalidates every organization's rules
 automatically, same as any other `reads`/`writes`-declared query. `ORG_RULES_QUERY_KEY` is the
 prefix for invalidating them by hand; `orgRulesQueryKey(organizationId)` is one organization's.
-
-`@fcalell/plugin-solid-ui/lib/ability` ships the same primitive for web, accessor-style:
-`const ability = useAbility(() => org().id, () => recordRules()); ability().can(...)`, plus
-`ability.pending()`, true while the organization's rules are fetched for the first time, for a
-caller that acts on a denial (a redirect) rather than hiding an affordance. This hook returns the
-`MongoAbility` itself, a shared memoized instance, so it carries no such flag.
 
 ### 8. Errors
 
@@ -565,7 +551,7 @@ createWorker({ domain: "example.com", cors: ["https://example.com"], prefix: "/r
 | `@fcalell/plugin-api/client` | `createClient()`, `RouterClient`, `ClientConfig` |
 | `@fcalell/plugin-api/tanstack-query` | `createQueryClient()`, `createApiQueryUtils()`, `QueryProvider`, `useAbility(organizationId, recordRules?)`, `ORG_RULES_QUERY_KEY`, `orgRulesQueryKey()`, query hooks -- native TanStack Query client (runtime-only) |
 | `@fcalell/plugin-api/query-invalidation` | `captureEntityHeaders()`, `invalidateForWrites()`, `handleMutationSuccess()`, `createEntityRegistry()` -- framework-agnostic auto-invalidation core (runtime-only) |
-| `@fcalell/plugin-api/ability-client` | `composeAbility()`, `fetchOrgRules(organizationId)`, `registerApiClient()`, `ORG_RULES_QUERY_KEY`, `orgRulesQueryKey()`, `PackedRulesLike` -- framework-agnostic `useAbility()` core (runtime-only), consumed by `./tanstack-query` and `@fcalell/plugin-solid-ui/lib/ability` |
+| `@fcalell/plugin-api/ability-client` | `composeAbility()`, `fetchOrgRules(organizationId)`, `registerApiClient()`, `ORG_RULES_QUERY_KEY`, `orgRulesQueryKey()`, `PackedRulesLike` -- framework-agnostic `useAbility()` core (runtime-only), consumed by `./tanstack-query` |
 | `@fcalell/plugin-api/schema` | `z` (Zod re-export), `ZodObject`, `ZodType`, `ZodRawShape` |
 | `@fcalell/plugin-api/lib/cursor` | `encodeCursor`, `decodeCursor`, `paginate`, `clampLimit`, constants |
 | `@fcalell/plugin-api/lib/slugify` | `slugify`, `isReservedSlug`, `createSlugify`, `RESERVED_SLUGS` |

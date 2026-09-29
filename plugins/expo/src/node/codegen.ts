@@ -179,7 +179,7 @@ function requireContextCall(appContextPath: string): TsExpression {
 }
 
 // Render `.stack/entry.tsx`. Composes contributed providers (outermost =
-// lowest `order`, mirroring solid's provider nesting) around the expo-router
+// lowest `order`) around the expo-router
 // root. Returns null when routing is disabled — there is no root to mount.
 export function aggregateEntry(payload: CodegenEntryPayload): string | null {
 	if (payload.appContextPath === null) return null;

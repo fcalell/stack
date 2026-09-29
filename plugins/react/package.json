@@ -1,0 +1,45 @@
+{
+	"name": "@fcalell/plugin-react",
+	"version": "0.0.0",
+	"type": "module",
+	"sideEffects": false,
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		},
+		"./codegen": {
+			"types": "./dist/node/codegen.d.ts",
+			"default": "./dist/node/codegen.js"
+		}
+	},
+	"files": [
+		"dist",
+		"src",
+		"templates",
+		"README.md",
+		"tsconfig.json",
+		"tsconfig.build.json"
+	],
+	"license": "MIT",
+	"scripts": {
+		"build": "tsc -p tsconfig.build.json",
+		"prepare": "pnpm build",
+		"check-types": "tsc --noEmit --pretty",
+		"lint": "biome check --write --unsafe",
+		"check": "pnpm check-types && pnpm lint",
+		"clear": "rm -rf dist node_modules .turbo",
+		"test": "node --test 'test/**/*.test.ts'"
+	},
+	"dependencies": {
+		"@fcalell/cli": "workspace:*",
+		"@fcalell/plugin-vite": "workspace:*",
+		"@tanstack/router-generator": "^1.167.39",
+		"zod": "^4.3.6"
+	},
+	"devDependencies": {
+		"@fcalell/typescript-config": "workspace:*",
+		"@types/node": "^25.5.0",
+		"typescript": "^5.9.3"
+	}
+}

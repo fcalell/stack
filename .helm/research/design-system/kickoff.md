@@ -138,10 +138,7 @@ only, or aimed at a system that already drifts; none is adopted.
 | --- | --- | --- |
 | Google `design.md` spec + `@google/design.md lint` and `diff` (github.com/google-labs-code/design.md) | the one open, tool-neutral definition format: YAML front-matter tokens (colors, typography, rounded, spacing, components with `{ref}` aliases), eight fixed body sections, a linter (schema, broken refs, WCAG contrast per component pair, missing sections, exit 1) and a token diff with a `regression` flag | stack **emits** `DESIGN.md` from `ui-core` (one emitter beside `emit.ts`); `lint` runs in `check`; `diff` runs in CI; the file is what Claude Design, `/design`, and every agent read as the contract |
 | plugin87 `ux-ui-agent-skills` (github.com/plugin87/ux-ui-agent-skills) | the most measurable "done" in the ecosystem: 43 gates, 31 of them in a headless browser (real-render contrast light and dark per state, target size, overflow at 280/320/414, axe, focus trap, keyboard, reduced motion, "declared states visibly change"), plus a `design-critic` agent that must render before it speaks | **not installed** (Python + house style); its gate design is re-implemented as stack's own Playwright suite over the showcase (§6 Done) |
-| impeccable (github.com/pbakaus/impeccable) | `detect`: 61 deterministic AI-tell and quality rules with CI exit codes; `craft-floor.md`: a numeric build floor; `audit` /20 and `critique` /40 as review input; writes standard `DESIGN.md` | installed; `detect` in CI over `plugins/react-ui` and consumers; the craft floor folded into §6 Beautiful; scores advisory, never gates |
-| Vercel `web-design-guidelines` (github.com/vercel-labs/agent-skills) | zero-setup code-level UI hygiene audit that speaks Tailwind (`focus-visible`, `min-w-0`, `truncate`, `tabular-nums`, forms, motion, touch, safe areas, dark mode) | run on every change touching UI code; its copy rules (Title Case, `&`) are overridden by ours (sentence case, glossary) |
-| Anthropic `frontend-design` plugin + the `## Design system` block in `CLAUDE.md` | the anti-default-look list and the precedence rule: the project's system beats the model's taste | installed; the `CLAUDE.md` block points at `DESIGN.md` so `/design` artboards inherit the contract |
-| OneRedOak `design-review` agent pattern (github.com/OneRedOak/claude-code-workflows) | the simplest screenshot-backed review agent: Playwright, three viewports, seven phases, Blocker to Nit triage, "problems over prescriptions" | forked as stack's `design-critic` subagent with §6 Beautiful as its rubric |
+| impeccable, Vercel `web-design-guidelines`, Anthropic `frontend-design`, OneRedOak `design-review` | read once for what §6 lacked: impeccable's craft floor, Vercel's code-hygiene checklist, the anti-default list and the precedence rule, the seven-phase screenshot review | **not installed** (each carries a house taste that competes with the rubric, and a skill's description fires on its own). Their unique content is folded into `rubric.md` and stack's own agents in `.claude/agents/`: `design-critic` (measures, interacts, judges, runs the hygiene checklist), `designer` (drafts artboards on the real CSS), `implementer`. `impeccable detect` was run on a fixture and dropped: the contract makes its source rules impossible by construction, its render rules are §6 Done rows, and it flags Inter as an overused font |
 | bundled `dataviz` skill and its `validate_palette` script | the only runnable chart-palette gate (hue order, OKLCH L bands, chroma floor, CVD separation ΔE ≥ 8, mark contrast ≥ 3:1) | the chip and status families and any chart ramp pass it; martechthings has `BarChart` and `Meter` |
 | `VoltAgent/awesome-design-md` | 73 `DESIGN.md` files reverse-engineered from the public CSS of Stripe, Vercel, Linear, Claude and others: measured values, not impressions | a second source for the reference sheet beside Mobbin (Stage 0.1) |
 | `secondsky/tailwind-v4-shadcn` skill, `mattbx/shadcn-component-review` | Tailwind v4 `@theme inline` and OKLCH dark-mode mechanics; a "semantic tokens only, `gap` over `space-y`, `size-*`" component review | reference only; no shadcn components |
@@ -189,11 +186,10 @@ a rubric for density, information design, and node canvases.
 | overflow and clipping | no horizontal overflow at 320, 390, 768, 1280, 1440; no clipped text at 200% text spacing | Playwright |
 | accessibility | axe-core zero serious or critical; every control keyboard-operable; visible focus ≥ 3:1 not obscured by sticky elements; overlays trap and return focus | `@axe-core/playwright` plus scripted checks |
 | states | every declared state produces a visible change (non-zero pixel diff from rest); reduced-motion path preserves state | Playwright |
-| motion | `prefers-reduced-motion` honoured without a global kill; transform and opacity only; no `transition: all` | Vercel audit plus lint |
+| motion | `prefers-reduced-motion` honoured without a global kill; transform and opacity only; no `transition: all` | critic hygiene step plus lint |
 | screenshots | every showcase cell matches its committed baseline | Playwright `toHaveScreenshot` in a pinned container |
 | console | zero errors or warnings on every showcase page | Playwright |
-| AI-tell detector | `impeccable detect` exit 0 | CI |
-| code hygiene | Vercel `web-design-guidelines` audit clean on changed files | per change |
+| code hygiene | the critic's hygiene checklist (`.claude/agents/design-critic.md` step 6) clean on the files that draw the unit | per unit |
 
 A unit is done when every row is green and its roster entry is written. Nothing here is judged.
 
@@ -222,8 +218,7 @@ Numeric tells, checked before anyone looks:
    AI-default looks (cream + serif + terracotta; near-black + acid accent; broadsheet hairlines;
    the uniform rounded-card kit; tracked all-caps eyebrows with middle dots and arrows).
 
-The critic (stack's `design-critic` subagent, forked from OneRedOak with this list as its
-rubric): renders the unit at 1280 and 390, light and dark, pointer parked off-screen,
+The critic (stack's `design-critic` subagent, `rubric.md` as its rubric): renders the unit at 1280 and 390, light and dark, pointer parked off-screen,
 transitions disabled; clicks every control; returns **ship / rework / reject** with every finding
 tied to a file and line, a gate row, or a screenshot; "a passing gate is never evidence of
 taste". It runs before fcalell sees anything.
@@ -237,10 +232,13 @@ brief, reviews every result against the rubric and the checks, publishes and rep
 artboards, records progress, and asks fcalell only the questions that are his: taste calls on
 artboards, and decisions with more than one defensible shape.
 
-**Implementers**: Opus 5.5 at medium effort, one per unit of work, in isolated worktrees when they
-run in parallel. Define them once as `.claude/agents/implementer.md` in stack (model and effort in
-the frontmatter; verify the exact keys against the current Claude Code docs, do not recall them).
-Each brief is self-contained: the unit's goal, the files it owns, the contract rules it must obey
+**Designer** (`.claude/agents/designer.md`, Opus 5.5 at high effort): drafts an artboard on the
+real CSS in contract classes from the reference sheet and the rubric, renders it, measures it
+against the pattern's range, and reports every contract gap. The orchestrator publishes the board;
+fcalell judges it. The designer never implements a component.
+
+**Implementers** (`.claude/agents/implementer.md`, Opus 5.5 at medium effort): one per unit of
+work, in isolated worktrees when they run in parallel. Each brief is self-contained: the unit's goal, the files it owns, the contract rules it must obey
 (`~/.claude/rules/ui.md`, `.helm/agents/conventions.md`), the reference crops and artboard it
 implements, the check it must run, and what it must report. An implementer never decides a look;
 it implements an approved one and reports where the contract could not express it.
@@ -310,12 +308,10 @@ CSS of Stripe, Vercel, Linear, Claude and others; cross-check Mobbin winners aga
 **0.2 Rubric.** Fill §6 Beautiful's line 1 with the sheet's numbers per pattern. Output:
 `rubric.md` in this folder, the file the critic agent loads.
 
-**0.2b QA toolchain.** Install the `frontend-design` plugin, `impeccable`, the Vercel
-`web-design-guidelines` skill, and `@google/design.md`; write the `## Design system` block in
-stack's and each consumer's `CLAUDE.md` pointing at the emitted `DESIGN.md`; define
-`.claude/agents/design-critic.md` (forked from OneRedOak's agent, rubric = §6 Beautiful,
-Playwright or Claude in Chrome for screenshots) and `.claude/agents/implementer.md`. Verify each
-tool's current install command and the agent frontmatter keys against its docs before use.
+**0.2b Agents.** Define `.claude/agents/design-critic.md`, `designer.md` and `implementer.md`
+in stack (§7), frontmatter keys verified against the current Claude Code docs; no third-party
+skill is installed. The `## Design system` block in stack's and each consumer's `CLAUDE.md`,
+pointing at the emitted `DESIGN.md`, is written at 0.4 when the file exists.
 
 **0.3 React plugins scaffold.** `plugins/react` (TanStack Router file routing via codegen,
 bootstrap, providers virtual module, meta) and `plugins/react-ui` (emits `app.css` from ui-core,
@@ -388,8 +384,7 @@ example. Output: martechthings' `design-language.md` rewritten from the approved
 
 Screenshot baselines over every showcase cell × mode × density, committed and run in a pinned
 container in stack's CI (stack has no `.github/` today; create it); the full §6 Done table
-promoted into stack's `check` with the verify suites; `impeccable detect` and `design.md diff` in
-CI. A build rule in `.helm/agents/` for stack and every consumer: a screen is done when every
+promoted into stack's `check` with the verify suites; `design.md diff` in CI. A build rule in `.helm/agents/` for stack and every consumer: a screen is done when every
 Done row is green, the critic returned ship, and fcalell signed off on the render.
 
 ### Stage 5. Close the design loop

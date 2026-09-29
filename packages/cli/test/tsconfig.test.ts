@@ -128,7 +128,7 @@ function diagnostics(dir: string): string[] {
 
 const split = () =>
 	tsconfigTemplate({
-		solid: true,
+		web: true,
 		native: false,
 		worker: true,
 		node: false,
@@ -166,7 +166,7 @@ document.title;
 
 const nodeSplit = () =>
 	tsconfigTemplate({
-		...tsconfigLayout(["api", "node", "solid"]),
+		...tsconfigLayout(["api", "node", "vite"]),
 		procedurePaths: { "virtual:stack-procedure": ["./.stack/procedure.ts"] },
 		nativeTypes: [],
 	});

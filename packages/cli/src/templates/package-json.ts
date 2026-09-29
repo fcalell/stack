@@ -28,21 +28,24 @@ export function packageJsonTemplate(options: PackageJsonOptions): string {
 	}
 
 	const hasNative = options.plugins.includes("expo");
-	if (hasNative) {
-		// React's types back the app's JSX (`react/jsx-runtime`) so the native
-		// `tsconfig.app.json` resolves the automatic runtime.
-		devDeps["@types/react"] = "~19.2.0";
+	const hasReactDom = options.plugins.includes("react");
+	if (hasNative || hasReactDom) {
+		// React's types back the app's JSX (`react/jsx-runtime`) so the app's
+		// tsconfig resolves the automatic runtime. The native app's React is
+		// the one Expo pins.
+		devDeps["@types/react"] = hasNative ? "~19.2.0" : "^19.3.0";
+	}
+	if (hasReactDom) {
+		deps.react = "^19.3.0";
+		deps["react-dom"] = "^19.3.0";
+		devDeps["@types/react-dom"] = "^19.3.0";
 	}
 
 	for (const name of options.plugins) {
 		deps[`@fcalell/plugin-${name}`] = "workspace:*";
 	}
 
-	const hasSolid =
-		options.plugins.includes("solid") || options.plugins.includes("solid-ui");
-	if (hasSolid) {
-		deps["solid-js"] = "^1.9.0";
-	}
+	const hasWeb = tsconfigLayout(options.plugins).web;
 
 	const pkg: Record<string, unknown> = {
 		name: options.name,
@@ -51,7 +54,7 @@ export function packageJsonTemplate(options: PackageJsonOptions): string {
 		type: "module",
 	};
 
-	if (hasSolid) {
+	if (hasWeb) {
 		pkg.imports = { "#/*": "./src/*" };
 	}
 
@@ -63,7 +66,7 @@ export function packageJsonTemplate(options: PackageJsonOptions): string {
 		// An app with a worker is a solution of two projects, which only
 		// `tsc -b` checks: `--noEmit` on its `files: []` root checks nothing.
 		"check-types":
-			(hasNative || hasSolid) && hasWorker ? "tsc -b" : "tsc --noEmit",
+			(hasNative || hasWeb) && hasWorker ? "tsc -b" : "tsc --noEmit",
 		lint: "biome check --write --unsafe",
 		check: "pnpm check-types && pnpm lint",
 	};

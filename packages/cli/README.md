@@ -28,8 +28,10 @@ Which plugins do you want?
   Auth         (@fcalell/plugin-auth)
   API          (@fcalell/plugin-api)
   Vite         (@fcalell/plugin-vite)
-  Solid        (@fcalell/plugin-solid)
-  Solid UI     (@fcalell/plugin-solid-ui)
+  React        (@fcalell/plugin-react)
+  Design System (@fcalell/plugin-react-ui)
+  Expo         (@fcalell/plugin-expo)
+  Native UI    (@fcalell/plugin-native-ui)
 ```
 
 Then prompts for plugin-specific config (dialect, cookie prefix, organizations) and scaffolds the project. Boilerplate (virtual worker, env types, wrangler config) is generated to `.stack/` automatically.
@@ -45,8 +47,7 @@ import { db } from "@fcalell/plugin-db";
 import { auth } from "@fcalell/plugin-auth";
 import { api } from "@fcalell/plugin-api";
 import { vite } from "@fcalell/plugin-vite";
-import { solid } from "@fcalell/plugin-solid";
-import { solidUi } from "@fcalell/plugin-solid-ui";
+import { react } from "@fcalell/plugin-react";
 
 export default defineConfig({
   app: { name: "my-app", domain: "example.com" },
@@ -55,8 +56,7 @@ export default defineConfig({
     auth({ cookies: { prefix: "myapp" }, organization: true }),
     api(),
     vite(),
-    solid(),
-    solidUi(),
+    react({ description: "My app" }),
   ],
 });
 ```
@@ -213,8 +213,8 @@ Interactive project scaffold. Creates the directory if it doesn't exist, or uses
 | `db` plugin | `src/schema/index.ts`, `src/migrations/` |
 | `auth` plugin | `src/worker/plugins/auth.ts` (callback template) |
 | `api` plugin | `src/worker/routes/`, `wrangler.toml` |
-| `solid` plugin | `src/app/pages/_layout.tsx`, `src/app/pages/index.tsx` |
-| An app (`solid` or `expo`) with a worker (`api` or `db`) | `tsconfig.app.json` and `tsconfig.worker.json` under a solution `tsconfig.json`, and a `check-types` of `tsc -b`: the DOM and the Workers runtime each stay out of the other's program. The worker project emits declarations into `.stack/types/` and the app references it, so the app types `AppRouter` without loading a worker source |
+| `react` plugin | `src/app/routes/__root.tsx`, `src/app/routes/index.tsx` (TanStack Router file routes) |
+| An app (`vite` or `expo`) with a worker (`api` or `db`) | `tsconfig.app.json` and `tsconfig.worker.json` under a solution `tsconfig.json`, and a `check-types` of `tsc -b`: the DOM and the Workers runtime each stay out of the other's program. The worker project emits declarations into `.stack/types/` and the app references it, so the app types `AppRouter` without loading a worker source |
 
 Required sibling plugins are auto-resolved: selecting `auth` automatically adds `db`, `api`, and `cloudflare`. Existing files are never overwritten. After scaffolding, `stack generate` runs to produce `.stack/` files.
 
@@ -226,11 +226,12 @@ Required sibling plugins are auto-resolved: selecting `auth` automatically adds 
 | `.stack/worker.ts` | `api.slots.workerSource` | Virtual worker entry (inlined options, convention-based) |
 | `.stack/wrangler.toml` | `cloudflare.slots.wranglerToml` | Merged wrangler config with all plugin bindings |
 | `.stack/vite.config.ts` | `vite.slots.viteConfig` | Generated Vite config with framework plugins |
-| `.stack/entry.tsx` | `solid.slots.entrySource` | App bootstrap |
-| `.stack/index.html` | `solid.slots.htmlSource` | HTML shell |
-| `.stack/virtual-providers.tsx` | `solid.slots.providersSource` | Provider composition |
-| `.stack/app.css` | `solidUi.slots.appCssSource` | Aggregated stylesheet |
-| `.stack/routes.d.ts` | `solid.slots.routesDtsSource` | Typed route builder declarations |
+| `.stack/entry.tsx` | `react.slots.entrySource` / `expo.slots.entrySource` | App bootstrap |
+| `.stack/index.html` | `react.slots.htmlSource` | Web HTML shell with the `<head>` metadata |
+| `.stack/app.css` | `reactUi.slots.appCssSource` | Web stylesheet: Tailwind v4 and the ui-core token contract |
+| `.stack/virtual-providers.tsx` | `react.slots.providersSource` | Web providers composition, served as `virtual:stack-providers` |
+| `.stack/routeTree.gen.ts` | `cliSlots.postWrite` (react) | TanStack Router route tree, from its own generator |
+| `.stack/routes.d.ts` | `react.slots.routesDtsSource` / `expo.slots.routesDtsSource` | Typed route declarations |
 | `src/worker/routes/index.ts` | `api` artifact contribution | Auto-generated barrel from route files |
 | `.dev.vars` | `api.slots.env` (rendered by `cloudflare`) | Template for local dev secrets |
 
@@ -240,7 +241,6 @@ Add a plugin to an existing project. Resolves the plugin's `cliSlots.initPrompts
 
 ```bash
 stack add auth    # Prompts for cookie prefix, organizations; scaffolds callback file
-stack add solid   # Scaffolds pages directory with layout and index
 ```
 
 Validates `requires` before proceeding. If `auth` requires `db` and `db` is not configured, the CLI errors with a fix suggestion.

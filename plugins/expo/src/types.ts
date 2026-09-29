@@ -36,7 +36,7 @@ export const expoOptionsSchema = z.object({
 	minNativeBuild: minNativeBuildSchema.optional(),
 	// File-based routing. `false` disables expo-router wiring entirely (rare —
 	// a bare-RN consumer). Otherwise `appDir` overrides the routes directory
-	// (default `src/app`), mirroring `solid({ routes: { pagesDir } })`.
+	// (default `src/app`).
 	routes: z
 		.union([
 			z.literal(false),

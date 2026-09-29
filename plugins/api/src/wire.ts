@@ -18,5 +18,5 @@ export const ORG_RULES_PATH = ["auth", "orgRules"] as const;
 
 // Router prefix of the framework-owned scope lookups: plugin-auth registers
 // `[...SCOPE_ROUTES_PATH, <scope name>, "bySlug"]` per scope with a slug, and
-// solid-ui's `ScopeBoundary` calls it. Owned here for the same reason.
+// the web plugin's `ScopeBoundary` calls it. Owned here for the same reason.
 export const SCOPE_ROUTES_PATH = ["auth", "scope"] as const;

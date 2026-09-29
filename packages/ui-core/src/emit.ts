@@ -2,6 +2,8 @@ import type { ResolvedTheme } from "./derive.ts";
 import {
 	BREAKPOINTS,
 	DENSITY_SIZES,
+	DURATIONS,
+	EASINGS,
 	FONT_ROLES,
 	INVARIANT_COLORS,
 	MONO_FEATURES,
@@ -65,6 +67,18 @@ export function themeTokens(resolved: ResolvedTheme): Record<string, string> {
 		tokens[`--font-${role}`] = resolved.fonts[role];
 	}
 	tokens["--font-mono--font-feature-settings"] = MONO_FEATURES;
+	for (const rung of DURATIONS) {
+		tokens[`--transition-duration-${rung}`] =
+			`${resolved.motion.durations[rung]}ms`;
+	}
+	for (const easing of EASINGS) {
+		tokens[`--ease-${easing}`] =
+			`cubic-bezier(${resolved.motion.easings[easing].join(", ")})`;
+	}
+	// A bare `transition` takes the base rung and `out`, through the variables,
+	// so it stills with them under reduced motion.
+	tokens["--default-transition-duration"] = "var(--transition-duration-base)";
+	tokens["--default-transition-timing-function"] = "var(--ease-out)";
 	for (const token of INVARIANT_COLORS) {
 		tokens[`--color-${token}`] = resolved.invariantColors[token];
 	}
@@ -74,17 +88,35 @@ export function themeTokens(resolved: ResolvedTheme): Record<string, string> {
 	return tokens;
 }
 
-// The density sizes a fine pointer takes, keyed by full custom-property
-// name: the compact set under `density: "desktop"`, nothing under `touch`.
-// Only the web renders it, inside its own pointer query; `themeTokens`
-// already seeds the touch set on both platforms, so every cell that names a
-// size resolves either way.
-export function compactTokens(resolved: ResolvedTheme): Record<string, string> {
+// One density set's sizes, keyed by full custom-property name, whatever the
+// knob says: the web draws either set on demand under a `data-density`
+// attribute on the root, which is how a screenshot pins a density.
+export function densityTokens(
+	resolved: ResolvedTheme,
+	set: "touch" | "compact",
+): Record<string, string> {
 	const tokens: Record<string, string> = {};
-	if (resolved.knobs.density !== "desktop") return tokens;
 	for (const size of DENSITY_SIZES) {
-		tokens[`--spacing-${size}`] = resolved.sizes.compact[size];
+		tokens[`--spacing-${size}`] = resolved.sizes[set][size];
 	}
+	return tokens;
+}
+
+// The density sizes a fine pointer takes: the compact set under
+// `density: "desktop"`, nothing under `touch`. Only the web renders it,
+// inside its own pointer query; `themeTokens` already seeds the touch set on
+// both platforms, so every cell that names a size resolves either way.
+export function compactTokens(resolved: ResolvedTheme): Record<string, string> {
+	if (resolved.knobs.density !== "desktop") return {};
+	return densityTokens(resolved, "compact");
+}
+
+// Every duration at 0, which the web renders under
+// `prefers-reduced-motion: reduce`: each transition and animation reads its
+// duration through a rung's variable, so none moves.
+export function reducedMotionTokens(): Record<string, string> {
+	const tokens: Record<string, string> = {};
+	for (const rung of DURATIONS) tokens[`--transition-duration-${rung}`] = "0ms";
 	return tokens;
 }
 

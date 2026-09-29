@@ -67,13 +67,12 @@ plugin, not core**. Full rationale: `.helm/knowledge/product/philosophy.md`.
 - **`AppConfig` / top-level `app`** takes only cross-cutting identity (`name`, `domain`): values
   consumed by more than one plugin. A value that only makes sense to one plugin's domain does
   **not** go on `app`; it goes on that plugin's options. HTML `<head>` metadata (`title`,
-  `description`, `icon`, `themeColor`, `lang`) lives on `plugin-solid` because it's meaningless
-  without a frontend.
-- **Plugin options** are the home for domain config. Typography → `solidUi({ fonts })`. API prefix
-  → `api({ prefix })`. Drizzle dialect → `db({ dialect })`. Types for those options live in the
-  plugin's `src/types.ts`, or alongside the plugin that renders them at build time (e.g.
-  `FontEntry` sits in `@fcalell/plugin-solid-ui/node/fonts` because `themeFontsPlugin` consumes
-  it).
+  `description`, `icon`, `themeColor`, `lang`) lives on `plugin-react` because it's meaningless
+  without a web app; the deep-link scheme lives on `plugin-expo` because it's meaningless without
+  a native app.
+- **Plugin options** are the home for domain config. Typography → `reactUi({ fonts })`. API
+  prefix → `api({ prefix })`. Drizzle dialect → `db({ dialect })`. Types for those options live in
+  the plugin's `src/types.ts`, or alongside the plugin that renders them at build time.
 - **Runtime data types** (e.g. `FontEntry`, design tokens) belong to the plugin that renders or
   emits them at build time; downstream plugins import via its subpath export and re-export from
   their own `types.ts` for consumers.
@@ -109,8 +108,8 @@ shared contract): `node/` (codegen) and `server/` never import each other, and `
 Runtime plugin (if any) is exported from the `./runtime` subpath. The CLI discovers it by checking
 `package.json` exports. Runtime factories take plain options, not `PluginConfig`.
 
-Config factory function name matches plugin name: `db()`, `auth()`, `api()`, `solid()`,
-`solidUi()`.
+Config factory function name matches plugin name: `db()`, `auth()`, `api()`, `react()`,
+`expo()`, `nativeUi()`.
 
 Third-party plugins published outside the `@fcalell/plugin-*` namespace must pass an explicit
 `package` option; first-party plugins omit it and fall back to the `@fcalell/plugin-${name}`

@@ -1,6 +1,6 @@
 # @fcalell/plugin-vite
 
-Framework-agnostic Vite lifecycle plugin for the `@fcalell/stack` framework. Provides Tailwind v4 and the `virtual:stack-providers` module used by the generated app entry. Required by any framework plugin that runs a Vite dev/build pipeline (e.g. `plugin-solid`); list it explicitly alongside the framework plugin in your `stack.config.ts`.
+Framework-agnostic Vite lifecycle plugin for the `@fcalell/stack` framework. Provides Tailwind v4 and the `virtual:stack-providers` module used by the generated app entry. Required by any framework plugin that runs a Vite dev/build pipeline; list it explicitly alongside the framework plugin in your `stack.config.ts`.
 
 **Stack:** Vite + Tailwind v4 (all internal -- consumers don't import them)
 
@@ -10,11 +10,11 @@ Framework-agnostic Vite lifecycle plugin for the `@fcalell/stack` framework. Pro
 pnpm add @fcalell/plugin-vite
 ```
 
-`stack init` adds this automatically when you pick `solid` in the interactive picker; `stack add solid` does the same for an existing project. The consumer declares `vite` itself (the plugin's `devDependencies`, which `stack init` writes): the generated config imports it, and the dev process and the build step run the consumer's own bin, resolved from its directory, so no PATH or registry lookup stands in.
+The consumer declares `vite` itself (the plugin's `devDependencies`, which `stack init` writes): the generated config imports it, and the dev process and the build step run the consumer's own bin, resolved from its directory, so no PATH or registry lookup stands in.
 
 ## How it works
 
-`plugin-vite` owns the Vite lifecycle and exposes `vite.slots.configImports` + `vite.slots.pluginCalls` as the contribution surfaces. Framework plugins (like `plugin-solid`) inject their Vite plugins by contributing into those slots; `vite.slots.viteConfig` is a derived slot that aggregates everything into `.stack/vite.config.ts`. `plugin-vite` then contributes a `vite dev` process to `cliSlots.devProcesses` and a `vite build` step to `cliSlots.buildSteps`.
+`plugin-vite` owns the Vite lifecycle and exposes `vite.slots.configImports` + `vite.slots.pluginCalls` as the contribution surfaces. Framework plugins inject their Vite plugins by contributing into those slots; `vite.slots.viteConfig` is a derived slot that aggregates everything into `.stack/vite.config.ts`. `plugin-vite` then contributes a `vite dev` process to `cliSlots.devProcesses` and a `vite build` step to `cliSlots.buildSteps`.
 
 Contributions are typed AST specs — `TsImportSpec` for imports and `TsExpression` for plugin calls — so plugin authors never concatenate source strings:
 
@@ -24,19 +24,19 @@ import type { TsExpression, TsImportSpec } from "@fcalell/cli/ast";
 
 contributes: [
   vite.slots.configImports.contribute(
-    (): TsImportSpec => ({ source: "vite-plugin-solid", default: "solidPlugin" }),
+    (): TsImportSpec => ({ source: "framework-plugin", default: "frameworkPlugin" }),
   ),
   vite.slots.pluginCalls.contribute(
     (): TsExpression => ({
       kind: "call",
-      callee: { kind: "identifier", name: "solidPlugin" },
+      callee: { kind: "identifier", name: "frameworkPlugin" },
       args: [],
     }),
   ),
 ],
 ```
 
-The generated config always includes the providers virtual-module plugin as a base plugin (and Tailwind v4 once `plugin-solid-ui` is in the config), with framework-contributed plugins appended after.
+The generated config always includes the providers virtual-module plugin as a base plugin, with framework-contributed plugins appended after.
 
 ## Config options
 

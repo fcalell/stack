@@ -1,0 +1,62 @@
+/* The parts of the sheet only the web owns. The token contract — the `@theme`
+   map, the per-mode colors and the shadow utilities — is emitted into
+   `.stack/app.css` from `@fcalell/ui-core`, which also imports `tailwindcss`
+   before this file. Importing it again here would emit preflight twice. */
+
+/* `.stack/app.css` imports `tailwindcss` with `source(none)`, so no automatic
+   content detection runs; the component sources are declared explicitly,
+   relative to this file. */
+@source "./";
+
+/* The variant matrices are class strings inside `@fcalell/ui-core`, and a cva
+   composes them at runtime, so a build that never scans that package emits
+   nothing for a cell no component also spells literally. Two paths are listed
+   because the package sits one level away in an install and four in a
+   workspace checkout; Tailwind ignores a source path that does not exist. */
+@source "../../../ui-core/src";
+@source "../../../../packages/ui-core/src";
+
+@layer base {
+	:root {
+		color-scheme: light;
+	}
+
+	*,
+	*::before,
+	*::after {
+		border-color: var(--color-edge);
+	}
+
+	html {
+		font-family: var(--font-sans);
+	}
+
+	body {
+		background-color: var(--color-canvas);
+		color: var(--color-ink);
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+	}
+}
+
+@keyframes content-show {
+	from {
+		opacity: 0;
+		transform: scale(0.96);
+	}
+	to {
+		opacity: 1;
+		transform: scale(1);
+	}
+}
+
+@keyframes content-hide {
+	from {
+		opacity: 1;
+		transform: scale(1);
+	}
+	to {
+		opacity: 0;
+		transform: scale(0.96);
+	}
+}

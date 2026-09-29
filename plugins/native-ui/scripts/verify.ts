@@ -995,7 +995,7 @@ check("b-roster", "every component carries exactly its roster props", () => {
 	const dirs = new Set(readdirSync(COMPONENT_DIR));
 	const seen = new Set<string>();
 	let props = 0;
-	for (const [, name, expected] of rosterEntries()) {
+	for (const [, name, { props: expected }] of rosterEntries()) {
 		const dir = componentDir(name);
 		seen.add(dir);
 		const file = resolve(COMPONENT_DIR, dir, "index.tsx");

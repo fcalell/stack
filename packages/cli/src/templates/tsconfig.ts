@@ -4,7 +4,8 @@
 // (`node()` in place of `cloudflare()`): its server runs under Node, with no
 // Workers globals, and holds the consumer's services under `src/server`.
 export interface TsconfigLayout {
-	solid: boolean;
+	// A DOM app built by Vite: `vite` in the config.
+	web: boolean;
 	native: boolean;
 	worker: boolean;
 	node: boolean;
@@ -12,7 +13,7 @@ export interface TsconfigLayout {
 
 export function tsconfigLayout(plugins: readonly string[]): TsconfigLayout {
 	return {
-		solid: plugins.includes("solid") || plugins.includes("solid-ui"),
+		web: plugins.includes("vite"),
 		native: plugins.includes("expo"),
 		worker: plugins.includes("api") || plugins.includes("db"),
 		node: plugins.includes("node") && !plugins.includes("cloudflare"),
@@ -20,7 +21,7 @@ export function tsconfigLayout(plugins: readonly string[]): TsconfigLayout {
 }
 
 function isSplit(layout: TsconfigLayout): boolean {
-	return layout.worker && (layout.native || layout.solid);
+	return layout.worker && (layout.native || layout.web);
 }
 
 // The consumer tsconfig that compiles the worker's sources, the one holding
@@ -77,7 +78,7 @@ export function tsconfigTemplate(
 	options: TsconfigOptions,
 ): Array<[string, string]> {
 	if (isSplit(options)) {
-		const base = options.native ? nativeApp(options.nativeTypes) : solidApp();
+		const base = options.native ? nativeApp(options.nativeTypes) : webApp();
 		return [
 			["tsconfig.json", render(SOLUTION)],
 			["tsconfig.app.json", render(appProject(base, options.node))],
@@ -89,8 +90,8 @@ export function tsconfigTemplate(
 	}
 
 	const single = {
-		extends: options.solid
-			? "@fcalell/typescript-config/solid-vite.json"
+		extends: options.web
+			? "@fcalell/typescript-config/web-vite.json"
 			: "@fcalell/typescript-config/node-tsx.json",
 		compilerOptions: options.worker
 			? { paths: options.procedurePaths }
@@ -187,9 +188,9 @@ function workerProject(options: TsconfigOptions): Project {
 	};
 }
 
-function solidApp(): Project {
+function webApp(): Project {
 	return {
-		extends: "@fcalell/typescript-config/solid-vite.json",
+		extends: "@fcalell/typescript-config/web-vite.json",
 		compilerOptions: {},
 		include: ["src", ".stack/routes.d.ts"],
 	};

@@ -125,40 +125,11 @@ export function tailwindBuild(
 
 // ── Matrix-cell enumeration ─────────────────────────────────────────
 
-export type AnyCva = (props: Record<string, string>) => string;
-
-export interface Family {
-	name: string;
-	cva: AnyCva;
-	axes: Record<string, readonly string[]>;
-}
-
-export function classes(value: string): string[] {
-	return value.split(/\s+/).filter(Boolean);
-}
-
-// One axis value's cell is what its rendering adds over the rendering every
-// other value of that axis shares. A compound row folds into the axis it
-// keys off, which is what makes `bg-accent` reachable as BUTTON's primary cell.
-export function matrixCells(families: Family[]): Map<string, Set<string>> {
-	const out = new Map<string, Set<string>>();
-	for (const family of families) {
-		for (const [axis, values] of Object.entries(family.axes)) {
-			const sets = values.map(
-				(value) => new Set(classes(family.cva({ [axis]: value }))),
-			);
-			const first = sets[0];
-			if (!first) continue;
-			const shared = new Set(
-				[...first].filter((name) => sets.every((set) => set.has(name))),
-			);
-			values.forEach((value, index) => {
-				const set = sets[index];
-				if (!set) return;
-				const cell = new Set([...set].filter((name) => !shared.has(name)));
-				if (cell.size > 0) out.set(`${family.name}.${axis}.${value}`, cell);
-			});
-		}
-	}
-	return out;
-}
+// The enumeration is browser-safe, so it lives with the matrices; the verify
+// scripts reach it here beside the rest of their tooling.
+export {
+	type AnyCva,
+	classes,
+	type Family,
+	matrixCells,
+} from "./variants.ts";

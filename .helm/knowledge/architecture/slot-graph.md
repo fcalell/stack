@@ -21,8 +21,8 @@ slot.derived<T, I>({ source, name, inputs, compute }) // computed from other slo
 - `list`: many contributions concatenated; optional `sortBy` gives deterministic ordering.
 - `map`: many contributions merged; duplicate keys throw.
 - `value`: at most one contribution; `seed` supplies the default when none lands; `override: true`
-  lets a later contribution replace the seed/contribution (e.g. `solid.slots.homeScaffold`, which
-  `plugin-solid-ui` overrides).
+  lets a later contribution replace the seed/contribution (e.g. `api.slots.rbacStatements`, which
+  `plugin-auth` fills from its access control).
 - `derived`: computed from other slots; the framework guarantees inputs are fully resolved before
   `compute` runs, and catches cycles at build time.
 

@@ -11,9 +11,9 @@ import { vite } from "@fcalell/plugin-vite";
 import { cloudflare } from "../src/index.ts";
 
 // The graph `stack dev` resolves for api + cloudflare + vite, over a consumer
-// directory holding the given root `.dev.vars`. `frontend` adds a plugin
-// by that name contributing nothing, for what only its presence decides.
-function devGraph(devVars?: string, frontend?: string) {
+// directory holding the given root `.dev.vars`. `web: false` leaves vite
+// out, for what only its presence decides.
+function devGraph(devVars?: string, web = true) {
 	const cwd = mkdtempSync(join(tmpdir(), "stack-cloudflare-dev-"));
 	if (devVars !== undefined) writeFileSync(join(cwd, ".dev.vars"), devVars);
 	const plugins = [
@@ -24,7 +24,7 @@ function devGraph(devVars?: string, frontend?: string) {
 			}),
 		},
 		{ factory: cloudflare, config: cloudflare() },
-		{ factory: vite, config: vite() },
+		...(web ? [{ factory: vite, config: vite() }] : []),
 	];
 	const discovered = plugins.map(
 		({ factory, config }) =>
@@ -35,13 +35,6 @@ function devGraph(devVars?: string, frontend?: string) {
 				options: config.options,
 			}) as unknown as DiscoveredPlugin,
 	);
-	if (frontend !== undefined) {
-		discovered.push({
-			name: frontend,
-			cli: { collect: () => ({ slots: {}, contributes: [] }) },
-			options: {},
-		} as unknown as DiscoveredPlugin);
-	}
 	return buildGraphFromDiscovered({
 		discovered,
 		app: { name: "cloudflare-dev", domain: "example.com" },
@@ -126,11 +119,11 @@ test("wrangler bundles the worker with the tsconfig holding its paths", async ()
 		);
 		return [dev?.args ?? [], step && "exec" in step ? step.exec.args : []];
 	};
-	for (const [frontend, expected] of [
-		["solid", "tsconfig.worker.json"],
-		[undefined, "tsconfig.json"],
+	for (const [web, expected] of [
+		[true, "tsconfig.worker.json"],
+		[false, "tsconfig.json"],
 	] as const) {
-		const graph = devGraph(undefined, frontend);
+		const graph = devGraph(undefined, web);
 		for (const args of await argsOf(graph)) {
 			const tsconfig = args[args.indexOf("--tsconfig") + 1] ?? "";
 			assert.ok(isAbsolute(tsconfig), `${tsconfig} is not absolute`);
