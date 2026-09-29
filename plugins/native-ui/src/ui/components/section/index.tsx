@@ -1,4 +1,4 @@
-import type { Act } from "@fcalell/ui-core/descriptors";
+import type { Act, Part } from "@fcalell/ui-core/descriptors";
 import { text } from "@fcalell/ui-core/variants";
 import { ChevronDown, ChevronRight } from "lucide-react-native";
 import { type ReactNode, useState } from "react";
@@ -7,10 +7,11 @@ import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { Glyph } from "../../lib/glyph";
 import { LoadingRows } from "../../lib/loading";
+import { partText } from "../../lib/parts";
 import { Count } from "../count";
 
 export interface SectionProps extends Closed {
-	title: string;
+	title: Part;
 	count?: number;
 	description?: string;
 	folded?: boolean;
@@ -41,7 +42,7 @@ export function Section({
 	const label = (
 		<>
 			<RNText className={cn(text({ role: "label" }), "uppercase")}>
-				{title}
+				{partText(title)}
 			</RNText>
 			{count !== undefined ? <Count value={count} /> : null}
 		</>

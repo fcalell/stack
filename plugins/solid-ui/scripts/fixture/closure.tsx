@@ -292,7 +292,7 @@ export const closure = (
 		<Split classList={{}} />
 		{/* @ts-expect-error closed channel */}
 		<Split className="x" />
-		<Section title="x" count={1} description="x" folded act={act} loading>x</Section>
+		<Section title={{ quoted: "x" }} count={1} description="x" folded act={act} loading>x</Section>
 		{/* @ts-expect-error closed channel */}
 		<Section title="x" class="x" />
 		{/* @ts-expect-error closed channel */}
@@ -427,7 +427,7 @@ export const closure = (
 		<Picker label="x" options={[]} value="x" onChange={noop} classList={{}} />
 		{/* @ts-expect-error closed channel */}
 		<Picker label="x" options={[]} value="x" onChange={noop} className="x" />
-		<OptionList options={[option]} value="x" onChange={noop}>x</OptionList>
+		<OptionList options={[option]} value="x" onChange={noop} loading>x</OptionList>
 		{/* @ts-expect-error closed channel */}
 		<OptionList options={[]} onChange={noop} class="x" />
 		{/* @ts-expect-error closed channel */}

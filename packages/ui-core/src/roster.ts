@@ -108,7 +108,7 @@ export const ROSTER: Record<Layer, Record<string, readonly string[]>> = {
 		],
 		Picker: ["label", "options", "value", "onChange"],
 		Menu: ["label", "items"],
-		OptionList: ["options", "value", "onChange", "children"],
+		OptionList: ["options", "value", "onChange", "loading", "children"],
 		EmptyState: ["title", "sentence", "act", "children"],
 		QueryBoundary: ["query", "sentence", "children"],
 		Toast: ["sentence", "state", "act"],

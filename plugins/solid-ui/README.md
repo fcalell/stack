@@ -303,7 +303,7 @@ own three-row form. `Part` is a string or `{ quoted }`, drawn in typographic quo
 | `Place` | `title`, `actions` (`IconAct[]`, two shown, the rest under more), `act`, `more` (labelled `Act`s under the more circle), `bleed`, children | the large title, which wraps and is never truncated, on its own line under the switcher and the circles under tablet; the scroll, the floating act; `bleed` hands the body the whole box under the top bar with no inset, no measure and no scroll, for a child that pans and scrolls itself (a canvas) |
 | `Screen` | `title`, `back` (a route), `actions`, children | the back circle, the compact title on scroll; covers the shell on the phone |
 | `Split` | `list`, `main`, `pane`, `empty` | the columns from desktop, one slot under it; the pane pushes `main` narrower from desktop, or from wide beside a `list`, and folds over it under that; `empty` fills `main` from desktop while nothing is picked |
-| `Section` | `title`, `count`, `description`, `folded`, `onToggle`, `act`, `loading`, children | the label header, folding; a foldable one is a group, never a landmark, and `onToggle` reports its new state |
+| `Section` | `title` (a part), `count`, `description`, `folded`, `onToggle`, `act`, `loading`, children | the label header, folding; a foldable one is a group, never a landmark, and `onToggle` reports its new state |
 | `Group` | `loading`, children | the group box with hairlines |
 | `List` | `loading`, children | rows on the surface |
 | `Form` | `onSubmit`, children | fields at `stack`, its bar in flow |
@@ -325,7 +325,7 @@ own three-row form. `Part` is a string or `{ quoted }`, drawn in typographic quo
 | `Picker` | `label`, `options` (`Option<V>[]` or `OptionGroup<V>[]`), `value`, `onChange`; generic over its value `V`, read off `options` alone, so an enum's options pick that enum: a bound enum field is one spread with no cast, and a value or handler outside the options is a type error; an option whose value is `null` is the empty choice, drawn in `ink-faint`, which makes `V` nullable, so a nullable enum field is the same spread and `onChange` hears `null`; in a `FormField` it takes the field's surface, label and error; a press on the open control closes its list |
 | `Menu` | `label` (read aloud on its more circle, the sheet's title), `items` (`MenuItem[]`, or `MenuItem[][]` for groups under separators: `{ label, onAct, icon?, destructive?, blocked? }`); anchored under the circle from tablet, a `Sheet` under it; arrows, Enter, Escape, focus back on the circle; the more circle of `Place` and `Screen` is the same menu |
 | `QueryBoundary` | `query` (one query or a tuple), `sentence`, children (`(data) => …`, an accessor) |
-| `OptionList` | `options`, `value`, `onChange`, children |
+| `OptionList` | `options`, `value`, `onChange`, `loading`, children |
 | `EmptyState` | `title`, `sentence`, `act`, children |
 | `Toast` | `sentence`, `state` (`done` \| `attention` \| `failed`), `act` |
 | `Banner` | `kind` (`note` \| `warn` \| `danger`), `sentence`, `act` |

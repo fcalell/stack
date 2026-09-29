@@ -1,4 +1,4 @@
-import type { Act } from "@fcalell/ui-core/descriptors";
+import type { Act, Part } from "@fcalell/ui-core/descriptors";
 import { text } from "@fcalell/ui-core/variants";
 import { ChevronDown } from "lucide-solid";
 import {
@@ -14,6 +14,7 @@ import type { Closed } from "#lib/closed.ts";
 import { cn } from "#lib/cn.ts";
 import { RING, TEXT_ACT } from "#lib/interact.ts";
 import { LoadingRows } from "#lib/loading.tsx";
+import { Parts } from "#lib/parts.tsx";
 import { Count } from "../count/index.tsx";
 
 // A titled region of a screen: the label header with its count and act.
@@ -23,7 +24,7 @@ import { Count } from "../count/index.tsx";
 // rhythm, takes `stack` above it. An `ActionBar` inside is the section's
 // own, in flow at its end, never pinned to the screen.
 export type SectionProps = Closed & {
-	title: string;
+	title: Part;
 	count?: number;
 	description?: string;
 	folded?: boolean;
@@ -46,7 +47,7 @@ export function Section(props: SectionProps) {
 	const label = () => (
 		<>
 			<h2 id={id} class={cn(text({ role: "label" }), "truncate")}>
-				{props.title}
+				<Parts parts={[props.title]} />
 			</h2>
 			<Show when={props.count !== undefined}>
 				<Count value={props.count ?? 0} />

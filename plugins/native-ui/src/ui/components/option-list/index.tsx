@@ -11,12 +11,14 @@ import type { ReactNode } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
+import { LoadingRows } from "../../lib/loading";
 import { useWords } from "../../lib/words";
 
 export interface OptionListProps extends Closed {
 	options: readonly Option[];
 	value?: string;
 	onChange: (value: string) => void;
+	loading?: boolean;
 	children?: ReactNode;
 }
 
@@ -26,9 +28,11 @@ export function OptionList({
 	options,
 	value,
 	onChange,
+	loading,
 	children,
 }: OptionListProps) {
 	const words = useWords();
+	if (loading) return <LoadingRows />;
 	return (
 		<View
 			accessibilityRole="radiogroup"
