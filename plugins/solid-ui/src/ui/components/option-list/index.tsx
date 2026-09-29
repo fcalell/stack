@@ -9,7 +9,7 @@ import { LoadingRows } from "#lib/loading.tsx";
 import { useWords } from "#lib/words.tsx";
 
 // Radio rows with a description line, the recommended one marked; the
-// children sit under the chosen option.
+// children sit under the chosen option. No `value` is no option chosen.
 export type OptionListProps = Closed & {
 	options: Option[];
 	value?: string;
@@ -23,7 +23,9 @@ export function OptionList(props: OptionListProps) {
 	return (
 		<Show when={!props.loading} fallback={<LoadingRows />}>
 			<RadioGroup.Root
-				value={props.value}
+				// Kobalte reads `undefined` as uncontrolled, keeping its own
+				// earlier pick; `""` is its none.
+				value={props.value ?? ""}
 				onChange={props.onChange}
 				class="flex flex-col"
 			>

@@ -2,13 +2,14 @@ import { SCRIM, SHEET, text } from "@fcalell/ui-core/variants";
 import * as DialogPrimitive from "@kobalte/core/dialog";
 import { ChevronLeft, X } from "lucide-solid";
 import type { JSX } from "solid-js";
-import { createEffect, createSignal, createUniqueId, Show } from "solid-js";
+import { createEffect, createSignal, createUniqueId, on, Show } from "solid-js";
 import { BarContext } from "#lib/bar.ts";
 import { Circle } from "#lib/circle.tsx";
 import type { Closed } from "#lib/closed.ts";
 import { cn } from "#lib/cn.ts";
 import { FieldContext, SheetTitleContext } from "#lib/field.ts";
 import { FitContext } from "#lib/fit.ts";
+import { focusIsFree } from "#lib/focus.ts";
 import { RING_INSET, TEXT_ACT } from "#lib/interact.ts";
 import { Inline } from "#lib/parts.tsx";
 import { reachable } from "#lib/reach.ts";
@@ -26,10 +27,12 @@ export interface SheetSubmit {
 // puts an `ActionBar` in its children instead, and the two exclude each
 // other. Content-tall from the bottom on the phone; centered at the sheet
 // width from tablet. It opens with focus on its first field, else on its
-// close circle, and gives focus back to what held it when it opened; the
-// title wraps to two lines, and it names a typing control inside that no
-// `FormField` labels. A blocked submit says its reason once tapped or
-// once a field has taken input.
+// close circle, and gives focus back to what held it when it opened; a
+// control removed while it holds focus leaves focus on the sheet, so Escape
+// still closes it. The title wraps to two lines, and it names a typing
+// control inside that no `FormField` labels. A blocked submit says its
+// reason once tapped or once a field on the page has taken input, and a new
+// `title` or `description` is a new page.
 export type SheetProps = Closed & {
 	open: boolean;
 	onClose: () => void;
@@ -69,6 +72,17 @@ export function Sheet(props: SheetProps) {
 	createEffect(() => {
 		if (!blocked()) setTapped(false);
 	});
+	// A wizard swaps its page in place: the new page has taken no input.
+	createEffect(
+		on(
+			[() => props.title, () => props.description],
+			() => {
+				setTouched(false);
+				setTapped(false);
+			},
+			{ defer: true },
+		),
+	);
 	return (
 		<DialogPrimitive.Root
 			open={props.open}
@@ -86,6 +100,16 @@ export function Sheet(props: SheetProps) {
 				<div class="fixed inset-0 z-50 flex items-end justify-center tablet:items-center tablet:p-section">
 					<DialogPrimitive.Content
 						onInput={() => setTouched(true)}
+						// Kobalte's trap hands focus back to the control that held it,
+						// which a removed control cannot take: focus falls to the body,
+						// where no keydown reaches its Escape listener. Once the
+						// removal settles, the sheet takes focus itself.
+						onFocusOut={() =>
+							queueMicrotask(() => {
+								if (props.open && focusIsFree(document.activeElement))
+									content?.focus();
+							})
+						}
 						ref={content}
 						onCloseAutoFocus={(event) => {
 							if (!opener?.isConnected) return;

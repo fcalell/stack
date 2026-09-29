@@ -57,7 +57,8 @@ const TRANSPARENT = { backgroundColor: "transparent" } as const;
 
 // Content-tall, full height when it holds a TextArea, the sheet corners; a
 // close circle left, the title, submit right, the foot under the children.
-// The title names a typing control inside that no `FormField` labels.
+// The title names a typing control inside that no `FormField` labels. A new
+// `title` or `description` is a new page, which has taken no input.
 export function Sheet({
 	open,
 	onClose,
@@ -76,6 +77,14 @@ export function Sheet({
 	const grow = useCallback(() => setTall(true), []);
 	const touch = useCallback(() => setTouched(true), []);
 	const submit = "submit" in rest ? rest.submit : undefined;
+	// A wizard swaps its page in place; reset during render, so the new page
+	// never draws the old page's reason.
+	const page = `${title}\n${description ?? ""}`;
+	const [shown, setShown] = useState(page);
+	if (shown !== page) {
+		setShown(page);
+		setTouched(false);
+	}
 	useEffect(() => {
 		if (open) ref.current?.present();
 		else {
@@ -121,7 +130,7 @@ export function Sheet({
 										{title}
 									</RNText>
 									{submit ? (
-										<SubmitAct submit={submit} touched={touched} />
+										<SubmitAct key={page} submit={submit} touched={touched} />
 									) : null}
 								</View>
 								{description ? (

@@ -325,11 +325,11 @@ own three-row form. `Part` is a string or `{ quoted }`, drawn in typographic quo
 | `FormField` | `label`, `description`, `error`, `field` (a `FieldBinding`; then children is `(control) => …` and the error is the form's; an autosaving binding hands the control `onCommit`), children |
 | `ItemHeader` | `overline`, `title`, `facts`, `loading` |
 | `SegmentedControl` | `options`, `value`, `onChange` |
-| `Sheet` | `open`, `onClose`, `title`, `description`, `back`, `submit` (`{ label, onAct, blocked }`), `foot`, children; the title names a typing control inside that no `FormField` labels |
+| `Sheet` | `open`, `onClose`, `title`, `description`, `back`, `submit` (`{ label, onAct, blocked }`), `foot`, children; the title names a typing control inside that no `FormField` labels; a new `title` or `description` is a new page, its blocked `submit` silent until tapped or touched again; a control removed while it holds focus leaves focus on the sheet |
 | `Picker` | `label`, `options` (`Option<V>[]` or `OptionGroup<V>[]`), `value`, `onChange`; generic over its value `V`, read off `options` alone, so an enum's options pick that enum: a bound enum field is one spread with no cast, and a value or handler outside the options is a type error; no `value`: nothing selected, the placeholder, and `onChange` still hears `V`; a `null` option: the explicit empty choice, drawn as the placeholder is, in `ink-meta`, which makes `V` nullable, so a nullable enum field is the same spread and `onChange` hears `null`; in a `FormField` it takes the field's surface, label and error; a press on the open control closes its list |
 | `Menu` | `label` (read aloud on its more circle, the sheet's title), `items` (`MenuItem[]`, or `MenuItem[][]` for groups under separators: `{ label, onAct, icon?, destructive?, blocked? }`); anchored under the circle from tablet, a `Sheet` under it; arrows, Enter, Escape, focus back on the circle; the more circle of `Place` and `Screen` is the same menu |
 | `QueryBoundary` | `query` (one query or a tuple), `sentence`, children (`(data) => …`, an accessor) |
-| `OptionList` | `options`, `value`, `onChange`, `loading`, children |
+| `OptionList` | `options`, `value` (none: no option chosen), `onChange`, `loading`, children |
 | `EmptyState` | `title`, `sentence`, `act`, children |
 | `Toast` | `sentence`, `state` (`done` \| `attention` \| `failed`), `act` |
 | `Banner` | `kind` (`note` \| `warn` \| `danger`), `sentence`, `act` |
