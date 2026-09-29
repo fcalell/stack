@@ -6,7 +6,7 @@ import { cn } from "./cn";
 // forms on the group fill. A screen never places a skeleton of its own.
 export function LoadingRows() {
 	return (
-		<View className="gap-stack" accessibilityState={{ busy: true }}>
+		<View className="gap-fields" accessibilityState={{ busy: true }}>
 			<View className={cn(GROUP, "min-h-11")} />
 			<View className={cn(GROUP, "min-h-11")} />
 			<View className={cn(GROUP, "min-h-11")} />

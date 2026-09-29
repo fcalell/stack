@@ -1,0 +1,353 @@
+<!doctype html>
+<!--
+Board 3, rhythm, radius, hairlines and elevation, desktop density. Targets (rubric §0, §4; settings
+form, page header, density, sheet and toast ranges in reference-sheet.md):
+  desktop control 24-32; inputs 32-38 in forms (settings 38); one-line rows 26-37; two-line 40-72
+  (settings rows 64-70); header 30-34
+  radius: controls and rows 4-6; cards, popovers, sheets 6-8; dialogs 8-12; pills only on chips
+  and status
+  separation: 1 px hairline or one surface step; shadow only on lifted layers
+  more than one radius and more than one shadow, each spent by role
+Drawn (desktop): base 4; inside 6, control-x 12, pair 6, rows 2, card 16, fields 16, sections 32,
+page 24; control 32, compact 28, field 38, row 32, row-2 48, setting row 64, header 32; radius chip
+4, control/row 6, card/popover/sheet 8, dialog 12, pill; hairline 1; ring 2 at offset 2; shadows
+float and modal; motion 100/150/200/300 ms, ease out/in/in-out.
+References: Dub and v0 settings cards (reference-sheet c6f878d6, 386a2fec), Linear settings
+(fbb07294), Vercel sheet (fce0f81a), Notion and Twenty tables (83e2d66a, 36b0d5c8).
+-->
+<html lang="en" data-density="desktop">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rhythm, radius, hairlines and elevation, desktop density</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./foundations.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>body{margin:0}</style>
+</helmet>
+<div class="board" style="width: 1280px; height: 3965px; box-sizing: border-box">
+  <div class="stack-loose">
+  <div class="columns">
+  <div class="mode" data-mode="light">
+    <section class="stack" data-section="spacing">
+      <h2 class="text-meta ink-meta">Light, spacing: base 4, rungs 2 4 6 8 12 16 20 24 32 40 48; the roles at desktop density</h2>
+      <div class="ruler">
+        <span class="text-body ink-body">within a control</span><span class="text-meta ink-meta nums">--space-inside, 6</span><span class="rung rung-inside" data-check="width=--space-inside"></span>
+        <span class="text-body ink-body">a control's inline padding</span><span class="text-meta ink-meta nums">--space-control-x, 12</span><span class="rung rung-control-x" data-check="width=--space-control-x"></span>
+        <span class="text-body ink-body">between paired elements</span><span class="text-meta ink-meta nums">--space-pair, 6</span><span class="rung rung-pair" data-check="width=--space-pair"></span>
+        <span class="text-body ink-body">between menu rows</span><span class="text-meta ink-meta nums">--space-rows, 2</span><span class="rung rung-rows" data-check="width=--space-rows"></span>
+        <span class="text-body ink-body">a card's inset</span><span class="text-meta ink-meta nums">--space-card, 16</span><span class="rung rung-card" data-check="width=--space-card"></span>
+        <span class="text-body ink-body">between fields</span><span class="text-meta ink-meta nums">--space-fields, 16</span><span class="rung rung-fields" data-check="width=--space-fields"></span>
+        <span class="text-body ink-body">between sections</span><span class="text-meta ink-meta nums">--space-sections, 32</span><span class="rung rung-sections" data-check="width=--space-sections"></span>
+        <span class="text-body ink-body">the page inset</span><span class="text-meta ink-meta nums">--space-page, 24</span><span class="rung rung-page" data-check="width=--space-page"></span>
+      </div>
+    </section>
+    <section class="stack" data-section="applied">
+      <h2 class="text-meta ink-meta">Light, the rhythm applied: a settings section and the start of the next</h2>
+      <div class="flow gap-sections" data-check="row-gap=--space-sections">
+        <div class="flow gap-fields" data-check="row-gap=--space-fields">
+          <div class="flow gap-pair" data-check="row-gap=--space-pair">
+            <h3 class="text-heading ink-body">Workspace</h3>
+            <p class="text-meta ink-meta">Name, address and the region new projects deploy to.</p>
+          </div>
+          <div class="fill-surface edge radius-card clip" data-check="border-top-left-radius=--radius-card;border-top-width=--hairline;border-top-color=--edge">
+            <div class="setting-row" data-check="height=--row-height-setting;padding-left=--space-card" data-id="r1">
+              <div class="flow"><p class="text-body strong ink-body">Workspace name</p><p class="text-meta ink-meta">Shown in invitations and emails.</p></div>
+              <div class="field field-b" data-check="height=--field-height;border-top-left-radius=--radius-control;border-top-width=--hairline;border-top-color=--edge;padding-left=--space-control-x"><span class="text-body ink-body">Acme</span></div>
+            </div>
+            <div class="setting-row" data-check="height=--row-height-setting;padding-left=--space-card" data-id="r2">
+              <div class="flow"><p class="text-body strong ink-body">Workspace URL</p><p class="text-meta ink-meta">Changing it breaks shared links.</p></div>
+              <div class="field field-b" data-check="height=--field-height;border-top-left-radius=--radius-control;border-top-width=--hairline;border-top-color=--edge;padding-left=--space-control-x"><span class="text-body ink-body">acme-inc</span></div>
+            </div>
+            <div class="setting-row" data-check="height=--row-height-setting;padding-left=--space-card" data-id="r3">
+              <div class="flow"><p class="text-body strong ink-body">Default region</p><p class="text-meta ink-meta">Where new databases are created.</p></div>
+              <div class="field field-b" data-check="height=--field-height;border-top-left-radius=--radius-control;border-top-width=--hairline;border-top-color=--edge;padding-left=--space-control-x"><span class="text-body ink-body">Frankfurt, eu-central-1</span></div>
+            </div>
+            <div class="card-footer" data-check="padding-top=--space-3;padding-left=--space-card">
+              <span class="button fill-accent text-body strong" data-check="height=--control-height;border-top-left-radius=--radius-control;padding-left=--space-control-x"><span>Save changes</span></span>
+            </div>
+          </div>
+        </div>
+        <div class="flow gap-pair">
+          <h3 class="text-heading ink-body">Danger zone</h3>
+          <p class="text-meta ink-meta">Deleting the workspace removes every project, database and deployment in it.</p>
+        </div>
+      </div>
+      <p class="text-meta ink-meta">heading to description: pair 6; description to card: fields 16; setting rows: --row-height-setting 64, split by a hairline; row inset: card 16; field: --field-height 38, boundary B; footer: 12 + control 32 + 12 = 57 with its hairline; section to section: sections 32</p>
+    </section>
+    <section class="stack" data-section="radius">
+      <h2 class="text-meta ink-meta">Light, radius spent by role (popover, dialog and sheet corners are on the full-width strips below)</h2>
+      <div class="grid-2">
+        <div class="stack-tight"><div class="cluster"><span class="button edge text-body strong ink-body" data-check="border-top-left-radius=--radius-control;height=--control-height"><span>Redeploy</span></span></div><p class="text-meta ink-meta">control, --radius-control 6</p></div>
+        <div class="stack-tight"><div class="menu-item wash is-selected" data-check="border-top-left-radius=--radius-row;height=--control-height-compact;background-color=--wash-selected"><span class="text-body ink-body">Rename workspace</span></div><p class="text-meta ink-meta">menu row, --radius-row 6, label at body 13 (selected: --wash-selected)</p></div>
+        <div class="stack-tight"><div class="fill-surface edge radius-card inset-card text-body ink-body" data-check="border-top-left-radius=--radius-card;padding-top=--space-card">Production deployment</div><p class="text-meta ink-meta">card, --radius-card 8</p></div>
+        <div class="stack-tight"><div class="cluster"><span class="chip chip-soft chip-green text-caption" data-check="border-top-left-radius=--radius-pill;padding-left=--space-1-5"><span>Active</span></span><span class="chip chip-outline text-caption" data-check="border-top-left-radius=--radius-chip;padding-left=--space-1-5"><span>v2.4.1</span></span></div><p class="text-meta ink-meta">soft chip a pill; outlined chip --radius-chip 4</p></div>
+      </div>
+    </section>
+    <section class="stack" data-section="separation">
+      <h2 class="text-meta ink-meta">Light, one two-region layout separated three ways</h2>
+      <div class="stack">
+        <div class="stack-tight">
+          <div class="regions regions-edge edge clip"><div class="flow gap-pair"><span class="text-body ink-body">General</span><span class="text-meta ink-meta">Members</span><span class="text-meta ink-meta">Billing</span></div><div class="flow gap-pair "><span class="text-body strong ink-body">General</span><span class="text-meta ink-meta">Name and address</span></div></div>
+          <p class="text-meta ink-meta">hairline</p>
+        </div>
+        <div class="stack-tight">
+          <div class="regions clip"><div class="flow gap-pair"><span class="text-body ink-body">General</span><span class="text-meta ink-meta">Members</span><span class="text-meta ink-meta">Billing</span></div><div class="flow gap-pair fill-surface"><span class="text-body strong ink-body">General</span><span class="text-meta ink-meta">Name and address</span></div></div>
+          <p class="text-meta ink-meta">surface step</p>
+        </div>
+        <div class="stack-tight">
+          <div class="regions regions-edge edge clip"><div class="flow gap-pair"><span class="text-body ink-body">General</span><span class="text-meta ink-meta">Members</span><span class="text-meta ink-meta">Billing</span></div><div class="flow gap-pair fill-surface"><span class="text-body strong ink-body">General</span><span class="text-meta ink-meta">Name and address</span></div></div>
+          <p class="text-meta ink-meta">both</p>
+        </div>
+      </div>
+      <div class="fill-surface edge radius-card clip">
+        <div class="list-row" data-check="height=--row-height"><span class="text-body ink-body grow">prod-api</span><span class="text-meta ink-meta nums">2 min ago</span></div>
+        <div class="list-row wash is-selected" data-check="background-color=--wash-selected"><span class="text-body ink-body grow">prod-web</span><span class="text-meta ink-meta nums">9 min ago</span></div>
+        <div class="list-row"><span class="text-body ink-body grow">staging-api</span><span class="chip chip-soft status-warn text-caption"><span>Queued</span></span></div>
+        <div class="list-row"><span class="text-body ink-body grow">preview-4812</span><span class="text-meta ink-meta nums">1 h ago</span></div>
+      </div>
+      <p class="text-meta ink-meta">fills mark selection and data only: the selected row (--wash-selected) and the chip; every region edge is a hairline</p>
+    </section>
+    <section class="stack" data-section="field-ab">
+      <h2 class="text-meta ink-meta">Light, the field-hairline question: A and B, each a full field row on canvas and on surface</h2>
+      <div class="grid-2">
+        <div class="flow gap-fields">
+          <p class="text-body strong ink-body">A: edge-strong (the record)</p>
+          <p class="text-meta ink-meta">on canvas</p>
+          <div class="flow gap-pair" data-check="row-gap=--space-pair">
+            <p class="text-body strong ink-body">Workspace URL</p>
+            <div class="field field-a" data-check="height=--field-height;border-top-width=--hairline;border-top-color=--edge-strong"><span class="text-body ink-meta">acme-inc</span></div>
+            <p class="text-meta ink-meta">Lowercase letters, numbers and hyphens.</p>
+          </div>
+          <p class="text-meta ink-meta">boundary against the page <span class="nums" data-fg="edge-strong" data-bg="canvas">3.37</span>, against the field <span class="nums" data-fg="edge-strong" data-bg="surface">3.64</span>; field fill against the page <span class="nums" data-fg="surface" data-bg="canvas">1.08</span></p>
+          <div class="fill-surface band inset-card flow gap-fields">
+            <p class="text-meta ink-meta">on surface</p>
+            <div class="flow gap-pair" data-check="row-gap=--space-pair">
+            <p class="text-body strong ink-body">Workspace URL</p>
+            <div class="field field-a" data-check="height=--field-height;border-top-width=--hairline;border-top-color=--edge-strong"><span class="text-body ink-meta">acme-inc</span></div>
+            <p class="text-meta ink-meta">Lowercase letters, numbers and hyphens.</p>
+          </div>
+          </div>
+          <p class="text-meta ink-meta">on surface: boundary <span class="nums" data-fg="edge-strong" data-bg="surface">3.64</span> on both sides; field fill against the surface 1.00 (no step)</p>
+        </div>
+        <div class="flow gap-fields">
+          <p class="text-body strong ink-body">B: edge, chosen</p>
+          <p class="text-meta ink-meta">on canvas</p>
+          <div class="flow gap-pair" data-check="row-gap=--space-pair">
+            <p class="text-body strong ink-body">Workspace URL</p>
+            <div class="field field-b" data-check="height=--field-height;border-top-width=--hairline;border-top-color=--edge"><span class="text-body ink-meta">acme-inc</span></div>
+            <p class="text-meta ink-meta">Lowercase letters, numbers and hyphens.</p>
+          </div>
+          <p class="text-meta ink-meta">boundary against the page <span class="nums" data-fg="edge" data-bg="canvas">1.19</span>, against the field <span class="nums" data-fg="edge" data-bg="surface">1.28</span>; field fill against the page <span class="nums" data-fg="surface" data-bg="canvas">1.08</span></p>
+          <div class="fill-surface band inset-card flow gap-fields">
+            <p class="text-meta ink-meta">on surface</p>
+            <div class="flow gap-pair" data-check="row-gap=--space-pair">
+            <p class="text-body strong ink-body">Workspace URL</p>
+            <div class="field field-b" data-check="height=--field-height;border-top-width=--hairline;border-top-color=--edge"><span class="text-body ink-meta">acme-inc</span></div>
+            <p class="text-meta ink-meta">Lowercase letters, numbers and hyphens.</p>
+          </div>
+          </div>
+          <p class="text-meta ink-meta">on surface: boundary <span class="nums" data-fg="edge" data-bg="surface">1.28</span> on both sides; field fill against the surface 1.00 (no step)</p>
+        </div>
+      </div>
+      <p class="text-meta ink-meta">references (DESIGN.md hex, computed): Vercel hairline #ebebeb on white 1.19, strong #a1a1a1 2.58; Notion #e5e3df 1.28, strong #c8c4be 1.74; Supabase strong #c7c7c7 1.69; Linear dark #23252a on #0f1011 1.24, strong #34343a 1.54</p>
+    </section>
+  </div>
+  <div class="mode dark" data-mode="dark">
+    <section class="stack" data-section="spacing">
+      <h2 class="text-meta ink-meta">Dark, spacing: base 4, rungs 2 4 6 8 12 16 20 24 32 40 48; the roles at desktop density</h2>
+      <div class="ruler">
+        <span class="text-body ink-body">within a control</span><span class="text-meta ink-meta nums">--space-inside, 6</span><span class="rung rung-inside" data-check="width=--space-inside"></span>
+        <span class="text-body ink-body">a control's inline padding</span><span class="text-meta ink-meta nums">--space-control-x, 12</span><span class="rung rung-control-x" data-check="width=--space-control-x"></span>
+        <span class="text-body ink-body">between paired elements</span><span class="text-meta ink-meta nums">--space-pair, 6</span><span class="rung rung-pair" data-check="width=--space-pair"></span>
+        <span class="text-body ink-body">between menu rows</span><span class="text-meta ink-meta nums">--space-rows, 2</span><span class="rung rung-rows" data-check="width=--space-rows"></span>
+        <span class="text-body ink-body">a card's inset</span><span class="text-meta ink-meta nums">--space-card, 16</span><span class="rung rung-card" data-check="width=--space-card"></span>
+        <span class="text-body ink-body">between fields</span><span class="text-meta ink-meta nums">--space-fields, 16</span><span class="rung rung-fields" data-check="width=--space-fields"></span>
+        <span class="text-body ink-body">between sections</span><span class="text-meta ink-meta nums">--space-sections, 32</span><span class="rung rung-sections" data-check="width=--space-sections"></span>
+        <span class="text-body ink-body">the page inset</span><span class="text-meta ink-meta nums">--space-page, 24</span><span class="rung rung-page" data-check="width=--space-page"></span>
+      </div>
+    </section>
+    <section class="stack" data-section="applied">
+      <h2 class="text-meta ink-meta">Dark, the rhythm applied: a settings section and the start of the next</h2>
+      <div class="flow gap-sections" data-check="row-gap=--space-sections">
+        <div class="flow gap-fields" data-check="row-gap=--space-fields">
+          <div class="flow gap-pair" data-check="row-gap=--space-pair">
+            <h3 class="text-heading ink-body">Workspace</h3>
+            <p class="text-meta ink-meta">Name, address and the region new projects deploy to.</p>
+          </div>
+          <div class="fill-surface edge radius-card clip" data-check="border-top-left-radius=--radius-card;border-top-width=--hairline;border-top-color=--edge">
+            <div class="setting-row" data-check="height=--row-height-setting;padding-left=--space-card" data-id="r1">
+              <div class="flow"><p class="text-body strong ink-body">Workspace name</p><p class="text-meta ink-meta">Shown in invitations and emails.</p></div>
+              <div class="field field-b" data-check="height=--field-height;border-top-left-radius=--radius-control;border-top-width=--hairline;border-top-color=--edge;padding-left=--space-control-x"><span class="text-body ink-body">Acme</span></div>
+            </div>
+            <div class="setting-row" data-check="height=--row-height-setting;padding-left=--space-card" data-id="r2">
+              <div class="flow"><p class="text-body strong ink-body">Workspace URL</p><p class="text-meta ink-meta">Changing it breaks shared links.</p></div>
+              <div class="field field-b" data-check="height=--field-height;border-top-left-radius=--radius-control;border-top-width=--hairline;border-top-color=--edge;padding-left=--space-control-x"><span class="text-body ink-body">acme-inc</span></div>
+            </div>
+            <div class="setting-row" data-check="height=--row-height-setting;padding-left=--space-card" data-id="r3">
+              <div class="flow"><p class="text-body strong ink-body">Default region</p><p class="text-meta ink-meta">Where new databases are created.</p></div>
+              <div class="field field-b" data-check="height=--field-height;border-top-left-radius=--radius-control;border-top-width=--hairline;border-top-color=--edge;padding-left=--space-control-x"><span class="text-body ink-body">Frankfurt, eu-central-1</span></div>
+            </div>
+            <div class="card-footer" data-check="padding-top=--space-3;padding-left=--space-card">
+              <span class="button fill-accent text-body strong" data-check="height=--control-height;border-top-left-radius=--radius-control;padding-left=--space-control-x"><span>Save changes</span></span>
+            </div>
+          </div>
+        </div>
+        <div class="flow gap-pair">
+          <h3 class="text-heading ink-body">Danger zone</h3>
+          <p class="text-meta ink-meta">Deleting the workspace removes every project, database and deployment in it.</p>
+        </div>
+      </div>
+      <p class="text-meta ink-meta">heading to description: pair 6; description to card: fields 16; setting rows: --row-height-setting 64, split by a hairline; row inset: card 16; field: --field-height 38, boundary B; footer: 12 + control 32 + 12 = 57 with its hairline; section to section: sections 32</p>
+    </section>
+    <section class="stack" data-section="radius">
+      <h2 class="text-meta ink-meta">Dark, radius spent by role (popover, dialog and sheet corners are on the full-width strips below)</h2>
+      <div class="grid-2">
+        <div class="stack-tight"><div class="cluster"><span class="button edge text-body strong ink-body" data-check="border-top-left-radius=--radius-control;height=--control-height"><span>Redeploy</span></span></div><p class="text-meta ink-meta">control, --radius-control 6</p></div>
+        <div class="stack-tight"><div class="menu-item wash is-selected" data-check="border-top-left-radius=--radius-row;height=--control-height-compact;background-color=--wash-selected"><span class="text-body ink-body">Rename workspace</span></div><p class="text-meta ink-meta">menu row, --radius-row 6, label at body 13 (selected: --wash-selected)</p></div>
+        <div class="stack-tight"><div class="fill-surface edge radius-card inset-card text-body ink-body" data-check="border-top-left-radius=--radius-card;padding-top=--space-card">Production deployment</div><p class="text-meta ink-meta">card, --radius-card 8</p></div>
+        <div class="stack-tight"><div class="cluster"><span class="chip chip-soft chip-green text-caption" data-check="border-top-left-radius=--radius-pill;padding-left=--space-1-5"><span>Active</span></span><span class="chip chip-outline text-caption" data-check="border-top-left-radius=--radius-chip;padding-left=--space-1-5"><span>v2.4.1</span></span></div><p class="text-meta ink-meta">soft chip a pill; outlined chip --radius-chip 4</p></div>
+      </div>
+    </section>
+    <section class="stack" data-section="separation">
+      <h2 class="text-meta ink-meta">Dark, one two-region layout separated three ways</h2>
+      <div class="stack">
+        <div class="stack-tight">
+          <div class="regions regions-edge edge clip"><div class="flow gap-pair"><span class="text-body ink-body">General</span><span class="text-meta ink-meta">Members</span><span class="text-meta ink-meta">Billing</span></div><div class="flow gap-pair "><span class="text-body strong ink-body">General</span><span class="text-meta ink-meta">Name and address</span></div></div>
+          <p class="text-meta ink-meta">hairline</p>
+        </div>
+        <div class="stack-tight">
+          <div class="regions clip"><div class="flow gap-pair"><span class="text-body ink-body">General</span><span class="text-meta ink-meta">Members</span><span class="text-meta ink-meta">Billing</span></div><div class="flow gap-pair fill-surface"><span class="text-body strong ink-body">General</span><span class="text-meta ink-meta">Name and address</span></div></div>
+          <p class="text-meta ink-meta">surface step</p>
+        </div>
+        <div class="stack-tight">
+          <div class="regions regions-edge edge clip"><div class="flow gap-pair"><span class="text-body ink-body">General</span><span class="text-meta ink-meta">Members</span><span class="text-meta ink-meta">Billing</span></div><div class="flow gap-pair fill-surface"><span class="text-body strong ink-body">General</span><span class="text-meta ink-meta">Name and address</span></div></div>
+          <p class="text-meta ink-meta">both</p>
+        </div>
+      </div>
+      <div class="fill-surface edge radius-card clip">
+        <div class="list-row" data-check="height=--row-height"><span class="text-body ink-body grow">prod-api</span><span class="text-meta ink-meta nums">2 min ago</span></div>
+        <div class="list-row wash is-selected" data-check="background-color=--wash-selected"><span class="text-body ink-body grow">prod-web</span><span class="text-meta ink-meta nums">9 min ago</span></div>
+        <div class="list-row"><span class="text-body ink-body grow">staging-api</span><span class="chip chip-soft status-warn text-caption"><span>Queued</span></span></div>
+        <div class="list-row"><span class="text-body ink-body grow">preview-4812</span><span class="text-meta ink-meta nums">1 h ago</span></div>
+      </div>
+      <p class="text-meta ink-meta">fills mark selection and data only: the selected row (--wash-selected) and the chip; every region edge is a hairline</p>
+    </section>
+    <section class="stack" data-section="field-ab">
+      <h2 class="text-meta ink-meta">Dark, the field-hairline question: A and B, each a full field row on canvas and on surface</h2>
+      <div class="grid-2">
+        <div class="flow gap-fields">
+          <p class="text-body strong ink-body">A: edge-strong (the record)</p>
+          <p class="text-meta ink-meta">on canvas</p>
+          <div class="flow gap-pair" data-check="row-gap=--space-pair">
+            <p class="text-body strong ink-body">Workspace URL</p>
+            <div class="field field-a" data-check="height=--field-height;border-top-width=--hairline;border-top-color=--edge-strong"><span class="text-body ink-meta">acme-inc</span></div>
+            <p class="text-meta ink-meta">Lowercase letters, numbers and hyphens.</p>
+          </div>
+          <p class="text-meta ink-meta">boundary against the page <span class="nums" data-fg="edge-strong" data-bg="canvas">3.69</span>, against the field <span class="nums" data-fg="edge-strong" data-bg="surface">3.38</span>; field fill against the page <span class="nums" data-fg="surface" data-bg="canvas">1.09</span></p>
+          <div class="fill-surface band inset-card flow gap-fields">
+            <p class="text-meta ink-meta">on surface</p>
+            <div class="flow gap-pair" data-check="row-gap=--space-pair">
+            <p class="text-body strong ink-body">Workspace URL</p>
+            <div class="field field-a" data-check="height=--field-height;border-top-width=--hairline;border-top-color=--edge-strong"><span class="text-body ink-meta">acme-inc</span></div>
+            <p class="text-meta ink-meta">Lowercase letters, numbers and hyphens.</p>
+          </div>
+          </div>
+          <p class="text-meta ink-meta">on surface: boundary <span class="nums" data-fg="edge-strong" data-bg="surface">3.38</span> on both sides; field fill against the surface 1.00 (no step)</p>
+        </div>
+        <div class="flow gap-fields">
+          <p class="text-body strong ink-body">B: edge, chosen</p>
+          <p class="text-meta ink-meta">on canvas</p>
+          <div class="flow gap-pair" data-check="row-gap=--space-pair">
+            <p class="text-body strong ink-body">Workspace URL</p>
+            <div class="field field-b" data-check="height=--field-height;border-top-width=--hairline;border-top-color=--edge"><span class="text-body ink-meta">acme-inc</span></div>
+            <p class="text-meta ink-meta">Lowercase letters, numbers and hyphens.</p>
+          </div>
+          <p class="text-meta ink-meta">boundary against the page <span class="nums" data-fg="edge" data-bg="canvas">1.41</span>, against the field <span class="nums" data-fg="edge" data-bg="surface">1.29</span>; field fill against the page <span class="nums" data-fg="surface" data-bg="canvas">1.09</span></p>
+          <div class="fill-surface band inset-card flow gap-fields">
+            <p class="text-meta ink-meta">on surface</p>
+            <div class="flow gap-pair" data-check="row-gap=--space-pair">
+            <p class="text-body strong ink-body">Workspace URL</p>
+            <div class="field field-b" data-check="height=--field-height;border-top-width=--hairline;border-top-color=--edge"><span class="text-body ink-meta">acme-inc</span></div>
+            <p class="text-meta ink-meta">Lowercase letters, numbers and hyphens.</p>
+          </div>
+          </div>
+          <p class="text-meta ink-meta">on surface: boundary <span class="nums" data-fg="edge" data-bg="surface">1.29</span> on both sides; field fill against the surface 1.00 (no step)</p>
+        </div>
+      </div>
+      <p class="text-meta ink-meta">references (DESIGN.md hex, computed): Vercel hairline #ebebeb on white 1.19, strong #a1a1a1 2.58; Notion #e5e3df 1.28, strong #c8c4be 1.74; Supabase strong #c7c7c7 1.69; Linear dark #23252a on #0f1011 1.24, strong #34343a 1.54</p>
+    </section>
+  </div>
+  </div>
+  <div class="mode" data-mode="light-strip">
+    <section class="stack" data-section="elevation">
+      <h2 class="text-meta ink-meta">Light, elevation and the lifted layers' corners at their pattern widths: a card at rest, a popover, a toast, a confirm dialog and a sheet, on canvas then on surface</h2>
+      <div class="flow gap-fields inset-page">
+        <p class="text-meta ink-meta">on canvas</p>
+        <div class="strip-row">
+          <div class="stack-tight"><div class="popover" data-check="width=--width-popover;border-top-left-radius=--radius-popover;box-shadow=--shadow-float"><div class="menu-item"><span class="text-body ink-body">Promote to production</span></div><div class="menu-item"><span class="text-body ink-body">Redeploy</span></div><div class="menu-item"><span class="text-body ink-body">Inspect</span></div></div><p class="text-meta ink-meta">popover: 240, radius 8, float</p></div>
+          <div class="stack-tight"><div class="toast" data-check="width=--width-toast;box-shadow=--shadow-float;border-top-left-radius=--radius-card"><span class="text-body ink-body grow">Deployment queued</span><span class="button text-body strong ink-accent"><span>Undo</span></span></div><p class="text-meta ink-meta">toast: 360, radius 8, float</p></div>
+          <div class="stack-tight"><div class="dialog" data-check="width=--width-dialog;border-top-left-radius=--radius-dialog;box-shadow=--shadow-modal"><p class="text-heading ink-body">Delete workspace?</p><p class="text-meta ink-meta">Projects, databases and deployments go with it. This cannot be undone.</p></div><p class="text-meta ink-meta">confirm dialog: 440, radius 12, modal</p></div>
+        </div>
+        <div class="strip-row">
+          <div class="stack-tight"><div class="fill-surface edge radius-card inset-card flow gap-pair" data-check="box-shadow=--none"><p class="text-body strong ink-body">Usage</p><p class="text-meta ink-meta">1,284,302 requests this month</p></div><p class="text-meta ink-meta">card at rest: hairline, no shadow</p></div>
+          <div class="stack-tight push-end"><div class="sheet" data-check="width=--width-sheet;box-shadow=--shadow-modal;border-top-left-radius=--radius-sheet"><p class="text-heading ink-body">Environment variable</p><p class="text-meta ink-meta">Encrypted at rest, exposed at build time.</p></div><p class="text-meta ink-meta">sheet: 640, leading corners 8, modal, attached to the trailing edge</p></div>
+        </div>
+      </div>
+      <div class="flow gap-fields inset-page fill-surface band">
+        <p class="text-meta ink-meta">on surface</p>
+        <div class="strip-row">
+          <div class="stack-tight"><div class="popover" data-check="width=--width-popover;border-top-left-radius=--radius-popover;box-shadow=--shadow-float"><div class="menu-item"><span class="text-body ink-body">Promote to production</span></div><div class="menu-item"><span class="text-body ink-body">Redeploy</span></div><div class="menu-item"><span class="text-body ink-body">Inspect</span></div></div><p class="text-meta ink-meta">popover: 240, radius 8, float</p></div>
+          <div class="stack-tight"><div class="toast" data-check="width=--width-toast;box-shadow=--shadow-float;border-top-left-radius=--radius-card"><span class="text-body ink-body grow">Deployment queued</span><span class="button text-body strong ink-accent"><span>Undo</span></span></div><p class="text-meta ink-meta">toast: 360, radius 8, float</p></div>
+          <div class="stack-tight"><div class="dialog" data-check="width=--width-dialog;border-top-left-radius=--radius-dialog;box-shadow=--shadow-modal"><p class="text-heading ink-body">Delete workspace?</p><p class="text-meta ink-meta">Projects, databases and deployments go with it. This cannot be undone.</p></div><p class="text-meta ink-meta">confirm dialog: 440, radius 12, modal</p></div>
+        </div>
+        <div class="strip-row">
+          <div class="stack-tight"><div class="fill-surface edge radius-card inset-card flow gap-pair" data-check="box-shadow=--none"><p class="text-body strong ink-body">Usage</p><p class="text-meta ink-meta">1,284,302 requests this month</p></div><p class="text-meta ink-meta">card at rest: hairline, no shadow</p></div>
+          <div class="stack-tight push-end"><div class="sheet" data-check="width=--width-sheet;box-shadow=--shadow-modal;border-top-left-radius=--radius-sheet"><p class="text-heading ink-body">Environment variable</p><p class="text-meta ink-meta">Encrypted at rest, exposed at build time.</p></div><p class="text-meta ink-meta">sheet: 640, leading corners 8, modal, attached to the trailing edge</p></div>
+        </div>
+      </div>
+    </section>
+  </div>
+  <div class="mode dark" data-mode="dark-strip">
+    <section class="stack" data-section="elevation">
+      <h2 class="text-meta ink-meta">Dark, elevation and the lifted layers' corners at their pattern widths: a card at rest, a popover, a toast, a confirm dialog and a sheet, on canvas then on surface</h2>
+      <div class="flow gap-fields inset-page">
+        <p class="text-meta ink-meta">on canvas</p>
+        <div class="strip-row">
+          <div class="stack-tight"><div class="popover" data-check="width=--width-popover;border-top-left-radius=--radius-popover;box-shadow=--shadow-float"><div class="menu-item"><span class="text-body ink-body">Promote to production</span></div><div class="menu-item"><span class="text-body ink-body">Redeploy</span></div><div class="menu-item"><span class="text-body ink-body">Inspect</span></div></div><p class="text-meta ink-meta">popover: 240, radius 8, float</p></div>
+          <div class="stack-tight"><div class="toast" data-check="width=--width-toast;box-shadow=--shadow-float;border-top-left-radius=--radius-card"><span class="text-body ink-body grow">Deployment queued</span><span class="button text-body strong ink-accent"><span>Undo</span></span></div><p class="text-meta ink-meta">toast: 360, radius 8, float</p></div>
+          <div class="stack-tight"><div class="dialog" data-check="width=--width-dialog;border-top-left-radius=--radius-dialog;box-shadow=--shadow-modal"><p class="text-heading ink-body">Delete workspace?</p><p class="text-meta ink-meta">Projects, databases and deployments go with it. This cannot be undone.</p></div><p class="text-meta ink-meta">confirm dialog: 440, radius 12, modal</p></div>
+        </div>
+        <div class="strip-row">
+          <div class="stack-tight"><div class="fill-surface edge radius-card inset-card flow gap-pair" data-check="box-shadow=--none"><p class="text-body strong ink-body">Usage</p><p class="text-meta ink-meta">1,284,302 requests this month</p></div><p class="text-meta ink-meta">card at rest: hairline, no shadow</p></div>
+          <div class="stack-tight push-end"><div class="sheet" data-check="width=--width-sheet;box-shadow=--shadow-modal;border-top-left-radius=--radius-sheet"><p class="text-heading ink-body">Environment variable</p><p class="text-meta ink-meta">Encrypted at rest, exposed at build time.</p></div><p class="text-meta ink-meta">sheet: 640, leading corners 8, modal, attached to the trailing edge</p></div>
+        </div>
+      </div>
+      <div class="flow gap-fields inset-page fill-surface band">
+        <p class="text-meta ink-meta">on surface</p>
+        <div class="strip-row">
+          <div class="stack-tight"><div class="popover" data-check="width=--width-popover;border-top-left-radius=--radius-popover;box-shadow=--shadow-float"><div class="menu-item"><span class="text-body ink-body">Promote to production</span></div><div class="menu-item"><span class="text-body ink-body">Redeploy</span></div><div class="menu-item"><span class="text-body ink-body">Inspect</span></div></div><p class="text-meta ink-meta">popover: 240, radius 8, float</p></div>
+          <div class="stack-tight"><div class="toast" data-check="width=--width-toast;box-shadow=--shadow-float;border-top-left-radius=--radius-card"><span class="text-body ink-body grow">Deployment queued</span><span class="button text-body strong ink-accent"><span>Undo</span></span></div><p class="text-meta ink-meta">toast: 360, radius 8, float</p></div>
+          <div class="stack-tight"><div class="dialog" data-check="width=--width-dialog;border-top-left-radius=--radius-dialog;box-shadow=--shadow-modal"><p class="text-heading ink-body">Delete workspace?</p><p class="text-meta ink-meta">Projects, databases and deployments go with it. This cannot be undone.</p></div><p class="text-meta ink-meta">confirm dialog: 440, radius 12, modal</p></div>
+        </div>
+        <div class="strip-row">
+          <div class="stack-tight"><div class="fill-surface edge radius-card inset-card flow gap-pair" data-check="box-shadow=--none"><p class="text-body strong ink-body">Usage</p><p class="text-meta ink-meta">1,284,302 requests this month</p></div><p class="text-meta ink-meta">card at rest: hairline, no shadow</p></div>
+          <div class="stack-tight push-end"><div class="sheet" data-check="width=--width-sheet;box-shadow=--shadow-modal;border-top-left-radius=--radius-sheet"><p class="text-heading ink-body">Environment variable</p><p class="text-meta ink-meta">Encrypted at rest, exposed at build time.</p></div><p class="text-meta ink-meta">sheet: 640, leading corners 8, modal, attached to the trailing edge</p></div>
+        </div>
+      </div>
+    </section>
+  </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":3965}}'>
+class Component extends DCLogic {
+  componentDidMount() { document.documentElement.dataset.density = "desktop"; }
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

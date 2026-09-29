@@ -8,7 +8,7 @@ export const GLYPH_SIZE = 20;
 
 export function Glyph({
 	icon: Icon,
-	tone = "ink",
+	tone = "ink-body",
 	size = GLYPH_SIZE,
 }: {
 	icon: LucideIcon;

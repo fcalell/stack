@@ -14,7 +14,7 @@ export interface QrCodeProps extends Closed {
 // A square code on the surface; a meta line may sit beneath it.
 export function QrCode({ value, loading }: QrCodeProps) {
 	const [size, setSize] = useState(0);
-	const ink = useTokenColor("--color-ink");
+	const ink = useTokenColor("--color-ink-body");
 	const surface = useTokenColor("--color-surface");
 	if (loading) return <LoadingRows />;
 	const code = qrcode(0, "M");
@@ -30,7 +30,7 @@ export function QrCode({ value, loading }: QrCodeProps) {
 		<View
 			accessibilityLabel={value}
 			onLayout={(event) => setSize(event.nativeEvent.layout.width)}
-			className="aspect-square w-full self-center overflow-hidden rounded-group"
+			className="aspect-square w-full self-center overflow-hidden rounded-control"
 		>
 			<Svg width={size} height={size}>
 				<Rect x={0} y={0} width={size} height={size} fill={surface} />

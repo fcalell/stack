@@ -51,7 +51,7 @@ export function OptionList({
 							onPress={() => onChange(option.value)}
 							className={cn(
 								row({ state: "rest" }),
-								"flex-row items-center active:bg-edge",
+								"flex-row items-center active:bg-wash-press",
 							)}
 						>
 							<View
@@ -65,7 +65,7 @@ export function OptionList({
 								) : null}
 							</View>
 							<View className="min-w-0 flex-1 gap-pair">
-								<View className="flex-row items-center gap-row">
+								<View className="flex-row items-center gap-inside">
 									<RNText className={text({ role: "body" })}>
 										{option.label}
 									</RNText>
@@ -81,7 +81,7 @@ export function OptionList({
 							</View>
 						</Pressable>
 						{selected && children ? (
-							<View className="px-inset pb-stack">{children}</View>
+							<View className="px-card pb-pair">{children}</View>
 						) : null}
 					</View>
 				);

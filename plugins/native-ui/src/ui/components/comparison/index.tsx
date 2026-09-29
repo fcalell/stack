@@ -22,7 +22,7 @@ export function Comparison({ rows, loading }: ComparisonProps) {
 	if (loading) return <LoadingRows />;
 	const index = Math.max(0, labels.indexOf(which));
 	return (
-		<View className="gap-stack">
+		<View className="gap-fields">
 			{labels.length > 1 ? (
 				<SegmentedControl
 					options={labels.map((label) => ({ value: label, label }))}

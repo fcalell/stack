@@ -39,17 +39,17 @@ export function FileRow({
 			className={cn(
 				row({ state: "rest" }),
 				"flex-row items-center",
-				open && "active:bg-edge",
+				open && "active:bg-wash-press",
 			)}
 		>
 			<Glyph icon={seen ? CircleCheck : Ring} tone={seen ? "ok" : "ink-meta"} />
 			<RNText
 				numberOfLines={1}
-				className={cn(text({ role: "mono" }), "min-w-0 flex-1")}
+				className={cn(text({ role: "code" }), "min-w-0 flex-1")}
 			>
 				{path}
 			</RNText>
-			<View className="flex-row gap-row">
+			<View className="flex-row gap-inside">
 				<RNText className={cn(text({ role: "meta" }), "text-ok")}>
 					+{added}
 				</RNText>

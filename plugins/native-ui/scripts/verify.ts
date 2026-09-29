@@ -49,10 +49,12 @@ import {
 	rosterEntries,
 } from "@fcalell/ui-core/roster";
 import {
+	COLOR_NAMES,
+	COLORS,
+	type ColorName,
 	ENGLISH,
-	PER_MODE_COLORS,
+	GAP_ROLES,
 	SHADOW_LEVELS,
-	SPACING_RUNGS,
 	STATUS_STATES,
 	TYPE_ROLES,
 	ZEROED_NAMESPACES,
@@ -75,9 +77,10 @@ const SOURCES = [
 	"../node_modules/@fcalell/ui-core/src",
 ];
 
-// The retired vocabulary: the names the components no longer carry, and the
-// shadcn-era names a consumer might type. The namespace resets must compile
-// every one of them to nothing.
+// The retired vocabulary: the names the components no longer carry (the
+// Stage 0 roles and rungs, and the shadcn-era names before them) and the
+// names a consumer might type. The namespace resets must compile every one
+// of them to nothing.
 const RETIRED = [
 	"text-sm",
 	"text-base",
@@ -86,30 +89,41 @@ const RETIRED = [
 	"text-h1",
 	"text-h3",
 	"text-callout",
-	"text-caption",
 	"text-micro",
+	"text-label",
+	"text-mono",
 	"rounded-lg",
 	"rounded-2xl",
 	"rounded-md",
-	"rounded-control",
 	"rounded-xl",
+	"rounded-group",
 	"shadow-1",
 	"shadow-2",
 	"shadow-3",
-	"p-card",
+	"shadow-sheet",
 	"text-ink-1",
 	"text-ink-2",
 	"text-ink-3",
 	"text-ink-4",
+	"text-ink",
+	"bg-tint",
+	"bg-thumb",
+	"bg-chip-1",
 	"bg-surface-2",
 	"bg-surface-3",
 	"border-edge-2",
 	"bg-brand",
 	"text-interactive",
-	"text-accent-ink",
 	"text-white",
 	"bg-primary",
 	"bg-black/50",
+	// `gap-row` is missing on purpose: `row` is a size in the `--spacing-*`
+	// namespace, so the utility resolves to the row height.
+	"gap-stack",
+	"gap-section",
+	"p-inset",
+	"min-h-floor",
+	"w-rail",
 ];
 
 // The native overlay allowlist: every class the swept `src/ui` sources name,
@@ -118,8 +132,8 @@ const RETIRED = [
 // fails until the list moves with it.
 const NATIVE_OVERLAYS = [
 	"absolute",
-	"active:bg-edge",
-	"active:bg-ink-meta",
+	"active:bg-act-accent-press",
+	"active:bg-wash-press",
 	"aspect-square",
 	"bg-canvas",
 	"bg-danger-soft",
@@ -135,10 +149,10 @@ const NATIVE_OVERLAYS = [
 	"flex-wrap",
 	"font-medium",
 	"font-mono",
+	"gap-fields",
+	"gap-inside",
 	"gap-pair",
-	"gap-row",
-	"gap-section",
-	"gap-stack",
+	"gap-sections",
 	"grow",
 	"h-1",
 	"h-2",
@@ -163,40 +177,39 @@ const NATIVE_OVERLAYS = [
 	"opacity-0",
 	"opacity-50",
 	"overflow-hidden",
-	"p-inset",
-	"pb-room",
-	"pb-section",
-	"pb-stack",
-	"pl-stack",
-	"pt-stack",
+	"p-card",
+	"pb-pair",
+	"pb-sections",
+	"pl-pair",
+	"pt-pair",
 	"px-0",
 	"px-0.5",
 	"px-4",
-	"px-inset",
-	"px-stack",
+	"px-card",
+	"px-pair",
 	"py-0",
 	"py-2",
-	"py-room",
-	"py-row",
+	"py-inside",
+	"py-sections",
 	"right-0",
+	"rounded-control",
 	"rounded-full",
-	"rounded-group",
 	"self-center",
 	"self-start",
 	"shadow-float",
-	"shadow-sheet",
+	"shadow-modal",
 	"shrink",
 	"size-2",
 	"size-6",
 	"size-7",
 	"size-8",
+	"text-accent-ink",
 	"text-center",
 	"text-danger",
-	"text-ink",
+	"text-ink-body",
 	"text-ink-faint",
 	"text-ok",
 	"text-right",
-	"text-tint",
 	"underline",
 	"uppercase",
 	"w-13",
@@ -344,7 +357,10 @@ const FAMILIES: Family[] = [
 	{
 		name: "BUTTON",
 		cva: variants.button as Family["cva"],
-		axes: { act: ["primary", "secondary", "destructive"] },
+		axes: {
+			act: ["primary", "secondary", "destructive"],
+			fit: ["body", "bar"],
+		},
 	},
 	{
 		name: "BUTTON_LABEL",
@@ -412,7 +428,7 @@ const FAMILIES: Family[] = [
 	{
 		name: "RHYTHM",
 		cva: variants.rhythm as Family["cva"],
-		axes: { unit: SPACING_RUNGS },
+		axes: { unit: GAP_ROLES },
 	},
 ];
 
@@ -635,7 +651,7 @@ check("a3", "the emitted sheet has the contract shape", () => {
 		`--font-mono does not carry the knob's family: ${themeMap.get("--font-mono")}`,
 	);
 
-	const utilities = shadowUtilities(resolved);
+	const utilities = shadowUtilities();
 	for (const level of SHADOW_LEVELS) {
 		const body = declarationMap(blockBody(sheet, `@utility shadow-${level}`));
 		for (const [property, value] of Object.entries(
@@ -662,14 +678,15 @@ check("a3", "the emitted sheet has the contract shape", () => {
 		);
 		const colors = declarationMap(body);
 		const expectedMode = modeTokens(resolved, mode);
+		const perMode = COLOR_NAMES.length + SHADOW_LEVELS.length;
 		assert(
-			colors.size === PER_MODE_COLORS.length,
-			`@variant ${mode} carries ${colors.size} keys, expected ${PER_MODE_COLORS.length}`,
+			colors.size === perMode,
+			`@variant ${mode} carries ${colors.size} keys, expected ${perMode}`,
 		);
-		for (const token of PER_MODE_COLORS) {
+		for (const [name, value] of Object.entries(expectedMode)) {
 			assert(
-				colors.get(`--color-${token}`) === expectedMode[token],
-				`@variant ${mode} ${token}: expected ${expectedMode[token]}, got ${colors.get(`--color-${token}`)}`,
+				colors.get(name) === normalize(value),
+				`@variant ${mode} ${name}: expected ${value}, got ${colors.get(name)}`,
 			);
 		}
 		keySets.push([...colors.keys()].sort().join(" "));
@@ -693,35 +710,34 @@ check("a3", "the emitted sheet has the contract shape", () => {
 			`src/index.ts does not name the ${src} source`,
 		);
 	}
-	return `${Object.keys(expected).length} @theme keys behind the ${ZEROED_NAMESPACES.length} resets, ${SHADOW_LEVELS.length} shadow utilities, 2 equal variant blocks of ${PER_MODE_COLORS.length}, 3 pinned sources`;
+	return `${Object.keys(expected).length} @theme keys behind the ${ZEROED_NAMESPACES.length} resets, ${SHADOW_LEVELS.length} shadow utilities, 2 equal variant blocks of ${COLOR_NAMES.length + SHADOW_LEVELS.length}, 3 pinned sources`;
 });
 
 check("a4", "the schema rejects off-contract keys by name", () => {
-	const color = nativeUiOptionsSchema.safeParse({
-		theme: {
-			overrides: { colors: { light: { primary: "oklch(0.5 0.1 100)" } } },
-		},
+	// A theme sets a knob and never a token: a retired knob and a token
+	// override are both unknown keys, each named in its issue.
+	const knob = nativeUiOptionsSchema.safeParse({
+		theme: { primary: "accent" },
 	});
-	assert(!color.success, "an off-contract color token was accepted");
+	assert(!knob.success, "a retired knob was accepted");
 	assert(
-		color.error.issues.some(
+		knob.error.issues.some(
 			(issue) =>
 				issue.path.includes("primary") || issue.message.includes("primary"),
 		),
-		`no zod issue names "primary": ${JSON.stringify(color.error.issues)}`,
+		`no zod issue names "primary": ${JSON.stringify(knob.error.issues)}`,
 	);
 
-	const scale = nativeUiOptionsSchema.safeParse({
+	const token = nativeUiOptionsSchema.safeParse({
 		theme: { overrides: { scales: { "--radius-lg": "16px" } } },
 	});
-	assert(!scale.success, "an off-contract scale key was accepted");
+	assert(!token.success, "a token override was accepted");
 	assert(
-		scale.error.issues.some(
+		token.error.issues.some(
 			(issue) =>
-				issue.path.includes("--radius-lg") ||
-				issue.message.includes("--radius-lg"),
+				issue.path.includes("overrides") || issue.message.includes("overrides"),
 		),
-		`no zod issue names "--radius-lg": ${JSON.stringify(scale.error.issues)}`,
+		`no zod issue names "overrides": ${JSON.stringify(token.error.issues)}`,
 	);
 
 	const { send: _send, ...short } = ENGLISH;
@@ -735,10 +751,37 @@ check("a4", "the schema rejects off-contract keys by name", () => {
 		nativeUiOptionsSchema.safeParse({ words: ENGLISH }).success,
 		"the English words were rejected",
 	);
-	return "primary, --radius-lg and a missing word rejected, each named in its issue";
+	return "primary, overrides and a missing word rejected, each named in its issue";
 });
 
+// The colors the accent knob binds: every declaration that reaches a literal
+// on the accent hue through its aliases, veils and mixes.
+function accentBound(): Set<ColorName> {
+	const memo = new Map<ColorName, boolean>();
+	const walk = (name: ColorName): boolean => {
+		const done = memo.get(name);
+		if (done !== undefined) return done;
+		const declaration = COLORS[name];
+		let bound: boolean;
+		if ("alias" in declaration) bound = walk(declaration.alias);
+		else if ("veil" in declaration) bound = walk(declaration.veil);
+		else if ("mix" in declaration) {
+			bound =
+				walk(declaration.mix) ||
+				(declaration.toward !== "black" && walk(declaration.toward));
+		} else {
+			bound =
+				declaration.light.hue === "accent" || declaration.dark.hue === "accent";
+		}
+		memo.set(name, bound);
+		return bound;
+	};
+	return new Set(COLOR_NAMES.filter(walk));
+}
+
 check("a5", "a knob move touches only its roles", () => {
+	const bound = accentBound();
+	const boundLine = new RegExp(`--color-(${[...bound].join("|")}):`);
 	const moved = emit({ accentHue: 30 });
 	const before = sheet.split("\n");
 	const after = moved.split("\n");
@@ -754,12 +797,11 @@ check("a5", "a knob move touches only its roles", () => {
 	for (const index of diffs) {
 		const line = before[index] ?? "";
 		assert(
-			/--color-(tint|avatar-\d|chip-\d):/.test(line) &&
-				/--color-(tint|avatar-\d|chip-\d):/.test(after[index] ?? ""),
-			`a line off tint and the avatar and chip ladders moved: ${line} -> ${after[index]}`,
+			boundLine.test(line) && boundLine.test(after[index] ?? ""),
+			`a line off the accent-bound colors moved: ${line} -> ${after[index]}`,
 		);
 	}
-	return `${diffs.length} lines moved, every one a --color-tint, --color-avatar-* or --color-chip-* declaration`;
+	return `${diffs.length} lines moved, every one an accent-bound --color-* declaration (${bound.size} bound)`;
 });
 
 check("a7", "uniwind's own compiler consumes the sheet", () => {
@@ -767,14 +809,16 @@ check("a7", "uniwind's own compiler consumes the sheet", () => {
 	const light = themeScope(compiledCss, "light");
 	const dark = themeScope(compiledCss, "dark");
 
+	// Native draws the touch set whatever the knob says.
+	const title = resolved.type.touch.title;
 	const fontSize = styleValue(compiledCss, "text-title", "fontSize", light);
 	assert(
-		fontSize === Number.parseFloat(resolved.scales["--text-title"]),
+		fontSize === Number.parseFloat(title.size),
 		`text-title fontSize: ${fontSize}`,
 	);
 	const lineHeight = styleValue(compiledCss, "text-title", "lineHeight", light);
 	assert(
-		lineHeight === Number.parseFloat(resolved.scales["--leading-title"]),
+		lineHeight === Number.parseFloat(title.leading),
 		`text-title lineHeight: ${lineHeight}`,
 	);
 	const letterSpacing = styleValue(
@@ -789,9 +833,10 @@ check("a7", "uniwind's own compiler consumes the sheet", () => {
 	);
 
 	const boxShadow = styleValue(compiledCss, "shadow-float", "boxShadow", light);
-	// uniwind folds the rgba color to hex; the offsets and blur survive.
+	// uniwind folds the rgba color to hex; the offsets and blur of the contact
+	// layer survive at the head of the list.
 	assert(
-		typeof boxShadow === "string" && boxShadow.startsWith("0 7 18"),
+		typeof boxShadow === "string" && boxShadow.startsWith("0 1 2"),
 		`shadow-float boxShadow: ${boxShadow}`,
 	);
 
@@ -815,8 +860,13 @@ check("a7", "uniwind's own compiler consumes the sheet", () => {
 	);
 
 	const accent = styleValue(compiledCss, "bg-accent", "backgroundColor", light);
-	const ink = styleValue(compiledCss, "text-ink", "color", light);
-	assert(accent === ink, `alias law broken: bg-accent ${accent}, ink ${ink}`);
+	const act = styleValue(
+		compiledCss,
+		"bg-act-accent",
+		"backgroundColor",
+		light,
+	);
+	assert(accent === act, `alias law broken: bg-accent ${accent}, act ${act}`);
 
 	const alive = RETIRED.filter(
 		(name) => compiledCss.stylesheet[name] !== undefined,
@@ -831,7 +881,9 @@ check("a7", "uniwind's own compiler consumes the sheet", () => {
 check("a6", "the build resolves the inventory and kills the retired", () => {
 	const roster = FAMILIES.map((family) => family.name).join(" ");
 	assert(roster === FAMILY_ROSTER, `the family roster drifted: ${roster}`);
-	assert(rule(built, "px-5"), "px-5 emitted no rule");
+	// A numeric off the contract stays live: the `--spacing` base is never
+	// reset, and the picker names this one.
+	assert(rule(built, "px-4"), "px-4 emitted no rule");
 	const dead = [...INVENTORY].filter((name) => !emitted(built, name));
 	assert(
 		dead.length === 0,
@@ -968,9 +1020,9 @@ check("b7", "the closure fixture proves every prop at the type layer", () => {
 		"style={{",
 		'class="x"',
 		"classList={{}}",
-		'colorClassName="text-ink"',
-		'placeholderTextColorClassName="text-ink"',
-		'selectionColorClassName="text-ink"',
+		'colorClassName="text-ink-body"',
+		'placeholderTextColorClassName="text-ink-body"',
+		'selectionColorClassName="text-ink-body"',
 	]) {
 		assert(source.includes(token), `the fixture never passes ${token}`);
 	}
@@ -1102,7 +1154,12 @@ const PRODUCT_NOUNS = [
 ];
 
 check("b-nouns", "no product noun in src", () => {
-	const pattern = new RegExp(`\\b(${PRODUCT_NOUNS.join("|")})\\b`, "i");
+	// A token boundary, not a word boundary: the contract's `card` role (`p-card`,
+	// `rounded-card`) is a class segment, never the product noun.
+	const pattern = new RegExp(
+		`(?<![\\w-])(${PRODUCT_NOUNS.join("|")})(?![\\w-])`,
+		"i",
+	);
 	const hits: string[] = [];
 	for (const path of walk(resolve(pkgDir, "src"), /\.(ts|tsx)$/)) {
 		const lines = withoutComments(readFileSync(path, "utf8")).split("\n");

@@ -29,9 +29,9 @@ export interface ButtonProps extends Closed {
 // The press ground moves the fill, never the alpha, so the label keeps its
 // contrast: the primary steps down the ink ladder, the others onto the edge.
 const GROUND: Record<ButtonAct, string> = {
-	primary: "active:bg-ink-meta",
-	secondary: "active:bg-edge",
-	destructive: "active:bg-edge",
+	primary: "active:bg-act-accent-press",
+	secondary: "active:bg-wash-press",
+	destructive: "active:bg-wash-press",
 };
 
 // A pill with words. Its container decides its width: full in an action bar,

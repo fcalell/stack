@@ -35,7 +35,7 @@ export function Avatar({ name, src }: AvatarProps) {
 					accessibilityIgnoresInvertColors
 				/>
 			) : (
-				<RNText className={cn(text({ role: "label" }), "text-ink")}>
+				<RNText className={cn(text({ role: "caption" }), "text-ink-body")}>
 					{initials(name)}
 				</RNText>
 			)}

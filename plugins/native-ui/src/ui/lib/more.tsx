@@ -129,7 +129,7 @@ function MenuRow({
 			onPress={onAct}
 			className={cn(
 				row({ state: "rest" }),
-				"flex-row items-center active:bg-edge",
+				"flex-row items-center active:bg-wash-press",
 			)}
 		>
 			{item.icon ? <ItemGlyph name={item.icon} /> : null}

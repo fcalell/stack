@@ -45,7 +45,7 @@ export function PendingBar({ sentence, until, spinner, act }: PendingBarProps) {
 			) : (
 				<Spinner kind={spinner} />
 			)}
-			<RNText className={cn(text({ role: "meta" }), "flex-1 text-ink")}>
+			<RNText className={cn(text({ role: "meta" }), "flex-1 text-ink-body")}>
 				{sentence}
 			</RNText>
 			{act ? (
@@ -56,7 +56,10 @@ export function PendingBar({ sentence, until, spinner, act }: PendingBarProps) {
 					className="min-h-11 justify-center"
 				>
 					<RNText
-						className={cn(text({ role: "body" }), "font-medium text-tint")}
+						className={cn(
+							text({ role: "body" }),
+							"font-medium text-accent-ink",
+						)}
 					>
 						{act.label}
 					</RNText>

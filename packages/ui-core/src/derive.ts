@@ -1,19 +1,26 @@
-import { oklchToRgb } from "./oklch.ts";
+import {
+	chromaInGamut,
+	contrastRatio,
+	type Lab,
+	labToOklch,
+	luminance,
+	mixLab,
+	oklchToLab,
+	oklchToRgb,
+} from "./oklch.ts";
 import { type ParsedTheme, parseTheme, type Theme } from "./schema.ts";
 import {
-	AVATAR_STEP_DEGREES,
-	AVATAR_VALUE,
+	BODY_SIZE,
+	BREAKPOINT_PX,
 	BREAKPOINTS,
-	CHIP_OFFSET_DEGREES,
-	CHIP_STEP_DEGREES,
-	CHIP_VALUE,
+	type Breakpoint,
+	COLOR_NAMES,
 	COLORS,
-	type ColorDeclaration,
+	type ColorName,
 	type ColorValue,
-	DENSITY_GEOMETRY,
-	DENSITY_SIZES,
-	type DensitySize,
-	DURATION_RATIO,
+	DENSITIES,
+	type Density,
+	DURATION_MS,
 	DURATIONS,
 	type Duration,
 	EASING,
@@ -21,31 +28,36 @@ import {
 	FONT_FALLBACKS,
 	type FontRole,
 	fallbackFace,
-	type HueBinding,
-	INVARIANT,
-	INVARIANT_COLORS,
-	type InvariantColor,
-	isNeutralBound,
+	type Holds,
 	KNOB_DEFAULTS,
 	type Knobs,
 	LABEL,
+	LOOP_MS,
 	MODES,
 	type Mode,
-	PER_MODE_COLORS,
-	type PerModeColor,
-	PRIMARY_COLORS,
-	RADIUS_RATIO,
-	SCALE_KEYS,
-	type ScaleKey,
-	SHADOW_GEOMETRY,
+	RADIUS_PX,
+	RADIUS_ROLES,
+	type RadiusRole,
+	SHADOW_INK,
+	SHADOW_LAYERS,
 	SHADOW_LEVELS,
+	type ShadowLevel,
+	SIZE_PX,
+	SIZES,
+	type Size,
+	SPACE_BASE,
 	SPACING_RATIO,
-	SPACING_RUNGS,
+	SPACING_ROLES,
+	type SpacingRole,
 	TRACKED_ROLES,
+	type TrackedRole,
 	TYPE_ROLES,
 	TYPE_SCALE,
 	TYPE_TRACKING,
+	type TypeRole,
+	WIDTH_VALUE,
 	WIDTHS,
+	type Width,
 } from "./tokens.ts";
 
 // Final value strings, one per token. Emit helpers read this and never the raw
@@ -55,200 +67,236 @@ export interface ResolvedTheme {
 	// preference decides.
 	defaultMode: Mode | undefined;
 	knobs: Knobs;
-	colors: Record<Mode, Record<PerModeColor, string>>;
-	invariantColors: Record<InvariantColor, string>;
-	scales: Record<ScaleKey, string>;
+	colors: Record<Mode, Record<ColorName, string>>;
+	// Each level as a `box-shadow` list in sRGB, since React Native's
+	// `boxShadow` parses no oklch.
+	shadows: Record<Mode, Record<ShadowLevel, string>>;
+	// The three scales density moves, each set complete on its own.
+	type: Record<Density, Record<TypeRole, { size: string; leading: string }>>;
+	tracking: Record<TrackedRole, string>;
+	spacing: Record<Density, Record<SpacingRole, string>>;
+	sizes: Record<Density, Record<Size, string>>;
+	radii: Record<RadiusRole, string>;
+	widths: Record<Width, string>;
+	breakpoints: Record<Breakpoint, string>;
 	// The two family stacks: the knob's family, its metric fallback face, then
 	// the platform fallback.
 	fonts: Record<FontRole, string>;
-	// The density sizes, both sets: `touch` is what every platform seeds,
-	// `compact` what a fine pointer takes under `density: "desktop"`.
-	sizes: Record<"touch" | "compact", Record<DensitySize, string>>;
 	// Numbers, so a platform that animates outside CSS (a native timing
 	// call) reads the same record the web renders as custom properties:
 	// each duration in milliseconds, each easing as its four cubic-bezier
 	// control values.
 	motion: {
 		durations: Record<Duration, number>;
+		loop: number;
 		easings: Record<Easing, readonly [number, number, number, number]>;
 	};
 }
 
-// Three decimals with trailing zeros stripped reproduces every reference value
+// Three decimals with trailing zeros stripped reproduces every sheet value
 // exactly and keeps a regenerate byte-stable.
+function round3(value: number): number {
+	return Math.round(value * 1000) / 1000;
+}
+
 function num(value: number): string {
-	return String(Math.round(value * 1000) / 1000);
+	return String(round3(value));
 }
 
-function resolveHue(hue: HueBinding, knobs: Knobs): number {
-	if (typeof hue === "number") return hue;
-	const raw = knobs[hue.knob] + hue.offset;
-	return ((raw % 360) + 360) % 360;
+interface Resolved {
+	l: number;
+	c: number;
+	h: number;
+	alpha: number | undefined;
 }
 
-function resolveColor(value: ColorValue, knobs: Knobs, alpha?: number): string {
-	const chroma = isNeutralBound(value.hue)
-		? value.c * knobs.neutralChroma
-		: value.c;
-	const c = num(chroma);
+function format(color: Resolved): string {
+	const c = num(color.c);
 	// At zero chroma the hue is unobservable, so it is emitted as 0.
-	const h = c === "0" ? "0" : num(resolveHue(value.hue, knobs));
-	const base = `${num(value.l)} ${c} ${h}`;
-	return alpha === undefined
+	const h = c === "0" ? "0" : num(color.h);
+	const base = `${num(color.l)} ${c} ${h}`;
+	return color.alpha === undefined
 		? `oklch(${base})`
-		: `oklch(${base} / ${num(alpha)})`;
+		: `oklch(${base} / ${num(color.alpha)})`;
 }
 
-function declarationOf(token: PerModeColor, knobs: Knobs): ColorDeclaration {
-	if (token === "accent" || token === "accent-soft") {
-		return PRIMARY_COLORS[knobs.primary][token];
-	}
-	const step = /^avatar-(\d)$/.exec(token)?.[1];
-	if (step !== undefined) {
-		const offset = (Number(step) - 1) * AVATAR_STEP_DEGREES;
-		const hue: HueBinding = { knob: "accentHue", offset };
-		return {
-			light: { ...AVATAR_VALUE.light, hue },
-			dark: { ...AVATAR_VALUE.dark, hue },
-		};
-	}
-	const family = /^chip-(\d)$/.exec(token)?.[1];
-	if (family !== undefined) {
-		const offset =
-			(Number(family) - 1) * CHIP_STEP_DEGREES + CHIP_OFFSET_DEGREES;
-		const hue: HueBinding = { knob: "accentHue", offset };
-		return {
-			light: { ...CHIP_VALUE.light, hue },
-			dark: { ...CHIP_VALUE.dark, hue },
-		};
-	}
-	return COLORS[token as keyof typeof COLORS];
+// A declared value, its chroma held inside sRGB at the same lightness: a
+// re-hued accent then keeps its luminance and contrast and loses saturation
+// instead of clipping to another color. The sheet's own values are already
+// in gamut, so at the default hue nothing moves.
+function literal(value: ColorValue, knobs: Knobs): Resolved {
+	const h = value.hue === "accent" ? knobs.accentHue : value.hue;
+	return {
+		l: value.l,
+		c: chromaInGamut(value.l, value.c, h),
+		h,
+		alpha: value.alpha,
+	};
 }
 
-function resolveMode(
-	mode: Mode,
-	knobs: Knobs,
-	overrides: Record<string, string>,
-): Record<PerModeColor, string> {
-	const out = {} as Record<PerModeColor, string>;
-	const aliases: Array<[PerModeColor, PerModeColor]> = [];
-	for (const token of PER_MODE_COLORS) {
-		const declaration = declarationOf(token, knobs);
+const HOLD_STEP = 0.005;
+
+// The declared lightness, moved away from each ground in 0.005 steps until
+// every contract holds, the chroma re-clamped at each step. At the sheet's
+// own hue every contract already holds and nothing moves.
+function holding(
+	color: Resolved,
+	contracts: readonly Holds[],
+	grounds: Resolved[],
+): Resolved {
+	let current = color;
+	for (let step = 0; step < 100; step++) {
+		const short = contracts.find(
+			(contract, index) =>
+				contrastRatio(
+					luminance(current.l, current.c, current.h),
+					luminance(
+						grounds[index]?.l ?? 0,
+						grounds[index]?.c ?? 0,
+						grounds[index]?.h ?? 0,
+					),
+				) < contract.ratio,
+		);
+		if (!short) return current;
+		const ground = grounds[contracts.indexOf(short)];
+		const darker = ground !== undefined && ground.l > current.l;
+		const l = round3(current.l + (darker ? -HOLD_STEP : HOLD_STEP));
+		current = { ...current, l, c: chromaInGamut(l, color.c, current.h) };
+	}
+	throw new Error(
+		`[${LABEL}] no lightness holds the contract at hue ${color.h}`,
+	);
+}
+
+function lab(color: Resolved): Lab {
+	return oklchToLab(color.l, color.c, color.h);
+}
+
+const BLACK: Lab = { l: 0, a: 0, b: 0 };
+
+// One resolver over the whole declaration graph, memoized per mode, so an
+// alias may point at a mix and a mix at an alias; a cycle throws by name.
+function resolveMode(mode: Mode, knobs: Knobs): Record<ColorName, string> {
+	const memo = new Map<ColorName, Resolved>();
+	const visiting = new Set<ColorName>();
+	const resolve = (name: ColorName): Resolved => {
+		const done = memo.get(name);
+		if (done) return done;
+		if (visiting.has(name)) {
+			throw new Error(`[${LABEL}] ${name} resolves through itself`);
+		}
+		visiting.add(name);
+		const declaration = COLORS[name];
+		let color: Resolved;
 		if ("alias" in declaration) {
-			aliases.push([token, declaration.alias]);
-			continue;
+			color = resolve(declaration.alias);
+		} else if ("veil" in declaration) {
+			color = { ...resolve(declaration.veil), alpha: declaration.alpha };
+		} else if ("mix" in declaration) {
+			const from = lab(resolve(declaration.mix));
+			const toward =
+				declaration.toward === "black"
+					? BLACK
+					: lab(resolve(declaration.toward));
+			const [l, c, h] = labToOklch(
+				mixLab(from, toward, declaration.amount),
+			).map(round3);
+			// A mix toward black narrows toward the gamut's tip, so a re-hued
+			// accent's mix is clamped as its source is, at the lightness and
+			// hue it is emitted with.
+			color = {
+				l: l ?? 0,
+				c: chromaInGamut(l ?? 0, c ?? 0, h ?? 0),
+				h: h ?? 0,
+				alpha: undefined,
+			};
+		} else {
+			const value = declaration[mode];
+			color = literal(value, knobs);
+			if (value.holds) {
+				color = holding(
+					color,
+					value.holds,
+					value.holds.map((contract) => resolve(contract.on)),
+				);
+			}
 		}
-		out[token] = overrides[token] ?? resolveColor(declaration[mode], knobs);
-	}
-	// Aliases read the overridden source, so the primary-fill law holds under a
-	// re-hued or hand-overridden ink ladder. An explicit override of the alias
-	// itself still wins. One hop only: an alias of an alias would resolve
-	// against a token this loop has not written yet.
-	for (const [token, source] of aliases) {
-		if ("alias" in declarationOf(source, knobs)) {
-			throw new Error(
-				`[${LABEL}] ${token} aliases ${source}, which is itself an alias`,
-			);
-		}
-		out[token] = overrides[token] ?? out[source];
+		visiting.delete(name);
+		memo.set(name, color);
+		return color;
+	};
+	const out = {} as Record<ColorName, string>;
+	for (const name of COLOR_NAMES) out[name] = format(resolve(name));
+	return out;
+}
+
+function shadowsFor(mode: Mode): Record<ShadowLevel, string> {
+	const ink = SHADOW_INK[mode];
+	const hue = ink.hue === "accent" ? KNOB_DEFAULTS.accentHue : ink.hue;
+	const [r, g, b] = oklchToRgb(ink.l, ink.c, hue);
+	const out = {} as Record<ShadowLevel, string>;
+	for (const level of SHADOW_LEVELS) {
+		out[level] = SHADOW_LAYERS[level][mode]
+			.map(
+				({ y, blur, alpha }) =>
+					`0 ${y}px ${blur}px rgba(${r}, ${g}, ${b}, ${alpha})`,
+			)
+			.join(", ");
 	}
 	return out;
 }
 
 // ── The scales ──────────────────────────────────────────────────────
 
+// The nearest even pixel; a tie rounds up.
 function roundEven(value: number): number {
 	return 2 * Math.round(value / 2);
 }
 
-function scalesFor(knobs: Knobs): Record<ScaleKey, string> {
-	const scales = {} as Record<ScaleKey, string>;
-	for (const rung of SPACING_RUNGS) {
-		scales[`--spacing-${rung}`] = `${knobs.space * SPACING_RATIO[rung]}px`;
-	}
-	scales["--radius-group"] =
-		`${Math.floor(knobs.radius * RADIUS_RATIO.group)}px`;
-	scales["--radius-sheet"] =
-		`${Math.floor(knobs.radius * RADIUS_RATIO.sheet)}px`;
-	// 0 squares everything: the pills and circles follow the knob to 0.
-	scales["--radius-full"] = knobs.radius === 0 ? "0px" : "9999px";
+function typeFor(
+	density: Density,
+): Record<TypeRole, { size: string; leading: string }> {
+	const body = BODY_SIZE[density];
+	const out = {} as Record<TypeRole, { size: string; leading: string }>;
 	for (const role of TYPE_ROLES) {
-		const size = Math.round(knobs.text * TYPE_SCALE[role].size);
-		scales[`--text-${role}`] = `${size}px`;
-		scales[`--leading-${role}`] =
-			`${roundEven(size * TYPE_SCALE[role].leading)}px`;
+		const size = Math.round(body * TYPE_SCALE[role].size);
+		out[role] = {
+			size: `${size}px`,
+			leading: `${roundEven(size * TYPE_SCALE[role].leading)}px`,
+		};
 	}
-	for (const role of TRACKED_ROLES) {
-		scales[`--tracking-${role}`] = TYPE_TRACKING[role];
-	}
-	const ink = COLORS.ink;
-	const shadowInk = "light" in ink ? ink.light : undefined;
-	if (shadowInk === undefined) throw new Error(`[${LABEL}] ink is an alias`);
-	const [r, g, b] = oklchToRgb(
-		shadowInk.l,
-		shadowInk.c * knobs.neutralChroma,
-		resolveHue(shadowInk.hue, knobs),
-	);
-	for (const level of SHADOW_LEVELS) {
-		const { y, blur, alpha } = SHADOW_GEOMETRY[level];
-		scales[`--shadow-${level}`] =
-			knobs.elevation === "flat"
-				? "none"
-				: `0 ${y}px ${blur}px rgba(${r}, ${g}, ${b}, ${alpha})`;
-	}
-	for (const width of WIDTHS) {
-		scales[`--container-${width}`] = `${knobs.widths[width]}px`;
-	}
-	for (const bp of BREAKPOINTS) {
-		scales[`--breakpoint-${bp}`] = `${knobs.breakpoints[bp]}px`;
-	}
-	return scales;
+	return out;
 }
 
-function sizesFor(
-	knobs: Knobs,
-	set: "touch" | "compact",
-): Record<DensitySize, string> {
-	const sizes = {} as Record<DensitySize, string>;
-	for (const size of DENSITY_SIZES) {
-		const value = DENSITY_GEOMETRY[set][size];
-		const px = typeof value === "number" ? value : knobs.space * value.space;
-		sizes[size] = `${px}px`;
+function spacingFor(density: Density): Record<SpacingRole, string> {
+	const out = {} as Record<SpacingRole, string>;
+	for (const role of SPACING_ROLES) {
+		out[role] = `${SPACE_BASE * SPACING_RATIO[density][role]}px`;
 	}
-	return sizes;
+	return out;
+}
+
+function sizesFor(density: Density): Record<Size, string> {
+	const out = {} as Record<Size, string>;
+	for (const size of SIZES) out[size] = `${SIZE_PX[density][size]}px`;
+	return out;
+}
+
+function perDensity<T>(build: (density: Density) => T): Record<Density, T> {
+	const out = {} as Record<Density, T>;
+	for (const density of DENSITIES) out[density] = build(density);
+	return out;
 }
 
 function knobsOf(parsed: ParsedTheme): Knobs {
-	const knobs: Knobs = {
+	return {
 		accentHue: parsed.accentHue ?? KNOB_DEFAULTS.accentHue,
-		neutralHue: parsed.neutralHue ?? KNOB_DEFAULTS.neutralHue,
-		neutralChroma: parsed.neutralChroma ?? KNOB_DEFAULTS.neutralChroma,
-		okHue: parsed.okHue ?? KNOB_DEFAULTS.okHue,
-		warnHue: parsed.warnHue ?? KNOB_DEFAULTS.warnHue,
-		dangerHue: parsed.dangerHue ?? KNOB_DEFAULTS.dangerHue,
-		primary: parsed.primary ?? KNOB_DEFAULTS.primary,
-		space: parsed.space ?? KNOB_DEFAULTS.space,
-		radius: parsed.radius ?? KNOB_DEFAULTS.radius,
-		text: parsed.text ?? KNOB_DEFAULTS.text,
-		elevation: parsed.elevation ?? KNOB_DEFAULTS.elevation,
 		density: parsed.density ?? KNOB_DEFAULTS.density,
-		motion: parsed.motion ?? KNOB_DEFAULTS.motion,
 		fonts: {
 			sans: parsed.fonts?.sans ?? KNOB_DEFAULTS.fonts.sans,
 			mono: parsed.fonts?.mono ?? KNOB_DEFAULTS.fonts.mono,
 		},
-		widths: { ...KNOB_DEFAULTS.widths },
-		breakpoints: { ...KNOB_DEFAULTS.breakpoints },
 	};
-	for (const width of WIDTHS) {
-		const value = parsed.widths?.[width];
-		if (value !== undefined) knobs.widths[width] = value;
-	}
-	for (const bp of BREAKPOINTS) {
-		const value = parsed.breakpoints?.[bp];
-		if (value !== undefined) knobs.breakpoints[bp] = value;
-	}
-	return knobs;
 }
 
 // A family name crosses into a `font-family` value, so it is quoted and its
@@ -264,56 +312,44 @@ function fontStack(family: string | undefined, role: FontRole): string {
 	return `${quoted(family)}, ${quoted(fallbackFace(family))}, ${fallback}`;
 }
 
-function durationsFor(knobs: Knobs): Record<Duration, number> {
-	const durations = {} as Record<Duration, number>;
-	for (const rung of DURATIONS) {
-		durations[rung] = Math.round(knobs.motion * DURATION_RATIO[rung]);
-	}
-	return durations;
+function record<K extends string, V>(
+	keys: readonly K[],
+	value: (key: K) => V,
+): Record<K, V> {
+	const out = {} as Record<K, V>;
+	for (const key of keys) out[key] = value(key);
+	return out;
 }
 
 export function deriveTheme(theme: Theme = {}): ResolvedTheme {
 	const parsed = parseTheme(theme);
 	const knobs = knobsOf(parsed);
-
-	const colorOverrides = parsed.overrides?.colors;
-	const colors = {} as Record<Mode, Record<PerModeColor, string>>;
+	const colors = {} as Record<Mode, Record<ColorName, string>>;
+	const shadows = {} as Record<Mode, Record<ShadowLevel, string>>;
 	for (const mode of MODES) {
-		colors[mode] = resolveMode(mode, knobs, colorOverrides?.[mode] ?? {});
+		colors[mode] = resolveMode(mode, knobs);
+		shadows[mode] = shadowsFor(mode);
 	}
-
-	const shared = colorOverrides?.shared ?? {};
-	const invariantColors = {} as Record<InvariantColor, string>;
-	for (const token of INVARIANT_COLORS) {
-		const declaration = INVARIANT[token];
-		invariantColors[token] =
-			shared[token] ?? resolveColor(declaration, knobs, declaration.alpha);
-	}
-
-	// Every override key is checked against `SCALE_KEYS` by the schema, so the
-	// cast holds and the map stays total.
-	const scales = scalesFor(knobs);
-	for (const [key, value] of Object.entries(parsed.overrides?.scales ?? {})) {
-		scales[key as ScaleKey] = value;
-	}
-	for (const key of SCALE_KEYS) {
-		if (scales[key] === undefined) throw new Error(`[${LABEL}] no ${key}`);
-	}
-
 	return {
 		defaultMode: parsed.defaultMode,
 		knobs,
 		colors,
-		invariantColors,
-		scales,
+		shadows,
+		type: perDensity(typeFor),
+		tracking: record(TRACKED_ROLES, (role) => TYPE_TRACKING[role]),
+		spacing: perDensity(spacingFor),
+		sizes: perDensity(sizesFor),
+		radii: record(RADIUS_ROLES, (role) => `${RADIUS_PX[role]}px`),
+		widths: record(WIDTHS, (width) => WIDTH_VALUE[width]),
+		breakpoints: record(BREAKPOINTS, (bp) => `${BREAKPOINT_PX[bp]}px`),
 		fonts: {
 			sans: fontStack(knobs.fonts.sans, "sans"),
 			mono: fontStack(knobs.fonts.mono, "mono"),
 		},
-		sizes: {
-			touch: sizesFor(knobs, "touch"),
-			compact: sizesFor(knobs, "compact"),
+		motion: {
+			durations: record(DURATIONS, (rung) => DURATION_MS[rung]),
+			loop: LOOP_MS,
+			easings: { ...EASING },
 		},
-		motion: { durations: durationsFor(knobs), easings: { ...EASING } },
 	};
 }

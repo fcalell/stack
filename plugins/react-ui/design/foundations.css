@@ -1,0 +1,1662 @@
+/*
+ * Foundations: the token sheet proposal (Stage 1). Every value a board draws is a named custom
+ * property below; boards and utilities read tokens only. Board 1 writes the type section and the
+ * minimum base it needs; boards 2 to 4 add colour, rhythm, elevation and states.
+ *
+ * Mode: light on :root, dark on .dark (a class="dark" wrapper scopes a subtree).
+ * Density: :root[data-density="desktop"] is the fine-pointer set, :root[data-density="touch"]
+ * the 44 px world. A page with no density attribute draws the desktop set.
+ */
+
+/* ------------------------------------------------------------------ faces */
+
+@font-face {
+	font-family: "Inter Variable";
+	src: url("./files/inter-latin-opsz-normal.woff2") format("woff2-variations");
+	font-weight: 100 900;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: "JetBrains Mono Variable";
+	src: url("./files/jetbrains-mono-latin-wght-normal.woff2")
+		format("woff2-variations");
+	font-weight: 100 800;
+	font-style: normal;
+	font-display: swap;
+}
+
+/* Arial (or its metric twin Liberation Sans) resized to Inter's metrics, so the swap does not
+   move a line. */
+@font-face {
+	font-family: "Inter Fallback";
+	src:
+		local("Arial"), local("ArialMT"), local("Liberation Sans"), local("Arimo");
+	ascent-override: 90.44%;
+	descent-override: 22.52%;
+	line-gap-override: 0%;
+	size-adjust: 107.12%;
+}
+
+/* ------------------------------------------------------------------ type */
+
+:root {
+	--font-sans:
+		"Inter Variable", "Inter Fallback", ui-sans-serif, system-ui, sans-serif;
+	--font-mono:
+		"JetBrains Mono Variable", ui-monospace, "SFMono-Regular", Menlo, monospace;
+	/* JetBrains Mono draws code: its programming ligatures and contextual alternates are off. */
+	--features-mono: "liga" 0, "calt" 0;
+
+	/* The one measure for running text (rubric: 45-75 ch). */
+	--measure: 66ch;
+}
+
+/*
+ * Two rules decide which role a piece of text takes:
+ *   (a) Size follows structure, never emphasis. The primary line of anything is body; a
+ *       secondary line is meta; emphasis inside a line is weight 500 (.strong), never a size
+ *       change.
+ *   (b) A size role names a place, once. title is the page's name, once per screen; heading is a
+ *       section's or a card's name, never inside a row; caption is text inside a small component
+ *       (a chip, a key hint, a badge), never a sentence; code is what a machine reads.
+ * So there is no label role: a field label and a row's leading cell are body at 500; a table
+ * header is meta at 500; menu and picker items are body.
+ *
+ * The scale derives from one knob per density, the body size b (desktop 13, touch 16), each role
+ * a fixed ratio of b rounded to the pixel:
+ *   display = round(2.77 b)    36 / 44   a display number (>= 2.5 x body, rubric §2)
+ *   title   = round(1.385 b)   18 / 22
+ *   heading = round(1.154 b)   15 / 18
+ *   body    = b                13 / 16
+ *   meta    = round(0.923 b)   12 / 15
+ *   caption = round(0.846 b)   11 / 14
+ *   code    = meta             12 / 15
+ * Leading = the nearest even px of size x 1.5 (body, meta, caption, code), x 1.3 (heading,
+ * title), x 1.1 (display); a tie rounds up.
+ * Tracking is per role and density-invariant (em): Inter's opsz axis already tightens the display
+ * cut, so display takes -0.02em, title -0.01em, heading -0.005em, text 0, caption +0.01em.
+ * Weights: display 500, title and heading 600, everything else 400, and --weight-strong 500 for
+ * emphasis; muted text is never above 500.
+ */
+
+:root {
+	--weight-strong: 500;
+}
+
+/* desktop, b = 13 */
+:root,
+:root[data-density="desktop"] {
+	--text-display: 36px;
+	--leading-display: 40px;
+	--weight-display: 500;
+	--tracking-display: -0.02em;
+
+	--text-title: 18px;
+	--leading-title: 24px;
+	--weight-title: 600;
+	--tracking-title: -0.01em;
+
+	--text-heading: 15px;
+	--leading-heading: 20px;
+	--weight-heading: 600;
+	--tracking-heading: -0.005em;
+
+	--text-body: 13px;
+	--leading-body: 20px;
+	--weight-body: 400;
+	--tracking-body: 0em;
+
+	--text-meta: 12px;
+	--leading-meta: 18px;
+	--weight-meta: 400;
+	--tracking-meta: 0em;
+
+	--text-caption: 11px;
+	--leading-caption: 16px;
+	--weight-caption: 400;
+	--tracking-caption: 0.01em;
+
+	--text-code: var(--text-meta);
+	--leading-code: var(--leading-meta);
+	--weight-code: 400;
+	--tracking-code: 0em;
+}
+
+/* touch, b = 16 (16 is also the input size below which iOS Safari zooms on focus) */
+:root[data-density="touch"] {
+	--text-display: 44px;
+	--leading-display: 48px;
+	--weight-display: 500;
+	--tracking-display: -0.02em;
+
+	--text-title: 22px;
+	--leading-title: 28px;
+	--weight-title: 600;
+	--tracking-title: -0.01em;
+
+	--text-heading: 18px;
+	--leading-heading: 24px;
+	--weight-heading: 600;
+	--tracking-heading: -0.005em;
+
+	--text-body: 16px;
+	--leading-body: 24px;
+	--weight-body: 400;
+	--tracking-body: 0em;
+
+	--text-meta: 15px;
+	--leading-meta: 22px;
+	--weight-meta: 400;
+	--tracking-meta: 0em;
+
+	--text-caption: 14px;
+	--leading-caption: 22px;
+	--weight-caption: 400;
+	--tracking-caption: 0.01em;
+
+	--text-code: var(--text-meta);
+	--leading-code: var(--leading-meta);
+	--weight-code: 400;
+	--tracking-code: 0em;
+}
+
+/* ------------------------------------------------------------------ colour */
+
+/*
+ * Every colour is oklch, named by role; light on :root, dark on .dark. Chroma sits inside sRGB so
+ * a value renders as written (the hex beside each is its sRGB rendering).
+ *
+ * Neutrals carry hue 270 at chroma 0.002-0.012: a cool grey on purpose (rubric §5, never a pure
+ * mid-grey), the same family as the accent.
+ *
+ * Surfaces. canvas: the page, a visible step below white in light (CIE L* 96.9 under surface 100
+ * and over group 93.8, each >= 3 L* apart).
+ * surface: a card, a field, a row (white in light, one step up in dark). group: a filled tile, a
+ * chip ground, one step below surface in light and above it in dark; a selected row takes the
+ * selection wash of the states section instead. raised: a popover or a sheet; light lifts it by
+ * shadow so it is white, dark lifts it by one step, the group step, since a popover never holds
+ * a group fill (its highlight is the hover wash). Dark steps in CIE L*: canvas 3.6, surface 8.1,
+ * group and raised 12.3 (+4.5, +4.1; rubric: +4 to +8, at most three steps).
+ * edge: the region hairline (rubric: light #dfdfdf-#ededed, dark #1f1f1f-#34343a, 10-15 % lighter
+ * than the surface it sits on). The dark ladder spans 8.6 L* from canvas to group, more than the
+ * 5 L* one hairline could straddle, so the hairline is split: edge (drawn over canvas and surface,
+ * dark L* 18.5: +14.9 over canvas, +10.4 over surface) and edge-raised (drawn on group and on the
+ * raised layers, their own borders included, dark L* 22.6: +10.3 over group and raised, a hair
+ * past the rubric's #34343a). A group
+ * or raised layer re-points --edge to --edge-raised for everything inside it, so a part never
+ * picks between them. In light both are the same hairline. It separates; it is not a boundary a
+ * control depends on, so it is not held to 3:1.
+ * edge-strong: a control's boundary (a field, a checkbox), >= 3:1 on surface and group
+ * (WCAG 1.4.11). scrim: 45 % light, 50 % dark (rubric 40-50 %).
+ *
+ * Inks: three levels, no fourth grey. body for the primary line, meta for the secondary line and
+ * placeholders (>= 4.5:1 on canvas, surface and group in both modes), faint for disabled text
+ * only, at about 3:1 on surface (WCAG exempts disabled text), so a disabled part reads as off.
+ * Dark: rubric #f7f8f8 / #a1a1a1-#d0d6e0 / #62666d-#8a8f98.
+ *
+ * Accent: hue 264, a blue between Linear's indigo (#5e6ad2, 277) and Vercel's blue (#0070f3,
+ * 255). Blue because the accent's jobs are the link, the focus ring and the one act, and blue is
+ * the hue a reader already takes for a link; 264 sits on the neutrals' own hue so the chrome and
+ * the accent read as one family; and it is far from the three status hues (25, 70, 150), so an
+ * accented act never reads as a status. accent: the filled act (>= 4.5:1 under on-accent, same in
+ * both modes). accent-soft: a selected row, a tinted tile. accent-ink: a link, the focus ring,
+ * a selection outline (text-grade on every surface); in light it is the accent itself, in dark it
+ * lightens so a link and a ring still read on the near-black ground.
+ *
+ * Status: three families x (strong, soft). The strong tone is the dot, the icon and the text on
+ * its own soft, >= 4.5:1 on canvas, surface, group and its soft; the soft is the chip or banner
+ * ground. Three dialects only (rubric §1): a dot with grey text on a hairline, the soft fill with
+ * the strong text, and a saturated fill for the one exceptional state, danger, with on-danger.
+ * Lightness is spread across the three (not only hue) so they separate under protanopia and
+ * deuteranopia. Dark strong tones are capped at L 0.75 like the chip marks (ok 0.64, danger 0.71,
+ * warn 0.75), so no status glares on the near-black ground.
+ *
+ * Chips: six categorical families in hue order (25, 85, 145, 195, 305, 350), the accent's
+ * 215-290 band left out. Each has a mark (the dot, a chart series; >= 3:1 on surface), a soft
+ * ground and an ink for text on the soft. Mark lightness alternates between neighbours so the set
+ * separates by lightness as well as hue. Light marks are floored at L 0.50 and dark marks capped
+ * at L 0.75, so no mark reads as ink or glares. Min CIEDE2000 between any two marks under normal,
+ * protan, deutan and tritan simulation (Machado 2009, severity 1): 9.3 light, 8.8 dark.
+ *
+ * Avatars: eight hues at 40-50 degree spacing, a pastel fill with a hue-darkened initial in light,
+ * a deep fill with a hue-lightened initial in dark; the initial clears 4.5:1 on its fill.
+ */
+
+:root {
+	color-scheme: light;
+
+	/* surfaces */
+	--canvas: oklch(0.974 0.002 270); /* #f6f6f8 */
+	--surface: oklch(1 0 0); /* #ffffff */
+	--group: oklch(0.947 0.004 270); /* #ecedf0 */
+	--raised: oklch(1 0 0); /* #ffffff */
+	--edge: oklch(0.915 0.004 270); /* #e2e3e6 */
+	--edge-raised: oklch(0.915 0.004 270); /* #e2e3e6 */
+	--edge-strong: oklch(0.62 0.01 270); /* #84868c */
+	--scrim: oklch(0.2 0.01 270 / 0.45);
+
+	/* inks */
+	--ink-body: oklch(0.2 0.008 270); /* #15161a */
+	--ink-meta: oklch(0.45 0.012 270); /* #53555c */
+	--ink-faint: oklch(0.665 0.01 270); /* #91949a */
+
+	/* accent */
+	--accent: oklch(0.52 0.19 264); /* #2d5ed4 */
+	--on-accent: oklch(1 0 0); /* #ffffff */
+	--accent-soft: oklch(0.95 0.023 264); /* #e7efff */
+	--accent-ink: oklch(0.52 0.19 264); /* #2d5ed4 */
+
+	/* status */
+	--ok: oklch(0.49 0.129 150); /* #0f7436 */
+	--ok-soft: oklch(0.965 0.04 150); /* #e1fce6 */
+	--warn: oklch(0.48 0.099 70); /* #81520c */
+	--warn-soft: oklch(0.965 0.036 85); /* #fff2d9 */
+	--danger: oklch(0.55 0.19 25); /* #c92f33 */
+	--danger-soft: oklch(0.965 0.016 20); /* #feefef */
+	--on-danger: oklch(1 0 0); /* #ffffff */
+
+	/* chips */
+	--chip-red: oklch(0.56 0.2 25); /* #d02b31 */
+	--chip-red-soft: oklch(0.945 0.026 25); /* #fee7e4 */
+	--chip-red-ink: oklch(0.42 0.1 25); /* #7a3430 */
+	--chip-amber: oklch(0.65 0.13 85); /* #b3880f */
+	--chip-amber-soft: oklch(0.945 0.035 85); /* #f8ecd3 */
+	--chip-amber-ink: oklch(0.42 0.085 85); /* #624902 */
+	--chip-green: oklch(0.5 0.154 145); /* #087820 */
+	--chip-green-soft: oklch(0.945 0.035 145); /* #dff4df */
+	--chip-green-ink: oklch(0.42 0.1 145); /* #235b28 */
+	--chip-teal: oklch(0.61 0.102 195); /* #0e9696 */
+	--chip-teal-soft: oklch(0.945 0.035 195); /* #d3f5f4 */
+	--chip-teal-ink: oklch(0.42 0.07 195); /* #055959 */
+	--chip-violet: oklch(0.51 0.2 305); /* #8239bf */
+	--chip-violet-soft: oklch(0.945 0.032 305); /* #f2e8ff */
+	--chip-violet-ink: oklch(0.42 0.1 305); /* #5a3d78 */
+	--chip-pink: oklch(0.51 0.2 350); /* #b11776 */
+	--chip-pink-soft: oklch(0.945 0.031 350); /* #fee5f0 */
+	--chip-pink-ink: oklch(0.42 0.1 350); /* #743355 */
+
+	/* avatars */
+	--avatar-1: oklch(0.88 0.062 20); /* #fec8c7 */
+	--avatar-1-ink: oklch(0.38 0.1 20); /* #6e282b */
+	--avatar-2: oklch(0.88 0.07 60); /* #fbcdaa */
+	--avatar-2-ink: oklch(0.38 0.088 60); /* #633502 */
+	--avatar-3: oklch(0.88 0.07 100); /* #e2d9a4 */
+	--avatar-3-ink: oklch(0.38 0.078 100); /* #4c4302 */
+	--avatar-4: oklch(0.88 0.07 150); /* #b7e5bf */
+	--avatar-4-ink: oklch(0.38 0.1 150); /* #085023 */
+	--avatar-5: oklch(0.88 0.07 190); /* #a1e7e2 */
+	--avatar-5-ink: oklch(0.38 0.064 190); /* #044d4a */
+	--avatar-6: oklch(0.88 0.07 230); /* #a8e1fd */
+	--avatar-6-ink: oklch(0.38 0.074 230); /* #044962 */
+	--avatar-7: oklch(0.88 0.057 270); /* #c9d6fe */
+	--avatar-7-ink: oklch(0.38 0.1 270); /* #2e3d77 */
+	--avatar-8: oklch(0.88 0.07 320); /* #edc9f5 */
+	--avatar-8-ink: oklch(0.38 0.1 320); /* #592e63 */
+}
+
+.dark {
+	color-scheme: dark;
+
+	/* surfaces */
+	--canvas: oklch(0.16 0.005 270); /* #0c0d0f */
+	--surface: oklch(0.207 0.006 270); /* #16181a */
+	--group: oklch(0.243 0.007 270); /* #1f2023 */
+	--raised: oklch(0.243 0.007 270); /* #1f2023 */
+	--edge: oklch(0.298 0.008 270); /* #2c2d31 */
+	--edge-raised: oklch(0.332 0.008 270); /* #34363a */
+	--edge-strong: oklch(0.53 0.01 270); /* #696c72 */
+	--scrim: oklch(0 0 0 / 0.5);
+
+	/* inks */
+	--ink-body: oklch(0.97 0.002 270); /* #f4f5f6 */
+	--ink-meta: oklch(0.76 0.01 270); /* #aeb1b8 */
+	--ink-faint: oklch(0.506 0.01 270); /* #63656b */
+
+	/* accent */
+	--accent: oklch(0.52 0.19 264); /* #2d5ed4 */
+	--on-accent: oklch(1 0 0); /* #ffffff */
+	--accent-soft: oklch(0.29 0.06 264); /* #1c2a49 */
+	--accent-ink: oklch(0.72 0.13 264); /* #7ba3f6 */
+
+	/* status */
+	--ok: oklch(0.64 0.17 150); /* #17a750 */
+	--ok-soft: oklch(0.28 0.05 150); /* #15301b */
+	--warn: oklch(0.75 0.15 80); /* #dfa11a */
+	--warn-soft: oklch(0.28 0.05 75); /* #372508 */
+	--danger: oklch(0.71 0.178 25); /* #fd6d67 */
+	--danger-soft: oklch(0.28 0.06 25); /* #421c19 */
+	--on-danger: oklch(0.16 0.005 270); /* #0c0d0f */
+
+	/* chips */
+	--chip-red: oklch(0.75 0.147 25); /* #fd867e */
+	--chip-red-soft: oklch(0.3 0.05 25); /* #442321 */
+	--chip-red-ink: oklch(0.87 0.068 25); /* #fec4be */
+	--chip-amber: oklch(0.75 0.15 85); /* #d9a514 */
+	--chip-amber-soft: oklch(0.3 0.05 85); /* #392c0c */
+	--chip-amber-ink: oklch(0.87 0.08 85); /* #edd198 */
+	--chip-green: oklch(0.6 0.185 145); /* #0d9b2c */
+	--chip-green-soft: oklch(0.3 0.05 145); /* #1d341e */
+	--chip-green-ink: oklch(0.87 0.08 145); /* #b4e3b4 */
+	--chip-teal: oklch(0.71 0.118 195); /* #17b8b8 */
+	--chip-teal-soft: oklch(0.3 0.05 195); /* #023536 */
+	--chip-teal-ink: oklch(0.87 0.08 195); /* #93e5e4 */
+	--chip-violet: oklch(0.65 0.2 305); /* #ac67ef */
+	--chip-violet-soft: oklch(0.3 0.05 305); /* #342742 */
+	--chip-violet-ink: oklch(0.87 0.078 305); /* #e0c8fe */
+	--chip-pink: oklch(0.6 0.2 350); /* #d13d91 */
+	--chip-pink-soft: oklch(0.3 0.05 350); /* #412331 */
+	--chip-pink-ink: oklch(0.87 0.08 350); /* #febfdc */
+
+	/* avatars */
+	--avatar-1: oklch(0.4 0.08 20); /* #6c3435 */
+	--avatar-1-ink: oklch(0.92 0.04 20); /* #fedbda */
+	--avatar-2: oklch(0.4 0.08 60); /* #673c14 */
+	--avatar-2-ink: oklch(0.92 0.05 60); /* #fedec4 */
+	--avatar-3: oklch(0.4 0.08 100); /* #524806 */
+	--avatar-3-ink: oklch(0.92 0.05 100); /* #ece6c0 */
+	--avatar-4: oklch(0.4 0.08 150); /* #235430 */
+	--avatar-4-ink: oklch(0.92 0.05 150); /* #ceefd3 */
+	--avatar-5: oklch(0.4 0.068 190); /* #035350 */
+	--avatar-5-ink: oklch(0.92 0.05 190); /* #bff0ec */
+	--avatar-6: oklch(0.4 0.078 230); /* #044f69 */
+	--avatar-6-ink: oklch(0.92 0.047 230); /* #c6ebfe */
+	--avatar-7: oklch(0.4 0.08 270); /* #374573 */
+	--avatar-7-ink: oklch(0.92 0.037 270); /* #dbe4fe */
+	--avatar-8: oklch(0.4 0.08 320); /* #5b3862 */
+	--avatar-8-ink: oklch(0.92 0.05 320); /* #f4dafa */
+}
+
+/* ------------------------------------------------------------------ space */
+
+/*
+ * One base, 4 px; every rung is base x n, n in {0.5, 1, 1.5, 2, 3, 4, 5, 6, 8, 10, 12}. The rungs
+ * are density-invariant; the roles below pick a rung per density, so a density knob moves roles
+ * up or down the same ladder rather than inventing values.
+ */
+:root {
+	--space-0-5: 2px;
+	--space-1: 4px;
+	--space-1-5: 6px;
+	--space-2: 8px;
+	--space-3: 12px;
+	--space-4: 16px;
+	--space-5: 20px;
+	--space-6: 24px;
+	--space-8: 32px;
+	--space-10: 40px;
+	--space-12: 48px;
+}
+
+/*
+ * Roles, by use:
+ *   inside     within a control: icon to label, dot to text
+ *   control-x  a control's inline padding
+ *   pair       between paired elements: label over input, title over description
+ *   rows       between rows in a menu or nav list (rows in a hairline list abut: 0)
+ *   card       a card's or popover's inset
+ *   fields     between fields, and between a field row and the next
+ *   sections   between sections of a page
+ *   page       the page inset, the content column's padding
+ */
+:root,
+:root[data-density="desktop"] {
+	--space-inside: var(--space-1-5);
+	--space-control-x: var(--space-3);
+	--space-pair: var(--space-1-5);
+	--space-rows: var(--space-0-5);
+	--space-card: var(--space-4);
+	--space-fields: var(--space-4);
+	--space-sections: var(--space-8);
+	--space-page: var(--space-6);
+}
+
+/* touch: the same roles one rung looser, except the page inset, which a phone narrows */
+:root[data-density="touch"] {
+	--space-inside: var(--space-2);
+	--space-control-x: var(--space-4);
+	--space-pair: var(--space-2);
+	--space-rows: var(--space-1);
+	--space-card: var(--space-4);
+	--space-fields: var(--space-6);
+	--space-sections: var(--space-10);
+	--space-page: var(--space-4);
+}
+
+/* ------------------------------------------------------------------ geometry per density */
+
+/*
+ * Heights are multiples of the base. desktop: control 32 (rubric 24-32), compact 28 (menus,
+ * toolbars), field 38 (form inputs, rubric 32-38; settings reference 38), one-line row 32
+ * (rubric 26-37, 3.1 rows / 100 px), two-line row 48 (list items, rubric 40-72), setting row 64
+ * (label + description beside a control, settings range 64-70), header 32 (table and strip
+ * headers, 30-34). touch: every target is at least 44 (the floor, WCAG 2.5.5 / platform HIG),
+ * rows and fields one rung above it.
+ */
+:root,
+:root[data-density="desktop"] {
+	--control-height: 32px;
+	--control-height-compact: 28px;
+	--field-height: 38px;
+	--row-height: 32px;
+	--row-height-2: 48px;
+	--row-height-setting: 64px;
+	--header-height: 32px;
+	--target-min: 24px;
+
+	--size-dot: 6px;
+	--size-chip: 20px;
+	--size-avatar: 24px;
+	--size-swatch: 40px;
+	--size-control: var(--control-height);
+}
+
+:root[data-density="touch"] {
+	--control-height: 44px;
+	--control-height-compact: 44px;
+	--field-height: 48px;
+	--row-height: 48px;
+	--row-height-2: 64px;
+	--row-height-setting: 72px;
+	--header-height: 44px;
+	--target-min: 44px;
+
+	--size-dot: 8px;
+	--size-chip: 24px;
+	--size-avatar: 32px;
+	--size-swatch: 40px;
+	--size-control: var(--control-height);
+}
+
+/* ------------------------------------------------------------------ widths of lifted layers */
+
+/* Each at its pattern's range (reference sheet): popover 215-300, toast 340-430, confirm dialog
+   365-590, sheet 610-730. A layer never stretches to its container. */
+:root {
+	--width-popover: 240px;
+	--width-toast: 360px;
+	--width-dialog: 440px;
+	--width-sheet: 640px;
+}
+
+/* ------------------------------------------------------------------ radius */
+
+/*
+ * Spent by role (rubric §0): chip 4; control and row 6; card, popover and sheet 8; dialog 12;
+ * full only on dots, avatars and the pill chip or status. Density-invariant: a radius names the
+ * role, not the size, so a 44 px touch control keeps the 6 of its desktop twin.
+ */
+:root {
+	--radius-chip: 4px;
+	--radius-control: 6px;
+	--radius-row: 6px;
+	--radius-card: 8px;
+	--radius-popover: 8px;
+	--radius-sheet: 8px;
+	--radius-dialog: 12px;
+	--radius-full: 9999px;
+	--radius-pill: var(--radius-full);
+}
+
+/* ------------------------------------------------------------------ hairline and ring */
+
+/* One hairline width for region edges, row splits and field boundaries. The focus ring is
+   accent-ink, drawn outside the box at an offset, so it never covers the control's own edge. */
+:root {
+	--hairline: 1px;
+	--ring: 2px;
+	--ring-offset: 2px;
+}
+
+/* ------------------------------------------------------------------ elevation */
+
+/*
+ * Two levels, spent on lifted layers only; a card at rest has a hairline and no shadow.
+ *   float  popover, menu, picker, toast
+ *   modal  command palette, dialog, sheet
+ * Each is a tight contact shadow plus a soft ambient one, tinted with the neutral hue in light.
+ * Dark: a shadow cannot darken a near-black canvas much, so the lift is carried by the raised
+ * step and the hairline, and the shadow is pure black at higher opacity to cut the layer from
+ * whatever sits behind it (it reads over surface and group, not over canvas).
+ */
+:root {
+	--shadow-float:
+		0 1px 2px oklch(0.2 0.01 270 / 0.06), 0 4px 12px oklch(0.2 0.01 270 / 0.08);
+	--shadow-modal:
+		0 2px 4px oklch(0.2 0.01 270 / 0.06), 0 16px 40px oklch(0.2 0.01 270 / 0.14);
+}
+
+.dark {
+	--shadow-float: 0 1px 2px oklch(0 0 0 / 0.4), 0 4px 12px oklch(0 0 0 / 0.5);
+	--shadow-modal: 0 2px 4px oklch(0 0 0 / 0.4), 0 16px 40px oklch(0 0 0 / 0.65);
+}
+
+/* ------------------------------------------------------------------ motion */
+
+/*
+ * One duration scale from a base of 200 ms: x 0.5, 0.75, 1, 1.5 (rubric §6: 150-300 for
+ * micro-interactions; instant is for press feedback only). One easing set: out for what
+ * enters, in for what leaves, in-out for what moves. Reduced motion zeroes the scale.
+ * Only transform and opacity animate (the gate's rule): a state switches its colour, fill and
+ * boundary at once, and motion is spent on what enters and leaves (popover, sheet, toast) and on
+ * the switch thumb.
+ */
+:root {
+	--duration-instant: 100ms;
+	--duration-fast: 150ms;
+	--duration-base: 200ms;
+	--duration-slow: 300ms;
+	--ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+	--ease-in: cubic-bezier(0.7, 0, 0.84, 0);
+	--ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	:root {
+		--duration-instant: 0ms;
+		--duration-fast: 0ms;
+		--duration-base: 0ms;
+		--duration-slow: 0ms;
+	}
+}
+
+/* ------------------------------------------------------------------ states */
+
+/*
+ * Every state is a token named by state. Washes derive from the body ink at an alpha, so they
+ * follow the mode on their own and sit on any surface (canvas, surface, group) as one more step:
+ *   hover 5 %, press 8 %, selected 11 %, selected + hover 15 %, disabled 6 %, skeleton 9 %.
+ * Measured on surface in CIE L*: light 100 -> hover 95.8 -> selected 91.0 -> selected + hover
+ * 87.8; dark 8.1 -> 13.1 -> 19.7 -> 23.8, so hover and selected sit 4.9 (light) and 6.6 (dark)
+ * L* apart and selected + hover is darker (light) or lighter (dark) than both. They read over group too,
+ * where a group fill would vanish.
+ * These tokens are declared on both :root and .dark: a var() inside a custom property resolves
+ * where it is declared, so a mode scope has to re-declare it to pick up its own ink.
+ *
+ * Acts. Two primaries, one default to be chosen: act-accent (the accent fill) and act-ink (the
+ * body ink as the fill, the dark primary the settings references use; it inverts in dark mode).
+ * Hover and press move the fill toward a second colour by 12 % and 22 % (color-mix in oklab, so
+ * the hue holds; oklch would swing it toward the black's nominal hue):
+ * the accent toward black, so its label only gains contrast; the ink fill toward its own label
+ * colour, which lightens it in light mode and darkens it in dark. Pending recedes the fill 30 %
+ * toward the page, except the accent's pending fill, which lightens 30 % toward its white label
+ * in both modes (rubric: a pending act's fill is lightened). act-accent is the default act;
+ * act-ink is the secondary dialect, for a screen that needs a dark act. Disabled: a 6 % ink wash
+ * with faint ink, so a disabled act or chip keeps a visible box on every surface and its label
+ * reads as off (about 3:1, WCAG exempts disabled text); a switch, which has no label of its own,
+ * disables by opacity. A field's rest boundary is edge (B); hover steps it to edge-strong.
+ * Hit area: every interactive part draws a ::before at least --target-min square, centred, so a
+ * 28 x 16 switch or a 20 px chip still takes a 24 px target (44 at touch).
+ */
+:root,
+.dark {
+	--shade: oklch(0 0 0);
+
+	--wash-hover: color-mix(in oklch, var(--ink-body) 5%, transparent);
+	--wash-press: color-mix(in oklch, var(--ink-body) 8%, transparent);
+	--wash-selected: color-mix(in oklch, var(--ink-body) 11%, transparent);
+	--wash-selected-hover: color-mix(in oklch, var(--ink-body) 15%, transparent);
+	--skeleton: color-mix(in oklch, var(--ink-body) 9%, transparent);
+
+	--ring-color: var(--accent-ink);
+	--selected-outline: var(--accent-ink);
+	--edge-hover: var(--edge-strong);
+	--edge-error: var(--danger);
+	--ink-error: var(--danger);
+	--ink-disabled: var(--ink-faint);
+	--fill-disabled: color-mix(in oklch, var(--ink-body) 6%, transparent);
+	--disabled-opacity: 0.45;
+
+	--act-accent: var(--accent);
+	--on-act-accent: var(--on-accent);
+	--act-accent-hover: color-mix(in oklab, var(--accent), var(--shade) 12%);
+	--act-accent-press: color-mix(in oklab, var(--accent), var(--shade) 22%);
+	--act-accent-pending: color-mix(
+		in oklab,
+		var(--accent) 70%,
+		var(--on-accent)
+	);
+
+	--act-ink: var(--ink-body);
+	--on-act-ink: var(--canvas);
+	--act-ink-hover: color-mix(in oklab, var(--ink-body), var(--canvas) 12%);
+	--act-ink-press: color-mix(in oklab, var(--ink-body), var(--canvas) 22%);
+	--act-ink-pending: color-mix(in oklab, var(--ink-body) 70%, var(--canvas));
+
+	--switch-off: var(--edge-strong);
+	--switch-off-hover: color-mix(
+		in oklab,
+		var(--edge-strong),
+		var(--ink-body) 15%
+	);
+	--switch-on: var(--accent);
+	--switch-on-hover: var(--act-accent-hover);
+	--switch-thumb-fill: var(--on-accent);
+}
+
+/* sizes of the state parts: skeleton bars are 12 tall at radius 4 (rubric §0), the spinner
+   14-16 inside a pending act, the switch sized to its row */
+:root,
+:root[data-density="desktop"] {
+	--skeleton-height: var(--space-3);
+	--size-spinner: 14px;
+	--switch-width: 28px;
+	--switch-height: 16px;
+	--switch-thumb: 12px;
+}
+
+:root[data-density="touch"] {
+	--skeleton-height: var(--space-3);
+	--size-spinner: 16px;
+	--switch-width: 40px;
+	--switch-height: 24px;
+	--switch-thumb: 20px;
+}
+
+:root {
+	--switch-inset: var(--space-0-5);
+	--spinner-stroke: 2px;
+	--spinner-track: 30%;
+	/* a loop, not a transition: outside the duration scale, and kept under reduced motion
+	   because the spin is the only sign the wait is live */
+	--duration-loop: 800ms;
+}
+
+@keyframes spin {
+	to {
+		transform: rotate(1turn);
+	}
+}
+
+/* ------------------------------------------------------------------ base */
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+html {
+	-webkit-text-size-adjust: 100%;
+	text-size-adjust: 100%;
+}
+
+body {
+	margin: 0;
+	font-family: var(--font-sans);
+	font-size: var(--text-body);
+	line-height: var(--leading-body);
+	font-weight: var(--weight-body);
+	letter-spacing: var(--tracking-body);
+	font-optical-sizing: auto;
+	font-synthesis: none;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	color: var(--ink-body);
+	background: var(--canvas);
+}
+
+h1,
+h2,
+h3,
+p {
+	margin: 0;
+}
+
+h1,
+h2,
+h3 {
+	text-wrap: balance;
+}
+
+p {
+	text-wrap: pretty;
+}
+
+code,
+kbd,
+pre,
+samp {
+	font-family: var(--font-mono);
+	font-feature-settings: var(--features-mono);
+	font-variant-ligatures: none;
+}
+
+/* ------------------------------------------------------------------ utilities */
+
+.text-display {
+	font-size: var(--text-display);
+	line-height: var(--leading-display);
+	font-weight: var(--weight-display);
+	letter-spacing: var(--tracking-display);
+}
+.text-title {
+	font-size: var(--text-title);
+	line-height: var(--leading-title);
+	font-weight: var(--weight-title);
+	letter-spacing: var(--tracking-title);
+}
+.text-heading {
+	font-size: var(--text-heading);
+	line-height: var(--leading-heading);
+	font-weight: var(--weight-heading);
+	letter-spacing: var(--tracking-heading);
+}
+.text-body {
+	font-size: var(--text-body);
+	line-height: var(--leading-body);
+	font-weight: var(--weight-body);
+	letter-spacing: var(--tracking-body);
+}
+.text-meta {
+	font-size: var(--text-meta);
+	line-height: var(--leading-meta);
+	font-weight: var(--weight-meta);
+	letter-spacing: var(--tracking-meta);
+}
+.text-caption {
+	font-size: var(--text-caption);
+	line-height: var(--leading-caption);
+	font-weight: var(--weight-caption);
+	letter-spacing: var(--tracking-caption);
+}
+.text-code {
+	font-family: var(--font-mono);
+	font-feature-settings: var(--features-mono);
+	font-variant-ligatures: none;
+	font-size: var(--text-code);
+	line-height: var(--leading-code);
+	font-weight: var(--weight-code);
+	letter-spacing: var(--tracking-code);
+}
+/* emphasis inside a line: weight, never size */
+.strong {
+	font-weight: var(--weight-strong);
+}
+
+.ink-body {
+	color: var(--ink-body);
+}
+.ink-meta {
+	color: var(--ink-meta);
+}
+.ink-faint {
+	color: var(--ink-faint);
+}
+
+/* Figures that line up in a column. */
+.nums {
+	font-variant-numeric: tabular-nums;
+}
+/* Running text wraps at the measure. */
+.measure {
+	max-width: var(--measure);
+}
+
+/* layout helpers for the boards */
+.board {
+	padding: var(--space-8);
+	background: var(--canvas);
+}
+.columns {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: var(--space-8);
+}
+.mode {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-12);
+	padding: var(--space-6);
+	background: var(--canvas);
+	color: var(--ink-body);
+	min-width: 0;
+}
+.stack {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-4);
+	min-width: 0;
+}
+.stack-tight {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-1);
+	min-width: 0;
+}
+.stack-loose {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-8);
+	min-width: 0;
+}
+.split {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+	gap: var(--space-4);
+}
+.grid-2 {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: var(--space-6);
+}
+.panel {
+	padding: var(--space-6);
+	background: var(--surface);
+}
+.end {
+	text-align: end;
+}
+.nowrap {
+	white-space: nowrap;
+}
+/* A row that holds one body line whatever its content, so a mono column lines up beside a body
+   column. */
+.line-body {
+	min-height: var(--leading-body);
+	align-items: center;
+}
+
+/* fills and edges */
+/* inside a group tile or a raised layer the hairline is edge-raised (see the colour comment) */
+.fill-group,
+.fill-raised,
+.popover,
+.dialog,
+.sheet,
+.toast {
+	--edge: var(--edge-raised);
+}
+.fill-canvas {
+	background: var(--canvas);
+}
+.fill-surface {
+	background: var(--surface);
+}
+.fill-group {
+	background: var(--group);
+}
+.fill-raised {
+	background: var(--raised);
+}
+.fill-edge {
+	background: var(--edge);
+}
+.fill-edge-strong {
+	background: var(--edge-strong);
+}
+.fill-scrim {
+	background: var(--scrim);
+}
+.fill-accent {
+	background: var(--accent);
+	color: var(--on-accent);
+}
+.fill-on-accent {
+	background: var(--on-accent);
+}
+.fill-accent-soft {
+	background: var(--accent-soft);
+}
+.fill-accent-ink {
+	background: var(--accent-ink);
+}
+.ink-accent {
+	color: var(--accent-ink);
+}
+.edge {
+	border: var(--hairline) solid var(--edge);
+}
+.edge-strong {
+	border: var(--hairline) solid var(--edge-strong);
+}
+.ring {
+	outline: var(--ring) solid var(--accent-ink);
+	outline-offset: var(--ring-offset);
+}
+
+/* A family scope names one status or chip family; the parts below read it. */
+.status-ok {
+	--family: var(--ok);
+	--family-soft: var(--ok-soft);
+	--family-ink: var(--ok);
+}
+.status-warn {
+	--family: var(--warn);
+	--family-soft: var(--warn-soft);
+	--family-ink: var(--warn);
+}
+.status-danger {
+	--family: var(--danger);
+	--family-soft: var(--danger-soft);
+	--family-ink: var(--danger);
+}
+.chip-red {
+	--family: var(--chip-red);
+	--family-soft: var(--chip-red-soft);
+	--family-ink: var(--chip-red-ink);
+}
+.chip-amber {
+	--family: var(--chip-amber);
+	--family-soft: var(--chip-amber-soft);
+	--family-ink: var(--chip-amber-ink);
+}
+.chip-green {
+	--family: var(--chip-green);
+	--family-soft: var(--chip-green-soft);
+	--family-ink: var(--chip-green-ink);
+}
+.chip-teal {
+	--family: var(--chip-teal);
+	--family-soft: var(--chip-teal-soft);
+	--family-ink: var(--chip-teal-ink);
+}
+.chip-violet {
+	--family: var(--chip-violet);
+	--family-soft: var(--chip-violet-soft);
+	--family-ink: var(--chip-violet-ink);
+}
+.chip-pink {
+	--family: var(--chip-pink);
+	--family-soft: var(--chip-pink-soft);
+	--family-ink: var(--chip-pink-ink);
+}
+.fill-family {
+	background: var(--family);
+}
+.fill-family-soft {
+	background: var(--family-soft);
+}
+.fill-family-ink {
+	background: var(--family-ink);
+}
+.ink-family {
+	color: var(--family-ink);
+}
+
+.dot {
+	display: inline-block;
+	flex: none;
+	width: var(--size-dot);
+	height: var(--size-dot);
+	border-radius: var(--radius-full);
+	background: var(--family);
+}
+.chip {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-1);
+	min-width: 0;
+	max-width: 100%;
+	height: var(--size-chip);
+	padding-inline: var(--space-1-5);
+	border-radius: var(--radius-chip);
+	white-space: nowrap;
+}
+/* soft is the filled dialect: a pill (rubric §0, pill filled); outlined chips keep radius 4 */
+.chip-soft {
+	background: var(--family-soft);
+	color: var(--family-ink);
+	border-radius: var(--radius-pill);
+}
+/* the one exceptional state: a saturated fill (danger only) */
+.chip-solid {
+	background: var(--danger);
+	color: var(--on-danger);
+	border-radius: var(--radius-pill);
+}
+.chip-outline {
+	border: var(--hairline) solid var(--edge);
+	color: var(--ink-meta);
+}
+.avatar {
+	display: inline-grid;
+	place-items: center;
+	flex: none;
+	width: var(--size-avatar);
+	height: var(--size-avatar);
+	border-radius: var(--radius-full);
+}
+.avatar-1 {
+	background: var(--avatar-1);
+	color: var(--avatar-1-ink);
+}
+.avatar-2 {
+	background: var(--avatar-2);
+	color: var(--avatar-2-ink);
+}
+.avatar-3 {
+	background: var(--avatar-3);
+	color: var(--avatar-3-ink);
+}
+.avatar-4 {
+	background: var(--avatar-4);
+	color: var(--avatar-4-ink);
+}
+.avatar-5 {
+	background: var(--avatar-5);
+	color: var(--avatar-5-ink);
+}
+.avatar-6 {
+	background: var(--avatar-6);
+	color: var(--avatar-6-ink);
+}
+.avatar-7 {
+	background: var(--avatar-7);
+	color: var(--avatar-7-ink);
+}
+.avatar-8 {
+	background: var(--avatar-8);
+	color: var(--avatar-8-ink);
+}
+
+/* board parts */
+.swatch {
+	height: var(--size-swatch);
+	border-radius: var(--radius-control);
+	outline: var(--hairline) solid var(--edge);
+	outline-offset: calc(var(--hairline) * -1);
+}
+.control {
+	display: flex;
+	align-items: center;
+	height: var(--size-control);
+	padding-inline: var(--space-3);
+	border-radius: var(--radius-control);
+}
+.card {
+	padding: var(--space-4);
+	border-radius: var(--radius-card);
+}
+.row {
+	display: flex;
+	align-items: center;
+	gap: var(--space-2);
+	min-height: var(--size-control);
+	padding-inline: var(--space-3);
+	border-radius: var(--radius-control);
+}
+.cluster {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--space-2);
+}
+.grid-3 {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: var(--space-3);
+}
+.grid-4 {
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: var(--space-3);
+}
+.ratios {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto auto;
+	column-gap: var(--space-3);
+	align-items: baseline;
+}
+.ratios > * {
+	border-bottom: var(--hairline) solid var(--edge);
+}
+.grow {
+	flex: 1;
+	min-width: 0;
+}
+
+/* rhythm roles */
+.flow {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+.inline {
+	display: flex;
+	align-items: center;
+	min-width: 0;
+}
+.gap-inside {
+	gap: var(--space-inside);
+}
+.gap-pair {
+	gap: var(--space-pair);
+}
+.gap-rows {
+	gap: var(--space-rows);
+}
+.gap-fields {
+	gap: var(--space-fields);
+}
+.gap-sections {
+	gap: var(--space-sections);
+}
+.inset-card {
+	padding: var(--space-card);
+}
+.inset-page {
+	padding: var(--space-page);
+}
+
+/* radius and elevation by role */
+.radius-chip {
+	border-radius: var(--radius-chip);
+}
+.radius-control {
+	border-radius: var(--radius-control);
+}
+.radius-row {
+	border-radius: var(--radius-row);
+}
+.radius-card {
+	border-radius: var(--radius-card);
+}
+.radius-popover {
+	border-radius: var(--radius-popover);
+}
+.radius-dialog {
+	border-radius: var(--radius-dialog);
+}
+.radius-pill {
+	border-radius: var(--radius-pill);
+}
+.shadow-float {
+	box-shadow: var(--shadow-float);
+}
+.shadow-modal {
+	box-shadow: var(--shadow-modal);
+}
+.clip {
+	overflow: hidden;
+}
+
+/* the ruler: a bar as wide as the rung it names */
+.rung {
+	height: var(--space-2);
+	background: var(--edge-strong);
+}
+.rung-inside {
+	width: var(--space-inside);
+}
+.rung-control-x {
+	width: var(--space-control-x);
+}
+.rung-pair {
+	width: var(--space-pair);
+}
+.rung-rows {
+	width: var(--space-rows);
+}
+.rung-card {
+	width: var(--space-card);
+}
+.rung-fields {
+	width: var(--space-fields);
+}
+.rung-sections {
+	width: var(--space-sections);
+}
+.rung-page {
+	width: var(--space-page);
+}
+.ruler {
+	display: grid;
+	grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr);
+	column-gap: var(--space-3);
+	row-gap: var(--space-2);
+	align-items: center;
+}
+
+/* shapes */
+.button {
+	position: relative;
+	min-width: 0;
+	max-width: 100%;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--space-inside);
+	height: var(--control-height);
+	padding-inline: var(--space-control-x);
+	border-radius: var(--radius-control);
+	white-space: nowrap;
+}
+.field {
+	position: relative;
+	display: flex;
+	align-items: center;
+	gap: var(--space-inside);
+	min-width: 0;
+	height: var(--field-height);
+	padding-inline: var(--space-control-x);
+	border-radius: var(--radius-control);
+	background: var(--surface);
+}
+.field-a {
+	border: var(--hairline) solid var(--edge-strong);
+}
+.field-b {
+	border: var(--hairline) solid var(--edge);
+}
+.setting-row {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+	align-items: center;
+	column-gap: var(--space-fields);
+	min-height: var(--row-height-setting);
+	padding-inline: var(--space-card);
+}
+.setting-row + .setting-row,
+.list-row + .list-row {
+	border-top: var(--hairline) solid var(--edge);
+}
+.card-footer {
+	display: flex;
+	justify-content: flex-end;
+	align-items: center;
+	gap: var(--space-2);
+	padding: var(--space-3) var(--space-card);
+	border-top: var(--hairline) solid var(--edge);
+}
+.list-row {
+	position: relative;
+	display: flex;
+	align-items: center;
+	gap: var(--space-2);
+	min-width: 0;
+	height: var(--row-height);
+	padding-inline: var(--space-3);
+}
+.menu-item {
+	position: relative;
+	min-width: 0;
+	display: flex;
+	align-items: center;
+	gap: var(--space-inside);
+	height: var(--control-height-compact);
+	padding-inline: var(--space-2);
+	border-radius: var(--radius-row);
+}
+.popover {
+	display: flex;
+	flex-direction: column;
+	width: var(--width-popover);
+	max-width: 100%;
+	overscroll-behavior: contain;
+	gap: var(--space-rows);
+	padding: var(--space-1);
+	background: var(--raised);
+	border: var(--hairline) solid var(--edge);
+	border-radius: var(--radius-popover);
+	box-shadow: var(--shadow-float);
+}
+.toast {
+	display: flex;
+	width: var(--width-toast);
+	max-width: 100%;
+	align-items: center;
+	gap: var(--space-3);
+	padding: var(--space-2) var(--space-2) var(--space-2) var(--space-3);
+	background: var(--raised);
+	border: var(--hairline) solid var(--edge);
+	border-radius: var(--radius-card);
+	box-shadow: var(--shadow-float);
+}
+.dialog {
+	display: flex;
+	flex-direction: column;
+	width: var(--width-dialog);
+	max-width: 100%;
+	overscroll-behavior: contain;
+	gap: var(--space-pair);
+	padding: var(--space-card);
+	background: var(--raised);
+	border: var(--hairline) solid var(--edge);
+	border-radius: var(--radius-dialog);
+	box-shadow: var(--shadow-modal);
+}
+/* a sheet is attached to the trailing edge: only its leading corners round */
+.sheet {
+	display: flex;
+	flex-direction: column;
+	width: var(--width-sheet);
+	max-width: 100%;
+	overscroll-behavior: contain;
+	gap: var(--space-pair);
+	padding: var(--space-card);
+	background: var(--raised);
+	border: var(--hairline) solid var(--edge);
+	border-inline-end: 0;
+	border-start-start-radius: var(--radius-sheet);
+	border-end-start-radius: var(--radius-sheet);
+	box-shadow: var(--shadow-modal);
+}
+.regions {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+	border-radius: var(--radius-card);
+}
+.regions > * {
+	padding: var(--space-3);
+}
+.regions-edge > :first-child {
+	border-inline-end: var(--hairline) solid var(--edge);
+}
+.stage {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: var(--space-6);
+	padding: var(--space-6);
+}
+.band {
+	border-block: var(--hairline) solid var(--edge);
+}
+.trail {
+	display: flex;
+	justify-content: flex-end;
+}
+
+/* states: a class per state, so a board draws each one at rest */
+.act {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--space-inside);
+	height: var(--control-height);
+	padding-inline: var(--space-control-x);
+	min-width: 0;
+	max-width: 100%;
+	border: var(--hairline) solid transparent;
+	border-radius: var(--radius-control);
+	white-space: nowrap;
+}
+.act-accent {
+	background: var(--act-accent);
+	color: var(--on-act-accent);
+}
+.act-accent.is-hover {
+	background: var(--act-accent-hover);
+}
+.act-accent.is-active {
+	background: var(--act-accent-press);
+}
+.act-accent.is-pending {
+	background: var(--act-accent-pending);
+}
+.act-ink {
+	background: var(--act-ink);
+	color: var(--on-act-ink);
+}
+.act-ink.is-hover {
+	background: var(--act-ink-hover);
+}
+.act-ink.is-active {
+	background: var(--act-ink-press);
+}
+.act-ink.is-pending {
+	background: var(--act-ink-pending);
+}
+.act-secondary {
+	background: transparent;
+	border-color: var(--edge);
+	color: var(--ink-body);
+}
+.act.is-disabled {
+	background: var(--fill-disabled);
+	border-color: transparent;
+	color: var(--ink-disabled);
+}
+.act-secondary.is-disabled {
+	background: transparent;
+	border-color: var(--edge);
+}
+.is-pending > .label {
+	visibility: hidden;
+}
+.is-pending > .spinner {
+	position: absolute;
+	inset: 0;
+	margin: auto;
+}
+
+/* a transparent thing that takes washes: secondary acts, rows, filter chips */
+.wash.is-hover {
+	background: var(--wash-hover);
+}
+.wash.is-active {
+	background: var(--wash-press);
+}
+.wash.is-selected {
+	background: var(--wash-selected);
+}
+.wash.is-selected.is-hover {
+	background: var(--wash-selected-hover);
+}
+
+.is-focus {
+	outline: var(--ring) solid var(--ring-color);
+	outline-offset: var(--ring-offset);
+}
+/* inside a list the ring is drawn inward, so it never overlaps the neighbouring row */
+.is-focus-inset {
+	outline: var(--ring) solid var(--ring-color);
+	outline-offset: calc(var(--ring) * -1);
+}
+.is-disabled,
+.is-disabled * {
+	color: var(--ink-disabled);
+}
+
+.field.is-hover {
+	border-color: var(--edge-hover);
+}
+.field.is-disabled {
+	background: var(--fill-disabled);
+	border-color: var(--edge);
+}
+.field.is-error {
+	border-color: var(--edge-error);
+}
+.ink-error {
+	color: var(--ink-error);
+}
+
+/* a hovered chip's outline steps to edge-strong, so the wash never swallows it */
+.chip-outline.is-hover {
+	border-color: var(--edge-strong);
+}
+.chip.is-selected {
+	border-color: var(--edge-strong);
+	color: var(--ink-body);
+}
+.chip.is-disabled {
+	background: var(--fill-disabled);
+	border-color: transparent;
+}
+
+.switch {
+	position: relative;
+	display: inline-block;
+	flex: none;
+	width: var(--switch-width);
+	height: var(--switch-height);
+	border-radius: var(--radius-full);
+	background: var(--switch-off);
+}
+.switch::after {
+	content: "";
+	position: absolute;
+	inset-block-start: var(--switch-inset);
+	inset-inline-start: var(--switch-inset);
+	width: var(--switch-thumb);
+	height: var(--switch-thumb);
+	border-radius: var(--radius-full);
+	background: var(--switch-thumb-fill);
+	transition: transform var(--duration-fast) var(--ease-in-out);
+}
+.switch.is-hover {
+	background: var(--switch-off-hover);
+}
+.switch.is-on {
+	background: var(--switch-on);
+}
+.switch.is-on.is-hover {
+	background: var(--switch-on-hover);
+}
+.switch.is-on::after {
+	transform: translateX(
+		calc(var(--switch-width) - var(--switch-thumb) - var(--switch-inset) * 2)
+	);
+}
+.switch.is-disabled {
+	opacity: var(--disabled-opacity);
+}
+
+.spinner {
+	display: inline-block;
+	flex: none;
+	width: var(--size-spinner);
+	height: var(--size-spinner);
+	border: var(--spinner-stroke) solid
+		color-mix(in oklch, currentColor var(--spinner-track), transparent);
+	border-block-start-color: currentColor;
+	border-radius: var(--radius-full);
+	animation: spin var(--duration-loop) linear infinite;
+}
+.field > .spinner {
+	margin-inline-start: auto;
+	color: var(--ink-meta);
+}
+
+/* a skeleton bar takes the width of the text it stands for, drawn transparent inside it */
+.skeleton {
+	display: inline-block;
+	height: var(--skeleton-height);
+	line-height: var(--skeleton-height);
+	border-radius: var(--radius-chip);
+	background: var(--skeleton);
+	color: transparent;
+	overflow: hidden;
+	white-space: nowrap;
+}
+
+/* the state matrix: a header row of state names, then one band per surface */
+.matrix {
+	display: flex;
+	flex-direction: column;
+}
+.matrix-row {
+	display: grid;
+	grid-template-columns: repeat(7, minmax(0, 1fr));
+	column-gap: var(--space-2);
+	align-items: center;
+	padding: var(--space-2);
+}
+.matrix-row > * {
+	min-width: 0;
+}
+.matrix-row.cols-4 {
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.motion {
+	display: grid;
+	grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+	column-gap: var(--space-3);
+	row-gap: var(--space-1);
+}
+
+/* the live focus ring; .is-focus draws the same ring on a static board */
+:focus-visible {
+	outline: var(--ring) solid var(--ring-color);
+	outline-offset: var(--ring-offset);
+}
+.list-row:focus-visible,
+.menu-item:focus-visible {
+	outline-offset: calc(var(--ring) * -1);
+}
+
+/* hit area: at least --target-min square, centred on the part, whatever it draws */
+.act::before,
+.button::before,
+.chip::before,
+.switch::before,
+.menu-item::before,
+.list-row::before,
+.field::before {
+	content: "";
+	position: absolute;
+	inset-block-start: 50%;
+	inset-inline-start: 50%;
+	width: max(100%, var(--target-min));
+	height: max(100%, var(--target-min));
+	translate: -50% -50%;
+}
+
+/* long content: one line, cut with an ellipsis; the part never grows past its box. A part's text
+   always sits in a child element (a label span): the part itself cannot clip, because overflow
+   hidden on it would also clip its ::before hit box. */
+.act > *,
+.button > *,
+.chip > :not(.dot),
+.list-row > :not(.dot, .spinner, .chip),
+.menu-item > *,
+.field > :not(.spinner) {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.field > :not(.spinner) {
+	flex: 1;
+}
+
+/* the matrix variant that holds a labelled field and its message: rows align to the top edge,
+   the row label to the centre of the field label and field together */
+.matrix-row.top {
+	align-items: start;
+}
+.matrix-row.top > .matrix-label {
+	display: flex;
+	align-items: center;
+	min-height: calc(
+		var(--leading-body) +
+		var(--space-pair) +
+		var(--field-height)
+	);
+}
+
+/* a stack of full-width strips and the phone frame */
+.strip {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	gap: var(--space-6);
+}
+.stacked {
+	display: flex;
+	flex-direction: column;
+}
+.phone {
+	padding: 0;
+}
+.phone .mode {
+	padding: var(--space-page);
+	gap: var(--space-8);
+}
+.phone .panel {
+	padding: var(--space-card);
+}
+.push-end {
+	margin-inline-start: auto;
+	flex: none;
+}
+.strip-row {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--space-6);
+}

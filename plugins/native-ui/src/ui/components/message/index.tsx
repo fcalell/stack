@@ -1,5 +1,5 @@
 import type { MessageAuthor } from "@fcalell/ui-core/variants";
-import { message, text } from "@fcalell/ui-core/variants";
+import { message, text, textStrong } from "@fcalell/ui-core/variants";
 import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
@@ -52,7 +52,11 @@ export function Message({
 			)}
 		>
 			{author === "other" && name ? (
-				<RNText className={text({ role: "label" })}>{name}</RNText>
+				<RNText
+					className={cn(text({ role: "meta" }), textStrong({ role: "meta" }))}
+				>
+					{name}
+				</RNText>
 			) : null}
 			<View
 				className={cn(message({ author }), author === "you" && "max-w-full")}

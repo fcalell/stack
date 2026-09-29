@@ -38,11 +38,11 @@ the measured number and the range.
 | Pattern | Range |
 | --- | --- |
 | sidebar and scope switcher | sidebar 205–245 (or a 45 icon rail); rows 26–36; body 12–13 + one 11–12 muted section label; radius 4–6; hairline edge only; selection grey fill; accent absent |
-| settings form | input 38; two-line rows 64–70; label 12–13/500 over 11–12 muted description; page title 15–16; radius 4–8 (cards 8, inputs 4–6); hairline card or surface-step tile; save per card or right-aligned under the group, dark primary, accent only on switches |
+| settings form | input 38; two-line rows 64–70; label 12–13/500 over 11–12 muted description; page title the system's title role (the references' 15–16 is a dialect); radius 4–8 (cards 8, inputs 4–6); hairline card or surface-step tile; save per card or right-aligned under the group, the system's primary act (dark or accent is a dialect), accent otherwise only on switches |
 | data table with inline edit | rows 30–37, header 30–34; body 11–13, header 11–12 muted never bold; cell padding 6–8 × 10–12; radius 4 cells and pills, 6 popovers; hairline grid (both axes in editors, horizontal only in lists); hover a surface step; edit state a tinted row or a focused cell ring; accent only on the primary act and status tints |
 | record pane beside a list | list 375, pane 300–395; two-line rows 46–55; property rows 30–34 with label and value at 11–12; one large size (18/600 title); radius 4–6; hairline boundaries; selection grey fill or tinted fill with a left bar |
 | command palette | dialog 490–645; input 41–56; rows 29–43 one-line, 50–52 two-line; label 11–12, group eyebrow 9–10 uppercase muted, kbd 10; dialog radius 8–12, rows 4–6; shadow-lifted, hairline only at input and footer; highlight grey fill; accent absent |
-| picker and menu | popover 215–300; items 28–34 one-line, 50 two-line; label 11–12; search as the first 28 px row; radius 6–8, inner chips 4; shadow + hairline (dark: step only); selection a right checkmark or grey/tinted fill; groups by hairline or spacing |
+| picker and menu | popover 215–300; items 28–34 one-line, 50 two-line; label at body (the references' 11–12 is a dialect; a menu label never differs from a list row's); search as the first 28 px row; radius 6–8, inner chips 4; shadow + hairline (dark: step only); selection a right checkmark or grey/tinted fill; groups by hairline or spacing |
 | sheet and confirm | sheet 610–730 wide, inputs 34–38, footer acts 30–32, hairline header and footer split, accent on one act; confirm 365–590 wide, radius 6–8, title 13–14/600, body 12–13, type-to-confirm input 30–36, red only on the destructive act, scrim 40–50 % |
 | toast and banner | toast 340–430 wide, 36 (pill) to 100 tall, radius 8 or pill, text 12–13, status colour in the icon only, hairline + shadow; banner 36–44 tall inline to 90 with body, radius 0–6, tinted surface or left rule, act a 24–26 button |
 | empty state | title 13–18 (13–14/600 in dense tools), body 12–13 muted, icon 20–64 or illustration 130–190, one primary 28–32 radius 6 carrying the only accent; column 300–360 centred; bare canvas or a radius-8 hairline frame |
@@ -65,7 +65,8 @@ the measured number and the range.
 ## 2. Type
 
 An obvious scale with at most six sizes on a screen; display ≥ 2.5× body where a display role
-appears; measure 45–75 ch; tracking never below −0.04 em; body never below 12 px at any density;
+appears; measure 45–75 ch where the column is wider than the text's natural measure (a phone
+column is exempt: the column sets the measure, body never shrinks to reach it); tracking never below −0.04 em; body never below 12 px at any density;
 one sans for UI, mono only for what a machine reads.
 
 ## 3. Hierarchy
@@ -86,7 +87,7 @@ selection, focus, links); status and chip hues fixed per family; dark mode its o
 ## 6. Motion
 
 One duration scale, one easing set, one authored moment per screen at most; 150–300 ms for
-micro-interactions.
+micro-interactions that move something; press feedback may be shorter (100 ms).
 
 ## 7. Composition
 

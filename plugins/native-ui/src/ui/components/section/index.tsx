@@ -1,5 +1,5 @@
 import type { Act, Part } from "@fcalell/ui-core/descriptors";
-import { text } from "@fcalell/ui-core/variants";
+import { text, textStrong } from "@fcalell/ui-core/variants";
 import { ChevronDown, ChevronRight } from "lucide-react-native";
 import { type ReactNode, useEffect, useState } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
@@ -51,15 +51,21 @@ export function Section({
 	const said = blocked && (pressed || touched);
 	const label = (
 		<>
-			<RNText className={cn(text({ role: "label" }), "uppercase")}>
+			<RNText
+				className={cn(
+					text({ role: "meta" }),
+					textStrong({ role: "meta" }),
+					"uppercase",
+				)}
+			>
 				{partText(title)}
 			</RNText>
 			{count !== undefined ? <Count value={count} /> : null}
 		</>
 	);
 	return (
-		<View className="gap-stack">
-			<View className="min-h-11 flex-row items-center gap-row">
+		<View className="gap-fields">
+			<View className="min-h-11 flex-row items-center gap-inside">
 				{foldable ? (
 					<Pressable
 						accessibilityRole="button"
@@ -100,7 +106,7 @@ export function Section({
 							<RNText
 								className={cn(
 									text({ role: "meta" }),
-									"font-medium text-tint",
+									"font-medium text-accent-ink",
 									blocked && "text-ink-faint",
 								)}
 							>

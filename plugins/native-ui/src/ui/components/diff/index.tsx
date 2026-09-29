@@ -37,7 +37,7 @@ export function Diff({ hunks: given, before, after, loading }: DiffProps) {
 			<View>
 				{hunks.map((hunk) => (
 					<View key={hunkKey(hunk)}>
-						<RNText className={cn(diffLine({ kind: "header" }), "px-stack")}>
+						<RNText className={cn(diffLine({ kind: "header" }), "px-pair")}>
 							{hunk.header}
 						</RNText>
 						{hunk.lines.map((line, index) => (
@@ -46,12 +46,12 @@ export function Diff({ hunks: given, before, after, loading }: DiffProps) {
 								key={index}
 								className={cn(
 									diffLine({ kind: line.kind }),
-									"flex-row gap-row px-stack",
+									"flex-row gap-inside px-pair",
 								)}
 							>
 								<RNText
 									className={cn(
-										text({ role: "mono" }),
+										text({ role: "code" }),
 										DIFF_GUTTER,
 										"w-8 text-right",
 									)}
@@ -60,14 +60,14 @@ export function Diff({ hunks: given, before, after, loading }: DiffProps) {
 								</RNText>
 								<RNText
 									className={cn(
-										text({ role: "mono" }),
+										text({ role: "code" }),
 										DIFF_GUTTER,
 										"w-8 text-right",
 									)}
 								>
 									{line.after ?? ""}
 								</RNText>
-								<RNText className={text({ role: "mono" })}>
+								<RNText className={text({ role: "code" })}>
 									{line.kind === "added"
 										? "+"
 										: line.kind === "removed"

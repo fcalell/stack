@@ -1,18 +1,21 @@
 import type { ResolvedTheme } from "./derive.ts";
 import {
 	BREAKPOINTS,
-	DENSITY_SIZES,
+	COLOR_NAMES,
+	type Density,
 	DURATIONS,
 	EASINGS,
 	FONT_ROLES,
-	INVARIANT_COLORS,
+	HAIRLINE_PX,
 	MONO_FEATURES,
 	type Mode,
-	PER_MODE_COLORS,
-	RADIUS_RUNGS,
+	RADIUS_ROLES,
+	RING_OFFSET_PX,
+	RING_PX,
 	SHADOW_LEVELS,
 	type ShadowLevel,
-	SPACING_RUNGS,
+	SIZES,
+	SPACING_ROLES,
 	TRACKED_ROLES,
 	TYPE_ROLES,
 	WIDTHS,
@@ -22,10 +25,11 @@ import {
 export type ShadowUtility = `shadow-${ShadowLevel}`;
 
 // The `@theme` record, keyed by full custom-property name. It carries the
-// light colors as well as the mode-invariant two: in Tailwind v4 a property
-// declared only inside a `@variant` block generates no utility, so without
-// them `bg-canvas` would not exist. Which mode seeds it never shows: each
-// platform switches every color through the active mode's variables.
+// light colors and the touch density set: in Tailwind v4 a property declared
+// only inside a variant block generates no utility, so without them
+// `bg-canvas` and `min-h-control` would not exist. Which mode and density
+// seed it never shows: each platform switches every value through the active
+// scope's variables, since a non-inline `@theme` utility reads its variable.
 //
 // Each type role renders twice, from one resolved value: the Tailwind v4
 // modifier so `text-title` carries its own leading on web, and the standalone
@@ -33,35 +37,21 @@ export type ShadowUtility = `shadow-${ShadowLevel}`;
 export function themeTokens(resolved: ResolvedTheme): Record<string, string> {
 	const tokens: Record<string, string> = {};
 	for (const namespace of ZEROED_NAMESPACES) tokens[namespace] = "initial";
-	for (const rung of SPACING_RUNGS) {
-		tokens[`--spacing-${rung}`] = resolved.scales[`--spacing-${rung}`];
-	}
-	for (const rung of RADIUS_RUNGS) {
-		tokens[`--radius-${rung}`] = resolved.scales[`--radius-${rung}`];
-	}
-	for (const role of TYPE_ROLES) {
-		tokens[`--text-${role}`] = resolved.scales[`--text-${role}`];
-		tokens[`--text-${role}--line-height`] =
-			resolved.scales[`--leading-${role}`];
+	Object.assign(tokens, densityTokens(resolved, "touch"));
+	for (const role of TRACKED_ROLES) {
+		tokens[`--text-${role}--letter-spacing`] = resolved.tracking[role];
 	}
 	for (const role of TRACKED_ROLES) {
-		tokens[`--text-${role}--letter-spacing`] =
-			resolved.scales[`--tracking-${role}`];
+		tokens[`--tracking-${role}`] = resolved.tracking[role];
 	}
-	for (const role of TYPE_ROLES) {
-		tokens[`--leading-${role}`] = resolved.scales[`--leading-${role}`];
-	}
-	for (const role of TRACKED_ROLES) {
-		tokens[`--tracking-${role}`] = resolved.scales[`--tracking-${role}`];
-	}
-	for (const size of DENSITY_SIZES) {
-		tokens[`--spacing-${size}`] = resolved.sizes.touch[size];
+	for (const role of RADIUS_ROLES) {
+		tokens[`--radius-${role}`] = resolved.radii[role];
 	}
 	for (const width of WIDTHS) {
-		tokens[`--container-${width}`] = resolved.scales[`--container-${width}`];
+		tokens[`--container-${width}`] = resolved.widths[width];
 	}
 	for (const bp of BREAKPOINTS) {
-		tokens[`--breakpoint-${bp}`] = resolved.scales[`--breakpoint-${bp}`];
+		tokens[`--breakpoint-${bp}`] = resolved.breakpoints[bp];
 	}
 	for (const role of FONT_ROLES) {
 		tokens[`--font-${role}`] = resolved.fonts[role];
@@ -71,6 +61,7 @@ export function themeTokens(resolved: ResolvedTheme): Record<string, string> {
 		tokens[`--transition-duration-${rung}`] =
 			`${resolved.motion.durations[rung]}ms`;
 	}
+	tokens["--transition-duration-loop"] = `${resolved.motion.loop}ms`;
 	for (const easing of EASINGS) {
 		tokens[`--ease-${easing}`] =
 			`cubic-bezier(${resolved.motion.easings[easing].join(", ")})`;
@@ -79,79 +70,101 @@ export function themeTokens(resolved: ResolvedTheme): Record<string, string> {
 	// so it stills with them under reduced motion.
 	tokens["--default-transition-duration"] = "var(--transition-duration-base)";
 	tokens["--default-transition-timing-function"] = "var(--ease-out)";
-	for (const token of INVARIANT_COLORS) {
-		tokens[`--color-${token}`] = resolved.invariantColors[token];
-	}
-	for (const token of PER_MODE_COLORS) {
-		tokens[`--color-${token}`] = resolved.colors.light[token];
+	for (const name of COLOR_NAMES) {
+		tokens[`--color-${name}`] = resolved.colors.light[name];
 	}
 	return tokens;
 }
 
-// One density set's sizes, keyed by full custom-property name, whatever the
-// knob says: the web draws either set on demand under a `data-density`
-// attribute on the root, which is how a screenshot pins a density.
+// The values that are neither utilities nor per mode, rendered on the root
+// outside `@theme`: the hairline and the focus ring's width and offset, which
+// a platform's base rules read, and the light shadows, seeded so the root
+// carries them ahead of any mode scope.
+export function rootTokens(resolved: ResolvedTheme): Record<string, string> {
+	const tokens: Record<string, string> = {
+		"--hairline": `${HAIRLINE_PX}px`,
+		"--focus-ring": `${RING_PX}px`,
+		"--focus-ring-offset": `${RING_OFFSET_PX}px`,
+	};
+	for (const level of SHADOW_LEVELS) {
+		tokens[`--shadow-${level}`] = resolved.shadows.light[level];
+	}
+	return tokens;
+}
+
+// One density's set, keyed by full custom-property name, whatever the knob
+// says: the type scale, the spacing roles and the sizes. The web draws
+// either set on demand under a `data-density` attribute on the root, which
+// is how a screenshot pins a density.
 export function densityTokens(
 	resolved: ResolvedTheme,
-	set: "touch" | "compact",
+	density: Density,
 ): Record<string, string> {
 	const tokens: Record<string, string> = {};
-	for (const size of DENSITY_SIZES) {
-		tokens[`--spacing-${size}`] = resolved.sizes[set][size];
+	for (const role of TYPE_ROLES) {
+		const { size, leading } = resolved.type[density][role];
+		tokens[`--text-${role}`] = size;
+		tokens[`--text-${role}--line-height`] = leading;
+	}
+	for (const role of TYPE_ROLES) {
+		tokens[`--leading-${role}`] = resolved.type[density][role].leading;
+	}
+	for (const role of SPACING_ROLES) {
+		tokens[`--spacing-${role}`] = resolved.spacing[density][role];
+	}
+	for (const size of SIZES) {
+		tokens[`--spacing-${size}`] = resolved.sizes[density][size];
 	}
 	return tokens;
 }
 
-// The density sizes a fine pointer takes: the compact set under
-// `density: "desktop"`, nothing under `touch`. Only the web renders it,
-// inside its own pointer query; `themeTokens` already seeds the touch set on
-// both platforms, so every cell that names a size resolves either way.
-export function compactTokens(resolved: ResolvedTheme): Record<string, string> {
+// The set a fine pointer takes: the desktop set under `density: "desktop"`,
+// nothing under `touch`. Only the web renders it, inside its own pointer
+// query; `themeTokens` already seeds the touch set on both platforms, so
+// every cell that names a size resolves either way.
+export function finePointerTokens(
+	resolved: ResolvedTheme,
+): Record<string, string> {
 	if (resolved.knobs.density !== "desktop") return {};
-	return densityTokens(resolved, "compact");
+	return densityTokens(resolved, "desktop");
 }
 
-// Every duration at 0, which the web renders under
-// `prefers-reduced-motion: reduce`: each transition and animation reads its
-// duration through a rung's variable, so none moves.
+// Every duration rung at 0, which the web renders under
+// `prefers-reduced-motion: reduce`: each transition reads its duration
+// through a rung's variable, so none moves. The loop stays: a spinner that
+// stops is a wait that looks over.
 export function reducedMotionTokens(): Record<string, string> {
 	const tokens: Record<string, string> = {};
 	for (const rung of DURATIONS) tokens[`--transition-duration-${rung}`] = "0ms";
 	return tokens;
 }
 
-// One mode's colors, keyed by bare token name (`canvas`, `ink`) because the
-// per-theme codegen path prefixes `--color-` itself. Never the invariant two:
-// they carry no per-mode override.
+// One mode's values, keyed by full custom-property name: every color and
+// the two shadows.
 export function modeTokens(
 	resolved: ResolvedTheme,
 	mode: Mode,
 ): Record<string, string> {
 	const tokens: Record<string, string> = {};
-	for (const token of PER_MODE_COLORS) {
-		tokens[token] = resolved.colors[mode][token];
+	for (const name of COLOR_NAMES) {
+		tokens[`--color-${name}`] = resolved.colors[mode][name];
+	}
+	for (const level of SHADOW_LEVELS) {
+		tokens[`--shadow-${level}`] = resolved.shadows[mode][level];
 	}
 	return tokens;
 }
 
 // The declarations of each elevation utility. The `--shadow-*` theme
 // namespace does not resolve into React Native's `boxShadow`, so each
-// consumer wraps these in `@utility` itself. `flat` casts no shadow and draws
-// the 1px `edge` ring as a border, the channel every hairline already uses on
-// both platforms.
-export function shadowUtilities(
-	resolved: ResolvedTheme,
-): Record<ShadowUtility, Record<string, string>> {
+// consumer wraps these in `@utility` itself; each reads its mode's variable.
+export function shadowUtilities(): Record<
+	ShadowUtility,
+	Record<string, string>
+> {
 	const utilities = {} as Record<ShadowUtility, Record<string, string>>;
 	for (const level of SHADOW_LEVELS) {
-		const shadow = resolved.scales[`--shadow-${level}`];
-		utilities[`shadow-${level}`] =
-			resolved.knobs.elevation === "flat"
-				? {
-						"border-width": "1px",
-						"border-color": "var(--color-edge)",
-					}
-				: { "box-shadow": shadow };
+		utilities[`shadow-${level}`] = { "box-shadow": `var(--shadow-${level})` };
 	}
 	return utilities;
 }

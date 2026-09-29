@@ -76,7 +76,7 @@ export function Screen({
 			    centred whatever each holds. */}
 				<View
 					style={{ paddingTop: insets.top }}
-					className="min-h-11 flex-row items-center gap-row px-inset"
+					className="min-h-11 flex-row items-center gap-inside px-card"
 				>
 					<View className="flex-1 flex-row items-center">
 						{back !== undefined ? (
@@ -99,7 +99,7 @@ export function Screen({
 					>
 						{title}
 					</RNText>
-					<View className="flex-1 flex-row items-center justify-end gap-row">
+					<View className="flex-1 flex-row items-center justify-end gap-inside">
 						{shown.map((action) => (
 							<IconButton key={action.label} {...action} />
 						))}
@@ -114,7 +114,7 @@ export function Screen({
 				</View>
 				<Scroll
 					className="flex-1"
-					contentContainerClassName="grow gap-section px-inset pb-section"
+					contentContainerClassName="grow gap-sections px-card pb-sections"
 					scrollEventThrottle={32}
 					onScroll={(event) =>
 						setCompact(event.nativeEvent.contentOffset.y > COMPACT_AT)
@@ -125,7 +125,7 @@ export function Screen({
 				{bar ? (
 					<View
 						style={{ paddingBottom: insets.bottom + 8 }}
-						className={cn("border-t bg-canvas px-inset pt-stack", HAIRLINE)}
+						className={cn("border-t bg-canvas px-card pt-pair", HAIRLINE)}
 					>
 						{bar}
 					</View>

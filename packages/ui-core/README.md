@@ -1,21 +1,28 @@
 # @fcalell/ui-core
 
-The design system both stack UI plugins render from: one closed token contract derived from a
-few knobs, the words the molecules speak, the platform-invariant variant matrices, the roster
-every component and its props are pinned to, and the laws that say which token to pick. The
-contract subpaths export build-time data only, so each plugin renders its own CSS from the same
-records and ui-core stays framework-free. Two subpaths are Node-only: `./harness` is internal
-tooling for the packages' verify scripts, and `./gate` is the geometry scanner the UI plugins run
-at build time.
+The design system both stack UI plugins render from: one closed token contract, the approved
+foundations sheet as data behind four knobs, the words the molecules speak, the platform-invariant
+variant matrices, the roster every component and its props are pinned to, and the laws that say
+which token to pick. The contract subpaths export build-time data only, so each plugin renders its
+own CSS from the same records and ui-core stays framework-free. Two subpaths are Node-only:
+`./harness` is internal tooling for the packages' verify scripts, and `./gate` is the geometry
+scanner the UI plugins run at build time.
 
 Eleven subpaths:
 
-- `@fcalell/ui-core/tokens`: the contract as data, including the calibrated defaults and the
-  English `words`.
+- `@fcalell/ui-core/tokens`: the contract as data, the sheet's every value, the knob defaults and
+  the English `words`.
 - `@fcalell/ui-core/schema`: the zod `themeSchema` and `wordsSchema`, and the `Theme` input type.
-- `@fcalell/ui-core/derive`: `deriveTheme(theme)` resolves knobs and overrides into final values.
-- `@fcalell/ui-core/emit`: `themeTokens`, `modeTokens`, `compactTokens`, `densityTokens`,
-  `reducedMotionTokens` and `shadowUtilities` shape those values into the records a plugin renders.
+- `@fcalell/ui-core/derive`: `deriveTheme(theme)` resolves the knobs into final values, one string
+  per token, plus the motion scale as numbers.
+- `@fcalell/ui-core/emit`: the records a plugin renders. `themeTokens` is the `@theme` block: the
+  eleven reset namespaces, the touch density set, tracking, radii, widths, breakpoints, the two
+  font stacks, the durations and curves, and the light colors. `rootTokens` is what sits on the
+  root outside `@theme`: the hairline, the focus ring's width and offset, and the light shadows.
+  `modeTokens` is one mode's colors and its two shadows. `densityTokens` is one density's type
+  scale, spacing roles and sizes, whatever the knob says. `finePointerTokens` is the desktop set
+  under `density: "desktop"` and empty under `touch`. `reducedMotionTokens` is every duration at
+  0ms. `shadowUtilities` is the declaration of each `shadow-*` utility, reading its mode's variable.
 - `@fcalell/ui-core/cn`: `cn()`, the class merger, taught the contract's six scales.
 - `@fcalell/ui-core/variants`: the platform-invariant variant matrices, each a cva built from a
   table, the single-cell constants beside them, and `FAMILIES`, every matrix by name with its axes,
@@ -32,9 +39,10 @@ Eleven subpaths:
 - `@fcalell/ui-core/gate`: Node-only. The closed geometry vocabulary as data and `scanGeometry`,
   the scanner behind each UI plugin's pre-build geometry gate. Importing it loads ts-morph.
 
-The contract has two modes, `light` and `dark`. `themeTokens` seeds the default mode's colors into
-the `@theme` block as well, because Tailwind v4 generates no utility from a property declared only
-inside a variant block.
+The contract has two modes, `light` and `dark`. `themeTokens` seeds the light colors and the touch
+density set into the `@theme` block as well, because Tailwind v4 generates no utility from a
+property declared only inside a variant block; which mode and density seed it never shows, since
+every utility reads its variable and the active scope sets it.
 
 ## DESIGN.md
 
@@ -47,38 +55,22 @@ reports an error, so it is never edited by hand.
 
 ## The knobs
 
-Every scale derives from one base, so a theme sets a knob and never a token.
+A theme sets a knob and never a token. Four knobs; everything else is the sheet and moves only
+with it.
 
-| Knob | Default | Derives |
+| Knob | Default | Moves |
 | --- | --- | --- |
-| `accentHue`, `neutralHue`, `neutralChroma`, `okHue`, `warnHue`, `dangerHue` | 261, 261, 1, 160, 75, 28 | every color role in OKLCH, light and dark, the lightness and chroma ladder fixed from the calibration; the two shadows, from `neutralHue` |
-| `primary` | `ink` | what the primary act, a switch that is on and the selected place are filled with: `ink` aliases `accent` to the ink ladder and `accent-soft` to its neutral soft; `accent` binds both to `accentHue` |
-| `space` | 4 | the rungs |
-| `radius` | 14 | the radii; 0 squares everything, the pills and circles too |
-| `text` | 16 | the type roles; each size rounds to the whole pixel, each line box to the even pixel |
-| `elevation` | `soft` | how a raised surface separates: `soft` casts the two shadows, `flat` draws a 1px ring in `edge` instead |
-| `density` | `touch` | how dense the controls draw: `touch` keeps the 44 px floor everywhere; `desktop` moves the four density sizes to their compact set where the primary pointer is fine, so rows, buttons, fields, circles, chips and section headers stand on a 32 px floor, and touch keeps 44 |
-| `motion` | 200 | the four duration rungs in milliseconds; 0 stills every transition |
+| `accentHue` | 264 | the accent-bound roles and nothing else: `accent`, `accent-soft`, `accent-ink`, `ring`, `selected-outline`, `act-accent` with `act-accent-hover`, `act-accent-press` and `act-accent-pending`, `switch-on` and `switch-on-hover`. The neutrals, the three status hues, the chip families and the avatars are fixed |
+| `density` | `desktop` | which set the type scale, the spacing roles and the sizes draw where the primary pointer is fine; `touch` is the 44 px world on every device |
+| `fonts` | `sans` unset, `mono` "JetBrains Mono Variable" | the two families as `--font-sans` and `--font-mono`, each followed by its metric fallback face (`fallbackFace(family)`, the family name plus ` Fallback`) and then its platform fallback stack; an unset `sans` is the platform's stack alone. The files are each plugin's `fonts` option |
 | `defaultMode` | unset | the mode a viewer with no stored choice starts in, ahead of the system preference; unset, the system decides |
-| `fonts` | `sans` unset, `mono` "JetBrains Mono Variable" | the two families as `--font-sans` and `--font-mono`, each followed by its metric fallback face (`fallbackFace(family)`, the family name plus ` Fallback`) and then its platform fallback stack; the files are each plugin's `fonts` option |
-| `widths` | `rail` 220, `list` 360, `column` 300, `sheet` 560, `reading` 720 | `--container-*`, so `w-rail` and `max-w-reading` |
-| `breakpoints` | `tablet` 768, `desktop` 1024, `wide` 1440 | `--breakpoint-*`, so `tablet:` and `desktop:` are the only responsive variants |
 
-Hues are in `[0, 360)`; `neutralChroma` in `[0, 2]` multiplies the declared chroma of every token
-bound to `neutralHue` and nothing else. `space`, `text`, every width and every
-breakpoint are positive integers; `radius` and `motion` may be 0. Density is a theme, never a breakpoint: no scale changes at a
-width. The floor is 44 px on touch and is not a knob: `density: "desktop"`
-lowers it to 32 on a fine pointer only, and a product that wants more text per row lowers `text`
-and `space`.
-
-Anything the knobs do not reach goes through `overrides`. `overrides.colors` splits into `shared`
-(`scrim` and `thumb`), `light`, and `dark` (the 31 per-mode roles); a value must be
-`oklch(L C H)` or `oklch(L C H / A)` with unsigned decimal components. `overrides.scales` is keyed
-by full custom-property name (`--spacing-inset`, `--leading-title`, `--shadow-float`,
-`--container-sheet`, `--breakpoint-wide`); each type role has one leading key and one tracking
-key, and both emitted shapes come from it. A value carrying `;`, `{`, `}`, a line break, a comment
-delimiter, or an unbalanced paren is rejected, since any of them would break out of the
-declaration it is rendered into. Every rejection names the offending key.
+`accentHue` is in `[0, 360)`. A re-hued accent holds its chroma inside sRGB at its lightness, so
+it loses saturation at a hue the gamut cannot carry and never clips to another color, and a role
+that carries a contrast contract (`accent-ink` on `group` and on `accent-soft`, at 4.5:1)
+moves its lightness from the declared one until the contract holds; at the sheet's own hue
+nothing moves. The contrast pairs then hold at every hue, and the verify script sweeps all 360. Density is a theme, never a breakpoint: no scale changes at a width. Native is
+touch-only and draws `touch` whatever the knob says.
 
 ## Words
 
@@ -88,104 +80,178 @@ once beside `theme`: the six `Status` words, `recommended`, `copy`, `copied`, `b
 (an `EnumInput`'s refusal of a value already listed). `Words` requires every key and
 `wordsSchema` is closed, so a translation that misses a word fails `tsc` and the schema, never the
 interface. `ENGLISH` is the default. A sentence that belongs to the consumer is a prop on the
-molecule that draws it (`placeholder`, `notice`, every `sentence`, every `label`), never a key.
+molecule that draws it (`placeholder`, `notice`, every `sentence`, every label), never a key.
 
 ## Color roles
 
-One accent hue, near-achromatic greys, three state hues.
+One accent hue, cool greys, three status hues, six chip families, eight avatars. Every value is
+OKLCH. The neutrals sit at hue 270, the accent's own family, so the greys and the accent read as
+one palette.
 
-- `canvas`: the frame behind the content, the sidebar, the page around a group on the desktop.
-- `surface`: the content column, a sheet, a picker's list.
-- `group`: a group's fill, an input, a search field.
-- `edge`: the hairline between columns and between a group's rows; a pressed row's fill.
-- `ink`: titles and body. `ink-meta`: meta lines, section labels, descriptions, a picker's empty
-  choice. `ink-faint`: an input's placeholder and disabled controls.
-- `accent`: the primary act's fill, a switch that is on, the selected place; by `primary`.
-  `accent-soft`: a selected row, following `primary` as `accent` does. `on-accent`: text on
-  `accent`, an alias of `canvas`, which keeps AA in both modes by the ladder's symmetry.
-- `tint`: focus, a link, a count, an `active` status: always the accent hue.
-- `ok`, `warn`, `danger`, each with `-soft`: state marks, diff lines, the banner; `danger` is also
-  a destructive act's text.
-- `avatar-1` to `avatar-8`: an `Avatar`'s fill, stepped 45° from `accentHue` at one lightness and
-  chroma, picked by a hash of the name, so a fill per name is a token and never a computed hue.
-- `chip-1` to `chip-6`: a `Chip`'s fill, one per data family, stepped 60° from `accentHue` plus
-  30° at one lightness and chroma, so the nearest family sits 30° off the accent and none wears
-  it. A chip is a fill under `ink`, where a status is an icon and a word in its state's ink, so
-  the two never read as one.
-- `scrim`: behind a sheet. `thumb`: the switch's knob, white in both modes, the one literal.
+- Surfaces step in CIE L*. Light: `surface` 100 (a card, a field, a row), `canvas` 96.9 (the
+  page), `group` 93.8 (a filled tile, a chip ground), `raised` white again (a popover, a dialog, a
+  sheet, a toast). Dark: `canvas` 3.6, `surface` 8.1, `group` and `raised` 12.3, so a lifted
+  layer sits one step above the content.
+- `edge`: the hairline over `canvas` and `surface`. `edge-raised`: the hairline inside a group and
+  on a lifted layer; the container re-points `edge` to it, so a row inside a group draws `edge`
+  and gets the raised value. In light the two are one hairline; the dark ladder spans more than
+  one hairline can straddle, so there they differ. `edge-strong`: a control's boundary, at 3:1
+  against `surface` and `group`.
+- `scrim`: the veil behind a dialog or a sheet.
+- Three inks. `ink-body`: the primary line of anything. `ink-meta`: a secondary line, a
+  placeholder, a table header. `ink-faint`: disabled text only, at about 3:1, which WCAG exempts.
+- The accent trio. `accent`: the filled act, a blue on the neutrals' hue. `on-accent`: text on
+  `accent`, white in both modes. `accent-soft`: a tinted tile. `accent-ink`: a link, the focus
+  ring, a selection outline; the accent itself in light, lighter in dark so it reads on the
+  near-black ground.
+- The status trio, each with a `-soft` ground: `ok` the `done` mark and an added line's ink,
+  `ok-soft` the ground under it; `warn` the `attention` mark, `warn-soft` its ground; `danger` the
+  `failed` mark, a destructive act's label, an error ring, `danger-soft` its ground and a removed
+  line. `on-danger`: text on a `danger` fill, the one saturated state fill. The dark tones are
+  capped at L 0.75 and spread in lightness so they separate under protanopia and deuteranopia.
+- Six chip families in hue order, the accent's band left out so no family wears it: `red`,
+  `amber`, `green`, `teal`, `violet`, `pink`. Each is three roles: `chip-red` the mark (a dot, a
+  chart series), `chip-red-soft` the soft ground, `chip-red-ink` the ink on the soft; the other
+  five follow. A `Chip` draws its family's soft under the family's ink, so the family is
+  learnable across screens and never mistaken for a status. The marks alternate in lightness
+  between neighbours so the set separates by lightness as well as hue.
+- Eight avatars at 40 to 50° spacing: `avatar-1` the fill and `avatar-1-ink` the initial on it,
+  through `avatar-8` and `avatar-8-ink`; a pastel fill under a hue-darkened initial in light, a
+  deep fill under a hue-lightened initial in dark, one step per name by a hash.
+- The washes are `ink-body` at an alpha, so they follow the mode and sit on any surface as one
+  more step: `wash-hover` a transparent part under the pointer, `wash-press` pressed,
+  `wash-selected` a selected row or chip, `wash-selected-hover` a selected row under the pointer,
+  `skeleton` a loading bar, `fill-disabled` a disabled act's or chip's box.
+- The places, each an alias of the tone that draws it: `ring` the focus ring and
+  `selected-outline` a selected tile's outline, both `accent-ink`; `edge-hover` a field's boundary
+  under the pointer, `edge-strong`; `edge-error` a field's boundary in error and `ink-error` an
+  error message, both `danger`; `ink-disabled` a disabled part's label, `ink-faint`.
+- Two act fills. `act-accent` is `accent` under `on-act-accent`, the primary act; `act-ink` is
+  `ink-body` under `on-act-ink` (`canvas`), a screen's dark primary. Hover and press mix the fill
+  12 % and 22 % toward a second color in OKLab: `act-accent-hover` and `act-accent-press` toward
+  black, so the label only gains contrast; `act-ink-hover` and `act-ink-press` toward `canvas`,
+  which lightens the fill in light and darkens it in dark. Pending recedes 30 %:
+  `act-accent-pending` toward `on-accent`, `act-ink-pending` toward `canvas`.
+- The switch. `switch-off` is `edge-strong` and `switch-off-hover` mixes it 15 % toward
+  `ink-body`; `switch-on` is `accent` and `switch-on-hover` mixes it 12 % toward black;
+  `switch-thumb` is `on-accent`. A switch has no label of its own, so it disables by opacity.
 
-Status colors: `active` → `tint`, `waiting` → `ink-meta`, `done` → `ok`, `attention` → `warn`,
-`failed` → `danger`, `idle` → `ink-faint`.
+Status colors: `active` → `accent-ink`, `waiting` → `ink-meta`, `done` → `ok`, `attention` →
+`warn`, `failed` → `danger`, `idle` → `ink-meta`.
 
 ## Type roles
 
-Seven roles named by use, each a ratio of `text`, one scale at every width. Weight and ink belong
-to the role; a molecule may set a role's weight in its own cell (a row's title is `body` at
-medium), never a consumer.
+Seven roles named by use, each a ratio of the body size. Two rules decide which one a piece of
+text takes. Size follows structure, never emphasis: the primary line of anything is `body`, a
+secondary line is `meta`, and emphasis inside a line is weight 500 (`strong`), never a size
+change. A size role names a place, once: `title` is the page's name, once per screen; `heading` a
+section's or a card's name, never inside a row; `caption` text inside a small component (a chip, a
+key hint), never a sentence; `code` what a machine reads. So there is no label role: a field label
+and a row's leading cell are `body` at 500, a table header is `meta` at 500, menu and picker
+items are `body`. Weight, ink and family ride with the role; a molecule may set a role's weight in
+its own cell, never a consumer.
 
-| Role | Ratio, at 16 | Leading | Weight | Used for |
-| --- | --- | --- | --- | --- |
-| `display` | 2.125, 34 | 1.18 | bold | one line on a screen with nothing else to read |
-| `title` | 1.75, 28 | 1.29 | bold | a place's large title, an item's title |
-| `heading` | 1.125, 18 | 1.33 | semibold | a sheet's title, the compact title, a heading inside an item |
-| `body` | 1, 16 | 1.5 | regular | prose, a row's title, an input's text |
-| `meta` | 0.875, 14 | 1.43 | regular, `ink-meta` | a row's second lines, a description, an age |
-| `label` | 0.8125, 13 | 1.23 | medium, `ink-meta` | the header over a list or a group |
-| `mono` | 0.875, 14 | 1.43 | regular, mono family | code, a commit, a key, the diff |
+The body size is the one base, per density: 13 on desktop, 16 on touch, the input size below
+which iOS Safari zooms on focus. Each size rounds to the whole pixel and each line box to the even
+pixel, a tie rounding up.
 
-Nothing is smaller than `label`. `body` at 16 keeps an input's text at the size iOS Safari does
-not zoom on focus. `display`, `title` and `heading` carry tracking.
+| Role | Desktop, size / line | Touch, size / line | Weight | Ink | Used for |
+| --- | --- | --- | --- | --- | --- |
+| `display` | 36 / 40 | 44 / 48 | 500 | `ink-body` | a display number, one per screen |
+| `title` | 18 / 24 | 22 / 28 | 600 | `ink-body` | the page's name, once per screen |
+| `heading` | 15 / 20 | 18 / 24 | 600 | `ink-body` | a section's or a card's name, never inside a row |
+| `body` | 13 / 20 | 16 / 24 | 400 | `ink-body` | the primary line of anything: prose, a row, a field, a menu item |
+| `meta` | 12 / 18 | 15 / 22 | 400 | `ink-meta` | a secondary line, a description, a table header at 500 |
+| `caption` | 11 / 16 | 14 / 22 | 400 | `ink-meta` | text inside a small component, never a sentence |
+| `code` | 12 / 18 | 15 / 22 | 400, mono family | `ink-body` | what a machine reads |
 
-## Rungs, radii, elevation
+`strong` is 500; `display`, `title` and `heading` already sit at or above it. Tracking is in em
+and density-invariant: `display` -0.02, `title` -0.01, `heading` -0.005, `caption` 0.01; the rest
+carry none. Code reads character for character, so the mono family's ligatures and contextual
+alternates stay off.
 
-Rungs are multiples of `space`, internal to the molecules; the names say what they separate:
-`pair` 1 (a label from its value), `row` 2 (atoms side by side), `stack` 3 (fields of a form, a
-row's vertical padding), `inset` 4 (the screen's side inset, a group's interior), `section` 6
-(sections of a screen), `room` 8 (the item header from its body on the desktop). The density sizes sit in the same `--spacing-*` namespace but are not rungs, since
-nothing is spaced by them: `floor` (the minimum height of a control, a row and a header, a circle's
-side; 44, compact 32), `row-y` (a row's vertical padding; `stack`, compact `pair`), `control-y` (a
-button's, a field's and a chip's vertical padding; 8, compact 4, so a chip lands on 32 and 24) and `segment` (a segment inside its padded
-control; 36, compact 24). Every platform seeds the touch set; `compactTokens` is the compact set
-under `density: "desktop"`, which the web renders under `(pointer: fine)`, and `densityTokens`
-is either set whatever the knob, which the web renders under a `data-density` attribute on the
-root (`desktop` compact, `touch` the touch set back under a fine pointer). The compact set lands a
-one-line `body` row, button and field on 32: a 24 px line box plus twice 4. A table cell
-(`TABLE_CELL`) is a field's box, the floor, `control-y` and the field's side padding behind a
-transparent side border, so the `Input` that edits it in place keeps the row's height. The type scale does not
-move with density: `body` at 16 is the iOS no-zoom size, a touch fact, and it fits the compact
-floor as it is. Radii come from
-`radius`: `group` at 1× for groups, inputs, code, pickers and menus; `sheet` at 1.75× rounded down
-for a sheet's corners; `full` for buttons, chips, a search field, a count, 0 when `radius` is.
-Elevation is two utilities by use: `shadow-float` for a picker's list, a menu, a toast, the
-selected segment and a thumb; `shadow-sheet` for a sheet. Groups, rows and cards are flat. Under
-`soft` each casts a shadow whose color is the light ink at `neutralHue`, converted to sRGB because
-React Native's `boxShadow` takes no oklch; under `flat` each draws a 1px `edge` border instead,
-the channel every hairline uses on both platforms, so no component changes.
+## Space, sizes, radii, elevation
+
+One base, 4 px; every spacing role is a multiple of it, picked per density, so a density moves
+the roles up and down one ladder. Eight roles by use, desktop then touch: `inside` 6 / 8 (within
+a control: icon to label, dot to text), `control-x` 12 / 16 (a control's inline padding), `pair`
+6 / 8 (between paired elements: label over input, title over description), `rows` 2 / 4 (between
+rows in a menu or a nav list; rows in a hairline list abut), `card` 16 / 16 (a card's or a
+popover's inset), `fields` 16 / 24 (between fields), `sections` 32 / 40 (between sections of a
+page), `page` 24 / 16 (the page inset). Touch is the same roles one rung looser except the page
+inset, which a phone narrows. Five are gap roles, what a container may put between its children:
+`inside`, `pair`, `rows`, `fields`, `sections`; the other three (`control-x`, `card`, `page`)
+are insets.
+
+Sixteen sizes per density sit in the same `--spacing-*` namespace, so a cell names them as it
+names a role (`min-h-control`, `size-avatar`), and nothing is spaced by them. Desktop then touch:
+`control` 32 / 44 (a button, a segmented control), `control-compact` 28 / 44 (a menu item, a
+toolbar control), `field` 38 / 48 (a form input), `row` 32 / 48 (a one-line row), `row-2` 48 / 64
+(a two-line row), `row-setting` 64 / 72 (a setting row), `header` 32 / 44 (a table or strip
+header), `target` 24 / 44 (the least hit area of any interactive part), `dot` 6 / 8, `chip` 20 /
+24, `avatar` 24 / 32, `spinner` 14 / 16, `switch-w` 28 / 40, `switch-h` 16 / 24, `thumb` 12 / 20,
+`skeleton` 12 / 12. On touch every target is at least 44. A cell says `min-h`, never `h`: a label
+must be able to grow its control under OS font scaling.
+
+Eight radius roles, density-invariant, a radius naming the role and never the size: `chip` 4
+(an outlined chip, a skeleton bar, a checkbox), `control` 6 (a button, a field, a segmented
+control), `row` 6 (a menu item, a highlighted row), `card` 8 (a card, a toast), `popover` 8,
+`sheet` 8 (a sheet's leading corners), `dialog` 12, `full` (a dot, an avatar, the pill chip or
+status, a switch). One hairline of 1 px draws region edges, row splits and field boundaries, as
+`--hairline`. The focus ring is `ring`, 2 px at a 2 px offset outside the box, so it never covers
+the control's own edge; inside a list it is drawn inward.
+
+Widths are the lifted layers' ranges and the one measure for running text, as `--container-*`:
+`popover` 240, `toast` 360, `dialog` 440, `sheet` 640, `measure` 66ch; a layer never stretches to
+its container. Breakpoints are `--breakpoint-*`: `tablet` 768, `desktop` 1024, `wide` 1440, so
+`tablet:` and `desktop:` are the only responsive variants.
+
+Elevation is two levels spent on lifted layers only: `shadow-float` for a popover, a menu, a
+picker, a toast; `shadow-modal` for a dialog, a sheet, a command palette. Groups, rows and cards
+are flat. Each is a tight contact shadow plus a soft ambient one, tinted with the neutral hue in
+light; in dark the lift is carried by the raised step and the hairline, so the shadow is pure
+black at a higher opacity. Each mode has its own pair, and each utility reads `var(--shadow-*)`,
+so a shadow follows the mode; the values are sRGB because React Native's `boxShadow` takes no
+oklch.
+
+Density is emitted as sets. `themeTokens` seeds the touch set on every platform;
+`finePointerTokens` is the desktop set under `density: "desktop"`, which the web renders under
+`(pointer: fine)`, and empty under `touch`; `densityTokens` is either set whatever the knob, which
+the web renders under a `data-density` attribute on the root, so a screenshot pins a density.
+Native is touch-only.
 
 ## Motion
 
-One duration scale and one curve family. The rungs are ratios of `motion`, each rounded to the
-millisecond: `instant` 0.5 (100), `fast` 0.75 (150), `base` 1 (200), `slow` 1.5 (300), emitted as
+One duration scale and one curve family. The durations are `instant` 100 (press feedback only),
+`fast` 150, `base` 200, `slow` 300, the 150 to 300 band a micro-interaction lives in, emitted as
 `--transition-duration-*`, the namespace Tailwind's `duration-*` reads, so `duration-fast` is a
-rung. The curves are the cubic family, emitted as `--ease-*`: `out` `cubic-bezier(0.33, 1, 0.68,
-1)` for what enters or answers a touch, `in` `cubic-bezier(0.32, 0, 0.67, 0)` for what leaves,
-`in-out` `cubic-bezier(0.65, 0, 0.35, 1)` for what moves; none overshoots. A bare `transition`
+rung. The loop is 800 ms, outside the scale and kept under reduced motion, because the spin is
+the only sign a wait is live. The curves are emitted as `--ease-*`: `out` `cubic-bezier(0.16, 1,
+0.3, 1)` for what enters or answers a touch, `in` `cubic-bezier(0.7, 0, 0.84, 0)` for what
+leaves, `in-out` `cubic-bezier(0.65, 0, 0.35, 1)` for what moves between two places; none
+overshoots. Only transform and opacity animate: a state switches its color, fill and boundary at
+once, and motion is spent on what enters and leaves and on the switch thumb. A bare `transition`
 takes `base` and `out` through the variables. `reducedMotionTokens` sets every rung to 0ms, which
-the web renders under `prefers-reduced-motion: reduce`. Motion lives in the matrices, never at a
-call site: no cell carries a duration that is not a rung. `deriveTheme` also returns the scale
-as numbers (`motion.durations` in milliseconds, `motion.easings` as the four control values), for
-a platform that times an animation outside CSS.
+the web renders under `prefers-reduced-motion: reduce`; the loop stays. Motion lives in the
+matrices, never at a call site: no cell carries a duration that is not a rung. `deriveTheme` also
+returns the scale as numbers (`motion.durations` and `motion.loop` in milliseconds,
+`motion.easings` as the four control values), for a platform that times an animation outside CSS.
 
 ## Contrast contracts
 
-At the default knobs, in both modes and under either primary, each pair clears 4.5:1: `ink` and
-`ink-meta` on `canvas`, `surface` and `group`; `ok`, `warn` and `danger` on `surface`, on `group`
-and on `ok-soft`, `warn-soft` and `danger-soft` in turn; `tint` on `surface` and `group`; `ink`, `ink-meta`, `ok`, `warn`, `danger` and `tint` on `accent-soft`, a selected row that
-holds a `Status`; `on-accent` on `accent`; `ink` on every
-`avatar-n` and every `chip-n`. The verify script measures every pair. The dark `tint`, `ok`, `warn` and `danger` sit
-lighter than the calibration so that a status, an act or a destructive label inside a group
-keeps the ratio, and `accent-soft` sits lighter in light mode (and, under `ink`, darker in dark
-mode) so that a `Status` inside a selected row does. Moving a knob puts the re-check on the consumer.
+At the default knobs, in both modes, each text pair clears 4.5:1: `ink-body` on `canvas`,
+`surface`, `group`, `raised`, `accent-soft`, `ok-soft`, `warn-soft` and `danger-soft`; `ink-meta`
+and `accent-ink` on the four grounds and on `accent-soft`; `ok`, `warn` and `danger` on the four
+grounds and each on its own soft; `on-accent` on `accent`, `act-accent-hover` and
+`act-accent-press`; `on-danger` on `danger`; `on-act-ink` on `act-ink`, `act-ink-hover` and
+`act-ink-press`; every `chip-red-ink` on its `chip-red-soft`; every `avatar-1-ink` on its
+`avatar-1`. Each graphic pair clears 3:1: `edge-strong` on `surface` and `group`, `accent` on
+`surface` and `canvas`, every chip mark on `surface`. `ink-faint` on `surface` is the one
+exemption, held at about 3:1 so it reads as off. The verify script measures every pair, and
+sweeps `accentHue` over all 360 values: at each hue every accent-bound role stays inside sRGB and
+the accent-derived pairs keep their floor (`on-accent` on `accent`, `on-act-accent` on the hover
+and press fills, `accent-ink` on the four grounds and `accent-soft`, `ink-body` and `ink-meta` on
+`accent-soft`, `accent` on `surface` and `canvas` at 3:1).
 
 ## What the reset does not catch
 
@@ -193,7 +259,7 @@ Eleven namespaces reset to `initial`: `--color-*`, `--radius-*`, `--text-*`, `--
 `--tracking-*`, `--shadow-*`, `--font-*`, `--container-*`, `--breakpoint-*`,
 `--transition-duration-*`, `--ease-*`. The numeric
 `--spacing` base stays live because dimension utilities derive from it, so no build check can tell
-a rung from a numeric; the matrices pin their cell strings verbatim instead. `--font-weight-*`
+a role from a numeric; the matrices pin their cell strings verbatim instead. `--font-weight-*`
 stays live because the roles name their weights. A bare `duration-150` stays live because
 Tailwind turns a number into milliseconds without reading the theme. The geometry gate is what
 keeps a numeric off a call site.
@@ -227,21 +293,21 @@ directory of a component is its name in kebab case (`componentDir("ListRow")` is
 
 ## The sharing line
 
-Matrices hold the platform-invariant cells only: fills, borders, ink, rungs, radius, type role,
-font weight, font family, and a control minimum height or width. Display, alignment, and every
-interaction state are platform overlays composed through `cn()` after the matrix (React Native is
-flex by default and the web is not, so a shared `flex-row` would be wrong on one). No arbitrary
-value in a cell, in either spelling. A control's horizontal padding stays a literal numeric; its
-vertical padding and every minimum height are density sizes; a row and a surface inset on rungs.
-No behavior in ui-core, ever.
+Matrices hold the platform-invariant cells only: fills, borders, ink, spacing roles, radius, type
+role, font weight, font family, and a control's size. Display, alignment, and every interaction
+state are platform overlays composed through `cn()` after the matrix (React Native is flex by
+default and the web is not, so a shared `flex-row` would be wrong on one). No arbitrary value in a
+cell, in either spelling. A control's horizontal padding is the `control-x` spacing role; its
+minimum height is a size; a row and a surface inset on spacing roles. No behavior in ui-core,
+ever.
 
 ## Composing with cn
 
 `cn()` merges class inputs and resolves Tailwind conflicts, last wins. Its `tailwind-merge` config
 registers six contract scales under `theme`: the type roles as font sizes and again as leading,
-the tracked roles as tracking, the radius rungs, the spacing rungs, and the widths as containers.
-Two members of one scale then collapse to the last, and a type role beside a color leaves both
-standing.
+the tracked roles as tracking, the radius roles, the spacing roles plus the sizes, and the widths
+as containers. Two members of one scale then collapse to the last, so `min-h-control` and
+`min-h-field` collapse, and a type role beside a color leaves both standing.
 
 A role owns three properties, so the config also declares `font-size` as conflicting with both
 `leading-` and `tracking-`: a later role clears the earlier role's line height and letter spacing
@@ -260,8 +326,11 @@ The vocabulary, one closed list for both platforms: flex plumbing (`flex`, `flex
 `flex-col`, `flex-wrap`, `grow`, `shrink-0`), the zero offsets (`absolute`, `relative`, `inset-0`,
 `inset-x-0`, `inset-y-0`, `top-0`, `bottom-0`, `left-0`, `right-0`), the non-numeric sizes
 (`w-full`, `min-w-0`, `min-h-0`, `min-h-full`, `min-h-screen`, `max-w-full`, `max-w-none`),
-`overflow-hidden`, the six `gap-<rung>` cells, and four prefixes: `items-`, `justify-`, `self-`,
-`z-`. Three unconditional bans inside any token: `[`, `(`, and `:`.
+`overflow-hidden`, the two gap cells a call site may spell (`gap-inside` and `gap-pair`,
+`CALL_SITE_GAPS`), and four prefixes: `items-`, `justify-`, `self-`, `z-`. Vertical rhythm
+(`rows`, `fields`, `sections`) belongs to the layout molecules that own it, so a screen composes
+a `Form` or a `Section` and never a gap. Three unconditional bans inside any token: `[`, `(`, and
+`:`.
 
 The host rule: on web a bare lowercase tag; on native `View`, `Pressable`, `ScrollView`, and
 `Animated.View`. The check fires only on elements carrying a class attribute. The scanner reads

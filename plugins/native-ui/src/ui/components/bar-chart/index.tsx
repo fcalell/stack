@@ -21,7 +21,7 @@ const BAR = 12;
 export function BarChart({ series, unit, loading }: BarChartProps) {
 	const [width, setWidth] = useState(0);
 	const fills = [
-		useTokenColor("--color-tint"),
+		useTokenColor("--color-accent-ink"),
 		useTokenColor("--color-accent-soft"),
 		useTokenColor("--color-ink-faint"),
 		useTokenColor("--color-edge"),
@@ -32,7 +32,7 @@ export function BarChart({ series, unit, loading }: BarChartProps) {
 		<View
 			accessibilityLabel={unit}
 			onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
-			className="gap-stack"
+			className="gap-fields"
 		>
 			{series.map((item) => {
 				const parts =
@@ -42,7 +42,7 @@ export function BarChart({ series, unit, loading }: BarChartProps) {
 				let x = 0;
 				return (
 					<View key={`${item.label}:${item.at ?? ""}`} className="gap-pair">
-						<View className="flex-row items-center justify-between gap-row">
+						<View className="flex-row items-center justify-between gap-inside">
 							<RNText className={text({ role: "body" })}>{item.label}</RNText>
 							<RNText className={text({ role: "meta" })}>
 								{item.value}

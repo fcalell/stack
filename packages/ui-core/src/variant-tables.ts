@@ -4,8 +4,12 @@
 // the matrix it describes. Internal to the package, with no subpath export.
 //
 // Every cell is a class both a web and a native renderer can take: fills,
-// borders, ink, rungs, radius, type role, weight, family, control minimum
+// borders, ink, spacing roles, radius, type role, weight, family, a control's
 // size. Display, alignment and every interaction state stay with the plugins.
+//
+// The text matrices are the Stage 1 port. Every other matrix is carried on
+// the new vocabulary until Stage 2 replaces it, component by component, with
+// the class strings of its approved artboard.
 
 export type Axes = Record<string, Record<string, string>>;
 
@@ -33,82 +37,80 @@ export const TEXT = matrix({
 	variants: {
 		role: {
 			display:
-				"text-display leading-display tracking-display font-bold text-ink",
-			title: "text-title leading-title tracking-title font-bold text-ink",
+				"text-display leading-display tracking-display font-medium text-ink-body",
+			title:
+				"text-title leading-title tracking-title font-semibold text-ink-body",
 			heading:
-				"text-heading leading-heading tracking-heading font-semibold text-ink",
-			body: "text-body leading-body font-normal text-ink",
+				"text-heading leading-heading tracking-heading font-semibold text-ink-body",
+			body: "text-body leading-body font-normal text-ink-body",
 			meta: "text-meta leading-meta font-normal text-ink-meta",
-			label: "text-label leading-label font-medium text-ink-meta",
-			mono: "text-mono leading-mono font-normal text-ink font-mono",
+			caption:
+				"text-caption leading-caption tracking-caption font-normal text-ink-meta",
+			code: "text-code leading-code font-normal text-ink-body font-mono",
 		},
 	},
 	defaultVariants: { role: "body" },
 });
 
-// One step up per role, for a row's title and a definition's label.
-// `display`, `title` and `heading` already carry their peak weight.
+// Emphasis inside a line: weight 500, never a size. `display`, `title` and
+// `heading` already sit at or above it.
 export const TEXT_STRONG = matrix({
 	base: "",
 	variants: {
 		role: {
 			display: "",
 			title: "",
-			heading: "font-bold",
+			heading: "",
 			body: "font-medium",
 			meta: "font-medium",
-			label: "font-semibold",
-			mono: "font-medium",
+			caption: "font-medium",
+			code: "font-medium",
 		},
 	},
 });
 
 // ── Button ──────────────────────────────────────────────────────────
 
-// `act` is the button's kind: the primary act is filled, the other two sit on
-// the group fill and differ by their label's ink. `fit` is its container's:
-// at the floor in the body, compact in a top bar, where the plugin keeps the 44 px
-// hit area around the smaller pill. min-h, never h: the label must be able to
-// grow the control under OS font scaling.
+// `act` is the button's kind: the primary act is the accent fill, the
+// secondary a hairline on the surface, the destructive one the same with
+// its label in `danger`. `fit` is its container's: a control in the body,
+// compact in a top bar. min-h, never h: the label must be able to grow the
+// control under OS font scaling.
 export const BUTTON = matrix({
-	base: "rounded-full gap-row",
+	base: "rounded-control gap-inside px-control-x",
 	variants: {
 		act: {
-			primary: "bg-accent",
-			secondary: "bg-group",
-			destructive: "bg-group",
+			primary: "bg-act-accent",
+			secondary: "border border-edge",
+			destructive: "border border-edge",
 		},
 		fit: {
-			body: "min-h-floor px-5 py-control-y",
-			bar: "min-h-8 px-3.5 py-1",
+			body: "min-h-control",
+			bar: "min-h-control-compact",
 		},
 	},
 	defaultVariants: { act: "primary", fit: "body" },
 });
 
 export const BUTTON_LABEL = matrix({
-	base: "font-medium",
+	base: "font-medium text-body leading-body",
 	variants: {
 		act: {
-			primary: "text-on-accent",
-			secondary: "text-ink",
+			primary: "text-on-act-accent",
+			secondary: "text-ink-body",
 			destructive: "text-danger",
 		},
-		fit: {
-			body: "text-body leading-body",
-			bar: "text-meta leading-meta",
-		},
 	},
-	defaultVariants: { act: "primary", fit: "body" },
+	defaultVariants: { act: "primary" },
 });
 
 // ── Status ──────────────────────────────────────────────────────────
 
 export const STATUS = matrix({
-	base: "text-meta leading-meta font-medium gap-pair",
+	base: "text-meta leading-meta font-medium gap-inside",
 	variants: {
 		state: {
-			active: "text-tint",
+			active: "text-accent-ink",
 			waiting: "text-ink-meta",
 			done: "text-ok",
 			attention: "text-warn",
@@ -120,41 +122,38 @@ export const STATUS = matrix({
 
 // ── Chip ────────────────────────────────────────────────────────
 
-// A data value's tag: its family's fill under `ink`, so the family is
-// learnable across screens and never mistaken for a status, which is an
-// icon and a word in its state's ink. It pads as a control does, so it
-// follows density: 32 on touch, 24 under the compact set.
+// A data value's tag: its family's soft ground under the family's ink, so
+// the family is learnable across screens and never mistaken for a status.
 export const CHIP = matrix({
-	base: "rounded-full px-2.5 py-control-y text-label leading-label font-medium text-ink",
+	base: "rounded-full px-inside min-h-chip text-caption leading-caption tracking-caption font-normal",
 	variants: {
 		family: {
-			"1": "bg-chip-1",
-			"2": "bg-chip-2",
-			"3": "bg-chip-3",
-			"4": "bg-chip-4",
-			"5": "bg-chip-5",
-			"6": "bg-chip-6",
+			red: "bg-chip-red-soft text-chip-red-ink",
+			amber: "bg-chip-amber-soft text-chip-amber-ink",
+			green: "bg-chip-green-soft text-chip-green-ink",
+			teal: "bg-chip-teal-soft text-chip-teal-ink",
+			violet: "bg-chip-violet-soft text-chip-violet-ink",
+			pink: "bg-chip-pink-soft text-chip-pink-ink",
 		},
 	},
 });
 
 // ── Field ───────────────────────────────────────────────────────────
 
-// A typing control's surface. `search` is a pill, `text` takes the group
-// radius, `code` is the same box in the mono role. The border is transparent
-// at rest so focus and error change no geometry.
+// A typing control's surface: white with the hairline as its boundary (the
+// approved answer B), `edge-strong` under the pointer, `danger` on error.
 export const FIELD = matrix({
-	base: "border bg-group px-4 text-ink",
+	base: "border bg-surface px-control-x text-ink-body",
 	variants: {
 		kind: {
-			text: "rounded-group min-h-floor py-control-y text-body leading-body",
-			search: "rounded-full min-h-floor text-body leading-body",
-			code: "rounded-group min-h-floor py-control-y text-mono leading-mono font-mono",
+			text: "rounded-control min-h-field text-body leading-body",
+			search: "rounded-control min-h-control text-body leading-body",
+			code: "rounded-control min-h-field text-code leading-code font-mono",
 		},
 		state: {
-			default: "border-transparent",
-			focused: "border-tint",
-			error: "border-danger",
+			default: "border-edge",
+			focused: "border-edge",
+			error: "border-edge-error",
 		},
 	},
 	defaultVariants: { kind: "text", state: "default" },
@@ -162,17 +161,13 @@ export const FIELD = matrix({
 
 // ── One-time code ───────────────────────────────────────────────
 
-// One box per character of a one-time code: the field's fill and radius, a
-// square at the floor. The box the next character lands in is `focused`
-// while the code has focus; an invalid code rings every box in `danger`.
-// The character is the `heading` role, set on the text itself.
 export const OTP_BOX = matrix({
-	base: "rounded-group border bg-group min-h-floor min-w-floor",
+	base: "rounded-control border bg-surface min-h-field min-w-field",
 	variants: {
 		state: {
-			default: "border-transparent",
-			focused: "border-tint",
-			error: "border-danger",
+			default: "border-edge",
+			focused: "border-edge",
+			error: "border-edge-error",
 		},
 	},
 	defaultVariants: { state: "default" },
@@ -180,41 +175,45 @@ export const OTP_BOX = matrix({
 
 // ── Row ─────────────────────────────────────────────────────────────
 
-// A row in a group or a list: the touch floor, the group's inset, the rhythm
-// between its atoms; pressed on `edge`, selected on `accent-soft`.
+// A row in a group or a list: pressed under the press wash, selected under
+// the selection wash.
 export const ROW = matrix({
-	base: "min-h-floor px-inset py-row-y gap-stack",
+	base: "min-h-row px-control-x gap-inside",
 	variants: {
-		state: { rest: "", pressed: "bg-edge", selected: "bg-accent-soft" },
+		state: {
+			rest: "",
+			pressed: "bg-wash-press",
+			selected: "bg-wash-selected",
+		},
 	},
 	defaultVariants: { state: "rest" },
 });
 
 // ── Table ───────────────────────────────────────────────────────────
 
-// A row of a data table: a hairline under it, the open row on `accent-soft`
-// as a `Split` list's open item is. Its height is its cells', `TABLE_CELL`.
 export const TABLE_ROW = matrix({
 	base: "border-b border-edge",
 	variants: {
-		state: { rest: "", selected: "bg-accent-soft" },
+		state: { rest: "", selected: "bg-wash-selected" },
 	},
 	defaultVariants: { state: "rest" },
 });
 
 // ── Switch and checkbox ─────────────────────────────────────────────
 
-// The on fill is `accent` for both, so the two controls read as one family.
 export const SWITCH = matrix({
 	base: "rounded-full",
-	variants: { state: { off: "bg-edge", on: "bg-accent" } },
+	variants: { state: { off: "bg-switch-off", on: "bg-switch-on" } },
 	defaultVariants: { state: "off" },
 });
 
 export const CHECKBOX = matrix({
-	base: "rounded-full",
+	base: "rounded-chip",
 	variants: {
-		state: { unchecked: "border border-ink-faint", checked: "bg-accent" },
+		state: {
+			unchecked: "border border-edge-strong",
+			checked: "bg-accent",
+		},
 	},
 	defaultVariants: { state: "unchecked" },
 });
@@ -222,9 +221,9 @@ export const CHECKBOX = matrix({
 // ── Segmented control ───────────────────────────────────────────────
 
 export const SEGMENT = matrix({
-	base: "rounded-full min-h-segment px-3 text-meta leading-meta font-medium",
+	base: "rounded-control min-h-control-compact px-control-x text-body leading-body font-medium",
 	variants: {
-		state: { idle: "text-ink-meta", selected: "bg-surface text-ink" },
+		state: { idle: "text-ink-meta", selected: "bg-surface text-ink-body" },
 	},
 	defaultVariants: { state: "idle" },
 });
@@ -232,7 +231,7 @@ export const SEGMENT = matrix({
 // ── Banner ──────────────────────────────────────────────────────────
 
 export const BANNER = matrix({
-	base: "px-inset py-stack gap-row text-meta leading-meta text-ink",
+	base: "rounded-card px-card py-pair gap-inside text-body leading-body text-ink-body",
 	variants: {
 		kind: {
 			note: "bg-accent-soft",
@@ -245,17 +244,13 @@ export const BANNER = matrix({
 
 // ── Toast ───────────────────────────────────────────────────────
 
-// A toast that reports how an act ended, composed after `TOAST`, the dark
-// pill every other toast is: three of the six status states, each on its
-// `-soft` fill under `ink`, the fill the banner draws a state on. A refused
-// edit reads `failed`, a finished act `done`.
 export const TOAST_STATE = matrix({
 	base: "",
 	variants: {
 		state: {
-			done: "bg-ok-soft text-ink",
-			attention: "bg-warn-soft text-ink",
-			failed: "bg-danger-soft text-ink",
+			done: "bg-ok-soft text-ink-body",
+			attention: "bg-warn-soft text-ink-body",
+			failed: "bg-danger-soft text-ink-body",
 		},
 	},
 });
@@ -263,7 +258,7 @@ export const TOAST_STATE = matrix({
 // ── Diff ────────────────────────────────────────────────────────────
 
 export const DIFF_LINE = matrix({
-	base: "text-mono leading-mono font-mono text-ink",
+	base: "text-code leading-code font-mono text-ink-body",
 	variants: {
 		kind: {
 			context: "",
@@ -281,7 +276,7 @@ export const MESSAGE = matrix({
 	base: "",
 	variants: {
 		author: {
-			you: "rounded-sheet bg-group px-inset py-stack",
+			you: "rounded-card bg-group px-card py-pair",
 			other: "",
 			system: "text-meta leading-meta text-ink-meta",
 		},
@@ -291,44 +286,46 @@ export const MESSAGE = matrix({
 // ── Avatar ──────────────────────────────────────────────────────────
 
 export const AVATAR = matrix({
-	base: "rounded-full text-ink",
+	base: "rounded-full size-avatar",
 	variants: {
 		step: {
-			"1": "bg-avatar-1",
-			"2": "bg-avatar-2",
-			"3": "bg-avatar-3",
-			"4": "bg-avatar-4",
-			"5": "bg-avatar-5",
-			"6": "bg-avatar-6",
-			"7": "bg-avatar-7",
-			"8": "bg-avatar-8",
+			"1": "bg-avatar-1 text-avatar-1-ink",
+			"2": "bg-avatar-2 text-avatar-2-ink",
+			"3": "bg-avatar-3 text-avatar-3-ink",
+			"4": "bg-avatar-4 text-avatar-4-ink",
+			"5": "bg-avatar-5 text-avatar-5-ink",
+			"6": "bg-avatar-6 text-avatar-6-ink",
+			"7": "bg-avatar-7 text-avatar-7-ink",
+			"8": "bg-avatar-8 text-avatar-8-ink",
 		},
 	},
 });
 
 // ── Place ───────────────────────────────────────────────────────────
 
-// A place in the tab bar or the sidebar: the selected one is inked `accent`.
+// A place in the tab bar or the sidebar: the selected one is inked accent.
 export const PLACE = matrix({
-	base: "text-label leading-label font-medium",
-	variants: { state: { idle: "text-ink-meta", selected: "text-accent" } },
+	base: "text-body leading-body font-medium",
+	variants: {
+		state: { idle: "text-ink-meta", selected: "text-accent-ink" },
+	},
 	defaultVariants: { state: "idle" },
 });
 
 // ── Rhythm ──────────────────────────────────────────────────────────
 
-// The gap a container bakes between its children. Every cell is exactly
-// `gap-<rung>`, a shape the harness pins, so the rung mapping lives here once.
+// The gap a container puts between its children. Every cell is exactly
+// `gap-<role>`, a shape the harness pins, so the role mapping lives here
+// once.
 export const RHYTHM = matrix({
 	base: "",
 	variants: {
 		unit: {
+			inside: "gap-inside",
 			pair: "gap-pair",
-			row: "gap-row",
-			stack: "gap-stack",
-			inset: "gap-inset",
-			section: "gap-section",
-			room: "gap-room",
+			rows: "gap-rows",
+			fields: "gap-fields",
+			sections: "gap-sections",
 		},
 	},
 });

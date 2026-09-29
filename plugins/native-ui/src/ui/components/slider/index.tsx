@@ -64,7 +64,7 @@ export function Slider({
 	const ratio = max > min ? (value - min) / (max - min) : 0;
 	return (
 		<View className="gap-pair">
-			<View className="flex-row items-center justify-between gap-row">
+			<View className="flex-row items-center justify-between gap-inside">
 				<RNText className={text({ role: "body" })}>{label}</RNText>
 				<RNText className={text({ role: "meta" })}>
 					{new Intl.NumberFormat(

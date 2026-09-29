@@ -47,12 +47,16 @@ test("app.css imports Tailwind without detection, then the web sheet, then the c
 	assert.match(css, /^@import "tailwindcss" source\(none\);/);
 	assert.match(css, /@import "@fcalell\/plugin-react-ui\/globals\.css";/);
 	assert.match(css, /@source "\.\.\/src";/);
-	assert.match(css, /@theme \{[^}]*--spacing-floor: 44px;/);
+	assert.match(
+		css,
+		/@source inline\("\{bg,text,border,outline\}-\{canvas,surface,/,
+	);
+	assert.match(css, /@theme \{[^}]*--spacing-control: 44px;/);
 	assert.match(css, /@utility shadow-/);
 	assert.match(css, /\.dark \{\n\tcolor-scheme: dark;/);
 	assert.match(css, /\.light \{\n\tcolor-scheme: light;/);
 	assert.match(css, /--transition-duration-base: 200ms;/);
-	assert.match(css, /--ease-out: cubic-bezier\(0\.33, 1, 0\.68, 1\);/);
+	assert.match(css, /--ease-out: cubic-bezier\(0\.16, 1, 0\.3, 1\);/);
 	assert.match(
 		css,
 		/@media \(prefers-reduced-motion: reduce\) \{\n:root \{\n\t--transition-duration-instant: 0ms;/,
@@ -81,23 +85,22 @@ test("Inter is the default sans while its file loads, and a theme's own sans win
 });
 
 test("data-density pins either set whatever the knob; the pointer query only under desktop", async () => {
-	const touch = (await artifacts()).get(".stack/app.css") ?? "";
+	const touch =
+		(await artifacts({ theme: { density: "touch" } })).get(".stack/app.css") ??
+		"";
 	assert.match(
 		touch,
-		/:root\[data-density="desktop"\] \{\n\t--spacing-floor: 32px;/,
+		/:root\[data-density="desktop"\] \{\n\t--text-display: 36px;/,
 	);
 	assert.doesNotMatch(touch, /pointer: fine/);
-	const desktop =
-		(await artifacts({ theme: { density: "desktop" } })).get(
-			".stack/app.css",
-		) ?? "";
+	const desktop = (await artifacts()).get(".stack/app.css") ?? "";
 	assert.match(
 		desktop,
-		/@media \(pointer: fine\) \{\n:root \{\n\t--spacing-floor: 32px;/,
+		/@media \(pointer: fine\) \{\n:root \{\n\t--text-display: 36px;/,
 	);
 	assert.match(
 		desktop,
-		/@media \(pointer: fine\) \{\n:root\[data-density="touch"\] \{\n\t--spacing-floor: 44px;/,
+		/@media \(pointer: fine\) \{\n:root\[data-density="touch"\] \{\n\t--text-display: 44px;/,
 	);
 });
 

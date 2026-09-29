@@ -2,10 +2,11 @@
 //
 //   pnpm --filter @fcalell/ui-core verify
 //
-// The script derives with default knobs, diffs the renamed roles against the
-// reference stylesheet (Marina's calibration, the oracle for every value the
-// contract kept), drives a Tailwind build over the emitted `@theme` record plus
-// every class the matrices can emit, and exits non-zero on any mismatch.
+// The script derives with default knobs, diffs every emitted value against
+// the approved Stage 1 sheet (`plugins/react-ui/design/foundations.css`, the
+// calibration the contract carries), sweeps the accent knob for contrast,
+// drives a Tailwind build over the emitted `@theme` record plus every class
+// the matrices can emit, and exits non-zero on any mismatch.
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -16,17 +17,22 @@ import ts from "typescript";
 import { cn } from "../src/cn.ts";
 import { deriveTheme } from "../src/derive.ts";
 import {
-	compactTokens,
 	densityTokens,
+	finePointerTokens,
 	modeTokens,
 	reducedMotionTokens,
+	rootTokens,
 	shadowUtilities,
 	themeTokens,
 } from "../src/emit.ts";
-import { GEOMETRY, NATIVE_GEOMETRY_HOSTS, scanGeometry } from "../src/gate.ts";
+import {
+	CALL_SITE_GAPS,
+	GEOMETRY,
+	NATIVE_GEOMETRY_HOSTS,
+	scanGeometry,
+} from "../src/gate.ts";
 import {
 	assert,
-	blockBody,
 	check,
 	declarationMap,
 	normalize,
@@ -34,7 +40,7 @@ import {
 	rule,
 	tailwindBuild,
 } from "../src/harness.ts";
-import { oklchToLinear } from "../src/oklch.ts";
+import { inGamut, oklchToLinear, oklchToRgb } from "../src/oklch.ts";
 import {
 	CLOSED_PROPS,
 	componentDir,
@@ -44,32 +50,38 @@ import {
 import { wordsSchema } from "../src/schema.ts";
 import {
 	AVATAR_STEPS,
+	BODY_SIZE,
+	BREAKPOINT_PX,
 	BREAKPOINTS,
 	CHIP_FAMILIES,
+	COLOR_NAMES,
 	COLORS,
-	DENSITY_SIZES,
-	DURATION_RATIO,
+	type ColorName,
+	DENSITIES,
+	DURATION_MS,
 	DURATIONS,
 	EASING,
 	EASINGS,
 	ENGLISH,
 	fallbackFace,
-	INVARIANT,
-	INVARIANT_COLORS,
-	isNeutralBound,
-	KNOB_DEFAULTS,
+	GAP_ROLES,
+	LOOP_MS,
 	MODES,
 	type Mode,
-	PER_MODE_COLORS,
-	type PerModeColor,
-	RADIUS_RUNGS,
+	RADIUS_PX,
+	RADIUS_ROLES,
 	SHADOW_LEVELS,
-	SPACING_RUNGS,
+	SIZE_PX,
+	SIZES,
+	SPACE_BASE,
+	SPACING_RATIO,
+	SPACING_ROLES,
 	TRACKED_ROLES,
 	type TrackedRole,
 	TYPE_ROLES,
 	TYPE_SCALE,
 	type TypeRole,
+	WIDTH_VALUE,
 	WIDTHS,
 	WORD_KEYS,
 	ZEROED_NAMESPACES,
@@ -121,7 +133,6 @@ import {
 	status,
 	statusContentTone,
 	switchTrack,
-	TABLE_CELL,
 	tableRow,
 	text,
 	textStrong,
@@ -131,77 +142,96 @@ import {
 const here = dirname(fileURLToPath(import.meta.url));
 const pkgDir = resolve(here, "..");
 const fixtureDir = resolve(here, "fixture");
-const referencePath = resolve(fixtureDir, "reference.css");
+// The approved sheet is the oracle. It lives with the boards it was drawn
+// on; this script runs in the workspace only, so the path is relative to it.
+const sheetPath = resolve(
+	pkgDir,
+	"../../plugins/react-ui/design/foundations.css",
+);
 
 // A value may carry no statement or block terminator and no comment delimiter:
 // each would let a token break out of the declaration it is rendered into.
 const ESCAPES_A_DECLARATION = /[;{}]|\/\*|\*\//;
 
-// ── Reference stylesheet parsing ────────────────────────────────────
+// ── The sheet ───────────────────────────────────────────────────────
 
-// Each role names the reference token whose value it kept: `accent` under
-// the default `ink` primary is the reference's ink-aliased accent, `tint`
-// its interactive hue.
-const ROLE_SOURCE: Record<
-	Exclude<PerModeColor, `avatar-${number}` | `chip-${number}`>,
-	string
-> = {
-	canvas: "canvas",
-	surface: "surface",
-	group: "surface-2",
-	edge: "edge",
-	ink: "ink-1",
-	"ink-meta": "ink-2",
-	"ink-faint": "ink-4",
-	accent: "accent",
-	"accent-soft": "brand-soft",
-	"on-accent": "canvas",
-	tint: "marine",
-	ok: "ok",
-	"ok-soft": "ok-soft",
-	warn: "warn",
-	"warn-soft": "warn-soft",
-	danger: "danger",
-	"danger-soft": "danger-soft",
-};
-
-// The values the contract departs from the calibration on, each for a
-// measured reason: the reference's dark marks clear 4.5:1 on `surface` but
-// not on `group`, where statuses, acts and destructive labels are drawn; and
-// the reference's `brand-soft`, a selected row, holds those marks under 4.5:1
-// until it is lighter in light mode and darker in dark mode.
-const DEPARTED: Record<string, string> = {
-	"dark.tint": "oklch(0.75 0.155 261)",
-	"dark.ok": "oklch(0.75 0.14 160)",
-	"dark.warn": "oklch(0.75 0.14 75)",
-	"dark.danger": "oklch(0.76 0.17 28)",
-	"light.accent-soft": "oklch(0.925 0.04 261)",
-	"dark.accent-soft": "oklch(0.34 0.095 261)",
-};
-
-const reference = readFileSync(referencePath, "utf8").replace(
-	/\/\*[\s\S]*?\*\//g,
-	"",
-);
-const referenceModes = new Map<Mode, Map<string, string>>();
-for (const mode of MODES) {
-	const tokens = new Map<string, string>();
-	for (const [property, value] of declarationMap(
-		blockBody(reference, `@variant ${mode}`),
-	)) {
-		if (property.startsWith("--color-")) {
-			tokens.set(property.slice("--color-".length), value);
-		}
+// Every top-level rule's custom properties by its selector text, the sheet's
+// own spellings. The sheet nests nothing but `@media` and `@keyframes`, and
+// neither carries a token this script reads.
+const sheet = readFileSync(sheetPath, "utf8")
+	.replace(/\/\*[\s\S]*?\*\//g, "")
+	// The reduced-motion block re-declares the durations at 0 under a nested
+	// `:root`; only the top-level rules carry the sheet's values.
+	.replace(/@media[^{]*\{(?:[^{}]*\{[^{}]*\})*[^{}]*\}/g, "");
+const sheetRules = new Map<string, Map<string, string>>();
+for (const match of sheet.matchAll(
+	/(?:^|\n)([^{}@\n][^{}]*?)\s*\{([^{}]*)\}/g,
+)) {
+	const selector = normalize(match[1] ?? "");
+	const body = match[2] ?? "";
+	const rule = sheetRules.get(selector) ?? new Map<string, string>();
+	sheetRules.set(selector, rule);
+	for (const [property, value] of declarationMap(body)) {
+		if (property.startsWith("--")) rule.set(property, value);
 	}
-	referenceModes.set(mode, tokens);
 }
-const referenceTheme = declarationMap(blockBody(reference, "@theme"));
 
-function fromVariant(mode: Mode, token: string): string {
-	const value = referenceModes.get(mode)?.get(token);
-	assert(value !== undefined, `reference @variant ${mode} has no ${token}`);
-	return value;
+const SHEET_SELECTOR = {
+	light: ":root",
+	dark: ".dark",
+	desktop: ':root, :root[data-density="desktop"]',
+	touch: ':root[data-density="touch"]',
+} as const;
+
+function sheetRule(selector: string): Map<string, string> {
+	const rule = sheetRules.get(selector);
+	assert(rule, `the sheet has no "${selector}" rule`);
+	return rule;
 }
+
+// A sheet value with its `var()` references followed, through the density
+// block it sits in and then the root.
+function sheetValue(selector: string, property: string): string {
+	const own = sheetRule(selector).get(property);
+	const value =
+		own ??
+		sheetRule(SHEET_SELECTOR.desktop).get(property) ??
+		sheetRule(":root").get(property);
+	assert(
+		value !== undefined,
+		`the sheet has no ${property} under "${selector}"`,
+	);
+	return value.replace(/var\((--[\w-]+)\)/g, (_, name: string) =>
+		sheetValue(selector, name),
+	);
+}
+
+// The sheet's names for the sizes; every other token keeps its sheet name.
+const SHEET_SIZE: Record<(typeof SIZES)[number], string> = {
+	control: "--control-height",
+	"control-compact": "--control-height-compact",
+	field: "--field-height",
+	row: "--row-height",
+	"row-2": "--row-height-2",
+	"row-setting": "--row-height-setting",
+	header: "--header-height",
+	target: "--target-min",
+	dot: "--size-dot",
+	chip: "--size-chip",
+	avatar: "--size-avatar",
+	spinner: "--size-spinner",
+	"switch-w": "--switch-width",
+	"switch-h": "--switch-height",
+	thumb: "--switch-thumb",
+	"switch-inset": "--switch-inset",
+	skeleton: "--skeleton-height",
+};
+
+// The sheet's names for the two places it spells differently.
+const SHEET_COLOR: Partial<Record<ColorName, string>> = {
+	ring: "--ring-color",
+	"switch-thumb": "--switch-thumb-fill",
+};
 
 // ── Check helpers ───────────────────────────────────────────────────
 
@@ -212,12 +242,17 @@ function requireEqual(actual: unknown, expected: unknown, what: string): void {
 	);
 }
 
-function chromaOf(value: string | undefined): string {
-	const inner = value?.match(/^oklch\(([^)]*)\)$/)?.[1];
-	assert(inner, `not an oklch value: ${value}`);
-	const chroma = inner.trim().split(/[\s/]+/)[1];
-	assert(chroma, `no chroma component in ${value}`);
-	return chroma;
+function oklch(value: string): [number, number, number, number | undefined] {
+	const parts = /^oklch\(([\d.]+) ([\d.]+) ([\d.]+)(?: \/ ([\d.]+))?\)$/.exec(
+		value,
+	);
+	assert(parts, `not an oklch value: ${value}`);
+	return [
+		Number(parts[1]),
+		Number(parts[2]),
+		Number(parts[3]),
+		parts[4] === undefined ? undefined : Number(parts[4]),
+	];
 }
 
 function rejection(theme: unknown): string {
@@ -233,6 +268,18 @@ function isTracked(role: TypeRole): role is TrackedRole {
 	return (TRACKED_ROLES as readonly string[]).includes(role);
 }
 
+// WCAG 2 contrast between two emitted opaque `oklch(L C H)` values.
+function contrast(fg: string, bg: string): number {
+	const luminance = (value: string) => {
+		const [l, c, h, alpha] = oklch(value);
+		assert(alpha === undefined, `not an opaque value: ${value}`);
+		const [r, g, b] = oklchToLinear(l, c, h);
+		return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+	};
+	const [a, b] = [luminance(fg), luminance(bg)].sort((x, y) => y - x);
+	return ((a ?? 0) + 0.05) / ((b ?? 0) + 0.05);
+}
+
 // ── The derivations every check reads ───────────────────────────────
 
 const base = deriveTheme();
@@ -244,6 +291,10 @@ function emitted(key: string): string {
 	const value = baseTheme[key];
 	assert(value !== undefined, `themeTokens emitted no ${key}`);
 	return value;
+}
+
+function color(mode: Mode, name: ColorName): string {
+	return base.colors[mode][name];
 }
 
 // ── The matrix registry ─────────────────────────────────────────────
@@ -374,7 +425,7 @@ function buildFixture(): string {
 	const body = Object.entries(baseTheme)
 		.map(([key, value]) => `\t${key}: ${value};`)
 		.join("\n");
-	const utilities = Object.entries(shadowUtilities(base))
+	const utilities = Object.entries(shadowUtilities())
 		.map(
 			([name, declarations]) =>
 				`@utility ${name} {\n${Object.entries(declarations)
@@ -444,112 +495,279 @@ check("c02", "package.json shape", () => {
 });
 
 check("c03", "tokens.ts declares the contract", () => {
-	requireEqual(PER_MODE_COLORS.length, 31, "per-mode color count");
-	requireEqual(INVARIANT_COLORS.length, 2, "mode-invariant color count");
+	requireEqual(COLOR_NAMES.length, 83, "color count");
+	requireEqual(new Set(COLOR_NAMES).size, COLOR_NAMES.length, "unique colors");
 	requireEqual(TYPE_ROLES.length, 7, "type role count");
-	requireEqual(SPACING_RUNGS.length, 6, "spacing rung count");
-	requireEqual(RADIUS_RUNGS.length, 3, "radius rung count");
+	requireEqual(SPACING_ROLES.length, 8, "spacing role count");
+	requireEqual(GAP_ROLES.length, 5, "gap role count");
+	requireEqual(SIZES.length, 17, "size count");
+	requireEqual(RADIUS_ROLES.length, 8, "radius role count");
 	requireEqual(SHADOW_LEVELS.length, 2, "shadow level count");
 	requireEqual(WIDTHS.length, 5, "width count");
 	requireEqual(BREAKPOINTS.length, 3, "breakpoint count");
 	requireEqual(WORD_KEYS.length, 21, "word count");
-	for (const [token, declaration] of Object.entries(COLORS)) {
-		if ("alias" in declaration) {
-			assert(
-				(PER_MODE_COLORS as readonly string[]).includes(declaration.alias),
-				`${token} aliases an unknown token`,
-			);
-			continue;
-		}
-		for (const mode of MODES) {
-			const hue = declaration[mode].hue;
-			assert(
-				typeof hue === "number" ||
-					(typeof hue.knob === "string" && typeof hue.offset === "number"),
-				`${token}.${mode} carries no hue binding`,
-			);
-		}
+	for (const name of COLOR_NAMES) {
+		assert(COLORS[name] !== undefined, `no declaration for ${name}`);
 	}
-	for (const token of INVARIANT_COLORS) {
-		assert(INVARIANT[token] !== undefined, `no declaration for ${token}`);
+	for (const role of GAP_ROLES) {
+		assert(
+			(SPACING_ROLES as readonly string[]).includes(role),
+			`gap role ${role} is not a spacing role`,
+		);
 	}
 	const source = readFileSync(resolve(pkgDir, "src/tokens.ts"), "utf8");
-	for (const word of ["marine", "navy", "brand", "interactive"]) {
-		assert(!/\b${word}\b/.test(source), `tokens.ts names "${word}"`);
+	for (const word of ["marine", "navy", "brand", "tint", "label", "floor"]) {
+		assert(!new RegExp(`"${word}"`).test(source), `tokens.ts names "${word}"`);
 	}
-	return "31 per-mode + 2 invariant colors, 7 roles, 6 rungs, 3 radii, 2 shadows, 5 widths, 3 breakpoints, 21 words";
+	return `${COLOR_NAMES.length} colors, 7 roles, 8 spacing roles (5 gaps), 17 sizes, 8 radii, 2 shadows, 5 widths, 3 breakpoints, 21 words`;
 });
 
-check("c05", "default knobs reproduce the reference under the roles", () => {
+check("c05", "default knobs reproduce the approved sheet", () => {
 	const diff: string[] = [];
+	let count = 0;
+	// Every literal color, both modes. The sheet's `color-mix` values are the
+	// washes, the act states and the switch hover, which c05-mix derives.
 	for (const mode of MODES) {
-		const actual = modeTokens(base, mode);
-		for (const [role, source] of Object.entries(ROLE_SOURCE)) {
-			const expected = DEPARTED[`${mode}.${role}`] ?? fromVariant(mode, source);
-			if (actual[role] !== expected) {
-				diff.push(`${mode}.${role}: ${expected} -> ${actual[role]}`);
+		const rule = sheetRule(SHEET_SELECTOR[mode]);
+		for (const name of COLOR_NAMES) {
+			const expected = rule.get(SHEET_COLOR[name] ?? `--${name}`);
+			if (expected === undefined || !expected.startsWith("oklch(")) continue;
+			count++;
+			if (color(mode, name) !== expected) {
+				diff.push(`${mode}.${name}: ${expected} -> ${color(mode, name)}`);
+			}
+		}
+		for (const [property, value] of rule) {
+			const name = property.slice(2);
+			if (property === "--shade" || !value.startsWith("oklch(")) continue;
+			if (!(COLOR_NAMES as readonly string[]).includes(name)) {
+				const renamed = Object.values(SHEET_COLOR).includes(property);
+				assert(renamed, `the sheet's ${property} has no contract color`);
 			}
 		}
 	}
-	assert(diff.length === 0, `token diff is not empty: ${diff.join(", ")}`);
+	// The three density scales, both sets.
+	for (const density of DENSITIES) {
+		const selector = SHEET_SELECTOR[density];
+		const tokens = densityTokens(base, density);
+		const expect = (key: string, property: string) => {
+			count++;
+			const expected = sheetValue(selector, property);
+			if (tokens[key] !== expected) {
+				diff.push(`${density} ${property}: ${expected} -> ${tokens[key]}`);
+			}
+		};
+		for (const role of TYPE_ROLES) {
+			expect(`--text-${role}`, `--text-${role}`);
+			expect(`--leading-${role}`, `--leading-${role}`);
+		}
+		for (const role of SPACING_ROLES) {
+			expect(`--spacing-${role}`, `--space-${role}`);
+		}
+		for (const size of SIZES) expect(`--spacing-${size}`, SHEET_SIZE[size]);
+	}
+	// The density-invariant scales, off the root.
+	const root = (property: string) => sheetValue(":root", property);
+	for (const role of TRACKED_ROLES) {
+		count++;
+		requireEqual(
+			emitted(`--tracking-${role}`),
+			root(`--tracking-${role}`),
+			role,
+		);
+	}
+	for (const role of TYPE_ROLES) {
+		if (!isTracked(role)) requireEqual(root(`--tracking-${role}`), "0em", role);
+	}
+	for (const role of RADIUS_ROLES) {
+		count++;
+		requireEqual(emitted(`--radius-${role}`), root(`--radius-${role}`), role);
+	}
+	for (const width of WIDTHS) {
+		count++;
+		const property = width === "measure" ? "--measure" : `--width-${width}`;
+		requireEqual(emitted(`--container-${width}`), root(property), width);
+	}
+	for (const rung of DURATIONS) {
+		count++;
+		requireEqual(
+			emitted(`--transition-duration-${rung}`),
+			root(`--duration-${rung}`),
+			rung,
+		);
+	}
+	count++;
 	requireEqual(
-		emitted("--color-thumb"),
-		fromVariant("light", "thumb"),
-		"thumb is the light reference value in both modes",
+		emitted("--transition-duration-loop"),
+		root("--duration-loop"),
+		"loop",
 	);
+	for (const easing of EASINGS) {
+		count++;
+		requireEqual(emitted(`--ease-${easing}`), root(`--ease-${easing}`), easing);
+	}
+	const rootValues = rootTokens(base);
+	requireEqual(rootValues["--hairline"], root("--hairline"), "hairline");
+	requireEqual(rootValues["--focus-ring"], root("--ring"), "ring");
 	requireEqual(
-		emitted("--color-scrim"),
-		referenceTheme.get("--color-scrim"),
-		"--color-scrim",
+		rootValues["--focus-ring-offset"],
+		root("--ring-offset"),
+		"offset",
 	);
-	return `${Object.keys(ROLE_SOURCE).length * 2 - Object.keys(DEPARTED).length} per-mode values match the reference and ${Object.keys(DEPARTED).length} depart as listed, thumb and scrim literal`;
+	// The shadows, the sheet's oklch layers converted to sRGB.
+	for (const mode of MODES) {
+		for (const level of SHADOW_LEVELS) {
+			count++;
+			const expected = sheetValue(
+				SHEET_SELECTOR[mode],
+				`--shadow-${level}`,
+			).replace(/oklch\(([^)]*)\)/g, (_, inner: string) => {
+				const [l, c, h, alpha] = inner
+					.replace(" / ", " ")
+					.split(" ")
+					.map(Number);
+				const [r, g, b] = oklchToRgb(l ?? 0, c ?? 0, h ?? 0);
+				return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+			});
+			if (base.shadows[mode][level] !== expected) {
+				diff.push(
+					`${mode} shadow-${level}: ${expected} -> ${base.shadows[mode][level]}`,
+				);
+			}
+		}
+	}
+	assert(
+		diff.length === 0,
+		`the derivation departs from the sheet: ${diff.join("; ")}`,
+	);
+	return `${count} values equal to the sheet, none departed`;
 });
 
-check("c06", "every scale is its ratio of the knob", () => {
-	const { space, radius, text, widths, breakpoints } = KNOB_DEFAULTS;
-	for (const [rung, ratio] of [
-		["pair", 1],
-		["row", 2],
-		["stack", 3],
-		["inset", 4],
-		["section", 6],
-		["room", 8],
-	] as const) {
-		requireEqual(emitted(`--spacing-${rung}`), `${space * ratio}px`, rung);
+check(
+	"c05-mix",
+	"the computed colors follow the sheet's color-mix rules",
+	() => {
+		const l = (value: string) => oklch(value)[0];
+		for (const mode of MODES) {
+			// A wash is the body ink at its alpha.
+			for (const [name, alpha] of [
+				["wash-hover", 0.05],
+				["wash-press", 0.08],
+				["wash-selected", 0.11],
+				["wash-selected-hover", 0.15],
+				["skeleton", 0.09],
+				["fill-disabled", 0.06],
+			] as const) {
+				const [il, ic, ih] = oklch(color(mode, "ink-body"));
+				requireEqual(
+					color(mode, name),
+					`oklch(${il} ${ic} ${ih} / ${alpha})`,
+					`${mode}.${name}`,
+				);
+			}
+			// The accent fill darkens under hover and press, lightens pending.
+			const accent = l(color(mode, "accent"));
+			assert(
+				l(color(mode, "act-accent-hover")) < accent,
+				`${mode} hover is not darker`,
+			);
+			assert(
+				l(color(mode, "act-accent-press")) < l(color(mode, "act-accent-hover")),
+				`${mode} press is not darker than hover`,
+			);
+			assert(
+				l(color(mode, "act-accent-pending")) > accent,
+				`${mode} pending is not lighter`,
+			);
+			// The ink fill moves toward the page: lighter in light, darker in dark.
+			const ink = l(color(mode, "ink-body"));
+			const hover = l(color(mode, "act-ink-hover"));
+			assert(
+				mode === "light" ? hover > ink : hover < ink,
+				`${mode} ink hover moves the wrong way`,
+			);
+			// Every alias reads its source.
+			for (const [name, declaration] of Object.entries(COLORS)) {
+				if ("alias" in declaration) {
+					requireEqual(
+						color(mode, name as ColorName),
+						color(mode, declaration.alias),
+						`${mode}.${name}`,
+					);
+				}
+			}
+		}
+		// Black at 12 % in OKLab: L drops by 12 % of itself, chroma with it.
+		const [al, ac] = oklch(color("light", "accent"));
+		const [hl, hc] = oklch(color("light", "act-accent-hover"));
+		requireEqual(
+			hl,
+			Math.round(al * 0.88 * 1000) / 1000,
+			"hover L is 88 % of the accent's",
+		);
+		requireEqual(
+			hc,
+			Math.round(ac * 0.88 * 1000) / 1000,
+			"hover C is 88 % of the accent's",
+		);
+		return "6 washes at their alpha, act fills move the right way, aliases read their source, one mix checked by hand";
+	},
+);
+
+check("c06", "every scale is its ratio of the base", () => {
+	for (const density of DENSITIES) {
+		const body = BODY_SIZE[density];
+		const tokens = densityTokens(base, density);
+		for (const role of TYPE_ROLES) {
+			const size = Math.round(body * TYPE_SCALE[role].size);
+			requireEqual(tokens[`--text-${role}`], `${size}px`, `${density} ${role}`);
+			const box = Number.parseInt(tokens[`--leading-${role}`] ?? "", 10);
+			requireEqual(box % 2, 0, `${role} line box is even`);
+			requireEqual(
+				box,
+				2 * Math.round((size * TYPE_SCALE[role].leading) / 2),
+				`${density} ${role} line box`,
+			);
+			requireEqual(
+				tokens[`--text-${role}--line-height`],
+				tokens[`--leading-${role}`],
+				`${role} modifier shape`,
+			);
+		}
+		for (const role of SPACING_ROLES) {
+			requireEqual(
+				tokens[`--spacing-${role}`],
+				`${SPACE_BASE * SPACING_RATIO[density][role]}px`,
+				`${density} ${role}`,
+			);
+		}
+		for (const size of SIZES) {
+			requireEqual(
+				tokens[`--spacing-${size}`],
+				`${SIZE_PX[density][size]}px`,
+				`${density} ${size}`,
+			);
+		}
 	}
-	requireEqual(emitted("--radius-group"), `${radius}px`, "--radius-group");
+	// A tie rounds up: touch caption 14 × 1.5 = 21 → 22.
 	requireEqual(
-		emitted("--radius-sheet"),
-		`${Math.floor(radius * 1.75)}px`,
-		"--radius-sheet",
+		densityTokens(base, "touch")["--leading-caption"],
+		"22px",
+		"tie rounds up",
 	);
-	requireEqual(emitted("--radius-full"), "9999px", "--radius-full");
-	// Sizes round to the whole pixel, line boxes to the even one; the reference
-	// carried the same sizes for the roles it had under their old names.
-	const sizes: Record<TypeRole, number> = {
-		display: 34,
-		title: 28,
-		heading: 18,
-		body: 16,
-		meta: 14,
-		label: 13,
-		mono: 14,
-	};
+	requireEqual(
+		emitted("--text-code"),
+		emitted("--text-meta"),
+		"code is meta's size",
+	);
 	for (const role of TYPE_ROLES) {
-		requireEqual(emitted(`--text-${role}`), `${sizes[role]}px`, role);
-		const box = Number.parseInt(emitted(`--leading-${role}`), 10);
-		requireEqual(box % 2, 0, `${role} line box is even`);
-		requireEqual(
-			box,
-			2 * Math.round((sizes[role] * TYPE_SCALE[role].leading) / 2),
-			`${role} line box`,
-		);
-		requireEqual(
-			emitted(`--text-${role}--line-height`),
-			emitted(`--leading-${role}`),
-			`${role} modifier shape`,
-		);
-		if (!isTracked(role)) {
+		if (isTracked(role)) {
+			requireEqual(
+				emitted(`--text-${role}--letter-spacing`),
+				emitted(`--tracking-${role}`),
+				`${role} tracking shape`,
+			);
+		} else {
 			assert(
 				baseTheme[`--tracking-${role}`] === undefined &&
 					baseTheme[`--text-${role}--letter-spacing`] === undefined,
@@ -557,23 +775,18 @@ check("c06", "every scale is its ratio of the knob", () => {
 			);
 		}
 	}
-	requireEqual(Math.round(text * 2.125), 34, "display ratio at 16");
-	for (const role of TRACKED_ROLES) {
-		requireEqual(
-			emitted(`--text-${role}--letter-spacing`),
-			emitted(`--tracking-${role}`),
-			`${role} tracking shape`,
-		);
+	for (const role of RADIUS_ROLES) {
+		requireEqual(emitted(`--radius-${role}`), `${RADIUS_PX[role]}px`, role);
 	}
 	for (const width of WIDTHS) {
-		requireEqual(emitted(`--container-${width}`), `${widths[width]}px`, width);
+		requireEqual(emitted(`--container-${width}`), WIDTH_VALUE[width], width);
 	}
 	for (const bp of BREAKPOINTS) {
-		requireEqual(emitted(`--breakpoint-${bp}`), `${breakpoints[bp]}px`, bp);
+		requireEqual(emitted(`--breakpoint-${bp}`), `${BREAKPOINT_PX[bp]}px`, bp);
 	}
 	requireEqual(
 		emitted("--font-mono"),
-		'"JetBrains Mono Variable", "JetBrains Mono Variable Fallback", ui-monospace, SFMono-Regular, monospace',
+		'"JetBrains Mono Variable", "JetBrains Mono Variable Fallback", ui-monospace, "SFMono-Regular", Menlo, monospace',
 		"--font-mono names its fallback face second",
 	);
 	requireEqual(
@@ -591,208 +804,139 @@ check("c06", "every scale is its ratio of the knob", () => {
 		"ui-sans-serif, system-ui, sans-serif",
 		"--font-sans",
 	);
-	// A halved text knob halves every size; doubled space doubles every rung.
-	const dense = themeTokens(deriveTheme({ text: 14, space: 8, radius: 8 }));
-	requireEqual(dense["--text-body"], "14px", "text 14 body");
-	requireEqual(dense["--text-title"], "25px", "text 14 title rounds");
-	requireEqual(dense["--spacing-inset"], "32px", "space 8 inset");
-	requireEqual(dense["--radius-sheet"], "14px", "radius 8 sheet floors");
+	const named = themeTokens(deriveTheme({ fonts: { sans: "Inter Variable" } }));
+	requireEqual(
+		named["--font-sans"],
+		'"Inter Variable", "Inter Variable Fallback", ui-sans-serif, system-ui, sans-serif',
+		"a named sans",
+	);
 	for (const rung of DURATIONS) {
 		requireEqual(
 			emitted(`--transition-duration-${rung}`),
-			`${Math.round(KNOB_DEFAULTS.motion * DURATION_RATIO[rung])}ms`,
-			`duration ${rung}`,
+			`${DURATION_MS[rung]}ms`,
+			rung,
 		);
 	}
-	const slow = themeTokens(deriveTheme({ motion: 300 }));
-	requireEqual(slow["--transition-duration-slow"], "450ms", "motion 300 slow");
-	return "6 rungs, 3 radii, 7 sizes with even line boxes, 3 trackings, 5 widths, 3 breakpoints, 2 families with their fallback faces, 4 durations, all from the knobs";
+	return "7 roles × 2 densities with even line boxes, 8 spacing roles, 17 sizes, 4 trackings, 8 radii, 5 widths, 3 breakpoints, 2 families with their fallback faces, 4 durations";
 });
 
 check(
 	"c06-density",
-	"touch seeds today's floor, desktop adds only the compact set",
+	"touch seeds the theme, desktop adds the fine-pointer set",
 	() => {
-		const touch = {
-			"--spacing-floor": "44px",
-			"--spacing-row-y": `${KNOB_DEFAULTS.space * 3}px`,
-			"--spacing-control-y": "8px",
-			"--spacing-segment": "36px",
-		};
+		const touch = densityTokens(base, "touch");
 		for (const [key, value] of Object.entries(touch)) {
-			requireEqual(emitted(key), value, `touch ${key}`);
+			requireEqual(emitted(key), value, `touch seeds ${key}`);
 		}
-		// The touch row pad is the `stack` rung the row padded on before.
 		requireEqual(
-			emitted("--spacing-row-y"),
-			emitted("--spacing-stack"),
-			"touch row-y is stack",
-		);
-		requireEqual(
-			JSON.stringify(compactTokens(base)),
+			JSON.stringify(finePointerTokens(deriveTheme({ density: "touch" }))),
 			"{}",
-			"the default density emits no compact set",
+			"touch emits no fine-pointer set",
 		);
-		const desktop = deriveTheme({ density: "desktop" });
+		requireEqual(base.knobs.density, "desktop", "the default density");
+		const fine = finePointerTokens(base);
 		requireEqual(
-			JSON.stringify(themeTokens(desktop)),
-			JSON.stringify(baseTheme),
-			"desktop leaves the seeded tokens as they are",
+			JSON.stringify(fine),
+			JSON.stringify(densityTokens(base, "desktop")),
+			"the fine-pointer set is the desktop set",
 		);
-		const compact = compactTokens(desktop);
 		requireEqual(
-			JSON.stringify(compact),
-			JSON.stringify({
-				"--spacing-floor": "32px",
-				"--spacing-row-y": `${KNOB_DEFAULTS.space}px`,
-				"--spacing-control-y": "4px",
-				"--spacing-segment": "24px",
-			}),
-			"the compact set",
+			JSON.stringify(Object.keys(fine)),
+			JSON.stringify(Object.keys(touch)),
+			"the two sets carry the same keys",
 		);
-		// A one-line body row, button and field land on the compact floor.
-		const line = Number.parseInt(emitted("--leading-body"), 10);
-		for (const pad of ["--spacing-row-y", "--spacing-control-y"]) {
-			requireEqual(
-				line + 2 * Number.parseInt(compact[pad] ?? "", 10),
-				32,
-				`body line plus ${pad}`,
+		for (const role of TYPE_ROLES) {
+			assert(
+				fine[`--text-${role}`] !== touch[`--text-${role}`],
+				`${role} does not move with density`,
 			);
 		}
-		// The on-demand sets ignore the knob: `touch` is the seeded set and
-		// `compact` the one `desktop` adds, under either density.
+		requireEqual(fine["--spacing-control"], "32px", "desktop control");
+		requireEqual(touch["--spacing-control"], "44px", "touch control");
+		requireEqual(fine["--spacing-target"], "24px", "desktop target");
+		requireEqual(touch["--spacing-target"], "44px", "touch target");
+		// A one-line body row lands on the row height with its padding: 20 + 2 × 6.
 		requireEqual(
-			JSON.stringify(densityTokens(base, "compact")),
-			JSON.stringify(compact),
-			"the compact set on demand under touch",
-		);
-		for (const [key, value] of Object.entries(
-			densityTokens(desktop, "touch"),
-		)) {
-			requireEqual(value, emitted(key), `the touch set on demand, ${key}`);
-		}
-		requireEqual(
-			compactTokens(deriveTheme({ density: "desktop", space: 8 }))[
-				"--spacing-row-y"
-			],
-			"8px",
-			"compact row-y follows space",
+			Number.parseInt(fine["--leading-body"] ?? "", 10) +
+				2 * Number.parseInt(fine["--spacing-inside"] ?? "", 10),
+			32,
+			"desktop body line plus inside",
 		);
 		assert(
 			rejection({ density: "dense" }).includes("density"),
 			"an unknown density is not rejected by key",
 		);
-		// A table cell stands on the density sizes a field stands on and pads
-		// across by the field's side padding behind a side-only border, so the
-		// cell and the `Input` that edits it in place keep one row height and
-		// one text position: 32 compact, 44 on touch.
-		const cell = new Set(TABLE_CELL.split(" "));
-		const text = new Set(FIELD.variants.kind.text.split(" "));
-		for (const name of ["min-h-floor", "py-control-y"]) {
-			assert(cell.has(name), `TABLE_CELL lacks ${name}`);
-			assert(text.has(name), `FIELD.kind.text lacks ${name}`);
-		}
-		assert(FIELD.base.includes("px-4"), "FIELD.base lost its px-4");
-		assert(
-			cell.has("px-4") && cell.has("border-x") && !cell.has("border"),
-			"TABLE_CELL does not pad as the field does behind side borders only",
-		);
-		return "touch 44/12/8/36 as before, compact 32/4/4/24 under desktop only and either set on demand, a table cell on a field's geometry";
+		return "touch 44/48/38 seeded, desktop 32/28/38 on a fine pointer, either set on demand, the type scale moves with them";
 	},
 );
 
-check("c07", "the shadows derive from neutralHue as sRGB", () => {
-	const utilities = shadowUtilities(base);
-	requireEqual(
-		Object.keys(utilities).join(","),
-		"shadow-float,shadow-sheet",
-		"shadow keys",
-	);
-	const SHAPE = /^0 (\d+)px (\d+)px rgba\((\d+), (\d+), (\d+), (0\.\d+)\)$/;
-	const float = SHAPE.exec(utilities["shadow-float"]["box-shadow"] ?? "");
-	const sheet = SHAPE.exec(utilities["shadow-sheet"]["box-shadow"] ?? "");
-	assert(float && sheet, `a shadow is off shape: ${JSON.stringify(utilities)}`);
-	requireEqual(`${float[1]} ${float[2]} ${float[6]}`, "7 18 0.13", "float");
-	requireEqual(`${sheet[1]} ${sheet[2]} ${sheet[6]}`, "12 28 0.16", "sheet");
-	// The reference hand-picked rgba(14, 26, 46) for the same ink; the
-	// conversion lands within a step of it.
-	for (const [index, expected] of [
-		[3, 14],
-		[4, 26],
-		[5, 46],
-	] as const) {
-		const channel = Number(float[index]);
-		assert(
-			Math.abs(channel - expected) <= 1,
-			`float channel ${index}: ${channel} is not within 1 of ${expected}`,
-		);
-		requireEqual(sheet[index], float[index], "sheet shares the float color");
-	}
-	const rehued = shadowUtilities(deriveTheme({ neutralHue: 30 }));
-	assert(
-		rehued["shadow-float"]["box-shadow"] !==
-			utilities["shadow-float"]["box-shadow"],
-		"neutralHue does not move the shadow color",
-	);
-	return `${utilities["shadow-float"]["box-shadow"]} / ${utilities["shadow-sheet"]["box-shadow"]}`;
-});
-
-check(
-	"c07-flat",
-	"radius 0 squares the pills and flat elevation rings in edge",
-	() => {
-		const square = deriveTheme({ radius: 0, elevation: "flat" });
-		const tokens = themeTokens(square);
-		requireEqual(tokens["--radius-full"], "0px", "--radius-full at radius 0");
-		requireEqual(tokens["--radius-group"], "0px", "--radius-group at radius 0");
-		requireEqual(
-			themeTokens(base)["--radius-full"],
-			"9999px",
-			"--radius-full above 0",
-		);
-		const utilities = shadowUtilities(square);
-		for (const level of ["shadow-float", "shadow-sheet"] as const) {
+check("c07", "the shadows are two sRGB layers per level and mode", () => {
+	const SHAPE =
+		/^0 (\d+)px (\d+)px rgba\((\d+), (\d+), (\d+), (0\.\d+)\), 0 (\d+)px (\d+)px rgba\((\d+), (\d+), (\d+), (0\.\d+)\)$/;
+	for (const mode of MODES) {
+		for (const level of SHADOW_LEVELS) {
+			const value = base.shadows[mode][level];
+			const parts = SHAPE.exec(value);
+			assert(parts, `${mode} ${level} is off shape: ${value}`);
 			requireEqual(
-				JSON.stringify(utilities[level]),
-				JSON.stringify({
-					"border-width": "1px",
-					"border-color": "var(--color-edge)",
-				}),
-				`${level} under flat`,
+				baseTheme[`--shadow-${level}`],
+				undefined,
+				"no shadow in @theme",
+			);
+			requireEqual(
+				modeTokens(base, mode)[`--shadow-${level}`],
+				value,
+				`${mode} mode carries ${level}`,
 			);
 		}
-		return "radius 0 → full 0px; flat → 1px edge ring, no shadow";
-	},
-);
+		const [, , , r, g, b] = SHAPE.exec(base.shadows[mode].float) ?? [];
+		if (mode === "dark")
+			requireEqual(`${r} ${g} ${b}`, "0 0 0", "dark shadows are black");
+		else
+			assert(
+				Number(r) < 40 && Number(b) > Number(r),
+				"light shadows are the cool ink",
+			);
+	}
+	requireEqual(
+		rootTokens(base)["--shadow-float"],
+		base.shadows.light.float,
+		"the root seeds the light float",
+	);
+	requireEqual(
+		JSON.stringify(shadowUtilities()),
+		JSON.stringify({
+			"shadow-float": { "box-shadow": "var(--shadow-float)" },
+			"shadow-modal": { "box-shadow": "var(--shadow-modal)" },
+		}),
+		"the utilities read their mode's variable",
+	);
+	return `${base.shadows.light.float} / ${base.shadows.dark.modal}`;
+});
 
 check("c08", "themeTokens and modeTokens carry the right keys", () => {
 	const expected = new Set<string>(ZEROED_NAMESPACES);
 	for (const namespace of expected) {
 		requireEqual(baseTheme[namespace], "initial", namespace);
 	}
-	for (const rung of SPACING_RUNGS) expected.add(`--spacing-${rung}`);
-	for (const rung of RADIUS_RUNGS) expected.add(`--radius-${rung}`);
-	for (const role of TYPE_ROLES) {
-		expected.add(`--text-${role}`);
-		expected.add(`--text-${role}--line-height`);
-		expected.add(`--leading-${role}`);
-	}
+	for (const key of Object.keys(densityTokens(base, "touch")))
+		expected.add(key);
 	for (const role of TRACKED_ROLES) {
 		expected.add(`--text-${role}--letter-spacing`);
 		expected.add(`--tracking-${role}`);
 	}
-	for (const size of DENSITY_SIZES) expected.add(`--spacing-${size}`);
+	for (const role of RADIUS_ROLES) expected.add(`--radius-${role}`);
 	for (const width of WIDTHS) expected.add(`--container-${width}`);
 	for (const bp of BREAKPOINTS) expected.add(`--breakpoint-${bp}`);
 	expected.add("--font-sans");
 	expected.add("--font-mono");
 	expected.add("--font-mono--font-feature-settings");
 	for (const rung of DURATIONS) expected.add(`--transition-duration-${rung}`);
+	expected.add("--transition-duration-loop");
 	for (const easing of EASINGS) expected.add(`--ease-${easing}`);
 	expected.add("--default-transition-duration");
 	expected.add("--default-transition-timing-function");
-	for (const token of INVARIANT_COLORS) expected.add(`--color-${token}`);
-	for (const token of PER_MODE_COLORS) expected.add(`--color-${token}`);
+	for (const name of COLOR_NAMES) expected.add(`--color-${name}`);
 	const actual = new Set(Object.keys(baseTheme));
 	for (const key of expected) {
 		assert(actual.has(key), `themeTokens is missing ${key}`);
@@ -800,252 +944,163 @@ check("c08", "themeTokens and modeTokens carry the right keys", () => {
 	for (const key of actual) {
 		assert(expected.has(key), `themeTokens carries an unexpected key: ${key}`);
 	}
-	for (const token of PER_MODE_COLORS) {
+	for (const name of COLOR_NAMES) {
 		requireEqual(
-			emitted(`--color-${token}`),
-			baseLight[token],
-			`default mode seeds --color-${token}`,
+			emitted(`--color-${name}`),
+			baseLight[`--color-${name}`],
+			`light seeds --color-${name}`,
 		);
 	}
-	for (const [key, value] of Object.entries(baseTheme)) {
-		assert(key.startsWith("--"), `themeTokens key is not a --name: ${key}`);
-		assert(
-			!ESCAPES_A_DECLARATION.test(value),
-			`${key} value can escape its declaration: ${value}`,
-		);
-	}
-
-	requireEqual(Object.keys(baseLight).length, 31, "modeTokens entry count");
-	for (const token of PER_MODE_COLORS) {
-		assert(baseLight[token] !== undefined, `modeTokens is missing ${token}`);
-	}
-	for (const token of INVARIANT_COLORS) {
-		assert(
-			baseLight[token] === undefined,
-			`modeTokens leaked the invariant token ${token}`,
-		);
-	}
-	for (const [key, value] of Object.entries(baseLight)) {
-		assert(!key.startsWith("--"), `modeTokens key is not bare: ${key}`);
-		assert(
-			!ESCAPES_A_DECLARATION.test(value),
-			`${key} value can escape its declaration: ${value}`,
-		);
-	}
-	return `${actual.size} theme entries, 25 mode entries`;
-});
-
-check("c09", "every modeTokens key passes the cli's isCssIdent", () => {
-	for (const mode of MODES) {
-		for (const key of Object.keys(modeTokens(base, mode))) {
-			assert(isCssIdent(key), `not a CSS ident: ${key}`);
+	for (const record of [baseTheme, baseLight, baseDark, rootTokens(base)]) {
+		for (const [key, value] of Object.entries(record)) {
+			assert(key.startsWith("--"), `key is not a --name: ${key}`);
+			assert(
+				!ESCAPES_A_DECLARATION.test(value),
+				`${key} value can escape its declaration: ${value}`,
+			);
 		}
 	}
+	requireEqual(
+		Object.keys(baseLight).length,
+		COLOR_NAMES.length + SHADOW_LEVELS.length,
+		"modeTokens entry count",
+	);
+	requireEqual(
+		Object.keys(baseLight).join(" "),
+		Object.keys(baseDark).join(" "),
+		"both modes carry the same keys",
+	);
+	return `${actual.size} theme entries, ${Object.keys(baseLight).length} mode entries`;
+});
+
+check("c09", "every color name passes the cli's isCssIdent", () => {
+	for (const name of COLOR_NAMES)
+		assert(isCssIdent(name), `not a CSS ident: ${name}`);
 	assert(
 		!isCssIdent("--color-canvas"),
 		"isCssIdent check is not discriminating",
 	);
-	return "50 keys pass @fcalell/cli/css";
+	return `${COLOR_NAMES.length} names pass @fcalell/cli/css`;
 });
 
 check("c10", "zero chroma drops the hue, non-zero keeps it", () => {
-	requireEqual(baseLight.surface, "oklch(1 0 0)", "light surface");
-	requireEqual(base.invariantColors.thumb, "oklch(1 0 0)", "thumb");
-	requireEqual(baseDark.surface, "oklch(0.285 0.044 261)", "dark surface");
-	const rehued = deriveTheme({ neutralHue: 30 });
+	requireEqual(color("light", "surface"), "oklch(1 0 0)", "light surface");
+	requireEqual(color("dark", "scrim"), "oklch(0 0 0 / 0.5)", "dark scrim");
 	requireEqual(
-		modeTokens(rehued, "light").surface,
-		"oklch(1 0 0)",
-		"light surface at neutralHue 30",
+		color("dark", "surface"),
+		"oklch(0.207 0.006 270)",
+		"dark surface",
 	);
-	requireEqual(
-		modeTokens(rehued, "dark").surface,
-		"oklch(0.285 0.044 30)",
-		"dark surface at neutralHue 30",
-	);
-	return "light surface and thumb hue 0, dark surface tracks neutralHue";
+	return "light surface and dark scrim hue 0, dark surface on the neutral hue";
 });
 
-check("c11", "accentHue and primary move only their roles", () => {
-	const moved = deriveTheme({ accentHue: 200 });
-	const changed: string[] = [];
-	for (const mode of MODES) {
-		const before = modeTokens(base, mode);
-		const after = modeTokens(moved, mode);
-		for (const token of PER_MODE_COLORS) {
-			if (before[token] !== after[token]) changed.push(`${mode}:${token}`);
-		}
-	}
-	for (const token of INVARIANT_COLORS) {
-		if (base.invariantColors[token] !== moved.invariantColors[token]) {
-			changed.push(`shared:${token}`);
-		}
-	}
-	for (const [key, value] of Object.entries(themeTokens(moved))) {
-		if (key.startsWith("--color-")) continue;
-		if (baseTheme[key] !== value) changed.push(`scale:${key}`);
-	}
-	const expected = MODES.flatMap((mode) => [
-		`${mode}:tint`,
-		...AVATAR_STEPS.map((step) => `${mode}:avatar-${step}`),
-		...CHIP_FAMILIES.map((family) => `${mode}:chip-${family}`),
-	]);
-	requireEqual(
-		changed.sort().join(","),
-		expected.sort().join(","),
-		"tokens changed by accentHue under primary ink",
-	);
-	requireEqual(
-		modeTokens(moved, "light")["avatar-3"],
-		"oklch(0.88 0.06 290)",
-		"avatar-3 steps 90° off accentHue 200",
-	);
-	requireEqual(
-		modeTokens(moved, "light")["chip-1"],
-		"oklch(0.9 0.07 230)",
-		"chip-1 sits 30° off accentHue 200",
-	);
-	// No family ever wears the accent: every chip hue sits at least 30° off
-	// accentHue, whatever the knob says.
-	for (const accentHue of [0, 90, 200, 261, 359]) {
-		const light = modeTokens(deriveTheme({ accentHue }), "light");
-		for (const family of CHIP_FAMILIES) {
-			const hue = Number(light[`chip-${family}`]?.split(" ")[2]?.slice(0, -1));
-			const apart = Math.abs(((hue - accentHue + 540) % 360) - 180);
-			assert(
-				apart >= 30,
-				`chip-${family} is ${apart}° off accentHue ${accentHue}`,
+check(
+	"c11",
+	"accentHue moves only the accent and keeps its contrasts at every hue",
+	() => {
+		const bound = new Set<ColorName>();
+		const walk = (name: ColorName): boolean => {
+			const declaration = COLORS[name];
+			if ("alias" in declaration) return walk(declaration.alias);
+			if ("veil" in declaration) return walk(declaration.veil);
+			if ("mix" in declaration) {
+				return (
+					walk(declaration.mix) ||
+					(declaration.toward !== "black" && walk(declaration.toward))
+				);
+			}
+			return (
+				declaration.light.hue === "accent" || declaration.dark.hue === "accent"
 			);
-		}
-	}
-	// Under either primary, `accent` is its source and `on-accent` is canvas.
-	for (const theme of [
-		{},
-		{ accentHue: 200 },
-		{ neutralChroma: 0 },
-		{ neutralHue: 12 },
-		{ primary: "accent" as const, accentHue: 300 },
-	]) {
-		const resolved = deriveTheme(theme);
-		const source = theme.primary === "accent" ? "tint" : "ink";
+		};
+		for (const name of COLOR_NAMES) if (walk(name)) bound.add(name);
+		requireEqual(
+			[...bound].join(" "),
+			"accent accent-soft accent-ink ring selected-outline act-accent act-accent-hover act-accent-press act-accent-pending switch-on switch-on-hover",
+			"the accent-bound roles",
+		);
+		const moved = deriveTheme({ accentHue: 200 });
 		for (const mode of MODES) {
-			const tokens = modeTokens(resolved, mode);
-			requireEqual(
-				tokens.accent,
-				tokens[source],
-				`accent aliases ${source} (${mode}, ${JSON.stringify(theme)})`,
-			);
-			requireEqual(
-				tokens["on-accent"],
-				tokens.canvas,
-				`on-accent aliases canvas (${mode}, ${JSON.stringify(theme)})`,
-			);
+			for (const name of COLOR_NAMES) {
+				const changed = moved.colors[mode][name] !== color(mode, name);
+				requireEqual(
+					changed,
+					bound.has(name),
+					`${mode}.${name} ${changed ? "moved" : "held"} under accentHue 200`,
+				);
+			}
 		}
-	}
-	const accented = deriveTheme({ primary: "accent" });
-	requireEqual(
-		modeTokens(accented, "light")["accent-soft"],
-		"oklch(0.925 0.045 261)",
-		"accent-soft under primary accent",
-	);
-	assert(
-		modeTokens(deriveTheme({ primary: "accent", accentHue: 90 }), "dark")[
-			"accent-soft"
-		] !== modeTokens(accented, "dark")["accent-soft"],
-		"accent-soft does not follow accentHue under primary accent",
-	);
-	return "tint, the 8 avatar steps and the 6 chip families move, no family on the accent, accent and on-accent alias under both primaries";
-});
-
-check("c12", "neutralChroma 0 zeroes only the neutral-bound tokens", () => {
-	const flat = deriveTheme({ neutralChroma: 0 });
-	const neutralBound = keysOf(COLORS).filter((token) => {
-		const declaration = COLORS[token];
-		return "alias" in declaration
-			? false
-			: isNeutralBound(declaration.light.hue);
-	});
-	requireEqual(neutralBound.length, 7, "neutral-bound per-mode token count");
-	for (const mode of MODES) {
-		const tokens = modeTokens(flat, mode);
-		for (const token of [...neutralBound, "accent", "accent-soft"]) {
-			requireEqual(chromaOf(tokens[token]), "0", `${mode}.${token}`);
+		for (const [key, value] of Object.entries(themeTokens(moved))) {
+			if (!key.startsWith("--color-"))
+				requireEqual(value, baseTheme[key], `${key} under accentHue 200`);
 		}
-	}
-	requireEqual(chromaOf(flat.invariantColors.scrim), "0", "scrim");
-	for (const mode of MODES) {
-		const before = modeTokens(base, mode);
-		const after = modeTokens(flat, mode);
-		for (const token of [
-			"tint",
-			"ok",
-			"ok-soft",
-			"warn",
-			"warn-soft",
-			"danger",
-			"danger-soft",
-			"avatar-1",
-			"chip-1",
-		]) {
-			requireEqual(after[token], before[token], `${mode}.${token} untouched`);
+		// The sweep: at every hue the accent-derived pairs keep their ratio, and
+		// every accent value stays inside sRGB with no more chroma than declared.
+		const pairs: Array<[ColorName, ColorName, number]> = [
+			["on-accent", "accent", 4.5],
+			["on-act-accent", "act-accent-hover", 4.5],
+			["on-act-accent", "act-accent-press", 4.5],
+			["accent-ink", "canvas", 4.5],
+			["accent-ink", "surface", 4.5],
+			["accent-ink", "group", 4.5],
+			["accent-ink", "accent-soft", 4.5],
+			["ink-body", "accent-soft", 4.5],
+			["ink-meta", "accent-soft", 4.5],
+		];
+		const short: string[] = [];
+		let count = 0;
+		for (let accentHue = 0; accentHue < 360; accentHue++) {
+			const resolved = deriveTheme({ accentHue });
+			for (const mode of MODES) {
+				const values = resolved.colors[mode];
+				for (const name of bound) {
+					const [l, c, h] = oklch(values[name]);
+					assert(
+						inGamut(l, c, h),
+						`${mode}.${name} leaves sRGB at hue ${accentHue}`,
+					);
+				}
+				for (const [fg, bg, floor] of pairs) {
+					count++;
+					const ratio = contrast(values[fg], values[bg]);
+					if (ratio < floor)
+						short.push(
+							`${mode} ${fg} on ${bg} at ${accentHue}: ${ratio.toFixed(2)}`,
+						);
+				}
+			}
 		}
-	}
-	return `${neutralBound.length} + 2 primary-bound per-mode tokens and scrim flattened`;
-});
+		assert(
+			short.length === 0,
+			`under the floor: ${short.slice(0, 8).join(", ")}${short.length > 8 ? ` and ${short.length - 8} more` : ""}`,
+		);
+		// The green accent is where the declared lightness falls short on a
+		// light group, so there the contract lowers it; at the sheet's hue it
+		// is the declared 0.52.
+		requireEqual(
+			oklch(color("light", "accent-ink"))[0],
+			0.52,
+			"accent-ink at the sheet's hue",
+		);
+		assert(
+			oklch(deriveTheme({ accentHue: 143 }).colors.light["accent-ink"])[0] <
+				0.52,
+			"a green accent-ink is not lowered for the group",
+		);
+		return `${bound.size} roles move, ${count} pairs hold over 360 hues, every value in gamut`;
+	},
+);
 
 check("c13", "the schema rejects each bad input by key", () => {
 	const rejections: Array<[string, unknown, string]> = [
-		[
-			"unknown token",
-			{ overrides: { colors: { light: { nope: "oklch(1 0 0)" } } } },
-			"nope",
-		],
 		["knob out of range", { accentHue: 400 }, "accentHue"],
-		["a retired knob", { brandHue: 20 }, "brandHue"],
-		["a fractional base", { space: 4.5 }, "space"],
-		["an unknown width", { widths: { modal: 400 } }, "modal"],
-		["an unknown primary", { primary: "brand" }, "primary"],
-		[
-			"value with ; and }",
-			{ overrides: { colors: { light: { canvas: "oklch(1 0 0);}" } } } },
-			"canvas",
-		],
-		[
-			"oklch(. . .)",
-			{ overrides: { colors: { dark: { ink: "oklch(. . .)" } } } },
-			"ink",
-		],
-		[
-			"per-mode token under shared",
-			{ overrides: { colors: { shared: { canvas: "oklch(1 0 0)" } } } },
-			"canvas",
-		],
-		[
-			"a retired scale key",
-			{ overrides: { scales: { "--radius-md": "10px" } } },
-			"--radius-md",
-		],
-		[
-			"scales value with a newline",
-			{ overrides: { scales: { "--spacing-room": "40px\nx" } } },
-			"--spacing-room",
-		],
-		[
-			"a modifier key, which is not its own override",
-			{ overrides: { scales: { "--text-title--line-height": "1.4" } } },
-			"--text-title--line-height",
-		],
-		// The pair is the silent case: each half is well-formed CSS on its own,
-		// and together they swallow every declaration between them.
-		[
-			"a pair of scales values that open and close one paren",
-			{
-				overrides: {
-					scales: { "--radius-group": "calc(1px", "--radius-sheet": "2px)" },
-				},
-			},
-			"--radius-group",
-		],
+		["a retired knob", { primary: "ink" }, "primary"],
+		["a retired scale knob", { space: 8 }, "space"],
+		["retired overrides", { overrides: { colors: {} } }, "overrides"],
+		["an unknown density", { density: "compact" }, "density"],
+		["an unknown mode", { defaultMode: "auto" }, "defaultMode"],
+		["an empty family", { fonts: { mono: "" } }, "mono"],
+		["an unknown font role", { fonts: { serif: "Georgia" } }, "serif"],
 	];
 	for (const [label, input, key] of rejections) {
 		const message = rejection(input);
@@ -1055,62 +1110,54 @@ check("c13", "the schema rejects each bad input by key", () => {
 			`${label}: error does not name "${key}": ${message}`,
 		);
 	}
-
-	const shared = deriveTheme({
-		overrides: { colors: { shared: { scrim: "oklch(0 0 0 / 0.5)" } } },
-	});
 	requireEqual(
-		themeTokens(shared)["--color-scrim"],
-		"oklch(0 0 0 / 0.5)",
-		"colors.shared override",
-	);
-	const dark = deriveTheme({
-		overrides: { colors: { dark: { canvas: "oklch(0.1 0.02 300)" } } },
-	});
-	requireEqual(
-		modeTokens(dark, "dark").canvas,
-		"oklch(0.1 0.02 300)",
-		"colors.dark override",
+		deriveTheme({ defaultMode: "dark" }).defaultMode,
+		"dark",
+		"defaultMode lands",
 	);
 	requireEqual(
-		modeTokens(dark, "light").canvas,
-		baseLight.canvas,
-		"colors.dark override leaves light alone",
+		deriveTheme().defaultMode,
+		undefined,
+		"no defaultMode by default",
 	);
-	const scaled = deriveTheme({
-		overrides: { scales: { "--spacing-room": "40px" } },
-	});
-	requireEqual(
-		themeTokens(scaled)["--spacing-room"],
-		"40px",
-		"scales override",
-	);
-	return `${rejections.length} rejections named their key, 3 valid overrides landed`;
+	return `${rejections.length} rejections named their key`;
 });
 
 check("c14", "the Tailwind fixture builds on contract only", () => {
 	const out = buildFixture();
 	const title = rule(out, "text-title");
 	assert(title, "text-title emitted no rule");
-	assert(title.includes("font-size"), "text-title carries no font-size");
-	assert(title.includes("line-height"), "text-title carries no line-height");
+	assert(
+		title.includes("var(--text-title)"),
+		"text-title does not read its variable",
+	);
+	assert(
+		title.includes("var(--text-title--line-height)"),
+		"text-title does not read its leading through the variable",
+	);
 	for (const selector of [
 		"leading-title",
 		"tracking-title",
 		"bg-canvas",
 		"bg-accent",
 		"bg-avatar-8",
-		"bg-chip-6",
-		"gap-stack",
-		"p-inset",
-		"rounded-group",
-		"rounded-sheet",
-		"w-rail",
-		"max-w-reading",
+		"bg-chip-pink-soft",
+		"gap-fields",
+		"p-card",
+		"rounded-control",
+		"rounded-dialog",
+		"w-popover",
+		"max-w-measure",
+		"min-h-control",
+		"size-avatar",
 		"font-mono",
 	]) {
 		assert(rule(out, selector), `${selector} emitted no rule`);
 	}
+	assert(
+		rule(out, "min-h-control")?.includes("var(--spacing-control)"),
+		"min-h-control does not read its variable",
+	);
 	assert(out.includes("tablet\\:flex"), "tablet:flex emitted no rule");
 	assert(out.includes("(width >= 768px)"), "tablet: is not the 768 breakpoint");
 	for (const selector of [
@@ -1124,16 +1171,17 @@ check("c14", "the Tailwind fixture builds on contract only", () => {
 		assert(rule(out, selector) === undefined, `${selector} emitted a rule`);
 	}
 	assert(!out.includes("sm\\:flex"), "sm:flex survived the breakpoint reset");
-	const shadow = rule(out, "shadow-float");
-	assert(shadow, "shadow-float emitted no rule");
-	requireEqual(
-		normalize(shadow.match(/box-shadow\s*:\s*([^;]+);/)?.[1] ?? ""),
-		shadowUtilities(base)["shadow-float"]["box-shadow"],
-		"shadow-float box-shadow",
-	);
-	const duration = rule(out, "duration-base");
+	for (const level of SHADOW_LEVELS) {
+		const shadow = rule(out, `shadow-${level}`);
+		assert(shadow, `shadow-${level} emitted no rule`);
+		requireEqual(
+			normalize(shadow.match(/box-shadow\s*:\s*([^;]+);/)?.[1] ?? ""),
+			`var(--shadow-${level})`,
+			`shadow-${level} box-shadow`,
+		);
+	}
 	assert(
-		duration?.includes("var(--transition-duration-base)"),
+		rule(out, "duration-base")?.includes("var(--transition-duration-base)"),
 		"duration-base does not read its rung",
 	);
 	assert(
@@ -1141,10 +1189,10 @@ check("c14", "the Tailwind fixture builds on contract only", () => {
 		"ease-out does not read its curve",
 	);
 	assert(
-		out.includes("--ease-out: cubic-bezier(0.33, 1, 0.68, 1)"),
-		"--ease-out is not the contract's curve",
+		out.includes("--ease-out: cubic-bezier(0.16, 1, 0.3, 1)"),
+		"--ease-out is not the sheet's curve",
 	);
-	return `${out.length} bytes of CSS, off-contract utilities empty, tablet: is 768, duration and ease on their rungs`;
+	return `${out.length} bytes of CSS, every utility on its variable, off-contract utilities empty, tablet: is 768`;
 });
 
 check("c15", "the README carries the design laws, off the brand", () => {
@@ -1158,6 +1206,8 @@ check("c15", "the README carries the design laws, off the brand", () => {
 		"azure",
 		"SpecCard",
 		"FilterChip",
+		"`tint`",
+		"text-label",
 	]) {
 		assert(!readme.includes(word), `README contains "${word}"`);
 	}
@@ -1166,52 +1216,22 @@ check("c15", "the README carries the design laws, off the brand", () => {
 		"## Words",
 		"## Color roles",
 		"## Type roles",
-		"## Rungs, radii, elevation",
+		"## Space, sizes, radii, elevation",
 		"## Contrast contracts",
 		"## What the reset does not catch",
 	]) {
 		assert(readme.includes(heading), `README has no "${heading}" section`);
 	}
-	for (const token of [...PER_MODE_COLORS, ...INVARIANT_COLORS]) {
-		const name = token.startsWith("avatar-")
-			? "avatar-1"
-			: token.startsWith("chip-")
-				? "chip-1"
-				: token;
-		assert(readme.includes(`\`${name}\``), `README never names ${token}`);
-	}
-	return "7 sections, every color role named, no brand words";
-});
-
-check("c16", "one scales override moves both emitted type shapes", () => {
-	const retyped = themeTokens(
-		deriveTheme({
-			overrides: {
-				scales: { "--leading-title": "40px", "--tracking-title": "0.5em" },
-			},
-		}),
-	);
-	requireEqual(retyped["--leading-title"], "40px", "--leading-title");
-	requireEqual(
-		retyped["--text-title--line-height"],
-		"40px",
-		"--text-title--line-height",
-	);
-	requireEqual(retyped["--tracking-title"], "0.5em", "--tracking-title");
-	requireEqual(
-		retyped["--text-title--letter-spacing"],
-		"0.5em",
-		"--text-title--letter-spacing",
-	);
-	for (const role of TYPE_ROLES) {
-		if (role === "title") continue;
-		requireEqual(
-			retyped[`--leading-${role}`],
-			emitted(`--leading-${role}`),
-			`--leading-${role} untouched`,
+	for (const name of COLOR_NAMES) {
+		const representative = name
+			.replace(/^chip-[a-z]+/, "chip-red")
+			.replace(/^avatar-\d/, "avatar-1");
+		assert(
+			readme.includes(`\`${representative}\``),
+			`README never names ${name}`,
 		);
 	}
-	return "one override key drives the modifier and the namespace";
+	return "7 sections, every color role named, no brand words";
 });
 
 // ── The cn merge cases, driven by the token lists ───────────────────
@@ -1242,24 +1262,27 @@ for (const [role, next] of pairs(TRACKED_ROLES)) {
 		`tracking-${next}`,
 	]);
 }
-for (const [rung, next] of pairs(RADIUS_RUNGS)) {
-	MERGE_CASES.push([[`rounded-${rung}`, `rounded-${next}`], `rounded-${next}`]);
+for (const [role, next] of pairs(RADIUS_ROLES)) {
+	MERGE_CASES.push([[`rounded-${role}`, `rounded-${next}`], `rounded-${next}`]);
 	MERGE_CASES.push([
-		[`rounded-t-${rung}`, `rounded-t-${next}`],
+		[`rounded-t-${role}`, `rounded-t-${next}`],
 		`rounded-t-${next}`,
 	]);
 }
-for (const [rung, next] of pairs(SPACING_RUNGS)) {
-	MERGE_CASES.push([[`p-${rung}`, `p-${next}`], `p-${next}`]);
-	MERGE_CASES.push([[`gap-${rung}`, `gap-${next}`], `gap-${next}`]);
+for (const [role, next] of pairs(SPACING_ROLES)) {
+	MERGE_CASES.push([[`p-${role}`, `p-${next}`], `p-${next}`]);
+	MERGE_CASES.push([[`gap-${role}`, `gap-${next}`], `gap-${next}`]);
+}
+for (const [size, next] of pairs(SIZES)) {
+	MERGE_CASES.push([[`min-h-${size}`, `min-h-${next}`], `min-h-${next}`]);
 }
 for (const [width, next] of pairs(WIDTHS)) {
 	MERGE_CASES.push([[`w-${width}`, `w-${next}`], `w-${next}`]);
 	MERGE_CASES.push([[`max-w-${width}`, `max-w-${next}`], `max-w-${next}`]);
 }
-// The numeric `--spacing` base stays live, so a rung and a numeric are one group.
-MERGE_CASES.push([["p-inset", "p-4"], "p-4"]);
-MERGE_CASES.push([["w-rail", "w-full"], "w-full"]);
+// The numeric `--spacing` base stays live, so a role and a numeric are one group.
+MERGE_CASES.push([["p-card", "p-4"], "p-4"]);
+MERGE_CASES.push([["w-popover", "w-full"], "w-full"]);
 // A later type role clears the earlier role's leading and its tracking, or a
 // stale `tracking-title` rides body text.
 MERGE_CASES.push([["leading-title", "text-body"], "text-body"]);
@@ -1269,7 +1292,7 @@ MERGE_CASES.push([
 	["text-title", "tracking-title"],
 	"text-title tracking-title",
 ]);
-// Four of the seven roles carry no tracking, so `tracking-body` names nothing
+// Three of the seven roles carry no tracking, so `tracking-body` names nothing
 // and must not join the group: registering all seven would collapse this pair.
 MERGE_CASES.push([
 	["tracking-body", "tracking-title"],
@@ -1283,8 +1306,9 @@ check("c17", "cn dedupes inside each registered scale, never across", () => {
 	const members =
 		TYPE_ROLES.length +
 		TRACKED_ROLES.length +
-		RADIUS_RUNGS.length +
-		SPACING_RUNGS.length +
+		RADIUS_ROLES.length +
+		SPACING_ROLES.length +
+		SIZES.length +
 		WIDTHS.length;
 	return `${MERGE_CASES.length} cases over ${members} token-list members`;
 });
@@ -1295,10 +1319,11 @@ const UNEXTENDED_MISSES: Array<[string[], string]> = [
 	[["text-title", "text-ink-meta"], "text-title text-ink-meta"],
 	[["leading-title", "leading-body"], "leading-body"],
 	[["tracking-title", "tracking-heading"], "tracking-heading"],
-	[["rounded-t-sheet", "rounded-t-group"], "rounded-t-group"],
-	[["p-inset", "p-room"], "p-room"],
-	[["gap-row", "gap-stack"], "gap-stack"],
-	[["w-rail", "w-list"], "w-list"],
+	[["rounded-t-sheet", "rounded-t-control"], "rounded-t-control"],
+	[["p-card", "p-page"], "p-page"],
+	[["gap-inside", "gap-fields"], "gap-fields"],
+	[["min-h-control", "min-h-field"], "min-h-field"],
+	[["w-popover", "w-dialog"], "w-dialog"],
 	[["tracking-title", "text-body"], "text-body"],
 ];
 
@@ -1361,8 +1386,12 @@ check("c19", "every cva renders exactly its own table", () => {
 		regular: "font-normal",
 		medium: "font-medium",
 		semibold: "font-semibold",
-		bold: "font-bold",
 	};
+	requireEqual(
+		Object.keys(TEXT.variants.role).join(" "),
+		TYPE_ROLES.join(" "),
+		"TEXT roles",
+	);
 	for (const role of TYPE_ROLES) {
 		const spec = TYPE_SCALE[role];
 		const tracking = isTracked(role) ? ` tracking-${role}` : "";
@@ -1372,7 +1401,22 @@ check("c19", "every cva renders exactly its own table", () => {
 			`text-${role} leading-${role}${tracking} ${weights[spec.weight]} text-${spec.ink}${family}`,
 			`TEXT.role.${role}`,
 		);
+		requireEqual(
+			TEXT_STRONG.variants.role[role],
+			spec.weight === "regular" ? "font-medium" : "",
+			`TEXT_STRONG.role.${role}`,
+		);
 	}
+	requireEqual(
+		Object.keys(CHIP.variants.family).join(" "),
+		CHIP_FAMILIES.join(" "),
+		"CHIP families",
+	);
+	requireEqual(
+		Object.keys(AVATAR.variants.step).join(" "),
+		AVATAR_STEPS.join(" "),
+		"AVATAR steps",
+	);
 	let combos = 0;
 	for (const entry of MATRICES) {
 		const [name, config] = entry;
@@ -1390,7 +1434,6 @@ check("c19", "every cva renders exactly its own table", () => {
 
 check("c20", "every class every matrix can emit resolves", () => {
 	const out = buildFixture();
-	assert(rule(out, "px-5"), "px-5 emitted no rule");
 	const missing = [...enumerated()].filter((name) => !rule(out, name));
 	assert(missing.length === 0, `emitted no rule: ${missing.join(", ")}`);
 	return `${enumerated().size} classes from ${MATRICES.length} tables and ${CLASS_CONSTANTS.length} constants, every one on contract`;
@@ -1406,7 +1449,7 @@ const BANNED_CLASSES = [
 const BANNED_PREFIXES = ["items-", "justify-", "self-"];
 
 check("c21", "the enumerated set holds no platform overlay", () => {
-	const rungs = new Set<string>(SPACING_RUNGS);
+	const gaps = new Set<string>(GAP_ROLES);
 	for (const name of enumerated()) {
 		assert(!BANNED_CLASSES.includes(name), `${name} is a platform overlay`);
 		for (const prefix of BANNED_PREFIXES) {
@@ -1418,17 +1461,14 @@ check("c21", "the enumerated set holds no platform overlay", () => {
 			assert(!name.includes(char), `${name} carries "${char}"`);
 		}
 		if (name.startsWith("gap-")) {
-			assert(
-				rungs.has(name.slice("gap-".length)),
-				`${name} is not a spacing rung`,
-			);
+			assert(gaps.has(name.slice("gap-".length)), `${name} is not a gap role`);
 		}
 	}
 	return `${enumerated().size} classes: no display, alignment, state or arbitrary value`;
 });
 
 check("c22", "the content tones are contract colors", () => {
-	const colors = new Set<string>([...PER_MODE_COLORS, ...INVARIANT_COLORS]);
+	const colors = new Set<string>(COLOR_NAMES);
 	let checked = 0;
 	for (const act of keysOf(BUTTON.variants.act)) {
 		const token = buttonContentTone(act);
@@ -1440,8 +1480,8 @@ check("c22", "the content tones are contract colors", () => {
 		assert(colors.has(token), `statusContentTone(${state}): ${token}`);
 		checked++;
 	}
-	requireEqual(buttonContentTone("primary"), "on-accent", "primary ink");
-	requireEqual(statusContentTone("active"), "tint", "active ink");
+	requireEqual(buttonContentTone("primary"), "on-act-accent", "primary ink");
+	requireEqual(statusContentTone("active"), "accent-ink", "active ink");
 	requireEqual(avatarStep("Frankie"), avatarStep("Frankie"), "stable step");
 	assert(/^[1-8]$/.test(avatarStep("x")), "avatarStep is off the ladder");
 	return `${checked} token names, every one a contract color`;
@@ -1556,7 +1596,6 @@ check("c25", "the README carries the canon and the sharing line", () => {
 		"`classname`",
 		"`style`",
 		"platform overlay",
-		"control minimum",
 		"font weight",
 	]) {
 		assert(prose.includes(term), `the README never names ${term}`);
@@ -1598,11 +1637,11 @@ check("c26", "every cell keeps the type role ahead of its metrics", () => {
 	return `${inspected} cells: type role ahead of its leading and tracking`;
 });
 
-check("c27", "every rhythm cell is exactly gap-<unit>", () => {
+check("c27", "every rhythm cell is exactly gap-<role>", () => {
 	const units = Object.keys(RHYTHM.variants.unit) as Array<
 		keyof (typeof RHYTHM)["variants"]["unit"]
 	>;
-	requireEqual(units.join(" "), SPACING_RUNGS.join(" "), "rhythm units");
+	requireEqual(units.join(" "), GAP_ROLES.join(" "), "rhythm units");
 	requireEqual(RHYTHM.base, "", "RHYTHM.base");
 	for (const unit of units) {
 		requireEqual(rhythm({ unit }), `gap-${unit}`, `rhythm(${unit})`);
@@ -1646,8 +1685,7 @@ check(
 );
 
 // The settled vocabulary, spelled out as a second opinion. The gap cells are
-// deliberately absent: they are the spacing rungs, asserted against
-// SPACING_RUNGS below so the derivation is what the check pins.
+// deliberately absent: they are `CALL_SITE_GAPS`, asserted below.
 const GEOMETRY_EXACTS = [
 	"flex",
 	"flex-1",
@@ -1689,14 +1727,15 @@ const LOOK_PREFIXES = [
 
 check(
 	"c29",
-	"the gate vocabulary is the settled list, gap cells derived",
+	"the gate vocabulary is the settled list, two gaps at a call site",
 	() => {
 		const gaps = GEOMETRY.exact.filter((token) => token.startsWith("gap-"));
 		const rest = GEOMETRY.exact.filter((token) => !token.startsWith("gap-"));
 		requireEqual(rest.join(" "), GEOMETRY_EXACTS.join(" "), "exact members");
+		requireEqual(CALL_SITE_GAPS.join(" "), "inside pair", "call-site gaps");
 		requireEqual(
 			gaps.join(" "),
-			SPACING_RUNGS.map((rung) => `gap-${rung}`).join(" "),
+			CALL_SITE_GAPS.map((role) => `gap-${role}`).join(" "),
 			"gap cells",
 		);
 		requireEqual(
@@ -1719,7 +1758,7 @@ check(
 				`src/${name} imports the gate module`,
 			);
 		}
-		return `${GEOMETRY.exact.length} exacts (${gaps.length} gap rungs derived), 4 prefixes, no look member, ts-morph confined to gate.ts`;
+		return `${GEOMETRY.exact.length} exacts (${gaps.length} gap roles), 4 prefixes, no look member, ts-morph confined to gate.ts`;
 	},
 );
 
@@ -1775,6 +1814,8 @@ check("c30", "the scanner reports exactly the fixture's violations", () => {
 		'merge("bg-canvas")',
 		'ui.cn("bg-canvas")',
 		"<Header",
+		"gap-pair",
+		"gap-inside",
 	]) {
 		assert(pass.includes(marker), `pass.tsx lost its ${marker} line`);
 	}
@@ -1828,80 +1869,76 @@ check("c31", "words: English is total and the schema is closed", () => {
 	return `${WORD_KEYS.length} words, sentence case, missing and extra keys rejected`;
 });
 
-// WCAG 2 contrast between two emitted `oklch(L C H)` values.
-function contrast(fg: string, bg: string): number {
-	const luminance = (value: string) => {
-		const parts = /^oklch\(([\d.]+) ([\d.]+)(?: ([\d.]+))?\)$/.exec(value);
-		assert(parts, `not an opaque oklch value: ${value}`);
-		const [r, g, b] = oklchToLinear(
-			Number(parts[1]),
-			Number(parts[2]),
-			Number(parts[3] ?? 0),
-		);
-		return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-	};
-	const [a, b] = [luminance(fg), luminance(bg)].sort((x, y) => y - x);
-	return ((a ?? 0) + 0.05) / ((b ?? 0) + 0.05);
-}
-
 check("c32", "the contrast contracts hold at the default knobs", () => {
-	const pairs: Array<[string, string[]]> = [
-		// A diff's text sits on the added and removed fills.
-		["ink", ["canvas", "surface", "group", "ok-soft", "danger-soft"]],
-		// Also the idle status and a file row's unopened ring.
-		["ink-meta", ["canvas", "surface", "group"]],
-		["ok", ["surface", "group", "ok-soft"]],
-		["warn", ["surface", "group", "warn-soft"]],
-		["danger", ["surface", "group", "danger-soft"]],
-		["tint", ["surface", "group"]],
-		// The open row of a list or a table: its text, its meta, and a
-		// `Status` or an act drawn in it.
-		["ink", ["accent-soft"]],
-		["ink-meta", ["accent-soft"]],
-		["ok", ["accent-soft"]],
-		["warn", ["accent-soft"]],
-		["danger", ["accent-soft"]],
-		["tint", ["accent-soft"]],
-		["on-accent", ["accent"]],
-		["ink", AVATAR_STEPS.map((step) => `avatar-${step}`)],
-		["ink", CHIP_FAMILIES.map((family) => `chip-${family}`)],
+	const grounds: ColorName[] = ["canvas", "surface", "group", "raised"];
+	const text: Array<[ColorName, ColorName[]]> = [
+		[
+			"ink-body",
+			[...grounds, "accent-soft", "ok-soft", "warn-soft", "danger-soft"],
+		],
+		["ink-meta", [...grounds, "accent-soft"]],
+		["accent-ink", [...grounds, "accent-soft"]],
+		["ok", [...grounds, "ok-soft"]],
+		["warn", [...grounds, "warn-soft"]],
+		["danger", [...grounds, "danger-soft"]],
+		["on-accent", ["accent", "act-accent-hover", "act-accent-press"]],
+		["on-danger", ["danger"]],
+		["on-act-ink", ["act-ink", "act-ink-hover", "act-ink-press"]],
+		...CHIP_FAMILIES.map((family): [ColorName, ColorName[]] => [
+			`chip-${family}-ink`,
+			[`chip-${family}-soft`],
+		]),
+		...AVATAR_STEPS.map((step): [ColorName, ColorName[]] => [
+			`avatar-${step}-ink`,
+			[`avatar-${step}`],
+		]),
+	];
+	const graphic: Array<[ColorName, ColorName[]]> = [
+		["edge-strong", ["surface", "group"]],
+		...CHIP_FAMILIES.map((family): [ColorName, ColorName[]] => [
+			`chip-${family}`,
+			["surface"],
+		]),
 	];
 	const short: string[] = [];
 	let count = 0;
-	for (const primary of ["ink", "accent"] as const) {
-		const theme = deriveTheme({ primary });
+	const measure = (pairs: Array<[ColorName, ColorName[]]>, floor: number) => {
 		for (const mode of MODES) {
-			const values = modeTokens(theme, mode);
-			for (const [fg, grounds] of pairs) {
-				for (const bg of grounds) {
-					const fgValue = values[fg];
-					const bgValue = values[bg];
-					assert(fgValue && bgValue, `no ${fg} or ${bg} in ${mode}`);
-					const ratio = contrast(fgValue, bgValue);
+			for (const [fg, fills] of pairs) {
+				for (const bg of fills) {
+					const ratio = contrast(color(mode, fg), color(mode, bg));
 					count++;
-					if (ratio < 4.5)
+					if (ratio < floor)
 						short.push(
-							`${primary} ${mode} ${fg} on ${bg}: ${ratio.toFixed(2)}`,
+							`${mode} ${fg} on ${bg}: ${ratio.toFixed(2)} < ${floor}`,
 						);
 				}
 			}
 		}
+	};
+	measure(text, 4.5);
+	measure(graphic, 3);
+	assert(short.length === 0, `under the floor: ${short.join(", ")}`);
+	// Disabled text is the one exemption, drawn at about 3:1 so it reads as off.
+	for (const mode of MODES) {
+		const ratio = contrast(color(mode, "ink-faint"), color(mode, "surface"));
+		assert(
+			ratio >= 2.8 && ratio < 4.5,
+			`${mode} ink-faint on surface is ${ratio.toFixed(2)}, not about 3:1`,
+		);
 	}
-	assert(short.length === 0, `under 4.5:1: ${short.join(", ")}`);
-	return `${count} pairs at 4.5:1 or more under both primaries in both modes`;
+	return `${count} pairs at their floor in both modes, ink-faint at about 3:1`;
 });
 
 check(
 	"c33",
 	"motion: one curve family, a bounded scale, stilled on request",
 	() => {
-		const durations = Object.values(base.motion.durations);
-		for (const ms of durations) {
-			assert(
-				ms >= 100 && ms <= 300,
-				`a default duration leaves 100–300: ${ms}`,
-			);
+		for (const rung of DURATIONS) {
+			const ms = base.motion.durations[rung];
+			assert(ms >= 100 && ms <= 300, `${rung} leaves 100–300: ${ms}`);
 		}
+		requireEqual(base.motion.loop, LOOP_MS, "the loop");
 		for (const easing of EASINGS) {
 			const points = EASING[easing];
 			assert(
@@ -1918,7 +1955,7 @@ check(
 		requireEqual(
 			Object.keys(reduced).join(" "),
 			DURATIONS.map((rung) => `--transition-duration-${rung}`).join(" "),
-			"reduced motion covers every rung",
+			"reduced motion covers every rung and never the loop",
 		);
 		assert(
 			Object.values(reduced).every((value) => value === "0ms"),
@@ -1932,14 +1969,12 @@ check(
 		const rungs = new Set(DURATIONS.map((rung) => `duration-${rung}`));
 		const easings = new Set(EASINGS.map((easing) => `ease-${easing}`));
 		for (const name of enumerated()) {
-			if (name.startsWith("duration-")) {
+			if (name.startsWith("duration-"))
 				assert(rungs.has(name), `${name} is a literal duration`);
-			}
-			if (name.startsWith("ease-")) {
+			if (name.startsWith("ease-"))
 				assert(easings.has(name), `${name} is not a contract curve`);
-			}
 		}
-		return `${DURATIONS.length} durations ${durations.join("/")} ms, ${EASINGS.length} cubic curves, reduced motion zeroes every rung, no literal duration in a cell`;
+		return `${DURATIONS.length} durations ${DURATIONS.map((rung) => base.motion.durations[rung]).join("/")} ms plus the ${LOOP_MS} ms loop, ${EASINGS.length} curves, reduced motion zeroes every rung`;
 	},
 );
 

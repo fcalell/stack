@@ -1,188 +1,21 @@
 import { z } from "zod";
-import {
-	BREAKPOINTS,
-	DENSITIES,
-	ELEVATIONS,
-	INVARIANT_COLORS,
-	LABEL,
-	MODES,
-	PER_MODE_COLORS,
-	PRIMARIES,
-	SCALE_KEYS,
-	WIDTHS,
-	WORD_KEYS,
-} from "./tokens.ts";
+import { DENSITIES, LABEL, MODES, WORD_KEYS } from "./tokens.ts";
 
-// The accepted subset is the one the derivation itself emits: three unsigned
-// decimal components and an optional unsigned decimal alpha. Percentages,
-// `none`, and angle units are rejected, so an override stays comparable with a
-// derived value. Digits are required, so `oklch(. . .)` is rejected: a
-// malformed oklch compiles to black rather than failing the build, which is why
-// the check sits here and not at the emit.
-const OKLCH_RE =
-	/^oklch\(\s*\d+(\.\d+)?(\s+\d+(\.\d+)?){2}\s*(\/\s*\d+(\.\d+)?\s*)?\)$/;
-
-// A scale value is a raw token stream (`32px`, a shadow list), so only the
-// sequences that would break out of the declaration are rejected: the
-// statement and block terminators, the line breaks that close a declaration,
-// and a comment delimiter, which would swallow the rest of the emitted block.
-const SCALE_VALUE_ILLEGAL_RE = /[;{}\n\r\f]|\/\*|\*\//;
-
-// Parens must balance. A single unbalanced value fails the CSS parser loudly,
-// but a pair does not: an unclosed `calc(` in one override and a stray `)` in
-// a later one fuse every declaration between them into one, and the stylesheet
-// builds clean with the whole block gone. Catching it here names the offending
-// key instead of leaving it to a render-time throw.
-//
-// This rule has a sibling: `cssTokenValue` in `packages/cli/src/css.ts` applies
-// the same check at the render boundary, because this package cannot depend on
-// the CLI. Keep the two in sync by hand.
-function parensBalanced(value: string): boolean {
-	let depth = 0;
-	for (const ch of value) {
-		if (ch === "(") depth++;
-		else if (ch === ")") {
-			depth--;
-			if (depth < 0) return false;
-		}
-	}
-	return depth === 0;
-}
-
-const hue = z.number().min(0).lt(360).optional();
-const px = z.number().int().positive().optional();
-
-const colorMapSchema = z.record(z.string(), z.string());
-
-const overridesSchema = z.strictObject({
-	colors: z
+// The knobs, flat: a theme sets a knob and never a token. Everything else in
+// the contract is the approved sheet and moves only with it.
+export const themeSchema = z.strictObject({
+	accentHue: z.number().min(0).lt(360).optional(),
+	density: z.enum(DENSITIES).optional(),
+	fonts: z
 		.strictObject({
-			shared: colorMapSchema.optional(),
-			light: colorMapSchema.optional(),
-			dark: colorMapSchema.optional(),
+			sans: z.string().min(1).optional(),
+			mono: z.string().min(1).optional(),
 		})
 		.optional(),
-	scales: z.record(z.string(), z.string()).optional(),
+	// The mode a viewer with no stored choice starts in, ahead of the system
+	// preference. Omitted, the system preference decides.
+	defaultMode: z.enum(MODES).optional(),
 });
-
-const PER_MODE_SET: ReadonlySet<string> = new Set(PER_MODE_COLORS);
-const INVARIANT_SET: ReadonlySet<string> = new Set(INVARIANT_COLORS);
-const SCALE_SET: ReadonlySet<string> = new Set(SCALE_KEYS);
-
-function checkColorGroup(
-	ctx: z.RefinementCtx,
-	group: Record<string, string> | undefined,
-	path: string[],
-	allowed: ReadonlySet<string>,
-	wrongGroup: ReadonlySet<string>,
-	wrongGroupHint: string,
-): void {
-	for (const [token, value] of Object.entries(group ?? {})) {
-		if (!allowed.has(token)) {
-			ctx.addIssue({
-				code: "custom",
-				path: [...path, token],
-				message: wrongGroup.has(token)
-					? `"${token}" ${wrongGroupHint}`
-					: `unknown color token "${token}"`,
-			});
-			continue;
-		}
-		if (!OKLCH_RE.test(value)) {
-			ctx.addIssue({
-				code: "custom",
-				path: [...path, token],
-				message: `"${token}" must be oklch(L C H) or oklch(L C H / A) with unsigned decimal components, got ${JSON.stringify(value)}`,
-			});
-		}
-	}
-}
-
-function pxRecord<const K extends readonly string[]>(keys: K) {
-	return z
-		.strictObject(
-			Object.fromEntries(keys.map((key) => [key, px])) as Record<
-				K[number],
-				typeof px
-			>,
-		)
-		.optional();
-}
-
-// The knobs, flat: every scale derives from one of them, so a theme sets a
-// knob and never a token. `overrides` stays for the single token off its ratio.
-export const themeSchema = z
-	.strictObject({
-		accentHue: hue,
-		neutralHue: hue,
-		neutralChroma: z.number().min(0).max(2).optional(),
-		okHue: hue,
-		warnHue: hue,
-		dangerHue: hue,
-		primary: z.enum(PRIMARIES).optional(),
-		space: px,
-		// 0 is legal and squares everything, the pills and circles too.
-		radius: z.number().int().nonnegative().optional(),
-		text: px,
-		elevation: z.enum(ELEVATIONS).optional(),
-		density: z.enum(DENSITIES).optional(),
-		// Milliseconds; 0 stills every transition.
-		motion: z.number().int().nonnegative().optional(),
-		fonts: z
-			.strictObject({
-				sans: z.string().min(1).optional(),
-				mono: z.string().min(1).optional(),
-			})
-			.optional(),
-		widths: pxRecord(WIDTHS),
-		breakpoints: pxRecord(BREAKPOINTS),
-		// The mode a viewer with no stored choice starts in, ahead of the
-		// system preference. Omitted, the system preference decides.
-		defaultMode: z.enum(MODES).optional(),
-		overrides: overridesSchema.optional(),
-	})
-	.superRefine((theme, ctx) => {
-		const colors = theme.overrides?.colors;
-		checkColorGroup(
-			ctx,
-			colors?.shared,
-			["overrides", "colors", "shared"],
-			INVARIANT_SET,
-			PER_MODE_SET,
-			"is a per-mode token: override it under colors.light / colors.dark",
-		);
-		for (const mode of MODES) {
-			checkColorGroup(
-				ctx,
-				colors?.[mode],
-				["overrides", "colors", mode],
-				PER_MODE_SET,
-				INVARIANT_SET,
-				"is mode-invariant: override it under colors.shared",
-			);
-		}
-		for (const [key, value] of Object.entries(theme.overrides?.scales ?? {})) {
-			if (!SCALE_SET.has(key)) {
-				ctx.addIssue({
-					code: "custom",
-					path: ["overrides", "scales", key],
-					message: `unknown scale token "${key}"`,
-				});
-				continue;
-			}
-			if (
-				value.trim() === "" ||
-				SCALE_VALUE_ILLEGAL_RE.test(value) ||
-				!parensBalanced(value)
-			) {
-				ctx.addIssue({
-					code: "custom",
-					path: ["overrides", "scales", key],
-					message: `"${key}" value is empty, carries an illegal character, or has unbalanced parentheses, got ${JSON.stringify(value)}`,
-				});
-			}
-		}
-	});
 
 export type Theme = z.input<typeof themeSchema>;
 export type ParsedTheme = z.output<typeof themeSchema>;
@@ -196,7 +29,7 @@ export const wordsSchema = z.strictObject(
 );
 
 // Throws an Error whose message names every offending key by its path, so a
-// consumer reads which token or knob it got wrong without decoding a ZodError.
+// consumer reads which knob it got wrong without decoding a ZodError.
 export function parseTheme(theme: Theme = {}): ParsedTheme {
 	const result = themeSchema.safeParse(theme);
 	if (result.success) return result.data;

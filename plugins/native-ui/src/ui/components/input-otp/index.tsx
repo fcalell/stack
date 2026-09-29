@@ -39,7 +39,7 @@ export function InputOtp({
 	}, []);
 	const at = Math.min(caret, length - 1);
 	return (
-		<View className={cn("flex-row gap-row", loading && CONTROL_MUTED)}>
+		<View className={cn("flex-row gap-inside", loading && CONTROL_MUTED)}>
 			{Array.from({ length }, (_, index) => (
 				<View
 					// biome-ignore lint/suspicious/noArrayIndexKey: a box is its position

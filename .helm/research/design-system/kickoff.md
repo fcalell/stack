@@ -5,13 +5,13 @@ context a fresh session needs to start the programme: the goal, what exists, wha
 what was decided, the plan with its refinement loops, how the work is run, and how progress is
 tracked. `progress.md` beside it is the live state; this file is the fixed brief.
 
-## Opening prompt for the first session
+## Opening prompt for every session
 
 ```
 Read /home/fcalell/projects/stack/.helm/research/design-system/kickoff.md in full, then
-progress.md beside it. You are the orchestrator of this programme. Start with Stage 0.0 (the clean
-slate). Before each stage, re-read its section here. Never carry state in chat that is not in
-progress.md.
+progress.md beside it. You are the orchestrator of this programme. progress.md names the stage
+and unit in flight; before starting it, re-read that stage's section in kickoff.md and the
+carried-forward list. Never carry state in chat that is not in progress.md; end by updating it.
 ```
 
 ## 1. Goal and standard
@@ -97,9 +97,13 @@ looks.
    subagents (§7), with one progress file (§8). No stories, gates, or ledgers.
 5. **References by survey.** The reference sheet is built per pattern from Mobbin, not from
    assumed anchor apps. Apps that recur across pattern shortlists become anchors by count.
-6. **Artboards on the real CSS.** Every design artboard links the emitted `app.css` and uses only
-   contract classes, so designing is changing token values and writing contract markup, and
-   implementing is moving that markup into a component. Nothing designed can be inexpressible.
+6. **Artboards on the real CSS, from Stage 2.** Every component artboard links the emitted
+   `app.css` and uses only contract classes, so designing is changing token values and writing
+   contract markup, and implementing is moving that markup into a component. Nothing designed can
+   be inexpressible. Stage 1 is the exception, decided 2026-09-29: the foundations are designed
+   from scratch on a fresh token sheet (`plugins/react-ui/design/foundations.css`, every value a
+   named custom property, no literal in a board), so no existing role, ladder or scale steers
+   them; the contract is rewritten to emit the approved sheet at the Stage 1 port.
 7. **Foundations first, then group by group.** Not all design before all implementation: the
    rendered component is the truth and the artboard its sketch; each group is designed,
    implemented, and rendered before the next starts.
@@ -333,7 +337,7 @@ overflow, states-change, console. Baselines start at Stage 4; the other gates ru
 ### Stage 1. Foundations (loop L1)
 
 One Design artifact, "Foundations", artboards as HTML files under `plugins/react-ui/design/`
-linking the emitted `app.css`:
+on the designer's token sheet `foundations.css` (decision 6):
 
 1. type scale at both densities, every role, Inter with `opsz`;
 2. colour ladder: canvas, surface, group, edge, three inks, accent and soft, six status colours,
@@ -342,15 +346,14 @@ linking the emitted `app.css`:
    `sheet` shadows);
 4. states sheet: hover wash, focus ring, selection, disabled, on every surface.
 
-Loop L1: publish, fcalell marks what is off, change the knob or calibration, republish; two or
-three rounds. Exit: all four boards pass the rubric by his word. Port: `tokens.ts` (knobs,
-calibration, a desktop type scale under `density: "desktop"`), regenerate the reference fixture,
-re-run contrast. Sign-off on the rendered showcase foundations page.
+Loop L1: publish, fcalell marks what is off, change the sheet, republish; two or three rounds.
+Exit: all four boards pass the rubric by his word. Port: `tokens.ts` and the type cells rewritten
+so the emitted `app.css` carries exactly the approved sheet (its roles, ladder, scales, densities),
+the reference fixture regenerated, contrast re-run. Sign-off on the rendered showcase foundations
+page.
 
-Expected changes from the diagnosis: Inter as default sans; `radius` default 6; fields and
-groups on `surface` with a 1 px `edge` hairline under `flat`, `group` fill reserved for selection
-and chips; body 14, meta 13, label 12, heading 15, title 22 at desktop density; a wider neutral
-ladder; accent hue and chroma to the approved value.
+The diagnosis (§3) names what the old values got wrong; it is a list of what the sheet must not
+repeat, not a target.
 
 ### Stage 2. Components, group by group (loops L2a, L2b)
 

@@ -1,5 +1,5 @@
 import type { ChipFamily } from "@fcalell/ui-core/tokens";
-import { type ChipCell, chip, text } from "@fcalell/ui-core/variants";
+import { chip, text } from "@fcalell/ui-core/variants";
 import { Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
@@ -16,12 +16,10 @@ export interface ChipProps extends Closed {
 // takes the role and the ink the cell names.
 export function Chip({ label, family }: ChipProps) {
 	return (
-		<View
-			className={cn(chip({ family: String(family) as ChipCell }), "self-start")}
-		>
+		<View className={cn(chip({ family }), "self-start")}>
 			<RNText
 				numberOfLines={1}
-				className={cn(text({ role: "label" }), "text-ink")}
+				className={cn(text({ role: "caption" }), "text-ink-body")}
 			>
 				{label}
 			</RNText>

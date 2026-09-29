@@ -108,12 +108,9 @@ export function Sheet({
 						<TouchedContext.Provider value={{ touched, touch }}>
 							<View
 								style={{ paddingBottom: insets.bottom + 8 }}
-								className={cn(
-									SHEET,
-									"gap-stack px-inset pt-stack shadow-sheet",
-								)}
+								className={cn(SHEET, "gap-fields px-card pt-pair shadow-modal")}
 							>
-								<View className="min-h-11 flex-row items-center gap-row">
+								<View className="min-h-11 flex-row items-center gap-inside">
 									{back ? (
 										<Circle
 											icon={ChevronLeft}
@@ -178,7 +175,7 @@ function SubmitAct({
 				<RNText
 					className={cn(
 						text({ role: "body" }),
-						"font-medium text-tint",
+						"font-medium text-accent-ink",
 						muted && "text-ink-faint",
 					)}
 				>

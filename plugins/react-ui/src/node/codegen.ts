@@ -4,6 +4,7 @@ import {
 	cssBlockSchema,
 	cssImportSchema,
 	cssLayerSchema,
+	cssSourceInlineSchema,
 } from "../types.ts";
 import {
 	cssIdent,
@@ -13,7 +14,7 @@ import {
 	cssTokenValue,
 } from "./css-escape.ts";
 
-// Emits `.stack/app.css` as `@import` statements, the `@source` declaration,
+// Emits `.stack/app.css` as `@import` statements, the `@source` declarations,
 // the top-level `@theme` / `@utility` blocks, then the `@layer` blocks. The
 // block/layer split is the cascade: `@theme` compiles into `@layer theme`,
 // which Tailwind sorts before `base`, so a `@layer base` block overrides a
@@ -31,6 +32,7 @@ import {
 export function aggregateAppCss(payload: CodegenAppCssPayload): string | null {
 	if (
 		payload.imports.length === 0 &&
+		payload.sources.length === 0 &&
 		payload.blocks.length === 0 &&
 		payload.layers.length === 0
 	) {
@@ -46,6 +48,11 @@ export function aggregateAppCss(payload: CodegenAppCssPayload): string | null {
 	// wrangler's bundle). The `tailwindcss` import turns it off with
 	// `source(none)`, so the consumer's sources are declared explicitly.
 	lines.push(`@source "../src";`);
+	for (const pattern of payload.sources) {
+		lines.push(
+			`@source inline(${cssString(cssSourceInlineSchema.parse(pattern))});`,
+		);
+	}
 
 	for (const raw of payload.blocks) {
 		const block = cssBlockSchema.parse(raw);

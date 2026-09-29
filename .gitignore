@@ -44,3 +44,6 @@ pnpm-debug.log*
 # Session-local agent worktrees
 .claude/worktrees/
 .playwright-mcp/
+
+# The artboards' font files (`pnpm --filter @fcalell/plugin-react-ui design`)
+plugins/react-ui/design/files/

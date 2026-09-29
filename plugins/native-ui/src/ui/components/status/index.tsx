@@ -56,7 +56,7 @@ export function Status({ state, label, onOpen }: StatusProps) {
 				onPress={onOpen}
 				className={cn(
 					STATUS_CHIP,
-					"flex-row items-center gap-pair self-start active:bg-edge",
+					"flex-row items-center gap-pair self-start active:bg-wash-press",
 				)}
 			>
 				{inner}

@@ -26,7 +26,7 @@ export function Circle({
 			onPress={onAct}
 			className={cn(
 				ICON_BUTTON,
-				"items-center justify-center active:bg-edge",
+				"items-center justify-center active:bg-wash-press",
 				disabled && "opacity-50",
 			)}
 		>

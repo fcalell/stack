@@ -27,7 +27,7 @@ export function EmptyState({
 		<View
 			accessibilityRole="summary"
 			className={cn(
-				"items-center gap-stack py-room",
+				"items-center gap-fields py-sections",
 				(title !== undefined || !children) && "flex-1 justify-center",
 			)}
 		>

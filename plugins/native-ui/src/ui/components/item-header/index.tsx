@@ -52,7 +52,7 @@ export function ItemHeader({
 				{partText(title)}
 			</RNText>
 			{facts && facts.length > 0 ? (
-				<View className="flex-row flex-wrap items-center gap-row">
+				<View className="flex-row flex-wrap items-center gap-inside">
 					{facts.map((fact) =>
 						typeof fact === "object" && "status" in fact ? (
 							<Status

@@ -6,19 +6,19 @@ import type { ResolvedTheme } from "./derive.ts";
 import { rosterEntries } from "./roster.ts";
 import {
 	BREAKPOINTS,
-	DENSITY_SIZES,
+	COLOR_NAMES,
 	DURATIONS,
 	EASINGS,
 	type FontWeight,
-	INVARIANT_COLORS,
 	LABEL,
 	MODES,
 	MONO_FEATURES,
 	type Mode,
-	PER_MODE_COLORS,
-	RADIUS_RUNGS,
+	RADIUS_ROLES,
 	SHADOW_LEVELS,
-	SPACING_RUNGS,
+	SIZES,
+	SPACING_ROLES,
+	STRONG_WEIGHT,
 	TRACKED_ROLES,
 	TYPE_ROLES,
 	TYPE_SCALE,
@@ -32,71 +32,116 @@ const WEIGHT: Record<FontWeight, number> = {
 	regular: 400,
 	medium: 500,
 	semibold: 600,
-	bold: 700,
 };
 
-// What each color role is for, by use. `avatar-n` and `chip-n` share a line.
+// What each color role is for, by use. A family's three and an avatar's two
+// share a line.
 const COLOR_USE: Record<string, string> = {
-	canvas: "the frame behind the content, the page around a group",
-	surface: "the content column, a sheet, a picker's list",
-	group: "a group's fill, an input, a search field",
-	edge: "the hairline between columns and rows; a pressed row's fill",
-	ink: "titles and body",
-	"ink-meta": "meta lines, section labels, descriptions",
-	"ink-faint": "an input's placeholder and a disabled control",
-	accent: "the primary act's fill, a switch that is on, the selected place",
-	"accent-soft": "a selected row",
+	canvas: "the page",
+	surface: "a card, a field, a row",
+	group: "a filled tile, a chip ground",
+	raised: "a popover, a dialog, a sheet, a toast",
+	edge: "the hairline over canvas and surface; inside a group or a lifted layer the container re-points it to `edge-raised`",
+	"edge-raised": "the hairline inside a group and on a lifted layer",
+	"edge-strong": "a control's boundary, at 3:1",
+	scrim: "the veil behind a dialog or a sheet",
+	"ink-body": "the primary line of anything",
+	"ink-meta": "a secondary line, a placeholder, a table header",
+	"ink-faint": "disabled text only",
+	accent: "the filled act",
 	"on-accent": "text on `accent`",
-	tint: "focus, a link, a count, an `active` status",
-	ok: "a `done` mark, an added line",
-	"ok-soft": "the fill under an `ok` mark",
-	warn: "an `attention` mark",
-	"warn-soft": "the fill under a `warn` mark",
-	danger: "a `failed` mark, a destructive act's text, an error ring",
-	"danger-soft": "the fill under a `danger` mark, a removed line",
-	avatar: "an `Avatar`'s fill, one step per name",
-	chip: "a `Chip`'s fill, one per data family",
-	scrim: "the veil behind a sheet",
-	thumb: "the switch's knob, white in both modes",
+	"accent-soft": "a tinted tile",
+	"accent-ink": "a link, the focus ring, a selection outline",
+	ok: "the `done` mark, an added line's ink",
+	"ok-soft": "the ground under an `ok` mark, an added line",
+	warn: "the `attention` mark",
+	"warn-soft": "the ground under a `warn` mark",
+	danger: "the `failed` mark, a destructive act's label, an error ring",
+	"danger-soft": "the ground under a `danger` mark, a removed line",
+	"on-danger": "text on a `danger` fill, the one saturated state",
+	chip: "a `Chip`'s family: the mark (a dot, a chart series), the soft ground, the ink on the soft",
+	avatar: "an `Avatar`'s fill and the initial on it, one step per name",
+	"wash-hover": "a transparent part under the pointer",
+	"wash-press": "a transparent part pressed",
+	"wash-selected": "a selected row or chip",
+	"wash-selected-hover": "a selected row under the pointer",
+	skeleton: "a loading bar",
+	"fill-disabled": "a disabled act's or chip's box",
+	ring: "the focus ring",
+	"selected-outline": "a selected tile's outline",
+	"edge-hover": "a field's boundary under the pointer",
+	"edge-error": "a field's boundary in error",
+	"ink-error": "an error message",
+	"ink-disabled": "a disabled part's label",
+	"act-accent":
+		"the primary act's fill; `-hover`, `-press` and `-pending` its states",
+	"on-act-accent": "the primary act's label",
+	"act-ink":
+		"the ink act, a screen's dark primary; `-hover`, `-press` and `-pending` its states",
+	"on-act-ink": "the ink act's label",
+	"switch-off": "a switch's track off; `-hover` under the pointer",
+	"switch-on": "a switch's track on; `-hover` under the pointer",
+	"switch-thumb": "a switch's knob",
 };
 
 const TYPE_USE: Record<TypeRole, string> = {
-	display: "one line on a screen with nothing else to read",
-	title: "a place's large title, an item's title",
-	heading: "a sheet's title, a heading inside an item",
-	body: "prose, a row's title, an input's text",
-	meta: "a row's second lines, a description, an age",
-	label: "the header over a list or a group",
-	mono: "code, a commit, a key, the diff",
+	display: "a display number, one per screen",
+	title: "the page's name, once per screen",
+	heading: "a section's or a card's name, never inside a row",
+	body: "the primary line of anything: prose, a row, a field, a menu item",
+	meta: "a secondary line, a description, a table header at 500",
+	caption:
+		"text inside a small component (a chip, a key hint), never a sentence",
+	code: "what a machine reads",
 };
 
-const RUNG_USE: Record<(typeof SPACING_RUNGS)[number], string> = {
-	pair: "a label from its value",
-	row: "atoms side by side",
-	stack: "fields of a form",
-	inset: "the screen's side inset, a group's interior",
-	section: "sections of a screen",
-	room: "the item header from its body",
+const SPACING_USE: Record<(typeof SPACING_ROLES)[number], string> = {
+	inside: "within a control: icon to label, dot to text",
+	"control-x": "a control's inline padding",
+	pair: "between paired elements: label over input, title over description",
+	rows: "between rows in a menu or a nav list",
+	card: "a card's or a popover's inset",
+	fields: "between fields",
+	sections: "between sections of a page",
+	page: "the page inset",
 };
 
-const DENSITY_USE: Record<(typeof DENSITY_SIZES)[number], string> = {
-	floor: "the minimum height of a control, a row and a header",
-	"row-y": "a row's vertical padding",
-	"control-y": "a button's, a field's and a chip's vertical padding",
-	segment: "a segment inside its padded control",
+const SIZE_USE: Record<(typeof SIZES)[number], string> = {
+	control: "a button, a segmented control",
+	"control-compact": "a menu item, a toolbar control",
+	field: "a form input",
+	row: "a one-line row",
+	"row-2": "a two-line row",
+	"row-setting": "a setting row: label and description beside a control",
+	header: "a table or strip header",
+	target: "the least hit area of any interactive part",
+	dot: "a status or chip mark",
+	chip: "a chip's height",
+	avatar: "an avatar's side",
+	spinner: "the spinner inside a pending act",
+	"switch-w": "a switch's width",
+	"switch-h": "a switch's height",
+	thumb: "a switch's knob",
+	"switch-inset": "the knob's inset from its track",
+	skeleton: "a skeleton bar's height",
 };
 
-const RADIUS_USE: Record<(typeof RADIUS_RUNGS)[number], string> = {
-	group: "groups, inputs, code, pickers and menus",
-	sheet: "a sheet's corners",
-	full: "buttons, chips, a search field, a count",
+const RADIUS_USE: Record<(typeof RADIUS_ROLES)[number], string> = {
+	chip: "an outlined chip, a skeleton bar, a checkbox",
+	control: "a button, a field, a segmented control",
+	row: "a menu item, a highlighted row",
+	card: "a card, a toast",
+	popover: "a popover, a menu",
+	sheet: "a sheet's leading corners",
+	dialog: "a dialog",
+	full: "a dot, an avatar, the pill chip or status, a switch",
 };
 
 const DURATION_USE: Record<(typeof DURATIONS)[number], string> = {
-	instant: "a color or opacity change under the pointer",
-	fast: "a control answering a press",
+	instant: "press feedback",
+	fast: "the switch thumb",
 	base: "a popover, a menu or a toast entering",
-	slow: "a sheet or a pane moving in",
+	slow: "a sheet or a dialog moving in",
 };
 
 const EASING_USE: Record<(typeof EASINGS)[number], string> = {
@@ -105,22 +150,15 @@ const EASING_USE: Record<(typeof EASINGS)[number], string> = {
 	"in-out": "what moves between two places",
 };
 
-const COLOR_NAMES: ReadonlySet<string> = new Set([
-	...PER_MODE_COLORS,
-	...INVARIANT_COLORS,
-]);
-const PER_MODE: ReadonlySet<string> = new Set(PER_MODE_COLORS);
-const RADII: ReadonlySet<string> = new Set(RADIUS_RUNGS);
+const COLOR_SET: ReadonlySet<string> = new Set(COLOR_NAMES);
+const RADII: ReadonlySet<string> = new Set(RADIUS_ROLES);
 const ROLES: ReadonlySet<string> = new Set(TYPE_ROLES);
-const SPACES: ReadonlySet<string> = new Set([
-	...SPACING_RUNGS,
-	...DENSITY_SIZES,
-]);
+const SPACES: ReadonlySet<string> = new Set([...SPACING_ROLES, ...SIZES]);
 
-// A per-mode color's token name: the light value bare, the dark value
-// suffixed, so a component's light entry and its `-dark` twin each name one.
+// A color's token name: the light value bare, the dark value suffixed, so a
+// component's light entry and its `-dark` twin each name one.
 function colorName(token: string, mode: Mode): string {
-	return mode === "dark" && PER_MODE.has(token) ? `${token}-dark` : token;
+	return mode === "dark" ? `${token}-dark` : token;
 }
 
 function kebab(name: string): string {
@@ -135,13 +173,13 @@ function subTokens(
 ): Record<string, string> {
 	const out: Record<string, string> = {};
 	for (const name of list) {
-		const [, prefix, rest] = /^(bg|text|rounded|p|min-h|min-w)-(.+)$/.exec(
+		const [, prefix, rest] = /^(bg|text|rounded|p|min-h|min-w|size)-(.+)$/.exec(
 			name,
 		) ?? [undefined, undefined, undefined];
 		if (prefix === undefined || rest === undefined) continue;
-		if (prefix === "bg" && COLOR_NAMES.has(rest)) {
+		if (prefix === "bg" && COLOR_SET.has(rest)) {
 			out.backgroundColor = `{colors.${colorName(rest, mode)}}`;
-		} else if (prefix === "text" && COLOR_NAMES.has(rest)) {
+		} else if (prefix === "text" && COLOR_SET.has(rest)) {
 			out.textColor = `{colors.${colorName(rest, mode)}}`;
 		} else if (prefix === "text" && ROLES.has(rest)) {
 			out.typography = `{typography.${rest}}`;
@@ -149,9 +187,10 @@ function subTokens(
 			out.rounded = `{rounded.${rest}}`;
 		} else if (prefix === "p" && SPACES.has(rest)) {
 			out.padding = `{spacing.${rest}}`;
-		} else if (prefix === "min-h" && SPACES.has(rest)) {
+		} else if ((prefix === "min-h" || prefix === "size") && SPACES.has(rest)) {
 			out.height = `{spacing.${rest}}`;
-		} else if (prefix === "min-w" && SPACES.has(rest)) {
+		}
+		if ((prefix === "min-w" || prefix === "size") && SPACES.has(rest)) {
 			out.width = `{spacing.${rest}}`;
 		}
 	}
@@ -228,55 +267,50 @@ function components(): Array<[string, Record<string, string>]> {
 // YAML's double-quoted scalar is JSON's string syntax.
 const q = JSON.stringify;
 
+// The front matter carries the desktop set, the default on the web; the
+// touch set is the body's table.
 function frontMatter(resolved: ResolvedTheme): string[] {
 	const lines = [
 		"---",
 		"version: alpha",
 		`name: ${q("@fcalell/stack")}`,
-		`description: ${q("The design contract both stack UI plugins render: tokens derived from a few knobs, the platform-invariant matrices, and the component roster.")}`,
+		`description: ${q("The design contract both stack UI plugins render: the approved token sheet behind four knobs, the platform-invariant matrices, and the component roster.")}`,
 		"colors:",
 		`  primary: ${q("{colors.accent}")}`,
 	];
 	for (const mode of MODES) {
-		for (const token of PER_MODE_COLORS) {
+		for (const name of COLOR_NAMES) {
 			lines.push(
-				`  ${colorName(token, mode)}: ${q(resolved.colors[mode][token])}`,
+				`  ${colorName(name, mode)}: ${q(resolved.colors[mode][name])}`,
 			);
 		}
-	}
-	for (const token of INVARIANT_COLORS) {
-		lines.push(`  ${token}: ${q(resolved.invariantColors[token])}`);
 	}
 	lines.push("typography:");
 	for (const role of TYPE_ROLES) {
 		const spec = TYPE_SCALE[role];
+		const { size, leading } = resolved.type.desktop[role];
 		lines.push(`  ${role}:`);
 		lines.push(`    fontFamily: ${q(resolved.fonts[spec.family])}`);
-		lines.push(`    fontSize: ${q(resolved.scales[`--text-${role}`])}`);
+		lines.push(`    fontSize: ${q(size)}`);
 		lines.push(`    fontWeight: ${WEIGHT[spec.weight]}`);
-		lines.push(`    lineHeight: ${q(resolved.scales[`--leading-${role}`])}`);
+		lines.push(`    lineHeight: ${q(leading)}`);
 		const tracked = TRACKED_ROLES.find((name) => name === role);
-		if (tracked) {
-			const tracking = resolved.scales[`--tracking-${tracked}`];
-			lines.push(`    letterSpacing: ${q(tracking)}`);
-		}
+		if (tracked)
+			lines.push(`    letterSpacing: ${q(resolved.tracking[tracked])}`);
 		if (spec.family === "mono") {
 			lines.push(`    fontFeature: ${q(MONO_FEATURES)}`);
 		}
 	}
 	lines.push("rounded:");
-	for (const rung of RADIUS_RUNGS) {
-		lines.push(`  ${rung}: ${q(resolved.scales[`--radius-${rung}`])}`);
+	for (const role of RADIUS_ROLES) {
+		lines.push(`  ${role}: ${q(resolved.radii[role])}`);
 	}
 	lines.push("spacing:");
-	for (const rung of SPACING_RUNGS) {
-		lines.push(`  ${rung}: ${q(resolved.scales[`--spacing-${rung}`])}`);
+	for (const role of SPACING_ROLES) {
+		lines.push(`  ${role}: ${q(resolved.spacing.desktop[role])}`);
 	}
-	for (const size of DENSITY_SIZES) {
-		lines.push(`  ${size}: ${q(resolved.sizes.touch[size])}`);
-	}
-	for (const size of DENSITY_SIZES) {
-		lines.push(`  ${size}-compact: ${q(resolved.sizes.compact[size])}`);
+	for (const size of SIZES) {
+		lines.push(`  ${size}: ${q(resolved.sizes.desktop[size])}`);
 	}
 	lines.push("components:");
 	for (const [name, tokens] of components()) {
@@ -301,12 +335,19 @@ function code(value: string): string {
 	return `\`${value}\``;
 }
 
-function useOf(token: string): string {
-	return COLOR_USE[token.replace(/-\d$/, "")] ?? "";
+function useOf(name: string): string {
+	const base = name
+		.replace(/^(chip)-[a-z]+(-soft|-ink)?$/, "$1")
+		.replace(/^(avatar)-\d(-ink)?$/, "$1")
+		.replace(
+			/^(act-accent|act-ink|switch-off|switch-on)-(hover|press|pending)$/,
+			"$1",
+		);
+	return COLOR_USE[base] ?? "";
 }
 
 function body(resolved: ResolvedTheme): string[] {
-	const { knobs, scales, sizes, motion } = resolved;
+	const { knobs, motion } = resolved;
 	return [
 		"# @fcalell/stack",
 		"",
@@ -314,111 +355,101 @@ function body(resolved: ResolvedTheme): string[] {
 		"",
 		"## Overview",
 		"",
-		"One closed token contract, derived from a few knobs, drawn by two UI plugins: `react-ui` on the web and `native-ui` on React Native. A product sets knobs, never tokens; a component renders its matrix cells and takes no class or style. Every color has a light and a dark value: the front matter names the light one bare and the dark one with a `-dark` suffix, and each component entry that names a color has a `-dark` twin. `primary` is `accent`, the primary act's fill.",
+		"One closed token contract, the approved foundations sheet, drawn by two UI plugins: `react-ui` on the web and `native-ui` on React Native. A product sets four knobs, never a token; a component renders its matrix cells and takes no class or style. Every color has a light and a dark value: the front matter names the light one bare and the dark one with a `-dark` suffix, and each component entry that names a color has a `-dark` twin. `primary` is `accent`, the primary act's fill.",
 		"",
 		...table(
 			["Knob", "Value"],
 			[
 				["accentHue", String(knobs.accentHue)],
-				["neutralHue", String(knobs.neutralHue)],
-				["neutralChroma", String(knobs.neutralChroma)],
-				[
-					"okHue, warnHue, dangerHue",
-					`${knobs.okHue}, ${knobs.warnHue}, ${knobs.dangerHue}`,
-				],
-				["primary", code(knobs.primary)],
-				["space", `${knobs.space} px`],
-				["radius", `${knobs.radius} px`],
-				["text", `${knobs.text} px`],
-				["elevation", code(knobs.elevation)],
 				["density", code(knobs.density)],
-				["motion", `${knobs.motion} ms`],
+				[
+					"fonts",
+					`sans ${knobs.fonts.sans ? code(knobs.fonts.sans) : "the platform's"}, mono ${code(knobs.fonts.mono)}`,
+				],
+				["defaultMode", resolved.defaultMode ?? "the system preference"],
 			],
 		),
 		"",
 		"## Colors",
 		"",
-		"Colors are OKLCH, named by use. One accent hue, near-achromatic greys, three state hues. `on-accent` is `canvas`; under `primary: ink` `accent` is `ink`.",
+		"Colors are OKLCH, named by the place they draw. Cool neutrals on hue 270, one accent hue (the only one a knob moves; its chroma is held inside sRGB at any hue), three status hues, six chip families, eight avatar steps. A wash is the body ink at an alpha, so it sits on any surface as one more step. Inside a group or a lifted layer the container re-points `edge` to `edge-raised`, so a part never picks between them.",
 		"",
 		...table(
-			["Role", "Light", "Dark", "Use"],
-			PER_MODE_COLORS.map((token) => [
-				code(token),
-				code(resolved.colors.light[token]),
-				code(resolved.colors.dark[token]),
-				useOf(token),
+			["Role", "Light", "Dark", "Draws"],
+			COLOR_NAMES.map((name) => [
+				code(name),
+				code(resolved.colors.light[name]),
+				code(resolved.colors.dark[name]),
+				useOf(name),
 			]),
 		),
 		"",
-		...table(
-			["Invariant", "Both modes", "Use"],
-			INVARIANT_COLORS.map((token) => [
-				code(token),
-				code(resolved.invariantColors[token]),
-				useOf(token),
-			]),
-		),
-		"",
-		"Status colors: `active` is `tint`, `waiting` is `ink-meta`, `done` is `ok`, `attention` is `warn`, `failed` is `danger`, `idle` is `ink-meta`.",
+		"Status colors: `active` is `accent-ink`, `waiting` and `idle` are `ink-meta`, `done` is `ok`, `attention` is `warn`, `failed` is `danger`.",
 		"",
 		"## Typography",
 		"",
-		"Seven roles named by use, one scale at every width. A role carries its size, line box, weight, ink and family; a component draws copy only through a role.",
+		`Seven roles named by place. Two rules decide the role: size follows structure, never emphasis (the primary line of anything is \`body\`, a secondary line is \`meta\`, emphasis inside a line is weight ${WEIGHT[STRONG_WEIGHT]}, never a size change); and a size role names a place once (\`title\` the page's name, once per screen; \`heading\` a section's or a card's name, never inside a row; \`caption\` text inside a small component, never a sentence; \`code\` what a machine reads). There is no label role: a field label and a row's leading cell are \`body\` at ${WEIGHT[STRONG_WEIGHT]}, a table header is \`meta\` at ${WEIGHT[STRONG_WEIGHT]}. The scale moves with density (desktop body 13, touch body 16); nothing else moves it.`,
 		"",
 		...table(
-			["Role", "Size / line", "Weight", "Ink", "Use"],
+			["Role", "Desktop", "Touch", "Weight", "Ink", "Place"],
 			TYPE_ROLES.map((role) => [
 				code(role),
-				`${scales[`--text-${role}`]} / ${scales[`--leading-${role}`]}`,
+				`${resolved.type.desktop[role].size} / ${resolved.type.desktop[role].leading}`,
+				`${resolved.type.touch[role].size} / ${resolved.type.touch[role].leading}`,
 				String(WEIGHT[TYPE_SCALE[role].weight]),
 				code(TYPE_SCALE[role].ink),
 				TYPE_USE[role],
 			]),
 		),
 		"",
-		`\`sans\` is ${code(resolved.fonts.sans)}; \`mono\` is ${code(resolved.fonts.mono)} with its ligatures off. Each named family is followed by its metric fallback face.`,
+		`Tracking: ${TRACKED_ROLES.map((role) => `${code(role)} ${resolved.tracking[role]}`).join(", ")}; the rest 0. \`sans\` is ${code(resolved.fonts.sans)}; \`mono\` is ${code(resolved.fonts.mono)} with its ligatures off. Each named family is followed by its metric fallback face. Running text wraps at \`measure\`, ${resolved.widths.measure}.`,
 		"",
 		"## Layout",
 		"",
-		`Rungs are multiples of \`space\` (${knobs.space} px), named by what they separate:`,
+		"Spacing roles are multiples of a 4 px base, picked per density, named by what they separate:",
 		"",
 		...table(
-			["Rung", "Value", "Separates"],
-			SPACING_RUNGS.map((rung) => [
-				code(rung),
-				scales[`--spacing-${rung}`],
-				RUNG_USE[rung],
+			["Role", "Desktop", "Touch", "Separates"],
+			SPACING_ROLES.map((role) => [
+				code(role),
+				resolved.spacing.desktop[role],
+				resolved.spacing.touch[role],
+				SPACING_USE[role],
 			]),
 		),
 		"",
-		"Density moves four sizes, never a rung or a type size. Touch is every platform's set; the compact set draws where the primary pointer is fine under `density: desktop`.",
+		`Sizes are heights and squares in the same namespace. Density is a theme, never a breakpoint: \`desktop\` draws the desktop set where the primary pointer is fine and the touch set on a coarse one; \`touch\` draws the touch set everywhere; a \`data-density\` attribute on the web root pins either. Every touch target is at least ${resolved.sizes.touch.target}; on the desktop every interactive part keeps a ${resolved.sizes.desktop.target} hit area whatever it draws.`,
 		"",
 		...table(
-			["Size", "Touch", "Compact", "Is"],
-			DENSITY_SIZES.map((size) => [
+			["Size", "Desktop", "Touch", "Is"],
+			SIZES.map((size) => [
 				code(size),
-				sizes.touch[size],
-				sizes.compact[size],
-				DENSITY_USE[size],
+				resolved.sizes.desktop[size],
+				resolved.sizes.touch[size],
+				SIZE_USE[size],
 			]),
 		),
 		"",
-		`Widths: ${WIDTHS.map((width) => `${code(width)} ${scales[`--container-${width}`]}`).join(", ")}. Breakpoints: ${BREAKPOINTS.map((bp) => `${code(bp)} ${scales[`--breakpoint-${bp}`]}`).join(", ")}; they are the only responsive variants.`,
+		`Widths of lifted layers, never stretched to their container: ${WIDTHS.filter(
+			(width) => width !== "measure",
+		)
+			.map((width) => `${code(width)} ${resolved.widths[width]}`)
+			.join(
+				", ",
+			)}. Breakpoints: ${BREAKPOINTS.map((bp) => `${code(bp)} ${resolved.breakpoints[bp]}`).join(", ")}; they are the only responsive variants.`,
 		"",
 		"## Elevation & Depth",
 		"",
-		knobs.elevation === "soft"
-			? `Groups, rows and cards are flat. Two shadows lift a layer: ${SHADOW_LEVELS.map((level) => `${code(`shadow-${level}`)} (${code(scales[`--shadow-${level}`])})`).join(" and ")}. \`shadow-float\` lifts a picker's list, a menu, a toast, the selected segment and a thumb; \`shadow-sheet\` lifts a sheet.`
-			: "Groups, rows and cards are flat. A lifted layer draws a 1px `edge` ring instead of a shadow.",
+		`A card at rest has a hairline and no shadow. Two levels lift a layer, each per mode: ${SHADOW_LEVELS.map((level) => `${code(`shadow-${level}`)} (light ${code(resolved.shadows.light[level])}, dark ${code(resolved.shadows.dark[level])})`).join("; ")}. \`shadow-float\` lifts a popover, a menu, a picker's list and a toast; \`shadow-modal\` a dialog, a sheet and a command palette. In dark the lift is carried by the \`raised\` step and the hairline as much as by the shadow. The hairline is 1 px; the focus ring is \`ring\` at 2 px, 2 px outside the box, drawn inward inside a list.`,
 		"",
 		"## Shapes",
 		"",
 		...table(
 			["Radius", "Value", "Rounds"],
-			RADIUS_RUNGS.map((rung) => [
-				code(rung),
-				scales[`--radius-${rung}`],
-				RADIUS_USE[rung],
+			RADIUS_ROLES.map((role) => [
+				code(role),
+				resolved.radii[role],
+				RADIUS_USE[role],
 			]),
 		),
 		"",
@@ -438,7 +469,7 @@ function body(resolved: ResolvedTheme): string[] {
 		"",
 		"### Motion",
 		"",
-		`Durations are ratios of \`motion\` (${knobs.motion} ms), read as \`duration-<rung>\`; every one is 0 under \`prefers-reduced-motion: reduce\`.`,
+		`Durations are read as \`duration-<rung>\`; every rung is 0 under \`prefers-reduced-motion: reduce\`. Only transform and opacity animate: a state switches its color, fill and boundary at once. A spinner loops at ${motion.loop} ms outside the scale and keeps turning under reduced motion.`,
 		"",
 		...table(
 			["Duration", "Value", "Times"],
@@ -464,6 +495,7 @@ function body(resolved: ResolvedTheme): string[] {
 		"- Do set a knob to move a scale; don't set a token.",
 		"- Don't pass `class`, `className`, `classList` or `style` to a component; a look the matrices lack is a new matrix cell.",
 		"- Do use tokens only: no literal color, pixel size or arbitrary value.",
+		"- Do draw one `title` per screen, no `heading` inside a row, no `caption` sentence; emphasis is weight, never size.",
 		"- Do keep text at 4.5:1 or more on its fill; the contract measures every pair it draws.",
 		"- Do time motion with a duration rung and a contract curve; don't write a literal duration.",
 		"- Do take every word a component draws from `words`; a sentence is a prop.",

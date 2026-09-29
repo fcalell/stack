@@ -66,7 +66,7 @@ export function ListRow({
 			className={cn(
 				row({ state: "rest" }),
 				"flex-row items-center",
-				open && "active:bg-edge",
+				open && "active:bg-wash-press",
 			)}
 		>
 			{leading ? <Leading leading={leading} /> : null}
@@ -140,7 +140,7 @@ export function RowAct({ act }: { act: Act }) {
 			<RNText
 				className={cn(
 					text({ role: "body" }),
-					"font-medium text-tint",
+					"font-medium text-accent-ink",
 					muted && "text-ink-faint",
 				)}
 			>

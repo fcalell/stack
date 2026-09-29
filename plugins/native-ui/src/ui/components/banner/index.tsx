@@ -31,7 +31,7 @@ export function Banner({ kind, sentence, act }: BannerProps) {
 					className="min-h-11 justify-center"
 				>
 					<RNText
-						className={cn(text({ role: "meta" }), "font-medium text-ink")}
+						className={cn(text({ role: "meta" }), "font-medium text-ink-body")}
 					>
 						{act.label}
 					</RNText>

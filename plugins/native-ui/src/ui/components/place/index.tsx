@@ -52,7 +52,7 @@ export function Place({
 			: all;
 	const rest = all.slice(shown.length);
 	const bar = (
-		<View className="min-h-11 flex-row items-center gap-row">
+		<View className="min-h-11 flex-row items-center gap-inside">
 			{switcher}
 			<RNText
 				accessibilityRole="header"
@@ -77,13 +77,13 @@ export function Place({
 		<View className="flex-1 bg-canvas">
 			{bleed ? (
 				<View className="flex-1" style={{ paddingTop: insets.top }}>
-					<View className="px-inset">{bar}</View>
+					<View className="px-card">{bar}</View>
 					<View className="flex-1 overflow-hidden">{children}</View>
 				</View>
 			) : (
 				<Scroll
 					className="flex-1"
-					contentContainerClassName="grow gap-section px-inset pb-room"
+					contentContainerClassName="grow gap-sections px-card pb-sections"
 					contentContainerStyle={{ paddingTop: insets.top }}
 				>
 					{bar}
@@ -91,7 +91,7 @@ export function Place({
 				</Scroll>
 			)}
 			{act ? (
-				<View className="absolute right-0 bottom-0 p-inset shadow-float">
+				<View className="absolute right-0 bottom-0 p-card shadow-float">
 					<Button act="primary" {...act} />
 				</View>
 			) : null}

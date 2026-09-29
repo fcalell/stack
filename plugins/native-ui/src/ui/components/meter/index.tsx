@@ -25,7 +25,7 @@ export function Meter({ label, value, max, meta, loading }: MeterProps) {
 			accessibilityValue={{ min: 0, max, now: value }}
 			className="gap-pair"
 		>
-			<View className="flex-row items-center justify-between gap-row">
+			<View className="flex-row items-center justify-between gap-inside">
 				<RNText className={text({ role: "body" })}>{label}</RNText>
 				<RNText className={text({ role: "meta" })}>
 					{Math.round(ratio * 100)}%

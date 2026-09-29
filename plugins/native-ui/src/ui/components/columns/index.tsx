@@ -8,5 +8,5 @@ export interface ColumnsProps extends Closed {
 
 // Sections side by side on the desktop; on the phone they stack.
 export function Columns({ children }: ColumnsProps) {
-	return <View className="gap-section">{children}</View>;
+	return <View className="gap-sections">{children}</View>;
 }

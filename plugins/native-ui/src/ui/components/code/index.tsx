@@ -38,7 +38,7 @@ export function Code({ text: source, title, tail, copy, loading }: CodeProps) {
 	const folded = tail !== undefined && !unfolded && lines.length > tail;
 	const shown = folded ? lines.slice(lines.length - tail) : lines;
 	const copyAct = copy ? (
-		<View className="flex-row items-center justify-end gap-row">
+		<View className="flex-row items-center justify-end gap-inside">
 			{copied ? (
 				<RNText className={text({ role: "meta" })}>{words.copied}</RNText>
 			) : null}
@@ -52,9 +52,9 @@ export function Code({ text: source, title, tail, copy, loading }: CodeProps) {
 		</View>
 	) : null;
 	return (
-		<View className={cn(CODE, "gap-row")}>
+		<View className={cn(CODE, "gap-inside")}>
 			{title ? (
-				<View className="flex-row items-center gap-row">
+				<View className="flex-row items-center gap-inside">
 					<RNText
 						numberOfLines={1}
 						className={cn(text({ role: "meta" }), "flex-1")}
@@ -78,7 +78,7 @@ export function Code({ text: source, title, tail, copy, loading }: CodeProps) {
 				</Pressable>
 			) : null}
 			<ScrollView horizontal showsHorizontalScrollIndicator={false}>
-				<RNText className={text({ role: "mono" })}>{shown.join("\n")}</RNText>
+				<RNText className={text({ role: "code" })}>{shown.join("\n")}</RNText>
 			</ScrollView>
 			{title ? null : copyAct}
 		</View>

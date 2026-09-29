@@ -1,5 +1,5 @@
 import type { FieldBinding, FieldControl } from "@fcalell/ui-core/descriptors";
-import { text } from "@fcalell/ui-core/variants";
+import { text, textStrong } from "@fcalell/ui-core/variants";
 import type { ReactNode } from "react";
 import { Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
@@ -43,7 +43,11 @@ export function FormField<V>(props: FormFieldProps<V>) {
 		: props.children;
 	return (
 		<View className="gap-pair">
-			<RNText className={text({ role: "label" })}>{label}</RNText>
+			<RNText
+				className={cn(text({ role: "body" }), textStrong({ role: "body" }))}
+			>
+				{label}
+			</RNText>
 			<FieldNameContext.Provider value={label}>
 				{body}
 			</FieldNameContext.Provider>

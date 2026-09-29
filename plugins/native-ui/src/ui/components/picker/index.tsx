@@ -1,5 +1,11 @@
 import type { Option, OptionGroup } from "@fcalell/ui-core/descriptors";
-import { GROUP, PICKER_EMPTY, row, text } from "@fcalell/ui-core/variants";
+import {
+	GROUP,
+	PICKER_EMPTY,
+	row,
+	text,
+	textStrong,
+} from "@fcalell/ui-core/variants";
 import { Check, ChevronDown } from "lucide-react-native";
 import { useState } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
@@ -78,7 +84,7 @@ export function Picker<V extends string | null = string>({
 				onPress={() => setOpen(true)}
 				className={cn(
 					GROUP,
-					"min-h-11 flex-row items-center gap-row px-4 active:bg-edge",
+					"min-h-11 flex-row items-center gap-inside px-4 active:bg-wash-press",
 				)}
 			>
 				<RNText
@@ -102,7 +108,11 @@ export function Picker<V extends string | null = string>({
 							{group.label ? (
 								<RNText
 									accessibilityRole="header"
-									className={cn(text({ role: "label" }), "px-inset")}
+									className={cn(
+										text({ role: "meta" }),
+										textStrong({ role: "meta" }),
+										"px-card",
+									)}
 								>
 									{group.label}
 								</RNText>
@@ -121,7 +131,7 @@ export function Picker<V extends string | null = string>({
 											}}
 											className={cn(
 												row({ state: "rest" }),
-												"flex-row items-center active:bg-edge",
+												"flex-row items-center active:bg-wash-press",
 											)}
 										>
 											<View className="min-w-0 flex-1 gap-pair">
@@ -143,7 +153,9 @@ export function Picker<V extends string | null = string>({
 													</RNText>
 												) : null}
 											</View>
-											{selected ? <Glyph icon={Check} tone="tint" /> : null}
+											{selected ? (
+												<Glyph icon={Check} tone="accent-ink" />
+											) : null}
 										</Pressable>
 									);
 								})}

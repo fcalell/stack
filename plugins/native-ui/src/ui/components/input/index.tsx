@@ -70,13 +70,13 @@ export function Input({
 		<View
 			className={cn(
 				field({ kind: SURFACE[which], state: focused ? "focused" : "default" }),
-				"flex-row items-center gap-row",
+				"flex-row items-center gap-inside",
 			)}
 		>
 			<TextInput
 				accessibilityLabel={name}
 				className={cn(
-					text({ role: SURFACE[which] === "code" ? "mono" : "body" }),
+					text({ role: SURFACE[which] === "code" ? "code" : "body" }),
 					"flex-1 py-0",
 				)}
 				placeholderTextColorClassName={FIELD_PLACEHOLDER}
@@ -131,7 +131,7 @@ export function Input({
 					<RNText
 						className={cn(
 							text({ role: "body" }),
-							"font-medium text-tint",
+							"font-medium text-accent-ink",
 							act.blocked !== undefined && "text-ink-faint",
 						)}
 					>

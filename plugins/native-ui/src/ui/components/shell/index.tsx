@@ -41,7 +41,7 @@ export function Shell({ places, banner, switcher, children }: ShellProps) {
 			{toasts.length > 0 ? (
 				<View
 					pointerEvents="box-none"
-					className="absolute inset-x-0 bottom-0 items-center gap-row p-inset"
+					className="absolute inset-x-0 bottom-0 items-center gap-inside p-card"
 				>
 					{toasts.map((entry) => (
 						<Pressable key={entry.id} onPress={() => dismissToast(entry.id)}>
@@ -88,7 +88,7 @@ function PlaceTab({
 			accessibilityState={{ selected }}
 			accessibilityLabel={spec.label}
 			onPress={() => navigate(spec.route)}
-			className="min-h-11 flex-1 items-center gap-pair py-row"
+			className="min-h-11 flex-1 items-center gap-pair py-inside"
 		>
 			<View className="flex-row items-start">
 				<Glyph

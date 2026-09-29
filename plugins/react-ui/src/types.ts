@@ -70,13 +70,27 @@ export const cssBlockSchema = z.discriminatedUnion("kind", [
 
 export type CssBlock = z.input<typeof cssBlockSchema>;
 
+// A class-candidate pattern Tailwind generates whether or not a scanned file
+// spells it, rendered as `@source inline("…")`: class characters and the
+// brace expansion Tailwind reads (`bg-{canvas,surface}`).
+export const cssSourceInlineSchema = z
+	.string()
+	.regex(
+		/^[a-z0-9{},.:-]+$/,
+		"css @source inline(...) pattern must be class characters and braces",
+	);
+
+export type CssSourceInline = z.input<typeof cssSourceInlineSchema>;
+
 // Aggregated inputs for the `.stack/app.css` derivation. Plugins contribute
 // to `reactUi.slots.appCssImports` (CSS `@import`s, shorthand or structured),
 // `reactUi.slots.appCssBlocks` (top-level `@theme` / `@utility` blocks) and
-// `reactUi.slots.appCssLayers` (named `@layer` blocks); `aggregateAppCss`
+// `reactUi.slots.appCssLayers` (named `@layer` blocks) and
+// `reactUi.slots.appCssSources` (`@source inline` patterns); `aggregateAppCss`
 // renders them to the final CSS source.
 export interface CodegenAppCssPayload {
 	imports: CssImport[];
+	sources: CssSourceInline[];
 	blocks: CssBlock[];
 	layers: CssLayer[];
 }

@@ -20,7 +20,8 @@
 		},
 		"./globals.css": "./src/ui/globals.css",
 		"./lib/words": "./src/ui/lib/words.tsx",
-		"./showcase": "./src/ui/showcase/index.tsx"
+		"./showcase": "./src/ui/showcase/index.tsx",
+		"./showcase/foundations": "./src/ui/showcase/foundations.tsx"
 	},
 	"files": [
 		"dist",
@@ -37,7 +38,8 @@
 		"lint": "biome check --write --unsafe",
 		"check": "pnpm check-types && pnpm lint",
 		"test": "node --test 'test/**/*.test.ts'",
-		"clear": "rm -rf dist node_modules .turbo"
+		"clear": "rm -rf dist node_modules .turbo",
+		"design": "mkdir -p design/files && cp node_modules/@fontsource-variable/inter/files/inter-latin-opsz-normal.woff2 node_modules/@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2 design/files/"
 	},
 	"peerDependencies": {
 		"react": "^19.3"

@@ -52,7 +52,7 @@ export function aggregateGlobalCss(payload: CodegenGlobalCssPayload): string {
 	lines.push("}");
 	lines.push("");
 
-	for (const [name, declarations] of shadowBlocks(payload.resolved)) {
+	for (const [name, declarations] of shadowBlocks()) {
 		lines.push(`@utility ${cssIdent(name)} {`);
 		for (const [property, value] of Object.entries(declarations)) {
 			lines.push(`\t${property}: ${cssTokenValue(value)};`);
@@ -65,8 +65,8 @@ export function aggregateGlobalCss(payload: CodegenGlobalCssPayload): string {
 	lines.push("\t:root {");
 	for (const [mode, colors] of modeBlocks(payload.resolved)) {
 		lines.push(`\t\t@variant ${cssIdent(mode)} {`);
-		for (const [token, value] of Object.entries(colors)) {
-			lines.push(`\t\t\t--color-${cssIdent(token)}: ${cssTokenValue(value)};`);
+		for (const [name, value] of Object.entries(colors)) {
+			lines.push(`\t\t\t${cssVarName(name)}: ${cssTokenValue(value)};`);
 		}
 		lines.push("\t\t}");
 	}

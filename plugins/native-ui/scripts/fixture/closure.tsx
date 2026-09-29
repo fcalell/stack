@@ -93,11 +93,11 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<Text role="body" classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<Text role="body" colorClassName="text-ink" />
+		<Text role="body" colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Text role="body" selectionColorClassName="text-ink" />
+		<Text role="body" selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Text role="body" placeholderTextColorClassName="text-ink" />
+		<Text role="body" placeholderTextColorClassName="text-ink-body" />
 		<Icon name="x" />
 		{/* @ts-expect-error: closed channel */}
 		<Icon name="x" className="x" />
@@ -108,11 +108,11 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<Icon name="x" classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<Icon name="x" colorClassName="text-ink" />
+		<Icon name="x" colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Icon name="x" selectionColorClassName="text-ink" />
+		<Icon name="x" selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Icon name="x" placeholderTextColorClassName="text-ink" />
+		<Icon name="x" placeholderTextColorClassName="text-ink-body" />
 		<Button label="a" onAct={noop} />
 		{/* @ts-expect-error: closed channel */}
 		<Button label="a" onAct={noop} className="x" />
@@ -123,11 +123,11 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<Button label="a" onAct={noop} classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<Button label="a" onAct={noop} colorClassName="text-ink" />
+		<Button label="a" onAct={noop} colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Button label="a" onAct={noop} selectionColorClassName="text-ink" />
+		<Button label="a" onAct={noop} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Button label="a" onAct={noop} placeholderTextColorClassName="text-ink" />
+		<Button label="a" onAct={noop} placeholderTextColorClassName="text-ink-body" />
 		<IconButton icon="x" label="a" onAct={noop} />
 		{/* @ts-expect-error: closed channel */}
 		<IconButton icon="x" label="a" onAct={noop} className="x" />
@@ -138,11 +138,11 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<IconButton icon="x" label="a" onAct={noop} classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<IconButton icon="x" label="a" onAct={noop} colorClassName="text-ink" />
+		<IconButton icon="x" label="a" onAct={noop} colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<IconButton icon="x" label="a" onAct={noop} selectionColorClassName="text-ink" />
+		<IconButton icon="x" label="a" onAct={noop} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<IconButton icon="x" label="a" onAct={noop} placeholderTextColorClassName="text-ink" />
+		<IconButton icon="x" label="a" onAct={noop} placeholderTextColorClassName="text-ink-body" />
 		<Count value={1} />
 		{/* @ts-expect-error: closed channel */}
 		<Count value={1} className="x" />
@@ -153,11 +153,11 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<Count value={1} classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<Count value={1} colorClassName="text-ink" />
+		<Count value={1} colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Count value={1} selectionColorClassName="text-ink" />
+		<Count value={1} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Count value={1} placeholderTextColorClassName="text-ink" />
+		<Count value={1} placeholderTextColorClassName="text-ink-body" />
 		<Status state="active" />
 		{/* @ts-expect-error: closed channel */}
 		<Status state="active" className="x" />
@@ -168,11 +168,11 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<Status state="active" classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<Status state="active" colorClassName="text-ink" />
+		<Status state="active" colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Status state="active" selectionColorClassName="text-ink" />
+		<Status state="active" selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Status state="active" placeholderTextColorClassName="text-ink" />
+		<Status state="active" placeholderTextColorClassName="text-ink-body" />
 		<Input value="" onChange={noop} />
 		{/* @ts-expect-error: closed channel */}
 		<Input value="" onChange={noop} className="x" />
@@ -183,11 +183,11 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<Input value="" onChange={noop} classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<Input value="" onChange={noop} colorClassName="text-ink" />
+		<Input value="" onChange={noop} colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Input value="" onChange={noop} selectionColorClassName="text-ink" />
+		<Input value="" onChange={noop} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Input value="" onChange={noop} placeholderTextColorClassName="text-ink" />
+		<Input value="" onChange={noop} placeholderTextColorClassName="text-ink-body" />
 		<TextArea value="" onChange={noop} />
 		{/* @ts-expect-error: closed channel */}
 		<TextArea value="" onChange={noop} className="x" />
@@ -198,11 +198,11 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<TextArea value="" onChange={noop} classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<TextArea value="" onChange={noop} colorClassName="text-ink" />
+		<TextArea value="" onChange={noop} colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<TextArea value="" onChange={noop} selectionColorClassName="text-ink" />
+		<TextArea value="" onChange={noop} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<TextArea value="" onChange={noop} placeholderTextColorClassName="text-ink" />
+		<TextArea value="" onChange={noop} placeholderTextColorClassName="text-ink-body" />
 		<InputOtp length={6} value="" onChange={noop} onComplete={noop} loading />
 		{/* @ts-expect-error: closed channel */}
 		<InputOtp length={6} value="" onChange={noop} className="x" />
@@ -213,11 +213,11 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<InputOtp length={6} value="" onChange={noop} classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<InputOtp length={6} value="" onChange={noop} colorClassName="text-ink" />
+		<InputOtp length={6} value="" onChange={noop} colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<InputOtp length={6} value="" onChange={noop} selectionColorClassName="text-ink" />
+		<InputOtp length={6} value="" onChange={noop} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<InputOtp length={6} value="" onChange={noop} placeholderTextColorClassName="text-ink" />
+		<InputOtp length={6} value="" onChange={noop} placeholderTextColorClassName="text-ink-body" />
 		<Slider label="a" value={1} onChange={noop} min={0} max={2} />
 		{/* @ts-expect-error: closed channel */}
 		<Slider label="a" value={1} onChange={noop} min={0} max={2} className="x" />
@@ -228,11 +228,11 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<Slider label="a" value={1} onChange={noop} min={0} max={2} classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<Slider label="a" value={1} onChange={noop} min={0} max={2} colorClassName="text-ink" />
+		<Slider label="a" value={1} onChange={noop} min={0} max={2} colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Slider label="a" value={1} onChange={noop} min={0} max={2} selectionColorClassName="text-ink" />
+		<Slider label="a" value={1} onChange={noop} min={0} max={2} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Slider label="a" value={1} onChange={noop} min={0} max={2} placeholderTextColorClassName="text-ink" />
+		<Slider label="a" value={1} onChange={noop} min={0} max={2} placeholderTextColorClassName="text-ink-body" />
 		<Switch checked onChange={noop} label="a" />
 		{/* @ts-expect-error: closed channel */}
 		<Switch checked onChange={noop} label="a" className="x" />
@@ -243,11 +243,11 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<Switch checked onChange={noop} label="a" classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<Switch checked onChange={noop} label="a" colorClassName="text-ink" />
+		<Switch checked onChange={noop} label="a" colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Switch checked onChange={noop} label="a" selectionColorClassName="text-ink" />
+		<Switch checked onChange={noop} label="a" selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Switch checked onChange={noop} label="a" placeholderTextColorClassName="text-ink" />
+		<Switch checked onChange={noop} label="a" placeholderTextColorClassName="text-ink-body" />
 		<Checkbox checked onChange={noop} label="a" />
 		{/* @ts-expect-error: closed channel */}
 		<Checkbox checked onChange={noop} label="a" className="x" />
@@ -258,11 +258,11 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<Checkbox checked onChange={noop} label="a" classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<Checkbox checked onChange={noop} label="a" colorClassName="text-ink" />
+		<Checkbox checked onChange={noop} label="a" colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Checkbox checked onChange={noop} label="a" selectionColorClassName="text-ink" />
+		<Checkbox checked onChange={noop} label="a" selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Checkbox checked onChange={noop} label="a" placeholderTextColorClassName="text-ink" />
+		<Checkbox checked onChange={noop} label="a" placeholderTextColorClassName="text-ink-body" />
 		<Spinner />
 		{/* @ts-expect-error: closed channel */}
 		<Spinner className="x" />
@@ -273,11 +273,11 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<Spinner classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<Spinner colorClassName="text-ink" />
+		<Spinner colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Spinner selectionColorClassName="text-ink" />
+		<Spinner selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Spinner placeholderTextColorClassName="text-ink" />
+		<Spinner placeholderTextColorClassName="text-ink-body" />
 		<Avatar name="a" />
 		{/* @ts-expect-error: closed channel */}
 		<Avatar name="a" className="x" />
@@ -288,11 +288,11 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<Avatar name="a" classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<Avatar name="a" colorClassName="text-ink" />
+		<Avatar name="a" colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Avatar name="a" selectionColorClassName="text-ink" />
+		<Avatar name="a" selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Avatar name="a" placeholderTextColorClassName="text-ink" />
+		<Avatar name="a" placeholderTextColorClassName="text-ink-body" />
 		<Link href="https://x" />
 		{/* @ts-expect-error: closed channel */}
 		<Link href="https://x" className="x" />
@@ -303,11 +303,11 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<Link href="https://x" classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<Link href="https://x" colorClassName="text-ink" />
+		<Link href="https://x" colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Link href="https://x" selectionColorClassName="text-ink" />
+		<Link href="https://x" selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Link href="https://x" placeholderTextColorClassName="text-ink" />
+		<Link href="https://x" placeholderTextColorClassName="text-ink-body" />
 		<Place title="a" />
 		{/* @ts-expect-error: closed channel */}
 		<Place title="a" className="x" />
@@ -318,11 +318,11 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<Place title="a" classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<Place title="a" colorClassName="text-ink" />
+		<Place title="a" colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Place title="a" selectionColorClassName="text-ink" />
+		<Place title="a" selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Place title="a" placeholderTextColorClassName="text-ink" />
+		<Place title="a" placeholderTextColorClassName="text-ink-body" />
 		<Screen title="a" back="/" />
 		{/* @ts-expect-error: closed channel */}
 		<Screen title="a" back="/" className="x" />
@@ -333,11 +333,11 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<Screen title="a" back="/" classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<Screen title="a" back="/" colorClassName="text-ink" />
+		<Screen title="a" back="/" colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Screen title="a" back="/" selectionColorClassName="text-ink" />
+		<Screen title="a" back="/" selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Screen title="a" back="/" placeholderTextColorClassName="text-ink" />
+		<Screen title="a" back="/" placeholderTextColorClassName="text-ink-body" />
 		<Split main={<Text />} />
 		{/* @ts-expect-error: closed channel */}
 		<Split main={<Text />} className="x" />
@@ -348,11 +348,11 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<Split main={<Text />} classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<Split main={<Text />} colorClassName="text-ink" />
+		<Split main={<Text />} colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Split main={<Text />} selectionColorClassName="text-ink" />
+		<Split main={<Text />} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Split main={<Text />} placeholderTextColorClassName="text-ink" />
+		<Split main={<Text />} placeholderTextColorClassName="text-ink-body" />
 		<Section title="a" />
 		{/* @ts-expect-error: closed channel */}
 		<Section title="a" className="x" />
@@ -363,11 +363,11 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<Section title="a" classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<Section title="a" colorClassName="text-ink" />
+		<Section title="a" colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Section title="a" selectionColorClassName="text-ink" />
+		<Section title="a" selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Section title="a" placeholderTextColorClassName="text-ink" />
+		<Section title="a" placeholderTextColorClassName="text-ink-body" />
 		<Group />
 		{/* @ts-expect-error: closed channel */}
 		<Group className="x" />
@@ -378,11 +378,11 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<Group classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<Group colorClassName="text-ink" />
+		<Group colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Group selectionColorClassName="text-ink" />
+		<Group selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Group placeholderTextColorClassName="text-ink" />
+		<Group placeholderTextColorClassName="text-ink-body" />
 		<List />
 		{/* @ts-expect-error: closed channel */}
 		<List className="x" />
@@ -393,11 +393,11 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<List classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<List colorClassName="text-ink" />
+		<List colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<List selectionColorClassName="text-ink" />
+		<List selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<List placeholderTextColorClassName="text-ink" />
+		<List placeholderTextColorClassName="text-ink-body" />
 		<Form onSubmit={noop} />
 		{/* @ts-expect-error: closed channel */}
 		<Form onSubmit={noop} className="x" />
@@ -408,11 +408,11 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<Form onSubmit={noop} classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<Form onSubmit={noop} colorClassName="text-ink" />
+		<Form onSubmit={noop} colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Form onSubmit={noop} selectionColorClassName="text-ink" />
+		<Form onSubmit={noop} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Form onSubmit={noop} placeholderTextColorClassName="text-ink" />
+		<Form onSubmit={noop} placeholderTextColorClassName="text-ink-body" />
 		<Toolbar />
 		{/* @ts-expect-error: closed channel */}
 		<Toolbar className="x" />
@@ -423,11 +423,11 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<Toolbar classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<Toolbar colorClassName="text-ink" />
+		<Toolbar colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Toolbar selectionColorClassName="text-ink" />
+		<Toolbar selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Toolbar placeholderTextColorClassName="text-ink" />
+		<Toolbar placeholderTextColorClassName="text-ink-body" />
 		<ActionBar />
 		{/* @ts-expect-error: closed channel */}
 		<ActionBar className="x" />
@@ -438,11 +438,11 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<ActionBar classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<ActionBar colorClassName="text-ink" />
+		<ActionBar colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<ActionBar selectionColorClassName="text-ink" />
+		<ActionBar selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<ActionBar placeholderTextColorClassName="text-ink" />
+		<ActionBar placeholderTextColorClassName="text-ink-body" />
 		<Columns />
 		{/* @ts-expect-error: closed channel */}
 		<Columns className="x" />
@@ -453,11 +453,11 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<Columns classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<Columns colorClassName="text-ink" />
+		<Columns colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Columns selectionColorClassName="text-ink" />
+		<Columns selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Columns placeholderTextColorClassName="text-ink" />
+		<Columns placeholderTextColorClassName="text-ink-body" />
 		<Shell places={[]} />
 		{/* @ts-expect-error: closed channel */}
 		<Shell places={[]} className="x" />
@@ -468,11 +468,11 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<Shell places={[]} classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<Shell places={[]} colorClassName="text-ink" />
+		<Shell places={[]} colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Shell places={[]} selectionColorClassName="text-ink" />
+		<Shell places={[]} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Shell places={[]} placeholderTextColorClassName="text-ink" />
+		<Shell places={[]} placeholderTextColorClassName="text-ink-body" />
 		<ListRow title="a" />
 		{/* @ts-expect-error: closed channel */}
 		<ListRow title="a" className="x" />
@@ -483,11 +483,11 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<ListRow title="a" classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<ListRow title="a" colorClassName="text-ink" />
+		<ListRow title="a" colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<ListRow title="a" selectionColorClassName="text-ink" />
+		<ListRow title="a" selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<ListRow title="a" placeholderTextColorClassName="text-ink" />
+		<ListRow title="a" placeholderTextColorClassName="text-ink-body" />
 		<DefinitionRow label="a" value="b" />
 		{/* @ts-expect-error: closed channel */}
 		<DefinitionRow label="a" value="b" className="x" />
@@ -498,11 +498,11 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<DefinitionRow label="a" value="b" classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<DefinitionRow label="a" value="b" colorClassName="text-ink" />
+		<DefinitionRow label="a" value="b" colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<DefinitionRow label="a" value="b" selectionColorClassName="text-ink" />
+		<DefinitionRow label="a" value="b" selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<DefinitionRow label="a" value="b" placeholderTextColorClassName="text-ink" />
+		<DefinitionRow label="a" value="b" placeholderTextColorClassName="text-ink-body" />
 		<FormField label="a" />
 		{/* @ts-expect-error: closed channel */}
 		<FormField label="a" className="x" />
@@ -513,11 +513,11 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<FormField label="a" classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<FormField label="a" colorClassName="text-ink" />
+		<FormField label="a" colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<FormField label="a" selectionColorClassName="text-ink" />
+		<FormField label="a" selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<FormField label="a" placeholderTextColorClassName="text-ink" />
+		<FormField label="a" placeholderTextColorClassName="text-ink-body" />
 		<ItemHeader title="a" />
 		{/* @ts-expect-error: closed channel */}
 		<ItemHeader title="a" className="x" />
@@ -528,11 +528,11 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<ItemHeader title="a" classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<ItemHeader title="a" colorClassName="text-ink" />
+		<ItemHeader title="a" colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<ItemHeader title="a" selectionColorClassName="text-ink" />
+		<ItemHeader title="a" selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<ItemHeader title="a" placeholderTextColorClassName="text-ink" />
+		<ItemHeader title="a" placeholderTextColorClassName="text-ink-body" />
 		<SegmentedControl options={[]} value="a" onChange={noop} />
 		{/* @ts-expect-error: closed channel */}
 		<SegmentedControl options={[]} value="a" onChange={noop} className="x" />
@@ -543,11 +543,11 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<SegmentedControl options={[]} value="a" onChange={noop} classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<SegmentedControl options={[]} value="a" onChange={noop} colorClassName="text-ink" />
+		<SegmentedControl options={[]} value="a" onChange={noop} colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<SegmentedControl options={[]} value="a" onChange={noop} selectionColorClassName="text-ink" />
+		<SegmentedControl options={[]} value="a" onChange={noop} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<SegmentedControl options={[]} value="a" onChange={noop} placeholderTextColorClassName="text-ink" />
+		<SegmentedControl options={[]} value="a" onChange={noop} placeholderTextColorClassName="text-ink-body" />
 		<Sheet open onClose={noop} title="a" />
 		{/* @ts-expect-error: closed channel */}
 		<Sheet open onClose={noop} title="a" className="x" />
@@ -558,11 +558,11 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<Sheet open onClose={noop} title="a" classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<Sheet open onClose={noop} title="a" colorClassName="text-ink" />
+		<Sheet open onClose={noop} title="a" colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Sheet open onClose={noop} title="a" selectionColorClassName="text-ink" />
+		<Sheet open onClose={noop} title="a" selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Sheet open onClose={noop} title="a" placeholderTextColorClassName="text-ink" />
+		<Sheet open onClose={noop} title="a" placeholderTextColorClassName="text-ink-body" />
 		<Picker label="a" options={[]} onChange={noop} />
 		{/* @ts-expect-error: closed channel */}
 		<Picker label="a" options={[]} onChange={noop} className="x" />
@@ -573,11 +573,11 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<Picker label="a" options={[]} onChange={noop} classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<Picker label="a" options={[]} onChange={noop} colorClassName="text-ink" />
+		<Picker label="a" options={[]} onChange={noop} colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Picker label="a" options={[]} onChange={noop} selectionColorClassName="text-ink" />
+		<Picker label="a" options={[]} onChange={noop} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Picker label="a" options={[]} onChange={noop} placeholderTextColorClassName="text-ink" />
+		<Picker label="a" options={[]} onChange={noop} placeholderTextColorClassName="text-ink-body" />
 		<OptionList options={[]} onChange={noop} />
 		{/* @ts-expect-error: closed channel */}
 		<OptionList options={[]} onChange={noop} className="x" />
@@ -588,11 +588,11 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<OptionList options={[]} onChange={noop} classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<OptionList options={[]} onChange={noop} colorClassName="text-ink" />
+		<OptionList options={[]} onChange={noop} colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<OptionList options={[]} onChange={noop} selectionColorClassName="text-ink" />
+		<OptionList options={[]} onChange={noop} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<OptionList options={[]} onChange={noop} placeholderTextColorClassName="text-ink" />
+		<OptionList options={[]} onChange={noop} placeholderTextColorClassName="text-ink-body" />
 		<EmptyState sentence="a" />
 		{/* @ts-expect-error: closed channel */}
 		<EmptyState sentence="a" className="x" />
@@ -603,11 +603,11 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<EmptyState sentence="a" classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<EmptyState sentence="a" colorClassName="text-ink" />
+		<EmptyState sentence="a" colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<EmptyState sentence="a" selectionColorClassName="text-ink" />
+		<EmptyState sentence="a" selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<EmptyState sentence="a" placeholderTextColorClassName="text-ink" />
+		<EmptyState sentence="a" placeholderTextColorClassName="text-ink-body" />
 		<Toast sentence="a" />
 		{/* @ts-expect-error: closed channel */}
 		<Toast sentence="a" className="x" />
@@ -618,11 +618,11 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<Toast sentence="a" classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<Toast sentence="a" colorClassName="text-ink" />
+		<Toast sentence="a" colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Toast sentence="a" selectionColorClassName="text-ink" />
+		<Toast sentence="a" selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Toast sentence="a" placeholderTextColorClassName="text-ink" />
+		<Toast sentence="a" placeholderTextColorClassName="text-ink-body" />
 		<Banner sentence="a" />
 		{/* @ts-expect-error: closed channel */}
 		<Banner sentence="a" className="x" />
@@ -633,11 +633,11 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<Banner sentence="a" classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<Banner sentence="a" colorClassName="text-ink" />
+		<Banner sentence="a" colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Banner sentence="a" selectionColorClassName="text-ink" />
+		<Banner sentence="a" selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Banner sentence="a" placeholderTextColorClassName="text-ink" />
+		<Banner sentence="a" placeholderTextColorClassName="text-ink-body" />
 		<PendingBar sentence="a" />
 		{/* @ts-expect-error: closed channel */}
 		<PendingBar sentence="a" className="x" />
@@ -648,11 +648,11 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<PendingBar sentence="a" classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<PendingBar sentence="a" colorClassName="text-ink" />
+		<PendingBar sentence="a" colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<PendingBar sentence="a" selectionColorClassName="text-ink" />
+		<PendingBar sentence="a" selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<PendingBar sentence="a" placeholderTextColorClassName="text-ink" />
+		<PendingBar sentence="a" placeholderTextColorClassName="text-ink-body" />
 		<Prose markdown="a" />
 		{/* @ts-expect-error: closed channel */}
 		<Prose markdown="a" className="x" />
@@ -663,11 +663,11 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<Prose markdown="a" classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<Prose markdown="a" colorClassName="text-ink" />
+		<Prose markdown="a" colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Prose markdown="a" selectionColorClassName="text-ink" />
+		<Prose markdown="a" selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Prose markdown="a" placeholderTextColorClassName="text-ink" />
+		<Prose markdown="a" placeholderTextColorClassName="text-ink-body" />
 		<Code text="a" />
 		{/* @ts-expect-error: closed channel */}
 		<Code text="a" className="x" />
@@ -678,11 +678,11 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<Code text="a" classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<Code text="a" colorClassName="text-ink" />
+		<Code text="a" colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Code text="a" selectionColorClassName="text-ink" />
+		<Code text="a" selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Code text="a" placeholderTextColorClassName="text-ink" />
+		<Code text="a" placeholderTextColorClassName="text-ink-body" />
 		<Diff hunks={[]} />
 		{/* @ts-expect-error: closed channel */}
 		<Diff hunks={[]} className="x" />
@@ -693,11 +693,11 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<Diff hunks={[]} classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<Diff hunks={[]} colorClassName="text-ink" />
+		<Diff hunks={[]} colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Diff hunks={[]} selectionColorClassName="text-ink" />
+		<Diff hunks={[]} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Diff hunks={[]} placeholderTextColorClassName="text-ink" />
+		<Diff hunks={[]} placeholderTextColorClassName="text-ink-body" />
 		<Menu label="a" items={[[{ label: "a", onAct: noop, icon: "a" }], [{ label: "a", onAct: noop, destructive: true, blocked: "a" }]]} />
 		{/* @ts-expect-error: closed channel */}
 		<Menu label="a" items={[]} className="x" />
@@ -708,11 +708,11 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<Menu label="a" items={[]} classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<Menu label="a" items={[]} colorClassName="text-ink" />
+		<Menu label="a" items={[]} colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Menu label="a" items={[]} selectionColorClassName="text-ink" />
+		<Menu label="a" items={[]} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Menu label="a" items={[]} placeholderTextColorClassName="text-ink" />
+		<Menu label="a" items={[]} placeholderTextColorClassName="text-ink-body" />
 		<Diff before="a" after="b" />
 		{/* @ts-expect-error: hunks and two texts exclude each other */}
 		<Diff hunks={[]} before="a" after="b" />
@@ -731,11 +731,11 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<Table columns={[]} rows={[]} classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<Table columns={[]} rows={[]} colorClassName="text-ink" />
+		<Table columns={[]} rows={[]} colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Table columns={[]} rows={[]} selectionColorClassName="text-ink" />
+		<Table columns={[]} rows={[]} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Table columns={[]} rows={[]} placeholderTextColorClassName="text-ink" />
+		<Table columns={[]} rows={[]} placeholderTextColorClassName="text-ink-body" />
 		<FileRow path="a" added={1} removed={0} />
 		{/* @ts-expect-error: closed channel */}
 		<FileRow path="a" added={1} removed={0} className="x" />
@@ -746,11 +746,11 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<FileRow path="a" added={1} removed={0} classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<FileRow path="a" added={1} removed={0} colorClassName="text-ink" />
+		<FileRow path="a" added={1} removed={0} colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<FileRow path="a" added={1} removed={0} selectionColorClassName="text-ink" />
+		<FileRow path="a" added={1} removed={0} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<FileRow path="a" added={1} removed={0} placeholderTextColorClassName="text-ink" />
+		<FileRow path="a" added={1} removed={0} placeholderTextColorClassName="text-ink-body" />
 		<ProseDiff before="a" after="b" />
 		{/* @ts-expect-error: closed channel */}
 		<ProseDiff before="a" after="b" className="x" />
@@ -761,11 +761,11 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<ProseDiff before="a" after="b" classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<ProseDiff before="a" after="b" colorClassName="text-ink" />
+		<ProseDiff before="a" after="b" colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<ProseDiff before="a" after="b" selectionColorClassName="text-ink" />
+		<ProseDiff before="a" after="b" selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<ProseDiff before="a" after="b" placeholderTextColorClassName="text-ink" />
+		<ProseDiff before="a" after="b" placeholderTextColorClassName="text-ink-body" />
 		<Comparison rows={[]} />
 		{/* @ts-expect-error: closed channel */}
 		<Comparison rows={[]} className="x" />
@@ -776,11 +776,11 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<Comparison rows={[]} classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<Comparison rows={[]} colorClassName="text-ink" />
+		<Comparison rows={[]} colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Comparison rows={[]} selectionColorClassName="text-ink" />
+		<Comparison rows={[]} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Comparison rows={[]} placeholderTextColorClassName="text-ink" />
+		<Comparison rows={[]} placeholderTextColorClassName="text-ink-body" />
 		<Message author="you" body="a" />
 		{/* @ts-expect-error: closed channel */}
 		<Message author="you" body="a" className="x" />
@@ -791,11 +791,11 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<Message author="you" body="a" classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<Message author="you" body="a" colorClassName="text-ink" />
+		<Message author="you" body="a" colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Message author="you" body="a" selectionColorClassName="text-ink" />
+		<Message author="you" body="a" selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Message author="you" body="a" placeholderTextColorClassName="text-ink" />
+		<Message author="you" body="a" placeholderTextColorClassName="text-ink-body" />
 		<MessageInput value="" onChange={noop} onSend={noop} />
 		{/* @ts-expect-error: closed channel */}
 		<MessageInput value="" onChange={noop} onSend={noop} className="x" />
@@ -806,11 +806,11 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<MessageInput value="" onChange={noop} onSend={noop} classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<MessageInput value="" onChange={noop} onSend={noop} colorClassName="text-ink" />
+		<MessageInput value="" onChange={noop} onSend={noop} colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<MessageInput value="" onChange={noop} onSend={noop} selectionColorClassName="text-ink" />
+		<MessageInput value="" onChange={noop} onSend={noop} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<MessageInput value="" onChange={noop} onSend={noop} placeholderTextColorClassName="text-ink" />
+		<MessageInput value="" onChange={noop} onSend={noop} placeholderTextColorClassName="text-ink-body" />
 		<Meter label="a" value={1} max={2} />
 		{/* @ts-expect-error: closed channel */}
 		<Meter label="a" value={1} max={2} className="x" />
@@ -821,11 +821,11 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<Meter label="a" value={1} max={2} classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<Meter label="a" value={1} max={2} colorClassName="text-ink" />
+		<Meter label="a" value={1} max={2} colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Meter label="a" value={1} max={2} selectionColorClassName="text-ink" />
+		<Meter label="a" value={1} max={2} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Meter label="a" value={1} max={2} placeholderTextColorClassName="text-ink" />
+		<Meter label="a" value={1} max={2} placeholderTextColorClassName="text-ink-body" />
 		<BarChart series={[]} />
 		{/* @ts-expect-error: closed channel */}
 		<BarChart series={[]} className="x" />
@@ -836,26 +836,26 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<BarChart series={[]} classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<BarChart series={[]} colorClassName="text-ink" />
+		<BarChart series={[]} colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<BarChart series={[]} selectionColorClassName="text-ink" />
+		<BarChart series={[]} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<BarChart series={[]} placeholderTextColorClassName="text-ink" />
-		<Chip label="a" family={1} />
+		<BarChart series={[]} placeholderTextColorClassName="text-ink-body" />
+		<Chip label="a" family="red" />
 		{/* @ts-expect-error: closed channel */}
-		<Chip label="a" family={1} className="x" />
+		<Chip label="a" family="red" className="x" />
 		{/* @ts-expect-error: closed channel */}
-		<Chip label="a" family={1} style={{ flex: 1 }} />
+		<Chip label="a" family="red" style={{ flex: 1 }} />
 		{/* @ts-expect-error: closed channel */}
-		<Chip label="a" family={1} class="x" />
+		<Chip label="a" family="red" class="x" />
 		{/* @ts-expect-error: closed channel */}
-		<Chip label="a" family={1} classList={{}} />
+		<Chip label="a" family="red" classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<Chip label="a" family={1} colorClassName="text-ink" />
+		<Chip label="a" family="red" colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Chip label="a" family={1} selectionColorClassName="text-ink" />
+		<Chip label="a" family="red" selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Chip label="a" family={1} placeholderTextColorClassName="text-ink" />
+		<Chip label="a" family="red" placeholderTextColorClassName="text-ink-body" />
 		{/* @ts-expect-error: a family is one of the six */}
 		<Chip label="a" family={7} />
 		<EnumInput value={["a"]} onChange={noop} placeholder="a" />
@@ -868,11 +868,11 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<EnumInput value={[]} onChange={noop} classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<EnumInput value={[]} onChange={noop} colorClassName="text-ink" />
+		<EnumInput value={[]} onChange={noop} colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<EnumInput value={[]} onChange={noop} selectionColorClassName="text-ink" />
+		<EnumInput value={[]} onChange={noop} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<EnumInput value={[]} onChange={noop} placeholderTextColorClassName="text-ink" />
+		<EnumInput value={[]} onChange={noop} placeholderTextColorClassName="text-ink-body" />
 		<QueryBoundary query={count} sentence="a">{(n) => <Count value={n} />}</QueryBoundary>
 		{/* @ts-expect-error: closed channel */}
 		<QueryBoundary query={count} sentence="a" children={() => null} className="x" />
@@ -883,11 +883,11 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<QueryBoundary query={count} sentence="a" children={() => null} classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<QueryBoundary query={count} sentence="a" children={() => null} colorClassName="text-ink" />
+		<QueryBoundary query={count} sentence="a" children={() => null} colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<QueryBoundary query={count} sentence="a" children={() => null} selectionColorClassName="text-ink" />
+		<QueryBoundary query={count} sentence="a" children={() => null} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<QueryBoundary query={count} sentence="a" children={() => null} placeholderTextColorClassName="text-ink" />
+		<QueryBoundary query={count} sentence="a" children={() => null} placeholderTextColorClassName="text-ink-body" />
 		<QueryBoundary query={[live, count]} sentence="a">
 			{([rows, n]) => <Count value={rows.length + n} />}
 		</QueryBoundary>
@@ -945,10 +945,10 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<QrCode value="a" classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<QrCode value="a" colorClassName="text-ink" />
+		<QrCode value="a" colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<QrCode value="a" selectionColorClassName="text-ink" />
+		<QrCode value="a" selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<QrCode value="a" placeholderTextColorClassName="text-ink" />
+		<QrCode value="a" placeholderTextColorClassName="text-ink-body" />
 	</>
 );

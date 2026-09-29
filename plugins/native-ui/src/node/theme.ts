@@ -17,18 +17,17 @@ export function themeDeclarations(
 }
 
 // `--shadow-*` is one of the reset namespaces, so the elevation ladder ships
-// as top-level `@utility` blocks, name → declarations: a shadow, or under
-// `elevation: "flat"` the `edge` ring.
-export function shadowBlocks(
-	resolved: ResolvedTheme,
-): Array<[string, Record<string, string>]> {
-	return Object.entries(shadowUtilities(resolved));
+// as top-level `@utility` blocks, name → declarations, each reading its
+// mode's variable.
+export function shadowBlocks(): Array<[string, Record<string, string>]> {
+	return Object.entries(shadowUtilities());
 }
 
-// Both `@variant` blocks carry every per-mode color, so the variable sets are
-// equal by construction and uniwind's equal-set check can never fire on our
-// output. No `color-scheme` declaration: `Appearance` sync is uniwind's job
-// via `setTheme`, and a non-var declaration inside a `@variant` block is
+// Both `@variant` blocks carry every per-mode value (the colors and the two
+// shadows, by full custom-property name), so the variable sets are equal by
+// construction and uniwind's equal-set check can never fire on our output.
+// No `color-scheme` declaration: `Appearance` sync is uniwind's job via
+// `setTheme`, and a non-var declaration inside a `@variant` block is
 // discovered and ignored.
 export function modeBlocks(
 	resolved: ResolvedTheme,

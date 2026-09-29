@@ -42,9 +42,9 @@ export function MessageInput({
 	const [focused, setFocused] = useState(false);
 	const empty = value.trim().length === 0;
 	return (
-		<View className="gap-row">
+		<View className="gap-inside">
 			{attachments && attachments.length > 0 ? (
-				<View className="flex-row flex-wrap gap-row">
+				<View className="flex-row flex-wrap gap-inside">
 					{attachments.map((attachment) => (
 						<RNText key={attachment.id} className={COUNT}>
 							{attachment.name}
@@ -52,7 +52,7 @@ export function MessageInput({
 					))}
 				</View>
 			) : null}
-			<View className="flex-row items-end gap-row">
+			<View className="flex-row items-end gap-inside">
 				{onAttach ? (
 					<Circle icon={Plus} label={words.attach} onAct={onAttach} />
 				) : null}
@@ -87,7 +87,7 @@ export function MessageInput({
 				)}
 			</View>
 			{notice ? (
-				<View className="flex-row items-center gap-row">
+				<View className="flex-row items-center gap-inside">
 					<RNText className={cn(text({ role: "meta" }), "flex-1")}>
 						{notice.sentence}
 					</RNText>
@@ -99,7 +99,10 @@ export function MessageInput({
 							className="min-h-11 justify-center"
 						>
 							<RNText
-								className={cn(text({ role: "meta" }), "font-medium text-tint")}
+								className={cn(
+									text({ role: "meta" }),
+									"font-medium text-accent-ink",
+								)}
 							>
 								{notice.act.label}
 							</RNText>

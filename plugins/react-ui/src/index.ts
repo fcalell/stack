@@ -18,13 +18,16 @@ import {
 	densityLayer,
 	modeLayer,
 	motionLayer,
+	rootLayer,
 	shadowBlocks,
 	themeBlock,
+	tokenSources,
 } from "./node/theme.ts";
 import {
 	type CssBlock,
 	type CssImport,
 	type CssLayer,
+	type CssSourceInline,
 	type ReactUiOptions,
 	reactUiOptionsSchema,
 } from "./types.ts";
@@ -90,6 +93,11 @@ const appCssImports = slot.list<CssImport>({
 	name: "appCssImports",
 });
 
+const appCssSources = slot.list<CssSourceInline>({
+	source: SOURCE,
+	name: "appCssSources",
+});
+
 // Top-level `@theme` / `@utility` blocks. Separate from `appCssLayers`
 // because neither at-rule may sit inside a `@layer`.
 const appCssBlocks = slot.list<CssBlock>({
@@ -141,12 +149,14 @@ const appCssSource = slot.derived({
 	name: "appCssSource",
 	inputs: {
 		imports: appCssImports,
+		sources: appCssSources,
 		blocks: appCssBlocks,
 		layers: appCssLayers,
 	},
 	compute: (inp): string | null =>
 		aggregateAppCss({
 			imports: inp.imports,
+			sources: inp.sources,
 			blocks: inp.blocks,
 			layers: inp.layers,
 		}),
@@ -169,6 +179,7 @@ export const reactUi = plugin("react-ui", {
 
 	slots: {
 		appCssImports,
+		appCssSources,
 		appCssBlocks,
 		appCssLayers,
 		fonts,
@@ -288,11 +299,13 @@ export const reactUi = plugin("react-ui", {
 		self.slots.appCssImports.contribute(
 			() => "@fcalell/plugin-react-ui/globals.css",
 		),
+		self.slots.appCssSources.contribute(() => tokenSources()),
 		self.slots.appCssBlocks.contribute(async (ctx) =>
 			themeBlock(await ctx.resolve(self.slots.resolvedTheme)),
 		),
-		self.slots.appCssBlocks.contribute(async (ctx) =>
-			shadowBlocks(await ctx.resolve(self.slots.resolvedTheme)),
+		self.slots.appCssBlocks.contribute(() => shadowBlocks()),
+		self.slots.appCssLayers.contribute(async (ctx) =>
+			rootLayer(await ctx.resolve(self.slots.resolvedTheme)),
 		),
 		self.slots.appCssLayers.contribute(async (ctx) =>
 			modeLayer(await ctx.resolve(self.slots.resolvedTheme)),

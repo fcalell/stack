@@ -80,10 +80,10 @@ export function DefinitionRow({
 			className={cn(
 				row({ state: "rest" }),
 				"justify-center gap-pair",
-				open && "active:bg-edge",
+				open && "active:bg-wash-press",
 			)}
 		>
-			<View className="flex-row items-center gap-stack">
+			<View className="flex-row items-center gap-pair">
 				<RNText
 					className={cn(
 						text({ role: "body" }),
@@ -100,7 +100,7 @@ export function DefinitionRow({
 				<RNText className={text({ role: "meta" })}>{description}</RNText>
 			) : null}
 			{stacked ? (
-				<View className="flex-row items-center gap-stack">
+				<View className="flex-row items-center gap-pair">
 					<View className="min-w-0 flex-1">{shown}</View>
 					{acts}
 				</View>

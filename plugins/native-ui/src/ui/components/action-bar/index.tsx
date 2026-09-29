@@ -10,5 +10,5 @@ export interface ActionBarProps extends Closed {
 // stacked, the primary first. A Screen pins it above the home indicator; a
 // Form or a Sheet keeps it in flow.
 export function ActionBar({ children }: ActionBarProps) {
-	return <View className="gap-row">{children}</View>;
+	return <View className="gap-inside">{children}</View>;
 }

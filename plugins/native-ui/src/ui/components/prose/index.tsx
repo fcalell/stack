@@ -35,7 +35,7 @@ function inline(tokens: Token[] | undefined, key = "i"): ReactNode[] {
 				);
 			case "codespan":
 				return (
-					<RNText key={id} className={cn(text({ role: "mono" }), "bg-group")}>
+					<RNText key={id} className={cn(text({ role: "code" }), "bg-group")}>
 						{(token as Tokens.Codespan).text}
 					</RNText>
 				);
@@ -46,7 +46,7 @@ function inline(tokens: Token[] | undefined, key = "i"): ReactNode[] {
 					<RNText
 						key={id}
 						accessibilityRole={href ? "link" : undefined}
-						className={cn(href && "text-tint underline")}
+						className={cn(href && "text-accent-ink underline")}
 						onPress={href ? () => Linking.openURL(href) : undefined}
 					>
 						{inline(link.tokens, id)}
@@ -105,7 +105,7 @@ function block(token: Token, key: string): ReactNode {
 			return <Code key={key} text={(token as Tokens.Code).text} />;
 		case "blockquote":
 			return (
-				<View key={key} className="border-l-2 border-edge pl-stack">
+				<View key={key} className="border-l-2 border-edge pl-pair">
 					{(token as Tokens.Blockquote).tokens.map((child, index) =>
 						block(child, `${key}q${index}`),
 					)}
@@ -116,7 +116,7 @@ function block(token: Token, key: string): ReactNode {
 			return (
 				<View key={key} className="gap-pair">
 					{keyed(list.items, key).map(([item, itemKey], position) => (
-						<View key={itemKey} className="flex-row gap-row">
+						<View key={itemKey} className="flex-row gap-inside">
 							<RNText className={text({ role: "body" })}>
 								{list.ordered
 									? `${(Number(list.start) || 1) + position}.`
@@ -157,7 +157,7 @@ export function Prose({ markdown, loading }: ProseProps) {
 	if (loading) return <LoadingRows />;
 	const tokens = lexer(markdown);
 	return (
-		<View className="gap-stack">
+		<View className="gap-fields">
 			{keyed(tokens, "b").map(([token, tokenKey]) => block(token, tokenKey))}
 		</View>
 	);

@@ -33,12 +33,12 @@ export function EnumInput({ value, onChange, placeholder }: EnumInputProps) {
 					key={item}
 					className={cn(
 						field({ kind: "code", state: "default" }),
-						"flex-row items-center gap-row",
+						"flex-row items-center gap-inside",
 					)}
 				>
 					<RNText
 						numberOfLines={1}
-						className={cn(text({ role: "mono" }), "flex-1")}
+						className={cn(text({ role: "code" }), "flex-1")}
 					>
 						{item}
 					</RNText>
@@ -50,7 +50,10 @@ export function EnumInput({ value, onChange, placeholder }: EnumInputProps) {
 						className="min-h-11 justify-center"
 					>
 						<RNText
-							className={cn(text({ role: "body" }), "font-medium text-tint")}
+							className={cn(
+								text({ role: "body" }),
+								"font-medium text-accent-ink",
+							)}
 						>
 							{words.remove}
 						</RNText>

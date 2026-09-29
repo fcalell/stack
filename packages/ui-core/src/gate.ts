@@ -15,11 +15,15 @@ import {
 	SyntaxKind,
 	ts,
 } from "ts-morph";
-import { SPACING_RUNGS } from "./tokens.ts";
+import type { GapRole } from "./tokens.ts";
+
+// The gaps a call site may spell: the two inside a line. Vertical rhythm
+// (`rows`, `fields`, `sections`) belongs to the layout molecules that own it,
+// so a screen composes a `Form` or a `Section` and never a gap.
+export const CALL_SITE_GAPS: readonly GapRole[] = ["inside", "pair"];
 
 // One shared vocabulary for both platforms: the PRD's geometry families with
-// their non-numeric members spelled out. The gap cells are the spacing rungs,
-// derived so the two lists cannot drift.
+// their non-numeric members spelled out. The gap cells are `CALL_SITE_GAPS`.
 export const GEOMETRY: {
 	exact: readonly string[];
 	prefixes: readonly string[];
@@ -59,7 +63,7 @@ export const GEOMETRY: {
 		// (`ScrollArea` on web, the `ScrollView` host on native), with consumer
 		// `ui/` the fallback, so `overflow-auto` and the axis variants stay out.
 		"overflow-hidden",
-		...SPACING_RUNGS.map((rung) => `gap-${rung}`),
+		...CALL_SITE_GAPS.map((role) => `gap-${role}`),
 	],
 	prefixes: ["items-", "justify-", "self-", "z-"],
 };

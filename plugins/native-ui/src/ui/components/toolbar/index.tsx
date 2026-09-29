@@ -10,6 +10,8 @@ export interface ToolbarProps extends Closed {
 // field, a switch.
 export function Toolbar({ children }: ToolbarProps) {
 	return (
-		<View className="flex-row flex-wrap items-center gap-row">{children}</View>
+		<View className="flex-row flex-wrap items-center gap-inside">
+			{children}
+		</View>
 	);
 }

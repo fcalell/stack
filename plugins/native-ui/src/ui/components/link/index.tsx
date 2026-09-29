@@ -14,7 +14,7 @@ export function Link({ href, children }: LinkProps) {
 	return (
 		<RNText
 			accessibilityRole="link"
-			className={cn(text({ role: "body" }), "text-tint underline")}
+			className={cn(text({ role: "body" }), "text-accent-ink underline")}
 			onPress={() => {
 				Linking.openURL(href);
 			}}

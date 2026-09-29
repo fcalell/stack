@@ -19,7 +19,7 @@ export function Checkbox({ checked, onChange, label }: CheckboxProps) {
 			accessibilityState={{ checked }}
 			accessibilityLabel={label}
 			onPress={() => onChange(!checked)}
-			className="min-h-11 flex-row items-center gap-stack"
+			className="min-h-11 flex-row items-center gap-pair"
 		>
 			<View
 				className={cn(

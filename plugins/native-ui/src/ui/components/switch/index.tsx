@@ -17,7 +17,7 @@ export function Switch({ checked, onChange, label }: SwitchProps) {
 			accessibilityState={{ checked }}
 			accessibilityLabel={label}
 			onPress={() => onChange(!checked)}
-			className="min-h-11 flex-row items-center justify-between gap-row"
+			className="min-h-11 flex-row items-center justify-between gap-inside"
 		>
 			<RNText className={cn(text({ role: "body" }), "flex-1")}>{label}</RNText>
 			<View

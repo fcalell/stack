@@ -4,7 +4,7 @@
 // package.
 import { cva } from "class-variance-authority";
 import type { ClassValue } from "clsx";
-import type { InvariantColor, PerModeColor } from "./tokens.ts";
+import type { ColorName } from "./tokens.ts";
 import {
 	AVATAR,
 	type Axes,
@@ -165,45 +165,45 @@ export function matrixCells(
 }
 
 // Single cells: one class string each, shared verbatim by both plugins.
-export const BUTTON_MUTED = "bg-group";
-export const BUTTON_MUTED_LABEL = "text-ink-faint";
+export const BUTTON_MUTED = "bg-fill-disabled";
+export const BUTTON_MUTED_LABEL = "text-ink-disabled";
 export const ICON_BUTTON =
-	"rounded-full min-h-floor min-w-floor bg-group text-ink";
-// The same circle in a top bar: drawn compact, its 44 px hit area kept by the
-// plugin around it.
-export const ICON_BUTTON_BAR = "rounded-full min-h-8 min-w-8 bg-group text-ink";
+	"rounded-control min-h-control min-w-control text-ink-body";
+// The same control in a top bar, drawn compact; the plugin keeps the target
+// around it.
+export const ICON_BUTTON_BAR =
+	"rounded-control min-h-control-compact min-w-control-compact text-ink-body";
 export const COUNT =
-	"rounded-full bg-group min-w-6 px-2 text-label leading-label font-medium text-tint";
-export const STATUS_CHIP = "rounded-full bg-group min-h-floor px-3";
-export const FIELD_PLACEHOLDER = "text-ink-faint";
-// A picker's empty choice and its control with no value: a placeholder's look
-// in `ink-meta`, since it is text a viewer reads and `ink-faint` misses 4.5:1.
+	"rounded-full bg-group min-w-chip px-inside text-caption leading-caption tracking-caption font-medium text-ink-meta";
+export const STATUS_CHIP = "rounded-full bg-group min-h-control px-control-x";
+export const FIELD_PLACEHOLDER = "text-ink-meta";
+// A picker's empty choice and its control with no value: a placeholder's
+// look.
 export const PICKER_EMPTY = "text-ink-meta";
-export const GROUP = "rounded-group bg-group";
+export const GROUP = "rounded-card bg-group";
 export const HAIRLINE = "border-edge";
-export const SWITCH_THUMB = "rounded-full bg-thumb";
+export const SWITCH_THUMB = "rounded-full bg-switch-thumb";
 export const CHECKBOX_MARK = "text-on-accent";
-export const SEGMENTED_CONTROL = "rounded-full bg-group p-pair gap-pair";
+export const SEGMENTED_CONTROL = "rounded-control bg-group p-rows gap-rows";
 export const TOAST =
-	"rounded-full bg-ink px-inset py-stack gap-row text-meta leading-meta text-canvas";
-export const SHEET = "bg-surface rounded-t-sheet";
-export const SHEET_CENTERED = "rounded-sheet";
+	"rounded-card bg-raised border border-edge px-card py-pair gap-inside text-body leading-body text-ink-body";
+export const SHEET = "bg-raised rounded-t-sheet";
+export const SHEET_CENTERED = "rounded-dialog";
 export const SCRIM = "bg-scrim";
-export const PENDING_BAR = "rounded-full bg-group min-h-floor px-inset gap-row";
-export const PENDING_FILL = "rounded-full bg-accent-soft";
+export const PENDING_BAR =
+	"rounded-control bg-group min-h-control px-card gap-inside";
+export const PENDING_FILL = "rounded-control bg-accent-soft";
 export const METER_TRACK = "rounded-full bg-group";
-export const METER_FILL = "rounded-full bg-tint";
-export const DIFF_GUTTER = "text-ink-faint";
-export const CODE = "rounded-group bg-group p-stack";
-// A data table's cell: the floor, a field's vertical padding, and a field's
-// side padding behind a transparent side border, so a cell and the `Input`
-// that edits it in place put their text in one place and the row keeps its
-// height: 32 under the compact set, 44 on touch.
+export const METER_FILL = "rounded-full bg-accent";
+export const DIFF_GUTTER = "text-ink-meta";
+export const CODE = "rounded-card bg-group p-card";
+// A data table's cell: a field's box behind a transparent side border, so the
+// `Input` that edits it in place keeps the row's height.
 export const TABLE_CELL =
-	"min-h-floor border-x border-transparent px-4 py-control-y";
-export const PLACE_ROW_SELECTED = "bg-accent-soft";
+	"min-h-field border-x border-transparent px-control-x";
+export const PLACE_ROW_SELECTED = "bg-wash-selected";
 // Switch and checkbox mute by fading; a button swaps fills through BUTTON_MUTED.
-export const CONTROL_MUTED = "opacity-50";
+export const CONTROL_MUTED = "opacity-45";
 
 export type TextRole = keyof (typeof TEXT)["variants"]["role"];
 export type ButtonAct = keyof (typeof BUTTON)["variants"]["act"];
@@ -225,14 +225,15 @@ export type ChipCell = keyof (typeof CHIP)["variants"]["family"];
 export type PlaceState = keyof (typeof PLACE)["variants"]["state"];
 export type RhythmUnit = keyof (typeof RHYTHM)["variants"]["unit"];
 
-export type ContentTone = PerModeColor | InvariantColor;
+export type ContentTone = ColorName;
 
 // The label matrices already carry the answer, so the tint a plugin hands to
 // its own icon or spinner is read back off the label cell instead of being
 // written a second time.
 function inkToken(cell: string): ContentTone {
 	const ink = cell.split(/\s+/).find((name) => name.startsWith("text-"));
-	return (ink ?? "text-ink").slice("text-".length) as ContentTone;
+	// Every label cell names a contract ink, which c22 pins.
+	return (ink ?? "text-ink-body").slice("text-".length) as ContentTone;
 }
 
 export function buttonContentTone(act: ButtonAct): ContentTone {

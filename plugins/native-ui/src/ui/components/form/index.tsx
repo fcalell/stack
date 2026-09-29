@@ -20,7 +20,7 @@ export function Form({ onSubmit, children }: FormProps) {
 			<TouchedContext.Provider
 				value={{ touched, touch: () => setTouched(true) }}
 			>
-				<View className="gap-stack">{children}</View>
+				<View className="gap-fields">{children}</View>
 			</TouchedContext.Provider>
 		</FormContext.Provider>
 	);

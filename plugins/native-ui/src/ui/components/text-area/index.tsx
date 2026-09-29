@@ -54,7 +54,7 @@ export function TextArea({
 						kind: source ? "code" : "text",
 						state: focused ? "focused" : "default",
 					}),
-					text({ role: source ? "mono" : "body" }),
+					text({ role: source ? "code" : "body" }),
 					"min-h-20",
 				)}
 				placeholderTextColorClassName={FIELD_PLACEHOLDER}
