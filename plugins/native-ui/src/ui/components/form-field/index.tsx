@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
+import { FieldNameContext } from "../../lib/field";
 
 interface FormFieldBase extends Closed {
 	label: string;
@@ -26,10 +27,10 @@ export type FormFieldProps<V = unknown> = FormFieldBase &
 		  }
 	);
 
-// A typing control with its label, its description and its error, stacked.
-// Bound to a form field, it draws the field's error and hands the control
-// its value and change handler, and an autosaving binding's commit:
-// `{(control) => <Input {...control} />}`.
+// A typing control with its label, its description and its error, stacked;
+// the label names the control. Bound to a form field, it draws the field's
+// error and hands the control its value and change handler, and an
+// autosaving binding's commit: `{(control) => <Input {...control} />}`.
 export function FormField<V>(props: FormFieldProps<V>) {
 	const { label, description } = props;
 	const error = props.field ? props.field.error : props.error;
@@ -41,9 +42,11 @@ export function FormField<V>(props: FormFieldProps<V>) {
 			})
 		: props.children;
 	return (
-		<View className="gap-pair" accessibilityLabel={label}>
+		<View className="gap-pair">
 			<RNText className={text({ role: "label" })}>{label}</RNText>
-			{body}
+			<FieldNameContext.Provider value={label}>
+				{body}
+			</FieldNameContext.Provider>
 			{description ? (
 				<RNText className={text({ role: "meta" })}>{description}</RNText>
 			) : null}

@@ -112,7 +112,7 @@ sidebar. Pull to refresh is the phone's.
 | `Place` | `title`, `actions` (at most two circles; the rest open under a more circle), `act`, `more`, `bleed` (the body is the whole box under the top bar, with no inset and no scroll, for a child that pans and scrolls itself), children |
 | `Screen` | `title`, `back` (a route), `actions`, children; an `ActionBar` child is pinned above the home indicator |
 | `Split` | `list`, `main`, `pane`, `empty` (the desktop's, never drawn) |
-| `Section` | `title` (a part), `count`, `description`, `folded` (set, it folds: the label is a button with a chevron), `onToggle` (its new state on each open and close), `act`, `loading`, children |
+| `Section` | `title` (a part), `count`, `description`, `folded` (set, it folds: the label is a button with a chevron), `onToggle` (its new state on each open and close), `act` (a blocked one says its reason under it once pressed or once its form or sheet is touched, as `Button` does), `loading`, children |
 | `Group`, `List` | `loading`, children |
 | `Form` | `onSubmit`, children |
 | `Toolbar`, `ActionBar`, `Columns` | children |
@@ -127,8 +127,8 @@ sidebar. Pull to refresh is the phone's.
 | `FormField` | `label`, `description`, `error`, `field` (a `FieldBinding`: the error is the field's and children is `(control) => …`, the control's value, handler and, for an autosaving binding, `onCommit`), one typing control as children |
 | `ItemHeader` | `overline` (parts), `title`, `facts` (parts and statuses), `loading` |
 | `SegmentedControl` | `options` (`{ value, label }[]`), `value`, `onChange` |
-| `Sheet` | `open`, `onClose`, `title`, `description`, `back`, `submit` (`{ label, onAct, blocked }`, top right), `foot`, children; `submit` and an `ActionBar` child exclude each other |
-| `Picker` | `label`, `options` (`{ value, label, description }[]`, or `{ label, options }[]` groups, each under its label), `value`, `onChange`; generic over its value, read off `options` alone, so an enum's options pick that enum and a value outside them is a type error; an option whose value is `null` is the empty choice, drawn in `ink-faint`, which makes the pick nullable and `onChange` hear `null`; a search field above six options |
+| `Sheet` | `open`, `onClose`, `title`, `description`, `back`, `submit` (`{ label, onAct, blocked }`, top right), `foot`, children; `submit` and an `ActionBar` child exclude each other; the title names a typing control inside that no `FormField` labels |
+| `Picker` | `label`, `options` (`{ value, label, description }[]`, or `{ label, options }[]` groups, each under its label), `value`, `onChange`; generic over its value, read off `options` alone, so an enum's options pick that enum and a value outside them is a type error; no `value`: nothing selected, the placeholder, and `onChange` still hears a value; a `null` option: the explicit empty choice, drawn as the placeholder is, in `ink-meta`, which makes the pick nullable and `onChange` hear `null`; a search field above six options |
 | `Menu` | `label` (read aloud on its more circle, the sheet's title), `items` (`{ label, onAct, icon, destructive, blocked }[]`, or a list of such lists for groups under hairlines); the phone's menu is a sheet of one-line acts, a destructive one in `danger`, a blocked one faded with its reason under it; the more circle of `Place` and `Screen` is the same sheet |
 | `QueryBoundary` | `query` (a `useQuery` result or a tuple of them), `sentence`, children (`(data) => …`, one value per query): the loading form while pending, the `EmptyState` with a retry act on error |
 | `OptionList` | `options` (`{ value, label, description, recommended }[]`), `value`, `onChange`, `loading`, children under the chosen option |

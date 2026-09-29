@@ -1,4 +1,5 @@
 import { Navigate, useLocation } from "@solidjs/router";
+import { useQueryClient } from "@tanstack/solid-query";
 import {
 	type Accessor,
 	createContext,
@@ -13,6 +14,7 @@ import {
 } from "solid-js";
 import { forgetScope } from "#lib/scope-lookup.ts";
 import {
+	claimCache,
 	isUnauthorized,
 	nextViewer,
 	type SessionState,
@@ -51,10 +53,15 @@ export function useViewer(): Accessor<string | null> | undefined {
 // another tab's sign-out) re-asks the session, and the gate sends to the
 // sign-in; it never reaches the app's error boundary. The signed-in user's id
 // is its children's `useViewer()`; when the session ends (a sign-out here, an
-// expiry, another tab), the last scope that user left is forgotten.
+// expiry, another tab), the last scope that user left is forgotten. Its
+// children render for one viewer: before they first read the query cache it
+// is emptied when it was last read for someone else, and a change of viewer
+// in place (another tab signing in as someone else) draws them afresh over
+// the emptied cache, so no query answered for one viewer is read by another.
 export function SessionBoundary(props: SessionBoundaryProps) {
 	const words = useWords();
 	const location = useLocation();
+	const queryClient = useQueryClient();
 	const change = createMemo(
 		(held: ReturnType<typeof nextViewer>) =>
 			nextViewer(held.viewer, props.session()),
@@ -75,19 +82,33 @@ export function SessionBoundary(props: SessionBoundaryProps) {
 		const g = gate();
 		return g.kind === "signIn" ? g.href : undefined;
 	};
+	// Who the children render for, a new object only when the viewer changes,
+	// so the keyed match below redraws them for a new viewer and never for a
+	// session refetch.
+	const rendered = createMemo(
+		() => {
+			if (gate().kind !== "render") return undefined;
+			claimCache(queryClient, viewer());
+			return { viewer: viewer() };
+		},
+		undefined,
+		{ equals: (a, b) => a?.viewer === b?.viewer },
+	);
 	return (
 		<Switch>
-			<Match when={gate().kind === "render"}>
-				<Viewer.Provider value={viewer}>
-					<ErrorBoundary
-						fallback={(error) => {
-							if (!isUnauthorized(error)) throw error;
-							return <Refused error={error} session={props.session} />;
-						}}
-					>
-						{props.children}
-					</ErrorBoundary>
-				</Viewer.Provider>
+			<Match when={rendered()} keyed>
+				{(served) => (
+					<Viewer.Provider value={() => served.viewer}>
+						<ErrorBoundary
+							fallback={(error) => {
+								if (!isUnauthorized(error)) throw error;
+								return <Refused error={error} session={props.session} />;
+							}}
+						>
+							{props.children}
+						</ErrorBoundary>
+					</Viewer.Provider>
+				)}
 			</Match>
 			<Match when={gate().kind === "failed"}>
 				<EmptyState

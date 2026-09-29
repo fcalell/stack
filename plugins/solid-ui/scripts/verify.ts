@@ -1278,17 +1278,21 @@ check("b-phone", "each molecule has its phone form", () => {
 // A picker's empty choice (an option whose value is null) reads as a
 // placeholder in its list and on its control. Its typing is
 // `test/picker.test.ts`.
-check("b-empty-choice", "a picker draws its empty choice faint", () => {
-	const picker = read("src/ui/components/picker/index.tsx");
-	assert(
-		/option\.value === null && FIELD_PLACEHOLDER/.test(picker) &&
-			/\(current\(\)\?\.value \?\? null\) === null && FIELD_PLACEHOLDER/.test(
-				picker,
-			),
-		"the empty choice does not draw as a placeholder in the list and on the control",
-	);
-	return "a null option and an empty control draw FIELD_PLACEHOLDER";
-});
+check(
+	"b-empty-choice",
+	"a picker draws its empty choice as a placeholder",
+	() => {
+		const picker = read("src/ui/components/picker/index.tsx");
+		assert(
+			/option\.value === null && PICKER_EMPTY/.test(picker) &&
+				/\(current\(\)\?\.value \?\? null\) === null && PICKER_EMPTY/.test(
+					picker,
+				),
+			"the empty choice does not draw as a placeholder in the list and on the control",
+		);
+		return "a null option and an empty control draw PICKER_EMPTY";
+	},
+);
 
 // A document shows its first `<title>`: the shell's static one stays ahead of
 // every `Title` unless the head manager takes it over. The takeover itself is

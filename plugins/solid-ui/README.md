@@ -204,7 +204,11 @@ never the sign-in and never the children. An error its children throw that is a 
 viewer goes to `signIn`; it never reaches the app's error boundary. A 401 while the session still
 stands, and every other error, does. Its children read the signed-in user's id with
 `useViewer()`; when the session ends (a sign-out anywhere, an expiry, another tab signing out or
-in as someone else) the last scope that user left is forgotten.
+in as someone else) the last scope that user left is forgotten. The children render for one
+viewer: before they first read the query cache it is emptied if it was last read for another user
+(kept per query client, since the sign-in between two viewers happens outside the guarded layout),
+and a viewer changing in place draws them afresh over the emptied cache, so no query answered for
+one viewer (their organizations, their role's rules) is read by another.
 
 ```tsx
 // src/app/pages/(app)/_layout.tsx
@@ -291,7 +295,7 @@ own three-row form. `Part` is a string or `{ quoted }`, drawn in typographic quo
 | `InputOtp` | `length`, `value`, `onChange`, `onComplete`, `loading` | `length` boxes over one input (`inputmode="numeric"`, `autocomplete="one-time-code"`), so a pasted or suggested code fills every box; the arrows move between boxes and a digit on a filled box replaces it; `onComplete` hears the full code; `loading` holds it read-only while the code is checked, keeping its focus; it takes focus when it is drawn unless the viewer is in another element, so the code step a sent code opens needs no tap; inside a `FormField` it takes the field's id and error |
 | `EnumInput` | `value` (`string[]`), `onChange`, `placeholder` | each value on a `source` cell with a remove act, then a `source` field that adds on its act or Enter; a value already listed is refused, `words.duplicate` under the field |
 | `Slider` | `label`, `value`, `onChange`, `min`, `max`, `step`, `unit` | the value beside the label, in `unit` (an Intl unit identifier such as `percent`) |
-| `Switch`, `Checkbox` | `checked`, `onChange`, `label` | the label is the hit line |
+| `Switch`, `Checkbox` | `checked`, `onChange`, `label` | the label is the hit line; with none, the `DefinitionRow` it is the value of names it by the row's label |
 | `Spinner` | `kind` (`circle` \| `scramble`) | in the ink around it; `scramble` cycles mono glyphs and holds still under reduced motion |
 | `Avatar` | `name`, `src` | initials on the ladder fill picked by the name |
 | `Link` | `href`, children | inline |
@@ -303,7 +307,7 @@ own three-row form. `Part` is a string or `{ quoted }`, drawn in typographic quo
 | `Place` | `title`, `actions` (`IconAct[]`, two shown, the rest under more), `act`, `more` (labelled `Act`s under the more circle), `bleed`, children | the large title, which wraps and is never truncated, on its own line under the switcher and the circles under tablet; the scroll, the floating act; `bleed` hands the body the whole box under the top bar with no inset, no measure and no scroll, for a child that pans and scrolls itself (a canvas) |
 | `Screen` | `title`, `back` (a route), `actions`, children | the back circle, the compact title on scroll; covers the shell on the phone |
 | `Split` | `list`, `main`, `pane`, `empty` | the columns from desktop, one slot under it; the pane pushes `main` narrower from desktop, or from wide beside a `list`, and folds over it under that; `empty` fills `main` from desktop while nothing is picked |
-| `Section` | `title` (a part), `count`, `description`, `folded`, `onToggle`, `act`, `loading`, children | the label header, folding; a foldable one is a group, never a landmark, and `onToggle` reports its new state |
+| `Section` | `title` (a part), `count`, `description`, `folded`, `onToggle`, `act`, `loading`, children | the label header, folding; a foldable one is a group, never a landmark, and `onToggle` reports its new state; a blocked `act` stays focusable and says its reason under the header once tapped or once its form or sheet is touched, as `Button` does |
 | `Group` | `loading`, children | the group box with hairlines |
 | `List` | `loading`, children | rows on the surface |
 | `Form` | `onSubmit`, children | fields at `stack`, its bar in flow |
@@ -317,12 +321,12 @@ own three-row form. `Part` is a string or `{ quoted }`, drawn in typographic quo
 | Molecule | Props |
 | --- | --- |
 | `ListRow` | `leading` (`{ icon }` \| `{ status }`), `title`, `meta` (parts, one or two lines), `trailing` (`{ age }` \| `{ count }` \| `{ value }`), `marks`, `act`, `more` (the row's `Menu` items, a more circle at its end beside what opens the row), `href`, `onOpen` |
-| `DefinitionRow` | `label`, `description`, `value` (a string, `{ status }` or a control), `copyable`, `act`, `href`, `onOpen`; a `Picker` value stacks the row under tablet: the label and the description, then the picker across the row with the act at its end |
+| `DefinitionRow` | `label`, `description`, `value` (a string, `{ status }` or a control), `copyable`, `act`, `href`, `onOpen`; a `Picker` value stacks the row under tablet: the label and the description, then the picker across the row with the act at its end; a `Switch` or a `Checkbox` value with no label of its own is named by the row's label |
 | `FormField` | `label`, `description`, `error`, `field` (a `FieldBinding`; then children is `(control) => …` and the error is the form's; an autosaving binding hands the control `onCommit`), children |
 | `ItemHeader` | `overline`, `title`, `facts`, `loading` |
 | `SegmentedControl` | `options`, `value`, `onChange` |
-| `Sheet` | `open`, `onClose`, `title`, `description`, `back`, `submit` (`{ label, onAct, blocked }`), `foot`, children |
-| `Picker` | `label`, `options` (`Option<V>[]` or `OptionGroup<V>[]`), `value`, `onChange`; generic over its value `V`, read off `options` alone, so an enum's options pick that enum: a bound enum field is one spread with no cast, and a value or handler outside the options is a type error; an option whose value is `null` is the empty choice, drawn in `ink-faint`, which makes `V` nullable, so a nullable enum field is the same spread and `onChange` hears `null`; in a `FormField` it takes the field's surface, label and error; a press on the open control closes its list |
+| `Sheet` | `open`, `onClose`, `title`, `description`, `back`, `submit` (`{ label, onAct, blocked }`), `foot`, children; the title names a typing control inside that no `FormField` labels |
+| `Picker` | `label`, `options` (`Option<V>[]` or `OptionGroup<V>[]`), `value`, `onChange`; generic over its value `V`, read off `options` alone, so an enum's options pick that enum: a bound enum field is one spread with no cast, and a value or handler outside the options is a type error; no `value`: nothing selected, the placeholder, and `onChange` still hears `V`; a `null` option: the explicit empty choice, drawn as the placeholder is, in `ink-meta`, which makes `V` nullable, so a nullable enum field is the same spread and `onChange` hears `null`; in a `FormField` it takes the field's surface, label and error; a press on the open control closes its list |
 | `Menu` | `label` (read aloud on its more circle, the sheet's title), `items` (`MenuItem[]`, or `MenuItem[][]` for groups under separators: `{ label, onAct, icon?, destructive?, blocked? }`); anchored under the circle from tablet, a `Sheet` under it; arrows, Enter, Escape, focus back on the circle; the more circle of `Place` and `Screen` is the same menu |
 | `QueryBoundary` | `query` (one query or a tuple), `sentence`, children (`(data) => …`, an accessor) |
 | `OptionList` | `options`, `value`, `onChange`, `loading`, children |

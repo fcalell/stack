@@ -49,6 +49,23 @@ export function inferred() {
 		onChange: (value: string) => value,
 	});
 
+	// No value is nothing selected yet, the placeholder, with no empty choice
+	// in the options: a pick still hears the enum, never undefined.
+	pick({
+		label: "Role",
+		options: ROLE_OPTIONS,
+		onChange: (role) => {
+			const picked: Role = role;
+			return picked;
+		},
+	});
+	pick({
+		label: "Role",
+		options: ROLE_OPTIONS,
+		value: undefined,
+		onChange: (role: Role) => role,
+	});
+
 	const stray = [...ROLE_OPTIONS, { value: "guest" as const, label: "Guest" }];
 	// @ts-expect-error a stray literal widens the options past the field's enum
 	pick({ label: "Role", options: stray, ...control });

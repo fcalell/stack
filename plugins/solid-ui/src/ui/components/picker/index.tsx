@@ -1,8 +1,8 @@
 import type { Option, OptionGroup } from "@fcalell/ui-core/descriptors";
 import {
-	FIELD_PLACEHOLDER,
 	field,
 	GROUP,
+	PICKER_EMPTY,
 	row,
 	text,
 } from "@fcalell/ui-core/variants";
@@ -27,14 +27,15 @@ import { Sheet } from "../sheet/index.tsx";
 // field's surface, its label and its error. `V` is read off the options
 // alone, so an enum's options pick that enum: a bound enum field spreads
 // its control in without a cast, and a value outside the options is a type
-// error. An option whose value is `null` is the empty choice: it makes the
-// pick nullable (a nullable enum field spreads in the same way), `onChange`
-// hears `null` for it, and it reads as a placeholder, in `ink-faint`, in the
-// list and on the control, as the control does with no value at all.
+// error. No `value` is nothing selected yet: the control draws its label as
+// a placeholder, in `ink-meta`, and ticks no row. An option whose value is
+// `null` is the empty choice, a different fact: it makes the pick nullable (a
+// nullable enum field spreads in the same way), `onChange` hears `null` for
+// it, and it reads as the same placeholder in the list and on the control.
 export type PickerProps<V extends string | null = string> = Closed & {
 	label: string;
 	options: readonly Option<V>[] | readonly OptionGroup<V>[];
-	value: NoInfer<V>;
+	value?: NoInfer<V>;
 	onChange: (value: NoInfer<V>) => void;
 };
 
@@ -64,7 +65,7 @@ function grouped<V extends string | null>(
 
 function Rows<V extends string | null>(props: {
 	groups: readonly Grouped<V>[];
-	value: V;
+	value: V | undefined;
 	onPick: (value: V) => void;
 }) {
 	return (
@@ -103,7 +104,7 @@ function Rows<V extends string | null>(props: {
 													<span
 														class={cn(
 															text({ role: "body" }),
-															option.value === null && FIELD_PLACEHOLDER,
+															option.value === null && PICKER_EMPTY,
 															"flex-1 truncate",
 														)}
 													>
@@ -188,7 +189,7 @@ export function Picker<V extends string | null = string>(
 			<span
 				class={cn(
 					"min-w-0 truncate",
-					(current()?.value ?? null) === null && FIELD_PLACEHOLDER,
+					(current()?.value ?? null) === null && PICKER_EMPTY,
 					ctx && "flex-1",
 					inRow && "flex-1 tablet:flex-none",
 				)}

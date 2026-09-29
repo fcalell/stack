@@ -1,3 +1,5 @@
+import type { QueryClient } from "@tanstack/solid-query";
+
 // What a layout under `SessionBoundary` does with the session state:
 // better-auth's Solid client reports `isPending` until its first answer, a
 // `null` body when nobody is signed in, and `error` when the check itself
@@ -97,4 +99,20 @@ export function nextViewer(
 	if (sessionGate(state, "", "").kind === "signIn")
 		return { viewer: null, signedOut: held };
 	return { viewer: held, signedOut: null };
+}
+
+// The viewer each query client's cache was last read for.
+const cacheViewer = new WeakMap<QueryClient, string | null>();
+
+// Gives `client`'s cache to `viewer` before anything reads it: a viewer other
+// than the one it was last read for starts from an empty cache, so no answer
+// the server gave one viewer (their organizations, their role's rules) is
+// read by another. It is kept per client, never per boundary, since the
+// sign-in between two viewers happens outside the guarded layout, which
+// mounts afresh for the next; the same viewer signing back in keeps their
+// cache.
+export function claimCache(client: QueryClient, viewer: string | null): void {
+	if (cacheViewer.has(client) && cacheViewer.get(client) !== viewer)
+		client.clear();
+	cacheViewer.set(client, viewer);
 }

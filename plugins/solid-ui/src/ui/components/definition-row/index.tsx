@@ -2,7 +2,14 @@ import type { Act } from "@fcalell/ui-core/descriptors";
 import type { StatusState } from "@fcalell/ui-core/tokens";
 import { row, text } from "@fcalell/ui-core/variants";
 import { A } from "@solidjs/router";
-import { createSignal, type JSX, Match, Show, Switch } from "solid-js";
+import {
+	createSignal,
+	createUniqueId,
+	type JSX,
+	Match,
+	Show,
+	Switch,
+} from "solid-js";
 import type { Closed } from "#lib/closed.ts";
 import { cn } from "#lib/cn.ts";
 import { RING_INSET, TEXT_ACT, WASH } from "#lib/interact.ts";
@@ -23,7 +30,8 @@ export type DefinitionValue =
 // its width at any character, so an address never runs under the other. A
 // control whose width is its words (a `Picker`) claims the row, and under
 // tablet the row then stacks: the label and the description, then the
-// control across the row with the act at its end.
+// control across the row with the act at its end. The label names a value
+// control that carries no label of its own (a `Switch`, a `Checkbox`).
 export type DefinitionRowProps = Closed & {
 	label: string;
 	description?: string;
@@ -50,6 +58,7 @@ export function DefinitionRow(props: DefinitionRowProps) {
 	const words = useWords();
 	const [copied, setCopied] = createSignal(false);
 	const claims = createWidthClaims();
+	const labelId = createUniqueId();
 	const stacked = claims.whole;
 	const interactive = () =>
 		props.href !== undefined || props.onOpen !== undefined;
@@ -82,6 +91,7 @@ export function DefinitionRow(props: DefinitionRowProps) {
 				)}
 			>
 				<span
+					id={labelId}
 					class={cn(text({ role: "body" }), "min-w-0 flex-1 wrap-anywhere")}
 				>
 					{props.label}
@@ -103,7 +113,9 @@ export function DefinitionRow(props: DefinitionRowProps) {
 									: "max-w-3/5 shrink-0",
 							)}
 						>
-							<RowContext.Provider value={claims.claim}>
+							<RowContext.Provider
+								value={{ claim: claims.claim, label: labelId }}
+							>
 								<Switch fallback={props.value as JSX.Element}>
 									<Match when={typeof props.value === "string" && props.value}>
 										{(value) => (

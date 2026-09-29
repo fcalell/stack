@@ -12,16 +12,18 @@ my-app/
                              # project over ["src", ".stack/*.d.ts"]: of the generated files only the
                              # root declarations (Env, typed routes) are type-checked; bundler inputs
                              # reach tsc through an import or not at all (a bare ".stack" matches nothing)
-  tsconfig.app.json          # the app's globals (DOM), never the Workers runtime's: `src` but
-                             # `src/worker`, plus `.stack/routes.d.ts`. References the worker
+  tsconfig.app.json          # the app's globals (DOM), never the server's: `src` but `src/worker`
+                             # (and `src/server` on the node target), plus `.stack/routes.d.ts`. References the worker
                              # project and reads every worker file (`AppRouter`, the schema,
                              # `src/shared`) through its declarations, so no worker source enters
                              # the app's program; editors read them too, as of the last `tsc -b`
-  tsconfig.worker.json       # the worker's globals (`.stack/worker-configuration.d.ts`), no DOM, and
+  tsconfig.worker.json       # the worker's globals (`.stack/worker-configuration.d.ts`; on the node
+                             # target `types: ["node"]` and no such file), no DOM, and
                              # the `virtual:stack-procedure` `paths`, so wrangler bundles with it
                              # (`--tsconfig`, from `cliSlots.workerTsconfig`):
                              # `src/worker`, `src/schema`, `src/shared` (its tests stay with the
-                             # app) and the generated worker files. Composite: emits declarations
+                             # app), `src/server` on the node target, and the generated worker
+                             # files. Composite: emits declarations
                              # only, into `.stack/types/`, which `tsc -b` builds before the app.
                              # One program would merge both, and they collide (the runtime's
                              # HTMLRewriter `Element` hides DOM's `append`)
@@ -39,7 +41,7 @@ my-app/
       routes/                # business logic (procedures; barrel generated to index.ts)
       middleware.ts          # optional Hono middleware, before context injection (auto-wired via api.slots.middlewareEntries)
       middleware.context.ts  # optional Hono middleware, after it; reaches db/auth via stackContext(c)
-    server/                  # node target only
+    server/                  # node target only; checked with the worker project, under Node's types
       services/              # background services (barrel generated to index.ts);
                              # each module default-exports a defineService(...)
     app/

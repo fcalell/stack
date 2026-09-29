@@ -10,7 +10,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { test } from "node:test";
 import ts from "typescript";
-import { tsconfigTemplate } from "../src/templates/tsconfig.ts";
+import { tsconfigLayout, tsconfigTemplate } from "../src/templates/tsconfig.ts";
 
 const packageDir = resolve(import.meta.dirname, "..");
 
@@ -131,6 +131,7 @@ const split = () =>
 		solid: true,
 		native: false,
 		worker: true,
+		node: false,
 		procedurePaths: { "virtual:stack-procedure": ["./.stack/procedure.ts"] },
 		nativeTypes: [],
 	});
@@ -144,4 +145,38 @@ test("the app types a procedure's input and output through the worker's declarat
 		diagnostics(consumer(split(), { ...GLOBALS, ...ROUTER })),
 		[],
 	);
+});
+
+// The node target in miniature: the server's services and the worker read
+// Node's globals, with no Workers declarations generated, and the app keeps
+// the DOM. Each side names the other's global under an expected error, so a
+// service landing in the app's program, or the DOM in the server's, fails.
+const NODE: Record<string, string> = {
+	"src/app/probe.ts": `document.body.append(document.createElement("div"));
+`,
+	"src/server/services/probe.ts": `export const port: string | undefined = process.env.PORT;
+// @ts-expect-error: the DOM stays out of the server
+document.title;
+`,
+	"src/worker/probe.ts": `export const host: string | undefined = process.env.HOST;
+// @ts-expect-error: the DOM stays out of the worker
+document.title;
+`,
+};
+
+const nodeSplit = () =>
+	tsconfigTemplate({
+		...tsconfigLayout(["api", "node", "solid"]),
+		procedurePaths: { "virtual:stack-procedure": ["./.stack/procedure.ts"] },
+		nativeTypes: [],
+	});
+
+test("the node target's server project reads Node's globals and holds the services", () => {
+	const worker = JSON.parse(
+		new Map(nodeSplit()).get("tsconfig.worker.json") ?? "{}",
+	);
+	assert.deepEqual(worker.compilerOptions.types, ["node"]);
+	assert.ok(worker.include.includes("src/server"));
+	assert.ok(!worker.include.includes(".stack/worker-configuration.d.ts"));
+	assert.deepEqual(diagnostics(consumer(nodeSplit(), NODE)), []);
 });

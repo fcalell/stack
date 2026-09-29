@@ -1,5 +1,5 @@
 import type { Option, OptionGroup } from "@fcalell/ui-core/descriptors";
-import { FIELD_PLACEHOLDER, GROUP, row, text } from "@fcalell/ui-core/variants";
+import { GROUP, PICKER_EMPTY, row, text } from "@fcalell/ui-core/variants";
 import { Check, ChevronDown } from "lucide-react-native";
 import { useState } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
@@ -14,7 +14,7 @@ import { Sheet } from "../sheet";
 // `V` is read off the options alone, so an enum's options pick that enum and
 // a value outside them is a type error. An option whose value is `null` is
 // the empty choice: it makes the pick nullable, `onChange` hears `null` for
-// it, and it reads as a placeholder, in `ink-faint`, in the sheet and on the
+// it, and it reads as a placeholder, in `ink-meta`, in the sheet and on the
 // control, as the control does with no value at all.
 export interface PickerProps<V extends string | null = string> extends Closed {
 	label: string;
@@ -84,7 +84,7 @@ export function Picker<V extends string | null = string>({
 				<RNText
 					className={cn(
 						text({ role: "body" }),
-						(current?.value ?? null) === null && FIELD_PLACEHOLDER,
+						(current?.value ?? null) === null && PICKER_EMPTY,
 						"flex-1",
 					)}
 				>
@@ -129,7 +129,7 @@ export function Picker<V extends string | null = string>({
 													numberOfLines={1}
 													className={cn(
 														text({ role: "body" }),
-														option.value === null && FIELD_PLACEHOLDER,
+														option.value === null && PICKER_EMPTY,
 													)}
 												>
 													{option.label}

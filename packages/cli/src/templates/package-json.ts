@@ -1,3 +1,5 @@
+import { tsconfigLayout } from "./tsconfig.ts";
+
 interface PackageJsonOptions {
 	name: string;
 	plugins: string[];
@@ -17,7 +19,11 @@ export function packageJsonTemplate(options: PackageJsonOptions): string {
 
 	const hasWorker =
 		options.plugins.includes("api") || options.plugins.includes("db");
-	if (hasWorker) {
+	if (tsconfigLayout(options.plugins).node) {
+		// The node target's server runs under Node, with no wrangler; Node's
+		// types back the worker project's `types: ["node"]`.
+		devDeps["@types/node"] = "^25.5.0";
+	} else if (hasWorker) {
 		devDeps.wrangler = "^4.98.0";
 	}
 

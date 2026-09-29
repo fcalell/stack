@@ -3,6 +3,7 @@ import { text } from "@fcalell/ui-core/variants";
 import { ChevronDown } from "lucide-solid";
 import {
 	createContext,
+	createEffect,
 	createSignal,
 	createUniqueId,
 	type JSX,
@@ -15,6 +16,7 @@ import { cn } from "#lib/cn.ts";
 import { RING, TEXT_ACT } from "#lib/interact.ts";
 import { LoadingRows } from "#lib/loading.tsx";
 import { Parts } from "#lib/parts.tsx";
+import { useTouched } from "#lib/touched.ts";
 import { Count } from "../count/index.tsx";
 
 // A titled region of a screen: the label header with its count and act.
@@ -22,7 +24,9 @@ import { Count } from "../count/index.tsx";
 // without it the header is a plain label. The space above it is its
 // container's gap; a nested section, which sits in its parent's tight
 // rhythm, takes `stack` above it. An `ActionBar` inside is the section's
-// own, in flow at its end, never pinned to the screen.
+// own, in flow at its end, never pinned to the screen. A blocked act stays
+// focusable and says its reason under the header once tapped, or once the
+// form or sheet around it is touched, as a `Button` does.
 export type SectionProps = Closed & {
 	title: Part;
 	count?: number;
@@ -44,6 +48,14 @@ export function Section(props: SectionProps) {
 	const [open, setOpen] = createSignal(!props.folded);
 	const foldable = () => props.folded !== undefined;
 	const id = createUniqueId();
+	const touched = useTouched();
+	const reason = createUniqueId();
+	const [tapped, setTapped] = createSignal(false);
+	const blocked = () => props.act?.blocked !== undefined;
+	const said = () => blocked() && (tapped() || touched());
+	createEffect(() => {
+		if (!blocked()) setTapped(false);
+	});
 	const label = () => (
 		<>
 			<h2 id={id} class={cn(text({ role: "label" }), "truncate")}>
@@ -65,57 +77,71 @@ export function Section(props: SectionProps) {
 				class={cn("flex flex-col gap-row", nested && "pt-stack")}
 			>
 				{/* The description is the label's own line, a pair below it, so it
-				    never reads as the section's content. */}
-				<div class="flex min-h-floor items-center justify-between gap-row">
-					<div class="flex min-w-0 flex-col gap-pair">
-						<Show
-							when={foldable()}
-							fallback={
-								<div class="flex min-w-0 items-center gap-pair">{label()}</div>
-							}
-						>
-							<button
-								type="button"
-								aria-expanded={open()}
-								onClick={() => {
-									const next = !open();
-									setOpen(next);
-									props.onToggle?.(next);
-								}}
-								class={cn(
-									"flex min-h-floor min-w-0 cursor-pointer items-center gap-pair self-start text-left",
-									RING,
-								)}
+				    never reads as the section's content; a blocked act's reason is
+				    the header's last line, at its end under the act. */}
+				<div class="flex flex-col">
+					<div class="flex min-h-floor items-center justify-between gap-row">
+						<div class="flex min-w-0 flex-col gap-pair">
+							<Show
+								when={foldable()}
+								fallback={
+									<div class="flex min-w-0 items-center gap-pair">
+										{label()}
+									</div>
+								}
 							>
-								{label()}
-								<ChevronDown
+								<button
+									type="button"
+									aria-expanded={open()}
+									onClick={() => {
+										const next = !open();
+										setOpen(next);
+										props.onToggle?.(next);
+									}}
 									class={cn(
-										"size-4 shrink-0 text-ink-faint transition-transform duration-(--duration-base) ease-ui",
-										open() || "-rotate-90",
+										"flex min-h-floor min-w-0 cursor-pointer items-center gap-pair self-start text-left",
+										RING,
 									)}
-									aria-hidden="true"
-								/>
-							</button>
-						</Show>
-						<Show when={props.description}>
-							<p class={text({ role: "meta" })}>{props.description}</p>
+								>
+									{label()}
+									<ChevronDown
+										class={cn(
+											"size-4 shrink-0 text-ink-faint transition-transform duration-(--duration-base) ease-ui",
+											open() || "-rotate-90",
+										)}
+										aria-hidden="true"
+									/>
+								</button>
+							</Show>
+							<Show when={props.description}>
+								<p class={text({ role: "meta" })}>{props.description}</p>
+							</Show>
+						</div>
+						<Show when={props.act}>
+							{(act) => (
+								<button
+									type="button"
+									aria-disabled={blocked() || undefined}
+									aria-describedby={said() ? reason : undefined}
+									onClick={() => {
+										if (blocked()) setTapped(true);
+										else act().onAct();
+									}}
+									class={cn(
+										text({ role: "meta" }),
+										"min-h-floor shrink-0",
+										TEXT_ACT,
+									)}
+								>
+									{act().label}
+								</button>
+							)}
 						</Show>
 					</div>
-					<Show when={props.act}>
-						{(act) => (
-							<button
-								type="button"
-								disabled={act().blocked !== undefined}
-								onClick={() => act().onAct()}
-								class={cn(
-									text({ role: "meta" }),
-									"min-h-floor shrink-0",
-									TEXT_ACT,
-								)}
-							>
-								{act().label}
-							</button>
-						)}
+					<Show when={said()}>
+						<p id={reason} class={cn(text({ role: "meta" }), "text-right")}>
+							{props.act?.blocked}
+						</p>
 					</Show>
 				</div>
 				<Show when={open()}>

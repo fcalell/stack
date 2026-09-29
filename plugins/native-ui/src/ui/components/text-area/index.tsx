@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Text as RNText, TextInput, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
+import { useFieldName } from "../../lib/field";
 import { useTouched } from "../../lib/touched";
 import { useSheetGrow } from "../sheet";
 
@@ -37,6 +38,7 @@ export function TextArea({
 	const [moment] = useState(() => commitMoment<string>());
 	const commit = (next: string) => onCommit?.(next);
 	const { touch } = useTouched();
+	const name = useFieldName();
 	const source = kind === "source";
 	const grow = useSheetGrow();
 	useEffect(() => grow?.(), [grow]);
@@ -44,6 +46,7 @@ export function TextArea({
 	return (
 		<View className="gap-pair">
 			<TextInput
+				accessibilityLabel={name}
 				multiline
 				textAlignVertical="top"
 				className={cn(

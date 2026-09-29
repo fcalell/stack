@@ -2,7 +2,9 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { ApiError } from "@fcalell/plugin-api/error";
 import type { AuthClient } from "@fcalell/plugin-auth/client";
+import { QueryClient } from "@tanstack/solid-query";
 import {
+	claimCache,
 	isUnauthorized,
 	nextViewer,
 	type SessionState,
@@ -170,4 +172,30 @@ test("a sign-out signs the held viewer out; a pending or failed check keeps them
 test("another user's session replaces the held viewer, who is signed out", () => {
 	const other = answer({ data: { session: {}, user: { id: "u2" } } });
 	assert.deepEqual(nextViewer("u1", other), { viewer: "u2", signedOut: "u1" });
+});
+
+test("the query cache is emptied for a viewer other than the one it was read for", () => {
+	const client = new QueryClient();
+	const rules = ["rules", "org-1"];
+	claimCache(client, "owner");
+	client.setQueryData(rules, ["manage all"]);
+	claimCache(client, "owner");
+	assert.deepEqual(client.getQueryData(rules), ["manage all"]);
+
+	claimCache(client, "viewer");
+	assert.equal(client.getQueryData(rules), undefined);
+	assert.equal(client.getQueryCache().getAll().length, 0);
+
+	client.setQueryData(rules, ["read all"]);
+	claimCache(client, "viewer");
+	assert.deepEqual(client.getQueryData(rules), ["read all"]);
+});
+
+test("the first viewer keeps what the client cached before any session", () => {
+	const client = new QueryClient();
+	client.setQueryData(["invitation", "i1"], { organization: "Acme" });
+	claimCache(client, "u1");
+	assert.deepEqual(client.getQueryData(["invitation", "i1"]), {
+		organization: "Acme",
+	});
 });

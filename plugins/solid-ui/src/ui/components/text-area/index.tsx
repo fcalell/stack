@@ -3,12 +3,13 @@ import { field, text } from "@fcalell/ui-core/variants";
 import { Show } from "solid-js";
 import type { Closed } from "#lib/closed.ts";
 import { cn } from "#lib/cn.ts";
-import { useField } from "#lib/field.ts";
+import { useField, useFieldName } from "#lib/field.ts";
 
 // Multi-line typing. `source` is mono and keeps indentation; `budget` is a
-// word budget and draws a counter under the field. `onCommit` hears the value
-// once the viewer leaves the field having changed it since focus (Enter is a
-// new line here); with it, Escape puts back the value at focus.
+// word budget and draws a counter under the field. Inside a `FormField` its
+// label names it; bare in a `Sheet`, the sheet's title does. `onCommit` hears
+// the value once the viewer leaves the field having changed it since focus
+// (Enter is a new line here); with it, Escape puts back the value at focus.
 export type TextAreaProps = Closed & {
 	kind?: "prose" | "source";
 	value: string;
@@ -24,6 +25,7 @@ function wordCount(value: string): number {
 
 export function TextArea(props: TextAreaProps) {
 	const ctx = useField();
+	const name = useFieldName();
 	const moment = commitMoment<string>();
 	const commit = (value: string) => props.onCommit?.(value);
 	const source = () => props.kind === "source";
@@ -33,6 +35,7 @@ export function TextArea(props: TextAreaProps) {
 		<div class="flex flex-col gap-pair">
 			<textarea
 				id={ctx?.id}
+				aria-labelledby={name}
 				rows={4}
 				value={props.value}
 				placeholder={props.placeholder}

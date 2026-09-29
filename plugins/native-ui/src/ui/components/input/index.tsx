@@ -10,6 +10,7 @@ import { useState } from "react";
 import { Pressable, Text as RNText, TextInput, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
+import { useFieldName } from "../../lib/field";
 import { useTouched } from "../../lib/touched";
 import { useWords } from "../../lib/words";
 
@@ -63,6 +64,7 @@ export function Input({
 	const [moment] = useState(() => commitMoment<string>());
 	const commit = (next: string) => onCommit?.(next);
 	const { touch } = useTouched();
+	const name = useFieldName();
 	const which = kind ?? "text";
 	return (
 		<View
@@ -72,6 +74,7 @@ export function Input({
 			)}
 		>
 			<TextInput
+				accessibilityLabel={name}
 				className={cn(
 					text({ role: SURFACE[which] === "code" ? "mono" : "body" }),
 					"flex-1 py-0",

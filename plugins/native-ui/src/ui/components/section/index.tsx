@@ -1,13 +1,14 @@
 import type { Act, Part } from "@fcalell/ui-core/descriptors";
 import { text } from "@fcalell/ui-core/variants";
 import { ChevronDown, ChevronRight } from "lucide-react-native";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { Glyph } from "../../lib/glyph";
 import { LoadingRows } from "../../lib/loading";
 import { partText } from "../../lib/parts";
+import { useTouched } from "../../lib/touched";
 import { Count } from "../count";
 
 export interface SectionProps extends Closed {
@@ -26,7 +27,9 @@ export interface SectionProps extends Closed {
 
 // A labelled region of a screen: the label header with its count and act,
 // the loading form. Setting `folded` makes it foldable: the label becomes a
-// button with a chevron, starting folded or open as `folded` says.
+// button with a chevron, starting folded or open as `folded` says. A blocked
+// act says its reason under it once pressed or once its form or sheet is
+// touched, as a `Button` does.
 export function Section({
 	title,
 	count,
@@ -39,6 +42,13 @@ export function Section({
 }: SectionProps) {
 	const foldable = folded !== undefined;
 	const [open, setOpen] = useState(!folded);
+	const { touched } = useTouched();
+	const blocked = act?.blocked !== undefined;
+	const [pressed, setPressed] = useState(false);
+	useEffect(() => {
+		if (!blocked) setPressed(false);
+	}, [blocked]);
+	const said = blocked && (pressed || touched);
 	const label = (
 		<>
 			<RNText className={cn(text({ role: "label" }), "uppercase")}>
@@ -78,22 +88,29 @@ export function Section({
 				)}
 				<View className="flex-1" />
 				{act ? (
-					<Pressable
-						accessibilityRole="button"
-						disabled={act.blocked !== undefined || act.loading}
-						onPress={act.onAct}
-						className="min-h-11 justify-center"
-					>
-						<RNText
-							className={cn(
-								text({ role: "meta" }),
-								"font-medium text-tint",
-								act.blocked !== undefined && "text-ink-faint",
-							)}
+					<View className="items-end gap-pair">
+						<Pressable
+							accessibilityRole="button"
+							accessibilityState={{ disabled: blocked || act.loading }}
+							accessibilityHint={said ? act.blocked : undefined}
+							disabled={act.loading}
+							onPress={() => (blocked ? setPressed(true) : act.onAct())}
+							className="min-h-11 justify-center"
 						>
-							{act.label}
-						</RNText>
-					</Pressable>
+							<RNText
+								className={cn(
+									text({ role: "meta" }),
+									"font-medium text-tint",
+									blocked && "text-ink-faint",
+								)}
+							>
+								{act.label}
+							</RNText>
+						</Pressable>
+						{said ? (
+							<RNText className={text({ role: "meta" })}>{act.blocked}</RNText>
+						) : null}
+					</View>
 				) : null}
 			</View>
 			{description ? (

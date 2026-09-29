@@ -2,7 +2,7 @@ import { CONTROL_MUTED, otpBox, text } from "@fcalell/ui-core/variants";
 import { createSignal, For, onMount } from "solid-js";
 import type { Closed } from "#lib/closed.ts";
 import { cn } from "#lib/cn.ts";
-import { useField } from "#lib/field.ts";
+import { useField, useFieldName } from "#lib/field.ts";
 import { focusIsFree } from "#lib/focus.ts";
 
 // A one-time code: `length` boxes over one string of digits. One real input
@@ -27,6 +27,7 @@ export type InputOtpProps = Closed & {
 
 export function InputOtp(props: InputOtpProps) {
 	const ctx = useField();
+	const name = useFieldName();
 	const [focused, setFocused] = createSignal(false);
 	const [caret, setCaret] = createSignal(0);
 	let input!: HTMLInputElement;
@@ -64,6 +65,7 @@ export function InputOtp(props: InputOtpProps) {
 			<input
 				ref={input}
 				id={ctx?.id}
+				aria-labelledby={name}
 				type="text"
 				inputmode="numeric"
 				pattern="[0-9]*"

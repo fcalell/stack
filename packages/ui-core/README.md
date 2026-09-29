@@ -87,8 +87,8 @@ One accent hue, near-achromatic greys, three state hues.
 - `surface`: the content column, a sheet, a picker's list.
 - `group`: a group's fill, an input, a search field.
 - `edge`: the hairline between columns and between a group's rows; a pressed row's fill.
-- `ink`: titles and body. `ink-meta`: meta lines, section labels, descriptions. `ink-faint`:
-  placeholders and disabled controls.
+- `ink`: titles and body. `ink-meta`: meta lines, section labels, descriptions, a picker's empty
+  choice. `ink-faint`: an input's placeholder and disabled controls.
 - `accent`: the primary act's fill, a switch that is on, the selected place; by `primary`.
   `accent-soft`: a selected row, following `primary` as `accent` does. `on-accent`: text on
   `accent`, an alias of `canvas`, which keeps AA in both modes by the ladder's symmetry.

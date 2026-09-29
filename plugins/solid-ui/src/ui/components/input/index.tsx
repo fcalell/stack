@@ -5,7 +5,7 @@ import { Search } from "lucide-solid";
 import { Show } from "solid-js";
 import type { Closed } from "#lib/closed.ts";
 import { cn } from "#lib/cn.ts";
-import { useField } from "#lib/field.ts";
+import { useField, useFieldName } from "#lib/field.ts";
 import { TEXT_ACT } from "#lib/interact.ts";
 
 export type InputKind =
@@ -22,9 +22,10 @@ export type InputKind =
 // mono and never corrected or capitalized; `email` is an address: the email
 // keyboard, the browser's saved address, never corrected or capitalized;
 // `act` is a trailing text act inside the field. Inside a `FormField` it
-// takes the field's id and error. `onCommit` hears the value once the viewer
-// is done with it: on leaving the field or on Enter, only when it changed
-// since the field took focus; with it, Escape puts back the value at focus.
+// takes the field's id and error; bare in a `Sheet`, the sheet's title names
+// it. `onCommit` hears the value once the viewer is done with it: on leaving
+// the field or on Enter, only when it changed since the field took focus;
+// with it, Escape puts back the value at focus.
 export type InputProps = Closed & {
 	kind?: InputKind;
 	value: string;
@@ -57,6 +58,7 @@ export function Input(props: InputProps) {
 	// Typed exactly as it reads: no correction, no capital, no spellcheck.
 	const verbatim = () => source() || kind() === "email";
 	const ctx = useField();
+	const name = useFieldName();
 	const moment = commitMoment<string>();
 	const commit = (value: string) => props.onCommit?.(value);
 	let input!: HTMLInputElement;
@@ -78,6 +80,7 @@ export function Input(props: InputProps) {
 			<input
 				ref={input}
 				id={ctx?.id}
+				aria-labelledby={name}
 				type={TYPE[kind()]}
 				inputmode={
 					kind() === "number"

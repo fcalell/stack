@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { Text as RNText, TextInput, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
+import { useFieldName } from "../../lib/field";
 import { useTouched } from "../../lib/touched";
 
 export interface InputOtpProps extends Closed {
@@ -31,6 +32,7 @@ export function InputOtp({
 	const [focused, setFocused] = useState(false);
 	const [caret, setCaret] = useState(0);
 	const { touch } = useTouched();
+	const name = useFieldName();
 	const input = useRef<TextInput>(null);
 	useEffect(() => {
 		if (!TextInput.State.currentlyFocusedInput()) input.current?.focus();
@@ -55,6 +57,7 @@ export function InputOtp({
 				</View>
 			))}
 			<TextInput
+				accessibilityLabel={name}
 				ref={input}
 				value={value}
 				onChangeText={(raw) => {

@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Circle } from "../../lib/circle";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
+import { FieldNameContext } from "../../lib/field";
 import { TouchedContext } from "../../lib/touched";
 import { useWords } from "../../lib/words";
 
@@ -56,6 +57,7 @@ const TRANSPARENT = { backgroundColor: "transparent" } as const;
 
 // Content-tall, full height when it holds a TextArea, the sheet corners; a
 // close circle left, the title, submit right, the foot under the children.
+// The title names a typing control inside that no `FormField` labels.
 export function Sheet({
 	open,
 	onClose,
@@ -93,36 +95,45 @@ export function Sheet({
 		>
 			<BottomSheetView>
 				<GrowContext.Provider value={grow}>
-					<TouchedContext.Provider value={{ touched, touch }}>
-						<View
-							style={{ paddingBottom: insets.bottom + 8 }}
-							className={cn(SHEET, "gap-stack px-inset pt-stack shadow-sheet")}
-						>
-							<View className="min-h-11 flex-row items-center gap-row">
-								{back ? (
-									<Circle icon={ChevronLeft} label={words.back} onAct={back} />
-								) : (
-									<Circle icon={X} label={words.close} onAct={onClose} />
+					<FieldNameContext.Provider value={title}>
+						<TouchedContext.Provider value={{ touched, touch }}>
+							<View
+								style={{ paddingBottom: insets.bottom + 8 }}
+								className={cn(
+									SHEET,
+									"gap-stack px-inset pt-stack shadow-sheet",
 								)}
-								<RNText
-									numberOfLines={1}
-									className={cn(text({ role: "heading" }), "flex-1")}
-								>
-									{title}
-								</RNText>
-								{submit ? (
-									<SubmitAct submit={submit} touched={touched} />
+							>
+								<View className="min-h-11 flex-row items-center gap-row">
+									{back ? (
+										<Circle
+											icon={ChevronLeft}
+											label={words.back}
+											onAct={back}
+										/>
+									) : (
+										<Circle icon={X} label={words.close} onAct={onClose} />
+									)}
+									<RNText
+										numberOfLines={1}
+										className={cn(text({ role: "heading" }), "flex-1")}
+									>
+										{title}
+									</RNText>
+									{submit ? (
+										<SubmitAct submit={submit} touched={touched} />
+									) : null}
+								</View>
+								{description ? (
+									<RNText className={text({ role: "meta" })}>
+										{description}
+									</RNText>
 								) : null}
+								{children}
+								{foot}
 							</View>
-							{description ? (
-								<RNText className={text({ role: "meta" })}>
-									{description}
-								</RNText>
-							) : null}
-							{children}
-							{foot}
-						</View>
-					</TouchedContext.Provider>
+						</TouchedContext.Provider>
+					</FieldNameContext.Provider>
 				</GrowContext.Provider>
 			</BottomSheetView>
 		</BottomSheetModal>

@@ -1121,7 +1121,7 @@ check("b-nouns", "no product noun in src", () => {
 // (an option whose value is null) reads as a placeholder.
 check(
 	"b-picker",
-	"a picker stacks its row and draws its empty choice faint",
+	"a picker stacks its row and draws its empty choice as a placeholder",
 	() => {
 		const component = (name: string) =>
 			readFileSync(resolve(COMPONENT_DIR, name, "index.tsx"), "utf8");
@@ -1132,13 +1132,11 @@ check(
 			"a picker in a definition row does not claim the row",
 		);
 		assert(
-			/option\.value === null && FIELD_PLACEHOLDER/.test(picker) &&
-				/\(current\?\.value \?\? null\) === null && FIELD_PLACEHOLDER/.test(
-					picker,
-				),
+			/option\.value === null && PICKER_EMPTY/.test(picker) &&
+				/\(current\?\.value \?\? null\) === null && PICKER_EMPTY/.test(picker),
 			"the empty choice does not draw as a placeholder in the list and on the control",
 		);
-		return "Picker claims the DefinitionRow; a null option and an empty control draw FIELD_PLACEHOLDER";
+		return "Picker claims the DefinitionRow; a null option and an empty control draw PICKER_EMPTY";
 	},
 );
 

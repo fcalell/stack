@@ -88,6 +88,9 @@ export const COUNT =
 	"rounded-full bg-group min-w-6 px-2 text-label leading-label font-medium text-tint";
 export const STATUS_CHIP = "rounded-full bg-group min-h-floor px-3";
 export const FIELD_PLACEHOLDER = "text-ink-faint";
+// A picker's empty choice and its control with no value: a placeholder's look
+// in `ink-meta`, since it is text a viewer reads and `ink-faint` misses 4.5:1.
+export const PICKER_EMPTY = "text-ink-meta";
 export const GROUP = "rounded-group bg-group";
 export const HAIRLINE = "border-edge";
 export const SWITCH_THUMB = "rounded-full bg-thumb";

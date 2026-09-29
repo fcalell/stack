@@ -1,10 +1,13 @@
 // Which environments the consumer spans, from its plugin names: the one
 // decision behind both the files `stack init` writes and the tsconfig the
-// worker's bundler reads (`workerTsconfig`).
+// worker's bundler reads (`workerTsconfig`). `node` is the node target
+// (`node()` in place of `cloudflare()`): its server runs under Node, with no
+// Workers globals, and holds the consumer's services under `src/server`.
 export interface TsconfigLayout {
 	solid: boolean;
 	native: boolean;
 	worker: boolean;
+	node: boolean;
 }
 
 export function tsconfigLayout(plugins: readonly string[]): TsconfigLayout {
@@ -12,6 +15,7 @@ export function tsconfigLayout(plugins: readonly string[]): TsconfigLayout {
 		solid: plugins.includes("solid") || plugins.includes("solid-ui"),
 		native: plugins.includes("expo"),
 		worker: plugins.includes("api") || plugins.includes("db"),
+		node: plugins.includes("node") && !plugins.includes("cloudflare"),
 	};
 }
 
@@ -41,8 +45,9 @@ interface TsconfigOptions extends TsconfigLayout {
 
 // A consumer with both an app and a worker spans two TypeScript environments
 // that cannot share one program: the app (DOM, or react-native) and the
-// worker (workerd globals from the generated `worker-configuration.d.ts`, no
-// DOM). One program merges both sets of globals and they collide: the Workers
+// worker (workerd globals from the generated `worker-configuration.d.ts`, or
+// Node's on the node target; never the DOM). One program merges both sets of
+// globals and they collide: the Workers
 // runtime declares HTMLRewriter's `Element` as a global interface, so DOM's
 // `Element.append` takes only `string | ReadableStream | Response`. The two
 // are split into projects under a solution `tsconfig.json`, so `tsc -b`
@@ -75,7 +80,7 @@ export function tsconfigTemplate(
 		const base = options.native ? nativeApp(options.nativeTypes) : solidApp();
 		return [
 			["tsconfig.json", render(SOLUTION)],
-			["tsconfig.app.json", render(appProject(base))],
+			["tsconfig.app.json", render(appProject(base, options.node))],
 			["tsconfig.worker.json", render(workerProject(options))],
 		];
 	}
@@ -118,14 +123,15 @@ interface Project {
 	references?: Array<{ path: string }>;
 }
 
-// Everything but the worker's tree, which it reads only through the worker
-// project's declarations. The app never emits, so its own declaration
+// Everything but the server's trees (`src/worker`, and on the node target
+// `src/server`), which it reads only through the worker project's
+// declarations. The app never emits, so its own declaration
 // diagnostics are off. Editors follow a project reference to its sources by
 // default, which would type those sources under the app's globals; the
 // redirect is off so they read the declarations, as `tsc -b` does, current
 // as of the last build. `tsc -b` writes the build info even under `noEmit`;
 // it lands in `node_modules/.tmp`, ignored already.
-function appProject(config: Project): Project {
+function appProject(config: Project, node: boolean): Project {
 	return {
 		...config,
 		compilerOptions: {
@@ -136,17 +142,20 @@ function appProject(config: Project): Project {
 			disableSourceOfProjectReferenceRedirect: true,
 			tsBuildInfoFile: "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
 		},
-		exclude: ["src/worker"],
+		exclude: node ? ["src/worker", "src/server"] : ["src/worker"],
 		references: [{ path: "./tsconfig.worker.json" }],
 	};
 }
 
 // The worker's sources, the schema, the isomorphic shared code, the generated
-// worker files and the `Env` declarations, with no ambient package types. A
-// referenced project lists every file its program loads, so `src/shared`
-// (which the schema and routes import) is its own and the app reads it
-// through its declarations too. The shared trees' tests run under node and
-// are checked with the app, whose program loads `@types/node`.
+// worker files and the `Env` declarations, with no ambient package types. On
+// the node target the server runs under Node: the project loads `@types/node`
+// in place of the Workers' generated declarations, which do not exist there,
+// and holds the services under `src/server`. A referenced project lists every
+// file its program loads, so `src/shared` (which the schema and routes
+// import) is its own and the app reads it through its declarations too. The
+// shared trees' tests run under node and are checked with the app, whose
+// program loads `@types/node`.
 // `declarationMap` lets an editor jump from the app to a procedure's source.
 // The build info sits with the declarations, so removing `.stack/` rebuilds
 // them rather than leaving `tsc -b` to call a project with no output current.
@@ -154,7 +163,7 @@ function workerProject(options: TsconfigOptions): Project {
 	return {
 		extends: "@fcalell/typescript-config/node-tsx.json",
 		compilerOptions: {
-			types: [],
+			types: options.node ? ["node"] : [],
 			paths: options.procedurePaths,
 			composite: true,
 			// `node-tsx` (via base) disables incremental, which composite
@@ -172,7 +181,7 @@ function workerProject(options: TsconfigOptions): Project {
 			"src/shared",
 			".stack/worker.ts",
 			".stack/procedure.ts",
-			".stack/worker-configuration.d.ts",
+			...(options.node ? ["src/server"] : [".stack/worker-configuration.d.ts"]),
 		],
 		exclude: ["src/schema/**/*.test.ts", "src/shared/**/*.test.ts"],
 	};
