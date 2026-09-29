@@ -2,8 +2,8 @@
 
 `@fcalell/ui-core` is the design contract both UI plugins render from: the token contract with its
 parametric derivation, the words the molecules speak, the shared `cn()` merge config, the
-platform-invariant variant matrices, the component roster, the shared descriptor types, and the
-geometry gate. It is a preset library like `biome-config`: no `plugin()` factory, no slots, and no
+platform-invariant variant matrices, the component roster, and the shared descriptor types. It
+is a preset library like `biome-config`: no `plugin()` factory, no slots, and no
 framework dependency. The normative laws (the
 canon, the sharing line, the `cn` ordering rule, the roster) live in the package README and are
 pinned by the package's verify suite; this entry holds the architecture and its rationale.
@@ -17,8 +17,8 @@ pinned by the package's verify suite; this entry holds the architecture and its 
   `--breakpoint-*`, `--transition-duration-*`, `--ease-*`), so an off-contract utility compiles
   to nothing and `tablet:`, `desktop:` and `wide:` are the only responsive variants. The numeric
   `--spacing` base stays live because dimension utilities derive from it, so no build check can
-  tell a role from a numeric; the matrices pin their cell strings verbatim and the geometry gate
-  keeps numerics off call sites.
+  tell a role from a numeric; the matrices pin their cell strings verbatim and the closed props
+  keep a numeric off a call site.
 - `mono` draws with its ligatures off (`--font-mono--font-feature-settings`), so code reads
   character for character: `!==` never becomes `≢`.
 - Four knobs and nothing else: `accentHue` (264), `density` (`desktop` or `touch`), `fonts`
@@ -142,32 +142,14 @@ prop on the molecule that draws it, never a key.
   against it with ts-morph, so a prop added on one platform, renamed, or a style channel reopened
   fails by name. A component's directory is `componentDir(name)` (`ListRow` → `list-row`).
 - Closure mechanics: every closed prop is declared `?: never` on a plain object type, never on a
-  host's props type, so the key set is closed and a call site gets a readable error. The named
-  holes: consumer CSS targeting plugin class names, and any class built from a variable. The gate
-  is a guardrail against drift, not a sandbox.
+  host's props type, so the key set is closed and a call site gets a readable error. The closed
+  props are the guardrail: a look the matrices do not cover is a matrix cell or a consumer
+  primitive under `ui/`, never a class on a call site. The named holes stay open on purpose:
+  consumer CSS targeting plugin class names, and any class built from a variable; the size of a
+  consumer's `ui/` directory is the number that says whether the matrices cover enough.
 - The boundary: a molecule lives in stack when its prop names and enum words are product-free. A
   molecule whose props are a product's nouns lives in that product's `ui/`, composing stack
   molecules and never a host element. Both suites fail on a product noun in source.
-
-## The geometry gate
-
-- An allowlist, never a denylist: the closed vocabulary lives as data (`GEOMETRY` in
-  `packages/ui-core/src/gate.ts`) and unknown classes fail; a denylist passes whatever it has not
-  been taught. At a call site, a class attribute is legal only on a raw host element (lowercase
-  intrinsics on web; `View` / `Pressable` / `ScrollView` / `Animated.View` on native) and only
-  from the vocabulary. The gap cells are `CALL_SITE_GAPS`, `gap-inside` and `gap-pair`, the
-  two gaps inside a line; vertical rhythm (`rows`, `fields`, `sections`) belongs to the layout
-  molecules that own it, so a screen composes a `Form` or a `Section` and never a gap.
-- The `ui/` carve-out (any path segment) is a fixed convention, never config, and there is no
-  per-file skip list.
-- Delivery: the scanner sits behind the `./gate` export (ts-morph, imported only from plugin
-  `node/` code) and each UI plugin contributes a pre-phase `cliSlots.buildSteps` entry, so every
-  consumer picks the gate up on upgrade. Rejected: a template `check:ui` script
-  (`patchPackageJson` merges only absent keys), a `stack ui check` subcommand (two UI plugins
-  would both claim it), and a Biome GritQL rule (cannot express the allowlist).
-- Coverage is literal-only: a class assembled through a variable, a prop, or a template passes
-  silently. The size of a consumer's `ui/` directory is the number that says whether the matrices
-  cover enough.
 
 ## Enforcement
 
@@ -176,6 +158,6 @@ the derivation diffed against the approved foundations sheet and swept over ever
 matrices asserted verbatim over their full axis products, the roster compared against every
 component's props type, closure fixtures that compile every component's `?: never` props, word
 and product-noun scans over the sources, class-literal set-equality against the native overlay
-allowlist, and the gate fixtures. A new
+allowlist. A new
 matrix that skips a registry, a component the roster does not name, a literal that duplicates a
 cell, or a drawn word outside `words` each fails a named check.

@@ -10,8 +10,7 @@
 		"generate": "stack generate",
 		"dev": "stack dev",
 		"build": "stack build",
-		"check-types": "tsc --noEmit",
-		"gates": "playwright test"
+		"check-types": "tsc --noEmit"
 	},
 	"dependencies": {
 		"@fcalell/plugin-react": "workspace:*",
@@ -24,18 +23,15 @@
 		"tailwindcss": "^4.3.3"
 	},
 	"devDependencies": {
-		"@axe-core/playwright": "4.13.0",
 		"@fcalell/cli": "workspace:*",
 		"@fcalell/typescript-config": "workspace:*",
 		"@fcalell/ui-core": "workspace:*",
-		"@playwright/test": "1.61.1",
 		"@tailwindcss/vite": "^4.3.3",
 		"@tanstack/router-plugin": "^1.168.41",
 		"@types/react": "^19.3.0",
 		"@types/react-dom": "^19.3.0",
 		"@vitejs/plugin-react": "^5.2.0",
 		"babel-plugin-react-compiler": "^1.0.0",
-		"playwright-core": "1.61.1",
 		"typescript": "^5.9.3",
 		"vite": "^7.0.4"
 	}

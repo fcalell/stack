@@ -1,4 +1,4 @@
 {
 	"extends": "@fcalell/typescript-config/web-vite.json",
-	"include": ["src", "gates", "playwright.config.ts", ".stack/*.d.ts"]
+	"include": ["src", ".stack/*.d.ts"]
 }

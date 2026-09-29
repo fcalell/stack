@@ -22,7 +22,6 @@ import {
 import { createRequire, registerHooks } from "node:module";
 import { dirname, relative, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { StackError } from "@fcalell/cli/errors";
 import { deriveTheme } from "@fcalell/ui-core/derive";
 import {
 	modeTokens,
@@ -62,7 +61,6 @@ import {
 import * as variants from "@fcalell/ui-core/variants";
 import { Node, Project } from "ts-morph";
 import { aggregateGlobalCss } from "../src/node/codegen.ts";
-import { runGeometryGate } from "../src/node/gate.ts";
 import { nativeUiOptionsSchema, type Theme } from "../src/types.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -610,20 +608,6 @@ function styleValue(
 	const entry = rules[0].entries.find(([name]) => name === property);
 	assert(entry, `${className} carries no ${property}`);
 	return entry[1](vars);
-}
-
-// ── The geometry gate over its fixture trees ────────────────────────
-
-const gateFixtureDir = resolve(fixtureDir, "gate");
-const gateOutcomes = new Map<string, unknown>();
-for (const tree of ["pass", "fail", "empty"]) {
-	gateOutcomes.set(
-		tree,
-		await runGeometryGate(resolve(gateFixtureDir, tree)).then(
-			() => "clean",
-			(error: unknown) => error,
-		),
-	);
 }
 
 // ── Criteria ────────────────────────────────────────────────────────
@@ -1197,97 +1181,15 @@ check(
 	},
 );
 
-check("b8", "the build-step contribution wires the real gate", () => {
+check("b8", "the words provider lands on the words option", () => {
 	const source = readFileSync(resolve(pkgDir, "src/index.ts"), "utf8");
-	const start = source.indexOf("cliSlots.buildSteps.contribute");
-	assert(start >= 0, "src/index.ts contributes no build step");
-	const end = source.indexOf("})),", start);
-	assert(end >= 0, "the build-step contribution never closes");
-	const contribution = source.slice(start, end);
-	for (const pin of [
-		'name: "native-ui-geometry-gate"',
-		'phase: "pre"',
-		"run: () => runGeometryGate(ctx.cwd)",
-	]) {
-		assert(contribution.includes(pin), `the contribution lacks ${pin}`);
-	}
-	assert(
-		source.includes('from "./node/gate.ts"'),
-		"src/index.ts does not import ./node/gate",
-	);
-	assert(
-		!source.includes("ui-core/gate"),
-		"src/index.ts touches the gate subpath",
-	);
-	const gateSource = readFileSync(resolve(pkgDir, "src/node/gate.ts"), "utf8");
-	assert(
-		gateSource.includes("await import(") &&
-			gateSource.includes('"@fcalell/ui-core/gate"'),
-		"gate.ts does not dynamic-import the scanner",
-	);
-	assert(
-		!gateSource.includes('from "@fcalell/ui-core/gate"'),
-		"gate.ts imports the gate subpath statically",
-	);
-	assert(
-		gateSource.includes("NATIVE_GEOMETRY_HOSTS"),
-		"gate.ts does not scan with the native host list",
-	);
 	// The words provider lands in the entry only when the consumer set words.
 	assert(
 		source.includes('named: ["WordsProvider"]') &&
 			source.includes("if (!opts.words) return undefined;"),
 		"src/index.ts does not contribute the WordsProvider on the words option",
 	);
-	return "one pre step, pinned name, run wired to runGeometryGate(ctx.cwd), scanner dynamic-imported, words provider gated";
-});
-
-check("b9", "the gate passes geometry and throws on the look", () => {
-	for (const file of [
-		"pass/src/screen.tsx",
-		"pass/src/ui/look.tsx",
-		"fail/src/screen.tsx",
-	]) {
-		assert(
-			existsSync(resolve(gateFixtureDir, file)),
-			`fixture ${file} is missing: is the gate tree tracked?`,
-		);
-	}
-	const look = readFileSync(
-		resolve(gateFixtureDir, "pass/src/ui/look.tsx"),
-		"utf8",
-	);
-	assert(
-		look.includes("flex-1 bg-canvas"),
-		"the ui/ carve-out fixture lost its look",
-	);
-	assert(
-		gateOutcomes.get("pass") === "clean",
-		`the pass tree reported: ${String(gateOutcomes.get("pass"))}`,
-	);
-	assert(
-		!existsSync(resolve(gateFixtureDir, "empty/src")),
-		"the empty tree grew a src/",
-	);
-	assert(
-		gateOutcomes.get("empty") === "clean",
-		`the src-less tree reported: ${String(gateOutcomes.get("empty"))}`,
-	);
-	const failure = gateOutcomes.get("fail");
-	assert(
-		failure instanceof StackError,
-		`the fail tree did not throw a StackError: ${String(failure)}`,
-	);
-	assert(failure.code === "GEOMETRY_GATE", `code: ${failure.code}`);
-	const expected = [
-		'src/screen.tsx:2  "bg-canvas" is not in the geometry vocabulary',
-		'src/screen.tsx:3  class attribute on non-host tag "Group"',
-	].join("\n");
-	assert(
-		failure.message === expected,
-		`unexpected message:\n${failure.message}`,
-	);
-	return "pass and src-less trees clean, the fail tree throws GEOMETRY_GATE naming both violations in one run";
+	return "words provider gated on the option";
 });
 
 // ── The exports, as a consumer resolves them ────────────────────────

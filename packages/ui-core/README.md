@@ -4,11 +4,10 @@ The design system both stack UI plugins render from: one closed token contract, 
 foundations sheet as data behind four knobs, the words the molecules speak, the platform-invariant
 variant matrices, the roster every component and its props are pinned to, and the laws that say
 which token to pick. The contract subpaths export build-time data only, so each plugin renders its
-own CSS from the same records and ui-core stays framework-free. Two subpaths are Node-only:
-`./harness` is internal tooling for the packages' verify scripts, and `./gate` is the geometry
-scanner the UI plugins run at build time.
+own CSS from the same records and ui-core stays framework-free. One subpath is Node-only:
+`./harness`, internal tooling for the packages' verify scripts.
 
-Eleven subpaths:
+Ten subpaths:
 
 - `@fcalell/ui-core/tokens`: the contract as data, the sheet's every value, the knob defaults and
   the English `words`.
@@ -36,8 +35,6 @@ Eleven subpaths:
 - `@fcalell/ui-core/roster`: the component roster as data (`ROSTER`, `STATES`, `CLOSED_PROPS`): the
   layer, prop names, drawn families and states of every component both plugins ship.
 - `@fcalell/ui-core/harness`: internal. The shared core of the packages' `scripts/verify.ts`.
-- `@fcalell/ui-core/gate`: Node-only. The closed geometry vocabulary as data and `scanGeometry`,
-  the scanner behind each UI plugin's pre-build geometry gate. Importing it loads ts-morph.
 
 The contract has two modes, `light` and `dark`. `themeTokens` seeds the light colors and the touch
 density set into the `@theme` block as well, because Tailwind v4 generates no utility from a
@@ -261,8 +258,9 @@ Eleven namespaces reset to `initial`: `--color-*`, `--radius-*`, `--text-*`, `--
 `--spacing` base stays live because dimension utilities derive from it, so no build check can tell
 a role from a numeric; the matrices pin their cell strings verbatim instead. `--font-weight-*`
 stays live because the roles name their weights. A bare `duration-150` stays live because
-Tailwind turns a number into milliseconds without reading the theme. The geometry gate is what
-keeps a numeric off a call site.
+Tailwind turns a number into milliseconds without reading the theme. The ownership rule and the
+closed props keep a numeric off a call site: a look the matrices do not cover is a matrix cell or
+a consumer primitive under `ui/`, never a class on a call site.
 
 ## The canon
 
@@ -313,27 +311,3 @@ A role owns three properties, so the config also declares `font-size` as conflic
 `leading-` and `tracking-`: a later role clears the earlier role's line height and letter spacing
 together. **Compose the type role before any later size class, never after.** That conflict runs
 one way, so `cn("leading-title", "text-body")` returns `text-body` alone.
-
-## The geometry gate
-
-`@fcalell/ui-core/gate` closes the call-site boundary. Outside a `ui/` directory, consumer app
-code may put a class only on a raw host element, and only from the closed geometry vocabulary
-below; every look belongs to the matrices. Each UI plugin runs `scanGeometry` over the consumer's
-`src/` tree as a pre-phase build step, skipping any path with a `ui/` segment, so a violation
-fails `stack build` naming the file, the line, and the token.
-
-The vocabulary, one closed list for both platforms: flex plumbing (`flex`, `flex-1`, `flex-row`,
-`flex-col`, `flex-wrap`, `grow`, `shrink-0`), the zero offsets (`absolute`, `relative`, `inset-0`,
-`inset-x-0`, `inset-y-0`, `top-0`, `bottom-0`, `left-0`, `right-0`), the non-numeric sizes
-(`w-full`, `min-w-0`, `min-h-0`, `min-h-full`, `min-h-screen`, `max-w-full`, `max-w-none`),
-`overflow-hidden`, the two gap cells a call site may spell (`gap-inside` and `gap-pair`,
-`CALL_SITE_GAPS`), and four prefixes: `items-`, `justify-`, `self-`, `z-`. Vertical rhythm
-(`rows`, `fields`, `sections`) belongs to the layout molecules that own it, so a screen composes
-a `Form` or a `Section` and never a gap. Three unconditional bans inside any token: `[`, `(`, and
-`:`.
-
-The host rule: on web a bare lowercase tag; on native `View`, `Pressable`, `ScrollView`, and
-`Animated.View`. The check fires only on elements carrying a class attribute. The scanner reads
-literals only: a class assembled through a variable, a prop, a template literal, or an aliased
-`cn` passes silently. The gate is a guardrail against drift, and the size of a consumer's `ui/`
-directory is the number that says whether the matrices cover enough.

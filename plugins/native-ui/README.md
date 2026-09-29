@@ -2,7 +2,7 @@
 
 React Native design-system plugin for the `@fcalell/stack` framework. It renders
 `@fcalell/ui-core`'s contract into the uniwind stylesheet, embeds the font files, composes the
-app's providers, runs the geometry gate at build, and ships the roster: 54 components in four
+app's providers, and ships the roster: 54 components in four
 layers. Requires
 `expo` (it contributes into `plugin-expo`'s slots) plus `api` and `auth` (the wired Query and Auth
 providers import their native subpaths).
@@ -41,8 +41,7 @@ export default defineConfig({
 `withUniwindConfig` Metro wrapper pointing at the generated `.stack/global.css`, an `expo-font`
 config plugin embedding the font files, the provider stack around the app root
 (`GestureHandlerRootView` → `KeyboardProvider` → `SafeAreaProvider` → `BottomSheetModalProvider` →
-`WordsProvider` when `words` is set → `QueryProvider` → `AuthProvider`), and the pre-build
-geometry gate. Theming is CSS-first: switch modes at runtime with `setTheme("dark")` from
+`WordsProvider` when `words` is set → `QueryProvider` → `AuthProvider`). Theming is CSS-first: switch modes at runtime with `setTheme("dark")` from
 `@fcalell/plugin-native-ui/lib/theme`.
 
 The app's icon set is a runtime map: wrap the screens in `IconsProvider` from
@@ -161,9 +160,9 @@ All take `loading` and draw three row forms.
 
 ## The boundary
 
-A class attribute outside the app's `ui/` directory may sit only on `View`, `Pressable`,
-`ScrollView` or `Animated.View`, and only from the closed geometry vocabulary in ui-core's gate;
-`stack build` fails on anything else, naming the file, the line and the token. A molecule whose
+Every look outside the app's `ui/` directory is a roster molecule: no component takes a
+`className` or `style`, so a class attribute there sits only on a `View`, `Pressable`,
+`ScrollView` or `Animated.View` and carries layout plumbing, never a look. A molecule whose
 props are the app's nouns lives in the app's `ui/`, composed from these molecules and never from a
 host element. Nothing here carries a product noun in a prop, an enum word or a string.
 
@@ -172,5 +171,4 @@ host element. Nothing here carries a product noun in a prop, an enum word or a s
 `pnpm --filter @fcalell/plugin-native-ui verify` renders the sheet, compiles it through uniwind's
 own compiler and a Tailwind build, reads the matrices back off ui-core's cvas, holds the overlay
 allowlist equal to the swept sources, proves the closure with the fixture under
-`scripts/fixture/closure.tsx`, reads every component's props type against the roster, and runs
-the geometry gate over its fixture trees.
+`scripts/fixture/closure.tsx`, and reads every component's props type against the roster.

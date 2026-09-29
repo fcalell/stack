@@ -2,7 +2,7 @@
 
 The web half of the stack design system: the CLI plugin that renders `@fcalell/ui-core`'s
 contract into `.stack/app.css` on Tailwind v4, loads the fonts, sets the mode before first paint,
-mounts the words, and runs the geometry gate before every build. It also ships the showcase: one
+and mounts the words. It also ships the showcase: one
 page that frames every roster component in every cell, state, mode and density.
 
 ## Install
@@ -68,11 +68,6 @@ the view (`?mode=dark&density=desktop`) and the page's toggles rewrite it, stori
 frame carries `data-cell="<component>/<cell>/<state>/<mode>/<density>"`; `showcaseCells()` lists
 every id over both densities, so a density's page draws half of them. A component without a
 registered renderer draws its name and its cell's classes.
-
-## Geometry gate
-
-`stack build` runs the gate over `src/` before Vite: a class attribute is legal only on a
-lowercase intrinsic element and only from ui-core's geometry vocabulary; `ui/` paths are exempt.
 
 ## Slots
 

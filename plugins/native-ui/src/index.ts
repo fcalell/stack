@@ -6,7 +6,6 @@ import { auth } from "@fcalell/plugin-auth";
 import { expo } from "@fcalell/plugin-expo";
 import { deriveTheme } from "@fcalell/ui-core/derive";
 import { aggregateGlobalCss } from "./node/codegen.ts";
-import { runGeometryGate } from "./node/gate.ts";
 import {
 	type NativeFontEntry,
 	type NativeUiOptions,
@@ -341,14 +340,6 @@ export const nativeUi = plugin("native-ui", {
 				? undefined
 				: { source: "./native-theme", sideEffect: true },
 		),
-
-		// ── Geometry gate ─────────────────────────────────────────────────
-		// Pre-phase; on a native-only consumer it is the first and only step.
-		cliSlots.buildSteps.contribute((ctx) => ({
-			name: "native-ui-geometry-gate",
-			phase: "pre",
-			run: () => runGeometryGate(ctx.cwd),
-		})),
 
 		// ── Scaffold the native client modules the entry imports ──────────
 		//

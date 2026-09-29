@@ -33,8 +33,8 @@
             pkgs.tailwindcss-language-server # the web plugin's tailwind surface
           ];
 
-          # Playwright's downloaded Chromium does not start on NixOS: the showcase's
-          # gates run nixpkgs' browsers, and `@playwright/test` pins this driver's version.
+          # Playwright's downloaded Chromium does not start on NixOS: the critic's and
+          # the designer's Playwright tools run nixpkgs' browsers.
           PLAYWRIGHT_BROWSERS_PATH = pkgs.playwright-driver.browsers;
           PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS = "1";
 

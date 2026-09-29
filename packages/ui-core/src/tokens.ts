@@ -541,7 +541,7 @@ export const SPACING_ROLES = [
 export type SpacingRole = (typeof SPACING_ROLES)[number];
 
 // The roles a container may put between its children; the other three are
-// insets. The gate's gap vocabulary and the rhythm matrix are this list.
+// insets. The rhythm matrix is this list.
 export const GAP_ROLES = [
 	"inside",
 	"pair",
@@ -790,7 +790,7 @@ export const EASING: Record<Easing, readonly [number, number, number, number]> =
 
 // Namespaces reset to `initial`, so an off-contract utility compiles to
 // nothing. The numeric `--spacing` base and the `--font-weight-*` ladder stay
-// live: the roles name their weights, and the geometry gate keeps a numeric
+// live: the roles name their weights, and the ownership rule keeps a numeric
 // off a call site. A bare `duration-150` stays live too: Tailwind turns a
 // number into milliseconds without reading the theme.
 export const ZEROED_NAMESPACES = [

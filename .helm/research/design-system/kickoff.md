@@ -22,12 +22,13 @@ native in React Native, over one framework-free contract (`packages/ui-core`).
 
 The standard is the craft of the best product UI on Mobbin, measured, not the two apps the old
 roster assumed. Every visual decision is made against a rendered screen, compared to a reference,
-and locked by a test. Nothing ships unseen.
+and measured before it ships. Nothing ships unseen.
 
 Three words are defined in §6 so every session judges the same way: **complete** is an inventory
-a script counts, **done** is a set of machine gates with exit codes, **beautiful** is a judged
-rubric with numeric tells, run by a critic agent before fcalell looks. The definitions were
-derived on 2026-09-29 from a survey of the design-system tooling in the Claude ecosystem (§5b).
+a script counts, **done** is `pnpm check` and the verify suites green plus the critic's measured
+numbers on the render, **beautiful** is a judged rubric with numeric tells, run by a critic agent
+before fcalell looks. The definitions were derived on 2026-09-29 from a survey of the
+design-system tooling in the Claude ecosystem (§5b).
 
 ## 2. What exists today (verified 2026-09-29)
 
@@ -38,7 +39,7 @@ React Native + uniwind, hand-built, not on stack; the future native consumer).
 
 | Package | Role | Fate |
 | --- | --- | --- |
-| `packages/ui-core` | framework-free contract: tokens (`tokens.ts`), derivation (`derive.ts`), emit records (`emit.ts`), cva variant matrices (`variant-tables.ts`, `variants.ts`), the roster (`roster.ts`, 54 components), descriptors, the geometry gate (`gate.ts`), the verify harness (`harness.ts`) | keep; recalibrate |
+| `packages/ui-core` | framework-free contract: tokens (`tokens.ts`), derivation (`derive.ts`), emit records (`emit.ts`), cva variant matrices (`variant-tables.ts`, `variants.ts`), the roster (`roster.ts`, 54 components), descriptors, the verify harness (`harness.ts`) | keep; recalibrate |
 | `packages/cli` | `defineConfig`, plugins, slot graph, codegen, the `stack` CLI | keep |
 | `packages/typescript-config`, `packages/biome-config`, `packages/auth-testing` | presets | keep; drop the `solid-vite` preset |
 | `plugins/api`, `auth`, `db`, `cloudflare`, `vite`, `node`, `expo` | server and build plugins | keep; `auth` and `vite` have Solid-specific client code to replace |
@@ -51,9 +52,8 @@ chroma, `primary`, `space`, `radius`, `text`, `elevation`, `density`, `fonts`, `
 `breakpoints`, `defaultMode`) derived into OKLCH light and dark values; density as a theme
 (`touch` 44 px floor, `desktop` 32 px under `(pointer: fine)`); variant matrices holding only
 platform-invariant cells; interaction states as platform overlays; one prop name per concept,
-`className`/`style` closed as `?: never`; the geometry gate as an allowlist over consumer code at
-build time; verify suites (27 in ui-core, 22 in solid-ui, 14 in native-ui) run only by hand via
-`pnpm verify`.
+`className`/`style` closed as `?: never`; verify suites (27 in ui-core, 22 in solid-ui, 14 in
+native-ui) run only by hand via `pnpm verify`.
 
 What does not exist, and is the root cause of the current look: nothing renders a component. No
 showcase, no screenshot, no visual test, no docs site, no images anywhere in the repo. Every check
@@ -120,8 +120,7 @@ looks.
 | Tailwind 4.3.x | stable | the `@theme` emit target, unchanged |
 | `@fontsource-variable/inter` 5.3.0 (has `opsz`) | stable | default sans; stack's `fonts` option already handles FontEntry, preload, metric fallback |
 | `lucide-react` | lockstep with lucide | icons; consumer supplies a closed `IconSet` map as today |
-| Playwright 1.63 `toHaveScreenshot` | stable | visual baselines over the showcase, run in a pinned container |
-| `@axe-core/playwright` 4.13 | stable | accessibility over the same pages |
+| Playwright (the `mcp__playwright__browser_*` tools) | available | the critic's and the designer's render, measurement and screenshot surface; no test suite |
 | Storybook 10.6 | optional | only if a controls UI is wanted; the showcase is the source of truth |
 | Argos Hobby (5,000 shots/month free) | optional | diff review UI on PRs; not needed at start |
 | Chromatic, Percy | skip | cost over value at this size |
@@ -141,8 +140,8 @@ only, or aimed at a system that already drifts; none is adopted.
 | Adopt | What it gives | How it is used here |
 | --- | --- | --- |
 | Google `design.md` spec + `@google/design.md lint` and `diff` (github.com/google-labs-code/design.md) | the one open, tool-neutral definition format: YAML front-matter tokens (colors, typography, rounded, spacing, components with `{ref}` aliases), eight fixed body sections, a linter (schema, broken refs, WCAG contrast per component pair, missing sections, exit 1) and a token diff with a `regression` flag | stack **emits** `DESIGN.md` from `ui-core` (one emitter beside `emit.ts`); `lint` runs in `check`; `diff` runs in CI; the file is what Claude Design, `/design`, and every agent read as the contract |
-| plugin87 `ux-ui-agent-skills` (github.com/plugin87/ux-ui-agent-skills) | the most measurable "done" in the ecosystem: 43 gates, 31 of them in a headless browser (real-render contrast light and dark per state, target size, overflow at 280/320/414, axe, focus trap, keyboard, reduced motion, "declared states visibly change"), plus a `design-critic` agent that must render before it speaks | **not installed** (Python + house style); its gate design is re-implemented as stack's own Playwright suite over the showcase (§6 Done) |
-| impeccable, Vercel `web-design-guidelines`, Anthropic `frontend-design`, OneRedOak `design-review` | read once for what §6 lacked: impeccable's craft floor, Vercel's code-hygiene checklist, the anti-default list and the precedence rule, the seven-phase screenshot review | **not installed** (each carries a house taste that competes with the rubric, and a skill's description fires on its own). Their unique content is folded into `rubric.md` and stack's own agents in `.claude/agents/`: `design-critic` (measures, interacts, judges, runs the hygiene checklist), `designer` (drafts artboards on the real CSS), `implementer`. `impeccable detect` was run on a fixture and dropped: the contract makes its source rules impossible by construction, its render rules are §6 Done rows, and it flags Inter as an overused font |
+| plugin87 `ux-ui-agent-skills` (github.com/plugin87/ux-ui-agent-skills) | the most measurable "done" in the ecosystem: 43 gates, 31 of them in a headless browser (real-render contrast light and dark per state, target size, overflow at 280/320/414, axe, focus trap, keyboard, reduced motion, "declared states visibly change"), plus a `design-critic` agent that must render before it speaks | **not installed** (Python + house style); no suite re-implements its gates: the numbers it measures are floors in `rubric.md` §8, and the `design-critic` agent measures them on the render per unit (§6 Done) |
+| impeccable, Vercel `web-design-guidelines`, Anthropic `frontend-design`, OneRedOak `design-review` | read once for what §6 lacked: impeccable's craft floor, Vercel's code-hygiene checklist, the anti-default list and the precedence rule, the seven-phase screenshot review | **not installed** (each carries a house taste that competes with the rubric, and a skill's description fires on its own). Their unique content is folded into `rubric.md` and stack's own agents in `.claude/agents/`: `design-critic` (measures, interacts, judges, runs the hygiene checklist), `designer` (drafts artboards on the real CSS), `implementer`. `impeccable detect` was run on a fixture and dropped: the contract makes its source rules impossible by construction, its render rules are the floors the critic measures (§6 Done), and it flags Inter as an overused font |
 | bundled `dataviz` skill and its `validate_palette` script | the only runnable chart-palette gate (hue order, OKLCH L bands, chroma floor, CVD separation ΔE ≥ 8, mark contrast ≥ 3:1) | the chip and status families and any chart ramp pass it; martechthings has `BarChart` and `Meter` |
 | `VoltAgent/awesome-design-md` | 73 `DESIGN.md` files reverse-engineered from the public CSS of Stripe, Vercel, Linear, Claude and others: measured values, not impressions | a second source for the reference sheet beside Mobbin (Stage 0.1) |
 | `secondsky/tailwind-v4-shadcn` skill, `mattbx/shadcn-component-review` | Tailwind v4 `@theme inline` and OKLCH dark-mode mechanics; a "semantic tokens only, `gap` over `space-y`, `size-*`" component review | reference only; no shadcn components |
@@ -165,7 +164,9 @@ a rubric for density, information design, and node canvases.
    in a component.
 2. Three tiers, enforced: knobs and calibration (primitive) → roles (semantic) → matrices
    (component). A component references roles only; the zeroed Tailwind namespaces make palette
-   steps non-existent, and the geometry gate rejects everything else.
+   steps non-existent, and the closed props with the ownership rule (a look the matrices do not
+   cover is a matrix cell or a consumer primitive under `ui/`) keep everything else off a call
+   site.
 3. Every roster component has a spec with: anatomy, variant axes (the matrix), sizes and density
    behaviour, the eight states (rest, hover, focus, active, disabled, loading, error, selected)
    plus empty where it applies, token mapping, and ARIA (role, keyboard model, what a screen
@@ -177,25 +178,26 @@ a rubric for density, information design, and node canvases.
    are declared and pass the dataviz validator.
 7. Each component has its roster entry (what it owns, its anchor from the reference sheet).
 
-### Done (gates; every one an exit code, run by `check` or CI)
+### Done (the machine checks, then the critic's measurements)
 
-| Gate | Threshold | Where |
+| Check | Threshold | Where |
 | --- | --- | --- |
-| `pnpm check` and the package verify suites | green | check |
-| geometry gate | zero off-contract classes in consumer code | build |
+| `pnpm check` | green | check |
+| the verify suites: `pnpm --filter @fcalell/ui-core verify` (30 checks) and `pnpm --filter @fcalell/plugin-native-ui verify` (15 checks) | green | by hand per unit; CI from Stage 4 |
+| token references | every `{ref}` in `DESIGN.md` resolves (`lint`); `diff` reports no regression | check, CI |
 | hard-coded values | zero raw hex, px, ms in components and consumer UI | lint |
-| token references | every `{ref}` in `DESIGN.md` resolves; `diff` reports no regression | check, CI |
-| contrast, measured on the real render | text ≥ 4.5:1, large ≥ 3:1, UI components, focus rings and icon-only controls ≥ 3:1, in light and dark, in every interactive state | Playwright over the showcase |
-| target size | ≥ 24×24 CSS px for every control, ≥ 44×44 for primary acts under touch density, ≥ 8 px between adjacent targets | Playwright |
-| overflow and clipping | no horizontal overflow at 320, 390, 768, 1280, 1440; no clipped text at 200% text spacing | Playwright |
-| accessibility | axe-core zero serious or critical; every control keyboard-operable; visible focus ≥ 3:1 not obscured by sticky elements; overlays trap and return focus | `@axe-core/playwright` plus scripted checks |
-| states | every declared state produces a visible change (non-zero pixel diff from rest); reduced-motion path preserves state | Playwright |
-| motion | `prefers-reduced-motion` honoured without a global kill; transform and opacity only; no `transition: all` | critic hygiene step plus lint |
-| screenshots | every showcase cell matches its committed baseline | Playwright `toHaveScreenshot` in a pinned container |
-| console | zero errors or warnings on every showcase page | Playwright |
-| code hygiene | the critic's hygiene checklist (`.claude/agents/design-critic.md` step 6) clean on the files that draw the unit | per unit |
 
-A unit is done when every row is green and its roster entry is written. Nothing here is judged.
+No suite measures a render. Contrast (text ≥ 4.5:1, large text ≥ 3:1; control boundaries, focus
+rings and icon-only controls ≥ 3:1, in both modes and every state), target size (≥ 24×24 CSS px,
+≥ 44×44 for a primary act on touch, ≥ 8 px between neighbours), horizontal overflow at 320, 390,
+768, 1280 and 1440, keyboard reach and focus visibility, and console cleanliness are measured by
+the `design-critic` agent on the render, per unit, against the floors in `rubric.md` §8, each
+reported as the measured value beside its floor. The critic's hygiene step covers motion
+(`prefers-reduced-motion` honoured without a global kill; transform and opacity only; no
+`transition: all`) and the code checklist on the files that draw the unit.
+
+A unit is done when every row is green, the critic's measurements clear every §8 floor, and its
+roster entry is written. Nothing here is judged.
 
 ### Beautiful (judged; numeric tells first, then the critic, then fcalell)
 
@@ -223,9 +225,10 @@ Numeric tells, checked before anyone looks:
    the uniform rounded-card kit; tracked all-caps eyebrows with middle dots and arrows).
 
 The critic (stack's `design-critic` subagent, `rubric.md` as its rubric): renders the unit at 1280 and 390, light and dark, pointer parked off-screen,
-transitions disabled; clicks every control; returns **ship / rework / reject** with every finding
-tied to a file and line, a gate row, or a screenshot; "a passing gate is never evidence of
-taste". It runs before fcalell sees anything.
+transitions disabled; clicks every control; measures the §8 floors; returns **ship / rework /
+reject** with every finding tied to a file and line, a measurement, or a screenshot. Its own
+measurements are the only machine numbers on a render and never evidence of taste. It runs before
+fcalell sees anything.
 
 fcalell's sign-off on the rendered showcase, recorded in `progress.md`, is the last word.
 
@@ -252,7 +255,8 @@ components run in parallel, one implementer each, then the orchestrator composes
 Groups are serial in roster order (atoms, layout, shared, content) because each composes the one
 before.
 
-**Verification per unit**: the §6 Done gates, then the `design-critic` subagent's verdict, then
+**Verification per unit**: `pnpm check` and the verify suites, then the `design-critic`
+subagent's measured verdict (the §8 floors read off the render), then
 the orchestrator's comparison of the showcase cell against the artboard export, then fcalell's
 sign-off on the render. An implementer never runs the critic on its own work.
 
@@ -319,7 +323,7 @@ pointing at the emitted `DESIGN.md`, is written at 0.4 when the file exists.
 
 **0.3 React plugins scaffold.** `plugins/react` (TanStack Router file routing via codegen,
 bootstrap, providers virtual module, meta) and `plugins/react-ui` (emits `app.css` from ui-core,
-fonts with Inter as default sans, the icon map, the geometry gate wired as a build step, and the
+fonts with Inter as default sans, the icon map, and the
 **showcase**: a dev route generated from `ROSTER` and `harness.matrixCells` that renders every
 component in every cell and state, with mode and density toggles). At the end of 0.3 the showcase
 renders nothing but exists on the real CSS. Slot changes update `slot-catalog.md` in the same
@@ -329,10 +333,9 @@ change.
 `emit.ts`, with `@google/design.md lint` wired into `check`; the motion tokens (duration scale,
 easing set) added to the contract, since §6 Complete requires them and the contract has none.
 
-**0.5 The gate suite skeleton.** The Playwright project over the showcase with the §6 Done rows
-as empty tests that fail on a missing cell, so every later unit lands into a suite that already
-runs. `@axe-core/playwright`, the contrast measurement on the composited render, target size,
-overflow, states-change, console. Baselines start at Stage 4; the other gates run from here on.
+**0.5 Machine checks.** No Playwright suite over the showcase. The machine checks are `pnpm
+check` and the two verify suites (ui-core, 30 checks; native-ui, 15 checks); every number read
+off a render is the critic's, per unit.
 
 ### Stage 1. Foundations (loop L1)
 
@@ -385,10 +388,11 @@ example. Output: martechthings' `design-language.md` rewritten from the approved
 
 ### Stage 4. Lock
 
-Screenshot baselines over every showcase cell × mode × density, committed and run in a pinned
-container in stack's CI (stack has no `.github/` today; create it); the full §6 Done table
-promoted into stack's `check` with the verify suites; `design.md diff` in CI. A build rule in `.helm/agents/` for stack and every consumer: a screen is done when every
-Done row is green, the critic returned ship, and fcalell signed off on the render.
+The verify suites and `design.md diff` run in stack's CI (stack has no `.github/` today; create
+it). A build rule in `.helm/agents/` for stack and every consumer: a screen is done when
+`pnpm check` and the verify suites are green, the critic returned ship with its measurements, and
+fcalell signed off on the render. Screenshot baselines are a decision to take here, only if
+regressions after sign-off show up.
 
 ### Stage 5. Close the design loop
 
@@ -413,7 +417,6 @@ L2a component     canvas ↔ fcalell        → variant table          (1–2 ro
 L2b component     showcase ↔ artboard     → component fix or L2a   (orchestrator)
 L3  screens       canvas ↔ fcalell        → new molecules → L2     (2–3 rounds)
 L4  consumer      chrome shot ↔ artboard  → screen fix             (per screen)
-∞   any change    showcase diff           → approve or revert
 ```
 
 fcalell's time goes into L1, L2a, and L3: looking at artboards and saying what is off. Everything
@@ -427,5 +430,5 @@ else is the orchestrator's and verified by a check.
 - Verify library behaviour against current docs (context7 or the registry), never from memory.
 - Least code, simplest shape; no workarounds; a contract gap is fixed in the contract.
 - Never commit or push unless fcalell asks.
-- The check is `pnpm check` at the repo root plus the package's `pnpm verify`; from Stage 4 on, the
-  screenshot and axe suites are part of it.
+- The check is `pnpm check` at the repo root plus the two verify suites; from Stage 4 on CI runs
+  them with `design.md diff`.

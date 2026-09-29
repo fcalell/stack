@@ -128,9 +128,3 @@ test("words mount a provider only when given", async () => {
 	assert.match(words ?? "", /from "@fcalell\/plugin-react-ui\/lib\/words"/);
 	assert.match(words ?? "", /back: "Zurück"/);
 });
-
-test("the geometry gate runs before the build", async () => {
-	const steps = await graph().resolve(cliSlots.buildSteps);
-	const gate = steps.find((step) => step.name === "react-ui-geometry-gate");
-	assert.equal(gate?.phase, "pre");
-});

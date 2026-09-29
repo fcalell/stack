@@ -3,8 +3,8 @@
 The judged half of the standard (`kickoff.md` §6 Beautiful), with line 1 filled from
 `reference-sheet.md` (2026-09-29). This is the file the `design-critic` agent loads. Every tell
 is a number or a yes/no read off the rendered unit at 1280 and 390, light and dark, pointer parked
-off-screen, transitions disabled, every control clicked. A passing gate (§6 Done) is never
-evidence of taste; the numbers below are the floor a screen must clear before the judged
+off-screen, transitions disabled, every control clicked. The critic's own measurements are the
+only machine numbers on a render and never evidence of taste; the numbers below are the floor a screen must clear before the judged
 questions in §2 to §8 are asked at all.
 
 ## 0. System constants (from the sheet, hold on every screen)
@@ -103,10 +103,17 @@ it); glow; mono as costume; and the five AI-default looks: cream + serif + terra
 + acid accent; broadsheet hairlines; the uniform rounded-card kit; tracked all-caps eyebrows with
 middle dots and arrows.
 
+Measured on the render, each an outright fail: text under 4.5:1 (large text under 3:1); a control
+boundary, focus ring or icon-only control under 3:1 against its ground, in either mode or any
+state; a target under 24×24 CSS px (44×44 for a primary act on touch) or under 8 px from its
+neighbour; horizontal overflow at 320, 390, 768, 1280 or 1440; a control the keyboard cannot
+reach or whose focus is not visible; a console error or warning. The one carve-out: a labelled
+form field's rest boundary is exempt from the 3:1 boundary rule, since its label is the cue.
+
 ## Verdict
 
 **ship** when §0 and §1 hold and §2–§8 raise nothing; **rework** when a finding is a number or a
 ban with a fix in the contract or the component; **reject** when the unit fails §7 or two or more
-bans. Every finding names a file and line, a gate row, or a screenshot, and states the measured
+bans. Every finding names a file and line, a measurement, or a screenshot, and states the measured
 value beside the range. Problems over prescriptions: say what is off and by how much, not how to
 draw it.

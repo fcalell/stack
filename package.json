@@ -5,6 +5,7 @@
 		"lint": "biome check --write --unsafe",
 		"check-types": "turbo run check-types",
 		"check": "turbo run build check-types test && pnpm lint",
+		"showcase": "turbo run build --filter=showcase... && pnpm --filter showcase dev",
 		"clear": "pnpm -r --if-present run clear && rm -rf node_modules .turbo"
 	},
 	"devDependencies": {

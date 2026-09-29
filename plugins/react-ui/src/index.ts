@@ -5,7 +5,7 @@ import type {
 	TsExpression,
 	TsImportSpec,
 } from "@fcalell/cli/ast";
-import { cliSlots, emitArtifact } from "@fcalell/cli/cli-slots";
+import { emitArtifact } from "@fcalell/cli/cli-slots";
 import { auth } from "@fcalell/plugin-auth";
 import { react } from "@fcalell/plugin-react";
 import { vite } from "@fcalell/plugin-vite";
@@ -13,7 +13,6 @@ import { deriveTheme } from "@fcalell/ui-core/derive";
 import { WORD_KEYS, type Words } from "@fcalell/ui-core/tokens";
 import { aggregateAppCss } from "./node/codegen.ts";
 import { defaultFonts, type FontEntry, interVariable } from "./node/fonts.ts";
-import { runGeometryGate } from "./node/gate.ts";
 import {
 	densityLayer,
 	modeLayer,
@@ -322,15 +321,6 @@ export const reactUi = plugin("react-ui", {
 			(): TsImportSpec => ({ source: "./app.css", sideEffect: true }),
 		),
 		emitArtifact(".stack/app.css", self.slots.appCssSource),
-
-		// ── Geometry gate ───────────────────────────────────────────────
-		// Pre-phase, so a call-site violation stops `stack build` before the
-		// Vite build spends a second on it.
-		cliSlots.buildSteps.contribute((ctx) => ({
-			name: "react-ui-geometry-gate",
-			phase: "pre",
-			run: () => runGeometryGate(ctx.cwd),
-		})),
 	],
 });
 

@@ -19,8 +19,7 @@
 			"!**/.claude/worktrees",
 			"!**/storybook-static",
 			"!**/coverage",
-			"!**/routeTree.gen.ts",
-			"!**/scripts/fixture/gate"
+			"!**/routeTree.gen.ts"
 		]
 	},
 	"formatter": {

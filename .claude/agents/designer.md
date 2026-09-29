@@ -24,8 +24,8 @@ reviews on a canvas. Two stages, two grounds:
    the numbers your board must land inside; §8 lists what fails outright.
 2. `.helm/research/design-system/reference-sheet.md`: your pattern's section; open two or three
    of its cited screens on Mobbin (`search_screens` with the app name) and keep them beside you.
-3. `packages/ui-core/src/tokens.ts`, `variant-tables.ts` and `gate.ts`, the classes that
-   exist, the root `DESIGN.md`, and `~/.claude/rules/ui.md`, the design-system rule.
+3. `packages/ui-core/src/tokens.ts` and `variant-tables.ts`, the classes that exist, the root
+   `DESIGN.md`, and `~/.claude/rules/ui.md`, the design-system rule.
 4. The brief: the pattern, the component or foundation the board is for, the cells and states it
    must show, both modes, and the file path to write.
 
