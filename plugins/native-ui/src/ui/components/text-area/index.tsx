@@ -1,10 +1,16 @@
 import { commitMoment } from "@fcalell/ui-core/commit";
-import { FIELD_PLACEHOLDER, field, text } from "@fcalell/ui-core/variants";
-import { useEffect, useState } from "react";
+import {
+	fieldValue,
+	TEXT_AREA_VALUE,
+	textArea,
+	textAreaBudget,
+} from "@fcalell/ui-core/variants";
+import { useContext, useEffect, useState } from "react";
 import { Text as RNText, TextInput, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import { useFieldName } from "../../lib/field";
+import { FieldDisabled, FieldError, useFieldName } from "../../lib/field";
+import { useTokenColor } from "../../lib/theme";
 import { useTouched } from "../../lib/touched";
 import { useSheetGrow } from "../sheet";
 
@@ -21,11 +27,12 @@ function wordCount(value: string): number {
 	return value.split(/\s+/).filter(Boolean).length;
 }
 
-// Many lines of typing. `source` is mono and keeps indentation; a `budget` in
-// words draws a counter. Inside a sheet it asks for the full height.
-// `onCommit` hears the value once the viewer leaves the field having changed
-// it since focus (return is a new line here); with it, a hardware Escape
-// puts back the value at focus.
+// Many lines of typing in a field box that grows with its value from three
+// body lines, the budget's count under the value in the error ink once over.
+// `source` is mono and keeps indentation. Inside a sheet it asks for the full
+// height. `onCommit` hears the value once the viewer leaves the field having
+// changed it since focus (return is a new line here); with it, a hardware
+// Escape puts back the value at focus.
 export function TextArea({
 	kind,
 	value,
@@ -34,30 +41,38 @@ export function TextArea({
 	placeholder,
 	budget,
 }: TextAreaProps) {
-	const [focused, setFocused] = useState(false);
 	const [moment] = useState(() => commitMoment<string>());
 	const commit = (next: string) => onCommit?.(next);
 	const { touch } = useTouched();
 	const name = useFieldName();
+	const error = useContext(FieldError);
+	const disabled = useContext(FieldDisabled);
+	// A placeholder's colour is a prop, never a class: `FIELD_PLACEHOLDER`'s ink.
+	const placeholderInk = useTokenColor("--color-ink-meta");
 	const source = kind === "source";
 	const grow = useSheetGrow();
 	useEffect(() => grow?.(), [grow]);
 	const count = budget === undefined ? undefined : wordCount(value);
 	return (
-		<View className="gap-pair">
+		<View
+			className={cn(
+				textArea({ state: error ? "error" : "rest" }),
+				disabled && "bg-fill-disabled",
+			)}
+		>
 			<TextInput
 				accessibilityLabel={name}
+				accessibilityState={{ disabled }}
+				editable={!disabled}
 				multiline
 				textAlignVertical="top"
 				className={cn(
-					field({
-						kind: source ? "code" : "text",
-						state: focused ? "focused" : "default",
-					}),
-					text({ role: source ? "code" : "body" }),
-					"min-h-20",
+					fieldValue({ kind: source ? "code" : "text" }),
+					TEXT_AREA_VALUE,
+					"py-0",
+					disabled && "text-ink-disabled",
 				)}
-				placeholderTextColorClassName={FIELD_PLACEHOLDER}
+				placeholderTextColor={placeholderInk}
 				value={value}
 				onChangeText={(next) => {
 					touch();
@@ -66,29 +81,24 @@ export function TextArea({
 				placeholder={placeholder}
 				autoCapitalize={source ? "none" : "sentences"}
 				autoCorrect={!source}
-				onFocus={() => {
-					setFocused(true);
-					moment.focus(value);
-				}}
-				onBlur={() => {
-					setFocused(false);
-					moment.leave(value, commit);
-				}}
+				onFocus={() => moment.focus(value)}
+				onBlur={() => moment.leave(value, commit)}
 				onKeyPress={(event) => {
 					if (onCommit && event.nativeEvent.key === "Escape")
 						moment.cancel(value, onChange);
 				}}
 			/>
-			{count !== undefined ? (
-				<RNText
-					className={cn(
-						text({ role: "meta" }),
-						"text-right",
-						budget !== undefined && count > budget && "text-danger",
-					)}
-				>
-					{count} / {budget}
-				</RNText>
+			{count !== undefined && budget !== undefined ? (
+				<View className="flex-row justify-end">
+					<RNText
+						className={cn(
+							textAreaBudget({ state: count > budget ? "error" : "rest" }),
+							disabled && "text-ink-disabled",
+						)}
+					>
+						{count} / {budget}
+					</RNText>
+				</View>
 			) : null}
 		</View>
 	);

@@ -1,28 +1,24 @@
-import type { IconFit } from "@fcalell/ui-core/variants";
+import type { IconName } from "@fcalell/ui-core/descriptors";
+import { type IconFit, icon } from "@fcalell/ui-core/variants";
 import { useResolveClassNames } from "uniwind";
 import type { Closed } from "../../lib/closed";
-import { Glyph } from "../../lib/glyph";
-import { useIcon } from "../../lib/icons";
+import { GLYPHS, Glyph } from "../../lib/glyph";
+import { useInk } from "../../lib/ink";
 
 export interface IconProps extends Closed {
-	name: string;
-	fit: IconFit;
+	name: IconName;
+	fit?: IconFit;
 }
 
-// Whole class strings, so uniwind's scan sees each size it resolves.
-const FIT_SIZE: Record<IconFit, string> = {
-	meta: "size-icon-meta",
-	body: "size-icon",
-	control: "size-icon-control",
-};
-
-// An icon from the consumer's closed set, in ink, at the size of what it
-// sits beside. A lucide glyph takes a number, so the size class is resolved.
+// A Lucide glyph in the ink of its place, at the size of what it sits
+// beside. A lucide glyph takes a number and a colour, so the cell's size is
+// resolved and the place's ink is read off `Ink`.
 export function Icon({ name, fit }: IconProps) {
-	const { width } = useResolveClassNames(FIT_SIZE[fit]);
+	const { width } = useResolveClassNames(icon({ fit }));
 	return (
 		<Glyph
-			icon={useIcon(name)}
+			icon={GLYPHS[name]}
+			tone={useInk()}
 			size={typeof width === "number" ? width : undefined}
 		/>
 	);

@@ -1,5 +1,10 @@
 import type { ChipFamily } from "@fcalell/ui-core/tokens";
-import { chip, text } from "@fcalell/ui-core/variants";
+import {
+	CHIP_REMOVE_HIT,
+	chip,
+	chipLabel,
+	icon,
+} from "@fcalell/ui-core/variants";
 import { X } from "lucide-react-native";
 import { Pressable, Text as RNText, View } from "react-native";
 import { useResolveClassNames } from "uniwind";
@@ -14,35 +19,36 @@ export interface ChipProps extends Closed {
 	onRemove?: () => void;
 }
 
-// A data value's tag on its family's fill: the app gives each family of
-// values (a type, a source, a destination) one of the six, so a chip's
-// meaning is learnable across screens. Its one act is removing the value; a
-// state is a `Status`, never a chip. React Native inherits no text style, so
-// the label takes the role and the ink the cell names.
+// A data value's tag on its family's soft ground, hugging its content; its
+// one act removes the value, a round hit box the chip's height closing its
+// right end. A lucide glyph takes a number and a colour, so the remove mark's
+// size is resolved and its ink is the family's, which the web inherits.
 export function Chip({ label, family, onRemove }: ChipProps) {
 	const words = useWords();
-	const { width } = useResolveClassNames("size-icon-meta");
+	const { width } = useResolveClassNames(icon({ fit: "meta" }));
 	return (
 		<View
 			className={cn(
-				chip({ family }),
-				"flex-row items-center gap-inside self-start",
+				chip({ family, trailing: onRemove ? "remove" : "none" }),
+				"flex-row items-center min-w-0 self-start",
 			)}
 		>
-			<RNText
-				numberOfLines={1}
-				className={cn(text({ role: "caption" }), "text-ink-body")}
-			>
+			<RNText numberOfLines={1} className={cn(chipLabel({ family }), "shrink")}>
 				{label}
 			</RNText>
 			{onRemove ? (
 				<Pressable
 					accessibilityRole="button"
-					accessibilityLabel={words.remove}
+					accessibilityLabel={`${words.remove} ${label}`}
 					onPress={onRemove}
+					className={cn(
+						CHIP_REMOVE_HIT,
+						"items-center justify-center active:bg-wash-press",
+					)}
 				>
 					<Glyph
 						icon={X}
+						tone={`chip-${family}-ink`}
 						size={typeof width === "number" ? width : undefined}
 					/>
 				</Pressable>

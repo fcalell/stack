@@ -1,8 +1,17 @@
 // The rebuilt roster as data: every component both UI plugins ship, its
-// layer, the prop names it takes, the families it draws and the states it
-// has, the same in both. Each plugin's verify suite reads its own components
-// against this table, so a prop added on one platform alone, or a look prop
-// reopened, fails by name.
+// layer, the prop names it takes, the cells it draws, the tokens it owns and
+// the states it has, the same in both. Each plugin's verify suite reads its
+// own components against this table, so a prop added on one platform alone,
+// or a look prop reopened, fails by name.
+import type {
+	ColorName,
+	RadiusRole,
+	ShadowLevel,
+	Size,
+	SpacingRole,
+	TypeRole,
+	Width,
+} from "./tokens.ts";
 
 export const LAYERS = ["atom", "layout", "shared", "content"] as const;
 export type Layer = (typeof LAYERS)[number];
@@ -32,12 +41,30 @@ export const STATES = [
 ] as const;
 export type State = (typeof STATES)[number];
 
-// A component's prop names, the matrix families it draws (each a `FAMILIES`
-// name in `./variants`), and the states it has a form for.
+// The tokens a component may draw, by namespace: type roles, colours,
+// radii, spacing roles, sizes and widths, shadow levels. A colour is a name,
+// or a family prefix ending in `-` (`chip-` covers every chip role); every
+// other namespace names its tokens. ui-core's verify reads each class of
+// every cell the entry draws, and a class spelling a token of a namespace
+// the entry does not own fails by name. A namespace left out owns nothing.
+export interface Owns {
+	roles?: readonly TypeRole[];
+	colors?: readonly (ColorName | `${string}-`)[];
+	radii?: readonly RadiusRole[];
+	spacing?: readonly SpacingRole[];
+	sizes?: readonly (Size | Width)[];
+	elevation?: readonly ShadowLevel[];
+}
+
+// A component's prop names, the cells it draws (a `FAMILIES` name for every
+// cell of that family, `FAMILY.axis.value` for one of its cells, or a
+// single-cell constant of `./variants`), the states it has a form for, and,
+// once its artboard is approved, the tokens it owns.
 export interface RosterEntry {
 	props: readonly string[];
 	draws: readonly string[];
 	states: readonly State[];
+	owns?: Owns;
 }
 
 // A pressable control's four.
@@ -46,39 +73,111 @@ const PRESS = ["rest", "hover", "focus", "active"] as const;
 export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 	atom: {
 		Text: {
-			props: ["role", "children"],
-			draws: ["TEXT", "TEXT_STRONG"],
+			props: ["role", "strong", "children"],
+			draws: [
+				"TEXT.role.body",
+				"TEXT.role.meta",
+				"TEXT_STRONG.role.body",
+				"TEXT_STRONG.role.meta",
+			],
 			states: ["rest"],
+			owns: {
+				roles: ["body", "meta"],
+				colors: ["ink-body", "ink-meta"],
+				sizes: ["measure"],
+			},
 		},
 		Icon: {
 			props: ["name", "fit"],
-			draws: [],
+			draws: ["ICON"],
 			states: ["rest"],
+			owns: { sizes: ["icon-meta", "icon", "icon-control"] },
 		},
 		Button: {
-			props: ["act", "label", "onAct", "loading", "blocked"],
-			draws: ["BUTTON", "BUTTON_LABEL"],
+			props: ["act", "fit", "icon", "label", "onAct", "loading", "blocked"],
+			draws: ["BUTTON", "BUTTON_LABEL", "ICON.fit.control"],
 			states: [...PRESS, "disabled", "loading"],
+			owns: {
+				roles: ["body", "meta"],
+				colors: [
+					"act-",
+					"on-act-",
+					"edge",
+					"ink-body",
+					"danger",
+					"wash-hover",
+					"wash-press",
+					"fill-disabled",
+					"ink-disabled",
+					"ink-error",
+					"ring",
+				],
+				radii: ["control"],
+				spacing: ["inside", "control-x", "pair"],
+				sizes: ["control", "control-compact", "field", "icon-control"],
+			},
 		},
 		IconButton: {
-			props: ["icon", "label", "onAct"],
-			draws: [],
+			props: ["icon", "fit", "label", "onAct"],
+			draws: ["ICON_BUTTON"],
 			states: [...PRESS],
+			owns: {
+				colors: [
+					"ink-meta",
+					"ink-body",
+					"wash-hover",
+					"wash-press",
+					"ink-disabled",
+					"ring",
+				],
+				radii: ["control"],
+				sizes: ["control", "control-compact"],
+			},
 		},
 		Count: {
 			props: ["value"],
-			draws: [],
+			draws: ["COUNT", "COUNT_LABEL"],
 			states: ["rest"],
+			owns: {
+				roles: ["caption"],
+				colors: ["fill-neutral", "ink-meta"],
+				radii: ["full"],
+				spacing: ["inside"],
+				sizes: ["chip"],
+			},
 		},
 		Status: {
 			props: ["state", "label", "onOpen"],
-			draws: ["STATUS"],
+			draws: ["STATUS", "STATUS_DOT", "STATUS_LABEL", "STATUS_OPEN"],
 			states: [...PRESS],
+			owns: {
+				roles: ["meta"],
+				colors: [
+					"accent-ink",
+					"ink-meta",
+					"ok",
+					"warn",
+					"danger",
+					"wash-hover",
+					"wash-press",
+					"ring",
+				],
+				radii: ["full"],
+				spacing: ["inside"],
+				sizes: ["dot", "target"],
+			},
 		},
 		Chip: {
 			props: ["label", "family", "onRemove"],
-			draws: ["CHIP"],
-			states: ["rest"],
+			draws: ["CHIP", "CHIP_LABEL", "CHIP_REMOVE_HIT"],
+			states: [...PRESS],
+			owns: {
+				roles: ["caption"],
+				colors: ["chip-", "wash-hover", "wash-press", "ring"],
+				radii: ["full"],
+				spacing: ["inside"],
+				sizes: ["chip", "chip-label"],
+			},
 		},
 		Input: {
 			props: [
@@ -90,53 +189,214 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"unit",
 				"act",
 			],
-			draws: ["FIELD"],
-			states: ["rest", "hover", "focus", "error"],
+			draws: [
+				"FIELD",
+				"FIELD_VALUE",
+				"FIELD_PLACEHOLDER",
+				"FIELD_UNIT",
+				"FIELD_GLYPH",
+			],
+			states: ["rest", "hover", "focus", "disabled", "error"],
+			owns: {
+				roles: ["body", "code"],
+				colors: [
+					"surface",
+					"edge",
+					"edge-hover",
+					"edge-error",
+					"ink-body",
+					"ink-meta",
+					"fill-disabled",
+					"ink-disabled",
+					"ring",
+				],
+				radii: ["control"],
+				spacing: ["inside", "control-x"],
+				sizes: ["field", "control"],
+			},
 		},
 		TextArea: {
 			props: ["kind", "value", "onChange", "onCommit", "placeholder", "budget"],
-			draws: ["FIELD"],
-			states: ["rest", "hover", "focus", "error"],
+			draws: [
+				"TEXT_AREA",
+				"TEXT_AREA_BUDGET",
+				"TEXT_AREA_VALUE",
+				"FIELD_VALUE",
+				"FIELD_PLACEHOLDER",
+			],
+			states: ["rest", "hover", "focus", "disabled", "error"],
+			owns: {
+				roles: ["body", "code", "caption"],
+				colors: [
+					"surface",
+					"edge",
+					"edge-hover",
+					"edge-error",
+					"ink-body",
+					"ink-meta",
+					"ink-error",
+					"fill-disabled",
+					"ink-disabled",
+					"ring",
+				],
+				radii: ["control"],
+				spacing: ["rows", "control-x", "inside"],
+				sizes: ["text-area"],
+			},
 		},
 		InputOtp: {
 			props: ["length", "value", "onChange", "onComplete", "loading"],
-			draws: ["OTP_BOX", "PLACE"],
+			draws: ["OTP", "OTP_BOX", "OTP_DIGIT", "TEXT.role.meta", "SPINNER"],
 			states: ["rest", "focus", "loading", "error"],
+			owns: {
+				roles: ["heading", "meta"],
+				colors: [
+					"surface",
+					"edge",
+					"edge-error",
+					"ink-body",
+					"ink-meta",
+					"ring",
+				],
+				radii: ["control"],
+				spacing: ["inside", "pair"],
+				sizes: ["otp", "spinner"],
+			},
 		},
-		EnumInput: {
-			props: ["value", "onChange", "placeholder"],
-			draws: ["FIELD"],
-			states: ["rest", "hover", "focus", "error"],
+		// The trigger is the field box; the open list is a popover of rows under
+		// group labels (meta at 500), the highlighted row under the hover wash
+		// and the chosen one ticked, a description in meta under an option.
+		Select: {
+			props: ["value", "onChange", "options", "placeholder"],
+			draws: [
+				"FIELD",
+				"FIELD_VALUE",
+				"FIELD_PLACEHOLDER",
+				"FIELD_GLYPH",
+				"POPOVER",
+				"RHYTHM.unit.rows",
+				"ROW",
+				"TEXT.role.meta",
+				"TEXT_STRONG.role.meta",
+			],
+			states: ["rest", "hover", "focus", "selected", "disabled", "error"],
+			owns: {
+				roles: ["body", "code", "meta"],
+				colors: [
+					"surface",
+					"edge",
+					"edge-hover",
+					"edge-error",
+					"ink-body",
+					"ink-meta",
+					"fill-disabled",
+					"ink-disabled",
+					"ring",
+					"raised",
+					"edge-raised",
+					"wash-hover",
+					"wash-press",
+					"wash-selected",
+				],
+				radii: ["control", "row", "popover"],
+				spacing: ["inside", "control-x", "pair", "rows", "float"],
+				sizes: ["field", "control", "row"],
+				elevation: ["float"],
+			},
 		},
 		Slider: {
 			props: ["label", "value", "onChange", "min", "max", "step", "unit"],
-			draws: [],
-			states: [...PRESS],
+			draws: [
+				"SLIDER",
+				"SLIDER_HEAD",
+				"SLIDER_LABEL",
+				"SLIDER_VALUE",
+				"SLIDER_TRACK",
+				"SLIDER_FILL",
+				"SLIDER_REST",
+				"SLIDER_THUMB",
+			],
+			states: [...PRESS, "disabled"],
+			owns: {
+				roles: ["body", "meta"],
+				colors: [
+					"ink-body",
+					"ink-meta",
+					"toggle-",
+					"edge",
+					"edge-strong",
+					"surface",
+					"wash-hover",
+					"wash-press",
+					"fill-disabled",
+					"ink-disabled",
+					"ring",
+				],
+				radii: ["full"],
+				spacing: ["pair", "fields"],
+				sizes: ["target", "track", "thumb"],
+			},
 		},
 		Switch: {
 			props: ["checked", "onChange", "label"],
-			draws: ["SWITCH"],
-			states: [...PRESS, "selected"],
+			draws: ["SWITCH", "SWITCH_THUMB"],
+			states: [...PRESS, "disabled", "selected"],
+			owns: {
+				colors: ["switch-", "toggle-", "fill-disabled", "ink-disabled", "ring"],
+				radii: ["full"],
+				sizes: [
+					"switch-w",
+					"switch-h",
+					"thumb",
+					"switch-inset",
+					"switch-travel",
+					"target",
+				],
+			},
 		},
 		Checkbox: {
 			props: ["checked", "onChange", "label"],
-			draws: ["CHECKBOX"],
-			states: [...PRESS, "selected"],
+			draws: ["CHECKBOX", "CHECKBOX_MARK"],
+			states: [...PRESS, "disabled", "selected"],
+			owns: {
+				colors: [
+					"edge-strong",
+					"surface",
+					"toggle-",
+					"on-accent",
+					"wash-hover",
+					"wash-press",
+					"edge",
+					"fill-disabled",
+					"ink-disabled",
+					"ring",
+				],
+				radii: ["chip"],
+				sizes: ["check", "target", "icon-meta"],
+			},
 		},
 		Spinner: {
 			props: [],
-			draws: [],
+			draws: ["SPINNER", "SPINNER_TRACK", "SPINNER_ARC"],
 			states: ["rest"],
+			owns: { radii: ["full"], sizes: ["spinner"] },
 		},
 		Avatar: {
 			props: ["name", "src"],
-			draws: ["AVATAR"],
+			draws: ["AVATAR", "AVATAR_LABEL"],
 			states: ["rest"],
+			owns: {
+				roles: ["caption"],
+				colors: ["avatar-"],
+				radii: ["full"],
+				sizes: ["avatar"],
+			},
 		},
 		Link: {
-			props: ["href", "children"],
-			draws: [],
+			props: ["href", "fit", "children"],
+			draws: ["LINK"],
 			states: [...PRESS],
+			owns: { colors: ["accent-ink", "ring"], sizes: ["target"] },
 		},
 	},
 	layout: {

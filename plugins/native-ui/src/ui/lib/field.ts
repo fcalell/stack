@@ -9,3 +9,11 @@ export const FieldNameContext = createContext<string | undefined>(undefined);
 export function useFieldName(): string | undefined {
 	return useContext(FieldNameContext);
 }
+
+// Whether the field around a control is disabled, the web's Base UI field
+// state: a disabled control answers no press and draws its disabled cells.
+export const FieldDisabled = createContext(false);
+
+// Whether the `FormField` around a typing control is in error, so the
+// control's box draws `edge-error`.
+export const FieldError = createContext(false);

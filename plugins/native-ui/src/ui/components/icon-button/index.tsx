@@ -1,14 +1,29 @@
+import type { IconName } from "@fcalell/ui-core/descriptors";
+import type { IconButtonFit } from "@fcalell/ui-core/variants";
+import { useContext } from "react";
 import { Circle } from "../../lib/circle";
 import type { Closed } from "../../lib/closed";
-import { useIcon } from "../../lib/icons";
+import { FieldDisabled } from "../../lib/field";
+import { GLYPHS } from "../../lib/glyph";
 
 export interface IconButtonProps extends Closed {
-	icon: string;
+	icon: IconName;
+	fit?: IconButtonFit;
 	label: string;
 	onAct: () => void;
 }
 
-// A 44 px circle for moving and nothing else; the label is read aloud.
-export function IconButton({ icon, label, onAct }: IconButtonProps) {
-	return <Circle icon={useIcon(icon)} label={label} onAct={onAct} />;
+// A square act with no boundary at rest; the label is read aloud, never
+// drawn. Inside a disabled field it is inert.
+export function IconButton({ icon, fit, label, onAct }: IconButtonProps) {
+	const disabled = useContext(FieldDisabled);
+	return (
+		<Circle
+			icon={GLYPHS[icon]}
+			fit={fit}
+			label={label}
+			onAct={onAct}
+			disabled={disabled}
+		/>
+	);
 }

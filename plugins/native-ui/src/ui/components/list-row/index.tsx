@@ -1,5 +1,6 @@
 import type {
 	Act,
+	IconName,
 	Mark,
 	Part,
 	StatusState,
@@ -8,15 +9,14 @@ import { row, text, textStrong } from "@fcalell/ui-core/variants";
 import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import { Glyph } from "../../lib/glyph";
-import { useIcon } from "../../lib/icons";
+import { GLYPHS, Glyph } from "../../lib/glyph";
 import { MenuCircle, type MenuItems } from "../../lib/more";
 import { navigate } from "../../lib/navigate";
 import { joinParts, META_CUT, partText } from "../../lib/parts";
 import { useWords } from "../../lib/words";
 import { Status } from "../status";
 
-export type RowLeading = { icon: string } | { status: StatusState };
+export type RowLeading = { icon: IconName } | { status: StatusState };
 export type RowTrailing =
 	| { age: string }
 	| { count: number }
@@ -27,7 +27,7 @@ export interface ListRowProps extends Closed {
 	title: Part;
 	meta?: readonly Part[] | readonly (readonly Part[])[];
 	trailing?: RowTrailing;
-	marks?: Mark<string>[];
+	marks?: Mark[];
 	act?: Act;
 	more?: MenuItems;
 	href?: string;
@@ -104,14 +104,14 @@ function Leading({ leading }: { leading: RowLeading }) {
 	return <LeadingIcon name={leading.icon} />;
 }
 
-function LeadingIcon({ name }: { name: string }) {
-	return <Glyph icon={useIcon(name)} tone="ink-meta" />;
+function LeadingIcon({ name }: { name: IconName }) {
+	return <Glyph icon={GLYPHS[name]} tone="ink-meta" />;
 }
 
-function MarkGlyph({ mark }: { mark: Mark<string> }) {
+function MarkGlyph({ mark }: { mark: Mark }) {
 	return (
 		<View accessibilityLabel={mark.label}>
-			<Glyph icon={useIcon(mark.icon)} tone="ink-meta" size={16} />
+			<Glyph icon={GLYPHS[mark.icon]} tone="ink-meta" size={16} />
 		</View>
 	);
 }

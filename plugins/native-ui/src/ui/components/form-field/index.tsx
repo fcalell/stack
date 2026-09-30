@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import { FieldNameContext } from "../../lib/field";
+import { FieldError, FieldNameContext } from "../../lib/field";
 
 interface FormFieldBase extends Closed {
 	label: string;
@@ -49,7 +49,7 @@ export function FormField<V>(props: FormFieldProps<V>) {
 				{label}
 			</RNText>
 			<FieldNameContext.Provider value={label}>
-				{body}
+				<FieldError.Provider value={Boolean(error)}>{body}</FieldError.Provider>
 			</FieldNameContext.Provider>
 			{description ? (
 				<RNText className={text({ role: "meta" })}>{description}</RNText>

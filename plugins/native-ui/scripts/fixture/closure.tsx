@@ -54,7 +54,7 @@ import { Meter } from "@fcalell/plugin-native-ui/components/meter";
 import { BarChart } from "@fcalell/plugin-native-ui/components/bar-chart";
 import { QrCode } from "@fcalell/plugin-native-ui/components/qr-code";
 import { Chip } from "@fcalell/plugin-native-ui/components/chip";
-import { EnumInput } from "@fcalell/plugin-native-ui/components/enum-input";
+import { Select } from "@fcalell/plugin-native-ui/components/select";
 import { Table } from "@fcalell/plugin-native-ui/components/table";
 import { Menu } from "@fcalell/plugin-native-ui/components/menu";
 import {
@@ -70,7 +70,6 @@ import type { UseQueryResult } from "@tanstack/react-query";
 
 const noop = () => {};
 declare const text: FieldBinding<string>;
-declare const values: FieldBinding<string[]>;
 declare const role: FieldBinding<"owner" | "viewer">;
 declare const group: OptionGroup;
 declare const count: QueryLike<number>;
@@ -98,22 +97,23 @@ export const closure = (
 		<Text role="body" selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
 		<Text role="body" placeholderTextColorClassName="text-ink-body" />
-		<Icon name="x" fit="body" />
+		<Icon name="X" fit="body" />
 		{/* @ts-expect-error: closed channel */}
-		<Icon name="x" fit="body" className="x" />
+		<Icon name="X" fit="body" className="x" />
 		{/* @ts-expect-error: closed channel */}
-		<Icon name="x" fit="body" style={{ flex: 1 }} />
+		<Icon name="X" fit="body" style={{ flex: 1 }} />
 		{/* @ts-expect-error: closed channel */}
-		<Icon name="x" fit="body" class="x" />
+		<Icon name="X" fit="body" class="x" />
 		{/* @ts-expect-error: closed channel */}
-		<Icon name="x" fit="body" classList={{}} />
+		<Icon name="X" fit="body" classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<Icon name="x" fit="body" colorClassName="text-ink-body" />
+		<Icon name="X" fit="body" colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Icon name="x" fit="body" selectionColorClassName="text-ink-body" />
+		<Icon name="X" fit="body" selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Icon name="x" fit="body" placeholderTextColorClassName="text-ink-body" />
+		<Icon name="X" fit="body" placeholderTextColorClassName="text-ink-body" />
 		<Button label="a" onAct={noop} />
+		<Button label="a" icon="X" onAct={noop} />
 		{/* @ts-expect-error: closed channel */}
 		<Button label="a" onAct={noop} className="x" />
 		{/* @ts-expect-error: closed channel */}
@@ -128,21 +128,21 @@ export const closure = (
 		<Button label="a" onAct={noop} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
 		<Button label="a" onAct={noop} placeholderTextColorClassName="text-ink-body" />
-		<IconButton icon="x" label="a" onAct={noop} />
+		<IconButton icon="X" label="a" onAct={noop} />
 		{/* @ts-expect-error: closed channel */}
-		<IconButton icon="x" label="a" onAct={noop} className="x" />
+		<IconButton icon="X" label="a" onAct={noop} className="x" />
 		{/* @ts-expect-error: closed channel */}
-		<IconButton icon="x" label="a" onAct={noop} style={{ flex: 1 }} />
+		<IconButton icon="X" label="a" onAct={noop} style={{ flex: 1 }} />
 		{/* @ts-expect-error: closed channel */}
-		<IconButton icon="x" label="a" onAct={noop} class="x" />
+		<IconButton icon="X" label="a" onAct={noop} class="x" />
 		{/* @ts-expect-error: closed channel */}
-		<IconButton icon="x" label="a" onAct={noop} classList={{}} />
+		<IconButton icon="X" label="a" onAct={noop} classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<IconButton icon="x" label="a" onAct={noop} colorClassName="text-ink-body" />
+		<IconButton icon="X" label="a" onAct={noop} colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<IconButton icon="x" label="a" onAct={noop} selectionColorClassName="text-ink-body" />
+		<IconButton icon="X" label="a" onAct={noop} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<IconButton icon="x" label="a" onAct={noop} placeholderTextColorClassName="text-ink-body" />
+		<IconButton icon="X" label="a" onAct={noop} placeholderTextColorClassName="text-ink-body" />
 		<Count value={1} />
 		{/* @ts-expect-error: closed channel */}
 		<Count value={1} className="x" />
@@ -249,6 +249,7 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<Switch checked onChange={noop} label="a" placeholderTextColorClassName="text-ink-body" />
 		<Checkbox checked onChange={noop} label="a" />
+		<Checkbox checked="mixed" onChange={noop} label="a" />
 		{/* @ts-expect-error: closed channel */}
 		<Checkbox checked onChange={noop} label="a" className="x" />
 		{/* @ts-expect-error: closed channel */}
@@ -698,7 +699,7 @@ export const closure = (
 		<Diff hunks={[]} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
 		<Diff hunks={[]} placeholderTextColorClassName="text-ink-body" />
-		<Menu label="a" items={[[{ label: "a", onAct: noop, icon: "a" }], [{ label: "a", onAct: noop, destructive: true, blocked: "a" }]]} />
+		<Menu label="a" items={[[{ label: "a", onAct: noop, icon: "Copy" }], [{ label: "a", onAct: noop, destructive: true, blocked: "a" }]]} />
 		{/* @ts-expect-error: closed channel */}
 		<Menu label="a" items={[]} className="x" />
 		{/* @ts-expect-error: closed channel */}
@@ -858,21 +859,21 @@ export const closure = (
 		<Chip label="a" family="red" placeholderTextColorClassName="text-ink-body" />
 		{/* @ts-expect-error: a family is one of the six */}
 		<Chip label="a" family={7} />
-		<EnumInput value={["a"]} onChange={noop} placeholder="a" />
+		<Select value="a" onChange={noop} options={[{ value: "a", label: "a" }]} placeholder="a" />
 		{/* @ts-expect-error: closed channel */}
-		<EnumInput value={[]} onChange={noop} className="x" />
+		<Select options={[]} onChange={noop} className="x" />
 		{/* @ts-expect-error: closed channel */}
-		<EnumInput value={[]} onChange={noop} style={{ flex: 1 }} />
+		<Select options={[]} onChange={noop} style={{ flex: 1 }} />
 		{/* @ts-expect-error: closed channel */}
-		<EnumInput value={[]} onChange={noop} class="x" />
+		<Select options={[]} onChange={noop} class="x" />
 		{/* @ts-expect-error: closed channel */}
-		<EnumInput value={[]} onChange={noop} classList={{}} />
+		<Select options={[]} onChange={noop} classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<EnumInput value={[]} onChange={noop} colorClassName="text-ink-body" />
+		<Select options={[]} onChange={noop} colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<EnumInput value={[]} onChange={noop} selectionColorClassName="text-ink-body" />
+		<Select options={[]} onChange={noop} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<EnumInput value={[]} onChange={noop} placeholderTextColorClassName="text-ink-body" />
+		<Select options={[]} onChange={noop} placeholderTextColorClassName="text-ink-body" />
 		<QueryBoundary query={count} sentence="a">{(n) => <Count value={n} />}</QueryBoundary>
 		{/* @ts-expect-error: closed channel */}
 		<QueryBoundary query={count} sentence="a" children={() => null} className="x" />
@@ -897,8 +898,16 @@ export const closure = (
 		<FormField label="a" field={text}>
 			{(control) => <Input kind="source" {...control} />}
 		</FormField>
-		<FormField label="a" field={values}>
-			{(control) => <EnumInput {...control} />}
+		<FormField label="a" field={role}>
+			{(control) => (
+				<Select
+					options={[
+						{ value: "owner", label: "a" },
+						{ value: "viewer", label: "a" },
+					]}
+					{...control}
+				/>
+			)}
 		</FormField>
 		<FormField label="a" field={text}>
 			{(control) => (

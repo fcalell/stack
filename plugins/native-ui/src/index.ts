@@ -271,7 +271,7 @@ export const nativeUi = plugin("native-ui", {
 		"react-native-safe-area-context": "^5.6.0",
 		"react-native-keyboard-controller": "^1.18.0",
 		"@gorhom/bottom-sheet": "^5.2.14",
-		"lucide-react-native": "^1.17.0",
+		"lucide-react-native": "^1.49.0",
 		// lucide's required peer; also backs consumer brand glyphs. Without it a
 		// fresh consumer can't render any icon.
 		"react-native-svg": "^15.15.4",

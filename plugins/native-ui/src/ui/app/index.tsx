@@ -3,7 +3,6 @@ import type { ReactNode } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { type IconSet, IconsProvider } from "../lib/icons";
 import { type Words, WordsProvider } from "../lib/words";
 
 const FLEX_FILL = { flex: 1 } as const;
@@ -15,19 +14,15 @@ const FLEX_FILL = { flex: 1 } as const;
 export function AppProviders({
 	children,
 	words,
-	icons,
 }: {
 	children: ReactNode;
 	words?: Words;
-	icons?: IconSet;
 }) {
 	const themed = (
 		<GestureHandlerRootView style={FLEX_FILL}>
 			<KeyboardProvider>
 				<SafeAreaProvider>
-					<BottomSheetModalProvider>
-						<IconsProvider icons={icons ?? {}}>{children}</IconsProvider>
-					</BottomSheetModalProvider>
+					<BottomSheetModalProvider>{children}</BottomSheetModalProvider>
 				</SafeAreaProvider>
 			</KeyboardProvider>
 		</GestureHandlerRootView>

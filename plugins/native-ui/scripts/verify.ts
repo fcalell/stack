@@ -132,13 +132,23 @@ const RETIRED = [
 const NATIVE_OVERLAYS = [
 	"absolute",
 	"active:bg-act-accent-press",
+	"active:bg-act-danger-press",
 	"active:bg-wash-press",
+	"active:no-underline",
+	"active:underline",
 	"aspect-square",
+	"bg-act-accent-pending",
+	"bg-act-danger-pending",
 	"bg-canvas",
 	"bg-danger-soft",
+	"bg-fill-disabled",
 	"bg-group",
+	"bg-ink-disabled",
 	"bg-ok-soft",
 	"bg-on-accent",
+	"bg-switch-off-hover",
+	"bg-toggle-on-hover",
+	"bg-wash-press",
 	"border-edge",
 	"border-l-2",
 	"border-t",
@@ -152,9 +162,7 @@ const NATIVE_OVERLAYS = [
 	"gap-pair",
 	"gap-sections",
 	"grow",
-	"h-1",
 	"h-2",
-	"h-8",
 	"inset-0",
 	"inset-x-0",
 	"inset-y-0",
@@ -166,14 +174,15 @@ const NATIVE_OVERLAYS = [
 	"justify-between",
 	"justify-center",
 	"justify-end",
+	"justify-start",
 	"left-0",
 	"line-through",
 	"max-w-full",
 	"min-h-11",
-	"min-h-20",
+	"min-h-target",
 	"min-w-0",
+	"min-w-target",
 	"opacity-0",
-	"opacity-50",
 	"overflow-hidden",
 	"p-card",
 	"pb-pair",
@@ -181,7 +190,6 @@ const NATIVE_OVERLAYS = [
 	"pl-pair",
 	"pt-pair",
 	"px-0",
-	"px-0.5",
 	"px-4",
 	"px-card",
 	"px-pair",
@@ -189,6 +197,7 @@ const NATIVE_OVERLAYS = [
 	"py-2",
 	"py-inside",
 	"py-sections",
+	"relative",
 	"right-0",
 	"rounded-control",
 	"rounded-full",
@@ -199,21 +208,18 @@ const NATIVE_OVERLAYS = [
 	"shrink",
 	"size-2",
 	"size-6",
-	"size-7",
-	"size-8",
-	"size-icon",
-	"size-icon-control",
-	"size-icon-meta",
+	"size-target",
 	"text-accent-ink",
 	"text-center",
 	"text-danger",
 	"text-ink-body",
+	"text-ink-disabled",
+	"text-ink-error",
 	"text-ink-faint",
 	"text-ok",
 	"text-right",
 	"underline",
 	"uppercase",
-	"w-13",
 	"w-8",
 	"w-full",
 ];
@@ -295,6 +301,7 @@ const CLASS_EXACT = [
 	"italic",
 	"underline",
 	"line-through",
+	"no-underline",
 	"absolute",
 	"relative",
 	"flex",
@@ -341,6 +348,7 @@ const themeMap = new Map(themeDecls);
 // ── The matrices, called for their full class inventory ─────────────
 
 const AVATAR_STEPS = ["1", "2", "3", "4", "5", "6", "7", "8"];
+const CHIPS = ["red", "amber", "green", "teal", "violet", "pink"];
 
 // The axis values are spelled here as a second opinion; every cell string is
 // produced by calling the cva, never written out.
@@ -359,27 +367,58 @@ const FAMILIES: Family[] = [
 		name: "BUTTON",
 		cva: variants.button as Family["cva"],
 		axes: {
-			act: ["primary", "secondary", "destructive"],
-			fit: ["body", "bar"],
+			act: ["primary", "danger", "secondary", "destructive"],
+			fit: ["body", "bar", "field"],
 		},
 	},
 	{
 		name: "BUTTON_LABEL",
 		cva: variants.buttonLabel as Family["cva"],
-		axes: { act: ["primary", "secondary", "destructive"] },
+		axes: { act: ["primary", "danger", "secondary", "destructive"] },
 	},
 	{
-		name: "STATUS",
-		cva: variants.status as Family["cva"],
+		name: "STATUS_DOT",
+		cva: variants.statusDot as Family["cva"],
 		axes: { state: STATUS_STATES },
+	},
+	{
+		name: "CHIP",
+		cva: variants.chip as Family["cva"],
+		axes: { family: CHIPS, trailing: ["none", "remove"] },
+	},
+	{
+		name: "CHIP_LABEL",
+		cva: variants.chipLabel as Family["cva"],
+		axes: { family: CHIPS },
 	},
 	{
 		name: "FIELD",
 		cva: variants.field as Family["cva"],
 		axes: {
 			kind: ["text", "search", "code"],
-			state: ["default", "focused", "error"],
+			trailing: ["none", "act"],
+			state: ["rest", "error"],
 		},
+	},
+	{
+		name: "FIELD_VALUE",
+		cva: variants.fieldValue as Family["cva"],
+		axes: { kind: ["text", "search", "code"] },
+	},
+	{
+		name: "TEXT_AREA",
+		cva: variants.textArea as Family["cva"],
+		axes: { state: ["rest", "error"] },
+	},
+	{
+		name: "TEXT_AREA_BUDGET",
+		cva: variants.textAreaBudget as Family["cva"],
+		axes: { state: ["rest", "error"] },
+	},
+	{
+		name: "OTP_BOX",
+		cva: variants.otpBox as Family["cva"],
+		axes: { state: ["rest", "error"] },
 	},
 	{
 		name: "ROW",
@@ -394,7 +433,7 @@ const FAMILIES: Family[] = [
 	{
 		name: "CHECKBOX",
 		cva: variants.checkbox as Family["cva"],
-		axes: { state: ["unchecked", "checked"] },
+		axes: { state: ["unchecked", "checked", "mixed"] },
 	},
 	{
 		name: "SEGMENT",
@@ -434,7 +473,7 @@ const FAMILIES: Family[] = [
 ];
 
 const FAMILY_ROSTER =
-	"TEXT TEXT_STRONG BUTTON BUTTON_LABEL STATUS FIELD ROW SWITCH CHECKBOX SEGMENT BANNER DIFF_LINE MESSAGE AVATAR PLACE RHYTHM";
+	"TEXT TEXT_STRONG BUTTON BUTTON_LABEL STATUS_DOT CHIP CHIP_LABEL FIELD FIELD_VALUE TEXT_AREA TEXT_AREA_BUDGET OTP_BOX ROW SWITCH CHECKBOX SEGMENT BANNER DIFF_LINE MESSAGE AVATAR PLACE RHYTHM";
 
 // The class-bearing constants beside the matrices, read off the module so a
 // new one cannot skip the compile probe.
@@ -1192,13 +1231,18 @@ check(
 		const component = (name: string) =>
 			readFileSync(resolve(COMPONENT_DIR, name, "index.tsx"), "utf8");
 		const picker = component("picker");
+		// The option sheet a Picker and a Select open.
+		const sheet = readFileSync(
+			resolve(pkgDir, "src/ui/lib/pick-sheet.tsx"),
+			"utf8",
+		);
 		assert(
 			/<RowContext\.Provider/.test(component("definition-row")) &&
 				/\buseRowClaim\(\)/.test(picker),
 			"a picker in a definition row does not claim the row",
 		);
 		assert(
-			/option\.value === null && PICKER_EMPTY/.test(picker) &&
+			/option\.value === null && PICKER_EMPTY/.test(sheet) &&
 				/\(current\?\.value \?\? null\) === null && PICKER_EMPTY/.test(picker),
 			"the empty choice does not draw as a placeholder in the list and on the control",
 		);

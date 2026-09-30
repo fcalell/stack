@@ -16,7 +16,7 @@ import { IconButton } from "../icon-button";
 
 export interface PlaceProps extends Closed {
 	title: string;
-	actions?: IconAct<string>[];
+	actions?: IconAct[];
 	act?: Act;
 	// Labelled acts under the more circle, after the actions past two.
 	more?: Act[];

@@ -21,7 +21,7 @@ hold re-resolves as the port would.
 Chroma applied: columns 1-4 replace every neutral() chroma with one constant per mode, tint =
 light 0.006 / dark 0.010, colour = light 0.016 / dark 0.024; the tokens re-hued are canvas,
 group, edge, edge-raised, edge-strong, the light scrim, the three inks and dark surface, raised and
-on-danger; the washes, skeleton, fill-disabled, fill-neutral, switch-off and every act-ink mix
+on-danger; the washes, skeleton, fill-disabled, fill-neutral and switch-off
 follow through their declarations. Light surface and raised are WHITE (L 1), where sRGB fits no
 chroma, so they stay white in every candidate. Sailward, light: canvas 0.006, group 0.009,
 surface/raised white, edge and edge-raised 0.010, edge-strong 0.014, ink-body 0.043, ink-meta
@@ -74,11 +74,6 @@ columns):
   --color-fill-neutral: oklch(0.2 0.006 264 / 0.08);
   --color-edge-hover: oklch(0.62 0.006 264);
   --color-ink-disabled: oklch(0.665 0.006 264);
-  --color-act-ink: oklch(0.2 0.006 264);
-  --color-on-act-ink: oklch(0.974 0.006 264);
-  --color-act-ink-hover: oklch(0.293 0.006 264);
-  --color-act-ink-press: oklch(0.37 0.006 264);
-  --color-act-ink-pending: oklch(0.432 0.006 264);
   --color-switch-off: oklch(0.62 0.006 264);
   --color-switch-off-hover: oklch(0.557 0.006 264);
 }
@@ -108,11 +103,6 @@ columns):
   --color-act-danger-hover: oklch(0.741 0.156 24.622);
   --color-act-danger-press: oklch(0.767 0.137 24.215);
   --color-act-danger-pending: oklch(0.545 0.123 23.803);
-  --color-act-ink: oklch(0.97 0.01 264);
-  --color-on-act-ink: oklch(0.16 0.01 264);
-  --color-act-ink-hover: oklch(0.873 0.01 264);
-  --color-act-ink-press: oklch(0.792 0.01 264);
-  --color-act-ink-pending: oklch(0.727 0.01 264);
   --color-switch-off: oklch(0.53 0.01 264);
   --color-switch-off-hover: oklch(0.596 0.01 264);
 }
@@ -135,11 +125,6 @@ columns):
   --color-fill-neutral: oklch(0.2 0.016 264 / 0.08);
   --color-edge-hover: oklch(0.62 0.016 264);
   --color-ink-disabled: oklch(0.665 0.016 264);
-  --color-act-ink: oklch(0.2 0.016 264);
-  --color-on-act-ink: oklch(0.974 0.012 264);
-  --color-act-ink-hover: oklch(0.293 0.016 264);
-  --color-act-ink-press: oklch(0.37 0.015 264);
-  --color-act-ink-pending: oklch(0.432 0.015 264);
   --color-switch-off: oklch(0.62 0.016 264);
   --color-switch-off-hover: oklch(0.557 0.016 264);
 }
@@ -169,11 +154,6 @@ columns):
   --color-act-danger-hover: oklch(0.741 0.156 24.47);
   --color-act-danger-press: oklch(0.767 0.137 23.898);
   --color-act-danger-pending: oklch(0.545 0.121 22.078);
-  --color-act-ink: oklch(0.97 0.014 264);
-  --color-on-act-ink: oklch(0.16 0.024 264);
-  --color-act-ink-hover: oklch(0.873 0.015 264);
-  --color-act-ink-press: oklch(0.792 0.016 264);
-  --color-act-ink-pending: oklch(0.727 0.017 264);
   --color-switch-off: oklch(0.53 0.024 264);
   --color-switch-off-hover: oklch(0.596 0.023 264);
 }
@@ -196,11 +176,6 @@ columns):
   --color-fill-neutral: oklch(0.2 0.006 70 / 0.08);
   --color-edge-hover: oklch(0.62 0.006 70);
   --color-ink-disabled: oklch(0.665 0.006 70);
-  --color-act-ink: oklch(0.2 0.006 70);
-  --color-on-act-ink: oklch(0.974 0.006 70);
-  --color-act-ink-hover: oklch(0.293 0.006 70);
-  --color-act-ink-press: oklch(0.37 0.006 70);
-  --color-act-ink-pending: oklch(0.432 0.006 70);
   --color-switch-off: oklch(0.62 0.006 70);
   --color-switch-off-hover: oklch(0.557 0.006 70);
 }
@@ -230,11 +205,6 @@ columns):
   --color-act-danger-hover: oklch(0.741 0.157 25.309);
   --color-act-danger-press: oklch(0.767 0.137 25.635);
   --color-act-danger-pending: oklch(0.545 0.127 25.959);
-  --color-act-ink: oklch(0.97 0.01 70);
-  --color-on-act-ink: oklch(0.16 0.01 70);
-  --color-act-ink-hover: oklch(0.873 0.01 70);
-  --color-act-ink-press: oklch(0.792 0.01 70);
-  --color-act-ink-pending: oklch(0.727 0.01 70);
   --color-switch-off: oklch(0.53 0.01 70);
   --color-switch-off-hover: oklch(0.596 0.01 70);
 }
@@ -257,11 +227,6 @@ columns):
   --color-fill-neutral: oklch(0.2 0.006 84 / 0.08);
   --color-edge-hover: oklch(0.62 0.006 84);
   --color-ink-disabled: oklch(0.665 0.006 84);
-  --color-act-ink: oklch(0.2 0.006 84);
-  --color-on-act-ink: oklch(0.974 0.006 84);
-  --color-act-ink-hover: oklch(0.293 0.006 84);
-  --color-act-ink-press: oklch(0.37 0.006 84);
-  --color-act-ink-pending: oklch(0.432 0.006 84);
   --color-switch-off: oklch(0.62 0.006 84);
   --color-switch-off-hover: oklch(0.557 0.006 84);
 }
@@ -291,11 +256,6 @@ columns):
   --color-act-danger-hover: oklch(0.741 0.157 25.375);
   --color-act-danger-press: oklch(0.767 0.137 25.772);
   --color-act-danger-pending: oklch(0.545 0.126 26.168);
-  --color-act-ink: oklch(0.97 0.01 84);
-  --color-on-act-ink: oklch(0.16 0.01 84);
-  --color-act-ink-hover: oklch(0.873 0.01 84);
-  --color-act-ink-press: oklch(0.792 0.01 84);
-  --color-act-ink-pending: oklch(0.727 0.01 84);
   --color-switch-off: oklch(0.53 0.01 84);
   --color-switch-off-hover: oklch(0.596 0.01 84);
 }
@@ -318,11 +278,6 @@ columns):
   --color-fill-neutral: oklch(0.2 0.043 261 / 0.08);
   --color-edge-hover: oklch(0.62 0.014 261);
   --color-ink-disabled: oklch(0.665 0.026 261);
-  --color-act-ink: oklch(0.2 0.043 261);
-  --color-on-act-ink: oklch(0.974 0.006 261);
-  --color-act-ink-hover: oklch(0.293 0.039 261);
-  --color-act-ink-press: oklch(0.37 0.035 261);
-  --color-act-ink-pending: oklch(0.432 0.032 261);
   --color-switch-off: oklch(0.62 0.014 261);
   --color-switch-off-hover: oklch(0.557 0.018 261);
 }
@@ -352,11 +307,6 @@ columns):
   --color-act-danger-hover: oklch(0.741 0.156 24.487);
   --color-act-danger-press: oklch(0.767 0.137 23.933);
   --color-act-danger-pending: oklch(0.545 0.124 24.308);
-  --color-act-ink: oklch(0.97 0.014 261);
-  --color-on-act-ink: oklch(0.16 0.006 261);
-  --color-act-ink-hover: oklch(0.873 0.013 261);
-  --color-act-ink-press: oklch(0.792 0.012 261);
-  --color-act-ink-pending: oklch(0.727 0.012 261);
   --color-switch-off: oklch(0.53 0.014 261);
   --color-switch-off-hover: oklch(0.596 0.014 261);
 }

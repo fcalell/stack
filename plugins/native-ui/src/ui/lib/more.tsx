@@ -1,4 +1,9 @@
-import type { Act, IconAct, MenuItem } from "@fcalell/ui-core/descriptors";
+import type {
+	Act,
+	IconAct,
+	IconName,
+	MenuItem,
+} from "@fcalell/ui-core/descriptors";
 import { HAIRLINE, row, text } from "@fcalell/ui-core/variants";
 import { Ellipsis } from "lucide-react-native";
 import { useState } from "react";
@@ -6,17 +11,16 @@ import { Pressable, Text as RNText, View } from "react-native";
 import { Sheet } from "../components/sheet";
 import { Circle } from "./circle";
 import { cn } from "./cn";
-import { Glyph } from "./glyph";
-import { useIcon } from "./icons";
+import { GLYPHS, Glyph } from "./glyph";
 
-export type MenuItems = MenuItem<string>[] | MenuItem<string>[][];
+export type MenuItems = MenuItem[] | MenuItem[][];
 
 // A flat list is one group; a list of lists is groups under separators.
-export function groupsOf(items: MenuItems): MenuItem<string>[][] {
+export function groupsOf(items: MenuItems): MenuItem[][] {
 	if (items.length === 0) return [];
 	return Array.isArray(items[0])
-		? (items as MenuItem<string>[][])
-		: [items as MenuItem<string>[]];
+		? (items as MenuItem[][])
+		: [items as MenuItem[]];
 }
 
 // A menu on the phone: a sheet of one-line acts, each group under a
@@ -93,7 +97,7 @@ export function MoreSheet({
 	title: string;
 	open: boolean;
 	onClose: () => void;
-	actions: IconAct<string>[];
+	actions: IconAct[];
 	more: Act[];
 }) {
 	const items = [
@@ -113,13 +117,7 @@ export function MoreSheet({
 	);
 }
 
-function MenuRow({
-	item,
-	onAct,
-}: {
-	item: MenuItem<string>;
-	onAct: () => void;
-}) {
+function MenuRow({ item, onAct }: { item: MenuItem; onAct: () => void }) {
 	const blocked = item.blocked !== undefined;
 	return (
 		<Pressable
@@ -152,6 +150,6 @@ function MenuRow({
 	);
 }
 
-function ItemGlyph({ name }: { name: string }) {
-	return <Glyph icon={useIcon(name)} tone="ink-meta" />;
+function ItemGlyph({ name }: { name: IconName }) {
+	return <Glyph icon={GLYPHS[name]} tone="ink-meta" />;
 }

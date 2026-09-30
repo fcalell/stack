@@ -1,22 +1,13 @@
 import type { StatusState } from "@fcalell/ui-core/descriptors";
 import {
-	STATUS_CHIP,
-	status,
-	statusContentTone,
+	STATUS,
+	STATUS_LABEL,
+	STATUS_OPEN,
+	statusDot,
 } from "@fcalell/ui-core/variants";
-import {
-	Circle,
-	CircleAlert,
-	CircleCheck,
-	CircleDot,
-	CircleX,
-	Clock,
-	type LucideIcon,
-} from "lucide-react-native";
 import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import { Glyph } from "../../lib/glyph";
 import { useWords } from "../../lib/words";
 
 export interface StatusProps extends Closed {
@@ -25,43 +16,39 @@ export interface StatusProps extends Closed {
 	onOpen?: () => void;
 }
 
-export const STATUS_MARK: Record<StatusState, LucideIcon> = {
-	active: CircleDot,
-	waiting: Clock,
-	done: CircleCheck,
-	attention: CircleAlert,
-	failed: CircleX,
-	idle: Circle,
-};
-
-// An icon and a word; the color follows the state. With `onOpen` it is a chip.
+// A dot in the state's colour beside its word in meta ink. With `onOpen` it is
+// a pill that pulls back by its own padding, so the dot and the word sit where
+// a static status's do; it hugs its content, so its wash is the pill's.
 export function Status({ state, label, onOpen }: StatusProps) {
 	const words = useWords();
 	const word = label ?? words[state];
 	const inner = (
 		<>
-			<Glyph
-				icon={STATUS_MARK[state]}
-				tone={statusContentTone(state)}
-				size={16}
-			/>
-			<RNText className={status({ state })}>{word}</RNText>
+			<View className={statusDot({ state })} />
+			<RNText numberOfLines={1} className={cn(STATUS_LABEL, "shrink")}>
+				{word}
+			</RNText>
 		</>
 	);
-	if (onOpen) {
+	if (!onOpen) {
 		return (
-			<Pressable
-				accessibilityRole="button"
-				accessibilityLabel={word}
-				onPress={onOpen}
-				className={cn(
-					STATUS_CHIP,
-					"flex-row items-center gap-pair self-start active:bg-wash-press",
-				)}
-			>
+			<View className={cn(STATUS, "flex-row items-center min-w-0")}>
 				{inner}
-			</Pressable>
+			</View>
 		);
 	}
-	return <View className="flex-row items-center gap-pair">{inner}</View>;
+	return (
+		<Pressable
+			accessibilityRole="button"
+			accessibilityLabel={word}
+			onPress={onOpen}
+			className={cn(
+				STATUS,
+				STATUS_OPEN,
+				"flex-row items-center min-w-0 self-start active:bg-wash-press",
+			)}
+		>
+			{inner}
+		</Pressable>
+	);
 }

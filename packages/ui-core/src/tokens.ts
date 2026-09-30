@@ -112,7 +112,7 @@ export const COLOR_GROUPS = {
 		"ink-error",
 		"ink-disabled",
 	],
-	// the three act fills and their states
+	// the two act fills and their states
 	acts: [
 		"act-accent",
 		"on-act-accent",
@@ -124,11 +124,6 @@ export const COLOR_GROUPS = {
 		"act-danger-hover",
 		"act-danger-press",
 		"act-danger-pending",
-		"act-ink",
-		"on-act-ink",
-		"act-ink-hover",
-		"act-ink-press",
-		"act-ink-pending",
 	],
 	// the switch's track and knob, and the on fill every toggle shares
 	switch: [
@@ -424,11 +419,10 @@ export const COLORS: Record<ColorName, ColorDeclaration> = {
 	// Hover and press move a fill 12 % and 22 % away from its label, so the
 	// label only gains contrast: the accent act (a white label in both modes)
 	// and the danger act in light (white) toward black, the danger act in dark
-	// (a near-black label) toward `ink-body`. The ink fill moves toward the
-	// page, which lightens it in light and darkens it in dark.
+	// (a near-black label) toward `ink-body`.
 	// Pending is inert and recedes 30 %: a filled act toward its label in
 	// light and toward the page in dark, held at 3:1 under its label, where
-	// the spinner draws; the ink fill toward the page. A labelled act's fill
+	// the spinner draws. A labelled act's fill
 	// takes no ground floor in any state: its label names it.
 	"act-accent": { alias: "accent" },
 	"on-act-accent": { alias: "on-accent" },
@@ -464,11 +458,6 @@ export const COLORS: Record<ColorName, ColorDeclaration> = {
 			dark: [{ on: "on-act-danger", ratio: 3 }],
 		},
 	},
-	"act-ink": { alias: "ink-body" },
-	"on-act-ink": { alias: "canvas" },
-	"act-ink-hover": { mix: "ink-body", toward: "canvas", amount: 0.12 },
-	"act-ink-press": { mix: "ink-body", toward: "canvas", amount: 0.22 },
-	"act-ink-pending": { mix: "ink-body", toward: "canvas", amount: 0.3 },
 	// A toggle on (a switch's track, a checked box, a slider's fill) has no
 	// label to carry it, so it is a boundary at 3:1 on every ground, and its
 	// hover moves away from the ground: darker in light, lighter in dark.
@@ -615,22 +604,26 @@ export const SPACE_BASE = 4;
 // Roles, by use: `inside` within a control (icon to label, dot to text);
 // `control-x` a control's inline padding; `pair` between paired elements
 // (label over input, title over description); `rows` between rows in a menu
-// or a nav list (rows in a hairline list abut); `card` a card's or a
-// popover's inset; `fields` between fields; `sections` between sections of a
-// page; `page` the page inset.
+// or a nav list (rows in a hairline list abut); `card` a card's inset;
+// `float` a floating surface's inset (a select's list, a menu, a picker
+// popover), so a row's wash sits just inside its edge; `fields` between
+// fields; `sections` between sections of a page; `page` the page inset. A
+// role never takes a width's name: `w-*` reads the spacing role first,
+// which would shadow the width.
 export const SPACING_ROLES = [
 	"inside",
 	"control-x",
 	"pair",
 	"rows",
 	"card",
+	"float",
 	"fields",
 	"sections",
 	"page",
 ] as const;
 export type SpacingRole = (typeof SPACING_ROLES)[number];
 
-// The roles a container may put between its children; the other three are
+// The roles a container may put between its children; the other four are
 // insets. The rhythm matrix is this list.
 export const GAP_ROLES = [
 	"inside",
@@ -642,7 +635,7 @@ export const GAP_ROLES = [
 export type GapRole = (typeof GAP_ROLES)[number];
 
 // Multiples of `SPACE_BASE`. Touch is the same roles one rung looser, except
-// the page inset, which a phone narrows.
+// the float inset, which holds, and the page inset, which a phone narrows.
 export const SPACING_RATIO: Record<Density, Record<SpacingRole, number>> = {
 	desktop: {
 		inside: 1.5,
@@ -650,6 +643,7 @@ export const SPACING_RATIO: Record<Density, Record<SpacingRole, number>> = {
 		pair: 1.5,
 		rows: 0.5,
 		card: 4,
+		float: 1,
 		fields: 4,
 		sections: 8,
 		page: 6,
@@ -660,6 +654,7 @@ export const SPACING_RATIO: Record<Density, Record<SpacingRole, number>> = {
 		pair: 2,
 		rows: 1,
 		card: 4,
+		float: 1,
 		fields: 6,
 		sections: 10,
 		page: 4,
@@ -700,12 +695,14 @@ export const SIZES = [
 	"check",
 	"track",
 	"otp",
+	"text-area",
 ] as const;
 export type Size = (typeof SIZES)[number];
 
-// The thumb's travel, the track less the thumb and its inset on both sides,
-// is derived from the other three and declared nowhere.
-export type DerivedSize = "switch-travel";
+// Derived and declared nowhere: the thumb's travel, the track less the thumb
+// and its inset on both sides; a text area's least value height, three body
+// line boxes.
+export type DerivedSize = "switch-travel" | "text-area";
 
 export const SIZE_PX: Record<
 	Density,
@@ -972,10 +969,10 @@ export const WORD_KEYS = [
 	"attach",
 	"search",
 	"loading",
+	"checking",
 	"retry",
 	"add",
 	"remove",
-	"duplicate",
 ] as const;
 export type WordKey = (typeof WORD_KEYS)[number];
 
@@ -999,8 +996,8 @@ export const ENGLISH: Words = {
 	attach: "Attach",
 	search: "Search",
 	loading: "Loading",
+	checking: "Checking the code",
 	retry: "Retry",
 	add: "Add",
 	remove: "Remove",
-	duplicate: "Already in the list",
 };

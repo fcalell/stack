@@ -19,7 +19,9 @@
 			"default": "./dist/node/mode.js"
 		},
 		"./globals.css": "./src/ui/globals.css",
+		"./components/*": "./src/ui/components/*/index.tsx",
 		"./lib/words": "./src/ui/lib/words.tsx",
+		"./lib/*": "./src/ui/lib/*.ts",
 		"./showcase": "./src/ui/showcase/index.tsx",
 		"./showcase/foundations": "./src/ui/showcase/foundations.tsx"
 	},
@@ -39,12 +41,14 @@
 		"check": "pnpm check-types && pnpm lint",
 		"test": "node --test 'test/**/*.test.ts'",
 		"clear": "rm -rf dist node_modules .turbo",
-		"design": "tsx scripts/design.ts"
+		"design": "tsx scripts/design.ts",
+		"verify": "tsx scripts/verify.ts"
 	},
 	"peerDependencies": {
 		"react": "^19.3"
 	},
 	"dependencies": {
+		"@base-ui/react": "^1.8.0",
 		"@fcalell/cli": "workspace:*",
 		"@fcalell/plugin-auth": "workspace:*",
 		"@fcalell/plugin-react": "workspace:*",
@@ -53,7 +57,8 @@
 		"@fontsource-variable/ibm-plex-sans": "^5.3.0",
 		"@fontsource/ibm-plex-mono": "^5.3.0",
 		"@tailwindcss/vite": "^4.3.3",
-		"lucide-react": "^1.48.0",
+		"lucide": "^1.49.0",
+		"lucide-react": "^1.49.0",
 		"tailwindcss": "^4.3.3",
 		"zod": "^4.3.6"
 	},
@@ -63,6 +68,7 @@
 		"@types/node": "^25.5.0",
 		"@types/react": "^19.3.0",
 		"react": "^19.3.0",
+		"ts-morph": "^28.0.0",
 		"tsx": "^4.19.0",
 		"typescript": "^5.9.3",
 		"vite": "^7.0.4"

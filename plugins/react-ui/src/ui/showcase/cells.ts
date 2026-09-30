@@ -31,11 +31,15 @@ export interface ShowcaseFrame {
 const CELLS = matrixCells(FAMILIES);
 const BASE: ShowcaseCell = { name: "base", classes: [] };
 
-// A component that draws no matrix shows one `base` cell.
+// A component shows every cell of a family it draws and each family cell it
+// names; one that draws no matrix shows one `base` cell.
 function componentCells(entry: RosterEntry): ShowcaseCell[] {
-	const families = entry.draws;
+	const { draws } = entry;
 	const cells = [...CELLS]
-		.filter(([path]) => families.includes(path.split(".")[0] ?? ""))
+		.filter(
+			([path]) =>
+				draws.includes(path) || draws.includes(path.split(".")[0] ?? ""),
+		)
 		.map(([name, set]) => ({ name, classes: [...set] }));
 	return cells.length > 0 ? cells : [BASE];
 }

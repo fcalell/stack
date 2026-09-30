@@ -12,7 +12,7 @@ pnpm add @fcalell/plugin-react-ui
 ```
 
 Peer dependency: `react ^19.3`. `plugin-react` and `plugin-vite` are listed alongside. The
-consumer declares `tailwindcss` and `lucide-react` (the plugin's `dependencies`) and
+consumer declares `tailwindcss` (the plugin's `dependencies`) and
 `@tailwindcss/vite` (its `devDependencies`), since the generated config and stylesheet import them.
 
 ```ts
@@ -36,7 +36,8 @@ export default defineConfig({
 | `words` | `Words` | English | Every word a molecule draws on its own, every key required. Mounted into the generated providers as a `WordsProvider` (`@fcalell/plugin-react-ui/lib/words`, read with `useWords()`). |
 | `fonts` | `FontEntry[]` | `defaultFonts` | The font files to load: each is preloaded and gets an `@font-face` with fallback metrics, one per family. The default is IBM Plex Sans (its `wght` axis, `plexSans` from `./node/fonts`) and IBM Plex Mono at 400, 500 and 600; `[]` loads none. Which family the contract binds to `sans` or `mono` is `theme.fonts`. |
 
-The consumer's icon set is typed `IconSet`: a closed map of names to `lucide-react` glyphs.
+The icon set is Lucide: every `icon` or `name` a component takes is an `IconName` (a Lucide
+PascalCase name), drawn from `lucide-react`, the plugin's own dependency.
 
 ## Generated files
 
@@ -59,6 +60,53 @@ no transition or animation that reads one moves. Each `@font-face` gets a metric
 named by ui-core's `fallbackFace` (`"IBM Plex Sans Fallback"`), the name the contract's family
 stack carries second.
 
+## Components
+
+Each roster component lives in `src/ui/components/<componentDir(name)>/index.tsx` and is
+imported as `@fcalell/plugin-react-ui/components/<dir>`. The file exports the component and its
+`XProps` interface, which extends `Closed` (`./lib/closed`: `class`, `className`, `classList`
+and `style` as `?: never`) and declares exactly the roster's prop names.
+
+- **Look.** A part's `className` is `cn(cell(props), OVERLAY)`: the ui-core cva (or single-cell
+  constant) first, then the overlay, so an overlay colour replaces the cell's. `cn` is
+  `@fcalell/ui-core/cn`. An overlay is a module constant spelled verbatim from
+  `.helm/research/design-system/atoms-overlays.md`, never a class built from a variable, and
+  every overlay class other than a state variant over a token is listed in
+  `scripts/overlays.ts`.
+- **States.** Hover, press and focus are the web variants `hover:`, `active:` and
+  `focus-visible:`; a disabled control `disabled:` or `aria-disabled:`, a pending act
+  `aria-busy:`. The focus ring is the base `:focus-visible` rule in `globals.css`
+  (`--focus-ring` in `--color-ring` at `--focus-ring-offset`), so a component spells nothing for
+  it; a control inside a control rings inset with `focus-visible:-outline-offset-2`.
+- **Behaviour.** `@base-ui/react` supplies behaviour and accessibility (a button, a switch, a
+  checkbox, a slider, a field, a select) through its per-component subpaths
+  (`@base-ui/react/switch`); its parts take the component's classes, never Base UI's look.
+- **Composition.** A component that draws another's place takes its pattern, never a copy:
+  `Select`'s trigger is `Input`'s box (`BOX`, `BOX_HOVER`, `BOX_DISABLED`, exported from
+  `components/input`) and its open list a popover (`POPOVER`) of rows (`ROW`, `highlighted`
+  under Base UI's highlight). A popup mounts in the body unless a `PortalContainer`
+  (`lib/portal`) names an element: a surface that scopes its own mode (a showcase frame).
+- **Words.** A word the component draws on its own comes from `useWords()`; a sentence is a prop.
+
+`Text` is the worked example: a `<p>` in `text({ role })` with the `max-w-measure` overlay.
+
+## Verify
+
+`pnpm --filter @fcalell/plugin-react-ui verify` resolves `.stack/app.css` through the plugin
+graph, compiles it with the Tailwind CLI in `scripts/fixture/`, and holds the components to it:
+
+| Check | Asserts |
+| --- | --- |
+| `a6` | every class a component spells is emitted by the built sheet, so an off-contract utility fails by name |
+| `b5` | the overlay classes the components spell equal `scripts/overlays.ts`, both ways; a state variant over a contract token is held by `b-owns` instead |
+| `b-owns` | every token a component spells is one its roster entry `owns` |
+| `b6` | every props type extends `Closed`, no class channel or props spread survives |
+| `b7` | `scripts/fixture/closure.tsx` passes each closed channel to every component under `@ts-expect-error` and compiles |
+| `b-roster` | every component directory is a roster name and its props type carries exactly the roster's props |
+| `b-words` | no JSX text or labelling attribute is a literal word |
+| `b-nouns` | no product noun in `src` |
+| `b-exports` | every component and lib subpath resolves through `exports` to its own file |
+
 ## The showcase
 
 `Showcase` (`@fcalell/plugin-react-ui/showcase`) is a page generated from data: for every roster
@@ -67,8 +115,19 @@ enumerated by `matrixCells`) and state its roster entry's `states` lists, light 
 side, each frame scoped by its mode's class, at one density. The URL decides
 the view (`?mode=dark&density=desktop`) and the page's toggles rewrite it, storing nothing. Every
 frame carries `data-cell="<component>/<cell>/<state>/<mode>/<density>"`; `showcaseCells()` lists
-every id over both densities, so a density's page draws half of them. A component without a
-registered renderer draws its name and its cell's classes.
+every id over both densities, so a density's page draws half of them.
+
+A component's frames are drawn by one function in `src/ui/showcase/frames/<dir>.tsx`, registered
+under its roster name in `registry.ts`: it takes the frame and returns the real component in that
+cell and state, or `undefined` for a cell the component has no form for. The frames stay out of
+the component directory, so a component never depends on the showcase. A component without a
+registered function, or a cell it returns `undefined` for, draws its name and its cell's classes.
+A state the component takes as a prop (`disabled` through `blocked`, `loading`, `error`,
+`selected`, `empty`) is drawn by passing it. The pointer and focus states are forced: each frame
+carries `data-force-state="<state>"`, and `globals.css` redefines the `hover`, `active` and
+`focus-visible` variants to match inside `[data-force-state=hover|active|focus]` as well as on the
+real pseudo-class, and draws the focus ring on every tabbable element in a `focus` frame. The
+component's own overlay classes then draw the state, with nothing showcase-only in it.
 
 ## The artboards
 

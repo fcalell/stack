@@ -26,16 +26,18 @@ Ten subpaths:
 - `@fcalell/ui-core/variants`: the platform-invariant variant matrices, each a cva built from a
   table, the single-cell constants beside them, and `FAMILIES`, every matrix by name with its axes,
   which `matrixCells` enumerates into cells; the prop types a component shares across plugins
-  with them (`ContentTone`, a glyph's ink; `IconFit`, `meta`, `body` or `control`, what an icon sits
-  beside, which picks `icon-meta`, `icon` or `icon-control`).
-- `@fcalell/ui-core/descriptors`: `Act`, `IconAct`, `Part`, `Mark`, `Option`, `OptionGroup`,
+  with them (`ContentTone`, a glyph's ink; `IconFit`, the `ICON` matrix's `meta`, `body` or
+  `control`, what an icon sits beside, which picks `icon-meta`, `icon` or `icon-control`;
+  `ButtonFit`, `IconButtonFit` and `LinkFit`, what an act sits in, read off each matrix's `fit`
+  axis; `TextRole`, the `body` and `meta` roles `Text` draws).
+- `@fcalell/ui-core/descriptors`: `IconName`, `Act`, `IconAct`, `Part`, `Mark`, `Option`, `OptionGroup`,
   `PlaceSpec`, `Hunk`, `FieldBinding`, `Confirmation`, `MenuItem`, `TableColumn`, `TableRow`,
   `CellEdit` and the other framework-free types a prop carries.
 - `@fcalell/ui-core/commit`: `commitMoment()`, when a typing control's value is final: on
   leaving the field or Enter, only when it changed since focus, Escape restoring the value at
   focus. Both plugins' `Input` and `TextArea` drive their `onCommit` with it.
 - `@fcalell/ui-core/roster`: the component roster as data (`ROSTER`, `STATES`, `CLOSED_PROPS`): the
-  layer, prop names, drawn families and states of every component both plugins ship.
+  layer, prop names, drawn cells, states and owned tokens of every component both plugins ship.
 - `@fcalell/ui-core/harness`: internal. The shared core of the packages' `scripts/verify.ts`.
 
 The contract has two modes, `light` and `dark`. `themeTokens` seeds the light colors and the touch
@@ -47,7 +49,8 @@ every utility reads its variable and the active scope sets it.
 
 The repo root's `DESIGN.md` is the contract in the [DESIGN.md format](https://github.com/google-labs-code/design.md):
 the default theme's tokens as front matter, each matrix cell and single cell as a component (dark
-values and their components suffixed `-dark`), and the roster with its drawn families and states.
+values and their components suffixed `-dark`), and the roster with the cells each component draws,
+its states and the tokens it owns.
 `src/design-md.ts` emits it and `pnpm --filter @fcalell/ui-core design-md` writes it. The package's
 `test` fails when the committed file differs from the emitter's output or when `design.md lint`
 reports an error, so it is never edited by hand.
@@ -84,8 +87,7 @@ changes at a width. Native is touch-only.
 
 Every word a molecule draws or reads aloud on its own comes from `words`, a typed object passed
 once beside `theme`: the six `Status` words, `recommended`, `copy`, `copied`, `back`, `close`,
-`more`, `send`, `stop`, `attach`, `search`, `loading`, `retry`, `add`, `remove`, `duplicate`
-(an `EnumInput`'s refusal of a value already listed). `Words` requires every key and
+`more`, `send`, `stop`, `attach`, `search`, `loading`, `checking`, `retry`, `add`, `remove`. `Words` requires every key and
 `wordsSchema` is closed, so a translation that misses a word fails `tsc` and the schema, never the
 interface. `ENGLISH` is the default. A sentence that belongs to the consumer is a prop on the
 molecule that draws it (`placeholder`, `notice`, every `sentence`, every label), never a key.
@@ -139,19 +141,16 @@ accent read as one palette.
   `selected-outline` a selected tile's outline, both `accent-ink`; `edge-hover` a field's boundary
   under the pointer, `edge-strong`; `edge-error` a field's boundary in error and `ink-error` an
   error message, both `danger`; `ink-disabled` a disabled part's label, `ink-faint`.
-- Three act fills. `act-accent` is `accent` under `on-act-accent`, the primary act; `act-danger`
+- Two act fills. `act-accent` is `accent` under `on-act-accent`, the primary act; `act-danger`
   is `danger` under `on-act-danger` (`on-danger`), a confirm's destructive primary (rows and
-  menus keep the hairline destructive act); `act-ink` is `ink-body` under `on-act-ink`
-  (`canvas`), a screen's dark primary. Hover and press move the fill away from the label, 12 %
+  menus keep the hairline destructive act). Hover and press move the fill away from the label, 12 %
   and 22 % in OKLab toward a second color a `mix` may name per mode, so the label only gains
   contrast: `act-accent-hover` and `-press` toward black in both modes (a white label), and
   `act-danger-hover` and `-press` toward black in light (a white label) and toward `ink-body` in
-  dark (a near-black label); `act-ink-hover` and `act-ink-press` toward `canvas`, which lightens
-  the fill in light and darkens it in dark.
+  dark (a near-black label).
   Pending is inert and recedes 30 %: a filled act's `-pending` toward its label in light and
-  toward `canvas` in dark, held at 3:1 under its label where the spinner draws;
-  `act-ink-pending` toward `canvas`. A labelled act's fill takes no 3:1 floor on its ground in
-  any state: its label names it.
+  toward `canvas` in dark, held at 3:1 under its label where the spinner draws. A labelled act's
+  fill takes no 3:1 floor on its ground in any state: its label names it.
 - The toggles. `toggle-on` is `accent`, the on fill of a switch's track, a checked box and a
   slider's fill; it has no label to carry it, so it and `toggle-on-hover` hold 3:1 on
   `canvas`, `surface` and `group` and under `switch-thumb`. `toggle-on-hover` mixes it 12 %
@@ -195,17 +194,17 @@ carry none.
 ## Space, sizes, radii, elevation
 
 One base, 4 px; every spacing role is a multiple of it, picked per density, so a density moves
-the roles up and down one ladder. Eight roles by use, desktop then touch: `inside` 6 / 8 (within
+the roles up and down one ladder. Nine roles by use, desktop then touch: `inside` 6 / 8 (within
 a control: icon to label, dot to text), `control-x` 12 / 16 (a control's inline padding), `pair`
 6 / 8 (between paired elements: label over input, title over description), `rows` 2 / 4 (between
-rows in a menu or a nav list; rows in a hairline list abut), `card` 16 / 16 (a card's or a
-popover's inset), `fields` 16 / 24 (between fields), `sections` 32 / 40 (between sections of a
-page), `page` 24 / 16 (the page inset). Touch is the same roles one rung looser except the page
-inset, which a phone narrows. Five are gap roles, what a container may put between its children:
-`inside`, `pair`, `rows`, `fields`, `sections`; the other three (`control-x`, `card`, `page`)
-are insets.
+rows in a menu or a nav list; rows in a hairline list abut), `card` 16 / 16 (a card's
+inset), `float` 4 / 4 (a floating surface's inset: a select's list, a menu, a picker popover), `fields` 16 / 24 (between fields), `sections` 32 / 40 (between sections of a
+page), `page` 24 / 16 (the page inset). Touch is the same roles one rung looser except the
+float inset, which holds, and the page inset, which a phone narrows. Five are gap roles, what a container may put between its children:
+`inside`, `pair`, `rows`, `fields`, `sections`; the other four (`control-x`, `card`, `float`,
+`page`) are insets.
 
-Twenty-four sizes per density sit in the same `--spacing-*` namespace, so a cell names them as it
+Twenty-five sizes per density sit in the same `--spacing-*` namespace, so a cell names them as it
 names a role (`min-h-control`, `size-avatar`), and nothing is spaced by them. Desktop then touch:
 `control` 32 / 44 (a button, a segmented control), `control-compact` 28 / 44 (a menu item, a
 toolbar control), `field` 38 / 48 (a form input), `row` 32 / 48 (a one-line row), `row-2` 48 / 64
@@ -216,7 +215,7 @@ header), `target` 24 / 44 (the least hit area of any interactive part), `dot` 6 
 `thumb` and both insets), `skeleton` 12 / 12, `icon-meta` 12 / 14 (an icon beside meta or
 caption text), `icon` 14 / 18 (beside body text), `icon-control` 16 / 20 (inside a control),
 `check` 16 / 20 (a checkbox's box), `track` 2 / 4 (a slider's track thickness), `otp` 44 / 48 (a
-one-time-code box, square). On touch every target is at least 44. A cell says `min-h`, never `h`: a label
+one-time-code box, square), `text-area` 60 / 72 (a text area's least value height, derived: three body line boxes). On touch every target is at least 44. A cell says `min-h`, never `h`: a label
 must be able to grow its control under OS font scaling.
 
 Eight radius roles, density-invariant, a radius naming the role and never the size: `chip` 4
@@ -270,8 +269,7 @@ and `accent-ink` on the four grounds and on `accent-soft`; `ok`, `warn` and `dan
 grounds and each on its own soft; `on-accent` on `accent`, `act-accent-hover` and
 `act-accent-press`; `danger` on `canvas`, `surface` and `group` under `wash-hover` and `wash-press`,
 a destructive act's label under the act's own wash; `on-danger` on `danger`; `on-act-danger` on
-`act-danger`, `act-danger-hover` and `act-danger-press`; `on-act-ink` on `act-ink`, `act-ink-hover` and
-`act-ink-press`; every `chip-red-ink` on its `chip-red-soft`; every `avatar-1-ink` on its
+`act-danger`, `act-danger-hover` and `act-danger-press`; every `chip-red-ink` on its `chip-red-soft`; every `avatar-1-ink` on its
 `avatar-1`. Each graphic pair clears 3:1: `edge-strong` on `surface` and `group`, `accent` on
 `canvas`, `surface` and `group`, `on-act-accent` on `act-accent-pending`, `on-act-danger` on
 `act-danger-pending`, `toggle-on` and `toggle-on-hover` on `canvas`, `surface` and `group`,
@@ -303,9 +301,19 @@ The canon binds every component either UI plugin ships:
 
 1. One name per concept: `label` for the visible word, `loading` for a busy control, `onChange`
    for a value's change, `onAct` for an act, `act` for a labelled act or a button's kind, `blocked`
-   for a disabled control's reason, `sentence` for a consumer's line.
+   for a disabled control's reason, `sentence` for a consumer's line, `fit` for what a component
+   sits in. `fit` is a closed enum off its matrix's `fit` axis, defaulting to the matrix's default:
+   an `Icon` sits beside meta, body or a control; a `Button` in a body, a bar or under a field; an
+   `IconButton` in a body or a bar; a `Link` inline or standalone. The composing molecule sets it
+   (a `Toolbar` passes `bar`, a field's trailing act `field`), and a call site may.
+6. `Text` draws `body` and `meta`, with `strong`; every other type role is drawn by the molecule
+   that owns its place (`title` by `Page` and `Screen`, `heading` by `Section` and `Card`,
+   `caption` by `Chip` and `Kbd`, `code` by `Code`, `display` by `Stat`). `TEXT` keeps all seven
+   roles as the table those owners draw from.
 2. A composed region is data: an act is an `Act`, a mark is a `Mark`, a place is a `PlaceSpec`;
-   the owning molecule renders it. `children` is the one open slot, on the molecules the roster
+   the owning molecule renders it. An icon is an `IconName`, a Lucide glyph by its PascalCase
+   name (`Check`, `ChevronDown`), typed off the `lucide` package: the set is fixed, not
+   configured, and each plugin draws the name from its platform's Lucide package. `children` is the one open slot, on the molecules the roster
    gives it to.
 3. Molecules compose molecules; a product's `ui/` composes stack molecules and never a host.
 4. No `class`, `className`, `classList` or `style` prop, on any component, in either plugin: each
@@ -316,11 +324,21 @@ The canon binds every component either UI plugin ships:
 ## The roster
 
 `ROSTER` in `@fcalell/ui-core/roster` is the closed list: 54 components in four layers (atoms,
-layout molecules, shared molecules, content molecules), each with its prop names, the matrix
-families it draws (`draws`, each a `FAMILIES` name) and the states it has a form for (`states`, from
-`STATES`: `rest`, `hover`, `focus`, `active`, `disabled`, `loading`, `error`, `selected`, `empty`),
-the same in both plugins. Every family is drawn by at least one component, and a component that
-takes `loading` or `empty` lists that state. A plugin's verify suite reads every component's exported props type against it, so a
+layout molecules, shared molecules, content molecules), each with its prop names, the cells it
+draws (`draws`: a `FAMILIES` name for every cell of that family, `FAMILY.axis.value` for one of
+its cells, as `Text` draws `TEXT.role.body`, or a single-cell constant of `./variants`) and the states it
+has a form for (`states`, from `STATES`: `rest`, `hover`, `focus`, `active`, `disabled`,
+`loading`, `error`, `selected`, `empty`), the same in both plugins. Every family is drawn by at
+least one component, and a component that takes `loading` or `empty` lists that state.
+
+A component whose artboard is approved also declares what it owns (`owns`): the type roles, the
+colours, the radii, the spacing roles, the sizes and widths, and the shadow levels it may draw. A
+colour is a name or a family prefix ending in `-` (`chip-` covers every chip role); the other
+namespaces name their tokens, and a namespace left out owns nothing. The verify suite reads every
+class of every cell the component draws (a family at every axis product, a named family cell as
+the table's base and that cell alone), and a class spelling a token its
+entry does not own fails by name, so a type role, a colour or a size reaches a cell only through
+the component that owns it. A plugin's verify suite reads every component's exported props type against it, so a
 prop added on one platform, a prop renamed, or a style channel reopened fails by name. The
 directory of a component is its name in kebab case (`componentDir("ListRow")` is `list-row`).
 
@@ -329,8 +347,11 @@ directory of a component is its name in kebab case (`componentDir("ListRow")` is
 Matrices hold the platform-invariant cells only: fills, borders, ink, spacing roles, radius, type
 role, font weight, font family, and a control's size. Display, alignment, and every interaction
 state are platform overlays composed through `cn()` after the matrix (React Native is flex by
-default and the web is not, so a shared `flex-row` would be wrong on one). No arbitrary value in a
-cell, in either spelling. A control's horizontal padding is the `control-x` spacing role; its
+default and the web is not, so a shared `flex-row` would be wrong on one). What a component is
+given (an act, a family, a checked value, an error) is an axis; where the pointer or the focus is
+on it is an overlay. A label's cell carries its ink, since React Native text inherits no colour;
+an act's fill carries it too, for the web glyph and spinner drawn in the current colour. No
+arbitrary value in a cell, in either spelling. A control's horizontal padding is the `control-x` spacing role; its
 minimum height is a size; a row and a surface inset on spacing roles. No behavior in ui-core,
 ever.
 

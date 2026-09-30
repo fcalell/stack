@@ -51,7 +51,7 @@ function Component(props: { name: string; frames: ShowcaseFrame[] }) {
 			<h2 className={text({ role: "heading" })}>{props.name}</h2>
 			<div className="flex flex-row flex-wrap gap-inside">
 				{rows.map((row) => (
-					<div key={row} className="flex flex-row flex-wrap gap-pair">
+					<div key={row} className="flex flex-row flex-wrap gap-pair min-w-0">
 						{props.frames
 							.filter((frame) => `${frame.cell.name}/${frame.state}` === row)
 							.map((frame) => (
@@ -64,21 +64,26 @@ function Component(props: { name: string; frames: ShowcaseFrame[] }) {
 	);
 }
 
+// A frame shrinks to the viewport (`min-w-0` on it and its row), so a component
+// that fits a narrow screen is drawn fitting it.
+// `data-force-state` carries the frame's state: the web's `hover`, `active`
+// and `focus-visible` variants and the focus ring also match under it
+// (`globals.css`), so a static frame draws a pointer or focus state with the
+// component's own classes.
 function Frame(props: { frame: ShowcaseFrame }) {
 	const { frame } = props;
-	const Drawn = registry[frame.component];
+	const drawn = registry[frame.component]?.(frame);
 	const strings = frame.cell.classes.join(" ");
 	return (
 		<div
 			data-cell={frame.id}
-			className={cn(frame.mode, GROUP, "flex flex-col gap-pair p-card")}
+			data-force-state={frame.state}
+			className={cn(frame.mode, GROUP, "flex flex-col gap-pair p-card min-w-0")}
 		>
 			<p className={text({ role: "caption" })}>
 				{frame.cell.name} · {frame.state} · {frame.mode}
 			</p>
-			{Drawn ? (
-				<Drawn frame={frame} />
-			) : (
+			{drawn ?? (
 				<>
 					<p className={text({ role: "body" })}>{frame.component}</p>
 					<p className={text({ role: "code" })}>{strings}</p>

@@ -80,9 +80,6 @@ const COLOR_USE: Record<string, string> = {
 	"act-danger":
 		"a confirm's destructive act's fill; `-hover`, `-press` and `-pending` its states",
 	"on-act-danger": "the filled destructive act's label",
-	"act-ink":
-		"the ink act, a screen's dark primary; `-hover`, `-press` and `-pending` its states",
-	"on-act-ink": "the ink act's label",
 	"switch-off": "a switch's track off; `-hover` under the pointer",
 	"toggle-on":
 		"a toggle on: a switch's track, a checked box, a slider's fill; `-hover` under the pointer",
@@ -105,7 +102,9 @@ const SPACING_USE: Record<(typeof SPACING_ROLES)[number], string> = {
 	"control-x": "a control's inline padding",
 	pair: "between paired elements: label over input, title over description",
 	rows: "between rows in a menu or a nav list",
-	card: "a card's or a popover's inset",
+	card: "a card's inset",
+	float:
+		"a floating surface's inset: a select's list, a menu, a picker popover",
 	fields: "between fields",
 	sections: "between sections of a page",
 	page: "the page inset",
@@ -135,7 +134,8 @@ const SIZE_USE: Record<(typeof SIZES)[number], string> = {
 	"icon-control": "an icon inside a control",
 	check: "a checkbox's box",
 	track: "a slider's track thickness",
-	otp: "a one-time-code box, square",
+	otp: "a one-time-code box's largest side; the box is square and shrinks with its row",
+	"text-area": "a text area's least value height: three body line boxes",
 };
 
 const RADIUS_USE: Record<(typeof RADIUS_ROLES)[number], string> = {
@@ -185,9 +185,12 @@ function subTokens(
 ): Record<string, string> {
 	const out: Record<string, string> = {};
 	for (const name of list) {
-		const [, prefix, rest] = /^(bg|text|rounded|p|min-h|min-w|size)-(.+)$/.exec(
-			name,
-		) ?? [undefined, undefined, undefined];
+		const [, prefix, rest] =
+			/^(bg|text|rounded|p|h|w|min-h|min-w|size)-(.+)$/.exec(name) ?? [
+				undefined,
+				undefined,
+				undefined,
+			];
 		if (prefix === undefined || rest === undefined) continue;
 		if (prefix === "bg" && COLOR_SET.has(rest)) {
 			out.backgroundColor = `{colors.${colorName(rest, mode)}}`;
@@ -199,32 +202,33 @@ function subTokens(
 			out.rounded = `{rounded.${rest}}`;
 		} else if (prefix === "p" && SPACES.has(rest)) {
 			out.padding = `{spacing.${rest}}`;
-		} else if ((prefix === "min-h" || prefix === "size") && SPACES.has(rest)) {
+		} else if (
+			(prefix === "h" || prefix === "min-h" || prefix === "size") &&
+			SPACES.has(rest)
+		) {
 			out.height = `{spacing.${rest}}`;
 		}
-		if ((prefix === "min-w" || prefix === "size") && SPACES.has(rest)) {
+		if (
+			(prefix === "w" || prefix === "min-w" || prefix === "size") &&
+			SPACES.has(rest)
+		) {
 			out.width = `{spacing.${rest}}`;
 		}
 	}
 	return out;
 }
 
-// Families one component draws over the same axes are one element's layers
-// (a button's fill and its label), so they render as one entry.
+// A family's label layer over the same axes (`AVATAR_LABEL` under
+// `AVATAR`) is one element with it, so the two render as one entry.
 function familyGroups(): Family[][] {
-	const roster = rosterEntries();
 	const groups: Family[][] = [];
 	for (const family of FAMILIES) {
 		const axes = JSON.stringify(family.axes);
 		const group = groups.find(
 			([head]) =>
 				head !== undefined &&
-				JSON.stringify(head.axes) === axes &&
-				roster.some(
-					([, , entry]) =>
-						entry.draws.includes(head.name) &&
-						entry.draws.includes(family.name),
-				),
+				family.name === `${head.name}_LABEL` &&
+				JSON.stringify(head.axes) === axes,
 		);
 		if (group) group.push(family);
 		else groups.push([family]);
@@ -349,7 +353,7 @@ function useOf(name: string): string {
 		.replace(/^(chip)-[a-z]+(-soft|-ink)?$/, "$1")
 		.replace(/^(avatar)-\d(-ink)?$/, "$1")
 		.replace(
-			/^(act-accent|act-danger|act-ink|switch-off|toggle-on)-(hover|press|pending)$/,
+			/^(act-accent|act-danger|switch-off|toggle-on)-(hover|press|pending)$/,
 			"$1",
 		);
 	return COLOR_USE[base] ?? "";
@@ -464,7 +468,7 @@ function body(resolved: ResolvedTheme): string[] {
 		"",
 		"## Components",
 		"",
-		"The front matter's components are the matrix cells: one entry per axis value of each family, a family's label layer folded into it, and one per single cell. Borders, weights, gaps and side paddings stay in the class strings. Every component the roster ships, the families it draws and the states it has:",
+		"The front matter's components are the matrix cells: one entry per axis value of each family, a family's label layer folded into it, and one per single cell. Borders, weights, gaps and side paddings stay in the class strings. Every component the roster ships, the families, family cells and single cells it draws and the states it has:",
 		"",
 		...table(
 			["Component", "Layer", "Draws", "States"],
@@ -474,6 +478,37 @@ function body(resolved: ResolvedTheme): string[] {
 				entry.draws.map(code).join(", ") || "none",
 				entry.states.join(", "),
 			]),
+		),
+		"",
+		"A component with an approved artboard owns the tokens it may draw: a cell it draws that spells a type role, a colour, a radius, a spacing role, a size or a shadow outside its row is a contract error. A colour ending in `-` is a family (`chip-` is every chip role).",
+		"",
+		...table(
+			[
+				"Component",
+				"Roles",
+				"Colours",
+				"Radii",
+				"Spacing",
+				"Sizes",
+				"Elevation",
+			],
+			rosterEntries().flatMap(([, name, { owns }]) =>
+				owns
+					? [
+							[
+								code(name),
+								...[
+									owns.roles,
+									owns.colors,
+									owns.radii,
+									owns.spacing,
+									owns.sizes,
+									owns.elevation,
+								].map((list) => list?.map(code).join(", ") || "none"),
+							],
+						]
+					: [],
+			),
 		),
 		"",
 		"### Motion",

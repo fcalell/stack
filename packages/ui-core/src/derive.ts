@@ -260,16 +260,22 @@ function roundEven(value: number): number {
 	return 2 * Math.round(value / 2);
 }
 
+function sizeOf(density: Density, role: TypeRole): number {
+	return Math.round(BODY_SIZE[density] * TYPE_SCALE[role].size);
+}
+
+function leadingOf(density: Density, role: TypeRole): number {
+	return roundEven(sizeOf(density, role) * TYPE_SCALE[role].leading);
+}
+
 function typeFor(
 	density: Density,
 ): Record<TypeRole, { size: string; leading: string }> {
-	const body = BODY_SIZE[density];
 	const out = {} as Record<TypeRole, { size: string; leading: string }>;
 	for (const role of TYPE_ROLES) {
-		const size = Math.round(body * TYPE_SCALE[role].size);
 		out[role] = {
-			size: `${size}px`,
-			leading: `${roundEven(size * TYPE_SCALE[role].leading)}px`,
+			size: `${sizeOf(density, role)}px`,
+			leading: `${leadingOf(density, role)}px`,
 		};
 	}
 	return out;
@@ -288,6 +294,7 @@ function sizePx(density: Density, size: Size): number {
 	if (size === "switch-travel") {
 		return px["switch-w"] - px.thumb - 2 * px["switch-inset"];
 	}
+	if (size === "text-area") return 3 * leadingOf(density, "body");
 	return px[size];
 }
 

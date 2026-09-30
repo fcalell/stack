@@ -4,17 +4,23 @@
 // package.
 import { cva } from "class-variance-authority";
 import type { ClassValue } from "clsx";
-import type { ColorName } from "./tokens.ts";
+import { COLOR_NAMES, type ColorName, type StatusState } from "./tokens.ts";
 import {
 	AVATAR,
+	AVATAR_LABEL,
 	type Axes,
 	BANNER,
 	BUTTON,
 	BUTTON_LABEL,
 	CHECKBOX,
 	CHIP,
+	CHIP_LABEL,
 	DIFF_LINE,
 	FIELD,
+	FIELD_VALUE,
+	ICON,
+	ICON_BUTTON,
+	LINK,
 	type Matrix,
 	MESSAGE,
 	OTP_BOX,
@@ -22,10 +28,13 @@ import {
 	RHYTHM,
 	ROW,
 	SEGMENT,
-	STATUS,
+	STATUS_DOT,
 	SWITCH,
+	SWITCH_THUMB,
 	TABLE_ROW,
 	TEXT,
+	TEXT_AREA,
+	TEXT_AREA_BUDGET,
 	TEXT_STRONG,
 	TOAST_STATE,
 } from "./variant-tables.ts";
@@ -58,22 +67,31 @@ function build<T extends Axes>(table: Matrix<T>): Variant<T> {
 
 export const text = build(TEXT);
 export const textStrong = build(TEXT_STRONG);
+export const icon = build(ICON);
 export const button = build(BUTTON);
 export const buttonLabel = build(BUTTON_LABEL);
-export const status = build(STATUS);
-export const field = build(FIELD);
-export const otpBox = build(OTP_BOX);
-export const row = build(ROW);
-export const switchTrack = build(SWITCH);
-export const tableRow = build(TABLE_ROW);
-export const checkbox = build(CHECKBOX);
+export const iconButton = build(ICON_BUTTON);
+export const link = build(LINK);
+export const avatar = build(AVATAR);
+export const avatarLabel = build(AVATAR_LABEL);
+export const statusDot = build(STATUS_DOT);
 export const chip = build(CHIP);
+export const chipLabel = build(CHIP_LABEL);
+export const field = build(FIELD);
+export const fieldValue = build(FIELD_VALUE);
+export const textArea = build(TEXT_AREA);
+export const textAreaBudget = build(TEXT_AREA_BUDGET);
+export const otpBox = build(OTP_BOX);
+export const switchTrack = build(SWITCH);
+export const switchThumb = build(SWITCH_THUMB);
+export const checkbox = build(CHECKBOX);
+export const row = build(ROW);
+export const tableRow = build(TABLE_ROW);
 export const segment = build(SEGMENT);
 export const banner = build(BANNER);
 export const toastState = build(TOAST_STATE);
 export const diffLine = build(DIFF_LINE);
 export const message = build(MESSAGE);
-export const avatar = build(AVATAR);
 export const place = build(PLACE);
 export const rhythm = build(RHYTHM);
 
@@ -112,22 +130,31 @@ function family<T extends Axes>(
 export const FAMILIES: readonly Family[] = [
 	family("TEXT", TEXT, text),
 	family("TEXT_STRONG", TEXT_STRONG, textStrong),
+	family("ICON", ICON, icon),
 	family("BUTTON", BUTTON, button),
 	family("BUTTON_LABEL", BUTTON_LABEL, buttonLabel),
-	family("STATUS", STATUS, status),
+	family("ICON_BUTTON", ICON_BUTTON, iconButton),
+	family("LINK", LINK, link),
+	family("AVATAR", AVATAR, avatar),
+	family("AVATAR_LABEL", AVATAR_LABEL, avatarLabel),
+	family("STATUS_DOT", STATUS_DOT, statusDot),
+	family("CHIP", CHIP, chip),
+	family("CHIP_LABEL", CHIP_LABEL, chipLabel),
 	family("FIELD", FIELD, field),
+	family("FIELD_VALUE", FIELD_VALUE, fieldValue),
+	family("TEXT_AREA", TEXT_AREA, textArea),
+	family("TEXT_AREA_BUDGET", TEXT_AREA_BUDGET, textAreaBudget),
 	family("OTP_BOX", OTP_BOX, otpBox),
-	family("ROW", ROW, row),
 	family("SWITCH", SWITCH, switchTrack),
-	family("TABLE_ROW", TABLE_ROW, tableRow),
+	family("SWITCH_THUMB", SWITCH_THUMB, switchThumb),
 	family("CHECKBOX", CHECKBOX, checkbox),
+	family("ROW", ROW, row),
+	family("TABLE_ROW", TABLE_ROW, tableRow),
 	family("SEGMENT", SEGMENT, segment),
 	family("BANNER", BANNER, banner),
 	family("TOAST_STATE", TOAST_STATE, toastState),
 	family("DIFF_LINE", DIFF_LINE, diffLine),
 	family("MESSAGE", MESSAGE, message),
-	family("AVATAR", AVATAR, avatar),
-	family("CHIP", CHIP, chip),
 	family("PLACE", PLACE, place),
 	family("RHYTHM", RHYTHM, rhythm),
 ];
@@ -165,25 +192,58 @@ export function matrixCells(
 }
 
 // Single cells: one class string each, shared verbatim by both plugins.
-export const BUTTON_MUTED = "bg-fill-disabled";
-export const BUTTON_MUTED_LABEL = "text-ink-disabled";
-export const ICON_BUTTON =
-	"rounded-control min-h-control min-w-control text-ink-body";
-// The same control in a top bar, drawn compact; the plugin keeps the target
-// around it.
-export const ICON_BUTTON_BAR =
-	"rounded-control min-h-control-compact min-w-control-compact text-ink-body";
+
+// A number in a pill on one grey step, its figures at one width.
 export const COUNT =
-	"rounded-full bg-group min-w-chip px-inside text-caption leading-caption tracking-caption font-medium text-ink-meta";
-export const STATUS_CHIP = "rounded-full bg-group min-h-control px-control-x";
+	"min-h-chip min-w-chip px-inside rounded-full bg-fill-neutral";
+export const COUNT_LABEL =
+	"text-caption leading-caption tracking-caption font-normal text-ink-meta tabular-nums";
+// A ring the size of the glyph it replaces: a track at 30 % under a turning
+// arc, both in the ink of its place (a plugin overlay: native colours a prop).
+export const SPINNER = "size-spinner";
+export const SPINNER_TRACK = "rounded-full border-2 opacity-30";
+export const SPINNER_ARC = "rounded-full border-2 border-t-transparent";
+// A status: its dot (`statusDot`) beside its word. With `onOpen` it is a
+// pill that pulls back by its own padding, so the dot and the word sit where
+// a static status's do.
+export const STATUS = "gap-inside";
+export const STATUS_LABEL = "text-meta leading-meta font-normal text-ink-meta";
+export const STATUS_OPEN = "rounded-full px-inside -mx-inside min-h-target";
+// A removable chip's remove act: a round hit box the chip's height.
+export const CHIP_REMOVE_HIT = "min-h-chip min-w-chip rounded-full";
 export const FIELD_PLACEHOLDER = "text-ink-meta";
+// A field's unit after its value, and its glyph (search, chevron).
+export const FIELD_UNIT = "text-body leading-body font-normal text-ink-meta";
+export const FIELD_GLYPH = "text-ink-meta";
+// A text area's value: three body lines at least, a line more for each past them.
+export const TEXT_AREA_VALUE = "min-h-text-area";
+// A one-time code's row of boxes and the digit in each.
+export const OTP = "gap-inside";
+export const OTP_DIGIT =
+	"text-heading leading-heading tracking-heading font-semibold text-ink-body font-mono";
+// A slider: its label line (the label, its value trailing) over the track,
+// the fill up to the thumb and the rest after it.
+export const SLIDER = "gap-pair";
+export const SLIDER_HEAD = "gap-fields";
+export const SLIDER_LABEL = "text-body leading-body font-medium text-ink-body";
+export const SLIDER_VALUE =
+	"tabular-nums text-meta leading-meta font-normal text-ink-meta";
+export const SLIDER_TRACK = "w-full min-h-target";
+export const SLIDER_FILL = "h-track rounded-full bg-toggle-on";
+export const SLIDER_REST = "h-track rounded-full bg-edge";
+export const SLIDER_THUMB =
+	"size-thumb rounded-full border border-edge-strong bg-surface";
 // A picker's empty choice and its control with no value: a placeholder's
 // look.
 export const PICKER_EMPTY = "text-ink-meta";
 export const GROUP = "rounded-card bg-group";
+// A popover: raised on the float shadow inside its hairline, its rows inset
+// by the float inset so a row's wash sits just inside the edge.
+export const POPOVER =
+	"gap-pair p-float bg-raised border border-edge-raised rounded-popover shadow-float";
 export const HAIRLINE = "border-edge";
-export const SWITCH_THUMB = "rounded-full bg-switch-thumb";
-export const CHECKBOX_MARK = "text-on-accent";
+// The check or the dash on a checked box, at the meta glyph's size.
+export const CHECKBOX_MARK = "size-icon-meta text-on-accent";
 export const SEGMENTED_CONTROL = "rounded-control bg-group p-rows gap-rows";
 export const TOAST =
 	"rounded-card bg-raised border border-edge px-card py-pair gap-inside text-body leading-body text-ink-body";
@@ -202,12 +262,22 @@ export const CODE = "rounded-card bg-group p-card";
 export const TABLE_CELL =
 	"min-h-field border-x border-transparent px-control-x";
 export const PLACE_ROW_SELECTED = "bg-wash-selected";
-// Switch and checkbox mute by fading; a button swaps fills through BUTTON_MUTED.
-export const CONTROL_MUTED = "opacity-45";
 
-export type TextRole = keyof (typeof TEXT)["variants"]["role"];
+// The roles `Text` draws: a primary line and a secondary one. The other roles
+// are drawn by the molecule that owns their place.
+export type TextRole = Extract<
+	keyof (typeof TEXT)["variants"]["role"],
+	"body" | "meta"
+>;
+// What an icon sits beside, which picks its size: meta or caption text, body
+// text, or the inside of a control.
+export type IconFit = keyof (typeof ICON)["variants"]["fit"];
 export type ButtonAct = keyof (typeof BUTTON)["variants"]["act"];
+// What a button, an icon button or a link sits in, which picks its height
+// (and a link's underline): the composing molecule sets it.
 export type ButtonFit = keyof (typeof BUTTON)["variants"]["fit"];
+export type IconButtonFit = keyof (typeof ICON_BUTTON)["variants"]["fit"];
+export type LinkFit = keyof (typeof LINK)["variants"]["fit"];
 export type FieldKind = keyof (typeof FIELD)["variants"]["kind"];
 export type FieldState = keyof (typeof FIELD)["variants"]["state"];
 export type OtpBoxState = keyof (typeof OTP_BOX)["variants"]["state"];
@@ -227,27 +297,27 @@ export type RhythmUnit = keyof (typeof RHYTHM)["variants"]["unit"];
 
 export type ContentTone = ColorName;
 
-// What an icon sits beside, which picks its size: meta or caption text, body
-// text, or the inside of a control (`icon-meta`, `icon`, `icon-control`).
-export type IconFit = "meta" | "body" | "control";
+const COLOR_SET: ReadonlySet<string> = new Set(COLOR_NAMES);
 
-// The label matrices already carry the answer, so the tint a plugin hands to
-// its own icon or spinner is read back off the label cell instead of being
+// The matrices already carry the answer, so the tint a plugin hands to its
+// own glyph or spinner is read back off a cell's colour instead of being
 // written a second time.
-function inkToken(cell: string): ContentTone {
-	const ink = cell.split(/\s+/).find((name) => name.startsWith("text-"));
-	// Every label cell names a contract ink, which c22 pins.
-	return (ink ?? "text-ink-body").slice("text-".length) as ContentTone;
+function toneOf(cell: string): ContentTone {
+	const tone = cell
+		.split(/\s+/)
+		.map((name) => /^(?:text|bg|border)-(.+)$/.exec(name)?.[1])
+		.find((name) => name !== undefined && COLOR_SET.has(name));
+	// Every cell these read names a contract colour, which c22 pins.
+	return (tone ?? "ink-body") as ContentTone;
 }
 
 export function buttonContentTone(act: ButtonAct): ContentTone {
-	return inkToken(BUTTON_LABEL.variants.act[act]);
+	return toneOf(BUTTON_LABEL.variants.act[act]);
 }
 
-export function statusContentTone(
-	state: keyof (typeof STATUS)["variants"]["state"],
-): ContentTone {
-	return inkToken(STATUS.variants.state[state]);
+// A status's colour, the dot's.
+export function statusContentTone(state: StatusState): ContentTone {
+	return toneOf(STATUS_DOT.variants.state[state]);
 }
 
 // A stable step for a name, so one name keeps one fill everywhere.

@@ -6,7 +6,6 @@ import {
 	text,
 } from "@fcalell/ui-core/variants";
 import { ArrowUp, Plus, Square } from "lucide-react-native";
-import { useState } from "react";
 import { Pressable, Text as RNText, TextInput, View } from "react-native";
 import { Circle } from "../../lib/circle";
 import type { Closed } from "../../lib/closed";
@@ -39,7 +38,6 @@ export function MessageInput({
 	onStop,
 }: MessageInputProps) {
 	const words = useWords();
-	const [focused, setFocused] = useState(false);
 	const empty = value.trim().length === 0;
 	return (
 		<View className="gap-inside">
@@ -59,7 +57,7 @@ export function MessageInput({
 				<TextInput
 					multiline
 					className={cn(
-						field({ kind: "search", state: focused ? "focused" : "default" }),
+						field({ kind: "search", state: "rest" }),
 						text({ role: "body" }),
 						"flex-1 py-2",
 					)}
@@ -67,8 +65,6 @@ export function MessageInput({
 					value={value}
 					onChangeText={onChange}
 					placeholder={placeholder}
-					onFocus={() => setFocused(true)}
-					onBlur={() => setFocused(false)}
 				/>
 				{working ? (
 					<Circle

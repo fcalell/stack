@@ -25,7 +25,7 @@ import { MessageInput } from "../message-input";
 export interface ScreenProps extends Closed {
 	title: string;
 	back?: string;
-	actions?: IconAct<string>[];
+	actions?: IconAct[];
 	// Labelled acts under the more circle, after the actions past two.
 	more?: Act[];
 	children?: ReactNode;

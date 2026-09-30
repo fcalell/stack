@@ -1,5 +1,4 @@
 import { themeSchema, wordsSchema } from "@fcalell/ui-core/schema";
-import type { LucideIcon } from "lucide-react";
 import { z } from "zod";
 import { isCssIdent, isCssSupportsExpression } from "./node/css-escape.ts";
 
@@ -144,6 +143,3 @@ export type ReactUiOptions = z.input<typeof reactUiOptionsSchema>;
 // consumer reaches it through the plugin it configures.
 export type { Theme } from "@fcalell/ui-core/schema";
 export type { Words } from "@fcalell/ui-core/tokens";
-
-// The consumer's closed icon set: a name to a `lucide-react` glyph.
-export type IconSet = Record<string, LucideIcon>;

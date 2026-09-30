@@ -44,6 +44,7 @@ import {
 import {
 	CLOSED_PROPS,
 	componentDir,
+	type Owns,
 	rosterEntries,
 	STATES,
 } from "../src/roster.ts";
@@ -78,6 +79,7 @@ import {
 	SPACE_BASE,
 	SPACING_RATIO,
 	SPACING_ROLES,
+	STATUS_STATES,
 	TRACKED_ROLES,
 	type TrackedRole,
 	TYPE_ROLES,
@@ -91,14 +93,20 @@ import {
 import * as tables from "../src/variant-tables.ts";
 import {
 	AVATAR,
+	AVATAR_LABEL,
 	type Axes,
 	BANNER,
 	BUTTON,
 	BUTTON_LABEL,
 	CHECKBOX,
 	CHIP,
+	CHIP_LABEL,
 	DIFF_LINE,
 	FIELD,
+	FIELD_VALUE,
+	ICON,
+	ICON_BUTTON,
+	LINK,
 	type Matrix,
 	MESSAGE,
 	OTP_BOX,
@@ -106,16 +114,20 @@ import {
 	RHYTHM,
 	ROW,
 	SEGMENT,
-	STATUS,
+	STATUS_DOT,
 	SWITCH,
+	SWITCH_THUMB,
 	TABLE_ROW,
 	TEXT,
+	TEXT_AREA,
+	TEXT_AREA_BUDGET,
 	TEXT_STRONG,
 	TOAST_STATE,
 } from "../src/variant-tables.ts";
 import * as variants from "../src/variants.ts";
 import {
 	avatar,
+	avatarLabel,
 	avatarStep,
 	banner,
 	button,
@@ -123,20 +135,28 @@ import {
 	buttonLabel,
 	checkbox,
 	chip,
+	chipLabel,
 	diffLine,
 	FAMILIES,
 	field,
+	fieldValue,
+	icon,
+	iconButton,
+	link,
 	message,
 	otpBox,
 	place,
 	rhythm,
 	row,
 	segment,
-	status,
 	statusContentTone,
+	statusDot,
+	switchThumb,
 	switchTrack,
 	tableRow,
 	text,
+	textArea,
+	textAreaBudget,
 	textStrong,
 	toastState,
 } from "../src/variants.ts";
@@ -234,6 +254,7 @@ const SHEET_SIZE: Record<(typeof SIZES)[number], string> = {
 	check: "--size-check",
 	track: "--track-height",
 	otp: "--size-otp",
+	"text-area": "--text-area-min",
 };
 
 // The sheet's names for the two places it spells differently.
@@ -335,7 +356,6 @@ const TEXT_FLOORS: Array<[ColorName, ColorName[]]> = [
 	["on-accent", ["accent", "act-accent-hover", "act-accent-press"]],
 	["on-danger", ["danger"]],
 	["on-act-danger", ["act-danger", "act-danger-hover", "act-danger-press"]],
-	["on-act-ink", ["act-ink", "act-ink-hover", "act-ink-press"]],
 	...CHIP_FAMILIES.map((family): [ColorName, ColorName[]] => [
 		`chip-${family}-ink`,
 		[`chip-${family}-soft`],
@@ -445,22 +465,31 @@ type Registration = readonly [string, Matrix<Axes>, (props?: never) => string];
 const MATRICES: readonly Registration[] = [
 	["TEXT", TEXT, text],
 	["TEXT_STRONG", TEXT_STRONG, textStrong],
+	["ICON", ICON, icon],
 	["BUTTON", BUTTON, button],
 	["BUTTON_LABEL", BUTTON_LABEL, buttonLabel],
-	["STATUS", STATUS, status],
+	["ICON_BUTTON", ICON_BUTTON, iconButton],
+	["LINK", LINK, link],
+	["AVATAR", AVATAR, avatar],
+	["AVATAR_LABEL", AVATAR_LABEL, avatarLabel],
+	["STATUS_DOT", STATUS_DOT, statusDot],
+	["CHIP", CHIP, chip],
+	["CHIP_LABEL", CHIP_LABEL, chipLabel],
 	["FIELD", FIELD, field],
+	["FIELD_VALUE", FIELD_VALUE, fieldValue],
+	["TEXT_AREA", TEXT_AREA, textArea],
+	["TEXT_AREA_BUDGET", TEXT_AREA_BUDGET, textAreaBudget],
 	["OTP_BOX", OTP_BOX, otpBox],
-	["ROW", ROW, row],
 	["SWITCH", SWITCH, switchTrack],
-	["TABLE_ROW", TABLE_ROW, tableRow],
+	["SWITCH_THUMB", SWITCH_THUMB, switchThumb],
 	["CHECKBOX", CHECKBOX, checkbox],
+	["ROW", ROW, row],
+	["TABLE_ROW", TABLE_ROW, tableRow],
 	["SEGMENT", SEGMENT, segment],
 	["BANNER", BANNER, banner],
 	["TOAST_STATE", TOAST_STATE, toastState],
 	["DIFF_LINE", DIFF_LINE, diffLine],
 	["MESSAGE", MESSAGE, message],
-	["AVATAR", AVATAR, avatar],
-	["CHIP", CHIP, chip],
 	["PLACE", PLACE, place],
 	["RHYTHM", RHYTHM, rhythm],
 ];
@@ -628,12 +657,12 @@ check("c02", "package.json shape", () => {
 });
 
 check("c03", "tokens.ts declares the contract", () => {
-	requireEqual(COLOR_NAMES.length, 89, "color count");
+	requireEqual(COLOR_NAMES.length, 84, "color count");
 	requireEqual(new Set(COLOR_NAMES).size, COLOR_NAMES.length, "unique colors");
 	requireEqual(TYPE_ROLES.length, 7, "type role count");
-	requireEqual(SPACING_ROLES.length, 8, "spacing role count");
+	requireEqual(SPACING_ROLES.length, 9, "spacing role count");
 	requireEqual(GAP_ROLES.length, 5, "gap role count");
-	requireEqual(SIZES.length, 24, "size count");
+	requireEqual(SIZES.length, 25, "size count");
 	requireEqual(RADIUS_ROLES.length, 8, "radius role count");
 	requireEqual(SHADOW_LEVELS.length, 2, "shadow level count");
 	requireEqual(WIDTHS.length, 6, "width count");
@@ -641,6 +670,12 @@ check("c03", "tokens.ts declares the contract", () => {
 	requireEqual(WORD_KEYS.length, 21, "word count");
 	for (const name of COLOR_NAMES) {
 		assert(COLORS[name] !== undefined, `no declaration for ${name}`);
+	}
+	for (const role of SPACING_ROLES) {
+		assert(
+			!(WIDTHS as readonly string[]).includes(role),
+			`spacing role ${role} shadows the width of its name`,
+		);
 	}
 	for (const role of GAP_ROLES) {
 		assert(
@@ -652,7 +687,7 @@ check("c03", "tokens.ts declares the contract", () => {
 	for (const word of ["marine", "navy", "brand", "tint", "label", "floor"]) {
 		assert(!new RegExp(`"${word}"`).test(source), `tokens.ts names "${word}"`);
 	}
-	return `${COLOR_NAMES.length} colors, 7 roles, 8 spacing roles (5 gaps), 24 sizes, 8 radii, 2 shadows, 6 widths, 3 breakpoints, 21 words`;
+	return `${COLOR_NAMES.length} colors, 7 roles, 9 spacing roles (5 gaps), 25 sizes, 8 radii, 2 shadows, 6 widths, 3 breakpoints, 21 words`;
 });
 
 check("c05", "default knobs reproduce the approved sheet", () => {
@@ -839,13 +874,6 @@ check(
 					`${mode} act-${fill}-press is not past hover`,
 				);
 			}
-			// The ink fill moves toward the page: lighter in light, darker in dark.
-			const ink = l(color(mode, "ink-body"));
-			const hover = l(color(mode, "act-ink-hover"));
-			assert(
-				mode === "light" ? hover > ink : hover < ink,
-				`${mode} ink hover moves the wrong way`,
-			);
 			// Every alias reads its source.
 			for (const [name, declaration] of Object.entries(COLORS)) {
 				if ("alias" in declaration) {
@@ -902,12 +930,15 @@ check("c06", "every scale is its ratio of the base", () => {
 			);
 		}
 		const px = SIZE_PX[density];
+		const expected: Record<(typeof SIZES)[number], number> = {
+			...px,
+			"switch-travel": px["switch-w"] - px.thumb - 2 * px["switch-inset"],
+			"text-area": 3 * Number.parseInt(tokens["--leading-body"] ?? "", 10),
+		};
 		for (const size of SIZES) {
 			requireEqual(
 				tokens[`--spacing-${size}`],
-				size === "switch-travel"
-					? `${px["switch-w"] - px.thumb - 2 * px["switch-inset"]}px`
-					: `${px[size]}px`,
+				`${expected[size]}px`,
 				`${density} ${size}`,
 			);
 		}
@@ -976,7 +1007,7 @@ check("c06", "every scale is its ratio of the base", () => {
 			rung,
 		);
 	}
-	return "7 roles × 2 densities with even line boxes, 8 spacing roles, 17 sizes, 4 trackings, 8 radii, 6 widths, 3 breakpoints, 2 families with their fallback faces, 4 durations";
+	return "7 roles × 2 densities with even line boxes, 9 spacing roles, 17 sizes, 4 trackings, 8 radii, 6 widths, 3 breakpoints, 2 families with their fallback faces, 4 durations";
 });
 
 check(
@@ -1605,15 +1636,30 @@ check("c19", "every cva renders exactly its own table", () => {
 			`TEXT_STRONG.role.${role}`,
 		);
 	}
+	for (const [name, table] of [
+		["CHIP", CHIP],
+		["CHIP_LABEL", CHIP_LABEL],
+	] as const) {
+		requireEqual(
+			Object.keys(table.variants.family).join(" "),
+			CHIP_FAMILIES.join(" "),
+			`${name} families`,
+		);
+	}
+	for (const [name, table] of [
+		["AVATAR", AVATAR],
+		["AVATAR_LABEL", AVATAR_LABEL],
+	] as const) {
+		requireEqual(
+			Object.keys(table.variants.step).join(" "),
+			AVATAR_STEPS.join(" "),
+			`${name} steps`,
+		);
+	}
 	requireEqual(
-		Object.keys(CHIP.variants.family).join(" "),
-		CHIP_FAMILIES.join(" "),
-		"CHIP families",
-	);
-	requireEqual(
-		Object.keys(AVATAR.variants.step).join(" "),
-		AVATAR_STEPS.join(" "),
-		"AVATAR steps",
+		Object.keys(STATUS_DOT.variants.state).join(" "),
+		STATUS_STATES.join(" "),
+		"STATUS_DOT states",
 	);
 	let combos = 0;
 	for (const entry of MATRICES) {
@@ -1673,7 +1719,7 @@ check("c22", "the content tones are contract colors", () => {
 		assert(colors.has(token), `buttonContentTone(${act}): ${token}`);
 		checked++;
 	}
-	for (const state of keysOf(STATUS.variants.state)) {
+	for (const state of STATUS_STATES) {
 		const token = statusContentTone(state);
 		assert(colors.has(token), `statusContentTone(${state}): ${token}`);
 		checked++;
@@ -1687,7 +1733,7 @@ check("c22", "the content tones are contract colors", () => {
 
 check(
 	"c23",
-	"descriptors.ts is types only, generic in TIcon or a value",
+	"descriptors.ts is types only, its icon an IconName, generic only in a value",
 	() => {
 		const source = readFileSync(resolve(pkgDir, "src/descriptors.ts"), "utf8");
 		const output = ts.transpileModule(source, {
@@ -1708,7 +1754,7 @@ check(
 			);
 		}
 		for (const match of source.matchAll(/\bicon\??\s*:\s*([^;\n]+)/g)) {
-			requireEqual(match[1]?.trim(), "TIcon", `field "${match[0]}"`);
+			requireEqual(match[1]?.trim(), "IconName", `field "${match[0]}"`);
 		}
 		const headers = [
 			...source.matchAll(/^(?:export )?(?:interface|type) \w+(<[^>]*>)?/gm),
@@ -1717,18 +1763,17 @@ check(
 		for (const header of headers) {
 			const params = header[1];
 			if (params === undefined) continue;
-			// The icon is the one framework type a descriptor may carry; a field
-			// binding is generic in the value its field holds, and an option in
-			// the string it picks or the empty choice's null, both data.
+			// A field binding is generic in the value its field holds, and an
+			// option in the string it picks or the empty choice's null, both data.
 			assert(
-				/^<TIcon = never>$/.test(params) ||
-					(/^<V>$/.test(params) && /\bField\w+<V>/.test(header[0])) ||
+				(/^<V>$/.test(params) && /\bField\w+<V>/.test(header[0])) ||
 					(/^<V extends string \| null = string>$/.test(params) &&
 						/\bOption\w*</.test(header[0])),
-				`type parameters must be exactly <TIcon = never>, <V> on a field binding, or <V extends string | null = string> on an option, got ${params}`,
+				`type parameters must be exactly <V> on a field binding, or <V extends string | null = string> on an option, got ${params}`,
 			);
 		}
 		for (const name of [
+			"IconName",
 			"Act",
 			"IconAct",
 			"Quoted",
@@ -1759,7 +1804,7 @@ check(
 			);
 		}
 		const generic = headers.filter((header) => header[1]).length;
-		return `${headers.length} declarations, ${generic} generic in TIcon or a field's value, no emitted JavaScript`;
+		return `${headers.length} declarations, ${generic} generic in a value, every icon an IconName, no emitted JavaScript`;
 	},
 );
 
@@ -1966,13 +2011,33 @@ check(
 	},
 );
 
+// The class strings a roster `draws` name renders: a family at every axis
+// product, one family cell (`FAMILY.axis.value`, the table's base and that
+// cell alone), or a single cell; undefined for a name that is none of these.
+function drawnCells(name: string): string[] | undefined {
+	const [family, axis, value, ...rest] = name.split(".");
+	const entry = MATRICES.find(([registered]) => registered === family);
+	if (entry && axis === undefined) {
+		return combinations(entry[1]).map((props) => render(entry, props));
+	}
+	if (entry && axis !== undefined && value !== undefined && !rest.length) {
+		const cell = entry[1].variants[axis]?.[value];
+		return cell === undefined ? undefined : [`${entry[1].base} ${cell}`];
+	}
+	const constant = CLASS_CONSTANTS.find(([registered]) => registered === name);
+	return constant && [constant[1]];
+}
+
 check("c34", "the roster draws every family and names only real states", () => {
 	const families = new Set(FAMILIES.map((family) => family.name));
 	const drawn = new Set<string>();
 	for (const [, name, entry] of rosterEntries()) {
-		for (const family of entry.draws) {
-			assert(families.has(family), `${name} draws unregistered ${family}`);
-			drawn.add(family);
+		for (const draw of entry.draws) {
+			assert(
+				drawnCells(draw) !== undefined,
+				`${name} draws ${draw}, neither a registered family, a family cell nor a single cell`,
+			);
+			drawn.add(draw.split(".")[0] ?? draw);
 		}
 		assert(entry.states.includes("rest"), `${name} has no rest state`);
 		requireEqual(
@@ -1995,6 +2060,87 @@ check("c34", "the roster draws every family and names only real states", () => {
 	const undrawn = [...families].filter((family) => !drawn.has(family));
 	assert(undrawn.length === 0, `no component draws ${undrawn.join(", ")}`);
 	return `${families.size} families each drawn, every state one of ${STATES.length}`;
+});
+
+// The token a class spells, by the namespace the entry's `owns` declares it
+// under; a class that spells no contract token (a weight, `border`,
+// `tabular-nums`) is undefined. A role's leading and tracking ride with it.
+const TOKEN_NAMESPACES: ReadonlyArray<
+	readonly [keyof Owns, RegExp, ReadonlySet<string>]
+> = [
+	["roles", /^(?:text|leading|tracking)-(.+)$/, new Set<string>(TYPE_ROLES)],
+	["colors", /^(?:bg|text|border|outline)-(.+)$/, new Set<string>(COLOR_NAMES)],
+	["radii", /^rounded(?:-[tblrse]{1,2})?-(.+)$/, new Set<string>(RADIUS_ROLES)],
+	[
+		"spacing",
+		/^-?(?:gap|gap-[xy]|p[xytblrse]?|m[xytblrse]?)-(.+)$/,
+		new Set<string>(SPACING_ROLES),
+	],
+	[
+		"sizes",
+		/^(?:(?:min-|max-)?[hw]|size|p[xytblrse]?|translate-[xy])-(.+)$/,
+		new Set<string>([...SIZES, ...WIDTHS]),
+	],
+	["elevation", /^shadow-(.+)$/, new Set<string>(SHADOW_LEVELS)],
+];
+
+function spelled(name: string): Array<[keyof Owns, string]> {
+	const out: Array<[keyof Owns, string]> = [];
+	for (const [space, pattern, tokens] of TOKEN_NAMESPACES) {
+		const token = pattern.exec(name)?.[1];
+		if (token !== undefined && tokens.has(token)) out.push([space, token]);
+	}
+	return out;
+}
+
+function owned(owns: Owns, space: keyof Owns, token: string): boolean {
+	const list: readonly string[] = owns[space] ?? [];
+	return list.some(
+		(entry) =>
+			entry === token || (entry.endsWith("-") && token.startsWith(entry)),
+	);
+}
+
+// Every class of every cell a declaring entry draws.
+function drawnClasses(draws: readonly string[]): Array<[string, string]> {
+	const out: Array<[string, string]> = [];
+	for (const name of draws) {
+		for (const cell of drawnCells(name) ?? []) {
+			for (const value of cell.split(/\s+/)) {
+				if (value) out.push([name, value]);
+			}
+		}
+	}
+	return out;
+}
+
+check("c35", "every cell a component draws spells only tokens it owns", () => {
+	let entries = 0;
+	let inspected = 0;
+	for (const [, name, entry] of rosterEntries()) {
+		const owns = entry.owns;
+		if (!owns) continue;
+		entries++;
+		for (const [space, , tokens] of TOKEN_NAMESPACES) {
+			for (const declared of owns[space] ?? []) {
+				const real = declared.endsWith("-")
+					? [...tokens].some((token) => token.startsWith(declared))
+					: tokens.has(declared);
+				assert(real, `${name} owns ${space} ${declared}, which names no token`);
+			}
+		}
+		for (const [cell, value] of drawnClasses(entry.draws)) {
+			for (const [space, token] of spelled(value)) {
+				assert(
+					owned(owns, space, token),
+					`${name} draws ${value} in ${cell}, but owns no ${space} ${token}`,
+				);
+			}
+			inspected++;
+		}
+	}
+	assert(entries > 0, "no roster entry declares what it owns");
+	return `${entries} components, ${inspected} drawn classes, each token owned`;
 });
 
 // ── Report ──────────────────────────────────────────────────────────

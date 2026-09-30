@@ -151,7 +151,8 @@ reactUi({
 }),
 ```
 
-The consumer's icon set is an `IconSet`, a closed map of names to `lucide-react` glyphs.
+The icon set is Lucide, fixed by the framework: every `icon` prop is an `IconName` from
+`@fcalell/ui-core/descriptors`, a Lucide PascalCase name, so the consumer declares no icon map.
 
 The web `<head>` belongs to `plugin-react`: its options render into `.stack/index.html` through
 `react.slots.htmlHead`, which allows one `<title>` and one of each `<html>` attribute, and a

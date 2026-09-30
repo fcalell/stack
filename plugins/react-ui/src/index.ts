@@ -156,7 +156,6 @@ export const reactUi = plugin("react-ui", {
 	requires: ["react", "vite"],
 
 	dependencies: {
-		"lucide-react": "^1.48.0",
 		tailwindcss: "^4.3.3",
 	},
 	devDependencies: {
@@ -313,7 +312,6 @@ export const reactUi = plugin("react-ui", {
 
 export type {
 	FontEntry,
-	IconSet,
 	ReactUiOptions,
 	Theme,
 	Words,

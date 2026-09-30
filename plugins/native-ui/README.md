@@ -47,9 +47,8 @@ config plugin embedding the font files, the provider stack around the app root
 `WordsProvider` when `words` is set → `QueryProvider` → `AuthProvider`). Theming is CSS-first: switch modes at runtime with `setTheme("dark")` from
 `@fcalell/plugin-native-ui/lib/theme`.
 
-The app's icon set is a runtime map: wrap the screens in `IconsProvider` from
-`@fcalell/plugin-native-ui/lib/icons` with `{ name: LucideIcon }`, and every `icon` prop names a
-key of it.
+The icon set is Lucide: every `icon` or `name` a component takes is an `IconName` (a Lucide
+PascalCase name), drawn from `lucide-react-native`.
 
 ## Config options
 
@@ -64,7 +63,7 @@ key of it.
 
 `active`, `waiting`, `done`, `attention`, `failed`, `idle` (the six `Status` words),
 `recommended`, `copy`, `copied`, `back`, `close`, `more`, `send`, `stop`, `attach`, `search`,
-`loading`, `retry`, `add`, `remove`, `duplicate`. A sentence that belongs to the app is a prop on the molecule that draws it
+`loading`, `retry`, `add`, `remove`. A sentence that belongs to the app is a prop on the molecule that draws it
 (`placeholder`, `notice`, every `sentence`, every `label`), never a word here.
 
 ## The roster
@@ -100,9 +99,9 @@ sidebar. Pull to refresh is the phone's.
 | `Input` | `kind` (`text`, `search`, `secret`, `source`, `number`, `email`: the email keyboard, the system's saved address, never corrected or capitalized), `value`, `onChange`, `onCommit` (the value once the viewer leaves the field or presses return, only when it changed since focus; a hardware Escape then puts back the value at focus), `placeholder`, `unit`, `act` |
 | `TextArea` | `kind` (`prose`, `source`), `value`, `onChange`, `onCommit` (the value once the viewer leaves the field having changed it; return is a new line), `placeholder`, `budget` (words) |
 | `InputOtp` | `length` (boxes), `value` (the digits), `onChange`, `onComplete` (the code once its last digit lands), `loading` (holds the boxes while the code is checked); it takes focus when it is drawn unless another input holds it, so the code step a sent code opens needs no tap; one invisible input over the boxes: the number pad, the system's one-time-code suggestion, a pasted code; inside a `FormField` its error is the field's line |
-| `EnumInput` | `value` (`string[]`), `onChange`, `placeholder`; each value on a `source` cell with a remove act, then a `source` field whose act adds the draft; a value already listed is refused, `words.duplicate` under the field |
+| `Select` | `value`, `onChange`, `options` (`{ value, label, description }[]`, or `{ label, options }[]` groups), `placeholder`; generic over its value like `Picker`; the field box showing the chosen label and a chevron, whose tap opens `Picker`'s option sheet; no `value`, or the `null` option, draws the placeholder |
 | `Slider` | `label`, `value`, `onChange`, `min`, `max`, `step`, `unit` (an Intl unit identifier such as `percent`) |
-| `Switch`, `Checkbox` | `checked`, `onChange`, `label` |
+| `Switch`, `Checkbox` | `checked` (a checkbox's is `mixed` over a partly checked set, and a press checks it), `onChange`, `label` (read aloud; the row around it draws the visible label); disabled by the field around it |
 | `Spinner` | none: the busy ring in the meta ink |
 | `Avatar` | `name`, `src` |
 | `Link` | `href`, children |

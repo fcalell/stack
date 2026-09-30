@@ -7,9 +7,11 @@
 // borders, ink, spacing roles, radius, type role, weight, family, a control's
 // size. Display, alignment and every interaction state stay with the plugins.
 //
-// The text matrices are the Stage 1 port. Every other matrix is carried on
-// the new vocabulary until Stage 2 replaces it, component by component, with
-// the class strings of its approved artboard.
+// The text matrices are the Stage 1 port. The atoms' matrices are the class
+// strings of their approved artboards (`plugins/react-ui/design/1*-*.dc.html`),
+// the states and the layout recorded beside them in the overlay notes
+// (`.helm/research/design-system/atoms-overlays.md`). Every other matrix is
+// carried on the new vocabulary until its artboard replaces it.
 
 export type Axes = Record<string, Record<string, string>>;
 
@@ -70,34 +72,56 @@ export const TEXT_STRONG = matrix({
 	},
 });
 
+// ── Icon ────────────────────────────────────────────────────────────
+
+// `fit` is what the icon sits beside: meta or caption text, body text, or
+// the inside of a control. Its ink is the place's (currentColor on the web).
+export const ICON = matrix({
+	base: "",
+	variants: {
+		fit: {
+			meta: "size-icon-meta",
+			body: "size-icon",
+			control: "size-icon-control",
+		},
+	},
+	defaultVariants: { fit: "body" },
+});
+
 // ── Button ──────────────────────────────────────────────────────────
 
-// `act` is the button's kind: the primary act is the accent fill, the
-// secondary a hairline on the surface, the destructive one the same with
-// its label in `danger`. `fit` is its container's: a control in the body,
-// compact in a top bar. min-h, never h: the label must be able to grow the
-// control under OS font scaling.
+// `act` is the button's kind: `primary` the accent fill (one per screen),
+// `danger` the danger fill (a confirm's one filled act), `secondary` a
+// hairline with no fill, `destructive` the hairline with its label in
+// `danger`. `fit` is its container's: a body control, compact in a
+// bar, or full width at a field's height under the field it submits. min-h,
+// never h: the label must be able to grow the control under OS font scaling.
+// The fill carries the act's ink for the web's glyph and spinner
+// (currentColor); the label repeats it, since a native Text inherits none.
 export const BUTTON = matrix({
-	base: "rounded-control gap-inside px-control-x",
+	base: "gap-inside rounded-control px-control-x",
 	variants: {
 		act: {
-			primary: "bg-act-accent",
-			secondary: "border border-edge",
-			destructive: "border border-edge",
+			primary: "bg-act-accent text-on-act-accent",
+			danger: "bg-act-danger text-on-act-danger",
+			secondary: "border border-edge text-ink-body",
+			destructive: "border border-edge text-danger",
 		},
 		fit: {
 			body: "min-h-control",
 			bar: "min-h-control-compact",
+			field: "min-h-field w-full",
 		},
 	},
 	defaultVariants: { act: "primary", fit: "body" },
 });
 
 export const BUTTON_LABEL = matrix({
-	base: "font-medium text-body leading-body",
+	base: "text-body leading-body font-medium",
 	variants: {
 		act: {
 			primary: "text-on-act-accent",
+			danger: "text-on-act-danger",
 			secondary: "text-ink-body",
 			destructive: "text-danger",
 		},
@@ -105,28 +129,97 @@ export const BUTTON_LABEL = matrix({
 	defaultVariants: { act: "primary" },
 });
 
-// ── Status ──────────────────────────────────────────────────────────
-
-export const STATUS = matrix({
-	base: "text-meta leading-meta font-medium gap-inside",
+// An icon-only act: square, no boundary at rest, in the meta ink. `field`
+// sits inside a field's end, at the compact square.
+export const ICON_BUTTON = matrix({
+	base: "rounded-control text-ink-meta",
 	variants: {
-		state: {
-			active: "text-accent-ink",
-			waiting: "text-ink-meta",
-			done: "text-ok",
-			attention: "text-warn",
-			failed: "text-danger",
-			idle: "text-ink-meta",
+		fit: {
+			body: "size-control",
+			bar: "size-control-compact",
+			field: "size-control-compact",
+		},
+	},
+	defaultVariants: { fit: "body" },
+});
+
+// ── Link ────────────────────────────────────────────────────────────
+
+// Accent ink at 500 in the type of the line it sits in. `inline` is
+// underlined at rest; `standalone` stands on the target height.
+export const LINK = matrix({
+	base: "font-medium text-accent-ink",
+	variants: {
+		fit: {
+			inline: "underline",
+			standalone: "min-h-target",
+		},
+	},
+	defaultVariants: { fit: "inline" },
+});
+
+// ── Avatar ──────────────────────────────────────────────────────────
+
+// The step's fill under its initials; the image form draws the base alone.
+export const AVATAR = matrix({
+	base: "rounded-full size-avatar",
+	variants: {
+		step: {
+			"1": "bg-avatar-1",
+			"2": "bg-avatar-2",
+			"3": "bg-avatar-3",
+			"4": "bg-avatar-4",
+			"5": "bg-avatar-5",
+			"6": "bg-avatar-6",
+			"7": "bg-avatar-7",
+			"8": "bg-avatar-8",
 		},
 	},
 });
 
-// ── Chip ────────────────────────────────────────────────────────
+export const AVATAR_LABEL = matrix({
+	base: "text-caption leading-caption tracking-caption font-medium",
+	variants: {
+		step: {
+			"1": "text-avatar-1-ink",
+			"2": "text-avatar-2-ink",
+			"3": "text-avatar-3-ink",
+			"4": "text-avatar-4-ink",
+			"5": "text-avatar-5-ink",
+			"6": "text-avatar-6-ink",
+			"7": "text-avatar-7-ink",
+			"8": "text-avatar-8-ink",
+		},
+	},
+});
+
+// ── Status ──────────────────────────────────────────────────────────
+
+// The status colour is the dot's alone; the word is meta ink in every
+// state. `idle` is the hollow dot, so it reads apart from `waiting`.
+export const STATUS_DOT = matrix({
+	base: "size-dot rounded-full",
+	variants: {
+		state: {
+			active: "bg-accent-ink",
+			waiting: "bg-ink-meta",
+			done: "bg-ok",
+			attention: "bg-warn",
+			failed: "bg-danger",
+			idle: "border border-ink-meta",
+		},
+	},
+});
+
+// ── Chip ────────────────────────────────────────────────────────────
 
 // A data value's tag: its family's soft ground under the family's ink, so
 // the family is learnable across screens and never mistaken for a status.
+// `trailing` is what closes its right end: its own padding, or the remove
+// act's round hit box. The fill carries the ink for the web's remove glyph;
+// the label repeats it, since a native Text inherits none.
 export const CHIP = matrix({
-	base: "rounded-full px-inside min-h-chip text-caption leading-caption tracking-caption font-normal",
+	base: "rounded-full min-h-chip",
 	variants: {
 		family: {
 			red: "bg-chip-red-soft text-chip-red-ink",
@@ -136,53 +229,149 @@ export const CHIP = matrix({
 			violet: "bg-chip-violet-soft text-chip-violet-ink",
 			pink: "bg-chip-pink-soft text-chip-pink-ink",
 		},
+		trailing: {
+			none: "px-inside",
+			remove: "pl-inside",
+		},
+	},
+	defaultVariants: { trailing: "none" },
+});
+
+// Bounded, so a long chip truncates before the row's title does.
+export const CHIP_LABEL = matrix({
+	base: "max-w-chip-label text-caption leading-caption tracking-caption font-normal",
+	variants: {
+		family: {
+			red: "text-chip-red-ink",
+			amber: "text-chip-amber-ink",
+			green: "text-chip-green-ink",
+			teal: "text-chip-teal-ink",
+			violet: "text-chip-violet-ink",
+			pink: "text-chip-pink-ink",
+		},
 	},
 });
 
 // ── Field ───────────────────────────────────────────────────────────
 
-// A typing control's surface: white with the hairline as its boundary (the
-// approved answer B), `edge-strong` under the pointer, `danger` on error.
+// A typing control's box: the surface with the hairline as its boundary,
+// `edge-error` in error. `kind` sets its height (a search box stands at the
+// control's, in a toolbar), `trailing` its right inset (an in-field act
+// sits `inside` from the edge).
 export const FIELD = matrix({
-	base: "border bg-surface px-control-x text-ink-body",
+	base: "gap-inside rounded-control border bg-surface",
 	variants: {
 		kind: {
-			text: "rounded-control min-h-field text-body leading-body",
-			search: "rounded-control min-h-control text-body leading-body",
-			code: "rounded-control min-h-field text-code leading-code font-mono",
+			text: "min-h-field",
+			code: "min-h-field",
+			search: "min-h-control",
+		},
+		trailing: {
+			none: "px-control-x",
+			act: "pl-control-x pr-inside",
 		},
 		state: {
-			default: "border-edge",
-			focused: "border-edge",
+			rest: "border-edge",
 			error: "border-edge-error",
 		},
 	},
-	defaultVariants: { kind: "text", state: "default" },
+	defaultVariants: { kind: "text", trailing: "none", state: "rest" },
 });
 
-// ── One-time code ───────────────────────────────────────────────
+// The value a field holds, typed or chosen: body, or mono code.
+export const FIELD_VALUE = matrix({
+	base: "",
+	variants: {
+		kind: {
+			text: "text-body leading-body font-normal text-ink-body",
+			code: "text-code leading-code font-normal font-mono text-ink-body",
+			search: "text-body leading-body font-normal text-ink-body",
+		},
+	},
+	defaultVariants: { kind: "text" },
+});
 
-export const OTP_BOX = matrix({
-	base: "rounded-control border bg-surface min-h-field min-w-field",
+// Many lines: the box grows with its value and stacks the budget under it.
+export const TEXT_AREA = matrix({
+	base: "gap-rows rounded-control border px-control-x py-inside bg-surface",
 	variants: {
 		state: {
-			default: "border-edge",
-			focused: "border-edge",
+			rest: "border-edge",
 			error: "border-edge-error",
 		},
 	},
-	defaultVariants: { state: "default" },
+	defaultVariants: { state: "rest" },
+});
+
+// The word budget's counter, in the error ink once over it.
+export const TEXT_AREA_BUDGET = matrix({
+	base: "text-caption leading-caption tracking-caption font-normal tabular-nums",
+	variants: {
+		state: {
+			rest: "text-ink-meta",
+			error: "text-ink-error",
+		},
+	},
+	defaultVariants: { state: "rest" },
+});
+
+// ── One-time code ───────────────────────────────────────────────────
+
+// One box per digit; the row is one input and one target. `otp` is the
+// box's largest side: it stands at that size and shrinks, square, when its
+// row is narrower than the boxes.
+export const OTP_BOX = matrix({
+	base: "w-otp min-w-0 shrink aspect-square rounded-control border bg-surface",
+	variants: {
+		state: {
+			rest: "border-edge",
+			error: "border-edge-error",
+		},
+	},
+	defaultVariants: { state: "rest" },
+});
+
+// ── Switch and checkbox ─────────────────────────────────────────────
+
+// `on` draws `toggle-on`, the fill the checkbox and the slider share.
+export const SWITCH = matrix({
+	base: "p-switch-inset w-switch-w h-switch-h rounded-full",
+	variants: { state: { off: "bg-switch-off", on: "bg-toggle-on" } },
+	defaultVariants: { state: "off" },
+});
+
+// The on thumb sits at the far end by transform, the one thing a toggle
+// animates.
+export const SWITCH_THUMB = matrix({
+	base: "size-thumb rounded-full bg-switch-thumb",
+	variants: { state: { off: "", on: "translate-x-switch-travel" } },
+	defaultVariants: { state: "off" },
+});
+
+export const CHECKBOX = matrix({
+	base: "size-check rounded-chip",
+	variants: {
+		state: {
+			unchecked: "border border-edge-strong bg-surface",
+			checked: "bg-toggle-on",
+			mixed: "bg-toggle-on",
+		},
+	},
+	defaultVariants: { state: "unchecked" },
 });
 
 // ── Row ─────────────────────────────────────────────────────────────
 
-// A row in a group or a list: pressed under the press wash, selected under
-// the selection wash.
+// A row in a group, a list or a popover: highlighted (the keyboard's or the
+// pointer's current option) under the hover wash, pressed under the press
+// wash, selected under the selection wash. The base is the option row of the
+// approved Select frame.
 export const ROW = matrix({
-	base: "min-h-row px-control-x gap-inside",
+	base: "min-h-row px-control-x gap-inside rounded-row",
 	variants: {
 		state: {
 			rest: "",
+			highlighted: "bg-wash-hover",
 			pressed: "bg-wash-press",
 			selected: "bg-wash-selected",
 		},
@@ -198,26 +387,6 @@ export const TABLE_ROW = matrix({
 		state: { rest: "", selected: "bg-wash-selected" },
 	},
 	defaultVariants: { state: "rest" },
-});
-
-// ── Switch and checkbox ─────────────────────────────────────────────
-
-export const SWITCH = matrix({
-	base: "rounded-full",
-	variants: { state: { off: "bg-switch-off", on: "bg-toggle-on" } },
-	defaultVariants: { state: "off" },
-});
-
-export const CHECKBOX = matrix({
-	base: "rounded-chip",
-	variants: {
-		state: {
-			unchecked: "border border-edge-strong",
-			checked: "bg-toggle-on",
-			mixed: "bg-toggle-on",
-		},
-	},
-	defaultVariants: { state: "unchecked" },
 });
 
 // ── Segmented control ───────────────────────────────────────────────
@@ -281,24 +450,6 @@ export const MESSAGE = matrix({
 			you: "rounded-card bg-group px-card py-pair",
 			other: "",
 			system: "text-meta leading-meta text-ink-meta",
-		},
-	},
-});
-
-// ── Avatar ──────────────────────────────────────────────────────────
-
-export const AVATAR = matrix({
-	base: "rounded-full size-avatar",
-	variants: {
-		step: {
-			"1": "bg-avatar-1 text-avatar-1-ink",
-			"2": "bg-avatar-2 text-avatar-2-ink",
-			"3": "bg-avatar-3 text-avatar-3-ink",
-			"4": "bg-avatar-4 text-avatar-4-ink",
-			"5": "bg-avatar-5 text-avatar-5-ink",
-			"6": "bg-avatar-6 text-avatar-6-ink",
-			"7": "bg-avatar-7 text-avatar-7-ink",
-			"8": "bg-avatar-8 text-avatar-8-ink",
 		},
 	},
 });

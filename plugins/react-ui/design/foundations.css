@@ -426,7 +426,8 @@
  *   control-x  a control's inline padding
  *   pair       between paired elements: label over input, title over description
  *   rows       between rows in a menu or nav list (rows in a hairline list abut: 0)
- *   card       a card's or popover's inset
+ *   card       a card's inset
+ *   float      a floating surface's inset (select list, menu, picker popover), the same at both densities
  *   fields     between fields, and between a field row and the next
  *   sections   between sections of a page
  *   page       the page inset, the content column's padding
@@ -438,18 +439,21 @@
 	--space-pair: var(--space-1-5);
 	--space-rows: var(--space-0-5);
 	--space-card: var(--space-4);
+	--space-float: var(--space-1);
 	--space-fields: var(--space-4);
 	--space-sections: var(--space-8);
 	--space-page: var(--space-6);
 }
 
-/* touch: the same roles one rung looser, except the page inset, which a phone narrows */
+/* touch: the same roles one rung looser, except the float inset, which holds, and the page
+   inset, which a phone narrows */
 :root[data-density="touch"] {
 	--space-inside: var(--space-2);
 	--space-control-x: var(--space-4);
 	--space-pair: var(--space-2);
 	--space-rows: var(--space-1);
 	--space-card: var(--space-4);
+	--space-float: var(--space-1);
 	--space-fields: var(--space-6);
 	--space-sections: var(--space-10);
 	--space-page: var(--space-4);
@@ -465,7 +469,8 @@
  * headers, 30-34). touch: every target is at least 44 (the floor, WCAG 2.5.5 / platform HIG),
  * rows and fields one rung above it. An icon is sized by what it sits beside: icon-meta beside
  * meta or caption text, icon beside body text, icon-control inside a control. A checkbox's box is
- * check; a one-time-code box is otp, square.
+ * check; a one-time-code box is otp, square. A text area's least value height is three body line
+ * boxes: 3 × 20 = 60 on desktop, 3 × 24 = 72 on touch.
  */
 :root,
 :root[data-density="desktop"] {
@@ -488,6 +493,7 @@
 	--size-icon-control: 16px;
 	--size-check: 16px;
 	--size-otp: 44px;
+	--text-area-min: 60px;
 }
 
 :root[data-density="touch"] {
@@ -510,6 +516,7 @@
 	--size-icon-control: 20px;
 	--size-check: 20px;
 	--size-otp: 48px;
+	--text-area-min: 72px;
 }
 
 /* ------------------------------------------------------------------ widths of lifted layers */
@@ -619,23 +626,19 @@
  * These tokens are declared on both :root and .dark: a var() inside a custom property resolves
  * where it is declared, so a mode scope has to re-declare it to pick up its own ink.
  *
- * Acts. Two primaries, one default to be chosen: act-accent (the accent fill) and act-ink (the
- * body ink as the fill, the dark primary the settings references use; it inverts in dark mode);
- * and act-danger (the danger fill under on-danger), a confirm's destructive primary, the hairline
- * destructive act kept for rows and menus.
+ * Acts. act-accent (the accent fill) is the primary; act-danger (the danger fill under
+ * on-danger) is a confirm's destructive primary, the hairline destructive act kept for rows and
+ * menus.
  * Hover and press move the fill toward a second colour by 12 % and 22 % (color-mix in oklab, so
  * the hue holds; oklch would swing it toward the black's nominal hue), away from the label so the
  * label only gains contrast: the accent act toward black in both modes, the danger act toward
- * black in light and toward the body ink in dark, where its label is near-black; the ink fill toward its own label colour, which lightens
- * it in light mode and darkens it in dark. Pending is inert and recedes the fill 30 %: a filled
- * act toward its label in light and toward the page in dark, held at 3:1 under its label, where
- * the spinner draws; the ink fill toward the page. A labelled act's fill takes no 3:1 floor on
- * its ground in any state: its label names it. A toggle on (the switch's track, a checked box, a
- * slider's fill) has no label, so toggle-on and its hover hold 3:1 on every ground and under the
- * knob; its hover darkens in light and lightens in dark, away from the ground.
- * act-accent is the default act;
- * act-ink is the secondary dialect, for a screen that needs a dark act. Disabled: a 6 % ink wash
- * with faint ink, so a disabled act or chip keeps a visible box on every surface and its label
+ * black in light and toward the body ink in dark, where its label is near-black. Pending is inert
+ * and recedes the fill 30 %: a filled act toward its label in light and toward the page in dark,
+ * held at 3:1 under its label, where the spinner draws. A labelled act's fill takes no 3:1 floor
+ * on its ground in any state: its label names it. A toggle on (the switch's track, a checked box,
+ * a slider's fill) has no label, so toggle-on and its hover hold 3:1 on every ground and under
+ * the knob; its hover darkens in light and lightens in dark, away from the ground.
+ * Disabled: a 6 % ink wash with faint ink, so a disabled act or chip keeps a visible box on every surface and its label
  * reads as off (about 3:1, WCAG exempts disabled text); a switch, which has no label of its own,
  * disables by opacity. A field's rest boundary is edge (B); hover steps it to edge-strong.
  * Hit area: every interactive part draws a ::before at least --target-min square, centred, so a
@@ -681,12 +684,6 @@
 		var(--danger) 70%,
 		var(--on-danger)
 	);
-
-	--act-ink: var(--ink-body);
-	--on-act-ink: var(--canvas);
-	--act-ink-hover: color-mix(in oklab, var(--ink-body), var(--canvas) 12%);
-	--act-ink-press: color-mix(in oklab, var(--ink-body), var(--canvas) 22%);
-	--act-ink-pending: color-mix(in oklab, var(--ink-body) 70%, var(--canvas));
 
 	--switch-off: var(--edge-strong);
 	--switch-off-hover: color-mix(
@@ -1464,19 +1461,6 @@ samp {
 }
 .act-accent.is-pending {
 	background: var(--act-accent-pending);
-}
-.act-ink {
-	background: var(--act-ink);
-	color: var(--on-act-ink);
-}
-.act-ink.is-hover {
-	background: var(--act-ink-hover);
-}
-.act-ink.is-active {
-	background: var(--act-ink-press);
-}
-.act-ink.is-pending {
-	background: var(--act-ink-pending);
 }
 .act-secondary {
 	background: transparent;

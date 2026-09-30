@@ -5,8 +5,7 @@ import { Pressable, Text as RNText, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import { Glyph } from "../../lib/glyph";
-import { useIcon } from "../../lib/icons";
+import { GLYPHS, Glyph } from "../../lib/glyph";
 import { navigate, usePathname } from "../../lib/navigate";
 import { SwitcherContext } from "../../lib/switcher";
 import { dismissToast, useToasts } from "../../lib/toast";
@@ -15,7 +14,7 @@ import { Toast } from "../toast";
 import { Confirmations } from "./confirmation";
 
 export interface ShellProps extends Closed {
-	places: readonly PlaceSpec<string>[];
+	places: readonly PlaceSpec[];
 	banner?: ReactNode;
 	switcher?: ReactNode;
 	children?: ReactNode;
@@ -74,13 +73,7 @@ export function Shell({ places, banner, switcher, children }: ShellProps) {
 	);
 }
 
-function PlaceTab({
-	spec,
-	selected,
-}: {
-	spec: PlaceSpec<string>;
-	selected: boolean;
-}) {
+function PlaceTab({ spec, selected }: { spec: PlaceSpec; selected: boolean }) {
 	const state = selected ? "selected" : "idle";
 	return (
 		<Pressable
@@ -92,7 +85,7 @@ function PlaceTab({
 		>
 			<View className="flex-row items-start">
 				<Glyph
-					icon={useIcon(spec.icon)}
+					icon={GLYPHS[spec.icon]}
 					tone={selected ? "accent" : "ink-meta"}
 					size={24}
 				/>

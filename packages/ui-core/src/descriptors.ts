@@ -1,10 +1,14 @@
 // Framework-free descriptors: a composed region is data, so the owning
-// molecule renders it. `TIcon` is a type parameter because the icon is a
-// `lucide-react` component on web and a `lucide-react-native` one on native,
-// and ui-core depends on neither.
+// molecule renders it.
+import type { icons } from "lucide";
 import type { ChipFamily, StatusState, Width, Words } from "./tokens.ts";
 
 export type { ChipFamily, StatusState, Width, Words };
+
+// A glyph of the one icon set, Lucide, by its PascalCase name (`Check`,
+// `ChevronDown`), the key both `lucide-react` and `lucide-react-native`
+// export it under. Lucide's own aliases are names too.
+export type IconName = keyof typeof icons;
 
 // A labelled text act, 44 px, with an optional `blocked` reason drawn under it.
 export interface Act {
@@ -15,8 +19,8 @@ export interface Act {
 }
 
 // An icon-only act: the label is read aloud, never drawn.
-export interface IconAct<TIcon = never> {
-	icon: TIcon;
+export interface IconAct {
+	icon: IconName;
 	label: string;
 	onAct: () => void;
 }
@@ -29,9 +33,9 @@ export interface Quoted {
 
 export type Part = string | Quoted;
 
-// A mark on a row: an icon from the consumer's set, its label read aloud.
-export interface Mark<TIcon = never> {
-	icon: TIcon;
+// A mark on a row: an icon, its label read aloud.
+export interface Mark {
+	icon: IconName;
 	label: string;
 }
 
@@ -94,19 +98,19 @@ export interface Confirmation {
 // One act of a menu: its label, an optional glyph, `destructive` for an act
 // that removes or ends something, and `blocked`, the reason it cannot be
 // taken, drawn under its label while the act is disabled.
-export interface MenuItem<TIcon = never> {
+export interface MenuItem {
 	label: string;
 	onAct: () => void;
-	icon?: TIcon;
+	icon?: IconName;
 	destructive?: boolean;
 	blocked?: string;
 }
 
 // A place in the shell: a route, a label, an icon, an optional count.
-export interface PlaceSpec<TIcon = never> {
+export interface PlaceSpec {
 	route: string;
 	label: string;
-	icon: TIcon;
+	icon: IconName;
 	count?: number;
 }
 

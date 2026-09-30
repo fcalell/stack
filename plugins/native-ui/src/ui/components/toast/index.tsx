@@ -5,12 +5,24 @@ import {
 	type ToastState,
 	toastState,
 } from "@fcalell/ui-core/variants";
+import {
+	CircleAlert,
+	CircleCheck,
+	CircleX,
+	type LucideIcon,
+} from "lucide-react-native";
 import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { Glyph } from "../../lib/glyph";
 import { toast, useToasts } from "../../lib/toast";
-import { STATUS_MARK } from "../status";
+
+// The glyph of each state a toast reports.
+const STATE_MARK: Record<ToastState, LucideIcon> = {
+	done: CircleCheck,
+	attention: CircleAlert,
+	failed: CircleX,
+};
 
 export interface ToastProps extends Closed {
 	sentence: string;
@@ -30,7 +42,7 @@ export function Toast({ sentence, state, act }: ToastProps) {
 		>
 			{state ? (
 				<Glyph
-					icon={STATUS_MARK[state]}
+					icon={STATE_MARK[state]}
 					tone={statusContentTone(state)}
 					size={16}
 				/>

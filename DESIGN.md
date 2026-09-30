@@ -83,11 +83,6 @@ colors:
   act-danger-hover: "oklch(0.453 0.167 25)"
   act-danger-press: "oklch(0.402 0.148 25)"
   act-danger-pending: "oklch(0.661 0.133 25)"
-  act-ink: "oklch(0.2 0.008 264)"
-  on-act-ink: "oklch(0.974 0.002 264)"
-  act-ink-hover: "oklch(0.293 0.007 264)"
-  act-ink-press: "oklch(0.37 0.007 264)"
-  act-ink-pending: "oklch(0.432 0.006 264)"
   switch-off: "oklch(0.62 0.01 264)"
   switch-off-hover: "oklch(0.557 0.01 264)"
   toggle-on: "oklch(0.52 0.19 264)"
@@ -172,11 +167,6 @@ colors:
   act-danger-hover-dark: "oklch(0.741 0.157 24.925)"
   act-danger-press-dark: "oklch(0.767 0.137 24.844)"
   act-danger-pending-dark: "oklch(0.545 0.124 24.405)"
-  act-ink-dark: "oklch(0.97 0.002 264)"
-  on-act-ink-dark: "oklch(0.16 0.005 264)"
-  act-ink-hover-dark: "oklch(0.873 0.002 264)"
-  act-ink-press-dark: "oklch(0.792 0.003 264)"
-  act-ink-pending-dark: "oklch(0.727 0.003 264)"
   switch-off-dark: "oklch(0.53 0.01 264)"
   switch-off-hover-dark: "oklch(0.596 0.009 264)"
   toggle-on-dark: "oklch(0.54 0.19 264)"
@@ -237,6 +227,7 @@ spacing:
   pair: "6px"
   rows: "2px"
   card: "16px"
+  float: "4px"
   fields: "16px"
   sections: "32px"
   page: "24px"
@@ -264,6 +255,7 @@ spacing:
   check: "16px"
   track: "2px"
   otp: "44px"
+  text-area: "60px"
 components:
   text-display:
     typography: "{typography.display}"
@@ -307,42 +299,93 @@ components:
   text-code-dark:
     typography: "{typography.code}"
     textColor: "{colors.ink-body-dark}"
+  icon-meta:
+    height: "{spacing.icon-meta}"
+    width: "{spacing.icon-meta}"
+  icon-body:
+    height: "{spacing.icon}"
+    width: "{spacing.icon}"
+  icon-control:
+    height: "{spacing.icon-control}"
+    width: "{spacing.icon-control}"
   button-primary:
     rounded: "{rounded.control}"
     backgroundColor: "{colors.act-accent}"
+    textColor: "{colors.on-act-accent}"
     height: "{spacing.control}"
   button-primary-dark:
     rounded: "{rounded.control}"
     backgroundColor: "{colors.act-accent-dark}"
+    textColor: "{colors.on-act-accent-dark}"
+    height: "{spacing.control}"
+  button-danger:
+    rounded: "{rounded.control}"
+    backgroundColor: "{colors.act-danger}"
+    textColor: "{colors.on-act-danger}"
+    height: "{spacing.control}"
+  button-danger-dark:
+    rounded: "{rounded.control}"
+    backgroundColor: "{colors.act-danger-dark}"
+    textColor: "{colors.on-act-danger-dark}"
     height: "{spacing.control}"
   button-secondary:
     rounded: "{rounded.control}"
+    textColor: "{colors.ink-body}"
+    height: "{spacing.control}"
+  button-secondary-dark:
+    rounded: "{rounded.control}"
+    textColor: "{colors.ink-body-dark}"
     height: "{spacing.control}"
   button-destructive:
     rounded: "{rounded.control}"
+    textColor: "{colors.danger}"
+    height: "{spacing.control}"
+  button-destructive-dark:
+    rounded: "{rounded.control}"
+    textColor: "{colors.danger-dark}"
     height: "{spacing.control}"
   button-body:
     rounded: "{rounded.control}"
     backgroundColor: "{colors.act-accent}"
+    textColor: "{colors.on-act-accent}"
     height: "{spacing.control}"
   button-body-dark:
     rounded: "{rounded.control}"
     backgroundColor: "{colors.act-accent-dark}"
+    textColor: "{colors.on-act-accent-dark}"
     height: "{spacing.control}"
   button-bar:
     rounded: "{rounded.control}"
     backgroundColor: "{colors.act-accent}"
+    textColor: "{colors.on-act-accent}"
     height: "{spacing.control-compact}"
   button-bar-dark:
     rounded: "{rounded.control}"
     backgroundColor: "{colors.act-accent-dark}"
+    textColor: "{colors.on-act-accent-dark}"
     height: "{spacing.control-compact}"
+  button-field:
+    rounded: "{rounded.control}"
+    backgroundColor: "{colors.act-accent}"
+    textColor: "{colors.on-act-accent}"
+    height: "{spacing.field}"
+  button-field-dark:
+    rounded: "{rounded.control}"
+    backgroundColor: "{colors.act-accent-dark}"
+    textColor: "{colors.on-act-accent-dark}"
+    height: "{spacing.field}"
   button-label-primary:
     typography: "{typography.body}"
     textColor: "{colors.on-act-accent}"
   button-label-primary-dark:
     typography: "{typography.body}"
     textColor: "{colors.on-act-accent-dark}"
+  button-label-danger:
+    typography: "{typography.body}"
+    textColor: "{colors.on-act-danger}"
+  button-label-danger-dark:
+    typography: "{typography.body}"
+    textColor: "{colors.on-act-danger-dark}"
   button-label-secondary:
     typography: "{typography.body}"
     textColor: "{colors.ink-body}"
@@ -355,188 +398,533 @@ components:
   button-label-destructive-dark:
     typography: "{typography.body}"
     textColor: "{colors.danger-dark}"
-  status-active:
-    typography: "{typography.meta}"
+  icon-button-body:
+    rounded: "{rounded.control}"
+    textColor: "{colors.ink-meta}"
+    height: "{spacing.control}"
+    width: "{spacing.control}"
+  icon-button-body-dark:
+    rounded: "{rounded.control}"
+    textColor: "{colors.ink-meta-dark}"
+    height: "{spacing.control}"
+    width: "{spacing.control}"
+  icon-button-bar:
+    rounded: "{rounded.control}"
+    textColor: "{colors.ink-meta}"
+    height: "{spacing.control-compact}"
+    width: "{spacing.control-compact}"
+  icon-button-bar-dark:
+    rounded: "{rounded.control}"
+    textColor: "{colors.ink-meta-dark}"
+    height: "{spacing.control-compact}"
+    width: "{spacing.control-compact}"
+  icon-button-field:
+    rounded: "{rounded.control}"
+    textColor: "{colors.ink-meta}"
+    height: "{spacing.control-compact}"
+    width: "{spacing.control-compact}"
+  icon-button-field-dark:
+    rounded: "{rounded.control}"
+    textColor: "{colors.ink-meta-dark}"
+    height: "{spacing.control-compact}"
+    width: "{spacing.control-compact}"
+  link-inline:
     textColor: "{colors.accent-ink}"
-  status-active-dark:
-    typography: "{typography.meta}"
+  link-inline-dark:
     textColor: "{colors.accent-ink-dark}"
-  status-waiting:
-    typography: "{typography.meta}"
-    textColor: "{colors.ink-meta}"
-  status-waiting-dark:
-    typography: "{typography.meta}"
-    textColor: "{colors.ink-meta-dark}"
-  status-done:
-    typography: "{typography.meta}"
-    textColor: "{colors.ok}"
-  status-done-dark:
-    typography: "{typography.meta}"
-    textColor: "{colors.ok-dark}"
-  status-attention:
-    typography: "{typography.meta}"
-    textColor: "{colors.warn}"
-  status-attention-dark:
-    typography: "{typography.meta}"
-    textColor: "{colors.warn-dark}"
-  status-failed:
-    typography: "{typography.meta}"
-    textColor: "{colors.danger}"
-  status-failed-dark:
-    typography: "{typography.meta}"
-    textColor: "{colors.danger-dark}"
-  status-idle:
-    typography: "{typography.meta}"
-    textColor: "{colors.ink-meta}"
-  status-idle-dark:
-    typography: "{typography.meta}"
-    textColor: "{colors.ink-meta-dark}"
+  link-standalone:
+    textColor: "{colors.accent-ink}"
+    height: "{spacing.target}"
+  link-standalone-dark:
+    textColor: "{colors.accent-ink-dark}"
+    height: "{spacing.target}"
+  avatar-1:
+    rounded: "{rounded.full}"
+    height: "{spacing.avatar}"
+    width: "{spacing.avatar}"
+    backgroundColor: "{colors.avatar-1}"
+    typography: "{typography.caption}"
+    textColor: "{colors.avatar-1-ink}"
+  avatar-1-dark:
+    rounded: "{rounded.full}"
+    height: "{spacing.avatar}"
+    width: "{spacing.avatar}"
+    backgroundColor: "{colors.avatar-1-dark}"
+    typography: "{typography.caption}"
+    textColor: "{colors.avatar-1-ink-dark}"
+  avatar-2:
+    rounded: "{rounded.full}"
+    height: "{spacing.avatar}"
+    width: "{spacing.avatar}"
+    backgroundColor: "{colors.avatar-2}"
+    typography: "{typography.caption}"
+    textColor: "{colors.avatar-2-ink}"
+  avatar-2-dark:
+    rounded: "{rounded.full}"
+    height: "{spacing.avatar}"
+    width: "{spacing.avatar}"
+    backgroundColor: "{colors.avatar-2-dark}"
+    typography: "{typography.caption}"
+    textColor: "{colors.avatar-2-ink-dark}"
+  avatar-3:
+    rounded: "{rounded.full}"
+    height: "{spacing.avatar}"
+    width: "{spacing.avatar}"
+    backgroundColor: "{colors.avatar-3}"
+    typography: "{typography.caption}"
+    textColor: "{colors.avatar-3-ink}"
+  avatar-3-dark:
+    rounded: "{rounded.full}"
+    height: "{spacing.avatar}"
+    width: "{spacing.avatar}"
+    backgroundColor: "{colors.avatar-3-dark}"
+    typography: "{typography.caption}"
+    textColor: "{colors.avatar-3-ink-dark}"
+  avatar-4:
+    rounded: "{rounded.full}"
+    height: "{spacing.avatar}"
+    width: "{spacing.avatar}"
+    backgroundColor: "{colors.avatar-4}"
+    typography: "{typography.caption}"
+    textColor: "{colors.avatar-4-ink}"
+  avatar-4-dark:
+    rounded: "{rounded.full}"
+    height: "{spacing.avatar}"
+    width: "{spacing.avatar}"
+    backgroundColor: "{colors.avatar-4-dark}"
+    typography: "{typography.caption}"
+    textColor: "{colors.avatar-4-ink-dark}"
+  avatar-5:
+    rounded: "{rounded.full}"
+    height: "{spacing.avatar}"
+    width: "{spacing.avatar}"
+    backgroundColor: "{colors.avatar-5}"
+    typography: "{typography.caption}"
+    textColor: "{colors.avatar-5-ink}"
+  avatar-5-dark:
+    rounded: "{rounded.full}"
+    height: "{spacing.avatar}"
+    width: "{spacing.avatar}"
+    backgroundColor: "{colors.avatar-5-dark}"
+    typography: "{typography.caption}"
+    textColor: "{colors.avatar-5-ink-dark}"
+  avatar-6:
+    rounded: "{rounded.full}"
+    height: "{spacing.avatar}"
+    width: "{spacing.avatar}"
+    backgroundColor: "{colors.avatar-6}"
+    typography: "{typography.caption}"
+    textColor: "{colors.avatar-6-ink}"
+  avatar-6-dark:
+    rounded: "{rounded.full}"
+    height: "{spacing.avatar}"
+    width: "{spacing.avatar}"
+    backgroundColor: "{colors.avatar-6-dark}"
+    typography: "{typography.caption}"
+    textColor: "{colors.avatar-6-ink-dark}"
+  avatar-7:
+    rounded: "{rounded.full}"
+    height: "{spacing.avatar}"
+    width: "{spacing.avatar}"
+    backgroundColor: "{colors.avatar-7}"
+    typography: "{typography.caption}"
+    textColor: "{colors.avatar-7-ink}"
+  avatar-7-dark:
+    rounded: "{rounded.full}"
+    height: "{spacing.avatar}"
+    width: "{spacing.avatar}"
+    backgroundColor: "{colors.avatar-7-dark}"
+    typography: "{typography.caption}"
+    textColor: "{colors.avatar-7-ink-dark}"
+  avatar-8:
+    rounded: "{rounded.full}"
+    height: "{spacing.avatar}"
+    width: "{spacing.avatar}"
+    backgroundColor: "{colors.avatar-8}"
+    typography: "{typography.caption}"
+    textColor: "{colors.avatar-8-ink}"
+  avatar-8-dark:
+    rounded: "{rounded.full}"
+    height: "{spacing.avatar}"
+    width: "{spacing.avatar}"
+    backgroundColor: "{colors.avatar-8-dark}"
+    typography: "{typography.caption}"
+    textColor: "{colors.avatar-8-ink-dark}"
+  status-dot-active:
+    height: "{spacing.dot}"
+    width: "{spacing.dot}"
+    rounded: "{rounded.full}"
+    backgroundColor: "{colors.accent-ink}"
+  status-dot-active-dark:
+    height: "{spacing.dot}"
+    width: "{spacing.dot}"
+    rounded: "{rounded.full}"
+    backgroundColor: "{colors.accent-ink-dark}"
+  status-dot-waiting:
+    height: "{spacing.dot}"
+    width: "{spacing.dot}"
+    rounded: "{rounded.full}"
+    backgroundColor: "{colors.ink-meta}"
+  status-dot-waiting-dark:
+    height: "{spacing.dot}"
+    width: "{spacing.dot}"
+    rounded: "{rounded.full}"
+    backgroundColor: "{colors.ink-meta-dark}"
+  status-dot-done:
+    height: "{spacing.dot}"
+    width: "{spacing.dot}"
+    rounded: "{rounded.full}"
+    backgroundColor: "{colors.ok}"
+  status-dot-done-dark:
+    height: "{spacing.dot}"
+    width: "{spacing.dot}"
+    rounded: "{rounded.full}"
+    backgroundColor: "{colors.ok-dark}"
+  status-dot-attention:
+    height: "{spacing.dot}"
+    width: "{spacing.dot}"
+    rounded: "{rounded.full}"
+    backgroundColor: "{colors.warn}"
+  status-dot-attention-dark:
+    height: "{spacing.dot}"
+    width: "{spacing.dot}"
+    rounded: "{rounded.full}"
+    backgroundColor: "{colors.warn-dark}"
+  status-dot-failed:
+    height: "{spacing.dot}"
+    width: "{spacing.dot}"
+    rounded: "{rounded.full}"
+    backgroundColor: "{colors.danger}"
+  status-dot-failed-dark:
+    height: "{spacing.dot}"
+    width: "{spacing.dot}"
+    rounded: "{rounded.full}"
+    backgroundColor: "{colors.danger-dark}"
+  status-dot-idle:
+    height: "{spacing.dot}"
+    width: "{spacing.dot}"
+    rounded: "{rounded.full}"
+  chip-red:
+    rounded: "{rounded.full}"
+    height: "{spacing.chip}"
+    backgroundColor: "{colors.chip-red-soft}"
+    textColor: "{colors.chip-red-ink}"
+  chip-red-dark:
+    rounded: "{rounded.full}"
+    height: "{spacing.chip}"
+    backgroundColor: "{colors.chip-red-soft-dark}"
+    textColor: "{colors.chip-red-ink-dark}"
+  chip-amber:
+    rounded: "{rounded.full}"
+    height: "{spacing.chip}"
+    backgroundColor: "{colors.chip-amber-soft}"
+    textColor: "{colors.chip-amber-ink}"
+  chip-amber-dark:
+    rounded: "{rounded.full}"
+    height: "{spacing.chip}"
+    backgroundColor: "{colors.chip-amber-soft-dark}"
+    textColor: "{colors.chip-amber-ink-dark}"
+  chip-green:
+    rounded: "{rounded.full}"
+    height: "{spacing.chip}"
+    backgroundColor: "{colors.chip-green-soft}"
+    textColor: "{colors.chip-green-ink}"
+  chip-green-dark:
+    rounded: "{rounded.full}"
+    height: "{spacing.chip}"
+    backgroundColor: "{colors.chip-green-soft-dark}"
+    textColor: "{colors.chip-green-ink-dark}"
+  chip-teal:
+    rounded: "{rounded.full}"
+    height: "{spacing.chip}"
+    backgroundColor: "{colors.chip-teal-soft}"
+    textColor: "{colors.chip-teal-ink}"
+  chip-teal-dark:
+    rounded: "{rounded.full}"
+    height: "{spacing.chip}"
+    backgroundColor: "{colors.chip-teal-soft-dark}"
+    textColor: "{colors.chip-teal-ink-dark}"
+  chip-violet:
+    rounded: "{rounded.full}"
+    height: "{spacing.chip}"
+    backgroundColor: "{colors.chip-violet-soft}"
+    textColor: "{colors.chip-violet-ink}"
+  chip-violet-dark:
+    rounded: "{rounded.full}"
+    height: "{spacing.chip}"
+    backgroundColor: "{colors.chip-violet-soft-dark}"
+    textColor: "{colors.chip-violet-ink-dark}"
+  chip-pink:
+    rounded: "{rounded.full}"
+    height: "{spacing.chip}"
+    backgroundColor: "{colors.chip-pink-soft}"
+    textColor: "{colors.chip-pink-ink}"
+  chip-pink-dark:
+    rounded: "{rounded.full}"
+    height: "{spacing.chip}"
+    backgroundColor: "{colors.chip-pink-soft-dark}"
+    textColor: "{colors.chip-pink-ink-dark}"
+  chip-none:
+    rounded: "{rounded.full}"
+    height: "{spacing.chip}"
+  chip-remove:
+    rounded: "{rounded.full}"
+    height: "{spacing.chip}"
+  chip-label-red:
+    typography: "{typography.caption}"
+    textColor: "{colors.chip-red-ink}"
+  chip-label-red-dark:
+    typography: "{typography.caption}"
+    textColor: "{colors.chip-red-ink-dark}"
+  chip-label-amber:
+    typography: "{typography.caption}"
+    textColor: "{colors.chip-amber-ink}"
+  chip-label-amber-dark:
+    typography: "{typography.caption}"
+    textColor: "{colors.chip-amber-ink-dark}"
+  chip-label-green:
+    typography: "{typography.caption}"
+    textColor: "{colors.chip-green-ink}"
+  chip-label-green-dark:
+    typography: "{typography.caption}"
+    textColor: "{colors.chip-green-ink-dark}"
+  chip-label-teal:
+    typography: "{typography.caption}"
+    textColor: "{colors.chip-teal-ink}"
+  chip-label-teal-dark:
+    typography: "{typography.caption}"
+    textColor: "{colors.chip-teal-ink-dark}"
+  chip-label-violet:
+    typography: "{typography.caption}"
+    textColor: "{colors.chip-violet-ink}"
+  chip-label-violet-dark:
+    typography: "{typography.caption}"
+    textColor: "{colors.chip-violet-ink-dark}"
+  chip-label-pink:
+    typography: "{typography.caption}"
+    textColor: "{colors.chip-pink-ink}"
+  chip-label-pink-dark:
+    typography: "{typography.caption}"
+    textColor: "{colors.chip-pink-ink-dark}"
   field-text:
-    backgroundColor: "{colors.surface}"
-    textColor: "{colors.ink-body}"
     rounded: "{rounded.control}"
+    backgroundColor: "{colors.surface}"
     height: "{spacing.field}"
-    typography: "{typography.body}"
   field-text-dark:
-    backgroundColor: "{colors.surface-dark}"
-    textColor: "{colors.ink-body-dark}"
     rounded: "{rounded.control}"
+    backgroundColor: "{colors.surface-dark}"
     height: "{spacing.field}"
-    typography: "{typography.body}"
-  field-search:
-    backgroundColor: "{colors.surface}"
-    textColor: "{colors.ink-body}"
-    rounded: "{rounded.control}"
-    height: "{spacing.control}"
-    typography: "{typography.body}"
-  field-search-dark:
-    backgroundColor: "{colors.surface-dark}"
-    textColor: "{colors.ink-body-dark}"
-    rounded: "{rounded.control}"
-    height: "{spacing.control}"
-    typography: "{typography.body}"
   field-code:
-    backgroundColor: "{colors.surface}"
-    textColor: "{colors.ink-body}"
     rounded: "{rounded.control}"
+    backgroundColor: "{colors.surface}"
     height: "{spacing.field}"
-    typography: "{typography.code}"
   field-code-dark:
-    backgroundColor: "{colors.surface-dark}"
-    textColor: "{colors.ink-body-dark}"
     rounded: "{rounded.control}"
+    backgroundColor: "{colors.surface-dark}"
     height: "{spacing.field}"
-    typography: "{typography.code}"
-  field-default:
+  field-search:
+    rounded: "{rounded.control}"
     backgroundColor: "{colors.surface}"
-    textColor: "{colors.ink-body}"
+    height: "{spacing.control}"
+  field-search-dark:
     rounded: "{rounded.control}"
-    height: "{spacing.field}"
-    typography: "{typography.body}"
-  field-default-dark:
     backgroundColor: "{colors.surface-dark}"
-    textColor: "{colors.ink-body-dark}"
+    height: "{spacing.control}"
+  field-none:
     rounded: "{rounded.control}"
-    height: "{spacing.field}"
-    typography: "{typography.body}"
-  field-focused:
     backgroundColor: "{colors.surface}"
-    textColor: "{colors.ink-body}"
-    rounded: "{rounded.control}"
     height: "{spacing.field}"
-    typography: "{typography.body}"
-  field-focused-dark:
+  field-none-dark:
+    rounded: "{rounded.control}"
     backgroundColor: "{colors.surface-dark}"
-    textColor: "{colors.ink-body-dark}"
-    rounded: "{rounded.control}"
     height: "{spacing.field}"
-    typography: "{typography.body}"
+  field-act:
+    rounded: "{rounded.control}"
+    backgroundColor: "{colors.surface}"
+    height: "{spacing.field}"
+  field-act-dark:
+    rounded: "{rounded.control}"
+    backgroundColor: "{colors.surface-dark}"
+    height: "{spacing.field}"
+  field-rest:
+    rounded: "{rounded.control}"
+    backgroundColor: "{colors.surface}"
+    height: "{spacing.field}"
+  field-rest-dark:
+    rounded: "{rounded.control}"
+    backgroundColor: "{colors.surface-dark}"
+    height: "{spacing.field}"
   field-error:
-    backgroundColor: "{colors.surface}"
-    textColor: "{colors.ink-body}"
     rounded: "{rounded.control}"
+    backgroundColor: "{colors.surface}"
     height: "{spacing.field}"
-    typography: "{typography.body}"
   field-error-dark:
-    backgroundColor: "{colors.surface-dark}"
-    textColor: "{colors.ink-body-dark}"
     rounded: "{rounded.control}"
+    backgroundColor: "{colors.surface-dark}"
     height: "{spacing.field}"
+  field-value-text:
     typography: "{typography.body}"
-  otp-box-default:
+    textColor: "{colors.ink-body}"
+  field-value-text-dark:
+    typography: "{typography.body}"
+    textColor: "{colors.ink-body-dark}"
+  field-value-code:
+    typography: "{typography.code}"
+    textColor: "{colors.ink-body}"
+  field-value-code-dark:
+    typography: "{typography.code}"
+    textColor: "{colors.ink-body-dark}"
+  field-value-search:
+    typography: "{typography.body}"
+    textColor: "{colors.ink-body}"
+  field-value-search-dark:
+    typography: "{typography.body}"
+    textColor: "{colors.ink-body-dark}"
+  text-area-rest:
     rounded: "{rounded.control}"
     backgroundColor: "{colors.surface}"
-    height: "{spacing.field}"
-    width: "{spacing.field}"
-  otp-box-default-dark:
+  text-area-rest-dark:
     rounded: "{rounded.control}"
     backgroundColor: "{colors.surface-dark}"
-    height: "{spacing.field}"
-    width: "{spacing.field}"
-  otp-box-focused:
+  text-area-error:
     rounded: "{rounded.control}"
     backgroundColor: "{colors.surface}"
-    height: "{spacing.field}"
-    width: "{spacing.field}"
-  otp-box-focused-dark:
+  text-area-error-dark:
     rounded: "{rounded.control}"
     backgroundColor: "{colors.surface-dark}"
-    height: "{spacing.field}"
-    width: "{spacing.field}"
+  text-area-budget-rest:
+    typography: "{typography.caption}"
+    textColor: "{colors.ink-meta}"
+  text-area-budget-rest-dark:
+    typography: "{typography.caption}"
+    textColor: "{colors.ink-meta-dark}"
+  text-area-budget-error:
+    typography: "{typography.caption}"
+    textColor: "{colors.ink-error}"
+  text-area-budget-error-dark:
+    typography: "{typography.caption}"
+    textColor: "{colors.ink-error-dark}"
+  otp-box-rest:
+    width: "{spacing.otp}"
+    rounded: "{rounded.control}"
+    backgroundColor: "{colors.surface}"
+  otp-box-rest-dark:
+    width: "{spacing.otp}"
+    rounded: "{rounded.control}"
+    backgroundColor: "{colors.surface-dark}"
   otp-box-error:
+    width: "{spacing.otp}"
     rounded: "{rounded.control}"
     backgroundColor: "{colors.surface}"
-    height: "{spacing.field}"
-    width: "{spacing.field}"
   otp-box-error-dark:
+    width: "{spacing.otp}"
     rounded: "{rounded.control}"
     backgroundColor: "{colors.surface-dark}"
-    height: "{spacing.field}"
-    width: "{spacing.field}"
-  row-rest:
-    height: "{spacing.row}"
-  row-pressed:
-    height: "{spacing.row}"
-    backgroundColor: "{colors.wash-press}"
-  row-pressed-dark:
-    height: "{spacing.row}"
-    backgroundColor: "{colors.wash-press-dark}"
-  row-selected:
-    height: "{spacing.row}"
-    backgroundColor: "{colors.wash-selected}"
-  row-selected-dark:
-    height: "{spacing.row}"
-    backgroundColor: "{colors.wash-selected-dark}"
   switch-off:
+    padding: "{spacing.switch-inset}"
+    width: "{spacing.switch-w}"
+    height: "{spacing.switch-h}"
     rounded: "{rounded.full}"
     backgroundColor: "{colors.switch-off}"
   switch-off-dark:
+    padding: "{spacing.switch-inset}"
+    width: "{spacing.switch-w}"
+    height: "{spacing.switch-h}"
     rounded: "{rounded.full}"
     backgroundColor: "{colors.switch-off-dark}"
   switch-on:
+    padding: "{spacing.switch-inset}"
+    width: "{spacing.switch-w}"
+    height: "{spacing.switch-h}"
     rounded: "{rounded.full}"
     backgroundColor: "{colors.toggle-on}"
   switch-on-dark:
+    padding: "{spacing.switch-inset}"
+    width: "{spacing.switch-w}"
+    height: "{spacing.switch-h}"
     rounded: "{rounded.full}"
     backgroundColor: "{colors.toggle-on-dark}"
+  switch-thumb-off:
+    height: "{spacing.thumb}"
+    width: "{spacing.thumb}"
+    rounded: "{rounded.full}"
+    backgroundColor: "{colors.switch-thumb}"
+  switch-thumb-off-dark:
+    height: "{spacing.thumb}"
+    width: "{spacing.thumb}"
+    rounded: "{rounded.full}"
+    backgroundColor: "{colors.switch-thumb-dark}"
+  switch-thumb-on:
+    height: "{spacing.thumb}"
+    width: "{spacing.thumb}"
+    rounded: "{rounded.full}"
+    backgroundColor: "{colors.switch-thumb}"
+  switch-thumb-on-dark:
+    height: "{spacing.thumb}"
+    width: "{spacing.thumb}"
+    rounded: "{rounded.full}"
+    backgroundColor: "{colors.switch-thumb-dark}"
+  checkbox-unchecked:
+    height: "{spacing.check}"
+    width: "{spacing.check}"
+    rounded: "{rounded.chip}"
+    backgroundColor: "{colors.surface}"
+  checkbox-unchecked-dark:
+    height: "{spacing.check}"
+    width: "{spacing.check}"
+    rounded: "{rounded.chip}"
+    backgroundColor: "{colors.surface-dark}"
+  checkbox-checked:
+    height: "{spacing.check}"
+    width: "{spacing.check}"
+    rounded: "{rounded.chip}"
+    backgroundColor: "{colors.toggle-on}"
+  checkbox-checked-dark:
+    height: "{spacing.check}"
+    width: "{spacing.check}"
+    rounded: "{rounded.chip}"
+    backgroundColor: "{colors.toggle-on-dark}"
+  checkbox-mixed:
+    height: "{spacing.check}"
+    width: "{spacing.check}"
+    rounded: "{rounded.chip}"
+    backgroundColor: "{colors.toggle-on}"
+  checkbox-mixed-dark:
+    height: "{spacing.check}"
+    width: "{spacing.check}"
+    rounded: "{rounded.chip}"
+    backgroundColor: "{colors.toggle-on-dark}"
+  row-rest:
+    height: "{spacing.row}"
+    rounded: "{rounded.row}"
+  row-highlighted:
+    height: "{spacing.row}"
+    rounded: "{rounded.row}"
+    backgroundColor: "{colors.wash-hover}"
+  row-highlighted-dark:
+    height: "{spacing.row}"
+    rounded: "{rounded.row}"
+    backgroundColor: "{colors.wash-hover-dark}"
+  row-pressed:
+    height: "{spacing.row}"
+    rounded: "{rounded.row}"
+    backgroundColor: "{colors.wash-press}"
+  row-pressed-dark:
+    height: "{spacing.row}"
+    rounded: "{rounded.row}"
+    backgroundColor: "{colors.wash-press-dark}"
+  row-selected:
+    height: "{spacing.row}"
+    rounded: "{rounded.row}"
+    backgroundColor: "{colors.wash-selected}"
+  row-selected-dark:
+    height: "{spacing.row}"
+    rounded: "{rounded.row}"
+    backgroundColor: "{colors.wash-selected-dark}"
   table-row-selected:
     backgroundColor: "{colors.wash-selected}"
   table-row-selected-dark:
     backgroundColor: "{colors.wash-selected-dark}"
-  checkbox-unchecked:
-    rounded: "{rounded.chip}"
-  checkbox-checked:
-    rounded: "{rounded.chip}"
-    backgroundColor: "{colors.toggle-on}"
-  checkbox-checked-dark:
-    rounded: "{rounded.chip}"
-    backgroundColor: "{colors.toggle-on-dark}"
-  checkbox-mixed:
-    rounded: "{rounded.chip}"
-    backgroundColor: "{colors.toggle-on}"
-  checkbox-mixed-dark:
-    rounded: "{rounded.chip}"
-    backgroundColor: "{colors.toggle-on-dark}"
   segment-idle:
     rounded: "{rounded.control}"
     height: "{spacing.control-compact}"
@@ -649,174 +1037,6 @@ components:
   message-system-dark:
     typography: "{typography.meta}"
     textColor: "{colors.ink-meta-dark}"
-  avatar-1:
-    rounded: "{rounded.full}"
-    height: "{spacing.avatar}"
-    width: "{spacing.avatar}"
-    backgroundColor: "{colors.avatar-1}"
-    textColor: "{colors.avatar-1-ink}"
-  avatar-1-dark:
-    rounded: "{rounded.full}"
-    height: "{spacing.avatar}"
-    width: "{spacing.avatar}"
-    backgroundColor: "{colors.avatar-1-dark}"
-    textColor: "{colors.avatar-1-ink-dark}"
-  avatar-2:
-    rounded: "{rounded.full}"
-    height: "{spacing.avatar}"
-    width: "{spacing.avatar}"
-    backgroundColor: "{colors.avatar-2}"
-    textColor: "{colors.avatar-2-ink}"
-  avatar-2-dark:
-    rounded: "{rounded.full}"
-    height: "{spacing.avatar}"
-    width: "{spacing.avatar}"
-    backgroundColor: "{colors.avatar-2-dark}"
-    textColor: "{colors.avatar-2-ink-dark}"
-  avatar-3:
-    rounded: "{rounded.full}"
-    height: "{spacing.avatar}"
-    width: "{spacing.avatar}"
-    backgroundColor: "{colors.avatar-3}"
-    textColor: "{colors.avatar-3-ink}"
-  avatar-3-dark:
-    rounded: "{rounded.full}"
-    height: "{spacing.avatar}"
-    width: "{spacing.avatar}"
-    backgroundColor: "{colors.avatar-3-dark}"
-    textColor: "{colors.avatar-3-ink-dark}"
-  avatar-4:
-    rounded: "{rounded.full}"
-    height: "{spacing.avatar}"
-    width: "{spacing.avatar}"
-    backgroundColor: "{colors.avatar-4}"
-    textColor: "{colors.avatar-4-ink}"
-  avatar-4-dark:
-    rounded: "{rounded.full}"
-    height: "{spacing.avatar}"
-    width: "{spacing.avatar}"
-    backgroundColor: "{colors.avatar-4-dark}"
-    textColor: "{colors.avatar-4-ink-dark}"
-  avatar-5:
-    rounded: "{rounded.full}"
-    height: "{spacing.avatar}"
-    width: "{spacing.avatar}"
-    backgroundColor: "{colors.avatar-5}"
-    textColor: "{colors.avatar-5-ink}"
-  avatar-5-dark:
-    rounded: "{rounded.full}"
-    height: "{spacing.avatar}"
-    width: "{spacing.avatar}"
-    backgroundColor: "{colors.avatar-5-dark}"
-    textColor: "{colors.avatar-5-ink-dark}"
-  avatar-6:
-    rounded: "{rounded.full}"
-    height: "{spacing.avatar}"
-    width: "{spacing.avatar}"
-    backgroundColor: "{colors.avatar-6}"
-    textColor: "{colors.avatar-6-ink}"
-  avatar-6-dark:
-    rounded: "{rounded.full}"
-    height: "{spacing.avatar}"
-    width: "{spacing.avatar}"
-    backgroundColor: "{colors.avatar-6-dark}"
-    textColor: "{colors.avatar-6-ink-dark}"
-  avatar-7:
-    rounded: "{rounded.full}"
-    height: "{spacing.avatar}"
-    width: "{spacing.avatar}"
-    backgroundColor: "{colors.avatar-7}"
-    textColor: "{colors.avatar-7-ink}"
-  avatar-7-dark:
-    rounded: "{rounded.full}"
-    height: "{spacing.avatar}"
-    width: "{spacing.avatar}"
-    backgroundColor: "{colors.avatar-7-dark}"
-    textColor: "{colors.avatar-7-ink-dark}"
-  avatar-8:
-    rounded: "{rounded.full}"
-    height: "{spacing.avatar}"
-    width: "{spacing.avatar}"
-    backgroundColor: "{colors.avatar-8}"
-    textColor: "{colors.avatar-8-ink}"
-  avatar-8-dark:
-    rounded: "{rounded.full}"
-    height: "{spacing.avatar}"
-    width: "{spacing.avatar}"
-    backgroundColor: "{colors.avatar-8-dark}"
-    textColor: "{colors.avatar-8-ink-dark}"
-  chip-red:
-    rounded: "{rounded.full}"
-    height: "{spacing.chip}"
-    typography: "{typography.caption}"
-    backgroundColor: "{colors.chip-red-soft}"
-    textColor: "{colors.chip-red-ink}"
-  chip-red-dark:
-    rounded: "{rounded.full}"
-    height: "{spacing.chip}"
-    typography: "{typography.caption}"
-    backgroundColor: "{colors.chip-red-soft-dark}"
-    textColor: "{colors.chip-red-ink-dark}"
-  chip-amber:
-    rounded: "{rounded.full}"
-    height: "{spacing.chip}"
-    typography: "{typography.caption}"
-    backgroundColor: "{colors.chip-amber-soft}"
-    textColor: "{colors.chip-amber-ink}"
-  chip-amber-dark:
-    rounded: "{rounded.full}"
-    height: "{spacing.chip}"
-    typography: "{typography.caption}"
-    backgroundColor: "{colors.chip-amber-soft-dark}"
-    textColor: "{colors.chip-amber-ink-dark}"
-  chip-green:
-    rounded: "{rounded.full}"
-    height: "{spacing.chip}"
-    typography: "{typography.caption}"
-    backgroundColor: "{colors.chip-green-soft}"
-    textColor: "{colors.chip-green-ink}"
-  chip-green-dark:
-    rounded: "{rounded.full}"
-    height: "{spacing.chip}"
-    typography: "{typography.caption}"
-    backgroundColor: "{colors.chip-green-soft-dark}"
-    textColor: "{colors.chip-green-ink-dark}"
-  chip-teal:
-    rounded: "{rounded.full}"
-    height: "{spacing.chip}"
-    typography: "{typography.caption}"
-    backgroundColor: "{colors.chip-teal-soft}"
-    textColor: "{colors.chip-teal-ink}"
-  chip-teal-dark:
-    rounded: "{rounded.full}"
-    height: "{spacing.chip}"
-    typography: "{typography.caption}"
-    backgroundColor: "{colors.chip-teal-soft-dark}"
-    textColor: "{colors.chip-teal-ink-dark}"
-  chip-violet:
-    rounded: "{rounded.full}"
-    height: "{spacing.chip}"
-    typography: "{typography.caption}"
-    backgroundColor: "{colors.chip-violet-soft}"
-    textColor: "{colors.chip-violet-ink}"
-  chip-violet-dark:
-    rounded: "{rounded.full}"
-    height: "{spacing.chip}"
-    typography: "{typography.caption}"
-    backgroundColor: "{colors.chip-violet-soft-dark}"
-    textColor: "{colors.chip-violet-ink-dark}"
-  chip-pink:
-    rounded: "{rounded.full}"
-    height: "{spacing.chip}"
-    typography: "{typography.caption}"
-    backgroundColor: "{colors.chip-pink-soft}"
-    textColor: "{colors.chip-pink-ink}"
-  chip-pink-dark:
-    rounded: "{rounded.full}"
-    height: "{spacing.chip}"
-    typography: "{typography.caption}"
-    backgroundColor: "{colors.chip-pink-soft-dark}"
-    textColor: "{colors.chip-pink-ink-dark}"
   place-idle:
     typography: "{typography.body}"
     textColor: "{colors.ink-meta}"
@@ -829,18 +1049,18 @@ components:
   place-selected-dark:
     typography: "{typography.body}"
     textColor: "{colors.accent-ink-dark}"
-  button-muted:
-    backgroundColor: "{colors.fill-disabled}"
-  button-muted-dark:
-    backgroundColor: "{colors.fill-disabled-dark}"
-  button-muted-label:
-    textColor: "{colors.ink-disabled}"
-  button-muted-label-dark:
-    textColor: "{colors.ink-disabled-dark}"
   checkbox-mark:
+    height: "{spacing.icon-meta}"
+    width: "{spacing.icon-meta}"
     textColor: "{colors.on-accent}"
   checkbox-mark-dark:
+    height: "{spacing.icon-meta}"
+    width: "{spacing.icon-meta}"
     textColor: "{colors.on-accent-dark}"
+  chip-remove-hit:
+    height: "{spacing.chip}"
+    width: "{spacing.chip}"
+    rounded: "{rounded.full}"
   code:
     rounded: "{rounded.card}"
     backgroundColor: "{colors.group}"
@@ -850,24 +1070,38 @@ components:
     backgroundColor: "{colors.group-dark}"
     padding: "{spacing.card}"
   count:
-    rounded: "{rounded.full}"
-    backgroundColor: "{colors.group}"
+    height: "{spacing.chip}"
     width: "{spacing.chip}"
+    rounded: "{rounded.full}"
+    backgroundColor: "{colors.fill-neutral}"
+  count-dark:
+    height: "{spacing.chip}"
+    width: "{spacing.chip}"
+    rounded: "{rounded.full}"
+    backgroundColor: "{colors.fill-neutral-dark}"
+  count-label:
     typography: "{typography.caption}"
     textColor: "{colors.ink-meta}"
-  count-dark:
-    rounded: "{rounded.full}"
-    backgroundColor: "{colors.group-dark}"
-    width: "{spacing.chip}"
+  count-label-dark:
     typography: "{typography.caption}"
     textColor: "{colors.ink-meta-dark}"
   diff-gutter:
     textColor: "{colors.ink-meta}"
   diff-gutter-dark:
     textColor: "{colors.ink-meta-dark}"
+  field-glyph:
+    textColor: "{colors.ink-meta}"
+  field-glyph-dark:
+    textColor: "{colors.ink-meta-dark}"
   field-placeholder:
     textColor: "{colors.ink-meta}"
   field-placeholder-dark:
+    textColor: "{colors.ink-meta-dark}"
+  field-unit:
+    typography: "{typography.body}"
+    textColor: "{colors.ink-meta}"
+  field-unit-dark:
+    typography: "{typography.body}"
     textColor: "{colors.ink-meta-dark}"
   group:
     rounded: "{rounded.card}"
@@ -875,26 +1109,6 @@ components:
   group-dark:
     rounded: "{rounded.card}"
     backgroundColor: "{colors.group-dark}"
-  icon-button:
-    rounded: "{rounded.control}"
-    height: "{spacing.control}"
-    width: "{spacing.control}"
-    textColor: "{colors.ink-body}"
-  icon-button-dark:
-    rounded: "{rounded.control}"
-    height: "{spacing.control}"
-    width: "{spacing.control}"
-    textColor: "{colors.ink-body-dark}"
-  icon-button-bar:
-    rounded: "{rounded.control}"
-    height: "{spacing.control-compact}"
-    width: "{spacing.control-compact}"
-    textColor: "{colors.ink-body}"
-  icon-button-bar-dark:
-    rounded: "{rounded.control}"
-    height: "{spacing.control-compact}"
-    width: "{spacing.control-compact}"
-    textColor: "{colors.ink-body-dark}"
   meter-fill:
     rounded: "{rounded.full}"
     backgroundColor: "{colors.accent}"
@@ -907,6 +1121,12 @@ components:
   meter-track-dark:
     rounded: "{rounded.full}"
     backgroundColor: "{colors.group-dark}"
+  otp-digit:
+    typography: "{typography.heading}"
+    textColor: "{colors.ink-body}"
+  otp-digit-dark:
+    typography: "{typography.heading}"
+    textColor: "{colors.ink-body-dark}"
   pending-bar:
     rounded: "{rounded.control}"
     backgroundColor: "{colors.group}"
@@ -929,6 +1149,14 @@ components:
     backgroundColor: "{colors.wash-selected}"
   place-row-selected-dark:
     backgroundColor: "{colors.wash-selected-dark}"
+  popover:
+    padding: "{spacing.float}"
+    backgroundColor: "{colors.raised}"
+    rounded: "{rounded.popover}"
+  popover-dark:
+    padding: "{spacing.float}"
+    backgroundColor: "{colors.raised-dark}"
+    rounded: "{rounded.popover}"
   scrim:
     backgroundColor: "{colors.scrim}"
   scrim-dark:
@@ -947,22 +1175,66 @@ components:
     backgroundColor: "{colors.raised-dark}"
   sheet-centered:
     rounded: "{rounded.dialog}"
-  status-chip:
+  slider-fill:
+    height: "{spacing.track}"
     rounded: "{rounded.full}"
-    backgroundColor: "{colors.group}"
-    height: "{spacing.control}"
-  status-chip-dark:
+    backgroundColor: "{colors.toggle-on}"
+  slider-fill-dark:
+    height: "{spacing.track}"
     rounded: "{rounded.full}"
-    backgroundColor: "{colors.group-dark}"
-    height: "{spacing.control}"
-  switch-thumb:
+    backgroundColor: "{colors.toggle-on-dark}"
+  slider-label:
+    typography: "{typography.body}"
+    textColor: "{colors.ink-body}"
+  slider-label-dark:
+    typography: "{typography.body}"
+    textColor: "{colors.ink-body-dark}"
+  slider-rest:
+    height: "{spacing.track}"
     rounded: "{rounded.full}"
-    backgroundColor: "{colors.switch-thumb}"
-  switch-thumb-dark:
+    backgroundColor: "{colors.edge}"
+  slider-rest-dark:
+    height: "{spacing.track}"
     rounded: "{rounded.full}"
-    backgroundColor: "{colors.switch-thumb-dark}"
+    backgroundColor: "{colors.edge-dark}"
+  slider-thumb:
+    height: "{spacing.thumb}"
+    width: "{spacing.thumb}"
+    rounded: "{rounded.full}"
+    backgroundColor: "{colors.surface}"
+  slider-thumb-dark:
+    height: "{spacing.thumb}"
+    width: "{spacing.thumb}"
+    rounded: "{rounded.full}"
+    backgroundColor: "{colors.surface-dark}"
+  slider-track:
+    height: "{spacing.target}"
+  slider-value:
+    typography: "{typography.meta}"
+    textColor: "{colors.ink-meta}"
+  slider-value-dark:
+    typography: "{typography.meta}"
+    textColor: "{colors.ink-meta-dark}"
+  spinner:
+    height: "{spacing.spinner}"
+    width: "{spacing.spinner}"
+  spinner-arc:
+    rounded: "{rounded.full}"
+  spinner-track:
+    rounded: "{rounded.full}"
+  status-label:
+    typography: "{typography.meta}"
+    textColor: "{colors.ink-meta}"
+  status-label-dark:
+    typography: "{typography.meta}"
+    textColor: "{colors.ink-meta-dark}"
+  status-open:
+    rounded: "{rounded.full}"
+    height: "{spacing.target}"
   table-cell:
     height: "{spacing.field}"
+  text-area-value:
+    height: "{spacing.text-area}"
   toast:
     rounded: "{rounded.card}"
     backgroundColor: "{colors.raised}"
@@ -1075,11 +1347,6 @@ Colors are OKLCH, named by the place they draw. Neutrals cast on one hue at a fi
 | `act-danger-hover` | `oklch(0.453 0.167 25)` | `oklch(0.741 0.157 24.925)` | a confirm's destructive act's fill; `-hover`, `-press` and `-pending` its states |
 | `act-danger-press` | `oklch(0.402 0.148 25)` | `oklch(0.767 0.137 24.844)` | a confirm's destructive act's fill; `-hover`, `-press` and `-pending` its states |
 | `act-danger-pending` | `oklch(0.661 0.133 25)` | `oklch(0.545 0.124 24.405)` | a confirm's destructive act's fill; `-hover`, `-press` and `-pending` its states |
-| `act-ink` | `oklch(0.2 0.008 264)` | `oklch(0.97 0.002 264)` | the ink act, a screen's dark primary; `-hover`, `-press` and `-pending` its states |
-| `on-act-ink` | `oklch(0.974 0.002 264)` | `oklch(0.16 0.005 264)` | the ink act's label |
-| `act-ink-hover` | `oklch(0.293 0.007 264)` | `oklch(0.873 0.002 264)` | the ink act, a screen's dark primary; `-hover`, `-press` and `-pending` its states |
-| `act-ink-press` | `oklch(0.37 0.007 264)` | `oklch(0.792 0.003 264)` | the ink act, a screen's dark primary; `-hover`, `-press` and `-pending` its states |
-| `act-ink-pending` | `oklch(0.432 0.006 264)` | `oklch(0.727 0.003 264)` | the ink act, a screen's dark primary; `-hover`, `-press` and `-pending` its states |
 | `switch-off` | `oklch(0.62 0.01 264)` | `oklch(0.53 0.01 264)` | a switch's track off; `-hover` under the pointer |
 | `switch-off-hover` | `oklch(0.557 0.01 264)` | `oklch(0.596 0.009 264)` | a switch's track off; `-hover` under the pointer |
 | `toggle-on` | `oklch(0.52 0.19 264)` | `oklch(0.54 0.19 264)` | a toggle on: a switch's track, a checked box, a slider's fill; `-hover` under the pointer |
@@ -1114,7 +1381,8 @@ Spacing roles are multiples of a 4 px base, picked per density, named by what th
 | `control-x` | 12px | 16px | a control's inline padding |
 | `pair` | 6px | 8px | between paired elements: label over input, title over description |
 | `rows` | 2px | 4px | between rows in a menu or a nav list |
-| `card` | 16px | 16px | a card's or a popover's inset |
+| `card` | 16px | 16px | a card's inset |
+| `float` | 4px | 4px | a floating surface's inset: a select's list, a menu, a picker popover |
 | `fields` | 16px | 24px | between fields |
 | `sections` | 32px | 40px | between sections of a page |
 | `page` | 24px | 16px | the page inset |
@@ -1146,7 +1414,8 @@ Sizes are heights and squares in the same namespace. Density is a theme, never a
 | `icon-control` | 16px | 20px | an icon inside a control |
 | `check` | 16px | 20px | a checkbox's box |
 | `track` | 2px | 4px | a slider's track thickness |
-| `otp` | 44px | 48px | a one-time-code box, square |
+| `otp` | 44px | 48px | a one-time-code box's largest side; the box is square and shrinks with its row |
+| `text-area` | 60px | 72px | a text area's least value height: three body line boxes |
 
 Widths of lifted layers, never stretched to their container: `chip-label` 18ch, `popover` 240px, `toast` 360px, `dialog` 440px, `sheet` 640px. Breakpoints: `tablet` 768px, `desktop` 1024px, `wide` 1440px; they are the only responsive variants.
 
@@ -1169,27 +1438,27 @@ A card at rest has a hairline and no shadow. Two levels lift a layer, each per m
 
 ## Components
 
-The front matter's components are the matrix cells: one entry per axis value of each family, a family's label layer folded into it, and one per single cell. Borders, weights, gaps and side paddings stay in the class strings. Every component the roster ships, the families it draws and the states it has:
+The front matter's components are the matrix cells: one entry per axis value of each family, a family's label layer folded into it, and one per single cell. Borders, weights, gaps and side paddings stay in the class strings. Every component the roster ships, the families, family cells and single cells it draws and the states it has:
 
 | Component | Layer | Draws | States |
 | --- | --- | --- | --- |
-| `Text` | atom | `TEXT`, `TEXT_STRONG` | rest |
-| `Icon` | atom | none | rest |
-| `Button` | atom | `BUTTON`, `BUTTON_LABEL` | rest, hover, focus, active, disabled, loading |
-| `IconButton` | atom | none | rest, hover, focus, active |
-| `Count` | atom | none | rest |
-| `Status` | atom | `STATUS` | rest, hover, focus, active |
-| `Chip` | atom | `CHIP` | rest |
-| `Input` | atom | `FIELD` | rest, hover, focus, error |
-| `TextArea` | atom | `FIELD` | rest, hover, focus, error |
-| `InputOtp` | atom | `OTP_BOX`, `PLACE` | rest, focus, loading, error |
-| `EnumInput` | atom | `FIELD` | rest, hover, focus, error |
-| `Slider` | atom | none | rest, hover, focus, active |
-| `Switch` | atom | `SWITCH` | rest, hover, focus, active, selected |
-| `Checkbox` | atom | `CHECKBOX` | rest, hover, focus, active, selected |
-| `Spinner` | atom | none | rest |
-| `Avatar` | atom | `AVATAR` | rest |
-| `Link` | atom | none | rest, hover, focus, active |
+| `Text` | atom | `TEXT.role.body`, `TEXT.role.meta`, `TEXT_STRONG.role.body`, `TEXT_STRONG.role.meta` | rest |
+| `Icon` | atom | `ICON` | rest |
+| `Button` | atom | `BUTTON`, `BUTTON_LABEL`, `ICON.fit.control` | rest, hover, focus, active, disabled, loading |
+| `IconButton` | atom | `ICON_BUTTON` | rest, hover, focus, active |
+| `Count` | atom | `COUNT`, `COUNT_LABEL` | rest |
+| `Status` | atom | `STATUS`, `STATUS_DOT`, `STATUS_LABEL`, `STATUS_OPEN` | rest, hover, focus, active |
+| `Chip` | atom | `CHIP`, `CHIP_LABEL`, `CHIP_REMOVE_HIT` | rest, hover, focus, active |
+| `Input` | atom | `FIELD`, `FIELD_VALUE`, `FIELD_PLACEHOLDER`, `FIELD_UNIT`, `FIELD_GLYPH` | rest, hover, focus, disabled, error |
+| `TextArea` | atom | `TEXT_AREA`, `TEXT_AREA_BUDGET`, `TEXT_AREA_VALUE`, `FIELD_VALUE`, `FIELD_PLACEHOLDER` | rest, hover, focus, disabled, error |
+| `InputOtp` | atom | `OTP`, `OTP_BOX`, `OTP_DIGIT`, `TEXT.role.meta`, `SPINNER` | rest, focus, loading, error |
+| `Select` | atom | `FIELD`, `FIELD_VALUE`, `FIELD_PLACEHOLDER`, `FIELD_GLYPH`, `POPOVER`, `RHYTHM.unit.rows`, `ROW`, `TEXT.role.meta`, `TEXT_STRONG.role.meta` | rest, hover, focus, selected, disabled, error |
+| `Slider` | atom | `SLIDER`, `SLIDER_HEAD`, `SLIDER_LABEL`, `SLIDER_VALUE`, `SLIDER_TRACK`, `SLIDER_FILL`, `SLIDER_REST`, `SLIDER_THUMB` | rest, hover, focus, active, disabled |
+| `Switch` | atom | `SWITCH`, `SWITCH_THUMB` | rest, hover, focus, active, disabled, selected |
+| `Checkbox` | atom | `CHECKBOX`, `CHECKBOX_MARK` | rest, hover, focus, active, disabled, selected |
+| `Spinner` | atom | `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC` | rest |
+| `Avatar` | atom | `AVATAR`, `AVATAR_LABEL` | rest |
+| `Link` | atom | `LINK` | rest, hover, focus, active |
 | `Place` | layout | none | rest |
 | `Screen` | layout | none | rest |
 | `Split` | layout | none | rest, empty |
@@ -1227,6 +1496,28 @@ The front matter's components are the matrix cells: one entry per axis value of 
 | `Meter` | content | none | rest, loading |
 | `BarChart` | content | none | rest, loading |
 | `QrCode` | content | none | rest, loading |
+
+A component with an approved artboard owns the tokens it may draw: a cell it draws that spells a type role, a colour, a radius, a spacing role, a size or a shadow outside its row is a contract error. A colour ending in `-` is a family (`chip-` is every chip role).
+
+| Component | Roles | Colours | Radii | Spacing | Sizes | Elevation |
+| --- | --- | --- | --- | --- | --- | --- |
+| `Text` | `body`, `meta` | `ink-body`, `ink-meta` | none | none | `measure` | none |
+| `Icon` | none | none | none | none | `icon-meta`, `icon`, `icon-control` | none |
+| `Button` | `body`, `meta` | `act-`, `on-act-`, `edge`, `ink-body`, `danger`, `wash-hover`, `wash-press`, `fill-disabled`, `ink-disabled`, `ink-error`, `ring` | `control` | `inside`, `control-x`, `pair` | `control`, `control-compact`, `field`, `icon-control` | none |
+| `IconButton` | none | `ink-meta`, `ink-body`, `wash-hover`, `wash-press`, `ink-disabled`, `ring` | `control` | none | `control`, `control-compact` | none |
+| `Count` | `caption` | `fill-neutral`, `ink-meta` | `full` | `inside` | `chip` | none |
+| `Status` | `meta` | `accent-ink`, `ink-meta`, `ok`, `warn`, `danger`, `wash-hover`, `wash-press`, `ring` | `full` | `inside` | `dot`, `target` | none |
+| `Chip` | `caption` | `chip-`, `wash-hover`, `wash-press`, `ring` | `full` | `inside` | `chip`, `chip-label` | none |
+| `Input` | `body`, `code` | `surface`, `edge`, `edge-hover`, `edge-error`, `ink-body`, `ink-meta`, `fill-disabled`, `ink-disabled`, `ring` | `control` | `inside`, `control-x` | `field`, `control` | none |
+| `TextArea` | `body`, `code`, `caption` | `surface`, `edge`, `edge-hover`, `edge-error`, `ink-body`, `ink-meta`, `ink-error`, `fill-disabled`, `ink-disabled`, `ring` | `control` | `rows`, `control-x`, `inside` | `text-area` | none |
+| `InputOtp` | `heading`, `meta` | `surface`, `edge`, `edge-error`, `ink-body`, `ink-meta`, `ring` | `control` | `inside`, `pair` | `otp`, `spinner` | none |
+| `Select` | `body`, `code`, `meta` | `surface`, `edge`, `edge-hover`, `edge-error`, `ink-body`, `ink-meta`, `fill-disabled`, `ink-disabled`, `ring`, `raised`, `edge-raised`, `wash-hover`, `wash-press`, `wash-selected` | `control`, `row`, `popover` | `inside`, `control-x`, `pair`, `rows`, `float` | `field`, `control`, `row` | `float` |
+| `Slider` | `body`, `meta` | `ink-body`, `ink-meta`, `toggle-`, `edge`, `edge-strong`, `surface`, `wash-hover`, `wash-press`, `fill-disabled`, `ink-disabled`, `ring` | `full` | `pair`, `fields` | `target`, `track`, `thumb` | none |
+| `Switch` | none | `switch-`, `toggle-`, `fill-disabled`, `ink-disabled`, `ring` | `full` | none | `switch-w`, `switch-h`, `thumb`, `switch-inset`, `switch-travel`, `target` | none |
+| `Checkbox` | none | `edge-strong`, `surface`, `toggle-`, `on-accent`, `wash-hover`, `wash-press`, `edge`, `fill-disabled`, `ink-disabled`, `ring` | `chip` | none | `check`, `target`, `icon-meta` | none |
+| `Spinner` | none | none | `full` | none | `spinner` | none |
+| `Avatar` | `caption` | `avatar-` | `full` | none | `avatar` | none |
+| `Link` | none | `accent-ink`, `ring` | none | none | `target` | none |
 
 ### Motion
 

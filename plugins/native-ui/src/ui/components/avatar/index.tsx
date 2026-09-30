@@ -1,7 +1,10 @@
-import { avatar, avatarStep, text } from "@fcalell/ui-core/variants";
+import { avatar, avatarLabel, avatarStep } from "@fcalell/ui-core/variants";
+import { useState } from "react";
 import { Image, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
+
+const CIRCLE = "items-center justify-center overflow-hidden";
 
 export interface AvatarProps extends Closed {
 	name: string;
@@ -17,28 +20,32 @@ function initials(name: string): string {
 		.join("");
 }
 
-// A circle: the image, else the name's initials on the ladder step its hash
-// picks, so one name keeps one fill.
+// The image, else (none, or one that failed to load) the name's initials on
+// the fill step its hash picks, so one name keeps one fill.
 export function Avatar({ name, src }: AvatarProps) {
+	const [failed, setFailed] = useState<string>();
+	const step = avatarStep(name);
+	// Keyed by the URL that failed, so a new src is tried again.
+	if (src && src !== failed)
+		return (
+			<Image
+				source={{ uri: src }}
+				accessible
+				accessibilityRole="image"
+				accessibilityLabel={name}
+				accessibilityIgnoresInvertColors
+				onError={() => setFailed(src)}
+				className={avatar()}
+			/>
+		);
 	return (
 		<View
+			accessible
+			accessibilityRole="image"
 			accessibilityLabel={name}
-			className={cn(
-				avatar({ step: avatarStep(name) }),
-				"size-8 items-center justify-center overflow-hidden",
-			)}
+			className={cn(avatar({ step }), CIRCLE)}
 		>
-			{src ? (
-				<Image
-					source={{ uri: src }}
-					className="size-8"
-					accessibilityIgnoresInvertColors
-				/>
-			) : (
-				<RNText className={cn(text({ role: "caption" }), "text-ink-body")}>
-					{initials(name)}
-				</RNText>
-			)}
+			<RNText className={avatarLabel({ step })}>{initials(name)}</RNText>
 		</View>
 	);
 }

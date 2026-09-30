@@ -19,12 +19,10 @@ import {
 	WIDTHS,
 } from "@fcalell/ui-core/tokens";
 import {
-	BUTTON_MUTED,
-	BUTTON_MUTED_LABEL,
 	button,
 	buttonLabel,
 	field,
-	SWITCH_THUMB,
+	switchThumb,
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
@@ -431,10 +429,10 @@ function States() {
 							className={cn(
 								"flex items-center justify-center",
 								button(),
-								BUTTON_MUTED,
+								"bg-fill-disabled",
 							)}
 						>
-							<p className={cn(buttonLabel(), BUTTON_MUTED_LABEL)}>disabled</p>
+							<p className={cn(buttonLabel(), "text-ink-disabled")}>disabled</p>
 						</div>
 					</div>
 				))}
@@ -490,7 +488,7 @@ function States() {
 									`bg-${track}`,
 								)}
 							>
-								<div className={cn("size-thumb", SWITCH_THUMB)} />
+								<div className={switchThumb()} />
 							</div>
 							<p className={text({ role: "caption" })}>{track}</p>
 						</div>
