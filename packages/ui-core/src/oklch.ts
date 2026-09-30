@@ -46,6 +46,14 @@ export function oklchToLinear(
 	return [clamp(r), clamp(g), clamp(b)];
 }
 
+function encode(x: number): number {
+	return x <= 0.0031308 ? 12.92 * x : 1.055 * x ** (1 / 2.4) - 0.055;
+}
+
+function decode(x: number): number {
+	return x <= 0.04045 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4;
+}
+
 // Gamma-encoded sRGB channels in [0, 255].
 export function oklchToRgb(
 	l: number,
@@ -53,17 +61,38 @@ export function oklchToRgb(
 	h: number,
 ): [number, number, number] {
 	const [r, g, b] = oklchToLinear(l, c, h).map((x) =>
-		Math.round(
-			(x <= 0.0031308 ? 12.92 * x : 1.055 * x ** (1 / 2.4) - 0.055) * 255,
-		),
+		Math.round(encode(x) * 255),
 	);
 	return [r ?? 0, g ?? 0, b ?? 0];
 }
 
+function relative([r, g, b]: readonly number[]): number {
+	return 0.2126 * (r ?? 0) + 0.7152 * (g ?? 0) + 0.0722 * (b ?? 0);
+}
+
 // WCAG 2 relative luminance and the contrast ratio between two opaque colors.
 export function luminance(l: number, c: number, h: number): number {
-	const [r, g, b] = oklchToLinear(l, c, h);
-	return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+	return relative(oklchToLinear(l, c, h));
+}
+
+export interface Oklch {
+	l: number;
+	c: number;
+	h: number;
+}
+
+// The luminance of a veil at `alpha` drawn over an opaque ground, blended as
+// a browser composites a translucent background: in gamma-encoded sRGB.
+export function veiledLuminance(
+	veil: Oklch,
+	alpha: number,
+	ground: Oklch,
+): number {
+	const top = oklchToLinear(veil.l, veil.c, veil.h).map(encode);
+	const bottom = oklchToLinear(ground.l, ground.c, ground.h).map(encode);
+	return relative(
+		top.map((x, i) => decode(x * alpha + (bottom[i] ?? 0) * (1 - alpha))),
+	);
 }
 
 export function contrastRatio(a: number, b: number): number {

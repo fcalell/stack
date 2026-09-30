@@ -12,7 +12,6 @@ import {
 	type FontWeight,
 	LABEL,
 	MODES,
-	MONO_FEATURES,
 	type Mode,
 	RADIUS_ROLES,
 	SHADOW_LEVELS,
@@ -56,7 +55,8 @@ const COLOR_USE: Record<string, string> = {
 	"ok-soft": "the ground under an `ok` mark, an added line",
 	warn: "the `attention` mark",
 	"warn-soft": "the ground under a `warn` mark",
-	danger: "the `failed` mark, a destructive act's label, an error ring",
+	danger:
+		"the `failed` mark, a destructive act's label, an error ring, the filled destructive act",
 	"danger-soft": "the ground under a `danger` mark, a removed line",
 	"on-danger": "text on a `danger` fill, the one saturated state",
 	chip: "a `Chip`'s family: the mark (a dot, a chart series), the soft ground, the ink on the soft",
@@ -67,6 +67,7 @@ const COLOR_USE: Record<string, string> = {
 	"wash-selected-hover": "a selected row under the pointer",
 	skeleton: "a loading bar",
 	"fill-disabled": "a disabled act's or chip's box",
+	"fill-neutral": "a resting neutral ground: a count's pill, a grey chip",
 	ring: "the focus ring",
 	"selected-outline": "a selected tile's outline",
 	"edge-hover": "a field's boundary under the pointer",
@@ -76,16 +77,20 @@ const COLOR_USE: Record<string, string> = {
 	"act-accent":
 		"the primary act's fill; `-hover`, `-press` and `-pending` its states",
 	"on-act-accent": "the primary act's label",
+	"act-danger":
+		"a confirm's destructive act's fill; `-hover`, `-press` and `-pending` its states",
+	"on-act-danger": "the filled destructive act's label",
 	"act-ink":
 		"the ink act, a screen's dark primary; `-hover`, `-press` and `-pending` its states",
 	"on-act-ink": "the ink act's label",
 	"switch-off": "a switch's track off; `-hover` under the pointer",
-	"switch-on": "a switch's track on; `-hover` under the pointer",
+	"toggle-on":
+		"a toggle on: a switch's track, a checked box, a slider's fill; `-hover` under the pointer",
 	"switch-thumb": "a switch's knob",
 };
 
 const TYPE_USE: Record<TypeRole, string> = {
-	display: "a display number, one per screen",
+	display: "a display number, one per screen, in tabular figures",
 	title: "the page's name, once per screen",
 	heading: "a section's or a card's name, never inside a row",
 	body: "the primary line of anything: prose, a row, a field, a menu item",
@@ -123,7 +128,14 @@ const SIZE_USE: Record<(typeof SIZES)[number], string> = {
 	"switch-h": "a switch's height",
 	thumb: "a switch's knob",
 	"switch-inset": "the knob's inset from its track",
+	"switch-travel": "the knob's travel: the width less the knob and both insets",
 	skeleton: "a skeleton bar's height",
+	"icon-meta": "an icon beside meta or caption text",
+	icon: "an icon beside body text",
+	"icon-control": "an icon inside a control",
+	check: "a checkbox's box",
+	track: "a slider's track thickness",
+	otp: "a one-time-code box, square",
 };
 
 const RADIUS_USE: Record<(typeof RADIUS_ROLES)[number], string> = {
@@ -297,9 +309,6 @@ function frontMatter(resolved: ResolvedTheme): string[] {
 		const tracked = TRACKED_ROLES.find((name) => name === role);
 		if (tracked)
 			lines.push(`    letterSpacing: ${q(resolved.tracking[tracked])}`);
-		if (spec.family === "mono") {
-			lines.push(`    fontFeature: ${q(MONO_FEATURES)}`);
-		}
 	}
 	lines.push("rounded:");
 	for (const role of RADIUS_ROLES) {
@@ -340,7 +349,7 @@ function useOf(name: string): string {
 		.replace(/^(chip)-[a-z]+(-soft|-ink)?$/, "$1")
 		.replace(/^(avatar)-\d(-ink)?$/, "$1")
 		.replace(
-			/^(act-accent|act-ink|switch-off|switch-on)-(hover|press|pending)$/,
+			/^(act-accent|act-danger|act-ink|switch-off|toggle-on)-(hover|press|pending)$/,
 			"$1",
 		);
 	return COLOR_USE[base] ?? "";
@@ -361,10 +370,10 @@ function body(resolved: ResolvedTheme): string[] {
 			["Knob", "Value"],
 			[
 				["accentHue", String(knobs.accentHue)],
-				["density", code(knobs.density)],
+				["castHue", `${knobs.castHue}, the accent's hue unless set`],
 				[
 					"fonts",
-					`sans ${knobs.fonts.sans ? code(knobs.fonts.sans) : "the platform's"}, mono ${code(knobs.fonts.mono)}`,
+					`sans ${code(knobs.fonts.sans)}, mono ${code(knobs.fonts.mono)}`,
 				],
 				["defaultMode", resolved.defaultMode ?? "the system preference"],
 			],
@@ -372,7 +381,7 @@ function body(resolved: ResolvedTheme): string[] {
 		"",
 		"## Colors",
 		"",
-		"Colors are OKLCH, named by the place they draw. Cool neutrals on hue 270, one accent hue (the only one a knob moves; its chroma is held inside sRGB at any hue), three status hues, six chip families, eight avatar steps. A wash is the body ink at an alpha, so it sits on any surface as one more step. Inside a group or a lifted layer the container re-points `edge` to `edge-raised`, so a part never picks between them.",
+		"Colors are OKLCH, named by the place they draw. Neutrals cast on one hue at a fixed chroma per role (the cast knob moves the hue, never the chroma, so no contrast moves), one accent hue (its chroma is held inside sRGB at any hue), three status hues, six chip families, eight avatar steps. A wash is the body ink at an alpha, so it sits on any surface as one more step. Inside a group or a lifted layer the container re-points `edge` to `edge-raised`, so a part never picks between them.",
 		"",
 		...table(
 			["Role", "Light", "Dark", "Draws"],
@@ -402,7 +411,7 @@ function body(resolved: ResolvedTheme): string[] {
 			]),
 		),
 		"",
-		`Tracking: ${TRACKED_ROLES.map((role) => `${code(role)} ${resolved.tracking[role]}`).join(", ")}; the rest 0. \`sans\` is ${code(resolved.fonts.sans)}; \`mono\` is ${code(resolved.fonts.mono)} with its ligatures off. Each named family is followed by its metric fallback face. Running text wraps at \`measure\`, ${resolved.widths.measure}.`,
+		`Tracking: ${TRACKED_ROLES.map((role) => `${code(role)} ${resolved.tracking[role]}`).join(", ")}; the rest 0. \`sans\` is ${code(resolved.fonts.sans)}; \`mono\` is ${code(resolved.fonts.mono)}. Each named family is followed by its metric fallback face. Running text wraps at \`measure\`, ${resolved.widths.measure}.`,
 		"",
 		"## Layout",
 		"",
@@ -418,7 +427,7 @@ function body(resolved: ResolvedTheme): string[] {
 			]),
 		),
 		"",
-		`Sizes are heights and squares in the same namespace. Density is a theme, never a breakpoint: \`desktop\` draws the desktop set where the primary pointer is fine and the touch set on a coarse one; \`touch\` draws the touch set everywhere; a \`data-density\` attribute on the web root pins either. Every touch target is at least ${resolved.sizes.touch.target}; on the desktop every interactive part keeps a ${resolved.sizes.desktop.target} hit area whatever it draws.`,
+		`Sizes are heights and squares in the same namespace. Density is a theme, never a breakpoint, and never a knob: the web draws the desktop set where the primary pointer is fine and the touch set everywhere else, native draws the touch set, and a \`data-density\` attribute on the web root pins either. Every touch target is at least ${resolved.sizes.touch.target}; on the desktop every interactive part keeps a ${resolved.sizes.desktop.target} hit area whatever it draws.`,
 		"",
 		...table(
 			["Size", "Desktop", "Touch", "Is"],

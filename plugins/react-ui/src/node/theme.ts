@@ -1,8 +1,8 @@
 import type { ResolvedTheme } from "@fcalell/ui-core/derive";
 import {
 	densityTokens,
-	finePointerTokens,
 	modeTokens,
+	raisedGroundTokens,
 	reducedMotionTokens,
 	rootTokens,
 	shadowUtilities,
@@ -14,6 +14,7 @@ import {
 	EASINGS,
 	MODES,
 	RADIUS_ROLES,
+	RAISED_GROUNDS,
 	SHADOW_LEVELS,
 	SIZES,
 	SPACING_ROLES,
@@ -25,7 +26,9 @@ import type { CssBlock, CssLayer, CssSourceInline } from "../types.ts";
 import { renderMediaRule, renderRule } from "./codegen.ts";
 
 // The tokens the web owns on top of the shared contract: the keyframe
-// animations in `globals.css`, timed by the contract's rungs and curves.
+// animations, timed by the contract's rungs and curves. `content-show` and
+// `content-hide` are keyframes in `globals.css`; `spin` is Tailwind's own,
+// which it emits beside this `--animate-spin`.
 const WEB_ONLY: Record<string, string> = {
 	"--animate-content-show":
 		"content-show var(--transition-duration-base) var(--ease-out)",
@@ -53,7 +56,7 @@ export function tokenSources(): CssSourceInline[] {
 	return [
 		`{bg,text,border,outline}-${set(COLOR_NAMES)}`,
 		`{p,px,py,pt,pb,pl,pr,gap,gap-x,gap-y,w}-${set(SPACING_ROLES)}`,
-		`{h,w,min-h,min-w,size}-${set(SIZES)}`,
+		`{h,w,min-h,min-w,size,p,translate-x}-${set(SIZES)}`,
 		`{w,max-w}-${set(WIDTHS)}`,
 		`{text,leading}-${set(TYPE_ROLES)}`,
 		`tracking-${set(TRACKED_ROLES)}`,
@@ -80,30 +83,26 @@ export function rootLayer(resolved: ResolvedTheme): CssLayer {
 	return { name: "base", content: renderRule(":root", rootTokens(resolved)) };
 }
 
-// `density: "desktop"` draws the desktop set where the primary pointer is
-// fine: it overrides the seeded touch set in `@layer base`, the same cascade
-// the dark layer rides, so every cell that names a size or a type role
-// (`min-h-control`, `text-body`) follows with no class of its own. A touch
-// screen, a phone and a tablet keep the touch set. Whatever the knob,
-// `data-density` on the root pins a density, which is how a screenshot
-// addresses either density on any device.
+// The desktop set draws where the primary pointer is fine: it overrides the
+// seeded touch set in `@layer base`, the same cascade the dark layer rides,
+// so every cell that names a size or a type role (`min-h-control`,
+// `text-body`) follows with no class of its own. A touch screen, a phone and
+// a tablet keep the touch set. `data-density` on the root pins either set on
+// any device, which is how the showcase and a board address a density.
 export const FINE_POINTER = "(pointer: fine)";
 const PINNED_DESKTOP = ':root[data-density="desktop"]';
 const PINNED_TOUCH = ':root[data-density="touch"]';
 
 export function densityLayer(resolved: ResolvedTheme): CssLayer {
-	const fine = finePointerTokens(resolved);
-	const rules: string[] = [];
-	if (Object.keys(fine).length > 0) {
-		rules.push(renderMediaRule(FINE_POINTER, renderRule(":root", fine)));
-		rules.push(
-			renderMediaRule(
-				FINE_POINTER,
-				renderRule(PINNED_TOUCH, densityTokens(resolved, "touch")),
-			),
-		);
-	}
-	rules.push(renderRule(PINNED_DESKTOP, densityTokens(resolved, "desktop")));
+	const desktop = densityTokens(resolved, "desktop");
+	const rules = [
+		renderMediaRule(FINE_POINTER, renderRule(":root", desktop)),
+		renderMediaRule(
+			FINE_POINTER,
+			renderRule(PINNED_TOUCH, densityTokens(resolved, "touch")),
+		),
+		renderRule(PINNED_DESKTOP, desktop),
+	];
 	return { name: "base", content: rules.join("\n") };
 }
 
@@ -112,13 +111,21 @@ export function densityLayer(resolved: ResolvedTheme): CssLayer {
 // so the layered values win over the seeded light ones. `.dark` on the root
 // is the mode; `.light` inside it restores the light set for its subtree, so
 // a light frame renders light under a dark page. `color-scheme` travels with
-// the colors so UA controls follow the scope.
+// the colors so UA controls follow the scope. A raised ground's fill class
+// then re-points the hairline for its subtree, after the mode scopes so an
+// element that is both keeps the re-point.
 export function modeLayer(resolved: ResolvedTheme): CssLayer {
 	const rules = MODES.map((mode) =>
 		renderRule(`.${mode}`, {
 			"color-scheme": mode,
 			...modeTokens(resolved, mode),
 		}),
+	);
+	rules.push(
+		renderRule(
+			RAISED_GROUNDS.map((ground) => `.bg-${ground}`).join(", "),
+			raisedGroundTokens(),
+		),
 	);
 	return { name: "base", content: rules.join("\n") };
 }

@@ -98,21 +98,21 @@ export const closure = (
 		<Text role="body" selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
 		<Text role="body" placeholderTextColorClassName="text-ink-body" />
-		<Icon name="x" />
+		<Icon name="x" fit="body" />
 		{/* @ts-expect-error: closed channel */}
-		<Icon name="x" className="x" />
+		<Icon name="x" fit="body" className="x" />
 		{/* @ts-expect-error: closed channel */}
-		<Icon name="x" style={{ flex: 1 }} />
+		<Icon name="x" fit="body" style={{ flex: 1 }} />
 		{/* @ts-expect-error: closed channel */}
-		<Icon name="x" class="x" />
+		<Icon name="x" fit="body" class="x" />
 		{/* @ts-expect-error: closed channel */}
-		<Icon name="x" classList={{}} />
+		<Icon name="x" fit="body" classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<Icon name="x" colorClassName="text-ink-body" />
+		<Icon name="x" fit="body" colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Icon name="x" selectionColorClassName="text-ink-body" />
+		<Icon name="x" fit="body" selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Icon name="x" placeholderTextColorClassName="text-ink-body" />
+		<Icon name="x" fit="body" placeholderTextColorClassName="text-ink-body" />
 		<Button label="a" onAct={noop} />
 		{/* @ts-expect-error: closed channel */}
 		<Button label="a" onAct={noop} className="x" />

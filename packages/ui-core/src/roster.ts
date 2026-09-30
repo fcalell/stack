@@ -51,12 +51,12 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			states: ["rest"],
 		},
 		Icon: {
-			props: ["name"],
+			props: ["name", "fit"],
 			draws: [],
 			states: ["rest"],
 		},
 		Button: {
-			props: ["act", "label", "onAct", "loading", "spinner", "blocked"],
+			props: ["act", "label", "onAct", "loading", "blocked"],
 			draws: ["BUTTON", "BUTTON_LABEL"],
 			states: [...PRESS, "disabled", "loading"],
 		},
@@ -76,7 +76,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			states: [...PRESS],
 		},
 		Chip: {
-			props: ["label", "family"],
+			props: ["label", "family", "onRemove"],
 			draws: ["CHIP"],
 			states: ["rest"],
 		},
@@ -124,7 +124,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			states: [...PRESS, "selected"],
 		},
 		Spinner: {
-			props: ["kind"],
+			props: [],
 			draws: [],
 			states: ["rest"],
 		},
@@ -299,7 +299,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			states: ["rest", "disabled"],
 		},
 		PendingBar: {
-			props: ["sentence", "until", "spinner", "act"],
+			props: ["sentence", "until", "act"],
 			draws: [],
 			states: ["rest", "disabled"],
 		},

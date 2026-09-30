@@ -73,12 +73,6 @@
 	}
 }
 
-@keyframes spin {
-	to {
-		transform: rotate(1turn);
-	}
-}
-
 @keyframes content-hide {
 	from {
 		opacity: 1;

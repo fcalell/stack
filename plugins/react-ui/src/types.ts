@@ -100,10 +100,10 @@ export interface CodegenAppCssPayload {
 // contract binds to `sans` or `mono` is the theme's `fonts` knob; an entry
 // here only makes a family's file load.
 export const fontEntrySchema = z.object({
-	// CSS family name used in `font-family` declarations (e.g. "Inter Variable").
+	// CSS family name used in `font-family` declarations (e.g. "IBM Plex Sans").
 	family: z.string(),
 	// Node module path or workspace-relative path to the actual woff2 file
-	// (e.g. "@fontsource-variable/inter/files/inter-latin-wght-normal.woff2").
+	// (e.g. "@fontsource-variable/ibm-plex-sans/files/ibm-plex-sans-latin-wght-normal.woff2").
 	specifier: z.string(),
 	// A single weight ("400") or a variable-font range ("100 900").
 	weight: z.string(),
@@ -124,12 +124,11 @@ export type FontEntry = z.infer<typeof fontEntrySchema>;
 
 // `fonts` is the font files to load: each entry is preloaded and gets an
 // `@font-face` (real + fallback metrics). Defaults to `defaultFonts`
-// (Inter Variable, which the theme's `sans` then defaults to, and
-// JetBrains Mono Variable, the contract's default `mono` family).
+// (IBM Plex Sans and IBM Plex Mono, the contract's default families).
 //
-// `theme` carries the ui-core design contract: the knobs and per-token
-// overrides. Omitted, the calibrated defaults apply. Its `defaultMode` is the
-// mode a viewer with no stored choice starts in, ahead of `prefers-color-scheme`.
+// `theme` carries the ui-core design contract: the knobs. Omitted, the
+// calibrated defaults apply. Its `defaultMode` is the mode a viewer with no
+// stored choice starts in, ahead of `prefers-color-scheme`.
 //
 // `words` is every word a molecule draws on its own, every key required;
 // omitted, the components speak English.

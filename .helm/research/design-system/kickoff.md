@@ -358,6 +358,38 @@ page.
 The diagnosis (§3) names what the old values got wrong; it is a list of what the sheet must not
 repeat, not a target.
 
+### Stage 1b. Character (loop L1b, decided 2026-09-30)
+
+The Stage 1 sheet and the first atom boards are correct and read as the median of the
+references: Inter, achromatic greys, a blue accent, 6 px radius. Character is a small number of
+deliberate choices repeated everywhere, on top of that correctness, never decoration on the
+atoms. Three levers carry it, in order of leverage: the typeface (one family with a voice, a
+display cut at most for `title` and `display`, a mono with character for `code`), the colour cast
+(the hue every neutral carries, at a chroma the system fixes), and one signature idiom (the ring,
+the selection wash, the status dot, the pending state, the radius scale, the switch's shape: one
+or two, never five). Accent hue and radius are second-order; motion and composition come with
+their own stages.
+
+The consumer knobs are `accentHue`, `castHue` (the neutrals' hue; defaults to `accentHue`, so
+an accent alone tints the chrome toward it), `fonts`, and `defaultMode`. Chroma is never a knob:
+the cast's chroma is a system constant per mode, since chroma decides whether a cast is a tint
+or a colour. `density` is not a knob: a fine pointer gets the desktop set and everything else the
+touch set, and `data-density` on the root is the pin the showcase and the boards use, never a
+consumer option. The cast reaches every `neutral()`: canvas, surface, group, raised, the three
+hairlines, the three inks, the washes, the skeleton, `switch-off`, `fill-disabled`,
+`fill-neutral`, and dark `on-danger`; it never reaches the accent, the status trio, the chip
+families or the avatar steps.
+
+Loop L1b: one "Character" canvas with a type board (two or three candidate families on the same
+screens, side by side, both densities) and a cast board (the colour ladder at three or four cast
+hues and the two chroma constants, both modes, with the accent and the chip families over each),
+plus the candidate idiom drawn on the atoms it touches. fcalell picks; the port adds `castHue`
+and the chosen chroma constants, drops `density`, sets the chosen fonts, extends the hue sweep
+over cast hues (a warm cast must not brown the dark canvas; a cast near the accent's complement
+must not make it vibrate; the answer to either is a lower chroma constant, not a narrower knob),
+re-emits the sheet, and the five atom boards re-render once for a light critic pass before
+step 3.
+
 ### Stage 2. Components, group by group (loops L2a, L2b)
 
 Order: atoms (17), layout (11), shared (14), content (12). One Design artifact per group, one
@@ -413,6 +445,7 @@ removed from the config. Sailward's move onto stack is a separate programme afte
 
 ```
 L1  foundations   canvas ↔ fcalell        → tokens.ts             (2–3 rounds)
+L1b character     canvas ↔ fcalell        → knobs + sheet          (1–2 rounds)
 L2a component     canvas ↔ fcalell        → variant table          (1–2 rounds each)
 L2b component     showcase ↔ artboard     → component fix or L2a   (orchestrator)
 L3  screens       canvas ↔ fcalell        → new molecules → L2     (2–3 rounds)

@@ -1,4 +1,3 @@
-import type { SpinnerKind } from "@fcalell/ui-core/tokens";
 import {
 	BUTTON_MUTED,
 	BUTTON_MUTED_LABEL,
@@ -21,8 +20,6 @@ export interface ButtonProps extends Closed {
 	label: string;
 	onAct?: () => void;
 	loading?: boolean;
-	// The busy glyph drawn while `loading`.
-	spinner?: SpinnerKind;
 	blocked?: string;
 }
 
@@ -37,14 +34,7 @@ const GROUND: Record<ButtonAct, string> = {
 // A pill with words. Its container decides its width: full in an action bar,
 // its content's in a toolbar. A blocked button says why under it once
 // pressed or once its form or sheet is touched.
-export function Button({
-	act,
-	label,
-	onAct,
-	loading,
-	spinner,
-	blocked,
-}: ButtonProps) {
+export function Button({ act, label, onAct, loading, blocked }: ButtonProps) {
 	const kind = act ?? "primary";
 	const muted = blocked !== undefined;
 	const { touched } = useTouched();
@@ -68,7 +58,7 @@ export function Button({
 					muted ? BUTTON_MUTED : GROUND[kind],
 				)}
 			>
-				{loading ? <BusyGlyph kind={spinner} color={busyColor} /> : null}
+				{loading ? <BusyGlyph color={busyColor} /> : null}
 				<RNText
 					className={cn(
 						buttonLabel({ act: kind }),

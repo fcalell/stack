@@ -1,4 +1,4 @@
 {
 	"extends": "@fcalell/typescript-config/web-vite.json",
-	"include": ["src", "test"]
+	"include": ["src", "scripts", "test"]
 }

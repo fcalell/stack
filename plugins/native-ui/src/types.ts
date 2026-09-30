@@ -26,9 +26,9 @@ export const clientModuleSchema = z.object({
 export type ClientModule = z.input<typeof clientModuleSchema>;
 
 export const nativeUiOptionsSchema = z.object({
-	// The ui-core design contract: the knobs, per-token overrides and the mode
-	// that seeds the `@theme` block. Omitted, the calibrated defaults apply. A
-	// consumer with both platforms passes the same object to the web plugin.
+	// The ui-core design contract: the knobs and the mode the app starts in.
+	// Omitted, the calibrated defaults apply. A consumer with both platforms
+	// passes the same object to the web plugin.
 	theme: themeSchema.optional(),
 	// Every word a molecule draws on its own, every key required. Omitted,
 	// English.

@@ -109,6 +109,8 @@ The scaffold produces a `plugin()`-based skeleton and a runtime stub exported fr
 ```bash
 pnpm check            # Build, type-check, test every package, then lint (Biome)
 pnpm turbo run build  # Compile every package's src/ to dist/
+pnpm showcase         # Build the showcase's dependencies and serve it on :3000
+pnpm design           # Build the showcase, then compile the artboards' stylesheet (plugins/react-ui/design/app.css)
 ```
 
 Every package ships compiled JavaScript in `dist/` for what Node runs (Node strips no types under

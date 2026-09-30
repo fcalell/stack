@@ -7,6 +7,7 @@ import {
 	mixLab,
 	oklchToLab,
 	oklchToRgb,
+	veiledLuminance,
 } from "./oklch.ts";
 import { type ParsedTheme, parseTheme, type Theme } from "./schema.ts";
 import {
@@ -29,6 +30,7 @@ import {
 	type FontRole,
 	fallbackFace,
 	type Holds,
+	type Hue,
 	KNOB_DEFAULTS,
 	type Knobs,
 	LABEL,
@@ -120,12 +122,18 @@ function format(color: Resolved): string {
 		: `oklch(${base} / ${num(color.alpha)})`;
 }
 
+function hueOf(hue: Hue, knobs: Knobs): number {
+	if (hue === "accent") return knobs.accentHue;
+	if (hue === "cast") return knobs.castHue;
+	return hue;
+}
+
 // A declared value, its chroma held inside sRGB at the same lightness: a
 // re-hued accent then keeps its luminance and contrast and loses saturation
 // instead of clipping to another color. The sheet's own values are already
 // in gamut, so at the default hue nothing moves.
 function literal(value: ColorValue, knobs: Knobs): Resolved {
-	const h = value.hue === "accent" ? knobs.accentHue : value.hue;
+	const h = hueOf(value.hue, knobs);
 	return {
 		l: value.l,
 		c: chromaInGamut(value.l, value.c, h),
@@ -137,29 +145,23 @@ function literal(value: ColorValue, knobs: Knobs): Resolved {
 const HOLD_STEP = 0.005;
 
 // The declared lightness, moved away from each ground in 0.005 steps until
-// every contract holds, the chroma re-clamped at each step. At the sheet's
-// own hue every contract already holds and nothing moves.
+// every contract holds, the chroma re-clamped at each step. Each ground is
+// the luminance a contract measures against. The sheet carries the held
+// value at its own hue.
 function holding(
 	color: Resolved,
 	contracts: readonly Holds[],
-	grounds: Resolved[],
+	grounds: readonly number[],
 ): Resolved {
 	let current = color;
 	for (let step = 0; step < 100; step++) {
-		const short = contracts.find(
+		const y = luminance(current.l, current.c, current.h);
+		const short = contracts.findIndex(
 			(contract, index) =>
-				contrastRatio(
-					luminance(current.l, current.c, current.h),
-					luminance(
-						grounds[index]?.l ?? 0,
-						grounds[index]?.c ?? 0,
-						grounds[index]?.h ?? 0,
-					),
-				) < contract.ratio,
+				contrastRatio(y, grounds[index] ?? 0) < contract.ratio,
 		);
-		if (!short) return current;
-		const ground = grounds[contracts.indexOf(short)];
-		const darker = ground !== undefined && ground.l > current.l;
+		if (short === -1) return current;
+		const darker = (grounds[short] ?? 0) > y;
 		const l = round3(current.l + (darker ? -HOLD_STEP : HOLD_STEP));
 		current = { ...current, l, c: chromaInGamut(l, color.c, current.h) };
 	}
@@ -179,6 +181,13 @@ const BLACK: Lab = { l: 0, a: 0, b: 0 };
 function resolveMode(mode: Mode, knobs: Knobs): Record<ColorName, string> {
 	const memo = new Map<ColorName, Resolved>();
 	const visiting = new Set<ColorName>();
+	// A contract's ground, its veil composited over it when it names one.
+	const ground = (contract: Holds): number => {
+		const on = resolve(contract.on);
+		if (contract.under === undefined) return luminance(on.l, on.c, on.h);
+		const veil = resolve(contract.under);
+		return veiledLuminance(veil, veil.alpha ?? 1, on);
+	};
 	const resolve = (name: ColorName): Resolved => {
 		const done = memo.get(name);
 		if (done) return done;
@@ -194,10 +203,11 @@ function resolveMode(mode: Mode, knobs: Knobs): Record<ColorName, string> {
 			color = { ...resolve(declaration.veil), alpha: declaration.alpha };
 		} else if ("mix" in declaration) {
 			const from = lab(resolve(declaration.mix));
-			const toward =
-				declaration.toward === "black"
-					? BLACK
-					: lab(resolve(declaration.toward));
+			const target =
+				typeof declaration.toward === "string"
+					? declaration.toward
+					: declaration.toward[mode];
+			const toward = target === "black" ? BLACK : lab(resolve(target));
 			const [l, c, h] = labToOklch(
 				mixLab(from, toward, declaration.amount),
 			).map(round3);
@@ -210,15 +220,13 @@ function resolveMode(mode: Mode, knobs: Knobs): Record<ColorName, string> {
 				h: h ?? 0,
 				alpha: undefined,
 			};
+			const holds = declaration.holds?.[mode];
+			if (holds) color = holding(color, holds, holds.map(ground));
 		} else {
 			const value = declaration[mode];
 			color = literal(value, knobs);
 			if (value.holds) {
-				color = holding(
-					color,
-					value.holds,
-					value.holds.map((contract) => resolve(contract.on)),
-				);
+				color = holding(color, value.holds, value.holds.map(ground));
 			}
 		}
 		visiting.delete(name);
@@ -230,10 +238,9 @@ function resolveMode(mode: Mode, knobs: Knobs): Record<ColorName, string> {
 	return out;
 }
 
-function shadowsFor(mode: Mode): Record<ShadowLevel, string> {
+function shadowsFor(mode: Mode, knobs: Knobs): Record<ShadowLevel, string> {
 	const ink = SHADOW_INK[mode];
-	const hue = ink.hue === "accent" ? KNOB_DEFAULTS.accentHue : ink.hue;
-	const [r, g, b] = oklchToRgb(ink.l, ink.c, hue);
+	const [r, g, b] = oklchToRgb(ink.l, ink.c, hueOf(ink.hue, knobs));
 	const out = {} as Record<ShadowLevel, string>;
 	for (const level of SHADOW_LEVELS) {
 		out[level] = SHADOW_LAYERS[level][mode]
@@ -276,9 +283,17 @@ function spacingFor(density: Density): Record<SpacingRole, string> {
 	return out;
 }
 
+function sizePx(density: Density, size: Size): number {
+	const px = SIZE_PX[density];
+	if (size === "switch-travel") {
+		return px["switch-w"] - px.thumb - 2 * px["switch-inset"];
+	}
+	return px[size];
+}
+
 function sizesFor(density: Density): Record<Size, string> {
 	const out = {} as Record<Size, string>;
-	for (const size of SIZES) out[size] = `${SIZE_PX[density][size]}px`;
+	for (const size of SIZES) out[size] = `${sizePx(density, size)}px`;
 	return out;
 }
 
@@ -289,9 +304,10 @@ function perDensity<T>(build: (density: Density) => T): Record<Density, T> {
 }
 
 function knobsOf(parsed: ParsedTheme): Knobs {
+	const accentHue = parsed.accentHue ?? KNOB_DEFAULTS.accentHue;
 	return {
-		accentHue: parsed.accentHue ?? KNOB_DEFAULTS.accentHue,
-		density: parsed.density ?? KNOB_DEFAULTS.density,
+		accentHue,
+		castHue: parsed.castHue ?? accentHue,
 		fonts: {
 			sans: parsed.fonts?.sans ?? KNOB_DEFAULTS.fonts.sans,
 			mono: parsed.fonts?.mono ?? KNOB_DEFAULTS.fonts.mono,
@@ -306,10 +322,8 @@ function quoted(family: string): string {
 }
 
 // The family, its metric fallback face, then the platform stack.
-function fontStack(family: string | undefined, role: FontRole): string {
-	const fallback = FONT_FALLBACKS[role];
-	if (family === undefined) return fallback;
-	return `${quoted(family)}, ${quoted(fallbackFace(family))}, ${fallback}`;
+function fontStack(family: string, role: FontRole): string {
+	return `${quoted(family)}, ${quoted(fallbackFace(family))}, ${FONT_FALLBACKS[role]}`;
 }
 
 function record<K extends string, V>(
@@ -328,7 +342,7 @@ export function deriveTheme(theme: Theme = {}): ResolvedTheme {
 	const shadows = {} as Record<Mode, Record<ShadowLevel, string>>;
 	for (const mode of MODES) {
 		colors[mode] = resolveMode(mode, knobs);
-		shadows[mode] = shadowsFor(mode);
+		shadows[mode] = shadowsFor(mode, knobs);
 	}
 	return {
 		defaultMode: parsed.defaultMode,

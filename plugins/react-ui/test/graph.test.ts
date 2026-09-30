@@ -67,11 +67,15 @@ test("app.css imports Tailwind without detection, then the web sheet, then the c
 	);
 });
 
-test("Inter is the default sans while its file loads, and a theme's own sans wins", async () => {
+test("IBM Plex is the default pair, and a theme's own sans wins", async () => {
 	const css = (await artifacts()).get(".stack/app.css") ?? "";
 	assert.match(
 		css,
-		/--font-sans: "Inter Variable", "Inter Variable Fallback", ui-sans-serif/,
+		/--font-sans: "IBM Plex Sans", "IBM Plex Sans Fallback", ui-sans-serif/,
+	);
+	assert.match(
+		css,
+		/--font-mono: "IBM Plex Mono", "IBM Plex Mono Fallback", ui-monospace/,
 	);
 	const own = (await artifacts({ theme: { fonts: { sans: "Geist" } } })).get(
 		".stack/app.css",
@@ -80,20 +84,14 @@ test("Inter is the default sans while its file loads, and a theme's own sans win
 		own ?? "",
 		/--font-sans: "Geist", "Geist Fallback", ui-sans-serif/,
 	);
-	const none = (await artifacts({ fonts: [] })).get(".stack/app.css");
-	assert.match(none ?? "", /--font-sans: ui-sans-serif/);
 });
 
-test("data-density pins either set whatever the knob; the pointer query only under desktop", async () => {
-	const touch =
-		(await artifacts({ theme: { density: "touch" } })).get(".stack/app.css") ??
-		"";
+test("a fine pointer draws the desktop set, and data-density pins either", async () => {
+	const desktop = (await artifacts()).get(".stack/app.css") ?? "";
 	assert.match(
-		touch,
+		desktop,
 		/:root\[data-density="desktop"\] \{\n\t--text-display: 36px;/,
 	);
-	assert.doesNotMatch(touch, /pointer: fine/);
-	const desktop = (await artifacts()).get(".stack/app.css") ?? "";
 	assert.match(
 		desktop,
 		/@media \(pointer: fine\) \{\n:root \{\n\t--text-display: 36px;/,
@@ -114,7 +112,11 @@ test("the vite config runs Tailwind, the fonts and the mode script", async () =>
 	assert.match(config, /themeModePlugin\("dark"\)/);
 	assert.match(
 		config,
-		/specifier: "@fontsource-variable\/inter\/files\/inter-latin-opsz-normal\.woff2"/,
+		/specifier: "@fontsource-variable\/ibm-plex-sans\/files\/ibm-plex-sans-latin-wght-normal\.woff2"/,
+	);
+	assert.match(
+		config,
+		/specifier: "@fontsource\/ibm-plex-mono\/files\/ibm-plex-mono-latin-600-normal\.woff2"/,
 	);
 	assert.match(config, /import\.meta\.resolve\("@fcalell\/plugin-react-ui"\)/);
 });

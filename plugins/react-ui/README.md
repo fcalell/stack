@@ -32,9 +32,9 @@ export default defineConfig({
 
 | Option | Type | Default | What it does |
 | --- | --- | --- | --- |
-| `theme` | `Theme` | the calibrated defaults, `sans` Inter | The ui-core contract, flat knobs: `accentHue`, `neutralHue`, `neutralChroma`, `okHue`, `warnHue`, `dangerHue`, `primary` (`ink` \| `accent`), `space`, `radius` (0 squares everything), `text`, `elevation` (`soft` \| `flat`), `motion` (the base duration in ms, 200 by default), `density` (`touch` \| `desktop`: `desktop` draws rows, controls and headers on a 32 px floor where the primary pointer is fine, and keeps 44 px on touch), `fonts` (`{ sans?, mono? }` family names; `sans` defaults to Inter Variable while its file loads), `widths`, `breakpoints`, `defaultMode` (a viewer with no stored choice starts in it, ahead of `prefers-color-scheme`), `overrides`. Every value resolves through `deriveTheme` and lands in the `@theme` block of `.stack/app.css`. |
+| `theme` | `Theme` | the calibrated defaults | The ui-core contract, four flat knobs: `accentHue` (264), `castHue` (the neutrals' hue; `accentHue` unless set), `fonts` (`{ sans?, mono? }` family names; IBM Plex Sans and IBM Plex Mono unless set) and `defaultMode` (a viewer with no stored choice starts in it, ahead of `prefers-color-scheme`). Every value resolves through `deriveTheme` and lands in the `@theme` block of `.stack/app.css`. |
 | `words` | `Words` | English | Every word a molecule draws on its own, every key required. Mounted into the generated providers as a `WordsProvider` (`@fcalell/plugin-react-ui/lib/words`, read with `useWords()`). |
-| `fonts` | `FontEntry[]` | `defaultFonts` | The font files to load: each is preloaded and gets an `@font-face` with fallback metrics. The default is Inter Variable (its `opsz` and `wght` axes, `interVariable` from `./node/fonts`) and JetBrains Mono Variable; `[]` loads none. Which family the contract binds to `sans` or `mono` is `theme.fonts`. |
+| `fonts` | `FontEntry[]` | `defaultFonts` | The font files to load: each is preloaded and gets an `@font-face` with fallback metrics, one per family. The default is IBM Plex Sans (its `wght` axis, `plexSans` from `./node/fonts`) and IBM Plex Mono at 400, 500 and 600; `[]` loads none. Which family the contract binds to `sans` or `mono` is `theme.fonts`. |
 
 The consumer's icon set is typed `IconSet`: a closed map of names to `lucide-react` glyphs.
 
@@ -48,14 +48,15 @@ The consumer's icon set is typed `IconSet`: a closed map of names to `lucide-rea
 `themeFontsPlugin` (the preloads and `@font-face` rules) and `themeModePlugin` (the script that
 sets the `dark` class from the stored choice, the theme's `defaultMode`, else the system).
 
-A `data-density` attribute on `<html>` pins a density whatever the knob: `desktop` draws the
-compact set, `touch` the touch set.
+Density is no option: the desktop set draws under `(pointer: fine)` and the touch set
+everywhere else. A `data-density` attribute on `<html>` pins either on any device: `desktop`
+draws the compact set, `touch` the touch set.
 
 The modes are class scopes: `.dark` on `<html>` is the mode, and `.light` on any element
 inside it restores the light colors and `color-scheme` for that subtree, as the showcase's light
 frames do. Under `prefers-reduced-motion: reduce` every `--transition-duration-*` rung is 0ms, so
 no transition or animation that reads one moves. Each `@font-face` gets a metric fallback face
-named by ui-core's `fallbackFace` (`"Inter Variable Fallback"`), the name the contract's family
+named by ui-core's `fallbackFace` (`"IBM Plex Sans Fallback"`), the name the contract's family
 stack carries second.
 
 ## The showcase
@@ -68,6 +69,15 @@ the view (`?mode=dark&density=desktop`) and the page's toggles rewrite it, stori
 frame carries `data-cell="<component>/<cell>/<state>/<mode>/<density>"`; `showcaseCells()` lists
 every id over both densities, so a density's page draws half of them. A component without a
 registered renderer draws its name and its cell's classes.
+
+## The artboards
+
+`design/` holds the design artboards: the Stage 1 token sheet `foundations.css` with its boards,
+and from Stage 2 one `.dc.html` per component group on the real contract. `pnpm design` at the
+repo root builds the showcase, then `scripts/design.ts` copies the default fonts to
+`design/files/`, writes their `@font-face` rules to `design/fonts.css`, and compiles
+`design/board.css` (the showcase's emitted `app.css` plus every file under `design/` as a source)
+to `design/app.css`, the stylesheet a Stage 2 board links. The three outputs are gitignored.
 
 ## Slots
 

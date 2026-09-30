@@ -484,7 +484,7 @@ function States() {
 								data-switch={track}
 								className={cn(
 									"flex items-center w-switch-w h-switch-h p-switch-inset rounded-full",
-									track.startsWith("switch-on")
+									track.startsWith("toggle-on")
 										? "justify-end"
 										: "justify-start",
 									`bg-${track}`,

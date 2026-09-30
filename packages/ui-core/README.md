@@ -19,13 +19,15 @@ Ten subpaths:
   font stacks, the durations and curves, and the light colors. `rootTokens` is what sits on the
   root outside `@theme`: the hairline, the focus ring's width and offset, and the light shadows.
   `modeTokens` is one mode's colors and its two shadows. `densityTokens` is one density's type
-  scale, spacing roles and sizes, whatever the knob says. `finePointerTokens` is the desktop set
-  under `density: "desktop"` and empty under `touch`. `reducedMotionTokens` is every duration at
-  0ms. `shadowUtilities` is the declaration of each `shadow-*` utility, reading its mode's variable.
+  scale, spacing roles and sizes. `reducedMotionTokens` is every duration at 0ms. `shadowUtilities` is the declaration of each `shadow-*` utility, reading its mode's variable.
+  `raisedGroundTokens` is what a raised ground (`RAISED_GROUNDS`: `group`, `raised`) declares for
+  everything inside it, the hairline read through `edge-raised`.
 - `@fcalell/ui-core/cn`: `cn()`, the class merger, taught the contract's six scales.
 - `@fcalell/ui-core/variants`: the platform-invariant variant matrices, each a cva built from a
   table, the single-cell constants beside them, and `FAMILIES`, every matrix by name with its axes,
-  which `matrixCells` enumerates into cells.
+  which `matrixCells` enumerates into cells; the prop types a component shares across plugins
+  with them (`ContentTone`, a glyph's ink; `IconFit`, `meta`, `body` or `control`, what an icon sits
+  beside, which picks `icon-meta`, `icon` or `icon-control`).
 - `@fcalell/ui-core/descriptors`: `Act`, `IconAct`, `Part`, `Mark`, `Option`, `OptionGroup`,
   `PlaceSpec`, `Hunk`, `FieldBinding`, `Confirmation`, `MenuItem`, `TableColumn`, `TableRow`,
   `CellEdit` and the other framework-free types a prop carries.
@@ -57,17 +59,26 @@ with it.
 
 | Knob | Default | Moves |
 | --- | --- | --- |
-| `accentHue` | 264 | the accent-bound roles and nothing else: `accent`, `accent-soft`, `accent-ink`, `ring`, `selected-outline`, `act-accent` with `act-accent-hover`, `act-accent-press` and `act-accent-pending`, `switch-on` and `switch-on-hover`. The neutrals, the three status hues, the chip families and the avatars are fixed |
-| `density` | `desktop` | which set the type scale, the spacing roles and the sizes draw where the primary pointer is fine; `touch` is the 44 px world on every device |
-| `fonts` | `sans` unset, `mono` "JetBrains Mono Variable" | the two families as `--font-sans` and `--font-mono`, each followed by its metric fallback face (`fallbackFace(family)`, the family name plus ` Fallback`) and then its platform fallback stack; an unset `sans` is the platform's stack alone. The files are each plugin's `fonts` option |
+| `accentHue` | 264 | the accent-bound roles: `accent`, `accent-soft`, `accent-ink`, `ring`, `selected-outline`, `act-accent` with `act-accent-hover`, `act-accent-press` and `act-accent-pending`, `toggle-on` and `toggle-on-hover`. The three status hues, the chip families and the avatars are fixed |
+| `castHue` | `accentHue` | the hue every neutral carries: `canvas`, `surface`, `group`, `raised`, the three hairlines, `scrim`, the three inks, the washes, `skeleton`, `switch-off`, `fill-disabled`, `fill-neutral`, dark `on-danger` and the light shadows. Each neutral keeps the chroma the sheet declares for it, so the cast tints the chrome and moves no contrast. It never reaches the accent, the status trio, the chip families or the avatars |
+| `fonts` | `sans` "IBM Plex Sans", `mono` "IBM Plex Mono" | the two families as `--font-sans` and `--font-mono`, each followed by its metric fallback face (`fallbackFace(family)`, the family name plus ` Fallback`) and then its platform fallback stack. The files are each plugin's `fonts` option |
 | `defaultMode` | unset | the mode a viewer with no stored choice starts in, ahead of the system preference; unset, the system decides |
 
-`accentHue` is in `[0, 360)`. A re-hued accent holds its chroma inside sRGB at its lightness, so
+`accentHue` and `castHue` are in `[0, 360)`; an unset `castHue` is the accent's hue, so an
+accent alone tints the chrome toward it. Chroma is never a knob: it decides whether a cast is a
+tint or a color. A re-hued accent holds its chroma inside sRGB at its lightness, so
 it loses saturation at a hue the gamut cannot carry and never clips to another color, and a role
-that carries a contrast contract (`accent-ink` on `group` and on `accent-soft`, at 4.5:1)
-moves its lightness from the declared one until the contract holds; at the sheet's own hue
-nothing moves. The contrast pairs then hold at every hue, and the verify script sweeps all 360. Density is a theme, never a breakpoint: no scale changes at a width. Native is
-touch-only and draws `touch` whatever the knob says.
+that carries a contrast contract (`accent-ink` on `group` and on `accent-soft` at 4.5:1, the
+dark `accent` on `group` at 3:1, `act-accent-pending` at 3:1 under `on-act-accent`) moves its
+lightness from where it starts, a declared literal or a `mix`, until the contract holds; the
+sheet carries the held value at its own hue. The contrast pairs then hold at every hue of either
+knob: the verify script sweeps the accent at the default cast, the cast at the default accent and
+the two together, all 360 hues each.
+
+Density is not a knob. The web draws the desktop set where the primary pointer is fine and the
+touch set everywhere else; a `data-density` attribute on the root pins either, which is how the
+showcase and the boards address a density. Density is a theme, never a breakpoint: no scale
+changes at a width. Native is touch-only.
 
 ## Words
 
@@ -81,30 +92,34 @@ molecule that draws it (`placeholder`, `notice`, every `sentence`, every label),
 
 ## Color roles
 
-One accent hue, cool greys, three status hues, six chip families, eight avatars. Every value is
-OKLCH. The neutrals sit at hue 270, the accent's own family, so the greys and the accent read as
-one palette.
+One accent hue, cast greys, three status hues, six chip families, eight avatars. Every value is
+OKLCH. The neutrals wear the cast's hue, the accent's unless set, so by default the greys and the
+accent read as one palette.
 
 - Surfaces step in CIE L*. Light: `surface` 100 (a card, a field, a row), `canvas` 96.9 (the
   page), `group` 93.8 (a filled tile, a chip ground), `raised` white again (a popover, a dialog, a
-  sheet, a toast). Dark: `canvas` 3.6, `surface` 8.1, `group` and `raised` 12.3, so a lifted
-  layer sits one step above the content.
+  sheet, a toast). Dark: `canvas` 3.6, `surface` 8.1, `group` 13.1, `raised` 12.3, so a
+  lifted layer sits one step above the content.
 - `edge`: the hairline over `canvas` and `surface`. `edge-raised`: the hairline inside a group and
   on a lifted layer; the container re-points `edge` to it, so a row inside a group draws `edge`
-  and gets the raised value. In light the two are one hairline; the dark ladder spans more than
+  and gets the raised value. Each platform scopes the re-point on the raised grounds' fill
+  classes (`bg-group`, `bg-raised`), after its mode scopes. In light the two are one hairline; the dark ladder spans more than
   one hairline can straddle, so there they differ. `edge-strong`: a control's boundary, at 3:1
   against `surface` and `group`.
 - `scrim`: the veil behind a dialog or a sheet.
 - Three inks. `ink-body`: the primary line of anything. `ink-meta`: a secondary line, a
   placeholder, a table header. `ink-faint`: disabled text only, at about 3:1, which WCAG exempts.
-- The accent trio. `accent`: the filled act, a blue on the neutrals' hue. `on-accent`: text on
+- The accent trio. `accent`: the filled act, a blue on the neutrals' hue; in dark it holds 3:1
+  on `group`, where a checked box or an on switch is a control's boundary. `on-accent`: text on
   `accent`, white in both modes. `accent-soft`: a tinted tile. `accent-ink`: a link, the focus
   ring, a selection outline; the accent itself in light, lighter in dark so it reads on the
   near-black ground.
 - The status trio, each with a `-soft` ground: `ok` the `done` mark and an added line's ink,
   `ok-soft` the ground under it; `warn` the `attention` mark, `warn-soft` its ground; `danger` the
-  `failed` mark, a destructive act's label, an error ring, `danger-soft` its ground and a removed
-  line. `on-danger`: text on a `danger` fill, the one saturated state fill. The dark tones are
+  `failed` mark, a destructive act's label (in light held at 4.5:1 under `wash-press` on
+  `group`), an error ring, `danger-soft` its ground and a removed
+  line. `on-danger`: text on a `danger` fill, the one saturated state fill, which `danger`
+  holds at 4.5:1 in both modes. The dark tones are
   capped at L 0.75 and spread in lightness so they separate under protanopia and deuteranopia.
 - Six chip families in hue order, the accent's band left out so no family wears it: `red`,
   `amber`, `green`, `teal`, `violet`, `pink`. Each is three roles: `chip-red` the mark (a dot, a
@@ -118,20 +133,31 @@ one palette.
 - The washes are `ink-body` at an alpha, so they follow the mode and sit on any surface as one
   more step: `wash-hover` a transparent part under the pointer, `wash-press` pressed,
   `wash-selected` a selected row or chip, `wash-selected-hover` a selected row under the pointer,
-  `skeleton` a loading bar, `fill-disabled` a disabled act's or chip's box.
+  `skeleton` a loading bar, `fill-disabled` a disabled act's or chip's box, `fill-neutral` a
+  resting neutral ground (a count's pill, a grey chip).
 - The places, each an alias of the tone that draws it: `ring` the focus ring and
   `selected-outline` a selected tile's outline, both `accent-ink`; `edge-hover` a field's boundary
   under the pointer, `edge-strong`; `edge-error` a field's boundary in error and `ink-error` an
   error message, both `danger`; `ink-disabled` a disabled part's label, `ink-faint`.
-- Two act fills. `act-accent` is `accent` under `on-act-accent`, the primary act; `act-ink` is
-  `ink-body` under `on-act-ink` (`canvas`), a screen's dark primary. Hover and press mix the fill
-  12 % and 22 % toward a second color in OKLab: `act-accent-hover` and `act-accent-press` toward
-  black, so the label only gains contrast; `act-ink-hover` and `act-ink-press` toward `canvas`,
-  which lightens the fill in light and darkens it in dark. Pending recedes 30 %:
-  `act-accent-pending` toward `on-accent`, `act-ink-pending` toward `canvas`.
-- The switch. `switch-off` is `edge-strong` and `switch-off-hover` mixes it 15 % toward
-  `ink-body`; `switch-on` is `accent` and `switch-on-hover` mixes it 12 % toward black;
-  `switch-thumb` is `on-accent`. A switch has no label of its own, so it disables by opacity.
+- Three act fills. `act-accent` is `accent` under `on-act-accent`, the primary act; `act-danger`
+  is `danger` under `on-act-danger` (`on-danger`), a confirm's destructive primary (rows and
+  menus keep the hairline destructive act); `act-ink` is `ink-body` under `on-act-ink`
+  (`canvas`), a screen's dark primary. Hover and press move the fill away from the label, 12 %
+  and 22 % in OKLab toward a second color a `mix` may name per mode, so the label only gains
+  contrast: `act-accent-hover` and `-press` toward black in both modes (a white label), and
+  `act-danger-hover` and `-press` toward black in light (a white label) and toward `ink-body` in
+  dark (a near-black label); `act-ink-hover` and `act-ink-press` toward `canvas`, which lightens
+  the fill in light and darkens it in dark.
+  Pending is inert and recedes 30 %: a filled act's `-pending` toward its label in light and
+  toward `canvas` in dark, held at 3:1 under its label where the spinner draws;
+  `act-ink-pending` toward `canvas`. A labelled act's fill takes no 3:1 floor on its ground in
+  any state: its label names it.
+- The toggles. `toggle-on` is `accent`, the on fill of a switch's track, a checked box and a
+  slider's fill; it has no label to carry it, so it and `toggle-on-hover` hold 3:1 on
+  `canvas`, `surface` and `group` and under `switch-thumb`. `toggle-on-hover` mixes it 12 %
+  away from the ground: toward black in light, toward `on-accent` in dark. `switch-off` is
+  `edge-strong` and `switch-off-hover` mixes it 15 % toward `ink-body`; `switch-thumb` is
+  `on-accent`. A switch has no label of its own, so it disables by opacity.
 
 Status colors: `active` → `accent-ink`, `waiting` → `ink-meta`, `done` → `ok`, `attention` →
 `warn`, `failed` → `danger`, `idle` → `ink-meta`.
@@ -145,7 +171,7 @@ change. A size role names a place, once: `title` is the page's name, once per sc
 section's or a card's name, never inside a row; `caption` text inside a small component (a chip, a
 key hint), never a sentence; `code` what a machine reads. So there is no label role: a field label
 and a row's leading cell are `body` at 500, a table header is `meta` at 500, menu and picker
-items are `body`. Weight, ink and family ride with the role; a molecule may set a role's weight in
+items are `body`. Weight, ink, family and, on `display`, tabular figures ride with the role; a molecule may set a role's weight in
 its own cell, never a consumer.
 
 The body size is the one base, per density: 13 on desktop, 16 on touch, the input size below
@@ -154,7 +180,7 @@ pixel, a tie rounding up.
 
 | Role | Desktop, size / line | Touch, size / line | Weight | Ink | Used for |
 | --- | --- | --- | --- | --- | --- |
-| `display` | 36 / 40 | 44 / 48 | 500 | `ink-body` | a display number, one per screen |
+| `display` | 36 / 40 | 44 / 48 | 500 | `ink-body` | a display number, one per screen, in tabular figures |
 | `title` | 18 / 24 | 22 / 28 | 600 | `ink-body` | the page's name, once per screen |
 | `heading` | 15 / 20 | 18 / 24 | 600 | `ink-body` | a section's or a card's name, never inside a row |
 | `body` | 13 / 20 | 16 / 24 | 400 | `ink-body` | the primary line of anything: prose, a row, a field, a menu item |
@@ -164,8 +190,7 @@ pixel, a tie rounding up.
 
 `strong` is 500; `display`, `title` and `heading` already sit at or above it. Tracking is in em
 and density-invariant: `display` -0.02, `title` -0.01, `heading` -0.005, `caption` 0.01; the rest
-carry none. Code reads character for character, so the mono family's ligatures and contextual
-alternates stay off.
+carry none.
 
 ## Space, sizes, radii, elevation
 
@@ -180,14 +205,18 @@ inset, which a phone narrows. Five are gap roles, what a container may put betwe
 `inside`, `pair`, `rows`, `fields`, `sections`; the other three (`control-x`, `card`, `page`)
 are insets.
 
-Sixteen sizes per density sit in the same `--spacing-*` namespace, so a cell names them as it
+Twenty-four sizes per density sit in the same `--spacing-*` namespace, so a cell names them as it
 names a role (`min-h-control`, `size-avatar`), and nothing is spaced by them. Desktop then touch:
 `control` 32 / 44 (a button, a segmented control), `control-compact` 28 / 44 (a menu item, a
 toolbar control), `field` 38 / 48 (a form input), `row` 32 / 48 (a one-line row), `row-2` 48 / 64
 (a two-line row), `row-setting` 64 / 72 (a setting row), `header` 32 / 44 (a table or strip
 header), `target` 24 / 44 (the least hit area of any interactive part), `dot` 6 / 8, `chip` 20 /
-24, `avatar` 24 / 32, `spinner` 14 / 16, `switch-w` 28 / 40, `switch-h` 16 / 24, `thumb` 12 / 20,
-`skeleton` 12 / 12. On touch every target is at least 44. A cell says `min-h`, never `h`: a label
+24, `avatar` 24 / 32, `spinner` 14 / 18 (the `icon` rung), `switch-w` 28 / 40, `switch-h` 16 / 24, `thumb` 12 / 20,
+`switch-inset` 2 / 2, `switch-travel` 12 / 16 (the thumb's travel, derived: `switch-w` less
+`thumb` and both insets), `skeleton` 12 / 12, `icon-meta` 12 / 14 (an icon beside meta or
+caption text), `icon` 14 / 18 (beside body text), `icon-control` 16 / 20 (inside a control),
+`check` 16 / 20 (a checkbox's box), `track` 2 / 4 (a slider's track thickness), `otp` 44 / 48 (a
+one-time-code box, square). On touch every target is at least 44. A cell says `min-h`, never `h`: a label
 must be able to grow its control under OS font scaling.
 
 Eight radius roles, density-invariant, a radius naming the role and never the size: `chip` 4
@@ -198,23 +227,22 @@ status, a switch). One hairline of 1 px draws region edges, row splits and field
 `--hairline`. The focus ring is `ring`, 2 px at a 2 px offset outside the box, so it never covers
 the control's own edge; inside a list it is drawn inward.
 
-Widths are the lifted layers' ranges and the one measure for running text, as `--container-*`:
-`popover` 240, `toast` 360, `dialog` 440, `sheet` 640, `measure` 66ch; a layer never stretches to
+Widths are a chip label's longest run, the lifted layers' ranges and the one measure for running
+text, as `--container-*`: `chip-label` 18ch, `popover` 240, `toast` 360, `dialog` 440, `sheet` 640, `measure` 66ch; a layer never stretches to
 its container. Breakpoints are `--breakpoint-*`: `tablet` 768, `desktop` 1024, `wide` 1440, so
 `tablet:` and `desktop:` are the only responsive variants.
 
 Elevation is two levels spent on lifted layers only: `shadow-float` for a popover, a menu, a
 picker, a toast; `shadow-modal` for a dialog, a sheet, a command palette. Groups, rows and cards
-are flat. Each is a tight contact shadow plus a soft ambient one, tinted with the neutral hue in
+are flat. Each is a tight contact shadow plus a soft ambient one, tinted with the cast in
 light; in dark the lift is carried by the raised step and the hairline, so the shadow is pure
 black at a higher opacity. Each mode has its own pair, and each utility reads `var(--shadow-*)`,
 so a shadow follows the mode; the values are sRGB because React Native's `boxShadow` takes no
 oklch.
 
 Density is emitted as sets. `themeTokens` seeds the touch set on every platform;
-`finePointerTokens` is the desktop set under `density: "desktop"`, which the web renders under
-`(pointer: fine)`, and empty under `touch`; `densityTokens` is either set whatever the knob, which
-the web renders under a `data-density` attribute on the root, so a screenshot pins a density.
+`densityTokens` is either set, which the web renders as the desktop set under `(pointer: fine)`
+and as either set under a `data-density` attribute on the root, so a screenshot pins a density.
 Native is touch-only.
 
 ## Motion
@@ -240,15 +268,22 @@ At the default knobs, in both modes, each text pair clears 4.5:1: `ink-body` on 
 `surface`, `group`, `raised`, `accent-soft`, `ok-soft`, `warn-soft` and `danger-soft`; `ink-meta`
 and `accent-ink` on the four grounds and on `accent-soft`; `ok`, `warn` and `danger` on the four
 grounds and each on its own soft; `on-accent` on `accent`, `act-accent-hover` and
-`act-accent-press`; `on-danger` on `danger`; `on-act-ink` on `act-ink`, `act-ink-hover` and
+`act-accent-press`; `danger` on `canvas`, `surface` and `group` under `wash-hover` and `wash-press`,
+a destructive act's label under the act's own wash; `on-danger` on `danger`; `on-act-danger` on
+`act-danger`, `act-danger-hover` and `act-danger-press`; `on-act-ink` on `act-ink`, `act-ink-hover` and
 `act-ink-press`; every `chip-red-ink` on its `chip-red-soft`; every `avatar-1-ink` on its
 `avatar-1`. Each graphic pair clears 3:1: `edge-strong` on `surface` and `group`, `accent` on
-`surface` and `canvas`, every chip mark on `surface`. `ink-faint` on `surface` is the one
-exemption, held at about 3:1 so it reads as off. The verify script measures every pair, and
-sweeps `accentHue` over all 360 values: at each hue every accent-bound role stays inside sRGB and
-the accent-derived pairs keep their floor (`on-accent` on `accent`, `on-act-accent` on the hover
-and press fills, `accent-ink` on the four grounds and `accent-soft`, `ink-body` and `ink-meta` on
-`accent-soft`, `accent` on `surface` and `canvas` at 3:1).
+`canvas`, `surface` and `group`, `on-act-accent` on `act-accent-pending`, `on-act-danger` on
+`act-danger-pending`, `toggle-on` and `toggle-on-hover` on `canvas`, `surface` and `group`,
+`switch-thumb` on both, every chip mark on `surface`. No act fill is measured against its
+ground: a labelled act is named by its label, and a pending one is inert. A hold sits on a literal or a `mix`, per mode, and may name a veil over its ground
+(`under`), composited as a browser draws a translucent fill over an opaque one, an alpha blend in
+gamma sRGB. `ink-faint` on `surface` is the one
+exemption, held at about 3:1 so it reads as off. The verify script measures every pair and every
+hold, and sweeps the hues: `accentHue` over all 360 values at the default cast, `castHue` over all
+360 at the default accent, and the two together. At each hue every value stays inside sRGB and
+every pair and hold above keeps its floor. A warm cast (70) keeps the dark canvas inside
+`#000`–`#191a1f`, and a cast at the accent's complement keeps every accent hold.
 
 ## What the reset does not catch
 

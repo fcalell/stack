@@ -8,40 +8,50 @@ import { cssString, cssUrl } from "./css-escape.ts";
 
 export type { FontEntry };
 
-// Inter's variable file with its optical-size axis beside the weight axis,
-// so each type role draws at the cut its size calls for. The fallback metrics
-// size Arial to Inter's box (ascender 1984 and descender 494 over a 2048 em,
-// at Arial's width ratio), so the swap moves nothing.
-export const interVariable: FontEntry = {
-	family: "Inter Variable",
-	specifier: "@fontsource-variable/inter/files/inter-latin-opsz-normal.woff2",
-	weight: "100 900",
+// IBM Plex Sans's variable file on its weight axis. The fallback metrics
+// size Arial to Plex's box (ascender 1025 and descender 275 over a 1000 em,
+// at the ratio of Plex's average width 451/1000 to Arial's 913/2048), so the
+// swap moves nothing.
+export const plexSans: FontEntry = {
+	family: "IBM Plex Sans",
+	specifier:
+		"@fontsource-variable/ibm-plex-sans/files/ibm-plex-sans-latin-wght-normal.woff2",
+	weight: "100 700",
 	style: "normal",
 	fallback: {
 		family: "Arial",
-		ascentOverride: "90.44%",
-		descentOverride: "22.52%",
+		ascentOverride: "101.32%",
+		descentOverride: "27.18%",
 		lineGapOverride: "0%",
-		sizeAdjust: "107.12%",
+		sizeAdjust: "101.17%",
 	},
 };
 
-export const defaultFonts: FontEntry[] = [
-	interVariable,
-	{
-		family: "JetBrains Mono Variable",
-		specifier:
-			"@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2",
-		weight: "100 800",
+// IBM Plex Mono ships static cuts only: 400 for code, 500 for emphasis inside
+// it, 600 for the one-time-code digit. The fallback metrics size Courier New
+// to Plex Mono's box (ascender 1025 and descender 275 over a 1000 em, at the
+// ratio of its 600/1000 advance to Courier New's 1229/2048).
+function plexMono(weight: "400" | "500" | "600"): FontEntry {
+	return {
+		family: "IBM Plex Mono",
+		specifier: `@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-${weight}-normal.woff2`,
+		weight,
 		style: "normal",
 		fallback: {
-			family: "monospace",
-			ascentOverride: "90%",
-			descentOverride: "22%",
+			family: "Courier New",
+			ascentOverride: "102.52%",
+			descentOverride: "27.5%",
 			lineGapOverride: "0%",
-			sizeAdjust: "100%",
+			sizeAdjust: "99.98%",
 		},
-	},
+	};
+}
+
+export const defaultFonts: FontEntry[] = [
+	plexSans,
+	plexMono("400"),
+	plexMono("500"),
+	plexMono("600"),
 ];
 
 interface AssetLike {
@@ -107,10 +117,12 @@ function findBundleUrl(
 	return null;
 }
 
-function buildFontFaceCss(
+export function buildFontFaceCss(
 	fonts: Array<{ font: FontEntry; href: string }>,
 ): string {
 	const blocks: string[] = [];
+	// A family's static cuts share one metric fallback face.
+	const fallbacks = new Set<string>();
 	for (const { font, href } of fonts) {
 		// Every consumer-supplied value crosses a CSS context boundary —
 		// family names land inside a `font-family:` declaration, URLs land
@@ -124,6 +136,8 @@ function buildFontFaceCss(
 	font-style: ${font.style};
 	font-display: swap;
 }`);
+		if (fallbacks.has(font.family)) continue;
+		fallbacks.add(font.family);
 		blocks.push(`@font-face {
 	font-family: ${cssString(fallbackFace(font.family))};
 	src: local(${cssString(font.fallback.family)});

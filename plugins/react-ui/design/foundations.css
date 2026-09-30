@@ -11,43 +11,69 @@
 /* ------------------------------------------------------------------ faces */
 
 @font-face {
-	font-family: "Inter Variable";
-	src: url("./files/inter-latin-opsz-normal.woff2") format("woff2-variations");
-	font-weight: 100 900;
-	font-style: normal;
-	font-display: swap;
-}
-
-@font-face {
-	font-family: "JetBrains Mono Variable";
-	src: url("./files/jetbrains-mono-latin-wght-normal.woff2")
+	font-family: "IBM Plex Sans";
+	src: url("./files/ibm-plex-sans-latin-wght-normal.woff2")
 		format("woff2-variations");
-	font-weight: 100 800;
+	font-weight: 100 700;
 	font-style: normal;
 	font-display: swap;
 }
 
-/* Arial (or its metric twin Liberation Sans) resized to Inter's metrics, so the swap does not
-   move a line. */
+/* IBM Plex Mono ships static cuts: 400 for code, 500 for emphasis in it, 600 for the OTP digit. */
 @font-face {
-	font-family: "Inter Fallback";
+	font-family: "IBM Plex Mono";
+	src: url("./files/ibm-plex-mono-latin-400-normal.woff2") format("woff2");
+	font-weight: 400;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: "IBM Plex Mono";
+	src: url("./files/ibm-plex-mono-latin-500-normal.woff2") format("woff2");
+	font-weight: 500;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: "IBM Plex Mono";
+	src: url("./files/ibm-plex-mono-latin-600-normal.woff2") format("woff2");
+	font-weight: 600;
+	font-style: normal;
+	font-display: swap;
+}
+
+/* Arial (or its metric twin Liberation Sans) resized to Plex Sans's metrics, and Courier New to
+   Plex Mono's, so the swap does not move a line. */
+@font-face {
+	font-family: "IBM Plex Sans Fallback";
 	src:
 		local("Arial"), local("ArialMT"), local("Liberation Sans"), local("Arimo");
-	ascent-override: 90.44%;
-	descent-override: 22.52%;
+	ascent-override: 101.32%;
+	descent-override: 27.18%;
 	line-gap-override: 0%;
-	size-adjust: 107.12%;
+	size-adjust: 101.17%;
+}
+
+@font-face {
+	font-family: "IBM Plex Mono Fallback";
+	src: local("Courier New"), local("Liberation Mono"), local("Cousine");
+	ascent-override: 102.52%;
+	descent-override: 27.5%;
+	line-gap-override: 0%;
+	size-adjust: 99.98%;
 }
 
 /* ------------------------------------------------------------------ type */
 
 :root {
 	--font-sans:
-		"Inter Variable", "Inter Fallback", ui-sans-serif, system-ui, sans-serif;
+		"IBM Plex Sans", "IBM Plex Sans Fallback", ui-sans-serif, system-ui,
+		sans-serif;
 	--font-mono:
-		"JetBrains Mono Variable", ui-monospace, "SFMono-Regular", Menlo, monospace;
-	/* JetBrains Mono draws code: its programming ligatures and contextual alternates are off. */
-	--features-mono: "liga" 0, "calt" 0;
+		"IBM Plex Mono", "IBM Plex Mono Fallback", ui-monospace, "SFMono-Regular",
+		Menlo, monospace;
 
 	/* The one measure for running text (rubric: 45-75 ch). */
 	--measure: 66ch;
@@ -75,8 +101,8 @@
  *   code    = meta             12 / 15
  * Leading = the nearest even px of size x 1.5 (body, meta, caption, code), x 1.3 (heading,
  * title), x 1.1 (display); a tie rounds up.
- * Tracking is per role and density-invariant (em): Inter's opsz axis already tightens the display
- * cut, so display takes -0.02em, title -0.01em, heading -0.005em, text 0, caption +0.01em.
+ * Tracking is per role and density-invariant (em): display takes -0.02em, title -0.01em, heading
+ * -0.005em, text 0, caption +0.01em.
  * Weights: display 500, title and heading 600, everything else 400, and --weight-strong 500 for
  * emphasis; muted text is never above 500.
  */
@@ -168,22 +194,24 @@
  * Every colour is oklch, named by role; light on :root, dark on .dark. Chroma sits inside sRGB so
  * a value renders as written (the hex beside each is its sRGB rendering).
  *
- * Neutrals carry hue 270 at chroma 0.002-0.012: a cool grey on purpose (rubric §5, never a pure
- * mid-grey), the same family as the accent.
+ * Neutrals carry the cast hue at chroma 0.002-0.012, fixed per role: a tinted grey on purpose
+ * (rubric §5, never a pure mid-grey). The cast is the accent's hue unless a theme sets its own, so
+ * by default the greys are the accent's family, 264.
  *
  * Surfaces. canvas: the page, a visible step below white in light (CIE L* 96.9 under surface 100
  * and over group 93.8, each >= 3 L* apart).
  * surface: a card, a field, a row (white in light, one step up in dark). group: a filled tile, a
  * chip ground, one step below surface in light and above it in dark; a selected row takes the
  * selection wash of the states section instead. raised: a popover or a sheet; light lifts it by
- * shadow so it is white, dark lifts it by one step, the group step, since a popover never holds
+ * shadow so it is white, dark lifts it by one step, about the group's, since a popover never holds
  * a group fill (its highlight is the hover wash). Dark steps in CIE L*: canvas 3.6, surface 8.1,
- * group and raised 12.3 (+4.5, +4.1; rubric: +4 to +8, at most three steps).
+ * group 13.1, raised 12.3 (+4.5, then +5.0 to group and +4.1 to raised; rubric: +4 to +8, at most
+ * three steps).
  * edge: the region hairline (rubric: light #dfdfdf-#ededed, dark #1f1f1f-#34343a, 10-15 % lighter
- * than the surface it sits on). The dark ladder spans 8.6 L* from canvas to group, more than the
+ * than the surface it sits on). The dark ladder spans 9.5 L* from canvas to group, more than the
  * 5 L* one hairline could straddle, so the hairline is split: edge (drawn over canvas and surface,
  * dark L* 18.5: +14.9 over canvas, +10.4 over surface) and edge-raised (drawn on group and on the
- * raised layers, their own borders included, dark L* 22.6: +10.3 over group and raised, a hair
+ * raised layers, their own borders included, dark L* 22.6: +9.4 over group and +10.3 over raised, a hair
  * past the rubric's #34343a). A group
  * or raised layer re-points --edge to --edge-raised for everything inside it, so a part never
  * picks between them. In light both are the same hairline. It separates; it is not a boundary a
@@ -198,20 +226,23 @@
  *
  * Accent: hue 264, a blue between Linear's indigo (#5e6ad2, 277) and Vercel's blue (#0070f3,
  * 255). Blue because the accent's jobs are the link, the focus ring and the one act, and blue is
- * the hue a reader already takes for a link; 264 sits on the neutrals' own hue so the chrome and
+ * the hue a reader already takes for a link; the neutrals wear its hue so the chrome and
  * the accent read as one family; and it is far from the three status hues (25, 70, 150), so an
- * accented act never reads as a status. accent: the filled act (>= 4.5:1 under on-accent, same in
- * both modes). accent-soft: a selected row, a tinted tile. accent-ink: a link, the focus ring,
+ * accented act never reads as a status. accent: the filled act (>= 4.5:1 under on-accent); in dark
+ * it lifts to 3:1 on group, where a checked box or an on switch is a control's boundary.
+ * accent-soft: a selected row, a tinted tile. accent-ink: a link, the focus ring,
  * a selection outline (text-grade on every surface); in light it is the accent itself, in dark it
  * lightens so a link and a ring still read on the near-black ground.
  *
  * Status: three families x (strong, soft). The strong tone is the dot, the icon and the text on
  * its own soft, >= 4.5:1 on canvas, surface, group and its soft; the soft is the chip or banner
  * ground. Three dialects only (rubric §1): a dot with grey text on a hairline, the soft fill with
- * the strong text, and a saturated fill for the one exceptional state, danger, with on-danger.
+ * the strong text, and a saturated fill for the one exceptional state, danger, with on-danger,
+ * which is also a confirm's destructive act (danger holds 4.5:1 under on-danger in both modes).
  * Lightness is spread across the three (not only hue) so they separate under protanopia and
- * deuteranopia. Dark strong tones are capped at L 0.75 like the chip marks (ok 0.64, danger 0.71,
- * warn 0.75), so no status glares on the near-black ground.
+ * deuteranopia. Light danger is a destructive act's label, so it holds 4.5:1 under the press wash
+ * on group, the darkest ground the label takes. Dark strong tones are capped at L 0.75 like the
+ * chip marks (ok 0.64, danger 0.71, warn 0.75), so no status glares on the near-black ground.
  *
  * Chips: six categorical families in hue order (25, 85, 145, 195, 305, 350), the accent's
  * 215-290 band left out. Each has a mark (the dot, a chart series; >= 3:1 on surface), a soft
@@ -228,19 +259,19 @@
 	color-scheme: light;
 
 	/* surfaces */
-	--canvas: oklch(0.974 0.002 270); /* #f6f6f8 */
+	--canvas: oklch(0.974 0.002 264); /* #f6f6f8 */
 	--surface: oklch(1 0 0); /* #ffffff */
-	--group: oklch(0.947 0.004 270); /* #ecedf0 */
+	--group: oklch(0.947 0.004 264); /* #ecedf0 */
 	--raised: oklch(1 0 0); /* #ffffff */
-	--edge: oklch(0.915 0.004 270); /* #e2e3e6 */
-	--edge-raised: oklch(0.915 0.004 270); /* #e2e3e6 */
-	--edge-strong: oklch(0.62 0.01 270); /* #84868c */
-	--scrim: oklch(0.2 0.01 270 / 0.45);
+	--edge: oklch(0.915 0.004 264); /* #e1e3e6 */
+	--edge-raised: oklch(0.915 0.004 264); /* #e1e3e6 */
+	--edge-strong: oklch(0.62 0.01 264); /* #83868c */
+	--scrim: oklch(0.2 0.01 264 / 0.45);
 
 	/* inks */
-	--ink-body: oklch(0.2 0.008 270); /* #15161a */
-	--ink-meta: oklch(0.45 0.012 270); /* #53555c */
-	--ink-faint: oklch(0.665 0.01 270); /* #91949a */
+	--ink-body: oklch(0.2 0.008 264); /* #14161a */
+	--ink-meta: oklch(0.45 0.012 264); /* #52555c */
+	--ink-faint: oklch(0.665 0.01 264); /* #91949a */
 
 	/* accent */
 	--accent: oklch(0.52 0.19 264); /* #2d5ed4 */
@@ -253,7 +284,7 @@
 	--ok-soft: oklch(0.965 0.04 150); /* #e1fce6 */
 	--warn: oklch(0.48 0.099 70); /* #81520c */
 	--warn-soft: oklch(0.965 0.036 85); /* #fff2d9 */
-	--danger: oklch(0.55 0.19 25); /* #c92f33 */
+	--danger: oklch(0.515 0.19 25); /* #bc2028 */
 	--danger-soft: oklch(0.965 0.016 20); /* #feefef */
 	--on-danger: oklch(1 0 0); /* #ffffff */
 
@@ -300,22 +331,22 @@
 	color-scheme: dark;
 
 	/* surfaces */
-	--canvas: oklch(0.16 0.005 270); /* #0c0d0f */
-	--surface: oklch(0.207 0.006 270); /* #16181a */
-	--group: oklch(0.243 0.007 270); /* #1f2023 */
-	--raised: oklch(0.243 0.007 270); /* #1f2023 */
-	--edge: oklch(0.298 0.008 270); /* #2c2d31 */
-	--edge-raised: oklch(0.332 0.008 270); /* #34363a */
-	--edge-strong: oklch(0.53 0.01 270); /* #696c72 */
+	--canvas: oklch(0.16 0.005 264); /* #0c0d0f */
+	--surface: oklch(0.207 0.006 264); /* #16181a */
+	--group: oklch(0.25 0.007 264); /* #202225 */
+	--raised: oklch(0.243 0.007 264); /* #1e2023 */
+	--edge: oklch(0.298 0.008 264); /* #2b2d31 */
+	--edge-raised: oklch(0.332 0.008 264); /* #34363a */
+	--edge-strong: oklch(0.53 0.01 264); /* #696c72 */
 	--scrim: oklch(0 0 0 / 0.5);
 
 	/* inks */
-	--ink-body: oklch(0.97 0.002 270); /* #f4f5f6 */
-	--ink-meta: oklch(0.76 0.01 270); /* #aeb1b8 */
-	--ink-faint: oklch(0.506 0.01 270); /* #63656b */
+	--ink-body: oklch(0.97 0.002 264); /* #f4f5f6 */
+	--ink-meta: oklch(0.76 0.01 264); /* #aeb1b8 */
+	--ink-faint: oklch(0.506 0.01 264); /* #62656b */
 
 	/* accent */
-	--accent: oklch(0.52 0.19 264); /* #2d5ed4 */
+	--accent: oklch(0.54 0.19 264); /* #3364db */
 	--on-accent: oklch(1 0 0); /* #ffffff */
 	--accent-soft: oklch(0.29 0.06 264); /* #1c2a49 */
 	--accent-ink: oklch(0.72 0.13 264); /* #7ba3f6 */
@@ -327,7 +358,7 @@
 	--warn-soft: oklch(0.28 0.05 75); /* #372508 */
 	--danger: oklch(0.71 0.178 25); /* #fd6d67 */
 	--danger-soft: oklch(0.28 0.06 25); /* #421c19 */
-	--on-danger: oklch(0.16 0.005 270); /* #0c0d0f */
+	--on-danger: oklch(0.16 0.005 264); /* #0c0d0f */
 
 	/* chips */
 	--chip-red: oklch(0.75 0.147 25); /* #fd867e */
@@ -432,7 +463,9 @@
  * (rubric 26-37, 3.1 rows / 100 px), two-line row 48 (list items, rubric 40-72), setting row 64
  * (label + description beside a control, settings range 64-70), header 32 (table and strip
  * headers, 30-34). touch: every target is at least 44 (the floor, WCAG 2.5.5 / platform HIG),
- * rows and fields one rung above it.
+ * rows and fields one rung above it. An icon is sized by what it sits beside: icon-meta beside
+ * meta or caption text, icon beside body text, icon-control inside a control. A checkbox's box is
+ * check; a one-time-code box is otp, square.
  */
 :root,
 :root[data-density="desktop"] {
@@ -450,6 +483,11 @@
 	--size-avatar: 24px;
 	--size-swatch: 40px;
 	--size-control: var(--control-height);
+	--size-icon-meta: 12px;
+	--size-icon: 14px;
+	--size-icon-control: 16px;
+	--size-check: 16px;
+	--size-otp: 44px;
 }
 
 :root[data-density="touch"] {
@@ -467,13 +505,20 @@
 	--size-avatar: 32px;
 	--size-swatch: 40px;
 	--size-control: var(--control-height);
+	--size-icon-meta: 14px;
+	--size-icon: 18px;
+	--size-icon-control: 20px;
+	--size-check: 20px;
+	--size-otp: 48px;
 }
 
 /* ------------------------------------------------------------------ widths of lifted layers */
 
 /* Each at its pattern's range (reference sheet): popover 215-300, toast 340-430, confirm dialog
-   365-590, sheet 610-730. A layer never stretches to its container. */
+   365-590, sheet 610-730. A layer never stretches to its container. A chip's label runs to 16ch,
+   then truncates. */
 :root {
+	--width-chip-label: 18ch;
 	--width-popover: 240px;
 	--width-toast: 360px;
 	--width-dialog: 440px;
@@ -515,16 +560,16 @@
  * Two levels, spent on lifted layers only; a card at rest has a hairline and no shadow.
  *   float  popover, menu, picker, toast
  *   modal  command palette, dialog, sheet
- * Each is a tight contact shadow plus a soft ambient one, tinted with the neutral hue in light.
+ * Each is a tight contact shadow plus a soft ambient one, tinted with the cast in light.
  * Dark: a shadow cannot darken a near-black canvas much, so the lift is carried by the raised
  * step and the hairline, and the shadow is pure black at higher opacity to cut the layer from
  * whatever sits behind it (it reads over surface and group, not over canvas).
  */
 :root {
 	--shadow-float:
-		0 1px 2px oklch(0.2 0.01 270 / 0.06), 0 4px 12px oklch(0.2 0.01 270 / 0.08);
+		0 1px 2px oklch(0.2 0.01 264 / 0.06), 0 4px 12px oklch(0.2 0.01 264 / 0.08);
 	--shadow-modal:
-		0 2px 4px oklch(0.2 0.01 270 / 0.06), 0 16px 40px oklch(0.2 0.01 270 / 0.14);
+		0 2px 4px oklch(0.2 0.01 264 / 0.06), 0 16px 40px oklch(0.2 0.01 264 / 0.14);
 }
 
 .dark {
@@ -575,13 +620,20 @@
  * where it is declared, so a mode scope has to re-declare it to pick up its own ink.
  *
  * Acts. Two primaries, one default to be chosen: act-accent (the accent fill) and act-ink (the
- * body ink as the fill, the dark primary the settings references use; it inverts in dark mode).
+ * body ink as the fill, the dark primary the settings references use; it inverts in dark mode);
+ * and act-danger (the danger fill under on-danger), a confirm's destructive primary, the hairline
+ * destructive act kept for rows and menus.
  * Hover and press move the fill toward a second colour by 12 % and 22 % (color-mix in oklab, so
- * the hue holds; oklch would swing it toward the black's nominal hue):
- * the accent toward black, so its label only gains contrast; the ink fill toward its own label
- * colour, which lightens it in light mode and darkens it in dark. Pending recedes the fill 30 %
- * toward the page, except the accent's pending fill, which lightens 30 % toward its white label
- * in both modes (rubric: a pending act's fill is lightened). act-accent is the default act;
+ * the hue holds; oklch would swing it toward the black's nominal hue), away from the label so the
+ * label only gains contrast: the accent act toward black in both modes, the danger act toward
+ * black in light and toward the body ink in dark, where its label is near-black; the ink fill toward its own label colour, which lightens
+ * it in light mode and darkens it in dark. Pending is inert and recedes the fill 30 %: a filled
+ * act toward its label in light and toward the page in dark, held at 3:1 under its label, where
+ * the spinner draws; the ink fill toward the page. A labelled act's fill takes no 3:1 floor on
+ * its ground in any state: its label names it. A toggle on (the switch's track, a checked box, a
+ * slider's fill) has no label, so toggle-on and its hover hold 3:1 on every ground and under the
+ * knob; its hover darkens in light and lightens in dark, away from the ground.
+ * act-accent is the default act;
  * act-ink is the secondary dialect, for a screen that needs a dark act. Disabled: a 6 % ink wash
  * with faint ink, so a disabled act or chip keeps a visible box on every surface and its label
  * reads as off (about 3:1, WCAG exempts disabled text); a switch, which has no label of its own,
@@ -606,6 +658,8 @@
 	--ink-error: var(--danger);
 	--ink-disabled: var(--ink-faint);
 	--fill-disabled: color-mix(in oklch, var(--ink-body) 6%, transparent);
+	/* a resting neutral ground: a count's pill, a grey chip */
+	--fill-neutral: color-mix(in oklch, var(--ink-body) 8%, transparent);
 	--disabled-opacity: 0.45;
 
 	--act-accent: var(--accent);
@@ -616,6 +670,16 @@
 		in oklab,
 		var(--accent) 70%,
 		var(--on-accent)
+	);
+
+	--act-danger: var(--danger);
+	--on-act-danger: var(--on-danger);
+	--act-danger-hover: color-mix(in oklab, var(--danger), var(--shade) 12%);
+	--act-danger-press: color-mix(in oklab, var(--danger), var(--shade) 22%);
+	--act-danger-pending: color-mix(
+		in oklab,
+		var(--danger) 70%,
+		var(--on-danger)
 	);
 
 	--act-ink: var(--ink-body);
@@ -630,13 +694,26 @@
 		var(--edge-strong),
 		var(--ink-body) 15%
 	);
-	--switch-on: var(--accent);
-	--switch-on-hover: var(--act-accent-hover);
+	--toggle-on: var(--accent);
+	--toggle-on-hover: color-mix(in oklab, var(--accent), var(--shade) 12%);
 	--switch-thumb-fill: var(--on-accent);
 }
 
+/* In dark a filled act's pending fill recedes toward the page, the danger act's hover and press
+   move toward the body ink, away from its near-black label, and a toggle's hover lightens toward
+   its knob, away from the near-black ground. */
+.dark {
+	--act-danger-hover: color-mix(in oklab, var(--danger), var(--ink-body) 12%);
+	--act-danger-press: color-mix(in oklab, var(--danger), var(--ink-body) 22%);
+	--act-accent-pending: color-mix(in oklab, var(--accent) 70%, var(--canvas));
+	--act-danger-pending: color-mix(in oklab, var(--danger) 70%, var(--canvas));
+	--toggle-on-hover: color-mix(in oklab, var(--accent), var(--on-accent) 12%);
+}
+
 /* sizes of the state parts: skeleton bars are 12 tall at radius 4 (rubric §0), the spinner
-   14-16 inside a pending act, the switch sized to its row */
+   14-18, the icon rung (it replaces a row glyph and sits beside body text), the switch sized to
+   its row, the thumb travelling the width less itself and both insets, a slider's track 2-4
+   thick */
 :root,
 :root[data-density="desktop"] {
 	--skeleton-height: var(--space-3);
@@ -644,14 +721,18 @@
 	--switch-width: 28px;
 	--switch-height: 16px;
 	--switch-thumb: 12px;
+	--switch-travel: 12px;
+	--track-height: 2px;
 }
 
 :root[data-density="touch"] {
 	--skeleton-height: var(--space-3);
-	--size-spinner: 16px;
+	--size-spinner: 18px;
 	--switch-width: 40px;
 	--switch-height: 24px;
 	--switch-thumb: 20px;
+	--switch-travel: 16px;
+	--track-height: 4px;
 }
 
 :root {
@@ -719,8 +800,6 @@ kbd,
 pre,
 samp {
 	font-family: var(--font-mono);
-	font-feature-settings: var(--features-mono);
-	font-variant-ligatures: none;
 }
 
 /* ------------------------------------------------------------------ utilities */
@@ -763,8 +842,6 @@ samp {
 }
 .text-code {
 	font-family: var(--font-mono);
-	font-feature-settings: var(--features-mono);
-	font-variant-ligatures: none;
 	font-size: var(--text-code);
 	line-height: var(--leading-code);
 	font-weight: var(--weight-code);
@@ -1503,10 +1580,10 @@ samp {
 	background: var(--switch-off-hover);
 }
 .switch.is-on {
-	background: var(--switch-on);
+	background: var(--toggle-on);
 }
 .switch.is-on.is-hover {
-	background: var(--switch-on-hover);
+	background: var(--toggle-on-hover);
 }
 .switch.is-on::after {
 	transform: translateX(

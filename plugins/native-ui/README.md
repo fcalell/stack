@@ -30,8 +30,11 @@ export default defineConfig({
     auth(),
     expo({ scheme: "myapp" }),
     nativeUi({
-      theme: { accentHue: 200, primary: "accent" },
-      fonts: [{ family: "JetBrains Mono Variable", source: "./assets/JetBrainsMono.ttf" }],
+      theme: { accentHue: 200 },
+      fonts: [
+        { family: "IBM Plex Sans", source: "./assets/IBMPlexSans.ttf" },
+        { family: "IBM Plex Mono", source: "./assets/IBMPlexMono.ttf" },
+      ],
     }),
   ],
 });
@@ -52,9 +55,9 @@ key of it.
 
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
-| `theme` | `Theme` | the calibrated defaults | ui-core's contract: the knobs (`accentHue`, `neutralHue`, `neutralChroma`, `okHue`, `warnHue`, `dangerHue`, `primary`, `space`, `radius` (0 squares everything), `text`, `elevation` (`soft` \| `flat`), `density` (accepted and ignored: native is touch-only, so every control keeps the 44 px floor), `fonts`, `widths`, `breakpoints`), `overrides.colors` / `overrides.scales` for the single token off its ratio, and `defaultMode` (set, the app starts in that mode through a generated `Uniwind.setTheme` call; unset, it follows the system). |
+| `theme` | `Theme` | the calibrated defaults | ui-core's contract, four knobs: `accentHue`, `castHue` (the neutrals' hue; `accentHue` unless set), `fonts` (IBM Plex Sans and IBM Plex Mono unless set) and `defaultMode` (set, the app starts in that mode through a generated `Uniwind.setTheme` call; unset, it follows the system). Native draws the touch density set. |
 | `words` | `Words` | English | Every word a molecule draws on its own; every key required, so a translation that misses one fails `tsc`. |
-| `fonts` | `{ family, source }[]` | none | Font files to embed through expo-font. The families are named by `theme.fonts` (`sans`, `mono`); an entry only brings the file. |
+| `fonts` | `{ family, source }[]` | none | Font files to embed through expo-font. The families are named by `theme.fonts` (`sans`, `mono`, IBM Plex unless set); an entry only brings the file, so the app embeds the files of the families its theme names. |
 | `authClientModule`, `queryClientModule` | `{ source, export }` | `src/lib/auth`, `src/lib/query` | Where the generated entry imports the native clients from. |
 
 ### The words
@@ -88,19 +91,19 @@ sidebar. Pull to refresh is the phone's.
 | Component | Props |
 | --- | --- |
 | `Text` | `role` (`display`, `title`, `heading`, `body`, `meta`, `label`, `mono`), children |
-| `Icon` | `name`, from the app's icon set |
-| `Button` | `act` (`primary`, `secondary`, `destructive`), `label`, `onAct`, `loading`, `spinner` (the busy glyph), `blocked` (the reason, drawn under it once pressed or once its form or sheet has taken input) |
+| `Icon` | `name`, from the app's icon set; `fit` (`meta`, `body`, `control`: what it sits beside, which picks `icon-meta`, `icon` or `icon-control`) |
+| `Button` | `act` (`primary`, `secondary`, `destructive`), `label`, `onAct`, `loading` (the busy ring), `blocked` (the reason, drawn under it once pressed or once its form or sheet has taken input) |
 | `IconButton` | `icon`, `label` (read aloud), `onAct` |
 | `Count` | `value` |
 | `Status` | `state` (`active`, `waiting`, `done`, `attention`, `failed`, `idle`), `label`, `onOpen` |
-| `Chip` | `label`, `family` (`1` to `6`, the `chip-n` fill the app gives a family of values); no act |
+| `Chip` | `label`, `family` (`red` … `pink`, the family the app gives a kind of values); `onRemove` (a trailing remove act, read aloud as `words.remove`) |
 | `Input` | `kind` (`text`, `search`, `secret`, `source`, `number`, `email`: the email keyboard, the system's saved address, never corrected or capitalized), `value`, `onChange`, `onCommit` (the value once the viewer leaves the field or presses return, only when it changed since focus; a hardware Escape then puts back the value at focus), `placeholder`, `unit`, `act` |
 | `TextArea` | `kind` (`prose`, `source`), `value`, `onChange`, `onCommit` (the value once the viewer leaves the field having changed it; return is a new line), `placeholder`, `budget` (words) |
 | `InputOtp` | `length` (boxes), `value` (the digits), `onChange`, `onComplete` (the code once its last digit lands), `loading` (holds the boxes while the code is checked); it takes focus when it is drawn unless another input holds it, so the code step a sent code opens needs no tap; one invisible input over the boxes: the number pad, the system's one-time-code suggestion, a pasted code; inside a `FormField` its error is the field's line |
 | `EnumInput` | `value` (`string[]`), `onChange`, `placeholder`; each value on a `source` cell with a remove act, then a `source` field whose act adds the draft; a value already listed is refused, `words.duplicate` under the field |
 | `Slider` | `label`, `value`, `onChange`, `min`, `max`, `step`, `unit` (an Intl unit identifier such as `percent`) |
 | `Switch`, `Checkbox` | `checked`, `onChange`, `label` |
-| `Spinner` | `kind` (`circle` \| `scramble`; `scramble` cycles mono glyphs and holds still under reduced motion) |
+| `Spinner` | none: the busy ring in the meta ink |
 | `Avatar` | `name`, `src` |
 | `Link` | `href`, children |
 
@@ -134,7 +137,7 @@ sidebar. Pull to refresh is the phone's.
 | `EmptyState` | `title`, `sentence`, `act`, children |
 | `Toast` | `sentence`, `state` (`done`, `attention`, `failed`: the state's glyph on its `-soft` fill; without it the dark pill), `act`; `toast(sentence, { state, act })` queues one and the `Shell` draws the queue |
 | `Banner` | `kind` (`note`, `warn`, `danger`), `sentence`, `act` |
-| `PendingBar` | `sentence`, `until` (a `Date`; a countdown fills the bar), `spinner`, `act` |
+| `PendingBar` | `sentence`, `until` (a `Date`; a countdown fills the bar, else the busy ring), `act` |
 
 A part is a string or `{ quoted: string }`: typographic quotes around it, cut at 40 characters in
 a `meta` line, wrapped to two lines in a title.

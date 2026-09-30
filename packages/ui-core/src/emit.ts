@@ -7,7 +7,6 @@ import {
 	EASINGS,
 	FONT_ROLES,
 	HAIRLINE_PX,
-	MONO_FEATURES,
 	type Mode,
 	RADIUS_ROLES,
 	RING_OFFSET_PX,
@@ -56,7 +55,6 @@ export function themeTokens(resolved: ResolvedTheme): Record<string, string> {
 	for (const role of FONT_ROLES) {
 		tokens[`--font-${role}`] = resolved.fonts[role];
 	}
-	tokens["--font-mono--font-feature-settings"] = MONO_FEATURES;
 	for (const rung of DURATIONS) {
 		tokens[`--transition-duration-${rung}`] =
 			`${resolved.motion.durations[rung]}ms`;
@@ -92,10 +90,11 @@ export function rootTokens(resolved: ResolvedTheme): Record<string, string> {
 	return tokens;
 }
 
-// One density's set, keyed by full custom-property name, whatever the knob
-// says: the type scale, the spacing roles and the sizes. The web draws
-// either set on demand under a `data-density` attribute on the root, which
-// is how a screenshot pins a density.
+// One density's set, keyed by full custom-property name: the type scale,
+// the spacing roles and the sizes. `themeTokens` seeds the touch set on both
+// platforms; the web draws the desktop set under a fine pointer, and either
+// set under a `data-density` attribute on the root, which is how the
+// showcase and a board pin a density.
 export function densityTokens(
 	resolved: ResolvedTheme,
 	density: Density,
@@ -116,17 +115,6 @@ export function densityTokens(
 		tokens[`--spacing-${size}`] = resolved.sizes[density][size];
 	}
 	return tokens;
-}
-
-// The set a fine pointer takes: the desktop set under `density: "desktop"`,
-// nothing under `touch`. Only the web renders it, inside its own pointer
-// query; `themeTokens` already seeds the touch set on both platforms, so
-// every cell that names a size resolves either way.
-export function finePointerTokens(
-	resolved: ResolvedTheme,
-): Record<string, string> {
-	if (resolved.knobs.density !== "desktop") return {};
-	return densityTokens(resolved, "desktop");
 }
 
 // Every duration rung at 0, which the web renders under
@@ -153,6 +141,14 @@ export function modeTokens(
 		tokens[`--shadow-${level}`] = resolved.shadows[mode][level];
 	}
 	return tokens;
+}
+
+// What a raised ground (`RAISED_GROUNDS`) declares for everything inside
+// it: the hairline read through `edge-raised`. Each platform scopes it on
+// the grounds' fill classes, after the mode scopes, so a ground that is also
+// a mode scope still re-points.
+export function raisedGroundTokens(): Record<string, string> {
+	return { "--color-edge": "var(--color-edge-raised)" };
 }
 
 // The declarations of each elevation utility. The `--shadow-*` theme

@@ -39,7 +39,7 @@
 		"check": "pnpm check-types && pnpm lint",
 		"test": "node --test 'test/**/*.test.ts'",
 		"clear": "rm -rf dist node_modules .turbo",
-		"design": "mkdir -p design/files && cp node_modules/@fontsource-variable/inter/files/inter-latin-opsz-normal.woff2 node_modules/@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2 design/files/"
+		"design": "tsx scripts/design.ts"
 	},
 	"peerDependencies": {
 		"react": "^19.3"
@@ -50,8 +50,8 @@
 		"@fcalell/plugin-react": "workspace:*",
 		"@fcalell/plugin-vite": "workspace:*",
 		"@fcalell/ui-core": "workspace:*",
-		"@fontsource-variable/inter": "^5.3.0",
-		"@fontsource-variable/jetbrains-mono": "^5.3.0",
+		"@fontsource-variable/ibm-plex-sans": "^5.3.0",
+		"@fontsource/ibm-plex-mono": "^5.3.0",
 		"@tailwindcss/vite": "^4.3.3",
 		"lucide-react": "^1.48.0",
 		"tailwindcss": "^4.3.3",
@@ -59,9 +59,11 @@
 	},
 	"devDependencies": {
 		"@fcalell/typescript-config": "workspace:*",
+		"@tailwindcss/cli": "^4.3.3",
 		"@types/node": "^25.5.0",
 		"@types/react": "^19.3.0",
 		"react": "^19.3.0",
+		"tsx": "^4.19.0",
 		"typescript": "^5.9.3",
 		"vite": "^7.0.4"
 	}

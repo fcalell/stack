@@ -4,7 +4,8 @@
 //
 // The script derives with default knobs, diffs every emitted value against
 // the approved Stage 1 sheet (`plugins/react-ui/design/foundations.css`, the
-// calibration the contract carries), sweeps the accent knob for contrast,
+// calibration the contract carries), sweeps the accent and cast knobs for
+// contrast,
 // drives a Tailwind build over the emitted `@theme` record plus every class
 // the matrices can emit, and exits non-zero on any mismatch.
 import { readdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -15,11 +16,11 @@ import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import ts from "typescript";
 import { cn } from "../src/cn.ts";
-import { deriveTheme } from "../src/derive.ts";
+import { deriveTheme, type ResolvedTheme } from "../src/derive.ts";
 import {
 	densityTokens,
-	finePointerTokens,
 	modeTokens,
+	raisedGroundTokens,
 	reducedMotionTokens,
 	rootTokens,
 	shadowUtilities,
@@ -34,14 +35,19 @@ import {
 	rule,
 	tailwindBuild,
 } from "../src/harness.ts";
-import { inGamut, oklchToLinear, oklchToRgb } from "../src/oklch.ts";
+import {
+	inGamut,
+	oklchToLinear,
+	oklchToRgb,
+	veiledLuminance,
+} from "../src/oklch.ts";
 import {
 	CLOSED_PROPS,
 	componentDir,
 	rosterEntries,
 	STATES,
 } from "../src/roster.ts";
-import { wordsSchema } from "../src/schema.ts";
+import { type Theme, wordsSchema } from "../src/schema.ts";
 import {
 	AVATAR_STEPS,
 	BODY_SIZE,
@@ -59,11 +65,13 @@ import {
 	ENGLISH,
 	fallbackFace,
 	GAP_ROLES,
+	KNOB_DEFAULTS,
 	LOOP_MS,
 	MODES,
 	type Mode,
 	RADIUS_PX,
 	RADIUS_ROLES,
+	RAISED_GROUNDS,
 	SHADOW_LEVELS,
 	SIZE_PX,
 	SIZES,
@@ -218,7 +226,14 @@ const SHEET_SIZE: Record<(typeof SIZES)[number], string> = {
 	"switch-h": "--switch-height",
 	thumb: "--switch-thumb",
 	"switch-inset": "--switch-inset",
+	"switch-travel": "--switch-travel",
 	skeleton: "--skeleton-height",
+	"icon-meta": "--size-icon-meta",
+	icon: "--size-icon",
+	"icon-control": "--size-icon-control",
+	check: "--size-check",
+	track: "--track-height",
+	otp: "--size-otp",
 };
 
 // The sheet's names for the two places it spells differently.
@@ -262,15 +277,26 @@ function isTracked(role: TypeRole): role is TrackedRole {
 	return (TRACKED_ROLES as readonly string[]).includes(role);
 }
 
-// WCAG 2 contrast between two emitted opaque `oklch(L C H)` values.
-function contrast(fg: string, bg: string): number {
-	const luminance = (value: string) => {
+// WCAG 2 contrast between two emitted opaque `oklch(L C H)` values, the
+// ground under a translucent veil when one is given.
+function contrast(fg: string, bg: string, veil?: string): number {
+	const opaque = (value: string) => {
 		const [l, c, h, alpha] = oklch(value);
 		assert(alpha === undefined, `not an opaque value: ${value}`);
+		return { l, c, h };
+	};
+	const luminance = (value: string) => {
+		const { l, c, h } = opaque(value);
 		const [r, g, b] = oklchToLinear(l, c, h);
 		return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 	};
-	const [a, b] = [luminance(fg), luminance(bg)].sort((x, y) => y - x);
+	const ground = () => {
+		if (veil === undefined) return luminance(bg);
+		const [l, c, h, alpha] = oklch(veil);
+		assert(alpha !== undefined, `not a veil: ${veil}`);
+		return veiledLuminance({ l, c, h }, alpha, opaque(bg));
+	};
+	const [a, b] = [luminance(fg), ground()].sort((x, y) => y - x);
 	return ((a ?? 0) + 0.05) / ((b ?? 0) + 0.05);
 }
 
@@ -289,6 +315,124 @@ function emitted(key: string): string {
 
 function color(mode: Mode, name: ColorName): string {
 	return base.colors[mode][name];
+}
+
+type Palette = ResolvedTheme["colors"];
+
+const GROUNDS: ColorName[] = ["canvas", "surface", "group", "raised"];
+
+// Text at 4.5:1 on each ground it is drawn on.
+const TEXT_FLOORS: Array<[ColorName, ColorName[]]> = [
+	[
+		"ink-body",
+		[...GROUNDS, "accent-soft", "ok-soft", "warn-soft", "danger-soft"],
+	],
+	["ink-meta", [...GROUNDS, "accent-soft"]],
+	["accent-ink", [...GROUNDS, "accent-soft"]],
+	["ok", [...GROUNDS, "ok-soft"]],
+	["warn", [...GROUNDS, "warn-soft"]],
+	["danger", [...GROUNDS, "danger-soft"]],
+	["on-accent", ["accent", "act-accent-hover", "act-accent-press"]],
+	["on-danger", ["danger"]],
+	["on-act-danger", ["act-danger", "act-danger-hover", "act-danger-press"]],
+	["on-act-ink", ["act-ink", "act-ink-hover", "act-ink-press"]],
+	...CHIP_FAMILIES.map((family): [ColorName, ColorName[]] => [
+		`chip-${family}-ink`,
+		[`chip-${family}-soft`],
+	]),
+	...AVATAR_STEPS.map((step): [ColorName, ColorName[]] => [
+		`avatar-${step}-ink`,
+		[`avatar-${step}`],
+	]),
+];
+
+// A boundary or a mark at 3:1 on each ground it is drawn on.
+const GRAPHIC_FLOORS: Array<[ColorName, ColorName[]]> = [
+	["edge-strong", ["surface", "group"]],
+	["accent", ["canvas", "surface", "group"]],
+	["on-act-accent", ["act-accent-pending"]],
+	["on-act-danger", ["act-danger-pending"]],
+	["toggle-on", ["canvas", "surface", "group"]],
+	["toggle-on-hover", ["canvas", "surface", "group"]],
+	["switch-thumb", ["toggle-on", "toggle-on-hover"]],
+	...CHIP_FAMILIES.map((family): [ColorName, ColorName[]] => [
+		`chip-${family}`,
+		["surface"],
+	]),
+];
+
+// Every floor a palette keeps, both modes: the text and graphic floors, a
+// destructive act's label under its hover and press washes on each ground an
+// act sits on, and every hold the contract declares. c32 reads it at the
+// default knobs, c11 at every accent and cast hue.
+function floors(colors: Palette): { measured: number; short: string[] } {
+	const short: string[] = [];
+	let measured = 0;
+	for (const mode of MODES) {
+		const values = colors[mode];
+		const measure = (
+			fg: ColorName,
+			bg: ColorName,
+			floor: number,
+			veil?: ColorName,
+		) => {
+			measured++;
+			const under = veil === undefined ? undefined : values[veil];
+			const ratio = contrast(values[fg], values[bg], under);
+			if (ratio < floor)
+				short.push(
+					`${mode} ${fg} on ${bg}${veil ? ` under ${veil}` : ""}: ${ratio.toFixed(2)} < ${floor}`,
+				);
+		};
+		for (const [floor, pairs] of [
+			[4.5, TEXT_FLOORS],
+			[3, GRAPHIC_FLOORS],
+		] as const) {
+			for (const [fg, grounds] of pairs) {
+				for (const bg of grounds) measure(fg, bg, floor);
+			}
+		}
+		for (const bg of ["canvas", "surface", "group"] as const) {
+			for (const veil of ["wash-hover", "wash-press"] as const) {
+				measure("danger", bg, 4.5, veil);
+			}
+		}
+		for (const name of COLOR_NAMES) {
+			const declaration = COLORS[name];
+			const holds =
+				"mix" in declaration
+					? declaration.holds?.[mode]
+					: "light" in declaration
+						? declaration[mode].holds
+						: undefined;
+			for (const hold of holds ?? []) {
+				measure(name, hold.on, hold.ratio, hold.under);
+			}
+		}
+	}
+	return { measured, short };
+}
+
+// The roles a knob's hue reaches in one mode, through aliases, veils and
+// mixes: a literal declared on that knob, or anything read from one.
+function boundTo(knob: "accent" | "cast", mode: Mode): ColorName[] {
+	const walk = (name: ColorName): boolean => {
+		const declaration = COLORS[name];
+		if ("alias" in declaration) return walk(declaration.alias);
+		if ("veil" in declaration) return walk(declaration.veil);
+		if ("mix" in declaration) {
+			const { toward } = declaration;
+			const target = typeof toward === "string" ? toward : toward[mode];
+			return walk(declaration.mix) || (target !== "black" && walk(target));
+		}
+		return declaration[mode].hue === knob;
+	};
+	return COLOR_NAMES.filter(walk);
+}
+
+function summary(short: string[]): string {
+	const more = short.length > 8 ? ` and ${short.length - 8} more` : "";
+	return `${short.slice(0, 8).join(", ")}${more}`;
 }
 
 // ── The matrix registry ─────────────────────────────────────────────
@@ -484,15 +628,15 @@ check("c02", "package.json shape", () => {
 });
 
 check("c03", "tokens.ts declares the contract", () => {
-	requireEqual(COLOR_NAMES.length, 83, "color count");
+	requireEqual(COLOR_NAMES.length, 89, "color count");
 	requireEqual(new Set(COLOR_NAMES).size, COLOR_NAMES.length, "unique colors");
 	requireEqual(TYPE_ROLES.length, 7, "type role count");
 	requireEqual(SPACING_ROLES.length, 8, "spacing role count");
 	requireEqual(GAP_ROLES.length, 5, "gap role count");
-	requireEqual(SIZES.length, 17, "size count");
+	requireEqual(SIZES.length, 24, "size count");
 	requireEqual(RADIUS_ROLES.length, 8, "radius role count");
 	requireEqual(SHADOW_LEVELS.length, 2, "shadow level count");
-	requireEqual(WIDTHS.length, 5, "width count");
+	requireEqual(WIDTHS.length, 6, "width count");
 	requireEqual(BREAKPOINTS.length, 3, "breakpoint count");
 	requireEqual(WORD_KEYS.length, 21, "word count");
 	for (const name of COLOR_NAMES) {
@@ -508,7 +652,7 @@ check("c03", "tokens.ts declares the contract", () => {
 	for (const word of ["marine", "navy", "brand", "tint", "label", "floor"]) {
 		assert(!new RegExp(`"${word}"`).test(source), `tokens.ts names "${word}"`);
 	}
-	return `${COLOR_NAMES.length} colors, 7 roles, 8 spacing roles (5 gaps), 17 sizes, 8 radii, 2 shadows, 5 widths, 3 breakpoints, 21 words`;
+	return `${COLOR_NAMES.length} colors, 7 roles, 8 spacing roles (5 gaps), 24 sizes, 8 radii, 2 shadows, 6 widths, 3 breakpoints, 21 words`;
 });
 
 check("c05", "default knobs reproduce the approved sheet", () => {
@@ -595,6 +739,20 @@ check("c05", "default knobs reproduce the approved sheet", () => {
 		count++;
 		requireEqual(emitted(`--ease-${easing}`), root(`--ease-${easing}`), easing);
 	}
+	// The sheet re-points the hairline on each raised ground's fill; the
+	// contract's grounds and re-point are those.
+	for (const ground of RAISED_GROUNDS) {
+		count++;
+		const repoint = [...sheetRules].find(([selector]) =>
+			selector.split(/,\s*/).includes(`.fill-${ground}`),
+		)?.[1];
+		requireEqual(repoint?.get("--edge"), "var(--edge-raised)", ground);
+	}
+	requireEqual(
+		JSON.stringify(raisedGroundTokens()),
+		JSON.stringify({ "--color-edge": "var(--color-edge-raised)" }),
+		"the raised grounds' re-point",
+	);
 	const rootValues = rootTokens(base);
 	requireEqual(rootValues["--hairline"], root("--hairline"), "hairline");
 	requireEqual(rootValues["--focus-ring"], root("--ring"), "ring");
@@ -646,6 +804,7 @@ check(
 				["wash-selected-hover", 0.15],
 				["skeleton", 0.09],
 				["fill-disabled", 0.06],
+				["fill-neutral", 0.08],
 			] as const) {
 				const [il, ic, ih] = oklch(color(mode, "ink-body"));
 				requireEqual(
@@ -654,20 +813,32 @@ check(
 					`${mode}.${name}`,
 				);
 			}
-			// The accent fill darkens under hover and press, lightens pending.
-			const accent = l(color(mode, "accent"));
-			assert(
-				l(color(mode, "act-accent-hover")) < accent,
-				`${mode} hover is not darker`,
-			);
-			assert(
-				l(color(mode, "act-accent-press")) < l(color(mode, "act-accent-hover")),
-				`${mode} press is not darker than hover`,
-			);
-			assert(
-				l(color(mode, "act-accent-pending")) > accent,
-				`${mode} pending is not lighter`,
-			);
+			// A filled act's hover, press and pending each move its fill toward
+			// the color the mix names in this mode, press further than hover.
+			for (const fill of ["accent", "danger"] as const) {
+				const away = (state: "hover" | "press" | "pending") => {
+					const declaration = COLORS[`act-${fill}-${state}`];
+					assert("mix" in declaration, `act-${fill}-${state} is not a mix`);
+					const { toward } = declaration;
+					const target = typeof toward === "string" ? toward : toward[mode];
+					const goal = target === "black" ? 0 : l(color(mode, target));
+					return [
+						Math.abs(l(color(mode, `act-${fill}-${state}`)) - goal),
+						Math.abs(l(color(mode, fill)) - goal),
+					] as const;
+				};
+				for (const state of ["hover", "press", "pending"] as const) {
+					const [moved, rest] = away(state);
+					assert(
+						moved < rest,
+						`${mode} act-${fill}-${state} moves the wrong way`,
+					);
+				}
+				assert(
+					away("press")[0] < away("hover")[0],
+					`${mode} act-${fill}-press is not past hover`,
+				);
+			}
 			// The ink fill moves toward the page: lighter in light, darker in dark.
 			const ink = l(color(mode, "ink-body"));
 			const hover = l(color(mode, "act-ink-hover"));
@@ -699,7 +870,7 @@ check(
 			Math.round(ac * 0.88 * 1000) / 1000,
 			"hover C is 88 % of the accent's",
 		);
-		return "6 washes at their alpha, act fills move the right way, aliases read their source, one mix checked by hand";
+		return "7 washes at their alpha, act fills move toward their mode's target, aliases read their source, one mix checked by hand";
 	},
 );
 
@@ -730,10 +901,13 @@ check("c06", "every scale is its ratio of the base", () => {
 				`${density} ${role}`,
 			);
 		}
+		const px = SIZE_PX[density];
 		for (const size of SIZES) {
 			requireEqual(
 				tokens[`--spacing-${size}`],
-				`${SIZE_PX[density][size]}px`,
+				size === "switch-travel"
+					? `${px["switch-w"] - px.thumb - 2 * px["switch-inset"]}px`
+					: `${px[size]}px`,
 				`${density} ${size}`,
 			);
 		}
@@ -775,30 +949,26 @@ check("c06", "every scale is its ratio of the base", () => {
 	}
 	requireEqual(
 		emitted("--font-mono"),
-		'"JetBrains Mono Variable", "JetBrains Mono Variable Fallback", ui-monospace, "SFMono-Regular", Menlo, monospace',
+		'"IBM Plex Mono", "IBM Plex Mono Fallback", ui-monospace, "SFMono-Regular", Menlo, monospace',
 		"--font-mono names its fallback face second",
 	);
 	requireEqual(
-		fallbackFace("Inter Variable"),
-		"Inter Variable Fallback",
+		fallbackFace("IBM Plex Sans"),
+		"IBM Plex Sans Fallback",
 		"the fallback face rule",
 	);
 	requireEqual(
-		emitted("--font-mono--font-feature-settings"),
-		'"liga" 0, "calt" 0',
-		"mono ligatures off",
-	);
-	requireEqual(
 		emitted("--font-sans"),
-		"ui-sans-serif, system-ui, sans-serif",
+		'"IBM Plex Sans", "IBM Plex Sans Fallback", ui-sans-serif, system-ui, sans-serif',
 		"--font-sans",
 	);
-	const named = themeTokens(deriveTheme({ fonts: { sans: "Inter Variable" } }));
+	const named = themeTokens(deriveTheme({ fonts: { sans: "Geist" } }));
 	requireEqual(
 		named["--font-sans"],
-		'"Inter Variable", "Inter Variable Fallback", ui-sans-serif, system-ui, sans-serif',
+		'"Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif',
 		"a named sans",
 	);
+	requireEqual(named["--font-mono"], emitted("--font-mono"), "an unset mono");
 	for (const rung of DURATIONS) {
 		requireEqual(
 			emitted(`--transition-duration-${rung}`),
@@ -806,29 +976,18 @@ check("c06", "every scale is its ratio of the base", () => {
 			rung,
 		);
 	}
-	return "7 roles × 2 densities with even line boxes, 8 spacing roles, 17 sizes, 4 trackings, 8 radii, 5 widths, 3 breakpoints, 2 families with their fallback faces, 4 durations";
+	return "7 roles × 2 densities with even line boxes, 8 spacing roles, 17 sizes, 4 trackings, 8 radii, 6 widths, 3 breakpoints, 2 families with their fallback faces, 4 durations";
 });
 
 check(
 	"c06-density",
-	"touch seeds the theme, desktop adds the fine-pointer set",
+	"touch seeds the theme, the desktop set is the other",
 	() => {
 		const touch = densityTokens(base, "touch");
 		for (const [key, value] of Object.entries(touch)) {
 			requireEqual(emitted(key), value, `touch seeds ${key}`);
 		}
-		requireEqual(
-			JSON.stringify(finePointerTokens(deriveTheme({ density: "touch" }))),
-			"{}",
-			"touch emits no fine-pointer set",
-		);
-		requireEqual(base.knobs.density, "desktop", "the default density");
-		const fine = finePointerTokens(base);
-		requireEqual(
-			JSON.stringify(fine),
-			JSON.stringify(densityTokens(base, "desktop")),
-			"the fine-pointer set is the desktop set",
-		);
+		const fine = densityTokens(base, "desktop");
 		requireEqual(
 			JSON.stringify(Object.keys(fine)),
 			JSON.stringify(Object.keys(touch)),
@@ -851,11 +1010,7 @@ check(
 			32,
 			"desktop body line plus inside",
 		);
-		assert(
-			rejection({ density: "dense" }).includes("density"),
-			"an unknown density is not rejected by key",
-		);
-		return "touch 44/48/38 seeded, desktop 32/28/38 on a fine pointer, either set on demand, the type scale moves with them";
+		return "touch 44/48/38 seeded, desktop 32/28/38 beside it, the type scale moves with them";
 	},
 );
 
@@ -919,7 +1074,6 @@ check("c08", "themeTokens and modeTokens carry the right keys", () => {
 	for (const bp of BREAKPOINTS) expected.add(`--breakpoint-${bp}`);
 	expected.add("--font-sans");
 	expected.add("--font-mono");
-	expected.add("--font-mono--font-feature-settings");
 	for (const rung of DURATIONS) expected.add(`--transition-duration-${rung}`);
 	expected.add("--transition-duration-loop");
 	for (const easing of EASINGS) expected.add(`--ease-${easing}`);
@@ -977,44 +1131,34 @@ check("c10", "zero chroma drops the hue, non-zero keeps it", () => {
 	requireEqual(color("dark", "scrim"), "oklch(0 0 0 / 0.5)", "dark scrim");
 	requireEqual(
 		color("dark", "surface"),
-		"oklch(0.207 0.006 270)",
+		"oklch(0.207 0.006 264)",
 		"dark surface",
 	);
-	return "light surface and dark scrim hue 0, dark surface on the neutral hue";
+	return "light surface and dark scrim hue 0, dark surface on the cast hue";
 });
 
 check(
 	"c11",
-	"accentHue moves only the accent and keeps its contrasts at every hue",
+	"accentHue moves only the accent, and every hue of either knob keeps every floor",
 	() => {
-		const bound = new Set<ColorName>();
-		const walk = (name: ColorName): boolean => {
-			const declaration = COLORS[name];
-			if ("alias" in declaration) return walk(declaration.alias);
-			if ("veil" in declaration) return walk(declaration.veil);
-			if ("mix" in declaration) {
-				return (
-					walk(declaration.mix) ||
-					(declaration.toward !== "black" && walk(declaration.toward))
-				);
-			}
-			return (
-				declaration.light.hue === "accent" || declaration.dark.hue === "accent"
-			);
-		};
-		for (const name of COLOR_NAMES) if (walk(name)) bound.add(name);
-		requireEqual(
-			[...bound].join(" "),
-			"accent accent-soft accent-ink ring selected-outline act-accent act-accent-hover act-accent-press act-accent-pending switch-on switch-on-hover",
-			"the accent-bound roles",
-		);
-		const moved = deriveTheme({ accentHue: 200 });
+		const pinned = KNOB_DEFAULTS.accentHue;
 		for (const mode of MODES) {
+			requireEqual(
+				boundTo("accent", mode).join(" "),
+				"accent accent-soft accent-ink ring selected-outline act-accent act-accent-hover act-accent-press act-accent-pending toggle-on toggle-on-hover",
+				`the ${mode} accent-bound roles`,
+			);
+		}
+		// With the cast pinned, an accent hue moves the accent-bound roles and
+		// nothing else.
+		const moved = deriveTheme({ accentHue: 200, castHue: pinned });
+		for (const mode of MODES) {
+			const bound = boundTo("accent", mode);
 			for (const name of COLOR_NAMES) {
 				const changed = moved.colors[mode][name] !== color(mode, name);
 				requireEqual(
 					changed,
-					bound.has(name),
+					bound.includes(name),
 					`${mode}.${name} ${changed ? "moved" : "held"} under accentHue 200`,
 				);
 			}
@@ -1023,46 +1167,34 @@ check(
 			if (!key.startsWith("--color-"))
 				requireEqual(value, baseTheme[key], `${key} under accentHue 200`);
 		}
-		// The sweep: at every hue the accent-derived pairs keep their ratio, and
-		// every accent value stays inside sRGB with no more chroma than declared.
-		const pairs: Array<[ColorName, ColorName, number]> = [
-			["on-accent", "accent", 4.5],
-			["on-act-accent", "act-accent-hover", 4.5],
-			["on-act-accent", "act-accent-press", 4.5],
-			["accent-ink", "canvas", 4.5],
-			["accent-ink", "surface", 4.5],
-			["accent-ink", "group", 4.5],
-			["accent-ink", "accent-soft", 4.5],
-			["ink-body", "accent-soft", 4.5],
-			["ink-meta", "accent-soft", 4.5],
+		// The sweeps: the accent at the default cast, the cast at the default
+		// accent, and the two together (the cast's default). At every hue every
+		// value stays inside sRGB and every floor and hold keeps its ratio.
+		const sweeps: Array<[string, (hue: number) => Theme]> = [
+			["accentHue", (hue) => ({ accentHue: hue, castHue: pinned })],
+			["castHue", (hue) => ({ castHue: hue })],
+			["accentHue = castHue", (hue) => ({ accentHue: hue })],
 		];
 		const short: string[] = [];
 		let count = 0;
-		for (let accentHue = 0; accentHue < 360; accentHue++) {
-			const resolved = deriveTheme({ accentHue });
-			for (const mode of MODES) {
-				const values = resolved.colors[mode];
-				for (const name of bound) {
-					const [l, c, h] = oklch(values[name]);
-					assert(
-						inGamut(l, c, h),
-						`${mode}.${name} leaves sRGB at hue ${accentHue}`,
-					);
-				}
-				for (const [fg, bg, floor] of pairs) {
-					count++;
-					const ratio = contrast(values[fg], values[bg]);
-					if (ratio < floor)
-						short.push(
-							`${mode} ${fg} on ${bg} at ${accentHue}: ${ratio.toFixed(2)}`,
+		for (const [label, theme] of sweeps) {
+			for (let hue = 0; hue < 360; hue++) {
+				const resolved = deriveTheme(theme(hue));
+				for (const mode of MODES) {
+					for (const name of COLOR_NAMES) {
+						const [l, c, h] = oklch(resolved.colors[mode][name]);
+						assert(
+							inGamut(l, c, h),
+							`${mode}.${name} leaves sRGB at ${label} ${hue}`,
 						);
+					}
 				}
+				const result = floors(resolved.colors);
+				count += result.measured;
+				for (const miss of result.short) short.push(`${label} ${hue}: ${miss}`);
 			}
 		}
-		assert(
-			short.length === 0,
-			`under the floor: ${short.slice(0, 8).join(", ")}${short.length > 8 ? ` and ${short.length - 8} more` : ""}`,
-		);
+		assert(short.length === 0, `under the floor: ${summary(short)}`);
 		// The green accent is where the declared lightness falls short on a
 		// light group, so there the contract lowers it; at the sheet's hue it
 		// is the declared 0.52.
@@ -1072,11 +1204,86 @@ check(
 			"accent-ink at the sheet's hue",
 		);
 		assert(
-			oklch(deriveTheme({ accentHue: 143 }).colors.light["accent-ink"])[0] <
-				0.52,
+			oklch(
+				deriveTheme({ accentHue: 143, castHue: pinned }).colors.light[
+					"accent-ink"
+				],
+			)[0] < 0.52,
 			"a green accent-ink is not lowered for the group",
 		);
-		return `${bound.size} roles move, ${count} pairs hold over 360 hues, every value in gamut`;
+		return `${boundTo("accent", "light").length} roles move with the accent, ${count} pairs hold over 3 × 360 hues, every value in gamut`;
+	},
+);
+
+check(
+	"c11-cast",
+	"castHue re-hues the neutrals only, defaults to accentHue, and never browns or vibrates",
+	() => {
+		requireEqual(
+			base.knobs.castHue,
+			KNOB_DEFAULTS.accentHue,
+			"the default cast",
+		);
+		requireEqual(
+			deriveTheme({ accentHue: 200 }).knobs.castHue,
+			200,
+			"an accent alone sets the cast",
+		);
+		requireEqual(
+			deriveTheme({ accentHue: 200, castHue: 30 }).knobs.castHue,
+			30,
+			"a cast of its own",
+		);
+		const literals = (mode: Mode) =>
+			COLOR_NAMES.filter((name) => {
+				const declaration = COLORS[name];
+				return "light" in declaration && declaration[mode].hue === "cast";
+			});
+		requireEqual(
+			literals("light").join(" "),
+			"canvas group edge edge-raised edge-strong scrim ink-body ink-meta ink-faint",
+			"the light cast literals",
+		);
+		requireEqual(
+			literals("dark").join(" "),
+			"canvas surface group raised edge edge-raised edge-strong ink-body ink-meta ink-faint on-danger",
+			"the dark cast literals",
+		);
+		// A cast re-hues each cast literal at its declared chroma; a role that
+		// reads none keeps its hue (the accent, the status trio, the chip
+		// families, the avatars), moving only its lightness where a hold
+		// measures it on a cast ground.
+		const complement = (KNOB_DEFAULTS.accentHue + 180) % 360;
+		const moved = deriveTheme({ castHue: complement });
+		for (const mode of MODES) {
+			const bound = boundTo("cast", mode);
+			for (const name of COLOR_NAMES) {
+				const before = oklch(color(mode, name));
+				const after = oklch(moved.colors[mode][name]);
+				if (literals(mode).includes(name)) {
+					requireEqual(after[1], before[1], `${mode}.${name} chroma`);
+					requireEqual(after[2], complement, `${mode}.${name} hue`);
+				} else if (!bound.includes(name)) {
+					requireEqual(after[2], before[2], `${mode}.${name} hue`);
+				}
+			}
+		}
+		// A cast at the accent's complement keeps every hold and floor.
+		const held = floors(moved.colors);
+		assert(
+			held.short.length === 0,
+			`at the complement ${complement}: ${summary(held.short)}`,
+		);
+		// A warm cast keeps the dark canvas inside #000–#191a1f, channel by
+		// channel: a tint, never a brown.
+		const ceiling = [0x19, 0x1a, 0x1f];
+		const [l, c, h] = oklch(deriveTheme({ castHue: 70 }).colors.dark.canvas);
+		const rgb = oklchToRgb(l, c, h);
+		assert(
+			rgb.every((channel, index) => channel <= (ceiling[index] ?? 0)),
+			`the dark canvas at cast 70 is rgb(${rgb.join(", ")}), past #191a1f`,
+		);
+		return `${boundTo("cast", "dark").length} dark and ${boundTo("cast", "light").length} light roles move with the cast; the complement ${complement} keeps ${held.measured} pairs; the dark canvas at cast 70 is rgb(${rgb.join(", ")})`;
 	},
 );
 
@@ -1086,7 +1293,8 @@ check("c13", "the schema rejects each bad input by key", () => {
 		["a retired knob", { primary: "ink" }, "primary"],
 		["a retired scale knob", { space: 8 }, "space"],
 		["retired overrides", { overrides: { colors: {} } }, "overrides"],
-		["an unknown density", { density: "compact" }, "density"],
+		["cast out of range", { castHue: -1 }, "castHue"],
+		["the retired density knob", { density: "touch" }, "density"],
 		["an unknown mode", { defaultMode: "auto" }, "defaultMode"],
 		["an empty family", { fonts: { mono: "" } }, "mono"],
 		["an unknown font role", { fonts: { serif: "Georgia" } }, "serif"],
@@ -1385,9 +1593,10 @@ check("c19", "every cva renders exactly its own table", () => {
 		const spec = TYPE_SCALE[role];
 		const tracking = isTracked(role) ? ` tracking-${role}` : "";
 		const family = spec.family === "mono" ? " font-mono" : "";
+		const figures = spec.tabular ? " tabular-nums" : "";
 		requireEqual(
 			TEXT.variants.role[role],
-			`text-${role} leading-${role}${tracking} ${weights[spec.weight]} text-${spec.ink}${family}`,
+			`text-${role} leading-${role}${tracking} ${weights[spec.weight]} text-${spec.ink}${family}${figures}`,
 			`TEXT.role.${role}`,
 		);
 		requireEqual(
@@ -1696,54 +1905,7 @@ check("c31", "words: English is total and the schema is closed", () => {
 });
 
 check("c32", "the contrast contracts hold at the default knobs", () => {
-	const grounds: ColorName[] = ["canvas", "surface", "group", "raised"];
-	const text: Array<[ColorName, ColorName[]]> = [
-		[
-			"ink-body",
-			[...grounds, "accent-soft", "ok-soft", "warn-soft", "danger-soft"],
-		],
-		["ink-meta", [...grounds, "accent-soft"]],
-		["accent-ink", [...grounds, "accent-soft"]],
-		["ok", [...grounds, "ok-soft"]],
-		["warn", [...grounds, "warn-soft"]],
-		["danger", [...grounds, "danger-soft"]],
-		["on-accent", ["accent", "act-accent-hover", "act-accent-press"]],
-		["on-danger", ["danger"]],
-		["on-act-ink", ["act-ink", "act-ink-hover", "act-ink-press"]],
-		...CHIP_FAMILIES.map((family): [ColorName, ColorName[]] => [
-			`chip-${family}-ink`,
-			[`chip-${family}-soft`],
-		]),
-		...AVATAR_STEPS.map((step): [ColorName, ColorName[]] => [
-			`avatar-${step}-ink`,
-			[`avatar-${step}`],
-		]),
-	];
-	const graphic: Array<[ColorName, ColorName[]]> = [
-		["edge-strong", ["surface", "group"]],
-		...CHIP_FAMILIES.map((family): [ColorName, ColorName[]] => [
-			`chip-${family}`,
-			["surface"],
-		]),
-	];
-	const short: string[] = [];
-	let count = 0;
-	const measure = (pairs: Array<[ColorName, ColorName[]]>, floor: number) => {
-		for (const mode of MODES) {
-			for (const [fg, fills] of pairs) {
-				for (const bg of fills) {
-					const ratio = contrast(color(mode, fg), color(mode, bg));
-					count++;
-					if (ratio < floor)
-						short.push(
-							`${mode} ${fg} on ${bg}: ${ratio.toFixed(2)} < ${floor}`,
-						);
-				}
-			}
-		}
-	};
-	measure(text, 4.5);
-	measure(graphic, 3);
+	const { measured, short } = floors(base.colors);
 	assert(short.length === 0, `under the floor: ${short.join(", ")}`);
 	// Disabled text is the one exemption, drawn at about 3:1 so it reads as off.
 	for (const mode of MODES) {
@@ -1753,7 +1915,7 @@ check("c32", "the contrast contracts hold at the default knobs", () => {
 			`${mode} ink-faint on surface is ${ratio.toFixed(2)}, not about 3:1`,
 		);
 	}
-	return `${count} pairs at their floor in both modes, ink-faint at about 3:1`;
+	return `${measured} pairs at their floor in both modes, ink-faint at about 3:1`;
 });
 
 check(

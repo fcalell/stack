@@ -117,12 +117,8 @@ export default defineConfig({
     expo(),
     nativeUi({
       theme: {                          // optional — the ui-core design contract
-        accentHue: 120,                 //   the knobs: hues, primary, space, radius, text,
-        primary: "accent",              //   fonts, widths, breakpoints
-        overrides: {                    //   anything the knobs don't reach
-          colors: { dark: { canvas: "oklch(0.2 0.034 261)" } },
-          scales: { "--radius-group": "8px" },
-        },
+        accentHue: 120,                 //   the knobs: accentHue, castHue (the neutrals' hue,
+        castHue: 70,                    //   accentHue unless set), fonts, defaultMode
       },
       words: { ...english, back: "Zurück" },  // optional — every key required, English default
     }),
@@ -149,9 +145,9 @@ The web design system is `reactUi()` beside them, with the same `theme` and `wor
 
 ```ts
 reactUi({
-  theme: { accentHue: 120, density: "desktop" },  // the ui-core contract; `sans` defaults to Inter
+  theme: { accentHue: 120, defaultMode: "dark" },  // the ui-core contract; fonts default to IBM Plex
   words: { ...english, back: "Zurück" },
-  fonts: [interVariable],   // the files to load; default Inter Variable (opsz) + JetBrains Mono Variable
+  fonts: [plexSans],   // the files to load; default IBM Plex Sans (wght) + IBM Plex Mono 400/500/600
 }),
 ```
 

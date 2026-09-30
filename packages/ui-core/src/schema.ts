@@ -1,11 +1,13 @@
 import { z } from "zod";
-import { DENSITIES, LABEL, MODES, WORD_KEYS } from "./tokens.ts";
+import { LABEL, MODES, WORD_KEYS } from "./tokens.ts";
 
 // The knobs, flat: a theme sets a knob and never a token. Everything else in
 // the contract is the approved sheet and moves only with it.
 export const themeSchema = z.strictObject({
 	accentHue: z.number().min(0).lt(360).optional(),
-	density: z.enum(DENSITIES).optional(),
+	// The neutrals' hue. Omitted, it is `accentHue`, so an accent alone tints
+	// the chrome toward it.
+	castHue: z.number().min(0).lt(360).optional(),
 	fonts: z
 		.strictObject({
 			sans: z.string().min(1).optional(),

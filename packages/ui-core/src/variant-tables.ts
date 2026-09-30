@@ -28,7 +28,8 @@ function matrix<T extends Axes>(config: Matrix<T>): Matrix<T> {
 
 // ── Text ────────────────────────────────────────────────────────────
 
-// The role is the only way to set type; its ink and family ride with it.
+// The role is the only way to set type; its ink, family and figures ride
+// with it.
 // Every cell is spelled out: Tailwind reads source text, so a cell built from
 // a template would compile to nothing in a consumer build. c19 pins each cell
 // to TYPE_SCALE, so the two cannot drift.
@@ -37,7 +38,7 @@ export const TEXT = matrix({
 	variants: {
 		role: {
 			display:
-				"text-display leading-display tracking-display font-medium text-ink-body",
+				"text-display leading-display tracking-display font-medium text-ink-body tabular-nums",
 			title:
 				"text-title leading-title tracking-title font-semibold text-ink-body",
 			heading:
@@ -203,7 +204,7 @@ export const TABLE_ROW = matrix({
 
 export const SWITCH = matrix({
 	base: "rounded-full",
-	variants: { state: { off: "bg-switch-off", on: "bg-switch-on" } },
+	variants: { state: { off: "bg-switch-off", on: "bg-toggle-on" } },
 	defaultVariants: { state: "off" },
 });
 
@@ -212,7 +213,8 @@ export const CHECKBOX = matrix({
 	variants: {
 		state: {
 			unchecked: "border border-edge-strong",
-			checked: "bg-accent",
+			checked: "bg-toggle-on",
+			mixed: "bg-toggle-on",
 		},
 	},
 	defaultVariants: { state: "unchecked" },

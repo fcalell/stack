@@ -12,44 +12,36 @@ export type Mode = (typeof MODES)[number];
 
 // ── Knobs ───────────────────────────────────────────────────────────
 
-// How dense everything draws. `touch` is the 44 px world on every device;
-// `desktop` draws the desktop set where the primary pointer is fine (a mouse
-// or a trackpad) and keeps the touch set on a coarse one. Density moves the
-// type scale, the spacing roles and every size; nothing else. Native is
-// touch-only and draws `touch` whatever the knob says.
+// How dense everything draws, decided by the pointer and never by a knob:
+// where the primary pointer is fine (a mouse or a trackpad) the web draws the
+// `desktop` set, everywhere else the `touch` set, the 44 px world.
+// `data-density` on the web root pins either set on any device, which is how
+// the showcase and the boards address a density. Density moves the type
+// scale, the spacing roles and every size; nothing else. Native is
+// touch-only.
 export const DENSITIES = ["touch", "desktop"] as const;
 export type Density = (typeof DENSITIES)[number];
 
 export const FONT_ROLES = ["sans", "mono"] as const;
 export type FontRole = (typeof FONT_ROLES)[number];
 
-// `accentHue` re-hues the accent and nothing else: the neutrals, the three
-// status hues, the chip families and the avatars are fixed. `fonts` names
-// the two families; the files that carry them are each plugin's `fonts`
-// option, and a missing `sans` is the platform's stack.
+// `accentHue` re-hues the accent. `castHue` is the hue every neutral carries
+// (the grounds, the hairlines, the inks, the washes) at the chroma the sheet
+// fixes per role and mode, so it tints the chrome and moves no contrast; it
+// defaults to `accentHue`, so an accent alone tints the chrome toward it. The
+// status hues, the chip families and the avatars are fixed. `fonts` names the
+// two families; the files that carry them are each plugin's `fonts` option.
 export interface Knobs {
 	accentHue: number;
-	density: Density;
-	fonts: { sans?: string; mono: string };
+	castHue: number;
+	fonts: Record<FontRole, string>;
 }
 
-export const KNOB_DEFAULTS: Knobs = {
+// `castHue` has no default of its own: it is `accentHue`'s.
+export const KNOB_DEFAULTS: Omit<Knobs, "castHue"> = {
 	accentHue: 264,
-	density: "desktop",
-	fonts: { mono: "JetBrains Mono Variable" },
+	fonts: { sans: "IBM Plex Sans", mono: "IBM Plex Mono" },
 };
-
-// The busy glyph: `circle` spins, `scramble` cycles mono glyphs in place. A
-// call site picks it (`Spinner kind`, an act's `spinner`).
-export const SPINNER_KINDS = ["circle", "scramble"] as const;
-export type SpinnerKind = (typeof SPINNER_KINDS)[number];
-
-// The scramble's alphabet, width and pace, shared so both platforms draw the
-// same loader. Under reduced motion it holds `SCRAMBLE_STILL`.
-export const SCRAMBLE_GLYPHS = "ABCDEFGHJKLMNPQRSTUVWXYZ0123456789#%&*+=?";
-export const SCRAMBLE_LENGTH = 3;
-export const SCRAMBLE_INTERVAL_MS = 70;
-export const SCRAMBLE_STILL = "···";
 
 // ── Colors ──────────────────────────────────────────────────────────
 
@@ -109,6 +101,7 @@ export const COLOR_GROUPS = {
 		"wash-selected-hover",
 		"skeleton",
 		"fill-disabled",
+		"fill-neutral",
 	],
 	// places, each an alias of the tone that draws it
 	places: [
@@ -119,24 +112,30 @@ export const COLOR_GROUPS = {
 		"ink-error",
 		"ink-disabled",
 	],
-	// the two act fills and their states
+	// the three act fills and their states
 	acts: [
 		"act-accent",
 		"on-act-accent",
 		"act-accent-hover",
 		"act-accent-press",
 		"act-accent-pending",
+		"act-danger",
+		"on-act-danger",
+		"act-danger-hover",
+		"act-danger-press",
+		"act-danger-pending",
 		"act-ink",
 		"on-act-ink",
 		"act-ink-hover",
 		"act-ink-press",
 		"act-ink-pending",
 	],
+	// the switch's track and knob, and the on fill every toggle shares
 	switch: [
 		"switch-off",
 		"switch-off-hover",
-		"switch-on",
-		"switch-on-hover",
+		"toggle-on",
+		"toggle-on-hover",
 		"switch-thumb",
 	],
 } as const;
@@ -146,15 +145,18 @@ export const COLOR_NAMES: readonly ColorName[] =
 	Object.values(COLOR_GROUPS).flat();
 export type ColorName = (typeof COLOR_GROUPS)[ColorGroup][number];
 
-// A literal hue in degrees, or the accent knob.
-export type Hue = number | "accent";
+// A literal hue in degrees, the accent knob, or the cast knob.
+export type Hue = number | "accent" | "cast";
 
-// A contrast contract a role keeps at any accent hue: the derivation lowers
+// A contrast contract a role keeps at any accent or cast hue: the derivation lowers
 // (or raises) the role's lightness from the declared one until each ground
 // holds, so a green accent's link stays readable on a group where the blue
-// one is at the declared lightness already.
+// one is at the declared lightness already. `under` names a veil over the
+// ground, composited as a browser draws a translucent fill over an opaque
+// one (an alpha blend in gamma sRGB): a label on a pressed part.
 export interface Holds {
 	on: ColorName;
+	under?: ColorName;
 	ratio: number;
 }
 
@@ -166,23 +168,40 @@ export interface ColorValue {
 	holds?: readonly Holds[];
 }
 
+// The grounds that re-point the hairline for everything inside them: on a
+// group tile or a lifted layer a part that names `edge` draws
+// `edge-raised`, so no part picks between the two.
+export const RAISED_GROUNDS = [
+	"group",
+	"raised",
+] as const satisfies readonly ColorName[];
+
 // A color is one of: a light and a dark value; an alias of another role; a
 // role at an alpha (`veil`, what `color-mix(in oklch, role α, transparent)`
 // draws); or a role mixed toward another in OKLab (`mix`, what `color-mix(in
-// oklab, role, toward amount)` draws), `black` standing in for the shade.
+// oklab, role, toward amount)` draws), `black` standing in for the shade. A
+// mix names one `toward` for both modes or one per mode, and may carry
+// `holds` per mode, the mix being where the hold starts.
+export type MixTarget = ColorName | "black";
+
 export type ColorDeclaration =
 	| { light: ColorValue; dark: ColorValue }
 	| { alias: ColorName }
 	| { veil: ColorName; alpha: number }
-	| { mix: ColorName; toward: ColorName | "black"; amount: number };
+	| {
+			mix: ColorName;
+			toward: MixTarget | Record<Mode, MixTarget>;
+			amount: number;
+			holds?: Record<Mode, readonly Holds[]>;
+	  };
 
-// The neutrals' hue: a cool grey on purpose, the accent's own family.
-const NEUTRAL_HUE = 270;
-
+// A neutral wears the cast knob's hue at the chroma declared here, a
+// constant per role and mode: the chroma decides whether a cast is a tint or
+// a color, so only the hue is a knob.
 function neutral(l: number, c: number, alpha?: number): ColorValue {
 	return alpha === undefined
-		? { l, c, hue: NEUTRAL_HUE }
-		: { l, c, hue: NEUTRAL_HUE, alpha };
+		? { l, c, hue: "cast" }
+		: { l, c, hue: "cast", alpha };
 }
 
 function accent(l: number, c: number): ColorValue {
@@ -300,15 +319,15 @@ function avatarColors(): Record<AvatarColor, ColorDeclaration> {
 // hairline can straddle; in light both are one hairline. `edge-strong` is a
 // control's boundary at 3:1. Inks are three levels: `ink-faint` is disabled
 // text only, about 3:1, which WCAG exempts. The accent is a blue between
-// Linear's indigo and Vercel's blue, on the neutrals' own hue; `accent-ink`
-// is the accent itself in light and lightens in dark so a link and a ring
-// read on the near-black ground. The dark status tones are capped at L 0.75
+// Linear's indigo and Vercel's blue, whose hue the neutrals wear unless the
+// cast names another; `accent-ink` is the accent itself in light and
+// lightens in dark so a link and a ring read on the near-black ground. The dark status tones are capped at L 0.75
 // like the chip marks, and their lightness is spread so they separate under
 // protanopia and deuteranopia.
 export const COLORS: Record<ColorName, ColorDeclaration> = {
 	canvas: { light: neutral(0.974, 0.002), dark: neutral(0.16, 0.005) },
 	surface: { light: WHITE, dark: neutral(0.207, 0.006) },
-	group: { light: neutral(0.947, 0.004), dark: neutral(0.243, 0.007) },
+	group: { light: neutral(0.947, 0.004), dark: neutral(0.25, 0.007) },
 	raised: { light: WHITE, dark: neutral(0.243, 0.007) },
 	edge: { light: neutral(0.915, 0.004), dark: neutral(0.298, 0.008) },
 	"edge-raised": { light: neutral(0.915, 0.004), dark: neutral(0.332, 0.008) },
@@ -320,7 +339,12 @@ export const COLORS: Record<ColorName, ColorDeclaration> = {
 	"ink-body": { light: neutral(0.2, 0.008), dark: neutral(0.97, 0.002) },
 	"ink-meta": { light: neutral(0.45, 0.012), dark: neutral(0.76, 0.01) },
 	"ink-faint": { light: neutral(0.665, 0.01), dark: neutral(0.506, 0.01) },
-	accent: { light: accent(0.52, 0.19), dark: accent(0.52, 0.19) },
+	// In dark the accent fill is a control's boundary on a group tile (a
+	// checked box, a switch on), so it holds 3:1 there.
+	accent: {
+		light: accent(0.52, 0.19),
+		dark: { ...accent(0.52, 0.19), holds: [{ on: "group", ratio: 3 }] },
+	},
 	"on-accent": { light: WHITE, dark: WHITE },
 	"accent-soft": { light: accent(0.95, 0.023), dark: accent(0.29, 0.06) },
 	"accent-ink": {
@@ -355,9 +379,25 @@ export const COLORS: Record<ColorName, ColorDeclaration> = {
 		light: { l: 0.965, c: 0.036, hue: 85 },
 		dark: { l: 0.28, c: 0.05, hue: 75 },
 	},
+	// A hairline destructive act's label holds text contrast under its press
+	// wash on a group, the darkest ground it takes in light; the filled
+	// danger act holds its own label.
 	danger: {
-		light: { l: 0.55, c: 0.19, hue: 25 },
-		dark: { l: 0.71, c: 0.178, hue: 25 },
+		light: {
+			l: 0.55,
+			c: 0.19,
+			hue: 25,
+			holds: [
+				{ on: "group", under: "wash-press", ratio: 4.5 },
+				{ on: "on-danger", ratio: 4.5 },
+			],
+		},
+		dark: {
+			l: 0.71,
+			c: 0.178,
+			hue: 25,
+			holds: [{ on: "on-danger", ratio: 4.5 }],
+		},
 	},
 	"danger-soft": {
 		light: { l: 0.965, c: 0.016, hue: 20 },
@@ -374,31 +414,72 @@ export const COLORS: Record<ColorName, ColorDeclaration> = {
 	"wash-selected-hover": { veil: "ink-body", alpha: 0.15 },
 	skeleton: { veil: "ink-body", alpha: 0.09 },
 	"fill-disabled": { veil: "ink-body", alpha: 0.06 },
+	"fill-neutral": { veil: "ink-body", alpha: 0.08 },
 	ring: { alias: "accent-ink" },
 	"selected-outline": { alias: "accent-ink" },
 	"edge-hover": { alias: "edge-strong" },
 	"edge-error": { alias: "danger" },
 	"ink-error": { alias: "danger" },
 	"ink-disabled": { alias: "ink-faint" },
-	// Hover and press move a fill 12 % and 22 % toward a second color: the
-	// accent toward black, so its label only gains contrast; the ink fill
-	// toward its own label, which lightens it in light and darkens it in
-	// dark. Pending recedes 30 % toward the label (the accent) or the page
-	// (the ink fill).
+	// Hover and press move a fill 12 % and 22 % away from its label, so the
+	// label only gains contrast: the accent act (a white label in both modes)
+	// and the danger act in light (white) toward black, the danger act in dark
+	// (a near-black label) toward `ink-body`. The ink fill moves toward the
+	// page, which lightens it in light and darkens it in dark.
+	// Pending is inert and recedes 30 %: a filled act toward its label in
+	// light and toward the page in dark, held at 3:1 under its label, where
+	// the spinner draws; the ink fill toward the page. A labelled act's fill
+	// takes no ground floor in any state: its label names it.
 	"act-accent": { alias: "accent" },
 	"on-act-accent": { alias: "on-accent" },
 	"act-accent-hover": { mix: "accent", toward: "black", amount: 0.12 },
 	"act-accent-press": { mix: "accent", toward: "black", amount: 0.22 },
-	"act-accent-pending": { mix: "accent", toward: "on-accent", amount: 0.3 },
+	"act-accent-pending": {
+		mix: "accent",
+		toward: { light: "on-accent", dark: "canvas" },
+		amount: 0.3,
+		holds: {
+			light: [{ on: "on-act-accent", ratio: 3 }],
+			dark: [{ on: "on-act-accent", ratio: 3 }],
+		},
+	},
+	"act-danger": { alias: "danger" },
+	"on-act-danger": { alias: "on-danger" },
+	"act-danger-hover": {
+		mix: "danger",
+		toward: { light: "black", dark: "ink-body" },
+		amount: 0.12,
+	},
+	"act-danger-press": {
+		mix: "danger",
+		toward: { light: "black", dark: "ink-body" },
+		amount: 0.22,
+	},
+	"act-danger-pending": {
+		mix: "danger",
+		toward: { light: "on-danger", dark: "canvas" },
+		amount: 0.3,
+		holds: {
+			light: [{ on: "on-act-danger", ratio: 3 }],
+			dark: [{ on: "on-act-danger", ratio: 3 }],
+		},
+	},
 	"act-ink": { alias: "ink-body" },
 	"on-act-ink": { alias: "canvas" },
 	"act-ink-hover": { mix: "ink-body", toward: "canvas", amount: 0.12 },
 	"act-ink-press": { mix: "ink-body", toward: "canvas", amount: 0.22 },
 	"act-ink-pending": { mix: "ink-body", toward: "canvas", amount: 0.3 },
+	// A toggle on (a switch's track, a checked box, a slider's fill) has no
+	// label to carry it, so it is a boundary at 3:1 on every ground, and its
+	// hover moves away from the ground: darker in light, lighter in dark.
 	"switch-off": { alias: "edge-strong" },
 	"switch-off-hover": { mix: "edge-strong", toward: "ink-body", amount: 0.15 },
-	"switch-on": { alias: "accent" },
-	"switch-on-hover": { mix: "accent", toward: "black", amount: 0.12 },
+	"toggle-on": { alias: "accent" },
+	"toggle-on-hover": {
+		mix: "accent",
+		toward: { light: "black", dark: "on-accent" },
+		amount: 0.12,
+	},
 	"switch-thumb": { alias: "on-accent" },
 };
 
@@ -444,14 +525,16 @@ export const BODY_SIZE: Record<Density, number> = { desktop: 13, touch: 16 };
 
 // `size` is a ratio of the body size, rounded to the pixel; `leading` a ratio
 // of the size, its line box rounded to the even pixel (a tie rounds up).
-// Tracking is in em and density-invariant: Inter's opsz axis already
-// tightens the display cut. Ink is a color role, family a font role.
+// Tracking is in em and density-invariant. Ink is a color role, family a
+// font role.
+// `tabular` draws the figures at one width: a display is a stat.
 export interface TypeRoleSpec {
 	size: number;
 	leading: number;
 	weight: FontWeight;
 	ink: "ink-body" | "ink-meta";
 	family: FontRole;
+	tabular: boolean;
 }
 
 export const TYPE_SCALE: Record<TypeRole, TypeRoleSpec> = {
@@ -461,6 +544,7 @@ export const TYPE_SCALE: Record<TypeRole, TypeRoleSpec> = {
 		weight: "medium",
 		ink: "ink-body",
 		family: "sans",
+		tabular: true,
 	},
 	title: {
 		size: 1.385,
@@ -468,6 +552,7 @@ export const TYPE_SCALE: Record<TypeRole, TypeRoleSpec> = {
 		weight: "semibold",
 		ink: "ink-body",
 		family: "sans",
+		tabular: false,
 	},
 	heading: {
 		size: 1.154,
@@ -475,6 +560,7 @@ export const TYPE_SCALE: Record<TypeRole, TypeRoleSpec> = {
 		weight: "semibold",
 		ink: "ink-body",
 		family: "sans",
+		tabular: false,
 	},
 	body: {
 		size: 1,
@@ -482,6 +568,7 @@ export const TYPE_SCALE: Record<TypeRole, TypeRoleSpec> = {
 		weight: "regular",
 		ink: "ink-body",
 		family: "sans",
+		tabular: false,
 	},
 	meta: {
 		size: 0.923,
@@ -489,6 +576,7 @@ export const TYPE_SCALE: Record<TypeRole, TypeRoleSpec> = {
 		weight: "regular",
 		ink: "ink-meta",
 		family: "sans",
+		tabular: false,
 	},
 	caption: {
 		size: 0.846,
@@ -496,6 +584,7 @@ export const TYPE_SCALE: Record<TypeRole, TypeRoleSpec> = {
 		weight: "regular",
 		ink: "ink-meta",
 		family: "sans",
+		tabular: false,
 	},
 	code: {
 		size: 0.923,
@@ -503,6 +592,7 @@ export const TYPE_SCALE: Record<TypeRole, TypeRoleSpec> = {
 		weight: "regular",
 		ink: "ink-body",
 		family: "mono",
+		tabular: false,
 	},
 };
 
@@ -581,7 +671,10 @@ export const SPACING_RATIO: Record<Density, Record<SpacingRole, number>> = {
 // Heights and squares, in the `--spacing-*` namespace so a cell names them as
 // it names a role (`min-h-control`, `size-avatar`). Desktop: control 32,
 // compact 28 (menus, toolbars), field 38, one-line row 32, two-line row 48,
-// setting row 64, header 32, target 24. Touch: every target at least 44.
+// setting row 64, header 32, target 24. Touch: every target at least 44. An
+// icon is sized by what it sits beside: `icon-meta` meta or caption text,
+// `icon` body text, `icon-control` the inside of a control. The spinner is
+// the `icon` rung: it replaces a row's glyph and sits beside body text.
 export const SIZES = [
 	"control",
 	"control-compact",
@@ -599,11 +692,25 @@ export const SIZES = [
 	"switch-h",
 	"thumb",
 	"switch-inset",
+	"switch-travel",
 	"skeleton",
+	"icon-meta",
+	"icon",
+	"icon-control",
+	"check",
+	"track",
+	"otp",
 ] as const;
 export type Size = (typeof SIZES)[number];
 
-export const SIZE_PX: Record<Density, Record<Size, number>> = {
+// The thumb's travel, the track less the thumb and its inset on both sides,
+// is derived from the other three and declared nowhere.
+export type DerivedSize = "switch-travel";
+
+export const SIZE_PX: Record<
+	Density,
+	Record<Exclude<Size, DerivedSize>, number>
+> = {
 	desktop: {
 		control: 32,
 		"control-compact": 28,
@@ -622,6 +729,12 @@ export const SIZE_PX: Record<Density, Record<Size, number>> = {
 		thumb: 12,
 		"switch-inset": 2,
 		skeleton: 12,
+		"icon-meta": 12,
+		icon: 14,
+		"icon-control": 16,
+		check: 16,
+		track: 2,
+		otp: 44,
 	},
 	touch: {
 		control: 44,
@@ -635,12 +748,18 @@ export const SIZE_PX: Record<Density, Record<Size, number>> = {
 		dot: 8,
 		chip: 24,
 		avatar: 32,
-		spinner: 16,
+		spinner: 18,
 		"switch-w": 40,
 		"switch-h": 24,
 		thumb: 20,
 		"switch-inset": 2,
 		skeleton: 12,
+		"icon-meta": 14,
+		icon: 18,
+		"icon-control": 20,
+		check: 20,
+		track: 4,
+		otp: 48,
 	},
 };
 
@@ -679,9 +798,12 @@ export const HAIRLINE_PX = 1;
 export const RING_PX = 2;
 export const RING_OFFSET_PX = 2;
 
-// The widths of lifted layers, each at its pattern's range (a layer never
-// stretches to its container), and the one measure for running text.
+// A chip label's longest run, the widths of lifted layers, each at its
+// pattern's range (a layer never stretches to its container), and the one
+// measure for running text.
+// A width name never repeats a size name: `max-w-*` reads `--spacing-*` first.
 export const WIDTHS = [
+	"chip-label",
 	"popover",
 	"toast",
 	"dialog",
@@ -691,6 +813,7 @@ export const WIDTHS = [
 export type Width = (typeof WIDTHS)[number];
 
 export const WIDTH_VALUE: Record<Width, string> = {
+	"chip-label": "18ch",
 	popover: "240px",
 	toast: "360px",
 	dialog: "440px",
@@ -711,8 +834,8 @@ export const BREAKPOINT_PX: Record<Breakpoint, number> = {
 
 // Two levels, spent on lifted layers only: `float` a popover, a menu, a
 // picker, a toast; `modal` a dialog, a sheet, a command palette. Each is a
-// tight contact shadow plus a soft ambient one, tinted with the neutral hue
-// in light; in dark the lift is carried by the raised step and the hairline,
+// tight contact shadow plus a soft ambient one, tinted with the cast in
+// light; in dark the lift is carried by the raised step and the hairline,
 // so the shadow is pure black at a higher opacity.
 export const SHADOW_LEVELS = ["float", "modal"] as const;
 export type ShadowLevel = (typeof SHADOW_LEVELS)[number];
@@ -807,12 +930,8 @@ export const ZEROED_NAMESPACES = [
 	"--ease-*",
 ] as const;
 
-// Code reads character for character: the mono family's ligatures and
-// contextual alternates stay off, so `!==` never draws as `≢`.
-export const MONO_FEATURES = '"liga" 0, "calt" 0';
-
-// The stacks each family falls back to on both platforms; `sans` alone is the
-// platform's stack when the knob names no family.
+// The stacks each family falls back to on both platforms, after the knob's
+// family and its metric fallback face.
 export const FONT_FALLBACKS: Record<FontRole, string> = {
 	sans: "ui-sans-serif, system-ui, sans-serif",
 	mono: 'ui-monospace, "SFMono-Regular", Menlo, monospace',

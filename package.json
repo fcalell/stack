@@ -6,6 +6,7 @@
 		"check-types": "turbo run check-types",
 		"check": "turbo run build check-types test && pnpm lint",
 		"showcase": "turbo run build --filter=showcase... && pnpm --filter showcase dev",
+		"design": "turbo run build --filter=showcase... && pnpm --filter @fcalell/plugin-react-ui design",
 		"clear": "pnpm -r --if-present run clear && rm -rf node_modules .turbo"
 	},
 	"devDependencies": {

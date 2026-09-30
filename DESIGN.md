@@ -4,17 +4,17 @@ name: "@fcalell/stack"
 description: "The design contract both stack UI plugins render: the approved token sheet behind four knobs, the platform-invariant matrices, and the component roster."
 colors:
   primary: "{colors.accent}"
-  canvas: "oklch(0.974 0.002 270)"
+  canvas: "oklch(0.974 0.002 264)"
   surface: "oklch(1 0 0)"
-  group: "oklch(0.947 0.004 270)"
+  group: "oklch(0.947 0.004 264)"
   raised: "oklch(1 0 0)"
-  edge: "oklch(0.915 0.004 270)"
-  edge-raised: "oklch(0.915 0.004 270)"
-  edge-strong: "oklch(0.62 0.01 270)"
-  scrim: "oklch(0.2 0.01 270 / 0.45)"
-  ink-body: "oklch(0.2 0.008 270)"
-  ink-meta: "oklch(0.45 0.012 270)"
-  ink-faint: "oklch(0.665 0.01 270)"
+  edge: "oklch(0.915 0.004 264)"
+  edge-raised: "oklch(0.915 0.004 264)"
+  edge-strong: "oklch(0.62 0.01 264)"
+  scrim: "oklch(0.2 0.01 264 / 0.45)"
+  ink-body: "oklch(0.2 0.008 264)"
+  ink-meta: "oklch(0.45 0.012 264)"
+  ink-faint: "oklch(0.665 0.01 264)"
   accent: "oklch(0.52 0.19 264)"
   on-accent: "oklch(1 0 0)"
   accent-soft: "oklch(0.95 0.023 264)"
@@ -23,7 +23,7 @@ colors:
   ok-soft: "oklch(0.965 0.04 150)"
   warn: "oklch(0.48 0.099 70)"
   warn-soft: "oklch(0.965 0.036 85)"
-  danger: "oklch(0.55 0.19 25)"
+  danger: "oklch(0.515 0.19 25)"
   danger-soft: "oklch(0.965 0.016 20)"
   on-danger: "oklch(1 0 0)"
   chip-red: "oklch(0.56 0.2 25)"
@@ -60,45 +60,51 @@ colors:
   avatar-7-ink: "oklch(0.38 0.1 270)"
   avatar-8: "oklch(0.88 0.07 320)"
   avatar-8-ink: "oklch(0.38 0.1 320)"
-  wash-hover: "oklch(0.2 0.008 270 / 0.05)"
-  wash-press: "oklch(0.2 0.008 270 / 0.08)"
-  wash-selected: "oklch(0.2 0.008 270 / 0.11)"
-  wash-selected-hover: "oklch(0.2 0.008 270 / 0.15)"
-  skeleton: "oklch(0.2 0.008 270 / 0.09)"
-  fill-disabled: "oklch(0.2 0.008 270 / 0.06)"
+  wash-hover: "oklch(0.2 0.008 264 / 0.05)"
+  wash-press: "oklch(0.2 0.008 264 / 0.08)"
+  wash-selected: "oklch(0.2 0.008 264 / 0.11)"
+  wash-selected-hover: "oklch(0.2 0.008 264 / 0.15)"
+  skeleton: "oklch(0.2 0.008 264 / 0.09)"
+  fill-disabled: "oklch(0.2 0.008 264 / 0.06)"
+  fill-neutral: "oklch(0.2 0.008 264 / 0.08)"
   ring: "oklch(0.52 0.19 264)"
   selected-outline: "oklch(0.52 0.19 264)"
-  edge-hover: "oklch(0.62 0.01 270)"
-  edge-error: "oklch(0.55 0.19 25)"
-  ink-error: "oklch(0.55 0.19 25)"
-  ink-disabled: "oklch(0.665 0.01 270)"
+  edge-hover: "oklch(0.62 0.01 264)"
+  edge-error: "oklch(0.515 0.19 25)"
+  ink-error: "oklch(0.515 0.19 25)"
+  ink-disabled: "oklch(0.665 0.01 264)"
   act-accent: "oklch(0.52 0.19 264)"
   on-act-accent: "oklch(1 0 0)"
   act-accent-hover: "oklch(0.458 0.167 264)"
   act-accent-press: "oklch(0.406 0.148 264)"
   act-accent-pending: "oklch(0.664 0.133 264)"
-  act-ink: "oklch(0.2 0.008 270)"
-  on-act-ink: "oklch(0.974 0.002 270)"
-  act-ink-hover: "oklch(0.293 0.007 270)"
-  act-ink-press: "oklch(0.37 0.007 270)"
-  act-ink-pending: "oklch(0.432 0.006 270)"
-  switch-off: "oklch(0.62 0.01 270)"
-  switch-off-hover: "oklch(0.557 0.01 270)"
-  switch-on: "oklch(0.52 0.19 264)"
-  switch-on-hover: "oklch(0.458 0.167 264)"
+  act-danger: "oklch(0.515 0.19 25)"
+  on-act-danger: "oklch(1 0 0)"
+  act-danger-hover: "oklch(0.453 0.167 25)"
+  act-danger-press: "oklch(0.402 0.148 25)"
+  act-danger-pending: "oklch(0.661 0.133 25)"
+  act-ink: "oklch(0.2 0.008 264)"
+  on-act-ink: "oklch(0.974 0.002 264)"
+  act-ink-hover: "oklch(0.293 0.007 264)"
+  act-ink-press: "oklch(0.37 0.007 264)"
+  act-ink-pending: "oklch(0.432 0.006 264)"
+  switch-off: "oklch(0.62 0.01 264)"
+  switch-off-hover: "oklch(0.557 0.01 264)"
+  toggle-on: "oklch(0.52 0.19 264)"
+  toggle-on-hover: "oklch(0.458 0.167 264)"
   switch-thumb: "oklch(1 0 0)"
-  canvas-dark: "oklch(0.16 0.005 270)"
-  surface-dark: "oklch(0.207 0.006 270)"
-  group-dark: "oklch(0.243 0.007 270)"
-  raised-dark: "oklch(0.243 0.007 270)"
-  edge-dark: "oklch(0.298 0.008 270)"
-  edge-raised-dark: "oklch(0.332 0.008 270)"
-  edge-strong-dark: "oklch(0.53 0.01 270)"
+  canvas-dark: "oklch(0.16 0.005 264)"
+  surface-dark: "oklch(0.207 0.006 264)"
+  group-dark: "oklch(0.25 0.007 264)"
+  raised-dark: "oklch(0.243 0.007 264)"
+  edge-dark: "oklch(0.298 0.008 264)"
+  edge-raised-dark: "oklch(0.332 0.008 264)"
+  edge-strong-dark: "oklch(0.53 0.01 264)"
   scrim-dark: "oklch(0 0 0 / 0.5)"
-  ink-body-dark: "oklch(0.97 0.002 270)"
-  ink-meta-dark: "oklch(0.76 0.01 270)"
-  ink-faint-dark: "oklch(0.506 0.01 270)"
-  accent-dark: "oklch(0.52 0.19 264)"
+  ink-body-dark: "oklch(0.97 0.002 264)"
+  ink-meta-dark: "oklch(0.76 0.01 264)"
+  ink-faint-dark: "oklch(0.506 0.01 264)"
+  accent-dark: "oklch(0.54 0.19 264)"
   on-accent-dark: "oklch(1 0 0)"
   accent-soft-dark: "oklch(0.29 0.06 264)"
   accent-ink-dark: "oklch(0.72 0.13 264)"
@@ -108,7 +114,7 @@ colors:
   warn-soft-dark: "oklch(0.28 0.05 75)"
   danger-dark: "oklch(0.71 0.178 25)"
   danger-soft-dark: "oklch(0.28 0.06 25)"
-  on-danger-dark: "oklch(0.16 0.005 270)"
+  on-danger-dark: "oklch(0.16 0.005 264)"
   chip-red-dark: "oklch(0.75 0.147 25)"
   chip-red-soft-dark: "oklch(0.3 0.05 25)"
   chip-red-ink-dark: "oklch(0.87 0.068 25)"
@@ -143,74 +149,79 @@ colors:
   avatar-7-ink-dark: "oklch(0.92 0.037 270)"
   avatar-8-dark: "oklch(0.4 0.08 320)"
   avatar-8-ink-dark: "oklch(0.92 0.05 320)"
-  wash-hover-dark: "oklch(0.97 0.002 270 / 0.05)"
-  wash-press-dark: "oklch(0.97 0.002 270 / 0.08)"
-  wash-selected-dark: "oklch(0.97 0.002 270 / 0.11)"
-  wash-selected-hover-dark: "oklch(0.97 0.002 270 / 0.15)"
-  skeleton-dark: "oklch(0.97 0.002 270 / 0.09)"
-  fill-disabled-dark: "oklch(0.97 0.002 270 / 0.06)"
+  wash-hover-dark: "oklch(0.97 0.002 264 / 0.05)"
+  wash-press-dark: "oklch(0.97 0.002 264 / 0.08)"
+  wash-selected-dark: "oklch(0.97 0.002 264 / 0.11)"
+  wash-selected-hover-dark: "oklch(0.97 0.002 264 / 0.15)"
+  skeleton-dark: "oklch(0.97 0.002 264 / 0.09)"
+  fill-disabled-dark: "oklch(0.97 0.002 264 / 0.06)"
+  fill-neutral-dark: "oklch(0.97 0.002 264 / 0.08)"
   ring-dark: "oklch(0.72 0.13 264)"
   selected-outline-dark: "oklch(0.72 0.13 264)"
-  edge-hover-dark: "oklch(0.53 0.01 270)"
+  edge-hover-dark: "oklch(0.53 0.01 264)"
   edge-error-dark: "oklch(0.71 0.178 25)"
   ink-error-dark: "oklch(0.71 0.178 25)"
-  ink-disabled-dark: "oklch(0.506 0.01 270)"
-  act-accent-dark: "oklch(0.52 0.19 264)"
+  ink-disabled-dark: "oklch(0.506 0.01 264)"
+  act-accent-dark: "oklch(0.54 0.19 264)"
   on-act-accent-dark: "oklch(1 0 0)"
-  act-accent-hover-dark: "oklch(0.458 0.167 264)"
-  act-accent-press-dark: "oklch(0.406 0.148 264)"
-  act-accent-pending-dark: "oklch(0.664 0.133 264)"
-  act-ink-dark: "oklch(0.97 0.002 270)"
-  on-act-ink-dark: "oklch(0.16 0.005 270)"
-  act-ink-hover-dark: "oklch(0.873 0.002 270)"
-  act-ink-press-dark: "oklch(0.792 0.003 270)"
-  act-ink-pending-dark: "oklch(0.727 0.003 270)"
-  switch-off-dark: "oklch(0.53 0.01 270)"
-  switch-off-hover-dark: "oklch(0.596 0.009 270)"
-  switch-on-dark: "oklch(0.52 0.19 264)"
-  switch-on-hover-dark: "oklch(0.458 0.167 264)"
+  act-accent-hover-dark: "oklch(0.475 0.167 264)"
+  act-accent-press-dark: "oklch(0.421 0.148 264)"
+  act-accent-pending-dark: "oklch(0.426 0.134 264)"
+  act-danger-dark: "oklch(0.71 0.178 25)"
+  on-act-danger-dark: "oklch(0.16 0.005 264)"
+  act-danger-hover-dark: "oklch(0.741 0.157 24.925)"
+  act-danger-press-dark: "oklch(0.767 0.137 24.844)"
+  act-danger-pending-dark: "oklch(0.545 0.124 24.405)"
+  act-ink-dark: "oklch(0.97 0.002 264)"
+  on-act-ink-dark: "oklch(0.16 0.005 264)"
+  act-ink-hover-dark: "oklch(0.873 0.002 264)"
+  act-ink-press-dark: "oklch(0.792 0.003 264)"
+  act-ink-pending-dark: "oklch(0.727 0.003 264)"
+  switch-off-dark: "oklch(0.53 0.01 264)"
+  switch-off-hover-dark: "oklch(0.596 0.009 264)"
+  toggle-on-dark: "oklch(0.54 0.19 264)"
+  toggle-on-hover-dark: "oklch(0.595 0.167 264)"
   switch-thumb-dark: "oklch(1 0 0)"
 typography:
   display:
-    fontFamily: "ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "\"IBM Plex Sans\", \"IBM Plex Sans Fallback\", ui-sans-serif, system-ui, sans-serif"
     fontSize: "36px"
     fontWeight: 500
     lineHeight: "40px"
     letterSpacing: "-0.02em"
   title:
-    fontFamily: "ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "\"IBM Plex Sans\", \"IBM Plex Sans Fallback\", ui-sans-serif, system-ui, sans-serif"
     fontSize: "18px"
     fontWeight: 600
     lineHeight: "24px"
     letterSpacing: "-0.01em"
   heading:
-    fontFamily: "ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "\"IBM Plex Sans\", \"IBM Plex Sans Fallback\", ui-sans-serif, system-ui, sans-serif"
     fontSize: "15px"
     fontWeight: 600
     lineHeight: "20px"
     letterSpacing: "-0.005em"
   body:
-    fontFamily: "ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "\"IBM Plex Sans\", \"IBM Plex Sans Fallback\", ui-sans-serif, system-ui, sans-serif"
     fontSize: "13px"
     fontWeight: 400
     lineHeight: "20px"
   meta:
-    fontFamily: "ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "\"IBM Plex Sans\", \"IBM Plex Sans Fallback\", ui-sans-serif, system-ui, sans-serif"
     fontSize: "12px"
     fontWeight: 400
     lineHeight: "18px"
   caption:
-    fontFamily: "ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "\"IBM Plex Sans\", \"IBM Plex Sans Fallback\", ui-sans-serif, system-ui, sans-serif"
     fontSize: "11px"
     fontWeight: 400
     lineHeight: "16px"
     letterSpacing: "0.01em"
   code:
-    fontFamily: "\"JetBrains Mono Variable\", \"JetBrains Mono Variable Fallback\", ui-monospace, \"SFMono-Regular\", Menlo, monospace"
+    fontFamily: "\"IBM Plex Mono\", \"IBM Plex Mono Fallback\", ui-monospace, \"SFMono-Regular\", Menlo, monospace"
     fontSize: "12px"
     fontWeight: 400
     lineHeight: "18px"
-    fontFeature: "\"liga\" 0, \"calt\" 0"
 rounded:
   chip: "4px"
   control: "6px"
@@ -245,7 +256,14 @@ spacing:
   switch-h: "16px"
   thumb: "12px"
   switch-inset: "2px"
+  switch-travel: "12px"
   skeleton: "12px"
+  icon-meta: "12px"
+  icon: "14px"
+  icon-control: "16px"
+  check: "16px"
+  track: "2px"
+  otp: "44px"
 components:
   text-display:
     typography: "{typography.display}"
@@ -497,10 +515,10 @@ components:
     backgroundColor: "{colors.switch-off-dark}"
   switch-on:
     rounded: "{rounded.full}"
-    backgroundColor: "{colors.switch-on}"
+    backgroundColor: "{colors.toggle-on}"
   switch-on-dark:
     rounded: "{rounded.full}"
-    backgroundColor: "{colors.switch-on-dark}"
+    backgroundColor: "{colors.toggle-on-dark}"
   table-row-selected:
     backgroundColor: "{colors.wash-selected}"
   table-row-selected-dark:
@@ -509,10 +527,16 @@ components:
     rounded: "{rounded.chip}"
   checkbox-checked:
     rounded: "{rounded.chip}"
-    backgroundColor: "{colors.accent}"
+    backgroundColor: "{colors.toggle-on}"
   checkbox-checked-dark:
     rounded: "{rounded.chip}"
-    backgroundColor: "{colors.accent-dark}"
+    backgroundColor: "{colors.toggle-on-dark}"
+  checkbox-mixed:
+    rounded: "{rounded.chip}"
+    backgroundColor: "{colors.toggle-on}"
+  checkbox-mixed-dark:
+    rounded: "{rounded.chip}"
+    backgroundColor: "{colors.toggle-on-dark}"
   segment-idle:
     rounded: "{rounded.control}"
     height: "{spacing.control-compact}"
@@ -962,28 +986,28 @@ One closed token contract, the approved foundations sheet, drawn by two UI plugi
 | Knob | Value |
 | --- | --- |
 | accentHue | 264 |
-| density | `desktop` |
-| fonts | sans the platform's, mono `JetBrains Mono Variable` |
+| castHue | 264, the accent's hue unless set |
+| fonts | sans `IBM Plex Sans`, mono `IBM Plex Mono` |
 | defaultMode | the system preference |
 
 ## Colors
 
-Colors are OKLCH, named by the place they draw. Cool neutrals on hue 270, one accent hue (the only one a knob moves; its chroma is held inside sRGB at any hue), three status hues, six chip families, eight avatar steps. A wash is the body ink at an alpha, so it sits on any surface as one more step. Inside a group or a lifted layer the container re-points `edge` to `edge-raised`, so a part never picks between them.
+Colors are OKLCH, named by the place they draw. Neutrals cast on one hue at a fixed chroma per role (the cast knob moves the hue, never the chroma, so no contrast moves), one accent hue (its chroma is held inside sRGB at any hue), three status hues, six chip families, eight avatar steps. A wash is the body ink at an alpha, so it sits on any surface as one more step. Inside a group or a lifted layer the container re-points `edge` to `edge-raised`, so a part never picks between them.
 
 | Role | Light | Dark | Draws |
 | --- | --- | --- | --- |
-| `canvas` | `oklch(0.974 0.002 270)` | `oklch(0.16 0.005 270)` | the page |
-| `surface` | `oklch(1 0 0)` | `oklch(0.207 0.006 270)` | a card, a field, a row |
-| `group` | `oklch(0.947 0.004 270)` | `oklch(0.243 0.007 270)` | a filled tile, a chip ground |
-| `raised` | `oklch(1 0 0)` | `oklch(0.243 0.007 270)` | a popover, a dialog, a sheet, a toast |
-| `edge` | `oklch(0.915 0.004 270)` | `oklch(0.298 0.008 270)` | the hairline over canvas and surface; inside a group or a lifted layer the container re-points it to `edge-raised` |
-| `edge-raised` | `oklch(0.915 0.004 270)` | `oklch(0.332 0.008 270)` | the hairline inside a group and on a lifted layer |
-| `edge-strong` | `oklch(0.62 0.01 270)` | `oklch(0.53 0.01 270)` | a control's boundary, at 3:1 |
-| `scrim` | `oklch(0.2 0.01 270 / 0.45)` | `oklch(0 0 0 / 0.5)` | the veil behind a dialog or a sheet |
-| `ink-body` | `oklch(0.2 0.008 270)` | `oklch(0.97 0.002 270)` | the primary line of anything |
-| `ink-meta` | `oklch(0.45 0.012 270)` | `oklch(0.76 0.01 270)` | a secondary line, a placeholder, a table header |
-| `ink-faint` | `oklch(0.665 0.01 270)` | `oklch(0.506 0.01 270)` | disabled text only |
-| `accent` | `oklch(0.52 0.19 264)` | `oklch(0.52 0.19 264)` | the filled act |
+| `canvas` | `oklch(0.974 0.002 264)` | `oklch(0.16 0.005 264)` | the page |
+| `surface` | `oklch(1 0 0)` | `oklch(0.207 0.006 264)` | a card, a field, a row |
+| `group` | `oklch(0.947 0.004 264)` | `oklch(0.25 0.007 264)` | a filled tile, a chip ground |
+| `raised` | `oklch(1 0 0)` | `oklch(0.243 0.007 264)` | a popover, a dialog, a sheet, a toast |
+| `edge` | `oklch(0.915 0.004 264)` | `oklch(0.298 0.008 264)` | the hairline over canvas and surface; inside a group or a lifted layer the container re-points it to `edge-raised` |
+| `edge-raised` | `oklch(0.915 0.004 264)` | `oklch(0.332 0.008 264)` | the hairline inside a group and on a lifted layer |
+| `edge-strong` | `oklch(0.62 0.01 264)` | `oklch(0.53 0.01 264)` | a control's boundary, at 3:1 |
+| `scrim` | `oklch(0.2 0.01 264 / 0.45)` | `oklch(0 0 0 / 0.5)` | the veil behind a dialog or a sheet |
+| `ink-body` | `oklch(0.2 0.008 264)` | `oklch(0.97 0.002 264)` | the primary line of anything |
+| `ink-meta` | `oklch(0.45 0.012 264)` | `oklch(0.76 0.01 264)` | a secondary line, a placeholder, a table header |
+| `ink-faint` | `oklch(0.665 0.01 264)` | `oklch(0.506 0.01 264)` | disabled text only |
+| `accent` | `oklch(0.52 0.19 264)` | `oklch(0.54 0.19 264)` | the filled act |
 | `on-accent` | `oklch(1 0 0)` | `oklch(1 0 0)` | text on `accent` |
 | `accent-soft` | `oklch(0.95 0.023 264)` | `oklch(0.29 0.06 264)` | a tinted tile |
 | `accent-ink` | `oklch(0.52 0.19 264)` | `oklch(0.72 0.13 264)` | a link, the focus ring, a selection outline |
@@ -991,9 +1015,9 @@ Colors are OKLCH, named by the place they draw. Cool neutrals on hue 270, one ac
 | `ok-soft` | `oklch(0.965 0.04 150)` | `oklch(0.28 0.05 150)` | the ground under an `ok` mark, an added line |
 | `warn` | `oklch(0.48 0.099 70)` | `oklch(0.75 0.15 80)` | the `attention` mark |
 | `warn-soft` | `oklch(0.965 0.036 85)` | `oklch(0.28 0.05 75)` | the ground under a `warn` mark |
-| `danger` | `oklch(0.55 0.19 25)` | `oklch(0.71 0.178 25)` | the `failed` mark, a destructive act's label, an error ring |
+| `danger` | `oklch(0.515 0.19 25)` | `oklch(0.71 0.178 25)` | the `failed` mark, a destructive act's label, an error ring, the filled destructive act |
 | `danger-soft` | `oklch(0.965 0.016 20)` | `oklch(0.28 0.06 25)` | the ground under a `danger` mark, a removed line |
-| `on-danger` | `oklch(1 0 0)` | `oklch(0.16 0.005 270)` | text on a `danger` fill, the one saturated state |
+| `on-danger` | `oklch(1 0 0)` | `oklch(0.16 0.005 264)` | text on a `danger` fill, the one saturated state |
 | `chip-red` | `oklch(0.56 0.2 25)` | `oklch(0.75 0.147 25)` | a `Chip`'s family: the mark (a dot, a chart series), the soft ground, the ink on the soft |
 | `chip-red-soft` | `oklch(0.945 0.026 25)` | `oklch(0.3 0.05 25)` | a `Chip`'s family: the mark (a dot, a chart series), the soft ground, the ink on the soft |
 | `chip-red-ink` | `oklch(0.42 0.1 25)` | `oklch(0.87 0.068 25)` | a `Chip`'s family: the mark (a dot, a chart series), the soft ground, the ink on the soft |
@@ -1028,32 +1052,38 @@ Colors are OKLCH, named by the place they draw. Cool neutrals on hue 270, one ac
 | `avatar-7-ink` | `oklch(0.38 0.1 270)` | `oklch(0.92 0.037 270)` | an `Avatar`'s fill and the initial on it, one step per name |
 | `avatar-8` | `oklch(0.88 0.07 320)` | `oklch(0.4 0.08 320)` | an `Avatar`'s fill and the initial on it, one step per name |
 | `avatar-8-ink` | `oklch(0.38 0.1 320)` | `oklch(0.92 0.05 320)` | an `Avatar`'s fill and the initial on it, one step per name |
-| `wash-hover` | `oklch(0.2 0.008 270 / 0.05)` | `oklch(0.97 0.002 270 / 0.05)` | a transparent part under the pointer |
-| `wash-press` | `oklch(0.2 0.008 270 / 0.08)` | `oklch(0.97 0.002 270 / 0.08)` | a transparent part pressed |
-| `wash-selected` | `oklch(0.2 0.008 270 / 0.11)` | `oklch(0.97 0.002 270 / 0.11)` | a selected row or chip |
-| `wash-selected-hover` | `oklch(0.2 0.008 270 / 0.15)` | `oklch(0.97 0.002 270 / 0.15)` | a selected row under the pointer |
-| `skeleton` | `oklch(0.2 0.008 270 / 0.09)` | `oklch(0.97 0.002 270 / 0.09)` | a loading bar |
-| `fill-disabled` | `oklch(0.2 0.008 270 / 0.06)` | `oklch(0.97 0.002 270 / 0.06)` | a disabled act's or chip's box |
+| `wash-hover` | `oklch(0.2 0.008 264 / 0.05)` | `oklch(0.97 0.002 264 / 0.05)` | a transparent part under the pointer |
+| `wash-press` | `oklch(0.2 0.008 264 / 0.08)` | `oklch(0.97 0.002 264 / 0.08)` | a transparent part pressed |
+| `wash-selected` | `oklch(0.2 0.008 264 / 0.11)` | `oklch(0.97 0.002 264 / 0.11)` | a selected row or chip |
+| `wash-selected-hover` | `oklch(0.2 0.008 264 / 0.15)` | `oklch(0.97 0.002 264 / 0.15)` | a selected row under the pointer |
+| `skeleton` | `oklch(0.2 0.008 264 / 0.09)` | `oklch(0.97 0.002 264 / 0.09)` | a loading bar |
+| `fill-disabled` | `oklch(0.2 0.008 264 / 0.06)` | `oklch(0.97 0.002 264 / 0.06)` | a disabled act's or chip's box |
+| `fill-neutral` | `oklch(0.2 0.008 264 / 0.08)` | `oklch(0.97 0.002 264 / 0.08)` | a resting neutral ground: a count's pill, a grey chip |
 | `ring` | `oklch(0.52 0.19 264)` | `oklch(0.72 0.13 264)` | the focus ring |
 | `selected-outline` | `oklch(0.52 0.19 264)` | `oklch(0.72 0.13 264)` | a selected tile's outline |
-| `edge-hover` | `oklch(0.62 0.01 270)` | `oklch(0.53 0.01 270)` | a field's boundary under the pointer |
-| `edge-error` | `oklch(0.55 0.19 25)` | `oklch(0.71 0.178 25)` | a field's boundary in error |
-| `ink-error` | `oklch(0.55 0.19 25)` | `oklch(0.71 0.178 25)` | an error message |
-| `ink-disabled` | `oklch(0.665 0.01 270)` | `oklch(0.506 0.01 270)` | a disabled part's label |
-| `act-accent` | `oklch(0.52 0.19 264)` | `oklch(0.52 0.19 264)` | the primary act's fill; `-hover`, `-press` and `-pending` its states |
+| `edge-hover` | `oklch(0.62 0.01 264)` | `oklch(0.53 0.01 264)` | a field's boundary under the pointer |
+| `edge-error` | `oklch(0.515 0.19 25)` | `oklch(0.71 0.178 25)` | a field's boundary in error |
+| `ink-error` | `oklch(0.515 0.19 25)` | `oklch(0.71 0.178 25)` | an error message |
+| `ink-disabled` | `oklch(0.665 0.01 264)` | `oklch(0.506 0.01 264)` | a disabled part's label |
+| `act-accent` | `oklch(0.52 0.19 264)` | `oklch(0.54 0.19 264)` | the primary act's fill; `-hover`, `-press` and `-pending` its states |
 | `on-act-accent` | `oklch(1 0 0)` | `oklch(1 0 0)` | the primary act's label |
-| `act-accent-hover` | `oklch(0.458 0.167 264)` | `oklch(0.458 0.167 264)` | the primary act's fill; `-hover`, `-press` and `-pending` its states |
-| `act-accent-press` | `oklch(0.406 0.148 264)` | `oklch(0.406 0.148 264)` | the primary act's fill; `-hover`, `-press` and `-pending` its states |
-| `act-accent-pending` | `oklch(0.664 0.133 264)` | `oklch(0.664 0.133 264)` | the primary act's fill; `-hover`, `-press` and `-pending` its states |
-| `act-ink` | `oklch(0.2 0.008 270)` | `oklch(0.97 0.002 270)` | the ink act, a screen's dark primary; `-hover`, `-press` and `-pending` its states |
-| `on-act-ink` | `oklch(0.974 0.002 270)` | `oklch(0.16 0.005 270)` | the ink act's label |
-| `act-ink-hover` | `oklch(0.293 0.007 270)` | `oklch(0.873 0.002 270)` | the ink act, a screen's dark primary; `-hover`, `-press` and `-pending` its states |
-| `act-ink-press` | `oklch(0.37 0.007 270)` | `oklch(0.792 0.003 270)` | the ink act, a screen's dark primary; `-hover`, `-press` and `-pending` its states |
-| `act-ink-pending` | `oklch(0.432 0.006 270)` | `oklch(0.727 0.003 270)` | the ink act, a screen's dark primary; `-hover`, `-press` and `-pending` its states |
-| `switch-off` | `oklch(0.62 0.01 270)` | `oklch(0.53 0.01 270)` | a switch's track off; `-hover` under the pointer |
-| `switch-off-hover` | `oklch(0.557 0.01 270)` | `oklch(0.596 0.009 270)` | a switch's track off; `-hover` under the pointer |
-| `switch-on` | `oklch(0.52 0.19 264)` | `oklch(0.52 0.19 264)` | a switch's track on; `-hover` under the pointer |
-| `switch-on-hover` | `oklch(0.458 0.167 264)` | `oklch(0.458 0.167 264)` | a switch's track on; `-hover` under the pointer |
+| `act-accent-hover` | `oklch(0.458 0.167 264)` | `oklch(0.475 0.167 264)` | the primary act's fill; `-hover`, `-press` and `-pending` its states |
+| `act-accent-press` | `oklch(0.406 0.148 264)` | `oklch(0.421 0.148 264)` | the primary act's fill; `-hover`, `-press` and `-pending` its states |
+| `act-accent-pending` | `oklch(0.664 0.133 264)` | `oklch(0.426 0.134 264)` | the primary act's fill; `-hover`, `-press` and `-pending` its states |
+| `act-danger` | `oklch(0.515 0.19 25)` | `oklch(0.71 0.178 25)` | a confirm's destructive act's fill; `-hover`, `-press` and `-pending` its states |
+| `on-act-danger` | `oklch(1 0 0)` | `oklch(0.16 0.005 264)` | the filled destructive act's label |
+| `act-danger-hover` | `oklch(0.453 0.167 25)` | `oklch(0.741 0.157 24.925)` | a confirm's destructive act's fill; `-hover`, `-press` and `-pending` its states |
+| `act-danger-press` | `oklch(0.402 0.148 25)` | `oklch(0.767 0.137 24.844)` | a confirm's destructive act's fill; `-hover`, `-press` and `-pending` its states |
+| `act-danger-pending` | `oklch(0.661 0.133 25)` | `oklch(0.545 0.124 24.405)` | a confirm's destructive act's fill; `-hover`, `-press` and `-pending` its states |
+| `act-ink` | `oklch(0.2 0.008 264)` | `oklch(0.97 0.002 264)` | the ink act, a screen's dark primary; `-hover`, `-press` and `-pending` its states |
+| `on-act-ink` | `oklch(0.974 0.002 264)` | `oklch(0.16 0.005 264)` | the ink act's label |
+| `act-ink-hover` | `oklch(0.293 0.007 264)` | `oklch(0.873 0.002 264)` | the ink act, a screen's dark primary; `-hover`, `-press` and `-pending` its states |
+| `act-ink-press` | `oklch(0.37 0.007 264)` | `oklch(0.792 0.003 264)` | the ink act, a screen's dark primary; `-hover`, `-press` and `-pending` its states |
+| `act-ink-pending` | `oklch(0.432 0.006 264)` | `oklch(0.727 0.003 264)` | the ink act, a screen's dark primary; `-hover`, `-press` and `-pending` its states |
+| `switch-off` | `oklch(0.62 0.01 264)` | `oklch(0.53 0.01 264)` | a switch's track off; `-hover` under the pointer |
+| `switch-off-hover` | `oklch(0.557 0.01 264)` | `oklch(0.596 0.009 264)` | a switch's track off; `-hover` under the pointer |
+| `toggle-on` | `oklch(0.52 0.19 264)` | `oklch(0.54 0.19 264)` | a toggle on: a switch's track, a checked box, a slider's fill; `-hover` under the pointer |
+| `toggle-on-hover` | `oklch(0.458 0.167 264)` | `oklch(0.595 0.167 264)` | a toggle on: a switch's track, a checked box, a slider's fill; `-hover` under the pointer |
 | `switch-thumb` | `oklch(1 0 0)` | `oklch(1 0 0)` | a switch's knob |
 
 Status colors: `active` is `accent-ink`, `waiting` and `idle` are `ink-meta`, `done` is `ok`, `attention` is `warn`, `failed` is `danger`.
@@ -1064,7 +1094,7 @@ Seven roles named by place. Two rules decide the role: size follows structure, n
 
 | Role | Desktop | Touch | Weight | Ink | Place |
 | --- | --- | --- | --- | --- | --- |
-| `display` | 36px / 40px | 44px / 48px | 500 | `ink-body` | a display number, one per screen |
+| `display` | 36px / 40px | 44px / 48px | 500 | `ink-body` | a display number, one per screen, in tabular figures |
 | `title` | 18px / 24px | 22px / 28px | 600 | `ink-body` | the page's name, once per screen |
 | `heading` | 15px / 20px | 18px / 24px | 600 | `ink-body` | a section's or a card's name, never inside a row |
 | `body` | 13px / 20px | 16px / 24px | 400 | `ink-body` | the primary line of anything: prose, a row, a field, a menu item |
@@ -1072,7 +1102,7 @@ Seven roles named by place. Two rules decide the role: size follows structure, n
 | `caption` | 11px / 16px | 14px / 22px | 400 | `ink-meta` | text inside a small component (a chip, a key hint), never a sentence |
 | `code` | 12px / 18px | 15px / 22px | 400 | `ink-body` | what a machine reads |
 
-Tracking: `display` -0.02em, `title` -0.01em, `heading` -0.005em, `caption` 0.01em; the rest 0. `sans` is `ui-sans-serif, system-ui, sans-serif`; `mono` is `"JetBrains Mono Variable", "JetBrains Mono Variable Fallback", ui-monospace, "SFMono-Regular", Menlo, monospace` with its ligatures off. Each named family is followed by its metric fallback face. Running text wraps at `measure`, 66ch.
+Tracking: `display` -0.02em, `title` -0.01em, `heading` -0.005em, `caption` 0.01em; the rest 0. `sans` is `"IBM Plex Sans", "IBM Plex Sans Fallback", ui-sans-serif, system-ui, sans-serif`; `mono` is `"IBM Plex Mono", "IBM Plex Mono Fallback", ui-monospace, "SFMono-Regular", Menlo, monospace`. Each named family is followed by its metric fallback face. Running text wraps at `measure`, 66ch.
 
 ## Layout
 
@@ -1089,7 +1119,7 @@ Spacing roles are multiples of a 4 px base, picked per density, named by what th
 | `sections` | 32px | 40px | between sections of a page |
 | `page` | 24px | 16px | the page inset |
 
-Sizes are heights and squares in the same namespace. Density is a theme, never a breakpoint: `desktop` draws the desktop set where the primary pointer is fine and the touch set on a coarse one; `touch` draws the touch set everywhere; a `data-density` attribute on the web root pins either. Every touch target is at least 44px; on the desktop every interactive part keeps a 24px hit area whatever it draws.
+Sizes are heights and squares in the same namespace. Density is a theme, never a breakpoint, and never a knob: the web draws the desktop set where the primary pointer is fine and the touch set everywhere else, native draws the touch set, and a `data-density` attribute on the web root pins either. Every touch target is at least 44px; on the desktop every interactive part keeps a 24px hit area whatever it draws.
 
 | Size | Desktop | Touch | Is |
 | --- | --- | --- | --- |
@@ -1104,14 +1134,21 @@ Sizes are heights and squares in the same namespace. Density is a theme, never a
 | `dot` | 6px | 8px | a status or chip mark |
 | `chip` | 20px | 24px | a chip's height |
 | `avatar` | 24px | 32px | an avatar's side |
-| `spinner` | 14px | 16px | the spinner inside a pending act |
+| `spinner` | 14px | 18px | the spinner inside a pending act |
 | `switch-w` | 28px | 40px | a switch's width |
 | `switch-h` | 16px | 24px | a switch's height |
 | `thumb` | 12px | 20px | a switch's knob |
 | `switch-inset` | 2px | 2px | the knob's inset from its track |
+| `switch-travel` | 12px | 16px | the knob's travel: the width less the knob and both insets |
 | `skeleton` | 12px | 12px | a skeleton bar's height |
+| `icon-meta` | 12px | 14px | an icon beside meta or caption text |
+| `icon` | 14px | 18px | an icon beside body text |
+| `icon-control` | 16px | 20px | an icon inside a control |
+| `check` | 16px | 20px | a checkbox's box |
+| `track` | 2px | 4px | a slider's track thickness |
+| `otp` | 44px | 48px | a one-time-code box, square |
 
-Widths of lifted layers, never stretched to their container: `popover` 240px, `toast` 360px, `dialog` 440px, `sheet` 640px. Breakpoints: `tablet` 768px, `desktop` 1024px, `wide` 1440px; they are the only responsive variants.
+Widths of lifted layers, never stretched to their container: `chip-label` 18ch, `popover` 240px, `toast` 360px, `dialog` 440px, `sheet` 640px. Breakpoints: `tablet` 768px, `desktop` 1024px, `wide` 1440px; they are the only responsive variants.
 
 ## Elevation & Depth
 

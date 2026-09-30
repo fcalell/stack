@@ -12,7 +12,7 @@ import { vite } from "@fcalell/plugin-vite";
 import { deriveTheme } from "@fcalell/ui-core/derive";
 import { WORD_KEYS, type Words } from "@fcalell/ui-core/tokens";
 import { aggregateAppCss } from "./node/codegen.ts";
-import { defaultFonts, type FontEntry, interVariable } from "./node/fonts.ts";
+import { defaultFonts, type FontEntry } from "./node/fonts.ts";
 import {
 	densityLayer,
 	modeLayer,
@@ -120,26 +120,13 @@ const fonts = slot.derived({
 		ctx.options.fonts ?? defaultFonts,
 });
 
-// The design contract, resolved once, so knob resolution and override
-// validation happen exactly one time. The web's default `sans` is Inter when
-// its file loads and the theme names no `sans` family of its own.
+// The design contract, resolved once, so knob resolution and validation
+// happen exactly one time.
 const resolvedTheme = slot.derived({
 	source: SOURCE,
 	name: "resolvedTheme",
-	inputs: { fonts },
-	compute: (inp, ctx: ContributionCtx<ReactUiOptions>) => {
-		const theme = ctx.options.theme ?? {};
-		const loadsInter = inp.fonts.some(
-			(font) => font.family === interVariable.family,
-		);
-		if (theme.fonts?.sans !== undefined || !loadsInter) {
-			return deriveTheme(theme);
-		}
-		return deriveTheme({
-			...theme,
-			fonts: { ...theme.fonts, sans: interVariable.family },
-		});
-	},
+	compute: (_inp, ctx: ContributionCtx<ReactUiOptions>) =>
+		deriveTheme(ctx.options.theme),
 });
 
 // Rendered `.stack/app.css`. Returns null when no imports or layers landed.

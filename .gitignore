@@ -45,5 +45,7 @@ pnpm-debug.log*
 .claude/worktrees/
 .playwright-mcp/
 
-# The artboards' font files (`pnpm --filter @fcalell/plugin-react-ui design`)
+# The artboards' ground (`pnpm design`): the fonts and the compiled contract
 plugins/react-ui/design/files/
+plugins/react-ui/design/fonts.css
+plugins/react-ui/design/app.css

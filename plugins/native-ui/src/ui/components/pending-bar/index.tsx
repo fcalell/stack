@@ -1,5 +1,4 @@
 import type { Act } from "@fcalell/ui-core/descriptors";
-import type { SpinnerKind } from "@fcalell/ui-core/tokens";
 import { PENDING_BAR, PENDING_FILL, text } from "@fcalell/ui-core/variants";
 import { useEffect, useState } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
@@ -10,8 +9,6 @@ import { Spinner } from "../spinner";
 export interface PendingBarProps extends Closed {
 	sentence: string;
 	until?: Date;
-	// The busy glyph drawn while no deadline is set.
-	spinner?: SpinnerKind;
 	act?: Act;
 }
 
@@ -19,7 +16,7 @@ const TICK_MS = 250;
 
 // One line with a spinner, or a countdown that fills the bar toward `until`,
 // and one act.
-export function PendingBar({ sentence, until, spinner, act }: PendingBarProps) {
+export function PendingBar({ sentence, until, act }: PendingBarProps) {
 	const [now, setNow] = useState(() => Date.now());
 	const [width, setWidth] = useState(0);
 	const [start] = useState(() => Date.now());
@@ -43,7 +40,7 @@ export function PendingBar({ sentence, until, spinner, act }: PendingBarProps) {
 					style={{ width: ratio * width }}
 				/>
 			) : (
-				<Spinner kind={spinner} />
+				<Spinner />
 			)}
 			<RNText className={cn(text({ role: "meta" }), "flex-1 text-ink-body")}>
 				{sentence}

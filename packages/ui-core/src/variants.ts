@@ -227,6 +227,10 @@ export type RhythmUnit = keyof (typeof RHYTHM)["variants"]["unit"];
 
 export type ContentTone = ColorName;
 
+// What an icon sits beside, which picks its size: meta or caption text, body
+// text, or the inside of a control (`icon-meta`, `icon`, `icon-control`).
+export type IconFit = "meta" | "body" | "control";
+
 // The label matrices already carry the answer, so the tint a plugin hands to
 // its own icon or spinner is read back off the label cell instead of being
 // written a second time.

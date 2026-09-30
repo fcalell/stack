@@ -53,6 +53,7 @@ import {
 	type ColorName,
 	ENGLISH,
 	GAP_ROLES,
+	KNOB_DEFAULTS,
 	SHADOW_LEVELS,
 	STATUS_STATES,
 	TYPE_ROLES,
@@ -146,7 +147,6 @@ const NATIVE_OVERLAYS = [
 	"flex-row",
 	"flex-wrap",
 	"font-medium",
-	"font-mono",
 	"gap-fields",
 	"gap-inside",
 	"gap-pair",
@@ -201,6 +201,9 @@ const NATIVE_OVERLAYS = [
 	"size-6",
 	"size-7",
 	"size-8",
+	"size-icon",
+	"size-icon-control",
+	"size-icon-meta",
 	"text-accent-ink",
 	"text-center",
 	"text-danger",
@@ -631,7 +634,7 @@ check("a3", "the emitted sheet has the contract shape", () => {
 	const extra = [...themeMap.keys()].filter((name) => !(name in expected));
 	assert(extra.length === 0, `@theme carries unexpected keys: ${extra}`);
 	assert(
-		themeMap.get("--font-mono")?.includes('"JetBrains Mono Variable"'),
+		themeMap.get("--font-mono")?.includes('"IBM Plex Mono"'),
 		`--font-mono does not carry the knob's family: ${themeMap.get("--font-mono")}`,
 	);
 
@@ -750,9 +753,12 @@ function accentBound(): Set<ColorName> {
 		if ("alias" in declaration) bound = walk(declaration.alias);
 		else if ("veil" in declaration) bound = walk(declaration.veil);
 		else if ("mix" in declaration) {
+			const toward = declaration.toward;
+			const targets =
+				typeof toward === "string" ? [toward] : [toward.light, toward.dark];
 			bound =
 				walk(declaration.mix) ||
-				(declaration.toward !== "black" && walk(declaration.toward));
+				targets.some((target) => target !== "black" && walk(target));
 		} else {
 			bound =
 				declaration.light.hue === "accent" || declaration.dark.hue === "accent";
@@ -766,7 +772,8 @@ function accentBound(): Set<ColorName> {
 check("a5", "a knob move touches only its roles", () => {
 	const bound = accentBound();
 	const boundLine = new RegExp(`--color-(${[...bound].join("|")}):`);
-	const moved = emit({ accentHue: 30 });
+	// The cast is pinned: it follows the accent unless set.
+	const moved = emit({ accentHue: 30, castHue: KNOB_DEFAULTS.accentHue });
 	const before = sheet.split("\n");
 	const after = moved.split("\n");
 	assert(
@@ -793,7 +800,7 @@ check("a7", "uniwind's own compiler consumes the sheet", () => {
 	const light = themeScope(compiledCss, "light");
 	const dark = themeScope(compiledCss, "dark");
 
-	// Native draws the touch set whatever the knob says.
+	// Native draws the touch set.
 	const title = resolved.type.touch.title;
 	const fontSize = styleValue(compiledCss, "text-title", "fontSize", light);
 	assert(
@@ -852,6 +859,24 @@ check("a7", "uniwind's own compiler consumes the sheet", () => {
 	);
 	assert(accent === act, `alias law broken: bg-accent ${accent}, act ${act}`);
 
+	// The display cell's figures: uniwind maps `font-variant-numeric` to
+	// `fontVariant` through the class's own `--tw-numeric-*` variables, and
+	// its store drops the unset ones ("undefined") when it splits the list.
+	const own = Object.fromEntries(
+		(compiledCss.stylesheet["tabular-nums"]?.[0]?.entries ?? []).filter(
+			([name]) => name.startsWith("--"),
+		),
+	);
+	const variant = styleValue(compiledCss, "tabular-nums", "fontVariant", {
+		...light,
+		...own,
+	});
+	const figures = String(variant)
+		.split(" ")
+		.filter((token) => token !== "undefined")
+		.join(" ");
+	assert(figures === "tabular-nums", `tabular-nums fontVariant: ${variant}`);
+
 	const alive = RETIRED.filter(
 		(name) => compiledCss.stylesheet[name] !== undefined,
 	);
@@ -859,7 +884,7 @@ check("a7", "uniwind's own compiler consumes the sheet", () => {
 		alive.length === 0,
 		`retired classes survive the pipeline: ${alive.join(", ")}`,
 	);
-	return `text-title {${fontSize}/${lineHeight}}, bg-canvas ${canvasLight} light / ${canvasDark} dark, alias law holds, ${RETIRED.length} retired absent`;
+	return `text-title {${fontSize}/${lineHeight}}, tabular-nums {${figures}}, bg-canvas ${canvasLight} light / ${canvasDark} dark, alias law holds, ${RETIRED.length} retired absent`;
 });
 
 check("a6", "the build resolves the inventory and kills the retired", () => {
