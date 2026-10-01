@@ -17,5 +17,20 @@ export const LendAct = createContext<
 	((act: IconAct | undefined) => void) | null
 >(null);
 
+// The route of the Shell's current place: the list a Place returns to from a
+// record its Split shows alone.
+export const PlaceRoute = createContext<string | undefined>(undefined);
+
+// A Split tells the Place it sits in that its record stands alone; the Place
+// then starts its top bar with a back act to its route in place of the
+// switcher, and `false` takes it back.
+export const RecordAlone = createContext<((alone: boolean) => void) | null>(
+	null,
+);
+
+// A bleeding Place hands the room its floating act needs to the regions that
+// scroll inside its body, which keep it under their last row.
+export const ActRoom = createContext<ReactNode>(null);
+
 // The Place's or Screen's title, which names a Split's list.
 export const PageTitle = createContext<string | undefined>(undefined);

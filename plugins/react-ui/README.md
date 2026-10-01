@@ -43,20 +43,28 @@ PascalCase name), drawn from `lucide-react`, the plugin's own dependency.
 
 | File | Slot | Content |
 |------|------|---------|
-| `.stack/app.css` | `reactUi.slots.appCssSource` | `tailwindcss` with `source(none)`, the plugin's `globals.css`, `@source "../src"`, the `@theme` tokens and shadow utilities from ui-core, the `touch:` custom variant, the `pb-safe` utility, and `@layer base` for the mode scopes, reduced motion and density |
+| `.stack/app.css` | `reactUi.slots.appCssSource` | `tailwindcss` with `source(none)`, the plugin's `globals.css`, `@source "../src"`, the `@theme` tokens and shadow utilities from ui-core, the `touch:` and `page-*` custom variants, the `pb-safe` utility, and `@layer base` for the mode scopes, reduced motion and density |
 
 `.stack/entry.tsx` imports `./app.css`; `.stack/vite.config.ts` gains `tailwindcss()`,
 `themeFontsPlugin` (the preloads and `@font-face` rules) and `themeModePlugin` (the script that
 sets the `dark` class from the stored choice, the theme's `defaultMode`, else the system).
 
-Density is no option: the desktop set draws under `(pointer: fine)` and the touch set
-everywhere else. A `data-density` attribute on `<html>` pins either on any device: `desktop`
+Density is no option: the desktop set draws where the pointer is fine and the viewport is at
+least `tablet` wide, and the touch set everywhere else, so a desktop window narrower than
+`tablet` draws the touch sizes and structure. The rule is one query (`./density`) the density
+layer, the `touch:` variant and `useTouch` all read. A `data-density` attribute on `<html>` pins either on any device: `desktop`
 draws the compact set, `touch` the touch set. The `touch:` variant is the same rule for a
 class: it applies under `data-density="touch"`, and with no `desktop` pin where the pointer is
-not fine, so a molecule's structure follows density (an action bar at natural width on the
+not fine or the viewport is narrower than `tablet`, so a molecule's structure follows density (an action bar at natural width on the
 desktop, full width on touch); a molecule whose tree differs by density (the Shell's
 sidebar or tab bar) reads the same rule through `useTouch` from `lib/media`. A token never needs it: a size, a spacing role and a type role
 follow density through their variables.
+
+A Place or a Screen is the `page` size container (`@container/page`), and `page-<breakpoint>:`
+and `page-max-<breakpoint>:` draw from or below a breakpoint's width of it, emitted from the
+contract's breakpoint values. A Split decides its regions by them (one region below `tablet`,
+the list beside the main from it, the pane beside from `wide`), so its record keeps its room
+beside the sidebar whatever the viewport.
 
 `pb-safe` pads a bar's bottom by `env(safe-area-inset-bottom)`, so the touch tab bar clears a
 phone's home indicator; the react plugin's document sets `viewport-fit=cover`, which makes the inset

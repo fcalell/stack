@@ -496,9 +496,10 @@ export const PLACE_ROW_GLYPH = matrix({
 
 // A place in the tab bar: glyph over label, the box carrying the tab's ink
 // for the glyph inside it (currentColor on the web) and the label caption
-// repeating it, since a native Text inherits none.
+// repeating it, since a native Text inherits none. The box keeps no side
+// inset, so its label takes the tab's whole share of the bar.
 export const PLACE_TAB = matrix({
-	base: "gap-rows min-h-row px-pair rounded-row",
+	base: "gap-rows min-h-row rounded-row",
 	variants: {
 		state: { idle: "text-ink-meta", selected: "text-ink-body" },
 	},

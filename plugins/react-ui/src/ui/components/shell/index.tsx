@@ -19,7 +19,7 @@ import {
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, use, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
-import { CoverTabs, ShellSwitcher } from "../../lib/frame.ts";
+import { CoverTabs, PlaceRoute, ShellSwitcher } from "../../lib/frame.ts";
 import { spacing, useTouch } from "../../lib/media.ts";
 import { isCurrent, usePathname } from "../../lib/navigate.ts";
 import { PortalContainer } from "../../lib/portal.ts";
@@ -30,7 +30,6 @@ import { Icon } from "../icon/index.tsx";
 
 // The shell fills the viewport; the page inside scrolls its own body.
 const FRAME = "flex h-dvh overflow-hidden";
-const FRAME_TOUCH = "flex flex-col h-dvh overflow-hidden";
 const SIDEBAR = "relative flex flex-col shrink-0";
 const SLOT = "flex";
 const PLACES = "flex flex-col";
@@ -78,7 +77,7 @@ export interface ShellProps extends Closed {
 	children?: ReactNode;
 }
 
-/** The frame: on the desktop the sidebar (the switcher, then the places) beside the column; on touch the column over the tab bar, the switcher at the head of each Place's top bar and a pushed Screen covering the tab bar. */
+/** The frame: on the desktop the sidebar (the switcher, then the places) beside the column; on touch the column over the tab bar, the switcher at the head of each Place's top bar; on both, the current place's route handed down for a Place's back act and a pushed Screen covering the tab bar. */
 export function Shell({ places, banner, switcher, children }: ShellProps) {
 	const touch = useTouch();
 	const words = useWords();
@@ -87,52 +86,56 @@ export function Shell({ places, banner, switcher, children }: ShellProps) {
 	const trigger = switcher ? (
 		<SwitcherMenu switcher={switcher} touch={touch} />
 	) : null;
-	if (touch)
-		return (
-			<div className={cn(SHELL_COLUMN, FRAME_TOUCH)}>
-				{banner}
-				<ShellSwitcher value={trigger}>
-					<CoverTabs value={cover}>{children}</CoverTabs>
-				</ShellSwitcher>
-				{covered ? null : <TabBar places={places} pathname={pathname} />}
+	const route = places.find((spec) => isCurrent(spec.route, pathname))?.route;
+	// The sidebar and the tab bar differ by density; the column, and the page
+	// in it, keep one tree position on both, so crossing the density line
+	// keeps the page.
+	const sidebar = touch ? null : (
+		<nav aria-label={words.places} className={cn(SHELL_SIDEBAR, SIDEBAR)}>
+			{trigger ? (
+				<div className={cn(SWITCHER_SLOT, SLOT)}>{trigger}</div>
+			) : null}
+			<div className={cn(SHELL_PLACES, PLACES)}>
+				{places.map((spec) => {
+					const current = isCurrent(spec.route, pathname);
+					const state = current ? "selected" : "rest";
+					return (
+						<a
+							key={spec.route}
+							href={spec.route}
+							aria-current={current ? "page" : undefined}
+							className={cn(
+								placeRow({ state }),
+								ROW_BOX,
+								current ? ROW_SELECTED_PRESS : ROW_PRESS,
+							)}
+						>
+							<span className={cn(placeRowGlyph({ state }), GLYPH)}>
+								<Icon name={spec.icon} />
+							</span>
+							<span className={cn(text({ role: "body" }), LABEL)}>
+								{spec.label}
+							</span>
+							{spec.count === undefined ? null : <Count value={spec.count} />}
+						</a>
+					);
+				})}
 			</div>
-		);
+		</nav>
+	);
+	const tabs =
+		touch && !covered ? <TabBar places={places} pathname={pathname} /> : null;
 	return (
 		<div className={FRAME}>
-			<nav aria-label={words.places} className={cn(SHELL_SIDEBAR, SIDEBAR)}>
-				{trigger ? (
-					<div className={cn(SWITCHER_SLOT, SLOT)}>{trigger}</div>
-				) : null}
-				<div className={cn(SHELL_PLACES, PLACES)}>
-					{places.map((spec) => {
-						const current = isCurrent(spec.route, pathname);
-						const state = current ? "selected" : "rest";
-						return (
-							<a
-								key={spec.route}
-								href={spec.route}
-								aria-current={current ? "page" : undefined}
-								className={cn(
-									placeRow({ state }),
-									ROW_BOX,
-									current ? ROW_SELECTED_PRESS : ROW_PRESS,
-								)}
-							>
-								<span className={cn(placeRowGlyph({ state }), GLYPH)}>
-									<Icon name={spec.icon} />
-								</span>
-								<span className={cn(text({ role: "body" }), LABEL)}>
-									{spec.label}
-								</span>
-								{spec.count === undefined ? null : <Count value={spec.count} />}
-							</a>
-						);
-					})}
-				</div>
-			</nav>
+			{sidebar}
 			<div className={cn(SHELL_COLUMN, COLUMN)}>
 				{banner}
-				{children}
+				<ShellSwitcher value={trigger}>
+					<PlaceRoute value={route}>
+						<CoverTabs value={cover}>{children}</CoverTabs>
+					</PlaceRoute>
+				</ShellSwitcher>
+				{tabs}
 			</div>
 		</div>
 	);

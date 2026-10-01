@@ -109,11 +109,7 @@ export function Foundations() {
 		<main className="flex flex-col gap-sections p-page min-h-screen">
 			<header className="flex flex-row flex-wrap items-center gap-inside">
 				<h1 className={text({ role: "title" })}>Foundations</h1>
-				<ViewBar
-					view={view}
-					onChange={change}
-					to={{ path: "/", label: "Showcase" }}
-				/>
+				<ViewBar view={view} onChange={change} />
 			</header>
 			<Section title="Type">
 				<Modes>

@@ -76,16 +76,20 @@ export function Section({
 	children,
 }: SectionProps) {
 	const within = useContext(FormContext) ? "form" : "page";
-	const rows = Children.toArray(children).some(
+	const nodes = Children.toArray(children);
+	const rows = nodes.some(
 		(node) =>
 			isValidElement(node) && (node.type === Group || node.type === List),
 	);
 	const [open, setOpen] = useState(folded !== true);
-	// The count waits with the body.
+	// A count waits with the body.
 	let tally: ReactNode = null;
-	if (loading)
-		tally = <View className={cn(skeleton({ kind: "count" }), COUNT_WAIT)} />;
-	else if (count !== undefined) tally = <Count value={count} />;
+	if (count !== undefined)
+		tally = loading ? (
+			<View className={cn(skeleton({ kind: "count" }), COUNT_WAIT)} />
+		) : (
+			<Count value={count} />
+		);
 	const name = (
 		<>
 			<RNText numberOfLines={1} className={text({ role: "heading" })}>
@@ -156,20 +160,23 @@ export function Section({
 					) : null}
 				</View>
 			</View>
-			<View className={cn(section({ in: within }), !open && BODY_FOLDED)}>
-				{loading && !rows ? (
-					FIELDS.map((key) => (
-						<View key={key} className={skeletonRow({ kind: "field" })}>
-							<View className={cn(skeleton({ kind: "line" }), LABEL_WAIT)} />
-							<View className={skeleton({ kind: "field" })} />
-						</View>
-					))
-				) : (
-					<LoadingContext.Provider value={loading === true}>
-						{children}
-					</LoadingContext.Provider>
-				)}
-			</View>
+			{/* A section without children draws no body. */}
+			{nodes.length === 0 ? null : (
+				<View className={cn(section({ in: within }), !open && BODY_FOLDED)}>
+					{loading && !rows ? (
+						FIELDS.map((key) => (
+							<View key={key} className={skeletonRow({ kind: "field" })}>
+								<View className={cn(skeleton({ kind: "line" }), LABEL_WAIT)} />
+								<View className={skeleton({ kind: "field" })} />
+							</View>
+						))
+					) : (
+						<LoadingContext.Provider value={loading === true}>
+							{children}
+						</LoadingContext.Provider>
+					)}
+				</View>
+			)}
 		</View>
 	);
 }

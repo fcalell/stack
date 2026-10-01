@@ -15,7 +15,8 @@ pinned by the package's verify suite; this entry holds the architecture and its 
   carries exactly what was approved. Eleven namespaces are zeroed (`--color-*`, `--radius-*`,
   `--text-*`, `--leading-*`, `--tracking-*`, `--shadow-*`, `--font-*`, `--container-*`,
   `--breakpoint-*`, `--transition-duration-*`, `--ease-*`), so an off-contract utility compiles
-  to nothing and `tablet:`, `desktop:` and `wide:` are the only responsive variants. The numeric
+  to nothing and `tablet:`, `desktop:` and `wide:` are the only viewport variants (the web's
+  `page-*` container variants read the same values). The numeric
   `--spacing` base stays live because dimension utilities derive from it, so no build check can
   tell a role from a numeric; the matrices pin their cell strings verbatim and the closed props
   keep a numeric off a call site.
@@ -27,7 +28,7 @@ pinned by the package's verify suite; this entry holds the architecture and its 
   the accent's literals; it never reaches the accent, the status trio, the hued chip families or the
   avatars. Its chroma is a constant per role and mode, never a knob: hue at a neutral's chroma
   moves no contrast, while chroma decides whether a cast is a tint or a color and re-tunes the
-  ladder. Density is no knob either: the pointer decides it. Rejected: a knob per scale
+  ladder. Density is no knob either: the pointer and the width decide it. Rejected: a knob per scale
   (`space`, `radius`, `text`, `motion`, `elevation`, the status hues, the neutral chroma,
   `primary`, `density`) and per-token `overrides`; a consumer that moved one
   re-tuned a system it had not designed, and every pair the contract measures had to be re-checked
@@ -73,22 +74,25 @@ pinned by the package's verify suite; this entry holds the architecture and its 
   computed per avatar name (neither a token nor a cell); chip hues stepped off the accent (a
   family must never wear the accent, so the six are fixed and the accent's band is left out);
   `Status` with a family mode (a state and a data value are two concepts, so two names).
-- Density is a theme, never a breakpoint, and it moves three scales: the type roles (body 13 on
+- Density is a theme, and it moves three scales: the type roles (body 13 on
   the desktop set, 16 on touch, each role a ratio rounded to the pixel, its line box to the even
-  pixel), the eleven spacing roles (multiples of 4, one rung looser on touch except the float
-  and page insets and the acts gap) and the twenty-four sizes (control 32/44, field 38/48, target 24/44, the switch and
+  pixel), the twelve spacing roles (multiples of 4, one rung looser on touch except the float
+  and page insets and the acts gap; `list-x`, a list's inline inset, is derived as `page` less
+  `control-x`, so a list's row text meets the page title at either density) and the twenty-four sizes (control 32/44, field 38/48, target 24/44, the switch and
   its derived thumb travel, the avatar, three icon sizes by the text beside them, the check,
   the slider track, the one-time-code box). `themeTokens` seeds the touch set on both platforms; the web
-  overrides it with the desktop set in a `(pointer: fine)` `:root` rule in `@layer base`, the
-  cascade the dark layer rides, so no cell carries a density
+  overrides it with the desktop set in a `:root` rule in `@layer base` under a fine pointer at
+  `tablet` width and wider (so a desktop window narrower than `tablet` draws the touch set and
+  structure), the cascade the dark layer rides, so no cell carries a density
   class: a non-inline `@theme` utility reads its variable, so `text-body` and
   `min-h-control` follow. `data-density` on the web root pins either set on any device, the showcase's and the
   boards' pin, never a consumer option. Native is touch-only. A molecule whose structure follows
   density (an action bar at natural width on the desktop, full width on touch) reads it through
   the web's `touch:` custom variant, emitted over the density layer's own condition (the touch
-  pin, or no desktop pin and a pointer that is not fine), so a structural class and the token set
-  cannot disagree; native always draws the touch set, so it draws the touch structure with no
-  variant; the variant sits in a web molecule's overlay, never a cell. A value that flips by density is the same overlay over the desktop cell (the Split record's `touch:pt-0`, one inset under a touch title), never a matrix value. Rejected: a `fine:` variant in the cells (an interaction
+  pin, or no desktop pin where the pointer is not fine or the viewport is narrower than `tablet`),
+  and `useTouch` reads the same one query, so a structural class, a tree and the token set cannot
+  disagree; native always draws the touch set, so it draws the touch structure with no
+  variant; the variant sits in a web molecule's overlay, never a cell. A value that flips by density is the same overlay over the desktop cell, never a matrix value. Structure is decided by CSS wherever CSS can, a runtime check (`useTouch`) only where the tree differs (the Shell, Place and Screen). Rejected: a `fine:` variant in the cells (an interaction
   condition in a shared cell, meaningless on native) and one type scale at every density (13 on
   a phone is unreadable and 16 on a desktop row wastes the row).
 - Emission returns token records, never CSS text (`themeTokens`, `rootTokens`, `modeTokens`,
@@ -152,8 +156,13 @@ prop on the molecule that draws it, never a key.
   axis: the page's desktop strip (`PAGE_STRIP`, title and acts in one row under a hairline) and
   its touch head (`PAGE_HEAD` over `PAGE_TOP_BAR`, the title under the bar), the sidebar
   (`SHELL_SIDEBAR`, `PLACE_ROW`) and the tab bar (`SHELL_TAB_BAR`, `PLACE_TAB`), the split's
-  list inside its hairline and the phone's list alone. The web picks the structure under
-  `touch:` or by breakpoint; native draws the touch one.
+  list inside its hairline and the list alone. The web picks the structure under `touch:` or,
+  for a Split, by its page's width: a Place or Screen is the `page` size container and the
+  web's `page-<breakpoint>:` / `page-max-<breakpoint>:` variants, emitted from the breakpoint
+  values, query it, so the Split's regions and the Details and back acts it lends follow the room
+  the page has beside a sidebar rather than the viewport; native draws the touch one. A bleeding
+  body draws no inset, and whatever stands first in it (a Toolbar, the record, the list alone)
+  carries its own top inset.
 - A loading form stands in for what it replaces at that part's size: `SKELETON` by the part
   (`line`, `avatar`, `switch`, `count`, `field`) and `SKELETON_ROW` by the row it replaces
   (`two-line`, `setting`, `field`), so the loading frame keeps the loaded frame's height.

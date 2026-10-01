@@ -23,11 +23,11 @@ import { Pressable, Text as RNText, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import { CoverTabs, ShellSwitcher } from "../../lib/frame";
+import { CoverTabs, PlaceRoute, ShellSwitcher } from "../../lib/frame";
 import { Glyph } from "../../lib/glyph";
 import { Ink } from "../../lib/ink";
 import { MenuRow, MenuSheet } from "../../lib/more";
-import { navigate, usePathname } from "../../lib/navigate";
+import { isCurrent, navigate, usePathname } from "../../lib/navigate";
 import { dismissToast, useToasts } from "../../lib/toast";
 import { useWords } from "../../lib/words";
 import { Avatar } from "../avatar";
@@ -74,12 +74,15 @@ export interface ShellProps extends Closed {
 // content, the toast queue over the content's foot, the `confirm()`
 // decisions as a sheet, and the tab bar over the home indicator, past five
 // places four and a More tab whose sheet holds the rest. The switcher's
-// trigger starts each Place's top bar; a pushed Screen covers the tab bar,
+// trigger starts each Place's top bar, the current place's route handed down
+// for a Place's back act; a pushed Screen covers the tab bar,
 // and the frame then clears the home indicator itself.
 export function Shell({ places, banner, switcher, children }: ShellProps) {
 	const insets = useSafeAreaInsets();
 	const toasts = useToasts();
 	const [covered, cover] = useState(false);
+	const pathname = usePathname();
+	const route = places.find((spec) => isCurrent(spec.route, pathname))?.route;
 	return (
 		<View
 			style={{
@@ -93,7 +96,9 @@ export function Shell({ places, banner, switcher, children }: ShellProps) {
 				<ShellSwitcher.Provider
 					value={switcher ? <SwitcherTrigger switcher={switcher} /> : null}
 				>
-					<CoverTabs.Provider value={cover}>{children}</CoverTabs.Provider>
+					<PlaceRoute.Provider value={route}>
+						<CoverTabs.Provider value={cover}>{children}</CoverTabs.Provider>
+					</PlaceRoute.Provider>
 				</ShellSwitcher.Provider>
 				{toasts.length > 0 ? (
 					<View pointerEvents="box-none" className={cn(TOASTS, TOAST_LAYER)}>
@@ -109,7 +114,7 @@ export function Shell({ places, banner, switcher, children }: ShellProps) {
 					</View>
 				) : null}
 			</View>
-			{covered ? null : <TabBar places={places} />}
+			{covered ? null : <TabBar places={places} pathname={pathname} />}
 			<Confirmations />
 		</View>
 	);
@@ -195,13 +200,16 @@ function SwitcherTrigger({ switcher }: { switcher: Switcher }) {
 
 // The places: glyph over label, the count over the glyph's end; past five
 // places, four and a More tab whose sheet holds the rest.
-function TabBar({ places }: { places: readonly PlaceSpec[] }) {
+function TabBar({
+	places,
+	pathname,
+}: {
+	places: readonly PlaceSpec[];
+	pathname: string;
+}) {
 	const insets = useSafeAreaInsets();
-	const pathname = usePathname();
 	const words = useWords();
 	const [open, setOpen] = useState(false);
-	const current = (route: string) =>
-		pathname === route || pathname.startsWith(`${route}/`);
 	const fits = places.length <= TAB_ROOM;
 	const shown = fits ? places : places.slice(0, TAB_ROOM - 1);
 	const rest = fits ? [] : places.slice(TAB_ROOM - 1);
@@ -218,7 +226,7 @@ function TabBar({ places }: { places: readonly PlaceSpec[] }) {
 					icon={spec.icon}
 					label={spec.label}
 					count={spec.count}
-					selected={current(spec.route)}
+					selected={isCurrent(spec.route, pathname)}
 					onAct={() => navigate(spec.route)}
 				/>
 			))}
@@ -227,7 +235,7 @@ function TabBar({ places }: { places: readonly PlaceSpec[] }) {
 					<Tab
 						icon="Ellipsis"
 						label={words.more}
-						selected={rest.some((spec) => current(spec.route))}
+						selected={rest.some((spec) => isCurrent(spec.route, pathname))}
 						onAct={() => setOpen(true)}
 					/>
 					<MenuSheet

@@ -94,7 +94,7 @@ export function renderRule(
 }
 
 // A rule inside one media query: a token block a device class sets, such as
-// the compact density sizes under a fine pointer.
+// the compact density sizes under the desktop query.
 export function renderMediaRule(query: string, rule: string): string {
 	return [`@media ${query} {`, rule, "}"].join("\n");
 }

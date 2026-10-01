@@ -92,9 +92,9 @@ export function rootTokens(resolved: ResolvedTheme): Record<string, string> {
 
 // One density's set, keyed by full custom-property name: the type scale,
 // the spacing roles and the sizes. `themeTokens` seeds the touch set on both
-// platforms; the web draws the desktop set under a fine pointer, and either
-// set under a `data-density` attribute on the root, which is how the
-// showcase and a board pin a density.
+// platforms; the web draws the desktop set under a fine pointer at `tablet`
+// width and wider, and either set under a `data-density` attribute on the
+// root, which is how the showcase and a board pin a density.
 export function densityTokens(
 	resolved: ResolvedTheme,
 	density: Density,

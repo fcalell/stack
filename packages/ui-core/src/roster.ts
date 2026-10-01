@@ -431,7 +431,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"PAGE_TOP_BAR",
 				"TEXT.role.title",
 				"PAGE_BODY",
-				"PAGE_BLEED",
 				"FLOATING_ACT",
 				"FLOATING_ACT_ROOM",
 				"BUTTON.act.primary",
@@ -483,7 +482,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			},
 		},
 		// Below `wide` the Split adds a Details act to the Place's actions that
-		// opens the pane as a sheet.
+		// opens the pane as a sheet; below `tablet` a record it shows alone has
+		// its Place lead its strip or top bar with a back act to the list.
 		Split: {
 			props: ["list", "main", "pane", "empty"],
 			draws: ["SPLIT_LIST", "SPLIT_MAIN", "SPLIT_PANE", "ICON_BUTTON.fit.bar"],
@@ -491,7 +491,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			owns: {
 				colors: ["edge", "ink-meta"],
 				radii: ["control"],
-				spacing: ["inside", "page", "sections"],
+				spacing: ["inside", "list-x", "page", "sections"],
 				sizes: ["list", "pane", "control-compact"],
 			},
 		},
@@ -604,7 +604,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			props: ["children"],
 			draws: ["TOOLBAR", "TOOLBAR_ROW", "TOOLBAR_CHIPS"],
 			states: ["rest"],
-			owns: { colors: ["edge"], spacing: ["pair", "inside", "acts"] },
+			owns: { colors: ["edge"], spacing: ["pair", "page", "inside", "acts"] },
 		},
 		// The one filled act is the last; a destructive act draws `danger`
 		// filled and `destructive` otherwise. `fit: full` passes the acts

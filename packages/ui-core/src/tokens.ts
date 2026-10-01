@@ -12,9 +12,10 @@ export type Mode = (typeof MODES)[number];
 
 // ── Knobs ───────────────────────────────────────────────────────────
 
-// How dense everything draws, decided by the pointer and never by a knob:
-// where the primary pointer is fine (a mouse or a trackpad) the web draws the
-// `desktop` set, everywhere else the `touch` set, the 44 px world.
+// How dense everything draws, decided by the pointer and the width, never by
+// a knob: where the primary pointer is fine (a mouse or a trackpad) and the
+// viewport is at least `tablet` wide the web draws the `desktop` set,
+// everywhere else the `touch` set, the 44 px world.
 // `data-density` on the web root pins either set on any device, which is how
 // the showcase and the boards address a density. Density moves the type
 // scale, the spacing roles and every size; nothing else. Native is
@@ -626,8 +627,9 @@ export const SPACE_BASE = 4;
 // `tile` a compact card's inset (a board card);
 // `float` a floating surface's inset (a select's list, a menu, a picker
 // popover), so a row's wash sits just inside its edge; `fields` between
-// fields; `sections` between sections of a page; `page` the page inset. A
-// role never takes a width's name: `w-*` reads the spacing role first,
+// fields; `sections` between sections of a page; `page` the page inset;
+// `list-x` a list's inline inset, so its rows' text, inset by `control-x`,
+// meets the page title. A role never takes a width's name: `w-*` reads the spacing role first,
 // which would shadow the width.
 export const SPACING_ROLES = [
 	"inside",
@@ -641,10 +643,11 @@ export const SPACING_ROLES = [
 	"fields",
 	"sections",
 	"page",
+	"list-x",
 ] as const;
 export type SpacingRole = (typeof SPACING_ROLES)[number];
 
-// The roles a container may put between its children; the other five are
+// The roles a container may put between its children; the other six are
 // insets. A cell spells a gap only on one of these.
 export const GAP_ROLES = [
 	"inside",
@@ -658,8 +661,11 @@ export type GapRole = (typeof GAP_ROLES)[number];
 
 // Multiples of `SPACE_BASE`. Touch is the same roles one rung looser, except
 // the float inset and the acts gap, which hold, and the page inset, which a
-// phone narrows.
-export const SPACING_RATIO: Record<Density, Record<SpacingRole, number>> = {
+// phone narrows. `list-x` has no ratio of its own: `spacingRatio` derives it.
+export const SPACING_RATIO: Record<
+	Density,
+	Record<Exclude<SpacingRole, "list-x">, number>
+> = {
 	desktop: {
 		inside: 1.5,
 		"control-x": 3,
@@ -687,6 +693,13 @@ export const SPACING_RATIO: Record<Density, Record<SpacingRole, number>> = {
 		page: 4,
 	},
 };
+
+// A role's multiple of `SPACE_BASE` at a density. `list-x` is the page inset
+// less a control's, so moving either moves it.
+export function spacingRatio(density: Density, role: SpacingRole): number {
+	const ratio = SPACING_RATIO[density];
+	return role === "list-x" ? ratio.page - ratio["control-x"] : ratio[role];
+}
 
 // ── Sizes per density ───────────────────────────────────────────────
 

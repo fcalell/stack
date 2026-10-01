@@ -55,7 +55,15 @@ test("app.css imports Tailwind without detection, then the web sheet, then the c
 	assert.match(css, /@utility shadow-/);
 	assert.match(
 		css,
-		/@custom-variant touch \{\n:root\[data-density="touch"\] & \{\n\t@slot;\n\}\n@media not \(pointer: fine\) \{\n:root:not\(\[data-density="desktop"\]\) & \{\n\t@slot;\n\}\n\}\n\}/,
+		/@custom-variant touch \{\n:root\[data-density="touch"\] & \{\n\t@slot;\n\}\n@media not \(\(pointer: fine\) and \(width >= 768px\)\) \{\n:root:not\(\[data-density="desktop"\]\) & \{\n\t@slot;\n\}\n\}\n\}/,
+	);
+	assert.match(
+		css,
+		/@custom-variant page-max-tablet \{\n@container page \(width < 768px\) \{\n\t@slot;\n\}\n\}/,
+	);
+	assert.match(
+		css,
+		/@custom-variant page-wide \{\n@container page \(width >= 1440px\) \{\n\t@slot;\n\}\n\}/,
 	);
 	assert.match(css, /\.dark \{\n\tcolor-scheme: dark;/);
 	assert.match(css, /\.light \{\n\tcolor-scheme: light;/);
@@ -90,7 +98,7 @@ test("IBM Plex is the default pair, and a theme's own sans wins", async () => {
 	);
 });
 
-test("a fine pointer draws the desktop set, and data-density pins either", async () => {
+test("a fine pointer at tablet width draws the desktop set, and data-density pins either", async () => {
 	const desktop = (await artifacts()).get(".stack/app.css") ?? "";
 	assert.match(
 		desktop,
@@ -98,11 +106,11 @@ test("a fine pointer draws the desktop set, and data-density pins either", async
 	);
 	assert.match(
 		desktop,
-		/@media \(pointer: fine\) \{\n:root \{\n\t--text-display: 36px;/,
+		/@media \(pointer: fine\) and \(width >= 768px\) \{\n:root \{\n\t--text-display: 36px;/,
 	);
 	assert.match(
 		desktop,
-		/@media \(pointer: fine\) \{\n:root\[data-density="touch"\] \{\n\t--text-display: 44px;/,
+		/@media \(pointer: fine\) and \(width >= 768px\) \{\n:root\[data-density="touch"\] \{\n\t--text-display: 44px;/,
 	);
 });
 

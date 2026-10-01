@@ -110,6 +110,8 @@ const SPACING_USE: Record<(typeof SPACING_ROLES)[number], string> = {
 	fields: "between fields",
 	sections: "between sections of a page",
 	page: "the page inset",
+	"list-x":
+		"a list's inline inset, so its rows' text meets the page title: the page inset less control-x",
 };
 
 const SIZE_USE: Record<(typeof SIZES)[number], string> = {
@@ -434,7 +436,7 @@ function body(resolved: ResolvedTheme): string[] {
 			]),
 		),
 		"",
-		`Sizes are heights and squares in the same namespace. Density is a theme, never a breakpoint, and never a knob: the web draws the desktop set where the primary pointer is fine and the touch set everywhere else, native draws the touch set, and a \`data-density\` attribute on the web root pins either. A molecule whose structure follows density (an action bar at natural width on the desktop, full width on touch) reads it through the web's \`touch:\` variant, the same rule (a \`data-density="touch"\` pin, or a pointer that is not fine and no \`desktop\` pin); native is the touch set, so its molecules draw the touch structure with no variant. Every touch target is at least ${resolved.sizes.touch.target}; on the desktop every interactive part keeps a ${resolved.sizes.desktop.target} hit area whatever it draws.`,
+		`Sizes are heights and squares in the same namespace. Density is a theme and never a knob: the web draws the desktop set where the primary pointer is fine and the viewport is at least \`tablet\` wide (${resolved.breakpoints.tablet}) and the touch set everywhere else, native draws the touch set, and a \`data-density\` attribute on the web root pins either. A molecule whose structure follows density (an action bar at natural width on the desktop, full width on touch) reads it through the web's \`touch:\` variant, the same rule (a \`data-density="touch"\` pin, or no \`desktop\` pin where the pointer is not fine or the viewport is narrower than \`tablet\`); native is the touch set, so its molecules draw the touch structure with no variant. Every touch target is at least ${resolved.sizes.touch.target}; on the desktop every interactive part keeps a ${resolved.sizes.desktop.target} hit area whatever it draws.`,
 		"",
 		...table(
 			["Size", "Desktop", "Touch", "Is"],
@@ -452,7 +454,7 @@ function body(resolved: ResolvedTheme): string[] {
 			.map((width) => `${code(width)} ${resolved.widths[width]}`)
 			.join(
 				", ",
-			)}. Breakpoints: ${BREAKPOINTS.map((bp) => `${code(bp)} ${resolved.breakpoints[bp]}`).join(", ")}; they are the only responsive variants.`,
+			)}. Breakpoints: ${BREAKPOINTS.map((bp) => `${code(bp)} ${resolved.breakpoints[bp]}`).join(", ")}; they are the only responsive variants, of the viewport (\`tablet:\`) and, on the web, of a page's width (\`page-tablet:\`, \`page-max-tablet:\`), by which a Split decides its regions.`,
 		"",
 		"## Elevation & Depth",
 		"",

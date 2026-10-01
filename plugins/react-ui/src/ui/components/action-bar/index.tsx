@@ -11,6 +11,7 @@ import {
 import { use, useEffect, useId, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { FormContext, SubmitContext } from "../../lib/form.ts";
+import { useTouch } from "../../lib/media.ts";
 import { ReasonHostContext } from "../../lib/reason.ts";
 import { useTouched } from "../../lib/touched.ts";
 import { Button } from "../button/index.tsx";
@@ -23,8 +24,8 @@ const BAR: Record<ActionBarFit, string> = {
 	full: "flex flex-col",
 };
 const ACTS: Record<ActionBarFit, string> = {
-	end: "flex items-center justify-end touch:flex-col-reverse touch:items-stretch",
-	full: "grid grid-flow-col auto-cols-fr touch:flex touch:flex-col-reverse",
+	end: "flex items-center justify-end touch:flex-col touch:items-stretch",
+	full: "grid grid-flow-col auto-cols-fr touch:flex touch:flex-col",
 };
 const FIT: Record<ActionBarFit, ButtonFit> = { end: "body", full: "field" };
 
@@ -46,6 +47,7 @@ export interface ActionBarProps extends Closed {
 /** The acts row over a blocked act's reason; while one act is pending the others ignore the press. */
 export function ActionBar({ acts, fit }: ActionBarProps) {
 	const where = fit ?? "end";
+	const touch = useTouch();
 	const pend = use(FormContext);
 	const [running, setRunning] = useState(false);
 	const { touched } = useTouched();
@@ -65,6 +67,10 @@ export function ActionBar({ acts, fit }: ActionBarProps) {
 	}, [blockedKey]);
 	const busy = running || acts.some((act) => act.loading);
 	const filled = acts.length - 1;
+	// The tree holds the acts in drawn order, so Tab follows it: on touch the
+	// stack draws the filled act first.
+	const ordered = acts.map((act, at) => [act, at] as const);
+	const drawn = touch ? ordered.toReversed() : ordered;
 	const runFilled = () => {
 		const ran = acts[filled]?.onAct();
 		if (!(ran instanceof Promise)) return;
@@ -78,7 +84,7 @@ export function ActionBar({ acts, fit }: ActionBarProps) {
 	return (
 		<div className={cn(actionBar({ fit: where }), BAR[where])}>
 			<div className={cn(ACTION_BAR_ACTS, ACTS[where])}>
-				{acts.map((act, at) => {
+				{drawn.map(([act, at]) => {
 					const last = at === filled;
 					const loading = act.loading === true || (last && running);
 					const run = last ? runFilled : act.onAct;

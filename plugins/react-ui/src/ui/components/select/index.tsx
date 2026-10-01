@@ -22,7 +22,8 @@ import { BOX, BOX_DISABLED, BOX_HOVER } from "../input/index.tsx";
 // the ring on its open state.
 const TRIGGER_OPEN =
 	"data-popup-open:outline-2 data-popup-open:outline-offset-2 data-popup-open:outline-ring";
-const VALUE = "min-w-0 grow truncate";
+// The value starts at the start, as an input's does, not at the button's centre.
+const VALUE = "min-w-0 grow truncate text-start";
 const VALUE_DISABLED = "text-ink-disabled";
 // The list stands at the trigger's width, which Base UI sets on the
 // positioner as `--anchor-width`.

@@ -237,6 +237,7 @@ spacing:
   fields: "16px"
   sections: "32px"
   page: "24px"
+  list-x: "12px"
   control: "32px"
   control-compact: "28px"
   field: "38px"
@@ -1388,8 +1389,6 @@ components:
     rounded: "{rounded.full}"
   spinner-track:
     rounded: "{rounded.full}"
-  split-list:
-    padding: "{spacing.inside}"
   split-pane:
     padding: "{spacing.page}"
   status-label:
@@ -1567,8 +1566,9 @@ Spacing roles are multiples of a 4 px base, picked per density, named by what th
 | `fields` | 16px | 24px | between fields |
 | `sections` | 32px | 40px | between sections of a page |
 | `page` | 24px | 16px | the page inset |
+| `list-x` | 12px | 0px | a list's inline inset, so its rows' text meets the page title: the page inset less control-x |
 
-Sizes are heights and squares in the same namespace. Density is a theme, never a breakpoint, and never a knob: the web draws the desktop set where the primary pointer is fine and the touch set everywhere else, native draws the touch set, and a `data-density` attribute on the web root pins either. A molecule whose structure follows density (an action bar at natural width on the desktop, full width on touch) reads it through the web's `touch:` variant, the same rule (a `data-density="touch"` pin, or a pointer that is not fine and no `desktop` pin); native is the touch set, so its molecules draw the touch structure with no variant. Every touch target is at least 44px; on the desktop every interactive part keeps a 24px hit area whatever it draws.
+Sizes are heights and squares in the same namespace. Density is a theme and never a knob: the web draws the desktop set where the primary pointer is fine and the viewport is at least `tablet` wide (768px) and the touch set everywhere else, native draws the touch set, and a `data-density` attribute on the web root pins either. A molecule whose structure follows density (an action bar at natural width on the desktop, full width on touch) reads it through the web's `touch:` variant, the same rule (a `data-density="touch"` pin, or no `desktop` pin where the pointer is not fine or the viewport is narrower than `tablet`); native is the touch set, so its molecules draw the touch structure with no variant. Every touch target is at least 44px; on the desktop every interactive part keeps a 24px hit area whatever it draws.
 
 | Size | Desktop | Touch | Is |
 | --- | --- | --- | --- |
@@ -1599,7 +1599,7 @@ Sizes are heights and squares in the same namespace. Density is a theme, never a
 | `otp` | 44px | 48px | a one-time-code box's largest side; the box is square and shrinks with its row |
 | `text-area` | 60px | 72px | a text area's least value height: three body line boxes |
 
-Widths of lifted layers, never stretched to their container, and of a frame's fixed regions: `chip-label` 18ch, `popover` 240px, `toast` 360px, `dialog` 440px, `sheet` 640px, `sidebar` 240px, `list` 360px, `pane` 320px, `column` 300px, `auth` 400px. Breakpoints: `tablet` 768px, `desktop` 1024px, `wide` 1440px; they are the only responsive variants.
+Widths of lifted layers, never stretched to their container, and of a frame's fixed regions: `chip-label` 18ch, `popover` 240px, `toast` 360px, `dialog` 440px, `sheet` 640px, `sidebar` 240px, `list` 360px, `pane` 320px, `column` 300px, `auth` 400px. Breakpoints: `tablet` 768px, `desktop` 1024px, `wide` 1440px; they are the only responsive variants, of the viewport (`tablet:`) and, on the web, of a page's width (`page-tablet:`, `page-max-tablet:`), by which a Split decides its regions.
 
 ## Elevation & Depth
 
@@ -1641,7 +1641,7 @@ The front matter's components are the matrix cells: one entry per axis value of 
 | `Spinner` | atom | `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC` | rest |
 | `Avatar` | atom | `AVATAR`, `AVATAR_LABEL` | rest |
 | `Link` | atom | `LINK` | rest, hover, focus, active |
-| `Place` | layout | `PAGE_STRIP`, `PAGE_HEAD`, `PAGE_TOP_BAR`, `TEXT.role.title`, `PAGE_BODY`, `PAGE_BLEED`, `FLOATING_ACT`, `FLOATING_ACT_ROOM`, `BUTTON.act.primary`, `BUTTON.fit.bar`, `BUTTON.fit.body`, `BUTTON_LABEL.act.primary`, `ICON_BUTTON.fit.bar`, `ICON_BUTTON.fit.body` | rest |
+| `Place` | layout | `PAGE_STRIP`, `PAGE_HEAD`, `PAGE_TOP_BAR`, `TEXT.role.title`, `PAGE_BODY`, `FLOATING_ACT`, `FLOATING_ACT_ROOM`, `BUTTON.act.primary`, `BUTTON.fit.bar`, `BUTTON.fit.body`, `BUTTON_LABEL.act.primary`, `ICON_BUTTON.fit.bar`, `ICON_BUTTON.fit.body` | rest |
 | `Screen` | layout | `PAGE_STRIP`, `PAGE_HEAD`, `PAGE_TOP_BAR`, `TEXT.role.title`, `PAGE_BODY`, `TOASTS`, `ICON_BUTTON.fit.bar`, `ICON_BUTTON.fit.body` | rest |
 | `Split` | layout | `SPLIT_LIST`, `SPLIT_MAIN`, `SPLIT_PANE`, `ICON_BUTTON.fit.bar` | rest, empty |
 | `Section` | layout | `SECTION`, `SECTION_HEAD`, `SECTION_HEAD_ROW`, `SECTION_TITLE`, `SECTION_TOGGLE`, `SECTION_ACT`, `TEXT.role.heading`, `TEXT.role.meta`, `ICON.fit.body`, `COUNT`, `COUNT_LABEL`, `BUTTON.act.secondary`, `BUTTON.act.destructive`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.secondary`, `BUTTON_LABEL.act.destructive`, `ICON_BUTTON.fit.bar`, `SKELETON.kind.count`, `SKELETON.kind.line`, `SKELETON.kind.field`, `SKELETON_ROW.kind.field` | rest, hover, focus, active, disabled, loading |
@@ -1702,12 +1702,12 @@ A component with an approved artboard owns the tokens it may draw: a cell it dra
 | `Link` | none | `accent-ink`, `ring` | none | none | `target` | none |
 | `Place` | `title`, `body`, `meta` | `ink-body`, `ink-meta`, `edge`, `act-accent`, `on-act-accent`, `wash-hover`, `wash-press`, `danger` | `control` | `acts`, `page`, `sections`, `inside`, `control-x`, `rows` | `strip`, `control`, `control-compact`, `popover` | none |
 | `Screen` | `title` | `ink-body`, `ink-meta`, `edge` | `control` | `acts`, `page`, `sections` | `strip`, `control`, `control-compact` | none |
-| `Split` | none | `edge`, `ink-meta` | `control` | `inside`, `page`, `sections` | `list`, `pane`, `control-compact` | none |
+| `Split` | none | `edge`, `ink-meta` | `control` | `inside`, `list-x`, `page`, `sections` | `list`, `pane`, `control-compact` | none |
 | `Section` | `heading`, `meta`, `body`, `caption` | `ink-body`, `ink-meta`, `edge`, `fill-neutral`, `skeleton`, `wash-hover`, `wash-press`, `ring`, `danger` | `row`, `control`, `chip`, `full` | `pair`, `fields`, `inside`, `control-x` | `header`, `icon`, `chip`, `control-compact`, `skeleton`, `field` | none |
 | `Group` | none | `edge`, `surface`, `skeleton` | `card`, `chip`, `full` | `fields`, `card`, `pair` | `row-setting`, `skeleton`, `switch-w`, `switch-h` | none |
 | `List` | none | `skeleton` | `chip`, `full` | `rows`, `inside`, `control-x`, `pair` | `row-2`, `skeleton`, `avatar` | none |
 | `Form` | none | `edge` | none | `fields`, `sections` | none | none |
-| `Toolbar` | none | `edge` | none | `pair`, `inside`, `acts` | none | none |
+| `Toolbar` | none | `edge` | none | `pair`, `page`, `inside`, `acts` | none | none |
 | `ActionBar` | `meta`, `body` | `ink-meta`, `ink-body`, `edge`, `danger`, `act-accent`, `on-act-accent`, `act-danger`, `on-act-danger` | `control` | `pair`, `acts`, `inside`, `control-x` | `control`, `field` | none |
 | `Columns` | none | none | none | `fields`, `page` | `column` | none |
 | `Shell` | `body`, `caption` | `canvas`, `surface`, `edge`, `ink-body`, `ink-meta`, `fill-neutral`, `wash-hover`, `wash-press`, `wash-selected`, `wash-selected-hover`, `ring` | `row`, `control`, `full` | `inside`, `control-x`, `rows`, `pair`, `float`, `page` | `row`, `sidebar`, `target`, `chip`, `icon`, `icon-control`, `popover` | none |

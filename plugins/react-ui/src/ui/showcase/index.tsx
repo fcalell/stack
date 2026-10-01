@@ -22,11 +22,7 @@ export function Showcase() {
 		<main className="flex flex-col gap-sections p-page min-h-screen">
 			<header className="flex flex-row flex-wrap items-center gap-inside">
 				<h1 className={text({ role: "title" })}>Showcase</h1>
-				<ViewBar
-					view={view}
-					onChange={change}
-					to={{ path: "/foundations", label: "Foundations" }}
-				/>
+				<ViewBar view={view} onChange={change} />
 				<p className={text({ role: "meta" })}>{frames.length} frames</p>
 			</header>
 			{components.map((component) => (

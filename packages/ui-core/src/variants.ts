@@ -309,21 +309,20 @@ export const TOASTS = "p-page";
 // A page, a Place's or a Screen's. On the desktop its title and acts share
 // the strip under a hairline; on touch the head insets a top bar (the
 // switcher or the back act, then the acts) over the title. The body insets
-// its sections at the page inset; a bleeding body draws none on the desktop
-// and keeps the top inset under the touch title, which has no hairline.
+// its sections at the page inset; a bleeding body draws none, and whatever
+// stands first in it carries its own top inset.
 export const PAGE_STRIP = "gap-acts min-h-strip px-page border-b border-edge";
 export const PAGE_HEAD = "px-page";
 export const PAGE_TOP_BAR = "gap-acts min-h-strip";
 export const PAGE_BODY = "gap-sections p-page";
-export const PAGE_BLEED = "pt-page";
 // A touch Place's act, floating over the body's end on a layer at the page
 // inset, and the room the body keeps under its last row so the act never
 // covers it.
 export const FLOATING_ACT = "p-page";
 export const FLOATING_ACT_ROOM = "min-h-control";
 // A split: the list at its width inside a hairline, the pane at its width at
-// `wide`. On touch the list stands alone and draws neither.
-export const SPLIT_LIST = "w-list p-inside border-r border-edge";
+// `wide` of its page. Below `tablet` the list stands alone and draws neither.
+export const SPLIT_LIST = "w-list py-inside px-list-x border-r border-edge";
 export const SPLIT_PANE = "gap-sections w-pane p-page border-l border-edge";
 // A section's head (its rhythm is `SECTION`'s): the head row over a blocked
 // act's reason, the title line and the act a header tall. The fold toggle's
@@ -346,9 +345,10 @@ export const COLUMN = "w-column";
 // A sectioned form's foot: its action bar under a hairline across the form.
 export const FORM_FOOT = "border-t border-edge pt-fields";
 export const ACTION_BAR_ACTS = "gap-acts";
-// A toolbar's strip under a hairline: its controls and acts in wrapping rows
+// A toolbar's band under a bleeding page's strip, a hairline across the page
+// and its controls at the page inset: its controls and acts in wrapping rows
 // at the acts rhythm, the applied filters' chips at the pair rhythm.
-export const TOOLBAR = "gap-pair py-inside border-b border-edge";
+export const TOOLBAR = "gap-pair px-page py-inside border-b border-edge";
 export const TOOLBAR_ROW = "gap-acts";
 export const TOOLBAR_CHIPS = "gap-pair";
 // A skeleton row's stacked lines.

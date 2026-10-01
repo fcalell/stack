@@ -9,19 +9,23 @@ import {
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, use, useEffect, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
-import { LendAct, PageTitle } from "../../lib/frame.ts";
-import { useAtLeast } from "../../lib/media.ts";
+import { ActRoom, LendAct, PageTitle, RecordOpen } from "../../lib/frame.ts";
 import { PortalContainer } from "../../lib/portal.ts";
 import { useWords } from "../../lib/words.tsx";
 
-const SPLIT = "flex min-w-0 grow";
-const LIST = "flex flex-col shrink-0";
-const MAIN = "flex flex-col min-w-0 grow";
-// On touch the record sits under the bleeding Place's top inset, one inset
-// under the title, so it draws none of its own.
-const RECORD = "touch:pt-0";
+// The split fills its bleeding body; the list, the main and the pane each
+// scroll on their own. Its page is the size container its regions query.
+const SPLIT = "flex min-w-0 grow min-h-0";
+const LIST = "flex flex-col shrink-0 overflow-y-auto";
+// Below `tablet` the list stands alone: the page's width under its own top
+// inset, with no hairline.
+const LIST_ALONE =
+	"page-max-tablet:w-full page-max-tablet:pt-page page-max-tablet:pb-0 page-max-tablet:border-r-0";
+// Below `tablet` one region stands: the open record, else the list.
+const BEHIND = "page-max-tablet:hidden";
+const MAIN = "flex flex-col min-w-0 grow overflow-y-auto";
 const EMPTY = "flex grow min-w-0 items-center justify-center";
-const PANE = "flex flex-col shrink-0";
+const PANE = "flex flex-col shrink-0 overflow-y-auto page-max-wide:hidden";
 // The pane opened below `wide`: the pane's own strings over the column's
 // ground, standing at the viewport's end over the scrim.
 const BACKDROP = "fixed inset-0";
@@ -40,59 +44,57 @@ export interface SplitProps extends Closed {
 	empty?: ReactNode;
 }
 
-/** The list at its width inside a hairline beside the main; at `wide` the pane stands beside the main, below it the Split lends a Details act to its Place or Screen that opens the pane as a sheet. Below `tablet` one region stands at a time: the list, or the open record. It sits in a bleeding Place, whose strip heads it. */
+/** The list at its width inside a hairline beside the main, decided by its page's width: from `wide` the pane stands beside the main, below it the Split lends its Place or Screen a Details act that opens the pane as a sheet. Below `tablet` one region stands at a time: the list, or the open record, whose Place then leads its strip or top bar with a back act to the list. It sits in a bleeding Place, whose strip heads it. */
 export function Split({ list, main, pane, empty }: SplitProps) {
 	const words = useWords();
-	const tablet = useAtLeast("tablet");
-	const wide = useAtLeast("wide");
 	const title = use(PageTitle);
 	const lend = use(LendAct);
+	const recordOpen = use(RecordOpen);
 	const container = use(PortalContainer);
+	const room = use(ActRoom);
 	const [open, setOpen] = useState(false);
+	const [sheet] = useState(() => Dialog.createHandle<unknown>());
 	const opened = main !== undefined;
-	const sheet = !wide && opened && pane !== undefined;
+	const detailed = opened && pane !== undefined;
 	useEffect(() => {
-		if (!sheet || !lend) return;
-		lend({
-			icon: "PanelRight",
-			label: words.details,
-			onAct: () => setOpen(true),
-		});
+		if (!detailed || !lend) return;
+		lend(sheet);
 		return () => lend(undefined);
-	}, [sheet, lend, words.details]);
-	const record = (
-		<div className={cn(splitMain({ state: "rest" }), MAIN, RECORD)}>{main}</div>
-	);
-	const alone = opened ? (
-		record
-	) : (
-		<nav aria-labelledby={title} className={MAIN}>
-			{list}
-		</nav>
-	);
-	const beside = opened ? (
-		record
-	) : (
-		<div className={cn(splitMain({ state: "empty" }), EMPTY)}>{empty}</div>
-	);
+	}, [detailed, lend, sheet]);
+	useEffect(() => {
+		if (!opened || !recordOpen) return;
+		recordOpen(true);
+		return () => recordOpen(false);
+	}, [opened, recordOpen]);
 	return (
 		<div className={SPLIT}>
-			{tablet ? (
-				<>
-					<nav aria-labelledby={title} className={cn(SPLIT_LIST, LIST)}>
-						{list}
-					</nav>
-					{beside}
-					{wide && opened && pane !== undefined ? (
-						<aside aria-label={words.details} className={cn(SPLIT_PANE, PANE)}>
-							{pane}
-						</aside>
-					) : null}
-				</>
+			<nav
+				aria-labelledby={title}
+				className={cn(SPLIT_LIST, LIST, LIST_ALONE, opened && BEHIND)}
+			>
+				{list}
+				{room}
+			</nav>
+			{opened ? (
+				<div className={cn(splitMain({ state: "rest" }), MAIN)}>
+					{main}
+					{room}
+				</div>
 			) : (
-				alone
+				<div className={cn(splitMain({ state: "empty" }), EMPTY, BEHIND)}>
+					{empty}
+				</div>
 			)}
-			<Dialog.Root open={sheet && open} onOpenChange={setOpen}>
+			{detailed ? (
+				<aside aria-label={words.details} className={cn(SPLIT_PANE, PANE)}>
+					{pane}
+				</aside>
+			) : null}
+			<Dialog.Root
+				handle={sheet}
+				open={detailed && open}
+				onOpenChange={setOpen}
+			>
 				<Dialog.Portal container={container}>
 					<Dialog.Backdrop className={cn(SCRIM, BACKDROP)} />
 					<Dialog.Popup

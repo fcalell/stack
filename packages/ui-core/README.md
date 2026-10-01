@@ -80,12 +80,13 @@ knob: the verify script sweeps the accent at the default cast, the cast at the d
 the two together, all 360 hues each.
 
 Density is not a knob. The web draws the desktop set where the primary pointer is fine and the
-touch set everywhere else; a `data-density` attribute on the root pins either, which is how the
-showcase and the boards address a density. Density is a theme, never a breakpoint: no scale
-changes at a width. Native is touch-only. A molecule whose structure (not a token) follows density
-reads it through the web's `touch:` variant, which applies exactly where the touch set draws (a
-`data-density="touch"` pin, or no `desktop` pin and a pointer that is not fine); native has no
-variant, since it always draws the touch set and so the touch structure.
+viewport is at least `tablet` wide, and the touch set everywhere else, so a desktop window
+narrower than `tablet` draws the touch set; a `data-density` attribute on the root pins either,
+which is how the showcase and the boards address a density. Native is touch-only. A molecule whose
+structure (not a token) follows density reads it through the web's `touch:` variant, which
+applies exactly where the touch set draws (a `data-density="touch"` pin, or no `desktop` pin
+where the pointer is not fine or the viewport is narrower than `tablet`); native has no variant,
+since it always draws the touch set and so the touch structure.
 
 ## Words
 
@@ -200,16 +201,16 @@ carry none.
 ## Space, sizes, radii, elevation
 
 One base, 4 px; every spacing role is a multiple of it, picked per density, so a density moves
-the roles up and down one ladder. Eleven roles by use, desktop then touch: `inside` 6 / 8 (within
+the roles up and down one ladder. Twelve roles by use, desktop then touch: `inside` 6 / 8 (within
 a control: icon to label, dot to text), `control-x` 12 / 16 (a control's inline padding), `pair`
 6 / 8 (between paired elements: label over input, title over description), `acts` 8 / 8
 (between the acts of a bar: a page header, a toolbar, an action bar), `rows` 2 / 4 (between
 rows in a menu or a nav list; rows in a hairline list abut), `card` 16 / 16 (a card's
 inset), `tile` 12 / 16 (a compact card's inset: a board card), `float` 4 / 4 (a floating surface's inset: a select's list, a menu, a picker popover), `fields` 16 / 24 (between fields), `sections` 32 / 40 (between sections of a
-page), `page` 24 / 16 (the page inset). Touch is the same roles one rung looser except the
+page), `page` 24 / 16 (the page inset), `list-x` 12 / 0 (a list's inline inset, so its rows' text meets the page title: no ratio of its own, `page` less `control-x`, so moving either moves it). Touch is the same roles one rung looser except the
 float inset and the acts gap, which hold, and the page inset, which a phone narrows. Six are gap roles, what a container may put between its children:
-`inside`, `pair`, `acts`, `rows`, `fields`, `sections`; the other five (`control-x`, `card`, `tile`,
-`float`, `page`) are insets.
+`inside`, `pair`, `acts`, `rows`, `fields`, `sections`; the other six (`control-x`, `card`, `tile`,
+`float`, `page`, `list-x`) are insets.
 
 Twenty-five sizes per density sit in the same `--spacing-*` namespace, so a cell names them as it
 names a role (`min-h-control`, `size-avatar`), and nothing is spaced by them. Desktop then touch:
@@ -251,8 +252,8 @@ so a shadow follows the mode; the values are sRGB because React Native's `boxSha
 oklch.
 
 Density is emitted as sets. `themeTokens` seeds the touch set on every platform;
-`densityTokens` is either set, which the web renders as the desktop set under `(pointer: fine)`
-and as either set under a `data-density` attribute on the root, so a screenshot pins a density;
+`densityTokens` is either set, which the web renders as the desktop set under a fine pointer at
+`tablet` width and wider, and as either set under a `data-density` attribute on the root, so a screenshot pins a density;
 the web's `touch:` variant is emitted over the same condition. Native is touch-only.
 
 ## Motion

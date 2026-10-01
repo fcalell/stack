@@ -318,7 +318,7 @@ Board: `30-frames-desktop.dc.html` and `30-frames-touch.dc.html`.
 
 ### tab · idle
 
-- touch: `flex flex-col items-center justify-center gap-rows min-h-row px-pair rounded-row text-ink-meta min-w-0 grow basis-0`
+- touch: `flex flex-col items-center justify-center gap-rows min-h-row rounded-row text-ink-meta min-w-0 grow basis-0`
   - cell: `PLACE_TAB {state: idle}`; overlay: `flex flex-col items-center justify-center min-w-0 grow basis-0`
   - under: Shell holding a Place under tablet · the banner slot, the top bar (the switcher, one action, more; touch refreshes by the pull, so no Refresh act), the title on its own line, the one act floating over the body's end, the tab bar: four places and More, since eight places exceed five
 
@@ -330,7 +330,7 @@ Board: `30-frames-desktop.dc.html` and `30-frames-touch.dc.html`.
 
 ### tab · selected
 
-- touch: `flex flex-col items-center justify-center gap-rows min-h-row px-pair rounded-row text-ink-body min-w-0 grow basis-0`
+- touch: `flex flex-col items-center justify-center gap-rows min-h-row rounded-row text-ink-body min-w-0 grow basis-0`
   - cell: `PLACE_TAB {state: selected}`; overlay: `flex flex-col items-center justify-center min-w-0 grow basis-0`
   - under: Shell holding a Place under tablet · the banner slot, the top bar (the switcher, one action, more; touch refreshes by the pull, so no Refresh act), the title on its own line, the one act floating over the body's end, the tab bar: four places and More, since eight places exceed five
 
@@ -342,7 +342,7 @@ Board: `30-frames-desktop.dc.html` and `30-frames-touch.dc.html`.
 
 ### tab · idle focus
 
-- touch: `flex flex-col items-center justify-center gap-rows min-h-row px-pair rounded-row text-ink-meta min-w-0 grow basis-0 outline-2 -outline-offset-2 outline-ring`
+- touch: `flex flex-col items-center justify-center gap-rows min-h-row rounded-row text-ink-meta min-w-0 grow basis-0 outline-2 -outline-offset-2 outline-ring`
   - cell: `PLACE_TAB {state: idle}`; overlay: `flex flex-col items-center justify-center min-w-0 grow basis-0 outline-2 -outline-offset-2 outline-ring`
   - under: focus · the overlay ring, inset (a keyboard on a tablet)
 
@@ -439,9 +439,9 @@ Board: `30-frames-desktop.dc.html` and `30-frames-touch.dc.html`.
 - touch: `flex flex-col gap-sections p-page`
   - cell: `PAGE_BODY`; overlay: `flex flex-col`
   - under: Shell holding a Place under tablet · the banner slot, the top bar (the switcher, one action, more; touch refreshes by the pull, so no Refresh act), the title on its own line, the one act floating over the body's end, the tab bar: four places and More, since eight places exceed five
-- touch: `flex flex-col pt-page`
-  - cell: `PAGE_BLEED`; overlay: `flex flex-col`
-  - under: Place with bleed · the body edge to edge under the title; the child (a Code log tail, context) scrolls sideways itself
+- touch: `flex flex-col`
+  - cell: none; overlay: `flex flex-col`
+  - under: Place with bleed · the body edge to edge under the title, no inset of its own: whatever stands first in it carries its own top inset (the board's `pt-page` moved to the list alone; the record's cell already insets it)
 
 ### top bar · rest
 
@@ -564,11 +564,11 @@ Board: `31-structure-desktop.dc.html` and `31-structure-touch.dc.html`.
 
 ### list · rest
 
-- desktop: `flex flex-col shrink-0 w-list p-inside border-r border-edge`
-  - cell: `SPLIT_LIST`; overlay: `flex flex-col shrink-0`
+- desktop: `flex flex-col shrink-0 w-list py-inside px-list-x border-r border-edge`
+  - cell: `SPLIT_LIST`; overlay: `flex flex-col shrink-0`, below `tablet` of its page `page-max-tablet:w-full page-max-tablet:pt-page page-max-tablet:pb-0 page-max-tablet:border-r-0` (the list alone, still `px-list-x`, so a row's text meets the page title), `page-max-tablet:hidden` with a record open
   - under: Split · rest below wide, at the Shell's content width (1280 − 240 sidebar = 1040): list and main, the first record selected; the pane opens as a sheet below wide, from the Details act in the Place's strip (sidebar and strip are context)
 - touch: `flex flex-col`
-  - cell: none; overlay: `flex flex-col`
+  - cell: none; overlay: `flex flex-col`; native `pt-page px-list-x` (the list alone; `list-x` is 0 on touch, so a row's own `control-x` meets the title)
   - under: Split · rest and empty below tablet: one region at a time, the list is the screen, so the empty main is never drawn; a row opens the record as a pushed Screen
 
 ### list's List · rest
@@ -580,14 +580,14 @@ Board: `31-structure-desktop.dc.html` and `31-structure-touch.dc.html`.
 ### main · rest
 
 - desktop: `flex flex-col gap-sections min-w-0 grow p-page`
-  - cell: `SPLIT_MAIN {state: rest}`; overlay: `flex flex-col min-w-0 grow touch:pt-0` (the touch class inert here)
+  - cell: `SPLIT_MAIN {state: rest}`; overlay: `flex flex-col min-w-0 grow`
   - under: Split · rest below wide, at the Shell's content width (1280 − 240 sidebar = 1040): list and main, the first record selected; the pane opens as a sheet below wide, from the Details act in the Place's strip (sidebar and strip are context)
 
 ### main · rest, touch
 
-- touch: `flex flex-col gap-sections min-w-0 grow px-page pb-page`
-  - cell: `SPLIT_MAIN {state: rest}`; overlay: `flex flex-col min-w-0 grow touch:pt-0`
-  - under: Split · a record open on touch, under the bleeding Place's top inset (`PAGE_BLEED`), so the record sits one page inset under the title: the density flip is the overlay's `touch:pt-0`, never a cell
+- touch: `flex flex-col gap-sections min-w-0 grow p-page`
+  - cell: `SPLIT_MAIN {state: rest}`; overlay: `flex flex-col min-w-0 grow`
+  - under: Split · a record open below `tablet`, standing first in the bleeding body, so its own cell's inset puts it one page inset under the title or under a Toolbar's hairline
 
 ### main · empty
 
@@ -926,7 +926,7 @@ Board: `32-forms-bars-desktop.dc.html` and `32-forms-bars-touch.dc.html`.
 
 ### toolbar · rest
 
-- both densities: `flex flex-col gap-pair py-inside border-b border-edge`
+- both densities: `flex flex-col gap-pair px-page py-inside border-b border-edge`
   - cell: `TOOLBAR`; overlay: `flex flex-col`
   - under: rest · one row: the search grows (Input kind=search, control-compact), Filter and Sort at fit=bar with their glyphs, Display an IconButton; no filled act: the create act (New project) is the Place's, in the header (board 30); gap-acts (8) between the search and the acts and between the acts; py-inside and a hairline under the strip; the list under it is context
 
@@ -972,11 +972,13 @@ Board: `32-forms-bars-desktop.dc.html` and `32-forms-bars-touch.dc.html`.
 
 ### acts · rest
 
-- both densities: `flex items-center justify-end gap-acts touch:flex-col-reverse touch:items-stretch`
-  - cell: `ACTION_BAR_ACTS`; overlay: `flex items-center justify-end touch:flex-col-reverse touch:items-stretch`
+On touch the acts are in the tree filled first (the ActionBar orders them per density), so Tab follows the drawn order; no reverse class.
+
+- both densities: `flex items-center justify-end gap-acts touch:flex-col touch:items-stretch`
+  - cell: `ACTION_BAR_ACTS`; overlay: `flex items-center justify-end touch:flex-col touch:items-stretch`
   - under: rest · a settings form: sections at gap-sections, fields at gap-fields; its ActionBar closes the whole form under a hairline across it (border-t border-edge pt-fields): Discard, then the one filled act
-- both densities: `grid grid-flow-col auto-cols-fr gap-acts touch:flex touch:flex-col-reverse`
-  - cell: `ACTION_BAR_ACTS`; overlay: `grid grid-flow-col auto-cols-fr touch:flex touch:flex-col-reverse`
+- both densities: `grid grid-flow-col auto-cols-fr gap-acts touch:flex touch:flex-col`
+  - cell: `ACTION_BAR_ACTS`; overlay: `grid grid-flow-col auto-cols-fr touch:flex touch:flex-col`
   - under: rest · a login form: one field, then the ActionBar's full form: one act at the field's height across the column
 
 ### act · rest fit=body act=secondary

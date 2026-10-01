@@ -74,7 +74,7 @@ export interface SectionProps extends Closed {
 	onToggle?: (open: boolean) => void;
 	/** The section's one act, at the head's end: a labelled act or an icon act. */
 	act?: Act | IconAct;
-	/** The count and the body wait: a Group or a List in the body draws its own skeleton rows, and skeleton fields stand in for any other body. */
+	/** The count (when there is one) and the body wait: a Group or a List in the body draws its own skeleton rows, and skeleton fields stand in for any other body. */
 	loading?: boolean;
 	/** The body: a Group, a List, or the rows a Form lays out. */
 	children?: ReactNode;
@@ -94,7 +94,8 @@ export function Section({
 	const level = use(HeadingContext);
 	// Inside a Form the section takes the fields rhythm.
 	const within = use(FormContext) ? "form" : "page";
-	const rows = Children.toArray(children).some(
+	const nodes = Children.toArray(children);
+	const rows = nodes.some(
 		(node) =>
 			isValidElement(node) && (node.type === Group || node.type === List),
 	);
@@ -117,16 +118,17 @@ export function Section({
 				: { id: reasonId, press: () => setPressed(true) },
 		[blocked, reasonId],
 	);
-	// The count waits with the body.
+	// A count waits with the body.
 	let tally: ReactNode = null;
-	if (loading)
-		tally = (
+	if (count !== undefined)
+		tally = loading ? (
 			<span
 				aria-hidden
 				className={cn(skeleton({ kind: "count" }), COUNT_WAIT)}
 			/>
+		) : (
+			<Count value={count} />
 		);
-	else if (count !== undefined) tally = <Count value={count} />;
 	const name = (
 		<>
 			<span id={titleId} className={cn(text({ role: "heading" }), TITLE)}>
@@ -203,29 +205,35 @@ export function Section({
 					</p>
 				)}
 			</div>
-			{/* Kept mounted while folded and named on the toggle, so its `aria-controls` resolves in either state (Base UI names it only while open). */}
-			<Collapsible.Panel
-				id={bodyId}
-				keepMounted
-				className={cn(section({ in: within }), BODY)}
-			>
-				<HeadingContext value={DEEPER[level]}>
-					{loading && !rows ? (
-						FIELDS.map((key) => (
-							<div
-								key={key}
-								aria-hidden
-								className={cn(skeletonRow({ kind: "field" }), FIELD_WAIT)}
-							>
-								<span className={cn(skeleton({ kind: "line" }), LABEL_WAIT)} />
-								<span className={skeleton({ kind: "field" })} />
-							</div>
-						))
-					) : (
-						<LoadingContext value={loading === true}>{children}</LoadingContext>
-					)}
-				</HeadingContext>
-			</Collapsible.Panel>
+			{/* Kept mounted while folded and named on the toggle, so its `aria-controls` resolves in either state (Base UI names it only while open). A section without children draws no body. */}
+			{nodes.length === 0 ? null : (
+				<Collapsible.Panel
+					id={bodyId}
+					keepMounted
+					className={cn(section({ in: within }), BODY)}
+				>
+					<HeadingContext value={DEEPER[level]}>
+						{loading && !rows ? (
+							FIELDS.map((key) => (
+								<div
+									key={key}
+									aria-hidden
+									className={cn(skeletonRow({ kind: "field" }), FIELD_WAIT)}
+								>
+									<span
+										className={cn(skeleton({ kind: "line" }), LABEL_WAIT)}
+									/>
+									<span className={skeleton({ kind: "field" })} />
+								</div>
+							))
+						) : (
+							<LoadingContext value={loading === true}>
+								{children}
+							</LoadingContext>
+						)}
+					</HeadingContext>
+				</Collapsible.Panel>
+			)}
 		</Collapsible.Root>
 	);
 }

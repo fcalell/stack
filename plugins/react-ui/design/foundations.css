@@ -432,6 +432,8 @@
  *   fields     between fields, and between a field row and the next
  *   sections   between sections of a page
  *   page       the page inset, the content column's padding
+ *   list-x     a list's inline inset, so its rows' text (inset by control-x) meets the page title:
+ *              the page inset less control-x, derived at the root so either density's values move it
  */
 :root,
 :root[data-density="desktop"] {
@@ -446,6 +448,7 @@
 	--space-fields: var(--space-4);
 	--space-sections: var(--space-8);
 	--space-page: var(--space-6);
+	--space-list-x: calc(var(--space-page) - var(--space-control-x));
 }
 
 /* touch: the same roles one rung looser, except the float inset and the acts gap, which hold,

@@ -240,8 +240,13 @@ function sheetValue(selector: string, property: string): string {
 		value !== undefined,
 		`the sheet has no ${property} under "${selector}"`,
 	);
-	return value.replace(/var\((--[\w-]+)\)/g, (_, name: string) =>
+	const followed = value.replace(/var\((--[\w-]+)\)/g, (_, name: string) =>
 		sheetValue(selector, name),
+	);
+	// A derived role (`list-x`) is one px difference.
+	return followed.replace(
+		/^calc\(([\d.]+)px - ([\d.]+)px\)$/,
+		(_, a: string, b: string) => `${Number(a) - Number(b)}px`,
 	);
 }
 
@@ -688,7 +693,7 @@ check("c03", "tokens.ts declares the contract", () => {
 	requireEqual(COLOR_NAMES.length, 86, "color count");
 	requireEqual(new Set(COLOR_NAMES).size, COLOR_NAMES.length, "unique colors");
 	requireEqual(TYPE_ROLES.length, 7, "type role count");
-	requireEqual(SPACING_ROLES.length, 11, "spacing role count");
+	requireEqual(SPACING_ROLES.length, 12, "spacing role count");
 	requireEqual(GAP_ROLES.length, 6, "gap role count");
 	requireEqual(SIZES.length, 26, "size count");
 	requireEqual(RADIUS_ROLES.length, 8, "radius role count");
@@ -717,7 +722,7 @@ check("c03", "tokens.ts declares the contract", () => {
 	for (const word of ["marine", "navy", "brand", "tint", "label", "floor"]) {
 		assert(!new RegExp(`"${word}"`).test(source), `tokens.ts names "${word}"`);
 	}
-	return `${COLOR_NAMES.length} colors, 7 roles, 11 spacing roles (6 gaps), 25 sizes, 8 radii, 2 shadows, 11 widths, 3 breakpoints, 23 words`;
+	return `${COLOR_NAMES.length} colors, 7 roles, 12 spacing roles (6 gaps), 25 sizes, 8 radii, 2 shadows, 11 widths, 3 breakpoints, 23 words`;
 });
 
 check("c05", "default knobs reproduce the approved sheet", () => {
@@ -952,10 +957,15 @@ check("c06", "every scale is its ratio of the base", () => {
 				`${role} modifier shape`,
 			);
 		}
+		const ratio: Record<(typeof SPACING_ROLES)[number], number> = {
+			...SPACING_RATIO[density],
+			"list-x":
+				SPACING_RATIO[density].page - SPACING_RATIO[density]["control-x"],
+		};
 		for (const role of SPACING_ROLES) {
 			requireEqual(
 				tokens[`--spacing-${role}`],
-				`${SPACE_BASE * SPACING_RATIO[density][role]}px`,
+				`${SPACE_BASE * ratio[role]}px`,
 				`${density} ${role}`,
 			);
 		}
@@ -1037,7 +1047,7 @@ check("c06", "every scale is its ratio of the base", () => {
 			rung,
 		);
 	}
-	return "7 roles × 2 densities with even line boxes, 11 spacing roles, 17 sizes, 4 trackings, 8 radii, 11 widths, 3 breakpoints, 2 families with their fallback faces, 4 durations";
+	return "7 roles × 2 densities with even line boxes, 12 spacing roles, 17 sizes, 4 trackings, 8 radii, 11 widths, 3 breakpoints, 2 families with their fallback faces, 4 durations";
 });
 
 check(

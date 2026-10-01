@@ -2,7 +2,6 @@ import type { Act, IconAct, MenuItem } from "@fcalell/ui-core/descriptors";
 import {
 	FLOATING_ACT,
 	FLOATING_ACT_ROOM,
-	PAGE_BLEED,
 	PAGE_BODY,
 	PAGE_HEAD,
 	PAGE_TOP_BAR,
@@ -12,9 +11,17 @@ import { type ReactNode, useContext, useState } from "react";
 import { Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import { LendAct, PageTitle, ShellSwitcher } from "../../lib/frame";
+import {
+	ActRoom,
+	LendAct,
+	PageTitle,
+	PlaceRoute,
+	RecordAlone,
+	ShellSwitcher,
+} from "../../lib/frame";
 import { Scroll } from "../../lib/hosts";
 import { MenuCircle } from "../../lib/more";
+import { navigate } from "../../lib/navigate";
 import { useWords } from "../../lib/words";
 import { Button } from "../button";
 import { IconButton } from "../icon-button";
@@ -24,7 +31,7 @@ const TOP_BAR = "flex-row items-center";
 const SPACER = "flex-1";
 const TITLE = "min-w-0 grow";
 // The body scrolls under the fixed head; a bleeding body leaves scrolling
-// to its child.
+// to its child, which keeps the act's room.
 const BODY = "flex-1";
 const BODY_WRAP = "relative flex-1";
 const ACT_LAYER = "absolute inset-0 items-center justify-end";
@@ -40,10 +47,11 @@ export interface PlaceProps extends Closed {
 
 // A page in the shell: the top bar (the shell's switcher, the actions, more)
 // over the title, the body under it, and the one act floating over the
-// body's end, the body keeping room under its last row so the act never
-// covers it. With `bleed` the body is the whole box under the title, with no
+// body's end, the body keeping room under its last row (a bleeding body's scrolling child
+// keeps it) so the act never covers it. With `bleed` the body is the whole box under the title, with no
 // side inset and no scroll, for a child that scrolls itself. A Split inside
-// lends it its Details act.
+// lends it its Details act, and a record the Split shows alone puts a back
+// act to the place's route in the switcher's stead.
 export function Place({
 	title,
 	actions,
@@ -54,66 +62,90 @@ export function Place({
 }: PlaceProps) {
 	const words = useWords();
 	const switcher = useContext(ShellSwitcher);
+	const route = useContext(PlaceRoute);
 	const [lent, lend] = useState<IconAct>();
+	const [alone, standAlone] = useState(false);
+	// A record standing alone returns to the list, the place's own route.
+	const lead =
+		alone && route !== undefined ? (
+			<IconButton
+				icon="ChevronLeft"
+				fit="body"
+				label={words.back}
+				onAct={() => navigate(route)}
+			/>
+		) : (
+			switcher
+		);
 	const room = act ? <View className={FLOATING_ACT_ROOM} /> : null;
+	// A region scrolling inside a bleeding body keeps no page inset, so it
+	// keeps the act's whole footprint.
+	const footprint = act ? (
+		<View className={FLOATING_ACT}>
+			<View className={FLOATING_ACT_ROOM} />
+		</View>
+	) : null;
 	return (
 		<LendAct.Provider value={lend}>
-			<PageTitle.Provider value={title}>
-				<View className={PLACE}>
-					<View className={PAGE_HEAD}>
-						<View className={cn(PAGE_TOP_BAR, TOP_BAR)}>
-							{switcher}
-							<View className={SPACER} />
-							{[...(actions ?? []), ...(lent ? [lent] : [])].map((action) => (
-								<IconButton key={action.label} {...action} fit="body" />
-							))}
-							{more?.length ? (
-								<MenuCircle
-									label={words.more}
-									title={title}
-									items={more}
-									fit="body"
-								/>
+			<RecordAlone.Provider value={standAlone}>
+				<PageTitle.Provider value={title}>
+					<View className={PLACE}>
+						<View className={PAGE_HEAD}>
+							<View className={cn(PAGE_TOP_BAR, TOP_BAR)}>
+								{lead}
+								<View className={SPACER} />
+								{[...(actions ?? []), ...(lent ? [lent] : [])].map((action) => (
+									<IconButton key={action.label} {...action} fit="body" />
+								))}
+								{more?.length ? (
+									<MenuCircle
+										label={words.more}
+										title={title}
+										items={more}
+										fit="body"
+									/>
+								) : null}
+							</View>
+							<RNText
+								accessibilityRole="header"
+								className={cn(text({ role: "title" }), TITLE)}
+							>
+								{title}
+							</RNText>
+						</View>
+						<View className={BODY_WRAP}>
+							{bleed ? (
+								<View className={BODY}>
+									<ActRoom.Provider value={footprint}>
+										{children}
+									</ActRoom.Provider>
+								</View>
+							) : (
+								<Scroll className={BODY} contentContainerClassName={PAGE_BODY}>
+									{children}
+									{room}
+								</Scroll>
+							)}
+							{/* The page's act is its create act by rule, so it carries the plus. */}
+							{act ? (
+								<View
+									pointerEvents="box-none"
+									className={cn(FLOATING_ACT, ACT_LAYER)}
+								>
+									<Button
+										fit="body"
+										icon="Plus"
+										label={act.label}
+										onAct={act.onAct}
+										loading={act.loading}
+										blocked={act.blocked}
+									/>
+								</View>
 							) : null}
 						</View>
-						<RNText
-							accessibilityRole="header"
-							className={cn(text({ role: "title" }), TITLE)}
-						>
-							{title}
-						</RNText>
 					</View>
-					<View className={BODY_WRAP}>
-						{bleed ? (
-							<View className={cn(PAGE_BLEED, BODY)}>
-								{children}
-								{room}
-							</View>
-						) : (
-							<Scroll className={BODY} contentContainerClassName={PAGE_BODY}>
-								{children}
-								{room}
-							</Scroll>
-						)}
-						{/* The page's act is its create act by rule, so it carries the plus. */}
-						{act ? (
-							<View
-								pointerEvents="box-none"
-								className={cn(FLOATING_ACT, ACT_LAYER)}
-							>
-								<Button
-									fit="body"
-									icon="Plus"
-									label={act.label}
-									onAct={act.onAct}
-									loading={act.loading}
-									blocked={act.blocked}
-								/>
-							</View>
-						) : null}
-					</View>
-				</View>
-			</PageTitle.Provider>
+				</PageTitle.Provider>
+			</RecordAlone.Provider>
 		</LendAct.Provider>
 	);
 }

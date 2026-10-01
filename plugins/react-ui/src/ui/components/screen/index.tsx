@@ -1,3 +1,4 @@
+import type { Dialog } from "@base-ui/react/dialog";
 import { cn } from "@fcalell/ui-core/cn";
 import type { IconAct, MenuItem } from "@fcalell/ui-core/descriptors";
 import {
@@ -15,14 +16,14 @@ import { useTouch } from "../../lib/media.ts";
 import { navigate } from "../../lib/navigate.ts";
 import { useWords } from "../../lib/words.tsx";
 import { IconButton } from "../icon-button/index.tsx";
-import { More } from "../place/index.tsx";
+import { backGlyph, Details, More } from "../place/index.tsx";
 
-const SCREEN = "flex flex-col grow min-h-0";
-const STRIP = "flex items-center";
+// A screen is the size container a Split inside decides its regions by.
+const SCREEN = "@container/page flex flex-col grow min-h-0";
 const HEAD = "flex flex-col";
-const TOP_BAR = "relative flex items-center";
+const ROW = "flex items-center";
 const SPACER = "grow";
-const TITLE = "min-w-0 grow";
+const TITLE = "min-w-0 grow truncate";
 // The body scrolls under the fixed head.
 const BODY = "flex flex-col overflow-y-auto";
 
@@ -40,12 +41,12 @@ export interface ScreenProps extends Closed {
 	children?: ReactNode;
 }
 
-/** A page pushed over a place: the back act first and no filled act. On the desktop it stands in the shell's column under one strip; on touch the top bar (back, actions, more) stands over the title and the screen covers the tab bar. A Split inside lends it its Details act. */
+/** A page pushed over a place: the back act first and no filled act. On the desktop it stands in the shell's column under one strip; on touch the top bar (back, actions, more) stands over the title and the screen covers the tab bar. A Split inside decides its regions by the screen's width and lends it a Details act, drawn below `wide` of it. */
 export function Screen({ title, back, actions, more, children }: ScreenProps) {
 	const touch = useTouch();
 	const words = useWords();
 	const cover = use(CoverTabs);
-	const [lent, lend] = useState<IconAct>();
+	const [sheet, lend] = useState<Dialog.Handle<unknown>>();
 	const titleId = useId();
 	useEffect(() => {
 		if (!cover) return;
@@ -56,44 +57,45 @@ export function Screen({ title, back, actions, more, children }: ScreenProps) {
 	const backAct =
 		back === undefined ? null : (
 			<IconButton
-				icon={touch ? "ChevronLeft" : "ArrowLeft"}
+				icon={backGlyph(touch)}
 				fit={fit}
 				label={words.back}
 				onAct={() => navigate(back)}
 			/>
 		);
-	const acts = [...(actions ?? []), ...(lent ? [lent] : [])].map((action) => (
+	const acts = (actions ?? []).map((action) => (
 		<IconButton key={action.label} {...action} fit={fit} />
 	));
+	const details = sheet ? <Details sheet={sheet} fit={fit} /> : null;
 	const overflow = more?.length ? <More items={more} fit={fit} /> : null;
 	const heading = (
 		<h1 id={titleId} className={cn(text({ role: "title" }), TITLE)}>
 			{title}
 		</h1>
 	);
+	// The head is one tree on both densities, so crossing the density line
+	// keeps its acts, their focus and an open sheet's trigger. Only the
+	// title's place and the spacer differ, each a slot that holds `null` where
+	// it does not draw, so the acts after it never shift.
+	const head = (
+		<header className={cn(touch && PAGE_HEAD, HEAD)}>
+			<div className={cn(touch ? PAGE_TOP_BAR : PAGE_STRIP, ROW)}>
+				{backAct}
+				{touch ? null : heading}
+				{touch ? <span className={SPACER} /> : null}
+				{acts}
+				{details}
+				{overflow}
+			</div>
+			{touch ? heading : null}
+		</header>
+	);
 	return (
 		<LendAct value={lend}>
 			<PageTitle value={titleId}>
 				<HeadingContext value={2}>
 					<div className={SCREEN}>
-						{touch ? (
-							<header className={cn(PAGE_HEAD, HEAD)}>
-								<div className={cn(PAGE_TOP_BAR, TOP_BAR)}>
-									{backAct}
-									<span className={SPACER} />
-									{acts}
-									{overflow}
-								</div>
-								{heading}
-							</header>
-						) : (
-							<header className={cn(PAGE_STRIP, STRIP)}>
-								{backAct}
-								{heading}
-								{acts}
-								{overflow}
-							</header>
-						)}
+						{head}
 						<div className={cn(PAGE_BODY, BODY)}>{children}</div>
 					</div>
 				</HeadingContext>

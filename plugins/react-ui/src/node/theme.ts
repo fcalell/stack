@@ -9,6 +9,8 @@ import {
 	themeTokens,
 } from "@fcalell/ui-core/emit";
 import {
+	BREAKPOINT_PX,
+	BREAKPOINTS,
 	COLOR_NAMES,
 	DURATIONS,
 	EASINGS,
@@ -22,6 +24,7 @@ import {
 	TYPE_ROLES,
 	WIDTHS,
 } from "@fcalell/ui-core/tokens";
+import { DESKTOP_MEDIA, TOUCH_MEDIA } from "../density.ts";
 import type { CssBlock, CssLayer, CssSourceInline } from "../types.ts";
 import { renderMediaRule, renderRule } from "./codegen.ts";
 
@@ -83,22 +86,21 @@ export function rootLayer(resolved: ResolvedTheme): CssLayer {
 	return { name: "base", content: renderRule(":root", rootTokens(resolved)) };
 }
 
-// The desktop set draws where the primary pointer is fine: it overrides the
-// seeded touch set in `@layer base`, the same cascade the dark layer rides,
-// so every cell that names a size or a type role (`min-h-control`,
-// `text-body`) follows with no class of its own. A touch screen, a phone and
-// a tablet keep the touch set. `data-density` on the root pins either set on
-// any device, which is how the showcase and a board address a density.
-export const FINE_POINTER = "(pointer: fine)";
+// The desktop set draws under the density rule's desktop query: it overrides
+// the seeded touch set in `@layer base`, the same cascade the dark layer
+// rides, so every cell that names a size or a type role (`min-h-control`,
+// `text-body`) follows with no class of its own. `data-density` on the root
+// pins either set on any device, which is how the showcase and a board
+// address a density.
 const PINNED_DESKTOP = ':root[data-density="desktop"]';
 const PINNED_TOUCH = ':root[data-density="touch"]';
 
 export function densityLayer(resolved: ResolvedTheme): CssLayer {
 	const desktop = densityTokens(resolved, "desktop");
 	const rules = [
-		renderMediaRule(FINE_POINTER, renderRule(":root", desktop)),
+		renderMediaRule(DESKTOP_MEDIA, renderRule(":root", desktop)),
 		renderMediaRule(
-			FINE_POINTER,
+			DESKTOP_MEDIA,
 			renderRule(PINNED_TOUCH, densityTokens(resolved, "touch")),
 		),
 		renderRule(PINNED_DESKTOP, desktop),
@@ -106,23 +108,43 @@ export function densityLayer(resolved: ResolvedTheme): CssLayer {
 	return { name: "base", content: rules.join("\n") };
 }
 
+const slot = (selector: string) => `${selector} & {\n\t@slot;\n}`;
+
 // `touch:` draws where the density layer draws the touch set: under the touch
-// pin, or with no desktop pin where the pointer is not fine. It is how a
+// pin, or with no desktop pin outside the desktop query. It is how a
 // molecule's structure (not a token) follows density; a size or a type role
 // follows through its variable and never needs it.
 export function touchVariant(): CssBlock {
-	const slot = (selector: string) => `${selector} & {\n\t@slot;\n}`;
 	return {
 		kind: "variant",
 		name: "touch",
 		content: [
 			slot(PINNED_TOUCH),
-			renderMediaRule(
-				`not ${FINE_POINTER}`,
-				slot(':root:not([data-density="desktop"])'),
-			),
+			renderMediaRule(TOUCH_MEDIA, slot(':root:not([data-density="desktop"])')),
 		].join("\n"),
 	};
+}
+
+// A page (a Place or a Screen) is the `page` size container, and
+// `page-<breakpoint>:` / `page-max-<breakpoint>:` draw from or below a
+// breakpoint's width of it, so a molecule inside decides its regions by the
+// page's width rather than the viewport's.
+export function pageVariants(): CssBlock[] {
+	return BREAKPOINTS.flatMap((bp) => {
+		const px = `${BREAKPOINT_PX[bp]}px`;
+		return [
+			{
+				kind: "variant",
+				name: `page-${bp}`,
+				content: `@container page (width >= ${px}) {\n\t@slot;\n}`,
+			},
+			{
+				kind: "variant",
+				name: `page-max-${bp}`,
+				content: `@container page (width < ${px}) {\n\t@slot;\n}`,
+			},
+		];
+	});
 }
 
 // `pb-safe` keeps a bottom bar clear of the home indicator under `viewport-fit=cover`.
