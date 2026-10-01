@@ -1,5 +1,10 @@
 import { cn } from "@fcalell/ui-core/cn";
-import { SEGMENTED_CONTROL, segment, text } from "@fcalell/ui-core/variants";
+import {
+	SEGMENTED_CONTROL,
+	segment,
+	segmentLabel,
+	text,
+} from "@fcalell/ui-core/variants";
 import { useLayoutEffect, useState } from "react";
 import {
 	DENSITIES,
@@ -113,20 +118,23 @@ function Toggle<T extends string>(props: {
 			aria-label={props.label}
 			className={cn("flex flex-row", SEGMENTED_CONTROL)}
 		>
-			{props.options.map((option) => (
-				<button
-					key={option}
-					type="button"
-					aria-pressed={option === props.value}
-					className={cn(
-						"flex items-center justify-center",
-						segment({ state: option === props.value ? "selected" : "idle" }),
-					)}
-					onClick={() => props.onChange(option)}
-				>
-					{option}
-				</button>
-			))}
+			{props.options.map((option) => {
+				const state = option === props.value ? "selected" : "idle";
+				return (
+					<button
+						key={option}
+						type="button"
+						aria-pressed={state === "selected"}
+						className={cn(
+							"flex items-center justify-center",
+							segment({ state }),
+						)}
+						onClick={() => props.onChange(option)}
+					>
+						<span className={segmentLabel({ state })}>{option}</span>
+					</button>
+				);
+			})}
 		</fieldset>
 	);
 }

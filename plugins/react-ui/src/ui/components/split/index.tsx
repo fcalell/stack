@@ -23,6 +23,9 @@ const LIST_ALONE =
 	"page-max-tablet:w-full page-max-tablet:pt-page page-max-tablet:pb-0 page-max-tablet:border-r-0";
 // Below `tablet` one region stands: the open record, else the list.
 const BEHIND = "page-max-tablet:hidden";
+// The floating act's room under the record, kept only where the record
+// stands alone; beside the list the act floats over the list alone.
+const ALONE = "page-tablet:hidden";
 const MAIN = "flex flex-col min-w-0 grow overflow-y-auto";
 const EMPTY = "flex grow min-w-0 items-center justify-center";
 const PANE = "flex flex-col shrink-0 overflow-y-auto page-max-wide:hidden";
@@ -67,7 +70,7 @@ export function Split({ list, main, pane, empty }: SplitProps) {
 		return () => recordOpen(false);
 	}, [opened, recordOpen]);
 	return (
-		<div className={SPLIT}>
+		<div data-split className={SPLIT}>
 			<nav
 				aria-labelledby={title}
 				className={cn(SPLIT_LIST, LIST, LIST_ALONE, opened && BEHIND)}
@@ -78,7 +81,7 @@ export function Split({ list, main, pane, empty }: SplitProps) {
 			{opened ? (
 				<div className={cn(splitMain({ state: "rest" }), MAIN)}>
 					{main}
-					{room}
+					{room ? <div className={ALONE}>{room}</div> : null}
 				</div>
 			) : (
 				<div className={cn(splitMain({ state: "empty" }), EMPTY, BEHIND)}>

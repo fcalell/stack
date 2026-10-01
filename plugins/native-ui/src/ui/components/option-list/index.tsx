@@ -1,4 +1,4 @@
-import type { Option } from "@fcalell/ui-core/descriptors";
+import type { Option, OptionGroup } from "@fcalell/ui-core/descriptors";
 import {
 	COUNT,
 	checkbox,
@@ -12,43 +12,49 @@ import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { LoadingRows } from "../../lib/loading";
+import { flatOptions } from "../../lib/pick-sheet";
 import { useWords } from "../../lib/words";
 
-export interface OptionListProps extends Closed {
-	options: readonly Option[];
-	value?: string;
-	onChange: (value: string) => void;
+export interface OptionListProps<V extends string = string> extends Closed {
+	options: readonly Option<V>[] | readonly OptionGroup<V>[];
+	value: readonly V[];
+	onChange: (value: V[]) => void;
 	loading?: boolean;
 	children?: ReactNode;
 }
 
-// Radio rows with a description line, the recommended one marked; the
-// children sit under the chosen option.
-export function OptionList({
+// Check rows with a description line, the recommended one marked; a press
+// toggles its option and `onChange` hears the whole set. The children sit
+// under the first chosen option.
+export function OptionList<V extends string>({
 	options,
 	value,
 	onChange,
 	loading,
 	children,
-}: OptionListProps) {
+}: OptionListProps<V>) {
 	const words = useWords();
 	if (loading) return <LoadingRows />;
+	const first = value[0];
+	const toggle = (option: V) =>
+		onChange(
+			value.includes(option)
+				? value.filter((each) => each !== option)
+				: [...value, option],
+		);
 	return (
-		<View
-			accessibilityRole="radiogroup"
-			className={cn(GROUP_GROUND, "overflow-hidden")}
-		>
-			{options.map((option, index) => {
-				const selected = option.value === value;
+		<View className={cn(GROUP_GROUND, "overflow-hidden")}>
+			{flatOptions(options).map((option, index) => {
+				const selected = value.includes(option.value);
 				return (
 					<View
 						key={option.value}
 						className={cn(index > 0 && "border-t", index > 0 && HAIRLINE)}
 					>
 						<Pressable
-							accessibilityRole="radio"
-							accessibilityState={{ selected }}
-							onPress={() => onChange(option.value)}
+							accessibilityRole="checkbox"
+							accessibilityState={{ checked: selected }}
+							onPress={() => toggle(option.value)}
 							className={cn(
 								row({ state: "rest" }),
 								"flex-row items-center active:bg-wash-press",
@@ -80,7 +86,7 @@ export function OptionList({
 								) : null}
 							</View>
 						</Pressable>
-						{selected && children ? (
+						{option.value === first && children ? (
 							<View className="px-card pb-pair">{children}</View>
 						) : null}
 					</View>

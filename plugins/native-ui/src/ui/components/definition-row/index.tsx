@@ -1,16 +1,15 @@
-import type { Act, StatusState } from "@fcalell/ui-core/descriptors";
+import type { IconAct, StatusState } from "@fcalell/ui-core/descriptors";
 import { row, text, textStrong } from "@fcalell/ui-core/variants";
 import * as Clipboard from "expo-clipboard";
-import { Check, Copy } from "lucide-react-native";
 import { type ReactNode, useCallback, useEffect, useState } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
-import { Circle } from "../../lib/circle";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { navigate } from "../../lib/navigate";
 import { RowContext } from "../../lib/row";
 import { useWords } from "../../lib/words";
-import { RowAct } from "../list-row";
+import { IconButton } from "../icon-button";
+import { IconButtonBase } from "../icon-button/base";
 import { Status } from "../status";
 
 export type DefinitionValue =
@@ -23,7 +22,7 @@ export interface DefinitionRowProps extends Closed {
 	description?: string;
 	value?: DefinitionValue;
 	copyable?: boolean;
-	act?: Act;
+	act?: IconAct;
 	href?: string;
 	onOpen?: () => void;
 }
@@ -69,7 +68,7 @@ export function DefinitionRow({
 	const acts = (
 		<>
 			{copyable && typeof value === "string" ? <CopyAct value={value} /> : null}
-			{act ? <RowAct act={act} /> : null}
+			{act ? <IconButton {...act} /> : null}
 		</>
 	);
 	return (
@@ -118,8 +117,8 @@ function CopyAct({ value }: { value: string }) {
 		return () => clearTimeout(timer);
 	}, [copied]);
 	return (
-		<Circle
-			icon={copied ? Check : Copy}
+		<IconButtonBase
+			icon={copied ? "Check" : "Copy"}
 			label={copied ? words.copied : words.copy}
 			onAct={() => {
 				Clipboard.setStringAsync(value).then(() => setCopied(true));

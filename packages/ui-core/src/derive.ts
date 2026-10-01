@@ -48,9 +48,9 @@ import {
 	SIZES,
 	type Size,
 	SPACE_BASE,
+	SPACING_RATIO,
 	SPACING_ROLES,
 	type SpacingRole,
-	spacingRatio,
 	TRACKED_ROLES,
 	type TrackedRole,
 	TYPE_ROLES,
@@ -284,7 +284,7 @@ function typeFor(
 function spacingFor(density: Density): Record<SpacingRole, string> {
 	const out = {} as Record<SpacingRole, string>;
 	for (const role of SPACING_ROLES) {
-		out[role] = `${SPACE_BASE * spacingRatio(density, role)}px`;
+		out[role] = `${SPACE_BASE * SPACING_RATIO[density][role]}px`;
 	}
 	return out;
 }

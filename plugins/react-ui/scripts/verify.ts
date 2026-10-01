@@ -36,6 +36,7 @@ import {
 import {
 	CLOSED_PROPS,
 	componentDir,
+	heldSpellings,
 	type Owns,
 	rosterEntries,
 } from "@fcalell/ui-core/roster";
@@ -563,6 +564,42 @@ check("b-roster", "every component carries exactly its roster props", () => {
 		`component directories off the roster: ${extra.join(", ")}`,
 	);
 	return `${seen.size} of ${total} roster components built, ${props} props, every one the roster's, every style channel closed`;
+});
+
+check("b-holds", "no component imports a cell another one holds", () => {
+	const held = heldSpellings();
+	// A component is read once its artboard is approved, as its `owns` marks.
+	const approved = new Set(
+		rosterEntries()
+			.filter(([, , entry]) => entry.owns)
+			.map(([, name]) => componentDir(name)),
+	);
+	const hits: string[] = [];
+	let read = 0;
+	for (const path of COMPONENT_FILES) {
+		const dir = relative(COMPONENT_DIR, path).split("/")[0] ?? "";
+		if (!approved.has(dir)) continue;
+		read++;
+		const source = readFileSync(path, "utf8");
+		for (const [, names] of source.matchAll(
+			/import\s*(?:type\s*)?\{([^}]*)\}\s*from\s*"@fcalell\/ui-core\/variants"/g,
+		)) {
+			for (const name of (names ?? "").split(",")) {
+				const spelling =
+					name
+						.replace(/^\s*type\s+/, "")
+						.split(" as ")[0]
+						?.trim() ?? "";
+				const holder = held.get(spelling);
+				if (holder && componentDir(holder) !== dir)
+					hits.push(
+						`${relative(pkgDir, path)} imports ${spelling}, which ${holder} holds: compose ${holder}`,
+					);
+			}
+		}
+	}
+	assert(hits.length === 0, `held cells spelled:\n  ${hits.join("\n  ")}`);
+	return `${read} component files, no held cell imported outside its holder`;
 });
 
 check("b-words", "no word is drawn from a literal", () => {

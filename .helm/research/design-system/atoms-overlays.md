@@ -1357,7 +1357,7 @@ Under: Status, the six states on canvas: dot in the status colour, the word in m
 Under: Status with onOpen, active: rest, hover, focus, active / rest
 
 - button: `inline-flex items-center min-w-0 gap-inside rounded-full px-inside -mx-inside min-h-target`
-  - cell: `STATUS + STATUS_OPEN`; overlay: `inline-flex items-center min-w-0`
+  - cell: `STATUS + PILL_ACT`; overlay: `inline-flex items-center min-w-0 -mx-inside`
 - dot: `size-dot rounded-full shrink-0 bg-accent-ink`
   - cell: `STATUS_DOT {state: active}`; overlay: `shrink-0`
 - word: `truncate text-meta leading-meta font-normal text-ink-meta`
@@ -1368,7 +1368,7 @@ Under: Status with onOpen, active: rest, hover, focus, active / rest
 Under: Status with onOpen, active: rest, hover, focus, active / hover
 
 - button: `inline-flex items-center min-w-0 gap-inside rounded-full px-inside -mx-inside min-h-target bg-wash-hover`
-  - cell: `STATUS + STATUS_OPEN`; overlay: `inline-flex items-center min-w-0 bg-wash-hover`
+  - cell: `STATUS + PILL_ACT`; overlay: `inline-flex items-center min-w-0 -mx-inside bg-wash-hover`
 - dot: `size-dot rounded-full shrink-0 bg-accent-ink`
   - cell: `STATUS_DOT {state: active}`; overlay: `shrink-0`
 - word: `truncate text-meta leading-meta font-normal text-ink-meta`
@@ -1379,7 +1379,7 @@ Under: Status with onOpen, active: rest, hover, focus, active / hover
 Under: Status with onOpen, active: rest, hover, focus, active / focus
 
 - button: `inline-flex items-center min-w-0 gap-inside rounded-full px-inside -mx-inside min-h-target outline-2 outline-offset-2 outline-ring`
-  - cell: `STATUS + STATUS_OPEN`; overlay: `inline-flex items-center min-w-0 outline-2 outline-offset-2 outline-ring`
+  - cell: `STATUS + PILL_ACT`; overlay: `inline-flex items-center min-w-0 -mx-inside outline-2 outline-offset-2 outline-ring`
 - dot: `size-dot rounded-full shrink-0 bg-accent-ink`
   - cell: `STATUS_DOT {state: active}`; overlay: `shrink-0`
 - word: `truncate text-meta leading-meta font-normal text-ink-meta`
@@ -1390,7 +1390,7 @@ Under: Status with onOpen, active: rest, hover, focus, active / focus
 Under: Status with onOpen, active: rest, hover, focus, active / active
 
 - button: `inline-flex items-center min-w-0 gap-inside rounded-full px-inside -mx-inside min-h-target bg-wash-press`
-  - cell: `STATUS + STATUS_OPEN`; overlay: `inline-flex items-center min-w-0 bg-wash-press`
+  - cell: `STATUS + PILL_ACT`; overlay: `inline-flex items-center min-w-0 -mx-inside bg-wash-press`
 - dot: `size-dot rounded-full shrink-0 bg-accent-ink`
   - cell: `STATUS_DOT {state: active}`; overlay: `shrink-0`
 - word: `truncate text-meta leading-meta font-normal text-ink-meta`
@@ -1401,7 +1401,7 @@ Under: Status with onOpen, active: rest, hover, focus, active / active
 Under: Status with onOpen, failed: rest, hover, focus, active / rest
 
 - button: `inline-flex items-center min-w-0 gap-inside rounded-full px-inside -mx-inside min-h-target`
-  - cell: `STATUS + STATUS_OPEN`; overlay: `inline-flex items-center min-w-0`
+  - cell: `STATUS + PILL_ACT`; overlay: `inline-flex items-center min-w-0 -mx-inside`
 - dot: `size-dot rounded-full shrink-0 bg-danger`
   - cell: `STATUS_DOT {state: failed}`; overlay: `shrink-0`
 - word: `truncate text-meta leading-meta font-normal text-ink-meta`
@@ -1412,7 +1412,7 @@ Under: Status with onOpen, failed: rest, hover, focus, active / rest
 Under: Status with onOpen, failed: rest, hover, focus, active / hover
 
 - button: `inline-flex items-center min-w-0 gap-inside rounded-full px-inside -mx-inside min-h-target bg-wash-hover`
-  - cell: `STATUS + STATUS_OPEN`; overlay: `inline-flex items-center min-w-0 bg-wash-hover`
+  - cell: `STATUS + PILL_ACT`; overlay: `inline-flex items-center min-w-0 -mx-inside bg-wash-hover`
 - dot: `size-dot rounded-full shrink-0 bg-danger`
   - cell: `STATUS_DOT {state: failed}`; overlay: `shrink-0`
 - word: `truncate text-meta leading-meta font-normal text-ink-meta`
@@ -1423,7 +1423,7 @@ Under: Status with onOpen, failed: rest, hover, focus, active / hover
 Under: Status with onOpen, failed: rest, hover, focus, active / focus
 
 - button: `inline-flex items-center min-w-0 gap-inside rounded-full px-inside -mx-inside min-h-target outline-2 outline-offset-2 outline-ring`
-  - cell: `STATUS + STATUS_OPEN`; overlay: `inline-flex items-center min-w-0 outline-2 outline-offset-2 outline-ring`
+  - cell: `STATUS + PILL_ACT`; overlay: `inline-flex items-center min-w-0 -mx-inside outline-2 outline-offset-2 outline-ring`
 - dot: `size-dot rounded-full shrink-0 bg-danger`
   - cell: `STATUS_DOT {state: failed}`; overlay: `shrink-0`
 - word: `truncate text-meta leading-meta font-normal text-ink-meta`
@@ -1434,7 +1434,7 @@ Under: Status with onOpen, failed: rest, hover, focus, active / focus
 Under: Status with onOpen, failed: rest, hover, focus, active / active
 
 - button: `inline-flex items-center min-w-0 gap-inside rounded-full px-inside -mx-inside min-h-target bg-wash-press`
-  - cell: `STATUS + STATUS_OPEN`; overlay: `inline-flex items-center min-w-0 bg-wash-press`
+  - cell: `STATUS + PILL_ACT`; overlay: `inline-flex items-center min-w-0 -mx-inside bg-wash-press`
 - dot: `size-dot rounded-full shrink-0 bg-danger`
   - cell: `STATUS_DOT {state: failed}`; overlay: `shrink-0`
 - word: `truncate text-meta leading-meta font-normal text-ink-meta`
@@ -1445,7 +1445,7 @@ Under: Status with onOpen, failed: rest, hover, focus, active / active
 Under: Status with onOpen in a row's trailing slot
 
 - button: `inline-flex items-center min-w-0 gap-inside rounded-full px-inside -mx-inside min-h-target`
-  - cell: `STATUS + STATUS_OPEN`; overlay: `inline-flex items-center min-w-0`
+  - cell: `STATUS + PILL_ACT`; overlay: `inline-flex items-center min-w-0 -mx-inside`
 - dot: `size-dot rounded-full shrink-0 bg-ok`
   - cell: `STATUS_DOT {state: done}`; overlay: `shrink-0`
 - word: `truncate text-meta leading-meta font-normal text-ink-meta`
@@ -1456,7 +1456,7 @@ Under: Status with onOpen in a row's trailing slot
 Under: Status with onOpen in a row's trailing slot
 
 - button: `inline-flex items-center min-w-0 gap-inside rounded-full px-inside -mx-inside min-h-target`
-  - cell: `STATUS + STATUS_OPEN`; overlay: `inline-flex items-center min-w-0`
+  - cell: `STATUS + PILL_ACT`; overlay: `inline-flex items-center min-w-0 -mx-inside`
 - dot: `size-dot rounded-full shrink-0 bg-warn`
   - cell: `STATUS_DOT {state: attention}`; overlay: `shrink-0`
 - word: `truncate text-meta leading-meta font-normal text-ink-meta`

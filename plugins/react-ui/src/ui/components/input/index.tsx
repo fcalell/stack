@@ -112,7 +112,7 @@ export function Input({
 				<div
 					className={cn(
 						field({
-							kind: surface,
+							fit: search ? "bar" : "form",
 							trailing: act ? "act" : "none",
 							state: state.valid === false ? "error" : "rest",
 						}),

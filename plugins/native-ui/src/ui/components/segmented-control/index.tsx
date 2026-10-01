@@ -1,4 +1,8 @@
-import { SEGMENTED_CONTROL, segment } from "@fcalell/ui-core/variants";
+import {
+	SEGMENTED_CONTROL,
+	segment,
+	segmentLabel,
+} from "@fcalell/ui-core/variants";
 import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
@@ -36,11 +40,12 @@ export function SegmentedControl({
 						className={cn(
 							segment({ state: selected ? "selected" : "idle" }),
 							"items-center justify-center",
-							selected && "shadow-float",
 						)}
 					>
 						<RNText
-							className={segment({ state: selected ? "selected" : "idle" })}
+							className={segmentLabel({
+								state: selected ? "selected" : "idle",
+							})}
 						>
 							{option.label}
 						</RNText>

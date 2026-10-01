@@ -1,6 +1,5 @@
-import { SHEET, text } from "@fcalell/ui-core/variants";
+import { SHEET, type SheetFit, text } from "@fcalell/ui-core/variants";
 import { BottomSheetModal, BottomSheetView } from "@gorhom/bottom-sheet";
-import { ChevronLeft, X } from "lucide-react-native";
 import {
 	createContext,
 	type ReactNode,
@@ -13,12 +12,12 @@ import {
 } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Circle } from "../../lib/circle";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { FieldNameContext } from "../../lib/field";
 import { TouchedContext } from "../../lib/touched";
 import { useWords } from "../../lib/words";
+import { IconButtonBase } from "../icon-button/base";
 
 export interface SheetSubmit {
 	label: string;
@@ -34,6 +33,7 @@ interface SheetBase extends Closed {
 	description?: string;
 	back?: () => void;
 	foot?: ReactNode;
+	fit?: SheetFit;
 	children?: ReactNode;
 }
 
@@ -57,6 +57,8 @@ const TRANSPARENT = { backgroundColor: "transparent" } as const;
 
 // Content-tall, full height when it holds a TextArea, the sheet corners; a
 // close circle left, the title, submit right, the foot under the children.
+// Touch draws the bottom sheet whatever its `fit`, which sizes the desktop
+// side sheet.
 // The title names a typing control inside that no `FormField` labels. A new
 // `title` or `description` is a new page, which has taken no input.
 export function Sheet({
@@ -108,17 +110,21 @@ export function Sheet({
 						<TouchedContext.Provider value={{ touched, touch }}>
 							<View
 								style={{ paddingBottom: insets.bottom + 8 }}
-								className={cn(SHEET, "gap-fields px-card pt-pair shadow-modal")}
+								className={cn(SHEET, "gap-fields px-card pt-pair")}
 							>
 								<View className="min-h-11 flex-row items-center gap-inside">
 									{back ? (
-										<Circle
-											icon={ChevronLeft}
+										<IconButtonBase
+											icon="ChevronLeft"
 											label={words.back}
 											onAct={back}
 										/>
 									) : (
-										<Circle icon={X} label={words.close} onAct={onClose} />
+										<IconButtonBase
+											icon="X"
+											label={words.close}
+											onAct={onClose}
+										/>
 									)}
 									<RNText
 										numberOfLines={1}

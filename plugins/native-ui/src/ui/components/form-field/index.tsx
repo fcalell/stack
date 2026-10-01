@@ -4,11 +4,12 @@ import type { ReactNode } from "react";
 import { Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import { FieldError, FieldNameContext } from "../../lib/field";
+import { FieldDisabled, FieldError, FieldNameContext } from "../../lib/field";
 
 interface FormFieldBase extends Closed {
 	label: string;
 	description?: string;
+	disabled?: boolean;
 }
 
 // Unbound, the consumer gives the error and the control; bound, the form
@@ -31,8 +32,10 @@ export type FormFieldProps<V = unknown> = FormFieldBase &
 // the label names the control. Bound to a form field, it draws the field's
 // error and hands the control its value and change handler, and an
 // autosaving binding's commit: `{(control) => <Input {...control} />}`.
+// Disabled, the label takes the disabled ink, the control its disabled cells,
+// and the description stays as the reason.
 export function FormField<V>(props: FormFieldProps<V>) {
-	const { label, description } = props;
+	const { label, description, disabled = false } = props;
 	const error = props.field ? props.field.error : props.error;
 	const body = props.field
 		? props.children({
@@ -44,12 +47,20 @@ export function FormField<V>(props: FormFieldProps<V>) {
 	return (
 		<View className="gap-pair">
 			<RNText
-				className={cn(text({ role: "body" }), textStrong({ role: "body" }))}
+				className={cn(
+					text({ role: "body" }),
+					textStrong({ role: "body" }),
+					disabled && "text-ink-disabled",
+				)}
 			>
 				{label}
 			</RNText>
 			<FieldNameContext.Provider value={label}>
-				<FieldError.Provider value={Boolean(error)}>{body}</FieldError.Provider>
+				<FieldDisabled.Provider value={disabled}>
+					<FieldError.Provider value={Boolean(error)}>
+						{body}
+					</FieldError.Provider>
+				</FieldDisabled.Provider>
 			</FieldNameContext.Provider>
 			{description ? (
 				<RNText className={text({ role: "meta" })}>{description}</RNText>

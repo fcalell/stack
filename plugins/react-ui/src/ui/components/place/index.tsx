@@ -9,9 +9,9 @@ import type {
 } from "@fcalell/ui-core/descriptors";
 import {
 	FLOATING_ACT,
+	FLOATING_ACT_FOOT,
 	FLOATING_ACT_ROOM,
 	type IconButtonFit,
-	iconButton,
 	PAGE_BODY,
 	PAGE_HEAD,
 	PAGE_STRIP,
@@ -37,12 +37,13 @@ import { PortalContainer } from "../../lib/portal.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Button } from "../button/index.tsx";
 import { Icon } from "../icon/index.tsx";
+import { IconButtonBase } from "../icon-button/base.tsx";
 import { IconButton } from "../icon-button/index.tsx";
 
 const PLACE = "flex flex-col grow min-h-0";
 // A bleeding page is the size container a Split inside decides its regions
 // by; the acts it lends hide by the same widths.
-const PAGE = "@container/page";
+const PAGE = "@container/page group/page";
 const BACK = "flex page-tablet:hidden";
 const BESIDE_BACK = "flex page-max-tablet:hidden";
 // A Split's lent Details act, drawn below `wide` of its page.
@@ -60,13 +61,11 @@ const ACT_ROOM = "shrink-0";
 const ACT_LAYER =
 	"absolute inset-0 flex flex-col items-center justify-end pointer-events-none";
 const ACT_HIT = "flex pointer-events-auto";
+// From `tablet` of its page a Split's list stands at the body's start, and
+// the layer covers its column alone, so the act centres on the list.
+const BESIDE_LIST =
+	"page-tablet:group-has-data-split/page:right-auto page-tablet:group-has-data-split/page:w-list";
 
-// The more and Details acts are an IconButton's box on their popup's
-// trigger; the more act stays pressed while its menu is open.
-const ACT_BOX = "relative inline-flex items-center justify-center shrink-0";
-const ACT_PRESS =
-	"hover:bg-wash-hover hover:text-ink-body active:bg-wash-press active:text-ink-body";
-const MORE_OPEN = "data-popup-open:bg-wash-press data-popup-open:text-ink-body";
 const MENU = "flex flex-col w-popover";
 const MENU_ROWS = "flex flex-col gap-rows";
 // The highlight wash marks the keyboard's row, so a row draws no ring.
@@ -86,20 +85,9 @@ export function More(props: {
 	return (
 		<Menu.Root modal={false}>
 			<Menu.Trigger
-				render={(trigger) => (
-					<button
-						{...trigger}
-						aria-label={words.more}
-						className={cn(
-							iconButton({ fit: props.fit }),
-							ACT_BOX,
-							ACT_PRESS,
-							MORE_OPEN,
-						)}
-					>
-						<Icon name="Ellipsis" fit="control" />
-					</button>
-				)}
+				render={
+					<IconButtonBase icon="Ellipsis" fit={props.fit} label={words.more} />
+				}
 			/>
 			<Menu.Portal container={container}>
 				<Menu.Positioner align="end" sideOffset={() => spacing("pair")}>
@@ -161,11 +149,14 @@ export function Details(props: {
 		<span className={DETAILS}>
 			<Dialog.Trigger
 				handle={props.sheet}
-				aria-label={words.details}
-				className={cn(iconButton({ fit: props.fit }), ACT_BOX, ACT_PRESS)}
-			>
-				<Icon name="PanelRight" fit="control" />
-			</Dialog.Trigger>
+				render={
+					<IconButtonBase
+						icon="PanelRight"
+						fit={props.fit}
+						label={words.details}
+					/>
+				}
+			/>
 		</span>
 	);
 }
@@ -249,10 +240,16 @@ export function Place({
 		/>
 	) : null;
 	const floating = touch && button !== null;
+	const layer = floating ? (
+		<div className={cn(FLOATING_ACT, ACT_LAYER, bleed && BESIDE_LIST)}>
+			<span className={ACT_HIT}>{button}</span>
+		</div>
+	) : null;
 	// A bleeding body hands the act's room to the regions that scroll inside
-	// it: the act's whole footprint, since such a region keeps no page inset.
+	// it: the act's height over the page inset, since such a region keeps no
+	// inset of its own.
 	const room = floating ? (
-		<div aria-hidden className={cn(FLOATING_ACT, ACT_ROOM)}>
+		<div aria-hidden className={cn(FLOATING_ACT_FOOT, ACT_ROOM)}>
 			<div className={FLOATING_ACT_ROOM} />
 		</div>
 	) : null;
@@ -296,11 +293,7 @@ export function Place({
 							{head}
 							<div className={BODY_WRAP}>
 								{body}
-								{floating ? (
-									<div className={cn(FLOATING_ACT, ACT_LAYER)}>
-										<span className={ACT_HIT}>{button}</span>
-									</div>
-								) : null}
+								{layer}
 							</div>
 						</div>
 					</HeadingContext>

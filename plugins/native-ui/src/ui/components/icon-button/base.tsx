@@ -1,13 +1,9 @@
-import {
-	type IconButtonFit,
-	icon,
-	iconButton,
-} from "@fcalell/ui-core/variants";
-import type { LucideIcon } from "lucide-react-native";
+import type { IconName } from "@fcalell/ui-core/descriptors";
+import { type IconButtonFit, iconButton } from "@fcalell/ui-core/variants";
 import { Pressable } from "react-native";
-import { useResolveClassNames } from "uniwind";
-import { cn } from "./cn";
-import { Glyph } from "./glyph";
+import { cn } from "../../lib/cn";
+import { Ink } from "../../lib/ink";
+import { Icon } from "../icon";
 
 const BOX = "items-center justify-center";
 const PRESS = "active:bg-wash-press";
@@ -16,21 +12,20 @@ const PRESS = "active:bg-wash-press";
 // stack's own back, close, more, send and stop acts. No boundary at rest, the
 // press wash its ground; the glyph is in the meta ink, the body ink under the
 // press, and the disabled ink in a disabled place, which takes no wash.
-export function Circle({
-	icon: glyph,
+// Outside the package's exports.
+export function IconButtonBase({
+	icon,
 	label,
 	onAct,
 	fit,
 	disabled,
 }: {
-	icon: LucideIcon;
+	icon: IconName;
 	label: string;
 	onAct: () => void;
 	fit?: IconButtonFit;
 	disabled?: boolean;
 }) {
-	const { width } = useResolveClassNames(icon({ fit: "control" }));
-	const size = typeof width === "number" ? width : undefined;
 	return (
 		<Pressable
 			accessibilityRole="button"
@@ -41,7 +36,9 @@ export function Circle({
 			className={cn(iconButton({ fit }), BOX, !disabled && PRESS)}
 		>
 			{({ pressed }) => (
-				<Glyph icon={glyph} tone={toneOf(pressed, disabled)} size={size} />
+				<Ink.Provider value={toneOf(pressed, disabled)}>
+					<Icon name={icon} fit="control" />
+				</Ink.Provider>
 			)}
 		</Pressable>
 	);

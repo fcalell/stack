@@ -1,14 +1,14 @@
 import { CODE, text } from "@fcalell/ui-core/variants";
 import * as Clipboard from "expo-clipboard";
-import { Check, ChevronDown, Copy } from "lucide-react-native";
+import { ChevronDown } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import { Pressable, Text as RNText, ScrollView, View } from "react-native";
-import { Circle } from "../../lib/circle";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { Glyph } from "../../lib/glyph";
 import { LoadingRows } from "../../lib/loading";
 import { useWords } from "../../lib/words";
+import { IconButtonBase } from "../icon-button/base";
 
 export interface CodeProps extends Closed {
 	text: string;
@@ -42,8 +42,8 @@ export function Code({ text: source, title, tail, copy, loading }: CodeProps) {
 			{copied ? (
 				<RNText className={text({ role: "meta" })}>{words.copied}</RNText>
 			) : null}
-			<Circle
-				icon={copied ? Check : Copy}
+			<IconButtonBase
+				icon={copied ? "Check" : "Copy"}
 				label={copied ? words.copied : words.copy}
 				onAct={() => {
 					Clipboard.setStringAsync(source).then(() => setCopied(true));

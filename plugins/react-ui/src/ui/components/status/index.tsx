@@ -2,9 +2,9 @@ import { Button as BaseButton } from "@base-ui/react/button";
 import { cn } from "@fcalell/ui-core/cn";
 import type { StatusState } from "@fcalell/ui-core/tokens";
 import {
+	PILL_ACT,
 	STATUS,
 	STATUS_LABEL,
-	STATUS_OPEN,
 	statusDot,
 } from "@fcalell/ui-core/variants";
 import type { Closed } from "../../lib/closed.ts";
@@ -12,7 +12,7 @@ import { useWords } from "../../lib/words.tsx";
 
 const BOX = "inline-flex items-center min-w-0";
 const OPEN =
-	"inline-flex items-center min-w-0 hover:bg-wash-hover active:bg-wash-press";
+	"inline-flex items-center min-w-0 -mx-inside hover:bg-wash-hover active:bg-wash-press";
 const DOT = "shrink-0";
 const WORD = "truncate";
 
@@ -41,7 +41,7 @@ export function Status({ state, label, onOpen }: StatusProps) {
 		<BaseButton
 			aria-haspopup="menu"
 			onClick={onOpen}
-			className={cn(STATUS, STATUS_OPEN, OPEN)}
+			className={cn(STATUS, PILL_ACT, OPEN)}
 		>
 			{inner}
 		</BaseButton>

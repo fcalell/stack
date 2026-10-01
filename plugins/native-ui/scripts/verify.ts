@@ -45,6 +45,7 @@ import {
 import {
 	CLOSED_PROPS,
 	componentDir,
+	heldSpellings,
 	rosterEntries,
 } from "@fcalell/ui-core/roster";
 import {
@@ -122,6 +123,8 @@ const RETIRED = [
 	"p-inset",
 	"min-h-floor",
 	"w-rail",
+	"px-list-x",
+	"min-h-header",
 ];
 
 // The native overlay allowlist: every class the swept `src/ui` sources name,
@@ -189,10 +192,9 @@ const NATIVE_OVERLAYS = [
 	"pt-float",
 	"pt-page",
 	"pt-pair",
-	"px-0",
 	"px-4",
 	"px-card",
-	"px-list-x",
+	"px-page",
 	"px-pair",
 	"py-0",
 	"py-2",
@@ -202,8 +204,6 @@ const NATIVE_OVERLAYS = [
 	"rounded-full",
 	"self-center",
 	"self-start",
-	"shadow-float",
-	"shadow-modal",
 	"shrink",
 	"size-2",
 	"size-6",
@@ -398,7 +398,7 @@ const FAMILIES: Family[] = [
 		name: "FIELD",
 		cva: variants.field as Family["cva"],
 		axes: {
-			kind: ["text", "search", "code"],
+			fit: ["form", "bar"],
 			trailing: ["none", "act"],
 			state: ["rest", "error"],
 		},
@@ -426,7 +426,11 @@ const FAMILIES: Family[] = [
 	{
 		name: "ROW",
 		cva: variants.row as Family["cva"],
-		axes: { state: ["rest", "pressed", "selected"], ground: ["list", "group"] },
+		axes: {
+			lines: ["one", "two", "setting"],
+			state: ["rest", "pressed", "selected"],
+			ground: ["list", "group"],
+		},
 	},
 	{
 		name: "SWITCH",
@@ -441,6 +445,11 @@ const FAMILIES: Family[] = [
 	{
 		name: "SEGMENT",
 		cva: variants.segment as Family["cva"],
+		axes: { state: ["idle", "selected"] },
+	},
+	{
+		name: "SEGMENT_LABEL",
+		cva: variants.segmentLabel as Family["cva"],
 		axes: { state: ["idle", "selected"] },
 	},
 	{
@@ -488,7 +497,7 @@ const FAMILIES: Family[] = [
 ];
 
 const FAMILY_ROSTER =
-	"TEXT TEXT_STRONG BUTTON BUTTON_LABEL STATUS_DOT CHIP CHIP_LABEL FIELD FIELD_VALUE TEXT_AREA TEXT_AREA_BUDGET OTP_BOX ROW SWITCH CHECKBOX SEGMENT BANNER DIFF_LINE MESSAGE AVATAR PLACE_ROW PLACE_ROW_GLYPH PLACE_TAB PLACE_TAB_LABEL";
+	"TEXT TEXT_STRONG BUTTON BUTTON_LABEL STATUS_DOT CHIP CHIP_LABEL FIELD FIELD_VALUE TEXT_AREA TEXT_AREA_BUDGET OTP_BOX ROW SWITCH CHECKBOX SEGMENT SEGMENT_LABEL BANNER DIFF_LINE MESSAGE AVATAR PLACE_ROW PLACE_ROW_GLYPH PLACE_TAB PLACE_TAB_LABEL";
 
 // The class-bearing constants beside the matrices, read off the module so a
 // new one cannot skip the compile probe.
@@ -1170,6 +1179,42 @@ check("b-roster", "every component carries exactly its roster props", () => {
 		`component directories off the roster: ${extra.join(", ")}`,
 	);
 	return `${seen.size} components, ${props} props, every one the roster's, every style channel closed`;
+});
+
+check("b-holds", "no component imports a cell another one holds", () => {
+	const held = heldSpellings();
+	// A component is read once its artboard is approved, as its `owns` marks.
+	const approved = new Set(
+		rosterEntries()
+			.filter(([, , entry]) => entry.owns)
+			.map(([, name]) => componentDir(name)),
+	);
+	const hits: string[] = [];
+	let read = 0;
+	for (const path of COMPONENT_FILES) {
+		const dir = relative(COMPONENT_DIR, path).split("/")[0] ?? "";
+		if (!approved.has(dir)) continue;
+		read++;
+		const source = readFileSync(path, "utf8");
+		for (const [, names] of source.matchAll(
+			/import\s*(?:type\s*)?\{([^}]*)\}\s*from\s*"@fcalell\/ui-core\/variants"/g,
+		)) {
+			for (const name of (names ?? "").split(",")) {
+				const spelling =
+					name
+						.replace(/^\s*type\s+/, "")
+						.split(" as ")[0]
+						?.trim() ?? "";
+				const holder = held.get(spelling);
+				if (holder && componentDir(holder) !== dir)
+					hits.push(
+						`${relative(pkgDir, path)} imports ${spelling}, which ${holder} holds: compose ${holder}`,
+					);
+			}
+		}
+	}
+	assert(hits.length === 0, `held cells spelled:\n  ${hits.join("\n  ")}`);
+	return `${read} component files, no held cell imported outside its holder`;
 });
 
 check("b-words", "no word is drawn from a literal", () => {

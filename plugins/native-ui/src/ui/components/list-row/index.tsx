@@ -1,8 +1,8 @@
 import type {
-	Act,
+	ChipMark,
 	IconName,
-	Mark,
 	Part,
+	StatusMark,
 	StatusState,
 } from "@fcalell/ui-core/descriptors";
 import { row, text, textStrong } from "@fcalell/ui-core/variants";
@@ -14,9 +14,14 @@ import { MenuCircle, type MenuItems } from "../../lib/more";
 import { navigate } from "../../lib/navigate";
 import { joinParts, META_CUT, partText } from "../../lib/parts";
 import { useWords } from "../../lib/words";
+import { Avatar } from "../avatar";
+import { Chip } from "../chip";
 import { Status } from "../status";
 
-export type RowLeading = { icon: IconName } | { status: StatusState };
+export type RowLeading =
+	| { icon: IconName }
+	| { status: StatusState }
+	| { avatar: { name: string; src?: string } };
 export type RowTrailing =
 	| { age: string }
 	| { count: number }
@@ -27,8 +32,8 @@ export interface ListRowProps extends Closed {
 	title: Part;
 	meta?: readonly Part[] | readonly (readonly Part[])[];
 	trailing?: RowTrailing;
-	marks?: Mark[];
-	act?: Act;
+	status?: StatusMark;
+	chip?: ChipMark;
 	more?: MenuItems;
 	href?: string;
 	onOpen?: () => void;
@@ -44,14 +49,14 @@ function metaLines(
 }
 
 // A row of a list or a group: no chevron, no divider; `href` draws nothing.
-// `more` is the row's own acts under a more circle at its end.
+// `more` is the row's acts under a more circle at its end, its only act.
 export function ListRow({
 	leading,
 	title,
 	meta,
 	trailing,
-	marks,
-	act,
+	status,
+	chip,
 	more,
 	href,
 	onOpen,
@@ -87,11 +92,9 @@ export function ListRow({
 					</RNText>
 				))}
 			</View>
-			{marks?.map((mark) => (
-				<MarkGlyph key={mark.label} mark={mark} />
-			))}
+			{status ? <Status state={status.state} label={status.label} /> : null}
+			{chip ? <Chip family={chip.family} label={chip.label} /> : null}
 			{trailing ? <Trailing trailing={trailing} /> : null}
-			{act ? <RowAct act={act} /> : null}
 			{more ? (
 				<MenuCircle label={words.more} title={partText(title)} items={more} />
 			) : null}
@@ -101,19 +104,12 @@ export function ListRow({
 
 function Leading({ leading }: { leading: RowLeading }) {
 	if ("status" in leading) return <Status state={leading.status} label="" />;
+	if ("avatar" in leading) return <Avatar {...leading.avatar} />;
 	return <LeadingIcon name={leading.icon} />;
 }
 
 function LeadingIcon({ name }: { name: IconName }) {
 	return <Glyph icon={GLYPHS[name]} tone="ink-meta" />;
-}
-
-function MarkGlyph({ mark }: { mark: Mark }) {
-	return (
-		<View accessibilityLabel={mark.label}>
-			<Glyph icon={GLYPHS[mark.icon]} tone="ink-meta" size={16} />
-		</View>
-	);
 }
 
 function Trailing({ trailing }: { trailing: RowTrailing }) {
@@ -124,28 +120,4 @@ function Trailing({ trailing }: { trailing: RowTrailing }) {
 				? String(trailing.count)
 				: trailing.value;
 	return <RNText className={text({ role: "meta" })}>{value}</RNText>;
-}
-
-// A row's act: a text act in tint, 44 px tall.
-export function RowAct({ act }: { act: Act }) {
-	const muted = act.blocked !== undefined || act.loading;
-	return (
-		<Pressable
-			accessibilityRole="button"
-			accessibilityState={{ disabled: muted }}
-			disabled={muted}
-			onPress={act.onAct}
-			className="min-h-11 justify-center"
-		>
-			<RNText
-				className={cn(
-					text({ role: "body" }),
-					"font-medium text-accent-ink",
-					muted && "text-ink-faint",
-				)}
-			>
-				{act.label}
-			</RNText>
-		</Pressable>
-	);
 }

@@ -5,12 +5,11 @@ import {
 	field,
 	text,
 } from "@fcalell/ui-core/variants";
-import { ArrowUp, Plus, Square } from "lucide-react-native";
 import { Pressable, Text as RNText, TextInput, View } from "react-native";
-import { Circle } from "../../lib/circle";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { useWords } from "../../lib/words";
+import { IconButtonBase } from "../icon-button/base";
 
 export interface MessageInputProps extends Closed {
 	value: string;
@@ -52,12 +51,12 @@ export function MessageInput({
 			) : null}
 			<View className="flex-row items-end gap-inside">
 				{onAttach ? (
-					<Circle icon={Plus} label={words.attach} onAct={onAttach} />
+					<IconButtonBase icon="Plus" label={words.attach} onAct={onAttach} />
 				) : null}
 				<TextInput
 					multiline
 					className={cn(
-						field({ kind: "search", state: "rest" }),
+						field({ fit: "bar", state: "rest" }),
 						text({ role: "body" }),
 						"flex-1 py-2",
 					)}
@@ -67,15 +66,15 @@ export function MessageInput({
 					placeholder={placeholder}
 				/>
 				{working ? (
-					<Circle
-						icon={Square}
+					<IconButtonBase
+						icon="Square"
 						label={words.stop}
 						onAct={onStop ?? (() => {})}
 						disabled={!onStop}
 					/>
 				) : (
-					<Circle
-						icon={ArrowUp}
+					<IconButtonBase
+						icon="ArrowUp"
 						label={words.send}
 						onAct={onSend}
 						disabled={empty}

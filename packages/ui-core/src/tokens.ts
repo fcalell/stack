@@ -627,9 +627,7 @@ export const SPACE_BASE = 4;
 // `tile` a compact card's inset (a board card);
 // `float` a floating surface's inset (a select's list, a menu, a picker
 // popover), so a row's wash sits just inside its edge; `fields` between
-// fields; `sections` between sections of a page; `page` the page inset;
-// `list-x` a list's inline inset, so its rows' text, inset by `control-x`,
-// meets the page title. A role never takes a width's name: `w-*` reads the spacing role first,
+// fields; `sections` between sections of a page; `page` the page inset. A role never takes a width's name: `w-*` reads the spacing role first,
 // which would shadow the width.
 export const SPACING_ROLES = [
 	"inside",
@@ -643,7 +641,6 @@ export const SPACING_ROLES = [
 	"fields",
 	"sections",
 	"page",
-	"list-x",
 ] as const;
 export type SpacingRole = (typeof SPACING_ROLES)[number];
 
@@ -661,11 +658,8 @@ export type GapRole = (typeof GAP_ROLES)[number];
 
 // Multiples of `SPACE_BASE`. Touch is the same roles one rung looser, except
 // the float inset and the acts gap, which hold, and the page inset, which a
-// phone narrows. `list-x` has no ratio of its own: `spacingRatio` derives it.
-export const SPACING_RATIO: Record<
-	Density,
-	Record<Exclude<SpacingRole, "list-x">, number>
-> = {
+// phone narrows.
+export const SPACING_RATIO: Record<Density, Record<SpacingRole, number>> = {
 	desktop: {
 		inside: 1.5,
 		"control-x": 3,
@@ -694,20 +688,13 @@ export const SPACING_RATIO: Record<
 	},
 };
 
-// A role's multiple of `SPACE_BASE` at a density. `list-x` is the page inset
-// less a control's, so moving either moves it.
-export function spacingRatio(density: Density, role: SpacingRole): number {
-	const ratio = SPACING_RATIO[density];
-	return role === "list-x" ? ratio.page - ratio["control-x"] : ratio[role];
-}
-
 // ── Sizes per density ───────────────────────────────────────────────
 
 // Heights and squares, in the `--spacing-*` namespace so a cell names them as
 // it names a role (`min-h-control`, `size-avatar`). Desktop: control 32,
 // compact 28 (menus, toolbars), field 38, one-line row 32, two-line row 48,
-// setting row 64, header 32, strip 40 (a page header: the title role with 8 of
-// air, and its acts), target 24. Touch: every target at least 44. An
+// setting row 64, strip 40 (a page header bar: the title and its acts),
+// target 24. Touch: every target at least 44. An
 // icon is sized by what it sits beside: `icon-meta` meta or caption text,
 // `icon` body text, `icon-control` the inside of a control. The spinner is
 // the `icon` rung: it replaces a row's glyph and sits beside body text.
@@ -718,7 +705,6 @@ export const SIZES = [
 	"row",
 	"row-2",
 	"row-setting",
-	"header",
 	"strip",
 	"target",
 	"dot",
@@ -757,7 +743,6 @@ export const SIZE_PX: Record<
 		row: 32,
 		"row-2": 48,
 		"row-setting": 64,
-		header: 32,
 		strip: 40,
 		target: 24,
 		dot: 6,
@@ -783,7 +768,6 @@ export const SIZE_PX: Record<
 		row: 48,
 		"row-2": 64,
 		"row-setting": 72,
-		header: 44,
 		strip: 44,
 		target: 44,
 		dot: 8,
@@ -806,8 +790,9 @@ export const SIZE_PX: Record<
 
 // ── Radius, hairline, ring, widths, breakpoints ─────────────────────
 
-// Spent by role: chip 4; control and row 6; card, popover and sheet 8;
-// dialog 12; `full` only on dots, avatars and the pill chip or status.
+// Spent by role: chip 4; control and row 6; card, popover and sheet 8 (a
+// centred sheet too); `full` only on dots, avatars and the pill chip or
+// status.
 // Density-invariant: a radius names the role, not the size.
 export const RADIUS_ROLES = [
 	"chip",
@@ -816,7 +801,6 @@ export const RADIUS_ROLES = [
 	"card",
 	"popover",
 	"sheet",
-	"dialog",
 	"full",
 ] as const;
 export type RadiusRole = (typeof RADIUS_ROLES)[number];
@@ -828,7 +812,6 @@ export const RADIUS_PX: Record<RadiusRole, number> = {
 	card: 8,
 	popover: 8,
 	sheet: 8,
-	dialog: 12,
 	full: 9999,
 };
 
@@ -839,13 +822,14 @@ export const HAIRLINE_PX = 1;
 export const RING_PX = 2;
 export const RING_OFFSET_PX = 2;
 
-// A chip label's longest run, the widths of lifted layers, each at its
-// pattern's range (a layer never stretches to its container), the one
-// measure for running text, and the fixed regions of a frame (the sidebar, a
-// split's list column and record pane, a board column, the auth column).
+// The measure of a short label (a chip's, a status word, a skeleton label's
+// lane), the widths of lifted layers, each at its pattern's range (a layer
+// never stretches to its container), the one measure for running text, and
+// the fixed regions of a frame (the sidebar, a split's list column and record
+// pane, a board column, the auth column, an empty state's column).
 // A width name never repeats a size name: `max-w-*` reads `--spacing-*` first.
 export const WIDTHS = [
-	"chip-label",
+	"measure-short",
 	"popover",
 	"toast",
 	"dialog",
@@ -856,14 +840,15 @@ export const WIDTHS = [
 	"pane",
 	"column",
 	"auth",
+	"empty",
 ] as const;
 export type Width = (typeof WIDTHS)[number];
 
 export const WIDTH_VALUE: Record<Width, string> = {
-	"chip-label": "18ch",
+	"measure-short": "18ch",
 	popover: "240px",
 	toast: "360px",
-	dialog: "440px",
+	dialog: "520px",
 	sheet: "640px",
 	measure: "66ch",
 	sidebar: "240px",
@@ -871,6 +856,7 @@ export const WIDTH_VALUE: Record<Width, string> = {
 	pane: "320px",
 	column: "300px",
 	auth: "400px",
+	empty: "320px",
 };
 
 export const BREAKPOINTS = ["tablet", "desktop", "wide"] as const;

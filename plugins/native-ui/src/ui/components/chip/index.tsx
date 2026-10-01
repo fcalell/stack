@@ -1,17 +1,11 @@
 import type { ChipFamily } from "@fcalell/ui-core/tokens";
-import {
-	CHIP_REMOVE_HIT,
-	chip,
-	chipLabel,
-	icon,
-} from "@fcalell/ui-core/variants";
-import { X } from "lucide-react-native";
+import { CHIP_REMOVE_HIT, chip, chipLabel } from "@fcalell/ui-core/variants";
 import { Pressable, Text as RNText, View } from "react-native";
-import { useResolveClassNames } from "uniwind";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import { Glyph } from "../../lib/glyph";
+import { Ink } from "../../lib/ink";
 import { useWords } from "../../lib/words";
+import { Icon } from "../icon";
 
 export interface ChipProps extends Closed {
 	label: string;
@@ -25,7 +19,6 @@ export interface ChipProps extends Closed {
 // size is resolved and its ink is the family's, which the web inherits.
 export function Chip({ label, family, onRemove }: ChipProps) {
 	const words = useWords();
-	const { width } = useResolveClassNames(icon({ fit: "meta" }));
 	return (
 		<View
 			className={cn(
@@ -46,11 +39,9 @@ export function Chip({ label, family, onRemove }: ChipProps) {
 						"items-center justify-center active:bg-wash-press",
 					)}
 				>
-					<Glyph
-						icon={X}
-						tone={`chip-${family}-ink`}
-						size={typeof width === "number" ? width : undefined}
-					/>
+					<Ink.Provider value={`chip-${family}-ink`}>
+						<Icon name="X" fit="meta" />
+					</Ink.Provider>
 				</Pressable>
 			) : null}
 		</View>

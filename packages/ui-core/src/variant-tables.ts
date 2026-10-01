@@ -242,7 +242,7 @@ export const CHIP = matrix({
 
 // Bounded, so a long chip truncates before the row's title does.
 export const CHIP_LABEL = matrix({
-	base: "max-w-chip-label text-caption leading-caption tracking-caption font-normal",
+	base: "max-w-measure-short text-caption leading-caption tracking-caption font-normal",
 	variants: {
 		family: {
 			red: "text-chip-red-ink",
@@ -258,17 +258,17 @@ export const CHIP_LABEL = matrix({
 
 // ── Field ───────────────────────────────────────────────────────────
 
-// A typing control's box: the surface with the hairline as its boundary,
-// `edge-error` in error. `kind` sets its height (a search box stands at the
-// control's, in a toolbar), `trailing` its right inset (an in-field act
-// sits `inside` from the edge).
+// A typing or choosing control's box: the surface with the hairline as its
+// boundary, `edge-error` in error. `fit` is its container's: a form's
+// field height, or the compact control's in a bar (a toolbar's search box
+// or picker); `trailing` its right inset (an in-field act sits `inside`
+// from the edge).
 export const FIELD = matrix({
 	base: "gap-inside rounded-control border bg-surface",
 	variants: {
-		kind: {
-			text: "min-h-field",
-			code: "min-h-field",
-			search: "min-h-control-compact",
+		fit: {
+			form: "min-h-field",
+			bar: "min-h-control-compact",
 		},
 		trailing: {
 			none: "px-control-x",
@@ -279,7 +279,7 @@ export const FIELD = matrix({
 			error: "border-edge-error",
 		},
 	},
-	defaultVariants: { kind: "text", trailing: "none", state: "rest" },
+	defaultVariants: { fit: "form", trailing: "none", state: "rest" },
 });
 
 // The value a field holds, typed or chosen: body, or mono code.
@@ -366,27 +366,39 @@ export const CHECKBOX = matrix({
 
 // ── Row ─────────────────────────────────────────────────────────────
 
-// A row in a group, a list or a popover: highlighted (the keyboard's or the
-// pointer's current option) under the hover wash, pressed under the press
-// wash, selected under the selection wash. `ground` is what holds it: a
-// list or a popover insets it as a rounded wash (the option row of the
-// approved Select frame), a group runs it edge to edge at the card's inset,
-// the group drawing the hairline between its rows.
+// A row in a group, a list or a popover. `lines` is what it stands
+// for: one line, a title over its meta, or a setting (a label over its
+// description); the two taller forms pad so a wrapped line keeps air. Highlighted (the
+// keyboard's or the pointer's current option) under the hover wash, pressed
+// under the press wash, selected under the selection wash, and the selection
+// under the pointer a step darker. `ground` is what holds it: a list or a
+// popover insets it as a rounded wash (the option row of the approved Select
+// frame), a group runs it edge to edge at the card's inset, the group
+// drawing the hairline between its rows. A list row is square on touch,
+// where the list's inset is none and its wash meets the screen's edge: a
+// density flip, so an overlay over `list` (the web's under `touch:`), never
+// a cell.
 export const ROW = matrix({
-	base: "min-h-row gap-inside",
+	base: "gap-inside",
 	variants: {
+		lines: {
+			one: "min-h-row",
+			two: "min-h-row-2 py-rows",
+			setting: "min-h-row-setting py-pair",
+		},
 		state: {
 			rest: "",
 			highlighted: "bg-wash-hover",
 			pressed: "bg-wash-press",
 			selected: "bg-wash-selected",
+			"selected-hover": "bg-wash-selected-hover",
 		},
 		ground: {
 			list: "px-control-x rounded-row",
 			group: "px-card",
 		},
 	},
-	defaultVariants: { state: "rest", ground: "list" },
+	defaultVariants: { lines: "one", state: "rest", ground: "list" },
 });
 
 // ── Table ───────────────────────────────────────────────────────────
@@ -401,18 +413,41 @@ export const TABLE_ROW = matrix({
 
 // ── Segmented control ───────────────────────────────────────────────
 
+// A segment flush in its track at the compact control's height, selected
+// under the selection wash, and the selection under the pointer a step
+// darker. The box carries its ink for a web glyph; the label repeats it,
+// since a native Text inherits none.
 export const SEGMENT = matrix({
-	base: "rounded-control min-h-control-compact px-control-x text-body leading-body font-medium",
+	base: "rounded-control min-h-control-compact px-control-x",
 	variants: {
-		state: { idle: "text-ink-meta", selected: "bg-surface text-ink-body" },
+		state: {
+			idle: "text-ink-meta",
+			selected: "bg-wash-selected text-ink-body",
+			"selected-hover": "bg-wash-selected-hover text-ink-body",
+		},
+	},
+	defaultVariants: { state: "idle" },
+});
+
+export const SEGMENT_LABEL = matrix({
+	base: "text-body leading-body font-medium",
+	variants: {
+		state: {
+			idle: "text-ink-meta",
+			selected: "text-ink-body",
+			"selected-hover": "text-ink-body",
+		},
 	},
 	defaultVariants: { state: "idle" },
 });
 
 // ── Banner ──────────────────────────────────────────────────────────
 
+// A page's notice on its kind's soft ground, a pair inset around its content
+// (the act's height on a line with an act); the kind's colour is its glyph's
+// alone.
 export const BANNER = matrix({
-	base: "rounded-card px-card py-pair gap-inside text-body leading-body text-ink-body",
+	base: "rounded-control px-control-x py-pair gap-pair text-body leading-body text-ink-body",
 	variants: {
 		kind: {
 			note: "bg-accent-soft",
@@ -423,17 +458,75 @@ export const BANNER = matrix({
 	defaultVariants: { kind: "note" },
 });
 
+export const BANNER_GLYPH = matrix({
+	base: "",
+	variants: {
+		kind: {
+			note: "text-accent-ink",
+			warn: "text-warn",
+			danger: "text-danger",
+		},
+	},
+	defaultVariants: { kind: "note" },
+});
+
 // ── Toast ───────────────────────────────────────────────────────
 
+// The state is the glyph's ink alone; the toast's ground is every state's.
 export const TOAST_STATE = matrix({
 	base: "",
 	variants: {
 		state: {
-			done: "bg-ok-soft text-ink-body",
-			attention: "bg-warn-soft text-ink-body",
-			failed: "bg-danger-soft text-ink-body",
+			done: "text-ok",
+			attention: "text-warn",
+			failed: "text-danger",
 		},
 	},
+});
+
+// ── Menu ────────────────────────────────────────────────────────────
+
+// A menu's acts by its form: a popover at the popover's width (its ground
+// and inset are `POPOVER`'s), or the rows inside a touch sheet at the
+// popover's rhythm and inset.
+export const MENU = matrix({
+	base: "",
+	variants: {
+		form: {
+			popover: "w-popover",
+			sheet: "gap-pair p-float",
+		},
+	},
+	defaultVariants: { form: "popover" },
+});
+
+// A menu's group of rows: its acts, or the destructive acts last under a
+// hairline.
+export const MENU_GROUP = matrix({
+	base: "gap-rows",
+	variants: {
+		kind: {
+			acts: "",
+			destructive: "border-t border-edge pt-float",
+		},
+	},
+	defaultVariants: { kind: "acts" },
+});
+
+// ── Sheet ───────────────────────────────────────────────────────────
+
+// The side sheet on the desktop, raised at its end with its leading corners
+// rounded. `fit` is what it holds: a form at the sheet's width, or a
+// Split's record pane at the pane's (the Split passes it).
+export const SHEET_SIDE = matrix({
+	base: "bg-raised border-l border-edge-raised rounded-l-sheet shadow-modal",
+	variants: {
+		fit: {
+			form: "w-sheet",
+			pane: "w-pane",
+		},
+	},
+	defaultVariants: { fit: "form" },
 });
 
 // ── Diff ────────────────────────────────────────────────────────────
@@ -587,7 +680,7 @@ export const ACTION_BAR = matrix({
 
 // What a loading form draws in place of a part: a text line (a fraction
 // width, a web overlay, stands it at its text's length) or the atom it
-// stands in for, at that atom's size.
+// stands in for, at that atom's size (a checkbox's box among them).
 export const SKELETON = matrix({
 	base: "",
 	variants: {
@@ -597,6 +690,7 @@ export const SKELETON = matrix({
 			switch: "w-switch-w h-switch-h rounded-full bg-skeleton",
 			count: "min-h-chip min-w-chip rounded-full bg-skeleton",
 			field: "min-h-field rounded-control bg-skeleton",
+			check: "size-check rounded-chip bg-skeleton",
 		},
 	},
 	defaultVariants: { kind: "line" },

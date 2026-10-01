@@ -6,9 +6,7 @@ import type { ShowcaseFrame } from "../cells.ts";
 const change = () => {};
 
 const KINDS: Partial<Record<string, InputKind>> = {
-	"FIELD.kind.text": "text",
-	"FIELD.kind.code": "source",
-	"FIELD.kind.search": "search",
+	"FIELD.fit.bar": "search",
 	"FIELD_VALUE.kind.text": "text",
 	"FIELD_VALUE.kind.code": "source",
 	"FIELD_VALUE.kind.search": "search",

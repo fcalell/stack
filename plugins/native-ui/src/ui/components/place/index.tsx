@@ -1,6 +1,7 @@
 import type { Act, IconAct, MenuItem } from "@fcalell/ui-core/descriptors";
 import {
 	FLOATING_ACT,
+	FLOATING_ACT_FOOT,
 	FLOATING_ACT_ROOM,
 	PAGE_BODY,
 	PAGE_HEAD,
@@ -78,10 +79,10 @@ export function Place({
 			switcher
 		);
 	const room = act ? <View className={FLOATING_ACT_ROOM} /> : null;
-	// A region scrolling inside a bleeding body keeps no page inset, so it
-	// keeps the act's whole footprint.
+	// A region scrolling inside a bleeding body keeps no page inset under its
+	// last row, so its room is the act's height over the page inset.
 	const footprint = act ? (
-		<View className={FLOATING_ACT}>
+		<View className={FLOATING_ACT_FOOT}>
 			<View className={FLOATING_ACT_ROOM} />
 		</View>
 	) : null;

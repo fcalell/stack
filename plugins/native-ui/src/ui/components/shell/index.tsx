@@ -10,6 +10,7 @@ import {
 	placeTab,
 	placeTabLabel,
 	row,
+	SHELL_BANNER,
 	SHELL_COLUMN,
 	SHELL_TAB_BAR,
 	SWITCHER,
@@ -17,14 +18,12 @@ import {
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
-import { Check } from "lucide-react-native";
 import { type ReactNode, useState } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { CoverTabs, PlaceRoute, ShellSwitcher } from "../../lib/frame";
-import { Glyph } from "../../lib/glyph";
 import { Ink } from "../../lib/ink";
 import { MenuRow, MenuSheet } from "../../lib/more";
 import { isCurrent, navigate, usePathname } from "../../lib/navigate";
@@ -49,9 +48,9 @@ const SWITCH_LABEL = "min-w-0 flex-1";
 const CREATE = "border-t pt-float";
 
 const TABS = "flex-row";
-const TAB = "items-center justify-center min-w-0 flex-1";
+const TAB = "flex-col-reverse items-center justify-center min-w-0 flex-1";
 const TAB_GLYPH = "relative";
-const TAB_COUNT = "absolute top-0 left-full -translate-x-1/2";
+const TAB_COUNT = "absolute top-0 left-full";
 const TAB_LABEL = "max-w-full";
 // A tab bar holds five tabs at most: past five places, four and More.
 const TAB_ROOM = 5;
@@ -91,7 +90,7 @@ export function Shell({ places, banner, switcher, children }: ShellProps) {
 			}}
 			className={cn(SHELL_COLUMN, FRAME)}
 		>
-			{banner}
+			{banner ? <View className={SHELL_BANNER}>{banner}</View> : null}
 			<View className={CONTENT}>
 				<ShellSwitcher.Provider
 					value={switcher ? <SwitcherTrigger switcher={switcher} /> : null}
@@ -177,7 +176,11 @@ function SwitcherTrigger({ switcher }: { switcher: Switcher }) {
 								>
 									{option.label}
 								</RNText>
-								{current ? <Glyph icon={Check} tone="ink-body" /> : null}
+								{current ? (
+									<Ink.Provider value="ink-body">
+										<Icon name="Check" />
+									</Ink.Provider>
+								) : null}
 							</Pressable>
 						);
 					})}
@@ -200,6 +203,8 @@ function SwitcherTrigger({ switcher }: { switcher: Switcher }) {
 
 // The places: glyph over label, the count over the glyph's end; past five
 // places, four and a More tab whose sheet holds the rest.
+// A tab holds its label ahead of its glyph and stacks them reversed, and
+// takes no label of its own, so it reads the label then the count.
 function TabBar({
 	places,
 	pathname,
@@ -272,10 +277,15 @@ function Tab({
 		<Pressable
 			accessibilityRole="link"
 			accessibilityState={{ selected }}
-			accessibilityLabel={label}
 			onPress={onAct}
 			className={cn(placeTab({ state }), TAB)}
 		>
+			<RNText
+				numberOfLines={1}
+				className={cn(placeTabLabel({ state }), TAB_LABEL)}
+			>
+				{label}
+			</RNText>
 			<View className={TAB_GLYPH}>
 				<Ink.Provider value={TAB_INK[state]}>
 					<Icon name={icon} fit="control" />
@@ -286,12 +296,6 @@ function Tab({
 					</View>
 				)}
 			</View>
-			<RNText
-				numberOfLines={1}
-				className={cn(placeTabLabel({ state }), TAB_LABEL)}
-			>
-				{label}
-			</RNText>
 		</Pressable>
 	);
 }

@@ -31,7 +31,7 @@ Ten subpaths:
   `ButtonFit`, `IconButtonFit` and `LinkFit`, what an act sits in, read off each matrix's `fit`
   axis; `ActionBarFit`, where an action bar stands, `end` or `full`, off `ACTION_BAR`'s;
   `TextRole`, the `body` and `meta` roles `Text` draws).
-- `@fcalell/ui-core/descriptors`: `IconName`, `Act`, `IconAct`, `Part`, `Mark`, `Option`, `OptionGroup`,
+- `@fcalell/ui-core/descriptors`: `IconName`, `Act`, `IconAct`, `Part`, `StatusMark`, `ChipMark`, `Option`, `OptionGroup`,
   `PlaceSpec`, `Switcher`, `Hunk`, `FieldBinding`, `Confirmation`, `MenuItem`, `TableColumn`, `TableRow`,
   `CellEdit` and the other framework-free types a prop carries.
 - `@fcalell/ui-core/commit`: `commitMoment()`, when a typing control's value is final: on
@@ -207,38 +207,37 @@ a control: icon to label, dot to text), `control-x` 12 / 16 (a control's inline 
 (between the acts of a bar: a page header, a toolbar, an action bar), `rows` 2 / 4 (between
 rows in a menu or a nav list; rows in a hairline list abut), `card` 16 / 16 (a card's
 inset), `tile` 12 / 16 (a compact card's inset: a board card), `float` 4 / 4 (a floating surface's inset: a select's list, a menu, a picker popover), `fields` 16 / 24 (between fields), `sections` 32 / 40 (between sections of a
-page), `page` 24 / 16 (the page inset), `list-x` 12 / 0 (a list's inline inset, so its rows' text meets the page title: no ratio of its own, `page` less `control-x`, so moving either moves it). Touch is the same roles one rung looser except the
+page), `page` 24 / 16 (the page inset). A list bleeds by `control-x`, so its rows' leading meets the title over it. Touch is the same roles one rung looser except the
 float inset and the acts gap, which hold, and the page inset, which a phone narrows. Six are gap roles, what a container may put between its children:
-`inside`, `pair`, `acts`, `rows`, `fields`, `sections`; the other six (`control-x`, `card`, `tile`,
-`float`, `page`, `list-x`) are insets.
+`inside`, `pair`, `acts`, `rows`, `fields`, `sections`; the other five (`control-x`, `card`, `tile`,
+`float`, `page`) are insets.
 
 Twenty-five sizes per density sit in the same `--spacing-*` namespace, so a cell names them as it
 names a role (`min-h-control`, `size-avatar`), and nothing is spaced by them. Desktop then touch:
 `control` 32 / 44 (a button, a segmented control), `control-compact` 28 / 44 (a menu item, a
 toolbar control), `field` 38 / 48 (a form input), `row` 32 / 48 (a one-line row), `row-2` 48 / 64
-(a two-line row), `row-setting` 64 / 72 (a setting row), `header` 32 / 44 (a table or section
-header), `strip` 40 / 44 (a page header strip: a Place's or Screen's title and acts), `target` 24 / 44 (the least hit area of any interactive part), `dot` 6 / 8, `chip` 20 /
+(a two-line row), `row-setting` 64 / 72 (a setting row), `strip` 40 / 44 (a page header bar: a Place's or Screen's title and acts), `target` 24 / 44 (the least hit area of any interactive part), `dot` 6 / 8, `chip` 20 /
 24, `avatar` 24 / 32, `spinner` 14 / 18 (the `icon` rung), `switch-w` 28 / 40, `switch-h` 16 / 24, `thumb` 12 / 20,
 `switch-inset` 2 / 2, `switch-travel` 12 / 16 (the thumb's travel, derived: `switch-w` less
 `thumb` and both insets), `skeleton` 12 / 12, `icon-meta` 12 / 14 (an icon beside meta or
 caption text), `icon` 14 / 18 (beside body text), `icon-control` 16 / 20 (inside a control),
 `check` 16 / 20 (a checkbox's box), `track` 2 / 4 (a slider's track thickness), `otp` 44 / 48 (a
 one-time-code box, square), `text-area` 60 / 72 (a text area's least value height, derived: three body line boxes). On touch every target is at least 44. A cell says `min-h`, never `h`: a label
-must be able to grow its control under OS font scaling.
+must be able to grow its control under OS font scaling. A minimum height is the floor of something pressed (a control, a field, a target, a chip, a row), the set height of a bar (`strip`, a page's strip and its touch top bar), an intrinsic size, or the height of what a part swaps with (`PENDING_BAR` an action bar's, `TABLE_CELL` the field that edits it in place); any other container takes its height from its content and padding, its parts centred on its tallest, never from another component's size.
 
-Eight radius roles, density-invariant, a radius naming the role and never the size: `chip` 4
+Seven radius roles, density-invariant, a radius naming the role and never the size: `chip` 4
 (an outlined chip, a skeleton bar, a checkbox), `control` 6 (a button, a field, a segmented
 control), `row` 6 (a menu item, a highlighted row), `card` 8 (a card, a toast), `popover` 8,
-`sheet` 8 (a sheet's leading corners), `dialog` 12, `full` (a dot, an avatar, the pill chip or
+`sheet` 8 (a sheet's leading corners, a centred sheet), `full` (a dot, an avatar, the pill chip or
 status, a switch). One hairline of 1 px draws region edges, row splits and field boundaries, as
 `--hairline`. The focus ring is `ring`, 2 px at a 2 px offset outside the box, so it never covers
 the control's own edge; inside a list it is drawn inward.
 
-Widths are a chip label's longest run, the lifted layers' ranges, the one measure for running
-text and the fixed regions of a frame, as `--container-*`: `chip-label` 18ch, `popover` 240, `toast` 360, `dialog` 440, `sheet` 640, `measure` 66ch; a layer never stretches to
+Widths are a short label's measure (a chip's label, a status word, a skeleton label's lane), the lifted layers' ranges, the one measure for running
+text and the fixed regions of a frame, as `--container-*`: `measure-short` 18ch, `popover` 240, `toast` 360, `dialog` 520, `sheet` 640, `measure` 66ch; a layer never stretches to
 its container. The regions: `sidebar` 240 (the Shell's places), `list` 360 and `pane` 320 (a
 split's list column and record pane), `column` 300 (a board column), `auth` 400 (the sign-in
-column). A width never takes a spacing role's or a size's name, since `w-*` reads `--spacing-*`
+column), `empty` 320 (an empty state's column). A width never takes a spacing role's or a size's name, since `w-*` reads `--spacing-*`
 first. A skeleton bar alone may take a fraction width (`w-1/4`, `w-1/3`, `w-1/2`, `w-2/3`,
 `w-3/4`) to stand at the length of the text it replaces: structural, never a token. Breakpoints are `--breakpoint-*`: `tablet` 768, `desktop` 1024, `wide` 1440, so
 `tablet:` and `desktop:` are the only responsive variants.
@@ -324,7 +323,7 @@ The canon binds every component either UI plugin ships:
    that owns its place (`title` by `Page` and `Screen`, `heading` by `Section` and `Card`,
    `caption` by `Chip` and `Kbd`, `code` by `Code`, `display` by `Stat`). `TEXT` keeps all seven
    roles as the table those owners draw from.
-2. A composed region is data: an act is an `Act`, a mark is a `Mark`, a place is a `PlaceSpec`, what the
+2. A composed region is data: an act is an `Act`, a row's marks a `StatusMark` and a `ChipMark`, a place is a `PlaceSpec`, what the
    shell switches between is a `Switcher` (the current name and avatar, the options as `MenuItem`s
    with their avatars, the act that makes a new one), never a node;
    the owning molecule renders it. An `Act` says what it does, never how it looks: `destructive`

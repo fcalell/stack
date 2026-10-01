@@ -97,7 +97,6 @@ export function Select<V extends string | null = string>({
 						{...trigger}
 						className={cn(
 							field({
-								kind: "text",
 								state: state.valid === false ? "error" : "rest",
 							}),
 							FIELD_GLYPH,

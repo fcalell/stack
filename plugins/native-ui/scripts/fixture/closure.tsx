@@ -583,21 +583,21 @@ export const closure = (
 		<Picker label="a" options={[]} onChange={noop} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
 		<Picker label="a" options={[]} onChange={noop} placeholderTextColorClassName="text-ink-body" />
-		<OptionList options={[]} onChange={noop} />
+		<OptionList options={[]} value={[]} onChange={noop} />
 		{/* @ts-expect-error: closed channel */}
-		<OptionList options={[]} onChange={noop} className="x" />
+		<OptionList options={[]} value={[]} onChange={noop} className="x" />
 		{/* @ts-expect-error: closed channel */}
-		<OptionList options={[]} onChange={noop} style={{ flex: 1 }} />
+		<OptionList options={[]} value={[]} onChange={noop} style={{ flex: 1 }} />
 		{/* @ts-expect-error: closed channel */}
-		<OptionList options={[]} onChange={noop} class="x" />
+		<OptionList options={[]} value={[]} onChange={noop} class="x" />
 		{/* @ts-expect-error: closed channel */}
-		<OptionList options={[]} onChange={noop} classList={{}} />
+		<OptionList options={[]} value={[]} onChange={noop} classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<OptionList options={[]} onChange={noop} colorClassName="text-ink-body" />
+		<OptionList options={[]} value={[]} onChange={noop} colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<OptionList options={[]} onChange={noop} selectionColorClassName="text-ink-body" />
+		<OptionList options={[]} value={[]} onChange={noop} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<OptionList options={[]} onChange={noop} placeholderTextColorClassName="text-ink-body" />
+		<OptionList options={[]} value={[]} onChange={noop} placeholderTextColorClassName="text-ink-body" />
 		<EmptyState sentence="a" />
 		{/* @ts-expect-error: closed channel */}
 		<EmptyState sentence="a" className="x" />

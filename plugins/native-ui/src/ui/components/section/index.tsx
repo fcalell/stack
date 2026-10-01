@@ -1,6 +1,5 @@
 import type { Act, IconAct, Part } from "@fcalell/ui-core/descriptors";
 import {
-	SECTION_ACT,
 	SECTION_HEAD,
 	SECTION_HEAD_ROW,
 	SECTION_TITLE,
@@ -30,9 +29,14 @@ import { Group } from "../group";
 import { Icon } from "../icon";
 import { IconButton } from "../icon-button";
 import { List } from "../list";
+import { Text } from "../text";
 
 const BOX = "min-w-0";
-const HEAD_ROW = "flex-row items-start";
+const HEAD_ROW = "flex-row items-center";
+// A labelled act that would squeeze the title column wraps under the title:
+// the column's basis is its own width, so the row breaks once the title, its
+// count and its description cannot stand beside the act.
+const WRAP = "flex-wrap";
 const TITLE_BLOCK = "grow min-w-0";
 const TITLE_LINE = "flex-row items-center min-w-0";
 const TOGGLE =
@@ -104,7 +108,13 @@ export function Section({
 			className={cn(section({ in: within }), BOX)}
 		>
 			<View className={SECTION_HEAD}>
-				<View className={cn(SECTION_HEAD_ROW, HEAD_ROW)}>
+				<View
+					className={cn(
+						SECTION_HEAD_ROW,
+						HEAD_ROW,
+						act && !("icon" in act) && WRAP,
+					)}
+				>
 					<View className={TITLE_BLOCK}>
 						{folded === undefined ? (
 							<View
@@ -133,12 +143,10 @@ export function Section({
 								)}
 							</Pressable>
 						)}
-						{description ? (
-							<RNText className={text({ role: "meta" })}>{description}</RNText>
-						) : null}
+						{description ? <Text role="meta">{description}</Text> : null}
 					</View>
 					{act ? (
-						<View className={cn(SECTION_ACT, ACT_SLOT)}>
+						<View className={ACT_SLOT}>
 							{"icon" in act ? (
 								<IconButton
 									icon={act.icon}

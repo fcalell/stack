@@ -1,8 +1,8 @@
 import type { StatusState } from "@fcalell/ui-core/descriptors";
 import {
+	PILL_ACT,
 	STATUS,
 	STATUS_LABEL,
-	STATUS_OPEN,
 	statusDot,
 } from "@fcalell/ui-core/variants";
 import { Pressable, Text as RNText, View } from "react-native";
@@ -44,8 +44,8 @@ export function Status({ state, label, onOpen }: StatusProps) {
 			onPress={onOpen}
 			className={cn(
 				STATUS,
-				STATUS_OPEN,
-				"flex-row items-center min-w-0 self-start active:bg-wash-press",
+				PILL_ACT,
+				"flex-row items-center min-w-0 self-start -mx-inside active:bg-wash-press",
 			)}
 		>
 			{inner}

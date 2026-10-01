@@ -11,6 +11,7 @@ import {
 	AVATAR_LABEL,
 	type Axes,
 	BANNER,
+	BANNER_GLYPH,
 	BUTTON,
 	BUTTON_LABEL,
 	CHECKBOX,
@@ -24,6 +25,8 @@ import {
 	ICON_BUTTON,
 	LINK,
 	type Matrix,
+	MENU,
+	MENU_GROUP,
 	MESSAGE,
 	OTP_BOX,
 	PLACE_ROW,
@@ -33,6 +36,8 @@ import {
 	ROW,
 	SECTION,
 	SEGMENT,
+	SEGMENT_LABEL,
+	SHEET_SIDE,
 	SKELETON,
 	SKELETON_ROW,
 	SPLIT_MAIN,
@@ -96,8 +101,13 @@ export const checkbox = build(CHECKBOX);
 export const row = build(ROW);
 export const tableRow = build(TABLE_ROW);
 export const segment = build(SEGMENT);
+export const segmentLabel = build(SEGMENT_LABEL);
 export const banner = build(BANNER);
+export const bannerGlyph = build(BANNER_GLYPH);
 export const toastState = build(TOAST_STATE);
+export const menu = build(MENU);
+export const menuGroup = build(MENU_GROUP);
+export const sheetSide = build(SHEET_SIDE);
 export const diffLine = build(DIFF_LINE);
 export const message = build(MESSAGE);
 export const placeRow = build(PLACE_ROW);
@@ -167,8 +177,13 @@ export const FAMILIES: readonly Family[] = [
 	family("ROW", ROW, row),
 	family("TABLE_ROW", TABLE_ROW, tableRow),
 	family("SEGMENT", SEGMENT, segment),
+	family("SEGMENT_LABEL", SEGMENT_LABEL, segmentLabel),
 	family("BANNER", BANNER, banner),
+	family("BANNER_GLYPH", BANNER_GLYPH, bannerGlyph),
 	family("TOAST_STATE", TOAST_STATE, toastState),
+	family("MENU", MENU, menu),
+	family("MENU_GROUP", MENU_GROUP, menuGroup),
+	family("SHEET_SIDE", SHEET_SIDE, sheetSide),
 	family("DIFF_LINE", DIFF_LINE, diffLine),
 	family("MESSAGE", MESSAGE, message),
 	family("PLACE_ROW", PLACE_ROW, placeRow),
@@ -227,12 +242,16 @@ export const COUNT_LABEL =
 export const SPINNER = "size-spinner";
 export const SPINNER_TRACK = "rounded-full border-2 opacity-30";
 export const SPINNER_ARC = "rounded-full border-2 border-t-transparent";
-// A status: its dot (`statusDot`) beside its word. With `onOpen` it is a
-// pill that pulls back by its own padding, so the dot and the word sit where
-// a static status's do.
+// A status: its dot (`statusDot`) beside its word, the word bounded as a
+// chip's label is, so a long one truncates before a row's title does. With
+// `onOpen` it is a `PILL_ACT`.
 export const STATUS = "gap-inside";
-export const STATUS_LABEL = "text-meta leading-meta font-normal text-ink-meta";
-export const STATUS_OPEN = "rounded-full px-inside -mx-inside min-h-target";
+export const STATUS_LABEL =
+	"max-w-measure-short text-meta leading-meta font-normal text-ink-meta";
+// An act drawn as its words in a pill with no boundary at rest: a status that
+// opens, a row's pick. It pulls back by its own padding on the side that
+// meets plain text (an overlay), so its words sit where static words do.
+export const PILL_ACT = "rounded-full px-inside min-h-target";
 // A removable chip's remove act: a round hit box the chip's height.
 export const CHIP_REMOVE_HIT = "min-h-chip min-w-chip rounded-full";
 export const FIELD_PLACEHOLDER = "text-ink-meta";
@@ -271,15 +290,52 @@ export const POPOVER =
 export const HAIRLINE = "border-edge";
 // The check or the dash on a checked box, at the meta glyph's size.
 export const CHECKBOX_MARK = "size-icon-meta text-on-accent";
-export const SEGMENTED_CONTROL = "rounded-control bg-group p-rows gap-rows";
+// A row's leading: one slot at the avatar's size, the dot or the glyph centred
+// in it, so the titles of a list share one x whatever leads them.
+export const ROW_LEADING = "size-avatar";
+// A two-line row's meta line: the meta keeps its room and the marks or the
+// trailing that cannot sit beside it wrap under it, the row growing.
+export const ROW_META_LINE = "gap-x-inside";
+// A definition row: its text and its end acts a fields gap apart, over the
+// row's own gap.
+export const DEFINITION_ROW = "gap-fields";
+// A definition row's act: the Link's standalone form, at the body line's type.
+export const DEFINITION_ROW_ACT = "text-body leading-body";
+// The segments' track: flush, so the control stands at a segment's height.
+export const SEGMENTED_CONTROL = "rounded-control bg-group";
+// A toast at its width, raised and floating, its end inset tighter for the
+// dismiss act's own box; its state is its glyph's ink (`toastState`).
 export const TOAST =
-	"rounded-card bg-raised border border-edge px-card py-pair gap-inside text-body leading-body text-ink-body";
-export const SHEET = "bg-raised rounded-t-sheet";
-export const SHEET_CENTERED = "rounded-dialog";
+	"w-toast pl-card pr-pair py-pair gap-inside rounded-card bg-raised border border-edge-raised shadow-float";
+// A banner's line (its glyph beside the rest) and the rest (the sentence
+// beside its act on the desktop, over it on touch).
+export const BANNER_ROW = "gap-inside";
+export const BANNER_MAIN = "gap-inside";
+// A sheet on touch, raised from the bottom edge; on the desktop a side sheet
+// (`sheetSide`) or a centred one at the dialog's width, its one region at
+// the card inset.
+export const SHEET =
+	"bg-raised border-t border-edge-raised rounded-t-sheet shadow-modal";
+export const SHEET_CENTERED =
+	"gap-fields w-dialog p-card bg-raised border border-edge-raised rounded-sheet shadow-modal";
 export const SCRIM = "bg-scrim";
+// A sheet's regions in every form but the centred one: the head over a
+// hairline (its row, then a blocked submit's reason on touch), the body at
+// the card inset, the foot under a hairline (its line centred beside the acts).
+export const SHEET_HEAD = "gap-pair px-card py-pair border-b border-edge";
+// The head's row: the lead act, the title over the description, the end act,
+// the title centred on the acts, which set the row's height.
+export const SHEET_HEAD_ROW = "gap-acts";
+export const SHEET_BODY = "p-card";
+export const SHEET_FOOT = "gap-acts px-card py-card border-t border-edge";
+// An empty state's mark: its glyph in a control-sized disc on the neutral
+// ground, in the ink of its place (meta, or danger for a failed query).
+export const EMPTY_MARK = "size-control rounded-full bg-fill-neutral";
+// The pending work's track in an action bar's place, its act beside it.
 export const PENDING_BAR =
-	"rounded-control bg-group min-h-control px-card gap-inside";
-export const PENDING_FILL = "rounded-control bg-accent-soft";
+	"rounded-control bg-group min-h-control px-control-x gap-inside";
+// The elapsed share: a line along the track's foot.
+export const PENDING_FILL = "h-track bg-ink-meta";
 export const METER_TRACK = "rounded-full bg-group";
 export const METER_FILL = "rounded-full bg-accent";
 export const DIFF_GUTTER = "text-ink-meta";
@@ -296,6 +352,9 @@ export const TABLE_CELL =
 // by the float inset, so no wash meets the sidebar's edge.
 export const SHELL_SIDEBAR = "w-sidebar bg-canvas border-r border-edge";
 export const SHELL_COLUMN = "bg-surface";
+// The column's banner slot: a `Banner` at the page inset, so its edge meets
+// the Place title's.
+export const SHELL_BANNER = "px-page pt-page";
 export const SWITCHER_SLOT = "p-float";
 export const SHELL_PLACES = "gap-rows p-float";
 // The shell on touch: the tab bar on the canvas under a hairline.
@@ -304,12 +363,13 @@ export const SHELL_TAB_BAR = "px-float bg-canvas border-t border-edge";
 // `PLACE_ROW` with the name at body 500.
 export const SWITCHER = "gap-inside min-h-target rounded-control";
 // The toasts' layer over the column (the desktop shell) or at a touch
-// screen's foot.
-export const TOASTS = "p-page";
+// screen's foot, each toast a pair apart.
+export const TOASTS = "p-page gap-pair";
 // A page, a Place's or a Screen's. On the desktop its title and acts share
 // the strip under a hairline; on touch the head insets a top bar (the
-// switcher or the back act, then the acts) over the title. The body insets
-// its sections at the page inset; a bleeding body draws none, and whatever
+// switcher or the back act, then the acts) over the title. The strip and the
+// top bar are bars at a set height, a floor as a row's. The body insets its
+// sections at the page inset; a bleeding body draws none, and whatever
 // stands first in it carries its own top inset.
 export const PAGE_STRIP = "gap-acts min-h-strip px-page border-b border-edge";
 export const PAGE_HEAD = "px-page";
@@ -320,24 +380,30 @@ export const PAGE_BODY = "gap-sections p-page";
 // covers it.
 export const FLOATING_ACT = "p-page";
 export const FLOATING_ACT_ROOM = "min-h-control";
+// A region scrolling in a bleeding body (a Split's list or record) keeps no
+// page inset under its last row, so its room is the act's height over the
+// page inset.
+export const FLOATING_ACT_FOOT = "pb-page";
 // A split: the list at its width inside a hairline, the pane at its width at
 // `wide` of its page. Below `tablet` the list stands alone and draws neither.
-export const SPLIT_LIST = "w-list py-inside px-list-x border-r border-edge";
+export const SPLIT_LIST = "w-list py-inside px-page border-r border-edge";
 export const SPLIT_PANE = "gap-sections w-pane p-page border-l border-edge";
 // A section's head (its rhythm is `SECTION`'s): the head row over a blocked
-// act's reason, the title line and the act a header tall. The fold toggle's
-// wash overhangs the title's start only (a web overlay pulls it back).
+// act's reason, the title centred on the act, which sets the row's height.
+// The fold toggle's wash overhangs the title's start only (a web overlay
+// pulls it back).
 export const SECTION_HEAD = "gap-pair";
 export const SECTION_HEAD_ROW = "gap-fields";
-export const SECTION_TITLE = "gap-inside min-h-header";
-export const SECTION_TOGGLE = "gap-inside min-h-header px-inside rounded-row";
-export const SECTION_ACT = "min-h-header";
+export const SECTION_TITLE = "gap-inside";
+export const SECTION_TOGGLE = "gap-inside min-h-target px-inside rounded-row";
 // A group: a hairline card on the surface drawing the hairline between its
 // rows once, so no row carries one. `divide-*` is a child selector uniwind
 // drops, so native draws that hairline per row.
 export const GROUP =
 	"rounded-card border border-edge bg-surface divide-y divide-edge";
-export const LIST = "gap-rows";
+// A list bleeds its rows' inset, so a row's leading meets the title over it
+// and its wash hangs into the inset around it.
+export const LIST = "gap-rows -mx-control-x";
 // A board's columns: the row scrolls sideways from the page inset (a web
 // overlay bleeds it to the Place's edge), each column at its width.
 export const COLUMNS = "gap-fields px-page";
@@ -369,7 +435,8 @@ export type ButtonAct = keyof (typeof BUTTON)["variants"]["act"];
 export type ButtonFit = keyof (typeof BUTTON)["variants"]["fit"];
 export type IconButtonFit = keyof (typeof ICON_BUTTON)["variants"]["fit"];
 export type LinkFit = keyof (typeof LINK)["variants"]["fit"];
-export type FieldKind = keyof (typeof FIELD)["variants"]["kind"];
+export type FieldKind = keyof (typeof FIELD_VALUE)["variants"]["kind"];
+export type FieldFit = keyof (typeof FIELD)["variants"]["fit"];
 export type FieldState = keyof (typeof FIELD)["variants"]["state"];
 export type OtpBoxState = keyof (typeof OTP_BOX)["variants"]["state"];
 export type RowState = keyof (typeof ROW)["variants"]["state"];
@@ -377,6 +444,8 @@ export type SwitchState = keyof (typeof SWITCH)["variants"]["state"];
 export type TableRowState = keyof (typeof TABLE_ROW)["variants"]["state"];
 export type CheckboxState = keyof (typeof CHECKBOX)["variants"]["state"];
 export type SegmentState = keyof (typeof SEGMENT)["variants"]["state"];
+export type RowLines = keyof (typeof ROW)["variants"]["lines"];
+export type SheetFit = keyof (typeof SHEET_SIDE)["variants"]["fit"];
 export type BannerKind = keyof (typeof BANNER)["variants"]["kind"];
 export type ToastState = keyof (typeof TOAST_STATE)["variants"]["state"];
 export type DiffLineKind = keyof (typeof DIFF_LINE)["variants"]["kind"];

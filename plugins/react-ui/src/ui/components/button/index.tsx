@@ -6,7 +6,6 @@ import {
 	type ButtonFit,
 	button,
 	buttonLabel,
-	text,
 } from "@fcalell/ui-core/variants";
 import { use, useEffect, useId, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
@@ -16,6 +15,7 @@ import { useTouched } from "../../lib/touched.ts";
 import { Count } from "../count/index.tsx";
 import { Icon } from "../icon/index.tsx";
 import { Spinner } from "../spinner/index.tsx";
+import { Reason } from "./reason.tsx";
 
 const STACK = "flex flex-col items-start gap-pair";
 const BOX = "relative inline-flex items-center justify-center";
@@ -138,14 +138,12 @@ export function Button({
 	);
 	// A host draws the reason on its own line.
 	if (!muted || host) return control;
-	// A blocked act holds its reason from the start, hidden until shown, so the
-	// press that shows it keeps the button mounted and focused.
 	return (
 		<div className={STACK}>
 			{control}
-			<p id={reason} hidden={!said} className={text({ role: "meta" })}>
+			<Reason id={reason} shown={said}>
 				{blocked}
-			</p>
+			</Reason>
 		</div>
 	);
 }

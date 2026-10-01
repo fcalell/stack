@@ -110,8 +110,6 @@ const SPACING_USE: Record<(typeof SPACING_ROLES)[number], string> = {
 	fields: "between fields",
 	sections: "between sections of a page",
 	page: "the page inset",
-	"list-x":
-		"a list's inline inset, so its rows' text meets the page title: the page inset less control-x",
 };
 
 const SIZE_USE: Record<(typeof SIZES)[number], string> = {
@@ -121,8 +119,7 @@ const SIZE_USE: Record<(typeof SIZES)[number], string> = {
 	row: "a one-line row",
 	"row-2": "a two-line row",
 	"row-setting": "a setting row: label and description beside a control",
-	header: "a table or section header",
-	strip: "a page header strip: a Place's or Screen's title and acts",
+	strip: "a page header bar: a Place's or Screen's title and acts",
 	target: "the least hit area of any interactive part",
 	dot: "a status or chip mark",
 	chip: "a chip's height",
@@ -149,8 +146,7 @@ const RADIUS_USE: Record<(typeof RADIUS_ROLES)[number], string> = {
 	row: "a menu item, a highlighted row",
 	card: "a card, a toast",
 	popover: "a popover, a menu",
-	sheet: "a sheet's leading corners",
-	dialog: "a dialog",
+	sheet: "a sheet's leading corners, a centred sheet",
 	full: "a dot, an avatar, the pill chip or status, a switch",
 };
 

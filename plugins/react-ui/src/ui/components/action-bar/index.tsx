@@ -6,7 +6,6 @@ import {
 	actionBar,
 	type ButtonAct,
 	type ButtonFit,
-	text,
 } from "@fcalell/ui-core/variants";
 import { use, useEffect, useId, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
@@ -15,6 +14,7 @@ import { useTouch } from "../../lib/media.ts";
 import { ReasonHostContext } from "../../lib/reason.ts";
 import { useTouched } from "../../lib/touched.ts";
 import { Button } from "../button/index.tsx";
+import { Reason } from "../button/reason.tsx";
 
 // End: the acts at their width at the container's end. Full: the acts share
 // the container's width at the field's height. On touch both stack one act
@@ -113,14 +113,13 @@ export function ActionBar({ acts, fit }: ActionBarProps) {
 			</div>
 			{acts.map((act, at) =>
 				act.blocked === undefined ? null : (
-					<p
+					<Reason
 						key={act.label}
 						id={`${reason}-${at}`}
-						hidden={!(touched || pressed.has(act.label))}
-						className={text({ role: "meta" })}
+						shown={touched || pressed.has(act.label)}
 					>
 						{act.blocked}
-					</p>
+					</Reason>
 				),
 			)}
 		</div>

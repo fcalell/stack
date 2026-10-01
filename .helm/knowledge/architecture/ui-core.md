@@ -76,9 +76,9 @@ pinned by the package's verify suite; this entry holds the architecture and its 
   `Status` with a family mode (a state and a data value are two concepts, so two names).
 - Density is a theme, and it moves three scales: the type roles (body 13 on
   the desktop set, 16 on touch, each role a ratio rounded to the pixel, its line box to the even
-  pixel), the twelve spacing roles (multiples of 4, one rung looser on touch except the float
-  and page insets and the acts gap; `list-x`, a list's inline inset, is derived as `page` less
-  `control-x`, so a list's row text meets the page title at either density) and the twenty-four sizes (control 32/44, field 38/48, target 24/44, the switch and
+  pixel), the eleven spacing roles (multiples of 4, one rung looser on touch except the float
+  and page insets and the acts gap; a list bleeds by `control-x`, so its rows' leading meets
+  the title over it at either density) and the twenty-four sizes (control 32/44, field 38/48, target 24/44, the switch and
   its derived thumb travel, the avatar, three icon sizes by the text beside them, the check,
   the slider track, the one-time-code box). `themeTokens` seeds the touch set on both platforms; the web
   overrides it with the desktop set in a `:root` rule in `@layer base` under a fine pointer at
@@ -181,15 +181,39 @@ prop on the molecule that draws it, never a key.
   (`ink-meta` idle, `ink-body` selected, the selected label at 500); its box carries the ink for the glyph inside it, as a
   labelled act's fill does, and the label repeats it because a native Text inherits none.
 - A row names what holds it: `ROW`'s `ground` axis is `list` (a list or a popover, the row
-  inset as a rounded wash) or `group` (edge to edge at the card's inset). A group draws the
+  inset as a rounded wash) or `group` (edge to edge at the card's inset), and its `lines` what
+  it stands for (`one`, `two` a title over its meta, `setting` a label over its description).
+  A list row is square on touch, where the list's inset is none and the wash would meet the
+  screen's edge: a density flip, so an overlay over `list`, never a cell. A group draws the
   hairline between its rows once (`GROUP`: `divide-y divide-edge`), so no row carries one. That is
   web-only: `divide-*` is a child selector, which uniwind's compiler drops, so native has no
   divider utility yet and draws the hairline per row.
+- A row's leading is one slot at the avatar's size (`ROW_LEADING`), the dot or glyph centred
+  in it, so the titles of a list share one x whatever leads them; its meta line (`ROW_META_LINE`,
+  a gap on the inline axis only) keeps the meta's room and wraps the marks under it. A short
+  label (a chip's, a status word, a skeleton label's lane) is bounded by the one width `measure-short` (18ch, the short sibling of `measure`).
+- A minimum height is the floor of something pressed (a control, a field, a target, a chip, a
+  row), the set height of a bar (`strip` 40 / 44: the page's desktop strip and its touch top
+  bar), an intrinsic size, or the height of what a part swaps with: `PENDING_BAR` an action
+  bar's (`min-h-control`), `TABLE_CELL` the `Input` that edits it in place (`min-h-field`).
+  Any other container takes its height from its content and padding through flex, its parts
+  centred on the tallest, never from a height copied from another component to line things up:
+  a section head or a sheet head is its act's height, a banner its line (or its act) inside
+  `py-pair`. Rejected: a `header` size, a minimum that made a title-only head as tall as one
+  with an act.
+- A touch Place draws its one floating act; in a Split it centres on the list by CSS alone: a
+  bleeding Place is the `group/page` whose layer, from `tablet` of the page and with a
+  `data-split` inside, narrows to `w-list` at the body's start (below `tablet` it spans whichever
+  region stands alone). The Place hands the act's room (its height over `pb-page`,
+  `FLOATING_ACT_FOOT`, since a region in a bleeding body keeps no page inset) to the Split, which
+  keeps it under the list and, where the record stands alone, under the record. Two mounted
+  copies of the act would each keep their own state, so the act is never duplicated.
 - A bar at a phone's bottom edge clears the home indicator with the web emit's `pb-safe`
   (`padding-bottom: env(safe-area-inset-bottom)`, non-zero under the document's
   `viewport-fit=cover`), an overlay the tab bar spells beside `SHELL_TAB_BAR`; native pads the
   same inset from `react-native-safe-area-context`.
-- A frame's fixed regions are widths (`sidebar`, `list`, `pane`, `column`, `auth`), so a region
+- A frame's fixed regions are widths (`sidebar`, `list`, `pane`, `column`, `auth`, `empty` an
+  empty state's column), so a region
   keeps its measure at any viewport. A skeleton bar alone takes a fraction width (`w-1/4` to
   `w-3/4`) to stand at its text's length: structural, a closed list in the web verify's overlay
   acceptance, never a token.
@@ -203,7 +227,7 @@ prop on the molecule that draws it, never a key.
 
 - The canon binds every component either UI plugin ships: one name per concept (`label`,
   `loading`, `onChange`, `onAct`, `act`, `blocked`, `sentence`), composed regions as typed
-  descriptors (`Act`, `Mark`, `PlaceSpec`, `Switcher`, `Option`, `OptionGroup`, `Part`, `FieldBinding`,
+  descriptors (`Act`, `StatusMark`, `ChipMark`, `PlaceSpec`, `Switcher`, `Option`, `OptionGroup`, `Part`, `FieldBinding`,
   `Confirmation`, `MenuItem`, `TableColumn`, `TableRow`) instead of node slots, and no
   `class` / `className` / `classList` / `style` prop. Laws live in the README under `## The
   canon`. An icon is an `IconName`, a closed type over Lucide's PascalCase
@@ -221,13 +245,24 @@ prop on the molecule that draws it, never a key.
   cell) and the states it has a form for, the same in both plugins; the showcase draws exactly those matrix cells and states. Each plugin's verify suite reads every component's exported props type
   against it with ts-morph, so a prop added on one platform, renamed, or a style channel reopened
   fails by name. A component's directory is `componentDir(name)` (`ListRow` → `list-row`).
-  A component draws another's place by composing its cells, never by redrawing them: `Select`,
-  the single-choice field over `options`, is the field box (`FIELD`) whose open list is a
-  popover (`POPOVER`) of rows (`ROW`); on native it opens the same option sheet as `Picker`.
+  A component draws another's place by composing that component, never by spelling its cells,
+  so a change to the component (its hit box, its ring, its press, its label) reaches every place
+  it stands. An approved entry declares `holds`, the families and constants of its own box, and
+  each plugin's verify fails a component that imports a held cell outside its holder's
+  directory. A popup trigger renders the icon act's base (`icon-button/base.tsx`, which the
+  `./components/*` export does not reach), taking the trigger's props through Base UI's
+  `render`; on native a trigger is a press, and renders `IconButton` itself. A cell no entry
+  holds is shared, spelled by each component that draws it: the type roles, the field box
+  (`Input`, `Select`, `TextArea`), the row, the skeleton, the page cells `Place` and `Screen`
+  share, and the column ground (`SHELL_COLUMN`) a Split's pane sheet stands on. `Select`, the
+  single-choice field over `options`, is the field box (`FIELD`) whose open list is a popover
+  (`POPOVER`) of rows (`ROW`); on native it opens the same option sheet as `Picker`.
 - A component that sits in more than one container takes `fit`, a closed enum read off its
-  matrix's `fit` axis (`IconFit`, `ButtonFit`, `IconButtonFit`, `LinkFit`, `ActionBarFit`),
+  matrix's `fit` axis (`IconFit`, `ButtonFit`, `IconButtonFit`, `LinkFit`, `ActionBarFit`,
+  `FieldFit`, `SheetFit`),
   defaulting to the matrix's default; the composing molecule sets it (a `Place` passes `bar` to
-  its strip's acts, a field's trailing act `field`, a `Form` under an auth column `full`) and a
+  its strip's acts, a field's trailing act `field`, a `Form` under an auth column `full`, a
+  `Split` its details sheet `pane`) and a
   call site may. `ACTION_BAR`'s two fits carry no cell: `end` and `full` differ in structure
   (an overlay) and in the `Button` fit the bar passes (`body`, `field`), and the matrix exists
   so the closed type is read off an axis like every other fit.

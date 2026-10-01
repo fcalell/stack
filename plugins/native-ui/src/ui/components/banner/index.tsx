@@ -18,9 +18,7 @@ export function Banner({ kind, sentence, act }: BannerProps) {
 			accessibilityRole="alert"
 			className={cn(banner({ kind: kind ?? "note" }), "flex-row items-center")}
 		>
-			<RNText
-				className={cn(banner({ kind: kind ?? "note" }), "flex-1 px-0 py-0")}
-			>
+			<RNText className={cn(text({ role: "body" }), "flex-1")}>
 				{sentence}
 			</RNText>
 			{act ? (

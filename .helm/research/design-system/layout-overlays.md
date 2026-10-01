@@ -40,7 +40,8 @@ React step picks the structure under the `touch:` variant or by breakpoint.
   start) are overlays: a region bleeds by a negative margin of the inset it pulls back.
 - Positioning is an overlay: the desktop toasts' layer (`absolute inset-0 flex items-end
   justify-end pointer-events-none`, each toast `pointer-events-auto`), the touch act layer, the
-  tab's count at `absolute top-0 left-full -translate-x-1/2` over the glyph, a menu anchored under
+  tab's count at `absolute top-0 left-full` beside the glyph's top corner (the tab holds its
+  label ahead of its glyph in a `flex-col-reverse` column, so its name reads label then count), a menu anchored under
   its trigger (`absolute right-0 top-full pt-pair`, or `left-0 right-0` on the switcher).
 - Context the layout molecules do not own, recorded on the boards for the composition: the banner
   in the Shell's slot and the toasts (the shared group's `Banner` and `Toast`); the switcher's and
@@ -48,7 +49,7 @@ React step picks the structure under the `touch:` variant or by breakpoint.
   + TEXT_STRONG {role: meta}`, the menu at `w-popover` under the more act; the shared group's
   `Menu`); the List's rows, the Group's setting, member and open rows (`ListRow`,
   `DefinitionRow`, the settings row); the Split's empty state (`EmptyState`) and the record's
-  heading in the main (`flex items-center min-h-header` over `TEXT {role: heading}`, the record's
+  heading in the main (`flex items-center` over `TEXT {role: heading}`, the record's
   own); a form's fields (`FormField`), the toolbar's search (`Input {kind: search}`, `grow`), its
   chips (`Chip`) and a Sheet's or a Dialog's footer inset.
 - The sidebar switcher's name is body at 500 (`TEXT {role: body} + TEXT_STRONG {role: body}`)
@@ -318,8 +319,8 @@ Board: `30-frames-desktop.dc.html` and `30-frames-touch.dc.html`.
 
 ### tab · idle
 
-- touch: `flex flex-col items-center justify-center gap-rows min-h-row rounded-row text-ink-meta min-w-0 grow basis-0`
-  - cell: `PLACE_TAB {state: idle}`; overlay: `flex flex-col items-center justify-center min-w-0 grow basis-0`
+- touch: `flex flex-col-reverse items-center justify-center gap-rows min-h-row rounded-row text-ink-meta min-w-0 grow basis-0`
+  - cell: `PLACE_TAB {state: idle}`; overlay: `flex flex-col-reverse items-center justify-center min-w-0 grow basis-0`
   - under: Shell holding a Place under tablet · the banner slot, the top bar (the switcher, one action, more; touch refreshes by the pull, so no Refresh act), the title on its own line, the one act floating over the body's end, the tab bar: four places and More, since eight places exceed five
 
 ### tab › label · idle
@@ -330,8 +331,8 @@ Board: `30-frames-desktop.dc.html` and `30-frames-touch.dc.html`.
 
 ### tab · selected
 
-- touch: `flex flex-col items-center justify-center gap-rows min-h-row rounded-row text-ink-body min-w-0 grow basis-0`
-  - cell: `PLACE_TAB {state: selected}`; overlay: `flex flex-col items-center justify-center min-w-0 grow basis-0`
+- touch: `flex flex-col-reverse items-center justify-center gap-rows min-h-row rounded-row text-ink-body min-w-0 grow basis-0`
+  - cell: `PLACE_TAB {state: selected}`; overlay: `flex flex-col-reverse items-center justify-center min-w-0 grow basis-0`
   - under: Shell holding a Place under tablet · the banner slot, the top bar (the switcher, one action, more; touch refreshes by the pull, so no Refresh act), the title on its own line, the one act floating over the body's end, the tab bar: four places and More, since eight places exceed five
 
 ### tab › label · selected
@@ -342,8 +343,8 @@ Board: `30-frames-desktop.dc.html` and `30-frames-touch.dc.html`.
 
 ### tab · idle focus
 
-- touch: `flex flex-col items-center justify-center gap-rows min-h-row rounded-row text-ink-meta min-w-0 grow basis-0 outline-2 -outline-offset-2 outline-ring`
-  - cell: `PLACE_TAB {state: idle}`; overlay: `flex flex-col items-center justify-center min-w-0 grow basis-0 outline-2 -outline-offset-2 outline-ring`
+- touch: `flex flex-col-reverse items-center justify-center gap-rows min-h-row rounded-row text-ink-meta min-w-0 grow basis-0 outline-2 -outline-offset-2 outline-ring`
+  - cell: `PLACE_TAB {state: idle}`; overlay: `flex flex-col-reverse items-center justify-center min-w-0 grow basis-0 outline-2 -outline-offset-2 outline-ring`
   - under: focus · the overlay ring, inset (a keyboard on a tablet)
 
 ### tab › label · idle focus
@@ -564,17 +565,17 @@ Board: `31-structure-desktop.dc.html` and `31-structure-touch.dc.html`.
 
 ### list · rest
 
-- desktop: `flex flex-col shrink-0 w-list py-inside px-list-x border-r border-edge`
-  - cell: `SPLIT_LIST`; overlay: `flex flex-col shrink-0`, below `tablet` of its page `page-max-tablet:w-full page-max-tablet:pt-page page-max-tablet:pb-0 page-max-tablet:border-r-0` (the list alone, still `px-list-x`, so a row's text meets the page title), `page-max-tablet:hidden` with a record open
+- desktop: `flex flex-col shrink-0 w-list py-inside px-page border-r border-edge`
+  - cell: `SPLIT_LIST`; overlay: `flex flex-col shrink-0`, below `tablet` of its page `page-max-tablet:w-full page-max-tablet:pt-page page-max-tablet:pb-0 page-max-tablet:border-r-0` (the list alone, still `px-page`, which its bleeding rows meet the page title across), `page-max-tablet:hidden` with a record open
   - under: Split · rest below wide, at the Shell's content width (1280 − 240 sidebar = 1040): list and main, the first record selected; the pane opens as a sheet below wide, from the Details act in the Place's strip (sidebar and strip are context)
 - touch: `flex flex-col`
-  - cell: none; overlay: `flex flex-col`; native `pt-page px-list-x` (the list alone; `list-x` is 0 on touch, so a row's own `control-x` meets the title)
+  - cell: none; overlay: `flex flex-col`; native `pt-page px-page` (the list alone, its bleeding rows meeting the title)
   - under: Split · rest and empty below tablet: one region at a time, the list is the screen, so the empty main is never drawn; a row opens the record as a pushed Screen
 
 ### list's List · rest
 
-- both densities: `flex flex-col gap-rows`
-  - cell: `LIST`; overlay: `flex flex-col`
+- both densities: `flex flex-col gap-rows -mx-control-x`
+  - cell: `LIST`; overlay: `flex flex-col` (the list bleeds by `control-x`, so its rows' leading meets the title over it)
   - under: Split · rest below wide, at the Shell's content width (1280 − 240 sidebar = 1040): list and main, the first record selected; the pane opens as a sheet below wide, from the Details act in the Place's strip (sidebar and strip are context)
 
 ### main · rest
@@ -619,8 +620,8 @@ Board: `31-structure-desktop.dc.html` and `31-structure-touch.dc.html`.
 
 ### head row · rest
 
-- both densities: `flex items-start gap-fields`
-  - cell: `SECTION_HEAD_ROW`; overlay: `flex items-start`
+- both densities: `flex items-center gap-fields`
+  - cell: `SECTION_HEAD_ROW`; overlay: `flex items-center`
   - under: Split · rest below wide, at the Shell's content width (1280 − 240 sidebar = 1040): list and main, the first record selected; the pane opens as a sheet below wide, from the Details act in the Place's strip (sidebar and strip are context)
 
 ### title block · rest
@@ -631,7 +632,7 @@ Board: `31-structure-desktop.dc.html` and `31-structure-touch.dc.html`.
 
 ### title block › title line · rest
 
-- both densities: `flex items-center gap-inside min-w-0 min-h-header`
+- both densities: `flex items-center gap-inside min-w-0`
   - cell: `SECTION_TITLE`; overlay: `flex items-center min-w-0`
   - under: Split · rest below wide, at the Shell's content width (1280 − 240 sidebar = 1040): list and main, the first record selected; the pane opens as a sheet below wide, from the Details act in the Place's strip (sidebar and strip are context)
 - both densities: `flex min-w-0`
@@ -658,7 +659,7 @@ Board: `31-structure-desktop.dc.html` and `31-structure-touch.dc.html`.
 
 ### fold toggle · rest
 
-- both densities: `flex items-center gap-inside grow min-w-0 min-h-header -ms-inside px-inside rounded-row text-start`
+- both densities: `flex items-center gap-inside grow min-w-0 -ms-inside px-inside rounded-row text-start`
   - cell: `SECTION_TOGGLE`; overlay: `flex items-center grow min-w-0 -ms-inside text-start`
   - under: Split · rest at wide (1440 and up): list, main and pane beside it, drawn at the board's 1232, so the main here is 550; at a 1440 viewport beside the 240 sidebar the main is ~518 (the frame is the Place's edge, its strip context)
 
@@ -676,7 +677,7 @@ Board: `31-structure-desktop.dc.html` and `31-structure-touch.dc.html`.
 
 ### fold toggle · hover
 
-- desktop: `flex items-center gap-inside grow min-w-0 min-h-header -ms-inside px-inside rounded-row text-start bg-wash-hover`
+- desktop: `flex items-center gap-inside grow min-w-0 -ms-inside px-inside rounded-row text-start bg-wash-hover`
   - cell: `SECTION_TOGGLE`; overlay: `flex items-center grow min-w-0 -ms-inside text-start bg-wash-hover`
   - under: Section · the fold toggle hover
 
@@ -694,7 +695,7 @@ Board: `31-structure-desktop.dc.html` and `31-structure-touch.dc.html`.
 
 ### fold toggle · focus
 
-- both densities: `flex items-center gap-inside grow min-w-0 min-h-header -ms-inside px-inside rounded-row text-start outline-2 outline-offset-2 outline-ring`
+- both densities: `flex items-center gap-inside grow min-w-0 -ms-inside px-inside rounded-row text-start outline-2 outline-offset-2 outline-ring`
   - cell: `SECTION_TOGGLE`; overlay: `flex items-center grow min-w-0 -ms-inside text-start outline-2 outline-offset-2 outline-ring`
   - under: Section · the fold toggle focus
 
@@ -712,7 +713,7 @@ Board: `31-structure-desktop.dc.html` and `31-structure-touch.dc.html`.
 
 ### fold toggle · active
 
-- both densities: `flex items-center gap-inside grow min-w-0 min-h-header -ms-inside px-inside rounded-row text-start bg-wash-press`
+- both densities: `flex items-center gap-inside grow min-w-0 -ms-inside px-inside rounded-row text-start bg-wash-press`
   - cell: `SECTION_TOGGLE`; overlay: `flex items-center grow min-w-0 -ms-inside text-start bg-wash-press`
   - under: Section · the fold toggle active (pressed)
 
@@ -730,8 +731,8 @@ Board: `31-structure-desktop.dc.html` and `31-structure-touch.dc.html`.
 
 ### act slot · rest
 
-- both densities: `flex items-center shrink-0 min-h-header`
-  - cell: `SECTION_ACT`; overlay: `flex items-center shrink-0`
+- both densities: `flex items-center shrink-0`
+  - cell: none; overlay: `flex items-center shrink-0`
   - under: Section · rest: title, count, description and act over a Group
 
 ### act · rest
@@ -839,8 +840,8 @@ Board: `31-structure-desktop.dc.html` and `31-structure-touch.dc.html`.
 
 ### list · rest
 
-- both densities: `flex flex-col gap-rows`
-  - cell: `LIST`; overlay: `flex flex-col`
+- both densities: `flex flex-col gap-rows -mx-control-x`
+  - cell: `LIST`; overlay: `flex flex-col` (the list bleeds by `control-x`, so its rows' leading meets the title over it)
   - under: Split · rest below wide, at the Shell's content width (1280 − 240 sidebar = 1040): list and main, the first record selected; the pane opens as a sheet below wide, from the Details act in the Place's strip (sidebar and strip are context)
 
 ### skeleton row · rest

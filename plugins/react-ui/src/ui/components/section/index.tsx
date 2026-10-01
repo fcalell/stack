@@ -2,7 +2,6 @@ import { Collapsible } from "@base-ui/react/collapsible";
 import { cn } from "@fcalell/ui-core/cn";
 import type { Act, IconAct, Part } from "@fcalell/ui-core/descriptors";
 import {
-	SECTION_ACT,
 	SECTION_HEAD,
 	SECTION_HEAD_ROW,
 	SECTION_TITLE,
@@ -29,15 +28,21 @@ import { LoadingContext } from "../../lib/loading.ts";
 import { ReasonHostContext } from "../../lib/reason.ts";
 import { useTouched } from "../../lib/touched.ts";
 import { Button } from "../button/index.tsx";
+import { Reason } from "../button/reason.tsx";
 import { Count } from "../count/index.tsx";
 import { Group } from "../group/index.tsx";
 import { Icon } from "../icon/index.tsx";
 import { IconButton } from "../icon-button/index.tsx";
 import { List } from "../list/index.tsx";
+import { Text } from "../text/index.tsx";
 
 const BOX = "flex flex-col min-w-0";
 const HEAD = "flex flex-col";
-const HEAD_ROW = "flex items-start";
+const HEAD_ROW = "flex items-center";
+// On touch a labelled act that would squeeze the title column wraps under the
+// title: the column's basis is its own width, so the row breaks once the
+// title, its count and its description cannot stand beside the act.
+const WRAP = "touch:flex-wrap";
 const TITLE_BLOCK = "flex flex-col grow min-w-0";
 const TITLE_LINE = "flex items-center min-w-0";
 const TITLE_FOLD = "flex min-w-0";
@@ -48,7 +53,6 @@ const TOGGLE =
 	"flex items-center grow min-w-0 -ms-inside text-start text-ink-meta hover:bg-wash-hover hover:text-ink-body active:bg-wash-press active:text-ink-body";
 const ACT_SLOT = "flex items-center shrink-0";
 const BODY = "flex flex-col";
-const REASON = "text-end";
 const COUNT_WAIT = "inline-flex shrink-0";
 const FIELD_WAIT = "flex flex-col";
 // The label line at the length of a field label.
@@ -150,7 +154,13 @@ export function Section({
 			className={cn(section({ in: within }), BOX)}
 		>
 			<div className={cn(SECTION_HEAD, HEAD)}>
-				<div className={cn(SECTION_HEAD_ROW, HEAD_ROW)}>
+				<div
+					className={cn(
+						SECTION_HEAD_ROW,
+						HEAD_ROW,
+						act && !("icon" in act) && WRAP,
+					)}
+				>
 					<div className={TITLE_BLOCK}>
 						{folded === undefined ? (
 							<Heading className={cn(SECTION_TITLE, TITLE_LINE)}>
@@ -167,12 +177,10 @@ export function Section({
 								</Collapsible.Trigger>
 							</Heading>
 						)}
-						{description ? (
-							<p className={text({ role: "meta" })}>{description}</p>
-						) : null}
+						{description ? <Text role="meta">{description}</Text> : null}
 					</div>
 					{act ? (
-						<div className={cn(SECTION_ACT, ACT_SLOT)}>
+						<div className={ACT_SLOT}>
 							{"icon" in act ? (
 								<IconButton
 									icon={act.icon}
@@ -196,13 +204,9 @@ export function Section({
 					) : null}
 				</div>
 				{blocked === undefined ? null : (
-					<p
-						id={reasonId}
-						hidden={!(pressed || touched)}
-						className={cn(text({ role: "meta" }), REASON)}
-					>
+					<Reason id={reasonId} shown={pressed || touched} end>
 						{blocked}
-					</p>
+					</Reason>
 				)}
 			</div>
 			{/* Kept mounted while folded and named on the toggle, so its `aria-controls` resolves in either state (Base UI names it only while open). A section without children draws no body. */}

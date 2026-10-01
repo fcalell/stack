@@ -1,17 +1,17 @@
-import type { IconName, MenuItem } from "@fcalell/ui-core/descriptors";
+import type { MenuItem } from "@fcalell/ui-core/descriptors";
 import {
 	HAIRLINE,
 	type IconButtonFit,
 	row,
 	text,
 } from "@fcalell/ui-core/variants";
-import { Ellipsis } from "lucide-react-native";
 import { useState } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
+import { Icon } from "../components/icon";
+import { IconButton } from "../components/icon-button";
 import { Sheet } from "../components/sheet";
-import { Circle } from "./circle";
 import { cn } from "./cn";
-import { GLYPHS, Glyph } from "./glyph";
+import { Ink } from "./ink";
 
 export type MenuItems = MenuItem[] | MenuItem[][];
 
@@ -76,8 +76,8 @@ export function MenuCircle({
 	const [open, setOpen] = useState(false);
 	return (
 		<>
-			<Circle
-				icon={Ellipsis}
+			<IconButton
+				icon="Ellipsis"
 				label={label}
 				fit={fit}
 				onAct={() => setOpen(true)}
@@ -112,7 +112,11 @@ export function MenuRow({
 				"flex-row items-center active:bg-wash-press",
 			)}
 		>
-			{item.icon ? <ItemGlyph name={item.icon} /> : null}
+			{item.icon ? (
+				<Ink.Provider value="ink-meta">
+					<Icon name={item.icon} />
+				</Ink.Provider>
+			) : null}
 			<View className="min-w-0 flex-1 gap-pair">
 				<RNText
 					numberOfLines={1}
@@ -130,8 +134,4 @@ export function MenuRow({
 			</View>
 		</Pressable>
 	);
-}
-
-function ItemGlyph({ name }: { name: IconName }) {
-	return <Glyph icon={GLYPHS[name]} tone="ink-meta" />;
 }

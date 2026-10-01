@@ -3,7 +3,7 @@ import {
 	statusContentTone,
 	TOAST,
 	type ToastState,
-	toastState,
+	text,
 } from "@fcalell/ui-core/variants";
 import {
 	CircleAlert,
@@ -30,15 +30,14 @@ export interface ToastProps extends Closed {
 	act?: Act;
 }
 
-// The dark pill above the bar. Client-owned, so never an undo. With `state`
-// it reports how an act ended: the state's glyph on its soft fill. `toast()`
-// queues one; the Shell renders the queue.
+// A raised toast above the bar. Client-owned, so never an undo. With
+// `state` it reports how an act ended: the state's glyph in its ink.
+// `toast()` queues one; the Shell renders the queue.
 export function Toast({ sentence, state, act }: ToastProps) {
-	const pill = cn(TOAST, state && toastState({ state }));
 	return (
 		<View
 			accessibilityLiveRegion="polite"
-			className={cn(pill, "flex-row items-center self-center shadow-float")}
+			className={cn(TOAST, "flex-row items-center self-center max-w-full")}
 		>
 			{state ? (
 				<Glyph
@@ -47,14 +46,16 @@ export function Toast({ sentence, state, act }: ToastProps) {
 					size={16}
 				/>
 			) : null}
-			<RNText className={cn(pill, "shrink px-0 py-0")}>{sentence}</RNText>
+			<RNText className={cn(text({ role: "body" }), "shrink")}>
+				{sentence}
+			</RNText>
 			{act ? (
 				<Pressable
 					accessibilityRole="button"
 					onPress={act.onAct}
 					className="min-h-11 justify-center"
 				>
-					<RNText className={cn(pill, "px-0 py-0 font-medium")}>
+					<RNText className={cn(text({ role: "body" }), "font-medium")}>
 						{act.label}
 					</RNText>
 				</Pressable>

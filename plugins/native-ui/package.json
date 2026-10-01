@@ -10,7 +10,6 @@
 		},
 		"./app": "./src/ui/app/index.tsx",
 		"./components/*": "./src/ui/components/*/index.tsx",
-		"./lib/circle": "./src/ui/lib/circle.tsx",
 		"./lib/glyph": "./src/ui/lib/glyph.tsx",
 		"./lib/hosts": "./src/ui/lib/hosts.tsx",
 		"./lib/loading": "./src/ui/lib/loading.tsx",

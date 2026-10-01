@@ -223,7 +223,6 @@ rounded:
   card: "8px"
   popover: "8px"
   sheet: "8px"
-  dialog: "12px"
   full: "9999px"
 spacing:
   inside: "6px"
@@ -237,14 +236,12 @@ spacing:
   fields: "16px"
   sections: "32px"
   page: "24px"
-  list-x: "12px"
   control: "32px"
   control-compact: "28px"
   field: "38px"
   row: "32px"
   row-2: "48px"
   row-setting: "64px"
-  header: "32px"
   strip: "40px"
   target: "24px"
   dot: "6px"
@@ -730,27 +727,19 @@ components:
   chip-label-neutral-dark:
     typography: "{typography.caption}"
     textColor: "{colors.chip-neutral-ink-dark}"
-  field-text:
+  field-form:
     rounded: "{rounded.control}"
     backgroundColor: "{colors.surface}"
     height: "{spacing.field}"
-  field-text-dark:
+  field-form-dark:
     rounded: "{rounded.control}"
     backgroundColor: "{colors.surface-dark}"
     height: "{spacing.field}"
-  field-code:
-    rounded: "{rounded.control}"
-    backgroundColor: "{colors.surface}"
-    height: "{spacing.field}"
-  field-code-dark:
-    rounded: "{rounded.control}"
-    backgroundColor: "{colors.surface-dark}"
-    height: "{spacing.field}"
-  field-search:
+  field-bar:
     rounded: "{rounded.control}"
     backgroundColor: "{colors.surface}"
     height: "{spacing.control-compact}"
-  field-search-dark:
+  field-bar-dark:
     rounded: "{rounded.control}"
     backgroundColor: "{colors.surface-dark}"
     height: "{spacing.control-compact}"
@@ -918,6 +907,15 @@ components:
     width: "{spacing.check}"
     rounded: "{rounded.chip}"
     backgroundColor: "{colors.toggle-on-dark}"
+  row-one:
+    height: "{spacing.row}"
+    rounded: "{rounded.row}"
+  row-two:
+    height: "{spacing.row-2}"
+    rounded: "{rounded.row}"
+  row-setting:
+    height: "{spacing.row-setting}"
+    rounded: "{rounded.row}"
   row-rest:
     height: "{spacing.row}"
     rounded: "{rounded.row}"
@@ -945,6 +943,14 @@ components:
     height: "{spacing.row}"
     backgroundColor: "{colors.wash-selected-dark}"
     rounded: "{rounded.row}"
+  row-selected-hover:
+    height: "{spacing.row}"
+    backgroundColor: "{colors.wash-selected-hover}"
+    rounded: "{rounded.row}"
+  row-selected-hover-dark:
+    height: "{spacing.row}"
+    backgroundColor: "{colors.wash-selected-hover-dark}"
+    rounded: "{rounded.row}"
   row-list:
     height: "{spacing.row}"
     rounded: "{rounded.row}"
@@ -957,73 +963,101 @@ components:
   segment-idle:
     rounded: "{rounded.control}"
     height: "{spacing.control-compact}"
-    typography: "{typography.body}"
     textColor: "{colors.ink-meta}"
+    typography: "{typography.body}"
   segment-idle-dark:
     rounded: "{rounded.control}"
     height: "{spacing.control-compact}"
-    typography: "{typography.body}"
     textColor: "{colors.ink-meta-dark}"
+    typography: "{typography.body}"
   segment-selected:
     rounded: "{rounded.control}"
     height: "{spacing.control-compact}"
-    typography: "{typography.body}"
-    backgroundColor: "{colors.surface}"
+    backgroundColor: "{colors.wash-selected}"
     textColor: "{colors.ink-body}"
+    typography: "{typography.body}"
   segment-selected-dark:
     rounded: "{rounded.control}"
     height: "{spacing.control-compact}"
-    typography: "{typography.body}"
-    backgroundColor: "{colors.surface-dark}"
+    backgroundColor: "{colors.wash-selected-dark}"
     textColor: "{colors.ink-body-dark}"
+    typography: "{typography.body}"
+  segment-selected-hover:
+    rounded: "{rounded.control}"
+    height: "{spacing.control-compact}"
+    backgroundColor: "{colors.wash-selected-hover}"
+    textColor: "{colors.ink-body}"
+    typography: "{typography.body}"
+  segment-selected-hover-dark:
+    rounded: "{rounded.control}"
+    height: "{spacing.control-compact}"
+    backgroundColor: "{colors.wash-selected-hover-dark}"
+    textColor: "{colors.ink-body-dark}"
+    typography: "{typography.body}"
   banner-note:
-    rounded: "{rounded.card}"
+    rounded: "{rounded.control}"
     typography: "{typography.body}"
     textColor: "{colors.ink-body}"
     backgroundColor: "{colors.accent-soft}"
   banner-note-dark:
-    rounded: "{rounded.card}"
+    rounded: "{rounded.control}"
     typography: "{typography.body}"
     textColor: "{colors.ink-body-dark}"
     backgroundColor: "{colors.accent-soft-dark}"
   banner-warn:
-    rounded: "{rounded.card}"
+    rounded: "{rounded.control}"
     typography: "{typography.body}"
     textColor: "{colors.ink-body}"
     backgroundColor: "{colors.warn-soft}"
   banner-warn-dark:
-    rounded: "{rounded.card}"
+    rounded: "{rounded.control}"
     typography: "{typography.body}"
     textColor: "{colors.ink-body-dark}"
     backgroundColor: "{colors.warn-soft-dark}"
   banner-danger:
-    rounded: "{rounded.card}"
+    rounded: "{rounded.control}"
     typography: "{typography.body}"
     textColor: "{colors.ink-body}"
     backgroundColor: "{colors.danger-soft}"
   banner-danger-dark:
-    rounded: "{rounded.card}"
+    rounded: "{rounded.control}"
     typography: "{typography.body}"
     textColor: "{colors.ink-body-dark}"
     backgroundColor: "{colors.danger-soft-dark}"
+  banner-glyph-note:
+    textColor: "{colors.accent-ink}"
+  banner-glyph-note-dark:
+    textColor: "{colors.accent-ink-dark}"
+  banner-glyph-warn:
+    textColor: "{colors.warn}"
+  banner-glyph-warn-dark:
+    textColor: "{colors.warn-dark}"
+  banner-glyph-danger:
+    textColor: "{colors.danger}"
+  banner-glyph-danger-dark:
+    textColor: "{colors.danger-dark}"
   toast-state-done:
-    backgroundColor: "{colors.ok-soft}"
-    textColor: "{colors.ink-body}"
+    textColor: "{colors.ok}"
   toast-state-done-dark:
-    backgroundColor: "{colors.ok-soft-dark}"
-    textColor: "{colors.ink-body-dark}"
+    textColor: "{colors.ok-dark}"
   toast-state-attention:
-    backgroundColor: "{colors.warn-soft}"
-    textColor: "{colors.ink-body}"
+    textColor: "{colors.warn}"
   toast-state-attention-dark:
-    backgroundColor: "{colors.warn-soft-dark}"
-    textColor: "{colors.ink-body-dark}"
+    textColor: "{colors.warn-dark}"
   toast-state-failed:
-    backgroundColor: "{colors.danger-soft}"
-    textColor: "{colors.ink-body}"
+    textColor: "{colors.danger}"
   toast-state-failed-dark:
-    backgroundColor: "{colors.danger-soft-dark}"
-    textColor: "{colors.ink-body-dark}"
+    textColor: "{colors.danger-dark}"
+  menu-sheet:
+    padding: "{spacing.float}"
+  sheet-side-form:
+    backgroundColor: "{colors.raised}"
+  sheet-side-form-dark:
+    backgroundColor: "{colors.raised-dark}"
+  sheet-side-pane:
+    backgroundColor: "{colors.raised}"
+  sheet-side-pane-dark:
+    backgroundColor: "{colors.raised-dark}"
   diff-line-context:
     typography: "{typography.code}"
     textColor: "{colors.ink-body}"
@@ -1179,6 +1213,16 @@ components:
     height: "{spacing.field}"
     rounded: "{rounded.control}"
     backgroundColor: "{colors.skeleton-dark}"
+  skeleton-check:
+    height: "{spacing.check}"
+    width: "{spacing.check}"
+    rounded: "{rounded.chip}"
+    backgroundColor: "{colors.skeleton}"
+  skeleton-check-dark:
+    height: "{spacing.check}"
+    width: "{spacing.check}"
+    rounded: "{rounded.chip}"
+    backgroundColor: "{colors.skeleton-dark}"
   skeleton-row-two-line:
     height: "{spacing.row-2}"
   skeleton-row-setting:
@@ -1219,10 +1263,22 @@ components:
   count-label-dark:
     typography: "{typography.caption}"
     textColor: "{colors.ink-meta-dark}"
+  definition-row-act:
+    typography: "{typography.body}"
   diff-gutter:
     textColor: "{colors.ink-meta}"
   diff-gutter-dark:
     textColor: "{colors.ink-meta-dark}"
+  empty-mark:
+    height: "{spacing.control}"
+    width: "{spacing.control}"
+    rounded: "{rounded.full}"
+    backgroundColor: "{colors.fill-neutral}"
+  empty-mark-dark:
+    height: "{spacing.control}"
+    width: "{spacing.control}"
+    rounded: "{rounded.full}"
+    backgroundColor: "{colors.fill-neutral-dark}"
   field-glyph:
     textColor: "{colors.ink-meta}"
   field-glyph-dark:
@@ -1286,15 +1342,18 @@ components:
     backgroundColor: "{colors.group-dark}"
     height: "{spacing.control}"
   pending-fill:
-    rounded: "{rounded.control}"
-    backgroundColor: "{colors.accent-soft}"
+    height: "{spacing.track}"
+    backgroundColor: "{colors.ink-meta}"
   pending-fill-dark:
-    rounded: "{rounded.control}"
-    backgroundColor: "{colors.accent-soft-dark}"
+    height: "{spacing.track}"
+    backgroundColor: "{colors.ink-meta-dark}"
   picker-empty:
     textColor: "{colors.ink-meta}"
   picker-empty-dark:
     textColor: "{colors.ink-meta-dark}"
+  pill-act:
+    rounded: "{rounded.full}"
+    height: "{spacing.target}"
   popover:
     padding: "{spacing.float}"
     backgroundColor: "{colors.raised}"
@@ -1303,31 +1362,36 @@ components:
     padding: "{spacing.float}"
     backgroundColor: "{colors.raised-dark}"
     rounded: "{rounded.popover}"
+  row-leading:
+    height: "{spacing.avatar}"
+    width: "{spacing.avatar}"
   scrim:
     backgroundColor: "{colors.scrim}"
   scrim-dark:
     backgroundColor: "{colors.scrim-dark}"
-  section-act:
-    height: "{spacing.header}"
-  section-title:
-    height: "{spacing.header}"
   section-toggle:
-    height: "{spacing.header}"
+    height: "{spacing.target}"
     rounded: "{rounded.row}"
   segmented-control:
     rounded: "{rounded.control}"
     backgroundColor: "{colors.group}"
-    padding: "{spacing.rows}"
   segmented-control-dark:
     rounded: "{rounded.control}"
     backgroundColor: "{colors.group-dark}"
-    padding: "{spacing.rows}"
   sheet:
     backgroundColor: "{colors.raised}"
   sheet-dark:
     backgroundColor: "{colors.raised-dark}"
+  sheet-body:
+    padding: "{spacing.card}"
   sheet-centered:
-    rounded: "{rounded.dialog}"
+    padding: "{spacing.card}"
+    backgroundColor: "{colors.raised}"
+    rounded: "{rounded.sheet}"
+  sheet-centered-dark:
+    padding: "{spacing.card}"
+    backgroundColor: "{colors.raised-dark}"
+    rounded: "{rounded.sheet}"
   shell-column:
     backgroundColor: "{colors.surface}"
   shell-column-dark:
@@ -1397,9 +1461,6 @@ components:
   status-label-dark:
     typography: "{typography.meta}"
     textColor: "{colors.ink-meta-dark}"
-  status-open:
-    rounded: "{rounded.full}"
-    height: "{spacing.target}"
   switcher:
     height: "{spacing.target}"
     rounded: "{rounded.control}"
@@ -1412,13 +1473,9 @@ components:
   toast:
     rounded: "{rounded.card}"
     backgroundColor: "{colors.raised}"
-    typography: "{typography.body}"
-    textColor: "{colors.ink-body}"
   toast-dark:
     rounded: "{rounded.card}"
     backgroundColor: "{colors.raised-dark}"
-    typography: "{typography.body}"
-    textColor: "{colors.ink-body-dark}"
   toasts:
     padding: "{spacing.page}"
 ---
@@ -1566,7 +1623,6 @@ Spacing roles are multiples of a 4 px base, picked per density, named by what th
 | `fields` | 16px | 24px | between fields |
 | `sections` | 32px | 40px | between sections of a page |
 | `page` | 24px | 16px | the page inset |
-| `list-x` | 12px | 0px | a list's inline inset, so its rows' text meets the page title: the page inset less control-x |
 
 Sizes are heights and squares in the same namespace. Density is a theme and never a knob: the web draws the desktop set where the primary pointer is fine and the viewport is at least `tablet` wide (768px) and the touch set everywhere else, native draws the touch set, and a `data-density` attribute on the web root pins either. A molecule whose structure follows density (an action bar at natural width on the desktop, full width on touch) reads it through the web's `touch:` variant, the same rule (a `data-density="touch"` pin, or no `desktop` pin where the pointer is not fine or the viewport is narrower than `tablet`); native is the touch set, so its molecules draw the touch structure with no variant. Every touch target is at least 44px; on the desktop every interactive part keeps a 24px hit area whatever it draws.
 
@@ -1578,8 +1634,7 @@ Sizes are heights and squares in the same namespace. Density is a theme and neve
 | `row` | 32px | 48px | a one-line row |
 | `row-2` | 48px | 64px | a two-line row |
 | `row-setting` | 64px | 72px | a setting row: label and description beside a control |
-| `header` | 32px | 44px | a table or section header |
-| `strip` | 40px | 44px | a page header strip: a Place's or Screen's title and acts |
+| `strip` | 40px | 44px | a page header bar: a Place's or Screen's title and acts |
 | `target` | 24px | 44px | the least hit area of any interactive part |
 | `dot` | 6px | 8px | a status or chip mark |
 | `chip` | 20px | 24px | a chip's height |
@@ -1599,7 +1654,7 @@ Sizes are heights and squares in the same namespace. Density is a theme and neve
 | `otp` | 44px | 48px | a one-time-code box's largest side; the box is square and shrinks with its row |
 | `text-area` | 60px | 72px | a text area's least value height: three body line boxes |
 
-Widths of lifted layers, never stretched to their container, and of a frame's fixed regions: `chip-label` 18ch, `popover` 240px, `toast` 360px, `dialog` 440px, `sheet` 640px, `sidebar` 240px, `list` 360px, `pane` 320px, `column` 300px, `auth` 400px. Breakpoints: `tablet` 768px, `desktop` 1024px, `wide` 1440px; they are the only responsive variants, of the viewport (`tablet:`) and, on the web, of a page's width (`page-tablet:`, `page-max-tablet:`), by which a Split decides its regions.
+Widths of lifted layers, never stretched to their container, and of a frame's fixed regions: `measure-short` 18ch, `popover` 240px, `toast` 360px, `dialog` 520px, `sheet` 640px, `sidebar` 240px, `list` 360px, `pane` 320px, `column` 300px, `auth` 400px, `empty` 320px. Breakpoints: `tablet` 768px, `desktop` 1024px, `wide` 1440px; they are the only responsive variants, of the viewport (`tablet:`) and, on the web, of a page's width (`page-tablet:`, `page-max-tablet:`), by which a Split decides its regions.
 
 ## Elevation & Depth
 
@@ -1614,8 +1669,7 @@ A card at rest has a hairline and no shadow. Two levels lift a layer, each per m
 | `row` | 6px | a menu item, a highlighted row |
 | `card` | 8px | a card, a toast |
 | `popover` | 8px | a popover, a menu |
-| `sheet` | 8px | a sheet's leading corners |
-| `dialog` | 12px | a dialog |
+| `sheet` | 8px | a sheet's leading corners, a centred sheet |
 | `full` | 9999px | a dot, an avatar, the pill chip or status, a switch |
 
 ## Components
@@ -1629,7 +1683,7 @@ The front matter's components are the matrix cells: one entry per axis value of 
 | `Button` | atom | `BUTTON`, `BUTTON_LABEL`, `ICON.fit.control`, `COUNT`, `COUNT_LABEL` | rest, hover, focus, active, disabled, loading |
 | `IconButton` | atom | `ICON_BUTTON` | rest, hover, focus, active |
 | `Count` | atom | `COUNT`, `COUNT_LABEL` | rest |
-| `Status` | atom | `STATUS`, `STATUS_DOT`, `STATUS_LABEL`, `STATUS_OPEN` | rest, hover, focus, active |
+| `Status` | atom | `STATUS`, `STATUS_DOT`, `STATUS_LABEL`, `PILL_ACT` | rest, hover, focus, active |
 | `Chip` | atom | `CHIP`, `CHIP_LABEL`, `CHIP_REMOVE_HIT` | rest, hover, focus, active |
 | `Input` | atom | `FIELD`, `FIELD_VALUE`, `FIELD_PLACEHOLDER`, `FIELD_UNIT`, `FIELD_GLYPH` | rest, hover, focus, disabled, error |
 | `TextArea` | atom | `TEXT_AREA`, `TEXT_AREA_BUDGET`, `TEXT_AREA_VALUE`, `FIELD_VALUE`, `FIELD_PLACEHOLDER` | rest, hover, focus, disabled, error |
@@ -1641,31 +1695,31 @@ The front matter's components are the matrix cells: one entry per axis value of 
 | `Spinner` | atom | `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC` | rest |
 | `Avatar` | atom | `AVATAR`, `AVATAR_LABEL` | rest |
 | `Link` | atom | `LINK` | rest, hover, focus, active |
-| `Place` | layout | `PAGE_STRIP`, `PAGE_HEAD`, `PAGE_TOP_BAR`, `TEXT.role.title`, `PAGE_BODY`, `FLOATING_ACT`, `FLOATING_ACT_ROOM`, `BUTTON.act.primary`, `BUTTON.fit.bar`, `BUTTON.fit.body`, `BUTTON_LABEL.act.primary`, `ICON_BUTTON.fit.bar`, `ICON_BUTTON.fit.body` | rest |
+| `Place` | layout | `PAGE_STRIP`, `PAGE_HEAD`, `PAGE_TOP_BAR`, `TEXT.role.title`, `PAGE_BODY`, `FLOATING_ACT`, `FLOATING_ACT_ROOM`, `FLOATING_ACT_FOOT`, `BUTTON.act.primary`, `BUTTON.fit.bar`, `BUTTON.fit.body`, `BUTTON_LABEL.act.primary`, `ICON_BUTTON.fit.bar`, `ICON_BUTTON.fit.body` | rest |
 | `Screen` | layout | `PAGE_STRIP`, `PAGE_HEAD`, `PAGE_TOP_BAR`, `TEXT.role.title`, `PAGE_BODY`, `TOASTS`, `ICON_BUTTON.fit.bar`, `ICON_BUTTON.fit.body` | rest |
-| `Split` | layout | `SPLIT_LIST`, `SPLIT_MAIN`, `SPLIT_PANE`, `ICON_BUTTON.fit.bar` | rest, empty |
-| `Section` | layout | `SECTION`, `SECTION_HEAD`, `SECTION_HEAD_ROW`, `SECTION_TITLE`, `SECTION_TOGGLE`, `SECTION_ACT`, `TEXT.role.heading`, `TEXT.role.meta`, `ICON.fit.body`, `COUNT`, `COUNT_LABEL`, `BUTTON.act.secondary`, `BUTTON.act.destructive`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.secondary`, `BUTTON_LABEL.act.destructive`, `ICON_BUTTON.fit.bar`, `SKELETON.kind.count`, `SKELETON.kind.line`, `SKELETON.kind.field`, `SKELETON_ROW.kind.field` | rest, hover, focus, active, disabled, loading |
+| `Split` | layout | `SPLIT_LIST`, `SPLIT_MAIN`, `SPLIT_PANE`, `ICON_BUTTON.fit.bar`, `SHELL_COLUMN` | rest, empty |
+| `Section` | layout | `SECTION`, `SECTION_HEAD`, `SECTION_HEAD_ROW`, `SECTION_TITLE`, `SECTION_TOGGLE`, `TEXT.role.heading`, `TEXT.role.meta`, `ICON.fit.body`, `COUNT`, `COUNT_LABEL`, `BUTTON.act.secondary`, `BUTTON.act.destructive`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.secondary`, `BUTTON_LABEL.act.destructive`, `ICON_BUTTON.fit.bar`, `SKELETON.kind.count`, `SKELETON.kind.line`, `SKELETON.kind.field`, `SKELETON_ROW.kind.field` | rest, hover, focus, active, disabled, loading |
 | `Group` | layout | `GROUP`, `SKELETON_ROW.kind.setting`, `SKELETON_LINES`, `SKELETON.kind.line`, `SKELETON.kind.switch` | rest, loading |
 | `List` | layout | `LIST`, `SKELETON_ROW.kind.two-line`, `SKELETON_LINES`, `SKELETON.kind.line`, `SKELETON.kind.avatar` | rest, loading |
 | `Form` | layout | `FORM`, `FORM_FOOT` | rest, loading |
 | `Toolbar` | layout | `TOOLBAR`, `TOOLBAR_ROW`, `TOOLBAR_CHIPS` | rest |
-| `ActionBar` | layout | `ACTION_BAR`, `ACTION_BAR_ACTS`, `TEXT.role.meta`, `BUTTON.act.primary`, `BUTTON.act.danger`, `BUTTON.act.secondary`, `BUTTON.act.destructive`, `BUTTON.fit.body`, `BUTTON.fit.field`, `BUTTON_LABEL` | rest, loading, disabled |
+| `ActionBar` | layout | `ACTION_BAR`, `ACTION_BAR_ACTS`, `TEXT.role.meta`, `BUTTON.act.primary`, `BUTTON.act.danger`, `BUTTON.act.secondary`, `BUTTON.act.destructive`, `BUTTON.fit.body`, `BUTTON.fit.field`, `BUTTON_LABEL.act.primary`, `BUTTON_LABEL.act.danger`, `BUTTON_LABEL.act.secondary`, `BUTTON_LABEL.act.destructive` | rest, loading, disabled |
 | `Columns` | layout | `COLUMNS`, `COLUMN` | rest |
-| `Shell` | layout | `SHELL_SIDEBAR`, `SHELL_COLUMN`, `SWITCHER_SLOT`, `SWITCHER`, `SHELL_PLACES`, `PLACE_ROW`, `PLACE_ROW_GLYPH`, `SHELL_TAB_BAR`, `PLACE_TAB`, `PLACE_TAB_LABEL`, `TOASTS`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `ICON.fit.body`, `ICON.fit.control`, `COUNT`, `COUNT_LABEL` | rest, hover, focus, active, selected |
-| `ListRow` | shared | `ROW` | rest, hover, focus, active, disabled, selected |
-| `DefinitionRow` | shared | `ROW` | rest, hover, focus, active, disabled |
-| `FormField` | shared | none | rest, error |
-| `ItemHeader` | shared | `STATUS` | rest, loading |
-| `SegmentedControl` | shared | `SEGMENT` | rest, hover, focus, active, selected |
-| `Sheet` | shared | none | rest, disabled, loading |
-| `Picker` | shared | `FIELD`, `ROW` | rest, hover, focus, active, selected |
-| `Menu` | shared | none | rest, hover, focus, active |
-| `OptionList` | shared | `CHECKBOX`, `ROW` | rest, hover, focus, active, loading, selected |
-| `EmptyState` | shared | none | rest |
-| `QueryBoundary` | shared | none | rest, loading, error |
-| `Toast` | shared | `TOAST_STATE` | rest |
-| `Banner` | shared | `BANNER` | rest, disabled |
-| `PendingBar` | shared | none | rest, disabled |
+| `Shell` | layout | `SHELL_SIDEBAR`, `SHELL_COLUMN`, `SHELL_BANNER`, `SWITCHER_SLOT`, `SWITCHER`, `SHELL_PLACES`, `PLACE_ROW`, `PLACE_ROW_GLYPH`, `SHELL_TAB_BAR`, `PLACE_TAB`, `PLACE_TAB_LABEL`, `TOASTS`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `ICON.fit.body`, `ICON.fit.control`, `COUNT`, `COUNT_LABEL` | rest, hover, focus, active, selected |
+| `ListRow` | shared | `ROW.lines.one`, `ROW.lines.two`, `ROW.state.rest`, `ROW.state.highlighted`, `ROW.state.pressed`, `ROW.state.selected`, `ROW.state.selected-hover`, `ROW.ground.list`, `ROW.ground.group`, `ROW_LEADING`, `ROW_META_LINE`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `TEXT.role.meta`, `ICON.fit.body`, `AVATAR`, `AVATAR_LABEL`, `STATUS`, `STATUS_DOT`, `STATUS_LABEL`, `CHIP`, `CHIP_LABEL`, `COUNT`, `COUNT_LABEL`, `PILL_ACT`, `ICON.fit.meta`, `ICON_BUTTON.fit.bar` | rest, hover, focus, active, disabled, selected |
+| `DefinitionRow` | shared | `ROW.lines.one`, `ROW.lines.setting`, `ROW.state.rest`, `ROW.state.highlighted`, `ROW.state.pressed`, `ROW.ground.group`, `DEFINITION_ROW`, `DEFINITION_ROW_ACT`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `TEXT.role.meta`, `TEXT.role.code`, `STATUS`, `STATUS_DOT`, `STATUS_LABEL`, `ICON.fit.body`, `LINK.fit.standalone`, `ICON_BUTTON.fit.bar` | rest, hover, focus, active, disabled |
+| `FormField` | shared | `TEXT.role.body`, `TEXT_STRONG.role.body`, `TEXT.role.meta` | rest, disabled, error |
+| `ItemHeader` | shared | `TEXT.role.meta`, `TEXT.role.heading`, `STATUS`, `STATUS_DOT`, `STATUS_LABEL`, `PILL_ACT`, `COUNT`, `COUNT_LABEL`, `SKELETON.kind.line`, `SKELETON.kind.count` | rest, loading |
+| `SegmentedControl` | shared | `SEGMENTED_CONTROL`, `SEGMENT`, `SEGMENT_LABEL` | rest, hover, focus, active, selected |
+| `Sheet` | shared | `SHEET`, `SHEET_SIDE`, `SHEET_CENTERED`, `SHEET_HEAD`, `SHEET_HEAD_ROW`, `SHEET_BODY`, `SHEET_FOOT`, `SCRIM`, `TEXT.role.heading`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `TEXT.role.meta`, `ICON_BUTTON.fit.bar` | rest, disabled, loading |
+| `Picker` | shared | `PILL_ACT`, `ICON.fit.meta`, `FIELD.fit.bar`, `FIELD.trailing.none`, `FIELD.state.rest`, `FIELD_VALUE.kind.text`, `FIELD_VALUE.kind.search`, `FIELD_PLACEHOLDER`, `FIELD_GLYPH`, `PICKER_EMPTY`, `POPOVER`, `SELECT_GROUP`, `ROW.lines.one`, `ROW.lines.two`, `ROW.state.rest`, `ROW.state.highlighted`, `ROW.state.pressed`, `ROW.state.selected`, `ROW.ground.list`, `TEXT.role.body`, `TEXT.role.meta`, `TEXT_STRONG.role.meta`, `ICON.fit.body`, `ICON.fit.control`, `SHEET` | rest, hover, focus, active, selected |
+| `Menu` | shared | `MENU`, `MENU_GROUP`, `POPOVER`, `ROW.lines.one`, `ROW.lines.two`, `ROW.state.rest`, `ROW.state.highlighted`, `ROW.state.pressed`, `ROW.ground.list`, `TEXT.role.body`, `TEXT.role.meta`, `ICON.fit.body`, `ICON_BUTTON.fit.bar`, `ICON_BUTTON.fit.body` | rest, hover, focus, active |
+| `OptionList` | shared | `CHECKBOX`, `CHECKBOX_MARK`, `ROW.lines.one`, `ROW.lines.two`, `ROW.state.rest`, `ROW.state.highlighted`, `ROW.state.pressed`, `ROW.ground.list`, `SELECT_GROUP`, `TEXT.role.body`, `TEXT.role.meta`, `TEXT_STRONG.role.meta`, `CHIP.family.neutral`, `CHIP_LABEL.family.neutral`, `SKELETON.kind.check`, `SKELETON.kind.line` | rest, hover, focus, active, loading, selected |
+| `EmptyState` | shared | `EMPTY_MARK`, `ICON.fit.control`, `TEXT.role.title`, `TEXT.role.heading`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `TEXT.role.meta`, `BUTTON.act.primary`, `BUTTON.act.secondary`, `BUTTON.fit.bar`, `BUTTON.fit.body`, `BUTTON_LABEL.act.primary`, `BUTTON_LABEL.act.secondary` | rest |
+| `QueryBoundary` | shared | `SKELETON.kind.line`, `SKELETON.kind.avatar`, `SKELETON.kind.count`, `SKELETON_ROW.kind.two-line`, `SKELETON_ROW.kind.setting`, `SKELETON_LINES`, `EMPTY_MARK`, `ICON.fit.control`, `TEXT.role.meta`, `BUTTON.act.secondary`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.secondary` | rest, loading, error |
+| `Toast` | shared | `TOAST`, `TOAST_STATE`, `ICON.fit.body`, `TEXT.role.body`, `BUTTON.act.secondary`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.secondary`, `ICON_BUTTON.fit.bar` | rest |
+| `Banner` | shared | `BANNER`, `BANNER_ROW`, `BANNER_MAIN`, `BANNER_GLYPH`, `ICON.fit.body`, `TEXT.role.body`, `TEXT.role.meta`, `BUTTON.act.secondary`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.secondary` | rest, disabled |
+| `PendingBar` | shared | `PENDING_BAR`, `PENDING_FILL`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC`, `TEXT.role.body`, `TEXT.role.meta`, `BUTTON.act.secondary`, `BUTTON.fit.body`, `BUTTON_LABEL.act.secondary` | rest, disabled |
 | `Prose` | content | none | rest, loading |
 | `Code` | content | none | rest, loading |
 | `Diff` | content | `DIFF_LINE` | rest, loading |
@@ -1688,8 +1742,8 @@ A component with an approved artboard owns the tokens it may draw: a cell it dra
 | `Button` | `body`, `meta`, `caption` | `act-`, `on-act-`, `edge`, `ink-body`, `ink-meta`, `fill-neutral`, `danger`, `wash-hover`, `wash-press`, `fill-disabled`, `ink-disabled`, `ring` | `control`, `full` | `inside`, `control-x`, `pair` | `control`, `control-compact`, `field`, `icon-control`, `chip` | none |
 | `IconButton` | none | `ink-meta`, `ink-body`, `wash-hover`, `wash-press`, `ink-disabled`, `ring` | `control` | none | `control`, `control-compact` | none |
 | `Count` | `caption` | `fill-neutral`, `ink-meta` | `full` | `inside` | `chip` | none |
-| `Status` | `meta` | `accent-ink`, `ink-meta`, `ok`, `warn`, `danger`, `wash-hover`, `wash-press`, `ring` | `full` | `inside` | `dot`, `target` | none |
-| `Chip` | `caption` | `chip-`, `wash-hover`, `wash-press`, `ring` | `full` | `inside` | `chip`, `chip-label` | none |
+| `Status` | `meta` | `accent-ink`, `ink-meta`, `ok`, `warn`, `danger`, `wash-hover`, `wash-press`, `ring` | `full` | `inside` | `dot`, `target`, `measure-short` | none |
+| `Chip` | `caption` | `chip-`, `wash-hover`, `wash-press`, `ring` | `full` | `inside` | `chip`, `measure-short` | none |
 | `Input` | `body`, `code` | `surface`, `edge`, `edge-hover`, `edge-error`, `ink-body`, `ink-meta`, `fill-disabled`, `ink-disabled`, `ring` | `control` | `inside`, `control-x` | `field`, `control-compact` | none |
 | `TextArea` | `body`, `code`, `caption` | `surface`, `edge`, `edge-hover`, `edge-error`, `ink-body`, `ink-meta`, `ink-error`, `fill-disabled`, `ink-disabled`, `ring` | `control` | `rows`, `control-x`, `inside` | `text-area` | none |
 | `InputOtp` | `heading`, `meta` | `surface`, `edge`, `edge-error`, `ink-body`, `ink-meta`, `ring` | `control` | `inside`, `pair` | `otp`, `spinner` | none |
@@ -1700,10 +1754,10 @@ A component with an approved artboard owns the tokens it may draw: a cell it dra
 | `Spinner` | none | none | `full` | none | `spinner` | none |
 | `Avatar` | `caption` | `avatar-` | `full` | none | `avatar` | none |
 | `Link` | none | `accent-ink`, `ring` | none | none | `target` | none |
-| `Place` | `title`, `body`, `meta` | `ink-body`, `ink-meta`, `edge`, `act-accent`, `on-act-accent`, `wash-hover`, `wash-press`, `danger` | `control` | `acts`, `page`, `sections`, `inside`, `control-x`, `rows` | `strip`, `control`, `control-compact`, `popover` | none |
-| `Screen` | `title` | `ink-body`, `ink-meta`, `edge` | `control` | `acts`, `page`, `sections` | `strip`, `control`, `control-compact` | none |
-| `Split` | none | `edge`, `ink-meta` | `control` | `inside`, `list-x`, `page`, `sections` | `list`, `pane`, `control-compact` | none |
-| `Section` | `heading`, `meta`, `body`, `caption` | `ink-body`, `ink-meta`, `edge`, `fill-neutral`, `skeleton`, `wash-hover`, `wash-press`, `ring`, `danger` | `row`, `control`, `chip`, `full` | `pair`, `fields`, `inside`, `control-x` | `header`, `icon`, `chip`, `control-compact`, `skeleton`, `field` | none |
+| `Place` | `title`, `body`, `meta` | `ink-body`, `ink-meta`, `edge`, `act-accent`, `on-act-accent`, `wash-hover`, `wash-press`, `danger` | `control` | `acts`, `page`, `sections`, `inside`, `control-x`, `rows` | `strip`, `control`, `control-compact`, `popover`, `list` | none |
+| `Screen` | `title` | `ink-body`, `ink-meta`, `edge` | `control` | `acts`, `page`, `sections`, `pair` | `strip`, `control`, `control-compact` | none |
+| `Split` | none | `edge`, `ink-meta`, `surface` | `control` | `inside`, `page`, `sections` | `list`, `pane`, `control-compact` | none |
+| `Section` | `heading`, `meta`, `body`, `caption` | `ink-body`, `ink-meta`, `edge`, `fill-neutral`, `skeleton`, `wash-hover`, `wash-press`, `ring`, `danger` | `row`, `control`, `chip`, `full` | `pair`, `fields`, `inside`, `control-x` | `icon`, `chip`, `control-compact`, `skeleton`, `field`, `target` | none |
 | `Group` | none | `edge`, `surface`, `skeleton` | `card`, `chip`, `full` | `fields`, `card`, `pair` | `row-setting`, `skeleton`, `switch-w`, `switch-h` | none |
 | `List` | none | `skeleton` | `chip`, `full` | `rows`, `inside`, `control-x`, `pair` | `row-2`, `skeleton`, `avatar` | none |
 | `Form` | none | `edge` | none | `fields`, `sections` | none | none |

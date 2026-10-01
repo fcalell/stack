@@ -8,9 +8,9 @@ import { Sheet } from "../sheet";
 
 const REGION = "flex-1";
 // Whatever stands first in a bleeding body carries its own top inset: the
-// record its cell's, the list alone the page inset; it pads sideways by
-// `list-x`, so a row's text meets the title.
-const LIST = "pt-page px-list-x";
+// record its cell's, the list alone the page inset, sideways too, which its
+// bleeding rows meet the title across.
+const LIST = "pt-page px-page";
 
 export interface SplitProps extends Closed {
 	list?: ReactNode;

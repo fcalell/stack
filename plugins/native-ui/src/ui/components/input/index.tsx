@@ -5,9 +5,7 @@ import {
 	type FieldKind,
 	field,
 	fieldValue,
-	icon,
 } from "@fcalell/ui-core/variants";
-import { Search } from "lucide-react-native";
 import { useContext, useState } from "react";
 import {
 	type KeyboardTypeOptions,
@@ -15,14 +13,14 @@ import {
 	TextInput,
 	View,
 } from "react-native";
-import { useResolveClassNames } from "uniwind";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { FieldDisabled, FieldError, useFieldName } from "../../lib/field";
-import { Glyph } from "../../lib/glyph";
+import { Ink } from "../../lib/ink";
 import { useTokenColor } from "../../lib/theme";
 import { useTouched } from "../../lib/touched";
 import { useWords } from "../../lib/words";
+import { Icon } from "../icon";
 import { IconButton } from "../icon-button";
 
 export type InputKind =
@@ -89,7 +87,6 @@ export function Input({
 	const disabled = useContext(FieldDisabled);
 	// A placeholder's colour is a prop, never a class: `FIELD_PLACEHOLDER`'s ink.
 	const placeholderInk = useTokenColor("--color-ink-meta");
-	const { width } = useResolveClassNames(icon({ fit: "control" }));
 	const which = kind ?? "text";
 	const surface = SURFACE[which];
 	const search = which === "search";
@@ -97,7 +94,7 @@ export function Input({
 		<View
 			className={cn(
 				field({
-					kind: surface,
+					fit: search ? "bar" : "form",
 					trailing: act ? "act" : "none",
 					state: error ? "error" : "rest",
 				}),
@@ -106,11 +103,9 @@ export function Input({
 			)}
 		>
 			{search ? (
-				<Glyph
-					icon={Search}
-					tone={disabled ? "ink-disabled" : "ink-meta"}
-					size={typeof width === "number" ? width : undefined}
-				/>
+				<Ink.Provider value={disabled ? "ink-disabled" : "ink-meta"}>
+					<Icon name="Search" fit="control" />
+				</Ink.Provider>
 			) : null}
 			<TextInput
 				accessibilityLabel={name ?? (search ? words.search : undefined)}

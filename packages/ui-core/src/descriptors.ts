@@ -38,9 +38,15 @@ export interface Quoted {
 
 export type Part = string | Quoted;
 
-// A mark on a row: an icon, its label read aloud.
-export interface Mark {
-	icon: IconName;
+// A row's marks: a status (its dot beside its word) and a data value's chip
+// on its family, each with its label; a row holds at most one of each.
+export interface StatusMark {
+	state: StatusState;
+	label: string;
+}
+
+export interface ChipMark {
+	family: ChipFamily;
 	label: string;
 }
 

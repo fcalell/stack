@@ -1,10 +1,9 @@
 import type { IconName } from "@fcalell/ui-core/descriptors";
 import type { IconButtonFit } from "@fcalell/ui-core/variants";
 import { useContext } from "react";
-import { Circle } from "../../lib/circle";
 import type { Closed } from "../../lib/closed";
 import { FieldDisabled } from "../../lib/field";
-import { GLYPHS } from "../../lib/glyph";
+import { IconButtonBase } from "./base";
 
 export interface IconButtonProps extends Closed {
 	icon: IconName;
@@ -18,8 +17,8 @@ export interface IconButtonProps extends Closed {
 export function IconButton({ icon, fit, label, onAct }: IconButtonProps) {
 	const disabled = useContext(FieldDisabled);
 	return (
-		<Circle
-			icon={GLYPHS[icon]}
+		<IconButtonBase
+			icon={icon}
 			fit={fit}
 			label={label}
 			onAct={onAct}

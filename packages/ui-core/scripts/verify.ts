@@ -98,6 +98,7 @@ import {
 	AVATAR_LABEL,
 	type Axes,
 	BANNER,
+	BANNER_GLYPH,
 	BUTTON,
 	BUTTON_LABEL,
 	CHECKBOX,
@@ -111,6 +112,8 @@ import {
 	ICON_BUTTON,
 	LINK,
 	type Matrix,
+	MENU,
+	MENU_GROUP,
 	MESSAGE,
 	OTP_BOX,
 	PLACE_ROW,
@@ -120,6 +123,8 @@ import {
 	ROW,
 	SECTION,
 	SEGMENT,
+	SEGMENT_LABEL,
+	SHEET_SIDE,
 	SKELETON,
 	SKELETON_ROW,
 	SPLIT_MAIN,
@@ -140,6 +145,7 @@ import {
 	avatarLabel,
 	avatarStep,
 	banner,
+	bannerGlyph,
 	button,
 	buttonContentTone,
 	buttonLabel,
@@ -154,6 +160,8 @@ import {
 	icon,
 	iconButton,
 	link,
+	menu,
+	menuGroup,
 	message,
 	otpBox,
 	placeRow,
@@ -163,6 +171,8 @@ import {
 	row,
 	section,
 	segment,
+	segmentLabel,
+	sheetSide,
 	skeleton,
 	skeletonRow,
 	splitMain,
@@ -240,13 +250,8 @@ function sheetValue(selector: string, property: string): string {
 		value !== undefined,
 		`the sheet has no ${property} under "${selector}"`,
 	);
-	const followed = value.replace(/var\((--[\w-]+)\)/g, (_, name: string) =>
+	return value.replace(/var\((--[\w-]+)\)/g, (_, name: string) =>
 		sheetValue(selector, name),
-	);
-	// A derived role (`list-x`) is one px difference.
-	return followed.replace(
-		/^calc\(([\d.]+)px - ([\d.]+)px\)$/,
-		(_, a: string, b: string) => `${Number(a) - Number(b)}px`,
 	);
 }
 
@@ -258,7 +263,6 @@ const SHEET_SIZE: Record<(typeof SIZES)[number], string> = {
 	row: "--row-height",
 	"row-2": "--row-height-2",
 	"row-setting": "--row-height-setting",
-	header: "--header-height",
 	strip: "--strip-height",
 	target: "--target-min",
 	dot: "--size-dot",
@@ -511,8 +515,13 @@ const MATRICES: readonly Registration[] = [
 	["ROW", ROW, row],
 	["TABLE_ROW", TABLE_ROW, tableRow],
 	["SEGMENT", SEGMENT, segment],
+	["SEGMENT_LABEL", SEGMENT_LABEL, segmentLabel],
 	["BANNER", BANNER, banner],
+	["BANNER_GLYPH", BANNER_GLYPH, bannerGlyph],
 	["TOAST_STATE", TOAST_STATE, toastState],
+	["MENU", MENU, menu],
+	["MENU_GROUP", MENU_GROUP, menuGroup],
+	["SHEET_SIDE", SHEET_SIDE, sheetSide],
 	["DIFF_LINE", DIFF_LINE, diffLine],
 	["MESSAGE", MESSAGE, message],
 	["PLACE_ROW", PLACE_ROW, placeRow],
@@ -693,12 +702,12 @@ check("c03", "tokens.ts declares the contract", () => {
 	requireEqual(COLOR_NAMES.length, 86, "color count");
 	requireEqual(new Set(COLOR_NAMES).size, COLOR_NAMES.length, "unique colors");
 	requireEqual(TYPE_ROLES.length, 7, "type role count");
-	requireEqual(SPACING_ROLES.length, 12, "spacing role count");
+	requireEqual(SPACING_ROLES.length, 11, "spacing role count");
 	requireEqual(GAP_ROLES.length, 6, "gap role count");
-	requireEqual(SIZES.length, 26, "size count");
-	requireEqual(RADIUS_ROLES.length, 8, "radius role count");
+	requireEqual(SIZES.length, 25, "size count");
+	requireEqual(RADIUS_ROLES.length, 7, "radius role count");
 	requireEqual(SHADOW_LEVELS.length, 2, "shadow level count");
-	requireEqual(WIDTHS.length, 11, "width count");
+	requireEqual(WIDTHS.length, 12, "width count");
 	requireEqual(BREAKPOINTS.length, 3, "breakpoint count");
 	requireEqual(WORD_KEYS.length, 23, "word count");
 	for (const name of COLOR_NAMES) {
@@ -722,7 +731,7 @@ check("c03", "tokens.ts declares the contract", () => {
 	for (const word of ["marine", "navy", "brand", "tint", "label", "floor"]) {
 		assert(!new RegExp(`"${word}"`).test(source), `tokens.ts names "${word}"`);
 	}
-	return `${COLOR_NAMES.length} colors, 7 roles, 12 spacing roles (6 gaps), 25 sizes, 8 radii, 2 shadows, 11 widths, 3 breakpoints, 23 words`;
+	return `${COLOR_NAMES.length} colors, 7 roles, 12 spacing roles (6 gaps), 26 sizes, 7 radii, 2 shadows, 12 widths, 3 breakpoints, 23 words`;
 });
 
 check("c05", "default knobs reproduce the approved sheet", () => {
@@ -957,11 +966,7 @@ check("c06", "every scale is its ratio of the base", () => {
 				`${role} modifier shape`,
 			);
 		}
-		const ratio: Record<(typeof SPACING_ROLES)[number], number> = {
-			...SPACING_RATIO[density],
-			"list-x":
-				SPACING_RATIO[density].page - SPACING_RATIO[density]["control-x"],
-		};
+		const ratio = SPACING_RATIO[density];
 		for (const role of SPACING_ROLES) {
 			requireEqual(
 				tokens[`--spacing-${role}`],
@@ -1413,7 +1418,7 @@ check("c14", "the Tailwind fixture builds on contract only", () => {
 		"gap-fields",
 		"p-card",
 		"rounded-control",
-		"rounded-dialog",
+		"rounded-sheet",
 		"w-popover",
 		"max-w-measure",
 		"min-h-control",
@@ -1744,8 +1749,10 @@ check("c21", "the enumerated set holds no platform overlay", () => {
 		for (const char of [":", "[", "("]) {
 			assert(!name.includes(char), `${name} carries "${char}"`);
 		}
-		if (name.startsWith("gap-")) {
-			assert(gaps.has(name.slice("gap-".length)), `${name} is not a gap role`);
+		// A gap on one axis (`gap-x-`, `gap-y-`) is a gap role all the same.
+		const gap = /^gap-(?:[xy]-)?(.+)$/.exec(name)?.[1];
+		if (gap !== undefined) {
+			assert(gaps.has(gap), `${name} is not a gap role`);
 		}
 	}
 	return `${enumerated().size} classes: no display, alignment, state or arbitrary value`;
@@ -1818,7 +1825,8 @@ check(
 			"IconAct",
 			"Quoted",
 			"Part",
-			"Mark",
+			"StatusMark",
+			"ChipMark",
 			"Option",
 			"PlaceSpec",
 			"Hunk",
@@ -2088,6 +2096,26 @@ check("c34", "the roster draws every family and names only real states", () => {
 	const undrawn = [...families].filter((family) => !drawn.has(family));
 	assert(undrawn.length === 0, `no component draws ${undrawn.join(", ")}`);
 	return `${families.size} families each drawn, every state one of ${STATES.length}`;
+});
+
+check("c36", "every held cell is drawn by its one holder", () => {
+	const holders = new Map<string, string>();
+	for (const [, name, entry] of rosterEntries()) {
+		for (const held of entry.holds ?? []) {
+			assert(
+				!held.includes(".") && drawnCells(held) !== undefined,
+				`${name} holds ${held}, neither a registered family nor a single cell`,
+			);
+			assert(
+				entry.draws.some((draw) => draw.split(".")[0] === held),
+				`${name} holds ${held} but does not draw it`,
+			);
+			const other = holders.get(held);
+			assert(other === undefined, `${held} is held by ${other} and ${name}`);
+			holders.set(held, name);
+		}
+	}
+	return `${holders.size} cells, each held by one entry that draws it`;
 });
 
 // The token a class spells, by the namespace the entry's `owns` declares it

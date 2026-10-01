@@ -3,18 +3,16 @@ import {
 	FIELD_PLACEHOLDER,
 	field,
 	fieldValue,
-	icon,
 } from "@fcalell/ui-core/variants";
-import { ChevronDown } from "lucide-react-native";
 import { useContext, useState } from "react";
 import { Pressable, Text as RNText } from "react-native";
-import { useResolveClassNames } from "uniwind";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { FieldDisabled, FieldError, useFieldName } from "../../lib/field";
-import { Glyph } from "../../lib/glyph";
+import { Ink } from "../../lib/ink";
 import { flatOptions, PickSheet } from "../../lib/pick-sheet";
 import { useTouched } from "../../lib/touched";
+import { Icon } from "../icon";
 
 // `V` is read off the options alone, so an enum's options pick that enum and
 // a value outside them is a type error. An option whose value is `null` is
@@ -41,7 +39,6 @@ export function Select<V extends string | null = string>({
 	const name = useFieldName();
 	const error = useContext(FieldError);
 	const disabled = useContext(FieldDisabled);
-	const { width } = useResolveClassNames(icon({ fit: "control" }));
 	const current = flatOptions(options).find(
 		(option) => option.value !== null && option.value === value,
 	);
@@ -55,7 +52,7 @@ export function Select<V extends string | null = string>({
 				disabled={disabled}
 				onPress={() => setOpen(true)}
 				className={cn(
-					field({ kind: "text", state: error ? "error" : "rest" }),
+					field({ state: error ? "error" : "rest" }),
 					"flex-row items-center",
 					disabled && "bg-fill-disabled",
 				)}
@@ -71,11 +68,9 @@ export function Select<V extends string | null = string>({
 				>
 					{current?.label ?? placeholder}
 				</RNText>
-				<Glyph
-					icon={ChevronDown}
-					tone={disabled ? "ink-disabled" : "ink-meta"}
-					size={typeof width === "number" ? width : undefined}
-				/>
+				<Ink.Provider value={disabled ? "ink-disabled" : "ink-meta"}>
+					<Icon name="ChevronDown" fit="control" />
+				</Ink.Provider>
 			</Pressable>
 			<PickSheet
 				title={name ?? placeholder ?? ""}

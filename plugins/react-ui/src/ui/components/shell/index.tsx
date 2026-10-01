@@ -8,6 +8,7 @@ import {
 	placeTab,
 	placeTabLabel,
 	row,
+	SHELL_BANNER,
 	SHELL_COLUMN,
 	SHELL_PLACES,
 	SHELL_SIDEBAR,
@@ -34,6 +35,7 @@ const SIDEBAR = "relative flex flex-col shrink-0";
 const SLOT = "flex";
 const PLACES = "flex flex-col";
 const COLUMN = "relative flex flex-col min-w-0 grow";
+const BANNER_SLOT = "flex flex-col";
 // A place row rings inset, inside the sidebar's inset.
 const ROW_BOX = "flex items-center focus-visible:-outline-offset-2";
 const ROW_PRESS = "hover:bg-wash-hover active:bg-wash-press";
@@ -58,9 +60,9 @@ const MENU_GLYPH = "flex shrink-0 text-ink-meta";
 
 const TABS = "flex pb-safe";
 const TAB =
-	"flex flex-col items-center justify-center min-w-0 grow basis-0 focus-visible:-outline-offset-2";
+	"flex flex-col-reverse items-center justify-center min-w-0 grow basis-0 focus-visible:-outline-offset-2";
 const TAB_GLYPH = "relative flex";
-const TAB_COUNT = "absolute top-0 left-full -translate-x-1/2 flex";
+const TAB_COUNT = "absolute top-0 left-full flex";
 const TAB_LABEL = "max-w-full truncate";
 // A tab bar holds five tabs at most: past five places, four and More.
 const TAB_ROOM = 5;
@@ -69,7 +71,7 @@ const TAB_ROOM = 5;
 export interface ShellProps extends Closed {
 	/** The places, in order; the one at the current route is selected. */
 	places: readonly PlaceSpec[];
-	/** A strip over the column, a `Banner`. */
+	/** A `Banner` over the column, at the page inset. */
 	banner?: ReactNode;
 	/** What the app is looking at, and what it can switch to. */
 	switcher?: Switcher;
@@ -129,7 +131,9 @@ export function Shell({ places, banner, switcher, children }: ShellProps) {
 		<div className={FRAME}>
 			{sidebar}
 			<div className={cn(SHELL_COLUMN, COLUMN)}>
-				{banner}
+				{banner ? (
+					<div className={cn(SHELL_BANNER, BANNER_SLOT)}>{banner}</div>
+				) : null}
 				<ShellSwitcher value={trigger}>
 					<PlaceRoute value={route}>
 						<CoverTabs value={cover}>{children}</CoverTabs>
@@ -252,6 +256,8 @@ function SwitcherMenu(props: { switcher: Switcher; touch: boolean }) {
 
 // The touch shell's places: glyph over label, the count over the glyph's
 // end; past five places, four and a More tab whose menu holds the rest.
+// A tab holds its label ahead of its glyph and stacks them reversed, so its
+// name reads the label then the count.
 function TabBar(props: { places: readonly PlaceSpec[]; pathname: string }) {
 	const { places, pathname } = props;
 	const words = useWords();
@@ -361,7 +367,6 @@ function TabBar(props: { places: readonly PlaceSpec[]; pathname: string }) {
 function Tab(props: { icon: ReactNode; label: string; selected: boolean }) {
 	return (
 		<>
-			<span className={TAB_GLYPH}>{props.icon}</span>
 			<span
 				className={cn(
 					placeTabLabel({ state: props.selected ? "selected" : "idle" }),
@@ -370,6 +375,7 @@ function Tab(props: { icon: ReactNode; label: string; selected: boolean }) {
 			>
 				{props.label}
 			</span>
+			<span className={TAB_GLYPH}>{props.icon}</span>
 		</>
 	);
 }

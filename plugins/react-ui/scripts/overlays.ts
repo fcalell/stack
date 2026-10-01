@@ -19,6 +19,7 @@ export const OVERLAYS: readonly string[] = [
 	"gap-pair",
 	// Status, Chip
 	"inline-flex",
+	"-mx-inside",
 	"items-center",
 	"justify-center",
 	"min-w-0",
@@ -154,6 +155,8 @@ export const OVERLAYS: readonly string[] = [
 	"page-max-tablet:pb-0",
 	"page-max-tablet:pt-page",
 	"page-max-tablet:border-r-0",
+	"page-tablet:group-has-data-split/page:right-auto",
+	"page-tablet:group-has-data-split/page:w-list",
 	"page-wide:hidden",
 	"page-max-wide:hidden",
 	// Section, Group, List, Columns
@@ -184,6 +187,7 @@ export const OVERLAYS: readonly string[] = [
 	"touch:flex",
 	"touch:flex-col",
 	"touch:items-stretch",
+	"touch:flex-wrap",
 	// Shell
 	"h-dvh",
 	"pb-safe",
@@ -194,6 +198,7 @@ export const OVERLAYS: readonly string[] = [
 	"top-0",
 	"left-full",
 	"max-w-full",
+	"flex-col-reverse",
 ];
 
 // SKELETON: a skeleton bar stands at the length of the text it replaces as a

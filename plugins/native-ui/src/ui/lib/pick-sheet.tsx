@@ -1,13 +1,13 @@
 import type { Option, OptionGroup } from "@fcalell/ui-core/descriptors";
 import { PICKER_EMPTY, row, text, textStrong } from "@fcalell/ui-core/variants";
-import { Check } from "lucide-react-native";
 import { useState } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
+import { Icon } from "../components/icon";
 import { Input } from "../components/input";
 import { List } from "../components/list";
 import { Sheet } from "../components/sheet";
 import { cn } from "./cn";
-import { Glyph } from "./glyph";
+import { Ink } from "./ink";
 
 export type PickOptions<V extends string | null> =
 	| readonly Option<V>[]
@@ -126,7 +126,11 @@ export function PickSheet<V extends string | null>({
 												</RNText>
 											) : null}
 										</View>
-										{selected ? <Glyph icon={Check} tone="accent-ink" /> : null}
+										{selected ? (
+											<Ink.Provider value="accent-ink">
+												<Icon name="Check" />
+											</Ink.Provider>
+										) : null}
 									</Pressable>
 								);
 							})}

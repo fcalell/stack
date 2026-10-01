@@ -531,32 +531,34 @@
 
 /* ------------------------------------------------------------------ widths of lifted layers */
 
-/* Each at its pattern's range (reference sheet): popover 215-300, toast 340-430, confirm dialog
-   365-590, sheet 610-730. A layer never stretches to its container. A chip's label runs to 16ch,
+/* Each at its pattern's range (reference sheet): popover 215-300, toast 340-430, dialog 490-645
+   (a confirm 365-590), sheet 610-730. A layer never stretches to its container. A chip's label runs to 16ch,
    then truncates. */
 :root {
-	--width-chip-label: 18ch;
+	--width-measure-short: 18ch;
 	--width-popover: 240px;
 	--width-toast: 360px;
-	--width-dialog: 440px;
+	--width-dialog: 520px;
 	--width-sheet: 640px;
 }
 
 /* The regions of a frame, each at its pattern's range: sidebar 205-245, a split's list column
-   360-375 and record pane 300-395, a board column 260-350, the auth column 300-430. */
+   360-375 and record pane 300-395, a board column 260-350, the auth column 300-430, an empty state's
+   column 300-360. */
 :root {
 	--width-sidebar: 240px;
 	--width-list: 360px;
 	--width-pane: 320px;
 	--width-column: 300px;
 	--width-auth: 400px;
+	--width-empty: 320px;
 }
 
 /* ------------------------------------------------------------------ radius */
 
 /*
- * Spent by role (rubric §0): chip 4; control and row 6; card, popover and sheet 8; dialog 12;
- * full only on dots, avatars and the pill chip or status. Density-invariant: a radius names the
+ * Spent by role (rubric §0): chip 4; control and row 6; card, popover and sheet 8 (a centred
+ * sheet too); full only on dots, avatars and the pill chip or status. Density-invariant: a radius names the
  * role, not the size, so a 44 px touch control keeps the 6 of its desktop twin.
  */
 :root {
@@ -566,7 +568,6 @@
 	--radius-card: 8px;
 	--radius-popover: 8px;
 	--radius-sheet: 8px;
-	--radius-dialog: 12px;
 	--radius-full: 9999px;
 	--radius-pill: var(--radius-full);
 }
@@ -1258,9 +1259,6 @@ samp {
 .radius-popover {
 	border-radius: var(--radius-popover);
 }
-.radius-dialog {
-	border-radius: var(--radius-dialog);
-}
 .radius-pill {
 	border-radius: var(--radius-pill);
 }
@@ -1416,7 +1414,7 @@ samp {
 	padding: var(--space-card);
 	background: var(--raised);
 	border: var(--hairline) solid var(--edge);
-	border-radius: var(--radius-dialog);
+	border-radius: var(--radius-sheet);
 	box-shadow: var(--shadow-modal);
 }
 /* a sheet is attached to the trailing edge: only its leading corners round */
