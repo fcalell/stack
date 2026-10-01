@@ -44,6 +44,8 @@ colors:
   chip-pink: "oklch(0.51 0.2 350)"
   chip-pink-soft: "oklch(0.945 0.031 350)"
   chip-pink-ink: "oklch(0.42 0.1 350)"
+  chip-neutral-soft: "oklch(0.2 0.008 264 / 0.08)"
+  chip-neutral-ink: "oklch(0.2 0.008 264)"
   avatar-1: "oklch(0.88 0.062 20)"
   avatar-1-ink: "oklch(0.38 0.1 20)"
   avatar-2: "oklch(0.88 0.07 60)"
@@ -91,7 +93,7 @@ colors:
   canvas-dark: "oklch(0.16 0.005 264)"
   surface-dark: "oklch(0.207 0.006 264)"
   group-dark: "oklch(0.25 0.007 264)"
-  raised-dark: "oklch(0.243 0.007 264)"
+  raised-dark: "oklch(0.25 0.007 264)"
   edge-dark: "oklch(0.298 0.008 264)"
   edge-raised-dark: "oklch(0.332 0.008 264)"
   edge-strong-dark: "oklch(0.53 0.01 264)"
@@ -128,6 +130,8 @@ colors:
   chip-pink-dark: "oklch(0.6 0.2 350)"
   chip-pink-soft-dark: "oklch(0.3 0.05 350)"
   chip-pink-ink-dark: "oklch(0.87 0.08 350)"
+  chip-neutral-soft-dark: "oklch(0.97 0.002 264 / 0.08)"
+  chip-neutral-ink-dark: "oklch(0.97 0.002 264)"
   avatar-1-dark: "oklch(0.4 0.08 20)"
   avatar-1-ink-dark: "oklch(0.92 0.04 20)"
   avatar-2-dark: "oklch(0.4 0.08 60)"
@@ -225,8 +229,10 @@ spacing:
   inside: "6px"
   control-x: "12px"
   pair: "6px"
+  acts: "8px"
   rows: "2px"
   card: "16px"
+  tile: "12px"
   float: "4px"
   fields: "16px"
   sections: "32px"
@@ -238,6 +244,7 @@ spacing:
   row-2: "48px"
   row-setting: "64px"
   header: "32px"
+  strip: "40px"
   target: "24px"
   dot: "6px"
   chip: "20px"
@@ -664,6 +671,16 @@ components:
     height: "{spacing.chip}"
     backgroundColor: "{colors.chip-pink-soft-dark}"
     textColor: "{colors.chip-pink-ink-dark}"
+  chip-neutral:
+    rounded: "{rounded.full}"
+    height: "{spacing.chip}"
+    backgroundColor: "{colors.chip-neutral-soft}"
+    textColor: "{colors.chip-neutral-ink}"
+  chip-neutral-dark:
+    rounded: "{rounded.full}"
+    height: "{spacing.chip}"
+    backgroundColor: "{colors.chip-neutral-soft-dark}"
+    textColor: "{colors.chip-neutral-ink-dark}"
   chip-none:
     rounded: "{rounded.full}"
     height: "{spacing.chip}"
@@ -706,6 +723,12 @@ components:
   chip-label-pink-dark:
     typography: "{typography.caption}"
     textColor: "{colors.chip-pink-ink-dark}"
+  chip-label-neutral:
+    typography: "{typography.caption}"
+    textColor: "{colors.chip-neutral-ink}"
+  chip-label-neutral-dark:
+    typography: "{typography.caption}"
+    textColor: "{colors.chip-neutral-ink-dark}"
   field-text:
     rounded: "{rounded.control}"
     backgroundColor: "{colors.surface}"
@@ -725,11 +748,11 @@ components:
   field-search:
     rounded: "{rounded.control}"
     backgroundColor: "{colors.surface}"
-    height: "{spacing.control}"
+    height: "{spacing.control-compact}"
   field-search-dark:
     rounded: "{rounded.control}"
     backgroundColor: "{colors.surface-dark}"
-    height: "{spacing.control}"
+    height: "{spacing.control-compact}"
   field-none:
     rounded: "{rounded.control}"
     backgroundColor: "{colors.surface}"
@@ -899,28 +922,33 @@ components:
     rounded: "{rounded.row}"
   row-highlighted:
     height: "{spacing.row}"
-    rounded: "{rounded.row}"
     backgroundColor: "{colors.wash-hover}"
+    rounded: "{rounded.row}"
   row-highlighted-dark:
     height: "{spacing.row}"
-    rounded: "{rounded.row}"
     backgroundColor: "{colors.wash-hover-dark}"
+    rounded: "{rounded.row}"
   row-pressed:
     height: "{spacing.row}"
-    rounded: "{rounded.row}"
     backgroundColor: "{colors.wash-press}"
+    rounded: "{rounded.row}"
   row-pressed-dark:
     height: "{spacing.row}"
-    rounded: "{rounded.row}"
     backgroundColor: "{colors.wash-press-dark}"
+    rounded: "{rounded.row}"
   row-selected:
     height: "{spacing.row}"
-    rounded: "{rounded.row}"
     backgroundColor: "{colors.wash-selected}"
+    rounded: "{rounded.row}"
   row-selected-dark:
     height: "{spacing.row}"
-    rounded: "{rounded.row}"
     backgroundColor: "{colors.wash-selected-dark}"
+    rounded: "{rounded.row}"
+  row-list:
+    height: "{spacing.row}"
+    rounded: "{rounded.row}"
+  row-group:
+    height: "{spacing.row}"
   table-row-selected:
     backgroundColor: "{colors.wash-selected}"
   table-row-selected-dark:
@@ -1037,18 +1065,123 @@ components:
   message-system-dark:
     typography: "{typography.meta}"
     textColor: "{colors.ink-meta-dark}"
-  place-idle:
-    typography: "{typography.body}"
+  place-row-rest:
+    height: "{spacing.row}"
+    rounded: "{rounded.row}"
+  place-row-hover:
+    height: "{spacing.row}"
+    rounded: "{rounded.row}"
+    backgroundColor: "{colors.wash-hover}"
+  place-row-hover-dark:
+    height: "{spacing.row}"
+    rounded: "{rounded.row}"
+    backgroundColor: "{colors.wash-hover-dark}"
+  place-row-active:
+    height: "{spacing.row}"
+    rounded: "{rounded.row}"
+    backgroundColor: "{colors.wash-press}"
+  place-row-active-dark:
+    height: "{spacing.row}"
+    rounded: "{rounded.row}"
+    backgroundColor: "{colors.wash-press-dark}"
+  place-row-selected:
+    height: "{spacing.row}"
+    rounded: "{rounded.row}"
+    backgroundColor: "{colors.wash-selected}"
+  place-row-selected-dark:
+    height: "{spacing.row}"
+    rounded: "{rounded.row}"
+    backgroundColor: "{colors.wash-selected-dark}"
+  place-row-selected-hover:
+    height: "{spacing.row}"
+    rounded: "{rounded.row}"
+    backgroundColor: "{colors.wash-selected-hover}"
+  place-row-selected-hover-dark:
+    height: "{spacing.row}"
+    rounded: "{rounded.row}"
+    backgroundColor: "{colors.wash-selected-hover-dark}"
+  place-row-glyph-rest:
     textColor: "{colors.ink-meta}"
-  place-idle-dark:
-    typography: "{typography.body}"
+  place-row-glyph-rest-dark:
     textColor: "{colors.ink-meta-dark}"
-  place-selected:
-    typography: "{typography.body}"
-    textColor: "{colors.accent-ink}"
-  place-selected-dark:
-    typography: "{typography.body}"
-    textColor: "{colors.accent-ink-dark}"
+  place-row-glyph-selected:
+    textColor: "{colors.ink-body}"
+  place-row-glyph-selected-dark:
+    textColor: "{colors.ink-body-dark}"
+  place-tab-idle:
+    height: "{spacing.row}"
+    rounded: "{rounded.row}"
+    textColor: "{colors.ink-meta}"
+    typography: "{typography.caption}"
+  place-tab-idle-dark:
+    height: "{spacing.row}"
+    rounded: "{rounded.row}"
+    textColor: "{colors.ink-meta-dark}"
+    typography: "{typography.caption}"
+  place-tab-selected:
+    height: "{spacing.row}"
+    rounded: "{rounded.row}"
+    textColor: "{colors.ink-body}"
+    typography: "{typography.caption}"
+  place-tab-selected-dark:
+    height: "{spacing.row}"
+    rounded: "{rounded.row}"
+    textColor: "{colors.ink-body-dark}"
+    typography: "{typography.caption}"
+  split-main-rest:
+    padding: "{spacing.page}"
+  split-main-empty:
+    padding: "{spacing.page}"
+  skeleton-line:
+    height: "{spacing.skeleton}"
+    rounded: "{rounded.chip}"
+    backgroundColor: "{colors.skeleton}"
+  skeleton-line-dark:
+    height: "{spacing.skeleton}"
+    rounded: "{rounded.chip}"
+    backgroundColor: "{colors.skeleton-dark}"
+  skeleton-avatar:
+    height: "{spacing.avatar}"
+    width: "{spacing.avatar}"
+    rounded: "{rounded.full}"
+    backgroundColor: "{colors.skeleton}"
+  skeleton-avatar-dark:
+    height: "{spacing.avatar}"
+    width: "{spacing.avatar}"
+    rounded: "{rounded.full}"
+    backgroundColor: "{colors.skeleton-dark}"
+  skeleton-switch:
+    width: "{spacing.switch-w}"
+    height: "{spacing.switch-h}"
+    rounded: "{rounded.full}"
+    backgroundColor: "{colors.skeleton}"
+  skeleton-switch-dark:
+    width: "{spacing.switch-w}"
+    height: "{spacing.switch-h}"
+    rounded: "{rounded.full}"
+    backgroundColor: "{colors.skeleton-dark}"
+  skeleton-count:
+    height: "{spacing.chip}"
+    width: "{spacing.chip}"
+    rounded: "{rounded.full}"
+    backgroundColor: "{colors.skeleton}"
+  skeleton-count-dark:
+    height: "{spacing.chip}"
+    width: "{spacing.chip}"
+    rounded: "{rounded.full}"
+    backgroundColor: "{colors.skeleton-dark}"
+  skeleton-field:
+    height: "{spacing.field}"
+    rounded: "{rounded.control}"
+    backgroundColor: "{colors.skeleton}"
+  skeleton-field-dark:
+    height: "{spacing.field}"
+    rounded: "{rounded.control}"
+    backgroundColor: "{colors.skeleton-dark}"
+  skeleton-row-two-line:
+    height: "{spacing.row-2}"
+  skeleton-row-setting:
+    height: "{spacing.row-setting}"
   checkbox-mark:
     height: "{spacing.icon-meta}"
     width: "{spacing.icon-meta}"
@@ -1103,10 +1236,20 @@ components:
   field-unit-dark:
     typography: "{typography.body}"
     textColor: "{colors.ink-meta-dark}"
+  floating-act:
+    padding: "{spacing.page}"
+  floating-act-room:
+    height: "{spacing.control}"
   group:
     rounded: "{rounded.card}"
-    backgroundColor: "{colors.group}"
+    backgroundColor: "{colors.surface}"
   group-dark:
+    rounded: "{rounded.card}"
+    backgroundColor: "{colors.surface-dark}"
+  group-ground:
+    rounded: "{rounded.card}"
+    backgroundColor: "{colors.group}"
+  group-ground-dark:
     rounded: "{rounded.card}"
     backgroundColor: "{colors.group-dark}"
   meter-fill:
@@ -1127,6 +1270,12 @@ components:
   otp-digit-dark:
     typography: "{typography.heading}"
     textColor: "{colors.ink-body-dark}"
+  page-body:
+    padding: "{spacing.page}"
+  page-strip:
+    height: "{spacing.strip}"
+  page-top-bar:
+    height: "{spacing.strip}"
   pending-bar:
     rounded: "{rounded.control}"
     backgroundColor: "{colors.group}"
@@ -1145,10 +1294,6 @@ components:
     textColor: "{colors.ink-meta}"
   picker-empty-dark:
     textColor: "{colors.ink-meta-dark}"
-  place-row-selected:
-    backgroundColor: "{colors.wash-selected}"
-  place-row-selected-dark:
-    backgroundColor: "{colors.wash-selected-dark}"
   popover:
     padding: "{spacing.float}"
     backgroundColor: "{colors.raised}"
@@ -1161,6 +1306,13 @@ components:
     backgroundColor: "{colors.scrim}"
   scrim-dark:
     backgroundColor: "{colors.scrim-dark}"
+  section-act:
+    height: "{spacing.header}"
+  section-title:
+    height: "{spacing.header}"
+  section-toggle:
+    height: "{spacing.header}"
+    rounded: "{rounded.row}"
   segmented-control:
     rounded: "{rounded.control}"
     backgroundColor: "{colors.group}"
@@ -1175,6 +1327,20 @@ components:
     backgroundColor: "{colors.raised-dark}"
   sheet-centered:
     rounded: "{rounded.dialog}"
+  shell-column:
+    backgroundColor: "{colors.surface}"
+  shell-column-dark:
+    backgroundColor: "{colors.surface-dark}"
+  shell-places:
+    padding: "{spacing.float}"
+  shell-sidebar:
+    backgroundColor: "{colors.canvas}"
+  shell-sidebar-dark:
+    backgroundColor: "{colors.canvas-dark}"
+  shell-tab-bar:
+    backgroundColor: "{colors.canvas}"
+  shell-tab-bar-dark:
+    backgroundColor: "{colors.canvas-dark}"
   slider-fill:
     height: "{spacing.track}"
     rounded: "{rounded.full}"
@@ -1222,6 +1388,10 @@ components:
     rounded: "{rounded.full}"
   spinner-track:
     rounded: "{rounded.full}"
+  split-list:
+    padding: "{spacing.inside}"
+  split-pane:
+    padding: "{spacing.page}"
   status-label:
     typography: "{typography.meta}"
     textColor: "{colors.ink-meta}"
@@ -1231,6 +1401,11 @@ components:
   status-open:
     rounded: "{rounded.full}"
     height: "{spacing.target}"
+  switcher:
+    height: "{spacing.target}"
+    rounded: "{rounded.control}"
+  switcher-slot:
+    padding: "{spacing.float}"
   table-cell:
     height: "{spacing.field}"
   text-area-value:
@@ -1245,6 +1420,8 @@ components:
     backgroundColor: "{colors.raised-dark}"
     typography: "{typography.body}"
     textColor: "{colors.ink-body-dark}"
+  toasts:
+    padding: "{spacing.page}"
 ---
 
 # @fcalell/stack
@@ -1264,14 +1441,14 @@ One closed token contract, the approved foundations sheet, drawn by two UI plugi
 
 ## Colors
 
-Colors are OKLCH, named by the place they draw. Neutrals cast on one hue at a fixed chroma per role (the cast knob moves the hue, never the chroma, so no contrast moves), one accent hue (its chroma is held inside sRGB at any hue), three status hues, six chip families, eight avatar steps. A wash is the body ink at an alpha, so it sits on any surface as one more step. Inside a group or a lifted layer the container re-points `edge` to `edge-raised`, so a part never picks between them.
+Colors are OKLCH, named by the place they draw. Neutrals cast on one hue at a fixed chroma per role (the cast knob moves the hue, never the chroma, so no contrast moves), one accent hue (its chroma is held inside sRGB at any hue), three status hues, six hued chip families and a neutral one (`fill-neutral` under `ink-body`, no mark), eight avatar steps. A wash is the body ink at an alpha, so it sits on any surface as one more step. Inside a group or a lifted layer the container re-points `edge` to `edge-raised`, so a part never picks between them.
 
 | Role | Light | Dark | Draws |
 | --- | --- | --- | --- |
 | `canvas` | `oklch(0.974 0.002 264)` | `oklch(0.16 0.005 264)` | the page |
 | `surface` | `oklch(1 0 0)` | `oklch(0.207 0.006 264)` | a card, a field, a row |
 | `group` | `oklch(0.947 0.004 264)` | `oklch(0.25 0.007 264)` | a filled tile, a chip ground |
-| `raised` | `oklch(1 0 0)` | `oklch(0.243 0.007 264)` | a popover, a dialog, a sheet, a toast |
+| `raised` | `oklch(1 0 0)` | `oklch(0.25 0.007 264)` | a popover, a dialog, a sheet, a toast |
 | `edge` | `oklch(0.915 0.004 264)` | `oklch(0.298 0.008 264)` | the hairline over canvas and surface; inside a group or a lifted layer the container re-points it to `edge-raised` |
 | `edge-raised` | `oklch(0.915 0.004 264)` | `oklch(0.332 0.008 264)` | the hairline inside a group and on a lifted layer |
 | `edge-strong` | `oklch(0.62 0.01 264)` | `oklch(0.53 0.01 264)` | a control's boundary, at 3:1 |
@@ -1308,6 +1485,8 @@ Colors are OKLCH, named by the place they draw. Neutrals cast on one hue at a fi
 | `chip-pink` | `oklch(0.51 0.2 350)` | `oklch(0.6 0.2 350)` | a `Chip`'s family: the mark (a dot, a chart series), the soft ground, the ink on the soft |
 | `chip-pink-soft` | `oklch(0.945 0.031 350)` | `oklch(0.3 0.05 350)` | a `Chip`'s family: the mark (a dot, a chart series), the soft ground, the ink on the soft |
 | `chip-pink-ink` | `oklch(0.42 0.1 350)` | `oklch(0.87 0.08 350)` | a `Chip`'s family: the mark (a dot, a chart series), the soft ground, the ink on the soft |
+| `chip-neutral-soft` | `oklch(0.2 0.008 264 / 0.08)` | `oklch(0.97 0.002 264 / 0.08)` | a `Chip`'s family: the mark (a dot, a chart series), the soft ground, the ink on the soft |
+| `chip-neutral-ink` | `oklch(0.2 0.008 264)` | `oklch(0.97 0.002 264)` | a `Chip`'s family: the mark (a dot, a chart series), the soft ground, the ink on the soft |
 | `avatar-1` | `oklch(0.88 0.062 20)` | `oklch(0.4 0.08 20)` | an `Avatar`'s fill and the initial on it, one step per name |
 | `avatar-1-ink` | `oklch(0.38 0.1 20)` | `oklch(0.92 0.04 20)` | an `Avatar`'s fill and the initial on it, one step per name |
 | `avatar-2` | `oklch(0.88 0.07 60)` | `oklch(0.4 0.08 60)` | an `Avatar`'s fill and the initial on it, one step per name |
@@ -1380,14 +1559,16 @@ Spacing roles are multiples of a 4 px base, picked per density, named by what th
 | `inside` | 6px | 8px | within a control: icon to label, dot to text |
 | `control-x` | 12px | 16px | a control's inline padding |
 | `pair` | 6px | 8px | between paired elements: label over input, title over description |
+| `acts` | 8px | 8px | between the acts of a bar: a page header, a toolbar, an action bar |
 | `rows` | 2px | 4px | between rows in a menu or a nav list |
 | `card` | 16px | 16px | a card's inset |
+| `tile` | 12px | 16px | a compact card's inset: a board card |
 | `float` | 4px | 4px | a floating surface's inset: a select's list, a menu, a picker popover |
 | `fields` | 16px | 24px | between fields |
 | `sections` | 32px | 40px | between sections of a page |
 | `page` | 24px | 16px | the page inset |
 
-Sizes are heights and squares in the same namespace. Density is a theme, never a breakpoint, and never a knob: the web draws the desktop set where the primary pointer is fine and the touch set everywhere else, native draws the touch set, and a `data-density` attribute on the web root pins either. Every touch target is at least 44px; on the desktop every interactive part keeps a 24px hit area whatever it draws.
+Sizes are heights and squares in the same namespace. Density is a theme, never a breakpoint, and never a knob: the web draws the desktop set where the primary pointer is fine and the touch set everywhere else, native draws the touch set, and a `data-density` attribute on the web root pins either. A molecule whose structure follows density (an action bar at natural width on the desktop, full width on touch) reads it through the web's `touch:` variant, the same rule (a `data-density="touch"` pin, or a pointer that is not fine and no `desktop` pin); native is the touch set, so its molecules draw the touch structure with no variant. Every touch target is at least 44px; on the desktop every interactive part keeps a 24px hit area whatever it draws.
 
 | Size | Desktop | Touch | Is |
 | --- | --- | --- | --- |
@@ -1397,7 +1578,8 @@ Sizes are heights and squares in the same namespace. Density is a theme, never a
 | `row` | 32px | 48px | a one-line row |
 | `row-2` | 48px | 64px | a two-line row |
 | `row-setting` | 64px | 72px | a setting row: label and description beside a control |
-| `header` | 32px | 44px | a table or strip header |
+| `header` | 32px | 44px | a table or section header |
+| `strip` | 40px | 44px | a page header strip: a Place's or Screen's title and acts |
 | `target` | 24px | 44px | the least hit area of any interactive part |
 | `dot` | 6px | 8px | a status or chip mark |
 | `chip` | 20px | 24px | a chip's height |
@@ -1417,7 +1599,7 @@ Sizes are heights and squares in the same namespace. Density is a theme, never a
 | `otp` | 44px | 48px | a one-time-code box's largest side; the box is square and shrinks with its row |
 | `text-area` | 60px | 72px | a text area's least value height: three body line boxes |
 
-Widths of lifted layers, never stretched to their container: `chip-label` 18ch, `popover` 240px, `toast` 360px, `dialog` 440px, `sheet` 640px. Breakpoints: `tablet` 768px, `desktop` 1024px, `wide` 1440px; they are the only responsive variants.
+Widths of lifted layers, never stretched to their container, and of a frame's fixed regions: `chip-label` 18ch, `popover` 240px, `toast` 360px, `dialog` 440px, `sheet` 640px, `sidebar` 240px, `list` 360px, `pane` 320px, `column` 300px, `auth` 400px. Breakpoints: `tablet` 768px, `desktop` 1024px, `wide` 1440px; they are the only responsive variants.
 
 ## Elevation & Depth
 
@@ -1444,7 +1626,7 @@ The front matter's components are the matrix cells: one entry per axis value of 
 | --- | --- | --- | --- |
 | `Text` | atom | `TEXT.role.body`, `TEXT.role.meta`, `TEXT_STRONG.role.body`, `TEXT_STRONG.role.meta` | rest |
 | `Icon` | atom | `ICON` | rest |
-| `Button` | atom | `BUTTON`, `BUTTON_LABEL`, `ICON.fit.control` | rest, hover, focus, active, disabled, loading |
+| `Button` | atom | `BUTTON`, `BUTTON_LABEL`, `ICON.fit.control`, `COUNT`, `COUNT_LABEL` | rest, hover, focus, active, disabled, loading |
 | `IconButton` | atom | `ICON_BUTTON` | rest, hover, focus, active |
 | `Count` | atom | `COUNT`, `COUNT_LABEL` | rest |
 | `Status` | atom | `STATUS`, `STATUS_DOT`, `STATUS_LABEL`, `STATUS_OPEN` | rest, hover, focus, active |
@@ -1452,24 +1634,24 @@ The front matter's components are the matrix cells: one entry per axis value of 
 | `Input` | atom | `FIELD`, `FIELD_VALUE`, `FIELD_PLACEHOLDER`, `FIELD_UNIT`, `FIELD_GLYPH` | rest, hover, focus, disabled, error |
 | `TextArea` | atom | `TEXT_AREA`, `TEXT_AREA_BUDGET`, `TEXT_AREA_VALUE`, `FIELD_VALUE`, `FIELD_PLACEHOLDER` | rest, hover, focus, disabled, error |
 | `InputOtp` | atom | `OTP`, `OTP_BOX`, `OTP_DIGIT`, `TEXT.role.meta`, `SPINNER` | rest, focus, loading, error |
-| `Select` | atom | `FIELD`, `FIELD_VALUE`, `FIELD_PLACEHOLDER`, `FIELD_GLYPH`, `POPOVER`, `RHYTHM.unit.rows`, `ROW`, `TEXT.role.meta`, `TEXT_STRONG.role.meta` | rest, hover, focus, selected, disabled, error |
+| `Select` | atom | `FIELD`, `FIELD_VALUE`, `FIELD_PLACEHOLDER`, `FIELD_GLYPH`, `POPOVER`, `SELECT_GROUP`, `ROW.state.rest`, `ROW.state.highlighted`, `ROW.state.pressed`, `ROW.state.selected`, `ROW.ground.list`, `TEXT.role.meta`, `TEXT_STRONG.role.meta` | rest, hover, focus, selected, disabled, error |
 | `Slider` | atom | `SLIDER`, `SLIDER_HEAD`, `SLIDER_LABEL`, `SLIDER_VALUE`, `SLIDER_TRACK`, `SLIDER_FILL`, `SLIDER_REST`, `SLIDER_THUMB` | rest, hover, focus, active, disabled |
 | `Switch` | atom | `SWITCH`, `SWITCH_THUMB` | rest, hover, focus, active, disabled, selected |
 | `Checkbox` | atom | `CHECKBOX`, `CHECKBOX_MARK` | rest, hover, focus, active, disabled, selected |
 | `Spinner` | atom | `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC` | rest |
 | `Avatar` | atom | `AVATAR`, `AVATAR_LABEL` | rest |
 | `Link` | atom | `LINK` | rest, hover, focus, active |
-| `Place` | layout | none | rest |
-| `Screen` | layout | none | rest |
-| `Split` | layout | none | rest, empty |
-| `Section` | layout | none | rest, hover, focus, active, disabled, loading |
-| `Group` | layout | none | rest, loading |
-| `List` | layout | none | rest, loading |
-| `Form` | layout | `RHYTHM` | rest |
-| `Toolbar` | layout | `RHYTHM` | rest |
-| `ActionBar` | layout | `RHYTHM` | rest |
-| `Columns` | layout | `RHYTHM` | rest |
-| `Shell` | layout | `PLACE` | rest, hover, focus, active, selected |
+| `Place` | layout | `PAGE_STRIP`, `PAGE_HEAD`, `PAGE_TOP_BAR`, `TEXT.role.title`, `PAGE_BODY`, `PAGE_BLEED`, `FLOATING_ACT`, `FLOATING_ACT_ROOM`, `BUTTON.act.primary`, `BUTTON.fit.bar`, `BUTTON.fit.body`, `BUTTON_LABEL.act.primary`, `ICON_BUTTON.fit.bar`, `ICON_BUTTON.fit.body` | rest |
+| `Screen` | layout | `PAGE_STRIP`, `PAGE_HEAD`, `PAGE_TOP_BAR`, `TEXT.role.title`, `PAGE_BODY`, `TOASTS`, `ICON_BUTTON.fit.bar`, `ICON_BUTTON.fit.body` | rest |
+| `Split` | layout | `SPLIT_LIST`, `SPLIT_MAIN`, `SPLIT_PANE`, `ICON_BUTTON.fit.bar` | rest, empty |
+| `Section` | layout | `SECTION`, `SECTION_HEAD`, `SECTION_HEAD_ROW`, `SECTION_TITLE`, `SECTION_TOGGLE`, `SECTION_ACT`, `TEXT.role.heading`, `TEXT.role.meta`, `ICON.fit.body`, `COUNT`, `COUNT_LABEL`, `BUTTON.act.secondary`, `BUTTON.act.destructive`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.secondary`, `BUTTON_LABEL.act.destructive`, `ICON_BUTTON.fit.bar`, `SKELETON.kind.count`, `SKELETON.kind.line`, `SKELETON.kind.field`, `SKELETON_ROW.kind.field` | rest, hover, focus, active, disabled, loading |
+| `Group` | layout | `GROUP`, `SKELETON_ROW.kind.setting`, `SKELETON_LINES`, `SKELETON.kind.line`, `SKELETON.kind.switch` | rest, loading |
+| `List` | layout | `LIST`, `SKELETON_ROW.kind.two-line`, `SKELETON_LINES`, `SKELETON.kind.line`, `SKELETON.kind.avatar` | rest, loading |
+| `Form` | layout | `FORM`, `FORM_FOOT` | rest, loading |
+| `Toolbar` | layout | `TOOLBAR`, `TOOLBAR_ROW`, `TOOLBAR_CHIPS` | rest |
+| `ActionBar` | layout | `ACTION_BAR`, `ACTION_BAR_ACTS`, `TEXT.role.meta`, `BUTTON.act.primary`, `BUTTON.act.danger`, `BUTTON.act.secondary`, `BUTTON.act.destructive`, `BUTTON.fit.body`, `BUTTON.fit.field`, `BUTTON_LABEL` | rest, loading, disabled |
+| `Columns` | layout | `COLUMNS`, `COLUMN` | rest |
+| `Shell` | layout | `SHELL_SIDEBAR`, `SHELL_COLUMN`, `SWITCHER_SLOT`, `SWITCHER`, `SHELL_PLACES`, `PLACE_ROW`, `PLACE_ROW_GLYPH`, `SHELL_TAB_BAR`, `PLACE_TAB`, `PLACE_TAB_LABEL`, `TOASTS`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `ICON.fit.body`, `ICON.fit.control`, `COUNT`, `COUNT_LABEL` | rest, hover, focus, active, selected |
 | `ListRow` | shared | `ROW` | rest, hover, focus, active, disabled, selected |
 | `DefinitionRow` | shared | `ROW` | rest, hover, focus, active, disabled |
 | `FormField` | shared | none | rest, error |
@@ -1487,7 +1669,7 @@ The front matter's components are the matrix cells: one entry per axis value of 
 | `Prose` | content | none | rest, loading |
 | `Code` | content | none | rest, loading |
 | `Diff` | content | `DIFF_LINE` | rest, loading |
-| `Table` | content | `TABLE_ROW`, `CHECKBOX`, `CHIP`, `PLACE` | rest, hover, focus, active, loading, selected, empty |
+| `Table` | content | `TABLE_ROW`, `CHECKBOX`, `CHIP` | rest, hover, focus, active, loading, selected, empty |
 | `FileRow` | content | `ROW` | rest, hover, focus, active, loading |
 | `ProseDiff` | content | none | rest, loading |
 | `Comparison` | content | `ROW` | rest, loading |
@@ -1503,21 +1685,32 @@ A component with an approved artboard owns the tokens it may draw: a cell it dra
 | --- | --- | --- | --- | --- | --- | --- |
 | `Text` | `body`, `meta` | `ink-body`, `ink-meta` | none | none | `measure` | none |
 | `Icon` | none | none | none | none | `icon-meta`, `icon`, `icon-control` | none |
-| `Button` | `body`, `meta` | `act-`, `on-act-`, `edge`, `ink-body`, `danger`, `wash-hover`, `wash-press`, `fill-disabled`, `ink-disabled`, `ink-error`, `ring` | `control` | `inside`, `control-x`, `pair` | `control`, `control-compact`, `field`, `icon-control` | none |
+| `Button` | `body`, `meta`, `caption` | `act-`, `on-act-`, `edge`, `ink-body`, `ink-meta`, `fill-neutral`, `danger`, `wash-hover`, `wash-press`, `fill-disabled`, `ink-disabled`, `ring` | `control`, `full` | `inside`, `control-x`, `pair` | `control`, `control-compact`, `field`, `icon-control`, `chip` | none |
 | `IconButton` | none | `ink-meta`, `ink-body`, `wash-hover`, `wash-press`, `ink-disabled`, `ring` | `control` | none | `control`, `control-compact` | none |
 | `Count` | `caption` | `fill-neutral`, `ink-meta` | `full` | `inside` | `chip` | none |
 | `Status` | `meta` | `accent-ink`, `ink-meta`, `ok`, `warn`, `danger`, `wash-hover`, `wash-press`, `ring` | `full` | `inside` | `dot`, `target` | none |
 | `Chip` | `caption` | `chip-`, `wash-hover`, `wash-press`, `ring` | `full` | `inside` | `chip`, `chip-label` | none |
-| `Input` | `body`, `code` | `surface`, `edge`, `edge-hover`, `edge-error`, `ink-body`, `ink-meta`, `fill-disabled`, `ink-disabled`, `ring` | `control` | `inside`, `control-x` | `field`, `control` | none |
+| `Input` | `body`, `code` | `surface`, `edge`, `edge-hover`, `edge-error`, `ink-body`, `ink-meta`, `fill-disabled`, `ink-disabled`, `ring` | `control` | `inside`, `control-x` | `field`, `control-compact` | none |
 | `TextArea` | `body`, `code`, `caption` | `surface`, `edge`, `edge-hover`, `edge-error`, `ink-body`, `ink-meta`, `ink-error`, `fill-disabled`, `ink-disabled`, `ring` | `control` | `rows`, `control-x`, `inside` | `text-area` | none |
 | `InputOtp` | `heading`, `meta` | `surface`, `edge`, `edge-error`, `ink-body`, `ink-meta`, `ring` | `control` | `inside`, `pair` | `otp`, `spinner` | none |
-| `Select` | `body`, `code`, `meta` | `surface`, `edge`, `edge-hover`, `edge-error`, `ink-body`, `ink-meta`, `fill-disabled`, `ink-disabled`, `ring`, `raised`, `edge-raised`, `wash-hover`, `wash-press`, `wash-selected` | `control`, `row`, `popover` | `inside`, `control-x`, `pair`, `rows`, `float` | `field`, `control`, `row` | `float` |
+| `Select` | `body`, `code`, `meta` | `surface`, `edge`, `edge-hover`, `edge-error`, `ink-body`, `ink-meta`, `fill-disabled`, `ink-disabled`, `ring`, `raised`, `edge-raised`, `wash-hover`, `wash-press`, `wash-selected` | `control`, `row`, `popover` | `inside`, `control-x`, `pair`, `rows`, `float` | `field`, `control-compact`, `row` | `float` |
 | `Slider` | `body`, `meta` | `ink-body`, `ink-meta`, `toggle-`, `edge`, `edge-strong`, `surface`, `wash-hover`, `wash-press`, `fill-disabled`, `ink-disabled`, `ring` | `full` | `pair`, `fields` | `target`, `track`, `thumb` | none |
 | `Switch` | none | `switch-`, `toggle-`, `fill-disabled`, `ink-disabled`, `ring` | `full` | none | `switch-w`, `switch-h`, `thumb`, `switch-inset`, `switch-travel`, `target` | none |
 | `Checkbox` | none | `edge-strong`, `surface`, `toggle-`, `on-accent`, `wash-hover`, `wash-press`, `edge`, `fill-disabled`, `ink-disabled`, `ring` | `chip` | none | `check`, `target`, `icon-meta` | none |
 | `Spinner` | none | none | `full` | none | `spinner` | none |
 | `Avatar` | `caption` | `avatar-` | `full` | none | `avatar` | none |
 | `Link` | none | `accent-ink`, `ring` | none | none | `target` | none |
+| `Place` | `title`, `body`, `meta` | `ink-body`, `ink-meta`, `edge`, `act-accent`, `on-act-accent`, `wash-hover`, `wash-press`, `danger` | `control` | `acts`, `page`, `sections`, `inside`, `control-x`, `rows` | `strip`, `control`, `control-compact`, `popover` | none |
+| `Screen` | `title` | `ink-body`, `ink-meta`, `edge` | `control` | `acts`, `page`, `sections` | `strip`, `control`, `control-compact` | none |
+| `Split` | none | `edge`, `ink-meta` | `control` | `inside`, `page`, `sections` | `list`, `pane`, `control-compact` | none |
+| `Section` | `heading`, `meta`, `body`, `caption` | `ink-body`, `ink-meta`, `edge`, `fill-neutral`, `skeleton`, `wash-hover`, `wash-press`, `ring`, `danger` | `row`, `control`, `chip`, `full` | `pair`, `fields`, `inside`, `control-x` | `header`, `icon`, `chip`, `control-compact`, `skeleton`, `field` | none |
+| `Group` | none | `edge`, `surface`, `skeleton` | `card`, `chip`, `full` | `fields`, `card`, `pair` | `row-setting`, `skeleton`, `switch-w`, `switch-h` | none |
+| `List` | none | `skeleton` | `chip`, `full` | `rows`, `inside`, `control-x`, `pair` | `row-2`, `skeleton`, `avatar` | none |
+| `Form` | none | `edge` | none | `fields`, `sections` | none | none |
+| `Toolbar` | none | `edge` | none | `pair`, `inside`, `acts` | none | none |
+| `ActionBar` | `meta`, `body` | `ink-meta`, `ink-body`, `edge`, `danger`, `act-accent`, `on-act-accent`, `act-danger`, `on-act-danger` | `control` | `pair`, `acts`, `inside`, `control-x` | `control`, `field` | none |
+| `Columns` | none | none | none | `fields`, `page` | `column` | none |
+| `Shell` | `body`, `caption` | `canvas`, `surface`, `edge`, `ink-body`, `ink-meta`, `fill-neutral`, `wash-hover`, `wash-press`, `wash-selected`, `wash-selected-hover`, `ring` | `row`, `control`, `full` | `inside`, `control-x`, `rows`, `pair`, `float`, `page` | `row`, `sidebar`, `target`, `chip`, `icon`, `icon-control`, `popover` | none |
 
 ### Motion
 

@@ -45,9 +45,9 @@ export const KNOB_DEFAULTS: Omit<Knobs, "castHue"> = {
 
 // ── Colors ──────────────────────────────────────────────────────────
 
-// The six categorical chip families, in hue order (25, 85, 145, 195, 305,
-// 350), the accent's 215–290 band left out so no family ever wears it.
-export const CHIP_FAMILIES = [
+// The six hued chip families, in hue order (25, 85, 145, 195, 305, 350),
+// the accent's 215–290 band left out so no family ever wears it.
+export const CHIP_HUES = [
 	"red",
 	"amber",
 	"green",
@@ -55,6 +55,12 @@ export const CHIP_FAMILIES = [
 	"violet",
 	"pink",
 ] as const;
+export type ChipHue = (typeof CHIP_HUES)[number];
+
+// Every chip family: the six hues and `neutral`, the resting neutral ground
+// under the body ink (an applied filter, a tag without a category), which
+// has a soft and an ink and no mark.
+export const CHIP_FAMILIES = [...CHIP_HUES, "neutral"] as const;
 export type ChipFamily = (typeof CHIP_FAMILIES)[number];
 
 export const AVATAR_STEPS = [1, 2, 3, 4, 5, 6, 7, 8] as const;
@@ -83,11 +89,19 @@ export const COLOR_GROUPS = {
 		"danger-soft",
 		"on-danger",
 	],
-	// the mark, the soft ground, the ink on the soft
-	chips: CHIP_FAMILIES.flatMap(
-		(family) =>
-			[`chip-${family}`, `chip-${family}-soft`, `chip-${family}-ink`] as const,
-	),
+	// the mark, the soft ground, the ink on the soft; neutral has no mark
+	chips: [
+		...CHIP_HUES.flatMap(
+			(family) =>
+				[
+					`chip-${family}`,
+					`chip-${family}-soft`,
+					`chip-${family}-ink`,
+				] as const,
+		),
+		"chip-neutral-soft",
+		"chip-neutral-ink",
+	],
 	// the fill and the initial on it
 	avatars: AVATAR_STEPS.flatMap(
 		(step) => [`avatar-${step}`, `avatar-${step}-ink`] as const,
@@ -209,7 +223,7 @@ const WHITE: ColorValue = { l: 1, c: 0, hue: 0 };
 // between neighbours so the set separates by lightness as well as hue; light
 // marks are floored at L 0.50 and dark marks capped at L 0.75.
 const CHIP: Record<
-	ChipFamily,
+	ChipHue,
 	{ hue: number; light: [number, number]; dark: [number, number] }
 > = {
 	red: { hue: 25, light: [0.56, 0.2], dark: [0.75, 0.147] },
@@ -220,7 +234,7 @@ const CHIP: Record<
 	pink: { hue: 350, light: [0.51, 0.2], dark: [0.6, 0.2] },
 };
 
-const CHIP_SOFT_LIGHT: Record<ChipFamily, number> = {
+const CHIP_SOFT_LIGHT: Record<ChipHue, number> = {
 	red: 0.026,
 	amber: 0.035,
 	green: 0.035,
@@ -229,7 +243,7 @@ const CHIP_SOFT_LIGHT: Record<ChipFamily, number> = {
 	pink: 0.031,
 };
 
-const CHIP_INK_LIGHT: Record<ChipFamily, number> = {
+const CHIP_INK_LIGHT: Record<ChipHue, number> = {
 	red: 0.1,
 	amber: 0.085,
 	green: 0.1,
@@ -238,7 +252,7 @@ const CHIP_INK_LIGHT: Record<ChipFamily, number> = {
 	pink: 0.1,
 };
 
-const CHIP_INK_DARK: Record<ChipFamily, number> = {
+const CHIP_INK_DARK: Record<ChipHue, number> = {
 	red: 0.068,
 	amber: 0.08,
 	green: 0.08,
@@ -248,13 +262,16 @@ const CHIP_INK_DARK: Record<ChipFamily, number> = {
 };
 
 type ChipColor =
-	| `chip-${ChipFamily}`
+	| `chip-${ChipHue}`
 	| `chip-${ChipFamily}-soft`
 	| `chip-${ChipFamily}-ink`;
 
 function chipColors(): Record<ChipColor, ColorDeclaration> {
-	const out = {} as Record<ChipColor, ColorDeclaration>;
-	for (const family of CHIP_FAMILIES) {
+	const out = {
+		"chip-neutral-soft": { alias: "fill-neutral" },
+		"chip-neutral-ink": { alias: "ink-body" },
+	} as Record<ChipColor, ColorDeclaration>;
+	for (const family of CHIP_HUES) {
 		const { hue, light, dark } = CHIP[family];
 		out[`chip-${family}`] = {
 			light: { l: light[0], c: light[1], hue },
@@ -308,7 +325,7 @@ function avatarColors(): Record<AvatarColor, ColorDeclaration> {
 }
 
 // Surfaces step in CIE L*: light canvas 96.9 under surface 100 and over
-// group 93.8; dark canvas 3.6, surface 8.1, group and raised 12.3. The dark
+// group 93.8; dark canvas 3.6, surface 8.1, group and raised 13.1. The dark
 // hairline is two tokens, `edge` over canvas and surface and `edge-raised`
 // inside group and lifted layers, since the dark ladder spans more than one
 // hairline can straddle; in light both are one hairline. `edge-strong` is a
@@ -323,7 +340,7 @@ export const COLORS: Record<ColorName, ColorDeclaration> = {
 	canvas: { light: neutral(0.974, 0.002), dark: neutral(0.16, 0.005) },
 	surface: { light: WHITE, dark: neutral(0.207, 0.006) },
 	group: { light: neutral(0.947, 0.004), dark: neutral(0.25, 0.007) },
-	raised: { light: WHITE, dark: neutral(0.243, 0.007) },
+	raised: { light: WHITE, dark: neutral(0.25, 0.007) },
 	edge: { light: neutral(0.915, 0.004), dark: neutral(0.298, 0.008) },
 	"edge-raised": { light: neutral(0.915, 0.004), dark: neutral(0.332, 0.008) },
 	"edge-strong": { light: neutral(0.62, 0.01), dark: neutral(0.53, 0.01) },
@@ -603,8 +620,10 @@ export const SPACE_BASE = 4;
 
 // Roles, by use: `inside` within a control (icon to label, dot to text);
 // `control-x` a control's inline padding; `pair` between paired elements
-// (label over input, title over description); `rows` between rows in a menu
+// (label over input, title over description); `acts` between the acts of a
+// bar (a page header, a toolbar, an action bar); `rows` between rows in a menu
 // or a nav list (rows in a hairline list abut); `card` a card's inset;
+// `tile` a compact card's inset (a board card);
 // `float` a floating surface's inset (a select's list, a menu, a picker
 // popover), so a row's wash sits just inside its edge; `fields` between
 // fields; `sections` between sections of a page; `page` the page inset. A
@@ -614,8 +633,10 @@ export const SPACING_ROLES = [
 	"inside",
 	"control-x",
 	"pair",
+	"acts",
 	"rows",
 	"card",
+	"tile",
 	"float",
 	"fields",
 	"sections",
@@ -623,11 +644,12 @@ export const SPACING_ROLES = [
 ] as const;
 export type SpacingRole = (typeof SPACING_ROLES)[number];
 
-// The roles a container may put between its children; the other four are
-// insets. The rhythm matrix is this list.
+// The roles a container may put between its children; the other five are
+// insets. A cell spells a gap only on one of these.
 export const GAP_ROLES = [
 	"inside",
 	"pair",
+	"acts",
 	"rows",
 	"fields",
 	"sections",
@@ -635,14 +657,17 @@ export const GAP_ROLES = [
 export type GapRole = (typeof GAP_ROLES)[number];
 
 // Multiples of `SPACE_BASE`. Touch is the same roles one rung looser, except
-// the float inset, which holds, and the page inset, which a phone narrows.
+// the float inset and the acts gap, which hold, and the page inset, which a
+// phone narrows.
 export const SPACING_RATIO: Record<Density, Record<SpacingRole, number>> = {
 	desktop: {
 		inside: 1.5,
 		"control-x": 3,
 		pair: 1.5,
+		acts: 2,
 		rows: 0.5,
 		card: 4,
+		tile: 3,
 		float: 1,
 		fields: 4,
 		sections: 8,
@@ -652,8 +677,10 @@ export const SPACING_RATIO: Record<Density, Record<SpacingRole, number>> = {
 		inside: 2,
 		"control-x": 4,
 		pair: 2,
+		acts: 2,
 		rows: 1,
 		card: 4,
+		tile: 4,
 		float: 1,
 		fields: 6,
 		sections: 10,
@@ -666,7 +693,8 @@ export const SPACING_RATIO: Record<Density, Record<SpacingRole, number>> = {
 // Heights and squares, in the `--spacing-*` namespace so a cell names them as
 // it names a role (`min-h-control`, `size-avatar`). Desktop: control 32,
 // compact 28 (menus, toolbars), field 38, one-line row 32, two-line row 48,
-// setting row 64, header 32, target 24. Touch: every target at least 44. An
+// setting row 64, header 32, strip 40 (a page header: the title role with 8 of
+// air, and its acts), target 24. Touch: every target at least 44. An
 // icon is sized by what it sits beside: `icon-meta` meta or caption text,
 // `icon` body text, `icon-control` the inside of a control. The spinner is
 // the `icon` rung: it replaces a row's glyph and sits beside body text.
@@ -678,6 +706,7 @@ export const SIZES = [
 	"row-2",
 	"row-setting",
 	"header",
+	"strip",
 	"target",
 	"dot",
 	"chip",
@@ -716,6 +745,7 @@ export const SIZE_PX: Record<
 		"row-2": 48,
 		"row-setting": 64,
 		header: 32,
+		strip: 40,
 		target: 24,
 		dot: 6,
 		chip: 20,
@@ -741,6 +771,7 @@ export const SIZE_PX: Record<
 		"row-2": 64,
 		"row-setting": 72,
 		header: 44,
+		strip: 44,
 		target: 44,
 		dot: 8,
 		chip: 24,
@@ -796,8 +827,9 @@ export const RING_PX = 2;
 export const RING_OFFSET_PX = 2;
 
 // A chip label's longest run, the widths of lifted layers, each at its
-// pattern's range (a layer never stretches to its container), and the one
-// measure for running text.
+// pattern's range (a layer never stretches to its container), the one
+// measure for running text, and the fixed regions of a frame (the sidebar, a
+// split's list column and record pane, a board column, the auth column).
 // A width name never repeats a size name: `max-w-*` reads `--spacing-*` first.
 export const WIDTHS = [
 	"chip-label",
@@ -806,6 +838,11 @@ export const WIDTHS = [
 	"dialog",
 	"sheet",
 	"measure",
+	"sidebar",
+	"list",
+	"pane",
+	"column",
+	"auth",
 ] as const;
 export type Width = (typeof WIDTHS)[number];
 
@@ -816,6 +853,11 @@ export const WIDTH_VALUE: Record<Width, string> = {
 	dialog: "440px",
 	sheet: "640px",
 	measure: "66ch",
+	sidebar: "240px",
+	list: "360px",
+	pane: "320px",
+	column: "300px",
+	auth: "400px",
 };
 
 export const BREAKPOINTS = ["tablet", "desktop", "wide"] as const;
@@ -973,6 +1015,8 @@ export const WORD_KEYS = [
 	"retry",
 	"add",
 	"remove",
+	"details",
+	"places",
 ] as const;
 export type WordKey = (typeof WORD_KEYS)[number];
 
@@ -1000,4 +1044,6 @@ export const ENGLISH: Words = {
 	retry: "Retry",
 	add: "Add",
 	remove: "Remove",
+	details: "Details",
+	places: "Places",
 };

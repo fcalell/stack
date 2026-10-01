@@ -1,5 +1,5 @@
 import type { Option, OptionGroup } from "@fcalell/ui-core/descriptors";
-import { GROUP, PICKER_EMPTY, text } from "@fcalell/ui-core/variants";
+import { GROUP_GROUND, PICKER_EMPTY, text } from "@fcalell/ui-core/variants";
 import { ChevronDown } from "lucide-react-native";
 import { useState } from "react";
 import { Pressable, Text as RNText } from "react-native";
@@ -41,7 +41,7 @@ export function Picker<V extends string | null = string>({
 				accessibilityValue={{ text: current?.label }}
 				onPress={() => setOpen(true)}
 				className={cn(
-					GROUP,
+					GROUP_GROUND,
 					"min-h-11 flex-row items-center gap-inside px-4 active:bg-wash-press",
 				)}
 			>

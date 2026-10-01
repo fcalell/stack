@@ -1,99 +1,289 @@
-import type { PlaceSpec } from "@fcalell/ui-core/descriptors";
-import { HAIRLINE, place } from "@fcalell/ui-core/variants";
-import type { ReactNode } from "react";
+import type {
+	IconName,
+	PlaceSpec,
+	Switcher,
+} from "@fcalell/ui-core/descriptors";
+import {
+	type ContentTone,
+	HAIRLINE,
+	type PlaceTabState,
+	placeTab,
+	placeTabLabel,
+	row,
+	SHELL_COLUMN,
+	SHELL_TAB_BAR,
+	SWITCHER,
+	TOASTS,
+	text,
+	textStrong,
+} from "@fcalell/ui-core/variants";
+import { Check } from "lucide-react-native";
+import { type ReactNode, useState } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import { GLYPHS, Glyph } from "../../lib/glyph";
+import { CoverTabs, ShellSwitcher } from "../../lib/frame";
+import { Glyph } from "../../lib/glyph";
+import { Ink } from "../../lib/ink";
+import { MenuRow, MenuSheet } from "../../lib/more";
 import { navigate, usePathname } from "../../lib/navigate";
-import { SwitcherContext } from "../../lib/switcher";
 import { dismissToast, useToasts } from "../../lib/toast";
+import { useWords } from "../../lib/words";
+import { Avatar } from "../avatar";
 import { Count } from "../count";
+import { Icon } from "../icon";
+import { Sheet } from "../sheet";
 import { Toast } from "../toast";
 import { Confirmations } from "./confirmation";
+
+const FRAME = "flex-1 overflow-hidden";
+const CONTENT = "flex-1";
+const TOAST_LAYER = "absolute inset-x-0 bottom-0 items-center";
+
+const TRIGGER = "flex-row items-center min-w-0";
+const NAME = "shrink";
+const GLYPH = "shrink-0";
+const SWITCH_ROW = "flex-row items-center active:bg-wash-press";
+const SWITCH_LABEL = "min-w-0 flex-1";
+const CREATE = "border-t pt-float";
+
+const TABS = "flex-row";
+const TAB = "items-center justify-center min-w-0 flex-1";
+const TAB_GLYPH = "relative";
+const TAB_COUNT = "absolute top-0 left-full -translate-x-1/2";
+const TAB_LABEL = "max-w-full";
+// A tab bar holds five tabs at most: past five places, four and More.
+const TAB_ROOM = 5;
+
+// TODO: the tab's glyph ink is `PLACE_TAB`'s ink restated, since ui-core has
+// no content-tone reader for it; read it off the cell once ui-core exports one.
+const TAB_INK: Record<PlaceTabState, ContentTone> = {
+	idle: "ink-meta",
+	selected: "ink-body",
+};
 
 export interface ShellProps extends Closed {
 	places: readonly PlaceSpec[];
 	banner?: ReactNode;
-	switcher?: ReactNode;
+	switcher?: Switcher;
 	children?: ReactNode;
 }
 
-// The frame: the banner under the top, the content, the toast queue above
-// the bar, the `confirm()` decisions as a sheet, and the system-style tab bar with a hairline, icon over label and
-// a count where a place has one. `switcher` (what switches what the app is
-// looking at) starts each `Place`'s top bar, never a `Screen`'s: the tab
-// bar holds places only.
+// The frame on the column's ground: the banner under the status bar, the
+// content, the toast queue over the content's foot, the `confirm()`
+// decisions as a sheet, and the tab bar over the home indicator, past five
+// places four and a More tab whose sheet holds the rest. The switcher's
+// trigger starts each Place's top bar; a pushed Screen covers the tab bar,
+// and the frame then clears the home indicator itself.
 export function Shell({ places, banner, switcher, children }: ShellProps) {
 	const insets = useSafeAreaInsets();
-	const pathname = usePathname();
 	const toasts = useToasts();
+	const [covered, cover] = useState(false);
 	return (
-		<View className="flex-1 bg-canvas">
-			{banner ? <View style={{ paddingTop: insets.top }}>{banner}</View> : null}
-			<View className="flex-1">
-				<SwitcherContext.Provider value={switcher}>
-					{children}
-				</SwitcherContext.Provider>
-			</View>
-			{toasts.length > 0 ? (
-				<View
-					pointerEvents="box-none"
-					className="absolute inset-x-0 bottom-0 items-center gap-inside p-card"
+		<View
+			style={{
+				paddingTop: insets.top,
+				paddingBottom: covered ? insets.bottom : 0,
+			}}
+			className={cn(SHELL_COLUMN, FRAME)}
+		>
+			{banner}
+			<View className={CONTENT}>
+				<ShellSwitcher.Provider
+					value={switcher ? <SwitcherTrigger switcher={switcher} /> : null}
 				>
-					{toasts.map((entry) => (
-						<Pressable key={entry.id} onPress={() => dismissToast(entry.id)}>
-							<Toast
-								sentence={entry.sentence}
-								state={entry.state}
-								act={entry.act}
-							/>
-						</Pressable>
-					))}
-				</View>
-			) : null}
-			<View
-				accessibilityRole="tablist"
-				style={{ paddingBottom: insets.bottom }}
-				className={cn("flex-row border-t bg-canvas", HAIRLINE)}
-			>
-				{places.map((spec) => (
-					<PlaceTab
-						key={spec.route}
-						spec={spec}
-						selected={
-							pathname === spec.route || pathname.startsWith(`${spec.route}/`)
-						}
-					/>
-				))}
+					<CoverTabs.Provider value={cover}>{children}</CoverTabs.Provider>
+				</ShellSwitcher.Provider>
+				{toasts.length > 0 ? (
+					<View pointerEvents="box-none" className={cn(TOASTS, TOAST_LAYER)}>
+						{toasts.map((entry) => (
+							<Pressable key={entry.id} onPress={() => dismissToast(entry.id)}>
+								<Toast
+									sentence={entry.sentence}
+									state={entry.state}
+									act={entry.act}
+								/>
+							</Pressable>
+						))}
+					</View>
+				) : null}
 			</View>
+			{covered ? null : <TabBar places={places} />}
 			<Confirmations />
 		</View>
 	);
 }
 
-function PlaceTab({ spec, selected }: { spec: PlaceSpec; selected: boolean }) {
+// The switcher's trigger in a Place's top bar and its sheet: the options with
+// their avatars under the switcher's label, the current one ticked, then the
+// create act under a hairline.
+function SwitcherTrigger({ switcher }: { switcher: Switcher }) {
+	const [open, setOpen] = useState(false);
+	const close = () => setOpen(false);
+	return (
+		<>
+			<Pressable
+				accessibilityRole="button"
+				accessibilityLabel={switcher.name}
+				onPress={() => setOpen(true)}
+				className={cn(SWITCHER, TRIGGER)}
+			>
+				<Avatar name={switcher.name} src={switcher.avatar} />
+				<RNText
+					numberOfLines={1}
+					className={cn(
+						text({ role: "body" }),
+						textStrong({ role: "body" }),
+						NAME,
+					)}
+				>
+					{switcher.name}
+				</RNText>
+				<View className={GLYPH}>
+					<Ink.Provider value="ink-meta">
+						<Icon name="ChevronsUpDown" />
+					</Ink.Provider>
+				</View>
+			</Pressable>
+			<Sheet open={open} onClose={close} title={switcher.label}>
+				<View>
+					{switcher.options.map((option) => {
+						const current = option.label === switcher.name;
+						return (
+							<Pressable
+								key={option.label}
+								accessibilityRole="radio"
+								accessibilityState={{
+									selected: current,
+									disabled: option.blocked !== undefined,
+								}}
+								disabled={option.blocked !== undefined}
+								onPress={() => {
+									close();
+									option.onAct();
+								}}
+								className={cn(row({ state: "rest" }), SWITCH_ROW)}
+							>
+								<Avatar name={option.label} src={option.avatar} />
+								<RNText
+									numberOfLines={1}
+									className={cn(text({ role: "body" }), SWITCH_LABEL)}
+								>
+									{option.label}
+								</RNText>
+								{current ? <Glyph icon={Check} tone="ink-body" /> : null}
+							</Pressable>
+						);
+					})}
+				</View>
+				{switcher.create ? (
+					<View className={cn(HAIRLINE, CREATE)}>
+						<MenuRow
+							item={switcher.create}
+							onAct={() => {
+								close();
+								switcher.create?.onAct();
+							}}
+						/>
+					</View>
+				) : null}
+			</Sheet>
+		</>
+	);
+}
+
+// The places: glyph over label, the count over the glyph's end; past five
+// places, four and a More tab whose sheet holds the rest.
+function TabBar({ places }: { places: readonly PlaceSpec[] }) {
+	const insets = useSafeAreaInsets();
+	const pathname = usePathname();
+	const words = useWords();
+	const [open, setOpen] = useState(false);
+	const current = (route: string) =>
+		pathname === route || pathname.startsWith(`${route}/`);
+	const fits = places.length <= TAB_ROOM;
+	const shown = fits ? places : places.slice(0, TAB_ROOM - 1);
+	const rest = fits ? [] : places.slice(TAB_ROOM - 1);
+	return (
+		<View
+			role="navigation"
+			accessibilityLabel={words.places}
+			style={{ paddingBottom: insets.bottom }}
+			className={cn(SHELL_TAB_BAR, TABS)}
+		>
+			{shown.map((spec) => (
+				<Tab
+					key={spec.route}
+					icon={spec.icon}
+					label={spec.label}
+					count={spec.count}
+					selected={current(spec.route)}
+					onAct={() => navigate(spec.route)}
+				/>
+			))}
+			{rest.length > 0 ? (
+				<>
+					<Tab
+						icon="Ellipsis"
+						label={words.more}
+						selected={rest.some((spec) => current(spec.route))}
+						onAct={() => setOpen(true)}
+					/>
+					<MenuSheet
+						title={words.more}
+						open={open}
+						onClose={() => setOpen(false)}
+						items={rest.map((spec) => ({
+							label: spec.label,
+							icon: spec.icon,
+							onAct: () => navigate(spec.route),
+						}))}
+					/>
+				</>
+			) : null}
+		</View>
+	);
+}
+
+function Tab({
+	icon,
+	label,
+	count,
+	selected,
+	onAct,
+}: {
+	icon: IconName;
+	label: string;
+	count?: number;
+	selected: boolean;
+	onAct: () => void;
+}) {
 	const state = selected ? "selected" : "idle";
 	return (
 		<Pressable
-			accessibilityRole="tab"
+			accessibilityRole="link"
 			accessibilityState={{ selected }}
-			accessibilityLabel={spec.label}
-			onPress={() => navigate(spec.route)}
-			className="min-h-11 flex-1 items-center gap-pair py-inside"
+			accessibilityLabel={label}
+			onPress={onAct}
+			className={cn(placeTab({ state }), TAB)}
 		>
-			<View className="flex-row items-start">
-				<Glyph
-					icon={GLYPHS[spec.icon]}
-					tone={selected ? "accent" : "ink-meta"}
-					size={24}
-				/>
-				{spec.count !== undefined && spec.count > 0 ? (
-					<Count value={spec.count} />
-				) : null}
+			<View className={TAB_GLYPH}>
+				<Ink.Provider value={TAB_INK[state]}>
+					<Icon name={icon} fit="control" />
+				</Ink.Provider>
+				{count === undefined ? null : (
+					<View className={TAB_COUNT}>
+						<Count value={count} />
+					</View>
+				)}
 			</View>
-			<RNText className={place({ state })}>{spec.label}</RNText>
+			<RNText
+				numberOfLines={1}
+				className={cn(placeTabLabel({ state }), TAB_LABEL)}
+			>
+				{label}
+			</RNText>
 		</Pressable>
 	);
 }

@@ -43,7 +43,7 @@ PascalCase name), drawn from `lucide-react`, the plugin's own dependency.
 
 | File | Slot | Content |
 |------|------|---------|
-| `.stack/app.css` | `reactUi.slots.appCssSource` | `tailwindcss` with `source(none)`, the plugin's `globals.css`, `@source "../src"`, the `@theme` tokens and shadow utilities from ui-core, and `@layer base` for the mode scopes, reduced motion and density |
+| `.stack/app.css` | `reactUi.slots.appCssSource` | `tailwindcss` with `source(none)`, the plugin's `globals.css`, `@source "../src"`, the `@theme` tokens and shadow utilities from ui-core, the `touch:` custom variant, the `pb-safe` utility, and `@layer base` for the mode scopes, reduced motion and density |
 
 `.stack/entry.tsx` imports `./app.css`; `.stack/vite.config.ts` gains `tailwindcss()`,
 `themeFontsPlugin` (the preloads and `@font-face` rules) and `themeModePlugin` (the script that
@@ -51,7 +51,16 @@ sets the `dark` class from the stored choice, the theme's `defaultMode`, else th
 
 Density is no option: the desktop set draws under `(pointer: fine)` and the touch set
 everywhere else. A `data-density` attribute on `<html>` pins either on any device: `desktop`
-draws the compact set, `touch` the touch set.
+draws the compact set, `touch` the touch set. The `touch:` variant is the same rule for a
+class: it applies under `data-density="touch"`, and with no `desktop` pin where the pointer is
+not fine, so a molecule's structure follows density (an action bar at natural width on the
+desktop, full width on touch); a molecule whose tree differs by density (the Shell's
+sidebar or tab bar) reads the same rule through `useTouch` from `lib/media`. A token never needs it: a size, a spacing role and a type role
+follow density through their variables.
+
+`pb-safe` pads a bar's bottom by `env(safe-area-inset-bottom)`, so the touch tab bar clears a
+phone's home indicator; the react plugin's document sets `viewport-fit=cover`, which makes the inset
+non-zero.
 
 The modes are class scopes: `.dark` on `<html>` is the mode, and `.light` on any element
 inside it restores the light colors and `color-scheme` for that subtree, as the showcase's light
@@ -98,7 +107,7 @@ graph, compiles it with the Tailwind CLI in `scripts/fixture/`, and holds the co
 | Check | Asserts |
 | --- | --- |
 | `a6` | every class a component spells is emitted by the built sheet, so an off-contract utility fails by name |
-| `b5` | the overlay classes the components spell equal `scripts/overlays.ts`, both ways; a state variant over a contract token is held by `b-owns` instead |
+| `b5` | the overlay classes the components spell equal `scripts/overlays.ts`, both ways; a state variant over a contract token is held by `b-owns` instead; the skeleton fraction widths (`SKELETON_WIDTHS`) are accepted without being required, only in a class literal that spells `bg-skeleton`, or in a literal of widths alone in a file that draws the line cell (`skeleton({ kind: "line" })`) |
 | `b-owns` | every token a component spells is one its roster entry `owns` |
 | `b6` | every props type extends `Closed`, no class channel or props spread survives |
 | `b7` | `scripts/fixture/closure.tsx` passes each closed channel to every component under `@ts-expect-error` and compiles |

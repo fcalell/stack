@@ -7,8 +7,8 @@ import type { Closed } from "../../lib/closed.ts";
 import { FieldDisabled } from "../../lib/field.ts";
 import { Icon } from "../icon/index.tsx";
 
-const BOX = "relative inline-flex items-center justify-center";
-const IN_FIELD = "shrink-0 focus-visible:-outline-offset-2";
+const BOX = "relative inline-flex items-center justify-center shrink-0";
+const IN_FIELD = "focus-visible:-outline-offset-2";
 const PRESS =
 	"hover:bg-wash-hover hover:text-ink-body active:bg-wash-press active:text-ink-body";
 const DISABLED = "aria-disabled:text-ink-disabled";

@@ -51,12 +51,16 @@ export function declarationMap(body: string): Map<string, string> {
 
 // Tailwind escapes `.`, `[`, `(` and their siblings in the selectors it emits
 // (`.px-3\.5 {`), so the raw class name has to be CSS-escaped before it is
-// regex-escaped or a class that did compile reads as missing.
+// regex-escaped or a class that did compile reads as missing. A child-selector
+// utility (`divide-y`) emits its rule on the children
+// (`:where(.divide-y > :not(:last-child)) {`).
 export function rule(css: string, selector: string): string | undefined {
 	const escaped = selector
 		.replace(/[.[\]()/%:]/g, (char) => `\\${char}`)
 		.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-	return css.match(new RegExp(`\\.${escaped}\\s*\\{([^}]*)\\}`))?.[1];
+	return css.match(
+		new RegExp(`\\.${escaped}(?:\\s*>[^{}]*)?\\s*\\{([^}]*)\\}`),
+	)?.[1];
 }
 
 // ── Check runner ────────────────────────────────────────────────────

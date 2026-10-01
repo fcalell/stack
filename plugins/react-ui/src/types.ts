@@ -46,11 +46,13 @@ export const cssLayerSchema = z.object({
 
 export type CssLayer = z.input<typeof cssLayerSchema>;
 
-// A top-level block: the two Tailwind v4 at-rules that cannot sit inside a
+// A top-level block: the Tailwind v4 at-rules that cannot sit inside a
 // `@layer`. `theme` seeds the design tokens (`@theme { … }`); `utility`
-// declares one custom utility (`@utility shadow-float { … }`). Both bodies are
-// declaration records, rendered property-by-property through the CSS render
-// boundary.
+// declares one custom utility (`@utility shadow-float { … }`), both bodies
+// declaration records rendered property-by-property through the CSS render
+// boundary; `variant` declares one custom variant
+// (`@custom-variant touch { … }`) whose body is rules holding `@slot`, built
+// by the contributing plugin from its own constants, as a layer's content is.
 const cssDeclarationsSchema = z.record(z.string(), z.string());
 
 export const cssBlockSchema = z.discriminatedUnion("kind", [
@@ -64,6 +66,11 @@ export const cssBlockSchema = z.discriminatedUnion("kind", [
 		// throws an error that names the contributing plugin.
 		name: z.string(),
 		declarations: cssDeclarationsSchema,
+	}),
+	z.object({
+		kind: z.literal("variant"),
+		name: z.string(),
+		content: z.string(),
 	}),
 ]);
 

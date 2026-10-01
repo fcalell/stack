@@ -50,7 +50,7 @@ import {
 } from "@fcalell/ui-core/tokens";
 import { Node, Project } from "ts-morph";
 import { reactUi } from "../src/index.ts";
-import { OVERLAYS } from "./overlays.ts";
+import { OVERLAYS, SKELETON_WIDTHS } from "./overlays.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const pkgDir = resolve(here, "..");
@@ -140,6 +140,7 @@ const CLASS_ROOTS = [
 	"shrink",
 	"grow",
 	"overflow",
+	"overscroll",
 	"object",
 	"whitespace",
 	"font",
@@ -350,7 +351,35 @@ check("a6", "the built sheet carries every class the components spell", () => {
 });
 
 check("b5", "the overlay allowlist mirrors the swept sources", () => {
-	const listed = [...ALL_SWEPT].filter((name) => !isStateToken(name));
+	const misplaced: string[] = [];
+	for (const path of COMPONENT_FILES) {
+		const source = readFileSync(path, "utf8");
+		// A width composed over the line cell (`cn(skeleton({ kind: "line" }), width)`)
+		// sits in a literal of widths alone, in a file that draws the cell.
+		const bars = source.includes('skeleton({ kind: "line" })');
+		for (const literal of literals(source)) {
+			const names = classes(literal);
+			if (names.includes("bg-skeleton")) continue;
+			if (
+				bars &&
+				names.length > 0 &&
+				names.every((name) => SKELETON_WIDTHS.includes(name))
+			)
+				continue;
+			for (const name of names) {
+				if (SKELETON_WIDTHS.includes(name)) {
+					misplaced.push(`${relative(pkgDir, path)}: ${name}`);
+				}
+			}
+		}
+	}
+	assert(
+		misplaced.length === 0,
+		`a skeleton width off a skeleton bar: ${misplaced.join(", ")}`,
+	);
+	const listed = [...ALL_SWEPT].filter(
+		(name) => !isStateToken(name) && !SKELETON_WIDTHS.includes(name),
+	);
 	const missing = listed.filter((name) => !OVERLAYS.includes(name));
 	assert(
 		missing.length === 0,

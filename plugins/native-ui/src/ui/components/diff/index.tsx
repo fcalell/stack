@@ -1,5 +1,10 @@
 import type { Hunk } from "@fcalell/ui-core/descriptors";
-import { DIFF_GUTTER, diffLine, GROUP, text } from "@fcalell/ui-core/variants";
+import {
+	DIFF_GUTTER,
+	diffLine,
+	GROUP_GROUND,
+	text,
+} from "@fcalell/ui-core/variants";
 import { Text as RNText, ScrollView, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
@@ -32,7 +37,7 @@ export function Diff({ hunks: given, before, after, loading }: DiffProps) {
 		<ScrollView
 			horizontal
 			showsHorizontalScrollIndicator={false}
-			className={cn(GROUP, "overflow-hidden")}
+			className={cn(GROUP_GROUND, "overflow-hidden")}
 		>
 			<View>
 				{hunks.map((hunk) => (

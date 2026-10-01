@@ -7,8 +7,8 @@ import {
 	field,
 	fieldValue,
 	POPOVER,
-	rhythm,
 	row,
+	SELECT_GROUP,
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
@@ -133,7 +133,7 @@ export function Select<V extends string | null = string>({
 						{groups.map((group, at) => (
 							<Control.Group
 								key={group.label ?? at}
-								className={cn(rhythm({ unit: "rows" }), OPTION_GROUP)}
+								className={cn(SELECT_GROUP, OPTION_GROUP)}
 							>
 								{group.label ? (
 									<Control.GroupLabel

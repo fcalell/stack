@@ -55,6 +55,7 @@ import {
 	BREAKPOINT_PX,
 	BREAKPOINTS,
 	CHIP_FAMILIES,
+	CHIP_HUES,
 	COLOR_NAMES,
 	COLORS,
 	type ColorName,
@@ -92,6 +93,7 @@ import {
 } from "../src/tokens.ts";
 import * as tables from "../src/variant-tables.ts";
 import {
+	ACTION_BAR,
 	AVATAR,
 	AVATAR_LABEL,
 	type Axes,
@@ -104,16 +106,23 @@ import {
 	DIFF_LINE,
 	FIELD,
 	FIELD_VALUE,
+	FORM,
 	ICON,
 	ICON_BUTTON,
 	LINK,
 	type Matrix,
 	MESSAGE,
 	OTP_BOX,
-	PLACE,
-	RHYTHM,
+	PLACE_ROW,
+	PLACE_ROW_GLYPH,
+	PLACE_TAB,
+	PLACE_TAB_LABEL,
 	ROW,
+	SECTION,
 	SEGMENT,
+	SKELETON,
+	SKELETON_ROW,
+	SPLIT_MAIN,
 	STATUS_DOT,
 	SWITCH,
 	SWITCH_THUMB,
@@ -126,6 +135,7 @@ import {
 } from "../src/variant-tables.ts";
 import * as variants from "../src/variants.ts";
 import {
+	actionBar,
 	avatar,
 	avatarLabel,
 	avatarStep,
@@ -140,15 +150,22 @@ import {
 	FAMILIES,
 	field,
 	fieldValue,
+	form,
 	icon,
 	iconButton,
 	link,
 	message,
 	otpBox,
-	place,
-	rhythm,
+	placeRow,
+	placeRowGlyph,
+	placeTab,
+	placeTabLabel,
 	row,
+	section,
 	segment,
+	skeleton,
+	skeletonRow,
+	splitMain,
 	statusContentTone,
 	statusDot,
 	switchThumb,
@@ -237,6 +254,7 @@ const SHEET_SIZE: Record<(typeof SIZES)[number], string> = {
 	"row-2": "--row-height-2",
 	"row-setting": "--row-height-setting",
 	header: "--header-height",
+	strip: "--strip-height",
 	target: "--target-min",
 	dot: "--size-dot",
 	chip: "--size-chip",
@@ -356,7 +374,7 @@ const TEXT_FLOORS: Array<[ColorName, ColorName[]]> = [
 	["on-accent", ["accent", "act-accent-hover", "act-accent-press"]],
 	["on-danger", ["danger"]],
 	["on-act-danger", ["act-danger", "act-danger-hover", "act-danger-press"]],
-	...CHIP_FAMILIES.map((family): [ColorName, ColorName[]] => [
+	...CHIP_HUES.map((family): [ColorName, ColorName[]] => [
 		`chip-${family}-ink`,
 		[`chip-${family}-soft`],
 	]),
@@ -375,7 +393,7 @@ const GRAPHIC_FLOORS: Array<[ColorName, ColorName[]]> = [
 	["toggle-on", ["canvas", "surface", "group"]],
 	["toggle-on-hover", ["canvas", "surface", "group"]],
 	["switch-thumb", ["toggle-on", "toggle-on-hover"]],
-	...CHIP_FAMILIES.map((family): [ColorName, ColorName[]] => [
+	...CHIP_HUES.map((family): [ColorName, ColorName[]] => [
 		`chip-${family}`,
 		["surface"],
 	]),
@@ -383,7 +401,8 @@ const GRAPHIC_FLOORS: Array<[ColorName, ColorName[]]> = [
 
 // Every floor a palette keeps, both modes: the text and graphic floors, a
 // destructive act's label under its hover and press washes on each ground an
-// act sits on, and every hold the contract declares. c32 reads it at the
+// act sits on, the neutral chip's ink under its soft on the same grounds, and
+// every hold the contract declares. c32 reads it at the
 // default knobs, c11 at every accent and cast hue.
 function floors(colors: Palette): { measured: number; short: string[] } {
 	const short: string[] = [];
@@ -416,6 +435,7 @@ function floors(colors: Palette): { measured: number; short: string[] } {
 			for (const veil of ["wash-hover", "wash-press"] as const) {
 				measure("danger", bg, 4.5, veil);
 			}
+			measure("chip-neutral-ink", bg, 4.5, "chip-neutral-soft");
 		}
 		for (const name of COLOR_NAMES) {
 			const declaration = COLORS[name];
@@ -490,8 +510,16 @@ const MATRICES: readonly Registration[] = [
 	["TOAST_STATE", TOAST_STATE, toastState],
 	["DIFF_LINE", DIFF_LINE, diffLine],
 	["MESSAGE", MESSAGE, message],
-	["PLACE", PLACE, place],
-	["RHYTHM", RHYTHM, rhythm],
+	["PLACE_ROW", PLACE_ROW, placeRow],
+	["PLACE_ROW_GLYPH", PLACE_ROW_GLYPH, placeRowGlyph],
+	["PLACE_TAB", PLACE_TAB, placeTab],
+	["PLACE_TAB_LABEL", PLACE_TAB_LABEL, placeTabLabel],
+	["SPLIT_MAIN", SPLIT_MAIN, splitMain],
+	["SECTION", SECTION, section],
+	["FORM", FORM, form],
+	["ACTION_BAR", ACTION_BAR, actionBar],
+	["SKELETON", SKELETON, skeleton],
+	["SKELETON_ROW", SKELETON_ROW, skeletonRow],
 ];
 
 // The class-bearing exports that are not matrices: every uppercase string
@@ -657,24 +685,26 @@ check("c02", "package.json shape", () => {
 });
 
 check("c03", "tokens.ts declares the contract", () => {
-	requireEqual(COLOR_NAMES.length, 84, "color count");
+	requireEqual(COLOR_NAMES.length, 86, "color count");
 	requireEqual(new Set(COLOR_NAMES).size, COLOR_NAMES.length, "unique colors");
 	requireEqual(TYPE_ROLES.length, 7, "type role count");
-	requireEqual(SPACING_ROLES.length, 9, "spacing role count");
-	requireEqual(GAP_ROLES.length, 5, "gap role count");
-	requireEqual(SIZES.length, 25, "size count");
+	requireEqual(SPACING_ROLES.length, 11, "spacing role count");
+	requireEqual(GAP_ROLES.length, 6, "gap role count");
+	requireEqual(SIZES.length, 26, "size count");
 	requireEqual(RADIUS_ROLES.length, 8, "radius role count");
 	requireEqual(SHADOW_LEVELS.length, 2, "shadow level count");
-	requireEqual(WIDTHS.length, 6, "width count");
+	requireEqual(WIDTHS.length, 11, "width count");
 	requireEqual(BREAKPOINTS.length, 3, "breakpoint count");
-	requireEqual(WORD_KEYS.length, 21, "word count");
+	requireEqual(WORD_KEYS.length, 23, "word count");
 	for (const name of COLOR_NAMES) {
 		assert(COLORS[name] !== undefined, `no declaration for ${name}`);
 	}
-	for (const role of SPACING_ROLES) {
+	// `w-*` and `max-w-*` read `--spacing-*` (the roles and the sizes) before
+	// `--container-*`, so a width that shares either's name is shadowed.
+	for (const name of [...SPACING_ROLES, ...SIZES]) {
 		assert(
-			!(WIDTHS as readonly string[]).includes(role),
-			`spacing role ${role} shadows the width of its name`,
+			!(WIDTHS as readonly string[]).includes(name),
+			`${name} shadows the width of its name`,
 		);
 	}
 	for (const role of GAP_ROLES) {
@@ -687,7 +717,7 @@ check("c03", "tokens.ts declares the contract", () => {
 	for (const word of ["marine", "navy", "brand", "tint", "label", "floor"]) {
 		assert(!new RegExp(`"${word}"`).test(source), `tokens.ts names "${word}"`);
 	}
-	return `${COLOR_NAMES.length} colors, 7 roles, 9 spacing roles (5 gaps), 25 sizes, 8 radii, 2 shadows, 6 widths, 3 breakpoints, 21 words`;
+	return `${COLOR_NAMES.length} colors, 7 roles, 11 spacing roles (6 gaps), 25 sizes, 8 radii, 2 shadows, 11 widths, 3 breakpoints, 23 words`;
 });
 
 check("c05", "default knobs reproduce the approved sheet", () => {
@@ -1007,7 +1037,7 @@ check("c06", "every scale is its ratio of the base", () => {
 			rung,
 		);
 	}
-	return "7 roles × 2 densities with even line boxes, 9 spacing roles, 17 sizes, 4 trackings, 8 radii, 6 widths, 3 breakpoints, 2 families with their fallback faces, 4 durations";
+	return "7 roles × 2 densities with even line boxes, 11 spacing roles, 17 sizes, 4 trackings, 8 radii, 11 widths, 3 breakpoints, 2 families with their fallback faces, 4 durations";
 });
 
 check(
@@ -1880,18 +1910,6 @@ check("c26", "every cell keeps the type role ahead of its metrics", () => {
 	return `${inspected} cells: type role ahead of its leading and tracking`;
 });
 
-check("c27", "every rhythm cell is exactly gap-<role>", () => {
-	const units = Object.keys(RHYTHM.variants.unit) as Array<
-		keyof (typeof RHYTHM)["variants"]["unit"]
-	>;
-	requireEqual(units.join(" "), GAP_ROLES.join(" "), "rhythm units");
-	requireEqual(RHYTHM.base, "", "RHYTHM.base");
-	for (const unit of units) {
-		requireEqual(rhythm({ unit }), `gap-${unit}`, `rhythm(${unit})`);
-	}
-	return `${units.length} units, each cell the bare gap utility`;
-});
-
 check(
 	"c28",
 	"the roster is closed, camelCase, and off the style channels",
@@ -2069,7 +2087,11 @@ const TOKEN_NAMESPACES: ReadonlyArray<
 	readonly [keyof Owns, RegExp, ReadonlySet<string>]
 > = [
 	["roles", /^(?:text|leading|tracking)-(.+)$/, new Set<string>(TYPE_ROLES)],
-	["colors", /^(?:bg|text|border|outline)-(.+)$/, new Set<string>(COLOR_NAMES)],
+	[
+		"colors",
+		/^(?:bg|text|border|outline|divide)-(.+)$/,
+		new Set<string>(COLOR_NAMES),
+	],
 	["radii", /^rounded(?:-[tblrse]{1,2})?-(.+)$/, new Set<string>(RADIUS_ROLES)],
 	[
 		"spacing",

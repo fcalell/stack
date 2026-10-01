@@ -114,6 +114,7 @@ export const closure = (
 		<Icon name="X" fit="body" placeholderTextColorClassName="text-ink-body" />
 		<Button label="a" onAct={noop} />
 		<Button label="a" icon="X" onAct={noop} />
+		<Button label="a" count={2} onAct={noop} />
 		{/* @ts-expect-error: closed channel */}
 		<Button label="a" onAct={noop} className="x" />
 		{/* @ts-expect-error: closed channel */}
@@ -310,6 +311,7 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<Link href="https://x" placeholderTextColorClassName="text-ink-body" />
 		<Place title="a" />
+		<Place title="a" more={[{ label: "a", onAct: noop, destructive: true }]} />
 		{/* @ts-expect-error: closed channel */}
 		<Place title="a" className="x" />
 		{/* @ts-expect-error: closed channel */}
@@ -325,6 +327,7 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<Place title="a" placeholderTextColorClassName="text-ink-body" />
 		<Screen title="a" back="/" />
+		<Screen title="a" more={[{ label: "a", onAct: noop, destructive: true }]} />
 		{/* @ts-expect-error: closed channel */}
 		<Screen title="a" back="/" className="x" />
 		{/* @ts-expect-error: closed channel */}
@@ -355,6 +358,7 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<Split main={<Text />} placeholderTextColorClassName="text-ink-body" />
 		<Section title="a" />
+		<Section title="a" act={{ icon: "Plus", label: "a", onAct: noop }} />
 		{/* @ts-expect-error: closed channel */}
 		<Section title="a" className="x" />
 		{/* @ts-expect-error: closed channel */}
@@ -399,21 +403,21 @@ export const closure = (
 		<List selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
 		<List placeholderTextColorClassName="text-ink-body" />
-		<Form onSubmit={noop} />
+		<Form />
 		{/* @ts-expect-error: closed channel */}
-		<Form onSubmit={noop} className="x" />
+		<Form className="x" />
 		{/* @ts-expect-error: closed channel */}
-		<Form onSubmit={noop} style={{ flex: 1 }} />
+		<Form style={{ flex: 1 }} />
 		{/* @ts-expect-error: closed channel */}
-		<Form onSubmit={noop} class="x" />
+		<Form class="x" />
 		{/* @ts-expect-error: closed channel */}
-		<Form onSubmit={noop} classList={{}} />
+		<Form classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<Form onSubmit={noop} colorClassName="text-ink-body" />
+		<Form colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Form onSubmit={noop} selectionColorClassName="text-ink-body" />
+		<Form selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Form onSubmit={noop} placeholderTextColorClassName="text-ink-body" />
+		<Form placeholderTextColorClassName="text-ink-body" />
 		<Toolbar />
 		{/* @ts-expect-error: closed channel */}
 		<Toolbar className="x" />
@@ -429,21 +433,21 @@ export const closure = (
 		<Toolbar selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
 		<Toolbar placeholderTextColorClassName="text-ink-body" />
-		<ActionBar />
+		<ActionBar acts={[{ label: "a", onAct: noop }]} />
 		{/* @ts-expect-error: closed channel */}
-		<ActionBar className="x" />
+		<ActionBar acts={[]} className="x" />
 		{/* @ts-expect-error: closed channel */}
-		<ActionBar style={{ flex: 1 }} />
+		<ActionBar acts={[]} style={{ flex: 1 }} />
 		{/* @ts-expect-error: closed channel */}
-		<ActionBar class="x" />
+		<ActionBar acts={[]} class="x" />
 		{/* @ts-expect-error: closed channel */}
-		<ActionBar classList={{}} />
+		<ActionBar acts={[]} classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<ActionBar colorClassName="text-ink-body" />
+		<ActionBar acts={[]} colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<ActionBar selectionColorClassName="text-ink-body" />
+		<ActionBar acts={[]} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<ActionBar placeholderTextColorClassName="text-ink-body" />
+		<ActionBar acts={[]} placeholderTextColorClassName="text-ink-body" />
 		<Columns />
 		{/* @ts-expect-error: closed channel */}
 		<Columns className="x" />

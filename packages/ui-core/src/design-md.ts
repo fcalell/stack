@@ -101,8 +101,10 @@ const SPACING_USE: Record<(typeof SPACING_ROLES)[number], string> = {
 	inside: "within a control: icon to label, dot to text",
 	"control-x": "a control's inline padding",
 	pair: "between paired elements: label over input, title over description",
+	acts: "between the acts of a bar: a page header, a toolbar, an action bar",
 	rows: "between rows in a menu or a nav list",
 	card: "a card's inset",
+	tile: "a compact card's inset: a board card",
 	float:
 		"a floating surface's inset: a select's list, a menu, a picker popover",
 	fields: "between fields",
@@ -117,7 +119,8 @@ const SIZE_USE: Record<(typeof SIZES)[number], string> = {
 	row: "a one-line row",
 	"row-2": "a two-line row",
 	"row-setting": "a setting row: label and description beside a control",
-	header: "a table or strip header",
+	header: "a table or section header",
+	strip: "a page header strip: a Place's or Screen's title and acts",
 	target: "the least hit area of any interactive part",
 	dot: "a status or chip mark",
 	chip: "a chip's height",
@@ -385,7 +388,7 @@ function body(resolved: ResolvedTheme): string[] {
 		"",
 		"## Colors",
 		"",
-		"Colors are OKLCH, named by the place they draw. Neutrals cast on one hue at a fixed chroma per role (the cast knob moves the hue, never the chroma, so no contrast moves), one accent hue (its chroma is held inside sRGB at any hue), three status hues, six chip families, eight avatar steps. A wash is the body ink at an alpha, so it sits on any surface as one more step. Inside a group or a lifted layer the container re-points `edge` to `edge-raised`, so a part never picks between them.",
+		"Colors are OKLCH, named by the place they draw. Neutrals cast on one hue at a fixed chroma per role (the cast knob moves the hue, never the chroma, so no contrast moves), one accent hue (its chroma is held inside sRGB at any hue), three status hues, six hued chip families and a neutral one (`fill-neutral` under `ink-body`, no mark), eight avatar steps. A wash is the body ink at an alpha, so it sits on any surface as one more step. Inside a group or a lifted layer the container re-points `edge` to `edge-raised`, so a part never picks between them.",
 		"",
 		...table(
 			["Role", "Light", "Dark", "Draws"],
@@ -431,7 +434,7 @@ function body(resolved: ResolvedTheme): string[] {
 			]),
 		),
 		"",
-		`Sizes are heights and squares in the same namespace. Density is a theme, never a breakpoint, and never a knob: the web draws the desktop set where the primary pointer is fine and the touch set everywhere else, native draws the touch set, and a \`data-density\` attribute on the web root pins either. Every touch target is at least ${resolved.sizes.touch.target}; on the desktop every interactive part keeps a ${resolved.sizes.desktop.target} hit area whatever it draws.`,
+		`Sizes are heights and squares in the same namespace. Density is a theme, never a breakpoint, and never a knob: the web draws the desktop set where the primary pointer is fine and the touch set everywhere else, native draws the touch set, and a \`data-density\` attribute on the web root pins either. A molecule whose structure follows density (an action bar at natural width on the desktop, full width on touch) reads it through the web's \`touch:\` variant, the same rule (a \`data-density="touch"\` pin, or a pointer that is not fine and no \`desktop\` pin); native is the touch set, so its molecules draw the touch structure with no variant. Every touch target is at least ${resolved.sizes.touch.target}; on the desktop every interactive part keeps a ${resolved.sizes.desktop.target} hit area whatever it draws.`,
 		"",
 		...table(
 			["Size", "Desktop", "Touch", "Is"],
@@ -443,7 +446,7 @@ function body(resolved: ResolvedTheme): string[] {
 			]),
 		),
 		"",
-		`Widths of lifted layers, never stretched to their container: ${WIDTHS.filter(
+		`Widths of lifted layers, never stretched to their container, and of a frame's fixed regions: ${WIDTHS.filter(
 			(width) => width !== "measure",
 		)
 			.map((width) => `${code(width)} ${resolved.widths[width]}`)

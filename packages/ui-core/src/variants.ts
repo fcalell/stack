@@ -6,6 +6,7 @@ import { cva } from "class-variance-authority";
 import type { ClassValue } from "clsx";
 import { COLOR_NAMES, type ColorName, type StatusState } from "./tokens.ts";
 import {
+	ACTION_BAR,
 	AVATAR,
 	AVATAR_LABEL,
 	type Axes,
@@ -18,16 +19,23 @@ import {
 	DIFF_LINE,
 	FIELD,
 	FIELD_VALUE,
+	FORM,
 	ICON,
 	ICON_BUTTON,
 	LINK,
 	type Matrix,
 	MESSAGE,
 	OTP_BOX,
-	PLACE,
-	RHYTHM,
+	PLACE_ROW,
+	PLACE_ROW_GLYPH,
+	PLACE_TAB,
+	PLACE_TAB_LABEL,
 	ROW,
+	SECTION,
 	SEGMENT,
+	SKELETON,
+	SKELETON_ROW,
+	SPLIT_MAIN,
 	STATUS_DOT,
 	SWITCH,
 	SWITCH_THUMB,
@@ -92,8 +100,16 @@ export const banner = build(BANNER);
 export const toastState = build(TOAST_STATE);
 export const diffLine = build(DIFF_LINE);
 export const message = build(MESSAGE);
-export const place = build(PLACE);
-export const rhythm = build(RHYTHM);
+export const placeRow = build(PLACE_ROW);
+export const placeRowGlyph = build(PLACE_ROW_GLYPH);
+export const placeTab = build(PLACE_TAB);
+export const placeTabLabel = build(PLACE_TAB_LABEL);
+export const splitMain = build(SPLIT_MAIN);
+export const section = build(SECTION);
+export const form = build(FORM);
+export const actionBar = build(ACTION_BAR);
+export const skeleton = build(SKELETON);
+export const skeletonRow = build(SKELETON_ROW);
 
 // ── The family registry and its cells ──────────────────────────────
 
@@ -155,8 +171,16 @@ export const FAMILIES: readonly Family[] = [
 	family("TOAST_STATE", TOAST_STATE, toastState),
 	family("DIFF_LINE", DIFF_LINE, diffLine),
 	family("MESSAGE", MESSAGE, message),
-	family("PLACE", PLACE, place),
-	family("RHYTHM", RHYTHM, rhythm),
+	family("PLACE_ROW", PLACE_ROW, placeRow),
+	family("PLACE_ROW_GLYPH", PLACE_ROW_GLYPH, placeRowGlyph),
+	family("PLACE_TAB", PLACE_TAB, placeTab),
+	family("PLACE_TAB_LABEL", PLACE_TAB_LABEL, placeTabLabel),
+	family("SPLIT_MAIN", SPLIT_MAIN, splitMain),
+	family("SECTION", SECTION, section),
+	family("FORM", FORM, form),
+	family("ACTION_BAR", ACTION_BAR, actionBar),
+	family("SKELETON", SKELETON, skeleton),
+	family("SKELETON_ROW", SKELETON_ROW, skeletonRow),
 ];
 
 export function classes(value: string): string[] {
@@ -219,6 +243,8 @@ export const FIELD_GLYPH = "text-ink-meta";
 export const TEXT_AREA_VALUE = "min-h-text-area";
 // A one-time code's row of boxes and the digit in each.
 export const OTP = "gap-inside";
+// A select's option group: its rows at the rows rhythm.
+export const SELECT_GROUP = "gap-rows";
 export const OTP_DIGIT =
 	"text-heading leading-heading tracking-heading font-semibold text-ink-body font-mono";
 // A slider: its label line (the label, its value trailing) over the track,
@@ -236,7 +262,8 @@ export const SLIDER_THUMB =
 // A picker's empty choice and its control with no value: a placeholder's
 // look.
 export const PICKER_EMPTY = "text-ink-meta";
-export const GROUP = "rounded-card bg-group";
+// A box on the group ground.
+export const GROUP_GROUND = "rounded-card bg-group";
 // A popover: raised on the float shadow inside its hairline, its rows inset
 // by the float inset so a row's wash sits just inside the edge.
 export const POPOVER =
@@ -261,7 +288,71 @@ export const CODE = "rounded-card bg-group p-card";
 // `Input` that edits it in place keeps the row's height.
 export const TABLE_CELL =
 	"min-h-field border-x border-transparent px-control-x";
-export const PLACE_ROW_SELECTED = "bg-wash-selected";
+
+// ── Layout ──────────────────────────────────────────────────────────
+
+// The shell on the desktop: the sidebar on the canvas beside the column on
+// the surface, a hairline between; the switcher's slot and the places inset
+// by the float inset, so no wash meets the sidebar's edge.
+export const SHELL_SIDEBAR = "w-sidebar bg-canvas border-r border-edge";
+export const SHELL_COLUMN = "bg-surface";
+export const SWITCHER_SLOT = "p-float";
+export const SHELL_PLACES = "gap-rows p-float";
+// The shell on touch: the tab bar on the canvas under a hairline.
+export const SHELL_TAB_BAR = "px-float bg-canvas border-t border-edge";
+// The switcher's trigger in a touch top bar; in the sidebar it is a
+// `PLACE_ROW` with the name at body 500.
+export const SWITCHER = "gap-inside min-h-target rounded-control";
+// The toasts' layer over the column (the desktop shell) or at a touch
+// screen's foot.
+export const TOASTS = "p-page";
+// A page, a Place's or a Screen's. On the desktop its title and acts share
+// the strip under a hairline; on touch the head insets a top bar (the
+// switcher or the back act, then the acts) over the title. The body insets
+// its sections at the page inset; a bleeding body draws none on the desktop
+// and keeps the top inset under the touch title, which has no hairline.
+export const PAGE_STRIP = "gap-acts min-h-strip px-page border-b border-edge";
+export const PAGE_HEAD = "px-page";
+export const PAGE_TOP_BAR = "gap-acts min-h-strip";
+export const PAGE_BODY = "gap-sections p-page";
+export const PAGE_BLEED = "pt-page";
+// A touch Place's act, floating over the body's end on a layer at the page
+// inset, and the room the body keeps under its last row so the act never
+// covers it.
+export const FLOATING_ACT = "p-page";
+export const FLOATING_ACT_ROOM = "min-h-control";
+// A split: the list at its width inside a hairline, the pane at its width at
+// `wide`. On touch the list stands alone and draws neither.
+export const SPLIT_LIST = "w-list p-inside border-r border-edge";
+export const SPLIT_PANE = "gap-sections w-pane p-page border-l border-edge";
+// A section's head (its rhythm is `SECTION`'s): the head row over a blocked
+// act's reason, the title line and the act a header tall. The fold toggle's
+// wash overhangs the title's start only (a web overlay pulls it back).
+export const SECTION_HEAD = "gap-pair";
+export const SECTION_HEAD_ROW = "gap-fields";
+export const SECTION_TITLE = "gap-inside min-h-header";
+export const SECTION_TOGGLE = "gap-inside min-h-header px-inside rounded-row";
+export const SECTION_ACT = "min-h-header";
+// A group: a hairline card on the surface drawing the hairline between its
+// rows once, so no row carries one. `divide-*` is a child selector uniwind
+// drops, so native draws that hairline per row.
+export const GROUP =
+	"rounded-card border border-edge bg-surface divide-y divide-edge";
+export const LIST = "gap-rows";
+// A board's columns: the row scrolls sideways from the page inset (a web
+// overlay bleeds it to the Place's edge), each column at its width.
+export const COLUMNS = "gap-fields px-page";
+export const COLUMN = "w-column";
+// A sectioned form's foot: its action bar under a hairline across the form.
+export const FORM_FOOT = "border-t border-edge pt-fields";
+export const ACTION_BAR_ACTS = "gap-acts";
+// A toolbar's strip under a hairline: its controls and acts in wrapping rows
+// at the acts rhythm, the applied filters' chips at the pair rhythm.
+export const TOOLBAR = "gap-pair py-inside border-b border-edge";
+export const TOOLBAR_ROW = "gap-acts";
+export const TOOLBAR_CHIPS = "gap-pair";
+// A skeleton row's stacked lines.
+export const SKELETON_LINES = "gap-pair";
 
 // The roles `Text` draws: a primary line and a secondary one. The other roles
 // are drawn by the molecule that owns their place.
@@ -292,8 +383,9 @@ export type DiffLineKind = keyof (typeof DIFF_LINE)["variants"]["kind"];
 export type MessageAuthor = keyof (typeof MESSAGE)["variants"]["author"];
 export type AvatarStep = keyof (typeof AVATAR)["variants"]["step"];
 export type ChipCell = keyof (typeof CHIP)["variants"]["family"];
-export type PlaceState = keyof (typeof PLACE)["variants"]["state"];
-export type RhythmUnit = keyof (typeof RHYTHM)["variants"]["unit"];
+export type PlaceRowState = keyof (typeof PLACE_ROW)["variants"]["state"];
+export type PlaceTabState = keyof (typeof PLACE_TAB)["variants"]["state"];
+export type ActionBarFit = keyof (typeof ACTION_BAR)["variants"]["fit"];
 
 export type ContentTone = ColorName;
 

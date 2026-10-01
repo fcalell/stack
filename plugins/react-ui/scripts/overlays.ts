@@ -17,7 +17,6 @@ export const OVERLAYS: readonly string[] = [
 	"flex-col",
 	"items-start",
 	"gap-pair",
-	"text-ink-error",
 	// Status, Chip
 	"inline-flex",
 	"items-center",
@@ -136,4 +135,68 @@ export const OVERLAYS: readonly string[] = [
 	"active:no-underline",
 	"hover:underline",
 	"active:underline",
+	// Place, Screen, Split
+	"min-h-0",
+	"overflow-y-auto",
+	"pointer-events-none",
+	"pointer-events-auto",
+	"data-popup-open:bg-wash-press",
+	"data-popup-open:text-ink-body",
+	"w-popover",
+	"gap-rows",
+	"text-danger",
+	"inset-y-0",
+	"right-0",
+	"overscroll-contain",
+	"touch:pt-0",
+	// Section, Group, List, Columns
+	"flex",
+	"flex-col",
+	"min-w-0",
+	"items-start",
+	"items-center",
+	"inline-flex",
+	"shrink-0",
+	"truncate",
+	"text-start",
+	"text-end",
+	"text-ink-meta",
+	"overflow-hidden",
+	"overflow-x-auto",
+	"-mx-page",
+	// Form, Toolbar, ActionBar
+	"flex",
+	"flex-col",
+	"flex-wrap",
+	"items-center",
+	"items-end",
+	"justify-end",
+	"min-w-0",
+	"grid",
+	"touch:w-full",
+	"touch:flex",
+	"touch:flex-col-reverse",
+	"touch:items-stretch",
+	// Shell
+	"h-dvh",
+	"pb-safe",
+	"text-left",
+	"border-t",
+	"border-edge",
+	"pt-float",
+	"top-0",
+	"left-full",
+	"max-w-full",
+];
+
+// SKELETON: a skeleton bar stands at the length of the text it replaces as a
+// fraction of its line. The five are structural, never a token, and accepted
+// on a skeleton bar only (a class literal that spells `bg-skeleton`); check
+// b5 accepts them there without requiring them.
+export const SKELETON_WIDTHS: readonly string[] = [
+	"w-1/4",
+	"w-1/3",
+	"w-1/2",
+	"w-2/3",
+	"w-3/4",
 ];

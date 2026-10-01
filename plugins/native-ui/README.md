@@ -63,7 +63,7 @@ PascalCase name), drawn from `lucide-react-native`.
 
 `active`, `waiting`, `done`, `attention`, `failed`, `idle` (the six `Status` words),
 `recommended`, `copy`, `copied`, `back`, `close`, `more`, `send`, `stop`, `attach`, `search`,
-`loading`, `retry`, `add`, `remove`. A sentence that belongs to the app is a prop on the molecule that draws it
+`loading`, `retry`, `add`, `remove`, `details`, `places`. A sentence that belongs to the app is a prop on the molecule that draws it
 (`placeholder`, `notice`, every `sentence`, every `label`), never a word here.
 
 ## The roster
@@ -81,9 +81,9 @@ declines, and `confirmName` blocks the act until the viewer types the named valu
 takes any `FieldBinding` as `field`; native ships no form hook, so the binding comes from the
 app's form state (the web's `useApiForm(...).bind(name)` has no native twin yet).
 
-`native-ui` draws the phone layout at every width: `Split` shows one slot (the deepest present),
-`Columns` stacks, `Diff` is unified, `Sheet` is a bottom sheet, `Shell` draws the tab bar and no
-sidebar. Pull to refresh is the phone's.
+`native-ui` draws the phone layout at every width: `Split` shows the list or the open record
+alone with the pane as a sheet, `Columns` scrolls sideways, `Diff` is unified, `Sheet` is a bottom sheet,
+`Shell` draws the tab bar and no sidebar. Pull to refresh is the phone's.
 
 ### Atoms
 
@@ -91,7 +91,7 @@ sidebar. Pull to refresh is the phone's.
 | --- | --- |
 | `Text` | `role` (`display`, `title`, `heading`, `body`, `meta`, `label`, `mono`), children |
 | `Icon` | `name`, from the app's icon set; `fit` (`meta`, `body`, `control`: what it sits beside, which picks `icon-meta`, `icon` or `icon-control`) |
-| `Button` | `act` (`primary`, `secondary`, `destructive`), `label`, `onAct`, `loading` (the busy ring), `blocked` (the reason, drawn under it once pressed or once its form or sheet has taken input) |
+| `Button` | `act` (`primary`, `secondary`, `destructive`), `label`, `count` (a number in a pill after the label), `onAct`, `loading` (the busy ring), `blocked` (the reason, drawn under it once pressed or once its form or sheet has taken input) |
 | `IconButton` | `icon`, `label` (read aloud), `onAct` |
 | `Count` | `value` |
 | `Status` | `state` (`active`, `waiting`, `done`, `attention`, `failed`, `idle`), `label`, `onOpen` |
@@ -110,14 +110,15 @@ sidebar. Pull to refresh is the phone's.
 
 | Component | Props |
 | --- | --- |
-| `Place` | `title`, `actions` (at most two circles; the rest open under a more circle), `act`, `more`, `bleed` (the body is the whole box under the top bar, with no inset and no scroll, for a child that pans and scrolls itself), children |
-| `Screen` | `title`, `back` (a route), `actions`, children; an `ActionBar` child is pinned above the home indicator |
-| `Split` | `list`, `main`, `pane`, `empty` (the desktop's, never drawn) |
-| `Section` | `title` (a part), `count`, `description`, `folded` (set, it folds: the label is a button with a chevron), `onToggle` (its new state on each open and close), `act` (a blocked one says its reason under it once pressed or once its form or sheet is touched, as `Button` does), `loading`, children |
-| `Group`, `List` | `loading`, children |
-| `Form` | `onSubmit`, children |
-| `Toolbar`, `ActionBar`, `Columns` | children |
-| `Shell` | `places` (`{ route, label, icon, count }`), `banner`, the toast queue and the `confirm()` decisions, `switcher` (what switches what the app is looking at, an organization or a project: it starts each `Place`'s top bar, never a `Screen`'s), children |
+| `Place` | `title` (on its own line under the top bar), `actions` (icon acts in the top bar, after the shell's switcher), `act` (the create act, with its plus, floating over the body's end), `more` (`MenuItem`s under the more circle, a destructive one in `danger`), `bleed` (the body is the whole box under the title, with no side inset and no scroll, for a child that scrolls itself), children |
+| `Screen` | `title`, `back` (a route), `actions`, `more` (as `Place`'s), children; it covers the `Shell`'s tab bar |
+| `Split` | `list`, `main` (set, the record stands alone), `pane` (with a record, a Details act in its `Place`'s or `Screen`'s top bar opens it as a sheet), `empty` (the desktop's, never drawn); it sits in a bleeding `Place` and scrolls itself |
+| `Section` | `title` (a part), `count`, `description`, `folded` (set, it folds: the label is a button with a chevron), `onToggle` (its new state on each open and close), `act` (an `Act`, or an `IconAct` drawn as an `IconButton`; a blocked `Act` says its reason under it once pressed or once its form or sheet is touched, as `Button` does), `loading`, children |
+| `Group`, `List` | `loading` (a loading `Section` sets it for the `Group` or `List` in its body), children |
+| `Form` | children (its `ActionBar`'s filled act runs its `onAct`, and the form is busy while that promise pends; native has no implicit submission) |
+| `Toolbar`, `Columns` | children |
+| `ActionBar` | `acts` (`Act[]`, full width and stacked at the `acts` gap, the last one the filled act, drawn on top; a destructive act is `danger` filled, the hairline form otherwise), `fit` (`end`, `full`: the acts at the control or the field height) |
+| `Shell` | `places` (`{ route, label, icon, count }`; past five, four tabs and a More tab whose sheet holds the rest), `banner`, the toast queue and the `confirm()` decisions, `switcher` (what switches what the app is looking at, an organization or a project: it starts each `Place`'s top bar, never a `Screen`'s), children |
 
 ### Shared molecules
 

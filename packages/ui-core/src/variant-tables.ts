@@ -7,11 +7,13 @@
 // borders, ink, spacing roles, radius, type role, weight, family, a control's
 // size. Display, alignment and every interaction state stay with the plugins.
 //
-// The text matrices are the Stage 1 port. The atoms' matrices are the class
-// strings of their approved artboards (`plugins/react-ui/design/1*-*.dc.html`),
-// the states and the layout recorded beside them in the overlay notes
-// (`.helm/research/design-system/atoms-overlays.md`). Every other matrix is
-// carried on the new vocabulary until its artboard replaces it.
+// The text matrices are the Stage 1 port. The atoms' and the layout
+// molecules' matrices are the class strings of their approved artboards
+// (`plugins/react-ui/design/1*-*.dc.html`, `3*-*.dc.html`), the states and
+// the layout recorded beside them in the overlay notes
+// (`.helm/research/design-system/atoms-overlays.md`, `layout-overlays.md`).
+// Every other matrix is carried on the new vocabulary until its artboard
+// replaces it.
 
 export type Axes = Record<string, Record<string, string>>;
 
@@ -228,6 +230,7 @@ export const CHIP = matrix({
 			teal: "bg-chip-teal-soft text-chip-teal-ink",
 			violet: "bg-chip-violet-soft text-chip-violet-ink",
 			pink: "bg-chip-pink-soft text-chip-pink-ink",
+			neutral: "bg-chip-neutral-soft text-chip-neutral-ink",
 		},
 		trailing: {
 			none: "px-inside",
@@ -248,6 +251,7 @@ export const CHIP_LABEL = matrix({
 			teal: "text-chip-teal-ink",
 			violet: "text-chip-violet-ink",
 			pink: "text-chip-pink-ink",
+			neutral: "text-chip-neutral-ink",
 		},
 	},
 });
@@ -264,7 +268,7 @@ export const FIELD = matrix({
 		kind: {
 			text: "min-h-field",
 			code: "min-h-field",
-			search: "min-h-control",
+			search: "min-h-control-compact",
 		},
 		trailing: {
 			none: "px-control-x",
@@ -364,10 +368,12 @@ export const CHECKBOX = matrix({
 
 // A row in a group, a list or a popover: highlighted (the keyboard's or the
 // pointer's current option) under the hover wash, pressed under the press
-// wash, selected under the selection wash. The base is the option row of the
-// approved Select frame.
+// wash, selected under the selection wash. `ground` is what holds it: a
+// list or a popover insets it as a rounded wash (the option row of the
+// approved Select frame), a group runs it edge to edge at the card's inset,
+// the group drawing the hairline between its rows.
 export const ROW = matrix({
-	base: "min-h-row px-control-x gap-inside rounded-row",
+	base: "min-h-row gap-inside",
 	variants: {
 		state: {
 			rest: "",
@@ -375,8 +381,12 @@ export const ROW = matrix({
 			pressed: "bg-wash-press",
 			selected: "bg-wash-selected",
 		},
+		ground: {
+			list: "px-control-x rounded-row",
+			group: "px-card",
+		},
 	},
-	defaultVariants: { state: "rest" },
+	defaultVariants: { state: "rest", ground: "list" },
 });
 
 // ── Table ───────────────────────────────────────────────────────────
@@ -456,29 +466,152 @@ export const MESSAGE = matrix({
 
 // ── Place ───────────────────────────────────────────────────────────
 
-// A place in the tab bar or the sidebar: the selected one is inked accent.
-export const PLACE = matrix({
-	base: "text-body leading-body font-medium",
+// Navigation keeps the accent out: a place is selected by a grey fill in the
+// sidebar and by ink alone in the tab bar.
+
+// A place in the sidebar: the row under its state's wash; the label is
+// `TEXT.body` in every state.
+export const PLACE_ROW = matrix({
+	base: "gap-inside min-h-row px-control-x rounded-row",
 	variants: {
-		state: { idle: "text-ink-meta", selected: "text-accent-ink" },
+		state: {
+			rest: "",
+			hover: "bg-wash-hover",
+			active: "bg-wash-press",
+			selected: "bg-wash-selected",
+			"selected-hover": "bg-wash-selected-hover",
+		},
+	},
+	defaultVariants: { state: "rest" },
+});
+
+// The sidebar place's glyph: the meta ink until the place is selected.
+export const PLACE_ROW_GLYPH = matrix({
+	base: "",
+	variants: {
+		state: { rest: "text-ink-meta", selected: "text-ink-body" },
+	},
+	defaultVariants: { state: "rest" },
+});
+
+// A place in the tab bar: glyph over label, the box carrying the tab's ink
+// for the glyph inside it (currentColor on the web) and the label caption
+// repeating it, since a native Text inherits none.
+export const PLACE_TAB = matrix({
+	base: "gap-rows min-h-row px-pair rounded-row",
+	variants: {
+		state: { idle: "text-ink-meta", selected: "text-ink-body" },
 	},
 	defaultVariants: { state: "idle" },
 });
 
-// ── Rhythm ──────────────────────────────────────────────────────────
+// The selected tab's label steps to 500: ink alone is the only other cue.
+export const PLACE_TAB_LABEL = matrix({
+	base: "text-caption leading-caption tracking-caption",
+	variants: {
+		state: {
+			idle: "font-normal text-ink-meta",
+			selected: "font-medium text-ink-body",
+		},
+	},
+	defaultVariants: { state: "idle" },
+});
 
-// The gap a container puts between its children. Every cell is exactly
-// `gap-<role>`, a shape the harness pins, so the role mapping lives here
-// once.
-export const RHYTHM = matrix({
+// ── Split ───────────────────────────────────────────────────────────
+
+// The record beside the list: its sections apart at the page inset, or, with
+// nothing open, the empty state alone at the inset.
+export const SPLIT_MAIN = matrix({
 	base: "",
 	variants: {
-		unit: {
-			inside: "gap-inside",
-			pair: "gap-pair",
-			rows: "gap-rows",
+		state: {
+			rest: "gap-sections p-page",
+			empty: "p-page",
+		},
+	},
+	defaultVariants: { state: "rest" },
+});
+
+// ── Section ─────────────────────────────────────────────────────────
+
+// A section's rhythm follows where it sits: on a page (over a Group, a List,
+// a column's cards) the head sits over the body and the body's children
+// stack at the pair rhythm; in a form both are the fields rhythm. The same
+// cell spaces the section (head to body) and its body (child to child).
+export const SECTION = matrix({
+	base: "",
+	variants: {
+		in: {
+			page: "gap-pair",
+			form: "gap-fields",
+		},
+	},
+	defaultVariants: { in: "page" },
+});
+
+// ── Form ────────────────────────────────────────────────────────────
+
+// The rhythm between a form's children: fields apart, or sections apart when
+// it holds sections (each section's fields then at the fields rhythm).
+export const FORM = matrix({
+	base: "",
+	variants: {
+		holds: {
 			fields: "gap-fields",
 			sections: "gap-sections",
 		},
 	},
+	defaultVariants: { holds: "fields" },
+});
+
+// ── Action bar ──────────────────────────────────────────────────────
+
+// The acts row over a blocked act's reason. `fit` is where the bar stands:
+// at the end of its container at the acts' natural width, or across it with
+// each act at the field's height. The two differ only in structure (a
+// platform overlay) and in the `Button` fit the bar passes, so neither
+// carries a cell.
+export const ACTION_BAR = matrix({
+	base: "gap-pair",
+	variants: {
+		fit: {
+			end: "",
+			full: "",
+		},
+	},
+	defaultVariants: { fit: "end" },
+});
+
+// ── Skeleton ────────────────────────────────────────────────────────
+
+// What a loading form draws in place of a part: a text line (a fraction
+// width, a web overlay, stands it at its text's length) or the atom it
+// stands in for, at that atom's size.
+export const SKELETON = matrix({
+	base: "",
+	variants: {
+		kind: {
+			line: "h-skeleton rounded-chip bg-skeleton",
+			avatar: "size-avatar rounded-full bg-skeleton",
+			switch: "w-switch-w h-switch-h rounded-full bg-skeleton",
+			count: "min-h-chip min-w-chip rounded-full bg-skeleton",
+			field: "min-h-field rounded-control bg-skeleton",
+		},
+	},
+	defaultVariants: { kind: "line" },
+});
+
+// A loading row at the height of the row it stands in for: a two-line list
+// row, a group's setting row, or a form's field (a label line
+// over the field's box at the label's gap).
+export const SKELETON_ROW = matrix({
+	base: "",
+	variants: {
+		kind: {
+			"two-line": "gap-inside min-h-row-2 px-control-x",
+			setting: "gap-fields min-h-row-setting px-card py-pair",
+			field: "gap-pair",
+		},
+	},
+	defaultVariants: { kind: "two-line" },
 });

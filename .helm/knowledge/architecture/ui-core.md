@@ -24,7 +24,7 @@ pinned by the package's verify suite; this entry holds the architecture and its 
   `defaultMode`. Every other value is the sheet. The cast reaches every neutral (the grounds, the
   hairlines, the inks, the washes, `switch-off`, `fill-disabled`, `fill-neutral`, dark
   `on-danger`, the light shadow ink) through the `"cast"` hue marker, the way `"accent"` marks
-  the accent's literals; it never reaches the accent, the status trio, the chip families or the
+  the accent's literals; it never reaches the accent, the status trio, the hued chip families or the
   avatars. Its chroma is a constant per role and mode, never a knob: hue at a neutral's chroma
   moves no contrast, while chroma decides whether a cast is a tint or a color and re-tunes the
   ladder. Density is no knob either: the pointer decides it. Rejected: a knob per scale
@@ -59,7 +59,8 @@ pinned by the package's verify suite; this entry holds the architecture and its 
   `edge`, `edge-raised`, `edge-strong`, `scrim`), three inks (`ink-body`, `ink-meta`,
   `ink-faint` for disabled text only), the accent (`accent`, `on-accent`, `accent-soft`,
   `accent-ink` for a link and the ring), three status families with `-soft` and `on-danger`,
-  six chip families by hue name each with a mark, a `-soft` ground and an `-ink`, eight avatar
+  six chip families by hue name each with a mark, a `-soft` ground and an `-ink` and a `neutral`
+  family whose soft and ink alias `fill-neutral` and `ink-body` (no mark), eight avatar
   steps each with an `-ink`, seven washes (`fill-neutral` the resting neutral ground among them), six place aliases (`ring`, `selected-outline`,
   `edge-hover`, `edge-error`, `ink-error`, `ink-disabled`), the two act fills (`act-accent`,
   `act-danger`) with their states, and the switch's five with the shared `toggle-on`. `COLOR_GROUPS` holds the roles by those groups and `COLOR_NAMES`
@@ -74,15 +75,20 @@ pinned by the package's verify suite; this entry holds the architecture and its 
   `Status` with a family mode (a state and a data value are two concepts, so two names).
 - Density is a theme, never a breakpoint, and it moves three scales: the type roles (body 13 on
   the desktop set, 16 on touch, each role a ratio rounded to the pixel, its line box to the even
-  pixel), the nine spacing roles (multiples of 4, one rung looser on touch except the float
-  and page insets) and the twenty-four sizes (control 32/44, field 38/48, target 24/44, the switch and
+  pixel), the eleven spacing roles (multiples of 4, one rung looser on touch except the float
+  and page insets and the acts gap) and the twenty-four sizes (control 32/44, field 38/48, target 24/44, the switch and
   its derived thumb travel, the avatar, three icon sizes by the text beside them, the check,
   the slider track, the one-time-code box). `themeTokens` seeds the touch set on both platforms; the web
   overrides it with the desktop set in a `(pointer: fine)` `:root` rule in `@layer base`, the
-  cascade the dark layer rides, so no cell and no component carries a density
+  cascade the dark layer rides, so no cell carries a density
   class: a non-inline `@theme` utility reads its variable, so `text-body` and
   `min-h-control` follow. `data-density` on the web root pins either set on any device, the showcase's and the
-  boards' pin, never a consumer option. Native is touch-only. Rejected: a `fine:` variant in the cells (an interaction
+  boards' pin, never a consumer option. Native is touch-only. A molecule whose structure follows
+  density (an action bar at natural width on the desktop, full width on touch) reads it through
+  the web's `touch:` custom variant, emitted over the density layer's own condition (the touch
+  pin, or no desktop pin and a pointer that is not fine), so a structural class and the token set
+  cannot disagree; native always draws the touch set, so it draws the touch structure with no
+  variant; the variant sits in a web molecule's overlay, never a cell. A value that flips by density is the same overlay over the desktop cell (the Split record's `touch:pt-0`, one inset under a touch title), never a matrix value. Rejected: a `fine:` variant in the cells (an interaction
   condition in a shared cell, meaningless on native) and one type scale at every density (13 on
   a phone is unreadable and 16 on a desktop row wastes the row).
 - Emission returns token records, never CSS text (`themeTokens`, `rootTokens`, `modeTokens`,
@@ -104,7 +110,7 @@ pinned by the package's verify suite; this entry holds the architecture and its 
 ## Words
 
 Every word a molecule draws or reads aloud on its own (the six `Status` words, `recommended`,
-`copy`, `copied`, `back`, `close`, `more`, `send`, `stop`, `attach`, `search`, `loading`, `checking`, `retry`, `add`, `remove`) comes
+`copy`, `copied`, `back`, `close`, `more`, `send`, `stop`, `attach`, `search`, `loading`, `checking`, `retry`, `add`, `remove`, `details`) comes
 from `words`, a closed typed object with English defaults. The `Words` type requires every key
 and `wordsSchema` is strict, so a translation missing a word fails `tsc` and the schema. It is a
 plugin option beside `theme`; each plugin contributes a `WordsProvider` into the generated entry
@@ -119,15 +125,17 @@ prop on the molecule that draws it, never a key.
   react-ui's showcase read the same list.
 - The emitted `app.css` carries every contract utility whether or not a source spells it:
   react-ui contributes one `@source inline()` pattern per utility family over the token lists
-  (colours as fill, ink, border and outline; spacing roles as paddings, gaps and widths; sizes as
+  (colours as fill, ink, border, outline and divider; spacing roles as paddings, gaps and widths; sizes as
   heights, widths, minimums, paddings and an x translation; widths; type roles; tracking; radii;
   shadows; durations; easings). Tailwind reads source text, and a Stage 2 artboard is drawn on the emitted sheet in
   contract classes before any component spells them; the showcase's foundations page builds its
   classes from the token names for the same reason. The cost is the whole contract in every
   consumer's sheet, about 7.5 kB gzipped.
-- Matrices hold the platform-invariant cells only: fills, borders, ink, spacing roles, radius,
-  type role, weight, family, and a control's size. Display, alignment, and every interaction state
-  are platform overlays composed through `cn()` (RN is flex by default and web is not, so a
+- Matrices hold the platform-invariant cells only: fills, borders (a container's `divide-`
+  hairline among them), ink, spacing roles, radius, type role, weight, family, sizes and widths.
+  Display, alignment, flex sizing, truncation, positioning, overflow, a negative margin that
+  bleeds a region (`-mx-page`), a fraction width and every interaction state are platform
+  overlays composed through `cn()` (RN is flex by default and web is not, so a
   shared `flex-row` would be wrong on one). What a component is given (an act, a family, a
   checked value, an error) is an axis; where the pointer or focus is on it (hover, press, focus,
   disabled, pending) is an overlay. A type role's cell carries its ink and, for `mono`,
@@ -135,9 +143,20 @@ prop on the molecule that draws it, never a key.
   carries `tabular-nums`, a stat's figures at one width (uniwind maps it to `fontVariant`). A
   labelled act's fill (`BUTTON`, `CHIP`) carries the ink as well, since the web glyph and
   spinner inside it draw in the current colour.
-- An atom's matrices are its approved artboard's class strings, split on this line. The board's
-  display, alignment and state classes, per cell and state, are recorded for the plugins in
-  `.helm/research/design-system/atoms-overlays.md`.
+- An atom's or a layout molecule's matrices are its approved artboard's class strings, split on
+  this line: a part with an axis (a state, a ground, a fit, what it holds) is a matrix, a part
+  with one shape a named constant (`POPOVER`, `PAGE_STRIP`). The board's display, alignment and
+  state classes, per cell and state, are recorded for the plugins in
+  `.helm/research/design-system/atoms-overlays.md` and `layout-overlays.md`.
+- A molecule whose structure follows density keeps one constant per structure, never a density
+  axis: the page's desktop strip (`PAGE_STRIP`, title and acts in one row under a hairline) and
+  its touch head (`PAGE_HEAD` over `PAGE_TOP_BAR`, the title under the bar), the sidebar
+  (`SHELL_SIDEBAR`, `PLACE_ROW`) and the tab bar (`SHELL_TAB_BAR`, `PLACE_TAB`), the split's
+  list inside its hairline and the phone's list alone. The web picks the structure under
+  `touch:` or by breakpoint; native draws the touch one.
+- A loading form stands in for what it replaces at that part's size: `SKELETON` by the part
+  (`line`, `avatar`, `switch`, `count`, `field`) and `SKELETON_ROW` by the row it replaces
+  (`two-line`, `setting`, `field`), so the loading frame keeps the loaded frame's height.
 - No arbitrary values in a cell, in either spelling. A control pads across on `control-x`, stands
   on a size (`min-h-control`, `min-h-field`) and insets on a spacing role; density moves all
   three through the variables.
@@ -145,6 +164,26 @@ prop on the molecule that draws it, never a key.
   the spinner's ink is the recorded example (native colours a prop, not a class, so its cells
   carry its geometry alone, its ink is its place's, and `ContentTone` is the shared contract). So is a line diff: `Diff`'s `before` and
   `after` are diffed in each plugin with the `diff` package both already carry, never here.
+- Navigation keeps the accent out: a place is two cells by where it sits. `PLACE_ROW`, the
+  sidebar row, carries its states as washes (`rest`, `hover`, `active`, `selected` on
+  `wash-selected`, `selected-hover`), its focus the web's inset-ring overlay, its label `TEXT.body` in
+  every state and its glyph a part cell of its own (`PLACE_ROW_GLYPH`: `ink-meta`, `ink-body`
+  once selected). `PLACE_TAB` with `PLACE_TAB_LABEL`, the tab bar tab, is selected by ink alone
+  (`ink-meta` idle, `ink-body` selected, the selected label at 500); its box carries the ink for the glyph inside it, as a
+  labelled act's fill does, and the label repeats it because a native Text inherits none.
+- A row names what holds it: `ROW`'s `ground` axis is `list` (a list or a popover, the row
+  inset as a rounded wash) or `group` (edge to edge at the card's inset). A group draws the
+  hairline between its rows once (`GROUP`: `divide-y divide-edge`), so no row carries one. That is
+  web-only: `divide-*` is a child selector, which uniwind's compiler drops, so native has no
+  divider utility yet and draws the hairline per row.
+- A bar at a phone's bottom edge clears the home indicator with the web emit's `pb-safe`
+  (`padding-bottom: env(safe-area-inset-bottom)`, non-zero under the document's
+  `viewport-fit=cover`), an overlay the tab bar spells beside `SHELL_TAB_BAR`; native pads the
+  same inset from `react-native-safe-area-context`.
+- A frame's fixed regions are widths (`sidebar`, `list`, `pane`, `column`, `auth`), so a region
+  keeps its measure at any viewport. A skeleton bar alone takes a fraction width (`w-1/4` to
+  `w-3/4`) to stand at its text's length: structural, a closed list in the web verify's overlay
+  acceptance, never a token.
 - A table cell is the field's box (`TABLE_CELL`: `min-h-field` and `px-control-x` behind a
   transparent side border), so a cell and the `Input` that edits it in place put their text in
   one place and the row keeps its height at either density. The row (`TABLE_ROW`) is a hairline
@@ -155,7 +194,7 @@ prop on the molecule that draws it, never a key.
 
 - The canon binds every component either UI plugin ships: one name per concept (`label`,
   `loading`, `onChange`, `onAct`, `act`, `blocked`, `sentence`), composed regions as typed
-  descriptors (`Act`, `Mark`, `PlaceSpec`, `Option`, `OptionGroup`, `Part`, `FieldBinding`,
+  descriptors (`Act`, `Mark`, `PlaceSpec`, `Switcher`, `Option`, `OptionGroup`, `Part`, `FieldBinding`,
   `Confirmation`, `MenuItem`, `TableColumn`, `TableRow`) instead of node slots, and no
   `class` / `className` / `classList` / `style` prop. Laws live in the README under `## The
   canon`. An icon is an `IconName`, a closed type over Lucide's PascalCase
@@ -177,16 +216,26 @@ prop on the molecule that draws it, never a key.
   the single-choice field over `options`, is the field box (`FIELD`) whose open list is a
   popover (`POPOVER`) of rows (`ROW`); on native it opens the same option sheet as `Picker`.
 - A component that sits in more than one container takes `fit`, a closed enum read off its
-  matrix's `fit` axis (`IconFit`, `ButtonFit`, `IconButtonFit`, `LinkFit`), defaulting to the
-  matrix's default; the composing molecule sets it (a `Toolbar` passes `bar`, a field's trailing
-  act `field`) and a call site may.
+  matrix's `fit` axis (`IconFit`, `ButtonFit`, `IconButtonFit`, `LinkFit`, `ActionBarFit`),
+  defaulting to the matrix's default; the composing molecule sets it (a `Place` passes `bar` to
+  its strip's acts, a field's trailing act `field`, a `Form` under an auth column `full`) and a
+  call site may. `ACTION_BAR`'s two fits carry no cell: `end` and `full` differ in structure
+  (an overlay) and in the `Button` fit the bar passes (`body`, `field`), and the matrix exists
+  so the closed type is read off an axis like every other fit.
+- An `Act` says what it does, never how it looks: `destructive` marks an act that removes or
+  ends something, and the `ActionBar` draws it as `danger` when it is the bar's one filled act
+  and as `destructive` (the hairline form) otherwise, so a confirm's filled act needs no kind of
+  its own.
 - `Text` draws `body` and `meta` (plus `strong`) and names those roles' cells of `TEXT` and
   `TEXT_STRONG`, not either family; every other type role is drawn by the molecule that owns
   its place, and `TEXT` keeps all seven roles as the one table those owners draw from.
 - Tokens are enforced by ownership: a token names a place, and the component that owns the place
   draws it. A component whose artboard is approved declares `owns` on its entry, the type roles,
   colours (a name, or a family prefix ending in `-`), radii, spacing roles, sizes and widths, and
-  shadow levels it may draw. The least data that makes the check exact: a class is classified by
+  shadow levels it may draw. A molecule that picks a composed atom's `fit` or `act` (a
+  `Place` its strip act's `BUTTON.fit.bar`, a `Split` its Details act's `ICON_BUTTON.fit.bar`)
+  draws those cells and owns what they spell; a slot the consumer fills (`children`, a
+  `ReactNode`) draws nothing of its content. The least data that makes the check exact: a class is classified by
   its utility prefix into one namespace and looked up by name, so `rounded-chip`, `min-h-chip`
   and `bg-chip-red-soft` land in three namespaces and cannot be confused. Rejected: one flat
   prefix list (`chip` is a radius, a size and a colour family) and a declaration per cell (the

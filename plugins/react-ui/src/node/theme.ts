@@ -54,7 +54,7 @@ export function themeBlock(resolved: ResolvedTheme): CssBlock {
 export function tokenSources(): CssSourceInline[] {
 	const set = (names: readonly string[]) => `{${names.join(",")}}`;
 	return [
-		`{bg,text,border,outline}-${set(COLOR_NAMES)}`,
+		`{bg,text,border,outline,divide}-${set(COLOR_NAMES)}`,
 		`{p,px,py,pt,pb,pl,pr,gap,gap-x,gap-y,w}-${set(SPACING_ROLES)}`,
 		`{h,w,min-h,min-w,size,p,translate-x}-${set(SIZES)}`,
 		`{w,max-w}-${set(WIDTHS)}`,
@@ -104,6 +104,34 @@ export function densityLayer(resolved: ResolvedTheme): CssLayer {
 		renderRule(PINNED_DESKTOP, desktop),
 	];
 	return { name: "base", content: rules.join("\n") };
+}
+
+// `touch:` draws where the density layer draws the touch set: under the touch
+// pin, or with no desktop pin where the pointer is not fine. It is how a
+// molecule's structure (not a token) follows density; a size or a type role
+// follows through its variable and never needs it.
+export function touchVariant(): CssBlock {
+	const slot = (selector: string) => `${selector} & {\n\t@slot;\n}`;
+	return {
+		kind: "variant",
+		name: "touch",
+		content: [
+			slot(PINNED_TOUCH),
+			renderMediaRule(
+				`not ${FINE_POINTER}`,
+				slot(':root:not([data-density="desktop"])'),
+			),
+		].join("\n"),
+	};
+}
+
+// `pb-safe` keeps a bottom bar clear of the home indicator under `viewport-fit=cover`.
+export function safeAreaUtility(): CssBlock {
+	return {
+		kind: "utility",
+		name: "pb-safe",
+		declarations: { "padding-bottom": "env(safe-area-inset-bottom)" },
+	};
 }
 
 // Each mode is a class scope in `@layer base`, not a third block kind:

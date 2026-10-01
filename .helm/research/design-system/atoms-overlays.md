@@ -113,8 +113,8 @@ Under: Light · Button, fit=body, every act in every state, on canvas, surface a
   - cell: `BUTTON {act: primary, fit: body}`; overlay: `relative inline-flex items-center justify-center bg-fill-disabled text-ink-disabled`
 - label: `truncate text-body leading-body font-medium`
   - cell: `BUTTON_LABEL {act: primary}`; overlay: `truncate`
-- reason: `text-meta leading-meta font-normal text-ink-error`
-  - cell: `TEXT {role: meta}`; overlay: `text-ink-error`
+- reason: `text-meta leading-meta font-normal text-ink-meta`
+  - cell: `TEXT {role: meta}`; overlay: none
 
 ### act=primary fit=body · loading
 
@@ -188,8 +188,8 @@ Under: Light · Button, fit=body, every act in every state, on canvas, surface a
   - cell: `BUTTON {act: danger, fit: body}`; overlay: `relative inline-flex items-center justify-center bg-fill-disabled text-ink-disabled`
 - label: `truncate text-body leading-body font-medium`
   - cell: `BUTTON_LABEL {act: danger}`; overlay: `truncate`
-- reason: `text-meta leading-meta font-normal text-ink-error`
-  - cell: `TEXT {role: meta}`; overlay: `text-ink-error`
+- reason: `text-meta leading-meta font-normal text-ink-meta`
+  - cell: `TEXT {role: meta}`; overlay: none
 
 ### act=danger fit=body · loading
 
@@ -263,8 +263,8 @@ Under: Light · Button, fit=body, every act in every state, on canvas, surface a
   - cell: `BUTTON {act: secondary, fit: body}`; overlay: `relative inline-flex items-center justify-center text-ink-disabled`
 - label: `truncate text-body leading-body font-medium`
   - cell: `BUTTON_LABEL {act: secondary}`; overlay: `truncate`
-- reason: `text-meta leading-meta font-normal text-ink-error`
-  - cell: `TEXT {role: meta}`; overlay: `text-ink-error`
+- reason: `text-meta leading-meta font-normal text-ink-meta`
+  - cell: `TEXT {role: meta}`; overlay: none
 
 ### act=secondary fit=body · loading
 
@@ -338,8 +338,8 @@ Under: Light · Button, fit=body, every act in every state, on canvas, surface a
   - cell: `BUTTON {act: destructive, fit: body}`; overlay: `relative inline-flex items-center justify-center text-ink-disabled`
 - label: `truncate text-body leading-body font-medium`
   - cell: `BUTTON_LABEL {act: destructive}`; overlay: `truncate`
-- reason: `text-meta leading-meta font-normal text-ink-error`
-  - cell: `TEXT {role: meta}`; overlay: `text-ink-error`
+- reason: `text-meta leading-meta font-normal text-ink-meta`
+  - cell: `TEXT {role: meta}`; overlay: none
 
 ### act=destructive fit=body · loading
 
@@ -919,8 +919,8 @@ Board: `10-acts-desktop.dc.html` (the touch board draws the same strings).
 
 Under: Light · IconButton: icon only, square, no boundary at rest; the wash is its ground / fit=body · square at control
 
-- button: `relative inline-flex items-center justify-center rounded-control size-control text-ink-meta`
-  - cell: `ICON_BUTTON {fit: body}`; overlay: `relative inline-flex items-center justify-center`
+- button: `relative inline-flex items-center justify-center shrink-0 rounded-control size-control text-ink-meta`
+  - cell: `ICON_BUTTON {fit: body}`; overlay: `relative inline-flex items-center justify-center shrink-0`
 - glyph (Icon): `size-icon-control shrink-0`
   - cell: `ICON {fit: control}`; overlay: `shrink-0`
 
@@ -928,8 +928,8 @@ Under: Light · IconButton: icon only, square, no boundary at rest; the wash is 
 
 Under: Light · IconButton: icon only, square, no boundary at rest; the wash is its ground / fit=body · square at control
 
-- button: `relative inline-flex items-center justify-center rounded-control size-control bg-wash-hover text-ink-body`
-  - cell: `ICON_BUTTON {fit: body}`; overlay: `relative inline-flex items-center justify-center bg-wash-hover text-ink-body`
+- button: `relative inline-flex items-center justify-center shrink-0 rounded-control size-control bg-wash-hover text-ink-body`
+  - cell: `ICON_BUTTON {fit: body}`; overlay: `relative inline-flex items-center justify-center shrink-0 bg-wash-hover text-ink-body`
 - glyph (Icon): `size-icon-control shrink-0`
   - cell: `ICON {fit: control}`; overlay: `shrink-0`
 
@@ -937,8 +937,8 @@ Under: Light · IconButton: icon only, square, no boundary at rest; the wash is 
 
 Under: Light · IconButton: icon only, square, no boundary at rest; the wash is its ground / fit=body · square at control
 
-- button: `relative inline-flex items-center justify-center rounded-control size-control text-ink-meta outline-2 outline-offset-2 outline-ring`
-  - cell: `ICON_BUTTON {fit: body}`; overlay: `relative inline-flex items-center justify-center outline-2 outline-offset-2 outline-ring`
+- button: `relative inline-flex items-center justify-center shrink-0 rounded-control size-control text-ink-meta outline-2 outline-offset-2 outline-ring`
+  - cell: `ICON_BUTTON {fit: body}`; overlay: `relative inline-flex items-center justify-center shrink-0 outline-2 outline-offset-2 outline-ring`
 - glyph (Icon): `size-icon-control shrink-0`
   - cell: `ICON {fit: control}`; overlay: `shrink-0`
 
@@ -946,8 +946,8 @@ Under: Light · IconButton: icon only, square, no boundary at rest; the wash is 
 
 Under: Light · IconButton: icon only, square, no boundary at rest; the wash is its ground / fit=body · square at control
 
-- button: `relative inline-flex items-center justify-center rounded-control size-control bg-wash-press text-ink-body`
-  - cell: `ICON_BUTTON {fit: body}`; overlay: `relative inline-flex items-center justify-center bg-wash-press text-ink-body`
+- button: `relative inline-flex items-center justify-center shrink-0 rounded-control size-control bg-wash-press text-ink-body`
+  - cell: `ICON_BUTTON {fit: body}`; overlay: `relative inline-flex items-center justify-center shrink-0 bg-wash-press text-ink-body`
 - glyph (Icon): `size-icon-control shrink-0`
   - cell: `ICON {fit: control}`; overlay: `shrink-0`
 
@@ -955,8 +955,8 @@ Under: Light · IconButton: icon only, square, no boundary at rest; the wash is 
 
 Under: Light · IconButton: icon only, square, no boundary at rest; the wash is its ground / fit=bar · square at control-compact
 
-- button: `relative inline-flex items-center justify-center rounded-control size-control-compact text-ink-meta`
-  - cell: `ICON_BUTTON {fit: bar}`; overlay: `relative inline-flex items-center justify-center`
+- button: `relative inline-flex items-center justify-center shrink-0 rounded-control size-control-compact text-ink-meta`
+  - cell: `ICON_BUTTON {fit: bar}`; overlay: `relative inline-flex items-center justify-center shrink-0`
 - glyph (Icon): `size-icon-control shrink-0`
   - cell: `ICON {fit: control}`; overlay: `shrink-0`
 
@@ -964,8 +964,8 @@ Under: Light · IconButton: icon only, square, no boundary at rest; the wash is 
 
 Under: Light · IconButton: icon only, square, no boundary at rest; the wash is its ground / fit=bar · square at control-compact
 
-- button: `relative inline-flex items-center justify-center rounded-control size-control-compact bg-wash-hover text-ink-body`
-  - cell: `ICON_BUTTON {fit: bar}`; overlay: `relative inline-flex items-center justify-center bg-wash-hover text-ink-body`
+- button: `relative inline-flex items-center justify-center shrink-0 rounded-control size-control-compact bg-wash-hover text-ink-body`
+  - cell: `ICON_BUTTON {fit: bar}`; overlay: `relative inline-flex items-center justify-center shrink-0 bg-wash-hover text-ink-body`
 - glyph (Icon): `size-icon-control shrink-0`
   - cell: `ICON {fit: control}`; overlay: `shrink-0`
 
@@ -973,8 +973,8 @@ Under: Light · IconButton: icon only, square, no boundary at rest; the wash is 
 
 Under: Light · IconButton: icon only, square, no boundary at rest; the wash is its ground / fit=bar · square at control-compact
 
-- button: `relative inline-flex items-center justify-center rounded-control size-control-compact text-ink-meta outline-2 outline-offset-2 outline-ring`
-  - cell: `ICON_BUTTON {fit: bar}`; overlay: `relative inline-flex items-center justify-center outline-2 outline-offset-2 outline-ring`
+- button: `relative inline-flex items-center justify-center shrink-0 rounded-control size-control-compact text-ink-meta outline-2 outline-offset-2 outline-ring`
+  - cell: `ICON_BUTTON {fit: bar}`; overlay: `relative inline-flex items-center justify-center shrink-0 outline-2 outline-offset-2 outline-ring`
 - glyph (Icon): `size-icon-control shrink-0`
   - cell: `ICON {fit: control}`; overlay: `shrink-0`
 
@@ -982,8 +982,8 @@ Under: Light · IconButton: icon only, square, no boundary at rest; the wash is 
 
 Under: Light · IconButton: icon only, square, no boundary at rest; the wash is its ground / fit=bar · square at control-compact
 
-- button: `relative inline-flex items-center justify-center rounded-control size-control-compact bg-wash-press text-ink-body`
-  - cell: `ICON_BUTTON {fit: bar}`; overlay: `relative inline-flex items-center justify-center bg-wash-press text-ink-body`
+- button: `relative inline-flex items-center justify-center shrink-0 rounded-control size-control-compact bg-wash-press text-ink-body`
+  - cell: `ICON_BUTTON {fit: bar}`; overlay: `relative inline-flex items-center justify-center shrink-0 bg-wash-press text-ink-body`
 - glyph (Icon): `size-icon-control shrink-0`
   - cell: `ICON {fit: control}`; overlay: `shrink-0`
 
@@ -2032,7 +2032,7 @@ Under: Default region, the list open
   ring is spelled on the trigger's open state: `data-popup-open:outline-2
   data-popup-open:outline-offset-2 data-popup-open:outline-ring`.
 - option group (Group): `flex flex-col gap-rows`
-  - cell: `RHYTHM {unit: rows}`; overlay: `flex flex-col`
+  - cell: `SELECT_GROUP`; overlay: `flex flex-col`
 - group label (GroupLabel): `px-control-x pt-pair text-meta leading-meta font-medium text-ink-meta`
   - cell: `TEXT {role: meta} + TEXT_STRONG {role: meta}`; overlay: `px-control-x pt-pair`
 - highlighted row (Item, `data-highlighted`): `flex items-center min-h-row px-control-x gap-inside rounded-row bg-wash-hover`
@@ -2629,4 +2629,3 @@ Under: Light · Slider in a settings row: label at body 500, the value with its 
   - cell: `SLIDER_THUMB`; overlay: `relative shrink-0 overflow-hidden border-edge bg-fill-disabled`
 - rest of the track: `grow h-track rounded-full bg-edge`
   - cell: `SLIDER_REST`; overlay: `grow`
-

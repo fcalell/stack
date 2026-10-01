@@ -49,10 +49,14 @@ test("app.css imports Tailwind without detection, then the web sheet, then the c
 	assert.match(css, /@source "\.\.\/src";/);
 	assert.match(
 		css,
-		/@source inline\("\{bg,text,border,outline\}-\{canvas,surface,/,
+		/@source inline\("\{bg,text,border,outline,divide\}-\{canvas,surface,/,
 	);
 	assert.match(css, /@theme \{[^}]*--spacing-control: 44px;/);
 	assert.match(css, /@utility shadow-/);
+	assert.match(
+		css,
+		/@custom-variant touch \{\n:root\[data-density="touch"\] & \{\n\t@slot;\n\}\n@media not \(pointer: fine\) \{\n:root:not\(\[data-density="desktop"\]\) & \{\n\t@slot;\n\}\n\}\n\}/,
+	);
 	assert.match(css, /\.dark \{\n\tcolor-scheme: dark;/);
 	assert.match(css, /\.light \{\n\tcolor-scheme: light;/);
 	assert.match(css, /--transition-duration-base: 200ms;/);

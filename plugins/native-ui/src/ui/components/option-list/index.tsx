@@ -2,7 +2,7 @@ import type { Option } from "@fcalell/ui-core/descriptors";
 import {
 	COUNT,
 	checkbox,
-	GROUP,
+	GROUP_GROUND,
 	HAIRLINE,
 	row,
 	text,
@@ -36,7 +36,7 @@ export function OptionList({
 	return (
 		<View
 			accessibilityRole="radiogroup"
-			className={cn(GROUP, "overflow-hidden")}
+			className={cn(GROUP_GROUND, "overflow-hidden")}
 		>
 			{options.map((option, index) => {
 				const selected = option.value === value;

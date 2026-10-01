@@ -1,107 +1,119 @@
-import type { Act, IconAct } from "@fcalell/ui-core/descriptors";
-import { text } from "@fcalell/ui-core/variants";
-import { Ellipsis } from "lucide-react-native";
+import type { Act, IconAct, MenuItem } from "@fcalell/ui-core/descriptors";
+import {
+	FLOATING_ACT,
+	FLOATING_ACT_ROOM,
+	PAGE_BLEED,
+	PAGE_BODY,
+	PAGE_HEAD,
+	PAGE_TOP_BAR,
+	text,
+} from "@fcalell/ui-core/variants";
 import { type ReactNode, useContext, useState } from "react";
 import { Text as RNText, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Circle } from "../../lib/circle";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
+import { LendAct, PageTitle, ShellSwitcher } from "../../lib/frame";
 import { Scroll } from "../../lib/hosts";
-import { MoreSheet } from "../../lib/more";
-import { SwitcherContext } from "../../lib/switcher";
+import { MenuCircle } from "../../lib/more";
 import { useWords } from "../../lib/words";
 import { Button } from "../button";
 import { IconButton } from "../icon-button";
+
+const PLACE = "flex-1";
+const TOP_BAR = "flex-row items-center";
+const SPACER = "flex-1";
+const TITLE = "min-w-0 grow";
+// The body scrolls under the fixed head; a bleeding body leaves scrolling
+// to its child.
+const BODY = "flex-1";
+const BODY_WRAP = "relative flex-1";
+const ACT_LAYER = "absolute inset-0 items-center justify-end";
 
 export interface PlaceProps extends Closed {
 	title: string;
 	actions?: IconAct[];
 	act?: Act;
-	// Labelled acts under the more circle, after the actions past two.
-	more?: Act[];
+	more?: MenuItem[];
 	bleed?: boolean;
 	children?: ReactNode;
 }
 
-// At most two circles in the top bar; the rest open under a more circle.
-const BAR_ACTIONS = 2;
-
-// A place in the shell: the large title on the top bar's row beside its
-// circles, the side inset, the scroll, and the primary act as a pill
-// floating above the tab bar. The shell's `switcher` starts the top bar's row.
-// With `bleed` the body is the whole box under the top bar, with no side
-// inset and no scroll, so a child that pans or scrolls itself owns it.
+// A page in the shell: the top bar (the shell's switcher, the actions, more)
+// over the title, the body under it, and the one act floating over the
+// body's end, the body keeping room under its last row so the act never
+// covers it. With `bleed` the body is the whole box under the title, with no
+// side inset and no scroll, for a child that scrolls itself. A Split inside
+// lends it its Details act.
 export function Place({
 	title,
 	actions,
 	act,
-	more: moreActs,
+	more,
 	bleed,
 	children,
 }: PlaceProps) {
-	const insets = useSafeAreaInsets();
 	const words = useWords();
-	const switcher = useContext(SwitcherContext);
-	const [more, setMore] = useState(false);
-	const all = actions ?? [];
-	const extra = moreActs ?? [];
-	const shown =
-		all.length > BAR_ACTIONS || extra.length > 0
-			? all.slice(0, BAR_ACTIONS - 1)
-			: all;
-	const rest = all.slice(shown.length);
-	const bar = (
-		<View className="min-h-11 flex-row items-center gap-inside">
-			{switcher}
-			<RNText
-				accessibilityRole="header"
-				numberOfLines={1}
-				className={cn(text({ role: "title" }), "flex-1")}
-			>
-				{title}
-			</RNText>
-			{shown.map((action) => (
-				<IconButton key={action.label} {...action} />
-			))}
-			{rest.length + extra.length > 0 ? (
-				<Circle
-					icon={Ellipsis}
-					label={words.more}
-					onAct={() => setMore(true)}
-				/>
-			) : null}
-		</View>
-	);
+	const switcher = useContext(ShellSwitcher);
+	const [lent, lend] = useState<IconAct>();
+	const room = act ? <View className={FLOATING_ACT_ROOM} /> : null;
 	return (
-		<View className="flex-1 bg-canvas">
-			{bleed ? (
-				<View className="flex-1" style={{ paddingTop: insets.top }}>
-					<View className="px-card">{bar}</View>
-					<View className="flex-1 overflow-hidden">{children}</View>
+		<LendAct.Provider value={lend}>
+			<PageTitle.Provider value={title}>
+				<View className={PLACE}>
+					<View className={PAGE_HEAD}>
+						<View className={cn(PAGE_TOP_BAR, TOP_BAR)}>
+							{switcher}
+							<View className={SPACER} />
+							{[...(actions ?? []), ...(lent ? [lent] : [])].map((action) => (
+								<IconButton key={action.label} {...action} fit="body" />
+							))}
+							{more?.length ? (
+								<MenuCircle
+									label={words.more}
+									title={title}
+									items={more}
+									fit="body"
+								/>
+							) : null}
+						</View>
+						<RNText
+							accessibilityRole="header"
+							className={cn(text({ role: "title" }), TITLE)}
+						>
+							{title}
+						</RNText>
+					</View>
+					<View className={BODY_WRAP}>
+						{bleed ? (
+							<View className={cn(PAGE_BLEED, BODY)}>
+								{children}
+								{room}
+							</View>
+						) : (
+							<Scroll className={BODY} contentContainerClassName={PAGE_BODY}>
+								{children}
+								{room}
+							</Scroll>
+						)}
+						{/* The page's act is its create act by rule, so it carries the plus. */}
+						{act ? (
+							<View
+								pointerEvents="box-none"
+								className={cn(FLOATING_ACT, ACT_LAYER)}
+							>
+								<Button
+									fit="body"
+									icon="Plus"
+									label={act.label}
+									onAct={act.onAct}
+									loading={act.loading}
+									blocked={act.blocked}
+								/>
+							</View>
+						) : null}
+					</View>
 				</View>
-			) : (
-				<Scroll
-					className="flex-1"
-					contentContainerClassName="grow gap-sections px-card pb-sections"
-					contentContainerStyle={{ paddingTop: insets.top }}
-				>
-					{bar}
-					{children}
-				</Scroll>
-			)}
-			{act ? (
-				<View className="absolute right-0 bottom-0 p-card shadow-float">
-					<Button act="primary" {...act} />
-				</View>
-			) : null}
-			<MoreSheet
-				title={title}
-				open={more}
-				onClose={() => setMore(false)}
-				actions={rest}
-				more={extra}
-			/>
-		</View>
+			</PageTitle.Provider>
+		</LendAct.Provider>
 	);
 }

@@ -1,5 +1,5 @@
 import { cn } from "@fcalell/ui-core/cn";
-import { GROUP, text } from "@fcalell/ui-core/variants";
+import { text } from "@fcalell/ui-core/variants";
 import { type ShowcaseFrame, showcaseFrames } from "./cells.ts";
 import { registry } from "./registry.ts";
 import { useView, ViewBar } from "./view.tsx";
@@ -70,6 +70,8 @@ function Component(props: { name: string; frames: ShowcaseFrame[] }) {
 // and `focus-visible` variants and the focus ring also match under it
 // (`globals.css`), so a static frame draws a pointer or focus state with the
 // component's own classes.
+// A frame stands on the canvas: a group ground would re-point the hairline of
+// every surface drawn inside it.
 function Frame(props: { frame: ShowcaseFrame }) {
 	const { frame } = props;
 	const drawn = registry[frame.component]?.(frame);
@@ -78,7 +80,10 @@ function Frame(props: { frame: ShowcaseFrame }) {
 		<div
 			data-cell={frame.id}
 			data-force-state={frame.state}
-			className={cn(frame.mode, GROUP, "flex flex-col gap-pair p-card min-w-0")}
+			className={cn(
+				frame.mode,
+				"flex flex-col gap-pair p-card min-w-0 rounded-card bg-canvas",
+			)}
 		>
 			<p className={text({ role: "caption" })}>
 				{frame.cell.name} · {frame.state} · {frame.mode}

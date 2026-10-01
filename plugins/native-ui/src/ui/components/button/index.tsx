@@ -13,6 +13,7 @@ import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { Ink } from "../../lib/ink";
 import { useTouched } from "../../lib/touched";
+import { Count } from "../count";
 import { Icon } from "../icon";
 import { Spinner } from "../spinner";
 
@@ -21,7 +22,6 @@ const BOX = "flex-row items-center justify-center";
 const PENDING = "opacity-0";
 const LABEL_BLOCKED = "text-ink-disabled";
 const SPINNER_LAYER = "absolute inset-0 items-center justify-center";
-const REASON = "text-ink-error";
 
 const PRESS: Record<ButtonAct, string> = {
 	primary: "active:bg-act-accent-press",
@@ -59,12 +59,13 @@ export interface ButtonProps extends Closed {
 	fit?: ButtonFit;
 	icon?: IconName;
 	label: string;
+	count?: number;
 	onAct?: () => void;
 	loading?: boolean;
 	blocked?: string;
 }
 
-// A labelled act. Pending and blocked acts stay focusable and ignore the
+// A labelled act, its count after the label. Pending and blocked acts stay focusable and ignore the
 // press; a pending act hides its glyph and label under the spinner and keeps
 // its name, a blocked one says why under itself once pressed or once its
 // form or sheet is touched. Its ink reaches the glyph and the spinner through
@@ -74,6 +75,7 @@ export function Button({
 	fit,
 	icon,
 	label,
+	count,
 	onAct,
 	loading,
 	blocked,
@@ -115,6 +117,11 @@ export function Button({
 				>
 					{label}
 				</RNText>
+				{count !== undefined ? (
+					<View className={loading ? PENDING : undefined}>
+						<Count value={count} />
+					</View>
+				) : null}
 				{loading ? (
 					<View className={SPINNER_LAYER}>
 						<Spinner />
@@ -128,9 +135,7 @@ export function Button({
 		<View className={STACK}>
 			{control}
 			{said ? (
-				<RNText className={cn(text({ role: "meta" }), REASON)}>
-					{blocked}
-				</RNText>
+				<RNText className={text({ role: "meta" })}>{blocked}</RNText>
 			) : null}
 		</View>
 	);

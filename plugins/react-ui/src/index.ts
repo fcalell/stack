@@ -18,9 +18,11 @@ import {
 	modeLayer,
 	motionLayer,
 	rootLayer,
+	safeAreaUtility,
 	shadowBlocks,
 	themeBlock,
 	tokenSources,
+	touchVariant,
 } from "./node/theme.ts";
 import {
 	type CssBlock,
@@ -289,6 +291,8 @@ export const reactUi = plugin("react-ui", {
 			themeBlock(await ctx.resolve(self.slots.resolvedTheme)),
 		),
 		self.slots.appCssBlocks.contribute(() => shadowBlocks()),
+		self.slots.appCssBlocks.contribute(() => touchVariant()),
+		self.slots.appCssBlocks.contribute(() => safeAreaUtility()),
 		self.slots.appCssLayers.contribute(async (ctx) =>
 			rootLayer(await ctx.resolve(self.slots.resolvedTheme)),
 		),

@@ -1,17 +1,41 @@
-import type { ReactNode } from "react";
+import { TOOLBAR, TOOLBAR_CHIPS, TOOLBAR_ROW } from "@fcalell/ui-core/variants";
+import { Children, isValidElement, type ReactNode } from "react";
 import { View } from "react-native";
 import type { Closed } from "../../lib/closed";
+import { cn } from "../../lib/cn";
+import { Chip } from "../chip";
+import { Input } from "../input";
+
+const ROW = "flex-row flex-wrap items-center";
+const SEARCH = "w-full";
 
 export interface ToolbarProps extends Closed {
 	children?: ReactNode;
 }
 
-// One row of controls over a list: a picker, a segmented control, a search
-// field, a switch.
+// The strip under a hairline: the search on a row of its own, the acts at
+// their width in a wrapping row under it, the applied filters' chips in a
+// row under them. Never a filled act: the create act is the page's.
 export function Toolbar({ children }: ToolbarProps) {
+	const search: ReactNode[] = [];
+	const acts: ReactNode[] = [];
+	const chips: ReactNode[] = [];
+	for (const child of Children.toArray(children)) {
+		if (isValidElement(child) && child.type === Input) search.push(child);
+		else if (isValidElement(child) && child.type === Chip) chips.push(child);
+		else acts.push(child);
+	}
 	return (
-		<View className="flex-row flex-wrap items-center gap-inside">
-			{children}
+		<View className={TOOLBAR}>
+			<View className={cn(TOOLBAR_ROW, ROW)}>
+				{search.length > 0 ? <View className={SEARCH}>{search}</View> : null}
+				{acts.length > 0 ? (
+					<View className={cn(TOOLBAR_ROW, ROW)}>{acts}</View>
+				) : null}
+			</View>
+			{chips.length > 0 ? (
+				<View className={cn(TOOLBAR_CHIPS, ROW)}>{chips}</View>
+			) : null}
 		</View>
 	);
 }

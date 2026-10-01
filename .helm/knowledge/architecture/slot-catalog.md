@@ -132,7 +132,7 @@ e.g. consulting `ctx.fileExists` before writing.
 | Slot | Kind | Purpose |
 |------|------|---------|
 | `appCssImports` | `list<CssImport>` | CSS `@import`s aggregated into `.stack/app.css`: a URL, or `{ url, layer?, supports?, source? }`. react-ui imports `tailwindcss` with `source: "none"`, so Tailwind scans only the sheet's `@source` declarations (the consumer's `src`, the plugin's `src/ui` and ui-core), never the generated files in `.stack/` |
-| `appCssBlocks` | `list<CssBlock>` | Top-level `@theme` / `@utility` blocks, rendered after `@source` and before the layers. Neither at-rule may sit inside a `@layer`, which is why they don't ride `appCssLayers` |
+| `appCssBlocks` | `list<CssBlock>` | Top-level `@theme` / `@utility` / `@custom-variant` blocks, rendered after `@source` and before the layers. None of the three at-rules may sit inside a `@layer`, which is why they don't ride `appCssLayers`. react-ui's own `touch:` variant rides here, over the density layer's condition |
 | `appCssLayers` | `list<{ name, content }>` | CSS `@layer` blocks. Dark mode and density ride this slot as `@layer base`: `@theme` compiles into `@layer theme` and Tailwind sorts `base` after it, so a layered `.dark { … }` or `:root[data-density="desktop"] { … }` overrides the seeded values |
 | `fonts` | `derived<FontEntry[]>` | Resolved font files (consumer options or `defaultFonts`: IBM Plex Sans on its `wght` axis, IBM Plex Mono at 400, 500 and 600); `[]` loads none. The families the roles bind to are the theme's `fonts` knob, emitted by ui-core |
 | `resolvedTheme` | `derived<ResolvedTheme>` | The `theme` option run through `@fcalell/ui-core`'s `deriveTheme`, resolved once so every block contribution reads one value |

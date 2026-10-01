@@ -203,15 +203,14 @@
  * surface: a card, a field, a row (white in light, one step up in dark). group: a filled tile, a
  * chip ground, one step below surface in light and above it in dark; a selected row takes the
  * selection wash of the states section instead. raised: a popover or a sheet; light lifts it by
- * shadow so it is white, dark lifts it by one step, about the group's, since a popover never holds
- * a group fill (its highlight is the hover wash). Dark steps in CIE L*: canvas 3.6, surface 8.1,
- * group 13.1, raised 12.3 (+4.5, then +5.0 to group and +4.1 to raised; rubric: +4 to +8, at most
- * three steps).
+ * shadow so it is white, dark lifts it by the group's step, since a popover never holds a group
+ * fill (its highlight is the hover wash). Dark steps in CIE L*: canvas 3.6, surface 8.1, group
+ * and raised 13.1 (+4.5, then +5.0; rubric: +4 to +8, at most three steps).
  * edge: the region hairline (rubric: light #dfdfdf-#ededed, dark #1f1f1f-#34343a, 10-15 % lighter
  * than the surface it sits on). The dark ladder spans 9.5 L* from canvas to group, more than the
  * 5 L* one hairline could straddle, so the hairline is split: edge (drawn over canvas and surface,
  * dark L* 18.5: +14.9 over canvas, +10.4 over surface) and edge-raised (drawn on group and on the
- * raised layers, their own borders included, dark L* 22.6: +9.4 over group and +10.3 over raised, a hair
+ * raised layers, their own borders included, dark L* 22.6: +9.4 over group and raised, a hair
  * past the rubric's #34343a). A group
  * or raised layer re-points --edge to --edge-raised for everything inside it, so a part never
  * picks between them. In light both are the same hairline. It separates; it is not a boundary a
@@ -334,7 +333,7 @@
 	--canvas: oklch(0.16 0.005 264); /* #0c0d0f */
 	--surface: oklch(0.207 0.006 264); /* #16181a */
 	--group: oklch(0.25 0.007 264); /* #202225 */
-	--raised: oklch(0.243 0.007 264); /* #1e2023 */
+	--raised: oklch(0.25 0.007 264); /* #202225 */
 	--edge: oklch(0.298 0.008 264); /* #2b2d31 */
 	--edge-raised: oklch(0.332 0.008 264); /* #34363a */
 	--edge-strong: oklch(0.53 0.01 264); /* #696c72 */
@@ -425,8 +424,10 @@
  *   inside     within a control: icon to label, dot to text
  *   control-x  a control's inline padding
  *   pair       between paired elements: label over input, title over description
+ *   acts       between the acts of a bar (a page header, a toolbar, an action bar), the same at both densities
  *   rows       between rows in a menu or nav list (rows in a hairline list abut: 0)
  *   card       a card's inset
+ *   tile       a compact card's inset (a board card)
  *   float      a floating surface's inset (select list, menu, picker popover), the same at both densities
  *   fields     between fields, and between a field row and the next
  *   sections   between sections of a page
@@ -437,22 +438,26 @@
 	--space-inside: var(--space-1-5);
 	--space-control-x: var(--space-3);
 	--space-pair: var(--space-1-5);
+	--space-acts: var(--space-2);
 	--space-rows: var(--space-0-5);
 	--space-card: var(--space-4);
+	--space-tile: var(--space-3);
 	--space-float: var(--space-1);
 	--space-fields: var(--space-4);
 	--space-sections: var(--space-8);
 	--space-page: var(--space-6);
 }
 
-/* touch: the same roles one rung looser, except the float inset, which holds, and the page
-   inset, which a phone narrows */
+/* touch: the same roles one rung looser, except the float inset and the acts gap, which hold,
+   and the page inset, which a phone narrows */
 :root[data-density="touch"] {
 	--space-inside: var(--space-2);
 	--space-control-x: var(--space-4);
 	--space-pair: var(--space-2);
+	--space-acts: var(--space-2);
 	--space-rows: var(--space-1);
 	--space-card: var(--space-4);
+	--space-tile: var(--space-4);
 	--space-float: var(--space-1);
 	--space-fields: var(--space-6);
 	--space-sections: var(--space-10);
@@ -465,8 +470,8 @@
  * Heights are multiples of the base. desktop: control 32 (rubric 24-32), compact 28 (menus,
  * toolbars), field 38 (form inputs, rubric 32-38; settings reference 38), one-line row 32
  * (rubric 26-37, 3.1 rows / 100 px), two-line row 48 (list items, rubric 40-72), setting row 64
- * (label + description beside a control, settings range 64-70), header 32 (table and strip
- * headers, 30-34). touch: every target is at least 44 (the floor, WCAG 2.5.5 / platform HIG),
+ * (label + description beside a control, settings range 64-70), header 32 (table and section
+ * headers, 30-34), strip 40 (a page header: the title role with 8 of air, rubric 30-40). touch: every target is at least 44 (the floor, WCAG 2.5.5 / platform HIG),
  * rows and fields one rung above it. An icon is sized by what it sits beside: icon-meta beside
  * meta or caption text, icon beside body text, icon-control inside a control. A checkbox's box is
  * check; a one-time-code box is otp, square. A text area's least value height is three body line
@@ -481,6 +486,7 @@
 	--row-height-2: 48px;
 	--row-height-setting: 64px;
 	--header-height: 32px;
+	--strip-height: 40px;
 	--target-min: 24px;
 
 	--size-dot: 6px;
@@ -504,6 +510,7 @@
 	--row-height-2: 64px;
 	--row-height-setting: 72px;
 	--header-height: 44px;
+	--strip-height: 44px;
 	--target-min: 44px;
 
 	--size-dot: 8px;
@@ -530,6 +537,16 @@
 	--width-toast: 360px;
 	--width-dialog: 440px;
 	--width-sheet: 640px;
+}
+
+/* The regions of a frame, each at its pattern's range: sidebar 205-245, a split's list column
+   360-375 and record pane 300-395, a board column 260-350, the auth column 300-430. */
+:root {
+	--width-sidebar: 240px;
+	--width-list: 360px;
+	--width-pane: 320px;
+	--width-column: 300px;
+	--width-auth: 400px;
 }
 
 /* ------------------------------------------------------------------ radius */
@@ -663,6 +680,9 @@
 	--fill-disabled: color-mix(in oklch, var(--ink-body) 6%, transparent);
 	/* a resting neutral ground: a count's pill, a grey chip */
 	--fill-neutral: color-mix(in oklch, var(--ink-body) 8%, transparent);
+	/* the neutral chip family: an applied filter, a tag without a category; no mark */
+	--chip-neutral-soft: var(--fill-neutral);
+	--chip-neutral-ink: var(--ink-body);
 	--disabled-opacity: 0.45;
 
 	--act-accent: var(--accent);
@@ -1199,6 +1219,9 @@ samp {
 }
 .gap-pair {
 	gap: var(--space-pair);
+}
+.gap-acts {
+	gap: var(--space-acts);
 }
 .gap-rows {
 	gap: var(--space-rows);

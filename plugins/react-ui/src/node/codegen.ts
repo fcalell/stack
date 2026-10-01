@@ -15,7 +15,7 @@ import {
 } from "./css-escape.ts";
 
 // Emits `.stack/app.css` as `@import` statements, the `@source` declarations,
-// the top-level `@theme` / `@utility` blocks, then the `@layer` blocks. The
+// the top-level `@theme` / `@utility` / `@custom-variant` blocks, then the `@layer` blocks. The
 // block/layer split is the cascade: `@theme` compiles into `@layer theme`,
 // which Tailwind sorts before `base`, so a `@layer base` block overrides a
 // seeded token. Returns null when no contributions exist so consumers don't
@@ -57,12 +57,17 @@ export function aggregateAppCss(payload: CodegenAppCssPayload): string | null {
 	for (const raw of payload.blocks) {
 		const block = cssBlockSchema.parse(raw);
 		lines.push("");
-		lines.push(
-			block.kind === "theme"
-				? "@theme {"
-				: `@utility ${cssIdent(block.name)} {`,
-		);
-		lines.push(...renderDeclarations(block.declarations));
+		if (block.kind === "variant") {
+			lines.push(`@custom-variant ${cssIdent(block.name)} {`);
+			lines.push(block.content.trim());
+		} else {
+			lines.push(
+				block.kind === "theme"
+					? "@theme {"
+					: `@utility ${cssIdent(block.name)} {`,
+			);
+			lines.push(...renderDeclarations(block.declarations));
+		}
 		lines.push("}");
 	}
 

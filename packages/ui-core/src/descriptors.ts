@@ -10,12 +10,17 @@ export type { ChipFamily, StatusState, Width, Words };
 // export it under. Lucide's own aliases are names too.
 export type IconName = keyof typeof icons;
 
-// A labelled text act, 44 px, with an optional `blocked` reason drawn under it.
+// A labelled text act, 44 px, with an optional `blocked` reason drawn under
+// it. `destructive` marks an act that removes or ends something: an
+// `ActionBar` draws it as `danger` when it is the bar's filled act and as
+// `destructive` (the hairline form) otherwise. A promise its `onAct`
+// returns keeps the bar's filled act pending until it settles.
 export interface Act {
 	label: string;
-	onAct: () => void;
+	onAct: () => unknown;
 	blocked?: string;
 	loading?: boolean;
+	destructive?: boolean;
 }
 
 // An icon-only act: the label is read aloud, never drawn.
@@ -104,6 +109,23 @@ export interface MenuItem {
 	icon?: IconName;
 	destructive?: boolean;
 	blocked?: string;
+}
+
+// One thing the shell's switcher switches to, with its avatar's image.
+export interface SwitcherOption extends MenuItem {
+	avatar?: string;
+}
+
+// What the shell's switcher switches between (a workspace, an account): the
+// current one's name and avatar image on the trigger; in its menu, the
+// options under `label`, the one whose label is `name` checked, then the act
+// that makes a new one.
+export interface Switcher {
+	label: string;
+	name: string;
+	avatar?: string;
+	options: SwitcherOption[];
+	create?: MenuItem;
 }
 
 // A place in the shell: a route, a label, an icon, an optional count.

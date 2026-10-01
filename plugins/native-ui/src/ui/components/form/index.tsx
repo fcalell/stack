@@ -1,31 +1,59 @@
-import { createContext, type ReactNode, useContext, useState } from "react";
+import { FORM_FOOT, form } from "@fcalell/ui-core/variants";
+import {
+	Children,
+	isValidElement,
+	type ReactNode,
+	useMemo,
+	useState,
+} from "react";
 import { View } from "react-native";
 import type { Closed } from "../../lib/closed";
+import { FormContext } from "../../lib/form";
 import { TouchedContext } from "../../lib/touched";
+import { ActionBar } from "../action-bar";
+import { Section } from "../section";
 
 export interface FormProps extends Closed {
-	onSubmit: () => void;
 	children?: ReactNode;
 }
 
-const FormContext = createContext<(() => void) | undefined>(undefined);
-
-// Fields at `stack`; its ActionBar last and in flow, so it scrolls with the
-// fields and the keyboard never covers it. A blocked act inside says its
-// reason once a field has taken input.
-export function Form({ onSubmit, children }: FormProps) {
+// Fields apart at the fields rhythm, or sections at the sections rhythm with
+// the `ActionBar` under a hairline across the form; the bar sits in flow, so
+// it scrolls with the fields and the keyboard never covers it. Its filled act
+// runs its `onAct` (native has no implicit submission); while that promise
+// pends the act is pending, the others ignore the press and the form is
+// busy. A blocked act says its reason once a field has taken input.
+export function Form({ children }: FormProps) {
+	const [pending, setPending] = useState(false);
 	const [touched, setTouched] = useState(false);
+	const touch = useMemo(
+		() => ({ touched, touch: () => setTouched(true) }),
+		[touched],
+	);
+	const nodes = Children.toArray(children);
+	const sectioned = nodes.some(
+		(node) => isValidElement(node) && node.type === Section,
+	);
 	return (
-		<FormContext.Provider value={onSubmit}>
-			<TouchedContext.Provider
-				value={{ touched, touch: () => setTouched(true) }}
-			>
-				<View className="gap-fields">{children}</View>
+		<FormContext.Provider value={setPending}>
+			<TouchedContext.Provider value={touch}>
+				<View
+					accessibilityState={{ busy: pending }}
+					className={form({ holds: sectioned ? "sections" : "fields" })}
+				>
+					{sectioned
+						? nodes.map((node) =>
+								isValidElement(node) && node.type === ActionBar ? (
+									<View key={node.key} className={FORM_FOOT}>
+										{node}
+									</View>
+								) : (
+									node
+								),
+							)
+						: nodes}
+				</View>
 			</TouchedContext.Provider>
 		</FormContext.Provider>
 	);
-}
-
-export function useFormSubmit(): (() => void) | undefined {
-	return useContext(FormContext);
 }

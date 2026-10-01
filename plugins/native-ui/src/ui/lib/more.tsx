@@ -1,10 +1,10 @@
-import type {
-	Act,
-	IconAct,
-	IconName,
-	MenuItem,
-} from "@fcalell/ui-core/descriptors";
-import { HAIRLINE, row, text } from "@fcalell/ui-core/variants";
+import type { IconName, MenuItem } from "@fcalell/ui-core/descriptors";
+import {
+	HAIRLINE,
+	type IconButtonFit,
+	row,
+	text,
+} from "@fcalell/ui-core/variants";
 import { Ellipsis } from "lucide-react-native";
 import { useState } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
@@ -61,20 +61,27 @@ export function MenuSheet({
 }
 
 // A more circle, `label` read aloud, opening its acts as a sheet titled
-// `title`.
+// `title`; `fit` is its place's, as an `IconButton`'s.
 export function MenuCircle({
 	label,
 	title,
 	items,
+	fit,
 }: {
 	label: string;
 	title: string;
 	items: MenuItems;
+	fit?: IconButtonFit;
 }) {
 	const [open, setOpen] = useState(false);
 	return (
 		<>
-			<Circle icon={Ellipsis} label={label} onAct={() => setOpen(true)} />
+			<Circle
+				icon={Ellipsis}
+				label={label}
+				fit={fit}
+				onAct={() => setOpen(true)}
+			/>
 			<MenuSheet
 				title={title}
 				open={open}
@@ -85,39 +92,14 @@ export function MenuCircle({
 	);
 }
 
-// What a top bar's more circle opens: the actions past the bar's circles,
-// each with its glyph, then the labelled `more` acts under a separator.
-export function MoreSheet({
-	title,
-	open,
-	onClose,
-	actions,
-	more,
+// One act of a menu sheet, its glyph first.
+export function MenuRow({
+	item,
+	onAct,
 }: {
-	title: string;
-	open: boolean;
-	onClose: () => void;
-	actions: IconAct[];
-	more: Act[];
+	item: MenuItem;
+	onAct: () => void;
 }) {
-	const items = [
-		actions.map((action) => ({
-			label: action.label,
-			icon: action.icon,
-			onAct: action.onAct,
-		})),
-		more.map((act) => ({
-			label: act.label,
-			onAct: act.onAct,
-			blocked: act.blocked,
-		})),
-	].filter((group) => group.length > 0);
-	return (
-		<MenuSheet title={title} open={open} onClose={onClose} items={items} />
-	);
-}
-
-function MenuRow({ item, onAct }: { item: MenuItem; onAct: () => void }) {
 	const blocked = item.blocked !== undefined;
 	return (
 		<Pressable

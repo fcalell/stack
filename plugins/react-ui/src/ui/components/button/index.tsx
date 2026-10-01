@@ -8,9 +8,12 @@ import {
 	buttonLabel,
 	text,
 } from "@fcalell/ui-core/variants";
-import { useEffect, useId, useState } from "react";
+import { use, useEffect, useId, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
+import { SubmitContext } from "../../lib/form.ts";
+import { ReasonHostContext } from "../../lib/reason.ts";
 import { useTouched } from "../../lib/touched.ts";
+import { Count } from "../count/index.tsx";
 import { Icon } from "../icon/index.tsx";
 import { Spinner } from "../spinner/index.tsx";
 
@@ -21,7 +24,6 @@ const LABEL = "truncate";
 const PENDING = "opacity-0";
 const LABEL_BLOCKED = "text-ink-disabled";
 const SPINNER_LAYER = "absolute inset-0 flex items-center justify-center";
-const REASON = "text-ink-error";
 
 const PRESS: Record<ButtonAct, string> = {
 	primary: "hover:bg-act-accent-hover active:bg-act-accent-press",
@@ -62,6 +64,8 @@ export interface ButtonProps extends Closed {
 	icon?: IconName;
 	/** The visible word, and the act's accessible name. */
 	label: string;
+	/** A number after the label, in a grey pill. */
+	count?: number;
 	/** Runs the act. */
 	onAct?: () => void;
 	/** The act is running: inert, its glyph and label hidden under a spinner, its name kept. */
@@ -76,6 +80,7 @@ export function Button({
 	fit,
 	icon,
 	label,
+	count,
 	onAct,
 	loading,
 	blocked,
@@ -84,6 +89,8 @@ export function Button({
 	const reason = useId();
 	const muted = blocked !== undefined;
 	const { touched } = useTouched();
+	const host = use(ReasonHostContext);
+	const submits = use(SubmitContext);
 	const [pressed, setPressed] = useState(false);
 	useEffect(() => {
 		if (!muted) setPressed(false);
@@ -91,16 +98,21 @@ export function Button({
 	const said = muted && (pressed || touched);
 	const look = lookOf(kind, loading === true, muted);
 	const labelLook = loading ? PENDING : muted && LABEL_BLOCKED;
-	const press = () => (muted ? setPressed(true) : onAct?.());
+	const press = () => {
+		if (!muted) onAct?.();
+		else if (host) host.press();
+		else setPressed(true);
+	};
 	// Blocked is not Base UI's `disabled`, which swallows the press that shows
 	// the reason: aria-disabled is set by hand, and the caller's props win the merge.
 	const control = (
 		<BaseButton
 			disabled={loading}
 			focusableWhenDisabled
+			type={submits ? "submit" : "button"}
 			aria-disabled={loading || muted || undefined}
 			aria-busy={loading || undefined}
-			aria-describedby={muted ? reason : undefined}
+			aria-describedby={muted ? (host?.id ?? reason) : undefined}
 			onClick={press}
 			className={cn(button({ act: kind, fit }), BOX, look)}
 		>
@@ -112,6 +124,11 @@ export function Button({
 			<span className={cn(buttonLabel({ act: kind }), LABEL, labelLook)}>
 				{label}
 			</span>
+			{count !== undefined ? (
+				<span className={cn(GLYPH, loading && PENDING)}>
+					<Count value={count} />
+				</span>
+			) : null}
 			{loading ? (
 				<span className={SPINNER_LAYER}>
 					<Spinner />
@@ -119,17 +136,14 @@ export function Button({
 			) : null}
 		</BaseButton>
 	);
-	if (!muted) return control;
+	// A host draws the reason on its own line.
+	if (!muted || host) return control;
 	// A blocked act holds its reason from the start, hidden until shown, so the
 	// press that shows it keeps the button mounted and focused.
 	return (
 		<div className={STACK}>
 			{control}
-			<p
-				id={reason}
-				hidden={!said}
-				className={cn(text({ role: "meta" }), REASON)}
-			>
+			<p id={reason} hidden={!said} className={text({ role: "meta" })}>
 				{blocked}
 			</p>
 		</div>

@@ -5,15 +5,15 @@ import {
 	useConfirmations,
 } from "../../lib/confirm";
 import { ActionBar } from "../action-bar";
-import { Button } from "../button";
 import { Form } from "../form";
 import { FormField } from "../form-field";
 import { Input } from "../input";
 import { Sheet } from "../sheet";
 
 // The first queued decision as a sheet: the sentence under the title, the
-// name field when the act asks for one, and the act, blocked with its reason
-// until the typed name matches. The last decision stays drawn while the sheet
+// name field when the act asks for one, and the act as the form's bar,
+// blocked with its reason until the typed name matches (a destructive act is
+// the bar's danger fill). The last decision stays drawn while the sheet
 // slides away.
 export function Confirmations() {
 	const current = useConfirmations()[0];
@@ -26,9 +26,6 @@ export function Confirmations() {
 	if (!shown) return null;
 	const name = shown.confirmName;
 	const matches = name === undefined || typed.trim() === name.value;
-	const take = () => {
-		if (matches) settleConfirmation(shown.id, true);
-	};
 	return (
 		<Sheet
 			open={current !== undefined}
@@ -36,20 +33,22 @@ export function Confirmations() {
 			title={shown.title}
 			description={shown.sentence}
 		>
-			<Form onSubmit={take}>
+			<Form>
 				{name ? (
 					<FormField label={name.label}>
 						<Input kind="source" value={typed} onChange={setTyped} />
 					</FormField>
 				) : null}
-				<ActionBar>
-					<Button
-						act={shown.act.destructive ? "destructive" : "primary"}
-						label={shown.act.label}
-						blocked={matches ? undefined : name?.blocked}
-						onAct={take}
-					/>
-				</ActionBar>
+				<ActionBar
+					acts={[
+						{
+							label: shown.act.label,
+							destructive: shown.act.destructive,
+							blocked: matches ? undefined : name?.blocked,
+							onAct: () => settleConfirmation(shown.id, true),
+						},
+					]}
+				/>
 			</Form>
 		</Sheet>
 	);

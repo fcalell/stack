@@ -1,35 +1,70 @@
-import type { Act, Part } from "@fcalell/ui-core/descriptors";
-import { text, textStrong } from "@fcalell/ui-core/variants";
-import { ChevronDown, ChevronRight } from "lucide-react-native";
-import { type ReactNode, useEffect, useState } from "react";
+import type { Act, IconAct, Part } from "@fcalell/ui-core/descriptors";
+import {
+	SECTION_ACT,
+	SECTION_HEAD,
+	SECTION_HEAD_ROW,
+	SECTION_TITLE,
+	SECTION_TOGGLE,
+	section,
+	skeleton,
+	skeletonRow,
+	text,
+} from "@fcalell/ui-core/variants";
+import {
+	Children,
+	isValidElement,
+	type ReactNode,
+	useContext,
+	useState,
+} from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import { Glyph } from "../../lib/glyph";
-import { LoadingRows } from "../../lib/loading";
+import { FormContext } from "../../lib/form";
+import { Ink } from "../../lib/ink";
+import { LoadingContext } from "../../lib/loading";
 import { partText } from "../../lib/parts";
-import { useTouched } from "../../lib/touched";
+import { Button } from "../button";
 import { Count } from "../count";
+import { Group } from "../group";
+import { Icon } from "../icon";
+import { IconButton } from "../icon-button";
+import { List } from "../list";
+
+const BOX = "min-w-0";
+const HEAD_ROW = "flex-row items-start";
+const TITLE_BLOCK = "grow min-w-0";
+const TITLE_LINE = "flex-row items-center min-w-0";
+const TOGGLE =
+	"flex-row items-center grow min-w-0 -ms-inside active:bg-wash-press";
+const ACT_SLOT = "flex-row items-center shrink-0";
+const COUNT_WAIT = "shrink-0";
+// The label line at the length of a field label.
+const LABEL_WAIT = "w-1/4";
+const BODY_FOLDED = "hidden";
+// The loading fields: a body of fields waits as three.
+const FIELDS = ["first", "second", "third"];
 
 export interface SectionProps extends Closed {
 	title: Part;
 	count?: number;
 	description?: string;
 	folded?: boolean;
-	// Called as a foldable section opens or closes, with its new state: what
-	// the consumer does with what it showed, such as marking it read once it
-	// folds again.
+	// Called as a foldable section opens or closes, with whether it is now
+	// open.
 	onToggle?: (open: boolean) => void;
-	act?: Act;
+	act?: Act | IconAct;
 	loading?: boolean;
 	children?: ReactNode;
 }
 
-// A labelled region of a screen: the label header with its count and act,
-// the loading form. Setting `folded` makes it foldable: the label becomes a
-// button with a chevron, starting folded or open as `folded` says. A blocked
-// act says its reason under it once pressed or once its form or sheet is
-// touched, as a `Button` does.
+// A heading with its count, description and act over its body; the title
+// folds the body when `folded` is set. Inside a Form it takes the fields
+// rhythm. A loading section hands its loading to a Group or a List in its
+// body, which draws its own skeleton rows; any other body waits as three
+// skeleton fields. A blocked act says its reason under itself once pressed
+// or once its form or sheet is touched, as a `Button` does. React Native
+// exposes no heading level, so the title is a header at any depth.
 export function Section({
 	title,
 	count,
@@ -40,89 +75,101 @@ export function Section({
 	loading,
 	children,
 }: SectionProps) {
-	const foldable = folded !== undefined;
-	const [open, setOpen] = useState(!folded);
-	const { touched } = useTouched();
-	const blocked = act?.blocked !== undefined;
-	const [pressed, setPressed] = useState(false);
-	useEffect(() => {
-		if (!blocked) setPressed(false);
-	}, [blocked]);
-	const said = blocked && (pressed || touched);
-	const label = (
+	const within = useContext(FormContext) ? "form" : "page";
+	const rows = Children.toArray(children).some(
+		(node) =>
+			isValidElement(node) && (node.type === Group || node.type === List),
+	);
+	const [open, setOpen] = useState(folded !== true);
+	// The count waits with the body.
+	let tally: ReactNode = null;
+	if (loading)
+		tally = <View className={cn(skeleton({ kind: "count" }), COUNT_WAIT)} />;
+	else if (count !== undefined) tally = <Count value={count} />;
+	const name = (
 		<>
-			<RNText
-				className={cn(
-					text({ role: "meta" }),
-					textStrong({ role: "meta" }),
-					"uppercase",
-				)}
-			>
+			<RNText numberOfLines={1} className={text({ role: "heading" })}>
 				{partText(title)}
 			</RNText>
-			{count !== undefined ? <Count value={count} /> : null}
+			{tally}
 		</>
 	);
 	return (
-		<View className="gap-fields">
-			<View className="min-h-11 flex-row items-center gap-inside">
-				{foldable ? (
-					<Pressable
-						accessibilityRole="button"
-						accessibilityState={{ expanded: open }}
-						onPress={() => {
-							const next = !open;
-							setOpen(next);
-							onToggle?.(next);
-						}}
-						className="min-h-11 flex-row items-center gap-pair"
-					>
-						{label}
-						<Glyph
-							icon={open ? ChevronDown : ChevronRight}
-							tone="ink-faint"
-							size={16}
-						/>
-					</Pressable>
-				) : (
-					<View
-						accessibilityRole="header"
-						className="flex-row items-center gap-pair"
-					>
-						{label}
-					</View>
-				)}
-				<View className="flex-1" />
-				{act ? (
-					<View className="items-end gap-pair">
-						<Pressable
-							accessibilityRole="button"
-							accessibilityState={{ disabled: blocked || act.loading }}
-							accessibilityHint={said ? act.blocked : undefined}
-							disabled={act.loading}
-							onPress={() => (blocked ? setPressed(true) : act.onAct())}
-							className="min-h-11 justify-center"
-						>
-							<RNText
-								className={cn(
-									text({ role: "meta" }),
-									"font-medium text-accent-ink",
-									blocked && "text-ink-faint",
-								)}
+		<View
+			accessibilityState={{ busy: loading === true }}
+			className={cn(section({ in: within }), BOX)}
+		>
+			<View className={SECTION_HEAD}>
+				<View className={cn(SECTION_HEAD_ROW, HEAD_ROW)}>
+					<View className={TITLE_BLOCK}>
+						{folded === undefined ? (
+							<View
+								accessibilityRole="header"
+								className={cn(SECTION_TITLE, TITLE_LINE)}
 							>
-								{act.label}
-							</RNText>
-						</Pressable>
-						{said ? (
-							<RNText className={text({ role: "meta" })}>{act.blocked}</RNText>
+								{name}
+							</View>
+						) : (
+							<Pressable
+								accessibilityRole="button"
+								accessibilityState={{ expanded: open }}
+								onPress={() => {
+									setOpen(!open);
+									onToggle?.(!open);
+								}}
+								className={cn(SECTION_TOGGLE, TOGGLE)}
+							>
+								{({ pressed }) => (
+									<>
+										{name}
+										<Ink.Provider value={pressed ? "ink-body" : "ink-meta"}>
+											<Icon name={open ? "ChevronDown" : "ChevronRight"} />
+										</Ink.Provider>
+									</>
+								)}
+							</Pressable>
+						)}
+						{description ? (
+							<RNText className={text({ role: "meta" })}>{description}</RNText>
 						) : null}
 					</View>
-				) : null}
+					{act ? (
+						<View className={cn(SECTION_ACT, ACT_SLOT)}>
+							{"icon" in act ? (
+								<IconButton
+									icon={act.icon}
+									fit="bar"
+									label={act.label}
+									onAct={act.onAct}
+								/>
+							) : (
+								<Button
+									act={act.destructive ? "destructive" : "secondary"}
+									fit="bar"
+									label={act.label}
+									onAct={act.onAct}
+									loading={act.loading}
+									blocked={act.blocked}
+								/>
+							)}
+						</View>
+					) : null}
+				</View>
 			</View>
-			{description ? (
-				<RNText className={text({ role: "meta" })}>{description}</RNText>
-			) : null}
-			{open ? loading ? <LoadingRows /> : children : null}
+			<View className={cn(section({ in: within }), !open && BODY_FOLDED)}>
+				{loading && !rows ? (
+					FIELDS.map((key) => (
+						<View key={key} className={skeletonRow({ kind: "field" })}>
+							<View className={cn(skeleton({ kind: "line" }), LABEL_WAIT)} />
+							<View className={skeleton({ kind: "field" })} />
+						</View>
+					))
+				) : (
+					<LoadingContext.Provider value={loading === true}>
+						{children}
+					</LoadingContext.Provider>
+				)}
+			</View>
 		</View>
 	);
 }

@@ -29,6 +29,8 @@ const BOX_FOCUS =
 export const BOX_DISABLED = "bg-fill-disabled text-ink-disabled";
 const VALUE =
 	"min-w-0 grow truncate outline-none placeholder:text-ink-meta disabled:text-ink-disabled";
+// A search box grows to fill the slot a toolbar gives it.
+const SEARCH_BOX = "grow";
 const UNIT = "shrink-0";
 const UNIT_DISABLED = "text-ink-disabled";
 
@@ -117,6 +119,7 @@ export function Input({
 						FIELD_GLYPH,
 						BOX,
 						BOX_FOCUS,
+						search && SEARCH_BOX,
 						state.disabled
 							? BOX_DISABLED
 							: state.valid !== false && BOX_HOVER_VALUE,
