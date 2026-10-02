@@ -156,7 +156,9 @@ const rows = await app.client().notes.list();                 // the worker read
   the worker's procedures get. `dispose()` (or `await using`) stops the proxy and removes the
   temporary directory; a setup that fails does both before rejecting.
 - `wrangler` is an optional peer dependency, which every cloudflare consumer already has. The
-  sqlite dialect contributes no testing entry.
+  sqlite dialect contributes no testing entry: its test entry's worker opens the file `fileVar`
+  names at its dev default (`path`, resolved against the test process's working directory), the
+  same file `stack dev` uses, with no per-boot database.
 
 ## Config options
 

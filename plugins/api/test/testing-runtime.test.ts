@@ -46,7 +46,31 @@ test("a cookie reaches the worker and a refusal arrives by code", async () => {
 	);
 });
 
-test("boot env overrides the baked env and is checked per boot", async () => {
+test("a booted app's request writes no log line; unset, the worker logs", async (t) => {
+	const log = t.mock.method(console, "log", () => {});
+	const info = t.mock.method(console, "info", () => {});
+	{
+		await using app = await entry().boot();
+		assert.equal(app.env.STACK_QUIET, "1");
+		assert.equal(await app.client().hello.secret(), SECRET);
+		assert.equal(log.mock.callCount(), 0);
+		assert.equal(info.mock.callCount(), 0);
+	}
+	{
+		await using app = await entry().boot({ env: { STACK_QUIET: "" } });
+		assert.equal(await app.client().hello.secret(), SECRET);
+		assert.ok(
+			log.mock.calls.some((call) => String(call.arguments[0]).includes("/rpc")),
+		);
+		assert.ok(
+			info.mock.calls.some((call) =>
+				String(call.arguments[0]).includes("env checks passed"),
+			),
+		);
+	}
+});
+
+test("boot env overrides the baked env and is checked per boot", async (t) => {
 	const testing = entry();
 	const other = "another-secret-0123456789";
 	{
@@ -58,11 +82,20 @@ test("boot env overrides the baked env and is checked per boot", async () => {
 		assert.equal(await app.client().hello.secret(), SECRET);
 	}
 	{
+		// The wire carries a generic 500; the refusal naming the var is logged.
+		const logged = t.mock.method(console, "error", () => {});
 		await using app = await testing.boot({ env: { FIXTURE_SECRET: "short" } });
 		await assert.rejects(
 			app.client().hello.secret(),
 			(error: unknown) =>
 				error instanceof ORPCError && error.code === "INTERNAL_SERVER_ERROR",
+		);
+		assert.ok(
+			logged.mock.calls.some(
+				(call) =>
+					call.arguments[1] instanceof Error &&
+					call.arguments[1].message.includes("FIXTURE_SECRET"),
+			),
 		);
 	}
 });

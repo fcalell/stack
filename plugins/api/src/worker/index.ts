@@ -198,6 +198,15 @@ function isDevMode(env: unknown): boolean {
 	return (env as Record<string, unknown> | null | undefined)?.STACK_DEV === "1";
 }
 
+// Set by the test entry only: the worker writes no request log and no
+// env-check line, so `node --test` output carries the tests' own. Errors
+// still log.
+function isQuiet(env: unknown): boolean {
+	return (
+		(env as Record<string, unknown> | null | undefined)?.STACK_QUIET === "1"
+	);
+}
+
 const LOCAL_HOSTNAMES = new Set(["localhost", "127.0.0.1", "[::1]", "0.0.0.0"]);
 
 function isLocalHostname(hostname: string): boolean {
@@ -413,7 +422,10 @@ function createAppBuilder<TContext extends Record<string, unknown>>(
 					}),
 				);
 			}
-			app.use("*", logger());
+			const requestLogger = logger();
+			app.use("*", (c, next) =>
+				isQuiet(c.env) ? next() : requestLogger(c, next),
+			);
 			app.use("*", secureHeaders());
 
 			// Framework liveness route registered BEFORE the
@@ -439,7 +451,9 @@ function createAppBuilder<TContext extends Record<string, unknown>>(
 				if (!envChecked && envChecks && envChecks.length > 0) {
 					assertEnvChecks(envChecks, env);
 					envChecked = true;
-					console.info(`[api] env checks passed (${envChecks.length} vars)`);
+					if (!isQuiet(env)) {
+						console.info(`[api] env checks passed (${envChecks.length} vars)`);
+					}
 				}
 
 				for (const entry of pluginEntries) {

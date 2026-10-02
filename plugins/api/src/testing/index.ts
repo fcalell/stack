@@ -162,7 +162,13 @@ async function boot<TRouter extends Router>(
 		(await import(workerUrl.href)) as { default: WorkerExport<TRouter> }
 	).default;
 
-	const env: Record<string, unknown> = { ...options.env, ...overrides?.env };
+	// `STACK_QUIET` keeps the worker's request log and env-check line out of
+	// the test output; an override may unset it.
+	const env: Record<string, unknown> = {
+		...options.env,
+		STACK_QUIET: "1",
+		...overrides?.env,
+	};
 	const fetch = (
 		input: string | URL | Request,
 		init?: RequestInit,

@@ -274,3 +274,19 @@ test("the setup refuses a missing secret or app URL by name", async () => {
 	await assert.rejects(without("AUTH_SECRET"), /AUTH_SECRET/);
 	await assert.rejects(without("APP_URL"), /APP_URL/);
 });
+
+test("the setup refuses a boot with no db testing plugin by name", async () => {
+	await assert.rejects(
+		entry()
+			.use(
+				authTesting({
+					cookiePrefix: "probe",
+					secretVar: "AUTH_SECRET",
+					appUrlVar: "APP_URL",
+					roles: ROLES,
+				}),
+			)
+			.boot(),
+		/"db" testing plugin.*d1/,
+	);
+});

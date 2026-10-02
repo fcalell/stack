@@ -412,7 +412,9 @@ The handle `boot()` returns carries `env` (the live env object every request rea
 `fetch` (a relative URL resolves against `http://stack.test`), `client({ cookie })`, `dispose()`
 and `Symbol.asyncDispose`, plus what each testing plugin `provides`. `boot({ env })` overrides
 baked values for one boot; each boot loads a fresh worker, so its env checks run against that
-boot's env. One process serves one `.stack/procedure.ts`; `node --test` runs each file in its own.
+boot's env. Each boot also sets `STACK_QUIET=1`, so the worker writes no request log and no
+env-check line (errors still log); `boot({ env: { STACK_QUIET: "" } })` turns them back on. One
+process serves one `.stack/procedure.ts`; `node --test` runs each file in its own.
 
 A plugin joins the entry by shipping a `./testing` subpath whose default export takes literal
 options and returns a `TestingPlugin` (`{ name, dependsOn?, setup(ctx, upstream) }`; `setup`

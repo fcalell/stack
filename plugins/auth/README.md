@@ -227,7 +227,8 @@ await app.client({ cookie }).projects.list({ organizationId: org.id });
   secret the way Better Auth signs its own (`token.signature`, HMAC-SHA256). The name is
   `<prefix>.session_token`, with `__Secure-` when the app URL is https, so `boot({ env: {
   APP_URL } })` is honoured. The setup refuses a missing secret or app URL by its var name. The
-  helpers write through the `db` testing plugin, which plugin-db contributes on the d1 dialect.
+  helpers write through the `db` testing plugin, which plugin-db contributes on the d1 dialect
+  only; a boot without it (a sqlite consumer's) is refused by that name.
 - `mintSession(db, { secret, cookiePrefix, secure, expiresIn? }, userId)` is the same mint for a
   test that holds its own drizzle client, answering `{ name, value }`; `sessionCookieName({
   cookiePrefix, secure })` is the name rule.

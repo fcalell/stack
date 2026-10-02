@@ -131,6 +131,17 @@ function readVar(env: Record<string, unknown>, name: string): string {
 	return value;
 }
 
+// The type promises `db`; a consumer without the db testing plugin (a sqlite
+// one: `dbTesting` exists on d1 only) boots without it.
+function requireDb(db: TestingDb | undefined): TestingDb {
+	if (!db) {
+		throw new Error(
+			'authTesting: no "db" testing plugin provides a database to write through; plugin-db\'s `dbTesting` exists on the d1 dialect only.',
+		);
+	}
+	return db;
+}
+
 export default function authTesting<const TOptions extends AuthTestingOptions>(
 	options: TOptions,
 ): TestingPlugin<"auth", { db: TestingDb }, { auth: AuthTesting<TOptions> }> {
@@ -141,7 +152,7 @@ export default function authTesting<const TOptions extends AuthTestingOptions>(
 			// Read after `boot({ env })` overlays, so an override is honoured.
 			const secret = readVar(ctx.env, options.secretVar);
 			const appUrl = readVar(ctx.env, options.appUrlVar);
-			const { db } = upstream;
+			const db = requireDb(upstream.db);
 			const mint = {
 				secret,
 				cookiePrefix: options.cookiePrefix,

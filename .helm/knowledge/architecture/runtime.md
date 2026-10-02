@@ -180,6 +180,11 @@ spawned `stack`.
 - **Env composition.** The baked env is `STACK_DEV: "1"` plus every `api.slots.env` entry's
   `devDefault`, the env `stack dev` gives the worker; `boot({ env })` overlays it, and each testing
   plugin's `setup` adds to the same live object every request reads (a D1 binding).
+- **Quiet.** `boot` sets `STACK_QUIET: "1"` beneath the overrides, and the worker reads it per
+  request where it mounts Hono's `logger()` and where it prints the env-check line: under it the
+  worker writes neither, so `node --test` output carries only the tests' own. `stack dev` and a
+  deploy never set it, so their logs are unchanged; an unhandled error still logs with its cause.
+  `boot({ env: { STACK_QUIET: "" } })` turns the logs back on for one boot.
 - **Dependency order and dispose.** A plugin contributing to `api.slots.testingEntries` ships a
   `./testing` subpath whose default export returns a `TestingPlugin`. The file applies `.use()` in
   plugin-name order; `boot` runs the setups by `dependsOn` with `createWorker`'s stable
@@ -201,8 +206,10 @@ spawned `stack`.
   `provides.db` is the drizzle client the worker's `dbRuntime` also gets (both go through
   `createClient`'s per-binding cache). A setup that fails after the proxy opened disposes it and
   removes the temporary directory itself, since `boot` runs only the disposers already returned.
-  `wrangler` is plugin-db's optional peer dependency; a sqlite consumer's test entry has no
-  database.
+  `wrangler` is plugin-db's optional peer dependency. The sqlite dialect contributes no testing
+  plugin: its baked env carries the `fileVar` (`DB_FILE`) at its dev default, so that test entry's
+  worker opens the configured dev sqlite file (resolved against the test process's working
+  directory), the same file `stack dev` uses, with no per-boot isolation.
 - **Signed in.** plugin-auth's `authTesting` signs a test in without an OTP and without a Better
   Auth instance: its helpers write a user, an organization and a membership through the `db`
   plugin's drizzle client, then a `session` row, and the cookie is that row's token signed with
@@ -210,7 +217,8 @@ spawned `stack`.
   base64). The worker's session check finds the row by token, so the cookie passes it as a real
   sign-in's would. The name is `<prefix>.session_token`, with `__Secure-` exactly when the app URL
   is https, Better Auth's own rule; the secret and the app URL are read from the live env after
-  `boot({ env })`, and a missing one is refused by its var name. The organization helpers exist
+  `boot({ env })`, and a missing one is refused by its var name. A boot with no `db` testing
+  plugin upstream (a sqlite consumer's) is refused by that name. The organization helpers exist
   only when roles are baked, so `role` is typed to the configured names and a consumer without
   organizations has no `auth.member` at all.
 
