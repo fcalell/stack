@@ -92,7 +92,7 @@ since it always draws the touch set and so the touch structure.
 
 Every word a molecule draws or reads aloud on its own comes from `words`, a typed object passed
 once beside `theme`: the six `Status` words, `recommended`, `copy`, `copied`, `back`, `close`, `cancel`, `dismiss`,
-`more`, `send`, `stop`, `attach`, `search`, `loading`, `checking`, `retry`, `add`, `remove`, `details`, `places`, `notifications`. `Words` requires every key and
+`more`, `send`, `stop`, `attach`, `search`, `loading`, `checking`, `retry`, `add`, `remove`, `details`, `places`, `notifications`, `code`, `added`, `removed`, and the counted `earlierLines`. A counted word is `{ one, other }`, each form spelling `{count}` where the number stands, drawn through `counted(word, count)` (`one` at a count of one, `other` at any other). `Words` requires every key and
 `wordsSchema` is closed, so a translation that misses a word fails `tsc` and the schema, never the
 interface. `ENGLISH` is the default. A sentence that belongs to the consumer is a prop on the
 molecule that draws it (`placeholder`, `notice`, every `sentence`, every label), never a key.
@@ -136,6 +136,9 @@ accent read as one palette.
   between neighbours so the set separates by lightness as well as hue.
 - The seventh chip family, `neutral`, has no hue and no mark: `chip-neutral-soft` is `fill-neutral`
   and `chip-neutral-ink` is `ink-body`, the applied filter and any tag without a category.
+- A chart's series take the chip marks in `CHART_SERIES` order: `teal`, `violet`, `amber`,
+  `pink`, `green`, `red`; one series takes the first. A meter at or above `METER_NEAR` (0.9) of its
+  max is near, and above its max is over.
 - Eight avatars at 40 to 50° spacing: `avatar-1` the fill and `avatar-1-ink` the initial on it,
   through `avatar-8` and `avatar-8-ink`; a pastel fill under a hue-darkened initial in light, a
   deep fill under a hue-lightened initial in dark, one step per name by a hash.
@@ -212,7 +215,7 @@ float inset and the acts gap, which hold, and the page inset, which a phone narr
 `inside`, `pair`, `acts`, `rows`, `fields`, `sections`; the other five (`control-x`, `card`, `tile`,
 `float`, `page`) are insets.
 
-Twenty-five sizes per density sit in the same `--spacing-*` namespace, so a cell names them as it
+Thirty sizes per density sit in the same `--spacing-*` namespace, so a cell names them as it
 names a role (`min-h-control`, `size-avatar`), and nothing is spaced by them. Desktop then touch:
 `control` 32 / 44 (a button, a segmented control), `control-compact` 28 / 44 (a menu item, a
 toolbar control), `field` 38 / 48 (a form input), `row` 32 / 48 (a one-line row), `row-2` 48 / 64
@@ -222,7 +225,7 @@ toolbar control), `field` 38 / 48 (a form input), `row` 32 / 48 (a one-line row)
 `thumb` and both insets), `skeleton` 12 / 12, `icon-meta` 12 / 14 (an icon beside meta or
 caption text), `icon` 14 / 18 (beside body text), `icon-control` 16 / 20 (inside a control),
 `check` 16 / 20 (a checkbox's box), `track` 2 / 4 (a slider's track thickness), `otp` 44 / 48 (a
-one-time-code box, square), `text-area` 60 / 72 (a text area's least value height, derived: three body line boxes). On touch every target is at least 44. A cell says `min-h`, never `h`: a label
+one-time-code box, square), `text-area` 60 / 72 (a text area's least value height, derived: three body line boxes), `meter` 6 / 8 (a meter's bar), `chart` 128 / 192 (a chart's plot, its gridlines four bands), `qr` 160 / 240 (a QR code's square, its quiet zone inside it), `figures` 29 / 36 (four tabular figures at the code size: a diff's number columns, a file row's count lanes; derived at `MONO_ADVANCE`, Plex Mono's 0.6 em, rounded up, since native has no `ch`), `message-input` 160 / 192 (a message input's tallest text, derived: eight body line boxes, the text scrolling past it). On touch every target is at least 44. A cell says `min-h`, never `h`: a label
 must be able to grow its control under OS font scaling. A minimum height is the floor of something pressed (a control, a field, a target, a chip, a row), the set height of a bar (`strip`, a page's strip and its touch top bar), an intrinsic size, or the height of what a part swaps with (`PENDING_TRACK` an action bar's, `TABLE_CELL` the field that edits it in place); any other container takes its height from its content and padding, its parts centred on its tallest, never from another component's size.
 
 Seven radius roles, density-invariant, a radius naming the role and never the size: `chip` 4
@@ -234,7 +237,7 @@ status, a switch). One hairline of 1 px draws region edges, row splits and field
 the control's own edge; inside a list it is drawn inward.
 
 Widths are a short label's measure (a chip's label, a status word, a skeleton label's lane), the lifted layers' ranges, the one measure for running
-text and the fixed regions of a frame, as `--container-*`: `measure-short` 18ch, `popover` 240, `toast` 360, `dialog` 520, `sheet` 640, `measure` 66ch; a layer never stretches to
+text and the fixed regions of a frame, as `--container-*`: `measure-short` 18ch, `popover` 240, `toast` 360, `dialog` 520, `sheet` 640, `measure` 58ch; a layer never stretches to
 its container. The regions: `sidebar` 240 (the Shell's places), `list` 360 and `pane` 320 (a
 split's list column and record pane), `column` 300 (a board column), `auth` 400 (the sign-in
 column), `empty` 320 (an empty state's column). A width never takes a spacing role's or a size's name, since `w-*` reads `--spacing-*`
@@ -281,7 +284,8 @@ grounds and each on its own soft; `on-accent` on `accent`, `act-accent-hover` an
 `act-accent-press`; `danger` on `canvas`, `surface` and `group` under `wash-hover` and `wash-press`,
 a destructive act's label under the act's own wash; `on-danger` on `danger`; `on-act-danger` on
 `act-danger`, `act-danger-hover` and `act-danger-press`; every `chip-red-ink` on its `chip-red-soft`; every `avatar-1-ink` on its
-`avatar-1`. Each graphic pair clears 3:1: `edge-strong` on `surface` and `group`, `accent` on
+`avatar-1`. Each graphic pair clears 3:1: `edge-strong` on `surface` and `group`, and on `surface` under
+`wash-press` and `wash-selected` (a held boundary, so a checkbox reads on a pressed or selected row), `accent` on
 `canvas`, `surface` and `group`, `on-act-accent` on `act-accent-pending`, `on-act-danger` on
 `act-danger-pending`, `toggle-on` and `toggle-on-hover` on `canvas`, `surface` and `group`,
 `switch-thumb` on both, every chip mark on `surface`. No act fill is measured against its

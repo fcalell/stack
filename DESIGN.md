@@ -10,7 +10,7 @@ colors:
   raised: "oklch(1 0 0)"
   edge: "oklch(0.915 0.004 264)"
   edge-raised: "oklch(0.915 0.004 264)"
-  edge-strong: "oklch(0.62 0.01 264)"
+  edge-strong: "oklch(0.61 0.01 264)"
   scrim: "oklch(0.2 0.01 264 / 0.45)"
   ink-body: "oklch(0.2 0.008 264)"
   ink-meta: "oklch(0.45 0.012 264)"
@@ -71,7 +71,7 @@ colors:
   fill-neutral: "oklch(0.2 0.008 264 / 0.08)"
   ring: "oklch(0.52 0.19 264)"
   selected-outline: "oklch(0.52 0.19 264)"
-  edge-hover: "oklch(0.62 0.01 264)"
+  edge-hover: "oklch(0.61 0.01 264)"
   edge-error: "oklch(0.515 0.19 25)"
   ink-error: "oklch(0.515 0.19 25)"
   ink-disabled: "oklch(0.665 0.01 264)"
@@ -85,8 +85,8 @@ colors:
   act-danger-hover: "oklch(0.453 0.167 25)"
   act-danger-press: "oklch(0.402 0.148 25)"
   act-danger-pending: "oklch(0.661 0.133 25)"
-  switch-off: "oklch(0.62 0.01 264)"
-  switch-off-hover: "oklch(0.557 0.01 264)"
+  switch-off: "oklch(0.61 0.01 264)"
+  switch-off-hover: "oklch(0.549 0.01 264)"
   toggle-on: "oklch(0.52 0.19 264)"
   toggle-on-hover: "oklch(0.458 0.167 264)"
   switch-thumb: "oklch(1 0 0)"
@@ -96,7 +96,7 @@ colors:
   raised-dark: "oklch(0.25 0.007 264)"
   edge-dark: "oklch(0.298 0.008 264)"
   edge-raised-dark: "oklch(0.332 0.008 264)"
-  edge-strong-dark: "oklch(0.53 0.01 264)"
+  edge-strong-dark: "oklch(0.575 0.01 264)"
   scrim-dark: "oklch(0 0 0 / 0.5)"
   ink-body-dark: "oklch(0.97 0.002 264)"
   ink-meta-dark: "oklch(0.76 0.01 264)"
@@ -157,7 +157,7 @@ colors:
   fill-neutral-dark: "oklch(0.97 0.002 264 / 0.08)"
   ring-dark: "oklch(0.72 0.13 264)"
   selected-outline-dark: "oklch(0.72 0.13 264)"
-  edge-hover-dark: "oklch(0.53 0.01 264)"
+  edge-hover-dark: "oklch(0.575 0.01 264)"
   edge-error-dark: "oklch(0.71 0.178 25)"
   ink-error-dark: "oklch(0.71 0.178 25)"
   ink-disabled-dark: "oklch(0.506 0.01 264)"
@@ -171,8 +171,8 @@ colors:
   act-danger-hover-dark: "oklch(0.741 0.157 24.925)"
   act-danger-press-dark: "oklch(0.767 0.137 24.844)"
   act-danger-pending-dark: "oklch(0.545 0.124 24.405)"
-  switch-off-dark: "oklch(0.53 0.01 264)"
-  switch-off-hover-dark: "oklch(0.596 0.009 264)"
+  switch-off-dark: "oklch(0.575 0.01 264)"
+  switch-off-hover-dark: "oklch(0.634 0.009 264)"
   toggle-on-dark: "oklch(0.54 0.19 264)"
   toggle-on-hover-dark: "oklch(0.595 0.167 264)"
   switch-thumb-dark: "oklch(1 0 0)"
@@ -261,6 +261,11 @@ spacing:
   track: "2px"
   otp: "44px"
   text-area: "60px"
+  meter: "6px"
+  chart: "128px"
+  qr: "160px"
+  figures: "29px"
+  message-input: "160px"
 components:
   text-display:
     typography: "{typography.display}"
@@ -962,6 +967,8 @@ components:
     typography: "{typography.meta}"
   line-box-heading:
     typography: "{typography.heading}"
+  line-box-code:
+    typography: "{typography.code}"
   table-row-selected:
     backgroundColor: "{colors.wash-selected}"
   table-row-selected-dark:
@@ -1568,7 +1575,7 @@ Colors are OKLCH, named by the place they draw. Neutrals cast on one hue at a fi
 | `raised` | `oklch(1 0 0)` | `oklch(0.25 0.007 264)` | a popover, a dialog, a sheet, a toast |
 | `edge` | `oklch(0.915 0.004 264)` | `oklch(0.298 0.008 264)` | the hairline over canvas and surface; inside a group or a lifted layer the container re-points it to `edge-raised` |
 | `edge-raised` | `oklch(0.915 0.004 264)` | `oklch(0.332 0.008 264)` | the hairline inside a group and on a lifted layer |
-| `edge-strong` | `oklch(0.62 0.01 264)` | `oklch(0.53 0.01 264)` | a control's boundary, at 3:1 |
+| `edge-strong` | `oklch(0.61 0.01 264)` | `oklch(0.575 0.01 264)` | a control's boundary, at 3:1 |
 | `scrim` | `oklch(0.2 0.01 264 / 0.45)` | `oklch(0 0 0 / 0.5)` | the veil behind a dialog or a sheet |
 | `ink-body` | `oklch(0.2 0.008 264)` | `oklch(0.97 0.002 264)` | the primary line of anything |
 | `ink-meta` | `oklch(0.45 0.012 264)` | `oklch(0.76 0.01 264)` | a secondary line, a placeholder, a table header |
@@ -1629,7 +1636,7 @@ Colors are OKLCH, named by the place they draw. Neutrals cast on one hue at a fi
 | `fill-neutral` | `oklch(0.2 0.008 264 / 0.08)` | `oklch(0.97 0.002 264 / 0.08)` | a resting neutral ground: a count's pill, a grey chip |
 | `ring` | `oklch(0.52 0.19 264)` | `oklch(0.72 0.13 264)` | the focus ring |
 | `selected-outline` | `oklch(0.52 0.19 264)` | `oklch(0.72 0.13 264)` | a selected tile's outline |
-| `edge-hover` | `oklch(0.62 0.01 264)` | `oklch(0.53 0.01 264)` | a field's boundary under the pointer |
+| `edge-hover` | `oklch(0.61 0.01 264)` | `oklch(0.575 0.01 264)` | a field's boundary under the pointer |
 | `edge-error` | `oklch(0.515 0.19 25)` | `oklch(0.71 0.178 25)` | a field's boundary in error |
 | `ink-error` | `oklch(0.515 0.19 25)` | `oklch(0.71 0.178 25)` | an error message |
 | `ink-disabled` | `oklch(0.665 0.01 264)` | `oklch(0.506 0.01 264)` | a disabled part's label |
@@ -1643,13 +1650,15 @@ Colors are OKLCH, named by the place they draw. Neutrals cast on one hue at a fi
 | `act-danger-hover` | `oklch(0.453 0.167 25)` | `oklch(0.741 0.157 24.925)` | a confirm's destructive act's fill; `-hover`, `-press` and `-pending` its states |
 | `act-danger-press` | `oklch(0.402 0.148 25)` | `oklch(0.767 0.137 24.844)` | a confirm's destructive act's fill; `-hover`, `-press` and `-pending` its states |
 | `act-danger-pending` | `oklch(0.661 0.133 25)` | `oklch(0.545 0.124 24.405)` | a confirm's destructive act's fill; `-hover`, `-press` and `-pending` its states |
-| `switch-off` | `oklch(0.62 0.01 264)` | `oklch(0.53 0.01 264)` | a switch's track off; `-hover` under the pointer |
-| `switch-off-hover` | `oklch(0.557 0.01 264)` | `oklch(0.596 0.009 264)` | a switch's track off; `-hover` under the pointer |
+| `switch-off` | `oklch(0.61 0.01 264)` | `oklch(0.575 0.01 264)` | a switch's track off; `-hover` under the pointer |
+| `switch-off-hover` | `oklch(0.549 0.01 264)` | `oklch(0.634 0.009 264)` | a switch's track off; `-hover` under the pointer |
 | `toggle-on` | `oklch(0.52 0.19 264)` | `oklch(0.54 0.19 264)` | a toggle on: a switch's track, a checked box, a slider's fill; `-hover` under the pointer |
 | `toggle-on-hover` | `oklch(0.458 0.167 264)` | `oklch(0.595 0.167 264)` | a toggle on: a switch's track, a checked box, a slider's fill; `-hover` under the pointer |
 | `switch-thumb` | `oklch(1 0 0)` | `oklch(1 0 0)` | a switch's knob |
 
 Status colors: `active` is `accent-ink`, `waiting` and `idle` are `ink-meta`, `done` is `ok`, `attention` is `warn`, `failed` is `danger`.
+
+A chart's series take the chip marks in order: `chip-teal`, `chip-violet`, `chip-amber`, `chip-pink`, `chip-green`, `chip-red`; one series takes the first. A meter at or above 0.9 of its max is near, and above its max is over.
 
 ## Typography
 
@@ -1665,7 +1674,7 @@ Seven roles named by place. Two rules decide the role: size follows structure, n
 | `caption` | 11px / 16px | 14px / 22px | 400 | `ink-meta` | text inside a small component (a chip, a key hint), never a sentence |
 | `code` | 12px / 18px | 15px / 22px | 400 | `ink-body` | what a machine reads |
 
-Tracking: `display` -0.02em, `title` -0.01em, `heading` -0.005em, `caption` 0.01em; the rest 0. `sans` is `"IBM Plex Sans", "IBM Plex Sans Fallback", ui-sans-serif, system-ui, sans-serif`; `mono` is `"IBM Plex Mono", "IBM Plex Mono Fallback", ui-monospace, "SFMono-Regular", Menlo, monospace`. Each named family is followed by its metric fallback face. Running text wraps at `measure`, 66ch.
+Tracking: `display` -0.02em, `title` -0.01em, `heading` -0.005em, `caption` 0.01em; the rest 0. `sans` is `"IBM Plex Sans", "IBM Plex Sans Fallback", ui-sans-serif, system-ui, sans-serif`; `mono` is `"IBM Plex Mono", "IBM Plex Mono Fallback", ui-monospace, "SFMono-Regular", Menlo, monospace`. Each named family is followed by its metric fallback face. Running text wraps at `measure`, 58ch.
 
 ## Layout
 
@@ -1714,6 +1723,11 @@ Sizes are heights and squares in the same namespace. Density is a theme and neve
 | `track` | 2px | 4px | a slider's track thickness |
 | `otp` | 44px | 48px | a one-time-code box's largest side; the box is square and shrinks with its row |
 | `text-area` | 60px | 72px | a text area's least value height: three body line boxes |
+| `meter` | 6px | 8px | a meter's bar |
+| `chart` | 128px | 192px | a chart's plot, its gridlines four bands |
+| `qr` | 160px | 240px | a QR code's square, its quiet zone inside it |
+| `figures` | 29px | 36px | four tabular figures at the code size: a diff's number columns, a file row's count lanes |
+| `message-input` | 160px | 192px | a message input's tallest text: eight body line boxes, scrolling past it |
 
 Widths of lifted layers, never stretched to their container, and of a frame's fixed regions: `measure-short` 18ch, `popover` 240px, `toast` 360px, `dialog` 520px, `sheet` 640px, `sidebar` 240px, `list` 360px, `pane` 320px, `column` 300px, `auth` 400px, `empty` 320px. Breakpoints: `tablet` 768px, `desktop` 1024px, `wide` 1440px; they are the only responsive variants, of the viewport (`tablet:`) and, on the web, of a page's width (`page-tablet:`, `page-max-tablet:`), by which a Split decides its regions.
 
@@ -1789,7 +1803,7 @@ The front matter's components are the matrix cells: one entry per axis value of 
 | `ProseDiff` | content | none | rest, loading |
 | `Comparison` | content | `ROW` | rest, loading |
 | `Message` | content | `MESSAGE` | rest, hover, focus, active, loading |
-| `MessageInput` | content | `FIELD` | rest, hover, focus, disabled, loading |
+| `MessageInput` | content | `FIELD` | rest, hover, focus, disabled |
 | `Meter` | content | none | rest, loading |
 | `BarChart` | content | none | rest, loading |
 | `QrCode` | content | none | rest, loading |
@@ -1866,4 +1880,4 @@ Durations are read as `duration-<rung>`; every rung is 0 under `prefers-reduced-
 - Do draw one `title` per screen, no `heading` inside a row, no `caption` sentence; emphasis is weight, never size.
 - Do keep text at 4.5:1 or more on its fill; the contract measures every pair it draws.
 - Do time motion with a duration rung and a contract curve; don't write a literal duration.
-- Do take every word a component draws from `words`; a sentence is a prop.
+- Do take every word a component draws from `words`; a sentence is a prop. A counted word (`earlierLines`) is `{ one, other }`, each form spelling `{count}` where the number stands, drawn through `counted(word, count)`.

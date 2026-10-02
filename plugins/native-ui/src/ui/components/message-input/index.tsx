@@ -16,6 +16,7 @@ export interface MessageInputProps extends Closed {
 	onChange: (value: string) => void;
 	attachments?: readonly Attachment[];
 	onAttach?: () => void;
+	onDetach?: (id: string) => void;
 	placeholder?: string;
 	notice?: Notice;
 	working?: boolean;

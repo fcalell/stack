@@ -76,7 +76,7 @@
 		Menlo, monospace;
 
 	/* The one measure for running text (rubric: 45-75 ch). */
-	--measure: 66ch;
+	--measure: 58ch;
 }
 
 /*
@@ -215,7 +215,8 @@
  * or raised layer re-points --edge to --edge-raised for everything inside it, so a part never
  * picks between them. In light both are the same hairline. It separates; it is not a boundary a
  * control depends on, so it is not held to 3:1.
- * edge-strong: a control's boundary (a field, a checkbox), >= 3:1 on surface and group
+ * edge-strong: a control's boundary (a field, a checkbox), >= 3:1 on surface and group, and on surface
+ * under the press and selection washes, so a checkbox holds on a pressed or selected row
  * (WCAG 1.4.11). scrim: 45 % light, 50 % dark (rubric 40-50 %).
  *
  * Inks: three levels, no fourth grey. body for the primary line, meta for the secondary line and
@@ -264,7 +265,7 @@
 	--raised: oklch(1 0 0); /* #ffffff */
 	--edge: oklch(0.915 0.004 264); /* #e1e3e6 */
 	--edge-raised: oklch(0.915 0.004 264); /* #e1e3e6 */
-	--edge-strong: oklch(0.62 0.01 264); /* #83868c */
+	--edge-strong: oklch(0.61 0.01 264); /* #808389 */
 	--scrim: oklch(0.2 0.01 264 / 0.45);
 
 	/* inks */
@@ -336,7 +337,7 @@
 	--raised: oklch(0.25 0.007 264); /* #202225 */
 	--edge: oklch(0.298 0.008 264); /* #2b2d31 */
 	--edge-raised: oklch(0.332 0.008 264); /* #34363a */
-	--edge-strong: oklch(0.53 0.01 264); /* #696c72 */
+	--edge-strong: oklch(0.575 0.01 264); /* #76797f */
 	--scrim: oklch(0 0 0 / 0.5);
 
 	/* inks */
@@ -478,7 +479,11 @@
  * rows and fields one rung above it. An icon is sized by what it sits beside: icon-meta beside
  * meta or caption text, icon beside body text, icon-control inside a control. A checkbox's box is
  * check; a one-time-code box is otp, square. A text area's least value height is three body line
- * boxes: 3 × 20 = 60 on desktop, 3 × 24 = 72 on touch.
+ * boxes: 3 × 20 = 60 on desktop, 3 × 24 = 72 on touch. A meter's bar is meter, a chart's plot
+ * chart, a QR code's square qr. figures is four tabular figures at the code size (a diff's
+ * number columns, a file row's count lanes) at Plex Mono's 0.6 em advance, rounded up: 4 × 0.6 × 12 = 28.8 → 29 on desktop, 4 × 0.6 × 15 =
+ * 36 on touch. A message input's text grows to eight body line boxes, then scrolls: 8 × 20 = 160
+ * on desktop, 8 × 24 = 192 on touch.
  */
 :root,
 :root[data-density="desktop"] {
@@ -503,6 +508,11 @@
 	--size-check: 16px;
 	--size-otp: 44px;
 	--text-area-min: 60px;
+	--meter-height: 6px;
+	--chart-height: 128px;
+	--size-qr: 160px;
+	--figures-width: 29px;
+	--message-input-max: 160px;
 }
 
 :root[data-density="touch"] {
@@ -527,6 +537,11 @@
 	--size-check: 20px;
 	--size-otp: 48px;
 	--text-area-min: 72px;
+	--meter-height: 8px;
+	--chart-height: 192px;
+	--size-qr: 240px;
+	--figures-width: 36px;
+	--message-input-max: 192px;
 }
 
 /* ------------------------------------------------------------------ widths of lifted layers */

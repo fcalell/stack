@@ -1,6 +1,10 @@
 import type { ContributionCtx } from "@fcalell/cli";
 import { plugin, slot } from "@fcalell/cli";
-import type { ProviderSpec, TsExpression } from "@fcalell/cli/ast";
+import {
+	literalToProps,
+	type ProviderSpec,
+	type TsExpression,
+} from "@fcalell/cli/ast";
 import { cliSlots, emitArtifact } from "@fcalell/cli/cli-slots";
 import { auth } from "@fcalell/plugin-auth";
 import { expo } from "@fcalell/plugin-expo";
@@ -155,18 +159,9 @@ function wordsProvider(opts: NativeUiOptions): ProviderSpec | undefined {
 		],
 		wrap: {
 			identifier: "WordsProvider",
-			props: [
-				{
-					name: "words",
-					value: {
-						kind: "object",
-						properties: Object.entries(opts.words).map(([key, value]) => ({
-							key,
-							value: { kind: "string", value },
-						})),
-					},
-				},
-			],
+			props: Object.entries(literalToProps({ words: opts.words })).map(
+				([name, value]) => ({ name, value }),
+			),
 		},
 		order: 35,
 	};

@@ -6,11 +6,14 @@ import type { ResolvedTheme } from "./derive.ts";
 import { rosterEntries } from "./roster.ts";
 import {
 	BREAKPOINTS,
+	CHART_SERIES,
 	COLOR_NAMES,
+	COUNTED_WORD_KEYS,
 	DURATIONS,
 	EASINGS,
 	type FontWeight,
 	LABEL,
+	METER_NEAR,
 	MODES,
 	type Mode,
 	RADIUS_ROLES,
@@ -138,6 +141,13 @@ const SIZE_USE: Record<(typeof SIZES)[number], string> = {
 	track: "a slider's track thickness",
 	otp: "a one-time-code box's largest side; the box is square and shrinks with its row",
 	"text-area": "a text area's least value height: three body line boxes",
+	meter: "a meter's bar",
+	chart: "a chart's plot, its gridlines four bands",
+	qr: "a QR code's square, its quiet zone inside it",
+	figures:
+		"four tabular figures at the code size: a diff's number columns, a file row's count lanes",
+	"message-input":
+		"a message input's tallest text: eight body line boxes, scrolling past it",
 };
 
 const RADIUS_USE: Record<(typeof RADIUS_ROLES)[number], string> = {
@@ -400,6 +410,8 @@ function body(resolved: ResolvedTheme): string[] {
 		"",
 		"Status colors: `active` is `accent-ink`, `waiting` and `idle` are `ink-meta`, `done` is `ok`, `attention` is `warn`, `failed` is `danger`.",
 		"",
+		`A chart's series take the chip marks in order: ${CHART_SERIES.map((hue) => code(`chip-${hue}`)).join(", ")}; one series takes the first. A meter at or above ${METER_NEAR} of its max is near, and above its max is over.`,
+		"",
 		"## Typography",
 		"",
 		`Seven roles named by place. Two rules decide the role: size follows structure, never emphasis (the primary line of anything is \`body\`, a secondary line is \`meta\`, emphasis inside a line is weight ${WEIGHT[STRONG_WEIGHT]}, never a size change); and a size role names a place once (\`title\` the page's name, once per screen; \`heading\` a section's or a card's name, never inside a row; \`caption\` text inside a small component, never a sentence; \`code\` what a machine reads). There is no label role: a field label and a row's leading cell are \`body\` at ${WEIGHT[STRONG_WEIGHT]}, a table header is \`meta\` at ${WEIGHT[STRONG_WEIGHT]}. The scale moves with density (desktop body 13, touch body 16); nothing else moves it.`,
@@ -543,7 +555,7 @@ function body(resolved: ResolvedTheme): string[] {
 		"- Do draw one `title` per screen, no `heading` inside a row, no `caption` sentence; emphasis is weight, never size.",
 		"- Do keep text at 4.5:1 or more on its fill; the contract measures every pair it draws.",
 		"- Do time motion with a duration rung and a contract curve; don't write a literal duration.",
-		"- Do take every word a component draws from `words`; a sentence is a prop.",
+		`- Do take every word a component draws from \`words\`; a sentence is a prop. A counted word (${COUNTED_WORD_KEYS.map(code).join(", ")}) is \`{ one, other }\`, each form spelling \`{count}\` where the number stands, drawn through \`counted(word, count)\`.`,
 		"",
 	];
 }

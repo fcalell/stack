@@ -1,5 +1,12 @@
 import { z } from "zod";
-import { LABEL, MODES, WORD_KEYS } from "./tokens.ts";
+import {
+	COUNTED_WORD_KEYS,
+	type CountedWordKey,
+	LABEL,
+	MODES,
+	WORD_KEYS,
+	type WordKey,
+} from "./tokens.ts";
 
 // The knobs, flat: a theme sets a knob and never a token. Everything else in
 // the contract is the approved sheet and moves only with it.
@@ -24,11 +31,21 @@ export type ParsedTheme = z.output<typeof themeSchema>;
 
 // Every key required, so a translation that misses a word fails at the type
 // and at the schema, never in the interface.
-export const wordsSchema = z.strictObject(
-	Object.fromEntries(
+const countedWordSchema = z.strictObject({
+	one: z.string().min(1),
+	other: z.string().min(1),
+});
+
+// `Object.fromEntries` widens its keys to `string`; each record is the keys
+// it maps.
+export const wordsSchema = z.strictObject({
+	...(Object.fromEntries(
 		WORD_KEYS.map((key) => [key, z.string().min(1)]),
-	) as Record<(typeof WORD_KEYS)[number], z.ZodString>,
-);
+	) as Record<WordKey, z.ZodString>),
+	...(Object.fromEntries(
+		COUNTED_WORD_KEYS.map((key) => [key, countedWordSchema]),
+	) as Record<CountedWordKey, typeof countedWordSchema>),
+});
 
 // Throws an Error whose message names every offending key by its path, so a
 // consumer reads which knob it got wrong without decoding a ZodError.

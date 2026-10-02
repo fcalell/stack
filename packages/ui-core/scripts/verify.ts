@@ -54,11 +54,14 @@ import {
 	BODY_SIZE,
 	BREAKPOINT_PX,
 	BREAKPOINTS,
+	CHART_SERIES,
 	CHIP_FAMILIES,
 	CHIP_HUES,
 	COLOR_NAMES,
 	COLORS,
+	COUNTED_WORD_KEYS,
 	type ColorName,
+	counted,
 	DENSITIES,
 	DURATION_MS,
 	DURATIONS,
@@ -69,7 +72,9 @@ import {
 	GAP_ROLES,
 	KNOB_DEFAULTS,
 	LOOP_MS,
+	METER_NEAR,
 	MODES,
+	MONO_ADVANCE,
 	type Mode,
 	RADIUS_PX,
 	RADIUS_ROLES,
@@ -294,6 +299,11 @@ const SHEET_SIZE: Record<(typeof SIZES)[number], string> = {
 	track: "--track-height",
 	otp: "--size-otp",
 	"text-area": "--text-area-min",
+	meter: "--meter-height",
+	chart: "--chart-height",
+	qr: "--size-qr",
+	figures: "--figures-width",
+	"message-input": "--message-input-max",
 };
 
 // The sheet's names for the two places it spells differently.
@@ -721,12 +731,19 @@ check("c03", "tokens.ts declares the contract", () => {
 	requireEqual(TYPE_ROLES.length, 7, "type role count");
 	requireEqual(SPACING_ROLES.length, 11, "spacing role count");
 	requireEqual(GAP_ROLES.length, 6, "gap role count");
-	requireEqual(SIZES.length, 25, "size count");
+	requireEqual(SIZES.length, 30, "size count");
 	requireEqual(RADIUS_ROLES.length, 7, "radius role count");
 	requireEqual(SHADOW_LEVELS.length, 2, "shadow level count");
 	requireEqual(WIDTHS.length, 12, "width count");
 	requireEqual(BREAKPOINTS.length, 3, "breakpoint count");
-	requireEqual(WORD_KEYS.length, 26, "word count");
+	requireEqual(WORD_KEYS.length, 29, "word count");
+	requireEqual(COUNTED_WORD_KEYS.length, 1, "counted word count");
+	requireEqual(
+		[...CHART_SERIES].sort().join(" "),
+		[...CHIP_HUES].sort().join(" "),
+		"the chart series are the chip hues",
+	);
+	assert(METER_NEAR > 0 && METER_NEAR < 1, "METER_NEAR is a share of the max");
 	for (const name of COLOR_NAMES) {
 		assert(COLORS[name] !== undefined, `no declaration for ${name}`);
 	}
@@ -748,7 +765,7 @@ check("c03", "tokens.ts declares the contract", () => {
 	for (const word of ["marine", "navy", "brand", "tint", "label", "floor"]) {
 		assert(!new RegExp(`"${word}"`).test(source), `tokens.ts names "${word}"`);
 	}
-	return `${COLOR_NAMES.length} colors, 7 roles, 12 spacing roles (6 gaps), 26 sizes, 7 radii, 2 shadows, 12 widths, 3 breakpoints, 26 words`;
+	return `${COLOR_NAMES.length} colors, 7 roles, 11 spacing roles (6 gaps), ${SIZES.length} sizes, 7 radii, 2 shadows, 12 widths, 3 breakpoints, ${WORD_KEYS.length} words and ${COUNTED_WORD_KEYS.length} counted, ${CHART_SERIES.length} chart series`;
 });
 
 check("c05", "default knobs reproduce the approved sheet", () => {
@@ -996,6 +1013,10 @@ check("c06", "every scale is its ratio of the base", () => {
 			...px,
 			"switch-travel": px["switch-w"] - px.thumb - 2 * px["switch-inset"],
 			"text-area": 3 * Number.parseInt(tokens["--leading-body"] ?? "", 10),
+			figures: Math.ceil(
+				4 * MONO_ADVANCE * Number.parseInt(tokens["--text-code"] ?? "", 10),
+			),
+			"message-input": 8 * Number.parseInt(tokens["--leading-body"] ?? "", 10),
 		};
 		for (const size of SIZES) {
 			requireEqual(
@@ -2012,7 +2033,28 @@ check("c31", "words: English is total and the schema is closed", () => {
 	);
 	const extra = wordsSchema.safeParse({ ...ENGLISH, ok: "OK" });
 	assert(!extra.success, "an extra word was accepted");
-	return `${WORD_KEYS.length} words, sentence case, missing and extra keys rejected`;
+	for (const key of COUNTED_WORD_KEYS) {
+		for (const form of [ENGLISH[key].one, ENGLISH[key].other]) {
+			assert(form.includes("{count}"), `${key} has a form without {count}`);
+			assert(
+				form[0] === form[0]?.toUpperCase() && !form.includes("!"),
+				`${key} is not sentence case: ${form}`,
+			);
+		}
+	}
+	requireEqual(
+		counted(ENGLISH.earlierLines, 1),
+		"Show 1 earlier line",
+		"one earlier line",
+	);
+	requireEqual(
+		counted(ENGLISH.earlierLines, 3),
+		"Show 3 earlier lines",
+		"three earlier lines",
+	);
+	const bare = wordsSchema.safeParse({ ...ENGLISH, earlierLines: "Show" });
+	assert(!bare.success, "a counted word without its forms was accepted");
+	return `${WORD_KEYS.length} words and ${COUNTED_WORD_KEYS.length} counted, sentence case, missing and extra keys rejected`;
 });
 
 check("c32", "the contrast contracts hold at the default knobs", () => {

@@ -294,9 +294,8 @@ Known stale items (audit for more):
   calibration's provenance, the `home.tsx` template. Keep `slot-catalog.md`, `overview.md`,
   `commands.md`, `runtime.md`, `consumer-project.md`, `philosophy.md`, and update each for the
   React plugins when they exist, not before.
-- martechthings: `.helm/knowledge/product/design-language.md` (rewritten in Stage 3 from the
-  approved screens), Solid references in `.helm/knowledge/architecture/overview.md`, the board
-  epics' Solid assumptions. The app code is rewritten in Stage 6; leave it running until then.
+- martechthings: untouched by this programme and left running; it is redesigned on the finished
+  stack, its `design-language.md`, Solid references and app code with it.
 - Each deletion updates the knowledge index in the same change. Stack's `.helm/knowledge/index.md`
   load triggers must match what remains.
 
@@ -411,12 +410,11 @@ harness exists.
 
 ### Stage 3. Screens and composition (loop L3)
 
-Real screens composed from approved components, both modes: martechthings' Settings, Overview,
-Pages table with the page pane, Schema editor, login, onboarding; stead's three most used screens.
+Real screens composed from approved components, both modes: stead's three most used screens.
 Screens expose what components cannot compose: a page header with acts, a first-screen frame, the
 table with an editing pane, section rhythm. Each gap is a new molecule through Stage 2's seven
 steps. Exit: every listed screen passes on the canvas and renders in the showcase as a composed
-example. Output: martechthings' `design-language.md` rewritten from the approved screens.
+example. martechthings is outside the programme: it is redesigned on the finished stack.
 
 ### Stage 4. Lock
 
@@ -436,8 +434,7 @@ reference; update stack's knowledge entries.
 
 ### Stage 6. Consumers
 
-martechthings first (the smaller, and the one whose screens Stage 3 designed), then stead. Each
-screen migrates against its artboard, verified by loop L4: a Chrome screenshot beside the
+stead. Each screen migrates against its artboard, verified by loop L4: a Chrome screenshot beside the
 artboard, both modes. When a consumer's React build passes the same checks, its Solid plugins are
 removed from the config. Sailward's move onto stack is a separate programme after this one.
 

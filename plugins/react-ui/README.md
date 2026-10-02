@@ -34,7 +34,7 @@ export default defineConfig({
 | --- | --- | --- | --- |
 | `theme` | `Theme` | the calibrated defaults | The ui-core contract, four flat knobs: `accentHue` (264), `castHue` (the neutrals' hue; `accentHue` unless set), `fonts` (`{ sans?, mono? }` family names; IBM Plex Sans and IBM Plex Mono unless set) and `defaultMode` (a viewer with no stored choice starts in it, ahead of `prefers-color-scheme`). Every value resolves through `deriveTheme` and lands in the `@theme` block of `.stack/app.css`. |
 | `words` | `Words` | English | Every word a molecule draws on its own, every key required. Mounted into the generated providers as a `WordsProvider` (`@fcalell/plugin-react-ui/lib/words`, read with `useWords()`). |
-| `fonts` | `FontEntry[]` | `defaultFonts` | The font files to load: each is preloaded and gets an `@font-face` with fallback metrics, one per family. The default is IBM Plex Sans (its `wght` axis, `plexSans` from `./node/fonts`) and IBM Plex Mono at 400, 500 and 600; `[]` loads none. Which family the contract binds to `sans` or `mono` is `theme.fonts`. |
+| `fonts` | `FontEntry[]` | `defaultFonts` | The font files to load: each is preloaded and gets an `@font-face` with fallback metrics, one per family. The default is IBM Plex Sans upright and italic (each on its `wght` axis, `plexSans` and `plexSansItalic` from `./node/fonts`) and IBM Plex Mono at 400, 500 and 600; `[]` loads none. Which family the contract binds to `sans` or `mono` is `theme.fonts`. |
 
 The icon set is Lucide: every `icon` or `name` a component takes is an `IconName` (a Lucide
 PascalCase name), drawn from `lucide-react`, the plugin's own dependency.

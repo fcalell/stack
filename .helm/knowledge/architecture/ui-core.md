@@ -46,7 +46,8 @@ pinned by the package's verify suite; this entry holds the architecture and its 
   value's chroma inside sRGB at its lightness, so a re-hued accent keeps its luminance and its
   contrasts (the verify sweeps all 360 hues of the accent, of the cast, and of the two together) and loses saturation rather than clipping. The
   sheet carries the held value at its own hue: `accent-ink` holds 4.5:1 on `group` and
-  `accent-soft`, the dark `accent` 3:1 on `group` (a checked box, an on switch), the light
+  `accent-soft`, the dark `accent` 3:1 on `group` (a checked box, an on switch), `edge-strong` 3:1 on `surface`
+  under `wash-press` and `wash-selected` in both modes (an unticked box on a pressed or selected row), the light
   `danger` 4.5:1 under `wash-press` on `group` (a destructive act's pressed label) and 4.5:1
   under `on-danger` in both modes (the filled danger act), each filled act's pending fill 3:1
   under its label (the spinner on a pending act). Hover and press move a filled act away from its
@@ -65,7 +66,9 @@ pinned by the package's verify suite; this entry holds the architecture and its 
   steps each with an `-ink`, seven washes (`fill-neutral` the resting neutral ground among them), six place aliases (`ring`, `selected-outline`,
   `edge-hover`, `edge-error`, `ink-error`, `ink-disabled`), the two act fills (`act-accent`,
   `act-danger`) with their states, and the switch's five with the shared `toggle-on`. `COLOR_GROUPS` holds the roles by those groups and `COLOR_NAMES`
-  is its flattening. The dark hairline is two tokens because the dark ladder spans more
+  is its flattening. A chart's series take the chip marks in `CHART_SERIES` order and a meter's
+  level turns on `METER_NEAR`, contract data rather than a cell, so both platforms draw the same
+  series colour and the same level for a value. The dark hairline is two tokens because the dark ladder spans more
   than one hairline can straddle: a group or a lifted layer re-points `--color-edge` to
   `edge-raised` for everything inside it, so a part never picks between them. The grounds are
   `RAISED_GROUNDS` and the re-point `raisedGroundTokens`; the web scopes it on `.bg-group` and
@@ -78,9 +81,14 @@ pinned by the package's verify suite; this entry holds the architecture and its 
   the desktop set, 16 on touch, each role a ratio rounded to the pixel, its line box to the even
   pixel), the eleven spacing roles (multiples of 4, one rung looser on touch except the float
   and page insets and the acts gap; a list bleeds by `control-x`, so its rows' leading meets
-  the title over it at either density) and the twenty-four sizes (control 32/44, field 38/48, target 24/44, the switch and
+  the title over it at either density) and the thirty sizes (control 32/44, field 38/48, target 24/44, the switch and
   its derived thumb travel, the avatar, three icon sizes by the text beside them, the check,
-  the slider track, the one-time-code box). `themeTokens` seeds the touch set on both platforms; the web
+  the slider track, the one-time-code box, the meter's bar, the chart's plot, the QR square, and
+  three derived from the type: the text area's three body lines, the message input's eight, and
+  `figures`, four tabular figures at the code size, held by a diff's number columns and a
+  file row's count lanes). A size counted in figures is px at
+  `MONO_ADVANCE` (Plex Mono's 0.6 em), never a `ch` width, because uniwind has no `ch` unit and
+  native draws the figures too; a named mono with a wider advance overflows it. `themeTokens` seeds the touch set on both platforms; the web
   overrides it with the desktop set in a `:root` rule in `@layer base` under a fine pointer at
   `tablet` width and wider (so a desktop window narrower than `tablet` draws the touch set and
   structure), the cascade the dark layer rides, so no cell carries a density
@@ -114,13 +122,16 @@ pinned by the package's verify suite; this entry holds the architecture and its 
 ## Words
 
 Every word a molecule draws or reads aloud on its own (the six `Status` words, `recommended`,
-`copy`, `copied`, `back`, `close`, `cancel`, `dismiss`, `more`, `send`, `stop`, `attach`, `search`, `loading`, `checking`, `retry`, `add`, `remove`, `details`, `places`, `notifications`) comes
+`copy`, `copied`, `back`, `close`, `cancel`, `dismiss`, `more`, `send`, `stop`, `attach`, `search`, `loading`, `checking`, `retry`, `add`, `remove`, `details`, `places`, `notifications`, `code`, `added`, `removed`, and the counted `earlierLines`) comes
 from `words`, a closed typed object with English defaults. The `Words` type requires every key
 and `wordsSchema` is strict, so a translation missing a word fails `tsc` and the schema. It is a
 plugin option beside `theme`; each plugin contributes a `WordsProvider` into the generated entry
 through its platform's `providers` slot, so the value reaches the components with no consumer
 glue, and the context defaults to English when no provider is mounted. A consumer's sentence is a
-prop on the molecule that draws it, never a key.
+prop on the molecule that draws it, never a key. A word drawn with a number is data, `{ one,
+other }` each spelling `{count}`, drawn through `counted(word, count)`, never a function: the
+words cross into the generated entry as a literal. Two forms are English's; a language with more
+plural categories needs a locale the words do not carry.
 
 ## Matrices and the sharing line
 

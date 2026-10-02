@@ -9,6 +9,7 @@ export interface MeterProps extends Closed {
 	label: string;
 	value: number;
 	max: number;
+	unit?: string;
 	meta?: string;
 	loading?: boolean;
 }

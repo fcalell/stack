@@ -325,6 +325,11 @@ function avatarColors(): Record<AvatarColor, ColorDeclaration> {
 	return out;
 }
 
+const EDGE_STRONG_HOLDS: readonly Holds[] = [
+	{ on: "surface", under: "wash-press", ratio: 3 },
+	{ on: "surface", under: "wash-selected", ratio: 3 },
+];
+
 // Surfaces step in CIE L*: light canvas 96.9 under surface 100 and over
 // group 93.8; dark canvas 3.6, surface 8.1, group and raised 13.1. The dark
 // hairline is two tokens, `edge` over canvas and surface and `edge-raised`
@@ -344,7 +349,12 @@ export const COLORS: Record<ColorName, ColorDeclaration> = {
 	raised: { light: WHITE, dark: neutral(0.25, 0.007) },
 	edge: { light: neutral(0.915, 0.004), dark: neutral(0.298, 0.008) },
 	"edge-raised": { light: neutral(0.915, 0.004), dark: neutral(0.332, 0.008) },
-	"edge-strong": { light: neutral(0.62, 0.01), dark: neutral(0.53, 0.01) },
+	// A control's boundary stays one on a pressed or selected row, the
+	// checkbox and radio in a list among them.
+	"edge-strong": {
+		light: { ...neutral(0.62, 0.01), holds: EDGE_STRONG_HOLDS },
+		dark: { ...neutral(0.53, 0.01), holds: EDGE_STRONG_HOLDS },
+	},
 	scrim: {
 		light: neutral(0.2, 0.01, 0.45),
 		dark: { l: 0, c: 0, hue: 0, alpha: 0.5 },
@@ -493,6 +503,21 @@ export const COLORS: Record<ColorName, ColorDeclaration> = {
 // A switch, which has no label of its own, disables by opacity.
 export const DISABLED_OPACITY = 0.45;
 
+// The order a chart's series take the chip marks (`chip-<hue>`): one series
+// takes the first.
+export const CHART_SERIES = [
+	"teal",
+	"violet",
+	"amber",
+	"pink",
+	"green",
+	"red",
+] as const satisfies readonly ChipHue[];
+
+// The share of its max at or above which a meter is near; above the max it
+// is over.
+export const METER_NEAR = 0.9;
+
 // ── Type ────────────────────────────────────────────────────────────
 
 // Two rules decide which role a piece of text takes. Size follows structure,
@@ -613,6 +638,12 @@ export const TYPE_TRACKING: Record<TrackedRole, string> = {
 // Emphasis inside a line; muted text is never above it.
 export const STRONG_WEIGHT: FontWeight = "medium";
 
+// The mono family's character advance in em: IBM Plex Mono's 600 over its
+// 1000 em. A size counted in code figures (`figures`) is derived from it,
+// since native has no `ch` unit; a named mono with a narrower advance fits
+// inside it, a wider one does not.
+export const MONO_ADVANCE = 0.6;
+
 // ── Space ───────────────────────────────────────────────────────────
 
 // One base, 4 px; every role is a multiple of it, picked per density, so a
@@ -698,6 +729,10 @@ export const SPACING_RATIO: Record<Density, Record<SpacingRole, number>> = {
 // icon is sized by what it sits beside: `icon-meta` meta or caption text,
 // `icon` body text, `icon-control` the inside of a control. The spinner is
 // the `icon` rung: it replaces a row's glyph and sits beside body text.
+// `meter` is a meter's bar, `chart` a chart's plot, `qr` a QR code's
+// square, `figures` four tabular figures at the code size (a diff's number
+// columns, a file row's count lanes) and `message-input` the
+// tallest a message input's text grows before it scrolls.
 export const SIZES = [
 	"control",
 	"control-compact",
@@ -724,13 +759,24 @@ export const SIZES = [
 	"track",
 	"otp",
 	"text-area",
+	"meter",
+	"chart",
+	"qr",
+	"figures",
+	"message-input",
 ] as const;
 export type Size = (typeof SIZES)[number];
 
 // Derived and declared nowhere: the thumb's travel, the track less the thumb
 // and its inset on both sides; a text area's least value height, three body
-// line boxes.
-export type DerivedSize = "switch-travel" | "text-area";
+// line boxes; `figures`, four tabular figures at the code size at
+// `MONO_ADVANCE`, rounded up to the pixel; a message input's tallest text,
+// eight body line boxes.
+export type DerivedSize =
+	| "switch-travel"
+	| "text-area"
+	| "figures"
+	| "message-input";
 
 export const SIZE_PX: Record<
 	Density,
@@ -760,6 +806,9 @@ export const SIZE_PX: Record<
 		check: 16,
 		track: 2,
 		otp: 44,
+		meter: 6,
+		chart: 128,
+		qr: 160,
 	},
 	touch: {
 		control: 44,
@@ -785,6 +834,9 @@ export const SIZE_PX: Record<
 		check: 20,
 		track: 4,
 		otp: 48,
+		meter: 8,
+		chart: 192,
+		qr: 240,
 	},
 };
 
@@ -850,7 +902,7 @@ export const WIDTH_VALUE: Record<Width, string> = {
 	toast: "360px",
 	dialog: "520px",
 	sheet: "640px",
-	measure: "66ch",
+	measure: "58ch",
 	sidebar: "240px",
 	list: "360px",
 	pane: "320px",
@@ -1019,10 +1071,24 @@ export const WORD_KEYS = [
 	"details",
 	"places",
 	"notifications",
+	"code",
+	"added",
+	"removed",
 ] as const;
 export type WordKey = (typeof WORD_KEYS)[number];
 
-export type Words = Record<WordKey, string>;
+// A word drawn with a number: `one` where the count is one, `other` at
+// every other count, each spelling `{count}` where the number stands.
+export const COUNTED_WORD_KEYS = ["earlierLines"] as const;
+export type CountedWordKey = (typeof COUNTED_WORD_KEYS)[number];
+
+export interface CountedWord {
+	one: string;
+	other: string;
+}
+
+export type Words = Record<WordKey, string> &
+	Record<CountedWordKey, CountedWord>;
 
 export const ENGLISH: Words = {
 	active: "Active",
@@ -1051,4 +1117,19 @@ export const ENGLISH: Words = {
 	details: "Details",
 	places: "Places",
 	notifications: "Notifications",
+	code: "Code",
+	added: "Added",
+	removed: "Removed",
+	earlierLines: {
+		one: "Show {count} earlier line",
+		other: "Show {count} earlier lines",
+	},
 };
+
+// A counted word at a count: `counted(words.earlierLines, 3)`.
+export function counted(word: CountedWord, count: number): string {
+	return (count === 1 ? word.one : word.other).replace(
+		"{count}",
+		String(count),
+	);
+}

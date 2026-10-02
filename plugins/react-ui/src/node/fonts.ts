@@ -8,23 +8,35 @@ import { cssString, cssUrl } from "./css-escape.ts";
 
 export type { FontEntry };
 
-// IBM Plex Sans's variable file on its weight axis. The fallback metrics
-// size Arial to Plex's box (ascender 1025 and descender 275 over a 1000 em,
-// at the ratio of Plex's average width 451/1000 to Arial's 913/2048), so the
-// swap moves nothing.
+// IBM Plex Sans's variable files on their weight axis, upright and italic.
+// The fallback metrics size Arial to Plex's box (ascender 1025 and descender
+// 275 over a 1000 em, at the ratio of Plex's average width 451/1000 to
+// Arial's 913/2048), so the swap moves nothing. A family declares one
+// fallback face, so the italic carries the upright's metrics.
+const plexSansFallback: FontEntry["fallback"] = {
+	family: "Arial",
+	ascentOverride: "101.32%",
+	descentOverride: "27.18%",
+	lineGapOverride: "0%",
+	sizeAdjust: "101.17%",
+};
+
 export const plexSans: FontEntry = {
 	family: "IBM Plex Sans",
 	specifier:
 		"@fontsource-variable/ibm-plex-sans/files/ibm-plex-sans-latin-wght-normal.woff2",
 	weight: "100 700",
 	style: "normal",
-	fallback: {
-		family: "Arial",
-		ascentOverride: "101.32%",
-		descentOverride: "27.18%",
-		lineGapOverride: "0%",
-		sizeAdjust: "101.17%",
-	},
+	fallback: plexSansFallback,
+};
+
+export const plexSansItalic: FontEntry = {
+	family: "IBM Plex Sans",
+	specifier:
+		"@fontsource-variable/ibm-plex-sans/files/ibm-plex-sans-latin-wght-italic.woff2",
+	weight: "100 700",
+	style: "italic",
+	fallback: plexSansFallback,
 };
 
 // IBM Plex Mono ships static cuts only: 400 for code, 500 for emphasis inside
@@ -49,6 +61,7 @@ function plexMono(weight: "400" | "500" | "600"): FontEntry {
 
 export const defaultFonts: FontEntry[] = [
 	plexSans,
+	plexSansItalic,
 	plexMono("400"),
 	plexMono("500"),
 	plexMono("600"),

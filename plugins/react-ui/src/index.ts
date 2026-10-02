@@ -1,16 +1,16 @@
 import type { ContributionCtx } from "@fcalell/cli";
 import { plugin, slot } from "@fcalell/cli";
-import type {
-	ProviderSpec,
-	TsExpression,
-	TsImportSpec,
+import {
+	literalToProps,
+	type ProviderSpec,
+	type TsExpression,
+	type TsImportSpec,
 } from "@fcalell/cli/ast";
 import { emitArtifact } from "@fcalell/cli/cli-slots";
 import { auth } from "@fcalell/plugin-auth";
 import { react } from "@fcalell/plugin-react";
 import { vite } from "@fcalell/plugin-vite";
 import { deriveTheme } from "@fcalell/ui-core/derive";
-import { WORD_KEYS, type Words } from "@fcalell/ui-core/tokens";
 import { aggregateAppCss } from "./node/codegen.ts";
 import { defaultFonts, type FontEntry } from "./node/fonts.ts";
 import {
@@ -73,18 +73,6 @@ function fontEntryToExpression(font: FontEntry): TsExpression {
 				},
 			},
 		],
-	};
-}
-
-// The consumer's `words` as a literal object expression, so the generated
-// providers mount the context with no glue file.
-function wordsToExpression(words: Words): TsExpression {
-	return {
-		kind: "object",
-		properties: WORD_KEYS.map((key) => ({
-			key,
-			value: { kind: "string", value: words[key] },
-		})),
 	};
 }
 
@@ -273,7 +261,9 @@ export const reactUi = plugin("react-ui", {
 				],
 				wrap: {
 					identifier: "WordsProvider",
-					props: [{ name: "words", value: wordsToExpression(words) }],
+					props: Object.entries(literalToProps({ words })).map(
+						([name, value]) => ({ name, value }),
+					),
 				},
 				order: 1,
 			};

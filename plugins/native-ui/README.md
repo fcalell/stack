@@ -156,8 +156,8 @@ All take `loading` and draw three row forms.
 | `ProseDiff` | `before`, `after` |
 | `Comparison` | `rows` (`{ label, cells: [{ label, value }], chips }`) |
 | `Message` | `author` (`you`, `other`, `system`), `name`, `body`, `at`, `onOpen` (a `system` line that opens something becomes the act), `loading` |
-| `MessageInput` | `value`, `onChange`, `attachments`, `onAttach`, `placeholder`, `notice` (`{ sentence, act }`), `working`, `onSend`, `onStop` |
-| `Meter` | `label`, `value`, `max`, `meta` |
+| `MessageInput` | `value`, `onChange`, `attachments`, `onAttach`, `onDetach` (`(id) => void`), `placeholder`, `notice` (`{ sentence, act }`), `working`, `onSend`, `onStop` |
+| `Meter` | `label`, `value`, `max`, `unit`, `meta` |
 | `BarChart` | `series` (`{ label, value, parts, at }[]`), `unit` |
 | `QrCode` | `value` |
 

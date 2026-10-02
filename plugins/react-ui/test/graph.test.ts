@@ -128,6 +128,10 @@ test("the vite config runs Tailwind, the fonts and the mode script", async () =>
 	);
 	assert.match(
 		config,
+		/specifier: "@fontsource-variable\/ibm-plex-sans\/files\/ibm-plex-sans-latin-wght-italic\.woff2", weight: "100 700", style: "italic"/,
+	);
+	assert.match(
+		config,
 		/specifier: "@fontsource\/ibm-plex-mono\/files\/ibm-plex-mono-latin-600-normal\.woff2"/,
 	);
 	assert.match(config, /import\.meta\.resolve\("@fcalell\/plugin-react-ui"\)/);
@@ -141,4 +145,8 @@ test("words mount a provider only when given", async () => {
 	).get(".stack/virtual-providers.tsx");
 	assert.match(words ?? "", /from "@fcalell\/plugin-react-ui\/lib\/words"/);
 	assert.match(words ?? "", /back: "Zurück"/);
+	assert.match(
+		words ?? "",
+		/earlierLines: \{ one: "Show \{count\} earlier line", other: "Show \{count\} earlier lines" \}/,
+	);
 });
