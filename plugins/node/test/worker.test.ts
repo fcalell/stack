@@ -8,7 +8,6 @@ import {
 	browser,
 	CookieJar,
 	createTables,
-	mintSessionCookie,
 	registerPasskey,
 	SoftwareAuthenticator,
 	signInWithPasskey,
@@ -18,6 +17,7 @@ import createWorker, { type AppBuilder } from "@fcalell/plugin-api/runtime";
 import authRuntime from "@fcalell/plugin-auth/runtime";
 import * as authSchema from "@fcalell/plugin-auth/schema";
 import * as passkeySchema from "@fcalell/plugin-auth/schema/passkey";
+import { mintSession } from "@fcalell/plugin-auth/testing";
 import { sqliteTable, text } from "@fcalell/plugin-db/orm";
 import dbRuntime from "@fcalell/plugin-db/runtime/sqlite";
 import { createNodeServer } from "../src/server/create-node-server.ts";
@@ -104,9 +104,13 @@ test("a node app signs in with a passkey and reads a SQLite row", async () => {
 			"localhost",
 			origin,
 		);
-		const { auth } = await authRuntime(authOptions).context(env, { db });
 		const enrolled = new CookieJar();
-		const [name, value] = await mintSessionCookie(auth, "u1");
+		// Signed as the worker signs: its secret, no prefix option, an http app URL.
+		const { name, value } = await mintSession(
+			db,
+			{ secret: env.AUTH_SECRET, cookiePrefix: "better-auth", secure: false },
+			"u1",
+		);
 		enrolled.cookies.set(name, value);
 		const registration = await registerPasskey(
 			browser(http, origin, enrolled),

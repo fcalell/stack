@@ -16,7 +16,6 @@
 	},
 	"dependencies": {
 		"@fcalell/plugin-db": "workspace:*",
-		"better-auth": "^1.7.2",
 		"drizzle-kit": "^0.31.10"
 	},
 	"devDependencies": {

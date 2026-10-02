@@ -7,7 +7,11 @@ import type { PluginRuntimeEntry } from "@fcalell/plugin-api";
 import { api } from "@fcalell/plugin-api";
 import { RESERVED_SLUGS } from "@fcalell/plugin-api/lib/slugify";
 import { cloudflare } from "@fcalell/plugin-cloudflare";
-import { defaultOrgStatements, getStatements } from "./access.ts";
+import {
+	defaultOrgRoles,
+	defaultOrgStatements,
+	getStatements,
+} from "./access.ts";
 import type { AuthClientOptions, OrganizationAccess } from "./client.ts";
 import {
 	AUTH_PREFIX,
@@ -450,6 +454,41 @@ export const auth = plugin("auth", {
 					},
 					identifier: "authRuntime",
 					options,
+				};
+			},
+		),
+
+		// The test entry's sign-in: the cookie name's prefix, the var names the
+		// secret and app URL are read from, the session length, and with
+		// organizations on the configured role names in declaration order,
+		// which type `member`'s role. Every option is a literal, so no
+		// `testingImports` entry.
+		api.slots.testingEntries.contribute(
+			async (ctx): Promise<PluginRuntimeEntry> => {
+				const org = self.options.organization;
+				const roles = !org
+					? undefined
+					: Object.keys(
+							typeof org === "object" && org.roles
+								? org.roles
+								: defaultOrgRoles,
+						);
+				return {
+					plugin: "auth",
+					import: {
+						source: "@fcalell/plugin-auth/testing",
+						default: "authTesting",
+					},
+					identifier: "authTesting",
+					options: literalToProps({
+						cookiePrefix: await ctx.resolve(self.slots.cookiePrefix),
+						secretVar: self.options.secretVar,
+						appUrlVar: self.options.appUrlVar,
+						...(self.options.session?.expiresIn !== undefined
+							? { expiresIn: self.options.session.expiresIn }
+							: {}),
+						...(roles ? { roles } : {}),
+					}),
 				};
 			},
 		),

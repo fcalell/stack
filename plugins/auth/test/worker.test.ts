@@ -7,7 +7,6 @@ import {
 	browser,
 	CookieJar,
 	createTables,
-	mintSessionCookie,
 	registerPasskey,
 	SoftwareAuthenticator,
 	signInWithPasskey,
@@ -22,10 +21,15 @@ import { z } from "zod";
 import * as authSchema from "../src/schema/index.ts";
 import * as organizationSchema from "../src/schema/organization.ts";
 import * as passkeySchema from "../src/schema/passkey.ts";
+import { mintSession } from "../src/testing/index.ts";
 import type { AuthCallbackPayloads } from "../src/types.ts";
 import authRuntime, { type AuthRuntimeInput } from "../src/worker/index.ts";
 
 const ORIGIN = "http://localhost";
+const SECRET = "test-secret-at-least-32-characters-long";
+// How the worker below signs its session cookie: no prefix option, an http
+// app URL.
+const SESSION = { secret: SECRET, cookiePrefix: "better-auth", secure: false };
 
 // The worker as the codegen composes it for a node consumer: the sqlite db
 // runtime, then auth with literal options, over a fresh database file that
@@ -38,7 +42,7 @@ async function setup(
 ) {
 	const env = {
 		DB_FILE: join(mkdtempSync(join(tmpdir(), "stack-auth-")), "app.sqlite"),
-		AUTH_SECRET: "test-secret-at-least-32-characters-long",
+		AUTH_SECRET: SECRET,
 		APP_URL: ORIGIN,
 		...extraEnv,
 	};
@@ -64,13 +68,10 @@ async function setup(
 		.insert(authSchema.user)
 		.values({ id: "u1", name: "Ada", email: "ada@example.com" })
 		.run();
-	const { auth: instance } = await authRuntime(authOptions).context(env, {
-		db: client,
-	});
 
 	const fetchPath = async (path: string, init?: RequestInit) =>
 		worker.fetch(new Request(`${ORIGIN}${path}`, init), env, undefined);
-	return { client, instance, fetchPath };
+	return { client, env, authOptions, fetchPath };
 }
 
 async function sessionUser(send: (path: string) => Promise<Response>) {
@@ -81,12 +82,16 @@ async function sessionUser(send: (path: string) => Promise<Response>) {
 
 test("a passkey registered on a session signs the user in", async () => {
 	const schema = { ...authSchema, ...passkeySchema };
-	const { client, instance, fetchPath } = await setup(schema, {
+	const { client, fetchPath } = await setup(schema, {
 		passkey: { rpID: "localhost", rpName: "Stack", origin: ORIGIN },
 	});
 	const authenticator = await SoftwareAuthenticator.create("localhost", ORIGIN);
 
-	const [cookieName, cookieValue] = await mintSessionCookie(instance, "u1");
+	const { name: cookieName, value: cookieValue } = await mintSession(
+		client,
+		SESSION,
+		"u1",
+	);
 	const signedIn = new CookieJar();
 	signedIn.cookies.set(cookieName, cookieValue);
 	const registration = await registerPasskey(
@@ -111,7 +116,7 @@ test("under STACK_DEV a passkey ceremony runs against the localhost dev origin",
 	const schema = { ...authSchema, ...passkeySchema };
 	// What codegen bakes for app.domain "example.com" with a dev frontend at
 	// ORIGIN: production rpID and origins, the dev origins beside them.
-	const { client, instance, fetchPath } = await setup(
+	const { client, fetchPath } = await setup(
 		schema,
 		{
 			trustedOrigins: ["https://example.com"],
@@ -127,7 +132,11 @@ test("under STACK_DEV a passkey ceremony runs against the localhost dev origin",
 	);
 	const authenticator = await SoftwareAuthenticator.create("localhost", ORIGIN);
 
-	const [cookieName, cookieValue] = await mintSessionCookie(instance, "u1");
+	const { name: cookieName, value: cookieValue } = await mintSession(
+		client,
+		SESSION,
+		"u1",
+	);
 	const signedIn = new CookieJar();
 	signedIn.cookies.set(cookieName, cookieValue);
 	const registration = await registerPasskey(
@@ -164,7 +173,7 @@ test("sendOTP receives why the code was issued", async () => {
 
 test("sendInvitation receives the invitation, the organization and the inviter", async () => {
 	const sent: AuthCallbackPayloads["sendInvitation"][] = [];
-	const { client, instance, fetchPath } = await setup(
+	const { client, fetchPath } = await setup(
 		{ ...authSchema, ...organizationSchema },
 		{
 			organization: true,
@@ -172,7 +181,11 @@ test("sendInvitation receives the invitation, the organization and the inviter",
 		},
 	);
 
-	const [cookieName, cookieValue] = await mintSessionCookie(instance, "u1");
+	const { name: cookieName, value: cookieValue } = await mintSession(
+		client,
+		SESSION,
+		"u1",
+	);
 	const jar = new CookieJar();
 	jar.cookies.set(cookieName, cookieValue);
 	const send = browser(fetchPath, ORIGIN, jar);
@@ -209,9 +222,14 @@ test("sendInvitation receives the invitation, the organization and the inviter",
 });
 
 test("with email OTP on, a callbacks file without sendOTP refuses to build", async () => {
-	await assert.rejects(setup(authSchema, { emailOtp: true, callbacks: {} }), {
-		name: "MissingSendOtpError",
+	const { client, env, authOptions } = await setup(authSchema, {
+		emailOtp: true,
+		callbacks: {},
 	});
+	await assert.rejects(
+		async () => authRuntime(authOptions).context(env, { db: client }),
+		{ name: "MissingSendOtpError" },
+	);
 });
 
 // A consumer's own sign-in flow: one endpoint that records the mint in the
@@ -267,7 +285,7 @@ test("a consumer plugin from the callbacks file serves under /api/auth", async (
 });
 
 test("an organization's own roles decide what its members may do", async () => {
-	const { instance, fetchPath } = await setup(
+	const { client, fetchPath } = await setup(
 		{ ...authSchema, ...organizationSchema },
 		{
 			organization: {
@@ -281,7 +299,11 @@ test("an organization's own roles decide what its members may do", async () => {
 		},
 	);
 
-	const [cookieName, cookieValue] = await mintSessionCookie(instance, "u1");
+	const { name: cookieName, value: cookieValue } = await mintSession(
+		client,
+		SESSION,
+		"u1",
+	);
 	const jar = new CookieJar();
 	jar.cookies.set(cookieName, cookieValue);
 	const send = browser(fetchPath, ORIGIN, jar);
@@ -311,11 +333,15 @@ test("an organization's own roles decide what its members may do", async () => {
 });
 
 test("an organization slug the app's routes hold is refused on create and update, as a field error", async () => {
-	const { instance, fetchPath } = await setup(
+	const { client, fetchPath } = await setup(
 		{ ...authSchema, ...organizationSchema },
 		{ organization: true, reservedSlugs: ["login", "settings"] },
 	);
-	const [cookieName, cookieValue] = await mintSessionCookie(instance, "u1");
+	const { name: cookieName, value: cookieValue } = await mintSession(
+		client,
+		SESSION,
+		"u1",
+	);
 	const jar = new CookieJar();
 	jar.cookies.set(cookieName, cookieValue);
 	const send = browser(fetchPath, ORIGIN, jar);
@@ -361,11 +387,15 @@ test("an organization slug the app's routes hold is refused on create and update
 });
 
 test("check-slug refuses a slug the app's routes hold with the create's refusal", async () => {
-	const { instance, fetchPath } = await setup(
+	const { client, fetchPath } = await setup(
 		{ ...authSchema, ...organizationSchema },
 		{ organization: true, reservedSlugs: ["login", "settings"] },
 	);
-	const [cookieName, cookieValue] = await mintSessionCookie(instance, "u1");
+	const { name: cookieName, value: cookieValue } = await mintSession(
+		client,
+		SESSION,
+		"u1",
+	);
 	const jar = new CookieJar();
 	jar.cookies.set(cookieName, cookieValue);
 	const send = browser(fetchPath, ORIGIN, jar);

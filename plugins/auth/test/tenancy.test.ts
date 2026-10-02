@@ -3,12 +3,7 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
-import {
-	browser,
-	CookieJar,
-	createTables,
-	mintSessionCookie,
-} from "@fcalell/auth-testing";
+import { browser, CookieJar, createTables } from "@fcalell/auth-testing";
 import { createProcedure } from "@fcalell/plugin-api/procedure";
 import createWorker, { type AppBuilder } from "@fcalell/plugin-api/runtime";
 import { sqliteTable, text } from "@fcalell/plugin-db/orm";
@@ -17,9 +12,11 @@ import type { defaultOrgStatements } from "../src/access.ts";
 import * as authSchema from "../src/schema/index.ts";
 import * as orgSchema from "../src/schema/organization.ts";
 import { defineScope, organization } from "../src/scope.ts";
+import { mintSession } from "../src/testing/index.ts";
 import authRuntime, { type AuthRuntimeInput } from "../src/worker/index.ts";
 
 const ORIGIN = "http://localhost";
+const SECRET = "test-secret-at-least-32-characters-long";
 
 // A consumer's tenancy: projects under an organization, pages under a
 // project.
@@ -51,7 +48,7 @@ const schema = { ...authSchema, ...orgSchema, project, page };
 async function setup() {
 	const env = {
 		DB_FILE: join(mkdtempSync(join(tmpdir(), "stack-tenancy-")), "app.sqlite"),
-		AUTH_SECRET: "test-secret-at-least-32-characters-long",
+		AUTH_SECRET: SECRET,
 		APP_URL: ORIGIN,
 	};
 	const authOptions = {
@@ -146,14 +143,16 @@ async function setup() {
 		])
 		.run();
 
-	const { auth: instance } = await authRuntime(authOptions).context(env, {
-		db: client,
-	});
 	const fetchPath = async (path: string, init?: RequestInit) =>
 		worker.fetch(new Request(`${ORIGIN}${path}`, init), env, undefined);
 
 	async function as(userId: string) {
-		const [name, value] = await mintSessionCookie(instance, userId);
+		// The worker signs with SECRET, no prefix option, over an http app URL.
+		const { name, value } = await mintSession(
+			client,
+			{ secret: SECRET, cookiePrefix: "better-auth", secure: false },
+			userId,
+		);
 		const jar = new CookieJar();
 		jar.cookies.set(name, value);
 		const send = browser(fetchPath, ORIGIN, jar);

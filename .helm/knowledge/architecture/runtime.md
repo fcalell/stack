@@ -203,6 +203,16 @@ spawned `stack`.
   removes the temporary directory itself, since `boot` runs only the disposers already returned.
   `wrangler` is plugin-db's optional peer dependency; a sqlite consumer's test entry has no
   database.
+- **Signed in.** plugin-auth's `authTesting` signs a test in without an OTP and without a Better
+  Auth instance: its helpers write a user, an organization and a membership through the `db`
+  plugin's drizzle client, then a `session` row, and the cookie is that row's token signed with
+  the env's secret as Better Auth signs its own (`token.signature`, HMAC-SHA256 in standard
+  base64). The worker's session check finds the row by token, so the cookie passes it as a real
+  sign-in's would. The name is `<prefix>.session_token`, with `__Secure-` exactly when the app URL
+  is https, Better Auth's own rule; the secret and the app URL are read from the live env after
+  `boot({ env })`, and a missing one is refused by its var name. The organization helpers exist
+  only when roles are baked, so `role` is typed to the configured names and a consumer without
+  organizations has no `auth.member` at all.
 
 ## `virtual:stack-procedure`
 

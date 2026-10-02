@@ -52,8 +52,10 @@ Tests import their own package's `src/` by relative path and run under plain nod
 stripping, so everything they import from it (runtime code and codegen alike) stays erasable-only (no parameter properties, no enums) and names the `.ts` file
 of every value import. A test builds the real runtime factories with literal options, as the
 generated worker would, and drives `worker.fetch`; it never spawns `stack` or a scratch
-consumer. Test support two packages share lives in a private workspace package
-(`@fcalell/auth-testing`), never in a relative import across packages.
+consumer. A testing helper a consumer uses is public and lives in the owning plugin's `./testing`
+subpath (`@fcalell/plugin-auth/testing`, which plugin-auth's and plugin-node's tests also sign in
+through); the private workspace package `@fcalell/auth-testing` keeps only the test support two
+packages share that no consumer uses. Neither is reached by a relative import across packages.
 
 ## Where a new feature or config surface belongs
 

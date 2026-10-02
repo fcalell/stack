@@ -1,10 +1,10 @@
 // Private test support for the packages whose tests sign in (plugin-auth's
-// passkey test, plugin-node's end-to-end worker test): a software WebAuthn
-// authenticator, a cookie jar, session minting, and table creation from
-// drizzle schema modules. Never published.
+// passkey test, plugin-node's end-to-end worker test) that no consumer uses: a
+// software WebAuthn authenticator, a cookie jar, a browser helper, and table
+// creation from drizzle schema modules. Signing a test in is public, in
+// `@fcalell/plugin-auth/testing`. Never published.
 import { createHash, webcrypto } from "node:crypto";
 import { sql } from "@fcalell/plugin-db/orm";
-import { makeSignature } from "better-auth/crypto";
 import {
 	generateSQLiteDrizzleJson,
 	generateSQLiteMigration,
@@ -25,30 +25,7 @@ export async function createTables(
 	for (const statement of statements) db.run(sql.raw(statement));
 }
 
-// ── Sessions and cookies ────────────────────────────────────────────
-
-interface AuthContext {
-	secret: string;
-	authCookies: { sessionToken: { name: string } };
-	internalAdapter: {
-		createSession(userId: string): Promise<{ token: string }>;
-	};
-}
-
-// A session for `userId`, minted the way better-auth's own test utilities
-// do: the token cookie under better-auth's session cookie name, signed with
-// the auth secret.
-export async function mintSessionCookie(
-	auth: unknown,
-	userId: string,
-): Promise<[string, string]> {
-	const ctx = await (auth as { $context: Promise<AuthContext> }).$context;
-	const { token } = await ctx.internalAdapter.createSession(userId);
-	return [
-		ctx.authCookies.sessionToken.name,
-		`${token}.${await makeSignature(token, ctx.secret)}`,
-	];
-}
+// ── Cookies ─────────────────────────────────────────────────────────
 
 export class CookieJar {
 	readonly cookies = new Map<string, string>();

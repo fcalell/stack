@@ -115,3 +115,77 @@ test("with organizations the worker refuses plugin-api's reserved slugs; without
 		/reservedSlugs/,
 	);
 });
+
+// The auth entry `.stack/testing.ts` gets, auth configured as given, for a
+// consumer with one route so the worker exists.
+async function authTestingEntry(config: ReturnType<typeof auth>) {
+	const cwd = mkdtempSync(join(tmpdir(), "stack-auth-codegen-"));
+	mkdirSync(join(cwd, "src/worker/routes"), { recursive: true });
+	writeFileSync(
+		join(cwd, "src/worker/routes/hello.ts"),
+		"export const hello = {};\n",
+	);
+	const { graph } = buildGraphFromDiscovered({
+		discovered: [
+			discover(api, api()),
+			discover(db, db({ dialect: "sqlite", path: "app.sqlite" })),
+			discover(auth, config),
+		],
+		app: { name: "codegen", domain: "example.com" },
+		cwd,
+	});
+	const entries = (await graph.resolve(api.slots.testingEntries)).filter(
+		(entry) => entry.plugin === "auth",
+	);
+	assert.equal(entries.length, 1);
+	return entries[0];
+}
+
+const string = (value: string) => ({ kind: "string", value });
+
+test("the testing entry bakes the cookie prefix, the var names, the session length and the role names", async () => {
+	const ac = createAccessControl({ organization: ["update"] });
+	const configured = await authTestingEntry(
+		auth({
+			cookies: { prefix: "mtt" },
+			session: { expiresIn: 3600 },
+			organization: {
+				ac,
+				roles: {
+					owner: ac.newRole({ organization: ["update"] }),
+					editor: ac.newRole({ organization: [] }),
+					viewer: ac.newRole({ organization: [] }),
+				},
+			},
+		}),
+	);
+	assert.deepEqual(configured, {
+		plugin: "auth",
+		import: { source: "@fcalell/plugin-auth/testing", default: "authTesting" },
+		identifier: "authTesting",
+		options: {
+			cookiePrefix: string("mtt"),
+			secretVar: string("AUTH_SECRET"),
+			appUrlVar: string("APP_URL"),
+			expiresIn: { kind: "number", value: 3600 },
+			roles: {
+				kind: "array",
+				items: [string("owner"), string("editor"), string("viewer")],
+			},
+		},
+	});
+
+	const defaults = await authTestingEntry(auth({ organization: true }));
+	assert.deepEqual(defaults?.options?.roles, {
+		kind: "array",
+		items: [string("owner"), string("admin"), string("member")],
+	});
+	assert.deepEqual(defaults?.options?.cookiePrefix, string("better-auth"));
+
+	const bare = await authTestingEntry(auth());
+	assert.deepEqual(bare?.options, {
+		cookiePrefix: string("better-auth"),
+		secretVar: string("AUTH_SECRET"),
+		appUrlVar: string("APP_URL"),
+	});
+});

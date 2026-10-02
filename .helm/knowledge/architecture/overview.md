@@ -15,7 +15,7 @@ every package's `node --test`, Biome lint).
 | `@fcalell/ui-core` | The design contract both UI plugins render from: the knob-derived token records, `deriveTheme`, the emit helpers, `words`, `cn()`, the platform-invariant variant matrices and the component roster. Framework-free build-time data |
 | `@fcalell/typescript-config` | tsconfig presets (base, node-tsx, web-vite) and the `build` emit overlay |
 | `@fcalell/biome-config` | Shareable Biome formatter/linter config |
-| `@fcalell/auth-testing` | Private, never published: the test support the sign-in tests share (a software WebAuthn authenticator, a cookie jar, session minting, table creation from drizzle schemas) |
+| `@fcalell/auth-testing` | Private, never published: the test support the sign-in tests share that no consumer uses (a software WebAuthn authenticator, a cookie jar, a browser helper, table creation from drizzle schemas); signing a test in is public, in `@fcalell/plugin-auth/testing` |
 
 ## Plugins
 
@@ -75,7 +75,8 @@ plugin-db ────────────────> cli, requires api
                                   wrangler for its ./testing subpath)
 plugin-auth ──────────────> cli, requires api + db
                                  (owns auth.slots.runtimeOptions — derived from api.slots.cors;
-                                  contributes to cloudflare.slots.bindings, api.slots.env/pluginRuntimes/callbacks)
+                                  contributes to cloudflare.slots.bindings, api.slots.env/pluginRuntimes/callbacks,
+                                  and the test entry's sign-in to api.slots.testingEntries)
 plugin-api ───────────────> cli (owns api.slots.workerImports/pluginRuntimes/middlewareEntries/cors/callbacks/env/workerSource;
                                  never imports a deploy target)
 plugin-node ──────────────> cli, requires api

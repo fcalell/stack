@@ -198,6 +198,40 @@ type Session = InferSession<typeof config>;
 
 The identity tables are the plugin's, so they carry no columns of yours. Data you keep per user or per organization (a timezone, settings) lives in your own table keyed by `user.id` or `organization.id`, with an `onDelete: "cascade"` reference so it goes with its owner.
 
+### 5. Testing
+
+`stack generate` adds an `authTesting` entry to the consumer test entry (`.stack/testing.ts`,
+from plugin-api), baked from the config: the cookie prefix, the secret and app URL var names, the
+session length, and with organizations on the configured role names. A test signs in as a member
+of a role in one call:
+
+```ts
+import { testing } from "../.stack/testing.ts";
+
+await using app = await testing.boot();
+const org = await app.auth.organization();
+const { cookie } = await app.auth.member({ organizationId: org.id, role: "editor" });
+await app.client({ cookie }).projects.list({ organizationId: org.id });
+```
+
+- `auth.member({ organizationId, role, user? })` writes a member row with the role (creating the
+  user unless one `auth.user()` returned is given) and signs that user in; it answers `{ user,
+  member, cookie }`, `cookie` being the header `client({ cookie })` sends. `role` is typed to the
+  configured roles, so another name is a compile error, and the runtime refuses one too.
+  `auth.organization({ name?, slug? })` writes an organization. Both exist only with organizations
+  on.
+- `auth.user({ email?, name? })` writes a user and `auth.session(userId)` signs one in, answering
+  the cookie header.
+- No OTP and no Better Auth instance is involved: a session is a `session` row written through
+  the `db` testing plugin's drizzle client, and the cookie is its token signed with the env's
+  secret the way Better Auth signs its own (`token.signature`, HMAC-SHA256). The name is
+  `<prefix>.session_token`, with `__Secure-` when the app URL is https, so `boot({ env: {
+  APP_URL } })` is honoured. The setup refuses a missing secret or app URL by its var name. The
+  helpers write through the `db` testing plugin, which plugin-db contributes on the d1 dialect.
+- `mintSession(db, { secret, cookiePrefix, secure, expiresIn? }, userId)` is the same mint for a
+  test that holds its own drizzle client, answering `{ name, value }`; `sessionCookieName({
+  cookiePrefix, secure })` is the name rule.
+
 ## Config options
 
 | Option | Type | Default | Description |
@@ -473,6 +507,7 @@ export const auth = plugin("auth", {
 | `cloudflare.slots.bindings` | IP + email rate-limiter bindings |
 | `api.slots.env` | `AUTH_SECRET` + `APP_URL` + a client-id/secret pair per enabled OAuth provider (`.dev.vars` template on cloudflare, dev-process defaults on node, `envChecks` on both) |
 | `api.slots.pluginRuntimes` | `authRuntime({ ... })` runtime entry; options resolved from `auth.slots.runtimeOptions` |
+| `api.slots.testingEntries` | `authTesting({ cookiePrefix, secretVar, appUrlVar, expiresIn?, roles? })` test entry: the resolved `auth.slots.cookiePrefix`, the var names, `session.expiresIn` when set, and with organizations on the role names in declaration order (the default roles for `organization: true`) |
 | `api.slots.callbacks` | Wires `src/worker/plugins/auth.ts` onto the auth runtime whenever the file exists; required only when `emailOtp` is enabled |
 | `api.slots.entities` | The auth tables' export names (`passkey` and the organization tables only when enabled) |
 | `cliSlots.initPrompts` | Cookie prefix + organization toggle |
@@ -576,6 +611,7 @@ Requires the server `emailOtp` option (on by default) and a `sendOTP` callback i
 | `@fcalell/plugin-auth/client` | `createAuthClient({ baseURL?, passkey?, emailOtp?, organization? })`, `AuthClient` -- web client on `better-auth/react` |
 | `@fcalell/plugin-auth/expo` | `createAuthClient()`, `AuthProvider`, `useAuthClient()`, `signInWith{Apple,Google}()`, `sendEmailOtp()` / `signInWithEmailOtp()` -- native client (runtime-only) |
 | `@fcalell/plugin-auth/runtime` | `authRuntime()`, `AuthCallbacks` (including `plugins`), `Tenancy` (the context's scope resolver, exported so the worker project's declaration emit can name it) -- runtime plugin factory + worker-safe callback file typing |
+| `@fcalell/plugin-auth/testing` | `authTesting()` (default), `mintSession()`, `sessionCookieName()`, `AuthTesting`, `AuthTestingOptions`, `TestingDb` -- the test entry's sign-in (Node-only) |
 | `@fcalell/plugin-auth/schema` | `user`, `session`, `account`, `verification` -- core identity tables (always re-exported) |
 | `@fcalell/plugin-auth/schema/organization` | `organization`, `member`, `invitation` -- organization tables (re-exported only when `organization` is enabled) |
 | `@fcalell/plugin-auth/schema/passkey` | `passkey` -- the passkey table (re-exported only when `passkey` is enabled) |
