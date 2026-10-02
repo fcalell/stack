@@ -24,6 +24,10 @@
 			"types": "./dist/client.d.ts",
 			"default": "./dist/client.js"
 		},
+		"./testing": {
+			"types": "./dist/testing/index.d.ts",
+			"default": "./dist/testing/index.js"
+		},
 		"./ability-client": {
 			"types": "./dist/ability-client.d.ts",
 			"default": "./dist/ability-client.js"

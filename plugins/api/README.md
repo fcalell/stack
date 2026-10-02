@@ -383,6 +383,43 @@ import type { InferRouter } from "@fcalell/plugin-api";
 export type AppRouter = InferRouter<typeof worker>;
 ```
 
+### 10. Testing
+
+`stack generate` writes `.stack/testing.ts` beside the worker: a test entry that loads
+`.stack/worker.ts` under plain node with the dev env (`STACK_DEV=1` plus every declared env var's
+`devDefault`) and whatever the plugins with a `./testing` subpath set up. A test boots it and calls
+procedures through a typed client bound to `worker.fetch`, with no server and no port:
+
+```ts
+// src/worker/routes/projects.test.ts
+import assert from "node:assert/strict";
+import { test } from "node:test";
+import { ORPCError } from "@fcalell/plugin-api/testing";
+import { testing } from "../../../.stack/testing.ts";
+
+test("a stranger cannot list projects", async () => {
+  await using app = await testing.boot();
+  await assert.rejects(
+    app.client().projects.list({ organizationId: "org_1" }),
+    (error) => error instanceof ORPCError && error.code === "UNAUTHORIZED",
+  );
+  const signedIn = app.client({ cookie: "<session cookie>" });
+  // signedIn.projects.list(...) answers as that session
+});
+```
+
+The handle `boot()` returns carries `env` (the live env object every request reads), `worker`,
+`fetch` (a relative URL resolves against `http://stack.test`), `client({ cookie })`, `dispose()`
+and `Symbol.asyncDispose`, plus what each testing plugin `provides`. `boot({ env })` overrides
+baked values for one boot; each boot loads a fresh worker, so its env checks run against that
+boot's env. One process serves one `.stack/procedure.ts`; `node --test` runs each file in its own.
+
+A plugin joins the entry by shipping a `./testing` subpath whose default export takes literal
+options and returns a `TestingPlugin` (`{ name, dependsOn?, setup(ctx, upstream) }`; `setup`
+returns `{ env?, provides?, dispose? }`), and contributing the call to `api.slots.testingEntries`
+(plus any import its options need to `api.slots.testingImports`). Setups run in `dependsOn` order
+and dispose in reverse.
+
 ## Config options
 
 | Option | Type | Default | Description |
@@ -514,6 +551,9 @@ export const api = plugin("api", {
 | `api.slots.workerSource` | `derived<string \| null>` | Final `.stack/worker.ts` source; null when no runtimes are present |
 | `api.slots.rbacStatements` | `value<Record<string, readonly string[]> \| null>` (`override`) | RBAC action statements for `procedure({ rbac })` / `procedure({ can })`'s type-level autocomplete; `auth` contributes from `organization.ac.statements` |
 | `api.slots.entities` | `list<string>` | Entity vocabulary for `procedure({ reads, writes })`'s type-level autocomplete (sorted, deduplicated union); `db` contributes the consumer's Drizzle schema export names, `auth` contributes its own table names |
+| `api.slots.testingImports` | `list<TsImportSpec>` | Imports the test entries' option values need, sorted by source |
+| `api.slots.testingEntries` | `list<PluginRuntimeEntry>` | `.use(xTesting({...}))` entries on the test entry, one per plugin with a `./testing` subpath, sorted by plugin |
+| `api.slots.testingSource` | `derived<string \| null>` | Final `.stack/testing.ts` source; null when `workerSource` is |
 | `api.slots.procedureSource` | `derived<string \| null>` | Final `.stack/procedure.ts` source (`virtual:stack-procedure`'s target); null when no runtimes are present |
 
 ### Lifecycle contributions
@@ -521,7 +561,7 @@ export const api = plugin("api", {
 | `cliSlots` slot | Behavior |
 |-----------------|----------|
 | `initScaffolds` | Wrangler.toml + base routes scaffold |
-| `artifactFiles` | Writes `.stack/worker.ts` and `.stack/procedure.ts` (when any runtime is present) and `src/worker/routes/index.ts` barrel |
+| `artifactFiles` | Writes `.stack/worker.ts`, `.stack/procedure.ts` and `.stack/testing.ts` (when any runtime or route is present) and `src/worker/routes/index.ts` barrel |
 | `devProcesses` | Spawns `wrangler dev` (port 8787) |
 | `devWatchers` | Watches `src/worker/routes/**` and regenerates the barrel on add/unlink |
 | `deploySteps` | `wrangler deploy --config .stack/wrangler.toml` |
@@ -549,6 +589,7 @@ createWorker({ domain: "example.com", cors: ["https://example.com"], prefix: "/r
 | `@fcalell/plugin-api/error` | `ApiError` -- worker-safe (no Node-only deps); import this from route files |
 | `@fcalell/cli/runtime` | `RuntimePlugin` |
 | `@fcalell/plugin-api/client` | `createClient()`, `RouterClient`, `ClientConfig` |
+| `@fcalell/plugin-api/testing` | `createTestEntry()`, `TestEntry`, `TestApp`, `TestingPlugin`, `TestingContext`, `TestingSetup`, `ORPCError` -- the Node-only runtime `.stack/testing.ts` calls |
 | `@fcalell/plugin-api/tanstack-query` | `createQueryClient()`, `createApiQueryUtils()`, `QueryProvider`, `useAbility(organizationId, recordRules?)`, `ORG_RULES_QUERY_KEY`, `orgRulesQueryKey()`, query hooks -- native TanStack Query client (runtime-only) |
 | `@fcalell/plugin-api/query-invalidation` | `captureEntityHeaders()`, `invalidateForWrites()`, `handleMutationSuccess()`, `createEntityRegistry()` -- framework-agnostic auto-invalidation core (runtime-only) |
 | `@fcalell/plugin-api/ability-client` | `composeAbility()`, `fetchOrgRules(organizationId)`, `registerApiClient()`, `ORG_RULES_QUERY_KEY`, `orgRulesQueryKey()`, `PackedRulesLike` -- framework-agnostic `useAbility()` core (runtime-only), consumed by `./tanstack-query` |

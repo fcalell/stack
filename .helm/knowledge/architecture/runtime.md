@@ -156,6 +156,40 @@ v2 ships its own `upgradeWebSocket` plus `serve({ websocket: { server } })` with
 `ws` `WebSocketServer({ noServer: true })`. Graceful shutdown must `terminate()` the tracked WS
 clients before `server.close()` or close hangs on live sockets.
 
+## Test entry
+
+`.stack/testing.ts` (`api.slots.testingSource`, emitted whenever the worker is) is how a consumer
+test calls its own worker: `createTestEntry` from `@fcalell/plugin-api/testing` loads
+`.stack/worker.ts` under plain node and binds a typed `RouterClient<AppRouter>` to `worker.fetch`,
+so a test asserts an answer, or a refusal by its `ORPCError` code, without a server, a port or a
+spawned `stack`.
+
+- **Hook, once per process.** Route files import `virtual:stack-procedure`, which plain node cannot
+  resolve, so `boot` registers a `registerHooks` resolve to `.stack/procedure.ts` and then
+  dynamic-imports the worker, as the node target does. Hooks only append and a resolved module
+  stays cached, so a process serves one procedure module; a second entry naming another is
+  refused. `node --test` runs each file in its own process.
+- **Explicit URLs.** The generated file passes the worker, procedure and root URLs against
+  `import.meta.url` rather than the runtime assuming a layout, so the file says what it loads and a
+  fixture can live anywhere.
+- **A fresh worker per boot.** The worker asserts its `envChecks` once per `.handler()` call, so
+  each boot imports the worker with its own query string: every boot's first request is checked
+  against that boot's env, and a bad override fails as a deploy would. Routes, the procedure module
+  and the packages stay cached.
+- **Env composition.** The baked env is `STACK_DEV: "1"` plus every `api.slots.env` entry's
+  `devDefault`, the env `stack dev` gives the worker; `boot({ env })` overlays it, and each testing
+  plugin's `setup` adds to the same live object every request reads (a D1 binding).
+- **Dependency order and dispose.** A plugin contributing to `api.slots.testingEntries` ships a
+  `./testing` subpath whose default export returns a `TestingPlugin`. The file applies `.use()` in
+  plugin-name order; `boot` runs the setups by `dependsOn` with `createWorker`'s stable
+  topological rule (a cycle throws naming it, an unknown name is ignored), each seeing earlier
+  `provides` as `upstream`, and merges every `provides` onto the handle, which types it.
+  `setup` is declared in method syntax so `.use()` accepts a plugin before its dependencies.
+  `dispose` (and `await using`) runs the disposers in reverse; a boot that throws runs the
+  disposers collected so far before rejecting, so a proxy a setup opened never keeps the test
+  process alive. A `provides` key the handle owns (`env`, `worker`, `fetch`, `client`,
+  `dispose`) is refused at boot.
+
 ## `virtual:stack-procedure`
 
 `src/worker/routes/*.ts` files author procedures via `import { procedure } from "virtual:stack-procedure"`

@@ -13,6 +13,7 @@ import { isLocalOrigin } from "./lib/local-origin.ts";
 import { generateRouteBarrel, hasRoutableFiles } from "./node/barrel.ts";
 import { aggregateMiddleware, aggregateWorker } from "./node/codegen.ts";
 import { aggregateProcedure } from "./node/procedure-codegen.ts";
+import { aggregateTesting } from "./node/testing-codegen.ts";
 import {
 	type CallbackSpec,
 	type MiddlewareCall,
@@ -455,6 +456,51 @@ const procedureSource = slot.derived({
 	},
 });
 
+// Imports the test entries' option values need (a schema namespace, a
+// constants module), as `workerImports` carries db's `schema`. Sorted by
+// source for the same order invariance.
+const testingImports = slot.list<TsImportSpec>({
+	source: SOURCE,
+	name: "testingImports",
+	sortBy: (a, b) => a.source.localeCompare(b.source),
+});
+
+// One entry per plugin with a `./testing` subpath: its default import and a
+// call with literal options baked from the plugin's resolved options, the
+// `pluginRuntimes` shape. A baked path is relative to the consumer root,
+// which the runtime resolves against the `root` URL the entry passes.
+// Sorted by plugin name; `createTestEntry` orders setups by `dependsOn`.
+const testingEntries = slot.list<PluginRuntimeEntry>({
+	source: SOURCE,
+	name: "testingEntries",
+	sortBy: (a, b) => a.plugin.localeCompare(b.plugin),
+});
+
+// The rendered `.stack/testing.ts` source. Gated on `workerSource`, so the
+// entry never exists without a worker to load; inert until a test imports it.
+const testingSource = slot.derived({
+	source: SOURCE,
+	name: "testingSource",
+	inputs: {
+		worker: workerSource,
+		env,
+		imports: testingImports,
+		entries: testingEntries,
+	},
+	compute: (
+		inp,
+		ctx: ContributionCtx<z.output<typeof apiOptionsSchema>>,
+	): string | null => {
+		if (inp.worker === null) return null;
+		return aggregateTesting({
+			prefix: ctx.options.prefix,
+			env: inp.env,
+			imports: inp.imports,
+			entries: inp.entries,
+		});
+	},
+});
+
 export const api = plugin("api", {
 	label: "API",
 
@@ -486,6 +532,9 @@ export const api = plugin("api", {
 		localOrigins,
 		entities,
 		procedureSource,
+		testingImports,
+		testingEntries,
+		testingSource,
 	},
 
 	contributes: (self) => [
@@ -586,6 +635,9 @@ export const api = plugin("api", {
 		// `procedure` factory route files import. Same null-skip gate as
 		// workerSource (no runtimes, no artifact).
 		emitArtifact(".stack/procedure.ts", self.slots.procedureSource),
+
+		// The consumer test entry, emitted whenever the worker is.
+		emitArtifact(".stack/testing.ts", self.slots.testingSource),
 
 		// Emit the route barrel via the universal source-slot pattern. The
 		// source returns null when there are no routable files, in which

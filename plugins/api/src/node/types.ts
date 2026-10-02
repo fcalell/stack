@@ -3,6 +3,7 @@ import type {
 	TsExpression,
 	TsImportSpec,
 } from "@fcalell/cli/ast";
+import type { EnvSpec } from "../types.ts";
 
 // The route barrel's import source, as emitted into `api.slots.workerImports`
 // (see `index.ts`'s `routesHandler`-gated contribution) and consulted by
@@ -69,4 +70,15 @@ export interface MiddlewareCall {
 // into WorkerPayload's middlewareChain.
 export interface MiddlewarePayload {
 	entries: MiddlewareSpec[];
+}
+
+// Models `.stack/testing.ts` (internal to the `testingSource` derivation).
+// `entries` reuse the runtime entry shape: each is a default import of a
+// plugin's `./testing` subpath and a call with its baked literal options,
+// rendered as one `.use()` on the test entry.
+export interface TestingPayload {
+	prefix: string;
+	env: EnvSpec[];
+	imports: TsImportSpec[];
+	entries: PluginRuntimeEntry[];
 }

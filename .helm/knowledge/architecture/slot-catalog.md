@@ -71,6 +71,9 @@ e.g. consulting `ctx.fileExists` before writing.
 | `workerSource` | `derived<string \| null>` | Final `.stack/worker.ts` source; null when neither runtimes nor routes are present |
 | `rbacStatements` | `value<Record<string, readonly string[]> \| null>` (`override`) | RBAC action statements for `procedure({ rbac })` / `procedure({ can })`'s type-level autocomplete; `auth` contributes from `organization.ac.statements` |
 | `entities` | `list<string>` (sorted, `uniqueBy`) | Entity vocabulary for `procedure({ reads, writes })`'s type-level autocomplete (WS3 cache invalidation) — union across every contributing plugin; `db` contributes the consumer's Drizzle schema export names, `auth` contributes its own runtime-owned table names (`passkey` and the organization tables only when enabled) |
+| `testingImports` | `list<TsImportSpec>` (sorted by source) | Imports the test entries' option values need (a schema namespace, a constants module), as `workerImports` carries db's `schema` |
+| `testingEntries` | `list<PluginRuntimeEntry>` (sorted by plugin) | One entry per plugin with a `./testing` subpath, the `pluginRuntimes` payload: a default import of `@fcalell/plugin-<name>/testing` and its baked literal options, rendered as `.use(xTesting({...}))` on the test entry. A baked path is relative to the consumer root |
+| `testingSource` | `derived<string \| null>` | Final `.stack/testing.ts` source: `createTestEntry<AppRouter>` over the worker and procedure modules beside it, the api `prefix`, and `STACK_DEV: "1"` plus every `env` entry's `devDefault`, then one `.use()` per `testingEntries` entry; null when `workerSource` is |
 | `procedureSource` | `derived<string \| null>` | Final `.stack/procedure.ts` source (`virtual:stack-procedure`'s target); rebuilds the same runtime + middleware `.use()` chain as `workerSource` so `WorkerContext` matches the real request context; null when neither runtimes nor routes are present |
 
 ## `cloudflare.slots.*` (plugin-cloudflare)
@@ -220,7 +223,7 @@ lives with that plugin.
 - `HtmlInjection`: `title` / `meta` / `link` / `script` / `html-attr`.
 - `ProviderSpec`: `{ imports, wrap?, siblings?, order }` for JSX provider composition.
 - `MiddlewareSpec`: `{ imports, call, phase: "before-cors" | "after-cors" | "before-routes" | "after-routes" | "after-context", order }`.
-- `PluginRuntimeEntry`: `{ plugin, import, identifier, options? }` describing a `.use(xRuntime(opts))` call.
+- `PluginRuntimeEntry`: `{ plugin, import, identifier, options? }` describing a `.use(xRuntime(opts))` call; `api.slots.testingEntries` carries the same shape for a `.use(xTesting(opts))` call on the test entry.
 - `ProcessSpec`, `WatcherSpec`, `BuildStep`, `DeployStep`, `DeployCheck`, `PromptSpec`,
   `DevReadyTask`, `GeneratedFile`: exported from `@fcalell/cli/specs`. `ProcessSpec.env` merges
   extra environment variables over the parent env at spawn (per-process dev signals like
