@@ -130,6 +130,34 @@ column to let its SQL `DEFAULT` apply.
   with expand/contract, or acknowledge an intentional drop by adding a `-- stack:allow-destructive`
   line anywhere in that migration's `.sql`.
 
+### Testing
+
+On the d1 dialect, `stack generate` adds a `dbTesting` entry to the consumer test entry
+(`.stack/testing.ts`, from plugin-api), baked from the config: the binding name, the migrations
+directory, the compatibility date the deployed worker runs on, and the schema. Each `boot()` gets
+its own local D1:
+
+```ts
+import { testing } from "../.stack/testing.ts";
+
+await using app = await testing.boot();
+await app.db.insert(notes).values({ id: 1, body: "hello" }); // drizzle over the test D1
+const rows = await app.client().notes.list();                 // the worker reads DB_MAIN
+```
+
+- A wrangler config holding only the D1 binding is written to a temporary directory and opened
+  with wrangler's `getPlatformProxy` (`persist: false`, no remote bindings), so nothing touches
+  `.wrangler/state` and two boots, or two test files running in parallel, hold separate databases.
+- The committed migrations apply the way `wrangler d1 migrations apply` applies them at deploy:
+  every `.sql` file in filename order, each split by wrangler's splitter and run as one batch with
+  its `d1_migrations` record. No journal is read. An empty migrations directory is refused by
+  name, since `stack db generate` writes the migrations the database is built from.
+- The binding lands in the worker's env under its name, and `app.db` is the same drizzle client
+  the worker's procedures get. `dispose()` (or `await using`) stops the proxy and removes the
+  temporary directory; a setup that fails does both before rejecting.
+- `wrangler` is an optional peer dependency, which every cloudflare consumer already has. The
+  sqlite dialect contributes no testing entry.
+
 ## Config options
 
 | Option | Type | Default | Description |
@@ -208,7 +236,9 @@ export const db = plugin("db", {
 | `cloudflare.slots.bindings` | D1 binding (when `dialect: "d1"` and `databaseId` set) |
 | `api.slots.env` | `{ name: fileVar, devDefault: path }` (sqlite only) |
 | `api.slots.pluginRuntimes` | `dbRuntime({ binding, schema })` from `./runtime` (d1), `dbRuntime({ fileVar, schema })` from `./runtime/sqlite` (sqlite) |
-| `api.slots.workerImports` | `import * as schema from "../src/schema"` (`../src/schema/index.ts` on sqlite, whose runtime runs under node), gated on the schema dir existing |
+| `api.slots.workerImports` | `import * as schema from "../src/schema/index.ts"` on both dialects (node, which runs the sqlite worker and the test entry's d1 worker, refuses a directory import), gated on the schema dir existing |
+| `api.slots.testingEntries` | `dbTesting({ binding, migrations, compatibilityDate, schema })` from `./testing` (d1 only), the compatibility date resolved from `cloudflare.slots.compatibilityDate` |
+| `api.slots.testingImports` | The same `schema` namespace import for the test entry (d1 only), gated on the schema dir existing |
 | `api.slots.entities` | Sorted value-export names from `src/schema/index.ts` (both dialects) |
 | `cliSlots.initPrompts` | Asks for dialect, then database ID or SQLite path |
 | `cliSlots.initScaffolds` | Writes `src/schema/index.ts` from `templates/schema.ts` |
@@ -251,6 +281,7 @@ Returns `{ db }` to downstream plugins via the builder's context accumulation.
 | `@fcalell/plugin-db/sqlite` | `createClient()` for SQLite (requires `better-sqlite3`) |
 | `@fcalell/plugin-db/runtime` | `dbRuntime()` -- D1 runtime plugin factory |
 | `@fcalell/plugin-db/runtime/sqlite` | `dbRuntime()` -- SQLite runtime plugin factory (node target) |
+| `@fcalell/plugin-db/testing` | `dbTesting()` -- the test entry's local D1 (node only; needs the `wrangler` peer) |
 
 ## License
 

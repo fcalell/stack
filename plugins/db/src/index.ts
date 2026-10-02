@@ -31,6 +31,15 @@ import {
 import { applySeed } from "./node/seed.ts";
 import { dbOptionsSchema } from "./types.ts";
 
+// The consumer's schema namespace, as the worker and the test entry import it.
+// The file form on purpose: node's ESM resolver refuses a directory import, and
+// the worker runs under node on the node target and in the test entry; esbuild
+// resolves the file form as well.
+const SCHEMA_IMPORT: TsImportSpec = {
+	source: "../src/schema/index.ts",
+	namespace: "schema",
+};
+
 // A COALESCING latch for local schema re-applies — NOT a serializer.
 //
 // Cross-process AND in-process *exclusion* is already owned by the underlying
@@ -396,20 +405,49 @@ export const db = plugin("db", {
 			),
 
 			// Schema namespace import — gated on the schema directory existing,
-			// same as the runtime entry's `schema` option. The sqlite runtime
-			// only runs on the node target, whose ESM resolver refuses a
-			// directory import, so that dialect names the file.
+			// same as the runtime entry's `schema` option.
 			api.slots.workerImports.contribute(
 				async (ctx): Promise<TsImportSpec | undefined> => {
 					const hasSchema = await ctx.fileExists("src/schema");
-					if (!hasSchema) return undefined;
+					return hasSchema ? SCHEMA_IMPORT : undefined;
+				},
+			),
+
+			// The test entry's local D1, d1 only: a sqlite consumer's test entry
+			// boots without a database. The migrations path stays relative to
+			// the consumer root, and the compatibility date is the one the
+			// deployed worker runs on.
+			api.slots.testingEntries.contribute(
+				async (ctx): Promise<PluginRuntimeEntry | undefined> => {
+					if (self.options.dialect !== "d1") return undefined;
+					const hasSchema = await ctx.fileExists("src/schema");
+					const compatibilityDate = await ctx.resolve(
+						cloudflare.slots.compatibilityDate,
+					);
+					const schema: Record<string, TsExpression> = hasSchema
+						? { schema: { kind: "identifier", name: "schema" } }
+						: {};
 					return {
-						source:
-							self.options.dialect === "sqlite"
-								? "../src/schema/index.ts"
-								: "../src/schema",
-						namespace: "schema",
+						plugin: "db",
+						import: {
+							source: "@fcalell/plugin-db/testing",
+							default: "dbTesting",
+						},
+						identifier: "dbTesting",
+						options: {
+							binding: { kind: "string", value: self.options.binding },
+							migrations: { kind: "string", value: self.options.migrations },
+							compatibilityDate: { kind: "string", value: compatibilityDate },
+							...schema,
+						},
 					};
+				},
+			),
+			api.slots.testingImports.contribute(
+				async (ctx): Promise<TsImportSpec | undefined> => {
+					if (self.options.dialect !== "d1") return undefined;
+					const hasSchema = await ctx.fileExists("src/schema");
+					return hasSchema ? SCHEMA_IMPORT : undefined;
 				},
 			),
 

@@ -70,7 +70,9 @@ plugin-expo ──────────────> cli (owns expo.slots.met
                                  version gate and its telemetry dataset)
 plugin-db ────────────────> cli, requires api
                                  (contributes to cloudflare.slots.bindings, api.slots.env (sqlite's DB_FILE),
-                                  api.slots.pluginRuntimes / workerImports)
+                                  api.slots.pluginRuntimes / workerImports, and d1's local test D1
+                                  to api.slots.testingEntries / testingImports; optional peer
+                                  wrangler for its ./testing subpath)
 plugin-auth ──────────────> cli, requires api + db
                                  (owns auth.slots.runtimeOptions — derived from api.slots.cors;
                                   contributes to cloudflare.slots.bindings, api.slots.env/pluginRuntimes/callbacks)

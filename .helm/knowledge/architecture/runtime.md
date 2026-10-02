@@ -11,7 +11,7 @@ Generated `.stack/worker.ts` (composed by `api.slots.workerSource` from contribu
 import createWorker from "@fcalell/plugin-api/runtime";
 import dbRuntime from "@fcalell/plugin-db/runtime";
 import authRuntime from "@fcalell/plugin-auth/runtime";
-import * as schema from "../src/schema";
+import * as schema from "../src/schema/index.ts";
 import authCallbacks from "../src/worker/plugins/auth";
 import * as routes from "../src/worker/routes";
 
@@ -98,9 +98,10 @@ arrive via `ProcessSpec.env` on the dev process, not `.dev.vars`. The consumer's
 imports load compiled from `dist/`, so everything of the consumer's on the runtime import path
 stays erasable-only syntax (no parameter properties, no enums) and names the file of every
 value import (`./types.ts`, `../src/schema/index.ts`): node resolves neither a missing extension
-nor a directory (`ERR_UNSUPPORTED_DIR_IMPORT`). The generated worker imports the sqlite schema
-as `../src/schema/index.ts` for that reason, and a node consumer's route files name their files
-the same way; the d1 import stays `../src/schema`, which esbuild resolves.
+nor a directory (`ERR_UNSUPPORTED_DIR_IMPORT`). The generated worker imports the schema as
+`../src/schema/index.ts` on both dialects for that reason: the sqlite worker runs under node on
+this target, and the d1 worker runs under node in the test entry. esbuild resolves the file form
+for the Workers bundle. A node consumer's route files name their files the same way.
 
 ### Database on the node target
 
@@ -189,6 +190,19 @@ spawned `stack`.
   disposers collected so far before rejecting, so a proxy a setup opened never keeps the test
   process alive. A `provides` key the handle owns (`env`, `worker`, `fetch`, `client`,
   `dispose`) is refused at boot.
+- **Local D1.** plugin-db's `dbTesting` (d1 only) gives each boot its own database: it writes a
+  wrangler config holding only the D1 binding to a temporary directory and opens it with
+  wrangler's `getPlatformProxy` (`persist: false`, `remoteBindings: false`), so no boot touches
+  `.wrangler/state` and test files run in parallel. It applies the committed migrations as
+  `wrangler d1 migrations apply` does at deploy, not as drizzle's journal would: every `.sql` file
+  in filename order, each split by wrangler's `unstable_splitSqlQuery` and run as one batch with
+  its `d1_migrations` record, so a test database is built by the order and split production runs.
+  An empty migrations directory is refused by name. The binding lands in `env` under its name and
+  `provides.db` is the drizzle client the worker's `dbRuntime` also gets (both go through
+  `createClient`'s per-binding cache). A setup that fails after the proxy opened disposes it and
+  removes the temporary directory itself, since `boot` runs only the disposers already returned.
+  `wrangler` is plugin-db's optional peer dependency; a sqlite consumer's test entry has no
+  database.
 
 ## `virtual:stack-procedure`
 
