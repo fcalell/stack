@@ -1,54 +1,26 @@
 import type { StatusState } from "@fcalell/ui-core/descriptors";
-import {
-	PILL_ACT,
-	STATUS,
-	STATUS_LABEL,
-	statusDot,
-} from "@fcalell/ui-core/variants";
-import { Pressable, Text as RNText, View } from "react-native";
+import { STATUS, STATUS_LABEL } from "@fcalell/ui-core/variants";
+import { Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { useWords } from "../../lib/words";
+import { StatusDot } from "./dot";
 
 export interface StatusProps extends Closed {
 	state: StatusState;
 	label?: string;
-	onOpen?: () => void;
 }
 
-// A dot in the state's colour beside its word in meta ink. With `onOpen` it is
-// a pill that pulls back by its own padding, so the dot and the word sit where
-// a static status's do; it hugs its content, so its wash is the pill's.
-export function Status({ state, label, onOpen }: StatusProps) {
+// A dot in the state's colour beside its word in meta ink, a mark: a status
+// that moves is a `Picker` whose options carry states.
+export function Status({ state, label }: StatusProps) {
 	const words = useWords();
-	const word = label ?? words[state];
-	const inner = (
-		<>
-			<View className={statusDot({ state })} />
-			<RNText numberOfLines={1} className={cn(STATUS_LABEL, "shrink")}>
-				{word}
-			</RNText>
-		</>
-	);
-	if (!onOpen) {
-		return (
-			<View className={cn(STATUS, "flex-row items-center min-w-0")}>
-				{inner}
-			</View>
-		);
-	}
 	return (
-		<Pressable
-			accessibilityRole="button"
-			accessibilityLabel={word}
-			onPress={onOpen}
-			className={cn(
-				STATUS,
-				PILL_ACT,
-				"flex-row items-center min-w-0 self-start -mx-inside active:bg-wash-press",
-			)}
-		>
-			{inner}
-		</Pressable>
+		<View className={cn(STATUS, "flex-row items-center min-w-0")}>
+			<StatusDot state={state} />
+			<RNText numberOfLines={1} className={cn(STATUS_LABEL, "shrink")}>
+				{label ?? words[state]}
+			</RNText>
+		</View>
 	);
 }

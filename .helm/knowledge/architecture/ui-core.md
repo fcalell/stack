@@ -114,7 +114,7 @@ pinned by the package's verify suite; this entry holds the architecture and its 
 ## Words
 
 Every word a molecule draws or reads aloud on its own (the six `Status` words, `recommended`,
-`copy`, `copied`, `back`, `close`, `more`, `send`, `stop`, `attach`, `search`, `loading`, `checking`, `retry`, `add`, `remove`, `details`) comes
+`copy`, `copied`, `back`, `close`, `cancel`, `dismiss`, `more`, `send`, `stop`, `attach`, `search`, `loading`, `checking`, `retry`, `add`, `remove`, `details`, `places`, `notifications`) comes
 from `words`, a closed typed object with English defaults. The `Words` type requires every key
 and `wordsSchema` is strict, so a translation missing a word fails `tsc` and the schema. It is a
 plugin option beside `theme`; each plugin contributes a `WordsProvider` into the generated entry
@@ -147,11 +147,40 @@ prop on the molecule that draws it, never a key.
   carries `tabular-nums`, a stat's figures at one width (uniwind maps it to `fontVariant`). A
   labelled act's fill (`BUTTON`, `CHIP`) carries the ink as well, since the web glyph and
   spinner inside it draw in the current colour.
-- An atom's or a layout molecule's matrices are its approved artboard's class strings, split on
-  this line: a part with an axis (a state, a ground, a fit, what it holds) is a matrix, a part
-  with one shape a named constant (`POPOVER`, `PAGE_STRIP`). The board's display, alignment and
-  state classes, per cell and state, are recorded for the plugins in
-  `.helm/research/design-system/atoms-overlays.md` and `layout-overlays.md`.
+- An atom's, a layout molecule's or a shared molecule's matrices are its approved artboard's
+  class strings, split on this line: a part with an axis (a state, a ground, a fit, what it holds)
+  is a matrix, a part with one shape a named constant (`POPOVER`, `PAGE_STRIP`). The board's
+  display, alignment and state classes, per cell and state, are recorded for the plugins in
+  `.helm/research/design-system/atoms-overlays.md`, `layout-overlays.md` and
+  `shared-overlays.md`. A molecule draws an atom by composing it, so an atom's string on a
+  molecule's board is the atom's cell at the fit the molecule passes, never a cell of the
+  molecule's own.
+- A part that stands beside a line of text, or in for one while loading, is that line's box
+  (`LINE_BOX` by type role): a checkbox on its label's first line in a FormField or an
+  OptionList, an ItemHeader's loading bar in the line its text fills, so the loading frame and the
+  loaded one share a height. A loading label's bar runs in `SKELETON_LANE`, a short label's
+  measure in the ch of the role it stands in for.
+- A chosen option is ticked (`Picker`) or checked (`OptionList`), never washed: an option row
+  draws `ROW {state}` for the pointer alone, where a list's or a group's chosen row draws
+  `selected`. A destructive menu act's label draws `MENU_LABEL {kind: destructive}`
+  (`text-danger`), an axis because the act is given, not pointed at.
+- The Picker's trigger takes `PICKER {fit}`: `field`, the field box at the bar fit, or `row`,
+  a list row's trailing pick, its value (`PICKER_VALUE`) and chevron in a `PILL_ACT` that
+  pulls back by its own padding at the row's end (`-me-inside`). The Picker's `fit` prop picks it,
+  and a `ListRow`'s trailing pick (`RowTrailing`'s `pick`) passes `row`. The Picker holds `PILL_ACT`.
+- A status is a mark: a status that moves is a `Picker` whose options carry states
+  (`Option.status`), its options and its value drawn as the `Status`, as an ItemHeader's moving
+  status fact (`{ pick }`) is. Rejected: `Status` with `onOpen`, an act that opened a menu of
+  states the mark could not show as the current one.
+- The Shell's switcher is a pick: a `Switcher` is an `OptionPick` whose options carry their
+  avatars (`Option.avatar`, leading the option row as a status's dot does) plus `act`, the act
+  that makes a new one, which the Picker draws under a hairline (`HAIRLINE`) after the options as
+  a `ROW` (the Picker's `act` prop). The Shell draws its own trigger (a place row, `SWITCHER` on
+  touch) over the Picker's list through its internal base. Rejected: a switcher menu of its own,
+  a second list of the same rows. A Picker stands outside a form; a form's pick is `Select`.
+- On touch the places past the tab bar are a page, not a menu: the More tab opens a `Place` of
+  `ListRow`s (each place's glyph leading, its count trailing, its route), and while a Place's act
+  floats the toasts stand above it by the act's room.
 - A molecule whose structure follows density keeps one constant per structure, never a density
   axis: the page's desktop strip (`PAGE_STRIP`, title and acts in one row under a hairline) and
   its touch head (`PAGE_HEAD` over `PAGE_TOP_BAR`, the title under the bar), the sidebar
@@ -194,7 +223,7 @@ prop on the molecule that draws it, never a key.
   label (a chip's, a status word, a skeleton label's lane) is bounded by the one width `measure-short` (18ch, the short sibling of `measure`).
 - A minimum height is the floor of something pressed (a control, a field, a target, a chip, a
   row), the set height of a bar (`strip` 40 / 44: the page's desktop strip and its touch top
-  bar), an intrinsic size, or the height of what a part swaps with: `PENDING_BAR` an action
+  bar), an intrinsic size, or the height of what a part swaps with: `PENDING_TRACK` an action
   bar's (`min-h-control`), `TABLE_CELL` the `Input` that edits it in place (`min-h-field`).
   Any other container takes its height from its content and padding through flex, its parts
   centred on the tallest, never from a height copied from another component to line things up:
@@ -227,14 +256,15 @@ prop on the molecule that draws it, never a key.
 
 - The canon binds every component either UI plugin ships: one name per concept (`label`,
   `loading`, `onChange`, `onAct`, `act`, `blocked`, `sentence`), composed regions as typed
-  descriptors (`Act`, `StatusMark`, `ChipMark`, `PlaceSpec`, `Switcher`, `Option`, `OptionGroup`, `Part`, `FieldBinding`,
+  descriptors (`Act`, `StatusMark`, `ChipMark`, `RowLeading`, `RowTrailing`, `PlaceSpec`, `Switcher`, `Option`, `OptionGroup`, `Part`, `FieldBinding`,
   `Confirmation`, `MenuItem`, `TableColumn`, `TableRow`) instead of node slots, and no
   `class` / `className` / `classList` / `style` prop. Laws live in the README under `## The
   canon`. An icon is an `IconName`, a closed type over Lucide's PascalCase
   names read off the `lucide` package ui-core depends on: the set is baked in, never a consumer
   map, and each plugin draws a name from one table built over its platform package's exports
   (`lucide-react`, `lucide-react-native`), which fails the build if the package lacks a name. A
-  descriptor is generic only, for a field binding, in the value its field holds, which is data: `FieldBinding<V>` is how a bound
+  descriptor is generic only in a value, which is data: an option and a row's trailing pick (`OptionPick<V>`) in
+  the string they pick, a field binding in the value its field holds. `FieldBinding<V>` is how a bound
   `FormField` types its control by the field, and `useApiForm(...).bind(name)` produces it on the
   web from TanStack Form's store, one binding per name under the form's owner. Rejected: optional
   `value` and `onChange` on every control read from the field's context, which would compile a
@@ -253,13 +283,16 @@ prop on the molecule that draws it, never a key.
   `./components/*` export does not reach), taking the trigger's props through Base UI's
   `render`; on native a trigger is a press, and renders `IconButton` itself. A cell no entry
   holds is shared, spelled by each component that draws it: the type roles, the field box
-  (`Input`, `Select`, `TextArea`), the row, the skeleton, the page cells `Place` and `Screen`
-  share, and the column ground (`SHELL_COLUMN`) a Split's pane sheet stands on. `Select`, the
+  (`Input`, `Select`, `TextArea`, the Picker's field fit), the row with its title and meta
+  lines, the option group and its label (`SELECT_GROUP`, `OPTION_GROUP_LABEL`: `Select`,
+  `Picker`, `OptionList`), the line box, the popover, the skeleton, the page cells `Place` and `Screen` share, and the toasts'
+  layer (`TOASTS`, which the Shell stands over its page). A Split's details sheet is the
+  `Sheet` at the `pane` fit, composed through the sheet's internal base. `Select`, the
   single-choice field over `options`, is the field box (`FIELD`) whose open list is a popover
   (`POPOVER`) of rows (`ROW`); on native it opens the same option sheet as `Picker`.
 - A component that sits in more than one container takes `fit`, a closed enum read off its
   matrix's `fit` axis (`IconFit`, `ButtonFit`, `IconButtonFit`, `LinkFit`, `ActionBarFit`,
-  `FieldFit`, `SheetFit`),
+  `FieldFit`, `SheetFit`, `PickerFit`),
   defaulting to the matrix's default; the composing molecule sets it (a `Place` passes `bar` to
   its strip's acts, a field's trailing act `field`, a `Form` under an auth column `full`, a
   `Split` its details sheet `pane`) and a
@@ -270,6 +303,11 @@ prop on the molecule that draws it, never a key.
   ends something, and the `ActionBar` draws it as `danger` when it is the bar's one filled act
   and as `destructive` (the hairline form) otherwise, so a confirm's filled act needs no kind of
   its own.
+- A confirm's act runs the work, as a Form's submit does: `ConfirmAct.onAct` returns a promise,
+  the act is pending and the sheet's other acts inert while it pends, and the sheet closes when it
+  resolves and stays open to retry when it rejects (the caller says why, a toast). `confirm()`
+  returns nothing: a caller that awaited a boolean and then did the work left the sheet closed
+  with nothing pending while the work ran, and lost the retry.
 - `Text` draws `body` and `meta` (plus `strong`) and names those roles' cells of `TEXT` and
   `TEXT_STRONG`, not either family; every other type role is drawn by the molecule that owns
   its place, and `TEXT` keeps all seven roles as the one table those owners draw from.

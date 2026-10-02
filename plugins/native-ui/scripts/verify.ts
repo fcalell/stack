@@ -146,7 +146,6 @@ const NATIVE_OVERLAYS = [
 	"bg-group",
 	"bg-ink-disabled",
 	"bg-ok-soft",
-	"bg-on-accent",
 	"bg-switch-off-hover",
 	"bg-toggle-on-hover",
 	"bg-wash-press",
@@ -159,6 +158,7 @@ const NATIVE_OVERLAYS = [
 	"flex-row",
 	"flex-wrap",
 	"font-medium",
+	"gap-acts",
 	"gap-fields",
 	"gap-inside",
 	"gap-pair",
@@ -166,8 +166,6 @@ const NATIVE_OVERLAYS = [
 	"h-2",
 	"hidden",
 	"inset-0",
-	"inset-x-0",
-	"inset-y-0",
 	"italic",
 	"items-center",
 	"items-end",
@@ -181,39 +179,36 @@ const NATIVE_OVERLAYS = [
 	"left-full",
 	"line-through",
 	"max-w-full",
+	"min-h-0",
 	"min-h-11",
 	"min-h-target",
 	"min-w-0",
 	"min-w-target",
 	"opacity-0",
 	"overflow-hidden",
-	"pb-pair",
+	"pb-card",
 	"pl-pair",
 	"pt-float",
 	"pt-page",
 	"pt-pair",
-	"px-4",
 	"px-card",
 	"px-page",
 	"px-pair",
 	"py-0",
 	"py-2",
-	"py-sections",
 	"relative",
 	"rounded-control",
-	"rounded-full",
+	"rounded-none",
 	"self-center",
+	"self-stretch",
 	"self-start",
 	"shrink",
-	"size-2",
-	"size-6",
 	"size-target",
 	"text-accent-ink",
 	"text-center",
 	"text-danger",
 	"text-ink-body",
 	"text-ink-disabled",
-	"text-ink-faint",
 	"text-ok",
 	"text-right",
 	"top-0",
@@ -954,8 +949,8 @@ check("a6", "the build resolves the inventory and kills the retired", () => {
 	const roster = FAMILIES.map((family) => family.name).join(" ");
 	assert(roster === FAMILY_ROSTER, `the family roster drifted: ${roster}`);
 	// A numeric off the contract stays live: the `--spacing` base is never
-	// reset, and the picker names this one.
-	assert(rule(built, "px-4"), "px-4 emitted no rule");
+	// reset, and the loading rows name this one.
+	assert(rule(built, "min-h-11"), "min-h-11 emitted no rule");
 	const dead = [...INVENTORY].filter((name) => !emitted(built, name));
 	assert(
 		dead.length === 0,
@@ -1138,9 +1133,9 @@ check("b-roster", "every component carries exactly its roster props", () => {
 			propsDecl,
 			`${name}: components/${dir} does not export ${name}Props`,
 		);
-		// A union (Sheet's two shapes) is read member by member. A prop is
-		// closed only when every declaration of it is `never`; Sheet's `submit`
-		// is `never` in one member and a value in the other, so it stays open.
+		// A union is read member by member. A prop is closed only when every
+		// declaration of it is `never`, so one that is `never` in one member and
+		// a value in another stays open.
 		const type = propsDecl.getType();
 		const members = type.isUnion() ? type.getUnionTypes() : [type];
 		const byName = new Map<string, boolean[]>();
@@ -1281,34 +1276,24 @@ check("b-nouns", "no product noun in src", () => {
 	return `${PRODUCT_NOUNS.length} nouns absent from src`;
 });
 
-// The picker's two facts the types cannot hold: it claims a definition row,
-// which then stacks, as the web's does under tablet, and its empty choice
-// (an option whose value is null) reads as a placeholder.
-check(
-	"b-picker",
-	"a picker stacks its row and draws its empty choice as a placeholder",
-	() => {
-		const component = (name: string) =>
-			readFileSync(resolve(COMPONENT_DIR, name, "index.tsx"), "utf8");
-		const picker = component("picker");
-		// The option sheet a Picker and a Select open.
-		const sheet = readFileSync(
-			resolve(pkgDir, "src/ui/lib/pick-sheet.tsx"),
-			"utf8",
-		);
-		assert(
-			/<RowContext\.Provider/.test(component("definition-row")) &&
-				/\buseRowClaim\(\)/.test(picker),
-			"a picker in a definition row does not claim the row",
-		);
-		assert(
-			/option\.value === null && PICKER_EMPTY/.test(sheet) &&
-				/\(current\?\.value \?\? null\) === null && PICKER_EMPTY/.test(picker),
-			"the empty choice does not draw as a placeholder in the list and on the control",
-		);
-		return "Picker claims the DefinitionRow; a null option and an empty control draw PICKER_EMPTY";
-	},
-);
+// The picker's fact the types cannot hold: its empty choice (an option
+// whose value is null) reads as a placeholder.
+check("b-picker", "a picker draws its empty choice as a placeholder", () => {
+	const component = (name: string) =>
+		readFileSync(resolve(COMPONENT_DIR, name, "index.tsx"), "utf8");
+	const picker = component("picker");
+	// The option sheet a Picker and a Select open.
+	const sheet = readFileSync(
+		resolve(COMPONENT_DIR, "picker", "sheet.tsx"),
+		"utf8",
+	);
+	assert(
+		/option\.value === null && PICKER_EMPTY/.test(sheet) &&
+			/\(current\?\.value \?\? null\) === null && PICKER_EMPTY/.test(picker),
+		"the empty choice does not draw as a placeholder in the list and on the control",
+	);
+	return "a null option and an empty control draw PICKER_EMPTY";
+});
 
 check("b8", "the words provider lands on the words option", () => {
 	const source = readFileSync(resolve(pkgDir, "src/index.ts"), "utf8");

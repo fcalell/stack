@@ -10,6 +10,12 @@ export const CoverTabs = createContext<((covered: boolean) => void) | null>(
 	null,
 );
 
+// A Place whose act floats on touch tells the Shell, whose toasts then stand
+// above the act by its room.
+export const ActFloats = createContext<((floats: boolean) => void) | null>(
+	null,
+);
+
 // A Split with a record and its pane open lends its details sheet's handle to
 // the Place or Screen it sits in, which draws the sheet's trigger, the Details
 // act, after its own actions below `wide` of its width; `undefined` takes it
@@ -27,6 +33,10 @@ export const PlaceRoute = createContext<string | undefined>(undefined);
 // act to its route (in the switcher's stead in a touch top bar), and `false`
 // takes it back.
 export const RecordOpen = createContext<((open: boolean) => void) | null>(null);
+
+// Whether a record is open in the Place's Split: below `tablet` the Toolbar
+// over the list leaves with the list, the record standing alone.
+export const RecordShown = createContext(false);
 
 // A bleeding touch Place hands the room its floating act needs to the regions
 // that scroll inside its body, which keep it under their last row.

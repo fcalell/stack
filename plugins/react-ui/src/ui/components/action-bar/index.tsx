@@ -9,7 +9,7 @@ import {
 } from "@fcalell/ui-core/variants";
 import { use, useEffect, useId, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
-import { FormContext, SubmitContext } from "../../lib/form.ts";
+import { ActInert, FormContext, SubmitContext } from "../../lib/form.ts";
 import { useTouch } from "../../lib/media.ts";
 import { ReasonHostContext } from "../../lib/reason.ts";
 import { useTouched } from "../../lib/touched.ts";
@@ -98,14 +98,16 @@ export function ActionBar({ acts, fit }: ActionBarProps) {
 					return (
 						<ReasonHostContext key={act.label} value={host}>
 							<SubmitContext value={last && pend !== undefined}>
-								<Button
-									act={kindOf(act, last)}
-									fit={FIT[where]}
-									label={act.label}
-									onAct={busy && !loading ? undefined : run}
-									loading={loading}
-									blocked={act.blocked}
-								/>
+								<ActInert value={busy && !loading}>
+									<Button
+										act={kindOf(act, last)}
+										fit={FIT[where]}
+										label={act.label}
+										onAct={run}
+										loading={loading}
+										blocked={act.blocked}
+									/>
+								</ActInert>
 							</SubmitContext>
 						</ReasonHostContext>
 					);

@@ -2,13 +2,17 @@ import { Checkbox as Base } from "@base-ui/react/checkbox";
 import { cn } from "@fcalell/ui-core/cn";
 import { CHECKBOX_MARK, checkbox } from "@fcalell/ui-core/variants";
 import { Check, type IconNode, Minus } from "lucide";
-import { createElement } from "react";
+import { createElement, use } from "react";
 import type { Closed } from "../../lib/closed.ts";
+import { LabelTarget } from "../../lib/field.ts";
 
 // The checkbox element is the target-sized hit box, so a press anywhere in it
-// toggles; the box inside draws the states and the focus ring.
+// toggles; the box inside draws the states and the focus ring. In a row whose
+// label is its target the element is the box's size.
 const HIT =
 	"group/toggle inline-flex shrink-0 items-center justify-center size-target outline-none";
+const IN_LABEL =
+	"group/toggle inline-flex shrink-0 items-center justify-center outline-none";
 const RING =
 	"group-focus-visible/toggle:outline-2 group-focus-visible/toggle:outline-offset-2 group-focus-visible/toggle:outline-ring";
 const UNCHECKED =
@@ -41,6 +45,7 @@ export interface CheckboxProps extends Closed {
 /** A box and its mark, drawn alone inside a target-sized hit box. */
 export function Checkbox({ checked, onChange, label }: CheckboxProps) {
 	const state = STATES[`${checked}` as const];
+	const target = use(LabelTarget);
 	// A field around it disables it through Base UI's field context, which
 	// sets `aria-disabled` on the hit box and `data-disabled` on the mark.
 	return (
@@ -49,7 +54,9 @@ export function Checkbox({ checked, onChange, label }: CheckboxProps) {
 			indeterminate={checked === "mixed"}
 			onCheckedChange={(next) => onChange(next)}
 			aria-label={label}
-			className={HIT}
+			aria-labelledby={target?.labelledBy}
+			aria-describedby={target?.describedBy}
+			className={target ? IN_LABEL : HIT}
 		>
 			<span
 				className={cn(

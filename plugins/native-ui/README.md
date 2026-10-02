@@ -62,8 +62,8 @@ PascalCase name), drawn from `lucide-react-native`.
 ### The words
 
 `active`, `waiting`, `done`, `attention`, `failed`, `idle` (the six `Status` words),
-`recommended`, `copy`, `copied`, `back`, `close`, `more`, `send`, `stop`, `attach`, `search`,
-`loading`, `retry`, `add`, `remove`, `details`, `places`. A sentence that belongs to the app is a prop on the molecule that draws it
+`recommended`, `copy`, `copied`, `back`, `close`, `cancel`, `dismiss`, `more`, `send`, `stop`, `attach`, `search`,
+`loading`, `retry`, `add`, `remove`, `details`, `places`, `notifications`. A sentence that belongs to the app is a prop on the molecule that draws it
 (`placeholder`, `notice`, every `sentence`, every `label`), never a word here.
 
 ## The roster
@@ -75,9 +75,9 @@ matrix cell in ui-core or a primitive under the app's `ui/`, never a prop. The p
 roster in `@fcalell/ui-core/roster`, the same on both platforms; the verify suite reads each
 component's props type against it.
 
-`confirm({ title, sentence, act, confirmName? })` (`lib/confirm`) asks a decision from anywhere and
-resolves to whether the act was taken; the `Shell` draws it as a bottom sheet, dismissing it
-declines, and `confirmName` blocks the act until the viewer types the named value. A `FormField`
+`confirm({ title, sentence, act, confirmName? })` (`lib/confirm`) asks a decision from anywhere;
+its act's `onAct` runs the work, pending with Cancel and the close act inert, and the sheet closes once that promise resolves and stays open to retry when it rejects. The `Shell`
+draws it as a bottom sheet, dismissing it runs nothing, and `confirmName` blocks the act until the viewer types the named value. A `FormField`
 takes any `FieldBinding` as `field`; native ships no form hook, so the binding comes from the
 app's form state (the web's `useApiForm(...).bind(name)` has no native twin yet).
 
@@ -94,7 +94,7 @@ alone with the pane as a sheet, `Columns` scrolls sideways, `Diff` is unified, `
 | `Button` | `act` (`primary`, `secondary`, `destructive`), `label`, `count` (a number in a pill after the label), `onAct`, `loading` (the busy ring), `blocked` (the reason, drawn under it once pressed or once its form or sheet has taken input) |
 | `IconButton` | `icon`, `label` (read aloud), `onAct` |
 | `Count` | `value` |
-| `Status` | `state` (`active`, `waiting`, `done`, `attention`, `failed`, `idle`), `label`, `onOpen` |
+| `Status` | `state` (`active`, `waiting`, `done`, `attention`, `failed`, `idle`), `label`; a mark, a status that moves being a `Picker` over options carrying states |
 | `Chip` | `label`, `family` (`red` … `pink`, the family the app gives a kind of values); `onRemove` (a trailing remove act, read aloud as `words.remove`) |
 | `Input` | `kind` (`text`, `search`, `secret`, `source`, `number`, `email`: the email keyboard, the system's saved address, never corrected or capitalized), `value`, `onChange`, `onCommit` (the value once the viewer leaves the field or presses return, only when it changed since focus; a hardware Escape then puts back the value at focus), `placeholder`, `unit`, `act` |
 | `TextArea` | `kind` (`prose`, `source`), `value`, `onChange`, `onCommit` (the value once the viewer leaves the field having changed it; return is a new line), `placeholder`, `budget` (words) |
@@ -118,26 +118,26 @@ alone with the pane as a sheet, `Columns` scrolls sideways, `Diff` is unified, `
 | `Form` | children (its `ActionBar`'s filled act runs its `onAct`, and the form is busy while that promise pends; native has no implicit submission) |
 | `Toolbar`, `Columns` | children |
 | `ActionBar` | `acts` (`Act[]`, full width and stacked at the `acts` gap, the last one the filled act, drawn on top; a destructive act is `danger` filled, the hairline form otherwise), `fit` (`end`, `full`: the acts at the control or the field height) |
-| `Shell` | `places` (`{ route, label, icon, count }`; past five, four tabs and a More tab whose sheet holds the rest), `banner`, the toast queue and the `confirm()` decisions, `switcher` (what switches what the app is looking at, an organization or a project: it starts each `Place`'s top bar, never a `Screen`'s), children |
+| `Shell` | `places` (`{ route, label, icon, count }`; past five, four tabs and a More tab that opens a page of the rest, each a row with its glyph, its count and its route), `banner`, the toast queue (standing above a `Place`'s floating act) and the `confirm()` decisions, `switcher` (a pick of what the app is looking at, an organization or a project, its options with avatars and its create act: it starts each `Place`'s top bar, never a `Screen`'s), children |
 
 ### Shared molecules
 
 | Component | Props |
 | --- | --- |
-| `ListRow` | `leading` (`{ icon }` or `{ status }`), `title`, `meta` (parts, one or two lines), `trailing` (`{ age }`, `{ count }` or `{ value }`), `marks` (`{ icon, label }[]`), `act`, `more` (the row's `Menu` items, a more circle at its end), `href` or `onOpen` |
-| `DefinitionRow` | `label`, `description`, `value` (a string, `{ status, label }` or an in-place control), `copyable`, `act`, `href` or `onOpen`; a `Picker` value stacks the row, as the web's under tablet: the label and the description, then the picker across the row with the act at its end |
+| `ListRow` | `leading` (`{ icon }`, `{ status }` or `{ avatar }`, one slot at the avatar's size), `title`, `meta` (parts on one line), `trailing` (`{ age }`, `{ count }` or `{ value }`, or `{ pick }`: a `Picker` at the row fit), `status` and `chip` (marks on the meta line), `more` (the row's `Menu` items, a more act at its end), `href` (the row selected at it) or `onOpen`; in a `Group` edge to edge at the card's inset, elsewhere a list's row, square |
+| `DefinitionRow` | `label`, `description`, `value` (a string, `{ status, label }` or an in-place control), `copyable`, `act`, `href` or `onOpen`; the act an `IconAct`, or a link's chevron in its square, at the row's end |
 | `FormField` | `label`, `description`, `error`, `field` (a `FieldBinding`: the error is the field's and children is `(control) => …`, the control's value, handler and, for an autosaving binding, `onCommit`), one typing control as children |
 | `ItemHeader` | `overline` (parts), `title`, `facts` (parts and statuses), `loading` |
-| `SegmentedControl` | `options` (`{ value, label }[]`), `value`, `onChange` |
-| `Sheet` | `open`, `onClose`, `title`, `description`, `back`, `submit` (`{ label, onAct, blocked }`, top right), `foot`, children; `submit` and an `ActionBar` child exclude each other; the title names a typing control inside that no `FormField` labels; a new `title` or `description` is a new page, its blocked `submit` silent until pressed or touched again |
-| `Picker` | `label`, `options` (`{ value, label, description }[]`, or `{ label, options }[]` groups, each under its label), `value`, `onChange`; generic over its value, read off `options` alone, so an enum's options pick that enum and a value outside them is a type error; no `value`: nothing selected, the placeholder, and `onChange` still hears a value; a `null` option: the explicit empty choice, drawn as the placeholder is, in `ink-meta`, which makes the pick nullable and `onChange` hear `null`; a search field above six options |
-| `Menu` | `label` (read aloud on its more circle, the sheet's title), `items` (`{ label, onAct, icon, destructive, blocked }[]`, or a list of such lists for groups under hairlines); the phone's menu is a sheet of one-line acts, a destructive one in `danger`, a blocked one faded with its reason under it; the more circle of `Place` and `Screen` is the same sheet |
-| `QueryBoundary` | `query` (a `useQuery` result or a tuple of them), `sentence`, children (`(data) => …`, one value per query): the loading form while pending, the `EmptyState` with a retry act on error |
+| `SegmentedControl` | `label` (the group's name), `options` (`{ value, label }[]`), `value`, `onChange` |
+| `Sheet` | `open`, `onClose`, `title`, `description`, `back` (a second page's way back, in the close act's place), `submit` (an `Act` at the head's end, a blocked one's reason under the head), `foot` (a sentence in the foot), `fit` (`form`, `pane`: on the phone a pane's title steps down to body 500), children; a bottom sheet over the scrim, entering and leaving on the contract's motion (reduced motion honoured); the title names a typing control inside that no `FormField` labels; a new `title` or `description` is a new page, its blocked `submit` silent until pressed or touched again |
+| `Picker` | `label`, `options` (`{ value, label, description }[]` (an option carrying `status` draws as that Status, in the sheet its dot leading the label), or `{ label, options }[]` groups, each under its label), `value`, `onChange`; generic over its value, read off `options` alone, so an enum's options pick that enum and a value outside them is a type error; no `value`: nothing selected, the trigger showing `label` in the placeholder's ink, and `onChange` still hears a value; a `null` option: the explicit empty choice, drawn as the placeholder is, in `ink-meta`, which makes the pick nullable and `onChange` hear `null`; an option carrying `avatar` leads its sheet row with its avatar; a search field above six options; `fit` (`field`, the field box; `row`, a row's value and chevron in a pill); `act` (an icon act, the act that makes a new option, under a hairline after the options) |
+| `Menu` | `label` (read aloud on its more act, the sheet's title), `items` (`{ label, onAct, icon, destructive, blocked }[]`, the destructive ones last under a hairline); the phone's menu is a sheet of rows with its close act, a destructive one in `danger`, a blocked one inert with its reason under it, the more act holding the press wash while it is open; the more act of `Place`, `Screen` and `ListRow` is a `Menu` |
+| `QueryBoundary` | `query` (a `useQuery` result or a tuple of them), `sentence`, children (`(data) => …`, one value per query): while pending, in a `Section` the Section busy over a loading `Group`, elsewhere a loading `List`; on error the failed `EmptyState` with a retry act |
 | `OptionList` | `options` (`{ value, label, description, recommended }[]`), `value`, `onChange`, `loading`, children under the chosen option |
-| `EmptyState` | `title`, `sentence`, `act`, children |
-| `Toast` | `sentence`, `state` (`done`, `attention`, `failed`: the state's glyph on its `-soft` fill; without it the dark pill), `act`; `toast(sentence, { state, act })` queues one and the `Shell` draws the queue |
-| `Banner` | `kind` (`note`, `warn`, `danger`), `sentence`, `act` |
-| `PendingBar` | `sentence`, `until` (a `Date`; a countdown fills the bar, else the busy ring), `act` |
+| `EmptyState` | `icon` (in the mark's disc), `title`, `sentence`, `act`, children; its form by where it stands: on a `Place` or `Screen` body centred in what the body leaves (its act the filled one with the plus), in a `Section` in a hairline frame (the hairline act), anywhere else a first run (its acts stacked across the column) |
+| `Toast` | `sentence`, `state` (`done`, `attention`, `failed`: the state's glyph in its ink), `act` (a hairline Button), then the dismiss act; `toast(sentence, { state, act })` queues one and the `Shell` stands the queue at the screen's foot, each toast rising in and fading out, the stack closing up |
+| `Banner` | `kind` (`note`, `warn`, `danger`), `sentence`, `act` (a hairline Button under the line) |
+| `PendingBar` | `sentence`, `until` (a `Date`; a line along the track's foot fills toward it beside the time left, else the busy ring), `act` (a hairline Button under the track) |
 
 A part is a string or `{ quoted: string }`: typographic quotes around it, cut at 40 characters in
 a `meta` line, wrapped to two lines in a title.

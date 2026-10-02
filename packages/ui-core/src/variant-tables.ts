@@ -7,11 +7,12 @@
 // borders, ink, spacing roles, radius, type role, weight, family, a control's
 // size. Display, alignment and every interaction state stay with the plugins.
 //
-// The text matrices are the Stage 1 port. The atoms' and the layout
-// molecules' matrices are the class strings of their approved artboards
-// (`plugins/react-ui/design/1*-*.dc.html`, `3*-*.dc.html`), the states and
-// the layout recorded beside them in the overlay notes
-// (`.helm/research/design-system/atoms-overlays.md`, `layout-overlays.md`).
+// The text matrices are the Stage 1 port. The atoms', the layout molecules'
+// and the shared molecules' matrices are the class strings of their approved
+// artboards (`plugins/react-ui/design/1*-*.dc.html`, `3*-*.dc.html`,
+// `4*-*.dc.html`), the states and the layout recorded beside them in the
+// overlay notes (`.helm/research/design-system/atoms-overlays.md`,
+// `layout-overlays.md`, `shared-overlays.md`).
 // Every other matrix is carried on the new vocabulary until its artboard
 // replaces it.
 
@@ -401,6 +402,21 @@ export const ROW = matrix({
 	defaultVariants: { lines: "one", state: "rest", ground: "list" },
 });
 
+// A box one line of a type role tall: a control or a skeleton bar centred on
+// the line it stands beside or in for (a checkbox on its label's line, a
+// loading line at its text's height).
+export const LINE_BOX = matrix({
+	base: "",
+	variants: {
+		role: {
+			body: "text-body leading-body",
+			meta: "text-meta leading-meta",
+			heading: "text-heading leading-heading",
+		},
+	},
+	defaultVariants: { role: "body" },
+});
+
 // ── Table ───────────────────────────────────────────────────────────
 
 export const TABLE_ROW = matrix({
@@ -439,6 +455,38 @@ export const SEGMENT_LABEL = matrix({
 		},
 	},
 	defaultVariants: { state: "idle" },
+});
+
+// ── Picker ──────────────────────────────────────────────────────────
+
+// The pick's trigger by where it stands: a field box (`FIELD` at the bar
+// fit) in a toolbar, or a row's trailing value in a `PILL_ACT`, its ink the
+// meta ink for the chevron beside the value.
+export const PICKER = matrix({
+	base: "",
+	variants: {
+		fit: {
+			field: "",
+			row: "gap-inside text-ink-meta",
+		},
+	},
+	defaultVariants: { fit: "field" },
+});
+
+// ── Form field ──────────────────────────────────────────────────────
+
+// A field by what it holds: the label over a field box, the label beside a
+// switch at its end, or a checkbox on the label's line ahead of it.
+export const FORM_FIELD = matrix({
+	base: "",
+	variants: {
+		holds: {
+			field: "gap-pair",
+			switch: "gap-fields",
+			checkbox: "gap-inside",
+		},
+	},
+	defaultVariants: { holds: "field" },
 });
 
 // ── Banner ──────────────────────────────────────────────────────────
@@ -511,6 +559,19 @@ export const MENU_GROUP = matrix({
 		},
 	},
 	defaultVariants: { kind: "acts" },
+});
+
+// A menu act's label: the body role's, in `danger` for an act that removes
+// or ends something.
+export const MENU_LABEL = matrix({
+	base: "",
+	variants: {
+		kind: {
+			act: "",
+			destructive: "text-danger",
+		},
+	},
+	defaultVariants: { kind: "act" },
 });
 
 // ── Sheet ───────────────────────────────────────────────────────────
@@ -697,8 +758,9 @@ export const SKELETON = matrix({
 });
 
 // A loading row at the height of the row it stands in for: a two-line list
-// row, a group's setting row, or a form's field (a label line
-// over the field's box at the label's gap).
+// row, a group's setting row, a form's field (a label line
+// over the field's box at the label's gap), or a record's facts line (at the
+// height of the status that opens on it).
 export const SKELETON_ROW = matrix({
 	base: "",
 	variants: {
@@ -706,7 +768,22 @@ export const SKELETON_ROW = matrix({
 			"two-line": "gap-inside min-h-row-2 px-control-x",
 			setting: "gap-fields min-h-row-setting px-card py-pair",
 			field: "gap-pair",
+			facts: "gap-x-fields min-h-target",
 		},
 	},
 	defaultVariants: { kind: "two-line" },
+});
+
+// The lane a loading label's bar runs in: a short label's measure, in the ch
+// of the role it stands in for (a group label's meta from its line box, an
+// option's body).
+export const SKELETON_LANE = matrix({
+	base: "max-w-measure-short",
+	variants: {
+		role: {
+			meta: "",
+			body: "text-body",
+		},
+	},
+	defaultVariants: { role: "body" },
 });

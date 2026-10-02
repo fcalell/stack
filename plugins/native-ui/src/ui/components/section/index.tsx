@@ -23,6 +23,7 @@ import { FormContext } from "../../lib/form";
 import { Ink } from "../../lib/ink";
 import { LoadingContext } from "../../lib/loading";
 import { partText } from "../../lib/parts";
+import { SectionContext } from "../../lib/section";
 import { Button } from "../button";
 import { Count } from "../count";
 import { Group } from "../group";
@@ -86,10 +87,14 @@ export function Section({
 			isValidElement(node) && (node.type === Group || node.type === List),
 	);
 	const [open, setOpen] = useState(folded !== true);
+	// A QueryBoundary in the body waits through the Section: it draws its
+	// rows waiting, the Section its busy head.
+	const [waiting, setWaiting] = useState(false);
+	const busy = loading === true || waiting;
 	// A count waits with the body.
 	let tally: ReactNode = null;
 	if (count !== undefined)
-		tally = loading ? (
+		tally = busy ? (
 			<View className={cn(skeleton({ kind: "count" }), COUNT_WAIT)} />
 		) : (
 			<Count value={count} />
@@ -104,7 +109,7 @@ export function Section({
 	);
 	return (
 		<View
-			accessibilityState={{ busy: loading === true }}
+			accessibilityState={{ busy }}
 			className={cn(section({ in: within }), BOX)}
 		>
 			<View className={SECTION_HEAD}>
@@ -180,7 +185,9 @@ export function Section({
 						))
 					) : (
 						<LoadingContext.Provider value={loading === true}>
-							{children}
+							<SectionContext.Provider value={setWaiting}>
+								{children}
+							</SectionContext.Provider>
 						</LoadingContext.Provider>
 					)}
 				</View>

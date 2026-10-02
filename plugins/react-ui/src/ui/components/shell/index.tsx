@@ -1,13 +1,16 @@
-import { Menu } from "@base-ui/react/menu";
+import { Toast as ToastControl } from "@base-ui/react/toast";
 import { cn } from "@fcalell/ui-core/cn";
-import type { PlaceSpec, Switcher } from "@fcalell/ui-core/descriptors";
+import type {
+	Option,
+	OptionGroup,
+	PlaceSpec,
+	Switcher,
+} from "@fcalell/ui-core/descriptors";
 import {
-	POPOVER,
 	placeRow,
 	placeRowGlyph,
 	placeTab,
 	placeTabLabel,
-	row,
 	SHELL_BANNER,
 	SHELL_COLUMN,
 	SHELL_PLACES,
@@ -15,19 +18,31 @@ import {
 	SHELL_TAB_BAR,
 	SWITCHER,
 	SWITCHER_SLOT,
+	TOASTS,
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
-import { type ReactNode, use, useState } from "react";
+import { type ReactNode, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
-import { CoverTabs, PlaceRoute, ShellSwitcher } from "../../lib/frame.ts";
-import { spacing, useTouch } from "../../lib/media.ts";
+import {
+	ActFloats,
+	CoverTabs,
+	PlaceRoute,
+	ShellSwitcher,
+} from "../../lib/frame.ts";
+import { useTouch } from "../../lib/media.ts";
 import { isCurrent, usePathname } from "../../lib/navigate.ts";
-import { PortalContainer } from "../../lib/portal.ts";
+import { toasts } from "../../lib/toast.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Avatar } from "../avatar/index.tsx";
 import { Count } from "../count/index.tsx";
 import { Icon } from "../icon/index.tsx";
+import { List } from "../list/index.tsx";
+import { ListRow } from "../list-row/index.tsx";
+import { PickerBase } from "../picker/base.tsx";
+import { FloatingActRoom, Place } from "../place/index.tsx";
+import { Confirmations } from "../sheet/confirm.tsx";
+import { ToastList } from "../toast/layer.tsx";
 
 // The shell fills the viewport; the page inside scrolls its own body.
 const FRAME = "flex h-dvh overflow-hidden";
@@ -36,6 +51,13 @@ const SLOT = "flex";
 const PLACES = "flex flex-col";
 const COLUMN = "relative flex flex-col min-w-0 grow";
 const BANNER_SLOT = "flex flex-col";
+// The page and the toasts standing over its foot: at the end on the
+// desktop, centred on touch, above the tab bar and, while a Place's act
+// floats, above the act. It is the main landmark, so a page's headers inside
+// it are no banners.
+const MAIN = "relative flex flex-col grow min-h-0";
+const TOASTS_LAYER =
+	"absolute inset-0 flex flex-col items-end justify-end pointer-events-none touch:items-center";
 // A place row rings inset, inside the sidebar's inset.
 const ROW_BOX = "flex items-center focus-visible:-outline-offset-2";
 const ROW_PRESS = "hover:bg-wash-hover active:bg-wash-press";
@@ -47,16 +69,6 @@ const TRIGGER = "flex items-center w-full focus-visible:-outline-offset-2";
 const TRIGGER_TOUCH = "flex items-center min-w-0";
 const NAME = "truncate grow text-left";
 const NAME_TOUCH = "truncate";
-const MENU = "flex flex-col w-(--anchor-width)";
-const MENU_TOUCH = "flex flex-col w-popover";
-const MENU_ROWS = "flex flex-col gap-rows";
-const MENU_LABEL = "px-control-x pt-pair";
-const MENU_CREATE = "flex flex-col gap-rows border-t border-edge pt-float";
-// The highlight wash marks the keyboard's row, so a row draws no ring.
-const MENU_ROW = "flex items-center outline-none";
-const MENU_ROW_LABEL = "min-w-0 grow truncate";
-const MENU_CHECK = "flex shrink-0 text-ink-body";
-const MENU_GLYPH = "flex shrink-0 text-ink-meta";
 
 const TABS = "flex pb-safe";
 const TAB =
@@ -79,16 +91,23 @@ export interface ShellProps extends Closed {
 	children?: ReactNode;
 }
 
-/** The frame: on the desktop the sidebar (the switcher, then the places) beside the column; on touch the column over the tab bar, the switcher at the head of each Place's top bar; on both, the current place's route handed down for a Place's back act and a pushed Screen covering the tab bar. */
+/** The frame: on the desktop the sidebar (the switcher, then the places) beside the column; on touch the column over the tab bar, the switcher at the head of each Place's top bar, and past five places four tabs and More, which opens a page of the rest; on both, the current place's route handed down for a Place's back act, a pushed Screen covering the tab bar, the `toast()` queue standing over the page's foot (at the end on the desktop, centred on touch over a floating act) and the first `confirm()` decision as a sheet. */
 export function Shell({ places, banner, switcher, children }: ShellProps) {
 	const touch = useTouch();
 	const words = useWords();
 	const pathname = usePathname();
 	const [covered, cover] = useState(false);
+	const [lifted, lift] = useState(false);
+	// The More page stands at the route it opened on: going to a place closes it.
+	const [moreAt, setMoreAt] = useState<string>();
+	const more = moreAt === pathname;
 	const trigger = switcher ? (
-		<SwitcherMenu switcher={switcher} touch={touch} />
+		<SwitcherPick switcher={switcher} touch={touch} />
 	) : null;
 	const route = places.find((spec) => isCurrent(spec.route, pathname))?.route;
+	const rest = places.length > TAB_ROOM ? places.slice(TAB_ROOM - 1) : [];
+	// The More page stands in the page's place while it is open on touch.
+	const page = touch && more ? <MorePage places={rest} /> : children;
 	// The sidebar and the tab bar differ by density; the column, and the page
 	// in it, keep one tree position on both, so crossing the density line
 	// keeps the page.
@@ -126,150 +145,151 @@ export function Shell({ places, banner, switcher, children }: ShellProps) {
 		</nav>
 	);
 	const tabs =
-		touch && !covered ? <TabBar places={places} pathname={pathname} /> : null;
+		touch && !covered ? (
+			<TabBar
+				places={places}
+				pathname={pathname}
+				more={more}
+				onMore={() => setMoreAt(pathname)}
+			/>
+		) : null;
+	// The toast queue and the confirm() decisions stand in every Shell.
 	return (
-		<div className={FRAME}>
-			{sidebar}
-			<div className={cn(SHELL_COLUMN, COLUMN)}>
-				{banner ? (
-					<div className={cn(SHELL_BANNER, BANNER_SLOT)}>{banner}</div>
-				) : null}
-				<ShellSwitcher value={trigger}>
-					<PlaceRoute value={route}>
-						<CoverTabs value={cover}>{children}</CoverTabs>
-					</PlaceRoute>
-				</ShellSwitcher>
-				{tabs}
+		<ToastControl.Provider toastManager={toasts}>
+			<div className={FRAME}>
+				{sidebar}
+				<div className={cn(SHELL_COLUMN, COLUMN)}>
+					{banner ? (
+						<div className={cn(SHELL_BANNER, BANNER_SLOT)}>{banner}</div>
+					) : null}
+					<main className={MAIN}>
+						<ShellSwitcher value={trigger}>
+							<PlaceRoute value={route}>
+								<CoverTabs value={cover}>
+									<ActFloats value={lift}>{page}</ActFloats>
+								</CoverTabs>
+							</PlaceRoute>
+						</ShellSwitcher>
+						<ToastControl.Viewport
+							aria-label={words.notifications}
+							className={cn(TOASTS, TOASTS_LAYER)}
+						>
+							<ToastList />
+							{lifted ? <FloatingActRoom /> : null}
+						</ToastControl.Viewport>
+					</main>
+					{tabs}
+				</div>
 			</div>
-		</div>
+			<Confirmations />
+		</ToastControl.Provider>
 	);
 }
 
-// The switcher's trigger (a place row in the sidebar, a compact trigger in a
-// touch top bar) and its menu: the options with their avatars, the current
-// one checked, then the create act under a hairline.
-function SwitcherMenu(props: { switcher: Switcher; touch: boolean }) {
+function flatten(options: Switcher["options"]): readonly Option[] {
+	const entries: readonly (Option | OptionGroup)[] = options;
+	return entries.flatMap((entry) =>
+		"options" in entry ? entry.options : [entry],
+	);
+}
+
+// The switcher is a pick (its options with their avatars, the current one
+// ticked, the act that makes a new one under a hairline), drawn as a place
+// row in the sidebar and a compact trigger in a touch top bar.
+function SwitcherPick(props: { switcher: Switcher; touch: boolean }) {
 	const { switcher, touch } = props;
-	const container = use(PortalContainer);
+	const current = flatten(switcher.options).find(
+		(option) => option.value === switcher.value,
+	);
+	const name = current?.label ?? switcher.label;
 	return (
-		<Menu.Root modal={false}>
-			<Menu.Trigger
-				render={(trigger, state) => (
-					<button
-						{...trigger}
-						className={
-							touch
-								? cn(SWITCHER, TRIGGER_TOUCH)
-								: cn(
-										placeRow({ state: state.open ? "active" : "rest" }),
-										TRIGGER,
-										!state.open && ROW_PRESS,
-									)
-						}
+		<PickerBase
+			label={switcher.label}
+			options={switcher.options}
+			value={switcher.value}
+			onChange={switcher.onChange}
+			act={switcher.act}
+			drawn={(handed, open) => (
+				<button
+					{...handed}
+					type="button"
+					aria-label={`${switcher.label}, ${name}`}
+					className={
+						touch
+							? cn(SWITCHER, TRIGGER_TOUCH)
+							: cn(
+									placeRow({ state: open ? "active" : "rest" }),
+									TRIGGER,
+									!open && ROW_PRESS,
+								)
+					}
+				>
+					<span aria-hidden className={GLYPH}>
+						<Avatar name={name} src={current?.avatar?.src} />
+					</span>
+					<span
+						className={cn(
+							text({ role: "body" }),
+							textStrong({ role: "body" }),
+							touch ? NAME_TOUCH : NAME,
+						)}
 					>
-						<span aria-hidden className={GLYPH}>
-							<Avatar name={switcher.name} src={switcher.avatar} />
-						</span>
-						<span
-							className={cn(
-								text({ role: "body" }),
-								textStrong({ role: "body" }),
-								touch ? NAME_TOUCH : NAME,
-							)}
-						>
-							{switcher.name}
-						</span>
-						<span className={cn(placeRowGlyph({ state: "rest" }), GLYPH)}>
-							<Icon name="ChevronsUpDown" />
-						</span>
-					</button>
-				)}
-			/>
-			<Menu.Portal container={container}>
-				<Menu.Positioner align="start" sideOffset={() => spacing("pair")}>
-					<Menu.Popup className={cn(POPOVER, touch ? MENU_TOUCH : MENU)}>
-						<Menu.RadioGroup value={switcher.name} className={MENU_ROWS}>
-							<Menu.GroupLabel
-								className={cn(
-									text({ role: "meta" }),
-									textStrong({ role: "meta" }),
-									MENU_LABEL,
-								)}
-							>
-								{switcher.label}
-							</Menu.GroupLabel>
-							{switcher.options.map((option) => (
-								<Menu.RadioItem
-									key={option.label}
-									value={option.label}
-									label={option.label}
-									onClick={option.onAct}
-									disabled={option.blocked !== undefined}
-									className={(item) =>
-										cn(
-											row({ state: item.highlighted ? "highlighted" : "rest" }),
-											MENU_ROW,
-										)
-									}
-								>
-									<span aria-hidden className={GLYPH}>
-										<Avatar name={option.label} src={option.avatar} />
-									</span>
-									<span className={cn(text({ role: "body" }), MENU_ROW_LABEL)}>
-										{option.label}
-									</span>
-									<Menu.RadioItemIndicator className={MENU_CHECK}>
-										<Icon name="Check" />
-									</Menu.RadioItemIndicator>
-								</Menu.RadioItem>
-							))}
-						</Menu.RadioGroup>
-						{switcher.create ? (
-							<div className={MENU_CREATE}>
-								<Menu.Item
-									label={switcher.create.label}
-									onClick={switcher.create.onAct}
-									className={(item) =>
-										cn(
-											row({ state: item.highlighted ? "highlighted" : "rest" }),
-											MENU_ROW,
-										)
-									}
-								>
-									{switcher.create.icon ? (
-										<span className={MENU_GLYPH}>
-											<Icon name={switcher.create.icon} />
-										</span>
-									) : null}
-									<span className={cn(text({ role: "body" }), MENU_ROW_LABEL)}>
-										{switcher.create.label}
-									</span>
-								</Menu.Item>
-							</div>
-						) : null}
-					</Menu.Popup>
-				</Menu.Positioner>
-			</Menu.Portal>
-		</Menu.Root>
+						{name}
+					</span>
+					<span className={cn(placeRowGlyph({ state: "rest" }), GLYPH)}>
+						<Icon name="ChevronsUpDown" />
+					</span>
+				</button>
+			)}
+		/>
+	);
+}
+
+// The places past the tab bar, a page of rows: each place's glyph leading,
+// its count trailing, its route where the row goes.
+function MorePage(props: { places: readonly PlaceSpec[] }) {
+	const words = useWords();
+	return (
+		<Place title={words.more}>
+			<List>
+				{props.places.map((spec) => (
+					<ListRow
+						key={spec.route}
+						leading={{ icon: spec.icon }}
+						title={spec.label}
+						trailing={
+							spec.count === undefined ? undefined : { count: spec.count }
+						}
+						href={spec.route}
+					/>
+				))}
+			</List>
+		</Place>
 	);
 }
 
 // The touch shell's places: glyph over label, the count over the glyph's
-// end; past five places, four and a More tab whose menu holds the rest.
+// end; past five places, four and a More tab, which opens the page of the
+// rest and is selected while it stands or the current place is among them.
 // A tab holds its label ahead of its glyph and stacks them reversed, so its
 // name reads the label then the count.
-function TabBar(props: { places: readonly PlaceSpec[]; pathname: string }) {
-	const { places, pathname } = props;
+function TabBar(props: {
+	places: readonly PlaceSpec[];
+	pathname: string;
+	more: boolean;
+	onMore: () => void;
+}) {
+	const { places, pathname, more } = props;
 	const words = useWords();
-	const container = use(PortalContainer);
 	const fits = places.length <= TAB_ROOM;
 	const shown = fits ? places : places.slice(0, TAB_ROOM - 1);
 	const rest = fits ? [] : places.slice(TAB_ROOM - 1);
 	const inRest = rest.some((spec) => isCurrent(spec.route, pathname));
+	const moreSelected = more || inRest;
 	return (
 		<nav aria-label={words.places} className={cn(SHELL_TAB_BAR, TABS)}>
 			{shown.map((spec) => {
-				const current = isCurrent(spec.route, pathname);
+				const current = !more && isCurrent(spec.route, pathname);
 				return (
 					<a
 						key={spec.route}
@@ -298,67 +318,21 @@ function TabBar(props: { places: readonly PlaceSpec[]; pathname: string }) {
 				);
 			})}
 			{rest.length > 0 ? (
-				<Menu.Root modal={false}>
-					<Menu.Trigger
-						render={(trigger) => (
-							<button
-								{...trigger}
-								className={cn(
-									placeTab({ state: inRest ? "selected" : "idle" }),
-									TAB,
-								)}
-							>
-								<Tab
-									icon={<Icon name="Ellipsis" fit="control" />}
-									label={words.more}
-									selected={inRest}
-								/>
-							</button>
-						)}
+				<button
+					type="button"
+					aria-current={moreSelected ? "page" : undefined}
+					onClick={props.onMore}
+					className={cn(
+						placeTab({ state: moreSelected ? "selected" : "idle" }),
+						TAB,
+					)}
+				>
+					<Tab
+						icon={<Icon name="Ellipsis" fit="control" />}
+						label={words.more}
+						selected={moreSelected}
 					/>
-					<Menu.Portal container={container}>
-						<Menu.Positioner
-							side="top"
-							align="end"
-							sideOffset={() => spacing("pair")}
-						>
-							<Menu.Popup className={cn(POPOVER, MENU_TOUCH)}>
-								<div className={MENU_ROWS}>
-									{rest.map((spec) => (
-										<Menu.LinkItem
-											key={spec.route}
-											href={spec.route}
-											label={spec.label}
-											aria-current={
-												isCurrent(spec.route, pathname) ? "page" : undefined
-											}
-											className={(item) =>
-												cn(
-													row({
-														state: item.highlighted ? "highlighted" : "rest",
-													}),
-													MENU_ROW,
-												)
-											}
-										>
-											<span className={MENU_GLYPH}>
-												<Icon name={spec.icon} />
-											</span>
-											<span
-												className={cn(text({ role: "body" }), MENU_ROW_LABEL)}
-											>
-												{spec.label}
-											</span>
-											{spec.count === undefined ? null : (
-												<Count value={spec.count} />
-											)}
-										</Menu.LinkItem>
-									))}
-								</div>
-							</Menu.Popup>
-						</Menu.Positioner>
-					</Menu.Portal>
-				</Menu.Root>
+				</button>
 			) : null}
 		</nav>
 	);

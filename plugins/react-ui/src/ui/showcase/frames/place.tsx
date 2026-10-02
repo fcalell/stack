@@ -30,22 +30,26 @@ export function Column(props: { children: ReactNode }) {
 	);
 }
 
-// A frame whose first menu is open: once mounted it focuses the first menu
-// trigger and opens it from the keyboard. The popup mounts inside the frame,
-// so it draws the frame's mode.
-export function Opened(props: { children: ReactNode }) {
+// A frame whose first menu (or, `popup: "listbox"`, its first pick) is open:
+// once mounted it focuses that trigger and opens it from the keyboard. The
+// popup mounts inside the frame, so it draws the frame's mode.
+export function Opened(props: {
+	children: ReactNode;
+	popup?: "menu" | "listbox";
+}) {
+	const popup = props.popup ?? "menu";
 	const frame = useRef<HTMLDivElement>(null);
 	const [container, setContainer] = useState<HTMLElement | null>(null);
 	useEffect(() => {
 		if (!container) return;
 		const trigger = frame.current?.querySelector<HTMLElement>(
-			'[aria-haspopup="menu"]',
+			`[aria-haspopup="${popup}"]`,
 		);
 		trigger?.focus();
 		trigger?.dispatchEvent(
 			new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }),
 		);
-	}, [container]);
+	}, [container, popup]);
 	return (
 		<PortalContainer value={container}>
 			<div ref={frame} className="relative flex flex-col">

@@ -7,11 +7,12 @@ import {
 	buttonLabel,
 	text,
 } from "@fcalell/ui-core/variants";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { Ink } from "../../lib/ink";
+import { ReasonHostContext } from "../../lib/reason";
 import { useTouched } from "../../lib/touched";
 import { Count } from "../count";
 import { Icon } from "../icon";
@@ -68,8 +69,9 @@ export interface ButtonProps extends Closed {
 // A labelled act, its count after the label. Pending and blocked acts stay focusable and ignore the
 // press; a pending act hides its glyph and label under the spinner and keeps
 // its name, a blocked one says why under itself once pressed or once its
-// form or sheet is touched. Its ink reaches the glyph and the spinner through
-// `Ink`, since a native view takes no currentColor.
+// form or sheet is touched, or on the line of the host that holds it. Its
+// ink reaches the glyph and the spinner through `Ink`, since a native view
+// takes no currentColor.
 export function Button({
 	act,
 	fit,
@@ -83,6 +85,7 @@ export function Button({
 	const kind = act ?? "primary";
 	const muted = blocked !== undefined;
 	const { touched } = useTouched();
+	const host = useContext(ReasonHostContext);
 	const [pressed, setPressed] = useState(false);
 	useEffect(() => {
 		if (!muted) setPressed(false);
@@ -93,8 +96,9 @@ export function Button({
 	const ink = muted && !loading ? "ink-disabled" : buttonContentTone(kind);
 	const press = () => {
 		if (loading) return;
-		if (muted) setPressed(true);
-		else onAct?.();
+		if (!muted) onAct?.();
+		else if (host) host.press();
+		else setPressed(true);
 	};
 	const control = (
 		<Pressable
@@ -130,7 +134,8 @@ export function Button({
 			</Ink.Provider>
 		</Pressable>
 	);
-	if (!muted) return control;
+	// A host draws the reason on its own line.
+	if (!muted || host) return control;
 	return (
 		<View className={STACK}>
 			{control}

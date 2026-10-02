@@ -7,6 +7,7 @@ import {
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, use } from "react";
 import type { Closed } from "../../lib/closed.ts";
+import { GroundContext } from "../../lib/ground.ts";
 import { LoadingContext } from "../../lib/loading.ts";
 
 const BOX = "flex flex-col overflow-hidden";
@@ -36,21 +37,23 @@ export function Group({ loading, children }: GroupProps) {
 	// A loading Section is busy once: rows drawn on its word say nothing.
 	return (
 		<div aria-busy={loading || undefined} className={cn(GROUP, BOX)}>
-			{waiting
-				? BARS.map(([label, value]) => (
-						<div
-							key={`${label} ${value}`}
-							aria-hidden
-							className={cn(skeletonRow({ kind: "setting" }), ROW_WAIT)}
-						>
-							<span className={cn(SKELETON_LINES, LINES_WAIT)}>
-								<span className={cn(skeleton({ kind: "line" }), label)} />
-								<span className={cn(skeleton({ kind: "line" }), value)} />
-							</span>
-							<span className={cn(skeleton({ kind: "switch" }), SWITCH_WAIT)} />
-						</div>
-					))
-				: children}
+			{waiting ? (
+				BARS.map(([label, value]) => (
+					<div
+						key={`${label} ${value}`}
+						aria-hidden
+						className={cn(skeletonRow({ kind: "setting" }), ROW_WAIT)}
+					>
+						<span className={cn(SKELETON_LINES, LINES_WAIT)}>
+							<span className={cn(skeleton({ kind: "line" }), label)} />
+							<span className={cn(skeleton({ kind: "line" }), value)} />
+						</span>
+						<span className={cn(skeleton({ kind: "switch" }), SWITCH_WAIT)} />
+					</div>
+				))
+			) : (
+				<GroundContext value="group">{children}</GroundContext>
+			)}
 		</div>
 	);
 }

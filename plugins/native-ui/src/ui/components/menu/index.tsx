@@ -1,15 +1,37 @@
+import type { MenuItem } from "@fcalell/ui-core/descriptors";
+import { useState } from "react";
 import type { Closed } from "../../lib/closed";
-import { MenuCircle, type MenuItems } from "../../lib/more";
+import { IconButtonBase } from "../icon-button/base";
+import { MenuSheet } from "./sheet";
 
 export interface MenuProps extends Closed {
+	// The more act's name, read aloud, and the sheet's title.
 	label: string;
-	items: MenuItems;
+	// The acts in order; the destructive ones stand last under a hairline.
+	items: readonly MenuItem[];
 }
 
-// A more circle, `label` read aloud, whose acts open as a sheet titled
-// `label`: groups under hairlines, a destructive act in `danger`, a blocked
-// one faded with its reason under it. The sheet is the phone's menu; one
-// sheet is open at a time.
+// The more act and its acts: the phone's menu is a bottom sheet titled
+// `label` with its close act, the trigger holding the press wash while it is
+// open. A destructive act draws in danger ink, a blocked one inert with its
+// reason under its label.
 export function Menu({ label, items }: MenuProps) {
-	return <MenuCircle label={label} title={label} items={items} />;
+	const [open, setOpen] = useState(false);
+	return (
+		<>
+			<IconButtonBase
+				icon="Ellipsis"
+				fit="body"
+				label={label}
+				open={open}
+				onAct={() => setOpen(true)}
+			/>
+			<MenuSheet
+				label={label}
+				items={items}
+				open={open}
+				onClose={() => setOpen(false)}
+			/>
+		</>
+	);
 }

@@ -12,8 +12,11 @@ Three pages:
 - `/`: the roster frames, every component in every cell and state, light and dark side by side.
 - `/foundations`: the token page, every role of the contract on the emitted `app.css`, light and
   dark side by side.
-- `/layout`: the layout layer composed with the built components into five product frames, at
-  the URL's mode.
+- `/layout`: one app composed with the built components, every atom, layout and shared
+  molecule in its place: the Shell around the place `?place=` names (`deploys`, `projects`,
+  `logs`, `domains`, `verify`, `members`, `settings`; `welcome` is the first run outside the
+  shell), a record open by `&record=` (`d1` to `d5`) and the list's query forced by
+  `&query=loading|error`; fixture data, no network. The view toggles sit under the app.
 
 The URL holds the view: `?mode=<light|dark>` sets the page's own mode (without it the page keeps
 what the mode script set) and `?density=<touch|desktop>` the density it draws at (`desktop`

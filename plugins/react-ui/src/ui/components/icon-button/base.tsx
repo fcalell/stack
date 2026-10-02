@@ -25,7 +25,9 @@ export function IconButtonBase({
 	label,
 	...handed
 }: Handed & { icon: IconName; fit?: IconButtonFit; label: string }) {
-	const disabled = useContext(FieldDisabled);
+	// Inert inside a disabled field, or when its holder says so (a sheet's
+	// close while its act pends).
+	const disabled = useContext(FieldDisabled) || handed.disabled === true;
 	return (
 		<BaseButton
 			{...handed}

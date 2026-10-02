@@ -15,7 +15,12 @@ import {
 } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import { FieldDisabled, FieldError, useFieldName } from "../../lib/field";
+import {
+	FieldDisabled,
+	FieldError,
+	FieldFocus,
+	useFieldName,
+} from "../../lib/field";
 import { Ink } from "../../lib/ink";
 import { useTokenColor } from "../../lib/theme";
 import { useTouched } from "../../lib/touched";
@@ -85,6 +90,7 @@ export function Input({
 	const name = useFieldName();
 	const error = useContext(FieldError);
 	const disabled = useContext(FieldDisabled);
+	const focused = useContext(FieldFocus);
 	// A placeholder's colour is a prop, never a class: `FIELD_PLACEHOLDER`'s ink.
 	const placeholderInk = useTokenColor("--color-ink-meta");
 	const which = kind ?? "text";
@@ -108,6 +114,7 @@ export function Input({
 				</Ink.Provider>
 			) : null}
 			<TextInput
+				autoFocus={focused}
 				accessibilityLabel={name ?? (search ? words.search : undefined)}
 				accessibilityState={{ disabled }}
 				editable={!disabled}

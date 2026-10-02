@@ -79,19 +79,6 @@ function withoutComments(source: string): string {
 		.join("\n");
 }
 
-// String and template literals outside comments. A quoted object key goes
-// too: the formatter puts no space before a key's colon and always puts one
-// in a ternary, which separates the two.
-function literals(source: string): string[] {
-	const code = withoutComments(source);
-	return [
-		...[...code.matchAll(/"([^"\n]*)"(:?)/g)]
-			.filter((match) => match[2] !== ":")
-			.map((match) => match[1] ?? ""),
-		...[...code.matchAll(/`([^`]*)`/g)].map((match) => match[1] ?? ""),
-	];
-}
-
 // The web's state variants, the ones `atoms-overlays.md` names.
 const STATE_VARIANTS = [
 	"hover",
@@ -101,6 +88,57 @@ const STATE_VARIANTS = [
 	"aria-disabled",
 	"aria-busy",
 ];
+
+// The literals where a class can stand: a `className`, the arguments of
+// `cn` and of a ui-core variants call, and a module constant named in
+// UPPER_SNAKE (an overlay, or a record of them). Prose, words and runtime
+// strings elsewhere never reach the checks. An object key is a key, never a
+// class.
+const CLASS_SOURCES = new Project({ skipAddingFilesFromTsConfig: true });
+const VARIANTS = "@fcalell/ui-core/variants";
+
+function classLiterals(path: string): string[] {
+	const file = CLASS_SOURCES.addSourceFileAtPath(path);
+	const callers = new Set(["cn"]);
+	for (const decl of file.getImportDeclarations())
+		if (decl.getModuleSpecifierValue() === VARIANTS)
+			for (const named of decl.getNamedImports()) callers.add(named.getName());
+	const roots: Node[] = [];
+	file.forEachDescendant((node) => {
+		if (
+			Node.isJsxAttribute(node) &&
+			node.getNameNode().getText() === "className"
+		)
+			roots.push(node);
+		else if (
+			Node.isCallExpression(node) &&
+			callers.has(node.getExpression().getText())
+		)
+			roots.push(node);
+	});
+	for (const statement of file.getVariableStatements())
+		for (const decl of statement.getDeclarations())
+			if (/^[A-Z][A-Z0-9_]*$/.test(decl.getName())) roots.push(decl);
+	const out = new Set<Node>();
+	for (const root of roots)
+		root.forEachDescendant((node) => {
+			const literal =
+				Node.isStringLiteral(node) ||
+				Node.isNoSubstitutionTemplateLiteral(node) ||
+				Node.isTemplateHead(node) ||
+				Node.isTemplateMiddle(node) ||
+				Node.isTemplateTail(node);
+			const key =
+				Node.isPropertyAssignment(node.getParent()) &&
+				node.getParent()?.getChildAtIndex(0) === node;
+			if (literal && !key) out.add(node);
+		});
+	return [...out].map((node) =>
+		Node.isStringLiteral(node) || Node.isNoSubstitutionTemplateLiteral(node)
+			? node.getLiteralText()
+			: node.getText().replace(/^[`}]|(\$\{|`)$/g, ""),
+	);
+}
 
 // Utility roots a class literal draws from. A quoted token counts as a class
 // only when it carries a state variant or its root is named here, so prose
@@ -206,7 +244,7 @@ function sweptClasses(): Map<string, Set<string>> {
 	const out = new Map<string, Set<string>>();
 	for (const path of COMPONENT_FILES) {
 		const found = new Set<string>();
-		for (const literal of literals(readFileSync(path, "utf8"))) {
+		for (const literal of classLiterals(path)) {
 			for (const token of classes(literal)) {
 				if (isClass(token)) found.add(token);
 			}
@@ -331,7 +369,7 @@ const built = tailwindBuild(
 // rather than by a fixed delimiter.
 function emitted(css: string, name: string): boolean {
 	const escaped = name
-		.replace(/[.[\]()/%:!]/g, (char) => `\\${char}`)
+		.replace(/[.[\]()/%:!,]/g, (char) => `\\${char}`)
 		.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 	return new RegExp(`\\.${escaped}(?![\\w\\\\-])`).test(css);
 }
@@ -358,7 +396,7 @@ check("b5", "the overlay allowlist mirrors the swept sources", () => {
 		// A width composed over the line cell (`cn(skeleton({ kind: "line" }), width)`)
 		// sits in a literal of widths alone, in a file that draws the cell.
 		const bars = source.includes('skeleton({ kind: "line" })');
-		for (const literal of literals(source)) {
+		for (const literal of classLiterals(path)) {
 			const names = classes(literal);
 			if (names.includes("bg-skeleton")) continue;
 			if (

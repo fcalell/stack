@@ -13,9 +13,7 @@
 		"./lib/glyph": "./src/ui/lib/glyph.tsx",
 		"./lib/hosts": "./src/ui/lib/hosts.tsx",
 		"./lib/loading": "./src/ui/lib/loading.tsx",
-		"./lib/more": "./src/ui/lib/more.tsx",
 		"./lib/parts": "./src/ui/lib/parts.tsx",
-		"./lib/pick-sheet": "./src/ui/lib/pick-sheet.tsx",
 		"./lib/words": "./src/ui/lib/words.tsx",
 		"./lib/*": "./src/ui/lib/*.ts"
 	},

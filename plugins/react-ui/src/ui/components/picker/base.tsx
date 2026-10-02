@@ -1,0 +1,640 @@
+import { Combobox } from "@base-ui/react/combobox";
+import { Dialog } from "@base-ui/react/dialog";
+import { Select } from "@base-ui/react/select";
+import { cn } from "@fcalell/ui-core/cn";
+import type {
+	IconAct,
+	Option,
+	OptionGroup,
+} from "@fcalell/ui-core/descriptors";
+import {
+	FIELD_GLYPH,
+	FIELD_PLACEHOLDER,
+	field,
+	fieldValue,
+	HAIRLINE,
+	OPTION_GROUP_LABEL,
+	PICKER_EMPTY,
+	PICKER_POPOVER,
+	PICKER_VALUE,
+	PILL_ACT,
+	POPOVER,
+	picker,
+	type RowGround,
+	row,
+	SELECT_GROUP,
+	text,
+	textStrong,
+} from "@fcalell/ui-core/variants";
+import {
+	type ComponentProps,
+	type ReactElement,
+	type ReactNode,
+	use,
+	useEffect,
+	useRef,
+	useState,
+} from "react";
+import { arrowsOver } from "../../lib/arrows.ts";
+import { spacing, useTouch } from "../../lib/media.ts";
+import { PortalContainer } from "../../lib/portal.ts";
+import { useWords } from "../../lib/words.tsx";
+import { Avatar } from "../avatar/index.tsx";
+import { Icon } from "../icon/index.tsx";
+import { Input } from "../input/index.tsx";
+import { SheetBase } from "../sheet/base.tsx";
+import { StatusDot } from "../status/dot.tsx";
+import { Status } from "../status/index.tsx";
+import type { PickerProps } from "./index.tsx";
+
+// A field-fit trigger is the field box at the bar fit; open, it keeps the
+// ring, as the `Select`'s does.
+const FIELD_TRIGGER =
+	"flex shrink-0 items-center text-start hover:border-edge-hover";
+const FIELD_OPEN = "outline-2 outline-offset-2 outline-ring";
+const FIELD_VALUE = "min-w-0 grow truncate";
+// A row-fit trigger centres in its row and pulls back by its own padding at
+// the row's end; it stands over a row's hit. Open, it holds the press wash
+// and the value takes the body ink.
+const ROW_TRIGGER =
+	"relative inline-flex shrink-0 self-center items-center -me-inside hover:bg-wash-hover active:bg-wash-press";
+const ROW_OPEN = "bg-wash-press text-ink-body";
+const ROW_VALUE = "truncate";
+const OPEN_VALUE = "text-ink-body";
+// The popover stops at the room Base UI measures below its trigger; its rows
+// scroll inside it, under a search that stays.
+const POPUP = "flex flex-col max-h-(--available-height)";
+const LIST =
+	"flex flex-col gap-pair min-h-0 overflow-y-auto overscroll-contain";
+const GROUP = "flex flex-col";
+// The highlight washes the option under the pointer or the keyboard; the
+// keyboard's highlight rings it inset as well, the wash alone being no focus
+// cue, and the pointer's draws the wash alone.
+const OPTION = "flex items-center active:bg-wash-press";
+const OPTION_NO_FOCUS = "outline-none";
+const KEYBOARD_RING = "outline-2 -outline-offset-2 outline-ring";
+// A touch option is a button: its text at the start, its focus the
+// keyboard's highlight and its ring.
+const OPTION_BUTTON =
+	"text-start focus-visible:bg-wash-hover focus-visible:-outline-offset-2";
+const OPTION_TEXT = "flex flex-col min-w-0 grow";
+const LINE = "truncate";
+const TICK = "flex shrink-0 text-ink-body";
+const SEARCH = "flex grow items-center";
+const SEARCH_VALUE =
+	"min-w-0 grow truncate outline-none placeholder:text-ink-meta";
+const SEARCH_SLOT = "flex px-card";
+// The sheet's rows stand a pair under its head and the search, clear of a
+// phone's home indicator; a long list scrolls.
+const SHEET_ROWS = "flex flex-col gap-pair pt-pair pb-card min-h-0";
+const LISTBOX = "flex flex-col min-h-0 overflow-y-auto overscroll-contain";
+// The act that ends the list stands under a hairline across it, a float
+// inset below the line.
+const ACT_SLOT = "flex flex-col border-t pt-float";
+const ACT_ROW =
+	"flex items-center text-start hover:bg-wash-hover active:bg-wash-press focus-visible:-outline-offset-2";
+const ACT_GLYPH = "flex shrink-0 text-ink-meta";
+
+// Past six options a search leads the list.
+const SEARCH_PAST = 6;
+
+interface Grouped<V extends string | null> {
+	label?: string;
+	items: readonly Option<V>[];
+}
+
+function groupsOf<V extends string | null>(
+	options: PickerProps<V>["options"],
+): Grouped<V>[] {
+	const first = options[0];
+	if (first === undefined || !("options" in first))
+		return [{ items: options as readonly Option<V>[] }];
+	return (options as readonly OptionGroup<V>[]).map((group) => ({
+		label: group.label,
+		items: group.options,
+	}));
+}
+
+const optionRow = (
+	option: Option<string | null>,
+	ground: RowGround,
+	highlighted = false,
+) =>
+	row({
+		lines: option.description ? "two" : "one",
+		state: highlighted ? "highlighted" : "rest",
+		ground,
+	});
+
+// An option's label (the empty choice in the placeholder's ink) over its
+// description; an option carrying a state leads with its status's dot, one
+// carrying an avatar with its avatar.
+function OptionText(props: { option: Option<string | null> }) {
+	const { option } = props;
+	return (
+		<>
+			{option.status ? <StatusDot state={option.status} /> : null}
+			{option.avatar ? (
+				<Avatar name={option.label} src={option.avatar.src} />
+			) : null}
+			<span className={OPTION_TEXT}>
+				<span
+					className={cn(
+						text({ role: "body" }),
+						option.value === null && PICKER_EMPTY,
+						LINE,
+					)}
+				>
+					{option.label}
+				</span>
+				{option.description ? (
+					<span className={cn(text({ role: "meta" }), LINE)}>
+						{option.description}
+					</span>
+				) : null}
+			</span>
+		</>
+	);
+}
+
+// The act that ends the list under a hairline: its glyph and label on a row,
+// washed under the pointer and the press; it closes the list as it runs.
+function PickAct(props: {
+	act: IconAct;
+	ground: RowGround;
+	done: () => void;
+	onFocus?: () => void;
+}) {
+	const { act } = props;
+	return (
+		<div className={cn(HAIRLINE, ACT_SLOT)}>
+			<button
+				type="button"
+				onFocus={props.onFocus}
+				onClick={() => {
+					props.done();
+					act.onAct();
+				}}
+				className={cn(row({ ground: props.ground }), ACT_ROW)}
+			>
+				<span className={ACT_GLYPH}>
+					<Icon name={act.icon} />
+				</span>
+				<span className={cn(text({ role: "body" }), LINE)}>{act.label}</span>
+			</button>
+		</div>
+	);
+}
+
+function GroupLabel(props: { children: ReactNode }) {
+	return (
+		<div
+			className={cn(
+				OPTION_GROUP_LABEL,
+				text({ role: "meta" }),
+				textStrong({ role: "meta" }),
+			)}
+		>
+			{props.children}
+		</div>
+	);
+}
+
+// What every pick draws: the public `Picker`'s field and row triggers, or a
+// trigger its composer draws (the Shell's switcher), over the one list. Outside
+// the package's exports.
+export function PickerBase<V extends string | null = string>({
+	label,
+	options,
+	value,
+	onChange,
+	fit = "field",
+	act,
+	drawn,
+}: PickerProps<V> & {
+	/** A trigger drawn by the composer, handed Base UI's props and whether the list is open. */
+	drawn?: (handed: ComponentProps<"button">, open: boolean) => ReactElement;
+}) {
+	const touch = useTouch();
+	const [open, setOpen] = useState(false);
+	const groups = groupsOf(options);
+	const flat = groups.flatMap((group) => group.items);
+	const current = flat.find((option) => option.value === value);
+	const pick = (next: V) => {
+		setOpen(false);
+		onChange(next);
+	};
+	// A row's pick names its value with it; a field box's value is its own.
+	const named = fit === "row" && current ? `${label}, ${current.label}` : label;
+	// An option carrying a state shows as its status.
+	const status = current?.status ? (
+		<Status state={current.status} label={current.label} />
+	) : null;
+	// With no value the trigger shows what is picked in the placeholder's ink.
+	const unset = current === undefined;
+	const rowValue = status ?? (
+		<span
+			className={cn(
+				PICKER_VALUE,
+				ROW_VALUE,
+				unset && FIELD_PLACEHOLDER,
+				open && OPEN_VALUE,
+			)}
+		>
+			{current?.label ?? label}
+		</span>
+	);
+	const fieldShown = (
+		<span
+			className={cn(
+				fieldValue({ kind: "text" }),
+				current?.value === null && PICKER_EMPTY,
+				unset && FIELD_PLACEHOLDER,
+				FIELD_VALUE,
+			)}
+		>
+			{status ?? current?.label ?? label}
+		</span>
+	);
+	const own = (handed: ComponentProps<"button">) => (
+		<button
+			{...handed}
+			type="button"
+			aria-label={named}
+			className={
+				fit === "row"
+					? cn(PILL_ACT, picker({ fit }), ROW_TRIGGER, open && ROW_OPEN)
+					: cn(
+							field({ fit: "bar" }),
+							picker({ fit }),
+							FIELD_GLYPH,
+							FIELD_TRIGGER,
+							open && FIELD_OPEN,
+						)
+			}
+		>
+			{fit === "row" ? rowValue : fieldShown}
+			<Icon name="ChevronDown" fit={fit === "row" ? "meta" : "control"} />
+		</button>
+	);
+	const trigger = drawn
+		? (handed: ComponentProps<"button">) => drawn(handed, open)
+		: own;
+	if (touch)
+		return (
+			<PickSheet
+				label={label}
+				groups={groups}
+				value={value}
+				open={open}
+				setOpen={setOpen}
+				pick={pick}
+				trigger={trigger}
+				act={act}
+			/>
+		);
+	if (flat.length > SEARCH_PAST)
+		return (
+			<PickSearch
+				label={label}
+				groups={groups}
+				current={current}
+				open={open}
+				setOpen={setOpen}
+				pick={pick}
+				trigger={trigger}
+				act={act}
+			/>
+		);
+	return (
+		<PickList
+			label={label}
+			groups={groups}
+			value={value}
+			open={open}
+			setOpen={setOpen}
+			pick={pick}
+			trigger={trigger}
+			act={act}
+		/>
+	);
+}
+
+// Whether the keyboard moved the highlight last: a key on the trigger or in
+// the popup (an Enter that opens it among them) sets it, the pointer clears it.
+function useKeyed(trigger: PickParts<string | null>["trigger"]) {
+	const [keyed, setKeyed] = useState(false);
+	const keys = () => setKeyed(true);
+	const pointer = () => setKeyed(false);
+	return {
+		keyed,
+		trigger: (handed: ComponentProps<"button">) =>
+			trigger({
+				...handed,
+				onKeyDown: (event) => {
+					keys();
+					handed.onKeyDown?.(event);
+				},
+				onPointerDown: (event) => {
+					pointer();
+					handed.onPointerDown?.(event);
+				},
+			}),
+		popup: { onKeyDown: keys, onPointerMove: pointer },
+		// Focus leaving the options for the act takes the keyboard's ring with it.
+		leave: pointer,
+	};
+}
+
+const optionFocus = (highlighted: boolean, keyed: boolean) =>
+	highlighted && keyed ? KEYBOARD_RING : OPTION_NO_FOCUS;
+
+interface PickParts<V extends string | null> {
+	label: string;
+	groups: Grouped<V>[];
+	open: boolean;
+	setOpen: (open: boolean) => void;
+	pick: (value: V) => void;
+	trigger: (props: ComponentProps<"button">) => ReactElement;
+	act?: IconAct;
+}
+
+// The desktop list of six options or fewer: Base UI's select supplies the
+// listbox, its keyboard and its typeahead.
+function PickList<V extends string | null>(
+	props: PickParts<V> & { value: V | undefined },
+) {
+	const container = use(PortalContainer);
+	const keyboard = useKeyed(props.trigger);
+	return (
+		<Select.Root
+			value={props.value ?? null}
+			onValueChange={(next) => props.pick(next as V)}
+			open={props.open}
+			onOpenChange={props.setOpen}
+		>
+			<Select.Trigger render={(handed) => keyboard.trigger(handed)} />
+			<Select.Portal container={container}>
+				<Select.Positioner
+					align="end"
+					alignItemWithTrigger={false}
+					sideOffset={() => spacing("pair")}
+				>
+					<Select.Popup
+						{...keyboard.popup}
+						className={cn(POPOVER, PICKER_POPOVER, POPUP)}
+					>
+						<Select.List aria-label={props.label} className={LIST}>
+							{props.groups.map((group, at) => (
+								<Select.Group
+									key={group.label ?? at}
+									className={cn(SELECT_GROUP, GROUP)}
+								>
+									{group.label ? (
+										<Select.GroupLabel
+											render={<GroupLabel>{group.label}</GroupLabel>}
+										/>
+									) : null}
+									{group.items.map((option) => (
+										<Select.Item
+											key={String(option.value)}
+											value={option.value}
+											label={option.label}
+											className={(state) =>
+												cn(
+													optionRow(option, "list", state.highlighted),
+													OPTION,
+													optionFocus(state.highlighted, keyboard.keyed),
+												)
+											}
+										>
+											<OptionText option={option} />
+											<Select.ItemIndicator className={TICK}>
+												<Icon name="Check" fit="body" />
+											</Select.ItemIndicator>
+										</Select.Item>
+									))}
+								</Select.Group>
+							))}
+						</Select.List>
+						{props.act ? (
+							<PickAct
+								act={props.act}
+								ground="list"
+								done={() => props.setOpen(false)}
+								onFocus={keyboard.leave}
+							/>
+						) : null}
+					</Select.Popup>
+				</Select.Positioner>
+			</Select.Portal>
+		</Select.Root>
+	);
+}
+
+// The desktop list past six options: Base UI's combobox filters the rows by
+// the search typed at the popover's head.
+function PickSearch<V extends string | null>(
+	props: PickParts<V> & { current: Option<V> | undefined },
+) {
+	const container = use(PortalContainer);
+	const words = useWords();
+	const keyboard = useKeyed(props.trigger);
+	return (
+		<Combobox.Root
+			items={props.groups}
+			value={props.current ?? null}
+			onValueChange={(next) => {
+				if (next) props.pick((next as Option<V>).value);
+			}}
+			open={props.open}
+			onOpenChange={props.setOpen}
+		>
+			<Combobox.Trigger render={(handed) => keyboard.trigger(handed)} />
+			<Combobox.Portal container={container}>
+				<Combobox.Positioner align="end" sideOffset={() => spacing("pair")}>
+					<Combobox.Popup
+						{...keyboard.popup}
+						aria-label={props.label}
+						className={cn(POPOVER, PICKER_POPOVER, POPUP)}
+					>
+						<div className={cn(field({ fit: "bar" }), FIELD_GLYPH, SEARCH)}>
+							<Icon name="Search" fit="control" />
+							<Combobox.Input
+								placeholder={words.search}
+								aria-label={words.search}
+								className={cn(fieldValue({ kind: "search" }), SEARCH_VALUE)}
+							/>
+						</div>
+						<Combobox.List className={LIST}>
+							{(group: Grouped<V>) => (
+								<Combobox.Group
+									key={group.label ?? ""}
+									items={group.items as Option<V>[]}
+									className={cn(SELECT_GROUP, GROUP)}
+								>
+									{group.label ? (
+										<Combobox.GroupLabel
+											render={<GroupLabel>{group.label}</GroupLabel>}
+										/>
+									) : null}
+									<Combobox.Collection>
+										{(option: Option<V>) => (
+											<Combobox.Item
+												key={String(option.value)}
+												value={option}
+												className={(state) =>
+													cn(
+														optionRow(option, "list", state.highlighted),
+														OPTION,
+														optionFocus(state.highlighted, keyboard.keyed),
+													)
+												}
+											>
+												<OptionText option={option} />
+												<Combobox.ItemIndicator className={TICK}>
+													<Icon name="Check" fit="body" />
+												</Combobox.ItemIndicator>
+											</Combobox.Item>
+										)}
+									</Combobox.Collection>
+								</Combobox.Group>
+							)}
+						</Combobox.List>
+						{props.act ? (
+							<PickAct
+								act={props.act}
+								ground="list"
+								done={() => props.setOpen(false)}
+								onFocus={keyboard.leave}
+							/>
+						) : null}
+					</Combobox.Popup>
+				</Combobox.Positioner>
+			</Combobox.Portal>
+		</Combobox.Root>
+	);
+}
+
+const moveFocus = arrowsOver("option");
+
+// The touch sheet: the rows edge to edge under the sheet's head, a search
+// leading them past six options.
+function PickSheet<V extends string | null>(
+	props: PickParts<V> & { value: V | undefined },
+) {
+	const [sheet] = useState(() => Dialog.createHandle<unknown>());
+	const [search, setSearch] = useState("");
+	const [focused, setFocused] = useState<V>();
+	const list = useRef<HTMLDivElement>(null);
+	const typed = search.trim().toLowerCase();
+	const searching = props.groups.flatMap((g) => g.items).length > SEARCH_PAST;
+	const shown = props.groups
+		.map((group) => ({
+			...group,
+			items: group.items.filter((option) =>
+				option.label.toLowerCase().includes(typed),
+			),
+		}))
+		.filter((group) => group.items.length > 0);
+	// The options are one tab stop that the arrows move: the option last
+	// focused, else the chosen one, else the first.
+	const values = shown.flatMap((group) => group.items.map((o) => o.value));
+	const stop =
+		[focused, props.value].find((v) => v !== undefined && values.includes(v)) ??
+		values[0];
+	const { open } = props;
+	// The sheet opens with focus on the stop, after the dialog's own focus.
+	useEffect(() => {
+		if (!open) return;
+		let inner = 0;
+		const outer = requestAnimationFrame(() => {
+			inner = requestAnimationFrame(() =>
+				list.current?.querySelector<HTMLElement>('[tabindex="0"]')?.focus(),
+			);
+		});
+		return () => {
+			cancelAnimationFrame(outer);
+			cancelAnimationFrame(inner);
+		};
+	}, [open]);
+	return (
+		<>
+			<Dialog.Trigger
+				handle={sheet}
+				render={(handed) => props.trigger(handed)}
+			/>
+			<SheetBase
+				form="menu"
+				handle={sheet}
+				open={props.open}
+				onOpen={() => props.setOpen(true)}
+				onClose={() => {
+					props.setOpen(false);
+					setSearch("");
+					setFocused(undefined);
+				}}
+				title={props.label}
+			>
+				<div className={SHEET_ROWS}>
+					{searching ? (
+						<div className={SEARCH_SLOT}>
+							<Input kind="search" value={search} onChange={setSearch} />
+						</div>
+					) : null}
+					<div
+						ref={list}
+						role="listbox"
+						aria-label={props.label}
+						onKeyDown={moveFocus}
+						className={LISTBOX}
+					>
+						{shown.map((group, at) => (
+							// biome-ignore lint/a11y/useSemanticElements: a listbox's group of options
+							<div
+								key={group.label ?? at}
+								role="group"
+								className={cn(SELECT_GROUP, GROUP)}
+							>
+								{group.label ? <GroupLabel>{group.label}</GroupLabel> : null}
+								{group.items.map((option) => {
+									const chosen = option.value === props.value;
+									return (
+										<button
+											key={String(option.value)}
+											type="button"
+											role="option"
+											aria-selected={chosen}
+											tabIndex={option.value === stop ? 0 : -1}
+											onFocus={() => setFocused(option.value)}
+											onClick={() => props.pick(option.value)}
+											className={cn(
+												optionRow(option, "group"),
+												OPTION,
+												OPTION_BUTTON,
+											)}
+										>
+											<OptionText option={option} />
+											{chosen ? (
+												<span className={TICK}>
+													<Icon name="Check" fit="body" />
+												</span>
+											) : null}
+										</button>
+									);
+								})}
+							</div>
+						))}
+					</div>
+					{props.act ? (
+						<PickAct
+							act={props.act}
+							ground="group"
+							done={() => props.setOpen(false)}
+						/>
+					) : null}
+				</div>
+			</SheetBase>
+		</>
+	);
+}

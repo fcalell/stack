@@ -9,7 +9,7 @@ import {
 } from "@fcalell/ui-core/variants";
 import { use, useEffect, useId, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
-import { SubmitContext } from "../../lib/form.ts";
+import { ActInert, SubmitContext } from "../../lib/form.ts";
 import { ReasonHostContext } from "../../lib/reason.ts";
 import { useTouched } from "../../lib/touched.ts";
 import { Count } from "../count/index.tsx";
@@ -91,14 +91,17 @@ export function Button({
 	const { touched } = useTouched();
 	const host = use(ReasonHostContext);
 	const submits = use(SubmitContext);
+	// Inert beside a pending act: the blocked look and no press, no reason.
+	const inert = use(ActInert) && !loading;
 	const [pressed, setPressed] = useState(false);
 	useEffect(() => {
 		if (!muted) setPressed(false);
 	}, [muted]);
 	const said = muted && (pressed || touched);
-	const look = lookOf(kind, loading === true, muted);
-	const labelLook = loading ? PENDING : muted && LABEL_BLOCKED;
+	const look = lookOf(kind, loading === true, muted || inert);
+	const labelLook = loading ? PENDING : (muted || inert) && LABEL_BLOCKED;
 	const press = () => {
+		if (inert) return;
 		if (!muted) onAct?.();
 		else if (host) host.press();
 		else setPressed(true);
@@ -110,7 +113,7 @@ export function Button({
 			disabled={loading}
 			focusableWhenDisabled
 			type={submits ? "submit" : "button"}
-			aria-disabled={loading || muted || undefined}
+			aria-disabled={loading || muted || inert || undefined}
 			aria-busy={loading || undefined}
 			aria-describedby={muted ? (host?.id ?? reason) : undefined}
 			onClick={press}

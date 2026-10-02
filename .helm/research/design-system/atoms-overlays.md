@@ -1284,6 +1284,9 @@ Under: Avatar · a full circle at the avatar size, initials in caption 500 on th
 
 ## Status
 
+
+A status is a mark (fcalell, 2026-10-02): board 12's `onOpen` frames are retired, and a status that moves is a `Picker` at the row fit whose options carry states (`Option.status`), its value and options drawn as this Status.
+
 Board: `12-marks-desktop.dc.html` (the touch board draws the same strings).
 
 ### state=active · rest
@@ -1349,116 +1352,6 @@ Under: Status, the six states on canvas: dot in the status colour, the word in m
   - cell: `STATUS`; overlay: `inline-flex items-center min-w-0`
 - dot: `size-dot rounded-full shrink-0 border border-ink-meta`
   - cell: `STATUS_DOT {state: idle}`; overlay: `shrink-0`
-- word: `truncate text-meta leading-meta font-normal text-ink-meta`
-  - cell: `STATUS_LABEL`; overlay: `truncate`
-
-### state=active with onOpen · rest
-
-Under: Status with onOpen, active: rest, hover, focus, active / rest
-
-- button: `inline-flex items-center min-w-0 gap-inside rounded-full px-inside -mx-inside min-h-target`
-  - cell: `STATUS + PILL_ACT`; overlay: `inline-flex items-center min-w-0 -mx-inside`
-- dot: `size-dot rounded-full shrink-0 bg-accent-ink`
-  - cell: `STATUS_DOT {state: active}`; overlay: `shrink-0`
-- word: `truncate text-meta leading-meta font-normal text-ink-meta`
-  - cell: `STATUS_LABEL`; overlay: `truncate`
-
-### state=active with onOpen · hover
-
-Under: Status with onOpen, active: rest, hover, focus, active / hover
-
-- button: `inline-flex items-center min-w-0 gap-inside rounded-full px-inside -mx-inside min-h-target bg-wash-hover`
-  - cell: `STATUS + PILL_ACT`; overlay: `inline-flex items-center min-w-0 -mx-inside bg-wash-hover`
-- dot: `size-dot rounded-full shrink-0 bg-accent-ink`
-  - cell: `STATUS_DOT {state: active}`; overlay: `shrink-0`
-- word: `truncate text-meta leading-meta font-normal text-ink-meta`
-  - cell: `STATUS_LABEL`; overlay: `truncate`
-
-### state=active with onOpen · focus
-
-Under: Status with onOpen, active: rest, hover, focus, active / focus
-
-- button: `inline-flex items-center min-w-0 gap-inside rounded-full px-inside -mx-inside min-h-target outline-2 outline-offset-2 outline-ring`
-  - cell: `STATUS + PILL_ACT`; overlay: `inline-flex items-center min-w-0 -mx-inside outline-2 outline-offset-2 outline-ring`
-- dot: `size-dot rounded-full shrink-0 bg-accent-ink`
-  - cell: `STATUS_DOT {state: active}`; overlay: `shrink-0`
-- word: `truncate text-meta leading-meta font-normal text-ink-meta`
-  - cell: `STATUS_LABEL`; overlay: `truncate`
-
-### state=active with onOpen · active
-
-Under: Status with onOpen, active: rest, hover, focus, active / active
-
-- button: `inline-flex items-center min-w-0 gap-inside rounded-full px-inside -mx-inside min-h-target bg-wash-press`
-  - cell: `STATUS + PILL_ACT`; overlay: `inline-flex items-center min-w-0 -mx-inside bg-wash-press`
-- dot: `size-dot rounded-full shrink-0 bg-accent-ink`
-  - cell: `STATUS_DOT {state: active}`; overlay: `shrink-0`
-- word: `truncate text-meta leading-meta font-normal text-ink-meta`
-  - cell: `STATUS_LABEL`; overlay: `truncate`
-
-### state=failed with onOpen · rest
-
-Under: Status with onOpen, failed: rest, hover, focus, active / rest
-
-- button: `inline-flex items-center min-w-0 gap-inside rounded-full px-inside -mx-inside min-h-target`
-  - cell: `STATUS + PILL_ACT`; overlay: `inline-flex items-center min-w-0 -mx-inside`
-- dot: `size-dot rounded-full shrink-0 bg-danger`
-  - cell: `STATUS_DOT {state: failed}`; overlay: `shrink-0`
-- word: `truncate text-meta leading-meta font-normal text-ink-meta`
-  - cell: `STATUS_LABEL`; overlay: `truncate`
-
-### state=failed with onOpen · hover
-
-Under: Status with onOpen, failed: rest, hover, focus, active / hover
-
-- button: `inline-flex items-center min-w-0 gap-inside rounded-full px-inside -mx-inside min-h-target bg-wash-hover`
-  - cell: `STATUS + PILL_ACT`; overlay: `inline-flex items-center min-w-0 -mx-inside bg-wash-hover`
-- dot: `size-dot rounded-full shrink-0 bg-danger`
-  - cell: `STATUS_DOT {state: failed}`; overlay: `shrink-0`
-- word: `truncate text-meta leading-meta font-normal text-ink-meta`
-  - cell: `STATUS_LABEL`; overlay: `truncate`
-
-### state=failed with onOpen · focus
-
-Under: Status with onOpen, failed: rest, hover, focus, active / focus
-
-- button: `inline-flex items-center min-w-0 gap-inside rounded-full px-inside -mx-inside min-h-target outline-2 outline-offset-2 outline-ring`
-  - cell: `STATUS + PILL_ACT`; overlay: `inline-flex items-center min-w-0 -mx-inside outline-2 outline-offset-2 outline-ring`
-- dot: `size-dot rounded-full shrink-0 bg-danger`
-  - cell: `STATUS_DOT {state: failed}`; overlay: `shrink-0`
-- word: `truncate text-meta leading-meta font-normal text-ink-meta`
-  - cell: `STATUS_LABEL`; overlay: `truncate`
-
-### state=failed with onOpen · active
-
-Under: Status with onOpen, failed: rest, hover, focus, active / active
-
-- button: `inline-flex items-center min-w-0 gap-inside rounded-full px-inside -mx-inside min-h-target bg-wash-press`
-  - cell: `STATUS + PILL_ACT`; overlay: `inline-flex items-center min-w-0 -mx-inside bg-wash-press`
-- dot: `size-dot rounded-full shrink-0 bg-danger`
-  - cell: `STATUS_DOT {state: failed}`; overlay: `shrink-0`
-- word: `truncate text-meta leading-meta font-normal text-ink-meta`
-  - cell: `STATUS_LABEL`; overlay: `truncate`
-
-### state=done with onOpen · rest
-
-Under: Status with onOpen in a row's trailing slot
-
-- button: `inline-flex items-center min-w-0 gap-inside rounded-full px-inside -mx-inside min-h-target`
-  - cell: `STATUS + PILL_ACT`; overlay: `inline-flex items-center min-w-0 -mx-inside`
-- dot: `size-dot rounded-full shrink-0 bg-ok`
-  - cell: `STATUS_DOT {state: done}`; overlay: `shrink-0`
-- word: `truncate text-meta leading-meta font-normal text-ink-meta`
-  - cell: `STATUS_LABEL`; overlay: `truncate`
-
-### state=attention with onOpen · rest
-
-Under: Status with onOpen in a row's trailing slot
-
-- button: `inline-flex items-center min-w-0 gap-inside rounded-full px-inside -mx-inside min-h-target`
-  - cell: `STATUS + PILL_ACT`; overlay: `inline-flex items-center min-w-0 -mx-inside`
-- dot: `size-dot rounded-full shrink-0 bg-warn`
-  - cell: `STATUS_DOT {state: attention}`; overlay: `shrink-0`
 - word: `truncate text-meta leading-meta font-normal text-ink-meta`
   - cell: `STATUS_LABEL`; overlay: `truncate`
 
@@ -2270,6 +2163,8 @@ Under: Light · Switch, bare: off and on (selected) in every state, on canvas, s
 ## Checkbox
 
 Board: `14-toggles-desktop.dc.html` (the touch board draws the same strings). The component's checkbox element is the hit box, as the switch's is; the box inside it takes the listed box strings, its states spelled on the hit box the same way. The mark is Lucide's `Check` or `Minus` on its 24-unit grid at stroke 3.5, round caps and joins, filling the `size-icon-meta` mark: 12 in the 16 box (desktop, 1.75 px), 14 in the 20 box (touch, 2.04 px).
+
+In a row whose label is its target (a FormField's checkbox form, an OptionList row; set by the row through `LabelTarget`, never a prop) the checkbox element is the box's size: its hit overlay drops `size-target` (`group/toggle inline-flex shrink-0 items-center justify-center outline-none`), so the box sits on the label's line where boards 41 and 42 draw it and the label row is the target.
 
 ### state=unchecked · rest
 

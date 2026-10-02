@@ -1,196 +1,56 @@
-import { SHEET, type SheetFit, text } from "@fcalell/ui-core/variants";
-import { BottomSheetModal, BottomSheetView } from "@gorhom/bottom-sheet";
-import {
-	createContext,
-	type ReactNode,
-	useCallback,
-	useContext,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from "react";
-import { Pressable, Text as RNText, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import type { Act } from "@fcalell/ui-core/descriptors";
+import type { SheetFit } from "@fcalell/ui-core/variants";
+import type { ReactNode } from "react";
 import type { Closed } from "../../lib/closed";
-import { cn } from "../../lib/cn";
-import { FieldNameContext } from "../../lib/field";
-import { TouchedContext } from "../../lib/touched";
-import { useWords } from "../../lib/words";
-import { IconButtonBase } from "../icon-button/base";
+import { SheetBase } from "./base";
 
-export interface SheetSubmit {
-	label: string;
-	blocked?: string;
-	onAct: () => void;
-	loading?: boolean;
-}
+export { useSheetGrow } from "./base";
 
-interface SheetBase extends Closed {
+export interface SheetProps extends Closed {
 	open: boolean;
+	// Hears the close act, a press on the scrim and the drag down.
 	onClose: () => void;
+	// The sheet's heading, which names it.
 	title: string;
 	description?: string;
+	// A second page's way back, in the close act's place.
 	back?: () => void;
-	foot?: ReactNode;
+	// The act that completes the task, at the head's end where a keyboard
+	// would cover a bar; a blocked one's reason under the head.
+	submit?: Act;
+	// A sentence in the foot.
+	foot?: string;
+	// What the desktop side sheet holds; on the phone a pane's title steps
+	// down to body 500.
 	fit?: SheetFit;
 	children?: ReactNode;
 }
 
-// `submit` (top right, where a keyboard would cover a bar) and an ActionBar
-// child exclude each other: a sheet with text entry submits from its top bar,
-// a decision sheet takes the bar. The union names the two shapes; which
-// children a sheet holds is the consumer's side of it.
-export type SheetProps =
-	| (SheetBase & { submit: SheetSubmit })
-	| (SheetBase & { submit?: never });
-
-// A TextArea inside asks the sheet for the full height.
-const GrowContext = createContext<(() => void) | undefined>(undefined);
-
-export function useSheetGrow(): (() => void) | undefined {
-	return useContext(GrowContext);
-}
-
-const FULL = ["100%"];
-const TRANSPARENT = { backgroundColor: "transparent" } as const;
-
-// Content-tall, full height when it holds a TextArea, the sheet corners; a
-// close circle left, the title, submit right, the foot under the children.
-// Touch draws the bottom sheet whatever its `fit`, which sizes the desktop
-// side sheet.
-// The title names a typing control inside that no `FormField` labels. A new
-// `title` or `description` is a new page, which has taken no input.
+// A bottom sheet over the scrim: the close act first, the title, the submit
+// at the head's end, the description under them; the body; the foot's line.
 export function Sheet({
 	open,
 	onClose,
 	title,
 	description,
 	back,
-	foot,
-	children,
-	...rest
-}: SheetProps) {
-	const words = useWords();
-	const insets = useSafeAreaInsets();
-	const ref = useRef<BottomSheetModal>(null);
-	const [tall, setTall] = useState(false);
-	const [touched, setTouched] = useState(false);
-	const grow = useCallback(() => setTall(true), []);
-	const touch = useCallback(() => setTouched(true), []);
-	const submit = "submit" in rest ? rest.submit : undefined;
-	// A wizard swaps its page in place; reset during render, so the new page
-	// never draws the old page's reason.
-	const page = `${title}\n${description ?? ""}`;
-	const [shown, setShown] = useState(page);
-	if (shown !== page) {
-		setShown(page);
-		setTouched(false);
-	}
-	useEffect(() => {
-		if (open) ref.current?.present();
-		else {
-			ref.current?.dismiss();
-			setTouched(false);
-		}
-	}, [open]);
-	const snapPoints = useMemo(() => (tall ? FULL : undefined), [tall]);
-	return (
-		<BottomSheetModal
-			ref={ref}
-			onDismiss={onClose}
-			backgroundStyle={TRANSPARENT}
-			handleComponent={null}
-			enableDynamicSizing={!tall}
-			snapPoints={snapPoints}
-		>
-			<BottomSheetView>
-				<GrowContext.Provider value={grow}>
-					<FieldNameContext.Provider value={title}>
-						<TouchedContext.Provider value={{ touched, touch }}>
-							<View
-								style={{ paddingBottom: insets.bottom + 8 }}
-								className={cn(SHEET, "gap-fields px-card pt-pair")}
-							>
-								<View className="min-h-11 flex-row items-center gap-inside">
-									{back ? (
-										<IconButtonBase
-											icon="ChevronLeft"
-											label={words.back}
-											onAct={back}
-										/>
-									) : (
-										<IconButtonBase
-											icon="X"
-											label={words.close}
-											onAct={onClose}
-										/>
-									)}
-									<RNText
-										numberOfLines={1}
-										className={cn(text({ role: "heading" }), "flex-1")}
-									>
-										{title}
-									</RNText>
-									{submit ? (
-										<SubmitAct key={page} submit={submit} touched={touched} />
-									) : null}
-								</View>
-								{description ? (
-									<RNText className={text({ role: "meta" })}>
-										{description}
-									</RNText>
-								) : null}
-								{children}
-								{foot}
-							</View>
-						</TouchedContext.Provider>
-					</FieldNameContext.Provider>
-				</GrowContext.Provider>
-			</BottomSheetView>
-		</BottomSheetModal>
-	);
-}
-
-// A blocked submit says its reason under it once pressed or once a field in
-// the sheet has taken input.
-function SubmitAct({
 	submit,
-	touched,
-}: {
-	submit: SheetSubmit;
-	touched: boolean;
-}) {
-	const blocked = submit.blocked !== undefined;
-	const muted = blocked || submit.loading;
-	const [pressed, setPressed] = useState(false);
-	useEffect(() => {
-		if (!blocked) setPressed(false);
-	}, [blocked]);
-	const said = blocked && (pressed || touched);
+	foot,
+	fit,
+	children,
+}: SheetProps) {
 	return (
-		<View className="items-end gap-pair">
-			<Pressable
-				accessibilityRole="button"
-				accessibilityState={{ disabled: muted }}
-				accessibilityHint={said ? submit.blocked : undefined}
-				disabled={submit.loading}
-				onPress={() => (blocked ? setPressed(true) : submit.onAct())}
-				className="min-h-11 justify-center"
-			>
-				<RNText
-					className={cn(
-						text({ role: "body" }),
-						"font-medium text-accent-ink",
-						muted && "text-ink-faint",
-					)}
-				>
-					{submit.label}
-				</RNText>
-			</Pressable>
-			{said ? (
-				<RNText className={text({ role: "meta" })}>{submit.blocked}</RNText>
-			) : null}
-		</View>
+		<SheetBase
+			open={open}
+			onClose={onClose}
+			title={title}
+			description={description}
+			back={back}
+			submit={submit}
+			foot={foot}
+			fit={fit}
+		>
+			{children}
+		</SheetBase>
 	);
 }

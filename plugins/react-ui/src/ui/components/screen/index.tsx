@@ -16,7 +16,8 @@ import { useTouch } from "../../lib/media.ts";
 import { navigate } from "../../lib/navigate.ts";
 import { useWords } from "../../lib/words.tsx";
 import { IconButton } from "../icon-button/index.tsx";
-import { backGlyph, Details, More } from "../place/index.tsx";
+import { Menu } from "../menu/index.tsx";
+import { backGlyph, Details } from "../place/index.tsx";
 
 // A screen is the size container a Split inside decides its regions by.
 const SCREEN = "@container/page flex flex-col grow min-h-0";
@@ -24,8 +25,9 @@ const HEAD = "flex flex-col";
 const ROW = "flex items-center";
 const SPACER = "grow";
 const TITLE = "min-w-0 grow truncate";
-// The body scrolls under the fixed head.
-const BODY = "flex flex-col overflow-y-auto";
+// The body fills the screen, so an EmptyState alone in it centres, and
+// scrolls under the fixed head.
+const BODY = "flex flex-col grow overflow-y-auto";
 
 /** A pushed page. */
 export interface ScreenProps extends Closed {
@@ -67,7 +69,9 @@ export function Screen({ title, back, actions, more, children }: ScreenProps) {
 		<IconButton key={action.label} {...action} fit={fit} />
 	));
 	const details = sheet ? <Details sheet={sheet} fit={fit} /> : null;
-	const overflow = more?.length ? <More items={more} fit={fit} /> : null;
+	const overflow = more?.length ? (
+		<Menu label={words.more} items={more} />
+	) : null;
 	const heading = (
 		<h1 id={titleId} className={cn(text({ role: "title" }), TITLE)}>
 			{title}

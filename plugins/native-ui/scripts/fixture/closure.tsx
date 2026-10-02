@@ -538,21 +538,21 @@ export const closure = (
 		<ItemHeader title="a" selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
 		<ItemHeader title="a" placeholderTextColorClassName="text-ink-body" />
-		<SegmentedControl options={[]} value="a" onChange={noop} />
+		<SegmentedControl label="a" options={[]} value="a" onChange={noop} />
 		{/* @ts-expect-error: closed channel */}
-		<SegmentedControl options={[]} value="a" onChange={noop} className="x" />
+		<SegmentedControl label="a" options={[]} value="a" onChange={noop} className="x" />
 		{/* @ts-expect-error: closed channel */}
-		<SegmentedControl options={[]} value="a" onChange={noop} style={{ flex: 1 }} />
+		<SegmentedControl label="a" options={[]} value="a" onChange={noop} style={{ flex: 1 }} />
 		{/* @ts-expect-error: closed channel */}
-		<SegmentedControl options={[]} value="a" onChange={noop} class="x" />
+		<SegmentedControl label="a" options={[]} value="a" onChange={noop} class="x" />
 		{/* @ts-expect-error: closed channel */}
-		<SegmentedControl options={[]} value="a" onChange={noop} classList={{}} />
+		<SegmentedControl label="a" options={[]} value="a" onChange={noop} classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<SegmentedControl options={[]} value="a" onChange={noop} colorClassName="text-ink-body" />
+		<SegmentedControl label="a" options={[]} value="a" onChange={noop} colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<SegmentedControl options={[]} value="a" onChange={noop} selectionColorClassName="text-ink-body" />
+		<SegmentedControl label="a" options={[]} value="a" onChange={noop} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<SegmentedControl options={[]} value="a" onChange={noop} placeholderTextColorClassName="text-ink-body" />
+		<SegmentedControl label="a" options={[]} value="a" onChange={noop} placeholderTextColorClassName="text-ink-body" />
 		<Sheet open onClose={noop} title="a" />
 		{/* @ts-expect-error: closed channel */}
 		<Sheet open onClose={noop} title="a" className="x" />
@@ -703,7 +703,7 @@ export const closure = (
 		<Diff hunks={[]} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
 		<Diff hunks={[]} placeholderTextColorClassName="text-ink-body" />
-		<Menu label="a" items={[[{ label: "a", onAct: noop, icon: "Copy" }], [{ label: "a", onAct: noop, destructive: true, blocked: "a" }]]} />
+		<Menu label="a" items={[{ label: "a", onAct: noop, icon: "Copy" }, { label: "a", onAct: noop, destructive: true, blocked: "a" }]} />
 		{/* @ts-expect-error: closed channel */}
 		<Menu label="a" items={[]} className="x" />
 		{/* @ts-expect-error: closed channel */}

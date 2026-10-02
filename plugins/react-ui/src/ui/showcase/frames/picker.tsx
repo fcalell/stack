@@ -1,0 +1,128 @@
+import { Group } from "../../components/group/index.tsx";
+import { ListRow } from "../../components/list-row/index.tsx";
+import { Picker } from "../../components/picker/index.tsx";
+import type { ShowcaseFrame } from "../cells.ts";
+import { press, Stage } from "./overlay-stage.tsx";
+
+const change = () => {};
+const ROLES = [
+	{
+		value: "owner",
+		label: "Owner",
+		description: "Everything, billing included",
+	},
+	{
+		value: "admin",
+		label: "Admin",
+		description: "Manages members and settings",
+	},
+	{
+		value: "member",
+		label: "Member",
+		description: "Creates and edits projects",
+	},
+	{ value: "viewer", label: "Viewer", description: "Reads and comments" },
+] as const;
+type Role = (typeof ROLES)[number]["value"];
+const OWNERS = [
+	{ value: null, label: "Anyone" },
+	{ value: "ana", label: "Ana Ruiz", description: "ana@acme.app" },
+	{ value: "ben", label: "Ben Kaya", description: "ben@acme.app" },
+	{ value: "chen", label: "Chen Wu", description: "chen@acme.app" },
+	{ value: "dana", label: "Dana Moss", description: "dana@acme.app" },
+	{ value: "ema", label: "Ema Okafor", description: "ema@acme.app" },
+	{ value: "felix", label: "Felix Varga", description: "felix@acme.app" },
+];
+const MEMBERS = [
+	{ name: "Ben Kaya", email: "ben@acme.app", role: "admin" },
+	{ name: "Chen Wu", email: "Invited 2 days ago", role: "member" },
+	{ name: "Ema Okafor", email: "ema@acme.app", role: "member" },
+] as const;
+
+// A member's role as a row's trailing pick.
+function Members() {
+	return (
+		<Group>
+			{MEMBERS.map((member) => (
+				<ListRow<Role>
+					key={member.name}
+					leading={{ avatar: { name: member.name } }}
+					title={member.name}
+					meta={[member.email]}
+					trailing={{
+						pick: {
+							label: `${member.name}'s role`,
+							options: [...ROLES],
+							value: member.role,
+							onChange: change,
+						},
+					}}
+				/>
+			))}
+		</Group>
+	);
+}
+
+function Triggers() {
+	return (
+		<div className="flex flex-wrap items-start gap-sections">
+			<Picker
+				label="Role"
+				options={[...ROLES]}
+				value="admin"
+				onChange={change}
+			/>
+			<Picker label="Owner" options={OWNERS} value={null} onChange={change} />
+			<Picker label="Reviewer" options={OWNERS.slice(1)} onChange={change} />
+			<Picker label="Role" options={[...ROLES]} onChange={change} fit="row" />
+		</div>
+	);
+}
+
+// The trigger opens from the pointer: a popover's on its press down, a
+// sheet's on its click.
+function openFirst(stage: HTMLElement) {
+	const trigger = stage.querySelector("button");
+	for (const type of ["pointerdown", "mousedown"])
+		trigger?.dispatchEvent(
+			new PointerEvent(type, {
+				bubbles: true,
+				pointerType: "mouse",
+				button: 0,
+			}),
+		);
+	press(trigger);
+}
+
+// The row fit's cells draw the members' picks; the open state draws the
+// role pick's list (four options, no search) on the row fit cells and the
+// owner filter's (seven, the search leading) on the field cells; every other
+// cell the field-fit triggers, with a value, with the empty choice and with
+// none (its label in the placeholder's ink, a row fit's too).
+export function drawPicker(frame: ShowcaseFrame) {
+	const cell = frame.cell.name;
+	const row =
+		cell.startsWith("PICKER.fit.row") ||
+		cell === "PILL_ACT" ||
+		cell === "PICKER_VALUE" ||
+		cell.startsWith("ICON.fit.meta") ||
+		cell.startsWith("ROW.");
+	if (frame.state === "selected")
+		return (
+			<Stage contain={frame.density === "touch"} ready={openFirst}>
+				<div className="flex flex-col p-card">
+					{row ? (
+						<Members />
+					) : (
+						<Picker
+							label="Owner"
+							options={OWNERS}
+							value={null}
+							onChange={change}
+						/>
+					)}
+				</div>
+			</Stage>
+		);
+	return row ? <Members /> : <Triggers />;
+}

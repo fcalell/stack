@@ -1,0 +1,55 @@
+import type { Act } from "@fcalell/ui-core/descriptors";
+import type { SheetFit } from "@fcalell/ui-core/variants";
+import type { ReactNode } from "react";
+import type { Closed } from "../../lib/closed.ts";
+import { SheetBase } from "./base.tsx";
+
+/** A task over the page. */
+export interface SheetProps extends Closed {
+	/** The sheet is open. */
+	open: boolean;
+	/** Hears Escape, a press outside, the close act and Cancel. */
+	onClose: () => void;
+	/** The sheet's heading, which names it. */
+	title: string;
+	/** A sentence under the title. */
+	description?: string;
+	/** A second page's way back: the back act stands first in the head, on touch in the close act's place. */
+	back?: () => void;
+	/** The act that completes the task: after Cancel in the foot on the desktop, at the head's end on touch. */
+	submit?: Act;
+	/** A sentence in the foot, beside the submit on the desktop. */
+	foot?: string;
+	/** What the desktop side sheet holds: a form (the default) or a record's pane. */
+	fit?: SheetFit;
+	/** The body. */
+	children?: ReactNode;
+}
+
+/** On the desktop a side sheet at the end over the scrim, its head (the title over the description beside the close act) over the body and the foot; on touch a bottom sheet with the close act first and the submit at the head's end, a blocked submit's reason under the head. */
+export function Sheet({
+	open,
+	onClose,
+	title,
+	description,
+	back,
+	submit,
+	foot,
+	fit,
+	children,
+}: SheetProps) {
+	return (
+		<SheetBase
+			open={open}
+			onClose={onClose}
+			title={title}
+			description={description}
+			back={back}
+			submit={submit}
+			foot={foot}
+			fit={fit}
+		>
+			{children}
+		</SheetBase>
+	);
+}

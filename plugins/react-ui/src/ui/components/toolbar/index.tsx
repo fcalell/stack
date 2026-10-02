@@ -1,13 +1,17 @@
 import { cn } from "@fcalell/ui-core/cn";
 import { TOOLBAR, TOOLBAR_CHIPS, TOOLBAR_ROW } from "@fcalell/ui-core/variants";
-import { Children, isValidElement, type ReactNode } from "react";
+import { Children, isValidElement, type ReactNode, use } from "react";
 import type { Closed } from "../../lib/closed.ts";
+import { RecordShown } from "../../lib/frame.ts";
 import { Chip } from "../chip/index.tsx";
 import { Input } from "../input/index.tsx";
 
 const STRIP = "flex flex-col";
 const ROW = "flex flex-wrap items-center";
 const SEARCH = "flex grow min-w-0 touch:w-full";
+// Below `tablet` of its page, with a record standing alone, the strip leaves
+// with the list it works on.
+const BEHIND = "page-max-tablet:hidden";
 
 /** A strip of controls over a list. */
 export interface ToolbarProps extends Closed {
@@ -15,8 +19,9 @@ export interface ToolbarProps extends Closed {
 	children?: ReactNode;
 }
 
-/** The strip under a hairline: the search grows and the acts keep their width in one wrapping row (on touch the search takes its own), the applied filters' chips in a row under them. */
+/** The strip under a hairline: the search grows and the acts keep their width in one wrapping row (on touch the search takes its own), the applied filters' chips in a row under them; below `tablet` it leaves with its list while a record stands alone. */
 export function Toolbar({ children }: ToolbarProps) {
+	const behind = use(RecordShown);
 	const search: ReactNode[] = [];
 	const acts: ReactNode[] = [];
 	const chips: ReactNode[] = [];
@@ -26,7 +31,7 @@ export function Toolbar({ children }: ToolbarProps) {
 		else acts.push(child);
 	}
 	return (
-		<div className={cn(TOOLBAR, STRIP)}>
+		<div className={cn(TOOLBAR, STRIP, behind && BEHIND)}>
 			<div className={cn(TOOLBAR_ROW, ROW)}>
 				{search.length > 0 ? <div className={SEARCH}>{search}</div> : null}
 				{acts.length > 0 ? (

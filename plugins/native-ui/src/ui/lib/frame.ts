@@ -11,6 +11,12 @@ export const CoverTabs = createContext<((covered: boolean) => void) | null>(
 	null,
 );
 
+// A Place whose act floats tells the Shell, whose toasts then stand above the
+// act by its room.
+export const ActFloats = createContext<((floats: boolean) => void) | null>(
+	null,
+);
+
 // A Split lends its Details act to the Place or Screen it sits in, which
 // draws it after its own actions; `undefined` takes it back.
 export const LendAct = createContext<
@@ -27,6 +33,10 @@ export const PlaceRoute = createContext<string | undefined>(undefined);
 export const RecordAlone = createContext<((alone: boolean) => void) | null>(
 	null,
 );
+
+// Whether the record stands alone in the Place's Split: the Toolbar over the
+// list leaves with the list.
+export const RecordShown = createContext(false);
 
 // A bleeding Place hands the room its floating act needs to the regions that
 // scroll inside its body, which keep it under their last row.

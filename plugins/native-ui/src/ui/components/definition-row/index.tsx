@@ -1,16 +1,39 @@
 import type { IconAct, StatusState } from "@fcalell/ui-core/descriptors";
-import { row, text, textStrong } from "@fcalell/ui-core/variants";
+import {
+	DEFINITION_ROW,
+	DEFINITION_ROW_CHEVRON,
+	ROW_TITLE_LINE,
+	row,
+	text,
+	textStrong,
+} from "@fcalell/ui-core/variants";
 import * as Clipboard from "expo-clipboard";
-import { type ReactNode, useCallback, useEffect, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
+import { Ink } from "../../lib/ink";
 import { navigate } from "../../lib/navigate";
-import { RowContext } from "../../lib/row";
 import { useWords } from "../../lib/words";
+import { Icon } from "../icon";
 import { IconButton } from "../icon-button";
-import { IconButtonBase } from "../icon-button/base";
 import { Status } from "../status";
+
+const ROW = "relative flex-row items-center";
+// The hit covers the row under its text and its acts, and takes the press
+// wash; the text lets a press through to it.
+const HIT = "absolute inset-0 active:bg-wash-press";
+const TEXT_BLOCK = "flex-1 min-w-0";
+const LINE = "flex-row items-center min-w-0";
+const LABEL = "shrink";
+// The value gives way first: it takes the room the label leaves, ending at
+// the line's end.
+const VALUE = "flex-1 min-w-0 text-right";
+const VALUE_SLOT = "flex-1 min-w-0 flex-row justify-end";
+const ACTS = "relative flex-row shrink-0";
+const CHEVRON = "shrink-0 items-center justify-center";
+
+const COPIED_MS = 2000;
 
 export type DefinitionValue =
 	| string
@@ -19,15 +42,19 @@ export type DefinitionValue =
 
 export interface DefinitionRowProps extends Closed {
 	label: string;
+	// A sentence under the label and the value, at the row's width.
 	description?: string;
+	// The fact: words, a status, or a control that changes it in place.
 	value?: DefinitionValue;
+	// Words that are copied whole (an identifier): drawn in the code role with
+	// a copy act.
 	copyable?: boolean;
+	// The row's one icon act at its end.
 	act?: IconAct;
+	// Where the row goes when opened; a chevron stands at its end.
 	href?: string;
 	onOpen?: () => void;
 }
-
-const COPIED_MS = 2000;
 
 function isStatus(
 	value: DefinitionValue,
@@ -35,11 +62,10 @@ function isStatus(
 	return typeof value === "object" && value !== null && "status" in value;
 }
 
-// A labelled fact: the label left, the value or the in-place control right,
-// and the description under both at the row's width. A control whose width
-// is its words (a `Picker`) claims the row (`lib/row.ts`), and the row then
-// stacks, as the web's does under tablet: the label and the description,
-// then the control across the row with the act at its end.
+// The label at body 500 with the value at the line's end, the description
+// under both; an icon act, or a link's chevron in the act's square, at the
+// row's end, so values with either end at one x. A row that opens is one hit
+// under its acts.
 export function DefinitionRow({
 	label,
 	description,
@@ -49,79 +75,111 @@ export function DefinitionRow({
 	href,
 	onOpen,
 }: DefinitionRowProps) {
-	const [stacked, setStacked] = useState(false);
-	const claim = useCallback((next: boolean) => setStacked(next), []);
 	const open = href !== undefined ? () => navigate(href) : onOpen;
-	const shown = (
-		<RowContext.Provider value={claim}>
-			{typeof value === "string" ? (
-				<RNText className={cn(text({ role: "meta" }), "shrink text-right")}>
-					{value}
-				</RNText>
-			) : isStatus(value) ? (
+	const copied = copyable && typeof value === "string" ? value : undefined;
+	let shown: ReactNode = null;
+	if (typeof value === "string")
+		shown = (
+			<RNText
+				numberOfLines={1}
+				className={cn(text({ role: copied ? "code" : "meta" }), VALUE)}
+			>
+				{value}
+			</RNText>
+		);
+	else if (isStatus(value))
+		shown = (
+			<View className={VALUE_SLOT}>
 				<Status state={value.status} label={value.label} />
-			) : (
-				value
-			)}
-		</RowContext.Provider>
-	);
-	const acts = (
-		<>
-			{copyable && typeof value === "string" ? <CopyAct value={value} /> : null}
-			{act ? <IconButton {...act} /> : null}
-		</>
-	);
+			</View>
+		);
+	else if (value !== undefined && value !== null)
+		shown = <View className={VALUE_SLOT}>{value}</View>;
+	let end: ReactNode = null;
+	if (copied !== undefined || act)
+		end = (
+			<View className={ACTS}>
+				{copied === undefined ? null : <CopyAct label={label} value={copied} />}
+				{act ? (
+					<IconButton
+						icon={act.icon}
+						fit="bar"
+						label={act.label}
+						onAct={act.onAct}
+					/>
+				) : null}
+			</View>
+		);
+	else if (open)
+		end = (
+			<View
+				pointerEvents="none"
+				className={cn(DEFINITION_ROW_CHEVRON, CHEVRON)}
+			>
+				<Ink.Provider value="ink-meta">
+					<Icon name="ChevronRight" />
+				</Ink.Provider>
+			</View>
+		);
 	return (
-		<Pressable
-			accessibilityRole={open ? "button" : undefined}
-			disabled={!open}
-			onPress={open}
+		<View
 			className={cn(
-				row({ state: "rest" }),
-				"justify-center gap-pair",
-				open && "active:bg-wash-press",
+				row({
+					lines: description ? "setting" : "one",
+					state: "rest",
+					ground: "group",
+				}),
+				DEFINITION_ROW,
+				ROW,
 			)}
 		>
-			<View className="flex-row items-center gap-pair">
-				<RNText
-					className={cn(
-						text({ role: "body" }),
-						textStrong({ role: "body" }),
-						"flex-1",
-					)}
-				>
-					{label}
-				</RNText>
-				{stacked ? null : shown}
-				{stacked ? null : acts}
-			</View>
-			{description ? (
-				<RNText className={text({ role: "meta" })}>{description}</RNText>
+			{open ? (
+				<Pressable
+					accessibilityRole={href !== undefined ? "link" : "button"}
+					accessibilityLabel={label}
+					onPress={open}
+					className={HIT}
+				/>
 			) : null}
-			{stacked ? (
-				<View className="flex-row items-center gap-pair">
-					<View className="min-w-0 flex-1">{shown}</View>
-					{acts}
+			<View pointerEvents={open ? "none" : "auto"} className={TEXT_BLOCK}>
+				<View className={cn(ROW_TITLE_LINE, LINE)}>
+					<RNText
+						numberOfLines={1}
+						className={cn(
+							text({ role: "body" }),
+							textStrong({ role: "body" }),
+							LABEL,
+						)}
+					>
+						{label}
+					</RNText>
+					{shown}
 				</View>
-			) : null}
-		</Pressable>
+				{description ? (
+					<RNText className={text({ role: "meta" })}>{description}</RNText>
+				) : null}
+			</View>
+			{end}
+		</View>
 	);
 }
 
-function CopyAct({ value }: { value: string }) {
+// The copy act: a check and the word Copied for two seconds once copied.
+function CopyAct({ label, value }: { label: string; value: string }) {
 	const words = useWords();
-	const [copied, setCopied] = useState(false);
+	const [done, setDone] = useState(false);
 	useEffect(() => {
-		if (!copied) return;
-		const timer = setTimeout(() => setCopied(false), COPIED_MS);
+		if (!done) return;
+		const timer = setTimeout(() => setDone(false), COPIED_MS);
 		return () => clearTimeout(timer);
-	}, [copied]);
+	}, [done]);
 	return (
-		<IconButtonBase
-			icon={copied ? "Check" : "Copy"}
-			label={copied ? words.copied : words.copy}
+		<IconButton
+			icon={done ? "Check" : "Copy"}
+			fit="bar"
+			label={done ? words.copied : `${words.copy} ${label}`}
 			onAct={() => {
-				Clipboard.setStringAsync(value).then(() => setCopied(true));
+				Clipboard.setStringAsync(value).then(() => setDone(true));
 			}}
 		/>
 	);

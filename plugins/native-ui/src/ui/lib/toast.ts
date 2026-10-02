@@ -1,6 +1,6 @@
 import type { Act } from "@fcalell/ui-core/descriptors";
 import type { ToastState } from "@fcalell/ui-core/variants";
-import { useSyncExternalStore } from "react";
+import { createContext, useSyncExternalStore } from "react";
 
 // The toast queue. `toast()` is called from anywhere; the `Shell` renders the
 // queue. Client-owned, so never an undo: a toast's act is a route or a retry.
@@ -47,3 +47,6 @@ function subscribe(listener: () => void): () => void {
 export function useToasts(): ToastEntry[] {
 	return useSyncExternalStore(subscribe, () => entries);
 }
+
+// The queued toast a `Toast` stands for: the layer hands each its dismissal.
+export const ToastEntry = createContext<(() => void) | undefined>(undefined);

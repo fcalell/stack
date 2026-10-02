@@ -43,11 +43,17 @@ React step picks the structure under the `touch:` variant or by breakpoint.
   tab's count at `absolute top-0 left-full` beside the glyph's top corner (the tab holds its
   label ahead of its glyph in a `flex-col-reverse` column, so its name reads label then count), a menu anchored under
   its trigger (`absolute right-0 top-full pt-pair`, or `left-0 right-0` on the switcher).
+- While a Place's act floats (touch), the toasts' layer ends with the act's room (the Place's
+  `FloatingActRoom`: `FLOATING_ACT_FOOT` over `FLOATING_ACT_ROOM`), so the stack stands a page
+  inset above the act.
 - Context the layout molecules do not own, recorded on the boards for the composition: the banner
-  in the Shell's slot and the toasts (the shared group's `Banner` and `Toast`); the switcher's and
-  the more act's menus (`POPOVER` of `ROW {ground: list}` rows, the group label `TEXT {role: meta}
-  + TEXT_STRONG {role: meta}`, the menu at `w-popover` under the more act; the shared group's
-  `Menu`); the List's rows, the Group's setting, member and open rows (`ListRow`,
+  in the Shell's slot and the toasts (the shared group's `Banner` and `Toast`); the switcher's
+  list, the shared group's `Picker` (its options with their avatars, the current one ticked, the
+  create act under a hairline) drawn through the Picker's internal base with the Shell's own
+  trigger (the place row, or `SWITCHER` in a touch top bar); the more act's menu (the shared
+  group's `Menu`); the touch More tab's page (a `Place` titled with the `more` word holding a
+  `List` of `ListRow`s, each place's glyph leading, its count trailing, its route the row's
+  href), standing in the page's place from the route it opened on; the List's rows, the Group's setting, member and open rows (`ListRow`,
   `DefinitionRow`, the settings row); the Split's empty state (`EmptyState`) and the record's
   heading in the main (`flex items-center` over `TEXT {role: heading}`, the record's
   own); a form's fields (`FormField`), the toolbar's search (`Input {kind: search}`, `grow`), its
@@ -930,6 +936,12 @@ Board: `32-forms-bars-desktop.dc.html` and `32-forms-bars-touch.dc.html`.
 - both densities: `flex flex-col gap-pair px-page py-inside border-b border-edge`
   - cell: `TOOLBAR`; overlay: `flex flex-col`
   - under: rest · one row: the search grows (Input kind=search, control-compact), Filter and Sort at fit=bar with their glyphs, Display an IconButton; no filled act: the create act (New project) is the Place's, in the header (board 30); gap-acts (8) between the search and the acts and between the acts; py-inside and a hairline under the strip; the list under it is context
+
+### toolbar · a record open, below `tablet`
+
+- both densities: `page-max-tablet:hidden`
+  - cell: none; overlay: `page-max-tablet:hidden`
+  - under: Split · a record open below `tablet`: the record stands alone, so the strip over the list leaves with the list (the Place tells it the record is open)
 
 ### controls · rest
 

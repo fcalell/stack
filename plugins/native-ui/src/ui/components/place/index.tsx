@@ -8,24 +8,26 @@ import {
 	PAGE_TOP_BAR,
 	text,
 } from "@fcalell/ui-core/variants";
-import { type ReactNode, useContext, useState } from "react";
+import { type ReactNode, useContext, useEffect, useState } from "react";
 import { Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import {
+	ActFloats,
 	ActRoom,
 	LendAct,
 	PageTitle,
 	PlaceRoute,
 	RecordAlone,
+	RecordShown,
 	ShellSwitcher,
 } from "../../lib/frame";
 import { Scroll } from "../../lib/hosts";
-import { MenuCircle } from "../../lib/more";
 import { navigate } from "../../lib/navigate";
 import { useWords } from "../../lib/words";
 import { Button } from "../button";
 import { IconButton } from "../icon-button";
+import { Menu } from "../menu";
 
 const PLACE = "flex-1";
 const TOP_BAR = "flex-row items-center";
@@ -35,7 +37,19 @@ const TITLE = "min-w-0 grow";
 // to its child, which keeps the act's room.
 const BODY = "flex-1";
 const BODY_WRAP = "relative flex-1";
+// The body's content fills the scroll, so an EmptyState alone centres in it.
+const BODY_CONTENT = "grow";
 const ACT_LAYER = "absolute inset-0 items-center justify-end";
+
+// The floating act's room under what scrolls past it, or the toasts that
+// stand above it: the act's height over the page inset it floats at.
+export function FloatingActRoom() {
+	return (
+		<View className={FLOATING_ACT_FOOT}>
+			<View className={FLOATING_ACT_ROOM} />
+		</View>
+	);
+}
 
 export interface PlaceProps extends Closed {
 	title: string;
@@ -81,71 +95,76 @@ export function Place({
 	const room = act ? <View className={FLOATING_ACT_ROOM} /> : null;
 	// A region scrolling inside a bleeding body keeps no page inset under its
 	// last row, so its room is the act's height over the page inset.
-	const footprint = act ? (
-		<View className={FLOATING_ACT_FOOT}>
-			<View className={FLOATING_ACT_ROOM} />
-		</View>
-	) : null;
+	const footprint = act ? <FloatingActRoom /> : null;
+	const floats = useContext(ActFloats);
+	const floating = act !== undefined;
+	useEffect(() => {
+		if (!floating || !floats) return;
+		floats(true);
+		return () => floats(false);
+	}, [floating, floats]);
 	return (
 		<LendAct.Provider value={lend}>
 			<RecordAlone.Provider value={standAlone}>
-				<PageTitle.Provider value={title}>
-					<View className={PLACE}>
-						<View className={PAGE_HEAD}>
-							<View className={cn(PAGE_TOP_BAR, TOP_BAR)}>
-								{lead}
-								<View className={SPACER} />
-								{[...(actions ?? []), ...(lent ? [lent] : [])].map((action) => (
-									<IconButton key={action.label} {...action} fit="body" />
-								))}
-								{more?.length ? (
-									<MenuCircle
-										label={words.more}
-										title={title}
-										items={more}
-										fit="body"
-									/>
+				<RecordShown.Provider value={alone}>
+					<PageTitle.Provider value={title}>
+						<View className={PLACE}>
+							<View className={PAGE_HEAD}>
+								<View className={cn(PAGE_TOP_BAR, TOP_BAR)}>
+									{lead}
+									<View className={SPACER} />
+									{[...(actions ?? []), ...(lent ? [lent] : [])].map(
+										(action) => (
+											<IconButton key={action.label} {...action} fit="body" />
+										),
+									)}
+									{more?.length ? (
+										<Menu label={words.more} items={more} />
+									) : null}
+								</View>
+								<RNText
+									accessibilityRole="header"
+									className={cn(text({ role: "title" }), TITLE)}
+								>
+									{title}
+								</RNText>
+							</View>
+							<View className={BODY_WRAP}>
+								{bleed ? (
+									<View className={BODY}>
+										<ActRoom.Provider value={footprint}>
+											{children}
+										</ActRoom.Provider>
+									</View>
+								) : (
+									<Scroll
+										className={BODY}
+										contentContainerClassName={cn(PAGE_BODY, BODY_CONTENT)}
+									>
+										{children}
+										{room}
+									</Scroll>
+								)}
+								{/* The page's act is its create act by rule, so it carries the plus. */}
+								{act ? (
+									<View
+										pointerEvents="box-none"
+										className={cn(FLOATING_ACT, ACT_LAYER)}
+									>
+										<Button
+											fit="body"
+											icon="Plus"
+											label={act.label}
+											onAct={act.onAct}
+											loading={act.loading}
+											blocked={act.blocked}
+										/>
+									</View>
 								) : null}
 							</View>
-							<RNText
-								accessibilityRole="header"
-								className={cn(text({ role: "title" }), TITLE)}
-							>
-								{title}
-							</RNText>
 						</View>
-						<View className={BODY_WRAP}>
-							{bleed ? (
-								<View className={BODY}>
-									<ActRoom.Provider value={footprint}>
-										{children}
-									</ActRoom.Provider>
-								</View>
-							) : (
-								<Scroll className={BODY} contentContainerClassName={PAGE_BODY}>
-									{children}
-									{room}
-								</Scroll>
-							)}
-							{/* The page's act is its create act by rule, so it carries the plus. */}
-							{act ? (
-								<View
-									pointerEvents="box-none"
-									className={cn(FLOATING_ACT, ACT_LAYER)}
-								>
-									<Button
-										fit="body"
-										icon="Plus"
-										label={act.label}
-										onAct={act.onAct}
-										loading={act.loading}
-										blocked={act.blocked}
-									/>
-								</View>
-							) : null}
-						</View>
-					</View>
-				</PageTitle.Provider>
+					</PageTitle.Provider>
+				</RecordShown.Provider>
 			</RecordAlone.Provider>
 		</LendAct.Provider>
 	);

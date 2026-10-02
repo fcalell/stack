@@ -1,15 +1,15 @@
 import type {
 	IconName,
+	Option,
+	OptionGroup,
 	PlaceSpec,
 	Switcher,
 } from "@fcalell/ui-core/descriptors";
 import {
 	type ContentTone,
-	HAIRLINE,
 	type PlaceTabState,
 	placeTab,
 	placeTabLabel,
-	row,
 	SHELL_BANNER,
 	SHELL_COLUMN,
 	SHELL_TAB_BAR,
@@ -23,29 +23,32 @@ import { Pressable, Text as RNText, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import { CoverTabs, PlaceRoute, ShellSwitcher } from "../../lib/frame";
+import {
+	ActFloats,
+	CoverTabs,
+	PlaceRoute,
+	ShellSwitcher,
+} from "../../lib/frame";
 import { Ink } from "../../lib/ink";
-import { MenuRow, MenuSheet } from "../../lib/more";
 import { isCurrent, navigate, usePathname } from "../../lib/navigate";
-import { dismissToast, useToasts } from "../../lib/toast";
 import { useWords } from "../../lib/words";
 import { Avatar } from "../avatar";
 import { Count } from "../count";
 import { Icon } from "../icon";
-import { Sheet } from "../sheet";
-import { Toast } from "../toast";
-import { Confirmations } from "./confirmation";
+import { List } from "../list";
+import { ListRow } from "../list-row";
+import { PickSheet } from "../picker/sheet";
+import { FloatingActRoom, Place } from "../place";
+import { Confirmations } from "../sheet/confirm";
+import { ToastList } from "../toast/layer";
 
 const FRAME = "flex-1 overflow-hidden";
 const CONTENT = "flex-1";
-const TOAST_LAYER = "absolute inset-x-0 bottom-0 items-center";
+const TOAST_LAYER = "absolute inset-0 items-center justify-end";
 
 const TRIGGER = "flex-row items-center min-w-0";
 const NAME = "shrink";
 const GLYPH = "shrink-0";
-const SWITCH_ROW = "flex-row items-center active:bg-wash-press";
-const SWITCH_LABEL = "min-w-0 flex-1";
-const CREATE = "border-t pt-float";
 
 const TABS = "flex-row";
 const TAB = "flex-col-reverse items-center justify-center min-w-0 flex-1";
@@ -70,18 +73,23 @@ export interface ShellProps extends Closed {
 }
 
 // The frame on the column's ground: the banner under the status bar, the
-// content, the toast queue over the content's foot, the `confirm()`
-// decisions as a sheet, and the tab bar over the home indicator, past five
-// places four and a More tab whose sheet holds the rest. The switcher's
-// trigger starts each Place's top bar, the current place's route handed down
-// for a Place's back act; a pushed Screen covers the tab bar,
-// and the frame then clears the home indicator itself.
+// content, the toast queue over the content's foot (above a Place's act while
+// it floats), the `confirm()` decisions as a sheet, and the tab bar over the
+// home indicator, past five places four and a More tab that opens a page of
+// the rest in the content's place. The switcher's trigger starts each Place's
+// top bar, the current place's route handed down for a Place's back act; a
+// pushed Screen covers the tab bar, and the frame then clears the home
+// indicator itself.
 export function Shell({ places, banner, switcher, children }: ShellProps) {
 	const insets = useSafeAreaInsets();
-	const toasts = useToasts();
 	const [covered, cover] = useState(false);
+	const [lifted, lift] = useState(false);
 	const pathname = usePathname();
+	// The More page stands at the route it opened on: going to a place closes it.
+	const [moreAt, setMoreAt] = useState<string>();
+	const more = moreAt === pathname;
 	const route = places.find((spec) => isCurrent(spec.route, pathname))?.route;
+	const rest = places.length > TAB_ROOM ? places.slice(TAB_ROOM - 1) : [];
 	return (
 		<View
 			style={{
@@ -93,47 +101,62 @@ export function Shell({ places, banner, switcher, children }: ShellProps) {
 			{banner ? <View className={SHELL_BANNER}>{banner}</View> : null}
 			<View className={CONTENT}>
 				<ShellSwitcher.Provider
-					value={switcher ? <SwitcherTrigger switcher={switcher} /> : null}
+					value={switcher ? <SwitcherPick switcher={switcher} /> : null}
 				>
 					<PlaceRoute.Provider value={route}>
-						<CoverTabs.Provider value={cover}>{children}</CoverTabs.Provider>
+						<CoverTabs.Provider value={cover}>
+							<ActFloats.Provider value={lift}>
+								{more ? <MorePage places={rest} /> : children}
+							</ActFloats.Provider>
+						</CoverTabs.Provider>
 					</PlaceRoute.Provider>
 				</ShellSwitcher.Provider>
-				{toasts.length > 0 ? (
-					<View pointerEvents="box-none" className={cn(TOASTS, TOAST_LAYER)}>
-						{toasts.map((entry) => (
-							<Pressable key={entry.id} onPress={() => dismissToast(entry.id)}>
-								<Toast
-									sentence={entry.sentence}
-									state={entry.state}
-									act={entry.act}
-								/>
-							</Pressable>
-						))}
-					</View>
-				) : null}
+				<View pointerEvents="box-none" className={cn(TOASTS, TOAST_LAYER)}>
+					<ToastList />
+					{lifted ? <FloatingActRoom /> : null}
+				</View>
 			</View>
-			{covered ? null : <TabBar places={places} pathname={pathname} />}
+			{covered ? null : (
+				<TabBar
+					places={places}
+					pathname={pathname}
+					more={more}
+					onMore={() => setMoreAt(pathname)}
+					onPlace={() => setMoreAt(undefined)}
+				/>
+			)}
 			<Confirmations />
 		</View>
 	);
 }
 
-// The switcher's trigger in a Place's top bar and its sheet: the options with
-// their avatars under the switcher's label, the current one ticked, then the
-// create act under a hairline.
-function SwitcherTrigger({ switcher }: { switcher: Switcher }) {
+function flatten(options: Switcher["options"]): readonly Option[] {
+	const entries: readonly (Option | OptionGroup)[] = options;
+	return entries.flatMap((entry) =>
+		"options" in entry ? entry.options : [entry],
+	);
+}
+
+// The switcher is a pick: its trigger in a Place's top bar, and the pick's
+// sheet (the options with their avatars under the switcher's label, the
+// current one ticked, the act that makes a new one under a hairline).
+function SwitcherPick({ switcher }: { switcher: Switcher }) {
 	const [open, setOpen] = useState(false);
-	const close = () => setOpen(false);
+	const current = flatten(switcher.options).find(
+		(option) => option.value === switcher.value,
+	);
+	const name = current?.label ?? switcher.label;
 	return (
 		<>
 			<Pressable
 				accessibilityRole="button"
-				accessibilityLabel={switcher.name}
+				accessibilityLabel={switcher.label}
+				accessibilityValue={{ text: name }}
+				accessibilityState={{ expanded: open }}
 				onPress={() => setOpen(true)}
 				className={cn(SWITCHER, TRIGGER)}
 			>
-				<Avatar name={switcher.name} src={switcher.avatar} />
+				<Avatar name={name} src={current?.avatar?.src} />
 				<RNText
 					numberOfLines={1}
 					className={cn(
@@ -142,7 +165,7 @@ function SwitcherTrigger({ switcher }: { switcher: Switcher }) {
 						NAME,
 					)}
 				>
-					{switcher.name}
+					{name}
 				</RNText>
 				<View className={GLYPH}>
 					<Ink.Provider value="ink-meta">
@@ -150,71 +173,62 @@ function SwitcherTrigger({ switcher }: { switcher: Switcher }) {
 					</Ink.Provider>
 				</View>
 			</Pressable>
-			<Sheet open={open} onClose={close} title={switcher.label}>
-				<View>
-					{switcher.options.map((option) => {
-						const current = option.label === switcher.name;
-						return (
-							<Pressable
-								key={option.label}
-								accessibilityRole="radio"
-								accessibilityState={{
-									selected: current,
-									disabled: option.blocked !== undefined,
-								}}
-								disabled={option.blocked !== undefined}
-								onPress={() => {
-									close();
-									option.onAct();
-								}}
-								className={cn(row({ state: "rest" }), SWITCH_ROW)}
-							>
-								<Avatar name={option.label} src={option.avatar} />
-								<RNText
-									numberOfLines={1}
-									className={cn(text({ role: "body" }), SWITCH_LABEL)}
-								>
-									{option.label}
-								</RNText>
-								{current ? (
-									<Ink.Provider value="ink-body">
-										<Icon name="Check" />
-									</Ink.Provider>
-								) : null}
-							</Pressable>
-						);
-					})}
-				</View>
-				{switcher.create ? (
-					<View className={cn(HAIRLINE, CREATE)}>
-						<MenuRow
-							item={switcher.create}
-							onAct={() => {
-								close();
-								switcher.create?.onAct();
-							}}
-						/>
-					</View>
-				) : null}
-			</Sheet>
+			<PickSheet
+				title={switcher.label}
+				options={switcher.options}
+				value={switcher.value}
+				onChange={switcher.onChange}
+				act={switcher.act}
+				open={open}
+				onClose={() => setOpen(false)}
+			/>
 		</>
 	);
 }
 
+// The places past the tab bar, a page of rows: each place's glyph leading,
+// its count trailing, its route where the row goes.
+function MorePage({ places }: { places: readonly PlaceSpec[] }) {
+	const words = useWords();
+	return (
+		<Place title={words.more}>
+			<List>
+				{places.map((spec) => (
+					<ListRow
+						key={spec.route}
+						leading={{ icon: spec.icon }}
+						title={spec.label}
+						trailing={
+							spec.count === undefined ? undefined : { count: spec.count }
+						}
+						href={spec.route}
+					/>
+				))}
+			</List>
+		</Place>
+	);
+}
+
 // The places: glyph over label, the count over the glyph's end; past five
-// places, four and a More tab whose sheet holds the rest.
+// places, four and a More tab, selected while its page stands or the current
+// place is among the rest.
 // A tab holds its label ahead of its glyph and stacks them reversed, and
 // takes no label of its own, so it reads the label then the count.
 function TabBar({
 	places,
 	pathname,
+	more,
+	onMore,
+	onPlace,
 }: {
 	places: readonly PlaceSpec[];
 	pathname: string;
+	more: boolean;
+	onMore: () => void;
+	onPlace: () => void;
 }) {
 	const insets = useSafeAreaInsets();
 	const words = useWords();
-	const [open, setOpen] = useState(false);
 	const fits = places.length <= TAB_ROOM;
 	const shown = fits ? places : places.slice(0, TAB_ROOM - 1);
 	const rest = fits ? [] : places.slice(TAB_ROOM - 1);
@@ -231,29 +245,22 @@ function TabBar({
 					icon={spec.icon}
 					label={spec.label}
 					count={spec.count}
-					selected={isCurrent(spec.route, pathname)}
-					onAct={() => navigate(spec.route)}
+					selected={!more && isCurrent(spec.route, pathname)}
+					onAct={() => {
+						onPlace();
+						navigate(spec.route);
+					}}
 				/>
 			))}
 			{rest.length > 0 ? (
-				<>
-					<Tab
-						icon="Ellipsis"
-						label={words.more}
-						selected={rest.some((spec) => isCurrent(spec.route, pathname))}
-						onAct={() => setOpen(true)}
-					/>
-					<MenuSheet
-						title={words.more}
-						open={open}
-						onClose={() => setOpen(false)}
-						items={rest.map((spec) => ({
-							label: spec.label,
-							icon: spec.icon,
-							onAct: () => navigate(spec.route),
-						}))}
-					/>
-				</>
+				<Tab
+					icon="Ellipsis"
+					label={words.more}
+					selected={
+						more || rest.some((spec) => isCurrent(spec.route, pathname))
+					}
+					onAct={onMore}
+				/>
 			) : null}
 		</View>
 	);

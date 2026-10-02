@@ -91,8 +91,8 @@ since it always draws the touch set and so the touch structure.
 ## Words
 
 Every word a molecule draws or reads aloud on its own comes from `words`, a typed object passed
-once beside `theme`: the six `Status` words, `recommended`, `copy`, `copied`, `back`, `close`,
-`more`, `send`, `stop`, `attach`, `search`, `loading`, `checking`, `retry`, `add`, `remove`, `details`, `places`. `Words` requires every key and
+once beside `theme`: the six `Status` words, `recommended`, `copy`, `copied`, `back`, `close`, `cancel`, `dismiss`,
+`more`, `send`, `stop`, `attach`, `search`, `loading`, `checking`, `retry`, `add`, `remove`, `details`, `places`, `notifications`. `Words` requires every key and
 `wordsSchema` is closed, so a translation that misses a word fails `tsc` and the schema, never the
 interface. `ENGLISH` is the default. A sentence that belongs to the consumer is a prop on the
 molecule that draws it (`placeholder`, `notice`, every `sentence`, every label), never a key.
@@ -223,7 +223,7 @@ toolbar control), `field` 38 / 48 (a form input), `row` 32 / 48 (a one-line row)
 caption text), `icon` 14 / 18 (beside body text), `icon-control` 16 / 20 (inside a control),
 `check` 16 / 20 (a checkbox's box), `track` 2 / 4 (a slider's track thickness), `otp` 44 / 48 (a
 one-time-code box, square), `text-area` 60 / 72 (a text area's least value height, derived: three body line boxes). On touch every target is at least 44. A cell says `min-h`, never `h`: a label
-must be able to grow its control under OS font scaling. A minimum height is the floor of something pressed (a control, a field, a target, a chip, a row), the set height of a bar (`strip`, a page's strip and its touch top bar), an intrinsic size, or the height of what a part swaps with (`PENDING_BAR` an action bar's, `TABLE_CELL` the field that edits it in place); any other container takes its height from its content and padding, its parts centred on its tallest, never from another component's size.
+must be able to grow its control under OS font scaling. A minimum height is the floor of something pressed (a control, a field, a target, a chip, a row), the set height of a bar (`strip`, a page's strip and its touch top bar), an intrinsic size, or the height of what a part swaps with (`PENDING_TRACK` an action bar's, `TABLE_CELL` the field that edits it in place); any other container takes its height from its content and padding, its parts centred on its tallest, never from another component's size.
 
 Seven radius roles, density-invariant, a radius naming the role and never the size: `chip` 4
 (an outlined chip, a skeleton bar, a checkbox), `control` 6 (a button, a field, a segmented
@@ -324,8 +324,8 @@ The canon binds every component either UI plugin ships:
    `caption` by `Chip` and `Kbd`, `code` by `Code`, `display` by `Stat`). `TEXT` keeps all seven
    roles as the table those owners draw from.
 2. A composed region is data: an act is an `Act`, a row's marks a `StatusMark` and a `ChipMark`, a place is a `PlaceSpec`, what the
-   shell switches between is a `Switcher` (the current name and avatar, the options as `MenuItem`s
-   with their avatars, the act that makes a new one), never a node;
+   shell switches between is a `Switcher` (a pick: options carrying their avatars, the current
+   value, and `act`, the act that makes a new one), never a node;
    the owning molecule renders it. An `Act` says what it does, never how it looks: `destructive`
    marks one that removes or ends something, and an `ActionBar` draws it as `danger` when it is
    the bar's one filled act and as `destructive`, the hairline form, otherwise. An `Act` names
@@ -333,7 +333,10 @@ The canon binds every component either UI plugin ships:
    an `IconAct` is an icon-only act whose label is read aloud, never drawn. A `Form` has no
    submit handler: its `ActionBar`'s filled act submits it (on the web Enter in a field runs
    it), that act's `onAct` is the one handler, and while the promise it returns pends the act
-   is pending, the bar's other acts ignore the press and the form is busy. An icon is an `IconName`, a Lucide glyph by its PascalCase
+   is pending, the bar's other acts ignore the press and the form is busy. A `confirm()` is
+   the same shape: its `Confirmation`'s act runs the work, pending while its promise pends
+   (the sheet's other acts inert), the sheet closing when it resolves and staying open to retry
+   when it rejects; `confirm()` returns nothing, and dismissing the sheet runs nothing. An icon is an `IconName`, a Lucide glyph by its PascalCase
    name (`Check`, `ChevronDown`), typed off the `lucide` package: the set is fixed, not
    configured, and each plugin draws the name from its platform's Lucide package. `children` is the one open slot, on the molecules the roster
    gives it to.
@@ -361,7 +364,10 @@ class of every cell the component draws (a family at every axis product, a named
 the table's base and that cell alone), and a class spelling a token its
 entry does not own fails by name. A molecule that picks a composed atom's `fit` or `act` draws
 those atom cells too (a `Place` draws `BUTTON.fit.bar`), so it owns what they spell, so a type role, a colour or a size reaches a cell only through
-the component that owns it. A plugin's verify suite reads every component's exported props type against it, so a
+the component that owns it. It also declares what it holds (`holds`): the families and constants of its own box,
+which only it spells, so every other component draws them by composing it; a cell no entry holds (a type
+role, the field box, the row and its title and meta lines, the line box, the popover, the scrim, the
+skeleton) is shared, spelled by each component that draws it. A plugin's verify suite reads every component's exported props type against it, so a
 prop added on one platform, a prop renamed, or a style channel reopened fails by name. The
 directory of a component is its name in kebab case (`componentDir("ListRow")` is `list-row`).
 

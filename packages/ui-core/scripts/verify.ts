@@ -108,14 +108,18 @@ import {
 	FIELD,
 	FIELD_VALUE,
 	FORM,
+	FORM_FIELD,
 	ICON,
 	ICON_BUTTON,
+	LINE_BOX,
 	LINK,
 	type Matrix,
 	MENU,
 	MENU_GROUP,
+	MENU_LABEL,
 	MESSAGE,
 	OTP_BOX,
+	PICKER,
 	PLACE_ROW,
 	PLACE_ROW_GLYPH,
 	PLACE_TAB,
@@ -126,6 +130,7 @@ import {
 	SEGMENT_LABEL,
 	SHEET_SIDE,
 	SKELETON,
+	SKELETON_LANE,
 	SKELETON_ROW,
 	SPLIT_MAIN,
 	STATUS_DOT,
@@ -145,6 +150,7 @@ import {
 	avatarLabel,
 	avatarStep,
 	banner,
+	bannerContentTone,
 	bannerGlyph,
 	button,
 	buttonContentTone,
@@ -157,13 +163,17 @@ import {
 	field,
 	fieldValue,
 	form,
+	formField,
 	icon,
 	iconButton,
+	lineBox,
 	link,
 	menu,
 	menuGroup,
+	menuLabel,
 	message,
 	otpBox,
+	picker,
 	placeRow,
 	placeRowGlyph,
 	placeTab,
@@ -174,6 +184,7 @@ import {
 	segmentLabel,
 	sheetSide,
 	skeleton,
+	skeletonLane,
 	skeletonRow,
 	splitMain,
 	statusContentTone,
@@ -185,6 +196,7 @@ import {
 	textArea,
 	textAreaBudget,
 	textStrong,
+	toastContentTone,
 	toastState,
 } from "../src/variants.ts";
 
@@ -513,14 +525,18 @@ const MATRICES: readonly Registration[] = [
 	["SWITCH_THUMB", SWITCH_THUMB, switchThumb],
 	["CHECKBOX", CHECKBOX, checkbox],
 	["ROW", ROW, row],
+	["LINE_BOX", LINE_BOX, lineBox],
 	["TABLE_ROW", TABLE_ROW, tableRow],
 	["SEGMENT", SEGMENT, segment],
 	["SEGMENT_LABEL", SEGMENT_LABEL, segmentLabel],
+	["PICKER", PICKER, picker],
+	["FORM_FIELD", FORM_FIELD, formField],
 	["BANNER", BANNER, banner],
 	["BANNER_GLYPH", BANNER_GLYPH, bannerGlyph],
 	["TOAST_STATE", TOAST_STATE, toastState],
 	["MENU", MENU, menu],
 	["MENU_GROUP", MENU_GROUP, menuGroup],
+	["MENU_LABEL", MENU_LABEL, menuLabel],
 	["SHEET_SIDE", SHEET_SIDE, sheetSide],
 	["DIFF_LINE", DIFF_LINE, diffLine],
 	["MESSAGE", MESSAGE, message],
@@ -534,6 +550,7 @@ const MATRICES: readonly Registration[] = [
 	["ACTION_BAR", ACTION_BAR, actionBar],
 	["SKELETON", SKELETON, skeleton],
 	["SKELETON_ROW", SKELETON_ROW, skeletonRow],
+	["SKELETON_LANE", SKELETON_LANE, skeletonLane],
 ];
 
 // The class-bearing exports that are not matrices: every uppercase string
@@ -709,7 +726,7 @@ check("c03", "tokens.ts declares the contract", () => {
 	requireEqual(SHADOW_LEVELS.length, 2, "shadow level count");
 	requireEqual(WIDTHS.length, 12, "width count");
 	requireEqual(BREAKPOINTS.length, 3, "breakpoint count");
-	requireEqual(WORD_KEYS.length, 23, "word count");
+	requireEqual(WORD_KEYS.length, 26, "word count");
 	for (const name of COLOR_NAMES) {
 		assert(COLORS[name] !== undefined, `no declaration for ${name}`);
 	}
@@ -731,7 +748,7 @@ check("c03", "tokens.ts declares the contract", () => {
 	for (const word of ["marine", "navy", "brand", "tint", "label", "floor"]) {
 		assert(!new RegExp(`"${word}"`).test(source), `tokens.ts names "${word}"`);
 	}
-	return `${COLOR_NAMES.length} colors, 7 roles, 12 spacing roles (6 gaps), 26 sizes, 7 radii, 2 shadows, 12 widths, 3 breakpoints, 23 words`;
+	return `${COLOR_NAMES.length} colors, 7 roles, 12 spacing roles (6 gaps), 26 sizes, 7 radii, 2 shadows, 12 widths, 3 breakpoints, 26 words`;
 });
 
 check("c05", "default knobs reproduce the approved sheet", () => {
@@ -1771,6 +1788,18 @@ check("c22", "the content tones are contract colors", () => {
 		assert(colors.has(token), `statusContentTone(${state}): ${token}`);
 		checked++;
 	}
+	for (const state of keysOf(TOAST_STATE.variants.state)) {
+		const token = toastContentTone(state);
+		assert(colors.has(token), `toastContentTone(${state}): ${token}`);
+		checked++;
+	}
+	for (const kind of keysOf(BANNER_GLYPH.variants.kind)) {
+		const token = bannerContentTone(kind);
+		assert(colors.has(token), `bannerContentTone(${kind}): ${token}`);
+		checked++;
+	}
+	requireEqual(toastContentTone("done"), "ok", "done glyph ink");
+	requireEqual(bannerContentTone("note"), "accent-ink", "note glyph ink");
 	requireEqual(buttonContentTone("primary"), "on-act-accent", "primary ink");
 	requireEqual(statusContentTone("active"), "accent-ink", "active ink");
 	requireEqual(avatarStep("Frankie"), avatarStep("Frankie"), "stable step");
@@ -1811,12 +1840,13 @@ check(
 			const params = header[1];
 			if (params === undefined) continue;
 			// A field binding is generic in the value its field holds, and an
-			// option in the string it picks or the empty choice's null, both data.
+			// option (or a row's trailing pick of options) in the string it picks
+			// or the empty choice's null, all data.
 			assert(
 				(/^<V>$/.test(params) && /\bField\w+<V>/.test(header[0])) ||
 					(/^<V extends string \| null = string>$/.test(params) &&
-						/\bOption\w*</.test(header[0])),
-				`type parameters must be exactly <V> on a field binding, or <V extends string | null = string> on an option, got ${params}`,
+						/\b(?:Option|Row)\w*</.test(header[0])),
+				`type parameters must be exactly <V> on a field binding, or <V extends string | null = string> on an option or a row's pick, got ${params}`,
 			);
 		}
 		for (const name of [

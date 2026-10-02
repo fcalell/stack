@@ -1,8 +1,11 @@
-import type { ReactNode } from "react";
+import { type ReactNode, useContext, useEffect } from "react";
 import type { Closed } from "../../lib/closed";
-import { LoadingRows } from "../../lib/loading";
+import { LoadingContext } from "../../lib/loading";
+import { SectionContext } from "../../lib/section";
 import { useWords } from "../../lib/words";
-import { EmptyState } from "../empty-state";
+import { EmptyStateBase } from "../empty-state/base";
+import { Group } from "../group";
+import { List } from "../list";
 
 // The part of a TanStack query result a boundary reads; a `useQuery` result
 // is one.
@@ -26,9 +29,7 @@ export type QueryData<Q extends Queries> = Q extends readonly AnyQuery[]
 		? D
 		: never;
 
-// What a screen draws while its queries answer: the loading form while any
-// is pending, the screen's `EmptyState` with `sentence` and a retry act when
-// one fails, and the children with the data once every query has it.
+// What a body draws while its queries answer.
 export interface QueryBoundaryProps<Q extends Queries = Queries>
 	extends Closed {
 	query: Q;
@@ -36,18 +37,39 @@ export interface QueryBoundaryProps<Q extends Queries = Queries>
 	children: (data: QueryData<Q>) => ReactNode;
 }
 
+// The loading form of the container around it while any query is pending:
+// in a Section the Section's (busy, its count waiting) over a Group's
+// setting rows, anywhere else a List's two-line rows. When one fails, the
+// failed EmptyState with `sentence` and Retry, which refetches the failed
+// queries; then the children with the data.
 export function QueryBoundary<Q extends Queries>({
 	query,
 	sentence,
 	children,
 }: QueryBoundaryProps<Q>) {
 	const words = useWords();
+	const wait = useContext(SectionContext);
 	const several = Array.isArray(query);
 	const queries = (several ? query : [query]) as readonly AnyQuery[];
-	if (queries.some((entry) => entry.isPending)) return <LoadingRows />;
+	const pending = queries.some((entry) => entry.isPending);
+	useEffect(() => {
+		if (!pending || !wait) return;
+		wait(true);
+		return () => wait(false);
+	}, [pending, wait]);
+	if (pending)
+		return wait ? (
+			// The Section is busy once, so its rows wait on its word.
+			<LoadingContext.Provider value>
+				<Group />
+			</LoadingContext.Provider>
+		) : (
+			<List loading />
+		);
 	if (queries.some((entry) => entry.isError)) {
 		return (
-			<EmptyState
+			<EmptyStateBase
+				tone="failed"
 				sentence={sentence}
 				act={{
 					label: words.retry,

@@ -54,11 +54,18 @@ export interface ChipMark {
 // picks that enum. An option whose value is `null` is the empty choice (a
 // "Not set"), and it is the only way `null` joins `V`: a pick is nullable
 // because its options offer the empty choice, never by a flag.
+// An option carrying `status` is a work state: a pick over such options is
+// a status that moves, its options and its value drawn as the status (its
+// dot beside `label`).
+// An option carrying `avatar` stands for a person or a workspace: its avatar,
+// drawn from the label's initials or `src`, leads it.
 export interface Option<V extends string | null = string> {
 	value: V;
 	label: string;
 	description?: string;
 	recommended?: boolean;
+	status?: StatusState;
+	avatar?: { src?: string };
 }
 
 // Options under a group label, in a `Picker`'s list and its searchable sheet.
@@ -66,6 +73,32 @@ export interface OptionGroup<V extends string | null = string> {
 	label: string;
 	options: Option<V>[];
 }
+
+// A list row's leading: a glyph, a status's dot, or a person's avatar, one
+// slot at the avatar's size whatever leads.
+export type RowLeading =
+	| {
+			icon: IconName;
+	  }
+	| { status: StatusState }
+	| { avatar: { name: string; src?: string } };
+
+// A pick that applies at once where a value stands (a row's trailing, a
+// record's status fact), drawn as a `Picker` at the row fit.
+export interface OptionPick<V extends string | null = string> {
+	label: string;
+	options: readonly Option<V>[] | readonly OptionGroup<V>[];
+	value?: NoInfer<V>;
+	onChange: (value: NoInfer<V>) => void;
+}
+
+// A list row's trailing: a value that cannot change (an age, a count, a
+// word), or a pick.
+export type RowTrailing<V extends string | null = string> =
+	| { age: string }
+	| { count: number }
+	| { value: string }
+	| { pick: OptionPick<V> };
 
 // What a typing control inside a bound `FormField` takes: the field's value,
 // its change handler, and, when the binding autosaves, what hears each
@@ -84,10 +117,14 @@ export interface FieldBinding<V> extends FieldControl<V> {
 }
 
 // A decision asked imperatively: `confirm()` opens a sheet with the title,
-// the sentence and the act, and resolves to whether the act was taken.
+// the sentence and the act, and returns nothing. The act runs the work: while
+// the promise its `onAct` returns pends, the act is pending and the sheet's
+// other acts are inert; the sheet closes when it resolves and stays open,
+// the act ready again, when it rejects. Dismissing the sheet runs nothing.
 // `destructive` draws the act as a destructive button.
 export interface ConfirmAct {
 	label: string;
+	onAct: () => Promise<unknown>;
 	destructive?: boolean;
 }
 
@@ -117,21 +154,12 @@ export interface MenuItem {
 	blocked?: string;
 }
 
-// One thing the shell's switcher switches to, with its avatar's image.
-export interface SwitcherOption extends MenuItem {
-	avatar?: string;
-}
-
-// What the shell's switcher switches between (a workspace, an account): the
-// current one's name and avatar image on the trigger; in its menu, the
-// options under `label`, the one whose label is `name` checked, then the act
-// that makes a new one.
-export interface Switcher {
-	label: string;
-	name: string;
-	avatar?: string;
-	options: SwitcherOption[];
-	create?: MenuItem;
+// What the shell's switcher switches between (a workspace, an account): a
+// pick whose options carry their avatars, the current one on the trigger and
+// ticked in the list, and `act`, the act that makes a new one, under a
+// hairline after the options.
+export interface Switcher extends OptionPick {
+	act?: IconAct;
 }
 
 // A place in the shell: a route, a label, an icon, an optional count.

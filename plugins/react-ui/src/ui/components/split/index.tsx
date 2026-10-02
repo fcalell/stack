@@ -1,17 +1,11 @@
 import { Dialog } from "@base-ui/react/dialog";
 import { cn } from "@fcalell/ui-core/cn";
-import {
-	SCRIM,
-	SHELL_COLUMN,
-	SPLIT_LIST,
-	SPLIT_PANE,
-	splitMain,
-} from "@fcalell/ui-core/variants";
+import { SPLIT_LIST, SPLIT_PANE, splitMain } from "@fcalell/ui-core/variants";
 import { type ReactNode, use, useEffect, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { ActRoom, LendAct, PageTitle, RecordOpen } from "../../lib/frame.ts";
-import { PortalContainer } from "../../lib/portal.ts";
 import { useWords } from "../../lib/words.tsx";
+import { SheetBase } from "../sheet/base.tsx";
 
 // The split fills its bleeding body; the list, the main and the pane each
 // scroll on their own. Its page is the size container its regions query.
@@ -29,11 +23,9 @@ const ALONE = "page-tablet:hidden";
 const MAIN = "flex flex-col min-w-0 grow overflow-y-auto";
 const EMPTY = "flex grow min-w-0 items-center justify-center";
 const PANE = "flex flex-col shrink-0 overflow-y-auto page-max-wide:hidden";
-// The pane opened below `wide`: the pane's own strings over the column's
-// ground, standing at the viewport's end over the scrim.
-const BACKDROP = "fixed inset-0";
-const SHEET =
-	"fixed inset-y-0 right-0 flex flex-col overflow-y-auto overscroll-contain";
+// The pane opened below `wide` is a side sheet at the pane's fit, its
+// sections a sections rhythm apart.
+const PANE_SHEET = "flex flex-col gap-sections";
 
 /** A list beside the record it opens. */
 export interface SplitProps extends Closed {
@@ -53,7 +45,6 @@ export function Split({ list, main, pane, empty }: SplitProps) {
 	const title = use(PageTitle);
 	const lend = use(LendAct);
 	const recordOpen = use(RecordOpen);
-	const container = use(PortalContainer);
 	const room = use(ActRoom);
 	const [open, setOpen] = useState(false);
 	const [sheet] = useState(() => Dialog.createHandle<unknown>());
@@ -93,21 +84,16 @@ export function Split({ list, main, pane, empty }: SplitProps) {
 					{pane}
 				</aside>
 			) : null}
-			<Dialog.Root
+			<SheetBase
 				handle={sheet}
 				open={detailed && open}
-				onOpenChange={setOpen}
+				onOpen={() => setOpen(true)}
+				onClose={() => setOpen(false)}
+				title={words.details}
+				fit="pane"
 			>
-				<Dialog.Portal container={container}>
-					<Dialog.Backdrop className={cn(SCRIM, BACKDROP)} />
-					<Dialog.Popup
-						aria-label={words.details}
-						className={cn(SPLIT_PANE, SHELL_COLUMN, SHEET)}
-					>
-						{pane}
-					</Dialog.Popup>
-				</Dialog.Portal>
-			</Dialog.Root>
+				<div className={PANE_SHEET}>{pane}</div>
+			</SheetBase>
 		</div>
 	);
 }

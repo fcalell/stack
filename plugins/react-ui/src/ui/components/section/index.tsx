@@ -26,6 +26,7 @@ import { FormContext } from "../../lib/form.ts";
 import { DEEPER, HeadingContext } from "../../lib/heading.ts";
 import { LoadingContext } from "../../lib/loading.ts";
 import { ReasonHostContext } from "../../lib/reason.ts";
+import { SectionContext } from "../../lib/section.ts";
 import { useTouched } from "../../lib/touched.ts";
 import { Button } from "../button/index.tsx";
 import { Reason } from "../button/reason.tsx";
@@ -112,6 +113,10 @@ export function Section({
 		act !== undefined && "blocked" in act ? act.blocked : undefined;
 	const [open, setOpen] = useState(folded !== true);
 	const [pressed, setPressed] = useState(false);
+	// A QueryBoundary in the body waits through the Section: it draws its
+	// rows waiting, the Section its busy head.
+	const [waiting, setWaiting] = useState(false);
+	const busy = loading === true || waiting;
 	useEffect(() => {
 		if (blocked === undefined) setPressed(false);
 	}, [blocked]);
@@ -125,7 +130,7 @@ export function Section({
 	// A count waits with the body.
 	let tally: ReactNode = null;
 	if (count !== undefined)
-		tally = loading ? (
+		tally = busy ? (
 			<span
 				aria-hidden
 				className={cn(skeleton({ kind: "count" }), COUNT_WAIT)}
@@ -150,7 +155,7 @@ export function Section({
 				onToggle?.(next);
 			}}
 			aria-labelledby={titleId}
-			aria-busy={loading || undefined}
+			aria-busy={busy || undefined}
 			className={cn(section({ in: within }), BOX)}
 		>
 			<div className={cn(SECTION_HEAD, HEAD)}>
@@ -232,7 +237,7 @@ export function Section({
 							))
 						) : (
 							<LoadingContext value={loading === true}>
-								{children}
+								<SectionContext value={setWaiting}>{children}</SectionContext>
 							</LoadingContext>
 						)}
 					</HeadingContext>

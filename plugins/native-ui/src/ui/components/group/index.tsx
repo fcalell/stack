@@ -9,6 +9,7 @@ import { Children, type ReactNode, useContext } from "react";
 import { View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
+import { GroundContext } from "../../lib/ground";
 import { LoadingContext } from "../../lib/loading";
 
 const BOX = "overflow-hidden";
@@ -62,7 +63,7 @@ export function Group({ loading, children }: GroupProps) {
 					key={index}
 					className={cn(index > 0 && BETWEEN, index > 0 && HAIRLINE)}
 				>
-					{row}
+					<GroundContext.Provider value="group">{row}</GroundContext.Provider>
 				</View>
 			))}
 		</View>

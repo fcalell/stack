@@ -21,14 +21,18 @@ import {
 	FIELD,
 	FIELD_VALUE,
 	FORM,
+	FORM_FIELD,
 	ICON,
 	ICON_BUTTON,
+	LINE_BOX,
 	LINK,
 	type Matrix,
 	MENU,
 	MENU_GROUP,
+	MENU_LABEL,
 	MESSAGE,
 	OTP_BOX,
+	PICKER,
 	PLACE_ROW,
 	PLACE_ROW_GLYPH,
 	PLACE_TAB,
@@ -39,6 +43,7 @@ import {
 	SEGMENT_LABEL,
 	SHEET_SIDE,
 	SKELETON,
+	SKELETON_LANE,
 	SKELETON_ROW,
 	SPLIT_MAIN,
 	STATUS_DOT,
@@ -99,14 +104,18 @@ export const switchTrack = build(SWITCH);
 export const switchThumb = build(SWITCH_THUMB);
 export const checkbox = build(CHECKBOX);
 export const row = build(ROW);
+export const lineBox = build(LINE_BOX);
 export const tableRow = build(TABLE_ROW);
 export const segment = build(SEGMENT);
 export const segmentLabel = build(SEGMENT_LABEL);
+export const picker = build(PICKER);
+export const formField = build(FORM_FIELD);
 export const banner = build(BANNER);
 export const bannerGlyph = build(BANNER_GLYPH);
 export const toastState = build(TOAST_STATE);
 export const menu = build(MENU);
 export const menuGroup = build(MENU_GROUP);
+export const menuLabel = build(MENU_LABEL);
 export const sheetSide = build(SHEET_SIDE);
 export const diffLine = build(DIFF_LINE);
 export const message = build(MESSAGE);
@@ -120,6 +129,7 @@ export const form = build(FORM);
 export const actionBar = build(ACTION_BAR);
 export const skeleton = build(SKELETON);
 export const skeletonRow = build(SKELETON_ROW);
+export const skeletonLane = build(SKELETON_LANE);
 
 // ── The family registry and its cells ──────────────────────────────
 
@@ -175,14 +185,18 @@ export const FAMILIES: readonly Family[] = [
 	family("SWITCH_THUMB", SWITCH_THUMB, switchThumb),
 	family("CHECKBOX", CHECKBOX, checkbox),
 	family("ROW", ROW, row),
+	family("LINE_BOX", LINE_BOX, lineBox),
 	family("TABLE_ROW", TABLE_ROW, tableRow),
 	family("SEGMENT", SEGMENT, segment),
 	family("SEGMENT_LABEL", SEGMENT_LABEL, segmentLabel),
+	family("PICKER", PICKER, picker),
+	family("FORM_FIELD", FORM_FIELD, formField),
 	family("BANNER", BANNER, banner),
 	family("BANNER_GLYPH", BANNER_GLYPH, bannerGlyph),
 	family("TOAST_STATE", TOAST_STATE, toastState),
 	family("MENU", MENU, menu),
 	family("MENU_GROUP", MENU_GROUP, menuGroup),
+	family("MENU_LABEL", MENU_LABEL, menuLabel),
 	family("SHEET_SIDE", SHEET_SIDE, sheetSide),
 	family("DIFF_LINE", DIFF_LINE, diffLine),
 	family("MESSAGE", MESSAGE, message),
@@ -196,6 +210,7 @@ export const FAMILIES: readonly Family[] = [
 	family("ACTION_BAR", ACTION_BAR, actionBar),
 	family("SKELETON", SKELETON, skeleton),
 	family("SKELETON_ROW", SKELETON_ROW, skeletonRow),
+	family("SKELETON_LANE", SKELETON_LANE, skeletonLane),
 ];
 
 export function classes(value: string): string[] {
@@ -243,13 +258,12 @@ export const SPINNER = "size-spinner";
 export const SPINNER_TRACK = "rounded-full border-2 opacity-30";
 export const SPINNER_ARC = "rounded-full border-2 border-t-transparent";
 // A status: its dot (`statusDot`) beside its word, the word bounded as a
-// chip's label is, so a long one truncates before a row's title does. With
-// `onOpen` it is a `PILL_ACT`.
+// chip's label is, so a long one truncates before a row's title does.
 export const STATUS = "gap-inside";
 export const STATUS_LABEL =
 	"max-w-measure-short text-meta leading-meta font-normal text-ink-meta";
-// An act drawn as its words in a pill with no boundary at rest: a status that
-// opens, a row's pick. It pulls back by its own padding on the side that
+// A pick drawn as its value in a pill with no boundary at rest (a row's pick,
+// a status that moves). It pulls back by its own padding on the side that
 // meets plain text (an overlay), so its words sit where static words do.
 export const PILL_ACT = "rounded-full px-inside min-h-target";
 // A removable chip's remove act: a round hit box the chip's height.
@@ -262,8 +276,11 @@ export const FIELD_GLYPH = "text-ink-meta";
 export const TEXT_AREA_VALUE = "min-h-text-area";
 // A one-time code's row of boxes and the digit in each.
 export const OTP = "gap-inside";
-// A select's option group: its rows at the rows rhythm.
+// A group of options (a select's, a picker's, an option list's): its rows at
+// the rows rhythm.
 export const SELECT_GROUP = "gap-rows";
+// An option group's label over its rows, inset to the rows' text.
+export const OPTION_GROUP_LABEL = "px-control-x pt-pair";
 export const OTP_DIGIT =
 	"text-heading leading-heading tracking-heading font-semibold text-ink-body font-mono";
 // A slider: its label line (the label, its value trailing) over the track,
@@ -281,6 +298,13 @@ export const SLIDER_THUMB =
 // A picker's empty choice and its control with no value: a placeholder's
 // look.
 export const PICKER_EMPTY = "text-ink-meta";
+// The value a row's pick shows in its pill (`PICKER {fit: row}`); the field
+// fit's value is `FIELD_VALUE`'s.
+export const PICKER_VALUE =
+	"tabular-nums text-meta leading-meta font-normal text-ink-meta";
+// The pick's popover at the popover's width (its ground and inset are
+// `POPOVER`'s).
+export const PICKER_POPOVER = "w-popover";
 // A box on the group ground.
 export const GROUP_GROUND = "rounded-card bg-group";
 // A popover: raised on the float shadow inside its hairline, its rows inset
@@ -293,14 +317,41 @@ export const CHECKBOX_MARK = "size-icon-meta text-on-accent";
 // A row's leading: one slot at the avatar's size, the dot or the glyph centred
 // in it, so the titles of a list share one x whatever leads them.
 export const ROW_LEADING = "size-avatar";
+// A row's first line: its title (an option's label, a definition's label)
+// and what trails it.
+export const ROW_TITLE_LINE = "gap-inside";
+// A list row's trailing value (a time, a date), its figures at one width.
+export const ROW_TRAILING =
+	"tabular-nums text-meta leading-meta font-normal text-ink-meta";
 // A two-line row's meta line: the meta keeps its room and the marks or the
 // trailing that cannot sit beside it wrap under it, the row growing.
 export const ROW_META_LINE = "gap-x-inside";
+// A list row's marks on its meta line (a status, a chip) and its end acts.
+export const ROW_MARKS = "gap-inside";
+export const ROW_ACTS = "gap-acts";
 // A definition row: its text and its end acts a fields gap apart, over the
 // row's own gap.
 export const DEFINITION_ROW = "gap-fields";
-// A definition row's act: the Link's standalone form, at the body line's type.
-export const DEFINITION_ROW_ACT = "text-body leading-body";
+// A definition row's link chevron, centred in the square of the icon act it
+// stands in for, so values with an act or a link end at one x.
+export const DEFINITION_ROW_CHEVRON = "size-control-compact";
+// A record's head: the overline, the title and the facts line a pair apart;
+// the facts wrap at the fields rhythm, a counted fact its word beside its
+// count.
+export const ITEM_HEADER = "gap-pair";
+export const ITEM_FACTS = "gap-x-fields gap-y-pair";
+export const ITEM_FACT = "gap-inside";
+// A field's error line under its control, in the error ink.
+export const FORM_FIELD_ERROR =
+	"text-meta leading-meta font-normal text-ink-error";
+// A multi-choice list: its option groups on a hairline card at the float
+// inset; an option's box beside its label, and the children under a chosen
+// option inset past the box.
+export const OPTION_LIST =
+	"gap-pair p-float rounded-card border border-edge bg-surface";
+export const OPTION_LINE = "gap-inside";
+export const OPTION_CHILDREN = "gap-inside px-control-x pb-pair";
+export const OPTION_INDENT = "size-check";
 // The segments' track: flush, so the control stands at a segment's height.
 export const SEGMENTED_CONTROL = "rounded-control bg-group";
 // A toast at its width, raised and floating, its end inset tighter for the
@@ -321,21 +372,35 @@ export const SHEET_CENTERED =
 export const SCRIM = "bg-scrim";
 // A sheet's regions in every form but the centred one: the head over a
 // hairline (its row, then a blocked submit's reason on touch), the body at
-// the card inset, the foot under a hairline (its line centred beside the acts).
+// the card inset, the foot under a hairline (its line centred beside the
+// acts) on the sheet's own ground, since on touch it stands over the end of
+// the scrolling body.
 export const SHEET_HEAD = "gap-pair px-card py-pair border-b border-edge";
 // The head's row: the lead act, the title over the description, the end act,
 // the title centred on the acts, which set the row's height.
 export const SHEET_HEAD_ROW = "gap-acts";
 export const SHEET_BODY = "p-card";
-export const SHEET_FOOT = "gap-acts px-card py-card border-t border-edge";
+export const SHEET_FOOT =
+	"gap-acts px-card py-card border-t border-edge bg-raised";
+// An empty state: its column at the empty width (the mark, the text, the
+// act a fields gap apart), the title over the sentence a pair apart, and in a
+// Section a hairline frame at the card inset around it.
+export const EMPTY_COLUMN = "gap-fields w-full max-w-empty";
+export const EMPTY_TEXT = "gap-pair";
+export const EMPTY_FRAME = "p-card rounded-card border border-edge";
 // An empty state's mark: its glyph in a control-sized disc on the neutral
 // ground, in the ink of its place (meta, or danger for a failed query).
 export const EMPTY_MARK = "size-control rounded-full bg-fill-neutral";
-// The pending work's track in an action bar's place, its act beside it.
-export const PENDING_BAR =
+// The pending work in an action bar's place: the bar over a blocked act's
+// reason, its row (the track beside the act), the track, the elapsed share
+// as a line along the track's foot, and the time left.
+export const PENDING_BAR = "gap-pair";
+export const PENDING_ROW = "gap-acts";
+export const PENDING_TRACK =
 	"rounded-control bg-group min-h-control px-control-x gap-inside";
-// The elapsed share: a line along the track's foot.
 export const PENDING_FILL = "h-track bg-ink-meta";
+export const PENDING_LEFT =
+	"tabular-nums text-meta leading-meta font-normal text-ink-meta";
 export const METER_TRACK = "rounded-full bg-group";
 export const METER_FILL = "rounded-full bg-accent";
 export const DIFF_GUTTER = "text-ink-meta";
@@ -445,6 +510,7 @@ export type TableRowState = keyof (typeof TABLE_ROW)["variants"]["state"];
 export type CheckboxState = keyof (typeof CHECKBOX)["variants"]["state"];
 export type SegmentState = keyof (typeof SEGMENT)["variants"]["state"];
 export type RowLines = keyof (typeof ROW)["variants"]["lines"];
+export type RowGround = keyof (typeof ROW)["variants"]["ground"];
 export type SheetFit = keyof (typeof SHEET_SIDE)["variants"]["fit"];
 export type BannerKind = keyof (typeof BANNER)["variants"]["kind"];
 export type ToastState = keyof (typeof TOAST_STATE)["variants"]["state"];
@@ -455,6 +521,7 @@ export type ChipCell = keyof (typeof CHIP)["variants"]["family"];
 export type PlaceRowState = keyof (typeof PLACE_ROW)["variants"]["state"];
 export type PlaceTabState = keyof (typeof PLACE_TAB)["variants"]["state"];
 export type ActionBarFit = keyof (typeof ACTION_BAR)["variants"]["fit"];
+export type PickerFit = keyof (typeof PICKER)["variants"]["fit"];
 
 export type ContentTone = ColorName;
 
@@ -479,6 +546,16 @@ export function buttonContentTone(act: ButtonAct): ContentTone {
 // A status's colour, the dot's.
 export function statusContentTone(state: StatusState): ContentTone {
 	return toneOf(STATUS_DOT.variants.state[state]);
+}
+
+// A toast's glyph ink, its state's.
+export function toastContentTone(state: ToastState): ContentTone {
+	return toneOf(TOAST_STATE.variants.state[state]);
+}
+
+// A banner's glyph ink, its kind's.
+export function bannerContentTone(kind: BannerKind): ContentTone {
+	return toneOf(BANNER_GLYPH.variants.kind[kind]);
 }
 
 // A stable step for a name, so one name keeps one fill everywhere.

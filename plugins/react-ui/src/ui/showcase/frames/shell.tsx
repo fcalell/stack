@@ -25,13 +25,14 @@ function places(): PlaceSpec[] {
 
 const SWITCHER: Switcher = {
 	label: "Workspaces",
-	name: "Acme",
 	options: [
-		{ label: "Acme", onAct: act },
-		{ label: "Globex", onAct: act },
-		{ label: "Initech", onAct: act },
+		{ value: "acme", label: "Acme", avatar: {} },
+		{ value: "globex", label: "Globex", avatar: {} },
+		{ value: "initech", label: "Initech", avatar: {} },
 	],
-	create: { label: "New workspace", icon: "Plus", onAct: act },
+	value: "acme",
+	onChange: act,
+	act: { label: "New workspace", icon: "Plus", onAct: act },
 };
 
 function Frame() {
@@ -55,7 +56,7 @@ function Frame() {
 
 // The Shell holding a Place, one frame per state on the resting row glyph
 // (the sidebar's) and the idle tab (the tab bar's); the body name cell at
-// rest draws the switcher's menu open, and on touch the selected tab at rest
+// rest draws the switcher's pick open, and on touch the selected tab at rest
 // the Shell holding a pushed Screen, which covers the tab bar. The other
 // cells are drawn inside those frames.
 export function drawShell(frame: ShowcaseFrame) {
@@ -79,7 +80,7 @@ export function drawShell(frame: ShowcaseFrame) {
 		);
 	if (cell === "TEXT_STRONG.role.body" && frame.state === "rest")
 		return (
-			<Opened>
+			<Opened popup="listbox">
 				<Frame />
 			</Opened>
 		);

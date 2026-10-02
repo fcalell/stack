@@ -1,5 +1,4 @@
 import { Dialog } from "@base-ui/react/dialog";
-import { Menu } from "@base-ui/react/menu";
 import { cn } from "@fcalell/ui-core/cn";
 import type {
 	Act,
@@ -16,29 +15,28 @@ import {
 	PAGE_HEAD,
 	PAGE_STRIP,
 	PAGE_TOP_BAR,
-	POPOVER,
-	row,
 	text,
 } from "@fcalell/ui-core/variants";
-import { type ReactNode, use, useId, useState } from "react";
+import { type ReactNode, use, useEffect, useId, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import {
+	ActFloats,
 	ActRoom,
 	LendAct,
 	PageTitle,
 	PlaceRoute,
 	RecordOpen,
+	RecordShown,
 	ShellSwitcher,
 } from "../../lib/frame.ts";
 import { HeadingContext } from "../../lib/heading.ts";
-import { spacing, useTouch } from "../../lib/media.ts";
+import { useTouch } from "../../lib/media.ts";
 import { navigate } from "../../lib/navigate.ts";
-import { PortalContainer } from "../../lib/portal.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Button } from "../button/index.tsx";
-import { Icon } from "../icon/index.tsx";
 import { IconButtonBase } from "../icon-button/base.tsx";
 import { IconButton } from "../icon-button/index.tsx";
+import { Menu } from "../menu/index.tsx";
 
 const PLACE = "flex flex-col grow min-h-0";
 // A bleeding page is the size container a Split inside decides its regions
@@ -52,9 +50,10 @@ const HEAD = "flex flex-col";
 const ROW = "flex items-center";
 const SPACER = "grow";
 const TITLE = "min-w-0 grow truncate";
-// The body scrolls under the fixed head; a bleeding body fills the rest and
+// The body fills the column, so an EmptyState alone in it centres, and
+// scrolls under the fixed head; a bleeding body fills the rest and
 // leaves scrolling, and its top inset, to its child.
-const BODY = "flex flex-col overflow-y-auto";
+const BODY = "flex flex-col grow overflow-y-auto";
 const BLEED = "flex flex-col grow min-h-0";
 const BODY_WRAP = "relative flex flex-col grow min-h-0";
 const ACT_ROOM = "shrink-0";
@@ -66,76 +65,13 @@ const ACT_HIT = "flex pointer-events-auto";
 const BESIDE_LIST =
 	"page-tablet:group-has-data-split/page:right-auto page-tablet:group-has-data-split/page:w-list";
 
-const MENU = "flex flex-col w-popover";
-const MENU_ROWS = "flex flex-col gap-rows";
-// The highlight wash marks the keyboard's row, so a row draws no ring.
-const MENU_ROW = "flex items-center outline-none";
-const MENU_GLYPH = "flex shrink-0 text-ink-meta";
-const MENU_LINE = "flex flex-col min-w-0 grow";
-const MENU_LABEL = "truncate";
-const MENU_DANGER = "text-danger";
-
-/** The overflow of a page's acts: an icon act that opens a menu of `MenuItem`s, a destructive one in danger ink, a blocked one inert with its reason under its label. */
-export function More(props: {
-	items: readonly MenuItem[];
-	fit: IconButtonFit;
-}) {
-	const words = useWords();
-	const container = use(PortalContainer);
+// The floating act's room under what scrolls past it, or the toasts that
+// stand above it: the act's height over the page inset it floats at.
+export function FloatingActRoom() {
 	return (
-		<Menu.Root modal={false}>
-			<Menu.Trigger
-				render={
-					<IconButtonBase icon="Ellipsis" fit={props.fit} label={words.more} />
-				}
-			/>
-			<Menu.Portal container={container}>
-				<Menu.Positioner align="end" sideOffset={() => spacing("pair")}>
-					<Menu.Popup className={cn(POPOVER, MENU)}>
-						<div className={MENU_ROWS}>
-							{props.items.map((item) => (
-								<Menu.Item
-									key={item.label}
-									label={item.label}
-									onClick={item.onAct}
-									disabled={item.blocked !== undefined}
-									className={(state) =>
-										cn(
-											row({
-												state: state.highlighted ? "highlighted" : "rest",
-											}),
-											MENU_ROW,
-										)
-									}
-								>
-									{item.icon ? (
-										<span className={MENU_GLYPH}>
-											<Icon name={item.icon} />
-										</span>
-									) : null}
-									<span className={MENU_LINE}>
-										<span
-											className={cn(
-												text({ role: "body" }),
-												MENU_LABEL,
-												item.destructive && MENU_DANGER,
-											)}
-										>
-											{item.label}
-										</span>
-										{item.blocked ? (
-											<span className={text({ role: "meta" })}>
-												{item.blocked}
-											</span>
-										) : null}
-									</span>
-								</Menu.Item>
-							))}
-						</div>
-					</Menu.Popup>
-				</Menu.Positioner>
-			</Menu.Portal>
-		</Menu.Root>
+		<div aria-hidden className={cn(FLOATING_ACT_FOOT, ACT_ROOM)}>
+			<div className={FLOATING_ACT_ROOM} />
+		</div>
 	);
 }
 
@@ -222,7 +158,9 @@ export function Place({
 		<IconButton key={action.label} {...action} fit={fit} />
 	));
 	const details = sheet ? <Details sheet={sheet} fit={fit} /> : null;
-	const overflow = more?.length ? <More items={more} fit={fit} /> : null;
+	const overflow = more?.length ? (
+		<Menu label={words.more} items={more} />
+	) : null;
 	const heading = (
 		<h1 id={titleId} className={cn(text({ role: "title" }), TITLE)}>
 			{title}
@@ -248,11 +186,13 @@ export function Place({
 	// A bleeding body hands the act's room to the regions that scroll inside
 	// it: the act's height over the page inset, since such a region keeps no
 	// inset of its own.
-	const room = floating ? (
-		<div aria-hidden className={cn(FLOATING_ACT_FOOT, ACT_ROOM)}>
-			<div className={FLOATING_ACT_ROOM} />
-		</div>
-	) : null;
+	const room = floating ? <FloatingActRoom /> : null;
+	const floats = use(ActFloats);
+	useEffect(() => {
+		if (!floating || !floats) return;
+		floats(true);
+		return () => floats(false);
+	}, [floating, floats]);
 	// The head is one tree on both densities, so crossing the density line
 	// keeps its acts, their focus and an open sheet's trigger. Only the
 	// title's place, the spacer and the strip's act differ, each a slot that
@@ -287,17 +227,19 @@ export function Place({
 	return (
 		<LendAct value={lend}>
 			<RecordOpen value={setRecordOpen}>
-				<PageTitle value={titleId}>
-					<HeadingContext value={2}>
-						<div className={cn(PLACE, bleed && PAGE)}>
-							{head}
-							<div className={BODY_WRAP}>
-								{body}
-								{layer}
+				<RecordShown value={recordOpen}>
+					<PageTitle value={titleId}>
+						<HeadingContext value={2}>
+							<div className={cn(PLACE, bleed && PAGE)}>
+								{head}
+								<div className={BODY_WRAP}>
+									{body}
+									{layer}
+								</div>
 							</div>
-						</div>
-					</HeadingContext>
-				</PageTitle>
+						</HeadingContext>
+					</PageTitle>
+				</RecordShown>
 			</RecordOpen>
 		</LendAct>
 	);

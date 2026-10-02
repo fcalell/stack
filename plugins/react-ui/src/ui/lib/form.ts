@@ -10,3 +10,7 @@ export const FormContext = createContext<
 // Set by an `ActionBar` inside a `Form` around its filled act: the `Button`
 // it draws is the form's submit button, so Enter in a field presses it.
 export const SubmitContext = createContext(false);
+
+// Set by an `ActionBar` around its other acts while one act pends: each is
+// inert and says so, drawn in its disabled form.
+export const ActInert = createContext(false);

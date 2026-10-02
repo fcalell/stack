@@ -6,23 +6,36 @@
 
 import { ActionBar } from "@fcalell/plugin-react-ui/components/action-bar";
 import { Avatar } from "@fcalell/plugin-react-ui/components/avatar";
+import { Banner } from "@fcalell/plugin-react-ui/components/banner";
 import { Button } from "@fcalell/plugin-react-ui/components/button";
 import { Checkbox } from "@fcalell/plugin-react-ui/components/checkbox";
 import { Chip } from "@fcalell/plugin-react-ui/components/chip";
 import { Columns } from "@fcalell/plugin-react-ui/components/columns";
 import { Count } from "@fcalell/plugin-react-ui/components/count";
+import { DefinitionRow } from "@fcalell/plugin-react-ui/components/definition-row";
+import { EmptyState } from "@fcalell/plugin-react-ui/components/empty-state";
 import { Form } from "@fcalell/plugin-react-ui/components/form";
+import { FormField } from "@fcalell/plugin-react-ui/components/form-field";
 import { Group } from "@fcalell/plugin-react-ui/components/group";
 import { Icon } from "@fcalell/plugin-react-ui/components/icon";
 import { IconButton } from "@fcalell/plugin-react-ui/components/icon-button";
 import { Input } from "@fcalell/plugin-react-ui/components/input";
 import { InputOtp } from "@fcalell/plugin-react-ui/components/input-otp";
+import { ItemHeader } from "@fcalell/plugin-react-ui/components/item-header";
 import { Link } from "@fcalell/plugin-react-ui/components/link";
+import { PendingBar } from "@fcalell/plugin-react-ui/components/pending-bar";
+import { Picker } from "@fcalell/plugin-react-ui/components/picker";
+import { QueryBoundary } from "@fcalell/plugin-react-ui/components/query-boundary";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
 import { Screen } from "@fcalell/plugin-react-ui/components/screen";
 import { List } from "@fcalell/plugin-react-ui/components/list";
+import { ListRow } from "@fcalell/plugin-react-ui/components/list-row";
+import { Menu } from "@fcalell/plugin-react-ui/components/menu";
+import { OptionList } from "@fcalell/plugin-react-ui/components/option-list";
 import { Section } from "@fcalell/plugin-react-ui/components/section";
+import { SegmentedControl } from "@fcalell/plugin-react-ui/components/segmented-control";
 import { Select } from "@fcalell/plugin-react-ui/components/select";
+import { Sheet } from "@fcalell/plugin-react-ui/components/sheet";
 import { Shell } from "@fcalell/plugin-react-ui/components/shell";
 import { Slider } from "@fcalell/plugin-react-ui/components/slider";
 import { Spinner } from "@fcalell/plugin-react-ui/components/spinner";
@@ -31,6 +44,7 @@ import { Status } from "@fcalell/plugin-react-ui/components/status";
 import { Switch } from "@fcalell/plugin-react-ui/components/switch";
 import { Text } from "@fcalell/plugin-react-ui/components/text";
 import { TextArea } from "@fcalell/plugin-react-ui/components/text-area";
+import { Toast } from "@fcalell/plugin-react-ui/components/toast";
 import { Toolbar } from "@fcalell/plugin-react-ui/components/toolbar";
 
 const slider = { label: "x", value: 1, onChange: () => {}, min: 0, max: 2 };
@@ -295,5 +309,131 @@ export const closure = (
 		<Shell places={[]} class="x" />
 		{/* @ts-expect-error: closed channel */}
 		<Shell places={[]} classList={{}} />
+		<ListRow title="x" />
+		{/* @ts-expect-error: closed channel */}
+		<ListRow title="x" className="x" />
+		{/* @ts-expect-error: closed channel */}
+		<ListRow title="x" style={{ flex: 1 }} />
+		{/* @ts-expect-error: closed channel */}
+		<ListRow title="x" class="x" />
+		{/* @ts-expect-error: closed channel */}
+		<ListRow title="x" classList={{}} />
+		<FormField label="x" />
+		{/* @ts-expect-error: closed channel */}
+		<FormField label="x" className="x" />
+		{/* @ts-expect-error: closed channel */}
+		<FormField label="x" style={{ flex: 1 }} />
+		{/* @ts-expect-error: closed channel */}
+		<FormField label="x" class="x" />
+		{/* @ts-expect-error: closed channel */}
+		<FormField label="x" classList={{}} />
+		<SegmentedControl label="x" options={[]} value="x" onChange={() => {}} />
+		{/* @ts-expect-error: closed channel */}
+		<SegmentedControl label="x" options={[]} value="x" onChange={() => {}} className="x" />
+		{/* @ts-expect-error: closed channel */}
+		<SegmentedControl label="x" options={[]} value="x" onChange={() => {}} style={{ flex: 1 }} />
+		{/* @ts-expect-error: closed channel */}
+		<SegmentedControl label="x" options={[]} value="x" onChange={() => {}} class="x" />
+		{/* @ts-expect-error: closed channel */}
+		<SegmentedControl label="x" options={[]} value="x" onChange={() => {}} classList={{}} />
+		<Sheet open onClose={() => {}} title="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Sheet open onClose={() => {}} title="x" className="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Sheet open onClose={() => {}} title="x" style={{ flex: 1 }} />
+		{/* @ts-expect-error: closed channel */}
+		<Sheet open onClose={() => {}} title="x" class="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Sheet open onClose={() => {}} title="x" classList={{}} />
+		<Picker label="x" options={[]} onChange={() => {}} />
+		{/* @ts-expect-error: closed channel */}
+		<Picker label="x" options={[]} onChange={() => {}} className="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Picker label="x" options={[]} onChange={() => {}} style={{ flex: 1 }} />
+		{/* @ts-expect-error: closed channel */}
+		<Picker label="x" options={[]} onChange={() => {}} class="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Picker label="x" options={[]} onChange={() => {}} classList={{}} />
+		<Menu label="x" items={[]} />
+		{/* @ts-expect-error: closed channel */}
+		<Menu label="x" items={[]} className="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Menu label="x" items={[]} style={{ flex: 1 }} />
+		{/* @ts-expect-error: closed channel */}
+		<Menu label="x" items={[]} class="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Menu label="x" items={[]} classList={{}} />
+		<OptionList options={[]} value={[]} onChange={() => {}} />
+		{/* @ts-expect-error: closed channel */}
+		<OptionList options={[]} value={[]} onChange={() => {}} className="x" />
+		{/* @ts-expect-error: closed channel */}
+		<OptionList options={[]} value={[]} onChange={() => {}} style={{ flex: 1 }} />
+		{/* @ts-expect-error: closed channel */}
+		<OptionList options={[]} value={[]} onChange={() => {}} class="x" />
+		{/* @ts-expect-error: closed channel */}
+		<OptionList options={[]} value={[]} onChange={() => {}} classList={{}} />
+		<Toast sentence="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Toast sentence="x" className="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Toast sentence="x" style={{ flex: 1 }} />
+		{/* @ts-expect-error: closed channel */}
+		<Toast sentence="x" class="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Toast sentence="x" classList={{}} />
+		<DefinitionRow label="x" />
+		{/* @ts-expect-error: closed channel */}
+		<DefinitionRow label="x" className="x" />
+		{/* @ts-expect-error: closed channel */}
+		<DefinitionRow label="x" style={{ flex: 1 }} />
+		{/* @ts-expect-error: closed channel */}
+		<DefinitionRow label="x" class="x" />
+		{/* @ts-expect-error: closed channel */}
+		<DefinitionRow label="x" classList={{}} />
+		<ItemHeader title="x" />
+		{/* @ts-expect-error: closed channel */}
+		<ItemHeader title="x" className="x" />
+		{/* @ts-expect-error: closed channel */}
+		<ItemHeader title="x" style={{ flex: 1 }} />
+		{/* @ts-expect-error: closed channel */}
+		<ItemHeader title="x" class="x" />
+		{/* @ts-expect-error: closed channel */}
+		<ItemHeader title="x" classList={{}} />
+		<EmptyState sentence="x" />
+		{/* @ts-expect-error: closed channel */}
+		<EmptyState sentence="x" className="x" />
+		{/* @ts-expect-error: closed channel */}
+		<EmptyState sentence="x" style={{ flex: 1 }} />
+		{/* @ts-expect-error: closed channel */}
+		<EmptyState sentence="x" class="x" />
+		{/* @ts-expect-error: closed channel */}
+		<EmptyState sentence="x" classList={{}} />
+		<QueryBoundary query={{ data: 1, isPending: false, isError: false, refetch: () => {} }} sentence="x" children={() => null} />
+		{/* @ts-expect-error: closed channel */}
+		<QueryBoundary query={{ data: 1, isPending: false, isError: false, refetch: () => {} }} sentence="x" children={() => null} className="x" />
+		{/* @ts-expect-error: closed channel */}
+		<QueryBoundary query={{ data: 1, isPending: false, isError: false, refetch: () => {} }} sentence="x" children={() => null} style={{ flex: 1 }} />
+		{/* @ts-expect-error: closed channel */}
+		<QueryBoundary query={{ data: 1, isPending: false, isError: false, refetch: () => {} }} sentence="x" children={() => null} class="x" />
+		{/* @ts-expect-error: closed channel */}
+		<QueryBoundary query={{ data: 1, isPending: false, isError: false, refetch: () => {} }} sentence="x" children={() => null} classList={{}} />
+		<Banner sentence="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Banner sentence="x" className="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Banner sentence="x" style={{ flex: 1 }} />
+		{/* @ts-expect-error: closed channel */}
+		<Banner sentence="x" class="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Banner sentence="x" classList={{}} />
+		<PendingBar sentence="x" />
+		{/* @ts-expect-error: closed channel */}
+		<PendingBar sentence="x" className="x" />
+		{/* @ts-expect-error: closed channel */}
+		<PendingBar sentence="x" style={{ flex: 1 }} />
+		{/* @ts-expect-error: closed channel */}
+		<PendingBar sentence="x" class="x" />
+		{/* @ts-expect-error: closed channel */}
+		<PendingBar sentence="x" classList={{}} />
 	</>
 );

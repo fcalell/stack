@@ -11,16 +11,18 @@ import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { CoverTabs, LendAct, PageTitle } from "../../lib/frame";
 import { Scroll } from "../../lib/hosts";
-import { MenuCircle } from "../../lib/more";
 import { navigate } from "../../lib/navigate";
 import { useWords } from "../../lib/words";
 import { IconButton } from "../icon-button";
+import { Menu } from "../menu";
 
 const SCREEN = "flex-1";
 const TOP_BAR = "relative flex-row items-center";
 const SPACER = "flex-1";
 const TITLE = "min-w-0 grow";
 const BODY = "flex-1";
+// The body's content fills the scroll, so an EmptyState alone centres in it.
+const BODY_CONTENT = "grow";
 
 export interface ScreenProps extends Closed {
 	title: string;
@@ -60,14 +62,7 @@ export function Screen({ title, back, actions, more, children }: ScreenProps) {
 							{[...(actions ?? []), ...(lent ? [lent] : [])].map((action) => (
 								<IconButton key={action.label} {...action} fit="body" />
 							))}
-							{more?.length ? (
-								<MenuCircle
-									label={words.more}
-									title={title}
-									items={more}
-									fit="body"
-								/>
-							) : null}
+							{more?.length ? <Menu label={words.more} items={more} /> : null}
 						</View>
 						<RNText
 							accessibilityRole="header"
@@ -76,7 +71,10 @@ export function Screen({ title, back, actions, more, children }: ScreenProps) {
 							{title}
 						</RNText>
 					</View>
-					<Scroll className={BODY} contentContainerClassName={PAGE_BODY}>
+					<Scroll
+						className={BODY}
+						contentContainerClassName={cn(PAGE_BODY, BODY_CONTENT)}
+					>
 						{children}
 					</Scroll>
 				</View>

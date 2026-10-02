@@ -10,9 +10,9 @@ import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { FieldDisabled, FieldError, useFieldName } from "../../lib/field";
 import { Ink } from "../../lib/ink";
-import { flatOptions, PickSheet } from "../../lib/pick-sheet";
 import { useTouched } from "../../lib/touched";
 import { Icon } from "../icon";
+import { groupsOf, PickSheet } from "../picker/sheet";
 
 // `V` is read off the options alone, so an enum's options pick that enum and
 // a value outside them is a type error. An option whose value is `null` is
@@ -39,9 +39,9 @@ export function Select<V extends string | null = string>({
 	const name = useFieldName();
 	const error = useContext(FieldError);
 	const disabled = useContext(FieldDisabled);
-	const current = flatOptions(options).find(
-		(option) => option.value !== null && option.value === value,
-	);
+	const current = groupsOf(options)
+		.flatMap((group) => group.items)
+		.find((option) => option.value !== null && option.value === value);
 	return (
 		<>
 			<Pressable

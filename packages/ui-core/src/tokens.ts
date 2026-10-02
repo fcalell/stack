@@ -1004,6 +1004,8 @@ export const WORD_KEYS = [
 	"copied",
 	"back",
 	"close",
+	"cancel",
+	"dismiss",
 	"more",
 	"send",
 	"stop",
@@ -1016,6 +1018,7 @@ export const WORD_KEYS = [
 	"remove",
 	"details",
 	"places",
+	"notifications",
 ] as const;
 export type WordKey = (typeof WORD_KEYS)[number];
 
@@ -1033,6 +1036,8 @@ export const ENGLISH: Words = {
 	copied: "Copied",
 	back: "Back",
 	close: "Close",
+	cancel: "Cancel",
+	dismiss: "Dismiss",
 	more: "More",
 	send: "Send",
 	stop: "Stop",
@@ -1045,4 +1050,5 @@ export const ENGLISH: Words = {
 	remove: "Remove",
 	details: "Details",
 	places: "Places",
+	notifications: "Notifications",
 };

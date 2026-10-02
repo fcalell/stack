@@ -69,6 +69,7 @@ export function Split({ list, main, pane }: SplitProps) {
 				</Scroll>
 			)}
 			<Sheet
+				fit="pane"
 				open={sheet && open}
 				onClose={() => setOpen(false)}
 				title={words.details}

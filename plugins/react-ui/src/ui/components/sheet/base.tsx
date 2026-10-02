@@ -1,0 +1,284 @@
+import { Dialog } from "@base-ui/react/dialog";
+import { cn } from "@fcalell/ui-core/cn";
+import type { Act } from "@fcalell/ui-core/descriptors";
+import {
+	SCRIM,
+	SHEET,
+	SHEET_BODY,
+	SHEET_CENTERED,
+	SHEET_FOOT,
+	SHEET_HEAD,
+	SHEET_HEAD_ROW,
+	type SheetFit,
+	sheetSide,
+	text,
+	textStrong,
+} from "@fcalell/ui-core/variants";
+import { type ReactNode, use, useEffect, useId, useRef, useState } from "react";
+import { useTouch } from "../../lib/media.ts";
+import { PortalContainer } from "../../lib/portal.ts";
+import { ReasonHostContext } from "../../lib/reason.ts";
+import { TouchedContext } from "../../lib/touched.ts";
+import { useWords } from "../../lib/words.tsx";
+import { ActionBar } from "../action-bar/index.tsx";
+import { Button } from "../button/index.tsx";
+import { Reason } from "../button/reason.tsx";
+import { IconButtonBase } from "../icon-button/base.tsx";
+import { IconButton } from "../icon-button/index.tsx";
+import { backGlyph } from "../place/index.tsx";
+
+// The layer the sheet stands on over the scrim: from the bottom edge on
+// touch, at the end on the desktop, centred for a decision.
+const BACKDROP = "fixed inset-0";
+// Motion, on transform and opacity alone: a sheet enters at the slow rung
+// and leaves at the base rung, the side sheet from its end, the bottom sheet
+// from its edge, the centred one rising a pair as it fades; the scrim fades
+// on the same rung and curve. Reduced motion zeroes the rungs.
+const SCRIM_MOTION =
+	"transition-opacity duration-slow ease-out data-starting-style:opacity-0 data-ending-style:opacity-0 data-ending-style:duration-base data-ending-style:ease-in";
+const SIDE_MOTION =
+	"transition-transform duration-slow ease-out data-starting-style:translate-x-full data-ending-style:translate-x-full data-ending-style:duration-base data-ending-style:ease-in";
+const BOTTOM_MOTION =
+	"transition-transform duration-slow ease-out data-starting-style:translate-y-full data-ending-style:translate-y-full data-ending-style:duration-base data-ending-style:ease-in";
+const CENTRED_MOTION =
+	"transition-[opacity,translate] duration-slow ease-out data-starting-style:translate-y-pair data-starting-style:opacity-0 data-ending-style:opacity-0 data-ending-style:duration-base data-ending-style:ease-in";
+const LAYER_BOTTOM = "fixed inset-0 flex flex-col justify-end";
+const LAYER_SIDE = "fixed inset-0 flex justify-end";
+const LAYER_CENTRED = "fixed inset-0 flex items-center justify-center";
+const BOX = "relative flex flex-col";
+// A tall bottom sheet stops at the viewport's top and its body scrolls; the
+// bottom inset clears a phone's home indicator.
+const BOX_BOTTOM = "max-h-full pb-safe";
+const BOX_FLOAT = "max-w-full";
+const HEAD = "flex flex-col";
+const HEAD_ROW = "flex items-center";
+const TITLE_BLOCK = "flex flex-col grow min-w-0";
+const TITLE_SLOT = "flex items-center min-w-0";
+const TITLE = "truncate";
+const BODY = "flex flex-col grow min-h-0 overflow-y-auto overscroll-contain";
+const FOOT_ROW = "flex items-center";
+const FOOT_STACK = "flex flex-col";
+const FOOT_LINE = "flex items-center min-w-0";
+const FOOT_LINE_ROW = "flex items-center min-w-0 grow";
+const SPACER = "grow";
+
+/** What every sheet form draws: the public `Sheet`, the confirm and a touch `Menu`. Outside the package's exports. */
+export interface SheetBaseProps {
+	open: boolean;
+	onClose: () => void;
+	/** Hears a trigger tied by `handle` opening the sheet. */
+	onOpen?: () => void;
+	title: string;
+	description?: string;
+	back?: () => void;
+	submit?: Act;
+	foot?: string;
+	fit?: SheetFit;
+	/** A decision's acts, the foot's `ActionBar` at both densities. */
+	acts?: Act[];
+	/** A decision is centred on the desktop; a menu's rows stand under the head with no body or foot. */
+	form?: "centred" | "menu";
+	/** An act pends: the close act is inert and says so. */
+	busy?: boolean;
+	/** The sheet opens focused on its first field (a confirm's typed name). */
+	focusField?: boolean;
+	/** Ties a trigger elsewhere (a `Dialog.Trigger`) to the sheet. */
+	handle?: Dialog.Handle<unknown>;
+	children?: ReactNode;
+}
+
+/** A sheet over the scrim: on touch raised from the bottom edge, its submit at the head's end where a keyboard would cover a bar and a blocked submit's reason under the head; on the desktop at the end (a form, or a Split's pane at `fit: pane`) with the submit after Cancel in the foot, or centred for a decision. Base UI's dialog traps focus and closes on Escape and on a press outside. */
+export function SheetBase({
+	open,
+	onClose,
+	onOpen,
+	title,
+	description,
+	back,
+	submit,
+	foot,
+	fit,
+	acts,
+	form,
+	handle,
+	busy,
+	focusField,
+	children,
+}: SheetBaseProps) {
+	const touch = useTouch();
+	const words = useWords();
+	const container = use(PortalContainer);
+	const reason = useId();
+	const titleId = useId();
+	const descriptionId = useId();
+	const [touched, setTouched] = useState(false);
+	const [pressed, setPressed] = useState(false);
+	const popup = useRef<HTMLDivElement>(null);
+	const blocked = submit?.blocked !== undefined;
+	// A closed sheet, or a submit unblocked, forgets that it was touched and
+	// pressed, so a reason blocked again waits for the next press.
+	useEffect(() => {
+		if (!open) setTouched(false);
+	}, [open]);
+	useEffect(() => {
+		if (!blocked) setPressed(false);
+	}, [blocked]);
+	const iconFit = touch ? "body" : "bar";
+	const centred = form === "centred" && !touch;
+	const close = (
+		<Dialog.Close
+			disabled={busy}
+			render={<IconButtonBase icon="X" fit={iconFit} label={words.close} />}
+		/>
+	);
+	const lead = back ? (
+		<IconButton
+			icon={backGlyph(touch)}
+			fit={iconFit}
+			label={words.back}
+			onAct={back}
+		/>
+	) : null;
+	const host = blocked
+		? { id: reason, press: () => setPressed(true) }
+		: undefined;
+	// On touch the submit stands at the head's end in close's place, which
+	// moves to the start unless back holds it.
+	const headSubmit =
+		touch && submit ? (
+			<ReasonHostContext value={host}>
+				<Button
+					fit="bar"
+					label={submit.label}
+					onAct={() => void submit.onAct()}
+					loading={submit.loading}
+					blocked={submit.blocked}
+				/>
+			</ReasonHostContext>
+		) : null;
+	const start = touch ? (lead ?? close) : lead;
+	const end = touch ? headSubmit : close;
+	const titled = (
+		<h2 id={titleId} className={TITLE_SLOT}>
+			<span
+				className={cn(
+					fit === "pane"
+						? cn(text({ role: "body" }), textStrong({ role: "body" }))
+						: text({ role: "heading" }),
+					TITLE,
+				)}
+			>
+				{title}
+			</span>
+		</h2>
+	);
+	const said = description ? (
+		<p id={descriptionId} className={text({ role: "meta" })}>
+			{description}
+		</p>
+	) : null;
+	const headRow = (
+		<div className={cn(SHEET_HEAD_ROW, HEAD_ROW)}>
+			{start}
+			<div className={TITLE_BLOCK}>
+				{titled}
+				{touch ? null : said}
+			</div>
+			{end}
+		</div>
+	);
+	// On the desktop a submit follows Cancel in the foot's bar.
+	const bar =
+		acts ??
+		(submit && !touch
+			? [{ label: words.cancel, onAct: onClose }, submit]
+			: undefined);
+	const actionBar = bar ? <ActionBar acts={bar} /> : null;
+	const footLine = foot ? (
+		<div className={touch ? FOOT_LINE : FOOT_LINE_ROW}>
+			<p className={text({ role: "meta" })}>{foot}</p>
+		</div>
+	) : null;
+	const footer =
+		footLine || actionBar ? (
+			<div className={cn(SHEET_FOOT, touch ? FOOT_STACK : FOOT_ROW)}>
+				{footLine ?? (touch ? null : <div className={SPACER} />)}
+				{actionBar}
+			</div>
+		) : null;
+	const content = centred ? (
+		<>
+			{headRow}
+			{children}
+			{actionBar}
+		</>
+	) : (
+		<>
+			<div className={cn(SHEET_HEAD, HEAD)}>
+				{headRow}
+				{touch ? said : null}
+				{headSubmit && submit?.blocked ? (
+					<Reason id={reason} shown={touched || pressed} end>
+						{submit.blocked}
+					</Reason>
+				) : null}
+			</div>
+			{form === "menu" ? (
+				children
+			) : children ? (
+				<div className={cn(SHEET_BODY, BODY)}>{children}</div>
+			) : null}
+			{form === "menu" ? null : footer}
+		</>
+	);
+	const box = touch
+		? cn(SHEET, BOX, BOX_BOTTOM, BOTTOM_MOTION)
+		: centred
+			? cn(SHEET_CENTERED, BOX, BOX_FLOAT, CENTRED_MOTION)
+			: cn(sheetSide({ fit }), BOX, BOX_FLOAT, SIDE_MOTION);
+	const layer = touch ? LAYER_BOTTOM : centred ? LAYER_CENTRED : LAYER_SIDE;
+	return (
+		<Dialog.Root
+			handle={handle}
+			open={open}
+			onOpenChange={(next) => (next ? onOpen?.() : onClose())}
+			// A surface that scopes its own mode (a showcase frame) holds the
+			// sheet beside others, so it hides and traps nothing outside it and
+			// stays open while another takes focus.
+			modal={container === undefined}
+			disablePointerDismissal={container !== undefined}
+		>
+			<Dialog.Portal container={container}>
+				<Dialog.Backdrop className={cn(SCRIM, BACKDROP, SCRIM_MOTION)} />
+				<Dialog.Viewport
+					// A press on the scrim (the layer around the sheet) keeps focus
+					// inside the sheet.
+					onMouseDown={(event) => {
+						if (event.target === event.currentTarget) event.preventDefault();
+					}}
+					className={layer}
+				>
+					<Dialog.Popup
+						ref={popup}
+						// A field takes no ref (its props are closed), so the popup finds it.
+						initialFocus={
+							focusField
+								? () => popup.current?.querySelector("input") ?? true
+								: undefined
+						}
+						role={centred ? "alertdialog" : "dialog"}
+						aria-labelledby={titleId}
+						aria-describedby={description ? descriptionId : undefined}
+						// A field inside takes input: a blocked act says its reason.
+						onChange={() => setTouched(true)}
+						className={box}
+					>
+						<TouchedContext value={{ touched, touch: () => setTouched(true) }}>
+							{content}
+						</TouchedContext>
+					</Dialog.Popup>
+				</Dialog.Viewport>
+			</Dialog.Portal>
+		</Dialog.Root>
+	);
+}

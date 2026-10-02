@@ -25,6 +25,9 @@ export function Comparison({ rows, loading }: ComparisonProps) {
 		<View className="gap-fields">
 			{labels.length > 1 ? (
 				<SegmentedControl
+					// TODO: Comparison has no name for what its cells switch between; the
+					// labels stand in until its group is designed.
+					label={labels.join(", ")}
 					options={labels.map((label) => ({ value: label, label }))}
 					value={labels[index] ?? ""}
 					onChange={setWhich}

@@ -6,7 +6,7 @@ import Svg, { Path } from "react-native-svg";
 import { useResolveClassNames } from "uniwind";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import { FieldDisabled } from "../../lib/field";
+import { FieldDisabled, LabelTarget } from "../../lib/field";
 
 // Lucide's 24-unit grid at the mark's 14 px (touch): 3.5 units draw 2.04 px.
 const STROKE = 3.5;
@@ -26,11 +26,14 @@ export interface CheckboxProps extends Closed {
 	label: string;
 }
 
-/** A box and its mark, drawn alone inside a target-sized hit box. */
+type State = (typeof STATES)[keyof typeof STATES];
+
+/** A box and its mark, drawn alone inside a target-sized hit box; in a row whose label is its target, the box alone. */
 export function Checkbox({ checked, onChange, label }: CheckboxProps) {
 	const disabled = useContext(FieldDisabled);
+	const target = useContext(LabelTarget);
 	const state = STATES[`${checked}` as const];
-	const unchecked = state === "unchecked";
+	if (target) return <Box state={state} pressed={false} disabled={disabled} />;
 	return (
 		<Pressable
 			accessibilityRole="checkbox"
@@ -41,31 +44,42 @@ export function Checkbox({ checked, onChange, label }: CheckboxProps) {
 			className="shrink-0 items-center justify-center size-target"
 		>
 			{({ pressed }) => (
-				<View
-					className={cn(
-						checkbox({ state }),
-						"relative shrink-0 items-center justify-center overflow-hidden",
-						!unchecked && pressed && "bg-toggle-on-hover",
-						disabled && unchecked && "border-edge",
-						disabled && "bg-fill-disabled",
-					)}
-				>
-					{/* An unchecked box's press is a wash over its own fill. */}
-					{unchecked && pressed && !disabled ? (
-						<View className="absolute inset-0 bg-wash-press" />
-					) : null}
-					{unchecked ? null : (
-						<Mark
-							node={state === "mixed" ? Minus : Check}
-							disabled={disabled}
-						/>
-					)}
-				</View>
+				<Box state={state} pressed={pressed} disabled={disabled} />
 			)}
 		</Pressable>
 	);
 }
 
+function Box({
+	state,
+	pressed,
+	disabled,
+}: {
+	state: State;
+	pressed: boolean;
+	disabled: boolean;
+}) {
+	const unchecked = state === "unchecked";
+	return (
+		<View
+			className={cn(
+				checkbox({ state }),
+				"relative shrink-0 items-center justify-center overflow-hidden",
+				!unchecked && pressed && "bg-toggle-on-hover",
+				disabled && unchecked && "border-edge",
+				disabled && "bg-fill-disabled",
+			)}
+		>
+			{/* An unchecked box's press is a wash over its own fill. */}
+			{unchecked && pressed && !disabled ? (
+				<View className="absolute inset-0 bg-wash-press" />
+			) : null}
+			{unchecked ? null : (
+				<Mark node={state === "mixed" ? Minus : Check} disabled={disabled} />
+			)}
+		</View>
+	);
+}
 // Lucide's own path data, drawn at the board's weight rather than `Icon`'s;
 // react-native-svg takes values, so the mark's size and ink are resolved.
 function Mark({ node, disabled }: { node: IconNode; disabled: boolean }) {
