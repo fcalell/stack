@@ -35,8 +35,7 @@ the routes.
 
 ## 3. Set every secret
 
-Each declared env var deploys as an empty `[vars]` entry; its production value is a secret, set
-once per var. List them from `.dev.vars` (every line but `STACK_DEV`) and set each:
+Each declared env var's production value is a secret, set once per var. List them from `.dev.vars` (every line but `STACK_DEV`) and set each:
 
 ```bash
 pnpm exec wrangler secret put AUTH_SECRET --config .stack/wrangler.toml

@@ -24,8 +24,9 @@ import type { CodegenWranglerPayload, WranglerBindingSpec } from "../types.ts";
 //     (e.g. `account_id`, `dev`, `build`, `assets`).
 //
 // `[vars]` is a hybrid: consumer keys pass through, framework keys (vars
-// from contributions, secrets-as-empty, var-bindings) overlay; collisions
-// across consumer/framework or across plugin contributions throw.
+// from contributions, var-bindings) overlay; collisions across
+// consumer/framework or across plugin contributions throw. A secret never
+// lands in `[vars]`, though a consumer var of its name still collides.
 
 const FRAMEWORK_MANAGED_LISTS = new Set<string>([
 	"d1_databases",
@@ -333,8 +334,7 @@ function overlayVars(
 
 	const hasFrameworkVars =
 		frameworkVarBindings.length > 0 ||
-		Object.keys(frameworkExtraVars).length > 0 ||
-		frameworkSecrets.length > 0;
+		Object.keys(frameworkExtraVars).length > 0;
 
 	if (!hasFrameworkVars && Object.keys(consumerVars).length === 0) {
 		// Nothing to write; remove a trailing empty-vars artifact if any.
@@ -375,9 +375,6 @@ function overlayVars(
 	}
 	for (const v of frameworkVarBindings) {
 		merged[v.name] = v.value;
-	}
-	for (const s of frameworkSecrets) {
-		if (!(s.name in merged)) merged[s.name] = "";
 	}
 	root.vars = merged;
 }

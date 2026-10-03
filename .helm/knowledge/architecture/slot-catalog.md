@@ -67,7 +67,7 @@ e.g. consulting `ctx.fileExists` before writing.
 | `localOrigins` | `value<"dev" \| "deployed">` | Where the local origins of `app.origins` belong; seeded `dev`, set to `deployed` by a deploy target that is local itself (node bound to loopback) |
 | `cors` | `derived<string[]>` | Final production CORS list: `app.origins` minus local origins (kept when `localOrigins` is `deployed`), or `[https://domain, https://app.domain, ...corsOrigins]` |
 | `callbacks` | `map<string, CallbackSpec>` | Plugin-name → callback identifier; spliced onto matching runtime's options |
-| `env` | `list<EnvSpec>` (`uniqueBy: name`) | Env vars the worker reads: `{ name, devDefault, validate? }`, declared once by the plugin that reads it (auth: `AUTH_SECRET`, `APP_URL`, OAuth client pairs; api: the consumer's own vars from its `env` option). `validate` hints (`minLength` / `url` / `devLocalhost`) feed the worker's once-per-isolate env assertion. Deploy targets render it: cloudflare into `.dev.vars` and empty `[vars]` entries, node into the dev process env for each var the shell leaves unset. A `devDefault` must satisfy its own hints or a fresh project refuses to serve; a duplicate name is an error |
+| `env` | `list<EnvSpec>` (`uniqueBy: name`) | Env vars the worker reads: `{ name, devDefault, validate? }`, declared once by the plugin that reads it (auth: `AUTH_SECRET`, `APP_URL`, OAuth client pairs; api: the consumer's own vars from its `env` option). `validate` hints (`minLength` / `url` / `devLocalhost`) feed the worker's once-per-isolate env assertion. Deploy targets render it: cloudflare into `.dev.vars` (each var deploys as a secret, never a `[vars]` entry), node into the dev process env for each var the shell leaves unset. A `devDefault` must satisfy its own hints or a fresh project refuses to serve; a duplicate name is an error |
 | `workerBase` | `derived<TsExpression>` | The `createWorker({...})` call expression; reads `env` to bake `envChecks` (WS6.3 env value assertions) on both deploy targets |
 | `workerSource` | `derived<string \| null>` | Final `.stack/worker.ts` source; null when neither runtimes nor routes are present |
 | `rbacStatements` | `value<Record<string, readonly string[]> \| null>` (`override`) | RBAC action statements for `procedure({ rbac })` / `procedure({ can })`'s type-level autocomplete; `auth` contributes from `organization.ac.statements` |
@@ -86,7 +86,7 @@ e.g. consulting `ctx.fileExists` before writing.
 | `vars` | `map<string, string>` | Plain-text `[vars]` |
 | `compatibilityDate` | `value<string>` | Defaults to today; override with `value` + `override:true` |
 | `compatibilityFlags` | `list<string>` | Wrangler `compatibility_flags`; deduped + sorted, omitted when empty (e.g. auth contributes `nodejs_compat`) |
-| `wranglerToml` | `derived<string>` | Final `.stack/wrangler.toml` source; reads `api.slots.env` to declare each var as an empty `[vars]` entry (also triggers `wrangler types` via `postWrite`) |
+| `wranglerToml` | `derived<string>` | Final `.stack/wrangler.toml` source; reads `api.slots.env` so a consumer `[vars]` key naming a declared var fails generate (also triggers `wrangler types` via `postWrite`) |
 
 ## `node.slots.*` (plugin-node)
 

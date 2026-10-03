@@ -44,7 +44,7 @@ wrangler/Miniflare local dev, so `_devMode` is false in production. Rate limitin
 true.
 
 Env vars the worker reads are declared on `api.slots.env` by the plugin that reads them, never
-by a deploy target: cloudflare renders the list into `.dev.vars` and `[vars]`, node sets each
+by a deploy target: cloudflare renders the list into `.dev.vars` (each var deploys as a secret), node sets each
 var the shell leaves unset to its `devDefault` in the dev process, and both bake the same
 `envChecks`. A static-only cloudflare deploy (no api) reads the slot as `[]`.
 

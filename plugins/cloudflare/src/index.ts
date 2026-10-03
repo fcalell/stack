@@ -174,9 +174,8 @@ export const cloudflare = plugin("cloudflare", {
 		// Emit `.dev.vars` unless the consumer already has one; an existing
 		// file is topped up with STACK_DEV and every declared var it lacks, at
 		// its dev default, so a var declared after the file was written still
-		// reaches the dev worker, and `wrangler types` (which types a var in
-		// `.dev.vars` as `string`, one only in `[vars]` as its literal `""`)
-		// types it as a string. STACK_DEV never goes through `api.slots.env` —
+		// reaches the dev worker, and `wrangler types` types it, as a
+		// `string`: no declared var is in `[vars]`. STACK_DEV never goes through `api.slots.env` —
 		// it must never become a `wrangler secret put` deploy prompt.
 		//
 		// wrangler resolves `.dev.vars` relative to its config file, and the

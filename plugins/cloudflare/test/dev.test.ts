@@ -131,3 +131,10 @@ test("wrangler bundles the worker with the tsconfig holding its paths", async ()
 		}
 	}
 });
+
+// A declared env var's production value is a secret; a `[vars]` entry of the
+// same name would deploy as a plain-text binding beside it.
+test("the generated wrangler config declares no secret under [vars]", async () => {
+	const toml = await devGraph().resolve(cloudflare.slots.wranglerToml);
+	assert.doesNotMatch(toml, /RESEND_API_KEY/);
+});

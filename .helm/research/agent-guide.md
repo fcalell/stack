@@ -128,7 +128,6 @@ Each is fixed in stack, one commit each; the last is unit 7.
 
 - `stack deploy` never uploads `dist/client` to Cloudflare.
 - `InferSession<typeof config>` does not compile.
-- Each secret is also deployed as an empty `[vars]` entry (unverified).
 - `auth({ expo: true })` uses `app.name` as the scheme, while expo uses its slug.
 - `stack add` drops a plugin's `configPlugins` dependencies.
 - The phone has no render harness, so the design critique cannot judge a phone screen; the
