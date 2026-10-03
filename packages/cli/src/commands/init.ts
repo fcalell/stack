@@ -1,5 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { basename } from "node:path";
+import { createRequire } from "node:module";
+import { basename, join } from "node:path";
+import { pathToFileURL } from "node:url";
 import { intro, log, note, outro } from "@clack/prompts";
 import {
 	defineConfig,
@@ -10,10 +12,13 @@ import { buildGraphFromDiscovered } from "../lib/build-graph.ts";
 import { cliSlots } from "../lib/cli-slots.ts";
 import {
 	type DiscoveredPlugin,
+	FIRST_PARTY_PLUGINS,
 	loadAvailablePlugins,
+	PLUGIN_NAMES,
 	resolveRequiresClosure,
 } from "../lib/discovery.ts";
 import { MissingPluginError, StackError } from "../lib/errors.ts";
+import { installStack } from "../lib/install.ts";
 import { ask, createPromptContext, multi } from "../lib/prompt.ts";
 import {
 	announceCreated,
@@ -22,6 +27,7 @@ import {
 	writeIfMissingString,
 	writeScaffoldSpecs,
 } from "../lib/scaffold.ts";
+import { stackPluginSpecs } from "../lib/stack-packages.ts";
 import { biomeTemplate } from "../templates/biome.ts";
 import { claudeMdTemplate } from "../templates/claude-md.ts";
 import { gitignoreTemplate } from "../templates/gitignore.ts";
@@ -54,10 +60,15 @@ export async function init(
 	}
 }
 
+interface Selection {
+	plugins: string[];
+	appName: string;
+	domain: string;
+	nonInteractive: boolean;
+}
+
 async function run(dir: string, options: InitOptions): Promise<void> {
 	intro(`stack init ${basename(dir)}`);
-
-	const available = await loadAvailablePlugins();
 
 	const flagDriven =
 		options.plugins !== undefined ||
@@ -66,37 +77,79 @@ async function run(dir: string, options: InitOptions): Promise<void> {
 		options.yes === true;
 	const nonInteractive = flagDriven || !process.stdin.isTTY;
 
-	let selectedPlugins: string[] = [];
+	let picked: string[] = [];
 	let appName = options.name ?? basename(dir);
 	let domain = options.domain ?? "example.com";
 
 	if (options.plugins !== undefined) {
-		selectedPlugins = resolvePluginSelection(options.plugins, available);
+		picked = validatePluginNames(options.plugins);
 	} else if (!nonInteractive) {
-		selectedPlugins = await multi("Which plugins do you want?", [
-			...available.map((p) => ({
-				label: `${p.cli.label}  (${p.cli.package})`,
+		picked = await multi(
+			"Which plugins do you want?",
+			FIRST_PARTY_PLUGINS.map((p) => ({
+				label: `${p.name}  (${p.package})`,
 				value: p.name,
 			})),
-		]);
-
-		// Pull the full transitive `requires` closure (not just one level), so
-		// picking `auth` brings db/api/cloudflare and their deps too.
-		const picked = new Set(selectedPlugins);
-		selectedPlugins = resolveRequiresClosure(selectedPlugins, available);
-		for (const name of selectedPlugins) {
-			if (picked.has(name)) continue;
-			const info = available.find((p) => p.name === name);
-			log.warn(
-				`${info?.cli.label ?? name} added automatically (required by your selection).`,
-			);
-		}
-
+		);
 		appName = await ask("App name", basename(dir));
 		domain = await ask("Domain", "example.com");
 	}
 
-	const name = basename(dir);
+	const plugins = await installPlugins(dir, picked);
+
+	// Slots are matched by identity and the installed plugins import the
+	// app's own `@fcalell/cli`, so the scaffold runs in that copy, which is
+	// this one whenever the app's `stack` runs init.
+	const installedCli = createRequire(join(dir, "package.json")).resolve(
+		"@fcalell/cli",
+	);
+	const { scaffold } = (await import(
+		new URL("./commands/init.js", pathToFileURL(installedCli)).href
+	)) as typeof import("./init.ts");
+	await scaffold(dir, { plugins, appName, domain, nonInteractive });
+}
+
+// Writes `package.json` with the picked plugins and installs, until every
+// plugin a picked one requires is installed too: a plugin's `requires` is
+// known only once it is loaded.
+async function installPlugins(
+	dir: string,
+	picked: string[],
+): Promise<string[]> {
+	const ownsManifest = !existsSync("package.json");
+	let plugins = picked;
+	for (;;) {
+		if (ownsManifest) {
+			writeFileSync(
+				"package.json",
+				packageJsonTemplate({ name: basename(dir), plugins }),
+			);
+		} else {
+			patchPackageJson(dir, { dependencies: stackPluginSpecs(plugins) });
+		}
+		installStack(dir);
+		const closure = resolveRequiresClosure(
+			plugins,
+			await loadAvailablePlugins(),
+		);
+		if (closure.length === plugins.length) {
+			if (ownsManifest) announceCreated(["package.json"]);
+			return closure;
+		}
+		for (const name of closure) {
+			if (!plugins.includes(name)) {
+				log.warn(`${name} added automatically (required by your selection).`);
+			}
+		}
+		plugins = closure;
+	}
+}
+
+export async function scaffold(
+	dir: string,
+	{ plugins: selectedPlugins, appName, domain, nonInteractive }: Selection,
+): Promise<void> {
+	const available = await loadAvailablePlugins();
 
 	// Discovered plugins carry the factory + an `options: {}` placeholder.
 	// We don't yet have per-plugin options — prompts produce them. The
@@ -127,13 +180,6 @@ async function run(dir: string, options: InitOptions): Promise<void> {
 
 	// Scaffold base files — CLI-owned, not plugin-contributed.
 	const baseEntries: Array<[string, string]> = [
-		[
-			"package.json",
-			packageJsonTemplate({
-				name,
-				plugins: selectedPlugins,
-			}),
-		],
 		...tsconfigTemplate({
 			...tsconfigLayout(selectedPlugins),
 			procedurePaths: tsconfigPaths,
@@ -218,6 +264,7 @@ async function run(dir: string, options: InitOptions): Promise<void> {
 		fields: packageJsonFields,
 	});
 	if (gitignore.length > 0) ensureGitignore(...gitignore);
+	installStack(dir);
 
 	// Run the real generate path against the config we just wrote — this is
 	// the same code `stack generate` runs.
@@ -236,28 +283,20 @@ async function run(dir: string, options: InitOptions): Promise<void> {
 		);
 	}
 
-	const nextSteps = ["pnpm install", "stack dev"];
-	note(nextSteps.join("\n"), "Next steps");
+	note("stack dev", "Next steps");
 	outro("Done!");
 }
 
-function resolvePluginSelection(
-	requested: string[],
-	available: DiscoveredPlugin[],
-): string[] {
-	const validNames = new Set(available.map((p) => p.name));
-
-	const unknown = requested.filter((n) => !validNames.has(n));
+function validatePluginNames(requested: string[]): string[] {
+	const valid = new Set<string>(PLUGIN_NAMES);
+	const unknown = requested.filter((n) => !valid.has(n));
 	if (unknown.length > 0) {
 		throw new MissingPluginError(
 			unknown[0] ?? "",
-			`Unknown plugin(s): ${unknown.join(", ")}. Available: ${[...validNames].join(", ")}`,
+			`Unknown plugin(s): ${unknown.join(", ")}. Available: ${PLUGIN_NAMES.join(", ")}`,
 		);
 	}
-
-	// Pull the full transitive `requires` closure (not just one level) so a flag
-	// like `--plugins=auth` brings db/api/cloudflare and their deps too.
-	return resolveRequiresClosure(requested, available);
+	return requested;
 }
 
 // Build a StackConfig by calling each plugin's factory — the factory stamps

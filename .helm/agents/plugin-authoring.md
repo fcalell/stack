@@ -51,7 +51,7 @@ export const auth = plugin("auth", {
     push: { description: "Push schema", handler: async (ctx, flags) => { /* ... */ } },
   },
 
-  dependencies: { "@fcalell/plugin-auth": "workspace:*" },  // auto-wired into cliSlots.initDeps
+  dependencies: { "better-auth": "^1.7.2" },                 // auto-wired into cliSlots.initDeps
   devDependencies: { /* ... */ },                            // auto-wired into cliSlots.initDevDeps
   gitignore: [".wrangler"],                                  // auto-wired into cliSlots.gitignore
   guide: [{ page: "sessions", trigger: "Reading the signed-in user" }], // auto-wired into cliSlots.guide
@@ -91,7 +91,9 @@ Key fields:
 - `callbacks`: typed callback slots for consumer callback files.
 - `dependencies` / `devDependencies` / `gitignore`: auto-wired into `cliSlots.initDeps` /
   `cliSlots.initDevDeps` / `cliSlots.gitignore` (and the matching `cliSlots.removeDeps` /
-  `cliSlots.removeDevDeps` for cleanup).
+  `cliSlots.removeDevDeps` for cleanup). The CLI writes the plugin's own package; a first-party
+  package the consumer needs beside it takes its spec from the CLI's table,
+  `"@fcalell/ui-core": stackSpec("@fcalell/ui-core")` (`stackSpec` from `@fcalell/cli`).
 - `guide`: the plugin's guide pages, each `guide/<page>.md` in its package (listed in its
   `files`) with a load trigger: when to open the page, never what it holds. Auto-wired into
   `cliSlots.guide` under the plugin's name and package. A page is directive prose of about 600

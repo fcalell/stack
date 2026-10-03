@@ -8,9 +8,10 @@ Work the steps in order; each ends with its check.
 
 ## 1. Find the pin and the checkout
 
-Every `@fcalell/*` spec in the app's `package.json` is `github:<repo>#<sha>&path:/…`, one sha:
-that is the pin. The stack checkout is `../stack` beside the app's root when it is a clone of
-`<repo>`; otherwise ask fcalell for its path.
+Every `@fcalell/*` spec in the app's `package.json` is `github:<repo>#path:/…`, with no commit;
+the pin is the commit `pnpm-lock.yaml` records for them, one sha for every stack package. The
+stack checkout is `../stack` beside the app's root when it is a clone of `<repo>`; otherwise ask
+fcalell for its path.
 
 **Check:** you have the sha and a checkout whose `git remote -v` names `<repo>`.
 
@@ -24,9 +25,9 @@ git -C <checkout> show HEAD:packages/ui-core/src/roster.ts   # a UI part
 git -C <checkout> log --oneline <sha>..HEAD -- plugins/api    # what moved in a domain
 ```
 
-When `HEAD` has the part, the fix is moving the pin: every `@fcalell/*` spec in `package.json`
-and every `overrides` and `allowBuilds` entry in `pnpm-workspace.yaml`, all to one new sha.
-Propose that move to fcalell and stop here; the work resumes once it lands.
+When `HEAD` has the part, the fix is moving the pin: `pnpm update "@fcalell/*"`, which moves
+every stack package in `pnpm-lock.yaml` to the latest commit together. Propose that move to
+fcalell and stop here; the work resumes once it lands.
 
 **Check:** the part is absent at `HEAD`, or the pin move is proposed.
 

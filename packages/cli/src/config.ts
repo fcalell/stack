@@ -153,3 +153,4 @@ export type {
 	SlotKind,
 } from "./lib/slots.ts";
 export { slot } from "./lib/slots.ts";
+export { stackSpec } from "./lib/stack-packages.ts";

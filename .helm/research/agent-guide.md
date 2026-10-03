@@ -107,7 +107,7 @@ Each is one story. Order: 1 first, its format approved before 3; 2, 4, 5 and 6 a
    content in the same change.
    - [ ] (file) every consumer-facing README section has moved to a page; no fact in two places.
    - [ ] (command) `pnpm check` green.
-4. **`stack init` writes installable specs.** `github:fcalell/stack&path:` specs with no commit,
+4. **`stack init` writes installable specs.** Shipped. `github:fcalell/stack#path:` specs with no commit,
    the `pnpm-workspace.yaml` overrides, and `allowBuilds` keyed by repository URL, replacing
    `workspace:*`; stack and the scaffold on pnpm 11.15 or later. The commands page says to
    update stack with `pnpm update "@fcalell/*"`.

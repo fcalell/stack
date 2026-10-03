@@ -174,7 +174,6 @@ export const react = plugin("react", {
 	requires: ["vite"],
 
 	dependencies: {
-		"@fcalell/plugin-react": "workspace:*",
 		"@tanstack/react-router": "^1.170.40",
 	},
 	// The generated vite config imports them from the consumer, and Babel

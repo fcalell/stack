@@ -10,10 +10,12 @@ import { editConfig } from "../lib/config-writer.ts";
 import {
 	type DiscoveredPlugin,
 	loadAvailablePlugins,
+	PLUGIN_NAMES,
 	resolveRequiresClosure,
 } from "../lib/discovery.ts";
 import { ConfigLoadError, MissingPluginError } from "../lib/errors.ts";
 import type { Graph } from "../lib/graph.ts";
+import { installStack } from "../lib/install.ts";
 import { toCamelCase } from "../lib/naming.ts";
 import { createPromptContext } from "../lib/prompt.ts";
 import {
@@ -22,6 +24,7 @@ import {
 	patchPackageJson,
 	writeScaffoldSpecs,
 } from "../lib/scaffold.ts";
+import { stackPluginSpecs } from "../lib/stack-packages.ts";
 import { syntheticConfigFromSelection } from "./init.ts";
 
 // The dependencies `stack add` writes, as `stack init` does: every
@@ -30,28 +33,23 @@ import { syntheticConfigFromSelection } from "./init.ts";
 // package. `patchPackageJson` writes only the names the manifest lacks.
 export async function addDependencies(
 	graph: Graph,
-	added: DiscoveredPlugin[],
+	added: readonly string[],
 ): Promise<Record<string, string>> {
 	const [deps, devDeps] = await Promise.all([
 		graph.resolve(cliSlots.initDeps),
 		graph.resolve(cliSlots.initDevDeps),
 	]);
-	const dependencies = { ...deps, ...devDeps };
-	for (const info of added) dependencies[info.cli.package] ??= "latest";
-	return dependencies;
+	return { ...deps, ...devDeps, ...stackPluginSpecs(added) };
 }
 
 export async function add(
 	pluginName: string,
 	configPath: string,
 ): Promise<void> {
-	const available = await loadAvailablePlugins();
-	const pluginInfo = available.find((p) => p.name === pluginName);
-	if (!pluginInfo) {
-		const availableNames = available.map((p) => p.name).join(", ");
+	if (!new Set<string>(PLUGIN_NAMES).has(pluginName)) {
 		throw new MissingPluginError(
 			pluginName,
-			`Unknown plugin: "${pluginName}". Available plugins: ${availableNames}`,
+			`Unknown plugin: "${pluginName}". Available plugins: ${PLUGIN_NAMES.join(", ")}`,
 		);
 	}
 
@@ -70,18 +68,33 @@ export async function add(
 	const existingNames = new Set(existingPluginNames);
 
 	if (existingNames.has(pluginName)) {
-		log.info(`${pluginInfo.cli.label} is already configured.`);
+		log.info(`${pluginName} is already configured.`);
 		return;
 	}
 
-	// Auto-pull the transitive `requires` closure — adding `auth` also adds
-	// db/api/cloudflare when absent (and their requirements in turn), instead of
-	// erroring one missing sibling at a time. Mirrors `stack init`'s auto-add.
-	// The closure orders each plugin's dependencies before it; the requested
-	// plugin lands last.
-	const pluginsToAdd = resolveRequiresClosure([pluginName], available).filter(
-		(n) => !existingNames.has(n),
-	);
+	// Install the plugin, then each plugin it requires that the app lacks: a
+	// plugin's `requires` is known only once it is loaded. The closure orders
+	// each plugin's dependencies before it; the requested plugin lands last.
+	let pluginsToAdd = [pluginName];
+	let available: DiscoveredPlugin[];
+	for (;;) {
+		patchPackageJson(cwd, { dependencies: stackPluginSpecs(pluginsToAdd) });
+		installStack(cwd);
+		available = await loadAvailablePlugins();
+		const closure = resolveRequiresClosure([pluginName], available).filter(
+			(n) => !existingNames.has(n),
+		);
+		const grew = closure.length !== pluginsToAdd.length;
+		pluginsToAdd = closure;
+		if (!grew) break;
+	}
+	const pluginInfo = available.find((p) => p.name === pluginName);
+	if (!pluginInfo) {
+		throw new MissingPluginError(
+			pluginName,
+			`"${pluginName}" is installed but does not load.`,
+		);
+	}
 	const addedInfos = pluginsToAdd
 		.map((n) => available.find((p) => p.name === n))
 		.filter((p): p is DiscoveredPlugin => p !== undefined);
@@ -156,7 +169,7 @@ export async function add(
 		const [scaffolds, dependencies, gitignore, packageJsonFields] =
 			await Promise.all([
 				graph.resolve(cliSlots.initScaffolds),
-				addDependencies(graph, addedInfos),
+				addDependencies(graph, pluginsToAdd),
 				graph.resolve(cliSlots.gitignore),
 				graph.resolve(cliSlots.packageJsonFields),
 			]);
@@ -169,6 +182,7 @@ export async function add(
 		announceCreated(created);
 
 		patchPackageJson(cwd, { dependencies, fields: packageJsonFields });
+		installStack(cwd);
 
 		const gitignoreEntries = addedInfos.flatMap((info) => [
 			...info.cli.gitignore,
@@ -178,7 +192,7 @@ export async function add(
 		}
 	} catch (err) {
 		log.warn(
-			`Could not load plugins — they will be set up after install: ${err instanceof Error ? err.message : String(err)}`,
+			`Could not set up the plugins: ${err instanceof Error ? err.message : String(err)}`,
 		);
 	}
 
@@ -211,7 +225,9 @@ export async function add(
 	try {
 		await generate(configPath);
 	} catch {
-		log.warn("Could not run generate — run `stack generate` after install.");
+		log.warn(
+			"Could not run generate — fix the error, then run `stack generate`.",
+		);
 	}
 
 	outro(

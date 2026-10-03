@@ -514,10 +514,6 @@ export const api = plugin("api", {
 	label: "API",
 
 	schema: apiOptionsSchema,
-
-	dependencies: {
-		"@fcalell/plugin-api": "workspace:*",
-	},
 	gitignore: [".stack"],
 
 	guide: [

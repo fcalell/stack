@@ -20,7 +20,7 @@ stack <plugin> <command>     # Plugin subcommands (e.g. stack db push)
 
 | Command | Roots resolved (order shown matches procedure) |
 |---------|-----------------------------------------------|
-| `stack init` / `stack add` | `cliSlots.initPrompts` → render `stack.config.ts` → `cliSlots.initScaffolds` + `initDeps` + `initDevDeps` + `gitignore` → run `generate` |
+| `stack init` / `stack add` | write the plugins' packages and `pnpm-workspace.yaml` → `pnpm install` (again until every `requires` is installed) → `cliSlots.initPrompts` → render `stack.config.ts` → `cliSlots.initScaffolds` + `initDeps` + `initDevDeps` + `gitignore` → `pnpm install` → run `generate` |
 | `stack generate` | `cliSlots.artifactFiles` → write each `{ path, content }` → resolve `cliSlots.postWrite` → await each |
 | `stack dev` | `generate` → `cliSlots.devProcesses` (spawn) → `cliSlots.devReadySetup` (post-ready) → `cliSlots.devWatchers` (chokidar) |
 | `stack build` | `generate` → `cliSlots.buildSteps` (sorted by phase + order) → exec sequentially |
@@ -28,7 +28,12 @@ stack <plugin> <command>     # Plugin subcommands (e.g. stack db push)
 | `stack remove` | `cliSlots.removeFiles` + `removeDeps` + `removeDevDeps` filtered to target plugin → patch config → `generate` |
 | `stack <plugin> <command>` | Plugin's own `commands[name].handler(ctx)` — `ctx.resolve(slot)` is the escape hatch to pull arbitrary slot values |
 
-`stack init` first writes the CLI-owned base files (`package.json`, the tsconfigs, `biome.json`,
+`stack init` first writes `package.json` (only when missing) and `pnpm-workspace.yaml`, every
+`@fcalell/*` spec from the CLI's table ([consumer-project](./consumer-project.md#from-github)),
+and installs: a plugin loads only once installed, and its `requires` is known only once loaded.
+The scaffold then runs in the app's installed `@fcalell/cli`, imported from the app's root,
+which need not be the copy that started `init`: slots match by identity, and the installed
+plugins import the app's copy. It writes the CLI-owned base files (the tsconfigs, `biome.json`,
 `.gitignore`, each only when missing) and makes `CLAUDE.md` import `@.stack/guide.md`: the file
 is created with that line when missing, and the line appended when absent
 ([consumer-project](./consumer-project.md#the-guide)).
@@ -57,7 +62,4 @@ Each handler receives a `CommandContext` with `options` (typed from the plugin's
 
 ## Limits
 
-- `stack init` cannot run from a scratch directory: it loads each first-party plugin from the CLI's or the working directory's `node_modules`, and `@fcalell/cli` depends on none, so an empty directory offers no plugins.
-- `stack init` writes every `@fcalell/*` dependency as `workspace:*`, which resolves only inside
-  stack's workspace; a consumer outside it rewrites them to `github:<repo>#<sha>&path:/…` specs by
-  hand ([consumer-project](./consumer-project.md#by-git-commit)).
+- Every install builds the stack workspace once per git package (see [consumer-project](./consumer-project.md#from-github)), so a first `stack init` takes minutes.

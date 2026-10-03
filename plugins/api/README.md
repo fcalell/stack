@@ -30,7 +30,6 @@ import { emitArtifact } from "@fcalell/cli/cli-slots";
 export const api = plugin("api", {
   label: "API",
   schema: apiOptionsSchema,
-  dependencies: { "@fcalell/plugin-api": "workspace:*" },
   devDependencies: { wrangler: "^4.14.0" },
   gitignore: [".wrangler", ".stack"],
   slots: { workerImports, pluginRuntimes, /* ... */ workerSource },

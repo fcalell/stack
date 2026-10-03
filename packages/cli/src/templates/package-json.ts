@@ -1,3 +1,4 @@
+import { stackPluginSpecs, stackSpec } from "../lib/stack-packages.ts";
 import { tsconfigLayout } from "./tsconfig.ts";
 
 interface PackageJsonOptions {
@@ -8,9 +9,9 @@ interface PackageJsonOptions {
 export function packageJsonTemplate(options: PackageJsonOptions): string {
 	const deps: Record<string, string> = {};
 	const devDeps: Record<string, string> = {
-		"@fcalell/cli": "workspace:*",
-		"@fcalell/typescript-config": "workspace:*",
-		"@fcalell/biome-config": "workspace:*",
+		"@fcalell/cli": stackSpec("@fcalell/cli"),
+		"@fcalell/typescript-config": stackSpec("@fcalell/typescript-config"),
+		"@fcalell/biome-config": stackSpec("@fcalell/biome-config"),
 		// biome-config only carries config; the `lint`/`check` scripts need the
 		// Biome binary itself on the consumer's PATH.
 		"@biomejs/biome": "^2.4.16",
@@ -41,9 +42,7 @@ export function packageJsonTemplate(options: PackageJsonOptions): string {
 		devDeps["@types/react-dom"] = "^19.3.0";
 	}
 
-	for (const name of options.plugins) {
-		deps[`@fcalell/plugin-${name}`] = "workspace:*";
-	}
+	Object.assign(deps, stackPluginSpecs(options.plugins));
 
 	const hasWeb = tsconfigLayout(options.plugins).web;
 
@@ -52,6 +51,7 @@ export function packageJsonTemplate(options: PackageJsonOptions): string {
 		version: "0.0.0",
 		private: true,
 		type: "module",
+		packageManager: "pnpm@11.28.3",
 	};
 
 	if (hasWeb) {

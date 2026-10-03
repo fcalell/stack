@@ -1,5 +1,5 @@
 import type { ContributionCtx } from "@fcalell/cli";
-import { plugin, slot } from "@fcalell/cli";
+import { plugin, slot, stackSpec } from "@fcalell/cli";
 import {
 	literalToProps,
 	type ProviderSpec,
@@ -272,10 +272,9 @@ export const nativeUi = plugin("native-ui", {
 	// Consumer dependencies. Native module versions are Expo-SDK-56 ballpark;
 	// `expo install` reconciles exact versions at consumer setup.
 	dependencies: {
-		"@fcalell/plugin-native-ui": "workspace:*",
 		// The `@source` root pointing into ui-core only resolves when the package
 		// sits in the consumer's node_modules.
-		"@fcalell/ui-core": "workspace:*",
+		"@fcalell/ui-core": stackSpec("@fcalell/ui-core"),
 		uniwind: "^1.8.0",
 		"react-native-gesture-handler": "^3.0.0",
 		"react-native-reanimated": "^4.4.1",

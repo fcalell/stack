@@ -6,8 +6,8 @@ step does. Run a command from the app's root. Every command but `init` takes
 
 | Command | Run it when |
 | --- | --- |
-| `stack init [dir] [--plugins <csv>] [--domain <d>] [-y]` | Starting an app. It scaffolds the project, then runs `generate` |
-| `stack add <plugin>` | Adding a plugin: it asks the plugin's questions, writes its files, patches the config and regenerates |
+| `stack init [dir] [--plugins <csv>] [--domain <d>] [-y]` | Starting an app. It writes `package.json` and `pnpm-workspace.yaml`, installs, scaffolds the project, then runs `generate` |
+| `stack add <plugin>` | Adding a plugin: it installs the plugin, asks its questions, writes its files, patches the config and regenerates |
 | `stack remove <plugin>` | Dropping a plugin no other plugin requires: it removes the plugin's files and dependencies, patches the config and regenerates |
 | `stack generate` | After editing `stack.config.ts`, or when `.stack/` is missing. `dev` and `build` run it first |
 | `stack dev` | Working on the app: every plugin's dev process (the worker, the Node server, Vite) runs in one terminal, and the watchers regenerate as files change. Metro is not one: it runs under `stack expo dev` (`node_modules/@fcalell/plugin-expo/guide/builds.md`) |
@@ -19,9 +19,19 @@ The app's `package.json` scripts wrap them (`pnpm dev`, `pnpm build`, `pnpm run 
 `pnpm generate`), and `pnpm check` type-checks and lints the app. `pnpm check` is the check
 every change ends with.
 
+## Updating stack
+
+`pnpm-lock.yaml` pins every `@fcalell/*` package to one commit of stack's repository; the
+specs in `package.json` carry none. `pnpm update "@fcalell/*"` moves them all to stack's latest
+commit together. Never edit a spec or the lockfile by hand.
+
+**Check:** every `@fcalell/*` entry in `pnpm-lock.yaml` names the same commit.
+
 ## What `init` writes
 
-- `package.json`, `tsconfig.json` (and, for an app with a worker, `tsconfig.app.json` and
+- `package.json` and `pnpm-workspace.yaml`, then the install: every `@fcalell/*` package comes
+  from stack's repository, at the commit `pnpm-lock.yaml` records.
+- `tsconfig.json` (and, for an app with a worker, `tsconfig.app.json` and
   `tsconfig.worker.json`), `biome.json`, `.gitignore` and `stack.config.ts`, each only when
   missing. A plugin a picked plugin requires is picked with it.
 - For an app (`vite` or `expo`) with a worker (`api` or `db`), the app and the worker are two

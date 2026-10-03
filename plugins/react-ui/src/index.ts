@@ -1,5 +1,5 @@
 import type { ContributionCtx } from "@fcalell/cli";
-import { plugin, slot } from "@fcalell/cli";
+import { plugin, slot, stackSpec } from "@fcalell/cli";
 import {
 	literalToProps,
 	type ProviderSpec,
@@ -150,7 +150,7 @@ export const reactUi = plugin("react-ui", {
 	dependencies: {
 		// The guide's index points into the consumer's node_modules for
 		// ui-core's pages.
-		"@fcalell/ui-core": "workspace:*",
+		"@fcalell/ui-core": stackSpec("@fcalell/ui-core"),
 		tailwindcss: "^4.3.3",
 	},
 	devDependencies: {

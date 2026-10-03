@@ -295,7 +295,6 @@ export const expo = plugin("expo", {
 	schema: expoOptionsSchema,
 
 	dependencies: {
-		"@fcalell/plugin-expo": "workspace:*",
 		expo: "~56.0.8",
 		"expo-router": "~56.2.8",
 		react: "19.2.7",

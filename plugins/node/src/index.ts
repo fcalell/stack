@@ -113,10 +113,6 @@ export const node = plugin("node", {
 
 	requires: ["api"],
 
-	dependencies: {
-		"@fcalell/plugin-node": "workspace:*",
-	},
-
 	guide: [
 		{
 			page: "server",

@@ -37,7 +37,7 @@ export const db = plugin("db", {
   label: "Database",
   schema: dbOptionsSchema,
   requires: ["api"],
-  dependencies: { "@fcalell/plugin-db": "workspace:*", "drizzle-orm": "^0.45.2" },
+  dependencies: { "drizzle-orm": "^0.45.2" },
   devDependencies: { "drizzle-kit": "^0.31.0", "better-sqlite3": "^13.0.0" },
   gitignore: [".db-kit"],
   guide: [/* change-a-table, destructive-change, schema, seed, … */],

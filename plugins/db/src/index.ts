@@ -87,7 +87,6 @@ export const db = plugin("db", {
 	requires: ["api"],
 
 	dependencies: {
-		"@fcalell/plugin-db": "workspace:*",
 		// drizzle-kit resolves drizzle-orm from the consumer at
 		// generate/push time; the plugin's own copy doesn't satisfy it.
 		"drizzle-orm": "^0.45.2",

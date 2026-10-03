@@ -48,7 +48,6 @@ export const db = plugin("db", {
   schema: dbOptionsSchema,
   requires: ["cloudflare", "api"],
 
-  dependencies: { "@fcalell/plugin-db": "workspace:*" },
   devDependencies: { "drizzle-kit": "^0.31.0" },
   gitignore: [".db-kit"],
   guide: [{ page: "schema", trigger: "Adding or changing a table" }],

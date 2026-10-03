@@ -307,10 +307,6 @@ export const auth = plugin("auth", {
 		>(),
 	},
 
-	dependencies: {
-		"@fcalell/plugin-auth": "workspace:*",
-	},
-
 	guide: [
 		{
 			page: "config",

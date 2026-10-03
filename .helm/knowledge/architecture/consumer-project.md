@@ -182,41 +182,52 @@ Every package ships JavaScript in `dist/` for everything Node runs: Node refuses
 under `node_modules` (`ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING`) and has no flag for it.
 Bundler-compiled entries (`.tsx`, `.css`, `src/ui/`) resolve to source.
 
-### By git commit
+### From GitHub
 
-A consumer takes each package as a subpath of one commit:
+A consumer takes each package as a subdirectory of stack's repository, with no commit in the spec:
 
 ```json
-"@fcalell/plugin-db": "github:fcalell/stack#<sha>&path:/plugins/db"
+"@fcalell/plugin-db": "github:fcalell/stack#path:/plugins/db"
 ```
+
+The consumer's `pnpm-lock.yaml` is the pin: pnpm resolves the spec to the default branch's commit
+once and installs that commit until `pnpm update "@fcalell/*"` moves every stack package to the
+latest commit together. The CLI's table (`packages/cli/src/lib/stack-packages.ts`) maps each
+first-party package to its spec and lists its first-party `dependencies`; `stack init` and
+`stack add` write every `@fcalell/*` spec from it, and a plugin's own `dependencies` take a stack
+package's spec through `stackSpec` from `@fcalell/cli`.
 
 pnpm fetches the commit, installs the whole stack workspace in the clone (with the root's pinned
 pnpm) and runs the package's `prepare`; that install runs every workspace project's `prepare` in
 dependency order, so the package and its `@fcalell/*` dependencies are built before pnpm packs
-the package's `files`. Each built package's `files` also carries its `tsconfig.json` and
-`tsconfig.build.json`, so a consumer whose install runs no script (nixpkgs' pnpm fetcher) can run
-`tsc -p tsconfig.build.json` itself over the packed sources, with `typescript` and
+the package's `files`. Each git package does this in its own clone, so a first install builds the
+workspace once per stack package. Each built package's `files` also carries its `tsconfig.json`
+and `tsconfig.build.json`, so a consumer whose install runs no script (nixpkgs' pnpm fetcher) can
+run `tsc -p tsconfig.build.json` itself over the packed sources, with `typescript` and
 `@fcalell/typescript-config` resolved from the consumer's root. The consumer's
-`pnpm-workspace.yaml` carries:
+`pnpm-workspace.yaml`, which `stack init` and `stack add` write, carries:
 
 ```yaml
-overrides:                       # every @fcalell/* name in the closure, same commit
-  "@fcalell/cli": "github:fcalell/stack#<sha>&path:/packages/cli"
-  "@fcalell/plugin-api": "github:fcalell/stack#<sha>&path:/plugins/api"
-  "@fcalell/plugin-cloudflare": "github:fcalell/stack#<sha>&path:/plugins/cloudflare"
+overrides:                       # every stack package the consumer's reach, by `dependencies`
+  "@fcalell/cli": github:fcalell/stack#path:/packages/cli
+  "@fcalell/plugin-api": github:fcalell/stack#path:/plugins/api
+  "@fcalell/plugin-vite": github:fcalell/stack#path:/plugins/vite
 blockExoticSubdeps: false        # the git packages depend on each other by git spec
-allowBuilds:                     # each git package's prepare, plus esbuild's install
-  "@fcalell/plugin-db@https://codeload.github.com/fcalell/stack/tar.gz/<sha>#path:/plugins/db": true
-  "@fcalell/cli@https://codeload.github.com/fcalell/stack/tar.gz/<sha>#path:/packages/cli": true
-  "@fcalell/plugin-api@https://codeload.github.com/fcalell/stack/tar.gz/<sha>#path:/plugins/api": true
-  "@fcalell/plugin-cloudflare@https://codeload.github.com/fcalell/stack/tar.gz/<sha>#path:/plugins/cloudflare": true
+allowBuilds:                     # each git package's prepare, plus the install's own builds
+  "@fcalell/cli@git+https://github.com/fcalell/stack.git": true
+  "@fcalell/plugin-api@git+https://github.com/fcalell/stack.git": true
+  "@fcalell/plugin-vite@git+https://github.com/fcalell/stack.git": true
   esbuild: true
+  workerd: true
 ```
 
-The overrides exist because a git tarball keeps the `workspace:*` ranges between stack packages;
-a published npm version resolves them and the overrides go. A git package's `allowBuilds` key is
-its name plus its resolved tarball URL (for a `github:` spec, the `codeload` URL above), which pnpm
-prints in its `GIT_DEP_PREPARE_NOT_ALLOWED` hint; the bare name and the `github:` spec are refused.
+The overrides cover the closure over `dependencies`, not `requires`: a vite-only app installs
+plugin-api through plugin-vite. They exist because a git tarball keeps the `workspace:*` ranges
+between stack packages; a published npm version resolves them and the overrides go. A git
+package's `allowBuilds` key is its name plus the repository's `git+https` URL, which approves
+every commit; pnpm 11.15 is the first to match a `github:` tarball by it, so stack and its
+consumers run pnpm 11.15 or later. The bare name and the `github:` spec are refused, and the hint
+in pnpm's `GIT_DEP_PREPARE_NOT_ALLOWED` names only the commit-pinned `codeload` key.
 
 ### By `link:`
 

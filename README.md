@@ -130,8 +130,8 @@ pnpm showcase         # Build the showcase's dependencies and serve it on :3000
 Every package ships compiled JavaScript in `dist/` for what Node runs (Node strips no types under
 `node_modules`); `.tsx`, `.css` and `src/ui/` entries stay source for the consumer's bundler.
 `pnpm install` builds everything through each package's `prepare`, so a `link:` consumer sees
-`dist/` after an install here, and `pnpm turbo run build` after a source change. Taking stack by git
-commit: [consumer-project](.helm/knowledge/architecture/consumer-project.md#by-git-commit).
+`dist/` after an install here, and `pnpm turbo run build` after a source change. Taking stack from
+GitHub: [consumer-project](.helm/knowledge/architecture/consumer-project.md#from-github).
 
 ## Architecture
 
