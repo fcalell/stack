@@ -73,17 +73,16 @@ All ruled by fcalell on 2026-10-03.
 - `stack init` writes commit-free `github:` specs; the consumer's lockfile is the pin, and
   `pnpm update "@fcalell/*"` moves every stack package together. Stack moves to pnpm 11.15 or
   later, the first to approve a `github:` tarball's build by repository URL.
-- A phone screen is judged on a render like a web screen. Stack builds a phone render harness;
-  device screenshots are no substitute.
-- Every finding below is fixed in stack, after the guide commit, one commit each; the deploy
-  upload and the phone harness get a short design fcalell approves before they are built.
+- A phone screen is judged on a render like a web screen, never on device screenshots. The
+  harness and every phone fix are roadmap work, outside this PRD.
+- Every defect found while writing the guide is fixed in stack, one commit each.
 - The live proof runs last, on a consumer installed from GitHub.
 
 ## Units
 
 Each is one story. Order: 1 first, its format approved before 3; 2, 4, 5 and 6 are independent.
 
-1. **Mechanism and pilot.** Built, uncommitted.
+1. **Mechanism and pilot.** Shipped.
    - The guide slot, `stack generate` writing `.stack/guide.md`, `stack init` writing the
      `CLAUDE.md` import, with tests.
    - Pilot pages:
@@ -99,11 +98,11 @@ Each is one story. Order: 1 first, its format approved before 3; 2, 4, 5 and 6 a
      - [ ] (command) `git grep -n "stack-ui\|design-critic\|marketplace\|CLAUDE_PLUGIN_ROOT"`
        finds nothing outside history.
      - [ ] fcalell approves the page format on the pilot.
-2. **The free-by-default page.** Built, uncommitted. A cli page, "what stack gives you", listing what a consumer
+2. **The free-by-default page.** Shipped. A cli page, "what stack gives you", listing what a consumer
    never builds (auth flows, migrations checks, the RPC client, theming, deploy), so shaping never
    specs it.
    - [ ] (file) indexed with the trigger "shaping or scoping a feature".
-3. **The remaining domains.** Built, uncommitted. Config and commands (cli), db, auth, cloudflare, node, vite, react,
+3. **The remaining domains.** Shipped. Config and commands (cli), db, auth, cloudflare, node, vite, react,
    expo, native-ui, and testing across api, db and auth. Each README cut to install and maintainer
    content in the same change.
    - [ ] (file) every consumer-facing README section has moved to a page; no fact in two places.
@@ -114,20 +113,13 @@ Each is one story. Order: 1 first, its format approved before 3; 2, 4, 5 and 6 a
    update stack with `pnpm update "@fcalell/*"`.
    - [ ] (test) a scratch consumer from `stack init` installs and passes its check outside the
      stack workspace.
-5. **stead.** The "Stack's guide" entry in `design/decisions.md`: written, uncommitted, in stead. Seeding
+5. **stead.** The "Stack's guide" entry in `design/decisions.md`: shipped in stead. Seeding
    `.stack/guide.md` into a job lands with stead's seed work, in stead's build plan.
-6. **nix.** `home/common/claude/rules/ui.md` and its link in `default.nix` deleted, uncommitted,
+6. **nix.** Shipped: `home/common/claude/rules/ui.md` and its link in `default.nix` deleted
    in nix.
-7. **The phone render harness.** A phone screen rendered where the design critic can script and
-   measure it, at the touch width, light and dark. Design approved by fcalell first.
-   - [ ] (file) `add-a-phone-screen.md` step 6 runs the critique on the harness.
-
-## Found while writing
-
-Each is fixed in stack, one commit each; the last is unit 7.
-
-- The phone has no render harness, so the design critique cannot judge a phone screen; the
-  phone recipe stops after its step 5 until unit 7 ships.
+7. **The phone render harness.** On the roadmap: epic 002 (`.helm/board/epics/002-phone/`)
+   holds it with the phone defects its spike found. The phone recipe stops after its step 5
+   until story 002-07 ships.
 
 ## The proof
 

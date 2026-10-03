@@ -10,3 +10,5 @@ Working evidence: dated, drains, or gets promoted into `.helm/knowledge/`. Nothi
 - [agent-guide.md](./agent-guide.md): planning or building stack's agent guide (the per-package
   pages, the generated `.stack/guide.md` index, the screen and gap paths), or how stead and
   consumers reach it.
+- [phone-harness.md](./phone-harness.md): building the phone render harness or fixing a stack
+  phone app that will not render or build (epic 002).
