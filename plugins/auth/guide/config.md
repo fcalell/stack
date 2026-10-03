@@ -62,5 +62,15 @@ export * from "@fcalell/plugin-auth/schema/passkey"; // passkey: with `passkey`
   schema exporting them under its own names.
 - The session's user has `id`, `name`, `email`, `emailVerified`, `image`, `createdAt` and
   `updatedAt`; type it with `SessionUser` from `@fcalell/plugin-auth/infer`.
+- Type the session from the config, never by hand: it carries `activeOrganizationId` exactly when
+  `auth({ organization })` is set.
+
+```ts
+// src/shared/session.ts
+import type { InferSession } from "@fcalell/plugin-auth/infer";
+import type config from "../../stack.config";
+
+export type Session = InferSession<typeof config>;
+```
 
 **Check:** `stack generate`, then `pnpm check` passes.

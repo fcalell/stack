@@ -3,6 +3,7 @@
 export interface PluginConfig<
 	TName extends string = string,
 	TOptions = unknown,
+	TInput = unknown,
 > {
 	readonly __plugin: TName;
 	// Explicit npm package name used for runtime discovery. Optional for
@@ -11,6 +12,8 @@ export interface PluginConfig<
 	// different namespace must set this via `plugin(..., { package })`.
 	readonly __package?: string;
 	readonly options: TOptions;
+	// Type-only: the caller's literal input, never set at runtime.
+	readonly __input?: TInput;
 }
 
 // ── Validation types ────────────────────────────────────────────────

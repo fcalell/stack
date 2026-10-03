@@ -253,6 +253,32 @@ type InferCallbackPayloads<
 		: never;
 };
 
+// A key the options do not declare maps to `never`, at every depth: inferring
+// the input as a type parameter skips the excess-property check that would
+// catch a typo. `unknown` options (a factory typed without its schema, an
+// option the schema leaves open) declare every key.
+type KnownKeys<I, T> = unknown extends T
+	? I
+	: I extends (...args: never[]) => unknown
+		? I
+		: I extends readonly unknown[]
+			? {
+					[K in keyof I]: KnownKeys<
+						I[K],
+						Extract<T, readonly unknown[]>[number]
+					>;
+				}
+			: I extends object
+				? {
+						[K in keyof I]: K extends keyof Extract<T, object>
+							? KnownKeys<I[K], Extract<T, object>[K]>
+							: never;
+					}
+				: I;
+
+// The call infers the caller's literal input `I` and keeps it on the entry as
+// the type-only `__input`, so a type derived from the config (auth's
+// `InferSession`) reads what was configured, not the resolved options' union.
 export type PluginFactory<
 	TName extends string,
 	TOptions,
@@ -262,10 +288,13 @@ export type PluginFactory<
 		CallbackMarker<unknown, unknown> | OptionalCallbackMarker<unknown, unknown>
 	>,
 	TResolvedOptions = TOptions,
-> = ((...args: [options: TOptions] | []) => {
+> = (<const I extends TOptions = TOptions>(
+	...args: [options: I & KnownKeys<I, TOptions>] | []
+) => {
 	readonly __plugin: TName;
 	readonly __package: string;
 	readonly options: NonNullable<TResolvedOptions>;
+	readonly __input?: I;
 }) & {
 	name: TName;
 	package: string;

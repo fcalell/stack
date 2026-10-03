@@ -31,15 +31,20 @@ const probe = plugin("probe", {
 async function nodeProcessEnv(
 	apiOptions: ApiOptions = {},
 ): Promise<Record<string, string> | undefined> {
-	const discovered = [api, node, probe].map((factory) => {
-		const config = factory === api ? api(apiOptions) : factory();
-		return {
-			name: config.__plugin,
-			cli: factory.cli,
-			factory,
-			options: config.options,
-		} as unknown as DiscoveredPlugin;
-	});
+	const plugins = [
+		{ factory: api, config: api(apiOptions) },
+		{ factory: node, config: node() },
+		{ factory: probe, config: probe() },
+	];
+	const discovered = plugins.map(
+		({ factory, config }) =>
+			({
+				name: config.__plugin,
+				cli: factory.cli,
+				factory,
+				options: config.options,
+			}) as unknown as DiscoveredPlugin,
+	);
 	const { graph } = buildGraphFromDiscovered({
 		discovered,
 		app: { name: "dev-env", domain: "example.com" },

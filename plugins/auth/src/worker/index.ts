@@ -21,7 +21,7 @@ import { organization } from "better-auth/plugins/organization";
 import { z } from "zod";
 import { compileStatements, packAbility } from "../ability/index.ts";
 import { defaultOrgRoles } from "../access.ts";
-import type { InferSession, SessionUser } from "../infer.ts";
+import type { SessionOf, SessionUser } from "../infer.ts";
 import { account, session, user, verification } from "../schema/index.ts";
 import {
 	invitation,
@@ -188,7 +188,7 @@ type TenancyContext<TOptions> = TOptions extends { organization: infer O }
 	: object;
 
 // `$Infer.Session` is derived from `AuthRuntimeInput` via the SAME
-// `SessionUser`/`InferSession` types `@fcalell/plugin-auth/infer` exposes
+// `SessionUser`/`SessionOf` types `@fcalell/plugin-auth/infer` exposes
 // for the client (organization → `activeOrganizationId`), one derivation,
 // two consumers, instead of re-deriving the branching twice.
 // `TOptions` is inferred from the literal object `.stack/procedure.ts` /
@@ -203,7 +203,7 @@ export interface AuthInstance<
 	$Infer: {
 		Session: {
 			user: SessionUser;
-			session: InferSession<{ auth: TOptions }>;
+			session: SessionOf<TOptions>;
 		};
 	};
 }

@@ -67,7 +67,11 @@ export const auth = plugin("auth", {
 ```
 
 The returned `auth` is callable (`auth({ cookies: { prefix: "myapp" } })`) and exposes `.slots`,
-`.cli`, `.requires`, `.package`. When `callbacks` is declared, it also exposes
+`.cli`, `.requires`, `.package`. The call is generic over its input
+(`<const I extends TOptions>`): the entry it returns carries the validated `options` and, type-only,
+the caller's literal input as `__input`, so a type derived from the config reads what was
+configured (`InferSession<typeof config>` reads `organization: true`, not the resolved union). An
+option key the schema does not declare still fails type-checking. When `callbacks` is declared, it also exposes
 `.defineCallbacks(impl)` for consumer callback files. When a plugin has both `callbacks` and a
 `./runtime` export, the framework auto-scaffolds `src/worker/plugins/<name>.ts` from a
 `templates/callbacks.ts` template.
