@@ -70,8 +70,9 @@ under `stack dev`.
 `plugin-cloudflare` and `plugin-node` are alternative deploy targets for the same worker. On the
 node target, `.stack/server.ts` (composed by `node.slots.serverSource`) calls
 `startNodeServer` from `@fcalell/plugin-node/server`: an outer Hono app that mounts the worker's
-fetch handler on every `api.slots.routePrefixes` path, serves `dist/client` statically with SPA
-fallback to its `index.html` (the fallback shadows the worker's `GET /` liveness route), and runs
+fetch handler on every `api.slots.routePrefixes` path, serves the web client's build
+(`vite.slots.outDir`, `dist/client`) statically with SPA fallback to its `index.html` (the
+fallback shadows the worker's `GET /` liveness route; with no vite neither is mounted), and runs
 consumer background services (`src/server/services/<name>.ts`, each default-exporting a
 `defineService({ name, start })`; start may return a stop handle, stops run in reverse order on
 shutdown).

@@ -47,6 +47,9 @@ export interface CodegenServerPayload {
 	bounds: { body: number; frame: number };
 	hasWorker: boolean;
 	workerPaths: string[];
+	// The web client's build directory, relative to the project root; null
+	// when there is no web client.
+	staticRoot: string | null;
 	hasConsumerServices: boolean;
 	services: ServiceEntry[];
 }

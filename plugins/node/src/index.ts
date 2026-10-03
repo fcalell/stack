@@ -85,6 +85,7 @@ const serverSource = slot.derived({
 		consumer: consumerServices,
 		worker: api.slots.workerSource,
 		prefixes: api.slots.routePrefixes,
+		staticRoot: vite.slots.outDir,
 	},
 	compute: (inp): string | null => {
 		const hasWorker = inp.worker !== null;
@@ -98,6 +99,7 @@ const serverSource = slot.derived({
 			bounds: inp.bounds,
 			hasWorker,
 			workerPaths: inp.prefixes,
+			staticRoot: inp.staticRoot,
 			hasConsumerServices,
 			services: inp.entries,
 		});

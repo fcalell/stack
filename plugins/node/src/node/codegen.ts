@@ -70,7 +70,10 @@ export function aggregateServer(payload: CodegenServerPayload): string {
 	}
 	properties.push({
 		key: "staticRoot",
-		value: { kind: "string", value: "dist/client" },
+		value:
+			payload.staticRoot === null
+				? { kind: "null" }
+				: { kind: "string", value: payload.staticRoot },
 	});
 	properties.push({
 		key: "servicesModule",

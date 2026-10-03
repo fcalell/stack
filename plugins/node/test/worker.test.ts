@@ -75,6 +75,7 @@ test("a node app signs in with a passkey and reads a SQLite row", async () => {
 		port,
 		worker,
 		workerPaths: ["/rpc", "/api/auth"],
+		staticRoot: null,
 		env,
 		log: { info: () => {}, error: console.error },
 	});

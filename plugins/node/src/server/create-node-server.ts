@@ -29,10 +29,11 @@ export interface NodeServerOptions {
 	worker: NodeWorker | null;
 	// URL prefixes routed to the worker (from api.slots.routePrefixes).
 	workerPaths?: string[];
-	// Directory of built client assets, relative to the process cwd. Missing
-	// files fall through to the SPA fallback; a missing directory serves 404s
-	// (dev serves the SPA from vite instead).
-	staticRoot?: string;
+	// Directory of built client assets, relative to the process cwd; null
+	// when there is no web client. Missing files fall through to the SPA
+	// fallback; a missing directory serves 404s (dev serves the SPA from vite
+	// instead).
+	staticRoot: string | null;
 	// Entries may be a single spec or an array of specs (the generated
 	// consumer barrel hands over its whole `services` array as one entry).
 	services?: ReadonlyArray<ServiceSpec | readonly ServiceSpec[]>;
@@ -58,7 +59,7 @@ export function createNodeServer(options: NodeServerOptions): NodeServer {
 		host,
 		worker,
 		workerPaths = [],
-		staticRoot = "dist/client",
+		staticRoot,
 		env = process.env,
 		log = consoleLog,
 	} = options;
@@ -125,10 +126,12 @@ export function createNodeServer(options: NodeServerOptions): NodeServer {
 		}
 	}
 
-	app.use("*", serveStatic({ root: staticRoot }));
-	// SPA fallback: any remaining GET (deep links like /board/012-01) gets the
-	// client shell. Worker paths never reach here — they matched above.
-	app.get("*", serveStatic({ path: `${staticRoot}/index.html` }));
+	if (staticRoot !== null) {
+		app.use("*", serveStatic({ root: staticRoot }));
+		// SPA fallback: any remaining GET (deep links like /board/012-01) gets
+		// the client shell. Worker paths never reach here — they matched above.
+		app.get("*", serveStatic({ path: `${staticRoot}/index.html` }));
+	}
 
 	const stops: Array<{ name: string; stop: ServiceStop }> = [];
 	let server: ReturnType<typeof serve> | null = null;

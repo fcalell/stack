@@ -97,7 +97,7 @@ e.g. consulting `ctx.fileExists` before writing.
 | `services` | `list<ServiceEntry>` (`uniqueBy: name`) | Codegen entries (`{ name, imports, expression }`) for the generated server's `services` array; each expression evaluates to a ServiceSpec or ServiceSpec[]; the consumer barrel lands here as one entry |
 | `consumerServices` | `value<{ identifier } \| null>` | Consumer services barrel identifier (seeded from `src/server/services` contents) |
 | `serviceBarrelSource` | `derived<string \| null>` | Rendered `src/server/services/index.ts` barrel; null when no service modules exist |
-| `serverSource` | `derived<string \| null>` | Final `.stack/server.ts` source; reads `api.slots.workerSource` + `routePrefixes`; null when there is no worker and no services |
+| `serverSource` | `derived<string \| null>` | Final `.stack/server.ts` source; reads `api.slots.workerSource` + `routePrefixes`, and `vite.slots.outDir` as the static root (null mounts no static files or SPA fallback); null when there is no worker and no services |
 
 ## `vite.slots.*` (plugin-vite)
 
@@ -108,7 +108,7 @@ e.g. consulting `ctx.fileExists` before writing.
 | `resolveAliases` | `list<{ find, replacement }>` | `resolve.alias` entries |
 | `resolveDedupe` | `list<string>` | Bare specifiers rendered into `resolve.dedupe` (de-duplicated); plugins whose runtime must stay a singleton contribute here so workspace-linked checkouts can't ship a second copy in the production bundle. plugin-react contributes `react` and `react-dom` |
 | `devServerPort` | `value<number>` | Dev server port (defaults to options.port ?? 3000) |
-| `outDir` | `value<string \| null>` | The client build's output directory relative to the project root (`dist/client`), rendered as the config's `build.outDir`; seeded null and filled by vite's own contribution, so a reader without vite in the config sees null. cloudflare serves it as `[assets]` |
+| `outDir` | `value<string \| null>` | The client build's output directory relative to the project root (`dist/client`), rendered as the config's `build.outDir`; seeded null and filled by vite's own contribution, so a reader without vite in the config sees null. cloudflare serves it as `[assets]`, node as its static root |
 | `serverProxy` | `list<ServerProxyEntry>` (`uniqueBy: path`) | Dev-server proxy rules (`{ path, target, ws? }`) rendered into `server.proxy`; deploy targets contribute worker-owned paths so dev stays same-origin like prod |
 | `fsAllow` | `list<TsExpression>` | Extra `server.fs.allow` path expressions; plugins serving assets from their own package contribute their real location so a workspace-linked stack still serves them in dev. Any entry makes the rendered list explicit, prefixed with the consumer's workspace root |
 | `watchIgnored` | `list<string>` (sorted) | Globs rendered into `server.watch.ignored`, added to Vite's own defaults; a plugin whose tool writes scratch files under Vite's root contributes their glob so the writes never reach hot-update handling. plugin-cloudflare contributes `**/.wrangler/**` (wrangler's dev bundle in `.stack/.wrangler/tmp/`) |

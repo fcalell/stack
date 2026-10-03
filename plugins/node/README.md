@@ -52,6 +52,7 @@ only `ws/`.
 the services barrel are passed as module URLs, not imports: route files import
 `virtual:stack-procedure`, which plain Node resolves only through the `registerHooks` hook the
 boot installs before loading them. The server mounts, in order, `/ws`, service mounts (longest
-prefix wins), the worker paths, static files from `dist/client`, then the `index.html` fallback.
+prefix wins), the worker paths, then, with `vite()`, static files from `dist/client` and the
+`index.html` fallback.
 Services start in order before listen and stop in reverse on `SIGINT` or `SIGTERM`; a failed boot
 logs and exits 1.

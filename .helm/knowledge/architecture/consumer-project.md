@@ -83,7 +83,7 @@ my-app/
 
 On the node target (`node()` instead of `cloudflare()`), `wrangler.toml`,
 `worker-configuration.d.ts`, and `.stack/wrangler.toml` do not exist; `.stack/server.ts` serves
-the worker, the built client (`dist/client`), and the consumer's background services from one
+the worker, the built client (`dist/client`, with vite), and the consumer's background services from one
 long-running process. Its database is `db({ dialect: "sqlite", path })`: the running process
 opens the file the `DB_FILE` env var names (`fileVar` renames the var), `path` is that var's
 dev default, and the deployed installation sets `DB_FILE` itself. Env vars the worker declares
