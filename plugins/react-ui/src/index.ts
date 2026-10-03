@@ -152,6 +152,11 @@ export const reactUi = plugin("react-ui", {
 		// ui-core's pages.
 		"@fcalell/ui-core": stackSpec("@fcalell/ui-core"),
 		tailwindcss: "^4.3.3",
+		// The generated providers module mounts plugin-api's `QueryProvider`,
+		// and `QueryBoundary` reads the queries its TanStack peers make.
+		"@fcalell/plugin-api": stackSpec("@fcalell/plugin-api"),
+		"@tanstack/react-query": "^5.101.0",
+		"@orpc/tanstack-query": "^1.14.4",
 	},
 	devDependencies: {
 		"@tailwindcss/vite": "^4.3.3",
@@ -281,6 +286,20 @@ export const reactUi = plugin("react-ui", {
 				order: 1,
 			};
 		}),
+
+		// One query client around the app, inside the words.
+		react.slots.providers.contribute(
+			(): ProviderSpec => ({
+				imports: [
+					{
+						source: "@fcalell/plugin-api/tanstack-query",
+						named: ["QueryProvider"],
+					},
+				],
+				wrap: { identifier: "QueryProvider" },
+				order: 2,
+			}),
+		),
 
 		// ── App CSS ─────────────────────────────────────────────────────
 		self.slots.appCssImports.contribute(() => ({

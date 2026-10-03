@@ -21,9 +21,10 @@ object or a function returning one.
 ## Queries
 
 `@fcalell/plugin-api/tanstack-query` pairs the client with TanStack Query 5 and re-exports its
-hooks (`useQuery`, `useMutation`, `useInfiniteQuery`, `useSuspenseQuery`, `useQueryClient`). On the
-phone the app is already wrapped in `QueryProvider`; on the web, wrap the root route in
-`<QueryProvider>`.
+hooks (`useQuery`, `useMutation`, `useInfiniteQuery`, `useSuspenseQuery`, `useQueryClient`). With
+react-ui on the web or native-ui on the phone, TanStack Query is installed and the app is already
+wrapped in `QueryProvider`; never wrap it again. Without one, add `@tanstack/react-query` and
+`@orpc/tanstack-query` and wrap the root route in `<QueryProvider>`.
 
 ```tsx
 const { data } = useQuery(orpc.projects.list.queryOptions({ input: { organizationId } }));
