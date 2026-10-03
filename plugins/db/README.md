@@ -10,7 +10,7 @@ migration gates and steps, and the test entry's per-boot D1.
 pnpm add @fcalell/plugin-db
 ```
 
-`stack init` and `stack plugin add db` write `@fcalell/plugin-db` and `drizzle-orm` into the
+`stack init` and `stack add db` write `@fcalell/plugin-db` and `drizzle-orm` into the
 consumer's `dependencies`, and nothing into its `devDependencies`. `drizzle-kit` and
 `better-sqlite3` are the plugin's own dependencies: the `stack db` commands run the drizzle-kit
 resolved from the plugin's install, and that drizzle-kit, `stack db push` and the sqlite runtime

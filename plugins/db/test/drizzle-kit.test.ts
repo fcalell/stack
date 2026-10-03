@@ -5,11 +5,12 @@ import {
 	mkdtempSync,
 	readdirSync,
 	readFileSync,
+	realpathSync,
 	rmSync,
 	writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { join, relative, sep } from "node:path";
+import { join } from "node:path";
 import { after, test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { drizzleKitBin } from "../src/node/drizzle-kit.ts";
@@ -97,7 +98,13 @@ test("the binary resolves from plugin-db's install", () => {
 	const bin = drizzleKitBin();
 
 	assert.equal(existsSync(bin), true);
-	assert.ok(bin.endsWith(`${sep}bin.cjs`));
-	assert.ok(bin.split(sep).includes("drizzle-kit"));
-	assert.ok(relative(dir, bin).startsWith(".."));
+	assert.equal(
+		bin,
+		join(
+			realpathSync(
+				fileURLToPath(new URL("../node_modules/drizzle-kit", import.meta.url)),
+			),
+			"bin.cjs",
+		),
+	);
 });
