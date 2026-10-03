@@ -111,7 +111,7 @@ Each is one story. Order: 1 first, its format approved before 3; 2, 4, 5 and 6 a
    the `pnpm-workspace.yaml` overrides, and `allowBuilds` keyed by repository URL, replacing
    `workspace:*`; stack and the scaffold on pnpm 11.15 or later. The commands page says to
    update stack with `pnpm update "@fcalell/*"`.
-   - [ ] (test) a scratch consumer from `stack init` installs and passes its check outside the
+   - [x] (test) a scratch consumer from `stack init` installs and passes its check outside the
      stack workspace.
 5. **stead.** The "Stack's guide" entry in `design/decisions.md`: shipped in stead. Seeding
    `.stack/guide.md` into a job lands with stead's seed work, in stead's build plan.
