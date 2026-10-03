@@ -53,7 +53,7 @@ the text roles and the app's words. Never edit `node_modules` or a stack package
 ```tsx
 <Place title="Projects" act={{ label: "New project", onAct: create }}>
   <Section title="Active" count={projects.length}>
-    <QueryBoundary query={query} sentence="Projects could not load.">
+    <QueryBoundary query={query} sentence="Projects could not load." loading={<List loading />}>
       {(rows) => <List>{rows.map((p) => <ListRow key={p.id} title={p.name} />)}</List>}
     </QueryBoundary>
   </Section>
@@ -66,7 +66,8 @@ the text roles and the app's words. Never edit `node_modules` or a stack package
 
 Loading draws each region's loaded form in skeleton: a `QueryBoundary` or a loading `Section`,
 `Group` or `List` stands skeleton rows at the loaded rows' heights, so nothing moves when the
-data lands, and a pending act keeps its box. Empty draws the region's `EmptyState` with the one
+data lands, and a pending act keeps its box. A `QueryBoundary` stands a `Group`'s rows in a
+`Section` and a `List`'s elsewhere; a body of the other kind passes its own as `loading`. Empty draws the region's `EmptyState` with the one
 act that fills it. Error draws the failure where the work happened (a field's error, a banner over
 the region, a toast for an act) and keeps what still works on screen.
 

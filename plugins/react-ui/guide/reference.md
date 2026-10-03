@@ -15,8 +15,11 @@ import { toast } from "@fcalell/plugin-react-ui/lib/toast";
 import { useWords } from "@fcalell/plugin-react-ui/lib/words";
 ```
 
-`toast(sentence)` queues a toast and `confirm(confirmation)` (`lib/confirm`) asks for a decision
-in a sheet; the `Shell` draws both. `useTouch()` (`lib/media`) says whether the touch density is
+`toast(sentence, { state, act })` queues a toast, `state` being how the act it reports ended
+(`done`, `attention` or `failed`), and `confirm(confirmation)` (`lib/confirm`) asks for a decision
+in a sheet; only a page inside the `Shell` can call either, since the `Shell` draws both.
+`age(moment)` (`lib/age`) words an ISO moment as its age from now, the string a row's age
+takes. `useTouch()` (`lib/media`) says whether the touch density is
 drawing. The icon set is Lucide, drawn from `lucide-react`: every `icon` a component takes is an
 `IconName`, a Lucide PascalCase name.
 
