@@ -1,16 +1,13 @@
 import { createHash, createHmac } from "node:crypto";
-import {
-	existsSync,
-	mkdirSync,
-	readdirSync,
-	readFileSync,
-	writeFileSync,
-} from "node:fs";
-import { createRequire } from "node:module";
+import { existsSync, mkdirSync, readdirSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { LOCAL_PERSIST } from "@fcalell/plugin-cloudflare";
 import type { DbOptions } from "../types.ts";
-import { runCommand } from "./exec.ts";
+import {
+	assertSqliteDriver,
+	runDrizzleKit,
+	writeDrizzleConfig,
+} from "./drizzle-kit.ts";
 import { migrationLockPath, withMigrationLock } from "./lock.ts";
 import { executeSql, migrationsApply } from "./wrangler.ts";
 
@@ -80,33 +77,6 @@ export function migrationsExist(cwd: string, options: DbOptions): boolean {
 	return listMigrationFiles(cwd, options).length > 0;
 }
 
-// drizzle-kit exits 0 even when its sqlite driver fails to load, so a
-// broken push would report success. Load the consumer's copy up front and
-// fail with the fix instead. better-sqlite3 13 ships a prebuilt binary for
-// linux, darwin and win32 on x64 and arm64 and loads it first; elsewhere
-// it is built from source.
-function assertSqliteDriver(cwd: string): void {
-	const requireFromConsumer = createRequire(join(cwd, "package.json"));
-	try {
-		// Constructing a Database is the real probe: the binding loads
-		// lazily, so a bare require() passes even with no binary.
-		const Database = requireFromConsumer("better-sqlite3");
-		new Database(":memory:").close();
-	} catch (err) {
-		const detail =
-			err instanceof Error ? err.message.split("\n")[0] : String(err);
-		throw new Error(
-			`better-sqlite3 failed to load (${detail}). Off its prebuilt platforms, build it: approve the build (allowBuilds: better-sqlite3: true in pnpm-workspace.yaml) and run \`pnpm rebuild better-sqlite3\`, then retry.`,
-		);
-	}
-}
-
-function writeDrizzleConfig(configPath: string, content: string): void {
-	const dir = join(configPath, "..");
-	mkdirSync(dir, { recursive: true });
-	writeFileSync(configPath, content, "utf-8");
-}
-
 export async function pushSchemaLocal(
 	cwd: string,
 	options: DbOptions,
@@ -114,7 +84,7 @@ export async function pushSchemaLocal(
 	// `drizzle-kit push` writes to the dev SQLite file; serialize cross-process
 	// to avoid SQLite's per-file lock surfacing as "database is locked" when
 	// `stack db push` is run while `stack dev`'s schema watcher fires.
-	assertSqliteDriver(cwd);
+	assertSqliteDriver();
 	return withMigrationLock(migrationLockPath(cwd), async () => {
 		const configDir = join(cwd, ".db-kit");
 		mkdirSync(configDir, { recursive: true });
@@ -129,16 +99,12 @@ export async function pushSchemaLocal(
 				: sqliteLocalUrl(cwd, options);
 
 		const configPath = join(configDir, "drizzle.config.ts");
-		const configContent = `import { defineConfig } from "drizzle-kit";
-export default defineConfig({
-  dialect: "sqlite",
-  schema: "./src/schema/index.ts",
-  dbCredentials: { url: ${JSON.stringify(dbUrl)} },
-});
-`;
-		writeDrizzleConfig(configPath, configContent);
+		writeDrizzleConfig(configPath, {
+			schema: "./src/schema/index.ts",
+			dbCredentials: { url: dbUrl },
+		});
 
-		runCommand("npx", ["drizzle-kit", "push", "--config", configPath], cwd);
+		runDrizzleKit(cwd, ["push", "--config", configPath]);
 	});
 }
 
@@ -167,16 +133,12 @@ export async function generateMigrations(
 		mkdirSync(configDir, { recursive: true });
 
 		const configPath = join(configDir, "drizzle-generate.config.ts");
-		const configContent = `import { defineConfig } from "drizzle-kit";
-export default defineConfig({
-  dialect: "sqlite",
-  schema: "./src/schema/index.ts",
-  out: ${JSON.stringify(options.migrations ?? "./src/migrations")},
-});
-`;
-		writeDrizzleConfig(configPath, configContent);
+		writeDrizzleConfig(configPath, {
+			schema: "./src/schema/index.ts",
+			out: options.migrations ?? "./src/migrations",
+		});
 
-		runCommand("npx", ["drizzle-kit", "generate", "--config", configPath], cwd);
+		runDrizzleKit(cwd, ["generate", "--config", configPath]);
 
 		const newMigrations: Array<{ name: string; sql: string }> = [];
 		if (existsSync(migrationsDir)) {
@@ -226,26 +188,18 @@ export async function applyMigrationsLocal(
 	// other migration-writing path under the same lock.
 	return withMigrationLock(migrationLockPath(cwd), async () => {
 		if (options.dialect === "sqlite") {
-			assertSqliteDriver(cwd);
+			assertSqliteDriver();
 			const configDir = join(cwd, ".db-kit");
 			mkdirSync(configDir, { recursive: true });
 
 			const configPath = join(configDir, "drizzle-migrate.config.ts");
-			const configContent = `import { defineConfig } from "drizzle-kit";
-export default defineConfig({
-  dialect: "sqlite",
-  schema: "./src/schema/index.ts",
-  out: ${JSON.stringify(options.migrations ?? "./src/migrations")},
-  dbCredentials: { url: ${JSON.stringify(sqliteLocalUrl(cwd, options))} },
-});
-`;
-			writeDrizzleConfig(configPath, configContent);
+			writeDrizzleConfig(configPath, {
+				schema: "./src/schema/index.ts",
+				out: options.migrations ?? "./src/migrations",
+				dbCredentials: { url: sqliteLocalUrl(cwd, options) },
+			});
 
-			runCommand(
-				"npx",
-				["drizzle-kit", "migrate", "--config", configPath],
-				cwd,
-			);
+			runDrizzleKit(cwd, ["migrate", "--config", configPath]);
 			return;
 		}
 

@@ -87,15 +87,12 @@ export const db = plugin("db", {
 	requires: ["api"],
 
 	dependencies: {
-		// drizzle-kit resolves drizzle-orm from the consumer at
-		// generate/push time; the plugin's own copy doesn't satisfy it.
+		// The consumer's root copy is the one copy every plugin's emitted
+		// declarations resolve to: its test project resolves the
+		// `import("drizzle-orm/...")` a declaration names from the consumer
+		// root, and two physical copies are two classes to TypeScript.
+		// drizzle-kit and better-sqlite3 are the plugin's own dependencies.
 		"drizzle-orm": "^0.45.2",
-	},
-	devDependencies: {
-		"drizzle-kit": "^0.31.0",
-		// drizzle-kit's sqlite driver for `stack db push` — both dialects
-		// push into a local sqlite file (miniflare's for d1).
-		"better-sqlite3": "^13.0.0",
 	},
 	gitignore: [".db-kit"],
 

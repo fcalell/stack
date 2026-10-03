@@ -10,7 +10,20 @@ migration gates and steps, and the test entry's per-boot D1.
 pnpm add @fcalell/plugin-db
 ```
 
-`better-sqlite3` ships with the plugin: `stack db push` and the sqlite runtime both use it.
+`stack init` and `stack plugin add db` write `@fcalell/plugin-db` and `drizzle-orm` into the
+consumer's `dependencies`, and nothing into its `devDependencies`. `drizzle-kit` and
+`better-sqlite3` are the plugin's own dependencies: the `stack db` commands run the drizzle-kit
+resolved from the plugin's install, and that drizzle-kit, `stack db push` and the sqlite runtime
+load the plugin's `better-sqlite3`.
+
+`drizzle-orm` is the consumer's because the declarations the consumer's worker project emits name
+drizzle types as `import("drizzle-orm/...")`, and its test project resolves those imports from
+the consumer root. With no root copy every schema table types as `any`; with a second physical
+copy beside the plugin's, TypeScript treats the two `Column` classes as distinct and
+`app.db.select().from(table)` fails. So the root copy must be the one the plugin resolves. A
+consumer that links the stack checkout (`link:../stack/plugins/db`) links
+`../stack/plugins/db/node_modules/drizzle-orm` too, so the test project, the schema and `app.db`
+share one copy.
 
 ## Guide
 
@@ -38,7 +51,6 @@ export const db = plugin("db", {
   schema: dbOptionsSchema,
   requires: ["api"],
   dependencies: { "drizzle-orm": "^0.45.2" },
-  devDependencies: { "drizzle-kit": "^0.31.0", "better-sqlite3": "^13.0.0" },
   gitignore: [".db-kit"],
   guide: [/* change-a-table, destructive-change, schema, seed, … */],
   commands: { push, generate, apply, reset, create, check, seed },

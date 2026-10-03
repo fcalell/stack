@@ -1,4 +1,3 @@
-import { spawnSync } from "node:child_process";
 import {
 	cpSync,
 	existsSync,
@@ -6,10 +5,10 @@ import {
 	readdirSync,
 	readFileSync,
 	rmSync,
-	writeFileSync,
 } from "node:fs";
 import { join } from "node:path";
 import type { DbOptions } from "../types.ts";
+import { runDrizzleKit, writeDrizzleConfig } from "./drizzle-kit.ts";
 
 // A migration acknowledged as an intentional, reviewed drop carries this
 // marker anywhere in its `.sql` (a plain comment line). Kept as a bare token so
@@ -196,30 +195,12 @@ export function detectSchemaDrift(cwd: string, options: DbOptions): boolean {
 		// `out` is relative to cwd (drizzle-kit resolves config paths against
 		// cwd, matching push.ts), kept relative to dodge the 0.31 absolute-path
 		// bug.
-		writeFileSync(
-			configAbs,
-			`import { defineConfig } from "drizzle-kit";
-export default defineConfig({
-  dialect: "sqlite",
-  schema: "./src/schema/index.ts",
-  out: ${JSON.stringify(`./${DRIFT_DIR}`)},
-});
-`,
-			"utf-8",
-		);
+		writeDrizzleConfig(configAbs, {
+			schema: "./src/schema/index.ts",
+			out: `./${DRIFT_DIR}`,
+		});
 
-		const result = spawnSync(
-			"npx",
-			["drizzle-kit", "generate", "--config", configAbs],
-			{ cwd, stdio: "pipe", env: { ...process.env } },
-		);
-		if (result.status !== 0) {
-			const stderr = result.stderr?.toString().trim() ?? "";
-			const stdout = result.stdout?.toString().trim() ?? "";
-			throw new Error(
-				`drizzle-kit generate failed during drift check:\n${stderr || stdout}`,
-			);
-		}
+		runDrizzleKit(cwd, ["generate", "--config", configAbs]);
 
 		return countSqlFiles(driftAbs) > before;
 	} finally {

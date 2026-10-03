@@ -6,6 +6,9 @@ migration and no restart. Everywhere else (the deployed database, the test datab
 from the committed migrations in `src/migrations/`, which `stack db generate` writes. So a
 schema change is done only when its migration is generated and committed.
 
+`push`, `generate`, the sqlite `apply` and `check` run the plugin's own `drizzle-kit`, resolved
+from the plugin's install, never one from the project.
+
 | Command | Run it when |
 | --- | --- |
 | `stack db generate` | The schema changed: it writes the next migration (`.sql` plus drizzle's `meta/` snapshot) from the diff, or prints that nothing changed |
