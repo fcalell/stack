@@ -1,4 +1,5 @@
 import { toPascalCase as pascalCase, toCamelCase } from "../lib/naming.ts";
+import { stackSpec } from "../lib/stack-packages.ts";
 
 interface PluginPackageJsonOptions {
 	name: string;
@@ -13,6 +14,7 @@ export function pluginPackageJsonTemplate(
 		version: "0.0.0",
 		type: "module",
 		sideEffects: false,
+		packageManager: "pnpm@11.28.3",
 		exports: {
 			".": { types: "./dist/index.d.ts", default: "./dist/index.js" },
 			"./runtime": {
@@ -30,10 +32,10 @@ export function pluginPackageJsonTemplate(
 			check: "pnpm check-types && pnpm lint",
 		},
 		dependencies: {
-			"@fcalell/cli": "workspace:*",
+			"@fcalell/cli": stackSpec("@fcalell/cli"),
 		},
 		devDependencies: {
-			"@fcalell/typescript-config": "workspace:*",
+			"@fcalell/typescript-config": stackSpec("@fcalell/typescript-config"),
 			typescript: "^5.9.3",
 		},
 	};
@@ -154,9 +156,8 @@ export default defineConfig({
 
 ## Publishing
 
-1. Replace \`workspace:*\` dependencies in \`package.json\` with fixed versions.
-2. Run \`pnpm check-types\`.
-3. Publish: \`pnpm publish --access public\` (\`prepare\` builds \`dist\` first).
+1. Run \`pnpm check-types\`.
+2. Publish: \`pnpm publish --access public\` (\`prepare\` builds \`dist\` first).
 
 ## License
 

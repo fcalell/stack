@@ -11,6 +11,7 @@ import {
 	pluginTsconfigBuildTemplate,
 	pluginTsconfigTemplate,
 } from "../templates/plugin.ts";
+import { pnpmWorkspaceTemplate } from "../templates/pnpm-workspace.ts";
 
 export interface InitPluginOptions {
 	name: string;
@@ -57,6 +58,13 @@ export async function initPlugin(options: InitPluginOptions): Promise<void> {
 
 		const entries: Array<[string, string]> = [
 			["package.json", pluginPackageJsonTemplate({ name, packageName })],
+			[
+				"pnpm-workspace.yaml",
+				pnpmWorkspaceTemplate(null, [
+					"@fcalell/cli",
+					"@fcalell/typescript-config",
+				]),
+			],
 			["tsconfig.json", pluginTsconfigTemplate()],
 			["tsconfig.build.json", pluginTsconfigBuildTemplate()],
 			["src/index.ts", pluginIndexTemplate({ name, packageName, label })],
