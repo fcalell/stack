@@ -20,10 +20,14 @@ type AnyQuery = QueryLike<unknown>;
 /** One query, or several read together. */
 export type Queries = AnyQuery | readonly [AnyQuery, ...AnyQuery[]];
 
-/** The data a boundary hands its children: one query's, or one per query in order. */
-export type QueryData<Q extends Queries> = Q extends readonly AnyQuery[]
+/**
+ * The data a boundary hands its children: one query's, or one per query in
+ * order. The brackets stop the check distributing over a `useQuery` result's
+ * union, whose pending and error members would add `undefined`.
+ */
+export type QueryData<Q extends Queries> = [Q] extends [readonly AnyQuery[]]
 	? { -readonly [K in keyof Q]: Q[K] extends QueryLike<infer D> ? D : never }
-	: Q extends QueryLike<infer D>
+	: [Q] extends [QueryLike<infer D>]
 		? D
 		: never;
 
