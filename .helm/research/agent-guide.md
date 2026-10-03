@@ -126,7 +126,6 @@ Each is one story. Order: 1 first, its format approved before 3; 2, 4, 5 and 6 a
 
 Each is fixed in stack, one commit each; the last is unit 7.
 
-- `stack deploy` never uploads `dist/client` to Cloudflare.
 - `InferSession<typeof config>` does not compile.
 - The phone has no render harness, so the design critique cannot judge a phone screen; the
   phone recipe stops after its step 5 until unit 7 ships.

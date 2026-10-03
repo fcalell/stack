@@ -10,10 +10,11 @@ import type { CodegenWranglerPayload, WranglerBindingSpec } from "../types.ts";
 
 // ── Wrangler.toml merge contract ─────────────────────────────────────
 //
-// (1) FRAMEWORK_MANAGED_LISTS — consumer cannot specify; if present in the
+// (1) FRAMEWORK_MANAGED — consumer cannot specify; if present in the
 //     consumer file we throw with an actionable message. The framework owns
-//     these tables end-to-end (driven by plugin contributions to
-//     cloudflare.slots.bindings / compatibilityFlags).
+//     these keys end-to-end (driven by plugin contributions to
+//     cloudflare.slots.bindings / compatibilityFlags, and by vite's client
+//     build for `[assets]`).
 // (2) FRAMEWORK_DEFAULTED_SCALARS — consumer wins if present; otherwise the
 //     framework supplies a default. (`name`, `compatibility_date`, `main`.)
 // (3) CONSUMER_MERGED_LISTS — `[[routes]]` and `[[r2_buckets]]` (WS1.3):
@@ -21,19 +22,20 @@ import type { CodegenWranglerPayload, WranglerBindingSpec } from "../types.ts";
 //     collision (route pattern, r2 binding name) is a hard error so a
 //     future slot contributor can never silently shadow a consumer entry.
 // (4) Everything else is consumer-only and passes through verbatim
-//     (e.g. `account_id`, `dev`, `build`, `assets`).
+//     (e.g. `account_id`, `dev`, `build`, `observability`).
 //
 // `[vars]` is a hybrid: consumer keys pass through, framework keys (vars
 // from contributions, var-bindings) overlay; collisions across
 // consumer/framework or across plugin contributions throw. A secret never
 // lands in `[vars]`, though a consumer var of its name still collides.
 
-const FRAMEWORK_MANAGED_LISTS = new Set<string>([
+const FRAMEWORK_MANAGED = new Set<string>([
 	"d1_databases",
 	"kv_namespaces",
 	"analytics_engine_datasets",
 	"unsafe", // [unsafe.bindings] — rate_limiter
 	"compatibility_flags",
+	"assets",
 ]);
 
 const CONSUMER_MERGED_LISTS = new Set<string>(["routes", "r2_buckets"]);
@@ -98,7 +100,7 @@ export function aggregateWrangler(opts: {
 	// framework-managed list. Framework-defaulted scalars survive this step
 	// (consumer wins) and are filled in by step (2) only when missing.
 	for (const [k, v] of Object.entries(consumerParsed)) {
-		if (FRAMEWORK_MANAGED_LISTS.has(k)) continue;
+		if (FRAMEWORK_MANAGED.has(k)) continue;
 		if (CONSUMER_MERGED_LISTS.has(k)) continue;
 		// `vars` is special: consumer keys pass through here, framework keys
 		// will overlay below with collision checks.
@@ -149,6 +151,19 @@ export function aggregateWrangler(opts: {
 		root.compatibility_flags = [
 			...new Set(opts.payload.compatibilityFlags),
 		].sort();
+	}
+
+	// The web client's build, served for every path the worker does not own.
+	// `directory` resolves against `.stack/`, where the config lands.
+	if (opts.payload.clientDir !== null) {
+		const runWorkerFirst = opts.payload.routePrefixes
+			.map((prefix) => `${prefix}/*`)
+			.sort();
+		root.assets = {
+			directory: posix.join("..", posix.normalize(opts.payload.clientDir)),
+			not_found_handling: "single-page-application",
+			...(runWorkerFirst.length > 0 && { run_worker_first: runWorkerFirst }),
+		};
 	}
 
 	appendBindingsToTables(opts.payload.bindings, arrayTables, String(root.name));
@@ -221,7 +236,7 @@ function rejectFrameworkManagedSections(
 	parsed: Record<string, TomlValue>,
 ): void {
 	const offenders: string[] = [];
-	for (const key of FRAMEWORK_MANAGED_LISTS) {
+	for (const key of FRAMEWORK_MANAGED) {
 		if (parsed[key] !== undefined) {
 			// `unsafe` is the parent of `[unsafe.bindings]`. Only flag it when the
 			// nested `bindings` array is actually present — leaving room for other
@@ -244,10 +259,10 @@ function rejectFrameworkManagedSections(
 	if (offenders.length === 0) return;
 	throw new Error(
 		`wrangler.toml contains framework-managed section(s): ${offenders
-			.map((s) => `[[${s}]]`)
+			.map((s) => `\`${s}\``)
 			.join(
 				", ",
-			)}. Remove them and let plugins (db/auth/...) contribute these via stack.config.ts.`,
+			)}. Remove them: stack generates them from the plugins in stack.config.ts (bindings from db/auth/..., \`[assets]\` from vite's client build).`,
 	);
 }
 

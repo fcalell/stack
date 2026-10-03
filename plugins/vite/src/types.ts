@@ -36,6 +36,8 @@ export interface CodegenViteConfigPayload {
 	// second copy of a singleton runtime into the production bundle.
 	resolveDedupe: string[];
 	devServerPort: number;
+	// The client build's output directory, relative to the project root.
+	outDir: string;
 	serverProxy: ServerProxyEntry[];
 	// Extra `server.fs.allow` path expressions. Any entry switches the
 	// rendered config to an explicit allow list, so the aggregator prepends

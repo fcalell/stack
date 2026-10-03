@@ -8,14 +8,26 @@ import { cliSlots } from "@fcalell/cli/cli-slots";
 import type { DiscoveredPlugin } from "@fcalell/cli/discovery";
 import { api } from "@fcalell/plugin-api";
 import { vite } from "@fcalell/plugin-vite";
+import { parse as parseToml } from "smol-toml";
 import { cloudflare } from "../src/index.ts";
 
 // The graph `stack dev` resolves for api + cloudflare + vite, over a consumer
-// directory holding the given root `.dev.vars`. `web: false` leaves vite
-// out, for what only its presence decides.
-function devGraph(devVars?: string, web = true) {
+// directory holding the given root `.dev.vars` and `wrangler.toml`.
+// `web: false` leaves vite out, for what only its presence decides.
+function devGraph({
+	devVars,
+	wrangler,
+	web = true,
+}: {
+	devVars?: string;
+	wrangler?: string;
+	web?: boolean;
+} = {}) {
 	const cwd = mkdtempSync(join(tmpdir(), "stack-cloudflare-dev-"));
 	if (devVars !== undefined) writeFileSync(join(cwd, ".dev.vars"), devVars);
+	if (wrangler !== undefined) {
+		writeFileSync(join(cwd, "wrangler.toml"), wrangler);
+	}
 	const plugins = [
 		{
 			factory: api,
@@ -66,7 +78,7 @@ test("the vite dev server's watcher skips wrangler's scratch directory", async (
 });
 
 test("an existing .dev.vars is topped up with the vars it lacks", async () => {
-	const graph = devGraph("STACK_DEV=1\nAPI_OTHER=keep\n");
+	const graph = devGraph({ devVars: "STACK_DEV=1\nAPI_OTHER=keep\n" });
 	const root = await artifact(graph, ".dev.vars");
 	assert.equal(root, "STACK_DEV=1\nAPI_OTHER=keep\nRESEND_API_KEY=re_dev\n");
 	assert.match(
@@ -76,7 +88,7 @@ test("an existing .dev.vars is topped up with the vars it lacks", async () => {
 });
 
 test("an existing .dev.vars holding every var is left as written", async () => {
-	const graph = devGraph("STACK_DEV=1\nRESEND_API_KEY=re_real\n");
+	const graph = devGraph({ devVars: "STACK_DEV=1\nRESEND_API_KEY=re_real\n" });
 	assert.equal(await artifact(graph, ".dev.vars"), undefined);
 	assert.match(
 		(await artifact(graph, ".stack/.dev.vars")) ?? "",
@@ -123,7 +135,7 @@ test("wrangler bundles the worker with the tsconfig holding its paths", async ()
 		[true, "tsconfig.worker.json"],
 		[false, "tsconfig.json"],
 	] as const) {
-		const graph = devGraph(undefined, web);
+		const graph = devGraph({ web });
 		for (const args of await argsOf(graph)) {
 			const tsconfig = args[args.indexOf("--tsconfig") + 1] ?? "";
 			assert.ok(isAbsolute(tsconfig), `${tsconfig} is not absolute`);
@@ -137,4 +149,27 @@ test("wrangler bundles the worker with the tsconfig holding its paths", async ()
 test("the generated wrangler config declares no secret under [vars]", async () => {
 	const toml = await devGraph().resolve(cloudflare.slots.wranglerToml);
 	assert.doesNotMatch(toml, /RESEND_API_KEY/);
+});
+
+// wrangler resolves `assets.directory` against `.stack/`, where the config
+// lands, and answers any other navigation with the client's `index.html`;
+// the worker answers its own paths first.
+test("the generated wrangler config serves the web client as assets", async () => {
+	const toml = await devGraph().resolve(cloudflare.slots.wranglerToml);
+	assert.deepEqual(parseToml(toml).assets, {
+		directory: "../dist/client",
+		not_found_handling: "single-page-application",
+		run_worker_first: ["/rpc/*"],
+	});
+});
+
+test("the generated wrangler config has no assets without vite", async () => {
+	const graph = devGraph({ web: false });
+	const toml = await graph.resolve(cloudflare.slots.wranglerToml);
+	assert.equal(parseToml(toml).assets, undefined);
+});
+
+test("a root wrangler.toml declaring [assets] fails generate", async () => {
+	const graph = devGraph({ wrangler: '[assets]\ndirectory = "../public"\n' });
+	await assert.rejects(graph.resolve(cloudflare.slots.wranglerToml), /assets/);
 });

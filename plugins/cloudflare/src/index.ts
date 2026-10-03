@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { existsSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { log } from "@clack/prompts";
 import { type ContributionCtx, plugin, slot } from "@fcalell/cli";
@@ -65,8 +65,10 @@ const compatibilityDate = slot.value<string>({
 	seed: () => DEFAULT_COMPATIBILITY_DATE,
 });
 
-// Final wrangler.toml source. Pure derivation — no ordering dependency
-// between contributions; the aggregator reads every input slot at once.
+// Final wrangler.toml source; with vite in the config it serves the web
+// client's build as the worker's static assets. Pure derivation — no
+// ordering dependency between contributions; the aggregator reads every
+// input slot at once.
 const wranglerToml = slot.derived({
 	source: SOURCE,
 	name: "wranglerToml",
@@ -77,6 +79,8 @@ const wranglerToml = slot.derived({
 		env: api.slots.env,
 		compatibilityDate,
 		compatibilityFlags,
+		clientDir: vite.slots.outDir,
+		routePrefixes: api.slots.routePrefixes,
 	},
 	compute: (inp, ctx): string => {
 		const consumerWranglerPath = join(ctx.cwd, "wrangler.toml");
@@ -92,6 +96,8 @@ const wranglerToml = slot.derived({
 				secrets: inp.env,
 				compatibilityDate: inp.compatibilityDate,
 				compatibilityFlags: inp.compatibilityFlags,
+				clientDir: inp.clientDir,
+				routePrefixes: inp.routePrefixes,
 			},
 			name: ctx.app.name,
 		});
@@ -275,6 +281,16 @@ export const cloudflare = plugin("cloudflare", {
 				args: ["wrangler", "deploy", ...(await wranglerConfigArgs(ctx))],
 			},
 		})),
+
+		// wrangler refuses to start when `assets.directory` is missing, which it
+		// is until the first `stack build`; an empty one serves nothing and
+		// lets `wrangler dev` run on a fresh clone.
+		cliSlots.postWrite.contribute((ctx) => async () => {
+			const clientDir = await ctx.resolve(vite.slots.outDir);
+			if (clientDir !== null) {
+				mkdirSync(join(ctx.cwd, clientDir), { recursive: true });
+			}
+		}),
 
 		// After `.stack/wrangler.toml` is on disk, shell out to `wrangler types`
 		// to regenerate Env typings. Non-fatal by design: a missing binary or a

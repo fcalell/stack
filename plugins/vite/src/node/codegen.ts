@@ -1,3 +1,4 @@
+import { posix } from "node:path";
 import {
 	renderTsSourceFile,
 	type TsExpression,
@@ -51,7 +52,10 @@ export function aggregateViteConfig(payload: CodegenViteConfigPayload): string {
 			value: {
 				kind: "object",
 				properties: [
-					{ key: "outDir", value: { kind: "string", value: "../dist/client" } },
+					{
+						key: "outDir",
+						value: { kind: "string", value: posix.join("..", payload.outDir) },
+					},
 					{ key: "emptyOutDir", value: { kind: "boolean", value: true } },
 				],
 			},

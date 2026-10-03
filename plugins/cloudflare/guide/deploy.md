@@ -1,6 +1,6 @@
 # Deploy to Cloudflare
 
-`stack deploy` ships the worker to Cloudflare Workers. Work the steps in order; each names the
+`stack deploy` ships the worker, and with `vite()` the web client, to Cloudflare Workers. Work the steps in order; each names the
 page it needs and ends with its check.
 
 ## What `stack deploy` does
@@ -12,9 +12,9 @@ page it needs and ends with its check.
 3. Lists the plan (the committed migrations) and, in a terminal, asks to proceed.
 4. Applies the pending migrations to the remote database, then `src/schema/seed.ts` when it
    exists.
-5. Runs `wrangler deploy --config .stack/wrangler.toml`.
-
-It uploads the worker alone: nothing in it ships `dist/client`.
+5. Runs `wrangler deploy --config .stack/wrangler.toml`, which uploads the worker and, with
+   `vite()`, `dist/client` as its static assets. The worker answers its own paths (`/rpc/*`,
+   `/api/auth/*`); any other path is a file from `dist/client`, else its `index.html`.
 
 ## 1. Sign in to Cloudflare
 

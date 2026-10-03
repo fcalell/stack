@@ -122,6 +122,15 @@ const watchIgnored = slot.list<string>({
 	sortBy: (a, b) => a.localeCompare(b),
 });
 
+// The client build's output directory, relative to the project root. Seeded
+// null and filled by vite's own contribution, so a reader without vite in the
+// config sees null.
+const outDir = slot.value<string | null>({
+	source: SOURCE,
+	name: "outDir",
+	seed: () => null,
+});
+
 // Rendered `.stack/vite.config.ts` source. Pulled into `cli.slots.artifactFiles`
 // by the contribution below — gated on at least one plugin call or import
 // so a vite-less config never writes an empty file.
@@ -134,13 +143,16 @@ const viteConfig = slot.derived({
 		aliases: resolveAliases,
 		dedupe: resolveDedupe,
 		port: devServerPort,
+		outDir,
 		proxy: serverProxy,
 		fsAllow,
 		watchIgnored,
 	},
 	compute: (inp): string | null => {
+		if (inp.outDir === null) return null;
 		if (inp.plugins.length === 0 && inp.imports.length === 0) return null;
 		return aggregateViteConfig({
+			outDir: inp.outDir,
 			imports: inp.imports,
 			pluginCalls: inp.plugins,
 			resolveAliases: inp.aliases,
@@ -169,6 +181,7 @@ export const vite = plugin("vite", {
 		resolveAliases,
 		resolveDedupe,
 		devServerPort,
+		outDir,
 		serverProxy,
 		fsAllow,
 		watchIgnored,
@@ -176,6 +189,8 @@ export const vite = plugin("vite", {
 	},
 
 	contributes: (self) => [
+		self.slots.outDir.contribute(() => "dist/client"),
+
 		// Framework preset — the providers virtual module plugin.
 		self.slots.configImports.contribute(
 			(): TsImportSpec => ({
@@ -246,10 +261,9 @@ export const vite = plugin("vite", {
 			};
 		}),
 
-		// Build step. No --outDir: the generated config's
-		// `build.outDir: "../dist/client"` is the single source of truth; a
-		// relative CLI flag would resolve against config.root (.stack) and
-		// silently move the output to .stack/dist/client.
+		// Build step. No --outDir: the generated config's `build.outDir` is
+		// the single source of truth; a relative CLI flag would resolve against
+		// config.root (.stack) and silently move the output to .stack/dist/client.
 		cliSlots.buildSteps.contribute((ctx) => ({
 			name: "vite-build",
 			phase: "main",

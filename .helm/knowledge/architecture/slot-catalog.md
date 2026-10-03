@@ -86,7 +86,7 @@ e.g. consulting `ctx.fileExists` before writing.
 | `vars` | `map<string, string>` | Plain-text `[vars]` |
 | `compatibilityDate` | `value<string>` | Defaults to today; override with `value` + `override:true` |
 | `compatibilityFlags` | `list<string>` | Wrangler `compatibility_flags`; deduped + sorted, omitted when empty (e.g. auth contributes `nodejs_compat`) |
-| `wranglerToml` | `derived<string>` | Final `.stack/wrangler.toml` source; reads `api.slots.env` so a consumer `[vars]` key naming a declared var fails generate (also triggers `wrangler types` via `postWrite`) |
+| `wranglerToml` | `derived<string>` | Final `.stack/wrangler.toml` source; reads `api.slots.env` so a consumer `[vars]` key naming a declared var fails generate, and `vite.slots.outDir` with `api.slots.routePrefixes` for the framework-managed `[assets]` table (the client build as a single-page app, `run_worker_first` each prefix's `/*`; none without vite, and a consumer `[assets]` fails generate). Generate's `postWrite` creates the assets directory when missing, which `wrangler dev` refuses to start without, and runs `wrangler types` |
 
 ## `node.slots.*` (plugin-node)
 
@@ -108,6 +108,7 @@ e.g. consulting `ctx.fileExists` before writing.
 | `resolveAliases` | `list<{ find, replacement }>` | `resolve.alias` entries |
 | `resolveDedupe` | `list<string>` | Bare specifiers rendered into `resolve.dedupe` (de-duplicated); plugins whose runtime must stay a singleton contribute here so workspace-linked checkouts can't ship a second copy in the production bundle. plugin-react contributes `react` and `react-dom` |
 | `devServerPort` | `value<number>` | Dev server port (defaults to options.port ?? 3000) |
+| `outDir` | `value<string \| null>` | The client build's output directory relative to the project root (`dist/client`), rendered as the config's `build.outDir`; seeded null and filled by vite's own contribution, so a reader without vite in the config sees null. cloudflare serves it as `[assets]` |
 | `serverProxy` | `list<ServerProxyEntry>` (`uniqueBy: path`) | Dev-server proxy rules (`{ path, target, ws? }`) rendered into `server.proxy`; deploy targets contribute worker-owned paths so dev stays same-origin like prod |
 | `fsAllow` | `list<TsExpression>` | Extra `server.fs.allow` path expressions; plugins serving assets from their own package contribute their real location so a workspace-linked stack still serves them in dev. Any entry makes the rendered list explicit, prefixed with the consumer's workspace root |
 | `watchIgnored` | `list<string>` (sorted) | Globs rendered into `server.watch.ignored`, added to Vite's own defaults; a plugin whose tool writes scratch files under Vite's root contributes their glob so the writes never reach hot-update handling. plugin-cloudflare contributes `**/.wrangler/**` (wrangler's dev bundle in `.stack/.wrangler/tmp/`) |

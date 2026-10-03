@@ -1,18 +1,19 @@
 # Wrangler config and env
 
 `stack generate` writes `.stack/wrangler.toml` from what the plugins contribute: the database, the
-rate limiters, the compatibility flags, every declared env var. Never edit it. Settings of your
+rate limiters, the compatibility flags, every declared env var, and with `vite()` the web
+client's `[assets]`. Never edit it. Settings of your
 own go in a root `wrangler.toml`, which generate merges in.
 
 ## The root `wrangler.toml`
 
 | Section | Merge |
 | --- | --- |
-| `[[d1_databases]]`, `[[kv_namespaces]]`, `[[analytics_engine_datasets]]`, `[[unsafe.bindings]]`, `compatibility_flags` | Owned by the plugins: generate fails when the root file has one |
+| `[[d1_databases]]`, `[[kv_namespaces]]`, `[[analytics_engine_datasets]]`, `[[unsafe.bindings]]`, `compatibility_flags`, `[assets]` | Owned by the plugins: generate fails when the root file has one |
 | `[[routes]]`, `[[r2_buckets]]` | Yours merge beside the plugins'. A route pattern or a binding name both sides declare fails generate |
 | `name`, `compatibility_date`, `main` | Yours win; otherwise `app.name`, the plugin's pinned date and the generated worker |
 | `[vars]` | Yours merge with the plugins'; a key both declare fails generate |
-| Anything else (`account_id`, `observability`, `assets`) | Copied as written |
+| Anything else (`account_id`, `observability`) | Copied as written |
 
 Every name reaching `env` (a binding, a var, a secret) is unique across all of them, or generate
 fails naming both sides.
@@ -56,7 +57,7 @@ it (`AuthCallbacks<Env>`). When `wrangler types` fails, generate warns and remov
 in `.wrangler/state` at the root, gitignored. The db plugin's local commands read the same
 directory, so deleting it resets the local database. With `vite()` in the config, the dev server
 proxies the worker's paths (`/rpc`, `/api/auth`), so the browser calls the worker on the page's
-own origin.
+own origin, and `stack generate` creates `dist/client` empty until the first build fills it.
 
 ## Rules
 

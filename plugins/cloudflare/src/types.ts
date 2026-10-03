@@ -36,6 +36,10 @@ export interface CodegenWranglerPayload {
 	secrets: EnvSpec[];
 	compatibilityDate: string;
 	compatibilityFlags: string[];
+	// The web client's build directory, relative to the project root; null
+	// when no plugin builds one.
+	clientDir: string | null;
+	routePrefixes: string[];
 }
 
 // Default Workers compatibility date. Pinned so wrangler.toml generation is
