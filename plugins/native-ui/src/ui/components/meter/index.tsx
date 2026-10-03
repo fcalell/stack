@@ -1,45 +1,145 @@
-import { METER_FILL, METER_TRACK, text } from "@fcalell/ui-core/variants";
-import { useState } from "react";
+import { filled, METER_NEAR } from "@fcalell/ui-core/tokens";
+import {
+	FIGURES,
+	lineBox,
+	METER,
+	METER_HEAD,
+	METER_ITEM,
+	METER_TRACK,
+	meterFill,
+	skeleton,
+	text,
+	textStrong,
+} from "@fcalell/ui-core/variants";
+import { useContext } from "react";
 import { Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import { LoadingRows } from "../../lib/loading";
+import { GroundContext } from "../../lib/ground";
+import { useWords } from "../../lib/words";
+
+const STACK = "min-w-0";
+const HEAD = "flex-row items-center";
+const LABEL = "flex-1 min-w-0";
+const SHARE = "shrink-0";
+const TRACK = "overflow-hidden";
+// A loading line stands in its text's line box: a zero-width line of the
+// role beside the bar, so the loading meter keeps the loaded one's height.
+const LINE = "flex-row items-center";
+const STRUT = "​";
+const LABEL_WAIT = "grow";
+const SHARE_WAIT = "justify-end shrink-0";
+const BAR = "w-full";
+
+// The level a share stands at: past the max over, from `METER_NEAR` near.
+function levelOf(share: number) {
+	if (share > 1) return "over";
+	if (share >= METER_NEAR) return "near";
+	return "under";
+}
 
 export interface MeterProps extends Closed {
+	// What is measured.
 	label: string;
+	// How much is used; past `max` the meter is over.
 	value: number;
+	// The limit.
 	max: number;
+	// What the value counts (`GB`, `requests`), read aloud with it.
 	unit?: string;
+	// A line under the bar: the value in words, when it resets.
 	meta?: string;
+	// The label, share, bar and meta as bars in their line boxes.
 	loading?: boolean;
 }
 
-// A labelled fill in tint with the value beside it.
-export function Meter({ label, value, max, meta, loading }: MeterProps) {
-	const [width, setWidth] = useState(0);
-	if (loading) return <LoadingRows />;
-	const ratio = max > 0 ? Math.min(1, Math.max(0, value / max)) : 0;
+// The label at body 500 with the share in percent at its end, the bar under
+// them filling by the share in the meta ink, `warn` once near full and
+// `danger` once over, the meta line under the bar. In a `Group` it stands as
+// one of its items at the card's inset, the group's hairline between. React
+// Native has no meter role: it is a progress bar whose value text is the
+// web's valuetext.
+export function Meter({ label, value, max, unit, meta, loading }: MeterProps) {
+	const words = useWords();
+	// In a Group the meter is one of its items, at the card's inset.
+	const item = useContext(GroundContext) === "group" && METER_ITEM;
+	if (loading)
+		return (
+			<View
+				accessibilityState={{ busy: true }}
+				className={cn(METER, item, STACK)}
+			>
+				<View className={cn(METER_HEAD, HEAD)}>
+					<View className={cn(LINE, LABEL_WAIT)}>
+						<RNText className={lineBox({ role: "body" })}>{STRUT}</RNText>
+						<View className={cn(skeleton({ kind: "line" }), "w-1/3")} />
+					</View>
+					<View className={cn(LINE, SHARE_WAIT, "w-1/12")}>
+						<RNText className={lineBox({ role: "meta" })}>{STRUT}</RNText>
+						<View className={cn(skeleton({ kind: "line" }), BAR)} />
+					</View>
+				</View>
+				<View className={skeleton({ kind: "meter" })} />
+				<View className={LINE}>
+					<RNText className={lineBox({ role: "meta" })}>{STRUT}</RNText>
+					<View className={cn(skeleton({ kind: "line" }), "w-1/2")} />
+				</View>
+			</View>
+		);
+	const share = max > 0 ? value / max : 0;
+	const number = new Intl.NumberFormat();
+	const percent = new Intl.NumberFormat(undefined, {
+		style: "percent",
+		maximumFractionDigits: 0,
+	}).format(share);
+	// A figure with its unit, when the meter counts one.
+	const unitOf = (figure: string) => (unit ? `${figure} ${unit}` : figure);
+	const amount = unitOf(
+		filled(words.meterValue, {
+			value: number.format(value),
+			max: number.format(max),
+		}),
+	);
+	const rest =
+		share > 1
+			? filled(words.meterOver, { amount: unitOf(number.format(value - max)) })
+			: percent;
 	return (
 		<View
+			accessible
 			accessibilityRole="progressbar"
 			accessibilityLabel={label}
-			accessibilityValue={{ min: 0, max, now: value }}
-			className="gap-pair"
+			accessibilityValue={{
+				min: 0,
+				max,
+				now: Math.min(value, max),
+				text: `${amount}, ${rest}`,
+			}}
+			className={cn(METER, item, STACK)}
 		>
-			<View className="flex-row items-center justify-between gap-inside">
-				<RNText className={text({ role: "body" })}>{label}</RNText>
-				<RNText className={text({ role: "meta" })}>
-					{Math.round(ratio * 100)}%
+			<View className={cn(METER_HEAD, HEAD)}>
+				<RNText
+					numberOfLines={1}
+					className={cn(
+						text({ role: "body" }),
+						textStrong({ role: "body" }),
+						LABEL,
+					)}
+				>
+					{label}
+				</RNText>
+				<RNText className={cn(text({ role: "meta" }), FIGURES, SHARE)}>
+					{percent}
 				</RNText>
 			</View>
-			<View
-				onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
-				className={cn(METER_TRACK, "h-2 overflow-hidden")}
-			>
-				<View
-					className={cn(METER_FILL, "h-2")}
-					style={{ width: ratio * width }}
-				/>
+			<View className={cn(METER_TRACK, TRACK)}>
+				{share > 0 ? (
+					<View
+						className={meterFill({ level: levelOf(share) })}
+						// The fill's width is the data's, the value's share of the max.
+						style={{ width: `${Math.min(share, 1) * 100}%` }}
+					/>
+				) : null}
 			</View>
 			{meta ? <RNText className={text({ role: "meta" })}>{meta}</RNText> : null}
 		</View>

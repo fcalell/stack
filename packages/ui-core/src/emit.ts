@@ -7,6 +7,7 @@ import {
 	EASINGS,
 	FONT_ROLES,
 	HAIRLINE_PX,
+	MEASURES,
 	type Mode,
 	RADIUS_ROLES,
 	RING_OFFSET_PX,
@@ -144,9 +145,10 @@ export function modeTokens(
 }
 
 // What a raised ground (`RAISED_GROUNDS`) declares for everything inside
-// it: the hairline read through `edge-raised`. Each platform scopes it on
-// the grounds' fill classes, after the mode scopes, so a ground that is also
-// a mode scope still re-points.
+// it: the hairline read through `edge-raised`. The web scopes it on the
+// grounds' fill classes, after the mode scopes, so a ground that is also a
+// mode scope still re-points; native scopes it on each raised surface's
+// content, resolving each `var()` read in the mode.
 export function raisedGroundTokens(): Record<string, string> {
 	return { "--color-edge": "var(--color-edge-raised)" };
 }
@@ -163,4 +165,17 @@ export function shadowUtilities(): Record<
 		utilities[`shadow-${level}`] = { "box-shadow": `var(--shadow-${level})` };
 	}
 	return utilities;
+}
+
+// Native's two measures over the web's `ch`: uniwind reads no `ch`, so native
+// declares them in px at the sans figure advance of the touch body size, a
+// label's own size lost.
+export function nativeMeasureTokens(
+	resolved: ResolvedTheme,
+): Record<string, string> {
+	const tokens: Record<string, string> = {};
+	for (const measure of MEASURES) {
+		tokens[`--container-${measure}`] = resolved.nativeMeasures[measure];
+	}
+	return tokens;
 }

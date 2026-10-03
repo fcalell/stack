@@ -16,6 +16,10 @@ export const ActFloats = createContext<((floats: boolean) => void) | null>(
 	null,
 );
 
+// A Thread whose input docks at its Place's foot tells the Shell the foot's
+// height, whose toasts then stand above the foot; 0 takes it back.
+export const FootDocks = createContext<((height: number) => void) | null>(null);
+
 // A Split with a record and its pane open lends its details sheet's handle to
 // the Place or Screen it sits in, which draws the sheet's trigger, the Details
 // act, after its own actions below `wide` of its width; `undefined` takes it
@@ -37,6 +41,13 @@ export const RecordOpen = createContext<((open: boolean) => void) | null>(null);
 // Whether a record is open in the Place's Split: below `tablet` the Toolbar
 // over the list leaves with the list, the record standing alone.
 export const RecordShown = createContext(false);
+
+// A Thread standing in a Place's body tells the Place, whose body then gives
+// it the page's height and no inset, leaving scrolling to its log; a Section
+// takes the call back, a Thread in it standing among the page's sections.
+export const ThreadFills = createContext<((fills: boolean) => void) | null>(
+	null,
+);
 
 // A bleeding touch Place hands the room its floating act needs to the regions
 // that scroll inside its body, which keep it under their last row.

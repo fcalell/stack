@@ -36,13 +36,16 @@ export interface QueryBoundaryProps<Q extends Queries = Queries>
 	sentence: string;
 	/** The body, drawn with the data once every query has it. */
 	children: (data: QueryData<Q>) => ReactNode;
+	/** The body's own loading form, drawn while any query is pending in place of the container's skeleton rows. */
+	loading?: ReactNode;
 }
 
-/** The loading form of the container around it while any query is pending: in a Section the Section's (busy, its count waiting) over a Group's setting rows, anywhere else a List's two-line rows. When one fails, the failed EmptyState with `sentence` and Retry, which refetches the failed queries; then the children with the data. */
+/** While any query is pending, `loading` when given, else the loading form of the container around it: in a Section a Group's setting rows, anywhere else a List's two-line rows; in a Section the Section is busy and its count waits either way. When one fails, the failed EmptyState with `sentence` and Retry, which refetches the failed queries; then the children with the data. */
 export function QueryBoundary<Q extends Queries>({
 	query,
 	sentence,
 	children,
+	loading,
 }: QueryBoundaryProps<Q>) {
 	const words = useWords();
 	const wait = use(SectionContext);
@@ -56,6 +59,7 @@ export function QueryBoundary<Q extends Queries>({
 		wait(true);
 		return () => wait(false);
 	}, [pending, wait]);
+	if (pending && loading !== undefined) return loading;
 	if (pending)
 		return wait ? (
 			// The Section is busy once, so its rows wait on its word.

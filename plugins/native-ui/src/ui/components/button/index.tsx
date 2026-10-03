@@ -11,6 +11,7 @@ import { useContext, useEffect, useState } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
+import { ActInert } from "../../lib/form";
 import { Ink } from "../../lib/ink";
 import { ReasonHostContext } from "../../lib/reason";
 import { useTouched } from "../../lib/touched";
@@ -86,16 +87,19 @@ export function Button({
 	const muted = blocked !== undefined;
 	const { touched } = useTouched();
 	const host = useContext(ReasonHostContext);
+	// Inert where it stands: the blocked look and no press, no reason.
+	const inert = useContext(ActInert) && !loading;
 	const [pressed, setPressed] = useState(false);
 	useEffect(() => {
 		if (!muted) setPressed(false);
 	}, [muted]);
 	const said = muted && (pressed || touched);
-	const look = lookOf(kind, loading === true, muted);
-	const labelLook = loading ? PENDING : muted && LABEL_BLOCKED;
-	const ink = muted && !loading ? "ink-disabled" : buttonContentTone(kind);
+	const look = lookOf(kind, loading === true, muted || inert);
+	const labelLook = loading ? PENDING : (muted || inert) && LABEL_BLOCKED;
+	const ink =
+		(muted || inert) && !loading ? "ink-disabled" : buttonContentTone(kind);
 	const press = () => {
-		if (loading) return;
+		if (loading || inert) return;
 		if (!muted) onAct?.();
 		else if (host) host.press();
 		else setPressed(true);
@@ -104,7 +108,10 @@ export function Button({
 		<Pressable
 			accessibilityRole="button"
 			accessibilityLabel={label}
-			accessibilityState={{ disabled: loading || muted, busy: loading }}
+			accessibilityState={{
+				disabled: loading || muted || inert,
+				busy: loading,
+			}}
 			accessibilityHint={blocked}
 			onPress={press}
 			className={cn(button({ act: kind, fit }), BOX, look)}

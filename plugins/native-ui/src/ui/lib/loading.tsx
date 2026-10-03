@@ -18,3 +18,10 @@ export function LoadingRows() {
 		</View>
 	);
 }
+
+// Set by a molecule whose loading rows stand in for rows of another shape
+// than a `List`'s own (a `Table` below `tablet`: a two-line row with a
+// trailing value and no leading).
+export const LoadingRow = createContext<"two-line" | "two-line-trailing">(
+	"two-line",
+);

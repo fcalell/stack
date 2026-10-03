@@ -7,6 +7,7 @@
 import { ActionBar } from "@fcalell/plugin-react-ui/components/action-bar";
 import { Avatar } from "@fcalell/plugin-react-ui/components/avatar";
 import { Banner } from "@fcalell/plugin-react-ui/components/banner";
+import { BarChart } from "@fcalell/plugin-react-ui/components/bar-chart";
 import { Button } from "@fcalell/plugin-react-ui/components/button";
 import { Checkbox } from "@fcalell/plugin-react-ui/components/checkbox";
 import { Chip } from "@fcalell/plugin-react-ui/components/chip";
@@ -23,8 +24,12 @@ import { Input } from "@fcalell/plugin-react-ui/components/input";
 import { InputOtp } from "@fcalell/plugin-react-ui/components/input-otp";
 import { ItemHeader } from "@fcalell/plugin-react-ui/components/item-header";
 import { Link } from "@fcalell/plugin-react-ui/components/link";
+import { Message } from "@fcalell/plugin-react-ui/components/message";
+import { MessageInput } from "@fcalell/plugin-react-ui/components/message-input";
+import { Meter } from "@fcalell/plugin-react-ui/components/meter";
 import { PendingBar } from "@fcalell/plugin-react-ui/components/pending-bar";
 import { Picker } from "@fcalell/plugin-react-ui/components/picker";
+import { QrCode } from "@fcalell/plugin-react-ui/components/qr-code";
 import { QueryBoundary } from "@fcalell/plugin-react-ui/components/query-boundary";
 import { Place } from "@fcalell/plugin-react-ui/components/place";
 import { Screen } from "@fcalell/plugin-react-ui/components/screen";
@@ -44,8 +49,16 @@ import { Status } from "@fcalell/plugin-react-ui/components/status";
 import { Switch } from "@fcalell/plugin-react-ui/components/switch";
 import { Text } from "@fcalell/plugin-react-ui/components/text";
 import { TextArea } from "@fcalell/plugin-react-ui/components/text-area";
+import { Thread } from "@fcalell/plugin-react-ui/components/thread";
 import { Toast } from "@fcalell/plugin-react-ui/components/toast";
+import { Table } from "@fcalell/plugin-react-ui/components/table";
 import { Toolbar } from "@fcalell/plugin-react-ui/components/toolbar";
+import { Code } from "@fcalell/plugin-react-ui/components/code";
+import { Comparison } from "@fcalell/plugin-react-ui/components/comparison";
+import { Diff } from "@fcalell/plugin-react-ui/components/diff";
+import { FileRow } from "@fcalell/plugin-react-ui/components/file-row";
+import { Prose } from "@fcalell/plugin-react-ui/components/prose";
+import { ProseDiff } from "@fcalell/plugin-react-ui/components/prose-diff";
 
 const slider = { label: "x", value: 1, onChange: () => {}, min: 0, max: 2 };
 
@@ -409,6 +422,7 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<EmptyState sentence="x" classList={{}} />
 		<QueryBoundary query={{ data: 1, isPending: false, isError: false, refetch: () => {} }} sentence="x" children={() => null} />
+		<QueryBoundary query={{ data: 1, isPending: true, isError: false, refetch: () => {} }} sentence="x" children={() => null} loading={<List loading />} />
 		{/* @ts-expect-error: closed channel */}
 		<QueryBoundary query={{ data: 1, isPending: false, isError: false, refetch: () => {} }} sentence="x" children={() => null} className="x" />
 		{/* @ts-expect-error: closed channel */}
@@ -435,5 +449,124 @@ export const closure = (
 		<PendingBar sentence="x" class="x" />
 		{/* @ts-expect-error: closed channel */}
 		<PendingBar sentence="x" classList={{}} />
+		<Prose markdown="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Prose markdown="x" className="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Prose markdown="x" style={{ flex: 1 }} />
+		{/* @ts-expect-error: closed channel */}
+		<Prose markdown="x" class="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Prose markdown="x" classList={{}} />
+		<Code text="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Code text="x" className="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Code text="x" style={{ flex: 1 }} />
+		{/* @ts-expect-error: closed channel */}
+		<Code text="x" class="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Code text="x" classList={{}} />
+		<Diff label="x" hunks={[]} />
+		{/* @ts-expect-error: closed channel */}
+		<Diff label="x" hunks={[]} className="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Diff label="x" hunks={[]} style={{ flex: 1 }} />
+		{/* @ts-expect-error: closed channel */}
+		<Diff label="x" hunks={[]} class="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Diff label="x" hunks={[]} classList={{}} />
+		<ProseDiff before="x" after="x" />
+		{/* @ts-expect-error: closed channel */}
+		<ProseDiff before="x" after="x" className="x" />
+		{/* @ts-expect-error: closed channel */}
+		<ProseDiff before="x" after="x" style={{ flex: 1 }} />
+		{/* @ts-expect-error: closed channel */}
+		<ProseDiff before="x" after="x" class="x" />
+		{/* @ts-expect-error: closed channel */}
+		<ProseDiff before="x" after="x" classList={{}} />
+		<FileRow path="x" added={1} removed={1} />
+		{/* @ts-expect-error: closed channel */}
+		<FileRow path="x" added={1} removed={1} className="x" />
+		{/* @ts-expect-error: closed channel */}
+		<FileRow path="x" added={1} removed={1} style={{ flex: 1 }} />
+		{/* @ts-expect-error: closed channel */}
+		<FileRow path="x" added={1} removed={1} class="x" />
+		{/* @ts-expect-error: closed channel */}
+		<FileRow path="x" added={1} removed={1} classList={{}} />
+		<Comparison label="x" rows={[]} />
+		{/* @ts-expect-error: closed channel */}
+		<Comparison label="x" rows={[]} className="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Comparison label="x" rows={[]} style={{ flex: 1 }} />
+		{/* @ts-expect-error: closed channel */}
+		<Comparison label="x" rows={[]} class="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Comparison label="x" rows={[]} classList={{}} />
+		<BarChart label="x" series={[]} />
+		{/* @ts-expect-error: closed channel */}
+		<BarChart label="x" series={[]} className="x" />
+		{/* @ts-expect-error: closed channel */}
+		<BarChart label="x" series={[]} style={{ flex: 1 }} />
+		{/* @ts-expect-error: closed channel */}
+		<BarChart label="x" series={[]} class="x" />
+		{/* @ts-expect-error: closed channel */}
+		<BarChart label="x" series={[]} classList={{}} />
+		<Message author="you" body="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Message author="you" body="x" className="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Message author="you" body="x" style={{ flex: 1 }} />
+		{/* @ts-expect-error: closed channel */}
+		<Message author="you" body="x" class="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Message author="you" body="x" classList={{}} />
+		<MessageInput value="x" onChange={() => {}} onSend={() => {}} />
+		{/* @ts-expect-error: closed channel */}
+		<MessageInput value="x" onChange={() => {}} onSend={() => {}} className="x" />
+		{/* @ts-expect-error: closed channel */}
+		<MessageInput value="x" onChange={() => {}} onSend={() => {}} style={{ flex: 1 }} />
+		{/* @ts-expect-error: closed channel */}
+		<MessageInput value="x" onChange={() => {}} onSend={() => {}} class="x" />
+		{/* @ts-expect-error: closed channel */}
+		<MessageInput value="x" onChange={() => {}} onSend={() => {}} classList={{}} />
+		<Meter label="x" value={1} max={2} />
+		{/* @ts-expect-error: closed channel */}
+		<Meter label="x" value={1} max={2} className="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Meter label="x" value={1} max={2} style={{ flex: 1 }} />
+		{/* @ts-expect-error: closed channel */}
+		<Meter label="x" value={1} max={2} class="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Meter label="x" value={1} max={2} classList={{}} />
+		<QrCode value="x" />
+		{/* @ts-expect-error: closed channel */}
+		<QrCode value="x" className="x" />
+		{/* @ts-expect-error: closed channel */}
+		<QrCode value="x" style={{ flex: 1 }} />
+		{/* @ts-expect-error: closed channel */}
+		<QrCode value="x" class="x" />
+		{/* @ts-expect-error: closed channel */}
+		<QrCode value="x" classList={{}} />
+		<Thread />
+		{/* @ts-expect-error: closed channel */}
+		<Thread className="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Thread style={{ flex: 1 }} />
+		{/* @ts-expect-error: closed channel */}
+		<Thread class="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Thread classList={{}} />
+		<Table columns={[]} rows={[]} />
+		{/* @ts-expect-error: closed channel */}
+		<Table columns={[]} rows={[]} className="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Table columns={[]} rows={[]} style={{ flex: 1 }} />
+		{/* @ts-expect-error: closed channel */}
+		<Table columns={[]} rows={[]} class="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Table columns={[]} rows={[]} classList={{}} />
+		{/* @ts-expect-error: onEdit requires onOpen */}
+		<Table columns={[]} rows={[]} onEdit={() => {}} />
 	</>
 );

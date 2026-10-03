@@ -2,11 +2,12 @@ import { commitMoment } from "@fcalell/ui-core/commit";
 import type { IconAct } from "@fcalell/ui-core/descriptors";
 import {
 	FIELD_UNIT,
+	FIGURES,
 	type FieldKind,
 	field,
 	fieldValue,
 } from "@fcalell/ui-core/variants";
-import { useContext, useState } from "react";
+import { useContext, useRef, useState } from "react";
 import {
 	type KeyboardTypeOptions,
 	Text as RNText,
@@ -16,6 +17,7 @@ import {
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import {
+	CellField,
 	FieldDisabled,
 	FieldError,
 	FieldFocus,
@@ -73,7 +75,9 @@ const KEYBOARD: Record<InputKind, KeyboardTypeOptions> = {
 // corrected or capitalized; `act` is an icon act inside the field's end.
 // `onCommit` hears the value once the viewer is done with it: on leaving the
 // field or on the keyboard's return, only when it changed since the field took
-// focus; with it, a hardware Escape puts back the value at focus.
+// focus; with it, a hardware Escape puts back the value at focus. In a
+// `Table` cell it stands at the bar fit, named by the cell, focused as the
+// edit starts, a number end-aligned in tabular figures as the cell reads.
 export function Input({
 	kind,
 	value,
@@ -91,16 +95,19 @@ export function Input({
 	const error = useContext(FieldError);
 	const disabled = useContext(FieldDisabled);
 	const focused = useContext(FieldFocus);
+	const cell = useContext(CellField);
+	const input = useRef<TextInput>(null);
 	// A placeholder's colour is a prop, never a class: `FIELD_PLACEHOLDER`'s ink.
 	const placeholderInk = useTokenColor("--color-ink-meta");
 	const which = kind ?? "text";
 	const surface = SURFACE[which];
 	const search = which === "search";
+	const figures = cell !== undefined && which === "number";
 	return (
 		<View
 			className={cn(
 				field({
-					fit: search ? "bar" : "form",
+					fit: search || cell ? "bar" : "form",
 					trailing: act ? "act" : "none",
 					state: error ? "error" : "rest",
 				}),
@@ -114,13 +121,18 @@ export function Input({
 				</Ink.Provider>
 			) : null}
 			<TextInput
-				autoFocus={focused}
-				accessibilityLabel={name ?? (search ? words.search : undefined)}
+				ref={input}
+				autoFocus={focused || cell !== undefined}
+				accessibilityLabel={
+					cell?.label ?? name ?? (search ? words.search : undefined)
+				}
 				accessibilityState={{ disabled }}
 				editable={!disabled}
 				className={cn(
 					fieldValue({ kind: surface }),
+					figures && FIGURES,
 					"flex-1 py-0",
+					figures && "text-right",
 					disabled && "text-ink-disabled",
 				)}
 				placeholderTextColor={placeholderInk}
@@ -141,11 +153,17 @@ export function Input({
 				}
 				autoCorrect={which === "text"}
 				onFocus={() => moment.focus(value)}
-				onBlur={() => moment.leave(value, commit)}
+				onBlur={() => {
+					moment.leave(value, commit);
+					cell?.done();
+				}}
 				onSubmitEditing={() => moment.commit(value, commit)}
 				onKeyPress={(event) => {
-					if (onCommit && event.nativeEvent.key === "Escape")
-						moment.cancel(value, onChange);
+					if (!onCommit || event.nativeEvent.key !== "Escape") return;
+					moment.cancel(value, onChange);
+					// A cell's edit ends once the value put back has rendered, so
+					// leaving the field commits nothing more.
+					if (cell) requestAnimationFrame(() => input.current?.blur());
 				}}
 			/>
 			{which === "number" && unit ? (

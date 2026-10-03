@@ -4,7 +4,7 @@ import type { IconAct, MenuItem } from "@fcalell/ui-core/descriptors";
 import {
 	PAGE_BODY,
 	PAGE_HEAD,
-	PAGE_STRIP,
+	PAGE_TITLE,
 	PAGE_TOP_BAR,
 	text,
 } from "@fcalell/ui-core/variants";
@@ -43,7 +43,7 @@ export interface ScreenProps extends Closed {
 	children?: ReactNode;
 }
 
-/** A page pushed over a place: the back act first and no filled act. On the desktop it stands in the shell's column under one strip; on touch the top bar (back, actions, more) stands over the title and the screen covers the tab bar. A Split inside decides its regions by the screen's width and lends it a Details act, drawn below `wide` of it. */
+/** A page pushed over a place: the back act first and no filled act. Its head draws one hairline: on the desktop it stands in the shell's column under one strip; on touch the top bar (back, actions, more) stands over the title and the screen covers the tab bar. A Split inside decides its regions by the screen's width and lends it a Details act, drawn below `wide` of it. */
 export function Screen({ title, back, actions, more, children }: ScreenProps) {
 	const touch = useTouch();
 	const words = useWords();
@@ -73,7 +73,10 @@ export function Screen({ title, back, actions, more, children }: ScreenProps) {
 		<Menu label={words.more} items={more} />
 	) : null;
 	const heading = (
-		<h1 id={titleId} className={cn(text({ role: "title" }), TITLE)}>
+		<h1
+			id={titleId}
+			className={cn(text({ role: "title" }), TITLE, touch && PAGE_TITLE)}
+		>
 			{title}
 		</h1>
 	);
@@ -82,8 +85,8 @@ export function Screen({ title, back, actions, more, children }: ScreenProps) {
 	// title's place and the spacer differ, each a slot that holds `null` where
 	// it does not draw, so the acts after it never shift.
 	const head = (
-		<header className={cn(touch && PAGE_HEAD, HEAD)}>
-			<div className={cn(touch ? PAGE_TOP_BAR : PAGE_STRIP, ROW)}>
+		<header className={cn(PAGE_HEAD, HEAD)}>
+			<div className={cn(PAGE_TOP_BAR, ROW)}>
 				{backAct}
 				{touch ? null : heading}
 				{touch ? <span className={SPACER} /> : null}

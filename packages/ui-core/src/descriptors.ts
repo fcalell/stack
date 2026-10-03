@@ -59,6 +59,8 @@ export interface ChipMark {
 // dot beside `label`).
 // An option carrying `avatar` stands for a person or a workspace: its avatar,
 // drawn from the label's initials or `src`, leads it.
+// An option carrying `icon` leads with its glyph (a sort's direction), in
+// the trigger too. An option takes one leading form.
 export interface Option<V extends string | null = string> {
 	value: V;
 	label: string;
@@ -66,6 +68,7 @@ export interface Option<V extends string | null = string> {
 	recommended?: boolean;
 	status?: StatusState;
 	avatar?: { src?: string };
+	icon?: IconName;
 }
 
 // Options under a group label, in a `Picker`'s list and its searchable sheet.
@@ -194,12 +197,12 @@ export interface ComparisonRow {
 	chips?: Array<{ label: string }>;
 }
 
-// One bar: a label, its total, the parts it stacks by one dimension, the time
-// under it.
+// One bar: a label, its total, its parts' values by the chart's key names (a
+// key it lacks is 0), the time under it.
 export interface BarSeries {
 	label: string;
 	value: number;
-	parts?: Array<{ label: string; value: number }>;
+	parts?: Readonly<Record<string, number>>;
 	at?: string;
 }
 
@@ -270,7 +273,11 @@ export type TableCell = string | number | boolean | StatusCell | null;
 // picked cell cleared by its empty choice.
 export type CellValue = string | number | boolean | null;
 
+// A row with `href` is its leading cell's link, so it opens in a new tab;
+// `locked` names the columns whose cells this row draws read only.
 export interface TableRow {
 	id: string;
+	href?: string;
 	cells: Record<string, TableCell>;
+	locked?: readonly string[];
 }

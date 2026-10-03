@@ -19,6 +19,7 @@ import {
 	RADIUS_ROLES,
 	SHADOW_LEVELS,
 	SIZES,
+	SLOT_WORD_KEYS,
 	SPACING_ROLES,
 	STRONG_WEIGHT,
 	TRACKED_ROLES,
@@ -428,7 +429,7 @@ function body(resolved: ResolvedTheme): string[] {
 			]),
 		),
 		"",
-		`Tracking: ${TRACKED_ROLES.map((role) => `${code(role)} ${resolved.tracking[role]}`).join(", ")}; the rest 0. \`sans\` is ${code(resolved.fonts.sans)}; \`mono\` is ${code(resolved.fonts.mono)}. Each named family is followed by its metric fallback face. Running text wraps at \`measure\`, ${resolved.widths.measure}.`,
+		`Tracking: ${TRACKED_ROLES.map((role) => `${code(role)} ${resolved.tracking[role]}`).join(", ")}; the rest 0. \`sans\` is ${code(resolved.fonts.sans)}; \`mono\` is ${code(resolved.fonts.mono)}. Each named family is followed by its metric fallback face. Running text wraps at \`measure\`, ${resolved.widths.measure}; native, which has no \`ch\`, draws it at ${resolved.nativeMeasures.measure} (its characters at the sans face's figure advance of the touch body size, so a consumer face with a wider "0" overflows it).`,
 		"",
 		"## Layout",
 		"",
@@ -459,7 +460,11 @@ function body(resolved: ResolvedTheme): string[] {
 		`Widths of lifted layers, never stretched to their container, and of a frame's fixed regions: ${WIDTHS.filter(
 			(width) => width !== "measure",
 		)
-			.map((width) => `${code(width)} ${resolved.widths[width]}`)
+			.map((width) =>
+				width === "measure-short"
+					? `${code(width)} ${resolved.widths[width]} (native ${resolved.nativeMeasures[width]}, at the body size, so a label's own size is lost there)`
+					: `${code(width)} ${resolved.widths[width]}`,
+			)
 			.join(
 				", ",
 			)}. Breakpoints: ${BREAKPOINTS.map((bp) => `${code(bp)} ${resolved.breakpoints[bp]}`).join(", ")}; they are the only responsive variants, of the viewport (\`tablet:\`) and, on the web, of a page's width (\`page-tablet:\`, \`page-max-tablet:\`), by which a Split decides its regions.`,
@@ -555,7 +560,7 @@ function body(resolved: ResolvedTheme): string[] {
 		"- Do draw one `title` per screen, no `heading` inside a row, no `caption` sentence; emphasis is weight, never size.",
 		"- Do keep text at 4.5:1 or more on its fill; the contract measures every pair it draws.",
 		"- Do time motion with a duration rung and a contract curve; don't write a literal duration.",
-		`- Do take every word a component draws from \`words\`; a sentence is a prop. A counted word (${COUNTED_WORD_KEYS.map(code).join(", ")}) is \`{ one, other }\`, each form spelling \`{count}\` where the number stands, drawn through \`counted(word, count)\`.`,
+		`- Do take every word a component draws from \`words\`; a sentence is a prop. A counted word (${COUNTED_WORD_KEYS.map(code).join(", ")}) is \`{ one, other }\`, each form spelling \`{count}\` where the number stands, drawn through \`counted(word, count)\`. A slot word (${SLOT_WORD_KEYS.map(code).join(", ")}) spells its named slots as \`{name}\` where each value stands, drawn through \`filled(word, values)\`.`,
 		"",
 	];
 }

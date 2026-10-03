@@ -19,7 +19,7 @@ Ten subpaths:
   font stacks, the durations and curves, and the light colors. `rootTokens` is what sits on the
   root outside `@theme`: the hairline, the focus ring's width and offset, and the light shadows.
   `modeTokens` is one mode's colors and its two shadows. `densityTokens` is one density's type
-  scale, spacing roles and sizes. `reducedMotionTokens` is every duration at 0ms. `shadowUtilities` is the declaration of each `shadow-*` utility, reading its mode's variable.
+  scale, spacing roles and sizes. `nativeMeasureTokens` is native's two measures in px over `themeTokens`' `ch`. `reducedMotionTokens` is every duration at 0ms. `shadowUtilities` is the declaration of each `shadow-*` utility, reading its mode's variable.
   `raisedGroundTokens` is what a raised ground (`RAISED_GROUNDS`: `group`, `raised`) declares for
   everything inside it, the hairline read through `edge-raised`.
 - `@fcalell/ui-core/cn`: `cn()`, the class merger, taught the contract's six scales.
@@ -92,7 +92,7 @@ since it always draws the touch set and so the touch structure.
 
 Every word a molecule draws or reads aloud on its own comes from `words`, a typed object passed
 once beside `theme`: the six `Status` words, `recommended`, `copy`, `copied`, `back`, `close`, `cancel`, `dismiss`,
-`more`, `send`, `stop`, `attach`, `search`, `loading`, `checking`, `retry`, `add`, `remove`, `details`, `places`, `notifications`, `code`, `added`, `removed`, and the counted `earlierLines`. A counted word is `{ one, other }`, each form spelling `{count}` where the number stands, drawn through `counted(word, count)` (`one` at a count of one, `other` at any other). `Words` requires every key and
+`more`, `send`, `stop`, `attach`, `search`, `loading`, `checking`, `retry`, `add`, `remove`, `details`, `places`, `notifications`, `code`, `added`, `removed`, `sort`, `ascending`, `descending`, `time`, `message`, `seen`, `unseen`, `copyFailed`, the counted `earlierLines`, and the slot words `meterValue`, `meterOver`, `linesAdded` and `linesRemoved`. A counted word is `{ one, other }`, each form spelling `{count}` where the number stands, drawn through `counted(word, count)` (`one` at a count of one, `other` at any other). A slot word spells each of its named slots as `{name}` where the value stands (`meterValue` `{value}` and `{max}`, `meterOver` `{amount}`, `linesAdded` and `linesRemoved` `{count}`), drawn through `filled(word, values)`; the schema rejects a translation that drops a slot. `Words` requires every key and
 `wordsSchema` is closed, so a translation that misses a word fails `tsc` and the schema, never the
 interface. `ENGLISH` is the default. A sentence that belongs to the consumer is a prop on the
 molecule that draws it (`placeholder`, `notice`, every `sentence`, every label), never a key.
@@ -109,8 +109,8 @@ accent read as one palette.
   lifted layer sits one step above the content.
 - `edge`: the hairline over `canvas` and `surface`. `edge-raised`: the hairline inside a group and
   on a lifted layer; the container re-points `edge` to it, so a row inside a group draws `edge`
-  and gets the raised value. Each platform scopes the re-point on the raised grounds' fill
-  classes (`bg-group`, `bg-raised`), after its mode scopes. In light the two are one hairline; the dark ladder spans more than
+  and gets the raised value. The web scopes the re-point on the raised grounds' fill
+  classes (`bg-group`, `bg-raised`), after its mode scopes; native scopes it on each raised surface's content (uniwind's `ScopedVariables`), resolving each read in the mode. In light the two are one hairline; the dark ladder spans more than
   one hairline can straddle, so there they differ. `edge-strong`: a control's boundary, at 3:1
   against `surface` and `group`.
 - `scrim`: the veil behind a dialog or a sheet.
@@ -226,7 +226,7 @@ toolbar control), `field` 38 / 48 (a form input), `row` 32 / 48 (a one-line row)
 caption text), `icon` 14 / 18 (beside body text), `icon-control` 16 / 20 (inside a control),
 `check` 16 / 20 (a checkbox's box), `track` 2 / 4 (a slider's track thickness), `otp` 44 / 48 (a
 one-time-code box, square), `text-area` 60 / 72 (a text area's least value height, derived: three body line boxes), `meter` 6 / 8 (a meter's bar), `chart` 128 / 192 (a chart's plot, its gridlines four bands), `qr` 160 / 240 (a QR code's square, its quiet zone inside it), `figures` 29 / 36 (four tabular figures at the code size: a diff's number columns, a file row's count lanes; derived at `MONO_ADVANCE`, Plex Mono's 0.6 em, rounded up, since native has no `ch`), `message-input` 160 / 192 (a message input's tallest text, derived: eight body line boxes, the text scrolling past it). On touch every target is at least 44. A cell says `min-h`, never `h`: a label
-must be able to grow its control under OS font scaling. A minimum height is the floor of something pressed (a control, a field, a target, a chip, a row), the set height of a bar (`strip`, a page's strip and its touch top bar), an intrinsic size, or the height of what a part swaps with (`PENDING_TRACK` an action bar's, `TABLE_CELL` the field that edits it in place); any other container takes its height from its content and padding, its parts centred on its tallest, never from another component's size.
+must be able to grow its control under OS font scaling. A minimum height is the floor of something pressed (a control, a field, a target, a chip, a row), the set height of a bar (`strip`, a page's strip and its touch top bar), an intrinsic size, or the height of what a part swaps with (`PENDING_TRACK` an action bar's); any other container takes its height from its content and padding, its parts centred on its tallest, never from another component's size.
 
 Seven radius roles, density-invariant, a radius naming the role and never the size: `chip` 4
 (an outlined chip, a skeleton bar, a checkbox), `control` 6 (a button, a field, a segmented
@@ -237,12 +237,12 @@ status, a switch). One hairline of 1 px draws region edges, row splits and field
 the control's own edge; inside a list it is drawn inward.
 
 Widths are a short label's measure (a chip's label, a status word, a skeleton label's lane), the lifted layers' ranges, the one measure for running
-text and the fixed regions of a frame, as `--container-*`: `measure-short` 18ch, `popover` 240, `toast` 360, `dialog` 520, `sheet` 640, `measure` 58ch; a layer never stretches to
+text and the fixed regions of a frame, as `--container-*`: `measure-short` 18ch, `popover` 240, `toast` 360, `dialog` 520, `sheet` 640, `measure` 58ch (native has no `ch`, so `nativeMeasureTokens` declares the two measures in px at `SANS_ADVANCE`, Plex Sans's 0.6 em "0", of the touch body size, rounded up: 173 and 557; there a short label's cap is the body's 18 characters whatever its own size, and a consumer face with a wider "0" overflows them); a layer never stretches to
 its container. The regions: `sidebar` 240 (the Shell's places), `list` 360 and `pane` 320 (a
 split's list column and record pane), `column` 300 (a board column), `auth` 400 (the sign-in
 column), `empty` 320 (an empty state's column). A width never takes a spacing role's or a size's name, since `w-*` reads `--spacing-*`
-first. A skeleton bar alone may take a fraction width (`w-1/4`, `w-1/3`, `w-1/2`, `w-2/3`,
-`w-3/4`) to stand at the length of the text it replaces: structural, never a token. Breakpoints are `--breakpoint-*`: `tablet` 768, `desktop` 1024, `wide` 1440, so
+first. A skeleton bar alone may take a fraction width (`w-1/12`, `w-1/5`, `w-1/4`, `w-1/3`,
+`w-1/2`, `w-2/3`, `w-3/4`) to stand at the length of the text it replaces: structural, never a token; a chart column's share of its slot (`w-2/3`) is structural the same way. Breakpoints are `--breakpoint-*`: `tablet` 768, `desktop` 1024, `wide` 1440, so
 `tablet:` and `desktop:` are the only responsive variants.
 
 Elevation is two levels spent on lifted layers only: `shadow-float` for a popover, a menu, a
@@ -352,7 +352,7 @@ The canon binds every component either UI plugin ships:
 
 ## The roster
 
-`ROSTER` in `@fcalell/ui-core/roster` is the closed list: 54 components in four layers (atoms,
+`ROSTER` in `@fcalell/ui-core/roster` is the closed list: 55 components in four layers (atoms,
 layout molecules, shared molecules, content molecules), each with its prop names, the cells it
 draws (`draws`: a `FAMILIES` name for every cell of that family, `FAMILY.axis.value` for one of
 its cells, as `Text` draws `TEXT.role.body`, or a single-cell constant of `./variants`) and the states it

@@ -5,8 +5,11 @@ import { Checkbox } from "../../components/checkbox/index.tsx";
 import { EmptyState } from "../../components/empty-state/index.tsx";
 import { Form } from "../../components/form/index.tsx";
 import { FormField } from "../../components/form-field/index.tsx";
+import { Group } from "../../components/group/index.tsx";
 import { Input } from "../../components/input/index.tsx";
+import { ListRow } from "../../components/list-row/index.tsx";
 import { Place } from "../../components/place/index.tsx";
+import { QrCode } from "../../components/qr-code/index.tsx";
 import { Section } from "../../components/section/index.tsx";
 import { SegmentedControl } from "../../components/segmented-control/index.tsx";
 import { Select } from "../../components/select/index.tsx";
@@ -49,6 +52,7 @@ export function Settings() {
 	const [digest, setDigest] = useState("week");
 	const [threshold, setThreshold] = useState(5);
 	const [image, setImage] = useState("node-24");
+	const [devices, setDevices] = useState(["Ana's Pixel 9"]);
 	return (
 		<Place title="Settings">
 			<Form>
@@ -113,6 +117,38 @@ export function Settings() {
 						max={20}
 						unit="percent"
 					/>
+				</Section>
+				<Section
+					title="Devices"
+					count={devices.length}
+					description="Scan the code with the Acme app on your phone to get deploy alerts there."
+				>
+					<QrCode value="https://acme.dev/pair/7KQ2XM" />
+					{devices.length > 0 ? (
+						<Group>
+							{devices.map((device) => (
+								<ListRow
+									key={device}
+									leading={{ icon: "Smartphone" }}
+									title={device}
+									meta={["Paired Sep 12"]}
+									more={[
+										{
+											label: "Unpair",
+											icon: "Unlink",
+											destructive: true,
+											onAct: () => {
+												setDevices((all) =>
+													all.filter((each) => each !== device),
+												);
+												toast(`${device} unpaired`, { state: "done" });
+											},
+										},
+									]}
+								/>
+							))}
+						</Group>
+					) : null}
 				</Section>
 				<Banner
 					kind="warn"

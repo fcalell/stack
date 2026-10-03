@@ -31,9 +31,9 @@ has no entry of its own. States that draw a part the same way share one heading.
   `PICKER_POPOVER`), anchored under its trigger as the layout note's menus are (`absolute
   right-0 top-full pt-pair`; Base UI's positioner on the web). Sheet surfaces: `SHEET` on touch,
   `SHEET_SIDE` and `SHEET_CENTERED` on the desktop, all raised over `SCRIM`; inside a raised
-  ground the web re-points `--color-edge` to `edge-raised`, so the head's and the foot's
-  `border-edge` draw the raised hairline there, which native, unable to re-point, draws as
-  spelled. The sheet's layer (`absolute inset-0 flex flex-col justify-end` on touch, the side
+  ground `--color-edge` re-points to `edge-raised` (the web on the ground's fill class, native
+  through `RaisedGround`), so the head's and the foot's `border-edge` draw the raised hairline
+  there. The sheet's layer (`absolute inset-0 flex flex-col justify-end` on touch, the side
   sheet's `max-w-full`) is structure, and the bottom inset adds `pb-safe` on a phone.
 - A row's pick pulls back by its own padding on the side that meets the row's edge: the
   Picker's row fit is `-me-inside` over `PILL_ACT`, so its value ends where a plain trailing

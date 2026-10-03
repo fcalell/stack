@@ -3,12 +3,13 @@ import type { QueryLike } from "../../components/query-boundary/index.tsx";
 import type { View } from "../view.tsx";
 
 // Where the review stands: the place the URL names, the record open in it,
-// and a query state forced for the review (`loading` waits, `error` fails
+// the file open in that record, and a query state forced for the review (`loading` waits, `error` fails
 // once); the view rides along on every link the page draws.
 export interface Here {
 	view: View;
 	place: string;
 	record?: string;
+	file?: string;
 	query?: "loading" | "error";
 }
 
@@ -24,6 +25,7 @@ export function readHere(view: View): Here {
 		view,
 		place: params.get("place") ?? "deploys",
 		record: params.get("record") ?? undefined,
+		file: params.get("file") ?? undefined,
 		query: query === "loading" || query === "error" ? query : undefined,
 	};
 }

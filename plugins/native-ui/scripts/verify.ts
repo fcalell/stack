@@ -25,6 +25,8 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { deriveTheme } from "@fcalell/ui-core/derive";
 import {
 	modeTokens,
+	nativeMeasureTokens,
+	raisedGroundTokens,
 	shadowUtilities,
 	themeTokens,
 } from "@fcalell/ui-core/emit";
@@ -138,46 +140,39 @@ const NATIVE_OVERLAYS = [
 	"active:bg-wash-press",
 	"active:no-underline",
 	"active:underline",
-	"aspect-square",
 	"bg-act-accent-pending",
 	"bg-act-danger-pending",
-	"bg-danger-soft",
 	"bg-fill-disabled",
-	"bg-group",
 	"bg-ink-disabled",
-	"bg-ok-soft",
 	"bg-switch-off-hover",
 	"bg-toggle-on-hover",
 	"bg-wash-press",
 	"border-edge",
-	"border-l-2",
 	"border-t",
 	"bottom-0",
 	"flex-1",
 	"flex-col-reverse",
 	"flex-row",
 	"flex-wrap",
-	"font-medium",
 	"gap-acts",
 	"gap-fields",
 	"gap-inside",
 	"gap-pair",
 	"grow",
-	"h-2",
+	"h-0",
 	"hidden",
 	"inset-0",
-	"italic",
+	"items-baseline",
 	"items-center",
 	"items-end",
 	"items-start",
-	"items-stretch",
 	"justify-between",
 	"justify-center",
 	"justify-end",
 	"justify-start",
 	"left-0",
 	"left-full",
-	"line-through",
+	"max-w-4/5",
 	"max-w-full",
 	"min-h-0",
 	"min-h-11",
@@ -187,39 +182,34 @@ const NATIVE_OVERLAYS = [
 	"opacity-0",
 	"overflow-hidden",
 	"pb-card",
-	"pl-pair",
 	"pt-float",
 	"pt-page",
 	"pt-pair",
 	"px-card",
 	"px-page",
-	"px-pair",
 	"py-0",
-	"py-2",
 	"relative",
-	"rounded-control",
 	"rounded-none",
 	"self-center",
 	"self-stretch",
 	"self-start",
 	"shrink",
 	"size-target",
-	"text-accent-ink",
 	"text-center",
-	"text-danger",
 	"text-ink-body",
 	"text-ink-disabled",
-	"text-ok",
+	"text-ink-meta",
 	"text-right",
 	"top-0",
-	"underline",
+	"w-1/12",
 	"w-1/2",
 	"w-1/3",
 	"w-1/4",
+	"w-1/5",
 	"w-2/3",
 	"w-3/4",
-	"w-8",
 	"w-full",
+	"w-measure-short",
 ];
 
 // ── The swept sources, enumerated ───────────────────────────────────
@@ -682,7 +672,10 @@ check("a3", "the emitted sheet has the contract shape", () => {
 		`the namespace resets do not lead @theme: ${resets.join(" ")}`,
 	);
 
-	const expected = themeTokens(resolved);
+	const expected = {
+		...themeTokens(resolved),
+		...nativeMeasureTokens(resolved),
+	};
 	for (const [name, value] of Object.entries(expected)) {
 		assert(
 			themeMap.get(name) === normalize(value),
@@ -709,7 +702,13 @@ check("a3", "the emitted sheet has the contract shape", () => {
 		}
 	}
 	assert(
-		(sheet.match(/@utility /g) ?? []).length === SHADOW_LEVELS.length,
+		declarationMap(blockBody(sheet, "@utility tabular-nums")).get(
+			"font-variant-numeric",
+		) === "tabular-nums",
+		"@utility tabular-nums is not redeclared plain",
+	);
+	assert(
+		(sheet.match(/@utility /g) ?? []).length === SHADOW_LEVELS.length + 1,
 		"the sheet carries an extra @utility block",
 	);
 
@@ -755,7 +754,7 @@ check("a3", "the emitted sheet has the contract shape", () => {
 			`src/index.ts does not name the ${src} source`,
 		);
 	}
-	return `${Object.keys(expected).length} @theme keys behind the ${ZEROED_NAMESPACES.length} resets, ${SHADOW_LEVELS.length} shadow utilities, 2 equal variant blocks of ${COLOR_NAMES.length + SHADOW_LEVELS.length}, 3 pinned sources`;
+	return `${Object.keys(expected).length} @theme keys behind the ${ZEROED_NAMESPACES.length} resets, ${SHADOW_LEVELS.length} shadow utilities and the plain tabular-nums, 2 equal variant blocks of ${COLOR_NAMES.length + SHADOW_LEVELS.length}, 3 pinned sources`;
 });
 
 check("a4", "the schema rejects off-contract keys by name", () => {
@@ -917,23 +916,21 @@ check("a7", "uniwind's own compiler consumes the sheet", () => {
 	);
 	assert(accent === act, `alias law broken: bg-accent ${accent}, act ${act}`);
 
-	// The display cell's figures: uniwind maps `font-variant-numeric` to
-	// `fontVariant` through the class's own `--tw-numeric-*` variables, and
-	// its store drops the unset ones ("undefined") when it splits the list.
+	// The display cell's figures: native redeclares `tabular-nums` plain, so its
+	// `fontVariant` is the one token, with no empty tokens React Native logs.
 	const own = Object.fromEntries(
 		(compiledCss.stylesheet["tabular-nums"]?.[0]?.entries ?? []).filter(
 			([name]) => name.startsWith("--"),
 		),
 	);
-	const variant = styleValue(compiledCss, "tabular-nums", "fontVariant", {
+	const figures = styleValue(compiledCss, "tabular-nums", "fontVariant", {
 		...light,
 		...own,
 	});
-	const figures = String(variant)
-		.split(" ")
-		.filter((token) => token !== "undefined")
-		.join(" ");
-	assert(figures === "tabular-nums", `tabular-nums fontVariant: ${variant}`);
+	assert(
+		figures === "tabular-nums",
+		`tabular-nums fontVariant: ${JSON.stringify(figures)}`,
+	);
 
 	const alive = RETIRED.filter(
 		(name) => compiledCss.stylesheet[name] !== undefined,
@@ -943,6 +940,44 @@ check("a7", "uniwind's own compiler consumes the sheet", () => {
 		`retired classes survive the pipeline: ${alive.join(", ")}`,
 	);
 	return `text-title {${fontSize}/${lineHeight}}, tabular-nums {${figures}}, bg-canvas ${canvasLight} light / ${canvasDark} dark, alias law holds, ${RETIRED.length} retired absent`;
+});
+
+// `RaisedGround` scopes each re-pointed variable to the value its read
+// resolves to in the mode, and uniwind's store lays a scope over the theme's
+// variables; a hairline class reads `--color-edge` when it draws, so inside
+// the scope it draws `edge-raised`.
+check("a-raised", "a raised ground re-points the hairline", () => {
+	const compiledCss = pipeline();
+	const drawn: string[] = [];
+	for (const mode of ["light", "dark"]) {
+		const theme = themeScope(compiledCss, mode);
+		const scoped: Vars = { ...theme };
+		for (const [name, value] of Object.entries(raisedGroundTokens())) {
+			const read = theme[value.slice("var(".length, -")".length)];
+			assert(read, `${mode}: ${value} is not a compiled variable`);
+			const resolvedRead = read(theme);
+			scoped[name] = () => resolvedRead;
+		}
+		const outside = styleValue(
+			compiledCss,
+			"border-edge",
+			"borderColor",
+			theme,
+		);
+		const edge = styleValue(compiledCss, "border-edge", "borderColor", scoped);
+		const want = styleValue(
+			compiledCss,
+			"border-edge-raised",
+			"borderColor",
+			theme,
+		);
+		assert(
+			edge === want,
+			`${mode}: border-edge inside a raised ground draws ${edge}, edge-raised is ${want}`,
+		);
+		drawn.push(`${mode} ${outside} -> ${edge}`);
+	}
+	return `border-edge outside -> inside a raised ground: ${drawn.join(", ")}`;
 });
 
 check("a6", "the build resolves the inventory and kills the retired", () => {
@@ -1279,9 +1314,11 @@ check("b-nouns", "no product noun in src", () => {
 // The picker's fact the types cannot hold: its empty choice (an option
 // whose value is null) reads as a placeholder.
 check("b-picker", "a picker draws its empty choice as a placeholder", () => {
-	const component = (name: string) =>
-		readFileSync(resolve(COMPONENT_DIR, name, "index.tsx"), "utf8");
-	const picker = component("picker");
+	// The trigger every pick draws.
+	const picker = readFileSync(
+		resolve(COMPONENT_DIR, "picker", "base.tsx"),
+		"utf8",
+	);
 	// The option sheet a Picker and a Select open.
 	const sheet = readFileSync(
 		resolve(COMPONENT_DIR, "picker", "sheet.tsx"),

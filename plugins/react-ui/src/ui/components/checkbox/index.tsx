@@ -4,7 +4,7 @@ import { CHECKBOX_MARK, checkbox } from "@fcalell/ui-core/variants";
 import { Check, type IconNode, Minus } from "lucide";
 import { createElement, use } from "react";
 import type { Closed } from "../../lib/closed.ts";
-import { LabelTarget } from "../../lib/field.ts";
+import { CellField, LabelTarget } from "../../lib/field.ts";
 
 // The checkbox element is the target-sized hit box, so a press anywhere in it
 // toggles; the box inside draws the states and the focus ring. In a row whose
@@ -46,6 +46,8 @@ export interface CheckboxProps extends Closed {
 export function Checkbox({ checked, onChange, label }: CheckboxProps) {
 	const state = STATES[`${checked}` as const];
 	const target = use(LabelTarget);
+	// In a table cell the grid's cursor reaches it, so it leaves the tab order.
+	const cell = use(CellField);
 	// A field around it disables it through Base UI's field context, which
 	// sets `aria-disabled` on the hit box and `data-disabled` on the mark.
 	return (
@@ -56,6 +58,7 @@ export function Checkbox({ checked, onChange, label }: CheckboxProps) {
 			aria-label={label}
 			aria-labelledby={target?.labelledBy}
 			aria-describedby={target?.describedBy}
+			tabIndex={cell ? -1 : undefined}
 			className={target ? IN_LABEL : HIT}
 		>
 			<span

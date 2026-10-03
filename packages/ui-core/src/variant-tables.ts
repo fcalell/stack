@@ -7,14 +7,12 @@
 // borders, ink, spacing roles, radius, type role, weight, family, a control's
 // size. Display, alignment and every interaction state stay with the plugins.
 //
-// The text matrices are the Stage 1 port. The atoms', the layout molecules'
-// and the shared molecules' matrices are the class strings of their approved
-// artboards (`plugins/react-ui/design/1*-*.dc.html`, `3*-*.dc.html`,
-// `4*-*.dc.html`), the states and the layout recorded beside them in the
-// overlay notes (`.helm/research/design-system/atoms-overlays.md`,
-// `layout-overlays.md`, `shared-overlays.md`).
-// Every other matrix is carried on the new vocabulary until its artboard
-// replaces it.
+// The text matrices are the Stage 1 port. Every other matrix is the class
+// strings of its approved artboard (`plugins/react-ui/design/1*-*.dc.html`
+// to `5*-*.dc.html`: the atoms and the layout, shared and content
+// molecules), the states and the layout recorded beside them in the overlay
+// notes (`.helm/research/design-system/atoms-overlays.md`,
+// `layout-overlays.md`, `shared-overlays.md`, `content-overlays.md`).
 
 export type Axes = Record<string, Record<string, string>>;
 
@@ -420,10 +418,62 @@ export const LINE_BOX = matrix({
 
 // ── Table ───────────────────────────────────────────────────────────
 
+// A data table's row: a hairline under it, washed under the pointer and
+// pressed, and the open record selected (a step darker under the pointer).
+// The header row is the rest row.
 export const TABLE_ROW = matrix({
 	base: "border-b border-edge",
 	variants: {
-		state: { rest: "", selected: "bg-wash-selected" },
+		state: {
+			rest: "",
+			highlighted: "bg-wash-hover",
+			pressed: "bg-wash-press",
+			selected: "bg-wash-selected",
+			"selected-hover": "bg-wash-selected-hover",
+		},
+	},
+	defaultVariants: { state: "rest" },
+});
+
+// A sortable column's header: a cell-wide act at the row's height behind a
+// transparent side border, so its label stands on the values' x.
+export const TABLE_HEAD = matrix({
+	base: "gap-inside min-h-row border-x border-transparent px-control-x",
+	variants: {
+		state: {
+			rest: "",
+			highlighted: "bg-wash-hover",
+			pressed: "bg-wash-press",
+		},
+	},
+	defaultVariants: { state: "rest" },
+});
+
+// A header's label at meta 500, never bold, in the meta ink, the body ink on
+// the column the table sorts by. Its sort glyph takes the label's ink.
+export const TABLE_HEAD_LABEL = matrix({
+	base: "text-meta leading-meta font-medium",
+	variants: {
+		sort: {
+			none: "text-ink-meta",
+			sorted: "text-ink-body",
+		},
+	},
+	defaultVariants: { sort: "none" },
+});
+
+// The frozen leading column's content: its hairline at its end, and the
+// row's wash repeated over the frozen cell's own surface (`TABLE_FROZEN`).
+export const TABLE_FROZEN_CELL = matrix({
+	base: "border-r-edge",
+	variants: {
+		state: {
+			rest: "",
+			highlighted: "bg-wash-hover",
+			pressed: "bg-wash-press",
+			selected: "bg-wash-selected",
+			"selected-hover": "bg-wash-selected-hover",
+		},
 	},
 	defaultVariants: { state: "rest" },
 });
@@ -591,32 +641,173 @@ export const SHEET_SIDE = matrix({
 	defaultVariants: { fit: "form" },
 });
 
-// ── Diff ────────────────────────────────────────────────────────────
+// ── Prose ───────────────────────────────────────────────────────────
 
-export const DIFF_LINE = matrix({
-	base: "text-code leading-code font-mono text-ink-body",
+// A list item's marker in a slot the icon's width, in the meta ink: a
+// bullet, or an ordered item's figures at one width.
+export const PROSE_MARKER = matrix({
+	base: "min-w-icon text-body leading-body font-normal text-ink-meta",
+	variants: {
+		list: {
+			bullet: "",
+			ordered: "tabular-nums",
+		},
+	},
+	defaultVariants: { list: "bullet" },
+});
+
+// A ProseDiff's runs on the diff's own grounds: the added run underlined, the
+// removed run struck through.
+export const PROSE_DIFF_RUN = matrix({
+	base: "",
 	variants: {
 		kind: {
-			context: "",
-			added: "bg-ok-soft",
-			removed: "bg-danger-soft",
+			added: "bg-ok-soft underline",
+			removed: "bg-danger-soft line-through",
+		},
+	},
+});
+
+// ── Code ────────────────────────────────────────────────────────────
+
+// The code's text at the compact card inset or, beside the copy act's own
+// column (no title), without the end inset that column carries.
+export const CODE_TEXT = matrix({
+	base: "",
+	variants: {
+		act: {
+			none: "p-tile",
+			beside: "py-tile pl-tile",
+		},
+	},
+	defaultVariants: { act: "none" },
+});
+
+// ── Diff ────────────────────────────────────────────────────────────
+
+// A unified diff's line at the code role, Code's line: its kind is its
+// ground, the hunk header on the group ground in the meta ink.
+export const DIFF_LINE = matrix({
+	base: "text-code leading-code font-normal font-mono",
+	variants: {
+		kind: {
+			context: "text-ink-body",
+			added: "text-ink-body bg-ok-soft",
+			removed: "text-ink-body bg-danger-soft",
 			header: "bg-group text-ink-meta",
 		},
 	},
 	defaultVariants: { kind: "context" },
 });
 
+// ── File row ────────────────────────────────────────────────────────
+
+// A file's path split before its last slash: the directory in the meta
+// ink, the name (its slash first) at 500.
+export const FILE_PATH_PART = matrix({
+	base: "",
+	variants: {
+		part: {
+			directory: "text-ink-meta",
+			name: "font-medium text-ink-body",
+		},
+	},
+});
+
+// A count in its lane, four figures wide so the lanes line up down a list:
+// the diff's own marks, added in `ok`, removed in `danger`.
+export const FILE_COUNT = matrix({
+	base: "min-w-figures",
+	variants: {
+		kind: {
+			added: "text-ok",
+			removed: "text-danger",
+		},
+	},
+});
+
 // ── Message ─────────────────────────────────────────────────────────
 
+// A message by its author: yours and another's a pair over their parts, a
+// system line a row at the target height.
 export const MESSAGE = matrix({
 	base: "",
 	variants: {
 		author: {
-			you: "rounded-card bg-group px-card py-pair",
-			other: "",
-			system: "text-meta leading-meta text-ink-meta",
+			you: "gap-pair",
+			other: "gap-pair",
+			system: "min-h-target",
 		},
 	},
+});
+
+// ── Meter ───────────────────────────────────────────────────────────
+
+// A meter's fill by its level (`METER_NEAR`): under in the meta ink, near in
+// `warn`, over in `danger`; never the accent.
+export const METER_FILL = matrix({
+	base: "h-full rounded-chip",
+	variants: {
+		level: {
+			under: "bg-ink-meta",
+			near: "bg-warn",
+			over: "bg-danger",
+		},
+	},
+	defaultVariants: { level: "under" },
+});
+
+// ── Bar chart ───────────────────────────────────────────────────────
+
+// One of the four bands the plot's height splits into, its top a gridline
+// (the last band's bottom the baseline too); the axis beside the plot
+// stands the same bands with clear lines, so each tick centres on its line.
+export const CHART_BAND = matrix({
+	base: "",
+	variants: {
+		kind: {
+			grid: "border-edge",
+			axis: "border-transparent",
+		},
+		rule: {
+			top: "border-t",
+			both: "border-y",
+		},
+	},
+	defaultVariants: { kind: "grid", rule: "top" },
+});
+
+// A series' mark (a column, a stacked part, a key's dot) in the chip marks,
+// in `CHART_SERIES` order: one series takes the first.
+export const CHART_FILL = matrix({
+	base: "",
+	variants: {
+		series: {
+			teal: "bg-chip-teal",
+			violet: "bg-chip-violet",
+			amber: "bg-chip-amber",
+			pink: "bg-chip-pink",
+			green: "bg-chip-green",
+			red: "bg-chip-red",
+		},
+	},
+	defaultVariants: { series: "teal" },
+});
+
+// ── QR code ─────────────────────────────────────────────────────────
+
+// The code's SVG scaled into its tile in the body ink (the tile is a light
+// scope, so the modules are dark in both modes), or its square in the
+// skeleton ink while loading.
+export const QR_CODE = matrix({
+	base: "size-full",
+	variants: {
+		state: {
+			rest: "text-ink-body",
+			loading: "text-skeleton",
+		},
+	},
+	defaultVariants: { state: "rest" },
 });
 
 // ── Place ───────────────────────────────────────────────────────────
@@ -707,8 +898,10 @@ export const SECTION = matrix({
 
 // ── Form ────────────────────────────────────────────────────────────
 
-// The rhythm between a form's children: fields apart, or sections apart when
-// it holds sections (each section's fields then at the fields rhythm).
+// A form's one column: its children fields apart, or sections apart when it
+// holds sections (each section's fields then at the fields rhythm). On a page
+// the column is at most a line of running text wide, so its fields, banners
+// and act end together; in a sheet the sheet is the column.
 export const FORM = matrix({
 	base: "",
 	variants: {
@@ -716,8 +909,12 @@ export const FORM = matrix({
 			fields: "gap-fields",
 			sections: "gap-sections",
 		},
+		in: {
+			page: "max-w-measure",
+			sheet: "",
+		},
 	},
-	defaultVariants: { holds: "fields" },
+	defaultVariants: { holds: "fields", in: "page" },
 });
 
 // ── Action bar ──────────────────────────────────────────────────────
@@ -741,8 +938,9 @@ export const ACTION_BAR = matrix({
 // ── Skeleton ────────────────────────────────────────────────────────
 
 // What a loading form draws in place of a part: a text line (a fraction
-// width, a web overlay, stands it at its text's length) or the atom it
-// stands in for, at that atom's size (a checkbox's box among them).
+// width, a web overlay, stands it at its text's length) or the part it
+// stands in for, at that part's size (a checkbox's box, a row's glyph, a
+// status's dot, a meter's bar, a chart's plot among them).
 export const SKELETON = matrix({
 	base: "",
 	variants: {
@@ -753,6 +951,10 @@ export const SKELETON = matrix({
 			count: "min-h-chip min-w-chip rounded-full bg-skeleton",
 			field: "min-h-field rounded-control bg-skeleton",
 			check: "size-check rounded-chip bg-skeleton",
+			icon: "size-icon rounded-full bg-skeleton",
+			dot: "size-dot rounded-full bg-skeleton",
+			meter: "h-meter rounded-chip bg-skeleton",
+			chart: "h-chart rounded-chip bg-skeleton",
 		},
 	},
 	defaultVariants: { kind: "line" },
@@ -760,8 +962,10 @@ export const SKELETON = matrix({
 
 // A loading row at the height of the row it stands in for: a two-line list
 // row, a group's setting row, a form's field (a label line
-// over the field's box at the label's gap), or a record's facts line (at the
-// height of the status that opens on it).
+// over the field's box at the label's gap), a record's facts line (at the
+// height of the status that opens on it), a one-line row in a list or in a
+// group (a file row's), or a two-line row padded round its lines and its
+// trailing bar (a table's record below tablet).
 export const SKELETON_ROW = matrix({
 	base: "",
 	variants: {
@@ -770,6 +974,9 @@ export const SKELETON_ROW = matrix({
 			setting: "gap-fields min-h-row-setting px-card py-pair",
 			field: "gap-pair",
 			facts: "gap-x-fields min-h-target",
+			"one-line": "gap-inside min-h-row px-control-x",
+			"one-line-group": "gap-inside min-h-row px-card",
+			"two-line-trailing": "gap-inside min-h-row-2 py-rows px-control-x",
 		},
 	},
 	defaultVariants: { kind: "two-line" },

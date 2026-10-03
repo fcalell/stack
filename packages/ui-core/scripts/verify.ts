@@ -20,6 +20,7 @@ import { deriveTheme, type ResolvedTheme } from "../src/derive.ts";
 import {
 	densityTokens,
 	modeTokens,
+	nativeMeasureTokens,
 	raisedGroundTokens,
 	reducedMotionTokens,
 	rootTokens,
@@ -69,9 +70,11 @@ import {
 	EASINGS,
 	ENGLISH,
 	fallbackFace,
+	filled,
 	GAP_ROLES,
 	KNOB_DEFAULTS,
 	LOOP_MS,
+	MEASURE_CHARACTERS,
 	METER_NEAR,
 	MODES,
 	MONO_ADVANCE,
@@ -79,9 +82,12 @@ import {
 	RADIUS_PX,
 	RADIUS_ROLES,
 	RAISED_GROUNDS,
+	SANS_ADVANCE,
 	SHADOW_LEVELS,
 	SIZE_PX,
 	SIZES,
+	SLOT_WORD_KEYS,
+	SLOT_WORDS,
 	SPACE_BASE,
 	SPACING_RATIO,
 	SPACING_ROLES,
@@ -106,12 +112,17 @@ import {
 	BANNER_GLYPH,
 	BUTTON,
 	BUTTON_LABEL,
+	CHART_BAND,
+	CHART_FILL,
 	CHECKBOX,
 	CHIP,
 	CHIP_LABEL,
+	CODE_TEXT,
 	DIFF_LINE,
 	FIELD,
 	FIELD_VALUE,
+	FILE_COUNT,
+	FILE_PATH_PART,
 	FORM,
 	FORM_FIELD,
 	ICON,
@@ -123,12 +134,16 @@ import {
 	MENU_GROUP,
 	MENU_LABEL,
 	MESSAGE,
+	METER_FILL,
 	OTP_BOX,
 	PICKER,
 	PLACE_ROW,
 	PLACE_ROW_GLYPH,
 	PLACE_TAB,
 	PLACE_TAB_LABEL,
+	PROSE_DIFF_RUN,
+	PROSE_MARKER,
+	QR_CODE,
 	ROW,
 	SECTION,
 	SEGMENT,
@@ -141,6 +156,9 @@ import {
 	STATUS_DOT,
 	SWITCH,
 	SWITCH_THUMB,
+	TABLE_FROZEN_CELL,
+	TABLE_HEAD,
+	TABLE_HEAD_LABEL,
 	TABLE_ROW,
 	TEXT,
 	TEXT_AREA,
@@ -160,13 +178,18 @@ import {
 	button,
 	buttonContentTone,
 	buttonLabel,
+	chartBand,
+	chartFill,
 	checkbox,
 	chip,
 	chipLabel,
+	codeText,
 	diffLine,
 	FAMILIES,
 	field,
 	fieldValue,
+	fileCount,
+	filePathPart,
 	form,
 	formField,
 	icon,
@@ -177,12 +200,16 @@ import {
 	menuGroup,
 	menuLabel,
 	message,
+	meterFill,
 	otpBox,
 	picker,
 	placeRow,
 	placeRowGlyph,
 	placeTab,
 	placeTabLabel,
+	proseDiffRun,
+	proseMarker,
+	qrCode,
 	row,
 	section,
 	segment,
@@ -196,6 +223,9 @@ import {
 	statusDot,
 	switchThumb,
 	switchTrack,
+	tableFrozenCell,
+	tableHead,
+	tableHeadLabel,
 	tableRow,
 	text,
 	textArea,
@@ -537,6 +567,9 @@ const MATRICES: readonly Registration[] = [
 	["ROW", ROW, row],
 	["LINE_BOX", LINE_BOX, lineBox],
 	["TABLE_ROW", TABLE_ROW, tableRow],
+	["TABLE_HEAD", TABLE_HEAD, tableHead],
+	["TABLE_HEAD_LABEL", TABLE_HEAD_LABEL, tableHeadLabel],
+	["TABLE_FROZEN_CELL", TABLE_FROZEN_CELL, tableFrozenCell],
 	["SEGMENT", SEGMENT, segment],
 	["SEGMENT_LABEL", SEGMENT_LABEL, segmentLabel],
 	["PICKER", PICKER, picker],
@@ -548,8 +581,17 @@ const MATRICES: readonly Registration[] = [
 	["MENU_GROUP", MENU_GROUP, menuGroup],
 	["MENU_LABEL", MENU_LABEL, menuLabel],
 	["SHEET_SIDE", SHEET_SIDE, sheetSide],
+	["PROSE_MARKER", PROSE_MARKER, proseMarker],
+	["PROSE_DIFF_RUN", PROSE_DIFF_RUN, proseDiffRun],
+	["CODE_TEXT", CODE_TEXT, codeText],
 	["DIFF_LINE", DIFF_LINE, diffLine],
+	["FILE_PATH_PART", FILE_PATH_PART, filePathPart],
+	["FILE_COUNT", FILE_COUNT, fileCount],
 	["MESSAGE", MESSAGE, message],
+	["METER_FILL", METER_FILL, meterFill],
+	["CHART_BAND", CHART_BAND, chartBand],
+	["CHART_FILL", CHART_FILL, chartFill],
+	["QR_CODE", QR_CODE, qrCode],
 	["PLACE_ROW", PLACE_ROW, placeRow],
 	["PLACE_ROW_GLYPH", PLACE_ROW_GLYPH, placeRowGlyph],
 	["PLACE_TAB", PLACE_TAB, placeTab],
@@ -736,8 +778,9 @@ check("c03", "tokens.ts declares the contract", () => {
 	requireEqual(SHADOW_LEVELS.length, 2, "shadow level count");
 	requireEqual(WIDTHS.length, 12, "width count");
 	requireEqual(BREAKPOINTS.length, 3, "breakpoint count");
-	requireEqual(WORD_KEYS.length, 29, "word count");
+	requireEqual(WORD_KEYS.length, 37, "word count");
 	requireEqual(COUNTED_WORD_KEYS.length, 1, "counted word count");
+	requireEqual(SLOT_WORD_KEYS.length, 4, "slot word count");
 	requireEqual(
 		[...CHART_SERIES].sort().join(" "),
 		[...CHIP_HUES].sort().join(" "),
@@ -765,7 +808,7 @@ check("c03", "tokens.ts declares the contract", () => {
 	for (const word of ["marine", "navy", "brand", "tint", "label", "floor"]) {
 		assert(!new RegExp(`"${word}"`).test(source), `tokens.ts names "${word}"`);
 	}
-	return `${COLOR_NAMES.length} colors, 7 roles, 11 spacing roles (6 gaps), ${SIZES.length} sizes, 7 radii, 2 shadows, 12 widths, 3 breakpoints, ${WORD_KEYS.length} words and ${COUNTED_WORD_KEYS.length} counted, ${CHART_SERIES.length} chart series`;
+	return `${COLOR_NAMES.length} colors, 7 roles, 11 spacing roles (6 gaps), ${SIZES.length} sizes, 7 radii, 2 shadows, 12 widths, 3 breakpoints, ${WORD_KEYS.length} words, ${COUNTED_WORD_KEYS.length} counted and ${SLOT_WORD_KEYS.length} with slots, ${CHART_SERIES.length} chart series`;
 });
 
 check("c05", "default knobs reproduce the approved sheet", () => {
@@ -1025,6 +1068,16 @@ check("c06", "every scale is its ratio of the base", () => {
 				`${density} ${size}`,
 			);
 		}
+	}
+	// Native's measures: their characters at the sans figure advance of the
+	// touch body, since uniwind reads no `ch`.
+	const native = nativeMeasureTokens(base);
+	for (const [measure, characters] of Object.entries(MEASURE_CHARACTERS)) {
+		requireEqual(
+			native[`--container-${measure}`],
+			`${Math.ceil(characters * SANS_ADVANCE * BODY_SIZE.touch)}px`,
+			`native ${measure}`,
+		);
 	}
 	// A tie rounds up: touch caption 14 × 1.5 = 21 → 22.
 	requireEqual(
@@ -1744,6 +1797,18 @@ check("c19", "every cva renders exactly its own table", () => {
 		STATUS_STATES.join(" "),
 		"STATUS_DOT states",
 	);
+	requireEqual(
+		Object.keys(CHART_FILL.variants.series).join(" "),
+		CHART_SERIES.join(" "),
+		"CHART_FILL series",
+	);
+	for (const hue of CHART_SERIES) {
+		requireEqual(
+			CHART_FILL.variants.series[hue],
+			`bg-chip-${hue}`,
+			`CHART_FILL.series.${hue}`,
+		);
+	}
 	let combos = 0;
 	for (const entry of MATRICES) {
 		const [name, config] = entry;
@@ -1984,7 +2049,7 @@ check(
 	"the roster is closed, camelCase, and off the style channels",
 	() => {
 		const entries = rosterEntries();
-		requireEqual(entries.length, 54, "component count");
+		requireEqual(entries.length, 55, "component count");
 		const names = new Set<string>();
 		for (const [, name, { props }] of entries) {
 			assert(/^[A-Z][A-Za-z]+$/.test(name), `${name} is not PascalCase`);
@@ -2054,7 +2119,28 @@ check("c31", "words: English is total and the schema is closed", () => {
 	);
 	const bare = wordsSchema.safeParse({ ...ENGLISH, earlierLines: "Show" });
 	assert(!bare.success, "a counted word without its forms was accepted");
-	return `${WORD_KEYS.length} words and ${COUNTED_WORD_KEYS.length} counted, sentence case, missing and extra keys rejected`;
+	// A slot word spells exactly its slots, each once.
+	for (const key of SLOT_WORD_KEYS) {
+		const spelled = [...ENGLISH[key].matchAll(/\{(\w+)\}/g)].map((m) => m[1]);
+		requireEqual(
+			[...spelled].sort().join(" "),
+			[...SLOT_WORDS[key]].sort().join(" "),
+			`${key} spells its slots`,
+		);
+		const slotless = wordsSchema.safeParse({ ...ENGLISH, [key]: "Over" });
+		assert(!slotless.success, `${key} without its slots was accepted`);
+	}
+	requireEqual(
+		filled(ENGLISH.meterValue, { value: "8.4", max: "10" }),
+		"8.4 of 10",
+		"a filled meter value",
+	);
+	requireEqual(
+		filled(ENGLISH.meterOver, { amount: "1.8" }),
+		"1.8 over",
+		"a filled overage",
+	);
+	return `${WORD_KEYS.length} words, ${COUNTED_WORD_KEYS.length} counted and ${SLOT_WORD_KEYS.length} with slots, sentence case, missing and extra keys rejected`;
 });
 
 check("c32", "the contrast contracts hold at the default knobs", () => {

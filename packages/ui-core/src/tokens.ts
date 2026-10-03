@@ -644,6 +644,12 @@ export const STRONG_WEIGHT: FontWeight = "medium";
 // inside it, a wider one does not.
 export const MONO_ADVANCE = 0.6;
 
+// The sans family's figure advance in em: IBM Plex Sans's "0", 600 over
+// its 1000 em. Native has no `ch` unit, so its two measures are derived from
+// it at the touch body size: a label's own size is lost there (a caption's
+// cap is the body's), and a named sans with a wider "0" overflows them.
+export const SANS_ADVANCE = 0.6;
+
 // ── Space ───────────────────────────────────────────────────────────
 
 // One base, 4 px; every role is a multiple of it, picked per density, so a
@@ -896,13 +902,24 @@ export const WIDTHS = [
 ] as const;
 export type Width = (typeof WIDTHS)[number];
 
+// The widths counted in characters of the label's own font: `ch` on the
+// web; native draws them in px at `SANS_ADVANCE` of the touch body size,
+// rounded up to the pixel.
+export const MEASURES = ["measure-short", "measure"] as const;
+export type Measure = (typeof MEASURES)[number];
+
+export const MEASURE_CHARACTERS: Record<Measure, number> = {
+	"measure-short": 18,
+	measure: 58,
+};
+
 export const WIDTH_VALUE: Record<Width, string> = {
-	"measure-short": "18ch",
+	"measure-short": `${MEASURE_CHARACTERS["measure-short"]}ch`,
 	popover: "240px",
 	toast: "360px",
 	dialog: "520px",
 	sheet: "640px",
-	measure: "58ch",
+	measure: `${MEASURE_CHARACTERS.measure}ch`,
 	sidebar: "240px",
 	list: "360px",
 	pane: "320px",
@@ -1074,6 +1091,14 @@ export const WORD_KEYS = [
 	"code",
 	"added",
 	"removed",
+	"sort",
+	"ascending",
+	"descending",
+	"time",
+	"message",
+	"seen",
+	"unseen",
+	"copyFailed",
 ] as const;
 export type WordKey = (typeof WORD_KEYS)[number];
 
@@ -1087,8 +1112,21 @@ export interface CountedWord {
 	other: string;
 }
 
+// A word drawn with values: each spells its slots as `{name}` where the
+// value stands, drawn through `filled()`.
+export const SLOT_WORDS = {
+	meterValue: ["value", "max"],
+	meterOver: ["amount"],
+	linesAdded: ["count"],
+	linesRemoved: ["count"],
+} as const satisfies Record<string, readonly string[]>;
+export type SlotWordKey = keyof typeof SLOT_WORDS;
+// `Object.keys` widens to `string`; the keys are the record's own.
+export const SLOT_WORD_KEYS = Object.keys(SLOT_WORDS) as SlotWordKey[];
+
 export type Words = Record<WordKey, string> &
-	Record<CountedWordKey, CountedWord>;
+	Record<CountedWordKey, CountedWord> &
+	Record<SlotWordKey, string>;
 
 export const ENGLISH: Words = {
 	active: "Active",
@@ -1120,11 +1158,31 @@ export const ENGLISH: Words = {
 	code: "Code",
 	added: "Added",
 	removed: "Removed",
+	sort: "Sort",
+	ascending: "Ascending",
+	descending: "Descending",
+	time: "Time",
+	message: "Message",
+	seen: "Seen",
+	unseen: "Not seen",
+	copyFailed: "Couldn't copy",
 	earlierLines: {
 		one: "Show {count} earlier line",
 		other: "Show {count} earlier lines",
 	},
+	meterValue: "{value} of {max}",
+	meterOver: "{amount} over",
+	linesAdded: "{count} added",
+	linesRemoved: "{count} removed",
 };
+
+// A slot word with its values: `filled(words.meterValue, { value, max })`.
+export function filled(word: string, values: Record<string, string>): string {
+	return word.replace(
+		/\{(\w+)\}/g,
+		(slot, name: string) => values[name] ?? slot,
+	);
+}
 
 // A counted word at a count: `counted(words.earlierLines, 3)`.
 export function counted(word: CountedWord, count: number): string {

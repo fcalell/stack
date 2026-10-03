@@ -26,6 +26,7 @@ import { Section } from "@fcalell/plugin-native-ui/components/section";
 import { Group } from "@fcalell/plugin-native-ui/components/group";
 import { List } from "@fcalell/plugin-native-ui/components/list";
 import { Form } from "@fcalell/plugin-native-ui/components/form";
+import { Thread } from "@fcalell/plugin-native-ui/components/thread";
 import { Toolbar } from "@fcalell/plugin-native-ui/components/toolbar";
 import { ActionBar } from "@fcalell/plugin-native-ui/components/action-bar";
 import { Columns } from "@fcalell/plugin-native-ui/components/columns";
@@ -403,6 +404,21 @@ export const closure = (
 		<List selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
 		<List placeholderTextColorClassName="text-ink-body" />
+		<Thread />
+		{/* @ts-expect-error: closed channel */}
+		<Thread className="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Thread style={{ flex: 1 }} />
+		{/* @ts-expect-error: closed channel */}
+		<Thread class="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Thread classList={{}} />
+		{/* @ts-expect-error: closed channel */}
+		<Thread colorClassName="text-ink-body" />
+		{/* @ts-expect-error: closed channel */}
+		<Thread selectionColorClassName="text-ink-body" />
+		{/* @ts-expect-error: closed channel */}
+		<Thread placeholderTextColorClassName="text-ink-body" />
 		<Form />
 		{/* @ts-expect-error: closed channel */}
 		<Form className="x" />
@@ -688,21 +704,21 @@ export const closure = (
 		<Code text="a" selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
 		<Code text="a" placeholderTextColorClassName="text-ink-body" />
-		<Diff hunks={[]} />
+		<Diff label="x" hunks={[]} />
 		{/* @ts-expect-error: closed channel */}
-		<Diff hunks={[]} className="x" />
+		<Diff label="x" hunks={[]} className="x" />
 		{/* @ts-expect-error: closed channel */}
-		<Diff hunks={[]} style={{ flex: 1 }} />
+		<Diff label="x" hunks={[]} style={{ flex: 1 }} />
 		{/* @ts-expect-error: closed channel */}
-		<Diff hunks={[]} class="x" />
+		<Diff label="x" hunks={[]} class="x" />
 		{/* @ts-expect-error: closed channel */}
-		<Diff hunks={[]} classList={{}} />
+		<Diff label="x" hunks={[]} classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<Diff hunks={[]} colorClassName="text-ink-body" />
+		<Diff label="x" hunks={[]} colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Diff hunks={[]} selectionColorClassName="text-ink-body" />
+		<Diff label="x" hunks={[]} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Diff hunks={[]} placeholderTextColorClassName="text-ink-body" />
+		<Diff label="x" hunks={[]} placeholderTextColorClassName="text-ink-body" />
 		<Menu label="a" items={[{ label: "a", onAct: noop, icon: "Copy" }, { label: "a", onAct: noop, destructive: true, blocked: "a" }]} />
 		{/* @ts-expect-error: closed channel */}
 		<Menu label="a" items={[]} className="x" />
@@ -718,9 +734,9 @@ export const closure = (
 		<Menu label="a" items={[]} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
 		<Menu label="a" items={[]} placeholderTextColorClassName="text-ink-body" />
-		<Diff before="a" after="b" />
+		<Diff label="x" before="a" after="b" />
 		{/* @ts-expect-error: hunks and two texts exclude each other */}
-		<Diff hunks={[]} before="a" after="b" />
+		<Diff label="x" hunks={[]} before="a" after="b" />
 		<Code text="a" title="a" copy />
 		<Place title="a" bleed />
 		<ListRow title="a" more={[{ label: "a", onAct: noop }]} />
@@ -741,6 +757,8 @@ export const closure = (
 		<Table columns={[]} rows={[]} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
 		<Table columns={[]} rows={[]} placeholderTextColorClassName="text-ink-body" />
+		{/* @ts-expect-error: onEdit requires onOpen */}
+		<Table columns={[]} rows={[]} onEdit={noop} />
 		<FileRow path="a" added={1} removed={0} />
 		{/* @ts-expect-error: closed channel */}
 		<FileRow path="a" added={1} removed={0} className="x" />
@@ -771,21 +789,21 @@ export const closure = (
 		<ProseDiff before="a" after="b" selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
 		<ProseDiff before="a" after="b" placeholderTextColorClassName="text-ink-body" />
-		<Comparison rows={[]} />
+		<Comparison label="x" rows={[]} />
 		{/* @ts-expect-error: closed channel */}
-		<Comparison rows={[]} className="x" />
+		<Comparison label="x" rows={[]} className="x" />
 		{/* @ts-expect-error: closed channel */}
-		<Comparison rows={[]} style={{ flex: 1 }} />
+		<Comparison label="x" rows={[]} style={{ flex: 1 }} />
 		{/* @ts-expect-error: closed channel */}
-		<Comparison rows={[]} class="x" />
+		<Comparison label="x" rows={[]} class="x" />
 		{/* @ts-expect-error: closed channel */}
-		<Comparison rows={[]} classList={{}} />
+		<Comparison label="x" rows={[]} classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<Comparison rows={[]} colorClassName="text-ink-body" />
+		<Comparison label="x" rows={[]} colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Comparison rows={[]} selectionColorClassName="text-ink-body" />
+		<Comparison label="x" rows={[]} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Comparison rows={[]} placeholderTextColorClassName="text-ink-body" />
+		<Comparison label="x" rows={[]} placeholderTextColorClassName="text-ink-body" />
 		<Message author="you" body="a" />
 		{/* @ts-expect-error: closed channel */}
 		<Message author="you" body="a" className="x" />
@@ -831,21 +849,21 @@ export const closure = (
 		<Meter label="a" value={1} max={2} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
 		<Meter label="a" value={1} max={2} placeholderTextColorClassName="text-ink-body" />
-		<BarChart series={[]} />
+		<BarChart label="x" series={[]} />
 		{/* @ts-expect-error: closed channel */}
-		<BarChart series={[]} className="x" />
+		<BarChart label="x" series={[]} className="x" />
 		{/* @ts-expect-error: closed channel */}
-		<BarChart series={[]} style={{ flex: 1 }} />
+		<BarChart label="x" series={[]} style={{ flex: 1 }} />
 		{/* @ts-expect-error: closed channel */}
-		<BarChart series={[]} class="x" />
+		<BarChart label="x" series={[]} class="x" />
 		{/* @ts-expect-error: closed channel */}
-		<BarChart series={[]} classList={{}} />
+		<BarChart label="x" series={[]} classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<BarChart series={[]} colorClassName="text-ink-body" />
+		<BarChart label="x" series={[]} colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<BarChart series={[]} selectionColorClassName="text-ink-body" />
+		<BarChart label="x" series={[]} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<BarChart series={[]} placeholderTextColorClassName="text-ink-body" />
+		<BarChart label="x" series={[]} placeholderTextColorClassName="text-ink-body" />
 		<Chip label="a" family="red" />
 		{/* @ts-expect-error: closed channel */}
 		<Chip label="a" family="red" className="x" />

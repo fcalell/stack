@@ -9,8 +9,9 @@ import {
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
-import { type ReactNode, useEffect, useState } from "react";
+import type { ReactNode } from "react";
 import type { Closed } from "../../lib/closed.ts";
+import { useCopy } from "../../lib/copy.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Icon } from "../icon/index.tsx";
 import { IconButton } from "../icon-button/index.tsx";
@@ -33,8 +34,6 @@ const VALUE_SLOT = "flex basis-0 grow min-w-0 justify-end";
 const ACTS = "relative flex shrink-0";
 // The chevron draws in the slot's ink (currentColor).
 const CHEVRON = "flex shrink-0 items-center justify-center text-ink-meta";
-
-const COPIED_MS = 2000;
 
 /** What a definition shows: words, a status, or an in-place control. */
 export type DefinitionValue =
@@ -163,20 +162,13 @@ export function DefinitionRow({
 // The copy act: a check and the word Copied for two seconds once copied.
 function CopyAct({ label, value }: { label: string; value: string }) {
 	const words = useWords();
-	const [done, setDone] = useState(false);
-	useEffect(() => {
-		if (!done) return;
-		const timer = setTimeout(() => setDone(false), COPIED_MS);
-		return () => clearTimeout(timer);
-	}, [done]);
+	const [done, copy] = useCopy();
 	return (
 		<IconButton
 			icon={done ? "Check" : "Copy"}
 			fit="bar"
 			label={done ? words.copied : `${words.copy} ${label}`}
-			onAct={() => {
-				navigator.clipboard.writeText(value).then(() => setDone(true));
-			}}
+			onAct={() => copy(value)}
 		/>
 	);
 }

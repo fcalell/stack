@@ -203,6 +203,11 @@ const CLASS_ROOTS = [
 	"pointer-events",
 	"select",
 	"sr",
+	"col",
+	"row",
+	"table",
+	"wrap",
+	"-indent",
 ];
 const CLASS_EXACT = [
 	"border",
@@ -220,6 +225,8 @@ const CLASS_EXACT = [
 	"uppercase",
 	"tabular-nums",
 	"sr-only",
+	"invisible",
+	"isolate",
 ];
 
 function variantOf(token: string): string | undefined {

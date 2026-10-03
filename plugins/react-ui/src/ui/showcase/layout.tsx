@@ -2,11 +2,13 @@ import type { PlaceSpec, Switcher } from "@fcalell/ui-core/descriptors";
 import { text } from "@fcalell/ui-core/variants";
 import { use } from "react";
 import { Shell } from "../components/shell/index.tsx";
+import { Assistant } from "./layout/assistant.tsx";
 import { Deploys } from "./layout/deploys.tsx";
 import { act, HereContext, readHere, useTo } from "./layout/here.ts";
 import { Members } from "./layout/members.tsx";
 import { Domains, Logs, Projects, Verify, Welcome } from "./layout/places.tsx";
 import { Settings } from "./layout/settings.tsx";
+import { Usage } from "./layout/usage.tsx";
 import { useView, ViewBar } from "./view.tsx";
 
 // The places the review draws, by the `place` the URL names; a pushed Screen
@@ -17,6 +19,8 @@ const PAGES = {
 	logs: { page: Logs, in: "logs" },
 	domains: { page: Domains, in: "domains" },
 	verify: { page: Verify, in: "domains" },
+	usage: { page: Usage, in: "usage" },
+	assistant: { page: Assistant, in: "assistant" },
 	members: { page: Members, in: "members" },
 	settings: { page: Settings, in: "settings" },
 } as const;
@@ -28,9 +32,10 @@ const PLACES: Array<Omit<PlaceSpec, "route"> & { place?: Page }> = [
 	{ label: "Activity", icon: "Activity", count: 3 },
 	{ label: "Deploys", icon: "Rocket", place: "deploys" },
 	{ label: "Projects", icon: "Folder", place: "projects" },
-	{ label: "Usage", icon: "ChartColumn" },
+	{ label: "Usage", icon: "ChartColumn", place: "usage" },
 	{ label: "Domains", icon: "Globe", place: "domains" },
 	{ label: "Logs", icon: "Logs", place: "logs" },
+	{ label: "Assistant", icon: "Sparkles", place: "assistant" },
 	{ label: "Members", icon: "Users", place: "members" },
 	{ label: "Settings", icon: "Settings", place: "settings" },
 ];

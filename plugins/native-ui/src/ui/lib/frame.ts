@@ -17,6 +17,10 @@ export const ActFloats = createContext<((floats: boolean) => void) | null>(
 	null,
 );
 
+// A Thread whose input docks at its Place's foot tells the Shell the foot's
+// height, whose toasts then stand above the foot; 0 takes it back.
+export const FootDocks = createContext<((height: number) => void) | null>(null);
+
 // A Split lends its Details act to the Place or Screen it sits in, which
 // draws it after its own actions; `undefined` takes it back.
 export const LendAct = createContext<
@@ -37,6 +41,13 @@ export const RecordAlone = createContext<((alone: boolean) => void) | null>(
 // Whether the record stands alone in the Place's Split: the Toolbar over the
 // list leaves with the list.
 export const RecordShown = createContext(false);
+
+// A Thread standing in a Place's body tells the Place, whose body then gives
+// it the page's height and no inset, leaving scrolling to its log; a Section
+// takes the call back, a Thread in it standing among the page's sections.
+export const ThreadFills = createContext<((fills: boolean) => void) | null>(
+	null,
+);
 
 // A bleeding Place hands the room its floating act needs to the regions that
 // scroll inside its body, which keep it under their last row.

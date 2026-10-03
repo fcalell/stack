@@ -3,13 +3,18 @@ import type { ShowcaseFrame } from "./cells.ts";
 import { drawActionBar } from "./frames/action-bar.tsx";
 import { drawAvatar } from "./frames/avatar.tsx";
 import { drawBanner } from "./frames/banner.tsx";
+import { drawBarChart } from "./frames/bar-chart.tsx";
 import { drawButton } from "./frames/button.tsx";
 import { drawCheckbox } from "./frames/checkbox.tsx";
 import { drawChip } from "./frames/chip.tsx";
+import { drawCode } from "./frames/code.tsx";
 import { drawColumns } from "./frames/columns.tsx";
+import { drawComparison } from "./frames/comparison.tsx";
 import { drawCount } from "./frames/count.tsx";
 import { drawDefinitionRow } from "./frames/definition-row.tsx";
+import { drawDiff } from "./frames/diff.tsx";
 import { drawEmptyState } from "./frames/empty-state.tsx";
+import { drawFileRow } from "./frames/file-row.tsx";
 import { drawForm } from "./frames/form.tsx";
 import { drawFormField } from "./frames/form-field.tsx";
 import { drawGroup } from "./frames/group.tsx";
@@ -22,10 +27,16 @@ import { drawLink } from "./frames/link.tsx";
 import { drawList } from "./frames/list.tsx";
 import { drawListRow } from "./frames/list-row.tsx";
 import { drawMenu } from "./frames/menu.tsx";
+import { drawMessage } from "./frames/message.tsx";
+import { drawMessageInput } from "./frames/message-input.tsx";
+import { drawMeter } from "./frames/meter.tsx";
 import { drawOptionList } from "./frames/option-list.tsx";
 import { drawPendingBar } from "./frames/pending-bar.tsx";
 import { drawPicker } from "./frames/picker.tsx";
 import { drawPlace } from "./frames/place.tsx";
+import { drawProse } from "./frames/prose.tsx";
+import { drawProseDiff } from "./frames/prose-diff.tsx";
+import { drawQrCode } from "./frames/qr-code.tsx";
 import { drawQueryBoundary } from "./frames/query-boundary.tsx";
 import { drawScreen } from "./frames/screen.tsx";
 import { drawSection } from "./frames/section.tsx";
@@ -38,8 +49,10 @@ import { drawSpinner } from "./frames/spinner.tsx";
 import { drawSplit } from "./frames/split.tsx";
 import { drawStatus } from "./frames/status.tsx";
 import { drawSwitch } from "./frames/switch.tsx";
+import { drawTable } from "./frames/table.tsx";
 import { drawText } from "./frames/text.tsx";
 import { drawTextArea } from "./frames/text-area.tsx";
+import { drawThread } from "./frames/thread.tsx";
 import { drawToast } from "./frames/toast.tsx";
 import { drawToolbar } from "./frames/toolbar.tsx";
 
@@ -92,4 +105,17 @@ export const registry: Partial<
 	Toast: drawToast,
 	Banner: drawBanner,
 	PendingBar: drawPendingBar,
+	Table: drawTable,
+	Message: drawMessage,
+	MessageInput: drawMessageInput,
+	Thread: drawThread,
+	Meter: drawMeter,
+	BarChart: drawBarChart,
+	QrCode: drawQrCode,
+	Prose: drawProse,
+	Code: drawCode,
+	Diff: drawDiff,
+	ProseDiff: drawProseDiff,
+	FileRow: drawFileRow,
+	Comparison: drawComparison,
 };

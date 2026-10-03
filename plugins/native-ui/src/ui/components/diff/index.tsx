@@ -1,25 +1,101 @@
-import type { Hunk } from "@fcalell/ui-core/descriptors";
+import type { DiffLine, Hunk } from "@fcalell/ui-core/descriptors";
 import {
+	CONTENT_FRAME,
+	DIFF_CODE,
 	DIFF_GUTTER,
+	DIFF_HUNK,
+	DIFF_MARK,
 	diffLine,
-	GROUP_GROUND,
-	text,
+	skeleton,
 } from "@fcalell/ui-core/variants";
-import { Text as RNText, ScrollView, View } from "react-native";
+import { structuredPatch } from "diff";
+import { Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import { lineHunks } from "../../lib/line-diff";
-import { LoadingRows } from "../../lib/loading";
+
+const FRAME = "min-w-0 overflow-hidden";
+// A line's cells stand from its top, the numbers on its first line.
+const ROW = "flex-row items-start";
+const GUTTER = "text-right";
+const CODE = "flex-1 min-w-0";
+// A line of the code role: a zero-width strut sets its height, the bar
+// centred on it.
+const LINE = "flex-row items-center";
+const BAR_LINE = "flex-1 flex-row items-center";
+const STRUT = "​";
+// The loading form: the hunk header's bar, then each line's bar at the
+// length of the line it stands in for.
+const HEADER_BAR = "w-1/3";
+const BARS = [
+	"w-1/2",
+	"w-1/3",
+	"w-2/3",
+	"w-1/2",
+	"w-3/4",
+	"w-1/4",
+	"w-2/3",
+	"w-1/2",
+] as const;
+// The marker a line's kind reads by without its ground's hue.
+const MARKS: Record<DiffLine["kind"], string> = {
+	context: " ",
+	added: "+",
+	removed: "−",
+};
 
 interface DiffBase extends Closed {
+	// What the diff shows (the file's path), the name of its lines.
+	label: string;
+	// The lines wait: the hunk header's bar and the lines' bars stand in for
+	// them.
 	loading?: boolean;
 }
 
-// The lines come as `hunks`, or as two texts a machine reads, `before` and
-// `after`, diffed here by line.
+// A unified diff, as hunks, or as the two texts it compares, diffed here by
+// line.
 export type DiffProps =
 	| (DiffBase & { hunks: readonly Hunk[]; before?: never; after?: never })
 	| (DiffBase & { hunks?: never; before: string; after: string });
+
+// The unified line diff of two texts as the hunks a `Diff` draws, three lines
+// of context around each change, as git shows them.
+function lineHunks(before: string, after: string): Hunk[] {
+	const patch = structuredPatch("", "", before, after, undefined, undefined, {
+		context: 3,
+	});
+	return patch.hunks.map((hunk) => {
+		let old = hunk.oldStart;
+		let next = hunk.newStart;
+		const lines: DiffLine[] = [];
+		for (const line of hunk.lines) {
+			const text = line.slice(1);
+			if (line.startsWith("+"))
+				lines.push({ kind: "added", text, after: next++ });
+			else if (line.startsWith("-"))
+				lines.push({ kind: "removed", text, before: old++ });
+			else if (line.startsWith(" "))
+				lines.push({ kind: "context", text, before: old++, after: next++ });
+			// A "\" line marks a missing final newline, which draws as nothing.
+		}
+		return {
+			header: `@@ -${start(hunk.oldStart, hunk.oldLines)},${hunk.oldLines} +${start(hunk.newStart, hunk.newLines)},${hunk.newLines} @@`,
+			lines,
+		};
+	});
+}
+
+// A side with no lines starts at 0 in the header, as git writes it.
+function start(first: number, count: number): number {
+	return count === 0 ? first - 1 : first;
+}
+
+// A line's indent in no-break spaces (a tab as the two of the board's
+// indent), so a wrapped line never breaks right after it.
+function held(text: string): string {
+	return text.replace(/^[ \t]+/, (indent) =>
+		indent.replaceAll(" ", " ").replaceAll("\t", "  "),
+	);
+}
 
 // A hunk is keyed by its header and its first line numbers, which no two
 // hunks of one diff share.
@@ -28,63 +104,87 @@ function hunkKey(hunk: Hunk): string {
 	return `${hunk.header}:${first?.before ?? ""}:${first?.after ?? ""}`;
 }
 
-// Mono with a line-number gutter that scrolls with the lines; added lines on
-// ok-soft, removed on danger-soft. The phone draws unified.
-export function Diff({ hunks: given, before, after, loading }: DiffProps) {
-	if (loading) return <LoadingRows />;
-	const hunks = given ?? lineHunks(before ?? "", after ?? "");
+// A line is keyed by its numbers, which no two lines of one hunk share.
+function lineKey(line: DiffLine): string {
+	return `${line.kind}:${line.before ?? ""}:${line.after ?? ""}`;
+}
+
+// The two number columns and the marker. A Text inherits nothing from the
+// row it stands in, so each cell takes the line's role and ink.
+function Gutters({ line }: { line?: DiffLine }) {
+	const kind = diffLine({ kind: line?.kind ?? "context" });
 	return (
-		<ScrollView
-			horizontal
-			showsHorizontalScrollIndicator={false}
-			className={cn(GROUP_GROUND, "overflow-hidden")}
-		>
-			<View>
-				{hunks.map((hunk) => (
-					<View key={hunkKey(hunk)}>
-						<RNText className={cn(diffLine({ kind: "header" }), "px-pair")}>
-							{hunk.header}
-						</RNText>
-						{hunk.lines.map((line, index) => (
-							<View
-								// biome-ignore lint/suspicious/noArrayIndexKey: lines are positional
-								key={index}
-								className={cn(
-									diffLine({ kind: line.kind }),
-									"flex-row gap-inside px-pair",
-								)}
-							>
-								<RNText
-									className={cn(
-										text({ role: "code" }),
-										DIFF_GUTTER,
-										"w-8 text-right",
-									)}
-								>
-									{line.before ?? ""}
-								</RNText>
-								<RNText
-									className={cn(
-										text({ role: "code" }),
-										DIFF_GUTTER,
-										"w-8 text-right",
-									)}
-								>
-									{line.after ?? ""}
-								</RNText>
-								<RNText className={text({ role: "code" })}>
-									{line.kind === "added"
-										? "+"
-										: line.kind === "removed"
-											? "−"
-											: " "}
-									{line.text}
-								</RNText>
-							</View>
-						))}
+		<>
+			<RNText className={cn(kind, DIFF_GUTTER, GUTTER)}>{line?.before}</RNText>
+			<RNText className={cn(kind, DIFF_GUTTER, GUTTER)}>{line?.after}</RNText>
+			<RNText className={cn(kind, DIFF_MARK)}>
+				{MARKS[line?.kind ?? "context"]}
+			</RNText>
+		</>
+	);
+}
+
+// A unified diff at the code role in the frame Code shares: each hunk's
+// header on the group ground in the meta ink, then its lines, added on
+// ok-soft and removed on danger-soft, the whole row, each with its two line
+// numbers and its `+` or `−` marker. A long line wraps under itself at the
+// line's start: React Native has no text indent, so a wrapped line does not
+// hang. The frame is a list named by `label`, the phone having no table.
+export function Diff({ label, hunks, before, after, loading }: DiffProps) {
+	if (loading)
+		return (
+			<View
+				accessibilityState={{ busy: true }}
+				className={cn(CONTENT_FRAME, FRAME)}
+			>
+				<View className={diffLine({ kind: "header" })}>
+					<View className={cn(DIFF_HUNK, LINE)}>
+						<RNText className={diffLine({ kind: "header" })}>{STRUT}</RNText>
+						<View className={cn(skeleton({ kind: "line" }), HEADER_BAR)} />
+					</View>
+				</View>
+				{BARS.map((width, index) => (
+					<View
+						// biome-ignore lint/suspicious/noArrayIndexKey: the lines are fixed stand-ins
+						key={index}
+						className={cn(diffLine({ kind: "context" }), ROW)}
+					>
+						<Gutters />
+						<View className={cn(DIFF_CODE, BAR_LINE)}>
+							<RNText className={diffLine({ kind: "context" })}>{STRUT}</RNText>
+							<View className={cn(skeleton({ kind: "line" }), width)} />
+						</View>
 					</View>
 				))}
 			</View>
-		</ScrollView>
+		);
+	const shown = hunks ?? lineHunks(before ?? "", after ?? "");
+	return (
+		<View
+			accessibilityRole="list"
+			accessibilityLabel={label}
+			className={cn(CONTENT_FRAME, FRAME)}
+		>
+			{shown.map((hunk) => [
+				<View key={hunkKey(hunk)} className={diffLine({ kind: "header" })}>
+					<RNText className={cn(diffLine({ kind: "header" }), DIFF_HUNK)}>
+						{hunk.header}
+					</RNText>
+				</View>,
+				...hunk.lines.map((line) => (
+					<View
+						key={`${hunkKey(hunk)}/${lineKey(line)}`}
+						className={cn(diffLine({ kind: line.kind }), ROW)}
+					>
+						<Gutters line={line} />
+						<RNText
+							className={cn(diffLine({ kind: line.kind }), DIFF_CODE, CODE)}
+						>
+							{held(line.text)}
+						</RNText>
+					</View>
+				)),
+			])}
+		</View>
 	);
 }

@@ -35,7 +35,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useResolveClassNames, withUniwind } from "uniwind";
 import { cn } from "../../lib/cn";
 import { FieldNameContext } from "../../lib/field";
+import { FormStands } from "../../lib/form";
 import { timing } from "../../lib/motion";
+import { RaisedGround } from "../../lib/raised";
 import { ReasonHostContext } from "../../lib/reason";
 import { TouchedContext } from "../../lib/touched";
 import { useWords } from "../../lib/words";
@@ -173,16 +175,18 @@ export function SheetBase({
 		[blocked],
 	);
 	// gorhom draws the head, the body and the foot as three trees, so each
-	// carries the sheet's contexts.
+	// carries the sheet's contexts and its raised ground.
 	const within = useCallback(
 		(node: ReactNode) => (
-			<GrowContext.Provider value={grow}>
-				<FieldNameContext.Provider value={title}>
-					<TouchedContext.Provider value={touchedValue}>
-						{node}
-					</TouchedContext.Provider>
-				</FieldNameContext.Provider>
-			</GrowContext.Provider>
+			<RaisedGround>
+				<GrowContext.Provider value={grow}>
+					<FieldNameContext.Provider value={title}>
+						<TouchedContext.Provider value={touchedValue}>
+							<FormStands.Provider value="sheet">{node}</FormStands.Provider>
+						</TouchedContext.Provider>
+					</FieldNameContext.Provider>
+				</GrowContext.Provider>
+			</RaisedGround>
 		),
 		[grow, title, touchedValue],
 	);

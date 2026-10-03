@@ -20,6 +20,7 @@ import { Split } from "../../components/split/index.tsx";
 import { Toolbar } from "../../components/toolbar/index.tsx";
 import { confirm } from "../../lib/confirm.ts";
 import { toast } from "../../lib/toast.ts";
+import { DeployChanges } from "./changes.tsx";
 import { act, HereContext, settle, useFixture, useTo } from "./here.ts";
 
 interface Deploy {
@@ -240,12 +241,7 @@ function Record(props: { deploy: Deploy }) {
 					/>
 				</Group>
 			</Section>
-			<Section title="Build log" count={214} folded onToggle={act}>
-				<Group>
-					<DefinitionRow label="Install" value="12 s" />
-					<DefinitionRow label="Build" value="1 min 18 s" />
-				</Group>
-			</Section>
+			<DeployChanges id={deploy.id} />
 		</>
 	);
 }

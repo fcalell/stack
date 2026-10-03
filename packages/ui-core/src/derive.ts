@@ -35,12 +35,16 @@ import {
 	type Knobs,
 	LABEL,
 	LOOP_MS,
+	MEASURE_CHARACTERS,
+	MEASURES,
+	type Measure,
 	MODES,
 	MONO_ADVANCE,
 	type Mode,
 	RADIUS_PX,
 	RADIUS_ROLES,
 	type RadiusRole,
+	SANS_ADVANCE,
 	SHADOW_INK,
 	SHADOW_LAYERS,
 	SHADOW_LEVELS,
@@ -81,6 +85,8 @@ export interface ResolvedTheme {
 	sizes: Record<Density, Record<Size, string>>;
 	radii: Record<RadiusRole, string>;
 	widths: Record<Width, string>;
+	// Native's two measures in px, since uniwind reads no `ch`.
+	nativeMeasures: Record<Measure, string>;
 	breakpoints: Record<Breakpoint, string>;
 	// The two family stacks: the knob's family, its metric fallback face, then
 	// the platform fallback.
@@ -367,6 +373,11 @@ export function deriveTheme(theme: Theme = {}): ResolvedTheme {
 		sizes: perDensity(sizesFor),
 		radii: record(RADIUS_ROLES, (role) => `${RADIUS_PX[role]}px`),
 		widths: record(WIDTHS, (width) => WIDTH_VALUE[width]),
+		nativeMeasures: record(
+			MEASURES,
+			(measure) =>
+				`${Math.ceil(MEASURE_CHARACTERS[measure] * SANS_ADVANCE * BODY_SIZE.touch)}px`,
+		),
 		breakpoints: record(BREAKPOINTS, (bp) => `${BREAKPOINT_PX[bp]}px`),
 		fonts: {
 			sans: fontStack(knobs.fonts.sans, "sans"),

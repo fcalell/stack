@@ -26,6 +26,7 @@ import { cn } from "../../lib/cn";
 import {
 	ActFloats,
 	CoverTabs,
+	FootDocks,
 	PlaceRoute,
 	ShellSwitcher,
 } from "../../lib/frame";
@@ -74,7 +75,7 @@ export interface ShellProps extends Closed {
 
 // The frame on the column's ground: the banner under the status bar, the
 // content, the toast queue over the content's foot (above a Place's act while
-// it floats), the `confirm()` decisions as a sheet, and the tab bar over the
+// it floats, a Thread's input while it docks), the `confirm()` decisions as a sheet, and the tab bar over the
 // home indicator, past five places four and a More tab that opens a page of
 // the rest in the content's place. The switcher's trigger starts each Place's
 // top bar, the current place's route handed down for a Place's back act; a
@@ -84,6 +85,7 @@ export function Shell({ places, banner, switcher, children }: ShellProps) {
 	const insets = useSafeAreaInsets();
 	const [covered, cover] = useState(false);
 	const [lifted, lift] = useState(false);
+	const [footing, dock] = useState(0);
 	const pathname = usePathname();
 	// The More page stands at the route it opened on: going to a place closes it.
 	const [moreAt, setMoreAt] = useState<string>();
@@ -106,7 +108,9 @@ export function Shell({ places, banner, switcher, children }: ShellProps) {
 					<PlaceRoute.Provider value={route}>
 						<CoverTabs.Provider value={cover}>
 							<ActFloats.Provider value={lift}>
-								{more ? <MorePage places={rest} /> : children}
+								<FootDocks.Provider value={dock}>
+									{more ? <MorePage places={rest} /> : children}
+								</FootDocks.Provider>
 							</ActFloats.Provider>
 						</CoverTabs.Provider>
 					</PlaceRoute.Provider>
@@ -114,6 +118,8 @@ export function Shell({ places, banner, switcher, children }: ShellProps) {
 				<View pointerEvents="box-none" className={cn(TOASTS, TOAST_LAYER)}>
 					<ToastList />
 					{lifted ? <FloatingActRoom /> : null}
+					{/* The docked foot's room is its measured height: it grows with the input. */}
+					{footing > 0 ? <View style={{ height: footing }} /> : null}
 				</View>
 			</View>
 			{covered ? null : (

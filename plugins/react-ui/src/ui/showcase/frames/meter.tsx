@@ -1,0 +1,119 @@
+import type { ReactNode } from "react";
+import { Group } from "../../components/group/index.tsx";
+import { Meter } from "../../components/meter/index.tsx";
+import { Section } from "../../components/section/index.tsx";
+import type { ShowcaseFrame } from "../cells.ts";
+import { Wide } from "./layout-context.tsx";
+
+function Usage() {
+	return (
+		<Section title="Hobby plan" description="Resets on Oct 31.">
+			<Group>
+				{[
+					<Meter
+						key="requests"
+						label="Requests"
+						value={250_000}
+						max={1_000_000}
+						unit="requests"
+						meta="250k of 1M requests"
+					/>,
+					<Meter
+						key="minutes"
+						label="Build minutes"
+						value={4000}
+						max={6000}
+						unit="minutes"
+						meta="4,000 of 6,000 minutes"
+					/>,
+					<Meter
+						key="bandwidth"
+						label="Bandwidth"
+						value={92}
+						max={100}
+						unit="GB"
+						meta="92 of 100 GB"
+					/>,
+					<Meter
+						key="storage"
+						label="Storage"
+						value={11.8}
+						max={10}
+						unit="GB"
+						meta="11.8 of 10 GB · 1.8 GB over, billed at the end of the month"
+					/>,
+				]}
+			</Group>
+		</Section>
+	);
+}
+
+// The meters at one level, as board 54's states draw them.
+const LEVELS: Record<string, ReactNode> = {
+	"METER_FILL.level.under": (
+		<>
+			<Meter
+				label="Seats"
+				value={1}
+				max={12}
+				unit="seats"
+				meta="1 of 12 seats"
+			/>
+			<Meter
+				label="Preview deploys"
+				value={0}
+				max={100}
+				unit="preview deploys"
+				meta="0 of 100 this month"
+			/>
+			<Meter label="Build minutes" value={4000} max={6000} unit="minutes" />
+		</>
+	),
+	"METER_FILL.level.near": (
+		<>
+			<Meter
+				label="Bandwidth"
+				value={92}
+				max={100}
+				unit="GB"
+				meta="92 of 100 GB"
+			/>
+			<Meter
+				label="Projects"
+				value={3}
+				max={3}
+				unit="projects"
+				meta="3 of 3 projects"
+			/>
+		</>
+	),
+	"METER_FILL.level.over": (
+		<Meter
+			label="Storage"
+			value={11.8}
+			max={10}
+			unit="GB"
+			meta="11.8 of 10 GB"
+		/>
+	),
+};
+
+// A `METER_FILL.level` cell draws the meters at that level, every other cell
+// the usage group; loading stands beside its loaded form.
+export function drawMeter(frame: ShowcaseFrame) {
+	let drawn = LEVELS[frame.cell.name] ?? <Usage />;
+	if (frame.state === "loading")
+		drawn = (
+			<div className="grid grid-cols-2 gap-x-fields">
+				<Meter
+					label="Seats"
+					value={1}
+					max={12}
+					unit="seats"
+					meta="1 of 12 seats"
+				/>
+				<Meter label="" value={0} max={0} loading />
+			</div>
+		);
+	return <Wide>{drawn}</Wide>;
+}

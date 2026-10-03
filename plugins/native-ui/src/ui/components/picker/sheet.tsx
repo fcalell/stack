@@ -3,10 +3,12 @@ import type {
 	Option,
 	OptionGroup,
 } from "@fcalell/ui-core/descriptors";
+import type { ChipFamily } from "@fcalell/ui-core/tokens";
 import {
 	HAIRLINE,
 	OPTION_GROUP_LABEL,
 	PICKER_EMPTY,
+	ROW_LEADING,
 	row,
 	SELECT_GROUP,
 	text,
@@ -17,6 +19,7 @@ import { Pressable, Text as RNText, View } from "react-native";
 import { cn } from "../../lib/cn";
 import { Ink } from "../../lib/ink";
 import { Avatar } from "../avatar";
+import { Chip } from "../chip";
 import { Icon } from "../icon";
 import { Input } from "../input";
 import { SheetBase } from "../sheet/base";
@@ -33,6 +36,10 @@ const SEARCH_SLOT = "px-card pt-pair";
 const OPTION = "flex-row items-center active:bg-wash-press";
 const OPTION_TEXT = "flex-1 min-w-0";
 const TICK = "shrink-0";
+// A glyph leads an option in the row's leading slot.
+const LEADING = "shrink-0 items-center justify-center";
+// A chip column's options are its chips.
+const CHIP_SLOT = "flex-row grow min-w-0";
 // The act that ends the list stands under a hairline across it, a float
 // inset below the line.
 const ACT_SLOT = "border-t pt-float";
@@ -58,12 +65,38 @@ export function groupsOf<V extends string | null>(
 	}));
 }
 
+// A chip column's option draws as its chip alone, its description unsaid.
+const asChip = (
+	option: Option<string | null>,
+	chip?: ChipFamily,
+): chip is ChipFamily => chip !== undefined && option.value !== null;
+
 // An option's label (the empty choice in the placeholder's ink) over its
-// description; an option carrying a state leads with its status's dot, one
-// carrying an avatar with its avatar.
-function OptionText({ option }: { option: Option<string | null> }) {
+// description; an option carrying a glyph leads with it, one carrying a state
+// with its status's dot, one carrying an avatar with its avatar; a chip
+// column's option is its chip.
+function OptionText({
+	option,
+	chip,
+}: {
+	option: Option<string | null>;
+	chip?: ChipFamily;
+}) {
+	if (asChip(option, chip))
+		return (
+			<View className={CHIP_SLOT}>
+				<Chip family={chip} label={option.label} />
+			</View>
+		);
 	return (
 		<>
+			{option.icon ? (
+				<View className={cn(ROW_LEADING, LEADING)}>
+					<Ink.Provider value="ink-meta">
+						<Icon name={option.icon} />
+					</Ink.Provider>
+				</View>
+			) : null}
 			{option.status ? <StatusDot state={option.status} /> : null}
 			{option.avatar ? (
 				<Avatar name={option.label} src={option.avatar.src} />
@@ -101,6 +134,7 @@ export function PickSheet<V extends string | null>({
 	open,
 	onClose,
 	act,
+	chip,
 }: {
 	title: string;
 	options: PickOptions<V>;
@@ -109,6 +143,7 @@ export function PickSheet<V extends string | null>({
 	open: boolean;
 	onClose: () => void;
 	act?: IconAct;
+	chip?: ChipFamily;
 }) {
 	const [search, setSearch] = useState("");
 	const groups = groupsOf(options);
@@ -169,13 +204,16 @@ export function PickSheet<V extends string | null>({
 									}}
 									className={cn(
 										row({
-											lines: option.description ? "two" : "one",
+											lines:
+												option.description && !asChip(option, chip)
+													? "two"
+													: "one",
 											ground: "group",
 										}),
 										OPTION,
 									)}
 								>
-									<OptionText option={option} />
+									<OptionText option={option} chip={chip} />
 									{chosen ? (
 										<View className={TICK}>
 											<Ink.Provider value="ink-body">

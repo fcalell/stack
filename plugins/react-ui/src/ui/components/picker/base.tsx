@@ -7,6 +7,7 @@ import type {
 	Option,
 	OptionGroup,
 } from "@fcalell/ui-core/descriptors";
+import type { ChipFamily } from "@fcalell/ui-core/tokens";
 import {
 	FIELD_GLYPH,
 	FIELD_PLACEHOLDER,
@@ -20,6 +21,7 @@ import {
 	PILL_ACT,
 	POPOVER,
 	picker,
+	ROW_LEADING,
 	type RowGround,
 	row,
 	SELECT_GROUP,
@@ -36,10 +38,12 @@ import {
 	useState,
 } from "react";
 import { arrowsOver } from "../../lib/arrows.ts";
+import { CellField } from "../../lib/field.ts";
 import { spacing, useTouch } from "../../lib/media.ts";
 import { PortalContainer } from "../../lib/portal.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Avatar } from "../avatar/index.tsx";
+import { Chip } from "../chip/index.tsx";
 import { Icon } from "../icon/index.tsx";
 import { Input } from "../input/index.tsx";
 import { SheetBase } from "../sheet/base.tsx";
@@ -52,6 +56,8 @@ import type { PickerProps } from "./index.tsx";
 const FIELD_TRIGGER =
 	"flex shrink-0 items-center text-start hover:border-edge-hover";
 const FIELD_OPEN = "outline-2 outline-offset-2 outline-ring";
+// In a table cell the trigger fills the cell it stands in for.
+const IN_CELL = "w-full";
 const FIELD_VALUE = "min-w-0 grow truncate";
 // A row-fit trigger centres in its row and pulls back by its own padding at
 // the row's end; it stands over a row's hit. Open, it holds the press wash
@@ -80,6 +86,10 @@ const OPTION_BUTTON =
 const OPTION_TEXT = "flex flex-col min-w-0 grow";
 const LINE = "truncate";
 const TICK = "flex shrink-0 text-ink-body";
+// A glyph leads an option in the row's leading slot.
+const LEADING = "flex shrink-0 items-center justify-center";
+// A chip column's value and options are its chips.
+const CHIP_SLOT = "flex grow min-w-0";
 const SEARCH = "flex grow items-center";
 const SEARCH_VALUE =
 	"min-w-0 grow truncate outline-none placeholder:text-ink-meta";
@@ -115,13 +125,20 @@ function groupsOf<V extends string | null>(
 	}));
 }
 
+// A chip column's option draws as its chip alone, its description unsaid.
+const asChip = (
+	option: Option<string | null>,
+	chip?: ChipFamily,
+): chip is ChipFamily => chip !== undefined && option.value !== null;
+
 const optionRow = (
 	option: Option<string | null>,
 	ground: RowGround,
+	chip?: ChipFamily,
 	highlighted = false,
 ) =>
 	row({
-		lines: option.description ? "two" : "one",
+		lines: option.description && !asChip(option, chip) ? "two" : "one",
 		state: highlighted ? "highlighted" : "rest",
 		ground,
 	});
@@ -129,10 +146,24 @@ const optionRow = (
 // An option's label (the empty choice in the placeholder's ink) over its
 // description; an option carrying a state leads with its status's dot, one
 // carrying an avatar with its avatar.
-function OptionText(props: { option: Option<string | null> }) {
-	const { option } = props;
+function OptionText(props: {
+	option: Option<string | null>;
+	chip?: ChipFamily;
+}) {
+	const { option, chip } = props;
+	if (asChip(option, chip))
+		return (
+			<span className={CHIP_SLOT}>
+				<Chip family={chip} label={option.label} />
+			</span>
+		);
 	return (
 		<>
+			{option.icon ? (
+				<span className={cn(ROW_LEADING, LEADING)}>
+					<Icon name={option.icon} />
+				</span>
+			) : null}
 			{option.status ? <StatusDot state={option.status} /> : null}
 			{option.avatar ? (
 				<Avatar name={option.label} src={option.avatar.src} />
@@ -211,12 +242,34 @@ export function PickerBase<V extends string | null = string>({
 	fit = "field",
 	act,
 	drawn,
+	chip,
+	name,
 }: PickerProps<V> & {
 	/** A trigger drawn by the composer, handed Base UI's props and whether the list is open. */
 	drawn?: (handed: ComponentProps<"button">, open: boolean) => ReactElement;
+	/** The family a chip column's value and options draw as chips of. */
+	chip?: ChipFamily;
+	/** The trigger's name where its composer says more than the value (a sort's direction). */
+	name?: string;
 }) {
 	const touch = useTouch();
-	const [open, setOpen] = useState(false);
+	// In a table cell the pick opens as its edit starts, and its list closing
+	// ends the edit.
+	const cell = use(CellField);
+	const [open, setOpenState] = useState(cell?.editing ?? false);
+	const setOpen = (next: boolean) => {
+		setOpenState(next);
+		if (!next) cell?.done();
+	};
+	// The cell opens the list again each time its edit starts from the keyboard
+	// or a tap.
+	const opens = cell?.opens ?? 0;
+	const seen = useRef(opens);
+	useEffect(() => {
+		const later = opens > seen.current;
+		seen.current = opens;
+		if (later) setOpenState(true);
+	}, [opens]);
 	const groups = groupsOf(options);
 	const flat = groups.flatMap((group) => group.items);
 	const current = flat.find((option) => option.value === value);
@@ -225,7 +278,13 @@ export function PickerBase<V extends string | null = string>({
 		onChange(next);
 	};
 	// A row's pick names its value with it; a field box's value is its own.
-	const named = fit === "row" && current ? `${label}, ${current.label}` : label;
+	const named =
+		name ??
+		cell?.label ??
+		(fit === "row" && current ? `${label}, ${current.label}` : label);
+	const glyph = current?.icon ? (
+		<Icon name={current.icon} fit={fit === "row" ? "meta" : "control"} />
+	) : null;
 	// An option carrying a state shows as its status.
 	const status = current?.status ? (
 		<Status state={current.status} label={current.label} />
@@ -244,23 +303,29 @@ export function PickerBase<V extends string | null = string>({
 			{current?.label ?? label}
 		</span>
 	);
-	const fieldShown = (
-		<span
-			className={cn(
-				fieldValue({ kind: "text" }),
-				current?.value === null && PICKER_EMPTY,
-				unset && FIELD_PLACEHOLDER,
-				FIELD_VALUE,
-			)}
-		>
-			{status ?? current?.label ?? label}
-		</span>
-	);
+	const fieldShown =
+		chip && current && current.value !== null ? (
+			<span className={CHIP_SLOT}>
+				<Chip family={chip} label={current.label} />
+			</span>
+		) : (
+			<span
+				className={cn(
+					fieldValue({ kind: "text" }),
+					current?.value === null && PICKER_EMPTY,
+					unset && FIELD_PLACEHOLDER,
+					FIELD_VALUE,
+				)}
+			>
+				{status ?? current?.label ?? label}
+			</span>
+		);
 	const own = (handed: ComponentProps<"button">) => (
 		<button
 			{...handed}
 			type="button"
 			aria-label={named}
+			tabIndex={cell ? -1 : handed.tabIndex}
 			className={
 				fit === "row"
 					? cn(PILL_ACT, picker({ fit }), ROW_TRIGGER, open && ROW_OPEN)
@@ -269,10 +334,12 @@ export function PickerBase<V extends string | null = string>({
 							picker({ fit }),
 							FIELD_GLYPH,
 							FIELD_TRIGGER,
+							cell && IN_CELL,
 							open && FIELD_OPEN,
 						)
 			}
 		>
+			{glyph}
 			{fit === "row" ? rowValue : fieldShown}
 			<Icon name="ChevronDown" fit={fit === "row" ? "meta" : "control"} />
 		</button>
@@ -291,6 +358,7 @@ export function PickerBase<V extends string | null = string>({
 				pick={pick}
 				trigger={trigger}
 				act={act}
+				chip={chip}
 			/>
 		);
 	if (flat.length > SEARCH_PAST)
@@ -304,6 +372,7 @@ export function PickerBase<V extends string | null = string>({
 				pick={pick}
 				trigger={trigger}
 				act={act}
+				chip={chip}
 			/>
 		);
 	return (
@@ -316,6 +385,7 @@ export function PickerBase<V extends string | null = string>({
 			pick={pick}
 			trigger={trigger}
 			act={act}
+			chip={chip}
 		/>
 	);
 }
@@ -357,6 +427,7 @@ interface PickParts<V extends string | null> {
 	pick: (value: V) => void;
 	trigger: (props: ComponentProps<"button">) => ReactElement;
 	act?: IconAct;
+	chip?: ChipFamily;
 }
 
 // The desktop list of six options or fewer: Base UI's select supplies the
@@ -366,6 +437,8 @@ function PickList<V extends string | null>(
 ) {
 	const container = use(PortalContainer);
 	const keyboard = useKeyed(props.trigger);
+	// In a table cell the list hangs from the cell's start.
+	const align = use(CellField) ? "start" : "end";
 	return (
 		<Select.Root
 			value={props.value ?? null}
@@ -376,7 +449,7 @@ function PickList<V extends string | null>(
 			<Select.Trigger render={(handed) => keyboard.trigger(handed)} />
 			<Select.Portal container={container}>
 				<Select.Positioner
-					align="end"
+					align={align}
 					alignItemWithTrigger={false}
 					sideOffset={() => spacing("pair")}
 				>
@@ -402,13 +475,18 @@ function PickList<V extends string | null>(
 											label={option.label}
 											className={(state) =>
 												cn(
-													optionRow(option, "list", state.highlighted),
+													optionRow(
+														option,
+														"list",
+														props.chip,
+														state.highlighted,
+													),
 													OPTION,
 													optionFocus(state.highlighted, keyboard.keyed),
 												)
 											}
 										>
-											<OptionText option={option} />
+											<OptionText option={option} chip={props.chip} />
 											<Select.ItemIndicator className={TICK}>
 												<Icon name="Check" fit="body" />
 											</Select.ItemIndicator>
@@ -440,6 +518,7 @@ function PickSearch<V extends string | null>(
 	const container = use(PortalContainer);
 	const words = useWords();
 	const keyboard = useKeyed(props.trigger);
+	const align = use(CellField) ? "start" : "end";
 	return (
 		<Combobox.Root
 			items={props.groups}
@@ -452,7 +531,7 @@ function PickSearch<V extends string | null>(
 		>
 			<Combobox.Trigger render={(handed) => keyboard.trigger(handed)} />
 			<Combobox.Portal container={container}>
-				<Combobox.Positioner align="end" sideOffset={() => spacing("pair")}>
+				<Combobox.Positioner align={align} sideOffset={() => spacing("pair")}>
 					<Combobox.Popup
 						{...keyboard.popup}
 						aria-label={props.label}
@@ -485,13 +564,18 @@ function PickSearch<V extends string | null>(
 												value={option}
 												className={(state) =>
 													cn(
-														optionRow(option, "list", state.highlighted),
+														optionRow(
+															option,
+															"list",
+															props.chip,
+															state.highlighted,
+														),
 														OPTION,
 														optionFocus(state.highlighted, keyboard.keyed),
 													)
 												}
 											>
-												<OptionText option={option} />
+												<OptionText option={option} chip={props.chip} />
 												<Combobox.ItemIndicator className={TICK}>
 													<Icon name="Check" fit="body" />
 												</Combobox.ItemIndicator>
@@ -609,12 +693,12 @@ function PickSheet<V extends string | null>(
 											onFocus={() => setFocused(option.value)}
 											onClick={() => props.pick(option.value)}
 											className={cn(
-												optionRow(option, "group"),
+												optionRow(option, "group", props.chip),
 												OPTION,
 												OPTION_BUTTON,
 											)}
 										>
-											<OptionText option={option} />
+											<OptionText option={option} chip={props.chip} />
 											{chosen ? (
 												<span className={TICK}>
 													<Icon name="Check" fit="body" />

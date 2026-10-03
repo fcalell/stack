@@ -5,6 +5,7 @@ import {
 	FLOATING_ACT_ROOM,
 	PAGE_BODY,
 	PAGE_HEAD,
+	PAGE_TITLE,
 	PAGE_TOP_BAR,
 	text,
 } from "@fcalell/ui-core/variants";
@@ -21,6 +22,7 @@ import {
 	RecordAlone,
 	RecordShown,
 	ShellSwitcher,
+	ThreadFills,
 } from "../../lib/frame";
 import { Scroll } from "../../lib/hosts";
 import { navigate } from "../../lib/navigate";
@@ -64,8 +66,9 @@ export interface PlaceProps extends Closed {
 // over the title, the body under it, and the one act floating over the
 // body's end, the body keeping room under its last row (a bleeding body's scrolling child
 // keeps it) so the act never covers it. With `bleed` the body is the whole box under the title, with no
-// side inset and no scroll, for a child that scrolls itself. A Split inside
-// lends it its Details act, and a record the Split shows alone puts a back
+// side inset and no scroll, for a child that scrolls itself; a Thread in the
+// body fills it the same way (its first frame remounts it out of the
+// scroll). A Split inside lends it its Details act, and a record the Split shows alone puts a back
 // act to the place's route in the switcher's stead.
 export function Place({
 	title,
@@ -80,6 +83,7 @@ export function Place({
 	const route = useContext(PlaceRoute);
 	const [lent, lend] = useState<IconAct>();
 	const [alone, standAlone] = useState(false);
+	const [fills, setFills] = useState(false);
 	// A record standing alone returns to the list, the place's own route.
 	const lead =
 		alone && route !== undefined ? (
@@ -124,7 +128,7 @@ export function Place({
 								</View>
 								<RNText
 									accessibilityRole="header"
-									className={cn(text({ role: "title" }), TITLE)}
+									className={cn(text({ role: "title" }), TITLE, PAGE_TITLE)}
 								>
 									{title}
 								</RNText>
@@ -136,12 +140,23 @@ export function Place({
 											{children}
 										</ActRoom.Provider>
 									</View>
+								) : fills ? (
+									// A Thread in the body fills it, as a bleeding body's child
+									// does: no inset, its log scrolling.
+									<View className={BODY}>
+										<ThreadFills.Provider value={setFills}>
+											{children}
+										</ThreadFills.Provider>
+										{room}
+									</View>
 								) : (
 									<Scroll
 										className={BODY}
 										contentContainerClassName={cn(PAGE_BODY, BODY_CONTENT)}
 									>
-										{children}
+										<ThreadFills.Provider value={setFills}>
+											{children}
+										</ThreadFills.Provider>
 										{room}
 									</Scroll>
 								)}

@@ -1,6 +1,6 @@
 import type { ResolvedTheme } from "@fcalell/ui-core/derive";
 import { cssIdent, cssString, cssTokenValue, cssVarName } from "./css.ts";
-import { modeBlocks, shadowBlocks, themeDeclarations } from "./theme.ts";
+import { modeBlocks, themeDeclarations, utilityBlocks } from "./theme.ts";
 
 // Inputs for the `.stack/global.css` derivation. `plugin-native-ui` resolves
 // the consumer's `theme` option through ui-core's `deriveTheme` and renders
@@ -23,6 +23,7 @@ const GENERATED_BANNER =
 //   @source ...                                   (className scan roots)
 //   @theme { resets, scales, families, colors }
 //   @utility shadow-<level> { box-shadow: … }     (× 3)
+//   @utility tabular-nums { font-variant-numeric: tabular-nums }
 //   @layer theme { :root { @variant light|dark { color overrides } } }
 //
 // Every name and value crosses the render boundary through cssVarName /
@@ -52,7 +53,7 @@ export function aggregateGlobalCss(payload: CodegenGlobalCssPayload): string {
 	lines.push("}");
 	lines.push("");
 
-	for (const [name, declarations] of shadowBlocks()) {
+	for (const [name, declarations] of utilityBlocks()) {
 		lines.push(`@utility ${cssIdent(name)} {`);
 		for (const [property, value] of Object.entries(declarations)) {
 			lines.push(`\t${property}: ${cssTokenValue(value)};`);

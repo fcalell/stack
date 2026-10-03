@@ -4,6 +4,9 @@ import {
 	type CountedWordKey,
 	LABEL,
 	MODES,
+	SLOT_WORD_KEYS,
+	SLOT_WORDS,
+	type SlotWordKey,
 	WORD_KEYS,
 	type WordKey,
 } from "./tokens.ts";
@@ -36,6 +39,16 @@ const countedWordSchema = z.strictObject({
 	other: z.string().min(1),
 });
 
+// A slot word spells every slot it is filled with.
+function slotWordSchema(key: SlotWordKey) {
+	const slots: readonly string[] = SLOT_WORDS[key];
+	return z
+		.string()
+		.refine((word) => slots.every((slot) => word.includes(`{${slot}}`)), {
+			message: `spells ${slots.map((slot) => `{${slot}}`).join(" and ")}`,
+		});
+}
+
 // `Object.fromEntries` widens its keys to `string`; each record is the keys
 // it maps.
 export const wordsSchema = z.strictObject({
@@ -45,6 +58,9 @@ export const wordsSchema = z.strictObject({
 	...(Object.fromEntries(
 		COUNTED_WORD_KEYS.map((key) => [key, countedWordSchema]),
 	) as Record<CountedWordKey, typeof countedWordSchema>),
+	...(Object.fromEntries(
+		SLOT_WORD_KEYS.map((key) => [key, slotWordSchema(key)]),
+	) as Record<SlotWordKey, ReturnType<typeof slotWordSchema>>),
 });
 
 // Throws an Error whose message names every offending key by its path, so a

@@ -67,13 +67,19 @@ pinned by the package's verify suite; this entry holds the architecture and its 
   `edge-hover`, `edge-error`, `ink-error`, `ink-disabled`), the two act fills (`act-accent`,
   `act-danger`) with their states, and the switch's five with the shared `toggle-on`. `COLOR_GROUPS` holds the roles by those groups and `COLOR_NAMES`
   is its flattening. A chart's series take the chip marks in `CHART_SERIES` order and a meter's
-  level turns on `METER_NEAR`, contract data rather than a cell, so both platforms draw the same
-  series colour and the same level for a value. The dark hairline is two tokens because the dark ladder spans more
+  level turns on `METER_NEAR`, contract data the cells are keyed by (`CHART_FILL {series}`,
+  `METER_FILL {level}`), so both platforms draw the same series colour and the same level for a
+  value. The dark hairline is two tokens because the dark ladder spans more
   than one hairline can straddle: a group or a lifted layer re-points `--color-edge` to
   `edge-raised` for everything inside it, so a part never picks between them. The grounds are
   `RAISED_GROUNDS` and the re-point `raisedGroundTokens`; the web scopes it on `.bg-group` and
-  `.bg-raised` in `@layer base` after the mode scopes. Native cannot: uniwind resolves a
-  class's custom property on that element alone, so no class re-points a subtree there. Rejected: a hue
+  `.bg-raised` in `@layer base` after the mode scopes. Native has no selector to hang it on, so
+  a raised surface wraps its content in `RaisedGround` (native-ui `lib/raised`), uniwind's
+  `ScopedVariables` holding each re-pointed variable at the value its read resolves to in the
+  mode (a scoped variable takes a value, never a `var()`); a sheet's three trees and a toast
+  wrap, and no native `group` ground holds a part that draws `edge`. A limit: uniwind 1.12's
+  `ScopedTheme` keeps the parent's scoped variables, so a light tile (the QR code's) inside a dark
+  raised ground draws its edge at the dark raised value; no screen does this today. Rejected: a hue
   computed per avatar name (neither a token nor a cell); chip hues stepped off the accent (a
   family must never wear the accent, so the six are fixed and the accent's band is left out);
   `Status` with a family mode (a state and a data value are two concepts, so two names).
@@ -88,7 +94,7 @@ pinned by the package's verify suite; this entry holds the architecture and its 
   `figures`, four tabular figures at the code size, held by a diff's number columns and a
   file row's count lanes). A size counted in figures is px at
   `MONO_ADVANCE` (Plex Mono's 0.6 em), never a `ch` width, because uniwind has no `ch` unit and
-  native draws the figures too; a named mono with a wider advance overflows it. `themeTokens` seeds the touch set on both platforms; the web
+  native draws the figures too; a named mono with a wider advance overflows it. The two measures are `ch` on the web (`measure-short` 18ch, `measure` 58ch), so each label keeps 18 characters of its own font; native has no `ch`, so `nativeMeasureTokens` declares them in px at `SANS_ADVANCE` (Plex Sans's "0", 0.6 em) of the touch body size, rounded up (173 and 557). That is a native limit: there every short label's cap is the body's 18 characters whatever its role (a chip's caption included, and `SKELETON_LANE`'s role axis draws one width), and a named sans with a wider "0" overflows them. `themeTokens` seeds the touch set on both platforms; the web
   overrides it with the desktop set in a `:root` rule in `@layer base` under a fine pointer at
   `tablet` width and wider (so a desktop window narrower than `tablet` draws the touch set and
   structure), the cascade the dark layer rides, so no cell carries a density
@@ -122,7 +128,7 @@ pinned by the package's verify suite; this entry holds the architecture and its 
 ## Words
 
 Every word a molecule draws or reads aloud on its own (the six `Status` words, `recommended`,
-`copy`, `copied`, `back`, `close`, `cancel`, `dismiss`, `more`, `send`, `stop`, `attach`, `search`, `loading`, `checking`, `retry`, `add`, `remove`, `details`, `places`, `notifications`, `code`, `added`, `removed`, and the counted `earlierLines`) comes
+`copy`, `copied`, `back`, `close`, `cancel`, `dismiss`, `more`, `send`, `stop`, `attach`, `search`, `loading`, `checking`, `retry`, `add`, `remove`, `details`, `places`, `notifications`, `code`, `added`, `removed`, `sort`, `ascending`, `descending`, `time`, `message`, `seen`, `unseen`, `copyFailed`, the counted `earlierLines`, and the slot words `meterValue`, `meterOver`, `linesAdded` and `linesRemoved`) comes
 from `words`, a closed typed object with English defaults. The `Words` type requires every key
 and `wordsSchema` is strict, so a translation missing a word fails `tsc` and the schema. It is a
 plugin option beside `theme`; each plugin contributes a `WordsProvider` into the generated entry
@@ -131,7 +137,12 @@ glue, and the context defaults to English when no provider is mounted. A consume
 prop on the molecule that draws it, never a key. A word drawn with a number is data, `{ one,
 other }` each spelling `{count}`, drawn through `counted(word, count)`, never a function: the
 words cross into the generated entry as a literal. Two forms are English's; a language with more
-plural categories needs a locale the words do not carry.
+plural categories needs a locale the words do not carry. A word drawn with values (a meter's "8.4 of 10") is one whole phrase spelling
+named slots (`{value} of {max}`), drawn through `filled(word, values)`, the figures localized by
+the component; the schema rejects a translation that drops a slot. Rejected: a bare connective
+(`of`) composed around the figures, a sentence fragment a language cannot reorder. A moment drawn as its age (a table's `age`
+cell, an ISO moment so the table sorts by it) is no word either: each plugin formats it with the
+platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's language, in one helper.
 
 ## Matrices and the sharing line
 
@@ -155,17 +166,19 @@ plural categories needs a locale the words do not carry.
   checked value, an error) is an axis; where the pointer or focus is on it (hover, press, focus,
   disabled, pending) is an overlay. A type role's cell carries its ink and, for `mono`,
   its family, since RN Text inherits nothing and both platforms bind `--font-mono`; `display`
-  carries `tabular-nums`, a stat's figures at one width (uniwind maps it to `fontVariant`). A
+  carries `tabular-nums`, a stat's figures at one width (uniwind maps it to `fontVariant`; native redeclares the utility plain, since Tailwind composes it from unset `--tw-*` variables that uniwind from 1.11 resolves to empty tokens React Native logs as unsupported). A
   labelled act's fill (`BUTTON`, `CHIP`) carries the ink as well, since the web glyph and
   spinner inside it draw in the current colour.
-- An atom's, a layout molecule's or a shared molecule's matrices are its approved artboard's
+- An atom's or a molecule's (layout, shared, content) matrices are its approved artboard's
   class strings, split on this line: a part with an axis (a state, a ground, a fit, what it holds)
-  is a matrix, a part with one shape a named constant (`POPOVER`, `PAGE_STRIP`). The board's
+  is a matrix, a part with one shape a named constant (`POPOVER`, `PAGE_HEAD`). The board's
   display, alignment and state classes, per cell and state, are recorded for the plugins in
-  `.helm/research/design-system/atoms-overlays.md`, `layout-overlays.md` and
-  `shared-overlays.md`. A molecule draws an atom by composing it, so an atom's string on a
-  molecule's board is the atom's cell at the fit the molecule passes, never a cell of the
-  molecule's own.
+  `.helm/research/design-system/atoms-overlays.md`, `layout-overlays.md`,
+  `shared-overlays.md` and `content-overlays.md`. A molecule draws an atom by composing it, so an
+  atom's string on a molecule's board is the atom's cell at the fit the molecule passes, never a
+  cell of the molecule's own; a molecule it composes (a `Code` in a `Prose`, a `Prose` in a
+  `Message`, the `Group` around a `Comparison`) draws its own cells and the composer owns none
+  of them.
 - A part that stands beside a line of text, or in for one while loading, is that line's box
   (`LINE_BOX` by type role): a checkbox on its label's first line in a FormField or an
   OptionList, an ItemHeader's loading bar in the line its text fills, so the loading frame and the
@@ -191,13 +204,16 @@ plural categories needs a locale the words do not carry.
   a second list of the same rows. A Picker stands outside a form; a form's pick is `Select`.
 - On touch the places past the tab bar are a page, not a menu: the More tab opens a `Place` of
   `ListRow`s (each place's glyph leading, its count trailing, its route), and while a Place's act
-  floats the toasts stand above it by the act's room.
+  floats the toasts stand above it by the act's room; while a Thread's input docks at its Place's
+  foot they stand above the foot by its measured height (`FootDocks`), which follows the input as
+  it grows.
 - A molecule whose structure follows density keeps one constant per structure, never a density
-  axis: the page's desktop strip (`PAGE_STRIP`, title and acts in one row under a hairline) and
-  its touch head (`PAGE_HEAD` over `PAGE_TOP_BAR`, the title under the bar), the sidebar
+  axis: the page's head (`PAGE_HEAD`, one hairline at both densities) holds the desktop strip
+  (`PAGE_TOP_BAR` with the title and acts in one row) or the touch one (`PAGE_TOP_BAR` over the
+  title, which keeps `PAGE_TITLE` above the hairline), the sidebar
   (`SHELL_SIDEBAR`, `PLACE_ROW`) and the tab bar (`SHELL_TAB_BAR`, `PLACE_TAB`), the split's
   list inside its hairline and the list alone. The web picks the structure under `touch:` or,
-  for a Split, by its page's width: a Place or Screen is the `page` size container and the
+  for a Split, by its page's width: every Place and Screen is the `page` size container and the
   web's `page-<breakpoint>:` / `page-max-<breakpoint>:` variants, emitted from the breakpoint
   values, query it, so the Split's regions and the Details and back acts it lends follow the room
   the page has beside a sidebar rather than the viewport; native draws the touch one. A bleeding
@@ -235,7 +251,7 @@ plural categories needs a locale the words do not carry.
 - A minimum height is the floor of something pressed (a control, a field, a target, a chip, a
   row), the set height of a bar (`strip` 40 / 44: the page's desktop strip and its touch top
   bar), an intrinsic size, or the height of what a part swaps with: `PENDING_TRACK` an action
-  bar's (`min-h-control`), `TABLE_CELL` the `Input` that edits it in place (`min-h-field`).
+  bar's (`min-h-control`).
   Any other container takes its height from its content and padding through flex, its parts
   centred on the tallest, never from a height copied from another component to line things up:
   a section head or a sheet head is its act's height, a banner its line (or its act) inside
@@ -254,14 +270,56 @@ plural categories needs a locale the words do not carry.
   same inset from `react-native-safe-area-context`.
 - A frame's fixed regions are widths (`sidebar`, `list`, `pane`, `column`, `auth`, `empty` an
   empty state's column), so a region
-  keeps its measure at any viewport. A skeleton bar alone takes a fraction width (`w-1/4` to
-  `w-3/4`) to stand at its text's length: structural, a closed list in the web verify's overlay
-  acceptance, never a token.
-- A table cell is the field's box (`TABLE_CELL`: `min-h-field` and `px-control-x` behind a
-  transparent side border), so a cell and the `Input` that edits it in place put their text in
-  one place and the row keeps its height at either density. The row (`TABLE_ROW`) is a hairline
-  and the open row's selection wash; the wash is the body ink at an alpha, so every ink the sheet
-  measures on the surface keeps its ratio on it.
+  keeps its measure at any viewport. A skeleton bar alone takes a fraction width (`w-1/12`,
+  `w-1/5`, `w-1/4` to `w-3/4`) to stand at its text's length: structural, a closed list in the
+  web verify's overlay acceptance, never a token; a chart column's share of its slot (`w-2/3`)
+  is structural the same way. A size the data decides (a meter's fill width, a chart column's
+  height) is the value's share, set by the component on both platforms, never a class.
+- A class with no look is structural, an overlay the web's class sweep classifies: a stacking
+  order inside one component (`z-1`, a frozen table column over the cells that scroll under it,
+  inside `isolate`, the grid its own stacking context so the column never stands over a sheet),
+  `sr-only` (a contract utility with no token), `invisible` (an absent act holding its slot's
+  width), grid placement (`col-start-1 row-start-1`, two acts in one slot), `table-fixed`, a
+  hanging indent (`-indent-control-x`, a wrapped diff line's first line pulled back over its
+  hang) and `wrap-anywhere`.
+- A table cell stands at the row's floor behind a transparent side border (`TABLE_CELL`:
+  `min-h-row` and `px-control-x`), and the `Input` that edits it in place stands inside it at
+  the field's bar fit, so a cell and its edit put their text in one place and the row keeps its
+  height at either density. The row (`TABLE_ROW`) is a hairline under the pointer's and the open
+  record's washes; the wash is the body ink at an alpha, so every ink the sheet measures on the
+  surface keeps its ratio on it. A sortable header is a cell-wide act (`TABLE_HEAD`), its label
+  meta 500 in the meta ink and the body ink on the sorted column (`TABLE_HEAD_LABEL`). The grid
+  draws from `tablet` of the page up; below it the Table is a `List` of `ListRow`s with its sort
+  a `Picker` above them, its options the sortable columns, the sorted one led by its direction's
+  glyph (`Option.icon`), the trigger named "Sort, {column}, {direction}" by the words `sort`,
+  `ascending` and `descending`; loading, the List's rows are the two-line skeleton with a trailing
+  bar (`SKELETON_ROW two-line-trailing`), a form the Table sets through context, never a List prop.
+  A row with `href` is its leading cell's link (`tabindex -1`, so a new tab opens it); a row's
+  `locked` names the columns it draws read only (an owner's role). A chip
+  column's pick draws its value and options as the column's chips (the Picker's internal base), and
+  an Input, a Picker or a Checkbox inside a cell stands at the bar fit, named by the cell and out of
+  the tab order, by the cell's context. A loading status cell is the Status's own loading form (its
+  internal base: the dot's and the word's skeletons at its gap). An empty grid keeps its header and holds its
+  `empty` a page inset under it (`TABLE_EMPTY`). A read-only check cell draws a tick, read aloud as
+  its column's label. Where the grid scrolls sideways its leading column stays: the frozen cell
+  on the surface (`TABLE_FROZEN`), its content carrying its end hairline and the row's wash
+  (`TABLE_FROZEN_CELL`).
+- A thread is a molecule (`Thread`): its Messages are its children, a sections gap apart (one
+  rung above Prose's block gap), and its `MessageInput` its `foot`; on the desktop both stand in
+  a measure-wide column centred in the page (`THREAD_COLUMN`), on touch in the screen's. A
+  Thread in a Place's body fills the page at every width, decided by where it stands: it calls the
+  Place's `ThreadFills` setter (the `RecordOpen` / `ActFloats` pattern) before paint, the body
+  draws no inset and leaves scrolling to it, its log scrolls at the page inset (`THREAD_LOG`),
+  opening at the newest message and following each that arrives while the reader is at the end,
+  the input docked at the foot (`THREAD_FOOT`); a Section takes the setter back. A filled Place's
+  floating act would stand over the docked input: accepted while no Place has both.
+- A loading body draws its own loading form: `QueryBoundary`'s `loading` slot stands while a
+  query is pending, its Group or List skeleton the fallback, the Section busy either way. A Meter
+  in a Group stands as its item at the card's inset (`METER_ITEM`, by `GroundContext`), the
+  Group's hairline between. A FileRow is selected at its `href`, as a ListRow is.
+- Code, Diff and ProseDiff stand in one frame on the surface inside a hairline (`CONTENT_FRAME`),
+  so a diff's soft grounds always sit on the surface; a diff's number columns and a file row's
+  count lanes are `figures` wide.
 
 ## The canon, the roster and the closed props
 
@@ -280,7 +338,7 @@ plural categories needs a locale the words do not carry.
   web from TanStack Form's store, one binding per name under the form's owner. Rejected: optional
   `value` and `onChange` on every control read from the field's context, which would compile a
   control with no value anywhere and could not type a boolean field against an `Input`.
-- The roster is data: `ROSTER` in `packages/ui-core/src/roster.ts` names 54 components in four
+- The roster is data: `ROSTER` in `packages/ui-core/src/roster.ts` names 55 components in four
   layers (atoms, layout molecules, shared molecules, content molecules) with their prop names,
   the cells each draws (a whole matrix family, one family cell as `FAMILY.axis.value`, or a single
   cell) and the states it has a form for, the same in both plugins; the showcase draws exactly those matrix cells and states. Each plugin's verify suite reads every component's exported props type
@@ -294,8 +352,9 @@ plural categories needs a locale the words do not carry.
   `./components/*` export does not reach), taking the trigger's props through Base UI's
   `render`; on native a trigger is a press, and renders `IconButton` itself. A cell no entry
   holds is shared, spelled by each component that draws it: the type roles, the field box
-  (`Input`, `Select`, `TextArea`, the Picker's field fit), the row with its title and meta
-  lines, the option group and its label (`SELECT_GROUP`, `OPTION_GROUP_LABEL`: `Select`,
+  (`Input`, `Select`, `TextArea`, the Picker's field fit, the touch `MessageInput`), the row with
+  its leading slot and its title and meta lines (`ListRow`, `FileRow`), the content frame,
+  `FIGURES`, the option group and its label (`SELECT_GROUP`, `OPTION_GROUP_LABEL`: `Select`,
   `Picker`, `OptionList`), the line box, the popover, the skeleton, the page cells `Place` and `Screen` share, and the toasts'
   layer (`TOASTS`, which the Shell stands over its page). A Split's details sheet is the
   `Sheet` at the `pane` fit, composed through the sheet's internal base. `Select`, the

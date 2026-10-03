@@ -15,6 +15,7 @@ import {
 	textStrong,
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, use, useEffect, useId, useRef, useState } from "react";
+import { FormStands } from "../../lib/form.ts";
 import { useTouch } from "../../lib/media.ts";
 import { PortalContainer } from "../../lib/portal.ts";
 import { ReasonHostContext } from "../../lib/reason.ts";
@@ -274,7 +275,7 @@ export function SheetBase({
 						className={box}
 					>
 						<TouchedContext value={{ touched, touch: () => setTouched(true) }}>
-							{content}
+							<FormStands value="sheet">{content}</FormStands>
 						</TouchedContext>
 					</Dialog.Popup>
 				</Dialog.Viewport>

@@ -2,6 +2,7 @@ import type { IconAct, MenuItem } from "@fcalell/ui-core/descriptors";
 import {
 	PAGE_BODY,
 	PAGE_HEAD,
+	PAGE_TITLE,
 	PAGE_TOP_BAR,
 	text,
 } from "@fcalell/ui-core/variants";
@@ -66,7 +67,7 @@ export function Screen({ title, back, actions, more, children }: ScreenProps) {
 						</View>
 						<RNText
 							accessibilityRole="header"
-							className={cn(text({ role: "title" }), TITLE)}
+							className={cn(text({ role: "title" }), TITLE, PAGE_TITLE)}
 						>
 							{title}
 						</RNText>

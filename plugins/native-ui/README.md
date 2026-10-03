@@ -2,7 +2,7 @@
 
 React Native design-system plugin for the `@fcalell/stack` framework. It renders
 `@fcalell/ui-core`'s contract into the uniwind stylesheet, embeds the font files, composes the
-app's providers, and ships the roster: 54 components in four
+app's providers, and ships the roster: 55 components in four
 layers. Requires
 `expo` (it contributes into `plugin-expo`'s slots) plus `api` and `auth` (the wired Query and Auth
 providers import their native subpaths).
@@ -81,9 +81,15 @@ draws it as a bottom sheet, dismissing it runs nothing, and `confirmName` blocks
 takes any `FieldBinding` as `field`; native ships no form hook, so the binding comes from the
 app's form state (the web's `useApiForm(...).bind(name)` has no native twin yet).
 
-`native-ui` draws the phone layout at every width: `Split` shows the list or the open record
+`native-ui` draws the phone layout at every width but the `Table`'s grid: `Split` shows the list or the open record
 alone with the pane as a sheet, `Columns` scrolls sideways, `Diff` is unified, `Sheet` is a bottom sheet,
 `Shell` draws the tab bar and no sidebar. Pull to refresh is the phone's.
+
+A raised ground re-points the hairline as the web's does: `RaisedGround` (`lib/raised`) scopes
+`--color-edge` to the mode's `edge-raised` through uniwind's `ScopedVariables`, so a part's
+`border-edge` inside a sheet (its head, body and foot, a `Menu`'s and a Picker's sheet with it) or a
+toast draws the raised hairline. A ground on `group` holds no part that draws `edge`, so none
+wraps it.
 
 ### Atoms
 
@@ -130,9 +136,9 @@ alone with the pane as a sheet, `Columns` scrolls sideways, `Diff` is unified, `
 | `ItemHeader` | `overline` (parts), `title`, `facts` (parts and statuses), `loading` |
 | `SegmentedControl` | `label` (the group's name), `options` (`{ value, label }[]`), `value`, `onChange` |
 | `Sheet` | `open`, `onClose`, `title`, `description`, `back` (a second page's way back, in the close act's place), `submit` (an `Act` at the head's end, a blocked one's reason under the head), `foot` (a sentence in the foot), `fit` (`form`, `pane`: on the phone a pane's title steps down to body 500), children; a bottom sheet over the scrim, entering and leaving on the contract's motion (reduced motion honoured); the title names a typing control inside that no `FormField` labels; a new `title` or `description` is a new page, its blocked `submit` silent until pressed or touched again |
-| `Picker` | `label`, `options` (`{ value, label, description }[]` (an option carrying `status` draws as that Status, in the sheet its dot leading the label), or `{ label, options }[]` groups, each under its label), `value`, `onChange`; generic over its value, read off `options` alone, so an enum's options pick that enum and a value outside them is a type error; no `value`: nothing selected, the trigger showing `label` in the placeholder's ink, and `onChange` still hears a value; a `null` option: the explicit empty choice, drawn as the placeholder is, in `ink-meta`, which makes the pick nullable and `onChange` hear `null`; an option carrying `avatar` leads its sheet row with its avatar; a search field above six options; `fit` (`field`, the field box; `row`, a row's value and chevron in a pill); `act` (an icon act, the act that makes a new option, under a hairline after the options) |
+| `Picker` | `label`, `options` (`{ value, label, description }[]` (an option carrying `status` draws as that Status, in the sheet its dot leading the label), or `{ label, options }[]` groups, each under its label), `value`, `onChange`; generic over its value, read off `options` alone, so an enum's options pick that enum and a value outside them is a type error; no `value`: nothing selected, the trigger showing `label` in the placeholder's ink, and `onChange` still hears a value; a `null` option: the explicit empty choice, drawn as the placeholder is, in `ink-meta`, which makes the pick nullable and `onChange` hear `null`; an option carrying `avatar` leads its sheet row with its avatar, one carrying `icon` with its glyph (on the trigger too); a search field above six options; `fit` (`field`, the field box; `row`, a row's value and chevron in a pill); `act` (an icon act, the act that makes a new option, under a hairline after the options) |
 | `Menu` | `label` (read aloud on its more act, the sheet's title), `items` (`{ label, onAct, icon, destructive, blocked }[]`, the destructive ones last under a hairline); the phone's menu is a sheet of rows with its close act, a destructive one in `danger`, a blocked one inert with its reason under it, the more act holding the press wash while it is open; the more act of `Place`, `Screen` and `ListRow` is a `Menu` |
-| `QueryBoundary` | `query` (a `useQuery` result or a tuple of them), `sentence`, children (`(data) => …`, one value per query): while pending, in a `Section` the Section busy over a loading `Group`, elsewhere a loading `List`; on error the failed `EmptyState` with a retry act |
+| `QueryBoundary` | `query` (a `useQuery` result or a tuple of them), `sentence`, children (`(data) => …`, one value per query), `loading` (the body's own loading form, drawn while pending): while pending without it, in a `Section` the Section busy over a loading `Group`, elsewhere a loading `List`; on error the failed `EmptyState` with a retry act |
 | `OptionList` | `options` (`{ value, label, description, recommended }[]`), `value`, `onChange`, `loading`, children under the chosen option |
 | `EmptyState` | `icon` (in the mark's disc), `title`, `sentence`, `act`, children; its form by where it stands: on a `Place` or `Screen` body centred in what the body leaves (its act the filled one with the plus), in a `Section` in a hairline frame (the hairline act), anywhere else a first run (its acts stacked across the column) |
 | `Toast` | `sentence`, `state` (`done`, `attention`, `failed`: the state's glyph in its ink), `act` (a hairline Button), then the dismiss act; `toast(sentence, { state, act })` queues one and the `Shell` stands the queue at the screen's foot, each toast rising in and fading out, the stack closing up |
@@ -149,17 +155,18 @@ All take `loading` and draw three row forms.
 | Component | Props |
 | --- | --- |
 | `Prose` | `markdown` |
-| `Code` | `text`, `title` (what the text is, a file's name or the tool it goes into; the copy act sits in its row), `tail` (lines shown before a tap unfolds the rest), `copy` |
-| `Diff` | `hunks`, or `before` and `after` (two texts diffed by line, three lines of context); the phone draws unified |
-| `Table` | `columns`, `rows`, `selected`, `onOpen`, `onEdit`, `empty`, `loading`, the web's types: a grid does not fit a phone, so each row is a `ListRow` from the same columns (the first column its title, the first `status` its leading glyph, the first `age` its trailing age, the rest its meta line), a tap opens it through `onOpen` and its cells edit in the pane it opens; the phone draws no selection, since it never shows the pane beside the list, and does not sort or edit in place |
-| `FileRow` | `path`, `added`, `removed`, `seen`, `href` or `onOpen` |
+| `Code` | `text`, `title` (what the text is, a file's name or the tool it goes into; the copy act sits in its head, else in its own column beside the first line), `tail` (the last lines, a one-way act above them revealing the rest), `copy` (a refused copy raises a failed toast), `loading` (line boxes under the head, `tail` of them under the fold's when it folds) |
+| `Diff` | `label` (what it shows, the name of its lines), `hunks`, or `before` and `after` (two texts diffed by line, three lines of context); unified, a long line wrapped from its start (no hang: React Native has no text indent) |
+| `Table` | `columns`, `rows`, `selected`, `onOpen`, `onEdit` (requires `onOpen`; the leading column never edits, nor a column a row names in `locked`), `empty`, `loading`, the web's types; it sorts in its own state (newest or largest first, then turned over, then off). From `tablet` of the window a grid: a header of sort acts over one row per record, every column at the short measure, scrolling sideways under its frozen leading column, a press on a row opening it and a press on an editable value editing it in place (an `Input`, a `Picker` sheet, a `Checkbox`), the open record washed as selected. Below `tablet` one `ListRow` per record (the leading column its title, its age trailing, its status and chip the marks, the other values its meta line) under the sort's pick; a tap opens it, and its values edit in the record it opens |
+| `FileRow` | `path` (cut as text to the row's width: the directory first, then the name in its middle), `added`, `removed`, `seen`, `href` (the row selected at it) or `onOpen`; read aloud as the whole path, its counts and its seen state |
 | `ProseDiff` | `before`, `after` |
-| `Comparison` | `rows` (`{ label, cells: [{ label, value }], chips }`) |
-| `Message` | `author` (`you`, `other`, `system`), `name`, `body`, `at`, `onOpen` (a `system` line that opens something becomes the act), `loading` |
-| `MessageInput` | `value`, `onChange`, `attachments`, `onAttach`, `onDetach` (`(id) => void`), `placeholder`, `notice` (`{ sentence, act }`), `working`, `onSend`, `onStop` |
-| `Meter` | `label`, `value`, `max`, `unit`, `meta` |
-| `BarChart` | `series` (`{ label, value, parts, at }[]`), `unit` |
-| `QrCode` | `value` |
+| `Comparison` | `label`, `rows` (`{ label, cells: [{ label, value }], chips }`); each label on its own line over its values, each row read aloud whole, each value after its column's label |
+| `Message` | `author` (`you` a bubble at the column's end, its `name` read before the words; `other` the `name` at body 500 beside the time over the reply as `Prose`; `system` one meta line centred at the target height), `body`, `at` (an ISO moment, the time alone today, else the date and time), `onOpen` (`system` only: the line becomes the act, a chevron after it), `loading` |
+| `MessageInput` | `value`, `onChange`, `attachments` (neutral chips over the text), `onAttach`, `onDetach` (`(id) => void`), `placeholder`, `notice` (`{ sentence, act }`, under the row at the text's x), `working` (Stop in Send's place), `onSend` (inert while the text is empty), `onStop` (without it Stop is inert), `disabled`; one row: attach, the field growing to eight lines, Send or Stop; return breaks the line |
+| `Thread` | children (the `Message`s, a sections gap apart, a polite live region), `foot` (the `MessageInput`); in a `Place`'s body it fills the page, its log scrolling at the page inset, opening at the newest message and following each that arrives while the reader is at the end, the input docked at the foot over the keyboard |
+| `Meter` | `label`, `value`, `max` (the fill in the meta ink, `warn` from 90 %, `danger` past the max), `unit` (read aloud with the value), `meta`, `loading`; in a `Group` it stands as one of its items at the card's inset |
+| `BarChart` | `label` (names the chart, read with its total), `keys` (the parts' names, bottom first: present, the chart is stacked and draws them as its legend, loading or loaded, each in its chip mark), `series` (`{ label, value, parts, at }[]`, `parts` the values by key: a column per period, each column read aloud with its figures in full), `unit`, `loading` |
+| `QrCode` | `value` (also its name), `loading`; the tile is a light scope (uniwind's `ScopedTheme`), dark modules on a light ground in both modes |
 
 ## The boundary
 
@@ -172,6 +179,6 @@ host element. Nothing here carries a product noun in a prop, an enum word or a s
 ## Verify
 
 `pnpm --filter @fcalell/plugin-native-ui verify` renders the sheet, compiles it through uniwind's
-own compiler and a Tailwind build, reads the matrices back off ui-core's cvas, holds the overlay
+own compiler and a Tailwind build, checks a raised ground's hairline re-point on the compiled sheet, reads the matrices back off ui-core's cvas, holds the overlay
 allowlist equal to the swept sources, proves the closure with the fixture under
 `scripts/fixture/closure.tsx`, and reads every component's props type against the roster.

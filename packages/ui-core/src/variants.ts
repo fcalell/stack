@@ -14,12 +14,17 @@ import {
 	BANNER_GLYPH,
 	BUTTON,
 	BUTTON_LABEL,
+	CHART_BAND,
+	CHART_FILL,
 	CHECKBOX,
 	CHIP,
 	CHIP_LABEL,
+	CODE_TEXT,
 	DIFF_LINE,
 	FIELD,
 	FIELD_VALUE,
+	FILE_COUNT,
+	FILE_PATH_PART,
 	FORM,
 	FORM_FIELD,
 	ICON,
@@ -31,12 +36,16 @@ import {
 	MENU_GROUP,
 	MENU_LABEL,
 	MESSAGE,
+	METER_FILL,
 	OTP_BOX,
 	PICKER,
 	PLACE_ROW,
 	PLACE_ROW_GLYPH,
 	PLACE_TAB,
 	PLACE_TAB_LABEL,
+	PROSE_DIFF_RUN,
+	PROSE_MARKER,
+	QR_CODE,
 	ROW,
 	SECTION,
 	SEGMENT,
@@ -49,6 +58,9 @@ import {
 	STATUS_DOT,
 	SWITCH,
 	SWITCH_THUMB,
+	TABLE_FROZEN_CELL,
+	TABLE_HEAD,
+	TABLE_HEAD_LABEL,
 	TABLE_ROW,
 	TEXT,
 	TEXT_AREA,
@@ -106,6 +118,9 @@ export const checkbox = build(CHECKBOX);
 export const row = build(ROW);
 export const lineBox = build(LINE_BOX);
 export const tableRow = build(TABLE_ROW);
+export const tableHead = build(TABLE_HEAD);
+export const tableHeadLabel = build(TABLE_HEAD_LABEL);
+export const tableFrozenCell = build(TABLE_FROZEN_CELL);
 export const segment = build(SEGMENT);
 export const segmentLabel = build(SEGMENT_LABEL);
 export const picker = build(PICKER);
@@ -117,8 +132,17 @@ export const menu = build(MENU);
 export const menuGroup = build(MENU_GROUP);
 export const menuLabel = build(MENU_LABEL);
 export const sheetSide = build(SHEET_SIDE);
+export const proseMarker = build(PROSE_MARKER);
+export const proseDiffRun = build(PROSE_DIFF_RUN);
+export const codeText = build(CODE_TEXT);
 export const diffLine = build(DIFF_LINE);
+export const filePathPart = build(FILE_PATH_PART);
+export const fileCount = build(FILE_COUNT);
 export const message = build(MESSAGE);
+export const meterFill = build(METER_FILL);
+export const chartBand = build(CHART_BAND);
+export const chartFill = build(CHART_FILL);
+export const qrCode = build(QR_CODE);
 export const placeRow = build(PLACE_ROW);
 export const placeRowGlyph = build(PLACE_ROW_GLYPH);
 export const placeTab = build(PLACE_TAB);
@@ -187,6 +211,9 @@ export const FAMILIES: readonly Family[] = [
 	family("ROW", ROW, row),
 	family("LINE_BOX", LINE_BOX, lineBox),
 	family("TABLE_ROW", TABLE_ROW, tableRow),
+	family("TABLE_HEAD", TABLE_HEAD, tableHead),
+	family("TABLE_HEAD_LABEL", TABLE_HEAD_LABEL, tableHeadLabel),
+	family("TABLE_FROZEN_CELL", TABLE_FROZEN_CELL, tableFrozenCell),
 	family("SEGMENT", SEGMENT, segment),
 	family("SEGMENT_LABEL", SEGMENT_LABEL, segmentLabel),
 	family("PICKER", PICKER, picker),
@@ -198,8 +225,17 @@ export const FAMILIES: readonly Family[] = [
 	family("MENU_GROUP", MENU_GROUP, menuGroup),
 	family("MENU_LABEL", MENU_LABEL, menuLabel),
 	family("SHEET_SIDE", SHEET_SIDE, sheetSide),
+	family("PROSE_MARKER", PROSE_MARKER, proseMarker),
+	family("PROSE_DIFF_RUN", PROSE_DIFF_RUN, proseDiffRun),
+	family("CODE_TEXT", CODE_TEXT, codeText),
 	family("DIFF_LINE", DIFF_LINE, diffLine),
+	family("FILE_PATH_PART", FILE_PATH_PART, filePathPart),
+	family("FILE_COUNT", FILE_COUNT, fileCount),
 	family("MESSAGE", MESSAGE, message),
+	family("METER_FILL", METER_FILL, meterFill),
+	family("CHART_BAND", CHART_BAND, chartBand),
+	family("CHART_FILL", CHART_FILL, chartFill),
+	family("QR_CODE", QR_CODE, qrCode),
 	family("PLACE_ROW", PLACE_ROW, placeRow),
 	family("PLACE_ROW_GLYPH", PLACE_ROW_GLYPH, placeRowGlyph),
 	family("PLACE_TAB", PLACE_TAB, placeTab),
@@ -401,14 +437,138 @@ export const PENDING_TRACK =
 export const PENDING_FILL = "h-track bg-ink-meta";
 export const PENDING_LEFT =
 	"tabular-nums text-meta leading-meta font-normal text-ink-meta";
-export const METER_TRACK = "rounded-full bg-group";
-export const METER_FILL = "rounded-full bg-accent";
-export const DIFF_GUTTER = "text-ink-meta";
-export const CODE = "rounded-card bg-group p-card";
-// A data table's cell: a field's box behind a transparent side border, so the
-// `Input` that edits it in place keeps the row's height.
-export const TABLE_CELL =
-	"min-h-field border-x border-transparent px-control-x";
+// Figures at one width, beside the type role of the line they stand in (a
+// table's number and age, a meter's share, a chart's total, ticks and times).
+export const FIGURES = "tabular-nums";
+
+// ── Content ─────────────────────────────────────────────────────────
+
+// The frame a block of text a reader reads whole stands in (Code, Diff,
+// ProseDiff): the surface inside a hairline, so a diff's soft grounds sit on
+// the surface wherever the frame stands.
+export const CONTENT_FRAME = "rounded-card border border-edge bg-surface";
+// Prose: its column at the measure, its headed parts a sections gap apart,
+// a heading a pair over the blocks it heads, the blocks a fields gap apart;
+// a list's items a pair apart (an item's line and its nested list too), each
+// marker (`proseMarker`) an inside gap from its text; inline code on the
+// neutral fill in its sentence's ink; a quote behind a strong hairline; a
+// rule a hairline.
+export const PROSE = "gap-sections max-w-measure text-body leading-body";
+export const PROSE_PART = "gap-pair";
+export const PROSE_BLOCKS = "gap-fields";
+export const PROSE_LIST = "gap-pair";
+export const PROSE_ITEM = "gap-inside";
+export const PROSE_CODESPAN =
+	"rounded-chip bg-fill-neutral px-inside text-code leading-code font-normal font-mono";
+export const PROSE_QUOTE =
+	"gap-fields border-l border-edge-strong pl-control-x";
+export const PROSE_RULE = "border-t border-edge";
+export const PROSE_EMPHASIS = "italic";
+export const PROSE_STRIKE = "line-through";
+// Code: the head a bar at the strip's height (its title, its copy act a
+// float inset from the end), the hairline on the part under it; the copy
+// act's own column beside the first line when there is no title; the fold, a
+// band at the target height over the shown lines.
+export const CODE_HEAD = "gap-acts min-h-strip pl-tile pr-float";
+export const CODE_UNDER_HEAD = "border-t border-edge";
+export const CODE_ACT = "pt-tile pl-acts pr-float";
+export const CODE_FOLD =
+	"gap-inside min-h-target px-tile border-b border-edge text-ink-meta";
+// Diff: the hunk header's cell; the hang a wrapped line's continuation
+// starts in by (its first line pulled back by a web overlay); the number
+// columns, four code figures each; the marker; the code's end inset.
+export const DIFF_HUNK = "px-inside py-rows";
+export const DIFF_HANG = "pl-control-x";
+export const DIFF_GUTTER = "min-w-figures pl-inside tabular-nums text-ink-meta";
+export const DIFF_MARK = "px-inside text-ink-meta";
+export const DIFF_CODE = "pr-inside";
+// ProseDiff: the text at the card inset, at the measure.
+export const PROSE_DIFF_BODY = "p-card";
+export const PROSE_DIFF_TEXT = "max-w-measure";
+// FileRow: the path at the code role (its parts in `filePathPart`), the
+// counts at meta in their lanes (`fileCount`).
+export const FILE_PATH = "text-code leading-code font-mono";
+export const FILE_COUNTS =
+	"gap-inside tabular-nums text-meta leading-meta font-normal";
+// Comparison: its own row, not a list row, so a wrapped value keeps its air;
+// the label beside its chips.
+export const COMPARISON_ROW = "gap-pair min-h-row py-inside px-card";
+export const COMPARISON_LABEL = "gap-inside";
+// Table: the grid hangs into the page inset by the cell's inset, so the
+// leading text meets the title over it; its columns read at body. A cell is
+// the row's height behind a transparent side border, so the `Input` that
+// edits it in place (the field's bar fit) puts its text where the cell's
+// stands. The frozen leading column's cell stands on the surface. An empty
+// grid's EmptyState stands a page inset under its header.
+export const TABLE_FRAME = "-mx-control-x";
+export const TABLE = "text-body";
+export const TABLE_CELL = "min-h-row border-x border-transparent px-control-x";
+export const TABLE_FROZEN = "bg-surface";
+export const TABLE_EMPTY = "p-page";
+// Message: yours in a bubble on the group ground; the name beside the time;
+// a system line's words beside its time, wrapping; the line that opens, a
+// pill at the target height with the pointer's washes.
+export const MESSAGE_BUBBLE = "rounded-card bg-group px-tile py-pair";
+export const MESSAGE_HEAD = "gap-inside";
+export const MESSAGE_LINE = "gap-x-inside";
+export const MESSAGE_OPEN =
+	"gap-inside rounded-control px-inside min-h-target text-ink-meta";
+// MessageInput: the composer over its notice. On the desktop one box (the
+// field's boundary at the card radius), its attachments, its text at the
+// field's inset (capped at eight lines, scrolling past them) and its foot
+// (attach, the send or stop slot); its notice at the text's x. On touch one
+// row (attach, the field at its bar fit growing upward, the slot) and the
+// notice's row under it in the same columns, its sentence at the field's
+// text (the attach slot held, the field's hairline counted).
+export const MESSAGE_INPUT = "gap-pair";
+export const MESSAGE_INPUT_BOX =
+	"gap-rows rounded-card border border-edge bg-surface p-inside";
+export const MESSAGE_INPUT_CHIPS = "gap-inside px-inside pt-inside";
+export const MESSAGE_INPUT_TEXT = "px-inside py-inside";
+export const MESSAGE_INPUT_VALUE = "max-h-message-input";
+export const MESSAGE_INPUT_FOOT = "gap-inside";
+export const MESSAGE_INPUT_ROW = "gap-inside";
+export const MESSAGE_INPUT_FIELD = "py-inside";
+export const MESSAGE_NOTICE =
+	"gap-inside pl-control-x pr-inside border-x border-transparent";
+export const MESSAGE_NOTICE_TEXT = "px-control-x border-x border-transparent";
+export const MESSAGE_ATTACH_SLOT = "w-control-compact";
+// Meter: the label and its share over the bar over the meta line; the bar a
+// track one wash step off the ground, its fill by level (`meterFill`).
+export const METER = "gap-pair";
+// A meter in a Group stands as one of its items, at the card's inset, the
+// group drawing the hairline between.
+export const METER_ITEM = "p-card";
+export const METER_HEAD = "gap-inside";
+export const METER_TRACK = "h-meter rounded-chip bg-fill-neutral";
+// BarChart: the head (the total and its unit, then the series' keys) over
+// the body (the axis beside the plot over its times). The plot is the chart's
+// height in four bands (`chartBand`); a stacked part over another is split
+// from it by a clear line. The axis is a lane four figures wide, the widest
+// tick, loaded or loading, so the plot never moves when the data lands.
+export const CHART = "gap-fields";
+export const CHART_HEAD = "gap-pair";
+export const CHART_TOTAL = "gap-inside";
+export const CHART_KEYS = "gap-x-fields gap-y-pair";
+export const CHART_KEY = "gap-inside";
+export const CHART_KEY_DOT = "size-dot rounded-full";
+export const CHART_BODY = "gap-inside";
+export const CHART_GRID = "h-chart";
+export const CHART_MAIN = "gap-pair";
+export const CHART_PART_SPLIT = "border-b border-transparent bg-clip-padding";
+export const CHART_TICK_LANE = "w-figures";
+// Thread: the messages a sections gap apart, one rung above Prose's block
+// gap, and under them the input; on the desktop the messages and the input
+// each stand in a measure-wide column centred in the page.
+export const THREAD = "gap-sections";
+export const THREAD_COLUMN = "w-full max-w-measure mx-auto";
+// A Thread in a Place's body fills it: the log scrolls under the page's head
+// at the page inset, a sections gap over the input, which stands docked at
+// the body's foot at the page inset.
+export const THREAD_LOG = "px-page pt-page pb-sections";
+export const THREAD_FOOT = "px-page pb-page";
+// QrCode: the tile at the qr size inside a hairline on the surface.
+export const QR_TILE = "size-qr rounded-card border border-edge bg-surface";
 
 // ── Layout ──────────────────────────────────────────────────────────
 
@@ -430,15 +590,16 @@ export const SWITCHER = "gap-inside min-h-target rounded-control";
 // The toasts' layer over the column (the desktop shell) or at a touch
 // screen's foot, each toast a pair apart.
 export const TOASTS = "p-page gap-pair";
-// A page, a Place's or a Screen's. On the desktop its title and acts share
-// the strip under a hairline; on touch the head insets a top bar (the
-// switcher or the back act, then the acts) over the title. The strip and the
-// top bar are bars at a set height, a floor as a row's. The body insets its
-// sections at the page inset; a bleeding body draws none, and whatever
-// stands first in it carries its own top inset.
-export const PAGE_STRIP = "gap-acts min-h-strip px-page border-b border-edge";
-export const PAGE_HEAD = "px-page";
+// A page, a Place's or a Screen's. Its head insets the top bar at the page
+// inset over one hairline: on the desktop the bar holds the title and the
+// acts (the strip); on touch the switcher or the back act, then the acts,
+// over the title. The bar is at a set height, a floor as a row's. The body
+// insets its sections at the page inset; a bleeding body draws none, and
+// whatever stands first in it carries its own top inset.
+export const PAGE_HEAD = "px-page border-b border-edge";
 export const PAGE_TOP_BAR = "gap-acts min-h-strip";
+// The touch title over the head's hairline, a pair apart from it.
+export const PAGE_TITLE = "pb-pair";
 export const PAGE_BODY = "gap-sections p-page";
 // A touch Place's act, floating over the body's end on a layer at the page
 // inset, and the room the body keeps under its last row so the act never
@@ -512,6 +673,7 @@ export type SegmentState = keyof (typeof SEGMENT)["variants"]["state"];
 export type RowLines = keyof (typeof ROW)["variants"]["lines"];
 export type RowGround = keyof (typeof ROW)["variants"]["ground"];
 export type SheetFit = keyof (typeof SHEET_SIDE)["variants"]["fit"];
+export type FormIn = keyof (typeof FORM)["variants"]["in"];
 export type BannerKind = keyof (typeof BANNER)["variants"]["kind"];
 export type ToastState = keyof (typeof TOAST_STATE)["variants"]["state"];
 export type DiffLineKind = keyof (typeof DIFF_LINE)["variants"]["kind"];

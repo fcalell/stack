@@ -969,10 +969,64 @@ components:
     typography: "{typography.heading}"
   line-box-code:
     typography: "{typography.code}"
+  table-row-highlighted:
+    backgroundColor: "{colors.wash-hover}"
+  table-row-highlighted-dark:
+    backgroundColor: "{colors.wash-hover-dark}"
+  table-row-pressed:
+    backgroundColor: "{colors.wash-press}"
+  table-row-pressed-dark:
+    backgroundColor: "{colors.wash-press-dark}"
   table-row-selected:
     backgroundColor: "{colors.wash-selected}"
   table-row-selected-dark:
     backgroundColor: "{colors.wash-selected-dark}"
+  table-row-selected-hover:
+    backgroundColor: "{colors.wash-selected-hover}"
+  table-row-selected-hover-dark:
+    backgroundColor: "{colors.wash-selected-hover-dark}"
+  table-head-rest:
+    height: "{spacing.row}"
+  table-head-highlighted:
+    height: "{spacing.row}"
+    backgroundColor: "{colors.wash-hover}"
+  table-head-highlighted-dark:
+    height: "{spacing.row}"
+    backgroundColor: "{colors.wash-hover-dark}"
+  table-head-pressed:
+    height: "{spacing.row}"
+    backgroundColor: "{colors.wash-press}"
+  table-head-pressed-dark:
+    height: "{spacing.row}"
+    backgroundColor: "{colors.wash-press-dark}"
+  table-head-label-none:
+    typography: "{typography.meta}"
+    textColor: "{colors.ink-meta}"
+  table-head-label-none-dark:
+    typography: "{typography.meta}"
+    textColor: "{colors.ink-meta-dark}"
+  table-head-label-sorted:
+    typography: "{typography.meta}"
+    textColor: "{colors.ink-body}"
+  table-head-label-sorted-dark:
+    typography: "{typography.meta}"
+    textColor: "{colors.ink-body-dark}"
+  table-frozen-cell-highlighted:
+    backgroundColor: "{colors.wash-hover}"
+  table-frozen-cell-highlighted-dark:
+    backgroundColor: "{colors.wash-hover-dark}"
+  table-frozen-cell-pressed:
+    backgroundColor: "{colors.wash-press}"
+  table-frozen-cell-pressed-dark:
+    backgroundColor: "{colors.wash-press-dark}"
+  table-frozen-cell-selected:
+    backgroundColor: "{colors.wash-selected}"
+  table-frozen-cell-selected-dark:
+    backgroundColor: "{colors.wash-selected-dark}"
+  table-frozen-cell-selected-hover:
+    backgroundColor: "{colors.wash-selected-hover}"
+  table-frozen-cell-selected-hover-dark:
+    backgroundColor: "{colors.wash-selected-hover-dark}"
   segment-idle:
     rounded: "{rounded.control}"
     height: "{spacing.control-compact}"
@@ -1079,6 +1133,32 @@ components:
     backgroundColor: "{colors.raised}"
   sheet-side-pane-dark:
     backgroundColor: "{colors.raised-dark}"
+  prose-marker-bullet:
+    width: "{spacing.icon}"
+    typography: "{typography.body}"
+    textColor: "{colors.ink-meta}"
+  prose-marker-bullet-dark:
+    width: "{spacing.icon}"
+    typography: "{typography.body}"
+    textColor: "{colors.ink-meta-dark}"
+  prose-marker-ordered:
+    width: "{spacing.icon}"
+    typography: "{typography.body}"
+    textColor: "{colors.ink-meta}"
+  prose-marker-ordered-dark:
+    width: "{spacing.icon}"
+    typography: "{typography.body}"
+    textColor: "{colors.ink-meta-dark}"
+  prose-diff-run-added:
+    backgroundColor: "{colors.ok-soft}"
+  prose-diff-run-added-dark:
+    backgroundColor: "{colors.ok-soft-dark}"
+  prose-diff-run-removed:
+    backgroundColor: "{colors.danger-soft}"
+  prose-diff-run-removed-dark:
+    backgroundColor: "{colors.danger-soft-dark}"
+  code-text-none:
+    padding: "{spacing.tile}"
   diff-line-context:
     typography: "{typography.code}"
     textColor: "{colors.ink-body}"
@@ -1103,24 +1183,84 @@ components:
     backgroundColor: "{colors.danger-soft-dark}"
   diff-line-header:
     typography: "{typography.code}"
-    textColor: "{colors.ink-meta}"
     backgroundColor: "{colors.group}"
+    textColor: "{colors.ink-meta}"
   diff-line-header-dark:
     typography: "{typography.code}"
+    backgroundColor: "{colors.group-dark}"
     textColor: "{colors.ink-meta-dark}"
-    backgroundColor: "{colors.group-dark}"
-  message-you:
-    rounded: "{rounded.card}"
-    backgroundColor: "{colors.group}"
-  message-you-dark:
-    rounded: "{rounded.card}"
-    backgroundColor: "{colors.group-dark}"
-  message-system:
-    typography: "{typography.meta}"
+  file-path-part-directory:
     textColor: "{colors.ink-meta}"
-  message-system-dark:
-    typography: "{typography.meta}"
+  file-path-part-directory-dark:
     textColor: "{colors.ink-meta-dark}"
+  file-path-part-name:
+    textColor: "{colors.ink-body}"
+  file-path-part-name-dark:
+    textColor: "{colors.ink-body-dark}"
+  file-count-added:
+    width: "{spacing.figures}"
+    textColor: "{colors.ok}"
+  file-count-added-dark:
+    width: "{spacing.figures}"
+    textColor: "{colors.ok-dark}"
+  file-count-removed:
+    width: "{spacing.figures}"
+    textColor: "{colors.danger}"
+  file-count-removed-dark:
+    width: "{spacing.figures}"
+    textColor: "{colors.danger-dark}"
+  message-system:
+    height: "{spacing.target}"
+  meter-fill-under:
+    rounded: "{rounded.chip}"
+    backgroundColor: "{colors.ink-meta}"
+  meter-fill-under-dark:
+    rounded: "{rounded.chip}"
+    backgroundColor: "{colors.ink-meta-dark}"
+  meter-fill-near:
+    rounded: "{rounded.chip}"
+    backgroundColor: "{colors.warn}"
+  meter-fill-near-dark:
+    rounded: "{rounded.chip}"
+    backgroundColor: "{colors.warn-dark}"
+  meter-fill-over:
+    rounded: "{rounded.chip}"
+    backgroundColor: "{colors.danger}"
+  meter-fill-over-dark:
+    rounded: "{rounded.chip}"
+    backgroundColor: "{colors.danger-dark}"
+  chart-fill-teal:
+    backgroundColor: "{colors.chip-teal}"
+  chart-fill-teal-dark:
+    backgroundColor: "{colors.chip-teal-dark}"
+  chart-fill-violet:
+    backgroundColor: "{colors.chip-violet}"
+  chart-fill-violet-dark:
+    backgroundColor: "{colors.chip-violet-dark}"
+  chart-fill-amber:
+    backgroundColor: "{colors.chip-amber}"
+  chart-fill-amber-dark:
+    backgroundColor: "{colors.chip-amber-dark}"
+  chart-fill-pink:
+    backgroundColor: "{colors.chip-pink}"
+  chart-fill-pink-dark:
+    backgroundColor: "{colors.chip-pink-dark}"
+  chart-fill-green:
+    backgroundColor: "{colors.chip-green}"
+  chart-fill-green-dark:
+    backgroundColor: "{colors.chip-green-dark}"
+  chart-fill-red:
+    backgroundColor: "{colors.chip-red}"
+  chart-fill-red-dark:
+    backgroundColor: "{colors.chip-red-dark}"
+  qr-code-rest:
+    textColor: "{colors.ink-body}"
+  qr-code-rest-dark:
+    textColor: "{colors.ink-body-dark}"
+  qr-code-loading:
+    textColor: "{colors.skeleton}"
+  qr-code-loading-dark:
+    textColor: "{colors.skeleton-dark}"
   place-row-rest:
     height: "{spacing.row}"
     rounded: "{rounded.row}"
@@ -1244,14 +1384,64 @@ components:
     width: "{spacing.check}"
     rounded: "{rounded.chip}"
     backgroundColor: "{colors.skeleton-dark}"
+  skeleton-icon:
+    height: "{spacing.icon}"
+    width: "{spacing.icon}"
+    rounded: "{rounded.full}"
+    backgroundColor: "{colors.skeleton}"
+  skeleton-icon-dark:
+    height: "{spacing.icon}"
+    width: "{spacing.icon}"
+    rounded: "{rounded.full}"
+    backgroundColor: "{colors.skeleton-dark}"
+  skeleton-dot:
+    height: "{spacing.dot}"
+    width: "{spacing.dot}"
+    rounded: "{rounded.full}"
+    backgroundColor: "{colors.skeleton}"
+  skeleton-dot-dark:
+    height: "{spacing.dot}"
+    width: "{spacing.dot}"
+    rounded: "{rounded.full}"
+    backgroundColor: "{colors.skeleton-dark}"
+  skeleton-meter:
+    height: "{spacing.meter}"
+    rounded: "{rounded.chip}"
+    backgroundColor: "{colors.skeleton}"
+  skeleton-meter-dark:
+    height: "{spacing.meter}"
+    rounded: "{rounded.chip}"
+    backgroundColor: "{colors.skeleton-dark}"
+  skeleton-chart:
+    height: "{spacing.chart}"
+    rounded: "{rounded.chip}"
+    backgroundColor: "{colors.skeleton}"
+  skeleton-chart-dark:
+    height: "{spacing.chart}"
+    rounded: "{rounded.chip}"
+    backgroundColor: "{colors.skeleton-dark}"
   skeleton-row-two-line:
     height: "{spacing.row-2}"
   skeleton-row-setting:
     height: "{spacing.row-setting}"
   skeleton-row-facts:
     height: "{spacing.target}"
+  skeleton-row-one-line:
+    height: "{spacing.row}"
+  skeleton-row-one-line-group:
+    height: "{spacing.row}"
+  skeleton-row-two-line-trailing:
+    height: "{spacing.row-2}"
   skeleton-lane-body:
     typography: "{typography.body}"
+  chart-grid:
+    height: "{spacing.chart}"
+  chart-key-dot:
+    height: "{spacing.dot}"
+    width: "{spacing.dot}"
+    rounded: "{rounded.full}"
+  chart-tick-lane:
+    width: "{spacing.figures}"
   checkbox-mark:
     height: "{spacing.icon-meta}"
     width: "{spacing.icon-meta}"
@@ -1264,14 +1454,22 @@ components:
     height: "{spacing.chip}"
     width: "{spacing.chip}"
     rounded: "{rounded.full}"
-  code:
+  code-fold:
+    height: "{spacing.target}"
+    textColor: "{colors.ink-meta}"
+  code-fold-dark:
+    height: "{spacing.target}"
+    textColor: "{colors.ink-meta-dark}"
+  code-head:
+    height: "{spacing.strip}"
+  comparison-row:
+    height: "{spacing.row}"
+  content-frame:
     rounded: "{rounded.card}"
-    backgroundColor: "{colors.group}"
-    padding: "{spacing.card}"
-  code-dark:
+    backgroundColor: "{colors.surface}"
+  content-frame-dark:
     rounded: "{rounded.card}"
-    backgroundColor: "{colors.group-dark}"
-    padding: "{spacing.card}"
+    backgroundColor: "{colors.surface-dark}"
   count:
     height: "{spacing.chip}"
     width: "{spacing.chip}"
@@ -1292,8 +1490,14 @@ components:
     height: "{spacing.control-compact}"
     width: "{spacing.control-compact}"
   diff-gutter:
+    width: "{spacing.figures}"
     textColor: "{colors.ink-meta}"
   diff-gutter-dark:
+    width: "{spacing.figures}"
+    textColor: "{colors.ink-meta-dark}"
+  diff-mark:
+    textColor: "{colors.ink-meta}"
+  diff-mark-dark:
     textColor: "{colors.ink-meta-dark}"
   empty-frame:
     padding: "{spacing.card}"
@@ -1322,6 +1526,10 @@ components:
   field-unit-dark:
     typography: "{typography.body}"
     textColor: "{colors.ink-meta-dark}"
+  file-counts:
+    typography: "{typography.meta}"
+  file-path:
+    typography: "{typography.code}"
   floating-act:
     padding: "{spacing.page}"
   floating-act-room:
@@ -1344,18 +1552,40 @@ components:
   group-ground-dark:
     rounded: "{rounded.card}"
     backgroundColor: "{colors.group-dark}"
-  meter-fill:
-    rounded: "{rounded.full}"
-    backgroundColor: "{colors.accent}"
-  meter-fill-dark:
-    rounded: "{rounded.full}"
-    backgroundColor: "{colors.accent-dark}"
-  meter-track:
-    rounded: "{rounded.full}"
+  message-attach-slot:
+    width: "{spacing.control-compact}"
+  message-bubble:
+    rounded: "{rounded.card}"
     backgroundColor: "{colors.group}"
-  meter-track-dark:
-    rounded: "{rounded.full}"
+  message-bubble-dark:
+    rounded: "{rounded.card}"
     backgroundColor: "{colors.group-dark}"
+  message-input-box:
+    rounded: "{rounded.card}"
+    backgroundColor: "{colors.surface}"
+    padding: "{spacing.inside}"
+  message-input-box-dark:
+    rounded: "{rounded.card}"
+    backgroundColor: "{colors.surface-dark}"
+    padding: "{spacing.inside}"
+  message-open:
+    rounded: "{rounded.control}"
+    height: "{spacing.target}"
+    textColor: "{colors.ink-meta}"
+  message-open-dark:
+    rounded: "{rounded.control}"
+    height: "{spacing.target}"
+    textColor: "{colors.ink-meta-dark}"
+  meter-item:
+    padding: "{spacing.card}"
+  meter-track:
+    height: "{spacing.meter}"
+    rounded: "{rounded.chip}"
+    backgroundColor: "{colors.fill-neutral}"
+  meter-track-dark:
+    height: "{spacing.meter}"
+    rounded: "{rounded.chip}"
+    backgroundColor: "{colors.fill-neutral-dark}"
   option-indent:
     height: "{spacing.check}"
     width: "{spacing.check}"
@@ -1375,8 +1605,6 @@ components:
     textColor: "{colors.ink-body-dark}"
   page-body:
     padding: "{spacing.page}"
-  page-strip:
-    height: "{spacing.strip}"
   page-top-bar:
     height: "{spacing.strip}"
   pending-fill:
@@ -1420,6 +1648,28 @@ components:
     padding: "{spacing.float}"
     backgroundColor: "{colors.raised-dark}"
     rounded: "{rounded.popover}"
+  prose:
+    typography: "{typography.body}"
+  prose-codespan:
+    rounded: "{rounded.chip}"
+    backgroundColor: "{colors.fill-neutral}"
+    typography: "{typography.code}"
+  prose-codespan-dark:
+    rounded: "{rounded.chip}"
+    backgroundColor: "{colors.fill-neutral-dark}"
+    typography: "{typography.code}"
+  prose-diff-body:
+    padding: "{spacing.card}"
+  qr-tile:
+    height: "{spacing.qr}"
+    width: "{spacing.qr}"
+    rounded: "{rounded.card}"
+    backgroundColor: "{colors.surface}"
+  qr-tile-dark:
+    height: "{spacing.qr}"
+    width: "{spacing.qr}"
+    rounded: "{rounded.card}"
+    backgroundColor: "{colors.surface-dark}"
   row-leading:
     height: "{spacing.avatar}"
     width: "{spacing.avatar}"
@@ -1534,8 +1784,16 @@ components:
     rounded: "{rounded.control}"
   switcher-slot:
     padding: "{spacing.float}"
+  table:
+    typography: "{typography.body}"
   table-cell:
-    height: "{spacing.field}"
+    height: "{spacing.row}"
+  table-empty:
+    padding: "{spacing.page}"
+  table-frozen:
+    backgroundColor: "{colors.surface}"
+  table-frozen-dark:
+    backgroundColor: "{colors.surface-dark}"
   text-area-value:
     height: "{spacing.text-area}"
   toast:
@@ -1674,7 +1932,7 @@ Seven roles named by place. Two rules decide the role: size follows structure, n
 | `caption` | 11px / 16px | 14px / 22px | 400 | `ink-meta` | text inside a small component (a chip, a key hint), never a sentence |
 | `code` | 12px / 18px | 15px / 22px | 400 | `ink-body` | what a machine reads |
 
-Tracking: `display` -0.02em, `title` -0.01em, `heading` -0.005em, `caption` 0.01em; the rest 0. `sans` is `"IBM Plex Sans", "IBM Plex Sans Fallback", ui-sans-serif, system-ui, sans-serif`; `mono` is `"IBM Plex Mono", "IBM Plex Mono Fallback", ui-monospace, "SFMono-Regular", Menlo, monospace`. Each named family is followed by its metric fallback face. Running text wraps at `measure`, 58ch.
+Tracking: `display` -0.02em, `title` -0.01em, `heading` -0.005em, `caption` 0.01em; the rest 0. `sans` is `"IBM Plex Sans", "IBM Plex Sans Fallback", ui-sans-serif, system-ui, sans-serif`; `mono` is `"IBM Plex Mono", "IBM Plex Mono Fallback", ui-monospace, "SFMono-Regular", Menlo, monospace`. Each named family is followed by its metric fallback face. Running text wraps at `measure`, 58ch; native, which has no `ch`, draws it at 557px (its characters at the sans face's figure advance of the touch body size, so a consumer face with a wider "0" overflows it).
 
 ## Layout
 
@@ -1729,7 +1987,7 @@ Sizes are heights and squares in the same namespace. Density is a theme and neve
 | `figures` | 29px | 36px | four tabular figures at the code size: a diff's number columns, a file row's count lanes |
 | `message-input` | 160px | 192px | a message input's tallest text: eight body line boxes, scrolling past it |
 
-Widths of lifted layers, never stretched to their container, and of a frame's fixed regions: `measure-short` 18ch, `popover` 240px, `toast` 360px, `dialog` 520px, `sheet` 640px, `sidebar` 240px, `list` 360px, `pane` 320px, `column` 300px, `auth` 400px, `empty` 320px. Breakpoints: `tablet` 768px, `desktop` 1024px, `wide` 1440px; they are the only responsive variants, of the viewport (`tablet:`) and, on the web, of a page's width (`page-tablet:`, `page-max-tablet:`), by which a Split decides its regions.
+Widths of lifted layers, never stretched to their container, and of a frame's fixed regions: `measure-short` 18ch (native 173px, at the body size, so a label's own size is lost there), `popover` 240px, `toast` 360px, `dialog` 520px, `sheet` 640px, `sidebar` 240px, `list` 360px, `pane` 320px, `column` 300px, `auth` 400px, `empty` 320px. Breakpoints: `tablet` 768px, `desktop` 1024px, `wide` 1440px; they are the only responsive variants, of the viewport (`tablet:`) and, on the web, of a page's width (`page-tablet:`, `page-max-tablet:`), by which a Split decides its regions.
 
 ## Elevation & Depth
 
@@ -1758,7 +2016,7 @@ The front matter's components are the matrix cells: one entry per axis value of 
 | `Button` | atom | `BUTTON`, `BUTTON_LABEL`, `ICON.fit.control`, `COUNT`, `COUNT_LABEL` | rest, hover, focus, active, disabled, loading |
 | `IconButton` | atom | `ICON_BUTTON` | rest, hover, focus, active |
 | `Count` | atom | `COUNT`, `COUNT_LABEL` | rest |
-| `Status` | atom | `STATUS`, `STATUS_DOT`, `STATUS_LABEL` | rest |
+| `Status` | atom | `STATUS`, `STATUS_DOT`, `STATUS_LABEL`, `SKELETON.kind.dot`, `SKELETON.kind.line` | rest |
 | `Chip` | atom | `CHIP`, `CHIP_LABEL`, `CHIP_REMOVE_HIT` | rest, hover, focus, active |
 | `Input` | atom | `FIELD`, `FIELD_VALUE`, `FIELD_PLACEHOLDER`, `FIELD_UNIT`, `FIELD_GLYPH` | rest, hover, focus, disabled, error |
 | `TextArea` | atom | `TEXT_AREA`, `TEXT_AREA_BUDGET`, `TEXT_AREA_VALUE`, `FIELD_VALUE`, `FIELD_PLACEHOLDER` | rest, hover, focus, disabled, error |
@@ -1770,12 +2028,12 @@ The front matter's components are the matrix cells: one entry per axis value of 
 | `Spinner` | atom | `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC` | rest |
 | `Avatar` | atom | `AVATAR`, `AVATAR_LABEL` | rest |
 | `Link` | atom | `LINK` | rest, hover, focus, active |
-| `Place` | layout | `PAGE_STRIP`, `PAGE_HEAD`, `PAGE_TOP_BAR`, `TEXT.role.title`, `PAGE_BODY`, `FLOATING_ACT`, `FLOATING_ACT_ROOM`, `FLOATING_ACT_FOOT`, `BUTTON.act.primary`, `BUTTON.fit.bar`, `BUTTON.fit.body`, `BUTTON_LABEL.act.primary`, `ICON_BUTTON.fit.bar`, `ICON_BUTTON.fit.body` | rest |
-| `Screen` | layout | `PAGE_STRIP`, `PAGE_HEAD`, `PAGE_TOP_BAR`, `TEXT.role.title`, `PAGE_BODY`, `ICON_BUTTON.fit.bar`, `ICON_BUTTON.fit.body` | rest |
+| `Place` | layout | `PAGE_HEAD`, `PAGE_TOP_BAR`, `PAGE_TITLE`, `TEXT.role.title`, `PAGE_BODY`, `FLOATING_ACT`, `FLOATING_ACT_ROOM`, `FLOATING_ACT_FOOT`, `BUTTON.act.primary`, `BUTTON.fit.bar`, `BUTTON.fit.body`, `BUTTON_LABEL.act.primary`, `ICON_BUTTON.fit.bar`, `ICON_BUTTON.fit.body` | rest |
+| `Screen` | layout | `PAGE_HEAD`, `PAGE_TOP_BAR`, `PAGE_TITLE`, `TEXT.role.title`, `PAGE_BODY`, `ICON_BUTTON.fit.bar`, `ICON_BUTTON.fit.body` | rest |
 | `Split` | layout | `SPLIT_LIST`, `SPLIT_MAIN`, `SPLIT_PANE`, `ICON_BUTTON.fit.bar` | rest, empty |
 | `Section` | layout | `SECTION`, `SECTION_HEAD`, `SECTION_HEAD_ROW`, `SECTION_TITLE`, `SECTION_TOGGLE`, `TEXT.role.heading`, `TEXT.role.meta`, `ICON.fit.body`, `COUNT`, `COUNT_LABEL`, `BUTTON.act.secondary`, `BUTTON.act.destructive`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.secondary`, `BUTTON_LABEL.act.destructive`, `ICON_BUTTON.fit.bar`, `SKELETON.kind.count`, `SKELETON.kind.line`, `SKELETON.kind.field`, `SKELETON_ROW.kind.field` | rest, hover, focus, active, disabled, loading |
 | `Group` | layout | `GROUP`, `SKELETON_ROW.kind.setting`, `SKELETON_LINES`, `SKELETON.kind.line`, `SKELETON.kind.switch` | rest, loading |
-| `List` | layout | `LIST`, `SKELETON_ROW.kind.two-line`, `SKELETON_LINES`, `SKELETON.kind.line`, `SKELETON.kind.avatar` | rest, loading |
+| `List` | layout | `LIST`, `SKELETON_ROW.kind.two-line`, `SKELETON_ROW.kind.two-line-trailing`, `SKELETON_LINES`, `SKELETON.kind.line`, `SKELETON.kind.avatar`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `ROW_TITLE_LINE` | rest, loading |
 | `Form` | layout | `FORM`, `FORM_FOOT` | rest, loading |
 | `Toolbar` | layout | `TOOLBAR`, `TOOLBAR_ROW`, `TOOLBAR_CHIPS` | rest |
 | `ActionBar` | layout | `ACTION_BAR`, `ACTION_BAR_ACTS`, `TEXT.role.meta`, `BUTTON.act.primary`, `BUTTON.act.danger`, `BUTTON.act.secondary`, `BUTTON.act.destructive`, `BUTTON.fit.body`, `BUTTON.fit.field`, `BUTTON_LABEL.act.primary`, `BUTTON_LABEL.act.danger`, `BUTTON_LABEL.act.secondary`, `BUTTON_LABEL.act.destructive` | rest, loading, disabled |
@@ -1787,7 +2045,7 @@ The front matter's components are the matrix cells: one entry per axis value of 
 | `ItemHeader` | shared | `ITEM_HEADER`, `ITEM_FACTS`, `ITEM_FACT`, `TEXT.role.meta`, `TEXT.role.heading`, `STATUS`, `STATUS_DOT`, `STATUS_LABEL`, `COUNT`, `COUNT_LABEL`, `LINE_BOX.role.meta`, `LINE_BOX.role.heading`, `SKELETON_LINES`, `SKELETON_ROW.kind.facts`, `SKELETON.kind.line`, `SKELETON.kind.count` | rest, loading |
 | `SegmentedControl` | shared | `SEGMENTED_CONTROL`, `SEGMENT`, `SEGMENT_LABEL` | rest, hover, focus, active, selected |
 | `Sheet` | shared | `SHEET`, `SHEET_SIDE`, `SHEET_CENTERED`, `SHEET_HEAD`, `SHEET_HEAD_ROW`, `SHEET_BODY`, `SHEET_FOOT`, `SCRIM`, `TEXT.role.heading`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `TEXT.role.meta`, `ICON_BUTTON.fit.bar`, `ICON_BUTTON.fit.body`, `BUTTON.act.primary`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.primary` | rest, disabled, loading |
-| `Picker` | shared | `PICKER`, `HAIRLINE`, `AVATAR`, `AVATAR_LABEL`, `PILL_ACT`, `PICKER_VALUE`, `ICON.fit.meta`, `FIELD.fit.bar`, `FIELD.trailing.none`, `FIELD.state.rest`, `FIELD_VALUE.kind.text`, `FIELD_VALUE.kind.search`, `FIELD_PLACEHOLDER`, `FIELD_GLYPH`, `ICON.fit.control`, `PICKER_EMPTY`, `POPOVER`, `PICKER_POPOVER`, `SELECT_GROUP`, `ROW.lines.one`, `ROW.lines.two`, `ROW.state.rest`, `ROW.state.highlighted`, `ROW.state.pressed`, `ROW.ground.list`, `ROW.ground.group`, `TEXT.role.body`, `TEXT.role.meta`, `ICON.fit.body` | rest, hover, focus, active, selected |
+| `Picker` | shared | `PICKER`, `HAIRLINE`, `ROW_LEADING`, `AVATAR`, `AVATAR_LABEL`, `PILL_ACT`, `PICKER_VALUE`, `ICON.fit.meta`, `FIELD.fit.bar`, `FIELD.trailing.none`, `FIELD.state.rest`, `FIELD_VALUE.kind.text`, `FIELD_VALUE.kind.search`, `FIELD_PLACEHOLDER`, `FIELD_GLYPH`, `ICON.fit.control`, `PICKER_EMPTY`, `POPOVER`, `PICKER_POPOVER`, `SELECT_GROUP`, `ROW.lines.one`, `ROW.lines.two`, `ROW.state.rest`, `ROW.state.highlighted`, `ROW.state.pressed`, `ROW.ground.list`, `ROW.ground.group`, `TEXT.role.body`, `TEXT.role.meta`, `ICON.fit.body` | rest, hover, focus, active, selected |
 | `Menu` | shared | `MENU`, `MENU_GROUP`, `MENU_LABEL`, `POPOVER`, `ROW.lines.one`, `ROW.lines.two`, `ROW.state.rest`, `ROW.state.highlighted`, `ROW.state.pressed`, `ROW.ground.list`, `TEXT.role.body`, `TEXT.role.meta`, `ICON.fit.body`, `ICON_BUTTON.fit.bar`, `ICON_BUTTON.fit.body` | rest, hover, focus, active |
 | `OptionList` | shared | `OPTION_LIST`, `SELECT_GROUP`, `OPTION_GROUP_LABEL`, `TEXT.role.meta`, `TEXT_STRONG.role.meta`, `ROW.lines.one`, `ROW.lines.two`, `ROW.state.rest`, `ROW.state.highlighted`, `ROW.state.pressed`, `ROW.ground.list`, `OPTION_LINE`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `CHECKBOX`, `CHECKBOX_MARK`, `TEXT.role.body`, `ROW_TITLE_LINE`, `ROW_META_LINE`, `CHIP.family.neutral`, `CHIP_LABEL.family.neutral`, `OPTION_CHILDREN`, `OPTION_INDENT`, `SKELETON.kind.check`, `SKELETON.kind.line`, `SKELETON_LANE` | rest, hover, focus, active, loading, selected |
 | `EmptyState` | shared | `EMPTY_COLUMN`, `EMPTY_TEXT`, `EMPTY_FRAME`, `EMPTY_MARK`, `ICON.fit.control`, `TEXT.role.title`, `TEXT.role.heading`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `TEXT.role.meta`, `BUTTON.act.primary`, `BUTTON.act.secondary`, `BUTTON.fit.bar`, `BUTTON.fit.body`, `BUTTON_LABEL.act.primary`, `BUTTON_LABEL.act.secondary` | rest |
@@ -1795,18 +2053,19 @@ The front matter's components are the matrix cells: one entry per axis value of 
 | `Toast` | shared | `TOAST`, `TOAST_STATE`, `ICON.fit.body`, `TEXT.role.body`, `BUTTON.act.secondary`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.secondary`, `ICON_BUTTON.fit.bar` | rest |
 | `Banner` | shared | `BANNER`, `BANNER_ROW`, `BANNER_MAIN`, `BANNER_GLYPH`, `ICON.fit.body`, `TEXT.role.body`, `TEXT.role.meta`, `BUTTON.act.secondary`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.secondary` | rest, disabled |
 | `PendingBar` | shared | `PENDING_BAR`, `PENDING_ROW`, `PENDING_TRACK`, `PENDING_FILL`, `PENDING_LEFT`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC`, `TEXT.role.body`, `TEXT.role.meta`, `BUTTON.act.secondary`, `BUTTON.fit.body`, `BUTTON_LABEL.act.secondary` | rest, disabled |
-| `Prose` | content | none | rest, loading |
-| `Code` | content | none | rest, loading |
-| `Diff` | content | `DIFF_LINE` | rest, loading |
-| `Table` | content | `TABLE_ROW`, `CHECKBOX`, `CHIP` | rest, hover, focus, active, loading, selected, empty |
-| `FileRow` | content | `ROW` | rest, hover, focus, active, loading |
-| `ProseDiff` | content | none | rest, loading |
-| `Comparison` | content | `ROW` | rest, loading |
-| `Message` | content | `MESSAGE` | rest, hover, focus, active, loading |
-| `MessageInput` | content | `FIELD` | rest, hover, focus, disabled |
-| `Meter` | content | none | rest, loading |
-| `BarChart` | content | none | rest, loading |
-| `QrCode` | content | none | rest, loading |
+| `Prose` | content | `LINE_BOX.role.body`, `LINK.fit.inline`, `PROSE`, `PROSE_BLOCKS`, `PROSE_CODESPAN`, `PROSE_EMPHASIS`, `PROSE_ITEM`, `PROSE_LIST`, `PROSE_MARKER`, `PROSE_PART`, `PROSE_QUOTE`, `PROSE_RULE`, `PROSE_STRIKE`, `SKELETON.kind.line`, `TEXT.role.body`, `TEXT.role.heading`, `TEXT_STRONG.role.body` | rest, loading |
+| `Code` | content | `CODE_ACT`, `CODE_FOLD`, `CODE_HEAD`, `CODE_TEXT`, `CODE_UNDER_HEAD`, `CONTENT_FRAME`, `ICON.fit.control`, `ICON.fit.meta`, `ICON_BUTTON.fit.body`, `LINE_BOX.role.code`, `LINE_BOX.role.meta`, `SKELETON.kind.line`, `TEXT.role.code`, `TEXT.role.meta` | rest, hover, focus, active, loading |
+| `Diff` | content | `CONTENT_FRAME`, `DIFF_CODE`, `DIFF_GUTTER`, `DIFF_HANG`, `DIFF_HUNK`, `DIFF_LINE`, `DIFF_MARK`, `SKELETON.kind.line` | rest, loading |
+| `ProseDiff` | content | `CONTENT_FRAME`, `LINE_BOX.role.body`, `PROSE_DIFF_BODY`, `PROSE_DIFF_RUN`, `PROSE_DIFF_TEXT`, `SKELETON.kind.line`, `TEXT.role.body` | rest, loading |
+| `FileRow` | content | `FILE_COUNT`, `FILE_COUNTS`, `FILE_PATH`, `FILE_PATH_PART`, `ICON.fit.body`, `ROW.ground.group`, `ROW.ground.list`, `ROW.lines.one`, `ROW.state.highlighted`, `ROW.state.pressed`, `ROW.state.rest`, `ROW.state.selected`, `ROW.state.selected-hover`, `ROW_LEADING`, `SKELETON.kind.icon`, `SKELETON.kind.line`, `SKELETON_LANE.role.meta`, `SKELETON_ROW.kind.one-line`, `SKELETON_ROW.kind.one-line-group` | rest, hover, focus, active, selected, loading |
+| `Comparison` | content | `CHIP.family.neutral`, `CHIP.trailing.none`, `CHIP_LABEL.family.neutral`, `COMPARISON_LABEL`, `COMPARISON_ROW`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `SKELETON.kind.line`, `TEXT.role.body`, `TEXT.role.meta`, `TEXT_STRONG.role.body`, `TEXT_STRONG.role.meta` | rest, loading |
+| `Table` | content | `CHECKBOX`, `CHECKBOX_MARK`, `CHIP.family.teal`, `CHIP.trailing.none`, `CHIP_LABEL.family.teal`, `FIELD.fit.bar`, `FIELD.state.rest`, `FIELD.trailing.none`, `FIGURES`, `ICON.fit.body`, `ICON.fit.meta`, `SKELETON.kind.check`, `SKELETON.kind.dot`, `SKELETON.kind.line`, `STATUS`, `STATUS_DOT`, `STATUS_LABEL`, `TABLE`, `TABLE_CELL`, `TABLE_EMPTY`, `TABLE_FRAME`, `TABLE_FROZEN`, `TABLE_FROZEN_CELL`, `TABLE_HEAD`, `TABLE_HEAD_LABEL`, `TABLE_ROW`, `TEXT.role.body`, `TEXT.role.code`, `TEXT.role.meta`, `TEXT_STRONG.role.body` | rest, hover, focus, active, loading, selected, empty |
+| `Message` | content | `ICON.fit.meta`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `MESSAGE`, `MESSAGE_BUBBLE`, `MESSAGE_HEAD`, `MESSAGE_LINE`, `MESSAGE_OPEN`, `SKELETON.kind.line`, `TEXT.role.body`, `TEXT.role.meta`, `TEXT_STRONG.role.body` | rest, hover, focus, active, loading |
+| `MessageInput` | content | `BUTTON.act.primary`, `BUTTON.act.secondary`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.primary`, `BUTTON_LABEL.act.secondary`, `CHIP.family.neutral`, `CHIP.trailing.remove`, `CHIP_LABEL.family.neutral`, `CHIP_REMOVE_HIT`, `FIELD.fit.bar`, `FIELD.state.rest`, `FIELD.trailing.none`, `FIELD_VALUE.kind.text`, `ICON.fit.control`, `ICON.fit.meta`, `ICON_BUTTON.fit.bar`, `MESSAGE_ATTACH_SLOT`, `MESSAGE_INPUT`, `MESSAGE_INPUT_BOX`, `MESSAGE_INPUT_CHIPS`, `MESSAGE_INPUT_FIELD`, `MESSAGE_INPUT_FOOT`, `MESSAGE_INPUT_ROW`, `MESSAGE_INPUT_TEXT`, `MESSAGE_INPUT_VALUE`, `MESSAGE_NOTICE`, `MESSAGE_NOTICE_TEXT`, `SPINNER`, `SPINNER_ARC`, `SPINNER_TRACK`, `TEXT.role.meta` | rest, hover, focus, disabled |
+| `Meter` | content | `FIGURES`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `METER`, `METER_FILL`, `METER_HEAD`, `METER_ITEM`, `METER_TRACK`, `SKELETON.kind.line`, `SKELETON.kind.meter`, `TEXT.role.body`, `TEXT.role.meta`, `TEXT_STRONG.role.body` | rest, loading |
+| `BarChart` | content | `CHART`, `CHART_BAND`, `CHART_BODY`, `CHART_FILL`, `CHART_GRID`, `CHART_HEAD`, `CHART_KEY`, `CHART_KEYS`, `CHART_KEY_DOT`, `CHART_MAIN`, `CHART_PART_SPLIT`, `CHART_TICK_LANE`, `CHART_TOTAL`, `FIGURES`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `SKELETON.kind.chart`, `SKELETON.kind.line`, `TEXT.role.body`, `TEXT.role.meta`, `TEXT_STRONG.role.body` | rest, loading |
+| `Thread` | content | `THREAD`, `THREAD_COLUMN`, `THREAD_LOG`, `THREAD_FOOT` | rest |
+| `QrCode` | content | `QR_CODE`, `QR_TILE` | rest, loading |
 
 A component with an approved artboard owns the tokens it may draw: a cell it draws that spells a type role, a colour, a radius, a spacing role, a size or a shadow outside its row is a contract error. A colour ending in `-` is a family (`chip-` is every chip role).
 
@@ -1817,7 +2076,7 @@ A component with an approved artboard owns the tokens it may draw: a cell it dra
 | `Button` | `body`, `meta`, `caption` | `act-`, `on-act-`, `edge`, `ink-body`, `ink-meta`, `fill-neutral`, `danger`, `wash-hover`, `wash-press`, `fill-disabled`, `ink-disabled`, `ring` | `control`, `full` | `inside`, `control-x`, `pair` | `control`, `control-compact`, `field`, `icon-control`, `chip` | none |
 | `IconButton` | none | `ink-meta`, `ink-body`, `wash-hover`, `wash-press`, `ink-disabled`, `ring` | `control` | none | `control`, `control-compact` | none |
 | `Count` | `caption` | `fill-neutral`, `ink-meta` | `full` | `inside` | `chip` | none |
-| `Status` | `meta` | `accent-ink`, `ink-meta`, `ok`, `warn`, `danger` | `full` | `inside` | `dot`, `measure-short` | none |
+| `Status` | `meta` | `accent-ink`, `ink-meta`, `ok`, `warn`, `danger`, `skeleton` | `full`, `chip` | `inside` | `dot`, `measure-short`, `skeleton` | none |
 | `Chip` | `caption` | `chip-`, `wash-hover`, `wash-press`, `ring` | `full` | `inside` | `chip`, `measure-short` | none |
 | `Input` | `body`, `code` | `surface`, `edge`, `edge-hover`, `edge-error`, `ink-body`, `ink-meta`, `fill-disabled`, `ink-disabled`, `ring` | `control` | `inside`, `control-x` | `field`, `control-compact` | none |
 | `TextArea` | `body`, `code`, `caption` | `surface`, `edge`, `edge-hover`, `edge-error`, `ink-body`, `ink-meta`, `ink-error`, `fill-disabled`, `ink-disabled`, `ring` | `control` | `rows`, `control-x`, `inside` | `text-area` | none |
@@ -1829,13 +2088,13 @@ A component with an approved artboard owns the tokens it may draw: a cell it dra
 | `Spinner` | none | none | `full` | none | `spinner` | none |
 | `Avatar` | `caption` | `avatar-` | `full` | none | `avatar` | none |
 | `Link` | none | `accent-ink`, `ring` | none | none | `target` | none |
-| `Place` | `title`, `body`, `meta` | `ink-body`, `ink-meta`, `edge`, `act-accent`, `on-act-accent`, `wash-hover`, `wash-press`, `danger` | `control` | `acts`, `page`, `sections`, `inside`, `control-x`, `rows` | `strip`, `control`, `control-compact`, `popover`, `list` | none |
+| `Place` | `title`, `body`, `meta` | `ink-body`, `ink-meta`, `edge`, `act-accent`, `on-act-accent`, `wash-hover`, `wash-press`, `danger` | `control` | `acts`, `page`, `sections`, `inside`, `control-x`, `rows`, `pair` | `strip`, `control`, `control-compact`, `popover`, `list` | none |
 | `Screen` | `title` | `ink-body`, `ink-meta`, `edge` | `control` | `acts`, `page`, `sections`, `pair` | `strip`, `control`, `control-compact` | none |
 | `Split` | none | `edge`, `ink-meta`, `surface` | `control` | `inside`, `page`, `sections` | `list`, `pane`, `control-compact` | none |
 | `Section` | `heading`, `meta`, `body`, `caption` | `ink-body`, `ink-meta`, `edge`, `fill-neutral`, `skeleton`, `wash-hover`, `wash-press`, `ring`, `danger` | `row`, `control`, `chip`, `full` | `pair`, `fields`, `inside`, `control-x` | `icon`, `chip`, `control-compact`, `skeleton`, `field`, `target` | none |
 | `Group` | none | `edge`, `surface`, `skeleton` | `card`, `chip`, `full` | `fields`, `card`, `pair` | `row-setting`, `skeleton`, `switch-w`, `switch-h` | none |
-| `List` | none | `skeleton` | `chip`, `full` | `rows`, `inside`, `control-x`, `pair` | `row-2`, `skeleton`, `avatar` | none |
-| `Form` | none | `edge` | none | `fields`, `sections` | none | none |
+| `List` | `body`, `meta` | `skeleton` | `chip`, `full` | `rows`, `inside`, `control-x`, `pair` | `row-2`, `skeleton`, `avatar` | none |
+| `Form` | none | `edge` | none | `fields`, `sections` | `measure` | none |
 | `Toolbar` | none | `edge` | none | `pair`, `page`, `inside`, `acts` | none | none |
 | `ActionBar` | `meta`, `body` | `ink-meta`, `ink-body`, `edge`, `danger`, `act-accent`, `on-act-accent`, `act-danger`, `on-act-danger` | `control` | `pair`, `acts`, `inside`, `control-x` | `control`, `field` | none |
 | `Columns` | none | none | none | `fields`, `page` | `column` | none |
@@ -1853,6 +2112,19 @@ A component with an approved artboard owns the tokens it may draw: a cell it dra
 | `Toast` | `body` | `raised`, `edge-raised`, `edge`, `ink-body`, `ink-meta`, `ok`, `warn`, `danger` | `card`, `control` | `card`, `pair`, `inside`, `control-x` | `toast`, `icon`, `control-compact` | `float` |
 | `Banner` | `body`, `meta` | `ink-body`, `ink-meta`, `edge`, `accent-soft`, `accent-ink`, `warn-soft`, `warn`, `danger-soft`, `danger` | `control` | `control-x`, `pair`, `inside` | `icon`, `control-compact` | none |
 | `PendingBar` | `body`, `meta` | `group`, `ink-body`, `ink-meta`, `edge` | `control`, `full` | `pair`, `acts`, `control-x`, `inside` | `control`, `track`, `spinner` | none |
+| `Prose` | `body`, `heading`, `code` | `ink-body`, `ink-meta`, `fill-neutral`, `accent-ink`, `edge-strong`, `edge`, `skeleton` | `chip` | `sections`, `pair`, `fields`, `inside`, `control-x` | `measure`, `icon`, `skeleton` | none |
+| `Code` | `code`, `meta` | `edge`, `surface`, `ink-body`, `ring`, `ink-meta`, `wash-hover`, `skeleton`, `wash-press` | `card`, `control`, `chip` | `tile`, `acts`, `float`, `inside` | `control`, `icon-control`, `strip`, `target`, `icon-meta`, `skeleton` | none |
+| `Diff` | `code` | `edge`, `surface`, `group`, `ink-meta`, `ink-body`, `danger-soft`, `ok-soft`, `skeleton` | `card`, `chip` | `inside`, `rows`, `control-x` | `figures`, `skeleton` | none |
+| `ProseDiff` | `body` | `edge`, `surface`, `ink-body`, `danger-soft`, `ok-soft`, `skeleton` | `card`, `chip` | `card` | `measure`, `skeleton` | none |
+| `FileRow` | `code`, `meta` | `ink-meta`, `ink-body`, `ok`, `danger`, `wash-hover`, `ring`, `wash-press`, `wash-selected`, `wash-selected-hover`, `skeleton` | `row`, `full`, `chip` | `inside`, `control-x`, `card` | `row`, `avatar`, `icon`, `figures`, `skeleton`, `measure-short` | none |
+| `Comparison` | `meta`, `body`, `caption` | `ink-meta`, `ink-body`, `chip-neutral-soft`, `chip-neutral-ink`, `skeleton` | `full`, `chip` | `pair`, `inside`, `card` | `row`, `chip`, `measure-short`, `skeleton` | none |
+| `Table` | `body`, `meta`, `code`, `caption` | `edge`, `ink-meta`, `ink-body`, `ring`, `chip-teal-soft`, `chip-teal-ink`, `toggle-on`, `on-accent`, `ok`, `wash-hover`, `accent-ink`, `edge-strong`, `surface`, `danger`, `warn`, `wash-press`, `wash-selected`, `wash-selected-hover`, `edge-hover`, `toggle-on-hover`, `skeleton` | `full`, `chip`, `control` | `control-x`, `inside`, `pair`, `page` | `measure-short`, `popover`, `toast`, `dialog`, `sheet`, `measure`, `sidebar`, `list`, `pane`, `column`, `auth`, `empty`, `row`, `icon-meta`, `chip`, `check`, `dot`, `control-compact`, `icon`, `skeleton` | none |
+| `Message` | `meta`, `body` | `ink-meta`, `group`, `ink-body`, `skeleton`, `wash-hover`, `ring`, `wash-press` | `card`, `control`, `chip` | `pair`, `tile`, `inside` | `target`, `icon-meta`, `skeleton` | none |
+| `MessageInput` | `body`, `meta`, `caption` | `edge`, `surface`, `ink-meta`, `ink-body`, `act-accent`, `on-act-accent`, `fill-disabled`, `ink-disabled`, `edge-hover`, `ring`, `chip-neutral-soft`, `chip-neutral-ink` | `card`, `control`, `full` | `pair`, `rows`, `inside`, `control-x` | `message-input`, `control-compact`, `icon-control`, `chip`, `measure-short`, `icon-meta`, `spinner` | none |
+| `Meter` | `body`, `meta` | `ink-body`, `ink-meta`, `fill-neutral`, `warn`, `danger`, `skeleton` | `chip` | `pair`, `inside`, `card` | `meter`, `skeleton` | none |
+| `BarChart` | `body`, `meta` | `ink-body`, `ink-meta`, `edge`, `skeleton`, `chip-` | `full`, `chip` | `fields`, `inside`, `pair` | `chart`, `dot`, `skeleton`, `figures` | none |
+| `Thread` | none | none | none | `sections`, `page` | `measure` | none |
+| `QrCode` | none | `edge`, `surface`, `ink-body`, `skeleton` | `card` | none | `qr` | none |
 
 ### Motion
 
@@ -1880,4 +2152,4 @@ Durations are read as `duration-<rung>`; every rung is 0 under `prefers-reduced-
 - Do draw one `title` per screen, no `heading` inside a row, no `caption` sentence; emphasis is weight, never size.
 - Do keep text at 4.5:1 or more on its fill; the contract measures every pair it draws.
 - Do time motion with a duration rung and a contract curve; don't write a literal duration.
-- Do take every word a component draws from `words`; a sentence is a prop. A counted word (`earlierLines`) is `{ one, other }`, each form spelling `{count}` where the number stands, drawn through `counted(word, count)`.
+- Do take every word a component draws from `words`; a sentence is a prop. A counted word (`earlierLines`) is `{ one, other }`, each form spelling `{count}` where the number stands, drawn through `counted(word, count)`. A slot word (`meterValue`, `meterOver`, `linesAdded`, `linesRemoved`) spells its named slots as `{name}` where each value stands, drawn through `filled(word, values)`.

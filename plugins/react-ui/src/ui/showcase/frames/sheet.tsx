@@ -19,7 +19,9 @@ function submitOf(state: ShowcaseFrame["state"]): Act {
 
 // A blocked submit shows its reason once pressed.
 const pressSubmit = (stage: HTMLElement) =>
-	press(stage.querySelector('[aria-disabled="true"]:not([aria-busy])'));
+	requestAnimationFrame(() =>
+		press(stage.querySelector('[aria-disabled="true"]:not([aria-busy])')),
+	);
 
 const NAME = {
 	value: "acme-web",
@@ -40,22 +42,23 @@ const CONFIRM = {
 };
 
 // The name typed in, then the act pressed: the act runs its work.
-const typeAndRun = (stage: HTMLElement) => {
-	const field = stage.querySelector("input");
-	if (!field) return;
-	Object.getOwnPropertyDescriptor(
-		HTMLInputElement.prototype,
-		"value",
-	)?.set?.call(field, NAME.value);
-	field.dispatchEvent(new Event("input", { bubbles: true }));
-	requestAnimationFrame(() =>
-		press(
-			[...stage.querySelectorAll("button")].find(
-				(button) => button.textContent === CONFIRM.act.label,
+const typeAndRun = (stage: HTMLElement) =>
+	requestAnimationFrame(() => {
+		const field = stage.querySelector("input");
+		if (!field) return;
+		Object.getOwnPropertyDescriptor(
+			HTMLInputElement.prototype,
+			"value",
+		)?.set?.call(field, NAME.value);
+		field.dispatchEvent(new Event("input", { bubbles: true }));
+		requestAnimationFrame(() =>
+			press(
+				[...stage.querySelectorAll("button")].find(
+					(button) => button.textContent === CONFIRM.act.label,
+				),
 			),
-		),
-	);
-};
+		);
+	});
 
 // The side sheet (the bottom sheet on touch) in its three states on its
 // form cell, a second page with back on the body icon act cell, the Split's pane on the

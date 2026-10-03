@@ -35,3 +35,12 @@ export const LabelTarget = createContext(false);
 export const GroupName = createContext<
 	{ label: string; said?: string } | undefined
 >(undefined);
+
+// Set by a `Table` around a cell's edit: the control stands in the cell at the
+// field's bar fit, named by the cell (its column, then its row); a number reads
+// end-aligned in tabular figures, as the cell does. The control mounts as the
+// edit starts (a typed one focused, a pick with its sheet open) and `done`
+// hears it end (the field left, the sheet closed).
+export const CellField = createContext<
+	{ label: string; done: () => void } | undefined
+>(undefined);

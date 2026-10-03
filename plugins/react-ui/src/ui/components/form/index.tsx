@@ -4,11 +4,12 @@ import {
 	Children,
 	isValidElement,
 	type ReactNode,
+	use,
 	useMemo,
 	useState,
 } from "react";
 import type { Closed } from "../../lib/closed.ts";
-import { FormContext } from "../../lib/form.ts";
+import { FormContext, FormStands } from "../../lib/form.ts";
 import { TouchedContext } from "../../lib/touched.ts";
 import { ActionBar } from "../action-bar/index.tsx";
 import { Section } from "../section/index.tsx";
@@ -21,8 +22,9 @@ export interface FormProps extends Closed {
 	children?: ReactNode;
 }
 
-/** Fields apart at the fields rhythm, or sections at the sections rhythm with the `ActionBar` under a hairline across the form. Its bar's filled act is the submit button, so Enter in a field runs that act's `onAct`; while its promise pends the act is pending, the others ignore the press and the form is busy. A blocked act says its reason once a field has taken input. */
+/** One column, at most a line of running text wide on a page and the sheet's width in a sheet: fields apart at the fields rhythm, or sections at the sections rhythm with the `ActionBar` under a hairline across the form. Its bar's filled act is the submit button, so Enter in a field runs that act's `onAct`; while its promise pends the act is pending, the others ignore the press and the form is busy. A blocked act says its reason once a field has taken input. */
 export function Form({ children }: FormProps) {
+	const within = use(FormStands);
 	const [pending, setPending] = useState(false);
 	const [touched, setTouched] = useState(false);
 	const touch = useMemo(
@@ -42,7 +44,7 @@ export function Form({ children }: FormProps) {
 					onChange={touch.touch}
 					aria-busy={pending || undefined}
 					className={cn(
-						form({ holds: sectioned ? "sections" : "fields" }),
+						form({ holds: sectioned ? "sections" : "fields", in: within }),
 						STACK,
 					)}
 				>

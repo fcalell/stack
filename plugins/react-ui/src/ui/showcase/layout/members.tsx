@@ -1,5 +1,11 @@
-import type { StatusState } from "@fcalell/ui-core/tokens";
+import type {
+	CellValue,
+	Option,
+	TableColumn,
+	TableRow,
+} from "@fcalell/ui-core/descriptors";
 import { useState } from "react";
+import { EmptyState } from "../../components/empty-state/index.tsx";
 import { Form } from "../../components/form/index.tsx";
 import { FormField } from "../../components/form-field/index.tsx";
 import { Group } from "../../components/group/index.tsx";
@@ -7,12 +13,15 @@ import { Input } from "../../components/input/index.tsx";
 import { ListRow } from "../../components/list-row/index.tsx";
 import { OptionList } from "../../components/option-list/index.tsx";
 import { Place } from "../../components/place/index.tsx";
+import { QueryBoundary } from "../../components/query-boundary/index.tsx";
 import { Section } from "../../components/section/index.tsx";
 import { Select } from "../../components/select/index.tsx";
 import { Sheet } from "../../components/sheet/index.tsx";
+import { Switch } from "../../components/switch/index.tsx";
+import { Table } from "../../components/table/index.tsx";
 import { confirm } from "../../lib/confirm.ts";
 import { toast } from "../../lib/toast.ts";
-import { settle } from "./here.ts";
+import { settle, useFixture } from "./here.ts";
 
 const ROLES = [
 	{
@@ -30,25 +39,118 @@ const ROLES = [
 type Role = (typeof ROLES)[number]["value"];
 
 interface Member {
+	id: string;
 	name: string;
 	email: string;
 	role: Role | "owner";
-	// An invitation not yet taken.
-	invited?: StatusState;
+	team: string;
+	deploys: boolean;
+	active: string;
 }
 
+const ago = (minutes: number) =>
+	new Date(Date.now() - minutes * 60_000).toISOString();
+
 const MEMBERS: Member[] = [
-	{ name: "Ana Ruiz", email: "ana@acme.dev", role: "owner" },
-	{ name: "Ben Kaya", email: "ben@acme.dev", role: "admin" },
-	{ name: "Ema Okafor", email: "ema@acme.dev", role: "member" },
-	{ name: "Chen Wu", email: "chen@acme.dev", role: "viewer" },
 	{
-		name: "lea@northwind.io",
-		email: "Invited 2 d ago by Ana Ruiz",
+		id: "ana",
+		name: "Ana Ruiz",
+		email: "ana@acme.dev",
+		role: "owner",
+		team: "Platform",
+		deploys: true,
+		active: ago(2),
+	},
+	{
+		id: "ben",
+		name: "Ben Kaya",
+		email: "ben@acme.dev",
+		role: "admin",
+		team: "Web",
+		deploys: true,
+		active: ago(18),
+	},
+	{
+		id: "ema",
+		name: "Ema Okafor",
+		email: "ema@acme.dev",
 		role: "member",
-		invited: "waiting",
+		team: "Platform",
+		deploys: true,
+		active: ago(60),
+	},
+	{
+		id: "chen",
+		name: "Chen Wu",
+		email: "chen@acme.dev",
+		role: "viewer",
+		team: "Design",
+		deploys: false,
+		active: ago(60 * 26),
+	},
+	{
+		id: "dara",
+		name: "Dara Novak",
+		email: "dara.novak@acme.dev",
+		role: "member",
+		team: "",
+		deploys: false,
+		active: ago(60 * 24 * 9),
 	},
 ];
+
+// The roles a member holds; the owner's moves only with ownership.
+const ROLE_OPTIONS: Option<Member["role"]>[] = [
+	{ value: "owner", label: "Owner", description: "Owns the workspace" },
+	...ROLES,
+];
+
+const COLUMNS: TableColumn[] = [
+	{ key: "name", label: "Name", width: "1/4", sortable: true },
+	{ key: "email", label: "Email", kind: "source", sortable: true },
+	{
+		key: "role",
+		label: "Role",
+		kind: "chip",
+		family: "violet",
+		width: "measure-short",
+		sortable: true,
+		edit: { control: "picker", options: ROLE_OPTIONS },
+	},
+	{
+		key: "team",
+		label: "Team",
+		width: "measure-short",
+		edit: { control: "input" },
+	},
+	{
+		key: "deploys",
+		label: "Deploys",
+		kind: "check",
+		edit: { control: "checkbox" },
+	},
+	{
+		key: "active",
+		label: "Last active",
+		kind: "age",
+		width: "measure-short",
+		sortable: true,
+	},
+];
+
+const rowOf = (member: Member): TableRow => ({
+	id: member.id,
+	cells: {
+		name: member.name,
+		email: member.email,
+		role: member.role,
+		team: member.team || null,
+		deploys: member.deploys,
+		active: member.active,
+	},
+	// The owner's role moves only with ownership.
+	locked: member.role === "owner" ? ["role"] : undefined,
+});
 
 const PERMISSIONS = [
 	{
@@ -105,27 +207,158 @@ function Invite(props: { open: boolean; onClose: () => void }) {
 	);
 }
 
-export function Members() {
-	const [members, setMembers] = useState(MEMBERS);
-	const [inviting, setInviting] = useState(false);
-	const remove = (member: Member) =>
+// The open member: what a phone edits, since its rows edit nothing in place.
+function Record(props: {
+	member?: Member;
+	onClose: () => void;
+	onSave: (member: Member) => void;
+}) {
+	const { member } = props;
+	// The draft follows the member opened and stays through the sheet's exit.
+	const [draft, setDraft] = useState(member);
+	const [shown, setShown] = useState(member);
+	if (member && member !== shown) {
+		setShown(member);
+		setDraft(member);
+	}
+	const edit = (change: Partial<Member>) =>
+		setDraft((current) => (current ? { ...current, ...change } : current));
+	return (
+		<Sheet
+			open={member !== undefined}
+			onClose={props.onClose}
+			title={draft?.name ?? ""}
+			description={draft?.email}
+			submit={{
+				label: "Save",
+				onAct: async () => {
+					await settle();
+					if (draft) props.onSave(draft);
+					props.onClose();
+					toast(`${draft?.name} saved`, { state: "done" });
+				},
+			}}
+		>
+			{draft ? (
+				<Form>
+					<FormField
+						label="Role"
+						description={
+							draft.role === "owner"
+								? "The owner's role moves only when another member is made owner."
+								: "What they can change."
+						}
+						disabled={draft.role === "owner"}
+					>
+						<Select
+							options={
+								draft.role === "owner" ? ROLE_OPTIONS : ROLE_OPTIONS.slice(1)
+							}
+							value={draft.role}
+							onChange={(role) => edit({ role })}
+						/>
+					</FormField>
+					<FormField label="Team">
+						<Input value={draft.team} onChange={(team) => edit({ team })} />
+					</FormField>
+					<FormField
+						label="Deploys"
+						description="Promotes previews and deploys to production."
+					>
+						<Switch
+							checked={draft.deploys}
+							onChange={(deploys) => edit({ deploys })}
+							label="Deploys"
+						/>
+					</FormField>
+				</Form>
+			) : null}
+		</Sheet>
+	);
+}
+
+// What one cell's edit changes on its member.
+function edited(member: Member, key: string, value: CellValue): Member {
+	const role = ROLE_OPTIONS.find((option) => option.value === value);
+	if (key === "role" && role) return { ...member, role: role.value };
+	if (key === "team") return { ...member, team: String(value ?? "") };
+	if (key === "deploys") return { ...member, deploys: value === true };
+	return member;
+}
+
+function MemberTable(props: { initial: Member[] }) {
+	const [members, setMembers] = useState(props.initial);
+	const [open, setOpen] = useState<string>();
+	const save = (next: Member) =>
+		setMembers((all) => all.map((each) => (each.id === next.id ? next : each)));
+	// Ownership moves whole: the new owner takes it, the old one stays an admin.
+	const transfer = (member: Member) =>
 		confirm({
-			title: `Remove ${member.name}?`,
+			title: `Make ${member.name} the owner?`,
 			sentence:
-				"They lose access to every project in Acme at once. Their deploys stay.",
+				"They take over billing and the workspace's deletion. You stay an admin.",
 			act: {
-				label: "Remove member",
+				label: "Transfer ownership",
 				destructive: true,
 				onAct: async () => {
 					await settle();
-					setMembers((all) => all.filter((each) => each !== member));
-					toast(`${member.name} removed`, { state: "done" });
+					setMembers((all) =>
+						all.map((each) => {
+							if (each.id === member.id) return { ...each, role: "owner" };
+							if (each.role === "owner") return { ...each, role: "admin" };
+							return each;
+						}),
+					);
+					toast(`${member.name} owns Acme`, { state: "done" });
 				},
 			},
-			confirmName: {
-				value: member.name,
-				label: `Type ${member.name} to confirm`,
-				blocked: "Type their name to remove them.",
+		});
+	return (
+		<>
+			<Table
+				columns={COLUMNS}
+				rows={members.map(rowOf)}
+				selected={open}
+				onOpen={setOpen}
+				onEdit={(id, key, value) => {
+					const member = members.find((each) => each.id === id);
+					if (!member) return;
+					if (key === "role" && value === "owner") transfer(member);
+					else save(edited(member, key, value));
+				}}
+				empty={
+					<EmptyState
+						icon="Users"
+						title="No members yet"
+						sentence="Invite the people you work with to deploy together."
+					/>
+				}
+			/>
+			<Record
+				member={members.find((each) => each.id === open)}
+				onClose={() => setOpen(undefined)}
+				onSave={save}
+			/>
+		</>
+	);
+}
+
+export function Members() {
+	const query = useFixture(MEMBERS);
+	const [invited, setInvited] = useState(true);
+	const [inviting, setInviting] = useState(false);
+	const revoke = () =>
+		confirm({
+			title: "Revoke the invitation?",
+			sentence: "The link in the email stops working. You can invite again.",
+			act: {
+				label: "Revoke",
+				destructive: true,
+				onAct: async () => {
+					await settle();
+					setInvited(false);
+					toast("Invitation revoked", { state: "done" });
+				},
 			},
 		});
 	return (
@@ -135,61 +368,43 @@ export function Members() {
 		>
 			<Section
 				title="Members"
-				count={members.length}
+				count={query.data?.length}
 				description="Who works in Acme, and what each can change."
 			>
-				<Group>
-					{members.map((member) => (
-						<ListRow<Role>
-							key={member.name}
-							leading={
-								member.invited
-									? { status: member.invited }
-									: { avatar: { name: member.name } }
-							}
-							title={member.name}
-							meta={[member.email]}
-							status={
-								member.invited
-									? { state: member.invited, label: "Pending" }
-									: undefined
-							}
-							trailing={
-								member.role === "owner"
-									? { value: "Owner" }
-									: {
-											pick: {
-												label: `${member.name}'s role`,
-												options: ROLES,
-												value: member.role,
-												onChange: (role) => {
-													setMembers((all) =>
-														all.map((each) =>
-															each === member ? { ...each, role } : each,
-														),
-													);
-													toast(`${member.name} is now ${role}`);
-												},
-											},
-										}
-							}
+				<QueryBoundary
+					query={query}
+					sentence="Members did not load."
+					loading={<Table columns={COLUMNS} rows={[]} loading />}
+				>
+					{(members) => <MemberTable initial={members} />}
+				</QueryBoundary>
+			</Section>
+			{invited ? (
+				<Section title="Invitations" count={1}>
+					<Group>
+						<ListRow
+							leading={{ status: "waiting" }}
+							title="lea@northwind.io"
+							meta={["Invited 2 d ago by Ana Ruiz"]}
+							status={{ state: "waiting", label: "Pending" }}
+							trailing={{ value: "Member" }}
 							more={[
 								{
-									label: "Copy email",
-									icon: "Copy",
-									onAct: () => toast("Email copied"),
+									label: "Resend",
+									icon: "Send",
+									onAct: () => toast("Invitation sent again"),
 								},
 								{
-									label: "Remove",
+									label: "Revoke",
 									icon: "UserMinus",
 									destructive: true,
-									onAct: () => remove(member),
+									onAct: revoke,
 								},
 							]}
 						/>
-					))}
-				</Group>
-			</Section>
+					</Group>
+				</Section>
+			) : null}
 			<Invite open={inviting} onClose={() => setInviting(false)} />
 		</Place>
 	);

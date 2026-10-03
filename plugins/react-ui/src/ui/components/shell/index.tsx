@@ -27,6 +27,7 @@ import type { Closed } from "../../lib/closed.ts";
 import {
 	ActFloats,
 	CoverTabs,
+	FootDocks,
 	PlaceRoute,
 	ShellSwitcher,
 } from "../../lib/frame.ts";
@@ -53,9 +54,10 @@ const COLUMN = "relative flex flex-col min-w-0 grow";
 const BANNER_SLOT = "flex flex-col";
 // The page and the toasts standing over its foot: at the end on the
 // desktop, centred on touch, above the tab bar and, while a Place's act
-// floats, above the act. It is the main landmark, so a page's headers inside
+// floats or a Thread's input docks, above the act or the input. It is the main landmark, so a page's headers inside
 // it are no banners.
 const MAIN = "relative flex flex-col grow min-h-0";
+const ROOM = "shrink-0";
 const TOASTS_LAYER =
 	"absolute inset-0 flex flex-col items-end justify-end pointer-events-none touch:items-center";
 // A place row rings inset, inside the sidebar's inset.
@@ -91,13 +93,14 @@ export interface ShellProps extends Closed {
 	children?: ReactNode;
 }
 
-/** The frame: on the desktop the sidebar (the switcher, then the places) beside the column; on touch the column over the tab bar, the switcher at the head of each Place's top bar, and past five places four tabs and More, which opens a page of the rest; on both, the current place's route handed down for a Place's back act, a pushed Screen covering the tab bar, the `toast()` queue standing over the page's foot (at the end on the desktop, centred on touch over a floating act) and the first `confirm()` decision as a sheet. */
+/** The frame: on the desktop the sidebar (the switcher, then the places) beside the column; on touch the column over the tab bar, the switcher at the head of each Place's top bar, and past five places four tabs and More, which opens a page of the rest; on both, the current place's route handed down for a Place's back act, a pushed Screen covering the tab bar, the `toast()` queue standing over the page's foot (at the end on the desktop, centred on touch; above a floating act or a Thread's docked input) and the first `confirm()` decision as a sheet. */
 export function Shell({ places, banner, switcher, children }: ShellProps) {
 	const touch = useTouch();
 	const words = useWords();
 	const pathname = usePathname();
 	const [covered, cover] = useState(false);
 	const [lifted, lift] = useState(false);
+	const [footing, dock] = useState(0);
 	// The More page stands at the route it opened on: going to a place closes it.
 	const [moreAt, setMoreAt] = useState<string>();
 	const more = moreAt === pathname;
@@ -166,7 +169,9 @@ export function Shell({ places, banner, switcher, children }: ShellProps) {
 						<ShellSwitcher value={trigger}>
 							<PlaceRoute value={route}>
 								<CoverTabs value={cover}>
-									<ActFloats value={lift}>{page}</ActFloats>
+									<ActFloats value={lift}>
+										<FootDocks value={dock}>{page}</FootDocks>
+									</ActFloats>
 								</CoverTabs>
 							</PlaceRoute>
 						</ShellSwitcher>
@@ -176,6 +181,10 @@ export function Shell({ places, banner, switcher, children }: ShellProps) {
 						>
 							<ToastList />
 							{lifted ? <FloatingActRoom /> : null}
+							{footing > 0 ? (
+								// The docked foot's room is its measured height: it grows with the input.
+								<div aria-hidden className={ROOM} style={{ height: footing }} />
+							) : null}
 						</ToastControl.Viewport>
 					</main>
 					{tabs}

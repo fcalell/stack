@@ -13,7 +13,7 @@ import {
 	type IconButtonFit,
 	PAGE_BODY,
 	PAGE_HEAD,
-	PAGE_STRIP,
+	PAGE_TITLE,
 	PAGE_TOP_BAR,
 	text,
 } from "@fcalell/ui-core/variants";
@@ -28,6 +28,7 @@ import {
 	RecordOpen,
 	RecordShown,
 	ShellSwitcher,
+	ThreadFills,
 } from "../../lib/frame.ts";
 import { HeadingContext } from "../../lib/heading.ts";
 import { useTouch } from "../../lib/media.ts";
@@ -39,8 +40,9 @@ import { IconButton } from "../icon-button/index.tsx";
 import { Menu } from "../menu/index.tsx";
 
 const PLACE = "flex flex-col grow min-h-0";
-// A bleeding page is the size container a Split inside decides its regions
-// by; the acts it lends hide by the same widths.
+// A page is the size container what stands in it decides its structure by
+// (a Split its regions, a Table its grid); the acts a Split lends hide by the
+// same widths.
 const PAGE = "@container/page group/page";
 const BACK = "flex page-tablet:hidden";
 const BESIDE_BACK = "flex page-max-tablet:hidden";
@@ -118,7 +120,7 @@ export interface PlaceProps extends Closed {
 	children?: ReactNode;
 }
 
-/** A page: on the desktop the title and its acts share one strip under a hairline; on touch the top bar (the shell's switcher, the actions, more) stands over the title and the act floats over the body's end. A bleeding Place is the size container a Split inside decides its regions by: the Split lends it a Details act, drawn below `wide` of its width, and with a record open a back act to the place's route, drawn below `tablet` first: before the title in the strip, in the switcher's stead in the top bar. */
+/** A page under a head and its hairline: on the desktop the title and its acts share one strip; on touch the top bar (the shell's switcher, the actions, more) stands over the title and the act floats over the body's end. A Place is the size container what stands in it decides its structure by (a Split its regions, a Table its grid): a Thread in its body fills it; the Split lends it a Details act, drawn below `wide` of its width, and with a record open a back act to the place's route, drawn below `tablet` first: before the title in the strip, in the switcher's stead in the top bar. */
 export function Place({
 	title,
 	actions,
@@ -134,6 +136,7 @@ export function Place({
 	const titleId = useId();
 	const [sheet, lend] = useState<Dialog.Handle<unknown>>();
 	const [recordOpen, setRecordOpen] = useState(false);
+	const [fills, setFills] = useState(false);
 	const fit = touch ? "body" : "bar";
 	// A record standing alone returns to the list, the place's own route.
 	const back =
@@ -162,7 +165,10 @@ export function Place({
 		<Menu label={words.more} items={more} />
 	) : null;
 	const heading = (
-		<h1 id={titleId} className={cn(text({ role: "title" }), TITLE)}>
+		<h1
+			id={titleId}
+			className={cn(text({ role: "title" }), TITLE, touch && PAGE_TITLE)}
+		>
 			{title}
 		</h1>
 	);
@@ -198,8 +204,8 @@ export function Place({
 	// title's place, the spacer and the strip's act differ, each a slot that
 	// holds `null` where it does not draw, so the acts after it never shift.
 	const head = (
-		<header className={cn(touch && PAGE_HEAD, HEAD)}>
-			<div className={cn(touch ? PAGE_TOP_BAR : PAGE_STRIP, ROW)}>
+		<header className={cn(PAGE_HEAD, HEAD)}>
+			<div className={cn(PAGE_TOP_BAR, ROW)}>
 				{back}
 				{lead}
 				{touch ? null : heading}
@@ -212,13 +218,15 @@ export function Place({
 			{touch ? heading : null}
 		</header>
 	);
+	// A Thread in the body fills it, as a bleeding body's child does: no
+	// inset, its log scrolling.
 	const body = bleed ? (
 		<div className={BLEED}>
 			<ActRoom value={room}>{children}</ActRoom>
 		</div>
 	) : (
-		<div className={cn(PAGE_BODY, BODY)}>
-			{children}
+		<div className={fills ? BLEED : cn(PAGE_BODY, BODY)}>
+			<ThreadFills value={setFills}>{children}</ThreadFills>
 			{floating ? (
 				<div aria-hidden className={cn(FLOATING_ACT_ROOM, ACT_ROOM)} />
 			) : null}
@@ -230,7 +238,7 @@ export function Place({
 				<RecordShown value={recordOpen}>
 					<PageTitle value={titleId}>
 						<HeadingContext value={2}>
-							<div className={cn(PLACE, bleed && PAGE)}>
+							<div className={cn(PLACE, PAGE)}>
 								{head}
 								<div className={BODY_WRAP}>
 									{body}

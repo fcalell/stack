@@ -7,11 +7,11 @@ import {
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
-import * as Clipboard from "expo-clipboard";
-import { type ReactNode, useEffect, useState } from "react";
+import type { ReactNode } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
+import { useCopy } from "../../lib/copy";
 import { Ink } from "../../lib/ink";
 import { navigate } from "../../lib/navigate";
 import { useWords } from "../../lib/words";
@@ -32,8 +32,6 @@ const VALUE = "flex-1 min-w-0 text-right";
 const VALUE_SLOT = "flex-1 min-w-0 flex-row justify-end";
 const ACTS = "relative flex-row shrink-0";
 const CHEVRON = "shrink-0 items-center justify-center";
-
-const COPIED_MS = 2000;
 
 export type DefinitionValue =
 	| string
@@ -164,23 +162,17 @@ export function DefinitionRow({
 	);
 }
 
-// The copy act: a check and the word Copied for two seconds once copied.
+// The copy act: a check and the word Copied for two seconds once copied; a
+// refused write raises the failed Toast.
 function CopyAct({ label, value }: { label: string; value: string }) {
 	const words = useWords();
-	const [done, setDone] = useState(false);
-	useEffect(() => {
-		if (!done) return;
-		const timer = setTimeout(() => setDone(false), COPIED_MS);
-		return () => clearTimeout(timer);
-	}, [done]);
+	const [done, copy] = useCopy();
 	return (
 		<IconButton
 			icon={done ? "Check" : "Copy"}
 			fit="bar"
 			label={done ? words.copied : `${words.copy} ${label}`}
-			onAct={() => {
-				Clipboard.setStringAsync(value).then(() => setDone(true));
-			}}
+			onAct={() => copy(value)}
 		/>
 	);
 }

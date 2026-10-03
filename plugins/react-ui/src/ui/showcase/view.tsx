@@ -62,9 +62,14 @@ function writeView(view: View): void {
 export function useView(): [View, (next: View) => void] {
 	const [view, setView] = useState(readView);
 	useLayoutEffect(() => applyView(view), [view]);
+	// A density switch loads the page afresh: the showcase's frames drive
+	// themselves before any popup listens (`frames/overlay-stage.tsx`), and a
+	// switch in place mounts every new frame while the old frames' popups
+	// still listen.
 	const change = (next: View) => {
 		writeView(next);
-		setView(next);
+		if (next.density === view.density) setView(next);
+		else location.reload();
 	};
 	return [view, change];
 }

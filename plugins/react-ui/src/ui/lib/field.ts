@@ -22,3 +22,14 @@ export const LabelTarget = createContext<
 export const GroupName = createContext<
 	{ labelledBy: string; describedBy?: string } | undefined
 >(undefined);
+
+// Set by a `Table` around a cell's edit: the control stands in the cell at the
+// field's bar fit, named by the cell (its column, then its row), out of the
+// tab order (the grid's cursor reaches it); a number reads end-aligned in
+// tabular figures, as the cell does. A pick mounted while `editing` opens at
+// once, each rise of `opens` (an edit started on its cell from the keyboard or a
+// tap) opens it again, and `done` hears its list close.
+export const CellField = createContext<
+	| { label: string; editing: boolean; opens: number; done: () => void }
+	| undefined
+>(undefined);

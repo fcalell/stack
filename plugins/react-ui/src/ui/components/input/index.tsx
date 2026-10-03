@@ -4,13 +4,15 @@ import type { IconAct } from "@fcalell/ui-core/descriptors";
 import {
 	FIELD_GLYPH,
 	FIELD_UNIT,
+	FIGURES,
 	type FieldKind,
 	field,
 	fieldValue,
 } from "@fcalell/ui-core/variants";
+import { use } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { useCommit } from "../../lib/commit.ts";
-import { FieldDisabled } from "../../lib/field.ts";
+import { CellField, FieldDisabled } from "../../lib/field.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Icon } from "../icon/index.tsx";
 import { IconButton } from "../icon-button/index.tsx";
@@ -31,6 +33,8 @@ const VALUE =
 	"min-w-0 grow truncate outline-none placeholder:text-ink-meta disabled:text-ink-disabled";
 // A search box grows to fill the slot a toolbar gives it.
 const SEARCH_BOX = "grow";
+// A number in a table cell keeps the cell's end-aligned figures.
+const CELL_NUMBER = "text-end";
 const UNIT = "shrink-0";
 const UNIT_DISABLED = "text-ink-disabled";
 
@@ -78,7 +82,7 @@ export interface InputProps extends Closed {
 	act?: IconAct;
 }
 
-/** A field box on the surface: hairline at rest, `edge-hover` under the pointer, the ring on focus, `edge-error` when its `FormField` is in error, the disabled fill when it is disabled. */
+/** A field box on the surface: hairline at rest, `edge-hover` under the pointer, the ring on focus, `edge-error` when its `FormField` is in error, the disabled fill when it is disabled. In a `Table` cell it stands at the bar fit, named by the cell. */
 export function Input({
 	kind,
 	value,
@@ -92,6 +96,7 @@ export function Input({
 	const which = kind ?? "text";
 	const surface = SURFACE[which];
 	const search = which === "search";
+	const cell = use(CellField);
 	const commit = useCommit(value, onChange, onCommit, true);
 	return (
 		<Control
@@ -104,7 +109,8 @@ export function Input({
 			autoCapitalize={which === "text" ? undefined : "off"}
 			spellCheck={which === "text" ? undefined : false}
 			placeholder={placeholder ?? (search ? words.search : undefined)}
-			aria-label={search ? words.search : undefined}
+			aria-label={search ? words.search : cell?.label}
+			tabIndex={cell ? -1 : undefined}
 			// Base UI's Field wires the control (its id, label, description and
 			// validity); the render function hands over its props and state so the
 			// box around the value draws that state.
@@ -112,7 +118,7 @@ export function Input({
 				<div
 					className={cn(
 						field({
-							fit: search ? "bar" : "form",
+							fit: search || cell ? "bar" : "form",
 							trailing: act ? "act" : "none",
 							state: state.valid === false ? "error" : "rest",
 						}),
@@ -128,7 +134,12 @@ export function Input({
 					{search ? <Icon name="Search" fit="control" /> : null}
 					<input
 						{...control}
-						className={cn(fieldValue({ kind: surface }), VALUE)}
+						className={cn(
+							fieldValue({ kind: surface }),
+							cell && which === "number" && FIGURES,
+							VALUE,
+							cell && which === "number" && CELL_NUMBER,
+						)}
 					/>
 					{which === "number" && unit ? (
 						<span

@@ -23,6 +23,7 @@ import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { Ink } from "../../lib/ink";
 import { curve } from "../../lib/motion";
+import { RaisedGround } from "../../lib/raised";
 import { ToastEntry } from "../../lib/toast";
 import { useWords } from "../../lib/words";
 import { Button } from "../button";
@@ -80,39 +81,41 @@ export function Toast({ sentence, state, act }: ToastProps) {
 			"a Toast stands in the Shell's toasts layer, queued by toast()",
 		);
 	return (
-		<Raised
-			entering={ENTER}
-			exiting={LEAVE}
-			layout={CLOSE_UP}
-			accessibilityLiveRegion={state === "failed" ? "assertive" : "polite"}
-			className={cn(TOAST, BOX)}
-		>
-			{state ? (
-				<Ink.Provider value={toastContentTone(state)}>
-					<Icon name={MARK[state]} />
-				</Ink.Provider>
-			) : null}
-			<RNText className={cn(text({ role: "body" }), SENTENCE)}>
-				{sentence}
-			</RNText>
-			{act ? (
-				<View className={ACT}>
-					<Button
-						act="secondary"
-						fit="bar"
-						label={act.label}
-						onAct={() => void act.onAct()}
-						loading={act.loading}
-						blocked={act.blocked}
-					/>
-				</View>
-			) : null}
-			<IconButtonBase
-				icon="X"
-				fit="bar"
-				label={words.dismiss}
-				onAct={dismiss}
-			/>
-		</Raised>
+		<RaisedGround>
+			<Raised
+				entering={ENTER}
+				exiting={LEAVE}
+				layout={CLOSE_UP}
+				accessibilityLiveRegion={state === "failed" ? "assertive" : "polite"}
+				className={cn(TOAST, BOX)}
+			>
+				{state ? (
+					<Ink.Provider value={toastContentTone(state)}>
+						<Icon name={MARK[state]} />
+					</Ink.Provider>
+				) : null}
+				<RNText className={cn(text({ role: "body" }), SENTENCE)}>
+					{sentence}
+				</RNText>
+				{act ? (
+					<View className={ACT}>
+						<Button
+							act="secondary"
+							fit="bar"
+							label={act.label}
+							onAct={() => void act.onAct()}
+							loading={act.loading}
+							blocked={act.blocked}
+						/>
+					</View>
+				) : null}
+				<IconButtonBase
+					icon="X"
+					fit="bar"
+					label={words.dismiss}
+					onAct={dismiss}
+				/>
+			</Raised>
+		</RaisedGround>
 	);
 }

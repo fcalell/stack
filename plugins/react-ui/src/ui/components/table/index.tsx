@@ -1,0 +1,956 @@
+import { cn } from "@fcalell/ui-core/cn";
+import type {
+	CellValue,
+	Option,
+	Part,
+	StatusCell,
+	TableCell,
+	TableColumn,
+	TableRow,
+} from "@fcalell/ui-core/descriptors";
+import {
+	FIGURES,
+	skeleton,
+	TABLE,
+	TABLE_CELL,
+	TABLE_EMPTY,
+	TABLE_FRAME,
+	TABLE_FROZEN,
+	tableFrozenCell,
+	tableHead,
+	tableHeadLabel,
+	tableRow,
+	text,
+	textStrong,
+} from "@fcalell/ui-core/variants";
+import {
+	type FocusEvent,
+	type KeyboardEvent,
+	type MouseEvent,
+	type ReactNode,
+	use,
+	useRef,
+	useState,
+} from "react";
+import { age } from "../../lib/age.ts";
+import type { Closed } from "../../lib/closed.ts";
+import { CellField, LabelTarget } from "../../lib/field.ts";
+import { PageTitle } from "../../lib/frame.ts";
+import { LoadingRow } from "../../lib/loading.ts";
+import { useTouch } from "../../lib/media.ts";
+import { navigate } from "../../lib/navigate.ts";
+import { useWords } from "../../lib/words.tsx";
+import { Checkbox } from "../checkbox/index.tsx";
+import { Chip } from "../chip/index.tsx";
+import { Icon } from "../icon/index.tsx";
+import { Input } from "../input/index.tsx";
+import { List } from "../list/index.tsx";
+import { ListRow } from "../list-row/index.tsx";
+import { PickerBase } from "../picker/base.tsx";
+import { StatusBase } from "../status/base.tsx";
+import { Status } from "../status/index.tsx";
+
+// The table fills what its page's body leaves, so an empty one's EmptyState
+// centres under the header. From `tablet` of its page the grid stands; below
+// it the rows are a list under the sort's pick.
+const ROOT = "flex flex-col grow";
+const GRID = "hidden page-tablet:flex flex-col grow";
+const LIST_FORM = "flex flex-col grow page-tablet:hidden";
+// The grid is its own stacking context, so its frozen column stands over its
+// cells alone, never over a sheet or a floating act.
+const FRAME = "flex flex-col isolate";
+// On touch every column stands at one width and the grid scrolls sideways
+// under its frozen leading column.
+const SCROLLS = "overflow-x-auto";
+const FIT = "w-full table-fixed";
+const MAX = "w-max table-fixed";
+const HEAD_CELL = "p-0 font-normal";
+const START = "text-start";
+const END = "text-end";
+// The frozen column stands over the cells that scroll beneath it.
+const FROZEN = "sticky left-0 z-1";
+const SORT =
+	"group/sort flex items-center w-full min-w-0 hover:bg-wash-hover active:bg-wash-press focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring";
+const HEAD = "flex items-center min-w-0";
+const LABEL = "truncate";
+const GLYPH_SORTED = "flex shrink-0 text-ink-body";
+// An unsorted column shows the both-ways arrow under the pointer and the
+// keyboard.
+const GLYPH_HINT =
+	"hidden shrink-0 text-ink-meta group-hover/sort:flex group-focus-visible/sort:flex";
+// The cell cursor rings inward; the grid holds one cell at tabindex 0.
+const BODY_CELL =
+	"p-0 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring";
+const SKELETON_CELL = "p-0";
+const CELL = "flex items-center min-w-0";
+const CELL_END = "justify-end";
+const VALUE = "truncate";
+const TICK = "flex shrink-0 text-ink-body";
+// A ticked read-only check reads as its column's label, as the phone's row does.
+const TICK_NAME = "sr-only";
+const EMPTY = "flex justify-center";
+// A row that opens washes under the pointer and the press, the open record a
+// step darker under the pointer; its frozen cell repeats the wash over its
+// own surface.
+const ROW = "group/row";
+const ROW_PRESS = "hover:bg-wash-hover active:bg-wash-press";
+const ROW_CHOSEN_PRESS = "hover:bg-wash-selected-hover active:bg-wash-press";
+const FROZEN_PRESS =
+	"group-hover/row:bg-wash-hover group-active/row:bg-wash-press";
+const FROZEN_CHOSEN_PRESS =
+	"group-hover/row:bg-wash-selected-hover group-active/row:bg-wash-press";
+const SORT_BAR = "flex items-center justify-end";
+
+// A desktop column's width: its `widths` rung, its share, or what the others
+// leave; a touch column stands at the short measure.
+const WIDTH: Record<NonNullable<TableColumn["width"]>, string> = {
+	"measure-short": "w-measure-short",
+	popover: "w-popover",
+	toast: "w-toast",
+	dialog: "w-dialog",
+	sheet: "w-sheet",
+	measure: "w-measure",
+	sidebar: "w-sidebar",
+	list: "w-list",
+	pane: "w-pane",
+	column: "w-column",
+	auth: "w-auth",
+	empty: "w-empty",
+	"1/4": "w-1/4",
+	"1/3": "w-1/3",
+	"1/2": "w-1/2",
+	"2/3": "w-2/3",
+	"3/4": "w-3/4",
+};
+const TOUCH_WIDTH = "w-measure-short";
+
+// Five loading rows, each bar at a share of its cell: a number's at a
+// quarter, the others by row and by their place among the bars.
+const LOADING_BARS = [
+	["w-2/3", "w-1/2", "w-1/3", "w-1/2", "w-1/2"],
+	["w-1/2", "w-2/3", "w-1/2", "w-1/3", "w-2/3"],
+	["w-3/4", "w-1/2", "w-1/3", "w-1/2", "w-1/3"],
+	["w-1/2", "w-1/3", "w-1/2", "w-1/3", "w-1/2"],
+	["w-2/3", "w-1/2", "w-1/3", "w-1/2", "w-2/3"],
+] as const;
+const NUMBER_BAR = "w-1/4";
+
+type Direction = "descending" | "ascending";
+interface Sort {
+	key: string;
+	direction: Direction;
+}
+
+interface TableBase extends Closed {
+	/** The columns in order, the first the row's name. */
+	columns: readonly TableColumn[];
+	/** The records, each its cells by column key. */
+	rows: readonly TableRow[];
+	/** The open record's id, washed as selected. */
+	selected?: string;
+	/** What the table holds while it has no rows, an `EmptyState`. */
+	empty?: ReactNode;
+	/** The rows wait: the header stands over skeleton rows at the loaded height. */
+	loading?: boolean;
+}
+
+interface Reads {
+	/** Opens a record: a press on its row, Enter on its leading cell. */
+	onOpen?: (id: string) => void;
+	onEdit?: never;
+}
+
+interface Edits {
+	onOpen: (id: string) => void;
+	/** Hears one committed edit of a cell whose column edits; a phone edits through the record `onOpen` shows. */
+	onEdit?: (id: string, key: string, value: CellValue) => void;
+}
+
+/** Records in columns. */
+export type TableProps = TableBase & (Reads | Edits);
+
+function optionsOf(column: TableColumn): readonly Option<string | null>[] {
+	if (column.edit?.control !== "picker") return [];
+	return column.edit.options.flatMap((entry) =>
+		"options" in entry ? entry.options : [entry],
+	);
+}
+
+// What a cell reads as: a picked value its option's label, a status its word.
+function shown(column: TableColumn, cell: TableCell | undefined): string {
+	if (cell === null || cell === undefined || typeof cell === "boolean")
+		return "";
+	if (typeof cell === "object") return cell.label ?? "";
+	if (column.kind === "age") return age(String(cell));
+	const option = optionsOf(column).find((o) => o.value === cell);
+	return option?.label ?? String(cell);
+}
+
+function order(
+	column: TableColumn,
+	cell: TableCell | undefined,
+): number | string {
+	if (cell === null || cell === undefined) return "";
+	if (typeof cell === "boolean") return cell ? 1 : 0;
+	if (typeof cell === "number") return cell;
+	if (typeof cell === "object") return cell.label ?? cell.status;
+	if (column.kind === "age") return Date.parse(cell);
+	return shown(column, cell);
+}
+
+// Rows by the sorted column, an empty cell last either way.
+function sorted(
+	rows: readonly TableRow[],
+	columns: readonly TableColumn[],
+	sort: Sort | undefined,
+): readonly TableRow[] {
+	const column = columns.find((c) => c.key === sort?.key);
+	if (!sort || !column) return rows;
+	const sign = sort.direction === "ascending" ? 1 : -1;
+	return [...rows].sort((a, b) => {
+		const x = order(column, a.cells[column.key]);
+		const y = order(column, b.cells[column.key]);
+		if (x === "" || y === "") return x === y ? 0 : x === "" ? 1 : -1;
+		if (typeof x === "number" && typeof y === "number") return (x - y) * sign;
+		return (
+			String(x).localeCompare(String(y), undefined, { numeric: true }) * sign
+		);
+	});
+}
+
+// A header pressed again turns its sort over, then off; another column sorts
+// newest or largest first.
+function next(sort: Sort | undefined, key: string): Sort | undefined {
+	if (sort?.key !== key) return { key, direction: "descending" };
+	return sort.direction === "descending"
+		? { key, direction: "ascending" }
+		: undefined;
+}
+
+// Focus inside an open edit: an Input's value or a Picker's trigger.
+const inEdit = (target: HTMLElement) =>
+	target instanceof HTMLInputElement ||
+	target.closest("[aria-haspopup]") !== null;
+
+const isEnd = (column: TableColumn) =>
+	(column.align ?? (column.kind === "number" ? "end" : "start")) === "end";
+
+// The edit a cell takes: its column's, never the leading column's nor a
+// column its row locks.
+function editOf(
+	columns: readonly TableColumn[],
+	at: number,
+	edits: boolean,
+	row: TableRow,
+) {
+	const column = columns[at];
+	if (!edits || at === 0 || row.locked?.includes(column?.key ?? "")) return;
+	return column?.edit;
+}
+
+/** From `tablet` of its page a grid: a header of sortable acts (the table sorts in its own state: newest or largest first, then turned over, then off) over one row per record, its leading cell the record's name; on touch every column stands at the short measure and the grid scrolls sideways under its frozen leading column. Its keyboard is a cell cursor (one Tab stop, the arrows, Home and End; Enter opens the row from its leading cell or edits an editable cell, Space ticks a check, Escape leaves an edit); a press on a row opens it, a press on an editable value edits it in place: typed in an `Input`, picked in a `Picker`, ticked in a `Checkbox`. Below `tablet` one `ListRow` per record (its leading cell the title, its age trailing, its status and chip the marks, the other values its meta line) under the sort's pick. */
+export function Table({
+	columns,
+	rows,
+	selected,
+	onOpen,
+	onEdit,
+	empty,
+	loading,
+}: TableProps) {
+	const [sort, setSort] = useState<Sort>();
+	const shownRows = sorted(rows, columns, sort);
+	const blank = !loading && rows.length === 0;
+	const emptySlot = blank ? (
+		<div className={cn(TABLE_EMPTY, EMPTY)}>{empty}</div>
+	) : null;
+	return (
+		<div className={ROOT}>
+			<Grid
+				columns={columns}
+				rows={shownRows}
+				sort={sort}
+				onSort={(key) => setSort((current) => next(current, key))}
+				selected={selected}
+				onOpen={onOpen}
+				onEdit={onEdit}
+				loading={loading}
+			>
+				{emptySlot}
+			</Grid>
+			<div className={LIST_FORM}>
+				{blank ? (
+					emptySlot
+				) : (
+					<Phone
+						columns={columns}
+						rows={shownRows}
+						sort={sort}
+						onSort={setSort}
+						onOpen={onOpen}
+						loading={loading}
+					/>
+				)}
+			</div>
+		</div>
+	);
+}
+
+interface Cursor {
+	row: number;
+	column: number;
+}
+
+function Grid(props: {
+	columns: readonly TableColumn[];
+	rows: readonly TableRow[];
+	sort: Sort | undefined;
+	onSort: (key: string) => void;
+	selected: string | undefined;
+	onOpen: ((id: string) => void) | undefined;
+	onEdit: ((id: string, key: string, value: CellValue) => void) | undefined;
+	loading: boolean | undefined;
+	children: ReactNode;
+}) {
+	const { columns, rows, sort, loading } = props;
+	const touch = useTouch();
+	const title = use(PageTitle);
+	const frame = useRef<HTMLDivElement>(null);
+	const [cursor, setCursor] = useState<Cursor>({ row: 0, column: 0 });
+	const [editing, setEditing] = useState(false);
+	// The last edit started from the keyboard or a tap, which opens a pick:
+	// its cell and a count that rises with each start.
+	const [opened, setOpened] = useState({ row: -1, column: -1, count: 0 });
+	const start = (row: number, column: number) => {
+		const cell = cellAt(row, column);
+		setEditing(true);
+		setOpened((last) => ({ row, column, count: last.count + 1 }));
+		requestAnimationFrame(() => cell?.querySelector("input")?.focus());
+	};
+	const [hover, setHover] = useState<Cursor>();
+	const at: Cursor = {
+		row: Math.min(cursor.row, Math.max(rows.length - 1, 0)),
+		column: Math.min(cursor.column, Math.max(columns.length - 1, 0)),
+	};
+	const edits = props.onEdit !== undefined;
+
+	const cellAt = (row: number, column: number) =>
+		frame.current?.querySelector<HTMLElement>(
+			`td[data-row="${row}"][data-column="${column}"]`,
+		);
+	// The cursor's cell stays clear of the frozen column it scrolls beneath.
+	const clear = (cell: HTMLElement) => {
+		const scroller = frame.current;
+		const frozen = cell.parentElement?.firstElementChild;
+		if (!touch || !scroller || !frozen || frozen === cell) return;
+		const box = cell.getBoundingClientRect();
+		const under = frozen.getBoundingClientRect().right - box.left;
+		const past = box.right - scroller.getBoundingClientRect().right;
+		if (under > 0) scroller.scrollLeft -= under;
+		else if (past > 0) scroller.scrollLeft += past;
+	};
+	const focusCell = (row: number, column: number) => {
+		const cell = cellAt(row, column);
+		cell?.focus();
+		if (cell) clear(cell);
+	};
+	// A closed pick hands the cursor back to its cell once its list has let go
+	// of focus, unless focus has moved on to another part of the page.
+	const done = () => {
+		setEditing(false);
+		const cell = cellAt(at.row, at.column);
+		requestAnimationFrame(() =>
+			requestAnimationFrame(() => {
+				const now = document.activeElement;
+				const away =
+					now !== null &&
+					now !== document.body &&
+					!cell?.contains(now) &&
+					now.closest("[role=listbox], [role=dialog]") === null;
+				if (!away) cell?.focus();
+			}),
+		);
+	};
+	const open = (row: TableRow) => {
+		if (props.onOpen) props.onOpen(row.id);
+		else if (row.href !== undefined) navigate(row.href);
+	};
+	const edit = (row: TableRow, column: TableColumn, value: CellValue) =>
+		props.onEdit?.(row.id, column.key, value);
+
+	const onFocus = (event: FocusEvent) => {
+		const target = event.target as HTMLElement;
+		const cell = target.closest<HTMLElement>("td[data-row]");
+		if (!cell || !frame.current?.contains(cell)) return;
+		setCursor({
+			row: Number(cell.dataset.row),
+			column: Number(cell.dataset.column),
+		});
+		setEditing(inEdit(target));
+	};
+	// Leaving a typed edit for anywhere outside its cell ends it.
+	const onBlur = (event: FocusEvent) => {
+		const target = event.target as HTMLElement;
+		const cell = target.closest("td[data-row]");
+		if (!(target instanceof HTMLInputElement) || !cell) return;
+		if (!cell.contains(event.relatedTarget as Node | null)) setEditing(false);
+	};
+	const onKeyDown = (event: KeyboardEvent) => {
+		const target = event.target as HTMLElement;
+		const cell = target.closest<HTMLElement>("td[data-row]");
+		if (!cell) return;
+		const row = Number(cell.dataset.row);
+		const column = Number(cell.dataset.column);
+		const record = rows[row];
+		const field = columns[column];
+		if (!record || !field) return;
+		if (inEdit(target)) {
+			// An open edit: Enter has committed and Escape put the value back; the
+			// edit closes once the value put back has rendered, so leaving the
+			// field commits nothing more.
+			if (
+				(event.key === "Enter" || event.key === "Escape") &&
+				target instanceof HTMLInputElement
+			) {
+				event.preventDefault();
+				requestAnimationFrame(() => {
+					setEditing(false);
+					cell.focus();
+				});
+			}
+			return;
+		}
+		const last = columns.length - 1;
+		const move: Record<string, Cursor | undefined> = {
+			ArrowRight: { row, column: Math.min(column + 1, last) },
+			ArrowLeft: { row, column: Math.max(column - 1, 0) },
+			ArrowDown: { row: Math.min(row + 1, rows.length - 1), column },
+			ArrowUp: { row: Math.max(row - 1, 0), column },
+			Home: event.ctrlKey ? { row: 0, column: 0 } : { row, column: 0 },
+			End: event.ctrlKey
+				? { row: rows.length - 1, column: last }
+				: { row, column: last },
+		};
+		const to = move[event.key];
+		// The leading link and a check answer Enter and Space themselves; the
+		// arrows move the cursor from them as from their cell.
+		if (target !== cell && !to) return;
+		if (to) {
+			event.preventDefault();
+			focusCell(to.row, to.column);
+			return;
+		}
+		if (event.key !== "Enter" && event.key !== " ") return;
+		event.preventDefault();
+		const control = editOf(columns, column, edits, record)?.control;
+		if (control === "checkbox") {
+			edit(record, field, record.cells[field.key] !== true);
+			return;
+		}
+		if (control) {
+			start(row, column);
+			return;
+		}
+		if (column === 0 && event.key === "Enter") {
+			const link = cell.querySelector("a");
+			if (link) link.click();
+			else open(record);
+		}
+	};
+	// A press on a row opens it, unless it lands on an editable cell or the
+	// leading cell's link, which answer it themselves.
+	const onClick = (event: MouseEvent, row: TableRow) => {
+		const target = event.target as HTMLElement;
+		// A pick in a cell's popup reaches the row through React's tree alone.
+		if (!event.currentTarget.contains(target)) return;
+		if (target.closest("td[data-edit], a")) return;
+		if (props.onOpen || row.href !== undefined) open(row);
+	};
+
+	const opens = props.onOpen !== undefined;
+	const cells = (row: TableRow, index: number) =>
+		columns.map((column, place) => {
+			const frozen = touch && place === 0;
+			const chosen = row.id === props.selected;
+			const control = editOf(columns, place, edits, row)?.control;
+			const here = index === at.row && place === at.column;
+			const opening =
+				opened.row === index && opened.column === place ? opened.count : 0;
+			const live =
+				control !== undefined &&
+				control !== "checkbox" &&
+				((here && editing) || (hover?.row === index && hover.column === place));
+			const name = `${column.label}, ${shown(columns[0] ?? column, row.cells[columns[0]?.key ?? ""])}`;
+			const box = cn(
+				TABLE_CELL,
+				CELL,
+				isEnd(column) && CELL_END,
+				frozen && tableFrozenCell({ state: chosen ? "selected" : "rest" }),
+				frozen && opens && (chosen ? FROZEN_CHOSEN_PRESS : FROZEN_PRESS),
+			);
+			return (
+				// biome-ignore lint/a11y/useKeyWithClickEvents: the grid's keyboard is the table's, delegated over its cells
+				<td
+					key={column.key}
+					data-row={index}
+					data-column={place}
+					data-edit={control}
+					tabIndex={here ? 0 : -1}
+					onPointerEnter={
+						control ? () => setHover({ row: index, column: place }) : undefined
+					}
+					onPointerLeave={control ? () => setHover(undefined) : undefined}
+					onClick={
+						live || !control || control === "checkbox"
+							? undefined
+							: () => start(index, place)
+					}
+					className={cn(BODY_CELL, frozen && cn(TABLE_FROZEN, FROZEN))}
+				>
+					{live ? (
+						<CellField
+							value={{
+								label: name,
+								editing: here && editing,
+								opens: opening,
+								done,
+							}}
+						>
+							<CellEdit
+								column={column}
+								cell={row.cells[column.key]}
+								onEdit={(value) => edit(row, column, value)}
+							/>
+						</CellField>
+					) : control === "checkbox" ? (
+						// biome-ignore lint/a11y/noLabelWithoutControl: the Checkbox inside is the control
+						<label className={box}>
+							<CellField
+								value={{ label: name, editing: false, opens: opening, done }}
+							>
+								<LabelTarget value={{}}>
+									<Checkbox
+										checked={row.cells[column.key] === true}
+										onChange={(checked) => edit(row, column, checked)}
+										label={name}
+									/>
+								</LabelTarget>
+							</CellField>
+						</label>
+					) : (
+						<div className={box}>
+							<CellValueView
+								column={column}
+								cell={row.cells[column.key]}
+								leading={place === 0}
+								href={row.href}
+							/>
+						</div>
+					)}
+				</td>
+			);
+		});
+
+	return (
+		<div className={GRID}>
+			<div ref={frame} className={cn(TABLE_FRAME, FRAME, touch && SCROLLS)}>
+				<table
+					// biome-ignore lint/a11y/noNoninteractiveElementToInteractiveRole: a table whose keyboard is a cell cursor is the WAI-ARIA grid
+					role="grid"
+					aria-labelledby={title}
+					aria-busy={loading || undefined}
+					onFocus={onFocus}
+					onBlur={onBlur}
+					onKeyDown={onKeyDown}
+					className={cn(TABLE, touch ? MAX : FIT)}
+				>
+					<colgroup>
+						{columns.map((column) => (
+							<col
+								key={column.key}
+								className={
+									touch
+										? TOUCH_WIDTH
+										: column.width
+											? WIDTH[column.width]
+											: undefined
+								}
+							/>
+						))}
+					</colgroup>
+					<thead>
+						<tr className={tableRow({ state: "rest" })}>
+							{columns.map((column, place) => (
+								<HeadCell
+									key={column.key}
+									column={column}
+									sort={sort}
+									frozen={touch && place === 0}
+									onSort={() => props.onSort(column.key)}
+								/>
+							))}
+						</tr>
+					</thead>
+					<tbody>
+						{loading
+							? LOADING_BARS.map((bars, index) => (
+									<SkeletonRow
+										key={bars.join(" ") + String(index)}
+										columns={columns}
+										bars={bars}
+										odd={index % 2 === 1}
+										touch={touch}
+									/>
+								))
+							: rows.map((row, index) => {
+									const chosen = row.id === props.selected;
+									return (
+										<tr
+											key={row.id}
+											aria-selected={chosen || undefined}
+											onClick={(event) => onClick(event, row)}
+											className={cn(
+												tableRow({ state: chosen ? "selected" : "rest" }),
+												ROW,
+												opens && (chosen ? ROW_CHOSEN_PRESS : ROW_PRESS),
+											)}
+										>
+											{cells(row, index)}
+										</tr>
+									);
+								})}
+					</tbody>
+				</table>
+			</div>
+			{props.children}
+		</div>
+	);
+}
+
+function HeadCell(props: {
+	column: TableColumn;
+	sort: Sort | undefined;
+	frozen: boolean;
+	onSort: () => void;
+}) {
+	const { column, sort, frozen } = props;
+	const end = isEnd(column);
+	const direction = sort?.key === column.key ? sort.direction : undefined;
+	const label = (
+		<span
+			className={cn(
+				tableHeadLabel({ sort: direction ? "sorted" : "none" }),
+				LABEL,
+			)}
+		>
+			{column.label}
+		</span>
+	);
+	const glyph = direction ? (
+		<span className={GLYPH_SORTED}>
+			<Icon
+				name={direction === "descending" ? "ArrowDown" : "ArrowUp"}
+				fit="meta"
+			/>
+		</span>
+	) : (
+		<span className={GLYPH_HINT}>
+			<Icon name="ArrowUpDown" fit="meta" />
+		</span>
+	);
+	const content = (
+		<>
+			{end ? glyph : null}
+			{label}
+			{end ? null : glyph}
+		</>
+	);
+	const edge = frozen && tableFrozenCell({ state: "rest" });
+	return (
+		<th
+			scope="col"
+			aria-sort={column.sortable ? (direction ?? "none") : undefined}
+			className={cn(
+				HEAD_CELL,
+				end ? END : START,
+				frozen && cn(TABLE_FROZEN, FROZEN),
+			)}
+		>
+			{column.sortable ? (
+				<button
+					type="button"
+					onClick={props.onSort}
+					className={cn(
+						tableHead({ state: "rest" }),
+						edge,
+						SORT,
+						end && CELL_END,
+					)}
+				>
+					{content}
+				</button>
+			) : (
+				<div className={cn(TABLE_CELL, edge, HEAD, end && CELL_END)}>
+					<span className={cn(tableHeadLabel({ sort: "none" }), LABEL)}>
+						{column.label}
+					</span>
+				</div>
+			)}
+		</th>
+	);
+}
+
+// A cell at rest: the leading cell the record's name (its link when it has
+// one), the others by their column's kind.
+function CellValueView(props: {
+	column: TableColumn;
+	cell: TableCell | undefined;
+	leading: boolean;
+	href: string | undefined;
+}) {
+	const { column, cell, leading } = props;
+	if (cell === null || cell === undefined) return null;
+	if (leading) {
+		const strong = cn(
+			text({ role: "body" }),
+			textStrong({ role: "body" }),
+			VALUE,
+		);
+		return props.href !== undefined ? (
+			<a href={props.href} tabIndex={-1} className={strong}>
+				{shown(column, cell)}
+			</a>
+		) : (
+			<span className={strong}>{shown(column, cell)}</span>
+		);
+	}
+	switch (column.kind) {
+		case "check":
+			return cell === true ? (
+				<span className={TICK}>
+					<Icon name="Check" />
+					<span className={TICK_NAME}>{column.label}</span>
+				</span>
+			) : null;
+		case "status": {
+			const status = cell as StatusCell;
+			return <Status state={status.status} label={status.label} />;
+		}
+		case "chip":
+			return <Chip family={column.family} label={shown(column, cell)} />;
+		case "source":
+			return (
+				<span className={cn(text({ role: "code" }), VALUE)}>
+					{shown(column, cell)}
+				</span>
+			);
+		case "number":
+			return (
+				<span className={cn(text({ role: "body" }), FIGURES, VALUE)}>
+					{shown(column, cell)}
+				</span>
+			);
+		case "age":
+			return (
+				<span className={cn(text({ role: "meta" }), FIGURES, VALUE)}>
+					{shown(column, cell)}
+				</span>
+			);
+		default:
+			return (
+				<span className={cn(text({ role: "body" }), VALUE)}>
+					{shown(column, cell)}
+				</span>
+			);
+	}
+}
+
+// A cell's edit in place: the Input of its column's kind, or its Picker. The
+// cell context sets its fit, its name and its tab stop.
+function CellEdit(props: {
+	column: TableColumn;
+	cell: TableCell | undefined;
+	onEdit: (value: CellValue) => void;
+}) {
+	const { column, cell } = props;
+	const [draft, setDraft] = useState(
+		cell === null || cell === undefined ? "" : String(cell),
+	);
+	if (column.edit?.control === "picker")
+		return (
+			<PickerBase<string | null>
+				label={column.label}
+				options={column.edit.options}
+				value={typeof cell === "string" || cell === null ? cell : undefined}
+				onChange={props.onEdit}
+				chip={column.kind === "chip" ? column.family : undefined}
+			/>
+		);
+	const number = column.kind === "number";
+	return (
+		<Input
+			kind={number ? "number" : column.kind === "source" ? "source" : "text"}
+			value={draft}
+			onChange={setDraft}
+			onCommit={(value) =>
+				props.onEdit(
+					number ? (value.trim() === "" ? null : Number(value)) : value,
+				)
+			}
+		/>
+	);
+}
+
+function SkeletonRow(props: {
+	columns: readonly TableColumn[];
+	bars: readonly string[];
+	odd: boolean;
+	touch: boolean;
+}) {
+	let bar = 0;
+	return (
+		<tr aria-hidden className={tableRow({ state: "rest" })}>
+			{props.columns.map((column, place) => {
+				const frozen = props.touch && place === 0;
+				let wait: ReactNode;
+				if (column.kind === "check")
+					wait = <span className={skeleton({ kind: "check" })} />;
+				else if (column.kind === "number")
+					wait = (
+						<span className={cn(skeleton({ kind: "line" }), NUMBER_BAR)} />
+					);
+				else if (column.kind === "status")
+					wait = <StatusBase waiting={props.odd ? "third" : "half"} />;
+				else {
+					const width = props.bars[bar++ % props.bars.length];
+					wait = <span className={cn(skeleton({ kind: "line" }), width)} />;
+				}
+				return (
+					<td
+						key={column.key}
+						className={cn(SKELETON_CELL, frozen && cn(TABLE_FROZEN, FROZEN))}
+					>
+						<div
+							className={cn(
+								TABLE_CELL,
+								CELL,
+								isEnd(column) && CELL_END,
+								frozen && tableFrozenCell({ state: "rest" }),
+							)}
+						>
+							{wait}
+						</div>
+					</td>
+				);
+			})}
+		</tr>
+	);
+}
+
+// Below `tablet`: the sort's pick over one ListRow per record.
+function Phone(props: {
+	columns: readonly TableColumn[];
+	rows: readonly TableRow[];
+	sort: Sort | undefined;
+	onSort: (sort: Sort) => void;
+	onOpen: ((id: string) => void) | undefined;
+	loading: boolean | undefined;
+}) {
+	const words = useWords();
+	const { columns, sort } = props;
+	const [leading, ...rest] = columns;
+	const status = rest.find((column) => column.kind === "status");
+	const chip = rest.find((column) => column.kind === "chip");
+	const ageColumn = rest.find((column) => column.kind === "age");
+	const meta = rest.filter(
+		(column) => column !== status && column !== chip && column !== ageColumn,
+	);
+	const sortable = columns.filter((column) => column.sortable);
+	const sortedBy = sortable.find((column) => column.key === sort?.key);
+	const arrow = sort?.direction === "ascending" ? "ArrowUp" : "ArrowDown";
+	const pick = sortable.length ? (
+		<div className={SORT_BAR}>
+			<PickerBase<string>
+				label={words.sort}
+				name={
+					sortedBy && sort
+						? `${words.sort}, ${sortedBy.label}, ${words[sort.direction]}`
+						: undefined
+				}
+				options={sortable.map((column) => ({
+					value: column.key,
+					label: column.label,
+					icon: column === sortedBy ? arrow : undefined,
+				}))}
+				value={sortedBy?.key}
+				onChange={(key) =>
+					props.onSort(
+						sort?.key === key && sort.direction === "descending"
+							? { key, direction: "ascending" }
+							: { key, direction: "descending" },
+					)
+				}
+				fit="row"
+			/>
+		</div>
+	) : null;
+	return (
+		<>
+			{pick}
+			{props.loading ? (
+				<LoadingRow value="two-line-trailing">
+					<List loading />
+				</LoadingRow>
+			) : (
+				<List>
+					{props.rows.map((row) => {
+						const cell = (column: TableColumn | undefined) =>
+							column ? row.cells[column.key] : undefined;
+						const state = cell(status) as StatusCell | null | undefined;
+						const when = cell(ageColumn);
+						const value = cell(chip);
+						const parts: Part[] = meta
+							.map((column) => {
+								const at = cell(column);
+								if (column.kind === "check")
+									return at === true ? column.label : "";
+								if (column.kind === "number" && at !== null && at !== undefined)
+									return `${column.label} ${at}`;
+								return shown(column, at);
+							})
+							.filter((part) => part !== "");
+						return (
+							<ListRow
+								key={row.id}
+								title={leading ? shown(leading, cell(leading)) : row.id}
+								meta={parts.length ? parts : undefined}
+								trailing={
+									typeof when === "string" ? { age: age(when) } : undefined
+								}
+								status={
+									state
+										? {
+												state: state.status,
+												label: state.label ?? words[state.status],
+											}
+										: undefined
+								}
+								chip={
+									chip?.kind === "chip" && typeof value === "string"
+										? { family: chip.family, label: shown(chip, value) }
+										: undefined
+								}
+								href={row.href}
+								onOpen={
+									props.onOpen && row.href === undefined
+										? () => props.onOpen?.(row.id)
+										: undefined
+								}
+							/>
+						);
+					})}
+				</List>
+			)}
+		</>
+	);
+}
