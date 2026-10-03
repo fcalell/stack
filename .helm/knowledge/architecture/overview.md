@@ -66,6 +66,7 @@ plugin-react-ui ──────────> cli + ui-core, requires react + 
 plugin-expo ──────────────> cli (owns expo.slots.metroConfig/expoConfig/entrySource/routesDtsSource,
                                  providers, easBuildProfiles/easUpdateChannel;
                                  contributes to api.slots.devCorsOrigins for the Metro dev origin,
+                                 api.slots.nativeScheme for its deep-link scheme,
                                  api.slots.middlewareEntries + cloudflare.slots.bindings for the
                                  version gate and its telemetry dataset)
 plugin-db ────────────────> cli, requires api
@@ -74,10 +75,10 @@ plugin-db ────────────────> cli, requires api
                                   to api.slots.testingEntries / testingImports; optional peer
                                   wrangler for its ./testing subpath)
 plugin-auth ──────────────> cli, requires api + db
-                                 (owns auth.slots.runtimeOptions — derived from api.slots.cors and expo.slots.scheme;
+                                 (owns auth.slots.runtimeOptions — derived from api.slots.cors and api.slots.nativeScheme;
                                   contributes to cloudflare.slots.bindings, api.slots.env/pluginRuntimes/callbacks,
                                   and the test entry's sign-in to api.slots.testingEntries)
-plugin-api ───────────────> cli (owns api.slots.workerImports/pluginRuntimes/middlewareEntries/cors/callbacks/env/workerSource;
+plugin-api ───────────────> cli (owns api.slots.workerImports/pluginRuntimes/middlewareEntries/cors/nativeScheme/callbacks/env/workerSource;
                                  never imports a deploy target)
 plugin-node ──────────────> cli, requires api
                                  (owns node.slots.serverPort/services/serverSource;

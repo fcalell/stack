@@ -64,6 +64,7 @@ e.g. consulting `ctx.fileExists` before writing.
 | `devCorsOrigins` | `list<string>` (sorted) | Frontend dev origins: each frontend dev server's (vite, metro) localhost when `app.origins` is absent, else the local origins api partitions out of it; emitted with `devTargetOrigins` after it as `createWorker({ devCors })` and honoured only when the worker runs with `STACK_DEV`, so a deploy never trusts localhost |
 | `devTargetOrigins` | `list<string>` (sorted) | Deploy-target dev origins: each deploy target's dev process's (node server, wrangler) localhost when `app.origins` is absent; same dev-only gating, always after `devCorsOrigins` in every dev list |
 | `routePrefixes` | `list<string>` | URL prefixes the worker owns (api contributes its `prefix`, auth its `/api/auth`); deploy targets read this to mount/forward worker paths, and plugin-expo's version gate walls only paths inside one |
+| `nativeScheme` | `value<string \| null>` | The native app's deep-link scheme, a trusted client origin no CORS list can carry; seeded null, contributed by expo (`options.scheme` ?? app-name slug, the scheme its app config registers). Read by auth's `runtimeOptions` and native-ui's `nativeAuthSource`, so the worker's trusted origins and the client match the app config |
 | `localOrigins` | `value<"dev" \| "deployed">` | Where the local origins of `app.origins` belong; seeded `dev`, set to `deployed` by a deploy target that is local itself (node bound to loopback) |
 | `cors` | `derived<string[]>` | Final production CORS list: `app.origins` minus local origins (kept when `localOrigins` is `deployed`), or `[https://domain, https://app.domain, ...corsOrigins]` |
 | `callbacks` | `map<string, CallbackSpec>` | Plugin-name → callback identifier; spliced onto matching runtime's options |
@@ -153,7 +154,6 @@ e.g. consulting `ctx.fileExists` before writing.
 | `providers` | `list<ProviderSpec>` | JSX providers composed around `<ExpoRoot>` in `.stack/entry.tsx` (lower order = outer) |
 | `entryImports` | `list<TsImportSpec>` | Extra imports for `.stack/entry.tsx` |
 | `devServerPort` | `value<number>` | Metro dev-server port (`options.port` ?? default); also drives the localhost CORS origin contributed to plugin-api |
-| `scheme` | `value<string>` | Resolved deep-link scheme (`options.scheme` ?? app-name slug); read by native-ui's generated auth-client constants and auth's `runtimeOptions`, so the client and the worker's trusted origins match the app config |
 | `routesPagesDir` | `derived<string \| null>` | expo-router pages dir; null when `routes: false` |
 | `easBuildProfiles` | `value<string[]>` | EAS build profile names the `expo build` command validates against |
 | `easUpdateChannel` | `value<string>` | Default EAS Update channel |
@@ -170,14 +170,14 @@ e.g. consulting `ctx.fileExists` before writing.
 | `fonts` | `derived<NativeFontEntry[]>` | Resolved font files (`{ family, source }`, consumer option or none); each `source` is embedded through expo-font. The families are the theme's `fonts` knob |
 | `appCssImports` | `list<string>` | Extra CSS `@import`s aggregated into `.stack/global.css` beyond tailwindcss + uniwind |
 | `appCssSource` | `derived<string \| null>` | Final `.stack/global.css`: `@theme` from ui-core's records (namespace resets first), the two elevation utilities as `@utility` blocks, and `@variant light` / `@variant dark` color blocks under `@layer theme` |
-| `nativeAuthSource` | `derived<string>` | `.stack/native-auth.ts` source: the resolved `scheme` and `cookiePrefix` constants the scaffolded `src/lib/auth.ts` imports, so the native client can never drift from the app config or the worker's cookie prefix |
+| `nativeAuthSource` | `derived<string>` | `.stack/native-auth.ts` source: the `scheme` (`api.slots.nativeScheme`) and `cookiePrefix` (`auth.slots.cookiePrefix`) constants the scaffolded `src/lib/auth.ts` imports, so the native client can never drift from the app config or the worker's cookie prefix |
 | `nativeThemeSource` | `derived<string \| null>` | `.stack/native-theme.ts` source: a `Uniwind.setTheme` call with the theme's `defaultMode`, imported for its side effect by the expo entry; null (no file, no import) without the knob, so uniwind follows the system |
 
 ## `auth.slots.*` (plugin-auth)
 
 | Slot | Kind | Purpose |
 |------|------|---------|
-| `runtimeOptions` | `derived<Record<string, TsExpression>>` | Better Auth runtime options; reads `api.slots.cors` for `trustedOrigins` and the default passkey `origin`, and `api.slots.devCorsOrigins` then `api.slots.devTargetOrigins` for `devTrustedOrigins` and passkey `devOrigin` (both dev-gated by the runtime), `auth.slots.reservedSlugs` for `reservedSlugs`, and `expo.slots.scheme` for the native `trustedOrigins` under `expo: true`; bakes passkey `rpID`/`rpName` from `app` |
+| `runtimeOptions` | `derived<Record<string, TsExpression>>` | Better Auth runtime options; reads `api.slots.cors` for `trustedOrigins` and the default passkey `origin`, and `api.slots.devCorsOrigins` then `api.slots.devTargetOrigins` for `devTrustedOrigins` and passkey `devOrigin` (both dev-gated by the runtime), `auth.slots.reservedSlugs` for `reservedSlugs`, and `api.slots.nativeScheme` for the native `trustedOrigins` under `expo: true` (refusing to generate when it is null); bakes passkey `rpID`/`rpName` from `app` |
 | `appUrlDevDefault` | `derived<string>` | Canonical dev URL for `APP_URL`'s dev default: the first `api.slots.devCorsOrigins` entry (a frontend's), else the first `api.slots.devTargetOrigins` entry (the deploy target's), else `https://<domain>` |
 | `callbackFile` | `value<string>` | Consumer callback-file path (default `src/worker/plugins/auth.ts`); override for a restructured worker layout |
 | `cookiePrefix` | `value<string>` | Resolved session-cookie prefix (`cookies.prefix` ?? better-auth's `"better-auth"` default); read by native-ui's generated auth-client constants |

@@ -54,6 +54,7 @@ export const api = plugin("api", {
 | `api.slots.corsOrigins` | `list<string>` | Extra production origins |
 | `api.slots.devCorsOrigins` | `list<string>` | Frontend dev origins (vite and expo push their localhost here, api the local entries of `app.origins`); applied only under `STACK_DEV` |
 | `api.slots.devTargetOrigins` | `list<string>` | Deploy-target dev origins (node and cloudflare push their dev process's localhost here); baked after `devCorsOrigins` as `createWorker({ devCors })`, applied only under `STACK_DEV` |
+| `api.slots.nativeScheme` | `value<string \| null>` | The native app's deep-link scheme (expo contributes it); null without a native app. auth trusts it, native-ui bakes it into the native auth client |
 | `api.slots.routePrefixes` | `list<string>` | URL prefixes the worker owns (api pushes its `prefix`, auth its `/api/auth`); deploy targets read this to mount or forward worker paths |
 | `api.slots.localOrigins` | `value<"dev" \| "deployed">` | Whether the local origins of `app.origins` are dev origins or the deployed list; a local deploy target (node on loopback) sets `deployed` |
 | `api.slots.cors` | `derived<string[]>` | Final production CORS list: `app.origins` minus local origins (kept under `localOrigins: deployed`), or `[https://domain, https://app.domain, ...corsOrigins]` |

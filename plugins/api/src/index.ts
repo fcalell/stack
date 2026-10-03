@@ -149,6 +149,15 @@ const devTargetOrigins = slot.list<string>({
 	sortBy: (a, b) => a.localeCompare(b),
 });
 
+// The deep-link scheme of the app's native client: a trusted client origin
+// no CORS list can carry, since `<scheme>://` is no HTTP origin. The native
+// frontend contributes it; null without one.
+const nativeScheme = slot.value<string | null>({
+	source: SOURCE,
+	name: "nativeScheme",
+	seed: () => null,
+});
+
 // Where local origins in `app.origins` belong. `dev`: they are dev origins,
 // stripped from the deployed allow-list and re-admitted under STACK_DEV.
 // `deployed`: the deploy target itself is local (the node server bound to
@@ -553,6 +562,7 @@ export const api = plugin("api", {
 		corsOrigins,
 		devCorsOrigins,
 		devTargetOrigins,
+		nativeScheme,
 		routePrefixes,
 		cors,
 		callbacks,

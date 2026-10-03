@@ -7,7 +7,6 @@ import type { PluginRuntimeEntry } from "@fcalell/plugin-api";
 import { api } from "@fcalell/plugin-api";
 import { RESERVED_SLUGS } from "@fcalell/plugin-api/lib/slugify";
 import { cloudflare } from "@fcalell/plugin-cloudflare";
-import { expo } from "@fcalell/plugin-expo";
 import {
 	defaultOrgRoles,
 	defaultOrgStatements,
@@ -91,7 +90,7 @@ const runtimeOptions = slot.derived({
 		devCors: api.slots.devCorsOrigins,
 		devTargets: api.slots.devTargetOrigins,
 		reserved: reservedSlugs,
-		scheme: expo.slots.scheme,
+		nativeScheme: api.slots.nativeScheme,
 	},
 	compute: async (
 		inp,
@@ -179,15 +178,20 @@ const runtimeOptions = slot.derived({
 		const props = literalToProps(rawOptions);
 
 		// trustedOrigins: web CORS origins, plus the native deep-link scheme
-		// when `expo` is set: the scheme expo registers in the app config, and
-		// its wildcard. A custom scheme is not a valid HTTP CORS origin, so it
-		// flows here directly rather than through api.slots.cors — Better
-		// Auth's CSRF origin check rejects native requests otherwise, even for
-		// ID-token sign-in. Empty is structurally impossible (thrown above), so
-		// the consumer sees exactly what Better Auth sees at runtime.
+		// when `expo` is set: api's `nativeScheme`, the one the native app
+		// registers, and its wildcard. A custom scheme is not a valid HTTP CORS
+		// origin, so it flows here directly rather than through api.slots.cors
+		// — Better Auth's CSRF origin check rejects native requests otherwise,
+		// even for ID-token sign-in. Empty is structurally impossible (thrown
+		// above), so the consumer sees exactly what Better Auth sees at runtime.
 		const trustedOrigins = [...inp.cors];
 		if (expoEnabled) {
-			trustedOrigins.push(`${inp.scheme}://`, `${inp.scheme}://*`);
+			if (inp.nativeScheme === null) {
+				throw new Error(
+					"plugin-auth: `expo: true` trusts the native app's deep-link scheme, and no plugin contributes one. Add `expo()` to stack.config.ts.",
+				);
+			}
+			trustedOrigins.push(`${inp.nativeScheme}://`, `${inp.nativeScheme}://*`);
 		}
 		props.trustedOrigins = {
 			kind: "array",

@@ -79,6 +79,15 @@ function slugify(name: string): string {
 	);
 }
 
+// The deep-link scheme the app config registers and api's `nativeScheme`
+// carries to its readers: the `scheme` option, else the app name's slug.
+function deepLinkScheme(ctx: {
+	options: ExpoOptions;
+	app: { name: string };
+}): string {
+	return ctx.options.scheme ?? slugify(ctx.app.name);
+}
+
 // Make a string a legal Java/Android package segment: alphanumerics only, and —
 // since a segment must start with a letter — prefix a leading digit with `a`
 // (e.g. "1foo" → "a1foo"). Empty input falls back to "app".
@@ -222,19 +231,10 @@ const metroConfig = slot.derived({
 		aggregateMetroConfig({ requires: inp.requires, wrappers: inp.wrappers }),
 });
 
-// The resolved deep-link scheme. A value slot so peer plugins (native-ui's
-// generated auth-client constants) read the same value expoConfig bakes into
-// the app config, instead of re-deriving it.
-const scheme = slot.value<string, ExpoOptions>({
-	source: SOURCE,
-	name: "scheme",
-	seed: (ctx) => ctx.options.scheme ?? slugify(ctx.app.name),
-});
-
 const expoConfig = slot.derived({
 	source: SOURCE,
 	name: "expoConfig",
-	inputs: { plugins: expoConfigPlugins, pagesDir: routesPagesDir, scheme },
+	inputs: { plugins: expoConfigPlugins, pagesDir: routesPagesDir },
 	compute: (inp, ctx: ContributionCtx<ExpoOptions>): string | null => {
 		const slug = slugify(ctx.app.name);
 		const _opts = ctx.options;
@@ -248,7 +248,7 @@ const expoConfig = slot.derived({
 		return aggregateExpoConfig({
 			name: ctx.app.name,
 			slug,
-			scheme: inp.scheme,
+			scheme: deepLinkScheme(ctx),
 			bundleIdentifier: bundleId,
 			androidPackage: bundleId,
 			plugins: basePlugins,
@@ -355,7 +355,6 @@ export const expo = plugin("expo", {
 		providers,
 		entryImports,
 		devServerPort,
-		scheme,
 		routesPagesDir,
 		easBuildProfiles,
 		easUpdateChannel,
@@ -466,6 +465,8 @@ export const expo = plugin("expo", {
 	},
 
 	contributes: (self) => [
+		api.slots.nativeScheme.contribute(() => deepLinkScheme(self)),
+
 		// Contribute the Metro dev-server localhost origin to the dev-only CORS
 		// list unless the consumer has overridden `app.origins`. Predicate is
 		// `!== undefined` (not truthiness) so an explicit `app.origins: []`

@@ -49,7 +49,6 @@ is `type: module`, so a `.js` would parse as ESM. `.stack/metro.config.cjs` sets
 | `expo.slots.providers` | `list<ProviderSpec>` | JSX wrappers around the expo-router root |
 | `expo.slots.entryImports` | `list<TsImportSpec>` | Imports for `.stack/entry.tsx` |
 | `expo.slots.devServerPort` | `value<number>` | Resolved Metro dev-server port |
-| `expo.slots.scheme` | `value<string>` | Resolved deep-link scheme |
 | `expo.slots.routesPagesDir` | `derived<string \| null>` | Resolved routes directory, `null` when routing is disabled |
 | `expo.slots.easBuildProfiles` | `value<string[]>` | EAS build profile names |
 | `expo.slots.easUpdateChannel` | `value<string>` | Default EAS Update channel |
@@ -59,7 +58,9 @@ is `type: module`, so a `.js` would parse as ESM. `.stack/metro.config.cjs` sets
 | `expo.slots.routesDtsSource` | `derived<string \| null>` | Final `.stack/routes.d.ts` |
 
 `plugin-expo` also contributes its dev-server localhost origin to `api.slots.devCorsOrigins`
-(gated on `app.origins` not being set), which the worker honours only under `STACK_DEV`, and,
+(gated on `app.origins` not being set), which the worker honours only under `STACK_DEV`, its
+deep-link scheme (`scheme` ?? the slug of `app.name`, the one `.stack/app.config.cjs` registers)
+to `api.slots.nativeScheme`, and,
 when `minNativeBuild` is configured, the version-gate middleware to `api.slots.middlewareEntries`
 (`after-cors`, `order: 0`, resolving `api.slots.routePrefixes` for the gate's scope) plus its
 telemetry dataset to `cloudflare.slots.bindings`. It points the consumer's `package.json` `main` at

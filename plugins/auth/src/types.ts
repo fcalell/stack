@@ -142,7 +142,7 @@ export const authOptionsSchema = z.object({
 	// Native (Expo) consumer flag. When set, the worker enables Better Auth's
 	// server-side `expo()` plugin — required for a native client's deep-link /
 	// cookie / origin handling — and adds the deep-link scheme expo registers
-	// (`expo.slots.scheme`) to `trustedOrigins`. The CSRF origin check runs
+	// (`api.slots.nativeScheme`) to `trustedOrigins`. The CSRF origin check runs
 	// even for native ID-token sign-in, so the scheme must be trusted.
 	expo: z.boolean().optional(),
 	// Passkey (WebAuthn) sign-in through `@better-auth/passkey`. Off by
