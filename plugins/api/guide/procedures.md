@@ -30,10 +30,11 @@ export const projects = {
 ## Rules
 
 - Import `procedure` from `virtual:stack-procedure`, `z` from `@fcalell/plugin-api/schema`, and
-  `ApiError` from `@fcalell/plugin-api/error`, never the package root: a route file is bundled
-  into the worker, and the root drags in the plugin's Node-only codegen.
-- A procedure with a `scope` or `paginated` takes an object input schema (`z.object(...)`); any
-  other schema throws when the route loads.
+  `ApiError` from `@fcalell/plugin-api/error`, never the package root, which drags Node-only
+  codegen into the worker bundle.
+- A procedure with a `scope` or `paginated` takes an object input schema, which keeps its
+  unknown-key policy (`.strict()` refuses extras) and refinements. Another schema, or one
+  declaring a key the config adds, throws when the route loads.
 - Use `.query()` for a read and `.mutation()` for a write. They run identically with
   `.handler()`; the name carries intent.
 - Declare `reads` on every query and `writes` on every mutation that touches an entity. The client
@@ -48,7 +49,7 @@ export const projects = {
 | --- | --- |
 | none | Public, no middleware |
 | `auth: true` | Requires a session |
-| `scope` | Requires `auth: true`. A scope from `@fcalell/plugin-auth/scope` (`organization`, or one declared with `defineScope`): the input gains `<name>Id`, and the row, every level above it and the caller's `member` row of the organization are loaded into the context. A missing row and a non-member both answer `NOT_FOUND`. The resolver honours the consumer's membership and visibility predicates: a row they hide answers the same `NOT_FOUND` |
+| `scope` | Requires `auth: true`. A scope from `@fcalell/plugin-auth/scope` (`organization`, or one declared with `defineScope`): the input gains `<name>Id`, and the row, every level above it and the caller's `member` row of the organization are loaded into the context. A missing row, a non-member, and a row the consumer's membership or visibility predicates hide all answer `NOT_FOUND` |
 | `can` / `rbac` | Require `auth: true` and a `scope`. Check the caller's role in the scope's organization against the roles the auth config declares. Names autocomplete from `auth({ organization: { ac } })`; with no organization they cannot be set |
 | `rateLimit` | `"ip"`, `"email"` (keyed by `input.email`) or both |
 | `paginated: true` | Adds `cursor` and `limit` to the input; `limit` defaults to 20 and a value outside 1 to 100 answers `BAD_REQUEST` |

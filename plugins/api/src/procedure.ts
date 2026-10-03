@@ -662,6 +662,33 @@ interface BuilderState {
 	baseShape: z.ZodRawShape | null;
 }
 
+// The input a `scope` or `paginated` procedure validates: the consumer's
+// object extended with the keys the config adds. `safeExtend` clones the
+// object with its unknown-key policy (strict, strip, catchall) and its
+// refinements, where a fresh `z.object` over the two shapes would keep
+// neither. A consumer key the config also adds is refused: the scope
+// middleware reads `<scope>Id` off the raw input before validation, so the
+// consumer's schema could only weaken or contradict the config's.
+function mergeInput(
+	baseShape: z.ZodRawShape | null,
+	schema: z.ZodType,
+): z.ZodType {
+	if (baseShape === null) return schema;
+	if (!(schema instanceof z.ZodObject)) {
+		throw new Error(
+			"procedure() with `scope` or `paginated` requires an object input schema. Use .input(z.object({...})).",
+		);
+	}
+	for (const key of Object.keys(baseShape)) {
+		if (key in schema.shape) {
+			throw new Error(
+				`procedure(): the input schema declares \`${key}\`, a key the procedure's \`scope\` or \`paginated\` config adds. Drop \`${key}\` from the input schema.`,
+			);
+		}
+	}
+	return schema.safeExtend(baseShape);
+}
+
 function createBuilder<
 	TContext extends Record<string, unknown>,
 	TBaseInput extends AnySides,
@@ -688,17 +715,7 @@ function createBuilder<
 		},
 
 		input(userSchema: z.ZodType) {
-			let merged: z.ZodType = userSchema;
-			if (hasBaseShape) {
-				if (!(userSchema instanceof z.ZodObject)) {
-					throw new Error(
-						"procedure() with `org` or `paginated` requires an object input schema. Use .input(z.object({...})).",
-					);
-				}
-				merged = z.object({ ...baseShape, ...userSchema.shape });
-			}
-
-			const withInputChain = chain.input(merged);
+			const withInputChain = chain.input(mergeInput(baseShape, userSchema));
 			const run = (fn: OrpcHandlerFn) => withInputChain.handler(fn);
 
 			const withInput = {
@@ -736,16 +753,9 @@ function createBuilder<
 			};
 			const withOutput = {
 				input(inputSchema: z.ZodType) {
-					let merged: z.ZodType = inputSchema;
-					if (hasBaseShape) {
-						if (!(inputSchema instanceof z.ZodObject)) {
-							throw new Error(
-								"procedure() with `org` or `paginated` requires an object input schema. Use .input(z.object({...})).",
-							);
-						}
-						merged = z.object({ ...baseShape, ...inputSchema.shape });
-					}
-					const innerChain = withOutputChain.input(merged);
+					const innerChain = withOutputChain.input(
+						mergeInput(baseShape, inputSchema),
+					);
 					const run = (fn: OrpcHandlerFn) => innerChain.handler(fn);
 					return { handler: run, query: run, mutation: run };
 				},
