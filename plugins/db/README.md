@@ -83,6 +83,32 @@ import { eq, and, desc } from "@fcalell/plugin-db/orm";
 await db.delete(projects).where(eq(projects.id, id));
 ```
 
+`alias` gives a second reference to a table, so a self-join or a correlated subquery names its
+columns through typed properties instead of a raw `sql` fragment. Name the subquery's columns
+through the alias and the outer row's through the table:
+
+```ts
+import { alias, and, eq, gt, notExists } from "@fcalell/plugin-db/orm";
+
+// Each author's last note: no later note by the same author exists.
+const later = alias(notes, "later");
+await db
+  .select({ id: notes.id })
+  .from(notes)
+  .where(
+    notExists(
+      db
+        .select({ id: later.id })
+        .from(later)
+        .where(and(eq(later.authorId, notes.authorId), gt(later.id, notes.id))),
+    ),
+  );
+```
+
+The alias name must differ from the table's own name: `alias(notes, "notes")` builds and runs,
+and its subquery then correlates to itself. A fragment built with `sql` is typed `SQL`, also
+exported from `@fcalell/plugin-db/orm`.
+
 For SQLite (scripts, seeds, tests):
 
 ```ts
@@ -278,7 +304,7 @@ Returns `{ db }` to downstream plugins via the builder's context accumulation.
 | Subpath | Purpose |
 |---------|---------|
 | `@fcalell/plugin-db` | `db()`, `DbOptions` |
-| `@fcalell/plugin-db/orm` | Drizzle table/column builders, table constraints (`check`, `unique`, `primaryKey`, `foreignKey`, `index`, `uniqueIndex`), operators, relations, aggregates, table and view introspection (`getTableColumns`, `getTableName`, `getTableConfig`, `isTable`, `getViewName`, `getViewSelectedFields`, `getViewConfig`, `isView`), `defineSeed`/`seedTable` |
+| `@fcalell/plugin-db/orm` | Drizzle table/column builders, table constraints (`check`, `unique`, `primaryKey`, `foreignKey`, `index`, `uniqueIndex`), operators, `alias` for a second reference to a table, the `SQL` fragment type, relations, aggregates, table and view introspection (`getTableColumns`, `getTableName`, `getTableConfig`, `isTable`, `getViewName`, `getViewSelectedFields`, `getViewConfig`, `isView`), `defineSeed`/`seedTable` |
 | `@fcalell/plugin-db/d1` | `createClient()` for Cloudflare D1 |
 | `@fcalell/plugin-db/sqlite` | `createClient()` for SQLite (requires `better-sqlite3`) |
 | `@fcalell/plugin-db/runtime` | `dbRuntime()` -- D1 runtime plugin factory |

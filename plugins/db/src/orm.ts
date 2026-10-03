@@ -41,8 +41,10 @@ export {
 	sum,
 } from "drizzle-orm";
 
-// Table definition, and its introspection (indexes, keys, checks)
+// Table definition, its introspection (indexes, keys, checks), and a second
+// reference to a table for a self-join or a correlated subquery
 export {
+	alias,
 	blob,
 	check,
 	foreignKey,
@@ -76,6 +78,7 @@ export type {
 	Many,
 	One,
 	Relations,
+	SQL,
 } from "drizzle-orm";
 export type {
 	SQLiteColumn,
