@@ -6,6 +6,7 @@ import {
 	type TestingPlugin,
 } from "../src/testing/index.ts";
 import type { AppRouter } from "./fixtures/testing/worker.ts";
+import { assertType, type Equal } from "./types.ts";
 
 const fixture = new URL("./fixtures/testing/", import.meta.url);
 const SECRET = "fixture-secret-0123456789";
@@ -19,14 +20,6 @@ function entry() {
 		env: { STACK_DEV: "1", FIXTURE_SECRET: SECRET },
 	});
 }
-
-// Compile-time equality, so a widened or narrowed handle type fails
-// `check-types`.
-type Equal<A, B> =
-	(<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2
-		? true
-		: false;
-function assertType<T extends true>(_: T): void {}
 
 test("a route importing virtual:stack-procedure answers under node", async () => {
 	await using app = await entry().boot();

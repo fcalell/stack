@@ -238,3 +238,15 @@ callbacks/handler) as real, never-exported code, purely so `typeof` can extract 
 autocomplete) comes from `api.slots.rbacStatements`, a plain-JSON handoff `auth` contributes from
 `organization.ac.statements`; absent that contribution it falls back to `Record<never, never>`, which
 makes `rbac`/`can` un-settable rather than accepting an arbitrary string.
+
+The builder derives two types from one input schema: the caller's side is the config's additions
+merged with `z.input`, the handler's side the additions' handler form merged with `z.output`.
+The additions split the same way: a scope adds `<name>Id: string` to both, and `paginated: true`
+adds an optional `limit` for the caller and `limit: number` for the handler, because the input
+defaults it. `.output(schema)` swaps the sides: the handler returns `z.input` and the caller
+receives `z.output`. oRPC parses the input before the handler runs and sends the validated output,
+so the split is types only; the runtime chain is unchanged. `Procedure<TInput, TOutput>` carries
+the caller's side only, because every reader of a built procedure is a caller: `RouterClient`,
+`createClient`, `createApiQueryUtils`, the test entry's `client()` and the emitted `.stack/types`
+declarations, which inline the brand. The handler's side is used only where the handler is
+written, so a third parameter would be read by nothing and grow every emitted declaration.

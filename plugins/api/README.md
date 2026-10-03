@@ -108,6 +108,15 @@ export const projects = {
 };
 ```
 
+One input schema types two sides. The caller sends the schema's input (`z.input`) and the
+handler reads its output (`z.output`), the value oRPC hands it after parsing. A `.default()` field
+is optional for the caller and always present in the handler; a `.transform()` field asks the
+caller for the value before the transform and gives the handler the value after it. The config's
+additions split the same way: `paginated: true` lets the caller omit `limit` and gives the handler
+`limit: number`, since the input defaults it to 20. The client, the TanStack Query utilities, the
+test entry's `client()` and the router type all carry the caller's side; the handler's side is
+named nowhere outside the handler.
+
 ### 4. Procedure configuration
 
 ```ts
@@ -176,6 +185,10 @@ procedure({ auth: true }).input(schema).query(fn)     // read
 procedure({ auth: true }).input(schema).mutation(fn)   // write
 procedure({ auth: true }).input(schema).handler(fn)    // generic
 ```
+
+`.output(schema)` mirrors the input: the handler returns the schema's input (`z.input`) and the
+caller receives its output (`z.output`), since oRPC validates the returned value and sends what
+the schema produces.
 
 ### 6. Custom middleware
 
@@ -452,7 +465,8 @@ const result = await paginate(db.query.projects, {
 // result: { data: T[], nextCursor: string | null }
 ```
 
-Limits are clamped to 1--100 (default 20).
+A paginated procedure's input refuses a `limit` outside 1--100 with `BAD_REQUEST` rather than
+clamping it, and defaults it to 20. `clampLimit`, called directly, clamps to 1--100 (default 20).
 
 ### Slugify
 

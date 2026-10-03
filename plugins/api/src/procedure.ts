@@ -138,81 +138,140 @@ type ResolvedContext<O, TBase extends Record<string, unknown>> = TBase &
 	(O extends { auth: true } ? InferAuthContext<TBase> : unknown) &
 	(O extends { scope: ScopeLike<string, infer C> } ? C : unknown);
 
+// The two types one schema gives a procedure: what the caller sends and what
+// the handler holds once oRPC has parsed it. An output schema swaps them: the
+// handler returns what the schema accepts and the caller receives what it
+// produces.
+interface Sides<TClient, THandler> {
+	client: TClient;
+	handler: THandler;
+}
+
+type AnySides = Sides<unknown, unknown>;
+
 type ScopeInput<O> = O extends { scope: ScopeLike<infer N> }
 	? { [K in `${N}Id`]: string }
 	: unknown;
 
+// `PAGINATION_SHAPE` defaults `limit`, so only the caller may omit it.
 type PageInput<O> = O extends { paginated: true }
-	? { cursor?: string; limit?: number }
-	: unknown;
+	? Sides<
+			{ cursor?: string; limit?: number },
+			{ cursor?: string; limit: number }
+		>
+	: Sides<unknown, unknown>;
 
+// Both sides are `undefined` when the config adds nothing, so a procedure
+// with no input is called with no argument (`ProcedureCall`).
 type InputAdditions<O> = O extends { scope: ScopeLike } | { paginated: true }
-	? ScopeInput<O> & PageInput<O>
-	: undefined;
+	? Sides<
+			ScopeInput<O> & PageInput<O>["client"],
+			ScopeInput<O> & PageInput<O>["handler"]
+		>
+	: Sides<undefined, undefined>;
 
-type MergedInput<TBaseInput, TSchemaOut> = TBaseInput extends undefined
-	? TSchemaOut
-	: TSchemaOut & TBaseInput;
+type MergeSide<TBaseSide, TSchemaSide> = TBaseSide extends undefined
+	? TSchemaSide
+	: TSchemaSide & TBaseSide;
+
+type MergedInput<
+	TBaseInput extends AnySides,
+	TSchema extends z.ZodType,
+> = Sides<
+	MergeSide<TBaseInput["client"], z.input<TSchema>>,
+	MergeSide<TBaseInput["handler"], z.output<TSchema>>
+>;
+
+type OutputSides<TSchema extends z.ZodType> = Sides<
+	z.output<TSchema>,
+	z.input<TSchema>
+>;
 
 // ---------- Builder interfaces ----------
 
-interface ProcedureWithInputOutput<TContext, TInput, TOutput> {
+interface ProcedureWithInputOutput<
+	TContext,
+	TInput extends AnySides,
+	TOutput extends AnySides,
+> {
 	handler(
-		fn: (opts: HandlerOptions<TContext, TInput>) => Promisable<TOutput>,
-	): Procedure<TInput, TOutput>;
+		fn: (
+			opts: HandlerOptions<TContext, TInput["handler"]>,
+		) => Promisable<TOutput["handler"]>,
+	): Procedure<TInput["client"], TOutput["client"]>;
 
 	query(
-		fn: (opts: HandlerOptions<TContext, TInput>) => Promisable<TOutput>,
-	): Procedure<TInput, TOutput>;
+		fn: (
+			opts: HandlerOptions<TContext, TInput["handler"]>,
+		) => Promisable<TOutput["handler"]>,
+	): Procedure<TInput["client"], TOutput["client"]>;
 
 	mutation(
-		fn: (opts: HandlerOptions<TContext, TInput>) => Promisable<TOutput>,
-	): Procedure<TInput, TOutput>;
+		fn: (
+			opts: HandlerOptions<TContext, TInput["handler"]>,
+		) => Promisable<TOutput["handler"]>,
+	): Procedure<TInput["client"], TOutput["client"]>;
 }
 
-interface ProcedureWithInput<TContext, TInput> {
+interface ProcedureWithInput<TContext, TInput extends AnySides> {
 	output<TSchema extends z.ZodType>(
 		schema: TSchema,
-	): ProcedureWithInputOutput<TContext, TInput, z.input<TSchema>>;
+	): ProcedureWithInputOutput<TContext, TInput, OutputSides<TSchema>>;
 
 	handler<TOutput>(
-		fn: (opts: HandlerOptions<TContext, TInput>) => Promisable<TOutput>,
-	): Procedure<TInput, TOutput>;
+		fn: (
+			opts: HandlerOptions<TContext, TInput["handler"]>,
+		) => Promisable<TOutput>,
+	): Procedure<TInput["client"], TOutput>;
 
 	query<TOutput>(
-		fn: (opts: HandlerOptions<TContext, TInput>) => Promisable<TOutput>,
-	): Procedure<TInput, TOutput>;
+		fn: (
+			opts: HandlerOptions<TContext, TInput["handler"]>,
+		) => Promisable<TOutput>,
+	): Procedure<TInput["client"], TOutput>;
 
 	mutation<TOutput>(
-		fn: (opts: HandlerOptions<TContext, TInput>) => Promisable<TOutput>,
-	): Procedure<TInput, TOutput>;
+		fn: (
+			opts: HandlerOptions<TContext, TInput["handler"]>,
+		) => Promisable<TOutput>,
+	): Procedure<TInput["client"], TOutput>;
 }
 
-interface ProcedureWithOutput<TContext, TBaseInput, TOutput> {
+interface ProcedureWithOutput<
+	TContext,
+	TBaseInput extends AnySides,
+	TOutput extends AnySides,
+> {
 	input<TSchema extends z.ZodType>(
 		schema: TSchema,
 	): ProcedureWithInputOutput<
 		TContext,
-		MergedInput<TBaseInput, z.output<TSchema>>,
+		MergedInput<TBaseInput, TSchema>,
 		TOutput
 	>;
 
 	handler(
-		fn: (opts: HandlerOptions<TContext, TBaseInput>) => Promisable<TOutput>,
-	): Procedure<TBaseInput, TOutput>;
+		fn: (
+			opts: HandlerOptions<TContext, TBaseInput["handler"]>,
+		) => Promisable<TOutput["handler"]>,
+	): Procedure<TBaseInput["client"], TOutput["client"]>;
 
 	query(
-		fn: (opts: HandlerOptions<TContext, TBaseInput>) => Promisable<TOutput>,
-	): Procedure<TBaseInput, TOutput>;
+		fn: (
+			opts: HandlerOptions<TContext, TBaseInput["handler"]>,
+		) => Promisable<TOutput["handler"]>,
+	): Procedure<TBaseInput["client"], TOutput["client"]>;
 
 	mutation(
-		fn: (opts: HandlerOptions<TContext, TBaseInput>) => Promisable<TOutput>,
-	): Procedure<TBaseInput, TOutput>;
+		fn: (
+			opts: HandlerOptions<TContext, TBaseInput["handler"]>,
+		) => Promisable<TOutput["handler"]>,
+	): Procedure<TBaseInput["client"], TOutput["client"]>;
 }
 
 export interface ProcedureBuilder<
 	TContext extends Record<string, unknown>,
-	TBaseInput,
+	TBaseInput extends AnySides,
 > {
 	use<TExtra extends Record<string, unknown>>(
 		middleware: Middleware<TContext, TExtra>,
@@ -220,23 +279,29 @@ export interface ProcedureBuilder<
 
 	input<TSchema extends z.ZodType>(
 		schema: TSchema,
-	): ProcedureWithInput<TContext, MergedInput<TBaseInput, z.output<TSchema>>>;
+	): ProcedureWithInput<TContext, MergedInput<TBaseInput, TSchema>>;
 
 	output<TSchema extends z.ZodType>(
 		schema: TSchema,
-	): ProcedureWithOutput<TContext, TBaseInput, z.input<TSchema>>;
+	): ProcedureWithOutput<TContext, TBaseInput, OutputSides<TSchema>>;
 
 	handler<TOutput>(
-		fn: (opts: HandlerOptions<TContext, TBaseInput>) => Promisable<TOutput>,
-	): Procedure<TBaseInput, TOutput>;
+		fn: (
+			opts: HandlerOptions<TContext, TBaseInput["handler"]>,
+		) => Promisable<TOutput>,
+	): Procedure<TBaseInput["client"], TOutput>;
 
 	query<TOutput>(
-		fn: (opts: HandlerOptions<TContext, TBaseInput>) => Promisable<TOutput>,
-	): Procedure<TBaseInput, TOutput>;
+		fn: (
+			opts: HandlerOptions<TContext, TBaseInput["handler"]>,
+		) => Promisable<TOutput>,
+	): Procedure<TBaseInput["client"], TOutput>;
 
 	mutation<TOutput>(
-		fn: (opts: HandlerOptions<TContext, TBaseInput>) => Promisable<TOutput>,
-	): Procedure<TBaseInput, TOutput>;
+		fn: (
+			opts: HandlerOptions<TContext, TBaseInput["handler"]>,
+		) => Promisable<TOutput>,
+	): Procedure<TBaseInput["client"], TOutput>;
 }
 
 export type ProcedureFactory<
@@ -624,9 +689,10 @@ function maybeWrapPaginated(
 	) as OrpcHandlerFn;
 }
 
-function createBuilder<TContext extends Record<string, unknown>, TBaseInput>(
-	state: BuilderState,
-): ProcedureBuilder<TContext, TBaseInput> {
+function createBuilder<
+	TContext extends Record<string, unknown>,
+	TBaseInput extends AnySides,
+>(state: BuilderState): ProcedureBuilder<TContext, TBaseInput> {
 	const { chain, baseShape, paginated } = state;
 	const hasBaseShape = baseShape !== null;
 
@@ -684,7 +750,7 @@ function createBuilder<TContext extends Record<string, unknown>, TBaseInput>(
 			// into the object-literal type. One cast bridges the two.
 			return withInput as unknown as ProcedureWithInput<
 				TContext,
-				MergedInput<TBaseInput, unknown>
+				MergedInput<TBaseInput, z.ZodType>
 			>;
 		},
 
@@ -722,7 +788,7 @@ function createBuilder<TContext extends Record<string, unknown>, TBaseInput>(
 			return withOutput as unknown as ProcedureWithOutput<
 				TContext,
 				TBaseInput,
-				unknown
+				AnySides
 			>;
 		},
 
