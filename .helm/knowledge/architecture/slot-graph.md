@@ -44,6 +44,10 @@ value). Contributing to it is a no-op; deriving from it reads that empty value. 
 `auth` run on `node` while contributing to `cloudflare.slots.bindings`, and how `cloudflare` runs
 without `api` while deriving from `api.slots.env`.
 
+A slot is matched by identity, so two installed copies of a package hold two slots under one
+`source:name`, and a contribution to one never reaches a resolve of the other. The graph refuses a
+second slot under a name it already holds (`SLOT_DUPLICATE_COPY`) instead of dropping it.
+
 **Deriving** reads other slots as inputs:
 
 ```ts

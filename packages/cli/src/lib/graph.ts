@@ -57,12 +57,28 @@ export function buildGraph(
 	// Collect every slot declared by any plugin.
 	const slotById = new Map<symbol, Slot<unknown>>();
 	const slotOwner = new Map<symbol, string>();
+	// A slot is matched by identity, so one name held by two slots is two
+	// installed copies of its package: a contribution to one copy never
+	// reaches a resolve of the other, and would vanish without a word.
+	const slotByName = new Map<string, symbol>();
+	function claim(s: Slot<unknown>, owner: string): void {
+		const name = `${s.source}:${s.name}`;
+		const held = slotByName.get(name);
+		if (held !== undefined && held !== s.id) {
+			throw new SlotError(
+				`Slot '${name}' is defined twice: two copies of its package are installed. Every @fcalell/* package must resolve to one copy; remove pnpm-lock.yaml and node_modules, then run pnpm install.`,
+				"SLOT_DUPLICATE_COPY",
+			);
+		}
+		slotByName.set(name, s.id);
+		slotById.set(s.id, s);
+		slotOwner.set(s.id, owner);
+	}
 	for (const plugin of plugins) {
 		if (!plugin.slots) continue;
 		for (const s of Object.values(plugin.slots)) {
 			if (slotById.has(s.id)) continue;
-			slotById.set(s.id, s);
-			slotOwner.set(s.id, plugin.name);
+			claim(s, plugin.name);
 		}
 	}
 
@@ -72,8 +88,7 @@ export function buildGraph(
 	// peer the consumer left out: the list is `[]`, the map is `{}`.
 	function register(s: Slot<unknown>): void {
 		if (slotById.has(s.id)) return;
-		slotById.set(s.id, s);
-		slotOwner.set(s.id, s.source);
+		claim(s, s.source);
 	}
 
 	// Collect contributions keyed by slot id. Auto-stamp plugin name from the
