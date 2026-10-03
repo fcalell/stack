@@ -16,9 +16,9 @@
       {
         devShells.default = pkgs.mkShell {
           packages = [
-            # engines.node is ">=18"; node 24 matches the linked ../helm consumer.
+            # engines.node is ">=22.13" (pnpm 11's floor); node 24 matches the linked ../helm consumer.
             pkgs.nodejs_24
-            # Provides the `pnpm` shim that honours packageManager (pnpm@10.32.1).
+            # Provides the `pnpm` shim that honours packageManager (pnpm@11.28.3).
             pkgs.corepack
 
             # turbo runs check-types across the workspace (root `pnpm check`).
