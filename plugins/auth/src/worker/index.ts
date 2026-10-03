@@ -31,6 +31,7 @@ import {
 import { passkey as passkeyTable } from "../schema/passkey.ts";
 import {
 	type MemberRow,
+	type Membership,
 	organization as organizationScope,
 	type Scope,
 } from "../scope.ts";
@@ -160,7 +161,8 @@ export interface AuthRuntimeInput extends AuthRuntimeOptions {
 	// routes, since an organization is served at `/<slug>`.
 	reservedSlugs?: readonly string[];
 	// The consumer's `src/shared/scopes.ts` module namespace, when it exists:
-	// every scope descriptor it exports gets a `bySlug` lookup.
+	// every scope descriptor it exports gets a `bySlug` lookup, and the
+	// membership predicate it exports, if any, applies at every resolution.
 	scopes?: Record<string, unknown>;
 }
 
@@ -653,6 +655,26 @@ function consumerScopes(module: Record<string, unknown> | undefined): Scope[] {
 	return scopes;
 }
 
+// The membership predicate the same module exports, at most one.
+function consumerMembership(
+	module: Record<string, unknown> | undefined,
+): Membership | null {
+	const declared = Object.entries(module ?? {}).filter(
+		(entry): entry is [string, Membership] =>
+			typeof entry[1] === "object" &&
+			entry[1] !== null &&
+			"kind" in entry[1] &&
+			entry[1].kind === "membership",
+	);
+	if (declared.length > 1) {
+		const names = declared.map(([name]) => `"${name}"`).join(", ");
+		throw new Error(
+			`plugin-auth: the scopes module exports ${declared.length} memberships (${names}); export one defineMembership.`,
+		);
+	}
+	return declared[0]?.[1] ?? null;
+}
+
 export default function authRuntime<TOptions extends AuthRuntimeInput>(
 	options: TOptions,
 ): RuntimePlugin<
@@ -669,6 +691,7 @@ export default function authRuntime<TOptions extends AuthRuntimeInput>(
 			: defaultOrgRoles
 	) as Record<string, unknown>;
 	const scopes = consumerScopes(options.scopes);
+	const membership = consumerMembership(options.scopes);
 
 	return {
 		name: "auth",
@@ -766,7 +789,7 @@ export default function authRuntime<TOptions extends AuthRuntimeInput>(
 					options,
 				) as unknown as AuthInstance<TOptions>,
 				...(options.organization
-					? { tenancy: createTenancy(u.db, roles) }
+					? { tenancy: createTenancy(u.db, roles, membership) }
 					: {}),
 				...(rateLimiter.ip || rateLimiter.email
 					? { _rateLimiter: rateLimiter }

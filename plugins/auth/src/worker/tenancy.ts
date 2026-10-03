@@ -1,9 +1,9 @@
-import { and, eq } from "@fcalell/plugin-db/orm";
+import { and, eq, type SQL, sql } from "@fcalell/plugin-db/orm";
 import {
 	member,
 	organization as organizationTable,
 } from "../schema/organization.ts";
-import type { Scope } from "../scope.ts";
+import type { MemberRow, Membership, Scope } from "../scope.ts";
 
 // The request context's tenancy capability, which plugin-api's `scope`,
 // `can` and `rbac` procedure options call. Resolution is stateless: the
@@ -11,8 +11,10 @@ import type { Scope } from "../scope.ts";
 // organization at its root, never from the session.
 export interface Tenancy {
 	// The rows of `scope`'s chain for `id` as context entries, plus the
-	// caller's `member` row; null when any level is absent or the caller is
-	// no member, so a guessed id never confirms that a row exists.
+	// caller's `member` row; null when any level is absent, the caller is no
+	// member, or a consumer predicate fails (the membership one at the root, a
+	// scope's visibility one at its level), so a guessed id never confirms that
+	// a row exists.
 	resolve(
 		scope: Scope,
 		id: string,
@@ -48,15 +50,17 @@ interface SelectClient {
 export function createTenancy(
 	db: unknown,
 	roles: Record<string, unknown>,
+	membership: Membership | null = null,
 ): Tenancy {
 	const client = db as SelectClient;
 
 	// The organization matching `where` and the caller's membership of it, in
-	// one join.
+	// one join; the consumer's membership predicate decides whether the
+	// caller's `member` row counts.
 	async function resolveOrganization(
-		where: ReturnType<typeof eq>,
+		where: SQL,
 		userId: string,
-	): Promise<Record<string, unknown> | null> {
+	): Promise<{ organization: unknown; member: MemberRow } | null> {
 		const row = (await client
 			.select({ organization: organizationTable, member })
 			.from(member)
@@ -64,28 +68,62 @@ export function createTenancy(
 				organizationTable,
 				eq(member.organizationId, organizationTable.id),
 			)
-			.where(and(where, eq(member.userId, userId)))
-			.get()) as { organization: unknown; member: unknown } | undefined;
+			.where(
+				and(
+					where,
+					eq(member.userId, userId),
+					membership ? sql`(${membership.where})` : undefined,
+				),
+			)
+			.get()) as { organization: unknown; member: MemberRow } | undefined;
 		return row ? { organization: row.organization, member: row.member } : null;
 	}
 
+	// Bottom-up, each level's row and its parent's id up to the organization;
+	// then, once the root answers with the caller's member row, top-down, one
+	// read per level that declares a visibility predicate. A non-member never
+	// reaches a visibility read, and a level under an invisible one is refused
+	// with it.
 	async function resolve(
 		scope: Scope,
 		id: string,
 		userId: string,
 	): Promise<Record<string, unknown> | null> {
-		if (scope.parent === null) {
-			return resolveOrganization(eq(organizationTable.id, id), userId);
+		const levels: { scope: Scope; id: string; row: unknown }[] = [];
+		let level = scope;
+		let levelId = id;
+		while (level.parent !== null) {
+			const [parent, parentColumn] = level.parent;
+			const found = (await client
+				.select({ row: level.table, parentId: parentColumn })
+				.from(level.table)
+				.where(eq(level.table.id, levelId))
+				.get()) as { row: unknown; parentId: unknown } | undefined;
+			if (!found || typeof found.parentId !== "string") return null;
+			levels.push({ scope: level, id: levelId, row: found.row });
+			level = parent;
+			levelId = found.parentId;
 		}
-		const [parent, parentColumn] = scope.parent;
-		const found = (await client
-			.select({ row: scope.table, parentId: parentColumn })
-			.from(scope.table)
-			.where(eq(scope.table.id, id))
-			.get()) as { row: unknown; parentId: unknown } | undefined;
-		if (!found || typeof found.parentId !== "string") return null;
-		const above = await resolve(parent, found.parentId, userId);
-		return above ? { ...above, [scope.name]: found.row } : null;
+		const root = await resolveOrganization(
+			eq(organizationTable.id, levelId),
+			userId,
+		);
+		if (!root) return null;
+		const entries: Record<string, unknown> = { ...root };
+		for (const { scope: below, id: rowId, row } of levels.reverse()) {
+			if (below.where) {
+				const visible = await client
+					.select({ id: below.table.id })
+					.from(below.table)
+					.where(
+						and(eq(below.table.id, rowId), sql`(${below.where(root.member)})`),
+					)
+					.get();
+				if (!visible) return null;
+			}
+			entries[below.name] = row;
+		}
+		return entries;
 	}
 
 	return {

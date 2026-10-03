@@ -48,7 +48,7 @@ export const projects = {
 | --- | --- |
 | none | Public, no middleware |
 | `auth: true` | Requires a session |
-| `scope` | Requires `auth: true`. A scope from `@fcalell/plugin-auth/scope` (`organization`, or one declared with `defineScope`): the input gains `<name>Id`, and the row, every level above it and the caller's `member` row of the organization are loaded into the context. A missing row and a non-member both answer `NOT_FOUND` |
+| `scope` | Requires `auth: true`. A scope from `@fcalell/plugin-auth/scope` (`organization`, or one declared with `defineScope`): the input gains `<name>Id`, and the row, every level above it and the caller's `member` row of the organization are loaded into the context. A missing row and a non-member both answer `NOT_FOUND`. The resolver honours the consumer's membership and visibility predicates: a row they hide answers the same `NOT_FOUND` |
 | `can` / `rbac` | Require `auth: true` and a `scope`. Check the caller's role in the scope's organization against the roles the auth config declares. Names autocomplete from `auth({ organization: { ac } })`; with no organization they cannot be set |
 | `rateLimit` | `"ip"`, `"email"` (keyed by `input.email`) or both |
 | `paginated: true` | Adds `cursor` and `limit` to the input; `limit` defaults to 20 and a value outside 1 to 100 answers `BAD_REQUEST` |
