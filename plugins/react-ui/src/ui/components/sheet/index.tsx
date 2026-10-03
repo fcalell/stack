@@ -16,7 +16,7 @@ export interface SheetProps extends Closed {
 	description?: string;
 	/** A second page's way back: the back act stands first in the head, on touch in the close act's place. */
 	back?: () => void;
-	/** The act that completes the task: after Cancel in the foot on the desktop, at the head's end on touch. */
+	/** The act that completes the task: after Cancel in the foot on the desktop, at the head's end on touch. A promise its `onAct` returns keeps it pending until it settles. */
 	submit?: Act;
 	/** A sentence in the foot, beside the submit on the desktop. */
 	foot?: string;

@@ -114,6 +114,7 @@ export function SheetBase({
 	const descriptionId = useId();
 	const [touched, setTouched] = useState(false);
 	const [pressed, setPressed] = useState(false);
+	const [running, setRunning] = useState(false);
 	const popup = useRef<HTMLDivElement>(null);
 	const blocked = submit?.blocked !== undefined;
 	// A closed sheet, or a submit unblocked, forgets that it was touched and
@@ -144,15 +145,22 @@ export function SheetBase({
 		? { id: reason, press: () => setPressed(true) }
 		: undefined;
 	// On touch the submit stands at the head's end in close's place, which
-	// moves to the start unless back holds it.
+	// moves to the start unless back holds it. It pends on its promise, as the
+	// desktop's foot bar does.
+	const runSubmit = () => {
+		const ran = submit?.onAct();
+		if (!(ran instanceof Promise)) return;
+		setRunning(true);
+		void ran.finally(() => setRunning(false));
+	};
 	const headSubmit =
 		touch && submit ? (
 			<ReasonHostContext value={host}>
 				<Button
 					fit="bar"
 					label={submit.label}
-					onAct={() => void submit.onAct()}
-					loading={submit.loading}
+					onAct={runSubmit}
+					loading={submit.loading === true || running}
 					blocked={submit.blocked}
 				/>
 			</ReasonHostContext>
