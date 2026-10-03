@@ -126,6 +126,15 @@ export const cloudflare = plugin("cloudflare", {
 	},
 	gitignore: [".wrangler"],
 
+	guide: [
+		{
+			page: "wrangler",
+			trigger:
+				"Editing the root `wrangler.toml` or `.dev.vars`, adding a binding or route, or typing `Env`",
+		},
+		{ page: "deploy", trigger: "Deploying the app to Cloudflare" },
+	],
+
 	slots: {
 		bindings,
 		routes,

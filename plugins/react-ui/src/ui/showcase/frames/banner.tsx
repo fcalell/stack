@@ -20,7 +20,7 @@ const KINDS: Record<string, BannerKind> = {
 	"BANNER_GLYPH.kind.danger": "danger",
 };
 
-// A kind's cells draw that kind; the other cells the board's column of
+// A kind's cells draw that kind; the other cells a column of
 // kinds, no act and a wrapped sentence. `disabled` draws the blocked act
 // before it is pressed and in a touched form with its reason shown.
 export function drawBanner(frame: ShowcaseFrame) {

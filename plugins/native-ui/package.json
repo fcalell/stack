@@ -23,6 +23,7 @@
 		"src",
 		"scripts",
 		"templates",
+		"guide",
 		"README.md",
 		"tsconfig.json",
 		"tsconfig.build.json"

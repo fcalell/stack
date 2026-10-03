@@ -1,7 +1,7 @@
 # Shared molecules: the overlay notes
 
-The Stage 2 shared molecules' approved artboards (`plugins/react-ui/design/4*-*.dc.html`, boards 40
-to 43, approved 2026-10-01) split into the ui-core cells and what each plugin composes over them.
+The Stage 2 shared molecules' approved artboards (boards 40 to 43, approved 2026-10-01; the files
+are in git history at `d777de6`) split into the ui-core cells and what each plugin composes over them.
 This file is what the React step copies: for every part of every drawn frame and state, the
 board's class string verbatim, the ui-core cell or constant it now draws, and the overlay, which is
 the board string less the cell. Generated from the light column of each board; the dark column
@@ -69,7 +69,7 @@ has no entry of its own. States that draw a part the same way share one heading.
 
 ## ListRow
 
-Board: `40-rows-desktop.dc.html`, `40-rows-touch.dc.html` and `40-rows-tablet.dc.html` (768, the touch strings throughout).
+Board 40.
 
 A row has no disabled state (fcalell, 2026-10-01): an unavailable row is told by a Banner over its Section or list, or by its own value. Board 40's disabled frames are retired, and the `disabled` entries below are not drawn.
 
@@ -621,7 +621,7 @@ A row has no disabled state (fcalell, 2026-10-01): an unavailable row is told by
 
 ## DefinitionRow
 
-Board: `40-rows-desktop.dc.html`, `40-rows-touch.dc.html` and `40-rows-tablet.dc.html` (768, the touch strings throughout).
+Board 40.
 
 A row has no disabled state (fcalell, 2026-10-01): an unavailable row is told by a Banner over its Section or list, or by its own value. Board 40's disabled frames are retired, and the `disabled` entries below are not drawn.
 
@@ -839,7 +839,7 @@ The web draws the hit as a stretched link, not the board's empty anchor: the lab
 
 The status that opens is a status that moves (fcalell, 2026-10-02): a `Picker` at the row fit whose options carry states, its value drawn as the Status. In the facts line it pulls back at its start as well (`inline-flex -ms-inside` around the Picker, whose row fit pulls back its end), so the `status (Status, opens)` strings below stand as the Picker's trigger.
 
-Board: `40-rows-desktop.dc.html`, `40-rows-touch.dc.html` and `40-rows-tablet.dc.html` (768, the touch strings throughout).
+Board 40.
 
 ### head · rest; loading
 
@@ -972,7 +972,7 @@ Board: `40-rows-desktop.dc.html`, `40-rows-touch.dc.html` and `40-rows-tablet.dc
 
 Around a group of controls (an OptionList, a SegmentedControl) the field takes no field context: its label is a `<p>` whose id names the group (`aria-labelledby`) and its description or error describes it, so each control inside keeps its own name.
 
-Board: `41-choice-desktop.dc.html` and `41-choice-touch.dc.html`.
+Board 41.
 
 ### field · rest; error; disabled
 
@@ -1036,7 +1036,7 @@ Board: `41-choice-desktop.dc.html` and `41-choice-touch.dc.html`.
 
 The track shrinks to its room and the segments with it, and hugs them in a column (a FormField) rather than stretching to the field (`inline-flex min-w-0 max-w-full items-center w-fit` for the track's `inline-flex shrink-0 items-center`, `min-w-0` on each segment), so at 320 a label that cannot fit truncates; where they fit, the labels stay whole. A FormField around it names the radiogroup with its label.
 
-Board: `41-choice-desktop.dc.html` and `41-choice-touch.dc.html`.
+Board 41.
 
 ### track · rest
 
@@ -1105,7 +1105,7 @@ The keyboard's highlighted option rings inset as well as washing (`outline-2 -ou
 
 An option carrying an avatar leads its row with the `Avatar` (drawn from its label, or its `src`), as a status option leads with its dot. The optional act (the act that makes a new option) ends the list under a hairline across it: `HAIRLINE` with `flex flex-col border-t pt-float` (the sheet's `border-t pt-float`), the act a `ROW {ground: list}` row (`ROW {ground: group}` in the touch sheet) of its glyph in `text-ink-meta` (`flex shrink-0 text-ink-meta`) and its label at the body role, washing `hover:bg-wash-hover active:bg-wash-press` and ringing inset; running it closes the list. The Shell's switcher draws its own trigger over the same list through the Picker's internal base (`picker/base.tsx`, outside the exports; native composes `PickSheet`).
 
-Board: `41-choice-desktop.dc.html` and `41-choice-touch.dc.html`; the row fit's trigger from board 40's members.
+Board 41; the row fit's trigger from board 40's members.
 
 ### trigger (row fit) · rest fit=row
 
@@ -1349,7 +1349,7 @@ Board: `41-choice-desktop.dc.html` and `41-choice-touch.dc.html`; the row fit's 
 
 ## OptionList
 
-Board: `41-choice-desktop.dc.html` and `41-choice-touch.dc.html`.
+Board 41.
 
 ### list · rest
 
@@ -1539,7 +1539,7 @@ Board: `41-choice-desktop.dc.html` and `41-choice-touch.dc.html`.
 
 ## Sheet
 
-Board: `42-overlays-desktop.dc.html` and `42-overlays-touch.dc.html`.
+Board 42.
 
 ### scrim · rest
 
@@ -1756,7 +1756,7 @@ Board: `42-overlays-desktop.dc.html` and `42-overlays-touch.dc.html`.
 
 ## Menu
 
-Board: `42-overlays-desktop.dc.html` and `42-overlays-touch.dc.html`.
+Board 42.
 
 ### trigger (IconButton) · rest
 
@@ -1959,7 +1959,7 @@ Board: `42-overlays-desktop.dc.html` and `42-overlays-touch.dc.html`.
 
 ## Toast
 
-Board: `42-overlays-desktop.dc.html` and `42-overlays-touch.dc.html`.
+Board 42.
 
 ### the layer (`TOASTS`, the Shell's or the Screen's) · rest
 
@@ -2031,7 +2031,7 @@ Board: `42-overlays-desktop.dc.html` and `42-overlays-touch.dc.html`.
 
 ## EmptyState
 
-Board: `43-states-desktop.dc.html` and `43-states-touch.dc.html`.
+Board 43.
 
 ### empty state (in page) · in=page
 
@@ -2176,7 +2176,7 @@ Board: `43-states-desktop.dc.html` and `43-states-touch.dc.html`.
 
 ## QueryBoundary
 
-Board: `43-states-desktop.dc.html` and `43-states-touch.dc.html`.
+Board 43.
 
 ### loading › the Section's count · rest
 
@@ -2234,7 +2234,7 @@ Board: `43-states-desktop.dc.html` and `43-states-touch.dc.html`.
 
 ## Banner
 
-Board: `43-states-desktop.dc.html` and `43-states-touch.dc.html`.
+Board 43.
 
 ### banner · kind=warn
 
@@ -2322,7 +2322,7 @@ Board: `43-states-desktop.dc.html` and `43-states-touch.dc.html`.
 
 ## PendingBar
 
-Board: `43-states-desktop.dc.html` and `43-states-touch.dc.html`.
+Board 43.
 
 ### bar · rest
 

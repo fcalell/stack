@@ -18,6 +18,7 @@ lifecycle hooks; rarely read from these.
 | `cliSlots.initDevDeps` | `map<string, string>` | npm `devDependencies` to add (auto-wired from `plugin({ devDependencies })`) |
 | `cliSlots.packageJsonFields` | `map<unknown>` | Top-level `package.json` fields (e.g. Expo's `main`). Written if-absent at init/add, never clobbers a consumer-set value; duplicate keys across plugins throw |
 | `cliSlots.gitignore` | `list<string>` | `.gitignore` entries (auto-wired from `plugin({ gitignore })`) |
+| `cliSlots.guide` | `list<GuideEntry>` (sorted by domain) | The guide's pages, auto-wired from `plugin({ guide })` under the plugin's name and package; the CLI adds its own (`config`, `commands`, `gap`), and react-ui and native-ui each add ui-core's. Rendered by the CLI into `.stack/guide.md`, a page two plugins list written once |
 | `cliSlots.artifactFiles` | `list<GeneratedFile>` | `{ path, content }` files written under `.stack/` (or anywhere in cwd) |
 | `cliSlots.postWrite` | `list<() => Promise<void>>` | Hooks to run after artifact files land (e.g. `wrangler types`, TanStack Router's route tree) |
 | `cliSlots.devProcesses` | `list<ProcessSpec>` | Long-running dev processes spawned in parallel |
@@ -224,6 +225,9 @@ lives with that plugin.
 - `ProviderSpec`: `{ imports, wrap?, siblings?, order }` for JSX provider composition.
 - `MiddlewareSpec`: `{ imports, call, phase: "before-cors" | "after-cors" | "before-routes" | "after-routes" | "after-context", order }`.
 - `PluginRuntimeEntry`: `{ plugin, import, identifier, options? }` describing a `.use(xRuntime(opts))` call; `api.slots.testingEntries` carries the same shape for a `.use(xTesting(opts))` call on the test entry.
+- `GuideEntry`: `{ domain, package, page, trigger }`, one index line: `trigger` says when to open
+  the page (never what it holds), the page is `node_modules/<package>/guide/<page>.md`, and entries
+  group under `domain`.
 - `ProcessSpec`, `WatcherSpec`, `BuildStep`, `DeployStep`, `DeployCheck`, `PromptSpec`,
   `DevReadyTask`, `GeneratedFile`: exported from `@fcalell/cli/specs`. `ProcessSpec.env` merges
   extra environment variables over the parent env at spawn (per-process dev signals like

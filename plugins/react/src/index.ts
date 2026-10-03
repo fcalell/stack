@@ -157,6 +157,20 @@ export const react = plugin("react", {
 
 	schema: reactOptionsSchema,
 
+	guide: [
+		{
+			page: "web-app",
+			trigger:
+				"Setting the page's title, icon or language, the dev server's port, serving a static file, or reasoning about the web dev server and its API proxy",
+		},
+		{
+			page: "routes",
+			trigger:
+				"Writing, moving or linking a web route file in `src/app/routes/`, or reading its params",
+		},
+		{ page: "add-a-route", trigger: "Adding a page or URL to the web app" },
+	],
+
 	requires: ["vite"],
 
 	dependencies: {

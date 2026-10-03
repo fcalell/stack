@@ -315,6 +315,39 @@ export const expo = plugin("expo", {
 	// ios/ + android/ on demand via `stack expo prebuild`).
 	gitignore: [".expo", "ios", "android"],
 
+	guide: [
+		{ page: "add-a-phone-screen", trigger: "Adding a screen to the phone app" },
+		{
+			page: "routes",
+			trigger:
+				"Writing a route file under `src/app`, the root layout, or navigating on the phone",
+		},
+		{
+			page: "options",
+			trigger:
+				"Changing `expo()` options, adding a native module, or touching `app.config.ts`, `metro.config.js` or `babel.config.cjs`",
+		},
+		{
+			page: "builds",
+			trigger:
+				"Running the phone app, editing `eas.json`, or building or updating it with EAS",
+		},
+		{
+			page: "api-client",
+			trigger:
+				"Calling the API from the phone, or editing `src/lib/api.ts` or `EXPO_PUBLIC_API_URL`",
+		},
+		{
+			page: "native-auth",
+			trigger: "Signing in on the phone, or editing `src/lib/auth.ts`",
+		},
+		{
+			page: "version-gate",
+			trigger:
+				"Shipping an API change that old phone builds cannot handle (`minNativeBuild`), or the update wall",
+		},
+	],
+
 	slots: {
 		metroConfigImports,
 		metroPluginCalls,

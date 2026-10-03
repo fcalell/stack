@@ -19,6 +19,16 @@ about.
 
 ## Design system
 
-- The contract is the root `DESIGN.md`, emitted from `@fcalell/ui-core`
-  (`pnpm --filter @fcalell/ui-core design-md`); never edit it by hand.
-- The design rules are `~/.claude/rules/ui.md`; the standard is `.helm/research/design-system/rubric.md`.
+- The contract is `packages/ui-core/DESIGN.md`, emitted from `@fcalell/ui-core`
+  (`pnpm --filter @fcalell/ui-core design-md`) and shipped in the package; never edit it by hand.
+- The design rules are `plugins/react-ui/guide/rules.md` (web) and `plugins/native-ui/guide/rules.md` (phone); the standard is `packages/ui-core/guide/rubric.md`,
+  with its judged questions in `judging.md` and each pattern's measured range in
+  `patterns/<pattern>.md` (read as `references.md` sets out). A render is judged by
+  `packages/ui-core/guide/design-critique.md`, run by a session that played no part in the work.
+
+## Guide
+
+Each package ships "how to build on stack" as `guide/*.md` pages, and a consumer's
+`stack generate` indexes them into `.stack/guide.md`, which its `CLAUDE.md` imports. This repo
+is no consumer: open the pages by repo path (`packages/*/guide/`, `plugins/*/guide/`). The page
+format is in `.helm/agents/plugin-authoring.md`.

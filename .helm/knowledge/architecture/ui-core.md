@@ -10,9 +10,8 @@ pinned by the package's verify suite; this entry holds the architecture and its 
 
 ## Tokens and theming
 
-- The contract is the approved Stage 1 sheet, held as data in `tokens.ts` and diffed against
-  `plugins/react-ui/design/foundations.css` by the verify script, so the emitted `app.css`
-  carries exactly what was approved. Eleven namespaces are zeroed (`--color-*`, `--radius-*`,
+- The contract is the foundations sheet, held as data in `tokens.ts`; the emitted `app.css`
+  carries exactly those values. Eleven namespaces are zeroed (`--color-*`, `--radius-*`,
   `--text-*`, `--leading-*`, `--tracking-*`, `--shadow-*`, `--font-*`, `--container-*`,
   `--breakpoint-*`, `--transition-duration-*`, `--ease-*`), so an off-contract utility compiles
   to nothing and `tablet:`, `desktop:` and `wide:` are the only viewport variants (the web's
@@ -77,9 +76,7 @@ pinned by the package's verify suite; this entry holds the architecture and its 
   a raised surface wraps its content in `RaisedGround` (native-ui `lib/raised`), uniwind's
   `ScopedVariables` holding each re-pointed variable at the value its read resolves to in the
   mode (a scoped variable takes a value, never a `var()`); a sheet's three trees and a toast
-  wrap, and no native `group` ground holds a part that draws `edge`. A limit: uniwind 1.12's
-  `ScopedTheme` keeps the parent's scoped variables, so a light tile (the QR code's) inside a dark
-  raised ground draws its edge at the dark raised value; no screen does this today. Rejected: a hue
+  wrap, and no native `group` ground holds a part that draws `edge`. Rejected: a hue
   computed per avatar name (neither a token nor a cell); chip hues stepped off the accent (a
   family must never wear the accent, so the six are fixed and the accent's band is left out);
   `Status` with a family mode (a state and a data value are two concepts, so two names).
@@ -99,8 +96,8 @@ pinned by the package's verify suite; this entry holds the architecture and its 
   `tablet` width and wider (so a desktop window narrower than `tablet` draws the touch set and
   structure), the cascade the dark layer rides, so no cell carries a density
   class: a non-inline `@theme` utility reads its variable, so `text-body` and
-  `min-h-control` follow. `data-density` on the web root pins either set on any device, the showcase's and the
-  boards' pin, never a consumer option. Native is touch-only. A molecule whose structure follows
+  `min-h-control` follow. `data-density` on the web root pins either set on any device, the showcase's
+  pin, never a consumer option. Native is touch-only. A molecule whose structure follows
   density (an action bar at natural width on the desktop, full width on touch) reads it through
   the web's `touch:` custom variant, emitted over the density layer's own condition (the touch
   pin, or no desktop pin where the pointer is not fine or the viewport is narrower than `tablet`),
@@ -153,9 +150,8 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
   react-ui contributes one `@source inline()` pattern per utility family over the token lists
   (colours as fill, ink, border, outline and divider; spacing roles as paddings, gaps and widths; sizes as
   heights, widths, minimums, paddings and an x translation; widths; type roles; tracking; radii;
-  shadows; durations; easings). Tailwind reads source text, and a Stage 2 artboard is drawn on the emitted sheet in
-  contract classes before any component spells them; the showcase's foundations page builds its
-  classes from the token names for the same reason. The cost is the whole contract in every
+  shadows; durations; easings). Tailwind reads source text, and the showcase's foundations page builds its
+  classes from the token names. The cost is the whole contract in every
   consumer's sheet, about 7.5 kB gzipped.
 - Matrices hold the platform-invariant cells only: fills, borders (a container's `divide-`
   hairline among them), ink, spacing roles, radius, type role, weight, family, sizes and widths.
@@ -169,13 +165,12 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
   carries `tabular-nums`, a stat's figures at one width (uniwind maps it to `fontVariant`; native redeclares the utility plain, since Tailwind composes it from unset `--tw-*` variables that uniwind from 1.11 resolves to empty tokens React Native logs as unsupported). A
   labelled act's fill (`BUTTON`, `CHIP`) carries the ink as well, since the web glyph and
   spinner inside it draw in the current colour.
-- An atom's or a molecule's (layout, shared, content) matrices are its approved artboard's
-  class strings, split on this line: a part with an axis (a state, a ground, a fit, what it holds)
-  is a matrix, a part with one shape a named constant (`POPOVER`, `PAGE_HEAD`). The board's
+- An atom's or a molecule's (layout, shared, content) class strings are split on this line: a part with an axis (a state, a ground, a fit, what it holds)
+  is a matrix, a part with one shape a named constant (`POPOVER`, `PAGE_HEAD`). Its
   display, alignment and state classes, per cell and state, are recorded for the plugins in
   `.helm/research/design-system/atoms-overlays.md`, `layout-overlays.md`,
   `shared-overlays.md` and `content-overlays.md`. A molecule draws an atom by composing it, so an
-  atom's string on a molecule's board is the atom's cell at the fit the molecule passes, never a
+  atom's string inside a molecule is the atom's cell at the fit the molecule passes, never a
   cell of the molecule's own; a molecule it composes (a `Code` in a `Prose`, a `Prose` in a
   `Message`, the `Group` around a `Comparison`) draws its own cells and the composer owns none
   of them.
@@ -346,7 +341,7 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
   fails by name. A component's directory is `componentDir(name)` (`ListRow` → `list-row`).
   A component draws another's place by composing that component, never by spelling its cells,
   so a change to the component (its hit box, its ring, its press, its label) reaches every place
-  it stands. An approved entry declares `holds`, the families and constants of its own box, and
+  it stands. An entry declares `holds`, the families and constants of its own box, and
   each plugin's verify fails a component that imports a held cell outside its holder's
   directory. A popup trigger renders the icon act's base (`icon-button/base.tsx`, which the
   `./components/*` export does not reach), taking the trigger's props through Base UI's
@@ -382,7 +377,7 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
   `TEXT_STRONG`, not either family; every other type role is drawn by the molecule that owns
   its place, and `TEXT` keeps all seven roles as the one table those owners draw from.
 - Tokens are enforced by ownership: a token names a place, and the component that owns the place
-  draws it. A component whose artboard is approved declares `owns` on its entry, the type roles,
+  draws it. A component declares `owns` on its entry, the type roles,
   colours (a name, or a family prefix ending in `-`), radii, spacing roles, sizes and widths, and
   shadow levels it may draw. A molecule that picks a composed atom's `fit` or `act` (a
   `Place` its strip act's `BUTTON.fit.bar`, a `Split` its Details act's `ICON_BUTTON.fit.bar`)
@@ -402,10 +397,22 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
   molecule whose props are a product's nouns lives in that product's `ui/`, composing stack
   molecules and never a host element. Every plugin suite fails on a product noun in source.
 
+## The guide
+
+ui-core's `guide/` holds what is shared by both platforms: the screen recipe, the design critique
+procedure, the rubric with its judging questions, and one page per pattern under `patterns/`
+holding its measured range and the references behind it (`references.md` says how to read
+them). The rubric is the standard every render is judged by, and the critique is run by a
+session that played no part in composing the unit. ui-core is no plugin, so it contributes nothing itself: `@fcalell/ui-core/manifest` lists its pages, and
+react-ui and native-ui each contribute them to `cliSlots.guide`, where the index lists a page
+once. Each UI plugin depends on `@fcalell/ui-core` in the consumer's own `dependencies`, so the
+index's `node_modules/@fcalell/ui-core/guide/` paths resolve. A platform's rules for every
+`.tsx` are its plugin's own page (react-ui's `guide/rules.md`).
+
 ## Enforcement
 
 Three verify suites (ui-core, native-ui and react-ui) are the design system's enforcement layer:
-the derivation diffed against the approved foundations sheet and swept over every accent and cast hue,
+the derivation's scales and colour mixes checked against their rules and swept over every accent and cast hue,
 matrices asserted verbatim over their full axis products, every class a cell or a web overlay draws
 checked against the tokens its roster entry owns, the roster compared against every
 component's props type, closure fixtures that compile every component's `?: never` props, word
@@ -415,3 +422,13 @@ the roster one component at a time, so react-ui holds each component directory p
 entry and reports how many of the roster are built. A new
 matrix that skips a registry, a component the roster does not name, a literal that duplicates a
 cell, an off-contract utility, or a drawn word outside `words` each fails a named check.
+
+## Limits
+
+- Native has no render harness: its verify reads the components against the matrix strings and the roster, and no check draws a native screen.
+- A native QR tile inside a dark raised ground draws its edge at the dark raised value: uniwind 1.12's `ScopedTheme` keeps the parent's scoped variables and cannot clear one. No screen does this today.
+- A native Button's `count` is not read aloud: the pressable's accessible name is its `label` alone.
+- The native toast room adds the docked foot's measured height (`FootDocks`) and not the keyboard's offset, so a toast shown while the keyboard is up is not lifted with the foot.
+- A product cannot draw in the platform font: `fonts.sans` unset is IBM Plex Sans, and the platform stack only stands behind the named family and its metric fallback face.
+- Comparison's `hyphens-auto` is unverified: the Nix Playwright browsers ship no hyphenation dictionaries, so a value wider than its column breaks mid-letter there.
+- Native Diff and Comparison name a `list`-role container (React Native has no table role); whether VoiceOver and TalkBack announce that name is unverified.

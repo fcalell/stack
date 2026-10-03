@@ -7,12 +7,10 @@
 // borders, ink, spacing roles, radius, type role, weight, family, a control's
 // size. Display, alignment and every interaction state stay with the plugins.
 //
-// The text matrices are the Stage 1 port. Every other matrix is the class
-// strings of its approved artboard (`plugins/react-ui/design/1*-*.dc.html`
-// to `5*-*.dc.html`: the atoms and the layout, shared and content
-// molecules), the states and the layout recorded beside them in the overlay
-// notes (`.helm/research/design-system/atoms-overlays.md`,
-// `layout-overlays.md`, `shared-overlays.md`, `content-overlays.md`).
+// Each plugin's overlay (the states and the layout a matrix leaves out) is
+// recorded per component in the overlay notes
+// (`.helm/research/design-system/atoms-overlays.md`, `layout-overlays.md`,
+// `shared-overlays.md`, `content-overlays.md`).
 
 export type Axes = Record<string, Record<string, string>>;
 
@@ -371,8 +369,7 @@ export const CHECKBOX = matrix({
 // keyboard's or the pointer's current option) under the hover wash, pressed
 // under the press wash, selected under the selection wash, and the selection
 // under the pointer a step darker. `ground` is what holds it: a list or a
-// popover insets it as a rounded wash (the option row of the approved Select
-// frame), a group runs it edge to edge at the card's inset, the group
+// popover insets it as a rounded wash (a Select's option row), a group runs it edge to edge at the card's inset, the group
 // drawing the hairline between its rows. A list row is square on touch,
 // where the list's inset is none and its wash meets the screen's edge: a
 // density flip, so an overlay over `list` (the web's under `touch:`), never

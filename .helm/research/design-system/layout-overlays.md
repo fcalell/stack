@@ -1,7 +1,7 @@
 # Layout: the overlay notes
 
-The Stage 2 layout molecules' approved artboards (`plugins/react-ui/design/3*-*.dc.html`, boards 30
-to 32, approved 2026-09-30) split into the ui-core cells and what each plugin composes over them.
+The Stage 2 layout molecules' approved artboards (boards 30 to 32, approved 2026-09-30; the files
+are in git history at `d777de6`) split into the ui-core cells and what each plugin composes over them.
 This file is what the React step copies: for every part of every drawn frame and state, the
 board's class string verbatim, the ui-core cell or constant it now draws, and the overlay, which is
 the board string less the cell. Generated from the light column of each board; the dark column
@@ -63,7 +63,7 @@ React step picks the structure under the `touch:` variant or by breakpoint.
 
 ## Shell
 
-Board: `30-frames-desktop.dc.html` and `30-frames-touch.dc.html`.
+Board 30.
 
 ### shell (the board's frame) · rest
 
@@ -367,7 +367,7 @@ Board: `30-frames-desktop.dc.html` and `30-frames-touch.dc.html`.
 
 ## Place
 
-Board: `30-frames-desktop.dc.html` and `30-frames-touch.dc.html`.
+Board 30.
 
 ### place · rest
 
@@ -476,7 +476,7 @@ Board: `30-frames-desktop.dc.html` and `30-frames-touch.dc.html`.
 
 ## Screen
 
-Board: `30-frames-desktop.dc.html` and `30-frames-touch.dc.html`.
+Board 30.
 
 ### screen · rest
 
@@ -549,7 +549,7 @@ Board: `30-frames-desktop.dc.html` and `30-frames-touch.dc.html`.
 
 ## Split
 
-Board: `31-structure-desktop.dc.html` and `31-structure-touch.dc.html`.
+Board 31.
 
 ### Details act · rest
 
@@ -610,7 +610,7 @@ Board: `31-structure-desktop.dc.html` and `31-structure-touch.dc.html`.
 
 ## Section
 
-Board: `31-structure-desktop.dc.html` and `31-structure-touch.dc.html`.
+Board 31.
 
 ### section · rest
 
@@ -802,7 +802,7 @@ A loading Section hands its loading down: a Group or a List in its body draws it
 
 ## Group
 
-Board: `31-structure-desktop.dc.html` and `31-structure-touch.dc.html`.
+Board 31.
 
 ### group · rest
 
@@ -842,7 +842,7 @@ Board: `31-structure-desktop.dc.html` and `31-structure-touch.dc.html`.
 
 ## List
 
-Board: `31-structure-desktop.dc.html` and `31-structure-touch.dc.html`.
+Board 31.
 
 ### list · rest
 
@@ -888,7 +888,7 @@ Board: `31-structure-desktop.dc.html` and `31-structure-touch.dc.html`.
 
 ## Columns
 
-Board: `31-structure-desktop.dc.html` and `31-structure-touch.dc.html`.
+Board 31.
 
 ### columns · rest
 
@@ -904,7 +904,7 @@ Board: `31-structure-desktop.dc.html` and `31-structure-touch.dc.html`.
 
 ## Form
 
-Board: `32-forms-bars-desktop.dc.html` and `32-forms-bars-touch.dc.html`.
+Board 32.
 
 ### form · rest
 
@@ -929,7 +929,7 @@ Board: `32-forms-bars-desktop.dc.html` and `32-forms-bars-touch.dc.html`.
 
 ## Toolbar
 
-Board: `32-forms-bars-desktop.dc.html` and `32-forms-bars-touch.dc.html`.
+Board 32.
 
 ### toolbar · rest
 
@@ -969,7 +969,7 @@ Board: `32-forms-bars-desktop.dc.html` and `32-forms-bars-touch.dc.html`.
 
 ## ActionBar
 
-Board: `32-forms-bars-desktop.dc.html` and `32-forms-bars-touch.dc.html`.
+Board 32.
 
 ### bar · fit=end
 

@@ -5,7 +5,7 @@ import type { Closed } from "../../lib/closed.ts";
 
 // Inline is underlined at rest and plain under the pointer; standalone the
 // other way round. A standalone link's box keeps to its words in a stretching
-// parent, as the board's inline wrapper keeps it.
+// parent.
 const OVERLAY: Record<LinkFit, string> = {
 	inline: "hover:no-underline active:no-underline",
 	standalone: "inline-flex items-center w-fit hover:underline active:underline",

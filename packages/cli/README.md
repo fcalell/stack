@@ -10,58 +10,18 @@ Plugin-driven CLI and configuration system for the `@fcalell/stack` framework. P
 pnpm add -D @fcalell/cli
 ```
 
-## Quick start
+## Guide
 
-```bash
-# Scaffold a new project
-stack init my-app
-
-# Or run inside an existing directory
-stack init
-```
-
-The interactive wizard asks which plugins to include:
-
-```
-Which plugins do you want?
-  Database     (@fcalell/plugin-db)
-  Auth         (@fcalell/plugin-auth)
-  API          (@fcalell/plugin-api)
-  Vite         (@fcalell/plugin-vite)
-  React        (@fcalell/plugin-react)
-  Design System (@fcalell/plugin-react-ui)
-  Expo         (@fcalell/plugin-expo)
-  Native UI    (@fcalell/plugin-native-ui)
-```
-
-Then prompts for plugin-specific config (dialect, cookie prefix, organizations) and scaffolds the project. Boilerplate (virtual worker, env types, wrangler config) is generated to `.stack/` automatically.
+How to build an app on stack lives in `guide/`, and each plugin ships its own pages beside it.
+`stack generate` writes the index, `.stack/guide.md`, from `cliSlots.guide`, and `stack init`
+makes the app's `CLAUDE.md` import it. The CLI's pages are
+[`provided.md`](./guide/provided.md), [`config.md`](./guide/config.md),
+[`commands.md`](./guide/commands.md) and [`gap.md`](./guide/gap.md).
 
 ## Config
 
-`defineConfig()` is the single entry point for project configuration:
-
-```ts
-// stack.config.ts
-import { defineConfig } from "@fcalell/cli";
-import { db } from "@fcalell/plugin-db";
-import { auth } from "@fcalell/plugin-auth";
-import { api } from "@fcalell/plugin-api";
-import { vite } from "@fcalell/plugin-vite";
-import { react } from "@fcalell/plugin-react";
-
-export default defineConfig({
-  app: { name: "my-app", domain: "example.com" },
-  plugins: [
-    db({ dialect: "d1", databaseId: "..." }),
-    auth({ cookies: { prefix: "myapp" }, organization: true }),
-    api(),
-    vite(),
-    react({ description: "My app" }),
-  ],
-});
-```
-
-Returns a `StackConfig<T>` with a `.validate()` method that checks for duplicates and unsatisfied `requires` declarations.
+`defineConfig()` in `stack.config.ts` is the single entry point for project configuration
+([`config.md`](./guide/config.md)). It returns a `StackConfig<T>` with a `.validate()` method that checks for duplicates and unsatisfied `requires` declarations.
 
 ### Plugin extraction
 
@@ -91,6 +51,7 @@ export const db = plugin("db", {
   dependencies: { "@fcalell/plugin-db": "workspace:*" },
   devDependencies: { "drizzle-kit": "^0.31.0" },
   gitignore: [".db-kit"],
+  guide: [{ page: "schema", trigger: "Adding or changing a table" }],
 
   commands: {
     push: { description: "Push schema to local database", handler: async (ctx) => { /* ... */ } },
@@ -201,98 +162,37 @@ interface ContributionCtx {
 
 ## Commands
 
-### `stack init [dir]`
+What each command does for an app, and its flags, is [`commands.md`](./guide/commands.md). Each
+command resolves a fixed set of root slots:
 
-Interactive project scaffold. Creates the directory if it doesn't exist, or uses the current directory.
+| Command | Resolves |
+|---------|----------|
+| `stack init`, `stack add` | `cliSlots.initPrompts`, then renders `stack.config.ts`, then `initScaffolds`, `initDeps`, `initDevDeps`, `gitignore`, then runs `generate` |
+| `stack remove` | the target plugin's `removeFiles`, `removeDeps`, `removeDevDeps`, then patches the config and runs `generate` |
+| `stack generate` | `cliSlots.artifactFiles` (each written), then `cliSlots.postWrite` (each awaited) |
+| `stack dev` | `generate`, then `devProcesses` (spawned together), `devReadySetup` (after every process is ready), `devWatchers` |
+| `stack build` | `generate`, then `buildSteps` by `phase` and `order` |
+| `stack deploy` | `build`, then `deployChecks` (shown and confirmed), then `deploySteps` by phase |
+| `stack <plugin> <command>` | the plugin's `commands[name].handler(ctx)` |
 
-**What it scaffolds:**
+What `stack generate` writes, by the slot that renders it:
 
-| Condition | Files |
-|-----------|-------|
-| Always | `package.json`, `tsconfig.json`, `biome.json`, `.gitignore`, `stack.config.ts` |
-| `db` plugin | `src/schema/index.ts`, `src/migrations/` |
-| `auth` plugin | `src/worker/plugins/auth.ts` (callback template) |
-| `api` plugin | `src/worker/routes/`, `wrangler.toml` |
-| `react` plugin | `src/app/routes/__root.tsx`, `src/app/routes/index.tsx` (TanStack Router file routes) |
-| An app (`vite` or `expo`) with a worker (`api` or `db`) | `tsconfig.app.json` and `tsconfig.worker.json` under a solution `tsconfig.json`, and a `check-types` of `tsc -b`: the DOM and the Workers runtime each stay out of the other's program. The worker project emits declarations into `.stack/types/` and the app references it, so the app types `AppRouter` without loading a worker source |
-
-Required sibling plugins are auto-resolved: selecting `auth` automatically adds `db`, `api`, and `cloudflare`. Existing files are never overwritten. After scaffolding, `stack generate` runs to produce `.stack/` files.
-
-**What `stack generate` produces in `.stack/` (gitignored):**
-
-| File | Source slot | Purpose |
-|------|-------------|---------|
-| `.stack/worker-configuration.d.ts` | `cliSlots.postWrite` (cloudflare) | `Env` interface generated by `wrangler types` |
-| `.stack/worker.ts` | `api.slots.workerSource` | Virtual worker entry (inlined options, convention-based) |
-| `.stack/testing.ts` | `api.slots.testingSource` | Test entry: boots the worker under node and calls it through a typed client |
-| `.stack/wrangler.toml` | `cloudflare.slots.wranglerToml` | Merged wrangler config with all plugin bindings |
-| `.stack/vite.config.ts` | `vite.slots.viteConfig` | Generated Vite config with framework plugins |
-| `.stack/entry.tsx` | `react.slots.entrySource` / `expo.slots.entrySource` | App bootstrap |
-| `.stack/index.html` | `react.slots.htmlSource` | Web HTML shell with the `<head>` metadata |
-| `.stack/app.css` | `reactUi.slots.appCssSource` | Web stylesheet: Tailwind v4 and the ui-core token contract |
-| `.stack/virtual-providers.tsx` | `react.slots.providersSource` | Web providers composition, served as `virtual:stack-providers` |
-| `.stack/routeTree.gen.ts` | `cliSlots.postWrite` (react) | TanStack Router route tree, from its own generator |
-| `.stack/routes.d.ts` | `react.slots.routesDtsSource` / `expo.slots.routesDtsSource` | Typed route declarations |
-| `src/worker/routes/index.ts` | `api` artifact contribution | Auto-generated barrel from route files |
-| `.dev.vars` | `api.slots.env` (rendered by `cloudflare`) | Template for local dev secrets |
-
-### `stack add <plugin>`
-
-Add a plugin to an existing project. Resolves the plugin's `cliSlots.initPrompts` and `cliSlots.initScaffolds` contributions, patches `stack.config.ts`, and regenerates `.stack/`.
-
-```bash
-stack add auth    # Prompts for cookie prefix, organizations; scaffolds callback file
-```
-
-Validates `requires` before proceeding. If `auth` requires `db` and `db` is not configured, the CLI errors with a fix suggestion.
-
-### `stack remove <plugin>`
-
-Remove a plugin from the project. Checks that no other plugin requires it, resolves the target plugin's contributions to `cliSlots.removeFiles` / `removeDeps` / `removeDevDeps`, removes it from `stack.config.ts`, and regenerates.
-
-```bash
-stack remove auth
-```
-
-### `stack generate`
-
-Regenerates all `.stack/` files from the current config. Validates the config, resolves `cliSlots.artifactFiles` and writes each file, then resolves `cliSlots.postWrite` and awaits each hook (e.g. `wrangler types`).
-
-This runs automatically during `stack init`, `stack add`, `stack remove`, `stack dev`, and `stack build`. Run it manually after editing `stack.config.ts`.
-
-### `stack dev [--studio]`
-
-Plugin-driven development mode. Runs `generate`, then resolves and orchestrates:
-
-- `cliSlots.devProcesses` — long-running processes (wrangler dev, vite dev) spawned in parallel with prefixed/colored output
-- `cliSlots.devReadySetup` — one-shot tasks that run after processes report ready (e.g. `db-schema-push`)
-- `cliSlots.devWatchers` — chokidar watchers (schema dir, route dir, `stack.config.ts`)
-
-The `--studio` flag adds Drizzle Studio to the banner.
-
-### `stack build`
-
-Plugin-driven production build. Runs `generate`, then resolves `cliSlots.buildSteps` (sorted by `phase: pre | main | post` and `order`) and executes them sequentially.
-
-### `stack deploy`
-
-Plugin-driven deploy. Runs `stack build` first, then resolves `cliSlots.deployChecks` (displayed and confirmed) and `cliSlots.deploySteps` (executed sequentially in phase order).
-
-### `stack <plugin> <command>`
-
-Plugin subcommands. Each plugin defines commands in its `commands` field:
-
-```bash
-stack db push
-stack db reset
-```
-
-## Options
-
-| Flag | Default | Applies to |
-|------|---------|------------|
-| `--studio` | `false` | `dev` |
-| `--config <path>` | `stack.config.ts` | all commands except `init` |
+| File | Source slot |
+|------|-------------|
+| `.stack/guide.md` | `cliSlots.guide` |
+| `.stack/worker-configuration.d.ts` | `cliSlots.postWrite` (cloudflare, `wrangler types`) |
+| `.stack/worker.ts` | `api.slots.workerSource` |
+| `.stack/testing.ts` | `api.slots.testingSource` |
+| `.stack/wrangler.toml` | `cloudflare.slots.wranglerToml` |
+| `.stack/vite.config.ts` | `vite.slots.viteConfig` |
+| `.stack/entry.tsx` | `react.slots.entrySource` / `expo.slots.entrySource` |
+| `.stack/index.html` | `react.slots.htmlSource` |
+| `.stack/app.css` | `reactUi.slots.appCssSource` |
+| `.stack/virtual-providers.tsx` | `react.slots.providersSource` |
+| `.stack/routeTree.gen.ts` | `cliSlots.postWrite` (react) |
+| `.stack/routes.d.ts` | `react.slots.routesDtsSource` / `expo.slots.routesDtsSource` |
+| `src/worker/routes/index.ts` | `api` artifact contribution |
+| `.dev.vars` | `api.slots.env` (rendered by `cloudflare`) |
 
 ## Exports
 

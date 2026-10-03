@@ -54,6 +54,7 @@ export const auth = plugin("auth", {
   dependencies: { "@fcalell/plugin-auth": "workspace:*" },  // auto-wired into cliSlots.initDeps
   devDependencies: { /* ... */ },                            // auto-wired into cliSlots.initDevDeps
   gitignore: [".wrangler"],                                  // auto-wired into cliSlots.gitignore
+  guide: [{ page: "sessions", trigger: "Reading the signed-in user" }], // auto-wired into cliSlots.guide
 
   slots: {
     runtimeOptions: /* slot.derived(...) */,
@@ -87,6 +88,12 @@ Key fields:
 - `dependencies` / `devDependencies` / `gitignore`: auto-wired into `cliSlots.initDeps` /
   `cliSlots.initDevDeps` / `cliSlots.gitignore` (and the matching `cliSlots.removeDeps` /
   `cliSlots.removeDevDeps` for cleanup).
+- `guide`: the plugin's guide pages, each `guide/<page>.md` in its package (listed in its
+  `files`) with a load trigger: when to open the page, never what it holds. Auto-wired into
+  `cliSlots.guide` under the plugin's name and package. A page is directive prose of about 600
+  words at most with code examples; a recipe's every step names the page it needs and ends with
+  its check; a page names roles, never a tool or a mechanism; a fact lives on one page, and the
+  README keeps install, a pointer to the guide and the maintainer sections.
 
 ## Options via `schema`
 

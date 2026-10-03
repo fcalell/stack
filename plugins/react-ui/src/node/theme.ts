@@ -49,10 +49,8 @@ export function themeBlock(resolved: ResolvedTheme): CssBlock {
 	};
 }
 
-// Every contract utility, generated whether or not a source spells it: a
-// Stage 2 artboard is drawn on the emitted sheet in contract classes before
-// any component spells them, and the showcase's foundations page builds its
-// classes from the token names. The vocabulary is the contract's, not a
+// Every contract utility, generated whether or not a source spells it: the
+// showcase's foundations page builds its classes from the token names. The vocabulary is the contract's, not a
 // usage scan's; the cost is the whole contract in every sheet.
 export function tokenSources(): CssSourceInline[] {
 	const set = (names: readonly string[]) => `{${names.join(",")}}`;

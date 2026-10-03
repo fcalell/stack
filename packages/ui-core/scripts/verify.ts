@@ -2,10 +2,8 @@
 //
 //   pnpm --filter @fcalell/ui-core verify
 //
-// The script derives with default knobs, diffs every emitted value against
-// the approved Stage 1 sheet (`plugins/react-ui/design/foundations.css`, the
-// calibration the contract carries), sweeps the accent and cast knobs for
-// contrast,
+// The script derives with default knobs, checks every scale and computed
+// color against its rule, sweeps the accent and cast knobs for contrast,
 // drives a Tailwind build over the emitted `@theme` record plus every class
 // the matrices can emit, and exits non-zero on any mismatch.
 import { readdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -21,7 +19,6 @@ import {
 	densityTokens,
 	modeTokens,
 	nativeMeasureTokens,
-	raisedGroundTokens,
 	reducedMotionTokens,
 	rootTokens,
 	shadowUtilities,
@@ -30,7 +27,6 @@ import {
 import {
 	assert,
 	check,
-	declarationMap,
 	normalize,
 	report,
 	rule,
@@ -81,7 +77,6 @@ import {
 	type Mode,
 	RADIUS_PX,
 	RADIUS_ROLES,
-	RAISED_GROUNDS,
 	SANS_ADVANCE,
 	SHADOW_LEVELS,
 	SIZE_PX,
@@ -238,109 +233,10 @@ import {
 const here = dirname(fileURLToPath(import.meta.url));
 const pkgDir = resolve(here, "..");
 const fixtureDir = resolve(here, "fixture");
-// The approved sheet is the oracle. It lives with the boards it was drawn
-// on; this script runs in the workspace only, so the path is relative to it.
-const sheetPath = resolve(
-	pkgDir,
-	"../../plugins/react-ui/design/foundations.css",
-);
 
 // A value may carry no statement or block terminator and no comment delimiter:
 // each would let a token break out of the declaration it is rendered into.
 const ESCAPES_A_DECLARATION = /[;{}]|\/\*|\*\//;
-
-// ── The sheet ───────────────────────────────────────────────────────
-
-// Every top-level rule's custom properties by its selector text, the sheet's
-// own spellings. The sheet nests nothing but `@media` and `@keyframes`, and
-// neither carries a token this script reads.
-const sheet = readFileSync(sheetPath, "utf8")
-	.replace(/\/\*[\s\S]*?\*\//g, "")
-	// The reduced-motion block re-declares the durations at 0 under a nested
-	// `:root`; only the top-level rules carry the sheet's values.
-	.replace(/@media[^{]*\{(?:[^{}]*\{[^{}]*\})*[^{}]*\}/g, "");
-const sheetRules = new Map<string, Map<string, string>>();
-for (const match of sheet.matchAll(
-	/(?:^|\n)([^{}@\n][^{}]*?)\s*\{([^{}]*)\}/g,
-)) {
-	const selector = normalize(match[1] ?? "");
-	const body = match[2] ?? "";
-	const rule = sheetRules.get(selector) ?? new Map<string, string>();
-	sheetRules.set(selector, rule);
-	for (const [property, value] of declarationMap(body)) {
-		if (property.startsWith("--")) rule.set(property, value);
-	}
-}
-
-const SHEET_SELECTOR = {
-	light: ":root",
-	dark: ".dark",
-	desktop: ':root, :root[data-density="desktop"]',
-	touch: ':root[data-density="touch"]',
-} as const;
-
-function sheetRule(selector: string): Map<string, string> {
-	const rule = sheetRules.get(selector);
-	assert(rule, `the sheet has no "${selector}" rule`);
-	return rule;
-}
-
-// A sheet value with its `var()` references followed, through the density
-// block it sits in and then the root.
-function sheetValue(selector: string, property: string): string {
-	const own = sheetRule(selector).get(property);
-	const value =
-		own ??
-		sheetRule(SHEET_SELECTOR.desktop).get(property) ??
-		sheetRule(":root").get(property);
-	assert(
-		value !== undefined,
-		`the sheet has no ${property} under "${selector}"`,
-	);
-	return value.replace(/var\((--[\w-]+)\)/g, (_, name: string) =>
-		sheetValue(selector, name),
-	);
-}
-
-// The sheet's names for the sizes; every other token keeps its sheet name.
-const SHEET_SIZE: Record<(typeof SIZES)[number], string> = {
-	control: "--control-height",
-	"control-compact": "--control-height-compact",
-	field: "--field-height",
-	row: "--row-height",
-	"row-2": "--row-height-2",
-	"row-setting": "--row-height-setting",
-	strip: "--strip-height",
-	target: "--target-min",
-	dot: "--size-dot",
-	chip: "--size-chip",
-	avatar: "--size-avatar",
-	spinner: "--size-spinner",
-	"switch-w": "--switch-width",
-	"switch-h": "--switch-height",
-	thumb: "--switch-thumb",
-	"switch-inset": "--switch-inset",
-	"switch-travel": "--switch-travel",
-	skeleton: "--skeleton-height",
-	"icon-meta": "--size-icon-meta",
-	icon: "--size-icon",
-	"icon-control": "--size-icon-control",
-	check: "--size-check",
-	track: "--track-height",
-	otp: "--size-otp",
-	"text-area": "--text-area-min",
-	meter: "--meter-height",
-	chart: "--chart-height",
-	qr: "--size-qr",
-	figures: "--figures-width",
-	"message-input": "--message-input-max",
-};
-
-// The sheet's names for the two places it spells differently.
-const SHEET_COLOR: Partial<Record<ColorName, string>> = {
-	ring: "--ring-color",
-	"switch-thumb": "--switch-thumb-fill",
-};
 
 // ── Check helpers ───────────────────────────────────────────────────
 
@@ -749,7 +645,7 @@ check("c02", "package.json shape", () => {
 		Object.keys(pkg.exports ?? {})
 			.sort()
 			.join(" "),
-		"./cn ./commit ./derive ./descriptors ./emit ./harness ./roster ./schema ./tokens ./variants",
+		"./cn ./commit ./derive ./descriptors ./emit ./harness ./manifest ./roster ./schema ./tokens ./variants",
 		"export subpaths",
 	);
 	assert(pkg.peerDependencies?.zod, "zod is not a peerDependency");
@@ -764,7 +660,7 @@ check("c02", "package.json shape", () => {
 	for (const field of ["dependencies", "peerDependencies"] as const) {
 		assert(!pkg[field]?.["@fcalell/cli"], `@fcalell/cli appears in ${field}`);
 	}
-	return "10 subpaths, no root export, no runtime cli dependency";
+	return "11 subpaths, no root export, no runtime cli dependency";
 });
 
 check("c03", "tokens.ts declares the contract", () => {
@@ -811,217 +707,78 @@ check("c03", "tokens.ts declares the contract", () => {
 	return `${COLOR_NAMES.length} colors, 7 roles, 11 spacing roles (6 gaps), ${SIZES.length} sizes, 7 radii, 2 shadows, 12 widths, 3 breakpoints, ${WORD_KEYS.length} words, ${COUNTED_WORD_KEYS.length} counted and ${SLOT_WORD_KEYS.length} with slots, ${CHART_SERIES.length} chart series`;
 });
 
-check("c05", "default knobs reproduce the approved sheet", () => {
-	const diff: string[] = [];
-	let count = 0;
-	// Every literal color, both modes. The sheet's `color-mix` values are the
-	// washes, the act states and the switch hover, which c05-mix derives.
+check("c05", "the computed colors follow their color-mix rules", () => {
+	const l = (value: string) => oklch(value)[0];
 	for (const mode of MODES) {
-		const rule = sheetRule(SHEET_SELECTOR[mode]);
-		for (const name of COLOR_NAMES) {
-			const expected = rule.get(SHEET_COLOR[name] ?? `--${name}`);
-			if (expected === undefined || !expected.startsWith("oklch(")) continue;
-			count++;
-			if (color(mode, name) !== expected) {
-				diff.push(`${mode}.${name}: ${expected} -> ${color(mode, name)}`);
-			}
+		// A wash is the body ink at its alpha.
+		for (const [name, alpha] of [
+			["wash-hover", 0.05],
+			["wash-press", 0.08],
+			["wash-selected", 0.11],
+			["wash-selected-hover", 0.15],
+			["skeleton", 0.09],
+			["fill-disabled", 0.06],
+			["fill-neutral", 0.08],
+		] as const) {
+			const [il, ic, ih] = oklch(color(mode, "ink-body"));
+			requireEqual(
+				color(mode, name),
+				`oklch(${il} ${ic} ${ih} / ${alpha})`,
+				`${mode}.${name}`,
+			);
 		}
-		for (const [property, value] of rule) {
-			const name = property.slice(2);
-			if (property === "--shade" || !value.startsWith("oklch(")) continue;
-			if (!(COLOR_NAMES as readonly string[]).includes(name)) {
-				const renamed = Object.values(SHEET_COLOR).includes(property);
-				assert(renamed, `the sheet's ${property} has no contract color`);
-			}
-		}
-	}
-	// The three density scales, both sets.
-	for (const density of DENSITIES) {
-		const selector = SHEET_SELECTOR[density];
-		const tokens = densityTokens(base, density);
-		const expect = (key: string, property: string) => {
-			count++;
-			const expected = sheetValue(selector, property);
-			if (tokens[key] !== expected) {
-				diff.push(`${density} ${property}: ${expected} -> ${tokens[key]}`);
-			}
-		};
-		for (const role of TYPE_ROLES) {
-			expect(`--text-${role}`, `--text-${role}`);
-			expect(`--leading-${role}`, `--leading-${role}`);
-		}
-		for (const role of SPACING_ROLES) {
-			expect(`--spacing-${role}`, `--space-${role}`);
-		}
-		for (const size of SIZES) expect(`--spacing-${size}`, SHEET_SIZE[size]);
-	}
-	// The density-invariant scales, off the root.
-	const root = (property: string) => sheetValue(":root", property);
-	for (const role of TRACKED_ROLES) {
-		count++;
-		requireEqual(
-			emitted(`--tracking-${role}`),
-			root(`--tracking-${role}`),
-			role,
-		);
-	}
-	for (const role of TYPE_ROLES) {
-		if (!isTracked(role)) requireEqual(root(`--tracking-${role}`), "0em", role);
-	}
-	for (const role of RADIUS_ROLES) {
-		count++;
-		requireEqual(emitted(`--radius-${role}`), root(`--radius-${role}`), role);
-	}
-	for (const width of WIDTHS) {
-		count++;
-		const property = width === "measure" ? "--measure" : `--width-${width}`;
-		requireEqual(emitted(`--container-${width}`), root(property), width);
-	}
-	for (const rung of DURATIONS) {
-		count++;
-		requireEqual(
-			emitted(`--transition-duration-${rung}`),
-			root(`--duration-${rung}`),
-			rung,
-		);
-	}
-	count++;
-	requireEqual(
-		emitted("--transition-duration-loop"),
-		root("--duration-loop"),
-		"loop",
-	);
-	for (const easing of EASINGS) {
-		count++;
-		requireEqual(emitted(`--ease-${easing}`), root(`--ease-${easing}`), easing);
-	}
-	// The sheet re-points the hairline on each raised ground's fill; the
-	// contract's grounds and re-point are those.
-	for (const ground of RAISED_GROUNDS) {
-		count++;
-		const repoint = [...sheetRules].find(([selector]) =>
-			selector.split(/,\s*/).includes(`.fill-${ground}`),
-		)?.[1];
-		requireEqual(repoint?.get("--edge"), "var(--edge-raised)", ground);
-	}
-	requireEqual(
-		JSON.stringify(raisedGroundTokens()),
-		JSON.stringify({ "--color-edge": "var(--color-edge-raised)" }),
-		"the raised grounds' re-point",
-	);
-	const rootValues = rootTokens(base);
-	requireEqual(rootValues["--hairline"], root("--hairline"), "hairline");
-	requireEqual(rootValues["--focus-ring"], root("--ring"), "ring");
-	requireEqual(
-		rootValues["--focus-ring-offset"],
-		root("--ring-offset"),
-		"offset",
-	);
-	// The shadows, the sheet's oklch layers converted to sRGB.
-	for (const mode of MODES) {
-		for (const level of SHADOW_LEVELS) {
-			count++;
-			const expected = sheetValue(
-				SHEET_SELECTOR[mode],
-				`--shadow-${level}`,
-			).replace(/oklch\(([^)]*)\)/g, (_, inner: string) => {
-				const [l, c, h, alpha] = inner
-					.replace(" / ", " ")
-					.split(" ")
-					.map(Number);
-				const [r, g, b] = oklchToRgb(l ?? 0, c ?? 0, h ?? 0);
-				return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-			});
-			if (base.shadows[mode][level] !== expected) {
-				diff.push(
-					`${mode} shadow-${level}: ${expected} -> ${base.shadows[mode][level]}`,
+		// A filled act's hover, press and pending each move its fill toward
+		// the color the mix names in this mode, press further than hover.
+		for (const fill of ["accent", "danger"] as const) {
+			const away = (state: "hover" | "press" | "pending") => {
+				const declaration = COLORS[`act-${fill}-${state}`];
+				assert("mix" in declaration, `act-${fill}-${state} is not a mix`);
+				const { toward } = declaration;
+				const target = typeof toward === "string" ? toward : toward[mode];
+				const goal = target === "black" ? 0 : l(color(mode, target));
+				return [
+					Math.abs(l(color(mode, `act-${fill}-${state}`)) - goal),
+					Math.abs(l(color(mode, fill)) - goal),
+				] as const;
+			};
+			for (const state of ["hover", "press", "pending"] as const) {
+				const [moved, rest] = away(state);
+				assert(
+					moved < rest,
+					`${mode} act-${fill}-${state} moves the wrong way`,
 				);
 			}
+			assert(
+				away("press")[0] < away("hover")[0],
+				`${mode} act-${fill}-press is not past hover`,
+			);
 		}
-	}
-	assert(
-		diff.length === 0,
-		`the derivation departs from the sheet: ${diff.join("; ")}`,
-	);
-	return `${count} values equal to the sheet, none departed`;
-});
-
-check(
-	"c05-mix",
-	"the computed colors follow the sheet's color-mix rules",
-	() => {
-		const l = (value: string) => oklch(value)[0];
-		for (const mode of MODES) {
-			// A wash is the body ink at its alpha.
-			for (const [name, alpha] of [
-				["wash-hover", 0.05],
-				["wash-press", 0.08],
-				["wash-selected", 0.11],
-				["wash-selected-hover", 0.15],
-				["skeleton", 0.09],
-				["fill-disabled", 0.06],
-				["fill-neutral", 0.08],
-			] as const) {
-				const [il, ic, ih] = oklch(color(mode, "ink-body"));
+		// Every alias reads its source.
+		for (const [name, declaration] of Object.entries(COLORS)) {
+			if ("alias" in declaration) {
 				requireEqual(
-					color(mode, name),
-					`oklch(${il} ${ic} ${ih} / ${alpha})`,
+					color(mode, name as ColorName),
+					color(mode, declaration.alias),
 					`${mode}.${name}`,
 				);
 			}
-			// A filled act's hover, press and pending each move its fill toward
-			// the color the mix names in this mode, press further than hover.
-			for (const fill of ["accent", "danger"] as const) {
-				const away = (state: "hover" | "press" | "pending") => {
-					const declaration = COLORS[`act-${fill}-${state}`];
-					assert("mix" in declaration, `act-${fill}-${state} is not a mix`);
-					const { toward } = declaration;
-					const target = typeof toward === "string" ? toward : toward[mode];
-					const goal = target === "black" ? 0 : l(color(mode, target));
-					return [
-						Math.abs(l(color(mode, `act-${fill}-${state}`)) - goal),
-						Math.abs(l(color(mode, fill)) - goal),
-					] as const;
-				};
-				for (const state of ["hover", "press", "pending"] as const) {
-					const [moved, rest] = away(state);
-					assert(
-						moved < rest,
-						`${mode} act-${fill}-${state} moves the wrong way`,
-					);
-				}
-				assert(
-					away("press")[0] < away("hover")[0],
-					`${mode} act-${fill}-press is not past hover`,
-				);
-			}
-			// Every alias reads its source.
-			for (const [name, declaration] of Object.entries(COLORS)) {
-				if ("alias" in declaration) {
-					requireEqual(
-						color(mode, name as ColorName),
-						color(mode, declaration.alias),
-						`${mode}.${name}`,
-					);
-				}
-			}
 		}
-		// Black at 12 % in OKLab: L drops by 12 % of itself, chroma with it.
-		const [al, ac] = oklch(color("light", "accent"));
-		const [hl, hc] = oklch(color("light", "act-accent-hover"));
-		requireEqual(
-			hl,
-			Math.round(al * 0.88 * 1000) / 1000,
-			"hover L is 88 % of the accent's",
-		);
-		requireEqual(
-			hc,
-			Math.round(ac * 0.88 * 1000) / 1000,
-			"hover C is 88 % of the accent's",
-		);
-		return "7 washes at their alpha, act fills move toward their mode's target, aliases read their source, one mix checked by hand";
-	},
-);
+	}
+	// Black at 12 % in OKLab: L drops by 12 % of itself, chroma with it.
+	const [al, ac] = oklch(color("light", "accent"));
+	const [hl, hc] = oklch(color("light", "act-accent-hover"));
+	requireEqual(
+		hl,
+		Math.round(al * 0.88 * 1000) / 1000,
+		"hover L is 88 % of the accent's",
+	);
+	requireEqual(
+		hc,
+		Math.round(ac * 0.88 * 1000) / 1000,
+		"hover C is 88 % of the accent's",
+	);
+	return "7 washes at their alpha, act fills move toward their mode's target, aliases read their source, one mix checked by hand";
+});
 
 check("c06", "every scale is its ratio of the base", () => {
 	for (const density of DENSITIES) {
@@ -1363,12 +1120,12 @@ check(
 		}
 		assert(short.length === 0, `under the floor: ${summary(short)}`);
 		// The green accent is where the declared lightness falls short on a
-		// light group, so there the contract lowers it; at the sheet's hue it
+		// light group, so there the contract lowers it; at the default hue it
 		// is the declared 0.52.
 		requireEqual(
 			oklch(color("light", "accent-ink"))[0],
 			0.52,
-			"accent-ink at the sheet's hue",
+			"accent-ink at the default hue",
 		);
 		assert(
 			oklch(
@@ -1554,7 +1311,7 @@ check("c14", "the Tailwind fixture builds on contract only", () => {
 	);
 	assert(
 		out.includes("--ease-out: cubic-bezier(0.16, 1, 0.3, 1)"),
-		"--ease-out is not the sheet's curve",
+		"--ease-out is not the contract's curve",
 	);
 	return `${out.length} bytes of CSS, every utility on its variable, off-contract utilities empty, tablet: is 768`;
 });

@@ -100,6 +100,46 @@ export const db = plugin("db", {
 	},
 	gitignore: [".db-kit"],
 
+	guide: [
+		{
+			page: "change-a-table",
+			trigger: "Adding a table or changing a column",
+		},
+		{
+			page: "destructive-change",
+			trigger: "Dropping or renaming a table, a column or a view",
+		},
+		{
+			page: "schema",
+			trigger:
+				"Writing `src/schema/index.ts`, importing any Drizzle piece, or querying through `context.db`",
+		},
+		{
+			page: "seed",
+			trigger:
+				"Writing `src/schema/seed.ts`, the rows every database starts with",
+		},
+		{
+			page: "commands",
+			trigger:
+				"Running a `stack db` command, or a migration, a local database or a deploy step misbehaves",
+		},
+		{
+			page: "migration-safety",
+			trigger:
+				"`stack db check` or a deploy refuses a migration (drift or a drop)",
+		},
+		{
+			page: "config",
+			trigger:
+				"Setting `db()` options, picking the d1 or sqlite dialect, or creating the D1 database",
+		},
+		{
+			page: "testing",
+			trigger: "Writing a test that reads or writes the database",
+		},
+	],
+
 	commands: {
 		push: {
 			description: "Push schema to local database",

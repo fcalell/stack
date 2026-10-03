@@ -20,4 +20,4 @@ The *what/why* + gotchas (authoring mechanics live in `.helm/agents/plugin-autho
 - [commands](./architecture/commands.md): changing what a CLI command does, which root slots it resolves, or routing a plugin subcommand
 - [runtime](./architecture/runtime.md): touching worker codegen, a `/runtime` factory, or how `stack.config.ts` options reach the worker
 - [ui-core](./architecture/ui-core.md): touching the token contract or theme schema, `words`, a variant matrix, the component roster, or the canon; deciding whether a cell is shared or a platform overlay, or whether a molecule belongs in stack or a product's `ui/`
-- [consumer-project](./architecture/consumer-project.md): changing the scaffolded project shape, the `stack.config.ts` surface (`app` field, plugin options), or the generated `.stack/` files
+- [consumer-project](./architecture/consumer-project.md): changing the scaffolded project shape, the `stack.config.ts` surface (`app` field, plugin options), or the generated `.stack/` files, or the guide and its `.stack/guide.md` index; how a consumer designs its screens or files a gap

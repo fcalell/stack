@@ -38,19 +38,12 @@ contributes: [
 
 The generated config always includes the providers virtual-module plugin as a base plugin, with framework-contributed plugins appended after.
 
-## Config options
+## Guide
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `port` | `number` | `3000` | Vite dev server port |
-
-Default `vite()` is all most projects need. Override when customizing:
-
-```ts
-import { vite } from "@fcalell/plugin-vite";
-
-vite({ port: 4000 })
-```
+The consumer-facing options (`port`, `restart`, `maxRestarts`), the dev server and its API proxy
+live in plugin-react's [`web-app.md`](../react/guide/web-app.md), indexed into a consumer's
+`.stack/guide.md`: `react()` is the one plugin that runs on Vite, so a consumer meets `vite()`
+there.
 
 ## Owned slots
 
@@ -68,8 +61,8 @@ vite({ port: 4000 })
 | `cliSlots` slot | Behavior |
 |-----------------|----------|
 | `artifactFiles` | Writes `.stack/vite.config.ts` from `vite.slots.viteConfig` |
-| `devProcesses` | Spawns `vite dev --config .stack/vite.config.ts --port <devServerPort>` |
-| `buildSteps` | `vite build --config .stack/vite.config.ts --outDir dist/client` (`main` phase) |
+| `devProcesses` | Spawns the consumer's `vite dev --config .stack/vite.config.ts`; the port is the generated config's `server.port` |
+| `buildSteps` | `vite build --config .stack/vite.config.ts` (`main` phase), into the config's `build.outDir`, `dist/client` |
 
 `plugin-vite` also contributes its dev-server localhost origin to `api.slots.devCorsOrigins` (gated on `app.origins` not being set) so the auth + worker CORS allow-list picks up the dev server without consumer config. That list applies only when the worker runs with `STACK_DEV`; a deploy never trusts localhost.
 

@@ -12,7 +12,7 @@ import {
 } from "./tokens.ts";
 
 // The knobs, flat: a theme sets a knob and never a token. Everything else in
-// the contract is the approved sheet and moves only with it.
+// the contract is `tokens.ts` and moves only with it.
 export const themeSchema = z.strictObject({
 	accentHue: z.number().min(0).lt(360).optional(),
 	// The neutrals' hue. Omitted, it is `accentHue`, so an accent alone tints

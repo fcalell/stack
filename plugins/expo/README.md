@@ -1,6 +1,8 @@
 # @fcalell/plugin-expo
 
-The Expo/React Native target for `@fcalell/stack`. Generates the Metro config, the Expo app config, the expo-router entry, and typed routes, and mounts a native app on the same worker `plugin-api` generates for the web.
+The Expo/React Native target for `@fcalell/stack`. Generates the Metro config, the Expo app
+config, the expo-router entry and typed routes, and mounts a native app on the same worker
+`plugin-api` generates for the web.
 
 ## Install
 
@@ -8,7 +10,18 @@ The Expo/React Native target for `@fcalell/stack`. Generates the Metro config, t
 pnpm add @fcalell/plugin-expo
 ```
 
-`stack init` adds this when you pick `expo` in the interactive picker; `stack add expo` does the same for an existing project.
+`stack init` adds this when you pick `expo` in the interactive picker; `stack add expo` does the
+same for an existing project.
+
+## Guide
+
+How to build on the plugin lives in `guide/`, indexed into a consumer's `.stack/guide.md`:
+[`add-a-phone-screen.md`](./guide/add-a-phone-screen.md), the recipe;
+[`routes.md`](./guide/routes.md), the expo-router files; [`options.md`](./guide/options.md), the
+options and the root files; [`builds.md`](./guide/builds.md), the commands and `eas.json`;
+[`api-client.md`](./guide/api-client.md), `src/lib/api.ts`;
+[`native-auth.md`](./guide/native-auth.md), signing in on the phone; and
+[`version-gate.md`](./guide/version-gate.md), `minNativeBuild`.
 
 ## What it generates
 
@@ -20,110 +33,11 @@ pnpm add @fcalell/plugin-expo
 | `.stack/routes.d.ts` | `expo.slots.routesDtsSource` (skipped when routing is disabled) |
 | `.stack/expo-env.d.ts` | Static ambient-types reference |
 
-Root files (`metro.config.js`, `app.config.ts`, `babel.config.cjs`, `eas.json`) are scaffolded once at `stack init`/`stack add` and re-export from `.stack/`. `src/lib/api.ts` is scaffolded the same way: an editable starter, not a generated artifact. See [Native client](#native-client) below.
-
-## Config options
-
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `port` | `number` | `8081` | Metro dev-server port |
-| `routes` | `false \| { appDir?: string }` | `{ appDir: "src/app" }` | File-based routing via expo-router. `false` disables it (bare RN) |
-| `scheme` | `string` | app slug | Deep-link / OAuth-redirect URL scheme |
-| `easProfiles` | `string[]` | `["development", "preview", "production"]` | EAS build profile names |
-| `updateChannel` | `string` | `"production"` | Default EAS Update channel |
-| `configPlugins` | `ConfigPluginSpec[]` | `[]` | Extra Expo config plugins (native modules) merged into `app.config`'s `plugins` array |
-| `minNativeBuild` | `{ ios?: number; android?: number }` | both `0` | Client version gate floor, see below |
-
-```ts
-import { expo } from "@fcalell/plugin-expo";
-
-expo({
-  minNativeBuild: { ios: 42, android: 40 },
-});
-```
-
-## Client version gate
-
-A native build can't be force-updated the way a web page reloads. When a backend change breaks old clients, `minNativeBuild` walls builds below a per-platform floor with `426 Upgrade Required` instead of letting them run into undefined behavior.
-
-Set the floor by hand, atomically with the breaking change:
-
-```ts
-expo({ minNativeBuild: { ios: 42, android: 40 } });
-```
-
-A platform left out of `minNativeBuild` floors at `0` (every build of that platform passes). Leaving `minNativeBuild` out entirely, or setting both platforms to `0`, keeps the gate dormant: no middleware lands in the emitted worker at all.
-
-The gate reads two request headers:
-
-| Header | Value |
-|--------|-------|
-| `x-stack-client-build` | The native build number, as a string of digits |
-| `x-stack-client-platform` | `"ios"` or `"android"` |
-
-Both names are exported as `CLIENT_BUILD_HEADER` and `CLIENT_PLATFORM_HEADER` from `@fcalell/plugin-expo/version-gate`. `@fcalell/plugin-expo/client` (below) stamps them on every request.
-
-A request **fails open** (passes through untouched) when:
-
-- either header is missing,
-- `x-stack-client-build` isn't all digits (`"1.2.3"`, `""`, non-numeric),
-- or `x-stack-client-platform` is neither `"ios"` nor `"android"`.
-
-The gate only walls paths the worker itself owns, the resolved `api.slots.routePrefixes` (`/rpc/*` plus `/api/auth/*`), baked into the emitted call at codegen. A raw consumer route belongs to the consumer, so a stale client hitting it passes untouched. `/api/auth/*` is carved back out on top of that, because a stranded user must still be able to re-auth after updating, and `/` (liveness) falls outside every prefix. The wall is a UX nudge, not a security control: a request that can't be confidently read as "this is a stale native client" always passes.
-
-A build stamping header names other than the two above is invisible to the gate and is never walled. Ship a client release that stamps the current names before raising a floor.
-
-Below the floor, the gate short-circuits with:
-
-```json
-{ "code": "UPGRADE_REQUIRED", "message": "A newer version of the app is required." }
-```
-
-`426` and stops the request before it reaches CORS's downstream middleware, per-procedure rate limits, or the procedure itself, so a walled client's retry storm sees `426` and never a confusing `429`.
-
-### Telemetry
-
-While the gate is active, the plugin binds an Analytics Engine dataset (`VERSION_GATE_METRICS`, dataset `<app-slug>_version_gate`) and the gate counts two events on gated paths: `walled` (a 426 served) and `headerless` (a fail-open pass: missing or malformed headers, so also every web-browser request on a mixed consumer). Each datapoint carries `[event, platform, build]` as blobs with `event` as the index; `headerless` rows with an empty platform blob are the canary for clients the gate cannot wall. When the binding is absent from the env (node target, a local config without the section) the gate writes nothing and never errors.
-
-## Native client
-
-`stack init`/`stack add` scaffolds `src/lib/api.ts`: a typed oRPC client (`@fcalell/plugin-api/client`) wired to `.stack/worker`'s `AppRouter` and stamped with the version-gate headers on every request. No config is required. The two headers go out regardless of whether `minNativeBuild` is set, so the gate can be turned on later without a client change.
-
-```ts
-// src/lib/api.ts
-import { createClient } from "@fcalell/plugin-api/client";
-import { createApiQueryUtils } from "@fcalell/plugin-api/tanstack-query";
-import { createVersionGatedFetch } from "@fcalell/plugin-expo/client";
-import type { AppRouter } from "../../.stack/worker";
-
-const client = createClient<AppRouter>({
-  url: `${process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:8787"}/rpc`,
-  fetch: createVersionGatedFetch(),
-});
-
-export const orpc = createApiQueryUtils(client);
-```
-
-`@fcalell/plugin-expo/client` exports:
-
-| Export | Purpose |
-|--------|---------|
-| `versionHeaders()` | Reads the native build number (`expo-application`'s `nativeBuildVersion`) and platform (`react-native`'s `Platform.OS`); returns `{}` (never throws) when either is undetectable |
-| `createVersionGatedFetch(base?)` | Wraps `fetch` (defaults to the global): stamps `versionHeaders()` on every request, passes the response through, and notifies `onUpdateRequired` subscribers on a `426` |
-| `onUpdateRequired(cb)` | Subscribes to the 426 signal; returns an unsubscribe function |
-
-Rendering the update-wall screen itself is app territory: call `onUpdateRequired` wherever your app decides how to show it (a modal, a full-screen route). `plugin-expo` only carries the signal.
-
-`orpc`'s query utilities need `@tanstack/react-query` + `@orpc/tanstack-query` installed. `nativeUi()` wires both, along with the `QueryClientProvider` `useQuery`/`useMutation` need at runtime; using `expo()` without `nativeUi()` requires installing them by hand.
-
-## Commands
-
-| Command | Description |
-|---------|-------------|
-| `stack expo dev [--clear]` | Start the Metro dev server (`expo start`) |
-| `stack expo prebuild [--clean] [--platform ios\|android]` | Generate native `ios/`/`android/` projects |
-| `stack expo build [--profile <name>] [--platform ios\|android\|all]` | Create a native build with EAS Build |
-| `stack expo update [--channel <name>] [--message <text>]` | Publish an OTA update with EAS Update |
+The generated configs are `.cjs`: the root shims `require()` them through Node, and the consumer
+is `type: module`, so a `.js` would parse as ESM. `.stack/metro.config.cjs` sets Metro's
+`projectRoot` to the consumer root (one level above `.stack/`), so the entry's
+`require.context("../src/app")` and uniwind's paths resolve. `.stack/routes.d.ts` only references
+`expo-router/types`; expo-router's own generator writes the augmentation.
 
 ## Owned slots
 
@@ -135,6 +49,7 @@ Rendering the update-wall screen itself is app territory: call `onUpdateRequired
 | `expo.slots.providers` | `list<ProviderSpec>` | JSX wrappers around the expo-router root |
 | `expo.slots.entryImports` | `list<TsImportSpec>` | Imports for `.stack/entry.tsx` |
 | `expo.slots.devServerPort` | `value<number>` | Resolved Metro dev-server port |
+| `expo.slots.scheme` | `value<string>` | Resolved deep-link scheme |
 | `expo.slots.routesPagesDir` | `derived<string \| null>` | Resolved routes directory, `null` when routing is disabled |
 | `expo.slots.easBuildProfiles` | `value<string[]>` | EAS build profile names |
 | `expo.slots.easUpdateChannel` | `value<string>` | Default EAS Update channel |
@@ -143,7 +58,12 @@ Rendering the update-wall screen itself is app territory: call `onUpdateRequired
 | `expo.slots.entrySource` | `derived<string \| null>` | Final `.stack/entry.tsx` |
 | `expo.slots.routesDtsSource` | `derived<string \| null>` | Final `.stack/routes.d.ts` |
 
-`plugin-expo` also contributes its dev-server localhost origin to `api.slots.devCorsOrigins` (gated on `app.origins` not being set), which the worker honours only under `STACK_DEV`, and, when `minNativeBuild` is configured, the version-gate middleware to `api.slots.middlewareEntries` (resolving `api.slots.routePrefixes` for the gate's scope) plus its telemetry dataset to `cloudflare.slots.bindings`.
+`plugin-expo` also contributes its dev-server localhost origin to `api.slots.devCorsOrigins`
+(gated on `app.origins` not being set), which the worker honours only under `STACK_DEV`, and,
+when `minNativeBuild` is configured, the version-gate middleware to `api.slots.middlewareEntries`
+(`after-cors`, `order: 0`, resolving `api.slots.routePrefixes` for the gate's scope) plus its
+telemetry dataset to `cloudflare.slots.bindings`. It points the consumer's `package.json` `main` at
+`.stack/entry.tsx` while routing is on.
 
 ## Exports
 

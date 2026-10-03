@@ -6,7 +6,7 @@ import { designMd } from "../src/design-md.ts";
 
 test("the committed DESIGN.md is the emitter's output", () => {
 	const committed = readFileSync(
-		new URL("../../../DESIGN.md", import.meta.url),
+		new URL("../DESIGN.md", import.meta.url),
 		"utf8",
 	);
 	assert.equal(

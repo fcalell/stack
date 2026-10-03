@@ -115,6 +115,19 @@ export const node = plugin("node", {
 		"@fcalell/plugin-node": "workspace:*",
 	},
 
+	guide: [
+		{
+			page: "server",
+			trigger:
+				"Running the app as a Node server: `node()` options, sqlite, env vars, dev or production",
+		},
+		{
+			page: "services",
+			trigger:
+				"Adding a background service, a WebSocket channel or a raw HTTP mount to the Node server",
+		},
+	],
+
 	slots: {
 		serverPort,
 		serverHost,

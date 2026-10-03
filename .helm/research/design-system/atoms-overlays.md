@@ -1,7 +1,6 @@
 # Atoms: the overlay notes
 
-The Stage 2 atoms' approved artboards (`plugins/react-ui/design/1*-*-desktop.dc.html`, boards 10 to 14,
-approved 2026-09-30) split into the ui-core cells and what each plugin composes over them. This
+The Stage 2 atoms' approved artboards (boards 10 to 14, approved 2026-09-30; the files are in git history at `d777de6`) split into the ui-core cells and what each plugin composes over them. This
 file is what the React step copies: for every part of every drawn cell and state, the board's
 class string verbatim, the ui-core cell it now draws, and the overlay, which is the board string
 less the cell. Generated from the light column of each desktop board; the dark column and the
@@ -56,7 +55,7 @@ touch board spell the same strings.
 
 ## Button
 
-Board: `10-acts-desktop.dc.html` (the touch board draws the same strings). A plain Button is the button alone; a blocked one is drawn inside the `stack` with its reason hidden from the start, so the tree holds when the reason appears (once pressed, or once its form or sheet is touched); the glyph is `Icon {fit: control}`, in the act's ink as currentColor, inside a `shrink-0` span that takes the pending `opacity-0`.
+Board 10. A plain Button is the button alone; a blocked one is drawn inside the `stack` with its reason hidden from the start, so the tree holds when the reason appears (once pressed, or once its form or sheet is touched); the glyph is `Icon {fit: control}`, in the act's ink as currentColor, inside a `shrink-0` span that takes the pending `opacity-0`.
 
 ### act=primary fit=body · rest
 
@@ -913,7 +912,7 @@ Under: Light · Button, fit=field: full width at the field's height, a login's C
 
 ## IconButton
 
-Board: `10-acts-desktop.dc.html` (the touch board draws the same strings).
+Board 10.
 
 ### fit=body · rest
 
@@ -989,7 +988,7 @@ Under: Light · IconButton: icon only, square, no boundary at rest; the wash is 
 
 ## Link
 
-Board: `10-acts-desktop.dc.html` (the touch board draws the same strings). The board holds the standalone link in an inline `span`; the component spells `w-fit` over `inline-flex items-center` instead, so its box keeps to its words in a stretching parent.
+Board 10. The board holds the standalone link in an inline `span`; the component spells `w-fit` over `inline-flex items-center` instead, so its box keeps to its words in a stretching parent.
 
 ### fit=inline · rest
 
@@ -1049,7 +1048,7 @@ Under: Light · Link: accent-ink at 500; inline underlined at rest and plain on 
 
 ## Text
 
-Board: `11-text-desktop.dc.html` (the touch board draws the same strings). A `Text` inside another is a run of its line: a `span` carrying only `TEXT_STRONG` of the line's role when strong, the line's role taken over its own.
+Board 11. A `Text` inside another is a run of its line: a `span` carrying only `TEXT_STRONG` of the line's role when strong, the line's role taken over its own.
 
 ### role=title · rest
 
@@ -1130,7 +1129,7 @@ Under: Text · title, heading, body, meta, strong, display, caption and code, in
 
 ## Icon
 
-Board: `11-text-desktop.dc.html` (the touch board draws the same strings).
+Board 11.
 
 ### fit=body · rest
 
@@ -1162,7 +1161,7 @@ Under: Icon · the size follows the text it sits beside; stroke 2 on the 24 grid
 
 ## Count
 
-Board: `11-text-desktop.dc.html` (the touch board draws the same strings).
+Board 11.
 
 ### count · rest
 
@@ -1175,7 +1174,7 @@ Under: Count · caption, tabular numerals, a pill on one grey step / in a place'
 
 ## Spinner
 
-Board: `11-text-desktop.dc.html` (the touch board draws the same strings). The box is `aria-hidden` with no role or name, as the board draws it: its owner announces the wait (an act through `aria-busy`, a page wait through its own status).
+Board 11. The box is `aria-hidden` with no role or name, as the board draws it: its owner announces the wait (an act through `aria-busy`, a page wait through its own status).
 
 ### spinner · rest
 
@@ -1201,7 +1200,7 @@ Under: Spinner · a ring the size of the glyph it replaces, 2 px, its colour the
 
 ## Avatar
 
-Board: `11-text-desktop.dc.html` (the touch board draws the same strings).
+Board 11.
 
 ### step=1 · rest
 
@@ -1287,7 +1286,7 @@ Under: Avatar · a full circle at the avatar size, initials in caption 500 on th
 
 A status is a mark (fcalell, 2026-10-02): board 12's `onOpen` frames are retired, and a status that moves is a `Picker` at the row fit whose options carry states (`Option.status`), its value and options drawn as this Status.
 
-Board: `12-marks-desktop.dc.html` (the touch board draws the same strings).
+Board 12.
 
 ### state=active · rest
 
@@ -1357,7 +1356,7 @@ Under: Status, the six states on canvas: dot in the status colour, the word in m
 
 ## Chip
 
-Board: `12-marks-desktop.dc.html` (the touch board draws the same strings).
+Board 12.
 
 ### family=violet trailing=none · rest
 
@@ -1532,7 +1531,7 @@ Under: Chip row that wraps, removable
 
 ## Input
 
-Board: `13-fields-desktop.dc.html` (the touch board draws the same strings).
+Board 13.
 
 ### kind=text trailing=none · rest
 
@@ -1816,7 +1815,7 @@ Under: Input, kind search / disabled
 
 ## TextArea
 
-Board: `13-fields-desktop.dc.html` (the touch board draws the same strings).
+Board 13.
 
 ### kind=text · rest
 
@@ -1907,7 +1906,7 @@ Under: TextArea / Notes
 
 ## Select
 
-Board: `13-fields-desktop.dc.html` (the touch board draws the same strings).
+Board 13.
 The trigger's frames are below; the open list is the frame "open, highlighted and selected".
 An option's description (`TEXT {role: meta}`, no board draws it) stacks under its label in
 `flex flex-col min-w-0 grow`, each line `truncate`.
@@ -2007,7 +2006,7 @@ Under: Select / Default region
 
 ## InputOtp
 
-Board: `13-fields-desktop.dc.html` (the touch board draws the same strings).
+Board 13.
 `otp` is the box's largest side: `w-otp min-w-0 shrink aspect-square` in `OTP_BOX` stands each box at
 `otp` and shrinks the six together, square, when the row is narrower (a 320 viewport). Loading is
 the inert state and there is no disabled one: the input is `readOnly`, `tabIndex={-1}` and
@@ -2068,7 +2067,7 @@ Under: InputOtp / Enter the code sent to ada@acme.dev
 
 ## Switch
 
-Board: `14-toggles-desktop.dc.html` (the touch board draws the same strings). The component's switch element is the hit box, so a press anywhere in it toggles; the track inside it takes the listed track strings, with each state spelled on the hit box, a named group `group/toggle` (`group-hover/toggle:`, `group-active/toggle:`, `group-aria-disabled/toggle:`, `group-focus-visible/toggle:` for the ring), and the hit box itself is `outline-none`.
+Board 14. The component's switch element is the hit box, so a press anywhere in it toggles; the track inside it takes the listed track strings, with each state spelled on the hit box, a named group `group/toggle` (`group-hover/toggle:`, `group-active/toggle:`, `group-aria-disabled/toggle:`, `group-focus-visible/toggle:` for the ring), and the hit box itself is `outline-none`.
 
 ### state=off · rest
 
@@ -2162,7 +2161,7 @@ Under: Light · Switch, bare: off and on (selected) in every state, on canvas, s
 
 ## Checkbox
 
-Board: `14-toggles-desktop.dc.html` (the touch board draws the same strings). The component's checkbox element is the hit box, as the switch's is; the box inside it takes the listed box strings, its states spelled on the hit box the same way. The mark is Lucide's `Check` or `Minus` on its 24-unit grid at stroke 3.5, round caps and joins, filling the `size-icon-meta` mark: 12 in the 16 box (desktop, 1.75 px), 14 in the 20 box (touch, 2.04 px).
+Board 14. The component's checkbox element is the hit box, as the switch's is; the box inside it takes the listed box strings, its states spelled on the hit box the same way. The mark is Lucide's `Check` or `Minus` on its 24-unit grid at stroke 3.5, round caps and joins, filling the `size-icon-meta` mark: 12 in the 16 box (desktop, 1.75 px), 14 in the 20 box (touch, 2.04 px).
 
 In a row whose label is its target (a FormField's checkbox form, an OptionList row; set by the row through `LabelTarget`, never a prop) the checkbox element is the box's size: its hit overlay drops `size-target` (`group/toggle inline-flex shrink-0 items-center justify-center outline-none`), so the box sits on the label's line where boards 41 and 42 draw it and the label row is the target.
 
@@ -2317,7 +2316,7 @@ Under: Light · Checkbox in its target: unchecked, checked (selected) and mixed 
 
 ## Slider
 
-Board: `14-toggles-desktop.dc.html` (the touch board draws the same strings).
+Board 14.
 
 ### slider · rest
 

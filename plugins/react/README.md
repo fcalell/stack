@@ -12,64 +12,12 @@ pnpm add @fcalell/plugin-react
 
 The consumer declares `react`, `react-dom`, `@types/react` and `@types/react-dom` (`stack init` writes them), `@tanstack/react-router` (the plugin's `dependencies`), and `@vitejs/plugin-react`, `@tanstack/router-plugin` and `babel-plugin-react-compiler` (its `devDependencies`), since the generated vite config imports them and Babel resolves the compiler from the consumer.
 
-## Usage
+## Guide
 
-```ts
-// stack.config.ts
-import { defineConfig } from "@fcalell/cli";
-import { vite } from "@fcalell/plugin-vite";
-import { react } from "@fcalell/plugin-react";
-
-export default defineConfig({
-  app: { name: "my-app", domain: "example.com" },
-  plugins: [vite(), react({ description: "My app" })],
-});
-```
-
-`plugin-react` requires `plugin-vite`; both appear in the config.
-
-### Routes
-
-Routes follow TanStack Router's file convention under `src/app/routes/`:
-
-```
-src/app/routes/
-  __root.tsx           # wraps every route
-  index.tsx            # /
-  about.tsx            # /about
-  projects/
-    route.tsx          # wraps /projects/*
-    index.tsx          # /projects
-    $id.tsx            # /projects/:id
-  _auth/               # pathless layout: no URL segment
-    login.tsx          # /login
-  -components/         # ignored by the router
-```
-
-```tsx
-// src/app/routes/projects/$id.tsx
-import { createFileRoute, Link } from "@tanstack/react-router";
-
-export const Route = createFileRoute("/projects/$id")({ component: Project });
-
-function Project() {
-  const { id } = Route.useParams();
-  return <Link to="/projects/$id" params={{ id }}>Project {id}</Link>;
-}
-```
-
-TanStack's generator writes the route tree to `.stack/routeTree.gen.ts`, on `stack generate` and from its Vite plugin in dev and build. `.stack/routes.d.ts` registers the router over it, so `Link`, `useNavigate` and `Route.useParams` are typed and a stale path is a compile error.
-
-## Options
-
-| Option | Default | Purpose |
-|--------|---------|---------|
-| `routes` | `{ dir: "src/app/routes" }` | The routes directory, relative to the project root; `false` turns file routing off (a peer then contributes the mount) |
-| `title` | `app.name` | `<title>` |
-| `description` | none | `<meta name="description">` |
-| `icon` | none | `<link rel="icon">` |
-| `themeColor` | none | `<meta name="theme-color">` |
-| `lang` | `"en"` | `<html lang>` |
+Building the web app lives in `guide/`, indexed into a consumer's `.stack/guide.md`:
+[`web-app.md`](./guide/web-app.md), the `react()` and `vite()` options, the dev server and its
+API proxy, and the files the app owns; [`routes.md`](./guide/routes.md), the file-route
+conventions and typed routes; and [`add-a-route.md`](./guide/add-a-route.md), the recipe.
 
 ## Generated files
 
@@ -81,7 +29,7 @@ TanStack's generator writes the route tree to `.stack/routeTree.gen.ts`, on `sta
 | `.stack/routes.d.ts` | `react.slots.routesDtsSource` | The router's `Register` declaration |
 | `.stack/routeTree.gen.ts` | `cliSlots.postWrite` | TanStack Router's route tree |
 
-`.stack/vite.config.ts` gains `tanstackRouter()` ahead of `react()` (with the React Compiler), and `resolve.dedupe` for `react` and `react-dom`.
+`.stack/vite.config.ts` gains `tanstackRouter()` ahead of `react()` (with the React Compiler), and `resolve.dedupe` for `react` and `react-dom`. `routes: false` turns file routing off: no route tree, no `routes.d.ts`, and no mount until a peer contributes one to `react.slots.mountExpression`.
 
 ## Slots
 

@@ -498,7 +498,7 @@ function body(resolved: ResolvedTheme): string[] {
 			]),
 		),
 		"",
-		"A component with an approved artboard owns the tokens it may draw: a cell it draws that spells a type role, a colour, a radius, a spacing role, a size or a shadow outside its row is a contract error. A colour ending in `-` is a family (`chip-` is every chip role).",
+		"A component owns the tokens it may draw: a cell it draws that spells a type role, a colour, a radius, a spacing role, a size or a shadow outside its row is a contract error. A colour ending in `-` is a family (`chip-` is every chip role).",
 		"",
 		...table(
 			[

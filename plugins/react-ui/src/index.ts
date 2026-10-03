@@ -6,11 +6,12 @@ import {
 	type TsExpression,
 	type TsImportSpec,
 } from "@fcalell/cli/ast";
-import { emitArtifact } from "@fcalell/cli/cli-slots";
+import { cliSlots, emitArtifact } from "@fcalell/cli/cli-slots";
 import { auth } from "@fcalell/plugin-auth";
 import { react } from "@fcalell/plugin-react";
 import { vite } from "@fcalell/plugin-vite";
 import { deriveTheme } from "@fcalell/ui-core/derive";
+import { uiCoreGuide } from "@fcalell/ui-core/manifest";
 import { aggregateAppCss } from "./node/codegen.ts";
 import { defaultFonts, type FontEntry } from "./node/fonts.ts";
 import {
@@ -147,11 +148,23 @@ export const reactUi = plugin("react-ui", {
 	requires: ["react", "vite"],
 
 	dependencies: {
+		// The guide's index points into the consumer's node_modules for
+		// ui-core's pages.
+		"@fcalell/ui-core": "workspace:*",
 		tailwindcss: "^4.3.3",
 	},
 	devDependencies: {
 		"@tailwindcss/vite": "^4.3.3",
 	},
+
+	guide: [
+		{ page: "rules", trigger: "Writing or editing any `.tsx` of the web app" },
+		{
+			page: "reference",
+			trigger:
+				"Importing a web component, or setting the theme, words or fonts, or reasoning about density, dark mode or the page container",
+		},
+	],
 
 	slots: {
 		appCssImports,
@@ -303,6 +316,8 @@ export const reactUi = plugin("react-ui", {
 			(): TsImportSpec => ({ source: "./app.css", sideEffect: true }),
 		),
 		emitArtifact(".stack/app.css", self.slots.appCssSource),
+		// ui-core is no plugin: each UI plugin indexes its guide pages.
+		cliSlots.guide.contribute(() => uiCoreGuide),
 	],
 });
 

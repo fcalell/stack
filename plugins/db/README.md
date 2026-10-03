@@ -1,6 +1,8 @@
 # @fcalell/plugin-db
 
-Database plugin for the `@fcalell/stack` framework. Wraps Drizzle ORM for Cloudflare D1 and SQLite with WeakMap-cached clients, schema helpers, and slot-driven CLI hooks for dev/deploy workflows.
+Database plugin for the `@fcalell/stack` framework. Wraps Drizzle ORM over Cloudflare D1 or a
+SQLite file: the worker's `db` client, the `stack db` commands, the local dev push, the deploy's
+migration gates and steps, and the test entry's per-boot D1.
 
 ## Install
 
@@ -10,249 +12,40 @@ pnpm add @fcalell/plugin-db
 
 `better-sqlite3` ships with the plugin: `stack db push` and the sqlite runtime both use it.
 
-## Usage
+## Guide
 
-### 1. Add to config
-
-```ts
-// stack.config.ts
-import { defineConfig } from "@fcalell/cli";
-import { db } from "@fcalell/plugin-db";
-
-export default defineConfig({
-  plugins: [
-    db({
-      dialect: "d1",
-      databaseId: "9a619a0b-...",
-    }),
-  ],
-});
-```
-
-Or for SQLite:
-
-```ts
-db({
-  dialect: "sqlite",
-  path: "./data/app.sqlite",
-})
-```
-
-Schema is no longer passed in config options. The generated worker imports `src/schema` by convention.
-
-### 2. Define your schema
-
-All Drizzle ORM primitives are re-exported from `@fcalell/plugin-db/orm` -- no need to install or import `drizzle-orm` directly:
-
-```ts
-// src/schema/index.ts
-import { sqliteTable, text, integer } from "@fcalell/plugin-db/orm";
-
-export const projects = sqliteTable("projects", {
-  id: text("id").primaryKey(),
-  name: text("name").notNull(),
-  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
-});
-```
-
-The schema's export names also join the entity vocabulary for `procedure({ reads, writes })`
-(`@fcalell/plugin-api`'s cache-invalidation headers): `projects` above narrows `reads`/`writes` to
-autocomplete and type-check against it. A new table extends the union on the next `stack generate`;
-consumers never write the vocabulary by hand. Plugin-owned tables (e.g. `plugin-auth`'s
-`user`/`session`/…) contribute their own names to the same vocabulary directly — `export *`-ing a
-plugin's schema subpath doesn't add its table names here (see the slot table below), but a
-procedure can still declare `reads`/`writes` against them.
-
-### 3. Query at runtime
-
-When using `@fcalell/plugin-api`, the database client is provided automatically via the runtime plugin. For standalone use:
-
-```ts
-import { createClient } from "@fcalell/plugin-db/d1";
-import * as schema from "./src/schema";
-
-const db = createClient(env.DB_MAIN, schema);
-const users = await db.query.users.findMany();
-```
-
-Query operators are also available from `@fcalell/plugin-db/orm`:
-
-```ts
-import { eq, and, desc } from "@fcalell/plugin-db/orm";
-
-await db.delete(projects).where(eq(projects.id, id));
-```
-
-`alias` gives a second reference to a table, so a self-join or a correlated subquery names its
-columns through typed properties instead of a raw `sql` fragment. Name the subquery's columns
-through the alias and the outer row's through the table:
-
-```ts
-import { alias, and, eq, gt, notExists } from "@fcalell/plugin-db/orm";
-
-// Each author's last note: no later note by the same author exists.
-const later = alias(notes, "later");
-await db
-  .select({ id: notes.id })
-  .from(notes)
-  .where(
-    notExists(
-      db
-        .select({ id: later.id })
-        .from(later)
-        .where(and(eq(later.authorId, notes.authorId), gt(later.id, notes.id))),
-    ),
-  );
-```
-
-The alias name must differ from the table's own name: `alias(notes, "notes")` builds and runs,
-and its subquery then correlates to itself. A fragment built with `sql` is typed `SQL`, also
-exported from `@fcalell/plugin-db/orm`.
-
-For SQLite (scripts, seeds, tests):
-
-```ts
-import { createClient } from "@fcalell/plugin-db/sqlite";
-import * as schema from "./src/schema";
-
-const db = createClient("./data/app.sqlite", schema);
-```
-
-Both clients are cached (D1 via `WeakMap`, SQLite via `Map`) so it is safe to call `createClient` on every request without creating duplicate instances.
-
-### 4. Seed data (optional)
-
-Author `src/schema/seed.ts` with `defineSeed`/`seedTable` from `@fcalell/plugin-db/orm`. Rows are
-typed against each table's insert model — no column-name mapping, no SQL:
-
-```ts
-// src/schema/seed.ts
-import { defineSeed, seedTable } from "@fcalell/plugin-db/orm";
-import { projects } from "./index";
-
-export default defineSeed([
-  seedTable(projects, [
-    { id: "demo", name: "Demo project", createdAt: new Date() },
-  ]),
-]);
-```
-
-`stack db seed` applies it **idempotently**: rows upsert by primary key, then rows whose key left
-the seed are pruned (so user FK links survive via `ON DELETE SET NULL`); a primary-key-less table is
-replaced wholesale. The seed also runs automatically in `stack dev` (after schema apply, re-run when
-`seed.ts` changes) and on deploy (after migrations, when the file exists). `stack db seed --remote`
-targets the deployed D1.
-
-Every row must carry its primary key (that's what makes an upsert idempotent). Omit any other
-column to let its SQL `DEFAULT` apply.
-
-### Migration safety
-
-`stack db check` guards two failure modes and is also enforced as a pre-deploy gate:
-
-- **Drift** — `src/schema` changed but no migration was generated. Fix: `stack db generate`.
-- **Destructive change** — the newest migration drops a table, column, or view. A drop breaks the
-  live worker mid-rollout (old code still reads the dropped shape), so the deploy is blocked. Fix it
-  with expand/contract, or acknowledge an intentional drop by adding a `-- stack:allow-destructive`
-  line anywhere in that migration's `.sql`.
-
-### Testing
-
-On the d1 dialect, `stack generate` adds a `dbTesting` entry to the consumer test entry
-(`.stack/testing.ts`, from plugin-api), baked from the config: the binding name, the migrations
-directory, the compatibility date the deployed worker runs on, and the schema. Each `boot()` gets
-its own local D1:
-
-```ts
-import { testing } from "../.stack/testing.ts";
-
-await using app = await testing.boot();
-await app.db.insert(notes).values({ id: 1, body: "hello" }); // drizzle over the test D1
-const rows = await app.client().notes.list();                 // the worker reads DB_MAIN
-```
-
-- A wrangler config holding only the D1 binding is written to a temporary directory and opened
-  with wrangler's `getPlatformProxy` (`persist: false`, no remote bindings), so nothing touches
-  `.wrangler/state` and two boots, or two test files running in parallel, hold separate databases.
-- The committed migrations apply the way `wrangler d1 migrations apply` applies them at deploy:
-  every `.sql` file in filename order, each split by wrangler's splitter and run as one batch with
-  its `d1_migrations` record. No journal is read. An empty migrations directory is refused by
-  name, since `stack db generate` writes the migrations the database is built from.
-- The binding lands in the worker's env under its name, and `app.db` is the same drizzle client
-  the worker's procedures get. `dispose()` (or `await using`) stops the proxy and removes the
-  temporary directory; a setup that fails does both before rejecting.
-- `wrangler` is an optional peer dependency, which every cloudflare consumer already has. The
-  sqlite dialect contributes no testing entry: its test entry's worker opens the file `fileVar`
-  names at its dev default (`path`, resolved against the test process's working directory), the
-  same file `stack dev` uses, with no per-boot database.
-
-## Config options
-
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `dialect` | `"d1" \| "sqlite"` | -- | Required. Database dialect. |
-| `databaseId` | `string` | -- | Required for D1. |
-| `path` | `string` | -- | Required for SQLite: the `fileVar` dev default and the file `stack db push` targets (its directory is created first). |
-| `migrations` | `string` | `"./src/migrations"` | Migrations directory. |
-| `binding` | `string` | `"DB_MAIN"` | D1 binding name in `wrangler.toml` / env. |
-| `fileVar` | `string` | `"DB_FILE"` | SQLite: the env var the runtime reads the database file from. `path` is its dev default. |
-
-## Commands
-
-The plugin registers subcommands accessible via `stack db <command>`:
-
-| Command | Description |
-|---------|-------------|
-| `stack db push` | Push schema to local database |
-| `stack db generate` | Generate migration files from schema diff |
-| `stack db apply [--remote]` | Apply pending migrations (local or remote D1) |
-| `stack db check` | Fail on schema drift or an unacknowledged destructive migration |
-| `stack db seed [--remote]` | Apply `src/schema/seed.ts` idempotently (local or remote D1) |
-| `stack db create` | Create a Cloudflare D1 database and print its id |
-| `stack db reset` | Reset local database (all data will be lost) |
-
-## Bindings
-
-When `dialect` is `"d1"`, the plugin auto-declares one binding:
-
-| Binding | Type | Default name |
-|---------|------|--------------|
-| D1 database | `d1` | `DB_MAIN` |
-
-Customize via the `binding` option.
+Configuring the dialect, writing the schema and the seed, the `stack db` commands, migration
+safety and testing live in `guide/`, indexed into a consumer's `.stack/guide.md`:
+[`change-a-table.md`](./guide/change-a-table.md),
+[`destructive-change.md`](./guide/destructive-change.md), [`schema.md`](./guide/schema.md),
+[`seed.md`](./guide/seed.md), [`commands.md`](./guide/commands.md),
+[`migration-safety.md`](./guide/migration-safety.md), [`config.md`](./guide/config.md) and
+[`testing.md`](./guide/testing.md).
 
 ## Plugin implementation
 
-Built with `plugin` from `@fcalell/cli`. Has no owned slots; everything is a contribution to other plugins' slots or to `cliSlots.*`.
+Built with `plugin` from `@fcalell/cli`. Owns no slots; everything is a contribution to other
+plugins' slots or to `cliSlots.*`.
 
 ```ts
 import { plugin } from "@fcalell/cli";
 import { cliSlots } from "@fcalell/cli/cli-slots";
-import { cloudflare } from "@fcalell/plugin-cloudflare";
 import { api } from "@fcalell/plugin-api";
+import { cloudflare } from "@fcalell/plugin-cloudflare";
 
 export const db = plugin("db", {
   label: "Database",
   schema: dbOptionsSchema,
   requires: ["api"],
-  commands: { push, generate, apply, check, seed, create, reset /* ... */ },
-  dependencies: { "@fcalell/plugin-db": "workspace:*" },
+  dependencies: { "@fcalell/plugin-db": "workspace:*", "drizzle-orm": "^0.45.2" },
   devDependencies: { "drizzle-kit": "^0.31.0", "better-sqlite3": "^13.0.0" },
   gitignore: [".db-kit"],
-  contributes: [
-    cloudflare.slots.bindings.contribute((ctx) => {
-      if (ctx.options.dialect !== "d1") return undefined;
-      return { kind: "d1", binding: ctx.options.binding ?? "DB_MAIN", databaseId: ctx.options.databaseId };
-    }),
-    api.slots.pluginRuntimes.contribute(async (ctx) => /* dbRuntime entry */),
-    cliSlots.devReadySetup.contribute((ctx) => ({ name: "db-schema-apply", run: async () => { /* ... */ } })),
-    cliSlots.devReadySetup.contribute((ctx) => ({ name: "db-seed", run: async () => { /* ... */ } })),
-    cliSlots.devWatchers.contribute((ctx) => /* schema push watcher, plus a seed watcher */),
-    cliSlots.deployChecks.contribute(async (ctx) => /* drift + destructive gates, committed-migrations confirm */),
-    cliSlots.deploySteps.contribute((ctx) => /* applyMigrationsRemote, then seed */),
-    cliSlots.initPrompts.contribute(/* dialect + databaseId/path */),
-    cliSlots.initScaffolds.contribute((ctx) => ctx.scaffold("schema.ts", "src/schema/index.ts")),
-    cliSlots.removeFiles.contribute(() => ["src/schema/", "src/migrations/"]),
+  guide: [/* change-a-table, destructive-change, schema, seed, … */],
+  commands: { push, generate, apply, reset, create, check, seed },
+  contributes: (self) => [
+    cloudflare.slots.bindings.contribute(/* the D1 binding */),
+    api.slots.pluginRuntimes.contribute(/* dbRuntime entry */),
+    // env, worker and testing imports, testing entry, entities, dev, deploy, init, remove …
   ],
 });
 ```
@@ -261,55 +54,46 @@ export const db = plugin("db", {
 
 | Target slot | Behavior |
 |-------------|----------|
-| `cloudflare.slots.bindings` | D1 binding (when `dialect: "d1"` and `databaseId` set) |
+| `cloudflare.slots.bindings` | D1 binding with its `migrationsDir` (d1, when `databaseId` is set) |
 | `api.slots.env` | `{ name: fileVar, devDefault: path }` (sqlite only) |
 | `api.slots.pluginRuntimes` | `dbRuntime({ binding, schema })` from `./runtime` (d1), `dbRuntime({ fileVar, schema })` from `./runtime/sqlite` (sqlite) |
 | `api.slots.workerImports` | `import * as schema from "../src/schema/index.ts"` on both dialects (node, which runs the sqlite worker and the test entry's d1 worker, refuses a directory import), gated on the schema dir existing |
 | `api.slots.testingEntries` | `dbTesting({ binding, migrations, compatibilityDate, schema })` from `./testing` (d1 only), the compatibility date resolved from `cloudflare.slots.compatibilityDate` |
 | `api.slots.testingImports` | The same `schema` namespace import for the test entry (d1 only), gated on the schema dir existing |
-| `api.slots.entities` | Sorted value-export names from `src/schema/index.ts` (both dialects) |
-| `cliSlots.initPrompts` | Asks for dialect, then database ID or SQLite path |
-| `cliSlots.initScaffolds` | Writes `src/schema/index.ts` from `templates/schema.ts` |
-| `cliSlots.devReadySetup` | Pushes the schema into the local DB, then seeds (sqlite's file, or the miniflare D1 `wrangler dev` reads — a schema save is live without a migration or restart) |
-| `cliSlots.devWatchers` | Re-push on `src/schema/**` (both dialects); re-seed on `src/schema/seed.ts` (300ms debounce) |
-| `cliSlots.deployChecks` | Valid `databaseId`, the destructive-migration hard gate, the drift hard gate (schema change with no committed migration aborts), and the committed-migrations confirm |
-| `cliSlots.deploySteps` | `applyMigrationsRemote` then seed (when `seed.ts` exists), both `pre` phase |
-| `cliSlots.removeFiles` | `src/schema/`, `src/migrations/` |
+| `api.slots.entities` | Sorted value-export names from `src/schema/index.ts` (both dialects); `export *` re-exports are skipped, so auth contributes its own table names |
+
+### Lifecycle contributions
+
+| `cliSlots` slot | Behavior |
+|-----------------|----------|
+| `initPrompts` | Asks for dialect, then database ID or SQLite path |
+| `initScaffolds` | Writes `src/schema/index.ts` from `templates/schema.ts` |
+| `devReadySetup` | Pushes the schema into the local database (sqlite's file, or the miniflare D1 `wrangler dev` reads), then seeds |
+| `devWatchers` | Re-push on `src/schema/**` (both dialects); re-seed on `src/schema/seed.ts` (300ms debounce) |
+| `deployChecks` | d1: a real `databaseId`, the destructive-migration gate, the drift gate, and the committed-migrations confirm |
+| `deploySteps` | d1: `applyMigrationsRemote`, then the seed when `seed.ts` exists, both `pre` phase |
+| `removeFiles` | `src/schema/`, `src/migrations/` |
 
 ### Runtime
 
-The `./runtime` export provides a `RuntimePlugin` for the worker builder chain:
-
-```ts
-import dbRuntime from "@fcalell/plugin-db/runtime";
-
-// Takes plain options -- no config dependency
-dbRuntime({ binding: "DB_MAIN", schema })
-```
-
-The sqlite dialect's runtime lives on `./runtime/sqlite` so a Workers bundle never pulls in the
-native driver. It opens the file the `fileVar` env var names, once per process, and refuses a
-missing var by name:
-
-```ts
-import dbRuntime from "@fcalell/plugin-db/runtime/sqlite";
-
-dbRuntime({ fileVar: "DB_FILE", schema })
-```
-
-Returns `{ db }` to downstream plugins via the builder's context accumulation.
+`./runtime` is the D1 `RuntimePlugin` for the worker builder chain, taking plain options:
+`dbRuntime({ binding: "DB_MAIN", schema })`. The sqlite runtime lives on `./runtime/sqlite` so a
+Workers bundle never pulls in the native driver: `dbRuntime({ fileVar: "DB_FILE", schema })`
+opens the file that env var names, once per process, and refuses a missing var by name. Both
+return `{ db }` to downstream plugins through the builder's context accumulation; the clients
+behind them (`./d1`, `./sqlite`) are cached per binding and per file path.
 
 ## Exports
 
 | Subpath | Purpose |
 |---------|---------|
 | `@fcalell/plugin-db` | `db()`, `DbOptions` |
-| `@fcalell/plugin-db/orm` | Drizzle table/column builders, table constraints (`check`, `unique`, `primaryKey`, `foreignKey`, `index`, `uniqueIndex`), operators, `alias` for a second reference to a table, the `SQL` fragment type, relations, aggregates, table and view introspection (`getTableColumns`, `getTableName`, `getTableConfig`, `isTable`, `getViewName`, `getViewSelectedFields`, `getViewConfig`, `isView`), `defineSeed`/`seedTable` |
+| `@fcalell/plugin-db/orm` | Drizzle table/column builders, table constraints, operators, `alias`, the `SQL` type, relations, aggregates, table and view introspection, row types, `defineSeed`/`seedTable` |
 | `@fcalell/plugin-db/d1` | `createClient()` for Cloudflare D1 |
 | `@fcalell/plugin-db/sqlite` | `createClient()` for SQLite (requires `better-sqlite3`) |
-| `@fcalell/plugin-db/runtime` | `dbRuntime()` -- D1 runtime plugin factory |
-| `@fcalell/plugin-db/runtime/sqlite` | `dbRuntime()` -- SQLite runtime plugin factory (node target) |
-| `@fcalell/plugin-db/testing` | `dbTesting()` -- the test entry's local D1 (node only; needs the `wrangler` peer) |
+| `@fcalell/plugin-db/runtime` | `dbRuntime()`, the D1 runtime plugin factory |
+| `@fcalell/plugin-db/runtime/sqlite` | `dbRuntime()`, the SQLite runtime plugin factory (node target) |
+| `@fcalell/plugin-db/testing` | `dbTesting()`, the test entry's local D1 (node only; needs the `wrangler` peer) |
 
 ## License
 

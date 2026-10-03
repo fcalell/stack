@@ -46,13 +46,19 @@
 		"./harness": {
 			"types": "./dist/harness.d.ts",
 			"default": "./dist/harness.js"
+		},
+		"./manifest": {
+			"types": "./dist/manifest.d.ts",
+			"default": "./dist/manifest.js"
 		}
 	},
 	"files": [
 		"dist",
 		"src",
 		"scripts",
+		"guide",
 		"README.md",
+		"DESIGN.md",
 		"tsconfig.json",
 		"tsconfig.build.json"
 	],
@@ -63,7 +69,7 @@
 		"check-types": "tsc --noEmit --pretty",
 		"lint": "biome check --write --unsafe",
 		"check": "pnpm check-types && pnpm lint",
-		"test": "node --test 'test/**/*.test.ts' && design.md lint ../../DESIGN.md",
+		"test": "node --test 'test/**/*.test.ts' && design.md lint DESIGN.md",
 		"verify": "tsx scripts/verify.ts",
 		"clear": "rm -rf dist node_modules .turbo",
 		"design-md": "tsx scripts/design-md.ts"

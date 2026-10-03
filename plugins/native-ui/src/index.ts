@@ -9,6 +9,7 @@ import { cliSlots, emitArtifact } from "@fcalell/cli/cli-slots";
 import { auth } from "@fcalell/plugin-auth";
 import { expo } from "@fcalell/plugin-expo";
 import { deriveTheme } from "@fcalell/ui-core/derive";
+import { uiCoreGuide } from "@fcalell/ui-core/manifest";
 import { aggregateGlobalCss } from "./node/codegen.ts";
 import {
 	type NativeFontEntry,
@@ -252,6 +253,18 @@ export const nativeUi = plugin("native-ui", {
 	// subpaths; presence-only, for a clear error if a consumer forgets them.
 	requires: ["expo", "api", "auth"],
 
+	guide: [
+		{
+			page: "rules",
+			trigger: "Writing or editing any `.tsx` of the phone app",
+		},
+		{
+			page: "reference",
+			trigger:
+				"Importing a phone component, or setting the theme, words or fonts, or the scaffolded query client",
+		},
+	],
+
 	// Consumer dependencies. Native module versions are Expo-SDK-56 ballpark;
 	// `expo install` reconciles exact versions at consumer setup.
 	dependencies: {
@@ -329,6 +342,8 @@ export const nativeUi = plugin("native-ui", {
 		emitArtifact(GLOBAL_CSS_ARTIFACT, self.slots.appCssSource),
 		emitArtifact(NATIVE_AUTH_ARTIFACT, self.slots.nativeAuthSource),
 		emitArtifact(NATIVE_THEME_ARTIFACT, self.slots.nativeThemeSource),
+		// ui-core is no plugin: each UI plugin indexes its guide pages.
+		cliSlots.guide.contribute(() => uiCoreGuide),
 		// The entry sits in `.stack/`, beside the file it imports.
 		expo.slots.entryImports.contribute(async (ctx) =>
 			(await ctx.resolve(self.slots.nativeThemeSource)) === null

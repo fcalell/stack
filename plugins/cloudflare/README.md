@@ -1,57 +1,55 @@
 # @fcalell/plugin-cloudflare
 
 The Cloudflare Workers target for `@fcalell/stack`, the alternative to `@fcalell/plugin-node`. It
-renders the plugin-api worker's wrangler config from what the other plugins contribute and runs
-`wrangler` for dev and deploy.
+renders the API worker's wrangler config from what the other plugins contribute and runs
+`wrangler` for dev, types and deploy.
 
-## What it generates
+## Install
 
-- `.stack/wrangler.toml`: every contributed binding, route, var and compatibility flag, merged
-  onto the consumer's own `wrangler.toml` when there is one.
-  Every `api.slots.env` var is an empty `[vars]` entry; the deployed value is set once with
-  `wrangler secret put`.
-- `.dev.vars`: `STACK_DEV=1` and each `api.slots.env` var at its `devDefault`. The file is the
-  consumer's to edit; each generate adds only what it lacks (`STACK_DEV`, a var declared since),
-  and mirrors it into `.stack/.dev.vars`, where wrangler reads it.
-- `.stack/worker-configuration.d.ts`: the `Env` interface, from `wrangler types`. A var in
-  `.dev.vars` is typed `string`.
+```bash
+stack add cloudflare
+```
 
-## Dev
+## Guide
 
-`stack dev` runs `wrangler dev` on `http://localhost:8787`, with its local state (D1, KV, caches)
-persisted under `.wrangler/state`, gitignored with `.wrangler`. It stays outside `.stack/`, Vite's
-root, because the worker writes it on every request and each write Vite sees is a full reload.
-plugin-db's local D1 commands read the same directory (`LOCAL_PERSIST`). wrangler's scratch
-`.wrangler/` sits beside its config, so the bundle it rewrites on every worker edit lands in
-`.stack/.wrangler/tmp/`, inside Vite's root, where Tailwind's automatic source detection scans it
-and answers its change with a full reload; the plugin contributes `**/.wrangler/**` to
-`vite.slots.watchIgnored`, so a worker edit leaves the open page as it is.
+Using the target in an app lives in `guide/`, indexed into a consumer's `.stack/guide.md`:
+[`wrangler.md`](./guide/wrangler.md) and the recipe [`deploy.md`](./guide/deploy.md).
 
-With `vite` in the config, the vite dev server proxies every worker-owned path
-(`api.slots.routePrefixes`: api's `prefix`, auth's `/api/auth`) to it, so the browser calls the
-worker on the page's own origin: the RPC and auth clients keep their relative URLs and need no
-`baseURL`, and the session cookie is first-party. The worker's own origin joins
-`api.slots.devTargetOrigins`, after every frontend's.
+## Plugin implementation
 
-## Deploy
-
-`stack deploy` runs `wrangler deploy --config .stack/wrangler.toml`.
-
-## Bundling
-
-`wrangler dev` and `wrangler deploy` both pass `--tsconfig` with the absolute path of
-`cliSlots.workerTsconfig`, the tsconfig holding `virtual:stack-procedure`'s `paths`: esbuild otherwise
-reads the one nearest each file, which under the split is the solution `tsconfig.json` with no
-`paths`. The path is absolute because esbuild resolves a relative one against `.stack/`, the
-config's directory, as it does wrangler.toml's own `tsconfig` key.
-
-## Owned slots
+### Owned slots
 
 | Slot | Kind | Purpose |
-|------|------|---------|
+| --- | --- | --- |
 | `cloudflare.slots.bindings` | `list<WranglerBindingSpec>` | D1, KV, R2, analytics engine, rate limiter and var bindings |
 | `cloudflare.slots.routes` | `list<WranglerRouteSpec>` | Worker route patterns |
 | `cloudflare.slots.vars` | `map<string>` | Plain `[vars]` entries |
 | `cloudflare.slots.compatibilityFlags` | `list<string>` | Workers compatibility flags |
-| `cloudflare.slots.compatibilityDate` | `value<string>` | The pinned compatibility date |
-| `cloudflare.slots.wranglerToml` | `derived<string>` | The final `.stack/wrangler.toml` source |
+| `cloudflare.slots.compatibilityDate` | `value<string>` | The pinned compatibility date, seeded from `DEFAULT_COMPATIBILITY_DATE` so generate is reproducible |
+| `cloudflare.slots.wranglerToml` | `derived<string>` | The final `.stack/wrangler.toml` source: every slot above plus `api.slots.env`, merged onto the consumer's root `wrangler.toml` by `aggregateWrangler` |
+
+### Contributions
+
+| Target slot | Behaviour |
+| --- | --- |
+| `cliSlots.artifactFiles` | `.stack/wrangler.toml`, from `wranglerToml` |
+| `cloudflare.slots.bindings` | `RATE_LIMITER_RPC`, 1000 requests per 60 s per IP over the API tree, when any worker path exists |
+| `cliSlots.artifactFiles` | `.dev.vars` (created, or topped up with what it lacks) and its mirror `.stack/.dev.vars`, where wrangler reads it. `STACK_DEV` never enters `api.slots.env`, so it never becomes a secret |
+| `api.slots.devTargetOrigins` | `http://localhost:8787`, unless `app.origins` is set |
+| `vite.slots.serverProxy` | Every `api.slots.routePrefixes` path to the wrangler dev port |
+| `vite.slots.watchIgnored` | `**/.wrangler/**`: wrangler's scratch bundle lands in `.stack/.wrangler/tmp/`, inside Vite's root, where Tailwind's source scan would answer each worker edit with a full reload |
+| `cliSlots.devProcesses` | `wrangler dev --persist-to .wrangler/state` on port 8787 |
+| `cliSlots.deploySteps` | `wrangler deploy`, phase `main` |
+| `cliSlots.postWrite` | `wrangler types` into `.stack/worker-configuration.d.ts`; on failure it warns and removes the file, so a stale `Env` never type-checks |
+
+### Lifecycle
+
+- Local state stays in `.wrangler/state` at the root, outside `.stack/` (Vite's root), because the
+  worker writes it on every request. `LOCAL_PERSIST` exports the path for plugin-db's local D1
+  commands.
+- Every bundling wrangler command passes `--config .stack/wrangler.toml` and `--tsconfig` with the
+  absolute path of `cliSlots.workerTsconfig`, which holds `virtual:stack-procedure`'s `paths`.
+  esbuild otherwise reads the solution `tsconfig.json`, and resolves a relative path against
+  `.stack/`.
+- A rate limiter's `namespace_id` is a hash of the worker name and the binding, so apps sharing an
+  account never share a counter.

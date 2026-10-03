@@ -13,7 +13,7 @@ const BLOCKED = {
 };
 const MINUTE = 60_000;
 
-// Every cell draws the board's bars: no deadline, a deadline, no act and a
+// Every cell draws four bars: no deadline, a deadline, no act and a
 // long sentence at rest; `disabled` the blocked act before it is pressed and
 // in a touched form with its reason shown.
 export function drawPendingBar(frame: ShowcaseFrame) {

@@ -78,7 +78,7 @@ export function Checkbox({ checked, onChange, label }: CheckboxProps) {
 	);
 }
 
-// Lucide's own path data, drawn at the board's weight rather than `Icon`'s.
+// Lucide's own path data, drawn at the check's own weight rather than `Icon`'s.
 function Mark({ node }: { node: IconNode }) {
 	return (
 		<svg

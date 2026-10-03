@@ -28,16 +28,12 @@ export default defineConfig({
 });
 ```
 
-## Config options
+## Guide
 
-| Option | Type | Default | What it does |
-| --- | --- | --- | --- |
-| `theme` | `Theme` | the calibrated defaults | The ui-core contract, four flat knobs: `accentHue` (264), `castHue` (the neutrals' hue; `accentHue` unless set), `fonts` (`{ sans?, mono? }` family names; IBM Plex Sans and IBM Plex Mono unless set) and `defaultMode` (a viewer with no stored choice starts in it, ahead of `prefers-color-scheme`). Every value resolves through `deriveTheme` and lands in the `@theme` block of `.stack/app.css`. |
-| `words` | `Words` | English | Every word a molecule draws on its own, every key required. Mounted into the generated providers as a `WordsProvider` (`@fcalell/plugin-react-ui/lib/words`, read with `useWords()`). |
-| `fonts` | `FontEntry[]` | `defaultFonts` | The font files to load: each is preloaded and gets an `@font-face` with fallback metrics, one per family. The default is IBM Plex Sans upright and italic (each on its `wght` axis, `plexSans` and `plexSansItalic` from `./node/fonts`) and IBM Plex Mono at 400, 500 and 600; `[]` loads none. Which family the contract binds to `sans` or `mono` is `theme.fonts`. |
-
-The icon set is Lucide: every `icon` or `name` a component takes is an `IconName` (a Lucide
-PascalCase name), drawn from `lucide-react`, the plugin's own dependency.
+How to build on the plugin lives in `guide/`, indexed into a consumer's `.stack/guide.md`:
+[`rules.md`](./guide/rules.md), what every web `.tsx` follows, and
+[`reference.md`](./guide/reference.md), the components' subpaths, the options, density, the
+page container and the modes. The screen recipe and the design standard are ui-core's pages.
 
 ## Generated files
 
@@ -47,35 +43,24 @@ PascalCase name), drawn from `lucide-react`, the plugin's own dependency.
 
 `.stack/entry.tsx` imports `./app.css`; `.stack/vite.config.ts` gains `tailwindcss()`,
 `themeFontsPlugin` (the preloads and `@font-face` rules) and `themeModePlugin` (the script that
-sets the `dark` class from the stored choice, the theme's `defaultMode`, else the system).
+sets the `dark` class before first paint).
 
-Density is no option: the desktop set draws where the pointer is fine and the viewport is at
-least `tablet` wide, and the touch set everywhere else, so a desktop window narrower than
-`tablet` draws the touch sizes and structure. The rule is one query (`./density`) the density
-layer, the `touch:` variant and `useTouch` all read. A `data-density` attribute on `<html>` pins either on any device: `desktop`
-draws the compact set, `touch` the touch set. The `touch:` variant is the same rule for a
-class: it applies under `data-density="touch"`, and with no `desktop` pin where the pointer is
-not fine or the viewport is narrower than `tablet`, so a molecule's structure follows density (an action bar at natural width on the
-desktop, full width on touch); a molecule whose tree differs by density (the Shell's
-sidebar or tab bar) reads the same rule through `useTouch` from `lib/media`. A token never needs it: a size, a spacing role and a type role
-follow density through their variables.
+The density rule is one query (`./density`) that the density layer, the `touch:` variant and
+`useTouch` (`lib/media`) all read. The `touch:` variant applies under `data-density="touch"`,
+and with no `desktop` pin where the pointer is not fine or the viewport is narrower than
+`tablet`, so a molecule's structure follows density (an action bar at natural width on the
+desktop, full width on touch); a molecule whose tree differs by density (the Shell's sidebar or
+tab bar) reads `useTouch`. A token never needs it: a size, a spacing role and a type role follow
+density through their variables.
 
-A Place or a Screen is the `page` size container (`@container/page`), and `page-<breakpoint>:`
-and `page-max-<breakpoint>:` draw from or below a breakpoint's width of it, emitted from the
-contract's breakpoint values. A Split decides its regions by them (one region below `tablet`,
-the list beside the main from it, the pane beside from `wide`), so its record keeps its room
-beside the sidebar whatever the viewport.
+`page-<breakpoint>:` and `page-max-<breakpoint>:` draw from or below a breakpoint's width of the
+`page` container (`@container/page`), emitted from the contract's breakpoint values. `pb-safe`
+pads by `env(safe-area-inset-bottom)`, non-zero under the react plugin's `viewport-fit=cover`.
+Each `@font-face` gets a metric fallback face named by ui-core's `fallbackFace`
+(`"IBM Plex Sans Fallback"`), the name the contract's family stack carries second.
 
-`pb-safe` pads a bar's bottom by `env(safe-area-inset-bottom)`, so the touch tab bar clears a
-phone's home indicator; the react plugin's document sets `viewport-fit=cover`, which makes the inset
-non-zero.
-
-The modes are class scopes: `.dark` on `<html>` is the mode, and `.light` on any element
-inside it restores the light colors and `color-scheme` for that subtree, as the showcase's light
-frames do. Under `prefers-reduced-motion: reduce` every `--transition-duration-*` rung is 0ms, so
-no transition or animation that reads one moves. Each `@font-face` gets a metric fallback face
-named by ui-core's `fallbackFace` (`"IBM Plex Sans Fallback"`), the name the contract's family
-stack carries second.
+The plugin also hands the CLI ui-core's guide pages (`cliSlots.guide`), as native-ui does;
+the index lists each page once.
 
 ## Components
 
@@ -145,15 +130,6 @@ carries `data-force-state="<state>"`, and `globals.css` redefines the `hover`, `
 `focus-visible` variants to match inside `[data-force-state=hover|active|focus]` as well as on the
 real pseudo-class, and draws the focus ring on every tabbable element in a `focus` frame. The
 component's own overlay classes then draw the state, with nothing showcase-only in it.
-
-## The artboards
-
-`design/` holds the design artboards: the Stage 1 token sheet `foundations.css` with its boards,
-and from Stage 2 one `.dc.html` per component group on the real contract. `pnpm design` at the
-repo root builds the showcase, then `scripts/design.ts` copies the default fonts to
-`design/files/`, writes their `@font-face` rules to `design/fonts.css`, and compiles
-`design/board.css` (the showcase's emitted `app.css` plus every file under `design/` as a source)
-to `design/app.css`, the stylesheet a Stage 2 board links. The three outputs are gitignored.
 
 ## Slots
 

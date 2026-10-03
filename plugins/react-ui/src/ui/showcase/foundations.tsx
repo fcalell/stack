@@ -43,7 +43,7 @@ const SAMPLE: Record<TypeRole, string> = {
 	code: "npx wrangler d1 migrations apply acme-prod --remote",
 };
 
-// The roles whose emphasis the board draws: a field label, a table header.
+// The roles drawn with their emphasis: a field label, a table header.
 const STRONG: readonly TypeRole[] = ["body", "meta"];
 
 const RUNNING =
@@ -92,7 +92,7 @@ const SWITCH_TRACKS = COLOR_GROUPS.switch.filter(
 );
 
 // A field's static states. FIELD carries rest and error; hover and disabled
-// are the sheet's `.field.is-hover` and `.field.is-disabled`.
+// are drawn by their overlay classes.
 const FIELD_STATES: ReadonlyArray<readonly [string, string]> = [
 	["rest", field()],
 	["hover", cn(field(), "border-edge-hover")],

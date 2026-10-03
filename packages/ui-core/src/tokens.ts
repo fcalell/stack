@@ -1,6 +1,4 @@
-// The closed token contract, as data. Every value here is the approved
-// Stage 1 sheet (`plugins/react-ui/design/foundations.css`, the calibration
-// the verify script diffs against): the derivation keeps one base per scale
+// The closed token contract, as data. The derivation keeps one base per scale
 // so the numbers stay explainable, and a consumer moves the knobs below and
 // never a token.
 
@@ -17,7 +15,7 @@ export type Mode = (typeof MODES)[number];
 // viewport is at least `tablet` wide the web draws the `desktop` set,
 // everywhere else the `touch` set, the 44 px world.
 // `data-density` on the web root pins either set on any device, which is how
-// the showcase and the boards address a density. Density moves the type
+// the showcase addresses a density. Density moves the type
 // scale, the spacing roles and every size; nothing else. Native is
 // touch-only.
 export const DENSITIES = ["touch", "desktop"] as const;

@@ -93,6 +93,21 @@ Plugins coordinate through typed slots in a dataflow graph — each plugin contr
 
 See each plugin's README for config options, commands, event handlers, and runtime exports.
 
+## Designing screens
+
+A consumer's screens are its own, designed in code by ui-core's screen recipe
+(`packages/ui-core/guide/screen.md`): composed from the installed `@fcalell/ui-core` roster,
+judged in a design critique against the rubric, signed off on the render. A part the roster
+cannot compose is filed as a gap on this repo's board by the CLI's gap recipe. Details:
+[consumer-project](.helm/knowledge/architecture/consumer-project.md#designing-screens).
+
+## The guide
+
+Every package ships how to build on it as `guide/*.md`, versioned with the consumer's pin.
+`stack generate` writes `.stack/guide.md`, an index of every page with the trigger that says
+when to open it, and `stack init` makes the consumer's `CLAUDE.md` import it, so a session
+loads only the page a step needs.
+
 ## Writing a plugin
 
 Third-party plugins are first-class. Scaffold one with:
@@ -110,7 +125,6 @@ The scaffold produces a `plugin()`-based skeleton and a runtime stub exported fr
 pnpm check            # Build, type-check, test every package, then lint (Biome)
 pnpm turbo run build  # Compile every package's src/ to dist/
 pnpm showcase         # Build the showcase's dependencies and serve it on :3000
-pnpm design           # Build the showcase, then compile the artboards' stylesheet (plugins/react-ui/design/app.css)
 ```
 
 Every package ships compiled JavaScript in `dist/` for what Node runs (Node strips no types under

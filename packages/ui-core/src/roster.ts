@@ -61,8 +61,7 @@ export interface Owns {
 
 // A component's prop names, the cells it draws (a `FAMILIES` name for every
 // cell of that family, `FAMILY.axis.value` for one of its cells, or a
-// single-cell constant of `./variants`), the states it has a form for, and,
-// once its artboard is approved, the tokens it owns and the cells it holds:
+// single-cell constant of `./variants`), the states it has a form for, the tokens it owns and the cells it holds:
 // the families and constants of its own box, which only it spells, so every
 // other component draws them by composing it and a change to it reaches them
 // all. A cell no entry holds (a type role, the field, the row, the skeleton)

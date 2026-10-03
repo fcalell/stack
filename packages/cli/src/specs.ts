@@ -8,6 +8,16 @@ export interface GeneratedFile {
 	content: string;
 }
 
+// One line of the consumer's `.stack/guide.md`: when to open a page (a load
+// trigger, never a summary of the page) and the page, `guide/<page>.md` inside
+// `package`. Entries group under `domain`.
+export interface GuideEntry {
+	domain: string;
+	package: string;
+	page: string;
+	trigger: string;
+}
+
 // Restart policy for a supervised dev process.
 //   "never"     — exits are terminal; supervisor reports the exit and stops.
 //   "on-crash"  — restart only on non-zero exit / signal; clean exit (code 0) stops.

@@ -53,6 +53,7 @@
 	"files": [
 		"dist",
 		"src",
+		"guide",
 		"templates",
 		"README.md",
 		"tsconfig.json",

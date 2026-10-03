@@ -1,6 +1,0 @@
-/* The Stage 2 boards' stylesheet: the showcase's emitted contract, the
-   boards under this directory as a source, and the fonts `design.ts` writes.
-   `pnpm design` compiles it to `./app.css`, which every board links. */
-@import "../../../apps/showcase/.stack/app.css";
-@import "./fonts.css";
-@source "./";

@@ -80,7 +80,7 @@ function Box({
 		</View>
 	);
 }
-// Lucide's own path data, drawn at the board's weight rather than `Icon`'s;
+// Lucide's own path data, drawn at the check's own weight rather than `Icon`'s;
 // react-native-svg takes values, so the mark's size and ink are resolved.
 function Mark({ node, disabled }: { node: IconNode; disabled: boolean }) {
 	const { width, color } = useResolveClassNames(

@@ -97,8 +97,8 @@ function start(first: number, count: number): number {
 	return count === 0 ? first - 1 : first;
 }
 
-// A line's indent in no-break spaces (a tab as the two of the board's
-// indent), so a wrapped line never breaks right after it.
+// A line's indent in no-break spaces (a tab as two), so a wrapped line
+// never breaks right after it.
 function held(text: string): string {
 	return text.replace(/^[ \t]+/, (indent) =>
 		indent.replaceAll(" ", "\u00a0").replaceAll("\t", "\u00a0\u00a0"),

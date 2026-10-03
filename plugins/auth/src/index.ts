@@ -315,6 +315,49 @@ export const auth = plugin("auth", {
 		"@fcalell/plugin-auth": "workspace:*",
 	},
 
+	guide: [
+		{
+			page: "config",
+			trigger:
+				"Configuring auth: `auth()` options, its env vars, or the auth tables `src/schema/index.ts` re-exports",
+		},
+		{
+			page: "callbacks",
+			trigger:
+				"Writing `src/worker/plugins/auth.ts`: sending codes or invitations, account deletion, or a sign-in flow of your own",
+		},
+		{
+			page: "sign-in",
+			trigger:
+				"Adding OAuth or passkeys, or calling auth from the web or native client",
+		},
+		{
+			page: "organizations",
+			trigger:
+				"Working with organizations, members, invitations, roles or organization slugs",
+		},
+		{
+			page: "scopes",
+			trigger:
+				"Declaring a tenancy level below the organization (`defineScope`)",
+		},
+		{
+			page: "abilities",
+			trigger:
+				"Gating access by a record's own data (an owner column, a per-record role)",
+		},
+		{
+			page: "testing",
+			trigger: "Signing a test in as a user or as a member of a role",
+		},
+		{ page: "add-a-role", trigger: "Adding a role or a permission" },
+		{
+			page: "protect-by-scope",
+			trigger:
+				"Restricting a procedure to the members of an organization or a scope",
+		},
+	],
+
 	slots: {
 		runtimeOptions,
 		appUrlDevDefault,

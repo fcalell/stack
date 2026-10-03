@@ -2,7 +2,7 @@ import { Text } from "../../components/text/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
 
 // Each cell draws the component in that role; a `TEXT_STRONG` cell draws a
-// strong run inside a sentence of that role, as the board does.
+// strong run inside a sentence of that role.
 export function drawText(frame: ShowcaseFrame) {
 	switch (frame.cell.name) {
 		case "TEXT.role.body":

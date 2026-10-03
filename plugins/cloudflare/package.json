@@ -12,6 +12,7 @@
 	"files": [
 		"dist",
 		"src",
+		"guide",
 		"tsconfig.json",
 		"tsconfig.build.json"
 	],

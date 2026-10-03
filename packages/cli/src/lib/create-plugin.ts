@@ -175,6 +175,11 @@ export interface PluginDefinition<
 	dependencies?: Record<string, string>;
 	devDependencies?: Record<string, string>;
 	gitignore?: readonly string[];
+
+	// The plugin's guide pages, each `guide/<page>.md` in its package, with the
+	// trigger that says when to open it. Auto-wired into `cliSlots.guide` under
+	// the plugin's name and package.
+	guide?: readonly { page: string; trigger: string }[];
 }
 
 // ── Internal CLI-facing descriptor ─────────────────────────────────
@@ -343,6 +348,14 @@ export function plugin<
 		if (definition.gitignore && definition.gitignore.length > 0) {
 			const entries = [...definition.gitignore];
 			auto.push(cliSlots.gitignore.contribute(() => entries));
+		}
+		if (definition.guide && definition.guide.length > 0) {
+			const entries = definition.guide.map((e) => ({
+				domain: name,
+				package: pkg,
+				...e,
+			}));
+			auto.push(cliSlots.guide.contribute(() => entries));
 		}
 
 		// Auto-scaffold the callback file when the plugin declares both

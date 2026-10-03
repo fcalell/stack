@@ -7,7 +7,7 @@ export const FieldDisabled = createContext(false);
 
 // Set by a row whose label is a toggle's target (a FormField's checkbox
 // form, an OptionList row): the toggle inside draws its box with no hit box of
-// its own, so the box sits on the label's line where the board draws it. A
+// its own, so the box sits on the label's first line. A
 // row that wraps the toggle in its label names it by its label line and
 // describes it by its description line, so the row's other text (its mark)
 // stays out of the name.

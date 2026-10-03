@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename } from "node:path";
 import { intro, log, note, outro } from "@clack/prompts";
 import {
@@ -23,6 +23,7 @@ import {
 	writeScaffoldSpecs,
 } from "../lib/scaffold.ts";
 import { biomeTemplate } from "../templates/biome.ts";
+import { claudeMdTemplate } from "../templates/claude-md.ts";
 import { gitignoreTemplate } from "../templates/gitignore.ts";
 import { packageJsonTemplate } from "../templates/package-json.ts";
 import { stackConfigTemplate } from "../templates/stack-config.ts";
@@ -146,6 +147,7 @@ async function run(dir: string, options: InitOptions): Promise<void> {
 		if (writeIfMissingString(path, content)) createdBase.push(path);
 	}
 	announceCreated(createdBase);
+	writeClaudeMd();
 
 	const pluginAnswers = new Map<string, Record<string, unknown>>();
 	for (const p of selectedPlugins) pluginAnswers.set(p, {});
@@ -280,4 +282,15 @@ export function syntheticConfigFromSelection(opts: {
 		app: { name: opts.app.name, domain: opts.app.domain },
 		plugins: configs,
 	});
+}
+
+// The consumer's `CLAUDE.md` imports the guide's index.
+function writeClaudeMd(): void {
+	const path = "CLAUDE.md";
+	const content = claudeMdTemplate(
+		existsSync(path) ? readFileSync(path, "utf8") : null,
+	);
+	if (content === null) return;
+	writeFileSync(path, content);
+	log.success(`Imported stack's guide in ${path}`);
 }

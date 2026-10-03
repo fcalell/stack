@@ -1,7 +1,7 @@
 # Content molecules: the overlay notes
 
-The Stage 2 content molecules' approved artboards (`plugins/react-ui/design/5*-*.dc.html`, boards 50
-to 54, approved at L2a 2026-10-02) split into the ui-core cells and what each plugin composes over
+The Stage 2 content molecules' approved artboards (boards 50 to 54, approved at L2a 2026-10-02;
+the files are in git history at `d777de6`) split into the ui-core cells and what each plugin composes over
 them. This file is what the React step copies: for every part of every drawn frame and state, the
 board's class string verbatim, the ui-core cell or constant it now draws, and the overlay, which is
 the board string less the cell. Generated from the light column of each board; the dark column
@@ -40,7 +40,7 @@ Table below tablet. Board 53 also draws the Thread around the messages and the i
 
 ## Prose
 
-Board: `50-reading-desktop.dc.html` and `50-reading-touch.dc.html`.
+Board 50.
 
 A fenced block is a composed `Code`, recorded at its root. The quote's text is `TEXT {role: body}` in the meta ink (an ink overlay, `text-ink-meta`). Inline code on board 53 spells its sentence's ink (`text-ink-body`) as an overlay over `PROSE_CODESPAN`, which carries none.
 
@@ -206,7 +206,7 @@ A fenced block is a composed `Code`, recorded at its root. The quote's text is `
 
 ## Code
 
-Board: `50-reading-desktop.dc.html` and `50-reading-touch.dc.html`.
+Board 50.
 
 The text region and the fold act ring inward on their own focus (`focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring`); a frame drawn focused spells the static ring (`outline-2 -outline-offset-2 outline-ring`). The fold's hover and press washes are the web's `hover:` and `active:` overlays.
 
@@ -329,7 +329,7 @@ The text region and the fold act ring inward on their own focus (`focus-visible:
 
 ## Diff
 
-Board: `51-changes-desktop.dc.html` and `51-changes-touch.dc.html`.
+Board 51.
 
 The table structure (`w-full border-collapse`, `align-top`, `text-end` on the numbers, `w-full` on the code) is the web's; native draws rows of the same cells with the number columns at `w-figures`. A wrapped line's first visual line is pulled back by `-indent-control-x` over `DIFF_HANG`.
 
@@ -427,7 +427,7 @@ The loading form is a fixed eight lines, and what stands below a Diff may move w
 
 ## ProseDiff
 
-Board: `51-changes-desktop.dc.html` and `51-changes-touch.dc.html`.
+Board 51.
 
 ### prose-diff
 
@@ -485,7 +485,7 @@ Board: `51-changes-desktop.dc.html` and `51-changes-touch.dc.html`.
 
 ## FileRow
 
-Board: `51-changes-desktop.dc.html` and `51-changes-touch.dc.html`.
+Board 51.
 
 The row's hit is ListRow's (shared-overlays.md): `absolute inset-0`, `rounded-row touch:rounded-none` on the list ground, its ring inset. The counts' loading lane spells `text-meta` over `SKELETON_LANE {role: meta}`, which carries no role of its own.
 
@@ -608,7 +608,7 @@ The row's hit is ListRow's (shared-overlays.md): `absolute inset-0`, `rounded-ro
 
 ## Comparison
 
-Board: `51-changes-desktop.dc.html` and `51-changes-touch.dc.html`.
+Board 51.
 
 The card is a composed `Group` whose children are the rows. On touch the label stands over its values (`touch:basis-full` on the label cell) and the head's empty cell leaves the layout and stays the head row's first cell for assistive tech (`touch:sr-only`).
 
@@ -698,7 +698,7 @@ The card is a composed `Group` whose children are the rows. On touch the label s
 
 ## Table
 
-Board: `52-table-desktop.dc.html`, `52-table-tablet.dc.html` (768, the touch density) and `52-table-touch.dc.html` (390, below tablet).
+Board 52.
 
 From tablet up the grid (the desktop board and the tablet board, 768 at the touch density); below tablet (the touch board, 390) a composed Picker at its row fit (the sort) over a composed List of ListRows, whose strings are shared-overlays.md's. A column's width (`col`) is the column's `width`; the tablet board stands every column at `measure-short`. The frozen leading column (tablet) is `TABLE_FROZEN` on its `td`/`th` under the structural `sticky left-0 z-1`, its content `TABLE_FROZEN_CELL` by the row's state. Every body cell rings inward as the cell cursor (`focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring`), the drawn cursor the static ring. A cell's edit composes the Input (`FIELD` at the bar fit), the Picker (its field fit) or the Checkbox, the cell its target.
 
@@ -1075,7 +1075,7 @@ From tablet up the grid (the desktop board and the tablet board, 768 at the touc
 
 ## Message
 
-Board: `53-messages-desktop.dc.html` and `53-messages-touch.dc.html`.
+Board 53.
 
 A reply's body is a composed `Prose`, recorded at its root. `you` names its speaker in a visually hidden head (`sr-only`). The thread on the board (`thread`: the messages `gap-sections` apart in a measure-wide column) and the pane around it are not a Message's parts.
 
@@ -1195,7 +1195,7 @@ A reply's body is a composed `Prose`, recorded at its root. `you` names its spea
 
 ## MessageInput
 
-Board: `53-messages-desktop.dc.html` and `53-messages-touch.dc.html`.
+Board 53.
 
 The desktop draws the stacked box (`MESSAGE_INPUT_BOX`), touch and native one row (`MESSAGE_INPUT_ROW`, the field `FIELD` at the bar fit over `MESSAGE_INPUT_FIELD`): a structure that follows density, chosen as the Shell's is. Send and Stop share one grid cell (`col-start-1 row-start-1`), the absent act `invisible`. The box's hover, focus and disabled looks are overlays over its rest cell, as the Input's are (`border-edge-hover`, the ring on focus-within, `bg-fill-disabled`). The disabled frame is the `disabled` prop (the Input atom's).
 
@@ -1419,7 +1419,7 @@ The desktop draws the stacked box (`MESSAGE_INPUT_BOX`), touch and native one ro
 
 ## Meter
 
-Board: `54-measures-desktop.dc.html` and `54-measures-touch.dc.html`.
+Board 54.
 
 The fill's width is the value's share of the max, set by the component (the board's `w-1/12` to `w-full` stand in for the data).
 
@@ -1509,7 +1509,7 @@ The fill's width is the value's share of the max, set by the component (the boar
 
 ## BarChart
 
-Board: `54-measures-desktop.dc.html` and `54-measures-touch.dc.html`.
+Board 54.
 
 A column's and a part's height is its value's share of the axis top, set by the component (the board's `h-n/12` stand in for the data); a tick centres on its gridline by `-translate-y-1/2`. The values reach assistive tech as a visually hidden table (`sr-only`). A column's share of its slot (`w-2/3`) is a structural fraction width, as a skeleton bar's. A stacked chart's legend comes from `keys` (the parts' names, bottom first), never from a bar: each key holds its series mark by its place, and the loading form draws the same legend (dot and name, its figure a skeleton in the four-figure lane, `CHART_TICK_LANE`), so the head wraps as the loaded one does and the plot moves 0 px when the data lands.
 
@@ -1759,7 +1759,7 @@ A column's and a part's height is its value's share of the axis top, set by the 
 
 ## Thread
 
-Board: `53-messages-desktop.dc.html` and `53-messages-touch.dc.html`.
+Board 53.
 
 The Place body around the board's thread is context: the Thread's messages and its foot stand a sections gap apart. On touch (and native) both stand in the screen's column, without `THREAD_COLUMN`; the web picks the column by density, as a structure.
 
@@ -1801,7 +1801,7 @@ The Place body around the board's thread is context: the Thread's messages and i
 
 ## QrCode
 
-Board: `54-measures-desktop.dc.html` and `54-measures-touch.dc.html`.
+Board 54.
 
 The tile's `light` is the web's mode scope (its modules dark in both modes). The typed code and its copy act beside the tile on the board are the consumer's composition, not QrCode's.
 

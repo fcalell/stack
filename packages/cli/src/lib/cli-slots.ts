@@ -5,6 +5,7 @@ import type {
 	DeployStep,
 	DevReadyTask,
 	GeneratedFile,
+	GuideEntry,
 	ProcessSpec,
 	PromptSpec,
 	WatcherSpec,
@@ -52,6 +53,15 @@ export const cliSlots = {
 	artifactFiles: slot.list<GeneratedFile>({
 		source: SOURCE,
 		name: "artifactFiles",
+	}),
+	// The pages the CLI indexes into `.stack/guide.md`, auto-wired from
+	// `plugin({ guide })` with the plugin's name as the domain and its package.
+	// Sorted by domain so the index is independent of config order. A page two
+	// plugins list (a shared package's) is indexed once.
+	guide: slot.list<GuideEntry>({
+		source: SOURCE,
+		name: "guide",
+		sortBy: (a, b) => a.domain.localeCompare(b.domain),
 	}),
 	postWrite: slot.list<() => Promise<void>>({
 		source: SOURCE,

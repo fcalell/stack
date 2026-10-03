@@ -6,6 +6,8 @@ import { cliSlots } from "./cli-slots.ts";
 import { type DiscoveredPlugin, discoverPlugins } from "./discovery.ts";
 import { ConfigValidationError } from "./errors.ts";
 import { buildGraph, type Graph } from "./graph.ts";
+import { cliGuide, GUIDE_PATH, renderGuide } from "./guide.ts";
+import { cliManifest } from "./manifest.ts";
 import { createLogContext } from "./prompt.ts";
 import type { Contribution, LogContext, Slot } from "./slots.ts";
 
@@ -70,13 +72,24 @@ export function buildGraphFromDiscovered(
 	const log = opts.log ?? createLogContext();
 	const cwd = opts.cwd;
 
-	// The CLI's own contributions: facts only core knows, here which tsconfig
-	// `stack init` wrote for the worker.
+	// The CLI's own contributions: facts only core knows (which tsconfig
+	// `stack init` wrote for the worker), its guide pages, and the guide's index.
 	const layout = tsconfigLayout(opts.discovered.map((d) => d.name));
 	const core = {
 		name: "cli",
 		contributes: [
 			cliSlots.workerTsconfig.contribute(() => workerTsconfig(layout)),
+			cliSlots.guide.contribute(() =>
+				cliGuide.map((e) => ({
+					domain: "cli",
+					package: cliManifest.name,
+					...e,
+				})),
+			),
+			cliSlots.artifactFiles.contribute(async (ctx) => ({
+				path: GUIDE_PATH,
+				content: renderGuide(await ctx.resolve(cliSlots.guide)),
+			})),
 		],
 	};
 

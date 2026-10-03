@@ -511,6 +511,38 @@ export const api = plugin("api", {
 	},
 	gitignore: [".stack"],
 
+	guide: [
+		{
+			page: "add-a-procedure",
+			trigger: "Adding an endpoint the app calls",
+		},
+		{
+			page: "procedures",
+			trigger:
+				"Writing or changing a procedure: its `procedure()` options, input, output, middleware or errors",
+		},
+		{
+			page: "middleware",
+			trigger:
+				"Guarding every request, or adding a raw route outside the RPC tree (an upload, a webhook)",
+		},
+		{
+			page: "client",
+			trigger:
+				"Calling the API from the app: the typed client, queries, cache invalidation or `useAbility`",
+		},
+		{ page: "testing", trigger: "Writing a test that calls a procedure" },
+		{
+			page: "config",
+			trigger:
+				"Changing `api()`'s options, or adding an env var the worker code reads",
+		},
+		{
+			page: "utilities",
+			trigger: "Paginating a list procedure, or turning a name into a slug",
+		},
+	],
+
 	slots: {
 		workerImports,
 		pluginRuntimes,

@@ -4,10 +4,11 @@ The design system both stack UI plugins render from: one closed token contract, 
 foundations sheet as data behind four knobs, the words the molecules speak, the platform-invariant
 variant matrices, the roster every component and its props are pinned to, and the laws that say
 which token to pick. The contract subpaths export build-time data only, so each plugin renders its
-own CSS from the same records and ui-core stays framework-free. One subpath is Node-only:
-`./harness`, internal tooling for the packages' verify scripts.
+own CSS from the same records and ui-core stays framework-free. Two subpaths are Node-only:
+`./harness`, internal tooling for the packages' verify scripts, and `./manifest`, the guide pages
+the UI plugins index.
 
-Ten subpaths:
+Eleven subpaths:
 
 - `@fcalell/ui-core/tokens`: the contract as data, the sheet's every value, the knob defaults and
   the English `words`.
@@ -40,6 +41,11 @@ Ten subpaths:
 - `@fcalell/ui-core/roster`: the component roster as data (`ROSTER`, `STATES`, `CLOSED_PROPS`): the
   layer, prop names, drawn cells, states and owned tokens of every component both plugins ship.
 - `@fcalell/ui-core/harness`: internal. The shared core of the packages' `scripts/verify.ts`.
+- `@fcalell/ui-core/manifest`: `uiCoreGuide`, the package's `guide/` pages with their load
+  triggers, which react-ui and native-ui contribute to `cliSlots.guide`.
+
+The package's `guide/` is how to design on it: the screen recipe, the design critique, the
+rubric, the judging questions, the references, and one page per pattern under `patterns/`.
 
 The contract has two modes, `light` and `dark`. `themeTokens` seeds the light colors and the touch
 density set into the `@theme` block as well, because Tailwind v4 generates no utility from a
@@ -48,7 +54,8 @@ every utility reads its variable and the active scope sets it.
 
 ## DESIGN.md
 
-The repo root's `DESIGN.md` is the contract in the [DESIGN.md format](https://github.com/google-labs-code/design.md):
+The package's `DESIGN.md`, shipped in its `files` so a consumer reads it under
+`node_modules/@fcalell/ui-core/`, is the contract in the [DESIGN.md format](https://github.com/google-labs-code/design.md):
 the default theme's tokens as front matter, each matrix cell and single cell as a component (dark
 values and their components suffixed `-dark`), and the roster with the cells each component draws,
 its states and the tokens it owns.
@@ -82,7 +89,7 @@ the two together, all 360 hues each.
 Density is not a knob. The web draws the desktop set where the primary pointer is fine and the
 viewport is at least `tablet` wide, and the touch set everywhere else, so a desktop window
 narrower than `tablet` draws the touch set; a `data-density` attribute on the root pins either,
-which is how the showcase and the boards address a density. Native is touch-only. A molecule whose
+which is how the showcase addresses a density. Native is touch-only. A molecule whose
 structure (not a token) follows density reads it through the web's `touch:` variant, which
 applies exactly where the touch set draws (a `data-density="touch"` pin, or no `desktop` pin
 where the pointer is not fine or the viewport is narrower than `tablet`); native has no variant,
@@ -360,7 +367,7 @@ has a form for (`states`, from `STATES`: `rest`, `hover`, `focus`, `active`, `di
 `loading`, `error`, `selected`, `empty`), the same in both plugins. Every family is drawn by at
 least one component, and a component that takes `loading` or `empty` lists that state.
 
-A component whose artboard is approved also declares what it owns (`owns`): the type roles, the
+A component also declares what it owns (`owns`): the type roles, the
 colours, the radii, the spacing roles, the sizes and widths, and the shadow levels it may draw. A
 colour is a name or a family prefix ending in `-` (`chip-` covers every chip role); the other
 namespaces name their tokens, and a namespace left out owns nothing. The verify suite reads every
