@@ -54,8 +54,10 @@ export function packageJsonTemplate(options: PackageJsonOptions): string {
 		packageManager: "pnpm@11.28.3",
 	};
 
+	// TODO: `#/*` once the scaffold's TypeScript is 6.0 or later; 5.9
+	// refuses a subpath import that starts with `#/`.
 	if (hasWeb) {
-		pkg.imports = { "#/*": "./src/*" };
+		pkg.imports = { "#src/*": "./src/*" };
 	}
 
 	const scripts: Record<string, string> = {

@@ -49,8 +49,9 @@ in production. The API client and the auth client therefore take no `baseURL` an
 
 ## Files the app owns
 
-- `src/app/`: the routes and every module the web app imports. `#/` in an import is `src/`
-  (`import { orpc } from "#/app/lib/api"`), through the `imports` field `stack init` writes.
+- `src/app/`: the routes and every module the web app imports. `#src/` in an import is `src/`,
+  extension included (`import { orpc } from "#src/app/lib/api.ts"`), through the `imports` field
+  `stack init` writes.
 - `public/`: static files served as they are at `/` (`public/favicon.svg` is `/favicon.svg`).
 - `stack build` writes the built client to `dist/client/`; never edit it.
 
