@@ -137,6 +137,11 @@ test("the vite config runs Tailwind, the fonts and the mode script", async () =>
 	assert.match(config, /import\.meta\.resolve\("@fcalell\/plugin-react-ui"\)/);
 });
 
+test("the dev server pre-bundles the roster's .tsx subpaths", async () => {
+	const config = (await artifacts()).get(".stack/vite.config.ts") ?? "";
+	assert.match(config, /optimizeDeps: \{ extensions: \["\.tsx"\] \}/);
+});
+
 test("words mount a provider only when given", async () => {
 	const bare = (await artifacts()).get(".stack/virtual-providers.tsx");
 	assert.doesNotMatch(bare ?? "", /WordsProvider/);

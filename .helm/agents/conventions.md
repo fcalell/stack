@@ -35,6 +35,8 @@ bundler takes an array's first target whether or not the file exists, where tsc 
 array type-checks and fails the consumer's build. A pattern names one extension
 (`"./lib/*": "./src/ui/lib/*.ts"`) and each module of the other extension gets its own entry
 (`"./lib/words": "./src/ui/lib/words.tsx"`); each UI plugin's verify resolves every subpath.
+Vite's dev optimizer skips a `.tsx` entry unless told otherwise, so plugin-vite's generated config
+adds `.tsx` to `optimizeDeps.extensions`.
 
 A sibling `@fcalell/*` import resolves through its `exports`, so type-checking and tests need the
 dependencies' `dist`: turbo runs `^build` before `check-types` and `test`, and the package's own

@@ -198,6 +198,22 @@ export function aggregateViteConfig(payload: CodegenViteConfigPayload): string {
 			value: { kind: "object", properties: resolveProps },
 		});
 	}
+	// Stack's UI subpaths export `.tsx` source, and Vite's dev optimizer
+	// pre-bundles only `.js`/`.ts` entries: unbundled, their CJS dependencies
+	// (`use-sync-external-store/shim` under `@base-ui/react`) reach the
+	// browser raw and the page renders blank.
+	configProps.push({
+		key: "optimizeDeps",
+		value: {
+			kind: "object",
+			properties: [
+				{
+					key: "extensions",
+					value: { kind: "array", items: [{ kind: "string", value: ".tsx" }] },
+				},
+			],
+		},
+	});
 
 	const spec: TsSourceFile = {
 		imports,
