@@ -128,7 +128,6 @@ Each is fixed in stack, one commit each; the last is unit 7.
 
 - `stack deploy` never uploads `dist/client` to Cloudflare.
 - `InferSession<typeof config>` does not compile.
-- The `.stack/auth-client.ts` that `plugins/auth/src/client.ts` describes is never generated.
 - Each secret is also deployed as an empty `[vars]` entry (unverified).
 - `auth({ expo: true })` uses `app.name` as the scheme, while expo uses its slug.
 - `stack add` drops a plugin's `configPlugins` dependencies.

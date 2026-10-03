@@ -23,8 +23,7 @@ test("without the flag the organization methods are absent from the type", () =>
 	assert.ok(client.organization);
 });
 
-// The consumer's access control as codegen bakes it into
-// `.stack/auth-client.ts`.
+// The consumer's access control as its web client passes it.
 const access = {
 	statements: { project: ["read", "update"] },
 	roles: {

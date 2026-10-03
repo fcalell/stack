@@ -20,8 +20,8 @@ export interface OrganizationAccess {
 }
 
 // The web client: better-auth's React client, so `useSession()` is a hook.
-// The web plugin generates the call in `.stack/auth-client.ts` from the
-// `auth` options, so every flag matches the server's.
+// The consumer calls it with the flags its `auth()` options set, so the
+// client offers what the server serves.
 export interface AuthClientOptions {
 	// Origin of the worker's `/api/auth`. Omitted, the client calls `/api/auth`
 	// on the page's own origin.

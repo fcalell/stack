@@ -273,7 +273,7 @@ const cookiePrefix = slot.value<string, ResolvedAuthOptions>({
 // The web client's flags, derived from the options so the client and the
 // server enable the same better-auth plugins. Seeded null and filled by
 // auth's own contribution, so a frontend reading it without auth in the
-// config sees null. The web plugin generates `.stack/auth-client.ts` from it.
+// config sees null.
 export type AuthClientFlags = Required<Omit<AuthClientOptions, "baseURL">>;
 
 const clientFlags = slot.value<AuthClientFlags | null>({
