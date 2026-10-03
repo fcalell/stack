@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { basename, join } from "node:path";
@@ -193,6 +194,7 @@ export async function scaffold(
 		if (writeIfMissingString(path, content)) createdBase.push(path);
 	}
 	announceCreated(createdBase);
+	const written = [...createdBase];
 	writeClaudeMd();
 
 	const pluginAnswers = new Map<string, Record<string, unknown>>();
@@ -221,6 +223,7 @@ export async function scaffold(
 	});
 	if (writeIfMissingString("stack.config.ts", configContent)) {
 		announceCreated(["stack.config.ts"]);
+		written.push("stack.config.ts");
 	}
 
 	// Rebuild graph with the rendered options (each plugin's factory validates
@@ -258,6 +261,7 @@ export async function scaffold(
 
 	const created = await writeScaffoldSpecs(scaffolds, dir);
 	announceCreated(created);
+	written.push(...created);
 
 	patchPackageJson(dir, {
 		dependencies: { ...deps, ...devDeps },
@@ -265,6 +269,7 @@ export async function scaffold(
 	});
 	if (gitignore.length > 0) ensureGitignore(...gitignore);
 	installStack(dir);
+	formatWritten(dir, written);
 
 	// Run the real generate path against the config we just wrote — this is
 	// the same code `stack generate` runs.
@@ -321,6 +326,32 @@ export function syntheticConfigFromSelection(opts: {
 		app: { name: opts.app.name, domain: opts.app.domain },
 		plugins: configs,
 	});
+}
+
+// The templates write plain `JSON.stringify` and unsorted imports; the
+// app's own Biome lays out what init wrote, so its first check changes
+// nothing. A file type Biome does not handle (Markdown, YAML) is skipped.
+function formatWritten(dir: string, files: string[]): void {
+	if (files.length === 0) return;
+	const result = spawnSync(
+		"pnpm",
+		[
+			"exec",
+			"biome",
+			"check",
+			"--write",
+			"--files-ignore-unknown=true",
+			"--no-errors-on-unmatched",
+			...files,
+		],
+		{ cwd: dir, stdio: "inherit" },
+	);
+	if (result.status !== 0) {
+		throw new StackError(
+			`biome check failed on the scaffold (exit ${result.status ?? "signal"}).`,
+			"INIT_FORMAT_FAILED",
+		);
+	}
 }
 
 // The consumer's `CLAUDE.md` imports the guide's index.
