@@ -83,6 +83,7 @@ export function tsconfigTemplate(
 			["tsconfig.json", render(SOLUTION)],
 			["tsconfig.app.json", render(appProject(base, options.node))],
 			["tsconfig.worker.json", render(workerProject(options))],
+			["tsconfig.test.json", render(testProject(options.node))],
 		];
 	}
 	if (options.native) {
@@ -113,6 +114,7 @@ const SOLUTION = {
 	references: [
 		{ path: "./tsconfig.app.json" },
 		{ path: "./tsconfig.worker.json" },
+		{ path: "./tsconfig.test.json" },
 	],
 };
 
@@ -154,9 +156,10 @@ function appProject(config: Project, node: boolean): Project {
 // in place of the Workers' generated declarations, which do not exist there,
 // and holds the services under `src/server`. A referenced project lists every
 // file its program loads, so `src/shared` (which the schema and routes
-// import) is its own and the app reads it through its declarations too. The
-// shared trees' tests run under node and are checked with the app, whose
-// program loads `@types/node`.
+// import) is its own and the app reads it through its declarations too.
+// Every test runs under node and is checked elsewhere: the schema's and the
+// shared code's with the app, whose program loads `@types/node`, the
+// server's by the test project.
 // `declarationMap` lets an editor jump from the app to a procedure's source.
 // The build info sits with the declarations, so removing `.stack/` rebuilds
 // them rather than leaving `tsc -b` to call a project with no output current.
@@ -184,7 +187,28 @@ function workerProject(options: TsconfigOptions): Project {
 			".stack/procedure.ts",
 			...(options.node ? ["src/server"] : [".stack/worker-configuration.d.ts"]),
 		],
-		exclude: ["src/schema/**/*.test.ts", "src/shared/**/*.test.ts"],
+		exclude: ["src/**/*.test.ts"],
+	};
+}
+
+// The server's tests, which the app excludes with the server's trees and the
+// worker project cannot load: they run under node, so the project has Node's
+// globals and none of the Workers', and reads the worker's sources (through
+// `.stack/testing.ts`) by the worker project's declarations.
+function testProject(node: boolean): Project {
+	return {
+		extends: "@fcalell/typescript-config/node-tsx.json",
+		compilerOptions: {
+			types: ["node"],
+			noEmit: true,
+			tsBuildInfoFile: "./node_modules/.tmp/tsconfig.test.tsbuildinfo",
+		},
+		include: [
+			"src/worker/**/*.test.ts",
+			...(node ? ["src/server/**/*.test.ts"] : []),
+			".stack/testing.ts",
+		],
+		references: [{ path: "./tsconfig.worker.json" }],
 	};
 }
 

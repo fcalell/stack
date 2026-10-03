@@ -71,6 +71,15 @@ export const greetings = {
 `,
 	"src/worker/routes/index.ts": `export * from "./greetings.ts";
 `,
+	".stack/testing.ts": `export const base: string = new URL(".", import.meta.url).href;
+export { greetings } from "../src/worker/routes/greetings.ts";
+`,
+	"src/worker/routes/greetings.test.ts": `import assert from "node:assert/strict";
+import { base, greetings } from "../../../.stack/testing.ts";
+assert.ok(base && greetings.hello);
+// @ts-expect-error: the DOM stays out of the server's tests
+document.title;
+`,
 	".stack/worker.ts": `import * as routes from "../src/worker/routes/index.ts";
 export type AppRouter = typeof routes;
 export default { fetch: (env: Env): string => env.GREETING };

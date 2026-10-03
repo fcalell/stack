@@ -16,8 +16,8 @@ step does. Run a command from the app's root. Every command but `init` takes
 | `stack <plugin> <command>` | A plugin's own command, such as `stack db push` |
 
 The app's `package.json` scripts wrap them (`pnpm dev`, `pnpm build`, `pnpm run deploy`,
-`pnpm generate`), and `pnpm check` type-checks and lints the app. `pnpm check` is the check
-every change ends with.
+`pnpm generate`), and `pnpm check` type-checks, tests (`node --test` over `src/**/*.test.ts`)
+and lints the app. `pnpm check` is the check every change ends with.
 
 ## Updating stack
 
@@ -31,8 +31,8 @@ commit together. Never edit a spec or the lockfile by hand.
 
 - `package.json` and `pnpm-workspace.yaml`, then the install: every `@fcalell/*` package comes
   from stack's repository, at the commit `pnpm-lock.yaml` records.
-- `tsconfig.json` (and, for an app with a worker, `tsconfig.app.json` and
-  `tsconfig.worker.json`), `biome.json`, `.gitignore` and `stack.config.ts`, each only when
+- `tsconfig.json` (and, for an app with a worker, `tsconfig.app.json`, `tsconfig.worker.json`
+  and `tsconfig.test.json`), `biome.json`, `.gitignore` and `stack.config.ts`, each only when
   missing. A plugin a picked plugin requires is picked with it.
 - For an app (`vite` or `expo`) with a worker (`api` or `db`), the app and the worker are two
   projects under a solution `tsconfig.json` with no files of its own, so `check-types` is

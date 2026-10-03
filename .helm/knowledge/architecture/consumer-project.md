@@ -7,7 +7,7 @@ What a generated consumer repo looks like and how `stack.config.ts` drives it.
 ```
 my-app/
   package.json
-  tsconfig.json              # an app with a worker: a solution over the two projects below, which
+  tsconfig.json              # an app with a worker: a solution over the three projects below, which
                              # `tsc -b` checks (`tsc --noEmit` on it checks nothing). Otherwise one
                              # project over ["src", ".stack/*.d.ts"]: of the generated files only the
                              # root declarations (Env, typed routes) are type-checked; bundler inputs
@@ -21,12 +21,16 @@ my-app/
                              # target `types: ["node"]` and no such file), no DOM, and
                              # the `virtual:stack-procedure` `paths`, so wrangler bundles with it
                              # (`--tsconfig`, from `cliSlots.workerTsconfig`):
-                             # `src/worker`, `src/schema`, `src/shared` (its tests stay with the
-                             # app), `src/server` on the node target, and the generated worker
+                             # `src/worker`, `src/schema`, `src/shared` (never a test), `src/server`
+                             # on the node target, and the generated worker
                              # files. Composite: emits declarations
                              # only, into `.stack/types/`, which `tsc -b` builds before the app.
                              # One program would merge both, and they collide (the runtime's
                              # HTMLRewriter `Element` hides DOM's `append`)
+  tsconfig.test.json         # the server's tests (`src/worker`, and `src/server` on the node
+                             # target) with `.stack/testing.ts`: Node's globals, none of the
+                             # Workers', the worker read through its declarations. The schema's
+                             # and `src/shared`'s tests stay with the app
   biome.json
   CLAUDE.md                  # imports `@.stack/guide.md`; the rest is the consumer's
   stack.config.ts            # defineConfig({ app, plugins: [db(...), auth(), api(), expo(), nativeUi()] })

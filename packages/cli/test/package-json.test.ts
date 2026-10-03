@@ -11,10 +11,10 @@ test("the node target carries Node's types and no wrangler", () => {
 	assert.ok(dev["@types/node"]);
 });
 
-test("the cloudflare target carries wrangler", () => {
+test("the cloudflare target carries wrangler, and Node's types for its tests", () => {
 	const dev = devDependencies(["api", "cloudflare", "vite"]);
 	assert.ok(dev.wrangler);
-	assert.equal(dev["@types/node"], undefined);
+	assert.ok(dev["@types/node"]);
 });
 
 test("a React web app declares React, React DOM and their types", () => {

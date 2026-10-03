@@ -20,13 +20,13 @@ export function packageJsonTemplate(options: PackageJsonOptions): string {
 
 	const hasWorker =
 		options.plugins.includes("api") || options.plugins.includes("db");
-	if (tsconfigLayout(options.plugins).node) {
-		// The node target's server runs under Node, with no wrangler; Node's
-		// types back the worker project's `types: ["node"]`.
+	const node = tsconfigLayout(options.plugins).node;
+	if (hasWorker || node) {
+		// The server's tests run under Node on either target, and on the node
+		// target its server does too, with no wrangler.
 		devDeps["@types/node"] = "^25.5.0";
-	} else if (hasWorker) {
-		devDeps.wrangler = "^4.98.0";
 	}
+	if (hasWorker && !node) devDeps.wrangler = "^4.98.0";
 
 	const hasNative = options.plugins.includes("expo");
 	const hasReactDom = options.plugins.includes("react");
@@ -69,8 +69,10 @@ export function packageJsonTemplate(options: PackageJsonOptions): string {
 		// `tsc -b` checks: `--noEmit` on its `files: []` root checks nothing.
 		"check-types":
 			(hasNative || hasWeb) && hasWorker ? "tsc -b" : "tsc --noEmit",
+		// Node finds no file in a fresh app and passes.
+		test: "node --test 'src/**/*.test.ts'",
 		lint: "biome check --write --unsafe",
-		check: "pnpm check-types && pnpm lint",
+		check: "pnpm check-types && pnpm test && pnpm lint",
 	};
 
 	pkg.scripts = scripts;
