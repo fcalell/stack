@@ -219,6 +219,8 @@ allowBuilds:                     # each git package's prepare, plus the install'
   "@fcalell/plugin-vite@git+https://github.com/fcalell/stack.git": true
   esbuild: true
   workerd: true
+childConcurrency: 1              # one git package's prepare at a time
+networkConcurrency: 2
 ```
 
 The overrides cover the closure over `dependencies`, not `requires`: a vite-only app installs
@@ -228,6 +230,9 @@ package's `allowBuilds` key is its name plus the repository's `git+https` URL, w
 every commit; pnpm 11.15 is the first to match a `github:` tarball by it, so stack and its
 consumers run pnpm 11.15 or later. The bare name and the `github:` spec are refused, and the hint
 in pnpm's `GIT_DEP_PREPARE_NOT_ALLOWED` names only the commit-pinned `codeload` key.
+Each prepare is a full workspace install, and several at once can exhaust the machine's
+memory (one at a time adds about 4 GB); the two concurrency settings run them one at a time and
+go with the overrides.
 
 ### By `link:`
 

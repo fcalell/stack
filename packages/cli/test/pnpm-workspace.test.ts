@@ -28,9 +28,15 @@ test("each stack package's build is approved by repository URL", () => {
 	});
 });
 
+test("the git packages' prepares run one at a time", () => {
+	const yaml = workspace(null, ["@fcalell/cli"]);
+	assert.equal(yaml.childConcurrency, 1);
+	assert.equal(yaml.networkConcurrency, 2);
+});
+
 test("the app's own entries are kept", () => {
 	const yaml = workspace(
-		'overrides:\n  "@fcalell/cli": "link:../stack/packages/cli"\nallowBuilds:\n  esbuild: false\n',
+		'overrides:\n  "@fcalell/cli": "link:../stack/packages/cli"\nallowBuilds:\n  esbuild: false\nchildConcurrency: 4\n',
 		["@fcalell/cli", "@fcalell/plugin-api"],
 	);
 	assert.equal(yaml.overrides["@fcalell/cli"], "link:../stack/packages/cli");
@@ -39,4 +45,5 @@ test("the app's own entries are kept", () => {
 		"github:fcalell/stack#path:/plugins/api",
 	);
 	assert.equal(yaml.allowBuilds.esbuild, false);
+	assert.equal(yaml.childConcurrency, 4);
 });

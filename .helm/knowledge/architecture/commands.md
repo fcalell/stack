@@ -62,4 +62,4 @@ Each handler receives a `CommandContext` with `options` (typed from the plugin's
 
 ## Limits
 
-- Every install builds the stack workspace once per git package (see [consumer-project](./consumer-project.md#from-github)), so a first `stack init` takes minutes.
+- Every install builds the stack workspace once per git package (see [consumer-project](./consumer-project.md#from-github)), so a first `stack init` takes about eight minutes, one prepare at a time.
