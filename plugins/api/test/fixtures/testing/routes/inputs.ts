@@ -29,6 +29,13 @@ export const inputs = {
 			assertType<Equal<typeof input.limit, number>>(true);
 			return { limit: input.limit, type: typeof input.limit };
 		}),
+	// An empty input schema adds nothing to the pagination additions.
+	pageAll: procedure({ paginated: true })
+		.input(z.object({}))
+		.query(async ({ input }) => {
+			assertType<Equal<typeof input.limit, number>>(true);
+			return { limit: input.limit };
+		}),
 	// Returns the output schema's input; the caller receives its output.
 	word: procedure()
 		.input(z.object({ word: z.string() }))

@@ -73,6 +73,18 @@ test("a paginated caller may omit limit; the handler holds a number", async () =
 	);
 });
 
+test("a paginated procedure with an empty input schema takes a limit", async () => {
+	await using app = await boot();
+	type PageAllInput = Parameters<Client["inputs"]["pageAll"]>[0];
+	assertType<Equal<Flat<PageAllInput>, { cursor?: string; limit?: number }>>(
+		true,
+	);
+	assert.deepEqual(await app.client().inputs.pageAll({ limit: 100 }), {
+		limit: 100,
+	});
+	assert.deepEqual(await app.client().inputs.pageAll({}), { limit: 20 });
+});
+
 test("an output schema's handler returns its input and the caller receives its output", async () => {
 	await using app = await boot();
 	const answer = await app.client().inputs.word({ word: "stack" });

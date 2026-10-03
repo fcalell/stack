@@ -1,6 +1,6 @@
 import { ORPCError, os } from "@orpc/server";
 import { z } from "zod";
-import { clampLimit } from "./lib/cursor.ts";
+import { DEFAULT_LIMIT, MAX_LIMIT } from "./lib/cursor.ts";
 import type { Procedure } from "./types.ts";
 import { STACK_READS_HEADER, STACK_WRITES_HEADER } from "./wire.ts";
 
@@ -170,9 +170,19 @@ type InputAdditions<O> = O extends { scope: ScopeLike } | { paginated: true }
 		>
 	: Sides<undefined, undefined>;
 
+// zod types `z.object({})` as `Record<string, never>`, whose index signature
+// would refuse every key the config adds, so an empty schema adds nothing.
+type IsEmptyObject<T> = [T] extends [Record<string, never>]
+	? [Record<string, never>] extends [T]
+		? true
+		: false
+	: false;
+
 type MergeSide<TBaseSide, TSchemaSide> = TBaseSide extends undefined
 	? TSchemaSide
-	: TSchemaSide & TBaseSide;
+	: IsEmptyObject<TSchemaSide> extends true
+		? TBaseSide
+		: TSchemaSide & TBaseSide;
 
 type MergedInput<
 	TBaseInput extends AnySides,
@@ -567,7 +577,7 @@ function createEntityHeadersMiddleware(
 
 const PAGINATION_SHAPE = {
 	cursor: z.string().optional(),
-	limit: z.number().min(1).max(100).default(20),
+	limit: z.number().min(1).max(MAX_LIMIT).default(DEFAULT_LIMIT),
 };
 
 function toOrpcMiddleware<
@@ -623,13 +633,9 @@ type OrpcMiddlewareFn<
 	input: unknown,
 ) => Promise<unknown>;
 
-// Handler arg is contravariant in `input`, so a handler expecting
-// `{ limit?: number }` is assignable to `OrpcHandlerFn` (where input is
-// `unknown`-wide). Keeping this generic over the input shape lets
-// `wrapPaginatedHandler` feed its output straight into `chain.handler()`.
-type OrpcHandlerFn<TInput = unknown> = (opts: {
+type OrpcHandlerFn = (opts: {
 	context: Record<string, unknown>;
-	input: TInput;
+	input: unknown;
 }) => unknown;
 
 interface OrpcChain {
@@ -642,10 +648,7 @@ interface OrpcChain {
 	): OrpcChain;
 	input(schema: z.ZodType): OrpcChain;
 	output(schema: z.ZodType): OrpcChain;
-	// Same story for `handler`: a handler expecting a narrower input shape
-	// (e.g. `{ limit?: number }` from the paginated wrapper) is structurally a
-	// valid `OrpcHandlerFn`.
-	handler<TInput>(fn: OrpcHandlerFn<TInput>): OrpcTerminal;
+	handler(fn: OrpcHandlerFn): OrpcTerminal;
 }
 
 // The oRPC `DecoratedProcedure` value our handler calls produce. Consumers
@@ -657,49 +660,19 @@ interface OrpcTerminal {
 interface BuilderState {
 	chain: OrpcChain;
 	baseShape: z.ZodRawShape | null;
-	paginated: boolean;
-}
-
-type PaginatedHandlerArg = { input: { limit?: number } };
-
-function wrapPaginatedHandler<
-	THandler extends (opts: PaginatedHandlerArg) => unknown,
->(fn: THandler): (opts: PaginatedHandlerArg) => ReturnType<THandler> {
-	return (opts) => {
-		opts.input.limit = clampLimit(opts.input.limit);
-		return fn(opts) as ReturnType<THandler>;
-	};
-}
-
-// Centralized pagination wrap: when `paginated` is on, clamp `input.limit`
-// before the handler runs. When off, return `fn` unchanged (allocation-free).
-// The `OrpcHandlerFn` interface is `TInput`-variant, so the wrapped output
-// flows into `chain.handler()` without extra casts at call sites.
-function maybeWrapPaginated(
-	fn: OrpcHandlerFn,
-	paginated: boolean,
-): OrpcHandlerFn {
-	if (!paginated) return fn;
-	// `wrapPaginatedHandler` reads `opts.input.limit`, so it needs the narrower
-	// `PaginatedHandlerArg` shape; the surrounding `paginated` flag is the
-	// invariant that makes this safe. One focused cast replaces ten scattered
-	// ones at the previous call sites.
-	return wrapPaginatedHandler(
-		fn as (opts: PaginatedHandlerArg) => unknown,
-	) as OrpcHandlerFn;
 }
 
 function createBuilder<
 	TContext extends Record<string, unknown>,
 	TBaseInput extends AnySides,
 >(state: BuilderState): ProcedureBuilder<TContext, TBaseInput> {
-	const { chain, baseShape, paginated } = state;
+	const { chain, baseShape } = state;
 	const hasBaseShape = baseShape !== null;
 
 	function terminate(fn: OrpcHandlerFn): OrpcTerminal {
 		if (hasBaseShape) {
 			const schema = z.object(baseShape);
-			return chain.input(schema).handler(maybeWrapPaginated(fn, paginated));
+			return chain.input(schema).handler(fn);
 		}
 		return chain.handler(fn);
 	}
@@ -711,7 +684,6 @@ function createBuilder<
 			return createBuilder<TContext, TBaseInput>({
 				chain: chain.use(toOrpcMiddleware(middleware)),
 				baseShape,
-				paginated,
 			});
 		},
 
@@ -727,14 +699,13 @@ function createBuilder<
 			}
 
 			const withInputChain = chain.input(merged);
-			const run = (fn: OrpcHandlerFn) =>
-				withInputChain.handler(maybeWrapPaginated(fn, paginated));
+			const run = (fn: OrpcHandlerFn) => withInputChain.handler(fn);
 
 			const withInput = {
 				output(outputSchema: z.ZodType) {
 					const withOutputChain = withInputChain.output(outputSchema);
 					const runWithOutput = (fn: OrpcHandlerFn) =>
-						withOutputChain.handler(maybeWrapPaginated(fn, paginated));
+						withOutputChain.handler(fn);
 					return {
 						handler: runWithOutput,
 						query: runWithOutput,
@@ -757,12 +728,11 @@ function createBuilder<
 		output(outputSchema: z.ZodType) {
 			const withOutputChain = chain.output(outputSchema);
 			const runOutput = (fn: OrpcHandlerFn) => {
-				const wrapped = maybeWrapPaginated(fn, paginated);
 				if (hasBaseShape) {
 					const schema = z.object(baseShape);
-					return withOutputChain.input(schema).handler(wrapped);
+					return withOutputChain.input(schema).handler(fn);
 				}
-				return withOutputChain.handler(wrapped);
+				return withOutputChain.handler(fn);
 			};
 			const withOutput = {
 				input(inputSchema: z.ZodType) {
@@ -776,8 +746,7 @@ function createBuilder<
 						merged = z.object({ ...baseShape, ...inputSchema.shape });
 					}
 					const innerChain = withOutputChain.input(merged);
-					const run = (fn: OrpcHandlerFn) =>
-						innerChain.handler(maybeWrapPaginated(fn, paginated));
+					const run = (fn: OrpcHandlerFn) => innerChain.handler(fn);
 					return { handler: run, query: run, mutation: run };
 				},
 				handler: runOutput,
@@ -871,7 +840,7 @@ export function createProcedure<
 			};
 		}
 
-		return createBuilder({ chain, baseShape, paginated: isPaginated });
+		return createBuilder({ chain, baseShape });
 	}
 
 	return procedure as unknown as ProcedureFactory<
