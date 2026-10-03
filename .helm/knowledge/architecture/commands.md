@@ -61,5 +61,3 @@ Each handler receives a `CommandContext` with `options` (typed from the plugin's
 - `stack init` writes every `@fcalell/*` dependency as `workspace:*`, which resolves only inside
   stack's workspace; a consumer outside it rewrites them to `github:<repo>#<sha>&path:/…` specs by
   hand ([consumer-project](./consumer-project.md#by-git-commit)).
-- `stack dev --studio` is a dead flag: `cli.ts` parses it into `dev({ studio })`, and `dev`
-  reads nothing from it, so it changes nothing. The consumer docs leave it out.

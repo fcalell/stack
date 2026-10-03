@@ -14,7 +14,6 @@ const { positionals, values } = parseArgs({
 	allowPositionals: true,
 	strict: false,
 	options: {
-		studio: { type: "boolean", default: false },
 		config: { type: "string", default: "stack.config.ts" },
 		plugins: { type: "string" },
 		domain: { type: "string" },
@@ -46,7 +45,7 @@ function usage(): never {
   stack add <plugin>                    Add a plugin
   stack remove <plugin>                 Remove a plugin
   stack generate                        Generate .stack/ files
-  stack dev [--studio]                  Start development
+  stack dev                             Start development
   stack build                           Build for production
   stack deploy                          Deploy to production
   stack plugin init <name> [--package <npm-name>] [--dir <path>]
@@ -121,7 +120,7 @@ async function main(): Promise<void> {
 			await generate(configPath);
 		} else if (command === "dev") {
 			const { dev } = await import("./commands/dev.ts");
-			await dev({ studio: values.studio === true, config: configPath });
+			await dev({ config: configPath });
 		} else if (command === "build") {
 			const { build } = await import("./commands/build.ts");
 			await build(configPath);

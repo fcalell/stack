@@ -11,7 +11,6 @@ import type { DevReadyTask, ProcessSpec, WatcherSpec } from "../specs.ts";
 import { generateFromConfig } from "./generate.ts";
 
 interface DevOptions {
-	studio: boolean;
 	config: string;
 }
 
