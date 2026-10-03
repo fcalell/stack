@@ -126,6 +126,9 @@ Each is one story. Order: 1 first, its format approved before 3; 2, 4, 5 and 6 a
 - [ ] (live) A fresh session given only a story and a scratch consumer's `CLAUDE.md` adds a
   procedure and the screen that uses it, follows the screen loop, files nothing as a gap that the
   roster composes, and passes the consumer's check, without opening a README.
+  - The first run (a notes page: a list, an add sheet, a delete confirm) passed steps 1 to 5 on
+    a consumer installed from GitHub and waits at the judge on two gaps it filed, 003-01 and
+    003-02 (`.helm/board/epics/003-stack-gaps/`).
 
 ## Out of scope
 
