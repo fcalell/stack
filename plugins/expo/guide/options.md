@@ -31,8 +31,8 @@ expo({
 
 A native module reaches the app only through `configPlugins`: `name` is the config plugin's id
 (usually its package), `options` pass through verbatim into the app config's `plugins` array, and
-`dependencies` are written into `package.json` by `stack init`. In an app already set up,
-`stack generate` writes the config plugin but not the dependency: install the package too. A new
+`dependencies` are written into `package.json` by `stack init` and `stack add`. In an app already
+set up, `stack generate` writes the config plugin but not the dependency: install the package too. A new
 config plugin takes a new native build.
 
 ## What the app config holds

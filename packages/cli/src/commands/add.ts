@@ -13,6 +13,7 @@ import {
 	resolveRequiresClosure,
 } from "../lib/discovery.ts";
 import { ConfigLoadError, MissingPluginError } from "../lib/errors.ts";
+import type { Graph } from "../lib/graph.ts";
 import { toCamelCase } from "../lib/naming.ts";
 import { createPromptContext } from "../lib/prompt.ts";
 import {
@@ -22,6 +23,23 @@ import {
 	writeScaffoldSpecs,
 } from "../lib/scaffold.ts";
 import { syntheticConfigFromSelection } from "./init.ts";
+
+// The dependencies `stack add` writes, as `stack init` does: every
+// contribution to `initDeps` and `initDevDeps`, those a plugin's options
+// derive among them (expo's config plugins'), plus each added plugin's own
+// package. `patchPackageJson` writes only the names the manifest lacks.
+export async function addDependencies(
+	graph: Graph,
+	added: DiscoveredPlugin[],
+): Promise<Record<string, string>> {
+	const [deps, devDeps] = await Promise.all([
+		graph.resolve(cliSlots.initDeps),
+		graph.resolve(cliSlots.initDevDeps),
+	]);
+	const dependencies = { ...deps, ...devDeps };
+	for (const info of added) dependencies[info.cli.package] ??= "latest";
+	return dependencies;
+}
 
 export async function add(
 	pluginName: string,
@@ -133,13 +151,12 @@ export async function add(
 			);
 		}
 
-		// Scaffolds / deps / gitignore — for every added plugin (target + pulled
+		// Scaffolds / gitignore — for every added plugin (target + pulled
 		// siblings), matched by the contributing plugin's name.
-		const [scaffolds, _initDeps, _initDevDeps, gitignore, packageJsonFields] =
+		const [scaffolds, dependencies, gitignore, packageJsonFields] =
 			await Promise.all([
 				graph.resolve(cliSlots.initScaffolds),
-				graph.resolve(cliSlots.initDeps),
-				graph.resolve(cliSlots.initDevDeps),
+				addDependencies(graph, addedInfos),
 				graph.resolve(cliSlots.gitignore),
 				graph.resolve(cliSlots.packageJsonFields),
 			]);
@@ -151,19 +168,7 @@ export async function add(
 		);
 		announceCreated(created);
 
-		const scopedDeps: Record<string, string> = {};
-		for (const info of addedInfos) {
-			Object.assign(
-				scopedDeps,
-				info.cli.dependencies,
-				info.cli.devDependencies,
-			);
-			scopedDeps[info.cli.package] ??= "latest";
-		}
-		patchPackageJson(cwd, {
-			dependencies: scopedDeps,
-			fields: packageJsonFields,
-		});
+		patchPackageJson(cwd, { dependencies, fields: packageJsonFields });
 
 		const gitignoreEntries = addedInfos.flatMap((info) => [
 			...info.cli.gitignore,
