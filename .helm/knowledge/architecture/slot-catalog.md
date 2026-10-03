@@ -152,7 +152,7 @@ e.g. consulting `ctx.fileExists` before writing.
 | `providers` | `list<ProviderSpec>` | JSX providers composed around `<ExpoRoot>` in `.stack/entry.tsx` (lower order = outer) |
 | `entryImports` | `list<TsImportSpec>` | Extra imports for `.stack/entry.tsx` |
 | `devServerPort` | `value<number>` | Metro dev-server port (`options.port` ?? default); also drives the localhost CORS origin contributed to plugin-api |
-| `scheme` | `value<string>` | Resolved deep-link scheme (`options.scheme` ?? app-name slug); read by native-ui's generated auth-client constants so the client matches the app config |
+| `scheme` | `value<string>` | Resolved deep-link scheme (`options.scheme` ?? app-name slug); read by native-ui's generated auth-client constants and auth's `runtimeOptions`, so the client and the worker's trusted origins match the app config |
 | `routesPagesDir` | `derived<string \| null>` | expo-router pages dir; null when `routes: false` |
 | `easBuildProfiles` | `value<string[]>` | EAS build profile names the `expo build` command validates against |
 | `easUpdateChannel` | `value<string>` | Default EAS Update channel |
@@ -176,7 +176,7 @@ e.g. consulting `ctx.fileExists` before writing.
 
 | Slot | Kind | Purpose |
 |------|------|---------|
-| `runtimeOptions` | `derived<Record<string, TsExpression>>` | Better Auth runtime options; reads `api.slots.cors` for `trustedOrigins` and the default passkey `origin`, and `api.slots.devCorsOrigins` then `api.slots.devTargetOrigins` for `devTrustedOrigins` and passkey `devOrigin` (both dev-gated by the runtime), and `auth.slots.reservedSlugs` for `reservedSlugs`; bakes passkey `rpID`/`rpName` from `app` |
+| `runtimeOptions` | `derived<Record<string, TsExpression>>` | Better Auth runtime options; reads `api.slots.cors` for `trustedOrigins` and the default passkey `origin`, and `api.slots.devCorsOrigins` then `api.slots.devTargetOrigins` for `devTrustedOrigins` and passkey `devOrigin` (both dev-gated by the runtime), `auth.slots.reservedSlugs` for `reservedSlugs`, and `expo.slots.scheme` for the native `trustedOrigins` under `expo: true`; bakes passkey `rpID`/`rpName` from `app` |
 | `appUrlDevDefault` | `derived<string>` | Canonical dev URL for `APP_URL`'s dev default: the first `api.slots.devCorsOrigins` entry (a frontend's), else the first `api.slots.devTargetOrigins` entry (the deploy target's), else `https://<domain>` |
 | `callbackFile` | `value<string>` | Consumer callback-file path (default `src/worker/plugins/auth.ts`); override for a restructured worker layout |
 | `cookiePrefix` | `value<string>` | Resolved session-cookie prefix (`cookies.prefix` ?? better-auth's `"better-auth"` default); read by native-ui's generated auth-client constants |

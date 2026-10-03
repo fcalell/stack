@@ -7,6 +7,7 @@ import type { PluginRuntimeEntry } from "@fcalell/plugin-api";
 import { api } from "@fcalell/plugin-api";
 import { RESERVED_SLUGS } from "@fcalell/plugin-api/lib/slugify";
 import { cloudflare } from "@fcalell/plugin-cloudflare";
+import { expo } from "@fcalell/plugin-expo";
 import {
 	defaultOrgRoles,
 	defaultOrgStatements,
@@ -90,6 +91,7 @@ const runtimeOptions = slot.derived({
 		devCors: api.slots.devCorsOrigins,
 		devTargets: api.slots.devTargetOrigins,
 		reserved: reservedSlugs,
+		scheme: expo.slots.scheme,
 	},
 	compute: async (
 		inp,
@@ -137,16 +139,10 @@ const runtimeOptions = slot.derived({
 		} else {
 			delete rawOptions.socialProviders;
 		}
-		// Native (Expo) consumer: normalize the `expo` option to a boolean —
-		// the runtime only needs to know whether to enable Better Auth's
-		// server-side expo() plugin. The deep-link scheme is consumed below.
-		const expoOption = ctx.options.expo;
-		const expoEnabled = expoOption !== undefined && expoOption !== false;
-		if (expoEnabled) {
-			rawOptions.expo = true;
-		} else {
-			delete rawOptions.expo;
-		}
+		// Native (Expo) consumer: the runtime enables Better Auth's server-side
+		// expo() plugin. The deep-link scheme is consumed below.
+		const expoEnabled = ctx.options.expo === true;
+		if (!expoEnabled) delete rawOptions.expo;
 
 		// Passkeys: bake every derived default, so the runtime never guesses.
 		// `app.domain` is a registrable suffix of the derived origins, which
@@ -183,19 +179,15 @@ const runtimeOptions = slot.derived({
 		const props = literalToProps(rawOptions);
 
 		// trustedOrigins: web CORS origins, plus the native deep-link scheme
-		// when `expo` is set (`${app.name}://` + wildcard by default, or an
-		// explicit `scheme` override). A custom scheme is not a valid HTTP CORS
-		// origin, so it flows here directly rather than through api.slots.cors —
-		// Better Auth's CSRF origin check rejects native requests otherwise, even
-		// for ID-token sign-in. Empty is structurally impossible (thrown above),
-		// so the consumer sees exactly what Better Auth sees at runtime.
+		// when `expo` is set: the scheme expo registers in the app config, and
+		// its wildcard. A custom scheme is not a valid HTTP CORS origin, so it
+		// flows here directly rather than through api.slots.cors — Better
+		// Auth's CSRF origin check rejects native requests otherwise, even for
+		// ID-token sign-in. Empty is structurally impossible (thrown above), so
+		// the consumer sees exactly what Better Auth sees at runtime.
 		const trustedOrigins = [...inp.cors];
 		if (expoEnabled) {
-			const scheme =
-				typeof expoOption === "object" && expoOption.scheme
-					? expoOption.scheme
-					: ctx.app.name;
-			trustedOrigins.push(`${scheme}://`, `${scheme}://*`);
+			trustedOrigins.push(`${inp.scheme}://`, `${inp.scheme}://*`);
 		}
 		props.trustedOrigins = {
 			kind: "array",

@@ -74,7 +74,7 @@ plugin-db ────────────────> cli, requires api
                                   to api.slots.testingEntries / testingImports; optional peer
                                   wrangler for its ./testing subpath)
 plugin-auth ──────────────> cli, requires api + db
-                                 (owns auth.slots.runtimeOptions — derived from api.slots.cors;
+                                 (owns auth.slots.runtimeOptions — derived from api.slots.cors and expo.slots.scheme;
                                   contributes to cloudflare.slots.bindings, api.slots.env/pluginRuntimes/callbacks,
                                   and the test entry's sign-in to api.slots.testingEntries)
 plugin-api ───────────────> cli (owns api.slots.workerImports/pluginRuntimes/middlewareEntries/cors/callbacks/env/workerSource;

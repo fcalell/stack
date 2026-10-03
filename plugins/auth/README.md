@@ -29,7 +29,7 @@ Built with `plugin` from `@fcalell/cli`; requires `api` and `db`. Callbacks are 
 
 | Slot | Kind | Purpose |
 | --- | --- | --- |
-| `runtimeOptions` | derived | The `authRuntime({ ... })` options. Reads `api.slots.cors`, `devCorsOrigins`, `devTargetOrigins` and `reservedSlugs`, so `trustedOrigins` is computed against the resolved CORS list; dev origins ride in `devTrustedOrigins`, applied only under `STACK_DEV`. Throws when the CORS list is empty |
+| `runtimeOptions` | derived | The `authRuntime({ ... })` options. Reads `api.slots.cors`, `devCorsOrigins`, `devTargetOrigins`, `reservedSlugs` and `expo.slots.scheme`, so `trustedOrigins` is computed against the resolved CORS list; dev origins ride in `devTrustedOrigins`, applied only under `STACK_DEV`. Throws when the CORS list is empty |
 | `appUrlDevDefault` | derived | `APP_URL`'s dev default: the first frontend dev origin, else the deploy target's, else `https://<domain>` |
 | `callbackFile` | value | The callback file, `src/worker/plugins/auth.ts`; an override must stay under `src/` |
 | `cookiePrefix` | value | The resolved cookie prefix (`better-auth` unset), read by native-ui's generated constants |

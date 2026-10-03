@@ -245,6 +245,9 @@ importers:
       '@fcalell/plugin-db':
         specifier: workspace:*
         version: link:../db
+      '@fcalell/plugin-expo':
+        specifier: workspace:*
+        version: link:../expo
       '@orpc/server':
         specifier: ^1.14.4
         version: 1.14.4(@opentelemetry/api@1.9.1)(ws@8.22.0)

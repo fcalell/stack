@@ -8,9 +8,8 @@ signing in.
 
 `auth({ expo: true })` adds Better Auth's Expo plugin to the worker, trusts the app's deep-link
 scheme (`<scheme>://` and `<scheme>://*`) and sets the session cookies to `sameSite: "none"`,
-since a phone client is always cross-site. Its scheme is `app.name` as written, while `expo()`'s
-is the slug of `app.name`; when the two differ (a name with capitals or spaces), give both the
-same one: `expo({ scheme: "acme" })` and `auth({ expo: { scheme: "acme" } })`.
+since a phone client is always cross-site. The scheme is the one the app config registers:
+`expo({ scheme })`, by default the slug of `app.name`.
 
 ## The client
 

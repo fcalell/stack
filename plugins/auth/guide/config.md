@@ -26,7 +26,7 @@ auth({
 | `passkey` | `false` | `{}` turns passkeys on, see [sign-in](./sign-in.md) |
 | `organization` | off | `true` or `{ ac, roles }`, see [organizations](./organizations.md) |
 | `user.deleteUser` | `false` | Account deletion, see [callbacks](./callbacks.md). A native app on the App Store needs it |
-| `expo` | off | A native client: trusts the deep-link scheme (`<app.name>://`, or `{ scheme }`); see `node_modules/@fcalell/plugin-expo/guide/native-auth.md` |
+| `expo` | off | A native client: trusts the deep-link scheme `expo()` registers; see `node_modules/@fcalell/plugin-expo/guide/native-auth.md` |
 | `secretVar` / `appUrlVar` | `AUTH_SECRET` / `APP_URL` | The env var names below |
 | `rateLimiter.ip` / `.email` | 100 and 3 per 60 s | Cloudflare rate-limiter `binding`, `limit` and `period` (10 or 60). Node has no limiter |
 

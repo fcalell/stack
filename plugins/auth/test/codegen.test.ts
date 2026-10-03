@@ -7,6 +7,7 @@ import { buildGraphFromDiscovered } from "@fcalell/cli/build-graph";
 import type { DiscoveredPlugin } from "@fcalell/cli/discovery";
 import { api } from "@fcalell/plugin-api";
 import { db } from "@fcalell/plugin-db";
+import { expo } from "@fcalell/plugin-expo";
 import { createAccessControl } from "../src/access.ts";
 import { auth } from "../src/index.ts";
 import type { AuthOptions } from "../src/types.ts";
@@ -113,6 +114,26 @@ test("with organizations the worker refuses plugin-api's reserved slugs; without
 	assert.doesNotMatch(
 		await generatedWorker({ emailOtp: false }),
 		/reservedSlugs/,
+	);
+});
+
+test("a native client's trusted scheme is the one expo registers", async () => {
+	const cwd = mkdtempSync(join(tmpdir(), "stack-auth-codegen-"));
+	const { graph } = buildGraphFromDiscovered({
+		discovered: [
+			discover(api, api()),
+			discover(db, db({ dialect: "sqlite", path: "app.sqlite" })),
+			discover(auth, auth({ emailOtp: false, expo: true })),
+			discover(expo, expo()),
+		],
+		app: { name: "My App", domain: "example.com" },
+		cwd,
+	});
+	const scheme = await graph.resolve(expo.slots.scheme);
+	assert.equal(scheme, "my-app");
+	assert.match(
+		(await graph.resolve(api.slots.workerSource)) ?? "",
+		/trustedOrigins: \[[^\]]*"my-app:\/\/", "my-app:\/\/\*"\]/,
 	);
 });
 
