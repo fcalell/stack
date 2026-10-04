@@ -146,10 +146,6 @@ export function aggregateExpoConfig(payload: CodegenExpoConfigPayload): string {
 	);
 	props.push(`\tplugins: [`, ...pluginLines, `\t],`);
 
-	if (payload.typedRoutes) {
-		props.push(`\texperiments: {`, `\t\ttypedRoutes: true,`, `\t},`);
-	}
-
 	const body = [
 		GENERATED_BANNER.trimEnd(),
 		"",
@@ -243,13 +239,4 @@ export function aggregateEntry(payload: CodegenEntryPayload): string | null {
 	};
 
 	return renderTsSourceFile(spec);
-}
-
-// ── routes.d.ts ────────────────────────────────────────────────────
-//
-// Thin by design: expo-router runs its own typed-route generator (gated by
-// `experiments.typedRoutes`) and writes the augmentation it references here.
-// Re-emitting that generator would duplicate Expo's work and drift from it.
-export function buildRoutesDts(): string {
-	return `${GENERATED_BANNER.trimEnd()}\n/// <reference types="expo-router/types" />`;
 }

@@ -1,4 +1,5 @@
 import { spawnSync } from "node:child_process";
+import { createRequire } from "node:module";
 import type { ContributionCtx } from "@fcalell/cli";
 import { plugin, slot } from "@fcalell/cli";
 import type {
@@ -9,11 +10,11 @@ import type {
 import { cliSlots, emitArtifact } from "@fcalell/cli/cli-slots";
 import { api } from "@fcalell/plugin-api";
 import { cloudflare } from "@fcalell/plugin-cloudflare";
+import { z } from "zod";
 import {
 	aggregateEntry,
 	aggregateExpoConfig,
 	aggregateMetroConfig,
-	buildRoutesDts,
 } from "./node/codegen.ts";
 import {
 	type ExpoConfigPlugin,
@@ -29,6 +30,30 @@ const DEFAULT_PORT = 8081;
 const DEFAULT_APP_DIR = "src/app";
 const DEFAULT_EAS_PROFILES = ["development", "preview", "production"];
 const DEFAULT_UPDATE_CHANNEL = "production";
+
+// The plugin depends on `expo` to read the SDK's version table, which names
+// the version of each native module the SDK is built against. Its `react` is
+// the version react-native's renderer accepts: any other React fails at
+// startup with "Incompatible React versions".
+const require = createRequire(import.meta.url);
+const expoVersion = z
+	.object({ version: z.string() })
+	.parse(require("expo/package.json")).version;
+const sdkModules = z
+	.record(z.string(), z.string())
+	.parse(require("expo/bundledNativeModules.json"));
+
+function sdkVersions(names: readonly string[]): Record<string, string> {
+	return Object.fromEntries(
+		names.map((name) => {
+			const version = sdkModules[name];
+			if (!version) {
+				throw new Error(`Expo ${expoVersion} names no version for ${name}.`);
+			}
+			return [name, version];
+		}),
+	);
+}
 
 // Version-gate telemetry (WS6.2): the Analytics Engine binding the gate
 // writes its walled / header-less counters to. The dataset name carries the
@@ -186,7 +211,7 @@ const devServerPort = slot.value<number, ExpoOptions>({
 
 // Resolved routes directory. `null` disables expo-router wiring entirely
 // (consumer passed `routes: false`). Drives entry.tsx's `require.context`
-// path, typed-routes generation, and routes.d.ts emission.
+// path and the expo-router config plugin.
 const routesPagesDir = slot.derived({
 	source: SOURCE,
 	name: "routesPagesDir",
@@ -252,7 +277,6 @@ const expoConfig = slot.derived({
 			bundleIdentifier: bundleId,
 			androidPackage: bundleId,
 			plugins: basePlugins,
-			typedRoutes: routesEnabled,
 		});
 	},
 });
@@ -270,22 +294,23 @@ const entrySource = slot.derived({
 		}),
 });
 
-const routesDtsSource = slot.derived({
-	source: SOURCE,
-	name: "routesDtsSource",
-	inputs: { pagesDir: routesPagesDir },
-	compute: (inp): string | null =>
-		inp.pagesDir === null ? null : buildRoutesDts(),
-});
-
 // ── Command helpers ────────────────────────────────────────────────
 
 interface RunResult {
 	ok: boolean;
 }
 
-function runInherit(command: string, args: string[], cwd: string): RunResult {
-	const result = spawnSync(command, args, { cwd, stdio: "inherit" });
+function runInherit(
+	command: string,
+	args: string[],
+	cwd: string,
+	env?: Record<string, string>,
+): RunResult {
+	const result = spawnSync(command, args, {
+		cwd,
+		stdio: "inherit",
+		env: { ...process.env, ...env },
+	});
 	return { ok: !result.error && result.status === 0 };
 }
 
@@ -295,14 +320,19 @@ export const expo = plugin("expo", {
 	schema: expoOptionsSchema,
 
 	dependencies: {
-		expo: "~56.0.8",
-		"expo-router": "~56.2.8",
-		react: "19.2.7",
-		"react-native": "0.85.3",
-		// `@fcalell/plugin-expo/client`'s `versionHeaders()` reads the compiled
-		// build number via `expo-application`, required for every generated
-		// `src/lib/api.ts`, not just consumers with a `minNativeBuild` floor.
-		"expo-application": "~56.0.0",
+		expo: `~${expoVersion}`,
+		...sdkVersions([
+			"expo-router",
+			"react",
+			"react-native",
+			// `@fcalell/plugin-expo/client`'s `versionHeaders()` reads the compiled
+			// build number via `expo-application`, required for every generated
+			// `src/lib/api.ts`, not just consumers with a `minNativeBuild` floor.
+			"expo-application",
+			// Android's `userInterfaceStyle` needs it, or the status bar ignores
+			// the light and dark setting.
+			"expo-system-ui",
+		]),
 	},
 	devDependencies: {
 		"eas-cli": "^20.0.0",
@@ -360,7 +390,6 @@ export const expo = plugin("expo", {
 		metroConfig,
 		expoConfig,
 		entrySource,
-		routesDtsSource,
 	},
 
 	commands: {
@@ -377,7 +406,11 @@ export const expo = plugin("expo", {
 				const port = await ctx.resolve(devServerPort);
 				const args = ["expo", "start", "--port", String(port)];
 				if (flags.clear) args.push("--clear");
-				const { ok } = runInherit("npx", args, ctx.cwd);
+				// Expo's TypeScript setup rewrites the generated tsconfig.json
+				// (`extends`, `include`), which stack owns.
+				const { ok } = runInherit("npx", args, ctx.cwd, {
+					EXPO_NO_TYPESCRIPT_SETUP: "1",
+				});
 				if (!ok) throw new Error("expo start failed");
 			},
 		},
@@ -554,15 +587,13 @@ export const expo = plugin("expo", {
 			};
 		}),
 
-		// Emit the four native artifacts. metro/app.config/entry always render;
-		// routes.d.ts is null (skipped) when routing is disabled. The two config
-		// files are `.cjs` (not `.js`): the root shims `require()` them through
+		// Emit the native artifacts; the entry is null (skipped) when routing
+		// is disabled. The two config files are `.cjs` (not `.js`): the root shims `require()` them through
 		// Node, and the consumer is `type: module`, so a `.js` would parse as ESM
 		// and break — see codegen's section headers.
 		emitArtifact(".stack/metro.config.cjs", self.slots.metroConfig),
 		emitArtifact(".stack/app.config.cjs", self.slots.expoConfig),
 		emitArtifact(ENTRY_ARTIFACT, self.slots.entrySource),
-		emitArtifact(".stack/routes.d.ts", self.slots.routesDtsSource),
 
 		// Merge consumer-declared config plugins into the app.config `plugins`
 		// array, and install their native npm deps. The supported path for

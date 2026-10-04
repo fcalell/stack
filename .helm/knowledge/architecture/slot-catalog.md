@@ -158,9 +158,8 @@ e.g. consulting `ctx.fileExists` before writing.
 | `easBuildProfiles` | `value<string[]>` | EAS build profile names the `expo build` command validates against |
 | `easUpdateChannel` | `value<string>` | Default EAS Update channel |
 | `metroConfig` | `derived<string \| null>` | Final `.stack/metro.config.cjs` source |
-| `expoConfig` | `derived<string \| null>` | Final `.stack/app.config.cjs` source (name, slug, scheme, bundle ids, config plugins, typed routes) |
+| `expoConfig` | `derived<string \| null>` | Final `.stack/app.config.cjs` source (name, slug, scheme, bundle ids, config plugins) |
 | `entrySource` | `derived<string \| null>` | Final `.stack/entry.tsx` source (imports + providers around `<ExpoRoot>`) |
-| `routesDtsSource` | `derived<string \| null>` | `.stack/routes.d.ts` source; null when routing is off |
 
 ## `nativeUi.slots.*` (plugin-native-ui)
 

@@ -64,6 +64,4 @@ export default function ProjectScreen() {
 ## Navigating
 
 A roster `href`, `back` or place `route` navigates through expo-router on its own. App code
-navigates with `router` or `Link` from `expo-router`. Their routes are typed: expo-router writes
-the route types when Metro starts (`stack expo dev`), so an `href` to a file that doesn't exist
-fails the type-check from then on.
+navigates with `router` or `Link` from `expo-router`.

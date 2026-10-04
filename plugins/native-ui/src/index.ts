@@ -1,3 +1,4 @@
+import { basename } from "node:path";
 import type { ContributionCtx } from "@fcalell/cli";
 import { plugin, slot, stackSpec } from "@fcalell/cli";
 import {
@@ -347,7 +348,12 @@ export const nativeUi = plugin("native-ui", {
 		emitArtifact(NATIVE_THEME_ARTIFACT, self.slots.nativeThemeSource),
 		// ui-core is no plugin: each UI plugin indexes its guide pages.
 		cliSlots.guide.contribute(() => uiCoreGuide),
-		// The entry sits in `.stack/`, beside the file it imports.
+		// The entry sits in `.stack/`, beside the files it imports. uniwind
+		// reads classes only from a stylesheet the app imports.
+		expo.slots.entryImports.contribute(() => ({
+			source: `./${basename(GLOBAL_CSS_ARTIFACT)}`,
+			sideEffect: true,
+		})),
 		expo.slots.entryImports.contribute(async (ctx) =>
 			(await ctx.resolve(self.slots.nativeThemeSource)) === null
 				? undefined

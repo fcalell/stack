@@ -1,7 +1,7 @@
 # @fcalell/plugin-expo
 
 The Expo/React Native target for `@fcalell/stack`. Generates the Metro config, the Expo app
-config, the expo-router entry and typed routes, and mounts a native app on the same worker
+config and the expo-router entry, and mounts a native app on the same worker
 `plugin-api` generates for the web.
 
 ## Install
@@ -30,14 +30,12 @@ options and the root files; [`builds.md`](./guide/builds.md), the commands and `
 | `.stack/metro.config.cjs` | `expo.slots.metroConfig` |
 | `.stack/app.config.cjs` | `expo.slots.expoConfig` |
 | `.stack/entry.tsx` | `expo.slots.entrySource` |
-| `.stack/routes.d.ts` | `expo.slots.routesDtsSource` (skipped when routing is disabled) |
 | `.stack/expo-env.d.ts` | Static ambient-types reference |
 
 The generated configs are `.cjs`: the root shims `require()` them through Node, and the consumer
 is `type: module`, so a `.js` would parse as ESM. `.stack/metro.config.cjs` sets Metro's
 `projectRoot` to the consumer root (one level above `.stack/`), so the entry's
-`require.context("../src/app")` and uniwind's paths resolve. `.stack/routes.d.ts` only references
-`expo-router/types`; expo-router's own generator writes the augmentation.
+`require.context("../src/app")` and uniwind's paths resolve.
 
 ## Owned slots
 
@@ -55,7 +53,6 @@ is `type: module`, so a `.js` would parse as ESM. `.stack/metro.config.cjs` sets
 | `expo.slots.metroConfig` | `derived<string \| null>` | Final `.stack/metro.config.cjs` |
 | `expo.slots.expoConfig` | `derived<string \| null>` | Final `.stack/app.config.cjs` |
 | `expo.slots.entrySource` | `derived<string \| null>` | Final `.stack/entry.tsx` |
-| `expo.slots.routesDtsSource` | `derived<string \| null>` | Final `.stack/routes.d.ts` |
 
 `plugin-expo` also contributes its dev-server localhost origin to `api.slots.devCorsOrigins`
 (gated on `app.origins` not being set), which the worker honours only under `STACK_DEV`, its

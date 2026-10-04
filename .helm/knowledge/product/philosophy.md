@@ -25,8 +25,8 @@ structurally dead (see [slot-graph](../architecture/slot-graph.md)).
 `@fcalell/cli` owns the lifecycle (init/dev/build/deploy), the slot graph engine, and
 `stack.config.ts`, nothing else. Codegen surfaces are typed slots defined on the owning plugin:
 `api.slots.workerSource`, `cloudflare.slots.wranglerToml`, `vite.slots.viteConfig`,
-`react.slots.entrySource` / `htmlSource` / `providersSource`, `expo.slots.entrySource` /
-`routesDtsSource`, `nativeUi.slots.appCssSource`. CLI-level lifecycle slots
+`react.slots.entrySource` / `htmlSource` / `providersSource`, `expo.slots.entrySource`,
+`nativeUi.slots.appCssSource`. CLI-level lifecycle slots
 (`cliSlots.artifactFiles`, `cliSlots.devProcesses`, …) are the cross-cutting sinks every command
 consumes. Plugins never import each other to coordinate; they contribute typed values to one
 another's slots and read shared values via derived slots. Cross-plugin handoff happens through the

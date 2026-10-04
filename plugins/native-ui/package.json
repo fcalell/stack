@@ -36,6 +36,7 @@
 		"lint": "biome check --write --unsafe",
 		"check": "pnpm check-types && pnpm lint",
 		"verify": "tsx scripts/verify.ts",
+		"test": "node --test 'test/**/*.test.ts'",
 		"clear": "rm -rf dist node_modules .turbo"
 	},
 	"peerDependencies": {
@@ -78,7 +79,7 @@
 		"@types/node": "^25.5.0",
 		"@types/react": "^19.2.16",
 		"lucide-react-native": "^1.49.0",
-		"react": "^19.2.7",
+		"react": "19.2.3",
 		"react-native": "^0.85.3",
 		"react-native-gesture-handler": "^3.0.0",
 		"react-native-keyboard-controller": "^1.18.0",

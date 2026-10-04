@@ -63,7 +63,7 @@ plugin-react-ui ──────────> cli + ui-core, requires react + 
                                   contributes to vite.slots.configImports/pluginCalls/fsAllow,
                                   react.slots.providers/entryImports, auth.slots.reservedSlugs
                                   (from react.slots.topLevelRoutes), cliSlots.buildSteps)
-plugin-expo ──────────────> cli (owns expo.slots.metroConfig/expoConfig/entrySource/routesDtsSource,
+plugin-expo ──────────────> cli (owns expo.slots.metroConfig/expoConfig/entrySource,
                                  providers, easBuildProfiles/easUpdateChannel;
                                  contributes to api.slots.devCorsOrigins for the Metro dev origin,
                                  api.slots.nativeScheme for its deep-link scheme,

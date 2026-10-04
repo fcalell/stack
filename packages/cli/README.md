@@ -189,7 +189,7 @@ What `stack generate` writes, by the slot that renders it:
 | `.stack/app.css` | `reactUi.slots.appCssSource` |
 | `.stack/virtual-providers.tsx` | `react.slots.providersSource` |
 | `.stack/routeTree.gen.ts` | `cliSlots.postWrite` (react) |
-| `.stack/routes.d.ts` | `react.slots.routesDtsSource` / `expo.slots.routesDtsSource` |
+| `.stack/routes.d.ts` | `react.slots.routesDtsSource` |
 | `src/worker/routes/index.ts` | `api` artifact contribution |
 | `.dev.vars` | `api.slots.env` (rendered by `cloudflare`) |
 

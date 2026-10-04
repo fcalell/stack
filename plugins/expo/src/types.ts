@@ -113,8 +113,6 @@ export interface CodegenExpoConfigPayload {
 	bundleIdentifier: string;
 	androidPackage: string;
 	plugins: ExpoConfigPlugin[];
-	// Enables expo-router typed-route generation when routing is on.
-	typedRoutes: boolean;
 }
 
 // ── Entry codegen ──────────────────────────────────────────────────
