@@ -63,6 +63,19 @@ export type FormFieldProps<V = unknown> = FormFieldBase &
 		  }
 	);
 
+// The control a field holds: its children, or, bound, its children drawn
+// from the field's value. A sheet reads it to know whether it holds a
+// `TextArea`.
+export function fieldControl<V>(props: FormFieldProps<V>): ReactNode {
+	return props.field
+		? props.children({
+				value: props.field.value,
+				onChange: props.field.onChange,
+				onCommit: props.field.onCommit,
+			})
+		: props.children;
+}
+
 // What the control is decides the field's form: a switch at the label's end,
 // a checkbox ahead of it on its first line, any other under its label; a
 // slider's head is its own label; a group of controls is named by the label
@@ -85,13 +98,7 @@ export function FormField<V>(props: FormFieldProps<V>) {
 	useSectionField();
 	const { label, description, disabled = false } = props;
 	const error = props.field ? props.field.error : props.error;
-	const control = props.field
-		? props.children({
-				value: props.field.value,
-				onChange: props.field.onChange,
-				onCommit: props.field.onCommit,
-			})
-		: props.children;
+	const control = fieldControl(props);
 	const form = formOf(control);
 	const said = error ?? description;
 	const labelClass = cn(

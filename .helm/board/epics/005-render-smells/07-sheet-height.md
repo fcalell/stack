@@ -1,6 +1,6 @@
 ---
 id: 005-07
-status: backlog
+status: review
 sessions: {}
 ---
 # native-ui: a sheet knows it stands full height before it presents
@@ -27,5 +27,8 @@ one exists.
 Decided (the recommended answer, applied 2026-10-04): the full height is derived from what the sheet holds; a public height prop is not added.
 
 ## Acceptance criteria
-- [ ] (test) `TextArea` reads no sheet context, and `SheetBase` has no `grow`.
+- [x] (test) `TextArea` reads no sheet context, and `SheetBase` has no `grow`.
 - [ ] (live) on the harness, a sheet holding a TextArea (the Notes sheet in `apps/phone`, given a body field) opens at full height in its first frame, and a next page without one returns to content height.
+
+## Progress
+Built; `pnpm check` and `pnpm verify` pass. SheetBase walks its children in render for a TextArea (including a FormField's control); a TextArea inside an app's own component is not seen, so that sheet stays content-tall. Open: the phone live criterion on the harness.

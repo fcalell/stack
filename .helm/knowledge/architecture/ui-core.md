@@ -621,6 +621,13 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
   resolves and stays open to retry when it rejects (the caller says why, a toast). `confirm()`
   returns nothing: a caller that awaited a boolean and then did the work left the sheet closed
   with nothing pending while the work ran, and lost the retry.
+- A sheet knows what it holds before it presents. A phone sheet stands full height when it holds
+  a `TextArea` (which grows with its value), read in render off the elements it is given, a
+  `FormField`'s control included, so its snap point and dynamic sizing are set before
+  `present()` and follow a wizard's page; a TextArea an app component draws inside itself is out
+  of its sight. Rejected: the TextArea asking the sheet from a mount effect (gorhom mounts the
+  content only once presented, so the sheet opened content-tall and re-snapped after paint, and
+  never shrank back), and a public height prop.
 - `Text` draws `body` and `meta` (plus `strong`) and names those roles' cells of `TEXT` and
   `TEXT_STRONG`, not either family; every other type role is drawn by the molecule that owns
   its place, and `TEXT` keeps all seven roles as the one table those owners draw from.

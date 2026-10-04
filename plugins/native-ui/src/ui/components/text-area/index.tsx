@@ -5,14 +5,13 @@ import {
 	textArea,
 	textAreaBudget,
 } from "@fcalell/ui-core/variants";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useState } from "react";
 import { Text as RNText, TextInput, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { FieldDisabled, FieldError, useFieldName } from "../../lib/field";
 import { useTokenColor } from "../../lib/theme";
 import { useTouched } from "../../lib/touched";
-import { useSheetGrow } from "../sheet";
 
 export interface TextAreaProps extends Closed {
 	kind?: "prose" | "source";
@@ -29,7 +28,7 @@ function wordCount(value: string): number {
 
 // Many lines of typing in a field box that grows with its value from three
 // body lines, the budget's count under the value in the error ink once over.
-// `source` is mono and keeps indentation. Inside a sheet it asks for the full
+// `source` is mono and keeps indentation; a sheet holding one stands full
 // height. `onCommit` hears the value once the viewer leaves the field having
 // changed it since focus (return is a new line here); with it, a hardware
 // Escape puts back the value at focus.
@@ -50,8 +49,6 @@ export function TextArea({
 	// A placeholder's colour is a prop, never a class: `FIELD_PLACEHOLDER`'s ink.
 	const placeholderInk = useTokenColor("--color-ink-meta");
 	const source = kind === "source";
-	const grow = useSheetGrow();
-	useEffect(() => grow?.(), [grow]);
 	const count = budget === undefined ? undefined : wordCount(value);
 	return (
 		<View

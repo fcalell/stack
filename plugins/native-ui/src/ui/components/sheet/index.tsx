@@ -4,8 +4,6 @@ import type { ReactNode } from "react";
 import type { Closed } from "../../lib/closed";
 import { SheetBase } from "./base";
 
-export { useSheetGrow } from "./base";
-
 export interface SheetProps extends Closed {
 	open: boolean;
 	// Hears the close act, a press on the scrim and the drag down.

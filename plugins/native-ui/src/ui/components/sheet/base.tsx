@@ -23,7 +23,9 @@ import {
 	useBottomSheetInternal,
 } from "@gorhom/bottom-sheet";
 import {
+	Children,
 	createContext,
+	isValidElement,
 	type PropsWithChildren,
 	type ReactNode,
 	useCallback,
@@ -50,8 +52,10 @@ import { type Touched, TouchedContext } from "../../lib/touched";
 import { useWords } from "../../lib/words";
 import { ActionBar } from "../action-bar";
 import { Button } from "../button";
+import { FormField, type FormFieldProps, fieldControl } from "../form-field";
 import { IconButton } from "../icon-button";
 import { IconButtonBase } from "../icon-button/base";
+import { TextArea } from "../text-area";
 
 // The layer over the app that VoiceOver keeps to while the sheet is open.
 const LAYER = "absolute inset-0";
@@ -77,13 +81,6 @@ const LEAVE = timing("base", "in");
 // The scrim under the sheet, its own fill at full opacity.
 const ScrimBase = withUniwind(BottomSheetBackdrop);
 
-// A TextArea inside asks the sheet for the full height.
-const GrowContext = createContext<(() => void) | undefined>(undefined);
-
-export function useSheetGrow(): (() => void) | undefined {
-	return useContext(GrowContext);
-}
-
 // What the head, the foot and the scrim draw. gorhom renders each slot as an
 // element type, so a new component identity remounts its tree (a typing
 // field in the head loses focus): the slots are module components reading
@@ -102,7 +99,6 @@ interface Parts {
 	// A blocked submit's reason once the sheet is touched or the submit pressed.
 	reason?: string;
 	host?: ReasonHost;
-	grow: () => void;
 	touched: Touched;
 	// The sheet's height cap, gorhom's `maxDynamicContentSize`.
 	cap: number;
@@ -149,21 +145,19 @@ function layerOf(store: PartsStore) {
 		const parts = useSyncExternalStore(store.subscribe, store.get);
 		return (
 			<PartsContext.Provider value={parts}>
-				<GrowContext.Provider value={parts.grow}>
-					<FieldNameContext.Provider value={parts.title}>
-						<TouchedContext.Provider value={parts.touched}>
-							<FormStands.Provider value="sheet">
-								<View
-									accessibilityViewIsModal
-									pointerEvents="box-none"
-									className={LAYER}
-								>
-									{children}
-								</View>
-							</FormStands.Provider>
-						</TouchedContext.Provider>
-					</FieldNameContext.Provider>
-				</GrowContext.Provider>
+				<FieldNameContext.Provider value={parts.title}>
+					<TouchedContext.Provider value={parts.touched}>
+						<FormStands.Provider value="sheet">
+							<View
+								accessibilityViewIsModal
+								pointerEvents="box-none"
+								className={LAYER}
+							>
+								{children}
+							</View>
+						</FormStands.Provider>
+					</TouchedContext.Provider>
+				</FieldNameContext.Provider>
 			</PartsContext.Provider>
 		);
 	};
@@ -331,6 +325,23 @@ function Fits() {
 	return null;
 }
 
+// Whether the sheet holds a `TextArea`, read off the elements it is given
+// (through a `FormField`'s control), so it stands full height from its first
+// frame and a wizard's page without one returns to content height. A
+// TextArea an app component draws inside itself is out of its sight.
+function holdsTextArea(node: ReactNode): boolean {
+	return Children.toArray(node).some((child) => {
+		if (!isValidElement<{ children?: ReactNode }>(child)) return false;
+		if (child.type === TextArea) return true;
+		if (child.type === FormField)
+			// The element's type is FormField, so its props are a field's.
+			return holdsTextArea(fieldControl(child.props as FormFieldProps));
+		const inner = child.props.children;
+		// A render prop (a bound field, a list's map) is no node to read.
+		return typeof inner !== "function" && holdsTextArea(inner);
+	});
+}
+
 /** What every sheet draws: the public `Sheet`, the confirm, a `Menu` and the Picker's options. Outside the package's exports. */
 export interface SheetBaseProps {
 	open: boolean;
@@ -381,12 +392,11 @@ export function SheetBase({
 	const insets = useSafeAreaInsets();
 	const { height } = useWindowDimensions();
 	const ref = useRef<BottomSheetModal>(null);
-	const [tall, setTall] = useState(false);
 	const [settled, setSettled] = useState(false);
 	const [touched, setTouched] = useState(false);
 	const [pressed, setPressed] = useState(false);
-	const grow = useCallback(() => setTall(true), []);
 	const touch = useCallback(() => setTouched(true), []);
+	const tall = holdsTextArea(children);
 	const blocked = submit?.blocked !== undefined;
 	// A wizard swaps its page in place; reset during render, so the new page
 	// never draws the old page's reason.
@@ -423,7 +433,6 @@ export function SheetBase({
 	useEffect(() => {
 		if (!blocked) setPressed(false);
 	}, [blocked]);
-	const snapPoints = useMemo(() => (tall ? FULL : undefined), [tall]);
 	const touchedValue = useMemo(() => ({ touched, touch }), [touched, touch]);
 	const host = useMemo(
 		() => (blocked ? { press: () => setPressed(true) } : undefined),
@@ -442,7 +451,6 @@ export function SheetBase({
 		onClose,
 		reason: blocked && (pressed || touched) ? submit?.blocked : undefined,
 		host,
-		grow,
 		touched: touchedValue,
 		cap,
 		setCapped,
@@ -481,7 +489,7 @@ export function SheetBase({
 			enablePanDownToClose={!busy}
 			enableDynamicSizing={!tall}
 			maxDynamicContentSize={cap}
-			snapPoints={snapPoints}
+			snapPoints={tall ? FULL : undefined}
 			animationConfigs={settled ? LEAVE : ENTER}
 		>
 			<BottomSheetScrollView
