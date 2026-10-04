@@ -1,5 +1,5 @@
 import type { ChipMark, IconName } from "@fcalell/ui-core/descriptors";
-import { filled, MONO_ADVANCE } from "@fcalell/ui-core/tokens";
+import { filled } from "@fcalell/ui-core/tokens";
 import {
 	FILE_COUNTS,
 	FILE_PATH,
@@ -8,9 +8,8 @@ import {
 	ROW_LEADING,
 	row,
 } from "@fcalell/ui-core/variants";
-import { useContext, useState } from "react";
+import { useContext } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
-import { useResolveClassNames } from "uniwind";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { GroundContext } from "../../lib/ground";
@@ -27,13 +26,13 @@ const SQUARE = "rounded-none";
 // The hit covers the row under its text and takes the press wash.
 const HIT = "absolute inset-0 active:bg-wash-press";
 const LEADING = "shrink-0 items-center justify-center";
-const PATH = "flex-1 flex-row min-w-0";
-const PART = "shrink-0";
+const PATH = "flex-1 flex-row min-w-0 overflow-hidden";
+const DIRECTORY = "shrink min-w-0";
+const NAME = "shrink-0 max-w-full";
 // The chip keeps its width, capped by its label's measure; the path yields.
 const CHIP = "shrink-0";
 const COUNTS = "flex-row shrink-0 items-center";
 const COUNT = "text-right";
-const ELLIPSIS = "…";
 
 export interface FileRowProps extends Closed {
 	// The file's path; the directory gives way first when it is too long, the
@@ -70,58 +69,36 @@ function split(path: string): [string, string] {
 	return slash < 0 ? ["", path] : [path.slice(0, slash), path.slice(slash)];
 }
 
-// A name cut in its middle to `room` characters, its start and its end
-// (the extension) kept.
-function middle(name: string, room: number): string {
-	if (name.length <= room) return name;
-	const kept = Math.max(0, room - 1);
-	const head = Math.ceil(kept / 2);
-	return `${name.slice(0, head)}${ELLIPSIS}${name.slice(name.length - (kept - head))}`;
-}
-
-// The path cut to `room` characters of the mono face: the directory gives
-// way first, cut from its end down to its first character; then the name is
-// cut in its middle.
-function cut(path: string, room: number): [string, string] {
-	const [dir, name] = split(path);
-	if (dir.length + name.length <= room) return [dir, name];
-	if (!dir) return ["", middle(name, room)];
-	const left = room - name.length - 1;
-	if (left >= 1) return [`${dir.slice(0, left)}${ELLIPSIS}`, name];
-	const shortDir = `${dir.slice(0, 1)}${ELLIPSIS}`;
-	return [shortDir, middle(name, room - shortDir.length)];
-}
-
-// The path in its box, cut to the characters of the mono face the box
-// holds: the box's width from its layout over the code role's advance
-// (`MONO_ADVANCE` of its size, the face's one advance at every weight).
+// The path fits by layout: the name takes its width up to the whole box and
+// the directory the room it leaves, ellipsized at its end, so the directory
+// gives way first; past the box the name is cut in its middle, its end (the
+// extension) kept.
 function Path({ path }: { path: string }) {
-	const { fontSize } = useResolveClassNames(FILE_PATH);
-	const [room, setRoom] = useState(Number.POSITIVE_INFINITY);
-	const advance = typeof fontSize === "number" ? fontSize * MONO_ADVANCE : 0;
-	const [dir, name] = cut(path, room);
+	const [dir, name] = split(path);
 	return (
 		<View
 			pointerEvents="none"
 			accessibilityElementsHidden
 			importantForAccessibility="no-hide-descendants"
-			onLayout={(event) => {
-				if (advance > 0)
-					setRoom(Math.floor(event.nativeEvent.layout.width / advance));
-			}}
 			className={PATH}
 		>
 			{dir ? (
 				<RNText
 					numberOfLines={1}
-					className={cn(FILE_PATH, filePathPart({ part: "directory" }), PART)}
+					ellipsizeMode="tail"
+					className={cn(
+						FILE_PATH,
+						filePathPart({ part: "directory" }),
+						DIRECTORY,
+					)}
 				>
 					{dir}
 				</RNText>
 			) : null}
 			<RNText
 				numberOfLines={1}
-				className={cn(FILE_PATH, filePathPart({ part: "name" }), PART)}
+				ellipsizeMode="middle"
+				className={cn(FILE_PATH, filePathPart({ part: "name" }), NAME)}
 			>
 				{name}
 			</RNText>

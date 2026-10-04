@@ -10,7 +10,7 @@ import {
 	ROW_LEADING,
 	row,
 } from "@fcalell/ui-core/variants";
-import { use, useLayoutEffect, useRef, useState } from "react";
+import { use } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { GroundContext } from "../../lib/ground.ts";
 import { isCurrent, useRoute } from "../../lib/navigate.ts";
@@ -29,7 +29,12 @@ const HIT = "absolute inset-0 focus-visible:-outline-offset-2";
 const HIT_LIST = "rounded-row touch:rounded-none";
 const LEADING = "flex shrink-0 items-center justify-center text-ink-meta";
 const PATH = "flex grow min-w-0";
+const DIRECTORY = "min-w-0 truncate";
+const NAME = "flex shrink-0 max-w-full min-w-0";
+const STEM = "min-w-0 truncate";
 const PART = "shrink-0";
+// The characters kept before a name's extension (twice that without one).
+const TAIL_LEAD = 3;
 // The chip keeps its width, capped by its label's measure; the path yields.
 const CHIP = "flex shrink-0";
 const COUNTS = "flex shrink-0 items-center";
@@ -37,7 +42,6 @@ const COUNT = "text-end";
 // The row's name where it has no hit: the full path, the chip, the counts and
 // the seen state, for the cut path and the glyph are drawn alone.
 const SPOKEN = "sr-only";
-const ELLIPSIS = "…";
 
 /** A changed file in a review's list. */
 export interface FileRowProps extends Closed {
@@ -71,57 +75,31 @@ function split(path: string): [string, string] {
 	return slash < 0 ? ["", path] : [path.slice(0, slash), path.slice(slash)];
 }
 
-// A name cut in its middle to `room` characters, its start and its end
-// (the extension) kept.
-function middle(name: string, room: number): string {
-	if (name.length <= room) return name;
-	const kept = Math.max(0, room - 1);
-	const head = Math.ceil(kept / 2);
-	return `${name.slice(0, head)}${ELLIPSIS}${name.slice(name.length - (kept - head))}`;
+// The name's end that never cuts: its extension and the characters before it.
+function tailOf(name: string): number {
+	const dot = name.lastIndexOf(".");
+	const kept = dot > 0 ? name.length - dot + TAIL_LEAD : TAIL_LEAD * 2;
+	return Math.max(0, name.length - kept);
 }
 
-// The path cut to `room` characters of the mono face: the directory gives
-// way first, cut from its end down to its first character; then the name is
-// cut in its middle.
-function cut(path: string, room: number): [string, string] {
-	const [dir, name] = split(path);
-	if (dir.length + name.length <= room) return [dir, name];
-	if (!dir) return ["", middle(name, room)];
-	const left = room - name.length - 1;
-	if (left >= 1) return [`${dir.slice(0, left)}${ELLIPSIS}`, name];
-	const shortDir = `${dir.slice(0, 1)}${ELLIPSIS}`;
-	return [shortDir, middle(name, room - shortDir.length)];
-}
-
-// The path in its box, cut to the characters of the mono face the box
-// holds, measured on the box's own font (the face keeps one advance at every
-// weight).
+// The path fits by layout: the name takes its width up to the whole box and
+// the directory the room it leaves, ellipsized at its end, so the directory
+// gives way first; past the box the name's stem truncates before its kept
+// end, a cut in its middle.
 function Path(props: { path: string }) {
-	const box = useRef<HTMLSpanElement>(null);
-	const [room, setRoom] = useState(Number.POSITIVE_INFINITY);
-	useLayoutEffect(() => {
-		const element = box.current;
-		const context = document.createElement("canvas").getContext("2d");
-		if (!element || !context) return;
-		const measure = () => {
-			context.font = getComputedStyle(element).font;
-			const advance = context.measureText("0").width;
-			if (advance > 0) setRoom(Math.floor(element.clientWidth / advance));
-		};
-		const observer = new ResizeObserver(measure);
-		observer.observe(element);
-		document.fonts.ready.then(measure);
-		return () => observer.disconnect();
-	}, []);
-	const [dir, name] = cut(props.path, room);
+	const [dir, name] = split(props.path);
+	const at = tailOf(name);
 	return (
-		<span ref={box} aria-hidden className={cn(FILE_PATH, PATH)}>
+		<span aria-hidden className={cn(FILE_PATH, PATH)}>
 			{dir ? (
-				<span className={cn(filePathPart({ part: "directory" }), PART)}>
+				<span className={cn(filePathPart({ part: "directory" }), DIRECTORY)}>
 					{dir}
 				</span>
 			) : null}
-			<span className={cn(filePathPart({ part: "name" }), PART)}>{name}</span>
+			<span className={cn(filePathPart({ part: "name" }), NAME)}>
+				<span className={STEM}>{name.slice(0, at)}</span>
+				<span className={PART}>{name.slice(at)}</span>
+			</span>
 		</span>
 	);
 }

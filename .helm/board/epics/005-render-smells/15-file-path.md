@@ -1,6 +1,6 @@
 ---
 id: 005-15
-status: backlog
+status: review
 sessions: {}
 ---
 # react-ui, native-ui: a FileRow's path fits by layout, not by measure
@@ -24,3 +24,6 @@ measures, `cut()` and `middle()` go.
 ## Acceptance criteria
 - [ ] (live) web, changes' file rows at 1440 and 375 with the mono face delayed: the path never re-cuts after first paint, and the extension stays whole.
 - [ ] (live) phone, on the harness at 390 and 320 dp: the first frame draws the cut path, clear of the counts.
+
+## Progress
+Built; `pnpm check` and `pnpm verify` pass. Web live at 1440 and 375 with the mono font held back 3 s: no path box mutates through the font load, every name keeps its tail, and the directory gives way first (to nothing on the longest path). Open: the phone live criterion on the harness.

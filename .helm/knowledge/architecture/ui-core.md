@@ -604,10 +604,15 @@ a tick with no animation, never jumped to full.
 - A Meter in a Group stands as its item at the card's inset (`METER_ITEM`, by `GroundContext`),
   the Group's hairline between; a set of them from data is a `List` taking `meter`, in the Group. A FileRow is selected at its `href`, as a ListRow is.
 - A FileRow carries at most one `ChipMark` (why the file is listed, or what its change is),
-  standing between the path and the count lanes at its label's `measure-short` cap; the path's
-  cut measures the room the chip leaves, so the chip stays whole and the path yields: the chip is
+  standing between the path and the count lanes at its label's `measure-short` cap; the path
+  takes the room the chip leaves, so the chip stays whole and the path yields: the chip is
   why the row is listed and reads in one glance, where a cut path gives up its directory first,
-  keeping its file name, and its record opens in full a press away. The chip's
+  keeping its file name, and its record opens in full a press away. The path fits by layout,
+  never by measure, so it draws cut in its first frame and never re-cuts when the mono face
+  loads: the name takes its width up to the whole box (`max-w-full`, no shrink) and the
+  directory the room it leaves, ellipsized at its end down to nothing; past the box the name is
+  cut in its middle, its end kept (the web: a truncating stem before an unshrinking tail of the
+  extension and the three characters before it; the phone: `ellipsizeMode="middle"`). The chip's
   cells and size are FileRow's own in the roster, composed from `Chip`, with no token of its own.
 - Code, Diff and ProseDiff stand in one frame on the surface inside a hairline (`CONTENT_FRAME`),
   so a diff's soft grounds always sit on the surface; a diff's number columns and a file row's
