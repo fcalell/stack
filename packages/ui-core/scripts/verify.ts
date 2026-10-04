@@ -649,7 +649,7 @@ check("c02", "package.json shape", () => {
 		Object.keys(pkg.exports ?? {})
 			.sort()
 			.join(" "),
-		"./cn ./commit ./derive ./descriptors ./emit ./harness ./list-state ./manifest ./roster ./schema ./tokens ./variants",
+		"./clock ./cn ./commit ./derive ./descriptors ./emit ./harness ./list-state ./manifest ./roster ./schema ./tokens ./variants",
 		"export subpaths",
 	);
 	assert(pkg.peerDependencies?.zod, "zod is not a peerDependency");

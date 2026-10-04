@@ -140,7 +140,22 @@ named slots (`{value} of {max}`), drawn through `filled(word, values)`, the figu
 the component; the schema rejects a translation that drops a slot. Rejected: a bare connective
 (`of`) composed around the figures, a sentence fragment a language cannot reorder. A moment drawn as its age (a table's `age`
 cell, an ISO moment so the table sorts by it) is no word either: each plugin formats it with the
-platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's language, in one helper.
+platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's language, in one helper
+over ui-core's `ageWords` (`./clock`).
+
+Ages and pending bars read one coarse clock per plugin (`lib/clock`, `useClock(read, until)`): an
+external store read with `useSyncExternalStore`, ticking once a second while a reader holds it.
+A reader renders again only when what its `read` returns changes (an age cell its words, a touch
+list its rows' words joined), leaves once now passes its `until`, and the interval stops when no
+reader is left, so a bar past its `until` ticks nothing. What they draw is pure in ui-core's
+`./clock`: `timeLeft(end, now)`, and a `PendingRun` (`start`, `end`, `from`) whose
+`pendingShare(run, now)` is the fill; a moved `until` starts a new run from the share reached, so
+the fill never jumps back. The fill moves on its own from that share to full at `end` (a Web
+Animations width animation on the web, started before first paint; a linear Reanimated timing on
+the phone), and the tick redraws only the time left. Under reduced motion (the web's
+`prefers-reduced-motion: reduce`, read live; the phone's system setting as Reanimated's
+`useReducedMotion` read it at launch) the fill steps with the clock instead: its share is set once
+a tick with no animation, never jumped to full.
 
 ## Matrices and the sharing line
 

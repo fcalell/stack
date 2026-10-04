@@ -1,3 +1,9 @@
+import {
+	type PendingRun,
+	pendingRun,
+	pendingShare,
+	timeLeft,
+} from "@fcalell/ui-core/clock";
 import type { Act } from "@fcalell/ui-core/descriptors";
 import {
 	PENDING_BAR,
@@ -9,6 +15,17 @@ import {
 } from "@fcalell/ui-core/variants";
 import { useEffect, useMemo, useState } from "react";
 import { Text as RNText, View } from "react-native";
+import Animated, {
+	cancelAnimation,
+	Easing,
+	ReduceMotion,
+	useAnimatedStyle,
+	useReducedMotion,
+	useSharedValue,
+	withTiming,
+} from "react-native-reanimated";
+import { withUniwind } from "uniwind";
+import { useClock } from "../../lib/clock";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { Ink } from "../../lib/ink";
@@ -23,12 +40,33 @@ const FILL = "absolute bottom-0 left-0";
 const SENTENCE = "relative min-w-0 flex-1";
 const LEFT = "relative shrink-0";
 
-const TICK_MS = 1000;
+const Filled = withUniwind(Animated.View);
 
-// The time left, minutes then seconds padded to two.
-function clock(ms: number): string {
-	const seconds = Math.max(0, Math.ceil(ms / 1000));
-	return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
+// The elapsed share, moving on its own from where the run stands to full at
+// its end; the clock's tick redraws only the time left. With the system's
+// reduced motion on (as Reanimated read it at launch) it steps with the
+// clock instead, the share set once a tick.
+function Fill(props: { run: PendingRun; now: number }) {
+	const { run, now } = props;
+	const reduced = useReducedMotion();
+	const share = useSharedValue(pendingShare(run, Date.now()));
+	useEffect(() => {
+		if (reduced) return;
+		const at = Date.now();
+		share.value = pendingShare(run, at);
+		if (at < run.end)
+			share.value = withTiming(1, {
+				duration: run.end - at,
+				easing: Easing.linear,
+				reduceMotion: ReduceMotion.Never,
+			});
+		return () => cancelAnimation(share);
+	}, [run, share, reduced]);
+	useEffect(() => {
+		if (reduced) share.value = pendingShare(run, now);
+	}, [reduced, run, now, share]);
+	const width = useAnimatedStyle(() => ({ width: `${share.value * 100}%` }));
+	return <Filled className={cn(PENDING_FILL, FILL)} style={width} />;
 }
 
 export interface PendingBarProps extends Closed {
@@ -46,8 +84,13 @@ export interface PendingBarProps extends Closed {
 // track's foot filling toward `until` with the time left beside the
 // sentence, which alone is the live region; the act under it.
 export function PendingBar({ sentence, until, act }: PendingBarProps) {
-	const [start] = useState(() => Date.now());
-	const [now, setNow] = useState(start);
+	const end = until?.getTime();
+	// The shared clock ticks the bar until its end, never past it.
+	const now = useClock((at) => at, end ?? 0);
+	const [run, setRun] = useState(() =>
+		end === undefined ? undefined : pendingRun(end, now),
+	);
+	if (end !== undefined && run?.end !== end) setRun(pendingRun(end, now, run));
 	const { touched } = useTouched();
 	const blocked = act?.blocked;
 	const [pressed, setPressed] = useState(false);
@@ -59,29 +102,16 @@ export function PendingBar({ sentence, until, act }: PendingBarProps) {
 			blocked === undefined ? undefined : { press: () => setPressed(true) },
 		[blocked],
 	);
-	useEffect(() => {
-		if (!until) return;
-		const timer = setInterval(() => setNow(Date.now()), TICK_MS);
-		return () => clearInterval(timer);
-	}, [until]);
-	const end = until?.getTime();
-	const share =
-		end === undefined || end <= start
-			? 1
-			: Math.min(1, (now - start) / (end - start));
 	return (
 		<View className={PENDING_BAR}>
 			<View className={PENDING_ROW}>
 				<View className={cn(PENDING_TRACK, TRACK)}>
-					{end === undefined ? (
+					{end === undefined || run === undefined ? (
 						<Ink.Provider value="ink-meta">
 							<Spinner />
 						</Ink.Provider>
 					) : (
-						<View
-							className={cn(PENDING_FILL, FILL)}
-							style={{ width: `${share * 100}%` }}
-						/>
+						<Fill run={run} now={now} />
 					)}
 					<RNText
 						numberOfLines={1}
@@ -92,7 +122,7 @@ export function PendingBar({ sentence, until, act }: PendingBarProps) {
 					</RNText>
 					{end === undefined ? null : (
 						<RNText className={cn(PENDING_LEFT, LEFT)}>
-							{clock(end - now)}
+							{timeLeft(end, now)}
 						</RNText>
 					)}
 				</View>

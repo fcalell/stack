@@ -1,6 +1,6 @@
 ---
 id: 005-13
-status: backlog
+status: review
 sessions: {}
 ---
 # react-ui, native-ui: a pending bar and an age read one clock
@@ -27,6 +27,9 @@ by itself, a CSS width transition on the web and a Reanimated animation on the p
 Decided (the recommended answer, applied 2026-10-04): an age ticks live from one shared coarse clock.
 
 ## Acceptance criteria
-- [ ] (test) the bar's share and clock text, and an age's words, are functions of their times and now, shared by both plugins.
+- [x] (test) the bar's share and clock text, and an age's words, are functions of their times and now, shared by both plugins.
 - [ ] (live) web, deploys' PendingBar at 375: the fill moves smoothly, the clock is right in the first second, and nothing ticks past 0:00; a "just now" age turns to "1 minute ago" on its own.
 - [ ] (live) phone, on the harness: the same on a PendingBar whose `until` is set after mount.
+
+## Progress
+Built; `pnpm check` and `pnpm verify` pass. Web live at 375: the clock reads 1:30 in the first frame of a 90 s until and steps each second, the fill moves every frame (or once a tick under reduced motion), no timer runs past until, and ages step on their own. `useClock` (lib/clock) and `useReducedMotion` (lib/media) are public lib subpaths. Open: the phone live criterion on the harness.

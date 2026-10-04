@@ -38,7 +38,10 @@ Eleven subpaths:
   `CellEdit` and the other framework-free types a prop carries.
 - `@fcalell/ui-core/commit`: `commitMoment()`, when a typing control's value is final: on
   leaving the field or Enter, only when it changed since focus, Escape restoring the value at
-  focus. Both plugins' `Input` and `TextArea` drive their `onCommit` with it.
+  focus, and ending the edit. Both plugins' `Input` and `TextArea` drive their `onCommit` with it.
+- `@fcalell/ui-core/clock`: what a clock-read part draws, as functions of its times and now:
+  `timeLeft`, a `PendingRun` with `pendingRun` and `pendingShare` (a `PendingBar`'s clock and
+  fill), and `ageWords` (an ISO moment's age). Both plugins tick `now` from one shared clock.
 - `@fcalell/ui-core/roster`: the component roster as data (`ROSTER`, `STATES`, `CLOSED_PROPS`): the
   layer, prop names, drawn cells, states and owned tokens of every component both plugins ship.
 - `@fcalell/ui-core/harness`: internal. The shared core of the packages' `scripts/verify.ts`.

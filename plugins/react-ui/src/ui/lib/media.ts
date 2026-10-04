@@ -28,6 +28,24 @@ export function useTouch(): boolean {
 	return useSyncExternalStore(onDensity, touch, () => false);
 }
 
+const REDUCED = "(prefers-reduced-motion: reduce)";
+
+function onReduced(notify: () => void): () => void {
+	const query = matchMedia(REDUCED);
+	query.addEventListener("change", notify);
+	return () => query.removeEventListener("change", notify);
+}
+
+// Whether the viewer asked for reduced motion: a part that moves by script
+// (a Web Animation, which CSS cannot still) reads it here.
+export function useReducedMotion(): boolean {
+	return useSyncExternalStore(
+		onReduced,
+		() => matchMedia(REDUCED).matches,
+		() => false,
+	);
+}
+
 // A spacing role in pixels at the current density, for a popup's offset
 // from its trigger, read off the root so it follows the density.
 export function spacing(role: SpacingRole): number {
