@@ -31,3 +31,6 @@ Each one is checked for the same defect on the web, and the fix keeps both platf
 
 ## Acceptance criteria
 - [ ] (live) on the harness, each finding measures fixed at 390 and 320 dp, light and dark.
+
+## Progress
+WIP on branch `worktree-agent-afc15548e1d411eb5` (commit aa187d6), stopped mid-work: code for the defects on both platforms, not checked, not verified live. Review the diff against the Approach before continuing.
