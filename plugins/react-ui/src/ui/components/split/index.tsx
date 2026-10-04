@@ -15,10 +15,11 @@ import {
 	OverThread,
 	PageTitle,
 	ThreadBleeds,
-	ThreadFills,
+	ThreadRoom,
 } from "../../lib/frame.ts";
 import { useWords } from "../../lib/words.tsx";
 import { SheetBase } from "../sheet/base.tsx";
+import { MAIN_FILLED } from "../thread/fill.ts";
 
 // The split fills its bleeding body; the list, the main and the pane each
 // scroll on their own. Its page is the size container its regions query.
@@ -37,10 +38,12 @@ const ALONE = "page-tablet:hidden";
 // box is the half it shares and the inset counts against neither half.
 const MAIN = "flex flex-col min-w-0 grow overflow-y-auto";
 const MAIN_INSET = "flex flex-col shrink-0 grow";
-// A Thread filling the main scrolls its own log under the record's head,
-// which stays put, so the main does not scroll.
-const MAIN_FILLED = "flex flex-col min-w-0 grow";
-const MAIN_FILLED_INSET = "flex flex-col grow min-h-0";
+// A Thread filling the main (its `data-fill` mark) scrolls its own log under
+// the record's head, which stays put: the inset fits the main, which keeps the
+// page inset around the head alone (`MAIN_FILLED`), so the main does not
+// scroll.
+const MAIN_FITS =
+	"group/main [&:has(>[data-fill])]:shrink [&:has(>[data-fill])]:min-h-0";
 // With a record beside it the main takes its half from `wide` and gives its
 // place to that record below it.
 const MAIN_SHARED = "basis-0 page-max-wide:hidden";
@@ -73,7 +76,6 @@ export function Split({ list, main, beside, pane, empty }: SplitProps) {
 	const title = use(PageTitle);
 	const room = use(ActRoom);
 	const [open, setOpen] = useState(false);
-	const [fills, setFills] = useState(false);
 	// The page around holds the sheet's handle, so its Details act stands from
 	// its first frame.
 	const [own] = useState(() => Dialog.createHandle<unknown>());
@@ -81,10 +83,12 @@ export function Split({ list, main, beside, pane, empty }: SplitProps) {
 	const opened = main !== undefined;
 	const detailed = opened && pane !== undefined;
 	const besides = opened && beside !== undefined;
-	const record = cn(fills ? MAIN_FILLED : MAIN, besides && MAIN_SHARED);
+	const record = cn(MAIN, besides && MAIN_SHARED);
 	const inset = cn(
-		splitMain({ state: fills ? "fills" : "rest" }),
-		fills ? MAIN_FILLED_INSET : MAIN_INSET,
+		splitMain({ state: "rest" }),
+		MAIN_FILLED,
+		MAIN_INSET,
+		MAIN_FITS,
 	);
 	return (
 		<div
@@ -104,11 +108,11 @@ export function Split({ list, main, beside, pane, empty }: SplitProps) {
 			{opened ? (
 				<div className={record}>
 					<div className={inset}>
-						<ThreadFills value={setFills}>
+						<ThreadRoom value>
 							<ThreadBleeds value>
-								<OverThread value={fills}>{main}</OverThread>
+								<OverThread value>{main}</OverThread>
 							</ThreadBleeds>
-						</ThreadFills>
+						</ThreadRoom>
 						{room ? <div className={ALONE}>{room}</div> : null}
 					</div>
 				</div>

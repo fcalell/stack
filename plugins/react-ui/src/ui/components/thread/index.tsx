@@ -19,7 +19,7 @@ import type { Closed } from "../../lib/closed.ts";
 import {
 	PageTitle,
 	ThreadBleeds,
-	ThreadFills,
+	ThreadRoom,
 	ToLatest,
 	useFootDocks,
 } from "../../lib/frame.ts";
@@ -167,7 +167,7 @@ export function Thread<T>(props: ThreadProps<T>) {
 	const children = logOf(props, listState(input), words.retry);
 	// The column is a structure that follows density, as the Shell's tree is.
 	const column = !useTouch() && THREAD_COLUMN;
-	const fills = use(ThreadFills);
+	const fill = use(ThreadRoom);
 	const bleeds = use(ThreadBleeds);
 	const docked = useFootDocks();
 	const title = use(PageTitle);
@@ -176,17 +176,12 @@ export function Thread<T>(props: ThreadProps<T>) {
 	const atEnd = useRef(true);
 	// The reader is scrolled up: the Latest act stands over the foot.
 	const [away, setAway] = useState(false);
-	useLayoutEffect(() => {
-		if (!fills) return;
-		fills(true);
-		return () => fills(false);
-	}, [fills]);
 	// The log opens at its end and stays there while the reader is, as a
 	// message arrives, a reply grows, or the input grows under it.
 	useLayoutEffect(() => {
 		const scroller = log.current;
 		const inner = content.current;
-		if (!fills || !scroller || !inner) return;
+		if (!fill || !scroller || !inner) return;
 		const follow = () => {
 			if (atEnd.current) scroller.scrollTop = scroller.scrollHeight;
 		};
@@ -195,7 +190,7 @@ export function Thread<T>(props: ThreadProps<T>) {
 		observer.observe(scroller);
 		observer.observe(inner);
 		return () => observer.disconnect();
-	}, [fills]);
+	}, [fill]);
 	// Back to the newest message, following again from there; the log takes
 	// the focus the act held, since the act leaves with the press.
 	const toLatest = () => {
@@ -206,7 +201,7 @@ export function Thread<T>(props: ThreadProps<T>) {
 		scroller.scrollTop = scroller.scrollHeight;
 		scroller.focus({ preventScroll: true });
 	};
-	if (!fills)
+	if (!fill)
 		return (
 			<div className={cn(THREAD, STACK)}>
 				<div role="log" aria-busy={busy} className={cn(THREAD, column, STACK)}>
@@ -216,7 +211,10 @@ export function Thread<T>(props: ThreadProps<T>) {
 			</div>
 		);
 	return (
-		<div className={cn(FILL, bleeds && THREAD_UNDER_HEAD, bleeds && BLEED)}>
+		<div
+			data-fill
+			className={cn(FILL, bleeds && THREAD_UNDER_HEAD, bleeds && BLEED)}
+		>
 			<div className={REGION}>
 				<div
 					ref={log}

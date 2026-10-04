@@ -1,6 +1,6 @@
 ---
 id: 005-03
-status: backlog
+status: review
 sessions: {}
 ---
 # react-ui, native-ui: a Place or Split chooses its body before a Thread mounts in it
@@ -25,6 +25,9 @@ that marks itself. The phone body keeps one element type in every form. `ThreadF
 `fills` state in Place and Split, and Thread's layout effect go.
 
 ## Acceptance criteria
-- [ ] (test) `ThreadFills` and `fills` are gone from both plugins' Place, Split and Thread.
+- [x] (test) `ThreadFills` and `fills` are gone from both plugins' Place, Split and Thread.
 - [ ] (live) web, assistant and home at 1440 and 375: Place commits once on mount (React profiler), and the log stands at its end in the first frame.
 - [ ] (live) phone, on the harness: a Thread mounting late beside a typed field keeps the field's text, in a conversation this story adds to `apps/phone` (it holds no Thread today); 04 and 11 reuse it.
+
+## Progress
+Built; `pnpm check` and `pnpm verify` pass. Web live at 1440 and 375: a Place renders in one commit on mount, and the assistant's log is filled and at its end from its first frame. The web's marked forms stay in the overlay (the contract forbids platform conditionals in cells), held to the cells by `fill.test.ts`. A Thread stands as the body's or the main's direct child. `apps/phone` gains an Ask place for the phone check. Open: the phone live criterion on the harness.

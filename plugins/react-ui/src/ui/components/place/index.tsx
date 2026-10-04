@@ -29,7 +29,7 @@ import {
 	PageTitle,
 	PlaceRoute,
 	ShellSwitcher,
-	ThreadFills,
+	ThreadRoom,
 	useFootDocks,
 } from "../../lib/frame.ts";
 import { HeadingContext } from "../../lib/heading.ts";
@@ -39,6 +39,7 @@ import { Button } from "../button/index.tsx";
 import { IconButtonBase, IconButtonLink } from "../icon-button/base.tsx";
 import { IconButton } from "../icon-button/index.tsx";
 import { Menu } from "../menu/index.tsx";
+import { BODY_FILLED } from "../thread/fill.ts";
 
 const PLACE = "flex flex-col grow min-h-0";
 // A page is the size container what stands in it decides its structure by
@@ -167,7 +168,6 @@ export function Place({
 	const route = use(PlaceRoute);
 	const titleId = useId();
 	const [sheet] = useState(() => Dialog.createHandle<unknown>());
-	const [fills, setFills] = useState(false);
 	const docked = useFootDocks();
 	const fit = touch ? "body" : "bar";
 	// The column is a structure that follows density, as the Thread's is.
@@ -262,11 +262,9 @@ export function Place({
 		</div>
 	) : (
 		<div
-			className={
-				fills ? BLEED : cn(PAGE_BODY, BODY, foot && PAGE_BODY_OVER_FOOT)
-			}
+			className={cn(PAGE_BODY, BODY, foot ? PAGE_BODY_OVER_FOOT : BODY_FILLED)}
 		>
-			<ThreadFills value={foot ? null : setFills}>{children}</ThreadFills>
+			<ThreadRoom value={!foot}>{children}</ThreadRoom>
 			{floating ? (
 				<div aria-hidden className={cn(FLOATING_ACT_ROOM, ACT_ROOM)} />
 			) : null}

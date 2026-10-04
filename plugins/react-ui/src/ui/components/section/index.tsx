@@ -25,7 +25,7 @@ import {
 } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { FormContext } from "../../lib/form.ts";
-import { ThreadFills } from "../../lib/frame.ts";
+import { ThreadRoom } from "../../lib/frame.ts";
 import { DEEPER, HeadingContext } from "../../lib/heading.ts";
 import { LoadingContext } from "../../lib/loading.ts";
 import { ReasonHostContext } from "../../lib/reason.ts";
@@ -309,7 +309,7 @@ export function Section({
 						) : (
 							<LoadingContext value={loading === true}>
 								<SectionContext value={parts}>
-									<ThreadFills value={null}>{children}</ThreadFills>
+									<ThreadRoom value={false}>{children}</ThreadRoom>
 								</SectionContext>
 							</LoadingContext>
 						)}

@@ -344,7 +344,7 @@ a tick with no animation, never jumped to full.
   measure-wide column (`THREAD_COLUMN`) a Thread's input stands in. It reports
   `FootDocks` as a filling Thread's input does. `act` and `foot` are exclusive in the props type:
   the foot's Send is the screen's one filled act, so a floating act beside it would be a second.
-  A Place with a `foot` offers no `ThreadFills`, so a Thread in its body stands inline among the
+  A Place with a `foot` gives a Thread no room to fill (`ThreadRoom`), so a Thread in its body stands inline among the
   sections with no foot of its own, and no Latest act stands over the Place's foot. Rejected: a
   foot derived from a Thread's position (a Thread in the last Section docking its input), which
   hides the dock from the call site; a `MessageInput` docked variant, since docking is the
@@ -470,19 +470,35 @@ a tick with no animation, never jumped to full.
   Retry; no message, `empty`; each in the log's column. On the desktop both stand in
   a measure-wide column centred in the page (`THREAD_COLUMN`, held by no entry: a Place's `foot`
   and a record's `ItemHeader` over a filling Thread stand in it too), on touch in the screen's. A
-  Thread in a Place's body fills the page at every width, decided by where it stands: it calls the
-  Place's `ThreadFills` setter (the `RecordOpen` / `ActFloats` pattern) before paint, the body
-  draws no inset and leaves scrolling to it, its log scrolls at the page inset (`THREAD_LOG`),
+  Thread in a Place's body fills the page at every width, decided by where it stands, from its first render:
+  the frame hands it `ThreadRoom`, and the body draws no inset and leaves scrolling to it, its log scrolls at the page inset (`THREAD_LOG`),
   opening at the newest message and following each that arrives while the reader is at the end,
-  the input docked at the foot (`FOOT`); a Section takes the setter back. A filled Place's
+  the input docked at the foot (`FOOT`); a Section takes the room back. The web Thread marks
+  its filling root `data-fill` and the region reads the mark with an arbitrary
+  `[&:has(>[data-fill])]` variant (Tailwind 4's `has-[...]` takes no child combinator), so the
+  body's form follows the Thread from its first paint with no state in the frame. The marked
+  forms restate contract cells in the web overlay (`thread/fill.ts`), since Tailwind reads
+  literal classes only and the contract holds no platform overlay (ui-core's c21): the body's
+  `PAGE_BODY` inset zeroed, the Split main's `rest` cell turned into its `fills` one, and
+  `THREAD_COLUMN` under the main's mark. react-ui's `fill.test.ts` holds each to its cell by
+  resolving the insets side by side, so a cell that changes without its marked form fails
+  `pnpm check`. Native has no
+  such selector: by contract the Thread stands as the body's direct child (as `main`, or in a
+  fragment under the record's `ItemHeader`, in a Split), and the Place or Split reads it among
+  its children in render (`holdsThread`, as a sheet reads a TextArea). The native body keeps one
+  element type in every form, its keyboard-aware scroll stilled (`scrollEnabled` and `enabled`
+  off) with its content held to its height, so a Thread arriving late remounts nothing beside it.
+  Rejected: a Thread telling its frame in a layout effect, which commits the frame twice and, on
+  native, swapped the body's scroll for a view and remounted every sibling. A filled Place's
   floating act would stand over the docked input: accepted while no Place has both. A Split's
-  main provides its own setter, so a Thread under a record's `ItemHeader` fills the main the same
-  way: the main stops scrolling (native swaps its scroll for a view), keeping the page inset
-  around the head alone (`SPLIT_MAIN {state: fills}`), and the Thread bleeds through the sides
+  main gives it room too, so a Thread under a record's `ItemHeader` fills the main the same
+  way: the main stops scrolling, keeping the page inset
+  around the head alone (`SPLIT_MAIN {state: fills}`; the web spells it as the `rest` cell less
+  its gap and foot under the fill mark), and the Thread bleeds through the sides
   (`-mx-page`, an overlay by `ThreadBleeds`), its log and foot carrying the inset themselves,
   a page inset under the head over a hairline (`THREAD_UNDER_HEAD`) the scrolling messages meet;
-  the Split hands its main `OverThread`, so the `ItemHeader` stands in the Thread's column on the
-  desktop. The input docks at the main's foot and reports `FootDocks` as in a Place. The bleeding Place's act
+  the Split hands its main `OverThread` and the `ItemHeader` stands in the Thread's column on the
+  desktop under the main's fill mark (`group/main`). The input docks at the main's foot and reports `FootDocks` as in a Place. The bleeding Place's act
   still floats over the list, and where the record stands alone its room stands under the input.
   While a filling Thread's reader is scrolled up (the log's `atEnd` false), a secondary `Button`
   (`ArrowDown`, the word `latest`) floats centred at the foot of the log's region, a pair above

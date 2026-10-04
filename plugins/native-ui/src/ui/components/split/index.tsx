@@ -17,11 +17,12 @@ import {
 	type DetailsState,
 	PageTitle,
 	ThreadBleeds,
-	ThreadFills,
+	ThreadRoom,
 } from "../../lib/frame";
 import { Scroll } from "../../lib/hosts";
 import { useWords } from "../../lib/words";
 import { Sheet } from "../sheet";
+import { holdsThread } from "../thread";
 
 const REGION = "flex-1";
 // Whatever stands first in a bleeding body carries its own top inset: the
@@ -39,9 +40,9 @@ export interface SplitProps extends Closed {
 
 // One region at a time, each scrolling itself in a bleeding Place: the list,
 // or the open record once `main` is set, whose Place then leads its top bar
-// with a back act to the list. A Thread in the record fills it: the record
-// stops scrolling (its first frame remounts it out of the scroll), its head
-// stays at the page inset over the Thread's log, which scrolls, and the
+// with a back act to the list. A Thread in the record (as `main`, or in a
+// fragment under the record's head) fills it: the record stops scrolling, its
+// scroll kept so nothing in it remounts, its head stays at the page inset over the Thread's log, which scrolls, and the
 // input docks at its foot. A record the main opened (`beside`, a Screen)
 // replaces the main, its head the page's one (the Place draws none) with its
 // back act to the main and the Details act in its top bar. With a record
@@ -57,7 +58,6 @@ export function Split({ list, main, beside, pane }: SplitProps) {
 	const [own, setOwn] = useState(false);
 	const open = held ? held.open : own;
 	const setOpen = held ? held.setOpen : setOwn;
-	const [fills, setFills] = useState(false);
 	const opened = main !== undefined;
 	const sheet = opened && pane !== undefined;
 	// The Details sheet belongs to the pane it opened on: with no pane it
@@ -67,11 +67,8 @@ export function Split({ list, main, beside, pane }: SplitProps) {
 	const details: IconAct | undefined = sheet
 		? { icon: "PanelRight", label: words.details, onAct: () => setOpen(true) }
 		: undefined;
-	const record = (
-		<ThreadFills.Provider value={setFills}>
-			<ThreadBleeds.Provider value>{main}</ThreadBleeds.Provider>
-		</ThreadFills.Provider>
-	);
+	// A Thread in the record fills it, read off `main` in render.
+	const fill = holdsThread(main);
 	let region: ReactNode = (
 		<Scroll
 			key="list"
@@ -90,21 +87,22 @@ export function Split({ list, main, beside, pane }: SplitProps) {
 				<Beside.Provider value={{ details }}>{beside}</Beside.Provider>
 			</View>
 		);
-	else if (opened && fills)
-		region = (
-			<View className={cn(splitMain({ state: "fills" }), REGION)}>
-				{record}
-				{room}
-			</View>
-		);
 	else if (opened)
 		region = (
 			<Scroll
 				key="record"
+				enabled={!fill}
+				scrollEnabled={!fill}
 				className={REGION}
-				contentContainerClassName={splitMain({ state: "rest" })}
+				contentContainerClassName={
+					fill
+						? cn(splitMain({ state: "fills" }), REGION)
+						: splitMain({ state: "rest" })
+				}
 			>
-				{record}
+				<ThreadRoom.Provider value={fill}>
+					<ThreadBleeds.Provider value>{main}</ThreadBleeds.Provider>
+				</ThreadRoom.Provider>
 				{room}
 			</Scroll>
 		);

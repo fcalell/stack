@@ -12,7 +12,6 @@ import {
 	SKELETON_LINES,
 	skeleton,
 	skeletonRow,
-	THREAD_COLUMN,
 	text,
 } from "@fcalell/ui-core/variants";
 import { use } from "react";
@@ -24,6 +23,7 @@ import { joinParts, META_CUT, partText } from "../../lib/parts.ts";
 import { Count } from "../count/index.tsx";
 import { Picker } from "../picker/index.tsx";
 import { Status } from "../status/index.tsx";
+import { COLUMN_FILLED } from "../thread/fill.ts";
 
 const HEAD = "flex flex-col";
 const OVERLINE = "truncate";
@@ -103,7 +103,7 @@ export function ItemHeader<V extends string | null = string>({
 	// The column is a structure that follows density, as the Thread's is.
 	const overThread = use(OverThread);
 	const touch = useTouch();
-	const column = overThread && !touch && THREAD_COLUMN;
+	const column = overThread && !touch && COLUMN_FILLED;
 	if (loading)
 		return (
 			<div aria-busy className={cn(ITEM_HEADER, HEAD, column)}>

@@ -164,6 +164,16 @@ export const OVERLAYS: readonly string[] = [
 	"page-max-wide:group-has-data-pane/page:flex",
 	"group-has-[[data-pane][data-beside]]/page:flex",
 	"page-max-tablet:group-has-data-beside/page:hidden",
+	// A region reads the mark of a Thread filling it: no inset, the log
+	// scrolling; the record's head over it stands in the Thread's column.
+	"[&:has(>[data-fill])]:p-0",
+	"[&:has(>[data-fill])]:gap-0",
+	"[&:has(>[data-fill])]:pb-0",
+	"[&:has(>[data-fill])]:shrink",
+	"[&:has(>[data-fill])]:min-h-0",
+	"group-[:has(>[data-fill])]/main:w-full",
+	"group-[:has(>[data-fill])]/main:max-w-measure",
+	"group-[:has(>[data-fill])]/main:mx-auto",
 	"page-wide:hidden",
 	"page-max-wide:hidden",
 	"border-edge",

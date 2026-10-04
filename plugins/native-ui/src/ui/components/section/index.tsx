@@ -23,7 +23,7 @@ import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { FormContext } from "../../lib/form";
-import { ThreadFills } from "../../lib/frame";
+import { ThreadRoom } from "../../lib/frame";
 import { Ink } from "../../lib/ink";
 import { LoadingContext } from "../../lib/loading";
 import { partText } from "../../lib/parts";
@@ -270,9 +270,9 @@ export function Section({
 					) : (
 						<LoadingContext.Provider value={loading === true}>
 							<SectionContext.Provider value={parts}>
-								<ThreadFills.Provider value={null}>
+								<ThreadRoom.Provider value={false}>
 									{children}
-								</ThreadFills.Provider>
+								</ThreadRoom.Provider>
 							</SectionContext.Provider>
 						</LoadingContext.Provider>
 					)}

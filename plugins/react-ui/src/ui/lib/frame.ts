@@ -56,20 +56,19 @@ export const PlaceRoute = createContext<string | undefined>(undefined);
 // not found leads back; outside a Screen it leads to `PlaceRoute`.
 export const BackRoute = createContext<string | undefined>(undefined);
 
-// A Thread standing in a Place's body or a Split's main tells it, which then
-// gives the Thread the rest of its height and no inset, leaving scrolling to
-// its log; a Section takes the call back, a Thread in it standing among the
-// page's sections.
-export const ThreadFills = createContext<((fills: boolean) => void) | null>(
-	null,
-);
+// Whether a Thread standing here fills the region it stands in: true in a
+// Place's body without a foot and in a Split's main, false in a Section,
+// where it stands among the page's sections. A filling Thread marks its root
+// `data-fill`, and the region reads the mark by a `has-[>[data-fill]]`
+// variant (no inset, scrolling left to the log) from its first frame.
+export const ThreadRoom = createContext(false);
 
 // A Split's main keeps the page inset around the record's head, so a Thread
 // filling it bleeds through the sides, its log and foot inset themselves.
 export const ThreadBleeds = createContext(false);
 
-// While a Thread fills a Split's main, the record's head over it stands in the
-// Thread's column on the desktop.
+// A Split's main, whose record head stands in the Thread's column on the
+// desktop while a Thread fills the main (the main's `data-fill` mark).
 export const OverThread = createContext(false);
 
 // A bleeding touch Place hands the room its floating act needs to the regions

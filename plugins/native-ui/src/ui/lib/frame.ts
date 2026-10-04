@@ -98,13 +98,11 @@ export const BackRoute = createContext<string | undefined>(undefined);
 // props: the Toolbar over the list leaves with the list.
 export const RecordShown = createContext(false);
 
-// A Thread standing in a Place's body or a Split's main tells it, which then
-// gives the Thread the rest of its height and no inset, leaving scrolling to
-// its log; a Section takes the call back, a Thread in it standing among the
-// page's sections.
-export const ThreadFills = createContext<((fills: boolean) => void) | null>(
-	null,
-);
+// Whether a Thread standing here fills the region it stands in, which the
+// Place or Split decides from its children in render (`holdsThread`): the
+// region gives it the rest of its height and no inset, leaving scrolling to
+// its log. False in a Section, where it stands among the page's sections.
+export const ThreadRoom = createContext(false);
 
 // A Split's main keeps the page inset around the record's head, so a Thread
 // filling it bleeds through the sides, its log and foot inset themselves.

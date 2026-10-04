@@ -13,9 +13,11 @@ import {
 	THREAD_UNDER_HEAD,
 } from "@fcalell/ui-core/variants";
 import {
+	Children,
+	Fragment,
+	isValidElement,
 	type ReactNode,
 	useContext,
-	useLayoutEffect,
 	useRef,
 	useState,
 } from "react";
@@ -24,7 +26,7 @@ import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import {
 	ThreadBleeds,
-	ThreadFills,
+	ThreadRoom,
 	ToLatest,
 	useFootDocks,
 } from "../../lib/frame";
@@ -183,18 +185,13 @@ export function Thread<T>(props: ThreadProps<T>) {
 	};
 	const busy = listBusy(input);
 	const children = logOf(props, listState(input), words.retry);
-	const fills = useContext(ThreadFills);
+	const fill = useContext(ThreadRoom);
 	const bleeds = useContext(ThreadBleeds);
 	const docked = useFootDocks();
 	const log = useRef<ScrollView>(null);
 	const atEnd = useRef(true);
 	// The reader is scrolled up: the Latest act stands over the foot.
 	const [away, setAway] = useState(false);
-	useLayoutEffect(() => {
-		if (!fills) return;
-		fills(true);
-		return () => fills(false);
-	}, [fills]);
 	// The log opens at its end and stays there while the reader is, as a
 	// message arrives, a reply grows, or the input or the keyboard shrinks
 	// the log.
@@ -216,7 +213,7 @@ export function Thread<T>(props: ThreadProps<T>) {
 		setAway(false);
 		log.current?.scrollToEnd({ animated: false });
 	};
-	if (!fills)
+	if (!fill)
 		return (
 			<View className={THREAD}>
 				{messages}
@@ -258,5 +255,18 @@ export function Thread<T>(props: ThreadProps<T>) {
 				</View>
 			) : null}
 		</Lifted>
+	);
+}
+
+// Whether a Thread stands in a frame's region as its direct child, or in a
+// fragment there (a record's head over its conversation): the region then
+// gives it the rest of its height from its first render, its element type
+// unchanged, so nothing in it remounts when the Thread arrives.
+export function holdsThread(node: ReactNode): boolean {
+	return Children.toArray(node).some(
+		(child) =>
+			isValidElement<{ children?: ReactNode }>(child) &&
+			(child.type === Thread ||
+				(child.type === Fragment && holdsThread(child.props.children))),
 	);
 }

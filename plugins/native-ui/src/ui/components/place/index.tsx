@@ -12,7 +12,7 @@ import {
 	PAGE_TOP_BAR,
 	text,
 } from "@fcalell/ui-core/variants";
-import { type ReactNode, useContext, useState } from "react";
+import { type ReactNode, useContext } from "react";
 import { Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
@@ -24,7 +24,7 @@ import {
 	RecordShown,
 	ShellSwitcher,
 	ShellTabs,
-	ThreadFills,
+	ThreadRoom,
 	useToastBox,
 } from "../../lib/frame";
 import { Lifted, Scroll } from "../../lib/hosts";
@@ -34,6 +34,7 @@ import { Button } from "../button";
 import { IconButton } from "../icon-button";
 import { Menu } from "../menu";
 import { useSplitHead } from "../split";
+import { holdsThread } from "../thread";
 
 const PLACE = "flex-1";
 const TOP_BAR = "flex-row items-center";
@@ -91,9 +92,9 @@ export type PlaceProps = PlaceBase & PlaceEnd;
 // over the title, the body under it, and the one act floating lifted over
 // the body's end, the body keeping room under its last row (a bleeding body's scrolling child
 // keeps it) so the act never covers it. With `bleed` the body is the whole box under the title, with no
-// side inset and no scroll, for a child that scrolls itself; a Thread in the
-// body fills it the same way (its first frame remounts it out of the
-// scroll). A `foot` docks under the body over the keyboard a sections gap
+// side inset and no scroll, for a child that scrolls itself; a Thread standing as
+// the body's direct child fills it the same way from its first render, the
+// body's scroll kept and stilled so nothing in it remounts. A `foot` docks under the body over the keyboard a sections gap
 // under the body's end, the body scrolling past it, and a Thread in such a body stands among its sections.
 // A Split standing as its direct child gets its Details act in its head, and a record the Split shows alone puts a back
 // act to the place's route in the switcher's stead; while a record stands beside
@@ -114,10 +115,10 @@ export function Place({
 	// What the head shows of the Split in the body, read off its props: a
 	// record beside the main stands alone, its head the page's one.
 	const split = useSplitHead(children);
-	const [fills, setFills] = useState(false);
-	// Over a docked foot a Thread stands among the sections, the foot the
-	// page's one input.
-	const fill = foot ? null : setFills;
+	// A Thread standing as the body's child fills it, read off the children:
+	// over a docked foot it stands among the sections, the foot the page's one
+	// input.
+	const fill = foot === undefined && holdsThread(children);
 	// A record standing alone returns to the list, the place's own route.
 	const lead =
 		split.record && route !== undefined ? (
@@ -178,27 +179,27 @@ export function Place({
 											{children}
 										</ActRoom.Provider>
 									</View>
-								) : fills ? (
-									// A Thread in the body fills it, as a bleeding body's child
-									// does: no inset, its log scrolling.
-									<View className={BODY}>
-										<ThreadFills.Provider value={fill}>
-											{children}
-										</ThreadFills.Provider>
-										{room}
-									</View>
 								) : (
+									// One scroll in every form, so nothing in the body remounts
+									// when a Thread arrives: a filling Thread takes its height,
+									// with no inset, and scrolls its own log.
 									<Scroll
+										enabled={!fill}
+										scrollEnabled={!fill}
 										className={BODY}
-										contentContainerClassName={cn(
-											PAGE_BODY,
-											foot !== undefined && PAGE_BODY_OVER_FOOT,
-											BODY_CONTENT,
-										)}
+										contentContainerClassName={
+											fill
+												? BODY
+												: cn(
+														PAGE_BODY,
+														foot !== undefined && PAGE_BODY_OVER_FOOT,
+														BODY_CONTENT,
+													)
+										}
 									>
-										<ThreadFills.Provider value={fill}>
+										<ThreadRoom.Provider value={fill}>
 											{children}
-										</ThreadFills.Provider>
+										</ThreadRoom.Provider>
 										{room}
 									</Scroll>
 								)}
