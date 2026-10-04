@@ -12,15 +12,17 @@ import {
 import { buildGraphFromDiscovered } from "../lib/build-graph.ts";
 import { cliSlots } from "../lib/cli-slots.ts";
 import {
+	type ChooseRequirement,
 	type DiscoveredPlugin,
 	FIRST_PARTY_PLUGINS,
 	loadInstalledPlugins,
 	PLUGIN_NAMES,
 	resolveRequiresClosure,
+	validateDependencies,
 } from "../lib/discovery.ts";
 import { MissingPluginError, StackError } from "../lib/errors.ts";
 import { installStack, stackWorkspaceRoot } from "../lib/install.ts";
-import { ask, createPromptContext, multi } from "../lib/prompt.ts";
+import { ask, choose, createPromptContext, multi } from "../lib/prompt.ts";
 import {
 	announceCreated,
 	ensureGitignore,
@@ -97,7 +99,11 @@ async function run(dir: string, options: InitOptions): Promise<void> {
 		domain = await ask("Domain", "example.com");
 	}
 
-	const plugins = await installPlugins(dir, picked);
+	const plugins = await installPlugins(
+		dir,
+		picked,
+		nonInteractive ? undefined : chooseRequirement,
+	);
 
 	// Slots are matched by identity and the installed plugins import the
 	// app's own `@fcalell/cli`, so the scaffold runs in that copy, which is
@@ -113,10 +119,14 @@ async function run(dir: string, options: InitOptions): Promise<void> {
 
 // Writes `package.json` with the picked plugins and installs, until every
 // plugin a picked one requires is installed too: a plugin's `requires` is
-// known only once it is loaded.
+// known only once it is loaded. A one-of requirement the selection does not
+// meet is asked when `pick` is given and takes its first plugin otherwise;
+// the finished closure is validated, so a selection with two of a one-of
+// fails before the scaffold.
 async function installPlugins(
 	dir: string,
 	picked: string[],
+	pick?: ChooseRequirement,
 ): Promise<string[]> {
 	const ownsManifest = !existsSync("package.json");
 	let plugins = picked;
@@ -130,11 +140,10 @@ async function installPlugins(
 			patchPackageJson(dir, { dependencies: stackPluginSpecs(plugins) });
 		}
 		installStack(dir);
-		const closure = resolveRequiresClosure(
-			plugins,
-			await loadInstalledPlugins(plugins),
-		);
+		const installed = await loadInstalledPlugins(plugins);
+		const closure = await resolveRequiresClosure(plugins, installed, pick);
 		if (closure.length === plugins.length) {
+			validateDependencies(installed);
 			if (ownsManifest) announceCreated(["package.json"]);
 			return closure;
 		}
@@ -299,6 +308,9 @@ export async function scaffold(
 	note("stack dev", "Next steps");
 	outro("Done!");
 }
+
+const chooseRequirement: ChooseRequirement = (req, plugin) =>
+	choose(`${plugin} requires exactly one of these plugins`, req.oneOf);
 
 function validatePluginNames(requested: string[]): string[] {
 	const valid = new Set<string>(PLUGIN_NAMES);

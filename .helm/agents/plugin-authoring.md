@@ -80,8 +80,12 @@ Key fields:
 
 - `label`: human label used in the CLI picker.
 - `schema`: Zod schema for plugin options (see next section).
-- `requires`: presence-only sibling-plugin names. The CLI surfaces a missing entry with an
-  actionable error; ordering is derived from slot edges, not from this list.
+- `requires`: presence-only sibling plugins, each a name or a one-of
+  (`{ oneOf: ["cloudflare", "node"] }`) that exactly one of its plugins meets, the first being
+  the default. `stack init` and `stack add` pull every requirement the selection lacks; for an
+  unmet one-of, interactive `init` asks which and every other path takes the first. The CLI
+  surfaces a missing entry, or a one-of met twice, with an actionable error naming the choices;
+  ordering is derived from slot edges, not from this list.
 - `slots`: slots owned by this plugin, exposed on the returned factory as `.slots` so other plugins
   can contribute or derive.
 - `contributes`: array (or `(self) => array`) of `Contribution`s built via `someSlot.contribute(fn)`.

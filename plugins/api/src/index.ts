@@ -514,6 +514,8 @@ export const api = plugin("api", {
 	label: "API",
 
 	schema: apiOptionsSchema,
+	// The worker runs on exactly one server target, cloudflare by default.
+	requires: [{ oneOf: ["cloudflare", "node"] }],
 	gitignore: [".stack"],
 
 	guide: [

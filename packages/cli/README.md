@@ -21,7 +21,7 @@ makes the app's `CLAUDE.md` import it. The CLI's pages are
 ## Config
 
 `defineConfig()` in `stack.config.ts` is the single entry point for project configuration
-([`config.md`](./guide/config.md)). It returns a `StackConfig<T>` with a `.validate()` method that checks for duplicates and unsatisfied `requires` declarations.
+([`config.md`](./guide/config.md)). It returns a `StackConfig<T>` with a `.validate()` method that checks `app` and duplicate plugins; `requires` is checked when the config's plugins load.
 
 ### Plugin extraction
 
@@ -89,7 +89,7 @@ For the full contract and design paradigm, see [`.helm/agents/plugin-authoring.m
 
 ### `requires`
 
-`requires: ["plugin"]` declares presence-only sibling-plugin names — used for nicer error messages when a sibling is missing from the consumer's config. It does NOT influence ordering. Cross-plugin ordering falls out of slot edges (a derived slot waits for its inputs; a list slot waits for all contributions).
+`requires` declares presence-only sibling plugins, each a name (`"db"`) or a one-of that exactly one of its plugins meets (`{ oneOf: ["cloudflare", "node"] }`, the first being the default). `stack init` and `stack add` pull every requirement the selection lacks; for an unmet one-of, interactive `init` asks which and every other path takes the first. A sibling missing from the consumer's config, or a one-of met twice, fails with an error naming the choices. It does NOT influence ordering. Cross-plugin ordering falls out of slot edges (a derived slot waits for its inputs; a list slot waits for all contributions).
 
 ### Plugin commands
 

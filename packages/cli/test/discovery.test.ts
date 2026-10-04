@@ -3,7 +3,13 @@ import { mkdirSync, mkdtempSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
-import { loadInstalledPlugins } from "../src/lib/discovery.ts";
+import { plugin } from "../src/lib/create-plugin.ts";
+import {
+	type DiscoveredPlugin,
+	loadInstalledPlugins,
+	resolveRequiresClosure,
+	validateDependencies,
+} from "../src/lib/discovery.ts";
 
 // Links a stand-in first-party plugin into the app's `node_modules`, as a
 // workspace install does.
@@ -48,4 +54,79 @@ test("a plugin installed after an earlier load still loads", async () => {
 	} finally {
 		process.chdir(original);
 	}
+});
+
+// Stand-ins mirroring the `requires` each `plugins/*/src/index.ts` declares,
+// plus `bridge`, which names a server target after api.
+const SERVER_TARGET = { oneOf: ["cloudflare", "node"] } as const;
+const available: DiscoveredPlugin[] = (
+	[
+		["native-ui", ["expo", "api", "auth"]],
+		["expo", []],
+		["auth", ["api", "db"]],
+		["db", ["api"]],
+		["api", [SERVER_TARGET]],
+		["cloudflare", []],
+		["node", ["api"]],
+		["bridge", ["api", "node"]],
+	] as const
+).map(([name, requires]) => {
+	const factory = plugin(name, { label: name, requires });
+	return { name, cli: factory.cli, factory, options: {} };
+});
+
+const SERVER_TARGETS = new Set<string>(SERVER_TARGET.oneOf);
+const targets = (names: string[]) => names.filter((n) => SERVER_TARGETS.has(n));
+const config = (...names: string[]) =>
+	available.filter((p) => names.includes(p.name));
+
+test("the closure of native-ui pulls one server target, cloudflare by default", async () => {
+	const closure = await resolveRequiresClosure(["native-ui"], available);
+	assert.deepEqual(targets(closure), ["cloudflare"]);
+	assert.deepEqual([...closure].sort(), [
+		"api",
+		"auth",
+		"cloudflare",
+		"db",
+		"expo",
+		"native-ui",
+	]);
+});
+
+test("a one-of takes the plugin the chooser picks", async () => {
+	const closure = await resolveRequiresClosure(
+		["native-ui"],
+		available,
+		async () => "node",
+	);
+	assert.deepEqual(targets(closure), ["node"]);
+});
+
+test("a selection that picks node adds no cloudflare", async () => {
+	const closure = await resolveRequiresClosure(
+		["native-ui", "node"],
+		available,
+		async () => assert.fail("a met one-of asks nothing"),
+	);
+	assert.deepEqual(targets(closure), ["node"]);
+});
+
+test("a one-of is met by a plugin required after it", async () => {
+	const closure = await resolveRequiresClosure(["bridge"], available);
+	assert.deepEqual(targets(closure), ["node"]);
+});
+
+test("validation rejects an api with no server target and names the choices", () => {
+	assert.throws(
+		() => validateDependencies(config("db", "api")),
+		/\[api\] requires one of 'cloudflare', 'node', but none is in your config\. Add cloudflare\(\) or node\(\)/,
+	);
+	assert.doesNotThrow(() => validateDependencies(config("api", "node")));
+});
+
+test("validation rejects an api with both server targets", () => {
+	assert.throws(
+		() => validateDependencies(config("api", "cloudflare", "node")),
+		/\[api\] requires exactly one of 'cloudflare', 'node', but your config has cloudflare, node\. Remove all but one\./,
+	);
 });

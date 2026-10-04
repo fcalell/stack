@@ -2,7 +2,12 @@ import { createRequire } from "node:module";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import type { StackConfig } from "../config.ts";
-import type { InternalCliPlugin, PluginFactory } from "./create-plugin.ts";
+import type {
+	InternalCliPlugin,
+	OneOfRequirement,
+	PluginFactory,
+	Requirement,
+} from "./create-plugin.ts";
 import { toCamelCase } from "./naming.ts";
 import type { Slot } from "./slots.ts";
 
@@ -107,38 +112,55 @@ export async function loadInstalledPlugins(
 	return results;
 }
 
-// Presence-only dependencies. Used by `stack add` / init for nicer error
-// messages when a required sibling plugin is missing from the config.
-export function dependencyNames(plugin: DiscoveredPlugin): string[] {
-	return [...plugin.cli.requires];
+// The plugins any one of which satisfies a requirement.
+export function requirementOptions(req: Requirement): readonly string[] {
+	return typeof req === "string" ? [req] : req.oneOf;
 }
+
+// Picks the plugin that meets a one-of requirement the selection does not;
+// `plugin` is the plugin that declares it.
+export type ChooseRequirement = (
+	req: OneOfRequirement,
+	plugin: string,
+) => Promise<string>;
+
+const chooseFirst: ChooseRequirement = async (req) => req.oneOf[0];
 
 // Transitive `requires` closure for a set of selected plugin names, resolved
 // against the available (first-party) plugins. Returns the selected names PLUS
-// every transitively-required sibling, deduped, with each plugin's requirements
-// ordered before it (post-order). Shared by `stack init` and `stack add` so
-// both auto-pull the *full* dependency chain, not just one level — picking
-// `auth` pulls `db`, and `db`'s own requirements in turn. Unknown names (e.g.
-// third-party plugins not in `available`) pass through as leaves.
-export function resolveRequiresClosure(
+// every transitively-required sibling, deduped, with each plugin's named
+// requirements ordered before it (post-order). Shared by `stack init` and
+// `stack add` so both auto-pull the *full* dependency chain, not just one
+// level — picking `auth` pulls `db`, and `db`'s own requirements in turn.
+// One-of requirements settle after the named closure, so a plugin pulled by
+// name anywhere meets them whatever the visit order; one still unmet adds the
+// plugin `choose` picks, the first of `oneOf` unless told otherwise. Unknown
+// names (e.g. third-party plugins not in `available`) pass through as leaves.
+export async function resolveRequiresClosure(
 	names: readonly string[],
 	available: readonly DiscoveredPlugin[],
-): string[] {
+	choose: ChooseRequirement = chooseFirst,
+): Promise<string[]> {
 	const byName = new Map(available.map((p) => [p.name, p]));
 	const ordered: string[] = [];
 	const seen = new Set<string>();
+	const oneOfs: { req: OneOfRequirement; plugin: string }[] = [];
 
 	const visit = (name: string): void => {
 		if (seen.has(name)) return;
 		seen.add(name);
-		const plugin = byName.get(name);
-		if (plugin) {
-			for (const req of plugin.cli.requires) visit(req);
+		for (const req of byName.get(name)?.cli.requires ?? []) {
+			if (typeof req === "string") visit(req);
+			else oneOfs.push({ req, plugin: name });
 		}
 		ordered.push(name);
 	};
 
 	for (const name of names) visit(name);
+	for (let next = oneOfs.shift(); next; next = oneOfs.shift()) {
+		if (next.req.oneOf.some((name) => seen.has(name))) continue;
+		visit(await choose(next.req, next.plugin));
+	}
 	return ordered;
 }
 
@@ -171,12 +193,21 @@ export function validateDependencies(plugins: DiscoveredPlugin[]): void {
 
 	for (const plugin of plugins) {
 		for (const req of plugin.cli.requires) {
-			if (!available.has(req)) {
+			const options = requirementOptions(req);
+			const present = options.filter((name) => available.has(name));
+			if (present.length === 1) continue;
+			const quoted = options.map((name) => `'${name}'`).join(", ");
+			const calls = options.map((name) => `${toCamelCase(name)}()`);
+			if (present.length > 1) {
 				throw new Error(
-					`[${plugin.name}] requires plugin '${req}', ` +
-						`but it is not in your config. Add ${req}() to plugins array.`,
+					`[${plugin.name}] requires exactly one of ${quoted}, but your config has ${present.join(", ")}. Remove all but one.`,
 				);
 			}
+			throw new Error(
+				typeof req === "string"
+					? `[${plugin.name}] requires plugin '${req}', but it is not in your config. Add ${calls[0]} to plugins array.`
+					: `[${plugin.name}] requires one of ${quoted}, but none is in your config. Add ${calls.join(" or ")} to plugins array.`,
+			);
 		}
 	}
 }

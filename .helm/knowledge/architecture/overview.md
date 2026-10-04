@@ -40,8 +40,8 @@ runtime export.
 
 Cross-plugin dataflow is expressed as typed slot imports: plugin A imports `pluginB.slots.foo` and
 either contributes to it or derives from it. The graph engine resolves topology automatically.
-`requires: ["plugin"]` only declares presence (for nicer error messages); ordering falls out of the
-slot edges.
+`requires` only declares presence, by name or as a one-of (for nicer error messages and init's
+and add's auto-pull); ordering falls out of the slot edges.
 
 ```
 @fcalell/cli               (core — defineConfig, plugin, slot.*, slot graph, CLI)
@@ -78,7 +78,8 @@ plugin-auth ──────────────> cli, requires api + db
                                  (owns auth.slots.runtimeOptions — derived from api.slots.cors and api.slots.nativeScheme;
                                   contributes to cloudflare.slots.bindings, api.slots.env/pluginRuntimes/callbacks,
                                   and the test entry's sign-in to api.slots.testingEntries)
-plugin-api ───────────────> cli (owns api.slots.workerImports/pluginRuntimes/middlewareEntries/cors/nativeScheme/callbacks/env/workerSource;
+plugin-api ───────────────> cli, requires exactly one of cloudflare or node (default cloudflare)
+                                 (owns api.slots.workerImports/pluginRuntimes/middlewareEntries/cors/nativeScheme/callbacks/env/workerSource;
                                  never imports a deploy target)
 plugin-node ──────────────> cli, requires api
                                  (owns node.slots.serverPort/services/serverSource;

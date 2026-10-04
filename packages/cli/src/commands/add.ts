@@ -73,8 +73,9 @@ export async function add(
 	}
 
 	// Install the plugin, then each plugin it requires that the app lacks: a
-	// plugin's `requires` is known only once it is loaded. The closure orders
-	// each plugin's dependencies before it; the requested plugin lands last.
+	// plugin's `requires` is known only once it is loaded. The closure starts
+	// from the app's plugins so a one-of the app already meets adds nothing,
+	// and an unmet one-of takes its first plugin.
 	let pluginsToAdd = [pluginName];
 	let available: DiscoveredPlugin[];
 	for (;;) {
@@ -84,9 +85,12 @@ export async function add(
 			...existingPluginNames,
 			...pluginsToAdd,
 		]);
-		const closure = resolveRequiresClosure([pluginName], available).filter(
-			(n) => !existingNames.has(n),
-		);
+		const closure = (
+			await resolveRequiresClosure(
+				[...existingPluginNames, pluginName],
+				available,
+			)
+		).filter((n) => !existingNames.has(n));
 		const grew = closure.length !== pluginsToAdd.length;
 		pluginsToAdd = closure;
 		if (!grew) break;

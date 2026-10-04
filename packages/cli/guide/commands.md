@@ -33,7 +33,10 @@ commit together. Never edit a spec or the lockfile by hand.
   from stack's repository, at the commit `pnpm-lock.yaml` records.
 - `tsconfig.json` (and, for an app with a worker, `tsconfig.app.json`, `tsconfig.worker.json`
   and `tsconfig.test.json`), `biome.json`, `.gitignore` and `stack.config.ts`, each only when
-  missing. A plugin a picked plugin requires is picked with it.
+  missing. A plugin a picked plugin requires is picked with it. When a plugin needs exactly one
+  of several (the API needs a server target, cloudflare or node), init asks which; init run
+  with flags or without a terminal, and `stack add`, take the plugin's default, cloudflare for
+  the API.
 - For an app (`vite` or `expo`) with a worker (`api` or `db`), the app and the worker are two
   projects under a solution `tsconfig.json` with no files of its own, so `check-types` is
   `tsc -b`. Type-check with `pnpm check` or `tsc -b`, never `tsc --noEmit`: on the solution it

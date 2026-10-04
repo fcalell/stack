@@ -66,5 +66,7 @@ resolves `api.slots.workerSource` waits for every contribution to `workerImports
 There is no `after:`, no handler-firing order, no barrier event. If you find yourself wanting to
 "run after plugin X did Y", declare a derived slot whose inputs include the value Y produced.
 
-`requires: ["plugin"]` on a plugin definition is presence-only: it powers an actionable error when
-a sibling is missing from the consumer's config. It never influences ordering.
+`requires` on a plugin definition is presence-only, by name (`"db"`) or as a one-of exactly one
+of whose plugins meets it (`{ oneOf: ["cloudflare", "node"] }`, the first being the default): it
+powers an actionable error when a sibling is missing from the consumer's config, and init's and
+add's auto-pull. It never influences ordering.

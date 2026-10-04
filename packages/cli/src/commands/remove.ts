@@ -6,7 +6,11 @@ import { buildGraphFromDiscovered } from "../lib/build-graph.ts";
 import { cliSlots } from "../lib/cli-slots.ts";
 import { loadConfig } from "../lib/config.ts";
 import { removePluginCall } from "../lib/config-writer.ts";
-import { type DiscoveredPlugin, discoverPlugins } from "../lib/discovery.ts";
+import {
+	type DiscoveredPlugin,
+	discoverPlugins,
+	requirementOptions,
+} from "../lib/discovery.ts";
 import { MissingPluginError, StackError } from "../lib/errors.ts";
 
 // Remove `keys` from `pkg[field]` (when it's a plain object). Returns true if
@@ -82,12 +86,15 @@ export async function remove(
 		);
 	}
 
-	// Any sibling that declares `requires: [pluginName]` blocks removal.
+	// A sibling with a requirement `pluginName` meets blocks removal; a
+	// one-of is met by exactly one plugin, so it is `pluginName`.
 	// Only enforceable when discovery succeeded; in the degraded path we
 	// can't see plugin metadata, so we trust the consumer.
 	if (discovered) {
 		const dependents = discovered.filter((p) =>
-			p.cli.requires.includes(pluginName),
+			p.cli.requires.some((req) =>
+				requirementOptions(req).includes(pluginName),
+			),
 		);
 		if (dependents.length > 0) {
 			const names = dependents.map((p) => p.name).join(", ");

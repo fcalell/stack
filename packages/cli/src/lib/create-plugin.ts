@@ -149,9 +149,10 @@ export interface PluginDefinition<
 	// command `ctx.options`. Plugins don't redeclare either shape.
 	schema?: z.ZodType<TResolvedOptions, TOptions>;
 
-	// Presence-only dependency. Used for nicer error messages; ordering is
-	// derived entirely from slot inputs, not from `requires`.
-	requires?: string[];
+	// Presence-only dependency. Used for nicer error messages and init's and
+	// add's auto-pull; ordering is derived entirely from slot inputs, not from
+	// `requires`.
+	requires?: readonly Requirement[];
 
 	// Slots owned by this plugin. Exposed on the returned factory as
 	// `.slots` so other plugins can contribute to them.
@@ -182,6 +183,15 @@ export interface PluginDefinition<
 	guide?: readonly { page: string; trigger: string }[];
 }
 
+// A sibling plugin that must be in the config: one by name, or exactly one
+// of several. The first `oneOf` entry is the default `stack init` and
+// `stack add` pick when the selection has none.
+export type Requirement = string | OneOfRequirement;
+
+export interface OneOfRequirement {
+	readonly oneOf: readonly [string, string, ...string[]];
+}
+
 // ── Internal CLI-facing descriptor ─────────────────────────────────
 
 // Everything the CLI needs to route subcommands and drive discovery. The
@@ -192,7 +202,7 @@ export interface InternalCliPlugin<TOptions, TSlots, TResolvedOptions> {
 	name: string;
 	label: string;
 	package: string;
-	requires: readonly string[];
+	requires: readonly Requirement[];
 	callbacks: Record<
 		string,
 		CallbackMarker<unknown, unknown> | OptionalCallbackMarker<unknown, unknown>
@@ -298,7 +308,7 @@ export type PluginFactory<
 }) & {
 	name: TName;
 	package: string;
-	requires: readonly string[];
+	requires: readonly Requirement[];
 	slots: TSlots;
 	cli: InternalCliPlugin<TOptions, TSlots, TResolvedOptions>;
 } & (TCallbacks extends Record<string, never>
@@ -334,6 +344,7 @@ export function plugin<
 		definition.callbacks !== undefined &&
 		Object.keys(definition.callbacks).length > 0;
 	const callbackTarget = `src/worker/plugins/${name}.ts`;
+	const requires = definition.requires ?? [];
 
 	const template = (templateName: string): URL => {
 		const root = packageInfo()?.root;
@@ -434,7 +445,7 @@ export function plugin<
 		name,
 		label: definition.label,
 		package: pkg,
-		requires: definition.requires ?? [],
+		requires,
 		callbacks: (definition.callbacks ?? {}) as Record<
 			string,
 			| CallbackMarker<unknown, unknown>
@@ -488,7 +499,7 @@ export function plugin<
 
 	const result = Object.assign(configFactory, {
 		package: pkg,
-		requires: (definition.requires ?? []) as readonly string[],
+		requires,
 		slots,
 		cli,
 	});

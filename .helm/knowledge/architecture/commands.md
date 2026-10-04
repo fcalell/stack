@@ -31,6 +31,12 @@ stack <plugin> <command>     # Plugin subcommands (e.g. stack db push)
 `stack init` first writes `package.json` (only when missing) and `pnpm-workspace.yaml`, every
 `@fcalell/*` spec from the CLI's table ([consumer-project](./consumer-project.md#from-github)),
 and installs: a plugin loads only once installed, and its `requires` is known only once loaded.
+One-of requirements (api's server target) settle after the named closure, so a plugin any
+selected plugin names meets them. One still unmet is asked by interactive `init` and takes the
+first of its `oneOf` under flags, without a TTY, and in `stack add`, whose closure starts from
+the app's plugins so a one-of the app meets adds nothing. `init` validates the finished closure,
+so a selection meeting a one-of twice fails before the scaffold. The default lives in the
+requiring plugin's declaration, so the CLI names no domain.
 In an app inside stack's own workspace, every `@fcalell/*` spec becomes `workspace:*` instead,
 no `pnpm-workspace.yaml` or `biome.json` is written, and the workspace root installs
 ([consumer-project](./consumer-project.md#inside-stacks-workspace)).
