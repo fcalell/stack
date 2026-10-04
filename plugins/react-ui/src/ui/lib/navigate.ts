@@ -8,10 +8,11 @@ function onLocation(notify: () => void): () => void {
 	return () => removeEventListener("popstate", notify);
 }
 
-export function usePathname(): string {
+// The current route: the location's path and its query.
+export function useRoute(): string {
 	return useSyncExternalStore(
 		onLocation,
-		() => location.pathname,
+		() => location.pathname + location.search,
 		() => "/",
 	);
 }
@@ -20,8 +21,16 @@ export function navigate(route: string): void {
 	location.assign(route);
 }
 
-// A place is current at its route and below it; the root only at itself.
-export function isCurrent(route: string, pathname: string): boolean {
-	if (route === "/") return pathname === "/";
-	return pathname === route || pathname.startsWith(`${route}/`);
+// A place is current at its route and below it, the root only at itself; a
+// route's query narrows it to the routes carrying each of its parameters.
+export function isCurrent(route: string, current: string): boolean {
+	const want = new URL(route, "https://route.invalid");
+	const here = new URL(current, "https://route.invalid");
+	for (const [key, value] of want.searchParams)
+		if (!here.searchParams.getAll(key).includes(value)) return false;
+	if (want.pathname === "/") return here.pathname === "/";
+	return (
+		here.pathname === want.pathname ||
+		here.pathname.startsWith(`${want.pathname}/`)
+	);
 }

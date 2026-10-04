@@ -2,9 +2,11 @@ import type { Act, IconAct, MenuItem } from "@fcalell/ui-core/descriptors";
 import {
 	FLOATING_ACT,
 	FLOATING_ACT_FOOT,
+	FLOATING_ACT_LIFT,
 	FLOATING_ACT_ROOM,
 	FOOT,
 	PAGE_BODY,
+	PAGE_BODY_OVER_FOOT,
 	PAGE_HEAD,
 	PAGE_TITLE,
 	PAGE_TOP_BAR,
@@ -17,6 +19,7 @@ import { cn } from "../../lib/cn";
 import {
 	ActFloats,
 	ActRoom,
+	BesideOpen,
 	LendAct,
 	PageTitle,
 	PlaceRoute,
@@ -72,15 +75,16 @@ type PlaceEnd = { act?: Act; foot?: never } | { foot?: ReactNode; act?: never };
 export type PlaceProps = PlaceBase & PlaceEnd;
 
 // A page in the shell: the top bar (the shell's switcher, the actions, more)
-// over the title, the body under it, and the one act floating over the
-// body's end, the body keeping room under its last row (a bleeding body's scrolling child
+// over the title, the body under it, and the one act floating lifted over
+// the body's end, the body keeping room under its last row (a bleeding body's scrolling child
 // keeps it) so the act never covers it. With `bleed` the body is the whole box under the title, with no
 // side inset and no scroll, for a child that scrolls itself; a Thread in the
 // body fills it the same way (its first frame remounts it out of the
-// scroll). A `foot` docks under the body over the keyboard, the body
-// scrolling past it, and a Thread in such a body stands among its sections.
+// scroll). A `foot` docks under the body over the keyboard a sections gap
+// under the body's end, the body scrolling past it, and a Thread in such a body stands among its sections.
 // A Split inside lends it its Details act, and a record the Split shows alone puts a back
-// act to the place's route in the switcher's stead.
+// act to the place's route in the switcher's stead; while a record stands beside
+// the main, the Place draws no head, that record's head the page's one.
 export function Place({
 	title,
 	actions,
@@ -95,6 +99,8 @@ export function Place({
 	const route = useContext(PlaceRoute);
 	const [lent, lend] = useState<IconAct>();
 	const [alone, standAlone] = useState(false);
+	// A record beside the main stands alone, its head the page's one.
+	const [besideShown, showBeside] = useState(false);
 	const [fills, setFills] = useState(false);
 	const docked = useFootDocks();
 	// Over a docked foot a Thread stands among the sections, the foot the
@@ -129,88 +135,102 @@ export function Place({
 	return (
 		<LendAct.Provider value={lend}>
 			<RecordAlone.Provider value={standAlone}>
-				<RecordShown.Provider value={alone}>
-					<PageTitle.Provider value={title}>
-						<View className={PLACE}>
-							<View className={PAGE_HEAD}>
-								{bar ? (
-									<View className={cn(PAGE_TOP_BAR, TOP_BAR)}>
-										{lead}
-										<View className={SPACER} />
-										{acts.map((action) => (
-											<IconButton key={action.label} {...action} fit="body" />
-										))}
-										{more?.length ? (
-											<Menu label={words.more} items={more} />
+				<BesideOpen.Provider value={showBeside}>
+					<RecordShown.Provider value={alone}>
+						<PageTitle.Provider value={title}>
+							<View className={PLACE}>
+								{besideShown ? null : (
+									<View className={PAGE_HEAD}>
+										{bar ? (
+											<View className={cn(PAGE_TOP_BAR, TOP_BAR)}>
+												{lead}
+												<View className={SPACER} />
+												{acts.map((action) => (
+													<IconButton
+														key={action.label}
+														{...action}
+														fit="body"
+													/>
+												))}
+												{more?.length ? (
+													<Menu label={words.more} items={more} />
+												) : null}
+											</View>
+										) : null}
+										<RNText
+											accessibilityRole="header"
+											className={cn(text({ role: "title" }), TITLE, PAGE_TITLE)}
+										>
+											{title}
+										</RNText>
+									</View>
+								)}
+								<Lifted
+									behavior="padding"
+									automaticOffset
+									enabled={foot !== undefined}
+									className={BODY}
+								>
+									<View className={BODY_WRAP}>
+										{bleed ? (
+											<View className={BODY}>
+												<ActRoom.Provider value={footprint}>
+													{children}
+												</ActRoom.Provider>
+											</View>
+										) : fills ? (
+											// A Thread in the body fills it, as a bleeding body's child
+											// does: no inset, its log scrolling.
+											<View className={BODY}>
+												<ThreadFills.Provider value={fill}>
+													{children}
+												</ThreadFills.Provider>
+												{room}
+											</View>
+										) : (
+											<Scroll
+												className={BODY}
+												contentContainerClassName={cn(
+													PAGE_BODY,
+													foot !== undefined && PAGE_BODY_OVER_FOOT,
+													BODY_CONTENT,
+												)}
+											>
+												<ThreadFills.Provider value={fill}>
+													{children}
+												</ThreadFills.Provider>
+												{room}
+											</Scroll>
+										)}
+										{/* The page's act is its create act by rule, so it carries the plus. */}
+										{act ? (
+											<View
+												pointerEvents="box-none"
+												className={cn(FLOATING_ACT, ACT_LAYER)}
+											>
+												<View className={FLOATING_ACT_LIFT}>
+													<Button
+														fit="body"
+														icon="Plus"
+														label={act.label}
+														onAct={act.onAct}
+														loading={act.loading}
+														blocked={act.blocked}
+													/>
+												</View>
+											</View>
 										) : null}
 									</View>
-								) : null}
-								<RNText
-									accessibilityRole="header"
-									className={cn(text({ role: "title" }), TITLE, PAGE_TITLE)}
-								>
-									{title}
-								</RNText>
-							</View>
-							<Lifted
-								behavior="padding"
-								automaticOffset
-								enabled={foot !== undefined}
-								className={BODY}
-							>
-								<View className={BODY_WRAP}>
-									{bleed ? (
-										<View className={BODY}>
-											<ActRoom.Provider value={footprint}>
-												{children}
-											</ActRoom.Provider>
-										</View>
-									) : fills ? (
-										// A Thread in the body fills it, as a bleeding body's child
-										// does: no inset, its log scrolling.
-										<View className={BODY}>
-											<ThreadFills.Provider value={fill}>
-												{children}
-											</ThreadFills.Provider>
-											{room}
-										</View>
-									) : (
-										<Scroll
-											className={BODY}
-											contentContainerClassName={cn(PAGE_BODY, BODY_CONTENT)}
-										>
-											<ThreadFills.Provider value={fill}>
-												{children}
-											</ThreadFills.Provider>
-											{room}
-										</Scroll>
-									)}
-									{/* The page's act is its create act by rule, so it carries the plus. */}
-									{act ? (
-										<View
-											pointerEvents="box-none"
-											className={cn(FLOATING_ACT, ACT_LAYER)}
-										>
-											<Button
-												fit="body"
-												icon="Plus"
-												label={act.label}
-												onAct={act.onAct}
-												loading={act.loading}
-												blocked={act.blocked}
-											/>
+									{foot ? (
+										<View onLayout={docked} className={cn(FOOT, DOCKED)}>
+											{foot}
 										</View>
 									) : null}
-								</View>
-								{foot ? (
-									<View onLayout={docked} className={cn(FOOT, DOCKED)}>
-										{foot}
-									</View>
-								) : null}
-							</Lifted>
-						</View>
-					</PageTitle.Provider>
-				</RecordShown.Provider>
+								</Lifted>
+							</View>
+						</PageTitle.Provider>
+					</RecordShown.Provider>
+				</BesideOpen.Provider>
 			</RecordAlone.Provider>
 		</LendAct.Provider>
 	);

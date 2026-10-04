@@ -144,10 +144,17 @@ function GroupLabel({ children }: { children: string }) {
 	);
 }
 
-// The waiting check rows in the slots the options declare: a group label's
-// bar over them when they stand under labels, a description bar under each
-// label when they are described.
-function Wait({ shape }: { shape: OptionShape }) {
+// The waiting rows in the slots the options declare, each led by the mark
+// its form draws (a box, or a radio's ring): a group label's bar over them
+// when they stand under labels, a description bar under each label when they
+// are described.
+function Wait({
+	shape,
+	mark,
+}: {
+	shape: OptionShape;
+	mark: "check" | "radio";
+}) {
 	return (
 		<View className={SELECT_GROUP}>
 			{shape.group ? (
@@ -170,7 +177,7 @@ function Wait({ shape }: { shape: OptionShape }) {
 					<View className={cn(OPTION_LINE, LINE)}>
 						<View className={BOX_LINE}>
 							<RNText className={lineBox({ role: "body" })}>{STRUT}</RNText>
-							<View className={skeleton({ kind: "check" })} />
+							<View className={skeleton({ kind: mark })} />
 						</View>
 						<View className={TEXT}>
 							<View className={STRUT_BAR}>
@@ -249,6 +256,7 @@ export function OptionList<V extends string = string, T = unknown>(
 				shape={
 					props.option ? optionShape(props.option) : optionsShape(props.options)
 				}
+				mark={one ? "radio" : "check"}
 			/>,
 		);
 	if (state === "missing")

@@ -6,7 +6,12 @@ import {
 	retryOf,
 	WAITING_MESSAGES,
 } from "@fcalell/ui-core/list-state";
-import { FOOT, THREAD, THREAD_LOG } from "@fcalell/ui-core/variants";
+import {
+	FOOT,
+	THREAD,
+	THREAD_LOG,
+	THREAD_UNDER_HEAD,
+} from "@fcalell/ui-core/variants";
 import {
 	type ReactNode,
 	useContext,
@@ -34,7 +39,7 @@ import { Latest } from "./latest";
 
 const FILL = "flex-1";
 // In a Split's main the Thread bleeds through the inset the record's head
-// keeps.
+// keeps, under the head's hairline.
 const BLEED = "-mx-page";
 // The region over the foot: the log, and the Latest act floating at its foot.
 const REGION = "relative flex-1";
@@ -222,7 +227,7 @@ export function Thread<T>(props: ThreadProps<T>) {
 		<Lifted
 			behavior="padding"
 			automaticOffset
-			className={cn(FILL, bleeds && BLEED)}
+			className={cn(FILL, bleeds && THREAD_UNDER_HEAD, bleeds && BLEED)}
 		>
 			<View className={REGION}>
 				<ScrollView

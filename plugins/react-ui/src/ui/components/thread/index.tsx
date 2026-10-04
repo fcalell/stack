@@ -12,6 +12,7 @@ import {
 	THREAD,
 	THREAD_COLUMN,
 	THREAD_LOG,
+	THREAD_UNDER_HEAD,
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, use, useLayoutEffect, useRef, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
@@ -34,7 +35,7 @@ import { Latest } from "./latest.tsx";
 const STACK = "flex flex-col";
 const FILL = "flex flex-col grow min-h-0";
 // In a Split's main the Thread bleeds through the inset the record's head
-// keeps.
+// keeps, under the head's hairline.
 const BLEED = "-mx-page";
 // The log rings inset, its edge meeting the page's.
 const SCROLLS = "grow min-h-0 overflow-y-auto focus-visible:-outline-offset-2";
@@ -215,7 +216,7 @@ export function Thread<T>(props: ThreadProps<T>) {
 			</div>
 		);
 	return (
-		<div className={cn(FILL, bleeds && BLEED)}>
+		<div className={cn(FILL, bleeds && THREAD_UNDER_HEAD, bleeds && BLEED)}>
 			<div className={REGION}>
 				<div
 					ref={log}

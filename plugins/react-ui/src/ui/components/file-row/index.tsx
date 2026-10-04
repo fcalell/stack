@@ -13,7 +13,7 @@ import {
 import { use, useLayoutEffect, useRef, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { GroundContext } from "../../lib/ground.ts";
-import { isCurrent, usePathname } from "../../lib/navigate.ts";
+import { isCurrent, useRoute } from "../../lib/navigate.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Chip } from "../chip/index.tsx";
 import { Icon } from "../icon/index.tsx";
@@ -139,7 +139,7 @@ export function FileRow({
 }: FileRowProps) {
 	const words = useWords();
 	const ground = use(GroundContext);
-	const pathname = usePathname();
+	const at = useRoute();
 	if (loading) return <FileWait busy chip={chip !== undefined} />;
 	const seenWord = seen ? words.seen : words.unseen;
 	const named = [
@@ -153,7 +153,7 @@ export function FileRow({
 	]
 		.filter(Boolean)
 		.join(", ");
-	const current = href !== undefined && isCurrent(href, pathname);
+	const current = href !== undefined && isCurrent(href, at);
 	const hitClass = cn(HIT, ground === "list" && HIT_LIST);
 	let hit = null;
 	if (href !== undefined)

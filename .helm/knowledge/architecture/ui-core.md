@@ -198,8 +198,10 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
   ItemHeader's status, a status pick's option), so running and steady rows mix in one List under
   one leading kind. `STATUS_DOT` carries no `running` cell; the spinner's slot is
   `STATUS_SPINNER`, its accent ink the web's currentColor and native's `Ink` tone
-  (`statusContentTone`). The spinner keeps its own size (the `icon` rung) and its own
-  reduced-motion rule. Rejected: spinning `active`, which would turn a row that stands for days.
+  (`statusContentTone`). The spinner keeps its own size (the `icon` rung) and keeps turning
+  under reduced motion: it is a progress indicator, the one motion that says work is under way,
+  and a still arc reads as a stalled one; reduced motion stills the transitions around it. Rejected:
+  spinning `active`, which would turn a row that stands for days.
 - The Shell's switcher is a pick: a `Switcher` is an `OptionPick` whose options carry their
   avatars (`Option.avatar`, leading the option row as a status's dot does) plus `act`, the act
   that makes a new one, which the Picker draws under a hairline (`HAIRLINE`) after the options as
@@ -277,13 +279,19 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
   `data-split` inside, narrows to `w-list` at the body's start (below `tablet` it spans whichever
   region stands alone). The Place hands the act's room (its height over `pb-page`,
   `FLOATING_ACT_FOOT`, since a region in a bleeding body keeps no page inset) to the Split, which
-  keeps it under the list and, where the record stands alone, under the record. Two mounted
-  copies of the act would each keep their own state, so the act is never duplicated.
+  keeps it under the list and, where the record stands alone, under the record; a `beside`
+  Screen keeps it under its sections where it stands alone. Two mounted
+  copies of the act would each keep their own state, so the act is never duplicated. The act is
+  lifted (`FLOATING_ACT_LIFT`, `shadow-float` at the control radius) as a Thread's Latest act is:
+  an act floating over what scrolls is a lifted layer, the one shadow it carries.
 - A field that stays in view while a Place's sections scroll (an ask box over a home) is the
   Place's `foot`, an explicit slot: it docks under the body at both densities on the shared `FOOT`
   cell (the page inset at the sides and foot, the cell a filling Thread's input docks on, held by
   no entry), the body scrolling past it, above the tab bar on touch and, on native, lifted over
-  the keyboard (the body and the foot share one `KeyboardAvoidingView`, `Lifted`). It reports
+  the keyboard (the body and the foot share one `KeyboardAvoidingView`, `Lifted`). The body
+  ends a sections gap over it (`PAGE_BODY_OVER_FOOT`), as a filling Thread's log ends over its
+  input, so the field reads apart from the last section; on the desktop the foot stands in the
+  measure-wide column (`THREAD_COLUMN`) a Thread's input stands in. It reports
   `FootDocks` as a filling Thread's input does. `act` and `foot` are exclusive in the props type:
   the foot's Send is the screen's one filled act, so a floating act beside it would be a second.
   A Place with a `foot` offers no `ThreadFills`, so a Thread in its body stands inline among the
@@ -296,14 +304,18 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
   surface and no component can derive it. From `wide` of the page the list, the main and the
   beside record stand together, main and beside sharing what the list leaves half each
   (`SPLIT_BESIDE`, `grow basis-0`: a structural fraction, never a width token; the web parts
-  them by the beside's start hairline, an overlay from `wide`); the Screen's back act draws as
+  them by the beside's start hairline, an overlay from `wide`). The main's inset sits on a box
+  inside its scroll, never on the shared box, because a `basis-0` item still counts its own
+  padding against its share; the Screen's back act draws as
   Close to the same route, and the pane leaves for the Details act at every width, which the
   Split lends with `beside` set. Below `wide` the beside record stands in the main's place with
-  its back act, a pushed page inside the Split; on the phone it replaces the main, its back act
-  in its top bar. The Split hands the Screen `Beside`: the Screen covers no tab bar, its title
-  is a heading at the level where it stands, and on the web its body, not its root, is the
-  `page` container, so its head's acts read the outer page's width and what stands in its body
-  reads its own. Rejected: the record in the pane (the pane is the open record's details, at
+  its back act, a pushed page inside the Split. Below `tablet` (the web) and on the phone, where
+  it stands alone, its head is the page's one: the Split tells the Place (`BesideOpen`), which
+  draws no head, so one top bar holds one back act, to the main, and the list is reached by
+  going back from the main; the Split hands the Details act to that head through `Beside`. The Split hands the Screen `Beside`: the Screen covers no tab bar, its title
+  is a heading at the level where it stands, and on the web its body's sections, not its root,
+  are the `page` container, so its head's acts and the floating act's room read the outer
+  page's width and what stands in its body reads its own. Rejected: the record in the pane (the pane is the open record's details, at
   forty-five characters), a `Sheet` (an overlay over the scrim with no back to the main), and a
   width token for the beside record.
 - A bar at a phone's bottom edge clears the home indicator with the web emit's `pb-safe`
@@ -396,7 +408,8 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
   the item's and unknown before the data, each at its loaded height (yours its bubble over its
   time's bar, `figures` wide, as the loaded bubble stands over its time); failed, the failed EmptyState with `sentence` and
   Retry; no message, `empty`; each in the log's column. On the desktop both stand in
-  a measure-wide column centred in the page (`THREAD_COLUMN`), on touch in the screen's. A
+  a measure-wide column centred in the page (`THREAD_COLUMN`, held by no entry: a Place's `foot`
+  and a record's `ItemHeader` over a filling Thread stand in it too), on touch in the screen's. A
   Thread in a Place's body fills the page at every width, decided by where it stands: it calls the
   Place's `ThreadFills` setter (the `RecordOpen` / `ActFloats` pattern) before paint, the body
   draws no inset and leaves scrolling to it, its log scrolls at the page inset (`THREAD_LOG`),
@@ -406,8 +419,10 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
   main provides its own setter, so a Thread under a record's `ItemHeader` fills the main the same
   way: the main stops scrolling (native swaps its scroll for a view), keeping the page inset
   around the head alone (`SPLIT_MAIN {state: fills}`), and the Thread bleeds through the sides
-  (`-mx-page`, an overlay by `ThreadBleeds`), its log and foot carrying the inset themselves; the
-  input docks at the main's foot and reports `FootDocks` as in a Place. The bleeding Place's act
+  (`-mx-page`, an overlay by `ThreadBleeds`), its log and foot carrying the inset themselves,
+  a page inset under the head over a hairline (`THREAD_UNDER_HEAD`) the scrolling messages meet;
+  the Split hands its main `OverThread`, so the `ItemHeader` stands in the Thread's column on the
+  desktop. The input docks at the main's foot and reports `FootDocks` as in a Place. The bleeding Place's act
   still floats over the list, and where the record stands alone its room stands under the input.
   While a filling Thread's reader is scrolled up (the log's `atEnd` false), a secondary `Button`
   (`ArrowDown`, the word `latest`) floats centred at the foot of the log's region, a pair above
@@ -420,15 +435,19 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
   parent's bounds.
 - A `MessageInput` sends while an answer streams: `working` sets Stop before Send and leaves
   Send live, so Send and Enter send whenever the text is non-empty. Stop is the secondary bar
-  Button on the desktop and an icon act at the bar fit (`ICON_BUTTON.fit.bar`, `Square`) on
-  touch, so the touch field gives up only a compact square. What becomes of a message sent while
+  Button on the desktop and an icon act at the bar fit (`ICON_BUTTON.fit.bar`, `CircleStop`) on
+  touch, so the touch field gives up only a compact square. Lucide draws no filled stop square,
+  and a bare `Square` beside the field reads as an unchecked box. What becomes of a message sent while
   an answer runs is the consumer's sentence in `notice`; the input takes no prop for it.
 - What an agent made or did stands in a thread as a system Message's `detail` (`MessageDetail`,
   exactly one of three, the others typed `?: never`): `row`, one `ListRow` on the group ground in
   a hairline card on the surface (`MESSAGE_CARD`), its slots the row's (the kind leads as the
-  icon or the first meta part), opening its record; `code`, a free act's arguments in the code role under the line, its verb;
-  `fold`, meta lines at the pill's inset (`MESSAGE_FOLD`) the line opens in place under it, its
-  chevron turning down, read whole without a sheet. The line stays the centred meta line; a fold's
+  icon or the first meta part), opening its record; `code`, a free act's arguments in the code role under the line, its verb,
+  in the meta ink since they rank under it (`MESSAGE_CODE`);
+  `fold`, meta lines (`MESSAGE_FOLD`) the line opens in place under it, its
+  chevron turning down, read whole without a sheet. The code and the fold stand start-aligned
+  across the message column at the pill's inset, wrapping at a space and breaking a token only
+  when it outruns the line. The line stays the centred meta line; a fold's
   line is its toggle, so it opens nothing else. A thread holds one item kind, so a row or a `Code`
   between messages is a detail, never a second item map or children.
 - A collection takes data and draws its states at the leaf. A `List` takes `query` (or
@@ -460,7 +479,10 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
   as Retry is not; the base's internal `missing` tone carries it), never Retry. An OptionList
   draws it as its card's line, `missing` beside a secondary Back, as its failed line stands.
   Back goes to `BackRoute`, the enclosing `Screen`'s `back`, else to the Shell's `PlaceRoute`;
-  with neither it draws no act. A missing list gives the Section no count.
+  with neither it draws no act. Going to a route is navigation, so on the web Back is an anchor
+  in the hairline act's look (the internal `ButtonLink`), as a Place's and a Screen's back and
+  Close acts are anchors in the icon act's (`IconButtonLink`); native presses through
+  `navigate`. A missing list gives the Section no count.
 - A `Comparison` is a collection of facts with the List's source (`query` with `sentence` and
   `empty`, or `items` waiting on `loading`) and a `row` map over a fact's slots: `key`, `label`,
   `values` (one per column, in order) and `chips`. Its column heads are its declared `columns`,
@@ -484,6 +506,8 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
   Base UI `RadioGroup`, native `radiogroup` around `radio` rows with their checked state). The
   radio is the box's size (`OPTION_RADIO {state}`, a `full` ring in `edge-strong`, `toggle-on`
   when chosen) around the `toggle-on` dot (`OPTION_RADIO_DOT`), both held by OptionList. The
+  radio is the focused element, so the web's base focus ring draws on it; waiting, radio rows
+  lead with the ring's skeleton (`SKELETON {kind: radio}`), check rows with the box's. The
   description line, the recommended mark and the children under the chosen option are the same
   in both forms. The form is the component's two call signatures (`OneChoice`, `SetChoice` in
   `./list-state`), so an inline `onChange` takes its parameter from `value`: TypeScript does
@@ -526,7 +550,9 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
   the Group's hairline between; a set of them from data is a `List` taking `meter`, in the Group. A FileRow is selected at its `href`, as a ListRow is.
 - A FileRow carries at most one `ChipMark` (why the file is listed, or what its change is),
   standing between the path and the count lanes at its label's `measure-short` cap; the path's
-  cut measures the room the chip leaves, so the chip stays whole and the path yields. The chip's
+  cut measures the room the chip leaves, so the chip stays whole and the path yields: the chip is
+  why the row is listed and reads in one glance, where a cut path gives up its directory first,
+  keeping its file name, and its record opens in full a press away. The chip's
   cells and size are FileRow's own in the roster, composed from `Chip`, with no token of its own.
 - Code, Diff and ProseDiff stand in one frame on the surface inside a hairline (`CONTENT_FRAME`),
   so a diff's soft grounds always sit on the surface; a diff's number columns and a file row's

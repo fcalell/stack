@@ -113,8 +113,10 @@ function Home() {
 
 // The cell picks the form: the title the Place with its actions, more and
 // act; the primary act that act loading; the bar fit a bleeding body under
-// one action; the bar icon act its more menu open; the foot an assistant's
-// home with its ask field docked. The other cells are the atoms' own.
+// one action; the bar icon act its more menu open; the body icon act (the
+// touch top bar's) an assistant's home under its search act, its ask field
+// docked at its foot, since the foot draws no matrix cell of its own. The
+// other cells are the atoms' own.
 export function drawPlace(frame: ShowcaseFrame) {
 	const cell = frame.cell.name;
 	if (cell === "TEXT.role.title")
@@ -137,7 +139,7 @@ export function drawPlace(frame: ShowcaseFrame) {
 				</Place>
 			</Column>
 		);
-	if (cell === "FOOT")
+	if (cell === "ICON_BUTTON.fit.body")
 		return (
 			<Column>
 				<Home />

@@ -3,6 +3,7 @@ import {
 	lineBox,
 	MESSAGE_BUBBLE,
 	MESSAGE_CARD,
+	MESSAGE_CODE,
 	MESSAGE_FOLD,
 	MESSAGE_HEAD,
 	MESSAGE_LINE,
@@ -24,10 +25,11 @@ import { ListRow } from "../list-row";
 import { Prose } from "../prose";
 
 const YOURS = "items-end";
-// The line centred, a free act's code or an open fold's lines under it.
+// The line centred; a free act's code or an open fold's lines under it
+// start-aligned across the column.
 const SYSTEM = "items-center justify-center";
 const FRAMED = "overflow-hidden";
-const DETAIL_TEXT = "text-center";
+const DETAIL_TEXT = "self-stretch text-left";
 const LINE_TEXT = "flex-row flex-wrap justify-center min-w-0";
 // A React Native text never shrinks in a row unless told, so a long line
 // wraps inside the row instead of running past it.
@@ -76,9 +78,9 @@ export type MessageProps =
 			name?: never;
 	  });
 
-// A system line and its detail: the fold's toggle and its lines, or the line
-// (an act with `onOpen`) over the code, all centred; a row's hairline card
-// stands under them.
+// A system line and its detail: the fold's toggle over its lines, or the line
+// (an act with `onOpen`) over the code, the line centred and the detail
+// start-aligned across the column; a row's hairline card stands under them.
 function SystemMessage(props: {
 	body: string;
 	time: ReactNode;
@@ -129,7 +131,9 @@ function SystemMessage(props: {
 		<View className={cn(message({ author: "system" }), SYSTEM)}>
 			{line}
 			{detail?.code === undefined ? null : (
-				<RNText className={cn(text({ role: "code" }), DETAIL_TEXT)}>
+				<RNText
+					className={cn(text({ role: "code" }), MESSAGE_CODE, DETAIL_TEXT)}
+				>
 					{detail.code}
 				</RNText>
 			)}

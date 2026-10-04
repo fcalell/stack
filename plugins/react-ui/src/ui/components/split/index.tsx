@@ -11,7 +11,9 @@ import type { Closed } from "../../lib/closed.ts";
 import {
 	ActRoom,
 	Beside,
+	BesideOpen,
 	LendAct,
+	OverThread,
 	PageTitle,
 	RecordOpen,
 	ThreadBleeds,
@@ -33,10 +35,14 @@ const BEHIND = "page-max-tablet:hidden";
 // The floating act's room under the record, kept only where the record
 // stands alone; beside the list the act floats over the list alone.
 const ALONE = "page-tablet:hidden";
+// The main scrolls; its inset is its content's, so beside a record its own
+// box is the half it shares and the inset counts against neither half.
 const MAIN = "flex flex-col min-w-0 grow overflow-y-auto";
+const MAIN_INSET = "flex flex-col shrink-0 grow";
 // A Thread filling the main scrolls its own log under the record's head,
 // which stays put, so the main does not scroll.
 const MAIN_FILLED = "flex flex-col min-w-0 grow";
+const MAIN_FILLED_INSET = "flex flex-col grow min-h-0";
 // With a record beside it the main takes its half from `wide` and gives its
 // place to that record below it.
 const MAIN_SHARED = "basis-0 page-max-wide:hidden";
@@ -63,12 +69,13 @@ export interface SplitProps extends Closed {
 	empty?: ReactNode;
 }
 
-/** The list at its width inside a hairline beside the main, decided by its page's width: from `wide` the pane stands beside the main, below it the Split lends its Place or Screen a Details act that opens the pane as a sheet. Below `tablet` one region stands at a time: the list, or the open record, whose Place then leads its strip or top bar with a back act to the list. A record the main opened (`beside`) stands beside the main from `wide`, the two sharing what the list leaves, its back act drawn as Close and the pane behind the Details act at every width; below `wide` it stands in the main's place with its back act to the main. A Thread in the main fills it: the main stops scrolling, the record's head stays at the page inset over the Thread's log, which scrolls, and its input docks at the main's foot. It sits in a bleeding Place, whose strip heads it. */
+/** The list at its width inside a hairline beside the main, decided by its page's width: from `wide` the pane stands beside the main, below it the Split lends its Place or Screen a Details act that opens the pane as a sheet. Below `tablet` one region stands at a time: the list, or the open record, whose Place then leads its strip or top bar with a back act to the list. A record the main opened (`beside`) stands beside the main from `wide`, the two sharing what the list leaves, its back act drawn as Close and the pane behind the Details act at every width; below `wide` it stands in the main's place with its back act to the main, and below `tablet` its head stands alone, the Place drawing none. A Thread in the main fills it: the main stops scrolling, the record's head stays at the page inset over the Thread's log, which scrolls, and its input docks at the main's foot. It sits in a bleeding Place, whose strip heads it. */
 export function Split({ list, main, beside, pane, empty }: SplitProps) {
 	const words = useWords();
 	const title = use(PageTitle);
 	const lend = use(LendAct);
 	const recordOpen = use(RecordOpen);
+	const besideOpen = use(BesideOpen);
 	const room = use(ActRoom);
 	const [open, setOpen] = useState(false);
 	const [fills, setFills] = useState(false);
@@ -86,10 +93,15 @@ export function Split({ list, main, beside, pane, empty }: SplitProps) {
 		recordOpen(true);
 		return () => recordOpen(false);
 	}, [opened, recordOpen]);
-	const record = cn(
+	useEffect(() => {
+		if (!besides || !besideOpen) return;
+		besideOpen(true);
+		return () => besideOpen(false);
+	}, [besides, besideOpen]);
+	const record = cn(fills ? MAIN_FILLED : MAIN, besides && MAIN_SHARED);
+	const inset = cn(
 		splitMain({ state: fills ? "fills" : "rest" }),
-		fills ? MAIN_FILLED : MAIN,
-		besides && MAIN_SHARED,
+		fills ? MAIN_FILLED_INSET : MAIN_INSET,
 	);
 	return (
 		<div data-split className={SPLIT}>
@@ -102,10 +114,14 @@ export function Split({ list, main, beside, pane, empty }: SplitProps) {
 			</nav>
 			{opened ? (
 				<div className={record}>
-					<ThreadFills value={setFills}>
-						<ThreadBleeds value>{main}</ThreadBleeds>
-					</ThreadFills>
-					{room ? <div className={ALONE}>{room}</div> : null}
+					<div className={inset}>
+						<ThreadFills value={setFills}>
+							<ThreadBleeds value>
+								<OverThread value={fills}>{main}</OverThread>
+							</ThreadBleeds>
+						</ThreadFills>
+						{room ? <div className={ALONE}>{room}</div> : null}
+					</div>
 				</div>
 			) : (
 				<div className={cn(splitMain({ state: "empty" }), EMPTY, BEHIND)}>
@@ -114,7 +130,11 @@ export function Split({ list, main, beside, pane, empty }: SplitProps) {
 			)}
 			{besides ? (
 				<div className={cn(SPLIT_BESIDE, BESIDE)}>
-					<Beside value>{beside}</Beside>
+					<Beside
+						value={{ details: detailed ? { sheet, beside: true } : undefined }}
+					>
+						{beside}
+					</Beside>
 				</div>
 			) : null}
 			{detailed && !besides ? (

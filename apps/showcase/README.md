@@ -14,8 +14,9 @@ Three pages:
   dark side by side.
 - `/layout`: one app composed with the built components, every atom, layout, shared and
   content molecule in its place: the Shell around the place `?place=` names (`deploys`,
-  `projects`, `usage`, `domains`, `verify`, `logs`, `assistant`, `members`, `settings`;
-  `welcome` is the first run outside the shell), a deploy open by `&record=` (`d1` to `d5`,
+  `projects`, `usage`, `domains`, `logs`, `assistant`, `members`, `settings`, `home`;
+  `welcome` is the first run outside the shell), each place at its own route with the view, a Screen
+  pushed over it by `&screen=` (`verify`, over `domains`), a deploy open by `&record=` (`d1` to `d5`,
   each with its changes, release notes and build log), the changed file its diff shows by
   `&file=` (a path, the first without it) and every query on the page forced by
   `&query=loading|error|missing|empty` (`missing` answers not found, so every read draws its

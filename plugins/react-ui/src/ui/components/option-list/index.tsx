@@ -40,6 +40,7 @@ import type { Closed } from "../../lib/closed.ts";
 import { GroupName, LabelTarget } from "../../lib/field.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Button } from "../button/index.tsx";
+import { ButtonLink } from "../button/link.tsx";
 import { Checkbox } from "../checkbox/index.tsx";
 import { Chip } from "../chip/index.tsx";
 import { useBackAct } from "../empty-state/missing.tsx";
@@ -58,10 +59,9 @@ const LABEL = "min-w-0 grow truncate";
 const TEXT = "flex flex-col min-w-0 grow";
 const TITLE = "truncate";
 const DESCRIPTION_LINE = "flex flex-wrap items-center min-w-0";
-// The radio is the box's size in its label's line, its dot centred; the
-// focus ring is its own, as the checkbox's is.
-const RADIO =
-	"relative inline-flex shrink-0 items-center justify-center outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
+// The radio is the box's size in its label's line, its dot centred; it is
+// the focused element, so the base focus ring draws on it.
+const RADIO = "relative inline-flex shrink-0 items-center justify-center";
 const CHILDREN = "flex";
 const INDENT = "shrink-0";
 const CHILDREN_BODY = "flex flex-col grow min-w-0";
@@ -145,11 +145,12 @@ function GroupLabel(props: { children: ReactNode }) {
 	);
 }
 
-// The waiting check rows in the slots the options declare: a group label's
-// bar over them when they stand under labels, a description bar under each
-// label when they are described.
-function Wait(props: { shape: OptionShape }) {
-	const { shape } = props;
+// The waiting rows in the slots the options declare, each led by the mark
+// its form draws (a box, or a radio's ring): a group label's bar over them
+// when they stand under labels, a description bar under each label when they
+// are described.
+function Wait(props: { shape: OptionShape; mark: "check" | "radio" }) {
+	const { shape, mark } = props;
 	return (
 		<div aria-hidden className={cn(SELECT_GROUP, GROUP)}>
 			{shape.group ? (
@@ -177,7 +178,7 @@ function Wait(props: { shape: OptionShape }) {
 				>
 					<span className={cn(OPTION_LINE, LINE)}>
 						<span className={cn(lineBox({ role: "body" }), BOX_LINE)}>
-							<span className={skeleton({ kind: "check" })} />
+							<span className={skeleton({ kind: mark })} />
 						</span>
 						<span className={TEXT}>
 							<span className={cn(lineBox({ role: "body" }), LINE_WAIT)}>
@@ -234,6 +235,7 @@ export function OptionList<V extends string = string, T = unknown>(
 		hasEmpty: props.empty !== undefined,
 	};
 	const state = listState(input);
+	const one = isOneChoice(props);
 	const frame = (body: ReactNode) => (
 		// biome-ignore lint/a11y/useSemanticElements: a group of rows, not a form's fieldset
 		<div
@@ -252,6 +254,7 @@ export function OptionList<V extends string = string, T = unknown>(
 				shape={
 					props.option ? optionShape(props.option) : optionsShape(props.options)
 				}
+				mark={one ? "radio" : "check"}
 			/>,
 		);
 	if (state === "missing")
@@ -261,12 +264,7 @@ export function OptionList<V extends string = string, T = unknown>(
 					{words.missing}
 				</span>
 				{back ? (
-					<Button
-						act="secondary"
-						fit="bar"
-						label={back.label}
-						onAct={back.onAct}
-					/>
+					<ButtonLink fit="bar" label={back.label} href={back.href} />
 				) : null}
 			</div>,
 		);
@@ -293,7 +291,6 @@ export function OptionList<V extends string = string, T = unknown>(
 	const options = props.query
 		? optionsOf(props.query.data ?? [], props.option)
 		: props.options;
-	const one = isOneChoice(props);
 	const chosenValues = chosenOf(props);
 	const first = chosenValues[0];
 	const rows = groupsOf(options).map((group, at) => (

@@ -21,3 +21,4 @@ Reference: Linear's "Latest" pill over the composer ([screen](https://mobbin.com
 
 ## Progress
 Shape: no prop; a "Latest" secondary Button floats above the foot whenever a filling Thread's reader is scrolled up, through the internal `ToLatest` context and `Latest` component, so a docked foot elsewhere reuses it. `THREAD_LATEST` is `mb-pair rounded-control bg-raised shadow-float`, for the design critique. Built on web and phone; `pnpm check` and `pnpm verify` pass. Open: the live check (web per batch, phone on the harness).
+The web design critique's findings are fixed and measured at 1440 and 375 (light).

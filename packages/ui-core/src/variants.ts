@@ -519,14 +519,16 @@ export const TABLE_EMPTY = "pt-page";
 // Message: yours in a bubble on the group ground; the name beside the time;
 // a system line's words beside its time, wrapping; the line that opens, a
 // pill at the target height with the pointer's washes. Under a system line,
-// its card: one list row in a hairline card on the surface; its fold's lines
-// at the pill's inset.
+// its card: one list row in a hairline card on the surface; a free act's code
+// and its fold's lines start-aligned across the column at the pill's inset,
+// the code in the meta ink, ranking under its verb.
 export const MESSAGE_BUBBLE = "rounded-card bg-group px-tile py-pair";
 export const MESSAGE_HEAD = "gap-inside";
 export const MESSAGE_LINE = "gap-x-inside";
 export const MESSAGE_OPEN =
 	"gap-inside rounded-control px-inside min-h-target text-ink-meta";
 export const MESSAGE_CARD = "rounded-card border border-edge bg-surface";
+export const MESSAGE_CODE = "px-inside text-ink-meta";
 export const MESSAGE_FOLD = "px-inside";
 // MessageInput: the composer over its notice. On the desktop one box (the
 // field's boundary at the card radius), its attachments, its text at the
@@ -575,12 +577,16 @@ export const CHART_PART_SPLIT = "border-b border-transparent bg-clip-padding";
 export const CHART_TICK_LANE = "w-figures";
 // Thread: the messages a sections gap apart, one rung above Prose's block
 // gap, and under them the input; on the desktop the messages and the input
-// each stand in a measure-wide column centred in the page.
+// each stand in a measure-wide column centred in the page, as do the record's
+// head over a Thread filling a Split's main and a Place's docked foot.
 export const THREAD = "gap-sections";
 export const THREAD_COLUMN = "w-full max-w-measure mx-auto";
 // A Thread in a Place's body fills it: the log scrolls under the page's head
 // at the page inset, a sections gap over the input, which docks at the foot.
 export const THREAD_LOG = "px-page pt-page pb-sections";
+// A Thread filling a Split's main stands a page inset under the record's head
+// over a hairline, which the log's messages scroll up to.
+export const THREAD_UNDER_HEAD = "mt-page border-t border-edge";
 // The way back to the newest message, floating over the log a pair above the
 // foot while the reader is scrolled up: a lifted ground under the secondary
 // act's hairline, at its radius.
@@ -620,12 +626,14 @@ export const PAGE_TOP_BAR = "gap-acts min-h-strip";
 export const PAGE_TITLE = "pb-pair";
 export const PAGE_BODY = "gap-sections p-page";
 // A docked foot (a Place's `foot`, a filling Thread's input) stands under
-// what scrolls past it at the page inset.
+// what scrolls past it at the page inset, a sections gap under its end.
 export const FOOT = "px-page pb-page";
+export const PAGE_BODY_OVER_FOOT = "pb-sections";
 // A touch Place's act, floating over the body's end on a layer at the page
-// inset, and the room the body keeps under its last row so the act never
-// covers it.
+// inset, lifted off what scrolls under it as a Thread's Latest act is, and
+// the room the body keeps under its last row so the act never covers it.
 export const FLOATING_ACT = "p-page";
+export const FLOATING_ACT_LIFT = "rounded-control shadow-float";
 export const FLOATING_ACT_ROOM = "min-h-control";
 // A region scrolling in a bleeding body (a Split's list or record) keeps no
 // page inset under its last row, so its room is the act's height over the

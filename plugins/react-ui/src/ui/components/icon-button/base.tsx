@@ -48,3 +48,21 @@ export function IconButtonBase({
 		</BaseButton>
 	);
 }
+
+/** The icon act that goes to a route: an anchor in the IconButton's look, for a back or close act. Outside the package's exports. */
+export function IconButtonLink(props: {
+	icon: IconName;
+	fit?: IconButtonFit;
+	label: string;
+	href: string;
+}) {
+	return (
+		<a
+			href={props.href}
+			aria-label={props.label}
+			className={cn(iconButton({ fit: props.fit }), BOX, PRESS)}
+		>
+			<Icon name={props.icon} fit="control" />
+		</a>
+	);
+}

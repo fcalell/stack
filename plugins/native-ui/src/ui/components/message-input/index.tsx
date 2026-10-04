@@ -166,10 +166,10 @@ export function MessageInput({
 						)}
 					/>
 				</View>
-				{/* Stop is an icon act, so the field keeps its width. */}
+				{/* Stop is an icon act, so the field keeps its width; its glyph is the stop square in a ring, never a bare square a checkbox would read as. */}
 				{working ? (
 					<IconButtonBase
-						icon="Square"
+						icon="CircleStop"
 						fit="bar"
 						label={words.stop}
 						onAct={stop}

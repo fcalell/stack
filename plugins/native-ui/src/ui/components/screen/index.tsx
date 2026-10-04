@@ -11,6 +11,7 @@ import { Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import {
+	ActRoom,
 	BackRoute,
 	Beside,
 	CoverTabs,
@@ -42,11 +43,17 @@ export interface ScreenProps extends Closed {
 // A page pushed over a place: the top bar (back, the actions, more) over the
 // title, the body scrolling under it, no filled act; it covers the Shell's
 // tab bar while it stands. A Split inside lends it its Details act. As a
-// Split's `beside` record it stands in the main's stead and covers no tab bar.
+// Split's `beside` record it stands in the main's stead, covers no tab bar,
+// keeps the floating act's room under its body, and, its head the page's one,
+// draws the Details act the Split lends while the pane is open.
 export function Screen({ title, back, actions, more, children }: ScreenProps) {
 	const words = useWords();
 	const cover = useContext(CoverTabs);
-	const beside = useContext(Beside);
+	const frame = useContext(Beside);
+	const beside = frame !== null;
+	// Beside, it stands in the main's stead in a bleeding Place, so its body
+	// keeps the room of the act floating over it, as the main does.
+	const room = useContext(ActRoom);
 	const [lent, lend] = useState<IconAct>();
 	useEffect(() => {
 		if (!cover || beside) return;
@@ -68,7 +75,11 @@ export function Screen({ title, back, actions, more, children }: ScreenProps) {
 								/>
 							)}
 							<View className={SPACER} />
-							{[...(actions ?? []), ...(lent ? [lent] : [])].map((action) => (
+							{[
+								...(actions ?? []),
+								...(lent ? [lent] : []),
+								...(frame?.details ? [frame.details] : []),
+							].map((action) => (
 								<IconButton key={action.label} {...action} fit="body" />
 							))}
 							{more?.length ? <Menu label={words.more} items={more} /> : null}
@@ -85,6 +96,7 @@ export function Screen({ title, back, actions, more, children }: ScreenProps) {
 						contentContainerClassName={cn(PAGE_BODY, BODY_CONTENT)}
 					>
 						<BackRoute.Provider value={back}>{children}</BackRoute.Provider>
+						{beside ? room : null}
 					</Scroll>
 				</View>
 			</PageTitle.Provider>

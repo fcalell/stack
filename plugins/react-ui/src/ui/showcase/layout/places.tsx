@@ -131,7 +131,8 @@ export function Domains() {
 											{
 												label: "Verify",
 												icon: "ShieldCheck" as const,
-												onAct: () => navigate(to({ place: "verify" })),
+												onAct: () =>
+													navigate(to({ place: "domains", screen: "verify" })),
 											},
 										]
 									: []),

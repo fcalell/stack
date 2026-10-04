@@ -15,22 +15,14 @@ import { useTouched } from "../../lib/touched.ts";
 import { Count } from "../count/index.tsx";
 import { Icon } from "../icon/index.tsx";
 import { Spinner } from "../spinner/index.tsx";
+import { BOX, LABEL, PRESS } from "./link.tsx";
 import { Reason } from "./reason.tsx";
 
 const STACK = "flex flex-col items-start gap-pair";
-const BOX = "relative inline-flex items-center justify-center";
 const GLYPH = "shrink-0";
-const LABEL = "truncate";
 const PENDING = "opacity-0";
 const LABEL_BLOCKED = "text-ink-disabled";
 const SPINNER_LAYER = "absolute inset-0 flex items-center justify-center";
-
-const PRESS: Record<ButtonAct, string> = {
-	primary: "hover:bg-act-accent-hover active:bg-act-accent-press",
-	danger: "hover:bg-act-danger-hover active:bg-act-danger-press",
-	secondary: "hover:bg-wash-hover active:bg-wash-press",
-	destructive: "hover:bg-wash-hover active:bg-wash-press",
-};
 
 const FILL_PENDING: Record<ButtonAct, string> = {
 	primary: "aria-busy:bg-act-accent-pending",

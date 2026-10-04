@@ -21,3 +21,4 @@ Reference: Customer.io's single-choice rows with a description each ([screen](ht
 
 ## Progress
 Shape: OptionList's form is chosen by its value: `value: V | null` draws radio rows read as a radiogroup, a set draws checkboxes. TypeScript cannot narrow the props union by `value`, so OptionList has one call signature per form. New cells `OPTION_RADIO` and `OPTION_RADIO_DOT` from existing tokens (the dot at the `dot` size), for the design critique. No disabled radio look yet. Built on web and phone; `pnpm check` and `pnpm verify` pass. Open: the live check (web per batch, phone on the harness).
+The web design critique's findings are fixed and measured at 1440 and 375 (light).

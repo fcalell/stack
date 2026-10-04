@@ -2,7 +2,8 @@ import { createContext, use, useEffect, useState } from "react";
 import type { QueryLike } from "../../components/query-boundary/index.tsx";
 import type { View } from "../view.tsx";
 
-// Where the review stands: the place the URL names, the record open in it,
+// Where the review stands: the place the URL names, the Screen pushed over
+// it, the record open in it,
 // the file open in that record, the step that record opened beside it, and a
 // query state forced for the review (`loading` waits, `error` fails once,
 // `missing` answers not found, `empty` answers a collection with none); the
@@ -10,6 +11,7 @@ import type { View } from "../view.tsx";
 export interface Here {
 	view: View;
 	place: string;
+	screen?: string;
 	record?: string;
 	file?: string;
 	step?: string;
@@ -36,6 +38,7 @@ export function readHere(view: View): Here {
 	return {
 		view,
 		place: params.get("place") ?? "deploys",
+		screen: params.get("screen") ?? undefined,
 		record: params.get("record") ?? undefined,
 		file: params.get("file") ?? undefined,
 		step: params.get("step") ?? undefined,

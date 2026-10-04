@@ -53,8 +53,18 @@ export const LendAct = createContext<
 >(null);
 
 // A Split's `beside` record is a Screen standing in its Place in the main's
-// stead, not a page pushed over it, so it covers no tab bar.
-export const Beside = createContext(false);
+// stead, not a page pushed over it, so it covers no tab bar. Its head stands
+// alone, so it draws the Details act the Split lends while its pane is open;
+// `null` outside a `beside`.
+export interface BesideFrame {
+	details?: IconAct;
+}
+export const Beside = createContext<BesideFrame | null>(null);
+
+// A Split tells the Place it sits in that a record stands beside the main:
+// that record's head is then the page's one and the Place draws none, and
+// `false` takes it back.
+export const BesideOpen = createContext<((open: boolean) => void) | null>(null);
 
 // The route of the Shell's current place: the list a Place returns to from a
 // record its Split shows alone.

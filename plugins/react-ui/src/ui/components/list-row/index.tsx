@@ -22,7 +22,7 @@ import {
 import { use } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { GroundContext } from "../../lib/ground.ts";
-import { isCurrent, usePathname } from "../../lib/navigate.ts";
+import { isCurrent, useRoute } from "../../lib/navigate.ts";
 import { joinParts, META_CUT, partText } from "../../lib/parts.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Avatar } from "../avatar/index.tsx";
@@ -120,9 +120,9 @@ export function ListRow<V extends string | null = string>({
 }: ListRowProps<V>) {
 	const words = useWords();
 	const ground = use(GroundContext);
-	const pathname = usePathname();
+	const at = useRoute();
 	const named = partText(title);
-	const current = href !== undefined && isCurrent(href, pathname);
+	const current = href !== undefined && isCurrent(href, at);
 	const opens = href !== undefined || onOpen !== undefined;
 	const marked = status !== undefined || chip !== undefined;
 	const lines = meta?.length || marked ? "two" : "one";

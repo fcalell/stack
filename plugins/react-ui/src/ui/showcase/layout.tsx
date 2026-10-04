@@ -1,6 +1,6 @@
 import type { PlaceSpec, Switcher } from "@fcalell/ui-core/descriptors";
 import { text } from "@fcalell/ui-core/variants";
-import { use } from "react";
+import { type ReactNode, use } from "react";
 import { Shell } from "../components/shell/index.tsx";
 import { Assistant } from "./layout/assistant.tsx";
 import { Deploys } from "./layout/deploys.tsx";
@@ -12,23 +12,31 @@ import { Settings } from "./layout/settings.tsx";
 import { Usage } from "./layout/usage.tsx";
 import { useView, ViewBar } from "./view.tsx";
 
-// The places the review draws, by the `place` the URL names; a pushed Screen
-// stands in the place it was pushed from.
+// The places the review draws, by the `place` the URL names, and the Screens
+// pushed over them, by its `screen`.
 const PAGES = {
-	home: { page: Home, in: "home" },
-	deploys: { page: Deploys, in: "deploys" },
-	projects: { page: Projects, in: "projects" },
-	logs: { page: Logs, in: "logs" },
-	domains: { page: Domains, in: "domains" },
-	verify: { page: Verify, in: "domains" },
-	usage: { page: Usage, in: "usage" },
-	assistant: { page: Assistant, in: "assistant" },
-	members: { page: Members, in: "members" },
-	settings: { page: Settings, in: "settings" },
+	home: Home,
+	deploys: Deploys,
+	projects: Projects,
+	logs: Logs,
+	domains: Domains,
+	usage: Usage,
+	assistant: Assistant,
+	members: Members,
+	settings: Settings,
 } as const;
 type Page = keyof typeof PAGES;
+const SCREENS = { verify: Verify } as const;
 
 const isPage = (place: string): place is Page => place in PAGES;
+const isScreen = (screen: string): screen is keyof typeof SCREENS =>
+	screen in SCREENS;
+
+// The Screen the URL pushes, else its place.
+function pageOf(place: string, screen?: string): () => ReactNode {
+	if (screen !== undefined && isScreen(screen)) return SCREENS[screen];
+	return isPage(place) ? PAGES[place] : PAGES.deploys;
+}
 
 const PLACES: Array<Omit<PlaceSpec, "route"> & { place?: Page }> = [
 	{ label: "Activity", icon: "Activity", count: 3 },
@@ -56,7 +64,8 @@ const SWITCHER: Switcher = {
 };
 
 // One app, composed as a product composes it: the Shell around the place the
-// URL names (`?place=`, a record open by `&record=`, a query forced by
+// URL names (`?place=`, a Screen pushed over it by `&screen=`, a record open
+// by `&record=`, a query forced by
 // `&query=loading|error|missing|empty`), at the URL's mode and density. The
 // first run (`?place=welcome`) stands outside the shell. The view's toggles
 // sit under the app, past the viewport.
@@ -75,19 +84,13 @@ export function Layout() {
 }
 
 function App() {
-	const { place } = use(HereContext);
+	const { place, screen } = use(HereContext);
 	const to = useTo();
-	const current = isPage(place) ? PAGES[place] : PAGES.deploys;
-	const Page = current.page;
-	// The current place is the page's own path; the others carry the view.
+	const Page = pageOf(place, screen);
+	// Each place at its own route, carrying the view.
 	const places: PlaceSpec[] = PLACES.map(({ place: page, ...spec }) => ({
 		...spec,
-		route:
-			page === current.in
-				? location.pathname
-				: page
-					? to({ place: page })
-					: `#${spec.label.toLowerCase()}`,
+		route: page ? to({ place: page }) : `#${spec.label.toLowerCase()}`,
 	}));
 	return (
 		<Shell places={places} switcher={SWITCHER}>

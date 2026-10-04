@@ -12,11 +12,14 @@ import {
 	SKELETON_LINES,
 	skeleton,
 	skeletonRow,
+	THREAD_COLUMN,
 	text,
 } from "@fcalell/ui-core/variants";
 import { use } from "react";
 import type { Closed } from "../../lib/closed.ts";
+import { OverThread } from "../../lib/frame.ts";
 import { HeadingContext } from "../../lib/heading.ts";
+import { useTouch } from "../../lib/media.ts";
 import { joinParts, META_CUT, partText } from "../../lib/parts.ts";
 import { Count } from "../count/index.tsx";
 import { Picker } from "../picker/index.tsx";
@@ -88,7 +91,7 @@ function FactPart<V extends string | null>({ fact }: { fact: Fact<V> }) {
 	);
 }
 
-/** The overline, the title at the heading role and the facts, a pair apart whether the title wraps or not. The title is a heading at the level where the header stands. */
+/** The overline, the title at the heading role and the facts, a pair apart whether the title wraps or not. The title is a heading at the level where the header stands. Over a Thread filling a Split's main it stands in the Thread's column on the desktop. */
 export function ItemHeader<V extends string | null = string>({
 	overline,
 	title,
@@ -97,9 +100,13 @@ export function ItemHeader<V extends string | null = string>({
 }: ItemHeaderProps<V>) {
 	const level = use(HeadingContext);
 	const Heading = `h${level}` as const;
+	// The column is a structure that follows density, as the Thread's is.
+	const overThread = use(OverThread);
+	const touch = useTouch();
+	const column = overThread && !touch && THREAD_COLUMN;
 	if (loading)
 		return (
-			<div aria-busy className={cn(ITEM_HEADER, HEAD)}>
+			<div aria-busy className={cn(ITEM_HEADER, HEAD, column)}>
 				<span className={cn(lineBox({ role: "meta" }), LINE_WAIT)}>
 					<span className={cn(skeleton({ kind: "line" }), "w-1/4")} />
 				</span>
@@ -118,7 +125,7 @@ export function ItemHeader<V extends string | null = string>({
 			</div>
 		);
 	return (
-		<header className={cn(ITEM_HEADER, HEAD)}>
+		<header className={cn(ITEM_HEADER, HEAD, column)}>
 			{overline && overline.length > 0 ? (
 				<p className={cn(text({ role: "meta" }), OVERLINE)}>
 					{joinParts(overline, META_CUT)}

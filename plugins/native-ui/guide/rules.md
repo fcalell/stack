@@ -13,7 +13,7 @@ control, the text role (`Text`). A `View` rebuilding one is drift.
 
 A record the open record links to opens beside it: the `Split`'s `beside` holds a `Screen` whose
 `back` is the open record's route. On the phone it stands in the open record's stead, its back
-act in its top bar.
+act in its top bar, its head the page's only head.
 
 ```tsx
 <Split list={rows} main={<Item />} beside={<Screen title="Run 12" back={itemRoute}><Run /></Screen>} />

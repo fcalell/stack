@@ -5,6 +5,7 @@ import {
 	lineBox,
 	MESSAGE_BUBBLE,
 	MESSAGE_CARD,
+	MESSAGE_CODE,
 	MESSAGE_FOLD,
 	MESSAGE_HEAD,
 	MESSAGE_LINE,
@@ -24,8 +25,11 @@ import { Prose } from "../prose/index.tsx";
 
 const STACK = "flex flex-col";
 const YOURS = "flex flex-col items-end";
-// The line centred, a free act's code or an open fold's lines under it.
+// The line centred; a free act's code or an open fold's lines under it
+// start-aligned across the column.
 const SYSTEM = "flex flex-col items-center justify-center text-center";
+// Each wraps at its spaces, breaking a token only when it outruns the line.
+const DETAIL = "self-stretch text-start whitespace-pre-wrap wrap-break-word";
 const FRAMED = "flex flex-col overflow-hidden";
 const LINE_TEXT = "inline-flex flex-wrap justify-center min-w-0";
 const OPEN =
@@ -75,9 +79,9 @@ export type MessageProps =
 			name?: never;
 	  });
 
-// A system line and its detail: the fold's toggle and its lines, or the line
-// (an act with `onOpen`) over the code, all centred; a row's hairline card
-// stands under them.
+// A system line and its detail: the fold's toggle over its lines, or the line
+// (an act with `onOpen`) over the code, the line centred and the detail
+// start-aligned across the column; a row's hairline card stands under them.
 function SystemMessage(props: {
 	body: string;
 	time: ReactNode;
@@ -121,13 +125,15 @@ function SystemMessage(props: {
 		<div className={cn(message({ author: "system" }), SYSTEM)}>
 			{line}
 			{detail?.code === undefined ? null : (
-				<code className={cn(text({ role: "code" }), BODY)}>{detail.code}</code>
+				<code className={cn(text({ role: "code" }), MESSAGE_CODE, DETAIL)}>
+					{detail.code}
+				</code>
 			)}
 			{detail?.fold === undefined ? null : (
 				<p
 					id={linesId}
 					hidden={!open}
-					className={cn(text({ role: "meta" }), MESSAGE_FOLD, BODY)}
+					className={cn(text({ role: "meta" }), MESSAGE_FOLD, DETAIL)}
 				>
 					{detail.fold}
 				</p>
@@ -147,7 +153,7 @@ function SystemMessage(props: {
 	);
 }
 
-/** Yours a bubble on the group ground at the column's end, the time under it; another's the name at body 500 beside the time over the reply as Prose; a system line one meta line centred in a row at the target height, its time beside it, its detail under it: a free act's code, a fold's meta lines once its chevron opens them, or a hairline card holding one row. */
+/** Yours a bubble on the group ground at the column's end, the time under it; another's the name at body 500 beside the time over the reply as Prose; a system line one meta line centred in a row at the target height, its time beside it, its detail under it: a free act's code in the meta ink or a fold's meta lines once its chevron opens them, each start-aligned across the column, or a hairline card holding one row. */
 export function Message(props: MessageProps) {
 	const { author, body, at, loading } = props;
 	const time = at ? (

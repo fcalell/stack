@@ -1392,6 +1392,16 @@ components:
     width: "{spacing.check}"
     rounded: "{rounded.chip}"
     backgroundColor: "{colors.skeleton-dark}"
+  skeleton-radio:
+    height: "{spacing.check}"
+    width: "{spacing.check}"
+    rounded: "{rounded.full}"
+    backgroundColor: "{colors.skeleton}"
+  skeleton-radio-dark:
+    height: "{spacing.check}"
+    width: "{spacing.check}"
+    rounded: "{rounded.full}"
+    backgroundColor: "{colors.skeleton-dark}"
   skeleton-icon:
     height: "{spacing.icon}"
     width: "{spacing.icon}"
@@ -1538,6 +1548,8 @@ components:
     typography: "{typography.code}"
   floating-act:
     padding: "{spacing.page}"
+  floating-act-lift:
+    rounded: "{rounded.control}"
   floating-act-room:
     height: "{spacing.control}"
   form-field-error:
@@ -1572,6 +1584,10 @@ components:
   message-card-dark:
     rounded: "{rounded.card}"
     backgroundColor: "{colors.surface-dark}"
+  message-code:
+    textColor: "{colors.ink-meta}"
+  message-code-dark:
+    textColor: "{colors.ink-meta-dark}"
   message-input-box:
     rounded: "{rounded.card}"
     backgroundColor: "{colors.surface}"
@@ -2021,7 +2037,7 @@ Widths of lifted layers, never stretched to their container, and of a frame's fi
 
 ## Elevation & Depth
 
-A card at rest has a hairline and no shadow. Two levels lift a layer, each per mode: `shadow-float` (light `0 1px 2px rgba(20, 22, 27, 0.06), 0 4px 12px rgba(20, 22, 27, 0.08)`, dark `0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.5)`); `shadow-modal` (light `0 2px 4px rgba(20, 22, 27, 0.06), 0 16px 40px rgba(20, 22, 27, 0.14)`, dark `0 2px 4px rgba(0, 0, 0, 0.4), 0 16px 40px rgba(0, 0, 0, 0.65)`). `shadow-float` lifts a popover, a menu, a picker's list and a toast; `shadow-modal` a dialog, a sheet and a command palette. In dark the lift is carried by the `raised` step and the hairline as much as by the shadow. The hairline is 1 px; the focus ring is `ring` at 2 px, 2 px outside the box, drawn inward inside a list. The layers over the page stand in one order, each `--layer-<layer>` read as `z-(--layer-<layer>)` on the web: `sheet` 1 < `popover` 2 < `toasts` 3, the page at 0. A sheet's scrim and the sheet stand on `sheet`, a popover over a sheet it opens from, and the toasts over both, so a toast raised while a sheet or a confirm is open is seen and its dismiss pressed.
+A card at rest has a hairline and no shadow. Two levels lift a layer, each per mode: `shadow-float` (light `0 1px 2px rgba(20, 22, 27, 0.06), 0 4px 12px rgba(20, 22, 27, 0.08)`, dark `0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.5)`); `shadow-modal` (light `0 2px 4px rgba(20, 22, 27, 0.06), 0 16px 40px rgba(20, 22, 27, 0.14)`, dark `0 2px 4px rgba(0, 0, 0, 0.4), 0 16px 40px rgba(0, 0, 0, 0.65)`). `shadow-float` lifts a popover, a menu, a picker's list, a toast and an act floating over what scrolls (a touch Place's act, a Thread's Latest); `shadow-modal` a dialog, a sheet and a command palette. In dark the lift is carried by the `raised` step and the hairline as much as by the shadow. The hairline is 1 px; the focus ring is `ring` at 2 px, 2 px outside the box, drawn inward inside a list. The layers over the page stand in one order, each `--layer-<layer>` read as `z-(--layer-<layer>)` on the web: `sheet` 1 < `popover` 2 < `toasts` 3, the page at 0. A sheet's scrim and the sheet stand on `sheet`, a popover over a sheet it opens from, and the toasts over both, so a toast raised while a sheet or a confirm is open is seen and its dismiss pressed.
 
 ## Shapes
 
@@ -2058,7 +2074,7 @@ The front matter's components are the matrix cells: one entry per axis value of 
 | `Spinner` | atom | `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC` | rest |
 | `Avatar` | atom | `AVATAR`, `AVATAR_LABEL` | rest |
 | `Link` | atom | `LINK` | rest, hover, focus, active |
-| `Place` | layout | `PAGE_HEAD`, `PAGE_TOP_BAR`, `PAGE_TITLE`, `TEXT.role.title`, `PAGE_BODY`, `FOOT`, `FLOATING_ACT`, `FLOATING_ACT_ROOM`, `FLOATING_ACT_FOOT`, `BUTTON.act.primary`, `BUTTON.fit.bar`, `BUTTON.fit.body`, `BUTTON_LABEL.act.primary`, `ICON_BUTTON.fit.bar`, `ICON_BUTTON.fit.body` | rest |
+| `Place` | layout | `PAGE_HEAD`, `PAGE_TOP_BAR`, `PAGE_TITLE`, `TEXT.role.title`, `PAGE_BODY`, `FOOT`, `PAGE_BODY_OVER_FOOT`, `THREAD_COLUMN`, `FLOATING_ACT`, `FLOATING_ACT_LIFT`, `FLOATING_ACT_ROOM`, `FLOATING_ACT_FOOT`, `BUTTON.act.primary`, `BUTTON.fit.bar`, `BUTTON.fit.body`, `BUTTON_LABEL.act.primary`, `ICON_BUTTON.fit.bar`, `ICON_BUTTON.fit.body` | rest |
 | `Screen` | layout | `PAGE_HEAD`, `PAGE_TOP_BAR`, `PAGE_TITLE`, `TEXT.role.title`, `PAGE_BODY`, `ICON_BUTTON.fit.bar`, `ICON_BUTTON.fit.body` | rest |
 | `Split` | layout | `SPLIT_LIST`, `SPLIT_MAIN`, `SPLIT_BESIDE`, `SPLIT_PANE`, `ICON_BUTTON.fit.bar` | rest, empty |
 | `Section` | layout | `SECTION`, `SECTION_HEAD`, `SECTION_HEAD_ROW`, `SECTION_TITLE`, `SECTION_TOGGLE`, `TEXT.role.heading`, `TEXT.role.meta`, `ICON.fit.body`, `COUNT`, `COUNT_LABEL`, `BUTTON.act.secondary`, `BUTTON.act.destructive`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.secondary`, `BUTTON_LABEL.act.destructive`, `ICON_BUTTON.fit.bar`, `SKELETON.kind.count`, `SKELETON.kind.line`, `SKELETON.kind.field`, `SKELETON_ROW.kind.field`, `TEXT.role.caption`, `LINE_BOX.role.body` | rest, hover, focus, active, disabled, loading |
@@ -2072,12 +2088,12 @@ The front matter's components are the matrix cells: one entry per axis value of 
 | `ListRow` | shared | `ROW.lines.one`, `ROW.lines.two`, `ROW.state.rest`, `ROW.state.highlighted`, `ROW.state.pressed`, `ROW.state.selected`, `ROW.state.selected-hover`, `ROW.ground.list`, `ROW.ground.group`, `ROW_LEADING`, `ROW_TITLE_LINE`, `ROW_META_LINE`, `ROW_TRAILING`, `ROW_MARKS`, `ROW_ACTS`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `TEXT.role.meta`, `ICON.fit.body`, `AVATAR`, `AVATAR_LABEL`, `STATUS`, `STATUS_DOT`, `STATUS_SPINNER`, `STATUS_LABEL`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC`, `CHIP`, `CHIP_LABEL`, `ICON_BUTTON.fit.bar`, `SKELETON.kind.avatar`, `SKELETON.kind.icon`, `SKELETON.kind.dot`, `SKELETON_LANE.role.body`, `SKELETON_LANE.role.meta`, `SKELETON.kind.line`, `LINE_BOX.role.body`, `LINE_BOX.role.meta` | rest, hover, focus, active, selected |
 | `DefinitionRow` | shared | `ROW.lines.one`, `ROW.lines.setting`, `ROW.state.rest`, `ROW.state.highlighted`, `ROW.state.pressed`, `ROW.ground.group`, `DEFINITION_ROW`, `DEFINITION_ROW_CHEVRON`, `ROW_TITLE_LINE`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `TEXT.role.meta`, `TEXT.role.code`, `ICON.fit.body`, `STATUS`, `STATUS_DOT`, `STATUS_SPINNER`, `STATUS_LABEL`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC`, `ICON_BUTTON.fit.bar` | rest, hover, focus, active |
 | `FormField` | shared | `FORM_FIELD`, `FORM_FIELD_ERROR`, `LINE_BOX.role.body`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `TEXT.role.meta` | rest, disabled, error |
-| `ItemHeader` | shared | `ITEM_HEADER`, `ITEM_FACTS`, `ITEM_FACT`, `TEXT.role.meta`, `TEXT.role.heading`, `STATUS`, `STATUS_DOT`, `STATUS_SPINNER`, `STATUS_LABEL`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC`, `COUNT`, `COUNT_LABEL`, `LINE_BOX.role.meta`, `LINE_BOX.role.heading`, `SKELETON_LINES`, `SKELETON_ROW.kind.facts`, `SKELETON.kind.line`, `SKELETON.kind.count` | rest, loading |
+| `ItemHeader` | shared | `ITEM_HEADER`, `THREAD_COLUMN`, `ITEM_FACTS`, `ITEM_FACT`, `TEXT.role.meta`, `TEXT.role.heading`, `STATUS`, `STATUS_DOT`, `STATUS_SPINNER`, `STATUS_LABEL`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC`, `COUNT`, `COUNT_LABEL`, `LINE_BOX.role.meta`, `LINE_BOX.role.heading`, `SKELETON_LINES`, `SKELETON_ROW.kind.facts`, `SKELETON.kind.line`, `SKELETON.kind.count` | rest, loading |
 | `SegmentedControl` | shared | `SEGMENTED_CONTROL`, `SEGMENT`, `SEGMENT_LABEL` | rest, hover, focus, active, selected |
 | `Sheet` | shared | `SHEET`, `SHEET_SIDE`, `SHEET_CENTERED`, `SHEET_HEAD`, `SHEET_HEAD_ROW`, `SHEET_BODY`, `SHEET_FOOT`, `SCRIM`, `TEXT.role.heading`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `TEXT.role.meta`, `ICON_BUTTON.fit.bar`, `ICON_BUTTON.fit.body`, `BUTTON.act.primary`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.primary` | rest, disabled, loading |
 | `Picker` | shared | `PICKER`, `HAIRLINE`, `ROW_LEADING`, `AVATAR`, `AVATAR_LABEL`, `PILL_ACT`, `PICKER_VALUE`, `ICON.fit.meta`, `FIELD.fit.bar`, `FIELD.trailing.none`, `FIELD.state.rest`, `FIELD_VALUE.kind.text`, `FIELD_VALUE.kind.search`, `FIELD_PLACEHOLDER`, `FIELD_GLYPH`, `ICON.fit.control`, `PICKER_EMPTY`, `POPOVER`, `PICKER_POPOVER`, `SELECT_GROUP`, `ROW.lines.one`, `ROW.lines.two`, `ROW.state.rest`, `ROW.state.highlighted`, `ROW.state.pressed`, `ROW.ground.list`, `ROW.ground.group`, `TEXT.role.body`, `TEXT.role.meta`, `ICON.fit.body` | rest, hover, focus, active, selected |
 | `Menu` | shared | `MENU`, `MENU_GROUP`, `MENU_LABEL`, `POPOVER`, `ROW.lines.one`, `ROW.lines.two`, `ROW.state.rest`, `ROW.state.highlighted`, `ROW.state.pressed`, `ROW.ground.list`, `TEXT.role.body`, `TEXT.role.meta`, `ICON.fit.body`, `ICON_BUTTON.fit.bar`, `ICON_BUTTON.fit.body` | rest, hover, focus, active |
-| `OptionList` | shared | `OPTION_LIST`, `SELECT_GROUP`, `OPTION_GROUP_LABEL`, `TEXT.role.meta`, `TEXT_STRONG.role.meta`, `ROW.lines.one`, `ROW.lines.two`, `ROW.state.rest`, `ROW.state.highlighted`, `ROW.state.pressed`, `ROW.ground.list`, `OPTION_LINE`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `CHECKBOX`, `CHECKBOX_MARK`, `OPTION_RADIO`, `OPTION_RADIO_DOT`, `TEXT.role.body`, `ROW_TITLE_LINE`, `ROW_META_LINE`, `CHIP.family.neutral`, `CHIP_LABEL.family.neutral`, `OPTION_CHILDREN`, `OPTION_INDENT`, `SKELETON.kind.check`, `SKELETON.kind.line`, `SKELETON_LANE`, `BUTTON.act.secondary`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.secondary` | rest, hover, focus, active, loading, error, empty, selected |
+| `OptionList` | shared | `OPTION_LIST`, `SELECT_GROUP`, `OPTION_GROUP_LABEL`, `TEXT.role.meta`, `TEXT_STRONG.role.meta`, `ROW.lines.one`, `ROW.lines.two`, `ROW.state.rest`, `ROW.state.highlighted`, `ROW.state.pressed`, `ROW.ground.list`, `OPTION_LINE`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `CHECKBOX`, `CHECKBOX_MARK`, `OPTION_RADIO`, `OPTION_RADIO_DOT`, `TEXT.role.body`, `ROW_TITLE_LINE`, `ROW_META_LINE`, `CHIP.family.neutral`, `CHIP_LABEL.family.neutral`, `OPTION_CHILDREN`, `OPTION_INDENT`, `SKELETON.kind.check`, `SKELETON.kind.radio`, `SKELETON.kind.line`, `SKELETON_LANE`, `BUTTON.act.secondary`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.secondary` | rest, hover, focus, active, loading, error, empty, selected |
 | `EmptyState` | shared | `EMPTY_COLUMN`, `EMPTY_TEXT`, `EMPTY_FRAME`, `EMPTY_CARD`, `EMPTY_MARK`, `ICON.fit.control`, `TEXT.role.title`, `TEXT.role.heading`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `TEXT.role.meta`, `BUTTON.act.primary`, `BUTTON.act.secondary`, `BUTTON.fit.bar`, `BUTTON.fit.body`, `BUTTON_LABEL.act.primary`, `BUTTON_LABEL.act.secondary` | rest |
 | `QueryBoundary` | shared | none | rest, loading, error |
 | `Toast` | shared | `TOAST`, `TOAST_STATE`, `ICON.fit.body`, `TEXT.role.body`, `BUTTON.act.secondary`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.secondary`, `ICON_BUTTON.fit.bar` | rest |
@@ -2090,11 +2106,11 @@ The front matter's components are the matrix cells: one entry per axis value of 
 | `FileRow` | content | `CHIP`, `CHIP_LABEL`, `FILE_COUNT`, `FILE_COUNTS`, `FILE_PATH`, `FILE_PATH_PART`, `ICON.fit.body`, `ROW.ground.group`, `ROW.ground.list`, `ROW.lines.one`, `ROW.state.highlighted`, `ROW.state.pressed`, `ROW.state.rest`, `ROW.state.selected`, `ROW.state.selected-hover`, `ROW_LEADING`, `SKELETON.kind.icon`, `SKELETON.kind.line`, `SKELETON_LANE.role.meta`, `SKELETON_ROW.kind.one-line`, `SKELETON_ROW.kind.one-line-group` | rest, hover, focus, active, selected, loading |
 | `Comparison` | content | `CHIP.family.neutral`, `CHIP.trailing.none`, `CHIP_LABEL.family.neutral`, `COMPARISON_LABEL`, `COMPARISON_ROW`, `LINE_BOX.role.body`, `SKELETON.kind.line`, `SKELETON_LANE.role.body`, `TEXT.role.body`, `TEXT.role.meta`, `TEXT_STRONG.role.body`, `TEXT_STRONG.role.meta` | rest, loading, error, empty |
 | `Table` | content | `CHECKBOX`, `CHECKBOX_MARK`, `CHIP.family.teal`, `CHIP.trailing.none`, `CHIP_LABEL.family.teal`, `FIELD.fit.bar`, `FIELD.state.rest`, `FIELD.trailing.none`, `FIGURES`, `ICON.fit.body`, `ICON.fit.meta`, `SKELETON.kind.check`, `SKELETON.kind.dot`, `SKELETON.kind.line`, `SPINNER`, `SPINNER_ARC`, `SPINNER_TRACK`, `STATUS`, `STATUS_DOT`, `STATUS_LABEL`, `STATUS_SPINNER`, `TABLE`, `TABLE_CELL`, `TABLE_EMPTY`, `TABLE_FRAME`, `TABLE_FROZEN`, `TABLE_FROZEN_CELL`, `TABLE_HEAD`, `TABLE_HEAD_LABEL`, `TABLE_ROW`, `TEXT.role.body`, `TEXT.role.code`, `TEXT.role.meta`, `TEXT_STRONG.role.body` | rest, hover, focus, active, loading, error, selected, empty |
-| `Message` | content | `ICON.fit.meta`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `MESSAGE`, `MESSAGE_BUBBLE`, `MESSAGE_HEAD`, `MESSAGE_LINE`, `MESSAGE_OPEN`, `MESSAGE_CARD`, `MESSAGE_FOLD`, `SKELETON.kind.line`, `TEXT.role.body`, `TEXT.role.meta`, `TEXT.role.code`, `TEXT_STRONG.role.body` | rest, hover, focus, active, loading |
+| `Message` | content | `ICON.fit.meta`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `MESSAGE`, `MESSAGE_BUBBLE`, `MESSAGE_HEAD`, `MESSAGE_LINE`, `MESSAGE_OPEN`, `MESSAGE_CARD`, `MESSAGE_CODE`, `MESSAGE_FOLD`, `SKELETON.kind.line`, `TEXT.role.body`, `TEXT.role.meta`, `TEXT.role.code`, `TEXT_STRONG.role.body` | rest, hover, focus, active, loading |
 | `MessageInput` | content | `BUTTON.act.primary`, `BUTTON.act.secondary`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.primary`, `BUTTON_LABEL.act.secondary`, `CHIP.family.neutral`, `CHIP.trailing.remove`, `CHIP_LABEL.family.neutral`, `CHIP_REMOVE_HIT`, `FIELD.fit.bar`, `FIELD.state.rest`, `FIELD.trailing.none`, `FIELD_VALUE.kind.text`, `ICON.fit.control`, `ICON.fit.meta`, `ICON_BUTTON.fit.bar`, `MESSAGE_ATTACH_SLOT`, `MESSAGE_INPUT`, `MESSAGE_INPUT_BOX`, `MESSAGE_INPUT_CHIPS`, `MESSAGE_INPUT_FIELD`, `MESSAGE_INPUT_FOOT`, `MESSAGE_INPUT_ROW`, `MESSAGE_INPUT_TEXT`, `MESSAGE_INPUT_VALUE`, `MESSAGE_NOTICE`, `MESSAGE_NOTICE_TEXT`, `SPINNER`, `SPINNER_ARC`, `SPINNER_TRACK`, `TEXT.role.meta` | rest, hover, focus, disabled |
 | `Meter` | content | `FIGURES`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `METER`, `METER_FILL`, `METER_HEAD`, `METER_ITEM`, `METER_TRACK`, `SKELETON.kind.line`, `SKELETON.kind.meter`, `TEXT.role.body`, `TEXT.role.meta`, `TEXT_STRONG.role.body` | rest, loading |
 | `BarChart` | content | `CHART`, `CHART_BAND`, `CHART_BODY`, `CHART_FILL`, `CHART_GRID`, `CHART_HEAD`, `CHART_KEY`, `CHART_KEYS`, `CHART_KEY_DOT`, `CHART_MAIN`, `CHART_PART_SPLIT`, `CHART_TICK_LANE`, `CHART_TOTAL`, `FIGURES`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `SKELETON.kind.chart`, `SKELETON.kind.line`, `TEXT.role.body`, `TEXT.role.meta`, `TEXT_STRONG.role.body` | rest, loading, error, empty |
-| `Thread` | content | `THREAD`, `THREAD_COLUMN`, `THREAD_LOG`, `FOOT`, `THREAD_LATEST` | rest, loading, error, empty |
+| `Thread` | content | `THREAD`, `THREAD_COLUMN`, `THREAD_LOG`, `THREAD_UNDER_HEAD`, `FOOT`, `THREAD_LATEST` | rest, loading, error, empty |
 | `QrCode` | content | `QR_CODE`, `QR_TILE` | rest, loading |
 
 A component owns the tokens it may draw: a cell it draws that spells a type role, a colour, a radius, a spacing role, a size or a shadow outside its row is a contract error. A colour ending in `-` is a family (`chip-` is every chip role).
@@ -2118,7 +2134,7 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | `Spinner` | none | none | `full` | none | `spinner` | none |
 | `Avatar` | `caption` | `avatar-` | `full` | none | `avatar` | none |
 | `Link` | none | `accent-ink`, `ring` | none | none | `target` | none |
-| `Place` | `title`, `body`, `meta` | `ink-body`, `ink-meta`, `edge`, `act-accent`, `on-act-accent`, `wash-hover`, `wash-press`, `danger` | `control` | `acts`, `page`, `sections`, `inside`, `control-x`, `rows`, `pair` | `strip`, `control`, `control-compact`, `popover`, `list` | none |
+| `Place` | `title`, `body`, `meta` | `ink-body`, `ink-meta`, `edge`, `act-accent`, `on-act-accent`, `wash-hover`, `wash-press`, `danger` | `control` | `acts`, `page`, `sections`, `inside`, `control-x`, `rows`, `pair` | `strip`, `control`, `control-compact`, `popover`, `list`, `measure` | `float` |
 | `Screen` | `title` | `ink-body`, `ink-meta`, `edge` | `control` | `acts`, `page`, `sections`, `pair` | `strip`, `control`, `control-compact` | none |
 | `Split` | none | `edge`, `ink-meta`, `surface` | `control` | `inside`, `page`, `sections` | `list`, `pane`, `control-compact` | none |
 | `Section` | `heading`, `meta`, `body`, `caption` | `ink-body`, `ink-meta`, `edge`, `fill-neutral`, `skeleton`, `wash-hover`, `wash-press`, `ring`, `danger` | `row`, `control`, `chip`, `full` | `pair`, `fields`, `inside`, `control-x` | `icon`, `chip`, `control-compact`, `skeleton`, `field`, `target` | none |
@@ -2132,7 +2148,7 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | `ListRow` | `body`, `meta`, `caption` | `ink-body`, `ink-meta`, `ink-disabled`, `wash-hover`, `wash-press`, `wash-selected`, `wash-selected-hover`, `ring`, `accent-ink`, `ok`, `warn`, `danger`, `avatar-`, `chip-`, `skeleton` | `row`, `full`, `control`, `chip` | `inside`, `rows`, `control-x`, `card`, `acts` | `row`, `row-2`, `avatar`, `icon`, `dot`, `spinner`, `measure-short`, `chip`, `control-compact`, `skeleton`, `figures` | none |
 | `DefinitionRow` | `body`, `meta`, `code` | `ink-body`, `ink-meta`, `wash-hover`, `wash-press`, `ring`, `accent-ink`, `ok`, `warn`, `danger` | `full`, `control` | `fields`, `card`, `inside`, `pair` | `row`, `row-setting`, `control-compact`, `icon`, `dot`, `spinner`, `measure-short` | none |
 | `FormField` | `body`, `meta` | `ink-body`, `ink-meta`, `ink-error`, `ink-disabled` | none | `pair`, `fields`, `inside` | none | none |
-| `ItemHeader` | `meta`, `heading`, `caption` | `ink-body`, `ink-meta`, `fill-neutral`, `skeleton`, `accent-ink`, `ok`, `warn`, `danger` | `chip`, `full` | `pair`, `inside`, `fields` | `skeleton`, `target`, `chip`, `dot`, `spinner`, `measure-short` | none |
+| `ItemHeader` | `meta`, `heading`, `caption` | `ink-body`, `ink-meta`, `fill-neutral`, `skeleton`, `accent-ink`, `ok`, `warn`, `danger` | `chip`, `full` | `pair`, `inside`, `fields` | `skeleton`, `target`, `chip`, `dot`, `spinner`, `measure-short`, `measure` | none |
 | `SegmentedControl` | `body` | `group`, `ink-body`, `ink-meta`, `wash-hover`, `wash-press`, `wash-selected`, `wash-selected-hover`, `ring` | `control` | `control-x` | `control-compact` | none |
 | `Sheet` | `heading`, `body`, `meta` | `scrim`, `raised`, `edge-raised`, `edge`, `ink-body`, `ink-meta`, `act-accent`, `on-act-accent` | `sheet`, `control` | `pair`, `card`, `acts`, `fields`, `inside`, `control-x` | `sheet`, `pane`, `dialog`, `control`, `control-compact` | `modal` |
 | `Picker` | `body`, `meta`, `caption` | `ink-body`, `ink-meta`, `surface`, `edge`, `edge-hover`, `raised`, `avatar-`, `edge-raised`, `wash-hover`, `wash-press`, `ring` | `full`, `control`, `popover`, `row` | `inside`, `pair`, `float`, `rows`, `control-x`, `card` | `target`, `control-compact`, `popover`, `avatar`, `row`, `row-2`, `icon-meta`, `icon`, `icon-control` | `float` |
@@ -2153,7 +2169,7 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | `MessageInput` | `body`, `meta`, `caption` | `edge`, `surface`, `ink-meta`, `ink-body`, `act-accent`, `on-act-accent`, `fill-disabled`, `ink-disabled`, `edge-hover`, `ring`, `chip-neutral-soft`, `chip-neutral-ink` | `card`, `control`, `full` | `pair`, `rows`, `inside`, `control-x` | `message-input`, `control-compact`, `icon-control`, `chip`, `measure-short`, `icon-meta`, `spinner` | none |
 | `Meter` | `body`, `meta` | `ink-body`, `ink-meta`, `fill-neutral`, `warn`, `danger`, `skeleton` | `chip` | `pair`, `inside`, `card` | `meter`, `skeleton` | none |
 | `BarChart` | `body`, `meta` | `ink-body`, `ink-meta`, `edge`, `skeleton`, `chip-` | `full`, `chip` | `fields`, `inside`, `pair` | `chart`, `dot`, `skeleton`, `figures` | none |
-| `Thread` | none | `raised` | `control` | `sections`, `page`, `pair` | `measure` | `float` |
+| `Thread` | none | `raised`, `edge` | `control` | `sections`, `page`, `pair` | `measure` | `float` |
 | `QrCode` | none | `edge`, `surface`, `ink-body`, `skeleton` | `card` | none | `qr` | none |
 
 ### Motion

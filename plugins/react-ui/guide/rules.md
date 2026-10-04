@@ -13,7 +13,8 @@ control, the text role (`Text`). A host element that rebuilds one of these is dr
 
 A record the open record links to opens beside it: the `Split`'s `beside` holds a `Screen` whose
 `back` is the open record's route. From `wide` it stands beside the main, its back act a Close;
-below `wide` it stands in the main's place with its back act.
+below `wide` it stands in the main's place with its back act, and below `tablet` its head is the
+page's only head, its back act to the main.
 
 ```tsx
 <Split list={rows} main={<Item />} beside={<Screen title="Run 12" back={itemRoute}><Run /></Screen>} />

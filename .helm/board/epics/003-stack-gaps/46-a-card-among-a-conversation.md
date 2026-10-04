@@ -21,3 +21,4 @@ Reference: Linear's agent puts the issues it found as rows in a hairline card in
 
 ## Progress
 Shape: a system `Message` takes `detail?: MessageDetail` and the Thread's message map a `detail` slot; a detail is exactly one of `row` (a ListRow in a hairline card, `MESSAGE_CARD`), `code` (a free act's arguments under its verb) or `fold` (lines the line opens in place, `MESSAGE_FOLD`). The key is `row`, never `card`, by the product-noun rule. For the critique: the cells' class strings and the web's centred column. Built on web and phone; `pnpm check` and `pnpm verify` pass. Open: the live check (web per batch, phone on the harness).
+The web design critique's findings are fixed and measured at 1440 and 375 (light).

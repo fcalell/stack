@@ -198,6 +198,7 @@ const NATIVE_OVERLAYS = [
 	"text-ink-body",
 	"text-ink-disabled",
 	"text-ink-meta",
+	"text-left",
 	"text-right",
 	"top-0",
 	"w-0",

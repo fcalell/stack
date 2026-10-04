@@ -21,3 +21,4 @@ Reference: Relevance AI's list, timeline and details pane ([screen](https://mobb
 
 ## Progress
 Shape: no API change; a Split's main provides the Thread's fill and bleed contexts, and the `SPLIT_MAIN` `fills` cell insets its head. Built on web and phone; `pnpm check` and `pnpm verify` pass. Open: the live check (web per batch, phone on the harness).
+The web design critique's findings are fixed and measured at 1440 and 375 (light).

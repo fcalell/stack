@@ -54,7 +54,18 @@ export const LendAct = createContext<
 // its own: it covers no tab bar, its title is a heading at the level where it
 // stands, its body is the size container what stands in it decides by, and
 // its back act draws as Close to the same route from `wide` of the page.
-export const Beside = createContext(false);
+// Below `tablet` of the page its head stands alone, so it draws the Details
+// act the Split lends while its pane is open; `null` outside a `beside`.
+export interface BesideFrame {
+	details?: LentDetails;
+}
+export const Beside = createContext<BesideFrame | null>(null);
+
+// A Split tells the Place it sits in that a record stands beside the main;
+// below `tablet` of its width, where that record stands alone, the Place then
+// draws no head, the record's own head the page's one, and `false` takes it
+// back.
+export const BesideOpen = createContext<((open: boolean) => void) | null>(null);
 
 // The route of the Shell's current place: the list a Place returns to
 // from a record its Split shows alone.
@@ -85,6 +96,10 @@ export const ThreadFills = createContext<((fills: boolean) => void) | null>(
 // A Split's main keeps the page inset around the record's head, so a Thread
 // filling it bleeds through the sides, its log and foot inset themselves.
 export const ThreadBleeds = createContext(false);
+
+// While a Thread fills a Split's main, the record's head over it stands in the
+// Thread's column on the desktop.
+export const OverThread = createContext(false);
 
 // A bleeding touch Place hands the room its floating act needs to the regions
 // that scroll inside its body, which keep it under their last row.

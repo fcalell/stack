@@ -170,7 +170,6 @@ function moreOf(deploy: Deploy): MenuItem[] {
 }
 
 function DeployRows(props: { query: QueryLike<Deploy[]> }) {
-	const { record } = use(HereContext);
 	const to = useTo();
 	return (
 		<List
@@ -192,11 +191,8 @@ function DeployRows(props: { query: QueryLike<Deploy[]> }) {
 				}),
 				chip: (deploy) => deploy.env,
 				more: moreOf,
-				// The open record's row is current at the page's own path.
-				href: (deploy) =>
-					deploy.id === record
-						? location.pathname
-						: to({ place: "deploys", record: deploy.id }),
+				// The open record's row is current at its route and below it.
+				href: (deploy) => to({ place: "deploys", record: deploy.id }),
 			}}
 		/>
 	);
@@ -288,9 +284,8 @@ function Record(props: { deploy: Deploy }) {
 	);
 }
 
-// The deploy's steps; the open one's row is current at the page's own path.
+// The deploy's steps; the open one's row is current at its route.
 function StepRows(props: { deploy: Deploy }) {
-	const { step } = use(HereContext);
 	const to = useTo();
 	return (
 		<List
@@ -301,9 +296,7 @@ function StepRows(props: { deploy: Deploy }) {
 				meta: (each) => [each.took],
 				status: (each) => ({ state: each.state, label: LABELS[each.state] }),
 				href: (each) =>
-					each.id === step
-						? location.pathname
-						: to({ place: "deploys", record: props.deploy.id, step: each.id }),
+					to({ place: "deploys", record: props.deploy.id, step: each.id }),
 			}}
 		/>
 	);

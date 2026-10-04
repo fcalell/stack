@@ -469,7 +469,10 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"TEXT.role.title",
 				"PAGE_BODY",
 				"FOOT",
+				"PAGE_BODY_OVER_FOOT",
+				"THREAD_COLUMN",
 				"FLOATING_ACT",
+				"FLOATING_ACT_LIFT",
 				"FLOATING_ACT_ROOM",
 				"FLOATING_ACT_FOOT",
 				"BUTTON.act.primary",
@@ -479,7 +482,12 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"ICON_BUTTON.fit.bar",
 				"ICON_BUTTON.fit.body",
 			],
-			holds: ["FLOATING_ACT", "FLOATING_ACT_ROOM", "FLOATING_ACT_FOOT"],
+			holds: [
+				"FLOATING_ACT",
+				"FLOATING_ACT_LIFT",
+				"FLOATING_ACT_ROOM",
+				"FLOATING_ACT_FOOT",
+			],
 			states: ["rest"],
 			owns: {
 				roles: ["title", "body", "meta"],
@@ -503,7 +511,15 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"rows",
 					"pair",
 				],
-				sizes: ["strip", "control", "control-compact", "popover", "list"],
+				sizes: [
+					"strip",
+					"control",
+					"control-compact",
+					"popover",
+					"list",
+					"measure",
+				],
+				elevation: ["float"],
 			},
 		},
 		// A pushed page: the back act first, no act; on touch its toasts stand
@@ -533,7 +549,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// its Place lead its strip or top bar with a back act to the list. A
 		// record the main opened (`beside`, a Screen) stands beside the main from
 		// `wide`, the pane then behind the Details act at every width, and in
-		// the main's place below it.
+		// the main's place below it; below `tablet` its head stands alone, the
+		// Place drawing none.
 		Split: {
 			props: ["list", "main", "beside", "pane", "empty"],
 			draws: [
@@ -984,6 +1001,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			props: ["overline", "title", "facts", "loading"],
 			draws: [
 				"ITEM_HEADER",
+				"THREAD_COLUMN",
 				"ITEM_FACTS",
 				"ITEM_FACT",
 				"TEXT.role.meta",
@@ -1027,6 +1045,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"dot",
 					"spinner",
 					"measure-short",
+					"measure",
 				],
 			},
 		},
@@ -1287,6 +1306,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"OPTION_CHILDREN",
 				"OPTION_INDENT",
 				"SKELETON.kind.check",
+				"SKELETON.kind.radio",
 				"SKELETON.kind.line",
 				"SKELETON_LANE",
 				"BUTTON.act.secondary",
@@ -1909,6 +1929,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"MESSAGE_LINE",
 				"MESSAGE_OPEN",
 				"MESSAGE_CARD",
+				"MESSAGE_CODE",
 				"MESSAGE_FOLD",
 				"SKELETON.kind.line",
 				"TEXT.role.body",
@@ -1923,6 +1944,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"MESSAGE_LINE",
 				"MESSAGE_OPEN",
 				"MESSAGE_CARD",
+				"MESSAGE_CODE",
 				"MESSAGE_FOLD",
 			],
 			states: [...PRESS, "loading"],
@@ -2155,11 +2177,18 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"loading",
 				"foot",
 			],
-			draws: ["THREAD", "THREAD_COLUMN", "THREAD_LOG", "FOOT", "THREAD_LATEST"],
-			holds: ["THREAD", "THREAD_COLUMN", "THREAD_LOG", "THREAD_LATEST"],
+			draws: [
+				"THREAD",
+				"THREAD_COLUMN",
+				"THREAD_LOG",
+				"THREAD_UNDER_HEAD",
+				"FOOT",
+				"THREAD_LATEST",
+			],
+			holds: ["THREAD", "THREAD_LOG", "THREAD_UNDER_HEAD", "THREAD_LATEST"],
 			states: ["rest", "loading", "error", "empty"],
 			owns: {
-				colors: ["raised"],
+				colors: ["raised", "edge"],
 				radii: ["control"],
 				spacing: ["sections", "page", "pair"],
 				sizes: ["measure"],

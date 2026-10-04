@@ -155,12 +155,13 @@ export function MessageInput({
 			className={cn(fieldValue({ kind: "text" }), MESSAGE_INPUT_VALUE, VALUE)}
 		/>
 	);
-	// On touch Stop is an icon act, so the field keeps its width.
+	// On touch Stop is an icon act, so the field keeps its width; its glyph is
+	// the stop square in a ring, never a bare square a checkbox would read as.
 	let stopAct: ReactNode = null;
 	if (working && touch)
 		stopAct = (
 			<IconButtonBase
-				icon="Square"
+				icon="CircleStop"
 				fit="bar"
 				label={words.stop}
 				onClick={stop}

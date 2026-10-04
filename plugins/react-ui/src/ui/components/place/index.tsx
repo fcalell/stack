@@ -9,13 +9,16 @@ import type {
 import {
 	FLOATING_ACT,
 	FLOATING_ACT_FOOT,
+	FLOATING_ACT_LIFT,
 	FLOATING_ACT_ROOM,
 	FOOT,
 	type IconButtonFit,
 	PAGE_BODY,
+	PAGE_BODY_OVER_FOOT,
 	PAGE_HEAD,
 	PAGE_TITLE,
 	PAGE_TOP_BAR,
+	THREAD_COLUMN,
 	text,
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, use, useEffect, useId, useState } from "react";
@@ -23,6 +26,7 @@ import type { Closed } from "../../lib/closed.ts";
 import {
 	ActFloats,
 	ActRoom,
+	BesideOpen,
 	LendAct,
 	type LentDetails,
 	PageTitle,
@@ -35,10 +39,9 @@ import {
 } from "../../lib/frame.ts";
 import { HeadingContext } from "../../lib/heading.ts";
 import { useTouch } from "../../lib/media.ts";
-import { navigate } from "../../lib/navigate.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Button } from "../button/index.tsx";
-import { IconButtonBase } from "../icon-button/base.tsx";
+import { IconButtonBase, IconButtonLink } from "../icon-button/base.tsx";
 import { IconButton } from "../icon-button/index.tsx";
 import { Menu } from "../menu/index.tsx";
 
@@ -53,6 +56,9 @@ const BESIDE_BACK = "flex page-max-tablet:hidden";
 const DETAILS = "flex page-wide:hidden";
 const DETAILS_BESIDE = "flex";
 const HEAD = "flex flex-col";
+// Below `tablet` of the page a record standing beside the main stands alone,
+// its head the page's one, so the Place draws none.
+const HEAD_BESIDE = "page-max-tablet:hidden";
 const ROW = "flex items-center";
 const SPACER = "grow";
 const TITLE = "min-w-0 grow truncate";
@@ -62,8 +68,10 @@ const TITLE = "min-w-0 grow truncate";
 const BODY = "flex flex-col grow overflow-y-auto";
 const BLEED = "flex flex-col grow min-h-0";
 const BODY_WRAP = "relative flex flex-col grow min-h-0";
-// The foot stays under the body, which scrolls past it.
+// The foot stays under the body, which scrolls past it; on the desktop it
+// stands in the measure-wide column a Thread's foot stands in.
 const DOCKED = "flex flex-col shrink-0";
+const FOOT_COLUMN = "flex flex-col";
 const ACT_ROOM = "shrink-0";
 const ACT_LAYER =
 	"absolute inset-0 flex flex-col items-center justify-end pointer-events-none";
@@ -136,7 +144,7 @@ type PlaceEnd =
 /** A page in the shell. */
 export type PlaceProps = PlaceBase & PlaceEnd;
 
-/** A page under a head and its hairline: on the desktop the title and its acts share one strip; on touch the top bar (the shell's switcher, the actions, more) stands over the title and the act floats over the body's end. A `foot` docks at the page's bottom at both densities, the body scrolling under it, above the tab bar on touch. A Place is the size container what stands in it decides its structure by (a Split its regions, a Table its grid): a Thread in its body fills it, unless the Place has a `foot`, where it stands among the sections; the Split lends it a Details act, drawn below `wide` of its width, and with a record open a back act to the place's route, drawn below `tablet` first: before the title in the strip, in the switcher's stead in the top bar. */
+/** A page under a head and its hairline: on the desktop the title and its acts share one strip; on touch the top bar (the shell's switcher, the actions, more) stands over the title and the act floats over the body's end, lifted. A `foot` docks at the page's bottom at both densities a sections gap under the body's end, the body scrolling under it, above the tab bar on touch; on the desktop it stands in the measure-wide column a Thread's foot stands in. A Place is the size container what stands in it decides its structure by (a Split its regions, a Table its grid): a Thread in its body fills it, unless the Place has a `foot`, where it stands among the sections; the Split lends it a Details act, drawn below `wide` of its width, and with a record open a back act to the place's route, drawn below `tablet` first: before the title in the strip, in the switcher's stead in the top bar. While a record stands beside the main, below `tablet` the Place draws no head: that record's head is the page's one. */
 export function Place({
 	title,
 	actions,
@@ -153,18 +161,21 @@ export function Place({
 	const titleId = useId();
 	const [lent, lend] = useState<LentDetails>();
 	const [recordOpen, setRecordOpen] = useState(false);
+	const [besideOpen, setBesideOpen] = useState(false);
 	const [fills, setFills] = useState(false);
 	const docked = useFootDocks();
 	const fit = touch ? "body" : "bar";
+	// The column is a structure that follows density, as the Thread's is.
+	const column = !touch && THREAD_COLUMN;
 	// A record standing alone returns to the list, the place's own route.
 	const back =
 		recordOpen && route !== undefined ? (
 			<span className={BACK}>
-				<IconButton
+				<IconButtonLink
 					icon={backGlyph(touch)}
 					fit={fit}
 					label={words.back}
-					onAct={() => navigate(route)}
+					href={route}
 				/>
 			</span>
 		) : null;
@@ -204,7 +215,7 @@ export function Place({
 	const floating = touch && button !== null;
 	const layer = floating ? (
 		<div className={cn(FLOATING_ACT, ACT_LAYER, bleed && BESIDE_LIST)}>
-			<span className={ACT_HIT}>{button}</span>
+			<span className={cn(FLOATING_ACT_LIFT, ACT_HIT)}>{button}</span>
 		</div>
 	) : null;
 	// A bleeding body hands the act's room to the regions that scroll inside
@@ -231,7 +242,7 @@ export function Place({
 	// title's place, the spacer and the strip's act differ, each a slot that
 	// holds `null` where it does not draw, so the acts after it never shift.
 	const head = (
-		<header className={cn(PAGE_HEAD, HEAD)}>
+		<header className={cn(PAGE_HEAD, HEAD, besideOpen && HEAD_BESIDE)}>
 			{bar ? (
 				<div className={cn(PAGE_TOP_BAR, ROW)}>
 					{back}
@@ -255,7 +266,11 @@ export function Place({
 			<ActRoom value={room}>{children}</ActRoom>
 		</div>
 	) : (
-		<div className={fills ? BLEED : cn(PAGE_BODY, BODY)}>
+		<div
+			className={
+				fills ? BLEED : cn(PAGE_BODY, BODY, foot && PAGE_BODY_OVER_FOOT)
+			}
+		>
 			<ThreadFills value={foot ? null : setFills}>{children}</ThreadFills>
 			{floating ? (
 				<div aria-hidden className={cn(FLOATING_ACT_ROOM, ACT_ROOM)} />
@@ -265,24 +280,26 @@ export function Place({
 	return (
 		<LendAct value={lend}>
 			<RecordOpen value={setRecordOpen}>
-				<RecordShown value={recordOpen}>
-					<PageTitle value={titleId}>
-						<HeadingContext value={2}>
-							<div className={cn(PLACE, PAGE)}>
-								{head}
-								<div className={BODY_WRAP}>
-									{body}
-									{layer}
-								</div>
-								{foot ? (
-									<div ref={docked} className={cn(FOOT, DOCKED)}>
-										{foot}
+				<BesideOpen value={setBesideOpen}>
+					<RecordShown value={recordOpen}>
+						<PageTitle value={titleId}>
+							<HeadingContext value={2}>
+								<div className={cn(PLACE, PAGE)}>
+									{head}
+									<div className={BODY_WRAP}>
+										{body}
+										{layer}
 									</div>
-								) : null}
-							</div>
-						</HeadingContext>
-					</PageTitle>
-				</RecordShown>
+									{foot ? (
+										<div ref={docked} className={cn(FOOT, DOCKED)}>
+											<div className={cn(column, FOOT_COLUMN)}>{foot}</div>
+										</div>
+									) : null}
+								</div>
+							</HeadingContext>
+						</PageTitle>
+					</RecordShown>
+				</BesideOpen>
 			</RecordOpen>
 		</LendAct>
 	);

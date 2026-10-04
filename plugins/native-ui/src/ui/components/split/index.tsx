@@ -1,3 +1,4 @@
+import type { IconAct } from "@fcalell/ui-core/descriptors";
 import { SPLIT_BESIDE, splitMain } from "@fcalell/ui-core/variants";
 import { type ReactNode, useContext, useEffect, useState } from "react";
 import { View } from "react-native";
@@ -6,6 +7,7 @@ import { cn } from "../../lib/cn";
 import {
 	ActRoom,
 	Beside,
+	BesideOpen,
 	LendAct,
 	PageTitle,
 	RecordAlone,
@@ -36,7 +38,8 @@ export interface SplitProps extends Closed {
 // stops scrolling (its first frame remounts it out of the scroll), its head
 // stays at the page inset over the Thread's log, which scrolls, and the
 // input docks at its foot. A record the main opened (`beside`, a Screen)
-// replaces the main, its back act to the main in its top bar. With a record
+// replaces the main, its head the page's one (the Place draws none) with its
+// back act to the main and the Details act in its top bar. With a record
 // and a pane open, the Split lends a Details act to its Place or Screen, which
 // opens the pane as a sheet. `empty` is the desktop's, so the phone never
 // draws it.
@@ -45,20 +48,32 @@ export function Split({ list, main, beside, pane }: SplitProps) {
 	const title = useContext(PageTitle);
 	const lend = useContext(LendAct);
 	const standAlone = useContext(RecordAlone);
+	const besideOpen = useContext(BesideOpen);
 	const room = useContext(ActRoom);
 	const [open, setOpen] = useState(false);
 	const [fills, setFills] = useState(false);
 	const opened = main !== undefined;
 	const sheet = opened && pane !== undefined;
+	const besides = opened && beside !== undefined;
+	const details: IconAct | undefined = sheet
+		? { icon: "PanelRight", label: words.details, onAct: () => setOpen(true) }
+		: undefined;
+	// The Details act stands in the head the page shows: the Place's, or the
+	// beside record's, which then stands alone.
 	useEffect(() => {
-		if (!sheet || !lend) return;
+		if (!sheet || besides || !lend) return;
 		lend({
 			icon: "PanelRight",
 			label: words.details,
 			onAct: () => setOpen(true),
 		});
 		return () => lend(undefined);
-	}, [sheet, lend, words.details]);
+	}, [sheet, besides, lend, words.details]);
+	useEffect(() => {
+		if (!besides || !besideOpen) return;
+		besideOpen(true);
+		return () => besideOpen(false);
+	}, [besides, besideOpen]);
 	useEffect(() => {
 		if (!opened || !standAlone) return;
 		standAlone(true);
@@ -80,10 +95,10 @@ export function Split({ list, main, beside, pane }: SplitProps) {
 			{room}
 		</Scroll>
 	);
-	if (opened && beside !== undefined)
+	if (besides)
 		region = (
 			<View className={SPLIT_BESIDE}>
-				<Beside.Provider value>{beside}</Beside.Provider>
+				<Beside.Provider value={{ details }}>{beside}</Beside.Provider>
 			</View>
 		);
 	else if (opened && fills)

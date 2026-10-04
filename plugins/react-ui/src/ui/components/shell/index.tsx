@@ -32,7 +32,7 @@ import {
 	ShellSwitcher,
 } from "../../lib/frame.ts";
 import { useTouch } from "../../lib/media.ts";
-import { isCurrent, usePathname } from "../../lib/navigate.ts";
+import { isCurrent, useRoute } from "../../lib/navigate.ts";
 import { toasts } from "../../lib/toast.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Avatar } from "../avatar/index.tsx";
@@ -99,17 +99,17 @@ export interface ShellProps extends Closed {
 export function Shell({ places, banner, switcher, children }: ShellProps) {
 	const touch = useTouch();
 	const words = useWords();
-	const pathname = usePathname();
+	const at = useRoute();
 	const [covered, cover] = useState(false);
 	const [lifted, lift] = useState(false);
 	const [footing, dock] = useState(0);
 	// The More page stands at the route it opened on: going to a place closes it.
 	const [moreAt, setMoreAt] = useState<string>();
-	const more = moreAt === pathname;
+	const more = moreAt === at;
 	const trigger = switcher ? (
 		<SwitcherPick switcher={switcher} touch={touch} />
 	) : null;
-	const route = places.find((spec) => isCurrent(spec.route, pathname))?.route;
+	const route = places.find((spec) => isCurrent(spec.route, at))?.route;
 	const rest = places.length > TAB_ROOM ? places.slice(TAB_ROOM - 1) : [];
 	// The More page stands in the page's place while it is open on touch.
 	const page = touch && more ? <MorePage places={rest} /> : children;
@@ -123,7 +123,7 @@ export function Shell({ places, banner, switcher, children }: ShellProps) {
 			) : null}
 			<div className={cn(SHELL_PLACES, PLACES)}>
 				{places.map((spec) => {
-					const current = isCurrent(spec.route, pathname);
+					const current = isCurrent(spec.route, at);
 					const state = current ? "selected" : "rest";
 					return (
 						<a
@@ -153,9 +153,9 @@ export function Shell({ places, banner, switcher, children }: ShellProps) {
 		touch && !covered ? (
 			<TabBar
 				places={places}
-				pathname={pathname}
+				at={at}
 				more={more}
-				onMore={() => setMoreAt(pathname)}
+				onMore={() => setMoreAt(at)}
 			/>
 		) : null;
 	// The toast queue and the confirm() decisions stand in every Shell.
@@ -284,21 +284,21 @@ function MorePage(props: { places: readonly PlaceSpec[] }) {
 // name reads the label then the count.
 function TabBar(props: {
 	places: readonly PlaceSpec[];
-	pathname: string;
+	at: string;
 	more: boolean;
 	onMore: () => void;
 }) {
-	const { places, pathname, more } = props;
+	const { places, at, more } = props;
 	const words = useWords();
 	const fits = places.length <= TAB_ROOM;
 	const shown = fits ? places : places.slice(0, TAB_ROOM - 1);
 	const rest = fits ? [] : places.slice(TAB_ROOM - 1);
-	const inRest = rest.some((spec) => isCurrent(spec.route, pathname));
+	const inRest = rest.some((spec) => isCurrent(spec.route, at));
 	const moreSelected = more || inRest;
 	return (
 		<nav aria-label={words.places} className={cn(SHELL_TAB_BAR, TABS)}>
 			{shown.map((spec) => {
-				const current = !more && isCurrent(spec.route, pathname);
+				const current = !more && isCurrent(spec.route, at);
 				return (
 					<a
 						key={spec.route}

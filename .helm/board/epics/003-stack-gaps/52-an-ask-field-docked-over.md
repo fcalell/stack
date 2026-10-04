@@ -21,3 +21,4 @@ Reference: Perplexity's home docks its ask field under its tasks ([screen](https
 
 ## Progress
 Shape (fcalell's call, an explicit slot): `Place` takes `foot?: ReactNode`, docked at its bottom at both densities; the sections scroll under it, it stands above the tab bar on touch, lifts over the keyboard on the phone, and reports `FootDocks`. `act` and `foot` are exclusive (one filled act per screen). The foot cell is shared as `FOOT` by Place and Thread. The showcase has a Home place with an ask field docked over its sections. Built on web and phone; `pnpm check` and `pnpm verify` pass. Open: the live check (web per batch, phone on the harness).
+The web design critique's findings are fixed and measured at 1440 and 375 (light).
