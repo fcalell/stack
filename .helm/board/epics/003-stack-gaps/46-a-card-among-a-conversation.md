@@ -1,6 +1,6 @@
 ---
 id: 003-46
-status: backlog
+status: review
 sessions: {}
 ---
 # ui-core: a card among a conversation's messages
@@ -17,4 +17,7 @@ Reference: Linear's agent puts the issues it found as rows in a hairline card in
 - [ ] Stack provides the part on every platform the app runs on.
 
 ## Open questions
-- [ ] Its shape (a component, a variant, a token, an option): the stack session decides.
+- [x] Its shape (a component, a variant, a token, an option): the stack session decides.
+
+## Progress
+Shape: a system `Message` takes `detail?: MessageDetail` and the Thread's message map a `detail` slot; a detail is exactly one of `row` (a ListRow in a hairline card, `MESSAGE_CARD`), `code` (a free act's arguments under its verb) or `fold` (lines the line opens in place, `MESSAGE_FOLD`). The key is `row`, never `card`, by the product-noun rule. For the critique: the cells' class strings and the web's centred column. Built on web and phone; `pnpm check` and `pnpm verify` pass. Open: the live check (web per batch, phone on the harness).

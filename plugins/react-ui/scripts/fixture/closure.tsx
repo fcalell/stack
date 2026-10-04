@@ -526,6 +526,7 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<BarChart label="x" items={[]} bar={{ key: String, label: String, value: Number }} classList={{}} />
 		<Message author="you" body="x" />
+		<Message author="system" body="x" detail={{ row: { title: "x", meta: ["y"] } }} />
 		{/* @ts-expect-error: closed channel */}
 		<Message author="you" body="x" className="x" />
 		{/* @ts-expect-error: closed channel */}

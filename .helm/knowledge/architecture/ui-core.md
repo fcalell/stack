@@ -388,8 +388,8 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
   (`TABLE_FROZEN_CELL`).
 - A thread is a molecule (`Thread`), a collection: its Messages from `query` (with `sentence`)
   or `items` (waiting on `loading`) through the `message` map, one function per `Message` slot
-  (`key`, `author`, `name`, `body`, `at`, and `onOpen` returning a system line's handler or none),
-  a sections gap apart (one rung above Prose's block gap), and its `MessageInput` its `foot`, the
+  (`key`, `author`, `name`, `body`, `at`, `onOpen` returning a system line's handler or none,
+  and `detail` returning a system line's `MessageDetail` or none), a sections gap apart (one rung above Prose's block gap), and its `MessageInput` its `foot`, the
   one authored part, drawn in every state. Pending, the log holds Message's own loading forms in a
   fixed order (`WAITING_MESSAGES`: another's reply, yours, another's reply), for each author is
   the item's and unknown before the data; failed, the failed EmptyState with `sentence` and
@@ -421,6 +421,14 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
   Button on the desktop and an icon act at the bar fit (`ICON_BUTTON.fit.bar`, `Square`) on
   touch, so the touch field gives up only a compact square. What becomes of a message sent while
   an answer runs is the consumer's sentence in `notice`; the input takes no prop for it.
+- What an agent made or did stands in a thread as a system Message's `detail` (`MessageDetail`,
+  exactly one of three, the others typed `?: never`): `row`, one `ListRow` on the group ground in
+  a hairline card on the surface (`MESSAGE_CARD`), its slots the row's (the kind leads as the
+  icon or the first meta part), opening its record; `code`, a free act's arguments in the code role under the line, its verb;
+  `fold`, meta lines at the pill's inset (`MESSAGE_FOLD`) the line opens in place under it, its
+  chevron turning down, read whole without a sheet. The line stays the centred meta line; a fold's
+  line is its toggle, so it opens nothing else. A thread holds one item kind, so a row or a `Code`
+  between messages is a detail, never a second item map or children.
 - A collection takes data and draws its states at the leaf. A `List` takes `query` (or
   `items`, waiting on `loading`) and one item map: `row`, one function per `ListRow` slot,
   `file`, one per `FileRow` slot, or `meter`, one per `Meter` slot. Its waiting rows are the row's
@@ -522,7 +530,7 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
 
 - The canon binds every component either UI plugin ships: one name per concept (`label`,
   `loading`, `onChange`, `onAct`, `act`, `blocked`, `sentence`), composed regions as typed
-  descriptors (`Act`, `StatusMark`, `ChipMark`, `RowLeading`, `RowTrailing`, `PlaceSpec`, `Switcher`, `Option`, `OptionGroup`, `Part`, `FieldBinding`,
+  descriptors (`Act`, `StatusMark`, `ChipMark`, `RowLeading`, `RowTrailing`, `PlaceSpec`, `Switcher`, `Option`, `OptionGroup`, `Part`, `FieldBinding`, `MessageDetail`,
   `Confirmation`, `MenuItem`, `TableColumn`, `TableRowSlots`) instead of node slots, and no
   `class` / `className` / `classList` / `style` prop. Laws live in the README under `## The
   canon`. An icon is an `IconName`, a closed type over Lucide's PascalCase

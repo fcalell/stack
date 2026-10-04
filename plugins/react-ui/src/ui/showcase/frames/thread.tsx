@@ -1,3 +1,4 @@
+import type { MessageDetail } from "@fcalell/ui-core/descriptors";
 import { useState } from "react";
 import { MessageInput } from "../../components/message-input/index.tsx";
 import { type MessageSlots, Thread } from "../../components/thread/index.tsx";
@@ -12,6 +13,8 @@ interface Turn {
 	at: string;
 	// A system line that opens what it names.
 	opens?: boolean;
+	// What stands under a system line.
+	detail?: MessageDetail;
 }
 
 const NAME = { you: "You", other: "Assistant" } as const;
@@ -24,6 +27,7 @@ export const TURN: MessageSlots<Turn> = {
 	body: (turn) => turn.body,
 	at: (turn) => turn.at,
 	onOpen: (turn) => (turn.opens ? act : undefined),
+	detail: (turn) => turn.detail,
 };
 
 export const TURNS: Turn[] = [
@@ -53,6 +57,15 @@ export const TURNS: Turn[] = [
 		opens: true,
 	},
 	{
+		id: "t4-reads",
+		author: "system",
+		body: "Read 3 files",
+		at: today("10:04"),
+		detail: {
+			fold: "migrations/0042_add_invoices.sql\nsrc/db/schema.ts\nwrangler.toml",
+		},
+	},
+	{
 		id: "t5",
 		author: "you",
 		body: "Open it, and hold the redeploy until I have read it.",
@@ -64,11 +77,34 @@ export const TURNS: Turn[] = [
 		body: "Opened `0042_add_invoices`. The redeploy waits for you.",
 		at: today("10:05"),
 	},
+	{
+		id: "t7",
+		author: "system",
+		body: "Ran migrate",
+		at: today("10:06"),
+		detail: { code: "0042_add_invoices --env production" },
+	},
+	{
+		id: "t8",
+		author: "system",
+		body: "Proposed a redeploy",
+		at: today("10:06"),
+		detail: {
+			row: {
+				leading: { icon: "Rocket" },
+				title: "Redeploy api to production",
+				meta: ["Deploy", "After the migration"],
+				status: { state: "waiting", label: "Waits for you" },
+				onOpen: act,
+			},
+		},
+	},
 ];
 
 // Board 53's thread in a Place body (the Place's frame is context): system
-// lines, yours and the assistant's replies, the input in the foot with its
-// notice, the answer still working.
+// lines (one opening, one folding its reads, a free act over its code, a
+// proposal as its row), yours and the assistant's replies, the input in the
+// foot with its notice, the answer still working.
 export function drawThread() {
 	return <Conversation />;
 }

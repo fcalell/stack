@@ -82,9 +82,13 @@ form: a set (`onChange` hears the set) draws check rows, one value or `null` (`o
 the value) radio rows, one answer among a few described options.
 
 A `Thread` takes its `query` (or `items`) the same way through a `message` map (`key`,
-`author`, `name`, `body`, `at`, `onOpen`); its `MessageInput` stays the `foot`. In a
+`author`, `name`, `body`, `at`, `onOpen`, `detail`); its `MessageInput` stays the `foot`. In a
 `Place`'s body, or in a `Split`'s `main` under the record's `ItemHeader`, it fills what holds it:
-its log scrolls and the input docks at the foot.
+its log scrolls and the input docks at the foot. What a
+system line names stands under it as its `detail`, a `MessageDetail`, exactly one of: a `row`
+(a `ListRow`'s slots, in a hairline card, opening its record), a free act's `code` under its
+verb, or a `fold` of lines the line opens in place; never a `ListRow` or a `Code` between the
+messages.
 
 A field that stays in view while a `Place`'s sections scroll under it (an ask box over a
 home's sections) is the Place's `foot`: it docks at the Place's bottom, above the tab bar on

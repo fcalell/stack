@@ -28,12 +28,13 @@ export function Pane(props: { children: ReactNode }) {
 type Author = "you" | "other" | "system";
 
 // The author a cell stands for: a `MESSAGE.author` cell its own, the strong
-// name another's, the meta line and the chevron a system line's, the body
-// line yours.
+// name another's, the meta line, the chevron and the code a system line's,
+// the body line yours.
 const YOURS = ["MESSAGE.author.you", "TEXT.role.body"];
 const SYSTEMS = [
 	"MESSAGE.author.system",
 	"TEXT.role.meta",
+	"TEXT.role.code",
 	"LINE_BOX.role.meta",
 	"ICON.fit.meta",
 ];
@@ -119,6 +120,40 @@ function Rest(props: { author: Author }) {
 					body="Relayed from #deploys"
 					at={today("10:04")}
 					onOpen={open}
+				/>
+			</Pane>
+			<Pane>
+				<Message
+					author="system"
+					body="Read 3 files"
+					at={today("10:04")}
+					detail={{
+						fold: "migrations/0042_add_invoices.sql\nsrc/db/schema.ts\nwrangler.toml",
+					}}
+				/>
+			</Pane>
+			<Pane>
+				<Message
+					author="system"
+					body="Ran migrate"
+					at={today("10:06")}
+					detail={{ code: "0042_add_invoices --env production" }}
+				/>
+			</Pane>
+			<Pane>
+				<Message
+					author="system"
+					body="Proposed a redeploy"
+					at={today("10:06")}
+					detail={{
+						row: {
+							leading: { icon: "Rocket" },
+							title: "Redeploy api to production",
+							meta: ["Deploy", "After the migration"],
+							status: { state: "waiting", label: "Waits for you" },
+							onOpen: open,
+						},
+					}}
 				/>
 			</Pane>
 		</>

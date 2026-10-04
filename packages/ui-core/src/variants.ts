@@ -518,12 +518,16 @@ export const TABLE_FROZEN = "bg-surface";
 export const TABLE_EMPTY = "p-page";
 // Message: yours in a bubble on the group ground; the name beside the time;
 // a system line's words beside its time, wrapping; the line that opens, a
-// pill at the target height with the pointer's washes.
+// pill at the target height with the pointer's washes. Under a system line,
+// its card: one list row in a hairline card on the surface; its fold's lines
+// at the pill's inset.
 export const MESSAGE_BUBBLE = "rounded-card bg-group px-tile py-pair";
 export const MESSAGE_HEAD = "gap-inside";
 export const MESSAGE_LINE = "gap-x-inside";
 export const MESSAGE_OPEN =
 	"gap-inside rounded-control px-inside min-h-target text-ink-meta";
+export const MESSAGE_CARD = "rounded-card border border-edge bg-surface";
+export const MESSAGE_FOLD = "px-inside";
 // MessageInput: the composer over its notice. On the desktop one box (the
 // field's boundary at the card radius), its attachments, its text at the
 // field's inset (capped at eight lines, scrolling past them) and its foot

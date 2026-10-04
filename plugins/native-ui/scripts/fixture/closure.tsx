@@ -823,6 +823,7 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<Comparison label="x" columns={["a"]} items={[]} row={{ key: String, label: String, values: () => [] }} placeholderTextColorClassName="text-ink-body" />
 		<Message author="you" body="a" />
+		<Message author="system" body="a" detail={{ fold: "b" }} />
 		{/* @ts-expect-error: closed channel */}
 		<Message author="you" body="a" className="x" />
 		{/* @ts-expect-error: closed channel */}

@@ -1,4 +1,5 @@
 import { cn } from "@fcalell/ui-core/cn";
+import type { MessageDetail } from "@fcalell/ui-core/descriptors";
 import {
 	type ListState,
 	listBusy,
@@ -58,6 +59,8 @@ export interface MessageSlots<T> {
 	at?: (item: T) => string | undefined;
 	/** What a system line opens: the line becomes the act; a turn takes none. */
 	onOpen?: (item: T) => (() => void) | undefined;
+	/** What stands under a system line (a row, a free act's code, a fold); a turn takes none. */
+	detail?: (item: T) => MessageDetail | undefined;
 }
 
 /** Where a thread's messages come from. */
@@ -107,6 +110,7 @@ function messageOf<T>(slots: MessageSlots<T>, item: T): ReactNode {
 				body={body}
 				at={at}
 				onOpen={slots.onOpen?.(item)}
+				detail={slots.detail?.(item)}
 			/>
 		);
 	return (

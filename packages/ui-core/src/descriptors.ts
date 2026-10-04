@@ -198,6 +198,28 @@ export interface Notice {
 	act?: Act;
 }
 
+// What stands under a system message's line, exactly one of three: `row`,
+// what the line names as one list row in a hairline card, opening its record;
+// `code`, a free act's arguments in the code role under the line, its verb;
+// `fold`, lines (split on newlines) the line opens in place, its chevron
+// turning down.
+export type MessageDetail =
+	| {
+			row: {
+				leading?: RowLeading;
+				title: string;
+				meta?: Part[];
+				status?: StatusMark;
+				chip?: ChipMark;
+				href?: string;
+				onOpen?: () => void;
+			};
+			code?: never;
+			fold?: never;
+	  }
+	| { code: string; row?: never; fold?: never }
+	| { fold: string; row?: never; code?: never };
+
 // ── Table ───────────────────────────────────────────────────────────
 
 // A column's width: a `widths` rung, or a fraction of the table's width. A

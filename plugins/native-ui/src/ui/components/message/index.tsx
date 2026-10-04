@@ -1,6 +1,9 @@
+import type { MessageDetail } from "@fcalell/ui-core/descriptors";
 import {
 	lineBox,
 	MESSAGE_BUBBLE,
+	MESSAGE_CARD,
+	MESSAGE_FOLD,
 	MESSAGE_HEAD,
 	MESSAGE_LINE,
 	MESSAGE_OPEN,
@@ -9,16 +12,22 @@ import {
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
+import { type ReactNode, useState } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
+import { GroundContext } from "../../lib/ground";
 import { Ink } from "../../lib/ink";
 import { moment } from "../../lib/moment";
 import { Icon } from "../icon";
+import { ListRow } from "../list-row";
 import { Prose } from "../prose";
 
 const YOURS = "items-end";
+// The line centred, a free act's code or an open fold's lines under it.
 const SYSTEM = "items-center justify-center";
+const FRAMED = "overflow-hidden";
+const DETAIL_TEXT = "text-center";
 const LINE_TEXT = "flex-row flex-wrap justify-center min-w-0";
 // A React Native text never shrinks in a row unless told, so a long line
 // wraps inside the row instead of running past it.
@@ -51,14 +60,98 @@ export type MessageProps =
 			// Who said it: drawn over `other`'s reply, read aloud before yours.
 			name?: string;
 			onOpen?: never;
+			detail?: never;
 	  })
 	| (MessageBase & {
 			author: "system";
 			// Opens what the line names: the line becomes the act, a chevron
 			// after it.
 			onOpen?: () => void;
+			// What stands under the line, one of three: a row in a hairline card
+			// that opens its record, a free act's arguments in the code role, or
+			// lines the line opens in place (it takes no `onOpen` then).
+			detail?: MessageDetail;
 			name?: never;
 	  });
+
+// A system line and its detail: the fold's toggle and its lines, or the line
+// (an act with `onOpen`) over the code, all centred; a row's hairline card
+// stands under them.
+function SystemMessage(props: {
+	body: string;
+	time: ReactNode;
+	onOpen?: () => void;
+	detail?: MessageDetail;
+}) {
+	const { body, time, onOpen, detail } = props;
+	const [open, setOpen] = useState(false);
+	const words = (
+		<RNText className={cn(text({ role: "meta" }), WORDS)}>{body}</RNText>
+	);
+	let line = (
+		<View className={cn(MESSAGE_LINE, LINE_TEXT)}>
+			{words}
+			{time}
+		</View>
+	);
+	if (detail?.fold !== undefined)
+		line = (
+			<Pressable
+				accessibilityRole="button"
+				accessibilityState={{ expanded: open }}
+				onPress={() => setOpen(!open)}
+				className={cn(MESSAGE_OPEN, OPEN)}
+			>
+				{words}
+				{time}
+				<Ink.Provider value="ink-meta">
+					<Icon name={open ? "ChevronDown" : "ChevronRight"} fit="meta" />
+				</Ink.Provider>
+			</Pressable>
+		);
+	else if (onOpen)
+		line = (
+			<Pressable
+				accessibilityRole="button"
+				onPress={onOpen}
+				className={cn(MESSAGE_OPEN, OPEN)}
+			>
+				{words}
+				{time}
+				<Ink.Provider value="ink-meta">
+					<Icon name="ChevronRight" fit="meta" />
+				</Ink.Provider>
+			</Pressable>
+		);
+	const centred = (
+		<View className={cn(message({ author: "system" }), SYSTEM)}>
+			{line}
+			{detail?.code === undefined ? null : (
+				<RNText className={cn(text({ role: "code" }), DETAIL_TEXT)}>
+					{detail.code}
+				</RNText>
+			)}
+			{detail?.fold === undefined || !open ? null : (
+				<RNText
+					className={cn(text({ role: "meta" }), MESSAGE_FOLD, DETAIL_TEXT)}
+				>
+					{detail.fold}
+				</RNText>
+			)}
+		</View>
+	);
+	if (detail?.row === undefined) return centred;
+	return (
+		<View>
+			{centred}
+			<View className={cn(MESSAGE_CARD, FRAMED)}>
+				<GroundContext.Provider value="group">
+					<ListRow {...detail.row} />
+				</GroundContext.Provider>
+			</View>
+		</View>
+	);
+}
 
 function LineWait({ role, bar }: { role: "body" | "meta"; bar: string }) {
 	return (
@@ -93,30 +186,13 @@ export function Message(props: MessageProps) {
 					</View>
 				</View>
 			);
-		const words = (
-			<RNText className={cn(text({ role: "meta" }), WORDS)}>{body}</RNText>
-		);
 		return (
-			<View className={cn(message({ author }), SYSTEM)}>
-				{props.onOpen ? (
-					<Pressable
-						accessibilityRole="button"
-						onPress={props.onOpen}
-						className={cn(MESSAGE_OPEN, OPEN)}
-					>
-						{words}
-						{time}
-						<Ink.Provider value="ink-meta">
-							<Icon name="ChevronRight" fit="meta" />
-						</Ink.Provider>
-					</Pressable>
-				) : (
-					<View className={cn(MESSAGE_LINE, LINE_TEXT)}>
-						{words}
-						{time}
-					</View>
-				)}
-			</View>
+			<SystemMessage
+				body={body}
+				time={time}
+				onOpen={props.onOpen}
+				detail={props.detail}
+			/>
 		);
 	}
 	const { name } = props;

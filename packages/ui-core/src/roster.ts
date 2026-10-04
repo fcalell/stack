@@ -1892,10 +1892,12 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			},
 		},
 		// Its props are a union on `author`: `you` and `other` take `name`, `system`
-		// takes `onOpen`. A reply's body is a `Prose`; `at` is an ISO moment each
-		// plugin formats in the document's language (the time alone today).
+		// takes `onOpen` and `detail` (a `MessageDetail`: a row, one `ListRow`
+		// in a hairline card, a free act's code, or a fold its line opens). A reply's body
+		// is a `Prose`; `at` is an ISO moment each plugin formats in the
+		// document's language (the time alone today).
 		Message: {
-			props: ["author", "name", "body", "at", "onOpen", "loading"],
+			props: ["author", "name", "body", "at", "onOpen", "detail", "loading"],
 			draws: [
 				"ICON.fit.meta",
 				"LINE_BOX.role.body",
@@ -1905,9 +1907,12 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"MESSAGE_HEAD",
 				"MESSAGE_LINE",
 				"MESSAGE_OPEN",
+				"MESSAGE_CARD",
+				"MESSAGE_FOLD",
 				"SKELETON.kind.line",
 				"TEXT.role.body",
 				"TEXT.role.meta",
+				"TEXT.role.code",
 				"TEXT_STRONG.role.body",
 			],
 			holds: [
@@ -1916,14 +1921,18 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"MESSAGE_HEAD",
 				"MESSAGE_LINE",
 				"MESSAGE_OPEN",
+				"MESSAGE_CARD",
+				"MESSAGE_FOLD",
 			],
 			states: [...PRESS, "loading"],
 			owns: {
-				roles: ["meta", "body"],
+				roles: ["meta", "body", "code"],
 				colors: [
 					"ink-meta",
 					"group",
 					"ink-body",
+					"edge",
+					"surface",
 					"skeleton",
 					"wash-hover",
 					"ring",

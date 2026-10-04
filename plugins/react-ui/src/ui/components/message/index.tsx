@@ -1,8 +1,11 @@
 import { Button as BaseButton } from "@base-ui/react/button";
 import { cn } from "@fcalell/ui-core/cn";
+import type { MessageDetail } from "@fcalell/ui-core/descriptors";
 import {
 	lineBox,
 	MESSAGE_BUBBLE,
+	MESSAGE_CARD,
+	MESSAGE_FOLD,
 	MESSAGE_HEAD,
 	MESSAGE_LINE,
 	MESSAGE_OPEN,
@@ -11,14 +14,19 @@ import {
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
+import { type ReactNode, useId, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
+import { GroundContext } from "../../lib/ground.ts";
 import { moment } from "../../lib/moment.ts";
 import { Icon } from "../icon/index.tsx";
+import { ListRow } from "../list-row/index.tsx";
 import { Prose } from "../prose/index.tsx";
 
 const STACK = "flex flex-col";
 const YOURS = "flex flex-col items-end";
-const SYSTEM = "flex items-center justify-center text-center";
+// The line centred, a free act's code or an open fold's lines under it.
+const SYSTEM = "flex flex-col items-center justify-center text-center";
+const FRAMED = "flex flex-col overflow-hidden";
 const LINE_TEXT = "inline-flex flex-wrap justify-center min-w-0";
 const OPEN =
 	"inline-flex items-center min-w-0 hover:bg-wash-hover active:bg-wash-press";
@@ -53,16 +61,91 @@ export type MessageProps =
 			/** Who said it: drawn over `other`'s reply, read aloud before yours. */
 			name?: string;
 			onOpen?: never;
+			detail?: never;
 	  })
 	| (MessageBase & {
 			/** `system`, one meta line centred in the thread. */
 			author: "system";
 			/** Opens what the line names: the line becomes the act, a chevron after it. */
 			onOpen?: () => void;
+			/** What stands under the line, one of three: a row in a hairline card that opens its record, a free act's arguments in the code role, or lines the line opens in place (it takes no `onOpen` then). */
+			detail?: MessageDetail;
 			name?: never;
 	  });
 
-/** Yours a bubble on the group ground at the column's end, the time under it; another's the name at body 500 beside the time over the reply as Prose; a system line one meta line centred in a row at the target height, its time beside it. */
+// A system line and its detail: the fold's toggle and its lines, or the line
+// (an act with `onOpen`) over the code, all centred; a row's hairline card
+// stands under them.
+function SystemMessage(props: {
+	body: string;
+	time: ReactNode;
+	onOpen?: () => void;
+	detail?: MessageDetail;
+}) {
+	const { body, time, onOpen, detail } = props;
+	const [open, setOpen] = useState(false);
+	const linesId = useId();
+	const words = (
+		<span className={cn(text({ role: "meta" }), WORDS)}>{body}</span>
+	);
+	let line = (
+		<p className={cn(MESSAGE_LINE, LINE_TEXT)}>
+			{words}
+			{time}
+		</p>
+	);
+	if (detail?.fold !== undefined)
+		line = (
+			<BaseButton
+				aria-expanded={open}
+				aria-controls={linesId}
+				onClick={() => setOpen(!open)}
+				className={cn(MESSAGE_OPEN, OPEN)}
+			>
+				{words}
+				{time}
+				<Icon name={open ? "ChevronDown" : "ChevronRight"} fit="meta" />
+			</BaseButton>
+		);
+	else if (onOpen)
+		line = (
+			<BaseButton onClick={onOpen} className={cn(MESSAGE_OPEN, OPEN)}>
+				{words}
+				{time}
+				<Icon name="ChevronRight" fit="meta" />
+			</BaseButton>
+		);
+	const centred = (
+		<div className={cn(message({ author: "system" }), SYSTEM)}>
+			{line}
+			{detail?.code === undefined ? null : (
+				<code className={cn(text({ role: "code" }), BODY)}>{detail.code}</code>
+			)}
+			{detail?.fold === undefined ? null : (
+				<p
+					id={linesId}
+					hidden={!open}
+					className={cn(text({ role: "meta" }), MESSAGE_FOLD, BODY)}
+				>
+					{detail.fold}
+				</p>
+			)}
+		</div>
+	);
+	if (detail?.row === undefined) return centred;
+	return (
+		<div className={STACK}>
+			{centred}
+			<div className={cn(MESSAGE_CARD, FRAMED)}>
+				<GroundContext value="group">
+					<ListRow {...detail.row} />
+				</GroundContext>
+			</div>
+		</div>
+	);
+}
+
+/** Yours a bubble on the group ground at the column's end, the time under it; another's the name at body 500 beside the time over the reply as Prose; a system line one meta line centred in a row at the target height, its time beside it, its detail under it: a free act's code, a fold's meta lines once its chevron opens them, or a hairline card holding one row. */
 export function Message(props: MessageProps) {
 	const { author, body, at, loading } = props;
 	const time = at ? (
@@ -79,24 +162,13 @@ export function Message(props: MessageProps) {
 					</span>
 				</div>
 			);
-		const words = (
-			<span className={cn(text({ role: "meta" }), WORDS)}>{body}</span>
-		);
 		return (
-			<div className={cn(message({ author }), SYSTEM)}>
-				{props.onOpen ? (
-					<BaseButton onClick={props.onOpen} className={cn(MESSAGE_OPEN, OPEN)}>
-						{words}
-						{time}
-						<Icon name="ChevronRight" fit="meta" />
-					</BaseButton>
-				) : (
-					<p className={cn(MESSAGE_LINE, LINE_TEXT)}>
-						{words}
-						{time}
-					</p>
-				)}
-			</div>
+			<SystemMessage
+				body={body}
+				time={time}
+				onOpen={props.onOpen}
+				detail={props.detail}
+			/>
 		);
 	}
 	const { name } = props;
