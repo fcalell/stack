@@ -2,7 +2,8 @@ import type { BarSeries, ComparisonRow } from "@fcalell/ui-core/descriptors";
 import { BarChart } from "../../components/bar-chart/index.tsx";
 import { Comparison } from "../../components/comparison/index.tsx";
 import { Group } from "../../components/group/index.tsx";
-import { Meter, type MeterProps } from "../../components/meter/index.tsx";
+import { List } from "../../components/list/index.tsx";
+import type { MeterProps } from "../../components/meter/index.tsx";
 import { Place } from "../../components/place/index.tsx";
 import { QueryBoundary } from "../../components/query-boundary/index.tsx";
 import { Section } from "../../components/section/index.tsx";
@@ -120,9 +121,22 @@ function Sections(props: { usage?: typeof USAGE }) {
 		<>
 			<Section title="This month" description="Team plan, resets on Oct 31.">
 				<Group>
-					{(usage?.meters ?? METERS).map((meter) => (
-						<Meter key={meter.label} {...meter} loading={!usage} />
-					))}
+					<List
+						items={usage?.meters ?? []}
+						loading={!usage}
+						empty={{
+							title: "No limits",
+							sentence: "This plan meters nothing.",
+						}}
+						meter={{
+							key: (meter) => meter.label,
+							label: (meter) => meter.label,
+							value: (meter) => meter.value,
+							max: (meter) => meter.max,
+							unit: (meter) => meter.unit,
+							meta: (meter) => meter.meta,
+						}}
+					/>
 				</Group>
 			</Section>
 			<Section title="Requests" description="Per day this week, by project.">

@@ -1,13 +1,11 @@
 import { filled, METER_NEAR } from "@fcalell/ui-core/tokens";
 import {
 	FIGURES,
-	lineBox,
 	METER,
 	METER_HEAD,
 	METER_ITEM,
 	METER_TRACK,
 	meterFill,
-	skeleton,
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
@@ -17,19 +15,13 @@ import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { GroundContext } from "../../lib/ground";
 import { useWords } from "../../lib/words";
+import { MeterWait } from "./wait";
 
 const STACK = "min-w-0";
 const HEAD = "flex-row items-center";
 const LABEL = "flex-1 min-w-0";
 const SHARE = "shrink-0";
 const TRACK = "overflow-hidden";
-// A loading line stands in its text's line box: a zero-width line of the
-// role beside the bar, so the loading meter keeps the loaded one's height.
-const LINE = "flex-row items-center";
-const STRUT = "​";
-const LABEL_WAIT = "grow";
-const SHARE_WAIT = "justify-end shrink-0";
-const BAR = "w-full";
 
 // The level a share stands at: past the max over, from `METER_NEAR` near.
 function levelOf(share: number) {
@@ -63,29 +55,7 @@ export function Meter({ label, value, max, unit, meta, loading }: MeterProps) {
 	const words = useWords();
 	// In a Group the meter is one of its items, at the card's inset.
 	const item = useContext(GroundContext) === "group" && METER_ITEM;
-	if (loading)
-		return (
-			<View
-				accessibilityState={{ busy: true }}
-				className={cn(METER, item, STACK)}
-			>
-				<View className={cn(METER_HEAD, HEAD)}>
-					<View className={cn(LINE, LABEL_WAIT)}>
-						<RNText className={lineBox({ role: "body" })}>{STRUT}</RNText>
-						<View className={cn(skeleton({ kind: "line" }), "w-1/3")} />
-					</View>
-					<View className={cn(LINE, SHARE_WAIT, "w-1/12")}>
-						<RNText className={lineBox({ role: "meta" })}>{STRUT}</RNText>
-						<View className={cn(skeleton({ kind: "line" }), BAR)} />
-					</View>
-				</View>
-				<View className={skeleton({ kind: "meter" })} />
-				<View className={LINE}>
-					<RNText className={lineBox({ role: "meta" })}>{STRUT}</RNText>
-					<View className={cn(skeleton({ kind: "line" }), "w-1/2")} />
-				</View>
-			</View>
-		);
+	if (loading) return <MeterWait busy meta />;
 	const share = max > 0 ? value / max : 0;
 	const number = new Intl.NumberFormat();
 	const percent = new Intl.NumberFormat(undefined, {

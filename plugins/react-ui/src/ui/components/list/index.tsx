@@ -13,6 +13,7 @@ import {
 	listGround,
 	listState,
 	listWaits,
+	meterShape,
 	retryOf,
 	rowShape,
 } from "@fcalell/ui-core/list-state";
@@ -33,6 +34,8 @@ import { FileRow } from "../file-row/index.tsx";
 import { FileWait } from "../file-row/wait.tsx";
 import { ListRow } from "../list-row/index.tsx";
 import { RowWait, WAITING_ROWS } from "../list-row/wait.tsx";
+import { Meter } from "../meter/index.tsx";
+import { MeterWait } from "../meter/wait.tsx";
 import type { QueryLike } from "../query-boundary/index.tsx";
 
 const STACK = "flex flex-col";
@@ -105,6 +108,22 @@ export interface FileSlots<T> {
 	onOpen?: (item: T) => void;
 }
 
+/** One function per `Meter` slot, each called with a loaded item; a declared `meta` is the line the waiting meters draw. */
+export interface MeterSlots<T> {
+	/** The item's React key, unique in the list. */
+	key: (item: T) => string;
+	/** What is measured. */
+	label: (item: T) => string;
+	/** How much is used. */
+	value: (item: T) => number;
+	/** The limit. */
+	max: (item: T) => number;
+	/** What the value counts. */
+	unit?: (item: T) => string | undefined;
+	/** The line under the bar. */
+	meta?: (item: T) => string | undefined;
+}
+
 /** What an empty list draws: an EmptyState's mark, title, sentence and the act that fills the list. */
 export type ListEmpty = Pick<
 	EmptyStateProps,
@@ -140,14 +159,22 @@ type ListKind<T, V extends string | null> =
 			/** The `ListRow` slots. */
 			row: RowSlots<T, V>;
 			file?: never;
+			meter?: never;
 	  }
 	| {
 			/** The `FileRow` slots. */
 			file: FileSlots<T>;
 			row?: never;
+			meter?: never;
+	  }
+	| {
+			/** The `Meter` slots. */
+			meter: MeterSlots<T>;
+			row?: never;
+			file?: never;
 	  };
 
-/** A collection's rows: from a query or from items, each a ListRow or a FileRow. */
+/** A collection's rows: from a query or from items, each a ListRow, a FileRow or a Meter. */
 export type ListProps<T = unknown, V extends string | null = string> = Closed &
 	ListSource<T> &
 	ListKind<T, V>;
@@ -182,15 +209,15 @@ export function List<T, V extends string | null = string>(
 			</div>
 		);
 	if (state === "pending") {
-		const shape = props.row ? rowShape(props.row) : undefined;
+		const { row, meter } = props;
 		return frame(
-			WAITING.map((index) =>
-				shape ? (
-					<RowWait key={index} shape={shape} index={index} />
-				) : (
-					<FileWait key={index} busy={false} />
-				),
-			),
+			WAITING.map((index) => {
+				if (row)
+					return <RowWait key={index} shape={rowShape(row)} index={index} />;
+				if (meter)
+					return <MeterWait key={index} busy={false} {...meterShape(meter)} />;
+				return <FileWait key={index} busy={false} />;
+			}),
 		);
 	}
 	if (state === "failed" && props.query !== undefined) {
@@ -220,6 +247,21 @@ export function List<T, V extends string | null = string>(
 					more={row.more?.(item)}
 					href={row.href?.(item)}
 					onOpen={row.onOpen ? () => row.onOpen?.(item) : undefined}
+				/>
+			)),
+		);
+	}
+	if (props.meter) {
+		const { meter } = props;
+		return frame(
+			items.map((item) => (
+				<Meter
+					key={meter.key(item)}
+					label={meter.label(item)}
+					value={meter.value(item)}
+					max={meter.max(item)}
+					unit={meter.unit?.(item)}
+					meta={meter.meta?.(item)}
 				/>
 			)),
 		);

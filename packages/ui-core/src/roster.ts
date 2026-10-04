@@ -628,12 +628,21 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			},
 		},
 		// A collection: its rows from `query` or `items` through one item map
-		// (`row` for ListRows, `file` for FileRows), its waiting rows the row's
-		// own in the slots the map declares, its failed and empty EmptyStates its
-		// own. In a Group its rows and forms stand on the card, the card their
-		// box.
+		// (`row` for ListRows, `file` for FileRows, `meter` for Meters), its
+		// waiting rows the row's own in the slots the map declares, its failed
+		// and empty EmptyStates its own. In a Group its rows and forms stand on
+		// the card, the card their box.
 		List: {
-			props: ["query", "sentence", "empty", "row", "file", "items", "loading"],
+			props: [
+				"query",
+				"sentence",
+				"empty",
+				"row",
+				"file",
+				"meter",
+				"items",
+				"loading",
+			],
 			draws: ["LIST"],
 			holds: ["LIST"],
 			states: ["rest", "loading", "error", "empty"],

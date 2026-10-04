@@ -350,10 +350,11 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
   the input docked at the foot (`THREAD_FOOT`); a Section takes the setter back. A filled Place's
   floating act would stand over the docked input: accepted while no Place has both.
 - A collection takes data and draws its four states at the leaf. A `List` takes `query` (or
-  `items`, waiting on `loading`) and one item map: `row`, one function per `ListRow` slot, or
-  `file`, one per `FileRow` slot. Its waiting rows are the row's own markup (`list-row/wait.tsx`,
-  `file-row/wait.tsx`), a ListRow's with bars in the slots `row` declares, read before any item
-  exists. The `leading` slot names its kind by its one key (`{ avatar }`, `{ icon }` or
+  `items`, waiting on `loading`) and one item map: `row`, one function per `ListRow` slot,
+  `file`, one per `FileRow` slot, or `meter`, one per `Meter` slot. Its waiting rows are the row's
+  own markup (`list-row/wait.tsx`, `file-row/wait.tsx`, `meter/wait.tsx`), a ListRow's with bars in
+  the slots `row` declares and a Meter's meta bar only when `meter` declares `meta`, read before
+  any item exists. The `leading` slot names its kind by its one key (`{ avatar }`, `{ icon }` or
   `{ status }`, each a function of the item), so a list's rows share one kind or have none, and
   the waiting row draws that kind's mark at its size (`SKELETON` `avatar`, `icon` or `dot`). A
   trailing waits `figures` wide; a declared `more` keeps the act's room empty. A collection of
@@ -388,7 +389,7 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
   (its `loading`, or a loading Section's) renders its body once and, when no List registered,
   swaps it for setting skeletons before paint (`groupWait`), the Section's mechanism.
 - A Meter in a Group stands as its item at the card's inset (`METER_ITEM`, by `GroundContext`),
-  the Group's hairline between. A FileRow is selected at its `href`, as a ListRow is.
+  the Group's hairline between; a set of them from data is a `List` taking `meter`, in the Group. A FileRow is selected at its `href`, as a ListRow is.
 - Code, Diff and ProseDiff stand in one frame on the surface inside a hairline (`CONTENT_FRAME`),
   so a diff's soft grounds always sit on the surface; a diff's number columns and a file row's
   count lanes are `figures` wide.

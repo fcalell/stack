@@ -1,6 +1,6 @@
 ---
 id: 004-09
-status: backlog
+status: review
 sessions: {}
 ---
 # react-ui, native-ui: a set of meters from data draws its own four states
@@ -25,5 +25,8 @@ on the card (004-04). One List holds one item kind.
 Web and phone alike. Depends on 004-04.
 
 ## Acceptance criteria
-- [ ] (test) a `List` given `meter` and `row` together fails the type-check.
+- [x] (test) a `List` given `meter` and `row` together fails the type-check.
 - [ ] (live) the usage page's meters pass data with no fixture stand-in, and draw their four states under `&query=loading|error`.
+
+## Progress
+Built on web and phone; `pnpm check` and `pnpm verify` pass. Open: the live criteria (web per batch, phone on the harness).

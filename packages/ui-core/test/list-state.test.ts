@@ -8,6 +8,7 @@ import {
 	listGround,
 	listState,
 	listWaits,
+	meterShape,
 	retryOf,
 	rowShape,
 	sectionCount,
@@ -112,6 +113,8 @@ test("the waiting shape follows the declared slots and runs none of them", () =>
 		rowShape({ leading: { status: spy("status") } }).leading,
 		"status",
 	);
+	assert.deepEqual(meterShape({}), { meta: false });
+	assert.deepEqual(meterShape({ meta: spy("meta") }), { meta: true });
 	assert.deepEqual(calls, []);
 });
 

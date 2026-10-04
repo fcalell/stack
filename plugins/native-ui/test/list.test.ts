@@ -25,3 +25,32 @@ test("a List holds one item kind: `row` and `file` together fail the type-check"
 	const both: ListProps<Changed> = { items: [], row, file };
 	void both;
 });
+
+interface Limit {
+	label: string;
+	used: number;
+	max: number;
+}
+
+const meter = {
+	key: (each: Limit) => each.label,
+	label: (each: Limit) => each.label,
+	value: (each: Limit) => each.used,
+	max: (each: Limit) => each.max,
+};
+
+test("a List takes `meter` as an item map over Meter's slots", () => {
+	const limits: ListProps<Limit> = { items: [], meter };
+	void limits;
+});
+
+test("a List holds one item kind: `meter` and `row` together fail the type-check", () => {
+	const title = (each: Limit) => each.label;
+	// @ts-expect-error: one List holds one item kind
+	const both: ListProps<Limit> = {
+		items: [],
+		row: { key: title, title },
+		meter,
+	};
+	void both;
+});

@@ -2,13 +2,11 @@ import { cn } from "@fcalell/ui-core/cn";
 import { filled, METER_NEAR } from "@fcalell/ui-core/tokens";
 import {
 	FIGURES,
-	lineBox,
 	METER,
 	METER_HEAD,
 	METER_ITEM,
 	METER_TRACK,
 	meterFill,
-	skeleton,
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
@@ -16,16 +14,13 @@ import { use } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { GroundContext } from "../../lib/ground.ts";
 import { useWords } from "../../lib/words.tsx";
+import { MeterWait } from "./wait.tsx";
 
 const STACK = "flex flex-col min-w-0";
 const HEAD = "flex items-center";
 const LABEL = "min-w-0 grow truncate";
 const SHARE = "shrink-0";
 const TRACK = "overflow-hidden";
-const LINE = "flex items-center h-lh";
-const LABEL_WAIT = "grow";
-const SHARE_WAIT = "justify-end shrink-0";
-const BAR = "w-full";
 
 // The level a share stands at: past the max over, from `METER_NEAR` near.
 function levelOf(share: number) {
@@ -55,30 +50,7 @@ export function Meter({ label, value, max, unit, meta, loading }: MeterProps) {
 	const words = useWords();
 	// In a Group the meter is one of its items, at the card's inset.
 	const item = use(GroundContext) === "group" && METER_ITEM;
-	if (loading)
-		return (
-			<div aria-busy className={cn(METER, item, STACK)}>
-				<div className={cn(METER_HEAD, HEAD)}>
-					<span className={cn(lineBox({ role: "body" }), LINE, LABEL_WAIT)}>
-						<span className={cn(skeleton({ kind: "line" }), "w-1/3")} />
-					</span>
-					<span
-						className={cn(
-							lineBox({ role: "meta" }),
-							LINE,
-							SHARE_WAIT,
-							"w-1/12",
-						)}
-					>
-						<span className={cn(skeleton({ kind: "line" }), BAR)} />
-					</span>
-				</div>
-				<div className={skeleton({ kind: "meter" })} />
-				<span className={cn(lineBox({ role: "meta" }), LINE)}>
-					<span className={cn(skeleton({ kind: "line" }), "w-1/2")} />
-				</span>
-			</div>
-		);
+	if (loading) return <MeterWait busy meta />;
 	const share = max > 0 ? value / max : 0;
 	const number = new Intl.NumberFormat();
 	const percent = new Intl.NumberFormat(undefined, {

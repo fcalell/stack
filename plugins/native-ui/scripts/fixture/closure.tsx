@@ -398,6 +398,9 @@ export const closure = (
 		{/* @ts-expect-error: a list holds one row kind */}
 		<List items={[1]} row={{ key: String, title: String }} file={{ key: String, path: String, added: Number, removed: Number }} />
 		<List items={["a"]} empty={{ sentence: "x", act: { label: "x", onAct: noop } }} file={{ key: String, path: String, added: () => 1, removed: () => 0 }} />
+		{/* @ts-expect-error: a list holds one row kind */}
+		<List items={[1]} row={{ key: String, title: String }} meter={{ key: String, label: String, value: Number, max: Number }} />
+		<List items={[1]} meter={{ key: String, label: String, value: Number, max: Number, meta: String }} />
 		{/* @ts-expect-error: closed channel */}
 		<List items={[]} row={{ key: String, title: String }} className="x" />
 		{/* @ts-expect-error: closed channel */}

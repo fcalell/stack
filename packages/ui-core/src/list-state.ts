@@ -123,6 +123,18 @@ export function rowShape(slots: {
 	};
 }
 
+// The slots a waiting Meter draws, known before any item: the label, share
+// and bar always, the meta line when the `meter` map declares one.
+export interface MeterShape {
+	meta: boolean;
+}
+
+// The waiting meter's shape from the slots a `meter` map declares, read by
+// key: no slot function runs.
+export function meterShape(slots: { meta?: unknown }): MeterShape {
+	return { meta: slots.meta !== undefined };
+}
+
 // The count a Section shows: its own `count` when it has one (a total its
 // lists do not hold), else its lists' total once every list has answered (a
 // list still waiting or failed gives none), else none; an empty collection
