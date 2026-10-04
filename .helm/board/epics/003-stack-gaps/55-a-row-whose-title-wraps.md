@@ -1,0 +1,20 @@
+---
+id: 003-55
+status: backlog
+sessions: {}
+---
+# ui-core: a row whose title wraps in full
+
+## Goal
+A memory note reads whole in its list with its origin on the meta line and its more menu. System, Memory, the notes under each owner. Stead needs it: `design/07-interface.md` at github.com/fcalell/stead, "Gaps", and the surfaces named here.
+
+## Approach
+`ListRow` cuts its title to one line, and a `Quoted` title wraps to two but adds typographic quotes, which mark model-written names, never an approved note. `Prose` is one document with no per-item meta line or more menu. `Message` is a conversation turn, its author and bubble the wrong meaning.
+
+Reference: Oura's notes wrap whole with their date ([screen](https://mobbin.com/screens/f5728230-f84a-40ac-aa8e-48b9238e1ae5)); Perplexity's memories ([screen](https://mobbin.com/screens/9da0306d-58e7-4c44-aa67-1537d44b2e7e)).
+
+## Acceptance criteria
+- [ ] Stack provides the part on every platform the app runs on.
+
+## Open questions
+- [ ] Its shape (a component, a variant, a token, an option): the stack session decides.
