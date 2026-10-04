@@ -492,7 +492,14 @@ a tick with no animation, never jumped to full.
   Thread in a Place's body fills the page at every width, decided by where it stands, from its first render:
   the frame hands it `ThreadRoom`, and the body draws no inset and leaves scrolling to it, its log scrolls at the page inset (`THREAD_LOG`),
   opening at the newest message and following each that arrives while the reader is at the end,
-  the input docked at the foot (`FOOT`); a Section takes the room back. The web Thread marks
+  the input docked at the foot (`FOOT`); a Section takes the room back. The phone log's origin is
+  its end: the ScrollView and each message turn upside down (as React Native's `VirtualizedList`
+  inverts a list), the messages newest first, so its first frame shows the newest message and a
+  keyboard's resize keeps the bottom anchored; `maintainVisibleContentPosition` keeps a
+  scrolled-up reader's place as a message arrives at the origin, and follows from the end. Its
+  insets swap (`THREAD_LOG`'s top inset at its layout end) and a short log stands at its layout
+  end, the top of the screen. Rejected: scrolling to the end from `onContentSizeChange` and
+  `onLayout`, which showed the oldest messages for a frame and jumped on each keyboard resize. The web Thread marks
   its filling root `data-fill` and the region reads the mark with an arbitrary
   `[&:has(>[data-fill])]` variant (Tailwind 4's `has-[...]` takes no child combinator), so the
   body's form follows the Thread from its first paint with no state in the frame. The marked

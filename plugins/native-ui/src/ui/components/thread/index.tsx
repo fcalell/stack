@@ -21,7 +21,7 @@ import {
 	useRef,
 	useState,
 } from "react";
-import { ScrollView, View } from "react-native";
+import { Platform, ScrollView, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { ThreadBleeds, ThreadRoom, ToLatest } from "../../lib/frame";
@@ -42,10 +42,21 @@ const BLEED = "-mx-page";
 // The region over the foot: the log, and the Latest act floating at its foot.
 const REGION = "relative flex-1";
 const LOG = "flex-1";
+// The log is drawn upside down, its newest message at its origin (see
+// `INVERTED`), so `THREAD_LOG`'s top and bottom insets swap, and a short log
+// stands at its layout end, the top of the screen.
+const UPSIDE_DOWN = "grow justify-end pt-sections pb-page";
 const DOCKED = "shrink-0";
-// The log is at its end while its last point shows; a reader who scrolled
-// up keeps their place as a message arrives.
+// The log is at its end while its newest point shows.
 const AT_END = 1;
+// The log and each message in it turn upside down, as React Native's
+// `VirtualizedList` inverts a list (Android turns both axes): the log's
+// origin is its end, so the first frame shows the newest message and a
+// keyboard's resize keeps it at the bottom.
+const INVERTED =
+	Platform.OS === "android"
+		? { transform: [{ scale: -1 }] }
+		: { transform: [{ scaleY: -1 }] };
 
 // One function per `Message` slot, each called with a loaded item.
 export interface MessageSlots<T> {
@@ -184,37 +195,35 @@ export function Thread<T>(props: ThreadProps<T>) {
 	const fill = useContext(ThreadRoom);
 	const bleeds = useContext(ThreadBleeds);
 	const log = useRef<ScrollView>(null);
-	const atEnd = useRef(true);
 	// The reader is scrolled up: the Latest act stands over the foot.
 	const [away, setAway] = useState(false);
-	// The log opens at its end and stays there while the reader is, as a
-	// message arrives, a reply grows, or the input or the keyboard shrinks
-	// the log.
-	const follow = () => {
-		if (atEnd.current) log.current?.scrollToEnd({ animated: false });
-	};
-	const messages = (
-		<View
-			accessibilityLiveRegion="polite"
-			accessibilityState={{ busy }}
-			className={THREAD}
-		>
-			{children}
-		</View>
-	);
-	// Back to the newest message, following again from there.
+	// Back to the newest message, at the log's origin.
 	const toLatest = () => {
-		atEnd.current = true;
 		setAway(false);
-		log.current?.scrollToEnd({ animated: false });
+		log.current?.scrollTo({ y: 0, animated: false });
 	};
 	if (!fill)
 		return (
 			<View className={THREAD}>
-				{messages}
+				<View
+					accessibilityLiveRegion="polite"
+					accessibilityState={{ busy }}
+					className={THREAD}
+				>
+					{children}
+				</View>
 				{foot ?? null}
 			</View>
 		);
+	// Newest first, each upside down inside the upside-down log, so it reads
+	// the right way up with the newest at the bottom.
+	const cells = Children.toArray(children)
+		.reverse()
+		.map((child) => (
+			<View key={isValidElement(child) ? child.key : null} style={INVERTED}>
+				{child}
+			</View>
+		));
 	return (
 		<Lifted
 			behavior="padding"
@@ -224,21 +233,22 @@ export function Thread<T>(props: ThreadProps<T>) {
 			<View className={REGION}>
 				<ScrollView
 					ref={log}
-					onContentSizeChange={follow}
-					onLayout={follow}
-					onScroll={(event) => {
-						const { contentOffset, contentSize, layoutMeasurement } =
-							event.nativeEvent;
-						const end =
-							contentSize.height - contentOffset.y - layoutMeasurement.height <=
-							AT_END;
-						atEnd.current = end;
-						setAway(!end);
+					accessibilityLiveRegion="polite"
+					accessibilityState={{ busy }}
+					style={INVERTED}
+					// A message arriving at the origin keeps a scrolled-up reader's
+					// place, and one at the end follows it.
+					maintainVisibleContentPosition={{
+						minIndexForVisible: 0,
+						autoscrollToTopThreshold: AT_END,
 					}}
+					onScroll={(event) =>
+						setAway(event.nativeEvent.contentOffset.y > AT_END)
+					}
 					className={LOG}
-					contentContainerClassName={THREAD_LOG}
+					contentContainerClassName={cn(THREAD, THREAD_LOG, UPSIDE_DOWN)}
 				>
-					{messages}
+					{cells}
 				</ScrollView>
 				<ToLatest.Provider value={away ? toLatest : null}>
 					<Latest />

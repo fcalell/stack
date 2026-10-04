@@ -1,6 +1,6 @@
 ---
 id: 005-11
-status: backlog
+status: review
 sessions: {}
 ---
 # native-ui: a Thread's log starts at its end
@@ -22,3 +22,6 @@ four states.
 
 ## Acceptance criteria
 - [ ] (live) on the harness, the conversation 03 adds to `apps/phone`, at 40 messages: the first frame shows the newest message, and opening the keyboard moves no message off the bottom for a frame, at 390 dp.
+
+## Progress
+Built; `pnpm check` and `pnpm verify` pass. The phone log is inverted (as VirtualizedList inverts), so its origin is the newest message and `follow()`, `atEnd` and the size handlers go; `maintainVisibleContentPosition` keeps a scrolled-up reader's place. To check on the harness: screen readers likely read the log newest first, and Android may draw its scroll indicator on the left. Open: the phone live criterion on the harness.
