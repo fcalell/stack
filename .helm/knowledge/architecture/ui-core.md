@@ -241,7 +241,23 @@ a tick with no animation, never jumped to full.
   (`ToastFrame`), the one measure left, since the layer stands outside the page's tree (below).
   Rejected: a registration the Shell reads in render from a host object, since a frame that
   mounts after the Shell's render (a route that waits first) leaves nothing that renders the
-  Shell's tab bar again.
+  Shell's tab bar again. A Split and its page work the same way on the web: the Place (or a
+  pushed Screen) owns the handle of the Split's details sheet (`DetailsSheet`) and always draws
+  the back act to its route and the Details act, and the Split marks its root `data-record`,
+  `data-pane` and `data-beside`; `group-has-*/page` variants on the page's head show the back
+  act below `tablet` with a record, the Details act below `wide` with a pane and at every width
+  beside a record, and hide the head below `tablet` beside a record, while a Toolbar leaves with
+  the list below `tablet` with a record, all from a deep link's first frame. Native has no such
+  selector, so by contract a Split stands as its page's direct child (the page's frame region,
+  stated in both rules pages): the Place or Screen reads the Split element's props among its
+  children in render (`useSplitHead`, as a Toolbar sorts its children by type), so its head
+  draws the back act with a record, the Details act with a pane and no head beside a record from
+  the first frame, and holds the Details sheet's open state (`DetailsOpen`), which closes with
+  the pane it opened on. A Split standing deeper draws as a plain region and no head draws its
+  acts. Rejected: a registration the Place reads in render from a host object, since the Place's
+  head renders before the Split in the same pass and a Split inside a component that re-renders
+  alone (a selection in that component's state) would leave the head stale. Each region keeps
+  its own keyed scroll, so a record opens at its top after a scrolled list.
 - A molecule whose structure follows density keeps one constant per structure, never a density
   axis: the page's head (`PAGE_HEAD`, one hairline at both densities) holds the desktop strip
   (`PAGE_TOP_BAR` with the title and acts in one row) or the touch one (`PAGE_TOP_BAR` over the
@@ -250,7 +266,7 @@ a tick with no animation, never jumped to full.
   list inside its hairline and the list alone. The web picks the structure under `touch:` or,
   for a Split, by its page's width: every Place and Screen is the `page` size container and the
   web's `page-<breakpoint>:` / `page-max-<breakpoint>:` variants, emitted from the breakpoint
-  values, query it, so the Split's regions and the Details and back acts it lends follow the room
+  values, query it, so the Split's regions and the Details and back acts its marks show follow the room
   the page has beside a sidebar rather than the viewport; native draws the touch one. A bleeding
   body draws no inset, and whatever stands first in it (a Toolbar, the record, the list alone)
   carries its own top inset.
@@ -337,9 +353,9 @@ a tick with no animation, never jumped to full.
   inside its scroll, never on the shared box, because a `basis-0` item still counts its own
   padding against its share; the Screen's back act draws as
   Close to the same route, and the pane leaves for the Details act at every width, which the
-  Split lends with `beside` set. Below `wide` the beside record stands in the main's place with
+  Split's `data-beside` mark shows. Below `wide` the beside record stands in the main's place with
   its back act, a pushed page inside the Split. Below `tablet` (the web) and on the phone, where
-  it stands alone, its head is the page's one: the Split tells the Place (`BesideOpen`), which
+  it stands alone, its head is the page's one: the Place reads the Split's `data-beside` mark (the web) or its `beside` prop (native), and
   draws no head, so one top bar holds one back act, to the main, and the list is reached by
   going back from the main; the Split hands the Details act to that head through `Beside`. The Split hands the Screen `Beside`: the Screen covers no tab bar, its title
   is a heading at the level where it stands, and where its head stands alone the page's top heading

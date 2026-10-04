@@ -67,25 +67,24 @@ export function useFootDocks() {
 	};
 }
 
-// A Split lends its Details act to the Place or Screen it sits in, which
-// draws it after its own actions; `undefined` takes it back.
-export const LendAct = createContext<
-	((act: IconAct | undefined) => void) | null
->(null);
+// Whether the details sheet of a Split's pane is open, held by the Place or
+// Screen the Split stands in as a direct child, which draws the sheet's
+// Details act in its head from the Split's props; `null` for a Split that
+// stands deeper, which draws as a plain region.
+export interface DetailsState {
+	open: boolean;
+	setOpen: (open: boolean) => void;
+}
+export const DetailsOpen = createContext<DetailsState | null>(null);
 
 // A Split's `beside` record is a Screen standing in its Place in the main's
 // stead, not a page pushed over it, so it covers no tab bar. Its head stands
-// alone, so it draws the Details act the Split lends while its pane is open;
+// alone, so it draws the Details act of the Split's pane while it is open;
 // `null` outside a `beside`.
 export interface BesideFrame {
 	details?: IconAct;
 }
 export const Beside = createContext<BesideFrame | null>(null);
-
-// A Split tells the Place it sits in that a record stands beside the main:
-// that record's head is then the page's one and the Place draws none, and
-// `false` takes it back.
-export const BesideOpen = createContext<((open: boolean) => void) | null>(null);
 
 // The route of the Shell's current place: the list a Place returns to from a
 // record its Split shows alone.
@@ -95,15 +94,8 @@ export const PlaceRoute = createContext<string | undefined>(undefined);
 // not found leads back; outside a Screen it leads to `PlaceRoute`.
 export const BackRoute = createContext<string | undefined>(undefined);
 
-// A Split tells the Place it sits in that its record stands alone; the Place
-// then starts its top bar with a back act to its route in place of the
-// switcher, and `false` takes it back.
-export const RecordAlone = createContext<((alone: boolean) => void) | null>(
-	null,
-);
-
-// Whether the record stands alone in the Place's Split: the Toolbar over the
-// list leaves with the list.
+// Whether the record of the Place's Split stands alone, read off the Split's
+// props: the Toolbar over the list leaves with the list.
 export const RecordShown = createContext(false);
 
 // A Thread standing in a Place's body or a Split's main tells it, which then

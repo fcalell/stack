@@ -25,13 +25,9 @@ import { type ReactNode, use, useId, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import {
 	ActRoom,
-	BesideOpen,
-	LendAct,
-	type LentDetails,
+	DetailsSheet,
 	PageTitle,
 	PlaceRoute,
-	RecordOpen,
-	RecordShown,
 	ShellSwitcher,
 	ThreadFills,
 	useFootDocks,
@@ -46,18 +42,24 @@ import { Menu } from "../menu/index.tsx";
 
 const PLACE = "flex flex-col grow min-h-0";
 // A page is the size container what stands in it decides its structure by
-// (a Split its regions, a Table its grid); the acts a Split lends hide by the
+// (a Split its regions, a Table its grid); the acts a Split's marks show hide by the
 // same widths.
 const PAGE = "@container/page group/page";
-const BACK = "flex page-tablet:hidden";
-const BESIDE_BACK = "flex page-max-tablet:hidden";
-// A Split's lent Details act, drawn below `wide` of its page.
-const DETAILS = "flex page-wide:hidden";
-const DETAILS_BESIDE = "flex";
+// The head's acts for a Split, drawn from the first frame and shown by the
+// marks its root carries (`DetailsSheet`): the back act to the list below
+// `tablet` with a record open, the switcher giving it its place; the Details
+// act below `wide` with a pane, and at every width beside a record. A touch
+// top bar holding nothing else stands only while one of them shows.
+const BACK = "hidden page-max-tablet:group-has-data-record/page:flex";
+const BESIDE_BACK = "flex page-max-tablet:group-has-data-record/page:hidden";
+export const DETAILS =
+	"hidden page-max-wide:group-has-data-pane/page:flex group-has-[[data-pane][data-beside]]/page:flex";
+const ROW_MARKED =
+	"hidden items-center page-max-tablet:group-has-data-record/page:flex page-max-wide:group-has-data-pane/page:flex group-has-[[data-pane][data-beside]]/page:flex";
 const HEAD = "flex flex-col";
 // Below `tablet` of the page a record standing beside the main stands alone,
 // its head the page's one, so the Place draws none.
-const HEAD_BESIDE = "page-max-tablet:hidden";
+const HEAD_BESIDE = "page-max-tablet:group-has-data-beside/page:hidden";
 const ROW = "flex items-center";
 const SPACER = "grow";
 const TITLE = "min-w-0 grow truncate";
@@ -92,11 +94,15 @@ export function FloatingActRoom() {
 	);
 }
 
-/** The Details act a Split lends its page: the trigger of its details sheet, drawn below `wide` of the page, and at every width while a record stands beside the main. */
-export function Details(props: LentDetails & { fit: IconButtonFit }) {
+/** The Details act a page draws for a Split's pane: the trigger of the details sheet, shown by `shown`. */
+export function Details(props: {
+	sheet: Dialog.Handle<unknown>;
+	fit: IconButtonFit;
+	shown: string;
+}) {
 	const words = useWords();
 	return (
-		<span className={props.beside ? DETAILS_BESIDE : DETAILS}>
+		<span className={props.shown}>
 			<Dialog.Trigger
 				handle={props.sheet}
 				render={
@@ -145,7 +151,7 @@ type PlaceEnd =
 /** A page in the shell. */
 export type PlaceProps = PlaceBase & PlaceEnd;
 
-/** A page under a head and its hairline: on the desktop the title and its acts share one strip; on touch the top bar (the shell's switcher, the actions, more) stands over the title and the act floats over the body's end, lifted. A `foot` docks at the page's bottom at both densities a sections gap under the body's end, the body scrolling under it, above the tab bar on touch; on the desktop it stands in the measure-wide column a Thread's foot stands in. A Place is the size container what stands in it decides its structure by (a Split its regions, a Table its grid): a Thread in its body fills it, unless the Place has a `foot`, where it stands among the sections; the Split lends it a Details act, drawn below `wide` of its width, and with a record open a back act to the place's route, drawn below `tablet` first: before the title in the strip, in the switcher's stead in the top bar. While a record stands beside the main, below `tablet` the Place draws no head: that record's head is the page's one. */
+/** A page under a head and its hairline: on the desktop the title and its acts share one strip; on touch the top bar (the shell's switcher, the actions, more) stands over the title and the act floats over the body's end, lifted. A `foot` docks at the page's bottom at both densities a sections gap under the body's end, the body scrolling under it, above the tab bar on touch; on the desktop it stands in the measure-wide column a Thread's foot stands in. A Place is the size container what stands in it decides its structure by (a Split its regions, a Table its grid): a Thread in its body fills it, unless the Place has a `foot`, where it stands among the sections; it draws the Details act of a Split's pane, below `wide` of its width, and with a record open a back act to the place's route, drawn below `tablet` first: before the title in the strip, in the switcher's stead in the top bar. While a record stands beside the main, below `tablet` the Place draws no head: that record's head is the page's one. */
 export function Place({
 	title,
 	actions,
@@ -160,9 +166,7 @@ export function Place({
 	const switcher = use(ShellSwitcher);
 	const route = use(PlaceRoute);
 	const titleId = useId();
-	const [lent, lend] = useState<LentDetails>();
-	const [recordOpen, setRecordOpen] = useState(false);
-	const [besideOpen, setBesideOpen] = useState(false);
+	const [sheet] = useState(() => Dialog.createHandle<unknown>());
 	const [fills, setFills] = useState(false);
 	const docked = useFootDocks();
 	const fit = touch ? "body" : "bar";
@@ -170,7 +174,7 @@ export function Place({
 	const column = !touch && THREAD_COLUMN;
 	// A record standing alone returns to the list, the place's own route.
 	const back =
-		recordOpen && route !== undefined ? (
+		route !== undefined ? (
 			<span className={BACK}>
 				<IconButtonLink
 					icon={backGlyph(touch)}
@@ -180,8 +184,8 @@ export function Place({
 				/>
 			</span>
 		) : null;
-	// On touch the shell's switcher leads the top bar, beside the back act
-	// where the back act draws; on the desktop it stands in the sidebar.
+	// On touch the shell's switcher leads the top bar, giving the back act its
+	// place where the back act shows; on the desktop it stands in the sidebar.
 	const lead = !touch ? null : back ? (
 		<span className={BESIDE_BACK}>{switcher}</span>
 	) : (
@@ -190,7 +194,7 @@ export function Place({
 	const acts = (actions ?? []).map((action) => (
 		<IconButton key={action.label} {...action} fit={fit} />
 	));
-	const details = lent ? <Details {...lent} fit={fit} /> : null;
+	const details = <Details sheet={sheet} fit={fit} shown={DETAILS} />;
 	const overflow = more?.length ? (
 		<Menu label={words.more} items={more} />
 	) : null;
@@ -226,33 +230,26 @@ export function Place({
 	// it: the act's height over the page inset, since such a region keeps no
 	// inset of its own.
 	const room = floating ? <FloatingActRoom /> : null;
-	// On touch a top bar with nothing in it is not drawn; on the desktop the
+	// On touch a top bar with nothing else in it stands only while the Split's
+	// marks show its back or Details act; on the desktop the
 	// strip always holds the title.
-	const bar =
-		!touch ||
-		back !== null ||
-		lead !== null ||
-		acts.length > 0 ||
-		details !== null ||
-		overflow !== null;
+	const bar = !touch || lead !== null || acts.length > 0 || overflow !== null;
 	// The head is one tree on both densities, so crossing the density line
 	// keeps its acts, their focus and an open sheet's trigger. Only the
 	// title's place, the spacer and the strip's act differ, each a slot that
 	// holds `null` where it does not draw, so the acts after it never shift.
 	const head = (
-		<header className={cn(PAGE_HEAD, HEAD, besideOpen && HEAD_BESIDE)}>
-			{bar ? (
-				<div className={cn(PAGE_TOP_BAR, ROW)}>
-					{back}
-					{lead}
-					{touch ? null : heading}
-					{touch ? <span className={SPACER} /> : null}
-					{acts}
-					{details}
-					{overflow}
-					{touch ? null : button}
-				</div>
-			) : null}
+		<header className={cn(PAGE_HEAD, HEAD, HEAD_BESIDE)}>
+			<div className={cn(PAGE_TOP_BAR, bar ? ROW : ROW_MARKED)}>
+				{back}
+				{lead}
+				{touch ? null : heading}
+				{touch ? <span className={SPACER} /> : null}
+				{acts}
+				{details}
+				{overflow}
+				{touch ? null : button}
+			</div>
 			{touch ? heading : null}
 		</header>
 	);
@@ -276,29 +273,23 @@ export function Place({
 		</div>
 	);
 	return (
-		<LendAct value={lend}>
-			<RecordOpen value={setRecordOpen}>
-				<BesideOpen value={setBesideOpen}>
-					<RecordShown value={recordOpen}>
-						<PageTitle value={titleId}>
-							<HeadingContext value={2}>
-								<div className={cn(PLACE, PAGE)}>
-									{head}
-									<div className={BODY_WRAP}>
-										{body}
-										{layer}
-									</div>
-									{foot ? (
-										<div ref={docked} className={cn(FOOT, DOCKED)}>
-											<div className={cn(column, FOOT_COLUMN)}>{foot}</div>
-										</div>
-									) : null}
-								</div>
-							</HeadingContext>
-						</PageTitle>
-					</RecordShown>
-				</BesideOpen>
-			</RecordOpen>
-		</LendAct>
+		<DetailsSheet value={sheet}>
+			<PageTitle value={titleId}>
+				<HeadingContext value={2}>
+					<div className={cn(PLACE, PAGE)}>
+						{head}
+						<div className={BODY_WRAP}>
+							{body}
+							{layer}
+						</div>
+						{foot ? (
+							<div ref={docked} className={cn(FOOT, DOCKED)}>
+								<div className={cn(column, FOOT_COLUMN)}>{foot}</div>
+							</div>
+						) : null}
+					</div>
+				</HeadingContext>
+			</PageTitle>
+		</DetailsSheet>
 	);
 }

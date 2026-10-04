@@ -9,7 +9,9 @@ and never restyles them.
 
 Find the roster component that owns the shape: the frame (`Shell`, `Place`, `Screen`, `Split`),
 the rhythm (`Section`, `Group`, `List`), the row (`ListRow`, `DefinitionRow`, `FormField`), the
-control, the text role (`Text`). A host element that rebuilds one of these is drift.
+control, the text role (`Text`). A host element that rebuilds one of these is drift. A `Split` is its page's frame region: it
+stands as the bleeding `Place`'s (or `Screen`'s) direct child, never inside a component of the
+app's, so the page's head draws its back and Details acts.
 
 A record the open record links to opens beside it: the `Split`'s `beside` holds a `Screen` whose
 `back` is the open record's route. From `wide` it stands beside the main, its back act a Close;

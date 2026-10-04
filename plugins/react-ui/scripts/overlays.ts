@@ -156,6 +156,14 @@ export const OVERLAYS: readonly string[] = [
 	// bar, a floating act shows its room under the toasts.
 	"group-has-data-screen/column:hidden",
 	"group-has-data-act-floats/column:flex",
+	// A page's head reads its Split's marks: the back act with a record, the
+	// Details act with a pane, no head beside a record, the Toolbar leaving
+	// with the list.
+	"page-max-tablet:group-has-data-record/page:flex",
+	"page-max-tablet:group-has-data-record/page:hidden",
+	"page-max-wide:group-has-data-pane/page:flex",
+	"group-has-[[data-pane][data-beside]]/page:flex",
+	"page-max-tablet:group-has-data-beside/page:hidden",
 	"page-wide:hidden",
 	"page-max-wide:hidden",
 	"border-edge",

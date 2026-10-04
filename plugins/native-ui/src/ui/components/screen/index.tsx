@@ -6,7 +6,7 @@ import {
 	PAGE_TOP_BAR,
 	text,
 } from "@fcalell/ui-core/variants";
-import { type ReactNode, useContext, useState } from "react";
+import { type ReactNode, useContext } from "react";
 import { Text as RNText, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Closed } from "../../lib/closed";
@@ -15,7 +15,7 @@ import {
 	ActRoom,
 	BackRoute,
 	Beside,
-	LendAct,
+	DetailsOpen,
 	PageTitle,
 } from "../../lib/frame";
 import { Scroll } from "../../lib/hosts";
@@ -24,6 +24,7 @@ import { useWords } from "../../lib/words";
 import { IconButton } from "../icon-button";
 import { Menu } from "../menu";
 import { ToastRoom } from "../place";
+import { useSplitHead } from "../split";
 
 const SCREEN = "flex-1";
 const TOP_BAR = "relative flex-row items-center";
@@ -45,11 +46,11 @@ export interface ScreenProps extends Closed {
 // A page pushed over a place: the top bar (back, the actions, more) over the
 // title, the body scrolling under it, no filled act; it draws no tab bar, so
 // it covers the Shell's from its first frame, and clears the home indicator
-// itself, the toasts standing over its body. A Split inside lends it its
-// Details act. As a Split's `beside` record it stands in the main's stead in
+// itself, the toasts standing over its body. A Split standing as its direct
+// child gets its Details act in its head. As a Split's `beside` record it stands in the main's stead in
 // the Place, which keeps the tab bar and the toasts' box; it keeps the
 // floating act's room under its body, and, its head the page's one, draws the
-// Details act the Split lends while the pane is open.
+// Details act of the Split's pane while it is open.
 export function Screen({ title, back, actions, more, children }: ScreenProps) {
 	const words = useWords();
 	const frame = useContext(Beside);
@@ -57,10 +58,10 @@ export function Screen({ title, back, actions, more, children }: ScreenProps) {
 	// Beside, it stands in the main's stead in a bleeding Place, so its body
 	// keeps the room of the act floating over it, as the main does.
 	const room = useContext(ActRoom);
-	const [lent, lend] = useState<IconAct>();
+	const split = useSplitHead(children);
 	const insets = useSafeAreaInsets();
 	return (
-		<LendAct.Provider value={lend}>
+		<DetailsOpen.Provider value={split.held}>
 			<PageTitle.Provider value={title}>
 				<View
 					style={beside ? undefined : { paddingBottom: insets.bottom }}
@@ -79,7 +80,7 @@ export function Screen({ title, back, actions, more, children }: ScreenProps) {
 							<View className={SPACER} />
 							{[
 								...(actions ?? []),
-								...(lent ? [lent] : []),
+								...(split.details ? [split.details] : []),
 								...(frame?.details ? [frame.details] : []),
 							].map((action) => (
 								<IconButton key={action.label} {...action} fit="body" />
@@ -105,6 +106,6 @@ export function Screen({ title, back, actions, more, children }: ScreenProps) {
 					</View>
 				</View>
 			</PageTitle.Provider>
-		</LendAct.Provider>
+		</DetailsOpen.Provider>
 	);
 }

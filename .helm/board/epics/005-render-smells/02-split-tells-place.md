@@ -1,6 +1,6 @@
 ---
 id: 005-02
-status: backlog
+status: review
 sessions: {}
 ---
 # react-ui, native-ui: a Place knows its Split's record and Details before first paint
@@ -29,3 +29,6 @@ or slots, never from a layout effect or a post-paint state push; a registration 
 ## Acceptance criteria
 - [ ] (live) web, a deep link to a places record at 375: the first frame has the back and Details acts and no list Toolbar.
 - [ ] (live) phone, on the harness: a deep-linked record paints its final head first; a record opens at its top after a scrolled list; Details stays closed on the next record.
+
+## Progress
+Built; `pnpm check` and `pnpm verify` pass. Web live, every frame from document start: a deep-linked record at 375 has its back and Details acts and no Toolbar in its first frame, and each width keeps its acts in every frame. Phone (the recommended option, b): a Split stands as its page's direct child and the page reads its props in render; a deeper Split draws as a plain region. Open: the phone live criterion on the harness.

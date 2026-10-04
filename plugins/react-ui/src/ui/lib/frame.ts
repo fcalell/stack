@@ -27,34 +27,26 @@ export function useFootDocks() {
 	);
 }
 
-// A Split with a record and its pane open lends its details sheet's handle to
-// the Place or Screen it sits in, which draws the sheet's trigger, the Details
-// act, after its own actions below `wide` of its width, and at every width
-// while a record stands `beside` the main; `undefined` takes it back.
-export interface LentDetails {
-	sheet: Dialog.Handle<unknown>;
-	beside: boolean;
-}
-export const LendAct = createContext<
-	((details: LentDetails | undefined) => void) | null
->(null);
+// The handle of the details sheet a Split's pane opens in, owned by the Place
+// or pushed Screen it sits in, which draws the sheet's trigger, the Details
+// act, from its first frame. The Split marks its root (`data-record` while a
+// record is open, `data-pane` while that record has a pane, `data-beside` while
+// a record stands beside the main) and the page's head shows its acts by the
+// marks: the Details act below `wide` of the page with a pane, at every width
+// beside a record; the back act to the list below `tablet` with a record;
+// below `tablet` with a record beside the main, no head at all.
+export const DetailsSheet = createContext<Dialog.Handle<unknown> | null>(null);
 
 // A Split's `beside` record is a Screen standing in its page, not a page of
 // its own: it covers no tab bar, its title is a heading at the level where it
 // stands, its body is the size container what stands in it decides by, and
 // its back act draws as Close to the same route from `wide` of the page.
 // Below `tablet` of the page its head stands alone, so it draws the Details
-// act the Split lends while its pane is open; `null` outside a `beside`.
+// act of the Split's pane while it is open; `null` outside a `beside`.
 export interface BesideFrame {
-	details?: LentDetails;
+	details?: Dialog.Handle<unknown>;
 }
 export const Beside = createContext<BesideFrame | null>(null);
-
-// A Split tells the Place it sits in that a record stands beside the main;
-// below `tablet` of its width, where that record stands alone, the Place then
-// draws no head, the record's own head the page's one, and `false` takes it
-// back.
-export const BesideOpen = createContext<((open: boolean) => void) | null>(null);
 
 // The route of the Shell's current place: the list a Place returns to
 // from a record its Split shows alone.
@@ -63,16 +55,6 @@ export const PlaceRoute = createContext<string | undefined>(undefined);
 // The route a Screen's back act returns to, where a read inside that answers
 // not found leads back; outside a Screen it leads to `PlaceRoute`.
 export const BackRoute = createContext<string | undefined>(undefined);
-
-// A Split tells the Place it sits in that a record is open; below `tablet` of
-// its width, where the record stands alone, the Place then leads with a back
-// act to its route (in the switcher's stead in a touch top bar), and `false`
-// takes it back.
-export const RecordOpen = createContext<((open: boolean) => void) | null>(null);
-
-// Whether a record is open in the Place's Split: below `tablet` the Toolbar
-// over the list leaves with the list, the record standing alone.
-export const RecordShown = createContext(false);
 
 // A Thread standing in a Place's body or a Split's main tells it, which then
 // gives the Thread the rest of its height and no inset, leaving scrolling to

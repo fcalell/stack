@@ -6,16 +6,14 @@ import {
 	SPLIT_PANE,
 	splitMain,
 } from "@fcalell/ui-core/variants";
-import { type ReactNode, use, useEffect, useState } from "react";
+import { type ReactNode, use, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import {
 	ActRoom,
 	Beside,
-	BesideOpen,
-	LendAct,
+	DetailsSheet,
 	OverThread,
 	PageTitle,
-	RecordOpen,
 	ThreadBleeds,
 	ThreadFills,
 } from "../../lib/frame.ts";
@@ -69,42 +67,33 @@ export interface SplitProps extends Closed {
 	empty?: ReactNode;
 }
 
-/** The list at its width inside a hairline beside the main, decided by its page's width: from `wide` the pane stands beside the main, below it the Split lends its Place or Screen a Details act that opens the pane as a sheet. Below `tablet` one region stands at a time: the list, or the open record, whose Place then leads its strip or top bar with a back act to the list. A record the main opened (`beside`) stands beside the main from `wide`, the two sharing what the list leaves, its back act drawn as Close and the pane behind the Details act at every width; below `wide` it stands in the main's place with its back act to the main, and below `tablet` its head stands alone, the Place drawing none. A Thread in the main fills it: the main stops scrolling, the record's head stays at the page inset over the Thread's log, which scrolls, and its input docks at the main's foot. It sits in a bleeding Place, whose strip heads it. */
+/** The list at its width inside a hairline beside the main, decided by its page's width: from `wide` the pane stands beside the main, below it the Details act its Place or Screen draws opens the pane as a sheet. Below `tablet` one region stands at a time: the list, or the open record, whose Place then leads its strip or top bar with a back act to the list. A record the main opened (`beside`) stands beside the main from `wide`, the two sharing what the list leaves, its back act drawn as Close and the pane behind the Details act at every width; below `wide` it stands in the main's place with its back act to the main, and below `tablet` its head stands alone, the Place drawing none. A Thread in the main fills it: the main stops scrolling, the record's head stays at the page inset over the Thread's log, which scrolls, and its input docks at the main's foot. It sits in a bleeding Place, whose strip heads it. */
 export function Split({ list, main, beside, pane, empty }: SplitProps) {
 	const words = useWords();
 	const title = use(PageTitle);
-	const lend = use(LendAct);
-	const recordOpen = use(RecordOpen);
-	const besideOpen = use(BesideOpen);
 	const room = use(ActRoom);
 	const [open, setOpen] = useState(false);
 	const [fills, setFills] = useState(false);
-	const [sheet] = useState(() => Dialog.createHandle<unknown>());
+	// The page around holds the sheet's handle, so its Details act stands from
+	// its first frame.
+	const [own] = useState(() => Dialog.createHandle<unknown>());
+	const sheet = use(DetailsSheet) ?? own;
 	const opened = main !== undefined;
 	const detailed = opened && pane !== undefined;
 	const besides = opened && beside !== undefined;
-	useEffect(() => {
-		if (!detailed || !lend) return;
-		lend({ sheet, beside: besides });
-		return () => lend(undefined);
-	}, [detailed, besides, lend, sheet]);
-	useEffect(() => {
-		if (!opened || !recordOpen) return;
-		recordOpen(true);
-		return () => recordOpen(false);
-	}, [opened, recordOpen]);
-	useEffect(() => {
-		if (!besides || !besideOpen) return;
-		besideOpen(true);
-		return () => besideOpen(false);
-	}, [besides, besideOpen]);
 	const record = cn(fills ? MAIN_FILLED : MAIN, besides && MAIN_SHARED);
 	const inset = cn(
 		splitMain({ state: fills ? "fills" : "rest" }),
 		fills ? MAIN_FILLED_INSET : MAIN_INSET,
 	);
 	return (
-		<div data-split className={SPLIT}>
+		<div
+			data-split
+			data-record={opened || undefined}
+			data-pane={detailed || undefined}
+			data-beside={besides || undefined}
+			className={SPLIT}
+		>
 			<nav
 				aria-labelledby={title}
 				className={cn(SPLIT_LIST, LIST, LIST_ALONE, opened && BEHIND)}
@@ -130,9 +119,7 @@ export function Split({ list, main, beside, pane, empty }: SplitProps) {
 			)}
 			{besides ? (
 				<div className={cn(SPLIT_BESIDE, BESIDE)}>
-					<Beside
-						value={{ details: detailed ? { sheet, beside: true } : undefined }}
-					>
+					<Beside value={{ details: detailed ? sheet : undefined }}>
 						{beside}
 					</Beside>
 				</div>

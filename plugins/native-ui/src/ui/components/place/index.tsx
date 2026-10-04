@@ -18,11 +18,9 @@ import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import {
 	ActRoom,
-	BesideOpen,
-	LendAct,
+	DetailsOpen,
 	PageTitle,
 	PlaceRoute,
-	RecordAlone,
 	RecordShown,
 	ShellSwitcher,
 	ShellTabs,
@@ -35,6 +33,7 @@ import { useWords } from "../../lib/words";
 import { Button } from "../button";
 import { IconButton } from "../icon-button";
 import { Menu } from "../menu";
+import { useSplitHead } from "../split";
 
 const PLACE = "flex-1";
 const TOP_BAR = "flex-row items-center";
@@ -96,7 +95,7 @@ export type PlaceProps = PlaceBase & PlaceEnd;
 // body fills it the same way (its first frame remounts it out of the
 // scroll). A `foot` docks under the body over the keyboard a sections gap
 // under the body's end, the body scrolling past it, and a Thread in such a body stands among its sections.
-// A Split inside lends it its Details act, and a record the Split shows alone puts a back
+// A Split standing as its direct child gets its Details act in its head, and a record the Split shows alone puts a back
 // act to the place's route in the switcher's stead; while a record stands beside
 // the main, the Place draws no head, that record's head the page's one. The
 // Shell's tab bar stands under it all, and its toasts over the body.
@@ -112,17 +111,16 @@ export function Place({
 	const words = useWords();
 	const switcher = useContext(ShellSwitcher);
 	const route = useContext(PlaceRoute);
-	const [lent, lend] = useState<IconAct>();
-	const [alone, standAlone] = useState(false);
-	// A record beside the main stands alone, its head the page's one.
-	const [besideShown, showBeside] = useState(false);
+	// What the head shows of the Split in the body, read off its props: a
+	// record beside the main stands alone, its head the page's one.
+	const split = useSplitHead(children);
 	const [fills, setFills] = useState(false);
 	// Over a docked foot a Thread stands among the sections, the foot the
 	// page's one input.
 	const fill = foot ? null : setFills;
 	// A record standing alone returns to the list, the place's own route.
 	const lead =
-		alone && route !== undefined ? (
+		split.record && route !== undefined ? (
 			<IconButton
 				icon="ChevronLeft"
 				fit="body"
@@ -132,7 +130,7 @@ export function Place({
 		) : (
 			switcher
 		);
-	const acts = [...(actions ?? []), ...(lent ? [lent] : [])];
+	const acts = [...(actions ?? []), ...(split.details ? [split.details] : [])];
 	// A top bar with nothing in it is not drawn.
 	const bar = lead != null || acts.length > 0 || Boolean(more?.length);
 	const room = act ? <View className={FLOATING_ACT_ROOM} /> : null;
@@ -141,105 +139,95 @@ export function Place({
 	const footprint = act ? <FloatingActRoom /> : null;
 	const tabs = useContext(ShellTabs);
 	return (
-		<LendAct.Provider value={lend}>
-			<RecordAlone.Provider value={standAlone}>
-				<BesideOpen.Provider value={showBeside}>
-					<RecordShown.Provider value={alone}>
-						<PageTitle.Provider value={title}>
-							<View className={PLACE}>
-								{besideShown ? null : (
-									<View className={PAGE_HEAD}>
-										{bar ? (
-											<View className={cn(PAGE_TOP_BAR, TOP_BAR)}>
-												{lead}
-												<View className={SPACER} />
-												{acts.map((action) => (
-													<IconButton
-														key={action.label}
-														{...action}
-														fit="body"
-													/>
-												))}
-												{more?.length ? (
-													<Menu label={words.more} items={more} />
-												) : null}
-											</View>
+		<DetailsOpen.Provider value={split.held}>
+			<RecordShown.Provider value={split.record}>
+				<PageTitle.Provider value={title}>
+					<View className={PLACE}>
+						{split.beside ? null : (
+							<View className={PAGE_HEAD}>
+								{bar ? (
+									<View className={cn(PAGE_TOP_BAR, TOP_BAR)}>
+										{lead}
+										<View className={SPACER} />
+										{acts.map((action) => (
+											<IconButton key={action.label} {...action} fit="body" />
+										))}
+										{more?.length ? (
+											<Menu label={words.more} items={more} />
 										) : null}
-										<RNText
-											accessibilityRole="header"
-											className={cn(text({ role: "title" }), TITLE, PAGE_TITLE)}
-										>
-											{title}
-										</RNText>
 									</View>
-								)}
-								<Lifted
-									behavior="padding"
-									automaticOffset
-									enabled={foot !== undefined}
-									className={BODY}
+								) : null}
+								<RNText
+									accessibilityRole="header"
+									className={cn(text({ role: "title" }), TITLE, PAGE_TITLE)}
 								>
-									<View className={BODY_WRAP}>
-										{bleed ? (
-											<View className={BODY}>
-												<ActRoom.Provider value={footprint}>
-													{children}
-												</ActRoom.Provider>
-											</View>
-										) : fills ? (
-											// A Thread in the body fills it, as a bleeding body's child
-											// does: no inset, its log scrolling.
-											<View className={BODY}>
-												<ThreadFills.Provider value={fill}>
-													{children}
-												</ThreadFills.Provider>
-												{room}
-											</View>
-										) : (
-											<Scroll
-												className={BODY}
-												contentContainerClassName={cn(
-													PAGE_BODY,
-													foot !== undefined && PAGE_BODY_OVER_FOOT,
-													BODY_CONTENT,
-												)}
-											>
-												<ThreadFills.Provider value={fill}>
-													{children}
-												</ThreadFills.Provider>
-												{room}
-											</Scroll>
-										)}
-										{/* The page's act is its create act by rule, so it carries the plus. */}
-										{act ? (
-											<View
-												pointerEvents="box-none"
-												className={cn(FLOATING_ACT, ACT_LAYER)}
-											>
-												<View className={FLOATING_ACT_LIFT}>
-													<Button
-														fit="body"
-														icon="Plus"
-														label={act.label}
-														onAct={act.onAct}
-														loading={act.loading}
-														blocked={act.blocked}
-													/>
-												</View>
-											</View>
-										) : null}
-										<ToastRoom act={act !== undefined} />
-									</View>
-									{foot ? (
-										<View className={cn(FOOT, DOCKED)}>{foot}</View>
-									) : null}
-								</Lifted>
-								{tabs}
+									{title}
+								</RNText>
 							</View>
-						</PageTitle.Provider>
-					</RecordShown.Provider>
-				</BesideOpen.Provider>
-			</RecordAlone.Provider>
-		</LendAct.Provider>
+						)}
+						<Lifted
+							behavior="padding"
+							automaticOffset
+							enabled={foot !== undefined}
+							className={BODY}
+						>
+							<View className={BODY_WRAP}>
+								{bleed ? (
+									<View className={BODY}>
+										<ActRoom.Provider value={footprint}>
+											{children}
+										</ActRoom.Provider>
+									</View>
+								) : fills ? (
+									// A Thread in the body fills it, as a bleeding body's child
+									// does: no inset, its log scrolling.
+									<View className={BODY}>
+										<ThreadFills.Provider value={fill}>
+											{children}
+										</ThreadFills.Provider>
+										{room}
+									</View>
+								) : (
+									<Scroll
+										className={BODY}
+										contentContainerClassName={cn(
+											PAGE_BODY,
+											foot !== undefined && PAGE_BODY_OVER_FOOT,
+											BODY_CONTENT,
+										)}
+									>
+										<ThreadFills.Provider value={fill}>
+											{children}
+										</ThreadFills.Provider>
+										{room}
+									</Scroll>
+								)}
+								{/* The page's act is its create act by rule, so it carries the plus. */}
+								{act ? (
+									<View
+										pointerEvents="box-none"
+										className={cn(FLOATING_ACT, ACT_LAYER)}
+									>
+										<View className={FLOATING_ACT_LIFT}>
+											<Button
+												fit="body"
+												icon="Plus"
+												label={act.label}
+												onAct={act.onAct}
+												loading={act.loading}
+												blocked={act.blocked}
+											/>
+										</View>
+									</View>
+								) : null}
+								<ToastRoom act={act !== undefined} />
+							</View>
+							{foot ? <View className={cn(FOOT, DOCKED)}>{foot}</View> : null}
+						</Lifted>
+						{tabs}
+					</View>
+				</PageTitle.Provider>
+			</RecordShown.Provider>
+		</DetailsOpen.Provider>
 	);
 }

@@ -1,3 +1,4 @@
+import { Dialog } from "@base-ui/react/dialog";
 import { cn } from "@fcalell/ui-core/cn";
 import type { IconAct, MenuItem } from "@fcalell/ui-core/descriptors";
 import {
@@ -13,8 +14,7 @@ import {
 	ActRoom,
 	BackRoute,
 	Beside,
-	LendAct,
-	type LentDetails,
+	DetailsSheet,
 	PageTitle,
 } from "../../lib/frame.ts";
 import { HeadingContext, screenLevels } from "../../lib/heading.ts";
@@ -23,12 +23,12 @@ import { useWords } from "../../lib/words.tsx";
 import { IconButtonLink } from "../icon-button/base.tsx";
 import { IconButton } from "../icon-button/index.tsx";
 import { Menu } from "../menu/index.tsx";
-import { backGlyph, Details } from "../place/index.tsx";
+import { backGlyph, DETAILS, Details } from "../place/index.tsx";
 
 // A screen is the size container a Split inside decides its regions by.
 // A pushed screen marks its root `data-screen`: the Shell hides its tab bar
 // while the mark stands in its column, from the first paint.
-const SCREEN = "@container/page flex flex-col grow min-h-0";
+const SCREEN = "@container/page group/page flex flex-col grow min-h-0";
 // Beside a Split's main the screen is a region of its page: its head's acts
 // read the page's width, and its body's sections are the container. Where it
 // stands alone (below `tablet` of the page) its body keeps the room of the
@@ -45,7 +45,7 @@ const TITLE_UNDER = "page-max-tablet:hidden";
 const BACK = "flex page-wide:hidden";
 const CLOSE = "flex page-max-wide:hidden";
 // Below `tablet` of the page the beside record's head stands alone, in the
-// Place's stead, so it draws the Details act the Split lends that head.
+// Place's stead, so it draws the Details act of the Split's pane.
 const ALONE_ACT = "flex page-tablet:hidden";
 const HEAD = "flex flex-col";
 const ROW = "flex items-center";
@@ -69,7 +69,7 @@ export interface ScreenProps extends Closed {
 	children?: ReactNode;
 }
 
-/** A page pushed over a place: the back act first and no filled act. Its head draws one hairline: on the desktop it stands in the shell's column under one strip; on touch the top bar (back, actions, more) stands over the title and the screen covers the tab bar. A Split inside decides its regions by the screen's width and lends it a Details act, drawn below `wide` of it. As a Split's `beside` record it stands in its page: its title is a heading at the level where it stands, it covers no tab bar, and from `wide` of the page its back act draws as Close. Below `tablet` of the page its head stands alone in the Place's stead, its title the page's `h1` over a body at the lower level, one top bar with its back act to the main, and draws the Details act the Split lends while the pane is open; its body keeps the room of the act floating over it. */
+/** A page pushed over a place: the back act first and no filled act. Its head draws one hairline: on the desktop it stands in the shell's column under one strip; on touch the top bar (back, actions, more) stands over the title and the screen covers the tab bar. A Split inside decides its regions by the screen's width and its pane's Details act stands in its head, drawn below `wide` of it. As a Split's `beside` record it stands in its page: its title is a heading at the level where it stands, it covers no tab bar, and from `wide` of the page its back act draws as Close. Below `tablet` of the page its head stands alone in the Place's stead, its title the page's `h1` over a body at the lower level, one top bar with its back act to the main, and draws the Details act of the Split's pane while it is open; its body keeps the room of the act floating over it. */
 export function Screen({ title, back, actions, more, children }: ScreenProps) {
 	const touch = useTouch();
 	const words = useWords();
@@ -77,7 +77,10 @@ export function Screen({ title, back, actions, more, children }: ScreenProps) {
 	const beside = frame !== null;
 	const room = use(ActRoom);
 	const level = use(HeadingContext);
-	const [lent, lend] = useState<LentDetails>();
+	// A pushed screen holds the details sheet of a Split inside, as a Place
+	// does; beside, the Place around holds it.
+	const [own] = useState(() => Dialog.createHandle<unknown>());
+	const sheet = (beside ? use(DetailsSheet) : null) ?? own;
 	const titleId = useId();
 	const fit = touch ? "body" : "bar";
 	const levels = screenLevels(beside, level);
@@ -108,11 +111,11 @@ export function Screen({ title, back, actions, more, children }: ScreenProps) {
 	const acts = (actions ?? []).map((action) => (
 		<IconButton key={action.label} {...action} fit={fit} />
 	));
-	const details = lent ? <Details {...lent} fit={fit} /> : null;
+	const details = beside ? null : (
+		<Details sheet={sheet} fit={fit} shown={DETAILS} />
+	);
 	const besideDetails = frame?.details ? (
-		<span className={ALONE_ACT}>
-			<Details {...frame.details} fit={fit} />
-		</span>
+		<Details sheet={frame.details} fit={fit} shown={ALONE_ACT} />
 	) : null;
 	const overflow = more?.length ? (
 		<Menu label={words.more} items={more} />
@@ -145,7 +148,7 @@ export function Screen({ title, back, actions, more, children }: ScreenProps) {
 		</header>
 	);
 	return (
-		<LendAct value={lend}>
+		<DetailsSheet value={sheet}>
 			<BackRoute value={back}>
 				<PageTitle value={titleId}>
 					<HeadingContext value={levels.body}>
@@ -168,6 +171,6 @@ export function Screen({ title, back, actions, more, children }: ScreenProps) {
 					</HeadingContext>
 				</PageTitle>
 			</BackRoute>
-		</LendAct>
+		</DetailsSheet>
 	);
 }
