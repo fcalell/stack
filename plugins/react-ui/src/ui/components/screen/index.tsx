@@ -7,13 +7,12 @@ import {
 	PAGE_TOP_BAR,
 	text,
 } from "@fcalell/ui-core/variants";
-import { type ReactNode, use, useEffect, useId, useState } from "react";
+import { type ReactNode, use, useId, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import {
 	ActRoom,
 	BackRoute,
 	Beside,
-	CoverTabs,
 	LendAct,
 	type LentDetails,
 	PageTitle,
@@ -27,6 +26,8 @@ import { Menu } from "../menu/index.tsx";
 import { backGlyph, Details } from "../place/index.tsx";
 
 // A screen is the size container a Split inside decides its regions by.
+// A pushed screen marks its root `data-screen`: the Shell hides its tab bar
+// while the mark stands in its column, from the first paint.
 const SCREEN = "@container/page flex flex-col grow min-h-0";
 // Beside a Split's main the screen is a region of its page: its head's acts
 // read the page's width, and its body's sections are the container. Where it
@@ -72,18 +73,12 @@ export interface ScreenProps extends Closed {
 export function Screen({ title, back, actions, more, children }: ScreenProps) {
 	const touch = useTouch();
 	const words = useWords();
-	const cover = use(CoverTabs);
 	const frame = use(Beside);
 	const beside = frame !== null;
 	const room = use(ActRoom);
 	const level = use(HeadingContext);
 	const [lent, lend] = useState<LentDetails>();
 	const titleId = useId();
-	useEffect(() => {
-		if (!cover || beside) return;
-		cover(true);
-		return () => cover(false);
-	}, [cover, beside]);
 	const fit = touch ? "body" : "bar";
 	const levels = screenLevels(beside, level);
 	const Heading = `h${levels.title}` as const;
@@ -154,7 +149,10 @@ export function Screen({ title, back, actions, more, children }: ScreenProps) {
 			<BackRoute value={back}>
 				<PageTitle value={titleId}>
 					<HeadingContext value={levels.body}>
-						<div className={beside ? SCREEN_BESIDE : SCREEN}>
+						<div
+							data-screen={beside ? undefined : ""}
+							className={beside ? SCREEN_BESIDE : SCREEN}
+						>
 							{head}
 							{beside ? (
 								<div className={BODY}>

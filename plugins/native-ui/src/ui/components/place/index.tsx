@@ -12,12 +12,11 @@ import {
 	PAGE_TOP_BAR,
 	text,
 } from "@fcalell/ui-core/variants";
-import { type ReactNode, useContext, useEffect, useState } from "react";
+import { type ReactNode, useContext, useState } from "react";
 import { Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import {
-	ActFloats,
 	ActRoom,
 	BesideOpen,
 	LendAct,
@@ -26,8 +25,9 @@ import {
 	RecordAlone,
 	RecordShown,
 	ShellSwitcher,
+	ShellTabs,
 	ThreadFills,
-	useFootDocks,
+	useToastBox,
 } from "../../lib/frame";
 import { Lifted, Scroll } from "../../lib/hosts";
 import { navigate } from "../../lib/navigate";
@@ -47,6 +47,8 @@ const BODY_WRAP = "relative flex-1";
 // The body's content fills the scroll, so an EmptyState alone centres in it.
 const BODY_CONTENT = "grow";
 const ACT_LAYER = "absolute inset-0 items-center justify-end";
+const TOAST_ROOM = "absolute inset-0";
+const FILL = "flex-1";
 // The foot stays under the body, which scrolls past it.
 const DOCKED = "shrink-0";
 
@@ -56,6 +58,18 @@ export function FloatingActRoom() {
 	return (
 		<View className={FLOATING_ACT_FOOT}>
 			<View className={FLOATING_ACT_ROOM} />
+		</View>
+	);
+}
+
+// The box the Shell's toasts stand in, over the body: above the room of a
+// floating act, and by the page's layout above a docked foot and the tab bar.
+export function ToastRoom({ act }: { act: boolean }) {
+	const box = useToastBox();
+	return (
+		<View pointerEvents="none" className={TOAST_ROOM}>
+			<View ref={box.ref} onLayout={box.onLayout} className={FILL} />
+			{act ? <FloatingActRoom /> : null}
 		</View>
 	);
 }
@@ -84,7 +98,8 @@ export type PlaceProps = PlaceBase & PlaceEnd;
 // under the body's end, the body scrolling past it, and a Thread in such a body stands among its sections.
 // A Split inside lends it its Details act, and a record the Split shows alone puts a back
 // act to the place's route in the switcher's stead; while a record stands beside
-// the main, the Place draws no head, that record's head the page's one.
+// the main, the Place draws no head, that record's head the page's one. The
+// Shell's tab bar stands under it all, and its toasts over the body.
 export function Place({
 	title,
 	actions,
@@ -102,7 +117,6 @@ export function Place({
 	// A record beside the main stands alone, its head the page's one.
 	const [besideShown, showBeside] = useState(false);
 	const [fills, setFills] = useState(false);
-	const docked = useFootDocks();
 	// Over a docked foot a Thread stands among the sections, the foot the
 	// page's one input.
 	const fill = foot ? null : setFills;
@@ -125,13 +139,7 @@ export function Place({
 	// A region scrolling inside a bleeding body keeps no page inset under its
 	// last row, so its room is the act's height over the page inset.
 	const footprint = act ? <FloatingActRoom /> : null;
-	const floats = useContext(ActFloats);
-	const floating = act !== undefined;
-	useEffect(() => {
-		if (!floating || !floats) return;
-		floats(true);
-		return () => floats(false);
-	}, [floating, floats]);
+	const tabs = useContext(ShellTabs);
 	return (
 		<LendAct.Provider value={lend}>
 			<RecordAlone.Provider value={standAlone}>
@@ -220,13 +228,13 @@ export function Place({
 												</View>
 											</View>
 										) : null}
+										<ToastRoom act={act !== undefined} />
 									</View>
 									{foot ? (
-										<View onLayout={docked} className={cn(FOOT, DOCKED)}>
-											{foot}
-										</View>
+										<View className={cn(FOOT, DOCKED)}>{foot}</View>
 									) : null}
 								</Lifted>
+								{tabs}
 							</View>
 						</PageTitle.Provider>
 					</RecordShown.Provider>

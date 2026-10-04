@@ -24,13 +24,7 @@ import {
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
-import {
-	ActFloats,
-	CoverTabs,
-	FootDocks,
-	PlaceRoute,
-	ShellSwitcher,
-} from "../../lib/frame.ts";
+import { FootDocks, PlaceRoute, ShellSwitcher } from "../../lib/frame.ts";
 import { useTouch } from "../../lib/media.ts";
 import { isCurrent, useRoute } from "../../lib/navigate.ts";
 import { toasts } from "../../lib/toast.ts";
@@ -49,14 +43,19 @@ const FRAME = "flex h-dvh overflow-hidden";
 const SIDEBAR = "relative flex flex-col shrink-0";
 const SLOT = "flex";
 const PLACES = "flex flex-col";
-const COLUMN = "relative flex flex-col min-w-0 grow";
+// The column reads the marks the page inside draws: a pushed Screen's
+// `data-screen` hides the tab bar, a floating act's `data-act-floats` lifts
+// the toasts by the act's room. Both hold from the first paint and across
+// the density line, since the page draws them in its own tree.
+const COLUMN = "group/column relative flex flex-col min-w-0 grow";
 const BANNER_SLOT = "flex flex-col";
 // The page and the toasts standing over its foot: at the end on the
 // desktop, centred on touch, above the tab bar and, while a Place's act
-// floats or a foot docks, above the act or the foot. It is the main landmark, so a page's headers inside
-// it are no banners.
+// floats or a foot docks, above the act or the foot. It is the main
+// landmark, so a page's headers inside it are no banners.
 const MAIN = "relative flex flex-col grow min-h-0";
 const ROOM = "shrink-0";
+const ACT_ROOM = "hidden shrink-0 group-has-data-act-floats/column:flex";
 // The toasts stand on their layer over an open sheet's portal, so nothing
 // between them and the root makes a stacking context (no `isolate`, `z-*` or
 // transform on the frame, the column or `main`; verify b-layers holds it).
@@ -74,7 +73,7 @@ const TRIGGER_TOUCH = "flex items-center min-w-0";
 const NAME = "truncate grow text-left";
 const NAME_TOUCH = "truncate";
 
-const TABS = "flex pb-safe";
+const TABS = "flex pb-safe group-has-data-screen/column:hidden";
 const TAB =
 	"flex flex-col-reverse items-center justify-center min-w-0 grow basis-0 focus-visible:-outline-offset-2";
 const TAB_GLYPH = "relative flex";
@@ -100,8 +99,6 @@ export function Shell({ places, banner, switcher, children }: ShellProps) {
 	const touch = useTouch();
 	const words = useWords();
 	const at = useRoute();
-	const [covered, cover] = useState(false);
-	const [lifted, lift] = useState(false);
 	const [footing, dock] = useState(0);
 	// The More page stands at the route it opened on: going to a place closes it.
 	const [moreAt, setMoreAt] = useState<string>();
@@ -149,15 +146,9 @@ export function Shell({ places, banner, switcher, children }: ShellProps) {
 			</div>
 		</nav>
 	);
-	const tabs =
-		touch && !covered ? (
-			<TabBar
-				places={places}
-				at={at}
-				more={more}
-				onMore={() => setMoreAt(at)}
-			/>
-		) : null;
+	const tabs = touch ? (
+		<TabBar places={places} at={at} more={more} onMore={() => setMoreAt(at)} />
+	) : null;
 	// The toast queue and the confirm() decisions stand in every Shell.
 	return (
 		<ToastControl.Provider toastManager={toasts}>
@@ -170,11 +161,7 @@ export function Shell({ places, banner, switcher, children }: ShellProps) {
 					<main className={MAIN}>
 						<ShellSwitcher value={trigger}>
 							<PlaceRoute value={route}>
-								<CoverTabs value={cover}>
-									<ActFloats value={lift}>
-										<FootDocks value={dock}>{page}</FootDocks>
-									</ActFloats>
-								</CoverTabs>
+								<FootDocks value={dock}>{page}</FootDocks>
 							</PlaceRoute>
 						</ShellSwitcher>
 						<ToastControl.Viewport
@@ -182,7 +169,9 @@ export function Shell({ places, banner, switcher, children }: ShellProps) {
 							className={cn(TOASTS, TOASTS_LAYER)}
 						>
 							<ToastList />
-							{lifted ? <FloatingActRoom /> : null}
+							<div className={ACT_ROOM}>
+								<FloatingActRoom />
+							</div>
 							{footing > 0 ? (
 								// The docked foot's room is its measured height: it grows with the input.
 								<div aria-hidden className={ROOM} style={{ height: footing }} />

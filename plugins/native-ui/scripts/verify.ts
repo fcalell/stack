@@ -159,6 +159,7 @@ const NATIVE_OVERLAYS = [
 	"grow",
 	"hidden",
 	"inset-0",
+	"inset-x-0",
 	"items-baseline",
 	"items-center",
 	"items-end",

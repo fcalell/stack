@@ -1,6 +1,6 @@
 ---
 id: 005-01
-status: backlog
+status: review
 sessions: {}
 ---
 # react-ui, native-ui: the Shell knows a Screen covers the tabs and a Place's act floats before first paint
@@ -28,3 +28,6 @@ or slots, never from a layout effect or a post-paint state push; a registration 
 ## Acceptance criteria
 - [ ] (live) web, `/layout` deploys and places at 375: a Screen route's first frame has no tab bar; a toast raised before a floating-act Place mounts stands above the act in the first frame.
 - [ ] (live) phone, on the harness at 390 dp: pushing and popping a Screen shows no tab-bar frame, recorded frame by frame.
+
+## Progress
+Built; `pnpm check` and `pnpm verify` pass. Web live at 375 touch, frame by frame: no Screen frame draws the tab bar, and a toast standing as an act Place remounts never covers the act. Phone: the tab bar is a slot each Place draws; the toast layer is still placed by one measure, left to 005-04. Open: the phone live criterion on the harness.

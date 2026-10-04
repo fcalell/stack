@@ -5,17 +5,6 @@ import { createContext, type ReactNode, use, useCallback } from "react";
 // trigger to the Place, which starts its touch top bar with it.
 export const ShellSwitcher = createContext<ReactNode>(null);
 
-// A pushed Screen covers the touch Shell's tab bar while it is mounted.
-export const CoverTabs = createContext<((covered: boolean) => void) | null>(
-	null,
-);
-
-// A Place whose act floats on touch tells the Shell, whose toasts then stand
-// above the act by its room.
-export const ActFloats = createContext<((floats: boolean) => void) | null>(
-	null,
-);
-
 // A docked foot (a Place's `foot`, a filling Thread's input) tells the Shell
 // its height, whose toasts then stand above the foot; 0 takes it back.
 export const FootDocks = createContext<((height: number) => void) | null>(null);

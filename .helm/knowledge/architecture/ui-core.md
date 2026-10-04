@@ -212,7 +212,21 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
   `ListRow`s (each place's glyph leading, its count trailing, its route), and while a Place's act
   floats the toasts stand above it by the act's room; while a foot docks (a Place's `foot`, a
   filling Thread's input) they stand above the foot by its measured height (`FootDocks`, reported
-  through the frame's `useFootDocks`), which follows the input as it grows.
+  through the frame's `useFootDocks`), which follows the input as it grows. A frame never tells
+  the Shell what it is after paint; the Shell learns it before the first frame. On the web the
+  page marks its tree and the Shell's column reads the marks by `group-has-*/column` variants:
+  a pushed Screen's root carries `data-screen`, which hides the tab bar, and a floating act's
+  layer `data-act-floats`, which shows the act's room under the toasts, so both hold from the
+  first paint and across the density line. Native has no such selector, so the frame draws what
+  the Shell would have had to learn: the Shell hands its tab bar to each Place (`ShellTabs`, as
+  it hands the switcher), which draws it under its body, and a pushed Screen draws none and
+  clears the home indicator itself; each Place and pushed Screen draws the box the toasts stand
+  in (`ToastRoom`: the body over the act's room, so above a Place's `foot` and the tab bar by
+  layout), which places the Shell's toasts' layer by measuring itself against the Shell's root
+  (`ToastFrame`), the one measure left, since the layer stands outside the page's tree (below).
+  Rejected: a registration the Shell reads in render from a host object, since a frame that
+  mounts after the Shell's render (a route that waits first) leaves nothing that renders the
+  Shell's tab bar again.
 - A molecule whose structure follows density keeps one constant per structure, never a density
   axis: the page's head (`PAGE_HEAD`, one hairline at both densities) holds the desktop strip
   (`PAGE_TOP_BAR` with the title and acts in one row) or the touch one (`PAGE_TOP_BAR` over the
@@ -355,8 +369,9 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
   geometry). React Native's `zIndex` orders siblings only, so native reads the order by tree
   position: gorhom's `BottomSheetModalProvider` draws its sheets after its children, in its own
   host. The native Shell holds a provider around its column, inside a host view, and draws the
-  toasts' layer after that view, so over every sheet; the layer stands in the content's frame,
-  its edges measured in the column, so the toasts keep the Shell's geometry. A sheet resolves the
+  toasts' layer after that view, so over every sheet; the layer stands over the box the page
+  draws for it (`ToastRoom`), measured against the Shell's root, so the toasts keep the page's
+  geometry. A sheet resolves the
   nearest provider, so every sheet opened under a Shell stands in the Shell's host and stacks
   against the others there; the entry's root provider hosts only the screens with no Shell, where
   no toast stands, so the two hosts never hold sheets that must stack together. The host view is
@@ -702,7 +717,7 @@ cell, an off-contract utility, or a drawn word outside `words` each fails a name
 - A native QR tile inside a dark raised ground draws its edge at the dark raised value: uniwind 1.12's `ScopedTheme` keeps the parent's scoped variables and cannot clear one. No screen does this today.
 - A native Button's `count` is not read aloud: the pressable's accessible name is its `label` alone.
 - A failed toast's announcement is Base UI's visually hidden `role="alert"` wrapper beside the toasts' viewport, which exists only while a failed toast stands and the viewport is unfocused, and carries no `aria-live`. When a sheet opens while a failed toast stands, the modal marks that wrapper `aria-hidden`, so a failed toast raised while one has stood continuously since before the sheet opened is not announced. Once no failed toast stands the wrapper is gone, and the next is announced.
-- The native toast room adds the docked foot's measured height (`FootDocks`) and not the keyboard's offset, so a toast shown while the keyboard is up is not lifted with the foot.
+- The native toast room adds a filling Thread's docked input's measured height (`FootDocks`) and not the keyboard's offset, so a toast shown while the keyboard is up over a filling Thread is not lifted with the input.
 - A product cannot draw in the platform font: `fonts.sans` unset is IBM Plex Sans, and the platform stack only stands behind the named family and its metric fallback face.
 - Comparison's `hyphens-auto` is unverified: the Nix Playwright browsers ship no hyphenation dictionaries, so a value wider than its column breaks mid-letter there.
 - Native Diff and Comparison name a `list`-role container (React Native has no table role); whether VoiceOver and TalkBack announce that name is unverified.

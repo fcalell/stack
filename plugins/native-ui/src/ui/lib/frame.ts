@@ -2,46 +2,67 @@ import type { IconAct } from "@fcalell/ui-core/descriptors";
 import {
 	createContext,
 	type ReactNode,
+	type RefObject,
 	useContext,
 	useEffect,
 	useRef,
 } from "react";
-import type { LayoutChangeEvent } from "react-native";
+import type { LayoutChangeEvent, View } from "react-native";
 
 // What the frame molecules hand each other. The Shell hands its switcher's
 // trigger to each Place, which starts its top bar with it; a Screen never
 // reads it.
 export const ShellSwitcher = createContext<ReactNode>(null);
 
-// A pushed Screen covers the Shell's tab bar while it is mounted.
-export const CoverTabs = createContext<((covered: boolean) => void) | null>(
-	null,
-);
+// The Shell hands its tab bar to each Place, which draws it under its body; a
+// pushed Screen never reads it, so it covers the tab bar from its first frame
+// and clears the home indicator itself.
+export const ShellTabs = createContext<ReactNode>(null);
 
-// A Place whose act floats tells the Shell, whose toasts then stand above the
-// act by its room.
-export const ActFloats = createContext<((floats: boolean) => void) | null>(
-	null,
-);
+// The box the toasts stand in, in the Shell's coordinates.
+export interface ToastBox {
+	top: number;
+	height: number;
+}
 
-// A docked foot (a Place's `foot`, a filling Thread's input) tells the Shell
-// its height, whose toasts then stand above the foot; 0 takes it back.
+// The Shell's root and its way to place the toasts' layer. The layer stands
+// after the sheets' host, outside the page's tree, so it takes the box the
+// page draws (its body over the act's room, the foot and the tab bar) by
+// measuring that box against the root.
+export interface ToastFrame {
+	root: RefObject<View | null>;
+	place: (box: ToastBox) => void;
+}
+export const ToastFrame = createContext<ToastFrame | null>(null);
+
+// The ref and `onLayout` of the box a page draws for the toasts: each layout
+// of the box places the toasts' layer over it.
+export function useToastBox() {
+	const frame = useContext(ToastFrame);
+	const box = useRef<View>(null);
+	const onLayout = () => {
+		const root = frame?.root.current;
+		if (!root) return;
+		box.current?.measureLayout(root, (_x, top, _width, height) =>
+			frame.place({ top, height }),
+		);
+	};
+	return { ref: box, onLayout };
+}
+
+// A filling Thread's docked input tells the Shell its height, whose toasts
+// then stand above the input; 0 takes it back.
 export const FootDocks = createContext<((height: number) => void) | null>(null);
 
-// The `onLayout` of a docked foot: it reports the foot's height to
-// `FootDocks` as the foot grows, and leaving takes back what it reported (a
-// Thread that never docked leaves a Place's foot standing).
+// The `onLayout` of a docked input: it reports the input's height to
+// `FootDocks` as the input grows, and leaving takes it back.
 export function useFootDocks() {
 	const docks = useContext(FootDocks);
-	const reported = useRef(false);
 	useEffect(() => {
 		if (!docks) return;
-		return () => {
-			if (reported.current) docks(0);
-		};
+		return () => docks(0);
 	}, [docks]);
 	return (event: LayoutChangeEvent) => {
-		reported.current = true;
 		docks?.(event.nativeEvent.layout.height);
 	};
 }

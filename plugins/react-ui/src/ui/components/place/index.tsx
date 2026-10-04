@@ -21,10 +21,9 @@ import {
 	THREAD_COLUMN,
 	text,
 } from "@fcalell/ui-core/variants";
-import { type ReactNode, use, useEffect, useId, useState } from "react";
+import { type ReactNode, use, useId, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import {
-	ActFloats,
 	ActRoom,
 	BesideOpen,
 	LendAct,
@@ -73,6 +72,8 @@ const BODY_WRAP = "relative flex flex-col grow min-h-0";
 const DOCKED = "flex flex-col shrink-0";
 const FOOT_COLUMN = "flex flex-col";
 const ACT_ROOM = "shrink-0";
+// The layer marks itself `data-act-floats`: the Shell's toasts stand above
+// the act by its room while the mark stands in its column.
 const ACT_LAYER =
 	"absolute inset-0 flex flex-col items-center justify-end pointer-events-none";
 const ACT_HIT = "flex pointer-events-auto";
@@ -214,7 +215,10 @@ export function Place({
 	) : null;
 	const floating = touch && button !== null;
 	const layer = floating ? (
-		<div className={cn(FLOATING_ACT, ACT_LAYER, bleed && BESIDE_LIST)}>
+		<div
+			data-act-floats
+			className={cn(FLOATING_ACT, ACT_LAYER, bleed && BESIDE_LIST)}
+		>
 			<span className={cn(FLOATING_ACT_LIFT, ACT_HIT)}>{button}</span>
 		</div>
 	) : null;
@@ -222,12 +226,6 @@ export function Place({
 	// it: the act's height over the page inset, since such a region keeps no
 	// inset of its own.
 	const room = floating ? <FloatingActRoom /> : null;
-	const floats = use(ActFloats);
-	useEffect(() => {
-		if (!floating || !floats) return;
-		floats(true);
-		return () => floats(false);
-	}, [floating, floats]);
 	// On touch a top bar with nothing in it is not drawn; on the desktop the
 	// strip always holds the title.
 	const bar =
