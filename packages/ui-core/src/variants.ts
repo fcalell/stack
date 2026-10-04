@@ -575,10 +575,8 @@ export const CHART_TICK_LANE = "w-figures";
 export const THREAD = "gap-sections";
 export const THREAD_COLUMN = "w-full max-w-measure mx-auto";
 // A Thread in a Place's body fills it: the log scrolls under the page's head
-// at the page inset, a sections gap over the input, which stands docked at
-// the body's foot at the page inset.
+// at the page inset, a sections gap over the input, which docks at the foot.
 export const THREAD_LOG = "px-page pt-page pb-sections";
-export const THREAD_FOOT = "px-page pb-page";
 // The way back to the newest message, floating over the log a pair above the
 // foot while the reader is scrolled up: a lifted ground under the secondary
 // act's hairline, at its radius.
@@ -617,6 +615,9 @@ export const PAGE_TOP_BAR = "gap-acts min-h-strip";
 // The touch title over the head's hairline, a pair apart from it.
 export const PAGE_TITLE = "pb-pair";
 export const PAGE_BODY = "gap-sections p-page";
+// A docked foot (a Place's `foot`, a filling Thread's input) stands under
+// what scrolls past it at the page inset.
+export const FOOT = "px-page pb-page";
 // A touch Place's act, floating over the body's end on a layer at the page
 // inset, and the room the body keeps under its last row so the act never
 // covers it.

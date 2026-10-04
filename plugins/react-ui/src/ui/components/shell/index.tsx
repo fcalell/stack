@@ -53,7 +53,7 @@ const COLUMN = "relative flex flex-col min-w-0 grow";
 const BANNER_SLOT = "flex flex-col";
 // The page and the toasts standing over its foot: at the end on the
 // desktop, centred on touch, above the tab bar and, while a Place's act
-// floats or a Thread's input docks, above the act or the input. It is the main landmark, so a page's headers inside
+// floats or a foot docks, above the act or the foot. It is the main landmark, so a page's headers inside
 // it are no banners.
 const MAIN = "relative flex flex-col grow min-h-0";
 const ROOM = "shrink-0";
@@ -95,7 +95,7 @@ export interface ShellProps extends Closed {
 	children?: ReactNode;
 }
 
-/** The frame: on the desktop the sidebar (the switcher, then the places) beside the column; on touch the column over the tab bar, the switcher at the head of each Place's top bar, and past five places four tabs and More, which opens a page of the rest; on both, the current place's route handed down for a Place's back act, a pushed Screen covering the tab bar, the `toast()` queue standing over the page's foot (at the end on the desktop, centred on touch; above a floating act or a Thread's docked input) and the first `confirm()` decision as a sheet. */
+/** The frame: on the desktop the sidebar (the switcher, then the places) beside the column; on touch the column over the tab bar, the switcher at the head of each Place's top bar, and past five places four tabs and More, which opens a page of the rest; on both, the current place's route handed down for a Place's back act, a pushed Screen covering the tab bar, the `toast()` queue standing over the page's foot (at the end on the desktop, centred on touch; above a floating act or a docked foot) and the first `confirm()` decision as a sheet. */
 export function Shell({ places, banner, switcher, children }: ShellProps) {
 	const touch = useTouch();
 	const words = useWords();

@@ -208,9 +208,9 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
   a second list of the same rows. A Picker stands outside a form; a form's pick is `Select`.
 - On touch the places past the tab bar are a page, not a menu: the More tab opens a `Place` of
   `ListRow`s (each place's glyph leading, its count trailing, its route), and while a Place's act
-  floats the toasts stand above it by the act's room; while a Thread's input docks at its Place's
-  foot they stand above the foot by its measured height (`FootDocks`), which follows the input as
-  it grows.
+  floats the toasts stand above it by the act's room; while a foot docks (a Place's `foot`, a
+  filling Thread's input) they stand above the foot by its measured height (`FootDocks`, reported
+  through the frame's `useFootDocks`), which follows the input as it grows.
 - A molecule whose structure follows density keeps one constant per structure, never a density
   axis: the page's head (`PAGE_HEAD`, one hairline at both densities) holds the desktop strip
   (`PAGE_TOP_BAR` with the title and acts in one row) or the touch one (`PAGE_TOP_BAR` over the
@@ -279,6 +279,18 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
   `FLOATING_ACT_FOOT`, since a region in a bleeding body keeps no page inset) to the Split, which
   keeps it under the list and, where the record stands alone, under the record. Two mounted
   copies of the act would each keep their own state, so the act is never duplicated.
+- A field that stays in view while a Place's sections scroll (an ask box over a home) is the
+  Place's `foot`, an explicit slot: it docks under the body at both densities on the shared `FOOT`
+  cell (the page inset at the sides and foot, the cell a filling Thread's input docks on, held by
+  no entry), the body scrolling past it, above the tab bar on touch and, on native, lifted over
+  the keyboard (the body and the foot share one `KeyboardAvoidingView`, `Lifted`). It reports
+  `FootDocks` as a filling Thread's input does. `act` and `foot` are exclusive in the props type:
+  the foot's Send is the screen's one filled act, so a floating act beside it would be a second.
+  A Place with a `foot` offers no `ThreadFills`, so a Thread in its body stands inline among the
+  sections with no foot of its own, and no Latest act stands over the Place's foot. Rejected: a
+  foot derived from a Thread's position (a Thread in the last Section docking its input), which
+  hides the dock from the call site; a `MessageInput` docked variant, since docking is the
+  frame's, never the field's.
 - A bar at a phone's bottom edge clears the home indicator with the web emit's `pb-safe`
   (`padding-bottom: env(safe-area-inset-bottom)`, non-zero under the document's
   `viewport-fit=cover`), an overlay the tab bar spells beside `SHELL_TAB_BAR`; native pads the
@@ -372,7 +384,7 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
   Place's `ThreadFills` setter (the `RecordOpen` / `ActFloats` pattern) before paint, the body
   draws no inset and leaves scrolling to it, its log scrolls at the page inset (`THREAD_LOG`),
   opening at the newest message and following each that arrives while the reader is at the end,
-  the input docked at the foot (`THREAD_FOOT`); a Section takes the setter back. A filled Place's
+  the input docked at the foot (`FOOT`); a Section takes the setter back. A filled Place's
   floating act would stand over the docked input: accepted while no Place has both. A Split's
   main provides its own setter, so a Thread under a record's `ItemHeader` fills the main the same
   way: the main stops scrolling (native swaps its scroll for a view), keeping the page inset

@@ -83,7 +83,7 @@ export interface ShellProps extends Closed {
 
 // The frame on the column's ground: the banner under the status bar, the
 // content, the toast queue over the content's foot (above a Place's act while
-// it floats, a Thread's input while it docks), the `confirm()` decisions as
+// it floats, a docked foot while it stands), the `confirm()` decisions as
 // a sheet, and the tab bar over the home indicator, past five places four and
 // a More tab that opens a page of the rest in the content's place. The
 // switcher's trigger starts each Place's top bar, the current place's route

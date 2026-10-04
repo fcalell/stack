@@ -1,5 +1,12 @@
 import type { IconAct } from "@fcalell/ui-core/descriptors";
-import { createContext, type ReactNode } from "react";
+import {
+	createContext,
+	type ReactNode,
+	useContext,
+	useEffect,
+	useRef,
+} from "react";
+import type { LayoutChangeEvent } from "react-native";
 
 // What the frame molecules hand each other. The Shell hands its switcher's
 // trigger to each Place, which starts its top bar with it; a Screen never
@@ -17,9 +24,27 @@ export const ActFloats = createContext<((floats: boolean) => void) | null>(
 	null,
 );
 
-// A Thread whose input docks at its Place's foot tells the Shell the foot's
-// height, whose toasts then stand above the foot; 0 takes it back.
+// A docked foot (a Place's `foot`, a filling Thread's input) tells the Shell
+// its height, whose toasts then stand above the foot; 0 takes it back.
 export const FootDocks = createContext<((height: number) => void) | null>(null);
+
+// The `onLayout` of a docked foot: it reports the foot's height to
+// `FootDocks` as the foot grows, and leaving takes back what it reported (a
+// Thread that never docked leaves a Place's foot standing).
+export function useFootDocks() {
+	const docks = useContext(FootDocks);
+	const reported = useRef(false);
+	useEffect(() => {
+		if (!docks) return;
+		return () => {
+			if (reported.current) docks(0);
+		};
+	}, [docks]);
+	return (event: LayoutChangeEvent) => {
+		reported.current = true;
+		docks?.(event.nativeEvent.layout.height);
+	};
+}
 
 // A Split lends its Details act to the Place or Screen it sits in, which
 // draws it after its own actions; `undefined` takes it back.

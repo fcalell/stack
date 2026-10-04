@@ -2,10 +2,15 @@ import { cn } from "@fcalell/ui-core/cn";
 import type { MenuItem } from "@fcalell/ui-core/descriptors";
 import { SHELL_COLUMN } from "@fcalell/ui-core/variants";
 import { type ReactNode, useEffect, useRef, useState } from "react";
+import { Group } from "../../components/group/index.tsx";
+import { MessageInput } from "../../components/message-input/index.tsx";
 import { Place } from "../../components/place/index.tsx";
+import { Section } from "../../components/section/index.tsx";
+import { Thread } from "../../components/thread/index.tsx";
 import { PortalContainer } from "../../lib/portal.ts";
 import type { ShowcaseFrame } from "../cells.ts";
 import { StandInList } from "./layout-context.tsx";
+import { TURN, TURNS } from "./thread.tsx";
 
 const act = () => {};
 export const ACTIONS = [
@@ -76,10 +81,40 @@ function Deploys(props: { loading?: boolean }) {
 	);
 }
 
+// An assistant's home: its sections scrolling under the ask field docked at
+// its foot, the latest exchange inline in the last section.
+function Home() {
+	const [value, setValue] = useState("");
+	return (
+		<Place
+			title="Home"
+			actions={SEARCH}
+			foot={
+				<MessageInput
+					value={value}
+					onChange={setValue}
+					onAttach={act}
+					placeholder="Ask about your deploys"
+					onSend={() => setValue("")}
+				/>
+			}
+		>
+			<Section title="Tasks">
+				<Group>
+					<StandInList />
+				</Group>
+			</Section>
+			<Section title="Latest">
+				<Thread items={TURNS.slice(-2)} message={TURN} />
+			</Section>
+		</Place>
+	);
+}
+
 // The cell picks the form: the title the Place with its actions, more and
 // act; the primary act that act loading; the bar fit a bleeding body under
-// one action; the bar icon act its more menu open. The other cells are the
-// atoms' own.
+// one action; the bar icon act its more menu open; the foot an assistant's
+// home with its ask field docked. The other cells are the atoms' own.
 export function drawPlace(frame: ShowcaseFrame) {
 	const cell = frame.cell.name;
 	if (cell === "TEXT.role.title")
@@ -100,6 +135,12 @@ export function drawPlace(frame: ShowcaseFrame) {
 				<Place title="Logs" actions={SEARCH} bleed>
 					<StandInList />
 				</Place>
+			</Column>
+		);
+	if (cell === "FOOT")
+		return (
+			<Column>
+				<Home />
 			</Column>
 		);
 	if (cell === "ICON_BUTTON.fit.bar")

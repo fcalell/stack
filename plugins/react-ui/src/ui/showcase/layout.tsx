@@ -5,6 +5,7 @@ import { Shell } from "../components/shell/index.tsx";
 import { Assistant } from "./layout/assistant.tsx";
 import { Deploys } from "./layout/deploys.tsx";
 import { act, HereContext, readHere, useTo } from "./layout/here.ts";
+import { Home } from "./layout/home.tsx";
 import { Members } from "./layout/members.tsx";
 import { Domains, Logs, Projects, Verify, Welcome } from "./layout/places.tsx";
 import { Settings } from "./layout/settings.tsx";
@@ -14,6 +15,7 @@ import { useView, ViewBar } from "./view.tsx";
 // The places the review draws, by the `place` the URL names; a pushed Screen
 // stands in the place it was pushed from.
 const PAGES = {
+	home: { page: Home, in: "home" },
 	deploys: { page: Deploys, in: "deploys" },
 	projects: { page: Projects, in: "projects" },
 	logs: { page: Logs, in: "logs" },
@@ -38,6 +40,7 @@ const PLACES: Array<Omit<PlaceSpec, "route"> & { place?: Page }> = [
 	{ label: "Assistant", icon: "Sparkles", place: "assistant" },
 	{ label: "Members", icon: "Users", place: "members" },
 	{ label: "Settings", icon: "Settings", place: "settings" },
+	{ label: "Home", icon: "House", place: "home" },
 ];
 
 const SWITCHER: Switcher = {

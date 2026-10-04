@@ -78,6 +78,11 @@ A `Thread` takes its `query` (or `items`) the same way through a `message` map (
 `Place`'s body, or in a `Split`'s `main` under the record's `ItemHeader`, it fills what holds it:
 its log scrolls and the input docks at the foot.
 
+A field that stays in view while a `Place`'s sections scroll under it (an ask box over a
+home's sections) is the Place's `foot`: it docks at the Place's bottom, above the tab bar on
+touch. A Place takes a `foot` or an `act`, never both, since each holds the screen's filled act.
+A `Thread` in a Place with a `foot` stands among its sections, inline, its `foot` left empty.
+
 A `BarChart` takes data the same way, its `bar` map reading each item's `key`, `label`, `value`,
 `parts` (by its declared `keys`) and `at`; its failed and empty forms stand at the chart's height.
 

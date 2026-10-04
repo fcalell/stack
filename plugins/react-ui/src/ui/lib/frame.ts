@@ -1,5 +1,5 @@
 import type { Dialog } from "@base-ui/react/dialog";
-import { createContext, type ReactNode } from "react";
+import { createContext, type ReactNode, use, useCallback } from "react";
 
 // What the frame molecules hand each other. The Shell hands its switcher's
 // trigger to the Place, which starts its touch top bar with it.
@@ -16,9 +16,27 @@ export const ActFloats = createContext<((floats: boolean) => void) | null>(
 	null,
 );
 
-// A Thread whose input docks at its Place's foot tells the Shell the foot's
-// height, whose toasts then stand above the foot; 0 takes it back.
+// A docked foot (a Place's `foot`, a filling Thread's input) tells the Shell
+// its height, whose toasts then stand above the foot; 0 takes it back.
 export const FootDocks = createContext<((height: number) => void) | null>(null);
+
+// The ref of a docked foot: it reports the foot's height to `FootDocks` as
+// the foot grows, and takes it back when the foot leaves.
+export function useFootDocks() {
+	const docks = use(FootDocks);
+	return useCallback(
+		(foot: HTMLDivElement) => {
+			if (!docks) return;
+			const observer = new ResizeObserver(() => docks(foot.offsetHeight));
+			observer.observe(foot);
+			return () => {
+				observer.disconnect();
+				docks(0);
+			};
+		},
+		[docks],
+	);
+}
 
 // A Split with a record and its pane open lends its details sheet's handle to
 // the Place or Screen it sits in, which draws the sheet's trigger, the Details

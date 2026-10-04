@@ -7,26 +7,19 @@ import {
 	WAITING_MESSAGES,
 } from "@fcalell/ui-core/list-state";
 import {
+	FOOT,
 	THREAD,
 	THREAD_COLUMN,
-	THREAD_FOOT,
 	THREAD_LOG,
 } from "@fcalell/ui-core/variants";
-import {
-	type ReactNode,
-	use,
-	useCallback,
-	useLayoutEffect,
-	useRef,
-	useState,
-} from "react";
+import { type ReactNode, use, useLayoutEffect, useRef, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import {
-	FootDocks,
 	PageTitle,
 	ThreadBleeds,
 	ThreadFills,
 	ToLatest,
+	useFootDocks,
 } from "../../lib/frame.ts";
 import { useTouch } from "../../lib/media.ts";
 import { useWords } from "../../lib/words.tsx";
@@ -171,7 +164,7 @@ export function Thread<T>(props: ThreadProps<T>) {
 	const column = !useTouch() && THREAD_COLUMN;
 	const fills = use(ThreadFills);
 	const bleeds = use(ThreadBleeds);
-	const docks = use(FootDocks);
+	const docked = useFootDocks();
 	const title = use(PageTitle);
 	const log = useRef<HTMLDivElement>(null);
 	const content = useRef<HTMLDivElement>(null);
@@ -198,19 +191,6 @@ export function Thread<T>(props: ThreadProps<T>) {
 		observer.observe(inner);
 		return () => observer.disconnect();
 	}, [fills]);
-	// The docked foot's height, the room the Shell's toasts stand above.
-	const docked = useCallback(
-		(footing: HTMLDivElement) => {
-			if (!docks) return;
-			const observer = new ResizeObserver(() => docks(footing.offsetHeight));
-			observer.observe(footing);
-			return () => {
-				observer.disconnect();
-				docks(0);
-			};
-		},
-		[docks],
-	);
 	// Back to the newest message, following again from there; the log takes
 	// the focus the act held, since the act leaves with the press.
 	const toLatest = () => {
@@ -258,7 +238,7 @@ export function Thread<T>(props: ThreadProps<T>) {
 				</ToLatest>
 			</div>
 			{foot ? (
-				<div ref={docked} className={cn(THREAD_FOOT, DOCKED)}>
+				<div ref={docked} className={cn(FOOT, DOCKED)}>
 					<div className={cn(column, STACK)}>{foot}</div>
 				</div>
 			) : null}

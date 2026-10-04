@@ -5,26 +5,24 @@ import {
 	retryOf,
 	WAITING_MESSAGES,
 } from "@fcalell/ui-core/list-state";
-import { THREAD, THREAD_FOOT, THREAD_LOG } from "@fcalell/ui-core/variants";
+import { FOOT, THREAD, THREAD_LOG } from "@fcalell/ui-core/variants";
 import {
 	type ReactNode,
 	useContext,
-	useEffect,
 	useLayoutEffect,
 	useRef,
 	useState,
 } from "react";
 import { ScrollView, View } from "react-native";
-import { KeyboardAvoidingView } from "react-native-keyboard-controller";
-import { withUniwind } from "uniwind";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import {
-	FootDocks,
 	ThreadBleeds,
 	ThreadFills,
 	ToLatest,
+	useFootDocks,
 } from "../../lib/frame";
+import { Lifted } from "../../lib/hosts";
 import { useWords } from "../../lib/words";
 import { EmptyStateBase } from "../empty-state/base";
 import { Missing } from "../empty-state/missing";
@@ -32,9 +30,6 @@ import type { ListEmpty } from "../list";
 import { Message } from "../message";
 import type { QueryLike } from "../query-boundary";
 import { Latest } from "./latest";
-
-// The column the log and the docked input share, lifted over the keyboard.
-const Fill = withUniwind(KeyboardAvoidingView);
 
 const FILL = "flex-1";
 // In a Split's main the Thread bleeds through the inset the record's head
@@ -180,7 +175,7 @@ export function Thread<T>(props: ThreadProps<T>) {
 	const children = logOf(props, listState(input), words.retry);
 	const fills = useContext(ThreadFills);
 	const bleeds = useContext(ThreadBleeds);
-	const docks = useContext(FootDocks);
+	const docked = useFootDocks();
 	const log = useRef<ScrollView>(null);
 	const atEnd = useRef(true);
 	// The reader is scrolled up: the Latest act stands over the foot.
@@ -196,12 +191,6 @@ export function Thread<T>(props: ThreadProps<T>) {
 	const follow = () => {
 		if (atEnd.current) log.current?.scrollToEnd({ animated: false });
 	};
-	// The docked foot's height, the room the Shell's toasts stand above; its
-	// layout reports it, and leaving takes it back.
-	useEffect(() => {
-		if (!docks) return;
-		return () => docks(0);
-	}, [docks]);
 	const messages = (
 		<View
 			accessibilityLiveRegion="polite"
@@ -225,7 +214,7 @@ export function Thread<T>(props: ThreadProps<T>) {
 			</View>
 		);
 	return (
-		<Fill
+		<Lifted
 			behavior="padding"
 			automaticOffset
 			className={cn(FILL, bleeds && BLEED)}
@@ -254,13 +243,10 @@ export function Thread<T>(props: ThreadProps<T>) {
 				</ToLatest.Provider>
 			</View>
 			{foot ? (
-				<View
-					onLayout={(event) => docks?.(event.nativeEvent.layout.height)}
-					className={cn(THREAD_FOOT, DOCKED)}
-				>
+				<View onLayout={docked} className={cn(FOOT, DOCKED)}>
 					{foot}
 				</View>
 			) : null}
-		</Fill>
+		</Lifted>
 	);
 }

@@ -458,15 +458,17 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 	layout: {
 		// A page in the shell: on the desktop the title and the acts share the
 		// strip, the act a bar-fit primary rightmost; on touch the top bar holds
-		// the acts over the title and the act floats over the body's end.
+		// the acts over the title and the act floats over the body's end. A
+		// `foot` (a field, never beside the act) docks under the scrolling body.
 		Place: {
-			props: ["title", "actions", "act", "more", "bleed", "children"],
+			props: ["title", "actions", "act", "more", "bleed", "foot", "children"],
 			draws: [
 				"PAGE_HEAD",
 				"PAGE_TOP_BAR",
 				"PAGE_TITLE",
 				"TEXT.role.title",
 				"PAGE_BODY",
+				"FOOT",
 				"FLOATING_ACT",
 				"FLOATING_ACT_ROOM",
 				"FLOATING_ACT_FOOT",
@@ -2134,20 +2136,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"loading",
 				"foot",
 			],
-			draws: [
-				"THREAD",
-				"THREAD_COLUMN",
-				"THREAD_LOG",
-				"THREAD_FOOT",
-				"THREAD_LATEST",
-			],
-			holds: [
-				"THREAD",
-				"THREAD_COLUMN",
-				"THREAD_LOG",
-				"THREAD_FOOT",
-				"THREAD_LATEST",
-			],
+			draws: ["THREAD", "THREAD_COLUMN", "THREAD_LOG", "FOOT", "THREAD_LATEST"],
+			holds: ["THREAD", "THREAD_COLUMN", "THREAD_LOG", "THREAD_LATEST"],
 			states: ["rest", "loading", "error", "empty"],
 			owns: {
 				colors: ["raised"],

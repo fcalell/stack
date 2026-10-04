@@ -10,6 +10,7 @@ import {
 	FLOATING_ACT,
 	FLOATING_ACT_FOOT,
 	FLOATING_ACT_ROOM,
+	FOOT,
 	type IconButtonFit,
 	PAGE_BODY,
 	PAGE_HEAD,
@@ -29,6 +30,7 @@ import {
 	RecordShown,
 	ShellSwitcher,
 	ThreadFills,
+	useFootDocks,
 } from "../../lib/frame.ts";
 import { HeadingContext } from "../../lib/heading.ts";
 import { useTouch } from "../../lib/media.ts";
@@ -58,6 +60,8 @@ const TITLE = "min-w-0 grow truncate";
 const BODY = "flex flex-col grow overflow-y-auto";
 const BLEED = "flex flex-col grow min-h-0";
 const BODY_WRAP = "relative flex flex-col grow min-h-0";
+// The foot stays under the body, which scrolls past it.
+const DOCKED = "flex flex-col shrink-0";
 const ACT_ROOM = "shrink-0";
 const ACT_LAYER =
 	"absolute inset-0 flex flex-col items-center justify-end pointer-events-none";
@@ -104,14 +108,11 @@ export function backGlyph(touch: boolean): IconName {
 	return touch ? "ChevronLeft" : "ArrowLeft";
 }
 
-/** A page in the shell. */
-export interface PlaceProps extends Closed {
+interface PlaceBase extends Closed {
 	/** The page's title, its one `h1`. */
 	title: string;
 	/** Icon acts beside the title, in order. */
 	actions?: IconAct[];
-	/** The page's one filled act: rightmost in the desktop strip, floating over the body's end on touch. */
-	act?: Act;
 	/** The acts past the actions, in a menu under the more act. */
 	more?: MenuItem[];
 	/** The body runs edge to edge with no inset, and its child scrolls itself. */
@@ -120,13 +121,30 @@ export interface PlaceProps extends Closed {
 	children?: ReactNode;
 }
 
-/** A page under a head and its hairline: on the desktop the title and its acts share one strip; on touch the top bar (the shell's switcher, the actions, more) stands over the title and the act floats over the body's end. A Place is the size container what stands in it decides its structure by (a Split its regions, a Table its grid): a Thread in its body fills it; the Split lends it a Details act, drawn below `wide` of its width, and with a record open a back act to the place's route, drawn below `tablet` first: before the title in the strip, in the switcher's stead in the top bar. */
+/** The page's one filled act, or the field docked at its foot whose send is that act: never both. */
+type PlaceEnd =
+	| {
+			/** The page's one filled act: rightmost in the desktop strip, floating over the body's end on touch. */
+			act?: Act;
+			foot?: never;
+	  }
+	| {
+			/** The field docked at the page's foot (a `MessageInput`), the sections scrolling under it. */
+			foot?: ReactNode;
+			act?: never;
+	  };
+
+/** A page in the shell. */
+export type PlaceProps = PlaceBase & PlaceEnd;
+
+/** A page under a head and its hairline: on the desktop the title and its acts share one strip; on touch the top bar (the shell's switcher, the actions, more) stands over the title and the act floats over the body's end. A `foot` docks at the page's bottom at both densities, the body scrolling under it, above the tab bar on touch. A Place is the size container what stands in it decides its structure by (a Split its regions, a Table its grid): a Thread in its body fills it, unless the Place has a `foot`, where it stands among the sections; the Split lends it a Details act, drawn below `wide` of its width, and with a record open a back act to the place's route, drawn below `tablet` first: before the title in the strip, in the switcher's stead in the top bar. */
 export function Place({
 	title,
 	actions,
 	act,
 	more,
 	bleed,
+	foot,
 	children,
 }: PlaceProps) {
 	const touch = useTouch();
@@ -137,6 +155,7 @@ export function Place({
 	const [sheet, lend] = useState<Dialog.Handle<unknown>>();
 	const [recordOpen, setRecordOpen] = useState(false);
 	const [fills, setFills] = useState(false);
+	const docked = useFootDocks();
 	const fit = touch ? "body" : "bar";
 	// A record standing alone returns to the list, the place's own route.
 	const back =
@@ -230,14 +249,15 @@ export function Place({
 		</header>
 	);
 	// A Thread in the body fills it, as a bleeding body's child does: no
-	// inset, its log scrolling.
+	// inset, its log scrolling. Over a docked foot it stands among the
+	// sections, the foot the page's one input.
 	const body = bleed ? (
 		<div className={BLEED}>
 			<ActRoom value={room}>{children}</ActRoom>
 		</div>
 	) : (
 		<div className={fills ? BLEED : cn(PAGE_BODY, BODY)}>
-			<ThreadFills value={setFills}>{children}</ThreadFills>
+			<ThreadFills value={foot ? null : setFills}>{children}</ThreadFills>
 			{floating ? (
 				<div aria-hidden className={cn(FLOATING_ACT_ROOM, ACT_ROOM)} />
 			) : null}
@@ -255,6 +275,11 @@ export function Place({
 									{body}
 									{layer}
 								</div>
+								{foot ? (
+									<div ref={docked} className={cn(FOOT, DOCKED)}>
+										{foot}
+									</div>
+								) : null}
 							</div>
 						</HeadingContext>
 					</PageTitle>
