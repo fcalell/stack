@@ -1108,6 +1108,7 @@ export const WORD_KEYS = [
 	"seen",
 	"unseen",
 	"copyFailed",
+	"latest",
 ] as const;
 export type WordKey = (typeof WORD_KEYS)[number];
 
@@ -1175,6 +1176,7 @@ export const ENGLISH: Words = {
 	seen: "Seen",
 	unseen: "Not seen",
 	copyFailed: "Couldn't copy",
+	latest: "Latest",
 	earlierLines: {
 		one: "Show {count} earlier line",
 		other: "Show {count} earlier lines",

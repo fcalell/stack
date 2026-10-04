@@ -2091,7 +2091,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// A collection: its Messages from `query` or `items` through the
 		// `message` map, its waiting turns the Message's own loading forms, its
 		// failed and empty EmptyStates its own in the log; a MessageInput its
-		// `foot`, drawn in every state.
+		// `foot`, drawn in every state. While a filling Thread's reader is scrolled
+		// up, a secondary Latest act floats over the log above the foot.
 		Thread: {
 			props: [
 				"query",
@@ -2102,12 +2103,27 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"loading",
 				"foot",
 			],
-			draws: ["THREAD", "THREAD_COLUMN", "THREAD_LOG", "THREAD_FOOT"],
-			holds: ["THREAD", "THREAD_COLUMN", "THREAD_LOG", "THREAD_FOOT"],
+			draws: [
+				"THREAD",
+				"THREAD_COLUMN",
+				"THREAD_LOG",
+				"THREAD_FOOT",
+				"THREAD_LATEST",
+			],
+			holds: [
+				"THREAD",
+				"THREAD_COLUMN",
+				"THREAD_LOG",
+				"THREAD_FOOT",
+				"THREAD_LATEST",
+			],
 			states: ["rest", "loading", "error", "empty"],
 			owns: {
-				spacing: ["sections", "page"],
+				colors: ["raised"],
+				radii: ["control"],
+				spacing: ["sections", "page", "pair"],
 				sizes: ["measure"],
+				elevation: ["float"],
 			},
 		},
 		QrCode: {

@@ -126,7 +126,7 @@ pinned by the package's verify suite; this entry holds the architecture and its 
 ## Words
 
 Every word a molecule draws or reads aloud on its own (the six `Status` words, `recommended`,
-`copy`, `copied`, `back`, `close`, `cancel`, `dismiss`, `more`, `send`, `stop`, `attach`, `search`, `loading`, `checking`, `retry`, `add`, `remove`, `details`, `places`, `notifications`, `code`, `added`, `removed`, `sort`, `ascending`, `descending`, `time`, `message`, `seen`, `unseen`, `copyFailed`, the counted `earlierLines`, and the slot words `meterValue`, `meterOver`, `linesAdded` and `linesRemoved`) comes
+`copy`, `copied`, `back`, `close`, `cancel`, `dismiss`, `more`, `send`, `stop`, `attach`, `search`, `loading`, `checking`, `retry`, `add`, `remove`, `details`, `places`, `notifications`, `code`, `added`, `removed`, `sort`, `ascending`, `descending`, `time`, `message`, `seen`, `unseen`, `copyFailed`, `latest`, the counted `earlierLines`, and the slot words `meterValue`, `meterOver`, `linesAdded` and `linesRemoved`) comes
 from `words`, a closed typed object with English defaults. The `Words` type requires every key
 and `wordsSchema` is strict, so a translation missing a word fails `tsc` and the schema. It is a
 plugin option beside `theme`; each plugin contributes a `WordsProvider` into the generated entry
@@ -371,6 +371,15 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
   (`-mx-page`, an overlay by `ThreadBleeds`), its log and foot carrying the inset themselves; the
   input docks at the main's foot and reports `FootDocks` as in a Place. The bleeding Place's act
   still floats over the list, and where the record stands alone its room stands under the input.
+  While a filling Thread's reader is scrolled up (the log's `atEnd` false), a secondary `Button`
+  (`ArrowDown`, the word `latest`) floats centred at the foot of the log's region, a pair above
+  the foot, on a lifted ground at its radius (`THREAD_LATEST`: `bg-raised`, `shadow-float`, since
+  the secondary act draws no fill); pressing it scrolls to the end and resumes following (the web
+  log takes the focus the act held). It takes no prop: the Thread hands its way back through
+  `ToLatest` (the handler, `null` at the end), and the internal `Latest` draws from that context
+  in whatever region stands over a docked foot. The layer is anchored inside that region, never
+  hung above the foot by `bottom-full`, because Android does not hit-test a child outside its
+  parent's bounds.
 - A `MessageInput` sends while an answer streams: `working` sets Stop before Send and leaves
   Send live, so Send and Enter send whenever the text is non-empty. Stop is the secondary bar
   Button on the desktop and an icon act at the bar fit (`ICON_BUTTON.fit.bar`, `Square`) on

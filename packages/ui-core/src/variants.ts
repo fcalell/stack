@@ -575,6 +575,10 @@ export const THREAD_COLUMN = "w-full max-w-measure mx-auto";
 // the body's foot at the page inset.
 export const THREAD_LOG = "px-page pt-page pb-sections";
 export const THREAD_FOOT = "px-page pb-page";
+// The way back to the newest message, floating over the log a pair above the
+// foot while the reader is scrolled up: a lifted ground under the secondary
+// act's hairline, at its radius.
+export const THREAD_LATEST = "mb-pair rounded-control bg-raised shadow-float";
 // QrCode: the tile at the qr size inside a hairline on the surface.
 export const QR_TILE = "size-qr rounded-card border border-edge bg-surface";
 

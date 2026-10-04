@@ -1,6 +1,6 @@
 ---
 id: 003-50
-status: backlog
+status: review
 sessions: {}
 ---
 # ui-core: a way back to the newest message
@@ -17,4 +17,7 @@ Reference: Linear's "Latest" pill over the composer ([screen](https://mobbin.com
 - [ ] Stack provides the part on every platform the app runs on.
 
 ## Open questions
-- [ ] Its shape (a component, a variant, a token, an option): the stack session decides.
+- [x] Its shape (a component, a variant, a token, an option): the stack session decides.
+
+## Progress
+Shape: no prop; a "Latest" secondary Button floats above the foot whenever a filling Thread's reader is scrolled up, through the internal `ToLatest` context and `Latest` component, so a docked foot elsewhere reuses it. `THREAD_LATEST` is `mb-pair rounded-control bg-raised shadow-float`, for the design critique. Built on web and phone; `pnpm check` and `pnpm verify` pass. Open: the live check (web per batch, phone on the harness).

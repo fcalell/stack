@@ -60,3 +60,8 @@ export const ActRoom = createContext<ReactNode>(null);
 
 // The Place's or Screen's title, which names a Split's list.
 export const PageTitle = createContext<string | undefined>(undefined);
+
+// A filling Thread's way back to its newest message while its reader is
+// scrolled up, and `null` at the end: the region over its docked foot draws
+// the Latest act from it.
+export const ToLatest = createContext<(() => void) | null>(null);

@@ -12,18 +12,25 @@ import {
 	useEffect,
 	useLayoutEffect,
 	useRef,
+	useState,
 } from "react";
 import { ScrollView, View } from "react-native";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { withUniwind } from "uniwind";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import { FootDocks, ThreadBleeds, ThreadFills } from "../../lib/frame";
+import {
+	FootDocks,
+	ThreadBleeds,
+	ThreadFills,
+	ToLatest,
+} from "../../lib/frame";
 import { useWords } from "../../lib/words";
 import { EmptyStateBase } from "../empty-state/base";
 import type { ListEmpty } from "../list";
 import { Message } from "../message";
 import type { QueryLike } from "../query-boundary";
+import { Latest } from "./latest";
 
 // The column the log and the docked input share, lifted over the keyboard.
 const Fill = withUniwind(KeyboardAvoidingView);
@@ -32,6 +39,8 @@ const FILL = "flex-1";
 // In a Split's main the Thread bleeds through the inset the record's head
 // keeps.
 const BLEED = "-mx-page";
+// The region over the foot: the log, and the Latest act floating at its foot.
+const REGION = "relative flex-1";
 const LOG = "flex-1";
 const DOCKED = "shrink-0";
 // The log is at its end while its last point shows; a reader who scrolled
@@ -143,7 +152,9 @@ function logOf<T>(
 // the touch structure, so no measure-wide column). In a Place's body it
 // fills the page, and in a Split's record the record under its head: the log scrolls at the page inset, opening at the newest
 // message and following each that arrives while the reader is at the end,
-// the input docked at the foot over the keyboard. React Native has no log
+// the input docked at the foot over the keyboard; while the reader is scrolled
+// up, a Latest act floats centred above the foot and returns to the newest
+// message. React Native has no log
 // role: the messages are a polite live region, so an arriving one is
 // announced (Android; VoiceOver reads them in order). It draws its
 // collection's four states, the input under each: while its query is
@@ -169,6 +180,8 @@ export function Thread<T>(props: ThreadProps<T>) {
 	const docks = useContext(FootDocks);
 	const log = useRef<ScrollView>(null);
 	const atEnd = useRef(true);
+	// The reader is scrolled up: the Latest act stands over the foot.
+	const [away, setAway] = useState(false);
 	useLayoutEffect(() => {
 		if (!fills) return;
 		fills(true);
@@ -195,6 +208,12 @@ export function Thread<T>(props: ThreadProps<T>) {
 			{children}
 		</View>
 	);
+	// Back to the newest message, following again from there.
+	const toLatest = () => {
+		atEnd.current = true;
+		setAway(false);
+		log.current?.scrollToEnd({ animated: false });
+	};
 	if (!fills)
 		return (
 			<View className={THREAD}>
@@ -208,22 +227,29 @@ export function Thread<T>(props: ThreadProps<T>) {
 			automaticOffset
 			className={cn(FILL, bleeds && BLEED)}
 		>
-			<ScrollView
-				ref={log}
-				onContentSizeChange={follow}
-				onLayout={follow}
-				onScroll={(event) => {
-					const { contentOffset, contentSize, layoutMeasurement } =
-						event.nativeEvent;
-					atEnd.current =
-						contentSize.height - contentOffset.y - layoutMeasurement.height <=
-						AT_END;
-				}}
-				className={LOG}
-				contentContainerClassName={THREAD_LOG}
-			>
-				{messages}
-			</ScrollView>
+			<View className={REGION}>
+				<ScrollView
+					ref={log}
+					onContentSizeChange={follow}
+					onLayout={follow}
+					onScroll={(event) => {
+						const { contentOffset, contentSize, layoutMeasurement } =
+							event.nativeEvent;
+						const end =
+							contentSize.height - contentOffset.y - layoutMeasurement.height <=
+							AT_END;
+						atEnd.current = end;
+						setAway(!end);
+					}}
+					className={LOG}
+					contentContainerClassName={THREAD_LOG}
+				>
+					{messages}
+				</ScrollView>
+				<ToLatest.Provider value={away ? toLatest : null}>
+					<Latest />
+				</ToLatest.Provider>
+			</View>
 			{foot ? (
 				<View
 					onLayout={(event) => docks?.(event.nativeEvent.layout.height)}

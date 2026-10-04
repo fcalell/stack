@@ -18,6 +18,7 @@ import {
 	useCallback,
 	useLayoutEffect,
 	useRef,
+	useState,
 } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import {
@@ -25,6 +26,7 @@ import {
 	PageTitle,
 	ThreadBleeds,
 	ThreadFills,
+	ToLatest,
 } from "../../lib/frame.ts";
 import { useTouch } from "../../lib/media.ts";
 import { useWords } from "../../lib/words.tsx";
@@ -32,6 +34,7 @@ import { EmptyStateBase } from "../empty-state/base.tsx";
 import type { ListEmpty } from "../list/index.tsx";
 import { Message } from "../message/index.tsx";
 import type { QueryLike } from "../query-boundary/index.tsx";
+import { Latest } from "./latest.tsx";
 
 const STACK = "flex flex-col";
 const FILL = "flex flex-col grow min-h-0";
@@ -41,6 +44,8 @@ const BLEED = "-mx-page";
 // The log rings inset, its edge meeting the page's.
 const SCROLLS = "grow min-h-0 overflow-y-auto focus-visible:-outline-offset-2";
 const DOCKED = "flex flex-col shrink-0";
+// The region over the foot: the log, and the Latest act floating at its foot.
+const REGION = "relative flex flex-col grow min-h-0";
 // The log is at its end while its last pixel shows; a reader who scrolled
 // up keeps their place as a message arrives.
 const AT_END = 1;
@@ -146,7 +151,7 @@ function logOf<T>(
 	return items.map((item) => messageOf(props.message, item));
 }
 
-/** The messages, a log region so an arriving one is announced, a sections gap apart, one rung above a reply's block gap, and the input a sections gap under them; on the desktop each stands in a measure-wide column centred in the page, on touch in the screen's column. In a Place's body it fills the page, and in a Split's main the main under the record's head: the log scrolls at the page inset, opening at the newest message and following each that arrives while the reader is at the end, the input docked at the foot. It draws its collection's four states, the input under each: while its query is pending or `loading` is set, Message's loading forms (another's reply, yours, another's reply), the log at its end; a failed query, the failed EmptyState with `sentence` and Retry in the log's column; no message, `empty` in the log; then one Message per item. */
+/** The messages, a log region so an arriving one is announced, a sections gap apart, one rung above a reply's block gap, and the input a sections gap under them; on the desktop each stands in a measure-wide column centred in the page, on touch in the screen's column. In a Place's body it fills the page, and in a Split's main the main under the record's head: the log scrolls at the page inset, opening at the newest message and following each that arrives while the reader is at the end, the input docked at the foot; while the reader is scrolled up, a Latest act floats centred above the foot and returns to the newest message. It draws its collection's four states, the input under each: while its query is pending or `loading` is set, Message's loading forms (another's reply, yours, another's reply), the log at its end; a failed query, the failed EmptyState with `sentence` and Retry in the log's column; no message, `empty` in the log; then one Message per item. */
 export function Thread<T>(props: ThreadProps<T>) {
 	const { foot } = props;
 	const words = useWords();
@@ -169,6 +174,8 @@ export function Thread<T>(props: ThreadProps<T>) {
 	const log = useRef<HTMLDivElement>(null);
 	const content = useRef<HTMLDivElement>(null);
 	const atEnd = useRef(true);
+	// The reader is scrolled up: the Latest act stands over the foot.
+	const [away, setAway] = useState(false);
 	useLayoutEffect(() => {
 		if (!fills) return;
 		fills(true);
@@ -202,6 +209,16 @@ export function Thread<T>(props: ThreadProps<T>) {
 		},
 		[docks],
 	);
+	// Back to the newest message, following again from there; the log takes
+	// the focus the act held, since the act leaves with the press.
+	const toLatest = () => {
+		const scroller = log.current;
+		if (!scroller) return;
+		atEnd.current = true;
+		setAway(false);
+		scroller.scrollTop = scroller.scrollHeight;
+		scroller.focus({ preventScroll: true });
+	};
 	if (!fills)
 		return (
 			<div className={cn(THREAD, STACK)}>
@@ -213,22 +230,30 @@ export function Thread<T>(props: ThreadProps<T>) {
 		);
 	return (
 		<div className={cn(FILL, bleeds && BLEED)}>
-			<div
-				ref={log}
-				role="log"
-				aria-busy={busy}
-				aria-labelledby={title}
-				// biome-ignore lint/a11y/noNoninteractiveTabindex: a scrolling region is reached by the keyboard (WCAG 2.1.1)
-				tabIndex={0}
-				onScroll={(event) => {
-					const { scrollHeight, scrollTop, clientHeight } = event.currentTarget;
-					atEnd.current = scrollHeight - scrollTop - clientHeight <= AT_END;
-				}}
-				className={cn(THREAD_LOG, SCROLLS)}
-			>
-				<div ref={content} className={cn(THREAD, column, STACK)}>
-					{children}
+			<div className={REGION}>
+				<div
+					ref={log}
+					role="log"
+					aria-busy={busy}
+					aria-labelledby={title}
+					// biome-ignore lint/a11y/noNoninteractiveTabindex: a scrolling region is reached by the keyboard (WCAG 2.1.1)
+					tabIndex={0}
+					onScroll={(event) => {
+						const { scrollHeight, scrollTop, clientHeight } =
+							event.currentTarget;
+						const end = scrollHeight - scrollTop - clientHeight <= AT_END;
+						atEnd.current = end;
+						setAway(!end);
+					}}
+					className={cn(THREAD_LOG, SCROLLS)}
+				>
+					<div ref={content} className={cn(THREAD, column, STACK)}>
+						{children}
+					</div>
 				</div>
+				<ToLatest value={away ? toLatest : null}>
+					<Latest />
+				</ToLatest>
 			</div>
 			{foot ? (
 				<div ref={docked} className={cn(THREAD_FOOT, DOCKED)}>
