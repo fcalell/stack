@@ -12,3 +12,6 @@ Working evidence: dated, drains, or gets promoted into `.helm/knowledge/`. Nothi
   consumers reach it.
 - [phone-harness.md](./phone-harness.md): building the phone render harness or fixing a stack
   phone app that will not render or build (epic 002).
+- [skeleton-loading.md](./skeleton-loading.md): drawing a component's loading form in skeleton
+  (where its shape comes from before the data), changing `List`, `QueryBoundary` or a data
+  molecule's loading state, or story 003-02.
