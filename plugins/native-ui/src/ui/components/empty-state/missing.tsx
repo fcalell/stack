@@ -17,9 +17,17 @@ export function useBackAct(): Act | undefined {
 }
 
 // What a read that answers not found draws: the rest EmptyState saying it no
-// longer exists, with Back and never Retry.
-export function Missing() {
+// longer exists, with Back and never Retry; with `fill` its frame fills the
+// box it stands in.
+export function Missing(props: { fill?: boolean }) {
 	const words = useWords();
 	const back = useBackAct();
-	return <EmptyStateBase tone="missing" sentence={words.missing} act={back} />;
+	return (
+		<EmptyStateBase
+			tone="missing"
+			sentence={words.missing}
+			act={back}
+			fill={props.fill}
+		/>
+	);
 }

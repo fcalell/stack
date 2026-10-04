@@ -43,6 +43,8 @@ const BAR = "w-full";
 const TIME = "shrink-0 whitespace-nowrap";
 // A loading reply: one paragraph of three lines, each bar at its line's length.
 const REPLY_BARS = ["w-full", "w-full", "w-2/3"] as const;
+// A loading time: four figures, as the time it stands in for.
+const TIME_BAR = "w-figures";
 
 interface MessageBase extends Closed {
 	/** What was said: plain text for `you` and `system`, markdown for `other`. */
@@ -181,6 +183,9 @@ export function Message(props: MessageProps) {
 							<span className={cn(skeleton({ kind: "line" }), BAR)} />
 						</span>
 					</div>
+					<span className={cn(lineBox({ role: "meta" }), LINE)}>
+						<span className={cn(skeleton({ kind: "line" }), TIME_BAR)} />
+					</span>
 				</article>
 			);
 		return (

@@ -24,6 +24,7 @@ const ALONE = "flex grow items-center justify-center";
 const COLUMN = "flex flex-col items-center text-center";
 const ABOVE = "self-center";
 const FRAME = "flex justify-center";
+const FILL = "grow items-center";
 const FIRST = "flex flex-col text-center";
 const MARK_SLOT = "flex justify-center";
 const MARK = "inline-flex items-center justify-center shrink-0";
@@ -44,6 +45,9 @@ export function EmptyStateBase(props: {
 	sentence: string;
 	act?: Act;
 	children?: ReactNode;
+	// The frame fills the box it stands in, its content centred there (a
+	// chart's loaded height).
+	fill?: boolean;
 }) {
 	// In a Section it stands framed; in a Group the card is its frame.
 	const inGroup = use(GroundContext) === "group";
@@ -91,7 +95,13 @@ export function EmptyStateBase(props: {
 		) : null;
 		if (framed)
 			return (
-				<div className={cn(inGroup ? EMPTY_CARD : EMPTY_FRAME, FRAME)}>
+				<div
+					className={cn(
+						inGroup ? EMPTY_CARD : EMPTY_FRAME,
+						FRAME,
+						props.fill && FILL,
+					)}
+				>
 					<div className={cn(EMPTY_COLUMN, COLUMN)}>
 						{mark}
 						{words}

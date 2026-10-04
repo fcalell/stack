@@ -69,7 +69,7 @@ const BAR = "w-full";
 // A failed or empty chart's EmptyState stands over the loaded boxes, held
 // unseen, so it takes the chart's loaded height.
 const HELD = "opacity-0";
-const OVER = "absolute inset-0 justify-center";
+const OVER = "absolute inset-0";
 
 // Four bands, the last one's bottom the baseline.
 const BANDS = 4;
@@ -193,13 +193,14 @@ export function BarChart<T>(props: BarChartProps<T>) {
 	if (state === "missing")
 		return (
 			<Stand keys={keys}>
-				<Missing />
+				<Missing fill />
 			</Stand>
 		);
 	if (state === "failed" && props.query !== undefined)
 		return (
 			<Stand keys={keys}>
 				<EmptyStateBase
+					fill
 					tone="failed"
 					sentence={props.sentence}
 					act={{ label: words.retry, onAct: retryOf(props.query) }}
@@ -209,7 +210,7 @@ export function BarChart<T>(props: BarChartProps<T>) {
 	if (state === "empty" && props.empty)
 		return (
 			<Stand keys={keys}>
-				<EmptyStateBase tone="rest" {...props.empty} />
+				<EmptyStateBase fill tone="rest" {...props.empty} />
 			</Stand>
 		);
 	const { bar } = props;
@@ -412,7 +413,8 @@ function Key(props: { name: string; at: number; children: ReactNode }) {
 
 // A failed, missing or empty chart: its EmptyState over the loaded boxes, held unseen
 // and hidden from assistive tech. React Native has no grid to stack the two
-// in one cell, so the EmptyState lies over the boxes, which set the height.
+// in one cell, so the EmptyState lies over the boxes, which set the height,
+// its frame filling them.
 function Stand(props: { keys?: readonly string[]; children: ReactNode }) {
 	return (
 		<View>

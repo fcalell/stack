@@ -32,6 +32,10 @@ const LEADING_WAIT = { avatar: "avatar", icon: "icon", status: "dot" } as const;
 const TRAILING = "shrink-0";
 // A trailing value is an age or a count: four figures at most.
 const TRAILING_BAR = "w-figures";
+// The marks (a status, a chip) end the meta line: their bar at the end of
+// their own short-label lane, half its width.
+const MARKS_ROOM = "flex grow justify-end ms-auto min-w-0";
+const MARKS_BAR = "w-1/2";
 // The more act's room, empty: the act waits with nothing to act on.
 const ACTS = "relative flex shrink-0 items-center";
 const MORE = "size-control-compact";
@@ -47,7 +51,7 @@ const BARS = [
 /** How many rows a waiting list draws. Outside the package's exports. */
 export const WAITING_ROWS = BARS.length;
 
-/** A ListRow waiting, the `index`th of a waiting list: the leading mark's skeleton by its kind, a bar in the title line (the trailing's at its end, four figures wide) and one in the meta line, each at its slot's place, and the more act's room left empty. Outside the package's exports. */
+/** A ListRow waiting, the `index`th of a waiting list: the leading mark's skeleton by its kind, a bar in the title line (the trailing's at its end, four figures wide) and one in the meta line (the marks' at its end), each at its slot's place, and the more act's room left empty. Outside the package's exports. */
 export function RowWait(props: { shape: RowShape; index: number }) {
 	const ground = use(GroundContext);
 	const { shape } = props;
@@ -98,6 +102,11 @@ export function RowWait(props: { shape: RowShape; index: number }) {
 						<span className={cn(skeletonLane({ role: "meta" }), BAR_ROOM)}>
 							<span className={cn(skeleton({ kind: "line" }), meta)} />
 						</span>
+						{shape.marks ? (
+							<span className={cn(skeletonLane({ role: "meta" }), MARKS_ROOM)}>
+								<span className={cn(skeleton({ kind: "line" }), MARKS_BAR)} />
+							</span>
+						) : null}
 					</span>
 				) : null}
 			</span>

@@ -33,3 +33,4 @@ values, as today. Needs `items` mostly (a slice of the page's query, its pending
 
 ## Progress
 Built on web and phone; `pnpm check` and `pnpm verify` pass. The chips bar's width (`w-1/5`) is the implementer's choice, for the design critique. Open: the live check (web per batch, phone on the harness).
+The web live criteria pass and the web design critique's findings are fixed, measured at 1440 and 375.

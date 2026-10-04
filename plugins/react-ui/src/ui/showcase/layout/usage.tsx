@@ -64,18 +64,13 @@ const REQUESTS: Day[] = WEEK.map(([day, values]) => ({
 interface PlanFact {
 	label: string;
 	values: [string, string];
-	chips?: string[];
 }
 
 const PLAN_CHANGE: PlanFact[] = [
 	{ label: "Requests", values: ["1M a month", "10M a month"] },
 	{ label: "Build minutes", values: ["6,000 a month", "25,000 a month"] },
 	{ label: "Storage", values: ["10 GB", "100 GB"] },
-	{
-		label: "Audit log",
-		values: ["Not included", "Kept 90 days"],
-		chips: ["New"],
-	},
+	{ label: "Audit log", values: ["Not included", "Kept 90 days"] },
 	{ label: "Billed", values: ["$120 a month", "$480 a month, from Oct 14"] },
 ];
 
@@ -197,7 +192,6 @@ export function Usage() {
 						key: (fact) => fact.label,
 						label: (fact) => fact.label,
 						values: (fact) => fact.values,
-						chips: (fact) => fact.chips,
 					}}
 				/>
 			</Section>

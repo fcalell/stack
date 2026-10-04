@@ -1045,7 +1045,7 @@ From tablet up the grid (the desktop board and the tablet board, 768 at the touc
 ### empty-state
 
 - desktop, tablet (768, touch density): `flex justify-center p-page`
-  - cell: `TABLE_EMPTY`; overlay: `flex justify-center`; the slot the grid holds its `empty` in, the consumer's EmptyState inside it drawing its own cells
+  - cell: `TABLE_EMPTY`; overlay: `flex flex-col grow`; the slot the grid holds its `empty` in, the consumer's EmptyState inside it drawing its own cells
 - touch: the consumer's EmptyState alone in the body, which draws its own root and cells
   - under: Empty (empty, no rows): the header stays, so the columns tell what will land here; under it the consumer's …; Empty: the consumer's EmptyState alone in the body, with no sort pick (nothing to sort); the Place's floati…; and 1 more frames
 

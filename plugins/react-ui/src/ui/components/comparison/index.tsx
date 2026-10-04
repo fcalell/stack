@@ -12,6 +12,7 @@ import {
 	COMPARISON_ROW,
 	lineBox,
 	skeleton,
+	skeletonLane,
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
@@ -45,12 +46,14 @@ const LABEL_WAIT = "flex items-center basis-0 grow min-w-0 touch:basis-full";
 const LINE_HEIGHT = "h-lh";
 // A chip stands taller than the label's line.
 const CHIP_LINE = "min-h-chip";
-// The waiting facts: four rows of a label's bar, a chips bar when chips are
-// declared, and each column's bar, at the lengths of the words they stand in
-// for.
+// The waiting facts: four rows of a label's bar (a chip's bar beside it when
+// chips are declared) and each column's bar, every bar a share of the
+// short-label lane of the line it stands in, so it stands at the length of a
+// typical label or value rather than of the column.
+const BAR_ROOM = "flex grow items-center";
 const LABEL_BARS = ["w-1/2", "w-1/3", "w-2/3", "w-1/2"] as const;
 const VALUE_BARS = ["w-1/3", "w-2/3", "w-1/2"] as const;
-const CHIP_BAR = "w-1/5";
+const CHIP_BAR = "w-1/4";
 
 /** One function per fact slot, each called with a loaded item; the slots given are the shape the waiting facts draw. */
 export interface FactSlots<T> {
@@ -75,7 +78,7 @@ export type ComparisonProps<T = unknown> = Closed &
 		row: FactSlots<T>;
 	};
 
-// A waiting fact: a label's bar (a chips bar beside it when chips are
+// A waiting fact: a label's bar (a chip's bar beside it when chips are
 // declared) and a bar per declared column.
 function FactWait(props: { shape: FactShape; index: number }) {
 	const { shape, index } = props;
@@ -83,7 +86,6 @@ function FactWait(props: { shape: FactShape; index: number }) {
 		<div aria-hidden className={cn(COMPARISON_ROW, ROW_WAIT)}>
 			<span
 				className={cn(
-					COMPARISON_LABEL,
 					lineBox({ role: "body" }),
 					LABEL_WAIT,
 					shape.chips ? CHIP_LINE : LINE_HEIGHT,
@@ -91,13 +93,21 @@ function FactWait(props: { shape: FactShape; index: number }) {
 			>
 				<span
 					className={cn(
-						skeleton({ kind: "line" }),
-						LABEL_BARS[index % LABEL_BARS.length],
+						skeletonLane({ role: "body" }),
+						COMPARISON_LABEL,
+						BAR_ROOM,
 					)}
-				/>
-				{shape.chips ? (
-					<span className={cn(skeleton({ kind: "line" }), CHIP_BAR)} />
-				) : null}
+				>
+					<span
+						className={cn(
+							skeleton({ kind: "line" }),
+							LABEL_BARS[index % LABEL_BARS.length],
+						)}
+					/>
+					{shape.chips ? (
+						<span className={cn(skeleton({ kind: "line" }), CHIP_BAR)} />
+					) : null}
+				</span>
 			</span>
 			{Array.from({ length: shape.values }, (_, column) => (
 				<span
@@ -105,12 +115,14 @@ function FactWait(props: { shape: FactShape; index: number }) {
 					key={column}
 					className={cn(lineBox({ role: "body" }), CELL_WAIT)}
 				>
-					<span
-						className={cn(
-							skeleton({ kind: "line" }),
-							VALUE_BARS[(index + column) % VALUE_BARS.length],
-						)}
-					/>
+					<span className={cn(skeletonLane({ role: "body" }), BAR_ROOM)}>
+						<span
+							className={cn(
+								skeleton({ kind: "line" }),
+								VALUE_BARS[(index + column) % VALUE_BARS.length],
+							)}
+						/>
+					</span>
 				</span>
 			))}
 		</div>

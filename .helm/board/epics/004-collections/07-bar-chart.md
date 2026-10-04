@@ -32,3 +32,4 @@ chart's own metric) and `items` (a slice of a page's one query).
 
 ## Progress
 Built on web and phone; `pnpm check` and `pnpm verify` pass. Each usage section reads its own query and its collection draws that query's states; a Cron runs section shows the empty week. On the phone the failed and empty forms lie over the boxes at the chart's height, so a taller EmptyState would overflow rather than grow it. Open: the live check (web per batch, phone on the harness).
+The web live criteria pass and the web design critique's findings are fixed, measured at 1440 and 375.

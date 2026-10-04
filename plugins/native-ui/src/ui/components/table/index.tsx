@@ -86,7 +86,9 @@ const TICK = "shrink-0";
 const CHIP = "shrink min-w-0";
 // An edit fills the cell it stands in.
 const EDIT = "grow min-w-0";
-const EMPTY = "items-center";
+// The empty slot spans the grid: a framed EmptyState stands across it, an
+// unframed one centres in what the page's body leaves.
+const EMPTY = "grow";
 const SORT_BAR = "flex-row items-center justify-end";
 
 // Five loading rows, each bar at a share of its cell: a number's at a

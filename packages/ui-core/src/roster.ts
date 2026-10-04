@@ -1760,6 +1760,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"COMPARISON_ROW",
 				"LINE_BOX.role.body",
 				"SKELETON.kind.line",
+				"SKELETON_LANE.role.body",
 				"TEXT.role.body",
 				"TEXT.role.meta",
 				"TEXT_STRONG.role.body",
@@ -1940,7 +1941,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				],
 				radii: ["card", "control", "chip"],
 				spacing: ["pair", "tile", "inside"],
-				sizes: ["target", "icon-meta", "skeleton"],
+				sizes: ["target", "icon-meta", "skeleton", "figures"],
 			},
 		},
 		// Stacked on the desktop, one row on touch; `onDetach(id)` removes an

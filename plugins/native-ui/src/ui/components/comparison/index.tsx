@@ -11,6 +11,7 @@ import {
 	COMPARISON_ROW,
 	lineBox,
 	skeleton,
+	skeletonLane,
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
@@ -39,16 +40,17 @@ const CHIP = "shrink-0";
 // it.
 const CELL_WAIT = "flex-1 flex-row items-center min-w-0";
 const LABEL_WAIT = "flex-row items-center w-full min-w-0";
-const LABEL_BARS_ROOM = "flex-1 flex-row items-center min-w-0";
+const BAR_ROOM = "flex-1 flex-row items-center min-w-0";
 // A chip stands taller than the label's line.
 const CHIP_LINE = "min-h-chip";
 const STRUT = "​";
-// The waiting facts: four rows of a label's bar, a chips bar when chips are
-// declared, and each column's bar, at the lengths of the words they stand in
-// for.
+// The waiting facts: four rows of a label's bar (a chip's bar beside it when
+// chips are declared) and each column's bar, every bar a share of the
+// short-label lane of the line it stands in, so it stands at the length of a
+// typical label or value rather than of the column.
 const LABEL_BARS = ["w-1/2", "w-1/3", "w-2/3", "w-1/2"] as const;
 const VALUE_BARS = ["w-1/3", "w-2/3", "w-1/2"] as const;
-const CHIP_BAR = "w-1/5";
+const CHIP_BAR = "w-1/4";
 
 // One function per fact slot, each called with a loaded item; the slots
 // given are the shape the waiting facts draw.
@@ -82,7 +84,13 @@ function FactWait(props: { shape: FactShape; index: number }) {
 		<View className={cn(COMPARISON_ROW, ROW_WAIT)}>
 			<View className={cn(LABEL_WAIT, shape.chips && CHIP_LINE)}>
 				<RNText className={lineBox({ role: "body" })}>{STRUT}</RNText>
-				<View className={cn(COMPARISON_LABEL, LABEL_BARS_ROOM)}>
+				<View
+					className={cn(
+						skeletonLane({ role: "body" }),
+						COMPARISON_LABEL,
+						BAR_ROOM,
+					)}
+				>
 					<View
 						className={cn(
 							skeleton({ kind: "line" }),
@@ -98,12 +106,14 @@ function FactWait(props: { shape: FactShape; index: number }) {
 				// biome-ignore lint/suspicious/noArrayIndexKey: the columns are fixed stand-ins
 				<View key={column} className={CELL_WAIT}>
 					<RNText className={lineBox({ role: "body" })}>{STRUT}</RNText>
-					<View
-						className={cn(
-							skeleton({ kind: "line" }),
-							VALUE_BARS[(index + column) % VALUE_BARS.length],
-						)}
-					/>
+					<View className={cn(skeletonLane({ role: "body" }), BAR_ROOM)}>
+						<View
+							className={cn(
+								skeleton({ kind: "line" }),
+								VALUE_BARS[(index + column) % VALUE_BARS.length],
+							)}
+						/>
+					</View>
 				</View>
 			))}
 		</View>

@@ -2,6 +2,8 @@ import type { MessageDetail } from "@fcalell/ui-core/descriptors";
 import { useState } from "react";
 import { MessageInput } from "../../components/message-input/index.tsx";
 import { type MessageSlots, Thread } from "../../components/thread/index.tsx";
+import type { ShowcaseFrame } from "../cells.ts";
+import { queryOf } from "./layout-context.tsx";
 import { REPLY, today } from "./message.tsx";
 
 const act = () => {};
@@ -104,19 +106,25 @@ export const TURNS: Turn[] = [
 // Board 53's thread in a Place body (the Place's frame is context): system
 // lines (one opening, one folding its reads, a free act over its code, a
 // proposal as its row), yours and the assistant's replies, the input in the
-// foot with its notice, the answer still working.
-export function drawThread() {
-	return <Conversation />;
+// foot with its notice, the answer still working. Each frame draws its state:
+// the waiting turns, the failed form, the empty form, the conversation.
+export function drawThread(frame: ShowcaseFrame) {
+	return <Conversation state={frame.state} />;
 }
 
-function Conversation() {
+function Conversation(props: { state: ShowcaseFrame["state"] }) {
 	const [value, setValue] = useState("");
 	const [working, setWorking] = useState(true);
 	return (
 		<div className="flex flex-col w-screen max-w-full overflow-hidden rounded-card border border-edge bg-surface">
 			<div className="flex flex-col gap-sections p-page">
 				<Thread
-					items={TURNS}
+					query={queryOf(props.state, TURNS)}
+					sentence="The conversation did not load."
+					empty={{
+						title: "Ask about this deploy",
+						sentence: "Why it failed, what it changed, or what to run next.",
+					}}
 					message={TURN}
 					foot={
 						<MessageInput

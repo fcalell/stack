@@ -62,11 +62,11 @@ const LINE = "flex items-center h-lh";
 const TIMES_WAIT = "flex justify-between";
 const BAR = "w-full";
 // A failed or empty chart's EmptyState stands over the loaded boxes, held
-// unseen, so it takes the chart's loaded height.
+// unseen, so it takes the chart's loaded height, its frame filling it.
 const STAND = "grid";
 const LAYER = "col-start-1 row-start-1";
 const HELD = "invisible";
-const OVER = "flex flex-col justify-center";
+const OVER = "flex flex-col";
 
 // Four bands, the last one's bottom the baseline.
 const BANDS = 4;
@@ -173,13 +173,14 @@ export function BarChart<T>(props: BarChartProps<T>) {
 	if (state === "missing")
 		return (
 			<Stand keys={keys}>
-				<Missing />
+				<Missing fill />
 			</Stand>
 		);
 	if (state === "failed" && props.query !== undefined)
 		return (
 			<Stand keys={keys}>
 				<EmptyStateBase
+					fill
 					tone="failed"
 					sentence={props.sentence}
 					act={{ label: words.retry, onAct: retryOf(props.query) }}
@@ -189,7 +190,7 @@ export function BarChart<T>(props: BarChartProps<T>) {
 	if (state === "empty" && props.empty)
 		return (
 			<Stand keys={keys}>
-				<EmptyStateBase tone="rest" {...props.empty} />
+				<EmptyStateBase fill tone="rest" {...props.empty} />
 			</Stand>
 		);
 	const { bar } = props;

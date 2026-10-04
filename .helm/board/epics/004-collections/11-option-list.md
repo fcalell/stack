@@ -34,3 +34,4 @@ Web and phone take the same props. Needs a query for loaded option sets; static 
 
 ## Progress
 Built on web and phone; `pnpm check` and `pnpm verify` pass. The failed line is built from existing cells (a meta row and a secondary Retry), with no danger mark, for the design critique. No consumer loads options from a query yet. Open: the live check (web per batch, phone on the harness).
+The web live criteria pass and the web design critique's findings are fixed, measured at 1440 and 375.

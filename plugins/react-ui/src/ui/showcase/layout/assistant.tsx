@@ -97,12 +97,17 @@ const QUEUED: Notice = {
 };
 
 // The conversation: its history a query, a sent turn and its answer joining
-// it as the server holds them; the input under every state, inert until the
-// history answers. A message sent while an answer comes is answered next.
+// the history as the server holds them (an empty one too); the input under
+// every state, inert until the history answers. A message sent while an
+// answer comes is answered next.
 export function Assistant() {
 	const to = useTo();
 	const [sent, setSent] = useState<Turn[]>([]);
-	const query = useFixture([...TURNS, ...sent]);
+	const history = useFixture(TURNS);
+	const query = {
+		...history,
+		data: history.data && [...history.data, ...sent],
+	};
 	const [value, setValue] = useState("");
 	const [attachments, setAttachments] = useState<Attachment[]>(ATTACHED);
 	const [working, setWorking] = useState(false);

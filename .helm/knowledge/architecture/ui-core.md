@@ -382,7 +382,8 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
   an Input, a Picker or a Checkbox inside a cell stands at the bar fit, named by the cell and out of
   the tab order, by the cell's context. A loading status cell is the Status's own loading form (its
   internal base: the dot's and the word's skeletons at its gap). An empty grid keeps its header and holds its
-  `empty` a page inset under it (`TABLE_EMPTY`). A read-only check cell draws a tick, read aloud as
+  `empty` a page inset under it, across the grid's width as a List's EmptyState fills its
+  column (`TABLE_EMPTY`: no side inset; on touch the form stands alone, the List's width). A read-only check cell draws a tick, read aloud as
   its column's label. Where the grid scrolls sideways its leading column stays: the frozen cell
   on the surface (`TABLE_FROZEN`), its content carrying its end hairline and the row's wash
   (`TABLE_FROZEN_CELL`).
@@ -392,7 +393,8 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
   and `detail` returning a system line's `MessageDetail` or none), a sections gap apart (one rung above Prose's block gap), and its `MessageInput` its `foot`, the
   one authored part, drawn in every state. Pending, the log holds Message's own loading forms in a
   fixed order (`WAITING_MESSAGES`: another's reply, yours, another's reply), for each author is
-  the item's and unknown before the data; failed, the failed EmptyState with `sentence` and
+  the item's and unknown before the data, each at its loaded height (yours its bubble over its
+  time's bar, `figures` wide, as the loaded bubble stands over its time); failed, the failed EmptyState with `sentence` and
   Retry; no message, `empty`; each in the log's column. On the desktop both stand in
   a measure-wide column centred in the page (`THREAD_COLUMN`), on touch in the screen's. A
   Thread in a Place's body fills the page at every width, decided by where it stands: it calls the
@@ -437,7 +439,8 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
   and a Meter's meta bar only when `meter` declares `meta`, read before any item exists. The `leading` slot names its kind by its one key (`{ avatar }`, `{ icon }` or
   `{ status }`, each a function of the item), so a list's rows share one kind or have none, and
   the waiting row draws that kind's mark at its size (`SKELETON` `avatar`, `icon` or `dot`). A
-  trailing waits `figures` wide; a declared `more` keeps the act's room empty. A collection of
+  trailing waits `figures` wide; a declared `status` or `chip` draws the marks' bar at the meta
+  line's end, half its own short-label lane (`RowShape.marks`), as the loaded marks end that line; a declared `more` keeps the act's room empty. A collection of
   unknown length waits as four rows, and its height change on load is accepted. A failed query
   draws the failed EmptyState with `sentence` and Retry; no item draws `empty` (an EmptyState's
   props, its act the one that fills the list). Its decisions (which state, the waiting shape, the
@@ -462,8 +465,9 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
   `empty`, or `items` waiting on `loading`) and a `row` map over a fact's slots: `key`, `label`,
   `values` (one per column, in order) and `chips`. Its column heads are its declared `columns`,
   known before the data, so its waiting form is the real head over four facts of bars: a value bar
-  per column, and a chips bar beside the label's when `row` declares `chips` (`factShape` in
-  `./list-state`). It registers its wait with the Section around and reports no count: its facts
+  per column, and a chip's bar beside the label's when `row` declares `chips` (`factShape` in
+  `./list-state`), each bar a share of its line's short-label lane (`SKELETON_LANE`), so it
+  stands at a typical label's or value's length rather than the column's. It registers its wait with the Section around and reports no count: its facts
   are one record's, not items the Section counts.
 - An `OptionList` is a collection with a static form. A static set takes `options` (an `Option`
   is already the projected row, waiting on `loading`); a set from a query takes `query`,
@@ -490,7 +494,9 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
   item). Its `keys` are declared, so its pending form is its loaded boxes in skeleton with the
   legend standing. Its failed and empty EmptyStates stand at its loaded height: the loaded boxes
   are held unseen under them in one cell (the web's grid placement and `invisible`; native lays
-  the EmptyState absolutely over the boxes at `opacity-0`), so the Section does not move.
+  the EmptyState absolutely over the boxes at `opacity-0`), so the Section does not move, and the
+  EmptyState's frame fills that box with its content centred in it (`EmptyStateBase`'s internal
+  `fill`), so nothing floats above or below it.
 - A pending collection or `QueryBoundary` registers with the Section around it through
   `SectionContext`, released when it settles or unmounts; the Section stays busy, its count
   waiting, until every waiter settles. A List also reports its item count there once its items

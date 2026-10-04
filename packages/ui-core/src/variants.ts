@@ -510,12 +510,12 @@ export const COMPARISON_LABEL = "gap-inside";
 // the row's height behind a transparent side border, so the `Input` that
 // edits it in place (the field's bar fit) puts its text where the cell's
 // stands. The frozen leading column's cell stands on the surface. An empty
-// grid's EmptyState stands a page inset under its header.
+// grid's EmptyState stands a page inset under its header, across its width.
 export const TABLE_FRAME = "-mx-control-x";
 export const TABLE = "text-body";
 export const TABLE_CELL = "min-h-row border-x border-transparent px-control-x";
 export const TABLE_FROZEN = "bg-surface";
-export const TABLE_EMPTY = "p-page";
+export const TABLE_EMPTY = "pt-page";
 // Message: yours in a bubble on the group ground; the name beside the time;
 // a system line's words beside its time, wrapping; the line that opens, a
 // pill at the target height with the pointer's washes. Under a system line,

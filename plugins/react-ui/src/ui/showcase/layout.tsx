@@ -57,9 +57,9 @@ const SWITCHER: Switcher = {
 
 // One app, composed as a product composes it: the Shell around the place the
 // URL names (`?place=`, a record open by `&record=`, a query forced by
-// `&query=loading|error|missing`), at the URL's mode and density. The first run
-// (`?place=welcome`) stands outside the shell. The view's toggles sit under
-// the app, past the viewport.
+// `&query=loading|error|missing|empty`), at the URL's mode and density. The
+// first run (`?place=welcome`) stands outside the shell. The view's toggles
+// sit under the app, past the viewport.
 export function Layout() {
 	const [view, change] = useView();
 	const here = readHere(view);

@@ -103,7 +103,9 @@ const VALUE = "truncate";
 const TICK = "flex shrink-0 text-ink-body";
 // A ticked read-only check reads as its column's label, as the phone's row does.
 const TICK_NAME = "sr-only";
-const EMPTY = "flex justify-center";
+// The empty slot spans the grid: a framed EmptyState stands across it, an
+// unframed one centres in what the page's body leaves.
+const EMPTY = "flex flex-col grow";
 // A row that opens washes under the pointer and the press, the open record a
 // step darker under the pointer; its frozen cell repeats the wash over its
 // own surface.
@@ -315,7 +317,7 @@ export function Table<T>(props: TableProps<T>) {
 			/>
 		);
 	else if (state === "empty") slot = empty;
-	const below =
+	const under =
 		slot === null ? null : <div className={cn(TABLE_EMPTY, EMPTY)}>{slot}</div>;
 	return (
 		<div className={ROOT}>
@@ -329,10 +331,10 @@ export function Table<T>(props: TableProps<T>) {
 				onEdit={onEdit}
 				loading={waiting}
 			>
-				{below}
+				{under}
 			</Grid>
 			<div className={LIST_FORM}>
-				{below ?? (
+				{slot ?? (
 					// The Table reports to the Section around it once; its touch
 					// List is its own part, not a list of the Section.
 					<SectionContext value={undefined}>

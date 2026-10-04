@@ -10,16 +10,36 @@ interface Topic {
 	id: string;
 	name: string;
 	kind: string;
-	about?: string;
+	about: string;
 	suggested?: boolean;
 }
 
 const change = () => {};
 const TOPICS: Topic[] = [
-	{ id: "mentions", name: "Mentions", kind: "Activity" },
-	{ id: "assigned", name: "Assigned to me", kind: "Activity" },
-	{ id: "failed", name: "Failed deploys", kind: "Activity" },
-	{ id: "comments", name: "Comments", kind: "Activity" },
+	{
+		id: "mentions",
+		name: "Mentions",
+		kind: "Activity",
+		about: "When someone names you",
+	},
+	{
+		id: "assigned",
+		name: "Assigned to me",
+		kind: "Activity",
+		about: "Work handed to you",
+	},
+	{
+		id: "failed",
+		name: "Failed deploys",
+		kind: "Activity",
+		about: "Each deploy that fails, with its log",
+	},
+	{
+		id: "comments",
+		name: "Comments",
+		kind: "Activity",
+		about: "Replies on what you wrote",
+	},
 	{
 		id: "digest",
 		name: "Weekly digest",
@@ -76,12 +96,12 @@ function queryIn<T>(
 	};
 }
 
-// Board 41's notifications from a query: two groups, three checked, the
-// first checked option's children a Select, the recommended mark on a
-// description line; waiting, failed and empty in the card. The radio cells
-// draw the question sheet's one answer: three described options, none chosen
-// on the unchecked cell, the recommended one chosen on the checked cell with
-// its note field under it.
+// Board 41's notifications from a query: two groups, every topic described,
+// three checked, the first checked option's children a Select, the
+// recommended mark on a description line; waiting, failed and empty in the
+// card. The radio cells draw the question sheet's one answer: three described
+// options, none chosen on the unchecked cell, the recommended one chosen on
+// the checked cell with its note field under it.
 export function drawOptionList(frame: ShowcaseFrame) {
 	const cell = frame.cell.name;
 	if (cell.startsWith("OPTION_RADIO"))

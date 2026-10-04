@@ -3,8 +3,10 @@ import type { QueryLike } from "../../components/query-boundary/index.tsx";
 import type { View } from "../view.tsx";
 
 // Where the review stands: the place the URL names, the record open in it,
-// the file open in that record, the step that record opened beside it, and a query state forced for the review (`loading` waits, `error` fails
-// once, `missing` answers not found); the view rides along on every link the page draws.
+// the file open in that record, the step that record opened beside it, and a
+// query state forced for the review (`loading` waits, `error` fails once,
+// `missing` answers not found, `empty` answers a collection with none); the
+// view rides along on every link the page draws.
 export interface Here {
 	view: View;
 	place: string;
@@ -14,7 +16,7 @@ export interface Here {
 	query?: Forced;
 }
 
-const FORCED = ["loading", "error", "missing"] as const;
+const FORCED = ["loading", "error", "missing", "empty"] as const;
 type Forced = (typeof FORCED)[number];
 
 const isForced = (query: string | null): query is Forced =>
@@ -56,7 +58,9 @@ export const settle = (ms = 1200) =>
 
 // Fixture data answered as a query does: pending a moment on mount and on
 // every refetch; forced `loading` never answers, forced `error` fails until
-// the first refetch, forced `missing` answers not found on every run.
+// the first refetch, forced `missing` answers not found on every run, forced
+// `empty` answers a collection with none of its items (a record answers whole,
+// having no empty form).
 export function useFixture<T>(data: T): QueryLike<T> {
 	const { query } = use(HereContext);
 	const [run, setRun] = useState(0);
@@ -70,10 +74,17 @@ export function useFixture<T>(data: T): QueryLike<T> {
 	}, [query, run]);
 	const isError = state === "error";
 	return {
-		data: state === "done" ? data : undefined,
+		data: state === "done" ? answer(data, query) : undefined,
 		isPending: state === "pending",
 		isError,
 		error: isError && query === "missing" ? NOT_FOUND : undefined,
 		refetch: () => setRun((count) => count + 1),
 	};
+}
+
+// What a settled fixture answers: forced `empty` drops a collection's items.
+function answer<T>(data: T, query: Forced | undefined): T {
+	if (query !== "empty" || !Array.isArray(data)) return data;
+	// `data` is an array, so its empty slice is a `T` the narrowing cannot name.
+	return data.slice(0, 0) as T;
 }

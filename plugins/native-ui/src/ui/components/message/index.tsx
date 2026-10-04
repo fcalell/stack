@@ -43,6 +43,8 @@ const LINE = "flex-row items-center";
 const STRUT = "​";
 // A loading reply: one paragraph of three lines, each bar at its line's length.
 const REPLY_BARS = ["w-full", "w-full", "w-2/3"] as const;
+// A loading time: four figures, as the time it stands in for.
+const TIME_BAR = "w-figures";
 
 interface MessageBase extends Closed {
 	// What was said: plain text for `you` and `system`, markdown for `other`.
@@ -206,6 +208,7 @@ export function Message(props: MessageProps) {
 					<View className={cn(MESSAGE_BUBBLE, "w-1/2")}>
 						<LineWait role="body" bar="w-full" />
 					</View>
+					<LineWait role="meta" bar={TIME_BAR} />
 				</View>
 			);
 		// React Native has no visually hidden text: the speaker is read before
