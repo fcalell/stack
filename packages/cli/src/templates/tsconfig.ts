@@ -236,7 +236,12 @@ function nativeApp(types: string[]): Project {
 			// plugin contributes one (e.g. `expo()` without `nativeUi()`).
 			types,
 		},
-		include: ["src", ".stack/entry.tsx", ".stack/expo-env.d.ts"],
+		include: [
+			"src",
+			".stack/entry.tsx",
+			".stack/routes.d.ts",
+			".stack/expo-env.d.ts",
+		],
 	};
 }
 

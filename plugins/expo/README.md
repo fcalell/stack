@@ -53,6 +53,7 @@ is `type: module`, so a `.js` would parse as ESM. `.stack/metro.config.cjs` sets
 | `expo.slots.metroConfig` | `derived<string \| null>` | Final `.stack/metro.config.cjs` |
 | `expo.slots.expoConfig` | `derived<string \| null>` | Final `.stack/app.config.cjs` |
 | `expo.slots.entrySource` | `derived<string \| null>` | Final `.stack/entry.tsx` |
+| `expo.slots.routesDtsSource` | `derived<string \| null>` | `.stack/routes.d.ts`, the typed routes over the routes directory |
 
 `plugin-expo` also contributes its dev-server localhost origin to `api.slots.devCorsOrigins`
 (gated on `app.origins` not being set), which the worker honours only under `STACK_DEV`, its

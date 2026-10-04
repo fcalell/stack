@@ -19,7 +19,7 @@ domain missing from the config arrives with `stack add <plugin>`.
 | node | The server serving the worker and the built client with SPA fallback; the services barrel | The services in `src/server/services/` |
 | react | The HTML shell and `<head>`, the entry, the providers module, the Vite config, typed routes, memoization by the React Compiler, same-origin API calls in dev | The routes and what they import |
 | react-ui, native-ui | The roster and its look: stylesheet or native theme, fonts, dark mode, density, safe areas, English words | Screens composed from the roster, the theme knobs, other languages' words |
-| expo | Metro and Expo configs, the router entry, the native client stamped with its build, the version gate, EAS build and update commands | The screens, and the update-wall screen the gate signals |
+| expo | Metro and Expo configs, the router entry, the native client stamped with its build, the version gate, EAS build and update commands, typed routes | The screens, and the update-wall screen the gate signals |
 | cli | One `stack dev` for every process and watcher; one `stack deploy` that builds, checks, migrates, seeds and deploys; the tsconfigs, the lint config, this guide's index | `stack.config.ts` |
 
 ## Rules

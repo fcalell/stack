@@ -160,6 +160,7 @@ e.g. consulting `ctx.fileExists` before writing.
 | `metroConfig` | `derived<string \| null>` | Final `.stack/metro.config.cjs` source |
 | `expoConfig` | `derived<string \| null>` | Final `.stack/app.config.cjs` source (name, slug, scheme, bundle ids, config plugins) |
 | `entrySource` | `derived<string \| null>` | Final `.stack/entry.tsx` source (imports + providers around `<ExpoRoot>`) |
+| `routesDtsSource` | `derived<string \| null>` | `.stack/routes.d.ts`: expo-router's typed-routes declaration over the routes directory, from the generator the app's Expo CLI runs; null when routing is off |
 
 ## `nativeUi.slots.*` (plugin-native-ui)
 

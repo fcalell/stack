@@ -1,5 +1,7 @@
 import { spawnSync } from "node:child_process";
+import { writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
+import { join } from "node:path";
 import type { ContributionCtx } from "@fcalell/cli";
 import { plugin, slot } from "@fcalell/cli";
 import type {
@@ -16,6 +18,7 @@ import {
 	aggregateExpoConfig,
 	aggregateMetroConfig,
 } from "./node/codegen.ts";
+import { buildRoutesDts } from "./node/routes.ts";
 import {
 	type ExpoConfigPlugin,
 	type ExpoOptions,
@@ -91,6 +94,7 @@ const ENTRY_ARTIFACT = ".stack/entry.tsx";
 // Emitted into `.stack/` so the consumer's `tsconfig.app.json` includes it
 // without a hand-managed file.
 const EXPO_ENV_ARTIFACT = ".stack/expo-env.d.ts";
+const ROUTES_ARTIFACT = ".stack/routes.d.ts";
 const EXPO_ENV_DTS = '/// <reference types="expo/types" />\n';
 
 // ── Identifier helpers ─────────────────────────────────────────────
@@ -294,6 +298,15 @@ const entrySource = slot.derived({
 		}),
 });
 
+// The app's typed routes, `.stack/routes.d.ts`; null when routing is off.
+const routesDtsSource = slot.derived({
+	source: SOURCE,
+	name: "routesDtsSource",
+	inputs: { pagesDir: routesPagesDir },
+	compute: (inp, ctx): string | null =>
+		inp.pagesDir === null ? null : buildRoutesDts(ctx.cwd, inp.pagesDir),
+});
+
 // ── Command helpers ────────────────────────────────────────────────
 
 interface RunResult {
@@ -402,6 +415,7 @@ export const expo = plugin("expo", {
 		metroConfig,
 		expoConfig,
 		entrySource,
+		routesDtsSource,
 	},
 
 	commands: {
@@ -606,6 +620,25 @@ export const expo = plugin("expo", {
 		emitArtifact(".stack/metro.config.cjs", self.slots.metroConfig),
 		emitArtifact(".stack/app.config.cjs", self.slots.expoConfig),
 		emitArtifact(ENTRY_ARTIFACT, self.slots.entrySource),
+		emitArtifact(ROUTES_ARTIFACT, self.slots.routesDtsSource),
+
+		// A route file added or removed during `stack dev` retypes the hrefs.
+		cliSlots.devWatchers.contribute(async (ctx) => {
+			const pagesDir = await ctx.resolve(self.slots.routesPagesDir);
+			if (pagesDir === null) return undefined;
+			return {
+				name: "routes",
+				paths: `${pagesDir}/**`,
+				debounce: 300,
+				handler(_path, type) {
+					if (type === "change") return;
+					writeFileSync(
+						join(ctx.cwd, ROUTES_ARTIFACT),
+						buildRoutesDts(ctx.cwd, pagesDir),
+					);
+				},
+			};
+		}),
 
 		// Merge consumer-declared config plugins into the app.config `plugins`
 		// array, and install their native npm deps. The supported path for

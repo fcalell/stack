@@ -14,7 +14,7 @@ my-app/
                              # reach tsc through an import or not at all (a bare ".stack" matches nothing)
   tsconfig.app.json          # the app's globals (DOM), never the server's: `src` but `src/worker`
                              # (and `src/server` on the node target), plus the web's `.stack/routes.d.ts` or the phone's
-                             # `.stack/entry.tsx` and `.stack/expo-env.d.ts`. References the worker
+                             # `.stack/entry.tsx`, `.stack/routes.d.ts` and `.stack/expo-env.d.ts`. References the worker
                              # project and reads every worker file (`AppRouter`, the schema,
                              # `src/shared`) through its declarations, so no worker source enters
                              # the app's program; editors read them too, as of the last `tsc -b`
@@ -78,7 +78,10 @@ my-app/
     routeTree.gen.ts         # TanStack Router's route tree, written by its generator on
                              # `stack generate` and by its Vite plugin in dev and build
     routes.d.ts              # typed routes: the web router's `Register` over the route tree
-                             # (react.slots.routesDtsSource)
+                             # (react.slots.routesDtsSource), or the phone's expo-router `__routes`
+                             # augmentation over its route files, which `Href` reads
+                             # (expo.slots.routesDtsSource, from the generator the app's Expo CLI
+                             # runs; `stack dev` rewrites it as a route file comes or goes)
     server.ts                # node target entry from node.slots.serverSource (run with `node .stack/server.ts`)
   .wrangler/state/           # the dev worker's local state (D1, KV, caches, traces): `wrangler dev
                              # --persist-to`, and every local D1 command's. Gitignored, and outside

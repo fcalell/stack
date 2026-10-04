@@ -68,4 +68,11 @@ export default function ProjectScreen() {
 ## Navigating
 
 A roster `href`, `back` or place `route` navigates through expo-router on its own. App code
-navigates with `router` or `Link` from `expo-router`.
+navigates with `router` or `Link` from `expo-router`, and their routes are typed: `stack generate`
+writes the route types from the files under the routes directory, and `stack dev` rewrites them
+as a route file comes or goes, so an `href` to a path no file serves fails the type-check.
+
+```tsx
+<Link href="/projects/12">Project 12</Link> // a route file serves it
+<Link href="/settings">Settings</Link> // fails the type-check: no route file
+```
