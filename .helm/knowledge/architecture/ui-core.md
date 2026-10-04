@@ -628,6 +628,15 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
   of its sight. Rejected: the TextArea asking the sheet from a mount effect (gorhom mounts the
   content only once presented, so the sheet opened content-tall and re-snapped after paint, and
   never shrank back), and a public height prop.
+- A sheet keeps its content until it has left. State that belongs to one opening resets as the
+  next arrives, during render, never as the sheet starts closing: a sheet's touched and pressed
+  marks reset as it opens or turns to a new page (a wizard's, or the next queued decision's), and
+  a confirm's typed name and pending act reset when its decision's id changes. `Confirmations`
+  draws the queue's first decision in the render that hears it, else the last one while its
+  sheet leaves, and `ConfirmSheet` stays unkeyed, so a decision queued behind an open one takes
+  the open sheet in place. Rejected: an effect mirroring the queue (the first `confirm()` drew a
+  commit late, and a dismissed decision's content stood a frame in the next one's sheet), and a
+  reset on close (the name emptied and the act turned blocked while the sheet left).
 - `Text` draws `body` and `meta` (plus `strong`) and names those roles' cells of `TEXT` and
   `TEXT_STRONG`, not either family; every other type role is drawn by the molecule that owns
   its place, and `TEXT` keeps all seven roles as the one table those owners draw from.

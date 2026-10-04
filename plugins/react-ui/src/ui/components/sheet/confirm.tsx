@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
 	type ConfirmEntry,
 	dismissConfirmation,
@@ -17,6 +17,15 @@ export function ConfirmSheet(props: {
 }) {
 	const { entry, open, onDone } = props;
 	const [pending, setPending] = useState(false);
+	const [typed, setTyped] = useState("");
+	// A new decision starts from an empty field and a ready act, reset during
+	// render; a sheet that is leaving keeps its decision's state until it is gone.
+	const [decision, setDecision] = useState(entry.id);
+	if (decision !== entry.id) {
+		setDecision(entry.id);
+		setTyped("");
+		setPending(false);
+	}
 	const dismiss = () => {
 		if (!pending) onDone();
 	};
@@ -29,12 +38,7 @@ export function ConfirmSheet(props: {
 			.finally(() => setPending(false));
 	};
 	const words = useWords();
-	const [typed, setTyped] = useState("");
 	const name = entry.confirmName;
-	// A decision asked again starts from an empty field.
-	useEffect(() => {
-		if (!open) setTyped("");
-	}, [open]);
 	const blocked = name && typed !== name.value ? name.blocked : undefined;
 	return (
 		<SheetBase
@@ -67,10 +71,9 @@ export function ConfirmSheet(props: {
 /** The first queued decision; the last one stays drawn while its sheet closes. */
 export function Confirmations() {
 	const current = useConfirmations()[0];
-	const [shown, setShown] = useState<ConfirmEntry | undefined>(current);
-	useEffect(() => {
-		if (current) setShown(current);
-	}, [current]);
+	const [last, setLast] = useState(current);
+	if (current && current !== last) setLast(current);
+	const shown = current ?? last;
 	if (!shown) return null;
 	return (
 		<ConfirmSheet

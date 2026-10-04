@@ -398,14 +398,18 @@ export function SheetBase({
 	const touch = useCallback(() => setTouched(true), []);
 	const tall = holdsTextArea(children);
 	const blocked = submit?.blocked !== undefined;
-	// A wizard swaps its page in place; reset during render, so the new page
-	// never draws the old page's reason.
+	// A sheet as it opens, and a new page (a wizard's, or the next queued
+	// decision's), has taken no input: reset during render, so it never draws
+	// the last one's reason, while a closing sheet keeps its own until it is
+	// gone.
 	const page = `${title}\n${description ?? ""}`;
-	const [shown, setShown] = useState(page);
-	if (shown !== page) {
-		setShown(page);
-		setTouched(false);
-		setPressed(false);
+	const [shown, setShown] = useState({ open, page });
+	if (shown.open !== open || shown.page !== page) {
+		setShown({ open, page });
+		if (open) {
+			setTouched(false);
+			setPressed(false);
+		}
 	}
 	// gorhom sizes a sheet to its content once it has measured the content
 	// and the head; a footer it measures after them sizes it a second time.
@@ -425,10 +429,7 @@ export function SheetBase({
 			setSettled(false);
 			held.current = true;
 			ref.current?.present();
-		} else {
-			if (held.current) ref.current?.dismiss(LEAVE);
-			setTouched(false);
-		}
+		} else if (held.current) ref.current?.dismiss(LEAVE);
 	}, [open]);
 	useEffect(() => {
 		if (!blocked) setPressed(false);

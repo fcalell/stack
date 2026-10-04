@@ -1,6 +1,6 @@
 ---
 id: 005-08
-status: backlog
+status: review
 sessions: {}
 ---
 # react-ui, native-ui: a decision's sheet keeps its content until it has left
@@ -29,3 +29,6 @@ Decided (the recommended answer, applied 2026-10-04): the reset is per decision 
 ## Acceptance criteria
 - [ ] (live) web, members' remove (a name-confirm) at 375: after Delete, the field keeps the typed name and the act its look until the sheet is gone; with two decisions queued, the second opens empty.
 - [ ] (live) phone, on the harness: the Notes `confirm()` opens in the first commit after the call, and its content holds through the slide-out.
+
+## Progress
+Built; `pnpm check` and `pnpm verify` pass. Web live: a typed confirm keeps its text and its act's look through the whole exit (Cancel and Escape), and a queued second decision opens on the first frame with an empty field, at 375 and 1440. SheetBase also resets on a new page (an unkeyed confirm stays open from one decision to the next). Open: the phone live criterion on the harness.

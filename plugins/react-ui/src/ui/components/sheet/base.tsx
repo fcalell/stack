@@ -119,11 +119,21 @@ export function SheetBase({
 	const [running, setRunning] = useState(false);
 	const popup = useRef<HTMLDivElement>(null);
 	const blocked = submit?.blocked !== undefined;
-	// A closed sheet, or a submit unblocked, forgets that it was touched and
-	// pressed, so a reason blocked again waits for the next press.
-	useEffect(() => {
-		if (!open) setTouched(false);
-	}, [open]);
+	// A sheet as it opens, and a new page (a wizard's, or the next queued
+	// decision's), has taken no input: reset during render, so it never draws
+	// the last one's reason, while a closing sheet keeps its own until it is
+	// gone.
+	const page = `${title}\n${description ?? ""}`;
+	const [shown, setShown] = useState({ open, page });
+	if (shown.open !== open || shown.page !== page) {
+		setShown({ open, page });
+		if (open) {
+			setTouched(false);
+			setPressed(false);
+		}
+	}
+	// A submit unblocked forgets that it was pressed, so a reason blocked
+	// again waits for the next press.
 	useEffect(() => {
 		if (!blocked) setPressed(false);
 	}, [blocked]);

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
 	type ConfirmEntry,
 	dismissConfirmation,
@@ -29,6 +29,14 @@ function ConfirmSheet({
 	const words = useWords();
 	const [pending, setPending] = useState(false);
 	const [typed, setTyped] = useState("");
+	// A new decision starts from an empty field and a ready act, reset during
+	// render; a sheet that is leaving keeps its decision's state until it is gone.
+	const [decision, setDecision] = useState(entry.id);
+	if (decision !== entry.id) {
+		setDecision(entry.id);
+		setTyped("");
+		setPending(false);
+	}
 	const dismiss = () => {
 		if (!pending) onDone();
 	};
@@ -40,10 +48,6 @@ function ConfirmSheet({
 			.then(onDone, () => {})
 			.finally(() => setPending(false));
 	};
-	// A decision asked again starts from an empty field.
-	useEffect(() => {
-		if (!open) setTyped("");
-	}, [open]);
 	const name = entry.confirmName;
 	const blocked =
 		name && typed.trim() !== name.value ? name.blocked : undefined;
@@ -79,10 +83,9 @@ function ConfirmSheet({
 // slides away.
 export function Confirmations() {
 	const current = useConfirmations()[0];
-	const [shown, setShown] = useState<ConfirmEntry | undefined>(current);
-	useEffect(() => {
-		if (current) setShown(current);
-	}, [current]);
+	const [last, setLast] = useState(current);
+	if (current && current !== last) setLast(current);
+	const shown = current ?? last;
 	if (!shown) return null;
 	return (
 		<ConfirmSheet
