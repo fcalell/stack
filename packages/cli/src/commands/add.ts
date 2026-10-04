@@ -14,9 +14,9 @@ import {
 	resolveRequiresClosure,
 } from "../lib/discovery.ts";
 import { ConfigLoadError, MissingPluginError } from "../lib/errors.ts";
-import type { Graph } from "../lib/graph.ts";
 import { installStack } from "../lib/install.ts";
 import { toCamelCase } from "../lib/naming.ts";
+import { pluginDependencies } from "../lib/plugin-dependencies.ts";
 import { createPromptContext } from "../lib/prompt.ts";
 import {
 	announceCreated,
@@ -26,21 +26,6 @@ import {
 } from "../lib/scaffold.ts";
 import { stackPluginSpecs } from "../lib/stack-packages.ts";
 import { syntheticConfigFromSelection } from "./init.ts";
-
-// The dependencies `stack add` writes, as `stack init` does: every
-// contribution to `initDeps` and `initDevDeps`, those a plugin's options
-// derive among them (expo's config plugins'), plus each added plugin's own
-// package. `patchPackageJson` writes only the names the manifest lacks.
-export async function addDependencies(
-	graph: Graph,
-	added: readonly string[],
-): Promise<Record<string, string>> {
-	const [deps, devDeps] = await Promise.all([
-		graph.resolve(cliSlots.initDeps),
-		graph.resolve(cliSlots.initDevDeps),
-	]);
-	return { ...deps, ...devDeps, ...stackPluginSpecs(added) };
-}
 
 export async function add(
 	pluginName: string,
@@ -176,7 +161,7 @@ export async function add(
 		const [scaffolds, dependencies, gitignore, packageJsonFields] =
 			await Promise.all([
 				graph.resolve(cliSlots.initScaffolds),
-				addDependencies(graph, pluginsToAdd),
+				pluginDependencies(graph, pluginsToAdd),
 				graph.resolve(cliSlots.gitignore),
 				graph.resolve(cliSlots.packageJsonFields),
 			]);
@@ -188,7 +173,7 @@ export async function add(
 		);
 		announceCreated(created);
 
-		patchPackageJson(cwd, { dependencies, fields: packageJsonFields });
+		patchPackageJson(cwd, { ...dependencies, fields: packageJsonFields });
 		installStack(cwd);
 
 		const gitignoreEntries = addedInfos.flatMap((info) => [

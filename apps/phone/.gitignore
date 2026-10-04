@@ -1,0 +1,12 @@
+node_modules
+dist
+.stack
+.direnv
+.corepack
+.db-kit
+.wrangler
+.dev.vars
+
+.expo
+ios
+android

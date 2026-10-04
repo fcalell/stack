@@ -1,0 +1,14 @@
+{
+	"extends": "@fcalell/typescript-config/node-tsx.json",
+	"compilerOptions": {
+		"types": ["node"],
+		"noEmit": true,
+		"tsBuildInfoFile": "./node_modules/.tmp/tsconfig.test.tsbuildinfo"
+	},
+	"include": ["src/worker/**/*.test.ts", ".stack/testing.ts"],
+	"references": [
+		{
+			"path": "./tsconfig.worker.json"
+		}
+	]
+}

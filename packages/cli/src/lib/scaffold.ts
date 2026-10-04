@@ -89,11 +89,17 @@ export function ensureGitignore(...entries: string[]): boolean {
 export interface PackageJsonPatch {
 	imports?: Record<string, string>;
 	dependencies?: Record<string, string>;
+	devDependencies?: Record<string, string>;
 	scripts?: Record<string, string>;
 	// Arbitrary top-level fields (e.g. Expo's `main`). Written only when the key
 	// is absent, so a consumer-customized value is never overwritten.
 	fields?: Record<string, unknown>;
 }
+
+const DEPENDENCY_FIELDS: readonly string[] = [
+	"dependencies",
+	"devDependencies",
+];
 
 export function patchPackageJson(cwd: string, patch: PackageJsonPatch): void {
 	const pkgPath = join(cwd, "package.json");
@@ -107,14 +113,34 @@ export function patchPackageJson(cwd: string, patch: PackageJsonPatch): void {
 		unknown
 	>;
 	let changed = false;
+	const entries = (field: string) =>
+		(pkg[field] ?? {}) as Record<string, string>;
+	// A package either dependency field declares is present in both, so no
+	// name is declared twice.
+	const present = (field: string, name: string) =>
+		DEPENDENCY_FIELDS.includes(field)
+			? DEPENDENCY_FIELDS.some((f) => name in entries(f))
+			: name in entries(field);
 
-	for (const field of ["imports", "dependencies", "scripts"] as const) {
+	for (const field of [
+		"imports",
+		"dependencies",
+		"devDependencies",
+		"scripts",
+	] as const) {
 		const additions = patch[field];
 		if (!additions) continue;
-		const existing = (pkg[field] ?? {}) as Record<string, string>;
-		const missing = Object.entries(additions).filter(([k]) => !(k in existing));
+		const existing = entries(field);
+		const missing = Object.entries(additions).filter(
+			([k]) => !present(field, k),
+		);
 		if (missing.length > 0) {
-			pkg[field] = { ...existing, ...Object.fromEntries(missing) };
+			const merged = [...Object.entries(existing), ...missing];
+			// Dependency maps stay sorted by name, as the template writes them.
+			if (DEPENDENCY_FIELDS.includes(field)) {
+				merged.sort(([a], [b]) => a.localeCompare(b));
+			}
+			pkg[field] = Object.fromEntries(merged);
 			changed = true;
 		}
 	}

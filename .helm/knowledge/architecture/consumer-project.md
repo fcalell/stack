@@ -262,9 +262,11 @@ globs name both the app and the running `@fcalell/cli`, the CLI rewrites every `
 in the app's `package.json` to `workspace:*`, writes no `pnpm-workspace.yaml` in the app, and
 installs at the workspace root. The app resolves the checkout's `dist/`, as a `link:` consumer
 does, so the checkout is built (`pnpm turbo run build`) before the app runs. The app is an
-importer in the checkout's `pnpm-lock.yaml`. `stack init` writes the app no `biome.json` and no
-`.editorconfig`, so the app lints and formats under the checkout's root configs as
-`apps/showcase` does: Biome refuses a second root config below the checkout's. Anywhere else,
+importer in the checkout's `pnpm-lock.yaml`. `stack init` writes the app no `biome.json`, no
+`.editorconfig`, no `@biomejs/biome` or `@fcalell/biome-config` devDependency, no `lint` or
+`check` script and no `packageManager`, so the app lints and formats under the checkout's root
+configs and runs the root's pnpm as `apps/showcase` does: Biome refuses a second root config
+below the checkout's. Anywhere else,
 including a directory under the checkout that no glob names, the app installs from GitHub.
 
 ## The guide

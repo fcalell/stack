@@ -4,6 +4,9 @@ import { tsconfigLayout } from "./tsconfig.ts";
 interface PackageJsonOptions {
 	name: string;
 	plugins: string[];
+	// The app sits in stack's own workspace: it lints under the checkout's
+	// root Biome config and takes the root's package manager.
+	workspace: boolean;
 }
 
 export function packageJsonTemplate(options: PackageJsonOptions): string {
@@ -11,12 +14,14 @@ export function packageJsonTemplate(options: PackageJsonOptions): string {
 	const devDeps: Record<string, string> = {
 		"@fcalell/cli": stackSpec("@fcalell/cli"),
 		"@fcalell/typescript-config": stackSpec("@fcalell/typescript-config"),
-		"@fcalell/biome-config": stackSpec("@fcalell/biome-config"),
-		// biome-config only carries config; the `lint`/`check` scripts need the
-		// Biome binary itself on the consumer's PATH.
-		"@biomejs/biome": "^2.4.16",
 		typescript: "^5.9.3",
 	};
+	if (!options.workspace) {
+		devDeps["@fcalell/biome-config"] = stackSpec("@fcalell/biome-config");
+		// biome-config only carries config; the `lint`/`check` scripts need the
+		// Biome binary itself on the consumer's PATH.
+		devDeps["@biomejs/biome"] = "^2.4.16";
+	}
 
 	const hasWorker =
 		options.plugins.includes("api") || options.plugins.includes("db");
@@ -51,8 +56,8 @@ export function packageJsonTemplate(options: PackageJsonOptions): string {
 		version: "0.0.0",
 		private: true,
 		type: "module",
-		packageManager: "pnpm@11.28.3",
 	};
+	if (!options.workspace) pkg.packageManager = "pnpm@11.28.3";
 
 	// TODO: `#/*` once the scaffold's TypeScript is 6.0 or later; 5.9
 	// refuses a subpath import that starts with `#/`.
@@ -71,9 +76,11 @@ export function packageJsonTemplate(options: PackageJsonOptions): string {
 			(hasNative || hasWeb) && hasWorker ? "tsc -b" : "tsc --noEmit",
 		// Node finds no file in a fresh app and passes.
 		test: "node --test 'src/**/*.test.ts'",
-		lint: "biome check --write --unsafe",
-		check: "pnpm check-types && pnpm test && pnpm lint",
 	};
+	if (!options.workspace) {
+		scripts.lint = "biome check --write --unsafe";
+		scripts.check = "pnpm check-types && pnpm test && pnpm lint";
+	}
 
 	pkg.scripts = scripts;
 	pkg.dependencies = sortKeys(deps);

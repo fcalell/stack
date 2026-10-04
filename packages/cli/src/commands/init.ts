@@ -22,6 +22,7 @@ import {
 } from "../lib/discovery.ts";
 import { MissingPluginError, StackError } from "../lib/errors.ts";
 import { installStack, stackWorkspaceRoot } from "../lib/install.ts";
+import { pluginDependencies } from "../lib/plugin-dependencies.ts";
 import { ask, choose, createPromptContext, multi } from "../lib/prompt.ts";
 import {
 	announceCreated,
@@ -129,12 +130,13 @@ async function installPlugins(
 	pick?: ChooseRequirement,
 ): Promise<string[]> {
 	const ownsManifest = !existsSync("package.json");
+	const workspace = stackWorkspaceRoot(dir) !== null;
 	let plugins = picked;
 	for (;;) {
 		if (ownsManifest) {
 			writeFileSync(
 				"package.json",
-				packageJsonTemplate({ name: basename(dir), plugins }),
+				packageJsonTemplate({ name: basename(dir), plugins, workspace }),
 			);
 		} else {
 			patchPackageJson(dir, { dependencies: stackPluginSpecs(plugins) });
@@ -267,11 +269,10 @@ export async function scaffold(
 		cwd: dir,
 	});
 
-	const [scaffolds, deps, devDeps, gitignore, packageJsonFields] =
+	const [scaffolds, dependencies, gitignore, packageJsonFields] =
 		await Promise.all([
 			initGraph.resolve(cliSlots.initScaffolds),
-			initGraph.resolve(cliSlots.initDeps),
-			initGraph.resolve(cliSlots.initDevDeps),
+			pluginDependencies(initGraph, selectedPlugins),
 			initGraph.resolve(cliSlots.gitignore),
 			initGraph.resolve(cliSlots.packageJsonFields),
 		]);
@@ -280,10 +281,7 @@ export async function scaffold(
 	announceCreated(created);
 	written.push(...created);
 
-	patchPackageJson(dir, {
-		dependencies: { ...deps, ...devDeps },
-		fields: packageJsonFields,
-	});
+	patchPackageJson(dir, { ...dependencies, fields: packageJsonFields });
 	if (gitignore.length > 0) ensureGitignore(...gitignore);
 	installStack(dir);
 	formatWritten(dir, written);
