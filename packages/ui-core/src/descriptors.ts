@@ -77,8 +77,9 @@ export interface OptionGroup<V extends string | null = string> {
 	options: Option<V>[];
 }
 
-// A list row's leading: a glyph, a status's dot, or a person's avatar, one
-// slot at the avatar's size whatever leads.
+// A list row's leading: a glyph, a status's mark (its dot, or the spinner
+// while `running`), or a person's avatar, one slot at the avatar's size
+// whatever leads.
 export type RowLeading =
 	| {
 			icon: IconName;

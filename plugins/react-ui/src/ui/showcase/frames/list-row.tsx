@@ -178,6 +178,38 @@ const INVITES: Invite[] = [
 	},
 ];
 
+// A job's stage led by its state: a steady one (a watch that stands) beside
+// one under way, whose leading and status spin.
+interface Stage {
+	id: string;
+	title: string;
+	meta: string[];
+	status: StatusMark;
+}
+
+const STAGE_ROW: RowSlots<Stage> = {
+	key: (stage) => stage.id,
+	leading: { status: (stage) => stage.status.state },
+	title: (stage) => stage.title,
+	meta: (stage) => stage.meta,
+	status: (stage) => stage.status,
+};
+
+const STAGES: Stage[] = [
+	{
+		id: "watch",
+		title: "Watch main",
+		meta: ["Since Monday"],
+		status: { state: "active", label: "Watching" },
+	},
+	{
+		id: "rebase",
+		title: "Rebasing on main",
+		meta: ["Started 2 min ago"],
+		status: { state: "running", label: "Running" },
+	},
+];
+
 // A note: its title over its meta, no leading.
 interface Note {
 	id: string;
@@ -196,13 +228,15 @@ function Issues() {
 }
 
 // Board 40's props: deploys in a List (a glyph leading, a status and a chip
-// on the meta line, the more act), services on one line, and members in a
-// Group (a trailing value, a trailing pick, a status dot leading).
+// on the meta line, the more act), services on one line, a job's stages (a
+// running row beside an active one), and members in a Group (a trailing
+// value, a trailing pick, a status dot leading).
 function Props() {
 	return (
 		<>
 			<List items={DEPLOYS} row={DEPLOY_ROW} />
 			<List items={SERVICES} row={SERVICE_ROW} />
+			<List items={STAGES} row={STAGE_ROW} />
 			<Group>
 				<ListRow
 					leading={{ avatar: { name: "Ana Ruiz" } }}

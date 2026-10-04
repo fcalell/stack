@@ -125,7 +125,7 @@ pinned by the package's verify suite; this entry holds the architecture and its 
 
 ## Words
 
-Every word a molecule draws or reads aloud on its own (the six `Status` words, `recommended`,
+Every word a molecule draws or reads aloud on its own (the seven `Status` words, `recommended`,
 `copy`, `copied`, `back`, `close`, `cancel`, `dismiss`, `more`, `send`, `stop`, `attach`, `search`, `loading`, `checking`, `retry`, `add`, `remove`, `details`, `places`, `notifications`, `code`, `added`, `removed`, `sort`, `ascending`, `descending`, `time`, `message`, `seen`, `unseen`, `copyFailed`, `latest`, the counted `earlierLines`, and the slot words `meterValue`, `meterOver`, `linesAdded` and `linesRemoved`) comes
 from `words`, a closed typed object with English defaults. The `Words` type requires every key
 and `wordsSchema` is strict, so a translation missing a word fails `tsc` and the schema. It is a
@@ -192,6 +192,14 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
   (`Option.status`), its options and its value drawn as the `Status`, as an ItemHeader's moving
   status fact (`{ pick }`) is. Rejected: `Status` with `onOpen`, an act that opened a menu of
   states the mark could not show as the current one.
+- `running` is work under way and `active` a steady state (a watch that stands, a service that is
+  up): both wear the accent, and `running` draws a `Spinner` where every other state draws its
+  dot, wherever a status draws one (a `Status`, a list row's `{ status }` leading, an
+  ItemHeader's status, a status pick's option), so running and steady rows mix in one List under
+  one leading kind. `STATUS_DOT` carries no `running` cell; the spinner's slot is
+  `STATUS_SPINNER`, its accent ink the web's currentColor and native's `Ink` tone
+  (`statusContentTone`). The spinner keeps its own size (the `icon` rung) and its own
+  reduced-motion rule. Rejected: spinning `active`, which would turn a row that stands for days.
 - The Shell's switcher is a pick: a `Switcher` is an `OptionPick` whose options carry their
   avatars (`Option.avatar`, leading the option row as a status's dot does) plus `act`, the act
   that makes a new one, which the Picker draws under a hairline (`HAIRLINE`) after the options as
@@ -246,7 +254,7 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
   hairline between its rows once (`GROUP`: `divide-y divide-edge`), so no row carries one. That is
   web-only: `divide-*` is a child selector, which uniwind's compiler drops, so native has no
   divider utility yet and draws the hairline per row.
-- A row's leading is one slot at the avatar's size (`ROW_LEADING`), the dot or glyph centred
+- A row's leading is one slot at the avatar's size (`ROW_LEADING`), the dot, spinner or glyph centred
   in it, so the titles of a list share one x whatever leads them; its meta line (`ROW_META_LINE`)
   is one line that yields in order: the later parts truncate first, then the chip; the first part
   (naming the item) and the status keep their width, and past them the line clips at the row's

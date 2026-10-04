@@ -411,7 +411,7 @@ function body(resolved: ResolvedTheme): string[] {
 			]),
 		),
 		"",
-		"Status colors: `active` is `accent-ink`, `waiting` and `idle` are `ink-meta`, `done` is `ok`, `attention` is `warn`, `failed` is `danger`.",
+		"Status colors: `active` is `accent-ink`, `running` is `accent-ink` drawn as a spinner in the dot's place, `waiting` and `idle` are `ink-meta`, `done` is `ok`, `attention` is `warn`, `failed` is `danger`.",
 		"",
 		`A chart's series take the chip marks in order: ${CHART_SERIES.map((hue) => code(`chip-${hue}`)).join(", ")}; one series takes the first. A meter at or above ${METER_NEAR} of its max is near, and above its max is over.`,
 		"",

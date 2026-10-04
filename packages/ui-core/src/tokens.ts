@@ -1067,6 +1067,7 @@ export function fallbackFace(family: string): string {
 // is a prop on the molecule that draws it, never a key here.
 export const STATUS_STATES = [
 	"active",
+	"running",
 	"waiting",
 	"done",
 	"attention",
@@ -1140,6 +1141,7 @@ export type Words = Record<WordKey, string> &
 
 export const ENGLISH: Words = {
 	active: "Active",
+	running: "Running",
 	waiting: "Waiting",
 	done: "Done",
 	attention: "Attention",

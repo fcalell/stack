@@ -196,6 +196,7 @@ export const AVATAR_LABEL = matrix({
 
 // The status colour is the dot's alone; the word is meta ink in every
 // state. `idle` is the hollow dot, so it reads apart from `waiting`.
+// `running` draws no dot: a spinner stands in its place (`STATUS_SPINNER`).
 export const STATUS_DOT = matrix({
 	base: "size-dot rounded-full",
 	variants: {

@@ -678,7 +678,7 @@ check("c03", "tokens.ts declares the contract", () => {
 	requireEqual(SHADOW_LEVELS.length, 2, "shadow level count");
 	requireEqual(WIDTHS.length, 12, "width count");
 	requireEqual(BREAKPOINTS.length, 3, "breakpoint count");
-	requireEqual(WORD_KEYS.length, 38, "word count");
+	requireEqual(WORD_KEYS.length, 39, "word count");
 	requireEqual(COUNTED_WORD_KEYS.length, 1, "counted word count");
 	requireEqual(SLOT_WORD_KEYS.length, 4, "slot word count");
 	requireEqual(
@@ -1570,8 +1570,8 @@ check("c19", "every cva renders exactly its own table", () => {
 	}
 	requireEqual(
 		Object.keys(STATUS_DOT.variants.state).join(" "),
-		STATUS_STATES.join(" "),
-		"STATUS_DOT states",
+		STATUS_STATES.filter((state) => state !== "running").join(" "),
+		"STATUS_DOT states, all but the running spinner's",
 	);
 	requireEqual(
 		Object.keys(CHART_FILL.variants.series).join(" "),
@@ -1664,6 +1664,7 @@ check("c22", "the content tones are contract colors", () => {
 	requireEqual(bannerContentTone("note"), "accent-ink", "note glyph ink");
 	requireEqual(buttonContentTone("primary"), "on-act-accent", "primary ink");
 	requireEqual(statusContentTone("active"), "accent-ink", "active ink");
+	requireEqual(statusContentTone("running"), "accent-ink", "running ink");
 	requireEqual(avatarStep("Frankie"), avatarStep("Frankie"), "stable step");
 	assert(/^[1-8]$/.test(avatarStep("x")), "avatarStep is off the ladder");
 	return `${checked} token names, every one a contract color`;

@@ -368,7 +368,9 @@ const FAMILIES: Family[] = [
 	{
 		name: "STATUS_DOT",
 		cva: variants.statusDot as Family["cva"],
-		axes: { state: STATUS_STATES },
+		axes: {
+			state: STATUS_STATES.filter((state) => state !== "running"),
+		},
 	},
 	{
 		name: "CHIP",

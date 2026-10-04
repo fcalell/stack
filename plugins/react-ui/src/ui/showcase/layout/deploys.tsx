@@ -92,6 +92,7 @@ const DEPLOYS: Deploy[] = [
 
 const LABELS: Record<StatusState, string> = {
 	active: "Building",
+	running: "Deploying",
 	waiting: "Waiting",
 	done: "Ready",
 	attention: "Slow",

@@ -1,6 +1,6 @@
 ---
 id: 003-53
-status: backlog
+status: review
 sessions: {}
 ---
 # ui-core: a running row's leading spins
@@ -17,4 +17,7 @@ Reference: GitHub iOS's run spins its running step ([screen](https://mobbin.com/
 - [ ] Stack provides the part on every platform the app runs on.
 
 ## Open questions
-- [ ] Its shape (a component, a variant, a token, an option): the stack session decides.
+- [x] Its shape (a component, a variant, a token, an option): the stack session decides.
+
+## Progress
+Shape: a new status state `running` (accent, word "Running") draws the Spinner wherever a status draws its dot: a ListRow leading, Status in a meta line, ItemHeader, Picker and Table through the shared status mark; `active` stays a static dot (Stead has steady active rows). For the critique: in a meta line the spinner is at the icon rung, one above a meta glyph. Built on web and phone; `pnpm check` and `pnpm verify` pass. Open: the live check (web per batch, phone on the harness).

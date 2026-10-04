@@ -1,13 +1,28 @@
 import { cn } from "@fcalell/ui-core/cn";
 import type { StatusState } from "@fcalell/ui-core/tokens";
-import { statusDot } from "@fcalell/ui-core/variants";
+import { STATUS_SPINNER, statusDot } from "@fcalell/ui-core/variants";
+import { Spinner } from "../spinner/index.tsx";
 
 const DOT = "shrink-0";
+const SPIN = "flex shrink-0";
 
-/** A status's dot alone: beside its word in a `Status`, or named by `label` as a list row's leading. Outside the package's exports. */
+/** A status's mark alone (its dot, or a `Spinner` in the accent ink while `running`): beside its word in a `Status`, named by `label` as a list row's leading, or leading a status pick's option. Outside the package's exports. */
 export function StatusDot(props: { state: StatusState; label?: string }) {
-	const drawn = cn(statusDot({ state: props.state }), DOT);
-	if (props.label)
-		return <span role="img" aria-label={props.label} className={drawn} />;
-	return <span aria-hidden className={drawn} />;
+	const { state, label } = props;
+	const drawn =
+		state === "running"
+			? cn(STATUS_SPINNER, SPIN)
+			: cn(statusDot({ state }), DOT);
+	const mark = state === "running" ? <Spinner /> : null;
+	if (label)
+		return (
+			<span role="img" aria-label={label} className={drawn}>
+				{mark}
+			</span>
+		);
+	return (
+		<span aria-hidden className={drawn}>
+			{mark}
+		</span>
+	);
 }

@@ -299,6 +299,10 @@ export const SPINNER_ARC = "rounded-full border-2 border-t-transparent";
 // A status: its dot (`statusDot`) beside its word, the word bounded as a
 // chip's label is, so a long one truncates before a row's title does.
 export const STATUS = "gap-inside";
+// A running status's mark: the spinner in the dot's place, its slot carrying
+// the accent ink the spinner draws in (a native place sets the same tone as
+// the spinner's ink, read through `statusContentTone`).
+export const STATUS_SPINNER = "text-accent-ink";
 export const STATUS_LABEL =
 	"max-w-measure-short text-meta leading-meta font-normal text-ink-meta";
 // A pick drawn as its value in a pill with no boundary at rest (a row's pick,
@@ -688,6 +692,9 @@ export type SheetFit = keyof (typeof SHEET_SIDE)["variants"]["fit"];
 export type FormIn = keyof (typeof FORM)["variants"]["in"];
 export type BannerKind = keyof (typeof BANNER)["variants"]["kind"];
 export type ToastState = keyof (typeof TOAST_STATE)["variants"]["state"];
+// The states a status draws as a dot: every one but `running`, whose mark
+// is a spinner.
+export type StatusDotState = keyof (typeof STATUS_DOT)["variants"]["state"];
 export type DiffLineKind = keyof (typeof DIFF_LINE)["variants"]["kind"];
 export type MessageAuthor = keyof (typeof MESSAGE)["variants"]["author"];
 export type AvatarStep = keyof (typeof AVATAR)["variants"]["step"];
@@ -717,8 +724,9 @@ export function buttonContentTone(act: ButtonAct): ContentTone {
 	return toneOf(BUTTON_LABEL.variants.act[act]);
 }
 
-// A status's colour, the dot's.
+// A status's colour: the dot's, or the running spinner's.
 export function statusContentTone(state: StatusState): ContentTone {
+	if (state === "running") return toneOf(STATUS_SPINNER);
 	return toneOf(STATUS_DOT.variants.state[state]);
 }
 

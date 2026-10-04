@@ -28,7 +28,7 @@ scaled number, never the desktop one.
 | dark surfaces | canvas `#000`–`#191a1f`; each layer +4 to +8 L; at most three steps |
 | ink | three levels; no fourth grey |
 | selection | grey or tinted fill, or a 1 px outline; accent fill never; a tab bar's selected tab is ink alone, its label body ink at 500 and its glyph body ink |
-| accent | one filled act per screen at most; otherwise only focus rings, links, selection outlines, the `active` status dot, and a checked control's fill (a checked box, an on switch, a slider's fill), which is a control state, never a selection |
+| accent | one filled act per screen at most; otherwise only focus rings, links, selection outlines, the `active` status dot and the `running` status spinner, and a checked control's fill (a checked box, an on switch, a slider's fill), which is a control state, never a selection |
 | chip | 16–22 px tall, 10–12 px type, radius 3–4 outlined or pill filled; hue by family, fixed |
 | status colour | confined to the icon, dot or chip, never the row's text |
 | kbd hint | 18–22 px chip, radius 4, hairline, or plain muted 11 px text |

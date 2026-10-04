@@ -61,7 +61,8 @@ const CHIP_MARK = "shrink min-w-0";
 const ACTS = "relative flex-row shrink-0 items-center";
 
 export interface ListRowProps<V extends string | null = string> extends Closed {
-	// A glyph, a status's dot or an avatar, in one slot at the avatar's size.
+	// A glyph, a status's mark (its dot, or the spinner while `running`) or an
+	// avatar, in one slot at the avatar's size.
 	leading?: RowLeading;
 	// What the row names, at body 500.
 	title: Part;
