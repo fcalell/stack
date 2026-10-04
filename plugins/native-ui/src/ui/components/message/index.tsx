@@ -13,7 +13,7 @@ import {
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
-import { type ReactNode, useState } from "react";
+import { memo, type ReactNode, useState } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
@@ -172,7 +172,9 @@ function LineWait({ role, bar }: { role: "body" | "meta"; bar: string }) {
 // another's the name at body 500 beside the time over the reply as Prose; a
 // system line one meta line centred in a row at the target height, its time
 // beside it.
-export function Message(props: MessageProps) {
+// Memoised on its props: a thread's re-render skips each message whose
+// author, body and time are unchanged.
+export const Message = memo(function Message(props: MessageProps) {
 	const { author, body, at, loading } = props;
 	const time = at ? (
 		<RNText numberOfLines={1} className={cn(text({ role: "meta" }), TIME)}>
@@ -263,4 +265,4 @@ export function Message(props: MessageProps) {
 			<Prose markdown={body} />
 		</View>
 	);
-}
+});

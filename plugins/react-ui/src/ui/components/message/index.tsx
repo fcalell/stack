@@ -15,7 +15,7 @@ import {
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
-import { type ReactNode, useId, useState } from "react";
+import { memo, type ReactNode, useId, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { GroundContext } from "../../lib/ground.ts";
 import { moment } from "../../lib/moment.ts";
@@ -153,8 +153,10 @@ function SystemMessage(props: {
 	);
 }
 
+// Memoised on its props: a thread's re-render skips each message whose
+// author, body and time are unchanged.
 /** Yours a bubble on the group ground at the column's end, the time under it; another's the name at body 500 beside the time over the reply as Prose; a system line one meta line centred in a row at the target height, its time beside it, its detail under it: a free act's code in the meta ink or a fold's meta lines once its chevron opens them, each start-aligned across the column, or a hairline card holding one row. */
-export function Message(props: MessageProps) {
+export const Message = memo(function Message(props: MessageProps) {
 	const { author, body, at, loading } = props;
 	const time = at ? (
 		<time dateTime={at} className={cn(text({ role: "meta" }), TIME)}>
@@ -243,4 +245,4 @@ export function Message(props: MessageProps) {
 			<Prose markdown={body} />
 		</article>
 	);
-}
+});

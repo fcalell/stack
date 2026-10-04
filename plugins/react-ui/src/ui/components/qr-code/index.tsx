@@ -1,6 +1,7 @@
 import { cn } from "@fcalell/ui-core/cn";
 import { QR_TILE, qrCode } from "@fcalell/ui-core/variants";
 import qrcode from "qrcode-generator";
+import { useMemo } from "react";
 import type { Closed } from "../../lib/closed.ts";
 
 // The tile is a light scope: its modules stay dark on a light ground in both
@@ -9,6 +10,9 @@ const TILE = "light shrink-0 self-start overflow-hidden";
 const CODE = "block";
 // The quiet zone a scanner needs, in modules, inside the viewBox.
 const QUIET = 4;
+// A waiting tile's module count, a version 2 code's: the skeleton encodes
+// nothing.
+const WAITING_MODULES = 25;
 
 // The value's code, its text encoded as UTF-8 bytes (the generator's byte
 // mode reads one char per byte).
@@ -49,10 +53,15 @@ export interface QrCodeProps extends Closed {
 
 /** The code scaled into a square tile inside a hairline, its quiet zone four modules wide. */
 export function QrCode({ value, loading }: QrCodeProps) {
-	const code = encode(value);
-	const count = code.getModuleCount();
+	// The code encodes once per value, and not while the tile waits.
+	const drawn = useMemo(() => {
+		if (loading) return undefined;
+		const code = encode(value);
+		return { count: code.getModuleCount(), path: modules(code) };
+	}, [value, loading]);
+	const count = drawn?.count ?? WAITING_MODULES;
 	const box = `0 0 ${count + QUIET * 2} ${count + QUIET * 2}`;
-	if (loading)
+	if (!drawn)
 		return (
 			<div aria-busy className={cn(QR_TILE, TILE)}>
 				<svg
@@ -78,7 +87,7 @@ export function QrCode({ value, loading }: QrCodeProps) {
 				aria-label={value}
 				className={cn(qrCode({ state: "rest" }), CODE)}
 			>
-				<path fill="currentColor" d={modules(code)} />
+				<path fill="currentColor" d={drawn.path} />
 			</svg>
 		</div>
 	);

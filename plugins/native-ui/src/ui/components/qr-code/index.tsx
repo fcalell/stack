@@ -1,5 +1,6 @@
 import { QR_TILE, qrCode } from "@fcalell/ui-core/variants";
 import qrcode from "qrcode-generator";
+import { useMemo } from "react";
 import { View } from "react-native";
 import Svg, { Path, Rect } from "react-native-svg";
 import { ScopedTheme } from "uniwind";
@@ -10,6 +11,9 @@ import { useTokenColor } from "../../lib/theme";
 const TILE = "shrink-0 self-start overflow-hidden";
 // The quiet zone a scanner needs, in modules, inside the viewBox.
 const QUIET = 4;
+// A waiting tile's module count, a version 2 code's: the skeleton encodes
+// nothing.
+const WAITING_MODULES = 25;
 
 // The value's code, its text encoded as UTF-8 bytes (the generator's byte
 // mode reads one char per byte).
@@ -63,8 +67,13 @@ export function QrCode({ value, loading }: QrCodeProps) {
 // takes its ink as a prop, never a class: `QR_CODE`'s ink by its state.
 function Tile({ value, loading }: { value: string; loading: boolean }) {
 	const ink = useTokenColor(loading ? "--color-skeleton" : "--color-ink-body");
-	const code = encode(value);
-	const count = code.getModuleCount();
+	// The code encodes once per value, and not while the tile waits.
+	const drawn = useMemo(() => {
+		if (loading) return undefined;
+		const code = encode(value);
+		return { count: code.getModuleCount(), path: modules(code) };
+	}, [value, loading]);
+	const count = drawn?.count ?? WAITING_MODULES;
 	const box = `0 0 ${count + QUIET * 2} ${count + QUIET * 2}`;
 	return (
 		<View
@@ -76,10 +85,10 @@ function Tile({ value, loading }: { value: string; loading: boolean }) {
 		>
 			<View className={qrCode({ state: loading ? "loading" : "rest" })}>
 				<Svg width="100%" height="100%" viewBox={box}>
-					{loading ? (
-						<Rect x={QUIET} y={QUIET} width={count} height={count} fill={ink} />
+					{drawn ? (
+						<Path fill={ink} d={drawn.path} />
 					) : (
-						<Path fill={ink} d={modules(code)} />
+						<Rect x={QUIET} y={QUIET} width={count} height={count} fill={ink} />
 					)}
 				</Svg>
 			</View>

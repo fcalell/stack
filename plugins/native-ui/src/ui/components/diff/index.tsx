@@ -9,6 +9,7 @@ import {
 	skeleton,
 } from "@fcalell/ui-core/variants";
 import { structuredPatch } from "diff";
+import { useMemo } from "react";
 import { Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
@@ -131,6 +132,11 @@ function Gutters({ line }: { line?: DiffLine }) {
 // line's start: React Native has no text indent, so a wrapped line does not
 // hang. The frame is a list named by `label`, the phone having no table.
 export function Diff({ label, hunks, before, after, loading }: DiffProps) {
+	// The hunks derive once per text pair, and not while the diff waits.
+	const shown = useMemo(
+		() => hunks ?? (loading ? [] : lineHunks(before ?? "", after ?? "")),
+		[hunks, before, after, loading],
+	);
 	if (loading)
 		return (
 			<View
@@ -158,7 +164,6 @@ export function Diff({ label, hunks, before, after, loading }: DiffProps) {
 				))}
 			</View>
 		);
-	const shown = hunks ?? lineHunks(before ?? "", after ?? "");
 	return (
 		<View
 			accessibilityRole="list"

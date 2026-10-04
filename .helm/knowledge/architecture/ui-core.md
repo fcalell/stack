@@ -528,6 +528,14 @@ a tick with no animation, never jumped to full.
   in whatever region stands over a docked foot. The layer is anchored inside that region, never
   hung above the foot by `bottom-full`, because Android does not hit-test a child outside its
   parent's bounds.
+- A content molecule derives once per input: `Prose` lexes and folds its markdown, `Diff` runs
+  its patch, `ProseDiff` its word diff and runs, and `QrCode` its encoding and module path, each
+  memoised on its text and skipped while it waits (a waiting QR tile draws a version 2 code's 25
+  modules and encodes nothing). `Message` is memoised on its props, so a thread's re-render
+  skips each reply and bubble whose author, body and time are unchanged; a system line whose
+  `onOpen` or `detail` the thread builds afresh renders again. The showcase compiles the
+  workspace's plugin source with the React Compiler, which memoises on its own; a consumer's
+  `node_modules` copy is not compiled, so these memos are explicit.
 - A `MessageInput` sends while an answer streams: `working` sets Stop before Send and leaves
   Send live, so Send and Enter send whenever the text is non-empty. Stop is the secondary bar
   Button on the desktop and an icon act at the bar fit (`ICON_BUTTON.fit.bar`, `CircleStop`) on

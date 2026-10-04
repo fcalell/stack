@@ -11,6 +11,7 @@ import {
 	skeleton,
 } from "@fcalell/ui-core/variants";
 import { structuredPatch } from "diff";
+import { useMemo } from "react";
 import type { Closed } from "../../lib/closed.ts";
 
 const FRAME = "flex flex-col min-w-0 overflow-hidden";
@@ -131,6 +132,11 @@ function Gutters(props: { line?: DiffLine }) {
 
 /** A unified diff at the code role in the frame Code shares: each hunk's header on the group ground in the meta ink, then its lines, added on ok-soft and removed on danger-soft, the whole row, each with its two line numbers and its `+` or `−` marker. A long line wraps under itself at every width, hung one inset, its numbers on its first line. */
 export function Diff({ label, hunks, before, after, loading }: DiffProps) {
+	// The hunks derive once per text pair, and not while the diff waits.
+	const shown = useMemo(
+		() => hunks ?? (loading ? [] : lineHunks(before ?? "", after ?? "")),
+		[hunks, before, after, loading],
+	);
 	if (loading)
 		return (
 			<div aria-busy className={cn(CONTENT_FRAME, FRAME)}>
@@ -160,7 +166,6 @@ export function Diff({ label, hunks, before, after, loading }: DiffProps) {
 				</table>
 			</div>
 		);
-	const shown = hunks ?? lineHunks(before ?? "", after ?? "");
 	return (
 		<div className={cn(CONTENT_FRAME, FRAME)}>
 			<table aria-label={label} className={TABLE}>

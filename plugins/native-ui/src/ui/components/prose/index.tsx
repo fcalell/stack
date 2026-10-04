@@ -16,7 +16,7 @@ import {
 	textStrong,
 } from "@fcalell/ui-core/variants";
 import { lexer, type Token, type Tokens } from "marked";
-import type { ReactNode } from "react";
+import { type ReactNode, useMemo } from "react";
 import { Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
@@ -293,7 +293,12 @@ function Headed({ part }: { part: Part }) {
 // own text; tables, task lists and images draw as text. A heading is a
 // header to the screen reader, which has no heading levels on the phone.
 export function Prose({ markdown, loading }: ProseProps) {
-	if (loading)
+	// The markdown lexes and folds once per text, and not while the prose waits.
+	const root = useMemo(
+		() => (loading ? undefined : parts(lexer(markdown))),
+		[markdown, loading],
+	);
+	if (!root)
 		return (
 			<View accessibilityState={{ busy: true }} className={cn(PROSE, COLUMN)}>
 				<View className={PROSE_BLOCKS}>
@@ -312,7 +317,6 @@ export function Prose({ markdown, loading }: ProseProps) {
 				</View>
 			</View>
 		);
-	const root = parts(lexer(markdown));
 	return (
 		<View className={cn(PROSE, COLUMN)}>
 			{root.blocks.length > 0 ? <Blocks part={root} /> : null}

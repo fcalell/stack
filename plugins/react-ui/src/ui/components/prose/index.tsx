@@ -17,7 +17,7 @@ import {
 	textStrong,
 } from "@fcalell/ui-core/variants";
 import { lexer, type Token, type Tokens } from "marked";
-import { type ReactNode, use } from "react";
+import { type ReactNode, use, useMemo } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { HeadingContext } from "../../lib/heading.ts";
 import { Code } from "../code/index.tsx";
@@ -307,7 +307,12 @@ function Headed(props: { part: Part; level: number }) {
 /** Markdown at the body role, its column at the measure: `#` and `##` head its parts a sections gap apart at the heading role, `###` and deeper head a part inside them at body 500; paragraphs, lists (the marker hung in its own slot), quotes and rules a fields gap apart; inline code on the neutral fill; a fenced block is a `Code` with its copy act. Raw HTML reads as its own text; tables, task lists and images draw as text. */
 export function Prose({ markdown, loading }: ProseProps) {
 	const level = use(HeadingContext);
-	if (loading)
+	// The markdown lexes and folds once per text, and not while the prose waits.
+	const root = useMemo(
+		() => (loading ? undefined : parts(lexer(markdown))),
+		[markdown, loading],
+	);
+	if (!root)
 		return (
 			<div aria-busy className={cn(PROSE, COLUMN)}>
 				<div className={cn(PROSE_BLOCKS, STACK)}>
@@ -331,7 +336,6 @@ export function Prose({ markdown, loading }: ProseProps) {
 				</div>
 			</div>
 		);
-	const root = parts(lexer(markdown));
 	return (
 		<div className={cn(PROSE, COLUMN)}>
 			{root.blocks.length > 0 ? <Blocks part={root} level={level} /> : null}
