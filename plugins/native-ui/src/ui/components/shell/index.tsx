@@ -18,8 +18,14 @@ import {
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
+import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { type ReactNode, useState } from "react";
-import { Pressable, Text as RNText, View } from "react-native";
+import {
+	type LayoutRectangle,
+	Pressable,
+	Text as RNText,
+	View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
@@ -43,8 +49,11 @@ import { FloatingActRoom, Place } from "../place";
 import { Confirmations } from "../sheet/confirm";
 import { ToastList } from "../toast/layer";
 
+const FILL = "flex-1";
 const FRAME = "flex-1 overflow-hidden";
 const CONTENT = "flex-1";
+// The measured content frame's `top` and `bottom` style override the class's
+// edges.
 const TOAST_LAYER = "absolute inset-0 items-center justify-end";
 
 const TRIGGER = "flex-row items-center min-w-0";
@@ -75,63 +84,92 @@ export interface ShellProps extends Closed {
 
 // The frame on the column's ground: the banner under the status bar, the
 // content, the toast queue over the content's foot (above a Place's act while
-// it floats, a Thread's input while it docks), the `confirm()` decisions as a sheet, and the tab bar over the
-// home indicator, past five places four and a More tab that opens a page of
-// the rest in the content's place. The switcher's trigger starts each Place's
-// top bar, the current place's route handed down for a Place's back act; a
-// pushed Screen covers the tab bar, and the frame then clears the home
-// indicator itself.
+// it floats, a Thread's input while it docks), the `confirm()` decisions as
+// a sheet, and the tab bar over the home indicator, past five places four and
+// a More tab that opens a page of the rest in the content's place. The
+// switcher's trigger starts each Place's top bar, the current place's route
+// handed down for a Place's back act; a pushed Screen covers the tab bar, and
+// the frame then clears the home indicator itself.
+// The column holds its own sheets' provider, the nearest one every sheet
+// inside resolves, which draws the sheets after the column; the toasts' layer
+// stands after the provider's host view, so over every sheet, since React
+// Native's `zIndex` orders siblings only. The host view is never flattened: a
+// sheet's layer is `accessibilityViewIsModal`, which hides its siblings from
+// VoiceOver, and the toasts' layer is not among them.
 export function Shell({ places, banner, switcher, children }: ShellProps) {
 	const insets = useSafeAreaInsets();
 	const [covered, cover] = useState(false);
 	const [lifted, lift] = useState(false);
 	const [footing, dock] = useState(0);
+	const [height, setHeight] = useState<number>();
+	const [frame, setFrame] = useState<LayoutRectangle>();
 	const pathname = usePathname();
 	// The More page stands at the route it opened on: going to a place closes it.
 	const [moreAt, setMoreAt] = useState<string>();
 	const more = moreAt === pathname;
 	const route = places.find((spec) => isCurrent(spec.route, pathname))?.route;
 	const rest = places.length > TAB_ROOM ? places.slice(TAB_ROOM - 1) : [];
+	// The toasts stand in the content's frame, its edges measured in the column.
+	const toasts =
+		frame && height !== undefined
+			? { top: frame.y, bottom: height - frame.y - frame.height }
+			: undefined;
 	return (
-		<View
-			style={{
-				paddingTop: insets.top,
-				paddingBottom: covered ? insets.bottom : 0,
-			}}
-			className={cn(SHELL_COLUMN, FRAME)}
-		>
-			{banner ? <View className={SHELL_BANNER}>{banner}</View> : null}
-			<View className={CONTENT}>
-				<ShellSwitcher.Provider
-					value={switcher ? <SwitcherPick switcher={switcher} /> : null}
+		<View className={FILL}>
+			<View collapsable={false} className={FILL}>
+				<BottomSheetModalProvider>
+					<View
+						onLayout={(event) => setHeight(event.nativeEvent.layout.height)}
+						style={{
+							paddingTop: insets.top,
+							paddingBottom: covered ? insets.bottom : 0,
+						}}
+						className={cn(SHELL_COLUMN, FRAME)}
+					>
+						{banner ? <View className={SHELL_BANNER}>{banner}</View> : null}
+						<View
+							onLayout={(event) => setFrame(event.nativeEvent.layout)}
+							className={CONTENT}
+						>
+							<ShellSwitcher.Provider
+								value={switcher ? <SwitcherPick switcher={switcher} /> : null}
+							>
+								<PlaceRoute.Provider value={route}>
+									<CoverTabs.Provider value={cover}>
+										<ActFloats.Provider value={lift}>
+											<FootDocks.Provider value={dock}>
+												{more ? <MorePage places={rest} /> : children}
+											</FootDocks.Provider>
+										</ActFloats.Provider>
+									</CoverTabs.Provider>
+								</PlaceRoute.Provider>
+							</ShellSwitcher.Provider>
+						</View>
+						{covered ? null : (
+							<TabBar
+								places={places}
+								pathname={pathname}
+								more={more}
+								onMore={() => setMoreAt(pathname)}
+								onPlace={() => setMoreAt(undefined)}
+							/>
+						)}
+						<Confirmations />
+					</View>
+				</BottomSheetModalProvider>
+			</View>
+			{toasts ? (
+				<View
+					pointerEvents="box-none"
+					style={toasts}
+					className={cn(TOASTS, TOAST_LAYER)}
 				>
-					<PlaceRoute.Provider value={route}>
-						<CoverTabs.Provider value={cover}>
-							<ActFloats.Provider value={lift}>
-								<FootDocks.Provider value={dock}>
-									{more ? <MorePage places={rest} /> : children}
-								</FootDocks.Provider>
-							</ActFloats.Provider>
-						</CoverTabs.Provider>
-					</PlaceRoute.Provider>
-				</ShellSwitcher.Provider>
-				<View pointerEvents="box-none" className={cn(TOASTS, TOAST_LAYER)}>
 					<ToastList />
 					{lifted ? <FloatingActRoom /> : null}
 					{/* The docked foot's room is its measured height: it grows with the input. */}
 					{footing > 0 ? <View style={{ height: footing }} /> : null}
 				</View>
-			</View>
-			{covered ? null : (
-				<TabBar
-					places={places}
-					pathname={pathname}
-					more={more}
-					onMore={() => setMoreAt(pathname)}
-					onPlace={() => setMoreAt(undefined)}
-				/>
-			)}
-			<Confirmations />
+			) : null}
 		</View>
 	);
 }

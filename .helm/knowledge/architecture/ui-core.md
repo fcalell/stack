@@ -290,7 +290,22 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
   `aria-hidden` but keeps every `[aria-live]` element and its ancestors, the toasts' viewport
   among them. Rejected: a literal `z-*` at the call site, and portalling the toasts after the
   sheets (a Base UI portal mounts in the order it opens, and the layer would lose `main`'s
-  geometry).
+  geometry). React Native's `zIndex` orders siblings only, so native reads the order by tree
+  position: gorhom's `BottomSheetModalProvider` draws its sheets after its children, in its own
+  host. The native Shell holds a provider around its column, inside a host view, and draws the
+  toasts' layer after that view, so over every sheet; the layer stands in the content's frame,
+  its edges measured in the column, so the toasts keep the Shell's geometry. A sheet resolves the
+  nearest provider, so every sheet opened under a Shell stands in the Shell's host and stacks
+  against the others there; the entry's root provider hosts only the screens with no Shell, where
+  no toast stands, so the two hosts never hold sheets that must stack together. The host view is
+  never flattened: a sheet's layer is `accessibilityViewIsModal`, which hides its siblings from
+  VoiceOver, and the toasts' layer is not among them. gorhom draws a sheet's content in its
+  host, outside the screen that opened it, so the entry's words, Query and Auth providers wrap
+  the root provider. Rejected: a toasts portal through gorhom's host (its name is internal, and
+  an entry keeps its first mount's place, under every later sheet), react-native-screens'
+  `FullWindowOverlay` (iOS only; a plain `View` on Android), and a layer wrapped around the root
+  provider that the Shell hands its frame (a context, two effects and an export for what the
+  Shell's own tree holds).
 - A table cell stands at the row's floor behind a transparent side border (`TABLE_CELL`:
   `min-h-row` and `px-control-x`), and the `Input` that edits it in place stands inside it at
   the field's bar fit, so a cell and its edit put their text in one place and the row keeps its
@@ -442,7 +457,6 @@ cell, an off-contract utility, or a drawn word outside `words` each fails a name
 - Native has no render harness: its verify reads the components against the matrix strings and the roster, and no check draws a native screen.
 - A native QR tile inside a dark raised ground draws its edge at the dark raised value: uniwind 1.12's `ScopedTheme` keeps the parent's scoped variables and cannot clear one. No screen does this today.
 - A native Button's `count` is not read aloud: the pressable's accessible name is its `label` alone.
-- A native toast raised while a sheet or a `confirm()` is open stands under it: gorhom's `BottomSheetModalProvider` renders its portal host after the app, the Shell's toasts' layer among it, and React Native's `zIndex` orders siblings only, so the layer order has no native reading. The sheet's layer is also `accessibilityViewIsModal`, which hides the toasts from VoiceOver while it is open.
 - A failed toast's announcement is Base UI's visually hidden `role="alert"` wrapper beside the toasts' viewport, which exists only while a failed toast stands and the viewport is unfocused, and carries no `aria-live`. When a sheet opens while a failed toast stands, the modal marks that wrapper `aria-hidden`, so a failed toast raised while one has stood continuously since before the sheet opened is not announced. Once no failed toast stands the wrapper is gone, and the next is announced.
 - The native toast room adds the docked foot's measured height (`FootDocks`) and not the keyboard's offset, so a toast shown while the keyboard is up is not lifted with the foot.
 - A product cannot draw in the platform font: `fonts.sans` unset is IBM Plex Sans, and the platform stack only stands behind the named family and its metric fallback face.

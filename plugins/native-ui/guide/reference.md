@@ -19,8 +19,8 @@ A component's props, each with what it draws on the phone, are its props type in
 `node_modules/@fcalell/plugin-native-ui/src/ui/components/<dir>/index.tsx`.
 
 `toast(sentence, { state, act })` queues a toast and `confirm(confirmation)` (`lib/confirm`) asks
-for a decision; the `Shell` draws the toasts at the screen's foot and each decision as a bottom
-sheet. `setTheme("light" | "dark" | "system")` (`lib/theme`) switches the mode at runtime. The
+for a decision; the `Shell` draws each decision as a bottom sheet and the toasts at the screen's
+foot, over any open sheet. `setTheme("light" | "dark" | "system")` (`lib/theme`) switches the mode at runtime. The
 icon set is Lucide, drawn from `lucide-react-native`: every `icon` a component takes is an
 `IconName`, a Lucide PascalCase name.
 

@@ -31,9 +31,12 @@ ui-core's pages; the plugin hands the CLI those too (`cliSlots.guide`), as react
   `.stack/global.css` and `.stack/uniwind-types.d.ts`.
 - An `expo-font` config plugin embedding the `fonts` files, when there are any.
 - The provider stack around the expo-router root, outer to inner: `GestureHandlerRootView` →
-  `KeyboardProvider` → `SafeAreaProvider` → `BottomSheetModalProvider` → `WordsProvider` (only
-  when `words` is set) → `QueryProvider` → `AuthProvider`. Theming is CSS-first, so there is no
-  theme provider. `AppProviders` (`./app`) composes the UI half of the same stack for use outside
+  `KeyboardProvider` → `SafeAreaProvider` → `WordsProvider` (only when `words` is set) →
+  `QueryProvider` → `AuthProvider` → `BottomSheetModalProvider`. gorhom draws a sheet's content in
+  its provider's host, so every context a sheet body reads wraps that provider. It hosts the sheets
+  of the screens with no `Shell`; a `Shell` holds its own provider, under which every sheet opened
+  inside it stands, and draws its toasts after that provider's host so a toast stands over an open
+  sheet. Theming is CSS-first, so there is no theme provider. `AppProviders` (`./app`) composes the UI half of the same stack for use outside
   the generated entry.
 - `.stack/native-auth.ts`: the resolved `scheme` and `cookiePrefix` the scaffolded auth client
   imports, so the client always matches the app config and the worker's cookies.

@@ -100,10 +100,12 @@ const appCssSource = slot.derived({
 // ── Provider specs ─────────────────────────────────────────────────
 //
 // Composed around `<ExpoRoot>` in `.stack/entry.tsx`, outer → inner by `order`.
-// GestureHandlerRootView must be outermost; the gorhom bottom-sheet modal host
-// sits inside the gesture + safe-area context; Auth/Query providers are
-// innermost (closest to the screens that read them via hooks). No ThemeProvider
-// — uniwind theming is CSS-first (global `Uniwind.setTheme`), not context-based.
+// GestureHandlerRootView must be outermost. The gorhom bottom-sheet modal host
+// is innermost, inside the gesture + safe-area context: gorhom draws a sheet's
+// content in its host, outside the screen that opened it, so every context a
+// sheet body reads (words, Query, Auth) wraps the host. It serves the screens
+// with no Shell; a Shell holds its own. No ThemeProvider: uniwind theming is
+// CSS-first (global `Uniwind.setTheme`), not context-based.
 
 const FLEX_FILL: TsExpression = {
 	kind: "object",
@@ -166,7 +168,7 @@ function wordsProvider(opts: NativeUiOptions): ProviderSpec | undefined {
 				([name, value]) => ({ name, value }),
 			),
 		},
-		order: 35,
+		order: 25,
 	};
 }
 
@@ -186,7 +188,7 @@ function queryProvider(opts: NativeUiOptions): ProviderSpec {
 				{ name: "client", value: { kind: "identifier", name: mod.export } },
 			],
 		},
-		order: 40,
+		order: 26,
 	};
 }
 
@@ -203,7 +205,7 @@ function authProvider(opts: NativeUiOptions): ProviderSpec {
 				{ name: "client", value: { kind: "identifier", name: mod.export } },
 			],
 		},
-		order: 50,
+		order: 27,
 	};
 }
 
@@ -337,10 +339,10 @@ export const nativeUi = plugin("native-ui", {
 		expo.slots.providers.contribute(() => gestureProvider),
 		expo.slots.providers.contribute(() => keyboardProvider),
 		expo.slots.providers.contribute(() => safeAreaProvider),
-		expo.slots.providers.contribute(() => bottomSheetProvider),
 		expo.slots.providers.contribute(() => wordsProvider(self.options)),
 		expo.slots.providers.contribute(() => queryProvider(self.options)),
 		expo.slots.providers.contribute(() => authProvider(self.options)),
+		expo.slots.providers.contribute(() => bottomSheetProvider),
 
 		// ── Emit the uniwind entry stylesheet ─────────────────────────────
 		emitArtifact(GLOBAL_CSS_ARTIFACT, self.slots.appCssSource),
