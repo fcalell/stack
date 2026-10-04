@@ -329,9 +329,11 @@ export const expo = plugin("expo", {
 			// build number via `expo-application`, required for every generated
 			// `src/lib/api.ts`, not just consumers with a `minNativeBuild` floor.
 			"expo-application",
-			// Android's `userInterfaceStyle` needs it, or the status bar ignores
-			// the light and dark setting.
+			// Android's `userInterfaceStyle` needs it, or the app ignores the light
+			// and dark setting.
 			"expo-system-ui",
+			// The generated entry's `StatusBar`.
+			"expo-status-bar",
 		]),
 	},
 	devDependencies: {

@@ -180,14 +180,34 @@ function requireContextCall(appContextPath: string): TsExpression {
 export function aggregateEntry(payload: CodegenEntryPayload): string | null {
 	if (payload.appContextPath === null) return null;
 
+	// Android draws the status bar's icons light unless told otherwise, so a
+	// light ground hides them. `auto` reads `useColorScheme()`, which follows
+	// the OS setting and the scheme the theme sets through `Appearance`.
 	const root: TsExpression = {
 		kind: "jsx",
-		tag: "ExpoRoot",
-		props: [
-			{ name: "context", value: requireContextCall(payload.appContextPath) },
+		tag: "Fragment",
+		props: [],
+		children: [
+			{
+				kind: "jsx",
+				tag: "ExpoRoot",
+				props: [
+					{
+						name: "context",
+						value: requireContextCall(payload.appContextPath),
+					},
+				],
+				children: [],
+				selfClosing: true,
+			},
+			{
+				kind: "jsx",
+				tag: "StatusBar",
+				props: [{ name: "style", value: { kind: "string", value: "auto" } }],
+				children: [],
+				selfClosing: true,
+			},
 		],
-		children: [],
-		selfClosing: true,
 	};
 
 	// Providers arrive pre-sorted ascending by `order` from the owning list
@@ -214,6 +234,8 @@ export function aggregateEntry(payload: CodegenEntryPayload): string | null {
 	const imports: TsImportSpec[] = dedupeImports([
 		{ source: "expo", named: ["registerRootComponent"] },
 		{ source: "expo-router", named: ["ExpoRoot"] },
+		{ source: "expo-status-bar", named: ["StatusBar"] },
+		{ source: "react", named: ["Fragment"] },
 		...payload.imports,
 		...payload.providers.flatMap((p) => p.imports),
 	]);

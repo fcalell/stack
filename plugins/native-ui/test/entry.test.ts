@@ -51,6 +51,6 @@ test("the words, Query and Auth providers wrap the sheets' provider", async () =
 	const entry = (await graph.resolve(expo.slots.entrySource)) ?? "";
 	assert.match(
 		entry,
-		/<WordsProvider .*><QueryProvider [^>]*><AuthProvider [^>]*><BottomSheetModalProvider><ExpoRoot [^>]*\/><\/BottomSheetModalProvider><\/AuthProvider><\/QueryProvider><\/WordsProvider>/s,
+		/<WordsProvider .*><QueryProvider [^>]*><AuthProvider [^>]*><BottomSheetModalProvider><Fragment><ExpoRoot [^>]*\/><StatusBar [^>]*\/><\/Fragment><\/BottomSheetModalProvider><\/AuthProvider><\/QueryProvider><\/WordsProvider>/s,
 	);
 });
