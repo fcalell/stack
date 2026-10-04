@@ -1,6 +1,6 @@
 ---
 id: 003-34
-status: backlog
+status: review
 sessions: {}
 ---
 # react-ui, native-ui: a Group's waiting setting rows stand at the loaded rows' geometry
@@ -20,3 +20,6 @@ waiting row matches a one-line description.
 
 ## Acceptance criteria
 - [ ] (live) a waiting Group's rows match its loaded one-line rows' heights and line centres at 1440 and 375, light and dark.
+
+## Progress
+Built; `pnpm check` and `pnpm verify` pass. Web live at 1440 and 375, light and dark: the waiting setting row is built from the loaded row's boxes, so its height and its label, description and switch centres match the loaded one-line row; the card differs only by a loaded description that wraps (the wrap clause). Open: the phone live criterion on the harness.

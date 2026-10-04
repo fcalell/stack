@@ -647,7 +647,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			draws: [
 				"GROUP",
 				"SKELETON_ROW.kind.setting",
-				"SKELETON_LINES",
+				"ROW_TITLE_LINE",
+				"LINE_BOX.role.body",
+				"LINE_BOX.role.meta",
 				"SKELETON.kind.line",
 				"SKELETON.kind.switch",
 			],
@@ -656,8 +658,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			owns: {
 				colors: ["edge", "surface", "skeleton"],
 				radii: ["card", "chip", "full"],
-				spacing: ["fields", "card", "pair"],
-				sizes: ["row-setting", "skeleton", "switch-w", "switch-h"],
+				roles: ["body", "meta"],
+				spacing: ["fields", "card", "pair", "inside"],
+				sizes: ["row-setting", "skeleton", "switch-w", "switch-h", "target"],
 			},
 		},
 		// A collection: its rows from `query` or `items` through one item map

@@ -2,7 +2,8 @@ import { cn } from "@fcalell/ui-core/cn";
 import { groupWait } from "@fcalell/ui-core/list-state";
 import {
 	GROUP,
-	SKELETON_LINES,
+	lineBox,
+	ROW_TITLE_LINE,
 	skeleton,
 	skeletonRow,
 } from "@fcalell/ui-core/variants";
@@ -21,9 +22,16 @@ import { LoadingContext } from "../../lib/loading.ts";
 import { useSectionRows } from "../../lib/section.ts";
 
 const BOX = "flex flex-col overflow-hidden";
+// A waiting setting row stands in the loaded DefinitionRow's boxes: the
+// label's line box beside the switch's hit box on the title line, the
+// description's line box under it, so each bar centres where its text does.
 const ROW_WAIT = "flex items-center";
 const LINES_WAIT = "flex grow min-w-0 flex-col";
-const SWITCH_WAIT = "shrink-0";
+const TITLE_WAIT = "flex items-center";
+const LABEL_WAIT = "flex grow min-w-0 items-center h-lh";
+const LINE_WAIT = "flex items-center h-lh";
+const SWITCH_WAIT =
+	"flex shrink-0 items-center justify-center min-h-target min-w-target";
 // The loading rows' bars, a label over a value, each at the length of the
 // line it stands in for.
 const BARS = [
@@ -78,11 +86,19 @@ export function Group({ loading, children }: GroupProps) {
 						aria-hidden
 						className={cn(skeletonRow({ kind: "setting" }), ROW_WAIT)}
 					>
-						<span className={cn(SKELETON_LINES, LINES_WAIT)}>
-							<span className={cn(skeleton({ kind: "line" }), label)} />
-							<span className={cn(skeleton({ kind: "line" }), value)} />
+						<span className={LINES_WAIT}>
+							<span className={cn(ROW_TITLE_LINE, TITLE_WAIT)}>
+								<span className={cn(lineBox({ role: "body" }), LABEL_WAIT)}>
+									<span className={cn(skeleton({ kind: "line" }), label)} />
+								</span>
+								<span className={SWITCH_WAIT}>
+									<span className={skeleton({ kind: "switch" })} />
+								</span>
+							</span>
+							<span className={cn(lineBox({ role: "meta" }), LINE_WAIT)}>
+								<span className={cn(skeleton({ kind: "line" }), value)} />
+							</span>
 						</span>
-						<span className={cn(skeleton({ kind: "switch" }), SWITCH_WAIT)} />
 					</div>
 				))
 			) : (

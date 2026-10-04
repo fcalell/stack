@@ -2078,7 +2078,7 @@ The front matter's components are the matrix cells: one entry per axis value of 
 | `Screen` | layout | `PAGE_HEAD`, `PAGE_TOP_BAR`, `PAGE_TITLE`, `TEXT.role.title`, `PAGE_BODY`, `ICON_BUTTON.fit.bar`, `ICON_BUTTON.fit.body` | rest |
 | `Split` | layout | `SPLIT_LIST`, `SPLIT_MAIN`, `SPLIT_BESIDE`, `SPLIT_PANE`, `ICON_BUTTON.fit.bar` | rest, empty |
 | `Section` | layout | `SECTION`, `SECTION_HEAD`, `SECTION_HEAD_ROW`, `SECTION_TITLE`, `SECTION_TOGGLE`, `TEXT.role.heading`, `TEXT.role.meta`, `ICON.fit.body`, `COUNT`, `COUNT_LABEL`, `BUTTON.act.secondary`, `BUTTON.act.destructive`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.secondary`, `BUTTON_LABEL.act.destructive`, `ICON_BUTTON.fit.bar`, `SKELETON.kind.count`, `SKELETON.kind.line`, `SKELETON.kind.field`, `SKELETON_ROW.kind.field`, `TEXT.role.caption`, `LINE_BOX.role.body` | rest, hover, focus, active, disabled, loading |
-| `Group` | layout | `GROUP`, `SKELETON_ROW.kind.setting`, `SKELETON_LINES`, `SKELETON.kind.line`, `SKELETON.kind.switch` | rest, loading |
+| `Group` | layout | `GROUP`, `SKELETON_ROW.kind.setting`, `ROW_TITLE_LINE`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `SKELETON.kind.line`, `SKELETON.kind.switch` | rest, loading |
 | `List` | layout | `LIST` | rest, loading, error, empty |
 | `Form` | layout | `FORM`, `FORM_FOOT` | rest, loading |
 | `Toolbar` | layout | `TOOLBAR`, `TOOLBAR_ROW`, `TOOLBAR_CHIPS` | rest |
@@ -2138,7 +2138,7 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | `Screen` | `title` | `ink-body`, `ink-meta`, `edge` | `control` | `acts`, `page`, `sections`, `pair` | `strip`, `control`, `control-compact` | none |
 | `Split` | none | `edge`, `ink-meta`, `surface` | `control` | `inside`, `page`, `sections` | `list`, `pane`, `control-compact` | none |
 | `Section` | `heading`, `meta`, `body`, `caption` | `ink-body`, `ink-meta`, `edge`, `fill-neutral`, `skeleton`, `wash-hover`, `wash-press`, `ring`, `danger` | `row`, `control`, `chip`, `full` | `pair`, `fields`, `inside`, `control-x` | `icon`, `chip`, `control-compact`, `skeleton`, `field`, `target` | none |
-| `Group` | none | `edge`, `surface`, `skeleton` | `card`, `chip`, `full` | `fields`, `card`, `pair` | `row-setting`, `skeleton`, `switch-w`, `switch-h` | none |
+| `Group` | `body`, `meta` | `edge`, `surface`, `skeleton` | `card`, `chip`, `full` | `fields`, `card`, `pair`, `inside` | `row-setting`, `skeleton`, `switch-w`, `switch-h`, `target` | none |
 | `List` | none | none | none | `rows`, `control-x` | none | none |
 | `Form` | none | `edge` | none | `fields`, `sections` | `measure` | none |
 | `Toolbar` | none | `edge` | none | `pair`, `page`, `inside`, `acts` | none | none |

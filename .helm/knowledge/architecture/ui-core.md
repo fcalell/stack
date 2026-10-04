@@ -613,7 +613,10 @@ a tick with no animation, never jumped to full.
   failed and empty EmptyStates in the card at `EMPTY_CARD` (the card their frame, in place of
   `EMPTY_FRAME`). A busy List makes the Group busy, for the card is its box. A waiting Group
   (its `loading`, or a loading Section's) renders its body once and, when no List registered,
-  swaps it for setting skeletons before paint (`groupWait`), the Section's mechanism.
+  swaps it for setting skeletons before paint (`groupWait`), the Section's mechanism. A waiting
+  setting row stands in the loaded DefinitionRow's boxes (the label's body line box beside the
+  switch's target-sized hit box on the title line, the description's meta line box under it), so
+  its height and its bars' centres are a one-line setting row's at either density.
 - A Meter in a Group stands as its item at the card's inset (`METER_ITEM`, by `GroundContext`),
   the Group's hairline between; a set of them from data is a `List` taking `meter`, in the Group. A FileRow is selected at its `href`, as a ListRow is.
 - A FileRow carries at most one `ChipMark` (why the file is listed, or what its change is),

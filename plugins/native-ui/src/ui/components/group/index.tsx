@@ -1,7 +1,8 @@
 import { groupWait } from "@fcalell/ui-core/list-state";
 import {
 	GROUP,
-	SKELETON_LINES,
+	lineBox,
+	ROW_TITLE_LINE,
 	skeleton,
 	skeletonRow,
 } from "@fcalell/ui-core/variants";
@@ -14,7 +15,7 @@ import {
 	useRef,
 	useState,
 } from "react";
-import { View } from "react-native";
+import { Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { GroundContext } from "../../lib/ground";
@@ -23,9 +24,18 @@ import { LoadingContext } from "../../lib/loading";
 import { useSectionRows } from "../../lib/section";
 
 const BOX = "overflow-hidden";
+// A waiting setting row stands in the loaded DefinitionRow's boxes: the
+// label's line box beside the switch's hit box on the title line, the
+// description's line box under it, each line's height set by a zero-width
+// strut at its role, so each bar centres where its text does.
 const ROW_WAIT = "flex-row items-center";
-const LINES_WAIT = "grow min-w-0";
-const SWITCH_WAIT = "shrink-0";
+const LINES_WAIT = "flex-1 min-w-0";
+const TITLE_WAIT = "flex-row items-center min-w-0";
+const LABEL_WAIT = "flex-1 min-w-0 flex-row items-center";
+const LINE_WAIT = "flex-row items-center";
+const SWITCH_WAIT =
+	"shrink-0 items-center justify-center min-h-target min-w-target";
+const STRUT = "​";
 // The loading rows' bars, a label over a value, each at the length of the
 // line it stands in for.
 const BARS = [
@@ -78,11 +88,21 @@ export function Group({ loading, children }: GroupProps) {
 						key={`${label} ${value}`}
 						className={cn(skeletonRow({ kind: "setting" }), ROW_WAIT)}
 					>
-						<View className={cn(SKELETON_LINES, LINES_WAIT)}>
-							<View className={cn(skeleton({ kind: "line" }), label)} />
-							<View className={cn(skeleton({ kind: "line" }), value)} />
+						<View className={LINES_WAIT}>
+							<View className={cn(ROW_TITLE_LINE, TITLE_WAIT)}>
+								<View className={LABEL_WAIT}>
+									<RNText className={lineBox({ role: "body" })}>{STRUT}</RNText>
+									<View className={cn(skeleton({ kind: "line" }), label)} />
+								</View>
+								<View className={SWITCH_WAIT}>
+									<View className={skeleton({ kind: "switch" })} />
+								</View>
+							</View>
+							<View className={LINE_WAIT}>
+								<RNText className={lineBox({ role: "meta" })}>{STRUT}</RNText>
+								<View className={cn(skeleton({ kind: "line" }), value)} />
+							</View>
 						</View>
-						<View className={cn(skeleton({ kind: "switch" }), SWITCH_WAIT)} />
 					</View>
 				))
 			: Children.toArray(children);
