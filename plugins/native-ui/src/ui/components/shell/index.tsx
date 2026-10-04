@@ -1,7 +1,5 @@
 import type {
 	IconName,
-	Option,
-	OptionGroup,
 	PlaceSpec,
 	Switcher,
 } from "@fcalell/ui-core/descriptors";
@@ -39,7 +37,7 @@ import { Avatar } from "../avatar";
 import { Count } from "../count";
 import { Icon } from "../icon";
 import { List } from "../list";
-import { PickSheet } from "../picker/sheet";
+import { PickSheet, useOptionGroups } from "../picker/sheet";
 import { Place } from "../place";
 import { Confirmations } from "../sheet/confirm";
 import { ToastList } from "../toast/layer";
@@ -155,21 +153,13 @@ export function Shell({ places, banner, switcher, children }: ShellProps) {
 	);
 }
 
-function flatten(options: Switcher["options"]): readonly Option[] {
-	const entries: readonly (Option | OptionGroup)[] = options;
-	return entries.flatMap((entry) =>
-		"options" in entry ? entry.options : [entry],
-	);
-}
-
 // The switcher is a pick: its trigger in a Place's top bar, and the pick's
 // sheet (the options with their avatars under the switcher's label, the
 // current one ticked, the act that makes a new one under a hairline).
 function SwitcherPick({ switcher }: { switcher: Switcher }) {
 	const [open, setOpen] = useState(false);
-	const current = flatten(switcher.options).find(
-		(option) => option.value === switcher.value,
-	);
+	const groups = useOptionGroups(switcher.options);
+	const current = groups.flat.find((option) => option.value === switcher.value);
 	const name = current?.label ?? switcher.label;
 	return (
 		<>
@@ -200,7 +190,7 @@ function SwitcherPick({ switcher }: { switcher: Switcher }) {
 			</Pressable>
 			<PickSheet
 				title={switcher.label}
-				options={switcher.options}
+				groups={groups}
 				value={switcher.value}
 				onChange={switcher.onChange}
 				act={switcher.act}

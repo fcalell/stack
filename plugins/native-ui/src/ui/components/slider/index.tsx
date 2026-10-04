@@ -51,7 +51,8 @@ export function Slider({
 }: SliderProps) {
 	const disabled = useContext(FieldDisabled);
 	const [pressed, setPressed] = useState(false);
-	const [width, setWidth] = useState(0);
+	// The track's width, which only a touch reads, so its layout renders nothing.
+	const width = useRef(0);
 	const thumb = useResolveClassNames(SLIDER_THUMB).width;
 	const quantum = step ?? 1;
 
@@ -63,7 +64,7 @@ export function Slider({
 	// travels the track less its own width; a touch maps through the same span.
 	function pick(x: number): void {
 		const size = typeof thumb === "number" ? thumb : 0;
-		const span = width - size;
+		const span = width.current - size;
 		if (span <= 0) return;
 		const ratio = Math.min(Math.max((x - size / 2) / span, 0), 1);
 		onChange(settle(min + ratio * (max - min)));
@@ -131,7 +132,9 @@ export function Slider({
 				accessibilityActions={[{ name: "increment" }, { name: "decrement" }]}
 				onAccessibilityAction={disabled ? undefined : adjust}
 				pointerEvents="box-only"
-				onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
+				onLayout={(event) => {
+					width.current = event.nativeEvent.layout.width;
+				}}
 				className={cn(SLIDER_TRACK, "flex-row items-center")}
 				{...responder.panHandlers}
 			>

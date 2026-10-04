@@ -14,6 +14,7 @@ import {
 } from "@fcalell/ui-core/variants";
 import { use } from "react";
 import type { Closed } from "../../lib/closed.ts";
+import { spacing } from "../../lib/media.ts";
 import { PortalContainer } from "../../lib/portal.ts";
 import { Icon } from "../icon/index.tsx";
 import { BOX, BOX_DISABLED, BOX_HOVER } from "../input/index.tsx";
@@ -57,16 +58,6 @@ function groupsOf<V extends string | null>(
 		return [{ options: options as readonly Option<V>[] }];
 	}
 	return options as readonly OptionGroup<V>[];
-}
-
-// The list sits one `pair` below the trigger, the gap a label keeps over its
-// field; the role is read off the root so it follows the density.
-function pairOffset(): number {
-	return Number.parseFloat(
-		getComputedStyle(document.documentElement).getPropertyValue(
-			"--spacing-pair",
-		),
-	);
 }
 
 /** The field box showing the chosen label and a chevron; it opens a popover of rows under group labels, the highlighted row washed and the chosen one ticked. Base UI supplies the listbox, its keyboard and its typeahead. */
@@ -129,7 +120,9 @@ export function Select<V extends string | null = string>({
 				<Control.Positioner
 					className={POSITIONER}
 					alignItemWithTrigger={false}
-					sideOffset={pairOffset}
+					// The list sits one `pair` below the trigger, the gap a label keeps
+					// over its field.
+					sideOffset={() => spacing("pair")}
 				>
 					<Control.Popup className={cn(POPOVER, POPUP)}>
 						{groups.map((group, at) => (

@@ -716,12 +716,14 @@ a tick with no animation, never jumped to full.
   commit late, and a dismissed decision's content stood a frame in the next one's sheet), and a
   reset on close (the name emptied and the act turned blocked while the sheet left).
   A pick's sheet holds the same rule. On the web its rows, the search with them, are a component
-  inside the sheet's popup, which Base UI removes once the leave has played, so the search and the
-  option last focused die with the sheet however it closes (a pick, the act, the scrim, Escape),
-  and the sheet hands Base UI's `initialFocus` the options' tab stop by ref. On the phone the
-  search stands in the sheet's head, apart from the rows, so it clears as the sheet opens. A
-  cell's pick ends its edit once its list has left, never in the handler that closes it: on the
-  web from Base UI's `onOpenChangeComplete(false)` (the sheet, the desktop list and its search
+  inside the sheet's popup, which Base UI removes once the leave has played, so the search dies
+  with the sheet however it closes (a pick, the act, the scrim, Escape). The options' one tab stop
+  starts on the chosen option, which the sheet hands Base UI's `initialFocus` by ref, and follows
+  focus in the DOM, so an arrow key re-renders no option. On the phone the search stands in the
+  sheet's head, apart from the rows, so it clears as the sheet opens; the options' groups derive
+  once per options identity, shared by the trigger and its sheet, and the filter runs once per
+  search. A cell's pick ends its edit once its list has left, never in the handler that closes
+  it: on the web from Base UI's `onOpenChangeComplete(false)` (the sheet, the desktop list and its search
   alike), on the phone from gorhom's `onDismiss`. A Picker latches its form (the desktop list or
   its search, the sheet's search field) while open: the options' count picks it only while the
   list is closed, so data crossing six never tears down an open list and its focus. Rejected:

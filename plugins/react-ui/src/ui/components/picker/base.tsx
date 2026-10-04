@@ -30,6 +30,7 @@ import {
 } from "@fcalell/ui-core/variants";
 import {
 	type ComponentProps,
+	type FocusEvent,
 	type ReactElement,
 	type ReactNode,
 	type RefObject,
@@ -635,6 +636,15 @@ function PickSearch<V extends string | null>(
 
 const moveFocus = arrowsOver("option");
 
+// The listbox's one tab stop moves to the option focus reaches.
+function rove(event: FocusEvent<HTMLElement>): void {
+	if (event.target.getAttribute("role") !== "option") return;
+	for (const option of event.currentTarget.querySelectorAll<HTMLElement>(
+		'[role="option"]',
+	))
+		option.tabIndex = option === event.target ? 0 : -1;
+}
+
 type SheetParts<V extends string | null> = PickParts<V> & {
 	value: V | undefined;
 	searching: boolean;
@@ -677,16 +687,15 @@ function PickSheet<V extends string | null>(props: SheetParts<V>) {
 	);
 }
 
-// The sheet's rows hold the search and the option last focused, so both
-// leave with the sheet however it closes (a pick, the act, the scrim,
-// Escape) and the next open starts from every option.
+// The sheet's rows hold the search, so it leaves with the sheet however it
+// closes (a pick, the act, the scrim, Escape) and the next open starts from
+// every option.
 function PickRows<V extends string | null>(
 	props: Omit<SheetParts<V>, "open" | "trigger"> & {
 		first: RefObject<HTMLButtonElement | null>;
 	},
 ) {
 	const [search, setSearch] = useState("");
-	const [focused, setFocused] = useState<V>();
 	const typed = search.trim().toLowerCase();
 	const shown = props.groups
 		.map((group) => ({
@@ -696,12 +705,14 @@ function PickRows<V extends string | null>(
 			),
 		}))
 		.filter((group) => group.items.length > 0);
-	// The options are one tab stop that the arrows move: the option last
-	// focused, else the chosen one, else the first.
+	// The options are one tab stop that the arrows move: it starts on the chosen
+	// one, else the first, and follows focus in the DOM, so a move re-renders
+	// no option.
 	const values = shown.flatMap((group) => group.items.map((o) => o.value));
 	const stop =
-		[focused, props.value].find((v) => v !== undefined && values.includes(v)) ??
-		values[0];
+		props.value !== undefined && values.includes(props.value)
+			? props.value
+			: values[0];
 	return (
 		<div className={SHEET_ROWS}>
 			{props.searching ? (
@@ -713,6 +724,7 @@ function PickRows<V extends string | null>(
 				role="listbox"
 				aria-label={props.label}
 				onKeyDown={moveFocus}
+				onFocus={rove}
 				className={LISTBOX}
 			>
 				{shown.map((group, at) => (
@@ -734,7 +746,6 @@ function PickRows<V extends string | null>(
 									role="option"
 									aria-selected={chosen}
 									tabIndex={stands ? 0 : -1}
-									onFocus={() => setFocused(option.value)}
 									onClick={() => props.pick(option.value)}
 									className={cn(
 										optionRow(option, "group", props.chip),

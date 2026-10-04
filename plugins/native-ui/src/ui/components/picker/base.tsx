@@ -17,7 +17,7 @@ import { Chip } from "../chip";
 import { Icon } from "../icon";
 import { Status } from "../status";
 import type { PickerProps } from "./index";
-import { groupsOf, PickSheet } from "./sheet";
+import { PickSheet, useOptionGroups } from "./sheet";
 
 // A field-fit trigger is the field box at the bar fit; in a table cell it
 // fills the cell it stands in for.
@@ -56,9 +56,8 @@ export function PickerBase<V extends string | null = string>({
 	// its leave played, ends the edit.
 	const cell = useContext(CellField);
 	const [open, setOpen] = useState(cell !== undefined);
-	const current = groupsOf(options)
-		.flatMap((group) => group.items)
-		.find((option) => option.value === value);
+	const groups = useOptionGroups(options);
+	const current = groups.flat.find((option) => option.value === value);
 	const status = current?.status ? (
 		<Status state={current.status} label={current.label} />
 	) : null;
@@ -133,7 +132,7 @@ export function PickerBase<V extends string | null = string>({
 			</Pressable>
 			<PickSheet
 				title={label}
-				options={options}
+				groups={groups}
 				value={value}
 				onChange={onChange}
 				open={open}

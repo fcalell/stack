@@ -10,7 +10,7 @@ import {
 	MESSAGE_NOTICE_TEXT,
 	text,
 } from "@fcalell/ui-core/variants";
-import { useRef } from "react";
+import { memo, useRef } from "react";
 import {
 	AccessibilityInfo,
 	Text as RNText,
@@ -65,6 +65,32 @@ export interface MessageInputProps extends Closed {
 	disabled?: boolean;
 }
 
+interface ChipHooks {
+	ref: (node: View | null) => void;
+	remove: () => void;
+}
+
+// An attachment's chip, which renders again only when its name or its
+// removability changes.
+const AttachmentChip = memo(function AttachmentChip({
+	name,
+	hooks,
+	removable,
+}: {
+	name: string;
+	hooks: ChipHooks;
+	removable: boolean;
+}) {
+	return (
+		<Chip
+			ref={hooks.ref}
+			family="neutral"
+			label={name}
+			onRemove={removable ? hooks.remove : undefined}
+		/>
+	);
+});
+
 // One row: the attach act, the field growing upward to eight lines (its
 // attachments over the text), Stop's icon act while an answer comes and
 // Send; the notice under it in the same columns, its sentence at the field's
@@ -92,13 +118,35 @@ export function MessageInput({
 	// Focus never drops to the screen: a removed chip hands the screen
 	// reader's focus to the next chip's remove, else the previous one's, else
 	// the text, without raising the keyboard.
-	const detach = (id: string, index: number) => {
+	const detach = (id: string) => {
 		const ids = attachments?.map((attachment) => attachment.id) ?? [];
+		const index = ids.indexOf(id);
 		const near = ids[index + 1] ?? ids[index - 1];
 		const next = near === undefined ? undefined : removes.current.get(near);
 		onDetach?.(id);
 		const to = next ?? textField.current;
 		if (to) AccessibilityInfo.sendAccessibilityEvent(to, "focus");
+	};
+	// One ref and one remove per attachment id, kept across renders, so a
+	// keystroke re-renders no chip; the remove reads the latest list.
+	const latest = useRef(detach);
+	latest.current = detach;
+	const hooks = useRef(new Map<string, ChipHooks>());
+	const hooksOf = (id: string): ChipHooks => {
+		const known = hooks.current.get(id);
+		if (known) return known;
+		const made: ChipHooks = {
+			ref: (node) => {
+				if (node) removes.current.set(id, node);
+				else {
+					removes.current.delete(id);
+					hooks.current.delete(id);
+				}
+			},
+			remove: () => latest.current(id),
+		};
+		hooks.current.set(id, made);
+		return made;
 	};
 	return (
 		<View className={cn(MESSAGE_INPUT, ROOT)}>
@@ -124,16 +172,12 @@ export function MessageInput({
 				>
 					{attachments && attachments.length > 0 ? (
 						<View className={cn(MESSAGE_INPUT_ROW, CHIPS)}>
-							{attachments.map((attachment, index) => (
-								<Chip
+							{attachments.map((attachment) => (
+								<AttachmentChip
 									key={attachment.id}
-									ref={(node: View | null) => {
-										if (node) removes.current.set(attachment.id, node);
-										else removes.current.delete(attachment.id);
-									}}
-									family="neutral"
-									label={attachment.name}
-									onRemove={onDetach && (() => detach(attachment.id, index))}
+									name={attachment.name}
+									hooks={hooksOf(attachment.id)}
+									removable={onDetach !== undefined}
 								/>
 							))}
 						</View>

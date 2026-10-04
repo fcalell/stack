@@ -1,6 +1,6 @@
 ---
 id: 005-21
-status: backlog
+status: review
 sessions: {}
 ---
 # react-ui, native-ui: Picker, Select, Slider and MessageInput keep per-render work out
@@ -28,3 +28,6 @@ through a stable per-id ref.
 ## Acceptance criteria
 - [ ] (live) web, members' role Select on touch at 375: an arrow key re-renders no option it did not move between (React profiler).
 - [ ] (live) phone, on the harness: typing in a MessageInput with chips re-renders no chip.
+
+## Progress
+Built; `pnpm check` and `pnpm verify` pass. Web live at 375 touch on a four-option pick sheet: arrow, End and Home keys each commit nothing and render no option (master: one commit, four options), and the tab stop moves correctly. Open: the phone live criterion on the harness.

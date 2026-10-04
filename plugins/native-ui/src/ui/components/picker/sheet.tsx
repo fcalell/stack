@@ -14,7 +14,7 @@ import {
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import { cn } from "../../lib/cn";
 import { Ink } from "../../lib/ink";
@@ -53,7 +53,7 @@ interface Grouped<V extends string | null> {
 	items: readonly Option<V>[];
 }
 
-export function groupsOf<V extends string | null>(
+function groupsOf<V extends string | null>(
 	options: PickOptions<V>,
 ): Grouped<V>[] {
 	const first = options[0];
@@ -63,6 +63,22 @@ export function groupsOf<V extends string | null>(
 		label: group.label,
 		items: group.options,
 	}));
+}
+
+// Options under their groups and flat, derived once per options identity and
+// shared by a trigger and its sheet.
+export interface OptionGroups<V extends string | null> {
+	groups: Grouped<V>[];
+	flat: readonly Option<V>[];
+}
+
+export function useOptionGroups<V extends string | null>(
+	options: PickOptions<V>,
+): OptionGroups<V> {
+	return useMemo(() => {
+		const groups = groupsOf(options);
+		return { groups, flat: groups.flatMap((group) => group.items) };
+	}, [options]);
 }
 
 // A chip column's option draws as its chip alone, its description unsaid.
@@ -128,7 +144,7 @@ function OptionText({
 // Outside the package's exports.
 export function PickSheet<V extends string | null>({
 	title,
-	options,
+	groups: { groups, flat },
 	value,
 	onChange,
 	open,
@@ -138,7 +154,7 @@ export function PickSheet<V extends string | null>({
 	chip,
 }: {
 	title: string;
-	options: PickOptions<V>;
+	groups: OptionGroups<V>;
 	value: V | undefined;
 	onChange: (value: V) => void;
 	open: boolean;
@@ -156,17 +172,23 @@ export function PickSheet<V extends string | null>({
 		setWasOpen(open);
 		if (open) setSearch("");
 	}
-	const groups = groupsOf(options);
-	const searching = groups.flatMap((g) => g.items).length > SEARCH_PAST;
+	const searching = flat.length > SEARCH_PAST;
 	const typed = search.trim().toLowerCase();
-	const shown = groups
-		.map((group) => ({
-			...group,
-			items: group.items.filter((option) =>
-				option.label.toLowerCase().includes(typed),
-			),
-		}))
-		.filter((group) => group.items.length > 0);
+	// The filter runs only on a search, once per search and options.
+	const shown = useMemo(
+		() =>
+			typed === ""
+				? groups
+				: groups
+						.map((group) => ({
+							...group,
+							items: group.items.filter((option) =>
+								option.label.toLowerCase().includes(typed),
+							),
+						}))
+						.filter((group) => group.items.length > 0),
+		[groups, typed],
+	);
 	return (
 		<SheetBase
 			form="menu"
