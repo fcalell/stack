@@ -654,6 +654,13 @@ a tick with no animation, never jumped to full.
   its height and its bars' centres are a one-line setting row's at either density.
 - A Meter in a Group stands as its item at the card's inset (`METER_ITEM`, by `GroundContext`),
   the Group's hairline between; a set of them from data is a `List` taking `meter`, in the Group. A FileRow is selected at its `href`, as a ListRow is.
+- On the web every route reader shares the page's one `popstate` listener (`useRoute` in
+  `lib/navigate`). A List reads the route once and hands it to its rows through `ListedRoute`,
+  internal: a row's `useRoute` takes it from there and subscribes to nothing, and a ListRow or
+  FileRow standing alone subscribes itself. Rows are not memoised: a route change redraws the
+  List's rows, cheaper and plainer than serializing each row's props to skip it. On the phone a
+  Group keys each row's wrapper by the row's own key (`Children.toArray`'s, its place among the
+  children as written), so a conditional row appearing shifts no later row's state.
 - A FileRow carries at most one `ChipMark` (why the file is listed, or what its change is),
   standing between the path and the count lanes at its label's `measure-short` cap; the path
   takes the room the chip leaves, so the chip stays whole and the path yields: the chip is

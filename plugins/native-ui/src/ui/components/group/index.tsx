@@ -8,6 +8,7 @@ import {
 } from "@fcalell/ui-core/variants";
 import {
 	Children,
+	isValidElement,
 	type ReactNode,
 	useContext,
 	useLayoutEffect,
@@ -115,8 +116,14 @@ export function Group({ loading, children }: GroupProps) {
 				<GroupContext.Provider value={host}>
 					<GroundContext.Provider value="group">
 						{rows.map((row, index) => (
-							// biome-ignore lint/suspicious/noArrayIndexKey: rows are positional and never reorder
-							<View key={index} className={between(index)}>
+							// Each wrapper keeps its row's own key (`Children.toArray`
+							// keys a row by its place among the children as written,
+							// so a conditional row appearing shifts no later row's
+							// state); a keyless text stands at its index.
+							<View
+								key={isValidElement(row) && row.key !== null ? row.key : index}
+								className={between(index)}
+							>
 								{row}
 							</View>
 						))}

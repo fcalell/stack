@@ -1,20 +1,38 @@
-import { useSyncExternalStore } from "react";
+import { createContext, use, useSyncExternalStore } from "react";
 
 // react-ui has no seam to the app's router: a place is a plain link, the
 // current place is read off the location, and a route an act goes to is a
-// document load.
+// document load. The page holds one location listener, whatever reads the
+// route: every reader hears it through the set.
+const readers = new Set<() => void>();
+const hear = () => {
+	for (const reader of readers) reader();
+};
+
 function onLocation(notify: () => void): () => void {
-	addEventListener("popstate", notify);
-	return () => removeEventListener("popstate", notify);
+	if (readers.size === 0) addEventListener("popstate", hear);
+	readers.add(notify);
+	return () => {
+		readers.delete(notify);
+		if (readers.size === 0) removeEventListener("popstate", hear);
+	};
 }
+
+const unheard = () => () => {};
+
+// Set by a List around its rows: the route it read once, which each row
+// reads instead of subscribing on its own.
+export const ListedRoute = createContext<string | undefined>(undefined);
 
 // The current route: the location's path and its query.
 export function useRoute(): string {
-	return useSyncExternalStore(
-		onLocation,
+	const listed = use(ListedRoute);
+	const own = useSyncExternalStore(
+		listed === undefined ? onLocation : unheard,
 		() => location.pathname + location.search,
 		() => "/",
 	);
+	return listed ?? own;
 }
 
 export function navigate(route: string): void {

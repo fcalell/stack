@@ -23,6 +23,7 @@ import { type ReactNode, use } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { useGroupList } from "../../lib/group.ts";
 import { LoadingContext } from "../../lib/loading.ts";
+import { ListedRoute, useRoute } from "../../lib/navigate.ts";
 import {
 	useSectionCount,
 	useSectionRows,
@@ -188,6 +189,7 @@ export function List<T, V extends string | null = string>(
 	props: ListProps<T, V>,
 ) {
 	const words = useWords();
+	const at = useRoute();
 	const base = {
 		query: props.query,
 		items: props.items,
@@ -204,14 +206,18 @@ export function List<T, V extends string | null = string>(
 	const state = listState(input);
 	// In a Group the card is the rows' box: they stand in it directly, so its
 	// hairline falls once between them.
-	const frame = (rows: ReactNode) =>
-		ground === "group" ? (
-			rows
-		) : (
-			<div aria-busy={busy || undefined} className={cn(LIST, STACK)}>
-				{rows}
-			</div>
-		);
+	// The rows read the route the List read once, through `ListedRoute`.
+	const frame = (rows: ReactNode) => (
+		<ListedRoute value={at}>
+			{ground === "group" ? (
+				rows
+			) : (
+				<div aria-busy={busy || undefined} className={cn(LIST, STACK)}>
+					{rows}
+				</div>
+			)}
+		</ListedRoute>
+	);
 	if (state === "pending") {
 		return frame(
 			WAITING.map((index) => {
