@@ -18,6 +18,9 @@ import {
 	type BottomSheetFooterProps,
 	BottomSheetModal,
 	BottomSheetScrollView,
+	INITIAL_LAYOUT_VALUE,
+	KEYBOARD_STATUS,
+	useBottomSheetInternal,
 } from "@gorhom/bottom-sheet";
 import {
 	createContext,
@@ -26,20 +29,24 @@ import {
 	useCallback,
 	useContext,
 	useEffect,
+	useLayoutEffect,
 	useMemo,
 	useRef,
 	useState,
+	useSyncExternalStore,
 } from "react";
 import { Text as RNText, useWindowDimensions, View } from "react-native";
+import { useAnimatedReaction } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { scheduleOnRN } from "react-native-worklets";
 import { useResolveClassNames, withUniwind } from "uniwind";
 import { cn } from "../../lib/cn";
 import { FieldNameContext } from "../../lib/field";
 import { FormStands } from "../../lib/form";
 import { timing } from "../../lib/motion";
 import { RaisedGround } from "../../lib/raised";
-import { ReasonHostContext } from "../../lib/reason";
-import { TouchedContext } from "../../lib/touched";
+import { type ReasonHost, ReasonHostContext } from "../../lib/reason";
+import { type Touched, TouchedContext } from "../../lib/touched";
 import { useWords } from "../../lib/words";
 import { ActionBar } from "../action-bar";
 import { Button } from "../button";
@@ -68,7 +75,7 @@ const ENTER = timing("slow", "out");
 const LEAVE = timing("base", "in");
 
 // The scrim under the sheet, its own fill at full opacity.
-const Scrim = withUniwind(BottomSheetBackdrop);
+const ScrimBase = withUniwind(BottomSheetBackdrop);
 
 // A TextArea inside asks the sheet for the full height.
 const GrowContext = createContext<(() => void) | undefined>(undefined);
@@ -77,16 +84,251 @@ export function useSheetGrow(): (() => void) | undefined {
 	return useContext(GrowContext);
 }
 
-function Layer({ children }: PropsWithChildren) {
-	return (
-		<View accessibilityViewIsModal pointerEvents="box-none" className={LAYER}>
-			{children}
-		</View>
-	);
+// What the head, the foot and the scrim draw. gorhom renders each slot as an
+// element type, so a new component identity remounts its tree (a typing
+// field in the head loses focus): the slots are module components reading
+// this, never closures.
+interface Parts {
+	title: string;
+	description?: string;
+	back?: () => void;
+	submit?: Act;
+	fit?: SheetFit;
+	foot?: string;
+	acts?: Act[];
+	above?: ReactNode;
+	busy?: boolean;
+	onClose: () => void;
+	// A blocked submit's reason once the sheet is touched or the submit pressed.
+	reason?: string;
+	host?: ReasonHost;
+	grow: () => void;
+	touched: Touched;
+	// The sheet's height cap, gorhom's `maxDynamicContentSize`.
+	cap: number;
+	setCapped: (capped: boolean) => void;
+	setFootHeight: (height: number) => void;
+}
+
+// One sheet's parts, which its layer reads: gorhom draws the layer in its
+// provider's host and pushes it only when the modal itself re-renders.
+interface PartsStore {
+	get: () => Parts;
+	set: (parts: Parts) => void;
+	subscribe: (listener: () => void) => () => void;
+}
+
+function partsStore(initial: Parts): PartsStore {
+	let current = initial;
+	const listeners = new Set<() => void>();
+	return {
+		get: () => current,
+		set: (parts) => {
+			current = parts;
+			for (const listener of listeners) listener();
+		},
+		subscribe: (listener) => {
+			listeners.add(listener);
+			return () => listeners.delete(listener);
+		},
+	};
+}
+
+const PartsContext = createContext<Parts | undefined>(undefined);
+
+function useParts(): Parts {
+	const parts = useContext(PartsContext);
+	if (!parts) throw new Error("A sheet's part is drawn outside its sheet.");
+	return parts;
+}
+
+// gorhom draws the sheet outside the tree that opens it, so the sheet's
+// contexts start at the container it draws everything in.
+function layerOf(store: PartsStore) {
+	return function Layer({ children }: PropsWithChildren) {
+		const parts = useSyncExternalStore(store.subscribe, store.get);
+		return (
+			<PartsContext.Provider value={parts}>
+				<GrowContext.Provider value={parts.grow}>
+					<FieldNameContext.Provider value={parts.title}>
+						<TouchedContext.Provider value={parts.touched}>
+							<FormStands.Provider value="sheet">
+								<View
+									accessibilityViewIsModal
+									pointerEvents="box-none"
+									className={LAYER}
+								>
+									{children}
+								</View>
+							</FormStands.Provider>
+						</TouchedContext.Provider>
+					</FieldNameContext.Provider>
+				</GrowContext.Provider>
+			</PartsContext.Provider>
+		);
+	};
 }
 
 function Ground({ style }: BottomSheetBackgroundProps) {
 	return <View pointerEvents="none" style={style} className={SHEET} />;
+}
+
+function Scrim(props: BottomSheetBackdropProps) {
+	const { busy } = useParts();
+	return (
+		<ScrimBase
+			{...props}
+			className={SCRIM}
+			opacity={1}
+			appearsOnIndex={0}
+			disappearsOnIndex={-1}
+			pressBehavior={busy ? "none" : "close"}
+		/>
+	);
+}
+
+function Head() {
+	const words = useWords();
+	const {
+		back,
+		acts,
+		onClose,
+		busy,
+		fit,
+		title,
+		submit,
+		host,
+		description,
+		reason,
+		above,
+	} = useParts();
+	return (
+		<RaisedGround>
+			<View className={SHEET_HEAD}>
+				<View className={cn(SHEET_HEAD_ROW, HEAD_ROW)}>
+					{back ? (
+						<IconButton
+							icon="ChevronLeft"
+							fit="body"
+							label={words.back}
+							onAct={back}
+						/>
+					) : null}
+					{back || acts ? null : (
+						<IconButtonBase
+							icon="X"
+							fit="body"
+							label={words.close}
+							onAct={onClose}
+							disabled={busy}
+						/>
+					)}
+					<View className={TITLE_BLOCK}>
+						<View accessibilityRole="header" className={TITLE_SLOT}>
+							<RNText
+								numberOfLines={1}
+								className={cn(
+									fit === "pane"
+										? cn(text({ role: "body" }), textStrong({ role: "body" }))
+										: text({ role: "heading" }),
+									TITLE,
+								)}
+							>
+								{title}
+							</RNText>
+						</View>
+					</View>
+					{submit ? (
+						<ReasonHostContext.Provider value={host}>
+							<Button
+								fit="bar"
+								label={submit.label}
+								onAct={() => void submit.onAct()}
+								loading={submit.loading}
+								blocked={submit.blocked}
+							/>
+						</ReasonHostContext.Provider>
+					) : null}
+				</View>
+				{description ? (
+					<RNText className={text({ role: "meta" })}>{description}</RNText>
+				) : null}
+				{reason ? (
+					<RNText className={cn(text({ role: "meta" }), REASON)}>
+						{reason}
+					</RNText>
+				) : null}
+			</View>
+			{above}
+		</RaisedGround>
+	);
+}
+
+// The foot's line over a decision's acts, at the content's end or held by
+// gorhom's footer; either place reports its height.
+function Foot() {
+	const { foot, acts, setFootHeight } = useParts();
+	const insets = useSafeAreaInsets();
+	const { paddingBottom } = useResolveClassNames(FOOT_END);
+	const footEnd = typeof paddingBottom === "number" ? paddingBottom : 0;
+	return (
+		<View
+			onLayout={(event) => setFootHeight(event.nativeEvent.layout.height)}
+			style={{ paddingBottom: footEnd + insets.bottom }}
+			className={SHEET_FOOT}
+		>
+			{foot ? (
+				<View className={FOOT_LINE}>
+					<RNText className={text({ role: "meta" })}>{foot}</RNText>
+				</View>
+			) : null}
+			{acts ? <ActionBar acts={acts} /> : null}
+		</View>
+	);
+}
+
+function Footer(props: BottomSheetFooterProps) {
+	return (
+		<BottomSheetFooter {...props}>
+			<RaisedGround>
+				<Foot />
+			</RaisedGround>
+		</BottomSheetFooter>
+	);
+}
+
+// Whether the content scrolls, read off gorhom's own layout: the head and
+// the content at the height cap, or, with the keyboard up, taller than the
+// room left over it, where gorhom clips the content.
+function Fits() {
+	const { cap, setCapped } = useParts();
+	const { animatedLayoutState, animatedKeyboardState } =
+		useBottomSheetInternal();
+	useAnimatedReaction(
+		() => {
+			const { containerHeight, handleHeight, contentHeight } =
+				animatedLayoutState.get();
+			if (
+				containerHeight === INITIAL_LAYOUT_VALUE ||
+				handleHeight === INITIAL_LAYOUT_VALUE ||
+				contentHeight === INITIAL_LAYOUT_VALUE
+			)
+				return undefined;
+			const keyboard = animatedKeyboardState.get();
+			const covered =
+				keyboard.status === KEYBOARD_STATUS.SHOWN
+					? keyboard.heightWithinContainer
+					: 0;
+			const sheet = handleHeight + contentHeight;
+			return sheet >= cap || sheet + covered > containerHeight;
+		},
+		(capped, previous) => {
+			if (capped !== undefined && capped !== previous)
+				scheduleOnRN(setCapped, capped);
+		},
+		[cap, setCapped],
+	);
+	return null;
 }
 
 /** What every sheet draws: the public `Sheet`, the confirm, a `Menu` and the Picker's options. Outside the package's exports. */
@@ -115,11 +357,12 @@ export interface SheetBaseProps {
 // (the close act, or back on a second page, or neither for a decision, whose
 // acts dismiss it, the title and the submit at its
 // end where a keyboard would cover a bar, the description under them and a
-// blocked submit's reason under the head), the body scrolling under it, and
-// the foot fixed at the bottom (its line over a decision's acts). Native
-// draws the phone at every width, so `fit` picks only the pane's title. The
-// title names a typing control inside that no `FormField` labels. A new
-// `title` or `description` is a new page, which has taken no input.
+// blocked submit's reason under the head), the body under it, and the foot
+// (its line over a decision's acts) at the body's end, or fixed at the
+// bottom once the body scrolls. Native draws the phone at every width, so
+// `fit` picks only the pane's title. The title names a typing control
+// inside that no `FormField` labels. A new `title` or `description` is a new
+// page, which has taken no input.
 export function SheetBase({
 	open,
 	onClose,
@@ -135,11 +378,8 @@ export function SheetBase({
 	busy,
 	children,
 }: SheetBaseProps) {
-	const words = useWords();
 	const insets = useSafeAreaInsets();
 	const { height } = useWindowDimensions();
-	const { paddingBottom } = useResolveClassNames(FOOT_END);
-	const footEnd = typeof paddingBottom === "number" ? paddingBottom : 0;
 	const ref = useRef<BottomSheetModal>(null);
 	const [tall, setTall] = useState(false);
 	const [settled, setSettled] = useState(false);
@@ -157,6 +397,15 @@ export function SheetBase({
 		setTouched(false);
 		setPressed(false);
 	}
+	// gorhom sizes a sheet to its content once it has measured the content
+	// and the head; a footer it measures after them sizes it a second time.
+	// So the foot stands at the content's end, measured with it, and moves to
+	// gorhom's footer only where the content scrolls: a full-height sheet, or
+	// content gorhom caps, which keeps the foot's height as its end inset so
+	// the content's height holds.
+	const [capped, setCapped] = useState(false);
+	const [footHeight, setFootHeight] = useState(0);
+	const cap = height - insets.top;
 	// Whether gorhom holds the sheet, from `present()` to its `onDismiss`.
 	// A `dismiss()` while it holds none marks the modal dismissing for good,
 	// and every later `present()` then draws nothing.
@@ -180,139 +429,35 @@ export function SheetBase({
 		() => (blocked ? { press: () => setPressed(true) } : undefined),
 		[blocked],
 	);
-	// gorhom draws the head, the body and the foot as three trees, so each
-	// carries the sheet's contexts and its raised ground.
-	const within = useCallback(
-		(node: ReactNode) => (
-			<RaisedGround>
-				<GrowContext.Provider value={grow}>
-					<FieldNameContext.Provider value={title}>
-						<TouchedContext.Provider value={touchedValue}>
-							<FormStands.Provider value="sheet">{node}</FormStands.Provider>
-						</TouchedContext.Provider>
-					</FieldNameContext.Provider>
-				</GrowContext.Provider>
-			</RaisedGround>
-		),
-		[grow, title, touchedValue],
-	);
-	const scrim = useCallback(
-		(props: BottomSheetBackdropProps) => (
-			<Scrim
-				{...props}
-				className={SCRIM}
-				opacity={1}
-				appearsOnIndex={0}
-				disappearsOnIndex={-1}
-				pressBehavior={busy ? "none" : "close"}
-			/>
-		),
-		[busy],
-	);
-	const head = useCallback(
-		() =>
-			within(
-				<>
-					<View className={SHEET_HEAD}>
-						<View className={cn(SHEET_HEAD_ROW, HEAD_ROW)}>
-							{back ? (
-								<IconButton
-									icon="ChevronLeft"
-									fit="body"
-									label={words.back}
-									onAct={back}
-								/>
-							) : null}
-							{back || acts ? null : (
-								<IconButtonBase
-									icon="X"
-									fit="body"
-									label={words.close}
-									onAct={onClose}
-									disabled={busy}
-								/>
-							)}
-							<View className={TITLE_BLOCK}>
-								<View accessibilityRole="header" className={TITLE_SLOT}>
-									<RNText
-										numberOfLines={1}
-										className={cn(
-											fit === "pane"
-												? cn(
-														text({ role: "body" }),
-														textStrong({ role: "body" }),
-													)
-												: text({ role: "heading" }),
-											TITLE,
-										)}
-									>
-										{title}
-									</RNText>
-								</View>
-							</View>
-							{submit ? (
-								<ReasonHostContext.Provider value={host}>
-									<Button
-										fit="bar"
-										label={submit.label}
-										onAct={() => void submit.onAct()}
-										loading={submit.loading}
-										blocked={submit.blocked}
-									/>
-								</ReasonHostContext.Provider>
-							) : null}
-						</View>
-						{description ? (
-							<RNText className={text({ role: "meta" })}>{description}</RNText>
-						) : null}
-						{blocked && (pressed || touched) ? (
-							<RNText className={cn(text({ role: "meta" }), REASON)}>
-								{submit?.blocked}
-							</RNText>
-						) : null}
-					</View>
-					{above}
-				</>,
-			),
-		[
-			within,
-			back,
-			acts,
-			words,
-			onClose,
-			busy,
-			fit,
-			title,
-			submit,
-			host,
-			description,
-			blocked,
-			pressed,
-			touched,
-			above,
-		],
-	);
+	const parts: Parts = {
+		title,
+		description,
+		back,
+		submit,
+		fit,
+		foot,
+		acts,
+		above,
+		busy,
+		onClose,
+		reason: blocked && (pressed || touched) ? submit?.blocked : undefined,
+		host,
+		grow,
+		touched: touchedValue,
+		cap,
+		setCapped,
+		setFootHeight,
+	};
+	const [{ store, Layer }] = useState(() => {
+		const created = partsStore(parts);
+		return { store: created, Layer: layerOf(created) };
+	});
+	useLayoutEffect(() => store.set(parts));
 	const footed = form !== "menu" && (foot !== undefined || acts !== undefined);
-	const footer = useCallback(
-		(props: BottomSheetFooterProps) => (
-			<BottomSheetFooter {...props}>
-				{within(
-					<View
-						style={{ paddingBottom: footEnd + insets.bottom }}
-						className={SHEET_FOOT}
-					>
-						{foot ? (
-							<View className={FOOT_LINE}>
-								<RNText className={text({ role: "meta" })}>{foot}</RNText>
-							</View>
-						) : null}
-						{acts ? <ActionBar acts={acts} /> : null}
-					</View>,
-				)}
-			</BottomSheetFooter>
-		),
-		[within, footEnd, insets.bottom, foot, acts],
-	);
+	const fixed = footed && (tall || capped);
+	let end: { paddingBottom: number } | undefined;
+	if (!footed) end = { paddingBottom: insets.bottom };
+	else if (fixed && !tall) end = { paddingBottom: footHeight };
 	let body: ReactNode = null;
 	if (form === "menu") body = children;
 	else if (children)
@@ -320,6 +465,8 @@ export function SheetBase({
 	return (
 		<BottomSheetModal
 			ref={ref}
+			// Every sheet reaches the screen under reduced motion through this
+			// commit; the mechanism is undiagnosed.
 			onChange={(index) => setSettled(index >= 0)}
 			onDismiss={() => {
 				held.current = false;
@@ -328,22 +475,25 @@ export function SheetBase({
 			containerComponent={Layer}
 			accessible={false}
 			backgroundComponent={Ground}
-			backdropComponent={scrim}
-			handleComponent={head}
-			footerComponent={footed ? footer : undefined}
+			backdropComponent={Scrim}
+			handleComponent={Head}
+			footerComponent={fixed ? Footer : undefined}
 			enablePanDownToClose={!busy}
 			enableDynamicSizing={!tall}
-			maxDynamicContentSize={height - insets.top}
+			maxDynamicContentSize={cap}
 			snapPoints={snapPoints}
 			animationConfigs={settled ? LEAVE : ENTER}
 		>
 			<BottomSheetScrollView
-				enableFooterMarginAdjustment={footed}
-				contentContainerStyle={
-					footed ? undefined : { paddingBottom: insets.bottom }
-				}
+				enableFooterMarginAdjustment={fixed && tall}
+				keyboardShouldPersistTaps="handled"
+				contentContainerStyle={end}
 			>
-				{within(body)}
+				<RaisedGround>
+					{body}
+					{footed && !fixed ? <Foot /> : null}
+					{footed && !tall ? <Fits /> : null}
+				</RaisedGround>
 			</BottomSheetScrollView>
 		</BottomSheetModal>
 	);

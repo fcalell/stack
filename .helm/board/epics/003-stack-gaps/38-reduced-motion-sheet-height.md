@@ -1,9 +1,9 @@
 ---
 id: 003-38
-status: backlog
+status: review
 sessions: {}
 ---
-# native-ui: under reduced motion a sheet sizes once and shows its acts
+# native-ui: a sheet sizes once, shows its acts under reduced motion and rises above the keyboard
 
 ## Goal
 With the system's reduced motion on, the `confirm()` sheet first sizes to its head and body, then
@@ -13,16 +13,24 @@ but the view stays at 775.8, so Delete and Cancel sit off the screen (5 of 5 run
 set at once reaches the screen only on the next React commit, and today every sheet reaches the
 screen only because `SheetBase`'s `onChange` commits. Found during 003-35.
 
+The sheet also rises above the keyboard: focusing the Notes sheet's Title field opened the
+keyboard over the sheet, covering its field and acts.
+
 ## Approach
 Decided by fcalell (2026-10-04): fix it in `SheetBase`'s structure, at no runtime cost; no feature
 flag change, no upstream report. A sheet whose content cannot scroll (a `confirm()`, a short form)
 holds its acts in the measured content, so dynamic sizing measures once; gorhom's sticky footer
-stays only where the content can scroll (tall sheets, or a sheet at its height cap). Prove it on
-the harness under reduced motion, and that menu and form sheets open without relying on the
-`onChange` commit. The flag may be turned off in a local build as a diagnostic only.
+stays only where the content can scroll (tall sheets, a sheet at its height cap, or content the
+keyboard covers). Why every sheet reaches the screen only through `onChange`'s commit is out of
+this story: it is a finding in `.helm/research/render-smells.md`.
 
 ## Acceptance criteria
 - [ ] (live) under reduced motion, a `confirm()` and the Notes sheet show their acts on the emulator, light and dark, at 390 and 320 dp.
+- [ ] (live) with the keyboard open, the sheet's focused field and its submit stand above it, at 390 and 320 dp.
 
 ## Progress
-WIP on branch `wip/003-38-sheet-sizes-once` (commit 67083b3). Done: the foot and a decision's acts sit in the measured content, so the sheet sizes once (confirm shows its acts under reduced motion, 5 of 5 on the harness); gorhom's sticky footer stays for tall or capped sheets; Head, Footer, Scrim and Foot are stable module components fed by a per-instance store read with useSyncExternalStore (fixes a Picker search losing focus); keyboardShouldPersistTaps is handled. Open: every sheet still reaches the screen only through SheetBase's onChange commit, mechanism undiagnosed. A review read Reanimated 4.4.1's source: a deferred frame flushes right after the paused commit mounts, and FORCE_REACT_RENDER_FOR_SETTLED_ANIMATIONS would re-sync a stored value, so the value likely never reaches the registry or is reverted (propsToRevert, performNonLayoutOperations). Next: diagnose with local builds only (DISABLE_COMMIT_PAUSING_MECHANISM, then FORCE_REACT_RENDER_FOR_SETTLED_ANIMATIONS off) and a reduced-motion case resizing an open sheet; count the sheet capped while the keyboard covers it; re-measure the foot when it changes while capped; the onChange comment states only the observed fact. Unverified live after the store and keyboard edits.
+Built and `pnpm check` passes: the foot and a decision's acts sit in the measured content, so the
+sheet sizes once (confirm showed its acts under reduced motion, 5 of 5 on the harness, before the
+stable-slot and keyboard edits); Head, Footer, Scrim and Foot are stable module components fed by
+a per-instance store; a sheet the keyboard covers moves its foot to gorhom's footer. Open: both
+live criteria on the harness (x86_64 Linux).
