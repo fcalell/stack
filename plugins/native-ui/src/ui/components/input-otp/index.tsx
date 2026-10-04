@@ -1,9 +1,9 @@
 import { OTP, OTP_DIGIT, otpBox, text } from "@fcalell/ui-core/variants";
-import { useContext, useEffect, useRef } from "react";
+import { useContext } from "react";
 import { Text as RNText, TextInput, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import { FieldError, useFieldName } from "../../lib/field";
+import { FieldError, FieldFocus, useFieldName } from "../../lib/field";
 import { useTouched } from "../../lib/touched";
 import { useWords } from "../../lib/words";
 import { Spinner } from "../spinner";
@@ -20,8 +20,8 @@ export interface InputOtpProps extends Closed {
 // `otp` side and shrinking together, square, on a narrow row. One real input
 // lies over the boxes, invisible, so a tap anywhere focuses it and the
 // system's code suggestion and a paste of the whole code fill it at once; the
-// boxes draw it. It takes focus when it is drawn unless another input holds
-// it, so the code step a sent code opens is typed into at once. `onComplete`
+// boxes draw it. It takes focus as it mounts where `FieldFocus` asks, as an
+// `Input` does, so a code sheet is typed into at once. `onComplete`
 // hears the code once its last digit lands; `loading` holds the boxes at rest
 // while the code is checked, the input inert (unwritable and marked
 // disabled, still read) and the row busy, the spinner and its line under it.
@@ -36,10 +36,7 @@ export function InputOtp({
 	const { touch } = useTouched();
 	const name = useFieldName();
 	const error = useContext(FieldError);
-	const input = useRef<TextInput>(null);
-	useEffect(() => {
-		if (!TextInput.State.currentlyFocusedInput()) input.current?.focus();
-	}, []);
+	const focused = useContext(FieldFocus);
 	return (
 		<View className="gap-pair">
 			<View
@@ -63,7 +60,7 @@ export function InputOtp({
 				<TextInput
 					accessibilityLabel={name}
 					accessibilityState={{ disabled: loading, busy: loading }}
-					ref={input}
+					autoFocus={focused}
 					value={value}
 					onChangeText={(raw) => {
 						const next = raw.replace(/\D/g, "").slice(0, length);

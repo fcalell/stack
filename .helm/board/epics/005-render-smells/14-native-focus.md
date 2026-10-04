@@ -1,6 +1,6 @@
 ---
 id: 005-14
-status: backlog
+status: review
 sessions: {}
 ---
 # native-ui: an InputOtp and a MessageInput hold focus by mount and by touch handling
@@ -27,3 +27,6 @@ Decided (the recommended answer, applied 2026-10-04): phone only; the web Messag
 ## Acceptance criteria
 - [ ] (live) on the harness, a sheet holding an `InputOtp` (added to `apps/phone`, which holds none): the keyboard rises with the sheet's first frame.
 - [ ] (live) on the harness, in 03's conversation: Send and Stop leave the keyboard up with no flicker, recorded frame by frame.
+
+## Progress
+Built; `pnpm check` and `pnpm verify` pass. Decided (the answer that adds no public surface): an InputOtp focuses at mount only through `FieldFocus`, as on the web. Every Place, Screen and Split scroll keeps taps (`keyboardShouldPersistTaps="handled"`), so an act tapped inside one no longer dismisses the keyboard first. Open: the phone live criteria on the harness.

@@ -18,7 +18,7 @@ export const FieldDisabled = createContext(false);
 // control's box draws `edge-error`.
 export const FieldError = createContext(false);
 
-// Set around the field a sheet opens on (a confirm's typed name): the
+// Set around the field a sheet opens on (a confirm's typed name, a code): the
 // control takes focus as it mounts.
 export const FieldFocus = createContext(false);
 

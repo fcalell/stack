@@ -494,6 +494,14 @@ a tick with no animation, never jumped to full.
   touch, so the touch field gives up only a compact square. Lucide draws no filled stop square,
   and a bare `Square` beside the field reads as an unchecked box. What becomes of a message sent while
   an answer runs is the consumer's sentence in `notice`; the input takes no prop for it.
+  On native, Send and Stop never touch focus: the keyboard stays up because no tap takes it, the
+  Place and Screen scroll (`Scroll` in `lib/hosts`) keeping taps on its acts
+  (`keyboardShouldPersistTaps="handled"`) and a docked foot standing outside any scroll. The web
+  input refocuses its text after Send and Stop, which is keyboard focus management there. A
+  removed chip hands the screen reader's focus on (`sendAccessibilityEvent`), never the keyboard.
+- Focus at mount is declarative on native: a typing control (`Input`, `InputOtp`) takes
+  `autoFocus` from `FieldFocus`, which the caller that knows no other field holds focus sets (a
+  confirm's typed name), never a mount effect reading the focused input.
 - What an agent made or did stands in a thread as a system Message's `detail` (`MessageDetail`,
   exactly one of three, the others typed `?: never`): `row`, one `ListRow` on the group ground in
   a hairline card on the surface (`MESSAGE_CARD`), its slots the row's (the kind leads as the

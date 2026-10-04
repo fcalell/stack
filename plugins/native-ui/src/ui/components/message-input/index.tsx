@@ -87,27 +87,18 @@ export function MessageInput({
 	const placeholderInk = useTokenColor("--color-ink-meta");
 	const textField = useRef<TextInput>(null);
 	const sendable = value.trim() !== "" && !disabled;
-	// The keyboard stays on the text after Send and Stop.
-	const send = () => {
-		onSend();
-		textField.current?.focus();
-	};
-	const stop = () => {
-		onStop?.();
-		textField.current?.focus();
-	};
 	// Each chip's remove act, by attachment id.
 	const removes = useRef(new Map<string, View>());
 	// Focus never drops to the screen: a removed chip hands the screen
 	// reader's focus to the next chip's remove, else the previous one's, else
-	// the text.
+	// the text, without raising the keyboard.
 	const detach = (id: string, index: number) => {
 		const ids = attachments?.map((attachment) => attachment.id) ?? [];
 		const near = ids[index + 1] ?? ids[index - 1];
 		const next = near === undefined ? undefined : removes.current.get(near);
 		onDetach?.(id);
-		if (next) AccessibilityInfo.sendAccessibilityEvent(next, "focus");
-		else textField.current?.focus();
+		const to = next ?? textField.current;
+		if (to) AccessibilityInfo.sendAccessibilityEvent(to, "focus");
 	};
 	return (
 		<View className={cn(MESSAGE_INPUT, ROOT)}>
@@ -172,12 +163,12 @@ export function MessageInput({
 						icon="CircleStop"
 						fit="bar"
 						label={words.stop}
-						onAct={stop}
+						onAct={() => onStop?.()}
 						disabled={!onStop}
 					/>
 				) : null}
 				<ActInert.Provider value={!sendable}>
-					<Button act="primary" fit="bar" label={words.send} onAct={send} />
+					<Button act="primary" fit="bar" label={words.send} onAct={onSend} />
 				</ActInert.Provider>
 			</View>
 			{notice ? (
