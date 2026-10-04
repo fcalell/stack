@@ -1,4 +1,4 @@
-import type { IconName } from "@fcalell/ui-core/descriptors";
+import type { ChipMark, IconName } from "@fcalell/ui-core/descriptors";
 import { filled, MONO_ADVANCE } from "@fcalell/ui-core/tokens";
 import {
 	FILE_COUNTS,
@@ -17,6 +17,7 @@ import { GroundContext } from "../../lib/ground";
 import { Ink } from "../../lib/ink";
 import { isCurrent, navigate, usePathname } from "../../lib/navigate";
 import { useWords } from "../../lib/words";
+import { Chip } from "../chip";
 import { Icon } from "../icon";
 import { FileWait } from "./wait";
 
@@ -28,6 +29,8 @@ const HIT = "absolute inset-0 active:bg-wash-press";
 const LEADING = "shrink-0 items-center justify-center";
 const PATH = "flex-1 flex-row min-w-0";
 const PART = "shrink-0";
+// The chip keeps its width, capped by its label's measure; the path yields.
+const CHIP = "shrink-0";
 const COUNTS = "flex-row shrink-0 items-center";
 const COUNT = "text-right";
 const ELLIPSIS = "…";
@@ -43,12 +46,15 @@ export interface FileRowProps extends Closed {
 	// Whether the reviewer has seen the file: a tick when seen, a ring when
 	// not; absent, the file glyph leads.
 	seen?: boolean;
+	// Why the file is listed or what its change is, a data value's chip
+	// between the path and the counts.
+	chip?: ChipMark;
 	// Where the row goes when opened; the row is selected at it.
 	href?: string;
 	// Opens the file.
 	onOpen?: () => void;
-	// The row waits: the glyph, the path's bar and the counts' bar stand in
-	// for it.
+	// The row waits: the glyph, the path's bar, the chip's bar when it has a
+	// chip, and the counts' bar stand in for it.
 	loading?: boolean;
 }
 
@@ -124,10 +130,11 @@ function Path({ path }: { path: string }) {
 }
 
 // A changed file: its seen mark leading, its path in mono (the directory in
-// the meta ink, the name at 500), its added and removed counts each in its
-// own lane. A row that opens is one hit, current (the selection wash) at its
-// `href`, named by the whole path, its counts and its seen state, the cut
-// text never read; it washes under the press.
+// the meta ink, the name at 500) cut to the room its chip leaves, its chip,
+// its added and removed counts each in its own lane. A row that opens is one
+// hit, current (the selection wash) at its `href`, named by the whole path,
+// its chip, its counts and its seen state, the cut text never read; it washes
+// under the press.
 // In a `Group` it runs edge to edge at the card's inset, elsewhere it is the
 // list's row, square on the phone.
 export function FileRow({
@@ -135,6 +142,7 @@ export function FileRow({
 	added,
 	removed,
 	seen,
+	chip,
 	href,
 	onOpen,
 	loading,
@@ -142,10 +150,11 @@ export function FileRow({
 	const words = useWords();
 	const ground = useContext(GroundContext);
 	const pathname = usePathname();
-	if (loading) return <FileWait busy />;
+	if (loading) return <FileWait busy chip={chip !== undefined} />;
 	const seenWord = seen ? words.seen : words.unseen;
 	const named = [
 		path,
+		chip?.label,
 		added > 0 ? filled(words.linesAdded, { count: String(added) }) : undefined,
 		removed > 0
 			? filled(words.linesRemoved, { count: String(removed) })
@@ -186,6 +195,16 @@ export function FileRow({
 				</Ink.Provider>
 			</View>
 			<Path path={path} />
+			{chip ? (
+				<View
+					pointerEvents="none"
+					accessibilityElementsHidden
+					importantForAccessibility="no-hide-descendants"
+					className={CHIP}
+				>
+					<Chip family={chip.family} label={chip.label} />
+				</View>
+			) : null}
 			<View
 				pointerEvents="none"
 				accessibilityElementsHidden

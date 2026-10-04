@@ -1633,10 +1633,22 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			},
 		},
 		// A one-line row on its ground, its leading the row's slot, the path cut
-		// as text by the component, each count in its own lane.
+		// as text by the component to the room its chip leaves, each count in its
+		// own lane. At most one Chip, between the path and the counts.
 		FileRow: {
-			props: ["path", "added", "removed", "seen", "href", "onOpen", "loading"],
+			props: [
+				"path",
+				"added",
+				"removed",
+				"seen",
+				"chip",
+				"href",
+				"onOpen",
+				"loading",
+			],
 			draws: [
+				"CHIP",
+				"CHIP_LABEL",
 				"FILE_COUNT",
 				"FILE_COUNTS",
 				"FILE_PATH",
@@ -1660,7 +1672,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			holds: ["FILE_PATH", "FILE_PATH_PART", "FILE_COUNTS", "FILE_COUNT"],
 			states: [...PRESS, "selected", "loading"],
 			owns: {
-				roles: ["code", "meta"],
+				roles: ["code", "meta", "caption"],
 				colors: [
 					"ink-meta",
 					"ink-body",
@@ -1671,6 +1683,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"wash-press",
 					"wash-selected",
 					"wash-selected-hover",
+					"chip-",
 					"skeleton",
 				],
 				radii: ["row", "full", "chip"],
@@ -1682,6 +1695,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"figures",
 					"skeleton",
 					"measure-short",
+					"chip",
 				],
 			},
 		},

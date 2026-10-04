@@ -8,6 +8,7 @@ import type {
 	StatusMark,
 } from "@fcalell/ui-core/descriptors";
 import {
+	fileShape,
 	listBusy,
 	listCount,
 	listGround,
@@ -102,6 +103,8 @@ export interface FileSlots<T> {
 	removed: (item: T) => number;
 	/** Whether the reviewer has seen the file. */
 	seen?: (item: T) => boolean | undefined;
+	/** The file's chip mark. */
+	chip?: (item: T) => ChipMark | undefined;
 	/** Where the row goes. */
 	href?: (item: T) => string | undefined;
 	/** Opens the file. */
@@ -209,14 +212,17 @@ export function List<T, V extends string | null = string>(
 			</div>
 		);
 	if (state === "pending") {
-		const { row, meter } = props;
 		return frame(
 			WAITING.map((index) => {
-				if (row)
-					return <RowWait key={index} shape={rowShape(row)} index={index} />;
-				if (meter)
-					return <MeterWait key={index} busy={false} {...meterShape(meter)} />;
-				return <FileWait key={index} busy={false} />;
+				if (props.row)
+					return (
+						<RowWait key={index} shape={rowShape(props.row)} index={index} />
+					);
+				if (props.meter)
+					return (
+						<MeterWait key={index} busy={false} {...meterShape(props.meter)} />
+					);
+				return <FileWait key={index} busy={false} {...fileShape(props.file)} />;
 			}),
 		);
 	}
@@ -275,6 +281,7 @@ export function List<T, V extends string | null = string>(
 				added={file.added(item)}
 				removed={file.removed(item)}
 				seen={file.seen?.(item)}
+				chip={file.chip?.(item)}
 				href={file.href?.(item)}
 				onOpen={file.onOpen ? () => file.onOpen?.(item) : undefined}
 			/>

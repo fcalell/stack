@@ -1,6 +1,6 @@
 ---
 id: 003-43
-status: backlog
+status: review
 sessions: {}
 ---
 # ui-core: a file row carries the mark of why it is listed
@@ -17,4 +17,7 @@ Reference: Replit marks Modified and Added per file ([screen](https://mobbin.com
 - [ ] Stack provides the part on every platform the app runs on.
 
 ## Open questions
-- [ ] Its shape (a component, a variant, a token, an option): the stack session decides.
+- [x] Its shape (a component, a variant, a token, an option): the stack session decides.
+
+## Progress
+Shape: `FileRow` takes one `chip?: ChipMark` and the List's `file` map a `chip` slot; the chip stands between the path and the counts, the path's cut measuring what is left, and a waiting row draws a chip bar when `chip` is declared (`fileShape`). Built on web and phone; `pnpm check` and `pnpm verify` pass. Open: the live check (web per batch, phone on the harness).

@@ -3,6 +3,7 @@ import { test } from "node:test";
 import type { TableColumn } from "../src/descriptors.ts";
 import {
 	factShape,
+	fileShape,
 	groupWait,
 	type ListInput,
 	listBusy,
@@ -118,6 +119,8 @@ test("the waiting shape follows the declared slots and runs none of them", () =>
 	);
 	assert.deepEqual(meterShape({}), { meta: false });
 	assert.deepEqual(meterShape({ meta: spy("meta") }), { meta: true });
+	assert.deepEqual(fileShape({}), { chip: false });
+	assert.deepEqual(fileShape({ chip: spy("chip") }), { chip: true });
 	assert.deepEqual(calls, []);
 });
 

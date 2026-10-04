@@ -1,3 +1,4 @@
+import type { ChipMark } from "@fcalell/ui-core/descriptors";
 import { use } from "react";
 import { Code } from "../../components/code/index.tsx";
 import { Diff } from "../../components/diff/index.tsx";
@@ -15,7 +16,13 @@ interface ChangedFile {
 	path: string;
 	before: string;
 	after: string;
+	// Why the review lists the file, or what its change is.
+	mark?: ChipMark;
 }
+
+const ADDED: ChipMark = { family: "green", label: "Added" };
+const DEPENDENCIES: ChipMark = { family: "amber", label: "Dependencies" };
+const GENERATED: ChipMark = { family: "neutral", label: "Generated" };
 
 // What a deploy changed: its files, its description before and after, its
 // release notes and its build log.
@@ -56,6 +63,7 @@ export async function save(key: string, dir: string) {
 			before: "",
 			after: `export const bucket = env.BUILD_CACHE;
 export const ttl = 60 * 60 * 24 * 7;`,
+			mark: ADDED,
 		},
 		{
 			path: "src/build/steps/install.ts",
@@ -127,6 +135,7 @@ const WRANGLER: Changes = {
 		"wrangler": "4.12.0"
 	}
 }`,
+			mark: DEPENDENCIES,
 		},
 		{
 			path: "pnpm-lock.yaml",
@@ -136,6 +145,7 @@ const WRANGLER: Changes = {
 			after: `  wrangler:
     specifier: 4.12.0
     version: 4.12.0`,
+			mark: GENERATED,
 		},
 	],
 	notes:
@@ -247,6 +257,7 @@ function Files(props: { files: QueryLike<ChangedFile[]> }) {
 					added,
 					removed,
 					seen: (each) => all.indexOf(each) <= at,
+					chip: (each) => each.mark,
 					// The open file's row is current at the page's own path.
 					href: (each) =>
 						each === open
