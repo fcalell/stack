@@ -9,8 +9,8 @@ export const FormContext = createContext<
 >(undefined);
 
 // Set around an act that cannot run where it stands, with no reason to give:
-// a `MessageInput`'s Send while its text is empty and its Stop without
-// `onStop`. Each is inert and says so, drawn in its disabled form.
+// a `MessageInput`'s Send while its text is empty. It is inert and says so,
+// drawn in its disabled form.
 export const ActInert = createContext(false);
 
 // Where a `Form` stands, which bounds its column: a sheet's body is the

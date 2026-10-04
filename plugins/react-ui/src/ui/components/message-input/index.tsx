@@ -24,6 +24,7 @@ import { useTouch } from "../../lib/media.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Button } from "../button/index.tsx";
 import { Chip } from "../chip/index.tsx";
+import { IconButtonBase } from "../icon-button/base.tsx";
 import { IconButton } from "../icon-button/index.tsx";
 
 const ROOT = "flex flex-col w-full";
@@ -41,12 +42,8 @@ const ROW = "flex items-end";
 const CHIPS = "flex flex-wrap";
 const FOOT = "flex items-center";
 const SPACER = "grow";
-// Send and Stop share one cell, the absent one invisible, so the slot holds
-// the wider act's width whichever stands.
-const SLOT = "grid shrink-0";
-// Each act stretches to the slot, so Stop's end meets Send's.
-const SLOT_ACT = "grid col-start-1 row-start-1";
-const ABSENT = "invisible";
+// Stop, while an answer comes, and Send: never narrowed by the text.
+const ACTS = "flex items-center shrink-0";
 const NOTICE = "flex items-center";
 const NOTICE_TEXT = "grow min-w-0";
 const ATTACH_SLOT = "shrink-0";
@@ -67,7 +64,7 @@ export interface MessageInputProps extends Closed {
 	placeholder?: string;
 	/** A sentence under the input, with its one act. */
 	notice?: Notice;
-	/** An answer is coming: Stop stands in Send's place and the text stays open. */
+	/** An answer is coming: Stop stands before Send, and Send still sends. */
 	working?: boolean;
 	/** Sends the text; inert while it is empty. Enter sends on the desktop, Shift+Enter breaks the line. */
 	onSend: () => void;
@@ -77,7 +74,7 @@ export interface MessageInputProps extends Closed {
 	disabled?: boolean;
 }
 
-/** On the desktop one box (its attachments, the text growing to eight lines and scrolling past them, then the attach act and Send or Stop), the notice under it at the text's x; on touch one row (attach, the field growing upward, Send or Stop), the notice under it in the same columns. */
+/** On the desktop one box (its attachments, the text growing to eight lines and scrolling past them, then the attach act, Stop while an answer comes, and Send), the notice under it at the text's x; on touch one row (attach, the field growing upward, Stop's icon act while an answer comes, Send), the notice under it in the same columns. */
 export function MessageInput({
 	value,
 	onChange,
@@ -94,7 +91,7 @@ export function MessageInput({
 	const words = useWords();
 	const touch = useTouch();
 	const empty = value.trim() === "";
-	const sendable = !empty && !working && !disabled;
+	const sendable = !empty && !disabled;
 	const textField = useRef<HTMLTextAreaElement>(null);
 	const chipRow = useRef<HTMLDivElement>(null);
 	const noticeId = useId();
@@ -158,18 +155,30 @@ export function MessageInput({
 			className={cn(fieldValue({ kind: "text" }), MESSAGE_INPUT_VALUE, VALUE)}
 		/>
 	);
+	// On touch Stop is an icon act, so the field keeps its width.
+	let stopAct: ReactNode = null;
+	if (working && touch)
+		stopAct = (
+			<IconButtonBase
+				icon="Square"
+				fit="bar"
+				label={words.stop}
+				onClick={stop}
+				disabled={!onStop}
+			/>
+		);
+	else if (working)
+		stopAct = (
+			<ActInert value={!onStop}>
+				<Button act="secondary" fit="bar" label={words.stop} onAct={stop} />
+			</ActInert>
+		);
 	const acts = (
-		<div className={SLOT}>
-			<span className={cn(SLOT_ACT, working && ABSENT)}>
-				<ActInert value={!sendable}>
-					<Button act="primary" fit="bar" label={words.send} onAct={send} />
-				</ActInert>
-			</span>
-			<span className={cn(SLOT_ACT, !working && ABSENT)}>
-				<ActInert value={!onStop}>
-					<Button act="secondary" fit="bar" label={words.stop} onAct={stop} />
-				</ActInert>
-			</span>
+		<div className={cn(touch ? MESSAGE_INPUT_ROW : MESSAGE_INPUT_FOOT, ACTS)}>
+			{stopAct}
+			<ActInert value={!sendable}>
+				<Button act="primary" fit="bar" label={words.send} onAct={send} />
+			</ActInert>
 		</div>
 	);
 	const act = notice?.act ? (

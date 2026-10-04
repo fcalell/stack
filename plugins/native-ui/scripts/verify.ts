@@ -157,7 +157,6 @@ const NATIVE_OVERLAYS = [
 	"gap-inside",
 	"gap-pair",
 	"grow",
-	"h-0",
 	"hidden",
 	"inset-0",
 	"items-baseline",

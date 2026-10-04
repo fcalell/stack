@@ -10,7 +10,7 @@ import {
 	MESSAGE_NOTICE_TEXT,
 	text,
 } from "@fcalell/ui-core/variants";
-import { type ReactNode, useRef } from "react";
+import { useRef } from "react";
 import {
 	AccessibilityInfo,
 	Text as RNText,
@@ -26,6 +26,7 @@ import { useWords } from "../../lib/words";
 import { Button } from "../button";
 import { Chip } from "../chip";
 import { IconButton } from "../icon-button";
+import { IconButtonBase } from "../icon-button/base";
 
 const ROOT = "w-full";
 const ROW = "flex-row items-end";
@@ -34,12 +35,6 @@ const FIELD_DISABLED = "bg-fill-disabled";
 const VALUE = "py-0";
 const VALUE_DISABLED = "text-ink-disabled";
 const CHIPS = "flex-row flex-wrap";
-// Send and Stop share one slot, so it holds the wider act's width whichever
-// stands: React Native has no grid, so both stand in one column and the
-// absent one keeps its width at no height, hidden from touch and from
-// assistive tech. Each act stretches to the slot, so Stop's end meets Send's.
-const SLOT = "shrink-0";
-const ABSENT = "h-0 overflow-hidden";
 const NOTICE = "flex-row items-center";
 const NOTICE_TEXT = "flex-1 min-w-0";
 const ATTACH_SLOT = "shrink-0";
@@ -59,7 +54,7 @@ export interface MessageInputProps extends Closed {
 	placeholder?: string;
 	// A sentence under the input, with its one act.
 	notice?: Notice;
-	// An answer is coming: Stop stands in Send's place and the text stays open.
+	// An answer is coming: Stop stands before Send, and Send still sends.
 	working?: boolean;
 	// Sends the text; inert while it is empty. Return breaks the line.
 	onSend: () => void;
@@ -71,8 +66,9 @@ export interface MessageInputProps extends Closed {
 }
 
 // One row: the attach act, the field growing upward to eight lines (its
-// attachments over the text) and Send or Stop; the notice under it in the
-// same columns, its sentence at the field's text.
+// attachments over the text), Stop's icon act while an answer comes and
+// Send; the notice under it in the same columns, its sentence at the field's
+// text.
 export function MessageInput({
 	value,
 	onChange,
@@ -90,7 +86,7 @@ export function MessageInput({
 	// A placeholder's colour is a prop, never a class: `FIELD_PLACEHOLDER`'s ink.
 	const placeholderInk = useTokenColor("--color-ink-meta");
 	const textField = useRef<TextInput>(null);
-	const sendable = value.trim() !== "" && !working && !disabled;
+	const sendable = value.trim() !== "" && !disabled;
 	// The keyboard stays on the text after Send and Stop.
 	const send = () => {
 		onSend();
@@ -113,16 +109,6 @@ export function MessageInput({
 		if (next) AccessibilityInfo.sendAccessibilityEvent(next, "focus");
 		else textField.current?.focus();
 	};
-	const slotAct = (absent: boolean, act: ReactNode) => (
-		<View
-			pointerEvents={absent ? "none" : "auto"}
-			accessibilityElementsHidden={absent}
-			importantForAccessibility={absent ? "no-hide-descendants" : "auto"}
-			className={absent ? ABSENT : undefined}
-		>
-			{act}
-		</View>
-	);
 	return (
 		<View className={cn(MESSAGE_INPUT, ROOT)}>
 			<View className={cn(MESSAGE_INPUT_ROW, ROW)}>
@@ -180,25 +166,19 @@ export function MessageInput({
 						)}
 					/>
 				</View>
-				<View className={SLOT}>
-					{slotAct(
-						working === true,
-						<ActInert.Provider value={!sendable}>
-							<Button act="primary" fit="bar" label={words.send} onAct={send} />
-						</ActInert.Provider>,
-					)}
-					{slotAct(
-						!working,
-						<ActInert.Provider value={!onStop}>
-							<Button
-								act="secondary"
-								fit="bar"
-								label={words.stop}
-								onAct={stop}
-							/>
-						</ActInert.Provider>,
-					)}
-				</View>
+				{/* Stop is an icon act, so the field keeps its width. */}
+				{working ? (
+					<IconButtonBase
+						icon="Square"
+						fit="bar"
+						label={words.stop}
+						onAct={stop}
+						disabled={!onStop}
+					/>
+				) : null}
+				<ActInert.Provider value={!sendable}>
+					<Button act="primary" fit="bar" label={words.send} onAct={send} />
+				</ActInert.Provider>
 			</View>
 			{notice ? (
 				<View className={cn(MESSAGE_INPUT_ROW, NOTICE)}>

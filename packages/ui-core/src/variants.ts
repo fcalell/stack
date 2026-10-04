@@ -518,10 +518,11 @@ export const MESSAGE_OPEN =
 // MessageInput: the composer over its notice. On the desktop one box (the
 // field's boundary at the card radius), its attachments, its text at the
 // field's inset (capped at eight lines, scrolling past them) and its foot
-// (attach, the send or stop slot); its notice at the text's x. On touch one
-// row (attach, the field at its bar fit growing upward, the slot) and the
-// notice's row under it in the same columns, its sentence at the field's
-// text (the attach slot held, the field's hairline counted).
+// (attach, Stop while an answer comes, Send); its notice at the text's x. On
+// touch one row (attach, the field at its bar fit growing upward, Stop's icon
+// act at the bar fit while an answer comes, Send) and the notice's row under
+// it in the same columns, its sentence at the field's text (the attach slot
+// held, the field's hairline counted).
 export const MESSAGE_INPUT = "gap-pair";
 export const MESSAGE_INPUT_BOX =
 	"gap-rows rounded-card border border-edge bg-surface p-inside";

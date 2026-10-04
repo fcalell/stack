@@ -91,9 +91,14 @@ function notice(to: ReturnType<typeof useTo>): Notice {
 	};
 }
 
+// While an answer comes, the notice says what becomes of a message sent then.
+const QUEUED: Notice = {
+	sentence: "A message sent now is read once this answer ends.",
+};
+
 // The conversation: its history a query, a sent turn and its answer joining
 // it as the server holds them; the input under every state, inert until the
-// history answers.
+// history answers. A message sent while an answer comes is answered next.
 export function Assistant() {
 	const to = useTo();
 	const [sent, setSent] = useState<Turn[]>([]);
@@ -102,11 +107,22 @@ export function Assistant() {
 	const [attachments, setAttachments] = useState<Attachment[]>(ATTACHED);
 	const [working, setWorking] = useState(false);
 	const answer = useRef<ReturnType<typeof setTimeout>>(undefined);
+	const queued = useRef(false);
 	const say = (turn: Omit<Turn, "id" | "at">) =>
 		setSent((all) => [
 			...all,
 			{ ...turn, id: `s${all.length + 1}`, at: new Date().toISOString() },
 		]);
+	const reply = () => {
+		setWorking(true);
+		answer.current = setTimeout(() => {
+			say({ author: "other", body: ANSWER });
+			if (queued.current) {
+				queued.current = false;
+				reply();
+			} else setWorking(false);
+		}, 2400);
+	};
 	return (
 		<Place title="Assistant">
 			<Thread
@@ -145,21 +161,19 @@ export function Assistant() {
 							setAttachments((all) => all.filter((each) => each.id !== id))
 						}
 						placeholder="Ask about your deploys"
-						notice={notice(to)}
+						notice={working ? QUEUED : notice(to)}
 						working={working}
 						disabled={query.data === undefined}
 						onSend={() => {
 							say({ author: "you", body: value });
 							setValue("");
 							setAttachments([]);
-							setWorking(true);
-							answer.current = setTimeout(() => {
-								say({ author: "other", body: ANSWER });
-								setWorking(false);
-							}, 2400);
+							if (working) queued.current = true;
+							else reply();
 						}}
 						onStop={() => {
 							clearTimeout(answer.current);
+							queued.current = false;
 							setWorking(false);
 							say({ author: "system", body: "Answer stopped" });
 							toast("Answer stopped");

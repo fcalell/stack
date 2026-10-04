@@ -371,6 +371,11 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
   (`-mx-page`, an overlay by `ThreadBleeds`), its log and foot carrying the inset themselves; the
   input docks at the main's foot and reports `FootDocks` as in a Place. The bleeding Place's act
   still floats over the list, and where the record stands alone its room stands under the input.
+- A `MessageInput` sends while an answer streams: `working` sets Stop before Send and leaves
+  Send live, so Send and Enter send whenever the text is non-empty. Stop is the secondary bar
+  Button on the desktop and an icon act at the bar fit (`ICON_BUTTON.fit.bar`, `Square`) on
+  touch, so the touch field gives up only a compact square. What becomes of a message sent while
+  an answer runs is the consumer's sentence in `notice`; the input takes no prop for it.
 - A collection takes data and draws its four states at the leaf. A `List` takes `query` (or
   `items`, waiting on `loading`) and one item map: `row`, one function per `ListRow` slot,
   `file`, one per `FileRow` slot, or `meter`, one per `Meter` slot. Its waiting rows are the row's

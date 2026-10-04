@@ -1,6 +1,6 @@
 ---
 id: 003-49
-status: backlog
+status: review
 sessions: {}
 ---
 # ui-core: a message input sends while an answer streams
@@ -17,4 +17,7 @@ Reference: Manus keeps its input live under a running task and says what it is d
 - [ ] Stack provides the part on every platform the app runs on.
 
 ## Open questions
-- [ ] Its shape (a component, a variant, a token, an option): the stack session decides.
+- [x] Its shape (a component, a variant, a token, an option): the stack session decides.
+
+## Progress
+Shape: no prop; while `working`, Stop stands before Send and Send stays live. On touch Stop is an icon act, so the field narrows by one compact square while an answer runs. Built on web and phone; `pnpm check` and `pnpm verify` pass. Open: the live check (web per batch, phone on the harness).

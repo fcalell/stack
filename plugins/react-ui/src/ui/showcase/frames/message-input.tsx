@@ -33,6 +33,9 @@ const UPGRADE: Notice = {
 	sentence: "12 of 50 answers left this month.",
 	act: { label: "Upgrade", onAct: act },
 };
+const QUEUED: Notice = {
+	sentence: "A message sent now is read once this answer ends.",
+};
 
 // One input as a viewer drives it: typing, sending (which clears the text
 // and works until Stop), attaching and detaching.
@@ -71,10 +74,10 @@ function Live(props: {
 
 // Board 53's input frames, the shape by the page's density: a pointer or
 // focus state on a typed value; disabled with its notice; at rest the frames
-// whose part the cell names (Send for the primary act, Stop for the
-// secondary, the notice's act for the bar fit, the chips for the chip and
-// its glyph, the field and its text for the field, the empty input for the
-// attach act and the notice's line).
+// whose part the cell names (Send for the primary act, Stop beside it for
+// the secondary and the icon act, the notice's act for the bar fit, the chips
+// for the chip and its glyph, the field and its text for the field, the empty
+// input for the notice's line).
 function Rest(props: { cell: string }) {
 	const { cell } = props;
 	if (
@@ -84,12 +87,13 @@ function Rest(props: { cell: string }) {
 		return <Live value={ASKED} />;
 	if (
 		cell.startsWith("BUTTON_LABEL.act.secondary") ||
-		cell === "BUTTON.act.secondary"
+		cell === "BUTTON.act.secondary" ||
+		cell === "ICON_BUTTON.fit.bar"
 	)
 		return (
 			<>
-				<Live working />
-				<Live working value="Then redeploy web too" />
+				<Live working notice={QUEUED} />
+				<Live working notice={QUEUED} value="Then redeploy web too" />
 				<Live working stoppable={false} />
 			</>
 		);

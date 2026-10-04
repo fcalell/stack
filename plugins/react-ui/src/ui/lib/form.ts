@@ -14,7 +14,7 @@ export const SubmitContext = createContext(false);
 
 // Set around an act that cannot run where it stands, with no reason to give:
 // an `ActionBar`'s other acts while one act pends, a `MessageInput`'s Send
-// while its text is empty and its Stop without `onStop`. Each is inert and
+// while its text is empty and its desktop Stop without `onStop`. Each is inert and
 // says so, drawn in its disabled form.
 export const ActInert = createContext(false);
 

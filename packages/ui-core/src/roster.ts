@@ -1868,7 +1868,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		},
 		// Stacked on the desktop, one row on touch; `onDetach(id)` removes an
 		// attachment, and the notice's act carries its own pending, so the input
-		// has no loading form.
+		// has no loading form. While `working`, Stop stands before Send (an icon
+		// act on touch) and Send still sends; the notice says what becomes of a
+		// message sent then.
 		MessageInput: {
 			props: [
 				"value",
