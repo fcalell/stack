@@ -1,6 +1,7 @@
 import { procedure } from "virtual:stack-procedure";
+import { ApiError } from "@fcalell/plugin-api/error";
 import { z } from "@fcalell/plugin-api/schema";
-import { desc } from "@fcalell/plugin-db/orm";
+import { desc, eq } from "@fcalell/plugin-db/orm";
 import { notes as table } from "../../schema/index.ts";
 
 export const notes = {
@@ -19,6 +20,17 @@ export const notes = {
 					createdAt: new Date(),
 				})
 				.returning();
+			return note;
+		}),
+
+	remove: procedure({ writes: ["notes"] })
+		.input(z.object({ id: z.string() }))
+		.mutation(async ({ input, context }) => {
+			const [note] = await context.db
+				.delete(table)
+				.where(eq(table.id, input.id))
+				.returning();
+			if (!note) throw new ApiError("NOT_FOUND");
 			return note;
 		}),
 };

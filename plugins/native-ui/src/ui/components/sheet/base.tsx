@@ -156,12 +156,17 @@ export function SheetBase({
 		setTouched(false);
 		setPressed(false);
 	}
+	// Whether gorhom holds the sheet, from `present()` to its `onDismiss`.
+	// A `dismiss()` while it holds none marks the modal dismissing for good,
+	// and every later `present()` then draws nothing.
+	const held = useRef(false);
 	useEffect(() => {
 		if (open) {
 			setSettled(false);
+			held.current = true;
 			ref.current?.present();
 		} else {
-			ref.current?.dismiss(LEAVE);
+			if (held.current) ref.current?.dismiss(LEAVE);
 			setTouched(false);
 		}
 	}, [open]);
@@ -313,7 +318,10 @@ export function SheetBase({
 		<BottomSheetModal
 			ref={ref}
 			onChange={(index) => setSettled(index >= 0)}
-			onDismiss={onClose}
+			onDismiss={() => {
+				held.current = false;
+				onClose();
+			}}
 			containerComponent={Layer}
 			accessible={false}
 			backgroundComponent={Ground}

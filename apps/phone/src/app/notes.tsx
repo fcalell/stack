@@ -6,6 +6,7 @@ import { Place } from "@fcalell/plugin-native-ui/components/place";
 import { Section } from "@fcalell/plugin-native-ui/components/section";
 import { Sheet } from "@fcalell/plugin-native-ui/components/sheet";
 import { age } from "@fcalell/plugin-native-ui/lib/age";
+import { confirm } from "@fcalell/plugin-native-ui/lib/confirm";
 import { toast } from "@fcalell/plugin-native-ui/lib/toast";
 import type { Act } from "@fcalell/ui-core/descriptors";
 import { useState } from "react";
@@ -14,6 +15,7 @@ import { orpc } from "../lib/api";
 export default function Notes() {
 	const notes = useQuery(orpc.notes.list.queryOptions());
 	const create = useMutation(orpc.notes.create.mutationOptions());
+	const remove = useMutation(orpc.notes.remove.mutationOptions());
 	const [open, setOpen] = useState(false);
 	const [title, setTitle] = useState("");
 	const start = () => {
@@ -30,6 +32,20 @@ export default function Notes() {
 				() => toast("The note was not added.", { state: "failed" }),
 			),
 	};
+	const ask = (note: { id: string; title: string }) =>
+		confirm({
+			title: "Delete note",
+			sentence: `“${note.title}” will be gone for good.`,
+			act: {
+				label: "Delete",
+				destructive: true,
+				onAct: () =>
+					remove.mutateAsync({ id: note.id }).catch((error: unknown) => {
+						toast("The note was not deleted.", { state: "failed" });
+						throw error;
+					}),
+			},
+		});
 	return (
 		<Place title="Notes" act={newNote}>
 			<Section title="Recent">
@@ -41,6 +57,14 @@ export default function Notes() {
 						key: (note) => note.id,
 						title: (note) => note.title,
 						meta: (note) => [age(note.createdAt.toISOString())],
+						more: (note) => [
+							{
+								label: "Delete",
+								icon: "Trash2",
+								destructive: true,
+								onAct: () => ask(note),
+							},
+						],
 					}}
 				/>
 			</Section>

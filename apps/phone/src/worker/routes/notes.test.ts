@@ -15,6 +15,28 @@ test("a created note lists first", async () => {
 	);
 });
 
+test("a removed note leaves the list", async () => {
+	await using app = await testing.boot();
+	const client = app.client();
+	await client.notes.create({ title: "Kept" });
+	const removed = await client.notes.create({ title: "Removed" });
+	assert.ok(removed);
+	await client.notes.remove({ id: removed.id });
+	const notes = await client.notes.list();
+	assert.deepEqual(
+		notes.map((note) => note.title),
+		["Kept"],
+	);
+});
+
+test("removing a missing note is not found", async () => {
+	await using app = await testing.boot();
+	await assert.rejects(
+		app.client().notes.remove({ id: "missing" }),
+		(error) => error instanceof ORPCError && error.code === "NOT_FOUND",
+	);
+});
+
 test("a blank title is refused", async () => {
 	await using app = await testing.boot();
 	await assert.rejects(
