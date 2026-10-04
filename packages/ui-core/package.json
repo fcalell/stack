@@ -31,6 +31,10 @@
 			"types": "./dist/clock.d.ts",
 			"default": "./dist/clock.js"
 		},
+		"./format": {
+			"types": "./dist/format.d.ts",
+			"default": "./dist/format.js"
+		},
 		"./cn": {
 			"types": "./dist/cn.d.ts",
 			"default": "./dist/cn.js"

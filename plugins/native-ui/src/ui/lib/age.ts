@@ -1,4 +1,5 @@
 import { ageWords } from "@fcalell/ui-core/clock";
+import { formatterFor } from "@fcalell/ui-core/format";
 import { moment as momentOf } from "./moment";
 
 // An ISO moment as its age from `now` ("2 minutes ago", "yesterday"), in the
@@ -12,6 +13,6 @@ export function age(moment: string, now = Date.now()): string {
 	if (Number.isNaN(Date.parse(moment))) return moment;
 	if (typeof Intl.RelativeTimeFormat !== "function")
 		return momentOf(moment, new Date(now));
-	const format = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" });
+	const format = formatterFor("relative", undefined, { numeric: "auto" });
 	return ageWords(moment, now, format);
 }

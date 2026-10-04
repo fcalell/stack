@@ -1,3 +1,4 @@
+import { formatterFor } from "@fcalell/ui-core/format";
 import { filled, METER_NEAR } from "@fcalell/ui-core/tokens";
 import {
 	FIGURES,
@@ -57,8 +58,8 @@ export function Meter({ label, value, max, unit, meta, loading }: MeterProps) {
 	const item = useContext(GroundContext) === "group" && METER_ITEM;
 	if (loading) return <MeterWait busy meta />;
 	const share = max > 0 ? value / max : 0;
-	const number = new Intl.NumberFormat();
-	const percent = new Intl.NumberFormat(undefined, {
+	const number = formatterFor("number");
+	const percent = formatterFor("number", undefined, {
 		style: "percent",
 		maximumFractionDigits: 0,
 	}).format(share);

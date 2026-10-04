@@ -141,7 +141,12 @@ the component; the schema rejects a translation that drops a slot. Rejected: a b
 (`of`) composed around the figures, a sentence fragment a language cannot reorder. A moment drawn as its age (a table's `age`
 cell, an ISO moment so the table sorts by it) is no word either: each plugin formats it with the
 platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's language, in one helper
-over ui-core's `ageWords` (`./clock`).
+over ui-core's `ageWords` (`./clock`). Every `Intl` formatter either plugin uses (an age, a
+moment, a meter's figures, a chart's ticks, a slider's value, the phone's `compact`) comes from
+ui-core's `formatterFor(kind, lang, options)` (`./format`), built once per kind, language and
+options at module scope, since building one costs far more than formatting (Hermes most of all)
+and ages and moments format per row per render; each plugin's tests hold no `new Intl.` in its
+`src`.
 
 Ages and pending bars read one coarse clock per plugin (`lib/clock`, `useClock(read, until)`): an
 external store read with `useSyncExternalStore`, ticking once a second while a reader holds it.

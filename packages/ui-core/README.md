@@ -39,6 +39,9 @@ Eleven subpaths:
 - `@fcalell/ui-core/commit`: `commitMoment()`, when a typing control's value is final: on
   leaving the field or Enter, only when it changed since focus, Escape restoring the value at
   focus, and ending the edit. Both plugins' `Input` and `TextArea` drive their `onCommit` with it.
+- `@fcalell/ui-core/format`: `formatterFor(kind, lang, options)`, the platform's `Intl` number,
+  date and relative-time formatters, built once per kind, language and options; every formatter
+  both plugins use comes from it.
 - `@fcalell/ui-core/clock`: what a clock-read part draws, as functions of its times and now:
   `timeLeft`, a `PendingRun` with `pendingRun` and `pendingShare` (a `PendingBar`'s clock and
   fill), and `ageWords` (an ISO moment's age). Both plugins tick `now` from one shared clock.

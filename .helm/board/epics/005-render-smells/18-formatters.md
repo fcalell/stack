@@ -1,6 +1,6 @@
 ---
 id: 005-18
-status: backlog
+status: review
 sessions: {}
 ---
 # react-ui, native-ui: Intl formatters are built once per language and options
@@ -19,5 +19,8 @@ One helper per plugin, `formatterFor(kind, lang, options)`, caches formatters at
 keyed by language and options. Every site above reads from it.
 
 ## Acceptance criteria
-- [ ] (test) `formatterFor` returns the same instance for the same language and options, and a new one for another language.
-- [ ] (test) no `new Intl.` remains in either plugin outside the helper.
+- [x] (test) `formatterFor` returns the same instance for the same language and options, and a new one for another language.
+- [x] (test) no `new Intl.` remains in either plugin outside the helper.
+
+## Progress
+Built; `pnpm check` and `pnpm verify` pass, and both (test) criteria pass. One helper in ui-core (`./format`) serves both plugins, the logic both platforms run being one source.

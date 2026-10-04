@@ -1,3 +1,5 @@
+import { formatterFor } from "@fcalell/ui-core/format";
+
 const STEPS = [
 	[1e9, "B"],
 	[1e6, "M"],
@@ -10,7 +12,7 @@ const STEPS = [
 // TODO: Hermes on iOS lacks `notation: "compact"`; when it ships, use Intl's
 // compact notation as the web does.
 export function compact(value: number): string {
-	const mantissa = new Intl.NumberFormat(undefined, {
+	const mantissa = formatterFor("number", undefined, {
 		maximumFractionDigits: 1,
 	});
 	const size = Math.abs(value);

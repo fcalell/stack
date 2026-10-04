@@ -1,3 +1,4 @@
+import { formatterFor } from "@fcalell/ui-core/format";
 import {
 	SLIDER,
 	SLIDER_FILL,
@@ -96,7 +97,8 @@ export function Slider({
 		onChange(settle(value + delta * quantum));
 	}
 
-	const formatted = new Intl.NumberFormat(
+	const formatted = formatterFor(
+		"number",
 		undefined,
 		unit ? { style: "unit", unit } : {},
 	).format(value);

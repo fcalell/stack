@@ -1,4 +1,5 @@
 import { cn } from "@fcalell/ui-core/cn";
+import { formatterFor } from "@fcalell/ui-core/format";
 import {
 	listBusy,
 	listState,
@@ -83,7 +84,8 @@ function stepOf(peak: number): number {
 // Every figure of one chart in one notation: compact once its axis reaches
 // five figures, so a tick stays inside its four-figure lane.
 function formatter(top: number): Intl.NumberFormat {
-	return new Intl.NumberFormat(
+	return formatterFor(
+		"number",
 		undefined,
 		top >= 10_000
 			? { notation: "compact", maximumFractionDigits: 1 }
@@ -214,7 +216,7 @@ export function BarChart<T>(props: BarChartProps<T>) {
 	const top = step * BANDS;
 	const figure = formatter(top);
 	// The table gives assistive tech the figures the plot cannot: in full.
-	const full = new Intl.NumberFormat();
+	const full = formatterFor("number");
 	const total = series.reduce((sum, bar) => sum + bar.value, 0);
 	const keyTotals = labels.map((label) => ({
 		label,
