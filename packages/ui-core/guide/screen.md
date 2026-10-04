@@ -56,8 +56,8 @@ Loading and failure sit at the leaf. A collection takes its own query and draws 
 pending rows in the slots its item map declares, its failure, its empty state, its items. Any
 other region that reads a query sits in its own `QueryBoundary`, which names its loading form, so
 the rest stays drawn. A loading form is the loaded form in skeleton at the loaded heights, so
-nothing moves when the data lands; a pending act keeps its box. Empty draws the `EmptyState` with
-the act that fills it. Error draws where the work happened (a field's error, a banner over the
+nothing moves when the data lands; a pending act keeps its box. Empty draws the `EmptyState`,
+with the act that fills it unless the screen's primary act already does. Error draws where the work happened (a field's error, a banner over the
 region, a toast for an act) and keeps what still works.
 
 **Check:** each state is reachable by a route, a fixture or a control, written down.
@@ -81,6 +81,6 @@ fcalell.
 ## 8. Sign off
 
 Present the judge's screenshots per width and mode, its numbers beside their ranges, the
-references and the files; the screen is done at fcalell's sign-off.
+references and the files.
 
 **Check:** fcalell's sign-off.

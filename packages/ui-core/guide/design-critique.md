@@ -19,36 +19,38 @@ unrendered with the reason, never judged from source.
 
 A phone screen is judged on the Android emulator, built, booted and started by the expo guide's
 [render page](node_modules/@fcalell/plugin-expo/guide/phone-render.md), with `stack dev` and
-`stack expo dev` running. The critic gets the route as a deep link, opens it with Maestro's
-`openLink`, and drives it with Maestro flows (`tapOn`, `scrollUntilVisible`,
-`extendedWaitUntil`, `waitForAnimationToEnd`, `takeScreenshot`), one flow per state walk, since
-each Maestro call costs about 20 s. The procedure's steps read as follows on the phone.
+`stack expo dev` running, and captured as its
+[capture page](node_modules/@fcalell/plugin-expo/guide/phone-capture.md) says. The critic gets
+the route as a deep link, opens it with Maestro's `openLink`, and drives it with Maestro flows
+(`tapOn`, `scrollUntilVisible`, `extendedWaitUntil`, `waitForAnimationToEnd`,
+`takeScreenshot`), one flow per state walk, since each Maestro call costs about 20 s. The procedure's steps read as follows on the phone.
 
 1. **Prepare.** The animation scales at 0 (the system's reduced motion), set before the app
-   starts; force-stop the app, clear the log, then open the route. Every screenshot follows an
+   starts; force-stop the app, then open the route. Every screenshot follows an
    `extendedWaitUntil` on a known text and a `waitForAnimationToEnd`: the first frames after a
    launch arrive seconds late.
 2. **Measure.** `maestro hierarchy` gives each element's bounds in px, its text, its
    accessibility label, and whether it is clickable, checked or selected. A size in dp is
-   px × 160 / the density `adb shell wm density` reports. Colours are sampled from the
-   screenshot's pixels. Font size, weight, radius, border and shadow are not in the hierarchy:
-   read them from the component's cell in `DESIGN.md`, and measure a radius or a hairline on the
-   screenshot.
+   px × 160 / the density `adb shell wm density` reports. Colours and contrast ratios are read
+   from the screenshot's pixels with the phone shell's ImageMagick, as the capture page shows.
+   Font size, weight, radius, border and shadow are not in the hierarchy: read them from the
+   component's cell in `DESIGN.md`, and measure a radius or a hairline on the screenshot.
 3. **Interact.** Tap every control and scroll every list in a flow, with a screenshot after each
-   state the unit declares. A touch screen has no hover, and a pressed state is not captured.
-4. **Widths.** 390 and 320 dp, set through the density on the 1080 px panel
-   (density = 1080 × 160 / width: 443 and 540). An element whose bounds pass the screen's edge,
-   or clipped text, is a finding, and so is a target under 44 dp for a primary act or under
-   24 dp otherwise.
+   state the unit declares; a toast is judged from that screenshot, since it is gone before
+   `maestro hierarchy` returns. A touch screen has no hover, and a pressed state is not captured.
+4. **Widths.** 390 and 320 dp, set live through the density on the 1080 px panel
+   (density = 1080 × 160 / width: 443 and 540), with no relaunch. An element whose bounds pass
+   the screen's edge, or clipped text, is a finding, and so is a target under 44 dp for a primary
+   act or under 24 dp otherwise.
 5. **Modes.** `adb shell cmd uimode night yes`, then `no`, and repeat steps 2 to 4. The app
    follows the system mode while it runs.
 6. **Floors.** As on the web, from the pixels and the bounds, except that keyboard reach becomes
    an accessible name (text or accessibility label) on every clickable element, and overflow is
    bounds past the screen's edge.
 7. **Judge** and 8. **Hygiene** as on the web, by the phone's rules page.
-9. **Console.** The app's log (`adb logcat -d 'ReactNativeJS:W' '*:S'`) and Metro's output show
-   zero warnings and errors, except Reanimated's "Reduced motion setting is enabled" warning,
-   which the harness's own reduced motion raises.
+9. **Console.** Metro's output, where the app's JavaScript logs arrive, shows zero warnings
+   and errors, except Reanimated's "Reduced motion setting is enabled" warning, which the
+   harness's own reduced motion raises.
 
 ## Procedure
 

@@ -25,6 +25,7 @@ export default function Notes() {
 	const newNote: Act = { label: "New note", onAct: start };
 	const add: Act = {
 		label: "Add",
+		blocked: title.trim() ? undefined : "Give the note a title.",
 		loading: create.isPending,
 		onAct: () =>
 			create.mutateAsync({ title }).then(
@@ -52,7 +53,7 @@ export default function Notes() {
 				<List
 					query={notes}
 					sentence="Notes did not load."
-					empty={{ sentence: "No notes yet.", act: newNote }}
+					empty={{ sentence: "No notes yet." }}
 					row={{
 						key: (note) => note.id,
 						title: (note) => note.title,

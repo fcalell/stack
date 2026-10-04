@@ -3,14 +3,24 @@
 The phone app renders on an Android emulator for the design critique, driven by Maestro. It
 needs x86_64 Linux with `/dev/kvm`, and runs a debug build of the app that loads its JavaScript
 from `stack expo dev`. Expo Go cannot run the native roster, so the build is the app's own.
+[Capture a phone screen](./phone-capture.md) drives the running app.
 
-Every command runs in stack's phone shell (the Android SDK, the emulator, JDK 17, Maestro). The
-build needs no nix-ld on NixOS: `hermesc` is static, and the shell points Gradle at the SDK's
-`aapt2`.
+## The shell
+
+Every command runs in stack's phone shell (the Android SDK, the emulator, JDK 17, Maestro,
+ImageMagick), in bash, from the app's directory, with the app's `stack` on the path. A
+non-interactive shell sources the environment; zsh drops `adb` and `emulator` from it. Inside
+stack's own repository the flake is the local checkout's (`<repo>#phone`), since the published
+one lags it, and the workspace packages are built first.
 
 ```sh
-nix develop github:fcalell/stack#phone
+source <(nix print-dev-env github:fcalell/stack#phone)   # in stack's repo: <repo>#phone
+cd <app> && export PATH="$PWD/node_modules/.bin:$PATH"
+turbo run build --filter=<app>...                        # in stack's repo, from its root
 ```
+
+The build needs no nix-ld on NixOS: `hermesc` is static, and the shell points Gradle at the
+SDK's `aapt2`.
 
 ## Once per machine: the device
 
@@ -38,88 +48,47 @@ boots, never beside it: the two together exhaust 16 GB of memory.
 
 ```sh
 emulator -avd stack-phone -no-window -no-audio -no-boot-anim -no-snapshot \
-  -gpu swiftshader_indirect &
+  -gpu swiftshader_indirect > emulator.log 2>&1 &
 adb wait-for-device
 until [ "$(adb shell getprop sys.boot_completed | tr -d '\r')" = 1 ]; do sleep 2; done
 adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+adb shell wm density reset
 adb shell svc power stayon true
 adb shell settings put global hide_error_dialogs 1
 for k in window_animation_scale transition_animation_scale animator_duration_scale; do
   adb shell settings put global $k 0
 done
 adb reverse tcp:8787 tcp:8787
-stack dev & stack expo dev &
+setsid stack dev > dev.log 2>&1 & DEV=$!
+setsid stack expo dev > metro.log 2>&1 & METRO=$!
 
 PKG=$(node -p 'require("./.stack/app.config.cjs").android.package')
 SCHEME=$(node -p 'require("./.stack/app.config.cjs").scheme')
+worker_pid() { ss -Htlnp 'sport = :8787' | grep -o 'pid=[0-9]*' | cut -d= -f2 | sort -u; }
 ```
 
+A density left by an earlier session would skew every width, so the session resets it first.
+`setsid` gives each dev server its own process group, which `kill -- -$DEV` stops whole.
+`worker_pid` prints the pid of the worker process serving port 8787.
+
 The animation scales at 0 are the system's reduced motion, which the app reads when it starts.
-Reanimated answers with a development warning and its toast; the flow below dismisses the
-toast. Metro's "installing React Native DevTools" error is the host's, never the app's.
+Reanimated answers with a development warning and its toast, which a flow dismisses. Metro's
+"installing React Native DevTools" error is the host's, never the app's.
 
 The emulator's `localhost` is its own: `adb reverse` carries its port 8787 to the worker
 `stack dev` serves, so the API client's localhost fallback reaches it with no
 `EXPO_PUBLIC_API_URL`. Without it every query fails. The worker's port is fixed, so one
 `stack dev` runs on the machine at a time.
 
-## Open a route and capture it
-
-A Maestro flow opens a route by deep link, waits for a known text, and screenshots. Pass every
-variable with `-e`: a default in the flow's own `env:` overrides it.
-
-```yaml
-# home.yaml
-appId: ${PKG}
----
-- stopApp
-- openLink: ${SCHEME}://
-- extendedWaitUntil:
-    visible: Platform
-    timeout: 180000
-- extendedWaitUntil:
-    visible: Open debugger to view warnings.
-    timeout: 10000
-    optional: true
-- runFlow:
-    when:
-      visible: Open debugger to view warnings.
-    commands:
-      - tapOn:
-          point: "92%,92%"
-- waitForAnimationToEnd
-- takeScreenshot: home-${MODE}-${WIDTH}
-```
-
-```sh
-adb shell cmd uimode night no        # yes for dark
-adb shell wm density 443             # 390 dp on the 1080 px panel; 540 is 320 dp
-maestro test --no-reinstall-driver --test-output-dir=shots \
-  -e PKG=$PKG -e SCHEME=$SCHEME -e MODE=light -e WIDTH=390 home.yaml
-maestro hierarchy --no-reinstall-driver > home-light-390.json
-adb logcat -d 'ReactNativeJS:W' '*:S'
-```
-
-`wm density` sets the width in dp: density = 1080 × 160 / width. A screenshot lands in
-`shots/<run>/<flow>/takeScreenshot/`. `maestro hierarchy` prints each element's bounds in px,
-its text, its accessibility label and its state. Each Maestro call costs about 20 s, so one flow
-walks a whole set of states. The first frames after a launch arrive seconds late, so a
-screenshot always follows a wait on a known text. The warning toast's close act carries no
-label, and `tapOn: rightOf:` its sentence misses it, so the flow taps its point.
-
-## Hold a query's states
-
-A query's pending, failed and empty states come from the worker the app calls.
-
-| State | How |
-| --- | --- |
-| Empty | A fresh local database, before anything is created |
-| Pending | `kill -STOP` the `workerd` process listening on 8787: the request is accepted and never answered. `kill -CONT` releases it |
-| Failed | Stop `stack dev`: the request is refused, and the query fails after the client's single retry. Start it again and tap Retry to load |
-
 ## Shut down
 
 ```sh
+adb reverse --remove-all
+kill -- -$DEV -$METRO
+kill $(worker_pid) 2>/dev/null
 adb shell wm density reset
+adb shell cmd uimode night no
 adb emu kill
 ```
+
+A `workerd` that outlives `stack dev` keeps port 8787 and blocks the next session's worker.

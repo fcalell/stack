@@ -369,6 +369,11 @@ export const expo = plugin("expo", {
 				"Rendering the phone app on an emulator to judge a screen, or rebuilding it after a native change",
 		},
 		{
+			page: "phone-capture",
+			trigger:
+				"Capturing, measuring or holding a phone screen's states on the emulator",
+		},
+		{
 			page: "api-client",
 			trigger:
 				"Calling the API from the phone, or editing `src/lib/api.ts` or `EXPO_PUBLIC_API_URL`",

@@ -87,6 +87,8 @@
             android.androidsdk
             pkgsAndroid.jdk17
             pkgs.maestro
+            # The critique's pixel colours and contrast ratios, read from a screenshot.
+            pkgs.imagemagick
           ];
           ANDROID_HOME = sdk;
           ANDROID_SDK_ROOT = sdk;
