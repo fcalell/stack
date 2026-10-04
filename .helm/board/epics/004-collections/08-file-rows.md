@@ -1,6 +1,6 @@
 ---
 id: 004-08
-status: backlog
+status: review
 sessions: {}
 ---
 # react-ui, native-ui: a list of changed files from data draws its own four states
@@ -26,5 +26,8 @@ Web and phone take the same props. Needs a query (a deploy's or a review's chang
 (the same list beside a diff from one query). Depends on 004-02.
 
 ## Acceptance criteria
-- [ ] (test) both plugins' `List` take `file` as an item map, and a List given `row` and `file` together fails the type-check.
+- [x] (test) both plugins' `List` take `file` as an item map, and a List given `row` and `file` together fails the type-check.
 - [ ] (live) the changes page passes its files as data, `FilesWaiting` is gone, and the list draws its four states under `&query=loading|error`.
+
+## Progress
+The file map, its four states and the changes page shipped with 004-02; the type-level tests are added. Open: the live criteria (web per batch, phone on the harness).
