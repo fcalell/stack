@@ -29,7 +29,7 @@ import { useWords } from "../../lib/words";
 import { Avatar } from "../avatar";
 import { Chip } from "../chip";
 import { Icon } from "../icon";
-import { Menu } from "../menu";
+import { MenuBase } from "../menu/base";
 import { Picker } from "../picker";
 import { Status } from "../status";
 import { StatusDot } from "../status/dot";
@@ -219,7 +219,11 @@ export function ListRow<V extends string | null = string>({
 			) : null}
 			{more?.length ? (
 				<View className={cn(ROW_ACTS, ACTS)}>
-					<Menu label={`${words.more} ${named}`} items={more} />
+					<MenuBase
+						label={`${words.more} ${named}`}
+						title={named}
+						items={more}
+					/>
 				</View>
 			) : null}
 		</View>

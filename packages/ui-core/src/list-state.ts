@@ -108,17 +108,18 @@ export function rowShape(slots: {
 
 // The count a Section shows: its own `count` when it has one (a total its
 // lists do not hold), else its lists' total once every list has answered (a
-// list still waiting or failed gives none), else none.
+// list still waiting or failed gives none), else none; an empty collection
+// shows none, its empty state saying so.
 export function sectionCount(
 	own: number | undefined,
 	lists: readonly (number | undefined)[],
 ): number | undefined {
-	if (own !== undefined) return own;
+	if (own !== undefined) return own === 0 ? undefined : own;
 	if (lists.length === 0) return undefined;
 	let total = 0;
 	for (const value of lists) {
 		if (value === undefined) return undefined;
 		total += value;
 	}
-	return total;
+	return total === 0 ? undefined : total;
 }

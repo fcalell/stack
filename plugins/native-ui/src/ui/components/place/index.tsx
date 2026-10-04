@@ -96,6 +96,9 @@ export function Place({
 		) : (
 			switcher
 		);
+	const acts = [...(actions ?? []), ...(lent ? [lent] : [])];
+	// A top bar with nothing in it is not drawn.
+	const bar = lead != null || acts.length > 0 || Boolean(more?.length);
 	const room = act ? <View className={FLOATING_ACT_ROOM} /> : null;
 	// A region scrolling inside a bleeding body keeps no page inset under its
 	// last row, so its room is the act's height over the page inset.
@@ -114,18 +117,18 @@ export function Place({
 					<PageTitle.Provider value={title}>
 						<View className={PLACE}>
 							<View className={PAGE_HEAD}>
-								<View className={cn(PAGE_TOP_BAR, TOP_BAR)}>
-									{lead}
-									<View className={SPACER} />
-									{[...(actions ?? []), ...(lent ? [lent] : [])].map(
-										(action) => (
+								{bar ? (
+									<View className={cn(PAGE_TOP_BAR, TOP_BAR)}>
+										{lead}
+										<View className={SPACER} />
+										{acts.map((action) => (
 											<IconButton key={action.label} {...action} fit="body" />
-										),
-									)}
-									{more?.length ? (
-										<Menu label={words.more} items={more} />
-									) : null}
-								</View>
+										))}
+										{more?.length ? (
+											<Menu label={words.more} items={more} />
+										) : null}
+									</View>
+								) : null}
 								<RNText
 									accessibilityRole="header"
 									className={cn(text({ role: "title" }), TITLE, PAGE_TITLE)}

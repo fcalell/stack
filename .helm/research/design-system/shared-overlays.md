@@ -1830,13 +1830,13 @@ Board 42.
 ### group · rest
 
 - both densities: `gap-rows flex flex-col`
-  - cell: `MENU_GROUP {kind: acts}`; overlay: `flex flex-col`
+  - cell: `MENU_GROUP {place: first}`; overlay: `flex flex-col`
   - under: open · the keyboard on Export as CSV (highlighted, the hover wash); glyphs at fit=body in meta ink; a blocked item inert, its label disabled, its reason under it…
 
-### group · kind=destructive
+### group · place=after
 
 - both densities: `gap-rows border-t border-edge pt-float flex flex-col`
-  - cell: `MENU_GROUP {kind: destructive}`; overlay: `flex flex-col`
+  - cell: `MENU_GROUP {place: after}`; overlay: `flex flex-col`
   - under: open · the keyboard on Export as CSV (highlighted, the hover wash); glyphs at fit=body in meta ink; a blocked item inert, its label disabled, its reason under it…
 
 ### item · rest; rest destructive

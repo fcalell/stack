@@ -153,10 +153,12 @@ test("a list reports its item count once its items answer, none while they wait 
 	assert.equal(listCount({ ...base, items: [1, 2], loading: true }), undefined);
 });
 
-test("a Section shows its own count, else its lists' total once every list has answered", () => {
+test("a Section shows its own count, else its lists' total once every list has answered, and none for an empty collection", () => {
 	assert.equal(sectionCount(11, [3, undefined]), 11);
 	assert.equal(sectionCount(undefined, []), undefined);
 	assert.equal(sectionCount(undefined, [3, 2]), 5);
 	assert.equal(sectionCount(undefined, [3, undefined]), undefined);
-	assert.equal(sectionCount(undefined, [0]), 0);
+	assert.equal(sectionCount(undefined, [0]), undefined);
+	assert.equal(sectionCount(undefined, [0, 0]), undefined);
+	assert.equal(sectionCount(0, [3]), undefined);
 });

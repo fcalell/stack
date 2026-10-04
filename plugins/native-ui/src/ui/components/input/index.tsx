@@ -10,9 +10,9 @@ import {
 import { useContext, useRef, useState } from "react";
 import {
 	type KeyboardTypeOptions,
+	Pressable,
 	Text as RNText,
 	TextInput,
-	View,
 } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
@@ -103,8 +103,12 @@ export function Input({
 	const surface = SURFACE[which];
 	const search = which === "search";
 	const figures = cell !== undefined && which === "number";
+	// The whole box focuses the value: the value is one line tall inside it.
 	return (
-		<View
+		<Pressable
+			accessible={false}
+			disabled={disabled}
+			onPress={() => input.current?.focus()}
 			className={cn(
 				field({
 					fit: search || cell ? "bar" : "form",
@@ -179,6 +183,6 @@ export function Input({
 					fit="field"
 				/>
 			) : null}
-		</View>
+		</Pressable>
 	);
 }

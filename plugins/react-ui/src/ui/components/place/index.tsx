@@ -199,22 +199,33 @@ export function Place({
 		floats(true);
 		return () => floats(false);
 	}, [floating, floats]);
+	// On touch a top bar with nothing in it is not drawn; on the desktop the
+	// strip always holds the title.
+	const bar =
+		!touch ||
+		back !== null ||
+		lead !== null ||
+		acts.length > 0 ||
+		details !== null ||
+		overflow !== null;
 	// The head is one tree on both densities, so crossing the density line
 	// keeps its acts, their focus and an open sheet's trigger. Only the
 	// title's place, the spacer and the strip's act differ, each a slot that
 	// holds `null` where it does not draw, so the acts after it never shift.
 	const head = (
 		<header className={cn(PAGE_HEAD, HEAD)}>
-			<div className={cn(PAGE_TOP_BAR, ROW)}>
-				{back}
-				{lead}
-				{touch ? null : heading}
-				{touch ? <span className={SPACER} /> : null}
-				{acts}
-				{details}
-				{overflow}
-				{touch ? null : button}
-			</div>
+			{bar ? (
+				<div className={cn(PAGE_TOP_BAR, ROW)}>
+					{back}
+					{lead}
+					{touch ? null : heading}
+					{touch ? <span className={SPACER} /> : null}
+					{acts}
+					{details}
+					{overflow}
+					{touch ? null : button}
+				</div>
+			) : null}
 			{touch ? heading : null}
 		</header>
 	);

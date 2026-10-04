@@ -21,7 +21,9 @@ const SQUARE = "rounded-none";
 const LEADING = "shrink-0 items-center justify-center";
 const TEXT = "flex-1 min-w-0";
 const LINE = "flex-row items-center min-w-0";
-const TITLE = "flex-row items-center grow min-w-0";
+// A line's strut and its bar in one box, so the line's gap never stands
+// between them and the bar starts where the text it stands in for starts.
+const STRUT_BAR = "flex-row items-center grow min-w-0";
 // A bar runs in its line's short-label lane, at a share of a typical title or
 // meta line rather than of the row.
 const BAR_ROOM = "flex-row grow";
@@ -71,7 +73,7 @@ export function RowWait(props: { shape: RowShape; index: number }) {
 			) : null}
 			<View className={TEXT}>
 				<View className={cn(ROW_TITLE_LINE, LINE)}>
-					<View className={TITLE}>
+					<View className={STRUT_BAR}>
 						<RNText className={lineBox({ role: "body" })}>{STRUT}</RNText>
 						<View className={cn(skeletonLane({ role: "body" }), BAR_ROOM)}>
 							<View className={cn(skeleton({ kind: "line" }), title)} />
@@ -85,9 +87,11 @@ export function RowWait(props: { shape: RowShape; index: number }) {
 				</View>
 				{shape.meta ? (
 					<View className={cn(ROW_META_LINE, LINE, shape.chip && CHIP_LINE)}>
-						<RNText className={lineBox({ role: "meta" })}>{STRUT}</RNText>
-						<View className={cn(skeletonLane({ role: "meta" }), BAR_ROOM)}>
-							<View className={cn(skeleton({ kind: "line" }), meta)} />
+						<View className={STRUT_BAR}>
+							<RNText className={lineBox({ role: "meta" })}>{STRUT}</RNText>
+							<View className={cn(skeletonLane({ role: "meta" }), BAR_ROOM)}>
+								<View className={cn(skeleton({ kind: "line" }), meta)} />
+							</View>
 						</View>
 					</View>
 				) : null}

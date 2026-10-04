@@ -9,7 +9,7 @@ import {
 	field,
 	fieldValue,
 } from "@fcalell/ui-core/variants";
-import { use } from "react";
+import { type MouseEvent, use } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { useCommit } from "../../lib/commit.ts";
 import { CellField, FieldDisabled } from "../../lib/field.ts";
@@ -37,6 +37,15 @@ const SEARCH_BOX = "grow";
 const CELL_NUMBER = "text-end";
 const UNIT = "shrink-0";
 const UNIT_DISABLED = "text-ink-disabled";
+
+// The whole box focuses the value, which is one line tall inside it; a press
+// on the value or on the act inside keeps its own.
+function focusValue(event: MouseEvent<HTMLDivElement>) {
+	if (event.target instanceof Element && event.target.closest("input, button"))
+		return;
+	event.preventDefault();
+	event.currentTarget.querySelector("input")?.focus();
+}
 
 export type InputKind =
 	| "text"
@@ -115,7 +124,9 @@ export function Input({
 			// validity); the render function hands over its props and state so the
 			// box around the value draws that state.
 			render={(control, state) => (
+				// biome-ignore lint/a11y/noStaticElementInteractions: the press forwards focus to the input inside, which the keyboard reaches on its own
 				<div
+					onMouseDown={focusValue}
 					className={cn(
 						field({
 							fit: search || cell ? "bar" : "form",

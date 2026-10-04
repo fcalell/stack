@@ -596,17 +596,17 @@ export const MENU = matrix({
 	defaultVariants: { form: "popover" },
 });
 
-// A menu's group of rows: its acts, or the destructive acts last under a
-// hairline.
+// A menu's group of rows (its acts, or the destructive acts last): the first
+// group stands alone, a group after another under a hairline between them.
 export const MENU_GROUP = matrix({
 	base: "gap-rows",
 	variants: {
-		kind: {
-			acts: "",
-			destructive: "border-t border-edge pt-float",
+		place: {
+			first: "",
+			after: "border-t border-edge pt-float",
 		},
 	},
-	defaultVariants: { kind: "acts" },
+	defaultVariants: { place: "first" },
 });
 
 // A menu act's label: the body role's, in `danger` for an act that removes

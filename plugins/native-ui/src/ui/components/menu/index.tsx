@@ -1,8 +1,6 @@
 import type { MenuItem } from "@fcalell/ui-core/descriptors";
-import { useState } from "react";
 import type { Closed } from "../../lib/closed";
-import { IconButtonBase } from "../icon-button/base";
-import { MenuSheet } from "./sheet";
+import { MenuBase } from "./base";
 
 export interface MenuProps extends Closed {
 	// The more act's name, read aloud, and the sheet's title.
@@ -16,22 +14,5 @@ export interface MenuProps extends Closed {
 // open. A destructive act draws in danger ink, a blocked one inert with its
 // reason under its label.
 export function Menu({ label, items }: MenuProps) {
-	const [open, setOpen] = useState(false);
-	return (
-		<>
-			<IconButtonBase
-				icon="Ellipsis"
-				fit="body"
-				label={label}
-				open={open}
-				onAct={() => setOpen(true)}
-			/>
-			<MenuSheet
-				label={label}
-				items={items}
-				open={open}
-				onClose={() => setOpen(false)}
-			/>
-		</>
-	);
+	return <MenuBase label={label} title={label} items={items} />;
 }

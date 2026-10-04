@@ -129,7 +129,8 @@ export function SheetBase({
 	}, [blocked]);
 	const iconFit = touch ? "body" : "bar";
 	const centred = form === "centred" && !touch;
-	const close = (
+	// A decision draws no close act: its acts dismiss it.
+	const close = acts ? null : (
 		<Dialog.Close
 			disabled={busy}
 			render={<IconButtonBase icon="X" fit={iconFit} label={words.close} />}

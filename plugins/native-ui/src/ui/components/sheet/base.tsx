@@ -112,7 +112,8 @@ export interface SheetBaseProps {
 
 // A bottom sheet over the scrim, content-tall up to the screen under its top
 // inset (full height when it holds a TextArea): the head fixed at the top
-// (the close act, or back on a second page, the title and the submit at its
+// (the close act, or back on a second page, or neither for a decision, whose
+// acts dismiss it, the title and the submit at its
 // end where a keyboard would cover a bar, the description under them and a
 // blocked submit's reason under the head), the body scrolling under it, and
 // the foot fixed at the bottom (its line over a decision's acts). Native
@@ -221,7 +222,8 @@ export function SheetBase({
 									label={words.back}
 									onAct={back}
 								/>
-							) : (
+							) : null}
+							{back || acts ? null : (
 								<IconButtonBase
 									icon="X"
 									fit="body"
@@ -275,6 +277,7 @@ export function SheetBase({
 		[
 			within,
 			back,
+			acts,
 			words,
 			onClose,
 			busy,

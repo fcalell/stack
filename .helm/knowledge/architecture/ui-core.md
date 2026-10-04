@@ -366,7 +366,7 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
   `SectionContext`, released when it settles or unmounts; the Section stays busy, its count
   waiting, until every waiter settles. A List also reports its item count there once its items
   answer, and a Section with no `count` of its own shows its lists' total once every list has
-  answered (a failed one gives none). A `Group` or a `List` anywhere in the body registers as rows
+  answered (a failed one gives none); an empty collection shows no count beside its empty state. A `Group` or a `List` anywhere in the body registers as rows
   through the same context; a loading Section renders its body once, and when nothing registered
   rows its layout effect swaps the body for field skeletons in a synchronous re-render before
   paint, one skeleton per `FormField` that registered the same way (three when none did), so

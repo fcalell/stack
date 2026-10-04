@@ -28,7 +28,7 @@ import { useWords } from "../../lib/words.tsx";
 import { Avatar } from "../avatar/index.tsx";
 import { Chip } from "../chip/index.tsx";
 import { Icon } from "../icon/index.tsx";
-import { Menu } from "../menu/index.tsx";
+import { MenuBase } from "../menu/base.tsx";
 import { Picker } from "../picker/index.tsx";
 import { StatusDot } from "../status/dot.tsx";
 import { Status } from "../status/index.tsx";
@@ -217,7 +217,11 @@ export function ListRow<V extends string | null = string>({
 			) : null}
 			{more?.length ? (
 				<span className={cn(ROW_ACTS, ACTS)}>
-					<Menu label={`${words.more} ${named}`} items={more} />
+					<MenuBase
+						label={`${words.more} ${named}`}
+						title={named}
+						items={more}
+					/>
 				</span>
 			) : null}
 		</div>

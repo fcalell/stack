@@ -81,30 +81,35 @@ export function MenuRow({
 	);
 }
 
-// A menu on the phone: a sheet titled `label` with its close act, its rows
-// under the head, the destructive acts last under a hairline; taking an act
-// closes the sheet first. Outside the package's exports: the `Menu` opens it
+// A menu on the phone: a sheet titled `title` with its close act, its rows
+// under the head, the destructive acts last under a hairline between the
+// groups; taking an act closes the sheet first. Outside the package's exports: the `Menu` opens it
 // from the more act, the Shell's More tab from its tab.
 export function MenuSheet({
 	label,
+	title,
 	items,
 	open,
 	onClose,
 }: {
 	label: string;
+	title: string;
 	items: readonly MenuItem[];
 	open: boolean;
 	onClose: () => void;
 }) {
 	return (
-		<SheetBase form="menu" open={open} onClose={onClose} title={label}>
+		<SheetBase form="menu" open={open} onClose={onClose} title={title}>
 			<View
 				accessibilityRole="menu"
 				accessibilityLabel={label}
 				className={menu({ form: "sheet" })}
 			>
-				{groupsOf(items).map((group) => (
-					<View key={group.kind} className={menuGroup({ kind: group.kind })}>
+				{groupsOf(items).map((group, index) => (
+					<View
+						key={group.kind}
+						className={menuGroup({ place: index === 0 ? "first" : "after" })}
+					>
 						{group.items.map((item) => (
 							<MenuRow
 								key={item.label}
