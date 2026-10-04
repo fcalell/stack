@@ -268,6 +268,10 @@ importer in the checkout's `pnpm-lock.yaml`. `stack init` writes the app no `bio
 configs and runs the root's pnpm as `apps/showcase` does: Biome refuses a second root config
 below the checkout's. Anywhere else,
 including a directory under the checkout that no glob names, the app installs from GitHub.
+`stack plugin init` applies the same rule to the plugin it scaffolds (`plugins/<name>` by
+default): inside the workspace its manifest takes each stack package as `workspace:*` and no
+`packageManager`, and it writes no `pnpm-workspace.yaml`; elsewhere it writes the GitHub specs
+and its own `pnpm-workspace.yaml`.
 
 ## The guide
 

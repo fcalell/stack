@@ -1,6 +1,6 @@
 ---
 id: 003-04
-status: backlog
+status: review
 sessions: {}
 ---
 # cli: stack plugin new inside the checkout links the workspace
@@ -15,4 +15,7 @@ Reuse init's workspace mode (`stackWorkspaceRoot`, `toWorkspaceSpecs` in
 `packages/cli/src/lib/install.ts`).
 
 ## Acceptance criteria
-- [ ] (test) a plugin scaffolded inside the workspace gets `workspace:*` specs and no `pnpm-workspace.yaml`.
+- [x] (test) a plugin scaffolded inside the workspace gets `workspace:*` specs and no `pnpm-workspace.yaml`.
+
+## Progress
+Built; `pnpm check` and `pnpm verify` pass. Inside stack's checkout `stack plugin init <name>` writes `workspace:*` specs, no `packageManager` and no `pnpm-workspace.yaml`; outside it, GitHub specs and its own workspace file, as before (both checked with the built CLI).

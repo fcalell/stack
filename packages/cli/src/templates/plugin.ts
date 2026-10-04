@@ -1,9 +1,13 @@
+import { toWorkspaceSpecs } from "../lib/install.ts";
 import { toPascalCase as pascalCase, toCamelCase } from "../lib/naming.ts";
 import { stackSpec } from "../lib/stack-packages.ts";
 
 interface PluginPackageJsonOptions {
 	name: string;
 	packageName: string;
+	// The plugin sits in stack's own workspace: it takes each stack package
+	// from the workspace and the root's package manager.
+	workspace: boolean;
 }
 
 export function pluginPackageJsonTemplate(
@@ -14,7 +18,7 @@ export function pluginPackageJsonTemplate(
 		version: "0.0.0",
 		type: "module",
 		sideEffects: false,
-		packageManager: "pnpm@11.28.3",
+		...(options.workspace ? {} : { packageManager: "pnpm@11.28.3" }),
 		exports: {
 			".": { types: "./dist/index.d.ts", default: "./dist/index.js" },
 			"./runtime": {
@@ -40,7 +44,8 @@ export function pluginPackageJsonTemplate(
 		},
 	};
 
-	return `${JSON.stringify(pkg, null, "\t")}\n`;
+	const manifest = options.workspace ? toWorkspaceSpecs(pkg) : pkg;
+	return `${JSON.stringify(manifest, null, "\t")}\n`;
 }
 
 export function pluginTsconfigTemplate(): string {
