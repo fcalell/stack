@@ -63,6 +63,9 @@ An `OptionList` holds a static set in `options`. Options from a query take `quer
 A `Thread` takes its `query` (or `items`) the same way through a `message` map (`key`,
 `author`, `name`, `body`, `at`, `onOpen`); its `MessageInput` stays the `foot`.
 
+A `BarChart` takes data the same way, its `bar` map reading each item's `key`, `label`, `value`,
+`parts` (by its declared `keys`) and `at`; its failed and empty forms stand at the chart's height.
+
 Any other region reading a query sits in its own `QueryBoundary`, naming its loading form.
 
 ## Words are the config's, sentences are props

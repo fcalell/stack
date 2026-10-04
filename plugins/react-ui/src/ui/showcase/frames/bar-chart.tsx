@@ -1,8 +1,23 @@
-import type { BarSeries } from "@fcalell/ui-core/descriptors";
-import { BarChart } from "../../components/bar-chart/index.tsx";
+import { BarChart, type BarSlots } from "../../components/bar-chart/index.tsx";
 import { Section } from "../../components/section/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
-import { Wide } from "./layout-context.tsx";
+import { queryOf, Wide } from "./layout-context.tsx";
+
+// A day's figure, its parts by service when the chart stacks.
+interface Day {
+	day: string;
+	value: number;
+	parts?: Record<string, number>;
+	at?: string;
+}
+
+const BAR: BarSlots<Day> = {
+	key: (day) => day.day,
+	label: (day) => day.day,
+	value: (day) => day.value,
+	parts: (day) => day.parts,
+	at: (day) => day.at,
+};
 
 // Board 54's build minutes, one a day from Sep 3, the first and last day
 // timed under their bars.
@@ -10,14 +25,14 @@ const MINUTES = [
 	40, 60, 70, 50, 20, 10, 50, 70, 80, 60, 70, 20, 10, 60, 90, 80, 70, 100, 30,
 	20, 70, 80, 110, 90, 80, 20, 10, 60, 70, 50,
 ];
-const DAYS: BarSeries[] = MINUTES.map((value, index) => {
+const DAYS: Day[] = MINUTES.map((value, index) => {
 	const day = new Date(Date.UTC(2026, 8, 3 + index)).toLocaleDateString("en", {
 		month: "short",
 		day: "numeric",
 		timeZone: "UTC",
 	});
 	const end = index === 0 || index === MINUTES.length - 1;
-	return { label: day, value, at: end ? day : undefined };
+	return { day, value, at: end ? day : undefined };
 });
 
 const SERVICES = ["api", "web", "worker", "cron", "queue", "mail"];
@@ -33,11 +48,11 @@ const WEEK: Array<[string, number[]]> = [
 	["Sun", [2000, 1000, 0, 200, 100, 100]],
 ];
 
-function byService(keys: readonly string[]): BarSeries[] {
+function byService(keys: readonly string[]): Day[] {
 	return WEEK.map(([day, values]) => {
 		const shown = values.slice(0, keys.length);
 		return {
-			label: day,
+			day,
 			value: shown.reduce((sum, value) => sum + value, 0),
 			parts: Object.fromEntries(
 				keys.map((key, index) => [key, shown[index] ?? 0]),
@@ -49,21 +64,17 @@ function byService(keys: readonly string[]): BarSeries[] {
 
 // A week with nothing yet: no ticks over the empty plot, the table's value
 // column named by the label for want of a unit.
-const QUIET: BarSeries[] = WEEK.map(([day]) => ({
-	label: day,
-	value: 0,
-	at: day,
-}));
+const QUIET: Day[] = WEEK.map(([day]) => ({ day, value: 0, at: day }));
 
 // A `CHART_FILL.series` cell past the first stacks by service (past the
-// third, by six of them); a `CHART_BAND` cell adds an empty week; every
-// other cell draws the one series; loading draws the loaded boxes.
+// third, by six of them); a `CHART_BAND` cell at rest adds a week of zeros;
+// every other cell draws the one series. Each chart takes a query in the
+// frame's state: its loaded boxes in skeleton, its failure, its empty form.
 export function drawBarChart(frame: ShowcaseFrame) {
 	const cell = frame.cell.name;
 	const wide = ["pink", "green", "red"].some((hue) => cell.endsWith(hue));
 	const stacked = wide || ["violet", "amber"].some((hue) => cell.endsWith(hue));
-	const loading = frame.state === "loading";
-	const empty = cell.startsWith("CHART_BAND") && !loading;
+	const quiet = cell.startsWith("CHART_BAND") && frame.state === "rest";
 	const keys = SERVICES.slice(0, wide ? SERVICES.length : 3);
 	return (
 		<Wide>
@@ -72,24 +83,28 @@ export function drawBarChart(frame: ShowcaseFrame) {
 					<BarChart
 						label="Requests per day this week, by service"
 						keys={keys}
-						series={byService(keys)}
+						query={queryOf(frame.state, byService(keys))}
+						sentence="Requests did not load."
+						empty={{ sentence: "No request reached a service this week." }}
+						bar={BAR}
 						unit="requests"
-						loading={loading}
 					/>
 				</Section>
 			) : (
 				<Section title="Build minutes" description="Per day, the last 30 days.">
 					<BarChart
 						label="Build minutes per day, Sep 3 to Oct 2"
-						series={DAYS}
+						query={queryOf(frame.state, DAYS)}
+						sentence="Build minutes did not load."
+						empty={{ sentence: "No build ran in the last 30 days." }}
+						bar={BAR}
 						unit="minutes"
-						loading={loading}
 					/>
 				</Section>
 			)}
-			{empty ? (
+			{quiet ? (
 				<Section title="Cron runs" description="Per day this week.">
-					<BarChart label="Cron runs" series={QUIET} />
+					<BarChart label="Cron runs" items={QUIET} bar={BAR} />
 				</Section>
 			) : null}
 		</Wide>

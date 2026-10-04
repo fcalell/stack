@@ -867,21 +867,21 @@ export const closure = (
 		<Meter label="a" value={1} max={2} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
 		<Meter label="a" value={1} max={2} placeholderTextColorClassName="text-ink-body" />
-		<BarChart label="x" series={[]} />
+		<BarChart label="x" items={[]} bar={{ key: String, label: String, value: Number }} />
 		{/* @ts-expect-error: closed channel */}
-		<BarChart label="x" series={[]} className="x" />
+		<BarChart label="x" items={[]} bar={{ key: String, label: String, value: Number }} className="x" />
 		{/* @ts-expect-error: closed channel */}
-		<BarChart label="x" series={[]} style={{ flex: 1 }} />
+		<BarChart label="x" items={[]} bar={{ key: String, label: String, value: Number }} style={{ flex: 1 }} />
 		{/* @ts-expect-error: closed channel */}
-		<BarChart label="x" series={[]} class="x" />
+		<BarChart label="x" items={[]} bar={{ key: String, label: String, value: Number }} class="x" />
 		{/* @ts-expect-error: closed channel */}
-		<BarChart label="x" series={[]} classList={{}} />
+		<BarChart label="x" items={[]} bar={{ key: String, label: String, value: Number }} classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<BarChart label="x" series={[]} colorClassName="text-ink-body" />
+		<BarChart label="x" items={[]} bar={{ key: String, label: String, value: Number }} colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<BarChart label="x" series={[]} selectionColorClassName="text-ink-body" />
+		<BarChart label="x" items={[]} bar={{ key: String, label: String, value: Number }} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<BarChart label="x" series={[]} placeholderTextColorClassName="text-ink-body" />
+		<BarChart label="x" items={[]} bar={{ key: String, label: String, value: Number }} placeholderTextColorClassName="text-ink-body" />
 		<Chip label="a" family="red" />
 		{/* @ts-expect-error: closed channel */}
 		<Chip label="a" family="red" className="x" />

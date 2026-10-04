@@ -186,15 +186,6 @@ export interface Hunk {
 	lines: DiffLine[];
 }
 
-// One bar: a label, its total, its parts' values by the chart's key names (a
-// key it lacks is 0), the time under it.
-export interface BarSeries {
-	label: string;
-	value: number;
-	parts?: Readonly<Record<string, number>>;
-	at?: string;
-}
-
 export interface Attachment {
 	id: string;
 	name: string;

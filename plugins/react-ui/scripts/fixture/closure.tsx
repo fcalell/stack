@@ -516,15 +516,15 @@ export const closure = (
 		<Comparison label="x" columns={["a"]} items={[]} row={{ key: String, label: String, values: () => [] }} class="x" />
 		{/* @ts-expect-error: closed channel */}
 		<Comparison label="x" columns={["a"]} items={[]} row={{ key: String, label: String, values: () => [] }} classList={{}} />
-		<BarChart label="x" series={[]} />
+		<BarChart label="x" items={[]} bar={{ key: String, label: String, value: Number }} />
 		{/* @ts-expect-error: closed channel */}
-		<BarChart label="x" series={[]} className="x" />
+		<BarChart label="x" items={[]} bar={{ key: String, label: String, value: Number }} className="x" />
 		{/* @ts-expect-error: closed channel */}
-		<BarChart label="x" series={[]} style={{ flex: 1 }} />
+		<BarChart label="x" items={[]} bar={{ key: String, label: String, value: Number }} style={{ flex: 1 }} />
 		{/* @ts-expect-error: closed channel */}
-		<BarChart label="x" series={[]} class="x" />
+		<BarChart label="x" items={[]} bar={{ key: String, label: String, value: Number }} class="x" />
 		{/* @ts-expect-error: closed channel */}
-		<BarChart label="x" series={[]} classList={{}} />
+		<BarChart label="x" items={[]} bar={{ key: String, label: String, value: Number }} classList={{}} />
 		<Message author="you" body="x" />
 		{/* @ts-expect-error: closed channel */}
 		<Message author="you" body="x" className="x" />

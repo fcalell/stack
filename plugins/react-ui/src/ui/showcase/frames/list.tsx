@@ -1,8 +1,8 @@
 import { List } from "../../components/list/index.tsx";
 import { Place } from "../../components/place/index.tsx";
-import type { QueryLike } from "../../components/query-boundary/index.tsx";
 import { Section } from "../../components/section/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
+import { queryOf } from "./layout-context.tsx";
 import { Column } from "./place.tsx";
 
 interface Note {
@@ -31,22 +31,6 @@ const DEPLOYS: Deploy[] = [
 ];
 
 const refetch = () => {};
-
-// A query in the frame's state: its items at rest, none when empty.
-function queryOf<T>(
-	state: ShowcaseFrame["state"],
-	items: readonly T[],
-): QueryLike<readonly T[]> {
-	let data: readonly T[] | undefined;
-	if (state === "rest") data = items;
-	if (state === "empty") data = [];
-	return {
-		data,
-		isPending: state === "loading",
-		isError: state === "error",
-		refetch,
-	};
-}
 
 // Every cell draws two Lists in the frame's state, each in a Section on a
 // page as it ships: notes (a title over a meta line, no leading) and

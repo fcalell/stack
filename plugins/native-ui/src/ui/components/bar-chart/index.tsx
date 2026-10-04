@@ -1,4 +1,9 @@
-import type { BarSeries } from "@fcalell/ui-core/descriptors";
+import {
+	listBusy,
+	listState,
+	listWaits,
+	retryOf,
+} from "@fcalell/ui-core/list-state";
 import { CHART_SERIES } from "@fcalell/ui-core/tokens";
 import {
 	CHART,
@@ -20,11 +25,17 @@ import {
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
-import type { ReactNode } from "react";
+import { type ReactNode, useContext } from "react";
 import { Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { compact } from "../../lib/compact";
+import { LoadingContext } from "../../lib/loading";
+import { useSectionWait } from "../../lib/section";
+import { useWords } from "../../lib/words";
+import { EmptyStateBase } from "../empty-state/base";
+import type { ListEmpty } from "../list";
+import type { QueryLike } from "../query-boundary";
 
 const STACK = "min-w-0";
 const TOTAL = "flex-row items-baseline";
@@ -54,6 +65,10 @@ const LINE = "flex-row items-center";
 const STRUT = "​";
 const TIMES_WAIT = "flex-row justify-between";
 const BAR = "w-full";
+// A failed or empty chart's EmptyState stands over the loaded boxes, held
+// unseen, so it takes the chart's loaded height.
+const HELD = "opacity-0";
+const OVER = "absolute inset-0 justify-center";
 
 // Four bands, the last one's bottom the baseline.
 const BANDS = 4;
@@ -91,37 +106,114 @@ const HIDDEN = {
 	importantForAccessibility: "no-hide-descendants",
 } as const;
 
-export interface BarChartProps extends Closed {
-	// What the chart counts, which names the plot.
+// One function per bar slot, each called with a loaded item.
+export interface BarSlots<T> {
+	key: (item: T) => string;
+	// The bar's period, which its column reads aloud.
+	label: (item: T) => string;
+	value: (item: T) => number;
+	// The bar's parts' values by the chart's `keys`; a key it lacks is 0.
+	parts?: (item: T) => Readonly<Record<string, number>> | undefined;
+	// The time drawn under the bar.
+	at?: (item: T) => string | undefined;
+}
+
+// Where a chart's bars come from, oldest first.
+type ChartSource<T> =
+	| {
+			query: QueryLike<readonly T[]>;
+			// What failed to load, over the retry act.
+			sentence: string;
+			empty: ListEmpty;
+			items?: never;
+			loading?: never;
+	  }
+	| {
+			items: readonly T[];
+			// The items are on their way (a compound body's loading form).
+			loading?: boolean;
+			// Without it an empty chart draws its empty plot.
+			empty?: ListEmpty;
+			query?: never;
+			sentence?: never;
+	  };
+
+// Columns over time: one bar per item, stacked by one dimension when `keys`
+// names its parts.
+export type BarChartProps<T = unknown> = Closed &
+	ChartSource<T> & {
+		// What the chart counts, which names the plot.
+		label: string;
+		// The names a bar's parts stack by, bottom first: present, the chart is
+		// stacked and draws them as its legend in every form, each name holding
+		// its series mark.
+		keys?: readonly string[];
+		bar: BarSlots<T>;
+		// What the values count (`requests`, `minutes`), drawn after the total.
+		unit?: string;
+	};
+
+// One bar, read from its item.
+interface Bar {
+	key: string;
 	label: string;
-	// The names a bar's parts stack by, bottom first: present, the chart is
-	// stacked and draws them as its legend in both forms, each name holding its
-	// series mark.
-	keys?: readonly string[];
-	// The bars, oldest first: each a label, its total, its parts' values by key
-	// and the time drawn under it.
-	series: readonly BarSeries[];
-	// What the values count (`requests`, `minutes`), drawn after the total.
-	unit?: string;
-	// The chart's boxes as skeletons at their loaded size.
-	loading?: boolean;
+	value: number;
+	parts?: Readonly<Record<string, number>>;
+	at?: string;
 }
 
 // The total at body 500 with its unit, the parts' keys under it, then the
 // axis beside the plot, its four gridlines a hairline, the columns in the
 // chip marks by part, a time under each bar that has one. React Native has no
 // hidden table: the total names the chart and sums it, and each column reads
-// its label and its figures in full, as the web's table rows do.
-export function BarChart({
-	label,
-	keys,
-	series,
-	unit,
-	loading,
-}: BarChartProps) {
-	if (loading) return <Loading keys={keys} />;
+// its label and its figures in full, as the web's table rows do. It draws its
+// collection's four states: while its query is pending, `loading` is set or a
+// loading Section around it waits, its boxes in skeleton at their loaded size
+// with the keys standing (a Section around a pending query busy); a failed
+// query draws the failed EmptyState with `sentence` and Retry, and no item
+// draws `empty`, each at the chart's loaded height; then one bar per item.
+export function BarChart<T>(props: BarChartProps<T>) {
+	const { label, keys, unit } = props;
+	const words = useWords();
+	const base = {
+		query: props.query,
+		items: props.items,
+		loading: props.loading,
+		sectionLoading: useContext(LoadingContext),
+		inSection: false,
+		hasEmpty: props.empty !== undefined,
+	};
+	const input = { ...base, inSection: useSectionWait(listWaits(base)) };
+	const state = listState(input);
+	if (state === "pending")
+		return <Loading keys={keys} busy={listBusy(input)} />;
+	if (state === "failed" && props.query !== undefined)
+		return (
+			<Stand keys={keys}>
+				<EmptyStateBase
+					tone="failed"
+					sentence={props.sentence}
+					act={{ label: words.retry, onAct: retryOf(props.query) }}
+				/>
+			</Stand>
+		);
+	if (state === "empty" && props.empty)
+		return (
+			<Stand keys={keys}>
+				<EmptyStateBase tone="rest" {...props.empty} />
+			</Stand>
+		);
+	const { bar } = props;
+	const items = (props.query ? props.query.data : props.items) ?? [];
+	const series: Bar[] = items.map((item) => ({
+		key: bar.key(item),
+		label: bar.label(item),
+		value: bar.value(item),
+		parts: bar.parts?.(item),
+		at: bar.at?.(item),
+	}));
 	const labels = keys ?? [];
-	const part = (bar: BarSeries, key: string) => bar.parts?.[key] ?? 0;
+	const part = (bar: Bar, key: string) => bar.parts?.[key] ?? 0;
 	const peak = Math.max(
 		0,
 		...series.map((bar) =>
@@ -143,7 +235,7 @@ export function BarChart({
 		unit ? `${figure(total)} ${unit}` : figure(total),
 		...keyTotals.map((key) => `${key.label} ${figure(key.value)}`),
 	].join(", ");
-	const said = (bar: BarSeries) =>
+	const said = (bar: Bar) =>
 		[
 			bar.label,
 			unit ? `${full.format(bar.value)} ${unit}` : full.format(bar.value),
@@ -217,10 +309,9 @@ export function BarChart({
 							))}
 						</View>
 						<View className={BARS}>
-							{series.map((bar, index) => (
+							{series.map((bar) => (
 								<View
-									// biome-ignore lint/suspicious/noArrayIndexKey: a bar is its period, in order
-									key={index}
+									key={bar.key}
 									accessible
 									accessibilityLabel={said(bar)}
 									className={SLOT}
@@ -269,9 +360,8 @@ export function BarChart({
 						</View>
 					</View>
 					<View {...HIDDEN} className={TIMES}>
-						{series.map((bar, index) => (
-							// biome-ignore lint/suspicious/noArrayIndexKey: a bar is its period, in order
-							<View key={index} className={TIME}>
+						{series.map((bar) => (
+							<View key={bar.key} className={TIME}>
 								{bar.at ? (
 									<RNText
 										numberOfLines={1}
@@ -311,11 +401,25 @@ function Key(props: { name: string; at: number; children: ReactNode }) {
 	);
 }
 
+// A failed or empty chart: its EmptyState over the loaded boxes, held unseen
+// and hidden from assistive tech. React Native has no grid to stack the two
+// in one cell, so the EmptyState lies over the boxes, which set the height.
+function Stand(props: { keys?: readonly string[]; children: ReactNode }) {
+	return (
+		<View>
+			<View {...HIDDEN} className={HELD}>
+				<Loading keys={props.keys} busy={false} />
+			</View>
+			<View className={OVER}>{props.children}</View>
+		</View>
+	);
+}
+
 // The loaded boxes: the total's line (with the keys under it, each figure
 // waiting in a lane four figures wide, so the legend wraps as the loaded one
 // does), a tick's lane on each gridline, the plot's box, a time's lane at
 // each end of the plot.
-function Loading(props: { keys?: readonly string[] }) {
+function Loading(props: { keys?: readonly string[]; busy: boolean }) {
 	const total = (
 		<View className={LINE}>
 			<RNText className={lineBox({ role: "body" })}>{STRUT}</RNText>
@@ -323,7 +427,10 @@ function Loading(props: { keys?: readonly string[] }) {
 		</View>
 	);
 	return (
-		<View accessibilityState={{ busy: true }} className={cn(CHART, STACK)}>
+		<View
+			accessibilityState={{ busy: props.busy }}
+			className={cn(CHART, STACK)}
+		>
 			{props.keys ? (
 				<View className={CHART_HEAD}>
 					{total}

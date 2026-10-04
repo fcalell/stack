@@ -2,12 +2,31 @@ import { cn } from "@fcalell/ui-core/cn";
 import { row, text, textStrong } from "@fcalell/ui-core/variants";
 import type { ReactNode } from "react";
 import { List, type RowSlots } from "../../components/list/index.tsx";
+import type { QueryLike } from "../../components/query-boundary/index.tsx";
+import type { ShowcaseFrame } from "../cells.ts";
 
 // Context the layout frames place inside their molecules: stand-in rows at
-// the row cell until the row molecules are built, and the width a board's
-// frame draws a molecule at, shrinking to a narrow viewport.
+// the row cell until the row molecules are built, the width a board's frame
+// draws a molecule at, shrinking to a narrow viewport, and a collection's
+// query in the frame's state.
 
 const NAMES = ["Ana Ruiz", "Ben Kaya", "Ema Okafor"];
+
+// A query in the frame's state: its items at rest, none when empty.
+export function queryOf<T>(
+	state: ShowcaseFrame["state"],
+	items: readonly T[],
+): QueryLike<readonly T[]> {
+	let data: readonly T[] | undefined;
+	if (state === "rest") data = items;
+	if (state === "empty") data = [];
+	return {
+		data,
+		isPending: state === "loading",
+		isError: state === "error",
+		refetch: () => {},
+	};
+}
 
 export function Wide(props: { children: ReactNode }) {
 	return (

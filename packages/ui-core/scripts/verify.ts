@@ -1719,7 +1719,6 @@ check(
 			"Option",
 			"PlaceSpec",
 			"Hunk",
-			"BarSeries",
 			"Attachment",
 			"Notice",
 			"OptionGroup",

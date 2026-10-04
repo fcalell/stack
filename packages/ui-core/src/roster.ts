@@ -1989,12 +1989,24 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				sizes: ["meter", "skeleton"],
 			},
 		},
-		// Columns over time in the chip marks, stacked by one dimension; `label`
-		// names what it counts, the plot and the visually hidden table the values
-		// reach assistive tech by; `keys` names the stack's parts in order, so
-		// the legend and each part's mark stand before the data does.
+		// A collection: columns over time in the chip marks, stacked by one
+		// dimension, its bars from `query` or `items` through the `bar` map;
+		// `label` names what it counts, the plot and the visually hidden table
+		// the values reach assistive tech by; `keys` names the stack's parts in
+		// order, so the legend and each part's mark stand before the data does.
+		// Its failed and empty EmptyStates are its own, at its loaded height.
 		BarChart: {
-			props: ["label", "keys", "series", "unit", "loading"],
+			props: [
+				"label",
+				"keys",
+				"unit",
+				"query",
+				"sentence",
+				"empty",
+				"bar",
+				"items",
+				"loading",
+			],
 			draws: [
 				"CHART",
 				"CHART_BAND",
@@ -2033,7 +2045,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"CHART_PART_SPLIT",
 				"CHART_TICK_LANE",
 			],
-			states: ["rest", "loading"],
+			states: ["rest", "loading", "error", "empty"],
 			owns: {
 				roles: ["body", "meta"],
 				colors: ["ink-body", "ink-meta", "edge", "skeleton", "chip-"],

@@ -1,29 +1,43 @@
-import type { BarSeries } from "@fcalell/ui-core/descriptors";
-import { BarChart } from "../../components/bar-chart/index.tsx";
+import { BarChart, type BarSlots } from "../../components/bar-chart/index.tsx";
 import { Comparison } from "../../components/comparison/index.tsx";
 import { Group } from "../../components/group/index.tsx";
 import { List } from "../../components/list/index.tsx";
 import type { MeterProps } from "../../components/meter/index.tsx";
 import { Place } from "../../components/place/index.tsx";
-import { QueryBoundary } from "../../components/query-boundary/index.tsx";
 import { Section } from "../../components/section/index.tsx";
 import { confirm } from "../../lib/confirm.ts";
 import { toast } from "../../lib/toast.ts";
 import { settle, useFixture } from "./here.ts";
+
+// A day's figure, its parts by project when the chart stacks.
+interface Day {
+	day: string;
+	value: number;
+	parts?: Record<string, number>;
+	at?: string;
+}
+
+const BAR: BarSlots<Day> = {
+	key: (day) => day.day,
+	label: (day) => day.day,
+	value: (day) => day.value,
+	parts: (day) => day.parts,
+	at: (day) => day.at,
+};
 
 // Build minutes a day, the last 30 days, the first and last day timed.
 const MINUTES = [
 	140, 160, 170, 150, 120, 110, 150, 170, 180, 160, 170, 120, 110, 160, 190,
 	180, 170, 200, 130, 120, 170, 180, 210, 190, 180, 120, 110, 160, 170, 150,
 ];
-const DAYS: BarSeries[] = MINUTES.map((value, index) => {
+const DAYS: Day[] = MINUTES.map((value, index) => {
 	const day = new Date(Date.UTC(2026, 8, 3 + index)).toLocaleDateString("en", {
 		month: "short",
 		day: "numeric",
 		timeZone: "UTC",
 	});
 	const end = index === 0 || index === MINUTES.length - 1;
-	return { label: day, value, at: end ? day : undefined };
+	return { day, value, at: end ? day : undefined };
 });
 
 // Requests a day this week, by project.
@@ -37,8 +51,8 @@ const WEEK: Array<[string, number[]]> = [
 	["Sat", [21_000, 12_000, 4_000]],
 	["Sun", [19_000, 10_000, 3_000]],
 ];
-const REQUESTS: BarSeries[] = WEEK.map(([day, values]) => ({
-	label: day,
+const REQUESTS: Day[] = WEEK.map(([day, values]) => ({
+	day,
 	value: values.reduce((sum, value) => sum + value, 0),
 	parts: Object.fromEntries(
 		PROJECTS.map((project, index) => [project, values[index] ?? 0]),
@@ -90,12 +104,8 @@ const METERS: MeterProps[] = [
 	},
 ];
 
-const USAGE = {
-	meters: METERS,
-	minutes: DAYS,
-	requests: REQUESTS,
-	plan: PLAN_CHANGE,
-};
+// Cron runs a day this week: none ran.
+const CRON_RUNS: Day[] = [];
 
 const upgrade = () =>
 	confirm({
@@ -111,17 +121,21 @@ const upgrade = () =>
 		},
 	});
 
-// The page's sections over the usage, each body in its loading form until
-// the usage lands.
-function Sections(props: { usage?: typeof USAGE }) {
-	const { usage } = props;
+// Each section reads its own query and its collection draws that query's
+// states, so a failure stays in its section.
+export function Usage() {
+	const meters = useFixture(METERS);
+	const requests = useFixture(REQUESTS);
+	const minutes = useFixture(DAYS);
+	const cron = useFixture(CRON_RUNS);
+	const plan = useFixture(PLAN_CHANGE);
 	return (
-		<>
+		<Place title="Usage">
 			<Section title="This month" description="Team plan, resets on Oct 31.">
 				<Group>
 					<List
-						items={usage?.meters ?? []}
-						loading={!usage}
+						query={meters}
+						sentence="The meters did not load."
 						empty={{
 							title: "No limits",
 							sentence: "This plan meters nothing.",
@@ -141,17 +155,31 @@ function Sections(props: { usage?: typeof USAGE }) {
 				<BarChart
 					label="Requests per day this week, by project"
 					keys={PROJECTS}
-					series={usage?.requests ?? []}
+					query={requests}
+					sentence="Requests did not load."
+					empty={{ sentence: "No request reached a project this week." }}
+					bar={BAR}
 					unit="requests"
-					loading={!usage}
 				/>
 			</Section>
 			<Section title="Build minutes" description="Per day, the last 30 days.">
 				<BarChart
 					label="Build minutes per day, Sep 3 to Oct 2"
-					series={usage?.minutes ?? []}
+					query={minutes}
+					sentence="Build minutes did not load."
+					empty={{ sentence: "No build ran in the last 30 days." }}
+					bar={BAR}
 					unit="minutes"
-					loading={!usage}
+				/>
+			</Section>
+			<Section title="Cron runs" description="Per day this week.">
+				<BarChart
+					label="Cron runs per day this week"
+					query={cron}
+					sentence="Cron runs did not load."
+					empty={{ sentence: "Nothing ran on a schedule this week." }}
+					bar={BAR}
+					unit="runs"
 				/>
 			</Section>
 			<Section
@@ -162,8 +190,9 @@ function Sections(props: { usage?: typeof USAGE }) {
 				<Comparison
 					label="Plan change"
 					columns={["Team, now", "Business"]}
-					items={usage?.plan ?? []}
-					loading={!usage}
+					query={plan}
+					sentence="The plan change did not load."
+					empty={{ sentence: "Moving to Business changes nothing." }}
 					row={{
 						key: (fact) => fact.label,
 						label: (fact) => fact.label,
@@ -172,23 +201,6 @@ function Sections(props: { usage?: typeof USAGE }) {
 					}}
 				/>
 			</Section>
-		</>
-	);
-}
-
-// One query answers the page: one boundary, so a failure is one frame with
-// one Retry.
-export function Usage() {
-	const query = useFixture(USAGE);
-	return (
-		<Place title="Usage">
-			<QueryBoundary
-				query={query}
-				sentence="Usage did not load."
-				loading={<Sections />}
-			>
-				{(usage) => <Sections usage={usage} />}
-			</QueryBoundary>
 		</Place>
 	);
 }
