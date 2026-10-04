@@ -1,14 +1,18 @@
+import { boundaryState } from "@fcalell/ui-core/list-state";
 import type { ReactNode } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { useSectionWait } from "../../lib/section.ts";
 import { useWords } from "../../lib/words.tsx";
 import { EmptyStateBase } from "../empty-state/base.tsx";
+import { Missing } from "../empty-state/missing.tsx";
 
 /** The part of a TanStack query result a boundary reads; a `useQuery` result is one. */
 export interface QueryLike<TData> {
 	data: TData | undefined;
 	isPending: boolean;
 	isError: boolean;
+	/** What the failed read answered: a not-found answer draws the missing form. */
+	error?: unknown;
 	refetch: () => unknown;
 }
 
@@ -41,7 +45,7 @@ export interface QueryBoundaryProps<Q extends Queries = Queries>
 	loading: ReactNode;
 }
 
-/** The states of a compound body that reads queries; a collection takes its own query instead (a `List`). While any query is pending, `loading`; in a Section the Section is busy and its count waits. When one fails, the failed EmptyState with `sentence` and Retry, which refetches the failed queries; then the children with the data. */
+/** The states of a compound body that reads queries; a collection takes its own query instead (a `List`). While any query is pending, `loading`; in a Section the Section is busy and its count waits. When every failed query answers not found, the rest EmptyState saying it no longer exists with Back (to the enclosing Screen's back, else the Place's route), never Retry; when one fails otherwise, the failed EmptyState with `sentence` and Retry, which refetches the failed queries; then the children with the data. */
 export function QueryBoundary<Q extends Queries>({
 	query,
 	sentence,
@@ -56,7 +60,9 @@ export function QueryBoundary<Q extends Queries>({
 	const pending = queries.some((entry) => entry.isPending);
 	useSectionWait(pending);
 	if (pending) return loading;
-	if (queries.some((entry) => entry.isError))
+	const state = boundaryState(queries);
+	if (state === "missing") return <Missing />;
+	if (state === "failed")
 		return (
 			<EmptyStateBase
 				tone="failed"

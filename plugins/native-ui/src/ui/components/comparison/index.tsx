@@ -23,6 +23,7 @@ import { useSectionWait } from "../../lib/section";
 import { useWords } from "../../lib/words";
 import { Chip } from "../chip";
 import { EmptyStateBase } from "../empty-state/base";
+import { Missing } from "../empty-state/missing";
 import { Group } from "../group";
 import type { ListSource } from "../list";
 
@@ -165,8 +166,9 @@ function Fact<T>(props: {
 // collection's four states: while its query is pending, `loading` is set or
 // a loading Section around it waits, the head stands over four waiting
 // facts, each a bar per column and a chips bar when `row` declares chips; a
-// failed query draws the failed EmptyState with `sentence` and Retry; no
-// item draws `empty`; then one row per fact.
+// query that answers not found draws the rest EmptyState saying it no longer
+// exists with Back, never Retry; a failed query draws the failed EmptyState
+// with `sentence` and Retry; no item draws `empty`; then one row per fact.
 export function Comparison<T>(props: ComparisonProps<T>) {
 	const words = useWords();
 	const base = {
@@ -180,6 +182,7 @@ export function Comparison<T>(props: ComparisonProps<T>) {
 	const input = { ...base, inSection: useSectionWait(listWaits(base)) };
 	const state = listState(input);
 	const { columns, row } = props;
+	if (state === "missing") return <Missing />;
 	if (state === "failed" && props.query !== undefined) {
 		return (
 			<EmptyStateBase

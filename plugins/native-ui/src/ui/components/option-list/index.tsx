@@ -41,6 +41,7 @@ import { useWords } from "../../lib/words";
 import { Button } from "../button";
 import { Checkbox } from "../checkbox";
 import { Chip } from "../chip";
+import { useBackAct } from "../empty-state/missing";
 import type { QueryLike } from "../query-boundary";
 
 // The row is the target of its box or radio: a press anywhere toggles or
@@ -72,7 +73,8 @@ const ROW_BARS = [
 	["w-2/3", "w-1/2"],
 	["w-1/2", "w-1/4"],
 ] as const;
-// The failed and empty lines: the sentence, and Retry at its end.
+// The failed, missing and empty lines: the sentence, and Retry or Back at its
+// end.
 const NOTE = "flex-row items-center";
 const SENTENCE = "flex-1 min-w-0";
 const STRUT = "​";
@@ -202,8 +204,10 @@ function Wait({ shape }: { shape: OptionShape }) {
 // first line, a description and the recommended mark on the line under it;
 // the pressed row washes, the checked box or the ringed dot is the choice.
 // The children stand under the first chosen option. From a query it draws its
-// four states in the card: waiting rows in the slots `option` declares, a
-// failed line with `sentence` and Retry, the `empty` sentence, then the rows.
+// states in the card: waiting rows in the slots `option` declares, a failed
+// line with `sentence` and Retry, a line saying it no longer exists with Back
+// (never Retry) when the query answers not found, the `empty` sentence, then
+// the rows.
 export function OptionList<V extends string = string, T = unknown>(
 	props: Closed & OptionListBase<V, T> & OneChoice<V>,
 ): ReactNode;
@@ -215,6 +219,7 @@ export function OptionList<V extends string = string, T = unknown>(
 ) {
 	const { children } = props;
 	const words = useWords();
+	const back = useBackAct();
 	const named = useContext(GroupName);
 	const input = {
 		query: props.query,
@@ -245,6 +250,22 @@ export function OptionList<V extends string = string, T = unknown>(
 					props.option ? optionShape(props.option) : optionsShape(props.options)
 				}
 			/>,
+		);
+	if (state === "missing")
+		return frame(
+			<View className={cn(row({ lines: "one" }), NOTE)}>
+				<RNText className={cn(text({ role: "meta" }), SENTENCE)}>
+					{words.missing}
+				</RNText>
+				{back ? (
+					<Button
+						act="secondary"
+						fit="bar"
+						label={back.label}
+						onAct={back.onAct}
+					/>
+				) : null}
+			</View>,
 		);
 	if (state === "failed" && props.query !== undefined)
 		return frame(

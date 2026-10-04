@@ -1,15 +1,19 @@
+import { boundaryState } from "@fcalell/ui-core/list-state";
 import type { ReactNode } from "react";
 import type { Closed } from "../../lib/closed";
 import { useSectionWait } from "../../lib/section";
 import { useWords } from "../../lib/words";
 import { EmptyStateBase } from "../empty-state/base";
+import { Missing } from "../empty-state/missing";
 
 // The part of a TanStack query result a boundary reads; a `useQuery` result
-// is one.
+// is one. A failed read's `error` that answers not found draws the missing
+// form.
 export interface QueryLike<TData> {
 	data: TData | undefined;
 	isPending: boolean;
 	isError: boolean;
+	error?: unknown;
 	refetch: () => unknown;
 }
 
@@ -38,9 +42,11 @@ export interface QueryBoundaryProps<Q extends Queries = Queries>
 
 // The states of a compound body that reads queries; a collection takes its
 // own query instead (a `List`). While any query is pending, `loading`; in a
-// Section the Section is busy and its count waits. When one fails, the
-// failed EmptyState with `sentence` and Retry, which refetches the failed
-// queries; then the children with the data.
+// Section the Section is busy and its count waits. When every failed query
+// answers not found, the rest EmptyState saying it no longer exists with Back
+// (to the enclosing Screen's back, else the Place's route), never Retry; when
+// one fails otherwise, the failed EmptyState with `sentence` and Retry, which
+// refetches the failed queries; then the children with the data.
 export function QueryBoundary<Q extends Queries>({
 	query,
 	sentence,
@@ -53,7 +59,9 @@ export function QueryBoundary<Q extends Queries>({
 	const pending = queries.some((entry) => entry.isPending);
 	useSectionWait(pending);
 	if (pending) return <>{loading}</>;
-	if (queries.some((entry) => entry.isError)) {
+	const state = boundaryState(queries);
+	if (state === "missing") return <Missing />;
+	if (state === "failed") {
 		return (
 			<EmptyStateBase
 				tone="failed"

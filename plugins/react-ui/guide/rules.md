@@ -42,19 +42,25 @@ filled act, the act pending while its promise pends; a `confirm()` takes a `Conf
 
 ## Collections take data
 
-A collection takes data and draws its four states. A `List` takes its `query` (or static
+A collection takes data and draws its states. A `List` takes its `query` (or static
 `items`) and one item map, `row` for `ListRow`s, `file` for `FileRow`s or `meter` for `Meter`s,
 one function per slot; declare a slot only if every item fills it. Pending, it waits in those
 slots; failed, it shows `sentence` and Retry; empty, `empty`, with the act that fills it. Rows share one `leading` kind
 (`avatar`, `icon` or `status`) or none. The first meta part names the item; it and the status
 stay whole as the later parts, then the chip, truncate. A file row's `chip` says why it is listed
 or what its change is; it stays whole and the path yields to it. A Section counts them. A `Group` holds
-static rows; rows from data in a card are a `List` placed in the `Group`, drawing its four states
+static rows; rows from data in a card are a `List` placed in the `Group`, drawing its states
 on the card, never a `.map` of `ListRow`s or `Meter`s.
+
+A read that answers not found (its query's `error` carries `code: "NOT_FOUND"`, as a stack
+procedure throws it, or `status: 404`) draws "This no longer exists." (the `missing` word) with
+Back, never Retry: Back goes to the enclosing `Screen`'s `back`, else to the place's route, and
+with neither there is no act. Pass the `useQuery` result whole so its `error` arrives; a record
+opened by an address after it was removed then needs no screen of its own.
 
 A `Table` takes its data the same way: `query` with `sentence`, or `items`; each column reads its
 cell from the item by `cell`, and `row` gives the row's `id`, `href` and `locked`. It draws its
-four states itself, with no `QueryBoundary` around it.
+states itself, with no `QueryBoundary` around it.
 
 ```tsx
 <List
@@ -79,7 +85,8 @@ its log scrolls and the input docks at the foot.
 A `BarChart` takes data the same way, its `bar` map reading each item's `key`, `label`, `value`,
 `parts` (by its declared `keys`) and `at`; its failed and empty forms stand at the chart's height.
 
-Any other region reading a query sits in its own `QueryBoundary`, naming its loading form.
+Any other region reading a query sits in its own `QueryBoundary`, naming its loading form; it
+draws the not-found form when every failed query answers not found.
 
 ## Words are the config's, sentences are props
 

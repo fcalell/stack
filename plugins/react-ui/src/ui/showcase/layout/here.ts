@@ -4,14 +4,23 @@ import type { View } from "../view.tsx";
 
 // Where the review stands: the place the URL names, the record open in it,
 // the file open in that record, and a query state forced for the review (`loading` waits, `error` fails
-// once); the view rides along on every link the page draws.
+// once, `missing` answers not found); the view rides along on every link the page draws.
 export interface Here {
 	view: View;
 	place: string;
 	record?: string;
 	file?: string;
-	query?: "loading" | "error";
+	query?: Forced;
 }
+
+const FORCED = ["loading", "error", "missing"] as const;
+type Forced = (typeof FORCED)[number];
+
+const isForced = (query: string | null): query is Forced =>
+	FORCED.some((forced) => forced === query);
+
+// What stack's procedures answer for a record that does not exist.
+const NOT_FOUND = { code: "NOT_FOUND", status: 404 };
 
 export const HereContext = createContext<Here>({
 	view: { mode: "light", density: "desktop" },
@@ -26,7 +35,7 @@ export function readHere(view: View): Here {
 		place: params.get("place") ?? "deploys",
 		record: params.get("record") ?? undefined,
 		file: params.get("file") ?? undefined,
-		query: query === "loading" || query === "error" ? query : undefined,
+		query: isForced(query) ? query : undefined,
 	};
 }
 
@@ -45,7 +54,7 @@ export const settle = (ms = 1200) =>
 
 // Fixture data answered as a query does: pending a moment on mount and on
 // every refetch; forced `loading` never answers, forced `error` fails until
-// the first refetch.
+// the first refetch, forced `missing` answers not found on every run.
 export function useFixture<T>(data: T): QueryLike<T> {
 	const { query } = use(HereContext);
 	const [run, setRun] = useState(0);
@@ -53,14 +62,16 @@ export function useFixture<T>(data: T): QueryLike<T> {
 	useEffect(() => {
 		setState("pending");
 		if (query === "loading") return;
-		const failed = query === "error" && run === 0;
+		const failed = query === "missing" || (query === "error" && run === 0);
 		const timer = setTimeout(() => setState(failed ? "error" : "done"), 900);
 		return () => clearTimeout(timer);
 	}, [query, run]);
+	const isError = state === "error";
 	return {
 		data: state === "done" ? data : undefined,
 		isPending: state === "pending",
-		isError: state === "error",
+		isError,
+		error: isError && query === "missing" ? NOT_FOUND : undefined,
 		refetch: () => setRun((count) => count + 1),
 	};
 }

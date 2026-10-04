@@ -31,6 +31,7 @@ import {
 import { useWords } from "../../lib/words.tsx";
 import { EmptyStateBase } from "../empty-state/base.tsx";
 import type { EmptyStateProps } from "../empty-state/index.tsx";
+import { Missing } from "../empty-state/missing.tsx";
 import { FileRow } from "../file-row/index.tsx";
 import { FileWait } from "../file-row/wait.tsx";
 import { ListRow } from "../list-row/index.tsx";
@@ -182,7 +183,7 @@ export type ListProps<T = unknown, V extends string | null = string> = Closed &
 	ListSource<T> &
 	ListKind<T, V>;
 
-/** Rows on the ground at the rows rhythm, with no box and no hairlines: a feed. It draws its collection's four states: while its query is pending, `loading` is set or a loading Section around it waits, waiting rows stand in the slots its map declares (a Section around a pending query busy, its count waiting); a failed query draws the failed EmptyState with `sentence` and Retry; no item draws `empty`; then one row per item. In a Group its rows, waiting rows and failed and empty forms stand on the card, the hairline once between rows. */
+/** Rows on the ground at the rows rhythm, with no box and no hairlines: a feed. It draws its collection's four states: while its query is pending, `loading` is set or a loading Section around it waits, waiting rows stand in the slots its map declares (a Section around a pending query busy, its count waiting); a query that answers not found draws the rest EmptyState saying it no longer exists with Back, never Retry; a failed query draws the failed EmptyState with `sentence` and Retry; no item draws `empty`; then one row per item. In a Group its rows, waiting rows and failed, missing and empty forms stand on the card, the hairline once between rows. */
 export function List<T, V extends string | null = string>(
 	props: ListProps<T, V>,
 ) {
@@ -226,6 +227,7 @@ export function List<T, V extends string | null = string>(
 			}),
 		);
 	}
+	if (state === "missing") return <Missing />;
 	if (state === "failed" && props.query !== undefined) {
 		return (
 			<EmptyStateBase

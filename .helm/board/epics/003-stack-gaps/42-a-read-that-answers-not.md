@@ -1,6 +1,6 @@
 ---
 id: 003-42
-status: backlog
+status: review
 sessions: {}
 ---
 # ui-core: a read that answers not found draws its "does not exist" form
@@ -17,4 +17,7 @@ Reference: Sketch says "We cannot find this document" with one link back and no 
 - [ ] Stack provides the part on every platform the app runs on.
 
 ## Open questions
-- [ ] Its shape (a component, a variant, a token, an option): the stack session decides.
+- [x] Its shape (a component, a variant, a token, an option): the stack session decides.
+
+## Progress
+Shape: derived, no prop. A query whose error is `NOT_FOUND` or 404 draws "This no longer exists." with Back (the Screen's back, else the Place's route), never Retry, in QueryBoundary and every collection that takes a query; a QueryBoundary over several queries draws it only when every failed query is not found. Reachable in the showcase with `&query=missing`. Built on web and phone; `pnpm check` and `pnpm verify` pass. Open: the live check (web per batch, phone on the harness).

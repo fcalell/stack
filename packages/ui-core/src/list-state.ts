@@ -11,12 +11,13 @@ import type {
 } from "./descriptors.ts";
 import type { RowGround } from "./variants.ts";
 
-export type ListState = "pending" | "failed" | "empty" | "loaded";
+export type ListState = "pending" | "failed" | "missing" | "empty" | "loaded";
 
 export interface ListInput {
 	query?: {
 		isPending: boolean;
 		isError: boolean;
+		error?: unknown;
 		data: readonly unknown[] | undefined;
 	};
 	items?: readonly unknown[];
@@ -36,22 +37,47 @@ export function listWaits(input: ListInput): boolean {
 	return input.query?.isPending === true || input.loading === true;
 }
 
-// Pending while its own items wait or a loading Section waits; failed when
-// its query fails; empty when no item answers and an empty form is given;
-// else loaded (no item and no empty form draws none).
+// A failed read whose answer is that the thing does not exist: its error
+// carries the code stack's procedures throw (`ORPCError("NOT_FOUND")`) or an
+// HTTP 404, read by shape so no client library is imported.
+export function missing(query: { error?: unknown }): boolean {
+	const { error } = query;
+	if (typeof error !== "object" || error === null) return false;
+	return (
+		("code" in error && error.code === "NOT_FOUND") ||
+		("status" in error && error.status === 404)
+	);
+}
+
+// What a QueryBoundary draws once no query waits: missing when every failed
+// query answers not found, failed when any fails otherwise, else its body.
+export function boundaryState(
+	queries: readonly { isError: boolean; error?: unknown }[],
+): "failed" | "missing" | "loaded" {
+	const failed = queries.filter((query) => query.isError);
+	if (failed.length === 0) return "loaded";
+	return failed.every(missing) ? "missing" : "failed";
+}
+
+// Pending while its own items wait or a loading Section waits; missing when
+// its query answers not found, failed when it fails otherwise; empty when no
+// item answers and an empty form is given; else loaded (no item and no empty
+// form draws none).
 export function listState(input: ListInput): ListState {
 	if (listWaits(input) || input.sectionLoading) return "pending";
-	if (input.query?.isError) return "failed";
+	if (input.query?.isError) return missing(input.query) ? "missing" : "failed";
 	const items = input.query ? input.query.data : input.items;
 	if (!items?.length && input.hasEmpty) return "empty";
 	return "loaded";
 }
 
 // The item count a list reports to the Section around it: its items' length
-// once they answer, none while they wait or once its query fails.
+// once they answer, none while they wait or once its query fails or answers
+// not found.
 export function listCount(input: ListInput): number | undefined {
 	const state = listState(input);
-	if (state === "pending" || state === "failed") return undefined;
+	if (state === "pending" || state === "failed" || state === "missing")
+		return undefined;
 	return (input.query ? input.query.data : input.items)?.length ?? 0;
 }
 
@@ -173,7 +199,7 @@ export function factShape(
 
 // The count a Section shows: its own `count` when it has one (a total its
 // lists do not hold), else its lists' total once every list has answered (a
-// list still waiting or failed gives none), else none; an empty collection
+// list still waiting, failed or missing gives none), else none; an empty collection
 // shows none, its empty state saying so.
 export function sectionCount(
 	own: number | undefined,

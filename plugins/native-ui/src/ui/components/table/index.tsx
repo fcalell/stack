@@ -55,6 +55,7 @@ import { useWords } from "../../lib/words";
 import { Checkbox } from "../checkbox";
 import { Chip } from "../chip";
 import { EmptyStateBase } from "../empty-state/base";
+import { Missing } from "../empty-state/missing";
 import { Icon } from "../icon";
 import { Input } from "../input";
 import { List, type RowSlots } from "../list";
@@ -217,9 +218,10 @@ const isEnd = (column: TableColumn) =>
 // first, then turned over, then off. It draws its four states: while its
 // query is pending, `loading` is set or a loading Section around it waits,
 // the header over skeleton rows (below `tablet` the list's waiting rows; a
-// Section around busy, its count waiting); a failed query the failed
-// EmptyState with `sentence` and Retry, under the header on the grid and
-// alone below `tablet`; no row `empty`; then one row per item, which a
+// Section around busy, its count waiting); a query that answers not found
+// the rest EmptyState saying it no longer exists with Back, never Retry, and
+// a failed query the failed EmptyState with `sentence` and Retry, each under
+// the header on the grid and alone below `tablet`; no row `empty`; then one row per item, which a
 // Section around counts.
 export function Table<T>(props: TableProps<T>) {
 	const { columns, selected, onOpen, onEdit, empty } = props;
@@ -244,7 +246,8 @@ export function Table<T>(props: TableProps<T>) {
 		? []
 		: sorted(tableRecords(items, columns, props.row), columns, sort);
 	let slot: ReactNode = null;
-	if (state === "failed" && props.query)
+	if (state === "missing") slot = <Missing />;
+	else if (state === "failed" && props.query)
 		slot = (
 			<EmptyStateBase
 				tone="failed"

@@ -27,6 +27,7 @@ import {
 } from "../../lib/frame";
 import { useWords } from "../../lib/words";
 import { EmptyStateBase } from "../empty-state/base";
+import { Missing } from "../empty-state/missing";
 import type { ListEmpty } from "../list";
 import { Message } from "../message";
 import type { QueryLike } from "../query-boundary";
@@ -133,6 +134,7 @@ function logOf<T>(
 		return WAITING_MESSAGES.map(({ key, author }) => (
 			<Message key={key} author={author} body="" loading />
 		));
+	if (state === "missing") return <Missing />;
 	if (state === "failed" && props.query !== undefined)
 		return (
 			<EmptyStateBase
@@ -157,11 +159,12 @@ function logOf<T>(
 // message. React Native has no log
 // role: the messages are a polite live region, so an arriving one is
 // announced (Android; VoiceOver reads them in order). It draws its
-// collection's four states, the input under each: while its query is
-// pending or `loading` is set, Message's loading forms (another's reply,
-// yours, another's reply), the log at its end; a failed query, the failed
-// EmptyState with `sentence` and Retry in the log; no message, `empty` in
-// the log; then one Message per item.
+// collection's states, the input under each: while its query is pending or
+// `loading` is set, Message's loading forms (another's reply, yours,
+// another's reply), the log at its end; a failed query, the failed
+// EmptyState with `sentence` and Retry in the log; a query that answers not
+// found, the form saying it no longer exists with Back; no message, `empty`
+// in the log; then one Message per item.
 export function Thread<T>(props: ThreadProps<T>) {
 	const { foot } = props;
 	const words = useWords();

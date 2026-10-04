@@ -1,5 +1,8 @@
 import { test } from "node:test";
-import type { QueryData } from "../src/ui/components/query-boundary/index.tsx";
+import type {
+	QueryData,
+	QueryLike,
+} from "../src/ui/components/query-boundary/index.tsx";
 
 type Equal<A, B> =
 	(<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2
@@ -22,4 +25,10 @@ test("a tuple's children get each query's data in order", () => {
 	assertType<
 		Equal<QueryData<[Result<string[]>, Result<number>]>, [string[], number]>
 	>(true);
+});
+
+test("a query's error reaches the boundary, so a not-found answer draws the missing form", () => {
+	assertType<Equal<QueryLike<string[]>["error"], unknown>>(true);
+	type Failed = Result<string[]> & { error: Error | null };
+	assertType<Failed extends QueryLike<string[]> ? true : false>(true);
 });

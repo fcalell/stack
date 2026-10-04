@@ -4,6 +4,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  miniflare@5.20261001.0-alpha: c298c18a48a4dee6f7e734252761111c083562a5f3bab62da424a41a5ea7888a
+
 importers:
 
   .:
@@ -13460,7 +13463,7 @@ snapshots:
 
   min-indent@1.0.1: {}
 
-  miniflare@5.20261001.0-alpha(@types/node@25.9.8):
+  miniflare@5.20261001.0-alpha(patch_hash=c298c18a48a4dee6f7e734252761111c083562a5f3bab62da424a41a5ea7888a)(@types/node@25.9.8):
     dependencies:
       '@cspotcode/source-map-support': 0.8.1
       sharp: 0.35.4(@types/node@25.9.8)
@@ -15071,7 +15074,7 @@ snapshots:
       '@cloudflare/unenv-preset': 2.16.2(unenv@2.0.0-rc.24)(workerd@1.20261001.1)
       blake3-wasm: 2.1.5
       esbuild: 0.28.1
-      miniflare: 5.20261001.0-alpha(@types/node@25.9.8)
+      miniflare: 5.20261001.0-alpha(patch_hash=c298c18a48a4dee6f7e734252761111c083562a5f3bab62da424a41a5ea7888a)(@types/node@25.9.8)
       path-to-regexp: 6.3.0
       unenv: 2.0.0-rc.24
       workerd: 1.20261001.1

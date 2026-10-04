@@ -18,7 +18,8 @@ Three pages:
   `welcome` is the first run outside the shell), a deploy open by `&record=` (`d1` to `d5`,
   each with its changes, release notes and build log), the changed file its diff shows by
   `&file=` (a path, the first without it) and every query on the page forced by
-  `&query=loading|error`; fixture data, no network. The view toggles sit under the app.
+  `&query=loading|error|missing` (`missing` answers not found, so every read draws its
+  "no longer exists" form with Back); fixture data, no network. The view toggles sit under the app.
 
 The URL holds the view: `?mode=<light|dark>` sets the page's own mode (without it the page keeps
 what the mode script set) and `?density=<touch|desktop>` the density it draws at (`desktop`

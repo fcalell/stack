@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import type { TableColumn } from "../src/descriptors.ts";
 import {
+	boundaryState,
 	factShape,
 	fileShape,
 	groupWait,
@@ -12,6 +13,7 @@ import {
 	listState,
 	listWaits,
 	meterShape,
+	missing,
 	retryOf,
 	rowShape,
 	sectionCount,
@@ -47,6 +49,48 @@ test("a failed query draws its failure", () => {
 		listState({ ...base, query: query(false, true, undefined) }),
 		"failed",
 	);
+});
+
+test("an error carrying stack's NOT_FOUND code or an HTTP 404 answers not found; any other error does not", () => {
+	assert.equal(missing({ error: { code: "NOT_FOUND", status: 404 } }), true);
+	assert.equal(missing({ error: { code: "NOT_FOUND" } }), true);
+	assert.equal(missing({ error: { status: 404 } }), true);
+	assert.equal(missing({ error: { code: "INTERNAL_SERVER_ERROR" } }), false);
+	assert.equal(missing({ error: { status: 500 } }), false);
+	assert.equal(missing({ error: new Error("NOT_FOUND") }), false);
+	assert.equal(missing({ error: "NOT_FOUND" }), false);
+	assert.equal(missing({ error: null }), false);
+	assert.equal(missing({}), false);
+});
+
+test("a query that answers not found draws its missing form, never its failure", () => {
+	const notFound = { ...query(false, true, undefined), error: { status: 404 } };
+	assert.equal(listState({ ...base, query: notFound }), "missing");
+	assert.equal(
+		listState({
+			...base,
+			query: { ...query(false, true, undefined), error: { status: 503 } },
+		}),
+		"failed",
+	);
+	assert.equal(
+		listState({ ...base, query: { ...notFound, isError: false, data: [1] } }),
+		"loaded",
+	);
+	assert.equal(listCount({ ...base, query: notFound }), undefined);
+});
+
+test("a QueryBoundary draws its missing form only when every failed query answers not found", () => {
+	const ok = { isError: false };
+	const notFound = { isError: true, error: { code: "NOT_FOUND" } };
+	const down = { isError: true, error: { status: 503 } };
+	assert.equal(boundaryState([ok]), "loaded");
+	assert.equal(boundaryState([notFound]), "missing");
+	assert.equal(boundaryState([ok, notFound]), "missing");
+	assert.equal(boundaryState([notFound, notFound]), "missing");
+	assert.equal(boundaryState([notFound, down]), "failed");
+	assert.equal(boundaryState([down]), "failed");
+	assert.equal(boundaryState([{ isError: true }]), "failed");
 });
 
 test("no item draws the empty form when there is one, else the empty list", () => {

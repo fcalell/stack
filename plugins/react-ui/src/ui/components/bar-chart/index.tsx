@@ -32,6 +32,7 @@ import { LoadingContext } from "../../lib/loading.ts";
 import { useSectionWait } from "../../lib/section.ts";
 import { useWords } from "../../lib/words.tsx";
 import { EmptyStateBase } from "../empty-state/base.tsx";
+import { Missing } from "../empty-state/missing.tsx";
 import type { ListEmpty } from "../list/index.tsx";
 import type { QueryLike } from "../query-boundary/index.tsx";
 
@@ -153,7 +154,7 @@ interface Bar {
 	at?: string;
 }
 
-/** The total at body 500 with its unit, the parts' keys under it, then the axis beside the plot, its four gridlines a hairline, the columns in the chip marks by part, a time under each bar that has one; the values reach assistive tech as a visually hidden table. It draws its collection's four states: while its query is pending, `loading` is set or a loading Section around it waits, its boxes in skeleton at their loaded size with the keys standing (a Section around a pending query busy); a failed query draws the failed EmptyState with `sentence` and Retry, and no item draws `empty`, each at the chart's loaded height; then one bar per item. */
+/** The total at body 500 with its unit, the parts' keys under it, then the axis beside the plot, its four gridlines a hairline, the columns in the chip marks by part, a time under each bar that has one; the values reach assistive tech as a visually hidden table. It draws its collection's four states: while its query is pending, `loading` is set or a loading Section around it waits, its boxes in skeleton at their loaded size with the keys standing (a Section around a pending query busy); a query that answers not found draws the rest EmptyState saying it no longer exists with Back (never Retry), a failed query the failed EmptyState with `sentence` and Retry, and no item `empty`, each at the chart's loaded height; then one bar per item. */
 export function BarChart<T>(props: BarChartProps<T>) {
 	const { label, keys, unit } = props;
 	const words = useWords();
@@ -169,6 +170,12 @@ export function BarChart<T>(props: BarChartProps<T>) {
 	const state = listState(input);
 	if (state === "pending")
 		return <Loading keys={keys} busy={listBusy(input)} />;
+	if (state === "missing")
+		return (
+			<Stand keys={keys}>
+				<Missing />
+			</Stand>
+		);
 	if (state === "failed" && props.query !== undefined)
 		return (
 			<Stand keys={keys}>
@@ -383,7 +390,8 @@ function Key(props: { name: string; at: number; children: ReactNode }) {
 	);
 }
 
-// A failed or empty chart: its EmptyState over the loaded boxes, held unseen.
+// A failed, missing or empty chart: its EmptyState over the loaded boxes,
+// held unseen.
 function Stand(props: { keys?: readonly string[]; children: ReactNode }) {
 	return (
 		<div className={STAND}>

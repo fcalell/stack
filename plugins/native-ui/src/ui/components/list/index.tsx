@@ -31,6 +31,7 @@ import {
 import { useWords } from "../../lib/words";
 import type { EmptyStateProps } from "../empty-state";
 import { EmptyStateBase } from "../empty-state/base";
+import { Missing } from "../empty-state/missing";
 import { FileRow } from "../file-row";
 import { FileWait } from "../file-row/wait";
 import { ListRow } from "../list-row";
@@ -150,10 +151,11 @@ export type ListProps<T = unknown, V extends string | null = string> = Closed &
 // feed. It draws its collection's four states: while its query is pending,
 // `loading` is set or a loading Section around it waits, waiting rows stand
 // in the slots its map declares (a Section around a pending query busy, its
-// count waiting); a failed query draws the failed EmptyState with
-// `sentence` and Retry; no item draws `empty`; then one row per item. In a
-// Group its rows, waiting rows and failed and empty forms stand on the card,
-// the hairline once between rows.
+// count waiting); a query that answers not found draws the rest EmptyState
+// saying it no longer exists with Back, never Retry; a failed query draws the
+// failed EmptyState with `sentence` and Retry; no item draws `empty`; then
+// one row per item. In a Group its rows, waiting rows and failed, missing and
+// empty forms stand on the card, the hairline once between rows.
 export function List<T, V extends string | null = string>(
 	props: ListProps<T, V>,
 ) {
@@ -201,6 +203,7 @@ export function List<T, V extends string | null = string>(
 			}),
 		);
 	}
+	if (state === "missing") return <Missing />;
 	if (state === "failed" && props.query !== undefined) {
 		return (
 			<EmptyStateBase

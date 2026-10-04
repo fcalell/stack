@@ -22,6 +22,7 @@ import { useSectionWait } from "../../lib/section.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Chip } from "../chip/index.tsx";
 import { EmptyStateBase } from "../empty-state/base.tsx";
+import { Missing } from "../empty-state/missing.tsx";
 import { Group } from "../group/index.tsx";
 import type { ListSource } from "../list/index.tsx";
 
@@ -162,7 +163,7 @@ function Fact<T>(props: {
 	);
 }
 
-/** A Group of its own rows: a head row of `columns` at meta 500, then each fact's label at body 500 (its chips beside it) and its values in equal columns, a wrapped value keeping its row's air. On touch the label stands on its own line over the values. No column is the accent's; nothing is a selection. It draws its collection's four states: while its query is pending, `loading` is set or a loading Section around it waits, the head stands over four waiting facts, each a bar per column and a chips bar when `row` declares chips; a failed query draws the failed EmptyState with `sentence` and Retry; no item draws `empty`; then one row per fact. */
+/** A Group of its own rows: a head row of `columns` at meta 500, then each fact's label at body 500 (its chips beside it) and its values in equal columns, a wrapped value keeping its row's air. On touch the label stands on its own line over the values. No column is the accent's; nothing is a selection. It draws its collection's four states: while its query is pending, `loading` is set or a loading Section around it waits, the head stands over four waiting facts, each a bar per column and a chips bar when `row` declares chips; a query that answers not found draws the rest EmptyState saying it no longer exists with Back, never Retry; a failed query draws the failed EmptyState with `sentence` and Retry; no item draws `empty`; then one row per fact. */
 export function Comparison<T>(props: ComparisonProps<T>) {
 	const words = useWords();
 	const base = {
@@ -176,6 +177,7 @@ export function Comparison<T>(props: ComparisonProps<T>) {
 	const input = { ...base, inSection: useSectionWait(listWaits(base)) };
 	const state = listState(input);
 	const { columns, row } = props;
+	if (state === "missing") return <Missing />;
 	if (state === "failed" && props.query !== undefined) {
 		return (
 			<EmptyStateBase

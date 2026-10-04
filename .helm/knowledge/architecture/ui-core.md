@@ -126,7 +126,7 @@ pinned by the package's verify suite; this entry holds the architecture and its 
 ## Words
 
 Every word a molecule draws or reads aloud on its own (the seven `Status` words, `recommended`,
-`copy`, `copied`, `back`, `close`, `cancel`, `dismiss`, `more`, `send`, `stop`, `attach`, `search`, `loading`, `checking`, `retry`, `add`, `remove`, `details`, `places`, `notifications`, `code`, `added`, `removed`, `sort`, `ascending`, `descending`, `time`, `message`, `seen`, `unseen`, `copyFailed`, `latest`, the counted `earlierLines`, and the slot words `meterValue`, `meterOver`, `linesAdded` and `linesRemoved`) comes
+`copy`, `copied`, `back`, `close`, `cancel`, `dismiss`, `more`, `send`, `stop`, `attach`, `search`, `loading`, `checking`, `retry`, `add`, `remove`, `details`, `places`, `notifications`, `code`, `added`, `removed`, `sort`, `ascending`, `descending`, `time`, `message`, `seen`, `unseen`, `copyFailed`, `latest`, `missing`, the counted `earlierLines`, and the slot words `meterValue`, `meterOver`, `linesAdded` and `linesRemoved`) comes
 from `words`, a closed typed object with English defaults. The `Words` type requires every key
 and `wordsSchema` is strict, so a translation missing a word fails `tsc` and the schema. It is a
 plugin option beside `theme`; each plugin contributes a `WordsProvider` into the generated entry
@@ -342,9 +342,10 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
   compound body waits), each `TableColumn<T>` reading its cell from the item by `cell`, and a
   `row` map (`TableRowSlots<T>`) for the row's own slots. Both forms draw one projection,
   `tableRecords` in `./list-state`, so the grid and the touch List read the same item. It decides
-  its state by the List's `listState` and draws all four at the leaf: pending, the header over
+  its state by the List's `listState` and draws each at the leaf: pending, the header over
   skeleton rows (the touch List's waiting rows); failed, the failed EmptyState with `sentence`
-  and Retry under the header on the grid and alone on touch; empty, `empty`; then its rows. It
+  and Retry, and missing, the missing form, each under the header on the grid and alone on
+  touch; empty, `empty`; then its rows. It
   registers with the Section around it once (waiter, count, rows) and mounts its touch List under
   an empty `SectionContext`, since on the web both forms are mounted and the List would count the
   same rows again.
@@ -393,7 +394,7 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
   Button on the desktop and an icon act at the bar fit (`ICON_BUTTON.fit.bar`, `Square`) on
   touch, so the touch field gives up only a compact square. What becomes of a message sent while
   an answer runs is the consumer's sentence in `notice`; the input takes no prop for it.
-- A collection takes data and draws its four states at the leaf. A `List` takes `query` (or
+- A collection takes data and draws its states at the leaf. A `List` takes `query` (or
   `items`, waiting on `loading`) and one item map: `row`, one function per `ListRow` slot,
   `file`, one per `FileRow` slot, or `meter`, one per `Meter` slot. Its waiting rows are the row's
   own markup (`list-row/wait.tsx`, `file-row/wait.tsx`, `meter/wait.tsx`), a ListRow's with bars in
@@ -407,6 +408,21 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
   props, its act the one that fills the list). Its decisions (which state, the waiting shape, the
   count, Retry) and the Section's total (`sectionCount`) are ui-core's `./list-state`, which both
   platforms import, tested without rendering.
+- A read that answers not found is `missing`, a state of its own beside `failed`: every read
+  ends in content, "does not exist" with a way back, or Retry, and Retry cannot bring back what
+  was removed. `missing(query)` in `./list-state` reads the query's `error` by shape, true for
+  `code === "NOT_FOUND"` (what stack's procedures throw as `ORPCError("NOT_FOUND")`) or
+  `status === 404`, so ui-core imports no client library; `QueryLike` carries the optional
+  `error` a `useQuery` result already has, and no prop is added. `listState` returns `missing`
+  for such a query, and `boundaryState` makes a `QueryBoundary` draw it when every failed query
+  answers not found (one that failed otherwise keeps Retry). Every collection that takes `query`
+  (List, Table, Thread, Comparison, BarChart) and the boundary draw the missing form
+  (`empty-state/missing.tsx`): the EmptyState at rest ink with no mark, the word `missing`
+  ("This no longer exists.") and Back, the hairline act with no plus (a Back is no create act,
+  as Retry is not; the base's internal `missing` tone carries it), never Retry. An OptionList
+  draws it as its card's line, `missing` beside a secondary Back, as its failed line stands.
+  Back goes to `BackRoute`, the enclosing `Screen`'s `back`, else to the Shell's `PlaceRoute`;
+  with neither it draws no act. A missing list gives the Section no count.
 - A `Comparison` is a collection of facts with the List's source (`query` with `sentence` and
   `empty`, or `items` waiting on `loading`) and a `row` map over a fact's slots: `key`, `label`,
   `values` (one per column, in order) and `chips`. Its column heads are its declared `columns`,
@@ -444,7 +460,7 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
   `SectionContext`, released when it settles or unmounts; the Section stays busy, its count
   waiting, until every waiter settles. A List also reports its item count there once its items
   answer, and a Section with no `count` of its own shows its lists' total once every list has
-  answered (a failed one gives none); an empty collection shows no count beside its empty state. A `Group` or a `List` anywhere in the body registers as rows
+  answered (a failed or missing one gives none); an empty collection shows no count beside its empty state. A `Group` or a `List` anywhere in the body registers as rows
   through the same context; a loading Section renders its body once, and when nothing registered
   rows its layout effect swaps the body for field skeletons in a synchronous re-render before
   paint, one skeleton per `FormField` that registered the same way (three when none did), so

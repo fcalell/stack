@@ -10,7 +10,7 @@ import {
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, use, useEffect, useId, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
-import { CoverTabs, LendAct, PageTitle } from "../../lib/frame.ts";
+import { BackRoute, CoverTabs, LendAct, PageTitle } from "../../lib/frame.ts";
 import { HeadingContext } from "../../lib/heading.ts";
 import { useTouch } from "../../lib/media.ts";
 import { navigate } from "../../lib/navigate.ts";
@@ -99,14 +99,16 @@ export function Screen({ title, back, actions, more, children }: ScreenProps) {
 	);
 	return (
 		<LendAct value={lend}>
-			<PageTitle value={titleId}>
-				<HeadingContext value={2}>
-					<div className={SCREEN}>
-						{head}
-						<div className={cn(PAGE_BODY, BODY)}>{children}</div>
-					</div>
-				</HeadingContext>
-			</PageTitle>
+			<BackRoute value={back}>
+				<PageTitle value={titleId}>
+					<HeadingContext value={2}>
+						<div className={SCREEN}>
+							{head}
+							<div className={cn(PAGE_BODY, BODY)}>{children}</div>
+						</div>
+					</HeadingContext>
+				</PageTitle>
+			</BackRoute>
 		</LendAct>
 	);
 }

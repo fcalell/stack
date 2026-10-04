@@ -52,10 +52,11 @@ Write the screen under the rules page; never edit `node_modules` or a stack pack
 
 ## 5. Draw every state
 
-Loading and failure sit at the leaf. A collection takes its own query and draws its four states:
-pending rows in the slots its item map declares, its failure, its empty state, its items. Any
-other region that reads a query sits in its own `QueryBoundary`, which names its loading form, so
-the rest stays drawn. A loading form is the loaded form in skeleton at the loaded heights, so
+Loading and failure sit at the leaf. A collection takes its own query and draws its states:
+pending rows in the slots its item map declares, its failure, its "no longer exists" form with
+Back when the read answers not found, its empty state, its items. Any other region that reads a
+query sits in its own `QueryBoundary`, which names its loading form and draws the same failure
+and not-found forms, so the rest stays drawn. A loading form is the loaded form in skeleton at the loaded heights, so
 nothing moves when the data lands; a pending act keeps its box. Empty draws the `EmptyState`,
 with the act that fills it unless the screen's primary act already does. Error draws where the work happened (a field's error, a banner over the
 region, a toast for an act) and keeps what still works.

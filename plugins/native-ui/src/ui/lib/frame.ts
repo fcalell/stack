@@ -31,6 +31,10 @@ export const LendAct = createContext<
 // record its Split shows alone.
 export const PlaceRoute = createContext<string | undefined>(undefined);
 
+// The route a Screen's back act returns to, where a read inside that answers
+// not found leads back; outside a Screen it leads to `PlaceRoute`.
+export const BackRoute = createContext<string | undefined>(undefined);
+
 // A Split tells the Place it sits in that its record stands alone; the Place
 // then starts its top bar with a back act to its route in place of the
 // switcher, and `false` takes it back.

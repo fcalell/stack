@@ -10,7 +10,7 @@ import { type ReactNode, useContext, useEffect, useState } from "react";
 import { Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import { CoverTabs, LendAct, PageTitle } from "../../lib/frame";
+import { BackRoute, CoverTabs, LendAct, PageTitle } from "../../lib/frame";
 import { Scroll } from "../../lib/hosts";
 import { navigate } from "../../lib/navigate";
 import { useWords } from "../../lib/words";
@@ -76,7 +76,7 @@ export function Screen({ title, back, actions, more, children }: ScreenProps) {
 						className={BODY}
 						contentContainerClassName={cn(PAGE_BODY, BODY_CONTENT)}
 					>
-						{children}
+						<BackRoute.Provider value={back}>{children}</BackRoute.Provider>
 					</Scroll>
 				</View>
 			</PageTitle.Provider>

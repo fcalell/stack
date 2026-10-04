@@ -27,14 +27,18 @@ const FRAME = "flex justify-center";
 const FIRST = "flex flex-col text-center";
 const MARK_SLOT = "flex justify-center";
 const MARK = "inline-flex items-center justify-center shrink-0";
-const INK = { rest: "text-ink-meta", failed: "text-danger" } as const;
+const INK = {
+	rest: "text-ink-meta",
+	missing: "text-ink-meta",
+	failed: "text-danger",
+} as const;
 const TEXT = "flex flex-col items-center";
 // A first run's acts stretch across the column, its children under the act.
 const ACTS = "flex flex-col gap-acts";
 
-/** The empty state every EmptyState and a failed QueryBoundary draws. Outside the package's exports: `tone` is the boundary's alone. */
+/** The empty state every EmptyState, a failed read and a missing one draw. Outside the package's exports: `tone` is the reads' alone. */
 export function EmptyStateBase(props: {
-	tone: "rest" | "failed";
+	tone: "rest" | "failed" | "missing";
 	icon?: IconName;
 	title?: string;
 	sentence: string;
@@ -110,6 +114,7 @@ export function EmptyStateBase(props: {
 		);
 	}
 	const Heading = `h${level}` as const;
+	const create = props.tone === "rest";
 	const column = (
 		<div className={cn(EMPTY_COLUMN, COLUMN, props.children && ABOVE)}>
 			{mark}
@@ -119,12 +124,12 @@ export function EmptyStateBase(props: {
 				)}
 				<Text role="meta">{props.sentence}</Text>
 			</div>
-			{/* A failed boundary's retry is no create act: the hairline one, no plus. */}
+			{/* A failed read's Retry and a missing one's Back are no create act: the hairline one, no plus. */}
 			{act ? (
 				<Button
-					act={props.tone === "failed" ? "secondary" : "primary"}
+					act={create ? "primary" : "secondary"}
 					fit="bar"
-					icon={props.tone === "failed" ? undefined : "Plus"}
+					icon={create ? "Plus" : undefined}
 					label={act.label}
 					onAct={act.onAct}
 					loading={act.loading}
