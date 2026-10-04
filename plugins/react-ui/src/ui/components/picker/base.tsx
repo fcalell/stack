@@ -34,7 +34,6 @@ import {
 	type ReactNode,
 	type RefObject,
 	use,
-	useEffect,
 	useRef,
 	useState,
 } from "react";
