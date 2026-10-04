@@ -46,8 +46,8 @@ const MARKS: Record<DiffLine["kind"], string> = {
 interface DiffBase extends Closed {
 	// What the diff shows (the file's path), the name of its lines.
 	label: string;
-	// The lines wait: the hunk header's bar and the lines' bars stand in for
-	// them.
+	// The lines wait: the hunk header's bar and eight lines' bars stand in for
+	// them, a fixed count, since the lines are unknown before the data.
 	loading?: boolean;
 }
 

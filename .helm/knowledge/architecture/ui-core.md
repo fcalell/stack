@@ -580,7 +580,9 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
   cells and size are FileRow's own in the roster, composed from `Chip`, with no token of its own.
 - Code, Diff and ProseDiff stand in one frame on the surface inside a hairline (`CONTENT_FRAME`),
   so a diff's soft grounds always sit on the surface; a diff's number columns and a file row's
-  count lanes are `figures` wide.
+  count lanes are `figures` wide. A waiting Diff is a collection of unknown length: its hunk
+  header and eight lines wait at the loaded rows' heights and code start, and its height changes on
+  load by the line count, and on touch by the lines that wrap, which no waiting form can know.
 - A copy act (`Code`'s, `DefinitionRow`'s) reads Copied for two seconds from the last copy: each
   copy is a counted moment and the reset is keyed on it, so a copy inside the window restarts it.
   Unfolding a `Code` moves focus to its already-mounted text in the press, before the fold act

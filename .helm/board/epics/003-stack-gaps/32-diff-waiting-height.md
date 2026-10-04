@@ -1,6 +1,6 @@
 ---
 id: 003-32
-status: backlog
+status: done
 sessions: {}
 ---
 # react-ui: a waiting Diff stands at its loaded height
@@ -15,3 +15,6 @@ unknown length applies and is recorded as such.
 
 ## Acceptance criteria
 - [ ] (live) nothing below the Diff moves when its data lands, or the critique records the rule that covers it.
+
+## Progress
+No code change: a waiting Diff is a collection of unknown length, its header and eight lines at the loaded rows' heights and code start (measured at 1440 and 375). On load it grows by its line count, and on touch by its wrapped lines; the rubric and the critique now say a loaded row whose text wraps grows by its wrapped lines, its waiting row matching its one-line form.
