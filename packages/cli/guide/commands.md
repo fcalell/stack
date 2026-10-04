@@ -7,7 +7,7 @@ step does. Run a command from the app's root. Every command but `init` takes
 | Command | Run it when |
 | --- | --- |
 | `stack init [dir] [--plugins <csv>] [--domain <d>] [-y]` | Starting an app. It writes `package.json` and `pnpm-workspace.yaml`, installs, scaffolds the project, then runs `generate` |
-| `stack add <plugin>` | Adding a plugin: it installs the plugin, asks its questions, writes its files, patches the config and regenerates |
+| `stack add <plugin>` | Adding a plugin: it installs the plugin, asks its questions, writes its files, patches the config and regenerates. A plugin that takes the place of one the app has replaces it: `stack add node` on a cloudflare app switches the server target to node, after asking |
 | `stack remove <plugin>` | Dropping a plugin no other plugin requires: it removes the plugin's files and dependencies, patches the config and regenerates |
 | `stack generate` | After editing `stack.config.ts`, or when `.stack/` is missing. `dev` and `build` run it first |
 | `stack dev` | Working on the app: every plugin's dev process (the worker, the Node server, Vite) runs in one terminal, and the watchers regenerate as files change. Metro is not one: it runs under `stack expo dev` (`node_modules/@fcalell/plugin-expo/guide/builds.md`) |

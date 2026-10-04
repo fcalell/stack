@@ -9,6 +9,7 @@ import { loadConfig } from "../lib/config.ts";
 import { editConfig } from "../lib/config-writer.ts";
 import {
 	type DiscoveredPlugin,
+	displacedBy,
 	loadInstalledPlugins,
 	PLUGIN_NAMES,
 	resolveRequiresClosure,
@@ -17,7 +18,7 @@ import { ConfigLoadError, MissingPluginError } from "../lib/errors.ts";
 import { installStack } from "../lib/install.ts";
 import { toCamelCase } from "../lib/naming.ts";
 import { pluginDependencies } from "../lib/plugin-dependencies.ts";
-import { createPromptContext } from "../lib/prompt.ts";
+import { confirm, createPromptContext } from "../lib/prompt.ts";
 import {
 	announceCreated,
 	ensureGitignore,
@@ -26,6 +27,7 @@ import {
 } from "../lib/scaffold.ts";
 import { stackPluginSpecs } from "../lib/stack-packages.ts";
 import { syntheticConfigFromSelection } from "./init.ts";
+import { uninstall } from "./remove.ts";
 
 export async function add(
 	pluginName: string,
@@ -38,8 +40,6 @@ export async function add(
 		);
 	}
 
-	const cwd = process.cwd();
-
 	let existingConfig: Awaited<ReturnType<typeof loadConfig>> | null = null;
 	try {
 		existingConfig = await loadConfig(configPath);
@@ -47,15 +47,46 @@ export async function add(
 		if (!(err instanceof ConfigLoadError)) throw err;
 	}
 
-	const existingPluginNames = existingConfig
+	const configuredNames = existingConfig
 		? existingConfig.plugins.map((p) => p.__plugin)
 		: [];
-	const existingNames = new Set(existingPluginNames);
 
-	if (existingNames.has(pluginName)) {
+	if (configuredNames.includes(pluginName)) {
 		log.info(`${pluginName} is already configured.`);
 		return;
 	}
+
+	const cwd = process.cwd();
+	const nonInteractive = !process.stdin.isTTY;
+
+	// A plugin meeting a one-of the app already meets replaces the plugin
+	// meeting it (node for cloudflare as the server target). It goes first,
+	// so its removed dependencies never take one the new plugin brings.
+	const configured = await loadInstalledPlugins(configuredNames);
+	const displaced = displacedBy(pluginName, configured);
+	if (existingConfig && displaced.length > 0) {
+		if (
+			!nonInteractive &&
+			!(await confirm(`Replace ${displaced.join(", ")} with ${pluginName}?`))
+		) {
+			outro("Nothing changed");
+			return;
+		}
+		for (const name of displaced) {
+			await uninstall(name, {
+				config: existingConfig,
+				configPath,
+				cwd,
+				discovered: configured,
+			});
+			log.info(`Removed ${name}, which ${pluginName} replaces.`);
+		}
+	}
+
+	const existingPluginNames = configuredNames.filter(
+		(n) => !displaced.includes(n),
+	);
+	const existingNames = new Set(existingPluginNames);
 
 	// Install the plugin, then each plugin it requires that the app lacks: a
 	// plugin's `requires` is known only once it is loaded. The closure starts
@@ -98,7 +129,6 @@ export async function add(
 		);
 	}
 
-	const nonInteractive = !process.stdin.isTTY;
 	const app = existingConfig?.app ?? { name: "app", domain: "example.com" };
 
 	// Synthetic config = existing plugins + everything we're about to add, so
@@ -108,6 +138,7 @@ export async function add(
 	const existingOptions = new Map<string, Record<string, unknown>>();
 	if (existingConfig) {
 		for (const p of existingConfig.plugins) {
+			if (!existingNames.has(p.__plugin)) continue;
 			existingOptions.set(
 				p.__plugin,
 				(p.options as Record<string, unknown>) ?? {},

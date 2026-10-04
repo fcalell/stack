@@ -1,6 +1,6 @@
 ---
 id: 003-33
-status: backlog
+status: done
 sessions: {}
 ---
 # cli: an app switches its server target
@@ -15,4 +15,4 @@ as the last target and `stack add node` as a second one, so switching takes a ha
 dedicated switch; decide in the story.
 
 ## Acceptance criteria
-- [ ] (test) adding node to a cloudflare app leaves exactly node.
+- [x] (test) adding node to a cloudflare app leaves exactly node.

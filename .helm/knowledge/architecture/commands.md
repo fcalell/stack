@@ -34,7 +34,11 @@ and installs: a plugin loads only once installed, and its `requires` is known on
 One-of requirements (api's server target) settle after the named closure, so a plugin any
 selected plugin names meets them. One still unmet is asked by interactive `init` and takes the
 first of its `oneOf` under flags, without a TTY, and in `stack add`, whose closure starts from
-the app's plugins so a one-of the app meets adds nothing. `init` validates the finished closure,
+the app's plugins so a one-of the app meets adds nothing. `stack add` of a plugin meeting a
+one-of the app already meets replaces the plugin meeting it (`stack add node` on a cloudflare
+app): it asks first when interactive, removes the displaced plugin through `remove`'s cleanup
+before installing, so a dependency both bring survives, and never runs `remove`'s dependents
+check, since the added plugin meets the requirement. `init` validates the finished closure,
 so a selection meeting a one-of twice fails before the scaffold. The default lives in the
 requiring plugin's declaration, so the CLI names no domain.
 In an app inside stack's own workspace, every `@fcalell/*` spec becomes `workspace:*` instead,

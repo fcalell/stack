@@ -117,6 +117,25 @@ export function requirementOptions(req: Requirement): readonly string[] {
 	return typeof req === "string" ? [req] : req.oneOf;
 }
 
+// The app's plugins that `name` replaces: each one meeting a one-of
+// requirement `name` also meets, since a one-of is met by exactly one plugin.
+export function displacedBy(
+	name: string,
+	plugins: readonly DiscoveredPlugin[],
+): string[] {
+	const present = new Set(plugins.map((p) => p.name));
+	const displaced = new Set<string>();
+	for (const plugin of plugins) {
+		for (const req of plugin.cli.requires) {
+			if (typeof req === "string" || !req.oneOf.includes(name)) continue;
+			for (const option of req.oneOf) {
+				if (option !== name && present.has(option)) displaced.add(option);
+			}
+		}
+	}
+	return [...displaced];
+}
+
 // Picks the plugin that meets a one-of requirement the selection does not;
 // `plugin` is the plugin that declares it.
 export type ChooseRequirement = (

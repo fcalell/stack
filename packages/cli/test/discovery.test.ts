@@ -6,6 +6,7 @@ import { test } from "node:test";
 import { plugin } from "../src/lib/create-plugin.ts";
 import {
 	type DiscoveredPlugin,
+	displacedBy,
 	loadInstalledPlugins,
 	resolveRequiresClosure,
 	validateDependencies,
@@ -129,4 +130,20 @@ test("validation rejects an api with both server targets", () => {
 		() => validateDependencies(config("api", "cloudflare", "node")),
 		/\[api\] requires exactly one of 'cloudflare', 'node', but your config has cloudflare, node\. Remove all but one\./,
 	);
+});
+
+test("adding node to a cloudflare app leaves exactly node", async () => {
+	const app = config("db", "api", "cloudflare");
+	const displaced = displacedBy("node", app);
+	assert.deepEqual(displaced, ["cloudflare"]);
+
+	const kept = app.map((p) => p.name).filter((n) => !displaced.includes(n));
+	const closure = await resolveRequiresClosure([...kept, "node"], available);
+	assert.deepEqual(targets(closure), ["node"]);
+	assert.doesNotThrow(() => validateDependencies(config(...closure)));
+});
+
+test("a plugin no one-of names displaces nothing", () => {
+	assert.deepEqual(displacedBy("auth", config("db", "api", "cloudflare")), []);
+	assert.deepEqual(displacedBy("node", config("expo")), []);
 });

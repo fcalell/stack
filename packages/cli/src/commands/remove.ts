@@ -2,6 +2,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { rm } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { log, outro } from "@clack/prompts";
+import type { StackConfig } from "../config.ts";
 import { buildGraphFromDiscovered } from "../lib/build-graph.ts";
 import { cliSlots } from "../lib/cli-slots.ts";
 import { loadConfig } from "../lib/config.ts";
@@ -105,7 +106,47 @@ export async function remove(
 		}
 	}
 
+	const label = await uninstall(pluginName, {
+		config,
+		configPath,
+		cwd,
+		discovered,
+	});
+
+	// Skip the regenerate pass when we couldn't fully discover the workspace —
+	// `generate` would just hit the same load error and overwrite our useful
+	// log line with a confusing "could not regenerate" warning.
+	if (discovered) {
+		const { generate } = await import("./generate.ts");
+		try {
+			await generate(configPath);
+		} catch {
+			log.warn("Could not regenerate — run `stack generate` manually.");
+		}
+	}
+
+	outro(`Removed ${label}`);
+}
+
+// Removes the plugin's files, its dependencies and its config call, and
+// answers its label. `discovered` is null when the workspace did not load,
+// and then only the package and the config call go.
+export async function uninstall(
+	pluginName: string,
+	{
+		config,
+		configPath,
+		cwd,
+		discovered,
+	}: {
+		config: StackConfig;
+		configPath: string;
+		cwd: string;
+		discovered: DiscoveredPlugin[] | null;
+	},
+): Promise<string> {
 	const plugin = discovered?.find((p) => p.name === pluginName) ?? null;
+	const targetEntry = config.plugins.find((p) => p.__plugin === pluginName);
 
 	// Two sources of "what to remove":
 	//   1. The slot graph (when the plugin loaded) — gives us the plugin's
@@ -115,7 +156,7 @@ export async function remove(
 	//      package.json as a baseline so the package itself goes away.
 	const packageName =
 		plugin?.cli.package ??
-		targetEntry.__package ??
+		targetEntry?.__package ??
 		`@fcalell/plugin-${pluginName}`;
 
 	let files: string[] = [];
@@ -180,19 +221,5 @@ export async function remove(
 	const fullConfigPath = join(cwd, configPath);
 	await removePluginCall(fullConfigPath, pluginName);
 
-	const label = plugin?.cli.label ?? pluginName;
-
-	// Skip the regenerate pass when we couldn't fully discover the workspace —
-	// `generate` would just hit the same load error and overwrite our useful
-	// log line with a confusing "could not regenerate" warning.
-	if (discovered) {
-		const { generate } = await import("./generate.ts");
-		try {
-			await generate(configPath);
-		} catch {
-			log.warn("Could not regenerate — run `stack generate` manually.");
-		}
-	}
-
-	outro(`Removed ${label}`);
+	return plugin?.cli.label ?? pluginName;
 }
