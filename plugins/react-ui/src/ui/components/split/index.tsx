@@ -1,10 +1,16 @@
 import { Dialog } from "@base-ui/react/dialog";
 import { cn } from "@fcalell/ui-core/cn";
-import { SPLIT_LIST, SPLIT_PANE, splitMain } from "@fcalell/ui-core/variants";
+import {
+	SPLIT_BESIDE,
+	SPLIT_LIST,
+	SPLIT_PANE,
+	splitMain,
+} from "@fcalell/ui-core/variants";
 import { type ReactNode, use, useEffect, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import {
 	ActRoom,
+	Beside,
 	LendAct,
 	PageTitle,
 	RecordOpen,
@@ -31,6 +37,12 @@ const MAIN = "flex flex-col min-w-0 grow overflow-y-auto";
 // A Thread filling the main scrolls its own log under the record's head,
 // which stays put, so the main does not scroll.
 const MAIN_FILLED = "flex flex-col min-w-0 grow";
+// With a record beside it the main takes its half from `wide` and gives its
+// place to that record below it.
+const MAIN_SHARED = "basis-0 page-max-wide:hidden";
+// The record beside the main scrolls in its own Screen body; from `wide` a
+// hairline parts it from the main, below it the list's hairline is its edge.
+const BESIDE = "flex flex-col min-w-0 border-edge page-wide:border-l";
 const EMPTY = "flex grow min-w-0 items-center justify-center";
 const PANE = "flex flex-col shrink-0 overflow-y-auto page-max-wide:hidden";
 // The pane opened below `wide` is a side sheet at the pane's fit, its
@@ -43,14 +55,16 @@ export interface SplitProps extends Closed {
 	list?: ReactNode;
 	/** The open record; none means nothing is open. */
 	main?: ReactNode;
+	/** A record the main opened, a `Screen` whose `back` is the main's route. */
+	beside?: ReactNode;
 	/** The open record's details. */
 	pane?: ReactNode;
 	/** What the main holds while nothing is open, an `EmptyState`. */
 	empty?: ReactNode;
 }
 
-/** The list at its width inside a hairline beside the main, decided by its page's width: from `wide` the pane stands beside the main, below it the Split lends its Place or Screen a Details act that opens the pane as a sheet. Below `tablet` one region stands at a time: the list, or the open record, whose Place then leads its strip or top bar with a back act to the list. A Thread in the main fills it: the main stops scrolling, the record's head stays at the page inset over the Thread's log, which scrolls, and its input docks at the main's foot. It sits in a bleeding Place, whose strip heads it. */
-export function Split({ list, main, pane, empty }: SplitProps) {
+/** The list at its width inside a hairline beside the main, decided by its page's width: from `wide` the pane stands beside the main, below it the Split lends its Place or Screen a Details act that opens the pane as a sheet. Below `tablet` one region stands at a time: the list, or the open record, whose Place then leads its strip or top bar with a back act to the list. A record the main opened (`beside`) stands beside the main from `wide`, the two sharing what the list leaves, its back act drawn as Close and the pane behind the Details act at every width; below `wide` it stands in the main's place with its back act to the main. A Thread in the main fills it: the main stops scrolling, the record's head stays at the page inset over the Thread's log, which scrolls, and its input docks at the main's foot. It sits in a bleeding Place, whose strip heads it. */
+export function Split({ list, main, beside, pane, empty }: SplitProps) {
 	const words = useWords();
 	const title = use(PageTitle);
 	const lend = use(LendAct);
@@ -61,19 +75,22 @@ export function Split({ list, main, pane, empty }: SplitProps) {
 	const [sheet] = useState(() => Dialog.createHandle<unknown>());
 	const opened = main !== undefined;
 	const detailed = opened && pane !== undefined;
+	const besides = opened && beside !== undefined;
 	useEffect(() => {
 		if (!detailed || !lend) return;
-		lend(sheet);
+		lend({ sheet, beside: besides });
 		return () => lend(undefined);
-	}, [detailed, lend, sheet]);
+	}, [detailed, besides, lend, sheet]);
 	useEffect(() => {
 		if (!opened || !recordOpen) return;
 		recordOpen(true);
 		return () => recordOpen(false);
 	}, [opened, recordOpen]);
-	const record = fills
-		? cn(splitMain({ state: "fills" }), MAIN_FILLED)
-		: cn(splitMain({ state: "rest" }), MAIN);
+	const record = cn(
+		splitMain({ state: fills ? "fills" : "rest" }),
+		fills ? MAIN_FILLED : MAIN,
+		besides && MAIN_SHARED,
+	);
 	return (
 		<div data-split className={SPLIT}>
 			<nav
@@ -95,7 +112,12 @@ export function Split({ list, main, pane, empty }: SplitProps) {
 					{empty}
 				</div>
 			)}
-			{detailed ? (
+			{besides ? (
+				<div className={cn(SPLIT_BESIDE, BESIDE)}>
+					<Beside value>{beside}</Beside>
+				</div>
+			) : null}
+			{detailed && !besides ? (
 				<aside aria-label={words.details} className={cn(SPLIT_PANE, PANE)}>
 					{pane}
 				</aside>

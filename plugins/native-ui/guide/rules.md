@@ -11,6 +11,14 @@ Find the roster component that owns the shape: the frame (`Shell`, `Place`, `Scr
 the rhythm (`Section`, `Group`, `List`), the row (`ListRow`, `DefinitionRow`, `FormField`), the
 control, the text role (`Text`). A `View` rebuilding one is drift.
 
+A record the open record links to opens beside it: the `Split`'s `beside` holds a `Screen` whose
+`back` is the open record's route. On the phone it stands in the open record's stead, its back
+act in its top bar.
+
+```tsx
+<Split list={rows} main={<Item />} beside={<Screen title="Run 12" back={itemRoute}><Run /></Screen>} />
+```
+
 ## Classes are geometry, on hosts only
 
 A component takes no `class`, `className`, `classList` or `style`, nor uniwind's host class

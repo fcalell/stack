@@ -52,7 +52,9 @@ structure differs by density reads it itself.
 
 A `Place` or a `Screen` is the `page` size container. A `Split` decides its regions by the page's
 width, never the viewport's: one region below `tablet`, the list beside the main from it, the pane
-beside both from `wide`, so a record keeps its room beside the sidebar at any window width.
+beside both from `wide`, so a record keeps its room beside the sidebar at any window width. A
+record the main opened (`beside`) stands beside the main from `wide`, the two sharing what the
+list leaves, and in the main's place below it.
 
 ## Modes
 

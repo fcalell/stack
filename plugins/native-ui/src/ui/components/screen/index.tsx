@@ -10,7 +10,13 @@ import { type ReactNode, useContext, useEffect, useState } from "react";
 import { Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import { BackRoute, CoverTabs, LendAct, PageTitle } from "../../lib/frame";
+import {
+	BackRoute,
+	Beside,
+	CoverTabs,
+	LendAct,
+	PageTitle,
+} from "../../lib/frame";
 import { Scroll } from "../../lib/hosts";
 import { navigate } from "../../lib/navigate";
 import { useWords } from "../../lib/words";
@@ -35,16 +41,18 @@ export interface ScreenProps extends Closed {
 
 // A page pushed over a place: the top bar (back, the actions, more) over the
 // title, the body scrolling under it, no filled act; it covers the Shell's
-// tab bar while it stands. A Split inside lends it its Details act.
+// tab bar while it stands. A Split inside lends it its Details act. As a
+// Split's `beside` record it stands in the main's stead and covers no tab bar.
 export function Screen({ title, back, actions, more, children }: ScreenProps) {
 	const words = useWords();
 	const cover = useContext(CoverTabs);
+	const beside = useContext(Beside);
 	const [lent, lend] = useState<IconAct>();
 	useEffect(() => {
-		if (!cover) return;
+		if (!cover || beside) return;
 		cover(true);
 		return () => cover(false);
-	}, [cover]);
+	}, [cover, beside]);
 	return (
 		<LendAct.Provider value={lend}>
 			<PageTitle.Provider value={title}>

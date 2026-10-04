@@ -631,6 +631,10 @@ export const FLOATING_ACT_FOOT = "pb-page";
 // `wide` of its page. Below `tablet` the list stands alone and draws neither.
 export const SPLIT_LIST = "w-list py-inside px-page border-r border-edge";
 export const SPLIT_PANE = "gap-sections w-pane p-page border-l border-edge";
+// A record the main opened: from `wide` of its page the main and it share what
+// the list leaves, half each, a structural fraction and never a width token;
+// below `wide` it stands in the main's place, and on the phone it replaces it.
+export const SPLIT_BESIDE = "grow basis-0";
 // A section's head (its rhythm is `SECTION`'s): the head row over a blocked
 // act's reason, the title centred on the act, which sets the row's height.
 // The fold toggle's wash overhangs the title's start only (a web overlay

@@ -4,6 +4,7 @@ import { use, useState } from "react";
 import { Banner } from "../../components/banner/index.tsx";
 import { Button } from "../../components/button/index.tsx";
 import { Chip } from "../../components/chip/index.tsx";
+import { Code } from "../../components/code/index.tsx";
 import { DefinitionRow } from "../../components/definition-row/index.tsx";
 import { EmptyState } from "../../components/empty-state/index.tsx";
 import { Group } from "../../components/group/index.tsx";
@@ -14,6 +15,7 @@ import { List } from "../../components/list/index.tsx";
 import { PendingBar } from "../../components/pending-bar/index.tsx";
 import { Place } from "../../components/place/index.tsx";
 import type { QueryLike } from "../../components/query-boundary/index.tsx";
+import { Screen } from "../../components/screen/index.tsx";
 import { Section } from "../../components/section/index.tsx";
 import { Split } from "../../components/split/index.tsx";
 import { Toolbar } from "../../components/toolbar/index.tsx";
@@ -87,6 +89,44 @@ const DEPLOYS: Deploy[] = [
 		age: "1 d",
 		state: "done",
 		env: PRODUCTION,
+	},
+];
+
+// A deploy's steps, each opened beside the deploy that runs it.
+interface Step {
+	id: string;
+	name: string;
+	state: StatusState;
+	took: string;
+	log: string;
+}
+
+const STEPS: Step[] = [
+	{
+		id: "install",
+		name: "Install",
+		state: "done",
+		took: "38 s",
+		log: `[10:40:04] pnpm install --frozen-lockfile
+[10:40:31] Packages: +812
+[10:40:42] Done in 38 s`,
+	},
+	{
+		id: "build",
+		name: "Build",
+		state: "done",
+		took: "51 s",
+		log: `[10:40:43] vite build
+[10:41:20] 214 modules transformed
+[10:41:34] Built in 51 s`,
+	},
+	{
+		id: "upload",
+		name: "Upload",
+		state: "active",
+		took: "13 s",
+		log: `[10:41:35] Uploading 38 files
+[10:41:48] 31 of 38 uploaded`,
 	},
 ];
 
@@ -240,8 +280,66 @@ function Record(props: { deploy: Deploy }) {
 					/>
 				</Group>
 			</Section>
+			<Section title="Steps" count={STEPS.length}>
+				<StepRows deploy={deploy} />
+			</Section>
 			<DeployChanges id={deploy.id} />
 		</>
+	);
+}
+
+// The deploy's steps; the open one's row is current at the page's own path.
+function StepRows(props: { deploy: Deploy }) {
+	const { step } = use(HereContext);
+	const to = useTo();
+	return (
+		<List
+			items={STEPS}
+			row={{
+				key: (each) => each.id,
+				title: (each) => each.name,
+				meta: (each) => [each.took],
+				status: (each) => ({ state: each.state, label: LABELS[each.state] }),
+				href: (each) =>
+					each.id === step
+						? location.pathname
+						: to({ place: "deploys", record: props.deploy.id, step: each.id }),
+			}}
+		/>
+	);
+}
+
+// A step the deploy opened, beside it from `wide`: a Screen whose back is the
+// deploy's route.
+function StepScreen(props: { deploy: Deploy; step: Step }) {
+	const { deploy, step } = props;
+	const to = useTo();
+	return (
+		<Screen
+			title={step.name}
+			back={to({ place: "deploys", record: deploy.id })}
+			actions={[
+				{
+					icon: "RotateCw",
+					label: "Rerun",
+					onAct: () => toast(`Rerunning ${step.name}`),
+				},
+			]}
+		>
+			<Section title="Summary">
+				<Group>
+					<DefinitionRow
+						label="Status"
+						value={{ status: step.state, label: LABELS[step.state] }}
+					/>
+					<DefinitionRow label="Duration" value={step.took} />
+					<DefinitionRow label="Deploy" value={deploy.commit} copyable />
+				</Group>
+			</Section>
+			<Section title="Log">
+				<Code text={step.log} copy />
+			</Section>
+		</Screen>
 	);
 }
 
@@ -294,9 +392,10 @@ function Details(props: { deploy: Deploy }) {
 }
 
 export function Deploys() {
-	const { record } = use(HereContext);
+	const { record, step } = use(HereContext);
 	const query = useFixture(DEPLOYS);
 	const open = DEPLOYS.find((deploy) => deploy.id === record);
+	const opened = STEPS.find((each) => each.id === step);
 	return (
 		<Place
 			title="Deploys"
@@ -363,6 +462,11 @@ export function Deploys() {
 			<Split
 				list={<DeployRows query={query} />}
 				main={open ? <Record key={open.id} deploy={open} /> : undefined}
+				beside={
+					open && opened ? (
+						<StepScreen key={opened.id} deploy={open} step={opened} />
+					) : undefined
+				}
 				pane={open ? <Details deploy={open} /> : undefined}
 				empty={
 					<EmptyState

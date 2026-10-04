@@ -2056,7 +2056,7 @@ The front matter's components are the matrix cells: one entry per axis value of 
 | `Link` | atom | `LINK` | rest, hover, focus, active |
 | `Place` | layout | `PAGE_HEAD`, `PAGE_TOP_BAR`, `PAGE_TITLE`, `TEXT.role.title`, `PAGE_BODY`, `FOOT`, `FLOATING_ACT`, `FLOATING_ACT_ROOM`, `FLOATING_ACT_FOOT`, `BUTTON.act.primary`, `BUTTON.fit.bar`, `BUTTON.fit.body`, `BUTTON_LABEL.act.primary`, `ICON_BUTTON.fit.bar`, `ICON_BUTTON.fit.body` | rest |
 | `Screen` | layout | `PAGE_HEAD`, `PAGE_TOP_BAR`, `PAGE_TITLE`, `TEXT.role.title`, `PAGE_BODY`, `ICON_BUTTON.fit.bar`, `ICON_BUTTON.fit.body` | rest |
-| `Split` | layout | `SPLIT_LIST`, `SPLIT_MAIN`, `SPLIT_PANE`, `ICON_BUTTON.fit.bar` | rest, empty |
+| `Split` | layout | `SPLIT_LIST`, `SPLIT_MAIN`, `SPLIT_BESIDE`, `SPLIT_PANE`, `ICON_BUTTON.fit.bar` | rest, empty |
 | `Section` | layout | `SECTION`, `SECTION_HEAD`, `SECTION_HEAD_ROW`, `SECTION_TITLE`, `SECTION_TOGGLE`, `TEXT.role.heading`, `TEXT.role.meta`, `ICON.fit.body`, `COUNT`, `COUNT_LABEL`, `BUTTON.act.secondary`, `BUTTON.act.destructive`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.secondary`, `BUTTON_LABEL.act.destructive`, `ICON_BUTTON.fit.bar`, `SKELETON.kind.count`, `SKELETON.kind.line`, `SKELETON.kind.field`, `SKELETON_ROW.kind.field`, `TEXT.role.caption`, `LINE_BOX.role.body` | rest, hover, focus, active, disabled, loading |
 | `Group` | layout | `GROUP`, `SKELETON_ROW.kind.setting`, `SKELETON_LINES`, `SKELETON.kind.line`, `SKELETON.kind.switch` | rest, loading |
 | `List` | layout | `LIST` | rest, loading, error, empty |

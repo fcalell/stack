@@ -1,10 +1,11 @@
-import { splitMain } from "@fcalell/ui-core/variants";
+import { SPLIT_BESIDE, splitMain } from "@fcalell/ui-core/variants";
 import { type ReactNode, useContext, useEffect, useState } from "react";
 import { View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import {
 	ActRoom,
+	Beside,
 	LendAct,
 	PageTitle,
 	RecordAlone,
@@ -24,6 +25,7 @@ const LIST = "pt-page px-page";
 export interface SplitProps extends Closed {
 	list?: ReactNode;
 	main?: ReactNode;
+	beside?: ReactNode;
 	pane?: ReactNode;
 	empty?: ReactNode;
 }
@@ -33,10 +35,12 @@ export interface SplitProps extends Closed {
 // with a back act to the list. A Thread in the record fills it: the record
 // stops scrolling (its first frame remounts it out of the scroll), its head
 // stays at the page inset over the Thread's log, which scrolls, and the
-// input docks at its foot. With a record and a pane open, the Split lends a
-// Details act to its Place or Screen, which opens the pane as a sheet.
-// `empty` is the desktop's, so the phone never draws it.
-export function Split({ list, main, pane }: SplitProps) {
+// input docks at its foot. A record the main opened (`beside`, a Screen)
+// replaces the main, its back act to the main in its top bar. With a record
+// and a pane open, the Split lends a Details act to its Place or Screen, which
+// opens the pane as a sheet. `empty` is the desktop's, so the phone never
+// draws it.
+export function Split({ list, main, beside, pane }: SplitProps) {
 	const words = useWords();
 	const title = useContext(PageTitle);
 	const lend = useContext(LendAct);
@@ -76,7 +80,13 @@ export function Split({ list, main, pane }: SplitProps) {
 			{room}
 		</Scroll>
 	);
-	if (opened && fills)
+	if (opened && beside !== undefined)
+		region = (
+			<View className={SPLIT_BESIDE}>
+				<Beside.Provider value>{beside}</Beside.Provider>
+			</View>
+		);
+	else if (opened && fills)
 		region = (
 			<View className={cn(splitMain({ state: "fills" }), REGION)}>
 				{record}

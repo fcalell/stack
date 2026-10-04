@@ -52,6 +52,10 @@ export const LendAct = createContext<
 	((act: IconAct | undefined) => void) | null
 >(null);
 
+// A Split's `beside` record is a Screen standing in its Place in the main's
+// stead, not a page pushed over it, so it covers no tab bar.
+export const Beside = createContext(false);
+
 // The route of the Shell's current place: the list a Place returns to from a
 // record its Split shows alone.
 export const PlaceRoute = createContext<string | undefined>(undefined);

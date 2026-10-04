@@ -154,6 +154,8 @@ export const OVERLAYS: readonly string[] = [
 	"page-tablet:group-has-data-split/page:w-list",
 	"page-wide:hidden",
 	"page-max-wide:hidden",
+	"border-edge",
+	"page-wide:border-l",
 	// Section, Group, List, Columns
 	"px-inside",
 	"tabular-nums",

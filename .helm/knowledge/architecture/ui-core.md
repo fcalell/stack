@@ -291,6 +291,21 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
   foot derived from a Thread's position (a Thread in the last Section docking its input), which
   hides the dock from the call site; a `MessageInput` docked variant, since docking is the
   frame's, never the field's.
+- A record the main opened is the Split's `beside`: a `Screen`
+  whose `back` is the main's route, given by the consumer because the route's depth differs by
+  surface and no component can derive it. From `wide` of the page the list, the main and the
+  beside record stand together, main and beside sharing what the list leaves half each
+  (`SPLIT_BESIDE`, `grow basis-0`: a structural fraction, never a width token; the web parts
+  them by the beside's start hairline, an overlay from `wide`); the Screen's back act draws as
+  Close to the same route, and the pane leaves for the Details act at every width, which the
+  Split lends with `beside` set. Below `wide` the beside record stands in the main's place with
+  its back act, a pushed page inside the Split; on the phone it replaces the main, its back act
+  in its top bar. The Split hands the Screen `Beside`: the Screen covers no tab bar, its title
+  is a heading at the level where it stands, and on the web its body, not its root, is the
+  `page` container, so its head's acts read the outer page's width and what stands in its body
+  reads its own. Rejected: the record in the pane (the pane is the open record's details, at
+  forty-five characters), a `Sheet` (an overlay over the scrim with no back to the main), and a
+  width token for the beside record.
 - A bar at a phone's bottom edge clears the home indicator with the web emit's `pb-safe`
   (`padding-bottom: env(safe-area-inset-bottom)`, non-zero under the document's
   `viewport-fit=cover`), an overlay the tab bar spells beside `SHELL_TAB_BAR`; native pads the

@@ -24,6 +24,7 @@ import {
 	ActFloats,
 	ActRoom,
 	LendAct,
+	type LentDetails,
 	PageTitle,
 	PlaceRoute,
 	RecordOpen,
@@ -50,6 +51,7 @@ const BACK = "flex page-tablet:hidden";
 const BESIDE_BACK = "flex page-max-tablet:hidden";
 // A Split's lent Details act, drawn below `wide` of its page.
 const DETAILS = "flex page-wide:hidden";
+const DETAILS_BESIDE = "flex";
 const HEAD = "flex flex-col";
 const ROW = "flex items-center";
 const SPACER = "grow";
@@ -81,14 +83,11 @@ export function FloatingActRoom() {
 	);
 }
 
-/** The Details act a Split lends its page: the trigger of its details sheet, drawn below `wide` of the page. */
-export function Details(props: {
-	sheet: Dialog.Handle<unknown>;
-	fit: IconButtonFit;
-}) {
+/** The Details act a Split lends its page: the trigger of its details sheet, drawn below `wide` of the page, and at every width while a record stands beside the main. */
+export function Details(props: LentDetails & { fit: IconButtonFit }) {
 	const words = useWords();
 	return (
-		<span className={DETAILS}>
+		<span className={props.beside ? DETAILS_BESIDE : DETAILS}>
 			<Dialog.Trigger
 				handle={props.sheet}
 				render={
@@ -152,7 +151,7 @@ export function Place({
 	const switcher = use(ShellSwitcher);
 	const route = use(PlaceRoute);
 	const titleId = useId();
-	const [sheet, lend] = useState<Dialog.Handle<unknown>>();
+	const [lent, lend] = useState<LentDetails>();
 	const [recordOpen, setRecordOpen] = useState(false);
 	const [fills, setFills] = useState(false);
 	const docked = useFootDocks();
@@ -179,7 +178,7 @@ export function Place({
 	const acts = (actions ?? []).map((action) => (
 		<IconButton key={action.label} {...action} fit={fit} />
 	));
-	const details = sheet ? <Details sheet={sheet} fit={fit} /> : null;
+	const details = lent ? <Details {...lent} fit={fit} /> : null;
 	const overflow = more?.length ? (
 		<Menu label={words.more} items={more} />
 	) : null;

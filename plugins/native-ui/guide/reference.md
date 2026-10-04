@@ -60,7 +60,7 @@ Expo Go never has them.
 
 The phone draws the touch density set at every width. The roster's structure follows the phone:
 the `Shell` draws a tab bar and no sidebar, `Split` shows the list or the open record alone with
-the pane as a sheet, `Sheet` is a bottom sheet, `Columns` scrolls sideways and `Diff` is unified.
+the pane as a sheet (a record the main opened, `beside`, in the main's stead), `Sheet` is a bottom sheet, `Columns` scrolls sideways and `Diff` is unified.
 The `Table` alone reads the window: from `tablet` wide it is a grid, below it one `ListRow` per
 record.
 

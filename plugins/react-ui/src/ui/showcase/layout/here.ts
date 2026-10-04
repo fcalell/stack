@@ -3,13 +3,14 @@ import type { QueryLike } from "../../components/query-boundary/index.tsx";
 import type { View } from "../view.tsx";
 
 // Where the review stands: the place the URL names, the record open in it,
-// the file open in that record, and a query state forced for the review (`loading` waits, `error` fails
+// the file open in that record, the step that record opened beside it, and a query state forced for the review (`loading` waits, `error` fails
 // once, `missing` answers not found); the view rides along on every link the page draws.
 export interface Here {
 	view: View;
 	place: string;
 	record?: string;
 	file?: string;
+	step?: string;
 	query?: Forced;
 }
 
@@ -35,6 +36,7 @@ export function readHere(view: View): Here {
 		place: params.get("place") ?? "deploys",
 		record: params.get("record") ?? undefined,
 		file: params.get("file") ?? undefined,
+		step: params.get("step") ?? undefined,
 		query: isForced(query) ? query : undefined,
 	};
 }

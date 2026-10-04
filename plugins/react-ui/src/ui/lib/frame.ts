@@ -40,11 +40,21 @@ export function useFootDocks() {
 
 // A Split with a record and its pane open lends its details sheet's handle to
 // the Place or Screen it sits in, which draws the sheet's trigger, the Details
-// act, after its own actions below `wide` of its width; `undefined` takes it
-// back.
+// act, after its own actions below `wide` of its width, and at every width
+// while a record stands `beside` the main; `undefined` takes it back.
+export interface LentDetails {
+	sheet: Dialog.Handle<unknown>;
+	beside: boolean;
+}
 export const LendAct = createContext<
-	((sheet: Dialog.Handle<unknown> | undefined) => void) | null
+	((details: LentDetails | undefined) => void) | null
 >(null);
+
+// A Split's `beside` record is a Screen standing in its page, not a page of
+// its own: it covers no tab bar, its title is a heading at the level where it
+// stands, its body is the size container what stands in it decides by, and
+// its back act draws as Close to the same route from `wide` of the page.
+export const Beside = createContext(false);
 
 // The route of the Shell's current place: the list a Place returns to
 // from a record its Split shows alone.

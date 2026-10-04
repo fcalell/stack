@@ -1,6 +1,6 @@
 ---
 id: 003-41
-status: backlog
+status: review
 sessions: {}
 ---
 # ui-core: a record the main opened stands beside it
@@ -17,4 +17,7 @@ Reference: Cursor gives the diff about half the window beside the conversation (
 - [ ] Stack provides the part on every platform the app runs on.
 
 ## Open questions
-- [ ] Its shape (a component, a variant, a token, an option): the stack session decides.
+- [x] Its shape (a component, a variant, a token, an option): the stack session decides.
+
+## Progress
+Shape: `Split` takes `beside`, a `Screen` whose `back` is the main's route. From `wide` main and beside share what the list leaves, half each (fcalell's call: a structural fraction, no width token), the back act drawn as Close and the pane behind the Details act; below `wide` and on the phone it stands in the main's place. Open for the critique: the Place's head and the beside Screen's head stack below `tablet` and on the phone; the beside Screen keeps no floating act room. The showcase opens a deploy's step beside it. Built on web and phone; `pnpm check` and `pnpm verify` pass. Open: the live check (web per batch, phone on the harness).
