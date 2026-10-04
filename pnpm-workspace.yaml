@@ -9,3 +9,4 @@ allowBuilds:
   "@parcel/watcher": false
   "@prisma/client": false
   better-sqlite3: false
+  dtrace-provider: false

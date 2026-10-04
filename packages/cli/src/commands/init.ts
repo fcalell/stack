@@ -14,12 +14,12 @@ import { cliSlots } from "../lib/cli-slots.ts";
 import {
 	type DiscoveredPlugin,
 	FIRST_PARTY_PLUGINS,
-	loadAvailablePlugins,
+	loadInstalledPlugins,
 	PLUGIN_NAMES,
 	resolveRequiresClosure,
 } from "../lib/discovery.ts";
 import { MissingPluginError, StackError } from "../lib/errors.ts";
-import { installStack } from "../lib/install.ts";
+import { installStack, stackWorkspaceRoot } from "../lib/install.ts";
 import { ask, createPromptContext, multi } from "../lib/prompt.ts";
 import {
 	announceCreated,
@@ -132,7 +132,7 @@ async function installPlugins(
 		installStack(dir);
 		const closure = resolveRequiresClosure(
 			plugins,
-			await loadAvailablePlugins(),
+			await loadInstalledPlugins(plugins),
 		);
 		if (closure.length === plugins.length) {
 			if (ownsManifest) announceCreated(["package.json"]);
@@ -151,7 +151,7 @@ export async function scaffold(
 	dir: string,
 	{ plugins: selectedPlugins, appName, domain, nonInteractive }: Selection,
 ): Promise<void> {
-	const available = await loadAvailablePlugins();
+	const available = await loadInstalledPlugins(selectedPlugins);
 
 	// Discovered plugins carry the factory + an `options: {}` placeholder.
 	// We don't yet have per-plugin options — prompts produce them. The
@@ -187,10 +187,16 @@ export async function scaffold(
 			procedurePaths: tsconfigPaths,
 			nativeTypes: tsconfigTypes,
 		}),
-		["biome.json", biomeTemplate()],
-		[".editorconfig", editorconfigTemplate()],
 		[".gitignore", gitignoreTemplate({ plugins: selectedPlugins })],
 	];
+	// An app in stack's own workspace lints and formats under the checkout's
+	// root configs: Biome refuses a second root config below it.
+	if (!stackWorkspaceRoot(dir)) {
+		baseEntries.push(
+			["biome.json", biomeTemplate()],
+			[".editorconfig", editorconfigTemplate()],
+		);
+	}
 	const createdBase: string[] = [];
 	for (const [path, content] of baseEntries) {
 		if (writeIfMissingString(path, content)) createdBase.push(path);

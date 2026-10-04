@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { parse } from "yaml";
-import type { StackPackage } from "../src/lib/stack-packages.ts";
+import {
+	isStackPackage,
+	STACK_PACKAGES,
+	type StackPackage,
+} from "../src/lib/stack-packages.ts";
 import { pnpmWorkspaceTemplate } from "../src/templates/pnpm-workspace.ts";
 
 const workspace = (existing: string | null, packages: StackPackage[]) =>
@@ -26,6 +30,21 @@ test("each stack package's build is approved by repository URL", () => {
 		esbuild: true,
 		workerd: true,
 	});
+});
+
+test("a db app skips better-sqlite3's source build from its first install", () => {
+	const yaml = workspace(null, ["@fcalell/cli", "@fcalell/plugin-db"]);
+	assert.equal(yaml.allowBuilds["better-sqlite3"], false);
+	assert.equal(yaml.allowBuilds.esbuild, true);
+});
+
+test("every stack package agrees on each build it brings", () => {
+	assert.doesNotThrow(() =>
+		pnpmWorkspaceTemplate(
+			null,
+			Object.keys(STACK_PACKAGES).filter(isStackPackage),
+		),
+	);
 });
 
 test("the git packages' prepares run one at a time", () => {

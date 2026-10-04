@@ -9,7 +9,7 @@ import { loadConfig } from "../lib/config.ts";
 import { editConfig } from "../lib/config-writer.ts";
 import {
 	type DiscoveredPlugin,
-	loadAvailablePlugins,
+	loadInstalledPlugins,
 	PLUGIN_NAMES,
 	resolveRequiresClosure,
 } from "../lib/discovery.ts";
@@ -80,7 +80,10 @@ export async function add(
 	for (;;) {
 		patchPackageJson(cwd, { dependencies: stackPluginSpecs(pluginsToAdd) });
 		installStack(cwd);
-		available = await loadAvailablePlugins();
+		available = await loadInstalledPlugins([
+			...existingPluginNames,
+			...pluginsToAdd,
+		]);
 		const closure = resolveRequiresClosure([pluginName], available).filter(
 			(n) => !existingNames.has(n),
 		);

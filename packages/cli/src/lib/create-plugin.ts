@@ -326,28 +326,24 @@ export function plugin<
 	definition: PluginDefinition<TOptions, TSlots, TCallbacks, TResolvedOptions>,
 ): PluginFactory<TName, TOptions, TSlots, TCallbacks, TResolvedOptions> {
 	const pkg = definition.package ?? `@fcalell/plugin-${name}`;
-	const packageInfo = findPackageInfo(pkg);
-	const packageRoot = packageInfo?.root ?? null;
-	const templatesRoot = packageRoot
-		? pathToFileURL(`${join(packageRoot, "templates")}/`)
-		: null;
-
-	const hasRuntimeExport = Boolean(
-		packageInfo?.pkgJson?.exports?.["./runtime"],
-	);
+	// Looked up on first use, never on import: a plugin imports its siblings
+	// before `stack init` installs them, and Node keeps a failed resolution
+	// for the rest of the process.
+	const packageInfo = () => findPackageInfo(pkg);
 	const hasCallbacks =
 		definition.callbacks !== undefined &&
 		Object.keys(definition.callbacks).length > 0;
 	const callbackTarget = `src/worker/plugins/${name}.ts`;
 
 	const template = (templateName: string): URL => {
-		if (!templatesRoot) {
+		const root = packageInfo()?.root;
+		if (!root) {
 			throw new StackError(
 				`Plugin "${name}" attempted to resolve template ${JSON.stringify(templateName)} but its package "${pkg}" could not be located. Ensure it is installed in the consumer workspace.`,
 				"PLUGIN_CONFIG_INVALID",
 			);
 		}
-		return new URL(templateName, templatesRoot);
+		return new URL(templateName, pathToFileURL(`${join(root, "templates")}/`));
 	};
 
 	const _scaffold = (templateName: string, target: string): ScaffoldSpec => ({
@@ -392,7 +388,7 @@ export function plugin<
 		// wiring for the worker chain itself is performed by plugin-api in a
 		// separate contribution; this hook only ensures the callback file
 		// exists on disk after `stack init` / `stack add`.
-		if (hasCallbacks && hasRuntimeExport) {
+		if (hasCallbacks && packageInfo()?.pkgJson?.exports?.["./runtime"]) {
 			auto.push(
 				cliSlots.initScaffolds.contribute(
 					(): ScaffoldSpec => ({

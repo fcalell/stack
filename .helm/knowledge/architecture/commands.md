@@ -31,6 +31,9 @@ stack <plugin> <command>     # Plugin subcommands (e.g. stack db push)
 `stack init` first writes `package.json` (only when missing) and `pnpm-workspace.yaml`, every
 `@fcalell/*` spec from the CLI's table ([consumer-project](./consumer-project.md#from-github)),
 and installs: a plugin loads only once installed, and its `requires` is known only once loaded.
+In an app inside stack's own workspace, every `@fcalell/*` spec becomes `workspace:*` instead,
+no `pnpm-workspace.yaml` or `biome.json` is written, and the workspace root installs
+([consumer-project](./consumer-project.md#inside-stacks-workspace)).
 The scaffold then runs in the app's installed `@fcalell/cli`, imported from the app's root,
 which need not be the copy that started `init`: slots match by identity, and the installed
 plugins import the app's copy. It writes the CLI-owned base files (the tsconfigs, `biome.json`,

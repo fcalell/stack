@@ -93,14 +93,16 @@ async function loadPlugin(
 	return { name, cli: pluginExport.cli, factory: pluginExport, options };
 }
 
-export async function loadAvailablePlugins(): Promise<DiscoveredPlugin[]> {
+// The named first-party plugins, each installed already. Node caches a
+// failed resolution for the rest of the process, so a plugin probed before
+// its install stays unresolvable after it: never load an absent one.
+export async function loadInstalledPlugins(
+	names: readonly string[],
+): Promise<DiscoveredPlugin[]> {
 	const results: DiscoveredPlugin[] = [];
 	for (const entry of FIRST_PARTY_PLUGINS) {
-		try {
-			results.push(await loadPlugin(entry.name, entry.package, {}));
-		} catch {
-			// Plugin not available in this workspace
-		}
+		if (!names.includes(entry.name)) continue;
+		results.push(await loadPlugin(entry.name, entry.package, {}));
 	}
 	return results;
 }

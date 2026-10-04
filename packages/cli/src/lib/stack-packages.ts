@@ -1,8 +1,16 @@
 // Every first-party package a consumer installs, by the directory it lives in
 // within stack's repository and the first-party packages its `dependencies`
-// name. A test holds each entry to the package's own manifest.
+// name. A test holds each entry to the package's own manifest. `builds` is
+// pnpm's verdict on each build script the package brings into the app
+// (`true` runs it, `false` skips it); the install that brings the package
+// meets them before any plugin loads.
 export const STACK_PACKAGES = {
-	"@fcalell/cli": { dir: "packages/cli", dependencies: [] },
+	"@fcalell/cli": {
+		dir: "packages/cli",
+		dependencies: [],
+		// The wrangler its package.json template writes for an app with a worker.
+		builds: { esbuild: true, workerd: true },
+	},
 	"@fcalell/typescript-config": {
 		dir: "packages/typescript-config",
 		dependencies: [],
@@ -18,6 +26,8 @@ export const STACK_PACKAGES = {
 			"@fcalell/plugin-cloudflare",
 			"@fcalell/plugin-db",
 		],
+		// better-auth's Prisma adapter auto-installs its peer; auth uses Drizzle.
+		builds: { "@prisma/client": false },
 	},
 	"@fcalell/plugin-cloudflare": {
 		dir: "plugins/cloudflare",
@@ -34,6 +44,9 @@ export const STACK_PACKAGES = {
 			"@fcalell/plugin-api",
 			"@fcalell/plugin-cloudflare",
 		],
+		// drizzle-kit's esbuild; better-sqlite3 loads its prebuilt binary on
+		// linux, darwin and win32 (x64, arm64), so its source build is skipped.
+		builds: { esbuild: true, "better-sqlite3": false },
 	},
 	"@fcalell/plugin-expo": {
 		dir: "plugins/expo",
@@ -42,6 +55,9 @@ export const STACK_PACKAGES = {
 			"@fcalell/plugin-api",
 			"@fcalell/plugin-cloudflare",
 		],
+		// Expo's logger reaches bunyan, whose optional DTrace probes compile
+		// natively; logging works without them.
+		builds: { "dtrace-provider": false },
 	},
 	"@fcalell/plugin-native-ui": {
 		dir: "plugins/native-ui",
@@ -78,10 +94,16 @@ export const STACK_PACKAGES = {
 	"@fcalell/plugin-vite": {
 		dir: "plugins/vite",
 		dependencies: ["@fcalell/cli", "@fcalell/plugin-api"],
+		// vite's esbuild.
+		builds: { esbuild: true },
 	},
 } as const satisfies Record<
 	string,
-	{ dir: string; dependencies: readonly string[] }
+	{
+		dir: string;
+		dependencies: readonly string[];
+		builds?: Readonly<Record<string, boolean>>;
+	}
 >;
 
 export type StackPackage = keyof typeof STACK_PACKAGES;

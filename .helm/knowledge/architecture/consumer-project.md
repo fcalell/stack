@@ -219,7 +219,7 @@ overrides:                       # every stack package the consumer's reach, by 
   "@fcalell/plugin-api": github:fcalell/stack#path:/plugins/api
   "@fcalell/plugin-vite": github:fcalell/stack#path:/plugins/vite
 blockExoticSubdeps: false        # the git packages depend on each other by git spec
-allowBuilds:                     # each git package's prepare, plus the install's own builds
+allowBuilds:                     # each git package's prepare, then the verdicts of those packages
   "@fcalell/cli@git+https://github.com/fcalell/stack.git": true
   "@fcalell/plugin-api@git+https://github.com/fcalell/stack.git": true
   "@fcalell/plugin-vite@git+https://github.com/fcalell/stack.git": true
@@ -236,6 +236,12 @@ package's `allowBuilds` key is its name plus the repository's `git+https` URL, w
 every commit; pnpm 11.15 is the first to match a `github:` tarball by it, so stack and its
 consumers run pnpm 11.15 or later. The bare name and the `github:` spec are refused, and the hint
 in pnpm's `GIT_DEP_PREPARE_NOT_ALLOWED` names only the commit-pinned `codeload` key.
+pnpm 11 refuses an install that meets a build script `allowBuilds` gives no verdict
+(`strictDepBuilds`). Each verdict is a stack package's own data, its `builds` in the CLI's table
+(plugin-db's `better-sqlite3: false`, the CLI's `esbuild` and `workerd` for the wrangler its
+template writes), so the yaml written with the first install already carries every verdict of
+the packages that install brings, before any plugin loads. Inside stack's workspace the
+checkout's root `pnpm-workspace.yaml` carries the same verdicts by hand.
 Each prepare is a full workspace install, and several at once can exhaust the machine's
 memory (one at a time adds about 4 GB); the two concurrency settings run them one at a time and
 go with the overrides.
@@ -245,6 +251,21 @@ go with the overrides.
 A `link:` consumer resolves the stack checkout's `dist/` too, so the checkout is built first and
 rebuilt after a source change: `pnpm install` there runs every `prepare`, and
 `pnpm turbo run build` rebuilds.
+
+### Inside stack's workspace
+
+An app in stack's own checkout (a directory the root `pnpm-workspace.yaml` globs name, such as
+`apps/<name>`) is a workspace project and takes each stack package as `workspace:*`, the way
+`apps/showcase` does. `stack init` and `stack add` tell this from a GitHub install by pnpm's own
+rule: the nearest `pnpm-workspace.yaml` above the app is its workspace, and when its `packages`
+globs name both the app and the running `@fcalell/cli`, the CLI rewrites every `@fcalell/*` spec
+in the app's `package.json` to `workspace:*`, writes no `pnpm-workspace.yaml` in the app, and
+installs at the workspace root. The app resolves the checkout's `dist/`, as a `link:` consumer
+does, so the checkout is built (`pnpm turbo run build`) before the app runs. The app is an
+importer in the checkout's `pnpm-lock.yaml`. `stack init` writes the app no `biome.json` and no
+`.editorconfig`, so the app lints and formats under the checkout's root configs as
+`apps/showcase` does: Biome refuses a second root config below the checkout's. Anywhere else,
+including a directory under the checkout that no glob names, the app installs from GitHub.
 
 ## The guide
 

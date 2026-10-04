@@ -205,7 +205,7 @@ What `stack generate` writes, by the slot that renders it:
 | `@fcalell/cli/css` | CSS escape and validation primitives: `cssString`, `cssUrl`, `cssIdent`, `cssVarName`, `cssTokenValue`, `cssSupportsExpression`. The shared render boundary both UI plugins wrap with their own label |
 | `@fcalell/cli/specs` | Spec types: `GeneratedFile`, `ProcessSpec`, `WatcherSpec`, `BuildStep`, `DeployStep`, `DeployCheck`, `PromptSpec`, `DevReadyTask` |
 | `@fcalell/cli/ast` | TS / TOML / HTML spec types + printers + builder helpers |
-| `@fcalell/cli/discovery` | `discoverPlugins()`, `loadAvailablePlugins()`, `FIRST_PARTY_PLUGINS`, `PLUGIN_NAMES` |
+| `@fcalell/cli/discovery` | `discoverPlugins()`, `loadInstalledPlugins(names)`, `FIRST_PARTY_PLUGINS`, `PLUGIN_NAMES` |
 | `@fcalell/cli/runtime` | `RuntimePlugin` |
 | `@fcalell/cli/codegen` | Reusable codegen helpers |
 | `@fcalell/cli/errors` | `StackError`, `ConfigValidationError` |
