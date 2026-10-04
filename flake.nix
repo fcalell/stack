@@ -46,7 +46,9 @@
             corepack enable --install-directory "$COREPACK_HOME" 2>/dev/null || true
             export PATH="$COREPACK_HOME:$PATH"
 
-            echo "stack dev shell: node $(node --version), pnpm $(pnpm --version 2>/dev/null || echo 'run: pnpm')"
+            # No `pnpm` call here: corepack would download a newly pinned pnpm with no
+            # timeout, blocking direnv silently.
+            echo "stack dev shell: node $(node --version)"
           '';
         };
 
