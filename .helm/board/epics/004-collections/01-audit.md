@@ -1,6 +1,6 @@
 ---
 id: 004-01
-status: backlog
+status: done
 sessions: {}
 ---
 # ui-core: classify the roster as collections or composition

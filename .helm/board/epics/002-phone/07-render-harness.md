@@ -1,6 +1,6 @@
 ---
 id: 002-07
-status: backlog
+status: done
 sessions: {}
 ---
 # expo: the phone render harness

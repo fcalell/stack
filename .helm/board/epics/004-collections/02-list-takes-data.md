@@ -1,6 +1,6 @@
 ---
 id: 004-02
-status: backlog
+status: done
 sessions: {}
 ---
 # react-ui, native-ui: a List takes its items and a row map, and its skeleton draws the declared slots

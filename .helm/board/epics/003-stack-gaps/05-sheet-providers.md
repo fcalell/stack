@@ -1,6 +1,6 @@
 ---
 id: 003-05
-status: backlog
+status: done
 sessions: {}
 ---
 # native-ui: a sheet's body reads the app's query and auth context

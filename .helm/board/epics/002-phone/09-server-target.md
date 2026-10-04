@@ -1,6 +1,6 @@
 ---
 id: 002-09
-status: backlog
+status: done
 sessions: {}
 ---
 # cli, plugin-api: an app with an API has a server target

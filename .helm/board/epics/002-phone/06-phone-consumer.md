@@ -1,6 +1,6 @@
 ---
 id: 002-06
-status: backlog
+status: done
 sessions: {}
 ---
 # expo: a phone consumer in stack

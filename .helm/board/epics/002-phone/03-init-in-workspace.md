@@ -1,6 +1,6 @@
 ---
 id: 002-03
-status: backlog
+status: done
 sessions: {}
 ---
 # cli: stack init finds the plugins inside the workspace

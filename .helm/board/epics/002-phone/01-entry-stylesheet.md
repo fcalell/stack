@@ -1,6 +1,6 @@
 ---
 id: 002-01
-status: backlog
+status: done
 sessions: {}
 ---
 # native-ui: the generated entry imports the stylesheet

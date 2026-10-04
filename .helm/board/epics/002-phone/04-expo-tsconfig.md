@@ -1,6 +1,6 @@
 ---
 id: 002-04
-status: backlog
+status: done
 sessions: {}
 ---
 # expo: expo start leaves the generated tsconfig alone

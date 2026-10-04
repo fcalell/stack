@@ -1,6 +1,6 @@
 ---
 id: 002-05
-status: backlog
+status: done
 sessions: {}
 ---
 # expo: Android follows the light and dark setting

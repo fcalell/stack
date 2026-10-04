@@ -1,6 +1,6 @@
 ---
 id: 004-03
-status: backlog
+status: done
 sessions: {}
 ---
 # react-ui, native-ui: a QueryBoundary names its body's loading form, and the guide teaches collections taking data

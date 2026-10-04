@@ -1,6 +1,6 @@
 ---
 id: 002-02
-status: backlog
+status: done
 sessions: {}
 ---
 # expo: one React, the renderer's version
