@@ -468,6 +468,16 @@ a tick with no animation, never jumped to full.
   its column's label. Where the grid scrolls sideways its leading column stays: the frozen cell
   on the surface (`TABLE_FROZEN`), its content carrying its end hairline and the row's wash
   (`TABLE_FROZEN_CELL`).
+  A grid re-renders only the rows and cells whose state changed: rows and cells are memoised
+  components fed per-cell values and one stable set of callbacks. On the web a cell holds the
+  pointer's hover itself (an editable cell under the pointer shows its control), so a pointer
+  crossing the grid renders the cells it leaves and enters; the cursor moves by focus, and a
+  focus on the cursor's own cell sets nothing. On the phone a row's two halves (the frozen
+  leading cell and the cells that scroll) wash together on a press, so both read one store of the
+  pressed row's id, each only whether it is the pressed one; a sortable header washes through the
+  Pressable's own pressed state. The web mounts both forms and CSS hides one, since the switch
+  is the page's container width, which no store reads: a sort, a selection or a data change
+  renders the rows twice until Place and Screen hand their page's width to one external store.
 - A thread is a molecule (`Thread`), a collection: its Messages from `query` (with `sentence`)
   or `items` (waiting on `loading`) through the `message` map, one function per `Message` slot
   (`key`, `author`, `name`, `body`, `at`, `onOpen` returning a system line's handler or none,

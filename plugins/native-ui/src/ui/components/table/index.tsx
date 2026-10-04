@@ -30,7 +30,15 @@ import {
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
-import { type ReactNode, useContext, useState } from "react";
+import {
+	memo,
+	type ReactNode,
+	useContext,
+	useMemo,
+	useRef,
+	useState,
+	useSyncExternalStore,
+} from "react";
 import {
 	Pressable,
 	Text as RNText,
@@ -75,7 +83,9 @@ const SCROLLS = "grow";
 const ROW_LINE = "flex-row";
 // On touch every column stands at one width.
 const COLUMN = "w-measure-short";
-const SORT = "flex-row items-center w-full min-w-0";
+// A sortable header washes under the press through the Pressable's own
+// pressed state.
+const SORT = "flex-row items-center w-full min-w-0 active:bg-wash-press";
 const HEAD = "flex-row items-center min-w-0";
 const LABEL = "shrink";
 const GLYPH = "shrink-0";
@@ -302,6 +312,216 @@ interface Editing {
 	key: string;
 }
 
+// What a row calls back into the grid: one object for the grid's life,
+// reading the grid's latest render, so a memoised row never re-renders for a
+// new callback.
+interface GridActions {
+	open: (row: TableRecord) => void;
+	start: (row: string, key: string) => void;
+	done: () => void;
+	edit: (row: string, key: string, value: CellValue) => void;
+}
+
+// The pressed row's id. A row's two halves (its frozen leading cell and the
+// cells that scroll) wash together, so they read one store, each row only
+// whether it is the pressed one: a touch re-renders the row it lands on.
+interface PressStore {
+	get: () => string | undefined;
+	set: (id: string | undefined) => void;
+	subscribe: (listener: () => void) => () => void;
+}
+
+function pressStore(): PressStore {
+	let pressed: string | undefined;
+	const listeners = new Set<() => void>();
+	return {
+		get: () => pressed,
+		set: (id) => {
+			pressed = id;
+			for (const listener of listeners) listener();
+		},
+		subscribe: (listener) => {
+			listeners.add(listener);
+			return () => listeners.delete(listener);
+		},
+	};
+}
+
+// What a row's half draws as: pressed, the open record, or at rest.
+function useRowState(
+	store: PressStore,
+	id: string,
+	chosen: boolean,
+): TableRowState {
+	const pressed = useSyncExternalStore(
+		store.subscribe,
+		() => store.get() === id,
+	);
+	if (pressed) return "pressed";
+	return chosen ? "selected" : "rest";
+}
+
+// A row that opens takes the press; one that does not is inert.
+function pressOf(
+	row: TableRecord,
+	opens: boolean,
+	store: PressStore,
+	actions: GridActions,
+) {
+	return opens
+		? {
+				onPress: () => actions.open(row),
+				onPressIn: () => store.set(row.id),
+				onPressOut: () => store.set(undefined),
+			}
+		: { disabled: true };
+}
+
+// The frozen half of a row: its leading cell, the record's name.
+const LeadRow = memo(function LeadRow(props: {
+	row: TableRecord;
+	lead: TableColumn;
+	name: string;
+	chosen: boolean;
+	opens: boolean;
+	link: boolean;
+	store: PressStore;
+	actions: GridActions;
+}) {
+	const { row, lead, name, chosen, opens, store, actions } = props;
+	const state = useRowState(store, row.id, chosen);
+	let role: "link" | "button" | undefined;
+	if (opens) role = props.link ? "link" : "button";
+	return (
+		<Pressable
+			accessibilityRole={role}
+			accessibilityLabel={name}
+			accessibilityState={{ selected: chosen }}
+			{...pressOf(row, opens, store, actions)}
+			className={cn(tableRow({ state: "rest" }), TABLE_FROZEN)}
+		>
+			<View
+				className={cn(
+					TABLE_CELL,
+					CELL,
+					isEnd(lead) && CELL_END,
+					tableFrozenCell({ state }),
+				)}
+			>
+				<RNText
+					numberOfLines={1}
+					className={cn(
+						text({ role: "body" }),
+						textStrong({ role: "body" }),
+						VALUE,
+					)}
+				>
+					{name}
+				</RNText>
+			</View>
+		</Pressable>
+	);
+});
+
+// The half of a row that scrolls: the cells past the leading one.
+const RestRow = memo(function RestRow(props: {
+	row: TableRecord;
+	columns: readonly TableColumn[];
+	name: string;
+	chosen: boolean;
+	opens: boolean;
+	edits: boolean;
+	// The key of the column this row edits, if any.
+	editing: string | undefined;
+	store: PressStore;
+	actions: GridActions;
+}) {
+	const { row, columns, name, chosen, opens, store, actions } = props;
+	const state = useRowState(store, row.id, chosen);
+	return (
+		<Pressable
+			accessible={false}
+			{...pressOf(row, opens, store, actions)}
+			className={cn(tableRow({ state }), ROW_LINE)}
+		>
+			{columns.map((column) => (
+				<View key={column.key} className={COLUMN}>
+					<Cell
+						row={row}
+						column={column}
+						name={name}
+						edits={props.edits}
+						editing={props.editing === column.key}
+						actions={actions}
+					/>
+				</View>
+			))}
+		</Pressable>
+	);
+});
+
+// A cell past the leading one, by whether and how its column edits (the
+// leading column never edits, nor a column its row locks).
+function Cell(props: {
+	row: TableRecord;
+	column: TableColumn;
+	name: string;
+	edits: boolean;
+	editing: boolean;
+	actions: GridActions;
+}) {
+	const { row, column, actions } = props;
+	const value = row.cells[column.key];
+	const control =
+		props.edits && !row.locked?.includes(column.key)
+			? column.edit?.control
+			: undefined;
+	const label = `${column.label}, ${props.name}`;
+	const box = cn(TABLE_CELL, CELL, isEnd(column) && CELL_END);
+	const edit = (next: CellValue) => actions.edit(row.id, column.key, next);
+	if (control === "checkbox")
+		return (
+			<Pressable
+				accessibilityRole="checkbox"
+				accessibilityLabel={label}
+				accessibilityState={{ checked: value === true }}
+				onPress={() => edit(value !== true)}
+				className={box}
+			>
+				<LabelTarget.Provider value>
+					<Checkbox checked={value === true} onChange={edit} label={label} />
+				</LabelTarget.Provider>
+			</Pressable>
+		);
+	if (control && props.editing)
+		return (
+			<View className={box}>
+				<View className={EDIT}>
+					<CellField.Provider value={{ label, done: actions.done }}>
+						<CellEdit column={column} cell={value} onEdit={edit} />
+					</CellField.Provider>
+				</View>
+			</View>
+		);
+	if (control)
+		return (
+			<Pressable
+				accessibilityRole="button"
+				accessibilityLabel={label}
+				accessibilityValue={{ text: shown(column, value) }}
+				onPress={() => actions.start(row.id, column.key)}
+				className={box}
+			>
+				<CellValueView column={column} cell={value} />
+			</Pressable>
+		);
+	return (
+		<View className={box}>
+			<CellValueView column={column} cell={value} />
+		</View>
+	);
+}
+
 function Grid(props: {
 	columns: readonly TableColumn[];
 	rows: readonly TableRecord[];
@@ -313,87 +533,27 @@ function Grid(props: {
 	loading: boolean | undefined;
 }) {
 	const { columns, rows, sort } = props;
-	const [lead, ...rest] = columns;
-	const [pressed, setPressed] = useState<string>();
+	const lead = columns[0];
+	const rest = useMemo(() => columns.slice(1), [columns]);
+	const [store] = useState(pressStore);
 	const [editing, setEditing] = useState<Editing>();
-	const done = () => setEditing(undefined);
 	const edits = props.onEdit !== undefined;
 	const opens = (row: TableRecord) =>
 		props.onOpen !== undefined || row.href !== undefined;
-	const open = (row: TableRecord) => {
-		if (props.onOpen) props.onOpen(row.id);
-		else if (row.href !== undefined) navigate(row.href);
-	};
-	const state = (row: TableRecord): TableRowState =>
-		pressed === row.id
-			? "pressed"
-			: row.id === props.selected
-				? "selected"
-				: "rest";
-	const press = (row: TableRecord) =>
-		opens(row)
-			? {
-					onPress: () => open(row),
-					onPressIn: () => setPressed(row.id),
-					onPressOut: () => setPressed(undefined),
-				}
-			: { disabled: true };
 	const name = (row: TableRecord) =>
 		lead ? shown(lead, row.cells[lead.key]) : row.id;
-
-	// A cell past the leading one, by whether and how its column edits (the
-	// leading column never edits, nor a column its row locks).
-	const cell = (row: TableRecord, column: TableColumn) => {
-		const value = row.cells[column.key];
-		const control =
-			edits && !row.locked?.includes(column.key)
-				? column.edit?.control
-				: undefined;
-		const label = `${column.label}, ${name(row)}`;
-		const box = cn(TABLE_CELL, CELL, isEnd(column) && CELL_END);
-		const edit = (next: CellValue) => props.onEdit?.(row.id, column.key, next);
-		if (control === "checkbox")
-			return (
-				<Pressable
-					accessibilityRole="checkbox"
-					accessibilityLabel={label}
-					accessibilityState={{ checked: value === true }}
-					onPress={() => edit(value !== true)}
-					className={box}
-				>
-					<LabelTarget.Provider value>
-						<Checkbox checked={value === true} onChange={edit} label={label} />
-					</LabelTarget.Provider>
-				</Pressable>
-			);
-		if (control && editing?.row === row.id && editing.key === column.key)
-			return (
-				<View className={box}>
-					<View className={EDIT}>
-						<CellField.Provider value={{ label, done }}>
-							<CellEdit column={column} cell={value} onEdit={edit} />
-						</CellField.Provider>
-					</View>
-				</View>
-			);
-		if (control)
-			return (
-				<Pressable
-					accessibilityRole="button"
-					accessibilityLabel={label}
-					accessibilityValue={{ text: shown(column, value) }}
-					onPress={() => setEditing({ row: row.id, key: column.key })}
-					className={box}
-				>
-					<CellValueView column={column} cell={value} />
-				</Pressable>
-			);
-		return (
-			<View className={box}>
-				<CellValueView column={column} cell={value} />
-			</View>
-		);
-	};
+	const latest = useRef(props);
+	latest.current = props;
+	const [actions] = useState<GridActions>(() => ({
+		open: (row) => {
+			const { onOpen } = latest.current;
+			if (onOpen) onOpen(row.id);
+			else if (row.href !== undefined) navigate(row.href);
+		},
+		start: (row, key) => setEditing({ row, key }),
+		done: () => setEditing(undefined),
+		edit: (row, key, value) => latest.current.onEdit?.(row, key, value),
+	}));
 
 	return (
 		<View
@@ -429,40 +589,17 @@ function Grid(props: {
 								</View>
 							))
 						: rows.map((row) => (
-								<Pressable
+								<LeadRow
 									key={row.id}
-									accessibilityRole={
-										!opens(row)
-											? undefined
-											: props.onOpen === undefined
-												? "link"
-												: "button"
-									}
-									accessibilityLabel={name(row)}
-									accessibilityState={{ selected: row.id === props.selected }}
-									{...press(row)}
-									className={cn(tableRow({ state: "rest" }), TABLE_FROZEN)}
-								>
-									<View
-										className={cn(
-											TABLE_CELL,
-											CELL,
-											isEnd(lead) && CELL_END,
-											tableFrozenCell({ state: state(row) }),
-										)}
-									>
-										<RNText
-											numberOfLines={1}
-											className={cn(
-												text({ role: "body" }),
-												textStrong({ role: "body" }),
-												VALUE,
-											)}
-										>
-											{name(row)}
-										</RNText>
-									</View>
-								</Pressable>
+									row={row}
+									lead={lead}
+									name={name(row)}
+									chosen={row.id === props.selected}
+									opens={opens(row)}
+									link={props.onOpen === undefined}
+									store={store}
+									actions={actions}
+								/>
 							))}
 				</View>
 			) : null}
@@ -511,18 +648,18 @@ function Grid(props: {
 								</View>
 							))
 						: rows.map((row) => (
-								<Pressable
+								<RestRow
 									key={row.id}
-									accessible={false}
-									{...press(row)}
-									className={cn(tableRow({ state: state(row) }), ROW_LINE)}
-								>
-									{rest.map((column) => (
-										<View key={column.key} className={COLUMN}>
-											{cell(row, column)}
-										</View>
-									))}
-								</Pressable>
+									row={row}
+									columns={rest}
+									name={name(row)}
+									chosen={row.id === props.selected}
+									opens={opens(row)}
+									edits={edits}
+									editing={editing?.row === row.id ? editing.key : undefined}
+									store={store}
+									actions={actions}
+								/>
 							))}
 				</View>
 			</ScrollView>
@@ -538,7 +675,6 @@ function HeadCell(props: {
 }) {
 	const { column, sort, frozen } = props;
 	const words = useWords();
-	const [pressed, setPressed] = useState(false);
 	const end = isEnd(column);
 	const direction = sort?.key === column.key ? sort.direction : undefined;
 	const edge = frozen && tableFrozenCell({ state: "rest" });
@@ -577,14 +713,7 @@ function HeadCell(props: {
 			accessibilityLabel={column.label}
 			accessibilityValue={{ text: direction ? words[direction] : undefined }}
 			onPress={props.onSort}
-			onPressIn={() => setPressed(true)}
-			onPressOut={() => setPressed(false)}
-			className={cn(
-				tableHead({ state: pressed ? "pressed" : "rest" }),
-				edge,
-				SORT,
-				end && CELL_END,
-			)}
+			className={cn(tableHead({ state: "rest" }), edge, SORT, end && CELL_END)}
 		>
 			{end ? glyph : null}
 			{label}

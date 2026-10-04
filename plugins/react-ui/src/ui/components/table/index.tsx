@@ -34,6 +34,7 @@ import {
 	type FocusEvent,
 	type KeyboardEvent,
 	type MouseEvent,
+	memo,
 	type ReactNode,
 	use,
 	useRef,
@@ -70,6 +71,11 @@ import { Status } from "../status/index.tsx";
 // centres under the header. From `tablet` of its page the grid stands; below
 // it the rows are a list under the sort's pick.
 const ROOT = "flex flex-col grow";
+// TODO: both forms mount and CSS hides one, so a sort, a selection or a data
+// change renders the rows twice and the hidden form stays in the document.
+// The switch is the page's container width, which no store reads; mount only
+// the live form once Place and Screen hand their page's width to one
+// external store.
 const GRID = "hidden page-tablet:flex flex-col grow";
 const LIST_FORM = "flex flex-col grow page-tablet:hidden";
 // The grid is its own stacking context, so its frozen column stands over its
@@ -354,6 +360,164 @@ export function Table<T>(props: TableProps<T>) {
 	);
 }
 
+// What a row and its cells call back into the grid: one object for the grid's
+// life, reading the grid's latest render, so a memoised row or cell never
+// re-renders for a new callback.
+interface GridActions {
+	start: (row: number, column: number) => void;
+	done: () => void;
+	edit: (row: TableRecord, column: TableColumn, value: CellValue) => void;
+	click: (event: MouseEvent, row: TableRecord) => void;
+	home: (row: number, column: number) => HTMLElement | undefined;
+}
+
+type Editing = "started" | "entered";
+
+// A row re-renders only when its record, its selection or the cursor's place
+// in it changes.
+const Row = memo(function Row(props: {
+	row: TableRecord;
+	index: number;
+	columns: readonly TableColumn[];
+	chosen: boolean;
+	opens: boolean;
+	touch: boolean;
+	edits: boolean;
+	// The cursor's column in this row, else -1, and its edit.
+	cursor: number;
+	editing: Editing | undefined;
+	actions: GridActions;
+}) {
+	const { row, index, columns, chosen, opens, actions } = props;
+	const lead = columns[0];
+	const name = lead ? shown(lead, row.cells[lead.key]) : "";
+	return (
+		<tr
+			aria-selected={chosen || undefined}
+			onClick={(event) => actions.click(event, row)}
+			className={cn(
+				tableRow({ state: chosen ? "selected" : "rest" }),
+				ROW,
+				opens && (chosen ? ROW_CHOSEN_PRESS : ROW_PRESS),
+			)}
+		>
+			{columns.map((column, place) => (
+				<Cell
+					key={column.key}
+					row={row}
+					index={index}
+					column={column}
+					place={place}
+					cell={row.cells[column.key]}
+					name={`${column.label}, ${name}`}
+					control={editOf(columns, place, props.edits, row)?.control}
+					frozen={props.touch && place === 0}
+					chosen={chosen}
+					opens={opens}
+					here={props.cursor === place}
+					editing={props.cursor === place ? props.editing : undefined}
+					actions={actions}
+				/>
+			))}
+		</tr>
+	);
+});
+
+// A cell holds the pointer's hover itself, so a pointer crossing the grid
+// re-renders only the cells it leaves and enters: an editable cell under the
+// pointer shows its control.
+const Cell = memo(function Cell(props: {
+	row: TableRecord;
+	index: number;
+	column: TableColumn;
+	place: number;
+	cell: TableCell | undefined;
+	name: string;
+	control: NonNullable<TableColumn["edit"]>["control"] | undefined;
+	frozen: boolean;
+	chosen: boolean;
+	opens: boolean;
+	here: boolean;
+	editing: Editing | undefined;
+	actions: GridActions;
+}) {
+	const { row, index, column, place, cell, name, control, actions } = props;
+	const [hovered, setHovered] = useState(false);
+	// A started edit's control mounts afresh over the one the pointer showed,
+	// so it mounts focused or open.
+	const starts = props.editing === "started";
+	const live =
+		control !== undefined &&
+		control !== "checkbox" &&
+		(props.editing !== undefined || hovered);
+	const field = (starting: boolean) => ({
+		label: name,
+		starts: starting,
+		done: actions.done,
+		home: () => actions.home(index, place),
+	});
+	const box = cn(
+		TABLE_CELL,
+		CELL,
+		isEnd(column) && CELL_END,
+		props.frozen &&
+			tableFrozenCell({ state: props.chosen ? "selected" : "rest" }),
+		props.frozen &&
+			props.opens &&
+			(props.chosen ? FROZEN_CHOSEN_PRESS : FROZEN_PRESS),
+	);
+	return (
+		// biome-ignore lint/a11y/useKeyWithClickEvents: the grid's keyboard is the table's, delegated over its cells
+		<td
+			data-row={index}
+			data-column={place}
+			data-edit={control}
+			tabIndex={props.here ? 0 : -1}
+			onPointerEnter={control ? () => setHovered(true) : undefined}
+			onPointerLeave={control ? () => setHovered(false) : undefined}
+			onClick={
+				live || !control || control === "checkbox"
+					? undefined
+					: () => actions.start(index, place)
+			}
+			className={cn(BODY_CELL, props.frozen && cn(TABLE_FROZEN, FROZEN))}
+		>
+			{live ? (
+				<CellField value={field(starts)}>
+					<CellEdit
+						key={starts ? "started" : "shown"}
+						column={column}
+						cell={cell}
+						onEdit={(value) => actions.edit(row, column, value)}
+					/>
+				</CellField>
+			) : control === "checkbox" ? (
+				// biome-ignore lint/a11y/noLabelWithoutControl: the Checkbox inside is the control
+				<label className={box}>
+					<CellField value={field(false)}>
+						<LabelTarget value={{}}>
+							<Checkbox
+								checked={cell === true}
+								onChange={(checked) => actions.edit(row, column, checked)}
+								label={name}
+							/>
+						</LabelTarget>
+					</CellField>
+				</label>
+			) : (
+				<div className={box}>
+					<CellValueView
+						column={column}
+						cell={cell}
+						leading={place === 0}
+						href={row.href}
+					/>
+				</div>
+			)}
+		</td>
+	);
+});
+
 interface Cursor {
 	row: number;
 	column: number;
@@ -383,7 +547,6 @@ function Grid(props: {
 		setCursor({ row, column });
 		setEditing("started");
 	};
-	const [hover, setHover] = useState<Cursor>();
 	const at: Cursor = {
 		row: Math.min(cursor.row, Math.max(rows.length - 1, 0)),
 		column: Math.min(cursor.column, Math.max(columns.length - 1, 0)),
@@ -412,17 +575,6 @@ function Grid(props: {
 	};
 	// A pick's list gone ends the edit; it hands focus back to its cell.
 	const done = () => setEditing(undefined);
-	const cellField = (
-		label: string,
-		starts: boolean,
-		row: number,
-		column: number,
-	) => ({
-		label,
-		starts,
-		done,
-		home: () => cellAt(row, column) ?? undefined,
-	});
 	const open = (row: TableRecord) => {
 		if (props.onOpen) props.onOpen(row.id);
 		else if (row.href !== undefined) navigate(row.href);
@@ -437,7 +589,8 @@ function Grid(props: {
 		const row = Number(cell.dataset.row);
 		const column = Number(cell.dataset.column);
 		const same = row === at.row && column === at.column;
-		setCursor({ row, column });
+		// A focus on the cursor's own cell sets nothing.
+		if (!same) setCursor({ row, column });
 		// The started edit's control taking focus keeps it started.
 		setEditing((now) =>
 			inEdit(target) ? (same && now) || "entered" : undefined,
@@ -522,82 +675,15 @@ function Grid(props: {
 	};
 
 	const opens = props.onOpen !== undefined;
-	const cells = (row: TableRecord, index: number) =>
-		columns.map((column, place) => {
-			const frozen = touch && place === 0;
-			const chosen = row.id === props.selected;
-			const control = editOf(columns, place, edits, row)?.control;
-			const here = index === at.row && place === at.column;
-			// A started edit's control mounts afresh over the one the pointer
-			// showed, so it mounts focused or open.
-			const starts = here && editing === "started";
-			const live =
-				control !== undefined &&
-				control !== "checkbox" &&
-				((here && editing !== undefined) ||
-					(hover?.row === index && hover.column === place));
-			const name = `${column.label}, ${shown(columns[0] ?? column, row.cells[columns[0]?.key ?? ""])}`;
-			const box = cn(
-				TABLE_CELL,
-				CELL,
-				isEnd(column) && CELL_END,
-				frozen && tableFrozenCell({ state: chosen ? "selected" : "rest" }),
-				frozen && opens && (chosen ? FROZEN_CHOSEN_PRESS : FROZEN_PRESS),
-			);
-			return (
-				// biome-ignore lint/a11y/useKeyWithClickEvents: the grid's keyboard is the table's, delegated over its cells
-				<td
-					key={column.key}
-					data-row={index}
-					data-column={place}
-					data-edit={control}
-					tabIndex={here ? 0 : -1}
-					onPointerEnter={
-						control ? () => setHover({ row: index, column: place }) : undefined
-					}
-					onPointerLeave={control ? () => setHover(undefined) : undefined}
-					onClick={
-						live || !control || control === "checkbox"
-							? undefined
-							: () => start(index, place)
-					}
-					className={cn(BODY_CELL, frozen && cn(TABLE_FROZEN, FROZEN))}
-				>
-					{live ? (
-						<CellField value={cellField(name, starts, index, place)}>
-							<CellEdit
-								key={starts ? "started" : "shown"}
-								column={column}
-								cell={row.cells[column.key]}
-								onEdit={(value) => edit(row, column, value)}
-							/>
-						</CellField>
-					) : control === "checkbox" ? (
-						// biome-ignore lint/a11y/noLabelWithoutControl: the Checkbox inside is the control
-						<label className={box}>
-							<CellField value={cellField(name, false, index, place)}>
-								<LabelTarget value={{}}>
-									<Checkbox
-										checked={row.cells[column.key] === true}
-										onChange={(checked) => edit(row, column, checked)}
-										label={name}
-									/>
-								</LabelTarget>
-							</CellField>
-						</label>
-					) : (
-						<div className={box}>
-							<CellValueView
-								column={column}
-								cell={row.cells[column.key]}
-								leading={place === 0}
-								href={row.href}
-							/>
-						</div>
-					)}
-				</td>
-			);
-		});
+	const latest = useRef({ start, done, edit, click: onClick, home: cellAt });
+	latest.current = { start, done, edit, click: onClick, home: cellAt };
+	const [actions] = useState<GridActions>(() => ({
+		start: (row, column) => latest.current.start(row, column),
+		done: () => latest.current.done(),
+		edit: (row, column, value) => latest.current.edit(row, column, value),
+		click: (event, row) => latest.current.click(event, row),
+		home: (row, column) => latest.current.home(row, column) ?? undefined,
+	}));
 
 	return (
 		<div className={GRID}>
@@ -650,23 +736,21 @@ function Grid(props: {
 										touch={touch}
 									/>
 								))
-							: rows.map((row, index) => {
-									const chosen = row.id === props.selected;
-									return (
-										<tr
-											key={row.id}
-											aria-selected={chosen || undefined}
-											onClick={(event) => onClick(event, row)}
-											className={cn(
-												tableRow({ state: chosen ? "selected" : "rest" }),
-												ROW,
-												opens && (chosen ? ROW_CHOSEN_PRESS : ROW_PRESS),
-											)}
-										>
-											{cells(row, index)}
-										</tr>
-									);
-								})}
+							: rows.map((row, index) => (
+									<Row
+										key={row.id}
+										row={row}
+										index={index}
+										columns={columns}
+										chosen={row.id === props.selected}
+										opens={opens}
+										touch={touch}
+										edits={edits}
+										cursor={index === at.row ? at.column : -1}
+										editing={index === at.row ? editing : undefined}
+										actions={actions}
+									/>
+								))}
 					</tbody>
 				</table>
 			</div>
