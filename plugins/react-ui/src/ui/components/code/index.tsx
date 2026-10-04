@@ -126,9 +126,10 @@ export function Code({ text: source, title, tail, copy, loading }: CodeProps) {
 				aria-expanded={false}
 				aria-controls={id}
 				onClick={() => {
+					// The act leaves with the lines it folded: the focus moves to the
+					// text, mounted already, before the act goes.
+					textRef.current?.focus();
 					setUnfolded(true);
-					// The act leaves with the lines it folded; the focus lands on them.
-					requestAnimationFrame(() => textRef.current?.focus());
 				}}
 				className={cn(CODE_FOLD, title && CODE_UNDER_HEAD, FOLD)}
 			>

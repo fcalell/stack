@@ -1,6 +1,6 @@
 ---
 id: 005-12
-status: backlog
+status: review
 sessions: {}
 ---
 # react-ui, native-ui: Copied holds two seconds from the last copy, and Code unfolds without a frame wait
@@ -21,3 +21,6 @@ button's removal cannot drop focus; the `requestAnimationFrame` goes.
 ## Acceptance criteria
 - [ ] (live) web, deploys' Code copy at 1440: two copies one second apart keep Copied for two seconds after the second; unfolding with the keyboard leaves focus on the text in every frame.
 - [ ] (live) phone, on the harness: two copies one second apart keep Copied two seconds after the second.
+
+## Progress
+Built; `pnpm check` and `pnpm verify` pass. Web live at 1440: two copies a second apart hold Copied until 2 s after the second; a keyboard unfold moves focus fold, fold, text with no frame on the body. Open: the phone live criterion on the harness.

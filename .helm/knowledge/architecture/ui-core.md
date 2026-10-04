@@ -566,6 +566,10 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
 - Code, Diff and ProseDiff stand in one frame on the surface inside a hairline (`CONTENT_FRAME`),
   so a diff's soft grounds always sit on the surface; a diff's number columns and a file row's
   count lanes are `figures` wide.
+- A copy act (`Code`'s, `DefinitionRow`'s) reads Copied for two seconds from the last copy: each
+  copy is a counted moment and the reset is keyed on it, so a copy inside the window restarts it.
+  Unfolding a `Code` moves focus to its already-mounted text in the press, before the fold act
+  unmounts, so focus never drops to the page.
 
 ## The canon, the roster and the closed props
 
