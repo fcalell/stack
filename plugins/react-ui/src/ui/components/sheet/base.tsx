@@ -77,6 +77,8 @@ const SPACER = "grow";
 export interface SheetBaseProps {
 	open: boolean;
 	onClose: () => void;
+	/** Hears the sheet gone, its leave played (a cell's pick ends its edit). */
+	onGone?: () => void;
 	/** Hears a trigger tied by `handle` opening the sheet. */
 	onOpen?: () => void;
 	title: string;
@@ -102,6 +104,7 @@ export interface SheetBaseProps {
 export function SheetBase({
 	open,
 	onClose,
+	onGone,
 	onOpen,
 	title,
 	description,
@@ -272,6 +275,9 @@ export function SheetBase({
 			handle={handle}
 			open={open}
 			onOpenChange={(next) => (next ? onOpen?.() : onClose())}
+			onOpenChangeComplete={(next) => {
+				if (!next) onGone?.();
+			}}
 			// A surface that scopes its own mode (a showcase frame) holds the
 			// sheet beside others, so it hides and traps nothing outside it and
 			// stays open while another takes focus.

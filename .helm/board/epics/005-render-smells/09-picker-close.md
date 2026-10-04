@@ -32,3 +32,4 @@ after-dismiss callback. `SheetBase` takes the element to focus first and hands i
 
 ## Progress
 Built; `pnpm check` and `pnpm verify` pass. Web live on a seven-option Picker at 375 and 1440: a reopened sheet shows every option with an empty search and focus on the choice, and dropping to six options while open keeps the search and focus. Open: the phone live criteria on the harness.
+The web cell's pick, desktop list and search included, ends its edit once its list has left (measured: the touch sheet plays its 13-frame leave).

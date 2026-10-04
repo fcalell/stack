@@ -712,8 +712,9 @@ a tick with no animation, never jumped to full.
   option last focused die with the sheet however it closes (a pick, the act, the scrim, Escape),
   and the sheet hands Base UI's `initialFocus` the options' tab stop by ref. On the phone the
   search stands in the sheet's head, apart from the rows, so it clears as the sheet opens. A
-  phone cell's pick ends its edit from the sheet's after-dismiss callback, once gorhom has played
-  the leave, never in the handler that closes it. A Picker latches its form (the desktop list or
+  cell's pick ends its edit once its list has left, never in the handler that closes it: on the
+  web from Base UI's `onOpenChangeComplete(false)` (the sheet, the desktop list and its search
+  alike), on the phone from gorhom's `onDismiss`. A Picker latches its form (the desktop list or
   its search, the sheet's search field) while open: the options' count picks it only while the
   list is closed, so data crossing six never tears down an open list and its focus. Rejected:
   clearing the search in the close handler (a pick or the act closed another way, and on the

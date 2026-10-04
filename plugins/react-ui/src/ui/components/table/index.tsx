@@ -410,7 +410,7 @@ function Grid(props: {
 		cell?.focus();
 		if (cell) clear(cell);
 	};
-	// A closed pick ends the edit; its list hands focus back to its cell.
+	// A pick's list gone ends the edit; it hands focus back to its cell.
 	const done = () => setEditing(undefined);
 	const cellField = (
 		label: string,

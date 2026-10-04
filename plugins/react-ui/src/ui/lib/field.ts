@@ -29,7 +29,7 @@ export const GroupName = createContext<
 // tabular figures, as the cell does. A control mounted with `starts` is the
 // edit the keyboard or a tap started (the cell mounts it afresh): a typed one
 // takes focus, a pick mounts with its list open. `done` hears the pick's list
-// close, and `home` is the cell, where the closing list hands focus back.
+// gone, its leave played, and `home` is the cell, where the closing list hands focus back.
 export const CellField = createContext<
 	| {
 			label: string;

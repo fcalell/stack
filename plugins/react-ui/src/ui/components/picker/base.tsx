@@ -254,9 +254,9 @@ export function PickerBase<V extends string | null = string>({
 }) {
 	const touch = useTouch();
 	// In a table cell the pick mounts open as its edit starts, and its list
-	// closing ends the edit. The list hands focus back to the cell as it
-	// unmounts (after its option's own press has focused it), unless the close
-	// came from focus moving on.
+	// gone, its leave played, ends the edit. The list hands focus back to the
+	// cell as it unmounts (after its option's own press has focused it), unless
+	// the close came from focus moving on.
 	const cell = use(CellField);
 	const [open, setOpenState] = useState(cell?.starts ?? false);
 	const back = useRef(true);
@@ -265,7 +265,6 @@ export function PickerBase<V extends string | null = string>({
 		if (next) return;
 		back.current =
 			details?.reason !== "outside-press" && details?.reason !== "focus-out";
-		cell?.done();
 	};
 	const finalFocus: FinalFocus = cell
 		? () => (back.current && cell.home()) || false
@@ -362,6 +361,7 @@ export function PickerBase<V extends string | null = string>({
 				searching={searching}
 				open={open}
 				setOpen={setOpen}
+				onGone={cell?.done}
 				pick={pick}
 				trigger={trigger}
 				act={act}
@@ -376,6 +376,7 @@ export function PickerBase<V extends string | null = string>({
 				current={current}
 				open={open}
 				setOpen={setOpen}
+				onGone={cell?.done}
 				finalFocus={finalFocus}
 				pick={pick}
 				trigger={trigger}
@@ -390,6 +391,7 @@ export function PickerBase<V extends string | null = string>({
 			value={value}
 			open={open}
 			setOpen={setOpen}
+			onGone={cell?.done}
 			finalFocus={finalFocus}
 			pick={pick}
 			trigger={trigger}
@@ -433,6 +435,8 @@ interface PickParts<V extends string | null> {
 	groups: Grouped<V>[];
 	open: boolean;
 	setOpen: (open: boolean, details?: { reason: string }) => void;
+	// Hears the list gone, its leave played: a cell's pick ends its edit.
+	onGone?: () => void;
 	pick: (value: V) => void;
 	trigger: (props: ComponentProps<"button">) => ReactElement;
 	act?: IconAct;
@@ -458,6 +462,9 @@ function PickList<V extends string | null>(
 			onValueChange={(next) => props.pick(next as V)}
 			open={props.open}
 			onOpenChange={props.setOpen}
+			onOpenChangeComplete={(next) => {
+				if (!next) props.onGone?.();
+			}}
 		>
 			<Select.Trigger render={(handed) => keyboard.trigger(handed)} />
 			<Select.Portal container={container}>
@@ -546,6 +553,9 @@ function PickSearch<V extends string | null>(
 			}}
 			open={props.open}
 			onOpenChange={props.setOpen}
+			onOpenChangeComplete={(next) => {
+				if (!next) props.onGone?.();
+			}}
 		>
 			<Combobox.Trigger render={(handed) => keyboard.trigger(handed)} />
 			<Combobox.Portal container={container}>
@@ -647,6 +657,7 @@ function PickSheet<V extends string | null>(props: SheetParts<V>) {
 				open={props.open}
 				onOpen={() => props.setOpen(true)}
 				onClose={() => props.setOpen(false)}
+				onGone={props.onGone}
 				title={props.label}
 				focus={first}
 			>
