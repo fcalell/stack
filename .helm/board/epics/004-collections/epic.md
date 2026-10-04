@@ -10,5 +10,6 @@ skeleton, failed, empty and loaded. Composition containers (`Section`, `Columns`
 `Screen`, `Toolbar`, `Form`, `Sheet`, `Shell`) keep children.
 
 ## Breakdown rationale
-`List` sets the pattern in 003-02. The audit (01) classifies the rest of the roster against the
-rule and files one story per collection. Evidence: `.helm/research/skeleton-loading.md`.
+`List` sets the pattern in 02. The audit (01) classifies the rest of the roster against the
+rule and files one story per collection. 03, built in 02's change, narrows `QueryBoundary` to
+compound bodies that name their loading form, and the guide teaches the pattern. Evidence: `.helm/research/skeleton-loading.md`.

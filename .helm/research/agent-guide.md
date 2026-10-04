@@ -128,7 +128,7 @@ Each is one story. Order: 1 first, its format approved before 3; 2, 4, 5 and 6 a
   roster composes, and passes the consumer's check, without opening a README.
   - The first run (a notes page: a list, an add sheet, a delete confirm) passed steps 1 to 5 on
     a consumer installed from GitHub and waits at the judge on two gaps it filed, 003-01 and
-    003-02 (`.helm/board/epics/003-stack-gaps/`).
+    004-02 (`.helm/board/epics/`).
 
 ## Out of scope
 

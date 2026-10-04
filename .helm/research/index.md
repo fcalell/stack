@@ -14,4 +14,4 @@ Working evidence: dated, drains, or gets promoted into `.helm/knowledge/`. Nothi
   phone app that will not render or build (epic 002).
 - [skeleton-loading.md](./skeleton-loading.md): drawing a component's loading form in skeleton
   (where its shape comes from before the data), changing `List`, `QueryBoundary` or a data
-  molecule's loading state, or story 003-02.
+  molecule's loading state, or epic 004.

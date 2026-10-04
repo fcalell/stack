@@ -1,8 +1,8 @@
 # Skeleton loading: where a skeleton's shape comes from
 
-2026-10-04. Feeds story 003-02 (`.helm/board/epics/003-stack-gaps/02-list-skeleton-leading.md`)
-and the loading guide (`packages/ui-core/guide/screen.md` step 5,
-`patterns/loading-and-pending.md`). It drains into them when the story ships; delete it then.
+2026-10-04. Feeds epic 004 (`.helm/board/epics/004-collections/`) and the loading guide
+(`packages/ui-core/guide/screen.md` step 5, `patterns/loading-and-pending.md`). It drains into
+them when 004-02 and 004-03 ship; delete it then.
 
 Desk research only: docs and READMEs as published on this date. Nothing was built.
 
