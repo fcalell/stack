@@ -313,7 +313,11 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
   it stands alone, its head is the page's one: the Split tells the Place (`BesideOpen`), which
   draws no head, so one top bar holds one back act, to the main, and the list is reached by
   going back from the main; the Split hands the Details act to that head through `Beside`. The Split hands the Screen `Beside`: the Screen covers no tab bar, its title
-  is a heading at the level where it stands, and on the web its body's sections, not its root,
+  is a heading at the level where it stands, and where its head stands alone the page's top heading
+  (native's header role has no level; the web draws the title twice, the `h1` below `tablet` of
+  the page and the lower level from it, the other `hidden` out of the accessibility tree, since a
+  container query swaps a pair but changes no tag; its body keeps the lower level, a body no pair
+  can swap), and on the web its body's sections, not its root,
   are the `page` container, so its head's acts and the floating act's room read the outer
   page's width and what stands in its body reads its own. Rejected: the record in the pane (the pane is the open record's details, at
   forty-five characters), a `Sheet` (an overlay over the scrim with no back to the main), and a

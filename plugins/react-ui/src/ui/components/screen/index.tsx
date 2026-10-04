@@ -18,7 +18,7 @@ import {
 	type LentDetails,
 	PageTitle,
 } from "../../lib/frame.ts";
-import { DEEPER, HeadingContext } from "../../lib/heading.ts";
+import { HeadingContext, screenLevels } from "../../lib/heading.ts";
 import { useTouch } from "../../lib/media.ts";
 import { useWords } from "../../lib/words.tsx";
 import { IconButtonLink } from "../icon-button/base.tsx";
@@ -35,6 +35,10 @@ const SCREEN = "@container/page flex flex-col grow min-h-0";
 const SCREEN_BESIDE = "flex flex-col grow min-h-0";
 const SECTIONS_BESIDE = "@container/page flex flex-col shrink-0 grow";
 const ALONE = "page-tablet:hidden";
+// Where its head stands alone the beside record draws its title as the page's
+// `h1`, and under the Place's head at the level where it stands; `hidden`
+// takes the other out of the accessibility tree.
+const TITLE_UNDER = "page-max-tablet:hidden";
 // Beside, the back act draws as Close to the same route from `wide` of the
 // page, where the main stands with it.
 const BACK = "flex page-wide:hidden";
@@ -52,7 +56,7 @@ const BODY = "flex flex-col grow overflow-y-auto";
 
 /** A pushed page. */
 export interface ScreenProps extends Closed {
-	/** The page's title, its one `h1`; beside a Split's main, a heading at the level where it stands. */
+	/** The page's title, its one `h1`; beside a Split's main, a heading at the level where it stands, the `h1` where its head stands alone. */
 	title: string;
 	/** The route the back act returns to; none draws no back act. */
 	back?: string;
@@ -64,7 +68,7 @@ export interface ScreenProps extends Closed {
 	children?: ReactNode;
 }
 
-/** A page pushed over a place: the back act first and no filled act. Its head draws one hairline: on the desktop it stands in the shell's column under one strip; on touch the top bar (back, actions, more) stands over the title and the screen covers the tab bar. A Split inside decides its regions by the screen's width and lends it a Details act, drawn below `wide` of it. As a Split's `beside` record it stands in its page: its title is a heading at the level where it stands, it covers no tab bar, and from `wide` of the page its back act draws as Close. Below `tablet` of the page its head stands alone in the Place's stead, one top bar with its back act to the main, and draws the Details act the Split lends while the pane is open; its body keeps the room of the act floating over it. */
+/** A page pushed over a place: the back act first and no filled act. Its head draws one hairline: on the desktop it stands in the shell's column under one strip; on touch the top bar (back, actions, more) stands over the title and the screen covers the tab bar. A Split inside decides its regions by the screen's width and lends it a Details act, drawn below `wide` of it. As a Split's `beside` record it stands in its page: its title is a heading at the level where it stands, it covers no tab bar, and from `wide` of the page its back act draws as Close. Below `tablet` of the page its head stands alone in the Place's stead, its title the page's `h1` over a body at the lower level, one top bar with its back act to the main, and draws the Details act the Split lends while the pane is open; its body keeps the room of the act floating over it. */
 export function Screen({ title, back, actions, more, children }: ScreenProps) {
 	const touch = useTouch();
 	const words = useWords();
@@ -81,7 +85,8 @@ export function Screen({ title, back, actions, more, children }: ScreenProps) {
 		return () => cover(false);
 	}, [cover, beside]);
 	const fit = touch ? "body" : "bar";
-	const Heading = beside ? (`h${level}` as const) : "h1";
+	const levels = screenLevels(beside, level);
+	const Heading = `h${levels.title}` as const;
 	const goBack =
 		back === undefined ? null : (
 			<IconButtonLink
@@ -117,13 +122,14 @@ export function Screen({ title, back, actions, more, children }: ScreenProps) {
 	const overflow = more?.length ? (
 		<Menu label={words.more} items={more} />
 	) : null;
+	const titleClass = cn(text({ role: "title" }), TITLE, touch && PAGE_TITLE);
 	const heading = (
-		<Heading
-			id={titleId}
-			className={cn(text({ role: "title" }), TITLE, touch && PAGE_TITLE)}
-		>
-			{title}
-		</Heading>
+		<>
+			{beside ? <h1 className={cn(titleClass, ALONE)}>{title}</h1> : null}
+			<Heading id={titleId} className={cn(titleClass, beside && TITLE_UNDER)}>
+				{title}
+			</Heading>
+		</>
 	);
 	// The head is one tree on both densities, so crossing the density line
 	// keeps its acts, their focus and an open sheet's trigger. Only the
@@ -147,7 +153,7 @@ export function Screen({ title, back, actions, more, children }: ScreenProps) {
 		<LendAct value={lend}>
 			<BackRoute value={back}>
 				<PageTitle value={titleId}>
-					<HeadingContext value={beside ? DEEPER[level] : 2}>
+					<HeadingContext value={levels.body}>
 						<div className={beside ? SCREEN_BESIDE : SCREEN}>
 							{head}
 							{beside ? (
