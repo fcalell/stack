@@ -340,8 +340,14 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
   its column's label. Where the grid scrolls sideways its leading column stays: the frozen cell
   on the surface (`TABLE_FROZEN`), its content carrying its end hairline and the row's wash
   (`TABLE_FROZEN_CELL`).
-- A thread is a molecule (`Thread`): its Messages are its children, a sections gap apart (one
-  rung above Prose's block gap), and its `MessageInput` its `foot`; on the desktop both stand in
+- A thread is a molecule (`Thread`), a collection: its Messages from `query` (with `sentence`)
+  or `items` (waiting on `loading`) through the `message` map, one function per `Message` slot
+  (`key`, `author`, `name`, `body`, `at`, and `onOpen` returning a system line's handler or none),
+  a sections gap apart (one rung above Prose's block gap), and its `MessageInput` its `foot`, the
+  one authored part, drawn in every state. Pending, the log holds Message's own loading forms in a
+  fixed order (`WAITING_MESSAGES`: another's reply, yours, another's reply), for each author is
+  the item's and unknown before the data; failed, the failed EmptyState with `sentence` and
+  Retry; no message, `empty`; each in the log's column. On the desktop both stand in
   a measure-wide column centred in the page (`THREAD_COLUMN`), on touch in the screen's. A
   Thread in a Place's body fills the page at every width, decided by where it stands: it calls the
   Place's `ThreadFills` setter (the `RecordOpen` / `ActFloats` pattern) before paint, the body

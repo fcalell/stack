@@ -1,6 +1,6 @@
 ---
 id: 004-06
-status: backlog
+status: review
 sessions: {}
 ---
 # react-ui, native-ui: a Thread's messages from data draw their own four states
@@ -28,5 +28,8 @@ end and is a polite live region. Needs a query (a conversation's history) and `i
 held locally while an answer streams, as the showcase's are).
 
 ## Acceptance criteria
-- [ ] (test) both plugins' `Thread` take `query`/`items` + `message` + `sentence` + `empty`, children are gone from the roster entry, and it lists the `loading`, `error` and `empty` states.
+- [x] (test) both plugins' `Thread` take `query`/`items` + `message` + `sentence` + `empty`, children are gone from the roster entry, and it lists the `loading`, `error` and `empty` states.
 - [ ] (live) the assistant page passes its turns as data and draws the pending, failed and empty forms under `&query=loading|error`.
+
+## Progress
+Built on web and phone; `pnpm check` and `pnpm verify` pass. Open for the critique: the failed and empty forms take the page EmptyState form and stand at the log's top; the showcase cannot reach the empty form (`useFixture` has no empty mode). Open: the live check (web per batch, phone on the harness).

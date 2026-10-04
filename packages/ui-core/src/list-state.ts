@@ -248,3 +248,12 @@ export function optionsOf<T, V extends string>(
 	}
 	return [...groups].map(([label, options]) => ({ label, options }));
 }
+
+// A pending Thread's turns, in order: each author is the item's, unknown
+// before the data, so the wait is a fixed exchange (another's reply, yours,
+// another's reply).
+export const WAITING_MESSAGES = [
+	{ key: 0, author: "other" },
+	{ key: 1, author: "you" },
+	{ key: 2, author: "other" },
+] as const;

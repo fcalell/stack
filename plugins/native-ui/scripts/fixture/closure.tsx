@@ -415,21 +415,28 @@ export const closure = (
 		<List items={[]} row={{ key: String, title: String }} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
 		<List items={[]} row={{ key: String, title: String }} placeholderTextColorClassName="text-ink-body" />
-		<Thread />
+		<Thread items={[]} message={{ key: String, author: () => "you", body: String }} />
+		<Thread query={{ data: ["a"], isPending: false, isError: false, refetch: noop }} sentence="x" empty={{ sentence: "x" }} message={{ key: String, author: () => "system", body: String, onOpen: () => noop }} foot={null} />
+		{/* @ts-expect-error: a thread takes a query or items, never both */}
+		<Thread items={["a"]} query={{ data: ["a"], isPending: false, isError: false, refetch: noop }} sentence="x" empty={{ sentence: "x" }} message={{ key: String, author: () => "you", body: String }} />
+		{/* @ts-expect-error: a thread's query names its failure and its empty form */}
+		<Thread query={{ data: ["a"], isPending: false, isError: false, refetch: noop }} message={{ key: String, author: () => "you", body: String }} />
+		{/* @ts-expect-error: a thread's messages are data, never children */}
+		<Thread items={[]} message={{ key: String, author: () => "you", body: String }}>x</Thread>
 		{/* @ts-expect-error: closed channel */}
-		<Thread className="x" />
+		<Thread items={[]} message={{ key: String, author: () => "you", body: String }} className="x" />
 		{/* @ts-expect-error: closed channel */}
-		<Thread style={{ flex: 1 }} />
+		<Thread items={[]} message={{ key: String, author: () => "you", body: String }} style={{ flex: 1 }} />
 		{/* @ts-expect-error: closed channel */}
-		<Thread class="x" />
+		<Thread items={[]} message={{ key: String, author: () => "you", body: String }} class="x" />
 		{/* @ts-expect-error: closed channel */}
-		<Thread classList={{}} />
+		<Thread items={[]} message={{ key: String, author: () => "you", body: String }} classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<Thread colorClassName="text-ink-body" />
+		<Thread items={[]} message={{ key: String, author: () => "you", body: String }} colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Thread selectionColorClassName="text-ink-body" />
+		<Thread items={[]} message={{ key: String, author: () => "you", body: String }} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Thread placeholderTextColorClassName="text-ink-body" />
+		<Thread items={[]} message={{ key: String, author: () => "you", body: String }} placeholderTextColorClassName="text-ink-body" />
 		<Form />
 		{/* @ts-expect-error: closed channel */}
 		<Form className="x" />

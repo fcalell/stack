@@ -1,9 +1,7 @@
 import type { Attachment, Notice } from "@fcalell/ui-core/descriptors";
 import { useRef, useState } from "react";
-import { Message } from "../../components/message/index.tsx";
 import { MessageInput } from "../../components/message-input/index.tsx";
 import { Place } from "../../components/place/index.tsx";
-import { QueryBoundary } from "../../components/query-boundary/index.tsx";
 import { Thread } from "../../components/thread/index.tsx";
 import { navigate } from "../../lib/navigate.ts";
 import { toast } from "../../lib/toast.ts";
@@ -79,8 +77,8 @@ const ANSWER =
 
 const NAME = { you: "You", other: "Assistant" } as const;
 
-// The composer's draft attachment and notice, drawn in both forms: neither is
-// part of the query.
+// The composer's draft attachment and notice, drawn in every state: neither
+// is part of the query.
 const ATTACHED: Attachment[] = [{ id: "log", name: "build-0c5e4aa.log" }];
 
 function notice(to: ReturnType<typeof useTo>): Notice {
@@ -93,123 +91,82 @@ function notice(to: ReturnType<typeof useTo>): Notice {
 	};
 }
 
-function Conversation(props: { initial: Turn[] }) {
+// The conversation: its history a query, a sent turn and its answer joining
+// it as the server holds them; the input under every state, inert until the
+// history answers.
+export function Assistant() {
 	const to = useTo();
-	const [turns, setTurns] = useState(props.initial);
+	const [sent, setSent] = useState<Turn[]>([]);
+	const query = useFixture([...TURNS, ...sent]);
 	const [value, setValue] = useState("");
 	const [attachments, setAttachments] = useState<Attachment[]>(ATTACHED);
 	const [working, setWorking] = useState(false);
 	const answer = useRef<ReturnType<typeof setTimeout>>(undefined);
 	const say = (turn: Omit<Turn, "id" | "at">) =>
-		setTurns((all) => [
+		setSent((all) => [
 			...all,
-			{ ...turn, id: `t${all.length + 1}`, at: new Date().toISOString() },
+			{ ...turn, id: `s${all.length + 1}`, at: new Date().toISOString() },
 		]);
 	return (
-		<Thread
-			foot={
-				<MessageInput
-					value={value}
-					onChange={setValue}
-					attachments={attachments}
-					onAttach={() =>
-						setAttachments((all) => [
-							...all,
-							{ id: `file${all.length}`, name: "wrangler.jsonc" },
-						])
-					}
-					onDetach={(id) =>
-						setAttachments((all) => all.filter((each) => each.id !== id))
-					}
-					placeholder="Ask about your deploys"
-					notice={notice(to)}
-					working={working}
-					onSend={() => {
-						say({ author: "you", body: value });
-						setValue("");
-						setAttachments([]);
-						setWorking(true);
-						answer.current = setTimeout(() => {
-							say({ author: "other", body: ANSWER });
-							setWorking(false);
-						}, 2400);
-					}}
-					onStop={() => {
-						clearTimeout(answer.current);
-						setWorking(false);
-						say({ author: "system", body: "Answer stopped" });
-						toast("Answer stopped");
-					}}
-				/>
-			}
-		>
-			{turns.map((turn) =>
-				turn.author === "system" ? (
-					<Message
-						key={turn.id}
-						author="system"
-						body={turn.body}
-						at={turn.at}
-						onOpen={
-							turn.deploy
-								? () =>
-										navigate(
-											to({ place: "deploys", record: turn.deploy ?? "" }),
-										)
-								: undefined
-						}
-					/>
-				) : (
-					<Message
-						key={turn.id}
-						author={turn.author}
-						name={NAME[turn.author]}
-						body={turn.body}
-						at={turn.at}
-					/>
-				),
-			)}
-		</Thread>
-	);
-}
-
-// The thread's own loading form: a turn of each author, the input inert
-// under its notice.
-function Waiting() {
-	const to = useTo();
-	return (
-		<Thread
-			foot={
-				<MessageInput
-					value=""
-					onChange={() => {}}
-					onSend={() => {}}
-					attachments={ATTACHED}
-					onAttach={() => {}}
-					placeholder="Ask about your deploys"
-					notice={notice(to)}
-					disabled
-				/>
-			}
-		>
-			<Message author="system" body="" loading />
-			<Message author="you" body="" loading />
-			<Message author="other" body="" loading />
-		</Thread>
-	);
-}
-
-export function Assistant() {
-	const query = useFixture(TURNS);
-	return (
 		<Place title="Assistant">
-			<QueryBoundary
+			<Thread
 				query={query}
 				sentence="The conversation did not load."
-				loading={<Waiting />}
-			>
-				{(turns) => <Conversation initial={turns} />}
-			</QueryBoundary>
+				empty={{
+					title: "Ask about your deploys",
+					sentence:
+						"Why a deploy failed, what changed between two, or how much of the plan is used.",
+				}}
+				message={{
+					key: (turn) => turn.id,
+					author: (turn) => turn.author,
+					name: (turn) =>
+						turn.author === "system" ? undefined : NAME[turn.author],
+					body: (turn) => turn.body,
+					at: (turn) => turn.at,
+					onOpen: (turn) => {
+						const { deploy } = turn;
+						if (deploy === undefined) return undefined;
+						return () => navigate(to({ place: "deploys", record: deploy }));
+					},
+				}}
+				foot={
+					<MessageInput
+						value={value}
+						onChange={setValue}
+						attachments={attachments}
+						onAttach={() =>
+							setAttachments((all) => [
+								...all,
+								{ id: `file${all.length}`, name: "wrangler.jsonc" },
+							])
+						}
+						onDetach={(id) =>
+							setAttachments((all) => all.filter((each) => each.id !== id))
+						}
+						placeholder="Ask about your deploys"
+						notice={notice(to)}
+						working={working}
+						disabled={query.data === undefined}
+						onSend={() => {
+							say({ author: "you", body: value });
+							setValue("");
+							setAttachments([]);
+							setWorking(true);
+							answer.current = setTimeout(() => {
+								say({ author: "other", body: ANSWER });
+								setWorking(false);
+							}, 2400);
+						}}
+						onStop={() => {
+							clearTimeout(answer.current);
+							setWorking(false);
+							say({ author: "system", body: "Answer stopped" });
+							toast("Answer stopped");
+						}}
+					/>
+				}
+			/>
 		</Place>
 	);
 }

@@ -1,3 +1,10 @@
+import {
+	type ListState,
+	listBusy,
+	listState,
+	retryOf,
+	WAITING_MESSAGES,
+} from "@fcalell/ui-core/list-state";
 import { THREAD, THREAD_FOOT, THREAD_LOG } from "@fcalell/ui-core/variants";
 import {
 	type ReactNode,
@@ -12,6 +19,11 @@ import { withUniwind } from "uniwind";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { FootDocks, ThreadFills } from "../../lib/frame";
+import { useWords } from "../../lib/words";
+import { EmptyStateBase } from "../empty-state/base";
+import type { ListEmpty } from "../list";
+import { Message } from "../message";
+import type { QueryLike } from "../query-boundary";
 
 // The column the log and the docked input share, lifted over the keyboard.
 const Fill = withUniwind(KeyboardAvoidingView);
@@ -23,11 +35,104 @@ const DOCKED = "shrink-0";
 // up keeps their place as a message arrives.
 const AT_END = 1;
 
-export interface ThreadProps extends Closed {
-	// The `Message`s, oldest first.
-	children?: ReactNode;
-	// The `MessageInput` under the messages.
-	foot?: ReactNode;
+// One function per `Message` slot, each called with a loaded item.
+export interface MessageSlots<T> {
+	// The item's React key, unique in the thread.
+	key: (item: T) => string;
+	author: (item: T) => "you" | "other" | "system";
+	// Drawn over `other`'s reply, read aloud before yours; a system line
+	// takes none.
+	name?: (item: T) => string | undefined;
+	// Plain text for `you` and `system`, markdown for `other`.
+	body: (item: T) => string;
+	// An ISO moment.
+	at?: (item: T) => string | undefined;
+	// What a system line opens: the line becomes the act; a turn takes none.
+	onOpen?: (item: T) => (() => void) | undefined;
+}
+
+// Where a thread's messages come from, oldest first.
+type ThreadSource<T> =
+	| {
+			query: QueryLike<readonly T[]>;
+			// What failed to load, over the retry act.
+			sentence: string;
+			// What the log draws when the query answers with no message: what
+			// to ask.
+			empty: ListEmpty;
+			items?: never;
+			loading?: never;
+	  }
+	| {
+			items: readonly T[];
+			// The items are on their way (a compound body's loading form).
+			loading?: boolean;
+			// Without it an empty log draws nothing.
+			empty?: ListEmpty;
+			query?: never;
+			sentence?: never;
+	  };
+
+// A conversation: its messages from a query or from items, over the input
+// that adds to it.
+export type ThreadProps<T = unknown> = Closed &
+	ThreadSource<T> & {
+		message: MessageSlots<T>;
+		// The `MessageInput` under the messages, drawn in every state.
+		foot?: ReactNode;
+	};
+
+// The item's Message by its author: a system line takes `onOpen`, a turn
+// takes `name`.
+function messageOf<T>(slots: MessageSlots<T>, item: T): ReactNode {
+	const author = slots.author(item);
+	const key = slots.key(item);
+	const body = slots.body(item);
+	const at = slots.at?.(item);
+	if (author === "system")
+		return (
+			<Message
+				key={key}
+				author="system"
+				body={body}
+				at={at}
+				onOpen={slots.onOpen?.(item)}
+			/>
+		);
+	return (
+		<Message
+			key={key}
+			author={author}
+			name={slots.name?.(item)}
+			body={body}
+			at={at}
+		/>
+	);
+}
+
+// What the log holds in the thread's state: the waiting turns, the failed
+// or the empty EmptyState, or the messages oldest first.
+function logOf<T>(
+	props: ThreadProps<T>,
+	state: ListState,
+	retry: string,
+): ReactNode {
+	if (state === "pending")
+		return WAITING_MESSAGES.map(({ key, author }) => (
+			<Message key={key} author={author} body="" loading />
+		));
+	if (state === "failed" && props.query !== undefined)
+		return (
+			<EmptyStateBase
+				tone="failed"
+				sentence={props.sentence}
+				act={{ label: retry, onAct: retryOf(props.query) }}
+			/>
+		);
+	if (state === "empty" && props.empty)
+		return <EmptyStateBase tone="rest" {...props.empty} />;
+	const items = (props.query ? props.query.data : props.items) ?? [];
+	return items.map((item) => messageOf(props.message, item));
 }
 
 // The messages a sections gap apart, one rung above a reply's block gap, and
@@ -37,8 +142,25 @@ export interface ThreadProps extends Closed {
 // message and following each that arrives while the reader is at the end,
 // the input docked at the foot over the keyboard. React Native has no log
 // role: the messages are a polite live region, so an arriving one is
-// announced (Android; VoiceOver reads them in order).
-export function Thread({ children, foot }: ThreadProps) {
+// announced (Android; VoiceOver reads them in order). It draws its
+// collection's four states, the input under each: while its query is
+// pending or `loading` is set, Message's loading forms (another's reply,
+// yours, another's reply), the log at its end; a failed query, the failed
+// EmptyState with `sentence` and Retry in the log; no message, `empty` in
+// the log; then one Message per item.
+export function Thread<T>(props: ThreadProps<T>) {
+	const { foot } = props;
+	const words = useWords();
+	const input = {
+		query: props.query,
+		items: props.items,
+		loading: props.loading,
+		sectionLoading: false,
+		inSection: false,
+		hasEmpty: props.empty !== undefined,
+	};
+	const busy = listBusy(input);
+	const children = logOf(props, listState(input), words.retry);
 	const fills = useContext(ThreadFills);
 	const docks = useContext(FootDocks);
 	const log = useRef<ScrollView>(null);
@@ -61,7 +183,11 @@ export function Thread({ children, foot }: ThreadProps) {
 		return () => docks(0);
 	}, [docks]);
 	const messages = (
-		<View accessibilityLiveRegion="polite" className={THREAD}>
+		<View
+			accessibilityLiveRegion="polite"
+			accessibilityState={{ busy }}
+			className={THREAD}
+		>
 			{children}
 		</View>
 	);

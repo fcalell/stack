@@ -561,15 +561,22 @@ export const closure = (
 		<QrCode value="x" class="x" />
 		{/* @ts-expect-error: closed channel */}
 		<QrCode value="x" classList={{}} />
-		<Thread />
+		<Thread items={[]} message={{ key: String, author: () => "you", body: String }} />
+		<Thread query={{ data: ["a"], isPending: false, isError: false, refetch: () => {} }} sentence="x" empty={{ sentence: "x" }} message={{ key: String, author: () => "system", body: String, onOpen: () => () => {} }} foot={null} />
+		{/* @ts-expect-error: a thread takes a query or items, never both */}
+		<Thread items={["a"]} query={{ data: ["a"], isPending: false, isError: false, refetch: () => {} }} sentence="x" empty={{ sentence: "x" }} message={{ key: String, author: () => "you", body: String }} />
+		{/* @ts-expect-error: a thread's query names its failure and its empty form */}
+		<Thread query={{ data: ["a"], isPending: false, isError: false, refetch: () => {} }} message={{ key: String, author: () => "you", body: String }} />
+		{/* @ts-expect-error: a thread's messages are data, never children */}
+		<Thread items={[]} message={{ key: String, author: () => "you", body: String }}>x</Thread>
 		{/* @ts-expect-error: closed channel */}
-		<Thread className="x" />
+		<Thread items={[]} message={{ key: String, author: () => "you", body: String }} className="x" />
 		{/* @ts-expect-error: closed channel */}
-		<Thread style={{ flex: 1 }} />
+		<Thread items={[]} message={{ key: String, author: () => "you", body: String }} style={{ flex: 1 }} />
 		{/* @ts-expect-error: closed channel */}
-		<Thread class="x" />
+		<Thread items={[]} message={{ key: String, author: () => "you", body: String }} class="x" />
 		{/* @ts-expect-error: closed channel */}
-		<Thread classList={{}} />
+		<Thread items={[]} message={{ key: String, author: () => "you", body: String }} classList={{}} />
 		<Table columns={[]} rows={[]} />
 		{/* @ts-expect-error: closed channel */}
 		<Table columns={[]} rows={[]} className="x" />

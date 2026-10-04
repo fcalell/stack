@@ -2042,12 +2042,23 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				sizes: ["chart", "dot", "skeleton", "figures"],
 			},
 		},
-		// Messages are its children and a MessageInput its foot.
+		// A collection: its Messages from `query` or `items` through the
+		// `message` map, its waiting turns the Message's own loading forms, its
+		// failed and empty EmptyStates its own in the log; a MessageInput its
+		// `foot`, drawn in every state.
 		Thread: {
-			props: ["children", "foot"],
+			props: [
+				"query",
+				"sentence",
+				"empty",
+				"message",
+				"items",
+				"loading",
+				"foot",
+			],
 			draws: ["THREAD", "THREAD_COLUMN", "THREAD_LOG", "THREAD_FOOT"],
 			holds: ["THREAD", "THREAD_COLUMN", "THREAD_LOG", "THREAD_FOOT"],
-			states: ["rest"],
+			states: ["rest", "loading", "error", "empty"],
 			owns: {
 				spacing: ["sections", "page"],
 				sizes: ["measure"],

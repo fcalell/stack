@@ -60,6 +60,9 @@ An `OptionList` holds a static set in `options`. Options from a query take `quer
 `empty` (a sentence) and an `option` map over the check row: `value`, `label`, `description`,
 `recommended` and `group`; it waits, fails and empties inside its card.
 
+A `Thread` takes its `query` (or `items`) the same way through a `message` map (`key`,
+`author`, `name`, `body`, `at`, `onOpen`); its `MessageInput` stays the `foot`.
+
 Any other region reading a query sits in its own `QueryBoundary`, naming its loading form.
 
 ## Words are the config's, sentences are props
