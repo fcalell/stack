@@ -1,6 +1,6 @@
 ---
 id: 005-18
-status: review
+status: done
 sessions: {}
 ---
 # react-ui, native-ui: Intl formatters are built once per language and options
