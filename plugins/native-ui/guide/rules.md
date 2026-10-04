@@ -62,7 +62,9 @@ four states itself, with no `QueryBoundary` around it.
 
 An `OptionList` holds a static set in `options`. Options from a query take `query`, `sentence`,
 `empty` (a sentence) and an `option` map over the check row: `value`, `label`, `description`,
-`recommended` and `group`; it waits, fails and empties inside its card.
+`recommended` and `group`; it waits, fails and empties inside its card. Its `value` picks the
+form: a set (`onChange` hears the set) draws check rows, one value or `null` (`onChange` hears
+the value) radio rows, one answer among a few described options.
 
 A `Thread` takes its `query` (or `items`) the same way through a `message` map (`key`,
 `author`, `name`, `body`, `at`, `onOpen`); its `MessageInput` stays the `foot`. In a

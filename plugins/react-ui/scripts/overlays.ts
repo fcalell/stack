@@ -291,6 +291,7 @@ export const OVERLAYS: readonly string[] = [
 	"data-ending-style:duration-fast",
 	"data-ending-style:ease-in",
 	// ListRow, FormField, SegmentedControl, Picker, OptionList
+	"focus-visible:outline-offset-2",
 	"w-0",
 	"w-figures",
 	"min-h-chip",

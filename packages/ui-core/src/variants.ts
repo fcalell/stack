@@ -37,6 +37,7 @@ import {
 	MENU_LABEL,
 	MESSAGE,
 	METER_FILL,
+	OPTION_RADIO,
 	OTP_BOX,
 	PICKER,
 	PLACE_ROW,
@@ -115,6 +116,7 @@ export const otpBox = build(OTP_BOX);
 export const switchTrack = build(SWITCH);
 export const switchThumb = build(SWITCH_THUMB);
 export const checkbox = build(CHECKBOX);
+export const optionRadio = build(OPTION_RADIO);
 export const row = build(ROW);
 export const lineBox = build(LINE_BOX);
 export const tableRow = build(TABLE_ROW);
@@ -208,6 +210,7 @@ export const FAMILIES: readonly Family[] = [
 	family("SWITCH", SWITCH, switchTrack),
 	family("SWITCH_THUMB", SWITCH_THUMB, switchThumb),
 	family("CHECKBOX", CHECKBOX, checkbox),
+	family("OPTION_RADIO", OPTION_RADIO, optionRadio),
 	family("ROW", ROW, row),
 	family("LINE_BOX", LINE_BOX, lineBox),
 	family("TABLE_ROW", TABLE_ROW, tableRow),
@@ -380,14 +383,16 @@ export const ITEM_FACT = "gap-inside";
 // A field's error line under its control, in the error ink.
 export const FORM_FIELD_ERROR =
 	"text-meta leading-meta font-normal text-ink-error";
-// A multi-choice list: its option groups on a hairline card at the float
-// inset; an option's box beside its label, and the children under a chosen
-// option inset past the box.
+// A list of options, several or one chosen: its option groups on a hairline
+// card at the float inset; an option's box or radio beside its label, and
+// the children under a chosen option inset past the box.
 export const OPTION_LIST =
 	"gap-pair p-float rounded-card border border-edge bg-surface";
 export const OPTION_LINE = "gap-inside";
 export const OPTION_CHILDREN = "gap-inside px-control-x pb-pair";
 export const OPTION_INDENT = "size-check";
+// The chosen radio's dot, centred in its ring.
+export const OPTION_RADIO_DOT = "size-dot rounded-full bg-toggle-on";
 // The segments' track: flush, so the control stands at a segment's height.
 export const SEGMENTED_CONTROL = "rounded-control bg-group";
 // A toast at its width, raised and floating, its end inset tighter for the

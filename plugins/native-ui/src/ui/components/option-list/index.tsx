@@ -1,13 +1,19 @@
 import type { Option, OptionGroup } from "@fcalell/ui-core/descriptors";
 import {
+	choose,
+	chosenOf,
+	isOneChoice,
 	listBusy,
 	listState,
+	type OneChoice,
+	type OptionChoice,
 	type OptionShape,
 	type OptionSlots,
 	optionShape,
 	optionsOf,
 	optionsShape,
 	retryOf,
+	type SetChoice,
 } from "@fcalell/ui-core/list-state";
 import {
 	lineBox,
@@ -16,6 +22,8 @@ import {
 	OPTION_INDENT,
 	OPTION_LINE,
 	OPTION_LIST,
+	OPTION_RADIO_DOT,
+	optionRadio,
 	ROW_META_LINE,
 	row,
 	SELECT_GROUP,
@@ -35,7 +43,8 @@ import { Checkbox } from "../checkbox";
 import { Chip } from "../chip";
 import type { QueryLike } from "../query-boundary";
 
-// The row is the target of its box: a press anywhere toggles it.
+// The row is the target of its box or radio: a press anywhere toggles or
+// chooses it.
 const OPTION = "flex-row items-center active:bg-wash-press";
 const LINE = "flex-1 min-w-0 flex-row items-start";
 // The box stands on its label's first line, beside a zero-width line of the
@@ -44,6 +53,8 @@ const BOX_LINE = "flex-row shrink-0 items-center";
 const LABEL = "flex-1 min-w-0";
 const TEXT = "flex-1 min-w-0";
 const DESCRIPTION_LINE = "flex-row flex-wrap items-center min-w-0";
+// The radio's dot centred in its ring.
+const RADIO = "shrink-0 items-center justify-center";
 const CHILDREN = "flex-row";
 const INDENT = "shrink-0";
 const CHILDREN_BODY = "flex-1 min-w-0";
@@ -94,18 +105,18 @@ type OptionSource<T, V extends string> =
 			loading?: never;
 	  };
 
-// Several choices from one list, static or from a query. `V` is read off
-// the options or the `option` map's `value`.
+type OptionListBase<V extends string, T> = OptionSource<T, V> & {
+	// What a chosen option opens, under the first one chosen at its label's
+	// start.
+	children?: ReactNode;
+};
+
+// One choice or several from one list, static or from a query: `value` one
+// value or null draws radio rows, a set check rows. `V` is read off the
+// options or the `option` map's `value`.
 export type OptionListProps<V extends string = string, T = unknown> = Closed &
-	OptionSource<T, V> & {
-		// The chosen options' values.
-		value: readonly V[];
-		// Hears the whole chosen set after a toggle.
-		onChange: (value: V[]) => void;
-		// What a chosen option opens, under the first one chosen at its label's
-		// start.
-		children?: ReactNode;
-	};
+	OptionListBase<V, T> &
+	OptionChoice<V>;
 
 function groupsOf<V extends string>(
 	options: readonly Option<V>[] | readonly OptionGroup<V>[],
@@ -186,16 +197,23 @@ function Wait({ shape }: { shape: OptionShape }) {
 	);
 }
 
-// Option rows on a hairline card, each the Checkbox on its label's first
-// line, a description and the recommended mark on the line under it; the
-// pressed row washes, the checked box is the choice. The children stand
-// under the first chosen option. From a query it draws its four states in
-// the card: waiting check rows in the slots `option` declares, a failed line
-// with `sentence` and Retry, the `empty` sentence, then the rows.
+// Option rows on a hairline card, each the Checkbox (several choices) or the
+// radio (one choice, read aloud as radios in a radiogroup) on its label's
+// first line, a description and the recommended mark on the line under it;
+// the pressed row washes, the checked box or the ringed dot is the choice.
+// The children stand under the first chosen option. From a query it draws its
+// four states in the card: waiting rows in the slots `option` declares, a
+// failed line with `sentence` and Retry, the `empty` sentence, then the rows.
+export function OptionList<V extends string = string, T = unknown>(
+	props: Closed & OptionListBase<V, T> & OneChoice<V>,
+): ReactNode;
+export function OptionList<V extends string = string, T = unknown>(
+	props: Closed & OptionListBase<V, T> & SetChoice<V>,
+): ReactNode;
 export function OptionList<V extends string = string, T = unknown>(
 	props: OptionListProps<V, T>,
 ) {
-	const { value, onChange, children } = props;
+	const { children } = props;
 	const words = useWords();
 	const named = useContext(GroupName);
 	const input = {
@@ -208,8 +226,10 @@ export function OptionList<V extends string = string, T = unknown>(
 	};
 	const state = listState(input);
 	const busy = listBusy(input);
-	const frame = (body: ReactNode) => (
+	const one = isOneChoice(props);
+	const frame = (body: ReactNode, radios = false) => (
 		<View
+			accessibilityRole={radios ? "radiogroup" : undefined}
 			accessibilityLabel={named?.label}
 			accessibilityHint={named?.said}
 			accessibilityState={busy ? { busy } : undefined}
@@ -251,28 +271,23 @@ export function OptionList<V extends string = string, T = unknown>(
 	const options = props.query
 		? optionsOf(props.query.data ?? [], props.option)
 		: props.options;
-	const first = value[0];
-	const toggle = (option: V) =>
-		onChange(
-			value.includes(option)
-				? value.filter((each) => each !== option)
-				: [...value, option],
-		);
+	const chosenValues = chosenOf(props);
+	const first = chosenValues[0];
 	return frame(
 		groupsOf(options).map((group, at) => (
 			<View key={group.label ?? at} className={SELECT_GROUP}>
 				{group.label ? <GroupLabel>{group.label}</GroupLabel> : null}
 				{group.options.map((option) => {
-					const chosen = value.includes(option.value);
+					const chosen = chosenValues.includes(option.value);
 					const marked = option.description || option.recommended;
 					return (
 						<Fragment key={option.value}>
 							<Pressable
-								accessibilityRole="checkbox"
+								accessibilityRole={one ? "radio" : "checkbox"}
 								accessibilityLabel={option.label}
 								accessibilityHint={option.description}
 								accessibilityState={{ checked: chosen }}
-								onPress={() => toggle(option.value)}
+								onPress={() => choose<V>(props, option.value)}
 								className={cn(row({ lines: marked ? "two" : "one" }), OPTION)}
 							>
 								<View className={cn(OPTION_LINE, LINE)}>
@@ -280,13 +295,26 @@ export function OptionList<V extends string = string, T = unknown>(
 										<RNText className={lineBox({ role: "body" })}>
 											{STRUT}
 										</RNText>
-										<LabelTarget.Provider value>
-											<Checkbox
-												checked={chosen}
-												onChange={() => toggle(option.value)}
-												label={option.label}
-											/>
-										</LabelTarget.Provider>
+										{one ? (
+											<View
+												className={cn(
+													optionRadio({
+														state: chosen ? "checked" : "unchecked",
+													}),
+													RADIO,
+												)}
+											>
+												{chosen ? <View className={OPTION_RADIO_DOT} /> : null}
+											</View>
+										) : (
+											<LabelTarget.Provider value>
+												<Checkbox
+													checked={chosen}
+													onChange={() => choose<V>(props, option.value)}
+													label={option.label}
+												/>
+											</LabelTarget.Provider>
+										)}
 									</View>
 									{marked ? (
 										<View className={TEXT}>
@@ -328,5 +356,6 @@ export function OptionList<V extends string = string, T = unknown>(
 				})}
 			</View>
 		)),
+		one,
 	);
 }

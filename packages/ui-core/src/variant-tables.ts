@@ -361,6 +361,19 @@ export const CHECKBOX = matrix({
 	defaultVariants: { state: "unchecked" },
 });
 
+// A single-choice option's radio: a ring at the box's size, the chosen one
+// in the checkbox's fill around its dot (`OPTION_RADIO_DOT`).
+export const OPTION_RADIO = matrix({
+	base: "size-check rounded-full border",
+	variants: {
+		state: {
+			unchecked: "border-edge-strong",
+			checked: "border-toggle-on",
+		},
+	},
+	defaultVariants: { state: "unchecked" },
+});
+
 // ── Row ─────────────────────────────────────────────────────────────
 
 // A row in a group, a list or a popover. `lines` is what it stands

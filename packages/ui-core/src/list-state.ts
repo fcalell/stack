@@ -255,6 +255,57 @@ export function optionsOf<T, V extends string>(
 	return [...groups].map(([label, options]) => ({ label, options }));
 }
 
+// An OptionList's one choice: radio rows, read aloud as a radiogroup.
+export interface OneChoice<V extends string> {
+	// The chosen option's value; null before one is chosen.
+	value: V | null;
+	// Hears the option chosen.
+	onChange: (value: V) => void;
+}
+
+// An OptionList's several choices: check rows, each toggling the set.
+export interface SetChoice<V extends string> {
+	// The chosen options' values.
+	value: readonly V[];
+	// Hears the whole chosen set after a toggle.
+	onChange: (value: V[]) => void;
+}
+
+// An OptionList's choice in either form.
+export type OptionChoice<V extends string> = OneChoice<V> | SetChoice<V>;
+
+// The form a value picks: a set is several choices, one value or null one.
+export function isOneChoice<V extends string>(
+	choice: OptionChoice<V>,
+): choice is OneChoice<V> {
+	return !Array.isArray(choice.value);
+}
+
+// The chosen values in either form, in the order they were chosen.
+export function chosenOf<V extends string>(
+	choice: OptionChoice<V>,
+): readonly V[] {
+	if (!isOneChoice(choice)) return choice.value;
+	return choice.value === null ? [] : [choice.value];
+}
+
+// A press on an option: one choice hears it unless it is already chosen; a
+// set hears itself with the option toggled.
+export function choose<V extends string>(
+	choice: OptionChoice<V>,
+	option: V,
+): void {
+	if (isOneChoice(choice)) {
+		if (choice.value !== option) choice.onChange(option);
+		return;
+	}
+	choice.onChange(
+		choice.value.includes(option)
+			? choice.value.filter((each) => each !== option)
+			: [...choice.value, option],
+	);
+}
+
 // A pending Thread's turns, in order: each author is the item's, unknown
 // before the data, so the wait is a fixed exchange (another's reply, yours,
 // another's reply).

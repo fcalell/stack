@@ -180,7 +180,7 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
   OptionList, an ItemHeader's loading bar in the line its text fills, so the loading frame and the
   loaded one share a height. A loading label's bar runs in `SKELETON_LANE`, a short label's
   measure in the ch of the role it stands in for.
-- A chosen option is ticked (`Picker`) or checked (`OptionList`), never washed: an option row
+- A chosen option is ticked (`Picker`), checked or its radio dotted (`OptionList`), never washed: an option row
   draws `ROW {state}` for the pointer alone, where a list's or a group's chosen row draws
   `selected`. A destructive menu act's label draws `MENU_LABEL {kind: destructive}`
   (`text-danger`), an axis because the act is given, not pointed at.
@@ -407,6 +407,16 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
   `sentence` and a secondary Retry at the bar fit; empty, one row holding the `empty` sentence.
   It registers with no Section. Its projection and waiting shape (`optionsOf`, `optionShape`,
   `optionsShape`) are in `./list-state`.
+- An `OptionList`'s `value` picks its form: a set is several choices, check rows each toggling
+  the set; one value or null is one choice, radio rows read aloud as a radiogroup (the web's
+  Base UI `RadioGroup`, native `radiogroup` around `radio` rows with their checked state). The
+  radio is the box's size (`OPTION_RADIO {state}`, a `full` ring in `edge-strong`, `toggle-on`
+  when chosen) around the `toggle-on` dot (`OPTION_RADIO_DOT`), both held by OptionList. The
+  description line, the recommended mark and the children under the chosen option are the same
+  in both forms. The form is the component's two call signatures (`OneChoice`, `SetChoice` in
+  `./list-state`), so an inline `onChange` takes its parameter from `value`: TypeScript does
+  not narrow a props union by `value: V | null` against `value: readonly V[]`, neither member
+  being a literal type. Rejected: a `ChoiceList` beside it, the same rows under a second name.
 - A `BarChart` is a collection on the same decisions: `query` (or `items`, waiting on `loading`)
   and a `bar` map (`key`, `label`, `value`, `parts` by `keys`, `at`, each a function of the
   item). Its `keys` are declared, so its pending form is its loaded boxes in skeleton with the

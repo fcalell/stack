@@ -1,14 +1,22 @@
+import { Radio } from "@base-ui/react/radio";
+import { RadioGroup } from "@base-ui/react/radio-group";
 import { cn } from "@fcalell/ui-core/cn";
 import type { Option, OptionGroup } from "@fcalell/ui-core/descriptors";
 import {
+	choose,
+	chosenOf,
+	isOneChoice,
 	listBusy,
 	listState,
+	type OneChoice,
+	type OptionChoice,
 	type OptionShape,
 	type OptionSlots,
 	optionShape,
 	optionsOf,
 	optionsShape,
 	retryOf,
+	type SetChoice,
 } from "@fcalell/ui-core/list-state";
 import {
 	lineBox,
@@ -17,6 +25,8 @@ import {
 	OPTION_INDENT,
 	OPTION_LINE,
 	OPTION_LIST,
+	OPTION_RADIO_DOT,
+	optionRadio,
 	ROW_META_LINE,
 	row,
 	SELECT_GROUP,
@@ -36,7 +46,8 @@ import type { QueryLike } from "../query-boundary/index.tsx";
 
 const LIST = "flex flex-col";
 const GROUP = "flex flex-col";
-// The row is the label of its box: a press anywhere toggles it.
+// The row is the label of its box or radio: a press anywhere toggles or
+// chooses it.
 const OPTION = "flex items-center hover:bg-wash-hover active:bg-wash-press";
 const LINE = "flex grow min-w-0 items-start";
 // The box stands on its label's first line, a box one body line tall; the
@@ -46,6 +57,10 @@ const LABEL = "min-w-0 grow truncate";
 const TEXT = "flex flex-col min-w-0 grow";
 const TITLE = "truncate";
 const DESCRIPTION_LINE = "flex flex-wrap items-center min-w-0";
+// The radio is the box's size in its label's line, its dot centred; the
+// focus ring is its own, as the checkbox's is.
+const RADIO =
+	"relative inline-flex shrink-0 items-center justify-center outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
 const CHILDREN = "flex";
 const INDENT = "shrink-0";
 const CHILDREN_BODY = "flex flex-col grow min-w-0";
@@ -95,16 +110,15 @@ type OptionSource<T, V extends string> =
 			loading?: never;
 	  };
 
-/** Several choices from one list, static or from a query. `V` is read off the options or the `option` map's `value`. */
+type OptionListBase<V extends string, T> = OptionSource<T, V> & {
+	/** What a chosen option opens, under the first one chosen at its label's start. */
+	children?: ReactNode;
+};
+
+/** One choice or several from one list, static or from a query: `value` one value or null draws radio rows, a set check rows. `V` is read off the options or the `option` map's `value`. */
 export type OptionListProps<V extends string = string, T = unknown> = Closed &
-	OptionSource<T, V> & {
-		/** The chosen options' values. */
-		value: readonly V[];
-		/** Hears the whole chosen set after a toggle. */
-		onChange: (value: V[]) => void;
-		/** What a chosen option opens, under the first one chosen at its label's start. */
-		children?: ReactNode;
-	};
+	OptionListBase<V, T> &
+	OptionChoice<V>;
 
 function groupsOf<V extends string>(
 	options: readonly Option<V>[] | readonly OptionGroup<V>[],
@@ -194,11 +208,17 @@ function Wait(props: { shape: OptionShape }) {
 	);
 }
 
-/** Option rows on a hairline card, each the Checkbox on its label's first line, a description and the recommended mark on the line under it; the row under the pointer washes, the checked box is the choice. The children stand under the first chosen option. From a query it draws its four states in the card: waiting check rows in the slots `option` declares, a failed line with `sentence` and Retry, the `empty` sentence, then the rows. */
+/** Option rows on a hairline card, each the Checkbox (several choices) or the radio (one choice, a radiogroup) on its label's first line, a description and the recommended mark on the line under it; the row under the pointer washes, the checked box or the ringed dot is the choice. The children stand under the first chosen option. From a query it draws its four states in the card: waiting rows in the slots `option` declares, a failed line with `sentence` and Retry, the `empty` sentence, then the rows. */
+export function OptionList<V extends string = string, T = unknown>(
+	props: Closed & OptionListBase<V, T> & OneChoice<V>,
+): ReactNode;
+export function OptionList<V extends string = string, T = unknown>(
+	props: Closed & OptionListBase<V, T> & SetChoice<V>,
+): ReactNode;
 export function OptionList<V extends string = string, T = unknown>(
 	props: OptionListProps<V, T>,
 ) {
-	const { value, onChange, children } = props;
+	const { children } = props;
 	const words = useWords();
 	const named = use(GroupName);
 	const ids = useId();
@@ -254,88 +274,114 @@ export function OptionList<V extends string = string, T = unknown>(
 	const options = props.query
 		? optionsOf(props.query.data ?? [], props.option)
 		: props.options;
-	const first = value[0];
-	const toggle = (option: V) =>
-		onChange(
-			value.includes(option)
-				? value.filter((each) => each !== option)
-				: [...value, option],
-		);
-	return frame(
-		groupsOf(options).map((group, at) => (
-			// biome-ignore lint/a11y/useSemanticElements: a group of rows, not a form's fieldset
-			<div
-				key={group.label ?? at}
-				role="group"
-				aria-label={group.label}
-				className={cn(SELECT_GROUP, GROUP)}
-			>
-				{group.label ? <GroupLabel>{group.label}</GroupLabel> : null}
-				{group.options.map((option, place) => {
-					const chosen = value.includes(option.value);
-					const marked = option.description || option.recommended;
-					const labelId = `${ids}-${at}-${place}`;
-					const saidId = `${labelId}-said`;
-					return (
-						<Fragment key={option.value}>
-							{/* biome-ignore lint/a11y/noLabelWithoutControl: the Checkbox inside is its control */}
-							<label
-								className={cn(row({ lines: marked ? "two" : "one" }), OPTION)}
-							>
-								<span className={cn(OPTION_LINE, LINE)}>
-									<span className={cn(lineBox({ role: "body" }), BOX_LINE)}>
-										<LabelTarget
-											value={{
-												labelledBy: labelId,
-												describedBy: option.description ? saidId : undefined,
-											}}
+	const one = isOneChoice(props);
+	const chosenValues = chosenOf(props);
+	const first = chosenValues[0];
+	const rows = groupsOf(options).map((group, at) => (
+		// biome-ignore lint/a11y/useSemanticElements: a group of rows, not a form's fieldset
+		<div
+			key={group.label ?? at}
+			role="group"
+			aria-label={group.label}
+			className={cn(SELECT_GROUP, GROUP)}
+		>
+			{group.label ? <GroupLabel>{group.label}</GroupLabel> : null}
+			{group.options.map((option, place) => {
+				const chosen = chosenValues.includes(option.value);
+				const marked = option.description || option.recommended;
+				const labelId = `${ids}-${at}-${place}`;
+				const saidId = `${labelId}-said`;
+				const target = {
+					labelledBy: labelId,
+					describedBy: option.description ? saidId : undefined,
+				};
+				return (
+					<Fragment key={option.value}>
+						{/* biome-ignore lint/a11y/noLabelWithoutControl: the Checkbox or the radio inside is its control */}
+						<label
+							className={cn(row({ lines: marked ? "two" : "one" }), OPTION)}
+						>
+							<span className={cn(OPTION_LINE, LINE)}>
+								<span className={cn(lineBox({ role: "body" }), BOX_LINE)}>
+									{one ? (
+										<Radio.Root
+											value={option.value}
+											aria-labelledby={target.labelledBy}
+											aria-describedby={target.describedBy}
+											className={cn(
+												optionRadio({
+													state: chosen ? "checked" : "unchecked",
+												}),
+												RADIO,
+											)}
 										>
+											<Radio.Indicator className={OPTION_RADIO_DOT} />
+										</Radio.Root>
+									) : (
+										<LabelTarget value={target}>
 											<Checkbox
 												checked={chosen}
-												onChange={() => toggle(option.value)}
+												onChange={() => choose<V>(props, option.value)}
 												label={option.label}
 											/>
 										</LabelTarget>
-									</span>
-									{marked ? (
-										<span className={TEXT}>
-											<span
-												id={labelId}
-												className={cn(text({ role: "body" }), TITLE)}
-											>
-												{option.label}
-											</span>
-											<span className={cn(ROW_META_LINE, DESCRIPTION_LINE)}>
-												{option.description ? (
-													<span id={saidId} className={text({ role: "meta" })}>
-														{option.description}
-													</span>
-												) : null}
-												{option.recommended ? (
-													<Chip family="neutral" label={words.recommended} />
-												) : null}
-											</span>
-										</span>
-									) : (
+									)}
+								</span>
+								{marked ? (
+									<span className={TEXT}>
 										<span
 											id={labelId}
-											className={cn(text({ role: "body" }), LABEL)}
+											className={cn(text({ role: "body" }), TITLE)}
 										>
 											{option.label}
 										</span>
-									)}
-								</span>
-							</label>
-							{option.value === first && chosen && children ? (
-								<div className={cn(OPTION_CHILDREN, CHILDREN)}>
-									<span aria-hidden className={cn(OPTION_INDENT, INDENT)} />
-									<div className={CHILDREN_BODY}>{children}</div>
-								</div>
-							) : null}
-						</Fragment>
-					);
-				})}
-			</div>
-		)),
+										<span className={cn(ROW_META_LINE, DESCRIPTION_LINE)}>
+											{option.description ? (
+												<span id={saidId} className={text({ role: "meta" })}>
+													{option.description}
+												</span>
+											) : null}
+											{option.recommended ? (
+												<Chip family="neutral" label={words.recommended} />
+											) : null}
+										</span>
+									</span>
+								) : (
+									<span
+										id={labelId}
+										className={cn(text({ role: "body" }), LABEL)}
+									>
+										{option.label}
+									</span>
+								)}
+							</span>
+						</label>
+						{option.value === first && chosen && children ? (
+							<div className={cn(OPTION_CHILDREN, CHILDREN)}>
+								<span aria-hidden className={cn(OPTION_INDENT, INDENT)} />
+								<div className={CHILDREN_BODY}>{children}</div>
+							</div>
+						) : null}
+					</Fragment>
+				);
+			})}
+		</div>
+	));
+	if (!one) return frame(rows);
+	// One choice is a radiogroup: Base UI moves between its radios by the
+	// arrows and chooses the one it reaches. Null, not undefined, keeps it
+	// controlled while nothing is chosen.
+	return (
+		<RadioGroup<V | null>
+			value={props.value}
+			onValueChange={(next) => {
+				if (next !== null) choose<V>(props, next);
+			}}
+			aria-labelledby={named?.labelledBy}
+			aria-describedby={named?.describedBy}
+			className={cn(OPTION_LIST, LIST)}
+		>
+			{rows}
+		</RadioGroup>
 	);
 }

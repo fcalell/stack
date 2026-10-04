@@ -912,6 +912,14 @@ components:
     width: "{spacing.check}"
     rounded: "{rounded.chip}"
     backgroundColor: "{colors.toggle-on-dark}"
+  option-radio-unchecked:
+    height: "{spacing.check}"
+    width: "{spacing.check}"
+    rounded: "{rounded.full}"
+  option-radio-checked:
+    height: "{spacing.check}"
+    width: "{spacing.check}"
+    rounded: "{rounded.full}"
   row-one:
     height: "{spacing.row}"
     rounded: "{rounded.row}"
@@ -1595,6 +1603,16 @@ components:
     padding: "{spacing.float}"
     rounded: "{rounded.card}"
     backgroundColor: "{colors.surface-dark}"
+  option-radio-dot:
+    height: "{spacing.dot}"
+    width: "{spacing.dot}"
+    rounded: "{rounded.full}"
+    backgroundColor: "{colors.toggle-on}"
+  option-radio-dot-dark:
+    height: "{spacing.dot}"
+    width: "{spacing.dot}"
+    rounded: "{rounded.full}"
+    backgroundColor: "{colors.toggle-on-dark}"
   otp-digit:
     typography: "{typography.heading}"
     textColor: "{colors.ink-body}"
@@ -2045,7 +2063,7 @@ The front matter's components are the matrix cells: one entry per axis value of 
 | `Sheet` | shared | `SHEET`, `SHEET_SIDE`, `SHEET_CENTERED`, `SHEET_HEAD`, `SHEET_HEAD_ROW`, `SHEET_BODY`, `SHEET_FOOT`, `SCRIM`, `TEXT.role.heading`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `TEXT.role.meta`, `ICON_BUTTON.fit.bar`, `ICON_BUTTON.fit.body`, `BUTTON.act.primary`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.primary` | rest, disabled, loading |
 | `Picker` | shared | `PICKER`, `HAIRLINE`, `ROW_LEADING`, `AVATAR`, `AVATAR_LABEL`, `PILL_ACT`, `PICKER_VALUE`, `ICON.fit.meta`, `FIELD.fit.bar`, `FIELD.trailing.none`, `FIELD.state.rest`, `FIELD_VALUE.kind.text`, `FIELD_VALUE.kind.search`, `FIELD_PLACEHOLDER`, `FIELD_GLYPH`, `ICON.fit.control`, `PICKER_EMPTY`, `POPOVER`, `PICKER_POPOVER`, `SELECT_GROUP`, `ROW.lines.one`, `ROW.lines.two`, `ROW.state.rest`, `ROW.state.highlighted`, `ROW.state.pressed`, `ROW.ground.list`, `ROW.ground.group`, `TEXT.role.body`, `TEXT.role.meta`, `ICON.fit.body` | rest, hover, focus, active, selected |
 | `Menu` | shared | `MENU`, `MENU_GROUP`, `MENU_LABEL`, `POPOVER`, `ROW.lines.one`, `ROW.lines.two`, `ROW.state.rest`, `ROW.state.highlighted`, `ROW.state.pressed`, `ROW.ground.list`, `TEXT.role.body`, `TEXT.role.meta`, `ICON.fit.body`, `ICON_BUTTON.fit.bar`, `ICON_BUTTON.fit.body` | rest, hover, focus, active |
-| `OptionList` | shared | `OPTION_LIST`, `SELECT_GROUP`, `OPTION_GROUP_LABEL`, `TEXT.role.meta`, `TEXT_STRONG.role.meta`, `ROW.lines.one`, `ROW.lines.two`, `ROW.state.rest`, `ROW.state.highlighted`, `ROW.state.pressed`, `ROW.ground.list`, `OPTION_LINE`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `CHECKBOX`, `CHECKBOX_MARK`, `TEXT.role.body`, `ROW_TITLE_LINE`, `ROW_META_LINE`, `CHIP.family.neutral`, `CHIP_LABEL.family.neutral`, `OPTION_CHILDREN`, `OPTION_INDENT`, `SKELETON.kind.check`, `SKELETON.kind.line`, `SKELETON_LANE`, `BUTTON.act.secondary`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.secondary` | rest, hover, focus, active, loading, error, empty, selected |
+| `OptionList` | shared | `OPTION_LIST`, `SELECT_GROUP`, `OPTION_GROUP_LABEL`, `TEXT.role.meta`, `TEXT_STRONG.role.meta`, `ROW.lines.one`, `ROW.lines.two`, `ROW.state.rest`, `ROW.state.highlighted`, `ROW.state.pressed`, `ROW.ground.list`, `OPTION_LINE`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `CHECKBOX`, `CHECKBOX_MARK`, `OPTION_RADIO`, `OPTION_RADIO_DOT`, `TEXT.role.body`, `ROW_TITLE_LINE`, `ROW_META_LINE`, `CHIP.family.neutral`, `CHIP_LABEL.family.neutral`, `OPTION_CHILDREN`, `OPTION_INDENT`, `SKELETON.kind.check`, `SKELETON.kind.line`, `SKELETON_LANE`, `BUTTON.act.secondary`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.secondary` | rest, hover, focus, active, loading, error, empty, selected |
 | `EmptyState` | shared | `EMPTY_COLUMN`, `EMPTY_TEXT`, `EMPTY_FRAME`, `EMPTY_CARD`, `EMPTY_MARK`, `ICON.fit.control`, `TEXT.role.title`, `TEXT.role.heading`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `TEXT.role.meta`, `BUTTON.act.primary`, `BUTTON.act.secondary`, `BUTTON.fit.bar`, `BUTTON.fit.body`, `BUTTON_LABEL.act.primary`, `BUTTON_LABEL.act.secondary` | rest |
 | `QueryBoundary` | shared | none | rest, loading, error |
 | `Toast` | shared | `TOAST`, `TOAST_STATE`, `ICON.fit.body`, `TEXT.role.body`, `BUTTON.act.secondary`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.secondary`, `ICON_BUTTON.fit.bar` | rest |
@@ -2105,7 +2123,7 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | `Sheet` | `heading`, `body`, `meta` | `scrim`, `raised`, `edge-raised`, `edge`, `ink-body`, `ink-meta`, `act-accent`, `on-act-accent` | `sheet`, `control` | `pair`, `card`, `acts`, `fields`, `inside`, `control-x` | `sheet`, `pane`, `dialog`, `control`, `control-compact` | `modal` |
 | `Picker` | `body`, `meta`, `caption` | `ink-body`, `ink-meta`, `surface`, `edge`, `edge-hover`, `raised`, `avatar-`, `edge-raised`, `wash-hover`, `wash-press`, `ring` | `full`, `control`, `popover`, `row` | `inside`, `pair`, `float`, `rows`, `control-x`, `card` | `target`, `control-compact`, `popover`, `avatar`, `row`, `row-2`, `icon-meta`, `icon`, `icon-control` | `float` |
 | `Menu` | `body`, `meta` | `raised`, `edge-raised`, `edge`, `ink-body`, `ink-meta`, `ink-disabled`, `danger`, `wash-hover`, `wash-press` | `popover`, `row`, `control` | `pair`, `float`, `rows`, `inside`, `control-x` | `popover`, `row`, `row-2`, `icon`, `control`, `control-compact` | `float` |
-| `OptionList` | `body`, `meta`, `caption` | `surface`, `edge`, `edge-strong`, `ink-body`, `ink-meta`, `toggle-on`, `on-accent`, `wash-hover`, `wash-press`, `skeleton`, `chip-` | `card`, `row`, `chip`, `full`, `control` | `pair`, `float`, `rows`, `control-x`, `inside` | `row`, `row-2`, `check`, `icon-meta`, `chip`, `measure-short`, `skeleton`, `control-compact` | none |
+| `OptionList` | `body`, `meta`, `caption` | `surface`, `edge`, `edge-strong`, `ink-body`, `ink-meta`, `toggle-on`, `on-accent`, `ring`, `wash-hover`, `wash-press`, `skeleton`, `chip-` | `card`, `row`, `chip`, `full`, `control` | `pair`, `float`, `rows`, `control-x`, `inside` | `row`, `row-2`, `check`, `dot`, `icon-meta`, `chip`, `measure-short`, `skeleton`, `control-compact` | none |
 | `EmptyState` | `title`, `heading`, `body`, `meta` | `fill-neutral`, `ink-body`, `ink-meta`, `danger`, `edge`, `act-accent`, `on-act-accent` | `full`, `card`, `control` | `fields`, `pair`, `card`, `inside`, `control-x`, `acts` | `empty`, `control`, `control-compact`, `icon-control` | none |
 | `Toast` | `body` | `raised`, `edge-raised`, `edge`, `ink-body`, `ink-meta`, `ok`, `warn`, `danger` | `card`, `control` | `card`, `pair`, `inside`, `control-x` | `toast`, `icon`, `control-compact` | `float` |
 | `Banner` | `body`, `meta` | `ink-body`, `ink-meta`, `edge`, `accent-soft`, `accent-ink`, `warn-soft`, `warn`, `danger-soft`, `danger` | `control` | `control-x`, `pair`, `inside` | `icon`, `control-compact` | none |

@@ -1206,10 +1206,11 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			},
 		},
 		// Check rows under group labels on a hairline card, a chosen option
-		// checked (the row takes no wash), the recommended mark on its
-		// description line; the children under a chosen option at its label's
-		// start. From a query, its failed line (`sentence` beside Retry) and its
-		// `empty` sentence stand in the card.
+		// checked (the row takes no wash); radio rows when `value` is one value
+		// or null, a radiogroup whose chosen ring holds its dot. The
+		// recommended mark on its description line; the children under a
+		// chosen option at its label's start. From a query, its failed line
+		// (`sentence` beside Retry) and its `empty` sentence stand in the card.
 		OptionList: {
 			props: [
 				"options",
@@ -1239,6 +1240,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"LINE_BOX.role.meta",
 				"CHECKBOX",
 				"CHECKBOX_MARK",
+				"OPTION_RADIO",
+				"OPTION_RADIO_DOT",
 				"TEXT.role.body",
 				"ROW_TITLE_LINE",
 				"ROW_META_LINE",
@@ -1253,7 +1256,14 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"BUTTON.fit.bar",
 				"BUTTON_LABEL.act.secondary",
 			],
-			holds: ["OPTION_LIST", "OPTION_LINE", "OPTION_CHILDREN", "OPTION_INDENT"],
+			holds: [
+				"OPTION_LIST",
+				"OPTION_LINE",
+				"OPTION_CHILDREN",
+				"OPTION_INDENT",
+				"OPTION_RADIO",
+				"OPTION_RADIO_DOT",
+			],
 			states: [...PRESS, "loading", "error", "empty", "selected"],
 			owns: {
 				roles: ["body", "meta", "caption"],
@@ -1265,6 +1275,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"ink-meta",
 					"toggle-on",
 					"on-accent",
+					"ring",
 					"wash-hover",
 					"wash-press",
 					"skeleton",
@@ -1276,6 +1287,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"row",
 					"row-2",
 					"check",
+					"dot",
 					"icon-meta",
 					"chip",
 					"measure-short",

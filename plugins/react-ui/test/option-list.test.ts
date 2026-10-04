@@ -1,5 +1,8 @@
 import { test } from "node:test";
-import type { OptionListProps } from "../src/ui/components/option-list/index.tsx";
+import type {
+	OptionList,
+	OptionListProps,
+} from "../src/ui/components/option-list/index.tsx";
 
 interface Scope {
 	id: string;
@@ -51,4 +54,89 @@ test("a query's OptionList names its failure and its empty sentence", () => {
 	// @ts-expect-error: a query needs its `sentence` and `empty`
 	const bare: OptionListProps<string, Scope> = { ...chosen, query, option };
 	void bare;
+});
+
+// The component's own signatures, called as JSX calls them; never run.
+declare const optionList: typeof OptionList;
+type Plan = "free" | "pro";
+const PLANS: { value: Plan; label: string }[] = [
+	{ value: "free", label: "Free" },
+	{ value: "pro", label: "Pro" },
+];
+const plans = { ...query, data: [] as { id: Plan }[] };
+
+test("one value or null types an inline `onChange` with one value", () => {
+	const typed = (one: Plan | null) => [
+		optionList({
+			options: PLANS,
+			value: one,
+			onChange: (next) => {
+				const picked: Plan = next;
+				void picked;
+			},
+		}),
+		optionList({
+			options: PLANS,
+			value: null,
+			onChange: (next) => {
+				const picked: Plan = next;
+				void picked;
+			},
+		}),
+		optionList({
+			query: plans,
+			option: { value: (each) => each.id, label: (each) => each.id },
+			sentence: "x",
+			empty: "x",
+			value: one,
+			onChange: (next) => {
+				const picked: Plan = next;
+				void picked;
+			},
+		}),
+	];
+	void typed;
+});
+
+test("a set types an inline `onChange` with the set, and each form refuses the other's", () => {
+	const typed = (set: Plan[]) => [
+		optionList({
+			options: PLANS,
+			value: set,
+			onChange: (next) => {
+				const picked: Plan[] = next;
+				void picked;
+			},
+		}),
+		optionList({
+			query: plans,
+			option: { value: (each) => each.id, label: (each) => each.id },
+			sentence: "x",
+			empty: "x",
+			value: set,
+			onChange: (next) => {
+				const picked: Plan[] = next;
+				void picked;
+			},
+		}),
+		optionList({
+			options: PLANS,
+			value: set,
+			onChange: (next) => {
+				// @ts-expect-error: a set's onChange hears the set
+				const picked: Plan = next;
+				void picked;
+			},
+		}),
+		optionList({
+			options: PLANS,
+			value: null,
+			onChange: (next) => {
+				// @ts-expect-error: one choice's onChange hears one value
+				const picked: Plan[] = next;
+				void picked;
+			},
+		}),
+	];
+	void typed;
 });
