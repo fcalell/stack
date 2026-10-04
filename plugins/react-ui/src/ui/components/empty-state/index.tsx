@@ -17,7 +17,7 @@ export interface EmptyStateProps extends Closed {
 	children?: ReactNode;
 }
 
-/** The mark, the title over the sentence, and the act, in a column at the empty width, its form decided by where it stands: on a page (a Place or a Screen) it centres in what the body leaves, or stands at the body's top over its children, its title at the heading role and its act the filled one with the plus; in a Section it stands in a hairline frame, its title at body 500 and its act the hairline one; anywhere else it is a first run, its title at the title role and its acts stacked across the column. */
+/** The mark, the title over the sentence, and the act, in a column at the empty width, its form decided by where it stands: on a page (a Place or a Screen) it centres in what the body leaves, or stands at the body's top over its children, its title at the heading role and its act the filled one with the plus; in a Section it stands in a hairline frame, and in a Group in the card (the card its frame), its title at body 500 and its act the hairline one; anywhere else it is a first run, its title at the title role and its acts stacked across the column. */
 export function EmptyState({
 	icon,
 	title,

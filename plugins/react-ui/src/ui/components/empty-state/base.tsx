@@ -1,6 +1,7 @@
 import { cn } from "@fcalell/ui-core/cn";
 import type { Act, IconName } from "@fcalell/ui-core/descriptors";
 import {
+	EMPTY_CARD,
 	EMPTY_COLUMN,
 	EMPTY_FRAME,
 	EMPTY_MARK,
@@ -10,6 +11,7 @@ import {
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, use } from "react";
 import { PageTitle } from "../../lib/frame.ts";
+import { GroundContext } from "../../lib/ground.ts";
 import { HeadingContext } from "../../lib/heading.ts";
 import { SectionContext } from "../../lib/section.ts";
 import { Button } from "../button/index.tsx";
@@ -39,7 +41,10 @@ export function EmptyStateBase(props: {
 	act?: Act;
 	children?: ReactNode;
 }) {
+	// In a Section it stands framed; in a Group the card is its frame.
+	const inGroup = use(GroundContext) === "group";
 	const section = use(SectionContext) !== undefined;
+	const framed = inGroup || section;
 	const page = use(PageTitle) !== undefined;
 	const level = use(HeadingContext);
 	const glyph = props.tone === "failed" ? "CircleAlert" : props.icon;
@@ -50,13 +55,13 @@ export function EmptyStateBase(props: {
 	) : null;
 	const { act } = props;
 	// Where it stands picks the form: the title's role and the act's look.
-	if (section || !page) {
-		const Title = section ? "p" : "h1";
+	if (framed || !page) {
+		const Title = framed ? "p" : "h1";
 		const title =
 			props.title === undefined ? null : (
 				<Title
 					className={
-						section
+						framed
 							? cn(text({ role: "body" }), textStrong({ role: "body" }))
 							: text({ role: "title" })
 					}
@@ -72,17 +77,17 @@ export function EmptyStateBase(props: {
 		);
 		const button = act ? (
 			<Button
-				act={section ? "secondary" : "primary"}
-				fit={section ? "bar" : "body"}
+				act={framed ? "secondary" : "primary"}
+				fit={framed ? "bar" : "body"}
 				label={act.label}
 				onAct={act.onAct}
 				loading={act.loading}
 				blocked={act.blocked}
 			/>
 		) : null;
-		if (section)
+		if (framed)
 			return (
-				<div className={cn(EMPTY_FRAME, FRAME)}>
+				<div className={cn(inGroup ? EMPTY_CARD : EMPTY_FRAME, FRAME)}>
 					<div className={cn(EMPTY_COLUMN, COLUMN)}>
 						{mark}
 						{words}

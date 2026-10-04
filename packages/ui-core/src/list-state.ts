@@ -2,6 +2,8 @@
 // free of any framework: both platforms run this one source, and it is
 // tested without rendering.
 
+import type { RowGround } from "./variants.ts";
+
 export type ListState = "pending" | "failed" | "empty" | "loaded";
 
 export interface ListInput {
@@ -57,6 +59,21 @@ export function retryOf(query: { refetch: () => unknown }): () => void {
 	return () => {
 		query.refetch();
 	};
+}
+
+// What a list's rows stand on: in a `Group`, the card (at the card's inset,
+// the group's hairline once between them, the card their box and the frame
+// of its failed and empty forms); anywhere else the list ground, in the
+// list's own box.
+export function listGround(inGroup: boolean): RowGround {
+	return inGroup ? "group" : "list";
+}
+
+// What a waiting `Group` draws: the waiting rows of the Lists it holds
+// (however deep), each in the slots its map declares; with no List, setting
+// row skeletons in place of its static rows.
+export function groupWait(lists: number): "rows" | "settings" {
+	return lists > 0 ? "rows" : "settings";
 }
 
 // The kind of mark every row of a list leads with.

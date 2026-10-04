@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
+	groupWait,
 	type ListInput,
 	listBusy,
 	listCount,
+	listGround,
 	listState,
 	listWaits,
 	retryOf,
@@ -161,4 +163,15 @@ test("a Section shows its own count, else its lists' total once every list has a
 	assert.equal(sectionCount(undefined, [0]), undefined);
 	assert.equal(sectionCount(undefined, [0, 0]), undefined);
 	assert.equal(sectionCount(0, [3]), undefined);
+});
+
+test("a List in a Group draws group rows; the same List outside draws list rows", () => {
+	assert.equal(listGround(true), "group");
+	assert.equal(listGround(false), "list");
+});
+
+test("a waiting Group draws its Lists' waiting rows, else setting row skeletons", () => {
+	assert.equal(groupWait(1), "rows");
+	assert.equal(groupWait(2), "rows");
+	assert.equal(groupWait(0), "settings");
 });

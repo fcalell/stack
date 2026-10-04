@@ -9,15 +9,17 @@ import type {
 import {
 	listBusy,
 	listCount,
+	listGround,
 	listState,
 	listWaits,
 	retryOf,
 	rowShape,
 } from "@fcalell/ui-core/list-state";
 import { LIST } from "@fcalell/ui-core/variants";
-import { type ReactNode, useContext } from "react";
+import { type ReactElement, useContext } from "react";
 import { View } from "react-native";
 import type { Closed } from "../../lib/closed";
+import { between, useGroupList } from "../../lib/group";
 import { LoadingContext } from "../../lib/loading";
 import {
 	useSectionCount,
@@ -132,7 +134,9 @@ export type ListProps<T = unknown, V extends string | null = string> = Closed &
 // `loading` is set or a loading Section around it waits, waiting rows stand
 // in the slots its map declares (a Section around a pending query busy, its
 // count waiting); a failed query draws the failed EmptyState with
-// `sentence` and Retry; no item draws `empty`; then one row per item.
+// `sentence` and Retry; no item draws `empty`; then one row per item. In a
+// Group its rows, waiting rows and failed and empty forms stand on the card,
+// the hairline once between rows.
 export function List<T, V extends string | null = string>(
 	props: ListProps<T, V>,
 ) {
@@ -148,12 +152,23 @@ export function List<T, V extends string | null = string>(
 	const input = { ...base, inSection: useSectionWait(listWaits(base)) };
 	useSectionCount(listCount(input));
 	useSectionRows();
+	const busy = listBusy(input);
+	const ground = listGround(useGroupList(busy));
 	const state = listState(input);
-	const frame = (rows: ReactNode) => (
-		<View accessibilityState={{ busy: listBusy(input) }} className={LIST}>
-			{rows}
-		</View>
-	);
+	// In a Group the card is the rows' box: each row after the first draws
+	// the group's hairline above it.
+	const frame = (rows: readonly ReactElement[]) =>
+		ground === "group" ? (
+			rows.map((row, index) => (
+				<View key={row.key ?? index} className={between(index)}>
+					{row}
+				</View>
+			))
+		) : (
+			<View accessibilityState={{ busy }} className={LIST}>
+				{rows}
+			</View>
+		);
 	if (state === "pending") {
 		const shape = props.row ? rowShape(props.row) : undefined;
 		return frame(

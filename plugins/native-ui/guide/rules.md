@@ -43,7 +43,9 @@ A collection takes data and draws its four states. A `List` takes its `query` (o
 declare a slot only if every item fills it. Pending, it waits in those slots; failed, it shows
 `sentence` and Retry; empty, `empty`, with the act that fills it. Rows share one `leading` kind
 (`avatar`, `icon` or `status`) or none. The first meta part names the item; it and the status
-stay whole as the later parts, then the chip, truncate. A Section counts them.
+stay whole as the later parts, then the chip, truncate. A Section counts them. A `Group` holds
+static rows; rows from data in a card are a `List` placed in the `Group`, drawing its four states
+on the card, never a `.map` of `ListRow`s.
 
 ```tsx
 <List

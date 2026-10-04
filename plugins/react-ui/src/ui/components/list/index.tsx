@@ -10,6 +10,7 @@ import type {
 import {
 	listBusy,
 	listCount,
+	listGround,
 	listState,
 	listWaits,
 	retryOf,
@@ -18,6 +19,7 @@ import {
 import { LIST } from "@fcalell/ui-core/variants";
 import { type ReactNode, use } from "react";
 import type { Closed } from "../../lib/closed.ts";
+import { useGroupList } from "../../lib/group.ts";
 import { LoadingContext } from "../../lib/loading.ts";
 import {
 	useSectionCount,
@@ -150,7 +152,7 @@ export type ListProps<T = unknown, V extends string | null = string> = Closed &
 	ListSource<T> &
 	ListKind<T, V>;
 
-/** Rows on the ground at the rows rhythm, with no box and no hairlines: a feed. It draws its collection's four states: while its query is pending, `loading` is set or a loading Section around it waits, waiting rows stand in the slots its map declares (a Section around a pending query busy, its count waiting); a failed query draws the failed EmptyState with `sentence` and Retry; no item draws `empty`; then one row per item. */
+/** Rows on the ground at the rows rhythm, with no box and no hairlines: a feed. It draws its collection's four states: while its query is pending, `loading` is set or a loading Section around it waits, waiting rows stand in the slots its map declares (a Section around a pending query busy, its count waiting); a failed query draws the failed EmptyState with `sentence` and Retry; no item draws `empty`; then one row per item. In a Group its rows, waiting rows and failed and empty forms stand on the card, the hairline once between rows. */
 export function List<T, V extends string | null = string>(
 	props: ListProps<T, V>,
 ) {
@@ -166,12 +168,19 @@ export function List<T, V extends string | null = string>(
 	const input = { ...base, inSection: useSectionWait(listWaits(base)) };
 	useSectionCount(listCount(input));
 	useSectionRows();
+	const busy = listBusy(input);
+	const ground = listGround(useGroupList(busy));
 	const state = listState(input);
-	const frame = (rows: ReactNode) => (
-		<div aria-busy={listBusy(input) || undefined} className={cn(LIST, STACK)}>
-			{rows}
-		</div>
-	);
+	// In a Group the card is the rows' box: they stand in it directly, so its
+	// hairline falls once between them.
+	const frame = (rows: ReactNode) =>
+		ground === "group" ? (
+			rows
+		) : (
+			<div aria-busy={busy || undefined} className={cn(LIST, STACK)}>
+				{rows}
+			</div>
+		);
 	if (state === "pending") {
 		const shape = props.row ? rowShape(props.row) : undefined;
 		return frame(

@@ -420,10 +420,12 @@ export const SHEET_FOOT =
 	"gap-acts px-card py-card border-t border-edge bg-raised";
 // An empty state: its column at the empty width (the mark, the text, the
 // act a fields gap apart), the title over the sentence a pair apart, and in a
-// Section a hairline frame at the card inset around it.
+// Section a hairline frame at the card inset around it; in a Group the card
+// is its frame, so it stands at the card inset alone.
 export const EMPTY_COLUMN = "gap-fields w-full max-w-empty";
 export const EMPTY_TEXT = "gap-pair";
 export const EMPTY_FRAME = "p-card rounded-card border border-edge";
+export const EMPTY_CARD = "p-card";
 // An empty state's mark: its glyph in a control-sized disc on the neutral
 // ground, in the ink of its place (meta, or danger for a failed query).
 export const EMPTY_MARK = "size-control rounded-full bg-fill-neutral";

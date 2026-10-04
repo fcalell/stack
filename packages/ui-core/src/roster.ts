@@ -630,7 +630,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// A collection: its rows from `query` or `items` through one item map
 		// (`row` for ListRows, `file` for FileRows), its waiting rows the row's
 		// own in the slots the map declares, its failed and empty EmptyStates its
-		// own.
+		// own. In a Group its rows and forms stand on the card, the card their
+		// box.
 		List: {
 			props: ["query", "sentence", "empty", "row", "file", "items", "loading"],
 			draws: ["LIST"],
@@ -1262,13 +1263,15 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// Its column at the empty width: the mark (the control disc holding
 		// `icon` at the control fit), the title at the role of where it stands
 		// (heading on a page, body 500 in a Section, title on a first run) and
-		// the act; in a Section a hairline frame around it.
+		// the act; in a Section a hairline frame around it, in a Group the
+		// card's.
 		EmptyState: {
 			props: ["icon", "title", "sentence", "act", "children"],
 			draws: [
 				"EMPTY_COLUMN",
 				"EMPTY_TEXT",
 				"EMPTY_FRAME",
+				"EMPTY_CARD",
 				"EMPTY_MARK",
 				"ICON.fit.control",
 				"TEXT.role.title",
@@ -1283,7 +1286,13 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"BUTTON_LABEL.act.primary",
 				"BUTTON_LABEL.act.secondary",
 			],
-			holds: ["EMPTY_COLUMN", "EMPTY_TEXT", "EMPTY_FRAME", "EMPTY_MARK"],
+			holds: [
+				"EMPTY_COLUMN",
+				"EMPTY_TEXT",
+				"EMPTY_FRAME",
+				"EMPTY_CARD",
+				"EMPTY_MARK",
+			],
 			states: ["rest"],
 			owns: {
 				roles: ["title", "heading", "body", "meta"],

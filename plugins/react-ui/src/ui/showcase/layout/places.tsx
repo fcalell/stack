@@ -10,7 +10,6 @@ import { Group } from "../../components/group/index.tsx";
 import { InputOtp } from "../../components/input-otp/index.tsx";
 import { Link } from "../../components/link/index.tsx";
 import { List } from "../../components/list/index.tsx";
-import { ListRow } from "../../components/list-row/index.tsx";
 import { Place } from "../../components/place/index.tsx";
 import { Screen } from "../../components/screen/index.tsx";
 import { Section } from "../../components/section/index.tsx";
@@ -18,7 +17,7 @@ import { Split } from "../../components/split/index.tsx";
 import { Text } from "../../components/text/index.tsx";
 import { navigate } from "../../lib/navigate.ts";
 import { toast } from "../../lib/toast.ts";
-import { act, settle, useTo } from "./here.ts";
+import { act, settle, useFixture, useTo } from "./here.ts";
 
 // ── Projects: a board, a column per stage ───────────────────────────
 
@@ -47,29 +46,42 @@ const STAGES = [
 	},
 ];
 
+type Project = (typeof STAGES)[number]["projects"][number];
+
+// A stage's projects, from their own query, on the stage's card.
+function Stage(props: { title: string; projects: readonly Project[] }) {
+	const projects = useFixture(props.projects);
+	return (
+		<Section title={props.title}>
+			<Group>
+				<List
+					query={projects}
+					sentence="Projects did not load."
+					empty={{ sentence: `No project is in ${props.title}.` }}
+					row={{
+						key: (project) => project.name,
+						leading: { icon: () => "Folder" },
+						title: (project) => project.name,
+						meta: (project) => [project.meta],
+						trailing: (project) => ({ age: project.age }),
+						href: (project) => `#${project.name}`,
+					}}
+				/>
+			</Group>
+		</Section>
+	);
+}
+
 export function Projects() {
 	return (
 		<Place title="Projects" act={{ label: "New project", onAct: act }}>
 			<Columns>
 				{STAGES.map((stage) => (
-					<Section
+					<Stage
 						key={stage.title}
 						title={stage.title}
-						count={stage.projects.length}
-					>
-						<Group>
-							{stage.projects.map((project) => (
-								<ListRow
-									key={project.name}
-									leading={{ icon: "Folder" }}
-									title={project.name}
-									meta={[project.meta]}
-									trailing={{ age: project.age }}
-									href={`#${project.name}`}
-								/>
-							))}
-						</Group>
-					</Section>
+						projects={stage.projects}
+					/>
 				))}
 			</Columns>
 		</Place>

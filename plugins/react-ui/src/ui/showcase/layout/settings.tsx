@@ -7,7 +7,7 @@ import { Form } from "../../components/form/index.tsx";
 import { FormField } from "../../components/form-field/index.tsx";
 import { Group } from "../../components/group/index.tsx";
 import { Input } from "../../components/input/index.tsx";
-import { ListRow } from "../../components/list-row/index.tsx";
+import { List } from "../../components/list/index.tsx";
 import { Place } from "../../components/place/index.tsx";
 import { QrCode } from "../../components/qr-code/index.tsx";
 import { Section } from "../../components/section/index.tsx";
@@ -17,7 +17,7 @@ import { Slider } from "../../components/slider/index.tsx";
 import { Switch } from "../../components/switch/index.tsx";
 import { TextArea } from "../../components/text-area/index.tsx";
 import { toast } from "../../lib/toast.ts";
-import { act, settle } from "./here.ts";
+import { act, settle, useFixture } from "./here.ts";
 
 const REGIONS = [
 	{ value: "fra", label: "Frankfurt, eu-central-1" },
@@ -53,6 +53,7 @@ export function Settings() {
 	const [threshold, setThreshold] = useState(5);
 	const [image, setImage] = useState("node-24");
 	const [devices, setDevices] = useState(["Ana's Pixel 9"]);
+	const paired = useFixture(devices);
 	return (
 		<Place title="Settings">
 			<Form>
@@ -120,35 +121,39 @@ export function Settings() {
 				</Section>
 				<Section
 					title="Devices"
-					count={devices.length}
 					description="Scan the code with the Acme app on your phone to get deploy alerts there."
 				>
 					<QrCode value="https://acme.dev/pair/7KQ2XM" />
-					{devices.length > 0 ? (
-						<Group>
-							{devices.map((device) => (
-								<ListRow
-									key={device}
-									leading={{ icon: "Smartphone" }}
-									title={device}
-									meta={["Paired Sep 12"]}
-									more={[
-										{
-											label: "Unpair",
-											icon: "Unlink",
-											destructive: true,
-											onAct: () => {
-												setDevices((all) =>
-													all.filter((each) => each !== device),
-												);
-												toast(`${device} unpaired`, { state: "done" });
-											},
+					<Group>
+						<List
+							query={paired}
+							sentence="Paired devices did not load."
+							empty={{
+								icon: "Smartphone",
+								title: "No devices",
+								sentence: "A phone that scans the code shows here.",
+							}}
+							row={{
+								key: (device) => device,
+								leading: { icon: () => "Smartphone" },
+								title: (device) => device,
+								meta: () => ["Paired Sep 12"],
+								more: (device) => [
+									{
+										label: "Unpair",
+										icon: "Unlink",
+										destructive: true,
+										onAct: () => {
+											setDevices((all) =>
+												all.filter((each) => each !== device),
+											);
+											toast(`${device} unpaired`, { state: "done" });
 										},
-									]}
-								/>
-							))}
-						</Group>
-					) : null}
+									},
+								],
+							}}
+						/>
+					</Group>
 				</Section>
 				<Banner
 					kind="warn"

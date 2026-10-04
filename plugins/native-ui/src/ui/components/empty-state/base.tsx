@@ -1,5 +1,6 @@
 import type { Act, IconName } from "@fcalell/ui-core/descriptors";
 import {
+	EMPTY_CARD,
 	EMPTY_COLUMN,
 	EMPTY_FRAME,
 	EMPTY_MARK,
@@ -11,6 +12,7 @@ import { type ReactNode, useContext } from "react";
 import { Text as RNText, View } from "react-native";
 import { cn } from "../../lib/cn";
 import { PageTitle } from "../../lib/frame";
+import { GroundContext } from "../../lib/ground";
 import { Ink } from "../../lib/ink";
 import { SectionContext } from "../../lib/section";
 import { Button } from "../button";
@@ -40,7 +42,10 @@ export function EmptyStateBase(props: {
 	act?: Act;
 	children?: ReactNode;
 }) {
+	// In a Section it stands framed; in a Group the card is its frame.
+	const inGroup = useContext(GroundContext) === "group";
 	const section = useContext(SectionContext) !== undefined;
+	const framed = inGroup || section;
 	const page = useContext(PageTitle) !== undefined;
 	const glyph = props.tone === "failed" ? "CircleAlert" : props.icon;
 	const mark = glyph ? (
@@ -57,13 +62,13 @@ export function EmptyStateBase(props: {
 	);
 	const { act } = props;
 	// Where it stands picks the form: the title's role and the act's look.
-	if (section || !page) {
+	if (framed || !page) {
 		const title =
 			props.title === undefined ? null : (
 				<RNText
-					accessibilityRole={section ? undefined : "header"}
+					accessibilityRole={framed ? undefined : "header"}
 					className={cn(
-						section
+						framed
 							? cn(text({ role: "body" }), textStrong({ role: "body" }))
 							: text({ role: "title" }),
 						LINE,
@@ -80,17 +85,17 @@ export function EmptyStateBase(props: {
 		);
 		const button = act ? (
 			<Button
-				act={section ? "secondary" : "primary"}
-				fit={section ? "bar" : "body"}
+				act={framed ? "secondary" : "primary"}
+				fit={framed ? "bar" : "body"}
 				label={act.label}
 				onAct={act.onAct}
 				loading={act.loading}
 				blocked={act.blocked}
 			/>
 		) : null;
-		if (section)
+		if (framed)
 			return (
-				<View className={cn(EMPTY_FRAME, FRAME)}>
+				<View className={cn(inGroup ? EMPTY_CARD : EMPTY_FRAME, FRAME)}>
 					<View className={cn(EMPTY_COLUMN, COLUMN)}>
 						{mark}
 						{words}

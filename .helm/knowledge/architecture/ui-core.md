@@ -378,6 +378,15 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
   a List in a Section draws no count placeholder while pending, for the List is not mounted to
   report one (unless the loading form is itself a List); a List taking its own query reports from
   its first render.
+- `Group` is composition: its children are static rows. A set of rows from data is a `List`
+  placed in the Group, which registers with it through `GroupContext` (however deep) and draws
+  on the card: its rows and waiting rows at the group ground (`listGround`), the Group's hairline
+  once between them (web: the rows stand in the card directly, under `GROUP`'s `divide-*`;
+  phone: each row after the first draws it on its wrapper, as the Group does its children), its
+  failed and empty EmptyStates in the card at `EMPTY_CARD` (the card their frame, in place of
+  `EMPTY_FRAME`). A busy List makes the Group busy, for the card is its box. A waiting Group
+  (its `loading`, or a loading Section's) renders its body once and, when no List registered,
+  swaps it for setting skeletons before paint (`groupWait`), the Section's mechanism.
 - A Meter in a Group stands as its item at the card's inset (`METER_ITEM`, by `GroundContext`),
   the Group's hairline between. A FileRow is selected at its `href`, as a ListRow is.
 - Code, Diff and ProseDiff stand in one frame on the surface inside a hairline (`CONTENT_FRAME`),

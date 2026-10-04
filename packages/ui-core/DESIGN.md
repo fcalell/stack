@@ -1495,6 +1495,8 @@ components:
     textColor: "{colors.ink-meta}"
   diff-mark-dark:
     textColor: "{colors.ink-meta-dark}"
+  empty-card:
+    padding: "{spacing.card}"
   empty-frame:
     padding: "{spacing.card}"
     rounded: "{rounded.card}"
@@ -2044,7 +2046,7 @@ The front matter's components are the matrix cells: one entry per axis value of 
 | `Picker` | shared | `PICKER`, `HAIRLINE`, `ROW_LEADING`, `AVATAR`, `AVATAR_LABEL`, `PILL_ACT`, `PICKER_VALUE`, `ICON.fit.meta`, `FIELD.fit.bar`, `FIELD.trailing.none`, `FIELD.state.rest`, `FIELD_VALUE.kind.text`, `FIELD_VALUE.kind.search`, `FIELD_PLACEHOLDER`, `FIELD_GLYPH`, `ICON.fit.control`, `PICKER_EMPTY`, `POPOVER`, `PICKER_POPOVER`, `SELECT_GROUP`, `ROW.lines.one`, `ROW.lines.two`, `ROW.state.rest`, `ROW.state.highlighted`, `ROW.state.pressed`, `ROW.ground.list`, `ROW.ground.group`, `TEXT.role.body`, `TEXT.role.meta`, `ICON.fit.body` | rest, hover, focus, active, selected |
 | `Menu` | shared | `MENU`, `MENU_GROUP`, `MENU_LABEL`, `POPOVER`, `ROW.lines.one`, `ROW.lines.two`, `ROW.state.rest`, `ROW.state.highlighted`, `ROW.state.pressed`, `ROW.ground.list`, `TEXT.role.body`, `TEXT.role.meta`, `ICON.fit.body`, `ICON_BUTTON.fit.bar`, `ICON_BUTTON.fit.body` | rest, hover, focus, active |
 | `OptionList` | shared | `OPTION_LIST`, `SELECT_GROUP`, `OPTION_GROUP_LABEL`, `TEXT.role.meta`, `TEXT_STRONG.role.meta`, `ROW.lines.one`, `ROW.lines.two`, `ROW.state.rest`, `ROW.state.highlighted`, `ROW.state.pressed`, `ROW.ground.list`, `OPTION_LINE`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `CHECKBOX`, `CHECKBOX_MARK`, `TEXT.role.body`, `ROW_TITLE_LINE`, `ROW_META_LINE`, `CHIP.family.neutral`, `CHIP_LABEL.family.neutral`, `OPTION_CHILDREN`, `OPTION_INDENT`, `SKELETON.kind.check`, `SKELETON.kind.line`, `SKELETON_LANE` | rest, hover, focus, active, loading, selected |
-| `EmptyState` | shared | `EMPTY_COLUMN`, `EMPTY_TEXT`, `EMPTY_FRAME`, `EMPTY_MARK`, `ICON.fit.control`, `TEXT.role.title`, `TEXT.role.heading`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `TEXT.role.meta`, `BUTTON.act.primary`, `BUTTON.act.secondary`, `BUTTON.fit.bar`, `BUTTON.fit.body`, `BUTTON_LABEL.act.primary`, `BUTTON_LABEL.act.secondary` | rest |
+| `EmptyState` | shared | `EMPTY_COLUMN`, `EMPTY_TEXT`, `EMPTY_FRAME`, `EMPTY_CARD`, `EMPTY_MARK`, `ICON.fit.control`, `TEXT.role.title`, `TEXT.role.heading`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `TEXT.role.meta`, `BUTTON.act.primary`, `BUTTON.act.secondary`, `BUTTON.fit.bar`, `BUTTON.fit.body`, `BUTTON_LABEL.act.primary`, `BUTTON_LABEL.act.secondary` | rest |
 | `QueryBoundary` | shared | none | rest, loading, error |
 | `Toast` | shared | `TOAST`, `TOAST_STATE`, `ICON.fit.body`, `TEXT.role.body`, `BUTTON.act.secondary`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.secondary`, `ICON_BUTTON.fit.bar` | rest |
 | `Banner` | shared | `BANNER`, `BANNER_ROW`, `BANNER_MAIN`, `BANNER_GLYPH`, `ICON.fit.body`, `TEXT.role.body`, `TEXT.role.meta`, `BUTTON.act.secondary`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.secondary` | rest, disabled |

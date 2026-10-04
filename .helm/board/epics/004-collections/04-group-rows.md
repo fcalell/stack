@@ -1,6 +1,6 @@
 ---
 id: 004-04
-status: backlog
+status: review
 sessions: {}
 ---
 # react-ui, native-ui: a List inside a Group draws its rows on the card
@@ -26,5 +26,8 @@ between rows. No look prop and no second Group form.
 Web (`plugins/react-ui`) and phone (`plugins/native-ui`) alike. Depends on 004-02.
 
 ## Acceptance criteria
-- [ ] (test) a `List` in a `Group` draws group rows; the same List outside draws list rows.
+- [x] (test) a `List` in a `Group` draws group rows; the same List outside draws list rows.
 - [ ] (live) the showcase's devices and projects-by-stage pass data through a `List` in a `Group`, with no `.map(<ListRow/>)`, and draw all four states under `&query=loading|error`.
+
+## Progress
+Built on web and phone; `pnpm check` passes. The web live criterion passed in the showcase (devices and projects-by-stage, all four states). Open: the phone live check on the harness.
