@@ -1,8 +1,9 @@
 // When a typing control's value is final: the viewer leaves the field, or
 // presses Enter on a one-line field, having changed the value since the
-// field took focus. Escape puts back the value the field had then. Both
-// platforms' `Input` and `TextArea` drive one of these per field, so an
-// autosaving form commits the same moments on the web and on native.
+// field took focus. Escape puts back the value the field had then and ends
+// the edit. Both platforms' `Input` and `TextArea` drive one of these per
+// field, so an autosaving form commits the same moments on the web and on
+// native.
 export interface CommitMoment<V> {
 	// The field took focus holding `value`.
 	focus(value: V): void;
@@ -12,7 +13,9 @@ export interface CommitMoment<V> {
 	// The field lost focus: a commit, then the edit is over.
 	leave(value: V, onCommit: (value: V) => void): void;
 	// Escape: `restore` hears the value at focus, or at the last commit, when
-	// the field moved since.
+	// the field moved since, and the edit is over: a leave after it commits
+	// nothing, whatever value it reads before the parent renders the restored
+	// one. The control leaves the field.
 	cancel(value: V, restore: (value: V) => void): void;
 }
 
@@ -33,7 +36,9 @@ export function commitMoment<V>(): CommitMoment<V> {
 			atFocus = undefined;
 		},
 		cancel(value, restore) {
-			if (atFocus && !Object.is(atFocus.value, value)) restore(atFocus.value);
+			const at = atFocus;
+			atFocus = undefined;
+			if (at && !Object.is(at.value, value)) restore(at.value);
 		},
 	};
 }

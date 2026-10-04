@@ -75,9 +75,10 @@ const KEYBOARD: Record<InputKind, KeyboardTypeOptions> = {
 // corrected or capitalized; `act` is an icon act inside the field's end.
 // `onCommit` hears the value once the viewer is done with it: on leaving the
 // field or on the keyboard's return, only when it changed since the field took
-// focus; with it, a hardware Escape puts back the value at focus. In a
-// `Table` cell it stands at the bar fit, named by the cell, focused as the
-// edit starts, a number end-aligned in tabular figures as the cell reads.
+// focus; with it, a hardware Escape puts back the value at focus and leaves
+// the field. In a `Table` cell it stands at the bar fit, named by the cell,
+// focused as the edit starts, a number end-aligned in tabular figures as the
+// cell reads.
 export function Input({
 	kind,
 	value,
@@ -165,9 +166,7 @@ export function Input({
 				onKeyPress={(event) => {
 					if (!onCommit || event.nativeEvent.key !== "Escape") return;
 					moment.cancel(value, onChange);
-					// A cell's edit ends once the value put back has rendered, so
-					// leaving the field commits nothing more.
-					if (cell) requestAnimationFrame(() => input.current?.blur());
+					input.current?.blur();
 				}}
 			/>
 			{which === "number" && unit ? (

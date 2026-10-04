@@ -1,6 +1,6 @@
 ---
 id: 005-10
-status: backlog
+status: review
 sessions: {}
 ---
 # ui-core, react-ui, native-ui: a cell edit starts, cancels and ends by event, not by frame
@@ -23,6 +23,9 @@ close end the edit and refocus the cell in their own handlers. The editing cell'
 open, so no counter crosses the grid. No `requestAnimationFrame` stays in the edit path.
 
 ## Acceptance criteria
-- [ ] (test) `commitMoment`: `cancel` then `leave` with the typed value commits nothing.
+- [x] (test) `commitMoment`: `cancel` then `leave` with the typed value commits nothing.
 - [ ] (live) web, members' table at 1440: Escape restores the value and refocuses the cell under 6x CPU throttle; a role cell's list is open in the edit's first frame.
 - [ ] (live) phone, on the harness: Escape in a cell edit commits nothing.
+
+## Progress
+Built; `pnpm check` and `pnpm verify` pass. Web live at 1440 under a 6x CPU throttle: Enter focuses a text cell's input and opens a role cell's list in the next frame; Escape restores and commits nothing; focus returns to the cell. Escape now leaves every typing control with `onCommit`. Open: the phone live criterion; the touch PickSheet's focus return is read from Base UI, not measured.

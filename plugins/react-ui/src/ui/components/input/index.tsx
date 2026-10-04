@@ -81,7 +81,7 @@ export interface InputProps extends Closed {
 	value: string;
 	/** Hears every keystroke's value. */
 	onChange: (value: string) => void;
-	/** Hears the value once the viewer is done with it: on leaving the field or on Enter, only when it changed since focus; Escape then puts back the value at focus. */
+	/** Hears the value once the viewer is done with it: on leaving the field or on Enter, only when it changed since focus; Escape then puts back the value at focus and leaves the field. */
 	onCommit?: (value: string) => void;
 	/** The hint drawn while the value is empty; never the field's name. */
 	placeholder?: string;
@@ -120,6 +120,7 @@ export function Input({
 			placeholder={placeholder ?? (search ? words.search : undefined)}
 			aria-label={search ? words.search : cell?.label}
 			tabIndex={cell ? -1 : undefined}
+			autoFocus={cell?.starts}
 			// Base UI's Field wires the control (its id, label, description and
 			// validity); the render function hands over its props and state so the
 			// box around the value draws that state.

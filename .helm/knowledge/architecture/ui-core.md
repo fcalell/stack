@@ -396,7 +396,12 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
   `locked` names the columns it draws read only (an owner's role). A chip
   column's pick draws its value and options as the column's chips (the Picker's internal base), and
   an Input, a Picker or a Checkbox inside a cell stands at the bar fit, named by the cell and out of
-  the tab order, by the cell's context. A loading status cell is the Status's own loading form (its
+  the tab order, by the cell's context. An edit the keyboard or a tap starts mounts its cell's
+  control afresh, a typed one focused and a pick open; Enter, Escape (which ends the field's
+  `CommitMoment`, so the leave after it commits nothing) and the pick's close end it in their own
+  handlers. Enter and Escape focus the cell at once; the pick's list names the cell as its
+  `finalFocus`, so Base UI hands focus back there once the list unmounts, after an option's own
+  press has focused it, unless a press outside the list moved focus on. A loading status cell is the Status's own loading form (its
   internal base: the dot's and the word's skeletons at its gap). An empty grid keeps its header and holds its
   `empty` a page inset under it, across the grid's width as a List's EmptyState fills its
   column (`TABLE_EMPTY`: no side inset; on touch the form stands alone, the List's width). A read-only check cell draws a tick, read aloud as

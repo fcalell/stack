@@ -26,10 +26,16 @@ export const GroupName = createContext<
 // Set by a `Table` around a cell's edit: the control stands in the cell at the
 // field's bar fit, named by the cell (its column, then its row), out of the
 // tab order (the grid's cursor reaches it); a number reads end-aligned in
-// tabular figures, as the cell does. A pick mounted while `editing` opens at
-// once, each rise of `opens` (an edit started on its cell from the keyboard or a
-// tap) opens it again, and `done` hears its list close.
+// tabular figures, as the cell does. A control mounted with `starts` is the
+// edit the keyboard or a tap started (the cell mounts it afresh): a typed one
+// takes focus, a pick mounts with its list open. `done` hears the pick's list
+// close, and `home` is the cell, where the closing list hands focus back.
 export const CellField = createContext<
-	| { label: string; editing: boolean; opens: number; done: () => void }
+	| {
+			label: string;
+			starts: boolean;
+			done: () => void;
+			home: () => HTMLElement | undefined;
+	  }
 	| undefined
 >(undefined);

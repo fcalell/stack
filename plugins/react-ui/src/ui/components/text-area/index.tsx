@@ -32,7 +32,7 @@ export interface TextAreaProps extends Closed {
 	value: string;
 	/** Hears every keystroke's value. */
 	onChange: (value: string) => void;
-	/** Hears the value once the viewer leaves the field having changed it since focus (Enter is a new line); Escape then puts back the value at focus. */
+	/** Hears the value once the viewer leaves the field having changed it since focus (Enter is a new line); Escape then puts back the value at focus and leaves the field. */
 	onCommit?: (value: string) => void;
 	/** The hint drawn while the value is empty; never the field's name. */
 	placeholder?: string;

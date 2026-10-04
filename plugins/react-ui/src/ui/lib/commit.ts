@@ -4,7 +4,7 @@ import { type KeyboardEvent, useState } from "react";
 // The focus, blur and key handlers that drive a typing control's commit
 // moments (`@fcalell/ui-core/commit`): leaving the field commits, Enter
 // commits a one-line field (`enter`), and Escape puts back the value at focus
-// when the control has an `onCommit`.
+// and leaves the field when the control has an `onCommit`.
 export function useCommit(
 	value: string,
 	onChange: (value: string) => void,
@@ -16,9 +16,12 @@ export function useCommit(
 	return {
 		onFocus: () => moment.focus(value),
 		onBlur: () => moment.leave(value, commit),
-		onKeyDown: (event: KeyboardEvent) => {
+		onKeyDown: (event: KeyboardEvent<HTMLElement>) => {
 			if (enter && event.key === "Enter") moment.commit(value, commit);
-			if (onCommit && event.key === "Escape") moment.cancel(value, onChange);
+			if (onCommit && event.key === "Escape") {
+				moment.cancel(value, onChange);
+				event.currentTarget.blur();
+			}
 		},
 	};
 }

@@ -5,7 +5,7 @@ import {
 	textArea,
 	textAreaBudget,
 } from "@fcalell/ui-core/variants";
-import { useContext, useState } from "react";
+import { useContext, useRef, useState } from "react";
 import { Text as RNText, TextInput, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
@@ -31,7 +31,7 @@ function wordCount(value: string): number {
 // `source` is mono and keeps indentation; a sheet holding one stands full
 // height. `onCommit` hears the value once the viewer leaves the field having
 // changed it since focus (return is a new line here); with it, a hardware
-// Escape puts back the value at focus.
+// Escape puts back the value at focus and leaves the field.
 export function TextArea({
 	kind,
 	value,
@@ -41,6 +41,7 @@ export function TextArea({
 	budget,
 }: TextAreaProps) {
 	const [moment] = useState(() => commitMoment<string>());
+	const input = useRef<TextInput>(null);
 	const commit = (next: string) => onCommit?.(next);
 	const { touch } = useTouched();
 	const name = useFieldName();
@@ -58,6 +59,7 @@ export function TextArea({
 			)}
 		>
 			<TextInput
+				ref={input}
 				accessibilityLabel={name}
 				accessibilityState={{ disabled }}
 				editable={!disabled}
@@ -81,8 +83,9 @@ export function TextArea({
 				onFocus={() => moment.focus(value)}
 				onBlur={() => moment.leave(value, commit)}
 				onKeyPress={(event) => {
-					if (onCommit && event.nativeEvent.key === "Escape")
-						moment.cancel(value, onChange);
+					if (!onCommit || event.nativeEvent.key !== "Escape") return;
+					moment.cancel(value, onChange);
+					input.current?.blur();
 				}}
 			/>
 			{count !== undefined && budget !== undefined ? (

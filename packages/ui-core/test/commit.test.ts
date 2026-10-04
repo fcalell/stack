@@ -65,6 +65,17 @@ test("Escape restores the value at focus, and leaving then commits nothing", () 
 	assert.deepEqual(name.commits, []);
 });
 
+test("Escape ends the edit: leaving before the value put back renders commits nothing", () => {
+	const moment = commitMoment<string>();
+	const commits: string[] = [];
+	const restored: string[] = [];
+	moment.focus("Shop");
+	moment.cancel("Store", (value) => restored.push(value));
+	moment.leave("Store", (value) => commits.push(value));
+	assert.deepEqual(restored, ["Shop"]);
+	assert.deepEqual(commits, []);
+});
+
 test("Escape after an Enter restores the committed value", () => {
 	const name = field("Shop");
 	name.focus();

@@ -374,15 +374,13 @@ function Grid(props: {
 	const title = use(PageTitle);
 	const frame = useRef<HTMLDivElement>(null);
 	const [cursor, setCursor] = useState<Cursor>({ row: 0, column: 0 });
-	const [editing, setEditing] = useState(false);
-	// The last edit started from the keyboard or a tap, which opens a pick:
-	// its cell and a count that rises with each start.
-	const [opened, setOpened] = useState({ row: -1, column: -1, count: 0 });
+	// The cursor's cell in its edit: `started` from the keyboard or a tap, its
+	// control mounted afresh (focused, or a pick open), or `entered` when focus
+	// reached a control the pointer already showed.
+	const [editing, setEditing] = useState<"started" | "entered">();
 	const start = (row: number, column: number) => {
-		const cell = cellAt(row, column);
-		setEditing(true);
-		setOpened((last) => ({ row, column, count: last.count + 1 }));
-		requestAnimationFrame(() => cell?.querySelector("input")?.focus());
+		setCursor({ row, column });
+		setEditing("started");
 	};
 	const [hover, setHover] = useState<Cursor>();
 	const at: Cursor = {
@@ -411,23 +409,19 @@ function Grid(props: {
 		cell?.focus();
 		if (cell) clear(cell);
 	};
-	// A closed pick hands the cursor back to its cell once its list has let go
-	// of focus, unless focus has moved on to another part of the page.
-	const done = () => {
-		setEditing(false);
-		const cell = cellAt(at.row, at.column);
-		requestAnimationFrame(() =>
-			requestAnimationFrame(() => {
-				const now = document.activeElement;
-				const away =
-					now !== null &&
-					now !== document.body &&
-					!cell?.contains(now) &&
-					now.closest("[role=listbox], [role=dialog]") === null;
-				if (!away) cell?.focus();
-			}),
-		);
-	};
+	// A closed pick ends the edit; its list hands focus back to its cell.
+	const done = () => setEditing(undefined);
+	const cellField = (
+		label: string,
+		starts: boolean,
+		row: number,
+		column: number,
+	) => ({
+		label,
+		starts,
+		done,
+		home: () => cellAt(row, column) ?? undefined,
+	});
 	const open = (row: TableRecord) => {
 		if (props.onOpen) props.onOpen(row.id);
 		else if (row.href !== undefined) navigate(row.href);
@@ -439,18 +433,22 @@ function Grid(props: {
 		const target = event.target as HTMLElement;
 		const cell = target.closest<HTMLElement>("td[data-row]");
 		if (!cell || !frame.current?.contains(cell)) return;
-		setCursor({
-			row: Number(cell.dataset.row),
-			column: Number(cell.dataset.column),
-		});
-		setEditing(inEdit(target));
+		const row = Number(cell.dataset.row);
+		const column = Number(cell.dataset.column);
+		const same = row === at.row && column === at.column;
+		setCursor({ row, column });
+		// The started edit's control taking focus keeps it started.
+		setEditing((now) =>
+			inEdit(target) ? (same && now) || "entered" : undefined,
+		);
 	};
 	// Leaving a typed edit for anywhere outside its cell ends it.
 	const onBlur = (event: FocusEvent) => {
 		const target = event.target as HTMLElement;
 		const cell = target.closest("td[data-row]");
 		if (!(target instanceof HTMLInputElement) || !cell) return;
-		if (!cell.contains(event.relatedTarget as Node | null)) setEditing(false);
+		if (!cell.contains(event.relatedTarget as Node | null))
+			setEditing(undefined);
 	};
 	const onKeyDown = (event: KeyboardEvent) => {
 		const target = event.target as HTMLElement;
@@ -462,18 +460,16 @@ function Grid(props: {
 		const field = columns[column];
 		if (!record || !field) return;
 		if (inEdit(target)) {
-			// An open edit: Enter has committed and Escape put the value back; the
-			// edit closes once the value put back has rendered, so leaving the
-			// field commits nothing more.
+			// An open edit: Enter has committed and Escape put the value back and
+			// ended the moment, so the field leaving for its cell commits nothing
+			// more.
 			if (
 				(event.key === "Enter" || event.key === "Escape") &&
 				target instanceof HTMLInputElement
 			) {
 				event.preventDefault();
-				requestAnimationFrame(() => {
-					setEditing(false);
-					cell.focus();
-				});
+				setEditing(undefined);
+				cell.focus();
 			}
 			return;
 		}
@@ -531,12 +527,14 @@ function Grid(props: {
 			const chosen = row.id === props.selected;
 			const control = editOf(columns, place, edits, row)?.control;
 			const here = index === at.row && place === at.column;
-			const opening =
-				opened.row === index && opened.column === place ? opened.count : 0;
+			// A started edit's control mounts afresh over the one the pointer
+			// showed, so it mounts focused or open.
+			const starts = here && editing === "started";
 			const live =
 				control !== undefined &&
 				control !== "checkbox" &&
-				((here && editing) || (hover?.row === index && hover.column === place));
+				((here && editing !== undefined) ||
+					(hover?.row === index && hover.column === place));
 			const name = `${column.label}, ${shown(columns[0] ?? column, row.cells[columns[0]?.key ?? ""])}`;
 			const box = cn(
 				TABLE_CELL,
@@ -565,15 +563,9 @@ function Grid(props: {
 					className={cn(BODY_CELL, frozen && cn(TABLE_FROZEN, FROZEN))}
 				>
 					{live ? (
-						<CellField
-							value={{
-								label: name,
-								editing: here && editing,
-								opens: opening,
-								done,
-							}}
-						>
+						<CellField value={cellField(name, starts, index, place)}>
 							<CellEdit
+								key={starts ? "started" : "shown"}
 								column={column}
 								cell={row.cells[column.key]}
 								onEdit={(value) => edit(row, column, value)}
@@ -582,9 +574,7 @@ function Grid(props: {
 					) : control === "checkbox" ? (
 						// biome-ignore lint/a11y/noLabelWithoutControl: the Checkbox inside is the control
 						<label className={box}>
-							<CellField
-								value={{ label: name, editing: false, opens: opening, done }}
-							>
+							<CellField value={cellField(name, false, index, place)}>
 								<LabelTarget value={{}}>
 									<Checkbox
 										checked={row.cells[column.key] === true}

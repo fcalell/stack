@@ -254,23 +254,23 @@ export function PickerBase<V extends string | null = string>({
 	name?: string;
 }) {
 	const touch = useTouch();
-	// In a table cell the pick opens as its edit starts, and its list closing
-	// ends the edit.
+	// In a table cell the pick mounts open as its edit starts, and its list
+	// closing ends the edit. The list hands focus back to the cell as it
+	// unmounts (after its option's own press has focused it), unless the close
+	// came from focus moving on.
 	const cell = use(CellField);
-	const [open, setOpenState] = useState(cell?.editing ?? false);
-	const setOpen = (next: boolean) => {
+	const [open, setOpenState] = useState(cell?.starts ?? false);
+	const back = useRef(true);
+	const setOpen = (next: boolean, details?: { reason: string }) => {
 		setOpenState(next);
-		if (!next) cell?.done();
+		if (next) return;
+		back.current =
+			details?.reason !== "outside-press" && details?.reason !== "focus-out";
+		cell?.done();
 	};
-	// The cell opens the list again each time its edit starts from the keyboard
-	// or a tap.
-	const opens = cell?.opens ?? 0;
-	const seen = useRef(opens);
-	useEffect(() => {
-		const later = opens > seen.current;
-		seen.current = opens;
-		if (later) setOpenState(true);
-	}, [opens]);
+	const finalFocus: FinalFocus = cell
+		? () => (back.current && cell.home()) || false
+		: true;
 	const groups = groupsOf(options);
 	const flat = groups.flatMap((group) => group.items);
 	const current = flat.find((option) => option.value === value);
@@ -370,6 +370,7 @@ export function PickerBase<V extends string | null = string>({
 				current={current}
 				open={open}
 				setOpen={setOpen}
+				finalFocus={finalFocus}
 				pick={pick}
 				trigger={trigger}
 				act={act}
@@ -383,6 +384,7 @@ export function PickerBase<V extends string | null = string>({
 			value={value}
 			open={open}
 			setOpen={setOpen}
+			finalFocus={finalFocus}
 			pick={pick}
 			trigger={trigger}
 			act={act}
@@ -424,17 +426,21 @@ interface PickParts<V extends string | null> {
 	label: string;
 	groups: Grouped<V>[];
 	open: boolean;
-	setOpen: (open: boolean) => void;
+	setOpen: (open: boolean, details?: { reason: string }) => void;
 	pick: (value: V) => void;
 	trigger: (props: ComponentProps<"button">) => ReactElement;
 	act?: IconAct;
 	chip?: ChipFamily;
 }
 
+// Where a desktop list hands focus as it closes: Base UI's own return, or
+// what a table cell's pick names.
+type FinalFocus = true | (() => HTMLElement | false);
+
 // The desktop list of six options or fewer: Base UI's select supplies the
 // listbox, its keyboard and its typeahead.
 function PickList<V extends string | null>(
-	props: PickParts<V> & { value: V | undefined },
+	props: PickParts<V> & { value: V | undefined; finalFocus: FinalFocus },
 ) {
 	const container = use(PortalContainer);
 	const keyboard = useKeyed(props.trigger);
@@ -456,6 +462,7 @@ function PickList<V extends string | null>(
 					sideOffset={() => spacing("pair")}
 				>
 					<Select.Popup
+						finalFocus={props.finalFocus}
 						{...keyboard.popup}
 						className={cn(POPOVER, PICKER_POPOVER, POPUP)}
 					>
@@ -515,7 +522,10 @@ function PickList<V extends string | null>(
 // The desktop list past six options: Base UI's combobox filters the rows by
 // the search typed at the popover's head.
 function PickSearch<V extends string | null>(
-	props: PickParts<V> & { current: Option<V> | undefined },
+	props: PickParts<V> & {
+		current: Option<V> | undefined;
+		finalFocus: FinalFocus;
+	},
 ) {
 	const container = use(PortalContainer);
 	const words = useWords();
@@ -539,6 +549,7 @@ function PickSearch<V extends string | null>(
 					sideOffset={() => spacing("pair")}
 				>
 					<Combobox.Popup
+						finalFocus={props.finalFocus}
 						{...keyboard.popup}
 						aria-label={props.label}
 						className={cn(POPOVER, PICKER_POPOVER, POPUP)}
