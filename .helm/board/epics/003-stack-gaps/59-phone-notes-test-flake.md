@@ -19,11 +19,10 @@ with no timeout, which fits the stall. Commit 3fae724 (20:24) patched miniflare'
 (reuse and a 1 s client-side keep-alive); the stall predates it, the cancellation does not.
 
 ## Approach
-Open for fcalell: the test boot serves its D1 from an in-process sqlite (`node:sqlite`) behind
+Decided by fcalell (2026-10-04): the test boot serves its D1 from an in-process sqlite (`node:sqlite`) behind
 the D1 interface drizzle uses, with the same migrations and `d1_migrations` records, which
-removes the proxy, the sync worker thread and the sockets. It reverses fc9da29's choice of
-miniflare's D1 for fidelity, so it waits for that decision; until then, a recurrence is recorded
-here with its time and symptom.
+removes the proxy, the sync worker thread and the sockets. This reverses fc9da29's choice of miniflare's D1 for
+fidelity in the test boot only; `stack dev` and deploys keep the real D1.
 
 ## Acceptance criteria
 - [ ] (test) the phone worker's tests pass 200 runs in a loaded full check with no stall or cancellation.
