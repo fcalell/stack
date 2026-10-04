@@ -25,12 +25,12 @@ draws its pending form. A row, a control or a content block is a leaf: it draws 
 | Component | Class | Reason |
 | --- | --- | --- |
 | `List` | collection | `ListRow`s over data; sets the pattern (02). |
-| `Group` | mixed | Static mixed setting rows stay children; a set of rows from data takes `row` in the card look (04). |
+| `Group` | composition | Static mixed setting rows; a set of rows from data is a `List` placed in the Group, drawn on the card (04). |
 | `Table` | collection | Already declares `columns`; lacks `query`, failed at the leaf, and reading cells from the item (05). |
 | `Thread` | collection | `Message`s over a conversation take `message`; `foot` stays the one authored part (06). |
 | `BarChart` | collection | Bars over data; `keys` already declared, lacks failed and empty (07). |
 | `FileRow` | leaf | One file; a set of them is a `List` taking `file` (08). |
-| `Meter` | leaf | One measure; a set of them is a `Group` taking `meter` (09). |
+| `Meter` | leaf | One measure; a set of them is a `List` taking `meter`, in a `Group` (09). |
 | `Comparison` | collection | Facts over data; its columns come from the first row, so it declares `columns` (10). |
 | `OptionList` | mixed | Static `options` are already projected; a set from a query takes `option` (11). |
 | `Section` | composition | A titled region over authored parts. |

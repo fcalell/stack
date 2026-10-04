@@ -17,6 +17,8 @@ Approved by fcalell (2026-10-03), as proposed in `.helm/research/phone-harness.m
 - no new CLI surface: plain commands in a new `plugins/expo/guide/phone-render.md`;
 - a phone section in `packages/ui-core/guide/design-critique.md`, and the rubric's widths line;
 - step 6 of `add-a-phone-screen.md` rewritten to judge on the emulator.
+- `apps/phone` gains one API procedure and a query-backed `List` (004-02's data form), so the
+  critique judges real pending, failed and empty states (decided by fcalell, 2026-10-04).
 Order: build, then boot (both together exhausted 15 GB).
 
 ## Acceptance criteria
