@@ -56,6 +56,10 @@ on the card, never a `.map` of `ListRow`s or `Meter`s.
 />
 ```
 
+An `OptionList` holds a static set in `options`. Options from a query take `query`, `sentence`,
+`empty` (a sentence) and an `option` map over the check row: `value`, `label`, `description`,
+`recommended` and `group`; it waits, fails and empties inside its card.
+
 Any other region reading a query sits in its own `QueryBoundary`, naming its loading form.
 
 ## Words are the config's, sentences are props

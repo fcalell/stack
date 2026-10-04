@@ -1,7 +1,8 @@
-// The decisions a `List` and the `Section` around it make before they draw,
-// free of any framework: both platforms run this one source, and it is
-// tested without rendering.
+// The decisions a collection (a `List`, an `OptionList`) and the `Section`
+// around it make before they draw, free of any framework: both platforms run
+// this one source, and it is tested without rendering.
 
+import type { Option, OptionGroup } from "./descriptors.ts";
 import type { RowGround } from "./variants.ts";
 
 export type ListState = "pending" | "failed" | "empty" | "loaded";
@@ -168,4 +169,82 @@ export function sectionCount(
 		total += value;
 	}
 	return total === 0 ? undefined : total;
+}
+
+// The slots a waiting OptionList's check rows draw, known before any option:
+// a description bar under each label, and a group label's bar over the rows.
+export interface OptionShape {
+	description: boolean;
+	group: boolean;
+}
+
+// A query's waiting rows from the slots its `option` map declares, read by
+// key: no slot function runs.
+export function optionShape(slots: {
+	description?: unknown;
+	group?: unknown;
+}): OptionShape {
+	return {
+		description: slots.description !== undefined,
+		group: slots.group !== undefined,
+	};
+}
+
+// A static set's waiting rows from the options it holds: grouped ones draw a
+// group label's bar, a described one a description bar under every label.
+export function optionsShape(
+	options: readonly Option<string>[] | readonly OptionGroup<string>[],
+): OptionShape {
+	const groups = isGrouped(options) ? options : [{ options }];
+	return {
+		description: groups.some((group) =>
+			group.options.some((option) => option.description !== undefined),
+		),
+		group: isGrouped(options),
+	};
+}
+
+function isGrouped(
+	options: readonly Option<string>[] | readonly OptionGroup<string>[],
+): options is readonly OptionGroup<string>[] {
+	const first = options[0];
+	return first !== undefined && "options" in first;
+}
+
+// One function per check row slot, each called with a loaded item; `group`
+// is the label the option stands under.
+export interface OptionSlots<T, V extends string> {
+	value: (item: T) => V;
+	label: (item: T) => string;
+	description?: (item: T) => string | undefined;
+	recommended?: (item: T) => boolean | undefined;
+	group?: (item: T) => string;
+}
+
+// A query's items as the options a static set holds: flat, or with `group`
+// under each label in the order it first appears.
+export function optionsOf<T, V extends string>(
+	items: readonly T[],
+	slots: OptionSlots<T, V>,
+): Option<V>[] | OptionGroup<V>[] {
+	const optionOf = (item: T): Option<V> => {
+		const option: Option<V> = {
+			value: slots.value(item),
+			label: slots.label(item),
+		};
+		const description = slots.description?.(item);
+		if (description !== undefined) option.description = description;
+		if (slots.recommended?.(item)) option.recommended = true;
+		return option;
+	};
+	const { group } = slots;
+	if (group === undefined) return items.map(optionOf);
+	const groups = new Map<string, Option<V>[]>();
+	for (const item of items) {
+		const label = group(item);
+		const held = groups.get(label);
+		if (held) held.push(optionOf(item));
+		else groups.set(label, [optionOf(item)]);
+	}
+	return [...groups].map(([label, options]) => ({ label, options }));
 }

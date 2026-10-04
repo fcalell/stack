@@ -1,6 +1,6 @@
 ---
 id: 004-11
-status: backlog
+status: review
 sessions: {}
 ---
 # react-ui, native-ui: an OptionList's options from a query draw failed and empty
@@ -29,5 +29,8 @@ Web and phone take the same props. Needs a query for loaded option sets; static 
 `options`.
 
 ## Acceptance criteria
-- [ ] (test) both plugins' `OptionList` take `query` + `option` + `sentence` + `empty` beside `options`, and the roster entry lists the `error` and `empty` states.
-- [ ] (test) a pending OptionList whose `option` declares no `description` draws one-line skeleton rows.
+- [x] (test) both plugins' `OptionList` take `query` + `option` + `sentence` + `empty` beside `options`, and the roster entry lists the `error` and `empty` states.
+- [x] (test) a pending OptionList whose `option` declares no `description` draws one-line skeleton rows.
+
+## Progress
+Built on web and phone; `pnpm check` and `pnpm verify` pass. The failed line is built from existing cells (a meta row and a secondary Retry), with no danger mark, for the design critique. No consumer loads options from a query yet. Open: the live check (web per batch, phone on the harness).

@@ -1208,9 +1208,20 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// Check rows under group labels on a hairline card, a chosen option
 		// checked (the row takes no wash), the recommended mark on its
 		// description line; the children under a chosen option at its label's
-		// start.
+		// start. From a query, its failed line (`sentence` beside Retry) and its
+		// `empty` sentence stand in the card.
 		OptionList: {
-			props: ["options", "value", "onChange", "loading", "children"],
+			props: [
+				"options",
+				"query",
+				"option",
+				"sentence",
+				"empty",
+				"value",
+				"onChange",
+				"loading",
+				"children",
+			],
 			draws: [
 				"OPTION_LIST",
 				"SELECT_GROUP",
@@ -1238,9 +1249,12 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"SKELETON.kind.check",
 				"SKELETON.kind.line",
 				"SKELETON_LANE",
+				"BUTTON.act.secondary",
+				"BUTTON.fit.bar",
+				"BUTTON_LABEL.act.secondary",
 			],
 			holds: ["OPTION_LIST", "OPTION_LINE", "OPTION_CHILDREN", "OPTION_INDENT"],
-			states: [...PRESS, "loading", "selected"],
+			states: [...PRESS, "loading", "error", "empty", "selected"],
 			owns: {
 				roles: ["body", "meta", "caption"],
 				colors: [
@@ -1256,7 +1270,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"skeleton",
 					"chip-",
 				],
-				radii: ["card", "row", "chip", "full"],
+				radii: ["card", "row", "chip", "full", "control"],
 				spacing: ["pair", "float", "rows", "control-x", "inside"],
 				sizes: [
 					"row",
@@ -1266,6 +1280,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"chip",
 					"measure-short",
 					"skeleton",
+					"control-compact",
 				],
 			},
 		},

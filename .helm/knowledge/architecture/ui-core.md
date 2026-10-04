@@ -370,6 +370,16 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
   per column, and a chips bar beside the label's when `row` declares `chips` (`factShape` in
   `./list-state`). It registers its wait with the Section around and reports no count: its facts
   are one record's, not items the Section counts.
+- An `OptionList` is a collection with a static form. A static set takes `options` (an `Option`
+  is already the projected row, waiting on `loading`); a set from a query takes `query`,
+  `sentence`, `empty` and an `option` map over the check row's slots (`value`, `label`,
+  `description`, `recommended`, and `group`, the label it stands under, groups in the order they
+  first appear). Every state stands in its card, so the field keeps its place in the form:
+  waiting, four check rows, two-line only when `description` is declared (a static set: when an
+  option is described) under a group label's bar only when `group` is; failed, one row holding
+  `sentence` and a secondary Retry at the bar fit; empty, one row holding the `empty` sentence.
+  It registers with no Section. Its projection and waiting shape (`optionsOf`, `optionShape`,
+  `optionsShape`) are in `./list-state`.
 - A pending collection or `QueryBoundary` registers with the Section around it through
   `SectionContext`, released when it settles or unmounts; the Section stays busy, its count
   waiting, until every waiter settles. A List also reports its item count there once its items

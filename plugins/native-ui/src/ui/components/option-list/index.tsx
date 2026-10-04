@@ -1,5 +1,15 @@
 import type { Option, OptionGroup } from "@fcalell/ui-core/descriptors";
 import {
+	listBusy,
+	listState,
+	type OptionShape,
+	type OptionSlots,
+	optionShape,
+	optionsOf,
+	optionsShape,
+	retryOf,
+} from "@fcalell/ui-core/list-state";
+import {
 	lineBox,
 	OPTION_CHILDREN,
 	OPTION_GROUP_LABEL,
@@ -20,8 +30,10 @@ import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { GroupName, LabelTarget } from "../../lib/field";
 import { useWords } from "../../lib/words";
+import { Button } from "../button";
 import { Checkbox } from "../checkbox";
 import { Chip } from "../chip";
+import type { QueryLike } from "../query-boundary";
 
 // The row is the target of its box: a press anywhere toggles it.
 const OPTION = "flex-row items-center active:bg-wash-press";
@@ -35,32 +47,68 @@ const DESCRIPTION_LINE = "flex-row flex-wrap items-center min-w-0";
 const CHILDREN = "flex-row";
 const INDENT = "shrink-0";
 const CHILDREN_BODY = "flex-1 min-w-0";
-// Loading, each row keeps its height: a box-sized skeleton and a bar at a
-// label's length in a short label's lane.
+// Loading, each row keeps its height: a box-sized skeleton on the label's
+// line, and a bar at a label's length in a short label's lane on each line
+// the row draws, a strut setting each line's height.
 const LABEL_WAIT = "flex-row items-center";
+const STRUT_BAR = "flex-row items-center grow min-w-0";
 const BAR_ROOM = "flex-row grow min-w-0";
-const BOX_WAIT = "shrink-0";
 const ROW_WAIT = "flex-row items-center";
 const LABEL_BAR = "w-1/3";
-const ROW_BARS = ["w-1/3", "w-2/3", "w-2/3", "w-1/2"] as const;
+const ROW_BARS = [
+	["w-1/3", "w-1/2"],
+	["w-2/3", "w-1/3"],
+	["w-2/3", "w-1/2"],
+	["w-1/2", "w-1/4"],
+] as const;
+// The failed and empty lines: the sentence, and Retry at its end.
+const NOTE = "flex-row items-center";
+const SENTENCE = "flex-1 min-w-0";
 const STRUT = "​";
 
-export interface OptionListProps<V extends string = string> extends Closed {
-	// The choices, flat or under group labels.
-	options: readonly Option<V>[] | readonly OptionGroup<V>[];
-	// The chosen options' values.
-	value: readonly V[];
-	// Hears the whole chosen set after a toggle.
-	onChange: (value: V[]) => void;
-	// The options wait: skeleton rows stand in for them.
-	loading?: boolean;
-	// What a chosen option opens, under the first one chosen at its label's
-	// start.
-	children?: ReactNode;
-}
+// Where an OptionList's options come from.
+type OptionSource<T, V extends string> =
+	| {
+			// The choices, flat or under group labels.
+			options: readonly Option<V>[] | readonly OptionGroup<V>[];
+			// The options wait: skeleton rows stand in for them.
+			loading?: boolean;
+			// The sentence the card holds with no option; without it an empty
+			// set draws an empty card.
+			empty?: string;
+			query?: never;
+			option?: never;
+			sentence?: never;
+	  }
+	| {
+			// The query whose items the check rows draw.
+			query: QueryLike<readonly T[]>;
+			// One function per check row slot, each called with a loaded item;
+			// the slots given are the shape the waiting rows draw.
+			option: OptionSlots<T, V>;
+			// What failed to load, beside the retry act.
+			sentence: string;
+			// The sentence the card holds when the query answers with no item.
+			empty: string;
+			options?: never;
+			loading?: never;
+	  };
+
+// Several choices from one list, static or from a query. `V` is read off
+// the options or the `option` map's `value`.
+export type OptionListProps<V extends string = string, T = unknown> = Closed &
+	OptionSource<T, V> & {
+		// The chosen options' values.
+		value: readonly V[];
+		// Hears the whole chosen set after a toggle.
+		onChange: (value: V[]) => void;
+		// What a chosen option opens, under the first one chosen at its label's
+		// start.
+		children?: ReactNode;
+	};
 
 function groupsOf<V extends string>(
-	options: OptionListProps<V>["options"],
+	options: readonly Option<V>[] | readonly OptionGroup<V>[],
 ): readonly { label?: string; options: readonly Option<V>[] }[] {
 	const first = options[0];
 	if (first === undefined || !("options" in first))
@@ -83,34 +131,57 @@ function GroupLabel({ children }: { children: string }) {
 	);
 }
 
-function Loading() {
-	const words = useWords();
+// The waiting check rows in the slots the options declare: a group label's
+// bar over them when they stand under labels, a description bar under each
+// label when they are described.
+function Wait({ shape }: { shape: OptionShape }) {
 	return (
-		<View
-			accessibilityLabel={words.loading}
-			accessibilityState={{ busy: true }}
-			className={OPTION_LIST}
-		>
-			<View className={SELECT_GROUP}>
+		<View className={SELECT_GROUP}>
+			{shape.group ? (
 				<View className={cn(OPTION_GROUP_LABEL, LABEL_WAIT)}>
 					<RNText className={lineBox({ role: "meta" })}>{STRUT}</RNText>
 					<View className={cn(skeletonLane({ role: "meta" }), BAR_ROOM)}>
 						<View className={cn(skeleton({ kind: "line" }), LABEL_BAR)} />
 					</View>
 				</View>
-				{ROW_BARS.map((bar, at) => (
-					<View
-						// biome-ignore lint/suspicious/noArrayIndexKey: fixed stand-ins
-						key={at}
-						className={cn(row({ lines: "one" }), ROW_WAIT)}
-					>
-						<View className={cn(skeleton({ kind: "check" }), BOX_WAIT)} />
-						<View className={cn(skeletonLane({ role: "body" }), BAR_ROOM)}>
-							<View className={cn(skeleton({ kind: "line" }), bar)} />
+			) : null}
+			{ROW_BARS.map(([label, description], at) => (
+				<View
+					// biome-ignore lint/suspicious/noArrayIndexKey: fixed stand-ins
+					key={at}
+					className={cn(
+						row({ lines: shape.description ? "two" : "one" }),
+						ROW_WAIT,
+					)}
+				>
+					<View className={cn(OPTION_LINE, LINE)}>
+						<View className={BOX_LINE}>
+							<RNText className={lineBox({ role: "body" })}>{STRUT}</RNText>
+							<View className={skeleton({ kind: "check" })} />
+						</View>
+						<View className={TEXT}>
+							<View className={STRUT_BAR}>
+								<RNText className={lineBox({ role: "body" })}>{STRUT}</RNText>
+								<View className={cn(skeletonLane({ role: "body" }), BAR_ROOM)}>
+									<View className={cn(skeleton({ kind: "line" }), label)} />
+								</View>
+							</View>
+							{shape.description ? (
+								<View className={cn(ROW_META_LINE, STRUT_BAR)}>
+									<RNText className={lineBox({ role: "meta" })}>{STRUT}</RNText>
+									<View
+										className={cn(skeletonLane({ role: "meta" }), BAR_ROOM)}
+									>
+										<View
+											className={cn(skeleton({ kind: "line" }), description)}
+										/>
+									</View>
+								</View>
+							) : null}
 						</View>
 					</View>
-				))}
-			</View>
+				</View>
+			))}
 		</View>
 	);
 }
@@ -118,17 +189,68 @@ function Loading() {
 // Option rows on a hairline card, each the Checkbox on its label's first
 // line, a description and the recommended mark on the line under it; the
 // pressed row washes, the checked box is the choice. The children stand
-// under the first chosen option.
-export function OptionList<V extends string = string>({
-	options,
-	value,
-	onChange,
-	loading,
-	children,
-}: OptionListProps<V>) {
+// under the first chosen option. From a query it draws its four states in
+// the card: waiting check rows in the slots `option` declares, a failed line
+// with `sentence` and Retry, the `empty` sentence, then the rows.
+export function OptionList<V extends string = string, T = unknown>(
+	props: OptionListProps<V, T>,
+) {
+	const { value, onChange, children } = props;
 	const words = useWords();
 	const named = useContext(GroupName);
-	if (loading) return <Loading />;
+	const input = {
+		query: props.query,
+		items: props.options,
+		loading: props.loading,
+		sectionLoading: false,
+		inSection: false,
+		hasEmpty: props.empty !== undefined,
+	};
+	const state = listState(input);
+	const busy = listBusy(input);
+	const frame = (body: ReactNode) => (
+		<View
+			accessibilityLabel={named?.label}
+			accessibilityHint={named?.said}
+			accessibilityState={busy ? { busy } : undefined}
+			className={OPTION_LIST}
+		>
+			{body}
+		</View>
+	);
+	if (state === "pending")
+		return frame(
+			<Wait
+				shape={
+					props.option ? optionShape(props.option) : optionsShape(props.options)
+				}
+			/>,
+		);
+	if (state === "failed" && props.query !== undefined)
+		return frame(
+			<View className={cn(row({ lines: "one" }), NOTE)}>
+				<RNText className={cn(text({ role: "meta" }), SENTENCE)}>
+					{props.sentence}
+				</RNText>
+				<Button
+					act="secondary"
+					fit="bar"
+					label={words.retry}
+					onAct={retryOf(props.query)}
+				/>
+			</View>,
+		);
+	if (state === "empty")
+		return frame(
+			<View className={cn(row({ lines: "one" }), NOTE)}>
+				<RNText className={cn(text({ role: "meta" }), SENTENCE)}>
+					{props.empty}
+				</RNText>
+			</View>,
+		);
+	const options = props.query
+		? optionsOf(props.query.data ?? [], props.option)
+		: props.options;
 	const first = value[0];
 	const toggle = (option: V) =>
 		onChange(
@@ -136,81 +258,75 @@ export function OptionList<V extends string = string>({
 				? value.filter((each) => each !== option)
 				: [...value, option],
 		);
-	return (
-		<View
-			accessibilityLabel={named?.label}
-			accessibilityHint={named?.said}
-			className={OPTION_LIST}
-		>
-			{groupsOf(options).map((group, at) => (
-				<View key={group.label ?? at} className={SELECT_GROUP}>
-					{group.label ? <GroupLabel>{group.label}</GroupLabel> : null}
-					{group.options.map((option) => {
-						const chosen = value.includes(option.value);
-						const marked = option.description || option.recommended;
-						return (
-							<Fragment key={option.value}>
-								<Pressable
-									accessibilityRole="checkbox"
-									accessibilityLabel={option.label}
-									accessibilityHint={option.description}
-									accessibilityState={{ checked: chosen }}
-									onPress={() => toggle(option.value)}
-									className={cn(row({ lines: marked ? "two" : "one" }), OPTION)}
-								>
-									<View className={cn(OPTION_LINE, LINE)}>
-										<View className={BOX_LINE}>
-											<RNText className={lineBox({ role: "body" })}>
-												{STRUT}
-											</RNText>
-											<LabelTarget.Provider value>
-												<Checkbox
-													checked={chosen}
-													onChange={() => toggle(option.value)}
-													label={option.label}
-												/>
-											</LabelTarget.Provider>
-										</View>
-										{marked ? (
-											<View className={TEXT}>
-												<RNText
-													numberOfLines={1}
-													className={text({ role: "body" })}
-												>
-													{option.label}
-												</RNText>
-												<View className={cn(ROW_META_LINE, DESCRIPTION_LINE)}>
-													{option.description ? (
-														<RNText className={text({ role: "meta" })}>
-															{option.description}
-														</RNText>
-													) : null}
-													{option.recommended ? (
-														<Chip family="neutral" label={words.recommended} />
-													) : null}
-												</View>
-											</View>
-										) : (
+	return frame(
+		groupsOf(options).map((group, at) => (
+			<View key={group.label ?? at} className={SELECT_GROUP}>
+				{group.label ? <GroupLabel>{group.label}</GroupLabel> : null}
+				{group.options.map((option) => {
+					const chosen = value.includes(option.value);
+					const marked = option.description || option.recommended;
+					return (
+						<Fragment key={option.value}>
+							<Pressable
+								accessibilityRole="checkbox"
+								accessibilityLabel={option.label}
+								accessibilityHint={option.description}
+								accessibilityState={{ checked: chosen }}
+								onPress={() => toggle(option.value)}
+								className={cn(row({ lines: marked ? "two" : "one" }), OPTION)}
+							>
+								<View className={cn(OPTION_LINE, LINE)}>
+									<View className={BOX_LINE}>
+										<RNText className={lineBox({ role: "body" })}>
+											{STRUT}
+										</RNText>
+										<LabelTarget.Provider value>
+											<Checkbox
+												checked={chosen}
+												onChange={() => toggle(option.value)}
+												label={option.label}
+											/>
+										</LabelTarget.Provider>
+									</View>
+									{marked ? (
+										<View className={TEXT}>
 											<RNText
 												numberOfLines={1}
-												className={cn(text({ role: "body" }), LABEL)}
+												className={text({ role: "body" })}
 											>
 												{option.label}
 											</RNText>
-										)}
-									</View>
-								</Pressable>
-								{option.value === first && chosen && children ? (
-									<View className={cn(OPTION_CHILDREN, CHILDREN)}>
-										<View className={cn(OPTION_INDENT, INDENT)} />
-										<View className={CHILDREN_BODY}>{children}</View>
-									</View>
-								) : null}
-							</Fragment>
-						);
-					})}
-				</View>
-			))}
-		</View>
+											<View className={cn(ROW_META_LINE, DESCRIPTION_LINE)}>
+												{option.description ? (
+													<RNText className={text({ role: "meta" })}>
+														{option.description}
+													</RNText>
+												) : null}
+												{option.recommended ? (
+													<Chip family="neutral" label={words.recommended} />
+												) : null}
+											</View>
+										</View>
+									) : (
+										<RNText
+											numberOfLines={1}
+											className={cn(text({ role: "body" }), LABEL)}
+										>
+											{option.label}
+										</RNText>
+									)}
+								</View>
+							</Pressable>
+							{option.value === first && chosen && children ? (
+								<View className={cn(OPTION_CHILDREN, CHILDREN)}>
+									<View className={cn(OPTION_INDENT, INDENT)} />
+									<View className={CHILDREN_BODY}>{children}</View>
+								</View>
+							) : null}
+						</Fragment>
+					);
+				})}
+			</View>
+		)),
 	);
 }
