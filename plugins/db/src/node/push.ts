@@ -9,7 +9,7 @@ import {
 	writeDrizzleConfig,
 } from "./drizzle-kit.ts";
 import { migrationLockPath, withMigrationLock } from "./lock.ts";
-import { executeSql, migrationsApply } from "./wrangler.ts";
+import { executeSql, MIGRATIONS_TABLE, migrationsApply } from "./wrangler.ts";
 
 // drizzle-kit neither creates the file's directory nor fails without it
 // (a push into a missing `./data` reports success and writes nothing), so
@@ -99,9 +99,13 @@ export async function pushSchemaLocal(
 				: sqliteLocalUrl(cwd, options);
 
 		const configPath = join(configDir, "drizzle.config.ts");
+		// `stack db apply` records into wrangler's migrations table in this same
+		// database. The schema declares no such table, so push would offer to
+		// drop it, behind a data-loss prompt nothing answers.
 		writeDrizzleConfig(configPath, {
 			schema: "./src/schema/index.ts",
 			dbCredentials: { url: dbUrl },
+			tablesFilter: [`!${MIGRATIONS_TABLE}`],
 		});
 
 		runDrizzleKit(cwd, ["push", "--config", configPath]);

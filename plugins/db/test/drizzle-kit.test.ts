@@ -9,13 +9,15 @@ import {
 	rmSync,
 	writeFileSync,
 } from "node:fs";
+import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { drizzleKitBin } from "../src/node/drizzle-kit.ts";
 import { detectSchemaDrift } from "../src/node/migration-safety.ts";
-import { generateMigrations } from "../src/node/push.ts";
+import { generateMigrations, pushSchemaLocal } from "../src/node/push.ts";
+import { MIGRATIONS_TABLE } from "../src/node/wrangler.ts";
 import type { DbOptions } from "../src/types.ts";
 
 // The schema builds its tables from plugin-db's own `orm.ts` by absolute
@@ -107,4 +109,39 @@ test("the binary resolves from plugin-db's install", () => {
 			"bin.cjs",
 		),
 	);
+});
+
+test("a push leaves the migrations table `stack db apply` records into", async () => {
+	const pushed =
+		consumer(`import { integer, sqliteTable, text } from ${JSON.stringify(ORM)};
+
+export const note = sqliteTable("note", {
+	id: integer("id").primaryKey(),
+	body: text("body").notNull(),
+});
+`);
+	const Database = createRequire(drizzleKitBin())("better-sqlite3");
+	const path = join(pushed, ".db-kit/local.db");
+	mkdirSync(join(pushed, ".db-kit"), { recursive: true });
+	const before = new Database(path);
+	before.exec(
+		`CREATE TABLE ${MIGRATIONS_TABLE} (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE); INSERT INTO ${MIGRATIONS_TABLE} (name) VALUES ('0000_init.sql');`,
+	);
+	before.close();
+
+	await pushSchemaLocal(pushed, options);
+
+	const after = new Database(path, { readonly: true });
+	const tables = after
+		.prepare("SELECT name FROM sqlite_master WHERE type = 'table'")
+		.all()
+		.map((row: { name: string }) => row.name);
+	const recorded = after
+		.prepare(`SELECT count(*) AS n FROM ${MIGRATIONS_TABLE}`)
+		.get() as { n: number };
+	after.close();
+	rmSync(pushed, { recursive: true, force: true });
+
+	assert.ok(tables.includes("note"), "the schema is pushed");
+	assert.equal(recorded.n, 1);
 });

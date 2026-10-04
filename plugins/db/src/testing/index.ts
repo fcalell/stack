@@ -7,14 +7,13 @@ import type { AnyD1Database, DrizzleD1Database } from "drizzle-orm/d1";
 import { getPlatformProxy, unstable_splitSqlQuery } from "wrangler";
 import { createClient } from "../d1/client.ts";
 import { listMigrationFiles } from "../node/push.ts";
+import { MIGRATIONS_TABLE } from "../node/wrangler.ts";
 
 // The test entry's local D1: one in-memory database per boot, behind
 // miniflare's D1 binding, with the consumer's migrations applied the way
 // `wrangler d1 migrations apply` applies them at deploy. Node-only.
 
-// The table and statements `wrangler d1 migrations apply` writes; stack's
-// wrangler config sets no `migrations_table`, so deploy records into this one.
-const MIGRATIONS_TABLE = "d1_migrations";
+// The statements `wrangler d1 migrations apply` writes.
 const CREATE_MIGRATIONS_TABLE = `CREATE TABLE IF NOT EXISTS "${MIGRATIONS_TABLE}"(
 		id         INTEGER PRIMARY KEY AUTOINCREMENT,
 		name       TEXT UNIQUE,

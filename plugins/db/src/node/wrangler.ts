@@ -8,6 +8,10 @@ import { runCommand } from "./exec.ts";
 // plugin-cloudflare.
 export const WRANGLER_CONFIG = ".stack/wrangler.toml";
 
+// The table `wrangler d1 migrations apply` records applied migrations in;
+// the generated wrangler config sets no `migrations_table`, so it is the default.
+export const MIGRATIONS_TABLE = "d1_migrations";
+
 // Flags that target the local miniflare-backed D1 that `wrangler dev` reads.
 export function localD1Flags(): string[] {
 	return [

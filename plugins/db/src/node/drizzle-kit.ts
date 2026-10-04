@@ -62,6 +62,7 @@ interface DrizzleConfig {
 	schema: string;
 	out?: string;
 	dbCredentials?: { url: string };
+	tablesFilter?: string[];
 }
 
 // A plain object with no import line: drizzle-kit loads the file with
