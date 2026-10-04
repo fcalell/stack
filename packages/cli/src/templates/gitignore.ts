@@ -3,7 +3,7 @@ interface GitignoreOptions {
 }
 
 export function gitignoreTemplate(options: GitignoreOptions): string {
-	const entries = ["node_modules", "dist", ".stack"];
+	const entries = ["node_modules", "dist", ".stack", ".direnv", ".corepack"];
 
 	if (options.plugins.includes("db")) {
 		entries.push(".db-kit");

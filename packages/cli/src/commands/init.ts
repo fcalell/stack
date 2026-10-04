@@ -31,6 +31,7 @@ import {
 import { stackPluginSpecs } from "../lib/stack-packages.ts";
 import { biomeTemplate } from "../templates/biome.ts";
 import { claudeMdTemplate } from "../templates/claude-md.ts";
+import { editorconfigTemplate } from "../templates/editorconfig.ts";
 import { gitignoreTemplate } from "../templates/gitignore.ts";
 import { packageJsonTemplate } from "../templates/package-json.ts";
 import { stackConfigTemplate } from "../templates/stack-config.ts";
@@ -187,6 +188,7 @@ export async function scaffold(
 			nativeTypes: tsconfigTypes,
 		}),
 		["biome.json", biomeTemplate()],
+		[".editorconfig", editorconfigTemplate()],
 		[".gitignore", gitignoreTemplate({ plugins: selectedPlugins })],
 	];
 	const createdBase: string[] = [];

@@ -34,7 +34,7 @@ and installs: a plugin loads only once installed, and its `requires` is known on
 The scaffold then runs in the app's installed `@fcalell/cli`, imported from the app's root,
 which need not be the copy that started `init`: slots match by identity, and the installed
 plugins import the app's copy. It writes the CLI-owned base files (the tsconfigs, `biome.json`,
-`.gitignore`, each only when missing) and makes `CLAUDE.md` import `@.stack/guide.md`: the file
+`.editorconfig`, `.gitignore`, each only when missing) and makes `CLAUDE.md` import `@.stack/guide.md`: the file
 is created with that line when missing, and the line appended when absent
 ([consumer-project](./consumer-project.md#the-guide)).
 

@@ -32,7 +32,8 @@ my-app/
                              # target) with `.stack/testing.ts`: Node's globals, none of the
                              # Workers', the worker read through its declarations. The schema's
                              # and `src/shared`'s tests stay with the app
-  biome.json
+  biome.json                 # extends @fcalell/biome-config; $schema from the installed biome
+  .editorconfig              # the shared style: biome and shfmt read it
   CLAUDE.md                  # imports `@.stack/guide.md`; the rest is the consumer's
   stack.config.ts            # defineConfig({ app, plugins: [db(...), auth(), api(), expo(), nativeUi()] })
   wrangler.toml              # consumer-owned base; .stack/wrangler.toml merges it (consumer [[routes]]/[[r2_buckets]] merge next to plugin contributions, collision = hard error; d1/kv/analytics_engine/unsafe/compatibility_flags stay framework-only)
