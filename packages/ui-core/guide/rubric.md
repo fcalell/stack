@@ -2,9 +2,9 @@
 
 The standard a stack component and a consumer screen are judged by, in a
 [design critique](./design-critique.md). Every tell is a number or a yes/no read off the rendered
-unit at 1280 and 390, light and dark, pointer parked off-screen, transitions disabled, every
-control clicked. The critic's own measurements are the only machine numbers on a render and
-never evidence of taste. The numbers, the constants below and each pattern's range (its page
+unit at 1280 and 390 (a phone screen at 390 and 320 dp), light and dark, pointer parked
+off-screen, transitions disabled, every control clicked. The critic's own measurements are the
+only machine numbers on a render and never evidence of taste. The numbers, the constants below and each pattern's range (its page
 under `patterns/`), are the floor a unit must clear before the judged questions
 ([judging](./judging.md)) and the bans below are asked at all.
 

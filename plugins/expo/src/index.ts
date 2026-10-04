@@ -362,6 +362,11 @@ export const expo = plugin("expo", {
 				"Running the phone app, editing `eas.json`, or building or updating it with EAS",
 		},
 		{
+			page: "phone-render",
+			trigger:
+				"Rendering the phone app on an emulator to judge a screen, or rebuilding it after a native change",
+		},
+		{
 			page: "api-client",
 			trigger:
 				"Calling the API from the phone, or editing `src/lib/api.ts` or `EXPO_PUBLIC_API_URL`",

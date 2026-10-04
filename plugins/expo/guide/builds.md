@@ -13,7 +13,8 @@ reads its port, profiles and channel from `expo()`.
 `stack expo dev` runs Metro alone: the API the app calls runs under `stack dev`, so run both while
 working on a phone screen. Embedded fonts and config plugins live in the native build, so run
 the app in a development build (`stack expo build --profile development`) against
-`stack expo dev`; Expo Go has neither.
+`stack expo dev`; Expo Go has neither. The emulator the design critique judges on runs a local
+debug build instead ([render page](./phone-render.md)).
 
 ## `eas.json`
 

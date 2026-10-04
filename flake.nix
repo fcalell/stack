@@ -12,9 +12,8 @@
       system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
-      in
-      {
-        devShells.default = pkgs.mkShell {
+
+        default = pkgs.mkShell {
           packages = [
             # engines.node is ">=22.20" (`path.matchesGlob` is stable from it); node 24 matches the linked ../helm consumer.
             pkgs.nodejs_24
@@ -50,6 +49,63 @@
             echo "stack dev shell: node $(node --version), pnpm $(pnpm --version 2>/dev/null || echo 'run: pnpm')"
           '';
         };
+
+        pkgsAndroid = import nixpkgs {
+          inherit system;
+          config = {
+            allowUnfree = true;
+            android_sdk.accept_license = true;
+          };
+        };
+        # Versions follow react-native's gradle/libs.versions.toml (compileSdk 36, buildTools
+        # 36.0.0, ndkVersion 27.1.12297006) plus AGP's default build-tools 35.0.0, which expo
+        # modules build with. Bump them with react-native.
+        android = pkgsAndroid.androidenv.composeAndroidPackages {
+          platformVersions = [ "36" ];
+          buildToolsVersions = [
+            "35.0.0"
+            "36.0.0"
+          ];
+          includeNDK = true;
+          ndkVersions = [ "27.1.12297006" ];
+          cmakeVersions = [ "3.22.1" ];
+          includeEmulator = true;
+          includeSystemImages = true;
+          systemImageTypes = [ "google_apis" ];
+          abiVersions = [ "x86_64" ];
+          includeSources = false;
+        };
+        sdk = "${android.androidsdk}/libexec/android-sdk";
+
+        # The phone render harness (plugins/expo/guide/phone-render.md). The system image is
+        # x86_64 and runs on KVM, so the shell exists on x86_64 Linux only.
+        phone = pkgs.mkShell {
+          inputsFrom = [ default ];
+          packages = [
+            android.androidsdk
+            pkgsAndroid.jdk17
+            pkgs.maestro
+          ];
+          ANDROID_HOME = sdk;
+          ANDROID_SDK_ROOT = sdk;
+          JAVA_HOME = pkgsAndroid.jdk17.home;
+          # The SDK is read-only, so Gradle fails on a missing component by name instead of
+          # installing it. AGP's aapt2 from Maven is a foreign binary: run the SDK's patched one.
+          GRADLE_OPTS = "-Dorg.gradle.project.android.aapt2FromMavenOverride=${sdk}/build-tools/36.0.0/aapt2";
+          MAESTRO_CLI_NO_ANALYTICS = "1";
+          MAESTRO_CLI_ANALYSIS_NOTIFICATION_DISABLED = "true";
+          # avdmanager writes under $XDG_CONFIG_HOME/.android when it is set, where the emulator
+          # never looks: one home for both.
+          shellHook = ''
+            export ANDROID_USER_HOME="$HOME/.android"
+          '';
+        };
+      in
+      {
+        devShells = {
+          inherit default;
+        }
+        // pkgs.lib.optionalAttrs (system == "x86_64-linux") { inherit phone; };
       }
     );
 }

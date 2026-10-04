@@ -43,8 +43,11 @@ Draw loading, empty and error for each region as the screen recipe's step 5 says
 
 ## 6. Judge and sign off
 
-Run the screen recipe's steps 6 to 8. The design critique judges a render it can script, and
-stack has no phone render harness yet, so a phone screen stops after step 5 until the harness
-ships. Device screenshots are no substitute for the critique.
+Start the app on the emulator by the [render page](./phone-render.md), with `stack dev` and
+`stack expo dev` running, and run the screen recipe's steps 6 to 8: a fresh session judges the
+render on the emulator by the design critique's phone section, at 390 and 320 dp, light and
+dark, and edits nothing. It gets the route as a deep link, the patterns, the states from step 5
+and how to reach each, the references and the files. A change that adds a native module, a
+config plugin or a font takes a new build first.
 
 **Check:** the critique's verdict is ship, and fcalell signs off.
