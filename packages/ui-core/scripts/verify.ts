@@ -86,6 +86,7 @@ import {
 	SPACE_BASE,
 	SPACING_RATIO,
 	SPACING_ROLES,
+	STACK_ORDER,
 	STATUS_STATES,
 	TRACKED_ROLES,
 	type TrackedRole,
@@ -980,6 +981,21 @@ check("c07", "the shadows are two sRGB layers per level and mode", () => {
 		"the utilities read their mode's variable",
 	);
 	return `${base.shadows.light.float} / ${base.shadows.dark.modal}`;
+});
+
+check("c37", "the layers stand over the page in order, toasts on top", () => {
+	const root = rootTokens(base);
+	STACK_ORDER.forEach((layer, at) => {
+		requireEqual(root[`--layer-${layer}`], String(at + 1), `--layer-${layer}`);
+	});
+	requireEqual(
+		STACK_ORDER.at(-1),
+		"toasts",
+		"the toasts stand over every layer",
+	);
+	return STACK_ORDER.map(
+		(layer) => `${layer} ${root[`--layer-${layer}`]}`,
+	).join(" < ");
 });
 
 check("c08", "themeTokens and modeTokens carry the right keys", () => {

@@ -28,6 +28,7 @@ const VALUE_DISABLED = "text-ink-disabled";
 // The list stands at the trigger's width, which Base UI sets on the
 // positioner as `--anchor-width`.
 const POPUP = "flex flex-col w-(--anchor-width)";
+const POSITIONER = "z-(--layer-popover)";
 const OPTION_GROUP = "flex flex-col";
 const GROUP_LABEL = "px-control-x pt-pair";
 // The highlight wash marks the keyboard's option, so a row draws no ring.
@@ -126,6 +127,7 @@ export function Select<V extends string | null = string>({
 			/>
 			<Control.Portal container={container}>
 				<Control.Positioner
+					className={POSITIONER}
 					alignItemWithTrigger={false}
 					sideOffset={pairOffset}
 				>

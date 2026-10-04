@@ -70,6 +70,7 @@ const OPEN_VALUE = "text-ink-body";
 // The popover stops at the room Base UI measures below its trigger; its rows
 // scroll inside it, under a search that stays.
 const POPUP = "flex flex-col max-h-(--available-height)";
+const POSITIONER = "z-(--layer-popover)";
 const LIST =
 	"flex flex-col gap-pair min-h-0 overflow-y-auto overscroll-contain";
 const GROUP = "flex flex-col";
@@ -449,6 +450,7 @@ function PickList<V extends string | null>(
 			<Select.Trigger render={(handed) => keyboard.trigger(handed)} />
 			<Select.Portal container={container}>
 				<Select.Positioner
+					className={POSITIONER}
 					align={align}
 					alignItemWithTrigger={false}
 					sideOffset={() => spacing("pair")}
@@ -531,7 +533,11 @@ function PickSearch<V extends string | null>(
 		>
 			<Combobox.Trigger render={(handed) => keyboard.trigger(handed)} />
 			<Combobox.Portal container={container}>
-				<Combobox.Positioner align={align} sideOffset={() => spacing("pair")}>
+				<Combobox.Positioner
+					className={POSITIONER}
+					align={align}
+					sideOffset={() => spacing("pair")}
+				>
 					<Combobox.Popup
 						{...keyboard.popup}
 						aria-label={props.label}

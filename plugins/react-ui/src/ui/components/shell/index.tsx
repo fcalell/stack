@@ -58,8 +58,11 @@ const BANNER_SLOT = "flex flex-col";
 // it are no banners.
 const MAIN = "relative flex flex-col grow min-h-0";
 const ROOM = "shrink-0";
+// The toasts stand on their layer over an open sheet's portal, so nothing
+// between them and the root makes a stacking context (no `isolate`, `z-*` or
+// transform on the frame, the column or `main`; verify b-layers holds it).
 const TOASTS_LAYER =
-	"absolute inset-0 flex flex-col items-end justify-end pointer-events-none touch:items-center";
+	"absolute inset-0 z-(--layer-toasts) flex flex-col items-end justify-end pointer-events-none touch:items-center";
 // A place row rings inset, inside the sidebar's inset.
 const ROW_BOX = "flex items-center focus-visible:-outline-offset-2";
 const ROW_PRESS = "hover:bg-wash-hover active:bg-wash-press";

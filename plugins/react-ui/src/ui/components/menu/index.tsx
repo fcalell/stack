@@ -20,6 +20,7 @@ import { IconButtonBase } from "../icon-button/base.tsx";
 import { SheetBase } from "../sheet/base.tsx";
 
 const POPUP = "flex flex-col";
+const POSITIONER = "z-(--layer-popover)";
 // The popover drops in from a float above as it fades, and fades out; on
 // transform and opacity alone, the rungs zeroed under reduced motion.
 const POPUP_MOTION =
@@ -182,7 +183,11 @@ export function Menu({ label, items }: MenuProps) {
 				render={<IconButtonBase icon="Ellipsis" fit="bar" label={label} />}
 			/>
 			<Control.Portal container={container}>
-				<Control.Positioner align="end" sideOffset={() => spacing("pair")}>
+				<Control.Positioner
+					className={POSITIONER}
+					align="end"
+					sideOffset={() => spacing("pair")}
+				>
 					<Control.Popup
 						className={cn(
 							POPOVER,

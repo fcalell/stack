@@ -49,6 +49,7 @@ import {
 	TYPE_ROLES,
 	WIDTHS,
 } from "@fcalell/ui-core/tokens";
+import { SHELL_COLUMN } from "@fcalell/ui-core/variants";
 import { Node, Project } from "ts-morph";
 import { reactUi } from "../src/index.ts";
 import { OVERLAYS, SKELETON_WIDTHS } from "./overlays.ts";
@@ -694,6 +695,44 @@ const PRODUCT_NOUNS = [
 	"cambusa",
 	"soldi",
 ];
+
+// The toasts' layer stands on `--layer-toasts` over a sheet portalled into
+// `<body>`, which holds only while no element between it and the root makes
+// a stacking context: the Shell's frame, its column and `main`.
+const STACKING_CONTEXT =
+	/^(?:isolate|z-|-?(?:transform|translate|scale|rotate|skew)|opacity-|filter|backdrop-|blur|brightness|contrast|drop-shadow|grayscale|hue-rotate|invert|saturate|sepia|will-change-|contain-|mix-blend-|mask-|perspective|fixed$|sticky$)/;
+
+check(
+	"b-layers",
+	"nothing under the toasts' layer makes a stacking context",
+	() => {
+		const source = readFileSync(
+			resolve(COMPONENT_DIR, "shell/index.tsx"),
+			"utf8",
+		);
+		const spelled = (name: string): string => {
+			const literal = new RegExp(`const ${name} =\\s*"([^"]*)"`).exec(
+				source,
+			)?.[1];
+			assert(literal !== undefined, `the Shell spells no ${name}`);
+			return literal;
+		};
+		const ancestors = [
+			spelled("FRAME"),
+			SHELL_COLUMN,
+			spelled("COLUMN"),
+			spelled("MAIN"),
+		];
+		const hits = ancestors
+			.flatMap((literal) => classes(literal))
+			.filter((name) => STACKING_CONTEXT.test(bareOf(name)));
+		assert(
+			hits.length === 0,
+			`a stacking context under the toasts' layer: ${hits.join(", ")}`,
+		);
+		return `${ancestors.length} class strings from the root to the toasts' layer, none a stacking context`;
+	},
+);
 
 check("b-nouns", "no product noun in src", () => {
 	// A token boundary, not a word boundary: the contract's `card` role (`p-card`,

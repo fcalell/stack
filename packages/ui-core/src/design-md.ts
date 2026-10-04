@@ -3,6 +3,7 @@
 // and the eight body sections as a snapshot of what the contract draws. A pure
 // function of a resolved theme, so the committed file is checked against it.
 import type { ResolvedTheme } from "./derive.ts";
+import { rootTokens } from "./emit.ts";
 import { rosterEntries } from "./roster.ts";
 import {
 	BREAKPOINTS,
@@ -21,6 +22,7 @@ import {
 	SIZES,
 	SLOT_WORD_KEYS,
 	SPACING_ROLES,
+	STACK_ORDER,
 	STRONG_WEIGHT,
 	TRACKED_ROLES,
 	TYPE_ROLES,
@@ -471,7 +473,7 @@ function body(resolved: ResolvedTheme): string[] {
 		"",
 		"## Elevation & Depth",
 		"",
-		`A card at rest has a hairline and no shadow. Two levels lift a layer, each per mode: ${SHADOW_LEVELS.map((level) => `${code(`shadow-${level}`)} (light ${code(resolved.shadows.light[level])}, dark ${code(resolved.shadows.dark[level])})`).join("; ")}. \`shadow-float\` lifts a popover, a menu, a picker's list and a toast; \`shadow-modal\` a dialog, a sheet and a command palette. In dark the lift is carried by the \`raised\` step and the hairline as much as by the shadow. The hairline is 1 px; the focus ring is \`ring\` at 2 px, 2 px outside the box, drawn inward inside a list.`,
+		`A card at rest has a hairline and no shadow. Two levels lift a layer, each per mode: ${SHADOW_LEVELS.map((level) => `${code(`shadow-${level}`)} (light ${code(resolved.shadows.light[level])}, dark ${code(resolved.shadows.dark[level])})`).join("; ")}. \`shadow-float\` lifts a popover, a menu, a picker's list and a toast; \`shadow-modal\` a dialog, a sheet and a command palette. In dark the lift is carried by the \`raised\` step and the hairline as much as by the shadow. The hairline is 1 px; the focus ring is \`ring\` at 2 px, 2 px outside the box, drawn inward inside a list. The layers over the page stand in one order, each \`--layer-<layer>\` read as \`z-(--layer-<layer>)\` on the web: ${STACK_ORDER.map((layer) => `${code(layer)} ${rootTokens(resolved)[`--layer-${layer}`]}`).join(" < ")}, the page at 0. A sheet's scrim and the sheet stand on \`sheet\`, a popover over a sheet it opens from, and the toasts over both, so a toast raised while a sheet or a confirm is open is seen and its dismiss pressed.`,
 		"",
 		"## Shapes",
 		"",

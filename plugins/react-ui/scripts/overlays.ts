@@ -186,6 +186,7 @@ export const OVERLAYS: readonly string[] = [
 	"touch:flex-wrap",
 	// Shell
 	"h-dvh",
+	"z-(--layer-toasts)",
 	"pb-safe",
 	"text-left",
 	"top-0",
@@ -236,6 +237,8 @@ export const OVERLAYS: readonly string[] = [
 	"touch:self-stretch",
 	"touch:text-start",
 	// Sheet, Menu, Toast
+	"z-(--layer-sheet)",
+	"z-(--layer-popover)",
 	"relative",
 	"absolute",
 	"inset-0",

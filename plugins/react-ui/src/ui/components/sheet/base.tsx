@@ -30,7 +30,7 @@ import { backGlyph } from "../place/index.tsx";
 
 // The layer the sheet stands on over the scrim: from the bottom edge on
 // touch, at the end on the desktop, centred for a decision.
-const BACKDROP = "fixed inset-0";
+const BACKDROP = "fixed inset-0 z-(--layer-sheet)";
 // Motion, on transform and opacity alone: a sheet enters at the slow rung
 // and leaves at the base rung, the side sheet from its end, the bottom sheet
 // from its edge, the centred one rising a pair as it fades; the scrim fades
@@ -43,9 +43,11 @@ const BOTTOM_MOTION =
 	"transition-transform duration-slow ease-out data-starting-style:translate-y-full data-ending-style:translate-y-full data-ending-style:duration-base data-ending-style:ease-in";
 const CENTRED_MOTION =
 	"transition-[opacity,translate] duration-slow ease-out data-starting-style:translate-y-pair data-starting-style:opacity-0 data-ending-style:opacity-0 data-ending-style:duration-base data-ending-style:ease-in";
-const LAYER_BOTTOM = "fixed inset-0 flex flex-col justify-end";
-const LAYER_SIDE = "fixed inset-0 flex justify-end";
-const LAYER_CENTRED = "fixed inset-0 flex items-center justify-center";
+const LAYER_BOTTOM =
+	"fixed inset-0 z-(--layer-sheet) flex flex-col justify-end";
+const LAYER_SIDE = "fixed inset-0 z-(--layer-sheet) flex justify-end";
+const LAYER_CENTRED =
+	"fixed inset-0 z-(--layer-sheet) flex items-center justify-center";
 const BOX = "relative flex flex-col";
 // A tall bottom sheet stops at the viewport's top and its body scrolls; the
 // bottom inset clears a phone's home indicator.

@@ -982,6 +982,17 @@ export const SHADOW_LAYERS: Record<
 	},
 };
 
+// ── Stacking order ──────────────────────────────────────────────────
+
+// The layers over the page, lowest first, each one step above the one before
+// it and the first one step above the page's own (the root's 0): a sheet with
+// its scrim, a popover over it (a picker's list opened from a sheet's field),
+// and the toasts over both, so a toast raised while a sheet or a confirm is
+// open is seen and its dismiss pressed. A stacking order inside one component
+// is its own structural class, never a layer. (The roster's `LAYERS` are the
+// component tiers, a different concept.)
+export const STACK_ORDER = ["sheet", "popover", "toasts"] as const;
+
 // ── Motion ──────────────────────────────────────────────────────────
 
 // One scale from a base of 200 ms: `instant` is press feedback only, the

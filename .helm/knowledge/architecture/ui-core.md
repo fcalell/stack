@@ -113,8 +113,9 @@ pinned by the package's verify suite; this entry holds the architecture and its 
   shadows in `@utility` rules reading `var(--shadow-<level>)`, because the `--shadow-*` theme
   namespace does not resolve into RN's `boxShadow` and a shadow is per mode. The web keys each
   mode on a class scope, `.dark` on the root and `.light` below it restoring the light set, so a
-  light subtree renders light under a dark page; `rootTokens` puts the hairline, the ring and the
-  light shadows on `:root` outside `@theme`, since no utility reads them.
+  light subtree renders light under a dark page; `rootTokens` puts the hairline, the ring, the
+  layers' order and the light shadows on `:root` outside `@theme`: no theme utility reads them,
+  and a layer is read by the arbitrary `z-(--layer-<layer>)`, since `z-*` reads no theme namespace.
 - Fonts split by fact: the theme names the families (`--font-sans`, `--font-mono`, each ahead of
   its platform fallback), each plugin's `fonts` option carries the files (a woff2 with fallback
   metrics on web, an expo-font source on native). The metric fallback face's name is one rule,
@@ -277,6 +278,19 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
   width), grid placement (`col-start-1 row-start-1`, two acts in one slot), `table-fixed`, a
   hanging indent (`-indent-control-x`, a wrapped diff line's first line pulled back over its
   hang) and `wrap-anywhere`.
+- The stacking order between components is a token, `STACK_ORDER`, each layer one step above
+  the one before (`sheet` 1, `popover` 2, `toasts` 3, over the page's 0), emitted on the root as
+  `--layer-<layer>` and read on the web as `z-(--layer-<layer>)`, since Tailwind's `z-*` reads no theme namespace. A sheet's
+  scrim and layer, each popover's positioner and the toasts' layer each draw theirs, so a toast
+  raised while a sheet or a `confirm()` is open stands over the scrim and its dismiss takes the
+  press. Base UI portals a sheet into `<body>` after the app root, so by DOM order alone a sheet
+  stands over the toasts. The toasts' layer stays inside `main` for its geometry
+  (above the tab bar, the floating act, the docked foot), so nothing between it and the root may
+  make a stacking context. Base UI's modal leaves the toasts announced: it marks the outside
+  `aria-hidden` but keeps every `[aria-live]` element and its ancestors, the toasts' viewport
+  among them. Rejected: a literal `z-*` at the call site, and portalling the toasts after the
+  sheets (a Base UI portal mounts in the order it opens, and the layer would lose `main`'s
+  geometry).
 - A table cell stands at the row's floor behind a transparent side border (`TABLE_CELL`:
   `min-h-row` and `px-control-x`), and the `Input` that edits it in place stands inside it at
   the field's bar fit, so a cell and its edit put their text in one place and the row keeps its
@@ -428,6 +442,8 @@ cell, an off-contract utility, or a drawn word outside `words` each fails a name
 - Native has no render harness: its verify reads the components against the matrix strings and the roster, and no check draws a native screen.
 - A native QR tile inside a dark raised ground draws its edge at the dark raised value: uniwind 1.12's `ScopedTheme` keeps the parent's scoped variables and cannot clear one. No screen does this today.
 - A native Button's `count` is not read aloud: the pressable's accessible name is its `label` alone.
+- A native toast raised while a sheet or a `confirm()` is open stands under it: gorhom's `BottomSheetModalProvider` renders its portal host after the app, the Shell's toasts' layer among it, and React Native's `zIndex` orders siblings only, so the layer order has no native reading. The sheet's layer is also `accessibilityViewIsModal`, which hides the toasts from VoiceOver while it is open.
+- A failed toast's announcement is Base UI's visually hidden `role="alert"` wrapper beside the toasts' viewport, which exists only while a failed toast stands and the viewport is unfocused, and carries no `aria-live`. When a sheet opens while a failed toast stands, the modal marks that wrapper `aria-hidden`, so a failed toast raised while one has stood continuously since before the sheet opened is not announced. Once no failed toast stands the wrapper is gone, and the next is announced.
 - The native toast room adds the docked foot's measured height (`FootDocks`) and not the keyboard's offset, so a toast shown while the keyboard is up is not lifted with the foot.
 - A product cannot draw in the platform font: `fonts.sans` unset is IBM Plex Sans, and the platform stack only stands behind the named family and its metric fallback face.
 - Comparison's `hyphens-auto` is unverified: the Nix Playwright browsers ship no hyphenation dictionaries, so a value wider than its column breaks mid-letter there.

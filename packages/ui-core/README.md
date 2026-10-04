@@ -18,7 +18,8 @@ Eleven subpaths:
 - `@fcalell/ui-core/emit`: the records a plugin renders. `themeTokens` is the `@theme` block: the
   eleven reset namespaces, the touch density set, tracking, radii, widths, breakpoints, the two
   font stacks, the durations and curves, and the light colors. `rootTokens` is what sits on the
-  root outside `@theme`: the hairline, the focus ring's width and offset, and the light shadows.
+  root outside `@theme`: the hairline, the focus ring's width and offset, the layers' order
+  (`--layer-<layer>`) and the light shadows.
   `modeTokens` is one mode's colors and its two shadows. `densityTokens` is one density's type
   scale, spacing roles and sizes. `nativeMeasureTokens` is native's two measures in px over `themeTokens`' `ch`. `reducedMotionTokens` is every duration at 0ms. `shadowUtilities` is the declaration of each `shadow-*` utility, reading its mode's variable.
   `raisedGroundTokens` is what a raised ground (`RAISED_GROUNDS`: `group`, `raised`) declares for
@@ -259,6 +260,13 @@ light; in dark the lift is carried by the raised step and the hairline, so the s
 black at a higher opacity. Each mode has its own pair, and each utility reads `var(--shadow-*)`,
 so a shadow follows the mode; the values are sRGB because React Native's `boxShadow` takes no
 oklch.
+
+The layers over the page stand in the order of `STACK_ORDER`, each one step above the one
+before: `sheet` 1 (the scrim and the sheet), `popover` 2 (a popover over the sheet it opens
+from), `toasts` 3, over the page's 0, so a toast raised while a sheet or a confirm is open is seen and its dismiss pressed. Each is
+`--layer-<layer>` on the root, read on the web as `z-(--layer-<layer>)`, since Tailwind's `z-*`
+reads no theme namespace. A stacking order inside one component (a frozen table column) is its
+own structural class inside `isolate`, never a layer.
 
 Density is emitted as sets. `themeTokens` seeds the touch set on every platform;
 `densityTokens` is either set, which the web renders as the desktop set under a fine pointer at

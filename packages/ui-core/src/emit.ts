@@ -16,6 +16,7 @@ import {
 	type ShadowLevel,
 	SIZES,
 	SPACING_ROLES,
+	STACK_ORDER,
 	TRACKED_ROLES,
 	TYPE_ROLES,
 	WIDTHS,
@@ -77,14 +78,19 @@ export function themeTokens(resolved: ResolvedTheme): Record<string, string> {
 
 // The values that are neither utilities nor per mode, rendered on the root
 // outside `@theme`: the hairline and the focus ring's width and offset, which
-// a platform's base rules read, and the light shadows, seeded so the root
-// carries them ahead of any mode scope.
+// a platform's base rules read, the layers' stacking order, which a layer
+// reads as `z-(--layer-<layer>)` (Tailwind's `z-*` reads no theme
+// namespace), and the light shadows, seeded so the root carries them ahead of
+// any mode scope.
 export function rootTokens(resolved: ResolvedTheme): Record<string, string> {
 	const tokens: Record<string, string> = {
 		"--hairline": `${HAIRLINE_PX}px`,
 		"--focus-ring": `${RING_PX}px`,
 		"--focus-ring-offset": `${RING_OFFSET_PX}px`,
 	};
+	STACK_ORDER.forEach((layer, at) => {
+		tokens[`--layer-${layer}`] = String(at + 1);
+	});
 	for (const level of SHADOW_LEVELS) {
 		tokens[`--shadow-${level}`] = resolved.shadows.light[level];
 	}
