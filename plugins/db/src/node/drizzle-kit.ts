@@ -28,9 +28,9 @@ function assertDrizzleOrm(bin: string): void {
 
 // drizzle-kit exits 0 even when its sqlite driver fails to load, so a broken
 // push or migrate would report success. Load the driver from drizzle-kit's
-// location up front and fail with the fix instead. better-sqlite3 13 ships a
-// prebuilt binary for linux, darwin and win32 on x64 and arm64 and loads it
-// first; elsewhere it is built from source.
+// location up front and fail with the fix instead. drizzle-kit declares no
+// better-sqlite3 and loads whichever copy pnpm hoists: plugin-db's 13, which
+// ships prebuilt binaries, or better-auth's 12 peer, built by its install script.
 export function assertSqliteDriver(): void {
 	const requireFromKit = createRequire(drizzleKitBin());
 	try {
@@ -42,7 +42,7 @@ export function assertSqliteDriver(): void {
 		const detail =
 			err instanceof Error ? err.message.split("\n")[0] : String(err);
 		throw new Error(
-			`better-sqlite3 failed to load from drizzle-kit (${detail}). Off its prebuilt platforms, build it: approve the build (allowBuilds: better-sqlite3: true in pnpm-workspace.yaml) and run \`pnpm rebuild better-sqlite3\`, then retry.`,
+			`better-sqlite3 failed to load from drizzle-kit (${detail}). Build its binding: approve the build (allowBuilds: better-sqlite3: true in pnpm-workspace.yaml) and run \`pnpm rebuild better-sqlite3\`, then retry.`,
 		);
 	}
 }

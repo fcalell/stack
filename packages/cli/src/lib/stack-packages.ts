@@ -27,7 +27,9 @@ export const STACK_PACKAGES = {
 			"@fcalell/plugin-db",
 		],
 		// better-auth's Prisma adapter auto-installs its peer; auth uses Drizzle.
-		builds: { "@prisma/client": false },
+		// Its better-sqlite3 ^12 peer installs beside plugin-db's 13 and builds
+		// its binding by install script; pnpm may hoist it as drizzle-kit's driver.
+		builds: { "@prisma/client": false, "better-sqlite3": true },
 	},
 	"@fcalell/plugin-cloudflare": {
 		dir: "plugins/cloudflare",
@@ -44,9 +46,9 @@ export const STACK_PACKAGES = {
 			"@fcalell/plugin-api",
 			"@fcalell/plugin-cloudflare",
 		],
-		// drizzle-kit's esbuild; better-sqlite3 loads its prebuilt binary on
-		// linux, darwin and win32 (x64, arm64), so its source build is skipped.
-		builds: { esbuild: true, "better-sqlite3": false },
+		// drizzle-kit's esbuild. better-sqlite3 13 ships prebuilt binaries and
+		// declares no build (`gypfile: false`).
+		builds: { esbuild: true },
 	},
 	"@fcalell/plugin-expo": {
 		dir: "plugins/expo",

@@ -238,7 +238,7 @@ consumers run pnpm 11.15 or later. The bare name and the `github:` spec are refu
 in pnpm's `GIT_DEP_PREPARE_NOT_ALLOWED` names only the commit-pinned `codeload` key.
 pnpm 11 refuses an install that meets a build script `allowBuilds` gives no verdict
 (`strictDepBuilds`). Each verdict is a stack package's own data, its `builds` in the CLI's table
-(plugin-db's `better-sqlite3: false`, the CLI's `esbuild` and `workerd` for the wrangler its
+(plugin-auth's `better-sqlite3: true`, the CLI's `esbuild` and `workerd` for the wrangler its
 template writes), so the yaml written with the first install already carries every verdict of
 the packages that install brings, before any plugin loads. Inside stack's workspace the
 checkout's root `pnpm-workspace.yaml` carries the same verdicts by hand.

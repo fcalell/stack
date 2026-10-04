@@ -32,9 +32,9 @@ test("each stack package's build is approved by repository URL", () => {
 	});
 });
 
-test("a db app skips better-sqlite3's source build from its first install", () => {
-	const yaml = workspace(null, ["@fcalell/cli", "@fcalell/plugin-db"]);
-	assert.equal(yaml.allowBuilds["better-sqlite3"], false);
+test("an auth app builds better-sqlite3 from its first install", () => {
+	const yaml = workspace(null, ["@fcalell/cli", "@fcalell/plugin-auth"]);
+	assert.equal(yaml.allowBuilds["better-sqlite3"], true);
 	assert.equal(yaml.allowBuilds.esbuild, true);
 });
 
