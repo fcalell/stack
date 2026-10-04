@@ -1,6 +1,6 @@
 ---
 id: 005-23
-status: review
+status: done
 sessions: {}
 ---
 # react-ui: the roster page goes idle once it has drawn
