@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
+	factShape,
 	groupWait,
 	type ListInput,
 	listBusy,
@@ -177,4 +178,17 @@ test("a waiting Group draws its Lists' waiting rows, else setting row skeletons"
 	assert.equal(groupWait(1), "rows");
 	assert.equal(groupWait(2), "rows");
 	assert.equal(groupWait(0), "settings");
+});
+
+test("a pending Comparison with three columns draws three bars per row, and a chips bar only when chips are declared", () => {
+	const calls: string[] = [];
+	const chips = () => {
+		calls.push("chips");
+		return undefined;
+	};
+	const columns = ["Free", "Team", "Business"];
+	assert.deepEqual(factShape(columns, {}), { values: 3, chips: false });
+	assert.deepEqual(factShape(columns, { chips }), { values: 3, chips: true });
+	assert.equal(factShape(["Team", "Business"], {}).values, 2);
+	assert.deepEqual(calls, []);
 });

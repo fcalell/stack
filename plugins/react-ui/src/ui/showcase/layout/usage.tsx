@@ -1,4 +1,4 @@
-import type { BarSeries, ComparisonRow } from "@fcalell/ui-core/descriptors";
+import type { BarSeries } from "@fcalell/ui-core/descriptors";
 import { BarChart } from "../../components/bar-chart/index.tsx";
 import { Comparison } from "../../components/comparison/index.tsx";
 import { Group } from "../../components/group/index.tsx";
@@ -46,25 +46,23 @@ const REQUESTS: BarSeries[] = WEEK.map(([day, values]) => ({
 	at: day,
 }));
 
-function change(label: string, current: string, next: string): ComparisonRow {
-	return {
-		label,
-		cells: [
-			{ label: "Team, now", value: current },
-			{ label: "Business", value: next },
-		],
-	};
+// What moving from Team to Business changes, a fact a row.
+interface PlanFact {
+	label: string;
+	values: [string, string];
+	chips?: string[];
 }
 
-const PLAN_CHANGE: ComparisonRow[] = [
-	change("Requests", "1M a month", "10M a month"),
-	change("Build minutes", "6,000 a month", "25,000 a month"),
-	change("Storage", "10 GB", "100 GB"),
+const PLAN_CHANGE: PlanFact[] = [
+	{ label: "Requests", values: ["1M a month", "10M a month"] },
+	{ label: "Build minutes", values: ["6,000 a month", "25,000 a month"] },
+	{ label: "Storage", values: ["10 GB", "100 GB"] },
 	{
-		...change("Audit log", "Not included", "Kept 90 days"),
-		chips: [{ label: "New" }],
+		label: "Audit log",
+		values: ["Not included", "Kept 90 days"],
+		chips: ["New"],
 	},
-	change("Billed", "$120 a month", "$480 a month, from Oct 14"),
+	{ label: "Billed", values: ["$120 a month", "$480 a month, from Oct 14"] },
 ];
 
 // This month's use against the plan: under, near and over its limits.
@@ -163,8 +161,15 @@ function Sections(props: { usage?: typeof USAGE }) {
 			>
 				<Comparison
 					label="Plan change"
-					rows={usage?.plan ?? []}
+					columns={["Team, now", "Business"]}
+					items={usage?.plan ?? []}
 					loading={!usage}
+					row={{
+						key: (fact) => fact.label,
+						label: (fact) => fact.label,
+						values: (fact) => fact.values,
+						chips: (fact) => fact.chips,
+					}}
 				/>
 			</Section>
 		</>

@@ -131,7 +131,7 @@ export type ListEmpty = Pick<
 >;
 
 /** Where a list's items come from. */
-type ListSource<T> =
+export type ListSource<T> =
 	| {
 			/** The query whose items the rows draw. */
 			query: QueryLike<readonly T[]>;

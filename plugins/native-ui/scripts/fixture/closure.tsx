@@ -800,21 +800,21 @@ export const closure = (
 		<ProseDiff before="a" after="b" selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
 		<ProseDiff before="a" after="b" placeholderTextColorClassName="text-ink-body" />
-		<Comparison label="x" rows={[]} />
+		<Comparison label="x" columns={["a"]} items={[]} row={{ key: String, label: String, values: () => [] }} />
 		{/* @ts-expect-error: closed channel */}
-		<Comparison label="x" rows={[]} className="x" />
+		<Comparison label="x" columns={["a"]} items={[]} row={{ key: String, label: String, values: () => [] }} className="x" />
 		{/* @ts-expect-error: closed channel */}
-		<Comparison label="x" rows={[]} style={{ flex: 1 }} />
+		<Comparison label="x" columns={["a"]} items={[]} row={{ key: String, label: String, values: () => [] }} style={{ flex: 1 }} />
 		{/* @ts-expect-error: closed channel */}
-		<Comparison label="x" rows={[]} class="x" />
+		<Comparison label="x" columns={["a"]} items={[]} row={{ key: String, label: String, values: () => [] }} class="x" />
 		{/* @ts-expect-error: closed channel */}
-		<Comparison label="x" rows={[]} classList={{}} />
+		<Comparison label="x" columns={["a"]} items={[]} row={{ key: String, label: String, values: () => [] }} classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<Comparison label="x" rows={[]} colorClassName="text-ink-body" />
+		<Comparison label="x" columns={["a"]} items={[]} row={{ key: String, label: String, values: () => [] }} colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Comparison label="x" rows={[]} selectionColorClassName="text-ink-body" />
+		<Comparison label="x" columns={["a"]} items={[]} row={{ key: String, label: String, values: () => [] }} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Comparison label="x" rows={[]} placeholderTextColorClassName="text-ink-body" />
+		<Comparison label="x" columns={["a"]} items={[]} row={{ key: String, label: String, values: () => [] }} placeholderTextColorClassName="text-ink-body" />
 		<Message author="you" body="a" />
 		{/* @ts-expect-error: closed channel */}
 		<Message author="you" body="a" className="x" />

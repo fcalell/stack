@@ -507,15 +507,15 @@ export const closure = (
 		<FileRow path="x" added={1} removed={1} class="x" />
 		{/* @ts-expect-error: closed channel */}
 		<FileRow path="x" added={1} removed={1} classList={{}} />
-		<Comparison label="x" rows={[]} />
+		<Comparison label="x" columns={["a"]} items={[]} row={{ key: String, label: String, values: () => [] }} />
 		{/* @ts-expect-error: closed channel */}
-		<Comparison label="x" rows={[]} className="x" />
+		<Comparison label="x" columns={["a"]} items={[]} row={{ key: String, label: String, values: () => [] }} className="x" />
 		{/* @ts-expect-error: closed channel */}
-		<Comparison label="x" rows={[]} style={{ flex: 1 }} />
+		<Comparison label="x" columns={["a"]} items={[]} row={{ key: String, label: String, values: () => [] }} style={{ flex: 1 }} />
 		{/* @ts-expect-error: closed channel */}
-		<Comparison label="x" rows={[]} class="x" />
+		<Comparison label="x" columns={["a"]} items={[]} row={{ key: String, label: String, values: () => [] }} class="x" />
 		{/* @ts-expect-error: closed channel */}
-		<Comparison label="x" rows={[]} classList={{}} />
+		<Comparison label="x" columns={["a"]} items={[]} row={{ key: String, label: String, values: () => [] }} classList={{}} />
 		<BarChart label="x" series={[]} />
 		{/* @ts-expect-error: closed channel */}
 		<BarChart label="x" series={[]} className="x" />

@@ -1,61 +1,88 @@
-import type { ComparisonRow } from "@fcalell/ui-core/descriptors";
 import { Comparison } from "../../components/comparison/index.tsx";
+import type { QueryLike } from "../../components/query-boundary/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
 import { Wide } from "./layout-context.tsx";
 
-function change(label: string, current: string, next: string): ComparisonRow {
+interface Fact {
+	label: string;
+	values: string[];
+	chips?: string[];
+}
+
+// Board 51's plan change (two columns) and plans (three, a fact with a chip).
+const CHANGE: Fact[] = [
+	{ label: "Plan", values: ["Team", "Business"] },
+	{ label: "Seats", values: ["10", "25"] },
+	{ label: "Storage", values: ["100 GB", "1 TB"] },
+	{ label: "Audit log", values: ["Not included", "Kept 90 days"] },
+	{
+		label: "Billed",
+		values: ["$120 a month", "$480 a month, from 14 October"],
+	},
+];
+const PLANS: Fact[] = [
+	{ label: "Seats", values: ["3", "10", "Unlimited"] },
+	{ label: "Projects", values: ["2", "Unlimited", "Unlimited"] },
+	{ label: "Single sign-on", values: ["No", "No", "Yes"], chips: ["Beta"] },
+	{ label: "History", values: ["7 days", "90 days", "Forever"] },
+	{
+		label: "Support",
+		values: ["Community", "Email", "Email and chat, same day"],
+	},
+];
+
+const refetch = () => {};
+
+// A query in the frame's state: its facts at rest, none when empty.
+function queryOf(
+	state: ShowcaseFrame["state"],
+	facts: readonly Fact[],
+): QueryLike<readonly Fact[]> {
+	let data: readonly Fact[] | undefined;
+	if (state === "rest") data = facts;
+	if (state === "empty") data = [];
 	return {
-		label,
-		cells: [
-			{ label: "Current", value: current },
-			{ label: "After the change", value: next },
-		],
+		data,
+		isPending: state === "loading",
+		isError: state === "error",
+		refetch,
 	};
 }
 
-function plans(
-	label: string,
-	values: [string, string, string],
-	chip?: string,
-): ComparisonRow {
-	return {
-		label,
-		cells: [
-			{ label: "Free", value: values[0] },
-			{ label: "Team", value: values[1] },
-			{ label: "Business", value: values[2] },
-		],
-		chips: chip ? [{ label: chip }] : undefined,
-	};
-}
+const ROW = {
+	key: (fact: Fact) => fact.label,
+	label: (fact: Fact) => fact.label,
+	values: (fact: Fact) => fact.values,
+};
 
-// Board 51's plan change (two cells) and plans (three, a row with a chip).
-const CHANGE = [
-	change("Plan", "Team", "Business"),
-	change("Seats", "10", "25"),
-	change("Storage", "100 GB", "1 TB"),
-	change("Audit log", "Not included", "Kept 90 days"),
-	change("Billed", "$120 a month", "$480 a month, from 14 October"),
-];
-const PLANS = [
-	plans("Seats", ["3", "10", "Unlimited"]),
-	plans("Projects", ["2", "Unlimited", "Unlimited"]),
-	plans("Single sign-on", ["No", "No", "Yes"], "Beta"),
-	plans("History", ["7 days", "90 days", "Forever"]),
-	plans("Support", ["Community", "Email", "Email and chat, same day"]),
-];
-
+// Every cell draws both comparisons in the frame's state: the plan change
+// over two columns, and the plans over three with a chips slot, so a waiting
+// fact draws a bar per column and the plans' a chips bar.
 export function drawComparison(frame: ShowcaseFrame) {
-	if (frame.state === "loading")
-		return (
-			<Wide>
-				<Comparison label="Plans" rows={[]} loading />
-			</Wide>
-		);
 	return (
 		<Wide>
-			<Comparison label="Plan change" rows={CHANGE} />
-			<Comparison label="Plans" rows={PLANS} />
+			<Comparison
+				label="Plan change"
+				columns={["Current", "After the change"]}
+				query={queryOf(frame.state, CHANGE)}
+				sentence="The plan change did not load."
+				empty={{
+					title: "No change",
+					sentence: "Pick a plan to see what it changes.",
+				}}
+				row={ROW}
+			/>
+			<Comparison
+				label="Plans"
+				columns={["Free", "Team", "Business"]}
+				query={queryOf(frame.state, PLANS)}
+				sentence="The plans did not load."
+				empty={{
+					title: "No plans",
+					sentence: "Plans on sale land here.",
+				}}
+				row={{ ...ROW, chips: (fact) => fact.chips }}
+			/>
 		</Wide>
 	);
 }

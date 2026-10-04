@@ -363,6 +363,13 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
   props, its act the one that fills the list). Its decisions (which state, the waiting shape, the
   count, Retry) and the Section's total (`sectionCount`) are ui-core's `./list-state`, which both
   platforms import, tested without rendering.
+- A `Comparison` is a collection of facts with the List's source (`query` with `sentence` and
+  `empty`, or `items` waiting on `loading`) and a `row` map over a fact's slots: `key`, `label`,
+  `values` (one per column, in order) and `chips`. Its column heads are its declared `columns`,
+  known before the data, so its waiting form is the real head over four facts of bars: a value bar
+  per column, and a chips bar beside the label's when `row` declares `chips` (`factShape` in
+  `./list-state`). It registers its wait with the Section around and reports no count: its facts
+  are one record's, not items the Section counts.
 - A pending collection or `QueryBoundary` registers with the Section around it through
   `SectionContext`, released when it settles or unmounts; the Section stays busy, its count
   waiting, until every waiter settles. A List also reports its item count there once its items

@@ -1,6 +1,6 @@
 ---
 id: 004-10
-status: backlog
+status: review
 sessions: {}
 ---
 # react-ui, native-ui: a Comparison declares its columns and draws its own four states
@@ -28,5 +28,8 @@ values, as today. Needs `items` mostly (a slice of the page's query, its pending
 `loading`) and a query for a comparison that loads alone.
 
 ## Acceptance criteria
-- [ ] (test) both plugins' `Comparison` take `columns` + `query`/`items` + `row` + `sentence` + `empty`, `rows` is gone from the roster entry, and it lists the `error` and `empty` states.
-- [ ] (test) a pending Comparison with three `columns` draws three bars per row.
+- [x] (test) both plugins' `Comparison` take `columns` + `query`/`items` + `row` + `sentence` + `empty`, `rows` is gone from the roster entry, and it lists the `error` and `empty` states.
+- [x] (test) a pending Comparison with three `columns` draws three bars per row.
+
+## Progress
+Built on web and phone; `pnpm check` and `pnpm verify` pass. The chips bar's width (`w-1/5`) is the implementer's choice, for the design critique. Open: the live check (web per batch, phone on the harness).

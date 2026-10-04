@@ -1659,9 +1659,21 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			},
 		},
 		// A Group of its own rows (not list rows, so a wrapped value keeps its air);
-		// on touch the label stands on its own line over the values.
+		// on touch the label stands on its own line over the values. A
+		// collection: its facts from `query` or `items` through a `row` map, its
+		// head from the declared `columns`, so its waiting facts draw a bar per
+		// column under the real head; its failed and empty EmptyStates its own.
 		Comparison: {
-			props: ["label", "rows", "loading"],
+			props: [
+				"label",
+				"columns",
+				"query",
+				"sentence",
+				"empty",
+				"row",
+				"items",
+				"loading",
+			],
 			draws: [
 				"CHIP.family.neutral",
 				"CHIP.trailing.none",
@@ -1669,7 +1681,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"COMPARISON_LABEL",
 				"COMPARISON_ROW",
 				"LINE_BOX.role.body",
-				"LINE_BOX.role.meta",
 				"SKELETON.kind.line",
 				"TEXT.role.body",
 				"TEXT.role.meta",
@@ -1677,7 +1688,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"TEXT_STRONG.role.meta",
 			],
 			holds: ["COMPARISON_ROW", "COMPARISON_LABEL"],
-			states: ["rest", "loading"],
+			states: ["rest", "loading", "error", "empty"],
 			owns: {
 				roles: ["meta", "body", "caption"],
 				colors: [
