@@ -1,12 +1,13 @@
 import { use } from "react";
 import { Code } from "../../components/code/index.tsx";
 import { Diff } from "../../components/diff/index.tsx";
-import { EmptyState } from "../../components/empty-state/index.tsx";
-import { FileRow } from "../../components/file-row/index.tsx";
 import { List } from "../../components/list/index.tsx";
 import { Prose } from "../../components/prose/index.tsx";
 import { ProseDiff } from "../../components/prose-diff/index.tsx";
-import { QueryBoundary } from "../../components/query-boundary/index.tsx";
+import {
+	QueryBoundary,
+	type QueryLike,
+} from "../../components/query-boundary/index.tsx";
 import { Section } from "../../components/section/index.tsx";
 import { HereContext, useFixture, useTo } from "./here.ts";
 
@@ -212,66 +213,58 @@ function lines(from: string, other: string): number {
 	return from ? from.split("\n").filter((line) => !kept.has(line)).length : 0;
 }
 
-// The files a deploy changed over the diff of the one open (`&file=`, the
-// first without it), which its row marks; the files before it are seen.
-function Files(props: { files: ChangedFile[] }) {
+// The files a deploy changed, from their own query, over the diff of the one
+// open (`&file=`, the first without it), which its row marks; the files
+// before it are seen. The list draws its own four states; the diff waits
+// with it and stands only over a loaded file.
+function Files(props: { files: QueryLike<ChangedFile[]> }) {
 	const { record, file: named } = use(HereContext);
 	const to = useTo();
+	const { files } = props;
+	const all = files.data ?? [];
 	const at = Math.max(
 		0,
-		props.files.findIndex((each) => each.path === named),
+		all.findIndex((each) => each.path === named),
 	);
-	const file = props.files[at];
+	const open = all[at];
+	let diff = null;
+	if (files.isPending) diff = <Diff label="" before="" after="" loading />;
+	else if (open)
+		diff = <Diff label={open.path} before={open.before} after={open.after} />;
 	return (
 		<>
-			<List>
-				{props.files.map((each, index) => (
-					<FileRow
-						key={each.path}
-						path={each.path}
-						added={added(each)}
-						removed={removed(each)}
-						seen={index <= at}
-						// The open file's row is current at the page's own path.
-						href={
-							index === at
-								? location.pathname
-								: to({
-										place: "deploys",
-										record: record ?? "",
-										file: each.path,
-									})
-						}
-					/>
-				))}
-			</List>
-			{file ? (
-				<Diff label={file.path} before={file.before} after={file.after} />
-			) : null}
+			<List
+				query={files}
+				sentence="Changes did not load."
+				empty={{
+					icon: "GitCommitHorizontal",
+					title: "No changes",
+					sentence: "This deploy rebuilt the commit already in production.",
+				}}
+				file={{
+					key: (each) => each.path,
+					path: (each) => each.path,
+					added,
+					removed,
+					seen: (each) => all.indexOf(each) <= at,
+					// The open file's row is current at the page's own path.
+					href: (each) =>
+						each === open
+							? location.pathname
+							: to({ place: "deploys", record: record ?? "", file: each.path }),
+				}}
+			/>
+			{diff}
 		</>
 	);
 }
 
-// The files' and the diff's own loading forms, a row per file.
-function FilesWaiting(props: { count: number }) {
-	return (
-		<>
-			<List>
-				{Array.from({ length: props.count }, (_, index) => (
-					// biome-ignore lint/suspicious/noArrayIndexKey: the rows are stand-ins
-					<FileRow key={index} path="" added={0} removed={0} loading />
-				))}
-			</List>
-			<Diff label="" before="" after="" loading />
-		</>
-	);
-}
-
-// A deploy's changes, read from their own query: the description's edit,
+// A deploy's changes, read from their own queries: the description's edit,
 // the release notes, the files and the build log.
 export function DeployChanges(props: { id: string }) {
 	const changes = BY_DEPLOY[props.id] ?? NIGHTLY;
 	const query = useFixture(changes);
+	const files = useFixture(changes.files);
 	return (
 		<>
 			{changes.description ? (
@@ -285,24 +278,8 @@ export function DeployChanges(props: { id: string }) {
 			<Section title="Release notes">
 				<Prose markdown={changes.notes} />
 			</Section>
-			<Section title="Changes" count={changes.files.length}>
-				<QueryBoundary
-					query={query}
-					sentence="Changes did not load."
-					loading={<FilesWaiting count={changes.files.length} />}
-				>
-					{({ files }) =>
-						files.length > 0 ? (
-							<Files files={files} />
-						) : (
-							<EmptyState
-								icon="GitCommitHorizontal"
-								title="No changes"
-								sentence="This deploy rebuilt the commit already in production."
-							/>
-						)
-					}
-				</QueryBoundary>
+			<Section title="Changes">
+				<Files files={files} />
 			</Section>
 			<Section title="Build log">
 				<QueryBoundary

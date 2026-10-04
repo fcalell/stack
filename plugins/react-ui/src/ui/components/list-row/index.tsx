@@ -50,9 +50,17 @@ const LINE = "flex items-center min-w-0";
 const ONE_LINE = "flex items-center grow min-w-0";
 const TITLE = "truncate grow";
 const TRAILING = "shrink-0";
-const META_LINE = "flex flex-wrap items-center min-w-0";
-const META = "truncate grow";
-const MARKS = "flex shrink-0 items-center";
+// The meta line is one line that yields in order: the later parts truncate
+// first, then the chip; the first part (naming the item) and the status keep
+// their width, and past them the line clips at the row's edge rather than
+// overprint. The parts' box is as wide as the first part at least (the later
+// parts take no width of their own) and grows into the room the marks leave.
+const META_LINE = "flex items-center min-w-0 overflow-hidden";
+const META_PARTS = "flex grow shrink-0";
+const META_FIRST = "shrink-0";
+const META = "truncate grow w-0";
+const MARKS = "flex items-center min-w-0";
+const STATUS_MARK = "flex shrink-0";
 const ACTS = "relative flex shrink-0 items-center";
 
 /** One thing in a list or a group. */
@@ -118,6 +126,7 @@ export function ListRow<V extends string | null = string>({
 	const opens = href !== undefined || onOpen !== undefined;
 	const marked = status !== undefined || chip !== undefined;
 	const lines = meta?.length || marked ? "two" : "one";
+	const [first, ...rest] = meta ?? [];
 	const value =
 		trailing && !("pick" in trailing) ? (
 			<span className={cn(ROW_TRAILING, TRAILING)}>
@@ -178,15 +187,24 @@ export function ListRow<V extends string | null = string>({
 						{value}
 					</span>
 					<span className={cn(ROW_META_LINE, META_LINE)}>
-						{meta?.length ? (
-							<span className={cn(text({ role: "meta" }), META)}>
-								{joinParts(meta, META_CUT)}
+						{first === undefined ? null : (
+							<span className={META_PARTS}>
+								<span className={cn(text({ role: "meta" }), META_FIRST)}>
+									{partText(first, META_CUT)}
+								</span>
+								{rest.length ? (
+									<span className={cn(text({ role: "meta" }), META)}>
+										{`\u00A0· ${joinParts(rest, META_CUT)}`}
+									</span>
+								) : null}
 							</span>
-						) : null}
+						)}
 						{marked ? (
 							<span className={cn(ROW_MARKS, MARKS)}>
 								{status ? (
-									<Status state={status.state} label={status.label} />
+									<span className={STATUS_MARK}>
+										<Status state={status.state} label={status.label} />
+									</span>
 								) : null}
 								{chip ? <Chip family={chip.family} label={chip.label} /> : null}
 							</span>

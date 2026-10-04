@@ -7,9 +7,6 @@ import {
 	filePathPart,
 	ROW_LEADING,
 	row,
-	skeleton,
-	skeletonLane,
-	skeletonRow,
 } from "@fcalell/ui-core/variants";
 import { useContext, useState } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
@@ -21,6 +18,7 @@ import { Ink } from "../../lib/ink";
 import { isCurrent, navigate, usePathname } from "../../lib/navigate";
 import { useWords } from "../../lib/words";
 import { Icon } from "../icon";
+import { FileWait } from "./wait";
 
 const ROW = "relative flex-row items-center";
 // A list row's wash is square on the phone, where it meets the screen's edge.
@@ -32,13 +30,6 @@ const PATH = "flex-1 flex-row min-w-0";
 const PART = "shrink-0";
 const COUNTS = "flex-row shrink-0 items-center";
 const COUNT = "text-right";
-const WAIT = "flex-row items-center";
-const WAIT_GLYPH = "shrink-0";
-const WAIT_PATH = "flex-1 flex-row min-w-0";
-const WAIT_COUNTS = "flex-1 flex-row justify-end min-w-0";
-// The path's bar at half the row, the counts' at a third of their lane.
-const PATH_BAR = "w-1/2";
-const COUNTS_BAR = "w-1/3";
 const ELLIPSIS = "…";
 
 export interface FileRowProps extends Closed {
@@ -151,28 +142,7 @@ export function FileRow({
 	const words = useWords();
 	const ground = useContext(GroundContext);
 	const pathname = usePathname();
-	if (loading)
-		return (
-			<View
-				accessibilityState={{ busy: true }}
-				className={cn(
-					skeletonRow({
-						kind: ground === "group" ? "one-line-group" : "one-line",
-					}),
-					WAIT,
-				)}
-			>
-				<View className={cn(ROW_LEADING, LEADING)}>
-					<View className={cn(skeleton({ kind: "icon" }), WAIT_GLYPH)} />
-				</View>
-				<View className={WAIT_PATH}>
-					<View className={cn(skeleton({ kind: "line" }), PATH_BAR)} />
-				</View>
-				<View className={cn(skeletonLane({ role: "meta" }), WAIT_COUNTS)}>
-					<View className={cn(skeleton({ kind: "line" }), COUNTS_BAR)} />
-				</View>
-			</View>
-		);
+	if (loading) return <FileWait busy />;
 	const seenWord = seen ? words.seen : words.unseen;
 	const named = [
 		path,

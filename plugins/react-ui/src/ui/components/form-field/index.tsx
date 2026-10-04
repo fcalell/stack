@@ -11,6 +11,7 @@ import {
 import { isValidElement, type ReactNode, useId } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { GroupName, LabelTarget } from "../../lib/field.ts";
+import { useSectionField } from "../../lib/section.ts";
 import { Checkbox } from "../checkbox/index.tsx";
 import { OptionList } from "../option-list/index.tsx";
 import { SegmentedControl } from "../segmented-control/index.tsx";
@@ -74,6 +75,7 @@ function formOf(control: ReactNode) {
 
 /** The label (body 500) over its control, the description (meta) under it and the error in the description's place; a switch stands at the label's end and a checkbox on its first line. Base UI's field wires the label, the description, the error, the validity and the disabled state into the control. */
 export function FormField<V>(props: FormFieldProps<V>) {
+	useSectionField();
 	const { label, description, disabled } = props;
 	const error = props.field ? props.field.error : props.error;
 	const control = props.field

@@ -39,7 +39,6 @@ import { Avatar } from "../avatar/index.tsx";
 import { Count } from "../count/index.tsx";
 import { Icon } from "../icon/index.tsx";
 import { List } from "../list/index.tsx";
-import { ListRow } from "../list-row/index.tsx";
 import { PickerBase } from "../picker/base.tsx";
 import { FloatingActRoom, Place } from "../place/index.tsx";
 import { Confirmations } from "../sheet/confirm.tsx";
@@ -263,19 +262,17 @@ function MorePage(props: { places: readonly PlaceSpec[] }) {
 	const words = useWords();
 	return (
 		<Place title={words.more}>
-			<List>
-				{props.places.map((spec) => (
-					<ListRow
-						key={spec.route}
-						leading={{ icon: spec.icon }}
-						title={spec.label}
-						trailing={
-							spec.count === undefined ? undefined : { count: spec.count }
-						}
-						href={spec.route}
-					/>
-				))}
-			</List>
+			<List
+				items={props.places}
+				row={{
+					key: (spec) => spec.route,
+					leading: { icon: (spec) => spec.icon },
+					title: (spec) => spec.label,
+					trailing: (spec) =>
+						spec.count === undefined ? undefined : { count: spec.count },
+					href: (spec) => spec.route,
+				}}
+			/>
 		</Place>
 	);
 }

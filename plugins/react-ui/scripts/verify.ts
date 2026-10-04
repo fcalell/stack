@@ -483,7 +483,10 @@ check(
 				const line = code.slice(0, offset).split("\n").length;
 				hits.push(`${name}:${line}: ${why}`);
 			};
-			if (path.endsWith("index.tsx") && !raw.includes("extends Closed")) {
+			// A props interface extends Closed; a union of props forms intersects it.
+			const closes =
+				raw.includes("extends Closed") || raw.includes("= Closed &");
+			if (path.endsWith("index.tsx") && !closes) {
 				hits.push(`${name}: the props type does not extend Closed`);
 			}
 			for (const match of code.matchAll(

@@ -41,7 +41,6 @@ import {
 	type Family,
 	normalize,
 	report,
-	rule,
 	tailwindBuild,
 } from "@fcalell/ui-core/harness";
 import {
@@ -155,7 +154,6 @@ const NATIVE_OVERLAYS = [
 	"flex-row",
 	"flex-wrap",
 	"gap-acts",
-	"gap-fields",
 	"gap-inside",
 	"gap-pair",
 	"grow",
@@ -175,7 +173,7 @@ const NATIVE_OVERLAYS = [
 	"max-w-4/5",
 	"max-w-full",
 	"min-h-0",
-	"min-h-11",
+	"min-h-chip",
 	"min-h-target",
 	"min-w-0",
 	"min-w-target",
@@ -186,6 +184,7 @@ const NATIVE_OVERLAYS = [
 	"pt-page",
 	"pt-pair",
 	"px-card",
+	"px-inside",
 	"px-page",
 	"py-0",
 	"relative",
@@ -194,6 +193,7 @@ const NATIVE_OVERLAYS = [
 	"self-stretch",
 	"self-start",
 	"shrink",
+	"size-control-compact",
 	"size-target",
 	"text-center",
 	"text-ink-body",
@@ -201,6 +201,7 @@ const NATIVE_OVERLAYS = [
 	"text-ink-meta",
 	"text-right",
 	"top-0",
+	"w-0",
 	"w-1/12",
 	"w-1/2",
 	"w-1/3",
@@ -208,6 +209,7 @@ const NATIVE_OVERLAYS = [
 	"w-1/5",
 	"w-2/3",
 	"w-3/4",
+	"w-figures",
 	"w-full",
 	"w-measure-short",
 ];
@@ -983,9 +985,6 @@ check("a-raised", "a raised ground re-points the hairline", () => {
 check("a6", "the build resolves the inventory and kills the retired", () => {
 	const roster = FAMILIES.map((family) => family.name).join(" ");
 	assert(roster === FAMILY_ROSTER, `the family roster drifted: ${roster}`);
-	// A numeric off the contract stays live: the `--spacing` base is never
-	// reset, and the loading rows name this one.
-	assert(rule(built, "min-h-11"), "min-h-11 emitted no rule");
 	const dead = [...INVENTORY].filter((name) => !emitted(built, name));
 	assert(
 		dead.length === 0,
@@ -1073,7 +1072,10 @@ check(
 				const text = (rawLines[line - 1] ?? "").trim();
 				hits.push(`${name}:${line}: ${why}: ${text}`);
 			};
-			if (path.endsWith("index.tsx") && !raw.includes("extends Closed")) {
+			// A props interface extends Closed; a union of props forms intersects it.
+			const closes =
+				raw.includes("extends Closed") || raw.includes("= Closed &");
+			if (path.endsWith("index.tsx") && !closes) {
 				hits.push(`${name}: the props type does not extend Closed`);
 			}
 			const code = codeOf(raw);

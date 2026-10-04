@@ -1,10 +1,9 @@
 import { text } from "@fcalell/ui-core/variants";
-import { List } from "../../components/list/index.tsx";
 import { Place } from "../../components/place/index.tsx";
 import { Section } from "../../components/section/index.tsx";
 import { Split } from "../../components/split/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
-import { StandInRows } from "./layout-context.tsx";
+import { StandInList, StandInRows } from "./layout-context.tsx";
 import { Column } from "./place.tsx";
 
 // The Split in a bleeding Place, whose strip takes the Details act below
@@ -18,11 +17,7 @@ export function drawSplit(frame: ShowcaseFrame) {
 		<Column>
 			<Place title="Issues" bleed>
 				<Split
-					list={
-						<List>
-							<StandInRows ground="list" />
-						</List>
-					}
+					list={<StandInList />}
 					main={
 						empty ? undefined : (
 							<>

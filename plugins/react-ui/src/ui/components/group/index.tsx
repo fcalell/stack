@@ -9,6 +9,7 @@ import { type ReactNode, use } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { GroundContext } from "../../lib/ground.ts";
 import { LoadingContext } from "../../lib/loading.ts";
+import { useSectionRows } from "../../lib/section.ts";
 
 const BOX = "flex flex-col overflow-hidden";
 const ROW_WAIT = "flex items-center";
@@ -32,6 +33,7 @@ export interface GroupProps extends Closed {
 
 /** Rows in a hairline card on the surface, the hairline drawn once between them, so no row carries one. */
 export function Group({ loading, children }: GroupProps) {
+	useSectionRows();
 	const inherited = use(LoadingContext);
 	const waiting = loading ?? inherited;
 	// A loading Section is busy once: rows drawn on its word say nothing.

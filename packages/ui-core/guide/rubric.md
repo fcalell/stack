@@ -32,7 +32,7 @@ scaled number, never the desktop one.
 | chip | 16–22 px tall, 10–12 px type, radius 3–4 outlined or pill filled; hue by family, fixed |
 | status colour | confined to the icon, dot or chip, never the row's text |
 | kbd hint | 18–22 px chip, radius 4, hairline, or plain muted 11 px text |
-| skeleton | 12 px bars, radius 4, at the real column widths inside the real row heights |
+| skeleton | 12 px bars, radius 4, at the real column widths inside the real row heights; a row's text starts where the loaded row's does, so within one list every row leads with one kind of mark (avatar, glyph or status dot) or none does; a collection of unknown length waits with a fixed number of rows; the list's height may change only by the difference in row count: each waiting row matches its loaded row's height and text start, measured row by row, and any per-row difference is a finding |
 | pending act | keeps its width and height, swaps the label for a 14–16 px spinner |
 
 ## Floors

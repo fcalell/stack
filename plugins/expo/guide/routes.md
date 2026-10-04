@@ -53,7 +53,11 @@ export default function ProjectScreen() {
   const query = useQuery(orpc.projects.get.queryOptions({ input: { id } }));
   return (
     <Screen title="Project" back="/projects">
-      <QueryBoundary query={query} sentence="The project could not load.">
+      <QueryBoundary
+        query={query}
+        sentence="The project could not load."
+        loading={<ItemHeader title="" loading />}
+      >
         {(project) => <ItemHeader title={project.name} />}
       </QueryBoundary>
     </Screen>

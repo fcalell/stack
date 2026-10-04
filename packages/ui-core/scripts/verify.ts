@@ -646,7 +646,7 @@ check("c02", "package.json shape", () => {
 		Object.keys(pkg.exports ?? {})
 			.sort()
 			.join(" "),
-		"./cn ./commit ./derive ./descriptors ./emit ./harness ./manifest ./roster ./schema ./tokens ./variants",
+		"./cn ./commit ./derive ./descriptors ./emit ./harness ./list-state ./manifest ./roster ./schema ./tokens ./variants",
 		"export subpaths",
 	);
 	assert(pkg.peerDependencies?.zod, "zod is not a peerDependency");
@@ -661,7 +661,7 @@ check("c02", "package.json shape", () => {
 	for (const field of ["dependencies", "peerDependencies"] as const) {
 		assert(!pkg[field]?.["@fcalell/cli"], `@fcalell/cli appears in ${field}`);
 	}
-	return "11 subpaths, no root export, no runtime cli dependency";
+	return "12 subpaths, no root export, no runtime cli dependency";
 });
 
 check("c03", "tokens.ts declares the contract", () => {

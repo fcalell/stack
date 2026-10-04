@@ -46,10 +46,18 @@ const LINE = "flex-row items-center min-w-0";
 const ONE_LINE = "flex-1 flex-row items-center min-w-0";
 const TITLE = "grow shrink";
 const TRAILING = "shrink-0";
-const META_LINE = "flex-row flex-wrap items-center min-w-0";
-// The meta keeps its room: a mark that cannot sit beside it wraps under it.
-const META = "grow shrink";
-const MARKS = "flex-row shrink-0 items-center";
+// The meta line is one line that yields in order: the later parts truncate
+// first, then the chip; the first part (naming the item) and the status keep
+// their width, and past them the line clips at the row's edge rather than
+// overprint. The parts' box is as wide as the first part at least (the later
+// parts take no width of their own) and grows into the room the marks leave.
+const META_LINE = "flex-row items-center min-w-0 overflow-hidden";
+const META_PARTS = "flex-row grow shrink-0";
+const META_FIRST = "shrink-0";
+const META = "grow w-0";
+const MARKS = "flex-row items-center shrink min-w-0";
+const STATUS_MARK = "shrink-0";
+const CHIP_MARK = "shrink min-w-0";
 const ACTS = "relative flex-row shrink-0 items-center";
 
 export interface ListRowProps<V extends string | null = string> extends Closed {
@@ -118,6 +126,7 @@ export function ListRow<V extends string | null = string>({
 	const open = href !== undefined ? () => navigate(href) : onOpen;
 	const marked = status !== undefined || chip !== undefined;
 	const lines = meta?.length || marked ? "two" : "one";
+	const [first, ...rest] = meta ?? [];
 	const value =
 		trailing && !("pick" in trailing) ? (
 			<RNText className={cn(ROW_TRAILING, TRAILING)}>
@@ -170,20 +179,36 @@ export function ListRow<V extends string | null = string>({
 						{value}
 					</View>
 					<View className={cn(ROW_META_LINE, META_LINE)}>
-						{meta?.length ? (
-							<RNText
-								numberOfLines={1}
-								className={cn(text({ role: "meta" }), META)}
-							>
-								{joinParts(meta, META_CUT)}
-							</RNText>
-						) : null}
+						{first === undefined ? null : (
+							<View className={META_PARTS}>
+								<RNText
+									numberOfLines={1}
+									className={cn(text({ role: "meta" }), META_FIRST)}
+								>
+									{partText(first, META_CUT)}
+								</RNText>
+								{rest.length ? (
+									<RNText
+										numberOfLines={1}
+										className={cn(text({ role: "meta" }), META)}
+									>
+										{`\u00A0· ${joinParts(rest, META_CUT)}`}
+									</RNText>
+								) : null}
+							</View>
+						)}
 						{marked ? (
 							<View className={cn(ROW_MARKS, MARKS)}>
 								{status ? (
-									<Status state={status.state} label={status.label} />
+									<View className={STATUS_MARK}>
+										<Status state={status.state} label={status.label} />
+									</View>
 								) : null}
-								{chip ? <Chip family={chip.family} label={chip.label} /> : null}
+								{chip ? (
+									<View className={CHIP_MARK}>
+										<Chip family={chip.family} label={chip.label} />
+									</View>
+								) : null}
 							</View>
 						) : null}
 					</View>

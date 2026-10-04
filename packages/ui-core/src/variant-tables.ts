@@ -957,26 +957,22 @@ export const SKELETON = matrix({
 	defaultVariants: { kind: "line" },
 });
 
-// A loading row at the height of the row it stands in for: a two-line list
-// row, a group's setting row, a form's field (a label line
-// over the field's box at the label's gap), a record's facts line (at the
-// height of the status that opens on it), a one-line row in a list or in a
-// group (a file row's), or a two-line row padded round its lines and its
-// trailing bar (a table's record below tablet).
+// A loading row at the height of the row it stands in for: a group's setting
+// row, a form's field (a label line over the field's box at the label's
+// gap), a record's facts line (at the height of the status that opens on
+// it), or a one-line row in a list or in a group (a file row's).
 export const SKELETON_ROW = matrix({
 	base: "",
 	variants: {
 		kind: {
-			"two-line": "gap-inside min-h-row-2 px-control-x",
 			setting: "gap-fields min-h-row-setting px-card py-pair",
 			field: "gap-pair",
 			facts: "gap-x-fields min-h-target",
 			"one-line": "gap-inside min-h-row px-control-x",
 			"one-line-group": "gap-inside min-h-row px-card",
-			"two-line-trailing": "gap-inside min-h-row-2 py-rows px-control-x",
 		},
 	},
-	defaultVariants: { kind: "two-line" },
+	defaultVariants: { kind: "setting" },
 });
 
 // The lane a loading label's bar runs in: a short label's measure, in the ch

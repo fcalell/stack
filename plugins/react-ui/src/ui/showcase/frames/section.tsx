@@ -1,11 +1,19 @@
 import { Form } from "../../components/form/index.tsx";
+import { FormField } from "../../components/form-field/index.tsx";
 import { Group } from "../../components/group/index.tsx";
+import { Input } from "../../components/input/index.tsx";
 import { List } from "../../components/list/index.tsx";
+import { QueryBoundary } from "../../components/query-boundary/index.tsx";
 import { Section } from "../../components/section/index.tsx";
 import { TouchedContext } from "../../lib/touched.ts";
 import type { ShowcaseFrame } from "../cells.ts";
 import { Labelled } from "./form.tsx";
-import { StandInRows, Wide } from "./layout-context.tsx";
+import {
+	STAND_IN_ROW,
+	STAND_INS,
+	StandInRows,
+	Wide,
+} from "./layout-context.tsx";
 
 const act = () => {};
 const INVITE = { label: "Invite", onAct: act };
@@ -13,6 +21,17 @@ const BLOCKED = { ...INVITE, blocked: "Only owners invite." };
 // A touched form, so a blocked act shows its reason.
 const TOUCHED = { touched: true, touch: act };
 const DESCRIPTION = "People who can open this workspace.";
+// An app's own component around a List and a settled query a QueryBoundary
+// reads: in a loading Section each waits as rows, however deep its List.
+function Starred() {
+	return <List items={STAND_INS} row={STAND_IN_ROW} />;
+}
+const ANSWERED = {
+	data: STAND_INS,
+	isPending: false,
+	isError: false,
+	refetch: act,
+};
 
 function Members(props: { blocked?: boolean }) {
 	return (
@@ -32,8 +51,9 @@ function Members(props: { blocked?: boolean }) {
 // By state: the pointer and focus states force the fold toggle of a folded
 // section; `disabled` draws the blocked act before it is pressed and in a
 // touched form with its reason shown; `loading` the waiting count over a
-// Group's and a List's own skeleton rows, and the section's skeleton fields
-// standing in for a body of fields in a Form. At rest the cell picks the form: the icon act a
+// Group's and a List's own skeleton rows (a List inside an app's component or
+// under a QueryBoundary too), and the section's skeleton fields standing in
+// for a body of fields in a Form. At rest the cell picks the form: the icon act a
 // column's head, `SECTION.in.form` a section of fields in a Form, the chevron an open and a folded section over a List, the
 // destructive act a section over a List whose act removes it, the skeleton cells the loading form, every other cell the section over a Group.
 export function drawSection(frame: ShowcaseFrame) {
@@ -47,9 +67,7 @@ export function drawSection(frame: ShowcaseFrame) {
 		return (
 			<Wide>
 				<Section title="Done" count={11} folded onToggle={act}>
-					<List>
-						<StandInRows ground="list" />
-					</List>
+					<List items={STAND_INS} row={STAND_IN_ROW} />
 				</Section>
 			</Wide>
 		);
@@ -65,18 +83,41 @@ export function drawSection(frame: ShowcaseFrame) {
 	if (frame.state === "loading" || cell.startsWith("SKELETON"))
 		return (
 			<Wide>
-				<Section title="Members" description={DESCRIPTION} act={INVITE} loading>
+				<Section
+					title="Members"
+					count={3}
+					description={DESCRIPTION}
+					act={INVITE}
+					loading
+				>
 					<Group>
 						<StandInRows ground="group" />
 					</Group>
 				</Section>
 				<Section title="In progress" folded={false} act={add} loading>
-					<List>
-						<StandInRows ground="list" />
-					</List>
+					<List items={STAND_INS} row={STAND_IN_ROW} />
+				</Section>
+				<Section title="Starred" loading>
+					<Starred />
+				</Section>
+				<Section title="Recent" loading>
+					<QueryBoundary
+						query={ANSWERED}
+						sentence="Recent members did not load."
+						loading={<List items={[]} loading row={STAND_IN_ROW} />}
+					>
+						{(names) => <List items={names} row={STAND_IN_ROW} />}
+					</QueryBoundary>
 				</Section>
 				<Form>
-					<Section title="Profile" loading />
+					<Section title="Profile" loading>
+						<FormField label="Workspace name">
+							<Input value="Acme Inc" onChange={act} />
+						</FormField>
+						<FormField label="Workspace URL">
+							<Input value="acme-inc" onChange={act} />
+						</FormField>
+					</Section>
 				</Form>
 			</Wide>
 		);
@@ -113,27 +154,20 @@ export function drawSection(frame: ShowcaseFrame) {
 			<Wide>
 				<Section
 					title="Archived"
-					count={3}
 					act={{ label: "Delete all", onAct: act, destructive: true }}
 				>
-					<List>
-						<StandInRows ground="list" />
-					</List>
+					<List items={STAND_INS} row={STAND_IN_ROW} />
 				</Section>
 			</Wide>
 		);
 	if (cell === "ICON.fit.body")
 		return (
 			<Wide>
-				<Section title="In progress" count={3} folded={false} act={add}>
-					<List>
-						<StandInRows ground="list" />
-					</List>
+				<Section title="In progress" folded={false} act={add}>
+					<List items={STAND_INS} row={STAND_IN_ROW} />
 				</Section>
 				<Section title="Done" count={11} folded act={add}>
-					<List>
-						<StandInRows ground="list" />
-					</List>
+					<List items={STAND_INS} row={STAND_IN_ROW} />
 				</Section>
 			</Wide>
 		);

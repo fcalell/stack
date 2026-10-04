@@ -216,15 +216,21 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
   body draws no inset, and whatever stands first in it (a Toolbar, the record, the list alone)
   carries its own top inset.
 - A loading form stands in for what it replaces at that part's size: `SKELETON` by the part
-  (`line`, `avatar`, `switch`, `count`, `field`) and `SKELETON_ROW` by the row it replaces
-  (`two-line`, `setting`, `field`), so the loading frame keeps the loaded frame's height.
+  (`line`, `avatar`, `icon`, `dot`, `check`, `switch`, `count`, `field`, `meter`, `chart`) and
+  `SKELETON_ROW` by the row it replaces (`setting`, `field`, `facts`, `one-line`,
+  `one-line-group`); a ListRow waits in its own markup (below). The loading frame keeps the loaded
+  frame's height.
 - No arbitrary values in a cell, in either spelling. A control pads across on `control-x`, stands
   on a size (`min-h-control`, `min-h-field`) and insets on a spacing role; density moves all
   three through the variables.
-- No behavior in ui-core, ever. A cell that needs a platform conditional belongs in the overlay;
-  the spinner's ink is the recorded example (native colours a prop, not a class, so its cells
-  carry its geometry alone, its ink is its place's, and `ContentTone` is the shared contract). So is a line diff: `Diff`'s `before` and
-  `after` are diffed in each plugin with the `diff` package both already carry, never here.
+- No framework code in ui-core. Framework-free logic both platforms run (the token derivations,
+  a collection's state decisions in `list-state.ts`) lives here once, so the web and the phone
+  share one source instead of keeping byte-identical twins; React and React Native code never
+  does. A cell that needs a platform conditional belongs in the overlay; the spinner's ink is the
+  recorded example (native colours a prop, not a class, so its cells carry its geometry alone,
+  its ink is its place's, and `ContentTone` is the shared contract). A line diff stays in each
+  plugin: `Diff`'s `before` and `after` are diffed with the `diff` package both plugins carry and
+  ui-core does not.
 - Navigation keeps the accent out: a place is two cells by where it sits. `PLACE_ROW`, the
   sidebar row, carries its states as washes (`rest`, `hover`, `active`, `selected` on
   `wash-selected`, `selected-hover`), its focus the web's inset-ring overlay, its label `TEXT.body` in
@@ -241,9 +247,14 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
   web-only: `divide-*` is a child selector, which uniwind's compiler drops, so native has no
   divider utility yet and draws the hairline per row.
 - A row's leading is one slot at the avatar's size (`ROW_LEADING`), the dot or glyph centred
-  in it, so the titles of a list share one x whatever leads them; its meta line (`ROW_META_LINE`,
-  a gap on the inline axis only) keeps the meta's room and wraps the marks under it. A short
-  label (a chip's, a status word, a skeleton label's lane) is bounded by the one width `measure-short` (18ch, the short sibling of `measure`).
+  in it, so the titles of a list share one x whatever leads them; its meta line (`ROW_META_LINE`)
+  is one line that yields in order: the later parts truncate first, then the chip; the first part
+  (naming the item) and the status keep their width, and past them the line clips at the row's
+  edge rather than overprint. The parts' box is at least the first part's width because the later
+  parts take no width of their own (`w-0`, growing into the room the marks leave). Every row keeps
+  one height, so its waiting form matches it by construction. A short label (a chip's, a status
+  word, a skeleton label's lane) is bounded by the one width `measure-short` (18ch, the short
+  sibling of `measure`).
 - A minimum height is the floor of something pressed (a control, a field, a target, a chip, a
   row), the set height of a bar (`strip` 40 / 44: the page's desktop strip and its touch top
   bar), an intrinsic size, or the height of what a part swaps with: `PENDING_TRACK` an action
@@ -316,8 +327,9 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
   draws from `tablet` of the page up; below it the Table is a `List` of `ListRow`s with its sort
   a `Picker` above them, its options the sortable columns, the sorted one led by its direction's
   glyph (`Option.icon`), the trigger named "Sort, {column}, {direction}" by the words `sort`,
-  `ascending` and `descending`; loading, the List's rows are the two-line skeleton with a trailing
-  bar (`SKELETON_ROW two-line-trailing`), a form the Table sets through context, never a List prop.
+  `ascending` and `descending`; its rows are the List's `items` through a `row` map whose slots
+  the columns declare (an age column the trailing, the status and chip columns the marks), so its
+  loading rows wait in the slots the loaded ones draw.
   A row with `href` is its leading cell's link (`tabindex -1`, so a new tab opens it); a row's
   `locked` names the columns it draws read only (an owner's role). A chip
   column's pick draws its value and options as the column's chips (the Picker's internal base), and
@@ -337,10 +349,37 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
   opening at the newest message and following each that arrives while the reader is at the end,
   the input docked at the foot (`THREAD_FOOT`); a Section takes the setter back. A filled Place's
   floating act would stand over the docked input: accepted while no Place has both.
-- A loading body draws its own loading form: `QueryBoundary`'s `loading` slot stands while a
-  query is pending, its Group or List skeleton the fallback, the Section busy either way. A Meter
-  in a Group stands as its item at the card's inset (`METER_ITEM`, by `GroundContext`), the
-  Group's hairline between. A FileRow is selected at its `href`, as a ListRow is.
+- A collection takes data and draws its four states at the leaf. A `List` takes `query` (or
+  `items`, waiting on `loading`) and one item map: `row`, one function per `ListRow` slot, or
+  `file`, one per `FileRow` slot. Its waiting rows are the row's own markup (`list-row/wait.tsx`,
+  `file-row/wait.tsx`), a ListRow's with bars in the slots `row` declares, read before any item
+  exists. The `leading` slot names its kind by its one key (`{ avatar }`, `{ icon }` or
+  `{ status }`, each a function of the item), so a list's rows share one kind or have none, and
+  the waiting row draws that kind's mark at its size (`SKELETON` `avatar`, `icon` or `dot`). A
+  trailing waits `figures` wide; a declared `more` keeps the act's room empty. A collection of
+  unknown length waits as four rows, and its height change on load is accepted. A failed query
+  draws the failed EmptyState with `sentence` and Retry; no item draws `empty` (an EmptyState's
+  props, its act the one that fills the list). Its decisions (which state, the waiting shape, the
+  count, Retry) and the Section's total (`sectionCount`) are ui-core's `./list-state`, which both
+  platforms import, tested without rendering.
+- A pending collection or `QueryBoundary` registers with the Section around it through
+  `SectionContext`, released when it settles or unmounts; the Section stays busy, its count
+  waiting, until every waiter settles. A List also reports its item count there once its items
+  answer, and a Section with no `count` of its own shows its lists' total once every list has
+  answered (a failed one gives none). A `Group` or a `List` anywhere in the body registers as rows
+  through the same context; a loading Section renders its body once, and when nothing registered
+  rows its layout effect swaps the body for field skeletons in a synchronous re-render before
+  paint, one skeleton per `FormField` that registered the same way (three when none did), so
+  the swap is never painted; a registration or a release while loading checks again, so the only
+  Group or List unmounting leaves fields. A loading Section's field children mount and unmount
+  once before paint, so their passive effects run: nothing may rely on them staying unmounted.
+  Every registration runs in a layout effect, so head and body land in one paint.
+  A compound body sits in a `QueryBoundary`, which requires its `loading`. A `QueryBoundary` over
+  a List in a Section draws no count placeholder while pending, for the List is not mounted to
+  report one (unless the loading form is itself a List); a List taking its own query reports from
+  its first render.
+- A Meter in a Group stands as its item at the card's inset (`METER_ITEM`, by `GroundContext`),
+  the Group's hairline between. A FileRow is selected at its `href`, as a ListRow is.
 - Code, Diff and ProseDiff stand in one frame on the surface inside a hairline (`CONTENT_FRAME`),
   so a diff's soft grounds always sit on the surface; a diff's number columns and a file row's
   count lanes are `figures` wide.

@@ -401,8 +401,9 @@ given (an act, a family, a checked value, an error) is an axis; where the pointe
 on it is an overlay. A label's cell carries its ink, since React Native text inherits no colour;
 an act's fill carries it too, for the web glyph and spinner drawn in the current colour. No
 arbitrary value in a cell, in either spelling. A control's horizontal padding is the `control-x` spacing role; its
-minimum height is a size; a row and a surface inset on spacing roles. No behavior in ui-core,
-ever.
+minimum height is a size; a row and a surface inset on spacing roles. No framework code in
+ui-core: logic both platforms run, free of React and React Native (a derivation, a collection's
+state decisions in `list-state`), lives here once instead of as a twin in each plugin.
 
 ## Composing with cn
 

@@ -268,15 +268,23 @@ export const closure = (
 		<Group class="x" />
 		{/* @ts-expect-error: closed channel */}
 		<Group classList={{}} />
-		<List />
+		<List items={[]} row={{ key: String, title: String }} />
+		{/* @ts-expect-error: a list's rows lead with one kind */}
+		<List items={[1]} row={{ key: String, title: String, leading: { avatar: () => ({ name: "x" }), icon: () => "X" } }} />
+		<List items={[1]} row={{ key: String, title: String, leading: { status: () => "active" } }} />
+		{/* @ts-expect-error: a list takes a query or items, never both */}
+		<List items={[1]} query={{ data: [1], isPending: false, isError: false, refetch: () => {} }} sentence="x" empty={{ sentence: "x" }} row={{ key: String, title: String }} />
+		{/* @ts-expect-error: a list holds one row kind */}
+		<List items={[1]} row={{ key: String, title: String }} file={{ key: String, path: String, added: Number, removed: Number }} />
+		<List items={["a"]} empty={{ sentence: "x", act: { label: "x", onAct: () => {} } }} file={{ key: String, path: String, added: () => 1, removed: () => 0 }} />
 		{/* @ts-expect-error: closed channel */}
-		<List className="x" />
+		<List items={[]} row={{ key: String, title: String }} className="x" />
 		{/* @ts-expect-error: closed channel */}
-		<List style={{ flex: 1 }} />
+		<List items={[]} row={{ key: String, title: String }} style={{ flex: 1 }} />
 		{/* @ts-expect-error: closed channel */}
-		<List class="x" />
+		<List items={[]} row={{ key: String, title: String }} class="x" />
 		{/* @ts-expect-error: closed channel */}
-		<List classList={{}} />
+		<List items={[]} row={{ key: String, title: String }} classList={{}} />
 		<Columns />
 		{/* @ts-expect-error: closed channel */}
 		<Columns className="x" />
@@ -421,16 +429,18 @@ export const closure = (
 		<EmptyState sentence="x" class="x" />
 		{/* @ts-expect-error: closed channel */}
 		<EmptyState sentence="x" classList={{}} />
-		<QueryBoundary query={{ data: 1, isPending: false, isError: false, refetch: () => {} }} sentence="x" children={() => null} />
-		<QueryBoundary query={{ data: 1, isPending: true, isError: false, refetch: () => {} }} sentence="x" children={() => null} loading={<List loading />} />
+		<QueryBoundary query={{ data: 1, isPending: false, isError: false, refetch: () => {} }} sentence="x" children={() => null} loading={null} />
+		<QueryBoundary query={{ data: 1, isPending: true, isError: false, refetch: () => {} }} sentence="x" children={() => null} loading={<List items={[]} loading row={{ key: String, title: String }} />} />
+		{/* @ts-expect-error: a QueryBoundary names its loading form */}
+		<QueryBoundary query={{ data: 1, isPending: true, isError: false, refetch: () => {} }} sentence="x" children={() => null} />
 		{/* @ts-expect-error: closed channel */}
-		<QueryBoundary query={{ data: 1, isPending: false, isError: false, refetch: () => {} }} sentence="x" children={() => null} className="x" />
+		<QueryBoundary query={{ data: 1, isPending: false, isError: false, refetch: () => {} }} sentence="x" children={() => null} loading={null} className="x" />
 		{/* @ts-expect-error: closed channel */}
-		<QueryBoundary query={{ data: 1, isPending: false, isError: false, refetch: () => {} }} sentence="x" children={() => null} style={{ flex: 1 }} />
+		<QueryBoundary query={{ data: 1, isPending: false, isError: false, refetch: () => {} }} sentence="x" children={() => null} loading={null} style={{ flex: 1 }} />
 		{/* @ts-expect-error: closed channel */}
-		<QueryBoundary query={{ data: 1, isPending: false, isError: false, refetch: () => {} }} sentence="x" children={() => null} class="x" />
+		<QueryBoundary query={{ data: 1, isPending: false, isError: false, refetch: () => {} }} sentence="x" children={() => null} loading={null} class="x" />
 		{/* @ts-expect-error: closed channel */}
-		<QueryBoundary query={{ data: 1, isPending: false, isError: false, refetch: () => {} }} sentence="x" children={() => null} classList={{}} />
+		<QueryBoundary query={{ data: 1, isPending: false, isError: false, refetch: () => {} }} sentence="x" children={() => null} loading={null} classList={{}} />
 		<Banner sentence="x" />
 		{/* @ts-expect-error: closed channel */}
 		<Banner sentence="x" className="x" />

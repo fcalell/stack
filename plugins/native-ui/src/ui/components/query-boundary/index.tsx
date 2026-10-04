@@ -1,11 +1,8 @@
-import { type ReactNode, useContext, useEffect } from "react";
+import type { ReactNode } from "react";
 import type { Closed } from "../../lib/closed";
-import { LoadingContext } from "../../lib/loading";
-import { SectionContext } from "../../lib/section";
+import { useSectionWait } from "../../lib/section";
 import { useWords } from "../../lib/words";
 import { EmptyStateBase } from "../empty-state/base";
-import { Group } from "../group";
-import { List } from "../list";
 
 // The part of a TanStack query result a boundary reads; a `useQuery` result
 // is one.
@@ -35,17 +32,15 @@ export interface QueryBoundaryProps<Q extends Queries = Queries>
 	query: Q;
 	sentence: string;
 	children: (data: QueryData<Q>) => ReactNode;
-	// The body's own loading form, drawn while any query is pending in place
-	// of the container's skeleton rows.
-	loading?: ReactNode;
+	// The body's loaded form in skeleton, drawn while any query is pending.
+	loading: ReactNode;
 }
 
-// While any query is pending, `loading` when given, else the loading form
-// of the container around it: in a Section a Group's setting rows, anywhere
-// else a List's two-line rows; in a Section the Section is busy and its
-// count waits either way. When one fails, the failed EmptyState with
-// `sentence` and Retry, which refetches the failed queries; then the
-// children with the data.
+// The states of a compound body that reads queries; a collection takes its
+// own query instead (a `List`). While any query is pending, `loading`; in a
+// Section the Section is busy and its count waits. When one fails, the
+// failed EmptyState with `sentence` and Retry, which refetches the failed
+// queries; then the children with the data.
 export function QueryBoundary<Q extends Queries>({
 	query,
 	sentence,
@@ -53,25 +48,11 @@ export function QueryBoundary<Q extends Queries>({
 	loading,
 }: QueryBoundaryProps<Q>) {
 	const words = useWords();
-	const wait = useContext(SectionContext);
 	const several = Array.isArray(query);
 	const queries = (several ? query : [query]) as readonly AnyQuery[];
 	const pending = queries.some((entry) => entry.isPending);
-	useEffect(() => {
-		if (!pending || !wait) return;
-		wait(true);
-		return () => wait(false);
-	}, [pending, wait]);
-	if (pending && loading !== undefined) return <>{loading}</>;
-	if (pending)
-		return wait ? (
-			// The Section is busy once, so its rows wait on its word.
-			<LoadingContext.Provider value>
-				<Group />
-			</LoadingContext.Provider>
-		) : (
-			<List loading />
-		);
+	useSectionWait(pending);
+	if (pending) return <>{loading}</>;
 	if (queries.some((entry) => entry.isError)) {
 		return (
 			<EmptyStateBase

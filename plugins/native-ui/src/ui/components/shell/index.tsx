@@ -43,7 +43,6 @@ import { Avatar } from "../avatar";
 import { Count } from "../count";
 import { Icon } from "../icon";
 import { List } from "../list";
-import { ListRow } from "../list-row";
 import { PickSheet } from "../picker/sheet";
 import { FloatingActRoom, Place } from "../place";
 import { Confirmations } from "../sheet/confirm";
@@ -236,19 +235,17 @@ function MorePage({ places }: { places: readonly PlaceSpec[] }) {
 	const words = useWords();
 	return (
 		<Place title={words.more}>
-			<List>
-				{places.map((spec) => (
-					<ListRow
-						key={spec.route}
-						leading={{ icon: spec.icon }}
-						title={spec.label}
-						trailing={
-							spec.count === undefined ? undefined : { count: spec.count }
-						}
-						href={spec.route}
-					/>
-				))}
-			</List>
+			<List
+				items={places}
+				row={{
+					key: (spec) => spec.route,
+					leading: { icon: (spec) => spec.icon },
+					title: (spec) => spec.label,
+					trailing: (spec) =>
+						spec.count === undefined ? undefined : { count: spec.count },
+					href: (spec) => spec.route,
+				}}
+			/>
 		</Place>
 	);
 }

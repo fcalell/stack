@@ -1,9 +1,8 @@
 import type { PlaceSpec, Switcher } from "@fcalell/ui-core/descriptors";
-import { List } from "../../components/list/index.tsx";
 import { Place } from "../../components/place/index.tsx";
 import { Shell } from "../../components/shell/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
-import { StandInRows } from "./layout-context.tsx";
+import { StandInList } from "./layout-context.tsx";
 import { ACTIONS, Column, MORE, Opened } from "./place.tsx";
 import { Deployment } from "./screen.tsx";
 
@@ -45,9 +44,7 @@ function Frame() {
 					more={MORE}
 					act={{ label: "Deploy", onAct: act }}
 				>
-					<List>
-						<StandInRows ground="list" />
-					</List>
+					<StandInList />
 				</Place>
 			</Shell>
 		</Column>

@@ -359,8 +359,8 @@ export const ROW_TITLE_LINE = "gap-inside";
 // A list row's trailing value (a time, a date), its figures at one width.
 export const ROW_TRAILING =
 	"tabular-nums text-meta leading-meta font-normal text-ink-meta";
-// A two-line row's meta line: the meta keeps its room and the marks or the
-// trailing that cannot sit beside it wrap under it, the row growing.
+// A two-line row's meta line, one line: its marks keep their place at its
+// end and its parts truncate first, so every row keeps one height.
 export const ROW_META_LINE = "gap-x-inside";
 // A list row's marks on its meta line (a status, a chip) and its end acts.
 export const ROW_MARKS = "gap-inside";

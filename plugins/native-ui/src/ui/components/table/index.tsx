@@ -1,7 +1,6 @@
 import type {
 	CellValue,
 	Option,
-	Part,
 	StatusCell,
 	TableCell,
 	TableColumn,
@@ -36,15 +35,13 @@ import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { CellField, LabelTarget } from "../../lib/field";
 import { Ink } from "../../lib/ink";
-import { LoadingRow } from "../../lib/loading";
 import { navigate } from "../../lib/navigate";
 import { useWords } from "../../lib/words";
 import { Checkbox } from "../checkbox";
 import { Chip } from "../chip";
 import { Icon } from "../icon";
 import { Input } from "../input";
-import { List } from "../list";
-import { ListRow } from "../list-row";
+import { List, type RowSlots } from "../list";
 import { PickerBase } from "../picker/base";
 import { StatusBase } from "../status/base";
 
@@ -703,63 +700,65 @@ function Phone(props: {
 			/>
 		</View>
 	) : null;
+	const cell = (record: TableRow, column: TableColumn | undefined) =>
+		column ? record.cells[column.key] : undefined;
+	const { onOpen } = props;
+	// A slot is declared only when a column fills it, so the waiting rows
+	// stand in the slots the loaded ones draw.
+	const row: RowSlots<TableRow> = {
+		key: (record) => record.id,
+		title: (record) =>
+			leading ? shown(leading, cell(record, leading)) : record.id,
+		meta: meta.length
+			? (record) => {
+					const parts = meta
+						.map((column) => {
+							const at = cell(record, column);
+							if (column.kind === "check")
+								return at === true ? column.label : "";
+							if (column.kind === "number" && at !== null && at !== undefined)
+								return `${column.label} ${at}`;
+							return shown(column, at);
+						})
+						.filter((part) => part !== "");
+					return parts.length ? parts : undefined;
+				}
+			: undefined,
+		trailing: ageColumn
+			? (record) => {
+					const when = cell(record, ageColumn);
+					return typeof when === "string" ? { age: age(when) } : undefined;
+				}
+			: undefined,
+		status: status
+			? (record) => {
+					const state = cell(record, status);
+					// A status cell is the one object a cell holds.
+					return typeof state === "object" && state !== null
+						? {
+								state: state.status,
+								label: state.label ?? words[state.status],
+							}
+						: undefined;
+				}
+			: undefined,
+		chip:
+			chip?.kind === "chip"
+				? (record) => {
+						const value = cell(record, chip);
+						return typeof value === "string"
+							? { family: chip.family, label: shown(chip, value) }
+							: undefined;
+					}
+				: undefined,
+		href: (record) => record.href,
+		// A row with `href` goes there; the others open through `onOpen`.
+		onOpen: onOpen ? (record) => onOpen(record.id) : undefined,
+	};
 	return (
 		<>
 			{pick}
-			{props.loading ? (
-				<LoadingRow.Provider value="two-line-trailing">
-					<List loading />
-				</LoadingRow.Provider>
-			) : (
-				<List>
-					{props.rows.map((row) => {
-						const cell = (column: TableColumn | undefined) =>
-							column ? row.cells[column.key] : undefined;
-						const state = cell(status) as StatusCell | null | undefined;
-						const when = cell(ageColumn);
-						const value = cell(chip);
-						const parts: Part[] = meta
-							.map((column) => {
-								const at = cell(column);
-								if (column.kind === "check")
-									return at === true ? column.label : "";
-								if (column.kind === "number" && at !== null && at !== undefined)
-									return `${column.label} ${at}`;
-								return shown(column, at);
-							})
-							.filter((part) => part !== "");
-						return (
-							<ListRow
-								key={row.id}
-								title={leading ? shown(leading, cell(leading)) : row.id}
-								meta={parts.length ? parts : undefined}
-								trailing={
-									typeof when === "string" ? { age: age(when) } : undefined
-								}
-								status={
-									state
-										? {
-												state: state.status,
-												label: state.label ?? words[state.status],
-											}
-										: undefined
-								}
-								chip={
-									chip?.kind === "chip" && typeof value === "string"
-										? { family: chip.family, label: shown(chip, value) }
-										: undefined
-								}
-								href={row.href}
-								onOpen={
-									props.onOpen && row.href === undefined
-										? () => props.onOpen?.(row.id)
-										: undefined
-								}
-							/>
-						);
-					})}
-				</List>
-			)}
+			<List items={props.rows} loading={props.loading} row={row} />
 		</>
 	);
 }

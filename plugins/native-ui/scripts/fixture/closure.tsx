@@ -389,21 +389,29 @@ export const closure = (
 		<Group selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
 		<Group placeholderTextColorClassName="text-ink-body" />
-		<List />
+		<List items={[]} row={{ key: String, title: String }} />
+		{/* @ts-expect-error: a list's rows lead with one kind */}
+		<List items={[1]} row={{ key: String, title: String, leading: { avatar: () => ({ name: "x" }), icon: () => "X" } }} />
+		<List items={[1]} row={{ key: String, title: String, leading: { status: () => "active" } }} />
+		{/* @ts-expect-error: a list takes a query or items, never both */}
+		<List items={[1]} query={{ data: [1], isPending: false, isError: false, refetch: noop }} sentence="x" empty={{ sentence: "x" }} row={{ key: String, title: String }} />
+		{/* @ts-expect-error: a list holds one row kind */}
+		<List items={[1]} row={{ key: String, title: String }} file={{ key: String, path: String, added: Number, removed: Number }} />
+		<List items={["a"]} empty={{ sentence: "x", act: { label: "x", onAct: noop } }} file={{ key: String, path: String, added: () => 1, removed: () => 0 }} />
 		{/* @ts-expect-error: closed channel */}
-		<List className="x" />
+		<List items={[]} row={{ key: String, title: String }} className="x" />
 		{/* @ts-expect-error: closed channel */}
-		<List style={{ flex: 1 }} />
+		<List items={[]} row={{ key: String, title: String }} style={{ flex: 1 }} />
 		{/* @ts-expect-error: closed channel */}
-		<List class="x" />
+		<List items={[]} row={{ key: String, title: String }} class="x" />
 		{/* @ts-expect-error: closed channel */}
-		<List classList={{}} />
+		<List items={[]} row={{ key: String, title: String }} classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<List colorClassName="text-ink-body" />
+		<List items={[]} row={{ key: String, title: String }} colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<List selectionColorClassName="text-ink-body" />
+		<List items={[]} row={{ key: String, title: String }} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<List placeholderTextColorClassName="text-ink-body" />
+		<List items={[]} row={{ key: String, title: String }} placeholderTextColorClassName="text-ink-body" />
 		<Thread />
 		{/* @ts-expect-error: closed channel */}
 		<Thread className="x" />
@@ -896,25 +904,27 @@ export const closure = (
 		<Select options={[]} onChange={noop} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
 		<Select options={[]} onChange={noop} placeholderTextColorClassName="text-ink-body" />
+		<QueryBoundary query={count} sentence="a" loading={null}>{(n) => <Count value={n} />}</QueryBoundary>
+		{/* @ts-expect-error: a QueryBoundary names its loading form */}
 		<QueryBoundary query={count} sentence="a">{(n) => <Count value={n} />}</QueryBoundary>
 		{/* @ts-expect-error: closed channel */}
-		<QueryBoundary query={count} sentence="a" children={() => null} className="x" />
+		<QueryBoundary query={count} sentence="a" loading={null} children={() => null} className="x" />
 		{/* @ts-expect-error: closed channel */}
-		<QueryBoundary query={count} sentence="a" children={() => null} style={{ flex: 1 }} />
+		<QueryBoundary query={count} sentence="a" loading={null} children={() => null} style={{ flex: 1 }} />
 		{/* @ts-expect-error: closed channel */}
-		<QueryBoundary query={count} sentence="a" children={() => null} class="x" />
+		<QueryBoundary query={count} sentence="a" loading={null} children={() => null} class="x" />
 		{/* @ts-expect-error: closed channel */}
-		<QueryBoundary query={count} sentence="a" children={() => null} classList={{}} />
+		<QueryBoundary query={count} sentence="a" loading={null} children={() => null} classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<QueryBoundary query={count} sentence="a" children={() => null} colorClassName="text-ink-body" />
+		<QueryBoundary query={count} sentence="a" loading={null} children={() => null} colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<QueryBoundary query={count} sentence="a" children={() => null} selectionColorClassName="text-ink-body" />
+		<QueryBoundary query={count} sentence="a" loading={null} children={() => null} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<QueryBoundary query={count} sentence="a" children={() => null} placeholderTextColorClassName="text-ink-body" />
-		<QueryBoundary query={[live, count]} sentence="a">
+		<QueryBoundary query={count} sentence="a" loading={null} children={() => null} placeholderTextColorClassName="text-ink-body" />
+		<QueryBoundary query={[live, count]} sentence="a" loading={null}>
 			{([rows, n]) => <Count value={rows.length + n} />}
 		</QueryBoundary>
-		<QueryBoundary query={[count, names]} sentence="a">
+		<QueryBoundary query={[count, names]} sentence="a" loading={null}>
 			{([n, list]) => <Count value={n + list.length} />}
 		</QueryBoundary>
 		<FormField label="a" field={text}>

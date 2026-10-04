@@ -11,6 +11,7 @@ import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { GroundContext } from "../../lib/ground";
 import { LoadingContext } from "../../lib/loading";
+import { useSectionRows } from "../../lib/section";
 
 const BOX = "overflow-hidden";
 // `GROUP`'s `divide-*` is a child selector uniwind drops, so the group draws
@@ -36,6 +37,7 @@ export interface GroupProps extends Closed {
 // them, so no row carries one. A loading Section's body waits with it; the
 // group says it is busy only on its own `loading`.
 export function Group({ loading, children }: GroupProps) {
+	useSectionRows();
 	const inherited = useContext(LoadingContext);
 	const waiting = loading ?? inherited;
 	const rows = waiting

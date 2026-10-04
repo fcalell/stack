@@ -50,6 +50,10 @@
 		"./manifest": {
 			"types": "./dist/manifest.d.ts",
 			"default": "./dist/manifest.js"
+		},
+		"./list-state": {
+			"types": "./dist/list-state.d.ts",
+			"default": "./dist/list-state.js"
 		}
 	},
 	"files": [

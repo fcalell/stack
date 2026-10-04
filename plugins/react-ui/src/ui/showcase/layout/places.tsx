@@ -105,33 +105,32 @@ export function Domains() {
 		<Place title="Domains" act={{ label: "Add domain", onAct: act }} bleed>
 			<Split
 				list={
-					<List>
-						{DOMAINS.map((domain) => (
-							<ListRow
-								key={domain.name}
-								leading={{ status: domain.state }}
-								title={domain.name}
-								meta={[domain.meta]}
-								href={`#${domain.name}`}
-								more={[
-									...(domain.state === "waiting"
-										? [
-												{
-													label: "Verify",
-													icon: "ShieldCheck" as const,
-													onAct: () => navigate(to({ place: "verify" })),
-												},
-											]
-										: []),
-									{
-										label: "Copy name",
-										icon: "Copy",
-										onAct: () => toast("Name copied"),
-									},
-								]}
-							/>
-						))}
-					</List>
+					<List
+						items={DOMAINS}
+						row={{
+							key: (domain) => domain.name,
+							leading: { status: (domain) => domain.state },
+							title: (domain) => domain.name,
+							meta: (domain) => [domain.meta],
+							href: (domain) => `#${domain.name}`,
+							more: (domain) => [
+								...(domain.state === "waiting"
+									? [
+											{
+												label: "Verify",
+												icon: "ShieldCheck" as const,
+												onAct: () => navigate(to({ place: "verify" })),
+											},
+										]
+									: []),
+								{
+									label: "Copy name",
+									icon: "Copy",
+									onAct: () => toast("Name copied"),
+								},
+							],
+						}}
+					/>
 				}
 				empty={
 					<EmptyState

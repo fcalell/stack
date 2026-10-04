@@ -9,9 +9,6 @@ import {
 	filePathPart,
 	ROW_LEADING,
 	row,
-	skeleton,
-	skeletonLane,
-	skeletonRow,
 } from "@fcalell/ui-core/variants";
 import { use, useLayoutEffect, useRef, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
@@ -19,6 +16,7 @@ import { GroundContext } from "../../lib/ground.ts";
 import { isCurrent, usePathname } from "../../lib/navigate.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Icon } from "../icon/index.tsx";
+import { FileWait } from "./wait.tsx";
 
 const ROW = "relative flex items-center";
 // A list row's wash is square on touch, where it meets the screen's edge.
@@ -36,14 +34,6 @@ const COUNT = "text-end";
 // The row's name where it has no hit: the full path, the counts and the seen
 // state, for the cut path and the glyph are drawn alone.
 const SPOKEN = "sr-only";
-const WAIT = "flex items-center";
-const WAIT_LEADING = "flex shrink-0 items-center justify-center";
-const WAIT_GLYPH = "shrink-0";
-const WAIT_PATH = "flex grow min-w-0";
-const WAIT_COUNTS = "flex basis-0 grow justify-end min-w-0 text-meta";
-// The path's bar at half the row, the counts' at a third of their lane.
-const PATH_BAR = "w-1/2";
-const COUNTS_BAR = "w-1/3";
 const ELLIPSIS = "…";
 
 /** A changed file in a review's list. */
@@ -144,28 +134,7 @@ export function FileRow({
 	const words = useWords();
 	const ground = use(GroundContext);
 	const pathname = usePathname();
-	if (loading)
-		return (
-			<div
-				aria-busy
-				className={cn(
-					skeletonRow({
-						kind: ground === "group" ? "one-line-group" : "one-line",
-					}),
-					WAIT,
-				)}
-			>
-				<span className={cn(ROW_LEADING, WAIT_LEADING)}>
-					<span className={cn(skeleton({ kind: "icon" }), WAIT_GLYPH)} />
-				</span>
-				<span className={WAIT_PATH}>
-					<span className={cn(skeleton({ kind: "line" }), PATH_BAR)} />
-				</span>
-				<span className={cn(skeletonLane({ role: "meta" }), WAIT_COUNTS)}>
-					<span className={cn(skeleton({ kind: "line" }), COUNTS_BAR)} />
-				</span>
-			</div>
-		);
+	if (loading) return <FileWait busy />;
 	const seenWord = seen ? words.seen : words.unseen;
 	const named = [
 		path,

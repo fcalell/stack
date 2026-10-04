@@ -5,7 +5,7 @@ executions behind it. Read the measurements as the [references](../references.md
 
 ## Range
 
-list 375 (the contract's `w-list`), pane 300–395 beside the list at `wide` and a sheet below it; the record in the main headed at `heading` inside a Place, which owns the title; two-line rows 46–55; property rows 30–34 with label and value at 11–12; one large size (18/600 title); radius 4–6; hairline boundaries; selection grey fill or tinted fill with a left bar.
+list 375 (the contract's `w-list`), pane 300–395 beside the list at `wide` and a sheet below it; the record in the main headed at `heading` inside a Place, which owns the title; two-line rows 46–55, the meta line one line yielding in order: the later parts truncate first, then the chip, while the first part (naming the item) and the status word stay whole, and past them the line clips at the row edge, never overprinting; property rows 30–34 with label and value at 11–12; one large size (18/600 title); radius 4–6; hairline boundaries; selection grey fill or tinted fill with a left bar.
 
 ## References
 

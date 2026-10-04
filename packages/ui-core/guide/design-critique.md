@@ -65,7 +65,10 @@ each step read as [A phone screen](#a-phone-screen) says.
 3. **Interact.** Click every control, hover every row, tab through in order. Screenshot rest,
    hover, focus, active, disabled, loading, empty, error and selected wherever the unit declares
    them. A declared state with no visible change is a finding, and so is a loading form whose
-   height differs from the loaded one.
+   height differs from the loaded one, except a collection of unknown length: it waits with a
+   fixed number of rows; the list's height may change only by the difference in row count: each
+   waiting row matches its loaded row's height and text start, measured row by row, and any
+   per-row difference is a finding.
 4. **Widths.** 1280 and 390 px, plus 768 and 1440 for a screen; 390 draws the touch density.
    Horizontal overflow, clipped text, a control under 24 px, or a touch target under 44 px at 390
    is a finding.

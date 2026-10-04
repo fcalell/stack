@@ -29,8 +29,9 @@ Write the screen under the phone's rules page, reading each component's props in
 
 ## 4. Feed it
 
-Read through `orpc` from `src/lib/api.ts` with `useQuery`, act with `useMutation`, and wrap each
-region that fetches in a `QueryBoundary`. Page: [the API client](./api-client.md).
+Read through `orpc` from `src/lib/api.ts` with `useQuery` and act with `useMutation`. A
+collection (a `List`) takes its query; any other region that fetches sits in a `QueryBoundary`
+that names its loading form. Page: [the API client](./api-client.md).
 
 **Check:** with `stack dev` and `stack expo dev` running, the screen loads its data on a device
 or simulator.

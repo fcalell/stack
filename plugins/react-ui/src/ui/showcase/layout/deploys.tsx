@@ -11,10 +11,9 @@ import { IconButton } from "../../components/icon-button/index.tsx";
 import { Input } from "../../components/input/index.tsx";
 import { ItemHeader } from "../../components/item-header/index.tsx";
 import { List } from "../../components/list/index.tsx";
-import { ListRow } from "../../components/list-row/index.tsx";
 import { PendingBar } from "../../components/pending-bar/index.tsx";
 import { Place } from "../../components/place/index.tsx";
-import { QueryBoundary } from "../../components/query-boundary/index.tsx";
+import type { QueryLike } from "../../components/query-boundary/index.tsx";
 import { Section } from "../../components/section/index.tsx";
 import { Split } from "../../components/split/index.tsx";
 import { Toolbar } from "../../components/toolbar/index.tsx";
@@ -30,8 +29,8 @@ interface Deploy {
 	commit: string;
 	age: string;
 	state: StatusState;
-	// A person started it; a schedule's deploy leads with its dot instead.
-	author?: string;
+	// Who started it: a person, or the trigger's name for an automated deploy.
+	author: string;
 	env: { family: ChipFamily; label: string };
 }
 
@@ -81,6 +80,7 @@ const DEPLOYS: Deploy[] = [
 	},
 	{
 		id: "d5",
+		author: "Nightly schedule",
 		message: "Nightly rebuild",
 		branch: "main",
 		commit: "e93a6c0",
@@ -128,38 +128,36 @@ function moreOf(deploy: Deploy): MenuItem[] {
 		: [redeploy, copy];
 }
 
-function DeployRows(props: { deploys: Deploy[] }) {
+function DeployRows(props: { query: QueryLike<Deploy[]> }) {
 	const { record } = use(HereContext);
 	const to = useTo();
 	return (
-		<List>
-			{props.deploys.map((deploy) => (
-				<ListRow
-					key={deploy.id}
-					leading={
-						deploy.author
-							? { avatar: { name: deploy.author } }
-							: { status: deploy.state }
-					}
-					title={deploy.message}
-					meta={[deploy.branch, deploy.commit]}
-					trailing={{ age: deploy.age }}
-					status={
-						deploy.author
-							? { state: deploy.state, label: LABELS[deploy.state] }
-							: undefined
-					}
-					chip={deploy.env}
-					more={moreOf(deploy)}
-					// The open record's row is current at the page's own path.
-					href={
-						deploy.id === record
-							? location.pathname
-							: to({ place: "deploys", record: deploy.id })
-					}
-				/>
-			))}
-		</List>
+		<List
+			query={props.query}
+			sentence="Deploys did not load."
+			empty={{ sentence: "No deploy has run on this project." }}
+			row={{
+				key: (deploy) => deploy.id,
+				// Every row leads with who started it; its state's word is a mark on the
+				// meta line, after the commit that names the deploy (the branch cut
+				// first).
+				leading: { avatar: (deploy) => ({ name: deploy.author }) },
+				title: (deploy) => deploy.message,
+				meta: (deploy) => [deploy.commit, deploy.branch],
+				trailing: (deploy) => ({ age: deploy.age }),
+				status: (deploy) => ({
+					state: deploy.state,
+					label: LABELS[deploy.state],
+				}),
+				chip: (deploy) => deploy.env,
+				more: moreOf,
+				// The open record's row is current at the page's own path.
+				href: (deploy) =>
+					deploy.id === record
+						? location.pathname
+						: to({ place: "deploys", record: deploy.id }),
+			}}
+		/>
 	);
 }
 
@@ -183,7 +181,7 @@ function Record(props: { deploy: Deploy }) {
 							onChange: setState,
 						},
 					},
-					deploy.author ?? "Schedule",
+					deploy.author,
 					`${deploy.age} ago`,
 					{ count: 3, label: "Checks" },
 				]}
@@ -254,7 +252,7 @@ function Details(props: { deploy: Deploy }) {
 		<>
 			<Section title="Deploy">
 				<Group>
-					<DefinitionRow label="Author" value={deploy.author ?? "Schedule"} />
+					<DefinitionRow label="Author" value={deploy.author} />
 					<DefinitionRow label="Started" value="10:42" />
 					<DefinitionRow
 						label="Deploy ID"
@@ -362,11 +360,7 @@ export function Deploys() {
 				<Chip family="neutral" label="Author: Ana Ruiz" onRemove={act} />
 			</Toolbar>
 			<Split
-				list={
-					<QueryBoundary query={query} sentence="Deploys did not load.">
-						{(deploys) => <DeployRows deploys={deploys} />}
-					</QueryBoundary>
-				}
+				list={<DeployRows query={query} />}
 				main={open ? <Record key={open.id} deploy={open} /> : undefined}
 				pane={open ? <Details deploy={open} /> : undefined}
 				empty={

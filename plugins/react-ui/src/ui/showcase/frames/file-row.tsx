@@ -1,142 +1,157 @@
 import { FileRow } from "../../components/file-row/index.tsx";
 import { Group } from "../../components/group/index.tsx";
-import { List } from "../../components/list/index.tsx";
+import { type FileSlots, List } from "../../components/list/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
 import { Wide } from "./layout-context.tsx";
 
 const LONG = "docs/billing/payment-terms-and-late-invoices.md";
 
-// Board 51's review list at the Split's list width, the long path cut.
-function Review() {
-	return (
-		<div className="flex flex-col w-list max-w-full px-page">
-			<List>
-				<FileRow
-					path="src/billing/invoice.ts"
-					added={4}
-					removed={2}
-					seen
-					href="#invoice"
-				/>
-				<FileRow
-					path="src/billing/terms.ts"
-					added={7}
-					removed={0}
-					seen={false}
-					href="#terms"
-				/>
-				<FileRow
-					path="src/billing/invoice.test.ts"
-					added={18}
-					removed={3}
-					seen={false}
-					href="#invoice-test"
-				/>
-				<FileRow path={LONG} added={2} removed={1} seen={false} href="#docs" />
-			</List>
-		</div>
-	);
+interface File {
+	path: string;
+	added: number;
+	removed: number;
+	seen?: boolean;
+	href?: string;
 }
 
-// The seen marks given, then absent (the file glyph), on the frame's ground.
-function Rows() {
-	return (
-		<>
-			<FileRow
-				path="src/billing/terms.ts"
-				added={7}
-				removed={0}
-				seen={false}
-				href="#terms"
-			/>
-			<FileRow
-				path="src/billing/invoice.ts"
-				added={4}
-				removed={2}
-				seen
-				href="#invoice"
-			/>
-			<FileRow
-				path="src/billing/invoice.test.ts"
-				added={18}
-				removed={3}
-				href="#invoice-test"
-			/>
-			<FileRow path={LONG} added={2} removed={1} href="#docs" />
-		</>
-	);
-}
+const FILE: FileSlots<File> = {
+	key: (file) => file.path,
+	path: (file) => file.path,
+	added: (file) => file.added,
+	removed: (file) => file.removed,
+	seen: (file) => file.seen,
+	href: (file) => file.href,
+};
+
+// Board 51's review list at the Split's list width, the long path cut.
+const REVIEW: File[] = [
+	{
+		path: "src/billing/invoice.ts",
+		added: 4,
+		removed: 2,
+		seen: true,
+		href: "#invoice",
+	},
+	{
+		path: "src/billing/terms.ts",
+		added: 7,
+		removed: 0,
+		seen: false,
+		href: "#terms",
+	},
+	{
+		path: "src/billing/invoice.test.ts",
+		added: 18,
+		removed: 3,
+		seen: false,
+		href: "#invoice-test",
+	},
+	{ path: LONG, added: 2, removed: 1, seen: false, href: "#docs" },
+];
+
+// The seen marks given, then absent (the file glyph).
+const ROWS: File[] = [
+	{
+		path: "src/billing/terms.ts",
+		added: 7,
+		removed: 0,
+		seen: false,
+		href: "#terms",
+	},
+	{
+		path: "src/billing/invoice.ts",
+		added: 4,
+		removed: 2,
+		seen: true,
+		href: "#invoice",
+	},
+	{
+		path: "src/billing/invoice.test.ts",
+		added: 18,
+		removed: 3,
+		href: "#invoice-test",
+	},
+	{ path: LONG, added: 2, removed: 1, href: "#docs" },
+];
 
 // A pointer or focus frame draws one row that opens over one that does not,
 // so only the first takes the forced state.
-function Pressed() {
-	return (
-		<>
-			<FileRow
-				path="src/billing/invoice.test.ts"
-				added={18}
-				removed={3}
-				seen={false}
-				href="#invoice-test"
-			/>
-			<FileRow path="src/billing/invoice.ts" added={4} removed={2} seen />
-		</>
-	);
-}
+const PRESSED: File[] = [
+	{
+		path: "src/billing/invoice.test.ts",
+		added: 18,
+		removed: 3,
+		seen: false,
+		href: "#invoice-test",
+	},
+	{ path: "src/billing/invoice.ts", added: 4, removed: 2, seen: true },
+];
 
-function Loading() {
-	return (
-		<>
-			<FileRow path="" added={0} removed={0} loading />
-			<FileRow path="" added={0} removed={0} loading />
-		</>
-	);
-}
-
-// The group ground's cells draw the rows in a Group, every other cell in a
-// List; the list's rest cells add the review list.
 // The open file's row current (its href is the page's own path) between
 // two that open elsewhere.
-function Selected() {
-	return (
-		<>
-			<FileRow
-				path="src/billing/invoice.ts"
-				added={4}
-				removed={2}
-				seen
-				href="#invoice"
-			/>
-			<FileRow
-				path="src/billing/terms.ts"
-				added={7}
-				removed={0}
-				seen
-				href={location.pathname}
-			/>
-			<FileRow
-				path="src/billing/invoice.test.ts"
-				added={18}
-				removed={3}
-				seen={false}
-				href="#invoice-test"
-			/>
-		</>
-	);
+function selected(): File[] {
+	return [
+		{
+			path: "src/billing/invoice.ts",
+			added: 4,
+			removed: 2,
+			seen: true,
+			href: "#invoice",
+		},
+		{
+			path: "src/billing/terms.ts",
+			added: 7,
+			removed: 0,
+			seen: true,
+			href: location.pathname,
+		},
+		{
+			path: "src/billing/invoice.test.ts",
+			added: 18,
+			removed: 3,
+			seen: false,
+			href: "#invoice-test",
+		},
+	];
 }
 
+// The group ground's cells draw the rows in a Group (each FileRow its own
+// loading form), every other cell a List of them; the list's rest cells add
+// the review list.
 export function drawFileRow(frame: ShowcaseFrame) {
 	const cell = frame.cell.name;
 	const group =
 		cell === "ROW.ground.group" || cell === "SKELETON_ROW.kind.one-line-group";
-	let rows = <Rows />;
-	if (frame.state === "loading") rows = <Loading />;
-	else if (frame.state === "selected") rows = <Selected />;
-	else if (frame.state !== "rest") rows = <Pressed />;
+	const loading = frame.state === "loading";
+	let files = PRESSED;
+	if (frame.state === "rest" || loading) files = ROWS;
+	else if (frame.state === "selected") files = selected();
+	if (group)
+		return (
+			<Wide>
+				<Group>
+					{files.map((file) => (
+						<FileRow
+							key={file.path}
+							path={file.path}
+							added={file.added}
+							removed={file.removed}
+							seen={file.seen}
+							href={file.href}
+							loading={loading}
+						/>
+					))}
+				</Group>
+			</Wide>
+		);
 	return (
 		<Wide>
-			{group ? <Group>{rows}</Group> : <List>{rows}</List>}
-			{!group && frame.state === "rest" ? <Review /> : null}
+			<List items={files} loading={loading} file={FILE} />
+			{frame.state === "rest" ? (
+				<div className="flex flex-col w-list max-w-full px-page">
+					<List items={REVIEW} file={FILE} />
+				</div>
+			) : null}
 		</Wide>
 	);
 }

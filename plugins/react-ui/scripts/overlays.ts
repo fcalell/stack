@@ -155,6 +155,8 @@ export const OVERLAYS: readonly string[] = [
 	"page-wide:hidden",
 	"page-max-wide:hidden",
 	// Section, Group, List, Columns
+	"px-inside",
+	"tabular-nums",
 	"flex",
 	"flex-col",
 	"min-w-0",
@@ -289,6 +291,10 @@ export const OVERLAYS: readonly string[] = [
 	"data-ending-style:duration-fast",
 	"data-ending-style:ease-in",
 	// ListRow, FormField, SegmentedControl, Picker, OptionList
+	"w-0",
+	"w-figures",
+	"min-h-chip",
+	"size-control-compact",
 	"border-t",
 	"pt-float",
 	"w-fit",

@@ -17,6 +17,7 @@ import {
 	GroupName,
 	LabelTarget,
 } from "../../lib/field";
+import { useSectionField } from "../../lib/section";
 import { Checkbox, type CheckboxProps } from "../checkbox";
 import { OptionList } from "../option-list";
 import { SegmentedControl } from "../segmented-control";
@@ -81,6 +82,7 @@ function formOf(control: ReactNode) {
 // names a typing control; disabled, the label takes the disabled ink, the
 // control its disabled cells, and the description stays as the reason.
 export function FormField<V>(props: FormFieldProps<V>) {
+	useSectionField();
 	const { label, description, disabled = false } = props;
 	const error = props.field ? props.field.error : props.error;
 	const control = props.field

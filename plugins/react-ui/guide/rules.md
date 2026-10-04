@@ -1,34 +1,22 @@
 # Rules for the web UI
 
-Every `.tsx` the app writes follows these rules. The design system is the roster
-`@fcalell/plugin-react-ui` ships plus the app's own `ui/` directory (any `ui/` path segment);
-everything else is app code, which composes components and never restyles them. The roster is
-`node_modules/@fcalell/ui-core/src/roster.ts`; each component's cells, states and tokens are in
-`node_modules/@fcalell/ui-core/DESIGN.md`.
+Every app `.tsx` follows these rules. The design system is the roster
+(`node_modules/@fcalell/ui-core/src/roster.ts`; cells, states and tokens in ui-core's `DESIGN.md`)
+plus the app's own `ui/` directory (any `ui/` path segment); everything else composes components
+and never restyles them.
 
 ## Pick the component first
 
-Before writing markup, find the roster component that owns the shape: the frame (`Shell`,
-`Place`, `Screen`, `Split`), the rhythm (`Section`, `Group`, `List`), the row (`ListRow`,
-`DefinitionRow`, `FormField`), the control, the text role (`Text`). A host element that rebuilds
-one of these is drift, even with the right tokens.
-
-```tsx
-// Drift: a host element redrawing a row.
-<div className="flex h-9 items-center border-b border-edge px-3 text-body">{project.name}</div>
-
-// The row the roster owns.
-<ListRow title={project.name} meta={project.owner} href={`/projects/${project.id}`} />
-```
+Find the roster component that owns the shape: the frame (`Shell`, `Place`, `Screen`, `Split`),
+the rhythm (`Section`, `Group`, `List`), the row (`ListRow`, `DefinitionRow`, `FormField`), the
+control, the text role (`Text`). A host element that rebuilds one of these is drift.
 
 ## Classes are geometry, on host elements only
 
 A component takes no `class`, `className`, `classList` or `style`: its props type declares each
-`?: never`, so passing one fails the type-check. Its look is its props.
-
-A class belongs only on an intrinsic host element (`div`, `span`, `ul`) and only for geometry:
-flex plumbing, alignment, zero offsets, fill sizes, gap rungs. A fill, radius, border, shadow,
-weight, tone, transition or state is a look, and a numeric dimension is never geometry.
+`?: never`. A class belongs only on an intrinsic host element (`div`, `span`, `ul`) and only for
+geometry: flex plumbing, alignment, zero offsets, fill sizes, gap rungs. A fill, radius, border,
+shadow, weight, tone, transition or state is a look, and a numeric dimension is never geometry.
 
 ```tsx
 <div className="flex min-w-0 items-center gap-pair">
@@ -41,39 +29,53 @@ weight, tone, transition or state is a look, and a numeric dimension is never ge
 
 Every colour, size, radius and spacing is a contract token; never an arbitrary value
 (`h-[34px]`), a literal colour or a raw pixel size. Copy renders through `Text` (`body` or `meta`,
-with `strong`) or the molecule that owns its role (`title` is `Place`'s and `Screen`'s, `heading` is
+with `strong`) or the molecule that owns its role (`title` is `Place`'s and `Screen`'s, `heading`
 `Section`'s); colour comes through a component's props.
 
 ## Data, never nodes
 
-A composed region is data the owning molecule renders: an act is an `Act`
-(`{ label, onAct, destructive? }`), an icon-only act an `IconAct`, a row's marks a `StatusMark`
-and a `ChipMark`, a place a `PlaceSpec`, all from `@fcalell/ui-core/descriptors`. An icon is an
-`IconName`, a Lucide glyph by its PascalCase name (`Check`, `ChevronDown`). `children` is open
-only on the molecules the roster gives it to.
+A composed region is data its molecule renders: an `Act` (`{ label, onAct, destructive? }`),
+an `IconAct`, a row's `StatusMark` and `ChipMark`, a `PlaceSpec`, all from
+`@fcalell/ui-core/descriptors`. An icon is an `IconName`, a Lucide glyph's PascalCase name.
+`children` is open only where the roster gives it. A `Form` submits through its `ActionBar`'s
+filled act, the act pending while its promise pends; a `confirm()` takes a `Confirmation`.
 
-A `Form` has no submit handler: its `ActionBar`'s filled act submits it, and while the promise
-that act's `onAct` returns pends, the act is pending. A `confirm()` takes a `Confirmation` the
-same way.
+## Collections take data
+
+A collection takes data and draws its four states. A `List` takes its `query` (or static
+`items`) and one item map, `row` for `ListRow`s or `file` for `FileRow`s, one function per slot;
+declare a slot only if every item fills it. Pending, it waits in those slots; failed, it shows
+`sentence` and Retry; empty, `empty`, with the act that fills it. Rows share one `leading` kind
+(`avatar`, `icon` or `status`) or none. The first meta part names the item; it and the status
+stay whole as the later parts, then the chip, truncate. A Section counts them.
+
+```tsx
+<List
+  query={notes}
+  sentence="Notes did not load."
+  empty={{ sentence: "No notes.", act: { label: "New note", onAct: create } }}
+  row={{ key: (n) => n.id, title: (n) => n.title, meta: (n) => [n.edited] }}
+/>
+```
+
+Any other region reading a query sits in its own `QueryBoundary`, naming its loading form.
 
 ## Words are the config's, sentences are props
 
-Every word a component draws on its own (Back, Retry, Cancel) comes from `words`
-(`reactUi({ words })`, read with `useWords()` from `@fcalell/plugin-react-ui/lib/words`). Every
-sentence the app shows is a prop it passes.
+A word a component draws on its own comes from `reactUi({ words })`, read with
+`useWords()` from `@fcalell/plugin-react-ui/lib/words`; every sentence the app shows is a prop.
 
 ## The app's `ui/`
 
-A shape that needs the app's nouns in its props (`ProjectRow`, taking a `project`) lives in the
-app's `ui/` and composes roster components only, never a host element with a look. It reads no
-data; its parent passes it.
+A shape that needs the app's nouns (`ProjectRow`, taking a `project`) lives in `ui/`, composes
+roster components only, never a host element with a look, and reads no data.
 
 ## What the roster lacks is a gap
 
-A shape no component owns, or a look a component's props cannot express, is a gap in stack:
-leave that part out, compose the rest, and file it by the gap recipe
-(`node_modules/@fcalell/cli/guide/gap.md`). Never a call-site class, a wrapper that re-adds a
-look, a local copy of a stack component, or a host element carrying tokens.
+A shape no component owns, or a look its props cannot express, is a gap in stack: leave that part
+out, compose the rest, and file it by the gap recipe (`node_modules/@fcalell/cli/guide/gap.md`).
+Never a call-site class, a wrapper that re-adds a look, a local copy of a stack component, or a
+host element carrying tokens.
 
 ## Done
 

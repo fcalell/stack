@@ -2,11 +2,10 @@ import { cn } from "@fcalell/ui-core/cn";
 import type { MenuItem } from "@fcalell/ui-core/descriptors";
 import { SHELL_COLUMN } from "@fcalell/ui-core/variants";
 import { type ReactNode, useEffect, useRef, useState } from "react";
-import { List } from "../../components/list/index.tsx";
 import { Place } from "../../components/place/index.tsx";
 import { PortalContainer } from "../../lib/portal.ts";
 import type { ShowcaseFrame } from "../cells.ts";
-import { StandInRows } from "./layout-context.tsx";
+import { StandInList } from "./layout-context.tsx";
 
 const act = () => {};
 export const ACTIONS = [
@@ -72,9 +71,7 @@ function Deploys(props: { loading?: boolean }) {
 				loading: props.loading,
 			}}
 		>
-			<List>
-				<StandInRows ground="list" />
-			</List>
+			<StandInList />
 		</Place>
 	);
 }
@@ -101,9 +98,7 @@ export function drawPlace(frame: ShowcaseFrame) {
 		return (
 			<Column>
 				<Place title="Logs" actions={SEARCH} bleed>
-					<List>
-						<StandInRows ground="list" />
-					</List>
+					<StandInList />
 				</Place>
 			</Column>
 		);
