@@ -1,6 +1,6 @@
 # Render, measure and commit smells
 
-2026-10-04. An audit of every react-ui and native-ui component, by six reviewers, for code that works only by accident of render, measure or commit timing (the smell behind native-ui SheetBase in 003-35 and 003-38). Feeds epic 005 (not yet filed); drains as its stories land.
+2026-10-04. An audit of every react-ui and native-ui component, by six reviewers, for code that works only by accident of render, measure or commit timing (the smell behind native-ui SheetBase in 003-35 and 003-38). Feeds epic 005 (`.helm/board/epics/005-render-smells/`); drains as its stories land.
 
 ## Verdict
 

@@ -1,0 +1,28 @@
+---
+id: 005-10
+status: backlog
+sessions: {}
+---
+# ui-core, react-ui, native-ui: a cell edit starts, cancels and ends by event, not by frame
+
+## Goal
+Escape in an edit puts the value back through the parent (`moment.cancel`), then blurs a frame
+later so `leave` sees the restored value: phone `components/input/index.tsx:165-171`, web
+`table/index.tsx:473-476`. `cancel` leaves `atFocus` set (`packages/ui-core/src/commit.ts:35-37`),
+so a parent slower than a frame commits the stale typed value. The web Table also focuses a new
+edit's input a frame after start (`:381-386`), and on `done()` waits two frames then reads
+`document.activeElement` to guess whether the Picker released focus (`:415-429`). The `opened`
+counter (`:380`, read per cell `:535`) carries "open now" as state, re-rendering the grid per edit,
+and the web Picker turns it into `open` through an effect (`picker/base.tsx:267-273`), painting a
+frame with the list closed.
+
+## Approach
+`cancel` ends the moment: it clears `atFocus`, so a following `leave` commits nothing, and both
+platforms blur at once. The edit control focuses itself on mount; Escape, Enter and the Picker's
+close end the edit and refocus the cell in their own handlers. The editing cell's Picker mounts
+open, so no counter crosses the grid. No `requestAnimationFrame` stays in the edit path.
+
+## Acceptance criteria
+- [ ] (test) `commitMoment`: `cancel` then `leave` with the typed value commits nothing.
+- [ ] (live) web, members' table at 1440: Escape restores the value and refocuses the cell under 6x CPU throttle; a role cell's list is open in the edit's first frame.
+- [ ] (live) phone, on the harness: Escape in a cell edit commits nothing.

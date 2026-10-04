@@ -1,0 +1,31 @@
+---
+id: 005-02
+status: backlog
+sessions: {}
+---
+# react-ui, native-ui: a Place knows its Split's record and Details before first paint
+
+## Goal
+`Split` pushes facts into its Place from passive effects: web `lend`, `recordOpen` and
+`besideOpen` (`components/split/index.tsx:86-100`, into `place/index.tsx:162-165`); phone `lend`,
+`besideOpen` and `standAlone` (`split/index.tsx:63-81`). A deep link to a record paints the
+list's Toolbar and a head with no back or Details act, then the head jumps; every open and close
+repeats it. On the phone, the list and record `<Scroll>`s (`split/index.tsx:88-120`) share one
+unkeyed slot, so the list's offset carries into the record; and `open` (`:53`) latches, so
+Details pops open by itself on the next record.
+
+## Approach
+Decided by fcalell (2026-10-04): a frame learns what its children need up front, through props
+or slots, never from a layout effect or a post-paint state push; a registration that must stay
+(the parent cannot know a child's kind statically) is read in render from a host object.
+
+- **Web**: Place owns the Details handle (`Dialog.createHandle`) and hands it down; Split marks
+  itself `data-record` and `data-pane`; Place always renders the back and Details acts and shows
+  them, and hides the Toolbar, with `group-has-[…]/page` variants. `LendAct`, `RecordOpen`,
+  `RecordShown` and the effects go.
+- **Phone**: Place reads the record and pane in render from a host object. Each region's
+  `<Scroll>` has its own key; the Details state resets with the record it belongs to.
+
+## Acceptance criteria
+- [ ] (live) web, a deep link to a places record at 375: the first frame has the back and Details acts and no list Toolbar.
+- [ ] (live) phone, on the harness: a deep-linked record paints its final head first; a record opens at its top after a scrolled list; Details stays closed on the next record.

@@ -1,0 +1,27 @@
+---
+id: 005-22
+status: backlog
+sessions: {}
+---
+# react-ui, native-ui: a List's rows read the route once and keep their keys
+
+## Goal
+- Web `ListRow` and `FileRow` each subscribe to the location through `useRoute`, one
+  `useSyncExternalStore` and `popstate` listener per row (`lib/navigate.ts:6-18`;
+  `components/list-row/index.tsx:123`, `file-row/index.tsx:142`), only to compute `current`.
+- Web `List` builds each row's meta, status, chip, more and `onOpen` inline
+  (`list/index.tsx:247-257`, `:280-288`), so a List re-render re-renders every row and no row can
+  be memoised.
+- Phone `Group` keys its row wrappers by index (`group/index.tsx:99`) over
+  `Children.toArray`, which already gives stable keys; a conditional row shifts every later
+  row's state onto the wrong element. A lint suppression claims rows never reorder.
+
+## Approach
+The List reads the route once and passes `current` to each row as a boolean. Row props are
+built from stable per-item values, and `ListRow` and `FileRow` are memoised on primitives. The
+Group keys each wrapper by its child's own key; the index stays for skeleton rows only, and the
+suppression goes.
+
+## Acceptance criteria
+- [ ] (live) web, settings' devices at 1440: selecting a row re-renders only the rows whose `current` changed (React profiler), with one location listener in the page.
+- [ ] (live) phone, on the harness: a Group with a conditional row keeps a later Switch's state when the row appears.
