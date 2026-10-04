@@ -3,7 +3,6 @@ import {
 	factShape,
 	listBusy,
 	listState,
-	listWaits,
 	retryOf,
 } from "@fcalell/ui-core/list-state";
 import {
@@ -20,7 +19,7 @@ import { Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { LoadingContext } from "../../lib/loading";
-import { useSectionWait } from "../../lib/section";
+import { SectionContext } from "../../lib/section";
 import { useWords } from "../../lib/words";
 import { Chip } from "../chip";
 import { EmptyStateBase } from "../empty-state/base";
@@ -189,7 +188,7 @@ export function Comparison<T>(props: ComparisonProps<T>) {
 		inSection: false,
 		hasEmpty: props.empty !== undefined,
 	};
-	const input = { ...base, inSection: useSectionWait(listWaits(base)) };
+	const input = { ...base, inSection: useContext(SectionContext) };
 	const state = listState(input);
 	const { columns, row } = props;
 	if (state === "missing") return <Missing />;

@@ -54,7 +54,7 @@ export function EmptyStateBase(props: {
 }) {
 	// In a Section it stands framed; in a Group the card is its frame.
 	const inGroup = use(GroundContext) === "group";
-	const section = use(SectionContext) !== undefined;
+	const section = use(SectionContext);
 	const framed = inGroup || section;
 	const page = use(PageTitle) !== undefined;
 	const level = use(HeadingContext);

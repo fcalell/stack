@@ -22,7 +22,6 @@ import { cn } from "../../lib/cn";
 import { GroundContext } from "../../lib/ground";
 import { between, GroupContext, type GroupHost } from "../../lib/group";
 import { LoadingContext } from "../../lib/loading";
-import { useSectionRows } from "../../lib/section";
 
 const BOX = "overflow-hidden";
 // A waiting setting row stands in the loaded DefinitionRow's boxes: the
@@ -57,7 +56,6 @@ export interface GroupProps extends Closed {
 // its own waiting rows, and skeleton setting rows stand in for static rows;
 // the group says it is busy only on its own `loading` or a busy List.
 export function Group({ loading, children }: GroupProps) {
-	useSectionRows();
 	const inherited = useContext(LoadingContext);
 	const waiting = loading ?? inherited;
 	// A waiting body draws a List's own waiting rows when one (however deep)

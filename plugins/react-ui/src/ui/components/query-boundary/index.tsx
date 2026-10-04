@@ -1,7 +1,6 @@
 import { boundaryState } from "@fcalell/ui-core/list-state";
 import type { ReactNode } from "react";
 import type { Closed } from "../../lib/closed.ts";
-import { useSectionWait } from "../../lib/section.ts";
 import { useWords } from "../../lib/words.tsx";
 import { EmptyStateBase } from "../empty-state/base.tsx";
 import { Missing } from "../empty-state/missing.tsx";
@@ -58,7 +57,6 @@ export function QueryBoundary<Q extends Queries>({
 		Array.isArray(query) ? query : [query]
 	) as readonly AnyQuery[];
 	const pending = queries.some((entry) => entry.isPending);
-	useSectionWait(pending);
 	if (pending) return loading;
 	const state = boundaryState(queries);
 	if (state === "missing") return <Missing />;

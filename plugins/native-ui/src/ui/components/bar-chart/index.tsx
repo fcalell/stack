@@ -1,10 +1,5 @@
 import { formatterFor } from "@fcalell/ui-core/format";
-import {
-	listBusy,
-	listState,
-	listWaits,
-	retryOf,
-} from "@fcalell/ui-core/list-state";
+import { listBusy, listState, retryOf } from "@fcalell/ui-core/list-state";
 import { CHART_SERIES } from "@fcalell/ui-core/tokens";
 import {
 	CHART,
@@ -32,7 +27,7 @@ import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { compact } from "../../lib/compact";
 import { LoadingContext } from "../../lib/loading";
-import { useSectionWait } from "../../lib/section";
+import { SectionContext } from "../../lib/section";
 import { useWords } from "../../lib/words";
 import { EmptyStateBase } from "../empty-state/base";
 import { Missing } from "../empty-state/missing";
@@ -189,7 +184,7 @@ export function BarChart<T>(props: BarChartProps<T>) {
 		inSection: false,
 		hasEmpty: props.empty !== undefined,
 	};
-	const input = { ...base, inSection: useSectionWait(listWaits(base)) };
+	const input = { ...base, inSection: useContext(SectionContext) };
 	const state = listState(input);
 	if (state === "pending")
 		return <Loading keys={keys} busy={listBusy(input)} />;

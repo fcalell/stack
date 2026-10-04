@@ -449,9 +449,8 @@ a tick with no animation, never jumped to full.
   skeleton rows (the touch List's waiting rows); failed, the failed EmptyState with `sentence`
   and Retry, and missing, the missing form, each under the header on the grid and alone on
   touch; empty, `empty`; then its rows. It
-  registers with the Section around it once (waiter, count, rows) and mounts its touch List under
-  an empty `SectionContext`, since on the web both forms are mounted and the List would count the
-  same rows again.
+  counts once in the Section around it, which reads the Table's own props, and mounts its touch
+  List with no `SectionContext`, since on the web both forms are mounted.
   A row with `href` is its leading cell's link (`tabindex -1`, so a new tab opens it); a row's
   `locked` names the columns it draws read only (an owner's role). A chip
   column's pick draws its value and options as the column's chips (the Picker's internal base), and
@@ -607,8 +606,8 @@ a tick with no animation, never jumped to full.
   known before the data, so its waiting form is the real head over four facts of bars: a value bar
   per column, and a chip's bar beside the label's when `row` declares `chips` (`factShape` in
   `./list-state`), each bar a share of its line's short-label lane (`SKELETON_LANE`), so it
-  stands at a typical label's or value's length rather than the column's. It registers its wait with the Section around and reports no count: its facts
-  are one record's, not items the Section counts.
+  stands at a typical label's or value's length rather than the column's. The Section around reads its wait and no count: its facts are one
+  record's, not items the Section counts.
 - An `OptionList` is a collection with a static form. A static set takes `options` (an `Option`
   is already the projected row, waiting on `loading`); a set from a query takes `query`,
   `sentence`, `empty` and an `option` map over the check row's slots (`value`, `label`,
@@ -617,7 +616,7 @@ a tick with no animation, never jumped to full.
   waiting, four check rows, two-line only when `description` is declared (a static set: when an
   option is described) under a group label's bar only when `group` is; failed, one row holding
   `sentence` and a secondary Retry at the bar fit; empty, one row holding the `empty` sentence.
-  It registers with no Section. Its projection and waiting shape (`optionsOf`, `optionShape`,
+  No Section reads it. Its projection and waiting shape (`optionsOf`, `optionShape`,
   `optionsShape`) are in `./list-state`.
 - An `OptionList`'s `value` picks its form: a set is several choices, check rows each toggling
   the set; one value or null is one choice, radio rows read aloud as a radiogroup (the web's
@@ -639,22 +638,28 @@ a tick with no animation, never jumped to full.
   the EmptyState absolutely over the boxes at `opacity-0`), so the Section does not move, and the
   EmptyState's frame fills that box with its content centred in it (`EmptyStateBase`'s internal
   `fill`), so nothing floats above or below it.
-- A pending collection or `QueryBoundary` registers with the Section around it through
-  `SectionContext`, released when it settles or unmounts; the Section stays busy, its count
-  waiting, until every waiter settles. A List also reports its item count there once its items
-  answer, and a Section with no `count` of its own shows its lists' total once every list has
-  answered (a failed or missing one gives none); an empty collection shows no count beside its empty state. A `Group` or a `List` anywhere in the body registers as rows
-  through the same context; a loading Section renders its body once, and when nothing registered
-  rows its layout effect swaps the body for field skeletons in a synchronous re-render before
-  paint, one skeleton per `FormField` that registered the same way (three when none did), so
-  the swap is never painted; a registration or a release while loading checks again, so the only
-  Group or List unmounting leaves fields. A loading Section's field children mount and unmount
-  once before paint, so their passive effects run: nothing may rely on them staying unmounted.
-  Every registration runs in a layout effect, so head and body land in one paint.
-  A compound body sits in a `QueryBoundary`, which requires its `loading`. A `QueryBoundary` over
-  a List in a Section draws no count placeholder while pending, for the List is not mounted to
-  report one (unless the loading form is itself a List); a List taking its own query reports from
-  its first render.
+- A Section reads its body's collections off its own children in render, so nothing registers and
+  the head (its count, its busy state) and the loading body land in the first paint with no
+  second commit. By the depth rule, a Section's collections stand as its direct children (a
+  fragment is transparent), inside a direct `Group`, or as a direct `QueryBoundary`'s props (its
+  queries, and its loading form while it waits). The platform walker (`sectionPartsOf` in each
+  plugin's `lib/section.ts`, handed the component types) reads each List and Table (it waits,
+  counts and is a body of rows), each BarChart and Comparison (it waits), each QueryBoundary,
+  Group and FormField; ui-core decides from those parts and the Section's own props
+  (`sectionState` in `./list-state`): busy while the Section loads or a part waits; its own
+  `count`, else its lists' total once every list has answered (a failed or missing one gives
+  none, an empty collection none beside its empty state); and, while loading with no body of
+  rows, one skeleton field per `FormField`, three when none. Outside the rule nothing is read: a
+  collection inside an app's own component (a `ui/` wrapper around a List) draws itself but adds
+  no count and no busy state to the head, and the Lists inside a QueryBoundary's body are not
+  counted (its queries still make the head busy). The body stays mounted in every form, hidden
+  while skeleton fields stand in, so what it holds (a field's typed text, an open picker) outlives
+  a refetch. `SectionContext` says only that a Section stands around (an EmptyState's framed
+  form, a collection's busy state left to the head). Rejected: registration (a layout effect per
+  collection, a second commit before paint) and a registration the head reads in render from a
+  host object (the head renders before the body, so it would always be a render pass stale).
+  `folded` is the initial fold: the Section holds its fold from there and reads no later change.
+  A compound body sits in a `QueryBoundary`, which requires its `loading`.
 - `Group` is composition: its children are static rows. A set of rows from data is a `List`
   placed in the Group, which registers with it through `GroupContext` (however deep) and draws
   on the card: its rows and waiting rows at the group ground (`listGround`), the Group's hairline

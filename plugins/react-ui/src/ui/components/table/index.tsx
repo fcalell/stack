@@ -8,9 +8,7 @@ import type {
 	TableRowSlots,
 } from "@fcalell/ui-core/descriptors";
 import {
-	listCount,
 	listState,
-	listWaits,
 	retryOf,
 	type TableRecord,
 	tableRecords,
@@ -48,12 +46,7 @@ import { PageTitle } from "../../lib/frame.ts";
 import { LoadingContext } from "../../lib/loading.ts";
 import { useTouch } from "../../lib/media.ts";
 import { navigate } from "../../lib/navigate.ts";
-import {
-	SectionContext,
-	useSectionCount,
-	useSectionRows,
-	useSectionWait,
-} from "../../lib/section.ts";
+import { SectionContext } from "../../lib/section.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Checkbox } from "../checkbox/index.tsx";
 import { Chip } from "../chip/index.tsx";
@@ -304,9 +297,7 @@ export function Table<T>(props: TableProps<T>) {
 		inSection: false,
 		hasEmpty: empty !== undefined,
 	};
-	const input = { ...base, inSection: useSectionWait(listWaits(base)) };
-	useSectionCount(listCount(input));
-	useSectionRows();
+	const input = { ...base, inSection: use(SectionContext) };
 	const state = listState(input);
 	const waiting = state === "pending";
 	const items = (props.query ? props.query.data : props.items) ?? [];
@@ -344,7 +335,7 @@ export function Table<T>(props: TableProps<T>) {
 				{slot ?? (
 					// The Table reports to the Section around it once; its touch
 					// List is its own part, not a list of the Section.
-					<SectionContext value={undefined}>
+					<SectionContext value={false}>
 						<Phone
 							columns={columns}
 							rows={records}

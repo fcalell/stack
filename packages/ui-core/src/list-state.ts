@@ -218,6 +218,64 @@ export function sectionCount(
 	return total === 0 ? undefined : total;
 }
 
+// What a Section reads off its body in render, by the depth rule: the
+// collections standing as its direct children, inside a direct Group, or as
+// a direct QueryBoundary's props. Nothing deeper registers or is read.
+export interface SectionParts {
+	// Each List or Table: it waits, it counts, and it is a body of rows.
+	lists: readonly Pick<ListInput, "query" | "items" | "loading">[];
+	// Each other waiter: a QueryBoundary's queries, a BarChart's or a
+	// Comparison's own items, whether they wait.
+	waits: readonly boolean[];
+	// Each Group, a body of rows with or without a List of its own.
+	groups: number;
+	// Each FormField.
+	fields: number;
+}
+
+export interface SectionState {
+	// The head is busy: the Section loads or any part of its body waits.
+	busy: boolean;
+	// The head has a count to show or to wait as.
+	counted: boolean;
+	// The count shown (`sectionCount`).
+	count: number | undefined;
+	// How many skeleton fields stand in for the body.
+	fields: number;
+}
+
+// A loading body of fields waits as one skeleton per field, or as three
+// when it holds none (content other than fields).
+const FALLBACK_FIELDS = 3;
+
+// The Section's head and loading body, decided from its own props and the
+// parts its body holds: busy while it loads or a part waits; its own count,
+// else its lists' total once each answers; and, while it loads with no body
+// of rows (which waits as its own skeleton rows), one skeleton field per
+// field, or three.
+export function sectionState(
+	parts: SectionParts,
+	own: { count?: number; loading?: boolean },
+): SectionState {
+	const loading = own.loading === true;
+	const inputs = parts.lists.map((list) => ({
+		...list,
+		sectionLoading: loading,
+		inSection: true,
+		hasEmpty: false,
+	}));
+	const rows = parts.lists.length + parts.groups;
+	return {
+		busy:
+			loading ||
+			inputs.some((input) => listWaits(input)) ||
+			parts.waits.some(Boolean),
+		counted: own.count !== undefined || parts.lists.length > 0,
+		count: sectionCount(own.count, inputs.map(listCount)),
+		fields: !loading || rows > 0 ? 0 : parts.fields || FALLBACK_FIELDS,
+	};
+}
+
 // The slots a waiting OptionList's check rows draw, known before any option:
 // a description bar under each label, and a group label's bar over the rows.
 export interface OptionShape {

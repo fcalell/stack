@@ -3,7 +3,10 @@ import { FormField } from "../../components/form-field/index.tsx";
 import { Group } from "../../components/group/index.tsx";
 import { Input } from "../../components/input/index.tsx";
 import { List } from "../../components/list/index.tsx";
-import { QueryBoundary } from "../../components/query-boundary/index.tsx";
+import {
+	QueryBoundary,
+	type QueryLike,
+} from "../../components/query-boundary/index.tsx";
 import { Section } from "../../components/section/index.tsx";
 import { TouchedContext } from "../../lib/touched.ts";
 import type { ShowcaseFrame } from "../cells.ts";
@@ -23,12 +26,9 @@ const TOUCHED = { touched: true, touch: act };
 const DESCRIPTION = "People who can open this workspace.";
 // An app's own component around a List and a settled query a QueryBoundary
 // reads: in a loading Section each waits as rows, however deep its List.
-function Starred() {
-	return <List items={STAND_INS} row={STAND_IN_ROW} />;
-}
-const ANSWERED = {
-	data: STAND_INS,
-	isPending: false,
+const PENDING: QueryLike<typeof STAND_INS> = {
+	data: undefined,
+	isPending: true,
 	isError: false,
 	refetch: act,
 };
@@ -51,8 +51,8 @@ function Members(props: { blocked?: boolean }) {
 // By state: the pointer and focus states force the fold toggle of a folded
 // section; `disabled` draws the blocked act before it is pressed and in a
 // touched form with its reason shown; `loading` the waiting count over a
-// Group's and a List's own skeleton rows (a List inside an app's component or
-// under a QueryBoundary too), and the section's skeleton fields standing in
+// Group's and a List's own skeleton rows (a List as a waiting QueryBoundary's
+// loading form too), and the section's skeleton fields standing in
 // for a body of fields in a Form. At rest the cell picks the form: the icon act a
 // column's head, `SECTION.in.form` a section of fields in a Form, the chevron an open and a folded section over a List, the
 // destructive act a section over a List whose act removes it, the skeleton cells the loading form, every other cell the section over a Group.
@@ -97,12 +97,9 @@ export function drawSection(frame: ShowcaseFrame) {
 				<Section title="In progress" folded={false} act={add} loading>
 					<List items={STAND_INS} row={STAND_IN_ROW} />
 				</Section>
-				<Section title="Starred" loading>
-					<Starred />
-				</Section>
 				<Section title="Recent" loading>
 					<QueryBoundary
-						query={ANSWERED}
+						query={PENDING}
 						sentence="Recent members did not load."
 						loading={<List items={[]} loading row={STAND_IN_ROW} />}
 					>

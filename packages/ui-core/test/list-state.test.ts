@@ -17,6 +17,7 @@ import {
 	retryOf,
 	rowShape,
 	sectionCount,
+	sectionState,
 	tableRecords,
 } from "../src/list-state.ts";
 
@@ -219,6 +220,47 @@ test("a Section shows its own count, else its lists' total once every list has a
 	assert.equal(sectionCount(undefined, [0]), undefined);
 	assert.equal(sectionCount(undefined, [0, 0]), undefined);
 	assert.equal(sectionCount(0, [3]), undefined);
+});
+
+test("a Section's head and loading body follow from its own props and the parts its body holds", () => {
+	const none = { lists: [], waits: [], groups: 0, fields: 0 };
+	const answered = { isPending: false, isError: false, data: [1, 2] };
+	const waiting = { isPending: true, isError: false, data: undefined };
+	// Its lists' total once each answers, none while one waits.
+	assert.deepEqual(
+		sectionState({ ...none, lists: [{ query: answered }, { items: [1] }] }, {}),
+		{ busy: false, counted: true, count: 3, fields: 0 },
+	);
+	assert.deepEqual(
+		sectionState(
+			{ ...none, lists: [{ query: answered }, { query: waiting }] },
+			{},
+		),
+		{ busy: true, counted: true, count: undefined, fields: 0 },
+	);
+	// Its own count wins; another waiter makes the head busy.
+	assert.deepEqual(sectionState({ ...none, waits: [true] }, { count: 11 }), {
+		busy: true,
+		counted: true,
+		count: 11,
+		fields: 0,
+	});
+	// Loading: a body of rows waits as its own rows, fields as one skeleton
+	// each, any other body as three; a loading Section's lists count none yet.
+	assert.equal(
+		sectionState({ ...none, groups: 1 }, { loading: true }).fields,
+		0,
+	);
+	assert.equal(
+		sectionState({ ...none, fields: 2 }, { loading: true }).fields,
+		2,
+	);
+	assert.equal(sectionState(none, { loading: true }).fields, 3);
+	assert.equal(sectionState({ ...none, fields: 2 }, {}).fields, 0);
+	assert.equal(
+		sectionState({ ...none, lists: [{ items: [1] }] }, { loading: true }).count,
+		undefined,
+	);
 });
 
 test("a List in a Group draws group rows; the same List outside draws list rows", () => {

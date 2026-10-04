@@ -55,7 +55,10 @@ one function per slot; declare a slot only if every item fills it. Pending, it w
 slots; failed, it shows `sentence` and Retry; empty, `empty`, with the act that fills it. Rows share one `leading` kind
 (`avatar`, `icon` or `status`) or none. The first meta part names the item; it and the status
 stay whole as the later parts, then the chip, truncate. A file row's `chip` says why it is listed
-or what its change is; it stays whole and the path yields to it. A Section counts them. A `Group` holds
+or what its change is; it stays whole and the path yields to it. A Section counts them and waits with them when
+they stand as its direct children, inside a direct `Group`, or as a direct `QueryBoundary`'s
+query; a collection inside the app's own component, or inside a `QueryBoundary`'s body, draws
+itself but adds no count and no busy state to the Section's head. A `Group` holds
 static rows; rows from data in a card are a `List` placed in the `Group`, drawing its states
 on the card, never a `.map` of `ListRow`s or `Meter`s.
 

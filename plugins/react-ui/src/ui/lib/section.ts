@@ -1,53 +1,83 @@
-import { createContext, use, useId, useLayoutEffect } from "react";
+import type { ListInput, SectionParts } from "@fcalell/ui-core/list-state";
+import {
+	Children,
+	createContext,
+	Fragment,
+	isValidElement,
+	type ReactNode,
+} from "react";
 
-// What a `Section` hands its body. `wait` registers a waiter (a
-// `QueryBoundary` or a `List` whose items are pending) and returns its
-// release: the Section is in its loading form (busy, its count waiting)
-// while any waiter is registered. `count` registers a list's item count
-// (none while its items wait) and returns its release: a Section with no
-// `count` of its own counts its lists' items. `rows` registers a body of
-// rows (a `Group` or a `List`, however deep): a loading Section with none
-// waits as fields, one skeleton per `FormField` that `field` registered.
-// Each registers in a layout effect, so the Section's head and body land in
-// one paint. Its presence is what draws an `EmptyState` in its framed form.
-export interface SectionHost {
-	wait: () => () => void;
-	count: (id: string, value: number | undefined) => () => void;
-	rows: () => () => void;
-	field: () => () => void;
+// Whether a `Section` stands around: an `EmptyState` in it draws its framed
+// form, and a collection in it hands its busy state to the Section's head.
+// The Section reads its collections off its own children in render, so
+// nothing registers.
+export const SectionContext = createContext(false);
+
+// The components a Section reads its body by, passed in so this reading
+// stays free of the components it names.
+export interface SectionKinds {
+	// Each counts and is a body of rows (a List, a Table).
+	lists: readonly unknown[];
+	// Each waits alone (a BarChart, a Comparison).
+	waits: readonly unknown[];
+	boundary: unknown;
+	group: unknown;
+	field: unknown;
 }
 
-export const SectionContext = createContext<SectionHost | undefined>(undefined);
-
-// Registers with the Section around while `pending`, released when it
-// settles or unmounts; returns whether a Section is around.
-export function useSectionWait(pending: boolean): boolean {
-	const host = use(SectionContext);
-	useLayoutEffect(() => {
-		if (!pending || !host) return;
-		return host.wait();
-	}, [pending, host]);
-	return host !== undefined;
+// What a collection's element carries that its Section reads.
+interface CollectionProps {
+	query?: ListInput["query"];
+	items?: readonly unknown[];
+	loading?: boolean;
 }
 
-// Reports a list's item count to the Section around, released on unmount.
-export function useSectionCount(value: number | undefined): void {
-	const host = use(SectionContext);
-	const id = useId();
-	useLayoutEffect(() => {
-		if (!host) return;
-		return host.count(id, value);
-	}, [host, id, value]);
+// What a QueryBoundary's element carries.
+interface BoundaryProps {
+	query: { isPending: boolean } | readonly { isPending: boolean }[];
+	loading?: ReactNode;
 }
 
-// Tells the Section around that its body holds a field, released on unmount.
-export function useSectionField(): void {
-	const host = use(SectionContext);
-	useLayoutEffect(() => host?.field(), [host]);
-}
-
-// Tells the Section around that its body holds rows, released on unmount.
-export function useSectionRows(): void {
-	const host = use(SectionContext);
-	useLayoutEffect(() => host?.rows(), [host]);
+// The parts of a Section's body by the depth rule: the collections standing
+// as its direct children (a fragment is transparent), inside a direct Group,
+// or as a direct QueryBoundary's props, whose loading form stands in its
+// place while it waits. Anything deeper (inside an app's own component, a
+// QueryBoundary's body) is not read.
+export function sectionPartsOf(
+	children: ReactNode,
+	kinds: SectionKinds,
+): SectionParts {
+	const lists: Pick<ListInput, "query" | "items" | "loading">[] = [];
+	const waits: boolean[] = [];
+	let groups = 0;
+	let fields = 0;
+	const walk = (node: ReactNode, inGroup: boolean) => {
+		for (const child of Children.toArray(node)) {
+			if (!isValidElement<{ children?: ReactNode }>(child)) continue;
+			const { type, props } = child;
+			if (type === Fragment) walk(props.children, inGroup);
+			else if (kinds.lists.includes(type)) {
+				// A List's or a Table's props carry their items, whatever the item type.
+				const { query, items, loading } = props as CollectionProps;
+				lists.push({ query, items, loading });
+			} else if (kinds.waits.includes(type)) {
+				// A BarChart's or a Comparison's props carry their items the same way.
+				const { query, loading } = props as CollectionProps;
+				waits.push(query?.isPending === true || loading === true);
+			} else if (type === kinds.boundary) {
+				// A QueryBoundary's props carry its query or its tuple of queries.
+				const boundary = props as BoundaryProps;
+				const queries =
+					"isPending" in boundary.query ? [boundary.query] : boundary.query;
+				const pending = queries.some((query) => query.isPending);
+				waits.push(pending);
+				if (pending) walk(boundary.loading, inGroup);
+			} else if (type === kinds.group && !inGroup) {
+				groups += 1;
+				walk(props.children, true);
+			} else if (type === kinds.field) fields += 1;
+		}
+	};
+	walk(children, false);
+	return { lists, waits, groups, fields };
 }

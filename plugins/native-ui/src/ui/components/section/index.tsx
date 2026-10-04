@@ -1,5 +1,5 @@
 import type { Act, IconAct, Part } from "@fcalell/ui-core/descriptors";
-import { sectionCount } from "@fcalell/ui-core/list-state";
+import { sectionState } from "@fcalell/ui-core/list-state";
 import {
 	lineBox,
 	SECTION_HEAD,
@@ -11,14 +11,7 @@ import {
 	skeletonRow,
 	text,
 } from "@fcalell/ui-core/variants";
-import {
-	type ReactNode,
-	useContext,
-	useLayoutEffect,
-	useMemo,
-	useRef,
-	useState,
-} from "react";
+import { type ReactNode, useContext, useState } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
@@ -27,11 +20,22 @@ import { ThreadRoom } from "../../lib/frame";
 import { Ink } from "../../lib/ink";
 import { LoadingContext } from "../../lib/loading";
 import { partText } from "../../lib/parts";
-import { SectionContext, type SectionHost } from "../../lib/section";
+import {
+	SectionContext,
+	type SectionKinds,
+	sectionPartsOf,
+} from "../../lib/section";
+import { BarChart } from "../bar-chart";
 import { Button } from "../button";
+import { Comparison } from "../comparison";
 import { Count } from "../count";
+import { FormField } from "../form-field";
+import { Group } from "../group";
 import { Icon } from "../icon";
 import { IconButton } from "../icon-button";
+import { List } from "../list";
+import { QueryBoundary } from "../query-boundary";
+import { Table } from "../table";
 import { Text } from "../text";
 
 const BOX = "min-w-0";
@@ -56,14 +60,18 @@ const LABEL_WAIT = "w-1/4";
 const LABEL_LINE = "flex-row items-center";
 const STRUT = "\u200B";
 const BODY_FOLDED = "hidden";
-// A loading body of fields waits as one skeleton per field it registered, or
-// as three when nothing registered (content other than fields).
-const FALLBACK_FIELDS = 3;
+// The body's own wrapper stays mounted, hidden, while skeleton fields stand
+// in for it.
+const BODY_WAITS = "hidden";
 
-// How many field skeletons a loading body waits as: none when it holds rows.
-function waitAs(rows: number, fields: number): number {
-	return rows === 0 ? fields || FALLBACK_FIELDS : 0;
-}
+// The components the Section reads its body by (`sectionPartsOf`).
+const KINDS: SectionKinds = {
+	lists: [List, Table],
+	waits: [BarChart, Comparison],
+	boundary: QueryBoundary,
+	group: Group,
+	field: FormField,
+};
 
 export interface SectionProps extends Closed {
 	title: Part;
@@ -71,6 +79,8 @@ export interface SectionProps extends Closed {
 	// counts its items here.
 	count?: number;
 	description?: string;
+	// Set, the title folds the body, and this is its initial fold: `true`
+	// starts folded, `false` open; later changes are not read.
 	folded?: boolean;
 	// Called as a foldable section opens or closes, with whether it is now
 	// open.
@@ -98,71 +108,19 @@ export function Section({
 	children,
 }: SectionProps) {
 	const within = useContext(FormContext) ? "form" : "page";
+	// `folded` is the initial fold: the section holds its fold from there.
 	const [open, setOpen] = useState(folded !== true);
-	// A QueryBoundary or a List's query in the body waits through the
-	// Section: it draws its rows waiting, the Section its busy head until
-	// every waiter settles. A List in it reports its item count, the
-	// Section's count unless it has its own.
-	const [waiters, setWaiters] = useState(0);
-	const [listed, setListed] = useState<ReadonlyMap<string, number | undefined>>(
-		() => new Map(),
-	);
-	// A loading body draws its own rows when a Group or a List in it (however
-	// deep) registers; with none, the body waits as fields. The body renders
-	// once to learn, and the swap lands in a synchronous re-render before
-	// paint, so the swap is never painted; a registration or a release while
-	// loading checks again (the only List unmounting leaves fields).
-	const rowBodies = useRef(0);
-	const loadingNow = useRef(loading === true);
-	const fieldBodies = useRef(0);
-	// How many field skeletons the body waits as; none while it draws itself.
-	const [fields, setFields] = useState(0);
-	const parts = useMemo<SectionHost>(
-		() => ({
-			wait: () => {
-				setWaiters((waiting) => waiting + 1);
-				return () => setWaiters((waiting) => waiting - 1);
-			},
-			count: (id, value) => {
-				setListed((counts) => new Map(counts).set(id, value));
-				return () =>
-					setListed((counts) => {
-						const next = new Map(counts);
-						next.delete(id);
-						return next;
-					});
-			},
-			rows: () => {
-				const recheck = () => {
-					if (loadingNow.current)
-						setFields(waitAs(rowBodies.current, fieldBodies.current));
-				};
-				rowBodies.current += 1;
-				recheck();
-				return () => {
-					rowBodies.current -= 1;
-					recheck();
-				};
-			},
-			field: () => {
-				fieldBodies.current += 1;
-				return () => {
-					fieldBodies.current -= 1;
-				};
-			},
-		}),
-		[],
-	);
-	useLayoutEffect(() => {
-		loadingNow.current = loading === true;
-		setFields(
-			loading === true ? waitAs(rowBodies.current, fieldBodies.current) : 0,
-		);
-	}, [loading]);
-	const busy = loading === true || waiters > 0;
-	const lists = [...listed.values()];
-	const counted = count !== undefined || lists.length > 0;
-	const shown = sectionCount(count, lists);
+	// The Section reads its body's collections off its children in render (by
+	// the depth rule, `sectionPartsOf`): a waiting one makes the head busy, a
+	// List or a Table counts there unless the Section has its own count, and a
+	// loading body with no rows waits as skeleton fields while it stays
+	// mounted, hidden, so what it holds (a field's text) outlives the wait.
+	const {
+		busy,
+		counted,
+		count: shown,
+		fields,
+	} = sectionState(sectionPartsOf(children, KINDS), { count, loading });
 	// A count waits with the body.
 	let tally: ReactNode = null;
 	if (counted && busy)
@@ -251,9 +209,11 @@ export function Section({
 			{/* A section without children draws no body. */}
 			{children === undefined || children === null ? null : (
 				<View className={cn(section({ in: within }), !open && BODY_FOLDED)}>
-					{loading && fields > 0 ? (
-						Array.from({ length: fields }, (_, index) => `field-${index}`).map(
-							(key) => (
+					{fields > 0
+						? Array.from(
+								{ length: fields },
+								(_, index) => `field-${index}`,
+							).map((key) => (
 								<View key={key} className={skeletonRow({ kind: "field" })}>
 									<View className={LABEL_LINE}>
 										<RNText className={lineBox({ role: "body" })}>
@@ -265,17 +225,19 @@ export function Section({
 									</View>
 									<View className={skeleton({ kind: "field" })} />
 								</View>
-							),
-						)
-					) : (
+							))
+						: null}
+					<View
+						className={cn(section({ in: within }), fields > 0 && BODY_WAITS)}
+					>
 						<LoadingContext.Provider value={loading === true}>
-							<SectionContext.Provider value={parts}>
+							<SectionContext.Provider value={true}>
 								<ThreadRoom.Provider value={false}>
 									{children}
 								</ThreadRoom.Provider>
 							</SectionContext.Provider>
 						</LoadingContext.Provider>
-					)}
+					</View>
 				</View>
 			)}
 		</View>

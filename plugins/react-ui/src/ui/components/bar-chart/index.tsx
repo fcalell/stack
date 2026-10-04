@@ -1,11 +1,6 @@
 import { cn } from "@fcalell/ui-core/cn";
 import { formatterFor } from "@fcalell/ui-core/format";
-import {
-	listBusy,
-	listState,
-	listWaits,
-	retryOf,
-} from "@fcalell/ui-core/list-state";
+import { listBusy, listState, retryOf } from "@fcalell/ui-core/list-state";
 import { CHART_SERIES } from "@fcalell/ui-core/tokens";
 import {
 	CHART,
@@ -30,7 +25,7 @@ import {
 import { type ReactNode, use } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { LoadingContext } from "../../lib/loading.ts";
-import { useSectionWait } from "../../lib/section.ts";
+import { SectionContext } from "../../lib/section.ts";
 import { useWords } from "../../lib/words.tsx";
 import { EmptyStateBase } from "../empty-state/base.tsx";
 import { Missing } from "../empty-state/missing.tsx";
@@ -168,7 +163,7 @@ export function BarChart<T>(props: BarChartProps<T>) {
 		inSection: false,
 		hasEmpty: props.empty !== undefined,
 	};
-	const input = { ...base, inSection: useSectionWait(listWaits(base)) };
+	const input = { ...base, inSection: use(SectionContext) };
 	const state = listState(input);
 	if (state === "pending")
 		return <Loading keys={keys} busy={listBusy(input)} />;

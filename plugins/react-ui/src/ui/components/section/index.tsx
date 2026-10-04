@@ -1,7 +1,7 @@
 import { Collapsible } from "@base-ui/react/collapsible";
 import { cn } from "@fcalell/ui-core/cn";
 import type { Act, IconAct, Part } from "@fcalell/ui-core/descriptors";
-import { sectionCount } from "@fcalell/ui-core/list-state";
+import { sectionState } from "@fcalell/ui-core/list-state";
 import {
 	lineBox,
 	SECTION_HEAD,
@@ -18,9 +18,7 @@ import {
 	use,
 	useEffect,
 	useId,
-	useLayoutEffect,
 	useMemo,
-	useRef,
 	useState,
 } from "react";
 import type { Closed } from "../../lib/closed.ts";
@@ -29,13 +27,24 @@ import { ThreadRoom } from "../../lib/frame.ts";
 import { DEEPER, HeadingContext } from "../../lib/heading.ts";
 import { LoadingContext } from "../../lib/loading.ts";
 import { ReasonHostContext } from "../../lib/reason.ts";
-import { SectionContext, type SectionHost } from "../../lib/section.ts";
+import {
+	SectionContext,
+	type SectionKinds,
+	sectionPartsOf,
+} from "../../lib/section.ts";
 import { useTouched } from "../../lib/touched.ts";
+import { BarChart } from "../bar-chart/index.tsx";
 import { Button } from "../button/index.tsx";
 import { Reason } from "../button/reason.tsx";
+import { Comparison } from "../comparison/index.tsx";
 import { Count } from "../count/index.tsx";
+import { FormField } from "../form-field/index.tsx";
+import { Group } from "../group/index.tsx";
 import { Icon } from "../icon/index.tsx";
 import { IconButton } from "../icon-button/index.tsx";
+import { List } from "../list/index.tsx";
+import { QueryBoundary } from "../query-boundary/index.tsx";
+import { Table } from "../table/index.tsx";
 import { Text } from "../text/index.tsx";
 
 const BOX = "flex flex-col min-w-0";
@@ -55,6 +64,10 @@ const TOGGLE =
 	"flex items-center grow min-w-0 -ms-inside text-start text-ink-meta hover:bg-wash-hover hover:text-ink-body active:bg-wash-press active:text-ink-body";
 const ACT_SLOT = "flex items-center shrink-0";
 const BODY = "flex flex-col";
+// The body's own wrapper: its children flow in the body's rhythm, and it
+// stays mounted, hidden, while skeleton fields stand in for it.
+const BODY_SHOWN = "contents";
+const BODY_WAITS = "hidden";
 // The waiting count stands at a one-figure pill's width: the pill's padding
 // round an unseen figure at the pill's type.
 const COUNT_WAIT = "inline-flex shrink-0 items-center px-inside";
@@ -64,14 +77,15 @@ const FIELD_WAIT = "flex flex-col";
 const LABEL_WAIT = "w-1/4";
 // The label's bar stands in the label's line box, at its line height.
 const LABEL_LINE = "flex items-center h-lh";
-// A loading body of fields waits as one skeleton per field it registered, or
-// as three when nothing registered (content other than fields).
-const FALLBACK_FIELDS = 3;
 
-// How many field skeletons a loading body waits as: none when it holds rows.
-function waitAs(rows: number, fields: number): number {
-	return rows === 0 ? fields || FALLBACK_FIELDS : 0;
-}
+// The components the Section reads its body by (`sectionPartsOf`).
+const KINDS: SectionKinds = {
+	lists: [List, Table],
+	waits: [BarChart, Comparison],
+	boundary: QueryBoundary,
+	group: Group,
+	field: FormField,
+};
 
 function partText(part: Part): string {
 	return typeof part === "string" ? part : `“${part.quoted}”`;
@@ -85,7 +99,7 @@ export interface SectionProps extends Closed {
 	count?: number;
 	/** A sentence under the title. */
 	description?: string;
-	/** Set, the title folds the body: `true` starts folded, `false` open. */
+	/** Set, the title folds the body, and this is its initial fold: `true` starts folded, `false` open; later changes are not read. */
 	folded?: boolean;
 	/** Called as a foldable section opens or closes, with whether it is now open. */
 	onToggle?: (open: boolean) => void;
@@ -118,73 +132,20 @@ export function Section({
 	const { touched } = useTouched();
 	const blocked =
 		act !== undefined && "blocked" in act ? act.blocked : undefined;
+	// `folded` is the initial fold: the section holds its fold from there.
 	const [open, setOpen] = useState(folded !== true);
 	const [pressed, setPressed] = useState(false);
-	// A QueryBoundary or a List's query in the body waits through the
-	// Section: it draws its rows waiting, the Section its busy head until
-	// every waiter settles.
-	// A List in it reports its item count, the Section's count unless it has
-	// its own.
-	const [waiters, setWaiters] = useState(0);
-	const [listed, setListed] = useState<ReadonlyMap<string, number | undefined>>(
-		() => new Map(),
-	);
-	// A loading body draws its own rows when a Group or a List in it (however
-	// deep) registers; with none, the body waits as fields. The body renders
-	// once to learn, and the swap lands in a synchronous re-render before
-	// paint, so the swap is never painted; a registration or a release while
-	// loading checks again (the only List unmounting leaves fields).
-	const rowBodies = useRef(0);
-	const loadingNow = useRef(loading === true);
-	const fieldBodies = useRef(0);
-	// How many field skeletons the body waits as; none while it draws itself.
-	const [fields, setFields] = useState(0);
-	const parts = useMemo<SectionHost>(
-		() => ({
-			wait: () => {
-				setWaiters((waiting) => waiting + 1);
-				return () => setWaiters((waiting) => waiting - 1);
-			},
-			count: (id, value) => {
-				setListed((counts) => new Map(counts).set(id, value));
-				return () =>
-					setListed((counts) => {
-						const next = new Map(counts);
-						next.delete(id);
-						return next;
-					});
-			},
-			rows: () => {
-				const recheck = () => {
-					if (loadingNow.current)
-						setFields(waitAs(rowBodies.current, fieldBodies.current));
-				};
-				rowBodies.current += 1;
-				recheck();
-				return () => {
-					rowBodies.current -= 1;
-					recheck();
-				};
-			},
-			field: () => {
-				fieldBodies.current += 1;
-				return () => {
-					fieldBodies.current -= 1;
-				};
-			},
-		}),
-		[],
-	);
-	useLayoutEffect(() => {
-		loadingNow.current = loading === true;
-		setFields(
-			loading === true ? waitAs(rowBodies.current, fieldBodies.current) : 0,
-		);
-	}, [loading]);
-	const busy = loading === true || waiters > 0;
-	const lists = [...listed.values()];
-	const counted = count !== undefined || lists.length > 0;
-	const shown = sectionCount(count, lists);
+	// The Section reads its body's collections off its children in render (by
+	// the depth rule, `sectionPartsOf`): a waiting one makes the head busy, a
+	// List or a Table counts there unless the Section has its own count, and a
+	// loading body with no rows waits as skeleton fields while it stays
+	// mounted, hidden, so what it holds (a field's text) outlives the wait.
+	const {
+		busy,
+		counted,
+		count: shown,
+		fields,
+	} = sectionState(sectionPartsOf(children, KINDS), { count, loading });
 	useEffect(() => {
 		if (blocked === undefined) setPressed(false);
 	}, [blocked]);
@@ -288,31 +249,32 @@ export function Section({
 					className={cn(section({ in: within }), BODY)}
 				>
 					<HeadingContext value={DEEPER[level]}>
-						{loading && fields > 0 ? (
-							Array.from(
-								{ length: fields },
-								(_, index) => `field-${index}`,
-							).map((key) => (
-								<div
-									key={key}
-									aria-hidden
-									className={cn(skeletonRow({ kind: "field" }), FIELD_WAIT)}
-								>
-									<span className={cn(lineBox({ role: "body" }), LABEL_LINE)}>
-										<span
-											className={cn(skeleton({ kind: "line" }), LABEL_WAIT)}
-										/>
-									</span>
-									<span className={skeleton({ kind: "field" })} />
-								</div>
-							))
-						) : (
+						{fields > 0
+							? Array.from(
+									{ length: fields },
+									(_, index) => `field-${index}`,
+								).map((key) => (
+									<div
+										key={key}
+										aria-hidden
+										className={cn(skeletonRow({ kind: "field" }), FIELD_WAIT)}
+									>
+										<span className={cn(lineBox({ role: "body" }), LABEL_LINE)}>
+											<span
+												className={cn(skeleton({ kind: "line" }), LABEL_WAIT)}
+											/>
+										</span>
+										<span className={skeleton({ kind: "field" })} />
+									</div>
+								))
+							: null}
+						<div className={fields > 0 ? BODY_WAITS : BODY_SHOWN}>
 							<LoadingContext value={loading === true}>
-								<SectionContext value={parts}>
+								<SectionContext value={true}>
 									<ThreadRoom value={false}>{children}</ThreadRoom>
 								</SectionContext>
 							</LoadingContext>
-						)}
+						</div>
 					</HeadingContext>
 				</Collapsible.Panel>
 			)}

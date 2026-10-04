@@ -52,7 +52,7 @@ export function EmptyStateBase(props: {
 }) {
 	// In a Section it stands framed; in a Group the card is its frame.
 	const inGroup = useContext(GroundContext) === "group";
-	const section = useContext(SectionContext) !== undefined;
+	const section = useContext(SectionContext);
 	const framed = inGroup || section;
 	const page = useContext(PageTitle) !== undefined;
 	const glyph = props.tone === "failed" ? "CircleAlert" : props.icon;

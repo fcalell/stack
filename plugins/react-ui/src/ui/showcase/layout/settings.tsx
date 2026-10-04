@@ -54,12 +54,25 @@ export function Settings() {
 	const [image, setImage] = useState("node-24");
 	const [devices, setDevices] = useState(["Ana's Pixel 9"]);
 	const paired = useFixture(devices);
+	// The workspace's settings as the server holds them: General waits as its
+	// fields while they load, and again on Refresh, its typed text kept.
+	const workspace = useFixture("acme");
 	return (
-		<Place title="Settings">
+		<Place
+			title="Settings"
+			actions={[
+				{
+					icon: "RefreshCw",
+					label: "Refresh",
+					onAct: () => workspace.refetch(),
+				},
+			]}
+		>
 			<Form>
 				<Section
 					title="General"
 					description="How the workspace appears to its members."
+					loading={workspace.isPending}
 				>
 					<FormField label="Workspace name">
 						<Input value={name} onChange={setName} />

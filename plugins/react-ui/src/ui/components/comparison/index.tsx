@@ -4,7 +4,6 @@ import {
 	factShape,
 	listBusy,
 	listState,
-	listWaits,
 	retryOf,
 } from "@fcalell/ui-core/list-state";
 import {
@@ -19,7 +18,7 @@ import {
 import { type ReactNode, use } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { LoadingContext } from "../../lib/loading.ts";
-import { useSectionWait } from "../../lib/section.ts";
+import { SectionContext } from "../../lib/section.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Chip } from "../chip/index.tsx";
 import { EmptyStateBase } from "../empty-state/base.tsx";
@@ -186,7 +185,7 @@ export function Comparison<T>(props: ComparisonProps<T>) {
 		inSection: false,
 		hasEmpty: props.empty !== undefined,
 	};
-	const input = { ...base, inSection: useSectionWait(listWaits(base)) };
+	const input = { ...base, inSection: use(SectionContext) };
 	const state = listState(input);
 	const { columns, row } = props;
 	if (state === "missing") return <Missing />;

@@ -226,11 +226,11 @@ function lines(from: string, other: string): number {
 // The files a deploy changed, from their own query, over the diff of the one
 // open (`&file=`, the first without it), which its row marks; the files
 // before it are seen. The list draws its own four states; the diff waits
-// with it and stands only over a loaded file.
-function Files(props: { files: QueryLike<ChangedFile[]> }) {
+// with it and stands only over a loaded file. Both are handed back as
+// elements, so the list stands as its Section's direct child and counts there.
+function useChangedFiles(files: QueryLike<ChangedFile[]>) {
 	const { record, file: named } = use(HereContext);
 	const to = useTo();
-	const { files } = props;
 	const all = files.data ?? [];
 	const at = Math.max(
 		0,
@@ -241,33 +241,31 @@ function Files(props: { files: QueryLike<ChangedFile[]> }) {
 	if (files.isPending) diff = <Diff label="" before="" after="" loading />;
 	else if (open)
 		diff = <Diff label={open.path} before={open.before} after={open.after} />;
-	return (
-		<>
-			<List
-				query={files}
-				sentence="Changes did not load."
-				empty={{
-					icon: "GitCommitHorizontal",
-					title: "No changes",
-					sentence: "This deploy rebuilt the commit already in production.",
-				}}
-				file={{
-					key: (each) => each.path,
-					path: (each) => each.path,
-					added,
-					removed,
-					seen: (each) => all.indexOf(each) <= at,
-					chip: (each) => each.mark,
-					// The open file's row is current at the page's own path.
-					href: (each) =>
-						each === open
-							? location.pathname
-							: to({ place: "deploys", record: record ?? "", file: each.path }),
-				}}
-			/>
-			{diff}
-		</>
+	const list = (
+		<List
+			query={files}
+			sentence="Changes did not load."
+			empty={{
+				icon: "GitCommitHorizontal",
+				title: "No changes",
+				sentence: "This deploy rebuilt the commit already in production.",
+			}}
+			file={{
+				key: (each) => each.path,
+				path: (each) => each.path,
+				added,
+				removed,
+				seen: (each) => all.indexOf(each) <= at,
+				chip: (each) => each.mark,
+				// The open file's row is current at the page's own path.
+				href: (each) =>
+					each === open
+						? location.pathname
+						: to({ place: "deploys", record: record ?? "", file: each.path }),
+			}}
+		/>
 	);
+	return { list, diff };
 }
 
 // A deploy's changes, read from their own queries: the description's edit,
@@ -275,7 +273,7 @@ function Files(props: { files: QueryLike<ChangedFile[]> }) {
 export function DeployChanges(props: { id: string }) {
 	const changes = BY_DEPLOY[props.id] ?? NIGHTLY;
 	const query = useFixture(changes);
-	const files = useFixture(changes.files);
+	const files = useChangedFiles(useFixture(changes.files));
 	return (
 		<>
 			{changes.description ? (
@@ -290,7 +288,8 @@ export function DeployChanges(props: { id: string }) {
 				<Prose markdown={changes.notes} />
 			</Section>
 			<Section title="Changes">
-				<Files files={files} />
+				{files.list}
+				{files.diff}
 			</Section>
 			<Section title="Build log">
 				<QueryBoundary

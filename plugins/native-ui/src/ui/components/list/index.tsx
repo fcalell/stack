@@ -9,10 +9,8 @@ import type {
 import {
 	fileShape,
 	listBusy,
-	listCount,
 	listGround,
 	listState,
-	listWaits,
 	meterShape,
 	retryOf,
 	rowShape,
@@ -24,11 +22,7 @@ import type { Closed } from "../../lib/closed";
 import { between, useGroupList } from "../../lib/group";
 import { LoadingContext } from "../../lib/loading";
 import type { Route } from "../../lib/route";
-import {
-	useSectionCount,
-	useSectionRows,
-	useSectionWait,
-} from "../../lib/section";
+import { SectionContext } from "../../lib/section";
 import { useWords } from "../../lib/words";
 import type { EmptyStateProps } from "../empty-state";
 import { EmptyStateBase } from "../empty-state/base";
@@ -169,9 +163,7 @@ export function List<T, V extends string | null = string>(
 		inSection: false,
 		hasEmpty: props.empty !== undefined,
 	};
-	const input = { ...base, inSection: useSectionWait(listWaits(base)) };
-	useSectionCount(listCount(input));
-	useSectionRows();
+	const input = { ...base, inSection: useContext(SectionContext) };
 	const busy = listBusy(input);
 	const ground = listGround(useGroupList(busy));
 	const state = listState(input);

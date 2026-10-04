@@ -19,7 +19,6 @@ import type { Closed } from "../../lib/closed.ts";
 import { GroundContext } from "../../lib/ground.ts";
 import { GroupContext, type GroupHost } from "../../lib/group.ts";
 import { LoadingContext } from "../../lib/loading.ts";
-import { useSectionRows } from "../../lib/section.ts";
 
 const BOX = "flex flex-col overflow-hidden";
 // A waiting setting row stands in the loaded DefinitionRow's boxes: the
@@ -50,7 +49,6 @@ export interface GroupProps extends Closed {
 
 /** Rows in a hairline card on the surface, the hairline drawn once between them, so no row carries one. A List in it draws its rows, its waiting rows and its failed and empty forms on the card, the card busy while the List's items wait. */
 export function Group({ loading, children }: GroupProps) {
-	useSectionRows();
 	const inherited = use(LoadingContext);
 	const waiting = loading ?? inherited;
 	// A waiting body draws a List's own waiting rows when one (however deep)
