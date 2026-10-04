@@ -193,21 +193,24 @@ spawned `stack`.
   `provides` as `upstream`, and merges every `provides` onto the handle, which types it.
   `setup` is declared in method syntax so `.use()` accepts a plugin before its dependencies.
   `dispose` (and `await using`) runs the disposers in reverse; a boot that throws runs the
-  disposers collected so far before rejecting, so a proxy a setup opened never keeps the test
+  disposers collected so far before rejecting, so nothing a setup opened keeps the test
   process alive. A `provides` key the handle owns (`env`, `worker`, `fetch`, `client`,
   `dispose`) is refused at boot.
-- **Local D1.** plugin-db's `dbTesting` (d1 only) gives each boot its own database: it writes a
-  wrangler config holding only the D1 binding to a temporary directory and opens it with
-  wrangler's `getPlatformProxy` (`persist: false`, `remoteBindings: false`), so no boot touches
-  `.wrangler/state` and test files run in parallel. It applies the committed migrations as
-  `wrangler d1 migrations apply` does at deploy, not as drizzle's journal would: every `.sql` file
-  in filename order, each split by wrangler's `unstable_splitSqlQuery` and run as one batch with
-  its `d1_migrations` record, so a test database is built by the order and split production runs.
-  An empty migrations directory is refused by name. The binding lands in `env` under its name and
-  `provides.db` is the drizzle client the worker's `dbRuntime` also gets (both go through
-  `createClient`'s per-binding cache). A setup that fails after the proxy opened disposes it and
-  removes the temporary directory itself, since `boot` runs only the disposers already returned.
-  `wrangler` is plugin-db's optional peer dependency. The sqlite dialect contributes no testing
+- **Local D1.** plugin-db's `dbTesting` (d1 only) gives each boot its own database: an in-memory
+  `node:sqlite` database in the test's own process, behind the D1 binding's statement surface
+  (`prepare`, `bind`, `run`, `all`, `raw`, `first`, and `batch` as one transaction), each
+  answering as D1 answers (a boolean binds as 1 or 0, a blob reads as an array of bytes, foreign
+  keys are enforced). No call crosses a socket or blocks on another thread, so a test cannot stall
+  on a runtime that stopped answering, and test files run in parallel. It applies the committed
+  migrations as `wrangler d1 migrations apply` does at deploy, not as drizzle's journal would:
+  every `.sql` file in filename order, each run with its `d1_migrations` record in one
+  transaction, so a test database is built by the order production runs and a failing file
+  leaves no record. An empty migrations directory is refused by name. The binding lands in `env`
+  under its name and `provides.db` is the drizzle client the worker's `dbRuntime` also gets
+  (both go through `createClient`'s per-binding cache). A setup whose migration fails closes its
+  database itself, since `boot` runs only the disposers already returned. `stack dev` and a
+  deploy run the real D1; the test boot trades workerd's D1 for a process with nothing to wait
+  on, and a D1 behaviour sqlite lacks is not reproduced. The sqlite dialect contributes no testing
   plugin: its baked env carries the `fileVar` (`DB_FILE`) at its dev default, so that test entry's
   worker opens the configured dev sqlite file (resolved against the test process's working
   directory), the same file `stack dev` uses, with no per-boot isolation.

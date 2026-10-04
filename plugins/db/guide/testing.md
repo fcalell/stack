@@ -29,12 +29,9 @@ test("lists a project", async () => {
   migration fails it with the file's name.
 - Never seeded: `seed.ts` does not run.
 - Disposed with the boot (`await using`, or `app.dispose()`).
-- Reached over loopback connections that each D1 call reuses, when the consumer links stack
-  (`link:../stack/...`): stack's install patches miniflare for it. A consumer installing stack
-  from GitHub installs its own unpatched wrangler, which opens and closes one connection per D1
-  call; a long worker suite then fails on macOS with `connect EADDRNOTAVAIL` once the loopback
-  ports run out. Its remedy is the same miniflare patch in its own install, until a wrangler
-  release carries upstream's fix.
+- Served in the test's own process: an in-memory `node:sqlite` database behind the D1
+  binding, answering each call as D1 does, so a test never waits on another process. `stack dev`
+  and a deploy run the real D1; a D1 behaviour sqlite lacks is not reproduced in a test.
 
 ## On sqlite
 

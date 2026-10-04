@@ -70,7 +70,7 @@ export const db = plugin("db", {
 | `api.slots.env` | `{ name: fileVar, devDefault: path }` (sqlite only) |
 | `api.slots.pluginRuntimes` | `dbRuntime({ binding, schema })` from `./runtime` (d1), `dbRuntime({ fileVar, schema })` from `./runtime/sqlite` (sqlite) |
 | `api.slots.workerImports` | `import * as schema from "../src/schema/index.ts"` on both dialects (node, which runs the sqlite worker and the test entry's d1 worker, refuses a directory import), gated on the schema dir existing |
-| `api.slots.testingEntries` | `dbTesting({ binding, migrations, compatibilityDate, schema })` from `./testing` (d1 only), the compatibility date resolved from `cloudflare.slots.compatibilityDate` |
+| `api.slots.testingEntries` | `dbTesting({ binding, migrations, schema })` from `./testing` (d1 only) |
 | `api.slots.testingImports` | The same `schema` namespace import for the test entry (d1 only), gated on the schema dir existing |
 | `api.slots.entities` | Sorted value-export names from `src/schema/index.ts` (both dialects); `export *` re-exports are skipped, so auth contributes its own table names |
 
@@ -105,7 +105,7 @@ behind them (`./d1`, `./sqlite`) are cached per binding and per file path.
 | `@fcalell/plugin-db/sqlite` | `createClient()` for SQLite (requires `better-sqlite3`) |
 | `@fcalell/plugin-db/runtime` | `dbRuntime()`, the D1 runtime plugin factory |
 | `@fcalell/plugin-db/runtime/sqlite` | `dbRuntime()`, the SQLite runtime plugin factory (node target) |
-| `@fcalell/plugin-db/testing` | `dbTesting()`, the test entry's local D1 (node only; needs the `wrangler` peer) |
+| `@fcalell/plugin-db/testing` | `dbTesting()`, the test entry's local D1, an in-memory `node:sqlite` behind the D1 binding (node only) |
 
 ## License
 

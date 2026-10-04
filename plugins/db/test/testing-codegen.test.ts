@@ -43,9 +43,6 @@ const SCHEMA_IMPORT = { source: "../src/schema/index.ts", namespace: "schema" };
 
 test("a d1 consumer gets a db testing entry baked from its options", async () => {
 	const graph = graphFor({ dialect: "d1", databaseId: "db-id" });
-	const compatibilityDate = await graph.resolve(
-		cloudflare.slots.compatibilityDate,
-	);
 	assert.deepEqual(await graph.resolve(api.slots.testingEntries), [
 		{
 			plugin: "db",
@@ -54,7 +51,6 @@ test("a d1 consumer gets a db testing entry baked from its options", async () =>
 			options: {
 				binding: { kind: "string", value: "DB_MAIN" },
 				migrations: { kind: "string", value: "./src/migrations" },
-				compatibilityDate: { kind: "string", value: compatibilityDate },
 				schema: { kind: "identifier", name: "schema" },
 			},
 		},

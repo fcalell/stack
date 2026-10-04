@@ -1,6 +1,4 @@
 import assert from "node:assert/strict";
-import { mkdtemp, readdir, rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
@@ -22,25 +20,8 @@ const FIXTURES = new URL("./fixtures/", import.meta.url);
 // `setup` reads only `root`.
 const ctx = { root: FIXTURES } as unknown as TestingContext;
 
-async function withTempRoot(
-	run: (tempRoot: string) => Promise<void>,
-): Promise<void> {
-	const tempRoot = await mkdtemp(join(tmpdir(), "stack-db-testing-"));
-	try {
-		await run(tempRoot);
-	} finally {
-		await rm(tempRoot, { recursive: true, force: true });
-	}
-}
-
-function plugin(tempRoot: string, migrations = "./migrations") {
-	return dbTesting({
-		binding: "DB_TEST",
-		migrations,
-		compatibilityDate: "2025-01-01",
-		schema,
-		tempRoot,
-	});
+function plugin(migrations = "./migrations") {
+	return dbTesting({ binding: "DB_TEST", migrations, schema });
 }
 
 interface RawD1 {
@@ -48,128 +29,118 @@ interface RawD1 {
 }
 
 test("migrations apply in filename order and are recorded as deploy records them", async () => {
-	await withTempRoot(async (tempRoot) => {
-		const setup = await plugin(tempRoot).setup(ctx, {});
-		try {
-			assert.deepEqual(Object.keys(setup.env ?? {}), ["DB_TEST"]);
-			const d1 = setup.env?.DB_TEST as RawD1;
-			const objects = await d1
-				.prepare(
-					"SELECT type, name FROM sqlite_master WHERE name IN ('item', 'item_name_idx') ORDER BY name",
-				)
-				.all();
-			assert.deepEqual(objects.results, [
-				{ type: "table", name: "item" },
-				{ type: "index", name: "item_name_idx" },
-			]);
-			const columns = await d1
-				.prepare("SELECT name FROM pragma_table_info('item') ORDER BY cid")
-				.all();
-			assert.deepEqual(columns.results, [
-				{ name: "id" },
-				{ name: "name" },
-				{ name: "note" },
-			]);
-			const applied = await d1
-				.prepare("SELECT name FROM d1_migrations ORDER BY id")
-				.all();
-			assert.deepEqual(applied.results, [
-				{ name: "0000_create_item.sql" },
-				{ name: "0001_add_column.sql" },
-			]);
-		} finally {
-			await setup.dispose?.();
-		}
-	});
+	const setup = await plugin().setup(ctx, {});
+	try {
+		assert.deepEqual(Object.keys(setup.env ?? {}), ["DB_TEST"]);
+		const d1 = setup.env?.DB_TEST as RawD1;
+		const objects = await d1
+			.prepare(
+				"SELECT type, name FROM sqlite_master WHERE name IN ('item', 'item_name_idx') ORDER BY name",
+			)
+			.all();
+		assert.deepEqual(objects.results, [
+			{ type: "table", name: "item" },
+			{ type: "index", name: "item_name_idx" },
+		]);
+		const columns = await d1
+			.prepare("SELECT name FROM pragma_table_info('item') ORDER BY cid")
+			.all();
+		assert.deepEqual(columns.results, [
+			{ name: "id" },
+			{ name: "name" },
+			{ name: "note" },
+		]);
+		const applied = await d1
+			.prepare("SELECT name FROM d1_migrations ORDER BY id")
+			.all();
+		assert.deepEqual(applied.results, [
+			{ name: "0000_create_item.sql" },
+			{ name: "0001_add_column.sql" },
+		]);
+	} finally {
+		await setup.dispose?.();
+	}
 });
 
 test("a row written through the drizzle client reads back", async () => {
-	await withTempRoot(async (tempRoot) => {
-		const setup = await plugin(tempRoot).setup(ctx, {});
-		try {
-			const db = setup.provides?.db;
-			assert.ok(db);
-			await db.insert(item).values({ id: 1, name: "first", note: "n" });
-			assert.deepEqual(await db.select().from(item).where(eq(item.id, 1)), [
-				{ id: 1, name: "first", note: "n" },
-			]);
-		} finally {
-			await setup.dispose?.();
-		}
-	});
+	const setup = await plugin().setup(ctx, {});
+	try {
+		const db = setup.provides?.db;
+		assert.ok(db);
+		await db.insert(item).values({ id: 1, name: "first", note: "n" });
+		assert.deepEqual(await db.select().from(item).where(eq(item.id, 1)), [
+			{ id: 1, name: "first", note: "n" },
+		]);
+		const [row] = await db
+			.insert(item)
+			.values({ id: 2, name: "second" })
+			.returning({ id: item.id });
+		assert.deepEqual(row, { id: 2 });
+	} finally {
+		await setup.dispose?.();
+	}
 });
 
 test("a batch runs whole or not at all", async () => {
-	await withTempRoot(async (tempRoot) => {
-		const setup = await plugin(tempRoot).setup(ctx, {});
-		try {
-			const db = setup.provides?.db;
-			assert.ok(db);
-			const [, rows] = await db.batch([
-				db.insert(item).values({ id: 1, name: "first" }),
-				db.select().from(item),
-			]);
-			assert.deepEqual(rows, [{ id: 1, name: "first", note: null }]);
-
-			await assert.rejects(
-				db.batch([
-					db.insert(item).values({ id: 2, name: "second" }),
-					db.insert(item).values({ id: 1, name: "duplicate" }),
-				]),
-				(error: unknown) => {
-					const text = `${String(error)} ${String((error as { cause?: unknown }).cause)}`;
-					assert.match(text, /UNIQUE constraint failed/);
-					return true;
-				},
-			);
-			assert.deepEqual(await db.select({ n: count() }).from(item), [{ n: 1 }]);
-		} finally {
-			await setup.dispose?.();
-		}
-	});
-});
-
-test("two setups are two databases", async () => {
-	await withTempRoot(async (tempRoot) => {
-		const [first, second] = await Promise.all([
-			plugin(tempRoot).setup(ctx, {}),
-			plugin(tempRoot).setup(ctx, {}),
+	const setup = await plugin().setup(ctx, {});
+	try {
+		const db = setup.provides?.db;
+		assert.ok(db);
+		const [, rows] = await db.batch([
+			db.insert(item).values({ id: 1, name: "first" }),
+			db.select().from(item),
 		]);
-		try {
-			const a = first.provides?.db;
-			const b = second.provides?.db;
-			assert.ok(a && b);
-			await a.insert(item).values({ id: 1, name: "only in the first" });
-			assert.equal((await a.select().from(item)).length, 1);
-			assert.deepEqual(await b.select().from(item), []);
-		} finally {
-			await Promise.all([first.dispose?.(), second.dispose?.()]);
-		}
-		assert.deepEqual(await readdir(tempRoot), []);
-	});
-});
+		assert.deepEqual(rows, [{ id: 1, name: "first", note: null }]);
 
-test("a migrations directory without a migration is refused by name", async () => {
-	await withTempRoot(async (tempRoot) => {
-		const dir = join(fileURLToPath(FIXTURES), "./migrations-empty");
 		await assert.rejects(
-			plugin(tempRoot, "./migrations-empty").setup(ctx, {}),
+			db.batch([
+				db.insert(item).values({ id: 2, name: "second" }),
+				db.insert(item).values({ id: 1, name: "duplicate" }),
+			]),
 			(error: unknown) => {
-				assert.ok(error instanceof Error);
-				assert.ok(error.message.includes(dir), error.message);
+				const text = `${String(error)} ${String((error as { cause?: unknown }).cause)}`;
+				assert.match(text, /UNIQUE constraint failed/);
 				return true;
 			},
 		);
-		assert.deepEqual(await readdir(tempRoot), []);
-	});
+		assert.deepEqual(await db.select({ n: count() }).from(item), [{ n: 1 }]);
+	} finally {
+		await setup.dispose?.();
+	}
 });
 
-test("a migration failing after the proxy is up leaves nothing behind", async () => {
-	await withTempRoot(async (tempRoot) => {
-		await assert.rejects(
-			plugin(tempRoot, "./migrations-broken").setup(ctx, {}),
-			/0001_bad\.sql/,
-		);
-		assert.deepEqual(await readdir(tempRoot), []);
-	});
+test("two setups are two databases", async () => {
+	const [first, second] = await Promise.all([
+		plugin().setup(ctx, {}),
+		plugin().setup(ctx, {}),
+	]);
+	try {
+		const a = first.provides?.db;
+		const b = second.provides?.db;
+		assert.ok(a && b);
+		await a.insert(item).values({ id: 1, name: "only in the first" });
+		assert.equal((await a.select().from(item)).length, 1);
+		assert.deepEqual(await b.select().from(item), []);
+	} finally {
+		await Promise.all([first.dispose?.(), second.dispose?.()]);
+	}
+});
+
+test("a migrations directory without a migration is refused by name", async () => {
+	const dir = join(fileURLToPath(FIXTURES), "./migrations-empty");
+	await assert.rejects(
+		plugin("./migrations-empty").setup(ctx, {}),
+		(error: unknown) => {
+			assert.ok(error instanceof Error);
+			assert.ok(error.message.includes(dir), error.message);
+			return true;
+		},
+	);
+});
+
+test("a failing migration fails the boot by its name", async () => {
+	await assert.rejects(
+		plugin("./migrations-broken").setup(ctx, {}),
+		/0001_bad\.sql/,
+	);
 });

@@ -478,15 +478,11 @@ export const db = plugin("db", {
 
 			// The test entry's local D1, d1 only: a sqlite consumer's test entry
 			// boots without a database. The migrations path stays relative to
-			// the consumer root, and the compatibility date is the one the
-			// deployed worker runs on.
+			// the consumer root.
 			api.slots.testingEntries.contribute(
 				async (ctx): Promise<PluginRuntimeEntry | undefined> => {
 					if (self.options.dialect !== "d1") return undefined;
 					const hasSchema = await ctx.fileExists("src/schema");
-					const compatibilityDate = await ctx.resolve(
-						cloudflare.slots.compatibilityDate,
-					);
 					const schema: Record<string, TsExpression> = hasSchema
 						? { schema: { kind: "identifier", name: "schema" } }
 						: {};
@@ -500,7 +496,6 @@ export const db = plugin("db", {
 						options: {
 							binding: { kind: "string", value: self.options.binding },
 							migrations: { kind: "string", value: self.options.migrations },
-							compatibilityDate: { kind: "string", value: compatibilityDate },
 							...schema,
 						},
 					};

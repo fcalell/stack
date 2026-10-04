@@ -72,19 +72,8 @@ plugin-expo ──────────────> cli (owns expo.slots.met
 plugin-db ────────────────> cli, requires api
                                  (contributes to cloudflare.slots.bindings, api.slots.env (sqlite's DB_FILE),
                                   api.slots.pluginRuntimes / workerImports, and d1's local test D1
-                                  to api.slots.testingEntries / testingImports; optional peer
-                                  wrangler for its ./testing subpath. wrangler 4.147.0 pins
-                                  miniflare 5.20261001.0-alpha, patched in pnpm-workspace.yaml's
-                                  patchedDependencies: runtime requests drop the per-request
-                                  reset and the runtime Pool closes idle sockets after 1s, so a
-                                  test's D1 calls reuse one loopback connection instead of one
-                                  each (a long suite otherwise hits EADDRNOTAVAIL on macOS).
-                                  Covers stack's own install and a consumer linking ../stack,
-                                  never a consumer installing stack from GitHub. Removed, with
-                                  its patchedDependencies key, in the wrangler bump that resolves
-                                  a miniflare carrying upstream's fix
-                                  (cloudflare/workers-sdk#15716, PR #15781); the exact-version
-                                  key fails any other miniflare's install until then)
+                                  to api.slots.testingEntries / testingImports, an in-memory
+                                  node:sqlite behind the D1 binding)
 plugin-auth ──────────────> cli, requires api + db
                                  (owns auth.slots.runtimeOptions — derived from api.slots.cors and api.slots.nativeScheme;
                                   contributes to cloudflare.slots.bindings, api.slots.env/pluginRuntimes/callbacks,

@@ -1,6 +1,6 @@
 ---
 id: 003-59
-status: backlog
+status: done
 sessions: {}
 ---
 # plugin-db: the phone app's worker test never stalls or is cancelled under a loaded check
@@ -25,4 +25,7 @@ removes the proxy, the sync worker thread and the sockets. This reverses fc9da29
 fidelity in the test boot only; `stack dev` and deploys keep the real D1.
 
 ## Acceptance criteria
-- [ ] (test) the phone worker's tests pass 200 runs in a loaded full check with no stall or cancellation.
+- [x] (test) the phone worker's tests pass 200 runs in a loaded full check with no stall or cancellation.
+
+## Progress
+Built; `pnpm check` and `pnpm verify` pass, and the criterion holds: 200 of 200 phone worker test runs passed beside 47 forced back-to-back check-types and test runs, no stall or cancellation (1 to 6 s each). The test boot's D1 is an in-memory `node:sqlite` behind the D1 calls drizzle uses; the miniflare patch, whose only purpose was the test boot's connections, is removed, so `stack dev` runs stock miniflare.
