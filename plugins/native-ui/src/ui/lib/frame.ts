@@ -42,12 +42,17 @@ export const RecordAlone = createContext<((alone: boolean) => void) | null>(
 // list leaves with the list.
 export const RecordShown = createContext(false);
 
-// A Thread standing in a Place's body tells the Place, whose body then gives
-// it the page's height and no inset, leaving scrolling to its log; a Section
-// takes the call back, a Thread in it standing among the page's sections.
+// A Thread standing in a Place's body or a Split's main tells it, which then
+// gives the Thread the rest of its height and no inset, leaving scrolling to
+// its log; a Section takes the call back, a Thread in it standing among the
+// page's sections.
 export const ThreadFills = createContext<((fills: boolean) => void) | null>(
 	null,
 );
+
+// A Split's main keeps the page inset around the record's head, so a Thread
+// filling it bleeds through the sides, its log and foot inset themselves.
+export const ThreadBleeds = createContext(false);
 
 // A bleeding Place hands the room its floating act needs to the regions that
 // scroll inside its body, which keep it under their last row.

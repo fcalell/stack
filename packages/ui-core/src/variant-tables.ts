@@ -864,13 +864,16 @@ export const PLACE_TAB_LABEL = matrix({
 // ── Split ───────────────────────────────────────────────────────────
 
 // The record beside the list: its sections apart at the page inset, or, with
-// nothing open, the empty state alone at the inset.
+// nothing open, the empty state alone at the inset. While a Thread fills it,
+// the inset holds the record's head alone: the Thread bleeds through the
+// sides, its log and its docked foot carrying the page inset themselves.
 export const SPLIT_MAIN = matrix({
 	base: "",
 	variants: {
 		state: {
 			rest: "gap-sections p-page",
 			empty: "p-page",
+			fills: "px-page pt-page",
 		},
 	},
 	defaultVariants: { state: "rest" },

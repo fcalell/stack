@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { MessageInput } from "../../components/message-input/index.tsx";
-import { Thread } from "../../components/thread/index.tsx";
+import { type MessageSlots, Thread } from "../../components/thread/index.tsx";
 import { REPLY, today } from "./message.tsx";
 
 const act = () => {};
@@ -16,7 +16,17 @@ interface Turn {
 
 const NAME = { you: "You", other: "Assistant" } as const;
 
-const TURNS: Turn[] = [
+// The Message slots every turn fills.
+export const TURN: MessageSlots<Turn> = {
+	key: (turn) => turn.id,
+	author: (turn) => turn.author,
+	name: (turn) => (turn.author === "system" ? undefined : NAME[turn.author]),
+	body: (turn) => turn.body,
+	at: (turn) => turn.at,
+	onOpen: (turn) => (turn.opens ? act : undefined),
+};
+
+export const TURNS: Turn[] = [
 	{
 		id: "t1",
 		author: "system",
@@ -71,15 +81,7 @@ function Conversation() {
 			<div className="flex flex-col gap-sections p-page">
 				<Thread
 					items={TURNS}
-					message={{
-						key: (turn) => turn.id,
-						author: (turn) => turn.author,
-						name: (turn) =>
-							turn.author === "system" ? undefined : NAME[turn.author],
-						body: (turn) => turn.body,
-						at: (turn) => turn.at,
-						onOpen: (turn) => (turn.opens ? act : undefined),
-					}}
+					message={TURN}
 					foot={
 						<MessageInput
 							value={value}

@@ -1,7 +1,16 @@
 import { splitMain } from "@fcalell/ui-core/variants";
 import { type ReactNode, useContext, useEffect, useState } from "react";
+import { View } from "react-native";
 import type { Closed } from "../../lib/closed";
-import { ActRoom, LendAct, PageTitle, RecordAlone } from "../../lib/frame";
+import { cn } from "../../lib/cn";
+import {
+	ActRoom,
+	LendAct,
+	PageTitle,
+	RecordAlone,
+	ThreadBleeds,
+	ThreadFills,
+} from "../../lib/frame";
 import { Scroll } from "../../lib/hosts";
 import { useWords } from "../../lib/words";
 import { Sheet } from "../sheet";
@@ -21,9 +30,12 @@ export interface SplitProps extends Closed {
 
 // One region at a time, each scrolling itself in a bleeding Place: the list,
 // or the open record once `main` is set, whose Place then leads its top bar
-// with a back act to the list. With a record and a pane open, the
-// Split lends a Details act to its Place or Screen, which opens the pane as a
-// sheet. `empty` is the desktop's, so the phone never draws it.
+// with a back act to the list. A Thread in the record fills it: the record
+// stops scrolling (its first frame remounts it out of the scroll), its head
+// stays at the page inset over the Thread's log, which scrolls, and the
+// input docks at its foot. With a record and a pane open, the Split lends a
+// Details act to its Place or Screen, which opens the pane as a sheet.
+// `empty` is the desktop's, so the phone never draws it.
 export function Split({ list, main, pane }: SplitProps) {
 	const words = useWords();
 	const title = useContext(PageTitle);
@@ -31,6 +43,7 @@ export function Split({ list, main, pane }: SplitProps) {
 	const standAlone = useContext(RecordAlone);
 	const room = useContext(ActRoom);
 	const [open, setOpen] = useState(false);
+	const [fills, setFills] = useState(false);
 	const opened = main !== undefined;
 	const sheet = opened && pane !== undefined;
 	useEffect(() => {
@@ -47,27 +60,42 @@ export function Split({ list, main, pane }: SplitProps) {
 		standAlone(true);
 		return () => standAlone(false);
 	}, [opened, standAlone]);
+	const record = (
+		<ThreadFills.Provider value={setFills}>
+			<ThreadBleeds.Provider value>{main}</ThreadBleeds.Provider>
+		</ThreadFills.Provider>
+	);
+	let region: ReactNode = (
+		<Scroll
+			role="navigation"
+			accessibilityLabel={title}
+			className={REGION}
+			contentContainerClassName={LIST}
+		>
+			{list}
+			{room}
+		</Scroll>
+	);
+	if (opened && fills)
+		region = (
+			<View className={cn(splitMain({ state: "fills" }), REGION)}>
+				{record}
+				{room}
+			</View>
+		);
+	else if (opened)
+		region = (
+			<Scroll
+				className={REGION}
+				contentContainerClassName={splitMain({ state: "rest" })}
+			>
+				{record}
+				{room}
+			</Scroll>
+		);
 	return (
 		<>
-			{opened ? (
-				<Scroll
-					className={REGION}
-					contentContainerClassName={splitMain({ state: "rest" })}
-				>
-					{main}
-					{room}
-				</Scroll>
-			) : (
-				<Scroll
-					role="navigation"
-					accessibilityLabel={title}
-					className={REGION}
-					contentContainerClassName={LIST}
-				>
-					{list}
-					{room}
-				</Scroll>
-			)}
+			{region}
 			<Sheet
 				fit="pane"
 				open={sheet && open}

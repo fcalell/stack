@@ -364,7 +364,13 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
   draws no inset and leaves scrolling to it, its log scrolls at the page inset (`THREAD_LOG`),
   opening at the newest message and following each that arrives while the reader is at the end,
   the input docked at the foot (`THREAD_FOOT`); a Section takes the setter back. A filled Place's
-  floating act would stand over the docked input: accepted while no Place has both.
+  floating act would stand over the docked input: accepted while no Place has both. A Split's
+  main provides its own setter, so a Thread under a record's `ItemHeader` fills the main the same
+  way: the main stops scrolling (native swaps its scroll for a view), keeping the page inset
+  around the head alone (`SPLIT_MAIN {state: fills}`), and the Thread bleeds through the sides
+  (`-mx-page`, an overlay by `ThreadBleeds`), its log and foot carrying the inset themselves; the
+  input docks at the main's foot and reports `FootDocks` as in a Place. The bleeding Place's act
+  still floats over the list, and where the record stands alone its room stands under the input.
 - A collection takes data and draws its four states at the leaf. A `List` takes `query` (or
   `items`, waiting on `loading`) and one item map: `row`, one function per `ListRow` slot,
   `file`, one per `FileRow` slot, or `meter`, one per `Meter` slot. Its waiting rows are the row's

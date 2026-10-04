@@ -20,7 +20,12 @@ import {
 	useRef,
 } from "react";
 import type { Closed } from "../../lib/closed.ts";
-import { FootDocks, PageTitle, ThreadFills } from "../../lib/frame.ts";
+import {
+	FootDocks,
+	PageTitle,
+	ThreadBleeds,
+	ThreadFills,
+} from "../../lib/frame.ts";
 import { useTouch } from "../../lib/media.ts";
 import { useWords } from "../../lib/words.tsx";
 import { EmptyStateBase } from "../empty-state/base.tsx";
@@ -30,6 +35,9 @@ import type { QueryLike } from "../query-boundary/index.tsx";
 
 const STACK = "flex flex-col";
 const FILL = "flex flex-col grow min-h-0";
+// In a Split's main the Thread bleeds through the inset the record's head
+// keeps.
+const BLEED = "-mx-page";
 // The log rings inset, its edge meeting the page's.
 const SCROLLS = "grow min-h-0 overflow-y-auto focus-visible:-outline-offset-2";
 const DOCKED = "flex flex-col shrink-0";
@@ -138,7 +146,7 @@ function logOf<T>(
 	return items.map((item) => messageOf(props.message, item));
 }
 
-/** The messages, a log region so an arriving one is announced, a sections gap apart, one rung above a reply's block gap, and the input a sections gap under them; on the desktop each stands in a measure-wide column centred in the page, on touch in the screen's column. In a Place's body it fills the page: the log scrolls at the page inset, opening at the newest message and following each that arrives while the reader is at the end, the input docked at the foot. It draws its collection's four states, the input under each: while its query is pending or `loading` is set, Message's loading forms (another's reply, yours, another's reply), the log at its end; a failed query, the failed EmptyState with `sentence` and Retry in the log's column; no message, `empty` in the log; then one Message per item. */
+/** The messages, a log region so an arriving one is announced, a sections gap apart, one rung above a reply's block gap, and the input a sections gap under them; on the desktop each stands in a measure-wide column centred in the page, on touch in the screen's column. In a Place's body it fills the page, and in a Split's main the main under the record's head: the log scrolls at the page inset, opening at the newest message and following each that arrives while the reader is at the end, the input docked at the foot. It draws its collection's four states, the input under each: while its query is pending or `loading` is set, Message's loading forms (another's reply, yours, another's reply), the log at its end; a failed query, the failed EmptyState with `sentence` and Retry in the log's column; no message, `empty` in the log; then one Message per item. */
 export function Thread<T>(props: ThreadProps<T>) {
 	const { foot } = props;
 	const words = useWords();
@@ -155,6 +163,7 @@ export function Thread<T>(props: ThreadProps<T>) {
 	// The column is a structure that follows density, as the Shell's tree is.
 	const column = !useTouch() && THREAD_COLUMN;
 	const fills = use(ThreadFills);
+	const bleeds = use(ThreadBleeds);
 	const docks = use(FootDocks);
 	const title = use(PageTitle);
 	const log = useRef<HTMLDivElement>(null);
@@ -203,7 +212,7 @@ export function Thread<T>(props: ThreadProps<T>) {
 			</div>
 		);
 	return (
-		<div className={FILL}>
+		<div className={cn(FILL, bleeds && BLEED)}>
 			<div
 				ref={log}
 				role="log"

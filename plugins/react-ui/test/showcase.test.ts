@@ -10,6 +10,7 @@ test("every roster component has frames, and every cell id is unique", () => {
 	for (const [, name] of rosterEntries()) assert.ok(drawn.has(name), name);
 	assert.ok(ids.includes("Button/BUTTON.act.primary/rest/light/touch"));
 	assert.ok(ids.includes("Table/TABLE_ROW.state.selected/empty/dark/desktop"));
+	assert.ok(ids.includes("Split/SPLIT_MAIN.state.fills/rest/light/touch"));
 	assert.ok(
 		!ids.some((id) => id.startsWith("Button/") && id.includes("/empty/")),
 	);

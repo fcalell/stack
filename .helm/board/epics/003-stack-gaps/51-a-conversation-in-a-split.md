@@ -1,6 +1,6 @@
 ---
 id: 003-51
-status: backlog
+status: review
 sessions: {}
 ---
 # ui-core: a conversation in a Split's main
@@ -17,4 +17,7 @@ Reference: Relevance AI's list, timeline and details pane ([screen](https://mobb
 - [ ] Stack provides the part on every platform the app runs on.
 
 ## Open questions
-- [ ] Its shape (a component, a variant, a token, an option): the stack session decides.
+- [x] Its shape (a component, a variant, a token, an option): the stack session decides.
+
+## Progress
+Shape: no API change; a Split's main provides the Thread's fill and bleed contexts, and the `SPLIT_MAIN` `fills` cell insets its head. Built on web and phone; `pnpm check` and `pnpm verify` pass. Open: the live check (web per batch, phone on the harness).

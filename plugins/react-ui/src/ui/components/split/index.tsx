@@ -3,7 +3,14 @@ import { cn } from "@fcalell/ui-core/cn";
 import { SPLIT_LIST, SPLIT_PANE, splitMain } from "@fcalell/ui-core/variants";
 import { type ReactNode, use, useEffect, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
-import { ActRoom, LendAct, PageTitle, RecordOpen } from "../../lib/frame.ts";
+import {
+	ActRoom,
+	LendAct,
+	PageTitle,
+	RecordOpen,
+	ThreadBleeds,
+	ThreadFills,
+} from "../../lib/frame.ts";
 import { useWords } from "../../lib/words.tsx";
 import { SheetBase } from "../sheet/base.tsx";
 
@@ -21,6 +28,9 @@ const BEHIND = "page-max-tablet:hidden";
 // stands alone; beside the list the act floats over the list alone.
 const ALONE = "page-tablet:hidden";
 const MAIN = "flex flex-col min-w-0 grow overflow-y-auto";
+// A Thread filling the main scrolls its own log under the record's head,
+// which stays put, so the main does not scroll.
+const MAIN_FILLED = "flex flex-col min-w-0 grow";
 const EMPTY = "flex grow min-w-0 items-center justify-center";
 const PANE = "flex flex-col shrink-0 overflow-y-auto page-max-wide:hidden";
 // The pane opened below `wide` is a side sheet at the pane's fit, its
@@ -39,7 +49,7 @@ export interface SplitProps extends Closed {
 	empty?: ReactNode;
 }
 
-/** The list at its width inside a hairline beside the main, decided by its page's width: from `wide` the pane stands beside the main, below it the Split lends its Place or Screen a Details act that opens the pane as a sheet. Below `tablet` one region stands at a time: the list, or the open record, whose Place then leads its strip or top bar with a back act to the list. It sits in a bleeding Place, whose strip heads it. */
+/** The list at its width inside a hairline beside the main, decided by its page's width: from `wide` the pane stands beside the main, below it the Split lends its Place or Screen a Details act that opens the pane as a sheet. Below `tablet` one region stands at a time: the list, or the open record, whose Place then leads its strip or top bar with a back act to the list. A Thread in the main fills it: the main stops scrolling, the record's head stays at the page inset over the Thread's log, which scrolls, and its input docks at the main's foot. It sits in a bleeding Place, whose strip heads it. */
 export function Split({ list, main, pane, empty }: SplitProps) {
 	const words = useWords();
 	const title = use(PageTitle);
@@ -47,6 +57,7 @@ export function Split({ list, main, pane, empty }: SplitProps) {
 	const recordOpen = use(RecordOpen);
 	const room = use(ActRoom);
 	const [open, setOpen] = useState(false);
+	const [fills, setFills] = useState(false);
 	const [sheet] = useState(() => Dialog.createHandle<unknown>());
 	const opened = main !== undefined;
 	const detailed = opened && pane !== undefined;
@@ -60,6 +71,9 @@ export function Split({ list, main, pane, empty }: SplitProps) {
 		recordOpen(true);
 		return () => recordOpen(false);
 	}, [opened, recordOpen]);
+	const record = fills
+		? cn(splitMain({ state: "fills" }), MAIN_FILLED)
+		: cn(splitMain({ state: "rest" }), MAIN);
 	return (
 		<div data-split className={SPLIT}>
 			<nav
@@ -70,8 +84,10 @@ export function Split({ list, main, pane, empty }: SplitProps) {
 				{room}
 			</nav>
 			{opened ? (
-				<div className={cn(splitMain({ state: "rest" }), MAIN)}>
-					{main}
+				<div className={record}>
+					<ThreadFills value={setFills}>
+						<ThreadBleeds value>{main}</ThreadBleeds>
+					</ThreadFills>
 					{room ? <div className={ALONE}>{room}</div> : null}
 				</div>
 			) : (

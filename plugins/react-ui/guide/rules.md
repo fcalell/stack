@@ -69,7 +69,9 @@ An `OptionList` holds a static set in `options`. Options from a query take `quer
 `recommended` and `group`; it waits, fails and empties inside its card.
 
 A `Thread` takes its `query` (or `items`) the same way through a `message` map (`key`,
-`author`, `name`, `body`, `at`, `onOpen`); its `MessageInput` stays the `foot`.
+`author`, `name`, `body`, `at`, `onOpen`); its `MessageInput` stays the `foot`. In a
+`Place`'s body, or in a `Split`'s `main` under the record's `ItemHeader`, it fills what holds it:
+its log scrolls and the input docks at the foot.
 
 A `BarChart` takes data the same way, its `bar` map reading each item's `key`, `label`, `value`,
 `parts` (by its declared `keys`) and `at`; its failed and empty forms stand at the chart's height.

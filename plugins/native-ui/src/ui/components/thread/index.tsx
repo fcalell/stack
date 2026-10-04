@@ -18,7 +18,7 @@ import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { withUniwind } from "uniwind";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import { FootDocks, ThreadFills } from "../../lib/frame";
+import { FootDocks, ThreadBleeds, ThreadFills } from "../../lib/frame";
 import { useWords } from "../../lib/words";
 import { EmptyStateBase } from "../empty-state/base";
 import type { ListEmpty } from "../list";
@@ -29,6 +29,9 @@ import type { QueryLike } from "../query-boundary";
 const Fill = withUniwind(KeyboardAvoidingView);
 
 const FILL = "flex-1";
+// In a Split's main the Thread bleeds through the inset the record's head
+// keeps.
+const BLEED = "-mx-page";
 const LOG = "flex-1";
 const DOCKED = "shrink-0";
 // The log is at its end while its last point shows; a reader who scrolled
@@ -138,7 +141,7 @@ function logOf<T>(
 // The messages a sections gap apart, one rung above a reply's block gap, and
 // the input a sections gap under them, in the screen's column (native draws
 // the touch structure, so no measure-wide column). In a Place's body it
-// fills the page: the log scrolls at the page inset, opening at the newest
+// fills the page, and in a Split's record the record under its head: the log scrolls at the page inset, opening at the newest
 // message and following each that arrives while the reader is at the end,
 // the input docked at the foot over the keyboard. React Native has no log
 // role: the messages are a polite live region, so an arriving one is
@@ -162,6 +165,7 @@ export function Thread<T>(props: ThreadProps<T>) {
 	const busy = listBusy(input);
 	const children = logOf(props, listState(input), words.retry);
 	const fills = useContext(ThreadFills);
+	const bleeds = useContext(ThreadBleeds);
 	const docks = useContext(FootDocks);
 	const log = useRef<ScrollView>(null);
 	const atEnd = useRef(true);
@@ -199,7 +203,11 @@ export function Thread<T>(props: ThreadProps<T>) {
 			</View>
 		);
 	return (
-		<Fill behavior="padding" automaticOffset className={FILL}>
+		<Fill
+			behavior="padding"
+			automaticOffset
+			className={cn(FILL, bleeds && BLEED)}
+		>
 			<ScrollView
 				ref={log}
 				onContentSizeChange={follow}
