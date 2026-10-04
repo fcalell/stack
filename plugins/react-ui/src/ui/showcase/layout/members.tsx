@@ -2,7 +2,6 @@ import type {
 	CellValue,
 	Option,
 	TableColumn,
-	TableRow,
 } from "@fcalell/ui-core/descriptors";
 import { useState } from "react";
 import { EmptyState } from "../../components/empty-state/index.tsx";
@@ -13,7 +12,6 @@ import { Input } from "../../components/input/index.tsx";
 import { ListRow } from "../../components/list-row/index.tsx";
 import { OptionList } from "../../components/option-list/index.tsx";
 import { Place } from "../../components/place/index.tsx";
-import { QueryBoundary } from "../../components/query-boundary/index.tsx";
 import { Section } from "../../components/section/index.tsx";
 import { Select } from "../../components/select/index.tsx";
 import { Sheet } from "../../components/sheet/index.tsx";
@@ -105,9 +103,21 @@ const ROLE_OPTIONS: Option<Member["role"]>[] = [
 	...ROLES,
 ];
 
-const COLUMNS: TableColumn[] = [
-	{ key: "name", label: "Name", width: "1/4", sortable: true },
-	{ key: "email", label: "Email", kind: "source", sortable: true },
+const COLUMNS: TableColumn<Member>[] = [
+	{
+		key: "name",
+		label: "Name",
+		width: "1/4",
+		sortable: true,
+		cell: (member) => member.name,
+	},
+	{
+		key: "email",
+		label: "Email",
+		kind: "source",
+		sortable: true,
+		cell: (member) => member.email,
+	},
 	{
 		key: "role",
 		label: "Role",
@@ -116,18 +126,21 @@ const COLUMNS: TableColumn[] = [
 		width: "measure-short",
 		sortable: true,
 		edit: { control: "picker", options: ROLE_OPTIONS },
+		cell: (member) => member.role,
 	},
 	{
 		key: "team",
 		label: "Team",
 		width: "measure-short",
 		edit: { control: "input" },
+		cell: (member) => member.team || null,
 	},
 	{
 		key: "deploys",
 		label: "Deploys",
 		kind: "check",
 		edit: { control: "checkbox" },
+		cell: (member) => member.deploys,
 	},
 	{
 		key: "active",
@@ -135,22 +148,15 @@ const COLUMNS: TableColumn[] = [
 		kind: "age",
 		width: "measure-short",
 		sortable: true,
+		cell: (member) => member.active,
 	},
 ];
 
-const rowOf = (member: Member): TableRow => ({
-	id: member.id,
-	cells: {
-		name: member.name,
-		email: member.email,
-		role: member.role,
-		team: member.team || null,
-		deploys: member.deploys,
-		active: member.active,
-	},
+const ROW = {
+	id: (member: Member) => member.id,
 	// The owner's role moves only with ownership.
-	locked: member.role === "owner" ? ["role"] : undefined,
-});
+	locked: (member: Member) => (member.role === "owner" ? ["role"] : undefined),
+};
 
 const PERMISSIONS = [
 	{
@@ -286,8 +292,12 @@ function edited(member: Member, key: string, value: CellValue): Member {
 	return member;
 }
 
-function MemberTable(props: { initial: Member[] }) {
-	const [members, setMembers] = useState(props.initial);
+// The members query, its answer updated in place by each edit as a query's
+// cache is.
+function MemberTable() {
+	const [all, setMembers] = useState(MEMBERS);
+	const query = useFixture(all);
+	const members = query.data ?? [];
 	const [open, setOpen] = useState<string>();
 	const save = (next: Member) =>
 		setMembers((all) => all.map((each) => (each.id === next.id ? next : each)));
@@ -317,7 +327,9 @@ function MemberTable(props: { initial: Member[] }) {
 		<>
 			<Table
 				columns={COLUMNS}
-				rows={members.map(rowOf)}
+				query={query}
+				sentence="Members did not load."
+				row={ROW}
 				selected={open}
 				onOpen={setOpen}
 				onEdit={(id, key, value) => {
@@ -344,7 +356,6 @@ function MemberTable(props: { initial: Member[] }) {
 }
 
 export function Members() {
-	const query = useFixture(MEMBERS);
 	const [invited, setInvited] = useState(true);
 	const [inviting, setInviting] = useState(false);
 	const revoke = () =>
@@ -368,16 +379,9 @@ export function Members() {
 		>
 			<Section
 				title="Members"
-				count={query.data?.length}
 				description="Who works in Acme, and what each can change."
 			>
-				<QueryBoundary
-					query={query}
-					sentence="Members did not load."
-					loading={<Table columns={COLUMNS} rows={[]} loading />}
-				>
-					{(members) => <MemberTable initial={members} />}
-				</QueryBoundary>
+				<MemberTable />
 			</Section>
 			{invited ? (
 				<Section title="Invitations" count={1}>

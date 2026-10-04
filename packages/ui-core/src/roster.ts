@@ -1719,18 +1719,24 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			},
 		},
 		// The grid from tablet up, a cell cursor its keyboard; below tablet a List of
-		// ListRows with the sort a Picker above it. It sorts in its own state
-		// (descending, ascending, off) and draws no checked rows; `onEdit` requires
-		// `onOpen`, and with `onOpen` the leading column never edits.
+		// ListRows with the sort a Picker above it. It takes `query` (with
+		// `sentence`) or `items`, each column reading its cell from the item and
+		// `row` the row's own slots, and draws its four states. It sorts in its
+		// own state (descending, ascending, off) and draws no checked rows;
+		// `onEdit` requires `onOpen`, and with `onOpen` the leading column never
+		// edits.
 		Table: {
 			props: [
 				"columns",
-				"rows",
+				"query",
+				"sentence",
+				"items",
+				"loading",
+				"row",
 				"selected",
 				"onOpen",
 				"onEdit",
 				"empty",
-				"loading",
 			],
 			draws: [
 				"CHECKBOX",
@@ -1775,7 +1781,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"TABLE_FROZEN_CELL",
 				"TABLE_EMPTY",
 			],
-			states: [...PRESS, "loading", "selected", "empty"],
+			states: [...PRESS, "loading", "error", "selected", "empty"],
 			owns: {
 				roles: ["body", "meta", "code", "caption"],
 				colors: [

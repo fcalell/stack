@@ -330,6 +330,16 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
   `ascending` and `descending`; its rows are the List's `items` through a `row` map whose slots
   the columns declare (an age column the trailing, the status and chip columns the marks), so its
   loading rows wait in the slots the loaded ones draw.
+  A Table takes data as a List does: `query` (with `sentence`) or `items` (`loading` while a
+  compound body waits), each `TableColumn<T>` reading its cell from the item by `cell`, and a
+  `row` map (`TableRowSlots<T>`) for the row's own slots. Both forms draw one projection,
+  `tableRecords` in `./list-state`, so the grid and the touch List read the same item. It decides
+  its state by the List's `listState` and draws all four at the leaf: pending, the header over
+  skeleton rows (the touch List's waiting rows); failed, the failed EmptyState with `sentence`
+  and Retry under the header on the grid and alone on touch; empty, `empty`; then its rows. It
+  registers with the Section around it once (waiter, count, rows) and mounts its touch List under
+  an empty `SectionContext`, since on the web both forms are mounted and the List would count the
+  same rows again.
   A row with `href` is its leading cell's link (`tabindex -1`, so a new tab opens it); a row's
   `locked` names the columns it draws read only (an owner's role). A chip
   column's pick draws its value and options as the column's chips (the Picker's internal base), and
@@ -428,14 +438,16 @@ platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in the document's langu
 - The canon binds every component either UI plugin ships: one name per concept (`label`,
   `loading`, `onChange`, `onAct`, `act`, `blocked`, `sentence`), composed regions as typed
   descriptors (`Act`, `StatusMark`, `ChipMark`, `RowLeading`, `RowTrailing`, `PlaceSpec`, `Switcher`, `Option`, `OptionGroup`, `Part`, `FieldBinding`,
-  `Confirmation`, `MenuItem`, `TableColumn`, `TableRow`) instead of node slots, and no
+  `Confirmation`, `MenuItem`, `TableColumn`, `TableRowSlots`) instead of node slots, and no
   `class` / `className` / `classList` / `style` prop. Laws live in the README under `## The
   canon`. An icon is an `IconName`, a closed type over Lucide's PascalCase
   names read off the `lucide` package ui-core depends on: the set is baked in, never a consumer
   map, and each plugin draws a name from one table built over its platform package's exports
   (`lucide-react`, `lucide-react-native`), which fails the build if the package lacks a name. A
   descriptor is generic only in a value, which is data: an option and a row's trailing pick (`OptionPick<V>`) in
-  the string they pick, a field binding in the value its field holds. `FieldBinding<V>` is how a bound
+  the string they pick, a field binding in the value its field holds, a table column
+  (`TableColumn<T>`, bare a column over any item) and its row map (`TableRowSlots<T>`) in the item
+  they read. `FieldBinding<V>` is how a bound
   `FormField` types its control by the field, and `useApiForm(...).bind(name)` produces it on the
   web from TanStack Form's store, one binding per name under the form's owner. Rejected: optional
   `value` and `onChange` on every control read from the field's context, which would compile a

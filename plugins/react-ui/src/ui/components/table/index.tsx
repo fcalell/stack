@@ -5,8 +5,16 @@ import type {
 	StatusCell,
 	TableCell,
 	TableColumn,
-	TableRow,
+	TableRowSlots,
 } from "@fcalell/ui-core/descriptors";
+import {
+	listCount,
+	listState,
+	listWaits,
+	retryOf,
+	type TableRecord,
+	tableRecords,
+} from "@fcalell/ui-core/list-state";
 import {
 	FIGURES,
 	skeleton,
@@ -35,15 +43,24 @@ import { age } from "../../lib/age.ts";
 import type { Closed } from "../../lib/closed.ts";
 import { CellField, LabelTarget } from "../../lib/field.ts";
 import { PageTitle } from "../../lib/frame.ts";
+import { LoadingContext } from "../../lib/loading.ts";
 import { useTouch } from "../../lib/media.ts";
 import { navigate } from "../../lib/navigate.ts";
+import {
+	SectionContext,
+	useSectionCount,
+	useSectionRows,
+	useSectionWait,
+} from "../../lib/section.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Checkbox } from "../checkbox/index.tsx";
 import { Chip } from "../chip/index.tsx";
+import { EmptyStateBase } from "../empty-state/base.tsx";
 import { Icon } from "../icon/index.tsx";
 import { Input } from "../input/index.tsx";
 import { List, type RowSlots } from "../list/index.tsx";
 import { PickerBase } from "../picker/base.tsx";
+import type { QueryLike } from "../query-boundary/index.tsx";
 import { StatusBase } from "../status/base.tsx";
 import { Status } from "../status/index.tsx";
 
@@ -138,17 +155,34 @@ interface Sort {
 	direction: Direction;
 }
 
-interface TableBase extends Closed {
-	/** The columns in order, the first the row's name. */
-	columns: readonly TableColumn[];
-	/** The records, each its cells by column key. */
-	rows: readonly TableRow[];
+/** Where a table's records come from. */
+type TableSource<T> =
+	| {
+			/** The query whose items the rows draw. */
+			query: QueryLike<readonly T[]>;
+			/** What failed to load, over the retry act. */
+			sentence: string;
+			items?: never;
+			loading?: never;
+	  }
+	| {
+			/** The items the rows draw. */
+			items: readonly T[];
+			/** The items are on their way (a compound body's loading form): the rows wait. */
+			loading?: boolean;
+			query?: never;
+			sentence?: never;
+	  };
+
+interface TableBase<T> extends Closed {
+	/** The columns in order, the first the row's name, each reading its cell from the item. */
+	columns: readonly TableColumn<T>[];
+	/** The row's own slots, each read from the item. */
+	row: TableRowSlots<T>;
 	/** The open record's id, washed as selected. */
 	selected?: string;
 	/** What the table holds while it has no rows, an `EmptyState`. */
 	empty?: ReactNode;
-	/** The rows wait: the header stands over skeleton rows at the loaded height. */
-	loading?: boolean;
 }
 
 interface Reads {
@@ -163,8 +197,10 @@ interface Edits {
 	onEdit?: (id: string, key: string, value: CellValue) => void;
 }
 
-/** Records in columns. */
-export type TableProps = TableBase & (Reads | Edits);
+/** Records in columns, from a query or from items. */
+export type TableProps<T = unknown> = TableBase<T> &
+	TableSource<T> &
+	(Reads | Edits);
 
 function optionsOf(column: TableColumn): readonly Option<string | null>[] {
 	if (column.edit?.control !== "picker") return [];
@@ -197,10 +233,10 @@ function order(
 
 // Rows by the sorted column, an empty cell last either way.
 function sorted(
-	rows: readonly TableRow[],
+	rows: readonly TableRecord[],
 	columns: readonly TableColumn[],
 	sort: Sort | undefined,
-): readonly TableRow[] {
+): readonly TableRecord[] {
 	const column = columns.find((c) => c.key === sort?.key);
 	if (!sort || !column) return rows;
 	const sign = sort.direction === "ascending" ? 1 : -1;
@@ -238,55 +274,75 @@ function editOf(
 	columns: readonly TableColumn[],
 	at: number,
 	edits: boolean,
-	row: TableRow,
+	row: TableRecord,
 ) {
 	const column = columns[at];
 	if (!edits || at === 0 || row.locked?.includes(column?.key ?? "")) return;
 	return column?.edit;
 }
 
-/** From `tablet` of its page a grid: a header of sortable acts (the table sorts in its own state: newest or largest first, then turned over, then off) over one row per record, its leading cell the record's name; on touch every column stands at the short measure and the grid scrolls sideways under its frozen leading column. Its keyboard is a cell cursor (one Tab stop, the arrows, Home and End; Enter opens the row from its leading cell or edits an editable cell, Space ticks a check, Escape leaves an edit); a press on a row opens it, a press on an editable value edits it in place: typed in an `Input`, picked in a `Picker`, ticked in a `Checkbox`. Below `tablet` one `ListRow` per record (its leading cell the title, its age trailing, its status and chip the marks, the other values its meta line) under the sort's pick. */
-export function Table({
-	columns,
-	rows,
-	selected,
-	onOpen,
-	onEdit,
-	empty,
-	loading,
-}: TableProps) {
+/** From `tablet` of its page a grid: a header of sortable acts (the table sorts in its own state: newest or largest first, then turned over, then off) over one row per record, its leading cell the record's name; on touch every column stands at the short measure and the grid scrolls sideways under its frozen leading column. Its keyboard is a cell cursor (one Tab stop, the arrows, Home and End; Enter opens the row from its leading cell or edits an editable cell, Space ticks a check, Escape leaves an edit); a press on a row opens it, a press on an editable value edits it in place: typed in an `Input`, picked in a `Picker`, ticked in a `Checkbox`. Below `tablet` one `ListRow` per record (its leading cell the title, its age trailing, its status and chip the marks, the other values its meta line) under the sort's pick. It draws its four states: while its query is pending, `loading` is set or a loading Section around it waits, the header stands over skeleton rows (on touch, the list's waiting rows; a Section around busy, its count waiting); a failed query draws the failed EmptyState with `sentence` and Retry, under the header on the grid; no row draws `empty`; then one row per item, which a Section around counts. */
+export function Table<T>(props: TableProps<T>) {
+	const { columns, selected, onOpen, onEdit, empty } = props;
+	const words = useWords();
 	const [sort, setSort] = useState<Sort>();
-	const shownRows = sorted(rows, columns, sort);
-	const blank = !loading && rows.length === 0;
-	const emptySlot = blank ? (
-		<div className={cn(TABLE_EMPTY, EMPTY)}>{empty}</div>
-	) : null;
+	const base = {
+		query: props.query,
+		items: props.items,
+		loading: props.loading,
+		sectionLoading: use(LoadingContext),
+		inSection: false,
+		hasEmpty: empty !== undefined,
+	};
+	const input = { ...base, inSection: useSectionWait(listWaits(base)) };
+	useSectionCount(listCount(input));
+	useSectionRows();
+	const state = listState(input);
+	const waiting = state === "pending";
+	const items = (props.query ? props.query.data : props.items) ?? [];
+	const records = waiting
+		? []
+		: sorted(tableRecords(items, columns, props.row), columns, sort);
+	let slot: ReactNode = null;
+	if (state === "failed" && props.query)
+		slot = (
+			<EmptyStateBase
+				tone="failed"
+				sentence={props.sentence}
+				act={{ label: words.retry, onAct: retryOf(props.query) }}
+			/>
+		);
+	else if (state === "empty") slot = empty;
+	const below =
+		slot === null ? null : <div className={cn(TABLE_EMPTY, EMPTY)}>{slot}</div>;
 	return (
 		<div className={ROOT}>
 			<Grid
 				columns={columns}
-				rows={shownRows}
+				rows={records}
 				sort={sort}
 				onSort={(key) => setSort((current) => next(current, key))}
 				selected={selected}
 				onOpen={onOpen}
 				onEdit={onEdit}
-				loading={loading}
+				loading={waiting}
 			>
-				{emptySlot}
+				{below}
 			</Grid>
 			<div className={LIST_FORM}>
-				{blank ? (
-					emptySlot
-				) : (
-					<Phone
-						columns={columns}
-						rows={shownRows}
-						sort={sort}
-						onSort={setSort}
-						onOpen={onOpen}
-						loading={loading}
-					/>
+				{below ?? (
+					// The Table reports to the Section around it once; its touch
+					// List is its own part, not a list of the Section.
+					<SectionContext value={undefined}>
+						<Phone
+							columns={columns}
+							rows={records}
+							sort={sort}
+							onSort={setSort}
+							onOpen={onOpen}
+							loading={waiting}
+						/>
+					</SectionContext>
 				)}
 			</div>
 		</div>
@@ -300,7 +356,7 @@ interface Cursor {
 
 function Grid(props: {
 	columns: readonly TableColumn[];
-	rows: readonly TableRow[];
+	rows: readonly TableRecord[];
 	sort: Sort | undefined;
 	onSort: (key: string) => void;
 	selected: string | undefined;
@@ -368,11 +424,11 @@ function Grid(props: {
 			}),
 		);
 	};
-	const open = (row: TableRow) => {
+	const open = (row: TableRecord) => {
 		if (props.onOpen) props.onOpen(row.id);
 		else if (row.href !== undefined) navigate(row.href);
 	};
-	const edit = (row: TableRow, column: TableColumn, value: CellValue) =>
+	const edit = (row: TableRecord, column: TableColumn, value: CellValue) =>
 		props.onEdit?.(row.id, column.key, value);
 
 	const onFocus = (event: FocusEvent) => {
@@ -456,7 +512,7 @@ function Grid(props: {
 	};
 	// A press on a row opens it, unless it lands on an editable cell or the
 	// leading cell's link, which answer it themselves.
-	const onClick = (event: MouseEvent, row: TableRow) => {
+	const onClick = (event: MouseEvent, row: TableRecord) => {
 		const target = event.target as HTMLElement;
 		// A pick in a cell's popup reaches the row through React's tree alone.
 		if (!event.currentTarget.contains(target)) return;
@@ -465,7 +521,7 @@ function Grid(props: {
 	};
 
 	const opens = props.onOpen !== undefined;
-	const cells = (row: TableRow, index: number) =>
+	const cells = (row: TableRecord, index: number) =>
 		columns.map((column, place) => {
 			const frozen = touch && place === 0;
 			const chosen = row.id === props.selected;
@@ -847,7 +903,7 @@ function SkeletonRow(props: {
 // Below `tablet`: the sort's pick over one ListRow per record.
 function Phone(props: {
 	columns: readonly TableColumn[];
-	rows: readonly TableRow[];
+	rows: readonly TableRecord[];
 	sort: Sort | undefined;
 	onSort: (sort: Sort) => void;
 	onOpen: ((id: string) => void) | undefined;
@@ -891,12 +947,12 @@ function Phone(props: {
 			/>
 		</div>
 	) : null;
-	const cell = (record: TableRow, column: TableColumn | undefined) =>
+	const cell = (record: TableRecord, column: TableColumn | undefined) =>
 		column ? record.cells[column.key] : undefined;
 	const { onOpen } = props;
 	// A slot is declared only when a column fills it, so the waiting rows
 	// stand in the slots the loaded ones draw.
-	const row: RowSlots<TableRow> = {
+	const row: RowSlots<TableRecord> = {
 		key: (record) => record.id,
 		title: (record) =>
 			leading ? shown(leading, cell(record, leading)) : record.id,

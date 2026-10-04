@@ -232,13 +232,16 @@ interface ColumnBase {
 // A column by the kind of value its cells hold, each kind with the edits
 // that fit it: `text` and `source` (mono) are strings, typed or picked;
 // `number` is typed; `chip` is a picked value drawn on the column's family;
-// `check` is ticked; `status` and `age` (an ISO moment) are read only.
-export type TableColumn =
+// `check` is ticked; `status` and `age` (an ISO moment) are read only. Its
+// `cell` reads its value from an item. Bare (`T` never), it is a column over
+// any item, its cell taking none.
+export type TableColumn<T = never> = (
 	| (ColumnBase & { kind?: "text" | "source"; edit?: CellInput | CellPick })
 	| (ColumnBase & { kind: "number"; edit?: CellInput })
 	| (ColumnBase & { kind: "chip"; family: ChipFamily; edit?: CellPick })
 	| (ColumnBase & { kind: "check"; edit?: CellCheck })
-	| (ColumnBase & { kind: "status" | "age"; edit?: never });
+	| (ColumnBase & { kind: "status" | "age"; edit?: never })
+) & { cell: (item: T) => TableCell };
 
 export interface StatusCell {
 	status: StatusState;
@@ -253,11 +256,11 @@ export type TableCell = string | number | boolean | StatusCell | null;
 // picked cell cleared by its empty choice.
 export type CellValue = string | number | boolean | null;
 
-// A row with `href` is its leading cell's link, so it opens in a new tab;
-// `locked` names the columns whose cells this row draws read only.
-export interface TableRow {
-	id: string;
-	href?: string;
-	cells: Record<string, TableCell>;
-	locked?: readonly string[];
+// A table row's own slots, each read from the item: its id, unique in the
+// table; `href`, its leading cell's link, so it opens in a new tab; and
+// `locked`, the columns whose cells it draws read only.
+export interface TableRowSlots<T> {
+	id: (item: T) => string;
+	href?: (item: T) => string | undefined;
+	locked?: (item: T) => readonly string[] | undefined;
 }

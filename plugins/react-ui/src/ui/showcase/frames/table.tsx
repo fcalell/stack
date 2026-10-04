@@ -1,11 +1,12 @@
 import type {
 	CellValue,
+	StatusCell,
 	TableColumn,
-	TableRow,
 } from "@fcalell/ui-core/descriptors";
 import { type ReactNode, useLayoutEffect, useRef, useState } from "react";
 import { EmptyState } from "../../components/empty-state/index.tsx";
 import { Place } from "../../components/place/index.tsx";
+import type { QueryLike } from "../../components/query-boundary/index.tsx";
 import { Table } from "../../components/table/index.tsx";
 import { PortalContainer } from "../../lib/portal.ts";
 import type { ShowcaseFrame } from "../cells.ts";
@@ -15,15 +16,33 @@ import { Column } from "./place.tsx";
 const act = () => {};
 const QUEUES = ["billing", "mail", "search", "storage"];
 
+interface Task {
+	id: string;
+	task: string;
+	schedule: string;
+	queue: string | null;
+	retries: number;
+	alerts: boolean;
+	last: StatusCell;
+	updated: string;
+}
+
 // Board 52's columns, one of each kind.
-const COLUMNS: TableColumn[] = [
-	{ key: "task", label: "Task", width: "1/4", sortable: true },
+const COLUMNS: TableColumn<Task>[] = [
+	{
+		key: "task",
+		label: "Task",
+		width: "1/4",
+		sortable: true,
+		cell: (task) => task.task,
+	},
 	{
 		key: "schedule",
 		label: "Schedule",
 		kind: "source",
 		width: "measure-short",
 		edit: { control: "input" },
+		cell: (task) => task.schedule,
 	},
 	{
 		key: "queue",
@@ -39,6 +58,7 @@ const COLUMNS: TableColumn[] = [
 				...QUEUES.map((queue) => ({ value: queue, label: queue })),
 			],
 		},
+		cell: (task) => task.queue,
 	},
 	{
 		key: "retries",
@@ -46,12 +66,14 @@ const COLUMNS: TableColumn[] = [
 		kind: "number",
 		sortable: true,
 		edit: { control: "input" },
+		cell: (task) => task.retries,
 	},
 	{
 		key: "alerts",
 		label: "Alerts",
 		kind: "check",
 		edit: { control: "checkbox" },
+		cell: (task) => task.alerts,
 	},
 	{
 		key: "last",
@@ -59,6 +81,7 @@ const COLUMNS: TableColumn[] = [
 		kind: "status",
 		width: "measure-short",
 		sortable: true,
+		cell: (task) => task.last,
 	},
 	{
 		key: "updated",
@@ -66,106 +89,102 @@ const COLUMNS: TableColumn[] = [
 		kind: "age",
 		width: "measure-short",
 		sortable: true,
+		cell: (task) => task.updated,
 	},
 ];
+
+const ROW = {
+	id: (task: Task) => task.id,
+	href: (task: Task) => `#${task.id}`,
+};
 
 const ago = (minutes: number) =>
 	new Date(Date.now() - minutes * 60_000).toISOString();
 
-const ROWS: TableRow[] = [
+const TASKS: Task[] = [
 	{
 		id: "backup",
-		href: "#backup",
-		cells: {
-			task: "Nightly backup",
-			schedule: "0 3 * * *",
-			queue: "storage",
-			retries: 3,
-			alerts: true,
-			last: { status: "done", label: "Succeeded" },
-			updated: ago(2),
-		},
+		task: "Nightly backup",
+		schedule: "0 3 * * *",
+		queue: "storage",
+		retries: 3,
+		alerts: true,
+		last: { status: "done", label: "Succeeded" },
+		updated: ago(2),
 	},
 	{
 		id: "invoices",
-		href: "#invoices",
-		cells: {
-			task: "Invoice sweep",
-			schedule: "*/15 * * * *",
-			queue: "billing",
-			retries: 5,
-			alerts: true,
-			last: { status: "active", label: "Running" },
-			updated: ago(6),
-		},
+		task: "Invoice sweep",
+		schedule: "*/15 * * * *",
+		queue: "billing",
+		retries: 5,
+		alerts: true,
+		last: { status: "active", label: "Running" },
+		updated: ago(6),
 	},
 	{
 		id: "reindex",
-		href: "#reindex",
-		cells: {
-			task: "Search reindex",
-			schedule: "0 */6 * * *",
-			queue: "search",
-			retries: 1,
-			alerts: false,
-			last: { status: "failed", label: "Failed" },
-			updated: ago(60),
-		},
+		task: "Search reindex",
+		schedule: "0 */6 * * *",
+		queue: "search",
+		retries: 1,
+		alerts: false,
+		last: { status: "failed", label: "Failed" },
+		updated: ago(60),
 	},
 	{
 		id: "purge",
-		href: "#purge",
-		cells: {
-			task: "Session purge",
-			schedule: "30 2 * * 0",
-			queue: null,
-			retries: 0,
-			alerts: false,
-			last: { status: "idle", label: "Paused" },
-			updated: ago(180),
-		},
+		task: "Session purge",
+		schedule: "30 2 * * 0",
+		queue: null,
+		retries: 0,
+		alerts: false,
+		last: { status: "idle", label: "Paused" },
+		updated: ago(180),
 	},
 	{
 		id: "digest",
-		href: "#digest",
-		cells: {
-			task: "Weekly digest",
-			schedule: "0 9 * * 1",
-			queue: "mail",
-			retries: 2,
-			alerts: true,
-			last: { status: "waiting", label: "Queued" },
-			updated: ago(60 * 26),
-		},
+		task: "Weekly digest",
+		schedule: "0 9 * * 1",
+		queue: "mail",
+		retries: 2,
+		alerts: true,
+		last: { status: "waiting", label: "Queued" },
+		updated: ago(60 * 26),
 	},
 	{
 		id: "rollup",
-		href: "#rollup",
-		cells: {
-			task: "Usage rollup",
-			schedule: "5 * * * *",
-			queue: "billing",
-			retries: 3,
-			alerts: true,
-			last: { status: "attention", label: "Slow" },
-			updated: ago(60 * 48),
-		},
+		task: "Usage rollup",
+		schedule: "5 * * * *",
+		queue: "billing",
+		retries: 3,
+		alerts: true,
+		last: { status: "attention", label: "Slow" },
+		updated: ago(60 * 48),
 	},
 ];
 
+// The frame's query in its state over the tasks it holds: pending while
+// loading, failed on error, none when empty, else the tasks.
+function queryOf(
+	state: ShowcaseFrame["state"],
+	tasks: readonly Task[],
+): QueryLike<readonly Task[]> {
+	const answered = state !== "loading" && state !== "error";
+	return {
+		data: answered ? (state === "empty" ? [] : tasks) : undefined,
+		isPending: state === "loading",
+		isError: state === "error",
+		refetch: act,
+	};
+}
+
 // The frame's table with its edits held in the frame's own state.
-function Tasks(props: {
-	readOnly?: boolean;
-	selected?: string;
-	loading?: boolean;
-	empty?: boolean;
-}) {
-	const [rows, setRows] = useState(ROWS);
+function Tasks(props: { readOnly?: boolean; state: ShowcaseFrame["state"] }) {
+	const [tasks, setTasks] = useState(TASKS);
 	const change = (id: string, at: string, value: CellValue) =>
-		setRows((current) =>
-			current.map((row) =>
-				row.id === id ? { ...row, cells: { ...row.cells, [at]: value } } : row,
-			),
+		setTasks((current) =>
+			current.map((task) => (task.id === id ? { ...task, [at]: value } : task)),
 		);
 	const empty = (
 		<EmptyState
@@ -177,13 +196,14 @@ function Tasks(props: {
 	return (
 		<Place title="Cron tasks" act={{ label: "New task", onAct: act }}>
 			{props.readOnly ? (
-				<Table columns={COLUMNS} rows={rows} onOpen={act} />
+				<Table columns={COLUMNS} items={tasks} row={ROW} onOpen={act} />
 			) : (
 				<Table
 					columns={COLUMNS}
-					rows={props.empty ? [] : rows}
-					selected={props.selected}
-					loading={props.loading}
+					query={queryOf(props.state, tasks)}
+					sentence="Cron tasks did not load."
+					row={ROW}
+					selected={props.state === "selected" ? "reindex" : undefined}
 					empty={empty}
 					onOpen={act}
 					onEdit={change}
@@ -268,17 +288,12 @@ const READY: Partial<Record<string, (frame: HTMLElement) => void>> = {
 // The Table on every cell it draws, the cell picking what the frame shows: an
 // edit open on the field's cells, a read-only grid (the check as its glyph)
 // on the body icon, an ascending sort on the sorted label, the rest sorted
-// newest first. The state picks the data: the open record selected, loading,
-// empty.
+// newest first. The state picks the query's answer: the open record
+// selected, pending, failed, empty.
 export function drawTable(frame: ShowcaseFrame) {
 	const cell = frame.cell.name;
 	const tasks = (
-		<Tasks
-			readOnly={cell === "ICON.fit.body"}
-			selected={frame.state === "selected" ? "reindex" : undefined}
-			loading={frame.state === "loading"}
-			empty={frame.state === "empty"}
-		/>
+		<Tasks readOnly={cell === "ICON.fit.body"} state={frame.state} />
 	);
 	// The picked edit: the queue's chips in the popover, or on touch in the
 	// pick sheet, held inside the frame.

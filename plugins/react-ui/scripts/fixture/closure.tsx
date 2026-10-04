@@ -577,16 +577,16 @@ export const closure = (
 		<Thread items={[]} message={{ key: String, author: () => "you", body: String }} class="x" />
 		{/* @ts-expect-error: closed channel */}
 		<Thread items={[]} message={{ key: String, author: () => "you", body: String }} classList={{}} />
-		<Table columns={[]} rows={[]} />
+		<Table columns={[]} items={[]} row={{ id: String }} />
 		{/* @ts-expect-error: closed channel */}
-		<Table columns={[]} rows={[]} className="x" />
+		<Table columns={[]} items={[]} row={{ id: String }} className="x" />
 		{/* @ts-expect-error: closed channel */}
-		<Table columns={[]} rows={[]} style={{ flex: 1 }} />
+		<Table columns={[]} items={[]} row={{ id: String }} style={{ flex: 1 }} />
 		{/* @ts-expect-error: closed channel */}
-		<Table columns={[]} rows={[]} class="x" />
+		<Table columns={[]} items={[]} row={{ id: String }} class="x" />
 		{/* @ts-expect-error: closed channel */}
-		<Table columns={[]} rows={[]} classList={{}} />
+		<Table columns={[]} items={[]} row={{ id: String }} classList={{}} />
 		{/* @ts-expect-error: onEdit requires onOpen */}
-		<Table columns={[]} rows={[]} onEdit={() => {}} />
+		<Table columns={[]} items={[]} row={{ id: String }} onEdit={() => {}} />
 	</>
 );

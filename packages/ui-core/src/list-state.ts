@@ -1,8 +1,14 @@
-// The decisions a collection (a `List`, an `OptionList`) and the `Section`
-// around it make before they draw, free of any framework: both platforms run
-// this one source, and it is tested without rendering.
+// The decisions a collection (a `List`, a `Table`, an `OptionList`) and the
+// `Section` around it make before they draw, free of any framework: both
+// platforms run this one source, and it is tested without rendering.
 
-import type { Option, OptionGroup } from "./descriptors.ts";
+import type {
+	Option,
+	OptionGroup,
+	TableCell,
+	TableColumn,
+	TableRowSlots,
+} from "./descriptors.ts";
 import type { RowGround } from "./variants.ts";
 
 export type ListState = "pending" | "failed" | "empty" | "loaded";
@@ -257,3 +263,28 @@ export const WAITING_MESSAGES = [
 	{ key: 1, author: "you" },
 	{ key: 2, author: "other" },
 ] as const;
+
+// One table row as both of its forms draw it: its own slots and each
+// column's cell by key, read from its item once.
+export interface TableRecord {
+	id: string;
+	href: string | undefined;
+	locked: readonly string[] | undefined;
+	cells: Readonly<Record<string, TableCell>>;
+}
+
+// The Table's rows: each item through the row map and every column's `cell`.
+export function tableRecords<T>(
+	items: readonly T[],
+	columns: readonly TableColumn<T>[],
+	row: TableRowSlots<T>,
+): TableRecord[] {
+	return items.map((item) => ({
+		id: row.id(item),
+		href: row.href?.(item),
+		locked: row.locked?.(item),
+		cells: Object.fromEntries(
+			columns.map((column) => [column.key, column.cell(item)]),
+		),
+	}));
+}

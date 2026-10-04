@@ -1,6 +1,6 @@
 ---
 id: 004-05
-status: backlog
+status: review
 sessions: {}
 ---
 # react-ui, native-ui: a Table takes its query and reads its cells from the item
@@ -37,6 +37,9 @@ Web and phone take the same props. Needs a query (a record set is the table's co
 `items` (rows held in local state while they edit, as the members table does). Depends on 004-02.
 
 ## Acceptance criteria
-- [ ] (test) both plugins' `Table` take `query`/`items` + `row` + `sentence`, `TableColumn` reads its cell by `cell`, and `rows` is gone from the roster entry.
-- [ ] (test) a Table whose query failed draws the failed form with Retry, which refetches.
+- [x] (test) both plugins' `Table` take `query`/`items` + `row` + `sentence`, `TableColumn` reads its cell by `cell`, and `rows` is gone from the roster entry.
+- [x] (test) a Table whose query failed draws the failed form with Retry, which refetches.
 - [ ] (live) the members page passes its query to the Table, with no `QueryBoundary` or twin around it.
+
+## Progress
+Built on web and phone; `pnpm check` and `pnpm verify` pass. The web mounts the grid and the touch List together, so the touch List stands under an empty `SectionContext` to keep the Section from counting rows twice. Open: the live check (web per batch, phone on the harness).

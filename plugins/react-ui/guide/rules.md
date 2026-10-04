@@ -51,6 +51,10 @@ stay whole as the later parts, then the chip, truncate. A Section counts them. A
 static rows; rows from data in a card are a `List` placed in the `Group`, drawing its four states
 on the card, never a `.map` of `ListRow`s or `Meter`s.
 
+A `Table` takes its data the same way: `query` with `sentence`, or `items`; each column reads its
+cell from the item by `cell`, and `row` gives the row's `id`, `href` and `locked`. It draws its
+four states itself, with no `QueryBoundary` around it.
+
 ```tsx
 <List
   query={notes}

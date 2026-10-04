@@ -77,8 +77,8 @@ declare const count: QueryLike<number>;
 declare const names: QueryLike<string[]>;
 declare const live: UseQueryResult<{ id: string }[], Error>;
 const columns: TableColumn[] = [
-	{ key: "name", label: "a", edit: { control: "input" } },
-	{ key: "state", label: "a", kind: "status" },
+	{ key: "name", label: "a", edit: { control: "input" }, cell: () => "a" },
+	{ key: "state", label: "a", kind: "status", cell: () => null },
 ];
 
 export const closure = (
@@ -758,25 +758,25 @@ export const closure = (
 		<Code text="a" title="a" copy />
 		<Place title="a" bleed />
 		<ListRow title="a" more={[{ label: "a", onAct: noop }]} />
-		<Table columns={columns} rows={[]} selected="a" onOpen={noop} onEdit={noop} empty={null} loading />
+		<Table columns={columns} items={[]} row={{ id: String }} selected="a" onOpen={noop} onEdit={noop} empty={null} loading />
 		{/* @ts-expect-error: a status column never edits */}
-		<Table columns={[{ key: "a", label: "a", kind: "status", edit: { control: "input" } }]} rows={[]} />
+		<Table columns={[{ key: "a", label: "a", kind: "status", edit: { control: "input" }, cell: () => null }]} items={[]} row={{ id: String }} />
 		{/* @ts-expect-error: closed channel */}
-		<Table columns={[]} rows={[]} className="x" />
+		<Table columns={[]} items={[]} row={{ id: String }} className="x" />
 		{/* @ts-expect-error: closed channel */}
-		<Table columns={[]} rows={[]} style={{ flex: 1 }} />
+		<Table columns={[]} items={[]} row={{ id: String }} style={{ flex: 1 }} />
 		{/* @ts-expect-error: closed channel */}
-		<Table columns={[]} rows={[]} class="x" />
+		<Table columns={[]} items={[]} row={{ id: String }} class="x" />
 		{/* @ts-expect-error: closed channel */}
-		<Table columns={[]} rows={[]} classList={{}} />
+		<Table columns={[]} items={[]} row={{ id: String }} classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<Table columns={[]} rows={[]} colorClassName="text-ink-body" />
+		<Table columns={[]} items={[]} row={{ id: String }} colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Table columns={[]} rows={[]} selectionColorClassName="text-ink-body" />
+		<Table columns={[]} items={[]} row={{ id: String }} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Table columns={[]} rows={[]} placeholderTextColorClassName="text-ink-body" />
+		<Table columns={[]} items={[]} row={{ id: String }} placeholderTextColorClassName="text-ink-body" />
 		{/* @ts-expect-error: onEdit requires onOpen */}
-		<Table columns={[]} rows={[]} onEdit={noop} />
+		<Table columns={[]} items={[]} row={{ id: String }} onEdit={noop} />
 		<FileRow path="a" added={1} removed={0} />
 		{/* @ts-expect-error: closed channel */}
 		<FileRow path="a" added={1} removed={0} className="x" />

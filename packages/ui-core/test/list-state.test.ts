@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import type { TableColumn } from "../src/descriptors.ts";
 import {
 	factShape,
 	groupWait,
@@ -13,6 +14,7 @@ import {
 	retryOf,
 	rowShape,
 	sectionCount,
+	tableRecords,
 } from "../src/list-state.ts";
 
 const refetch = () => {};
@@ -191,4 +193,78 @@ test("a pending Comparison with three columns draws three bars per row, and a ch
 	assert.deepEqual(factShape(columns, { chips }), { values: 3, chips: true });
 	assert.equal(factShape(["Team", "Business"], {}).values, 2);
 	assert.deepEqual(calls, []);
+});
+
+interface Member {
+	id: string;
+	name: string;
+	role: string;
+	owner: boolean;
+}
+
+const MEMBERS: Member[] = [
+	{ id: "ana", name: "Ana Ruiz", role: "admin", owner: true },
+	{ id: "ben", name: "Ben Kaya", role: "member", owner: false },
+];
+const COLUMNS: TableColumn<Member>[] = [
+	{ key: "name", label: "Name", cell: (member) => member.name },
+	{ key: "role", label: "Role", cell: (member) => member.role || null },
+	{
+		key: "owner",
+		label: "Owner",
+		kind: "check",
+		cell: (member) => member.owner,
+	},
+];
+
+test("a table's rows read each column's cell and the row map from the item", () => {
+	assert.deepEqual(
+		tableRecords(MEMBERS, COLUMNS, {
+			id: (member) => member.id,
+			href: (member) => `/members/${member.id}`,
+			locked: (member) => (member.owner ? ["role"] : undefined),
+		}),
+		[
+			{
+				id: "ana",
+				href: "/members/ana",
+				locked: ["role"],
+				cells: { name: "Ana Ruiz", role: "admin", owner: true },
+			},
+			{
+				id: "ben",
+				href: "/members/ben",
+				locked: undefined,
+				cells: { name: "Ben Kaya", role: "member", owner: false },
+			},
+		],
+	);
+	assert.deepEqual(
+		tableRecords(MEMBERS.slice(0, 1), COLUMNS, { id: (m) => m.id }),
+		[
+			{
+				id: "ana",
+				href: undefined,
+				locked: undefined,
+				cells: { name: "Ana Ruiz", role: "admin", owner: true },
+			},
+		],
+	);
+});
+
+test("a Table whose query failed draws the failed form, and its Retry refetches", () => {
+	let calls = 0;
+	const failed = {
+		isPending: false,
+		isError: true,
+		data: undefined,
+		refetch: () => {
+			calls++;
+		},
+	};
+	const input = { ...base, query: failed, inSection: true };
+	assert.equal(listState(input), "failed");
+	assert.equal(listCount(input), undefined);
+	retryOf(failed)();
+	assert.equal(calls, 1);
 });

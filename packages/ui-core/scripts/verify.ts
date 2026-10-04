@@ -1700,12 +1700,15 @@ check(
 			if (params === undefined) continue;
 			// A field binding is generic in the value its field holds, and an
 			// option (or a row's trailing pick of options) in the string it picks
-			// or the empty choice's null, all data.
+			// or the empty choice's null, all data; a table's column and its row
+			// map in the item they read.
 			assert(
 				(/^<V>$/.test(params) && /\bField\w+<V>/.test(header[0])) ||
 					(/^<V extends string \| null = string>$/.test(params) &&
-						/\b(?:Option|Row)\w*</.test(header[0])),
-				`type parameters must be exactly <V> on a field binding, or <V extends string | null = string> on an option or a row's pick, got ${params}`,
+						/\b(?:Option|Row)\w*</.test(header[0])) ||
+					(/^<T = never>$/.test(params) && /\bTableColumn</.test(header[0])) ||
+					(/^<T>$/.test(params) && /\bTableRowSlots</.test(header[0])),
+				`type parameters must be exactly <V> on a field binding, <V extends string | null = string> on an option or a row's pick, <T = never> on a table column or <T> on its row map, got ${params}`,
 			);
 		}
 		for (const name of [
@@ -1731,7 +1734,7 @@ check(
 			"TableColumn",
 			"TableCell",
 			"CellValue",
-			"TableRow",
+			"TableRowSlots",
 		]) {
 			assert(
 				new RegExp(`^export (?:interface|type) ${name}\\b`, "m").test(source),
