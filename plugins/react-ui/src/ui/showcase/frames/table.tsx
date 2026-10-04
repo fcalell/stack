@@ -237,9 +237,13 @@ function Driven(props: {
 	);
 }
 
-// The header pressed, a frame apart, until its column sorts the way asked,
-// so a drive run twice (StrictMode) lands in the same state: a press renders
-// its sort after it returns, and a second drive waits on the first.
+// A header's presses turn its column's sort through this cycle.
+const SORT_CYCLE = ["none", "descending", "ascending"];
+
+// The header pressed, at once, as many times as its column's sort cycle
+// needs to sort the way asked: each press queues the Table's next sort on
+// the last, so one drive lands in one commit. The header keeps a mark, so a
+// drive run twice (StrictMode) presses once.
 function sortBy(
 	frame: HTMLElement,
 	label: string,
@@ -249,19 +253,13 @@ function sortBy(
 		(button) => button.textContent === label,
 	);
 	const column = head?.closest("th");
-	if (!head || !column || head.dataset.driving) return;
-	head.dataset.driving = "";
-	let presses = 0;
-	const step = () => {
-		if (column.getAttribute("aria-sort") === direction || presses === 3) {
-			delete head.dataset.driving;
-			return;
-		}
-		presses++;
-		head.click();
-		requestAnimationFrame(step);
-	};
-	step();
+	if (!head || !column || head.dataset.driven !== undefined) return;
+	head.dataset.driven = "";
+	const at = SORT_CYCLE.indexOf(column.getAttribute("aria-sort") ?? "none");
+	const presses =
+		(SORT_CYCLE.indexOf(direction) - at + SORT_CYCLE.length) %
+		SORT_CYCLE.length;
+	for (let press = 0; press < presses; press++) head.click();
 }
 
 // The cursor on a cell, its edit opened by Enter.
