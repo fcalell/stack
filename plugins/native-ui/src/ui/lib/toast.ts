@@ -48,5 +48,6 @@ export function useToasts(): ToastEntry[] {
 	return useSyncExternalStore(subscribe, () => entries);
 }
 
-// The queued toast a `Toast` stands for: the layer hands each its dismissal.
-export const ToastEntry = createContext<(() => void) | undefined>(undefined);
+// The queued toast a `Toast` stands for: the layer hands each its id, which it
+// dismisses itself by.
+export const ToastEntry = createContext<number | undefined>(undefined);

@@ -227,7 +227,9 @@ a tick with no animation, never jumped to full.
   that makes a new one, which the Picker draws under a hairline (`HAIRLINE`) after the options as
   a `ROW` (the Picker's `act` prop). The Shell draws its own trigger (a place row, `SWITCHER` on
   touch) over the Picker's list through its internal base. Rejected: a switcher menu of its own,
-  a second list of the same rows. A Picker stands outside a form; a form's pick is `Select`.
+  a second list of the same rows. The Shell hands its `Switcher` descriptor down (`ShellSwitcher`), and
+  each Place draws the touch trigger from it, so the context changes only when the switcher does
+  and a Shell state change re-renders no Place. A Picker stands outside a form; a form's pick is `Select`.
 - On touch the places past the tab bar are a page, not a menu: the More tab opens a `Place` of
   `ListRow`s (each place's glyph leading, its count trailing, its route), and while a Place's act
   floats the toasts stand above it by the act's room; while a foot docks (a Place's `foot`, a
@@ -537,9 +539,11 @@ a tick with no animation, never jumped to full.
 - A content molecule derives once per input: `Prose` lexes and folds its markdown, `Diff` runs
   its patch, `ProseDiff` its word diff and runs, and `QrCode` its encoding and module path, each
   memoised on its text and skipped while it waits (a waiting QR tile draws a version 2 code's 25
-  modules and encodes nothing). `Message` is memoised on its props, so a thread's re-render
-  skips each reply and bubble whose author, body and time are unchanged; a system line whose
-  `onOpen` or `detail` the thread builds afresh renders again. The showcase compiles the
+  modules and encodes nothing). `Message` is memoised on its props, and the Thread draws each
+  item through a memoised item that renders again only when its item does: every slot reads the
+  item, and a system line's `onOpen` and a detail row's `onOpen` call the thread's latest slots
+  when pressed, so a thread's re-render (a keystroke in its input, a message arriving) skips every
+  message already drawn. The showcase compiles the
   workspace's plugin source with the React Compiler, which memoises on its own; a consumer's
   `node_modules` copy is not compiled, so these memos are explicit.
 - A `MessageInput` sends while an answer streams: `working` sets Stop before Send and leaves

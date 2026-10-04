@@ -1,4 +1,4 @@
-import type { IconAct } from "@fcalell/ui-core/descriptors";
+import type { IconAct, Switcher } from "@fcalell/ui-core/descriptors";
 import {
 	createContext,
 	type ReactNode,
@@ -9,10 +9,10 @@ import {
 import type { View } from "react-native";
 import type { Route } from "./route";
 
-// What the frame molecules hand each other. The Shell hands its switcher's
-// trigger to each Place, which starts its top bar with it; a Screen never
-// reads it.
-export const ShellSwitcher = createContext<ReactNode>(null);
+// What the frame molecules hand each other. The Shell hands its switcher to
+// each Place, which draws its trigger at the start of its top bar; a Screen
+// never reads it.
+export const ShellSwitcher = createContext<Switcher | undefined>(undefined);
 
 // The Shell hands its tab bar to each Place, which draws it under its body; a
 // pushed Screen never reads it, so it covers the tab bar from its first frame

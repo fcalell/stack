@@ -1,11 +1,6 @@
 import { Toast as ToastControl } from "@base-ui/react/toast";
 import { cn } from "@fcalell/ui-core/cn";
-import type {
-	Option,
-	OptionGroup,
-	PlaceSpec,
-	Switcher,
-} from "@fcalell/ui-core/descriptors";
+import type { PlaceSpec, Switcher } from "@fcalell/ui-core/descriptors";
 import {
 	placeRow,
 	placeRowGlyph,
@@ -16,11 +11,9 @@ import {
 	SHELL_PLACES,
 	SHELL_SIDEBAR,
 	SHELL_TAB_BAR,
-	SWITCHER,
 	SWITCHER_SLOT,
 	TOASTS,
 	text,
-	textStrong,
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
@@ -29,14 +22,13 @@ import { useTouch } from "../../lib/media.ts";
 import { isCurrent, useRoute } from "../../lib/navigate.ts";
 import { toasts } from "../../lib/toast.ts";
 import { useWords } from "../../lib/words.tsx";
-import { Avatar } from "../avatar/index.tsx";
 import { Count } from "../count/index.tsx";
 import { Icon } from "../icon/index.tsx";
 import { List } from "../list/index.tsx";
-import { PickerBase } from "../picker/base.tsx";
 import { FloatingActRoom, Place } from "../place/index.tsx";
 import { Confirmations } from "../sheet/confirm.tsx";
 import { ToastList } from "../toast/layer.tsx";
+import { SwitcherPick } from "./switcher.tsx";
 
 // The shell fills the viewport; the page inside scrolls its own body.
 const FRAME = "flex h-dvh overflow-hidden";
@@ -70,11 +62,6 @@ const ROW_SELECTED_PRESS = "hover:bg-wash-selected-hover";
 const GLYPH = "flex shrink-0";
 const LABEL = "truncate grow";
 
-const TRIGGER = "flex items-center w-full focus-visible:-outline-offset-2";
-const TRIGGER_TOUCH = "flex items-center min-w-0";
-const NAME = "truncate grow text-left";
-const NAME_TOUCH = "truncate";
-
 const TABS = "flex pb-safe group-has-data-screen/column:hidden";
 const TAB =
 	"flex flex-col-reverse items-center justify-center min-w-0 grow basis-0 focus-visible:-outline-offset-2";
@@ -104,9 +91,6 @@ export function Shell({ places, banner, switcher, children }: ShellProps) {
 	// The More page stands at the route it opened on: going to a place closes it.
 	const [moreAt, setMoreAt] = useState<string>();
 	const more = moreAt === at;
-	const trigger = switcher ? (
-		<SwitcherPick switcher={switcher} touch={touch} />
-	) : null;
 	const route = places.find((spec) => isCurrent(spec.route, at))?.route;
 	const rest = places.length > TAB_ROOM ? places.slice(TAB_ROOM - 1) : [];
 	// The More page stands in the page's place while it is open on touch.
@@ -116,8 +100,10 @@ export function Shell({ places, banner, switcher, children }: ShellProps) {
 	// keeps the page.
 	const sidebar = touch ? null : (
 		<nav aria-label={words.places} className={cn(SHELL_SIDEBAR, SIDEBAR)}>
-			{trigger ? (
-				<div className={cn(SWITCHER_SLOT, SLOT)}>{trigger}</div>
+			{switcher ? (
+				<div className={cn(SWITCHER_SLOT, SLOT)}>
+					<SwitcherPick switcher={switcher} touch={false} />
+				</div>
 			) : null}
 			<div className={cn(SHELL_PLACES, PLACES)}>
 				{places.map((spec) => {
@@ -160,7 +146,7 @@ export function Shell({ places, banner, switcher, children }: ShellProps) {
 						<div className={cn(SHELL_BANNER, BANNER_SLOT)}>{banner}</div>
 					) : null}
 					<main className={MAIN}>
-						<ShellSwitcher value={trigger}>
+						<ShellSwitcher value={switcher}>
 							<PlaceRoute value={route}>{page}</PlaceRoute>
 						</ShellSwitcher>
 						<ToastControl.Viewport
@@ -178,65 +164,6 @@ export function Shell({ places, banner, switcher, children }: ShellProps) {
 			</div>
 			<Confirmations />
 		</ToastControl.Provider>
-	);
-}
-
-function flatten(options: Switcher["options"]): readonly Option[] {
-	const entries: readonly (Option | OptionGroup)[] = options;
-	return entries.flatMap((entry) =>
-		"options" in entry ? entry.options : [entry],
-	);
-}
-
-// The switcher is a pick (its options with their avatars, the current one
-// ticked, the act that makes a new one under a hairline), drawn as a place
-// row in the sidebar and a compact trigger in a touch top bar.
-function SwitcherPick(props: { switcher: Switcher; touch: boolean }) {
-	const { switcher, touch } = props;
-	const current = flatten(switcher.options).find(
-		(option) => option.value === switcher.value,
-	);
-	const name = current?.label ?? switcher.label;
-	return (
-		<PickerBase
-			label={switcher.label}
-			options={switcher.options}
-			value={switcher.value}
-			onChange={switcher.onChange}
-			act={switcher.act}
-			drawn={(handed, open) => (
-				<button
-					{...handed}
-					type="button"
-					aria-label={`${switcher.label}, ${name}`}
-					className={
-						touch
-							? cn(SWITCHER, TRIGGER_TOUCH)
-							: cn(
-									placeRow({ state: open ? "active" : "rest" }),
-									TRIGGER,
-									!open && ROW_PRESS,
-								)
-					}
-				>
-					<span aria-hidden className={GLYPH}>
-						<Avatar name={name} src={current?.avatar?.src} />
-					</span>
-					<span
-						className={cn(
-							text({ role: "body" }),
-							textStrong({ role: "body" }),
-							touch ? NAME_TOUCH : NAME,
-						)}
-					>
-						{name}
-					</span>
-					<span className={cn(placeRowGlyph({ state: "rest" }), GLYPH)}>
-						<Icon name="ChevronsUpDown" />
-					</span>
-				</button>
-			)}
-		/>
 	);
 }
 

@@ -16,7 +16,9 @@ import {
 	Children,
 	Fragment,
 	isValidElement,
+	memo,
 	type ReactNode,
+	type RefObject,
 	useContext,
 	useRef,
 	useState,
@@ -58,7 +60,8 @@ const INVERTED =
 		? { transform: [{ scale: -1 }] }
 		: { transform: [{ scaleY: -1 }] };
 
-// One function per `Message` slot, each called with a loaded item.
+// One function per `Message` slot, each called with a loaded item and reading
+// only it: a message draws again only when its item changes.
 export interface MessageSlots<T> {
 	// The item's React key, unique in the thread.
 	key: (item: T) => string;
@@ -108,34 +111,50 @@ export type ThreadProps<T = unknown> = Closed &
 		foot?: ReactNode;
 	};
 
-// The item's Message by its author: a system line takes `onOpen`, a turn
-// takes `name`.
-function messageOf<T>(slots: MessageSlots<T>, item: T): ReactNode {
-	const author = slots.author(item);
-	const key = slots.key(item);
-	const body = slots.body(item);
-	const at = slots.at?.(item);
-	if (author === "system")
+// One message from its item, its Message by its author: a system line takes
+// `onOpen` and `detail`, a turn takes `name`. It renders again only when its
+// item does: every slot reads the item, and a system line's acts call the
+// thread's latest slots when pressed, so a thread's re-render (a keystroke in
+// its input, a message arriving) skips every message already drawn.
+function ThreadItemBase<T>({
+	item,
+	slots,
+}: {
+	item: T;
+	slots: RefObject<MessageSlots<T>>;
+}) {
+	const read = slots.current;
+	const author = read.author(item);
+	const body = read.body(item);
+	const at = read.at?.(item);
+	if (author !== "system")
 		return (
-			<Message
-				key={key}
-				author="system"
-				body={body}
-				at={at}
-				onOpen={slots.onOpen?.(item)}
-				detail={slots.detail?.(item)}
-			/>
+			<Message author={author} name={read.name?.(item)} body={body} at={at} />
 		);
+	const opens = read.onOpen?.(item) !== undefined;
+	let detail = read.detail?.(item);
+	const row = detail?.row;
+	if (row?.onOpen)
+		detail = {
+			row: {
+				...row,
+				onOpen: () => slots.current.detail?.(item)?.row?.onOpen?.(),
+			},
+		};
 	return (
 		<Message
-			key={key}
-			author={author}
-			name={slots.name?.(item)}
+			author="system"
 			body={body}
 			at={at}
+			onOpen={opens ? () => slots.current.onOpen?.(item)?.() : undefined}
+			detail={detail}
 		/>
 	);
 }
+
+// `memo` erases the generic its component takes, so the memoised item keeps
+// the base's own type.
+const ThreadItem = memo(ThreadItemBase) as typeof ThreadItemBase;
 
 // What the log holds in the thread's state: the waiting turns, the failed
 // or the empty EmptyState, or the messages oldest first.
@@ -143,6 +162,7 @@ function logOf<T>(
 	props: ThreadProps<T>,
 	state: ListState,
 	retry: string,
+	slots: RefObject<MessageSlots<T>>,
 ): ReactNode {
 	if (state === "pending")
 		return WAITING_MESSAGES.map(({ key, author }) => (
@@ -160,7 +180,9 @@ function logOf<T>(
 	if (state === "empty" && props.empty)
 		return <EmptyStateBase tone="rest" {...props.empty} />;
 	const items = (props.query ? props.query.data : props.items) ?? [];
-	return items.map((item) => messageOf(props.message, item));
+	return items.map((item) => (
+		<ThreadItem key={props.message.key(item)} item={item} slots={slots} />
+	));
 }
 
 // The messages a sections gap apart, one rung above a reply's block gap, and
@@ -191,7 +213,11 @@ export function Thread<T>(props: ThreadProps<T>) {
 		hasEmpty: props.empty !== undefined,
 	};
 	const busy = listBusy(input);
-	const children = logOf(props, listState(input), words.retry);
+	// The latest slots, which each drawn message reads when its item changes
+	// and its acts call when pressed.
+	const slots = useRef(props.message);
+	slots.current = props.message;
+	const children = logOf(props, listState(input), words.retry, slots);
 	const fill = useContext(ThreadRoom);
 	const bleeds = useContext(ThreadBleeds);
 	const log = useRef<ScrollView>(null);

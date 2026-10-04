@@ -32,6 +32,7 @@ import { useWords } from "../../lib/words";
 import { Button } from "../button";
 import { IconButton } from "../icon-button";
 import { Menu } from "../menu";
+import { SwitcherPick } from "../shell/switcher";
 import { useSplitHead } from "../split";
 import { holdsThread } from "../thread";
 import { ToastRoom } from "../toast/room";
@@ -59,6 +60,11 @@ export function FloatingActRoom() {
 		</View>
 	);
 }
+
+// The act's rooms as module elements, so the room a bleeding body hands its
+// regions keeps one identity and no consumer renders again with the Place.
+const ACT_ROOM_ELEMENT = <FloatingActRoom />;
+const SCROLL_ROOM = <View className={FLOATING_ACT_ROOM} />;
 
 interface PlaceBase extends Closed {
 	title: string;
@@ -121,16 +127,16 @@ export function Place({
 				label={words.back}
 				onAct={() => navigate(route)}
 			/>
-		) : (
-			switcher
-		);
+		) : switcher ? (
+			<SwitcherPick switcher={switcher} />
+		) : null;
 	const acts = [...(actions ?? []), ...(split.details ? [split.details] : [])];
 	// A top bar with nothing in it is not drawn.
 	const bar = lead != null || acts.length > 0 || Boolean(more?.length);
-	const room = act ? <View className={FLOATING_ACT_ROOM} /> : null;
+	const room = act ? SCROLL_ROOM : null;
 	// A region scrolling inside a bleeding body keeps no page inset under its
 	// last row, so its room is the act's height over the page inset.
-	const footprint = act ? <FloatingActRoom /> : null;
+	const footprint = act ? ACT_ROOM_ELEMENT : null;
 	const tabs = useContext(ShellTabs);
 	return (
 		<DetailsOpen.Provider value={split.held}>

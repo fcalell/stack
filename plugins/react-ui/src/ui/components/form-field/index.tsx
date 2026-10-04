@@ -8,7 +8,7 @@ import {
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
-import { isValidElement, type ReactNode, useId } from "react";
+import { isValidElement, type ReactNode, useId, useMemo } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { GroupName, LabelTarget } from "../../lib/field.ts";
 import { Checkbox } from "../checkbox/index.tsx";
@@ -86,6 +86,12 @@ export function FormField<V>(props: FormFieldProps<V>) {
 	const form = formOf(control);
 	const labelId = useId();
 	const saidId = useId();
+	// What a group of controls is named and described by, one value per change.
+	const described = error || description ? saidId : undefined;
+	const group = useMemo(
+		() => ({ labelledBy: labelId, describedBy: described }),
+		[labelId, described],
+	);
 	const holds =
 		form === "switch" || form === "checkbox" ? form : ("field" as const);
 	const named = (
@@ -126,14 +132,7 @@ export function FormField<V>(props: FormFieldProps<V>) {
 				>
 					{label}
 				</p>
-				<GroupName
-					value={{
-						labelledBy: labelId,
-						describedBy: error || description ? saidId : undefined,
-					}}
-				>
-					{control}
-				</GroupName>
+				<GroupName value={group}>{control}</GroupName>
 				{error || description ? (
 					<p
 						id={saidId}

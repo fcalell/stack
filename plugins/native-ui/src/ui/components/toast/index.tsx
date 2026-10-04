@@ -24,7 +24,7 @@ import { cn } from "../../lib/cn";
 import { Ink } from "../../lib/ink";
 import { curve } from "../../lib/motion";
 import { RaisedGround } from "../../lib/raised";
-import { ToastEntry } from "../../lib/toast";
+import { dismissToast, ToastEntry } from "../../lib/toast";
 import { useWords } from "../../lib/words";
 import { Button } from "../button";
 import { Icon } from "../icon";
@@ -75,8 +75,8 @@ export interface ToastProps extends Closed {
 // queues it to; a failed one is announced at once.
 export function Toast({ sentence, state, act }: ToastProps) {
 	const words = useWords();
-	const dismiss = useContext(ToastEntry);
-	if (!dismiss)
+	const id = useContext(ToastEntry);
+	if (id === undefined)
 		throw new Error(
 			"a Toast stands in the Shell's toasts layer, queued by toast()",
 		);
@@ -113,7 +113,7 @@ export function Toast({ sentence, state, act }: ToastProps) {
 					icon="X"
 					fit="bar"
 					label={words.dismiss}
-					onAct={dismiss}
+					onAct={() => dismissToast(id)}
 				/>
 			</Raised>
 		</RaisedGround>

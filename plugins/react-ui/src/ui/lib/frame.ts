@@ -1,9 +1,10 @@
 import type { Dialog } from "@base-ui/react/dialog";
+import type { Switcher } from "@fcalell/ui-core/descriptors";
 import { createContext, type ReactNode } from "react";
 
-// What the frame molecules hand each other. The Shell hands its switcher's
-// trigger to the Place, which starts its touch top bar with it.
-export const ShellSwitcher = createContext<ReactNode>(null);
+// What the frame molecules hand each other. The Shell hands its switcher to
+// the Place, which draws its trigger at the start of its touch top bar.
+export const ShellSwitcher = createContext<Switcher | undefined>(undefined);
 
 // The handle of the details sheet a Split's pane opens in, owned by the Place
 // or pushed Screen it sits in, which draws the sheet's trigger, the Details

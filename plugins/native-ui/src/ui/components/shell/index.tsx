@@ -11,13 +11,10 @@ import {
 	SHELL_BANNER,
 	SHELL_COLUMN,
 	SHELL_TAB_BAR,
-	SWITCHER,
 	TOASTS,
-	text,
-	textStrong,
 } from "@fcalell/ui-core/variants";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
-import { type ReactNode, useRef, useState } from "react";
+import { type ReactNode, useMemo, useRef, useState } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Closed } from "../../lib/closed";
@@ -32,11 +29,9 @@ import {
 import { Ink } from "../../lib/ink";
 import { isCurrent, navigate, usePathname } from "../../lib/navigate";
 import { useWords } from "../../lib/words";
-import { Avatar } from "../avatar";
 import { Count } from "../count";
 import { Icon } from "../icon";
 import { List } from "../list";
-import { PickSheet, useOptionGroups } from "../picker/sheet";
 import { Place } from "../place";
 import { Confirmations } from "../sheet/confirm";
 import { ToastList } from "../toast/layer";
@@ -46,10 +41,6 @@ const FRAME = "flex-1 overflow-hidden";
 const CONTENT = "flex-1";
 // The page's measured box gives the layer's `top` and `height`.
 const TOAST_LAYER = "absolute inset-x-0 items-center justify-end";
-
-const TRIGGER = "flex-row items-center min-w-0";
-const NAME = "shrink";
-const GLYPH = "shrink-0";
 
 const TABS = "flex-row";
 const TAB = "flex-col-reverse items-center justify-center min-w-0 flex-1";
@@ -99,14 +90,19 @@ export function Shell({ places, banner, switcher, children }: ShellProps) {
 	const more = moreAt === pathname;
 	const route = places.find((spec) => isCurrent(spec.route, pathname))?.route;
 	const rest = places.length > TAB_ROOM ? places.slice(TAB_ROOM - 1) : [];
-	const tabs = (
-		<TabBar
-			places={places}
-			pathname={pathname}
-			more={more}
-			onMore={() => setMoreAt(pathname)}
-			onPlace={() => setMoreAt(undefined)}
-		/>
+	// The tab bar each Place draws changes only with the places, the route and
+	// the More page, so a Shell state change re-renders no Place.
+	const tabs = useMemo(
+		() => (
+			<TabBar
+				places={places}
+				pathname={pathname}
+				more={more}
+				onMore={() => setMoreAt(pathname)}
+				onPlace={() => setMoreAt(undefined)}
+			/>
+		),
+		[places, pathname, more],
 	);
 	return (
 		<View ref={root} className={FILL}>
@@ -118,9 +114,7 @@ export function Shell({ places, banner, switcher, children }: ShellProps) {
 					>
 						{banner ? <View className={SHELL_BANNER}>{banner}</View> : null}
 						<View className={CONTENT}>
-							<ShellSwitcher.Provider
-								value={switcher ? <SwitcherPick switcher={switcher} /> : null}
-							>
+							<ShellSwitcher.Provider value={switcher}>
 								<ShellTabs.Provider value={tabs}>
 									<PlaceRoute.Provider value={route}>
 										<ToastFrame.Provider value={toastFrame}>
@@ -144,54 +138,6 @@ export function Shell({ places, banner, switcher, children }: ShellProps) {
 				</View>
 			) : null}
 		</View>
-	);
-}
-
-// The switcher is a pick: its trigger in a Place's top bar, and the pick's
-// sheet (the options with their avatars under the switcher's label, the
-// current one ticked, the act that makes a new one under a hairline).
-function SwitcherPick({ switcher }: { switcher: Switcher }) {
-	const [open, setOpen] = useState(false);
-	const groups = useOptionGroups(switcher.options);
-	const current = groups.flat.find((option) => option.value === switcher.value);
-	const name = current?.label ?? switcher.label;
-	return (
-		<>
-			<Pressable
-				accessibilityRole="button"
-				accessibilityLabel={switcher.label}
-				accessibilityValue={{ text: name }}
-				accessibilityState={{ expanded: open }}
-				onPress={() => setOpen(true)}
-				className={cn(SWITCHER, TRIGGER)}
-			>
-				<Avatar name={name} src={current?.avatar?.src} />
-				<RNText
-					numberOfLines={1}
-					className={cn(
-						text({ role: "body" }),
-						textStrong({ role: "body" }),
-						NAME,
-					)}
-				>
-					{name}
-				</RNText>
-				<View className={GLYPH}>
-					<Ink.Provider value="ink-meta">
-						<Icon name="ChevronsUpDown" />
-					</Ink.Provider>
-				</View>
-			</Pressable>
-			<PickSheet
-				title={switcher.label}
-				groups={groups}
-				value={switcher.value}
-				onChange={switcher.onChange}
-				act={switcher.act}
-				open={open}
-				onClose={() => setOpen(false)}
-			/>
-		</>
 	);
 }
 

@@ -38,6 +38,7 @@ import { Button } from "../button/index.tsx";
 import { IconButtonBase, IconButtonLink } from "../icon-button/base.tsx";
 import { IconButton } from "../icon-button/index.tsx";
 import { Menu } from "../menu/index.tsx";
+import { SwitcherPick } from "../shell/switcher.tsx";
 import { BODY_FILLED } from "../thread/fill.ts";
 
 const PLACE = "flex flex-col grow min-h-0";
@@ -185,10 +186,11 @@ export function Place({
 		) : null;
 	// On touch the shell's switcher leads the top bar, giving the back act its
 	// place where the back act shows; on the desktop it stands in the sidebar.
+	const pick = switcher ? <SwitcherPick switcher={switcher} touch /> : null;
 	const lead = !touch ? null : back ? (
-		<span className={BESIDE_BACK}>{switcher}</span>
+		<span className={BESIDE_BACK}>{pick}</span>
 	) : (
-		switcher
+		pick
 	);
 	const acts = (actions ?? []).map((action) => (
 		<IconButton key={action.label} {...action} fit={fit} />

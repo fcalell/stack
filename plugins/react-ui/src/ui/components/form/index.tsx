@@ -1,16 +1,9 @@
 import { cn } from "@fcalell/ui-core/cn";
 import { FORM_FOOT, form } from "@fcalell/ui-core/variants";
-import {
-	Children,
-	isValidElement,
-	type ReactNode,
-	use,
-	useMemo,
-	useState,
-} from "react";
+import { Children, isValidElement, type ReactNode, use, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { FormContext, FormStands } from "../../lib/form.ts";
-import { TouchedContext } from "../../lib/touched.ts";
+import { TouchedContext, useTouchState } from "../../lib/touched.ts";
 import { ActionBar } from "../action-bar/index.tsx";
 import { Section } from "../section/index.tsx";
 
@@ -26,11 +19,7 @@ export interface FormProps extends Closed {
 export function Form({ children }: FormProps) {
 	const within = use(FormStands);
 	const [pending, setPending] = useState(false);
-	const [touched, setTouched] = useState(false);
-	const touch = useMemo(
-		() => ({ touched, touch: () => setTouched(true) }),
-		[touched],
-	);
+	const [touch] = useTouchState();
 	const nodes = Children.toArray(children);
 	const sectioned = nodes.some(
 		(node) => isValidElement(node) && node.type === Section,

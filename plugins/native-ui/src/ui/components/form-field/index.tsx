@@ -6,7 +6,7 @@ import {
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
-import { isValidElement, type ReactNode } from "react";
+import { isValidElement, type ReactNode, useMemo } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
@@ -99,6 +99,8 @@ export function FormField<V>(props: FormFieldProps<V>) {
 	const control = fieldControl(props);
 	const form = formOf(control);
 	const said = error ?? description;
+	// What a group of controls is named and described by, one value per change.
+	const group = useMemo(() => ({ label, said }), [label, said]);
 	const labelClass = cn(
 		text({ role: "body" }),
 		textStrong({ role: "body" }),
@@ -118,9 +120,7 @@ export function FormField<V>(props: FormFieldProps<V>) {
 		return (
 			<View className={cn(formField({ holds: "field" }), STACK)}>
 				<RNText className={labelClass}>{label}</RNText>
-				<GroupName.Provider value={{ label, said }}>
-					{control}
-				</GroupName.Provider>
+				<GroupName.Provider value={group}>{control}</GroupName.Provider>
 				{line}
 			</View>
 		);

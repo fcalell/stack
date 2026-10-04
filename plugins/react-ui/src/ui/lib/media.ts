@@ -7,20 +7,42 @@ import { useSyncExternalStore } from "react";
 // `tablet` and wider). A molecule whose tree differs by density (the Shell's
 // sidebar or tab bar) reads it here, so its structure and the token set
 // cannot disagree.
-function touch(): boolean {
-	const pin = document.documentElement.dataset.density;
-	if (pin === "touch" || pin === "desktop") return pin === "touch";
-	return !matchMedia(DESKTOP_MEDIA).matches;
+// Every caller reads one store: one cached query, one observer of the pin,
+// one set of listeners, wired while any caller listens.
+let desktop: MediaQueryList | undefined;
+let pin: MutationObserver | undefined;
+const listeners = new Set<() => void>();
+
+function desktopQuery(): MediaQueryList {
+	desktop ??= matchMedia(DESKTOP_MEDIA);
+	return desktop;
 }
 
-function onDensity(notify: () => void): () => void {
-	const desktop = matchMedia(DESKTOP_MEDIA);
-	desktop.addEventListener("change", notify);
-	const pin = new MutationObserver(notify);
-	pin.observe(document.documentElement, { attributeFilter: ["data-density"] });
+function touch(): boolean {
+	const pinned = document.documentElement.dataset.density;
+	if (pinned === "touch" || pinned === "desktop") return pinned === "touch";
+	return !desktopQuery().matches;
+}
+
+function notify(): void {
+	for (const listener of listeners) listener();
+}
+
+function onDensity(listener: () => void): () => void {
+	if (listeners.size === 0) {
+		desktopQuery().addEventListener("change", notify);
+		pin = new MutationObserver(notify);
+		pin.observe(document.documentElement, {
+			attributeFilter: ["data-density"],
+		});
+	}
+	listeners.add(listener);
 	return () => {
-		desktop.removeEventListener("change", notify);
-		pin.disconnect();
+		listeners.delete(listener);
+		if (listeners.size > 0) return;
+		desktopQuery().removeEventListener("change", notify);
+		pin?.disconnect();
+		pin = undefined;
 	};
 }
 

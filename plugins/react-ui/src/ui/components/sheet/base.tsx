@@ -20,6 +20,7 @@ import {
 	use,
 	useEffect,
 	useId,
+	useMemo,
 	useRef,
 	useState,
 } from "react";
@@ -27,7 +28,7 @@ import { FormStands } from "../../lib/form.ts";
 import { useTouch } from "../../lib/media.ts";
 import { PortalContainer } from "../../lib/portal.ts";
 import { ReasonHostContext } from "../../lib/reason.ts";
-import { TouchedContext } from "../../lib/touched.ts";
+import { TouchedContext, useTouchState } from "../../lib/touched.ts";
 import { useWords } from "../../lib/words.tsx";
 import { ActionBar } from "../action-bar/index.tsx";
 import { Button } from "../button/index.tsx";
@@ -125,7 +126,8 @@ export function SheetBase({
 	const reason = useId();
 	const titleId = useId();
 	const descriptionId = useId();
-	const [touched, setTouched] = useState(false);
+	const [touchedValue, setTouched] = useTouchState();
+	const { touched } = touchedValue;
 	const [pressed, setPressed] = useState(false);
 	const [running, setRunning] = useState(false);
 	const popup = useRef<HTMLDivElement>(null);
@@ -165,9 +167,10 @@ export function SheetBase({
 			onAct={back}
 		/>
 	) : null;
-	const host = blocked
-		? { id: reason, press: () => setPressed(true) }
-		: undefined;
+	const host = useMemo(
+		() => (blocked ? { id: reason, press: () => setPressed(true) } : undefined),
+		[blocked, reason],
+	);
 	// On touch the submit stands at the head's end in close's place, which
 	// moves to the start unless back holds it. It pends on its promise, as the
 	// desktop's foot bar does.
@@ -306,10 +309,10 @@ export function SheetBase({
 						aria-labelledby={titleId}
 						aria-describedby={description ? descriptionId : undefined}
 						// A field inside takes input: a blocked act says its reason.
-						onChange={() => setTouched(true)}
+						onChange={touchedValue.touch}
 						className={box}
 					>
-						<TouchedContext value={{ touched, touch: () => setTouched(true) }}>
+						<TouchedContext value={touchedValue}>
 							<FormStands value="sheet">{content}</FormStands>
 						</TouchedContext>
 					</Dialog.Popup>

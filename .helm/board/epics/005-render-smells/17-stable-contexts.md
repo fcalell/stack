@@ -1,6 +1,6 @@
 ---
 id: 005-17
-status: backlog
+status: review
 sessions: {}
 ---
 # react-ui, native-ui: a context value changes only when what it holds changes
@@ -28,3 +28,6 @@ one module-level store: one cached query, one observer, a set of listeners.
 ## Acceptance criteria
 - [ ] (live) web, assistant at 1440: typing in the MessageInput re-renders no Place (React profiler); in members' invite sheet, an act turning busy re-renders none of its fields.
 - [ ] (live) phone, on the harness: raising a second toast does not re-render the first (React DevTools).
+
+## Progress
+Built; `pnpm check` and `pnpm verify` pass. Web live without the React Compiler: a keystroke in the assistant re-renders no Message (master: the two system lines), a Send only the new one; a busy act in the invite sheet re-renders no field at 1440 and 375. The Place still renders once per keystroke because the showcase page holds the input's value above it (a page structure outside this story). New contract: a message slot reads only its item, as FlatList rows do. Open: the phone toast criterion on the harness.
