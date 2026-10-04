@@ -7,6 +7,7 @@ import type { PluginRuntimeEntry } from "@fcalell/plugin-api";
 import { api } from "@fcalell/plugin-api";
 import { RESERVED_SLUGS } from "@fcalell/plugin-api/lib/slugify";
 import { cloudflare } from "@fcalell/plugin-cloudflare";
+import { db } from "@fcalell/plugin-db";
 import {
 	defaultOrgRoles,
 	defaultOrgStatements,
@@ -616,6 +617,19 @@ export const auth = plugin("auth", {
 			}
 			if (self.options.passkey) names.push("passkey");
 			return names;
+		}),
+
+		// The scaffolded schema re-exports auth's tables, so they migrate with
+		// the app's own.
+		db.slots.schemaModules.contribute(() => {
+			const modules = ["@fcalell/plugin-auth/schema"];
+			if (self.options.organization) {
+				modules.push("@fcalell/plugin-auth/schema/organization");
+			}
+			if (self.options.passkey) {
+				modules.push("@fcalell/plugin-auth/schema/passkey");
+			}
+			return modules;
 		}),
 	],
 });

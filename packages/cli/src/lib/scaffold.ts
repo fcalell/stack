@@ -51,7 +51,9 @@ export async function writeScaffoldSpecs(
 		const absTarget = resolve(cwd, spec.target);
 		if (existsSync(absTarget)) continue;
 
-		const content = await readFile(spec.source, "utf8");
+		const content = spec.source
+			? await readFile(spec.source, "utf8")
+			: spec.content;
 		await mkdir(dirname(absTarget), { recursive: true });
 		await writeFile(absTarget, content);
 		created.push(spec.target);

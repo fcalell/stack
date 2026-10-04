@@ -13,7 +13,7 @@ lifecycle hooks; rarely read from these.
 | Slot | Kind | Purpose |
 |------|------|---------|
 | `cliSlots.initPrompts` | `list<PromptSpec>` | Init/add interactive prompts |
-| `cliSlots.initScaffolds` | `list<ScaffoldSpec>` | Templates copied once into the consumer repo |
+| `cliSlots.initScaffolds` | `list<ScaffoldSpec>` | Files written once into the consumer repo, from a template or composed content |
 | `cliSlots.initDeps` | `map<string, string>` | npm `dependencies` to add (auto-wired from `plugin({ dependencies })`) |
 | `cliSlots.initDevDeps` | `map<string, string>` | npm `devDependencies` to add (auto-wired from `plugin({ devDependencies })`) |
 | `cliSlots.packageJsonFields` | `map<unknown>` | Top-level `package.json` fields (e.g. Expo's `main`). Written if-absent at init/add, never clobbers a consumer-set value; duplicate keys across plugins throw |
@@ -183,14 +183,21 @@ e.g. consulting `ctx.fileExists` before writing.
 | `clientFlags` | `value<AuthClientFlags \| null>` | The web client's `{ passkey, emailOtp, organization }`, from the options, `organization` carrying the access control's statements and role grants as the worker gets them; seeded null and filled by auth's own contribution, so a reader without auth in the config sees null |
 | `reservedSlugs` | `list<string>` | The app's top-level routes, which an organization slug may not take (an organization is served at `/<slug>`). With organizations on, `runtimeOptions` bakes them beside plugin-api's `RESERVED_SLUGS` and the runtime refuses them on organization create and update |
 
+## `db.slots.*` (plugin-db)
+
+| Slot | Kind | Purpose |
+|------|------|---------|
+| `schemaModules` | `list<string>` | Modules whose tables the scaffolded `src/schema/index.ts` re-exports (`export *`), so they migrate with the app's own; auth contributes its `/schema` subpath, plus `/schema/organization` and `/schema/passkey` when those are on |
+
 ## Spec types
 
 The shapes carried by slot payloads. Most are exported from `@fcalell/cli/ast` (TS / TOML / HTML
 specs) or `@fcalell/cli/specs` (lifecycle specs); a payload that only one plugin's own slots carry
 lives with that plugin.
 
-- `ScaffoldSpec`: `{ source: URL; target: string; plugin: string }`. Used for templates copied into
-  the consumer repo. Build with `ctx.scaffold(name, target)`.
+- `ScaffoldSpec`: `{ target: string; plugin: string }` plus either `source: URL` (a template on
+  disk, built with `ctx.scaffold(name, target)`) or `content: string` (text the plugin composed
+  from the graph, as db's schema scaffold does).
 - `TsImportSpec`: four shapes:
   ```ts
   { source: "@fcalell/plugin-db/runtime", default: "dbRuntime" }

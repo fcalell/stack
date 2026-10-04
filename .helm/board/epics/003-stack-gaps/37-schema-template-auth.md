@@ -1,6 +1,6 @@
 ---
 id: 003-37
-status: backlog
+status: done
 sessions: {}
 ---
 # plugin-db: the scaffolded schema re-exports auth's tables when auth is installed
@@ -15,4 +15,4 @@ The re-export reaches the template through the slot graph (auth contributes it),
 db naming auth.
 
 ## Acceptance criteria
-- [ ] (test) a scaffold with auth writes the re-export; one without does not.
+- [x] (test) a scaffold with auth writes the re-export; one without does not.

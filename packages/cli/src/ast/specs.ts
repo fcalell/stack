@@ -140,8 +140,12 @@ export type HtmlDocument = {
 
 // ── Scaffold ────────────────────────────────────────────────────────
 
-export type ScaffoldSpec = {
-	source: URL; // file:// URL to template on disk
+// A scaffold's body is a template on disk (`source`, a file:// URL) or text
+// the plugin composed from the graph (`content`).
+export type ScaffoldSpec = (
+	| { source: URL; content?: never }
+	| { content: string; source?: never }
+) & {
 	target: string; // cwd-relative path
 	plugin: string; // plugin that contributed this scaffold (for attribution)
 };

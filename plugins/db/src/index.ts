@@ -1,5 +1,6 @@
+import { readFile } from "node:fs/promises";
 import { basename, join } from "node:path";
-import { plugin } from "@fcalell/cli";
+import { plugin, slot } from "@fcalell/cli";
 import type { TsExpression, TsImportSpec } from "@fcalell/cli/ast";
 import { cliSlots } from "@fcalell/cli/cli-slots";
 import { StackError } from "@fcalell/cli/errors";
@@ -39,6 +40,22 @@ const SCHEMA_IMPORT: TsImportSpec = {
 	source: "../src/schema/index.ts",
 	namespace: "schema",
 };
+
+// The modules whose tables the scaffolded schema re-exports: a plugin that
+// owns tables contributes its schema subpath, so they migrate with the app's.
+const schemaModules = slot.list<string>({
+	source: "db",
+	name: "schemaModules",
+});
+
+// The template's first blank line ends its import block; the re-exports
+// stand there, as `guide/schema.md` shows them.
+function withReexports(template: string, modules: string[]): string {
+	if (modules.length === 0) return template;
+	const end = template.indexOf("\n\n");
+	const lines = modules.map((m) => `export * from "${m}";`).join("\n");
+	return `${template.slice(0, end)}\n\n${lines}${template.slice(end)}`;
+}
 
 // A COALESCING latch for local schema re-applies — NOT a serializer.
 //
@@ -135,6 +152,10 @@ export const db = plugin("db", {
 			trigger: "Writing a test that reads or writes the database",
 		},
 	],
+
+	slots: {
+		schemaModules,
+	},
 
 	commands: {
 		push: {
@@ -367,11 +388,17 @@ export const db = plugin("db", {
 				},
 			})),
 
-			// Schema template scaffold (the callbacks auto-wire in create-plugin
-			// handles the callback file; `db` has no callbacks, only a schema).
-			cliSlots.initScaffolds.contribute((ctx) =>
-				ctx.scaffold("schema.ts", "src/schema/index.ts"),
-			),
+			// The schema scaffold: the template, re-exporting every plugin's
+			// tables after its import block.
+			cliSlots.initScaffolds.contribute(async (ctx) => {
+				const template = await readFile(ctx.template("schema.ts"), "utf8");
+				const modules = await ctx.resolve(self.slots.schemaModules);
+				return {
+					content: withReexports(template, modules),
+					target: "src/schema/index.ts",
+					plugin: "db",
+				};
+			}),
 
 			// D1 binding — only for the d1 dialect, and only when `databaseId`
 			// is set. Contribution is pure; wrangler aggregator reads all
