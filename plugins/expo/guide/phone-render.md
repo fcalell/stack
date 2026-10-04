@@ -47,6 +47,7 @@ adb shell settings put global hide_error_dialogs 1
 for k in window_animation_scale transition_animation_scale animator_duration_scale; do
   adb shell settings put global $k 0
 done
+adb reverse tcp:8787 tcp:8787
 stack dev & stack expo dev &
 
 PKG=$(node -p 'require("./.stack/app.config.cjs").android.package')
@@ -56,6 +57,11 @@ SCHEME=$(node -p 'require("./.stack/app.config.cjs").scheme')
 The animation scales at 0 are the system's reduced motion, which the app reads when it starts.
 Reanimated answers with a development warning and its toast; the flow below dismisses the
 toast. Metro's "installing React Native DevTools" error is the host's, never the app's.
+
+The emulator's `localhost` is its own: `adb reverse` carries its port 8787 to the worker
+`stack dev` serves, so the API client's localhost fallback reaches it with no
+`EXPO_PUBLIC_API_URL`. Without it every query fails. The worker's port is fixed, so one
+`stack dev` runs on the machine at a time.
 
 ## Open a route and capture it
 
@@ -71,9 +77,16 @@ appId: ${PKG}
 - extendedWaitUntil:
     visible: Platform
     timeout: 180000
-- tapOn:
-    rightOf: Open debugger to view warnings.
+- extendedWaitUntil:
+    visible: Open debugger to view warnings.
+    timeout: 10000
     optional: true
+- runFlow:
+    when:
+      visible: Open debugger to view warnings.
+    commands:
+      - tapOn:
+          point: "92%,92%"
 - waitForAnimationToEnd
 - takeScreenshot: home-${MODE}-${WIDTH}
 ```
@@ -91,7 +104,18 @@ adb logcat -d 'ReactNativeJS:W' '*:S'
 `shots/<run>/<flow>/takeScreenshot/`. `maestro hierarchy` prints each element's bounds in px,
 its text, its accessibility label and its state. Each Maestro call costs about 20 s, so one flow
 walks a whole set of states. The first frames after a launch arrive seconds late, so a
-screenshot always follows a wait on a known text.
+screenshot always follows a wait on a known text. The warning toast's close act carries no
+label, and `tapOn: rightOf:` its sentence misses it, so the flow taps its point.
+
+## Hold a query's states
+
+A query's pending, failed and empty states come from the worker the app calls.
+
+| State | How |
+| --- | --- |
+| Empty | A fresh local database, before anything is created |
+| Pending | `kill -STOP` the `workerd` process listening on 8787: the request is accepted and never answered. `kill -CONT` releases it |
+| Failed | Stop `stack dev`: the request is refused, and the query fails after the client's single retry. Start it again and tap Retry to load |
 
 ## Shut down
 

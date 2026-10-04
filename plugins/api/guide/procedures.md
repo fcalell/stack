@@ -6,10 +6,10 @@ barrel merges every file's exports into the router.
 
 ```ts
 // src/worker/routes/projects.ts
+import { procedure } from "virtual:stack-procedure";
 import { ApiError } from "@fcalell/plugin-api/error";
 import { z } from "@fcalell/plugin-api/schema";
 import { organization } from "@fcalell/plugin-auth/scope";
-import { procedure } from "virtual:stack-procedure";
 
 export const projects = {
   list: procedure({ auth: true, scope: organization, paginated: true, reads: ["projects"] })

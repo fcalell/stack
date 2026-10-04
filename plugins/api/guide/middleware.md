@@ -14,8 +14,8 @@ use. Type the context with the generated `WorkerContext`, imported type-only.
 
 ```ts
 // src/worker/middleware.context.ts
-import { isForbiddenOrigin, stackContext } from "@fcalell/plugin-api/runtime";
 import type { WorkerContext } from "virtual:stack-procedure";
+import { isForbiddenOrigin, stackContext } from "@fcalell/plugin-api/runtime";
 import { createMiddleware } from "hono/factory";
 
 export default createMiddleware(async (c, next) => {

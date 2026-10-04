@@ -7,7 +7,8 @@
 		"generate": "stack generate",
 		"dev": "stack dev",
 		"build": "stack build",
-		"check-types": "tsc -b"
+		"check-types": "tsc -b",
+		"test": "node --test 'src/**/*.test.ts'"
 	},
 	"dependencies": {
 		"@better-auth/expo": "^1.6.14",

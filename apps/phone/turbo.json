@@ -4,6 +4,9 @@
 	"tasks": {
 		"build": {
 			"outputs": [".stack/**"]
+		},
+		"test": {
+			"dependsOn": ["^build", "build"]
 		}
 	}
 }
