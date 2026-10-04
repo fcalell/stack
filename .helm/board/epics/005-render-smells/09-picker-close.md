@@ -1,6 +1,6 @@
 ---
 id: 005-09
-status: backlog
+status: review
 sessions: {}
 ---
 # react-ui, native-ui: a Picker's sheet resets on open and leaves with its animation
@@ -29,3 +29,6 @@ after-dismiss callback. `SheetBase` takes the element to focus first and hands i
 ## Acceptance criteria
 - [ ] (live) web, members' role Select at 375 and 1440: after a pick from a filtered list, the next open shows every option, focus on the chosen one.
 - [ ] (live) phone, on the harness: a filtered list keeps its rows while the sheet leaves, and a cell picker's sheet plays its leave.
+
+## Progress
+Built; `pnpm check` and `pnpm verify` pass. Web live on a seven-option Picker at 375 and 1440: a reopened sheet shows every option with an empty search and focus on the choice, and dropping to six options while open keeps the search and focus. Open: the phone live criteria on the harness.

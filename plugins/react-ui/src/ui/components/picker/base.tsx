@@ -32,6 +32,7 @@ import {
 	type ComponentProps,
 	type ReactElement,
 	type ReactNode,
+	type RefObject,
 	use,
 	useEffect,
 	useRef,
@@ -106,7 +107,6 @@ const ACT_ROW =
 	"flex items-center text-start hover:bg-wash-hover active:bg-wash-press focus-visible:-outline-offset-2";
 const ACT_GLYPH = "flex shrink-0 text-ink-meta";
 
-// Past six options a search leads the list.
 const SEARCH_PAST = 6;
 
 interface Grouped<V extends string | null> {
@@ -274,6 +274,12 @@ export function PickerBase<V extends string | null = string>({
 	const groups = groupsOf(options);
 	const flat = groups.flatMap((group) => group.items);
 	const current = flat.find((option) => option.value === value);
+	// Past six options a search leads the list. The form follows the count only
+	// while the list is closed, so a count crossing six never tears down an
+	// open list and its focus.
+	const many = flat.length > SEARCH_PAST;
+	const [searching, setSearching] = useState(many);
+	if (!open && searching !== many) setSearching(many);
 	const pick = (next: V) => {
 		setOpen(false);
 		onChange(next);
@@ -354,6 +360,7 @@ export function PickerBase<V extends string | null = string>({
 				label={label}
 				groups={groups}
 				value={value}
+				searching={searching}
 				open={open}
 				setOpen={setOpen}
 				pick={pick}
@@ -362,7 +369,7 @@ export function PickerBase<V extends string | null = string>({
 				chip={chip}
 			/>
 		);
-	if (flat.length > SEARCH_PAST)
+	if (searching)
 		return (
 			<PickSearch
 				label={label}
@@ -619,17 +626,58 @@ function PickSearch<V extends string | null>(
 
 const moveFocus = arrowsOver("option");
 
+type SheetParts<V extends string | null> = PickParts<V> & {
+	value: V | undefined;
+	searching: boolean;
+};
+
 // The touch sheet: the rows edge to edge under the sheet's head, a search
-// leading them past six options.
-function PickSheet<V extends string | null>(
-	props: PickParts<V> & { value: V | undefined },
-) {
+// leading them past six options. It opens focused on the options' tab stop.
+function PickSheet<V extends string | null>(props: SheetParts<V>) {
 	const [sheet] = useState(() => Dialog.createHandle<unknown>());
+	const first = useRef<HTMLButtonElement>(null);
+	return (
+		<>
+			<Dialog.Trigger
+				handle={sheet}
+				render={(handed) => props.trigger(handed)}
+			/>
+			<SheetBase
+				form="menu"
+				handle={sheet}
+				open={props.open}
+				onOpen={() => props.setOpen(true)}
+				onClose={() => props.setOpen(false)}
+				title={props.label}
+				focus={first}
+			>
+				<PickRows
+					label={props.label}
+					groups={props.groups}
+					value={props.value}
+					searching={props.searching}
+					setOpen={props.setOpen}
+					pick={props.pick}
+					act={props.act}
+					chip={props.chip}
+					first={first}
+				/>
+			</SheetBase>
+		</>
+	);
+}
+
+// The sheet's rows hold the search and the option last focused, so both
+// leave with the sheet however it closes (a pick, the act, the scrim,
+// Escape) and the next open starts from every option.
+function PickRows<V extends string | null>(
+	props: Omit<SheetParts<V>, "open" | "trigger"> & {
+		first: RefObject<HTMLButtonElement | null>;
+	},
+) {
 	const [search, setSearch] = useState("");
 	const [focused, setFocused] = useState<V>();
-	const list = useRef<HTMLDivElement>(null);
 	const typed = search.trim().toLowerCase();
-	const searching = props.groups.flatMap((g) => g.items).length > SEARCH_PAST;
 	const shown = props.groups
 		.map((group) => ({
 			...group,
@@ -644,98 +692,65 @@ function PickSheet<V extends string | null>(
 	const stop =
 		[focused, props.value].find((v) => v !== undefined && values.includes(v)) ??
 		values[0];
-	const { open } = props;
-	// The sheet opens with focus on the stop, after the dialog's own focus.
-	useEffect(() => {
-		if (!open) return;
-		let inner = 0;
-		const outer = requestAnimationFrame(() => {
-			inner = requestAnimationFrame(() =>
-				list.current?.querySelector<HTMLElement>('[tabindex="0"]')?.focus(),
-			);
-		});
-		return () => {
-			cancelAnimationFrame(outer);
-			cancelAnimationFrame(inner);
-		};
-	}, [open]);
 	return (
-		<>
-			<Dialog.Trigger
-				handle={sheet}
-				render={(handed) => props.trigger(handed)}
-			/>
-			<SheetBase
-				form="menu"
-				handle={sheet}
-				open={props.open}
-				onOpen={() => props.setOpen(true)}
-				onClose={() => {
-					props.setOpen(false);
-					setSearch("");
-					setFocused(undefined);
-				}}
-				title={props.label}
-			>
-				<div className={SHEET_ROWS}>
-					{searching ? (
-						<div className={SEARCH_SLOT}>
-							<Input kind="search" value={search} onChange={setSearch} />
-						</div>
-					) : null}
-					<div
-						ref={list}
-						role="listbox"
-						aria-label={props.label}
-						onKeyDown={moveFocus}
-						className={LISTBOX}
-					>
-						{shown.map((group, at) => (
-							// biome-ignore lint/a11y/useSemanticElements: a listbox's group of options
-							<div
-								key={group.label ?? at}
-								role="group"
-								className={cn(SELECT_GROUP, GROUP)}
-							>
-								{group.label ? <GroupLabel>{group.label}</GroupLabel> : null}
-								{group.items.map((option) => {
-									const chosen = option.value === props.value;
-									return (
-										<button
-											key={String(option.value)}
-											type="button"
-											role="option"
-											aria-selected={chosen}
-											tabIndex={option.value === stop ? 0 : -1}
-											onFocus={() => setFocused(option.value)}
-											onClick={() => props.pick(option.value)}
-											className={cn(
-												optionRow(option, "group", props.chip),
-												OPTION,
-												OPTION_BUTTON,
-											)}
-										>
-											<OptionText option={option} chip={props.chip} />
-											{chosen ? (
-												<span className={TICK}>
-													<Icon name="Check" fit="body" />
-												</span>
-											) : null}
-										</button>
-									);
-								})}
-							</div>
-						))}
-					</div>
-					{props.act ? (
-						<PickAct
-							act={props.act}
-							ground="group"
-							done={() => props.setOpen(false)}
-						/>
-					) : null}
+		<div className={SHEET_ROWS}>
+			{props.searching ? (
+				<div className={SEARCH_SLOT}>
+					<Input kind="search" value={search} onChange={setSearch} />
 				</div>
-			</SheetBase>
-		</>
+			) : null}
+			<div
+				role="listbox"
+				aria-label={props.label}
+				onKeyDown={moveFocus}
+				className={LISTBOX}
+			>
+				{shown.map((group, at) => (
+					// biome-ignore lint/a11y/useSemanticElements: a listbox's group of options
+					<div
+						key={group.label ?? at}
+						role="group"
+						className={cn(SELECT_GROUP, GROUP)}
+					>
+						{group.label ? <GroupLabel>{group.label}</GroupLabel> : null}
+						{group.items.map((option) => {
+							const chosen = option.value === props.value;
+							const stands = option.value === stop;
+							return (
+								<button
+									key={String(option.value)}
+									ref={stands ? props.first : undefined}
+									type="button"
+									role="option"
+									aria-selected={chosen}
+									tabIndex={stands ? 0 : -1}
+									onFocus={() => setFocused(option.value)}
+									onClick={() => props.pick(option.value)}
+									className={cn(
+										optionRow(option, "group", props.chip),
+										OPTION,
+										OPTION_BUTTON,
+									)}
+								>
+									<OptionText option={option} chip={props.chip} />
+									{chosen ? (
+										<span className={TICK}>
+											<Icon name="Check" fit="body" />
+										</span>
+									) : null}
+								</button>
+							);
+						})}
+					</div>
+				))}
+			</div>
+			{props.act ? (
+				<PickAct
+					act={props.act}
+					ground="group"
+					done={() => props.setOpen(false)}
+				/>
+			) : null}
+		</div>
 	);
 }

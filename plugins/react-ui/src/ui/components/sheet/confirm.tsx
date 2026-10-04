@@ -46,7 +46,7 @@ export function ConfirmSheet(props: {
 			open={open}
 			onClose={dismiss}
 			busy={pending}
-			focusField={name !== undefined}
+			focus={name ? "field" : undefined}
 			title={entry.title}
 			description={entry.sentence}
 			acts={[

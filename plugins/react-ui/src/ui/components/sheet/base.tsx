@@ -14,7 +14,15 @@ import {
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
-import { type ReactNode, use, useEffect, useId, useRef, useState } from "react";
+import {
+	type ReactNode,
+	type RefObject,
+	use,
+	useEffect,
+	useId,
+	useRef,
+	useState,
+} from "react";
 import { FormStands } from "../../lib/form.ts";
 import { useTouch } from "../../lib/media.ts";
 import { PortalContainer } from "../../lib/portal.ts";
@@ -83,8 +91,8 @@ export interface SheetBaseProps {
 	form?: "centred" | "menu";
 	/** An act pends: the close act is inert and says so. */
 	busy?: boolean;
-	/** The sheet opens focused on its first field (a confirm's typed name). */
-	focusField?: boolean;
+	/** What the sheet opens focused on: its first field (a confirm's typed name), or the element a ref holds (a pick's option). */
+	focus?: "field" | RefObject<HTMLElement | null>;
 	/** Ties a trigger elsewhere (a `Dialog.Trigger`) to the sheet. */
 	handle?: Dialog.Handle<unknown>;
 	children?: ReactNode;
@@ -105,7 +113,7 @@ export function SheetBase({
 	form,
 	handle,
 	busy,
-	focusField,
+	focus,
 	children,
 }: SheetBaseProps) {
 	const touch = useTouch();
@@ -284,9 +292,9 @@ export function SheetBase({
 						ref={popup}
 						// A field takes no ref (its props are closed), so the popup finds it.
 						initialFocus={
-							focusField
+							focus === "field"
 								? () => popup.current?.querySelector("input") ?? true
-								: undefined
+								: focus
 						}
 						role={centred ? "alertdialog" : "dialog"}
 						aria-labelledby={titleId}

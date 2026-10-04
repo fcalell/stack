@@ -699,6 +699,18 @@ a tick with no animation, never jumped to full.
   the open sheet in place. Rejected: an effect mirroring the queue (the first `confirm()` drew a
   commit late, and a dismissed decision's content stood a frame in the next one's sheet), and a
   reset on close (the name emptied and the act turned blocked while the sheet left).
+  A pick's sheet holds the same rule. On the web its rows, the search with them, are a component
+  inside the sheet's popup, which Base UI removes once the leave has played, so the search and the
+  option last focused die with the sheet however it closes (a pick, the act, the scrim, Escape),
+  and the sheet hands Base UI's `initialFocus` the options' tab stop by ref. On the phone the
+  search stands in the sheet's head, apart from the rows, so it clears as the sheet opens. A
+  phone cell's pick ends its edit from the sheet's after-dismiss callback, once gorhom has played
+  the leave, never in the handler that closes it. A Picker latches its form (the desktop list or
+  its search, the sheet's search field) while open: the options' count picks it only while the
+  list is closed, so data crossing six never tears down an open list and its focus. Rejected:
+  clearing the search in the close handler (a pick or the act closed another way, and on the
+  phone the rows re-expanded while the sheet left), and focusing the stop after two animation
+  frames (a guess against Base UI's own focus).
 - `Text` draws `body` and `meta` (plus `strong`) and names those roles' cells of `TEXT` and
   `TEXT_STRONG`, not either family; every other type role is drawn by the molecule that owns
   its place, and `TEXT` keeps all seven roles as the one table those owners draw from.

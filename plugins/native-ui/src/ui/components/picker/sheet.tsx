@@ -133,6 +133,7 @@ export function PickSheet<V extends string | null>({
 	onChange,
 	open,
 	onClose,
+	onGone,
 	act,
 	chip,
 }: {
@@ -142,10 +143,19 @@ export function PickSheet<V extends string | null>({
 	onChange: (value: V) => void;
 	open: boolean;
 	onClose: () => void;
+	// Hears the sheet gone, its leave played.
+	onGone?: () => void;
 	act?: IconAct;
 	chip?: ChipFamily;
 }) {
 	const [search, setSearch] = useState("");
+	// The search clears as the sheet opens, during render, so the rows keep
+	// their filter while the sheet leaves.
+	const [wasOpen, setWasOpen] = useState(open);
+	if (wasOpen !== open) {
+		setWasOpen(open);
+		if (open) setSearch("");
+	}
 	const groups = groupsOf(options);
 	const searching = groups.flatMap((g) => g.items).length > SEARCH_PAST;
 	const typed = search.trim().toLowerCase();
@@ -157,15 +167,12 @@ export function PickSheet<V extends string | null>({
 			),
 		}))
 		.filter((group) => group.items.length > 0);
-	const close = () => {
-		setSearch("");
-		onClose();
-	};
 	return (
 		<SheetBase
 			form="menu"
 			open={open}
-			onClose={close}
+			onClose={onClose}
+			onGone={onGone}
 			title={title}
 			above={
 				searching ? (
@@ -199,7 +206,7 @@ export function PickSheet<V extends string | null>({
 									accessibilityLabel={option.label}
 									accessibilityState={{ checked: chosen }}
 									onPress={() => {
-										close();
+										onClose();
 										onChange(option.value);
 									}}
 									className={cn(
@@ -231,7 +238,7 @@ export function PickSheet<V extends string | null>({
 						<Pressable
 							accessibilityRole="button"
 							onPress={() => {
-								close();
+								onClose();
 								act.onAct();
 							}}
 							className={cn(row({ ground: "group" }), OPTION)}

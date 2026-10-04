@@ -52,14 +52,10 @@ export function PickerBase<V extends string | null = string>({
 	/** The trigger's name where its composer says more than the value (a sort's direction). */
 	name?: string;
 }) {
-	// In a table cell the pick opens as its edit starts, and its sheet closing
-	// ends the edit.
+	// In a table cell the pick opens as its edit starts, and its sheet gone,
+	// its leave played, ends the edit.
 	const cell = useContext(CellField);
-	const [open, setOpenState] = useState(cell !== undefined);
-	const setOpen = (next: boolean) => {
-		setOpenState(next);
-		if (!next) cell?.done();
-	};
+	const [open, setOpen] = useState(cell !== undefined);
 	const current = groupsOf(options)
 		.flatMap((group) => group.items)
 		.find((option) => option.value === value);
@@ -142,6 +138,7 @@ export function PickerBase<V extends string | null = string>({
 				onChange={onChange}
 				open={open}
 				onClose={() => setOpen(false)}
+				onGone={cell?.done}
 				act={act}
 				chip={chip}
 			/>

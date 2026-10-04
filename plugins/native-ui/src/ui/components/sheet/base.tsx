@@ -346,6 +346,8 @@ function holdsTextArea(node: ReactNode): boolean {
 export interface SheetBaseProps {
 	open: boolean;
 	onClose: () => void;
+	// Hears the sheet gone, its leave played (a cell's pick ends its edit).
+	onGone?: () => void;
 	title: string;
 	description?: string;
 	back?: () => void;
@@ -377,6 +379,7 @@ export interface SheetBaseProps {
 export function SheetBase({
 	open,
 	onClose,
+	onGone,
 	title,
 	description,
 	back,
@@ -480,6 +483,7 @@ export function SheetBase({
 			onDismiss={() => {
 				held.current = false;
 				onClose();
+				onGone?.();
 			}}
 			containerComponent={Layer}
 			accessible={false}
