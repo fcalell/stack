@@ -1,6 +1,6 @@
 ---
 id: 005-04
-status: backlog
+status: review
 sessions: {}
 ---
 # react-ui, native-ui: toasts stand above a docked foot without the Shell measuring it
@@ -27,6 +27,9 @@ log; on the phone the layer is a sibling that reserves the same insets and banne
 act's room is 01's.
 
 ## Acceptance criteria
-- [ ] (test) neither Shell holds `footing`, `height` or `frame` state, and `useFootDocks` is gone.
+- [x] (test) neither Shell holds `footing`, `height` or `frame` state, and `useFootDocks` is gone.
 - [ ] (live) web, assistant at 375: a toast stays above the MessageInput as it grows line by line, in the same frame.
 - [ ] (live) phone, on the harness, in 03's conversation: a toast stands above the foot at first paint, follows its growth, and drops when the foot goes.
+
+## Progress
+Built; `pnpm check` and `pnpm verify` pass. Web live on the assistant at 375 and 1440: as the input grows seven heights, no frame has the toast over the foot, the gap constant in the same frame. Web uses CSS anchor positioning (Baseline since January 2026). Phone: one box measure remains, an accepted limit with a `// TODO:` (the layer stands after the sheet host, outside the page tree). Open: the phone live criterion on the harness.

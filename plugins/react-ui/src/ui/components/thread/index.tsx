@@ -21,7 +21,6 @@ import {
 	ThreadBleeds,
 	ThreadRoom,
 	ToLatest,
-	useFootDocks,
 } from "../../lib/frame.ts";
 import { useTouch } from "../../lib/media.ts";
 import { useWords } from "../../lib/words.tsx";
@@ -39,7 +38,8 @@ const FILL = "flex flex-col grow min-h-0";
 const BLEED = "-mx-page";
 // The log rings inset, its edge meeting the page's.
 const SCROLLS = "grow min-h-0 overflow-y-auto focus-visible:-outline-offset-2";
-const DOCKED = "flex flex-col shrink-0";
+// The docked foot names itself the anchor the Shell's toasts stand above.
+const DOCKED = "flex flex-col shrink-0 [anchor-name:--docked-foot]";
 // The region over the foot: the log, and the Latest act floating at its foot.
 const REGION = "relative flex flex-col grow min-h-0";
 // The log is at its end while its last pixel shows; a reader who scrolled
@@ -169,7 +169,6 @@ export function Thread<T>(props: ThreadProps<T>) {
 	const column = !useTouch() && THREAD_COLUMN;
 	const fill = use(ThreadRoom);
 	const bleeds = use(ThreadBleeds);
-	const docked = useFootDocks();
 	const title = use(PageTitle);
 	const log = useRef<HTMLDivElement>(null);
 	const content = useRef<HTMLDivElement>(null);
@@ -241,7 +240,7 @@ export function Thread<T>(props: ThreadProps<T>) {
 				</ToLatest>
 			</div>
 			{foot ? (
-				<div ref={docked} className={cn(FOOT, DOCKED)}>
+				<div className={cn(FOOT, DOCKED)}>
 					<div className={cn(column, STACK)}>{foot}</div>
 				</div>
 			) : null}

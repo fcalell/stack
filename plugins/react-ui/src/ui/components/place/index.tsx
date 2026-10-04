@@ -30,7 +30,6 @@ import {
 	PlaceRoute,
 	ShellSwitcher,
 	ThreadRoom,
-	useFootDocks,
 } from "../../lib/frame.ts";
 import { HeadingContext } from "../../lib/heading.ts";
 import { useTouch } from "../../lib/media.ts";
@@ -72,7 +71,8 @@ const BLEED = "flex flex-col grow min-h-0";
 const BODY_WRAP = "relative flex flex-col grow min-h-0";
 // The foot stays under the body, which scrolls past it; on the desktop it
 // stands in the measure-wide column a Thread's foot stands in.
-const DOCKED = "flex flex-col shrink-0";
+// The docked foot names itself the anchor the Shell's toasts stand above.
+const DOCKED = "flex flex-col shrink-0 [anchor-name:--docked-foot]";
 const FOOT_COLUMN = "flex flex-col";
 const ACT_ROOM = "shrink-0";
 // The layer marks itself `data-act-floats`: the Shell's toasts stand above
@@ -168,7 +168,6 @@ export function Place({
 	const route = use(PlaceRoute);
 	const titleId = useId();
 	const [sheet] = useState(() => Dialog.createHandle<unknown>());
-	const docked = useFootDocks();
 	const fit = touch ? "body" : "bar";
 	// The column is a structure that follows density, as the Thread's is.
 	const column = !touch && THREAD_COLUMN;
@@ -281,7 +280,7 @@ export function Place({
 							{layer}
 						</div>
 						{foot ? (
-							<div ref={docked} className={cn(FOOT, DOCKED)}>
+							<div className={cn(FOOT, DOCKED)}>
 								<div className={cn(column, FOOT_COLUMN)}>{foot}</div>
 							</div>
 						) : null}

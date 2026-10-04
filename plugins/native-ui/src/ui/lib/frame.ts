@@ -4,10 +4,9 @@ import {
 	type ReactNode,
 	type RefObject,
 	useContext,
-	useEffect,
 	useRef,
 } from "react";
-import type { LayoutChangeEvent, View } from "react-native";
+import type { View } from "react-native";
 
 // What the frame molecules hand each other. The Shell hands its switcher's
 // trigger to each Place, which starts its top bar with it; a Screen never
@@ -37,6 +36,9 @@ export const ToastFrame = createContext<ToastFrame | null>(null);
 
 // The ref and `onLayout` of the box a page draws for the toasts: each layout
 // of the box places the toasts' layer over it.
+// TODO: the layer follows the box one layout late (a growing foot, the
+// keyboard); place it by layout once React Native can stand a layer after the
+// sheets' host from the page's tree, or once the sheets host the toasts.
 export function useToastBox() {
 	const frame = useContext(ToastFrame);
 	const box = useRef<View>(null);
@@ -48,23 +50,6 @@ export function useToastBox() {
 		);
 	};
 	return { ref: box, onLayout };
-}
-
-// A filling Thread's docked input tells the Shell its height, whose toasts
-// then stand above the input; 0 takes it back.
-export const FootDocks = createContext<((height: number) => void) | null>(null);
-
-// The `onLayout` of a docked input: it reports the input's height to
-// `FootDocks` as the input grows, and leaving takes it back.
-export function useFootDocks() {
-	const docks = useContext(FootDocks);
-	useEffect(() => {
-		if (!docks) return;
-		return () => docks(0);
-	}, [docks]);
-	return (event: LayoutChangeEvent) => {
-		docks?.(event.nativeEvent.layout.height);
-	};
 }
 
 // Whether the details sheet of a Split's pane is open, held by the Place or

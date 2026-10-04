@@ -24,7 +24,7 @@ import {
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
-import { FootDocks, PlaceRoute, ShellSwitcher } from "../../lib/frame.ts";
+import { PlaceRoute, ShellSwitcher } from "../../lib/frame.ts";
 import { useTouch } from "../../lib/media.ts";
 import { isCurrent, useRoute } from "../../lib/navigate.ts";
 import { toasts } from "../../lib/toast.ts";
@@ -54,13 +54,15 @@ const BANNER_SLOT = "flex flex-col";
 // floats or a foot docks, above the act or the foot. It is the main
 // landmark, so a page's headers inside it are no banners.
 const MAIN = "relative flex flex-col grow min-h-0";
-const ROOM = "shrink-0";
 const ACT_ROOM = "hidden shrink-0 group-has-data-act-floats/column:flex";
 // The toasts stand on their layer over an open sheet's portal, so nothing
 // between them and the root makes a stacking context (no `isolate`, `z-*` or
 // transform on the frame, the column or `main`; verify b-layers holds it).
+// Their foot is the top of a docked foot (a Place's `foot`, a filling
+// Thread's input), which names itself the `--docked-foot` anchor: the layer
+// stands above it by layout as it grows, and at `main`'s foot without one.
 const TOASTS_LAYER =
-	"absolute inset-0 z-(--layer-toasts) flex flex-col items-end justify-end pointer-events-none touch:items-center";
+	"absolute inset-0 bottom-[anchor(--docked-foot_top,0px)] z-(--layer-toasts) flex flex-col items-end justify-end pointer-events-none touch:items-center";
 // A place row rings inset, inside the sidebar's inset.
 const ROW_BOX = "flex items-center focus-visible:-outline-offset-2";
 const ROW_PRESS = "hover:bg-wash-hover active:bg-wash-press";
@@ -99,7 +101,6 @@ export function Shell({ places, banner, switcher, children }: ShellProps) {
 	const touch = useTouch();
 	const words = useWords();
 	const at = useRoute();
-	const [footing, dock] = useState(0);
 	// The More page stands at the route it opened on: going to a place closes it.
 	const [moreAt, setMoreAt] = useState<string>();
 	const more = moreAt === at;
@@ -160,9 +161,7 @@ export function Shell({ places, banner, switcher, children }: ShellProps) {
 					) : null}
 					<main className={MAIN}>
 						<ShellSwitcher value={trigger}>
-							<PlaceRoute value={route}>
-								<FootDocks value={dock}>{page}</FootDocks>
-							</PlaceRoute>
+							<PlaceRoute value={route}>{page}</PlaceRoute>
 						</ShellSwitcher>
 						<ToastControl.Viewport
 							aria-label={words.notifications}
@@ -172,10 +171,6 @@ export function Shell({ places, banner, switcher, children }: ShellProps) {
 							<div className={ACT_ROOM}>
 								<FloatingActRoom />
 							</div>
-							{footing > 0 ? (
-								// The docked foot's room is its measured height: it grows with the input.
-								<div aria-hidden className={ROOM} style={{ height: footing }} />
-							) : null}
 						</ToastControl.Viewport>
 					</main>
 					{tabs}

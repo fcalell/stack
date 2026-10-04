@@ -24,12 +24,7 @@ import {
 import { ScrollView, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import {
-	ThreadBleeds,
-	ThreadRoom,
-	ToLatest,
-	useFootDocks,
-} from "../../lib/frame";
+import { ThreadBleeds, ThreadRoom, ToLatest } from "../../lib/frame";
 import { Lifted } from "../../lib/hosts";
 import { useWords } from "../../lib/words";
 import { EmptyStateBase } from "../empty-state/base";
@@ -37,6 +32,7 @@ import { Missing } from "../empty-state/missing";
 import type { ListEmpty } from "../list";
 import { Message } from "../message";
 import type { QueryLike } from "../query-boundary";
+import { ToastRoom } from "../toast/room";
 import { Latest } from "./latest";
 
 const FILL = "flex-1";
@@ -187,7 +183,6 @@ export function Thread<T>(props: ThreadProps<T>) {
 	const children = logOf(props, listState(input), words.retry);
 	const fill = useContext(ThreadRoom);
 	const bleeds = useContext(ThreadBleeds);
-	const docked = useFootDocks();
 	const log = useRef<ScrollView>(null);
 	const atEnd = useRef(true);
 	// The reader is scrolled up: the Latest act stands over the foot.
@@ -248,12 +243,10 @@ export function Thread<T>(props: ThreadProps<T>) {
 				<ToLatest.Provider value={away ? toLatest : null}>
 					<Latest />
 				</ToLatest.Provider>
+				{/* The page's toasts stand over the log, above the docked input. */}
+				<ToastRoom />
 			</View>
-			{foot ? (
-				<View onLayout={docked} className={cn(FOOT, DOCKED)}>
-					{foot}
-				</View>
-			) : null}
+			{foot ? <View className={cn(FOOT, DOCKED)}>{foot}</View> : null}
 		</Lifted>
 	);
 }

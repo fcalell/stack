@@ -23,8 +23,8 @@ import { navigate } from "../../lib/navigate";
 import { useWords } from "../../lib/words";
 import { IconButton } from "../icon-button";
 import { Menu } from "../menu";
-import { ToastRoom } from "../place";
 import { useSplitHead } from "../split";
+import { ToastRoom } from "../toast/room";
 
 const SCREEN = "flex-1";
 const TOP_BAR = "relative flex-row items-center";
@@ -102,7 +102,7 @@ export function Screen({ title, back, actions, more, children }: ScreenProps) {
 							<BackRoute.Provider value={back}>{children}</BackRoute.Provider>
 							{beside ? room : null}
 						</Scroll>
-						{beside ? null : <ToastRoom act={false} />}
+						{beside ? null : <ToastRoom />}
 					</View>
 				</View>
 			</PageTitle.Provider>

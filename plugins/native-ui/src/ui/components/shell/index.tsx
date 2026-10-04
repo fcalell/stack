@@ -23,7 +23,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import {
-	FootDocks,
 	PlaceRoute,
 	ShellSwitcher,
 	ShellTabs,
@@ -94,7 +93,6 @@ export function Shell({ places, banner, switcher, children }: ShellProps) {
 	const root = useRef<View>(null);
 	const [box, place] = useState<ToastBox>();
 	const [toastFrame] = useState<ToastFrame>(() => ({ root, place }));
-	const [footing, dock] = useState(0);
 	const pathname = usePathname();
 	// The More page stands at the route it opened on: going to a place closes it.
 	const [moreAt, setMoreAt] = useState<string>();
@@ -126,9 +124,7 @@ export function Shell({ places, banner, switcher, children }: ShellProps) {
 								<ShellTabs.Provider value={tabs}>
 									<PlaceRoute.Provider value={route}>
 										<ToastFrame.Provider value={toastFrame}>
-											<FootDocks.Provider value={dock}>
-												{more ? <MorePage places={rest} /> : children}
-											</FootDocks.Provider>
+											{more ? <MorePage places={rest} /> : children}
 										</ToastFrame.Provider>
 									</PlaceRoute.Provider>
 								</ShellTabs.Provider>
@@ -145,8 +141,6 @@ export function Shell({ places, banner, switcher, children }: ShellProps) {
 					className={cn(TOASTS, TOAST_LAYER)}
 				>
 					<ToastList />
-					{/* A docked input's room is its measured height: it grows with the input. */}
-					{footing > 0 ? <View style={{ height: footing }} /> : null}
 				</View>
 			) : null}
 		</View>

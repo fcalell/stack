@@ -156,6 +156,9 @@ export const OVERLAYS: readonly string[] = [
 	// bar, a floating act shows its room under the toasts.
 	"group-has-data-screen/column:hidden",
 	"group-has-data-act-floats/column:flex",
+	// A docked foot names the anchor the toasts' layer stands above.
+	"[anchor-name:--docked-foot]",
+	"bottom-[anchor(--docked-foot_top,0px)]",
 	// A page's head reads its Split's marks: the back act with a record, the
 	// Details act with a pane, no head beside a record, the Toolbar leaving
 	// with the list.

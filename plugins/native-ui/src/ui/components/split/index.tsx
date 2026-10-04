@@ -143,5 +143,7 @@ export function useSplitHead(children: ReactNode) {
 			? { icon: "PanelRight", label: words.details, onAct: () => setOpen(true) }
 			: undefined;
 	const held: DetailsState | null = props ? { open, setOpen } : null;
-	return { record, beside, details, held };
+	// A Thread filling the record holds the page's toasts over its own input.
+	const thread = record && !beside && holdsThread(props?.main);
+	return { record, beside, details, held, thread };
 }

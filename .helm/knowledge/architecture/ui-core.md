@@ -231,8 +231,15 @@ a tick with no animation, never jumped to full.
 - On touch the places past the tab bar are a page, not a menu: the More tab opens a `Place` of
   `ListRow`s (each place's glyph leading, its count trailing, its route), and while a Place's act
   floats the toasts stand above it by the act's room; while a foot docks (a Place's `foot`, a
-  filling Thread's input) they stand above the foot by its measured height (`FootDocks`, reported
-  through the frame's `useFootDocks`), which follows the input as it grows. A frame never tells
+  filling Thread's input) they stand above the foot by layout as the input grows, with no height
+  reported to the Shell. On the web the docked foot names itself a CSS anchor
+  (`anchor-name: --docked-foot`) and the toasts' layer sets its bottom to that anchor's top
+  (`anchor(--docked-foot top, 0px)`, `main`'s foot without one), so the layer stays one
+  viewport in the Shell's `main` and follows the foot in the frame it grows (anchor positioning
+  is Baseline since January 2026: Chrome 125, Safari 26, Firefox 147). Rejected: the
+  viewport moved into the page's column, since the page is a size container, whose layout
+  containment makes a stacking context between the toasts and the root (below), and a
+  Place and a filling Thread inside it would each draw one. A frame never tells
   the Shell what it is after paint; the Shell learns it before the first frame. On the web the
   page marks its tree and the Shell's column reads the marks by `group-has-*/column` variants:
   a pushed Screen's root carries `data-screen`, which hides the tab bar, and a floating act's
@@ -240,9 +247,11 @@ a tick with no animation, never jumped to full.
   first paint and across the density line. Native has no such selector, so the frame draws what
   the Shell would have had to learn: the Shell hands its tab bar to each Place (`ShellTabs`, as
   it hands the switcher), which draws it under its body, and a pushed Screen draws none and
-  clears the home indicator itself; each Place and pushed Screen draws the box the toasts stand
-  in (`ToastRoom`: the body over the act's room, so above a Place's `foot` and the tab bar by
-  layout), which places the Shell's toasts' layer by measuring itself against the Shell's root
+  clears the home indicator itself; the region that stands over the page's docked foot draws the box
+  the toasts stand in (`ToastRoom`): a Place's body over its act's room (above its `foot` and the
+  tab bar by layout), a pushed Screen's body, or a filling Thread's log (above its input, and
+  lifted with it over the keyboard), the Place leaving it to a Thread it holds, as its child or
+  its Split's record; the box places the Shell's toasts' layer by measuring itself against the Shell's root
   (`ToastFrame`), the one measure left, since the layer stands outside the page's tree (below).
   Rejected: a registration the Shell reads in render from a host object, since a frame that
   mounts after the Shell's render (a route that waits first) leaves nothing that renders the
@@ -342,7 +351,7 @@ a tick with no animation, never jumped to full.
   ends a sections gap over it (`PAGE_BODY_OVER_FOOT`), as a filling Thread's log ends over its
   input, so the field reads apart from the last section; on the desktop the foot stands in the
   measure-wide column (`THREAD_COLUMN`) a Thread's input stands in. It reports
-  `FootDocks` as a filling Thread's input does. `act` and `foot` are exclusive in the props type:
+  the Shell's toasts' anchor as a filling Thread's input does. `act` and `foot` are exclusive in the props type:
   the foot's Send is the screen's one filled act, so a floating act beside it would be a second.
   A Place with a `foot` gives a Thread no room to fill (`ThreadRoom`), so a Thread in its body stands inline among the
   sections with no foot of its own, and no Latest act stands over the Place's foot. Rejected: a
@@ -397,7 +406,7 @@ a tick with no animation, never jumped to full.
   raised while a sheet or a `confirm()` is open stands over the scrim and its dismiss takes the
   press. Base UI portals a sheet into `<body>` after the app root, so by DOM order alone a sheet
   stands over the toasts. The toasts' layer stays inside `main` for its geometry
-  (above the tab bar, the floating act, the docked foot), so nothing between it and the root may
+  (above the tab bar, the floating act, the docked foot's anchor), so nothing between it and the root may
   make a stacking context. Base UI's modal leaves the toasts announced: it marks the outside
   `aria-hidden` but keeps every `[aria-live]` element and its ancestors, the toasts' viewport
   among them. Rejected: a literal `z-*` at the call site, and portalling the toasts after the
@@ -498,7 +507,7 @@ a tick with no animation, never jumped to full.
   (`-mx-page`, an overlay by `ThreadBleeds`), its log and foot carrying the inset themselves,
   a page inset under the head over a hairline (`THREAD_UNDER_HEAD`) the scrolling messages meet;
   the Split hands its main `OverThread` and the `ItemHeader` stands in the Thread's column on the
-  desktop under the main's fill mark (`group/main`). The input docks at the main's foot and reports `FootDocks` as in a Place. The bleeding Place's act
+  desktop under the main's fill mark (`group/main`). The input docks at the main's foot and names the toasts' anchor as in a Place. The bleeding Place's act
   still floats over the list, and where the record stands alone its room stands under the input.
   While a filling Thread's reader is scrolled up (the log's `atEnd` false), a secondary `Button`
   (`ArrowDown`, the word `latest`) floats centred at the foot of the log's region, a pair above
@@ -802,7 +811,7 @@ cell, an off-contract utility, or a drawn word outside `words` each fails a name
 - A native QR tile inside a dark raised ground draws its edge at the dark raised value: uniwind 1.12's `ScopedTheme` keeps the parent's scoped variables and cannot clear one. No screen does this today.
 - A native Button's `count` is not read aloud: the pressable's accessible name is its `label` alone.
 - A failed toast's announcement is Base UI's visually hidden `role="alert"` wrapper beside the toasts' viewport, which exists only while a failed toast stands and the viewport is unfocused, and carries no `aria-live`. When a sheet opens while a failed toast stands, the modal marks that wrapper `aria-hidden`, so a failed toast raised while one has stood continuously since before the sheet opened is not announced. Once no failed toast stands the wrapper is gone, and the next is announced.
-- The native toast room adds a filling Thread's docked input's measured height (`FootDocks`) and not the keyboard's offset, so a toast shown while the keyboard is up over a filling Thread is not lifted with the input.
+- The native toasts' layer stands over a box measured against the Shell's root (`ToastRoom`, `ToastFrame`): the layer must stand after the sheets' host, outside the page's tree, so no layout places it, and it follows a growing input a layout late.
 - A product cannot draw in the platform font: `fonts.sans` unset is IBM Plex Sans, and the platform stack only stands behind the named family and its metric fallback face.
 - Comparison's `hyphens-auto` is unverified: the Nix Playwright browsers ship no hyphenation dictionaries, so a value wider than its column breaks mid-letter there.
 - Native Diff and Comparison name a `list`-role container (React Native has no table role); whether VoiceOver and TalkBack announce that name is unverified.

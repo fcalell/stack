@@ -25,7 +25,6 @@ import {
 	ShellSwitcher,
 	ShellTabs,
 	ThreadRoom,
-	useToastBox,
 } from "../../lib/frame";
 import { Lifted, Scroll } from "../../lib/hosts";
 import { navigate } from "../../lib/navigate";
@@ -35,6 +34,7 @@ import { IconButton } from "../icon-button";
 import { Menu } from "../menu";
 import { useSplitHead } from "../split";
 import { holdsThread } from "../thread";
+import { ToastRoom } from "../toast/room";
 
 const PLACE = "flex-1";
 const TOP_BAR = "flex-row items-center";
@@ -47,8 +47,6 @@ const BODY_WRAP = "relative flex-1";
 // The body's content fills the scroll, so an EmptyState alone centres in it.
 const BODY_CONTENT = "grow";
 const ACT_LAYER = "absolute inset-0 items-center justify-end";
-const TOAST_ROOM = "absolute inset-0";
-const FILL = "flex-1";
 // The foot stays under the body, which scrolls past it.
 const DOCKED = "shrink-0";
 
@@ -58,18 +56,6 @@ export function FloatingActRoom() {
 	return (
 		<View className={FLOATING_ACT_FOOT}>
 			<View className={FLOATING_ACT_ROOM} />
-		</View>
-	);
-}
-
-// The box the Shell's toasts stand in, over the body: above the room of a
-// floating act, and by the page's layout above a docked foot and the tab bar.
-export function ToastRoom({ act }: { act: boolean }) {
-	const box = useToastBox();
-	return (
-		<View pointerEvents="none" className={TOAST_ROOM}>
-			<View ref={box.ref} onLayout={box.onLayout} className={FILL} />
-			{act ? <FloatingActRoom /> : null}
 		</View>
 	);
 }
@@ -119,6 +105,13 @@ export function Place({
 	// over a docked foot it stands among the sections, the foot the page's one
 	// input.
 	const fill = foot === undefined && holdsThread(children);
+	// The toasts stand over the body, unless a filling Thread (in the body or
+	// in its Split's record) stands over its own docked input: its log's region
+	// then holds them.
+	const toasts =
+		fill || split.thread ? null : (
+			<ToastRoom>{act ? <FloatingActRoom /> : null}</ToastRoom>
+		);
 	// A record standing alone returns to the list, the place's own route.
 	const lead =
 		split.record && route !== undefined ? (
@@ -221,7 +214,7 @@ export function Place({
 										</View>
 									</View>
 								) : null}
-								<ToastRoom act={act !== undefined} />
+								{toasts}
 							</View>
 							{foot ? <View className={cn(FOOT, DOCKED)}>{foot}</View> : null}
 						</Lifted>
