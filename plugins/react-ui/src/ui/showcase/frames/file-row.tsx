@@ -1,3 +1,4 @@
+import type { ChipMark } from "@fcalell/ui-core/descriptors";
 import { FileRow } from "../../components/file-row/index.tsx";
 import { Group } from "../../components/group/index.tsx";
 import { type FileSlots, List } from "../../components/list/index.tsx";
@@ -12,6 +13,7 @@ interface File {
 	removed: number;
 	seen?: boolean;
 	href?: string;
+	chip?: ChipMark;
 }
 
 const FILE: FileSlots<File> = {
@@ -21,6 +23,7 @@ const FILE: FileSlots<File> = {
 	removed: (file) => file.removed,
 	seen: (file) => file.seen,
 	href: (file) => file.href,
+	chip: (file) => file.chip,
 };
 
 // Board 51's review list at the Split's list width, the long path cut.
@@ -47,6 +50,28 @@ const REVIEW: File[] = [
 		href: "#invoice-test",
 	},
 	{ path: LONG, added: 2, removed: 1, seen: false, href: "#docs" },
+];
+
+// A chip beside a short name at the touch width: the directory goes first, the
+// name never loses its start (`biome.json` holds whole, a long one cuts to
+// `bio…json`), and the chip's label truncates before the path goes below it.
+const CHIPPED: File[] = [
+	{
+		path: "biome.json",
+		added: 12,
+		removed: 4,
+		seen: false,
+		href: "#biome",
+		chip: { family: "amber", label: "what the check reads" },
+	},
+	{
+		path: "docs/flags.md",
+		added: 3,
+		removed: 0,
+		seen: false,
+		href: "#flags",
+		chip: { family: "teal", label: "knowledge text" },
+	},
 ];
 
 // The seen marks given, then absent (the file glyph).
@@ -150,6 +175,7 @@ export function drawFileRow(frame: ShowcaseFrame) {
 			{frame.state === "rest" ? (
 				<div className="flex flex-col w-list max-w-full px-page">
 					<List items={REVIEW} file={FILE} />
+					<List items={CHIPPED} file={FILE} />
 				</div>
 			) : null}
 		</Wide>

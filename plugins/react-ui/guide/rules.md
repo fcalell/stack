@@ -286,8 +286,9 @@ and last the first part truncates; the status and the glyphs stay whole. A value
 a row with an `act` stands its acts on a line under its text, at the row's end, so give `act` the
 next step and let the row decide where it stands. A table's `selected` row washes in its list form
 as in its grid. A file row's `change` (a `ChangeKind`) draws the
-change mark ahead of its glyph, and its `chip` says why it is listed; the chip stays whole and the
-path yields to it. A Section counts them and waits with them when they stand as its direct children,
+change mark ahead of its glyph, and its `chip` says why it is listed; the path yields to it down to
+its name's floor (the whole name when it is short, else its first three characters, an ellipsis
+and its end), and below that the chip's label truncates. A Section counts them and waits with them when they stand as its direct children,
 inside a direct `Group`, or as a direct `QueryBoundary`'s query; a collection inside the app's own
 component, or inside a `QueryBoundary`'s body, draws itself but adds no count and no busy state to
 the Section's head. A `Group` holds static rows; rows from data in a card are a `List` placed in the

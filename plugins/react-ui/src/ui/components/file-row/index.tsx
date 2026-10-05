@@ -5,6 +5,7 @@ import type {
 	ChipMark,
 	IconName,
 } from "@fcalell/ui-core/descriptors";
+import { pathCut } from "@fcalell/ui-core/list-state";
 import { filled } from "@fcalell/ui-core/tokens";
 import {
 	FILE_COUNTS,
@@ -35,15 +36,17 @@ const HIT_LIST = "rounded-row touch:rounded-none";
 // The change mark stands in its own lane at the row's start, ahead of the glyph.
 const MARK = "flex shrink-0";
 const LEADING = "flex shrink-0 items-center justify-center text-ink-meta";
-const PATH = "flex grow min-w-0";
+// The path takes the overflow first (its shrink weight is 10^7 against the
+// chip's 1, as ListRow's meta line sets out), down to its floor, a `min-width`
+// in `ch` (the path is mono) from its name; it clips what its floor holds.
+const PATH = "flex grow shrink-10000000 overflow-hidden";
 const DIRECTORY = "min-w-0 truncate";
 const NAME = "flex shrink-0 max-w-full min-w-0";
 const STEM = "min-w-0 truncate";
 const PART = "shrink-0";
-// The characters kept before a name's extension (twice that without one).
-const TAIL_LEAD = 3;
-// The chip keeps its width, capped by its label's measure; the path yields.
-const CHIP = "flex shrink-0";
+// The chip stands at its label's measure cap while the path holds above its
+// floor; below it the chip's label truncates.
+const CHIP = "flex min-w-0 shrink";
 const COUNTS = "flex shrink-0 items-center";
 const COUNT = "text-end";
 // The row's name where it has no hit: the full path, the chip, the counts and
@@ -52,7 +55,7 @@ const SPOKEN = "sr-only";
 
 /** A changed file in a review's list. */
 export interface FileRowProps extends Closed {
-	/** The file's path; the directory gives way first when it is too long, the name stays whole as long as it can. */
+	/** The file's path; the directory gives way first when it is too long, then the name's middle down to its floor, then the chip's label. */
 	path: string;
 	/** Lines added; zero draws nothing. */
 	added: number;
@@ -84,30 +87,28 @@ function split(path: string): [string, string] {
 	return slash < 0 ? ["", path] : [path.slice(0, slash), path.slice(slash)];
 }
 
-// The name's end that never cuts: its extension and the characters before it.
-function tailOf(name: string): number {
-	const dot = name.lastIndexOf(".");
-	const kept = dot > 0 ? name.length - dot + TAIL_LEAD : TAIL_LEAD * 2;
-	return Math.max(0, name.length - kept);
-}
-
 // The path fits by layout: the name takes its width up to the whole box and
 // the directory the room it leaves, ellipsized at its end, so the directory
-// gives way first; past the box the name's stem truncates before its kept
-// end, a cut in its middle.
+// gives way first, down to nothing; then the name's stem truncates before its
+// kept end, a cut in its middle, down to the name's floor, below which the
+// chip's label truncates.
 function Path(props: { path: string }) {
 	const [dir, name] = split(props.path);
-	const at = tailOf(name);
+	const { stem, tail, floor } = pathCut(name);
 	return (
-		<span aria-hidden className={cn(FILE_PATH, PATH)}>
+		<span
+			aria-hidden
+			className={cn(FILE_PATH, PATH)}
+			style={{ minWidth: `${floor}ch` }}
+		>
 			{dir ? (
 				<span className={cn(filePathPart({ part: "directory" }), DIRECTORY)}>
 					{dir}
 				</span>
 			) : null}
 			<span className={cn(filePathPart({ part: "name" }), NAME)}>
-				<span className={STEM}>{name.slice(0, at)}</span>
-				<span className={PART}>{name.slice(at)}</span>
+				<span className={STEM}>{stem}</span>
+				<span className={PART}>{tail}</span>
 			</span>
 		</span>
 	);

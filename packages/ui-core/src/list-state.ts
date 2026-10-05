@@ -888,3 +888,30 @@ export function stagesShown<T extends { state: string }>(
 	while (last > 0 && steps[last - 1]?.state !== "done") last--;
 	return steps.slice(0, last);
 }
+
+// The characters a file name keeps at its start and before its extension.
+const NAME_LEAD = 3;
+
+// A file row's name, cut: its end (`tail`, never cut) is the extension and the
+// NAME_LEAD characters before it (twice that without an extension), but its
+// stem keeps its first NAME_LEAD characters, so a short name never loses its
+// start. `floor` is the least characters the path shows of the name: the whole
+// name when it is short, else its cut form (the lead, an ellipsis, the tail).
+// A leading slash (the name as split from its directory) is no character of
+// it. Both platforms read it, so one name cuts the same way.
+export function pathCut(name: string): {
+	stem: string;
+	tail: string;
+	floor: number;
+} {
+	const lead = name.startsWith("/") ? 1 : 0;
+	const bare = name.length - lead;
+	const dot = name.lastIndexOf(".");
+	const kept = dot > lead ? name.length - dot + NAME_LEAD : NAME_LEAD * 2;
+	const cut = name.length - Math.max(0, Math.min(kept, bare - NAME_LEAD));
+	return {
+		stem: name.slice(0, cut),
+		tail: name.slice(cut),
+		floor: lead + Math.min(bare, NAME_LEAD + 1 + kept),
+	};
+}

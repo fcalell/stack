@@ -1,6 +1,6 @@
 ---
 id: 003-70
-status: backlog
+status: review
 sessions: {}
 ---
 # react-ui: a file row's path keeps its start beside its chip
