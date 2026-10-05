@@ -50,6 +50,14 @@ test("a Section reads the collections standing as its children, in a fragment, i
 	assert.equal(parts.fields, 3);
 });
 
+test("a definition list is no collection a Section counts: it waits alone, adding no count", () => {
+	const parts = sectionPartsOf(
+		el(Group, {}, el(List, { query: pending, definition: {} })),
+		KINDS,
+	);
+	assert.deepEqual(parts, { lists: [], waits: [true], groups: 1, fields: 0 });
+});
+
 test("nothing deeper is read: an app's own component, a settled QueryBoundary's loading form, a Group in a Group", () => {
 	const parts = sectionPartsOf(
 		[

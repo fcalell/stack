@@ -2,6 +2,7 @@ import { Button as BaseButton } from "@base-ui/react/button";
 import { cn } from "@fcalell/ui-core/cn";
 import type {
 	ChangeKind,
+	DefinitionData,
 	IconAct,
 	Lock,
 	StatusState,
@@ -45,10 +46,7 @@ const ACTS = "relative flex shrink-0";
 const CHEVRON = "flex shrink-0 items-center justify-center text-ink-meta";
 
 /** What a definition shows: words, a status, or an in-place control. */
-export type DefinitionValue =
-	| string
-	| { status: StatusState; label?: string }
-	| ReactNode;
+export type DefinitionValue = DefinitionData | ReactNode;
 
 interface DefinitionRowBase extends Closed {
 	/** Where the fact stands in a change set: its mark at the row's start, ahead of the label. */

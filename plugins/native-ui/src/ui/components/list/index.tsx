@@ -3,6 +3,9 @@ import type {
 	ChangeKind,
 	ChipMark,
 	CountLink,
+	DefinitionData,
+	IconAct,
+	Lock,
 	MenuItem,
 	MeterMark,
 	Part,
@@ -12,6 +15,7 @@ import type {
 	StatusMark,
 } from "@fcalell/ui-core/descriptors";
 import {
+	definitionShape,
 	fileShape,
 	listBusy,
 	listGround,
@@ -23,7 +27,7 @@ import {
 	treeRows,
 } from "@fcalell/ui-core/list-state";
 import { LIST, LIST_TREE } from "@fcalell/ui-core/variants";
-import { type ReactElement, useContext, useState } from "react";
+import { type ReactElement, type ReactNode, useContext, useState } from "react";
 import { View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { between, useGroupList } from "../../lib/group";
@@ -32,6 +36,8 @@ import type { Route } from "../../lib/route";
 import { SectionContext } from "../../lib/section";
 import { TreeContext } from "../../lib/tree";
 import { useWords } from "../../lib/words";
+import { DefinitionRow } from "../definition-row";
+import { DefinitionWait } from "../definition-row/wait";
 import type { EmptyStateProps } from "../empty-state";
 import { EmptyStateBase } from "../empty-state/base";
 import { Missing } from "../empty-state/missing";
@@ -158,6 +164,39 @@ export type MeterSlots<T> = MeterSlotsBase<T> &
 		| { counts: (item: T) => readonly CountLink[]; meta?: never }
 	);
 
+interface DefinitionSlotsBase<T> {
+	key: (item: T) => string;
+	label: (item: T) => string;
+	value?: (item: T) => DefinitionData | ReactNode | undefined;
+	// Where the fact stands in a change set, its change mark.
+	change?: (item: T) => ChangeKind | undefined;
+	// Whether every value is copied whole (identifiers): drawn in the code role
+	// with a copy act; one value for the list, so the waiting rows hold the
+	// act's square.
+	copyable?: boolean;
+}
+
+// One function per `DefinitionRow` slot, each called with a loaded item; a
+// declared `description`, `act`, `href` or `onOpen` is the row's editable form,
+// a declared `locked` its locked one, never both.
+export type DefinitionSlots<T> = DefinitionSlotsBase<T> &
+	(
+		| {
+				locked?: never;
+				description?: (item: T) => string | undefined;
+				act?: (item: T) => IconAct | undefined;
+				href?: (item: T) => Route | undefined;
+				onOpen?: (item: T) => void;
+		  }
+		| {
+				locked: (item: T) => Lock | undefined;
+				description?: never;
+				act?: never;
+				href?: never;
+				onOpen?: never;
+		  }
+	);
+
 // What an empty list draws: an EmptyState's mark, title, sentence and the
 // act that fills the list.
 export type ListEmpty = Pick<
@@ -187,12 +226,18 @@ export type ListSource<T> =
 
 // The one kind of row a list holds.
 type ListKind<T, V extends string | null> =
-	| { row: RowSlots<T, V>; file?: never; meter?: never }
-	| { file: FileSlots<T>; row?: never; meter?: never }
-	| { meter: MeterSlots<T>; row?: never; file?: never };
+	| { row: RowSlots<T, V>; file?: never; meter?: never; definition?: never }
+	| { file: FileSlots<T>; row?: never; meter?: never; definition?: never }
+	| { meter: MeterSlots<T>; row?: never; file?: never; definition?: never }
+	| {
+			definition: DefinitionSlots<T>;
+			row?: never;
+			file?: never;
+			meter?: never;
+	  };
 
 // A collection's rows: from a query or from items, each a ListRow, a
-// FileRow or a Meter.
+// FileRow, a Meter or a DefinitionRow.
 export type ListProps<T = unknown, V extends string | null = string> = Closed &
 	ListSource<T> &
 	ListKind<T, V>;
@@ -205,7 +250,9 @@ export type ListProps<T = unknown, V extends string | null = string> = Closed &
 // saying it no longer exists with Back, never Retry; a failed query draws the
 // failed EmptyState with `sentence` and Retry; no item draws `empty`; then
 // one row per item. In a Group its rows, waiting rows and failed, missing and
-// empty forms stand on the card, the hairline once between rows.
+// empty forms stand on the card, the hairline once between rows; a
+// `definition` list (facts from data: DefinitionRows) stands in a Group, and
+// adds no count to a Section's head.
 export function List<T, V extends string | null = string>(
 	props: ListProps<T, V>,
 ) {
@@ -249,6 +296,14 @@ export function List<T, V extends string | null = string>(
 				if (props.meter)
 					return (
 						<MeterWait key={index} busy={false} {...meterShape(props.meter)} />
+					);
+				if (props.definition)
+					return (
+						<DefinitionWait
+							key={index}
+							shape={definitionShape(props.definition)}
+							index={index}
+						/>
 					);
 				return <FileWait key={index} busy={false} {...fileShape(props.file)} />;
 			}),
@@ -332,6 +387,35 @@ export function List<T, V extends string | null = string>(
 						: { meta: meter.meta?.(item) })}
 				/>
 			)),
+		);
+	}
+	if (props.definition) {
+		const { definition } = props;
+		return frame(
+			items.map((item) => {
+				const locked = definition.locked?.(item);
+				const key = definition.key(item);
+				const shared = {
+					change: definition.change?.(item),
+					label: definition.label(item),
+					value: definition.value?.(item),
+					copyable: definition.copyable,
+				};
+				if (locked)
+					return <DefinitionRow key={key} {...shared} locked={locked} />;
+				return (
+					<DefinitionRow
+						key={key}
+						{...shared}
+						description={definition.description?.(item)}
+						act={definition.act?.(item)}
+						href={definition.href?.(item)}
+						onOpen={
+							definition.onOpen ? () => definition.onOpen?.(item) : undefined
+						}
+					/>
+				);
+			}),
 		);
 	}
 	const { file } = props;

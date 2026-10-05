@@ -8,6 +8,7 @@ import {
 	chooseHead,
 	chooseReason,
 	chooseRow,
+	definitionShape,
 	factShape,
 	fileShape,
 	folding,
@@ -243,6 +244,38 @@ test("the waiting shape follows the declared slots and runs none of them", () =>
 	assert.deepEqual(fileShape({ change: spy("change") }), {
 		change: true,
 		chip: false,
+	});
+	assert.deepEqual(calls, []);
+});
+
+test("a waiting definition row's shape comes from the keys a `definition` map declares: copy or an act gives the act's square, a link its chevron, a description or a lock its meta line", () => {
+	const calls: string[] = [];
+	const spy = (name: string) => () => {
+		calls.push(name);
+		return undefined;
+	};
+	assert.deepEqual(definitionShape({}), {
+		change: false,
+		description: false,
+		end: "none",
+	});
+	assert.deepEqual(
+		definitionShape({ change: spy("change"), description: spy("description") }),
+		{ change: true, description: true, end: "none" },
+	);
+	assert.equal(definitionShape({ copyable: true }).end, "act");
+	assert.equal(definitionShape({ copyable: false }).end, "none");
+	assert.equal(definitionShape({ act: spy("act") }).end, "act");
+	assert.equal(definitionShape({ href: spy("href") }).end, "chevron");
+	assert.equal(definitionShape({ onOpen: spy("onOpen") }).end, "chevron");
+	assert.equal(
+		definitionShape({ copyable: true, href: spy("href") }).end,
+		"act",
+	);
+	assert.deepEqual(definitionShape({ locked: spy("locked") }), {
+		change: false,
+		description: true,
+		end: "none",
 	});
 	assert.deepEqual(calls, []);
 });

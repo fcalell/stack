@@ -332,6 +332,44 @@ export function fileShape(slots: {
 	return { change: slots.change !== undefined, chip: slots.chip !== undefined };
 }
 
+// What stands at the end of a waiting definition row: nothing, the act's
+// square (an icon act or the copy act), a link's chevron square, or, in a
+// waiting Group's setting row, the switch's hit box.
+export type DefinitionEnd = "none" | "act" | "chevron" | "switch";
+
+// The slots a waiting DefinitionRow draws beyond its label bar, known before
+// any item: the change mark's lane, a meta line under the label (a
+// description, or a locked row's reason; the value bar moves to it), and
+// what stands at the row's end.
+export interface DefinitionShape {
+	change: boolean;
+	description: boolean;
+	end: DefinitionEnd;
+}
+
+// The waiting definition row's shape from the slots a `definition` map
+// declares, read by key: no slot function runs. `copyable` is one value for
+// the list, so it keeps the act's square on every row.
+export function definitionShape(slots: {
+	change?: unknown;
+	description?: unknown;
+	locked?: unknown;
+	copyable?: boolean;
+	act?: unknown;
+	href?: unknown;
+	onOpen?: unknown;
+}): DefinitionShape {
+	let end: DefinitionEnd = "none";
+	if (slots.act !== undefined || slots.copyable === true) end = "act";
+	else if (slots.href !== undefined || slots.onOpen !== undefined)
+		end = "chevron";
+	return {
+		change: slots.change !== undefined,
+		description: slots.description !== undefined || slots.locked !== undefined,
+		end,
+	};
+}
+
 // The line a waiting figure or bar draws under it, known before any data: the
 // slot declared, `counts` (a link's target box, the taller) over `meta` (one
 // meta line), or none.
@@ -406,7 +444,8 @@ export function sectionCount(
 // collections standing as its direct children, inside a direct Group, or as
 // a direct QueryBoundary's props. Nothing deeper registers or is read.
 export interface SectionParts {
-	// Each List or Table: it waits, it counts, and it is a body of rows.
+	// Each List or Table: it waits, it counts, and it is a body of rows. A
+	// List of facts (its `definition` map) is none: it waits alone.
 	lists: readonly Pick<ListInput, "query" | "items" | "loading">[];
 	// Each other waiter: a QueryBoundary's queries, a BarChart's or a
 	// Comparison's own items, whether they wait.

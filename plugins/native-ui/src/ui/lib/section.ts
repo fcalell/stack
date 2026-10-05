@@ -30,6 +30,7 @@ interface CollectionProps {
 	query?: ListInput["query"];
 	items?: readonly unknown[];
 	loading?: boolean;
+	definition?: unknown;
 }
 
 // What a QueryBoundary's element carries.
@@ -58,8 +59,12 @@ export function sectionPartsOf(
 			if (type === Fragment) walk(props.children, inGroup);
 			else if (kinds.lists.includes(type)) {
 				// A List's or a Table's props carry their items, whatever the item type.
-				const { query, items, loading } = props as CollectionProps;
-				lists.push({ query, items, loading });
+				const { query, items, loading, definition } = props as CollectionProps;
+				// A `definition` list is facts, not a collection a viewer counts: it
+				// waits alone, like a chart, and adds no count.
+				if (definition !== undefined)
+					waits.push(query?.isPending === true || loading === true);
+				else lists.push({ query, items, loading });
 			} else if (kinds.waits.includes(type)) {
 				// A BarChart's or a Comparison's props carry their items the same way.
 				const { query, loading } = props as CollectionProps;

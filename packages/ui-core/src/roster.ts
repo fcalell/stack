@@ -784,33 +784,24 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		},
 		Group: {
 			props: ["loading", "children"],
-			draws: [
-				"GROUP",
-				"SKELETON_ROW.kind.setting",
-				"ROW_TITLE_LINE",
-				"LINE_BOX.role.body",
-				"LINE_BOX.role.meta",
-				"SKELETON.kind.line",
-				"SKELETON.kind.switch",
-			],
+			draws: ["GROUP"],
 			holds: ["GROUP"],
 			states: ["rest", "loading"],
 			owns: {
-				colors: ["edge", "surface", "skeleton"],
-				radii: ["card", "chip", "full"],
-				roles: ["body", "meta"],
-				spacing: ["fields", "card", "pair", "inside"],
-				sizes: ["row-setting", "skeleton", "switch-w", "switch-h", "target"],
+				colors: ["edge", "surface"],
+				radii: ["card"],
 			},
 		},
 		// A collection: its rows from `query` or `items` through one item map
-		// (`row` for ListRows, `file` for FileRows, `meter` for Meters), its
-		// waiting rows the row's own in the slots the map declares, its failed
-		// and empty EmptyStates its own. In a Group its rows and forms stand on
-		// the card, the card their box. A `row` map with `children` makes it a
-		// tree: the rows abut (`LIST_TREE`), each level one step in, and the List
-		// owns which branches are folded (open by default), handing every row
-		// its depth and fold.
+		// (`row` for ListRows, `file` for FileRows, `meter` for Meters,
+		// `definition` for DefinitionRows), its waiting rows the row's own in
+		// the slots the map declares, its failed and empty EmptyStates its own.
+		// In a Group its rows and forms stand on the card, the card their box.
+		// A `row` map with `children` makes it a tree: the rows abut
+		// (`LIST_TREE`), each level one step in, and the List owns which
+		// branches are folded (open by default), handing every row its depth
+		// and fold. A `definition` list stands in a Group and adds no count to
+		// a Section's head: facts are not a collection a viewer counts.
 		List: {
 			props: [
 				"query",
@@ -819,6 +810,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"row",
 				"file",
 				"meter",
+				"definition",
 				"items",
 				"loading",
 			],
@@ -1169,7 +1161,12 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// after it and its reason as the line under it (the whole line a link
 		// with an `href`); it takes no description, act or open, since its
 		// reason is the one line and the one link. A `change` draws the change
-		// mark ahead of the label, the kind's word its name.
+		// mark ahead of the label, the kind's word its name. A `List`'s
+		// `definition` map draws one per item and waits as the internal
+		// `DefinitionWait`: a label bar and a value bar on one line, or, with a
+		// description, the label over the meta line; the act's square or the
+		// chevron's at the end when declared. A waiting Group's setting rows are
+		// the same wait with a description and the switch's box at the end.
 		DefinitionRow: {
 			props: [
 				"change",
@@ -1209,9 +1206,16 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"SPINNER_ARC",
 				"ICON_BUTTON.fit.bar",
 				"CHANGE_MARK",
+				"SKELETON_ROW.kind.one-line-group",
+				"SKELETON_ROW.kind.setting",
+				"SKELETON.kind.line",
+				"SKELETON.kind.icon",
+				"SKELETON.kind.switch",
+				"LINE_BOX.role.body",
+				"LINE_BOX.role.meta",
 			],
 			holds: ["DEFINITION_ROW", "DEFINITION_ROW_CHEVRON"],
-			states: [...PRESS],
+			states: [...PRESS, "loading"],
 			owns: {
 				roles: ["body", "meta", "code"],
 				colors: [
@@ -1224,8 +1228,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"ok",
 					"warn",
 					"danger",
+					"skeleton",
 				],
-				radii: ["full", "control"],
+				radii: ["full", "control", "chip"],
 				spacing: ["fields", "card", "inside", "pair"],
 				sizes: [
 					"row",
@@ -1236,6 +1241,10 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"dot",
 					"spinner",
 					"measure-short",
+					"skeleton",
+					"switch-w",
+					"switch-h",
+					"target",
 				],
 			},
 		},

@@ -1,10 +1,5 @@
-import { groupWait } from "@fcalell/ui-core/list-state";
-import {
-	GROUP,
-	ROW_TITLE_LINE,
-	skeleton,
-	skeletonRow,
-} from "@fcalell/ui-core/variants";
+import { type DefinitionShape, groupWait } from "@fcalell/ui-core/list-state";
+import { GROUP } from "@fcalell/ui-core/variants";
 import {
 	Children,
 	isValidElement,
@@ -21,27 +16,17 @@ import { cn } from "../../lib/cn";
 import { GroundContext } from "../../lib/ground";
 import { between, GroupContext, type GroupHost } from "../../lib/group";
 import { LoadingContext } from "../../lib/loading";
-import { Strut } from "../../lib/strut";
+import { DefinitionWait } from "../definition-row/wait";
 
 const BOX = "overflow-hidden";
-// A waiting setting row stands in the loaded DefinitionRow's boxes: the
-// label's line box beside the switch's hit box on the title line, the
-// description's line box under it, each line's height set by a zero-width
-// strut at its role, so each bar centres where its text does.
-const ROW_WAIT = "flex-row items-center";
-const LINES_WAIT = "flex-1 min-w-0";
-const TITLE_WAIT = "flex-row items-center min-w-0";
-const LABEL_WAIT = "flex-1 min-w-0 flex-row items-center";
-const LINE_WAIT = "flex-row items-center";
-const SWITCH_WAIT =
-	"shrink-0 items-center justify-center min-h-target min-w-target";
-// The loading rows' bars, a label over a value, each at the length of the
-// line it stands in for.
-const BARS = [
-	["w-1/3", "w-1/4"],
-	["w-1/4", "w-1/4"],
-	["w-1/3", "w-1/2"],
-] as const;
+// A waiting Group with no List of its own draws three waiting setting rows:
+// a label over a description, a switch at the end.
+const SETTING: DefinitionShape = {
+	change: false,
+	description: true,
+	end: "switch",
+};
+const SETTINGS = [0, 1, 2] as const;
 
 export interface GroupProps extends Closed {
 	loading?: boolean;
@@ -81,27 +66,8 @@ export function Group({ loading, children }: GroupProps) {
 	}, [waiting]);
 	const rows =
 		waiting && settings
-			? BARS.map(([label, value]) => (
-					<View
-						key={`${label} ${value}`}
-						className={cn(skeletonRow({ kind: "setting" }), ROW_WAIT)}
-					>
-						<View className={LINES_WAIT}>
-							<View className={cn(ROW_TITLE_LINE, TITLE_WAIT)}>
-								<View className={LABEL_WAIT}>
-									<Strut role="body" />
-									<View className={cn(skeleton({ kind: "line" }), label)} />
-								</View>
-								<View className={SWITCH_WAIT}>
-									<View className={skeleton({ kind: "switch" })} />
-								</View>
-							</View>
-							<View className={LINE_WAIT}>
-								<Strut role="meta" />
-								<View className={cn(skeleton({ kind: "line" }), value)} />
-							</View>
-						</View>
-					</View>
+			? SETTINGS.map((index) => (
+					<DefinitionWait key={index} shape={SETTING} index={index} />
 				))
 			: Children.toArray(children);
 	return (

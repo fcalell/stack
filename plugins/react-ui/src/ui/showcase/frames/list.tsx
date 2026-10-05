@@ -1,3 +1,4 @@
+import { Group } from "../../components/group/index.tsx";
 import { List } from "../../components/list/index.tsx";
 import { Place } from "../../components/place/index.tsx";
 import { Section } from "../../components/section/index.tsx";
@@ -30,12 +31,38 @@ const DEPLOYS: Deploy[] = [
 	{ id: "d3", author: "Ema Okafor", message: "Retry webhooks", age: "1 d" },
 ];
 
+interface HostKey {
+	id: string;
+	algorithm: string;
+	fingerprint: string;
+}
+
+const HOST_KEYS: HostKey[] = [
+	{
+		id: "k1",
+		algorithm: "ED25519",
+		fingerprint: "SHA256:uNiVztksCsDhcc0u9e8BujQXVUpKZIDTMczCvj3tD2s",
+	},
+	{
+		id: "k2",
+		algorithm: "RSA",
+		fingerprint: "SHA256:nThbg6kXUpJWGl7E1IGOCspRomTxdCARLviKw6E5SY8",
+	},
+	{
+		id: "k3",
+		algorithm: "ECDSA",
+		fingerprint: "SHA256:p2QAMXNIC1TJYWeIOttrVc98/R1BUFWu3/LiyKgUfQM",
+	},
+];
+
 const refetch = () => {};
 
-// Every cell draws two Lists in the frame's state, each in a Section on a
-// page as it ships: notes (a title over a meta line, no leading) and
-// deploys (an avatar leading, an age trailing), each waiting in its own
-// rows' slots, its empty and failed forms framed in the Section.
+// Every cell draws three Lists in the frame's state, each in a Section on a
+// page as it ships: notes (a title over a meta line, no leading), deploys
+// (an avatar leading, an age trailing), each waiting in its own rows' slots,
+// its empty and failed forms framed in the Section; and host keys, facts
+// from data in a Group (a label over its fingerprint, copied), the Section's
+// head carrying no count.
 export function drawList(frame: ShowcaseFrame) {
 	return (
 		<Column>
@@ -74,6 +101,25 @@ export function drawList(frame: ShowcaseFrame) {
 							href: (deploy) => `#${deploy.id}`,
 						}}
 					/>
+				</Section>
+				<Section title="Host keys">
+					<Group>
+						<List
+							query={queryOf(frame.state, HOST_KEYS)}
+							sentence="The host keys did not load."
+							empty={{
+								title: "No host keys",
+								sentence: "The keys the host presents land here.",
+								act: { label: "Scan host", onAct: refetch },
+							}}
+							definition={{
+								key: (key) => key.id,
+								label: (key) => key.algorithm,
+								value: (key) => key.fingerprint,
+								copyable: true,
+							}}
+						/>
+					</Group>
 				</Section>
 			</Place>
 		</Column>

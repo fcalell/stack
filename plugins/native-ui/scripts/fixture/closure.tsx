@@ -424,6 +424,11 @@ export const closure = (
 		{/* @ts-expect-error: a list holds one row kind */}
 		<List items={[1]} row={{ key: String, title: String }} meter={{ key: String, label: String, value: Number, max: Number }} />
 		<List items={[1]} meter={{ key: String, label: String, value: Number, max: Number, meta: String }} />
+		{/* @ts-expect-error: a list holds one row kind */}
+		<List items={[1]} row={{ key: String, title: String }} definition={{ key: String, label: String }} />
+		<List items={[1]} definition={{ key: String, label: String, value: String, copyable: true, description: String }} />
+		{/* @ts-expect-error: a locked definition takes no description */}
+		<List items={[1]} definition={{ key: String, label: String, locked: () => ({ reason: "x" }), description: String }} />
 		{/* @ts-expect-error: closed channel */}
 		<List items={[]} row={{ key: String, title: String }} className="x" />
 		{/* @ts-expect-error: closed channel */}

@@ -887,11 +887,14 @@ a tick with no animation, never jumped to full.
   a row or a `Code` between messages is a detail, never a second item map or children.
 - A collection takes data and draws its states at the leaf. A `List` takes `query` (or `items`,
   waiting on `loading`) and one item map: `row`, one function per `ListRow` slot, `file`, one per
-  `FileRow` slot, or `meter`, one per `Meter` slot. Its waiting rows are the row's own markup
-  (`list-row/wait.tsx`, `file-row/wait.tsx`, `meter/wait.tsx`), a ListRow's with bars in the slots
+  `FileRow` slot, `meter`, one per `Meter` slot, or `definition`, one per `DefinitionRow` slot
+  (`copyable` one value for the list). Its waiting rows are the row's own markup
+  (`list-row/wait.tsx`, `file-row/wait.tsx`, `meter/wait.tsx`, `definition-row/wait.tsx`), a ListRow's with bars in the slots
   `row` declares, a FileRow's chip bar only when `file` declares `chip`, and its change lane when
   `file` declares `change` (`fileShape`), and a Meter's line bar only when `meter` declares `meta`
-  or `counts`, read before any item exists. The `leading` slot names its kind by its one key (`{
+  or `counts`, and a DefinitionRow's change lane, meta line (a description or a lock's reason, the
+  value bar moving to the title line when none) and end square (an act or `copyable`, or a
+  chevron) by the slots `definition` declares (`definitionShape`), read before any item exists. The `leading` slot names its kind by its one key (`{
   avatar }`, `{ icon }` or `{ status }`, each a function of the item), so a list's rows share one
   kind or have none, and the waiting row draws that kind's mark at its size (`SKELETON` `avatar`,
   `icon` or `dot`). A trailing waits `figures` wide; a declared `status` or `chip` draws the marks'
@@ -1153,11 +1156,15 @@ a tick with no animation, never jumped to full.
   `EMPTY_FRAME`). A busy List makes the Group busy, for the card is its box. A waiting Group
   (its `loading`, or a loading Section's) renders its body once and, when no List registered,
   swaps it for setting skeletons before paint (`groupWait`), the Section's mechanism. A waiting
-  setting row stands in the loaded DefinitionRow's boxes (the label's body line box beside the
-  switch's target-sized hit box on the title line, the description's meta line box under it), so
-  its height and its bars' centres are a one-line setting row's at either density.
+  setting row is the DefinitionRow's own wait (`definition-row/wait.tsx`, shared with a
+  `definition` List, `end: "switch"` internal to the Group): it stands in the loaded
+  DefinitionRow's boxes (the label's body line box beside the switch's target-sized hit box on the
+  title line, the description's meta line box under it), so its height and its bars' centres are a
+  one-line setting row's at either density. A `definition` List adds no count to a Section's head
+  (`sectionPartsOf` reads the map key and files it as a waiter, not a counted list).
 - A Meter in a Group stands as its item at the card's inset (`METER_ITEM`, by `GroundContext`), the
-  Group's hairline between; a set of them from data is a `List` taking `meter`, in the Group. A
+  Group's hairline between; a set of them from data is a `List` taking `meter`, in the Group (a set
+  of label and value rows from data is a `List` taking `definition`). A
   FileRow is selected at its `href`, as a ListRow is.
 - A Meter's one line under its bar is `meta` (words) or `counts` (`readonly CountLink[]`, links),
   exclusive in the type, as the meter's head already carries the share. `CountLink` (`{ label,

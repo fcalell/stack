@@ -1,12 +1,6 @@
 import { cn } from "@fcalell/ui-core/cn";
-import { groupWait } from "@fcalell/ui-core/list-state";
-import {
-	GROUP,
-	lineBox,
-	ROW_TITLE_LINE,
-	skeleton,
-	skeletonRow,
-} from "@fcalell/ui-core/variants";
+import { type DefinitionShape, groupWait } from "@fcalell/ui-core/list-state";
+import { GROUP } from "@fcalell/ui-core/variants";
 import {
 	type ReactNode,
 	use,
@@ -19,25 +13,17 @@ import type { Closed } from "../../lib/closed.ts";
 import { GroundContext } from "../../lib/ground.ts";
 import { GroupContext, type GroupHost } from "../../lib/group.ts";
 import { LoadingContext } from "../../lib/loading.ts";
+import { DefinitionWait } from "../definition-row/wait.tsx";
 
 const BOX = "flex flex-col overflow-hidden";
-// A waiting setting row stands in the loaded DefinitionRow's boxes: the
-// label's line box beside the switch's hit box on the title line, the
-// description's line box under it, so each bar centres where its text does.
-const ROW_WAIT = "flex items-center";
-const LINES_WAIT = "flex grow min-w-0 flex-col";
-const TITLE_WAIT = "flex items-center";
-const LABEL_WAIT = "flex grow min-w-0 items-center h-lh";
-const LINE_WAIT = "flex items-center h-lh";
-const SWITCH_WAIT =
-	"flex shrink-0 items-center justify-center min-h-target min-w-target";
-// The loading rows' bars, a label over a value, each at the length of the
-// line it stands in for.
-const BARS = [
-	["w-1/3", "w-1/4"],
-	["w-1/4", "w-1/4"],
-	["w-1/3", "w-1/2"],
-] as const;
+// A waiting Group with no List of its own draws three waiting setting rows:
+// a label over a description, a switch at the end.
+const SETTING: DefinitionShape = {
+	change: false,
+	description: true,
+	end: "switch",
+};
+const SETTINGS = [0, 1, 2] as const;
 
 /** Rows in a hairline card. */
 export interface GroupProps extends Closed {
@@ -78,26 +64,8 @@ export function Group({ loading, children }: GroupProps) {
 	return (
 		<div aria-busy={busy || undefined} className={cn(GROUP, BOX)}>
 			{waiting && settings ? (
-				BARS.map(([label, value]) => (
-					<div
-						key={`${label} ${value}`}
-						aria-hidden
-						className={cn(skeletonRow({ kind: "setting" }), ROW_WAIT)}
-					>
-						<span className={LINES_WAIT}>
-							<span className={cn(ROW_TITLE_LINE, TITLE_WAIT)}>
-								<span className={cn(lineBox({ role: "body" }), LABEL_WAIT)}>
-									<span className={cn(skeleton({ kind: "line" }), label)} />
-								</span>
-								<span className={SWITCH_WAIT}>
-									<span className={skeleton({ kind: "switch" })} />
-								</span>
-							</span>
-							<span className={cn(lineBox({ role: "meta" }), LINE_WAIT)}>
-								<span className={cn(skeleton({ kind: "line" }), value)} />
-							</span>
-						</span>
-					</div>
+				SETTINGS.map((index) => (
+					<DefinitionWait key={index} shape={SETTING} index={index} />
 				))
 			) : (
 				<LoadingContext value={waiting}>

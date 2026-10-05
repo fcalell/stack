@@ -4,6 +4,9 @@ import type {
 	ChangeKind,
 	ChipMark,
 	CountLink,
+	DefinitionData,
+	IconAct,
+	Lock,
 	MenuItem,
 	MeterMark,
 	Part,
@@ -13,6 +16,7 @@ import type {
 	StatusMark,
 } from "@fcalell/ui-core/descriptors";
 import {
+	definitionShape,
 	fileShape,
 	folding,
 	listBusy,
@@ -41,6 +45,8 @@ import { ListedRoute, useRoute } from "../../lib/navigate.ts";
 import { SectionContext } from "../../lib/section.ts";
 import { TreeContext } from "../../lib/tree.ts";
 import { useWords } from "../../lib/words.tsx";
+import { DefinitionRow } from "../definition-row/index.tsx";
+import { DefinitionWait } from "../definition-row/wait.tsx";
 import { EmptyStateBase } from "../empty-state/base.tsx";
 import type { EmptyStateProps } from "../empty-state/index.tsx";
 import { Missing } from "../empty-state/missing.tsx";
@@ -197,6 +203,43 @@ export type MeterSlots<T> = MeterSlotsBase<T> &
 		  }
 	);
 
+interface DefinitionSlotsBase<T> {
+	/** The item's React key, unique in the list. */
+	key: (item: T) => string;
+	/** What the fact is. */
+	label: (item: T) => string;
+	/** The fact: words, a status, or a control that changes it in place. */
+	value?: (item: T) => DefinitionData | ReactNode | undefined;
+	/** Where the fact stands in a change set, its change mark. */
+	change?: (item: T) => ChangeKind | undefined;
+	/** Whether every value is copied whole (identifiers): drawn in the code role with a copy act; one value for the list, so the waiting rows hold the act's square. */
+	copyable?: boolean;
+}
+
+/** One function per `DefinitionRow` slot, each called with a loaded item; a declared `description`, `act`, `href` or `onOpen` is the row's editable form, a declared `locked` its locked one, never both. */
+export type DefinitionSlots<T> = DefinitionSlotsBase<T> &
+	(
+		| {
+				locked?: never;
+				/** A sentence under the label and the value. */
+				description?: (item: T) => string | undefined;
+				/** The row's one icon act at its end. */
+				act?: (item: T) => IconAct | undefined;
+				/** Where the row goes. */
+				href?: (item: T) => string | undefined;
+				/** Opens what the row names. */
+				onOpen?: (item: T) => void;
+		  }
+		| {
+				/** The value outside its editable context: a lock after it and the reason under it. */
+				locked: (item: T) => Lock | undefined;
+				description?: never;
+				act?: never;
+				href?: never;
+				onOpen?: never;
+		  }
+	);
+
 /** What an empty list draws: an EmptyState's mark, title, sentence and the act that fills the list. */
 export type ListEmpty = Pick<
 	EmptyStateProps,
@@ -233,26 +276,36 @@ type ListKind<T, V extends string | null> =
 			row: RowSlots<T, V>;
 			file?: never;
 			meter?: never;
+			definition?: never;
 	  }
 	| {
 			/** The `FileRow` slots. */
 			file: FileSlots<T>;
 			row?: never;
 			meter?: never;
+			definition?: never;
 	  }
 	| {
 			/** The `Meter` slots. */
 			meter: MeterSlots<T>;
 			row?: never;
 			file?: never;
+			definition?: never;
+	  }
+	| {
+			/** The `DefinitionRow` slots; the list stands in a Group. */
+			definition: DefinitionSlots<T>;
+			row?: never;
+			file?: never;
+			meter?: never;
 	  };
 
-/** A collection's rows: from a query or from items, each a ListRow, a FileRow or a Meter. */
+/** A collection's rows: from a query or from items, each a ListRow, a FileRow, a Meter or a DefinitionRow. */
 export type ListProps<T = unknown, V extends string | null = string> = Closed &
 	ListSource<T> &
 	ListKind<T, V>;
 
-/** Rows on the ground at the rows rhythm, with no box and no hairlines: a feed. It draws its collection's four states: while its query is pending, `loading` is set or a loading Section around it waits, waiting rows stand in the slots its map declares (a Section around a pending query busy, its count waiting); a query that answers not found draws the rest EmptyState saying it no longer exists with Back, never Retry; a failed query draws the failed EmptyState with `sentence` and Retry; no item draws `empty`; then one row per item. In a Group its rows, waiting rows and failed, missing and empty forms stand on the card, the hairline once between rows. */
+/** Rows on the ground at the rows rhythm, with no box and no hairlines: a feed. It draws its collection's four states: while its query is pending, `loading` is set or a loading Section around it waits, waiting rows stand in the slots its map declares (a Section around a pending query busy, its count waiting); a query that answers not found draws the rest EmptyState saying it no longer exists with Back, never Retry; a failed query draws the failed EmptyState with `sentence` and Retry; no item draws `empty`; then one row per item. In a Group its rows, waiting rows and failed, missing and empty forms stand on the card, the hairline once between rows; a `definition` list (facts from data: DefinitionRows) stands in a Group, and adds no count to a Section's head. */
 export function List<T, V extends string | null = string>(
 	props: ListProps<T, V>,
 ) {
@@ -308,6 +361,14 @@ export function List<T, V extends string | null = string>(
 				if (props.meter)
 					return (
 						<MeterWait key={index} busy={false} {...meterShape(props.meter)} />
+					);
+				if (props.definition)
+					return (
+						<DefinitionWait
+							key={index}
+							shape={definitionShape(props.definition)}
+							index={index}
+						/>
 					);
 				return <FileWait key={index} busy={false} {...fileShape(props.file)} />;
 			}),
@@ -421,6 +482,35 @@ export function List<T, V extends string | null = string>(
 						: { meta: meter.meta?.(item) })}
 				/>
 			)),
+		);
+	}
+	if (props.definition) {
+		const { definition } = props;
+		return frame(
+			items.map((item) => {
+				const locked = definition.locked?.(item);
+				const key = definition.key(item);
+				const shared = {
+					change: definition.change?.(item),
+					label: definition.label(item),
+					value: definition.value?.(item),
+					copyable: definition.copyable,
+				};
+				if (locked)
+					return <DefinitionRow key={key} {...shared} locked={locked} />;
+				return (
+					<DefinitionRow
+						key={key}
+						{...shared}
+						description={definition.description?.(item)}
+						act={definition.act?.(item)}
+						href={definition.href?.(item)}
+						onOpen={
+							definition.onOpen ? () => definition.onOpen?.(item) : undefined
+						}
+					/>
+				);
+			}),
 		);
 	}
 	const { file } = props;

@@ -1,5 +1,6 @@
 import type {
 	ChangeKind,
+	DefinitionData,
 	IconAct,
 	Lock,
 	StatusState,
@@ -42,10 +43,7 @@ const VALUE_SLOT = "flex-1 min-w-0 flex-row justify-end";
 const ACTS = "relative flex-row shrink-0";
 const CHEVRON = "shrink-0 items-center justify-center";
 
-export type DefinitionValue =
-	| string
-	| { status: StatusState; label?: string }
-	| ReactNode;
+export type DefinitionValue = DefinitionData | ReactNode;
 
 interface DefinitionRowBase extends Closed {
 	// Where the fact stands in a change set: its mark at the row's start, ahead

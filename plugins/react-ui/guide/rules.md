@@ -275,8 +275,10 @@ the `Form`'s first child: the object's glyph as `leading`, its name as `title`, 
 ## Collections take data
 
 A collection takes data and draws its states. A `List` takes its `query` (or static `items`) and one
-item map, `row` for `ListRow`s, `file` for `FileRow`s or `meter` for `Meter`s, one function per
-slot; declare a slot only if every item fills it. Pending, it waits in those slots; failed, it shows
+item map, `row` for `ListRow`s, `file` for `FileRow`s, `meter` for `Meter`s or `definition` for
+`DefinitionRow`s (facts from data: `label`, `value`, and `description`, `act`, `href` and `onOpen` or
+`locked`, with `copyable` one value for the list), one function per slot; declare a slot only if
+every item fills it. Pending, it waits in those slots; failed, it shows
 `sentence` and Retry; empty, `empty`, with the act that fills it. Rows share one `leading` kind
 (`avatar`, `icon` or `status`) or none. The first meta part names the item. A row's meta line
 yields from its end, in this strict order: the later parts truncate (they show at least a short word
@@ -291,8 +293,11 @@ its name's floor (the whole name when it is short, else its first three characte
 and its end), and below that the chip's label truncates. A Section counts them and waits with them when they stand as its direct children,
 inside a direct `Group`, or as a direct `QueryBoundary`'s query; a collection inside the app's own
 component, or inside a `QueryBoundary`'s body, draws itself but adds no count and no busy state to
-the Section's head. A `Group` holds static rows; rows from data in a card are a `List` placed in the
-`Group`, drawing its states on the card, never a `.map` of `ListRow`s or `Meter`s.
+the Section's head. A `definition` list adds no count to a Section's head (facts are not a
+collection a viewer counts), though it still makes the head busy while it waits. A `Group` holds static
+rows; rows from data in a card are a `List` placed in the `Group`, drawing its states on the card,
+never a `.map` of `ListRow`s, `DefinitionRow`s or `Meter`s. A `definition` list stands in a `Group`,
+as a `DefinitionRow` does.
 
 A read that answers not found (its query's `error` carries `code: "NOT_FOUND"`, as a stack
 procedure throws it, or `status: 404`) draws "This no longer exists." (the `missing` word) with

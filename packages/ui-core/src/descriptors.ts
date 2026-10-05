@@ -198,6 +198,11 @@ export interface Lock {
 	href?: Route;
 }
 
+// What a definition shows as data: words or a status. Each platform's
+// `DefinitionValue` adds its own node (a control that changes the fact in
+// place); ui-core holds no node type.
+export type DefinitionData = string | { status: StatusState; label?: string };
+
 // What a typing control inside a bound `FormField` takes: the field's value,
 // its change handler, and, when the binding autosaves, what hears each
 // commit (`CommitMoment` in `./commit`: the viewer left the field or pressed
