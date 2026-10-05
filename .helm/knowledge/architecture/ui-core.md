@@ -614,6 +614,21 @@ a tick with no animation, never jumped to full.
   props, its act the one that fills the list). Its decisions (which state, the waiting shape, the
   count, Retry) and the Section's total (`sectionCount`) are ui-core's `./list-state`, which both
   platforms import, tested without rendering.
+- A `ListRow` shows a labelled act and holds an input by two props, not a second row kind. `act`
+  is one `Act` at the row's end ahead of the more act, a secondary Button at the bar fit with its
+  pending and blocked forms; the more menu stays the row's other acts, so an act the row waits on
+  has one home, `act`. `entry` is a `RowEntry` (`label`, `field`, `placeholder`, `act`, `error`):
+  an Input at the bar fit and a labelled Button on one line under the title, in the meta line's
+  place (it wins over `meta`, `status` and `chip`), its error under it in the error ink
+  (`ROW_ENTRY_ERROR`, held by ListRow beside `ROW_ENTRY`'s gap). The row keeps no state: the
+  consumer gives `meta` or `status` in place of `entry` once the act settles. The Input is named
+  by the entry's `label` and reads its bar fit from an internal context (`EntryField`), as a
+  Table cell's does from `CellField`. A blocked act's reason draws on the row's own line, the
+  Button handed a reason host, so the act keeps its place. Rejected: a `Form` or a `FormField`
+  in a `Group` row, which draws a label over its field and a foot ActionBar, the wrong geometry
+  for a row, and a Group child loses the row's leading and title. `RowSlots` carries `act` and
+  `entry`; `rowShape` reads them by key, so a waiting row draws a field-high bar and an act's
+  bar (`SKELETON {kind: bar}`) in their places, the entry's line in the meta line's.
 - A read that answers not found is `missing`, a state of its own beside `failed`: every read
   ends in content, "does not exist" with a way back, or Retry, and Retry cannot bring back what
   was removed. `missing(query)` in `./list-state` reads the query's `error` by shape, true for
@@ -760,7 +775,7 @@ a tick with no animation, never jumped to full.
 - The canon binds every component either UI plugin ships: one name per concept (`label`,
   `loading`, `onChange`, `onAct`, `act`, `blocked`, `sentence`), composed regions as typed
   descriptors (`Act`, `StatusMark`, `ChipMark`, `RowLeading`, `RowTrailing`, `PlaceSpec`, `Switcher`, `Option`, `OptionGroup`, `Part`, `FieldBinding`, `MessageDetail`,
-  `Confirmation`, `MenuItem`, `TableColumn`, `TableRowSlots`) instead of node slots, and no
+  `Confirmation`, `MenuItem`, `RowEntry`, `TableColumn`, `TableRowSlots`) instead of node slots, and no
   `class` / `className` / `classList` / `style` prop. Laws live in the README under `## The
   canon`. An icon is an `IconName`, a closed type over Lucide's PascalCase
   names read off the `lucide` package ui-core depends on: the set is baked in, never a consumer

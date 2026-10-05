@@ -104,6 +104,18 @@ export type RowTrailing<V extends string | null = string> =
 	| { value: string }
 	| { pick: OptionPick<V> };
 
+// A list row's entry: an input and the act that sends it, standing under the
+// title in the meta line's place (a URL and its Import). `label` names the
+// input and `error` is the line under it; once the act settles the row is
+// given its result as `meta` or `status` in place of the entry.
+export interface RowEntry {
+	label: string;
+	field: FieldControl<string>;
+	placeholder?: string;
+	act: Act;
+	error?: string;
+}
+
 // What a typing control inside a bound `FormField` takes: the field's value,
 // its change handler, and, when the binding autosaves, what hears each
 // commit (`CommitMoment` in `./commit`: the viewer left the field or pressed

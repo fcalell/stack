@@ -2,6 +2,7 @@ import type { RowShape } from "@fcalell/ui-core/list-state";
 import {
 	lineBox,
 	ROW_ACTS,
+	ROW_ENTRY,
 	ROW_LEADING,
 	ROW_META_LINE,
 	ROW_TITLE_LINE,
@@ -38,6 +39,11 @@ const MARKS_ROOM = "flex-row grow justify-end min-w-0";
 const MARKS_BAR = "w-1/2";
 // A chip on the meta line stands taller than the line's text.
 const CHIP_LINE = "min-h-chip";
+// The entry's line: a field's bar filling the room, its act's bar at the end.
+const ENTRY = "flex-row items-center min-w-0";
+const ENTRY_FIELD = "flex-1 min-w-0";
+// A labelled act waits as a bar a short label wide.
+const ACT_BAR = "w-measure-short shrink-0";
 // The more act's room, empty: the act waits with nothing to act on.
 const ACTS = "relative flex-row shrink-0 items-center";
 const MORE = "size-control-compact";
@@ -56,8 +62,9 @@ export const WAITING_ROWS = BARS.length;
 
 // A ListRow waiting, the `index`th of a waiting list: the leading mark's
 // skeleton by its kind, a bar in the title line (the trailing's at its end, four figures
-// wide) and one in the meta line (the marks' at its end), each at its slot's place, and the more
-// act's room left empty. Outside the package's exports.
+// wide) and one in the meta line (the marks' at its end) or, with an entry, a
+// field's bar and an act's bar in its place, each at its slot's place, a
+// labelled act's bar at the row's end and the more act's room left empty. Outside the package's exports.
 export function RowWait(props: { shape: RowShape; index: number }) {
 	const ground = useContext(GroundContext);
 	const { shape } = props;
@@ -65,7 +72,11 @@ export function RowWait(props: { shape: RowShape; index: number }) {
 	return (
 		<View
 			className={cn(
-				row({ lines: shape.meta ? "two" : "one", ground, state: "rest" }),
+				row({
+					lines: shape.meta || shape.entry ? "two" : "one",
+					ground,
+					state: "rest",
+				}),
 				ROW,
 				ground === "list" && SQUARE,
 			)}
@@ -75,7 +86,7 @@ export function RowWait(props: { shape: RowShape; index: number }) {
 					<View className={skeleton({ kind: LEADING_WAIT[shape.leading] })} />
 				</View>
 			) : null}
-			<View className={TEXT}>
+			<View className={cn(TEXT, shape.entry && ROW_ENTRY)}>
 				<View className={cn(ROW_TITLE_LINE, LINE)}>
 					<View className={STRUT_BAR}>
 						<RNText className={lineBox({ role: "body" })}>{STRUT}</RNText>
@@ -89,7 +100,12 @@ export function RowWait(props: { shape: RowShape; index: number }) {
 						/>
 					) : null}
 				</View>
-				{shape.meta ? (
+				{shape.entry ? (
+					<View className={cn(ROW_META_LINE, ENTRY)}>
+						<View className={cn(skeleton({ kind: "bar" }), ENTRY_FIELD)} />
+						<View className={cn(skeleton({ kind: "bar" }), ACT_BAR)} />
+					</View>
+				) : shape.meta ? (
 					<View className={cn(ROW_META_LINE, LINE, shape.chip && CHIP_LINE)}>
 						<View className={STRUT_BAR}>
 							<RNText className={lineBox({ role: "meta" })}>{STRUT}</RNText>
@@ -105,9 +121,12 @@ export function RowWait(props: { shape: RowShape; index: number }) {
 					</View>
 				) : null}
 			</View>
-			{shape.more ? (
+			{shape.act || shape.more ? (
 				<View className={cn(ROW_ACTS, ACTS)}>
-					<View className={MORE} />
+					{shape.act ? (
+						<View className={cn(skeleton({ kind: "bar" }), ACT_BAR)} />
+					) : null}
+					{shape.more ? <View className={MORE} /> : null}
 				</View>
 			) : null}
 		</View>

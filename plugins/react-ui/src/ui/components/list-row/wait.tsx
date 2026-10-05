@@ -3,6 +3,7 @@ import type { RowShape } from "@fcalell/ui-core/list-state";
 import {
 	lineBox,
 	ROW_ACTS,
+	ROW_ENTRY,
 	ROW_LEADING,
 	ROW_META_LINE,
 	ROW_TITLE_LINE,
@@ -36,6 +37,11 @@ const TRAILING_BAR = "w-figures";
 // their own short-label lane, half its width.
 const MARKS_ROOM = "flex grow justify-end ms-auto min-w-0";
 const MARKS_BAR = "w-1/2";
+// The entry's line: a field's bar filling the room, its act's bar at the end.
+const ENTRY = "flex items-center min-w-0";
+const ENTRY_FIELD = "grow min-w-0";
+// A labelled act waits as a bar a short label wide.
+const ACT_BAR = "w-measure-short shrink-0";
 // The more act's room, empty: the act waits with nothing to act on.
 const ACTS = "relative flex shrink-0 items-center";
 const MORE = "size-control-compact";
@@ -51,7 +57,7 @@ const BARS = [
 /** How many rows a waiting list draws. Outside the package's exports. */
 export const WAITING_ROWS = BARS.length;
 
-/** A ListRow waiting, the `index`th of a waiting list: the leading mark's skeleton by its kind, a bar in the title line (the trailing's at its end, four figures wide) and one in the meta line (the marks' at its end), each at its slot's place, and the more act's room left empty. Outside the package's exports. */
+/** A ListRow waiting, the `index`th of a waiting list: the leading mark's skeleton by its kind, a bar in the title line (the trailing's at its end, four figures wide) and one in the meta line (the marks' at its end) or, with an entry, a field's bar and an act's bar in its place, each at its slot's place, a labelled act's bar at the row's end and the more act's room left empty. Outside the package's exports. */
 export function RowWait(props: { shape: RowShape; index: number }) {
 	const ground = use(GroundContext);
 	const { shape } = props;
@@ -60,7 +66,11 @@ export function RowWait(props: { shape: RowShape; index: number }) {
 		<div
 			aria-hidden
 			className={cn(
-				row({ lines: shape.meta ? "two" : "one", ground, state: "rest" }),
+				row({
+					lines: shape.meta || shape.entry ? "two" : "one",
+					ground,
+					state: "rest",
+				}),
 				ROW,
 				ground === "list" && SQUARE,
 			)}
@@ -70,7 +80,7 @@ export function RowWait(props: { shape: RowShape; index: number }) {
 					<span className={skeleton({ kind: LEADING_WAIT[shape.leading] })} />
 				</span>
 			) : null}
-			<span className={TEXT}>
+			<span className={cn(TEXT, shape.entry && ROW_ENTRY)}>
 				<span
 					className={cn(
 						ROW_TITLE_LINE,
@@ -90,7 +100,12 @@ export function RowWait(props: { shape: RowShape; index: number }) {
 						/>
 					) : null}
 				</span>
-				{shape.meta ? (
+				{shape.entry ? (
+					<span className={cn(ROW_META_LINE, ENTRY)}>
+						<span className={cn(skeleton({ kind: "bar" }), ENTRY_FIELD)} />
+						<span className={cn(skeleton({ kind: "bar" }), ACT_BAR)} />
+					</span>
+				) : shape.meta ? (
 					<span
 						className={cn(
 							ROW_META_LINE,
@@ -110,9 +125,12 @@ export function RowWait(props: { shape: RowShape; index: number }) {
 					</span>
 				) : null}
 			</span>
-			{shape.more ? (
+			{shape.act || shape.more ? (
 				<span className={cn(ROW_ACTS, ACTS)}>
-					<span className={MORE} />
+					{shape.act ? (
+						<span className={cn(skeleton({ kind: "bar" }), ACT_BAR)} />
+					) : null}
+					{shape.more ? <span className={MORE} /> : null}
 				</span>
 			) : null}
 		</div>

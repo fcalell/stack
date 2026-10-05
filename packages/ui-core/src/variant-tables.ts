@@ -971,7 +971,8 @@ export const ACTION_BAR = matrix({
 // What a loading form draws in place of a part: a text line (a fraction
 // width, a web overlay, stands it at its text's length) or the part it
 // stands in for, at that part's size (a checkbox's box, a radio's ring, a row's glyph, a
-// status's dot, a meter's bar, a chart's plot among them).
+// status's dot, a meter's bar, a chart's plot among them); `bar` stands for a
+// control at the compact height (a row's act, its entry's field).
 export const SKELETON = matrix({
 	base: "",
 	variants: {
@@ -981,6 +982,7 @@ export const SKELETON = matrix({
 			switch: "w-switch-w h-switch-h rounded-full bg-skeleton",
 			count: "min-h-chip min-w-chip rounded-full bg-skeleton",
 			field: "min-h-field rounded-control bg-skeleton",
+			bar: "min-h-control-compact rounded-control bg-skeleton",
 			check: "size-check rounded-chip bg-skeleton",
 			radio: "size-check rounded-full bg-skeleton",
 			icon: "size-icon rounded-full bg-skeleton",

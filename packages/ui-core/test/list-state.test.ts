@@ -137,6 +137,8 @@ test("the waiting shape follows the declared slots and runs none of them", () =>
 		chip: false,
 		marks: false,
 		trailing: false,
+		entry: false,
+		act: false,
 		more: false,
 	};
 	assert.deepEqual(rowShape({}), none);
@@ -159,6 +161,11 @@ test("the waiting shape follows the declared slots and runs none of them", () =>
 		meta: true,
 		chip: true,
 		marks: true,
+	});
+	assert.deepEqual(rowShape({ entry: spy("entry"), act: spy("act") }), {
+		...none,
+		entry: true,
+		act: true,
 	});
 	assert.equal(rowShape({ leading: { icon: spy("icon") } }).leading, "icon");
 	assert.equal(

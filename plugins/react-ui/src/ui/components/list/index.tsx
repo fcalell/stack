@@ -1,10 +1,12 @@
 import { cn } from "@fcalell/ui-core/cn";
 import type {
+	Act,
 	ChipMark,
 	CountLink,
 	MenuItem,
 	MeterMark,
 	Part,
+	RowEntry,
 	RowLeading,
 	RowTrailing,
 	StatusMark,
@@ -81,6 +83,10 @@ export interface RowSlots<T, V extends string | null = string> {
 	status?: (item: T) => StatusMark | undefined;
 	/** The row's chip mark. */
 	chip?: (item: T) => ChipMark | undefined;
+	/** The row's input and its act, in the meta line's place; the waiting rows draw it in place of the meta line. */
+	entry?: (item: T) => RowEntry | undefined;
+	/** The row's labelled act at its end. */
+	act?: (item: T) => Act | undefined;
 	/** The row's acts. */
 	more?: (item: T) => readonly MenuItem[] | undefined;
 	/** Where the row goes. */
@@ -266,6 +272,8 @@ export function List<T, V extends string | null = string>(
 					trailing={row.trailing?.(item)}
 					status={row.status?.(item)}
 					chip={row.chip?.(item)}
+					entry={row.entry?.(item)}
+					act={row.act?.(item)}
 					more={row.more?.(item)}
 					href={row.href?.(item)}
 					onOpen={row.onOpen ? () => row.onOpen?.(item) : undefined}

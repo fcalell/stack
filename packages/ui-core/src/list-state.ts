@@ -117,13 +117,16 @@ export type LeadingKind = "avatar" | "icon" | "status";
 
 // The slots a waiting ListRow draws, known before any item: its leading mark
 // by kind, a meta line (at a chip's height when a chip may stand on it, the
-// marks' bar at its end when a status or a chip may), a trailing value, and
-// the more act's room, kept empty.
+// marks' bar at its end when a status or a chip may), an entry's field and
+// button in the meta line's place (it wins over the meta line), a labelled act
+// at the row's end, a trailing value, and the more act's room, kept empty.
 export interface RowShape {
 	leading: LeadingKind | null;
 	meta: boolean;
 	chip: boolean;
 	marks: boolean;
+	entry: boolean;
+	act: boolean;
 	trailing: boolean;
 	more: boolean;
 }
@@ -146,6 +149,8 @@ export function rowShape(slots: {
 	meta?: unknown;
 	status?: unknown;
 	chip?: unknown;
+	entry?: unknown;
+	act?: unknown;
 	trailing?: unknown;
 	more?: unknown;
 }): RowShape {
@@ -157,6 +162,8 @@ export function rowShape(slots: {
 			slots.chip !== undefined,
 		chip: slots.chip !== undefined,
 		marks: slots.status !== undefined || slots.chip !== undefined,
+		entry: slots.entry !== undefined,
+		act: slots.act !== undefined,
 		trailing: slots.trailing !== undefined,
 		more: slots.more !== undefined,
 	};

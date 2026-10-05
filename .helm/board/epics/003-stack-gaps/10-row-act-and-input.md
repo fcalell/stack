@@ -1,6 +1,6 @@
 ---
 id: 003-10
-status: backlog
+status: review
 sessions: {}
 ---
 # ui-core: a row shows a labelled act, and holds an input with its act

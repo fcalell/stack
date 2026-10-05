@@ -1,9 +1,11 @@
 import type {
+	Act,
 	ChipMark,
 	CountLink,
 	MenuItem,
 	MeterMark,
 	Part,
+	RowEntry,
 	RowLeading,
 	RowTrailing,
 	StatusMark,
@@ -77,6 +79,11 @@ export interface RowSlots<T, V extends string | null = string> {
 	trailing?: (item: T) => RowTrailing<V> | undefined;
 	status?: (item: T) => StatusMark | undefined;
 	chip?: (item: T) => ChipMark | undefined;
+	// The row's input and its act, in the meta line's place; the waiting rows
+	// draw it in place of the meta line.
+	entry?: (item: T) => RowEntry | undefined;
+	// The row's labelled act at its end.
+	act?: (item: T) => Act | undefined;
 	more?: (item: T) => readonly MenuItem[] | undefined;
 	href?: (item: T) => Route | undefined;
 	onOpen?: (item: T) => void;
@@ -232,6 +239,8 @@ export function List<T, V extends string | null = string>(
 					trailing={row.trailing?.(item)}
 					status={row.status?.(item)}
 					chip={row.chip?.(item)}
+					entry={row.entry?.(item)}
+					act={row.act?.(item)}
 					more={row.more?.(item)}
 					href={row.href?.(item)}
 					onOpen={row.onOpen ? () => row.onOpen?.(item) : undefined}

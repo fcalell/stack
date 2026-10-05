@@ -51,3 +51,9 @@ export const GroupName = createContext<
 export const CellField = createContext<
 	{ label: string; done: () => void } | undefined
 >(undefined);
+
+// Set by a `ListRow` around its entry: the input stands at the field's bar fit,
+// named by the entry's label, since no `FormField` labels it.
+export const EntryField = createContext<{ label: string } | undefined>(
+	undefined,
+);

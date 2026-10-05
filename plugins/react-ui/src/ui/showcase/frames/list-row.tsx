@@ -1,7 +1,9 @@
 import type {
+	Act,
 	ChipMark,
 	IconName,
 	MenuItem,
+	RowEntry,
 	StatusMark,
 } from "@fcalell/ui-core/descriptors";
 import type { StatusState } from "@fcalell/ui-core/tokens";
@@ -223,6 +225,82 @@ const NOTE_ROW: RowSlots<Note> = {
 	meta: (note) => [note.edited],
 };
 
+// An implementation item carrying the next step as its act: ready, pending
+// and blocked on a reason.
+interface Step {
+	id: string;
+	title: string;
+	meta: string[];
+	act: Act;
+}
+
+const STEP_ROW: RowSlots<Step> = {
+	key: (step) => step.id,
+	title: (step) => step.title,
+	meta: (step) => step.meta,
+	act: (step) => step.act,
+	more: () => MORE,
+};
+
+const STEPS: Step[] = [
+	{
+		id: "staging",
+		title: "Checkout redesign",
+		meta: ["Implementation", "Ana Ruiz"],
+		act: { label: "Claim staging", onAct: act },
+	},
+	{
+		id: "review",
+		title: "Invoice export",
+		meta: ["Implementation", "Ben Kaya"],
+		act: { label: "Request review", onAct: act, loading: true },
+	},
+	{
+		id: "release",
+		title: "Webhook retries",
+		meta: ["Implementation", "Ema Okafor"],
+		act: { label: "Release", onAct: act, blocked: "Staging is not claimed." },
+	},
+];
+
+// An import source asking for its URL: its input and Import act on the row;
+// the second row's address failed.
+interface Source {
+	id: string;
+	title: string;
+	entry: RowEntry;
+}
+
+const SOURCE_ROW: RowSlots<Source> = {
+	key: (source) => source.id,
+	leading: { icon: () => "Globe" },
+	title: (source) => source.title,
+	entry: (source) => source.entry,
+};
+
+const SOURCES: Source[] = [
+	{
+		id: "docs",
+		title: "Documentation site",
+		entry: {
+			label: "Documentation URL",
+			field: { value: "", onChange: act },
+			placeholder: "https://docs.acme.app",
+			act: { label: "Import", onAct: act },
+		},
+	},
+	{
+		id: "help",
+		title: "Help centre",
+		entry: {
+			label: "Help centre URL",
+			field: { value: "help.acme", onChange: act },
+			act: { label: "Import", onAct: act },
+			error: "Enter a full address starting with https://.",
+		},
+	},
+];
+
 function Issues() {
 	return <List items={issues()} row={ISSUE_ROW} />;
 }
@@ -237,7 +315,16 @@ function Props() {
 			<List items={DEPLOYS} row={DEPLOY_ROW} />
 			<List items={SERVICES} row={SERVICE_ROW} />
 			<List items={STAGES} row={STAGE_ROW} />
+			<List items={STEPS} row={STEP_ROW} />
+			<List items={SOURCES} row={SOURCE_ROW} />
 			<Group>
+				<ListRow
+					leading={{ icon: "Globe" }}
+					title="Pricing page"
+					meta={["Imported 2 min ago"]}
+					status={{ state: "done", label: "Imported" }}
+					act={{ label: "Edit", onAct: act }}
+				/>
 				<ListRow
 					leading={{ avatar: { name: "Ana Ruiz" } }}
 					title="Ana Ruiz"
@@ -299,6 +386,10 @@ function Waiting(props: { kind: "avatar" | "icon" | "status" }) {
 		<>
 			{led}
 			<List items={[]} loading row={NOTE_ROW} />
+			<List items={[]} loading row={STEP_ROW} />
+			<List items={STEPS} row={STEP_ROW} />
+			<List items={[]} loading row={SOURCE_ROW} />
+			<List items={SOURCES} row={SOURCE_ROW} />
 		</>
 	);
 }
@@ -327,6 +418,9 @@ export function drawListRow(frame: ShowcaseFrame) {
 		cell === "ROW.lines.one" ||
 		cell.startsWith("CHIP") ||
 		cell.startsWith("ICON") ||
+		cell.startsWith("BUTTON") ||
+		cell.startsWith("FIELD") ||
+		cell.startsWith("FORM_FIELD") ||
 		cell === "ROW_ACTS";
 	return <Wide>{props ? <Props /> : <Issues />}</Wide>;
 }

@@ -855,10 +855,15 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		},
 	},
 	shared: {
-		// Its one act is the more act, the same on every row of a list: an act
-		// a row waits on (a retry) is told by its Status and leads the menu.
-		// At most one Status and one Chip, on the meta line. Its trailing is a
-		// value, or a pick: a `Picker` at the `row` fit, centred in the row.
+		// Its acts are the more act, the same on every row of a list, and one
+		// labelled `act` ahead of it (a secondary Button at the bar fit, the
+		// next step the row names): an act a row waits on (a retry) is told by
+		// its Status and leads the menu, and its pending press stays on `act`.
+		// An `entry` (an Input at the bar fit and its labelled Button) stands
+		// under the title in the meta line's place, its error under it; the
+		// consumer gives `meta` or `status` once the act settles. At most one
+		// Status and one Chip, on the meta line. Its trailing is a value, or a
+		// pick: a `Picker` at the `row` fit, centred in the row.
 		ListRow: {
 			props: [
 				"leading",
@@ -867,6 +872,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"trailing",
 				"status",
 				"chip",
+				"entry",
+				"act",
 				"more",
 				"href",
 				"onOpen",
@@ -903,23 +910,45 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"CHIP",
 				"CHIP_LABEL",
 				"ICON_BUTTON.fit.bar",
+				"BUTTON.act.secondary",
+				"BUTTON.fit.bar",
+				"BUTTON_LABEL.act.secondary",
+				"FIELD.fit.bar",
+				"FIELD.trailing.none",
+				"FIELD.state.rest",
+				"FIELD.state.error",
+				"FIELD_VALUE.kind.text",
+				"FIELD_PLACEHOLDER",
+				"ROW_ENTRY",
+				"ROW_ENTRY_ERROR",
 				"SKELETON.kind.avatar",
 				"SKELETON.kind.icon",
 				"SKELETON.kind.dot",
+				"SKELETON.kind.bar",
 				"SKELETON_LANE.role.body",
 				"SKELETON_LANE.role.meta",
 				"SKELETON.kind.line",
 				"LINE_BOX.role.body",
 				"LINE_BOX.role.meta",
 			],
-			holds: ["ROW_TRAILING", "ROW_MARKS", "ROW_ACTS"],
-			states: [...PRESS, "selected"],
+			holds: [
+				"ROW_TRAILING",
+				"ROW_MARKS",
+				"ROW_ACTS",
+				"ROW_ENTRY",
+				"ROW_ENTRY_ERROR",
+			],
+			states: [...PRESS, "loading", "error", "selected"],
 			owns: {
 				roles: ["body", "meta", "caption"],
 				colors: [
 					"ink-body",
 					"ink-meta",
 					"ink-disabled",
+					"ink-error",
+					"surface",
+					"edge",
+					"edge-error",
 					"wash-hover",
 					"wash-press",
 					"wash-selected",
@@ -934,7 +963,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"skeleton",
 				],
 				radii: ["row", "full", "control", "chip"],
-				spacing: ["inside", "rows", "control-x", "card", "acts"],
+				spacing: ["inside", "rows", "control-x", "card", "acts", "pair"],
 				sizes: [
 					"row",
 					"row-2",

@@ -47,6 +47,12 @@ an `IconAct`, a row's `StatusMark` and `ChipMark`, a menu's `MenuItem`s, a `Plac
 `onAct`, the form busy while it pends. A `FormField` takes a `FieldBinding` from the
 app's own form state; a `confirm()` takes a `Confirmation`.
 
+A row's next step is its `act`, one labelled `Act` at its end ahead of the more menu (an act the
+row waits on keeps its pending press there, never also in `more`). An input on a row is its
+`entry`, a `RowEntry` (`label`, `field`, `placeholder`, `act`, `error`) standing under the title
+in the meta line's place; once its act settles, give the row `meta` or `status` instead of
+`entry`. A `List`'s `row` map declares `act` and `entry` only if every item fills them.
+
 ## Collections take data
 
 A collection takes data and draws its states. A `List` takes its `query` (or static

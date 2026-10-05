@@ -18,6 +18,7 @@ import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import {
 	CellField,
+	EntryField,
 	FieldDisabled,
 	FieldError,
 	FieldFocus,
@@ -78,7 +79,8 @@ const KEYBOARD: Record<InputKind, KeyboardTypeOptions> = {
 // focus; with it, a hardware Escape puts back the value at focus and leaves
 // the field. In a `Table` cell it stands at the bar fit, named by the cell,
 // focused as the edit starts, a number end-aligned in tabular figures as the
-// cell reads.
+// cell reads. In a `ListRow`'s entry it stands at the bar fit, named by the
+// entry's label.
 export function Input({
 	kind,
 	value,
@@ -97,6 +99,7 @@ export function Input({
 	const disabled = useContext(FieldDisabled);
 	const focused = useContext(FieldFocus);
 	const cell = useContext(CellField);
+	const entry = useContext(EntryField);
 	const input = useRef<TextInput>(null);
 	// A placeholder's colour is a prop, never a class: `FIELD_PLACEHOLDER`'s ink.
 	const placeholderInk = useTokenColor("--color-ink-meta");
@@ -112,7 +115,7 @@ export function Input({
 			onPress={() => input.current?.focus()}
 			className={cn(
 				field({
-					fit: search || cell ? "bar" : "form",
+					fit: search || cell || entry ? "bar" : "form",
 					trailing: act ? "act" : "none",
 					state: error ? "error" : "rest",
 				}),
@@ -129,7 +132,10 @@ export function Input({
 				ref={input}
 				autoFocus={focused || cell !== undefined}
 				accessibilityLabel={
-					cell?.label ?? name ?? (search ? words.search : undefined)
+					cell?.label ??
+					entry?.label ??
+					name ??
+					(search ? words.search : undefined)
 				}
 				accessibilityState={{ disabled }}
 				editable={!disabled}

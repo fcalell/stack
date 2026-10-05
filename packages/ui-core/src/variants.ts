@@ -375,6 +375,11 @@ export const ROW_META_LINE = "gap-x-inside";
 // A list row's marks on its meta line (a status, a chip) and its end acts.
 export const ROW_MARKS = "gap-inside";
 export const ROW_ACTS = "gap-acts";
+// A list row's entry: the title, the input with its act and the error line a
+// pair apart, the error in the error ink under the input.
+export const ROW_ENTRY = "gap-pair";
+export const ROW_ENTRY_ERROR =
+	"text-meta leading-meta font-normal text-ink-error";
 // A definition row: its text and its end acts a fields gap apart, over the
 // row's own gap.
 export const DEFINITION_ROW = "gap-fields";
