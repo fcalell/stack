@@ -1,7 +1,6 @@
 import {
 	IMAGE_CLOSE,
 	IMAGE_FULL,
-	type ImageFit,
 	image,
 	imageAspect,
 	imageContentTone,
@@ -30,11 +29,9 @@ const FETCHING = "absolute inset-0 opacity-0";
 // A picture in a box of its aspect fills the box, cover-cropped.
 const FILLS = "h-full";
 const FAILED = "items-center justify-center overflow-hidden";
-// The words of a failed tile: a thumbnail's wrap to two lines inside it.
-const ALT: Record<ImageFit, string> = {
-	thumb: "shrink max-w-full text-center",
-	content: "shrink max-w-full",
-};
+// The words of a failed content tile; a thumbnail has no room for a sentence,
+// so its alt names the tile and the glyph is drawn alone.
+const ALT = "shrink max-w-full";
 // A press on the scrim around the picture closes the view.
 const SCRIM_HIT = "absolute inset-0";
 const VIEW = "flex-1 items-center justify-center";
@@ -43,35 +40,47 @@ const FULL_PICTURE = "size-full";
 // picture keeps the touch everywhere else.
 const CLOSE_LAYER = "absolute inset-0 items-end";
 
-export interface ImageProps extends Closed {
+interface ImageBase extends Closed {
 	src: string;
 	// What the picture shows: the button's name, the failed form's words and
 	// the full view's name.
 	alt: string;
-	// A square `thumb` tile, or `content` (the default): the container's width
-	// at the picture's own aspect, capped in height.
-	fit?: ImageFit;
-	// A `content` picture's width over its height (`16 / 9`), when known: its
-	// box stands at it in every state, the picture cover-cropped to it. Without
-	// one the box waits at 3:2 and a loaded picture takes its own aspect.
-	aspect?: number;
 	// The tile at its box, a skeleton.
 	loading?: boolean;
 }
 
+// A thumbnail is a square and takes no aspect; a content picture's box is
+// its width over its height, which only its consumer knows before the bytes
+// are here.
+type ImageSize =
+	| {
+			// A square tile.
+			fit: "thumb";
+			aspect?: never;
+	  }
+	| {
+			// The container's width at the picture's aspect, capped in height (the
+			// default).
+			fit?: "content";
+			// The picture's width over its height (`16 / 9`): its box stands at it in
+			// every state, the picture cover-cropped to it.
+			aspect: number;
+	  };
+
+export type ImageProps = ImageBase & ImageSize;
+
 interface Seen {
 	src: string;
 	status: "loaded" | "failed";
-	// The loaded picture's width over its height.
-	aspect?: number;
 }
 
 // The picture in a hairline frame, cover-cropped to its tile or its cap.
 // Waiting, the frame is a skeleton at the loaded height (a thumbnail's square,
-// a content picture's `aspect`, else 3:2); failed, an `ImageOff` glyph in the
-// meta ink over the alt text and nothing to open. Pressed, the full picture opens in a sheet's view
-// over the scrim (under the toasts), contain-fit inside the page inset and the
-// safe area, with a Close act, the system's back and a press on the scrim.
+// a content picture's `aspect`); failed, an `ImageOff` glyph in the meta ink
+// over the alt text (a thumbnail draws the glyph alone, the alt its name) and
+// nothing to open. Pressed, the full picture opens in a sheet's view over the
+// scrim (under the toasts), contain-fit inside the page inset and the safe
+// area, with a Close act, the system's back and a press on the scrim.
 export function Image({ src, alt, fit, aspect, loading }: ImageProps) {
 	const place = fit ?? "content";
 	const [seen, setSeen] = useState<Seen>();
@@ -79,13 +88,8 @@ export function Image({ src, alt, fit, aspect, loading }: ImageProps) {
 	// Keyed by the address, so a new `src` is fetched again.
 	const current = seen?.src === src ? seen : undefined;
 	const pending = current === undefined;
-	// The box's aspect: the consumer's, or the default while waiting; a loaded
-	// picture with none given is as tall as its own aspect makes it.
-	const boxed = imageAspect(
-		place,
-		aspect,
-		current?.status === "loaded" && !loading,
-	);
+	// The box's aspect is the consumer's data, the same in every state.
+	const boxed = imageAspect(place, aspect);
 	const box = boxed === undefined ? undefined : { aspectRatio: boxed };
 	if (loading)
 		return (
@@ -98,18 +102,20 @@ export function Image({ src, alt, fit, aspect, loading }: ImageProps) {
 	if (current?.status === "failed")
 		return (
 			<View
+				accessible={place === "thumb"}
+				accessibilityRole={place === "thumb" ? "image" : undefined}
+				accessibilityLabel={place === "thumb" ? alt : undefined}
 				style={box}
 				className={cn(image({ fit: place, state: "error" }), FAILED)}
 			>
 				<Ink.Provider value={imageContentTone()}>
 					<Icon name="ImageOff" />
 				</Ink.Provider>
-				<RNText
-					numberOfLines={place === "thumb" ? 2 : 1}
-					className={cn(text({ role: "meta" }), ALT[place])}
-				>
-					{alt}
-				</RNText>
+				{place === "thumb" ? null : (
+					<RNText numberOfLines={1} className={cn(text({ role: "meta" }), ALT)}>
+						{alt}
+					</RNText>
+				)}
 			</View>
 		);
 	return (
@@ -130,20 +136,8 @@ export function Image({ src, alt, fit, aspect, loading }: ImageProps) {
 					source={{ uri: src }}
 					accessible={false}
 					accessibilityIgnoresInvertColors
-					onLoad={({ nativeEvent: { source } }) =>
-						setSeen({
-							src,
-							status: "loaded",
-							aspect:
-								source.height > 0 ? source.width / source.height : undefined,
-						})
-					}
+					onLoad={() => setSeen({ src, status: "loaded" })}
 					onError={() => setSeen({ src, status: "failed" })}
-					style={
-						place === "content" && box === undefined && current?.aspect
-							? { aspectRatio: current.aspect }
-							: undefined
-					}
 					className={
 						pending ? FETCHING : cn(imagePicture({ fit: place }), box && FILLS)
 					}

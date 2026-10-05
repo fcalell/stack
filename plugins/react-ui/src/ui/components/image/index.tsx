@@ -27,9 +27,11 @@ const FETCHING = "absolute inset-0 opacity-0";
 // A picture in a box of its aspect fills the box, cover-cropped.
 const BOXED = "absolute inset-0 h-full";
 const FAILED = "flex flex-col items-center justify-center";
-// The words of a failed tile: a thumbnail's wrap to two lines inside it.
+// The words of a failed tile: a thumbnail has no room for a sentence, so its
+// alt names the tile to assistive tech and in a tooltip, the glyph alone
+// drawn.
 const ALT: Record<ImageFit, string> = {
-	thumb: "min-w-0 max-w-full line-clamp-2 break-words text-center",
+	thumb: "sr-only",
 	content: "min-w-0 max-w-full truncate",
 };
 // The full view fills the sheet's layer, which takes no press: the picture
@@ -43,23 +45,35 @@ const CLOSE_LAYER =
 	"absolute inset-0 flex items-start justify-end pointer-events-none";
 const CLOSE_HIT = "flex pointer-events-auto";
 
-/** A picture that opens full size. */
-export interface ImageProps extends Closed {
+interface ImageBase extends Closed {
 	/** The picture's address. */
 	src: string;
 	/** What the picture shows: the button's accessible name, the failed form's words and the full view's name. */
 	alt: string;
-	/** A square `thumb` tile, or `content` (the default): the container's width at the picture's own aspect, capped in height. */
-	fit?: ImageFit;
-	/** A `content` picture's width over its height (`16 / 9`), when known: its box stands at it in every state, the picture cover-cropped to it. Without one the box waits at 3:2 and a loaded picture takes its own aspect. */
-	aspect?: number;
 	/** The tile at its box, a skeleton. */
 	loading?: boolean;
 }
 
+/** A thumbnail is a square and takes no aspect; a content picture's box is its width over its height, which only its consumer knows before the bytes are here. */
+type ImageSize =
+	| {
+			/** A square tile. */
+			fit: "thumb";
+			aspect?: never;
+	  }
+	| {
+			/** The container's width at the picture's aspect, capped in height (the default). */
+			fit?: "content";
+			/** The picture's width over its height (`16 / 9`): its box stands at it in every state, the picture cover-cropped to it. */
+			aspect: number;
+	  };
+
+/** A picture that opens full size. */
+export type ImageProps = ImageBase & ImageSize;
+
 type Status = "pending" | "loaded" | "failed";
 
-/** The picture in a hairline frame, cover-cropped to its tile or its cap. Waiting, the frame is a skeleton at the loaded height (a thumbnail's square, a content picture's `aspect`, else 3:2); failed, an `ImageOff` glyph in the meta ink over the alt text and nothing to open. Pressed, the full picture opens over the scrim, contain-fit inside the page inset, with a Close act, Escape and a press outside. */
+/** The picture in a hairline frame, cover-cropped to its tile or its cap. Waiting, the frame is a skeleton at the loaded height (a thumbnail's square, a content picture's `aspect`); failed, an `ImageOff` glyph in the meta ink over the alt text (a thumbnail draws the glyph alone, the alt its name) and nothing to open. Pressed, the full picture opens over the scrim, contain-fit inside the page inset, with a Close act, Escape and a press outside. */
 export function Image({ src, alt, fit, aspect, loading }: ImageProps) {
 	const place = fit ?? "content";
 	const words = useWords();
@@ -74,8 +88,8 @@ export function Image({ src, alt, fit, aspect, loading }: ImageProps) {
 		if (node?.complete && status === "pending")
 			settle(node.naturalWidth > 0 ? "loaded" : "failed");
 	};
-	// The box's aspect is data (the consumer's, or the default while waiting).
-	const ratio = imageAspect(place, aspect, status === "loaded" && !loading);
+	// The box's aspect is the consumer's data, the same in every state.
+	const ratio = imageAspect(place, aspect);
 	const box = ratio === undefined ? undefined : { aspectRatio: ratio };
 	if (loading)
 		return (
@@ -89,6 +103,7 @@ export function Image({ src, alt, fit, aspect, loading }: ImageProps) {
 		return (
 			<div
 				style={box}
+				title={place === "thumb" ? alt : undefined}
 				className={cn(
 					image({ fit: place, state: "error" }),
 					FAILED,

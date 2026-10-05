@@ -715,10 +715,12 @@ export const QR_TILE = "size-qr rounded-card border border-edge bg-surface";
 // Stages: a rail of fixed states. A stage is its mark beside its words, the
 // words the label with one meta line under it; a hairline in the edge ink
 // runs from each mark to the next (`STAGE_RAIL`), and the room between two
-// stages is the words' own bottom inset, so the rail runs unbroken. A done
-// mark's check stands on its disc in the canvas ink (`STAGE_CHECK`), an ended
-// rail's cross is the danger ink (`STAGE_CROSS`).
-export const STAGE_ROW = "gap-pair";
+// stages is the words' own bottom inset, so the rail runs unbroken. A row
+// stands at least the two-line row's height (`STAGE_ROW`: 48, 64 on touch,
+// the state rail's rows), so a later row of one meta line keeps the pace of a
+// done one. A done mark's check stands on its disc in the canvas ink
+// (`STAGE_CHECK`), an ended rail's cross is the danger ink (`STAGE_CROSS`).
+export const STAGE_ROW = "gap-pair min-h-row-2";
 export const STAGE_WORDS = "pb-pair";
 export const STAGE_CHECK = "text-canvas";
 export const STAGE_CROSS = "text-danger";
@@ -729,9 +731,6 @@ export const IMAGE_FULL = "p-page";
 export const IMAGE_CLOSE = "rounded-control bg-raised shadow-float";
 // A failed image's glyph, in the meta ink its alt text is drawn in.
 export const IMAGE_FAILED_INK = "text-ink-meta";
-// The aspect a content image waits at when its consumer gives none: the
-// width over the height of a photograph (3:2).
-export const IMAGE_ASPECT = 3 / 2;
 // StepCount: its segments a gap apart over its words.
 export const STEP_COUNT = "gap-pair";
 export const STEP_COUNT_SEGMENTS = "gap-inside";
@@ -947,16 +946,13 @@ export function imageContentTone(): ContentTone {
 	return toneOf(IMAGE_FAILED_INK);
 }
 
-// The aspect an image's box stands at, a thumbnail's being its square: a
-// content image's is its consumer's, else `IMAGE_ASPECT` until its bytes are
-// here, when a picture with none given takes its own (undefined).
+// The aspect an image's box stands at in every state: a content image's is
+// its consumer's, a thumbnail's is its square, which its size fixes.
 export function imageAspect(
 	fit: ImageFit,
 	aspect: number | undefined,
-	loaded: boolean,
 ): number | undefined {
-	if (fit === "thumb") return undefined;
-	return aspect ?? (loaded ? undefined : IMAGE_ASPECT);
+	return fit === "thumb" ? undefined : aspect;
 }
 
 // A toast's glyph ink, its state's.

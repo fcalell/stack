@@ -55,8 +55,9 @@ export interface CodeProps extends Closed {
 	// Shows only the last lines, this many, behind an act that reveals the
 	// earlier ones.
 	tail?: number;
-	// Adds the copy act, named by the title (else just Copy): in the head with a
-	// title, else in its own column beside the first line.
+	// Adds the copy act, named by the title (else by the download's file, else
+	// just Copy): in the head with a title, else in its own column beside the first
+	// line.
 	copy?: boolean;
 	// Adds the download act, saving the text as a file of this name
 	// (`recovery-codes.txt`), named by the title (else by the file): after the
@@ -127,7 +128,7 @@ export function Code({
 	}, [unfolded]);
 	const acts = (
 		<>
-			{copy ? <CopyAct name={title} value={source} /> : null}
+			{copy ? <CopyAct name={title ?? download} value={source} /> : null}
 			{download ? (
 				<DownloadAct name={title ?? download} value={source} file={download} />
 			) : null}

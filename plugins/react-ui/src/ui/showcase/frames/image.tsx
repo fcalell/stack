@@ -16,36 +16,14 @@ const ALT = "Checkout page after the failed payment";
 const COLUMN = "w-dialog max-w-full";
 
 function drawn(fit: ImageFit, state: ShowcaseFrame["state"]) {
-	const picture =
-		state === "error" ? (
-			<Image src={BROKEN} alt={ALT} fit={fit} />
-		) : (
-			<Image
-				src={SCREEN}
-				alt={ALT}
-				fit={fit}
-				loading={state === "loading" || undefined}
-			/>
-		);
-	if (fit === "thumb") return picture;
-	// The content fit without an aspect, and with the picture's own.
+	const src = state === "error" ? BROKEN : SCREEN;
+	const loading = state === "loading" || undefined;
+	if (fit === "thumb")
+		return <Image src={src} alt={ALT} fit="thumb" loading={loading} />;
 	return (
-		<>
-			<div className={COLUMN}>{picture}</div>
-			<div className={COLUMN}>
-				{state === "error" ? (
-					<Image src={BROKEN} alt={ALT} fit={fit} aspect={SCREEN_ASPECT} />
-				) : (
-					<Image
-						src={SCREEN}
-						alt={ALT}
-						fit={fit}
-						aspect={SCREEN_ASPECT}
-						loading={state === "loading" || undefined}
-					/>
-				)}
-			</div>
-		</>
+		<div className={COLUMN}>
+			<Image src={src} alt={ALT} aspect={SCREEN_ASPECT} loading={loading} />
+		</div>
 	);
 }
 

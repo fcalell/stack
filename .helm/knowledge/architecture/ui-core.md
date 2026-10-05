@@ -1177,15 +1177,16 @@ a tick with no animation, never jumped to full.
   `content` the container's width at the picture's own aspect down to a height cap (`image-cap`,
   the card radius), both cover-cropped inside the hairline `edge` (`IMAGE_PICTURE`). A content
   picture has no aspect before its bytes, so its waiting form stands at the loaded height through
-  `aspect`, an optional number (width over height, `16 / 9`) that fixes the box in every state with
-  the picture cover-cropped to it; without one the box waits at `IMAGE_ASPECT` (3:2) and a loaded
-  picture takes its own, a height change on load that the consumer avoids by passing the aspect it
-  knows (`imageAspect` in `./variants` reads it for both platforms). The picture mounts while it
+  `aspect`, a number (width over height, `16 / 9`) that is required for `content` and typed off
+  `thumb` (a union on `fit`, so a `content` picture without one is a type error) and fixes the box
+  in every state with the picture cover-cropped to it, so no state moves when the bytes land
+  (`imageAspect` in `./variants` reads it for both platforms). The picture mounts while it
   waits, hidden, so the frame (`IMAGE {state}`: a skeleton at that height) is replaced by the bytes
   without a second fetch; a failed fetch draws a group-ground tile at the same box with an
   `ImageOff` glyph in the meta ink (`IMAGE_FAILED_INK`, 4.5:1 on `group` in both modes with the alt
-  text it labels) over the alt text in meta and nothing to open (a thumbnail's alt wraps to two
-  lines), so `alt` is the one word the form needs and `words` gains none. A press moves the
+  text it labels) over the alt text in meta and nothing to open (a thumbnail draws the glyph alone,
+  its alt the tile's accessible name and tooltip, since an 80 px tile holds no sentence), so `alt`
+  is the one word the form needs and `words` gains none. A press moves the
   frame's hairline: `edge-hover` under the pointer, `ink-body` while pressed, since `edge-hover`
   aliases `edge-strong` and a pressed frame must differ from a hovered one. A loaded picture is a button named by `alt`; a press opens it over the scrim with no frame,
   contain-fit inside the page inset (`IMAGE_FULL`), with a Close act on a lifted ground
@@ -1216,23 +1217,28 @@ a tick with no animation, never jumped to full.
   rows, the current one included) with a terminal row: a cross in `danger` (`STAGE_CROSS`), its
   label at 500 and its reason in meta. The marks carry the hue (the current ring's accent, the
   cross's danger) and a label's ink is its own in every state. `STAGE {state}` is the label's cell, the row's
-  gap and the words' bottom inset (`STAGE_ROW`, `STAGE_WORDS`) carry the room between stages, inside
-  the rail's run. Each mark stands on its label's first line (a later label is meta, so its mark is
+  gap, the words' bottom inset and a minimum row of the two-line row's height (`STAGE_ROW`,
+  `STAGE_WORDS`; `row-2`, 48 / 64, the state rail's 28–56 and 48–70) carry the room between stages,
+  so a later row of one meta line keeps the pace of a done one. The rail runs through each mark's
+  line box in two halves around the mark, so it breaks nowhere. Each mark stands on its label's first line (a later label is meta, so its mark is
   on a meta line) and names its state to assistive tech through the existing status words (`done`,
   `active`, `waiting`, `failed`), so `words` gains none. Stages is static data, so it has no waiting
   form.
 - A copy act (`Code`'s, `DefinitionRow`'s) reads Copied for two seconds from the last copy: each
   copy is a counted moment and the reset is keyed on it, so a copy inside the window restarts it.
   Unfolding a `Code` moves focus to its already-mounted text in the press, before the fold act
-  unmounts, so focus never drops to the page.
+  unmounts, so focus never drops to the page. The web's text takes a tab stop only while it
+  scrolls sideways (a resize observer reads it), else it is focusable by script alone, so the fold
+  still lands on it and a reader passes no region with nothing to scroll.
 - `Code`'s `download` is the file's name, a string because the name is the one value stack cannot
   derive. The act sits beside the copy act, in the head with a title, else side by side in the copy
   column. The web saves a `Blob` of the text through an anchor's `download`; the phone writes it to
   the cache directory with `expo-file-system` and hands it to the share sheet with `expo-sharing`,
   from which iOS and Android save to Files, so both are native-ui peers beside `expo-clipboard`. A
   refused write or share raises the failed Toast, which says `downloadFailed`. The acts are named by
-  what they act on (`named` in `./tokens`): the title, else the file's name for download and the
-  bare word for copy, never the generic `code` word, which names the text group alone.
+  what they act on (`named` in `./tokens`): the title, else the file's name for both acts (the
+  bare word for a copy with neither), never the generic `code` word, which names the text group
+  alone.
 
 ## The canon, the roster and the closed props
 

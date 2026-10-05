@@ -25,10 +25,18 @@ const ROW = "flex-row min-w-0";
 const MARKS = "items-center shrink-0 w-icon-meta";
 // The mark beside a zero-width line of the label's role, so it stands on the
 // label's first line.
-const MARK = "flex-row items-center justify-center shrink-0";
+const MARK = "flex-row justify-center shrink-0";
+// The line's column, stretched to the line's height: the rail runs through it
+// in two halves around the mark, so no break stands at either side of it.
+const MARK_COLUMN = "items-center";
 // The done disc centres its check.
 const DISC = "items-center justify-center";
 const RAIL = "grow w-0";
+type RailState = "done" | "ahead";
+
+// The rail below a stage: solid through the done ones.
+const railBelow = (state: StepState | "ended"): RailState =>
+	state === "done" ? "done" : "ahead";
 const WORDS = "flex-1 min-w-0";
 
 export interface StagesProps extends Closed {
@@ -44,6 +52,8 @@ function Row(props: {
 	state: StepState | "ended";
 	mark: ReactNode;
 	last: boolean;
+	// The rail the row before runs down to this mark; none above the first.
+	above?: RailState;
 	current?: boolean;
 	// What assistive tech reads for the row: its state, label and moment.
 	spoken: string;
@@ -51,6 +61,9 @@ function Row(props: {
 }) {
 	// A later label is meta text, so its mark stands on a meta line.
 	const role = props.state === "later" ? "meta" : "body";
+	const below = props.last
+		? undefined
+		: stageRail({ state: railBelow(props.state) });
 	return (
 		<View
 			accessible
@@ -61,16 +74,18 @@ function Row(props: {
 			<View className={MARKS}>
 				<View className={MARK}>
 					<Strut role={role} />
-					{props.mark}
+					<View className={MARK_COLUMN}>
+						<View
+							className={cn(
+								props.above && stageRail({ state: props.above }),
+								RAIL,
+							)}
+						/>
+						{props.mark}
+						<View className={cn(below, RAIL)} />
+					</View>
 				</View>
-				{props.last ? null : (
-					<View
-						className={cn(
-							stageRail({ state: props.state === "done" ? "done" : "ahead" }),
-							RAIL,
-						)}
-					/>
-				)}
+				{props.last ? null : <View className={cn(below, RAIL)} />}
 			</View>
 			<View className={cn(props.last ? undefined : STAGE_WORDS, WORDS)}>
 				{props.children}
@@ -88,10 +103,12 @@ function Row(props: {
 export function Stages({ steps, ended }: StagesProps) {
 	const words = useWords();
 	const shown = stagesShown(steps, ended !== undefined);
+	const lastShown = shown.at(-1);
 	return (
 		<View className={LIST}>
 			{shown.map((step, at) => {
 				const last = ended === undefined && at === shown.length - 1;
+				const before = shown[at - 1];
 				let mark = <View className={stageMark({ state: "later" })} />;
 				let spoken: string = words.waiting;
 				if (step.state === "done") {
@@ -115,6 +132,7 @@ export function Stages({ steps, ended }: StagesProps) {
 						state={step.state}
 						mark={mark}
 						last={last}
+						above={before && railBelow(before.state)}
 						current={step.state === "current"}
 						spoken={[spoken, step.label, step.at ? moment(step.at) : undefined]
 							.filter(Boolean)
@@ -140,6 +158,7 @@ export function Stages({ steps, ended }: StagesProps) {
 						</Ink.Provider>
 					}
 					last
+					above={lastShown && railBelow(lastShown.state)}
 					spoken={[words.failed, ended.label, ended.reason].join(", ")}
 				>
 					<RNText className={stage({ state: "ended" })}>{ended.label}</RNText>

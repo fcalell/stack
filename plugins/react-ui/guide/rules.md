@@ -48,14 +48,15 @@ with `strong`) or the molecule that owns its role (`title` is `Place`'s and `Scr
 A picture is an `Image`, never an `<img>`: `src`, `alt` (a sentence naming what it shows), a `fit`
 (`thumb`, a square tile beside the lines that say where it came from, or `content`, the
 container's width at the picture's own aspect, capped in height), an `aspect` and `loading`. It
-draws its own waiting and failed forms (the failed form says the `alt`), and a press opens the full
-picture over the scrim with a Close act, Escape and a press outside. The full view takes no zoom.
+draws its own waiting and failed forms (the failed form says the `alt`; a `thumb`, too small for a
+sentence, draws the glyph alone and the `alt` names it), and a press opens the full picture over
+the scrim with a Close act, Escape and a press outside. The full view takes no zoom.
 
-A `content` picture has no aspect until its bytes arrive, so its waiting and failed forms stand at
-the aspect you give: `aspect` is its width over its height (`16 / 9`), and its box holds that
-aspect in every state, the picture cover-cropped to it. Give it whenever you know the picture's
-shape. Without one the box waits at 3:2 and a loaded picture takes its own aspect, so the page
-moves when they differ. A `thumb` is always square and takes none.
+A `content` picture has no aspect until its bytes arrive, so `aspect` is required: its width over
+its height (`16 / 9`), and its box holds that aspect in every state (waiting, failed and loaded),
+the picture cover-cropped to it, so nothing moves when the bytes land. A `content` picture without
+one is a type error; store the picture's width and height with its address. A `thumb` is always
+square and takes none.
 
 ```tsx
 <Image src={shot.url} alt={shot.title} fit="thumb" loading={shot.pending} />

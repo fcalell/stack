@@ -2519,7 +2519,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// meta, every mark at the meta icon size. `ended` replaces every step
 		// after the last done one with a terminal row: a cross in `danger`, its
 		// label and its reason in meta. The rail is solid in the strong hairline
-		// through the done stages, the plain hairline after. The hue is the
+		// through the done stages, the plain hairline after, running through each
+		// mark's line so no break stands around a mark. A row stands at least the
+		// two-line row's height, so a later row keeps the done rows' pace. The hue is the
 		// marks'; a label's ink is its own. Static data, so it has no waiting
 		// form.
 		Stages: {
@@ -2560,7 +2562,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				],
 				radii: ["full"],
 				spacing: ["pair"],
-				sizes: ["icon-meta"],
+				sizes: ["icon-meta", "row-2"],
 			},
 		},
 		// A strip of counts in one hairline card, its cells split by hairlines:
@@ -2738,11 +2740,12 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		},
 		// A picture a press opens full size: a square tile (`thumb`) or its
 		// container's width at its own aspect down to a height cap (`content`).
-		// A content picture's consumer may give its `aspect` (width over height),
-		// which fixes its box in every state; without one the box waits at
-		// `IMAGE_ASPECT` and a loaded picture takes its own. Waiting it is a
-		// skeleton at its box; failed, an `ImageOff` glyph in the meta ink with
-		// the alt text in meta under it and nothing to open. The full view
+		// A content picture's `aspect` (width over height) is required: it fixes
+		// its box in every state, so nothing moves when the bytes land; a
+		// thumbnail is square and takes none. Waiting it is a skeleton at its
+		// box; failed, an `ImageOff` glyph in the meta ink with the alt text in
+		// meta under it (a thumbnail draws the glyph alone, the alt its name) and
+		// nothing to open. The full view
 		// stands over the sheet base's scrim and focus trap, contain-fit inside
 		// the page inset, with a lifted Close act.
 		Image: {

@@ -598,15 +598,20 @@ export const closure = (
 		<Stages steps={[]} class="x" />
 		{/* @ts-expect-error: closed channel */}
 		<Stages steps={[]} classList={{}} />
+		<Image src="x" alt="x" aspect={1} />
+		<Image src="x" alt="x" fit="thumb" />
+		{/* @ts-expect-error: a content picture has no box before its bytes without an aspect */}
 		<Image src="x" alt="x" />
+		{/* @ts-expect-error: a thumbnail is a square and takes no aspect */}
+		<Image src="x" alt="x" fit="thumb" aspect={1} />
 		{/* @ts-expect-error: closed channel */}
-		<Image src="x" alt="x" className="x" />
+		<Image src="x" alt="x" aspect={1} className="x" />
 		{/* @ts-expect-error: closed channel */}
-		<Image src="x" alt="x" style={{ flex: 1 }} />
+		<Image src="x" alt="x" aspect={1} style={{ flex: 1 }} />
 		{/* @ts-expect-error: closed channel */}
-		<Image src="x" alt="x" class="x" />
+		<Image src="x" alt="x" aspect={1} class="x" />
 		{/* @ts-expect-error: closed channel */}
-		<Image src="x" alt="x" classList={{}} />
+		<Image src="x" alt="x" aspect={1} classList={{}} />
 		<StepCount at={1} of={3} />
 		{/* @ts-expect-error: closed channel */}
 		<StepCount at={1} of={3} className="x" />

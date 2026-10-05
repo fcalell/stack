@@ -1089,21 +1089,26 @@ export const closure = (
 		<Stat label="a" value={1} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
 		<Stat label="a" value={1} placeholderTextColorClassName="text-ink-body" />
+		<Image src="a" alt="a" aspect={1} />
+		<Image src="a" alt="a" fit="thumb" />
+		{/* @ts-expect-error: a content picture has no box before its bytes without an aspect */}
 		<Image src="a" alt="a" />
+		{/* @ts-expect-error: a thumbnail is a square and takes no aspect */}
+		<Image src="a" alt="a" fit="thumb" aspect={1} />
 		{/* @ts-expect-error: closed channel */}
-		<Image src="a" alt="a" className="x" />
+		<Image src="a" alt="a" aspect={1} className="x" />
 		{/* @ts-expect-error: closed channel */}
-		<Image src="a" alt="a" style={{ flex: 1 }} />
+		<Image src="a" alt="a" aspect={1} style={{ flex: 1 }} />
 		{/* @ts-expect-error: closed channel */}
-		<Image src="a" alt="a" class="x" />
+		<Image src="a" alt="a" aspect={1} class="x" />
 		{/* @ts-expect-error: closed channel */}
-		<Image src="a" alt="a" classList={{}} />
+		<Image src="a" alt="a" aspect={1} classList={{}} />
 		{/* @ts-expect-error: closed channel */}
-		<Image src="a" alt="a" colorClassName="text-ink-body" />
+		<Image src="a" alt="a" aspect={1} colorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Image src="a" alt="a" selectionColorClassName="text-ink-body" />
+		<Image src="a" alt="a" aspect={1} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
-		<Image src="a" alt="a" placeholderTextColorClassName="text-ink-body" />
+		<Image src="a" alt="a" aspect={1} placeholderTextColorClassName="text-ink-body" />
 		<StepCount at={1} of={3} />
 		{/* @ts-expect-error: closed channel */}
 		<StepCount at={1} of={3} className="x" />

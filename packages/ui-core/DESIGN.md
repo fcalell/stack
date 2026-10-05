@@ -2104,6 +2104,8 @@ components:
     textColor: "{colors.danger}"
   stage-cross-dark:
     textColor: "{colors.danger-dark}"
+  stage-row:
+    height: "{spacing.row-2}"
   stats:
     rounded: "{rounded.card}"
     backgroundColor: "{colors.surface}"
@@ -2498,7 +2500,7 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | `Message` | `meta`, `body`, `code`, `caption` | `ink-meta`, `group`, `ink-body`, `edge`, `surface`, `skeleton`, `wash-hover`, `ring`, `wash-press`, `chip-` | `card`, `control`, `chip`, `full` | `pair`, `tile`, `inside` | `target`, `icon-meta`, `skeleton`, `figures`, `chip`, `measure-short`, `image-tile` | none |
 | `MessageInput` | `body`, `meta`, `caption` | `edge`, `surface`, `ink-meta`, `ink-body`, `act-accent`, `on-act-accent`, `fill-disabled`, `ink-disabled`, `edge-hover`, `ring`, `raised`, `chip-neutral-soft`, `chip-neutral-ink` | `card`, `control`, `full` | `pair`, `rows`, `inside`, `control-x` | `message-input`, `control-compact`, `icon-control`, `chip`, `measure`, `measure-short`, `icon-meta`, `target`, `spinner`, `image-tile` | none |
 | `Meter` | `body`, `meta` | `ink-body`, `ink-meta`, `accent-ink`, `fill-neutral`, `warn`, `danger`, `skeleton` | `chip` | `pair`, `inside`, `card` | `meter`, `track`, `skeleton`, `target` | none |
-| `Stages` | `body`, `meta` | `ink-body`, `ink-meta`, `edge`, `edge-strong`, `accent-ink`, `canvas`, `danger` | `full` | `pair` | `icon-meta` | none |
+| `Stages` | `body`, `meta` | `ink-body`, `ink-meta`, `edge`, `edge-strong`, `accent-ink`, `canvas`, `danger` | `full` | `pair` | `icon-meta`, `row-2` | none |
 | `Stats` | `figure`, `meta` | `edge`, `surface`, `ink-body`, `ink-meta`, `accent-ink`, `skeleton`, `wash-hover`, `wash-press` | `card`, `chip` | `pair`, `inside`, `card` | `skeleton`, `target` | none |
 | `Stat` | `display`, `meta` | `ink-body`, `ink-meta`, `skeleton` | `chip` | `pair`, `inside` | `skeleton` | none |
 | `BarChart` | `body`, `meta` | `ink-body`, `ink-meta`, `edge`, `skeleton`, `chip-` | `full`, `chip` | `fields`, `inside`, `pair` | `chart`, `dot`, `skeleton`, `figures` | none |

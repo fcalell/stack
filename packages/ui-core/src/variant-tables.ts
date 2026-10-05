@@ -1002,9 +1002,8 @@ export const QR_CODE = matrix({
 // square tile at its radius; the content fit takes its container's width and
 // the card's radius, down to the height cap. Waiting it is a skeleton and
 // failed a group ground holding a glyph over the alt text, each at the
-// loaded height: the thumbnail's side, and the content fit's aspect (the
-// consumer's, else `IMAGE_ASPECT`, since its bytes have none yet); loaded,
-// the content fit's height is its picture's.
+// loaded height: the thumbnail's side, and the content fit's aspect, which
+// its consumer always gives since its bytes have none yet.
 export const IMAGE = matrix({
 	base: "border border-edge",
 	variants: {

@@ -20,13 +20,20 @@ import { Icon } from "../icon/index.tsx";
 
 const LIST = "flex flex-col min-w-0";
 const ROW = "flex min-w-0";
-// The marks' column is the mark's width, the rail running down its middle.
+// The marks' column is the mark's width, the rail running down its middle:
+// through the mark's own line box too, in its two halves around the mark, so
+// no break stands at either side of it.
 const MARKS = "flex flex-col items-center shrink-0 w-icon-meta";
-const MARK = "flex items-center justify-center h-lh shrink-0";
+const MARK = "flex flex-col items-center h-lh shrink-0";
 const SHAPE = "shrink-0";
 // A glyph mark (the check on its disc, the cross) centres its icon.
 const GLYPH = "flex shrink-0";
 const RAIL = "grow w-0";
+type RailState = "done" | "ahead";
+
+// The rail below a stage: solid through the done ones.
+const railBelow = (state: StepState | "ended"): RailState =>
+	state === "done" ? "done" : "ahead";
 const WORDS = "flex flex-col min-w-0";
 
 /** A rail of fixed states. */
@@ -41,26 +48,33 @@ function Row(props: {
 	state: StepState | "ended";
 	mark: ReactNode;
 	last: boolean;
+	// The rail the row before runs down to this mark; none above the first.
+	above?: RailState;
 	current?: boolean;
 	children: ReactNode;
 }) {
 	// A later label is meta text, so its mark stands on a meta line.
 	const role = props.state === "later" ? "meta" : "body";
+	const below = props.last
+		? undefined
+		: stageRail({ state: railBelow(props.state) });
 	return (
 		<li
 			aria-current={props.current ? "step" : undefined}
 			className={cn(STAGE_ROW, ROW)}
 		>
 			<span className={MARKS}>
-				<span className={cn(lineBox({ role }), MARK)}>{props.mark}</span>
-				{props.last ? null : (
+				<span className={cn(lineBox({ role }), MARK)}>
 					<span
 						className={cn(
-							stageRail({ state: props.state === "done" ? "done" : "ahead" }),
+							props.above && stageRail({ state: props.above }),
 							RAIL,
 						)}
 					/>
-				)}
+					{props.mark}
+					<span className={cn(below, RAIL)} />
+				</span>
+				{props.last ? null : <span className={cn(below, RAIL)} />}
 			</span>
 			<span className={cn(props.last ? undefined : STAGE_WORDS, WORDS)}>
 				{props.children}
@@ -73,10 +87,12 @@ function Row(props: {
 export function Stages({ steps, ended }: StagesProps) {
 	const words = useWords();
 	const shown = stagesShown(steps, ended !== undefined);
+	const lastShown = shown.at(-1);
 	return (
 		<ol className={LIST}>
 			{shown.map((step, at) => {
 				const last = ended === undefined && at === shown.length - 1;
+				const before = shown[at - 1];
 				let mark = (
 					<span
 						role="img"
@@ -109,6 +125,7 @@ export function Stages({ steps, ended }: StagesProps) {
 						state={step.state}
 						mark={mark}
 						last={last}
+						above={before && railBelow(before.state)}
 						current={step.state === "current"}
 					>
 						<span className={stage({ state: step.state })}>{step.label}</span>
@@ -133,6 +150,7 @@ export function Stages({ steps, ended }: StagesProps) {
 						</span>
 					}
 					last
+					above={lastShown && railBelow(lastShown.state)}
 				>
 					<span className={stage({ state: "ended" })}>{ended.label}</span>
 					<span className={text({ role: "meta" })}>{ended.reason}</span>

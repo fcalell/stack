@@ -12,7 +12,7 @@ import {
 	skeleton,
 	text,
 } from "@fcalell/ui-core/variants";
-import { useId, useRef, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { useCopy } from "../../lib/copy.ts";
 import { InsetRing } from "../../lib/ring.ts";
@@ -50,12 +50,29 @@ export interface CodeProps extends Closed {
 	title?: string;
 	/** Shows only the last lines, this many, behind an act that reveals the earlier ones. */
 	tail?: number;
-	/** Adds the copy act, named by the title (else just Copy): in the head with a title, else in a column beside the first line. */
+	/** Adds the copy act, named by the title (else by the download's file, else just Copy): in the head with a title, else in a column beside the first line. */
 	copy?: boolean;
 	/** Adds the download act, saving the text as a file of this name (`recovery-codes.txt`), named by the title (else by the file): after the copy act, in the same place. */
 	download?: string;
 	/** The text waits: line boxes stand in for it under the head, `tail` of them under the fold's when it folds. */
 	loading?: boolean;
+}
+
+// Whether the text runs past its box sideways: a text that scrolls takes a tab
+// stop so a keyboard can scroll it, one that does not takes none. Its `code`
+// child is watched too, since new text resizes it and not the box.
+function useScrolls(node: HTMLElement | null): boolean {
+	const [scrolls, setScrolls] = useState(false);
+	useEffect(() => {
+		if (!node) return;
+		const measure = () => setScrolls(node.scrollWidth > node.clientWidth);
+		measure();
+		const observer = new ResizeObserver(measure);
+		observer.observe(node);
+		if (node.firstElementChild) observer.observe(node.firstElementChild);
+		return () => observer.disconnect();
+	}, [node]);
+	return scrolls;
 }
 
 // The download act: the text as a file of the given name, saved through an
@@ -97,7 +114,7 @@ function CopyAct(props: { name?: string; text: string }) {
 	);
 }
 
-/** Mono at the code role in the frame Code, Diff and ProseDiff share; never wraps, the text scrolling sideways inside the frame. A head names it (`title`) and carries the copy and download acts; without a title they stand side by side in a column beside the first line. `tail` folds the earlier lines behind a one-way act that reveals them and leaves, the focus landing on the text. */
+/** Mono at the code role in the frame Code, Diff and ProseDiff share; never wraps, the text scrolling sideways inside the frame and taking a tab stop only when it does. A head names it (`title`) and carries the copy and download acts; without a title they stand side by side in a column beside the first line. `tail` folds the earlier lines behind a one-way act that reveals them and leaves, the focus landing on the text. */
 export function Code({
 	text: source,
 	title,
@@ -108,12 +125,15 @@ export function Code({
 }: CodeProps) {
 	const words = useWords();
 	const id = useId();
-	const textRef = useRef<HTMLPreElement>(null);
+	const [textNode, setTextNode] = useState<HTMLPreElement | null>(null);
+	const scrolls = useScrolls(textNode);
 	const [unfolded, setUnfolded] = useState(false);
 	const name = title ?? words.code;
+	// The acts' name: the title, else the file the download saves.
+	const actName = title ?? download;
 	const acts = (
 		<>
-			{copy ? <CopyAct name={title} text={source} /> : null}
+			{copy ? <CopyAct name={actName} text={source} /> : null}
 			{download ? (
 				<DownloadAct name={title ?? download} text={source} file={download} />
 			) : null}
@@ -170,7 +190,7 @@ export function Code({
 				onClick={() => {
 					// The act leaves with the lines it folded: the focus moves to the
 					// text, mounted already, before the act goes.
-					textRef.current?.focus();
+					textNode?.focus();
 					setUnfolded(true);
 				}}
 				className={cn(CODE_FOLD, title && CODE_UNDER_HEAD, FOLD)}
@@ -184,10 +204,11 @@ export function Code({
 	const body = (
 		// biome-ignore lint/a11y/useSemanticElements: a named text, not a form's fieldset; a group adds no landmark per block
 		<pre
-			ref={textRef}
+			ref={setTextNode}
 			id={id}
-			// biome-ignore lint/a11y/noNoninteractiveTabindex: a keyboard scrolls the text sideways
-			tabIndex={0}
+			// A keyboard scrolls the text sideways; one that fits is focusable by
+			// script only (the fold lands on it), out of the tab order.
+			tabIndex={scrolls ? 0 : -1}
 			role="group"
 			aria-label={name}
 			className={cn(
