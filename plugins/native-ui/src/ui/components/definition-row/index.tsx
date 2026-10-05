@@ -1,4 +1,9 @@
-import type { IconAct, Lock, StatusState } from "@fcalell/ui-core/descriptors";
+import type {
+	ChangeKind,
+	IconAct,
+	Lock,
+	StatusState,
+} from "@fcalell/ui-core/descriptors";
 import {
 	DEFINITION_ROW,
 	DEFINITION_ROW_CHEVRON,
@@ -21,6 +26,7 @@ import { Icon } from "../icon";
 import { IconButton } from "../icon-button";
 import { Link } from "../link";
 import { Status } from "../status";
+import { ChangeMark } from "../status/change";
 
 const ROW = "relative flex-row items-center";
 // The hit covers the row under its text and its acts, and takes the press
@@ -43,6 +49,9 @@ export type DefinitionValue =
 	| ReactNode;
 
 interface DefinitionRowBase extends Closed {
+	// Where the fact stands in a change set: its mark at the row's start, ahead
+	// of the label.
+	change?: ChangeKind;
 	label: string;
 	// The fact: words, a status, or a control that changes it in place.
 	value?: DefinitionValue;
@@ -82,13 +91,14 @@ function isStatus(
 	return typeof value === "object" && value !== null && "status" in value;
 }
 
-// The label at body 500 with the value at the line's end, the description
+// The change mark at the start, the label at body 500 with the value at the line's end, the description
 // under both; an icon act, or a link's chevron in the act's square, at the
 // row's end, so values with either end at one x. A row that opens is one hit
 // under its acts. A locked row draws a lock after its value and its reason
 // under both in the description's place, the whole line a link with an
 // `href`.
 export function DefinitionRow({
+	change,
 	label,
 	description,
 	value,
@@ -173,6 +183,7 @@ export function DefinitionRow({
 					className={HIT}
 				/>
 			) : null}
+			{change ? <ChangeMark kind={change} /> : null}
 			<View pointerEvents={open ? "none" : "auto"} className={TEXT_BLOCK}>
 				<View className={cn(ROW_TITLE_LINE, LINE)}>
 					<RNText

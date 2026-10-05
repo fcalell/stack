@@ -57,6 +57,7 @@ const record = (locked?: readonly string[]) => ({
 	href: undefined,
 	locked,
 	warning: undefined,
+	change: undefined,
 	cells: {},
 });
 const editable: TableColumn = {

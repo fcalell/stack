@@ -450,14 +450,28 @@ export type TableCell =
 // picked cell cleared by its empty choice.
 export type CellValue = string | number | boolean | null;
 
+// Where a record, a row or a field stands in a change set: added, changed,
+// removed, `unchanged` (so a marked set lines up) or `stale` (the change set
+// no longer matches what it was made against). One mark draws it on every
+// part that carries a `change`.
+export type ChangeKind =
+	| "added"
+	| "changed"
+	| "removed"
+	| "unchanged"
+	| "stale";
+
 // A table row's own slots, each read from the item: its id, unique in the
 // table; `href`, its leading cell's link, so it opens in a new tab; `locked`,
-// the columns whose cells it draws read only; and `warning`, what is wrong
-// with the row, drawn after its leading cell's name (a warn glyph and the
-// sentence; the phone's row carries it as a `ListRow` warning).
+// the columns whose cells it draws read only; `warning`, what is wrong with
+// the row, drawn after its leading cell's name (a warn glyph and the
+// sentence; the phone's row carries it as a `ListRow` warning); and `change`,
+// where the row stands in a change set, its mark ahead of the leading cell's
+// name (the phone's row carries it as a `ListRow` change).
 export interface TableRowSlots<T> {
 	id: (item: T) => string;
 	href?: (item: T) => Route | undefined;
 	locked?: (item: T) => readonly string[] | undefined;
 	warning?: (item: T) => string | undefined;
+	change?: (item: T) => ChangeKind | undefined;
 }

@@ -3,6 +3,7 @@ import { Field } from "@base-ui/react/field";
 import { cn } from "@fcalell/ui-core/cn";
 import type {
 	Act,
+	ChangeKind,
 	ChipMark,
 	MenuItem,
 	Part,
@@ -41,6 +42,7 @@ import { Icon } from "../icon/index.tsx";
 import { Input } from "../input/index.tsx";
 import { MenuBase } from "../menu/base.tsx";
 import { Picker } from "../picker/index.tsx";
+import { ChangeMark } from "../status/change.tsx";
 import { StatusDot } from "../status/dot.tsx";
 import { Status } from "../status/index.tsx";
 import { LockMark, WarningMark } from "./marks.tsx";
@@ -82,6 +84,8 @@ const ENTRY_FIELD = "grow min-w-0";
 
 /** One thing in a list or a group. */
 export interface ListRowProps<V extends string | null = string> extends Closed {
+	/** Where the row stands in a change set: its mark at the row's start, ahead of the leading slot. Mark a set's untouched rows `unchanged` so the titles line up. */
+	change?: ChangeKind;
 	/** A glyph, a status's mark (its dot, or the spinner while `running`) or an avatar, in one slot at the avatar's size. */
 	leading?: RowLeading;
 	/** What the row names, at body 500. */
@@ -169,8 +173,9 @@ function trailingWord(trailing: RowTrailing<string | null>): string {
 	return "";
 }
 
-/** The leading slot, the title with its trailing value over the meta line (its status, warning, lock and chip at the end, yielding from the chip) or the entry (its input and act, its error under it), a trailing pick, then the row's act and the more act. A row that opens is one hit under its pick and acts, current (the selection wash) at its `href`; it washes under the pointer and the press. In a `Group` it runs edge to edge at the card's inset, elsewhere it is an inset rounded wash, square on touch. */
+/** The change mark, the leading slot, the title with its trailing value over the meta line (its status, warning, lock and chip at the end, yielding from the chip) or the entry (its input and act, its error under it), a trailing pick, then the row's act and the more act. A row that opens is one hit under its pick and acts, current (the selection wash) at its `href`; it washes under the pointer and the press. In a `Group` it runs edge to edge at the card's inset, elsewhere it is an inset rounded wash, square on touch. */
 export function ListRow<V extends string | null = string>({
+	change,
 	leading,
 	title,
 	meta,
@@ -243,6 +248,7 @@ export function ListRow<V extends string | null = string>({
 			)}
 		>
 			{hit}
+			{change ? <ChangeMark kind={change} /> : null}
 			{leading ? (
 				<span className={cn(ROW_LEADING, LEADING)}>
 					<Leading leading={leading} />

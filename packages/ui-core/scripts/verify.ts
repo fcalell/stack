@@ -108,6 +108,7 @@ import {
 	BANNER_GLYPH,
 	BUTTON,
 	BUTTON_LABEL,
+	CHANGE_MARK,
 	CHART_BAND,
 	CHART_FILL,
 	CHECKBOX,
@@ -182,6 +183,7 @@ import {
 	button,
 	buttonContentTone,
 	buttonLabel,
+	changeMark,
 	chartBand,
 	chartFill,
 	checkbox,
@@ -469,6 +471,7 @@ const MATRICES: readonly Registration[] = [
 	["AVATAR", AVATAR, avatar],
 	["AVATAR_LABEL", AVATAR_LABEL, avatarLabel],
 	["STATUS_DOT", STATUS_DOT, statusDot],
+	["CHANGE_MARK", CHANGE_MARK, changeMark],
 	["CHIP", CHIP, chip],
 	["CHIP_LABEL", CHIP_LABEL, chipLabel],
 	["FIELD", FIELD, field],
@@ -701,7 +704,7 @@ check("c03", "tokens.ts declares the contract", () => {
 	requireEqual(SHADOW_LEVELS.length, 2, "shadow level count");
 	requireEqual(WIDTHS.length, 12, "width count");
 	requireEqual(BREAKPOINTS.length, 3, "breakpoint count");
-	requireEqual(WORD_KEYS.length, 52, "word count");
+	requireEqual(WORD_KEYS.length, 55, "word count");
 	requireEqual(COUNTED_WORD_KEYS.length, 1, "counted word count");
 	requireEqual(SLOT_WORD_KEYS.length, 8, "slot word count");
 	requireEqual(

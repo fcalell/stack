@@ -1,6 +1,11 @@
 import { Button as BaseButton } from "@base-ui/react/button";
 import { cn } from "@fcalell/ui-core/cn";
-import type { IconAct, Lock, StatusState } from "@fcalell/ui-core/descriptors";
+import type {
+	ChangeKind,
+	IconAct,
+	Lock,
+	StatusState,
+} from "@fcalell/ui-core/descriptors";
 import {
 	DEFINITION_ROW,
 	DEFINITION_ROW_CHEVRON,
@@ -17,6 +22,7 @@ import { useWords } from "../../lib/words.tsx";
 import { Icon } from "../icon/index.tsx";
 import { IconButton } from "../icon-button/index.tsx";
 import { Link } from "../link/index.tsx";
+import { ChangeMark } from "../status/change.tsx";
 import { Status } from "../status/index.tsx";
 
 const ROW = "relative flex items-center";
@@ -46,6 +52,8 @@ export type DefinitionValue =
 	| ReactNode;
 
 interface DefinitionRowBase extends Closed {
+	/** Where the fact stands in a change set: its mark at the row's start, ahead of the label. */
+	change?: ChangeKind;
 	/** What the fact is. */
 	label: string;
 	/** The fact: words, a status, or a control that changes it in place. */
@@ -84,8 +92,9 @@ function isStatus(
 	return typeof value === "object" && value !== null && "status" in value;
 }
 
-/** The label at body 500 with the value at the line's end, the description under both; an icon act, or a link's chevron in the act's square, at the row's end, so values with either end at one x. A locked row draws a lock after its value and its reason under both in the description's place, the whole line a link with an `href`. */
+/** The change mark at the start, the label at body 500 with the value at the line's end, the description under both; an icon act, or a link's chevron in the act's square, at the row's end, so values with either end at one x. A locked row draws a lock after its value and its reason under both in the description's place, the whole line a link with an `href`. */
 export function DefinitionRow({
+	change,
 	label,
 	description,
 	value,
@@ -174,6 +183,7 @@ export function DefinitionRow({
 				opens && ROW_PRESS,
 			)}
 		>
+			{change ? <ChangeMark kind={change} /> : null}
 			<span className={TEXT_BLOCK}>
 				<span className={cn(ROW_TITLE_LINE, LINE)}>
 					{title}

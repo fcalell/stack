@@ -7,6 +7,7 @@ import type {
 	TableRowSlots,
 } from "@fcalell/ui-core/descriptors";
 import {
+	CHANGE_WORD,
 	cellEdit,
 	cellLocked,
 	changeKind,
@@ -75,6 +76,7 @@ import { List, type RowSlots } from "../list";
 import { PickerBase } from "../picker/base";
 import type { QueryLike } from "../query-boundary";
 import { StatusBase } from "../status/base";
+import { ChangeMark } from "../status/change";
 
 const ROOT = "grow";
 // The frozen leading column stands outside the sideways scroll, on the
@@ -289,6 +291,7 @@ export function Table<T>(props: TableProps<T>) {
 							onOpen={onOpen}
 							loading={waiting}
 							warns={props.row.warning !== undefined}
+							changes={props.row.change !== undefined}
 						/>
 					</SectionContext.Provider>
 				)}
@@ -383,7 +386,8 @@ function pressOf(
 		: { disabled: true };
 }
 
-// The frozen half of a row: its leading cell, the record's name.
+// The frozen half of a row: its leading cell, the record's name with its change
+// mark ahead of it and its warning glyph after it.
 const LeadRow = memo(function LeadRow(props: {
 	row: TableRecord;
 	lead: TableColumn;
@@ -399,13 +403,17 @@ const LeadRow = memo(function LeadRow(props: {
 	const state = useRowState(store, row.id, chosen);
 	let role: "link" | "button" | undefined;
 	if (opens) role = props.link ? "link" : "button";
+	const spoken =
+		row.warning === undefined
+			? name
+			: `${name}. ${words.warning}. ${row.warning}`;
 	return (
 		<Pressable
 			accessibilityRole={role}
 			accessibilityLabel={
-				row.warning === undefined
-					? name
-					: `${name}. ${words.warning}. ${row.warning}`
+				row.change === undefined
+					? spoken
+					: `${words[CHANGE_WORD[row.change]]}. ${spoken}`
 			}
 			accessibilityState={{ selected: chosen }}
 			{...pressOf(row, opens, store, actions)}
@@ -416,10 +424,11 @@ const LeadRow = memo(function LeadRow(props: {
 					TABLE_CELL,
 					CELL,
 					isEnd(lead) && CELL_END,
-					row.warning !== undefined && TABLE_NAME,
+					(row.warning !== undefined || row.change !== undefined) && TABLE_NAME,
 					tableFrozenCell({ state }),
 				)}
 			>
+				{row.change ? <ChangeMark kind={row.change} /> : null}
 				<RNText
 					numberOfLines={1}
 					className={cn(
@@ -959,6 +968,7 @@ function Phone(props: {
 	onOpen: ((id: string) => void) | undefined;
 	loading: boolean | undefined;
 	warns: boolean;
+	changes: boolean;
 }) {
 	const words = useWords();
 	const { columns, sort } = props;
@@ -1056,6 +1066,7 @@ function Phone(props: {
 						: undefined;
 				}
 			: undefined,
+		change: props.changes ? (record) => record.change : undefined,
 		warning: props.warns ? (record) => record.warning : undefined,
 		chip:
 			chip?.kind === "chip"

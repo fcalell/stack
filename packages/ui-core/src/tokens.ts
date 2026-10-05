@@ -1174,6 +1174,9 @@ export const WORD_KEYS = [
 	"warning",
 	"photos",
 	"files",
+	"modified",
+	"unchanged",
+	"stale",
 ] as const;
 export type WordKey = (typeof WORD_KEYS)[number];
 
@@ -1260,6 +1263,9 @@ export const ENGLISH: Words = {
 	warning: "Warning",
 	photos: "Photos",
 	files: "Files",
+	modified: "Changed",
+	unchanged: "Unchanged",
+	stale: "Stale",
 	earlierLines: {
 		one: "Show {count} earlier line",
 		other: "Show {count} earlier lines",

@@ -2,6 +2,7 @@ import { Field } from "@base-ui/react/field";
 import { cn } from "@fcalell/ui-core/cn";
 import type {
 	Answered,
+	ChangeKind,
 	FieldBinding,
 	FieldControl,
 } from "@fcalell/ui-core/descriptors";
@@ -33,6 +34,7 @@ import { OptionList } from "../option-list/index.tsx";
 import { SegmentedControl } from "../segmented-control/index.tsx";
 import { Select } from "../select/index.tsx";
 import { Slider } from "../slider/index.tsx";
+import { ChangeMark } from "../status/change.tsx";
 import { Switch } from "../switch/index.tsx";
 
 const STACK = "flex flex-col min-w-0";
@@ -42,6 +44,10 @@ const LABEL_BLOCK = "flex flex-col grow min-w-0";
 // The checkbox stands on its label's first line, a box one body line tall;
 // the label is its target.
 const BOX_LINE = "flex shrink-0 items-center h-lh";
+// A change mark stands ahead of the whole field on its first line, a label's
+// line tall.
+const MARKED = "flex items-start gap-inside min-w-0";
+const MARKED_BODY = "grow min-w-0";
 const DISABLED = "text-ink-disabled";
 // Base UI's field names and describes the checkbox through its label.
 const FIELD_TARGET = {};
@@ -65,6 +71,8 @@ function focusFirst(root: HTMLElement | null) {
 }
 
 interface FormFieldBase extends Closed {
+	/** Where the field stands in a change set: its mark ahead of the field, on its label's line. */
+	change?: ChangeKind;
 	/** The control's name, drawn over it (beside a switch or a checkbox). */
 	label: string;
 	/** A sentence under the control; disabled, it is the reason. */
@@ -121,9 +129,20 @@ function formOf(control: ReactNode) {
 	return "field";
 }
 
-/** The label (body 500) over its control, the description (meta) under it and the error in the description's place; a switch stands at the label's end and a checkbox on its first line. Base UI's field wires the label, the description, the error, the validity and the disabled state into the control. */
+/** The label (body 500) over its control, the description (meta) under it and the error in the description's place; a switch stands at the label's end and a checkbox on its first line. Base UI's field wires the label, the description, the error, the validity and the disabled state into the control. A `change` draws the change mark ahead of the field, on its label's line. */
 export function FormField<V>(props: FormFieldProps<V>) {
-	const { label, description, disabled, answered } = props;
+	const { label, description, disabled, answered, change } = props;
+	const marked = (field: ReactNode) =>
+		change === undefined ? (
+			field
+		) : (
+			<div className={MARKED}>
+				<span className={cn(lineBox({ role: "body" }), BOX_LINE)}>
+					<ChangeMark kind={change} />
+				</span>
+				<div className={MARKED_BODY}>{field}</div>
+			</div>
+		);
 	const words = useWords();
 	const folded = answered !== undefined;
 	// What a control refused (a file of the wrong type) stands in the error
@@ -176,7 +195,7 @@ export function FormField<V>(props: FormFieldProps<V>) {
 	// A group takes no field context: its label and its line under it name and
 	// describe the group, never the controls inside.
 	if (answered)
-		return (
+		return marked(
 			<div ref={root} className={cn(FORM_FIELD_SUMMARY, SUMMARY)}>
 				<span className={cn(FORM_FIELD_SUMMARY_GLYPH, SUMMARY_GLYPH)}>
 					<Icon name="Check" />
@@ -199,10 +218,10 @@ export function FormField<V>(props: FormFieldProps<V>) {
 					label={`${words.edit} ${label}`}
 					onAct={answered.onEdit}
 				/>
-			</div>
+			</div>,
 		);
 	if (form === "group")
-		return (
+		return marked(
 			<div ref={root} className={cn(formField({ holds: "field" }), STACK)}>
 				<p
 					id={labelId}
@@ -223,13 +242,13 @@ export function FormField<V>(props: FormFieldProps<V>) {
 						{error ?? description}
 					</p>
 				) : null}
-			</div>
+			</div>,
 		);
 	const box = cn(
 		formField({ holds }),
 		holds === "switch" ? BESIDE : holds === "checkbox" ? AHEAD : STACK,
 	);
-	return (
+	return marked(
 		<Field.Root
 			ref={root}
 			invalid={Boolean(error)}
@@ -254,6 +273,6 @@ export function FormField<V>(props: FormFieldProps<V>) {
 				</div>
 			)}
 			{holds === "switch" ? control : null}
-		</Field.Root>
+		</Field.Root>,
 	);
 }

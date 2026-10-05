@@ -20,6 +20,8 @@ import { GroundContext } from "../../lib/ground";
 const ROW = "relative flex-row items-center";
 const SQUARE = "rounded-none";
 const LEADING = "shrink-0 items-center justify-center";
+// The change mark's lane, one icon wide.
+const BOX = "shrink-0 items-center justify-center";
 const TEXT = "flex-1 min-w-0";
 const LINE = "flex-row items-center min-w-0";
 // A line's strut and its bar in one box, so the line's gap never stands
@@ -60,8 +62,8 @@ const BARS = [
 // How many rows a waiting list draws.
 export const WAITING_ROWS = BARS.length;
 
-// A ListRow waiting, the `index`th of a waiting list: the leading mark's
-// skeleton by its kind, a bar in the title line (the trailing's at its end, four figures
+// A ListRow waiting, the `index`th of a waiting list: the change mark's
+// skeleton in its lane, the leading mark's skeleton by its kind, a bar in the title line (the trailing's at its end, four figures
 // wide) and one in the meta line (the marks' at its end) or, with an entry, a
 // field's bar and an act's bar in its place, each at its slot's place, a
 // labelled act's bar at the row's end and the more act's room left empty. Outside the package's exports.
@@ -81,6 +83,11 @@ export function RowWait(props: { shape: RowShape; index: number }) {
 				ground === "list" && SQUARE,
 			)}
 		>
+			{shape.change ? (
+				<View className={BOX}>
+					<View className={skeleton({ kind: "icon" })} />
+				</View>
+			) : null}
 			{shape.leading ? (
 				<View className={cn(ROW_LEADING, LEADING)}>
 					<View className={skeleton({ kind: LEADING_WAIT[shape.leading] })} />

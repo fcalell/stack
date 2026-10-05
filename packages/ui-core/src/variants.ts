@@ -4,6 +4,7 @@
 // package.
 import { cva } from "class-variance-authority";
 import type { ClassValue } from "clsx";
+import type { ChangeKind } from "./descriptors.ts";
 import { COLOR_NAMES, type ColorName, type StatusState } from "./tokens.ts";
 import {
 	ACTION_BAR,
@@ -14,6 +15,7 @@ import {
 	BANNER_GLYPH,
 	BUTTON,
 	BUTTON_LABEL,
+	CHANGE_MARK,
 	CHART_BAND,
 	CHART_FILL,
 	CHECKBOX,
@@ -113,6 +115,7 @@ export const link = build(LINK);
 export const avatar = build(AVATAR);
 export const avatarLabel = build(AVATAR_LABEL);
 export const statusDot = build(STATUS_DOT);
+export const changeMark = build(CHANGE_MARK);
 export const chip = build(CHIP);
 export const chipLabel = build(CHIP_LABEL);
 export const field = build(FIELD);
@@ -214,6 +217,7 @@ export const FAMILIES: readonly Family[] = [
 	family("AVATAR", AVATAR, avatar),
 	family("AVATAR_LABEL", AVATAR_LABEL, avatarLabel),
 	family("STATUS_DOT", STATUS_DOT, statusDot),
+	family("CHANGE_MARK", CHANGE_MARK, changeMark),
 	family("CHIP", CHIP, chip),
 	family("CHIP_LABEL", CHIP_LABEL, chipLabel),
 	family("FIELD", FIELD, field),
@@ -845,6 +849,11 @@ export function buttonContentTone(act: ButtonAct): ContentTone {
 export function statusContentTone(state: StatusState): ContentTone {
 	if (state === "running") return toneOf(STATUS_SPINNER);
 	return toneOf(STATUS_DOT.variants.state[state]);
+}
+
+// A change mark's glyph ink, its kind's.
+export function changeContentTone(kind: ChangeKind): ContentTone {
+	return toneOf(CHANGE_MARK.variants.kind[kind]);
 }
 
 // A done stage's check ink.

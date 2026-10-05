@@ -1,5 +1,6 @@
 import type {
 	Act,
+	ChangeKind,
 	ChipMark,
 	IconName,
 	MenuItem,
@@ -313,6 +314,31 @@ const ENTRIES: Entry[] = [
 	},
 ];
 
+// A change set: each row where it stands, one of every kind, with a leading glyph
+// so the mark is seen ahead of it.
+interface Change {
+	id: string;
+	kind: ChangeKind;
+	title: string;
+	meta: string[];
+}
+
+const CHANGE_ROW: RowSlots<Change> = {
+	key: (change) => change.id,
+	change: (change) => change.kind,
+	leading: { icon: () => "Workflow" },
+	title: (change) => change.title,
+	meta: (change) => change.meta,
+};
+
+const CHANGES: Change[] = [
+	{ id: "intake", kind: "added", title: "Intake form", meta: ["Step 1"] },
+	{ id: "review", kind: "changed", title: "Review", meta: ["Step 2"] },
+	{ id: "legacy", kind: "removed", title: "Manual approval", meta: ["Step 3"] },
+	{ id: "notify", kind: "unchanged", title: "Notify", meta: ["Step 4"] },
+	{ id: "archive", kind: "stale", title: "Archive", meta: ["Step 5"] },
+];
+
 // An import source asking for its URL: its input and Import act on the row;
 // the second row's address failed.
 interface Source {
@@ -358,7 +384,7 @@ function Issues() {
 // Board 40's props: deploys in a List (a glyph leading, a status and a chip
 // on the meta line, the more act), services on one line, a job's stages (a
 // running row beside an active one), change set entries (every mark and the
-// act that clears the warning), and members in a Group (a trailing
+// act that clears the warning), a change set (one row of every kind), and members in a Group (a trailing
 // value, a trailing pick, a status dot leading).
 function Props() {
 	return (
@@ -369,6 +395,7 @@ function Props() {
 			<List items={STEPS} row={STEP_ROW} />
 			<List items={SOURCES} row={SOURCE_ROW} />
 			<List items={ENTRIES} row={ENTRY_ROW} />
+			<List items={CHANGES} row={CHANGE_ROW} />
 			<Group>
 				<ListRow
 					leading={{ icon: "Globe" }}
@@ -444,6 +471,8 @@ function Waiting(props: { kind: "avatar" | "icon" | "status" }) {
 			<List items={SOURCES} row={SOURCE_ROW} />
 			<List items={[]} loading row={ENTRY_ROW} />
 			<List items={ENTRIES} row={ENTRY_ROW} />
+			<List items={[]} loading row={CHANGE_ROW} />
+			<List items={CHANGES} row={CHANGE_ROW} />
 		</>
 	);
 }
@@ -477,6 +506,7 @@ export function drawListRow(frame: ShowcaseFrame) {
 		cell.startsWith("FORM_FIELD") ||
 		cell === "ROW_MARKS" ||
 		cell === "ROW_WARNING" ||
+		cell.startsWith("CHANGE_MARK") ||
 		cell === "ROW_ACTS";
 	return <Wide>{props ? <Props /> : <Issues />}</Wide>;
 }

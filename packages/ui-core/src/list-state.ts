@@ -4,6 +4,7 @@
 
 import type {
 	ChangeCell,
+	ChangeKind,
 	EitherValue,
 	IconName,
 	Option,
@@ -15,7 +16,7 @@ import type {
 	TableColumn,
 	TableRowSlots,
 } from "./descriptors.ts";
-import { filled, type Words } from "./tokens.ts";
+import { filled, type WordKey, type Words } from "./tokens.ts";
 import type { RowGround } from "./variants.ts";
 
 export type ListState = "pending" | "failed" | "missing" | "empty" | "loaded";
@@ -119,12 +120,13 @@ export function groupWait(lists: number): "rows" | "settings" {
 // The kind of mark every row of a list leads with.
 export type LeadingKind = "avatar" | "icon" | "status";
 
-// The slots a waiting ListRow draws, known before any item: its leading mark
-// by kind, a meta line (at a chip's height when a chip may stand on it, the
+// The slots a waiting ListRow draws, known before any item: its change mark's
+// lane, its leading mark by kind, a meta line (at a chip's height when a chip may stand on it, the
 // marks' bar at its end when a status, a warning, a lock or a chip may), an entry's field and
 // button in the meta line's place (it wins over the meta line), a labelled act
 // at the row's end, a trailing value, and the more act's room, kept empty.
 export interface RowShape {
+	change: boolean;
 	leading: LeadingKind | null;
 	meta: boolean;
 	chip: boolean;
@@ -149,6 +151,7 @@ function leadingKind(leading: LeadingKeys | undefined): LeadingKind | null {
 // The waiting row's shape from the slots a `row` map declares, read by key:
 // no slot function runs.
 export function rowShape(slots: {
+	change?: unknown;
 	leading?: LeadingKeys;
 	meta?: unknown;
 	status?: unknown;
@@ -166,6 +169,7 @@ export function rowShape(slots: {
 		slots.lock !== undefined ||
 		slots.chip !== undefined;
 	return {
+		change: slots.change !== undefined,
 		leading: leadingKind(slots.leading),
 		meta: slots.meta !== undefined || marks,
 		chip: slots.chip !== undefined,
@@ -448,6 +452,7 @@ export interface TableRecord {
 	href: Route | undefined;
 	locked: readonly string[] | undefined;
 	warning: string | undefined;
+	change: ChangeKind | undefined;
 	cells: Readonly<Record<string, TableCell>>;
 }
 
@@ -462,6 +467,7 @@ export function tableRecords<T>(
 		href: row.href?.(item),
 		locked: row.locked?.(item),
 		warning: row.warning?.(item),
+		change: row.change?.(item),
 		cells: Object.fromEntries(
 			columns.map((column) => [column.key, column.cell(item)]),
 		),
@@ -495,7 +501,7 @@ export function cellLocked(
 
 // What a change cell is: both values, a value added (no before) or removed (no
 // after); none when it holds neither, drawing nothing.
-export type ChangeKind = "changed" | "added" | "removed";
+export type ChangeCellKind = Exclude<ChangeKind, "unchanged" | "stale">;
 
 // A table cell that holds a change (the object with a `before`, as a status
 // cell is the one with a `status`).
@@ -503,7 +509,7 @@ export function isChangeCell(cell: TableCell | undefined): cell is ChangeCell {
 	return typeof cell === "object" && cell !== null && "before" in cell;
 }
 
-export function changeKind(cell: ChangeCell): ChangeKind | undefined {
+export function changeKind(cell: ChangeCell): ChangeCellKind | undefined {
 	if (cell.before !== null && cell.after !== null) return "changed";
 	if (cell.after !== null) return "added";
 	if (cell.before !== null) return "removed";
@@ -541,6 +547,24 @@ export function changeMeta(
 		? `${cell.before} → ${cell.after}`
 		: changeReading(cell, words);
 }
+
+// A change mark's glyph and the word that names it, by kind: the glyph is
+// drawn, the word is what assistive tech reads.
+export const CHANGE_GLYPH: Readonly<Record<ChangeKind, IconName>> = {
+	added: "Plus",
+	changed: "PencilLine",
+	removed: "Minus",
+	unchanged: "Equal",
+	stale: "History",
+};
+
+export const CHANGE_WORD: Readonly<Record<ChangeKind, WordKey>> = {
+	added: "added",
+	changed: "modified",
+	removed: "removed",
+	unchanged: "unchanged",
+	stale: "stale",
+};
 
 // A picked option that carries no leading form of its own leads with this
 // glyph, which marks the value as a field and not typed text.

@@ -1,5 +1,6 @@
 import type {
 	Act,
+	ChangeKind,
 	ChipMark,
 	MenuItem,
 	Part,
@@ -42,6 +43,7 @@ import { Input } from "../input";
 import { MenuBase } from "../menu/base";
 import { Picker } from "../picker";
 import { Status } from "../status";
+import { ChangeMark } from "../status/change";
 import { StatusDot } from "../status/dot";
 import { LockMark, WarningMark } from "./marks";
 
@@ -74,6 +76,10 @@ const ENTRY = "flex-row items-center min-w-0";
 const ENTRY_FIELD = "flex-1 min-w-0";
 
 export interface ListRowProps<V extends string | null = string> extends Closed {
+	// Where the row stands in a change set: its mark at the row's start, ahead
+	// of the leading slot. Mark a set's untouched rows `unchanged` so the titles
+	// line up.
+	change?: ChangeKind;
 	// A glyph, a status's mark (its dot, or the spinner while `running`) or an
 	// avatar, in one slot at the avatar's size.
 	leading?: RowLeading;
@@ -165,13 +171,14 @@ function trailingWord(trailing: RowTrailing<string | null>): string {
 	return "";
 }
 
-// The leading slot, the title with its trailing value over the meta line (its
+// The change mark, the leading slot, the title with its trailing value over the meta line (its
 // status, warning, lock and chip at the end, the chip yielding first) or the entry (its input and act, its error
 // under it), a trailing pick, then the row's act and the more act. A row that
 // opens is one hit under its pick and acts, current (the selection wash) at
 // its `href`. In a `Group` it runs edge to edge at the card's inset,
 // elsewhere it is the list's row, square on the phone.
 export function ListRow<V extends string | null = string>({
+	change,
 	leading,
 	title,
 	meta,
@@ -236,6 +243,7 @@ export function ListRow<V extends string | null = string>({
 					className={HIT}
 				/>
 			) : null}
+			{change ? <ChangeMark kind={change} /> : null}
 			{leading ? (
 				<View pointerEvents="none" className={cn(ROW_LEADING, LEADING)}>
 					<Leading leading={leading} />

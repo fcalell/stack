@@ -128,6 +128,12 @@ A row's marks are named props on the meta line, at most one each, in order: `sta
 (what is wrong, a string), `lock` (what it holds, a string, a glyph read aloud) and `chip`; the
 act that clears a warning is the row's `act`.
 
+Where a row, a fact or a field stands in a change set is its `change` (`ChangeKind`: `added`,
+`changed`, `removed`, `unchanged`, `stale`), one prop on `ListRow`, `DefinitionRow` and `FormField`
+and a `change` slot on a `List`'s `row` map and a `Table`'s `row`: a glyph in the kind's ink in a
+lane at the row's start, named by the kind's word. Mark every row of a set, the untouched ones
+`unchanged`, so the titles line up.
+
 A row's next step is its `act`, one labelled `Act` at its end ahead of the more menu (an act the
 row waits on keeps its pending press there, never also in `more`). An input on a row is its
 `entry`, a `RowEntry` (`label`, `field`, `placeholder`, `act`, `error`) standing under the title
@@ -169,12 +175,11 @@ with neither there is no act. Pass the `useQuery` result whole so its `error` ar
 opened by an address after it was removed then needs no screen of its own.
 
 A `Table` takes its data the same way: `query` with `sentence`, or `items`; each column reads its
-cell from the item by `cell`, and `row` gives the row's `id`, `href` and `locked`. It draws its
-states itself, with no `QueryBoundary` around it. An editable table (`onEdit`) draws a lock after a
-cell its row locks; a column's own `locked` (a reason) makes it read only, its lock in the head
-alone.
-
-cell from the item by `cell`, and `row` gives the row's `id`, `href`, `locked` and `warning` (what is wrong with it, drawn after its name). It draws its
+cell from the item by `cell`, and `row` gives the row's `id`, `href`, `locked`, `warning` (what is
+wrong with it, drawn after its name) and `change` (where it stands in a change set, its mark ahead
+of its name). It draws its states itself, with no `QueryBoundary` around it. An editable table
+(`onEdit`) draws a lock after a cell its row locks; a column's own `locked` (a reason) makes it read
+only, its lock in the head alone.
 
 ```tsx
 <List

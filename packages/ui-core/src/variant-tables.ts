@@ -214,6 +214,23 @@ export const STATUS_DOT = matrix({
 	},
 });
 
+// A row's change mark: its glyph in the kind's ink in a lane one icon wide,
+// so every row of a change set aligns whether or not it is marked. Added is
+// `ok`, removed `danger`, changed and stale `warn` (told apart by their
+// glyphs), unchanged the meta ink.
+export const CHANGE_MARK = matrix({
+	base: "size-icon",
+	variants: {
+		kind: {
+			added: "text-ok",
+			changed: "text-warn",
+			removed: "text-danger",
+			unchanged: "text-ink-meta",
+			stale: "text-warn",
+		},
+	},
+});
+
 // ── Chip ────────────────────────────────────────────────────────────
 
 // A data value's tag: its family's soft ground under the family's ink, so

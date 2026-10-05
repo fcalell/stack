@@ -66,6 +66,35 @@ function Questions() {
 	);
 }
 
+// A change set's fields, one of every kind, over a text field, a switch and a
+// checkbox.
+function Changes() {
+	return (
+		<>
+			<FormField change="changed" label="Workspace URL">
+				<Input value="acme-inc" onChange={change} />
+			</FormField>
+			<FormField change="added" label="Default region">
+				<Select
+					value="eu-central-1"
+					onChange={change}
+					options={REGIONS}
+					placeholder="Choose a region"
+				/>
+			</FormField>
+			<FormField change="removed" label="Billing contact">
+				<Input value="ana@acme.app" onChange={change} />
+			</FormField>
+			<FormField change="unchanged" label="Require two-factor">
+				<Switch checked onChange={change} label="Require two-factor" />
+			</FormField>
+			<FormField change="stale" label="Trust this browser">
+				<Checkbox checked onChange={change} label="Trust this browser" />
+			</FormField>
+		</>
+	);
+}
+
 // Board 41's fields: typed fields under their labels, then a switch and a
 // checkbox inline; in error the messages take the descriptions' places, and
 // disabled the labels take the disabled ink, the descriptions kept. At rest
@@ -125,6 +154,9 @@ export function drawFormField(frame: ShowcaseFrame) {
 				/>
 			</FormField>
 			{state === "rest" ? <Questions /> : null}
+			{state === "rest" && frame.cell.name.startsWith("CHANGE_MARK") ? (
+				<Changes />
+			) : null}
 		</Wide>
 	);
 }

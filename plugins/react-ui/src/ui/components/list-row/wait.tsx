@@ -19,6 +19,8 @@ import { GroundContext } from "../../lib/ground.ts";
 const ROW = "relative flex items-center";
 const SQUARE = "touch:rounded-none";
 const LEADING = "flex shrink-0 items-center justify-center";
+// The change mark's lane, one icon wide.
+const BOX = "flex shrink-0 items-center justify-center";
 const TEXT = "flex flex-col grow min-w-0";
 const LINE = "flex items-center min-w-0";
 const LINE_HEIGHT = "h-lh";
@@ -57,7 +59,7 @@ const BARS = [
 /** How many rows a waiting list draws. Outside the package's exports. */
 export const WAITING_ROWS = BARS.length;
 
-/** A ListRow waiting, the `index`th of a waiting list: the leading mark's skeleton by its kind, a bar in the title line (the trailing's at its end, four figures wide) and one in the meta line (the marks' at its end) or, with an entry, a field's bar and an act's bar in its place, each at its slot's place, a labelled act's bar at the row's end and the more act's room left empty. Outside the package's exports. */
+/** A ListRow waiting, the `index`th of a waiting list: the change mark's skeleton in its lane, the leading mark's skeleton by its kind, a bar in the title line (the trailing's at its end, four figures wide) and one in the meta line (the marks' at its end) or, with an entry, a field's bar and an act's bar in its place, each at its slot's place, a labelled act's bar at the row's end and the more act's room left empty. Outside the package's exports. */
 export function RowWait(props: { shape: RowShape; index: number }) {
 	const ground = use(GroundContext);
 	const { shape } = props;
@@ -75,6 +77,11 @@ export function RowWait(props: { shape: RowShape; index: number }) {
 				ground === "list" && SQUARE,
 			)}
 		>
+			{shape.change ? (
+				<span className={BOX}>
+					<span className={skeleton({ kind: "icon" })} />
+				</span>
+			) : null}
 			{shape.leading ? (
 				<span className={cn(ROW_LEADING, LEADING)}>
 					<span className={skeleton({ kind: LEADING_WAIT[shape.leading] })} />

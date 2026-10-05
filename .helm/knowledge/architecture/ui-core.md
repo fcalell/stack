@@ -129,7 +129,7 @@ pinned by the package's verify suite; this entry holds the architecture and its 
 ## Words
 
 Every word a molecule draws or reads aloud on its own (the seven `Status` words, `recommended`,
-`copy`, `copied`, `download`, `back`, `close`, `cancel`, `dismiss`, `more`, `send`, `stop`, `attach`, `search`, `loading`, `checking`, `retry`, `saving`, `saved`, `notSaved`, `add`, `remove`, `edit`, `details`, `places`, `notifications`, `code`, `added`, `removed`, `sort`, `ascending`, `descending`, `time`, `message`, `seen`, `unseen`, `copyFailed`, `latest`, `missing`, `typeValue`, `pickValue`, `chooseFile`, `photos`, `files`, `warning`, `locked`, the counted `earlierLines`, and the slot words `meterValue`, `meterOver`, `meterMark`, `linesAdded`, `linesRemoved`, `changed`, `wrongType` and `stepOf`) comes
+`copy`, `copied`, `download`, `back`, `close`, `cancel`, `dismiss`, `more`, `send`, `stop`, `attach`, `search`, `loading`, `checking`, `retry`, `saving`, `saved`, `notSaved`, `add`, `remove`, `edit`, `details`, `places`, `notifications`, `code`, `added`, `removed`, `sort`, `ascending`, `descending`, `time`, `message`, `seen`, `unseen`, `copyFailed`, `latest`, `missing`, `typeValue`, `pickValue`, `chooseFile`, `photos`, `files`, `warning`, `locked`, `modified`, the counted `earlierLines`, and the slot words `meterValue`, `meterOver`, `meterMark`, `linesAdded`, `linesRemoved`, `changed`, `unchanged`, `stale`, `wrongType` and `stepOf`) comes
 from `words`, a closed typed object with English defaults. The `Words` type requires every key
 and `wordsSchema` is strict, so a translation missing a word fails `tsc` and the schema. It is a
 plugin option beside `theme`; each plugin contributes a `WordsProvider` into the generated entry
@@ -712,12 +712,29 @@ a tick with no animation, never jumped to full.
   truncates first, then the lock's label, and the warning's label keeps. Why named props: `List`'s
   per-slot functions let a waiting row know which marks to reserve before any item exists
   (`rowShape` reads `warning` and `lock` by key, as it does `status` and `chip`); a `marks`
-  record function would hide that. A change is not a mark but a part of the row's start (the
-  change cell kinds), a count a meta part, a test status a `status`, so no cell kind is added.
+  record function would hide that. A count is a meta part and a test status a `status`, so no cell
+  kind is added; a change set's mark is `change`, below.
   A `Table` row's `warning` (`TableRowSlots.warning`) is drawn after its leading cell's name on the
   grid, the same glyph and label; on touch it is the `ListRow` warning, and on the phone's frozen
   leading column, a short measure wide, the glyph alone with the sentence read with the row's name.
   The Table has no row act, so a warning's act on a Table row is the row's open.
+- A row, a fact or a field carries where it stands in a change set as one `change?: ChangeKind`
+  (`added`, `changed`, `removed`, `unchanged`, `stale`, in `descriptors.ts`, the one `ChangeKind`;
+  the change cell's own kinds are the subset `ChangeCellKind`) across `ListRow`, `DefinitionRow`
+  and `FormField`, with a `change` slot on `RowSlots` and `TableRowSlots`. One internal mark draws it
+  (`ChangeMark`, beside `StatusDot`, not a roster entry): the kind's glyph (`CHANGE_GLYPH`: `Plus`,
+  `PencilLine`, `Minus`, `Equal`, `History`) at the meta icon size in the kind's ink (`CHANGE_MARK`:
+  added `ok`, removed `danger`, changed and stale `warn`, unchanged `ink-meta`, the same hues as the
+  change cell's added and removed values) in a lane one icon wide, so a set lines up whether or not
+  a row is marked. The glyph carries kind and hue: no edge bar, which the rubric keeps for the diff.
+  Its word (`CHANGE_WORD`: `added`, `modified`, `removed`, `unchanged`, `stale`) is its accessible
+  name; `changed` is the change cell's from-to slot word, so the mark's own word is `modified`,
+  spoken "Changed". The lane stands ahead of the leading slot (`ListRow`), the label
+  (`DefinitionRow`), the field on its label's line (`FormField`, every form of it), and the name in a
+  Table's leading cell (on touch the `ListRow` change). A row with no `change` draws no lane, so a
+  set marks its untouched rows `unchanged`; `rowShape` reads a declared `change` slot, so a waiting
+  row draws the lane. Why one prop, no wrapper: the four parts each own their row box, a wrapper
+  would have to reach into it, and the canon has no node slots.
 - A `ListRow` shows a labelled act and holds an input by two props, not a second row kind. `act`
   is one `Act` at the row's end ahead of the more act, a secondary Button at the bar fit with its
   pending and blocked forms; the more menu stays the row's other acts, so an act the row waits on

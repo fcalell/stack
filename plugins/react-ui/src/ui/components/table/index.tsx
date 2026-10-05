@@ -1,6 +1,7 @@
 import { cn } from "@fcalell/ui-core/cn";
 import type {
 	CellValue,
+	ChangeKind,
 	Option,
 	StatusCell,
 	TableCell,
@@ -69,6 +70,7 @@ import { WarningMark } from "../list-row/marks.tsx";
 import { PickerBase } from "../picker/base.tsx";
 import type { QueryLike } from "../query-boundary/index.tsx";
 import { StatusBase } from "../status/base.tsx";
+import { ChangeMark } from "../status/change.tsx";
 import { Status } from "../status/index.tsx";
 
 // The table fills what its page's body leaves, so an empty one's EmptyState
@@ -296,7 +298,7 @@ function editOf(
 	return column ? cellEdit(column, at === 0, edits, row) : undefined;
 }
 
-/** From `tablet` of its page a grid: a header of sortable acts (the table sorts in its own state: newest or largest first, then turned over, then off) over one row per record, its leading cell the record's name (its row's warning, when it has one, after it); on touch every column stands at the short measure and the grid scrolls sideways under its frozen leading column. Its keyboard is a cell cursor (one Tab stop, the arrows, Home and End; Enter opens the row from its leading cell or edits an editable cell, Space ticks a check, Escape leaves an edit); a press on a row opens it, a press on an editable value edits it in place: typed in an `Input`, picked in a `Picker`, ticked in a `Checkbox`. Below `tablet` one `ListRow` per record (its leading cell the title, its age trailing, its status, warning and chip the marks, the other values its meta line) under the sort's pick. It draws its four states: while its query is pending, `loading` is set or a loading Section around it waits, the header stands over skeleton rows (on touch, the list's waiting rows; a Section around busy, its count waiting); a query that answers not found draws the rest EmptyState saying it no longer exists with Back, never Retry, and a failed query the failed EmptyState with `sentence` and Retry, each under the header on the grid; no row draws `empty`; then one row per item, which a Section around counts. */
+/** From `tablet` of its page a grid: a header of sortable acts (the table sorts in its own state: newest or largest first, then turned over, then off) over one row per record, its leading cell the record's name (its row's change mark, when it has one, ahead of it and its warning after it); on touch every column stands at the short measure and the grid scrolls sideways under its frozen leading column. Its keyboard is a cell cursor (one Tab stop, the arrows, Home and End; Enter opens the row from its leading cell or edits an editable cell, Space ticks a check, Escape leaves an edit); a press on a row opens it, a press on an editable value edits it in place: typed in an `Input`, picked in a `Picker`, ticked in a `Checkbox`. Below `tablet` one `ListRow` per record (its leading cell the title, its change the row's mark, its age trailing, its status, warning and chip the marks, the other values its meta line) under the sort's pick. It draws its four states: while its query is pending, `loading` is set or a loading Section around it waits, the header stands over skeleton rows (on touch, the list's waiting rows; a Section around busy, its count waiting); a query that answers not found draws the rest EmptyState saying it no longer exists with Back, never Retry, and a failed query the failed EmptyState with `sentence` and Retry, each under the header on the grid; no row draws `empty`; then one row per item, which a Section around counts. */
 export function Table<T>(props: TableProps<T>) {
 	const { columns, selected, onOpen, onEdit, empty } = props;
 	const words = useWords();
@@ -356,6 +358,7 @@ export function Table<T>(props: TableProps<T>) {
 							onOpen={onOpen}
 							loading={waiting}
 							warns={props.row.warning !== undefined}
+							changes={props.row.change !== undefined}
 						/>
 					</SectionContext>
 				)}
@@ -519,6 +522,7 @@ const Cell = memo(function Cell(props: {
 						leading={place === 0}
 						href={row.href}
 						warning={row.warning}
+						change={row.change}
 					/>
 					{props.locked ? <LockMark /> : null}
 				</div>
@@ -868,13 +872,14 @@ function Age(props: { moment: string }) {
 }
 
 // A cell at rest: the leading cell the record's name (its link when it has
-// one) and its warning after it, the others by their column's kind.
+// one) with its change mark ahead of it and its warning after it, the others by their column's kind.
 function CellValueView(props: {
 	column: TableColumn;
 	cell: TableCell | undefined;
 	leading: boolean;
 	href: string | undefined;
 	warning: string | undefined;
+	change: ChangeKind | undefined;
 }) {
 	const { column, cell, leading } = props;
 	const words = useWords();
@@ -893,12 +898,14 @@ function CellValueView(props: {
 			) : (
 				<span className={strong}>{shown(column, cell)}</span>
 			);
-		return props.warning === undefined ? (
-			name
-		) : (
+		if (props.warning === undefined && props.change === undefined) return name;
+		return (
 			<span className={cn(TABLE_NAME, CHANGE)}>
+				{props.change ? <ChangeMark kind={props.change} /> : null}
 				{name}
-				<WarningMark label={props.warning} />
+				{props.warning === undefined ? null : (
+					<WarningMark label={props.warning} />
+				)}
 			</span>
 		);
 	}
@@ -1072,6 +1079,7 @@ function Phone(props: {
 	onOpen: ((id: string) => void) | undefined;
 	loading: boolean | undefined;
 	warns: boolean;
+	changes: boolean;
 }) {
 	const words = useWords();
 	const { columns, sort } = props;
@@ -1169,6 +1177,7 @@ function Phone(props: {
 						: undefined;
 				}
 			: undefined,
+		change: props.changes ? (record) => record.change : undefined,
 		warning: props.warns ? (record) => record.warning : undefined,
 		chip:
 			chip?.kind === "chip"

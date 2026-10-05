@@ -1,5 +1,6 @@
 import type {
 	Act,
+	ChangeKind,
 	ChipMark,
 	CountLink,
 	MenuItem,
@@ -73,6 +74,9 @@ export interface RowSlots<T, V extends string | null = string> {
 	// The item's React key, unique in the list.
 	key: (item: T) => string;
 	title: (item: T) => Part;
+	// Where the row stands in a change set, its change mark; a row of the set
+	// that is untouched is `unchanged`.
+	change?: (item: T) => ChangeKind | undefined;
 	// The rows' leading mark, one kind for every row of the list.
 	leading?: LeadingSlot<T>;
 	meta?: (item: T) => readonly Part[] | undefined;
@@ -237,6 +241,7 @@ export function List<T, V extends string | null = string>(
 			items.map((item) => (
 				<ListRow
 					key={row.key(item)}
+					change={row.change?.(item)}
 					leading={row.leading && leadingOf(row.leading, item)}
 					title={row.title(item)}
 					meta={row.meta?.(item)}

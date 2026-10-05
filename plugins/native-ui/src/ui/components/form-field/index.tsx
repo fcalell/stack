@@ -1,5 +1,6 @@
 import type {
 	Answered,
+	ChangeKind,
 	FieldBinding,
 	FieldControl,
 } from "@fcalell/ui-core/descriptors";
@@ -33,6 +34,7 @@ import { IconButton } from "../icon-button";
 import { OptionList } from "../option-list";
 import { SegmentedControl } from "../segmented-control";
 import { Slider } from "../slider";
+import { ChangeMark } from "../status/change";
 import { Switch } from "../switch";
 
 const STACK = "min-w-0";
@@ -42,6 +44,10 @@ const LABEL_BLOCK = "flex-1 min-w-0";
 // The checkbox stands on its label's first line, beside a zero-width line of
 // the body role; the label row is its target.
 const BOX_LINE = "flex-row shrink-0 items-center";
+// A change mark stands ahead of the whole field on its first line, a label's
+// line tall.
+const MARKED = "flex-row items-start gap-inside min-w-0";
+const MARKED_BODY = "flex-1 min-w-0";
 const DISABLED = "text-ink-disabled";
 const STRUT = "​";
 const SUMMARY = "flex-row items-center min-w-0";
@@ -49,6 +55,9 @@ const SUMMARY_LABEL = "shrink min-w-0";
 const SUMMARY_ANSWER = "flex-1 min-w-0";
 
 interface FormFieldBase extends Closed {
+	// Where the field stands in a change set: its mark ahead of the field, on
+	// its label's line.
+	change?: ChangeKind;
 	// The control's name, drawn over it (beside a switch or a checkbox).
 	label: string;
 	// A sentence under the control; disabled, it is the reason.
@@ -107,12 +116,11 @@ function formOf(control: ReactNode) {
 	return "field";
 }
 
-// The label (body 500) over its control, the description (meta) under it and
-// the error in the description's place; a switch stands at the label's end
-// and a checkbox on its first line, the label row its target. The label
-// names a typing control; disabled, the label takes the disabled ink, the
-// control its disabled cells, and the description stays as the reason.
-export function FormField<V>(props: FormFieldProps<V>) {
+// The field itself: the label over its control, a switch at the label's end and a
+// checkbox on its first line, the label row its target. The label names a
+// typing control; disabled, the label takes the disabled ink, the control its
+// disabled cells, and the description stays as the reason.
+function FieldBody<V>(props: FormFieldProps<V>) {
 	const { label, description, disabled = false, answered } = props;
 	const words = useWords();
 	const folded = answered !== undefined;
@@ -233,6 +241,25 @@ export function FormField<V>(props: FormFieldProps<V>) {
 			{form === "slider" ? null : named}
 			{held}
 			{line}
+		</View>
+	);
+}
+
+// The label (body 500) over its control, the description (meta) under it and
+// the error in the description's place; a switch stands at the label's end
+// and a checkbox on its first line. A `change` draws the change mark ahead of
+// the field, on its label's line.
+export function FormField<V>(props: FormFieldProps<V>) {
+	const { change } = props;
+	const field = <FieldBody<V> {...props} />;
+	if (change === undefined) return field;
+	return (
+		<View className={MARKED}>
+			<View className={BOX_LINE}>
+				<RNText className={lineBox({ role: "body" })}>{STRUT}</RNText>
+				<ChangeMark kind={change} />
+			</View>
+			<View className={MARKED_BODY}>{field}</View>
 		</View>
 	);
 }

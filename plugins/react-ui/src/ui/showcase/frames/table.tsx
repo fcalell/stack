@@ -1,6 +1,7 @@
 import type {
 	CellValue,
 	ChangeCell,
+	ChangeKind,
 	StatusCell,
 	TableColumn,
 } from "@fcalell/ui-core/descriptors";
@@ -114,6 +115,18 @@ const ROW = {
 	warning: (task: Task) => task.warning,
 };
 
+// A change set holding the tasks: where each stands, so its row draws the mark
+// ahead of its name.
+const STANDING: Record<string, ChangeKind> = {
+	backup: "changed",
+	invoices: "unchanged",
+	reindex: "added",
+	purge: "removed",
+	digest: "stale",
+	rollup: "unchanged",
+};
+const CHANGE_SET = { ...ROW, change: (task: Task) => STANDING[task.id] };
+
 const ago = (minutes: number) =>
 	new Date(Date.now() - minutes * 60_000).toISOString();
 
@@ -203,7 +216,12 @@ function queryOf(
 }
 
 // The frame's table with its edits held in the frame's own state.
-function Tasks(props: { readOnly?: boolean; state: ShowcaseFrame["state"] }) {
+function Tasks(props: {
+	readOnly?: boolean;
+	changes?: boolean;
+	state: ShowcaseFrame["state"];
+}) {
+	const row = props.changes ? CHANGE_SET : ROW;
 	const [tasks, setTasks] = useState(TASKS);
 	const change = (id: string, at: string, value: CellValue) =>
 		setTasks((current) =>
@@ -219,13 +237,13 @@ function Tasks(props: { readOnly?: boolean; state: ShowcaseFrame["state"] }) {
 	return (
 		<Place title="Cron tasks" act={{ label: "New task", onAct: act }}>
 			{props.readOnly ? (
-				<Table columns={COLUMNS} items={tasks} row={ROW} onOpen={act} />
+				<Table columns={COLUMNS} items={tasks} row={row} onOpen={act} />
 			) : (
 				<Table
 					columns={COLUMNS}
 					query={queryOf(props.state, tasks)}
 					sentence="Cron tasks did not load."
-					row={ROW}
+					row={row}
 					selected={props.state === "selected" ? "reindex" : undefined}
 					empty={empty}
 					onOpen={act}
@@ -308,13 +326,17 @@ const READY: Partial<Record<string, (frame: HTMLElement) => void>> = {
 
 // The Table on every cell it draws, the cell picking what the frame shows: an
 // edit open on the field's cells, a read-only grid (the check as its glyph)
-// on the body icon, an ascending sort on the sorted label, the rest sorted
+// on the body icon, the change set's marks on the change mark, an ascending sort on the sorted label, the rest sorted
 // newest first. The state picks the query's answer: the open record
 // selected, pending, failed, empty.
 export function drawTable(frame: ShowcaseFrame) {
 	const cell = frame.cell.name;
 	const tasks = (
-		<Tasks readOnly={cell === "ICON.fit.body"} state={frame.state} />
+		<Tasks
+			readOnly={cell === "ICON.fit.body"}
+			changes={cell.startsWith("CHANGE_MARK")}
+			state={frame.state}
+		/>
 	);
 	// The picked edit: the queue's chips in the popover, or on touch in the
 	// pick sheet, held inside the frame.

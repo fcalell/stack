@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import type { TableColumn } from "../src/descriptors.ts";
+import type { ChangeKind, TableColumn } from "../src/descriptors.ts";
 import {
 	boundaryState,
+	CHANGE_GLYPH,
+	CHANGE_WORD,
 	factShape,
 	fileShape,
 	groupWait,
@@ -20,6 +22,8 @@ import {
 	sectionState,
 	tableRecords,
 } from "../src/list-state.ts";
+import { ENGLISH } from "../src/tokens.ts";
+import { changeContentTone } from "../src/variants.ts";
 
 const refetch = () => {};
 const base: ListInput = {
@@ -132,6 +136,7 @@ test("the waiting shape follows the declared slots and runs none of them", () =>
 		return undefined;
 	};
 	const none = {
+		change: false,
 		leading: null,
 		meta: false,
 		chip: false,
@@ -171,6 +176,10 @@ test("the waiting shape follows the declared slots and runs none of them", () =>
 		...none,
 		meta: true,
 		marks: true,
+	});
+	assert.deepEqual(rowShape({ change: spy("change") }), {
+		...none,
+		change: true,
 	});
 	assert.deepEqual(rowShape({ entry: spy("entry"), act: spy("act") }), {
 		...none,
@@ -356,6 +365,7 @@ test("a table's rows read each column's cell and the row map from the item", () 
 			href: (member) => `/members/${member.id}`,
 			locked: (member) => (member.owner ? ["role"] : undefined),
 			warning: (member) => (member.owner ? undefined : "Name conflicts"),
+			change: (member) => (member.owner ? "unchanged" : "added"),
 		}),
 		[
 			{
@@ -363,6 +373,7 @@ test("a table's rows read each column's cell and the row map from the item", () 
 				href: "/members/ana",
 				locked: ["role"],
 				warning: undefined,
+				change: "unchanged",
 				cells: { name: "Ana Ruiz", role: "admin", owner: true },
 			},
 			{
@@ -370,6 +381,7 @@ test("a table's rows read each column's cell and the row map from the item", () 
 				href: "/members/ben",
 				locked: undefined,
 				warning: "Name conflicts",
+				change: "added",
 				cells: { name: "Ben Kaya", role: "member", owner: false },
 			},
 		],
@@ -382,6 +394,7 @@ test("a table's rows read each column's cell and the row map from the item", () 
 				href: undefined,
 				locked: undefined,
 				warning: undefined,
+				change: undefined,
 				cells: { name: "Ana Ruiz", role: "admin", owner: true },
 			},
 		],
@@ -403,4 +416,32 @@ test("a Table whose query failed draws the failed form, and its Retry refetches"
 	assert.equal(listCount(input), undefined);
 	retryOf(failed)();
 	assert.equal(calls, 1);
+});
+
+test("a change mark has one glyph and one spoken word per kind", () => {
+	const kinds: ChangeKind[] = [
+		"added",
+		"changed",
+		"removed",
+		"unchanged",
+		"stale",
+	];
+	assert.deepEqual(Object.keys(CHANGE_GLYPH), kinds);
+	assert.deepEqual(Object.keys(CHANGE_WORD), kinds);
+	assert.equal(new Set(Object.values(CHANGE_GLYPH)).size, kinds.length);
+	for (const kind of kinds) {
+		assert.ok(ENGLISH[CHANGE_WORD[kind]], `${kind} has a word`);
+	}
+	// `changed` is the change cell's from-to sentence, so the mark's own word
+	// is another key.
+	assert.notEqual(CHANGE_WORD.changed, "changed");
+	assert.equal(ENGLISH[CHANGE_WORD.changed], "Changed");
+});
+
+test("a change mark's ink is its kind's: added ok, removed danger, changed warn", () => {
+	assert.equal(changeContentTone("added"), "ok");
+	assert.equal(changeContentTone("removed"), "danger");
+	assert.equal(changeContentTone("changed"), "warn");
+	assert.equal(changeContentTone("stale"), "warn");
+	assert.equal(changeContentTone("unchanged"), "ink-meta");
 });

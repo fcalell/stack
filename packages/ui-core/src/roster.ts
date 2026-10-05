@@ -198,10 +198,15 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// A mark, never an act: a status that moves is a `Picker` whose options
 		// carry states. Its loading form (a table's waiting status cell) is the
 		// dot's and the word's skeletons at its gap, through its internal base.
-		// `running` draws a `Spinner` in the dot's place, in the accent ink.
+		// `running` draws a `Spinner` in the dot's place, in the accent ink. Its
+		// internal change mark stands beside the dot: one glyph in a lane an icon
+		// wide, by the kind of change (added, changed, removed, unchanged, stale),
+		// named by the kind's word; the rows that carry a `change` compose it.
 		Status: {
 			props: ["state", "label"],
 			draws: [
+				"CHANGE_MARK",
+				"ICON.fit.meta",
 				"STATUS",
 				"STATUS_DOT",
 				"STATUS_SPINNER",
@@ -212,14 +217,27 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"SKELETON.kind.dot",
 				"SKELETON.kind.line",
 			],
-			holds: ["STATUS", "STATUS_DOT", "STATUS_SPINNER", "STATUS_LABEL"],
+			holds: [
+				"STATUS",
+				"STATUS_DOT",
+				"STATUS_SPINNER",
+				"STATUS_LABEL",
+				"CHANGE_MARK",
+			],
 			states: ["rest"],
 			owns: {
 				roles: ["meta"],
 				colors: ["accent-ink", "ink-meta", "ok", "warn", "danger", "skeleton"],
 				radii: ["full", "chip"],
 				spacing: ["inside"],
-				sizes: ["dot", "spinner", "measure-short", "skeleton"],
+				sizes: [
+					"dot",
+					"spinner",
+					"measure-short",
+					"skeleton",
+					"icon",
+					"icon-meta",
+				],
 			},
 		},
 		Chip: {
@@ -898,6 +916,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		},
 	},
 	shared: {
+		// A `change` (where the row stands in a change set) draws its mark in a
+		// lane one icon wide ahead of the leading slot, glyph only, the kind's word
+		// its name; a set's untouched rows are `unchanged`, so the titles line up.
 		// Its acts are the more act, the same on every row of a list, and one
 		// labelled `act` ahead of it (a secondary Button at the bar fit, the
 		// next step the row names): an act a row waits on (a retry) is told by
@@ -912,6 +933,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// pick: a `Picker` at the `row` fit, centred in the row.
 		ListRow: {
 			props: [
+				"change",
 				"leading",
 				"title",
 				"meta",
@@ -943,6 +965,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"ROW_MARKS",
 				"ROW_WARNING",
 				"ROW_ACTS",
+				"CHANGE_MARK",
 				"TEXT.role.body",
 				"TEXT_STRONG.role.body",
 				"TEXT.role.meta",
@@ -1035,9 +1058,11 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// stands in the act's square. A locked row keeps its value, a lock
 		// after it and its reason as the line under it (the whole line a link
 		// with an `href`); it takes no description, act or open, since its
-		// reason is the one line and the one link.
+		// reason is the one line and the one link. A `change` draws the change
+		// mark ahead of the label, the kind's word its name.
 		DefinitionRow: {
 			props: [
+				"change",
 				"label",
 				"description",
 				"value",
@@ -1073,6 +1098,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"SPINNER_TRACK",
 				"SPINNER_ARC",
 				"ICON_BUTTON.fit.bar",
+				"CHANGE_MARK",
 			],
 			holds: ["DEFINITION_ROW", "DEFINITION_ROW_CHEVRON"],
 			states: [...PRESS],
@@ -1112,8 +1138,11 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// renders no control; once `onEdit` clears it the field unfolds and
 		// focuses its control. A folded field is a rest field: it shows no
 		// description, error or disabled form.
+		// A `change` draws the change mark in a lane ahead of the label (on a
+		// checkbox's line, ahead of the box), the kind's word its name.
 		FormField: {
 			props: [
+				"change",
 				"label",
 				"description",
 				"error",
@@ -1127,7 +1156,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"FORM_FIELD_ERROR",
 				"FORM_FIELD_SUMMARY",
 				"FORM_FIELD_SUMMARY_GLYPH",
+				"CHANGE_MARK",
 				"ICON.fit.body",
+				"ICON.fit.meta",
 				"ICON_BUTTON.fit.bar",
 				"LINE_BOX.role.body",
 				"TEXT.role.body",
@@ -1143,10 +1174,18 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			states: ["rest", "disabled", "error"],
 			owns: {
 				roles: ["body", "meta"],
-				colors: ["ink-body", "ink-meta", "ink-error", "ink-disabled", "ok"],
+				colors: [
+					"ink-body",
+					"ink-meta",
+					"ink-error",
+					"ink-disabled",
+					"ok",
+					"warn",
+					"danger",
+				],
 				radii: ["control"],
 				spacing: ["pair", "fields", "inside"],
-				sizes: ["row", "icon", "control-compact"],
+				sizes: ["row", "icon", "icon-meta", "control-compact"],
 			},
 		},
 		// Loading, each line keeps its line box and the facts line the height
@@ -1997,7 +2036,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// `row` the row's own slots, and draws its four states. It sorts in its
 		// own state (descending, ascending, off) and draws no checked rows;
 		// `onEdit` requires `onOpen`, and with `onOpen` the leading column never
-		// edits.
+		// edits. A row's `change` slot draws the change mark ahead of the leading
+		// cell's name (a `ListRow` change below tablet), the kind's word its name.
 		Table: {
 			props: [
 				"columns",
@@ -2014,6 +2054,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			draws: [
 				"CHECKBOX",
 				"CHECKBOX_MARK",
+				"CHANGE_MARK",
 				"CHIP.family.teal",
 				"CHIP.trailing.none",
 				"CHIP_LABEL.family.teal",
