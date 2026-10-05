@@ -75,6 +75,12 @@ test("a desc cursor keeps the rows before it", async () => {
 		await paginate(q, { ...base, orderBy, cursor });
 		const { sql, params } = render(q.calls[0]?.where as SQL);
 		assert.match(sql, new RegExp(`"created_at" \\${op} \\?`));
+		assert.ok(
+			sql.includes(
+				`("items"."created_at" ${op} ? or ("items"."created_at" = ? and "items"."id" ${op} ?))`,
+			),
+			sql,
+		);
 		assert.match(sql, /"created_at" = \?/);
 		assert.match(sql, new RegExp(`"id" \\${op} \\?`));
 		assert.ok(params.includes(5000));
