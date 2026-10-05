@@ -11,6 +11,7 @@ import { type ReactNode, useRef } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { AuthColumnRoot } from "../../lib/frame.ts";
 import { HeadingContext } from "../../lib/heading.ts";
+import { PortalContainer, usePopupLayer } from "../../lib/portal.ts";
 import { StepCount } from "../step-count/index.tsx";
 
 // The page fills the viewport and the column stands in its middle while it
@@ -48,45 +49,49 @@ export function AuthColumn({
 	children,
 }: AuthColumnProps) {
 	const root = useRef<HTMLElement>(null);
+	const [layer, setLayer] = usePopupLayer();
 	const runs = typeof sentence === "string" ? [sentence] : sentence;
 	return (
 		<AuthColumnRoot value={root}>
-			<HeadingContext value={2}>
-				<main ref={root} className={cn(AUTH_PAGE, PAGE)}>
-					<div className={cn(AUTH_COLUMN, COLUMN)}>
-						{banner}
-						<p
-							className={cn(
-								text({ role: "meta" }),
-								textStrong({ role: "meta" }),
-								WRAPS,
-							)}
-						>
-							{product}
-						</p>
-						{step ? <StepCount at={step.at} of={step.of} /> : null}
-						<div className={cn(AUTH_HEAD, HEAD)}>
-							<h1 className={cn(text({ role: "title" }), WRAPS)}>{title}</h1>
-							{runs ? (
-								<p className={cn(text({ role: "meta" }), WRAPS)}>
-									{runs.map((run, at) =>
-										typeof run === "string" ? (
-											// biome-ignore lint/suspicious/noArrayIndexKey: a run is its position
-											<span key={at}>{run}</span>
-										) : (
-											// biome-ignore lint/suspicious/noArrayIndexKey: a run is its position
-											<span key={at} className={textStrong({ role: "meta" })}>
-												{run.strong}
-											</span>
-										),
-									)}
-								</p>
-							) : null}
+			<PortalContainer value={layer}>
+				<HeadingContext value={2}>
+					<main ref={root} className={cn(AUTH_PAGE, PAGE)}>
+						<div className={cn(AUTH_COLUMN, COLUMN)}>
+							{banner}
+							<p
+								className={cn(
+									text({ role: "meta" }),
+									textStrong({ role: "meta" }),
+									WRAPS,
+								)}
+							>
+								{product}
+							</p>
+							{step ? <StepCount at={step.at} of={step.of} /> : null}
+							<div className={cn(AUTH_HEAD, HEAD)}>
+								<h1 className={cn(text({ role: "title" }), WRAPS)}>{title}</h1>
+								{runs ? (
+									<p className={cn(text({ role: "meta" }), WRAPS)}>
+										{runs.map((run, at) =>
+											typeof run === "string" ? (
+												// biome-ignore lint/suspicious/noArrayIndexKey: a run is its position
+												<span key={at}>{run}</span>
+											) : (
+												// biome-ignore lint/suspicious/noArrayIndexKey: a run is its position
+												<span key={at} className={textStrong({ role: "meta" })}>
+													{run.strong}
+												</span>
+											),
+										)}
+									</p>
+								) : null}
+							</div>
+							{children}
 						</div>
-						{children}
-					</div>
-				</main>
-			</HeadingContext>
+						<div ref={setLayer} />
+					</main>
+				</HeadingContext>
+			</PortalContainer>
 		</AuthColumnRoot>
 	);
 }

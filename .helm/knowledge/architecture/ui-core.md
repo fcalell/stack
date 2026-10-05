@@ -653,8 +653,13 @@ a tick with no animation, never jumped to full.
   `--layer-<layer>` and read on the web as `z-(--layer-<layer>)`, since Tailwind's `z-*` reads no
   theme namespace. A sheet's scrim and layer, each popover's positioner and the toasts' layer each
   draw theirs, so a toast raised while a sheet or a `confirm()` is open stands over the scrim and
-  its dismiss takes the press. Base UI portals a sheet into `<body>` after the app root, so by DOM
-  order alone a sheet stands over the toasts. The toasts' layer stays inside `main` for its geometry
+  its dismiss takes the press. On the web the Shell and the `AuthColumn` each draw a popup layer
+  (`usePopupLayer`, `lib/portal.ts`), an empty element last in `main`, and name it the
+  `PortalContainer` around their whole tree, so every popup (a menu, a picker, a select, a sheet)
+  mounts inside the main landmark, where an axe `region` check finds it; a popup under neither
+  portals into `<body>` as Base UI does by default. The
+  layer follows the toasts' viewport in DOM order, so by DOM order alone a sheet would stand over
+  the toasts; the `z-(--layer-*)` steps decide. The toasts' layer stays inside `main` for its geometry
   (above the tab bar, the floating act, the docked foot's anchor), so nothing between it and the
   root may make a stacking context. Base UI's modal leaves the toasts announced: it marks the
   outside `aria-hidden` but keeps every `[aria-live]` element and its ancestors, the toasts'

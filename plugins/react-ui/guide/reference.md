@@ -73,6 +73,19 @@ colours for that subtree. The mode script sets `dark` before first paint from th
 else `theme.defaultMode`, else the system. Under `prefers-reduced-motion: reduce` every
 transition duration is 0 ms.
 
+## Auditing with axe
+
+Every popup (a menu, a picker, a select, a sheet) mounts in a popup layer the `Shell` and the
+`AuthColumn` each draw inside their `main` landmark, so an open popup passes axe's `region` rule.
+A popup outside both (a bare component in a test page) mounts in `<body>`.
+
+Exclude `[data-base-ui-focus-guard]` from an audit, as in
+`new AxeBuilder({ page }).exclude("[data-base-ui-focus-guard]")`. Base UI 1.8.0 draws its focus
+guards, the spans that relay Tab between a trigger and its portaled popup, as focusable and
+`aria-hidden` by design, so `aria-hidden-focus` flags each one; no prop turns them off. Each guard
+moves focus on `onFocus`, so no focus rests on hidden content. Drop the exclude once Base UI ships
+guards that are not focusable or not hidden.
+
 ## Safe areas
 
 The touch tab bar clears a phone's home indicator by itself: the document sets

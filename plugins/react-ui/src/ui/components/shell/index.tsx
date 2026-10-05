@@ -21,6 +21,7 @@ import type { Closed } from "../../lib/closed.ts";
 import { PlaceRoute, ShellSwitcher } from "../../lib/frame.ts";
 import { useTouch } from "../../lib/media.ts";
 import { follow, useRoute } from "../../lib/navigate.ts";
+import { PortalContainer, usePopupLayer } from "../../lib/portal.ts";
 import { toasts } from "../../lib/toast.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Count } from "../count/index.tsx";
@@ -91,6 +92,9 @@ export function Shell({ places, banner, switcher, children }: ShellProps) {
 	const at = useRoute();
 	// The More page stands at the route it opened on: going to a place closes it.
 	const [moreAt, setMoreAt] = useState<string>();
+	// Every popup (menu, picker, select, sheet) mounts in the popup layer, so an
+	// open popup stands inside the main landmark.
+	const [layer, setLayer] = usePopupLayer();
 	const more = moreAt === at;
 	const route = placeAt(places, at);
 	const rest = places.length > TAB_ROOM ? places.slice(TAB_ROOM - 1) : [];
@@ -145,32 +149,35 @@ export function Shell({ places, banner, switcher, children }: ShellProps) {
 	) : null;
 	// The toast queue and the confirm() decisions stand in every Shell.
 	return (
-		<ToastControl.Provider toastManager={toasts}>
-			<div className={FRAME}>
-				{sidebar}
-				<div className={cn(SHELL_COLUMN, COLUMN)}>
-					{banner ? (
-						<div className={cn(SHELL_BANNER, BANNER_SLOT)}>{banner}</div>
-					) : null}
-					<main className={MAIN}>
-						<ShellSwitcher value={switcher}>
-							<PlaceRoute value={route}>{page}</PlaceRoute>
-						</ShellSwitcher>
-						<ToastControl.Viewport
-							aria-label={words.notifications}
-							className={cn(TOASTS, TOASTS_LAYER)}
-						>
-							<ToastList />
-							<div className={ACT_ROOM}>
-								<FloatingActRoom />
-							</div>
-						</ToastControl.Viewport>
-					</main>
-					{tabs}
+		<PortalContainer value={layer}>
+			<ToastControl.Provider toastManager={toasts}>
+				<div className={FRAME}>
+					{sidebar}
+					<div className={cn(SHELL_COLUMN, COLUMN)}>
+						{banner ? (
+							<div className={cn(SHELL_BANNER, BANNER_SLOT)}>{banner}</div>
+						) : null}
+						<main className={MAIN}>
+							<ShellSwitcher value={switcher}>
+								<PlaceRoute value={route}>{page}</PlaceRoute>
+							</ShellSwitcher>
+							<ToastControl.Viewport
+								aria-label={words.notifications}
+								className={cn(TOASTS, TOASTS_LAYER)}
+							>
+								<ToastList />
+								<div className={ACT_ROOM}>
+									<FloatingActRoom />
+								</div>
+							</ToastControl.Viewport>
+							<div ref={setLayer} />
+						</main>
+						{tabs}
+					</div>
 				</div>
-			</div>
-			<Confirmations />
-		</ToastControl.Provider>
+				<Confirmations />
+			</ToastControl.Provider>
+		</PortalContainer>
 	);
 }
 
