@@ -8,7 +8,7 @@ own CSS from the same records and ui-core stays framework-free. Two subpaths are
 `./harness`, internal tooling for the packages' verify scripts, and `./manifest`, the guide pages
 the UI plugins index.
 
-Eleven subpaths:
+Seventeen subpaths:
 
 - `@fcalell/ui-core/tokens`: the contract as data, the sheet's every value, the knob defaults and
   the English `words`.
@@ -42,6 +42,12 @@ Eleven subpaths:
 - `@fcalell/ui-core/rules`: what the Rules editor and the Picker decide before they draw, free of
   any framework: `termSet`, `pairSet`, `termLabel`, `isTyped`, `toggled` and `marked` (with
   `PICKED_GLYPH`).
+- `@fcalell/ui-core/list-state`: what a collection decides before it draws, free of any framework:
+  a `List`'s or `Table`'s state and waiting shape (`listState`, `rowShape`), a table's records,
+  sort and tick logic (`tableRecords`, `sorted`, `tickable`), a tree's visible rows (`treeRows`),
+  and the states a meter, a step count and a rail draw (`levelOf`, `stepStateOf`, `stagesShown`).
+- `@fcalell/ui-core/file`: `accepts(file, accept)`, whether a picked file matches a control's
+  `accept` list, and `pickerTypes(accept)`, the MIME types a platform's picker filters by.
 - `@fcalell/ui-core/commit`: `commitMoment()`, when a typing control's value is final: on
   leaving the field or Enter, only when it changed since focus, Escape restoring the value at
   focus, and ending the edit. Both plugins' `Input` and `TextArea` drive their `onCommit` with it.
