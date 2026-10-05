@@ -101,8 +101,9 @@ const LIST_FORM = "flex flex-col grow page-tablet:hidden";
 // cells alone, never over a sheet or a floating act.
 const FRAME = "flex flex-col isolate";
 // On touch every column stands at one width and the grid scrolls sideways
-// under its frozen leading column.
-const SCROLLS = "overflow-x-auto";
+// under its frozen leading column. The scroller is positioned so the spoken
+// spans of its cells (absolute) stand in its scroll, never past it.
+const SCROLLS = "relative overflow-x-auto";
 const FIT = "w-full table-fixed";
 const MAX = "w-max table-fixed";
 const HEAD_CELL = "p-0 font-normal";
@@ -338,6 +339,7 @@ export function Table<T>(props: TableProps<T>) {
 							rows={records}
 							sort={sort}
 							onSort={setSort}
+							selected={selected}
 							onOpen={onOpen}
 							choose={props.choose}
 							loading={waiting}
@@ -1269,6 +1271,7 @@ function Phone(props: {
 	rows: readonly TableRecord[];
 	sort: Sort | undefined;
 	onSort: (sort: Sort) => void;
+	selected: string | undefined;
 	onOpen: ((id: string) => void) | undefined;
 	choose: Pick<TableChoice<never>, "chosen" | "onChange"> | undefined;
 	loading: boolean | undefined;
@@ -1399,6 +1402,7 @@ function Phone(props: {
 					}
 				: undefined,
 		href: (record) => record.href,
+		selected: (record) => record.id === props.selected,
 		// A row with `href` goes there; the others open through `onOpen`.
 		onOpen: onOpen ? (record) => onOpen(record.id) : undefined,
 	};

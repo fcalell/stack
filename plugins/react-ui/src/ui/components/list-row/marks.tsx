@@ -6,8 +6,10 @@ import { Icon } from "../icon/index.tsx";
 // A mark's glyph beside its label, the label truncating before the glyph
 // does. A row's meta line yields from the end: the chip, then the lock's
 // label, then the warning's, then the first meta part; a mark never shrinks
-// below its glyph.
-const MARK = "flex items-center min-w-icon-meta shrink-4";
+// below its glyph. The shrink weights are the order, a thousand apart
+// (`./index.tsx` sets out why): this one stands above the first part's and
+// below the lock's.
+const MARK = "flex items-center min-w-icon-meta shrink-1000";
 const GLYPH = "flex shrink-0";
 const LABEL = "truncate";
 const SPOKEN = "sr-only";

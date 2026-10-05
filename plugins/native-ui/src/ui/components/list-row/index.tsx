@@ -59,6 +59,14 @@ import { LockMark } from "./lock";
 import { WarningMark } from "./marks";
 
 const ROW = "relative flex-row items-center";
+// A row with a labelled act stands its acts on a line of their own at the
+// row's end, under the text: beside it the text keeps only what the acts
+// leave (65 of 288 at 320), too little for its title, its status and the
+// glyphs of its meta line. The text already takes no width of its own
+// (`flex-1`), so it fills the first line and the acts, a whole line wide, wrap
+// under it.
+const ROW_UNDER = "flex-wrap";
+const ACTS_UNDER = "w-full justify-end";
 // A row whose title wraps whole, or that holds an entry, stands its parts on the
 // title's first line:
 // each in a box one body line tall, centred on the line; a taller part
@@ -88,8 +96,11 @@ const TRAILING = "shrink-0";
 // all), the warning's label and last the first part, which names the item and
 // truncates with an ellipsis; the status and the glyphs keep their width, and
 // past them the line clips at the row's edge rather than overprint. The shrink
-// weights are the order, each far above the next. The parts' box grows into
-// the room the marks leave.
+// weights are the order: a flex line takes the overflow from each item in
+// proportion to its weight times its own width, so each weight stands a
+// thousand above the next (the warning's in `./marks.tsx`, the chip's slot
+// below) to outweigh any ratio between the marks' widths. The parts' box
+// grows into the room the marks leave.
 const META_LINE = "flex-row items-center min-w-0 overflow-hidden";
 const META_PARTS = "flex-row grow shrink min-w-0";
 const META_FIRST = "shrink min-w-0";
@@ -99,8 +110,9 @@ const STATUS_MARK = "shrink-0";
 // always keeps its first item, so a zero-width start item takes that place and
 // the chip, wider than the room the slot is left, wraps under the slot's one
 // line height and is clipped away.
-const CHIP_SLOT = "flex-row flex-wrap h-chip min-w-0 shrink-64 overflow-hidden";
-const CHIP_START = "w-0";
+const CHIP_SLOT =
+	"flex-row flex-wrap h-chip min-w-0 shrink-1000000000 overflow-hidden";
+const CHIP_START = "w-0 h-full";
 const CHIP_MARK = "shrink-0";
 const ACTS = "relative flex-row shrink-0 items-center";
 // The entry takes the touch itself: the input filling the room its act leaves.
@@ -166,6 +178,9 @@ export interface ListRowProps<V extends string | null = string> extends Closed {
 	more?: readonly MenuItem[];
 	// Where the row goes when opened; the row is current at it.
 	href?: Route;
+	// The row is the open record: current (the selection wash) whatever its
+	// `href`.
+	selected?: boolean;
 	onOpen?: () => void;
 }
 
@@ -304,6 +319,7 @@ export function ListRow<V extends string | null = string>({
 	act,
 	more,
 	href,
+	selected = false,
 	onOpen,
 }: ListRowProps<V>) {
 	const words = useWords();
@@ -311,7 +327,7 @@ export function ListRow<V extends string | null = string>({
 	const tree = useContext(TreeContext);
 	const pathname = usePathname();
 	const named = partText(title);
-	const current = href !== undefined && isCurrent(href, pathname);
+	const current = selected || (href !== undefined && isCurrent(href, pathname));
 	const open = href !== undefined ? () => navigate(href) : onOpen;
 	const marked =
 		status !== undefined ||
@@ -320,19 +336,25 @@ export function ListRow<V extends string | null = string>({
 		chip !== undefined;
 	const ticks = leading !== undefined && "check" in leading;
 	const blocked = ticks ? leading.check.blocked : undefined;
-	const parts = blocked === undefined ? meta : [blocked, ...(meta ?? [])];
 	const listed = steps?.length ? steps : undefined;
-	const lined = Boolean(entry || listed || parts?.length || marked);
+	const lined = Boolean(
+		entry || listed || meta?.length || blocked !== undefined || marked,
+	);
 	const stacked = lined ? "two" : "one";
 	const lines = wrap ? "whole" : stacked;
 	// A wrapped title and an entry's input are lines under the title's first, so
 	// the parts beside them stand on that first line.
 	const top = wrap || entry !== undefined;
+	const under = act !== undefined && !top;
 	const inline = useMemo(() => ({ label: entry?.label ?? "" }), [entry?.label]);
 	const entryReason = useReasonLine(entry?.act.blocked);
 	const live = useLive(entry?.error ?? "");
 	const actReason = useReasonLine(act?.blocked);
-	const [first, ...rest] = parts ?? [];
+	// A blocked tick's reason follows the first part inside the span that yields
+	// last, so the part that names the item stays whole ahead of it.
+	const [first, ...rest] = meta ?? [];
+	const lead: Part[] = first === undefined ? [] : [first];
+	if (blocked !== undefined) lead.push(blocked);
 	const value =
 		trailing && !("pick" in trailing) ? (
 			<First on={top}>
@@ -363,6 +385,7 @@ export function ListRow<V extends string | null = string>({
 			className={cn(
 				row({ lines, ground, state: current ? "selected" : "rest" }),
 				top ? ROW_WHOLE : ROW,
+				under && ROW_UNDER,
 				ground === "list" && SQUARE,
 			)}
 		>
@@ -455,13 +478,13 @@ export function ListRow<V extends string | null = string>({
 				<View pointerEvents="none" className={TEXT}>
 					{titleLine}
 					<View className={cn(ROW_META_LINE, META_LINE)}>
-						{first === undefined ? null : (
+						{lead.length === 0 ? null : (
 							<View className={META_PARTS}>
 								<RNText
 									numberOfLines={1}
 									className={cn(text({ role: "meta" }), META_FIRST)}
 								>
-									{partText(first, META_CUT)}
+									{joinParts(lead, META_CUT)}
 								</RNText>
 								{rest.length ? (
 									<RNText
@@ -499,7 +522,7 @@ export function ListRow<V extends string | null = string>({
 			) : null}
 			{act || more?.length ? (
 				<First on={top}>
-					<View className={cn(ROW_ACTS, ACTS)}>
+					<View className={cn(ROW_ACTS, ACTS, under && ACTS_UNDER)}>
 						{act ? <ActButton act={act} host={actReason.host} /> : null}
 						{more?.length ? (
 							<MenuBase

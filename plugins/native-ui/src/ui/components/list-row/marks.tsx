@@ -11,7 +11,7 @@ import { Icon } from "../icon";
 
 // The warning keeps its glyph and yields its label after the chip and before
 // the row's first meta part.
-const WARNING = "flex-row items-center min-w-icon-meta shrink-4";
+const WARNING = "flex-row items-center min-w-icon-meta shrink-1000";
 const LABEL = "shrink min-w-0";
 
 // What is wrong with a row: a warn glyph and its sentence in the meta ink,

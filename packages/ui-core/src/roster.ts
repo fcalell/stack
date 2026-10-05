@@ -953,6 +953,10 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// labelled `act` ahead of it (a secondary Button at the bar fit, the
 		// next step the row names): an act a row waits on (a retry) is told by
 		// its Status and leads the menu, and its pending press stays on `act`.
+		// Below `tablet` of its page a row with an `act` stands its acts on a line
+		// of their own at the row's end, under the text, which beside them kept
+		// too little for its title and its marks. A `selected` row is the open
+		// record, washed as one at its `href` is.
 		// An `entry` (an Input at the bar fit and its labelled Button) stands
 		// under the title in the meta line's place, its error under it; the
 		// consumer gives `meta` or `status` once the act settles. At most one
@@ -994,6 +998,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"act",
 				"more",
 				"href",
+				"selected",
 				"onOpen",
 			],
 			draws: [

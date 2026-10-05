@@ -262,6 +262,7 @@ export function Table<T>(props: TableProps<T>) {
 							rows={records}
 							sort={sort}
 							onSort={setSort}
+							selected={selected}
 							onOpen={onOpen}
 							choose={props.choose}
 							loading={waiting}
@@ -1020,6 +1021,7 @@ function Phone(props: {
 	rows: readonly TableRecord[];
 	sort: Sort | undefined;
 	onSort: (sort: Sort) => void;
+	selected: string | undefined;
 	onOpen: ((id: string) => void) | undefined;
 	choose: Pick<TableChoice<never>, "chosen" | "onChange"> | undefined;
 	loading: boolean | undefined;
@@ -1150,6 +1152,7 @@ function Phone(props: {
 					}
 				: undefined,
 		href: (record) => record.href,
+		selected: (record) => record.id === props.selected,
 		// A row with `href` goes there; the others open through `onOpen`.
 		onOpen: onOpen ? (record) => onOpen(record.id) : undefined,
 	};

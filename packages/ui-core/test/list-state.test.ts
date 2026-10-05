@@ -752,15 +752,14 @@ test("a lock glyph sets no margin of its own", () => {
 	assert.doesNotMatch(LOCK_GLYPH, /\bm[se]?-/);
 });
 
-test("a touch row's meta leads with the change value, then the move's reason, then the other values", () => {
+test("a touch row's meta leads with the change value and the move's reason after it in one part, then the other values", () => {
 	const values = [
 		{ changed: false, part: "0 3 * * *" },
 		{ changed: true, part: "30s → 60s" },
 		{ changed: false, part: "Retries 3" },
 	];
 	assert.deepEqual(touchMeta(values, "Needed by Usage rollup"), [
-		"30s → 60s",
-		"Needed by Usage rollup",
+		"30s → 60s · Needed by Usage rollup",
 		"0 3 * * *",
 		"Retries 3",
 	]);

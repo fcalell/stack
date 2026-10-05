@@ -508,7 +508,11 @@ a tick with no animation, never jumped to full.
   the lock's label, the warning's label and last the first part (naming the item, with an ellipsis);
   the status and the glyphs keep their width, and past them the line clips at the row's edge rather
   than overprint (the marks are described under `warning` below). The later parts take no width of
-  their own (`w-0`, growing into the room the marks leave). Every row keeps one height, so its waiting form matches it by
+  their own (`w-0`, growing into the room the marks leave) and show at least `figures` of it or
+  none, in the chip's wrapping slot, so a bare separator and an ellipsis never draw. A value
+  trailing a one-line title is whole or gone the same way: the title's basis is half its line, so
+  a value wider than what that leaves wraps under the line and is clipped away, and the title then
+  takes the whole line (a 320 px table row shows its name, not its age). Both rules are the web's: the phone's later parts and values still truncate with an ellipsis. Every row keeps one height, so its waiting form matches it by
   construction. A short label (a chip's, a status word, a skeleton label's lane) is bounded by the
   one width `measure-short` (18ch, the short sibling of `measure`).
 - A minimum height is the floor of something pressed (a control, a field, a target, a chip, a row),
@@ -662,7 +666,9 @@ a tick with no animation, never jumped to full.
   An empty grid keeps its header and holds its `empty` a page inset under it, across the grid's
   width as a List's EmptyState fills its column (`TABLE_EMPTY`: no side inset; on touch the form
   stands alone, the List's width). A read-only check cell draws a tick, read aloud as its column's
-  label. Where the grid scrolls sideways its leading column stays: the frozen cell on the surface
+  label. The sideways scroller is positioned, so the spoken spans of its cells (absolute, with no
+  offset) stay inside its scroll and never widen the page. Where the grid scrolls sideways its
+  leading column stays: the frozen cell on the surface
   (`TABLE_FROZEN`), its content carrying its end hairline and the row's wash (`TABLE_FROZEN_CELL`).
   A `change` column holds a `ChangeCell` (`{ before, after }`, either null), read only and sorted by
   its `after`. A kind beats a cell-level flag: the kind is how the Table types every cell, and the
@@ -670,9 +676,12 @@ a tick with no animation, never jumped to full.
   `ArrowRight` and `after` in the body ink, neither tinted, since a changed value is no verdict;
   only a value added (null `before`) takes `ok-soft` and one removed (null `after`) `danger-soft`,
   struck, each a chip-radius pill (`TABLE_CHANGE`, `TABLE_CHANGE_VALUE`); the values draw in tabular
-  figures, as a column of numbers does. The touch row leads its meta with it (`touchMeta`: the
-  change value, then a moved tick's reason, then the other values), since it is what the table is
-  read for and the first meta part truncates last. It reads aloud through the
+  figures, as a column of numbers does. The touch row leads its meta with it (`touchMeta`: one
+  part, the change value with a moved tick's reason after it, then the other values), since it is
+  what the table is read for and the first meta part truncates last; the reason is the tail of
+  that part, so it truncates before the value does, and a blocked tick's reason joins the first
+  part the same way. At 320 the status mark (whole) takes 90 of the 146 px the row's text has, so
+  a change value of 73 px draws ellipsized there. It reads aloud through the
   slot word `changedFrom` ("from X to Y"), or `added` or `removed` before the one value it holds.
   Rejected: tinting `after` for any change (a rename is not good news), and a Comparison column
   (that sets facts side by side, not one value's movement). A Table chooses rows through `choose`
@@ -887,14 +896,24 @@ a tick with no animation, never jumped to full.
   `DefinitionRow` draw too: `LOCK_GLYPH` (the meta ink, no margin) names the glyph, and the
   container's gap spaces it from what it follows. The act that clears a warning is the row's `act`,
   one visible act a row; a mark that is itself a press would put a second hit inside a row that may
-  open. The meta line yields from its end, by shrink weights each far above the next so the order
+  open. The meta line yields from its end, by shrink weights each a thousand above the next
+  (1, 1000, a million and a billion: a flex line takes the overflow from each item in proportion to
+  its weight times its own width, so a smaller ratio lets three marks yield at once) so the order
   holds: the later meta parts (they take no width of their own), then the chip, then the lock's
   label, then the warning's label, and last the first part, which names the item and truncates with
   an ellipsis; the status and every glyph keep their width, and past them the line clips at the
   row's edge rather than overprint. The chip is shown whole or not at all: it stands in a slot one
-  line tall that wraps (a zero-width start item holds the first place a flex line always keeps, so
-  a chip wider than the room the slot is left wraps under the slot and is clipped away), so no
-  sliver of a pill ever draws. The marks are flat items of the meta line, not a box of their own,
+  line tall that wraps (a start item as wide as nothing and as tall as the slot holds the first
+  line a flex line always keeps, so a chip wider than the room the slot is left wraps under the
+  slot and is clipped away; a start item with no height leaves the wrapped chip in the slot's
+  height, drawn cut), so no sliver of a pill ever draws. Below `tablet` of its page a row with
+  an `act` stands its acts on a line of their own at the row's end, under the text (`flex-wrap`
+  on the row, the text a zero basis, the acts a whole line wide; on the phone always): beside
+  them the text kept 65 of 288 px at 320, under the 112 the status and the two glyphs need, and
+  the waiting row draws the same line. A row holding an entry or wrapping its title keeps its acts
+  on the title's first line. `selected` (`RowSlots.selected`) washes a row as the open record
+  whatever its `href`, as the route does at one: a Table's list form passes its `selected`
+  through it. The marks are flat items of the meta line, not a box of their own,
   so one set of weights orders them with the parts. Why named props: `List`'s per-slot functions let a waiting row know
   which marks to reserve before any item exists (`rowShape` reads `warning` and `lock` by key, as it
   does `status` and `chip`); a `marks` record function would hide that. A count is a meta part and a
@@ -954,13 +973,16 @@ a tick with no animation, never jumped to full.
   StatusMark[]`, `RowSlots.steps`, per item) stands in the meta line's place while the row's act
   pends (the entry's rank: `entry`, then `steps`, then `meta` and the marks; the consumer gives
   `meta` back once the act settles), one line each (`ROW_STEPS`, a pair gap, and `ROW_STEP`, each
-  line one body line's box tall, `line-body`, the step lists' 19 of the references): the
+  line one body line's box tall, `line-body`, 20 at the desktop body size: the loading-and-pending
+  page's range for a step list is 19 to 20, its 19 one approximate preview reading): the
   status mark (`StatusDot`, the spinner while `running`, the same cells as `Status`) and the label
   at meta size, the running step in `ink-body` and the others in `ink-meta`; each mark carries its
   state's word as its label, so the state is never told by colour alone. It takes no descriptor of
   its own, so it shares nothing with `Stage` (a rail of fixed stages: a progress indicator, not a
   status list). A waiting row draws the meta line a `steps` slot declares, never the steps
-  (`rowShape` reads `steps` as a meta line). `wrap` (`RowSlots.wrap`, one boolean for the list) is a
+  (`rowShape` reads `steps` as a meta line): the steps show while an act pends, never while a list
+  loads, so a pending row standing taller than its waiting row is a change of state, not of
+  loading. `wrap` (`RowSlots.wrap`, one boolean for the list) is a
   title read whole: `ROW.lines.whole` (no minimum height, a `pair` pad, the lines set the height)
   wraps it to every line at body 400 (`ROW_TITLE` `form` `whole`, so a list of notes is not a wall
   of medium weight), the change mark, leading, trailing value or pick and acts standing in a box one

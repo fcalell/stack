@@ -226,8 +226,11 @@ item map, `row` for `ListRow`s, `file` for `FileRow`s or `meter` for `Meter`s, o
 slot; declare a slot only if every item fills it. Pending, it waits in those slots; failed, it shows
 `sentence` and Retry; empty, `empty`, with the act that fills it. Rows share one `leading` kind
 (`avatar`, `icon` or `status`) or none. The first meta part names the item. A row's meta line
-yields from its end: the later parts truncate, then the chip leaves whole, then the warning's label
-truncates, and last the first part truncates; the status and the glyphs stay whole. A file row's `change` (a `ChangeKind`) draws the
+yields from its end, in this strict order: the later parts truncate, then the chip leaves whole,
+then the warning's label truncates, and last the first part truncates; the status and the glyphs
+stay whole. A row with an `act` stands its acts on a line under its text, at the row's end, so give
+`act` the next step and let the row decide where it stands. A table's `selected` row washes in its
+list form as in its grid. A file row's `change` (a `ChangeKind`) draws the
 change mark ahead of its glyph, and its `chip` says why it is listed; the chip stays whole and the
 path yields to it. A Section counts them and waits with them when they stand as its direct children,
 inside a direct `Group`, or as a direct `QueryBoundary`'s query; a collection inside the app's own

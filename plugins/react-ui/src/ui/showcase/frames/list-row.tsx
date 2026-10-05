@@ -8,13 +8,24 @@ import type {
 	StatusMark,
 } from "@fcalell/ui-core/descriptors";
 import type { StatusState } from "@fcalell/ui-core/tokens";
+import type { ReactNode } from "react";
 import { Group } from "../../components/group/index.tsx";
 import { List, type RowSlots } from "../../components/list/index.tsx";
 import { ListRow } from "../../components/list-row/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
-import { Wide } from "./layout-context.tsx";
 
 const act = () => {};
+
+// The frame at touch is the page its rows decide their structure by (below
+// `tablet` an act stands under the row's text, a lock shows its glyph alone);
+// at the desktop it stands in no page, as a row inside a wide sheet does.
+function Page(props: { children: ReactNode }) {
+	return (
+		<div className="flex flex-col gap-sections w-sheet max-w-full touch:@container/page">
+			{props.children}
+		</div>
+	);
+}
 const MORE: MenuItem[] = [
 	{ label: "Redeploy", icon: "RotateCw", onAct: act },
 	{ label: "Copy URL", icon: "Copy", onAct: act },
@@ -746,9 +757,9 @@ export function drawListRow(frame: ShowcaseFrame) {
 	const cell = frame.cell.name;
 	if (cell.startsWith("SKELETON") || cell.startsWith("LINE_BOX"))
 		return (
-			<Wide>
+			<Page>
 				<Waiting kind={waitingKind(cell)} />
-			</Wide>
+			</Page>
 		);
 	const props =
 		cell === "ROW.ground.group" ||
@@ -766,5 +777,5 @@ export function drawListRow(frame: ShowcaseFrame) {
 		cell.startsWith("CHANGE_MARK") ||
 		cell.startsWith("CHECKBOX") ||
 		cell === "ROW_ACTS";
-	return <Wide>{props ? <Props /> : <Issues />}</Wide>;
+	return <Page>{props ? <Props /> : <Issues />}</Page>;
 }

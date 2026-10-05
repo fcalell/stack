@@ -8,7 +8,7 @@ const GLYPH = "flex";
 const LABEL = "truncate";
 const SPOKEN = "sr-only";
 // A row's lock keeps its glyph and yields its label, before the warning's.
-const ROW_LOCK = "shrink-16";
+const ROW_LOCK = "shrink-1000000";
 const FIXED = "shrink-0";
 // The row's lock label shows from `tablet`; below it the glyph stands alone and
 // the label is still read aloud.

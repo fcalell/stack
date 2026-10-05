@@ -21,6 +21,10 @@ import { Strut } from "../../lib/strut";
 // The geometry of the row it stands in for (`./index.tsx`); a strut sets
 // each line's height.
 const ROW = "relative flex-row items-center";
+// A row with an act stands its acts on a line of their own under the text, as
+// the loaded row does.
+const ROW_UNDER = "flex-wrap";
+const ACTS_UNDER = "w-full justify-end";
 // A wrapped title's row stands its parts on the title's first line.
 const ROW_WHOLE = "relative flex-row items-start";
 const FIRST_LINE = "flex-row shrink-0 items-center h-line-body";
@@ -114,6 +118,7 @@ export function RowWait(props: { shape: RowShape; index: number }) {
 	// A wrapped title and an entry's input are lines under the title's first, so
 	// the parts beside them stand on that first line.
 	const top = shape.wrap || shape.entry;
+	const under = shape.act && !top;
 	const levels = Array.from(
 		{ length: waitingDepth(props.index) },
 		(_, level) => level,
@@ -134,6 +139,7 @@ export function RowWait(props: { shape: RowShape; index: number }) {
 					state: "rest",
 				}),
 				top ? ROW_WHOLE : ROW,
+				under && ROW_UNDER,
 				ground === "list" && SQUARE,
 			)}
 		>
@@ -209,7 +215,7 @@ export function RowWait(props: { shape: RowShape; index: number }) {
 			</View>
 			{shape.act || shape.more ? (
 				<First on={top}>
-					<View className={cn(ROW_ACTS, ACTS)}>
+					<View className={cn(ROW_ACTS, ACTS, under && ACTS_UNDER)}>
 						{shape.act ? (
 							<View className={cn(skeleton({ kind: "bar" }), ACT_BAR)} />
 						) : null}

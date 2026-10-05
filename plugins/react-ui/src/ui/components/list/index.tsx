@@ -139,6 +139,8 @@ export interface RowSlots<T, V extends string | null = string> {
 	more?: (item: T) => readonly MenuItem[] | undefined;
 	/** Where the row goes. */
 	href?: (item: T) => string | undefined;
+	/** Whether the row is the open record, washed as selected whatever its `href`. */
+	selected?: (item: T) => boolean | undefined;
 	/** Opens the item. */
 	onOpen?: (item: T) => void;
 }
@@ -347,6 +349,7 @@ export function List<T, V extends string | null = string>(
 				act={row.act?.(item)}
 				more={row.more?.(item)}
 				href={row.href?.(item)}
+				selected={row.selected?.(item)}
 				onOpen={row.onOpen ? () => row.onOpen?.(item) : undefined}
 			/>
 		);
