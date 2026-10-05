@@ -204,7 +204,7 @@ and `moved` reading a row's reason from its item. Below `tablet` each row leads 
 `tablet` a tick column leads the grid and its head tick is unchecked, mixed or checked over the rows
 that can be ticked. `onChange` hears the viewer's tick and your rule decides what the set becomes
 (ticking a change under a new parent ticks the parent): return the ruled set through `chosen`. The
-table draws no count; the selection bar has it.
+table draws no count. Its count is the `ActionBar`'s: dock `<ActionBar chosen={{ count, of }} acts={[publish]} />` as the Place's `foot`, and it reads "N of M chosen" over the full-width act, whose label you set ("Publish 4 changes") and whose `blocked` reason you give when nothing can go.
 
 ```tsx
 <List
@@ -242,7 +242,7 @@ takes the same `attachments`, and `meta` (`"by voice"`, `"Kitchen"`) before its 
 
 A field that stays in view while a `Place`'s sections scroll under it (an ask box over a
 home's sections) is the Place's `foot`: it docks at the Place's bottom, above the tab bar on
-touch. A Place takes a `foot` or an `act`, never both, since each holds the screen's filled act.
+touch; a selection bar (an `ActionBar` with `chosen`) docks the same way. A Place takes a `foot` or an `act`, never both, since each holds the screen's filled act.
 A `Thread` in a Place with a `foot` stands among its sections, inline, its `foot` left empty.
 
 A `BarChart` takes data the same way, its `bar` map reading each item's `key`, `label`, `value`,

@@ -1233,6 +1233,7 @@ export const SLOT_WORDS = {
 	changed: ["before", "after"],
 	wrongType: ["name", "types"],
 	stepOf: ["at", "of"],
+	chosenOf: ["count", "of"],
 } as const satisfies Record<string, readonly string[]>;
 export type SlotWordKey = keyof typeof SLOT_WORDS;
 // `Object.keys` widens to `string`; the keys are the record's own.
@@ -1311,6 +1312,7 @@ export const ENGLISH: Words = {
 	changed: "from {before} to {after}",
 	wrongType: "{name} isn't one of {types}",
 	stepOf: "Step {at} of {of}",
+	chosenOf: "{count} of {of} chosen",
 };
 
 // A slot word with its values: `filled(words.meterValue, { value, max })`.

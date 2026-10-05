@@ -7,6 +7,7 @@ import type {
 	TableColumn,
 } from "@fcalell/ui-core/descriptors";
 import { type ReactNode, useLayoutEffect, useRef, useState } from "react";
+import { ActionBar } from "../../components/action-bar/index.tsx";
 import { EmptyState } from "../../components/empty-state/index.tsx";
 import { Place } from "../../components/place/index.tsx";
 import type { QueryLike } from "../../components/query-boundary/index.tsx";
@@ -239,12 +240,19 @@ function Tasks(props: {
 	readOnly?: boolean;
 	changes?: boolean;
 	choosing?: boolean;
+	// The state of the selection bar docked at the page's foot, which makes
+	// the page a publish page: the bar reads the chosen count, and while it
+	// is `disabled` nothing is chosen and the act is blocked.
+	publish?: ShowcaseFrame["state"];
 	state: ShowcaseFrame["state"];
 }) {
-	const row = props.changes || props.choosing ? CHANGE_SET : ROW;
+	const choosing = props.choosing || props.publish !== undefined;
+	const row = props.changes || choosing ? CHANGE_SET : ROW;
 	const [tasks, setTasks] = useState(TASKS);
-	const [chosen, setChosen] = useState(["rollup", "invoices"]);
-	const choose: TableChoice<Task> | undefined = props.choosing
+	const [chosen, setChosen] = useState(
+		props.publish === "disabled" ? [] : ["rollup", "invoices"],
+	);
+	const choose: TableChoice<Task> | undefined = choosing
 		? {
 				chosen,
 				onChange: (ids) => setChosen(ruled(ids)),
@@ -269,8 +277,28 @@ function Tasks(props: {
 			sentence="A cron task runs on a schedule, a nightly backup or a weekly digest."
 		/>
 	);
+	const publishing = props.publish !== undefined;
+	const publishAct = {
+		label:
+			chosen.length === 1
+				? "Publish 1 change"
+				: `Publish ${chosen.length} changes`,
+		onAct: act,
+		loading: props.publish === "loading",
+		blocked: chosen.length === 0 ? "Choose a change to publish." : undefined,
+	};
+	const placed = publishing
+		? {
+				foot: (
+					<ActionBar
+						chosen={{ count: chosen.length, of: tasks.length }}
+						acts={[publishAct]}
+					/>
+				),
+			}
+		: { act: { label: "New task", onAct: act } };
 	return (
-		<Place title="Cron tasks" act={{ label: "New task", onAct: act }}>
+		<Place title="Cron tasks" {...placed}>
 			{props.readOnly ? (
 				<Table columns={COLUMNS} items={tasks} row={row} onOpen={act} />
 			) : (
@@ -393,4 +421,11 @@ export function drawTable(frame: ShowcaseFrame) {
 			<Driven ready={READY[cell] ?? newest}>{tasks}</Driven>
 		</Column>
 	);
+}
+
+// A publish page: the tasks a change set holds, ticked from the grid, over a
+// selection bar docked at the foot reading how many are chosen. The state is
+// the bar's act's: pending, or blocked with nothing chosen.
+export function Publish(props: { state: ShowcaseFrame["state"] }) {
+	return <Tasks publish={props.state} state="rest" />;
 }

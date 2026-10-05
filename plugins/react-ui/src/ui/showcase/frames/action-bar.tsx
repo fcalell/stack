@@ -3,6 +3,8 @@ import type { ActionBarFit } from "@fcalell/ui-core/variants";
 import { ActionBar } from "../../components/action-bar/index.tsx";
 import { TouchedContext } from "../../lib/touched.ts";
 import type { ShowcaseFrame } from "../cells.ts";
+import { Column } from "./place.tsx";
+import { Publish } from "./table.tsx";
 
 const change = () => {};
 // A touched sheet, so a blocked act shows its reason.
@@ -46,8 +48,9 @@ const LOGIN: Drawn = {
 
 // A sheet's footer by default; the danger cell a confirm's, the destructive
 // cell a destructive secondary beside the filled act, the full fit and the
-// field fit a login's one act. `loading` draws the filled act pending,
-// `disabled` it blocked in a touched sheet with its reason shown.
+// field fit a login's one act, the meta cell a selection bar's count over a
+// list. `loading` draws the filled act pending, `disabled` it blocked in a
+// touched sheet with its reason shown.
 function drawnOf(cell: string): Drawn {
 	if (cell === "BUTTON.act.danger" || cell === "BUTTON_LABEL.act.danger")
 		return CONFIRM;
@@ -62,6 +65,20 @@ function drawnOf(cell: string): Drawn {
 }
 
 export function drawActionBar(frame: ShowcaseFrame) {
+	// The meta cell is the selection count: a publish page's bar docked at
+	// its foot, the act pending in `loading` and blocked in `disabled`.
+	if (frame.cell.name === "TEXT.role.meta") {
+		const page = <Publish state={frame.state} />;
+		return (
+			<Column>
+				{frame.state === "disabled" ? (
+					<TouchedContext value={TOUCHED}>{page}</TouchedContext>
+				) : (
+					page
+				)}
+			</Column>
+		);
+	}
 	const { fit, acts, reason } = drawnOf(frame.cell.name);
 	const last = acts.length - 1;
 	const drawn = acts.map((act, at) =>

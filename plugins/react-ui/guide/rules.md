@@ -221,7 +221,7 @@ unchecked, mixed or checked over the rows that can be ticked. `onChange` hears t
 and your rule decides what the set becomes (ticking a change under a new parent ticks the parent):
 return the ruled set through `chosen`. A `blocked` row cannot be ticked and a `moved` row says why
 its tick moved ("Needed by Checkout"), each as a line under the row's name. The table draws no
-count; the selection bar has it. A row of a `List` leads with a tick as `leading: { check }` (its
+count. Its count is the `ActionBar`'s: dock `<ActionBar chosen={{ count, of }} acts={[publish]} />` as the Place's `foot`, and it reads "N of M chosen" at the bar's start beside the one act, whose label you set ("Publish 4 changes") and whose `blocked` reason you give when nothing can go. On the desktop the bar spans the page's width; on touch the count stands over the full-width act. A row of a `List` leads with a tick as `leading: { check }` (its
 `blocked` reason leads the meta line).
 
 ```tsx
@@ -259,7 +259,7 @@ takes the same `attachments`, and `meta` (`"by voice"`, `"Kitchen"`) before its 
 
 A field that stays in view while a `Place`'s sections scroll under it (an ask box over a
 home's sections) is the Place's `foot`: it docks at the Place's bottom, above the tab bar on
-touch. A Place takes a `foot` or an `act`, never both, since each holds the screen's filled act.
+touch; a selection bar (an `ActionBar` with `chosen`) docks the same way. A Place takes a `foot` or an `act`, never both, since each holds the screen's filled act.
 A `Thread` in a Place with a `foot` stands among its sections, inline, its `foot` left empty.
 
 A `BarChart` takes data the same way, its `bar` map reading each item's `key`, `label`, `value`,

@@ -1,6 +1,6 @@
 ---
 id: 003-23
-status: backlog
+status: review
 sessions: {}
 ---
 # ui-core: a selection bar at a list's foot

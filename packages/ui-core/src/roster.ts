@@ -537,7 +537,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// A page in the shell: on the desktop the title and the acts share the
 		// strip, the act a bar-fit primary rightmost; on touch the top bar holds
 		// the acts over the title and the act floats over the body's end. A
-		// `foot` (a field, never beside the act) docks under the scrolling body.
+		// `foot` (a field or an action bar, never beside the act) docks under the
+		// scrolling body; a foot holding a bar spans the body, a field keeps the
+		// measure column.
 		// A `context` is a pick beside the title (the page's change set, its
 		// version), a Picker at the row fit that takes the option's chip.
 		// A `distance` of `room` draws the page for a screen read from across a
@@ -811,12 +813,15 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		},
 		// The one filled act is the last; a destructive act draws `danger`
 		// filled and `destructive` otherwise. `fit: full` passes the acts
-		// `fit: field`.
+		// `fit: field`. `chosen` makes it a selection bar over a list: "N of M
+		// chosen" (the slot word `chosenOf`) at meta at the bar's start, the acts
+		// at its end, stacked on touch with the count over the acts.
 		ActionBar: {
-			props: ["acts", "fit"],
+			props: ["acts", "fit", "chosen"],
 			draws: [
 				"ACTION_BAR",
 				"ACTION_BAR_ACTS",
+				"ACTION_BAR_CHOSEN",
 				"TEXT.role.meta",
 				"BUTTON.act.primary",
 				"BUTTON.act.danger",
@@ -829,7 +834,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"BUTTON_LABEL.act.secondary",
 				"BUTTON_LABEL.act.destructive",
 			],
-			holds: ["ACTION_BAR", "ACTION_BAR_ACTS"],
+			holds: ["ACTION_BAR", "ACTION_BAR_ACTS", "ACTION_BAR_CHOSEN"],
 			states: ["rest", "loading", "disabled"],
 			owns: {
 				roles: ["meta", "body"],

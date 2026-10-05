@@ -177,7 +177,7 @@ pinned by the package's verify suite; this entry holds the architecture and its 
 ## Words
 
 Every word a molecule draws or reads aloud on its own (the seven `Status` words, `recommended`,
-`copy`, `copied`, `download`, `back`, `close`, `cancel`, `dismiss`, `more`, `send`, `stop`, `attach`, `search`, `loading`, `checking`, `retry`, `saving`, `saved`, `notSaved`, `add`, `remove`, `edit`, `details`, `places`, `notifications`, `code`, `added`, `removed`, `sort`, `ascending`, `descending`, `time`, `message`, `seen`, `unseen`, `copyFailed`, `latest`, `missing`, `typeValue`, `pickValue`, `chooseFile`, `photos`, `files`, `warning`, `locked`, `modified`, `chooseAll`, the counted `earlierLines`, and the slot words `meterValue`, `meterOver`, `meterMark`, `linesAdded`, `linesRemoved`, `changed`, `unchanged`, `stale`, `wrongType` and `stepOf`) comes
+`copy`, `copied`, `download`, `back`, `close`, `cancel`, `dismiss`, `more`, `send`, `stop`, `attach`, `search`, `loading`, `checking`, `retry`, `saving`, `saved`, `notSaved`, `add`, `remove`, `edit`, `details`, `places`, `notifications`, `code`, `added`, `removed`, `sort`, `ascending`, `descending`, `time`, `message`, `seen`, `unseen`, `copyFailed`, `latest`, `missing`, `typeValue`, `pickValue`, `chooseFile`, `photos`, `files`, `warning`, `locked`, `modified`, `chooseAll`, the counted `earlierLines`, and the slot words `meterValue`, `meterOver`, `meterMark`, `linesAdded`, `linesRemoved`, `changed`, `unchanged`, `stale`, `wrongType`, `stepOf` and `chosenOf`) comes
 from `words`, a closed typed object with English defaults. The `Words` type requires every key
 and `wordsSchema` is strict, so a translation missing a word fails `tsc` and the schema. It is a
 plugin option beside `theme`; each plugin contributes a `WordsProvider` into the generated entry
@@ -465,7 +465,10 @@ a tick with no animation, never jumped to full.
   the keyboard (the body and the foot share one `KeyboardAvoidingView`, `Lifted`). The body
   ends a sections gap over it (`PAGE_BODY_OVER_FOOT`), as a filling Thread's log ends over its
   input, so the field reads apart from the last section; on the desktop the foot stands in the
-  measure-wide column (`THREAD_COLUMN`) a Thread's input stands in. It reports
+  measure-wide column (`THREAD_COLUMN`) a Thread's input stands in, unless the foot is an
+  `ActionBar`, which spans the body (the Place reads the foot's element type in render, a
+  structure choice, never a width prop; a bar a consumer wraps in its own component keeps the
+  column). It reports
   the Shell's toasts' anchor as a filling Thread's input does. `act` and `foot` are exclusive in the props type:
   the foot's Send is the screen's one filled act, so a floating act beside it would be a second.
   A Place with a `foot` gives a Thread no room to fill (`ThreadRoom`), so a Thread in its body stands inline among the
@@ -614,7 +617,15 @@ a tick with no animation, never jumped to full.
   unreachable on touch and by assistive tech. On touch the leading and tick columns both freeze (the
   leading one at the tick column's width); below `tablet` the tick is the `ListRow`'s leading
   `check` and a moved reason leads its meta. The head tick draws no count, and the table none:
-  "N of M chosen" belongs to the selection bar, which reads this selection.
+  "N of M chosen" belongs to the selection bar, which reads this selection: an `ActionBar` with
+  `chosen: { count, of }` docked as the Place's `foot`. It draws the slot word `chosenOf` at meta
+  at the bar's start (one phrase, since the count left behind is `of - count`), in a polite live
+  region, and the acts beside it at the end (`ACTION_BAR_CHOSEN`, a pair apart), the bar's one filled
+  act the page's one; on touch the count stands over the full-width act. The act's label ("Publish
+  4 changes") and its blocked reason stay the consumer's `Act`. The bar is not a new component:
+  `ActionBar` already owns the filled act, its pending state, the reason and the touch stacking,
+  and `Place.foot` already docks, scrolls the body under it and stands above the tab bar and the
+  toasts.
   A grid re-renders only the rows and cells whose state changed: rows and cells are memoised
   components fed per-cell values and one stable set of callbacks. On the web a cell holds the
   pointer's hover itself (an editable cell under the pointer shows its control), so a pointer

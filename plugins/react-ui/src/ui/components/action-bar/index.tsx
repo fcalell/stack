@@ -1,12 +1,15 @@
 import { cn } from "@fcalell/ui-core/cn";
 import type { Act } from "@fcalell/ui-core/descriptors";
 import { pressStands } from "@fcalell/ui-core/reason";
+import { filled } from "@fcalell/ui-core/tokens";
 import {
 	ACTION_BAR_ACTS,
+	ACTION_BAR_CHOSEN,
 	type ActionBarFit,
 	actionBar,
 	type ButtonAct,
 	type ButtonFit,
+	text,
 } from "@fcalell/ui-core/variants";
 import {
 	type ReactNode,
@@ -21,6 +24,7 @@ import { ActInert, FormContext, SubmitContext } from "../../lib/form.ts";
 import { useTouch } from "../../lib/media.ts";
 import { ReasonHostContext } from "../../lib/reason.ts";
 import { useTouched } from "../../lib/touched.ts";
+import { useWords } from "../../lib/words.tsx";
 import { Button } from "../button/index.tsx";
 import { Reason } from "../button/reason.tsx";
 
@@ -36,6 +40,13 @@ const ACTS: Record<ActionBarFit, string> = {
 	full: "grid grid-flow-col auto-cols-fr touch:flex touch:flex-col",
 };
 const FIT: Record<ActionBarFit, ButtonFit> = { end: "body", full: "field" };
+// A selection bar's row: the count at the start and the acts at the end, or
+// at `full` and on touch the count over the acts. The row spans the bar, so
+// the count keeps the start while the reasons under it stay at the end.
+const ROW: Record<ActionBarFit, string> = {
+	end: "flex items-center justify-between self-stretch touch:flex-col touch:items-stretch",
+	full: "flex flex-col self-stretch",
+};
 
 // The last act is the one filled act; a destructive act draws `danger`
 // filled and the hairline `destructive` otherwise.
@@ -44,12 +55,14 @@ function kindOf(act: Act, last: boolean): ButtonAct {
 	return last ? "primary" : "secondary";
 }
 
-/** The acts that close a form, a sheet or a confirm. */
+/** The acts that close a form, a sheet or a confirm, or that apply to the rows chosen in a list. */
 export interface ActionBarProps extends Closed {
 	/** The acts in reading order, the one filled act last. Inside a `Form` the filled act submits it. A promise the filled act's `onAct` returns keeps it pending until it settles. */
 	acts: Act[];
 	/** Where the bar stands: at its container's end (the default), or across it with each act at the field's height. */
 	fit?: ActionBarFit;
+	/** A selection bar's count, "N of M chosen" at meta at the bar's start (a `Table`'s `choose` set against its rows), announced as it changes; the act's label and its blocked reason stay the act's. Docked as a `Place`'s `foot`. */
+	chosen?: { count: number; of: number };
 }
 
 // An act's reason host: the same object while the act stays blocked by one
@@ -72,10 +85,11 @@ function ActHost(props: {
 	return <ReasonHostContext value={host}>{props.children}</ReasonHostContext>;
 }
 
-/** The acts row over a blocked act's reason; while one act is pending the others ignore the press. */
-export function ActionBar({ acts, fit }: ActionBarProps) {
+/** The acts row over a blocked act's reason, beside a selection count when `chosen` is set; while one act is pending the others ignore the press. */
+export function ActionBar({ acts, fit, chosen }: ActionBarProps) {
 	const where = fit ?? "end";
 	const touch = useTouch();
+	const words = useWords();
 	const pend = use(FormContext);
 	const [running, setRunning] = useState(false);
 	const { touched } = useTouched();
@@ -92,13 +106,13 @@ export function ActionBar({ acts, fit }: ActionBarProps) {
 		[],
 	);
 	const busy = running || acts.some((act) => act.loading);
-	const filled = acts.length - 1;
+	const lastAt = acts.length - 1;
 	// The tree holds the acts in drawn order, so Tab follows it: on touch the
 	// stack draws the filled act first.
 	const ordered = acts.map((act, at) => [act, at] as const);
 	const drawn = touch ? ordered.toReversed() : ordered;
 	const runFilled = () => {
-		const ran = acts[filled]?.onAct();
+		const ran = acts[lastAt]?.onAct();
 		if (!(ran instanceof Promise)) return;
 		setRunning(true);
 		pend?.(true);
@@ -110,37 +124,52 @@ export function ActionBar({ acts, fit }: ActionBarProps) {
 		};
 		void ran.then(done, done);
 	};
+	const buttons = (
+		<div className={cn(ACTION_BAR_ACTS, ACTS[where])}>
+			{drawn.map(([act, at]) => {
+				const last = at === lastAt;
+				const loading = act.loading === true || (last && running);
+				const run = last ? runFilled : act.onAct;
+				return (
+					<ActHost
+						key={act.label}
+						id={`${reason}-${at}`}
+						label={act.label}
+						blocked={act.blocked}
+						press={press}
+					>
+						<SubmitContext value={last && pend !== undefined}>
+							<ActInert value={busy && !loading}>
+								<Button
+									act={kindOf(act, last)}
+									fit={FIT[where]}
+									label={act.label}
+									onAct={run}
+									loading={loading}
+									blocked={act.blocked}
+								/>
+							</ActInert>
+						</SubmitContext>
+					</ActHost>
+				);
+			})}
+		</div>
+	);
 	return (
 		<div className={cn(actionBar({ fit: where }), BAR[where])}>
-			<div className={cn(ACTION_BAR_ACTS, ACTS[where])}>
-				{drawn.map(([act, at]) => {
-					const last = at === filled;
-					const loading = act.loading === true || (last && running);
-					const run = last ? runFilled : act.onAct;
-					return (
-						<ActHost
-							key={act.label}
-							id={`${reason}-${at}`}
-							label={act.label}
-							blocked={act.blocked}
-							press={press}
-						>
-							<SubmitContext value={last && pend !== undefined}>
-								<ActInert value={busy && !loading}>
-									<Button
-										act={kindOf(act, last)}
-										fit={FIT[where]}
-										label={act.label}
-										onAct={run}
-										loading={loading}
-										blocked={act.blocked}
-									/>
-								</ActInert>
-							</SubmitContext>
-						</ActHost>
-					);
-				})}
-			</div>
+			{chosen ? (
+				<div className={cn(ACTION_BAR_CHOSEN, ROW[where])}>
+					<span role="status" className={text({ role: "meta" })}>
+						{filled(words.chosenOf, {
+							count: String(chosen.count),
+							of: String(chosen.of),
+						})}
+					</span>
+					{buttons}
+				</div>
+			) : (
+				buttons
+			)}
 			{acts.map((act, at) =>
 				act.blocked === undefined ? null : (
 					<Reason

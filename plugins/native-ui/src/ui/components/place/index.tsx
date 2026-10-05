@@ -88,8 +88,8 @@ interface PlaceBase extends Closed {
 	children?: ReactNode;
 }
 
-// The page's one filled act, or the field docked at its foot whose send is
-// that act: never both.
+// The page's one filled act, or the field or action bar docked at its foot
+// whose send or filled act is that act: never both.
 type PlaceEnd = { act?: Act; foot?: never } | { foot?: ReactNode; act?: never };
 
 // Where the page is read from: a screen across a room draws the room set,
@@ -108,7 +108,8 @@ export type PlaceProps = PlaceBase & PlaceEnd & PlaceDistance;
 // side inset and no scroll, for a child that scrolls itself; a Thread standing as
 // the body's direct child fills it the same way from its first render, the
 // body's scroll kept and stilled so nothing in it remounts. A `foot` docks under the body over the keyboard a sections gap
-// under the body's end, the body scrolling past it, and a Thread in such a body stands among its sections.
+// under the body's end, the body scrolling past it, and a Thread in such a body stands among its sections. A foot is a
+// field (a `MessageInput`) or a selection bar (an `ActionBar` with `chosen`), whose count stands over the full-width act.
 // A Split standing as its direct child gets its Details act in its head, and a record the Split shows alone puts a back
 // act to the place's route in the switcher's stead; while a record stands beside
 // the main, the Place draws no head, that record's head the page's one. The

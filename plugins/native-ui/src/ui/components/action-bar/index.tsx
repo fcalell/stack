@@ -1,5 +1,6 @@
 import type { Act } from "@fcalell/ui-core/descriptors";
 import { pressStands } from "@fcalell/ui-core/reason";
+import { filled } from "@fcalell/ui-core/tokens";
 import {
 	ACTION_BAR_ACTS,
 	type ActionBarFit,
@@ -21,6 +22,7 @@ import { cn } from "../../lib/cn";
 import { FormContext } from "../../lib/form";
 import { ReasonHostContext } from "../../lib/reason";
 import { useTouched } from "../../lib/touched";
+import { useWords } from "../../lib/words";
 import { Button } from "../button";
 
 // The touch structure at either fit: one act per row across the container,
@@ -38,6 +40,10 @@ function kindOf(act: Act, last: boolean): ButtonAct {
 export interface ActionBarProps extends Closed {
 	acts: Act[];
 	fit?: ActionBarFit;
+	// A selection bar's count, "N of M chosen" at meta over the acts (a
+	// `Table`'s `choose` set against its rows), announced as it changes. Docked
+	// as a `Place`'s `foot`.
+	chosen?: { count: number; of: number };
 }
 
 // An act's reason host: the same object while the act stays blocked by one
@@ -68,9 +74,11 @@ function ActHost(props: {
 // indicator; a Form or a Sheet keeps it in flow. A promise the filled act's
 // `onAct` returns keeps it pending until it settles, and the others ignore
 // the press meanwhile. A blocked act's reason draws under the acts, so the
-// act keeps its row and stretches as a live one does.
-export function ActionBar({ acts, fit }: ActionBarProps) {
+// act keeps its row and stretches as a live one does. With `chosen` the count
+// stands over the acts at the bar's start.
+export function ActionBar({ acts, fit, chosen }: ActionBarProps) {
 	const where = fit ?? "end";
+	const words = useWords();
 	const pend = useContext(FormContext);
 	const [running, setRunning] = useState(false);
 	const { touched } = useTouched();
@@ -86,9 +94,9 @@ export function ActionBar({ acts, fit }: ActionBarProps) {
 		[],
 	);
 	const busy = running || acts.some((act) => act.loading);
-	const filled = acts.length - 1;
+	const lastAt = acts.length - 1;
 	const runFilled = () => {
-		const ran = acts[filled]?.onAct();
+		const ran = acts[lastAt]?.onAct();
 		if (!(ran instanceof Promise)) return;
 		setRunning(true);
 		pend?.(true);
@@ -102,9 +110,20 @@ export function ActionBar({ acts, fit }: ActionBarProps) {
 	};
 	return (
 		<View className={actionBar({ fit: where })}>
+			{chosen ? (
+				<RNText
+					accessibilityLiveRegion="polite"
+					className={text({ role: "meta" })}
+				>
+					{filled(words.chosenOf, {
+						count: String(chosen.count),
+						of: String(chosen.of),
+					})}
+				</RNText>
+			) : null}
 			<View className={cn(ACTION_BAR_ACTS, ACTS)}>
 				{acts.map((act, at) => {
-					const last = at === filled;
+					const last = at === lastAt;
 					const loading = act.loading === true || (last && running);
 					const run = last ? runFilled : act.onAct;
 					return (

@@ -714,7 +714,7 @@ check("c03", "tokens.ts declares the contract", () => {
 	requireEqual(BREAKPOINTS.length, 3, "breakpoint count");
 	requireEqual(WORD_KEYS.length, 56, "word count");
 	requireEqual(COUNTED_WORD_KEYS.length, 1, "counted word count");
-	requireEqual(SLOT_WORD_KEYS.length, 8, "slot word count");
+	requireEqual(SLOT_WORD_KEYS.length, 9, "slot word count");
 	requireEqual(
 		[...CHART_SERIES].sort().join(" "),
 		[...CHIP_HUES].sort().join(" "),
