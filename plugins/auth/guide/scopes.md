@@ -65,7 +65,8 @@ It declares `reads` on `member` and on each table of its chain by the table's SQ
 mutation that declares `writes: ["project"]` refreshes it. A table only a predicate reads is not
 among them.
 
-In a handler, `context.tenancy.resolve(scope, id, userId)` and `bySlug(...)` answer the same rows typed by the scope: `ScopeContext<typeof scope> | null`.
+In a handler, `context.tenancy.resolve(scope, id, userId)` and `bySlug(...)` answer the same rows
+typed by the scope: `ScopeContext<typeof scope> | null`.
 
 ## Rules
 
