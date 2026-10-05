@@ -14,7 +14,6 @@ import {
 	pairSet,
 	termLabel,
 	termSet,
-	toggled,
 } from "../src/rules.ts";
 
 const OPTIONS: Option[] = [
@@ -70,12 +69,6 @@ test("a typed value is told from a picked one", () => {
 	assert.equal(isTyped({ typed: "x" }), true);
 	assert.equal(isTyped({ picked: "page" }), false);
 	assert.equal(isTyped({}), false);
-});
-
-test("a several-pick toggles a member in and out, keeping order", () => {
-	assert.deepEqual(toggled(["a", "b"], "c"), ["a", "b", "c"]);
-	assert.deepEqual(toggled(["a", "b", "c"], "b"), ["a", "c"]);
-	assert.deepEqual(toggled([], "a"), ["a"]);
 });
 
 test("an option with no leading form leads with the picked glyph", () => {

@@ -343,9 +343,10 @@ export interface Hunk {
 // phone the document picker's asset (`blob` reads its uri). `size` is in
 // bytes and `type` a MIME type, empty when the platform knows none. `src` is
 // a local address the file can be drawn from before it is uploaded (an
-// `Attachment`'s thumbnail): the phone's asset uri, set on every file, and on
-// the web an object URL the picker makes for an image alone, which the
-// consumer revokes (`URL.revokeObjectURL`) when it no longer shows the file.
+// `Attachment`'s thumbnail): the phone's asset uri, set on every file and
+// needing no revoke, and on the web an object URL that `MessageInput`'s attach
+// path makes for an image alone, which the consumer revokes
+// (`URL.revokeObjectURL`) when it detaches the attachment.
 export interface PickedFile {
 	name: string;
 	size: number;
@@ -466,7 +467,9 @@ export type TableCell =
 // A selection bar's count of the rows a list chooses: `count` of `of` (the rows
 // that can be chosen). `onAll` adds the act beside the count that chooses every
 // row while some stand unchosen (it hears `true`) and clears them once all are
-// (`false`), as a table's head tick does; a list with a head tick omits it.
+// (`false`), as a table's head tick does. It draws on touch only (below
+// `tablet` on the web, always on the phone), where a table has no head tick; on
+// the desktop the head tick is the select-all.
 export interface ChosenCount {
 	count: number;
 	of: number;

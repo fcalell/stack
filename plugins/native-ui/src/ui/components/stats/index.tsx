@@ -64,7 +64,7 @@ export function Stats({ items, loading }: StatsProps) {
 							{href !== undefined ? (
 								<Pressable
 									accessibilityRole="link"
-									accessibilityLabel={`${item.label}, ${number.format(item.value)}`}
+									accessibilityLabel={`${item.label}, ${number.format(item.value)}${item.unit ? ` ${item.unit}` : ""}`}
 									onPress={() => navigate(href)}
 									className={HIT}
 								/>

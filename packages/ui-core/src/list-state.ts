@@ -1,6 +1,7 @@
-// The decisions a collection (a `List`, a `Table`, an `OptionList`) and the
-// `Section` around it make before they draw, free of any framework: both
-// platforms run this one source, and it is tested without rendering.
+// The decisions a collection (a `List`, a `Table`, an `OptionList`), the
+// `Section` around it, and the Meter, StepCount and Stages states make before
+// they draw, free of any framework: both platforms run this one source, and it
+// is tested without rendering.
 
 import type {
 	ChangeCell,
@@ -477,6 +478,17 @@ export function chosenOf<V extends string>(
 	return choice.value === null ? [] : [choice.value];
 }
 
+// A value toggled in a several-pick's set: out when it is in, else in at the
+// end.
+export function toggled<V extends string | null>(
+	values: readonly V[],
+	value: V,
+): V[] {
+	return values.includes(value)
+		? values.filter((one) => one !== value)
+		: [...values, value];
+}
+
 // A press on an option: one choice hears it unless it is already chosen; a
 // set hears itself with the option toggled.
 export function choose<V extends string>(
@@ -487,11 +499,7 @@ export function choose<V extends string>(
 		if (choice.value !== option) choice.onChange(option);
 		return;
 	}
-	choice.onChange(
-		choice.value.includes(option)
-			? choice.value.filter((each) => each !== option)
-			: [...choice.value, option],
-	);
+	choice.onChange(toggled(choice.value, option));
 }
 
 // A pending Thread's turns, in order: each author is the item's, unknown

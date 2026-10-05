@@ -69,7 +69,7 @@ export interface ActionBarProps extends Closed {
 	acts: Act[];
 	/** Where the bar stands: at its container's end (the default), or across it with each act at the field's height. */
 	fit?: ActionBarFit;
-	/** A selection bar's count, "N of M chosen" at meta at the bar's start (a `Table`'s `choose` set against its rows), announced as it changes, with `onAll` a select-all or deselect-all act beside it; the act's label and its blocked reason stay the act's. Docked as a `Place`'s `foot`. */
+	/** A selection bar's count, "N of M chosen" at meta at the bar's start (a `Table`'s `choose` set against its rows), announced as it changes, with `onAll` a select-all or deselect-all act beside it on touch (the desktop `Table`'s head tick is that act); the act's label and its blocked reason stay the act's. Docked as a `Place`'s `foot`. */
 	chosen?: ChosenCount;
 }
 
@@ -164,10 +164,10 @@ export function ActionBar({ acts, fit, chosen }: ActionBarProps) {
 		</div>
 	);
 	// The act chooses every row while some stand unchosen and clears them once
-	// all are, as a table's head tick does.
+	// all are. On touch only: a desktop table has its head tick for it.
 	const every = chosen !== undefined && chosen.count >= chosen.of;
 	const all =
-		chosen?.onAll !== undefined && chosen.of > 0 ? (
+		touch && chosen?.onAll !== undefined && chosen.of > 0 ? (
 			<BaseButton
 				onClick={() => chosen.onAll?.(!every)}
 				className={cn(PILL_ACT, ALL)}

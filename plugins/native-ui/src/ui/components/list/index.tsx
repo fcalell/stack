@@ -19,9 +19,9 @@ import {
 	meterShape,
 	retryOf,
 	rowShape,
+	toggled,
 	treeRows,
 } from "@fcalell/ui-core/list-state";
-import { toggled } from "@fcalell/ui-core/rules";
 import { LIST, LIST_TREE } from "@fcalell/ui-core/variants";
 import { type ReactElement, useContext, useState } from "react";
 import { View } from "react-native";

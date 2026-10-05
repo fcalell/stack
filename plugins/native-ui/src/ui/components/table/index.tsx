@@ -80,11 +80,11 @@ import { Missing } from "../empty-state/missing";
 import { Icon } from "../icon";
 import { Input } from "../input";
 import { List, type RowSlots } from "../list";
+import { LockMark } from "../list-row/lock";
 import { PickerBase } from "../picker/base";
 import type { QueryLike } from "../query-boundary";
 import { StatusBase } from "../status/base";
 import { ChangeMark } from "../status/change";
-import { LockMark } from "../status/lock";
 
 const ROOT = "grow";
 // The frozen leading column stands outside the sideways scroll, on the

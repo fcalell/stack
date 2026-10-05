@@ -55,7 +55,7 @@ import { Picker } from "../picker/index.tsx";
 import { ChangeMark } from "../status/change.tsx";
 import { StatusDot } from "../status/dot.tsx";
 import { Status } from "../status/index.tsx";
-import { LockMark } from "../status/lock.tsx";
+import { LockMark } from "./lock.tsx";
 import { WarningMark } from "./marks.tsx";
 
 const ROW = "relative flex items-center";
@@ -404,8 +404,8 @@ export function ListRow<V extends string | null = string>({
 					<span className={cn(ROW_STEPS, STEPS)}>
 						{listed.map((step, at) => (
 							<span
-								// biome-ignore lint/suspicious/noArrayIndexKey: two steps may share a label, so a step is its label at its position
-								key={`${step.label}:${at}`}
+								// biome-ignore lint/suspicious/noArrayIndexKey: the steps are fixed-order data that never reorder, so position is the identity
+								key={at}
 								className={cn(
 									rowStep({
 										state: step.state === "running" ? "running" : "rest",

@@ -36,8 +36,8 @@ ui-core's pages; the plugin hands the CLI those too (`cliSlots.guide`), as react
   its provider's host, so every context a sheet body reads wraps that provider. It hosts the sheets
   of the screens with no `Shell`; a `Shell` holds its own provider, under which every sheet opened
   inside it stands, and draws its toasts after that provider's host so a toast stands over an open
-  sheet. Theming is CSS-first, so there is no theme provider. `AppProviders` (`./app`) composes the UI half of the same stack for use outside
-  the generated entry.
+  sheet. Theming is CSS-first, so there is no theme provider. `AppProviders` (`./app`) composes the
+  UI half of the same stack for use outside the generated entry.
 - `.stack/native-auth.ts`: the resolved `scheme` and `cookiePrefix` the scaffolded auth client
   imports, so the client always matches the app config and the worker's cookies.
 - `.stack/native-theme.ts`: `Uniwind.setTheme(defaultMode)`, imported by the entry, only when
@@ -56,12 +56,12 @@ and carries layout plumbing; nothing carries a product noun in a prop, an enum w
 
 A raised ground re-points the hairline as the web's does: `RaisedGround` (`lib/raised`) scopes
 `--color-edge` to the mode's `edge-raised` through uniwind's `ScopedVariables`, so a part's
-`border-edge` inside a sheet (its head, body and foot, a `Menu`'s and a Picker's sheet with it) or
-a toast draws the raised hairline. A ground on `group` holds no part that draws `edge`, so none
-wraps it. `QrCode`'s tile is a light scope (uniwind's `ScopedTheme`). `Image`'s full view is the sheet base's `view` form: a gorhom
-modal at the screen's height inside the safe area, with no handle, ground, body or foot, so a
-sheet's chrome never takes the picture's room. It stands under the toasts like every sheet, and it
-draws the picture contain-fit with no pinch-zoom.
+`border-edge` inside a sheet (its head, body and foot, a `Menu`'s and a Picker's sheet with it) or a
+toast draws the raised hairline. A ground on `group` holds no part that draws `edge`, so none wraps
+it. `QrCode`'s tile is a light scope (uniwind's `ScopedTheme`). `Image`'s full view is the sheet
+base's `view` form: a gorhom modal at the screen's height inside the safe area, with no handle,
+ground, body or foot, so a sheet's chrome never takes the picture's room. It stands under the toasts
+like every sheet, and it draws the picture contain-fit with no pinch-zoom.
 
 ## Verify
 

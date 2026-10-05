@@ -807,8 +807,9 @@ export const COLUMN = "w-column";
 // A sectioned form's foot: its action bar under a hairline across the form.
 export const FORM_FOOT = "border-t border-edge pt-fields";
 export const ACTION_BAR_ACTS = "gap-acts";
-// The row holding a selection bar's count and its acts: a pair apart, the
-// count at the start and the acts at the end, or stacked on touch.
+// A selection bar's gaps, a pair apart: the row holding the count and its
+// acts (the count at the start and the acts at the end, or stacked on touch)
+// and the count's own row with its choose-all act.
 export const ACTION_BAR_CHOSEN = "gap-pair";
 // A toolbar's band under a bleeding page's strip, a hairline across the page
 // and its controls at the page inset: its controls and acts in wrapping rows

@@ -71,6 +71,7 @@ import {
 	EASING,
 	EASINGS,
 	ENGLISH,
+	FONT_ROLES,
 	fallbackFace,
 	filled,
 	GAP_ROLES,
@@ -751,7 +752,7 @@ check("c03", "tokens.ts declares the contract", () => {
 	for (const word of ["marine", "navy", "brand", "tint", "label", "floor"]) {
 		assert(!new RegExp(`"${word}"`).test(source), `tokens.ts names "${word}"`);
 	}
-	return `${COLOR_NAMES.length} colors, ${TYPE_ROLES.length} roles, 11 spacing roles (6 gaps), ${SIZES.length} sizes, 7 radii, 2 shadows, 12 widths, 3 breakpoints, ${WORD_KEYS.length} words, ${COUNTED_WORD_KEYS.length} counted and ${SLOT_WORD_KEYS.length} with slots, ${CHART_SERIES.length} chart series`;
+	return `${COLOR_NAMES.length} colors, ${TYPE_ROLES.length} roles, ${SPACING_ROLES.length} spacing roles (${GAP_ROLES.length} gaps), ${SIZES.length} sizes, ${RADIUS_ROLES.length} radii, ${SHADOW_LEVELS.length} shadows, ${WIDTHS.length} widths, ${BREAKPOINTS.length} breakpoints, ${WORD_KEYS.length} words, ${COUNTED_WORD_KEYS.length} counted and ${SLOT_WORD_KEYS.length} with slots, ${CHART_SERIES.length} chart series`;
 });
 
 check("c05", "the computed colors follow their color-mix rules", () => {
@@ -957,7 +958,7 @@ check("c06", "every scale is its ratio of the base", () => {
 			rung,
 		);
 	}
-	return `${TYPE_ROLES.length} roles × 3 densities with even line boxes, 12 spacing roles, 17 sizes, 4 trackings, 8 radii, 11 widths, 3 breakpoints, 2 families with their fallback faces, 4 durations`;
+	return `${TYPE_ROLES.length} roles × ${DENSITIES.length} densities with even line boxes, ${SPACING_ROLES.length} spacing roles, ${SIZES.length} sizes, ${TRACKED_ROLES.length} trackings, ${RADIUS_ROLES.length} radii, ${WIDTHS.length} widths, ${BREAKPOINTS.length} breakpoints, ${FONT_ROLES.length} families with their fallback faces, ${DURATIONS.length} durations`;
 });
 
 check(

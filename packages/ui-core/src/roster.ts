@@ -818,8 +818,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// `fit: field`. `chosen` makes it a selection bar over a list: "N of M
 		// chosen" (the slot word `chosenOf`) at meta at the bar's start, the acts
 		// at its end, stacked on touch with the count over the acts; `chosen.onAll`
-		// adds the act beside the count that chooses every row (the word
-		// `chooseAll`) or, once all are, clears them (`chooseNone`).
+		// adds, on touch, the act beside the count that chooses every row (the
+		// word `chooseAll`) or, once all are, clears them (`chooseNone`).
 		ActionBar: {
 			props: ["acts", "fit", "chosen"],
 			draws: [

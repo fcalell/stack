@@ -21,9 +21,9 @@ import { useWords } from "../../lib/words.tsx";
 import { Icon } from "../icon/index.tsx";
 import { IconButton } from "../icon-button/index.tsx";
 import { Link } from "../link/index.tsx";
+import { LockMark } from "../list-row/lock.tsx";
 import { ChangeMark } from "../status/change.tsx";
 import { Status } from "../status/index.tsx";
-import { LockMark } from "../status/lock.tsx";
 
 const ROW = "relative flex items-center";
 // A row that opens washes under the pointer and the press on its hit.

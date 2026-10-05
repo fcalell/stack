@@ -24,9 +24,9 @@ import { useWords } from "../../lib/words";
 import { Icon } from "../icon";
 import { IconButton } from "../icon-button";
 import { Link } from "../link";
+import { LockMark } from "../list-row/lock";
 import { Status } from "../status";
 import { ChangeMark } from "../status/change";
-import { LockMark } from "../status/lock";
 
 const ROW = "relative flex-row items-center";
 // The hit covers the row under its text and its acts, and takes the press

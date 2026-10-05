@@ -20,9 +20,9 @@ import {
 	meterShape,
 	retryOf,
 	rowShape,
+	toggled,
 	treeRows,
 } from "@fcalell/ui-core/list-state";
-import { toggled } from "@fcalell/ui-core/rules";
 import { LIST, LIST_TREE } from "@fcalell/ui-core/variants";
 import { type ReactNode, use, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";

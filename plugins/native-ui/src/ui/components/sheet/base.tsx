@@ -365,8 +365,9 @@ export interface SheetBaseProps {
 	acts?: Act[];
 	// A menu's rows stand under the head with no body inset or foot; a view (an
 	// image's full size) is its children over the whole screen inside the safe
-	// area, named by `title`, with no head, body or foot: the scrim and the
-	// children's own close act dismiss it.
+	// area, with no head, body or foot, so no accessible name of its own (the
+	// children name themselves): the scrim and the children's own close act
+	// dismiss it.
 	form?: "menu" | "view";
 	// Fixed under the head, over the scrolling body: the Picker's search, which
 	// stands a menu full height.

@@ -24,6 +24,7 @@ import {
 	sectionCount,
 	sectionState,
 	tableRecords,
+	toggled,
 	treeRows,
 } from "../src/list-state.ts";
 import { leadingOf, sizePx } from "../src/scales.ts";
@@ -667,4 +668,10 @@ test("a body line's box is the body's line box at each density", () => {
 
 test("a lock glyph sets no margin of its own", () => {
 	assert.doesNotMatch(LOCK_GLYPH, /\bm[se]?-/);
+});
+
+test("a several-pick toggles a member in and out, keeping order", () => {
+	assert.deepEqual(toggled(["a", "b"], "c"), ["a", "b", "c"]);
+	assert.deepEqual(toggled(["a", "b", "c"], "b"), ["a", "c"]);
+	assert.deepEqual(toggled([], "a"), ["a"]);
 });

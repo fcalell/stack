@@ -2,23 +2,22 @@
 
 `@fcalell/ui-core` is the design contract both UI plugins render from: the token contract with its
 parametric derivation, the words the molecules speak, the shared `cn()` merge config, the
-platform-invariant variant matrices, the component roster, and the shared descriptor types. It
-is a preset library like `biome-config`: no `plugin()` factory, no slots, and no
-framework dependency. The normative laws (the
-canon, the sharing line, the `cn` ordering rule, the roster) live in the package README and are
-pinned by the package's verify suite; this entry holds the architecture and its rationale.
+platform-invariant variant matrices, the component roster, and the shared descriptor types. It is a
+preset library like `biome-config`: no `plugin()` factory, no slots, and no framework dependency.
+The normative laws (the canon, the sharing line, the `cn` ordering rule, the roster) live in the
+package README and are pinned by the package's verify suite; this entry holds the architecture and
+its rationale.
 
 ## Tokens and theming
 
-- The contract is the foundations sheet, held as data in `tokens.ts`; the emitted `app.css`
-  carries exactly those values. Eleven namespaces are zeroed (`--color-*`, `--radius-*`,
-  `--text-*`, `--leading-*`, `--tracking-*`, `--shadow-*`, `--font-*`, `--container-*`,
-  `--breakpoint-*`, `--transition-duration-*`, `--ease-*`), so an off-contract utility compiles
-  to nothing and `tablet:`, `desktop:` and `wide:` are the only viewport variants (the web's
-  `page-*` container variants read the same values). The numeric
-  `--spacing` base stays live because dimension utilities derive from it, so no build check can
-  tell a role from a numeric; the matrices pin their cell strings verbatim and the closed props
-  keep a numeric off a call site.
+- The contract is the foundations sheet, held as data in `tokens.ts`; the emitted `app.css` carries
+  exactly those values. Eleven namespaces are zeroed (`--color-*`, `--radius-*`, `--text-*`,
+  `--leading-*`, `--tracking-*`, `--shadow-*`, `--font-*`, `--container-*`, `--breakpoint-*`,
+  `--transition-duration-*`, `--ease-*`), so an off-contract utility compiles to nothing and
+  `tablet:`, `desktop:` and `wide:` are the only viewport variants (the web's `page-*` container
+  variants read the same values). The numeric `--spacing` base stays live because dimension
+  utilities derive from it, so no build check can tell a role from a numeric; the matrices pin their
+  cell strings verbatim and the closed props keep a numeric off a call site.
 - Four knobs and nothing else: `accentHue` (264), `castHue` (the neutrals' hue, `accentHue`
   unless set), `fonts` (the two family names, IBM Plex Sans and IBM Plex Mono unless set) and
   `defaultMode`. Every other value is the sheet. The cast reaches every neutral (the grounds, the
@@ -124,54 +123,51 @@ pinned by the package's verify suite; this entry holds the architecture and its 
   variant in the cells (an interaction condition in a shared cell, meaningless on native) and one
   type scale at every density (13 on a phone is unreadable and 16 on a desktop row wastes the row).
 - The `room` density is the third set, the one tier a screen declares (`Place.distance: "room"`),
-  because no media query detects viewing distance; desktop and touch stay automatic. Both
-  platforms' ten-foot guidance designs on one 960 × 540 canvas scaled to the screen (Microsoft at
-  200 % for XAML and 150 % for HTML, Android TV at mdpi), and on that canvas the body is 15–16,
-  controls at least 32 and the information a phone's: stack's touch set. So the room set is the
-  touch set drawn on `ROOM_CANVAS` and multiplied by the room unit
-  `u = max(1px, min(100vw / 960, 100dvh / 540))`, never a third hand-tuned ladder. The canvas
-  settles why the set scales instead of holding px: the CSS width a TV browser reports varies
-  (1280, 960, 1920), so a fixed set is right on one screen and half or double on the next. The
-  unit takes the tighter axis, so a portrait or ultrawide screen stays inside the canvas, and
-  never falls under 1 px, so a small window keeps the touch set at least. At 1280 × 720 `u` is
-  1.33, at 1920 × 1080 it is 2 (body 32, title 44, control and target 88, row 96) and at
-  3840 × 2160 it is 4. Two values differ from touch: `display` takes ratio 5 in room only
-  (`ROOM_TYPE_SIZE`, 80 canvas units, so a glanceable figure stands 5.3× its meta label where the
-  references run 5–9×; 2.77 stays right for a stat inside a page), and `page` is 12 rungs, 48
-  canvas units all round (one role serves both axes, so it costs the height 42 units over the 27
+  because no media query detects viewing distance; desktop and touch stay automatic. Both platforms'
+  ten-foot guidance designs on one 960 × 540 canvas scaled to the screen (Microsoft at 200 % for
+  XAML and 150 % for HTML, Android TV at mdpi), and on that canvas the body is 15–16, controls at
+  least 32 and the information a phone's: stack's touch set. So the room set is the touch set drawn
+  on `ROOM_CANVAS` and multiplied by the room unit `u = max(1px, min(100vw / 960, 100dvh / 540))`,
+  never a third hand-tuned ladder. The canvas settles why the set scales instead of holding px: the
+  CSS width a TV browser reports varies (1280, 960, 1920), so a fixed set is right on one screen and
+  half or double on the next. The unit takes the tighter axis, so a portrait or ultrawide screen
+  stays inside the canvas, and never falls under 1 px, so a small window keeps the touch set at
+  least. At 1280 × 720 `u` is 1.33, at 1920 × 1080 it is 2 (body 32, title 44, control and target
+  88, row 96) and at 3840 × 2160 it is 4. Two values differ from touch: `display` takes ratio 5 in
+  room only (`ROOM_TYPE_SIZE`, 80 canvas units, so a glanceable figure stands 5.3× its meta label
+  where the references run 5–9×; 2.77 stays right for a stat inside a page), and `page` is 12 rungs,
+  48 canvas units all round (one role serves both axes, so it costs the height 42 units over the 27
   the guidance allows top and bottom; the Place's head stands that inset from the top too,
-  `PAGE_HEAD_ROOM`, since `PAGE_HEAD` pads the sides alone). The radii, the fixed widths (every width but the two `ch`
-  measures, which follow the type), the hairline and the ring scale by `u` too: a 1 px hairline
-  vanishes at three metres, a 6 px radius on an 88 px control reads square, and a pane must hold
-  the characters it holds on a phone. Motion is unchanged, and focus is the existing ring,
-  scaled (no scale transform: the roster draws focus as a ring everywhere, and a scaled element
-  blurs its text on most TV compositors). The structure is touch's: the `touch:` variant and
-  `useTouch` match inside a room Place, so nothing depends on hover. A room Place keeps the app's
-  mode (it scopes no colours), and the ten-foot guidance runs dark, so an app that draws a room
-  screen runs dark (`defaultMode: "dark"`).
-  Emission: `roomTokens(scale)` is one record whose values are canvas units, `scale` turning them
-  into the platform's value, so both platforms share one derivation. The web's `roomScope`
-  renders each as `calc(N * var(--room-unit))` under `[data-density="room"]`, which the Place
-  sets on its root (a root `data-density="room"` pins it page-wide) and which holds `--room-unit`
-  itself, so the unit resolves at the element that reads it. The scales (`scales.ts`) take no
-  theme, so native imports them without the colour machinery: it computes
-  `roomUnitFor(width, height)` from `useWindowDimensions` and scopes the numbers with uniwind's
-  `ScopedVariables` (`RoomScope`, the `RaisedGround` mechanism), a scoped variable taking a value
-  and never a `calc`. The hairline reaches every border through
-  `--default-border-width: var(--hairline)` in `@theme`: Tailwind inlines a theme value into the
-  utility, so only a variable reference lets a bare `border` and a `divide` follow the room.
-  A room Place holds one structure and never splits, since breakpoints (px literals, and the
-  `page` container queries that read them) stay px while its widths scale: at 1920 a Place's
-  container sees `wide` with its widths doubled, so a `Split` or a beside column would overflow.
-  It holds one column of `Columns`, `Stats` and `Stat`, with no `context`, `more` or `foot`
-  (their layers portal outside the scope and would draw at the page's density), and `Place`
-  types it so. Two limits stay named: a `vw` size ignores browser zoom (the screen is read from
-  across a room, never zoomed, and the floor keeps it at the touch set at least), and `calc`
-  sizes are fractional, so room line boxes leave the even-pixel rule (a TV scales the frame
-  anyway). Rejected: a consumer density option or a viewing-distance media query (none detects
-  distance), a hand-tuned third ladder (right on one screen, wrong on the next), breakpoints that
-  scale with `u` (every container query rewritten, relative units in `@container` conditions
-  unverified) and a `page-y` role used only by room.
+  `PAGE_HEAD_ROOM`, since `PAGE_HEAD` pads the sides alone). The radii, the fixed widths (every
+  width but the two `ch` measures, which follow the type), the hairline and the ring scale by `u`
+  too: a 1 px hairline vanishes at three metres, a 6 px radius on an 88 px control reads square, and
+  a pane must hold the characters it holds on a phone. Motion is unchanged, and focus is the
+  existing ring, scaled (no scale transform: the roster draws focus as a ring everywhere, and a
+  scaled element blurs its text on most TV compositors). The structure is touch's: the `touch:`
+  variant and `useTouch` match inside a room Place, so nothing depends on hover. A room Place keeps
+  the app's mode (it scopes no colours), and the ten-foot guidance runs dark, so an app that draws a
+  room screen runs dark (`defaultMode: "dark"`). Emission: `roomTokens(scale)` is one record whose
+  values are canvas units, `scale` turning them into the platform's value, so both platforms share
+  one derivation. The web's `roomScope` renders each as `calc(N * var(--room-unit))` under
+  `[data-density="room"]`, which the Place sets on its root (a root `data-density="room"` pins it
+  page-wide) and which holds `--room-unit` itself, so the unit resolves at the element that reads
+  it. The scales (`scales.ts`) take no theme, so native imports them without the colour machinery:
+  it computes `roomUnitFor(width, height)` from `useWindowDimensions` and scopes the numbers with
+  uniwind's `ScopedVariables` (`RoomScope`, the `RaisedGround` mechanism), a scoped variable taking
+  a value and never a `calc`. The hairline reaches every border through `--default-border-width:
+  var(--hairline)` in `@theme`: Tailwind inlines a theme value into the utility, so only a variable
+  reference lets a bare `border` and a `divide` follow the room. A room Place holds one structure
+  and never splits, since breakpoints (px literals, and the `page` container queries that read them)
+  stay px while its widths scale: at 1920 a Place's container sees `wide` with its widths doubled,
+  so a `Split` or a beside column would overflow. It holds one column of `Columns`, `Stats` and
+  `Stat`, with no `context`, `more` or `foot` (their layers portal outside the scope and would draw
+  at the page's density), and `Place` types it so. Two limits stay named: a `vw` size ignores
+  browser zoom (the screen is read from across a room, never zoomed, and the floor keeps it at the
+  touch set at least), and `calc` sizes are fractional, so room line boxes leave the even-pixel rule
+  (a TV scales the frame anyway). Rejected: a consumer density option or a viewing-distance media
+  query (none detects distance), a hand-tuned third ladder (right on one screen, wrong on the next),
+  breakpoints that scale with `u` (every container query rewritten, relative units in `@container`
+  conditions unverified) and a `page-y` role used only by room.
 - Emission returns token records, never CSS text (`themeTokens`, `rootTokens`, `modeTokens`,
   `densityTokens`, `roomTokens`, `reducedMotionTokens`, `shadowUtilities`): records
   validate per key, need no escaping, and keep ui-core free of `@fcalell/cli`. `modeTokens`
@@ -182,12 +178,12 @@ pinned by the package's verify suite; this entry holds the architecture and its 
   light subtree renders light under a dark page; `rootTokens` puts the hairline, the ring, the
   layers' order and the light shadows on `:root` outside `@theme`: no theme utility reads them,
   and a layer is read by the arbitrary `z-(--layer-<layer>)`, since `z-*` reads no theme namespace.
-- Fonts split by fact: the theme names the families (`--font-sans`, `--font-mono`, each ahead of
-  its platform fallback), each plugin's `fonts` option carries the files (a woff2 with fallback
-  metrics on web, an expo-font source on native). The metric fallback face's name is one rule,
+- Fonts split by fact: the theme names the families (`--font-sans`, `--font-mono`, each ahead of its
+  platform fallback), each plugin's `fonts` option carries the files (a woff2 with fallback metrics
+  on web, an expo-font source on native). The metric fallback face's name is one rule,
   `fallbackFace(family)` in `./tokens`, which the family stack names second and the web plugin
-  declares its `@font-face` under, so the two cannot disagree. Rejected: a `role` on the file entry, which
-  put the same fact in two places and let the two disagree.
+  declares its `@font-face` under, so the two cannot disagree. Rejected: a `role` on the file entry,
+  which put the same fact in two places and let the two disagree.
 
 ## Words
 
@@ -195,30 +191,31 @@ Every word a molecule draws or reads aloud on its own (the seven `Status` words,
 `copy`, `copied`, `download`, `back`, `close`, `cancel`, `dismiss`, `more`, `send`, `stop`,
 `attach`, `search`, `loading`, `checking`, `retry`, `saving`, `saved`, `notSaved`, `add`, `remove`,
 `edit`, `details`, `places`, `notifications`, `code`, `added`, `removed`, `sort`, `ascending`,
-`descending`, `time`, `message`, `seen`, `unseen`, `copyFailed`, `downloadFailed`, `latest`, `missing`, `chooseFile`,
-`typeValue`, `pickValue`, `locked`, `warning`, `photos`, `files`, `changed`, `unchanged`, `stale`,
-`chooseAll`, `chooseNone`, `expand`, `collapse`, the counted `earlierLines`, and the slot words `meterValue`,
-`meterOver`, `meterMark`, `linesAdded`, `linesRemoved`, `changedFrom`, `wrongType`, `stepOf` and
-`chosenOf`) comes from `words`, a closed typed object with English defaults. The `Words` type
-requires every key and `wordsSchema` is strict, so a translation missing a word fails `tsc` and the
-schema. It is a plugin option beside `theme`; each plugin contributes a `WordsProvider` into the
-generated entry through its platform's `providers` slot, so the value reaches the components with no
-consumer glue, and the context defaults to English when no provider is mounted. A consumer's
-sentence is a prop on the molecule that draws it, never a key. A word drawn with a number is data,
-`{ one, other }` each spelling `{count}`, drawn through `counted(word, count)`, never a function:
-the words cross into the generated entry as a literal. Two forms are English's; a language with more
-plural categories needs a locale the words do not carry. A word drawn with values (a meter's "8.4 of
-10") is one whole phrase spelling named slots (`{value} of {max}`), drawn through `filled(word,
-values)`, the figures localized by the component; the schema rejects a translation that drops a
-slot. Rejected: a bare connective (`of`) composed around the figures, a sentence fragment a language
-cannot reorder. A moment drawn as its age (a table's `age` cell, an ISO moment so the table sorts by
-it) is no word either: each plugin formats it with the platform's `Intl.RelativeTimeFormat`
-(`numeric: "auto"`) in the document's language, in one helper over ui-core's `ageWords` (`./clock`).
-Every `Intl` formatter either plugin uses (an age, a moment, a meter's figures, a chart's ticks, a
-slider's value, the phone's `compact`) comes from ui-core's `formatterFor(kind, lang, options)`
-(`./format`), built once per kind, language and options at module scope, since building one costs
-far more than formatting (Hermes most of all) and ages and moments format per row per render; each
-plugin's tests hold no `new Intl.` in its `src`.
+`descending`, `time`, `message`, `seen`, `unseen`, `copyFailed`, `downloadFailed`, `latest`,
+`missing`, `chooseFile`, `typeValue`, `pickValue`, `locked`, `warning`, `photos`, `files`,
+`changed`, `unchanged`, `stale`, `chooseAll`, `chooseNone`, `expand`, `collapse`, the counted
+`earlierLines`, and the slot words `meterValue`, `meterOver`, `meterMark`, `linesAdded`,
+`linesRemoved`, `changedFrom`, `wrongType`, `stepOf` and `chosenOf`) comes from `words`, a closed
+typed object with English defaults. The `Words` type requires every key and `wordsSchema` is strict,
+so a translation missing a word fails `tsc` and the schema. It is a plugin option beside `theme`;
+each plugin contributes a `WordsProvider` into the generated entry through its platform's
+`providers` slot, so the value reaches the components with no consumer glue, and the context
+defaults to English when no provider is mounted. A consumer's sentence is a prop on the molecule
+that draws it, never a key. A word drawn with a number is data, `{ one, other }` each spelling
+`{count}`, drawn through `counted(word, count)`, never a function: the words cross into the
+generated entry as a literal. Two forms are English's; a language with more plural categories needs
+a locale the words do not carry. A word drawn with values (a meter's "8.4 of 10") is one whole
+phrase spelling named slots (`{value} of {max}`), drawn through `filled(word, values)`, the figures
+localized by the component; the schema rejects a translation that drops a slot. Rejected: a bare
+connective (`of`) composed around the figures, a sentence fragment a language cannot reorder. A
+moment drawn as its age (a table's `age` cell, an ISO moment so the table sorts by it) is no word
+either: each plugin formats it with the platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in
+the document's language, in one helper over ui-core's `ageWords` (`./clock`). Every `Intl` formatter
+either plugin uses (an age, a moment, a meter's figures, a chart's ticks, a slider's value, the
+phone's `compact`) comes from ui-core's `formatterFor(kind, lang, options)` (`./format`), built once
+per kind, language and options at module scope, since building one costs far more than formatting
+(Hermes most of all) and ages and moments format per row per render; each plugin's tests hold no
+`new Intl.` in its `src`.
 
 Ages and pending bars read one coarse clock per plugin (`lib/clock`, `useClock(read, until)`): an
 external store read with `useSyncExternalStore`, ticking once a second while a reader holds it.
@@ -239,13 +236,13 @@ a tick with no animation, never jumped to full.
 - `FAMILIES` (`./variants`) registers every matrix by its table's name with its axes read off the
   table, and `matrixCells` enumerates them into cells (`BUTTON.act.primary`): the verify suites and
   react-ui's showcase read the same list.
-- The emitted `app.css` carries every contract utility whether or not a source spells it:
-  react-ui contributes one `@source inline()` pattern per utility family over the token lists
-  (colours as fill, ink, border, outline and divider; spacing roles as paddings, gaps and widths; sizes as
+- The emitted `app.css` carries every contract utility whether or not a source spells it: react-ui
+  contributes one `@source inline()` pattern per utility family over the token lists (colours as
+  fill, ink, border, outline and divider; spacing roles as paddings, gaps and widths; sizes as
   heights, widths, minimums, paddings and an x translation; widths; type roles; tracking; radii;
-  shadows; durations; easings). Tailwind reads source text, and the showcase's foundations page builds its
-  classes from the token names. The cost is the whole contract in every
-  consumer's sheet, about 7.5 kB gzipped.
+  shadows; durations; easings). Tailwind reads source text, and the showcase's foundations page
+  builds its classes from the token names. The cost is the whole contract in every consumer's sheet,
+  about 7.5 kB gzipped.
 - Matrices hold the platform-invariant cells only: fills, borders (a container's `divide-` hairline
   among them), ink, spacing roles, radius, type role, weight, family, sizes and widths. Display,
   alignment, flex sizing, truncation, positioning, overflow, a negative margin that bleeds a region
@@ -273,10 +270,10 @@ a tick with no animation, never jumped to full.
   OptionList, an ItemHeader's loading bar in the line its text fills, so the loading frame and the
   loaded one share a height. A loading label's bar runs in `SKELETON_LANE`, a short label's
   measure in the ch of the role it stands in for.
-- A chosen option is ticked (`Picker`), checked or its radio dotted (`OptionList`), never washed: an option row
-  draws `ROW {state}` for the pointer alone, where a list's or a group's chosen row draws
-  `selected`. A destructive menu act's label draws `MENU_LABEL {kind: destructive}`
-  (`text-danger`), an axis because the act is given, not pointed at.
+- A chosen option is ticked (`Picker`), checked or its radio dotted (`OptionList`), never washed: an
+  option row draws `ROW {state}` for the pointer alone, where a list's or a group's chosen row draws
+  `selected`. A destructive menu act's label draws `MENU_LABEL {kind: destructive}` (`text-danger`),
+  an axis because the act is given, not pointed at.
 - The Picker's trigger takes `PICKER {fit}`: `field`, the field box at the bar fit; `bar`, the same
   box filling the column a `Rules` row gives it; or `row`, a list row's trailing pick, its value
   (`PICKER_VALUE`) and chevron in a `PILL_ACT` that pulls back by its own padding at the row's end
@@ -297,28 +294,27 @@ a tick with no animation, never jumped to full.
   overloads on `value` (`PickOneProps`, `PickSeveralProps`), each handler's parameter typed by
   the value beside it; a props union alone leaves a lambda's parameter untyped.
 - `Rules` is the one molecule for the inline-term rows a mapping and a filter are made of, each
-  `Rule` a pair (`from`, an arrow, `to`) or a condition (`field`, fixed `operator` words, a
-  `value`) with a remove act, and `add` ending the list. A `RuleValue` is one of three terms,
-  each a bar-fit `Picker` or an `Input`: `pick` (`OptionPick`), `picks` (`MultiPick`, the
-  chips) or `either` (`EitherPick`): a picked option or a typed value, `EitherValue`
-  `{ picked?: V } | { typed: string }`. The picked form is a Picker whose options lead with their
-  own glyph, or `Braces` when they carry no leading form (`marked`, with the other Rules and pick
-  logic in `./rules`), and whose list ends with the
-  act `typeValue`; the typed form is an `Input` at the bar fit (read from `InlineField`, the
-  context that names it by the term and focuses it after the viewer's own act) whose trailing act
-  `pickValue` (`ListFilter`) returns to the pick. The mark of which form it is is that leading
-  glyph (a typed value has none and keeps the `text` kind), never Value/Field tabs, which would
-  be a second control row over the 28 px row. The arrow is `ArrowRight` at `icon-meta`, faded
-  (`RULE_ARROW {state: unset}`, `ink-disabled`) until both sides hold a value (`pairSet`). From
-  `tablet` the list is one grid of four columns (the terms share what the arrow or operator and
-  the remove act leave) with each row a subgrid, so the columns align across rows whichever
-  shape a row has; the rows sit at the bar fit (`control-compact`) with the `inside` gap
-  (`RULES`, `RULE_ROW`). On touch the tree differs (`useTouch`): each rule is a card of stacked
-  terms (`RULE_CARD`, the arrow `ArrowDown`) in a `Group`, the columns no longer aligning, and
-  native always draws that form. Rejected: a `Table` picker-cell kind with an arrow column (the
-  Table's edit needs `onOpen`, its touch form is a `ListRow` list, and a mapping is a part of
-  a form, not records), an open `terms: Term[]` list (it cannot keep the columns aligned or
-  typed), and two components for pairs and conditions.
+  `Rule` a pair (`from`, an arrow, `to`) or a condition (`field`, fixed `operator` words, a `value`)
+  with a remove act, and `add` ending the list. A `RuleValue` is one of three terms, each a bar-fit
+  `Picker` or an `Input`: `pick` (`OptionPick`), `picks` (`MultiPick`, the chips) or `either`
+  (`EitherPick`): a picked option or a typed value, `EitherValue` `{ picked?: V } | { typed: string
+  }`. The picked form is a Picker whose options lead with their own glyph, or `Braces` when they
+  carry no leading form (`marked`, with the other Rules and pick logic in `./rules`), and whose list
+  ends with the act `typeValue`; the typed form is an `Input` at the bar fit (read from
+  `InlineField`, the context that names it by the term and focuses it after the viewer's own act)
+  whose trailing act `pickValue` (`ListFilter`) returns to the pick. The mark of which form it is is
+  that leading glyph (a typed value has none and keeps the `text` kind), never Value/Field tabs,
+  which would be a second control row over the 28 px row. The arrow is `ArrowRight` at `icon-meta`,
+  faded (`RULE_ARROW {state: unset}`, `ink-disabled`) until both sides hold a value (`pairSet`).
+  From `tablet` the list is one grid of four columns (the terms share what the arrow or operator and
+  the remove act leave) with each row a subgrid, so the columns align across rows whichever shape a
+  row has; the rows sit at the bar fit (`control-compact`) with the `inside` gap (`RULES`,
+  `RULE_ROW`). On touch the tree differs (`useTouch`): each rule is a card of stacked terms
+  (`RULE_CARD`, the arrow `ArrowDown`) in a `Group`, the columns no longer aligning, and native
+  always draws that form. Rejected: a `Table` picker-cell kind with an arrow column (the Table's
+  edit needs `onOpen`, its touch form is a `ListRow` list, and a mapping is a part of a form, not
+  records), an open `terms: Term[]` list (it cannot keep the columns aligned or typed), and two
+  components for pairs and conditions.
 - A status is a mark: a status that moves is a `Picker` whose options carry states
   (`Option.status`), its options and its value drawn as the `Status`, as an ItemHeader's moving
   status fact (`{ pick }`) is. Rejected: `Status` with `onOpen`, an act that opened a menu of
@@ -327,21 +323,20 @@ a tick with no animation, never jumped to full.
   title: `Place.context`, a `Switcher` (an `OptionPick` with its closing `IconAct`, the type the
   shell's switcher takes), drawn as the Picker at the `row` fit right after the `h1`, a `pair` apart
   and pulled back by `-ms-inside` as an `ItemHeader`'s pick fact is. Its value is capped at
-  `measure-short` and truncates (`PICKER_VALUE`, as a status label is), so a long label cannot
-  crush the title. It stands on the title line
-  under the top bar on touch too, since the context is part of the page's address and the top bar
-  is the shell's switcher. A context's kind (Draft, Ready) is `Option.chip`, the `ChipMark` a
-  `ListRow` carries: the chip draws after the option's label in the list and on the trigger, and
-  `Option.status` keeps meaning a work state that moves. Rejected: a Picker trigger variant or a
-  Place slot for a Picker the consumer built (a Place's props are descriptors, never nodes), and
-  Draft and Ready as a `status` (they are a kind, not a state the pick moves). The Place and the
-  Picker hold `CHIP` and `CHIP_LABEL`; a chip column's option (the Picker's `chip` family) draws its
-  own chip alone and ignores `Option.chip`.
+  `measure-short` and truncates (`PICKER_VALUE`, as a status label is), so a long label cannot crush
+  the title. It stands on the title line under the top bar on touch too, since the context is part
+  of the page's address and the top bar is the shell's switcher. A context's kind (Draft, Ready) is
+  `Option.chip`, the `ChipMark` a `ListRow` carries: the chip draws after the option's label in the
+  list and on the trigger, and `Option.status` keeps meaning a work state that moves. Rejected: a
+  Picker trigger variant or a Place slot for a Picker the consumer built (a Place's props are
+  descriptors, never nodes), and Draft and Ready as a `status` (they are a kind, not a state the
+  pick moves). The Place and the Picker hold `CHIP` and `CHIP_LABEL`; a chip column's option (the
+  Picker's `chip` family) draws its own chip alone and ignores `Option.chip`.
 - A header fact in words that opens a sheet is `{ label: Part; onOpen }` on `ItemHeader`: the words
   in the meta ink and a trailing `ChevronRight` at the meta fit in a `PILL_ACT`, pulled back at its
-  start as a pick fact is, a button named by the fact; the consumer's `onOpen` opens its own `Sheet`.
-  The chevron stays because on touch there is no hover and an unmarked opening fact cannot be
-  found; it is the form a system `Message` line takes with `onOpen`. Rejected: `Status` with
+  start as a pick fact is, a button named by the fact; the consumer's `onOpen` opens its own
+  `Sheet`. The chevron stays because on touch there is no hover and an unmarked opening fact cannot
+  be found; it is the form a system `Message` line takes with `onOpen`. Rejected: `Status` with
   `onOpen` (a status carries a hue, a fact in words none), a `Button` beside the facts (a second
   control for one fact) and a `Link` (the accent hue).
 - A field that saves as it is typed shows its save as an `ItemHeader` fact, `{ save: "saving" |
@@ -351,12 +346,12 @@ a tick with no animation, never jumped to full.
   labelled `retry`. The fact stands in a polite live region (`role="status"` on the web; on the
   phone `useLive` in `lib/live`: an Android live region plus an iOS
   `AccessibilityInfo.announceForAccessibility` on each change, never on mount) and keeps one key
-  across its states, so the region persists and each change is announced. The fact stands from
-  the record's open, `saved` at rest: a region that first mounts holding `saving` has no earlier
-  text to change from, so that first save may go unheard. The selection bar's count announces
-  through the same hook. Rejected: a generic fact that carries an act, which lets any fact hold
-  acts and leaves the words and the announcement to the consumer; a `Banner`, which is loud for a
-  save that usually succeeds. An autosaving `FieldBinding` feeding this fact is not built.
+  across its states, so the region persists and each change is announced. The fact stands from the
+  record's open, `saved` at rest: a region that first mounts holding `saving` has no earlier text to
+  change from, so that first save may go unheard. The selection bar's count announces through the
+  same hook. Rejected: a generic fact that carries an act, which lets any fact hold acts and leaves
+  the words and the announcement to the consumer; a `Banner`, which is loud for a save that usually
+  succeeds. An autosaving `FieldBinding` feeding this fact is not built.
 - `running` is work under way and `active` a steady state (a watch that stands, a service that is
   up): both wear the accent, and `running` draws a `Spinner` where every other state draws its
   dot, wherever a status draws one (a `Status`, a list row's `{ status }` leading, an
@@ -367,70 +362,67 @@ a tick with no animation, never jumped to full.
   under reduced motion: it is a progress indicator, the one motion that says work is under way,
   and a still arc reads as a stalled one; reduced motion stills the transitions around it. Rejected:
   spinning `active`, which would turn a row that stands for days.
-- The Shell's switcher is a pick: a `Switcher` is an `OptionPick` whose options carry their
-  avatars (`Option.avatar`, leading the option row as a status's dot does) plus `act`, the act
-  that makes a new one, which the Picker draws under a hairline (`HAIRLINE`) after the options as
-  a `ROW` (the Picker's `act` prop). The Shell draws its own trigger (a place row, `SWITCHER` on
-  touch) over the Picker's list through its internal base. Rejected: a switcher menu of its own,
-  a second list of the same rows. The Shell hands its `Switcher` descriptor down (`ShellSwitcher`), and
-  each Place draws the touch trigger from it, so the context changes only when the switcher does
-  and a Shell state change re-renders no Place. A Picker stands outside a form; a form's pick is `Select`.
+- The Shell's switcher is a pick: a `Switcher` is an `OptionPick` whose options carry their avatars
+  (`Option.avatar`, leading the option row as a status's dot does) plus `act`, the act that makes a
+  new one, which the Picker draws under a hairline (`HAIRLINE`) after the options as a `ROW` (the
+  Picker's `act` prop). The Shell draws its own trigger (a place row, `SWITCHER` on touch) over the
+  Picker's list through its internal base. Rejected: a switcher menu of its own, a second list of
+  the same rows. The Shell hands its `Switcher` descriptor down (`ShellSwitcher`), and each Place
+  draws the touch trigger from it, so the context changes only when the switcher does and a Shell
+  state change re-renders no Place. A Picker stands outside a form; a form's pick is `Select`.
 - On touch the places past the tab bar are a page, not a menu: the More tab opens a `Place` of
   `ListRow`s (each place's glyph leading, its count trailing, its route), and while a Place's act
   floats the toasts stand above it by the act's room; while a foot docks (a Place's `foot`, a
   filling Thread's input) they stand above the foot by layout as the input grows, with no height
-  reported to the Shell. On the web the docked foot names itself a CSS anchor
-  (`anchor-name: --docked-foot`) and the toasts' layer sets its bottom to that anchor's top
-  (`anchor(--docked-foot top, 0px)`, `main`'s foot without one), so the layer stays one
-  viewport in the Shell's `main` and follows the foot in the frame it grows (anchor positioning
-  is Baseline since January 2026: Chrome 125, Safari 26, Firefox 147). Rejected: the
-  viewport moved into the page's column, since the page is a size container, whose layout
-  containment makes a stacking context between the toasts and the root (below), and a
-  Place and a filling Thread inside it would each draw one. A frame never tells
-  the Shell what it is after paint; the Shell learns it before the first frame. On the web the
-  page marks its tree and the Shell's column reads the marks by `group-has-*/column` variants:
-  a pushed Screen's root carries `data-screen`, which hides the tab bar, and a floating act's
-  layer `data-act-floats`, which shows the act's room under the toasts, so both hold from the
-  first paint and across the density line. Native has no such selector, so the frame draws what
-  the Shell would have had to learn: the Shell hands its tab bar to each Place (`ShellTabs`, as
-  it hands the switcher), which draws it under its body, and a pushed Screen draws none and
-  clears the home indicator itself; the region that stands over the page's docked foot draws the box
-  the toasts stand in (`ToastRoom`): a Place's body over its act's room (above its `foot` and the
-  tab bar by layout), a pushed Screen's body, or a filling Thread's log (above its input, and
-  lifted with it over the keyboard), the Place leaving it to a Thread it holds, as its child or
-  its Split's record; the box places the Shell's toasts' layer by measuring itself against the Shell's root
+  reported to the Shell. On the web the docked foot names itself a CSS anchor (`anchor-name:
+  --docked-foot`) and the toasts' layer sets its bottom to that anchor's top (`anchor(--docked-foot
+  top, 0px)`, `main`'s foot without one), so the layer stays one viewport in the Shell's `main` and
+  follows the foot in the frame it grows (anchor positioning is Baseline since January 2026: Chrome
+  125, Safari 26, Firefox 147). Rejected: the viewport moved into the page's column, since the page
+  is a size container, whose layout containment makes a stacking context between the toasts and the
+  root (below), and a Place and a filling Thread inside it would each draw one. A frame never tells
+  the Shell what it is after paint; the Shell learns it before the first frame. On the web the page
+  marks its tree and the Shell's column reads the marks by `group-has-*/column` variants: a pushed
+  Screen's root carries `data-screen`, which hides the tab bar, and a floating act's layer
+  `data-act-floats`, which shows the act's room under the toasts, so both hold from the first paint
+  and across the density line. Native has no such selector, so the frame draws what the Shell would
+  have had to learn: the Shell hands its tab bar to each Place (`ShellTabs`, as it hands the
+  switcher), which draws it under its body, and a pushed Screen draws none and clears the home
+  indicator itself; the region that stands over the page's docked foot draws the box the toasts
+  stand in (`ToastRoom`): a Place's body over its act's room (above its `foot` and the tab bar by
+  layout), a pushed Screen's body, or a filling Thread's log (above its input, and lifted with it
+  over the keyboard), the Place leaving it to a Thread it holds, as its child or its Split's record;
+  the box places the Shell's toasts' layer by measuring itself against the Shell's root
   (`ToastFrame`), the one measure left, since the layer stands outside the page's tree (below).
-  Rejected: a registration the Shell reads in render from a host object, since a frame that
-  mounts after the Shell's render (a route that waits first) leaves nothing that renders the
-  Shell's tab bar again. A Split and its page work the same way on the web: the Place (or a
-  pushed Screen) owns the handle of the Split's details sheet (`DetailsSheet`) and always draws
-  the back act to its route and the Details act, and the Split marks its root `data-record`,
-  `data-pane` and `data-beside`; `group-has-*/page` variants on the page's head show the back
-  act below `tablet` with a record, the Details act below `wide` with a pane and at every width
-  beside a record, and hide the head below `tablet` beside a record, while a Toolbar leaves with
-  the list below `tablet` with a record, all from a deep link's first frame. Native has no such
-  selector, so by contract a Split stands as its page's direct child (the page's frame region,
-  stated in both rules pages): the Place or Screen reads the Split element's props among its
-  children in render (`useSplitHead`, as a Toolbar sorts its children by type), so its head
-  draws the back act with a record, the Details act with a pane and no head beside a record from
-  the first frame, and holds the Details sheet's open state (`DetailsOpen`), which closes with
-  the pane it opened on. A Split standing deeper draws as a plain region and no head draws its
-  acts. Rejected: a registration the Place reads in render from a host object, since the Place's
-  head renders before the Split in the same pass and a Split inside a component that re-renders
-  alone (a selection in that component's state) would leave the head stale. Each region keeps
-  its own keyed scroll, so a record opens at its top after a scrolled list.
-- A molecule whose structure follows density keeps one constant per structure, never a density
-  axis: the page's head (`PAGE_HEAD`, one hairline at both densities) holds the desktop strip
+  Rejected: a registration the Shell reads in render from a host object, since a frame that mounts
+  after the Shell's render (a route that waits first) leaves nothing that renders the Shell's tab
+  bar again. A Split and its page work the same way on the web: the Place (or a pushed Screen) owns
+  the handle of the Split's details sheet (`DetailsSheet`) and always draws the back act to its
+  route and the Details act, and the Split marks its root `data-record`, `data-pane` and
+  `data-beside`; `group-has-*/page` variants on the page's head show the back act below `tablet`
+  with a record, the Details act below `wide` with a pane and at every width beside a record, and
+  hide the head below `tablet` beside a record, while a Toolbar leaves with the list below `tablet`
+  with a record, all from a deep link's first frame. Native has no such selector, so by contract a
+  Split stands as its page's direct child (the page's frame region, stated in both rules pages): the
+  Place or Screen reads the Split element's props among its children in render (`useSplitHead`, as a
+  Toolbar sorts its children by type), so its head draws the back act with a record, the Details act
+  with a pane and no head beside a record from the first frame, and holds the Details sheet's open
+  state (`DetailsOpen`), which closes with the pane it opened on. A Split standing deeper draws as a
+  plain region and no head draws its acts. Rejected: a registration the Place reads in render from a
+  host object, since the Place's head renders before the Split in the same pass and a Split inside a
+  component that re-renders alone (a selection in that component's state) would leave the head
+  stale. Each region keeps its own keyed scroll, so a record opens at its top after a scrolled list.
+- A molecule whose structure follows density keeps one constant per structure, never a density axis:
+  the page's head (`PAGE_HEAD`, one hairline at both densities) holds the desktop strip
   (`PAGE_TOP_BAR` with the title and acts in one row) or the touch one (`PAGE_TOP_BAR` over the
-  title, which keeps `PAGE_TITLE` above the hairline), the sidebar
-  (`SHELL_SIDEBAR`, `PLACE_ROW`) and the tab bar (`SHELL_TAB_BAR`, `PLACE_TAB`), the split's
-  list inside its hairline and the list alone. The web picks the structure under `touch:` or,
-  for a Split, by its page's width: every Place and Screen is the `page` size container and the
-  web's `page-<breakpoint>:` / `page-max-<breakpoint>:` variants, emitted from the breakpoint
-  values, query it, so the Split's regions and the Details and back acts its marks show follow the room
-  the page has beside a sidebar rather than the viewport; native draws the touch one. A bleeding
-  body draws no inset, and whatever stands first in it (a Toolbar, the record, the list alone)
-  carries its own top inset.
+  title, which keeps `PAGE_TITLE` above the hairline), the sidebar (`SHELL_SIDEBAR`, `PLACE_ROW`)
+  and the tab bar (`SHELL_TAB_BAR`, `PLACE_TAB`), the split's list inside its hairline and the list
+  alone. The web picks the structure under `touch:` or, for a Split, by its page's width: every
+  Place and Screen is the `page` size container and the web's `page-<breakpoint>:` /
+  `page-max-<breakpoint>:` variants, emitted from the breakpoint values, query it, so the Split's
+  regions and the Details and back acts its marks show follow the room the page has beside a sidebar
+  rather than the viewport; native draws the touch one. A bleeding body draws no inset, and whatever
+  stands first in it (a Toolbar, the record, the list alone) carries its own top inset.
 - A loading form stands in for what it replaces at that part's size: `SKELETON` by the part
   (`line`, `avatar`, `icon`, `dot`, `check`, `switch`, `count`, `field`, `meter`, `chart`) and
   `SKELETON_ROW` by the row it replaces (`setting`, `field`, `facts`, `one-line`,
@@ -471,15 +463,14 @@ a tick with no animation, never jumped to full.
   into the room the marks leave). Every row keeps one height, so its waiting form matches it by
   construction. A short label (a chip's, a status word, a skeleton label's lane) is bounded by the
   one width `measure-short` (18ch, the short sibling of `measure`).
-- A minimum height is the floor of something pressed (a control, a field, a target, a chip, a
-  row), the set height of a bar (`strip` 40 / 44: the page's desktop strip and its touch top
-  bar), an intrinsic size, or the height of what a part swaps with: `PENDING_TRACK` an action
-  bar's (`min-h-control`).
-  Any other container takes its height from its content and padding through flex, its parts
-  centred on the tallest, never from a height copied from another component to line things up:
-  a section head or a sheet head is its act's height, a banner its line (or its act) inside
-  `py-pair`. Rejected: a `header` size, a minimum that made a title-only head as tall as one
-  with an act.
+- A minimum height is the floor of something pressed (a control, a field, a target, a chip, a row),
+  the set height of a bar (`strip` 40 / 44: the page's desktop strip and its touch top bar), an
+  intrinsic size, or the height of what a part swaps with: `PENDING_TRACK` an action bar's
+  (`min-h-control`). Any other container takes its height from its content and padding through flex,
+  its parts centred on the tallest, never from a height copied from another component to line things
+  up: a section head or a sheet head is its act's height, a banner its line (or its act) inside
+  `py-pair`. Rejected: a `header` size, a minimum that made a title-only head as tall as one with an
+  act.
 - A touch Place draws its one floating act; in a Split it centres on the list by CSS alone: a
   bleeding Place is the `group/page` whose layer, from `tablet` of the page and with a
   `data-split` inside, narrows to `w-list` at the body's start (below `tablet` it spans whichever
@@ -490,23 +481,23 @@ a tick with no animation, never jumped to full.
   copies of the act would each keep their own state, so the act is never duplicated. The act is
   lifted (`FLOATING_ACT_LIFT`, `shadow-float` at the control radius) as a Thread's Latest act is:
   an act floating over what scrolls is a lifted layer, the one shadow it carries.
-- A field that stays in view while a Place's sections scroll (an ask box over a home) is the
-  Place's `foot`, an explicit slot: it docks under the body at both densities on the shared `FOOT`
-  cell (the page inset at the sides and foot, the cell a filling Thread's input docks on, held by
-  no entry), the body scrolling past it, above the tab bar on touch and, on native, lifted over
-  the keyboard (the body and the foot share one `KeyboardAvoidingView`, `Lifted`). The body
-  ends a sections gap over it (`PAGE_BODY_OVER_FOOT`), as a filling Thread's log ends over its
-  input, so the field reads apart from the last section; the foot spans the body at every
-  density, whatever it holds (the Place never reads its element type), and a docked `MessageInput`
-  keeps its own measure column (`THREAD_COLUMN`) inside it on the desktop, the column a Thread's
-  input stands in. It names
-  the Shell's toasts' anchor as a filling Thread's input does. `act` and `foot` are exclusive in the props type:
-  the foot's Send is the screen's one filled act, so a floating act beside it would be a second.
-  A Place with a `foot` gives a Thread no room to fill (`ThreadRoom`), so a Thread in its body stands inline among the
-  sections with no foot of its own, and no Latest act stands over the Place's foot. Rejected: a
-  foot derived from a Thread's position (a Thread in the last Section docking its input), which
-  hides the dock from the call site; a `MessageInput` docked variant, since docking is the
-  frame's, never the field's (the column the field keeps is its own at every use, not a docked form).
+- A field that stays in view while a Place's sections scroll (an ask box over a home) is the Place's
+  `foot`, an explicit slot: it docks under the body at both densities on the shared `FOOT` cell (the
+  page inset at the sides and foot, the cell a filling Thread's input docks on, held by no entry),
+  the body scrolling past it, above the tab bar on touch and, on native, lifted over the keyboard
+  (the body and the foot share one `KeyboardAvoidingView`, `Lifted`). The body ends a sections gap
+  over it (`PAGE_BODY_OVER_FOOT`), as a filling Thread's log ends over its input, so the field reads
+  apart from the last section; the foot spans the body at every density, whatever it holds (the
+  Place never reads its element type), and a docked `MessageInput` keeps its own measure column
+  (`THREAD_COLUMN`) inside it on the desktop, the column a Thread's input stands in. It names the
+  Shell's toasts' anchor as a filling Thread's input does. `act` and `foot` are exclusive in the
+  props type: the foot's Send is the screen's one filled act, so a floating act beside it would be a
+  second. A Place with a `foot` gives a Thread no room to fill (`ThreadRoom`), so a Thread in its
+  body stands inline among the sections with no foot of its own, and no Latest act stands over the
+  Place's foot. Rejected: a foot derived from a Thread's position (a Thread in the last Section
+  docking its input), which hides the dock from the call site; a `MessageInput` docked variant,
+  since docking is the frame's, never the field's (the column the field keeps is its own at every
+  use, not a docked form).
 - A record the main opened is the Split's `beside`: a `Screen` whose `back` is the main's route,
   given by the consumer because the route's depth differs by surface and no component can derive it.
   From `wide` of the page the list, the main and the beside record stand together, main and beside
@@ -534,13 +525,12 @@ a tick with no animation, never jumped to full.
   (`padding-bottom: env(safe-area-inset-bottom)`, non-zero under the document's
   `viewport-fit=cover`), an overlay the tab bar spells beside `SHELL_TAB_BAR`; native pads the
   same inset from `react-native-safe-area-context`.
-- A frame's fixed regions are widths (`sidebar`, `list`, `pane`, `column`, `auth`, `empty` an
-  empty state's column), so a region
-  keeps its measure at any viewport. A skeleton bar alone takes a fraction width (`w-1/12`,
-  `w-1/5`, `w-1/4` to `w-3/4`) to stand at its text's length: structural, a closed list in the
-  web verify's overlay acceptance, never a token; a chart column's share of its slot (`w-2/3`)
-  is structural the same way. A size the data decides (a meter's fill width, a chart column's
-  height) is the value's share, set by the component on both platforms, never a class.
+- A frame's fixed regions are widths (`sidebar`, `list`, `pane`, `column`, `auth`, `empty` an empty
+  state's column), so a region keeps its measure at any viewport. A skeleton bar alone takes a
+  fraction width (`w-1/12`, `w-1/5`, `w-1/4` to `w-3/4`) to stand at its text's length: structural,
+  a closed list in the web verify's overlay acceptance, never a token; a chart column's share of its
+  slot (`w-2/3`) is structural the same way. A size the data decides (a meter's fill width, a chart
+  column's height) is the value's share, set by the component on both platforms, never a class.
 - A class with no look is structural, an overlay the web's class sweep classifies: a stacking
   order inside one component (`z-1`, a frozen table column over the cells that scroll under it,
   inside `isolate`, the grid its own stacking context so the column never stands over a sheet),
@@ -629,7 +619,7 @@ a tick with no animation, never jumped to full.
   `ArrowRight` and `after` in the body ink, neither tinted, since a changed value is no verdict;
   only a value added (null `before`) takes `ok-soft` and one removed (null `after`) `danger-soft`,
   struck, each a chip-radius pill (`TABLE_CHANGE`, `TABLE_CHANGE_VALUE`). It reads aloud through the
-  slot word `changed` ("from X to Y"), or `added` or `removed` before the one value it holds.
+  slot word `changedFrom` ("from X to Y"), or `added` or `removed` before the one value it holds.
   Rejected: tinting `after` for any change (a rename is not good news), and a Comparison column
   (that sets facts side by side, not one value's movement). A Table chooses rows through `choose`
   (`TableChoice<T>`: `chosen`, the ticked ids, and `onChange`, which hears the set a tick makes;
@@ -652,26 +642,27 @@ a tick with no animation, never jumped to full.
   leads its meta. The head tick draws no count, and the table none: "N of M chosen" belongs to the
   selection bar, which reads this selection: an `ActionBar` with `chosen: { count, of, onAll? }`
   docked as the Place's `foot`. Touch has no head tick, so `onAll` puts the choose-all act on the
-  bar: beside the count, words in a pill (`PILL_ACT`) reading `chooseAll` while some rows stand
-  unchosen and `chooseNone` once all are, as the head tick toggles, and calling `onAll(true)` or
-  `onAll(false)`. `of` counts the rows that can be chosen, so a list with blocked rows still reaches
-  the cleared state. It draws the slot word `chosenOf` at meta at the bar's start (one phrase, since
-  the count left behind is `of - count`), in a polite live region, and the acts beside it at the end
-  (`ACTION_BAR_CHOSEN`, a pair apart), the bar's one filled act the page's one; on touch the count
-  stands over the full-width act. The act's label ("Publish 4 changes") and its blocked reason stay
-  the consumer's `Act`. The bar is not a new component: `ActionBar` already owns the filled act, its
-  pending state, the reason and the touch stacking, and `Place.foot` already docks, scrolls the body
-  under it and stands above the tab bar and the toasts. A grid re-renders only the rows and cells
-  whose state changed: rows and cells are memoised components fed per-cell values and one stable set
-  of callbacks. On the web a cell holds the pointer's hover itself (an editable cell under the
-  pointer shows its control), so a pointer crossing the grid renders the cells it leaves and enters;
-  the cursor moves by focus, and a focus on the cursor's own cell sets nothing. On the phone a row's
-  two halves (the frozen leading cell and the cells that scroll) wash together on a press, so both
-  read one store of the pressed row's id, each only whether it is the pressed one; a sortable header
-  washes through the Pressable's own pressed state. The web mounts both forms and CSS hides one,
-  since the switch is the page's container width, which no store reads: a sort, a selection or a
-  data change renders the rows twice until Place and Screen hand their page's width to one external
-  store.
+  bar there only (below `tablet` on the web, always on the phone); on the desktop the head tick is
+  the select-all and the bar draws none. The act stands beside the count, words in a pill
+  (`PILL_ACT`) reading `chooseAll` while some rows stand unchosen and `chooseNone` once all are, as
+  the head tick toggles, and calls `onAll(true)` or `onAll(false)`. `of` counts the rows that can be chosen, so a list with
+  blocked rows still reaches the cleared state. It draws the slot word `chosenOf` at meta at the
+  bar's start (one phrase, since the count left behind is `of - count`), in a polite live region,
+  and the acts beside it at the end (`ACTION_BAR_CHOSEN`, a pair apart), the bar's one filled act
+  the page's one; on touch the count stands over the full-width act. The act's label ("Publish 4
+  changes") and its blocked reason stay the consumer's `Act`. The bar is not a new component:
+  `ActionBar` already owns the filled act, its pending state, the reason and the touch stacking, and
+  `Place.foot` already docks, scrolls the body under it and stands above the tab bar and the toasts.
+  A grid re-renders only the rows and cells whose state changed: rows and cells are memoised
+  components fed per-cell values and one stable set of callbacks. On the web a cell holds the
+  pointer's hover itself (an editable cell under the pointer shows its control), so a pointer
+  crossing the grid renders the cells it leaves and enters; the cursor moves by focus, and a focus
+  on the cursor's own cell sets nothing. On the phone a row's two halves (the frozen leading cell
+  and the cells that scroll) wash together on a press, so both read one store of the pressed row's
+  id, each only whether it is the pressed one; a sortable header washes through the Pressable's own
+  pressed state. The web mounts both forms and CSS hides one, since the switch is the page's
+  container width, which no store reads: a sort, a selection or a data change renders the rows twice
+  until Place and Screen hand their page's width to one external store.
 - A thread is a molecule (`Thread`), a collection: its Messages from `query` (with `sentence`) or
   `items` (waiting on `loading`) through the `message` map, one function per `Message` slot (`key`,
   `author`, `name`, `body`, `at`, `attachments` and `meta` for a turn, `onOpen` returning a system
@@ -728,16 +719,15 @@ a tick with no animation, never jumped to full.
   `null` at the end), which it draws in the log's region over its docked foot. The layer is anchored
   inside that region, never hung above the foot by `bottom-full`, because Android does not hit-test
   a child outside its parent's bounds.
-- A content molecule derives once per input: `Prose` lexes and folds its markdown, `Diff` runs
-  its patch, `ProseDiff` its word diff and runs, and `QrCode` its encoding and module path, each
+- A content molecule derives once per input: `Prose` lexes and folds its markdown, `Diff` runs its
+  patch, `ProseDiff` its word diff and runs, and `QrCode` its encoding and module path, each
   memoised on its text and skipped while it waits (a waiting QR tile draws a version 2 code's 25
-  modules and encodes nothing). `Message` is memoised on its props, and the Thread draws each
-  item through a memoised item that renders again only when its item does: every slot reads the
-  item, and a system line's `onOpen` and a detail row's `onOpen` call the thread's latest slots
-  when pressed, so a thread's re-render (a keystroke in its input, a message arriving) skips every
-  message already drawn. The showcase compiles the
-  workspace's plugin source with the React Compiler, which memoises on its own; a consumer's
-  `node_modules` copy is not compiled, so these memos are explicit.
+  modules and encodes nothing). `Message` is memoised on its props, and the Thread draws each item
+  through a memoised item that renders again only when its item does: every slot reads the item, and
+  a system line's `onOpen` and a detail row's `onOpen` call the thread's latest slots when pressed,
+  so a thread's re-render (a keystroke in its input, a message arriving) skips every message already
+  drawn. The showcase compiles the workspace's plugin source with the React Compiler, which memoises
+  on its own; a consumer's `node_modules` copy is not compiled, so these memos are explicit.
 - A blocked act shows its reason once pressed or once its form or sheet is touched. The press is
   derived, never reset by an effect: it is kept as the reason the act was blocked by when
   pressed, and stands while `blocked` is that reason (`pressStands` in ui-core's `./reason`,
@@ -747,17 +737,17 @@ a tick with no animation, never jumped to full.
   ActionBar's host is the same object per act while its reason holds. An ActionBar settles the
   filled act's promise with `then(done, done)`, so a failing act leaves no derived promise to
   reject unhandled.
-- A `MessageInput` sends while an answer streams: `working` sets Stop before Send and leaves
-  Send live, so Send and Enter send whenever the text is non-empty. Stop is the secondary bar
-  Button on the desktop and an icon act at the bar fit (`ICON_BUTTON.fit.bar`, `CircleStop`) on
-  touch, so the touch field gives up only a compact square. Lucide draws no filled stop square,
-  and a bare `Square` beside the field reads as an unchecked box. What becomes of a message sent while
-  an answer runs is the consumer's sentence in `notice`; the input takes no prop for it.
-  On native, Send and Stop never touch focus: the keyboard stays up because no tap takes it, the
-  Place and Screen scroll (`Scroll` in `lib/hosts`) keeping taps on its acts
+- A `MessageInput` sends while an answer streams: `working` sets Stop before Send and leaves Send
+  live, so Send and Enter send whenever the text is non-empty. Stop is the secondary bar Button on
+  the desktop and an icon act at the bar fit (`ICON_BUTTON.fit.bar`, `CircleStop`) on touch, so the
+  touch field gives up only a compact square. Lucide draws no filled stop square, and a bare
+  `Square` beside the field reads as an unchecked box. What becomes of a message sent while an
+  answer runs is the consumer's sentence in `notice`; the input takes no prop for it. On native,
+  Send and Stop never touch focus: the keyboard stays up because no tap takes it, the Place and
+  Screen scroll (`Scroll` in `lib/hosts`) keeping taps on its acts
   (`keyboardShouldPersistTaps="handled"`) and a docked foot standing outside any scroll. The web
-  input refocuses its text after Send and Stop, which is keyboard focus management there. A
-  removed chip hands the screen reader's focus on (`sendAccessibilityEvent`), never the keyboard.
+  input refocuses its text after Send and Stop, which is keyboard focus management there. A removed
+  chip hands the screen reader's focus on (`sendAccessibilityEvent`), never the keyboard.
 - A message carries what came with it: `Message` for `you` and `other` takes `attachments`
   (`Attachment`: an id, a name and an optional `src`, an image's address) and `meta` (`Part[]`, the
   name `ListRow` gives its meta line), `system` takes neither. The attachments stand in one wrapping
@@ -785,9 +775,10 @@ a tick with no animation, never jumped to full.
   exposes no paste event and hands over no pasted image, so the phone takes files through the
   attach act alone, a limit until React Native gives the text input one. A picked file's
   `PickedFile` reads its bytes through `blob()` like every file, and carries `src`, a local address
-  to draw its thumbnail from before it is uploaded: the asset's uri on the phone, and on the web an
-  object URL the picker makes for an image (`URL.createObjectURL`). The package never revokes it,
-  since it cannot know when the consumer stops showing the file: the consumer calls
+  to draw its thumbnail from before it is uploaded: the asset's uri on the phone, which needs no
+  revoke, and on the web an object URL (`URL.createObjectURL`) that `MessageInput`'s attach path
+  alone makes, for an image (a web `FileInput`'s file carries no `src`). The package never revokes
+  it, since it cannot know when the consumer stops showing the file: the consumer calls
   `URL.revokeObjectURL(file.src)` once it drops the attachment.
 - Focus at mount is declarative on native: a typing control (`Input`, `InputOtp`) takes
   `autoFocus` from `FieldFocus`, which the caller that knows no other field holds focus sets (a
@@ -806,35 +797,35 @@ a tick with no animation, never jumped to full.
   waiting on `loading`) and one item map: `row`, one function per `ListRow` slot, `file`, one per
   `FileRow` slot, or `meter`, one per `Meter` slot. Its waiting rows are the row's own markup
   (`list-row/wait.tsx`, `file-row/wait.tsx`, `meter/wait.tsx`), a ListRow's with bars in the slots
-  `row` declares, a FileRow's chip bar only when `file` declares `chip` (`fileShape`) and a Meter's
-  line bar only when `meter` declares `meta` or `counts`, read before any item exists. The `leading`
-  slot names its kind by its one key (`{ avatar }`, `{ icon }` or `{ status }`, each a function of
-  the item), so a list's rows share one kind or have none, and the waiting row draws that kind's
-  mark at its size (`SKELETON` `avatar`, `icon` or `dot`). A trailing waits `figures` wide; a
-  declared `status` or `chip` draws the marks' bar at the meta line's end, half its own short-label
-  lane (`RowShape.marks`), as the loaded marks end that line; a declared `more` keeps the act's room
-  empty. A collection of unknown length waits as four rows, and its height change on load is
-  accepted. A failed query draws the failed EmptyState with `sentence` and Retry; no item draws
-  `empty` (an EmptyState's props, its act the one that fills the list). Its decisions (which state,
-  the waiting shape, the count, Retry) and the Section's total (`sectionCount`) are ui-core's
-  `./list-state`, which both platforms import, tested without rendering.
+  `row` declares, a FileRow's chip bar only when `file` declares `chip`, and its change lane when
+  `file` declares `change` (`fileShape`), and a Meter's line bar only when `meter` declares `meta`
+  or `counts`, read before any item exists. The `leading` slot names its kind by its one key (`{
+  avatar }`, `{ icon }` or `{ status }`, each a function of the item), so a list's rows share one
+  kind or have none, and the waiting row draws that kind's mark at its size (`SKELETON` `avatar`,
+  `icon` or `dot`). A trailing waits `figures` wide; a declared `status` or `chip` draws the marks'
+  bar at the meta line's end, half its own short-label lane (`RowShape.marks`), as the loaded marks
+  end that line; a declared `more` keeps the act's room empty. A collection of unknown length waits
+  as four rows, and its height change on load is accepted. A failed query draws the failed
+  EmptyState with `sentence` and Retry; no item draws `empty` (an EmptyState's props, its act the
+  one that fills the list). Its decisions (which state, the waiting shape, the count, Retry) and the
+  Section's total (`sectionCount`) are ui-core's `./list-state`, which both platforms import, tested
+  without rendering.
 - A `ListRow` carries several marks as named props, not a `marks` record: `status`, `warning`,
-  `lock`, `chip`, at most one each, in that order on the meta line (`ROW_MARKS`). `warning` is
-  what is wrong with the row (a string: "Name conflicts with Checkout"), a `TriangleAlert` glyph
-  at the meta icon size in `warn` (`ROW_WARNING`) beside its label in the meta ink, read after the
+  `lock`, `chip`, at most one each, in that order on the meta line (`ROW_MARKS`). `warning` is what
+  is wrong with the row (a string: "Name conflicts with Checkout"), a `TriangleAlert` glyph at the
+  meta icon size in `warn` (`ROW_WARNING`) beside its label in the meta ink, read after the
   `warning` word; `lock` is what the row holds ("Holds 3 fields"), the lock mark whose label shows
-  from `tablet` and is read aloud always, after the word `locked`, the glyph alone below. The
-  mark is one internal `LockMark` per platform (`status/lock`), which a Table cell and head and a
+  from `tablet` and is read aloud always, after the word `locked`, the glyph alone below. The mark
+  is one internal `LockMark` per platform (`list-row/lock`), which a Table cell and head and a
   `DefinitionRow` draw too: `LOCK_GLYPH` (the meta ink, no margin) names the glyph, and the
-  container's gap spaces it from what it follows. The act that
-  clears a warning is the row's `act`, one visible act a row; a mark that is itself a press would
-  put a second hit inside a row that may open. The marks yield from the end of the line: the chip
-  truncates first, then the lock's label, and the warning's label keeps. Why named props: `List`'s
-  per-slot functions let a waiting row know which marks to reserve before any item exists
-  (`rowShape` reads `warning` and `lock` by key, as it does `status` and `chip`); a `marks`
-  record function would hide that. A count is a meta part and a test status a `status`, so no cell
-  kind is added; a change set's mark is `change`, below.
-  A `Table` row's `warning` (`TableRowSlots.warning`) is drawn after its leading cell's name on the
+  container's gap spaces it from what it follows. The act that clears a warning is the row's `act`,
+  one visible act a row; a mark that is itself a press would put a second hit inside a row that may
+  open. The marks yield from the end of the line: the chip truncates first, then the lock's label,
+  and the warning's label keeps. Why named props: `List`'s per-slot functions let a waiting row know
+  which marks to reserve before any item exists (`rowShape` reads `warning` and `lock` by key, as it
+  does `status` and `chip`); a `marks` record function would hide that. A count is a meta part and a
+  test status a `status`, so no cell kind is added; a change set's mark is `change`, below. A
+  `Table` row's `warning` (`TableRowSlots.warning`) is drawn after its leading cell's name on the
   grid, the same glyph and label; on touch it is the `ListRow` warning, and on the phone's frozen
   leading column, a short measure wide, the glyph alone with the sentence read with the row's name.
   The Table has no row act, so a warning's act on a Table row is the row's open.
@@ -858,9 +849,9 @@ a tick with no animation, never jumped to full.
 - A row's `leading` may be a tick: `RowLeading` gains `{ check: { checked, onChange, blocked? } }`,
   a `Checkbox` in the leading slot at its hit box (`target`) above the row's open hit, named by the
   title. `blocked` (the reason it cannot be ticked) draws it disabled and leads the row's meta line,
-  so the row grows to two lines. It is how a touch Table chooses rows; a `List`'s `leading` slot takes
-  `check` as it does `avatar`, `icon` and `status`, and `rowShape` reads it so a waiting row holds
-  the tick's skeleton in the same slot.
+  so the row grows to two lines. It is how a touch Table chooses rows; a `List`'s `leading` slot
+  takes `check` as it does `avatar`, `icon` and `status`, and `rowShape` reads it so a waiting row
+  holds the tick's skeleton in the same slot.
 - A `ListRow` shows a labelled act and holds an input by two props, not a second row kind. `act` is
   one `Act` at the row's end ahead of the more act, a secondary Button at the bar fit with its
   pending and blocked forms; the more menu stays the row's other acts, so an act the row waits on
@@ -879,63 +870,60 @@ a tick with no animation, never jumped to full.
   the entry's line in the meta line's.
 - A `ListRow` takes three more props, each a look the consumer cannot know and the row cannot
   derive. `dim` (`RowSlots.dim`, per item) stands the row off a highlighted path: its title in
-  `ink-meta` at 400 (`ROW_TITLE` `form` `dim`), never faded, since opacity drops the title under
-  the 4.5:1 text floor and only a disabled part is carved out of it; the row stays a hit and
-  focusable, its leading glyph and marks keep their hue (a status colour is meaning, not path),
-  and the trailing is already `ink-meta`. It is an axis cell and never an overlay because the
-  pointer and selection states of `ROW.state` are drawn from outside and `dim` is given.
-  `steps` (`readonly StatusMark[]`, `RowSlots.steps`, per item) stands in the meta line's place
-  while the row's act pends (the entry's rank: `entry`, then `steps`, then `meta` and the marks;
-  the consumer gives `meta` back once the act settles), one line each (`ROW_STEPS`, a pair gap, and
-  `ROW_STEP`): the status mark (`StatusDot`, the spinner while `running`, the same cells as
-  `Status`) and the label at meta size, the running step in `ink-body` and the others in
-  `ink-meta`; each mark carries its state's word as its label, so the state is never told by
-  colour alone. It takes no descriptor of its own, so it shares nothing with `Stage` (a rail of
-  fixed stages: a progress indicator, not a status list). A waiting row draws the meta line a
-  `steps` slot declares, never the steps (`rowShape` reads `steps` as a meta line).
-  `wrap` (`RowSlots.wrap`, one boolean for the list) is a title read whole: `ROW.lines.whole`
-  (no minimum height, a `pair` pad, the lines set the height) wraps it to every line at body 400
-  (`ROW_TITLE` `form` `whole`, so a list of notes is not a wall of medium weight), the change
-  mark, leading, trailing value or pick and acts standing in a box one body line tall on its
-  first line (`line-body`, `h-line-body` on both platforms: the box is pinned to one body line,
-  so a 44 act overflows it centred on the line instead of growing it). A `Quoted` title still wraps to two lines
-  and adds quotes (a model-written name), `Prose` has no per-item meta or more, `Message` is a
-  turn; a row whose title wraps is none of them. `rowShape.wrap` is the list's flag, so the
-  waiting row draws two body lines and keeps its leading, trailing and acts on the first. The
-  one `ROW_TITLE` family holds the four forms (`strong`, `dim`, `whole`, `whole-dim`) so a title's
-  weight and ink are one cell, not a call-site pick; `rowTitleForm(wrap, dim)` names it for both
-  platforms.
+  `ink-meta` at 400 (`ROW_TITLE` `form` `dim`), never faded, since opacity drops the title under the
+  4.5:1 text floor and only a disabled part is carved out of it; the row stays a hit and focusable,
+  its leading glyph and marks keep their hue (a status colour is meaning, not path), and the
+  trailing is already `ink-meta`. It is an axis cell and never an overlay because the pointer and
+  selection states of `ROW.state` are drawn from outside and `dim` is given. `steps` (`readonly
+  StatusMark[]`, `RowSlots.steps`, per item) stands in the meta line's place while the row's act
+  pends (the entry's rank: `entry`, then `steps`, then `meta` and the marks; the consumer gives
+  `meta` back once the act settles), one line each (`ROW_STEPS`, a pair gap, and `ROW_STEP`): the
+  status mark (`StatusDot`, the spinner while `running`, the same cells as `Status`) and the label
+  at meta size, the running step in `ink-body` and the others in `ink-meta`; each mark carries its
+  state's word as its label, so the state is never told by colour alone. It takes no descriptor of
+  its own, so it shares nothing with `Stage` (a rail of fixed stages: a progress indicator, not a
+  status list). A waiting row draws the meta line a `steps` slot declares, never the steps
+  (`rowShape` reads `steps` as a meta line). `wrap` (`RowSlots.wrap`, one boolean for the list) is a
+  title read whole: `ROW.lines.whole` (no minimum height, a `pair` pad, the lines set the height)
+  wraps it to every line at body 400 (`ROW_TITLE` `form` `whole`, so a list of notes is not a wall
+  of medium weight), the change mark, leading, trailing value or pick and acts standing in a box one
+  body line tall on its first line (`line-body`, `h-line-body` on both platforms: the box is pinned
+  to one body line, so a 44 act overflows it centred on the line instead of growing it). A `Quoted`
+  title still wraps to two lines and adds quotes (a model-written name), `Prose` has no per-item
+  meta or more, `Message` is a turn; a row whose title wraps is none of them. `rowShape.wrap` is the
+  list's flag, so the waiting row draws two body lines and keeps its leading, trailing and acts on
+  the first. The one `ROW_TITLE` family holds the four forms (`strong`, `dim`, `whole`, `whole-dim`)
+  so a title's weight and ink are one cell, not a call-site pick; `rowTitleForm(wrap, dim)` names it
+  for both platforms.
 - A `List` whose `row` map gives `children` is a tree, not a new component: folding hides rows a
-  lone `ListRow` does not own, and a tree component would copy the List's four states. `treeRows`
-  in `./list-state` flattens the items to the visible rows (each item, then its children one depth
-  in unless its key is folded), pure and tested; the List holds the folded keys (open by default;
+  lone `ListRow` does not own, and a tree component would copy the List's four states. `treeRows` in
+  `./list-state` flattens the items to the visible rows (each item, then its children one depth in
+  unless its key is folded), pure and tested; the List holds the folded keys (open by default;
   `RowSlots.key` names a branch, so keys are unique across the tree) and hands each row its depth
-  and fold through an internal context, so `ListRow`'s roster props do not change. Each level is
-  one `indent` step (a size, 16 desktop and 20 touch: the leading slot plus the gap would be 30 or
-  40 per level, and three levels would cost 90 px of a 360 px list column) with a hairline on its
-  end (`TREE_RAIL`), which falls under the middle of the parent's fold lane. Every row of the tree
+  and fold through an internal context, so `ListRow`'s roster props do not change. Each level is one
+  `indent` step (a size, 16 desktop and 20 touch: the leading slot plus the gap would be 30 or 40
+  per level, and three levels would cost 90 px of a 360 px list column) with a hairline on its end
+  (`TREE_RAIL`), which falls under the middle of the parent's fold lane. Every row of the tree
   reserves the lane (`TREE_LANE`, the `control-compact` square; waiting rows too, through
   `rowShape.tree`), a branch's fold act standing in it as the bar-fit `IconButton` with a
   `ChevronRight` or `ChevronDown`, named by the words `expand` and `collapse` before the title. The
   levels and the lane stand as one box that bleeds the row's padding (`TREE_BLEED`, keyed on
   `ROW.lines`: the negative of the form's `py`, so `-my-rows` on a two-line row and `-my-pair` on a
-  wrapped one), and the tree's list drops the row gap (`LIST_TREE`), so a rail is unbroken from
-  row to row. A tree is a list of rows with the fold act as its one state: the web and the phone
-  both read it from the act's `aria-expanded` and `accessibilityState.expanded`. The web draws no
-  `tree` or `treeitem` roles, which would promise roving focus and Up and Down between rows that
-  the list does not have; a branch folds from its act. `dim`
-  composes by item: an off-path branch gives `dim` to its parent and each child, so the branch
-  reads grey whole, its chevron staying in the meta ink and its rail the `edge` hairline. A
-  Section counts a tree's top level, not every node.
-- A value outside its editable context reads locked on the fact's own row: `DefinitionRow.locked`
-  is a `Lock` (`reason`, `href`), drawing the lock mark after the value and the reason as the
-  row's meta line, the
-  whole line an inline `Link` when `href` names what holds it ("Held by CR-12, Ana"). The value
-  stays (`copyable` too); the row takes no `description`, `act`, `href` or `onOpen` (a union on
-  `locked`), since the reason is its one line and its one link, never a link inside a row that
-  opens. `FormField` keeps `disabled` for a control that cannot take input now; a held fact is
-  not a disabled input. Rejected: a `Part` kind carrying a link, which would put links in every
-  meta line where the row itself may be the hit.
+  wrapped one), and the tree's list drops the row gap (`LIST_TREE`), so a rail is unbroken from row
+  to row. A tree is a list of rows with the fold act as its one state: the web and the phone both
+  read it from the act's `aria-expanded` and `accessibilityState.expanded`. The web draws no `tree`
+  or `treeitem` roles, which would promise roving focus and Up and Down between rows that the list
+  does not have; a branch folds from its act. `dim` composes by item: an off-path branch gives `dim`
+  to its parent and each child, so the branch reads grey whole, its chevron staying in the meta ink
+  and its rail the `edge` hairline. A Section counts a tree's top level, not every node.
+- A value outside its editable context reads locked on the fact's own row: `DefinitionRow.locked` is
+  a `Lock` (`reason`, `href`), drawing the lock mark after the value and the reason as the row's
+  meta line, the whole line an inline `Link` when `href` names what holds it ("Held by CR-12, Ana").
+  The value stays (`copyable` too); the row takes no `description`, `act`, `href` or `onOpen` (a
+  union on `locked`), since the reason is its one line and its one link, never a link inside a row
+  that opens. `FormField` keeps `disabled` for a control that cannot take input now; a held fact is
+  not a disabled input. Rejected: a `Part` kind carrying a link, which would put links in every meta
+  line where the row itself may be the hit.
 - A read that answers not found is `missing`, a state of its own beside `failed`: every read
   ends in content, "does not exist" with a way back, or Retry, and Retry cannot bring back what
   was removed. `missing(query)` in `./list-state` reads the query's `error` by shape, true for
@@ -959,15 +947,14 @@ a tick with no animation, never jumped to full.
   `values` (one per column, in order), `chips` and `status`. A fact's `status` is its verdict, a
   `StatusMark` drawn in the label's line after the label and its chips, so on touch it never
   squeezes the values; a passing fact returns none, or `{ state: "done", label: "Matches" }` where
-  the screen wants the pass read. It is a trailing `Status` rather than a leading one (a passing
-  row has none, and every row of a list leads with the same kind of mark) or a tint (status hue
-  stays on the dot). Its column heads are its declared `columns`,
-  known before the data, so its waiting form is the real head over four facts of bars: a value bar
-  per column, and a chip's bar and a status's bar beside the label's when `row` declares `chips`
-  or `status` (`factShape` in `./list-state`), each bar a share of its line's short-label lane
-  (`SKELETON_LANE`), so it stands at a typical label's or value's length rather than the column's.
-  The Section around reads its wait and no count: its facts are one record's, not items the
-  Section counts.
+  the screen wants the pass read. It is a trailing `Status` rather than a leading one (a passing row
+  has none, and every row of a list leads with the same kind of mark) or a tint (status hue stays on
+  the dot). Its column heads are its declared `columns`, known before the data, so its waiting form
+  is the real head over four facts of bars: a value bar per column, and a chip's bar and a status's
+  bar beside the label's when `row` declares `chips` or `status` (`factShape` in `./list-state`),
+  each bar a share of its line's short-label lane (`SKELETON_LANE`), so it stands at a typical
+  label's or value's length rather than the column's. The Section around reads its wait and no
+  count: its facts are one record's, not items the Section counts.
 - An `OptionList` is a collection with a static form. A static set takes `options` (an `Option`
   is already the projected row, waiting on `loading`); a set from a query takes `query`,
   `sentence`, `empty` and an `option` map over the check row's slots (`value`, `label`,
@@ -1124,25 +1111,25 @@ a tick with no animation, never jumped to full.
   the scrim and the Close act dismiss it. It stands under the Shell's toasts like every sheet.
   Rejected: an `image` slot on `FileRow` or `Message`, which would repeat the open-full mechanism
   per component.
-- A rail of fixed states is `Stages`, a known sequence with a position in it (an activity feed
-  draws what happened, onboarding's step progress is its own molecule): `steps`, each a `Stage`
-  (`{ label, state: "done" | "current" | "later", at? }`, its own descriptor), and `ended`, a
-  `StageEnd` (`{ label, reason }`). Stages stand top to bottom as an ordered list on a hairline
-  rail in the `edge` ink (`STAGE_RAIL`) running from each mark to the next, so at phone width
-  the line is what reads as sequence. A done stage is a check at `icon-meta` (the meta ink,
-  `STAGE_CHECK`, read on the phone through `stageContentTone`) with its `at` as a moment in
-  meta under the label; the current stage is the active status dot with its label at body 500
-  and `aria-current="step"` (the phone: the selected row); a later stage is the hollow `idle`
-  dot with its label in meta. `at` is typed off a later stage, which draws none. `ended` replaces
-  every stage after the last done one (`stagesShown` in `./list-state`, so both platforms draw the same rows, the
-  current one included) with a terminal row: the failed dot, its label at 500 and its reason in
-  meta. The marks carry the hue (the current dot's accent, the failed dot's danger) and a label's
-  ink is its own in every state; the rail is the one hairline whether a stage is done or not.
-  `STAGE {state}` is the label's cell, the row's gap and the words' bottom inset (`STAGE_ROW`,
-  `STAGE_WORDS`) carry the room between stages, inside the rail's run. Each mark stands on its
-  label's first line (a later label is meta, so its mark is on a meta line) and names its state
-  to assistive tech through the existing status words (`done`, `active`, `waiting`, `failed`),
-  so `words` gains none. Stages is static data, so it has no waiting form.
+- A rail of fixed states is `Stages`, a known sequence with a position in it (an activity feed draws
+  what happened, onboarding's step progress is its own molecule): `steps`, each a `Stage` (`{ label,
+  state: "done" | "current" | "later", at? }`, its own descriptor), and `ended`, a `StageEnd` (`{
+  label, reason }`). Stages stand top to bottom as an ordered list on a hairline rail in the `edge`
+  ink (`STAGE_RAIL`) running from each mark to the next, so at phone width the line is what reads as
+  sequence. A done stage is a check at `icon-meta` (the meta ink, `STAGE_CHECK`, read on the phone
+  through `stageContentTone`) with its `at` as a moment in meta under the label; the current stage
+  is the active status dot with its label at body 500 and `aria-current="step"` (the phone: the
+  selected row); a later stage is the hollow `idle` dot with its label in meta. `at` is typed off a
+  later stage, which draws none. `ended` replaces every stage after the last done one (`stagesShown`
+  in `./list-state`, so both platforms draw the same rows, the current one included) with a terminal
+  row: the failed dot, its label at 500 and its reason in meta. The marks carry the hue (the current
+  dot's accent, the failed dot's danger) and a label's ink is its own in every state; the rail is
+  the one hairline whether a stage is done or not. `STAGE {state}` is the label's cell, the row's
+  gap and the words' bottom inset (`STAGE_ROW`, `STAGE_WORDS`) carry the room between stages, inside
+  the rail's run. Each mark stands on its label's first line (a later label is meta, so its mark is
+  on a meta line) and names its state to assistive tech through the existing status words (`done`,
+  `active`, `waiting`, `failed`), so `words` gains none. Stages is static data, so it has no waiting
+  form.
 - A copy act (`Code`'s, `DefinitionRow`'s) reads Copied for two seconds from the last copy: each
   copy is a counted moment and the reset is keyed on it, so a copy inside the window restarts it.
   Unfolding a `Code` moves focus to its already-mounted text in the press, before the fold act
@@ -1205,23 +1192,22 @@ a tick with no animation, never jumped to full.
   details sheet is the `Sheet` at the `pane` fit, composed through the sheet's internal base.
   `Select`, the single-choice field over `options`, is the field box (`FIELD`) whose open list is a
   popover (`POPOVER`) of rows (`ROW`); on native it opens the same option sheet as `Picker`.
-- `FileInput` is the field box (`FIELD`) that chooses a file. Its value is `PickedFile`
-  (`{ name, size, type, blob(), src? }`), one descriptor on both platforms so a consumer's upload code
-  is one: the web wraps its `File` (`blob` resolves to it) and the phone the document picker's
-  asset (`blob` is `fetch(uri).blob()`); a message input's paste or drop reuses it. `accept`
-  entries are MIME types, MIME families and dotted extensions, matched by `accepts` in
-  `@fcalell/ui-core/file` on every file either platform hands over (a drop and the phone's
-  picker can bring any); the phone's picker names MIME types alone, so `pickerTypes` asks for
-  every type when `accept` holds an extension. A refused file never reaches `onChange`: it is
-  drawn in the `FormField`'s own error line (the `FieldRefusal` context a `FormField` gives its
-  control, the line then in error and the box on `edge-error`), cleared by the next pick, so the
-  error stays one place. A `FileInput` therefore stands only inside a `FormField`: outside one a
-  refusal has nowhere to stand and vanishes, and the control has no error line of its own (react-ui's
-  verify flags a `FileInput` drawn outside a `FormField` in the package's own sources; an app's
-  `.tsx` is out of its reach, so the rule is the guide's). The web draws a
-  drag-over as the focus ring (the contract has no dashed edge); the phone has no drop.
-  `expo-document-picker` is a native-ui peer declared as `expo-clipboard` is; its config
-  plugin only sets an iCloud container, so the component needs none.
+- `FileInput` is the field box (`FIELD`) that chooses a file. Its value is `PickedFile` (`{ name,
+  size, type, blob(), src? }`), one descriptor on both platforms so a consumer's upload code is one:
+  the web wraps its `File` (`blob` resolves to it) and the phone the document picker's asset (`blob`
+  is `fetch(uri).blob()`); a message input's paste or drop reuses it. `accept` entries are MIME
+  types, MIME families and dotted extensions, matched by `accepts` in `@fcalell/ui-core/file` on
+  every file either platform hands over (a drop and the phone's picker can bring any); the phone's
+  picker names MIME types alone, so `pickerTypes` asks for every type when `accept` holds an
+  extension. A refused file never reaches `onChange`: it is drawn in the `FormField`'s own error
+  line (the `FieldRefusal` context a `FormField` gives its control, the line then in error and the
+  box on `edge-error`), cleared by the next pick, so the error stays one place. A `FileInput`
+  therefore stands only inside a `FormField`: outside one a refusal has nowhere to stand and
+  vanishes, and the control has no error line of its own (react-ui's verify flags a `FileInput`
+  drawn outside a `FormField` in the package's own sources; an app's `.tsx` is out of its reach, so
+  the rule is the guide's). The web draws a drag-over as the focus ring (the contract has no dashed
+  edge); the phone has no drop. `expo-document-picker` is a native-ui peer declared as
+  `expo-clipboard` is; its config plugin only sets an iCloud container, so the component needs none.
 - A `FormField` folds an answered question by `answered` (`{ answer, onEdit }`): one summary row
   at the row height (`FORM_FIELD_SUMMARY`: a `Check` in the `ok` ink, the label in body 500, the
   answer truncated in meta, a trailing `Pencil` `IconButton` at the bar fit named by the `edit`
@@ -1233,19 +1219,18 @@ a tick with no animation, never jumped to full.
   `Form`; the field keeps no fold state. Rejected: a `ListRow` per answer above the open field,
   which loses the focus return and draws a chevron where this edits in place; a labelled "Edit"
   `Button`, which makes every folded row louder than the question it summarises.
-- A component that sits in more than one container takes `fit`, a closed enum read off its
-  matrix's `fit` axis (`IconFit`, `ButtonFit`, `IconButtonFit`, `LinkFit`, `ActionBarFit`,
-  `FieldFit`, `SheetFit`, `PickerFit`, `ColumnsFit`),
-  defaulting to the matrix's default; the composing molecule sets it (a `Place` passes `bar` to
-  its strip's acts, a field's trailing act `field`, a `Form` under an auth column `full`, a
-  `Split` its details sheet `pane`) and a
-  call site may. `ACTION_BAR`'s two fits carry no cell: `end` and `full` differ in structure
-  (an overlay) and in the `Button` fit the bar passes (`body`, `field`), and the matrix exists
-  so the closed type is read off an axis like every other fit. `Columns` takes `fit` the same
-  way: `board` (the default) is a row of sections at the column width scrolling sideways from the
-  page inset, `half` is two to a row filling the body from the Place's `page-desktop` width and
-  stacking in order below it, at the `sections` gap, with no bleed and no column width (a web
-  grid overlay, no scroll region). The phone stacks both: it never reaches `desktop`.
+- A component that sits in more than one container takes `fit`, a closed enum read off its matrix's
+  `fit` axis (`IconFit`, `ButtonFit`, `IconButtonFit`, `LinkFit`, `ActionBarFit`, `FieldFit`,
+  `SheetFit`, `PickerFit`, `ColumnsFit`), defaulting to the matrix's default; the composing molecule
+  sets it (a `Place` passes `bar` to its strip's acts, a field's trailing act `field`, a `Form`
+  under an auth column `full`, a `Split` its details sheet `pane`) and a call site may.
+  `ACTION_BAR`'s two fits carry no cell: `end` and `full` differ in structure (an overlay) and in
+  the `Button` fit the bar passes (`body`, `field`), and the matrix exists so the closed type is
+  read off an axis like every other fit. `Columns` takes `fit` the same way: `board` (the default)
+  is a row of sections at the column width scrolling sideways from the page inset, `half` is two to
+  a row filling the body from the Place's `page-desktop` width and stacking in order below it, at
+  the `sections` gap, with no bleed and no column width (a web grid overlay, no scroll region). The
+  phone stacks both: it never reaches `desktop`.
 - An `Act` says what it does, never how it looks: `destructive` marks an act that removes or
   ends something, and the `ActionBar` draws it as `danger` when it is the bar's one filled act
   and as `destructive` (the hairline form) otherwise, so a confirm's filled act needs no kind of
@@ -1266,44 +1251,43 @@ a tick with no animation, never jumped to full.
   never a pushed page. Rejected: the TextArea asking the sheet from a mount effect (gorhom mounts
   the content only once presented, so the sheet opened content-tall and re-snapped after paint, and
   never shrank back), and a public height prop.
-- A sheet keeps its content until it has left. State that belongs to one opening resets as the
-  next arrives, during render, never as the sheet starts closing: a sheet's touched and pressed
-  marks reset as it opens or turns to a new page (a wizard's, or the next queued decision's), and
-  a confirm's typed name and pending act reset when its decision's id changes. `Confirmations`
-  draws the queue's first decision in the render that hears it, else the last one while its
-  sheet leaves, and `ConfirmSheet` stays unkeyed, so a decision queued behind an open one takes
-  the open sheet in place. Rejected: an effect mirroring the queue (the first `confirm()` drew a
-  commit late, and a dismissed decision's content stood a frame in the next one's sheet), and a
-  reset on close (the name emptied and the act turned blocked while the sheet left).
-  A pick's sheet holds the same rule. On the web its rows, the search with them, are a component
-  inside the sheet's popup, which Base UI removes once the leave has played, so the search dies
-  with the sheet however it closes (a pick, the act, the scrim, Escape). The options' one tab stop
-  starts on the chosen option, which the sheet hands Base UI's `initialFocus` by ref, and follows
-  focus in the DOM, so an arrow key re-renders no option. On the phone the search stands in the
-  sheet's head, apart from the rows, so it clears as the sheet opens; the options' groups derive
-  once per options identity, shared by the trigger and its sheet, and the filter runs once per
-  search. A cell's pick ends its edit once its list has left, never in the handler that closes
-  it: on the web from Base UI's `onOpenChangeComplete(false)` (the sheet, the desktop list and its search
-  alike), on the phone from gorhom's `onDismiss`. A Picker latches its form (the desktop list or
-  its search, the sheet's search field) while open: the options' count picks it only while the
-  list is closed, so data crossing six never tears down an open list and its focus. Rejected:
-  clearing the search in the close handler (a pick or the act closed another way, and on the
-  phone the rows re-expanded while the sheet left), and focusing the stop after two animation
-  frames (a guess against Base UI's own focus).
+- A sheet keeps its content until it has left. State that belongs to one opening resets as the next
+  arrives, during render, never as the sheet starts closing: a sheet's touched and pressed marks
+  reset as it opens or turns to a new page (a wizard's, or the next queued decision's), and a
+  confirm's typed name and pending act reset when its decision's id changes. `Confirmations` draws
+  the queue's first decision in the render that hears it, else the last one while its sheet leaves,
+  and `ConfirmSheet` stays unkeyed, so a decision queued behind an open one takes the open sheet in
+  place. Rejected: an effect mirroring the queue (the first `confirm()` drew a commit late, and a
+  dismissed decision's content stood a frame in the next one's sheet), and a reset on close (the
+  name emptied and the act turned blocked while the sheet left). A pick's sheet holds the same rule.
+  On the web its rows, the search with them, are a component inside the sheet's popup, which Base UI
+  removes once the leave has played, so the search dies with the sheet however it closes (a pick,
+  the act, the scrim, Escape). The options' one tab stop starts on the chosen option, which the
+  sheet hands Base UI's `initialFocus` by ref, and follows focus in the DOM, so an arrow key
+  re-renders no option. On the phone the search stands in the sheet's head, apart from the rows, so
+  it clears as the sheet opens; the options' groups derive once per options identity, shared by the
+  trigger and its sheet, and the filter runs once per search. A cell's pick ends its edit once its
+  list has left, never in the handler that closes it: on the web from Base UI's
+  `onOpenChangeComplete(false)` (the sheet, the desktop list and its search alike), on the phone
+  from gorhom's `onDismiss`. A Picker latches its form (the desktop list or its search, the sheet's
+  search field) while open: the options' count picks it only while the list is closed, so data
+  crossing six never tears down an open list and its focus. Rejected: clearing the search in the
+  close handler (a pick or the act closed another way, and on the phone the rows re-expanded while
+  the sheet left), and focusing the stop after two animation frames (a guess against Base UI's own
+  focus).
 - `Text` draws `body` and `meta` (plus `strong`) and names those roles' cells of `TEXT` and
   `TEXT_STRONG`, not either family; every other type role is drawn by the molecule that owns
   its place, and `TEXT` keeps all eight roles as the one table those owners draw from.
 - Tokens are enforced by ownership: a token names a place, and the component that owns the place
-  draws it. A component declares `owns` on its entry, the type roles,
-  colours (a name, or a family prefix ending in `-`), radii, spacing roles, sizes and widths, and
-  shadow levels it may draw. A molecule that picks a composed atom's `fit` or `act` (a
-  `Place` its strip act's `BUTTON.fit.bar`, a `Split` its Details act's `ICON_BUTTON.fit.bar`)
-  draws those cells and owns what they spell; a slot the consumer fills (`children`, a
-  `ReactNode`) draws nothing of its content. The least data that makes the check exact: a class is classified by
-  its utility prefix into one namespace and looked up by name, so `rounded-chip`, `min-h-chip`
-  and `bg-chip-red-soft` land in three namespaces and cannot be confused. Rejected: one flat
-  prefix list (`chip` is a radius, a size and a colour family) and a declaration per cell (the
-  matrices already say which cell a component draws).
+  draws it. A component declares `owns` on its entry, the type roles, colours (a name, or a family
+  prefix ending in `-`), radii, spacing roles, sizes and widths, and shadow levels it may draw. A
+  molecule that picks a composed atom's `fit` or `act` (a `Place` its strip act's `BUTTON.fit.bar`,
+  a `Split` its Details act's `ICON_BUTTON.fit.bar`) draws those cells and owns what they spell; a
+  slot the consumer fills (`children`, a `ReactNode`) draws nothing of its content. The least data
+  that makes the check exact: a class is classified by its utility prefix into one namespace and
+  looked up by name, so `rounded-chip`, `min-h-chip` and `bg-chip-red-soft` land in three namespaces
+  and cannot be confused. Rejected: one flat prefix list (`chip` is a radius, a size and a colour
+  family) and a declaration per cell (the matrices already say which cell a component draws).
 - Closure mechanics: every closed prop is declared `?: never` on a plain object type, never on a
   host's props type, so the key set is closed and a call site gets a readable error. The closed
   props are the guardrail: a look the matrices do not cover is a matrix cell or a consumer
@@ -1329,17 +1313,17 @@ resolve. A platform's rules for every `.tsx` are its plugin's own page (react-ui
 
 ## Enforcement
 
-Three verify suites (ui-core, native-ui and react-ui) are the design system's enforcement layer:
-the derivation's scales and colour mixes checked against their rules and swept over every accent and cast hue,
-matrices asserted verbatim over their full axis products, every class a cell or a web overlay draws
-checked against the tokens its roster entry owns, the roster compared against every
-component's props type, closure fixtures that compile every component's `?: never` props, word
-and product-noun scans over the sources, class-literal set-equality against each plugin's overlay
-allowlist, and every class a web component spells emitted by the built `app.css`. The web builds
-the roster one component at a time, so react-ui holds each component directory present to its
-entry and reports how many of the roster are built. A new
-matrix that skips a registry, a component the roster does not name, a literal that duplicates a
-cell, an off-contract utility, or a drawn word outside `words` each fails a named check.
+Three verify suites (ui-core, native-ui and react-ui) are the design system's enforcement layer: the
+derivation's scales and colour mixes checked against their rules and swept over every accent and
+cast hue, matrices asserted verbatim over their full axis products, every class a cell or a web
+overlay draws checked against the tokens its roster entry owns, the roster compared against every
+component's props type, closure fixtures that compile every component's `?: never` props, word and
+product-noun scans over the sources, class-literal set-equality against each plugin's overlay
+allowlist, and every class a web component spells emitted by the built `app.css`. The web builds the
+roster one component at a time, so react-ui holds each component directory present to its entry and
+reports how many of the roster are built. A new matrix that skips a registry, a component the roster
+does not name, a literal that duplicates a cell, an off-contract utility, or a drawn word outside
+`words` each fails a named check.
 
 ## Limits
 

@@ -137,7 +137,7 @@ export function Rules<V extends string | null = string>({
 	return (
 		<View className={STACK}>
 			{rules.length > 0 ? (
-				<View accessibilityRole="list" className={GROUP_SLOT}>
+				<View role="list" className={GROUP_SLOT}>
 					<Group>
 						{rules.map((rule) => (
 							<RuleRow key={rule.id} rule={rule} />

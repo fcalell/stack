@@ -45,17 +45,6 @@ export function pairSet<V extends string | null>(terms: RuleTerms<V>): boolean {
 	return termSet(terms.from) && termSet(terms.to);
 }
 
-// A value toggled in a several-pick's set: out when it is in, else in at the
-// end.
-export function toggled<V extends string | null>(
-	values: readonly V[],
-	value: V,
-): V[] {
-	return values.includes(value)
-		? values.filter((one) => one !== value)
-		: [...values, value];
-}
-
 // The options of a pick that leads its picked form with a glyph: each option
 // with no leading form of its own takes `PICKED_GLYPH`, the empty choice
 // none, and the grouping is kept.

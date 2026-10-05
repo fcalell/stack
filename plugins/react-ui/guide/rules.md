@@ -263,12 +263,12 @@ its tick moved ("Needed by Checkout"), each as a line under the row's name. The 
 count. Its count is the `ActionBar`'s: dock `<ActionBar chosen={{ count, of, onAll }}
 acts={[publish]} />` as the Place's `foot`, and it reads "N of M chosen" at the bar's start beside
 the one act, whose label you set ("Publish 4 changes") and whose `blocked` reason you give when
-nothing can go. `onAll` puts a choose-all act beside the count, which reads "Select all" while some
-rows stand unchosen and "Deselect all" once all are (`of` counts the rows that can be chosen) and
-calls `onAll(true)` or `onAll(false)`: apply your rule to it as to a tick. Touch has no head tick,
-so a list there takes `onAll`. On the desktop the bar spans the page's width; on touch the count
-stands over the full-width act. A row of a `List` leads with a tick as `leading: { check }` (its
-`blocked` reason leads the meta line).
+nothing can go. Touch has no head tick, so `onAll` puts a choose-all act beside the count there,
+which reads "Select all" while some rows stand unchosen and "Deselect all" once all are (`of` counts
+the rows that can be chosen) and calls `onAll(true)` or `onAll(false)`: apply your rule to it as to
+a tick. On the desktop the head tick is the select-all and the bar draws no such act. On the desktop
+the bar spans the page's width; on touch the count stands over the full-width act. A row of a `List`
+leads with a tick as `leading: { check }` (its `blocked` reason leads the meta line).
 
 ```tsx
 <List
@@ -304,9 +304,10 @@ back through `attachments`: an image draws as a thumbnail with its remove act, a
 A `Message` for `you` or `other` takes the same `attachments`, and `meta` (`"by voice"`,
 `"Kitchen"`) before its time.
 
-A picked file's `src` is a local address to draw it from before it is uploaded. On the web it is an
-object URL the picker makes for an image, and it stays until you revoke it
-(`URL.revokeObjectURL(file.src)`) once the attachment is dropped.
+A picked file's `src` is a local address to draw it from before it is uploaded. On the web only
+`MessageInput` sets it, as an object URL for an attached image (a `FileInput`'s file carries no
+`src`), and it stays until you revoke it (`URL.revokeObjectURL(file.src)`) once you drop the
+attachment.
 
 A `FileInput` stands only inside a `FormField`, which labels it and draws the error line a refused
 file lands in; outside one the refusal vanishes.

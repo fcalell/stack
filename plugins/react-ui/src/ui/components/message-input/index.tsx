@@ -35,7 +35,7 @@ import type { Closed } from "../../lib/closed.ts";
 import { FieldDisabled } from "../../lib/field.ts";
 import { ActInert } from "../../lib/form.ts";
 import { useTouch } from "../../lib/media.ts";
-import { pickedFrom } from "../../lib/picked.ts";
+import { attachedFrom } from "../../lib/picked.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Button } from "../button/index.tsx";
 import { IconButtonBase } from "../icon-button/base.tsx";
@@ -127,7 +127,7 @@ export function MessageInput({
 	};
 	// Every way a file arrives (the dialog, a paste, a drop) ends here.
 	const take = (files: ArrayLike<File>) => {
-		if (files.length > 0) onAttach?.(Array.from(files, pickedFrom));
+		if (files.length > 0) onAttach?.(Array.from(files, attachedFrom));
 	};
 	const choose = (event: ChangeEvent<HTMLInputElement>) => {
 		take(event.currentTarget.files ?? []);

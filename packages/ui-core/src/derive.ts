@@ -68,9 +68,7 @@ export interface ResolvedTheme {
 	// Each level as a `box-shadow` list in sRGB, since React Native's
 	// `boxShadow` parses no oklch.
 	shadows: Record<Mode, Record<ShadowLevel, string>>;
-	// The three scales density moves, each set complete on its own. The
-	// `room` set is in canvas units (`ROOM_CANVAS`), each `Npx` standing for N
-	// times the room unit, never a pixel count.
+	// The three scales density moves, each set complete on its own.
 	type: Record<
 		PixelDensity,
 		Record<TypeRole, { size: string; leading: string }>

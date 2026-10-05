@@ -282,7 +282,8 @@ for `you` or `other` takes the same `attachments`, and `meta` (`"by voice"`, `"K
 its time.
 
 A picked file's `src` is a local address to draw it from before it is uploaded: the asset's uri,
-set on every file the photo library and the file picker hand over.
+set on every file the photo library and the file picker hand over. It is the asset's own address,
+so nothing needs revoking.
 
 A `FileInput` stands only inside a `FormField`, which labels it and draws the error line a refused
 file lands in; outside one the refusal vanishes.

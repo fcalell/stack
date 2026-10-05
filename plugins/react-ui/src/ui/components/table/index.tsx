@@ -77,13 +77,13 @@ import { Missing } from "../empty-state/missing.tsx";
 import { Icon } from "../icon/index.tsx";
 import { Input } from "../input/index.tsx";
 import { List, type RowSlots } from "../list/index.tsx";
+import { LockMark } from "../list-row/lock.tsx";
 import { WarningMark } from "../list-row/marks.tsx";
 import { PickerBase } from "../picker/base.tsx";
 import type { QueryLike } from "../query-boundary/index.tsx";
 import { StatusBase } from "../status/base.tsx";
 import { ChangeMark } from "../status/change.tsx";
 import { Status } from "../status/index.tsx";
-import { LockMark } from "../status/lock.tsx";
 
 // The table fills what its page's body leaves, so an empty one's EmptyState
 // centres under the header. From `tablet` of its page the grid stands; below

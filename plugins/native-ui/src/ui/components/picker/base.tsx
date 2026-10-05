@@ -1,4 +1,4 @@
-import { toggled } from "@fcalell/ui-core/rules";
+import { toggled } from "@fcalell/ui-core/list-state";
 import type { ChipFamily } from "@fcalell/ui-core/tokens";
 import {
 	CHIPS_BOX,

@@ -98,8 +98,8 @@ export function Stages({ steps, ended }: StagesProps) {
 				}
 				return (
 					<Row
-						// biome-ignore lint/suspicious/noArrayIndexKey: the stages are fixed-order data, and two may share a label
-						key={`${step.label}${at}`}
+						// biome-ignore lint/suspicious/noArrayIndexKey: the stages are fixed-order data that never reorder, so position is the identity
+						key={at}
 						state={step.state}
 						mark={mark}
 						last={last}
