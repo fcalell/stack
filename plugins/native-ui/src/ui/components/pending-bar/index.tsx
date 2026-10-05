@@ -93,7 +93,7 @@ export function PendingBar({ sentence, until, act }: PendingBarProps) {
 	);
 	if (end !== undefined && run?.end !== end) setRun(pendingRun(end, now, run));
 	const { touched } = useTouched();
-	const live = useLive(sentence, { appears: true });
+	const live = useLive(sentence);
 	const blocked = act?.blocked;
 	const [pressed, press] = usePressed(blocked);
 	const host = useMemo(

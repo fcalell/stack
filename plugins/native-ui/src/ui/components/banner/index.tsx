@@ -48,7 +48,7 @@ export function Banner({ kind, sentence, act }: BannerProps) {
 	const drawn = kind ?? "note";
 	const live = useLive(sentence, {
 		assertive: drawn === "danger",
-		appears: true,
+		appears: drawn === "danger",
 	});
 	return (
 		<View

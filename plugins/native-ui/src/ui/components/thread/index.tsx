@@ -41,6 +41,7 @@ import { Message } from "../message";
 import type { QueryLike } from "../query-boundary";
 import { ToastRoom } from "../toast/room";
 import { Latest } from "./latest";
+import { newest } from "./newest";
 
 const FILL = "flex-1";
 // In a Split's main the Thread bleeds through the inset the record's head
@@ -203,20 +204,6 @@ function logOf<T>(
 	));
 }
 
-// What the log announces: the newest message's body. A log still waiting for
-// its first answer holds the baseline, so a thread opening on its history
-// announces nothing.
-function newest<T>(
-	props: ThreadProps<T>,
-	state: ListState,
-): string | undefined {
-	if (state === "pending") return undefined;
-	if (state !== "loaded") return "";
-	const items = (props.query ? props.query.data : props.items) ?? [];
-	const last = items.at(-1);
-	return last === undefined ? "" : props.message.body(last);
-}
-
 // The messages a sections gap apart, one rung above a reply's block gap, and
 // the input a sections gap under them, in the screen's column (native draws
 // the touch structure, so no measure-wide column). In a Place's body it
@@ -226,7 +213,7 @@ function newest<T>(
 // up, a Latest act floats centred above the foot and returns to the newest
 // message. React Native has no log
 // role: the log is a polite live region, so an arriving message is announced
-// on Android, and `useLive` announces the newest one's body on iOS. It draws its
+// on Android, and `useLive` announces an arriving reply on iOS. It draws its
 // collection's states, the input under each: while its query is pending or
 // `loading` is set, Message's loading forms (another's reply, yours,
 // another's reply), the log at its end; a failed query, the failed
@@ -251,7 +238,12 @@ export function Thread<T>(props: ThreadProps<T>) {
 	slots.current = props.message;
 	const state = listState(input);
 	const children = logOf(props, state, words.retry, slots);
-	const live = useLive(newest(props, state));
+	const heard = newest(
+		props.query ? props.query.data : props.items,
+		state,
+		props.message,
+	);
+	const live = useLive(heard.text, { id: heard.id });
 	const fill = useContext(ThreadRoom);
 	const bleeds = useContext(ThreadBleeds);
 	const log = useRef<ScrollView>(null);

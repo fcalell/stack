@@ -344,24 +344,32 @@ a tick with no animation, never jumped to full.
   `retry`) and the announcement are not the consumer's to spell. `saving` and `saved` are meta-ink
   words; `failed` is the `failed` Status with `notSaved`, then a `secondary` bar-fit `Button`
   labelled `retry`. The fact stands in a polite live region (`role="status"` on the web; on the
-  phone `useLive`, below) and keeps one key
-  across its states, so the region persists and each change is announced. The fact stands from the
-  record's open, `saved` at rest: a region that first mounts holding `saving` has no earlier text to
-  change from, so that first save may go unheard. The selection bar's count announces through the
-  same hook. Rejected: a generic fact that carries an act, which lets any fact hold acts and leaves
-  the words and the announcement to the consumer; a `Banner`, which is loud for a save that usually
-  succeeds. An autosaving `FieldBinding` feeding this fact is not built.
+  phone `useLive`, below) and keeps one key across its states, so the region persists and each
+  change is announced. The fact stands from the record's open, `saved` at rest: a region that first
+  mounts holding `saving` has no earlier text to change from, so that first save may go unheard. The
+  selection bar's count announces through the same hook. Rejected: a generic fact that carries an
+  act, which lets any fact hold acts and leaves the words and the announcement to the consumer; a
+  `Banner`, which is loud for a save that usually succeeds. An autosaving `FieldBinding` feeding
+  this fact is not built.
 - A phone component announces a change only through `useLive` in `lib/live`: React Native's
-  `accessibilityLiveRegion` is Android's alone, so the hook returns that prop and, on iOS, calls
-  `AccessibilityInfo.announceForAccessibility` (`announceForAccessibilityWithOptions` at high
-  priority when `assertive`) once per change of the text. It never announces the text standing at
-  mount, an empty text, or a repeat of the last text; `appears` marks a component that is itself the
-  news (`Toast`, `Banner`, `PendingBar`), announced as it mounts; an `undefined` text holds the
-  baseline (a `Thread` still loading, so opening on its history is silent). The sites: the toast and
-  banner sentences (assertive when failed or danger), the pending bar's sentence, a form field's and
-  a list row entry's error line, the one-time code's checking line, the newest message of a `Thread`,
-  the `ItemHeader` save fact and the selection bar's count. A test pins that no other file names
-  either API. A thread's newest message that repeats the last one's body is not announced.
+  `accessibilityLiveRegion` is Android's alone, so the hook returns that prop (the OS speaks an
+  Android live region) and, on iOS, calls `AccessibilityInfo.announceForAccessibility`
+  (`announceForAccessibilityWithOptions` at high priority when `assertive`) once per change of the
+  text. The rest is iOS's, and `announcement` in `lib/announce` holds it: the hook never announces
+  the text standing at mount, an empty text, or a repeat of the last text. `appears` marks a
+  component that is itself the news, announced as it mounts: the toast, and the banner when it draws
+  `danger`, which are the web's `role="alert"`; a note or warn banner and the pending bar are
+  `role="status"` there and speak only on change, so a screen opening on one does not read it. An
+  `undefined` text holds the baseline (a log still loading). An `id` names what the text belongs to
+  and is announced when it changes, not the text. The `Thread` passes its newest message's key and
+  that message's body at that moment, so a reply is read once as it arrives, a streaming reply is
+  not read per chunk, and a second reply with an identical body is still read. Its own messages
+  (author `you`) are silent, and it is silent on opening its history, after a failed load (a retry
+  that lands announces no history) and while the thread is missing; an empty log holds `""`, so its
+  first message is news. The sites: the toast and banner sentences (assertive when failed or
+  danger), the pending bar's sentence, a form field's and a list row entry's error line, the
+  one-time code's checking line, the `Thread`'s newest reply, the `ItemHeader` save fact and the
+  selection bar's count. A test pins that no other file names either API.
 - `running` is work under way and `active` a steady state (a watch that stands, a service that is
   up): both wear the accent, and `running` draws a `Spinner` where every other state draws its
   dot, wherever a status draws one (a `Status`, a list row's `{ status }` leading, an
