@@ -14,6 +14,7 @@ import { cn } from "../../lib/cn";
 import { useCopy } from "../../lib/copy";
 import { Ink } from "../../lib/ink";
 import { navigate } from "../../lib/navigate";
+import type { Route } from "../../lib/route";
 import { useWords } from "../../lib/words";
 import { Icon } from "../icon";
 import { IconButton } from "../icon-button";
@@ -50,7 +51,7 @@ export interface DefinitionRowProps extends Closed {
 	// The row's one icon act at its end.
 	act?: IconAct;
 	// Where the row goes when opened; a chevron stands at its end.
-	href?: string;
+	href?: Route;
 	onOpen?: () => void;
 }
 

@@ -15,6 +15,7 @@ import { cn } from "../../lib/cn";
 import { GroundContext } from "../../lib/ground";
 import { Ink } from "../../lib/ink";
 import { isCurrent, navigate, usePathname } from "../../lib/navigate";
+import type { Route } from "../../lib/route";
 import { useWords } from "../../lib/words";
 import { Chip } from "../chip";
 import { Icon } from "../icon";
@@ -49,7 +50,7 @@ export interface FileRowProps extends Closed {
 	// between the path and the counts.
 	chip?: ChipMark;
 	// Where the row goes when opened; the row is selected at it.
-	href?: string;
+	href?: Route;
 	// Opens the file.
 	onOpen?: () => void;
 	// The row waits: the glyph, the path's bar, the chip's bar when it has a

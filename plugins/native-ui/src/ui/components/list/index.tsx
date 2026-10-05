@@ -23,6 +23,7 @@ import { View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { between, useGroupList } from "../../lib/group";
 import { LoadingContext } from "../../lib/loading";
+import type { Route } from "../../lib/route";
 import {
 	useSectionCount,
 	useSectionRows,
@@ -81,7 +82,7 @@ export interface RowSlots<T, V extends string | null = string> {
 	status?: (item: T) => StatusMark | undefined;
 	chip?: (item: T) => ChipMark | undefined;
 	more?: (item: T) => readonly MenuItem[] | undefined;
-	href?: (item: T) => string | undefined;
+	href?: (item: T) => Route | undefined;
 	onOpen?: (item: T) => void;
 }
 
@@ -93,7 +94,7 @@ export interface FileSlots<T> {
 	removed: (item: T) => number;
 	seen?: (item: T) => boolean | undefined;
 	chip?: (item: T) => ChipMark | undefined;
-	href?: (item: T) => string | undefined;
+	href?: (item: T) => Route | undefined;
 	onOpen?: (item: T) => void;
 }
 

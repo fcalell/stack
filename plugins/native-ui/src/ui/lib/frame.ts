@@ -7,6 +7,7 @@ import {
 	useRef,
 } from "react";
 import type { View } from "react-native";
+import type { Route } from "./route";
 
 // What the frame molecules hand each other. The Shell hands its switcher's
 // trigger to each Place, which starts its top bar with it; a Screen never
@@ -73,11 +74,11 @@ export const Beside = createContext<BesideFrame | null>(null);
 
 // The route of the Shell's current place: the list a Place returns to from a
 // record its Split shows alone.
-export const PlaceRoute = createContext<string | undefined>(undefined);
+export const PlaceRoute = createContext<Route | undefined>(undefined);
 
 // The route a Screen's back act returns to, where a read inside that answers
 // not found leads back; outside a Screen it leads to `PlaceRoute`.
-export const BackRoute = createContext<string | undefined>(undefined);
+export const BackRoute = createContext<Route | undefined>(undefined);
 
 // Whether the record of the Place's Split stands alone, read off the Split's
 // props: the Toolbar over the list leaves with the list.

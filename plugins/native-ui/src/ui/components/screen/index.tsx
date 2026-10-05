@@ -20,6 +20,7 @@ import {
 } from "../../lib/frame";
 import { Scroll } from "../../lib/hosts";
 import { navigate } from "../../lib/navigate";
+import type { Route } from "../../lib/route";
 import { useWords } from "../../lib/words";
 import { IconButton } from "../icon-button";
 import { Menu } from "../menu";
@@ -37,7 +38,7 @@ const BODY_CONTENT = "grow";
 
 export interface ScreenProps extends Closed {
 	title: string;
-	back?: string;
+	back?: Route;
 	actions?: IconAct[];
 	more?: MenuItem[];
 	children?: ReactNode;

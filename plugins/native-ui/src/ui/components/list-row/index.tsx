@@ -25,6 +25,7 @@ import { GroundContext } from "../../lib/ground";
 import { Ink } from "../../lib/ink";
 import { isCurrent, navigate, usePathname } from "../../lib/navigate";
 import { joinParts, META_CUT, partText } from "../../lib/parts";
+import type { Route } from "../../lib/route";
 import { useWords } from "../../lib/words";
 import { Avatar } from "../avatar";
 import { Chip } from "../chip";
@@ -79,7 +80,7 @@ export interface ListRowProps<V extends string | null = string> extends Closed {
 	// waits on leads it.
 	more?: readonly MenuItem[];
 	// Where the row goes when opened; the row is current at it.
-	href?: string;
+	href?: Route;
 	onOpen?: () => void;
 }
 

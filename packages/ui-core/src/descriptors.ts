@@ -166,9 +166,19 @@ export interface Switcher extends OptionPick {
 	act?: IconAct;
 }
 
+// The routes an app has, registered by a platform through declaration
+// merging (`interface RouteRegistry { route: ... }`): native-ui registers the
+// app's expo-router paths. Every route a descriptor carries reads it, and an
+// unregistered route is any string.
+// biome-ignore lint/suspicious/noEmptyInterface: a platform merges its route type in
+export interface RouteRegistry {}
+export type Route = RouteRegistry extends { route: infer R extends string }
+	? R
+	: string;
+
 // A place in the shell: a route, a label, an icon, an optional count.
 export interface PlaceSpec {
-	route: string;
+	route: Route;
 	label: string;
 	icon: IconName;
 	count?: number;
@@ -211,7 +221,7 @@ export type MessageDetail =
 				meta?: Part[];
 				status?: StatusMark;
 				chip?: ChipMark;
-				href?: string;
+				href?: Route;
 				onOpen?: () => void;
 			};
 			code?: never;
@@ -284,6 +294,6 @@ export type CellValue = string | number | boolean | null;
 // `locked`, the columns whose cells it draws read only.
 export interface TableRowSlots<T> {
 	id: (item: T) => string;
-	href?: (item: T) => string | undefined;
+	href?: (item: T) => Route | undefined;
 	locked?: (item: T) => readonly string[] | undefined;
 }

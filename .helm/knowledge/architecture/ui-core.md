@@ -713,7 +713,15 @@ a tick with no animation, never jumped to full.
   (`TableColumn<T>`, bare a column over any item) and its row map (`TableRowSlots<T>`) in the item
   they read. `FieldBinding<V>` is how a bound
   `FormField` types its control by the field, and `useApiForm(...).bind(name)` produces it on the
-  web from TanStack Form's store, one binding per name under the form's owner. Rejected: optional
+  web from TanStack Form's store, one binding per name under the form's owner. A route a
+  descriptor carries (`PlaceSpec.route`, a message row's `href`, `TableRowSlots.href`) is a
+  `Route`, which reads `RouteRegistry`, an empty interface a platform fills by declaration merging:
+  native-ui registers the string forms of expo-router's `Href` and types its own route props
+  (`href`, `back`) as `Route`, so in a phone app with its route types every route a component takes
+  is checked against the app's route files; unregistered (the web, ui-core's own tests) a route is
+  any string. Rejected: a route type parameter on each descriptor, which every call site would
+  spell, and a native-only copy of the descriptors, which a shared `PlaceSpec[]` would no longer
+  satisfy. Rejected: optional
   `value` and `onChange` on every control read from the field's context, which would compile a
   control with no value anywhere and could not type a boolean field against an `Input`.
 - The roster is data: `ROSTER` in `packages/ui-core/src/roster.ts` names 55 components in four
