@@ -46,7 +46,9 @@ export interface CheckboxProps extends Closed {
 export function Checkbox({ checked, onChange, label }: CheckboxProps) {
 	const state = STATES[`${checked}` as const];
 	const target = use(LabelTarget);
-	// In a table cell the grid's cursor reaches it, so it leaves the tab order.
+	// In a table cell the grid's cursor reaches it, so it leaves the tab order;
+	// anywhere else it keeps Base UI's own tab stop, which a `tabIndex` prop
+	// given as `undefined` would override.
 	const cell = use(CellField);
 	// A field around it disables it through Base UI's field context, which
 	// sets `aria-disabled` on the hit box and `data-disabled` on the mark.
@@ -58,7 +60,7 @@ export function Checkbox({ checked, onChange, label }: CheckboxProps) {
 			aria-label={label}
 			aria-labelledby={target?.labelledBy}
 			aria-describedby={target?.describedBy}
-			tabIndex={cell ? -1 : undefined}
+			{...(cell ? { tabIndex: -1 } : {})}
 			className={target ? IN_LABEL : HIT}
 		>
 			<span

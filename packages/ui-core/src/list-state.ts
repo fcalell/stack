@@ -127,8 +127,9 @@ export type LeadingKind = "avatar" | "icon" | "status" | "check";
 // button in the meta line's place (it wins over the meta line), a labelled act
 // at the row's end, a trailing value, and the more act's room, kept empty. A
 // step list is a meta line while it waits (the steps draw once an act pends,
-// which no waiting row has), and a `wrap` list's waiting row draws two body
-// lines in the title's place, its leading, trailing and acts at the first.
+// which no waiting row has), and a `wrap` list's waiting row draws its
+// one-line form (one body line in the title's place, its leading, trailing and
+// acts on it), the row it loads into when the title fits a line.
 export interface RowShape {
 	wrap: boolean;
 	tree: boolean;
@@ -198,6 +199,17 @@ export function rowShape(slots: {
 	};
 }
 
+// The depths a waiting tree's rows stand at, in order (a root, a level in,
+// then two levels in): the rails the waiting rows draw, so the text of each
+// starts about where a loaded tree's rows do; the data's own depths are
+// unknown while it waits.
+const WAITING_DEPTHS = [0, 1, 2, 2] as const;
+
+// The depth of the `index`th waiting row of a tree.
+export function waitingDepth(index: number): number {
+	return WAITING_DEPTHS[index % WAITING_DEPTHS.length] ?? 0;
+}
+
 // One row of a tree as the list draws it: its item at a depth (the roots at
 // 0), whether it has children to fold, and whether they are drawn.
 export interface TreeRow<T> {
@@ -233,6 +245,74 @@ export function treeRows<T>(
 	};
 	walk(items, 0);
 	return rows;
+}
+
+// What a key does at a row of a tree, by the WAI-ARIA tree pattern: move the
+// focus to the row at an index, or open or fold the branch at a key.
+export type TreeMove =
+	| { focus: number }
+	| { fold: string; open: boolean }
+	| undefined;
+
+// The row the tree's one tab stop is on: the active key's, else the first. A
+// folded parent hides the active row, and the stop falls back to the first.
+export function treeStop(
+	rows: readonly Pick<TreeRow<unknown>, "key">[],
+	active: string | undefined,
+): number {
+	return Math.max(
+		rows.findIndex((each) => each.key === active),
+		0,
+	);
+}
+
+// What a key does with the focus on the row at `at` of the visible rows (see
+// `treeRows`): Down and Up step between visible rows, Home and End go to the
+// first and last; Right opens a closed branch and on an open one moves to its
+// first child (the next row), on a leaf does nothing; Left folds an open
+// branch, else moves to the parent (the nearest row before it a level out),
+// which a root has none of. Any other key does nothing.
+export function treeMove(
+	rows: readonly Pick<TreeRow<unknown>, "key" | "depth" | "branch" | "open">[],
+	at: number,
+	key: string,
+): TreeMove {
+	const here = rows[at];
+	if (!here) return undefined;
+	const last = rows.length - 1;
+	switch (key) {
+		case "ArrowDown":
+			return at < last ? { focus: at + 1 } : undefined;
+		case "ArrowUp":
+			return at > 0 ? { focus: at - 1 } : undefined;
+		case "Home":
+			return { focus: 0 };
+		case "End":
+			return { focus: last };
+		case "ArrowRight":
+			if (!here.branch) return undefined;
+			return here.open ? { focus: at + 1 } : { fold: here.key, open: true };
+		case "ArrowLeft": {
+			if (here.branch && here.open) return { fold: here.key, open: false };
+			const parent = rows.findLastIndex(
+				(each, index) => index < at && each.depth < here.depth,
+			);
+			return parent < 0 ? undefined : { focus: parent };
+		}
+		default:
+			return undefined;
+	}
+}
+
+// The folded keys after a branch opens or folds: the key out of the set to
+// open it, in to fold it, the set kept as it is when it already stands so.
+export function folding(
+	folded: readonly string[],
+	key: string,
+	open: boolean,
+): readonly string[] {
+	if (folded.includes(key) === !open) return folded;
+	return open ? folded.filter((each) => each !== key) : [...folded, key];
 }
 
 // The slots a waiting FileRow draws beyond its glyph, path and counts, known
@@ -629,6 +709,20 @@ export function chooseAllToggled(
 // it cannot be ticked, else why a rule moved it.
 export function chooseReason(row: TableRecord): string | undefined {
 	return row.blocked ?? row.moved;
+}
+
+// A touch row's meta parts from a table's values, in the order the line yields
+// them (the first truncates last): a change value (what a change table is read
+// for), then the reason a rule moved the row's tick, then the other values.
+export function touchMeta(
+	values: readonly { changed: boolean; part: string }[],
+	moved: string | undefined,
+): string[] {
+	return [
+		...values.filter(({ changed }) => changed).map(({ part }) => part),
+		...(moved === undefined ? [] : [moved]),
+		...values.filter(({ changed }) => !changed).map(({ part }) => part),
+	];
 }
 
 // How a table's sort stands: the column and the way round it turns.

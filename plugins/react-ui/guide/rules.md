@@ -186,7 +186,10 @@ Rows that branch (a journey's choice points and their legs) are a tree: the `Lis
 (open by default, read aloud as expanded or collapsed) and a lane every row reserves for it, so
 give each item a `key` unique across the whole tree. Never indent rows with a class, a nested
 `List` or a `ListRow` of your own. A `dim` branch gives `dim` to the parent and every child. The
-fold act is the only way to fold a branch: the list draws no tree roles and binds no arrow keys.
+tree is a real tree (the WAI-ARIA tree pattern): the list is a `tree` and each row a `treeitem`,
+with its level and, on a branch, whether it is open. The tree is one tab stop: Up and Down move
+between visible rows, Right opens a branch or moves to its first child, Left folds it or moves to
+the parent, Home and End go to the ends and Enter opens the row. The fold act is for the pointer.
 
 Rows of inline terms (a mapping of sources to targets, a filter's conditions) are `Rules`: each
 `Rule` is `{ id, terms, onRemove? }`, its `terms` a pair (`{ from, to }`) or a condition
@@ -242,8 +245,10 @@ A collection takes data and draws its states. A `List` takes its `query` (or sta
 item map, `row` for `ListRow`s, `file` for `FileRow`s or `meter` for `Meter`s, one function per
 slot; declare a slot only if every item fills it. Pending, it waits in those slots; failed, it shows
 `sentence` and Retry; empty, `empty`, with the act that fills it. Rows share one `leading` kind
-(`avatar`, `icon` or `status`) or none. The first meta part names the item; it and the status stay
-whole as the later parts, then the chip, truncate. A file row's `change` (a `ChangeKind`) draws the
+(`avatar`, `icon` or `status`) or none. The first meta part names the item. A row's meta line
+yields from its end: the later parts truncate, then the chip leaves whole, then the lock's label and
+the warning's truncate, and last the first part truncates; the status and the glyphs stay whole. A
+file row's `change` (a `ChangeKind`) draws the
 change mark ahead of its glyph, and its `chip` says why it is listed; the chip stays whole and the
 path yields to it. A Section counts them and waits with them when they stand as its direct children,
 inside a direct `Group`, or as a direct `QueryBoundary`'s query; a collection inside the app's own

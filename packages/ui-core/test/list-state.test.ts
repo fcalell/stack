@@ -10,6 +10,7 @@ import {
 	chooseRow,
 	factShape,
 	fileShape,
+	folding,
 	groupWait,
 	type ListInput,
 	listBusy,
@@ -25,7 +26,11 @@ import {
 	sectionState,
 	tableRecords,
 	toggled,
+	touchMeta,
+	treeMove,
 	treeRows,
+	treeStop,
+	waitingDepth,
 	waitLine,
 } from "../src/list-state.ts";
 import { leadingOf, sizePx } from "../src/scales.ts";
@@ -645,6 +650,81 @@ test("only an item with children is a branch, and a row says whether its childre
 	assert.equal(byKey.a?.item, TREE[0]);
 });
 
+// The visible rows of TREE with every branch open:
+// 0 a, 1 a1, 2 a1x, 3 a1y, 4 a2, 5 b, 6 c, 7 c1.
+const walk = (folded: readonly string[], from: string, key: string) => {
+	const rows = treeRows(TREE, NODES, folded);
+	const at = rows.findIndex((each) => each.key === from);
+	const move = treeMove(rows, at, key);
+	return move && "focus" in move ? rows[move.focus]?.key : move;
+};
+
+test("Down and Up step between the visible rows and stop at the ends", () => {
+	assert.equal(walk([], "a", "ArrowDown"), "a1");
+	assert.equal(walk([], "a1y", "ArrowDown"), "a2");
+	assert.equal(walk([], "c1", "ArrowDown"), undefined);
+	assert.equal(walk([], "b", "ArrowUp"), "a2");
+	assert.equal(walk([], "a", "ArrowUp"), undefined);
+	// A folded branch's children are not visible rows, so Down skips them.
+	assert.equal(walk(["a"], "a", "ArrowDown"), "b");
+});
+
+test("Home and End go to the first and last visible row", () => {
+	assert.equal(walk([], "a1y", "Home"), "a");
+	assert.equal(walk([], "a1y", "End"), "c1");
+	assert.equal(walk(["c"], "a", "End"), "c");
+});
+
+test("Right opens a closed branch, goes to the first child of an open one, and does nothing on a leaf", () => {
+	assert.deepEqual(walk(["a1"], "a1", "ArrowRight"), {
+		fold: "a1",
+		open: true,
+	});
+	assert.equal(walk([], "a", "ArrowRight"), "a1");
+	assert.equal(walk([], "a1", "ArrowRight"), "a1x");
+	assert.equal(walk([], "b", "ArrowRight"), undefined);
+	// An item with an empty list of children is a leaf.
+	assert.equal(walk([], "a2", "ArrowRight"), undefined);
+});
+
+test("Left folds an open branch, else goes to the parent, and does nothing on a root", () => {
+	assert.deepEqual(walk([], "a1", "ArrowLeft"), { fold: "a1", open: false });
+	assert.equal(walk(["a1"], "a1", "ArrowLeft"), "a");
+	assert.equal(walk([], "a1y", "ArrowLeft"), "a1");
+	assert.equal(walk([], "a2", "ArrowLeft"), "a");
+	assert.equal(walk([], "c1", "ArrowLeft"), "c");
+	assert.equal(walk([], "b", "ArrowLeft"), undefined);
+	assert.equal(walk(["a"], "a", "ArrowLeft"), undefined);
+});
+
+test("another key, or a row the tree does not draw, moves nothing", () => {
+	assert.equal(walk([], "a", "Enter"), undefined);
+	assert.equal(walk([], "a", "x"), undefined);
+	assert.equal(treeMove(treeRows(TREE, NODES, []), -1, "ArrowDown"), undefined);
+	assert.equal(treeMove([], 0, "End"), undefined);
+});
+
+test("a waiting tree's rows stand at a root, a level in, then two levels in", () => {
+	assert.deepEqual([0, 1, 2, 3].map(waitingDepth), [0, 1, 2, 2]);
+	assert.equal(waitingDepth(4), 0);
+});
+
+test("the tree's one tab stop is the active row, else the first", () => {
+	const rows = treeRows(TREE, NODES, []);
+	assert.equal(treeStop(rows, "a1y"), 3);
+	assert.equal(treeStop(rows, undefined), 0);
+	// A folded parent hides the active row.
+	assert.equal(treeStop(treeRows(TREE, NODES, ["a"]), "a1y"), 0);
+	assert.equal(treeStop([], "a"), 0);
+});
+
+test("a branch opens or folds by key, keeping the set as it stands", () => {
+	assert.deepEqual(folding([], "a", false), ["a"]);
+	assert.deepEqual(folding(["a"], "a", true), []);
+	assert.deepEqual(folding(["a", "b"], "a", false), ["a", "b"]);
+	assert.deepEqual(folding(["b"], "a", true), ["b"]);
+});
+
 test("a tree's rail is one indent step with a hairline, and its rows abut", () => {
 	assert.match(TREE_RAIL, /\bw-indent\b/);
 	assert.match(TREE_RAIL, /\bborder-r border-edge\b/);
@@ -670,6 +750,29 @@ test("a body line's box is the body's line box at each density", () => {
 
 test("a lock glyph sets no margin of its own", () => {
 	assert.doesNotMatch(LOCK_GLYPH, /\bm[se]?-/);
+});
+
+test("a touch row's meta leads with the change value, then the move's reason, then the other values", () => {
+	const values = [
+		{ changed: false, part: "0 3 * * *" },
+		{ changed: true, part: "30s → 60s" },
+		{ changed: false, part: "Retries 3" },
+	];
+	assert.deepEqual(touchMeta(values, "Needed by Usage rollup"), [
+		"30s → 60s",
+		"Needed by Usage rollup",
+		"0 3 * * *",
+		"Retries 3",
+	]);
+	assert.deepEqual(touchMeta(values, undefined), [
+		"30s → 60s",
+		"0 3 * * *",
+		"Retries 3",
+	]);
+	assert.deepEqual(touchMeta([], "Needed by Usage rollup"), [
+		"Needed by Usage rollup",
+	]);
+	assert.deepEqual(touchMeta([], undefined), []);
 });
 
 test("a several-pick toggles a member in and out, keeping order", () => {

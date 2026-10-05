@@ -14,7 +14,6 @@ import {
 	ROW_ACTS,
 	ROW_ENTRY,
 	ROW_LEADING,
-	ROW_MARKS,
 	ROW_META_LINE,
 	ROW_STEPS,
 	ROW_TITLE_LINE,
@@ -60,7 +59,8 @@ import { LockMark } from "./lock";
 import { WarningMark } from "./marks";
 
 const ROW = "relative flex-row items-center";
-// A row whose title wraps whole stands its parts on the title's first line:
+// A row whose title wraps whole, or that holds an entry, stands its parts on the
+// title's first line:
 // each in a box one body line tall, centred on the line; a taller part
 // overflows it centred.
 const ROW_WHOLE = "relative flex-row items-start";
@@ -77,23 +77,31 @@ const TEXT = "flex-1 min-w-0";
 const LINE = "flex-row items-center min-w-0";
 const TITLE = "grow shrink";
 const LINE_WHOLE = "flex-row items-start min-w-0";
-// A step is one meta line.
+// A step is one body line's box tall (the step lists' 19 of the references,
+// at the type scale's rung).
 const STEPS = "min-w-0";
-const STEP = "flex-row items-center min-w-0";
+const STEP = "flex-row items-center min-w-0 h-line-body";
 const STEP_LABEL = "shrink";
 const TRAILING = "shrink-0";
 // The meta line is one line that yields in order: the later parts truncate
-// first, then the chip; the first part (naming the item) and the status keep
-// their width, and past them the line clips at the row's edge rather than
-// overprint. The parts' box is as wide as the first part at least (the later
-// parts take no width of their own) and grows into the room the marks leave.
+// first (they take no width of their own), then the chip (shown whole or not at
+// all), the warning's label and last the first part, which names the item and
+// truncates with an ellipsis; the status and the glyphs keep their width, and
+// past them the line clips at the row's edge rather than overprint. The shrink
+// weights are the order, each far above the next. The parts' box grows into
+// the room the marks leave.
 const META_LINE = "flex-row items-center min-w-0 overflow-hidden";
-const META_PARTS = "flex-row grow shrink-0";
-const META_FIRST = "shrink-0";
+const META_PARTS = "flex-row grow shrink min-w-0";
+const META_FIRST = "shrink min-w-0";
 const META = "grow w-0";
-const MARKS = "flex-row items-center shrink min-w-0";
 const STATUS_MARK = "shrink-0";
-const CHIP_MARK = "shrink min-w-0";
+// The chip stands in a slot that shows it whole or not at all: a flex line
+// always keeps its first item, so a zero-width start item takes that place and
+// the chip, wider than the room the slot is left, wraps under the slot's one
+// line height and is clipped away.
+const CHIP_SLOT = "flex-row flex-wrap h-chip min-w-0 shrink-64 overflow-hidden";
+const CHIP_START = "w-0";
+const CHIP_MARK = "shrink-0";
 const ACTS = "relative flex-row shrink-0 items-center";
 // The entry takes the touch itself: the input filling the room its act leaves.
 const ENTRY = "flex-row items-center min-w-0";
@@ -166,11 +174,11 @@ export interface ListRowProps<V extends string | null = string> extends Closed {
 function TreeLead(props: {
 	tree: RowTree;
 	lines: RowLines;
-	wrap: boolean;
+	top: boolean;
 	named: string;
 }) {
 	const words = useWords();
-	const { tree, lines, wrap, named } = props;
+	const { tree, lines, top, named } = props;
 	const { depth, fold } = tree;
 	const levels = Array.from({ length: depth }, (_, level) => level);
 	return (
@@ -178,7 +186,7 @@ function TreeLead(props: {
 			{levels.map((level) => (
 				<View key={level} pointerEvents="none" className={TREE_RAIL} />
 			))}
-			<First on={wrap}>
+			<First on={top}>
 				<View pointerEvents="box-none" className={cn(TREE_LANE, FOLD)}>
 					{fold ? (
 						<IconButtonBase
@@ -317,6 +325,9 @@ export function ListRow<V extends string | null = string>({
 	const lined = Boolean(entry || listed || parts?.length || marked);
 	const stacked = lined ? "two" : "one";
 	const lines = wrap ? "whole" : stacked;
+	// A wrapped title and an entry's input are lines under the title's first, so
+	// the parts beside them stand on that first line.
+	const top = wrap || entry !== undefined;
 	const inline = useMemo(() => ({ label: entry?.label ?? "" }), [entry?.label]);
 	const entryReason = useReasonLine(entry?.act.blocked);
 	const live = useLive(entry?.error ?? "");
@@ -324,7 +335,7 @@ export function ListRow<V extends string | null = string>({
 	const [first, ...rest] = parts ?? [];
 	const value =
 		trailing && !("pick" in trailing) ? (
-			<First on={wrap}>
+			<First on={top}>
 				<RNText className={cn(ROW_TRAILING, TRAILING)}>
 					{trailingWord(trailing)}
 				</RNText>
@@ -351,7 +362,7 @@ export function ListRow<V extends string | null = string>({
 		<View
 			className={cn(
 				row({ lines, ground, state: current ? "selected" : "rest" }),
-				wrap ? ROW_WHOLE : ROW,
+				top ? ROW_WHOLE : ROW,
 				ground === "list" && SQUARE,
 			)}
 		>
@@ -365,15 +376,15 @@ export function ListRow<V extends string | null = string>({
 				/>
 			) : null}
 			{tree ? (
-				<TreeLead tree={tree} lines={lines} wrap={wrap} named={named} />
+				<TreeLead tree={tree} lines={lines} top={top} named={named} />
 			) : null}
 			{change ? (
-				<First on={wrap}>
+				<First on={top}>
 					<ChangeMark kind={change} />
 				</First>
 			) : null}
 			{leading ? (
-				<First on={wrap}>
+				<First on={top}>
 					<View
 						pointerEvents={ticks ? "auto" : "none"}
 						className={cn(ROW_LEADING, LEADING, ticks && TICK)}
@@ -462,20 +473,19 @@ export function ListRow<V extends string | null = string>({
 								) : null}
 							</View>
 						)}
-						{marked ? (
-							<View className={cn(ROW_MARKS, MARKS)}>
-								{status ? (
-									<View className={STATUS_MARK}>
-										<Status state={status.state} label={status.label} />
-									</View>
-								) : null}
-								{warning !== undefined ? <WarningMark label={warning} /> : null}
-								{lock !== undefined ? <LockMark reason={lock} /> : null}
-								{chip ? (
-									<View className={CHIP_MARK}>
-										<Chip family={chip.family} label={chip.label} />
-									</View>
-								) : null}
+						{status ? (
+							<View className={STATUS_MARK}>
+								<Status state={status.state} label={status.label} />
+							</View>
+						) : null}
+						{warning !== undefined ? <WarningMark label={warning} /> : null}
+						{lock !== undefined ? <LockMark reason={lock} /> : null}
+						{chip ? (
+							<View className={CHIP_SLOT}>
+								<View className={CHIP_START} />
+								<View className={CHIP_MARK}>
+									<Chip family={chip.family} label={chip.label} />
+								</View>
 							</View>
 						) : null}
 					</View>
@@ -483,12 +493,12 @@ export function ListRow<V extends string | null = string>({
 				</View>
 			)}
 			{trailing && "pick" in trailing ? (
-				<First on={wrap}>
+				<First on={top}>
 					<Picker {...trailing.pick} fit="row" />
 				</First>
 			) : null}
 			{act || more?.length ? (
-				<First on={wrap}>
+				<First on={top}>
 					<View className={cn(ROW_ACTS, ACTS)}>
 						{act ? <ActButton act={act} host={actReason.host} /> : null}
 						{more?.length ? (

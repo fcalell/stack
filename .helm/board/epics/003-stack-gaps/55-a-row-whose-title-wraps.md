@@ -20,6 +20,6 @@ Reference: Oura's notes wrap whole with their date ([screen](https://mobbin.com/
 - [x] Its shape (a component, a variant, a token, an option): the stack session decides.
 
 ## Shape
-`ListRow.wrap?: boolean` (and `RowSlots.wrap`): the title wraps to every line it needs at body weight 400 (a `ROW.lines.whole` cell), the leading, trailing and more act aligned to its first line; meta unchanged. The waiting row draws two body lines.
+`ListRow.wrap?: boolean` (and `RowSlots.wrap`): the title wraps to every line it needs at body weight 400 (a `ROW.lines.whole` cell), the leading, trailing and more act aligned to its first line; meta unchanged. The waiting row draws the one-line form (one body line in the title's place), as the rubric's skeleton constant says: a loaded row whose text wraps grows by its wrapped lines, its waiting row matching its one-line form.
 
 Review (accepted by fcalell): a one-line wrapped row on touch stands 40 tall, not a row's 48: `ROW.lines.whole` has no min height.

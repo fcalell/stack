@@ -15,4 +15,4 @@ A Martechthings import runs on its row: while it pends, the row's meta becomes t
 - [ ] A row draws the loading-and-pending step list while its act waits, the active step spinning.
 
 ## Shape
-`ListRow.steps?: readonly StatusMark[]` (and `RowSlots.steps`): while the row's act pends the steps replace the meta line, one line each, a status dot or the spinner while running and its label; done and waiting steps in `ink-meta`, the running step in `ink-body`. Reuses `STATUS_DOT` and `STATUS_SPINNER`; the waiting row draws its meta line.
+`ListRow.steps?: readonly StatusMark[]` (and `RowSlots.steps`): while the row's act pends the steps replace the meta line, one line each, a status dot or the spinner while running and its label; done and waiting steps in `ink-meta`, the running step in `ink-body`. Reuses `STATUS_DOT` and `STATUS_SPINNER`; the waiting row draws its meta line. Each step line is one body line's box tall (`line-body`).

@@ -4,8 +4,10 @@ import { useWords } from "../../lib/words.tsx";
 import { Icon } from "../icon/index.tsx";
 
 // A mark's glyph beside its label, the label truncating before the glyph
-// does. The marks of a row yield from the end: the lock before the warning.
-const MARK = "flex items-center min-w-0";
+// does. A row's meta line yields from the end: the chip, then the lock's
+// label, then the warning's, then the first meta part; a mark never shrinks
+// below its glyph.
+const MARK = "flex items-center min-w-icon-meta shrink-4";
 const GLYPH = "flex shrink-0";
 const LABEL = "truncate";
 const SPOKEN = "sr-only";

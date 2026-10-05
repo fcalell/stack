@@ -29,6 +29,7 @@ import {
 	type TableRecord,
 	tableRecords,
 	tickable,
+	touchMeta,
 } from "@fcalell/ui-core/list-state";
 import {
 	FIGURES,
@@ -137,6 +138,10 @@ const CELL = "flex items-center gap-inside min-w-0";
 const CELL_END = "justify-end";
 const VALUE = "truncate";
 const CHANGE = "flex items-center min-w-0";
+// The leading cell's change mark and the name (with the reason under it) side
+// by side, the mark centred on the name's own line.
+const CHANGE_LEAD = "flex items-start min-w-0";
+const MARK_LINE = "flex shrink-0 items-center h-line-body";
 const TICK = "flex shrink-0 text-ink-body";
 // What a cell says aloud and does not draw: a ticked read-only check its
 // column's label, a lock its word, a change its reading.
@@ -1035,24 +1040,37 @@ function CellValueView(props: {
 				<span className={strong}>{shown(column, cell)}</span>
 			);
 		const line =
-			props.warning === undefined && props.change === undefined ? (
+			props.warning === undefined ? (
 				name
 			) : (
 				<span className={cn(TABLE_NAME, CHANGE)}>
-					{props.change ? <ChangeMark kind={props.change} /> : null}
 					{name}
-					{props.warning === undefined ? null : (
-						<WarningMark label={props.warning} />
-					)}
+					<WarningMark label={props.warning} />
 				</span>
 			);
-		if (props.reason === undefined) return line;
-		return (
-			<span className={REASON_STACK}>
-				{line}
-				<span id={props.reasonId} className={cn(text({ role: "meta" }), VALUE)}>
-					{props.reason}
+		const stack =
+			props.reason === undefined ? (
+				line
+			) : (
+				<span className={REASON_STACK}>
+					{line}
+					<span
+						id={props.reasonId}
+						className={cn(text({ role: "meta" }), VALUE)}
+					>
+						{props.reason}
+					</span>
 				</span>
+			);
+		// The change mark stands on the name's line and the reason under the
+		// name, both starting where the name does.
+		if (props.change === undefined) return stack;
+		return (
+			<span className={cn(TABLE_NAME, CHANGE_LEAD)}>
+				<span className={MARK_LINE}>
+					<ChangeMark kind={props.change} />
+				</span>
+				{stack}
 			</span>
 		);
 	}
@@ -1083,6 +1101,7 @@ function CellValueView(props: {
 								tableChangeValue({
 									kind: kind === "removed" ? "removed" : "before",
 								}),
+								FIGURES,
 								VALUE,
 							)}
 						>
@@ -1097,6 +1116,7 @@ function CellValueView(props: {
 								tableChangeValue({
 									kind: kind === "added" ? "added" : "after",
 								}),
+								FIGURES,
 								VALUE,
 							)}
 						>
@@ -1333,20 +1353,21 @@ function Phone(props: {
 						const parts = meta
 							.map((column) => {
 								const at = cell(record, column);
+								const changed = isChangeCell(at);
 								if (column.kind === "check")
-									return at === true ? column.label : "";
-								if (isChangeCell(at)) return changeMeta(at, words);
+									return { changed, part: at === true ? column.label : "" };
+								if (changed) return { changed, part: changeMeta(at, words) };
 								if (column.kind === "number" && at !== null && at !== undefined)
-									return `${column.label} ${at}`;
-								return shown(column, at);
+									return { changed, part: `${column.label} ${at}` };
+								return { changed, part: shown(column, at) };
 							})
-							.filter((part) => part !== "");
-						// The tick draws a blocked reason itself; with none, the reason
-						// that leads the meta is the rule's move.
+							.filter(({ part }) => part !== "");
+						// The tick draws a blocked reason itself; with none, the rule's
+						// move is the reason.
 						const moved =
 							record.blocked === undefined ? chooseReason(record) : undefined;
-						if (moved !== undefined) parts.unshift(moved);
-						return parts.length ? parts : undefined;
+						const lines = touchMeta(parts, moved);
+						return lines.length ? lines : undefined;
 					}
 				: undefined,
 		trailing: ageColumn

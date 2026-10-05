@@ -26,6 +26,7 @@ import {
 	type TableRecord,
 	tableRecords,
 	tickable,
+	touchMeta,
 } from "@fcalell/ui-core/list-state";
 import { BREAKPOINT_PX } from "@fcalell/ui-core/tokens";
 import {
@@ -879,6 +880,7 @@ function CellValueView(props: {
 								tableChangeValue({
 									kind: kind === "removed" ? "removed" : "before",
 								}),
+								FIGURES,
 								VALUE,
 							)}
 						>
@@ -897,6 +899,7 @@ function CellValueView(props: {
 								tableChangeValue({
 									kind: kind === "added" ? "added" : "after",
 								}),
+								FIGURES,
 								VALUE,
 							)}
 						>
@@ -1101,20 +1104,21 @@ function Phone(props: {
 						const parts = meta
 							.map((column) => {
 								const at = cell(record, column);
+								const changed = isChangeCell(at);
 								if (column.kind === "check")
-									return at === true ? column.label : "";
-								if (isChangeCell(at)) return changeMeta(at, words);
+									return { changed, part: at === true ? column.label : "" };
+								if (changed) return { changed, part: changeMeta(at, words) };
 								if (column.kind === "number" && at !== null && at !== undefined)
-									return `${column.label} ${at}`;
-								return shown(column, at);
+									return { changed, part: `${column.label} ${at}` };
+								return { changed, part: shown(column, at) };
 							})
-							.filter((part) => part !== "");
-						// The tick draws a blocked reason itself; with none, the reason
-						// that leads the meta is the rule's move.
+							.filter(({ part }) => part !== "");
+						// The tick draws a blocked reason itself; with none, the rule's
+						// move is the reason.
 						const moved =
 							record.blocked === undefined ? chooseReason(record) : undefined;
-						if (moved !== undefined) parts.unshift(moved);
-						return parts.length ? parts : undefined;
+						const lines = touchMeta(parts, moved);
+						return lines.length ? lines : undefined;
 					}
 				: undefined,
 		trailing: ageColumn

@@ -3,12 +3,12 @@ import { LOCK_GLYPH, ROW_MARKS, text } from "@fcalell/ui-core/variants";
 import { useWords } from "../../lib/words.tsx";
 import { Icon } from "../icon/index.tsx";
 
-const MARK = "flex items-center min-w-0";
+const MARK = "flex items-center min-w-icon-meta";
 const GLYPH = "flex";
 const LABEL = "truncate";
 const SPOKEN = "sr-only";
 // A row's lock keeps its glyph and yields its label, before the warning's.
-const ROW_LOCK = "shrink-2";
+const ROW_LOCK = "shrink-16";
 const FIXED = "shrink-0";
 // The row's lock label shows from `tablet`; below it the glyph stands alone and
 // the label is still read aloud.

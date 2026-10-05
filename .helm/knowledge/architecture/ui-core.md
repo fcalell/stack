@@ -489,10 +489,10 @@ a tick with no animation, never jumped to full.
 - A row's leading is one slot at the avatar's size (`ROW_LEADING`), the dot, spinner or glyph
   centred in it, so the titles of a list share one x whatever leads them; its meta line
   (`ROW_META_LINE`) is one line that yields in order: the later parts truncate first, then the chip,
-  then the lock's label; the first part (naming the item), the status and the warning keep their
-  width, and past them the line clips at the row's edge rather than overprint. The parts' box is at
-  least the first part's width because the later parts take no width of their own (`w-0`, growing
-  into the room the marks leave). Every row keeps one height, so its waiting form matches it by
+  the lock's label, the warning's label and last the first part (naming the item, with an ellipsis);
+  the status and the glyphs keep their width, and past them the line clips at the row's edge rather
+  than overprint (the marks are described under `warning` below). The later parts take no width of
+  their own (`w-0`, growing into the room the marks leave). Every row keeps one height, so its waiting form matches it by
   construction. A short label (a chip's, a status word, a skeleton label's lane) is bounded by the
   one width `measure-short` (18ch, the short sibling of `measure`).
 - A minimum height is the floor of something pressed (a control, a field, a target, a chip, a row),
@@ -651,7 +651,10 @@ a tick with no animation, never jumped to full.
   touch row spells its meta part from it ("X → Y"). The cell draws `before` in the meta ink, an
   `ArrowRight` and `after` in the body ink, neither tinted, since a changed value is no verdict;
   only a value added (null `before`) takes `ok-soft` and one removed (null `after`) `danger-soft`,
-  struck, each a chip-radius pill (`TABLE_CHANGE`, `TABLE_CHANGE_VALUE`). It reads aloud through the
+  struck, each a chip-radius pill (`TABLE_CHANGE`, `TABLE_CHANGE_VALUE`); the values draw in tabular
+  figures, as a column of numbers does. The touch row leads its meta with it (`touchMeta`: the
+  change value, then a moved tick's reason, then the other values), since it is what the table is
+  read for and the first meta part truncates last. It reads aloud through the
   slot word `changedFrom` ("from X to Y"), or `added` or `removed` before the one value it holds.
   Rejected: tinting `after` for any change (a rename is not good news), and a Comparison column
   (that sets facts side by side, not one value's movement). A Table chooses rows through `choose`
@@ -667,12 +670,16 @@ a tick with no animation, never jumped to full.
   (`chooseHead` and `chooseAllToggled` in `./list-state`: from mixed it checks every tickable row,
   from checked it clears them, and a chosen id the rows do not hold keeps its place). A `blocked`
   row's tick is disabled (a field's disabled state around the Checkbox); its reason, or the `moved`
-  one ("Needed by Checkout"), is a meta line under the leading cell (`chooseReason`: blocked first),
-  and only that row grows to `row-2`, in every cell of it, so the row's halves still line up. A
+  one ("Needed by Checkout"), is a meta line under the leading cell, starting where the name starts
+  (the change mark stands on the name's line, the reason under the name; `chooseReason`: blocked
+  first), and only that row grows to `row-2`, in every cell of it, so the row's halves still line up.
+  Every tick that is not in a grid cell is a tab stop (the head tick; a `ListRow`'s tick); inside a
+  cell the grid's cursor owns focus and the tick leaves the tab order, an explicit `tabIndex` of
+  `undefined` on Base UI's checkbox would drop its own stop, so it is spread only for a cell. A
   reason is a meta line, never a tick tooltip, since a tooltip is unreachable on touch and by
   assistive tech. On touch the leading and tick columns both freeze (the leading one at the tick
   column's width); below `tablet` the tick is the `ListRow`'s leading `check` and a moved reason
-  leads its meta. The head tick draws no count, and the table none: "N of M chosen" belongs to the
+  follows the change value in its meta. The head tick draws no count, and the table none: "N of M chosen" belongs to the
   selection bar, which reads this selection: an `ActionBar` with `chosen: { count, of, onAll? }`
   docked as the Place's `foot`. Touch has no head tick, so `onAll` puts the choose-all act on the
   bar there only (below `tablet` on the web, always on the phone); on the desktop the head tick is
@@ -858,8 +865,15 @@ a tick with no animation, never jumped to full.
   `DefinitionRow` draw too: `LOCK_GLYPH` (the meta ink, no margin) names the glyph, and the
   container's gap spaces it from what it follows. The act that clears a warning is the row's `act`,
   one visible act a row; a mark that is itself a press would put a second hit inside a row that may
-  open. The marks yield from the end of the line: the chip truncates first, then the lock's label,
-  and the warning's label keeps. Why named props: `List`'s per-slot functions let a waiting row know
+  open. The meta line yields from its end, by shrink weights each far above the next so the order
+  holds: the later meta parts (they take no width of their own), then the chip, then the lock's
+  label, then the warning's label, and last the first part, which names the item and truncates with
+  an ellipsis; the status and every glyph keep their width, and past them the line clips at the
+  row's edge rather than overprint. The chip is shown whole or not at all: it stands in a slot one
+  line tall that wraps (a zero-width start item holds the first place a flex line always keeps, so
+  a chip wider than the room the slot is left wraps under the slot and is clipped away), so no
+  sliver of a pill ever draws. The marks are flat items of the meta line, not a box of their own,
+  so one set of weights orders them with the parts. Why named props: `List`'s per-slot functions let a waiting row know
   which marks to reserve before any item exists (`rowShape` reads `warning` and `lock` by key, as it
   does `status` and `chip`); a `marks` record function would hide that. A count is a meta part and a
   test status a `status`, so no cell kind is added; a change set's mark is `change`, below. A
@@ -901,7 +915,9 @@ a tick with no animation, never jumped to full.
   `entry` once the act settles. The Input is named by the entry's `label` and reads its bar fit from
   an internal context (`InlineField`, shared with a `Rules` term), as a Table cell's does from
   `CellField`. A blocked act's reason draws on the row's own line, the Button handed a reason host,
-  so the act keeps its place. Rejected: a `Form` or a `FormField` in a `Group` row, which draws a
+  so the act keeps its place. A row with an entry stands its leading, trailing and acts on the
+  title's first line (the box `wrap` uses), so the glyph names the line it sits by and not the
+  input under it. Rejected: a `Form` or a `FormField` in a `Group` row, which draws a
   label over its field and a foot ActionBar, the wrong geometry for a row, and a Group child loses
   the row's leading and title. `RowSlots` carries `act` and `entry`; `rowShape` reads them by key,
   so a waiting row draws a field-high bar and an act's bar (`SKELETON {kind: bar}`) in their places,
@@ -915,7 +931,8 @@ a tick with no animation, never jumped to full.
   selection states of `ROW.state` are drawn from outside and `dim` is given. `steps` (`readonly
   StatusMark[]`, `RowSlots.steps`, per item) stands in the meta line's place while the row's act
   pends (the entry's rank: `entry`, then `steps`, then `meta` and the marks; the consumer gives
-  `meta` back once the act settles), one line each (`ROW_STEPS`, a pair gap, and `ROW_STEP`): the
+  `meta` back once the act settles), one line each (`ROW_STEPS`, a pair gap, and `ROW_STEP`, each
+  line one body line's box tall, `line-body`, the step lists' 19 of the references): the
   status mark (`StatusDot`, the spinner while `running`, the same cells as `Status`) and the label
   at meta size, the running step in `ink-body` and the others in `ink-meta`; each mark carries its
   state's word as its label, so the state is never told by colour alone. It takes no descriptor of
@@ -929,8 +946,9 @@ a tick with no animation, never jumped to full.
   to one body line, so a 44 act overflows it centred on the line instead of growing it). A `Quoted`
   title still wraps to two lines and adds quotes (a model-written name), `Prose` has no per-item
   meta or more, `Message` is a turn; a row whose title wraps is none of them. `rowShape.wrap` is the
-  list's flag, so the waiting row draws two body lines and keeps its leading, trailing and acts on
-  the first. The one `ROW_TITLE` family holds the four forms (`strong`, `dim`, `whole`, `whole-dim`)
+  list's flag, so the waiting row draws the one-line form (one body line in the title's place, its
+  leading, trailing and acts on it), the row a note loads into when it fits a line, and the list
+  grows on load only by the lines a title wraps. The one `ROW_TITLE` family holds the four forms (`strong`, `dim`, `whole`, `whole-dim`)
   so a title's weight and ink are one cell, not a call-site pick; `rowTitleForm(wrap, dim)` names it
   for both platforms.
 - A `List` whose `row` map gives `children` is a tree, not a new component: folding hides rows a
@@ -948,10 +966,20 @@ a tick with no animation, never jumped to full.
   levels and the lane stand as one box that bleeds the row's padding (`TREE_BLEED`, keyed on
   `ROW.lines`: the negative of the form's `py`, so `-my-rows` on a two-line row and `-my-pair` on a
   wrapped one), and the tree's list drops the row gap (`LIST_TREE`), so a rail is unbroken from row
-  to row. A tree is a list of rows with the fold act as its one state: the web and the phone both
-  read it from the act's `aria-expanded` and `accessibilityState.expanded`. The web draws no `tree`
-  or `treeitem` roles, which would promise roving focus and Up and Down between rows that the list
-  does not have; a branch folds from its act. `dim` composes by item: an off-path branch gives `dim`
+  to row. On the web the tree is a real tree, the WAI-ARIA tree pattern: the list is `role="tree"`,
+  each row a `treeitem` (the row's own element: named by its title, described by its meta line,
+  `aria-level` its depth plus one, `aria-expanded` on a branch, `aria-current` at its `href`) and the
+  tree holds one tab stop, roving to the row last focused (`treeStop`; the hit link and the fold act
+  leave the tab order, the fold act staying for the pointer and a touch screen reader). Down and Up
+  move between visible rows, Right opens a closed branch or moves to the first child, Left folds an
+  open branch or moves to the parent, Home and End go to the first and last visible row, and Enter
+  opens the row. That navigation is `treeMove` in `./list-state` (pure, tested, returning a focus
+  index or a fold), with `folding` setting a branch open or folded by key; the List's container
+  hears the keys and focus its rows send up and moves the focus. A row's own controls (its act, its
+  more menu) keep their tab stops. The phone has no keyboard focus: the fold act's
+  `accessibilityState.expanded` is its state. A waiting tree draws its rails at the depths 0, 1, 2
+  and 2 (`waitingDepth`), so its rows start their text about where a loaded tree's rows do; the data's
+  own depths are unknown while it waits. `dim` composes by item: an off-path branch gives `dim`
   to its parent and each child, so the branch reads grey whole, its chevron staying in the meta ink
   and its rail the `edge` hairline. A Section counts a tree's top level, not every node.
 - A value outside its editable context reads locked on the fact's own row: `DefinitionRow.locked` is

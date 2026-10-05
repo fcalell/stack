@@ -1,5 +1,5 @@
 import { cn } from "@fcalell/ui-core/cn";
-import type { RowShape } from "@fcalell/ui-core/list-state";
+import { type RowShape, waitingDepth } from "@fcalell/ui-core/list-state";
 import {
 	lineBox,
 	ROW_ACTS,
@@ -11,6 +11,8 @@ import {
 	skeleton,
 	skeletonLane,
 	TREE_LANE,
+	TREE_RAIL,
+	treeBleed,
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, use } from "react";
 import { GroundContext } from "../../lib/ground.ts";
@@ -25,7 +27,9 @@ const LINE_WHOLE = "flex items-start min-w-0";
 const TITLE_LINES = "flex flex-col grow min-w-0";
 const SQUARE = "touch:rounded-none";
 const LEADING = "flex shrink-0 items-center justify-center";
-// A tree's fold lane, empty: no row waiting has depth or a branch.
+// A tree's levels and fold lane, as one box that runs the row's full height
+// (`./index.tsx`); the lane is empty, no row waiting has a branch.
+const TREE = "flex shrink-0 self-stretch";
 const FOLD = "shrink-0";
 // The change mark's lane, one icon wide.
 const BOX = "flex shrink-0 items-center justify-center";
@@ -91,14 +95,22 @@ function TitleBar(props: { width: string }) {
 	);
 }
 
-/** A ListRow waiting, the `index`th of a waiting list: a tree's fold lane, empty, the change mark's skeleton in its lane, the leading mark's skeleton by its kind, a bar in the title line (two when the list wraps its titles, its leading, trailing and acts on the first; the trailing's at its end, four figures wide) and one in the meta line (the marks' at its end) or, with an entry, a field's bar and an act's bar in its place, each at its slot's place, a labelled act's bar at the row's end and the more act's room left empty. Outside the package's exports. */
+/** A ListRow waiting, the `index`th of a waiting list: a tree's rails (the depths `waitingDepth` gives) and fold lane, empty, the change mark's skeleton in its lane, the leading mark's skeleton by its kind, a bar in the title line (the one-line form when the list wraps its titles, its leading, trailing and acts on it; the trailing's at its end, four figures wide) and one in the meta line (the marks' at its end) or, with an entry, a field's bar and an act's bar in its place, each at its slot's place, a labelled act's bar at the row's end and the more act's room left empty. Outside the package's exports. */
 export function RowWait(props: { shape: RowShape; index: number }) {
 	const ground = use(GroundContext);
 	const { shape } = props;
 	const [title, meta] = BARS[props.index % BARS.length] ?? BARS[0];
 	const stacked = shape.meta || shape.entry ? "two" : "one";
+	const lines = shape.wrap ? "whole" : stacked;
+	// A wrapped title and an entry's input are lines under the title's first, so
+	// the parts beside them stand on that first line.
+	const top = shape.wrap || shape.entry;
+	const levels = Array.from(
+		{ length: waitingDepth(props.index) },
+		(_, level) => level,
+	);
 	const trailing = shape.trailing ? (
-		<First on={shape.wrap}>
+		<First on={top}>
 			<span
 				className={cn(skeleton({ kind: "line" }), TRAILING_BAR, TRAILING)}
 			/>
@@ -109,24 +121,33 @@ export function RowWait(props: { shape: RowShape; index: number }) {
 			aria-hidden
 			className={cn(
 				row({
-					lines: shape.wrap ? "whole" : stacked,
+					lines,
 					ground,
 					state: "rest",
 				}),
-				shape.wrap ? ROW_WHOLE : ROW,
+				top ? ROW_WHOLE : ROW,
 				ground === "list" && SQUARE,
 			)}
 		>
-			{shape.tree ? <span className={cn(TREE_LANE, FOLD)} /> : null}
+			{shape.tree ? (
+				<span className={cn(TREE, treeBleed({ lines }))}>
+					{levels.map((level) => (
+						<span key={level} className={TREE_RAIL} />
+					))}
+					<First on={top}>
+						<span className={cn(TREE_LANE, FOLD)} />
+					</First>
+				</span>
+			) : null}
 			{shape.change ? (
-				<First on={shape.wrap}>
+				<First on={top}>
 					<span className={BOX}>
 						<span className={skeleton({ kind: "icon" })} />
 					</span>
 				</First>
 			) : null}
 			{shape.leading ? (
-				<First on={shape.wrap}>
+				<First on={top}>
 					<span
 						className={cn(
 							ROW_LEADING,
@@ -142,7 +163,6 @@ export function RowWait(props: { shape: RowShape; index: number }) {
 				{shape.wrap ? (
 					<span className={cn(ROW_TITLE_LINE, LINE_WHOLE)}>
 						<span className={TITLE_LINES}>
-							<TitleBar width="w-full" />
 							<TitleBar width={title} />
 						</span>
 						{trailing}
@@ -190,7 +210,7 @@ export function RowWait(props: { shape: RowShape; index: number }) {
 				) : null}
 			</span>
 			{shape.act || shape.more ? (
-				<First on={shape.wrap}>
+				<First on={top}>
 					<span className={cn(ROW_ACTS, ACTS)}>
 						{shape.act ? (
 							<span className={cn(skeleton({ kind: "bar" }), ACT_BAR)} />

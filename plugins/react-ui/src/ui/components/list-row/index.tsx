@@ -17,7 +17,6 @@ import {
 	ROW_ACTS,
 	ROW_ENTRY,
 	ROW_LEADING,
-	ROW_MARKS,
 	ROW_META_LINE,
 	ROW_STEPS,
 	ROW_TITLE_LINE,
@@ -32,11 +31,11 @@ import {
 	text,
 	treeBleed,
 } from "@fcalell/ui-core/variants";
-import { type ReactNode, use, useId, useMemo } from "react";
+import { type KeyboardEvent, type ReactNode, use, useId, useMemo } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { InlineField } from "../../lib/field.ts";
 import { GroundContext } from "../../lib/ground.ts";
-import { isCurrent, useRoute } from "../../lib/navigate.ts";
+import { isCurrent, navigate, useRoute } from "../../lib/navigate.ts";
 import { joinParts, META_CUT, partText } from "../../lib/parts.ts";
 import { ReasonHostContext, usePressed } from "../../lib/reason.ts";
 import { useTouched } from "../../lib/touched.ts";
@@ -59,7 +58,8 @@ import { LockMark } from "./lock.tsx";
 import { WarningMark } from "./marks.tsx";
 
 const ROW = "relative flex items-center";
-// A row whose title wraps whole stands its parts on the title's first line.
+// A row whose title wraps whole, or that holds an entry, stands its parts on
+// the title's first line.
 const ROW_WHOLE = "relative flex items-start";
 // The box one body line tall a part stands in, centred on the first line; a
 // taller part overflows it centred.
@@ -72,6 +72,8 @@ const PRESS = "hover:bg-wash-hover active:bg-wash-press";
 const CHOSEN_PRESS = "hover:bg-wash-selected-hover active:bg-wash-press";
 // The hit covers the row, under its pick and its acts, and rings inset.
 const HIT = "absolute inset-0 focus-visible:-outline-offset-2";
+// A tree's row is its own focus stop, ringed inset like the hit it replaces.
+const TREE_ITEM = "focus-visible:-outline-offset-2";
 const HIT_LIST = "rounded-row touch:rounded-none";
 const LEADING = "flex shrink-0 items-center justify-center";
 // A tick takes its hit box and stands above the row's hit, so a press on it
@@ -85,22 +87,29 @@ const TITLE_WHOLE = "grow min-w-0 wrap-break-word";
 const LINE_WHOLE = "flex items-start min-w-0";
 const TRAILING = "shrink-0";
 // The meta line is one line that yields in order: the later parts truncate
-// first, then the chip; the first part (naming the item) and the status keep
-// their width, and past them the line clips at the row's edge rather than
-// overprint. The parts' box is as wide as the first part at least (the later
-// parts take no width of their own) and grows into the room the marks leave.
+// first (they take no width of their own), then the chip (shown whole or not at
+// all), the lock's label, the warning's label and last the first part, which
+// names the item and truncates with an ellipsis; the status and the glyphs
+// keep their width, and past them the line clips at the row's edge rather
+// than overprint. The shrink weights are the order, each far above the next.
+// The parts' box grows into the room the marks leave.
 const META_LINE = "flex items-center min-w-0 overflow-hidden";
-const META_PARTS = "flex grow shrink-0";
-const META_FIRST = "shrink-0";
+const META_PARTS = "flex grow shrink min-w-0";
+const META_FIRST = "min-w-0 truncate";
 const META = "truncate grow w-0";
-const MARKS = "flex items-center min-w-0";
-// A step is one meta line; its label truncates before its mark does.
+// A step is one body line's box tall (the step lists' 19 of the references,
+// at the type scale's rung), its label truncating before its mark does.
 const STEPS = "flex flex-col min-w-0";
-const STEP = "flex items-center min-w-0 h-lh";
+const STEP = "flex items-center min-w-0 h-line-body";
 const STEP_LABEL = "truncate";
 const STATUS_MARK = "flex shrink-0";
-// The chip yields first, then the lock's label; the warning's keeps.
-const CHIP_MARK = "flex min-w-0 shrink-4";
+// The chip stands in a slot that shows it whole or not at all: a flex line
+// always keeps its first item, so a zero-width start item takes that place and
+// the chip, wider than the room the slot is left, wraps under the slot's one
+// line height and is clipped away.
+const CHIP_SLOT = "flex flex-wrap h-chip min-w-0 shrink-64 overflow-hidden";
+const CHIP_START = "w-0";
+const CHIP_MARK = "flex shrink-0";
 const ACTS = "relative flex shrink-0 items-center";
 // The entry stands above the hit: the input and its act, the field filling
 // the room the act leaves.
@@ -160,11 +169,11 @@ function First(props: { on: boolean; children: ReactNode }) {
 function TreeLead(props: {
 	tree: RowTree;
 	lines: RowLines;
-	wrap: boolean;
+	top: boolean;
 	named: string;
 }) {
 	const words = useWords();
-	const { tree, lines, wrap, named } = props;
+	const { tree, lines, top, named } = props;
 	const { depth, fold } = tree;
 	const levels = Array.from({ length: depth }, (_, level) => level);
 	return (
@@ -172,7 +181,7 @@ function TreeLead(props: {
 			{levels.map((level) => (
 				<span key={level} className={TREE_RAIL} />
 			))}
-			<First on={wrap}>
+			<First on={top}>
 				<span className={cn(TREE_LANE, FOLD)}>
 					{fold ? (
 						<IconButtonBase
@@ -180,6 +189,7 @@ function TreeLead(props: {
 							fit="bar"
 							label={`${fold.open ? words.collapse : words.expand} ${named}`}
 							aria-expanded={fold.open}
+							tabIndex={-1}
 							onClick={fold.onToggle}
 						/>
 					) : null}
@@ -258,7 +268,7 @@ function trailingWord(trailing: RowTrailing<string | null>): string {
 	return "";
 }
 
-/** Inside a tree `List` the row opens with a rail per level and the fold lane every row of the tree reserves, a branch's fold act in it, `aria-expanded` its state. Then the change mark, the leading slot, the title with its trailing value over the meta line (its status, warning, lock and chip at the end, yielding from the chip), the entry (its input and act, its error under it) or the step list, a trailing pick, then the row's act and the more act. A row that opens is one hit under its pick and acts, current (the selection wash) at its `href`; it washes under the pointer and the press. In a `Group` it runs edge to edge at the card's inset, elsewhere it is an inset rounded wash, square on touch. */
+/** Inside a tree `List` the row is a `treeitem` (its level, and `aria-expanded` on a branch) and the tree's focus stop (Enter opens it), and opens with a rail per level and the fold lane every row of the tree reserves, a branch's fold act in it for the pointer. Then the change mark, the leading slot, the title with its trailing value over the meta line (its status, warning, lock and chip at the end, yielding from the chip), the entry (its input and act, its error under it) or the step list, a trailing pick, then the row's act and the more act. A row that opens is one hit under its pick and acts, current (the selection wash) at its `href`; it washes under the pointer and the press. In a `Group` it runs edge to edge at the card's inset, elsewhere it is an inset rounded wash, square on touch. */
 export function ListRow<V extends string | null = string>({
 	change,
 	leading,
@@ -297,13 +307,20 @@ export function ListRow<V extends string | null = string>({
 	const lined = Boolean(entry || listed || parts?.length || marked);
 	const stacked = lined ? "two" : "one";
 	const lines = wrap ? "whole" : stacked;
+	// A wrapped title and an entry's input are lines under the title's first, so
+	// the parts beside them stand on that first line.
+	const top = wrap || entry !== undefined;
 	const inline = useMemo(() => ({ label: entry?.label ?? "" }), [entry?.label]);
 	const entryReason = useReasonLine(entry?.act.blocked);
 	const actReason = useReasonLine(act?.blocked);
+	// A tree's row is named by its title and described by the meta line's marks.
+	const titleId = useId();
+	const metaId = useId();
+	const metaLined = lined && !entry && !listed;
 	const [first, ...rest] = parts ?? [];
 	const value =
 		trailing && !("pick" in trailing) ? (
-			<First on={wrap}>
+			<First on={top}>
 				<span className={cn(ROW_TRAILING, TRAILING)}>
 					{trailingWord(trailing)}
 				</span>
@@ -311,6 +328,7 @@ export function ListRow<V extends string | null = string>({
 		) : null;
 	const titled = (
 		<span
+			id={tree ? titleId : undefined}
 			className={cn(
 				rowTitle({ form: rowTitleForm(wrap, dim) }),
 				wrap ? TITLE_WHOLE : TITLE,
@@ -326,41 +344,71 @@ export function ListRow<V extends string | null = string>({
 		</span>
 	);
 	const hitClass = cn(HIT, ground === "list" && HIT_LIST);
+	// In a tree the row is the focus stop and the hit is the pointer's alone.
+	const pointed = tree ? { tabIndex: -1, "aria-hidden": true } : {};
 	let hit = null;
 	if (href !== undefined)
 		hit = (
-			// biome-ignore lint/a11y/useAnchorContent: the hit covers the row, named by its title
 			<a
 				href={href}
 				aria-label={named}
-				aria-current={current ? "page" : undefined}
+				aria-current={!tree && current ? "page" : undefined}
 				className={hitClass}
+				{...pointed}
 			/>
 		);
 	else if (onOpen)
 		hit = (
-			<BaseButton aria-label={named} onClick={onOpen} className={hitClass} />
+			<BaseButton
+				aria-label={named}
+				onClick={onOpen}
+				className={hitClass}
+				{...pointed}
+			/>
 		);
+	// Enter on a tree's row opens what the hit does.
+	const openOnEnter = (event: KeyboardEvent<HTMLElement>) => {
+		if (event.key !== "Enter" || event.target !== event.currentTarget) return;
+		if (href !== undefined) navigate(href);
+		else onOpen?.();
+	};
+	// A tree's row is a `treeitem` (the WAI-ARIA tree pattern): named by its
+	// title, described by its meta line, its level and, on a branch, whether it
+	// is open; the tree holds one tab stop, so the rest are focusable by script.
+	const item = tree
+		? {
+				role: "treeitem",
+				tabIndex: tree.tabbable ? 0 : -1,
+				"aria-level": tree.depth + 1,
+				"aria-expanded": tree.fold?.open,
+				"aria-current": current ? ("page" as const) : undefined,
+				"aria-labelledby": titleId,
+				"aria-describedby": metaLined ? metaId : undefined,
+				onKeyDown: opens ? openOnEnter : undefined,
+			}
+		: {};
 	return (
 		<div
+			{...item}
 			className={cn(
 				row({ lines, ground, state: current ? "selected" : "rest" }),
-				wrap ? ROW_WHOLE : ROW,
+				top ? ROW_WHOLE : ROW,
 				ground === "list" && SQUARE,
 				opens && (current ? CHOSEN_PRESS : PRESS),
+				tree && TREE_ITEM,
 			)}
 		>
 			{hit}
 			{tree ? (
-				<TreeLead tree={tree} lines={lines} wrap={wrap} named={named} />
+				<TreeLead tree={tree} lines={lines} top={top} named={named} />
 			) : null}
 			{change ? (
-				<First on={wrap}>
+				<First on={top}>
 					<ChangeMark kind={change} />
 				</First>
 			) : null}
 			{leading ? (
-				<First on={wrap}>
+				<First on={top}>
 					<span className={cn(ROW_LEADING, LEADING, ticks && TICK)}>
 						<Leading leading={leading} named={named} />
 					</span>
@@ -423,7 +471,10 @@ export function ListRow<V extends string | null = string>({
 			) : (
 				<span className={TEXT}>
 					{titleLine}
-					<span className={cn(ROW_META_LINE, META_LINE)}>
+					<span
+						id={tree ? metaId : undefined}
+						className={cn(ROW_META_LINE, META_LINE)}
+					>
 						{first === undefined ? null : (
 							<span className={META_PARTS}>
 								<span className={cn(text({ role: "meta" }), META_FIRST)}>
@@ -436,22 +487,19 @@ export function ListRow<V extends string | null = string>({
 								) : null}
 							</span>
 						)}
-						{marked ? (
-							<span className={cn(ROW_MARKS, MARKS)}>
-								{status ? (
-									<span className={STATUS_MARK}>
-										<Status state={status.state} label={status.label} />
-									</span>
-								) : null}
-								{warning !== undefined ? <WarningMark label={warning} /> : null}
-								{lock !== undefined ? (
-									<LockMark reason={lock} labelled />
-								) : null}
-								{chip ? (
-									<span className={CHIP_MARK}>
-										<Chip family={chip.family} label={chip.label} />
-									</span>
-								) : null}
+						{status ? (
+							<span className={STATUS_MARK}>
+								<Status state={status.state} label={status.label} />
+							</span>
+						) : null}
+						{warning !== undefined ? <WarningMark label={warning} /> : null}
+						{lock !== undefined ? <LockMark reason={lock} labelled /> : null}
+						{chip ? (
+							<span className={CHIP_SLOT}>
+								<span aria-hidden className={CHIP_START} />
+								<span className={CHIP_MARK}>
+									<Chip family={chip.family} label={chip.label} />
+								</span>
 							</span>
 						) : null}
 					</span>
@@ -459,12 +507,12 @@ export function ListRow<V extends string | null = string>({
 				</span>
 			)}
 			{trailing && "pick" in trailing ? (
-				<First on={wrap}>
+				<First on={top}>
 					<Picker {...trailing.pick} fit="row" />
 				</First>
 			) : null}
 			{act || more?.length ? (
-				<First on={wrap}>
+				<First on={top}>
 					<span className={cn(ROW_ACTS, ACTS)}>
 						{act ? <ActButton act={act} host={actReason.host} /> : null}
 						{more?.length ? (

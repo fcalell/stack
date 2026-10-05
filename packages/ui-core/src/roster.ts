@@ -2233,6 +2233,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"control-compact",
 					"icon",
 					"skeleton",
+					"line-body",
 				],
 			},
 		},

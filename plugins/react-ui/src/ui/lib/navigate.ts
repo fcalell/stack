@@ -10,11 +10,17 @@ const hear = () => {
 };
 
 function onLocation(notify: () => void): () => void {
-	if (readers.size === 0) addEventListener("popstate", hear);
+	if (readers.size === 0) {
+		addEventListener("popstate", hear);
+		addEventListener("hashchange", hear);
+	}
 	readers.add(notify);
 	return () => {
 		readers.delete(notify);
-		if (readers.size === 0) removeEventListener("popstate", hear);
+		if (readers.size === 0) {
+			removeEventListener("popstate", hear);
+			removeEventListener("hashchange", hear);
+		}
 	};
 }
 
@@ -24,12 +30,12 @@ const unheard = () => () => {};
 // reads instead of subscribing on its own.
 export const ListedRoute = createContext<string | undefined>(undefined);
 
-// The current route: the location's path and its query.
+// The current route: the location's path, its query and its hash.
 export function useRoute(): string {
 	const listed = use(ListedRoute);
 	const own = useSyncExternalStore(
 		listed === undefined ? onLocation : unheard,
-		() => location.pathname + location.search,
+		() => location.pathname + location.search + location.hash,
 		() => "/",
 	);
 	return listed ?? own;
@@ -40,10 +46,14 @@ export function navigate(route: string): void {
 }
 
 // A place is current at its route and below it, the root only at itself; a
-// route's query narrows it to the routes carrying each of its parameters.
+// route's query narrows it to the routes carrying each of its parameters, and
+// its hash to the route carrying that hash (a bare `#id` names a spot on the
+// current page, so only the hash is compared).
 export function isCurrent(route: string, current: string): boolean {
 	const want = new URL(route, "https://route.invalid");
 	const here = new URL(current, "https://route.invalid");
+	if (route.startsWith("#")) return here.hash === want.hash;
+	if (want.hash !== "" && here.hash !== want.hash) return false;
 	for (const [key, value] of want.searchParams)
 		if (!here.searchParams.getAll(key).includes(value)) return false;
 	if (want.pathname === "/") return here.pathname === "/";

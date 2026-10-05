@@ -18,3 +18,15 @@ test("a route's query narrows it to the routes carrying each of its parameters",
 	assert.ok(!isCurrent(deploys, "/layout?place=deploys"));
 	assert.ok(isCurrent("/deploys", "/deploys?record=d1"));
 });
+
+test("a hash narrows a route to the location carrying it, and a bare hash names a spot on any page", () => {
+	assert.ok(!isCurrent("#signup", "/"));
+	assert.ok(!isCurrent("#signup", "/deploys"));
+	assert.ok(isCurrent("#signup", "/#signup"));
+	assert.ok(isCurrent("#signup", "/deploys#signup"));
+	assert.ok(!isCurrent("#signup", "/deploys#login"));
+	assert.ok(!isCurrent("/deploys#signup", "/deploys"));
+	assert.ok(isCurrent("/deploys#signup", "/deploys#signup"));
+	assert.ok(isCurrent("/deploys", "/deploys#signup"));
+	assert.ok(isCurrent("/", "/#signup"));
+});

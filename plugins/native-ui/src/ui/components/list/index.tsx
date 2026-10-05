@@ -249,6 +249,7 @@ export function List<T, V extends string | null = string>(
 					);
 				return <FileWait key={index} busy={false} {...fileShape(props.file)} />;
 			}),
+			props.row?.children !== undefined,
 		);
 	}
 	if (state === "missing") return <Missing />;

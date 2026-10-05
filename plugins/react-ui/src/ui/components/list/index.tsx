@@ -14,6 +14,7 @@ import type {
 } from "@fcalell/ui-core/descriptors";
 import {
 	fileShape,
+	folding,
 	listBusy,
 	listGround,
 	listState,
@@ -21,10 +22,18 @@ import {
 	retryOf,
 	rowShape,
 	toggled,
+	treeMove,
 	treeRows,
+	treeStop,
 } from "@fcalell/ui-core/list-state";
 import { LIST, LIST_TREE } from "@fcalell/ui-core/variants";
-import { type ReactNode, use, useState } from "react";
+import {
+	type FocusEvent,
+	type KeyboardEvent,
+	type ReactNode,
+	use,
+	useState,
+} from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { useGroupList } from "../../lib/group.ts";
 import { LoadingContext } from "../../lib/loading.ts";
@@ -44,6 +53,17 @@ import { MeterWait } from "../meter/wait.tsx";
 import type { QueryLike } from "../query-boundary/index.tsx";
 
 const STACK = "flex flex-col";
+// A tree in a Group has no box of its own: it stands as the card's rows, the
+// card's hairline falling once between them.
+const GROUP_TREE = "contents divide-y divide-edge";
+
+// A tree's keyboard: the container's role and the keys and focus its rows'
+// `treeitem` stops send up.
+interface TreeNav {
+	role: "tree";
+	onKeyDown: (event: KeyboardEvent<HTMLElement>) => void;
+	onFocus: (event: FocusEvent<HTMLElement>) => void;
+}
 const WAITING = Array.from({ length: WAITING_ROWS }, (_, index) => index);
 
 /** A list's leading slot: one key naming the kind every row leads with, its value from the item. */
@@ -238,6 +258,8 @@ export function List<T, V extends string | null = string>(
 	const at = useRoute();
 	// The keys of the tree's folded branches; every branch starts open.
 	const [folded, setFolded] = useState<readonly string[]>([]);
+	// The key of the tree's row that holds its one tab stop.
+	const [active, setActive] = useState<string>();
 	const base = {
 		query: props.query,
 		items: props.items,
@@ -254,20 +276,26 @@ export function List<T, V extends string | null = string>(
 	// hairline falls once between them.
 	// The rows read the route the List read once, through `ListedRoute`.
 	// A tree's rows abut, so its rails run unbroken.
-	const frame = (rows: ReactNode, tree = false) => (
-		<ListedRoute value={at}>
-			{ground === "group" ? (
-				rows
-			) : (
+	const frame = (rows: ReactNode, nav?: TreeNav, abut = nav !== undefined) => {
+		let box = rows;
+		if (ground === "group" && nav)
+			box = (
+				<div {...nav} className={GROUP_TREE}>
+					{rows}
+				</div>
+			);
+		else if (ground !== "group")
+			box = (
 				<div
+					{...nav}
 					aria-busy={busy || undefined}
-					className={cn(tree ? LIST_TREE : LIST, STACK)}
+					className={cn(abut ? LIST_TREE : LIST, STACK)}
 				>
 					{rows}
 				</div>
-			)}
-		</ListedRoute>
-	);
+			);
+		return <ListedRoute value={at}>{box}</ListedRoute>;
+	};
 	if (state === "pending") {
 		return frame(
 			WAITING.map((index) => {
@@ -281,6 +309,8 @@ export function List<T, V extends string | null = string>(
 					);
 				return <FileWait key={index} busy={false} {...fileShape(props.file)} />;
 			}),
+			undefined,
+			props.row?.children !== undefined,
 		);
 	}
 	if (state === "missing") return <Missing />;
@@ -322,9 +352,37 @@ export function List<T, V extends string | null = string>(
 		);
 		const { children } = row;
 		if (children === undefined) return frame(items.map(rowOf));
-		// Each row of the tree reads its depth and fold from its own provider.
+		// Each row of the tree reads its depth, fold and tab stop from its own
+		// provider; the keys and focus its `treeitem`s send up move the stop and
+		// fold the branches (the WAI-ARIA tree pattern, `treeMove`).
+		const visible = treeRows(items, { key: row.key, children }, folded);
+		const stop = treeStop(visible, active);
+		const rowsOf = (list: HTMLElement) => [
+			...list.querySelectorAll<HTMLElement>('[role="treeitem"]'),
+		];
+		const nav: TreeNav = {
+			role: "tree",
+			onKeyDown: (event) => {
+				// A key's target is the focused element, always an HTML one here.
+				const target = event.target as HTMLElement;
+				if (target.getAttribute("role") !== "treeitem") return;
+				const rows = rowsOf(event.currentTarget);
+				const move = treeMove(visible, rows.indexOf(target), event.key);
+				if (!move) return;
+				event.preventDefault();
+				if ("focus" in move) rows[move.focus]?.focus();
+				else setFolded((keys) => folding(keys, move.fold, move.open));
+			},
+			onFocus: (event) => {
+				// A focus event's target is the element that took focus, an HTML one here.
+				const target = event.target as HTMLElement;
+				const item = target.closest<HTMLElement>('[role="treeitem"]');
+				if (!item) return;
+				setActive(visible[rowsOf(event.currentTarget).indexOf(item)]?.key);
+			},
+		};
 		return frame(
-			treeRows(items, { key: row.key, children }, folded).map((each) => (
+			visible.map((each, at) => (
 				<TreeContext
 					key={each.key}
 					value={{
@@ -335,12 +393,13 @@ export function List<T, V extends string | null = string>(
 									onToggle: () => setFolded((keys) => toggled(keys, each.key)),
 								}
 							: undefined,
+						tabbable: at === stop,
 					}}
 				>
 					{rowOf(each.item)}
 				</TreeContext>
 			)),
-			true,
+			nav,
 		);
 	}
 	if (props.meter) {
