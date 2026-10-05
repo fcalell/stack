@@ -17,4 +17,7 @@ Reference: OpenAI Platform's budget meter with tick marks ([screen](https://mobb
 - [ ] Stack provides the part on every platform the app runs on.
 
 ## Open questions
-- [ ] Its shape (a component, a variant, a token, an option): the stack session decides.
+- [x] Its shape (a component, a variant, a token, an option): the stack session decides.
+
+## Shape
+`Meter.mark?: { value: number; label: string }`: a tick across the track at `value / max` (`w-track` in `ink-body`, standing proud of the track by `inside`, outside the clipped track), the fill turning `warn` once the value passes it, its label read aloud only (slot word `meterMark`). The `levelOf` rule moves into ui-core beside `METER_NEAR`. 004-09's `List` meter map gains `mark`.

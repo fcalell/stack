@@ -17,4 +17,7 @@ Reference: Plain's "Queue size 6" figure with its words ([screen](https://mobbin
 - [ ] Stack provides the part on every platform the app runs on.
 
 ## Open questions
-- [ ] Its shape (a component, a variant, a token, an option): the stack session decides.
+- [x] Its shape (a component, a variant, a token, an option): the stack session decides.
+
+## Shape
+New `Stat { label: string; value: number; unit?: string }`: the figure at the `display` role in tabular figures, its label under it (figure first, read "2, need you"), gap `pair`. One per screen. Range: `patterns/stats.md`.

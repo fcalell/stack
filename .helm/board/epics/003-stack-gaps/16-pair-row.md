@@ -15,4 +15,7 @@ A Martechthings mapping's parameters are rows of a source (a field or a constant
 - [ ] Rows of source picker, arrow, target picker and remove, aligned across rows, with an empty row's placeholders.
 
 ## Open questions
-- [ ] A `Table` picker cell kind or a pair-row component: the stack session decides.
+- [x] A `Table` picker cell kind or a pair-row component: the stack session decides.
+
+## Shape
+One new content molecule `Rules` serves 003-16, 18 and 19: aligned rows of inline terms (grid and subgrid), each with a remove `IconButton` (`X`, word `remove`), and an optional `add?: Act` at the foot. `Rule<V> = { id; terms: RuleTerms<V>; onRemove? }`; `RuleTerms` is either a pair `{ from: RuleValue<V>; to: RuleValue<V> }` (from, `ArrowRight`, to) or a condition `{ field: OptionPick<V>; operator: string; value: RuleValue<V> }`. `RuleValue<V>` is `{ pick }`, `{ picks }` (multi) or `{ either }`. Rows stand at `FIELD.fit.bar`; `Picker` gains a `bar` fit. The arrow is `ink-meta`, `ink-disabled` while a side is unset. On touch each row stacks its terms inside a Group card.

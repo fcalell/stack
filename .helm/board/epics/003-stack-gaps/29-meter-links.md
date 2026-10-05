@@ -13,3 +13,6 @@ Martechthings shows test status per environment as passing over applicable, with
 
 ## Acceptance criteria
 - [ ] A meter's meta line carries counts that are links.
+
+## Shape
+`Meter.counts?: readonly CountLink[]` (the descriptor shared with 003-27), exclusive with `meta`: the meta line draws the counts as `Link`s at meta in tabular figures, separated by the `inside` gap only. 004-09's `List` meter map gains a `counts` slot.

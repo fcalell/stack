@@ -16,4 +16,7 @@ Martechthings publishes part of a change set by ticking its entries, one table p
 - [ ] The consumer sets the selection from a rule, and a row shows why its tick moved.
 
 ## Open questions
-- [ ] Whether the rule's reason is a row meta line or a tick tooltip: the stack session decides.
+- [x] Whether the rule's reason is a row meta line or a tick tooltip: the stack session decides.
+
+## Shape
+`Table.choose?: TableChoice<T>`, `TableChoice<T> = { chosen: readonly string[]; onChange: (ids: string[]) => void; blocked?: (item: T) => string | undefined; moved?: (item: T) => string | undefined }`. A tick column leads the grid; the head tick is unchecked, mixed or checked over the rows that can be ticked, named by the word `chooseAll`; each row tick is named by its leading cell. The consumer applies its rule in `onChange` and returns the ruled set through `chosen`. A blocked or moved reason is a meta line under the leading cell in `ink-meta`. The touch form puts the tick in `ListRow`'s leading: `RowLeading` gains `{ check: { checked; onChange; blocked? } }`. The count belongs to 003-23's bar, never the table head.

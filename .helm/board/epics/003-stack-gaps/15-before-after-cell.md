@@ -13,3 +13,6 @@ Martechthings' change set diff shows each changed attribute as Current → New i
 
 ## Acceptance criteria
 - [ ] A `Table` cell draws an old value, an arrow and the new value, the new value tinted by the change, and reads as "from X to Y".
+
+## Shape
+A `TableColumn` kind `"change"` with cell `{ before: string | null; after: string | null }`, read-only, sorting by `after`, read aloud by the slot word `changed` ("from {before} to {after}"), or the existing `added`/`removed`. One hue mapping with 003-07: a changed value draws `before` in `ink-meta`, an `ArrowRight` at `icon-meta`, and `after` in `ink-body` with no tint; an added value (`before: null`) draws `after` on `ok-soft`; a removed value (`after: null`) draws `before` struck on `danger-soft`. The touch form spells it as a meta part "X → Y".

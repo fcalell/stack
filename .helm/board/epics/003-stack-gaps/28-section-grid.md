@@ -15,4 +15,7 @@ Martechthings' project health sets four blocks two by two at 1440, stacking belo
 - [ ] Sections stand two to a row filling the body at desktop width and stack in order below it.
 
 ## Open questions
-- [ ] A `Columns` mode or a grid composition: the stack session decides.
+- [x] A `Columns` mode or a grid composition: the stack session decides.
+
+## Shape
+`Columns.fit?: "board" | "half"` read off a new `COLUMNS.fit` axis: `board` is today's sideways scroll (default); `half` stands sections two to a row filling the body from the `desktop` container width and stacks them below it, with no bleed and no column width. The phone always stacks.

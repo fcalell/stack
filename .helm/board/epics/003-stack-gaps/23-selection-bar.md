@@ -13,3 +13,6 @@ Martechthings' partial publish keeps a bar in view at the foot of the scrolling 
 
 ## Acceptance criteria
 - [ ] A bar stays at the foot of a scrolling list with a live count and one act whose label the consumer sets, and a blocked reason.
+
+## Shape
+`ActionBar.chosen?: { count: number; of: number }` draws the slot word `chosenOf` ("{count} of {of} chosen") at meta at the bar's start; the act label and its blocked reason stay the consumer's `Act`. The bar docks through `Place.foot` (its doc widens to a docked field or action bar); a foot holding a bar spans the body width on desktop, a field keeps the measure column. On touch the count stands over the full-width act. Range: `patterns/selection-bar.md`.

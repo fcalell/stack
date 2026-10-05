@@ -17,4 +17,7 @@ Reference: Oura's notes wrap whole with their date ([screen](https://mobbin.com/
 - [ ] Stack provides the part on every platform the app runs on.
 
 ## Open questions
-- [ ] Its shape (a component, a variant, a token, an option): the stack session decides.
+- [x] Its shape (a component, a variant, a token, an option): the stack session decides.
+
+## Shape
+`ListRow.wrap?: boolean` (and `RowSlots.wrap`): the title wraps to every line it needs at body weight 400 (a `ROW.lines.whole` cell), the leading, trailing and more act aligned to its first line; meta unchanged. The waiting row draws two body lines.

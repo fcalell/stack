@@ -16,4 +16,7 @@ Martechthings draws a branching journey as a step list: a choice point's options
 - [ ] Three levels leave a row's title readable in a Split main beside the list.
 
 ## Open questions
-- [ ] A `ListRow` depth or a tree component: the stack session decides.
+- [x] A `ListRow` depth or a tree component: the stack session decides.
+
+## Shape
+`RowSlots<T>.children?: (item: T) => readonly T[] | undefined` makes a `List` a tree: each level one `indent` step in (a new size, 16 desktop / 20 touch), a hairline rail per level, and a fold chevron (`ChevronRight`/`ChevronDown` at `icon-meta`) in a lane every row of the tree reserves. The List owns the fold state (open by default) and passes depth to `ListRow` through internal context, so `ListRow`'s roster props do not change. Web: `role="tree"`/`treeitem` with `aria-level`/`aria-expanded` and Arrow Left/Right; phone: `accessibilityState.expanded`. The flattening by fold state lives in `list-state.ts`, pure and tested.

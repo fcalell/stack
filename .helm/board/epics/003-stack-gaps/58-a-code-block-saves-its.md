@@ -17,4 +17,7 @@ Reference: Cloudflare's codes with Download, Print and Copy ([screen](https://mo
 - [ ] Stack provides the part on every platform the app runs on.
 
 ## Open questions
-- [ ] Its shape (a component, a variant, a token, an option): the stack session decides.
+- [x] Its shape (a component, a variant, a token, an option): the stack session decides.
+
+## Shape
+`Code.download?: string` (the file's name): a `Download` icon act beside the copy act, named by the new word `download`. The web saves a `Blob` through an anchor's `download`; the phone writes the text to the cache directory with `expo-file-system` and hands it to the share sheet with `expo-sharing` (both `native-ui` peers).

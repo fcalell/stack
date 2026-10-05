@@ -13,3 +13,6 @@ Martechthings' organization home opens on one strip of counts under the header: 
 
 ## Acceptance criteria
 - [ ] One row of cells at 1440, each a label, a figure at the body-strong size, an optional meta line and sub-counts, each a link.
+
+## Shape
+New molecule `Stats { items: readonly StatSpec[] }`, `StatSpec = { label: string; value: number; unit?: string; meta?: string } & ({ counts?: readonly CountLink[]; href?: never } | { href: Route; counts?: never })`, `CountLink = { label: string; value: number; href: Route }` (shared with 003-29). One hairline card split by dividers; each cell the label at meta, the figure at `heading` in tabular figures, the optional meta line, and the counts as `Link`s; zeros drawn. Two cells to a row below `tablet` and on the phone. Range: `patterns/stats.md`.

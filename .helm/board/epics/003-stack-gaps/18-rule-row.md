@@ -13,3 +13,6 @@ A Martechthings mapping's conditions are one compact row each: kind, fixed opera
 
 ## Acceptance criteria
 - [ ] One row of kind, operator words, a value picker or chips, and remove, 26 to 32 px tall.
+
+## Shape
+Built inside 003-16's `Rules` as its condition row `{ field, operator, value }`: the operator in `ink-meta`, a chips value `{ picks: MultiPick<V> }` drawn as a bar-fit field holding one removable `Chip` per value. `Picker` gains a multiple mode (ticked rows, stays open while picking), taken when its value is an array, never a second component.

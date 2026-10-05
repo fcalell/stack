@@ -15,4 +15,7 @@ Martechthings' meaning fields save as they are typed, with one quiet line in the
 - [ ] A record head shows a failed save with a retry act, announced politely.
 
 ## Open questions
-- [ ] A fact with an act, or a `Banner`: the stack session decides.
+- [x] A fact with an act, or a `Banner`: the stack session decides.
+
+## Shape
+`ItemHeader`'s `Fact` gains `{ save: "saving" | "saved" | "failed"; onRetry: () => void }`, stack-owned words `saving`, `saved`, `notSaved` and the existing `retry`, in a polite live region. Saving and saved are meta-ink facts; failed is the `failed` status mark with `notSaved` and a `Button` `secondary` at the `bar` fit labelled `retry`.

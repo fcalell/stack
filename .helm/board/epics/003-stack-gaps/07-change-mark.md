@@ -17,4 +17,7 @@ In a change set's context, Martechthings marks every field, row and binding the 
 - [ ] The mark reaches assistive tech as words.
 
 ## Open questions
-- [ ] One `change` prop across the four, or a wrapper: the stack session decides.
+- [x] One `change` prop across the four, or a wrapper: the stack session decides.
+
+## Shape
+`ChangeKind = "added" | "changed" | "removed" | "unchanged" | "stale"` in `descriptors.ts`; one `change?: ChangeKind` prop on `ListRow`, `DefinitionRow` and `FormField`, and a `change` slot on `TableRowSlots` and `RowSlots`. One internal mark (not a roster entry) draws a glyph in a fixed `icon` lane at the row's start: added `Plus` in `ok`, changed `PencilLine` in `warn`, removed `Minus` in `danger`, stale `History` in `warn`, unchanged `Equal` in `ink-meta`, at `icon-meta`. Glyph only, no edge bar. Its word is the accessible name (new words `changed`, `unchanged`, `stale`).

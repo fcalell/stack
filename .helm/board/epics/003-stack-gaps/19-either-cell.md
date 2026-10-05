@@ -13,3 +13,6 @@ A Martechthings mapping parameter's source is a field by default, or a typed con
 
 ## Acceptance criteria
 - [ ] A cell holds a picked option or a typed value, marks which, and switches back.
+
+## Shape
+Built inside 003-16's `Rules` as the `either` value: `EitherValue<V> = { picked: V } | { typed: string }`. Picked, a bar-fit `Picker` whose list ends with the act `typeValue`; typed, a bar-fit `Input` whose trailing icon act (word `pickValue`) switches back. A picked value leads with its option's icon (`Braces` when it has none); a typed value has no glyph.

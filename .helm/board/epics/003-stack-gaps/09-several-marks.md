@@ -15,4 +15,7 @@ A Martechthings change set entry carries its change chip, a warn mark (stale, na
 - [ ] A row (in a `Table` or a list) carries a change chip, a warn mark with its act, a lock, a count and a status dot together, legible at desktop density.
 
 ## Open questions
-- [ ] Which of these become `Table` cell kinds and which become row marks: the stack session decides.
+- [x] Which of these become `Table` cell kinds and which become row marks: the stack session decides.
+
+## Shape
+Two more `ListRow` marks beside `status` and `chip`: `warning?: string` (a `TriangleAlert` glyph in `warn` with its label in meta ink) and `lock?: string` (a lock glyph, its label shown from `tablet`, read aloud always). The act that clears a warning is the row's `act` (003-10). `TableRowSlots` and `RowSlots` gain `warning` (and `RowSlots` `lock`); the count stays a meta part and the status a `status` column, so no new cell kinds. Meta-line order: status, warning, lock, chip; the chip and the lock label yield first.

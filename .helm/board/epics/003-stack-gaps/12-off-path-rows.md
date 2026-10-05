@@ -13,3 +13,6 @@ A Martechthings journey shows a pinned scenario or the latest run as a path: its
 
 ## Acceptance criteria
 - [ ] A row draws a dimmed state that keeps it legible and reachable, in light and dark.
+
+## Shape
+`ListRow.dim?: boolean` (and `RowSlots.dim`): the row stands off the highlighted path. Title and trailing draw in `ink-meta`, the title at weight 400; the leading glyph and marks keep their hue; the row stays a hit and focusable. Ink, never opacity, so the title keeps 4.5:1.

@@ -17,4 +17,7 @@ Reference: X's composer holds a file's thumbnail with its remove act ([screen](h
 - [ ] Stack provides the part on every platform the app runs on.
 
 ## Open questions
-- [ ] Its shape (a component, a variant, a token, an option): the stack session decides.
+- [x] Its shape (a component, a variant, a token, an option): the stack session decides.
+
+## Shape
+`MessageInput.onAttach(files: readonly PickedFile[])` (003-17's descriptor): stack owns the chooser behind the paperclip, and on the web paste and drop hand their files to the same callback. The consumer turns a file into an `Attachment` and passes it back. An image attachment draws as an `Image` thumb with its remove act at its corner (a new cell); a file as the removable chip. Phone paste of an image is verified against React Native's docs; if `TextInput` cannot hand one over, the phone takes files through the paperclip alone, named as a limit. `expo-document-picker` and `expo-image-picker` are `native-ui` peers. The per-chip outside-content mark is not built: the product says it once.

@@ -16,4 +16,7 @@ Martechthings shows contract fields in Live and in another change set's hold as 
 - [ ] An editable `Table` draws a column or a cell read-only with a lock glyph, the rest still editable.
 
 ## Open questions
-- [ ] Lock glyph per cell or in the column head: the stack session decides.
+- [x] Lock glyph per cell or in the column head: the stack session decides.
+
+## Shape
+`DefinitionRow.locked?: { reason: string; href?: Route }`: a `Lock` glyph after the value and the reason as the row's meta line, the whole line a `Link` when `href` is given; the row drops its `act`. In a `Table`, a cell its row locks (the existing `locked` slot) draws a `Lock` glyph at its end; `TableColumn.locked?: string` makes a column read-only with its reason read aloud and the glyph in the head only. `Lock` at `icon-meta` in `ink-meta`; word `locked`.

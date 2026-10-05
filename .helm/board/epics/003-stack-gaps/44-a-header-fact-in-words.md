@@ -17,4 +17,7 @@ Reference: GitHub iOS's session header names its repo under the title ([screen](
 - [ ] Stack provides the part on every platform the app runs on.
 
 ## Open questions
-- [ ] Its shape (a component, a variant, a token, an option): the stack session decides.
+- [x] Its shape (a component, a variant, a token, an option): the stack session decides.
+
+## Shape
+`ItemHeader`'s `Fact` gains `{ label: Part; onOpen: () => void }`: the words in meta ink with a trailing `ChevronRight` at the meta fit, in a `PILL_ACT` press pulled back at its start, a button named by the fact. `PILL_ACT` leaves `Picker`'s holds and becomes shared. The consumer's `onOpen` opens its own `Sheet`.

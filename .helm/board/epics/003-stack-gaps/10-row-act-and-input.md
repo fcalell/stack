@@ -16,4 +16,7 @@ Martechthings' implementation items carry the next claim ("Claim staging") on th
 - [ ] A row holds an input and its act inline, and can swap them for its result.
 
 ## Open questions
-- [ ] A `ListRow` variant, or a `Form` inside a `Group` row: the stack session decides.
+- [x] A `ListRow` variant, or a `Form` inside a `Group` row: the stack session decides.
+
+## Shape
+`ListRow.act?: Act`: one labelled `Button` `secondary` at the `bar` fit at the row's end, ahead of the more act. `ListRow.entry?: RowEntry`, `RowEntry = { label: string; field: FieldControl<string>; placeholder?: string; act: Act; error?: string }`: a bar-fit `Input` under the title in the meta line's place, everywhere, with a labelled `Button` for its act and the error in the meta line's place. The consumer swaps `entry` for `meta`/`status` once the act settles, so the row keeps no state. `RowSlots` gains `act` and `entry`, with waiting shapes in `list-state.ts`.

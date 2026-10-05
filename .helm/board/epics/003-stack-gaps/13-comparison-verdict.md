@@ -15,4 +15,7 @@ Martechthings compares an observed data layer with the spec field by field (Expe
 - [ ] A `Comparison` row draws a failing or passing verdict on the row, read by assistive tech.
 
 ## Open questions
-- [ ] Tint, edge or a leading `Status`: the stack session decides.
+- [x] Tint, edge or a leading `Status`: the stack session decides.
+
+## Shape
+`FactSlots<T>.status?: (item: T) => StatusMark | undefined` on 004-10's `Comparison`: a `Status` (dot and word) in the label line after the label and its chips; on touch it sits on the label's own line. A passing fact returns `undefined` or a `done` mark. Declaring `status` adds a status bar to the waiting rows.

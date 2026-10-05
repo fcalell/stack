@@ -17,4 +17,7 @@ Martechthings reads every spec screen in a context (Live, one change set, a past
 - [ ] A Place draws a picker beside its title, its trigger able to carry a state chip, on the desktop strip and the touch top bar.
 
 ## Open questions
-- [ ] A Place slot, a Picker trigger variant, or both: the stack session decides.
+- [x] A Place slot, a Picker trigger variant, or both: the stack session decides.
+
+## Shape
+`Place.context?: Switcher` (an `OptionPick` with an optional closing `IconAct`), drawn as a `Picker` at the `row` fit right after the `h1`, on the title line on touch too. `Option.chip?: ChipMark` draws a context's kind (Draft, Ready) after the option's label in the list and on the trigger; `Option.status` keeps meaning a work state. Existing cells only (`PILL_ACT`, `PICKER_VALUE`, `CHIP`).

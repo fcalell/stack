@@ -13,3 +13,6 @@ Martechthings' portal request form is one scrolling page where a choice reveals 
 
 ## Acceptance criteria
 - [ ] An answered question folds to a summary row that reopens it, inside a single-page form.
+
+## Shape
+`FormField.answered?: { answer: string; onEdit: () => void }`: while set the field draws folded as one summary row (a `Check` in `ok`, the label, the answer in `ink-meta`, a trailing `Pencil` `IconButton` named by the word `edit`) and does not render its control. Clearing `answered` unfolds the field and focuses its control. A choice revealing the next question is the consumer's rendering inside one `Form`.

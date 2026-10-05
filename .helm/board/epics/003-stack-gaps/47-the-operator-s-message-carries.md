@@ -17,4 +17,7 @@ Reference: Claude web puts the attached image above the operator's bubble ([scre
 - [ ] Stack provides the part on every platform the app runs on.
 
 ## Open questions
-- [ ] Its shape (a component, a variant, a token, an option): the stack session decides.
+- [x] Its shape (a component, a variant, a token, an option): the stack session decides.
+
+## Shape
+`Message.attachments?: readonly Attachment[]` and `Message.meta?: Part[]` on `you` and `other`. Attachments stand above the bubble at the column's end: one with `src` (new `Attachment.src`) as an `Image` thumb (003-31), one without as a neutral chip of its name. `meta` is the provenance line ("by voice", "Kitchen") before the time under the bubble. The attachments row is one internal part shared with `MessageInput`, removable only there. 004-06's `message` map gains both fields.

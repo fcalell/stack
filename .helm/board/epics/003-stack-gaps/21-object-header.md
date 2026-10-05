@@ -15,4 +15,7 @@ Martechthings' portal request form opens from an object: its glyph, name and whe
 - [ ] A form draws an object as read-only rows at its head, with one act to change it, at phone width.
 
 ## Open questions
-- [ ] Whether `DefinitionRow`s in a `Group` already compose it: the stack session decides.
+- [x] Whether `DefinitionRow`s in a `Group` already compose it: the stack session decides.
+
+## Shape
+No new surface. A form about an object opens on that object as one `ListRow` in a `Group`, its first child: the object's glyph as leading, its name as title, where it lives as meta, and `onOpen` to change it. One recipe line in the guide (`patterns/settings-form.md` or `guide/screen.md`) and one showcase case.

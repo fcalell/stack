@@ -17,4 +17,7 @@ Reference: FotMob's lock screen, its time about five times its date ([screen](ht
 - [ ] Stack provides the part on every platform the app runs on.
 
 ## Open questions
-- [ ] Its shape (a component, a variant, a token, an option): the stack session decides.
+- [x] Its shape (a component, a variant, a token, an option): the stack session decides.
+
+## Shape
+A third density `room`, declared by the screen: `Place.distance?: "room"`. Media queries cannot detect viewing distance, so desktop and touch stay automatic and room is the one tier a screen states. The room set derives from its own body base as the other two do; the web emits it under `[data-density="room"]` set by the Place, the phone scopes it with uniwind `ScopedVariables`. The room token values come from the designer pass and fcalell's approval; a critique by a fresh session judges the render. Range: `patterns/ten-foot.md`.

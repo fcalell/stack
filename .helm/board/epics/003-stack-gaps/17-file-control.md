@@ -13,3 +13,6 @@ Martechthings imports files (an SDR CSV, analytics and tag manager exports, an a
 
 ## Acceptance criteria
 - [ ] A control chooses a file or takes a dropped one, shows the chosen name and size, and refuses a wrong type with its reason, on the web and the phone.
+
+## Shape
+New control `FileInput` (`value: PickedFile | null`, `onChange`, `accept: readonly string[]`), labelled by a `FormField`. One shared descriptor `PickedFile = { name: string; size: number; type: string; blob: () => Promise<Blob> }`: the web wraps `File`, the phone wraps an `expo-document-picker` asset. Empty, the field box shows `chooseFile` in placeholder ink with a leading `FileUp` and the whole box is the act; chosen, the name, its size in `ink-meta`, and a remove act. The web takes a dropped file, shown by the focus ring. A wrong type never reaches `onChange`: it goes to the FormField's error line (slot word `wrongType`). `expo-document-picker` is a `native-ui` peer, as `expo-clipboard` is.
