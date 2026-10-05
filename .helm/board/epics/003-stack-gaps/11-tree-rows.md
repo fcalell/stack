@@ -20,3 +20,5 @@ Martechthings draws a branching journey as a step list: a choice point's options
 
 ## Shape
 `RowSlots<T>.children?: (item: T) => readonly T[] | undefined` makes a `List` a tree: each level one `indent` step in (a new size, 16 desktop / 20 touch), a hairline rail per level, and a fold chevron (`ChevronRight`/`ChevronDown` at `icon-meta`) in a lane every row of the tree reserves. The List owns the fold state (open by default) and passes depth to `ListRow` through internal context, so `ListRow`'s roster props do not change. Web: `role="tree"`/`treeitem` with `aria-level`/`aria-expanded` and Arrow Left/Right; phone: `accessibilityState.expanded`. The flattening by fold state lives in `list-state.ts`, pure and tested.
+
+Review (accepted by fcalell): the fold chevron draws at `icon-control`, the size `IconButton` draws its glyph at; the shape's `icon-meta` is amended.

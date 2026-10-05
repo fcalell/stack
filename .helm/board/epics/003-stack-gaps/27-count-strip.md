@@ -16,3 +16,5 @@ Martechthings' organization home opens on one strip of counts under the header: 
 
 ## Shape
 New molecule `Stats { items: readonly StatSpec[] }`, `StatSpec = { label: string; value: number; unit?: string; meta?: string } & ({ counts?: readonly CountLink[]; href?: never } | { href: Route; counts?: never })`, `CountLink = { label: string; value: number; href: Route }` (shared with 003-29). One hairline card split by dividers; each cell the label at meta, the figure at a new type role `figure` (ratio ≈ 1.69 of the body, 22 desktop / 27 touch, weight 500, tabular; the range measures strip figures at 18–26), the optional meta line, and the counts as `Link`s; zeros drawn. Two cells to a row below `tablet` and on the phone. Range: `patterns/stats.md`.
+
+Review (accepted by fcalell): data props stay required while `loading`, as `Meter`'s do; a roster-wide loading union is not built.

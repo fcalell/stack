@@ -21,3 +21,5 @@ Reference: Oura's notes wrap whole with their date ([screen](https://mobbin.com/
 
 ## Shape
 `ListRow.wrap?: boolean` (and `RowSlots.wrap`): the title wraps to every line it needs at body weight 400 (a `ROW.lines.whole` cell), the leading, trailing and more act aligned to its first line; meta unchanged. The waiting row draws two body lines.
+
+Review (accepted by fcalell): a one-line wrapped row on touch stands 40 tall, not a row's 48: `ROW.lines.whole` has no min height.

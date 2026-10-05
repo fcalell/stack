@@ -19,3 +19,5 @@ A Martechthings mapping's parameters are rows of a source (a field or a constant
 
 ## Shape
 One new content molecule `Rules` serves 003-16, 18 and 19: aligned rows of inline terms (grid and subgrid), each with a remove `IconButton` (`X`, word `remove`), and an optional `add?: Act` at the foot. `Rule<V> = { id; terms: RuleTerms<V>; onRemove? }`; `RuleTerms` is either a pair `{ from: RuleValue<V>; to: RuleValue<V> }` (from, `ArrowRight`, to) or a condition `{ field: OptionPick<V>; operator: string; value: RuleValue<V> }`. `RuleValue<V>` is `{ pick }`, `{ picks }` (multi) or `{ either }`. Rows stand at `FIELD.fit.bar`; `Picker` gains a `bar` fit. The arrow is `ink-meta`, `ink-disabled` while a side is unset. On touch each row stacks its terms inside a Group card.
+
+Review (accepted by fcalell): the desktop grid's template `grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_auto]` is structural, carrying no size or token value, and stays a web overlay under Rules.
