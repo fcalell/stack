@@ -680,13 +680,14 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		},
 		// Below `wide` the Split adds a Details act to the Place's actions that
 		// opens the pane as a sheet; below `tablet` a record it shows alone has
-		// its Place lead its strip or top bar with a back act to the list. A
-		// record the main opened (`beside`, a Screen) stands beside the main from
-		// `wide`, the pane then behind the Details act at every width, and in
-		// the main's place below it; below `tablet` its head stands alone, the
-		// Place drawing none.
+		// its Place lead its strip or top bar with a back act to the list, the
+		// place's route unless the Split's `back` names the route the list stands
+		// at. A record the main opened (`beside`, a Screen) stands beside the
+		// main from `wide`, the pane then behind the Details act at every width,
+		// and in the main's place below it; below `tablet` its head stands alone,
+		// the Place drawing none.
 		Split: {
-			props: ["list", "main", "beside", "pane", "empty"],
+			props: ["list", "main", "beside", "pane", "empty", "back"],
 			draws: [
 				"SPLIT_LIST",
 				"SPLIT_LIST_STACK",

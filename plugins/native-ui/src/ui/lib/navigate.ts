@@ -21,9 +21,3 @@ export function open(href: string): void {
 	if (isRoute(href)) navigate(href);
 	else Linking.openURL(href);
 }
-
-// A place is current at its route and below it; the root only at itself.
-export function isCurrent(route: string, pathname: string): boolean {
-	if (route === "/") return pathname === "/";
-	return pathname === route || pathname.startsWith(`${route}/`);
-}

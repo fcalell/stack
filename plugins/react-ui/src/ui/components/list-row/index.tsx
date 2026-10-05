@@ -12,6 +12,7 @@ import type {
 	RowTrailing,
 	StatusMark,
 } from "@fcalell/ui-core/descriptors";
+import { isCurrent } from "@fcalell/ui-core/route";
 import {
 	FIELD_ERROR_LINE,
 	ROW_ACTS,
@@ -35,7 +36,7 @@ import { type KeyboardEvent, type ReactNode, use, useId, useMemo } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { InlineField } from "../../lib/field.ts";
 import { GroundContext } from "../../lib/ground.ts";
-import { follow, isCurrent, navigate, useRoute } from "../../lib/navigate.ts";
+import { follow, navigate, useRoute } from "../../lib/navigate.ts";
 import { joinParts, META_CUT, partText } from "../../lib/parts.ts";
 import { ReasonHostContext, usePressed } from "../../lib/reason.ts";
 import { useTouched } from "../../lib/touched.ts";

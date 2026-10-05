@@ -3,6 +3,7 @@ import type {
 	PlaceSpec,
 	Switcher,
 } from "@fcalell/ui-core/descriptors";
+import { placeAt } from "@fcalell/ui-core/route";
 import {
 	type ContentTone,
 	type PlaceTabState,
@@ -27,7 +28,7 @@ import {
 	ToastFrame,
 } from "../../lib/frame";
 import { Ink } from "../../lib/ink";
-import { isCurrent, navigate, usePathname } from "../../lib/navigate";
+import { navigate, usePathname } from "../../lib/navigate";
 import { useWords } from "../../lib/words";
 import { Count } from "../count";
 import { Icon } from "../icon";
@@ -88,7 +89,7 @@ export function Shell({ places, banner, switcher, children }: ShellProps) {
 	// The More page stands at the route it opened on: going to a place closes it.
 	const [moreAt, setMoreAt] = useState<string>();
 	const more = moreAt === pathname;
-	const route = places.find((spec) => isCurrent(spec.route, pathname))?.route;
+	const route = placeAt(places, pathname);
 	const rest = places.length > TAB_ROOM ? places.slice(TAB_ROOM - 1) : [];
 	// The tab bar each Place draws changes only with the places, the route and
 	// the More page, so a Shell state change re-renders no Place.
@@ -96,13 +97,13 @@ export function Shell({ places, banner, switcher, children }: ShellProps) {
 		() => (
 			<TabBar
 				places={places}
-				pathname={pathname}
+				route={route}
 				more={more}
 				onMore={() => setMoreAt(pathname)}
 				onPlace={() => setMoreAt(undefined)}
 			/>
 		),
-		[places, pathname, more],
+		[places, route, pathname, more],
 	);
 	return (
 		<View ref={root} className={FILL}>
@@ -169,13 +170,13 @@ function MorePage({ places }: { places: readonly PlaceSpec[] }) {
 // takes no label of its own, so it reads the label then the count.
 function TabBar({
 	places,
-	pathname,
+	route,
 	more,
 	onMore,
 	onPlace,
 }: {
 	places: readonly PlaceSpec[];
-	pathname: string;
+	route: string | undefined;
 	more: boolean;
 	onMore: () => void;
 	onPlace: () => void;
@@ -198,7 +199,7 @@ function TabBar({
 					icon={spec.icon}
 					label={spec.label}
 					count={spec.count}
-					selected={!more && isCurrent(spec.route, pathname)}
+					selected={!more && spec.route === route}
 					onAct={() => {
 						onPlace();
 						navigate(spec.route);
@@ -209,9 +210,7 @@ function TabBar({
 				<Tab
 					icon="Ellipsis"
 					label={words.more}
-					selected={
-						more || rest.some((spec) => isCurrent(spec.route, pathname))
-					}
+					selected={more || rest.some((spec) => spec.route === route)}
 					onAct={onMore}
 				/>
 			) : null}

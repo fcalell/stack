@@ -368,6 +368,7 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<Screen title="a" back="/" placeholderTextColorClassName="text-ink-body" />
 		<Split main={<Text />} />
+		<Split main={<Text />} back="/" />
 		{/* @ts-expect-error: closed channel */}
 		<Split main={<Text />} className="x" />
 		{/* @ts-expect-error: closed channel */}

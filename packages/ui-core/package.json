@@ -63,6 +63,10 @@
 			"types": "./dist/roster.d.ts",
 			"default": "./dist/roster.js"
 		},
+		"./route": {
+			"types": "./dist/route.d.ts",
+			"default": "./dist/route.js"
+		},
 		"./harness": {
 			"types": "./dist/harness.d.ts",
 			"default": "./dist/harness.js"

@@ -1,6 +1,6 @@
 ---
 id: 003-67
-status: backlog
+status: review
 sessions: {}
 ---
 # react-ui: the root place owns its sub-addresses

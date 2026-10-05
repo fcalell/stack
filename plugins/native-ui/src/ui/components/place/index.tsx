@@ -113,7 +113,7 @@ export type PlaceProps = PlaceBase & PlaceEnd & PlaceDistance;
 // under the body's end, the body scrolling past it, and a Thread in such a body stands among its sections. A foot is a
 // field (a `MessageInput`) or a selection bar (an `ActionBar` with `chosen`), whose count stands over the full-width act.
 // A Split standing as its direct child gets its Details act in its head, and a record the Split shows alone puts a back
-// act to the place's route in the switcher's stead; while a record stands beside
+// act to the place's route (or to the Split's `back`) in the switcher's stead; while a record stands beside
 // the main, the Place draws no head, that record's head the page's one. The
 // Shell's tab bar stands under it all, and its toasts over the body.
 export function Place({
@@ -145,14 +145,16 @@ export function Place({
 		fill || split.thread ? null : (
 			<ToastRoom>{act ? <FloatingActRoom /> : null}</ToastRoom>
 		);
-	// A record standing alone returns to the list, the place's own route.
+	// A record standing alone returns to the list: the place's own route, or
+	// where the Split says its list stands.
+	const list = split.back ?? route;
 	const lead =
-		split.record && route !== undefined ? (
+		split.record && list !== undefined ? (
 			<IconButton
 				icon="ChevronLeft"
 				fit="body"
 				label={words.back}
-				onAct={() => navigate(route)}
+				onAct={() => navigate(list)}
 			/>
 		) : switcher && !far ? (
 			<SwitcherPick switcher={switcher} />

@@ -29,3 +29,7 @@ test("a Split takes the record its main opened, `beside`, and holds its cell", (
 	assert.ok(split.draws.includes("SPLIT_BESIDE"));
 	assert.ok(split.holds?.includes("SPLIT_BESIDE"));
 });
+
+test("a Split takes the route its list stands alone at, `back`", () => {
+	assert.ok(ROSTER.layout.Split?.props.includes("back"));
+});

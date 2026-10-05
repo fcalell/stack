@@ -11,7 +11,9 @@ Find the roster component that owns the shape: the frame (`Shell`, `Place`, `Scr
 the rhythm (`Section`, `Group`, `List`), the row (`ListRow`, `DefinitionRow`, `FormField`), the
 control, the text role (`Text`). A host element that rebuilds one of these is drift. A `Split` is
 its page's frame region: it stands as the bleeding `Place`'s (or `Screen`'s) direct child, never
-inside a component of the app's, so the page's head draws its back and Details acts.
+inside a component of the app's, so the page's head draws its back and Details acts. Its back act
+returns to the place's route; a list that stands at a deeper route names it as `back`
+(`<Split back={treeRoute} …>`), which an open record returns to and a missing read in it leads to.
 
 A record the open record links to opens beside it: the `Split`'s `beside` holds a `Screen` whose
 `back` is the open record's route. From `wide` it stands beside the main, its back act a Close;

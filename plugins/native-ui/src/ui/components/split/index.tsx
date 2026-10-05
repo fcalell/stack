@@ -20,10 +20,12 @@ import {
 	DetailsOpen,
 	type DetailsState,
 	PageTitle,
+	PlaceRoute,
 	ThreadBleeds,
 	ThreadRoom,
 } from "../../lib/frame";
 import { Scroll } from "../../lib/hosts";
+import type { Route } from "../../lib/route";
 import { useWords } from "../../lib/words";
 import { Sheet } from "../sheet";
 import { holdsThread } from "../thread";
@@ -40,6 +42,7 @@ export interface SplitProps extends Closed {
 	beside?: ReactNode;
 	pane?: ReactNode;
 	empty?: ReactNode;
+	back?: Route;
 }
 
 // One region at a time, each scrolling itself in a bleeding Place: the list,
@@ -53,10 +56,13 @@ export interface SplitProps extends Closed {
 // and a pane open, its Place or Screen draws a Details act that opens the pane
 // as a sheet. It stands as its page's direct child, where the page reads its
 // props (`useSplitHead`); deeper it draws as a plain region and no head draws its
-// acts. `empty` is the desktop's, so the phone never draws it.
-export function Split({ list, main, beside, pane }: SplitProps) {
+// acts. `empty` is the desktop's, so the phone never draws it. `back` is the
+// route where the list stands alone: the record's back act returns to it, and
+// so does a missing read in its regions, in the place's route's stead.
+export function Split({ list, main, beside, pane, back }: SplitProps) {
 	const words = useWords();
 	const title = useContext(PageTitle);
+	const place = useContext(PlaceRoute);
 	const held = useContext(DetailsOpen);
 	const room = useContext(ActRoom);
 	const [own, setOwn] = useState(false);
@@ -111,7 +117,7 @@ export function Split({ list, main, beside, pane }: SplitProps) {
 			</Scroll>
 		);
 	return (
-		<>
+		<PlaceRoute.Provider value={back ?? place}>
 			{region}
 			<Sheet
 				fit="pane"
@@ -121,15 +127,15 @@ export function Split({ list, main, beside, pane }: SplitProps) {
 			>
 				{pane}
 			</Sheet>
-		</>
+		</PlaceRoute.Provider>
 	);
 }
 
 // What a page's head shows of the Split standing as its direct child, read
 // off the Split's props in render: whether its record stands alone, has a
-// pane, or has a record standing beside it, and the Details act that opens
-// the pane, whose open state the page holds (`DetailsOpen`, `null` with no
-// Split there).
+// pane, or has a record standing beside it, the route its list stands at
+// (`back`), and the Details act that opens the pane, whose open state the
+// page holds (`DetailsOpen`, `null` with no Split there).
 export function useSplitHead(children: ReactNode) {
 	const words = useWords();
 	const [open, setOpen] = useState(false);
@@ -149,5 +155,5 @@ export function useSplitHead(children: ReactNode) {
 	const held: DetailsState | null = props ? { open, setOpen } : null;
 	// A Thread filling the record holds the page's toasts over its own input.
 	const thread = record && !beside && holdsThread(props?.main);
-	return { record, beside, details, held, thread };
+	return { record, beside, details, held, thread, back: props?.back };
 }

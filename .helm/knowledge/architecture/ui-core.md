@@ -461,6 +461,21 @@ a tick with no animation, never jumped to full.
   host object, since the Place's head renders before the Split in the same pass and a Split inside a
   component that re-renders alone (a selection in that component's state) would leave the head
   stale. Each region keeps its own keyed scroll, so a record opens at its top after a scrolled list.
+  The Shell's selected place is a function of the place list, not of one spec: `placeAt(places,
+  at)` (ui-core's `./route`, string parsing with no `URL`, which React Native only partly has) is
+  the place holding the address with the longest pathname, then the most query parameters, and
+  the root `/` holds every address, so a record under the root place (`/items/x` under Now)
+  selects the root and hands its Place a route to lead back to, and nested places (`/work` beside
+  `/work/code`) select the deeper one; an address no place claims selects the root. A row's
+  `isCurrent` keeps its own rule (a row linking to `/` is not current everywhere). Rejected: a
+  `PlaceSpec` prefix list (a consumer option for a derivable fact), and the router's layout match
+  (exact, but a second mechanism per platform for one rule). A Split's list can stand at a route
+  deeper than the place, which no component can derive (the list and its record share one layout
+  component), so `Split.back` names it: the route its record's back act returns to, and where a
+  missing read in its regions leads back to (the Split hands its regions `PlaceRoute` as `back`),
+  the place's route when unset. The page reads it off its direct child Split as it reads the rest
+  (`splitOf` on the web, `useSplitHead` on native); a tree standing alone at a deeper route draws
+  no back act of its own.
 - A molecule whose structure follows density keeps one constant per structure, never a density axis:
   the page's head (`PAGE_HEAD`, one hairline at both densities) holds the desktop strip
   (`PAGE_TOP_BAR` with the title and acts in one row) or the touch one (`PAGE_TOP_BAR` over the
@@ -1075,8 +1090,9 @@ a tick with no animation, never jumped to full.
   deriving it from `href` (a create act that navigates, "Add a repo", keeps its plus). `tone`
   stays internal, as does `fill`. Stack drawing an unmatched address itself is not part of it. An OptionList
   draws it as its card's line, `missing` beside a secondary Back, as its failed line stands.
-  Back goes to `BackRoute`, the enclosing `Screen`'s `back`, else to the Shell's `PlaceRoute`;
-  with neither it draws no act. Going to a route is navigation, so on the web Back is an anchor
+  Back goes to `BackRoute`, the enclosing `Screen`'s `back`, else to `PlaceRoute`, the route of
+  the place that owns the address (`placeAt` in `./route`, which the Shell reads, below) or of
+  the Split's `back` inside one; with neither it draws no act. Going to a route is navigation, so on the web Back is an anchor
   in the hairline act's look (the internal `ButtonLink`), as a Place's and a Screen's back and
   Close acts are anchors in the icon act's (`IconButtonLink`); native presses through
   `navigate`. On the web every anchor routes in place: its `onClick` is `lib/navigate`'s

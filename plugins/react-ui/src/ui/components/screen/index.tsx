@@ -9,6 +9,7 @@ import {
 	text,
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, use, useId, useState } from "react";
+import { backGlyph } from "../../lib/back.ts";
 import type { Closed } from "../../lib/closed.ts";
 import {
 	ActRoom,
@@ -24,7 +25,7 @@ import { useWords } from "../../lib/words.tsx";
 import { IconButtonLink } from "../icon-button/base.tsx";
 import { IconButton } from "../icon-button/index.tsx";
 import { Menu } from "../menu/index.tsx";
-import { backGlyph, DETAILS, Details } from "../place/index.tsx";
+import { DETAILS, Details } from "../place/index.tsx";
 
 // A screen is the size container a Split inside decides its regions by.
 // A pushed screen marks its root `data-screen`: the Shell hides its tab bar

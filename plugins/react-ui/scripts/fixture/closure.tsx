@@ -259,6 +259,7 @@ export const closure = (
 		{/* @ts-expect-error: closed channel */}
 		<Screen title="x" classList={{}} />
 		<Split />
+		<Split back="/" />
 		{/* @ts-expect-error: closed channel */}
 		<Split className="x" />
 		{/* @ts-expect-error: closed channel */}

@@ -3,7 +3,6 @@ import { cn } from "@fcalell/ui-core/cn";
 import type {
 	Act,
 	IconAct,
-	IconName,
 	MenuItem,
 	Switcher,
 } from "@fcalell/ui-core/descriptors";
@@ -23,6 +22,7 @@ import {
 	text,
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, use, useId, useState } from "react";
+import { backGlyph } from "../../lib/back.ts";
 import type { Closed } from "../../lib/closed.ts";
 import {
 	ActRoom,
@@ -42,6 +42,7 @@ import { IconButton } from "../icon-button/index.tsx";
 import { Menu } from "../menu/index.tsx";
 import { PickerBase } from "../picker/base.tsx";
 import { SwitcherPick } from "../shell/switcher.tsx";
+import { splitOf } from "../split/index.tsx";
 import { BODY_FILLED } from "../thread/fill.ts";
 
 // The column clips what stands past its sides, so its docked foot's shadow
@@ -136,11 +137,6 @@ export function Details(props: {
 	);
 }
 
-/** The back act's glyph, shared by the Place and the Screen. */
-export function backGlyph(touch: boolean): IconName {
-	return touch ? "ChevronLeft" : "ArrowLeft";
-}
-
 interface PlaceBase extends Closed {
 	/** The page's title, its one `h1`. */
 	title: string;
@@ -183,7 +179,7 @@ type PlaceDistance =
 /** A page in the shell. */
 export type PlaceProps = PlaceBase & PlaceEnd & PlaceDistance;
 
-/** A page under a head and its hairline: on the desktop the title, its `context` pick and its acts share one strip, on touch the pick stands on the title line under the top bar; on touch the top bar (the shell's switcher, the actions, more) stands over the title and the act floats over the body's end, lifted. A `foot` docks at the page's bottom at both densities a sections gap under the body's end, the body scrolling under it, above the tab bar on touch; it spans the body, and a `MessageInput` keeps its own measure column inside it. A Place is the size container what stands in it decides its structure by (a Split its regions, a Table its grid): a Thread in its body fills it, unless the Place has a `foot`, where it stands among the sections; it draws the Details act of a Split's pane, below `wide` of its width, and with a record open a back act to the place's route, drawn below `tablet` first: before the title in the strip, in the switcher's stead in the top bar. While a record stands beside the main, below `tablet` the Place draws no head, its `h1` staying read, unseen: that record's head is the page's one. With `distance` `room` it draws the room set and the touch structure, without the shell's switcher. */
+/** A page under a head and its hairline: on the desktop the title, its `context` pick and its acts share one strip, on touch the pick stands on the title line under the top bar; on touch the top bar (the shell's switcher, the actions, more) stands over the title and the act floats over the body's end, lifted. A `foot` docks at the page's bottom at both densities a sections gap under the body's end, the body scrolling under it, above the tab bar on touch; it spans the body, and a `MessageInput` keeps its own measure column inside it. A Place is the size container what stands in it decides its structure by (a Split its regions, a Table its grid): a Thread in its body fills it, unless the Place has a `foot`, where it stands among the sections; it draws the Details act of a Split's pane, below `wide` of its width, and with a record open a back act to the place's route (or to the `back` of the Split standing as its direct child), drawn below `tablet` first: before the title in the strip, in the switcher's stead in the top bar. While a record stands beside the main, below `tablet` the Place draws no head, its `h1` staying read, unseen: that record's head is the page's one. With `distance` `room` it draws the room set and the touch structure, without the shell's switcher. */
 export function Place({
 	title,
 	distance,
@@ -199,21 +195,23 @@ export function Place({
 	const touch = useTouch() || far;
 	const words = useWords();
 	const switcher = use(ShellSwitcher);
+	// A record standing alone returns to the list: the place's own route, or
+	// where the Split in the body says its list stands.
 	const route = use(PlaceRoute);
+	const list = splitOf(children)?.back ?? route;
 	const titleId = useId();
 	const [bodyNode, setBodyNode] = useState<HTMLDivElement | null>(null);
 	const stop = useScrolls(bodyNode, "y");
 	const [sheet] = useState(() => Dialog.createHandle<unknown>());
 	const fit = touch ? "body" : "bar";
-	// A record standing alone returns to the list, the place's own route.
 	const back =
-		route !== undefined ? (
+		list !== undefined ? (
 			<span className={BACK}>
 				<IconButtonLink
 					icon={backGlyph(touch)}
 					fit={fit}
 					label={words.back}
-					href={route}
+					href={list}
 				/>
 			</span>
 		) : null;

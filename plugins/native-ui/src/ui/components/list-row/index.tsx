@@ -9,6 +9,7 @@ import type {
 	RowTrailing,
 	StatusMark,
 } from "@fcalell/ui-core/descriptors";
+import { isCurrent } from "@fcalell/ui-core/route";
 import {
 	FIELD_ERROR_LINE,
 	ROW_ACTS,
@@ -36,7 +37,7 @@ import { FieldDisabled, FieldError, InlineField } from "../../lib/field";
 import { GroundContext } from "../../lib/ground";
 import { Ink } from "../../lib/ink";
 import { useLive } from "../../lib/live";
-import { isCurrent, navigate, usePathname } from "../../lib/navigate";
+import { navigate, usePathname } from "../../lib/navigate";
 import { joinParts, META_CUT, partText } from "../../lib/parts";
 import { ReasonHostContext, usePressed } from "../../lib/reason";
 import type { Route } from "../../lib/route";

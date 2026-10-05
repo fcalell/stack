@@ -24,6 +24,7 @@ import {
 	useRef,
 	useState,
 } from "react";
+import { backGlyph } from "../../lib/back.ts";
 import { FormStands } from "../../lib/form.ts";
 import { useTouch } from "../../lib/media.ts";
 import { PortalContainer } from "../../lib/portal.ts";
@@ -36,7 +37,6 @@ import { Button } from "../button/index.tsx";
 import { Reason } from "../button/reason.tsx";
 import { IconButtonBase } from "../icon-button/base.tsx";
 import { IconButton } from "../icon-button/index.tsx";
-import { backGlyph } from "../place/index.tsx";
 
 // The layer the sheet stands on over the scrim: from the bottom edge on
 // touch, at the end on the desktop, centred for a decision.

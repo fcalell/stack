@@ -1,5 +1,6 @@
 import { Dialog } from "@base-ui/react/dialog";
 import { cn } from "@fcalell/ui-core/cn";
+import type { Route } from "@fcalell/ui-core/descriptors";
 import {
 	SPLIT_BESIDE,
 	SPLIT_LIST,
@@ -7,7 +8,7 @@ import {
 	SPLIT_PANE,
 	splitMain,
 } from "@fcalell/ui-core/variants";
-import { type ReactNode, use, useState } from "react";
+import { Children, isValidElement, type ReactNode, use, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import {
 	ActRoom,
@@ -15,6 +16,7 @@ import {
 	DetailsSheet,
 	OverThread,
 	PageTitle,
+	PlaceRoute,
 	ThreadBleeds,
 	ThreadRoom,
 } from "../../lib/frame.ts";
@@ -72,13 +74,24 @@ export interface SplitProps extends Closed {
 	pane?: ReactNode;
 	/** What the main holds while nothing is open, an `EmptyState`. */
 	empty?: ReactNode;
+	/** The route where the list stands alone, which an open record returns to and a missing read in its regions leads back to; the place's route when unset. */
+	back?: Route;
 }
 
-/** The list at its width inside a hairline beside the main, decided by its page's width: from `wide` the pane stands beside the main, below it the Details act its Place or Screen draws opens the pane as a sheet. Below `tablet` one region stands at a time: the list, or the open record, whose Place then leads its strip or top bar with a back act to the list. A record the main opened (`beside`) stands beside the main from `wide`, the two sharing what the list leaves, its back act drawn as Close and the pane behind the Details act at every width; below `wide` it stands in the main's place with its back act to the main, and below `tablet` its head stands alone, the Place drawing none. A Thread in the main fills it: the main stops scrolling, the record's head stays at the page inset over the Thread's log, which scrolls, and its input docks at the main's foot. It sits in a bleeding Place, whose strip heads it. */
-export function Split({ list, main, beside, pane, empty }: SplitProps) {
+/** The props of the Split standing as a page's direct child, which the page reads in render. */
+export function splitOf(children: ReactNode): SplitProps | undefined {
+	const split = Children.toArray(children).find(
+		(child) => isValidElement<SplitProps>(child) && child.type === Split,
+	);
+	return isValidElement<SplitProps>(split) ? split.props : undefined;
+}
+
+/** The list at its width inside a hairline beside the main, decided by its page's width: from `wide` the pane stands beside the main, below it the Details act its Place or Screen draws opens the pane as a sheet. Below `tablet` one region stands at a time: the list, or the open record, whose Place then leads its strip or top bar with a back act to the list: the place's route, or the Split's `back` where the list stands deeper, which a missing read in its regions leads back to as well. A record the main opened (`beside`) stands beside the main from `wide`, the two sharing what the list leaves, its back act drawn as Close and the pane behind the Details act at every width; below `wide` it stands in the main's place with its back act to the main, and below `tablet` its head stands alone, the Place drawing none. A Thread in the main fills it: the main stops scrolling, the record's head stays at the page inset over the Thread's log, which scrolls, and its input docks at the main's foot. It sits in a bleeding Place, whose strip heads it. */
+export function Split({ list, main, beside, pane, empty, back }: SplitProps) {
 	const words = useWords();
 	const title = use(PageTitle);
 	const room = use(ActRoom);
+	const place = use(PlaceRoute);
 	const [open, setOpen] = useState(false);
 	// The page around holds the sheet's handle, so its Details act stands from
 	// its first frame.
@@ -101,75 +114,77 @@ export function Split({ list, main, beside, pane, empty }: SplitProps) {
 		MAIN_FITS,
 	);
 	return (
-		<div
-			data-split
-			data-record={opened || undefined}
-			data-pane={detailed || undefined}
-			data-beside={besides || undefined}
-			className={SPLIT}
-		>
-			<nav
-				ref={setListNode}
-				tabIndex={listStop ? 0 : undefined}
-				aria-labelledby={title}
-				className={cn(
-					SPLIT_LIST,
-					SPLIT_LIST_STACK,
-					LIST,
-					LIST_ALONE,
-					opened && BEHIND,
-				)}
+		<PlaceRoute value={back ?? place}>
+			<div
+				data-split
+				data-record={opened || undefined}
+				data-pane={detailed || undefined}
+				data-beside={besides || undefined}
+				className={SPLIT}
 			>
-				{list}
-				{room}
-			</nav>
-			{opened ? (
-				<div
-					ref={setMainNode}
-					tabIndex={mainStop ? 0 : undefined}
-					className={record}
+				<nav
+					ref={setListNode}
+					tabIndex={listStop ? 0 : undefined}
+					aria-labelledby={title}
+					className={cn(
+						SPLIT_LIST,
+						SPLIT_LIST_STACK,
+						LIST,
+						LIST_ALONE,
+						opened && BEHIND,
+					)}
 				>
-					<div className={inset}>
-						<ThreadRoom value>
-							<ThreadBleeds value>
-								<OverThread value>{main}</OverThread>
-							</ThreadBleeds>
-						</ThreadRoom>
-						{room ? <div className={ALONE}>{room}</div> : null}
+					{list}
+					{room}
+				</nav>
+				{opened ? (
+					<div
+						ref={setMainNode}
+						tabIndex={mainStop ? 0 : undefined}
+						className={record}
+					>
+						<div className={inset}>
+							<ThreadRoom value>
+								<ThreadBleeds value>
+									<OverThread value>{main}</OverThread>
+								</ThreadBleeds>
+							</ThreadRoom>
+							{room ? <div className={ALONE}>{room}</div> : null}
+						</div>
 					</div>
-				</div>
-			) : (
-				<div className={cn(splitMain({ state: "empty" }), EMPTY, BEHIND)}>
-					{empty}
-				</div>
-			)}
-			{besides ? (
-				<div className={cn(SPLIT_BESIDE, BESIDE)}>
-					<Beside value={{ details: detailed ? sheet : undefined }}>
-						{beside}
-					</Beside>
-				</div>
-			) : null}
-			{detailed && !besides ? (
-				<aside
-					ref={setPaneNode}
-					tabIndex={paneStop ? 0 : undefined}
-					aria-label={words.details}
-					className={cn(SPLIT_PANE, PANE)}
+				) : (
+					<div className={cn(splitMain({ state: "empty" }), EMPTY, BEHIND)}>
+						{empty}
+					</div>
+				)}
+				{besides ? (
+					<div className={cn(SPLIT_BESIDE, BESIDE)}>
+						<Beside value={{ details: detailed ? sheet : undefined }}>
+							{beside}
+						</Beside>
+					</div>
+				) : null}
+				{detailed && !besides ? (
+					<aside
+						ref={setPaneNode}
+						tabIndex={paneStop ? 0 : undefined}
+						aria-label={words.details}
+						className={cn(SPLIT_PANE, PANE)}
+					>
+						{pane}
+					</aside>
+				) : null}
+				<SheetBase
+					handle={sheet}
+					open={detailed && open}
+					onOpen={() => setOpen(true)}
+					onClose={() => setOpen(false)}
+					title={words.details}
+					fit="pane"
 				>
 					{pane}
-				</aside>
-			) : null}
-			<SheetBase
-				handle={sheet}
-				open={detailed && open}
-				onOpen={() => setOpen(true)}
-				onClose={() => setOpen(false)}
-				title={words.details}
-				fit="pane"
-			>
-				{pane}
-			</SheetBase>
-		</div>
+				</SheetBase>
+			</div>
+		</PlaceRoute>
 	);
 }

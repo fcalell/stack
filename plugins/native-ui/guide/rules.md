@@ -12,7 +12,9 @@ the rhythm (`Section`, `Group`, `List`), the row (`ListRow`, `DefinitionRow`, `F
 control, the text role (`Text`). A `View` rebuilding one is drift. A `Split` is its page's frame
 region: it stands as the bleeding `Place`'s (or `Screen`'s) direct child, never inside a component
 of the app's, since the page reads its props for its head's back and Details acts; deeper it draws
-as a plain region and no head draws them.
+as a plain region and no head draws them. Its back act returns to the place's route; a list that
+stands at a deeper route names it as `back` (`<Split back={treeRoute} …>`), which an open record
+returns to and a missing read in it leads to.
 
 A record the open record links to opens beside it: the `Split`'s `beside` holds a `Screen` whose
 `back` is the open record's route. On the phone it stands in the open record's stead, its back

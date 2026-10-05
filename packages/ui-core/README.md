@@ -54,6 +54,13 @@ Seventeen subpaths:
 - `@fcalell/ui-core/reason`: `pressStands(blocked, pressedUnder)`, whether a blocked act's press
   still shows its reason: a press is kept as the reason it came under and stands while the act
   is blocked by that reason, so unblocking or a new reason forgets it in render.
+- `@fcalell/ui-core/route`: where an address stands among a shell's places, by plain string
+  parsing (React Native's `URL` is partial): `isCurrent(route, at)`, whether a row's route is
+  current (a route is current below it, the root `/` only at itself, a query narrows it to the
+  addresses carrying each parameter, a hash to the address carrying it), and `placeAt(places, at)`,
+  the route of the place that owns the address: of the places that hold it, the longest pathname,
+  then the most query parameters, the root `/` holding every address so it owns what no other
+  place claims. Both Shells select by `placeAt`; the rows use `isCurrent`.
 - `@fcalell/ui-core/format`: `formatterFor(kind, lang, options)`, the platform's `Intl` number,
   date and relative-time formatters, built once per kind, language and options; every formatter
   both plugins use comes from it.

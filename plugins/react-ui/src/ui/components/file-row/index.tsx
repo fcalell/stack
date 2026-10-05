@@ -6,6 +6,7 @@ import type {
 	IconName,
 } from "@fcalell/ui-core/descriptors";
 import { pathCut } from "@fcalell/ui-core/list-state";
+import { isCurrent } from "@fcalell/ui-core/route";
 import { filled } from "@fcalell/ui-core/tokens";
 import {
 	FILE_COUNTS,
@@ -18,7 +19,7 @@ import {
 import { use } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { GroundContext } from "../../lib/ground.ts";
-import { follow, isCurrent, useRoute } from "../../lib/navigate.ts";
+import { follow, useRoute } from "../../lib/navigate.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Chip } from "../chip/index.tsx";
 import { Icon } from "../icon/index.tsx";

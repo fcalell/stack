@@ -4,6 +4,7 @@ import type {
 	IconName,
 } from "@fcalell/ui-core/descriptors";
 import { pathCut } from "@fcalell/ui-core/list-state";
+import { isCurrent } from "@fcalell/ui-core/route";
 import { filled } from "@fcalell/ui-core/tokens";
 import {
 	FILE_COUNTS,
@@ -19,7 +20,7 @@ import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { GroundContext } from "../../lib/ground";
 import { Ink } from "../../lib/ink";
-import { isCurrent, navigate, usePathname } from "../../lib/navigate";
+import { navigate, usePathname } from "../../lib/navigate";
 import type { Route } from "../../lib/route";
 import { useCSSVariable } from "../../lib/theme";
 import { useWords } from "../../lib/words";
