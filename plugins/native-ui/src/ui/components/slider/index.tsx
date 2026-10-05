@@ -1,5 +1,6 @@
 import { formatterFor } from "@fcalell/ui-core/format";
 import {
+	GROUP_ITEM,
 	SLIDER,
 	SLIDER_FILL,
 	SLIDER_HEAD,
@@ -20,6 +21,7 @@ import { useResolveClassNames } from "uniwind";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { FieldDisabled } from "../../lib/field";
+import { GroundContext } from "../../lib/ground";
 
 /** A number picked along a range, its label over the track. */
 export interface SliderProps extends Closed {
@@ -50,6 +52,8 @@ export function Slider({
 	unit,
 }: SliderProps) {
 	const disabled = useContext(FieldDisabled);
+	// In a Group the slider is one of its items, at the card's inset.
+	const item = useContext(GroundContext) === "group" && GROUP_ITEM;
 	const [pressed, setPressed] = useState(false);
 	// The track's width, which only a touch reads, so its layout renders nothing.
 	const width = useRef(0);
@@ -105,7 +109,7 @@ export function Slider({
 	).format(value);
 	const active = pressed && !disabled;
 	return (
-		<View className={cn(SLIDER, "justify-center")}>
+		<View className={cn(SLIDER, item, "justify-center")}>
 			<View
 				className={cn(SLIDER_HEAD, "flex-row items-center justify-between")}
 			>

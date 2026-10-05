@@ -11,6 +11,7 @@ import {
 	FORM_FIELD_SUMMARY,
 	FORM_FIELD_SUMMARY_GLYPH,
 	formField,
+	GROUP_ITEM,
 	lineBox,
 	text,
 	textStrong,
@@ -18,6 +19,7 @@ import {
 import {
 	isValidElement,
 	type ReactNode,
+	use,
 	useEffect,
 	useId,
 	useMemo,
@@ -26,6 +28,7 @@ import {
 } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { FieldRefusal, GroupName, LabelTarget } from "../../lib/field.ts";
+import { GroundContext } from "../../lib/ground.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Checkbox } from "../checkbox/index.tsx";
 import { Icon } from "../icon/index.tsx";
@@ -279,17 +282,28 @@ function FieldBody<V>(props: FormFieldProps<V>) {
 	);
 }
 
-/** The label (body 500) over its control, the description (meta) under it and the error in the description's place; a switch stands at the label's end and a checkbox on its first line. Base UI's field wires the label, the description, the error, the validity and the disabled state into the control. A `change` draws the change mark ahead of the field, on its label's line. */
+/** The label (body 500) over its control, the description (meta) under it and the error in the description's place; a switch stands at the label's end and a checkbox on its first line. Base UI's field wires the label, the description, the error, the validity and the disabled state into the control. A `change` draws the change mark ahead of the field, on its label's line. In a `Group` it stands as one of the card's items at the card's inset, the group's hairline between, its label kept. */
 export function FormField<V>(props: FormFieldProps<V>) {
 	const { change, ...body } = props;
+	const item = use(GroundContext) === "group" && GROUP_ITEM;
 	const field = <FieldBody<V> {...body} />;
-	if (change === undefined) return field;
+	const marked =
+		change === undefined ? (
+			field
+		) : (
+			<div className={MARKED}>
+				<span className={cn(lineBox({ role: "body" }), BOX_LINE)}>
+					<ChangeMark kind={change} />
+				</span>
+				<div className={MARKED_BODY}>{field}</div>
+			</div>
+		);
+	if (!item) return marked;
+	// The field is the card's one item: what it holds (a Slider) is no second
+	// item, so its control stands on the list ground.
 	return (
-		<div className={MARKED}>
-			<span className={cn(lineBox({ role: "body" }), BOX_LINE)}>
-				<ChangeMark kind={change} />
-			</span>
-			<div className={MARKED_BODY}>{field}</div>
+		<div className={item}>
+			<GroundContext value="list">{marked}</GroundContext>
 		</div>
 	);
 }

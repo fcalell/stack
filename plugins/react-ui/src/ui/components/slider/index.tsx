@@ -1,6 +1,7 @@
 import { Slider as Base } from "@base-ui/react/slider";
 import { cn } from "@fcalell/ui-core/cn";
 import {
+	GROUP_ITEM,
 	SLIDER,
 	SLIDER_FILL,
 	SLIDER_HEAD,
@@ -10,7 +11,9 @@ import {
 	SLIDER_TRACK,
 	SLIDER_VALUE,
 } from "@fcalell/ui-core/variants";
+import { use } from "react";
 import type { Closed } from "../../lib/closed.ts";
+import { GroundContext } from "../../lib/ground.ts";
 
 const BOX = "flex flex-col justify-center";
 const HEAD = "flex items-center justify-between";
@@ -44,7 +47,7 @@ export interface SliderProps extends Closed {
 	unit?: string;
 }
 
-/** A slider's label and value over its track: the fill up to the thumb, the rest after it. */
+/** A slider's label and value over its track: the fill up to the thumb, the rest after it. In a `Group` it stands as one of the card's items at the card's inset, the group's hairline between. */
 export function Slider({
 	label,
 	value,
@@ -54,6 +57,8 @@ export function Slider({
 	step,
 	unit,
 }: SliderProps) {
+	// In a Group the slider is one of its items, at the card's inset.
+	const item = use(GroundContext) === "group" && GROUP_ITEM;
 	// The fill and the rest share the track less the thumb in proportion to
 	// the value, and the thumb, positioned by Base UI at the same point with
 	// `edge` alignment, sits in the gap between them, so neither runs under it.
@@ -66,7 +71,7 @@ export function Slider({
 			step={step}
 			format={unit ? { style: "unit", unit } : undefined}
 			thumbAlignment="edge"
-			className={cn(SLIDER, BOX)}
+			className={cn(SLIDER, item, BOX)}
 		>
 			<div className={cn(SLIDER_HEAD, HEAD)}>
 				<Base.Label className={cn(SLIDER_LABEL, LABEL)}>{label}</Base.Label>

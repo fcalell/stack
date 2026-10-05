@@ -5,9 +5,9 @@ import { levelOf, waitLine } from "@fcalell/ui-core/list-state";
 import { filled } from "@fcalell/ui-core/tokens";
 import {
 	FIGURES,
+	GROUP_ITEM,
 	METER,
 	METER_HEAD,
-	METER_ITEM,
 	METER_MARK,
 	METER_TRACK,
 	meterFill,
@@ -73,7 +73,7 @@ export function Meter({
 }: MeterProps) {
 	const words = useWords();
 	// In a Group the meter is one of its items, at the card's inset.
-	const item = use(GroundContext) === "group" && METER_ITEM;
+	const item = use(GroundContext) === "group" && GROUP_ITEM;
 	if (loading) return <MeterWait busy line={waitLine({ meta, counts })} />;
 	const share = max > 0 ? value / max : 0;
 	const markShare = mark && max > 0 ? mark.value / max : undefined;

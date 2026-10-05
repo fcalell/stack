@@ -8,11 +8,18 @@ import {
 	FIELD_ERROR_LINE,
 	FORM_FIELD_SUMMARY,
 	formField,
+	GROUP_ITEM,
 	summaryContentTone,
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
-import { isValidElement, type ReactNode, useMemo, useState } from "react";
+import {
+	isValidElement,
+	type ReactNode,
+	useContext,
+	useMemo,
+	useState,
+} from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
@@ -25,6 +32,7 @@ import {
 	GroupName,
 	LabelTarget,
 } from "../../lib/field";
+import { GroundContext } from "../../lib/ground";
 import { Ink } from "../../lib/ink";
 import { useLive } from "../../lib/live";
 import { Strut } from "../../lib/strut";
@@ -249,18 +257,30 @@ function FieldBody<V>(props: FormFieldProps<V>) {
 // The label (body 500) over its control, the description (meta) under it and
 // the error in the description's place; a switch stands at the label's end
 // and a checkbox on its first line. A `change` draws the change mark ahead of
-// the field, on its label's line.
+// the field, on its label's line. In a `Group` it stands as one of the card's
+// items at the card's inset, the group's hairline between, its label kept.
 export function FormField<V>(props: FormFieldProps<V>) {
 	const { change } = props;
+	const item = useContext(GroundContext) === "group" && GROUP_ITEM;
 	const field = <FieldBody<V> {...props} />;
-	if (change === undefined) return field;
-	return (
-		<View className={MARKED}>
-			<View className={BOX_LINE}>
-				<Strut role="body" />
-				<ChangeMark kind={change} />
+	const marked =
+		change === undefined ? (
+			field
+		) : (
+			<View className={MARKED}>
+				<View className={BOX_LINE}>
+					<Strut role="body" />
+					<ChangeMark kind={change} />
+				</View>
+				<View className={MARKED_BODY}>{field}</View>
 			</View>
-			<View className={MARKED_BODY}>{field}</View>
+		);
+	if (!item) return marked;
+	// The field is the card's one item: what it holds (a Slider) is no second
+	// item, so its control stands on the list ground.
+	return (
+		<View className={item}>
+			<GroundContext.Provider value="list">{marked}</GroundContext.Provider>
 		</View>
 	);
 }

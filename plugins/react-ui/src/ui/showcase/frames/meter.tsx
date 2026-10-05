@@ -2,8 +2,11 @@ import type { ReactNode } from "react";
 import { Group } from "../../components/group/index.tsx";
 import { Meter } from "../../components/meter/index.tsx";
 import { Section } from "../../components/section/index.tsx";
+import { Slider } from "../../components/slider/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
 import { Wide } from "./layout-context.tsx";
+
+const noop = () => {};
 
 const COUNTS = [
 	{ label: "failing", value: 3, href: "/tests/failing" },
@@ -55,6 +58,16 @@ function Usage() {
 						unit="jobs"
 						mark={{ value: 80, label: "Reserve" }}
 						meta="Jobs and watches pause at the reserve"
+					/>,
+					<Slider
+						key="window"
+						label="Reserve"
+						value={80}
+						onChange={noop}
+						min={0}
+						max={100}
+						step={5}
+						unit="percent"
 					/>,
 					<Meter
 						key="tests"

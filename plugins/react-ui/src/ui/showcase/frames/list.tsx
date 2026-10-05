@@ -1,4 +1,6 @@
+import { FormField } from "../../components/form-field/index.tsx";
 import { Group } from "../../components/group/index.tsx";
+import { Input } from "../../components/input/index.tsx";
 import { List } from "../../components/list/index.tsx";
 import { Place } from "../../components/place/index.tsx";
 import { Section } from "../../components/section/index.tsx";
@@ -55,14 +57,20 @@ const HOST_KEYS: HostKey[] = [
 	},
 ];
 
+const HOSTS = [
+	{ id: "h1", name: "docs.example.org" },
+	{ id: "h2", name: "api.example.org" },
+];
+
 const refetch = () => {};
 
-// Every cell draws three Lists in the frame's state, each in a Section on a
+// Every cell draws four Lists in the frame's state, each in a Section on a
 // page as it ships: notes (a title over a meta line, no leading), deploys
 // (an avatar leading, an age trailing), each waiting in its own rows' slots,
-// its empty and failed forms framed in the Section; and host keys, facts
+// its empty and failed forms framed in the Section; host keys, facts
 // from data in a Group (a label over its fingerprint, copied), the Section's
-// head carrying no count.
+// head carrying no count; and allowed hosts, an add field over a List in a
+// Group, the field live while the rows wait.
 export function drawList(frame: ShowcaseFrame) {
 	return (
 		<Column>
@@ -117,6 +125,30 @@ export function drawList(frame: ShowcaseFrame) {
 								label: (key) => key.algorithm,
 								value: (key) => key.fingerprint,
 								copyable: true,
+							}}
+						/>
+					</Group>
+				</Section>
+				<Section title="Allowed hosts">
+					<Group>
+						<FormField label="Add host">
+							<Input
+								value=""
+								onChange={refetch}
+								placeholder="docs.example.org"
+								act={{ icon: "Plus", label: "Add host", onAct: refetch }}
+							/>
+						</FormField>
+						<List
+							query={queryOf(frame.state, HOSTS)}
+							sentence="The hosts did not load."
+							empty={{
+								title: "No hosts",
+								sentence: "Hosts you allow land here.",
+							}}
+							row={{
+								key: (host) => host.id,
+								title: (host) => host.name,
 							}}
 						/>
 					</Group>

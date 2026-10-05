@@ -1,11 +1,11 @@
 import { cn } from "@fcalell/ui-core/cn";
 import type { WaitLine } from "@fcalell/ui-core/list-state";
 import {
+	GROUP_ITEM,
 	LINK_TARGET,
 	lineBox,
 	METER,
 	METER_HEAD,
-	METER_ITEM,
 	skeleton,
 } from "@fcalell/ui-core/variants";
 import { use } from "react";
@@ -22,7 +22,7 @@ const BAR = "w-full";
 /** A Meter waiting: the label, share, bar and, when `line` is not `none`, the line under the bar as bars in their boxes (a meta line's, or one count link's target box); busy when it waits alone (a list of them is busy once). Outside the package's exports. */
 export function MeterWait(props: { busy: boolean; line: WaitLine }) {
 	// In a Group the meter is one of its items, at the card's inset.
-	const item = use(GroundContext) === "group" && METER_ITEM;
+	const item = use(GroundContext) === "group" && GROUP_ITEM;
 	return (
 		<div
 			aria-busy={props.busy || undefined}

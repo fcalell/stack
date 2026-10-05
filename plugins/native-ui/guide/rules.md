@@ -267,7 +267,7 @@ inside a direct `Group`, or as a direct `QueryBoundary`'s query; a collection in
 component, or inside a `QueryBoundary`'s body, draws itself but adds no count and no busy state to
 the Section's head. A `definition` list adds no count to a Section's head (facts are not a
 collection a viewer counts), though it still makes the head busy while it waits. A `Group` holds static
-rows; rows from data in a card are a `List` placed in the `Group`, drawing its states on the card,
+rows, and items that are no row (a `Meter`, a `FormField`, a `Slider`) which stand at the card's inset with its hairline between and keep their labels (an add field over a `List` is a `FormField` in the `Group`); rows from data in a card are a `List` placed in the `Group`, drawing its states on the card,
 never a `.map` of `ListRow`s, `DefinitionRow`s or `Meter`s. A `definition` list stands in a `Group`,
 as a `DefinitionRow` does.
 

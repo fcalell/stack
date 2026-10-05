@@ -1147,7 +1147,7 @@ a tick with no animation, never jumped to full.
   host object (the head renders before the body, so it would always be a render pass stale).
   `folded` is the initial fold: the Section holds its fold from there and reads no later change.
   A compound body sits in a `QueryBoundary`, which requires its `loading`.
-- `Group` is composition: its children are static rows. A set of rows from data is a `List`
+- `Group` is composition: its children are static rows, or items that are no row (a Meter, a FormField, a Slider) at the card's inset. A set of rows from data is a `List`
   placed in the Group, which registers with it through `GroupContext` (however deep) and draws
   on the card: its rows and waiting rows at the group ground (`listGround`), the Group's hairline
   once between them (web: the rows stand in the card directly, under `GROUP`'s `divide-*`;
@@ -1162,8 +1162,8 @@ a tick with no animation, never jumped to full.
   title line, the description's meta line box under it), so its height and its bars' centres are a
   one-line setting row's at either density. A `definition` List adds no count to a Section's head
   (`sectionPartsOf` reads the map key and files it as a waiter, not a counted list).
-- A Meter in a Group stands as its item at the card's inset (`METER_ITEM`, by `GroundContext`), the
-  Group's hairline between; a set of them from data is a `List` taking `meter`, in the Group (a set
+- A Meter, a FormField or a Slider in a Group stands as its item at the card's inset (`GROUP_ITEM`, drawn by each through `GroundContext`, held by none, like `FIELD_ERROR_LINE`), the
+  Group's hairline between, a FormField keeping its label and giving its control the list ground; a set of them from data is a `List` taking `meter`, in the Group (a set
   of label and value rows from data is a `List` taking `definition`). A
   FileRow is selected at its `href`, as a ListRow is.
 - A Meter's one line under its bar is `meta` (words) or `counts` (`readonly CountLink[]`, links),

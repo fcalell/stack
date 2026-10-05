@@ -1,6 +1,6 @@
 ---
 id: 003-66
-status: backlog
+status: review
 sessions: {}
 ---
 # react-ui: an add field or a slider inside a Group's card

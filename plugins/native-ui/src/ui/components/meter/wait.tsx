@@ -1,9 +1,9 @@
 import type { WaitLine } from "@fcalell/ui-core/list-state";
 import {
+	GROUP_ITEM,
 	LINK_TARGET,
 	METER,
 	METER_HEAD,
-	METER_ITEM,
 	skeleton,
 } from "@fcalell/ui-core/variants";
 import { useContext } from "react";
@@ -28,7 +28,7 @@ const BAR = "w-full";
 // Outside the package's exports.
 export function MeterWait(props: { busy: boolean; line: WaitLine }) {
 	// In a Group the meter is one of its items, at the card's inset.
-	const item = useContext(GroundContext) === "group" && METER_ITEM;
+	const item = useContext(GroundContext) === "group" && GROUP_ITEM;
 	return (
 		<View
 			accessibilityState={{ busy: props.busy }}

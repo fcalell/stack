@@ -645,9 +645,6 @@ export const MESSAGE_ATTACH_SLOT = "w-control-compact";
 // Meter: the label and its share over the bar over the meta line; the bar a
 // track one wash step off the ground, its fill by level (`meterFill`).
 export const METER = "gap-pair";
-// A meter in a Group stands as one of its items, at the card's inset, the
-// group drawing the hairline between.
-export const METER_ITEM = "p-card";
 export const METER_HEAD = "gap-inside";
 export const METER_TRACK = "h-meter rounded-chip bg-fill-neutral";
 // A meter's mark: a tick across the track centred on the mark's share (so one
@@ -830,6 +827,10 @@ export const SECTION_TOGGLE = "gap-inside min-h-target px-inside rounded-row";
 // drops, so native draws that hairline per row.
 export const GROUP =
 	"rounded-card border border-edge bg-surface divide-y divide-edge";
+// An item of a Group that is no row (a Meter, a FormField, a Slider) stands at
+// the card's inset, the group drawing the hairline between. Unheld: each
+// that has one draws it, none owns it.
+export const GROUP_ITEM = "p-card";
 // A list bleeds its rows' inset, so a row's leading meets the title over it
 // and its wash hangs into the inset around it.
 export const LIST = "gap-rows -mx-control-x";
