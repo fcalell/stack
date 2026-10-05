@@ -13,20 +13,13 @@ import {
 	skeletonRow,
 	text,
 } from "@fcalell/ui-core/variants";
-import {
-	type ReactNode,
-	use,
-	useEffect,
-	useId,
-	useMemo,
-	useState,
-} from "react";
+import { type ReactNode, use, useId, useMemo, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { FormContext } from "../../lib/form.ts";
 import { ThreadRoom } from "../../lib/frame.ts";
 import { DEEPER, HeadingContext } from "../../lib/heading.ts";
 import { LoadingContext } from "../../lib/loading.ts";
-import { ReasonHostContext } from "../../lib/reason.ts";
+import { ReasonHostContext, usePressed } from "../../lib/reason.ts";
 import {
 	SectionContext,
 	type SectionKinds,
@@ -134,7 +127,7 @@ export function Section({
 		act !== undefined && "blocked" in act ? act.blocked : undefined;
 	// `folded` is the initial fold: the section holds its fold from there.
 	const [open, setOpen] = useState(folded !== true);
-	const [pressed, setPressed] = useState(false);
+	const [pressed, press] = usePressed(blocked);
 	// The Section reads its body's collections off its children in render (by
 	// the depth rule, `sectionPartsOf`): a waiting one makes the head busy, a
 	// List or a Table counts there unless the Section has its own count, and a
@@ -146,15 +139,9 @@ export function Section({
 		count: shown,
 		fields,
 	} = sectionState(sectionPartsOf(children, KINDS), { count, loading });
-	useEffect(() => {
-		if (blocked === undefined) setPressed(false);
-	}, [blocked]);
 	const host = useMemo(
-		() =>
-			blocked === undefined
-				? undefined
-				: { id: reasonId, press: () => setPressed(true) },
-		[blocked, reasonId],
+		() => (blocked === undefined ? undefined : { id: reasonId, press }),
+		[blocked, reasonId, press],
 	);
 	// A count waits with the body.
 	let tally: ReactNode = null;

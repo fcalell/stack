@@ -1,4 +1,5 @@
 import type { Act } from "@fcalell/ui-core/descriptors";
+import { pressStands } from "@fcalell/ui-core/reason";
 import {
 	SCRIM,
 	SHEET,
@@ -397,10 +398,13 @@ export function SheetBase({
 	const ref = useRef<BottomSheetModal>(null);
 	const [settled, setSettled] = useState(false);
 	const [touched, setTouched] = useState(false);
-	const [pressed, setPressed] = useState(false);
+	const [pressedUnder, setPressedUnder] = useState<string>();
 	const touch = useCallback(() => setTouched(true), []);
 	const tall = holdsTextArea(children);
 	const blocked = submit?.blocked !== undefined;
+	// The submit's press stands while it is blocked by the reason it came
+	// under (`@fcalell/ui-core/reason`).
+	const pressed = pressStands(submit?.blocked, pressedUnder);
 	// A sheet as it opens, and a new page (a wizard's, or the next queued
 	// decision's), has taken no input: reset during render, so it never draws
 	// the last one's reason, while a closing sheet keeps its own until it is
@@ -411,7 +415,7 @@ export function SheetBase({
 		setShown({ open, page });
 		if (open) {
 			setTouched(false);
-			setPressed(false);
+			setPressedUnder(undefined);
 		}
 	}
 	// gorhom sizes a sheet to its content once it has measured the content
@@ -434,13 +438,11 @@ export function SheetBase({
 			ref.current?.present();
 		} else if (held.current) ref.current?.dismiss(LEAVE);
 	}, [open]);
-	useEffect(() => {
-		if (!blocked) setPressed(false);
-	}, [blocked]);
 	const touchedValue = useMemo(() => ({ touched, touch }), [touched, touch]);
 	const host = useMemo(
-		() => (blocked ? { press: () => setPressed(true) } : undefined),
-		[blocked],
+		() =>
+			blocked ? { press: () => setPressedUnder(submit?.blocked) } : undefined,
+		[blocked, submit?.blocked],
 	);
 	const parts: Parts = {
 		title,

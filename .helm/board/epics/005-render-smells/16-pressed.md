@@ -1,6 +1,6 @@
 ---
 id: 005-16
-status: backlog
+status: review
 sessions: {}
 ---
 # react-ui, native-ui: a blocked act's press is derived, not reset by an effect
@@ -25,6 +25,9 @@ in render. Every site uses it, and the reset effects go. Each act's reason host 
 act. ActionBar settles a run with `then(done, done)` and hands the rejection back to the caller.
 
 ## Acceptance criteria
-- [ ] (test) the shared rule: a press under one reason shows it, and shows nothing once `blocked` is undefined or another reason, with no state change.
-- [ ] (test) neither plugin's Button, ActionBar, SheetBase, Section, Banner or PendingBar resets a press in an effect.
+- [x] (test) the shared rule: a press under one reason shows it, and shows nothing once `blocked` is undefined or another reason, with no state change.
+- [x] (test) neither plugin's Button, ActionBar, SheetBase, Section, Banner or PendingBar resets a press in an effect.
 - [ ] (live) web, settings at 1440: a Form's ActionBar commits once on mount (React profiler).
+
+## Progress
+Built; `pnpm check` and `pnpm verify` pass, and both (test) criteria hold. Web live at 1440: a Form's ActionBar commits once on mount (master: twice), and the invite sheet's blocked Send shows its reason after a press and drops it once unblocked.

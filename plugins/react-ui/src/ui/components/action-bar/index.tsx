@@ -1,5 +1,6 @@
 import { cn } from "@fcalell/ui-core/cn";
 import type { Act } from "@fcalell/ui-core/descriptors";
+import { pressStands } from "@fcalell/ui-core/reason";
 import {
 	ACTION_BAR_ACTS,
 	type ActionBarFit,
@@ -7,7 +8,14 @@ import {
 	type ButtonAct,
 	type ButtonFit,
 } from "@fcalell/ui-core/variants";
-import { use, useEffect, useId, useState } from "react";
+import {
+	type ReactNode,
+	use,
+	useCallback,
+	useId,
+	useMemo,
+	useState,
+} from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { ActInert, FormContext, SubmitContext } from "../../lib/form.ts";
 import { useTouch } from "../../lib/media.ts";
@@ -44,6 +52,26 @@ export interface ActionBarProps extends Closed {
 	fit?: ActionBarFit;
 }
 
+// An act's reason host: the same object while the act stays blocked by one
+// reason, so the act under it renders only when its own props change.
+function ActHost(props: {
+	id: string;
+	label: string;
+	blocked: string | undefined;
+	press: (label: string, reason: string) => void;
+	children: ReactNode;
+}) {
+	const { id, label, blocked, press } = props;
+	const host = useMemo(
+		() =>
+			blocked === undefined
+				? undefined
+				: { id, press: () => press(label, blocked) },
+		[id, label, blocked, press],
+	);
+	return <ReasonHostContext value={host}>{props.children}</ReasonHostContext>;
+}
+
 /** The acts row over a blocked act's reason; while one act is pending the others ignore the press. */
 export function ActionBar({ acts, fit }: ActionBarProps) {
 	const where = fit ?? "end";
@@ -52,19 +80,17 @@ export function ActionBar({ acts, fit }: ActionBarProps) {
 	const [running, setRunning] = useState(false);
 	const { touched } = useTouched();
 	const reason = useId();
-	const [pressed, setPressed] = useState<ReadonlySet<string>>(new Set());
-	const blockedKey = acts
-		.filter((act) => act.blocked !== undefined)
-		.map((act) => act.label)
-		.join("\n");
-	// An act unblocked forgets its press, so a reason blocked again waits for
-	// the next one.
-	useEffect(() => {
-		const blocked = new Set(blockedKey.split("\n"));
-		setPressed(
-			(was) => new Set([...was].filter((label) => blocked.has(label))),
-		);
-	}, [blockedKey]);
+	// Each blocked act's press, by label, as the reason it came under: it
+	// stands while the act is blocked by that reason
+	// (`@fcalell/ui-core/reason`).
+	const [pressed, setPressed] = useState<ReadonlyMap<string, string>>(
+		new Map(),
+	);
+	const press = useCallback(
+		(label: string, reason: string) =>
+			setPressed((was) => new Map(was).set(label, reason)),
+		[],
+	);
 	const busy = running || acts.some((act) => act.loading);
 	const filled = acts.length - 1;
 	// The tree holds the acts in drawn order, so Tab follows it: on touch the
@@ -76,10 +102,13 @@ export function ActionBar({ acts, fit }: ActionBarProps) {
 		if (!(ran instanceof Promise)) return;
 		setRunning(true);
 		pend?.(true);
-		void ran.finally(() => {
+		// Settled either way, so a failing act leaves no derived promise to
+		// reject unhandled: its rejection stays the caller's.
+		const done = () => {
 			setRunning(false);
 			pend?.(false);
-		});
+		};
+		void ran.then(done, done);
 	};
 	return (
 		<div className={cn(actionBar({ fit: where }), BAR[where])}>
@@ -88,15 +117,14 @@ export function ActionBar({ acts, fit }: ActionBarProps) {
 					const last = at === filled;
 					const loading = act.loading === true || (last && running);
 					const run = last ? runFilled : act.onAct;
-					const host =
-						act.blocked === undefined
-							? undefined
-							: {
-									id: `${reason}-${at}`,
-									press: () => setPressed((was) => new Set(was).add(act.label)),
-								};
 					return (
-						<ReasonHostContext key={act.label} value={host}>
+						<ActHost
+							key={act.label}
+							id={`${reason}-${at}`}
+							label={act.label}
+							blocked={act.blocked}
+							press={press}
+						>
 							<SubmitContext value={last && pend !== undefined}>
 								<ActInert value={busy && !loading}>
 									<Button
@@ -109,7 +137,7 @@ export function ActionBar({ acts, fit }: ActionBarProps) {
 									/>
 								</ActInert>
 							</SubmitContext>
-						</ReasonHostContext>
+						</ActHost>
 					);
 				})}
 			</div>
@@ -118,7 +146,7 @@ export function ActionBar({ acts, fit }: ActionBarProps) {
 					<Reason
 						key={act.label}
 						id={`${reason}-${at}`}
-						shown={touched || pressed.has(act.label)}
+						shown={touched || pressStands(act.blocked, pressed.get(act.label))}
 					>
 						{act.blocked}
 					</Reason>

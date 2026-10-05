@@ -1,4 +1,5 @@
 import type { Act } from "@fcalell/ui-core/descriptors";
+import { pressStands } from "@fcalell/ui-core/reason";
 import {
 	ACTION_BAR_ACTS,
 	type ActionBarFit,
@@ -7,7 +8,13 @@ import {
 	type ButtonFit,
 	text,
 } from "@fcalell/ui-core/variants";
-import { useContext, useEffect, useState } from "react";
+import {
+	type ReactNode,
+	useCallback,
+	useContext,
+	useMemo,
+	useState,
+} from "react";
 import { Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
@@ -33,6 +40,29 @@ export interface ActionBarProps extends Closed {
 	fit?: ActionBarFit;
 }
 
+// An act's reason host: the same object while the act stays blocked by one
+// reason, so the act under it renders only when its own props change.
+function ActHost(props: {
+	label: string;
+	blocked: string | undefined;
+	press: (label: string, reason: string) => void;
+	children: ReactNode;
+}) {
+	const { label, blocked, press } = props;
+	const host = useMemo(
+		() =>
+			blocked === undefined
+				? undefined
+				: { press: () => press(label, blocked) },
+		[label, blocked, press],
+	);
+	return (
+		<ReasonHostContext.Provider value={host}>
+			{props.children}
+		</ReasonHostContext.Provider>
+	);
+}
+
 // The acts that close a form, a sheet or a confirm, stacked across the
 // container with the filled act on top. A Screen pins it above the home
 // indicator; a Form or a Sheet keeps it in flow. A promise the filled act's
@@ -44,19 +74,17 @@ export function ActionBar({ acts, fit }: ActionBarProps) {
 	const pend = useContext(FormContext);
 	const [running, setRunning] = useState(false);
 	const { touched } = useTouched();
-	const [pressed, setPressed] = useState<ReadonlySet<string>>(new Set());
-	const blockedKey = acts
-		.filter((act) => act.blocked !== undefined)
-		.map((act) => act.label)
-		.join("\n");
-	// An act unblocked forgets its press, so a reason blocked again waits for
-	// the next one.
-	useEffect(() => {
-		const blocked = new Set(blockedKey.split("\n"));
-		setPressed(
-			(was) => new Set([...was].filter((label) => blocked.has(label))),
-		);
-	}, [blockedKey]);
+	// Each blocked act's press, by label, as the reason it came under: it
+	// stands while the act is blocked by that reason
+	// (`@fcalell/ui-core/reason`).
+	const [pressed, setPressed] = useState<ReadonlyMap<string, string>>(
+		new Map(),
+	);
+	const press = useCallback(
+		(label: string, reason: string) =>
+			setPressed((was) => new Map(was).set(label, reason)),
+		[],
+	);
 	const busy = running || acts.some((act) => act.loading);
 	const filled = acts.length - 1;
 	const runFilled = () => {
@@ -64,10 +92,13 @@ export function ActionBar({ acts, fit }: ActionBarProps) {
 		if (!(ran instanceof Promise)) return;
 		setRunning(true);
 		pend?.(true);
-		void ran.finally(() => {
+		// Settled either way, so a failing act leaves no derived promise to
+		// reject unhandled: its rejection stays the caller's.
+		const done = () => {
 			setRunning(false);
 			pend?.(false);
-		});
+		};
+		void ran.then(done, done);
 	};
 	return (
 		<View className={actionBar({ fit: where })}>
@@ -76,14 +107,13 @@ export function ActionBar({ acts, fit }: ActionBarProps) {
 					const last = at === filled;
 					const loading = act.loading === true || (last && running);
 					const run = last ? runFilled : act.onAct;
-					const host =
-						act.blocked === undefined
-							? undefined
-							: {
-									press: () => setPressed((was) => new Set(was).add(act.label)),
-								};
 					return (
-						<ReasonHostContext.Provider key={act.label} value={host}>
+						<ActHost
+							key={act.label}
+							label={act.label}
+							blocked={act.blocked}
+							press={press}
+						>
 							<Button
 								act={kindOf(act, last)}
 								fit={FIT[where]}
@@ -92,12 +122,13 @@ export function ActionBar({ acts, fit }: ActionBarProps) {
 								loading={loading}
 								blocked={act.blocked}
 							/>
-						</ReasonHostContext.Provider>
+						</ActHost>
 					);
 				})}
 			</View>
 			{acts.map((act) =>
-				act.blocked !== undefined && (touched || pressed.has(act.label)) ? (
+				act.blocked !== undefined &&
+				(touched || pressStands(act.blocked, pressed.get(act.label))) ? (
 					<RNText key={act.label} className={text({ role: "meta" })}>
 						{act.blocked}
 					</RNText>

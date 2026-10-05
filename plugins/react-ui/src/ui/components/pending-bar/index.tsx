@@ -14,18 +14,11 @@ import {
 	PENDING_TRACK,
 	text,
 } from "@fcalell/ui-core/variants";
-import {
-	useEffect,
-	useId,
-	useLayoutEffect,
-	useMemo,
-	useRef,
-	useState,
-} from "react";
+import { useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useClock } from "../../lib/clock.ts";
 import type { Closed } from "../../lib/closed.ts";
 import { useReducedMotion } from "../../lib/media.ts";
-import { ReasonHostContext } from "../../lib/reason.ts";
+import { ReasonHostContext, usePressed } from "../../lib/reason.ts";
 import { useTouched } from "../../lib/touched.ts";
 import { Button } from "../button/index.tsx";
 import { Reason } from "../button/reason.tsx";
@@ -92,16 +85,10 @@ export function PendingBar({ sentence, until, act }: PendingBarProps) {
 	const reasonId = useId();
 	const { touched } = useTouched();
 	const blocked = act?.blocked;
-	const [pressed, setPressed] = useState(false);
-	useEffect(() => {
-		if (blocked === undefined) setPressed(false);
-	}, [blocked]);
+	const [pressed, press] = usePressed(blocked);
 	const host = useMemo(
-		() =>
-			blocked === undefined
-				? undefined
-				: { id: reasonId, press: () => setPressed(true) },
-		[blocked, reasonId],
+		() => (blocked === undefined ? undefined : { id: reasonId, press }),
+		[blocked, reasonId, press],
 	);
 	return (
 		<div className={cn(PENDING_BAR, BAR)}>

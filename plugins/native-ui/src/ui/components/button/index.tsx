@@ -7,13 +7,13 @@ import {
 	buttonLabel,
 	text,
 } from "@fcalell/ui-core/variants";
-import { useContext, useEffect, useState } from "react";
+import { useContext } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { ActInert } from "../../lib/form";
 import { Ink } from "../../lib/ink";
-import { ReasonHostContext } from "../../lib/reason";
+import { ReasonHostContext, usePressed } from "../../lib/reason";
 import { useTouched } from "../../lib/touched";
 import { Count } from "../count";
 import { Icon } from "../icon";
@@ -89,10 +89,7 @@ export function Button({
 	const host = useContext(ReasonHostContext);
 	// Inert where it stands: the blocked look and no press, no reason.
 	const inert = useContext(ActInert) && !loading;
-	const [pressed, setPressed] = useState(false);
-	useEffect(() => {
-		if (!muted) setPressed(false);
-	}, [muted]);
+	const [pressed, keep] = usePressed(blocked);
 	const said = muted && (pressed || touched);
 	const look = lookOf(kind, loading === true, muted || inert);
 	const labelLook = loading ? PENDING : (muted || inert) && LABEL_BLOCKED;
@@ -102,7 +99,7 @@ export function Button({
 		if (loading || inert) return;
 		if (!muted) onAct?.();
 		else if (host) host.press();
-		else setPressed(true);
+		else keep();
 	};
 	const control = (
 		<Pressable

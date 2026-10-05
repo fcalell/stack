@@ -8,9 +8,9 @@ import {
 	bannerGlyph,
 	text,
 } from "@fcalell/ui-core/variants";
-import { useEffect, useId, useMemo, useState } from "react";
+import { useId, useMemo } from "react";
 import type { Closed } from "../../lib/closed.ts";
-import { ReasonHostContext } from "../../lib/reason.ts";
+import { ReasonHostContext, usePressed } from "../../lib/reason.ts";
 import { useTouched } from "../../lib/touched.ts";
 import { Button } from "../button/index.tsx";
 import { Reason } from "../button/reason.tsx";
@@ -49,16 +49,10 @@ export function Banner({ kind, sentence, act }: BannerProps) {
 	const reasonId = useId();
 	const { touched } = useTouched();
 	const blocked = act?.blocked;
-	const [pressed, setPressed] = useState(false);
-	useEffect(() => {
-		if (blocked === undefined) setPressed(false);
-	}, [blocked]);
+	const [pressed, press] = usePressed(blocked);
 	const host = useMemo(
-		() =>
-			blocked === undefined
-				? undefined
-				: { id: reasonId, press: () => setPressed(true) },
-		[blocked, reasonId],
+		() => (blocked === undefined ? undefined : { id: reasonId, press }),
+		[blocked, reasonId, press],
 	);
 	return (
 		<div

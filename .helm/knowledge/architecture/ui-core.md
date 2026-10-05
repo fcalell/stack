@@ -546,6 +546,15 @@ a tick with no animation, never jumped to full.
   message already drawn. The showcase compiles the
   workspace's plugin source with the React Compiler, which memoises on its own; a consumer's
   `node_modules` copy is not compiled, so these memos are explicit.
+- A blocked act shows its reason once pressed or once its form or sheet is touched. The press is
+  derived, never reset by an effect: it is kept as the reason the act was blocked by when
+  pressed, and stands while `blocked` is that reason (`pressStands` in ui-core's `./reason`,
+  `usePressed` in each plugin's `lib/reason`), so unblocking or a new reason forgets it in render
+  and a new reason waits for its own press. A reason host (an ActionBar's act, a sheet's submit,
+  a Section's head act, a Banner's or a PendingBar's act) keeps the press the same way, and an
+  ActionBar's host is the same object per act while its reason holds. An ActionBar settles the
+  filled act's promise with `then(done, done)`, so a failing act leaves no derived promise to
+  reject unhandled.
 - A `MessageInput` sends while an answer streams: `working` sets Stop before Send and leaves
   Send live, so Send and Enter send whenever the text is non-empty. Stop is the secondary bar
   Button on the desktop and an icon act at the bar fit (`ICON_BUTTON.fit.bar`, `CircleStop`) on

@@ -1,4 +1,5 @@
-import { createContext } from "react";
+import { pressStands } from "@fcalell/ui-core/reason";
+import { createContext, useCallback, useState } from "react";
 
 // Where a blocked act's reason draws when not under the act: a molecule that
 // keeps its row still (a sheet's head, an action bar, a pending bar) draws
@@ -13,3 +14,14 @@ export interface ReasonHost {
 export const ReasonHostContext = createContext<ReasonHost | undefined>(
 	undefined,
 );
+
+// A blocked act's press (`@fcalell/ui-core/reason`): whether it stands under
+// `blocked`, and the press that keeps it. Unblocking or a new reason forgets
+// it in render.
+export function usePressed(
+	blocked: string | undefined,
+): [pressed: boolean, press: () => void] {
+	const [under, setUnder] = useState<string>();
+	const press = useCallback(() => setUnder(blocked), [blocked]);
+	return [pressStands(blocked, under), press];
+}

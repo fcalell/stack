@@ -39,6 +39,9 @@ Eleven subpaths:
 - `@fcalell/ui-core/commit`: `commitMoment()`, when a typing control's value is final: on
   leaving the field or Enter, only when it changed since focus, Escape restoring the value at
   focus, and ending the edit. Both plugins' `Input` and `TextArea` drive their `onCommit` with it.
+- `@fcalell/ui-core/reason`: `pressStands(blocked, pressedUnder)`, whether a blocked act's press
+  still shows its reason: a press is kept as the reason it came under and stands while the act
+  is blocked by that reason, so unblocking or a new reason forgets it in render.
 - `@fcalell/ui-core/format`: `formatterFor(kind, lang, options)`, the platform's `Intl` number,
   date and relative-time formatters, built once per kind, language and options; every formatter
   both plugins use comes from it.

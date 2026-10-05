@@ -7,10 +7,10 @@ import {
 	button,
 	buttonLabel,
 } from "@fcalell/ui-core/variants";
-import { use, useEffect, useId, useState } from "react";
+import { use, useId } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { ActInert, SubmitContext } from "../../lib/form.ts";
-import { ReasonHostContext } from "../../lib/reason.ts";
+import { ReasonHostContext, usePressed } from "../../lib/reason.ts";
 import { useTouched } from "../../lib/touched.ts";
 import { Count } from "../count/index.tsx";
 import { Icon } from "../icon/index.tsx";
@@ -85,10 +85,7 @@ export function Button({
 	const submits = use(SubmitContext);
 	// Inert beside a pending act: the blocked look and no press, no reason.
 	const inert = use(ActInert) && !loading;
-	const [pressed, setPressed] = useState(false);
-	useEffect(() => {
-		if (!muted) setPressed(false);
-	}, [muted]);
+	const [pressed, keep] = usePressed(blocked);
 	const said = muted && (pressed || touched);
 	const look = lookOf(kind, loading === true, muted || inert);
 	const labelLook = loading ? PENDING : (muted || inert) && LABEL_BLOCKED;
@@ -96,7 +93,7 @@ export function Button({
 		if (inert) return;
 		if (!muted) onAct?.();
 		else if (host) host.press();
-		else setPressed(true);
+		else keep();
 	};
 	// Blocked is not Base UI's `disabled`, which swallows the press that shows
 	// the reason: aria-disabled is set by hand, and the caller's props win the merge.

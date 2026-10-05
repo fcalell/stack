@@ -1,6 +1,7 @@
 import { Dialog } from "@base-ui/react/dialog";
 import { cn } from "@fcalell/ui-core/cn";
 import type { Act } from "@fcalell/ui-core/descriptors";
+import { pressStands } from "@fcalell/ui-core/reason";
 import {
 	SCRIM,
 	SHEET,
@@ -18,7 +19,6 @@ import {
 	type ReactNode,
 	type RefObject,
 	use,
-	useEffect,
 	useId,
 	useMemo,
 	useRef,
@@ -128,10 +128,13 @@ export function SheetBase({
 	const descriptionId = useId();
 	const [touchedValue, setTouched] = useTouchState();
 	const { touched } = touchedValue;
-	const [pressed, setPressed] = useState(false);
+	const [pressedUnder, setPressedUnder] = useState<string>();
 	const [running, setRunning] = useState(false);
 	const popup = useRef<HTMLDivElement>(null);
 	const blocked = submit?.blocked !== undefined;
+	// The submit's press stands while it is blocked by the reason it came
+	// under (`@fcalell/ui-core/reason`).
+	const pressed = pressStands(submit?.blocked, pressedUnder);
 	// A sheet as it opens, and a new page (a wizard's, or the next queued
 	// decision's), has taken no input: reset during render, so it never draws
 	// the last one's reason, while a closing sheet keeps its own until it is
@@ -142,14 +145,9 @@ export function SheetBase({
 		setShown({ open, page });
 		if (open) {
 			setTouched(false);
-			setPressed(false);
+			setPressedUnder(undefined);
 		}
 	}
-	// A submit unblocked forgets that it was pressed, so a reason blocked
-	// again waits for the next press.
-	useEffect(() => {
-		if (!blocked) setPressed(false);
-	}, [blocked]);
 	const iconFit = touch ? "body" : "bar";
 	const centred = form === "centred" && !touch;
 	// A decision draws no close act: its acts dismiss it.
@@ -168,8 +166,11 @@ export function SheetBase({
 		/>
 	) : null;
 	const host = useMemo(
-		() => (blocked ? { id: reason, press: () => setPressed(true) } : undefined),
-		[blocked, reason],
+		() =>
+			blocked
+				? { id: reason, press: () => setPressedUnder(submit?.blocked) }
+				: undefined,
+		[blocked, reason, submit?.blocked],
 	);
 	// On touch the submit stands at the head's end in close's place, which
 	// moves to the start unless back holds it. It pends on its promise, as the
