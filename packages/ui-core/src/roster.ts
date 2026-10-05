@@ -250,6 +250,44 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				sizes: ["field", "control-compact"],
 			},
 		},
+		// The field box that chooses a file: empty, its whole box is the act (a
+		// leading glyph and the `chooseFile` word); chosen, the name, the size
+		// and an act that removes it. The web's box also takes a dropped file,
+		// ringed while one is over it. A file of another type is refused into its
+		// `FormField`'s error line and never reaches `onChange`.
+		FileInput: {
+			props: ["value", "onChange", "accept"],
+			draws: [
+				"FIELD.fit.form",
+				"FIELD.trailing.none",
+				"FIELD.trailing.act",
+				"FIELD.state.rest",
+				"FIELD.state.error",
+				"FIELD_VALUE.kind.text",
+				"FIELD_PLACEHOLDER",
+				"TEXT.role.meta",
+				"FIELD_GLYPH",
+				"ICON.fit.control",
+			],
+			states: ["rest", "hover", "focus", "disabled", "error", "empty"],
+			owns: {
+				roles: ["body", "meta"],
+				colors: [
+					"surface",
+					"edge",
+					"edge-hover",
+					"edge-error",
+					"ink-body",
+					"ink-meta",
+					"fill-disabled",
+					"ink-disabled",
+					"ring",
+				],
+				radii: ["control"],
+				spacing: ["inside", "control-x"],
+				sizes: ["field", "icon-control"],
+			},
+		},
 		TextArea: {
 			props: ["kind", "value", "onChange", "onCommit", "placeholder", "budget"],
 			draws: [

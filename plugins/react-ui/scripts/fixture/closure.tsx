@@ -15,6 +15,7 @@ import { Columns } from "@fcalell/plugin-react-ui/components/columns";
 import { Count } from "@fcalell/plugin-react-ui/components/count";
 import { DefinitionRow } from "@fcalell/plugin-react-ui/components/definition-row";
 import { EmptyState } from "@fcalell/plugin-react-ui/components/empty-state";
+import { FileInput } from "@fcalell/plugin-react-ui/components/file-input";
 import { Form } from "@fcalell/plugin-react-ui/components/form";
 import { FormField } from "@fcalell/plugin-react-ui/components/form-field";
 import { Group } from "@fcalell/plugin-react-ui/components/group";
@@ -138,6 +139,15 @@ export const closure = (
 		<Input value="x" onChange={() => {}} class="x" />
 		{/* @ts-expect-error: closed channel */}
 		<Input value="x" onChange={() => {}} classList={{}} />
+		<FileInput value={null} onChange={() => {}} accept={[".csv"]} />
+		{/* @ts-expect-error: closed channel */}
+		<FileInput value={null} onChange={() => {}} accept={[".csv"]} className="x" />
+		{/* @ts-expect-error: closed channel */}
+		<FileInput value={null} onChange={() => {}} accept={[".csv"]} style={{ flex: 1 }} />
+		{/* @ts-expect-error: closed channel */}
+		<FileInput value={null} onChange={() => {}} accept={[".csv"]} class="x" />
+		{/* @ts-expect-error: closed channel */}
+		<FileInput value={null} onChange={() => {}} accept={[".csv"]} classList={{}} />
 		<Select value="x" onChange={() => {}} options={[{ value: "x", label: "x" }]} placeholder="x" />
 		<Select onChange={() => {}} options={[{ label: "x", options: [{ value: null, label: "x" }] }]} />
 		{/* @ts-expect-error: a value outside the options */}

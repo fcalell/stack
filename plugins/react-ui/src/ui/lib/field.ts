@@ -5,6 +5,13 @@ import { createContext } from "react";
 // inside it through this one.
 export const FieldDisabled = createContext(false);
 
+// Set by a `FormField` around its control: the control refuses a value into
+// the field's error line (`refuse(reason)`) and clears it on the next pick
+// (`refuse(undefined)`), so the line stays one place whoever speaks.
+export const FieldRefusal = createContext<
+	((reason: string | undefined) => void) | undefined
+>(undefined);
+
 // Set by a row whose label is a toggle's target (a FormField's checkbox
 // form, an OptionList row): the toggle inside draws its box with no hit box of
 // its own, so the box sits on the label's first line. A

@@ -18,6 +18,13 @@ export const FieldDisabled = createContext(false);
 // control's box draws `edge-error`.
 export const FieldError = createContext(false);
 
+// Set by a `FormField` around its control: the control refuses a value into
+// the field's error line (`refuse(reason)`) and clears it on the next pick
+// (`refuse(undefined)`), so the line stays one place whoever speaks.
+export const FieldRefusal = createContext<
+	((reason: string | undefined) => void) | undefined
+>(undefined);
+
 // Set around the field a sheet opens on (a confirm's typed name, a code): the
 // control takes focus as it mounts.
 export const FieldFocus = createContext(false);

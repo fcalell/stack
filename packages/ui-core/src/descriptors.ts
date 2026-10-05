@@ -214,6 +214,17 @@ export interface Hunk {
 	lines: DiffLine[];
 }
 
+// A file the viewer chose or dropped, the same on both platforms so one
+// upload serves both: the web wraps its `File` (`blob` resolves to it), the
+// phone the document picker's asset (`blob` reads its uri). `size` is in
+// bytes and `type` a MIME type, empty when the platform knows none.
+export interface PickedFile {
+	name: string;
+	size: number;
+	type: string;
+	blob: () => Promise<Blob>;
+}
+
 export interface Attachment {
 	id: string;
 	name: string;

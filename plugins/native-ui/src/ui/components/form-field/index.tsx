@@ -6,7 +6,7 @@ import {
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
-import { isValidElement, type ReactNode, useMemo } from "react";
+import { isValidElement, type ReactNode, useMemo, useState } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
@@ -14,6 +14,7 @@ import {
 	FieldDisabled,
 	FieldError,
 	FieldNameContext,
+	FieldRefusal,
 	GroupName,
 	LabelTarget,
 } from "../../lib/field";
@@ -95,7 +96,10 @@ function formOf(control: ReactNode) {
 // control its disabled cells, and the description stays as the reason.
 export function FormField<V>(props: FormFieldProps<V>) {
 	const { label, description, disabled = false } = props;
-	const error = props.field ? props.field.error : props.error;
+	// What a control refused (a file of the wrong type) stands in the error
+	// line until its next pick.
+	const [refused, refuse] = useState<string>();
+	const error = refused ?? (props.field ? props.field.error : props.error);
 	const control = fieldControl(props);
 	const form = formOf(control);
 	const said = error ?? description;
@@ -153,7 +157,9 @@ export function FormField<V>(props: FormFieldProps<V>) {
 		<FieldNameContext.Provider value={label}>
 			<FieldDisabled.Provider value={disabled}>
 				<FieldError.Provider value={Boolean(error)}>
-					{control}
+					<FieldRefusal.Provider value={refuse}>
+						{control}
+					</FieldRefusal.Provider>
 				</FieldError.Provider>
 			</FieldDisabled.Provider>
 		</FieldNameContext.Provider>

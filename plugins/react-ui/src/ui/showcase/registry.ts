@@ -14,6 +14,7 @@ import { drawCount } from "./frames/count.tsx";
 import { drawDefinitionRow } from "./frames/definition-row.tsx";
 import { drawDiff } from "./frames/diff.tsx";
 import { drawEmptyState } from "./frames/empty-state.tsx";
+import { drawFileInput } from "./frames/file-input.tsx";
 import { drawFileRow } from "./frames/file-row.tsx";
 import { drawForm } from "./frames/form.tsx";
 import { drawFormField } from "./frames/form-field.tsx";
@@ -73,6 +74,7 @@ export const registry: Partial<
 	Input: drawInput,
 	TextArea: drawTextArea,
 	InputOtp: drawInputOtp,
+	FileInput: drawFileInput,
 	Select: drawSelect,
 	Slider: drawSlider,
 	Switch: drawSwitch,

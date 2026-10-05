@@ -109,7 +109,7 @@ since it always draws the touch set and so the touch structure.
 
 Every word a molecule draws or reads aloud on its own comes from `words`, a typed object passed
 once beside `theme`: the seven `Status` words, `recommended`, `copy`, `copied`, `download`, `back`, `close`, `cancel`, `dismiss`,
-`more`, `send`, `stop`, `attach`, `search`, `loading`, `checking`, `retry`, `saving`, `saved`, `notSaved`, `add`, `remove`, `details`, `places`, `notifications`, `code`, `added`, `removed`, `sort`, `ascending`, `descending`, `time`, `message`, `seen`, `unseen`, `copyFailed`, `latest`, `missing`, the counted `earlierLines`, and the slot words `meterValue`, `meterOver`, `meterMark`, `linesAdded`, `linesRemoved` and `changed`. A counted word is `{ one, other }`, each form spelling `{count}` where the number stands, drawn through `counted(word, count)` (`one` at a count of one, `other` at any other). A slot word spells each of its named slots as `{name}` where the value stands (`meterValue` `{value}` and `{max}`, `meterOver` `{amount}`, `meterMark` `{name}` and `{value}`, `linesAdded` and `linesRemoved` `{count}`, `changed` `{before}` and `{after}`), drawn through `filled(word, values)`; the schema rejects a translation that drops a slot. `Words` requires every key and
+`more`, `send`, `stop`, `attach`, `search`, `loading`, `checking`, `retry`, `saving`, `saved`, `notSaved`, `add`, `remove`, `details`, `places`, `notifications`, `code`, `added`, `removed`, `sort`, `ascending`, `descending`, `time`, `message`, `seen`, `unseen`, `copyFailed`, `latest`, `missing`, `chooseFile`, the counted `earlierLines`, and the slot words `meterValue`, `meterOver`, `meterMark`, `linesAdded`, `linesRemoved` and `changed`. A counted word is `{ one, other }`, each form spelling `{count}` where the number stands, drawn through `counted(word, count)` (`one` at a count of one, `other` at any other). A slot word spells each of its named slots as `{name}` where the value stands (`meterValue` `{value}` and `{max}`, `meterOver` `{amount}`, `meterMark` `{name}` and `{value}`, `linesAdded` and `linesRemoved` `{count}`, `changed` `{before}` and `{after}`), drawn through `filled(word, values)`; the schema rejects a translation that drops a slot. `Words` requires every key and
 `wordsSchema` is closed, so a translation that misses a word fails `tsc` and the schema, never the
 interface. `ENGLISH` is the default. A sentence that belongs to the consumer is a prop on the
 molecule that draws it (`placeholder`, `notice`, every `sentence`, every label), never a key.
@@ -376,7 +376,7 @@ The canon binds every component either UI plugin ships:
 
 ## The roster
 
-`ROSTER` in `@fcalell/ui-core/roster` is the closed list: 55 components in four layers (atoms,
+`ROSTER` in `@fcalell/ui-core/roster` is the closed list: 56 components in four layers (atoms,
 layout molecules, shared molecules, content molecules), each with its prop names, the cells it
 draws (`draws`: a `FAMILIES` name for every cell of that family, `FAMILY.axis.value` for one of
 its cells, as `Text` draws `TEXT.role.body`, or a single-cell constant of `./variants`) and the states it

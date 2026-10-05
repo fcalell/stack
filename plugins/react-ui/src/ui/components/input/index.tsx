@@ -25,8 +25,8 @@ import { IconButton } from "../icon-button/index.tsx";
 export const BOX = "flex items-center";
 export const BOX_HOVER = "hover:border-edge-hover";
 // The in-field act answers its own pointer, so the box keeps its edge under it.
-const BOX_HOVER_VALUE = "not-has-[button:hover]:hover:border-edge-hover";
-const BOX_FOCUS =
+export const BOX_HOVER_VALUE = "not-has-[button:hover]:hover:border-edge-hover";
+export const BOX_FOCUS =
 	"not-has-[button:focus-visible]:has-focus-visible:outline-2 not-has-[button:focus-visible]:has-focus-visible:outline-offset-2 not-has-[button:focus-visible]:has-focus-visible:outline-ring";
 export const BOX_DISABLED = "bg-fill-disabled text-ink-disabled";
 const VALUE =

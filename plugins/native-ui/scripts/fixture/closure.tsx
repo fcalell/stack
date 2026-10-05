@@ -11,6 +11,7 @@ import { IconButton } from "@fcalell/plugin-native-ui/components/icon-button";
 import { Count } from "@fcalell/plugin-native-ui/components/count";
 import { Status } from "@fcalell/plugin-native-ui/components/status";
 import { Input } from "@fcalell/plugin-native-ui/components/input";
+import { FileInput } from "@fcalell/plugin-native-ui/components/file-input";
 import { TextArea } from "@fcalell/plugin-native-ui/components/text-area";
 import { InputOtp } from "@fcalell/plugin-native-ui/components/input-otp";
 import { Slider } from "@fcalell/plugin-native-ui/components/slider";
@@ -220,6 +221,21 @@ export const closure = (
 		<InputOtp length={6} value="" onChange={noop} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
 		<InputOtp length={6} value="" onChange={noop} placeholderTextColorClassName="text-ink-body" />
+		<FileInput value={null} onChange={noop} accept={[".csv"]} />
+		{/* @ts-expect-error: closed channel */}
+		<FileInput value={null} onChange={noop} accept={[".csv"]} className="x" />
+		{/* @ts-expect-error: closed channel */}
+		<FileInput value={null} onChange={noop} accept={[".csv"]} style={{ flex: 1 }} />
+		{/* @ts-expect-error: closed channel */}
+		<FileInput value={null} onChange={noop} accept={[".csv"]} class="x" />
+		{/* @ts-expect-error: closed channel */}
+		<FileInput value={null} onChange={noop} accept={[".csv"]} classList={{}} />
+		{/* @ts-expect-error: closed channel */}
+		<FileInput value={null} onChange={noop} accept={[".csv"]} colorClassName="text-ink-body" />
+		{/* @ts-expect-error: closed channel */}
+		<FileInput value={null} onChange={noop} accept={[".csv"]} selectionColorClassName="text-ink-body" />
+		{/* @ts-expect-error: closed channel */}
+		<FileInput value={null} onChange={noop} accept={[".csv"]} placeholderTextColorClassName="text-ink-body" />
 		<Slider label="a" value={1} onChange={noop} min={0} max={2} />
 		{/* @ts-expect-error: closed channel */}
 		<Slider label="a" value={1} onChange={noop} min={0} max={2} className="x" />

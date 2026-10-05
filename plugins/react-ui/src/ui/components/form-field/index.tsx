@@ -8,9 +8,15 @@ import {
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
-import { isValidElement, type ReactNode, useId, useMemo } from "react";
+import {
+	isValidElement,
+	type ReactNode,
+	useId,
+	useMemo,
+	useState,
+} from "react";
 import type { Closed } from "../../lib/closed.ts";
-import { GroupName, LabelTarget } from "../../lib/field.ts";
+import { FieldRefusal, GroupName, LabelTarget } from "../../lib/field.ts";
 import { Checkbox } from "../checkbox/index.tsx";
 import { OptionList } from "../option-list/index.tsx";
 import { SegmentedControl } from "../segmented-control/index.tsx";
@@ -75,7 +81,10 @@ function formOf(control: ReactNode) {
 /** The label (body 500) over its control, the description (meta) under it and the error in the description's place; a switch stands at the label's end and a checkbox on its first line. Base UI's field wires the label, the description, the error, the validity and the disabled state into the control. */
 export function FormField<V>(props: FormFieldProps<V>) {
 	const { label, description, disabled } = props;
-	const error = props.field ? props.field.error : props.error;
+	// What a control refused (a file of the wrong type) stands in the error
+	// line until its next pick.
+	const [refused, refuse] = useState<string>();
+	const error = refused ?? (props.field ? props.field.error : props.error);
 	const control = props.field
 		? props.children({
 				value: props.field.value,
@@ -157,7 +166,7 @@ export function FormField<V>(props: FormFieldProps<V>) {
 			{holds === "field" ? (
 				<>
 					{form === "slider" ? null : named}
-					{control}
+					<FieldRefusal value={refuse}>{control}</FieldRefusal>
 					{said}
 				</>
 			) : (

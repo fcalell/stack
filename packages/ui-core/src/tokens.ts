@@ -1126,6 +1126,7 @@ export const WORD_KEYS = [
 	"copyFailed",
 	"latest",
 	"missing",
+	"chooseFile",
 ] as const;
 export type WordKey = (typeof WORD_KEYS)[number];
 
@@ -1148,6 +1149,7 @@ export const SLOT_WORDS = {
 	linesAdded: ["count"],
 	linesRemoved: ["count"],
 	changed: ["before", "after"],
+	wrongType: ["name", "types"],
 } as const satisfies Record<string, readonly string[]>;
 export type SlotWordKey = keyof typeof SLOT_WORDS;
 // `Object.keys` widens to `string`; the keys are the record's own.
@@ -1202,6 +1204,7 @@ export const ENGLISH: Words = {
 	copyFailed: "Couldn't copy",
 	latest: "Latest",
 	missing: "This no longer exists.",
+	chooseFile: "Choose file",
 	earlierLines: {
 		one: "Show {count} earlier line",
 		other: "Show {count} earlier lines",
@@ -1212,6 +1215,7 @@ export const ENGLISH: Words = {
 	linesAdded: "{count} added",
 	linesRemoved: "{count} removed",
 	changed: "from {before} to {after}",
+	wrongType: "{name} isn't one of {types}",
 };
 
 // A slot word with its values: `filled(words.meterValue, { value, max })`.

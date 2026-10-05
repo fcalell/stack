@@ -55,7 +55,8 @@
 		"react-native-svg": "^15.15.4",
 		"expo-clipboard": "~56.0.3",
 		"expo-file-system": "~56.0.7",
-		"expo-sharing": "~56.0.16"
+		"expo-sharing": "~56.0.16",
+		"expo-document-picker": "~56.0.4"
 	},
 	"dependencies": {
 		"@fcalell/cli": "workspace:*",
@@ -96,6 +97,7 @@
 		"expo-clipboard": "~56.0.3",
 		"expo-file-system": "~56.0.7",
 		"expo-sharing": "~56.0.16",
+		"expo-document-picker": "~56.0.4",
 		"ts-morph": "^28.0.0",
 		"@types/diff": "^8.0.0"
 	}

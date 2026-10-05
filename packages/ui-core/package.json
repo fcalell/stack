@@ -39,6 +39,10 @@
 			"types": "./dist/format.d.ts",
 			"default": "./dist/format.js"
 		},
+		"./file": {
+			"types": "./dist/file.d.ts",
+			"default": "./dist/file.js"
+		},
 		"./cn": {
 			"types": "./dist/cn.d.ts",
 			"default": "./dist/cn.js"

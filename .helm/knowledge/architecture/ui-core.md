@@ -126,7 +126,7 @@ pinned by the package's verify suite; this entry holds the architecture and its 
 ## Words
 
 Every word a molecule draws or reads aloud on its own (the seven `Status` words, `recommended`,
-`copy`, `copied`, `download`, `back`, `close`, `cancel`, `dismiss`, `more`, `send`, `stop`, `attach`, `search`, `loading`, `checking`, `retry`, `saving`, `saved`, `notSaved`, `add`, `remove`, `details`, `places`, `notifications`, `code`, `added`, `removed`, `sort`, `ascending`, `descending`, `time`, `message`, `seen`, `unseen`, `copyFailed`, `latest`, `missing`, the counted `earlierLines`, and the slot words `meterValue`, `meterOver`, `meterMark`, `linesAdded`, `linesRemoved` and `changed`) comes
+`copy`, `copied`, `download`, `back`, `close`, `cancel`, `dismiss`, `more`, `send`, `stop`, `attach`, `search`, `loading`, `checking`, `retry`, `saving`, `saved`, `notSaved`, `add`, `remove`, `details`, `places`, `notifications`, `code`, `added`, `removed`, `sort`, `ascending`, `descending`, `time`, `message`, `seen`, `unseen`, `copyFailed`, `latest`, `missing`, `chooseFile`, the counted `earlierLines`, and the slot words `meterValue`, `meterOver`, `meterMark`, `linesAdded`, `linesRemoved` and `changed`) comes
 from `words`, a closed typed object with English defaults. The `Words` type requires every key
 and `wordsSchema` is strict, so a translation missing a word fails `tsc` and the schema. It is a
 plugin option beside `theme`; each plugin contributes a `WordsProvider` into the generated entry
@@ -782,7 +782,7 @@ a tick with no animation, never jumped to full.
   satisfy. Rejected: optional
   `value` and `onChange` on every control read from the field's context, which would compile a
   control with no value anywhere and could not type a boolean field against an `Input`.
-- The roster is data: `ROSTER` in `packages/ui-core/src/roster.ts` names 55 components in four
+- The roster is data: `ROSTER` in `packages/ui-core/src/roster.ts` names 56 components in four
   layers (atoms, layout molecules, shared molecules, content molecules) with their prop names,
   the cells each draws (a whole matrix family, one family cell as `FAMILY.axis.value`, or a single
   cell) and the states it has a form for, the same in both plugins; the showcase draws exactly those matrix cells and states. Each plugin's verify suite reads every component's exported props type
@@ -804,6 +804,20 @@ a tick with no animation, never jumped to full.
   `Sheet` at the `pane` fit, composed through the sheet's internal base. `Select`, the
   single-choice field over `options`, is the field box (`FIELD`) whose open list is a popover
   (`POPOVER`) of rows (`ROW`); on native it opens the same option sheet as `Picker`.
+- `FileInput` is the field box (`FIELD`) that chooses a file. Its value is `PickedFile`
+  (`{ name, size, type, blob() }`), one descriptor on both platforms so a consumer's upload code
+  is one: the web wraps its `File` (`blob` resolves to it) and the phone the document picker's
+  asset (`blob` is `fetch(uri).blob()`); a message input's paste or drop reuses it. `accept`
+  entries are MIME types, MIME families and dotted extensions, matched by `accepts` in
+  `@fcalell/ui-core/file` on every file either platform hands over (a drop and the phone's
+  picker can bring any); the phone's picker names MIME types alone, so `pickerTypes` asks for
+  every type when `accept` holds an extension. A refused file never reaches `onChange`: it is
+  drawn in the `FormField`'s own error line (the `FieldRefusal` context a `FormField` gives its
+  control, the line then in error and the box on `edge-error`), cleared by the next pick, so the
+  error stays one place. Outside a `FormField` a refusal has nowhere to stand. The web draws a
+  drag-over as the focus ring (the contract has no dashed edge); the phone has no drop.
+  `expo-document-picker` is a native-ui peer declared as `expo-clipboard` is; its config
+  plugin only sets an iCloud container, so the component needs none.
 - A component that sits in more than one container takes `fit`, a closed enum read off its
   matrix's `fit` axis (`IconFit`, `ButtonFit`, `IconButtonFit`, `LinkFit`, `ActionBarFit`,
   `FieldFit`, `SheetFit`, `PickerFit`),

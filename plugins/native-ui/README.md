@@ -2,7 +2,7 @@
 
 The phone half of the stack design system: the CLI plugin that renders `@fcalell/ui-core`'s
 contract into the uniwind stylesheet, embeds the font files, composes the app's providers, and
-ships the roster: 55 components in four layers. Requires `expo` (it contributes into
+ships the roster: 56 components in four layers. Requires `expo` (it contributes into
 `plugin-expo`'s slots) plus `api` and `auth` (the wired Query and Auth providers import their
 native subpaths).
 

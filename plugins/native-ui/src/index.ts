@@ -295,6 +295,8 @@ export const nativeUi = plugin("native-ui", {
 		// Code's download act writes the text to a file and hands it to the share sheet.
 		"expo-file-system": "~56.0.7",
 		"expo-sharing": "~56.0.16",
+		// `FileInput`'s Choose act opens the system document picker.
+		"expo-document-picker": "~56.0.4",
 		"expo-secure-store": "~56.0.0",
 		"@tanstack/react-query": "^5.101.0",
 		"@orpc/tanstack-query": "^1.14.4",

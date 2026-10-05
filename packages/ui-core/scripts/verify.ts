@@ -652,7 +652,7 @@ check("c02", "package.json shape", () => {
 		Object.keys(pkg.exports ?? {})
 			.sort()
 			.join(" "),
-		"./clock ./cn ./commit ./derive ./descriptors ./emit ./format ./harness ./list-state ./manifest ./reason ./roster ./schema ./tokens ./variants",
+		"./clock ./cn ./commit ./derive ./descriptors ./emit ./file ./format ./harness ./list-state ./manifest ./reason ./roster ./schema ./tokens ./variants",
 		"export subpaths",
 	);
 	assert(pkg.peerDependencies?.zod, "zod is not a peerDependency");
@@ -681,9 +681,9 @@ check("c03", "tokens.ts declares the contract", () => {
 	requireEqual(SHADOW_LEVELS.length, 2, "shadow level count");
 	requireEqual(WIDTHS.length, 12, "width count");
 	requireEqual(BREAKPOINTS.length, 3, "breakpoint count");
-	requireEqual(WORD_KEYS.length, 44, "word count");
+	requireEqual(WORD_KEYS.length, 45, "word count");
 	requireEqual(COUNTED_WORD_KEYS.length, 1, "counted word count");
-	requireEqual(SLOT_WORD_KEYS.length, 6, "slot word count");
+	requireEqual(SLOT_WORD_KEYS.length, 7, "slot word count");
 	requireEqual(
 		[...CHART_SERIES].sort().join(" "),
 		[...CHIP_HUES].sort().join(" "),
@@ -1830,7 +1830,7 @@ check(
 	"the roster is closed, camelCase, and off the style channels",
 	() => {
 		const entries = rosterEntries();
-		requireEqual(entries.length, 55, "component count");
+		requireEqual(entries.length, 56, "component count");
 		const names = new Set<string>();
 		for (const [, name, { props }] of entries) {
 			assert(/^[A-Z][A-Za-z]+$/.test(name), `${name} is not PascalCase`);
@@ -1920,6 +1920,11 @@ check("c31", "words: English is total and the schema is closed", () => {
 		filled(ENGLISH.meterOver, { amount: "1.8" }),
 		"1.8 over",
 		"a filled overage",
+	);
+	requireEqual(
+		filled(ENGLISH.wrongType, { name: "a.pdf", types: "text/csv, .har" }),
+		"a.pdf isn't one of text/csv, .har",
+		"a filled refusal",
 	);
 	return `${WORD_KEYS.length} words, ${COUNTED_WORD_KEYS.length} counted and ${SLOT_WORD_KEYS.length} with slots, sentence case, missing and extra keys rejected`;
 });
