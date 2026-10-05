@@ -1,4 +1,4 @@
-import { and, eq, gt, lt, or, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, gt, lt, or, type SQL } from "drizzle-orm";
 import type { SQLiteColumn } from "drizzle-orm/sqlite-core";
 
 export const DEFAULT_LIMIT = 20;
@@ -56,7 +56,7 @@ interface QueryBuilder<T> {
 	findMany(config: {
 		where?: SQL;
 		limit?: number;
-		orderBy?: SQLiteColumn[];
+		orderBy?: SQL[];
 	}): Promise<T[]>;
 }
 
@@ -87,7 +87,9 @@ export async function paginate<T extends { id: string; createdAt: Date }>(
 	const rows = await queryBuilder.findMany({
 		where,
 		limit: limit + 1,
-		orderBy: isDesc ? [orderBy.column, idColumn] : [orderBy.column, idColumn],
+		orderBy: isDesc
+			? [desc(orderBy.column), desc(idColumn)]
+			: [asc(orderBy.column), asc(idColumn)],
 	});
 
 	const hasMore = rows.length > limit;

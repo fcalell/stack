@@ -22,8 +22,10 @@ return paginate(db.query.projects, {
 // { data: Project[], nextCursor: string | null }
 ```
 
-The cursor encodes `createdAt` and `id`, so rows sharing a timestamp still page in a stable
-order. `nextCursor` is `null` on the last page. `clampLimit(limit)` keeps a limit within 1 to
+Rows order by the order column in the direction given, then by `id` in the same direction, so a
+`desc` page is the newest rows and rows sharing a moment page in a stable order by `id`. The
+cursor encodes the last row's `createdAt` and `id`, so the next page continues past that row.
+`nextCursor` is `null` on the last page. `clampLimit(limit)` keeps a limit within 1 to
 `MAX_LIMIT` (100), defaulting to `DEFAULT_LIMIT` (20).
 
 ## Slugs
