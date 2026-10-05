@@ -43,6 +43,15 @@ wrangler/Miniflare local dev, so `_devMode` is false in production. Rate limitin
 `rateLimit` middleware, `plugin-auth`'s `/api/auth/*` limiter) is skipped whenever `_devMode` is
 true.
 
+The base context every procedure starts from is `env`, `httpRequest` (the raw HTTP `Request`),
+`reqHeaders`, `resHeaders` (oRPC's header plugins), `executionCtx` and `_devMode`; plugin-db adds
+`db`, plugin-auth's runtime `auth`, `tenancy` and `_rateLimiter`, and its auth middleware `user`
+and `session`. A scoped procedure then writes each resolved level's row under its scope's name,
+`organization` and `member` at the root. The raw request is `httpRequest`, not `request`, because
+a consumer's scope takes its table's name and `request` is a common one. `defineScope` refuses
+every one of these keys as a scope name, since the row would overwrite it; its list checks
+plugin-api's `BaseContext` keys by type, so a key added there fails to compile until it is listed.
+
 Env vars the worker reads are declared on `api.slots.env` by the plugin that reads them, never
 by a deploy target: cloudflare renders the list into `.dev.vars` (each var deploys as a secret), node sets each
 var the shell leaves unset to its `devDefault` in the dev process, and both bake the same

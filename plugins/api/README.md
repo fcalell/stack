@@ -113,7 +113,7 @@ export type AppRouter = typeof worker._router;
 export default worker;
 ```
 
-The builder chain (`createWorker(options).use(plugin).handler(routes)`) accumulates context from each `.use()` call. The final `.handler()` creates a Hono app with CORS, logging, secure headers, and the oRPC handler mounted at the configured prefix.
+The builder chain (`createWorker(options).use(plugin).handler(routes)`) accumulates context from each `.use()` call. Every call starts from the base context: `env`, `httpRequest` (the raw HTTP `Request`), `reqHeaders`, `resHeaders`, `executionCtx` and the `_devMode` flag. A scope's row lands in the context under the scope's name, so `defineScope` refuses these keys, the ones plugin-db and plugin-auth add (`db`, `auth`, `tenancy`, `_rateLimiter`, `user`, `session`) and the organization level's (`organization`, `member`). The final `.handler()` creates a Hono app with CORS, logging, secure headers, and the oRPC handler mounted at the configured prefix.
 
 The CLI also generates `.stack/procedure.ts` -- the `virtual:stack-procedure` target route files import,
 mapped via a `paths` entry in the consumer's `tsconfig.json`. It rebuilds the same `.use()` chain (minus

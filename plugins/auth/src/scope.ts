@@ -1,3 +1,4 @@
+import type { BaseContext } from "@fcalell/plugin-api/runtime";
 import type {
 	InferSelectModel,
 	SQL,
@@ -67,8 +68,35 @@ export function defineMembership(where: SQL): Membership {
 	return { kind: "membership", where };
 }
 
-// The context keys the organization level already holds.
-const RESERVED = new Set(["organization", "member"]);
+// A resolved level's row lands in the procedure context under its scope's
+// name, so a scope named after a key the context already carries would
+// overwrite it. plugin-api's base context, checked against its type so a key
+// it gains is refused here too:
+type BaseContextKey = keyof {
+	[K in keyof BaseContext as string extends K ? never : K]: unknown;
+};
+const BASE_CONTEXT: Record<BaseContextKey, true> = {
+	env: true,
+	httpRequest: true,
+	reqHeaders: true,
+	resHeaders: true,
+	executionCtx: true,
+};
+// ...and what the runtimes and middlewares add before a scope resolves:
+// plugin-api's dev flag, plugin-db's client, this plugin's runtime and auth
+// middleware, and the organization level.
+const RESERVED = new Set([
+	...Object.keys(BASE_CONTEXT),
+	"_devMode",
+	"db",
+	"auth",
+	"tenancy",
+	"_rateLimiter",
+	"user",
+	"session",
+	"organization",
+	"member",
+]);
 
 export function defineScope<
 	const TName extends string,
@@ -86,7 +114,7 @@ export function defineScope<
 > {
 	if (RESERVED.has(def.name)) {
 		throw new Error(
-			`defineScope: "${def.name}" names the organization level; pick another scope name.`,
+			`defineScope: "${def.name}" is a key of the procedure context; pick another scope name.`,
 		);
 	}
 	for (const [role, column] of [

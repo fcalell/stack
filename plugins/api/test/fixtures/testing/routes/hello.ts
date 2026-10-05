@@ -12,7 +12,7 @@ export const hello = {
 	),
 	// Refuses a request without a cookie, else answers with it.
 	cookie: procedure().query(async ({ context }) => {
-		const cookie = context.request.headers.get("cookie");
+		const cookie = context.httpRequest.headers.get("cookie");
 		if (!cookie) throw new ApiError("FORBIDDEN");
 		return cookie;
 	}),

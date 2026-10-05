@@ -157,7 +157,8 @@ export interface AppBuilder<TContext extends Record<string, unknown>> {
 
 export type BaseContext = {
 	env: unknown;
-	request: Request;
+	// The raw HTTP request, named so no scope's row shadows it.
+	httpRequest: Request;
 	reqHeaders: Headers;
 	resHeaders: Headers;
 	// Hono's and wrangler's `ExecutionContext` types disagree on optional
@@ -473,7 +474,7 @@ function createAppBuilder<TContext extends Record<string, unknown>>(
 
 				let ctx: Record<string, unknown> = {
 					env,
-					request,
+					httpRequest: request,
 					executionCtx,
 					_devMode: isDevMode(env),
 				};
