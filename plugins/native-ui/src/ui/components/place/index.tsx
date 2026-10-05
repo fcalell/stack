@@ -62,8 +62,9 @@ const BODY_WRAP = "relative flex-1";
 // The body's content fills the scroll, so an EmptyState alone centres in it.
 const BODY_CONTENT = "grow";
 const ACT_LAYER = "absolute inset-0 items-center justify-end";
-// The foot stays under the body, which scrolls past it.
-const DOCKED = "shrink-0";
+// The foot stays under the body, which scrolls past it, and centres the
+// selection bar's column.
+const DOCKED = "shrink-0 items-center";
 
 // The floating act's room under what scrolls past it, or the toasts that
 // stand above it: the act's height over the page inset it floats at.

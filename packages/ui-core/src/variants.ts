@@ -498,14 +498,15 @@ export const SHEET_CENTERED =
 export const SCRIM = "bg-scrim";
 // A sheet's regions in every form but the centred one: the head over a
 // hairline (its row, then a blocked submit's reason on touch), the body at
-// the card inset, the foot under a hairline (its line centred beside the
-// acts) on the sheet's own ground, since on touch it stands over the end of
-// the scrolling body.
+// the card inset with its sections a sections gap apart (a form is one child,
+// so the gap shows only between sections), the foot under a hairline (its
+// line centred beside the acts) on the sheet's own ground, since on touch it
+// stands over the end of the scrolling body.
 export const SHEET_HEAD = "gap-pair px-card py-pair border-b border-edge";
 // The head's row: the lead act, the title over the description, the end act,
 // the title centred on the acts, which set the row's height.
 export const SHEET_HEAD_ROW = "gap-acts";
-export const SHEET_BODY = "p-card";
+export const SHEET_BODY = "gap-sections p-card";
 export const SHEET_FOOT =
 	"gap-acts px-card py-card border-t border-edge bg-raised";
 // An empty state: its column at the empty width (the mark, the text, the
@@ -696,11 +697,14 @@ export const CHART_PART_SPLIT = "border-b border-transparent bg-clip-padding";
 export const CHART_TICK_LANE = "w-figures";
 // Thread: the messages a sections gap apart, one rung above Prose's block
 // gap, and under them the input; on the desktop the messages and the input
-// each stand in a measure-wide column centred in the page, as do the record's
-// head over a Thread filling a Split's main and a `MessageInput` (so a Place's
-// docked foot spans the body and the field keeps the column).
+// each stand in a measure-wide column, as do the record's head over a Thread
+// filling a Split's main and a `MessageInput` (so a Place's docked foot spans
+// the body and the field keeps the column). A column cell is a width and
+// nothing else: the region that owns its frame's width centres it (a filling
+// Thread's log, a docked foot), and among sections it keeps the region's
+// start, as a paragraph's measure does.
 export const THREAD = "gap-sections";
-export const THREAD_COLUMN = "w-full max-w-measure mx-auto";
+export const THREAD_COLUMN = "w-full max-w-measure";
 // A Thread in a Place's body fills it: the log scrolls under the page's head
 // at the page inset, a sections gap over the input, which docks at the foot.
 export const THREAD_LOG = "px-page pt-page pb-sections";
@@ -804,7 +808,10 @@ export const FLOATING_ACT_ROOM = "min-h-control";
 export const FLOATING_ACT_FOOT = "pb-page";
 // A split: the list at its width inside a hairline, the pane at its width at
 // `wide` of its page. Below `tablet` the list stands alone and draws neither.
+// A list holding sections stands them a sections gap apart, as a page body
+// does: the rhythm is its own cell, which the phone's list reads as well.
 export const SPLIT_LIST = "w-list py-inside px-page border-r border-edge";
+export const SPLIT_LIST_STACK = "gap-sections";
 export const SPLIT_PANE = "gap-sections w-pane p-page border-l border-edge";
 // A record the main opened: from `wide` of its page the main and it share what
 // the list leaves, half each, a structural fraction and never a width token;
@@ -845,8 +852,8 @@ export const ACTION_BAR_ACTS = "gap-acts";
 // and the count's own row with its choose-all act.
 export const ACTION_BAR_CHOSEN = "gap-pair";
 // A selection bar's column: its container's width up to the selection-bar
-// pattern's table-wide width, centred in the container.
-export const ACTION_BAR_SELECTION = "w-full max-w-selection mx-auto";
+// pattern's table-wide width; the docked foot it stands in centres it.
+export const ACTION_BAR_SELECTION = "w-full max-w-selection";
 // The act beside a selection bar's count that chooses or clears every row:
 // words at the control radius, as the filled act beside it, washed at the
 // pointer.

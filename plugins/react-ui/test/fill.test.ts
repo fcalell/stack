@@ -58,6 +58,6 @@ test("a Place's body under the fill mark draws no `PAGE_BODY` inset", () => {
 	assert.deepEqual(insets(PAGE_BODY, unmarked(BODY_FILLED, MARK)), {});
 });
 
-test("a record's head under its main's fill mark stands in `THREAD_COLUMN`", () => {
-	assert.equal(unmarked(COLUMN_FILLED, GROUP_MARK), THREAD_COLUMN);
+test("a record's head under its main's fill mark stands in `THREAD_COLUMN`, centred", () => {
+	assert.equal(unmarked(COLUMN_FILLED, GROUP_MARK), `${THREAD_COLUMN} mx-auto`);
 });

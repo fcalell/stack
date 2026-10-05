@@ -1,6 +1,6 @@
 ---
 id: 003-82
-status: backlog
+status: review
 sessions: {}
 ---
 # react-ui: sections in a Split's list and in a Sheet's body stand a sections gap apart

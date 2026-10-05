@@ -14,7 +14,8 @@ import { TURN, TURNS } from "./thread.tsx";
 // The Split in a bleeding Place, whose strip takes the Details act below
 // `wide`, on the main cell. `empty` opens nothing, so the main holds the
 // empty state; every other frame opens the first record. The record's
-// heading, the empty state and the rows are context. The `fills` cell opens
+// heading, the empty state and the rows are context; the list holds three
+// Sections a sections gap apart. The `fills` cell opens
 // a conversation: the record's head over a Thread filling the main, its
 // `empty` frame a conversation with no message yet.
 export function drawSplit(frame: ShowcaseFrame) {
@@ -26,7 +27,19 @@ export function drawSplit(frame: ShowcaseFrame) {
 		<Column>
 			<Place title="Issues" bleed>
 				<Split
-					list={<StandInList />}
+					list={
+						<>
+							<Section title="Open">
+								<StandInList />
+							</Section>
+							<Section title="In review">
+								<StandInList />
+							</Section>
+							<Section title="Done">
+								<StandInList />
+							</Section>
+						</>
+					}
 					main={
 						empty ? undefined : (
 							<>

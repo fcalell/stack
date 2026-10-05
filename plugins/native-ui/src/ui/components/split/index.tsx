@@ -1,5 +1,9 @@
 import type { IconAct } from "@fcalell/ui-core/descriptors";
-import { SPLIT_BESIDE, splitMain } from "@fcalell/ui-core/variants";
+import {
+	SPLIT_BESIDE,
+	SPLIT_LIST_STACK,
+	splitMain,
+} from "@fcalell/ui-core/variants";
 import {
 	Children,
 	isValidElement,
@@ -75,7 +79,7 @@ export function Split({ list, main, beside, pane }: SplitProps) {
 			role="navigation"
 			accessibilityLabel={title}
 			className={REGION}
-			contentContainerClassName={LIST}
+			contentContainerClassName={cn(SPLIT_LIST_STACK, LIST)}
 		>
 			{list}
 			{room}

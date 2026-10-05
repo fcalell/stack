@@ -3,6 +3,7 @@ import { cn } from "@fcalell/ui-core/cn";
 import {
 	SPLIT_BESIDE,
 	SPLIT_LIST,
+	SPLIT_LIST_STACK,
 	SPLIT_PANE,
 	splitMain,
 } from "@fcalell/ui-core/variants";
@@ -52,9 +53,6 @@ const MAIN_SHARED = "basis-0 page-max-wide:hidden";
 const BESIDE = "flex flex-col min-w-0 border-edge page-wide:border-l";
 const EMPTY = "flex grow min-w-0 items-center justify-center";
 const PANE = "flex flex-col shrink-0 overflow-y-auto page-max-wide:hidden";
-// The pane opened below `wide` is a side sheet at the pane's fit, its
-// sections a sections rhythm apart.
-const PANE_SHEET = "flex flex-col gap-sections";
 
 /** A list beside the record it opens. */
 export interface SplitProps extends Closed {
@@ -100,7 +98,13 @@ export function Split({ list, main, beside, pane, empty }: SplitProps) {
 		>
 			<nav
 				aria-labelledby={title}
-				className={cn(SPLIT_LIST, LIST, LIST_ALONE, opened && BEHIND)}
+				className={cn(
+					SPLIT_LIST,
+					SPLIT_LIST_STACK,
+					LIST,
+					LIST_ALONE,
+					opened && BEHIND,
+				)}
 			>
 				{list}
 				{room}
@@ -141,7 +145,7 @@ export function Split({ list, main, beside, pane, empty }: SplitProps) {
 				title={words.details}
 				fit="pane"
 			>
-				<div className={PANE_SHEET}>{pane}</div>
+				{pane}
 			</SheetBase>
 		</div>
 	);

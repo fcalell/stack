@@ -54,7 +54,7 @@ const LOG = "flex-1";
 // `INVERTED`), so `THREAD_LOG`'s top and bottom insets swap, and a short log
 // stands at its layout end, the top of the screen.
 const UPSIDE_DOWN = "grow justify-end pt-sections pb-page";
-const DOCKED = "shrink-0";
+const DOCKED = "shrink-0 items-center";
 // The log is at its end while its newest point shows.
 const AT_END = 1;
 // The log and each message in it turn upside down, as React Native's

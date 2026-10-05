@@ -345,6 +345,11 @@ touch; a selection bar (an `ActionBar` with `chosen`) docks the same way. A Plac
 an `act`, never both, since each holds the screen's filled act. A `Thread` in a Place with a
 `foot` stands among its sections, inline, its `foot` left empty.
 
+A column is a width and the region around it aligns it: a docked foot (a `Place`'s `foot`, a
+`Thread`'s input) centres a selection bar's column. A region that holds a page's sections (a
+`Place`'s body, a `Split`'s list and record, a `Sheet`'s body) stands them a sections gap apart:
+never wrap sections in a `View` to space them.
+
 A `BarChart` takes data the same way, its `bar` map reading each item's `key`, `label`, `value`,
 `parts` (by its declared `keys`) and `at`; its failed and empty forms stand at the chart's height.
 Its head sums the bars, which is right for a flow (requests per day); bars that are a level (open

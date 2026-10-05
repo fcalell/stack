@@ -305,7 +305,6 @@ export const OVERLAYS: readonly string[] = [
 	"pointer-events-none",
 	"pointer-events-auto",
 	"touch:items-center",
-	"gap-sections",
 	"right-0",
 	"w-toast",
 	"duration-base",

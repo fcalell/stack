@@ -688,12 +688,19 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			props: ["list", "main", "beside", "pane", "empty"],
 			draws: [
 				"SPLIT_LIST",
+				"SPLIT_LIST_STACK",
 				"SPLIT_MAIN",
 				"SPLIT_BESIDE",
 				"SPLIT_PANE",
 				"ICON_BUTTON.fit.bar",
 			],
-			holds: ["SPLIT_LIST", "SPLIT_MAIN", "SPLIT_BESIDE", "SPLIT_PANE"],
+			holds: [
+				"SPLIT_LIST",
+				"SPLIT_LIST_STACK",
+				"SPLIT_MAIN",
+				"SPLIT_BESIDE",
+				"SPLIT_PANE",
+			],
 			states: ["rest", "empty"],
 			owns: {
 				colors: ["edge", "ink-meta", "surface"],
@@ -1437,6 +1444,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"card",
 					"acts",
 					"fields",
+					"sections",
 					"inside",
 					"control-x",
 					"page",

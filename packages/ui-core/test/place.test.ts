@@ -37,9 +37,8 @@ test("the docked foot is a region of its own: a hairline on a raised surface", (
 	assert.match(FOOT_DOCKED, /\bshadow-float\b/);
 });
 
-test("a selection bar's column stands at the pattern's table-wide width, centred", () => {
+test("a selection bar's column stands at the pattern's table-wide width", () => {
 	assert.match(ACTION_BAR_SELECTION, /\bmax-w-selection\b/);
-	assert.match(ACTION_BAR_SELECTION, /\bmx-auto\b/);
 	assert.equal(WIDTH_VALUE.selection, "1060px");
 });
 

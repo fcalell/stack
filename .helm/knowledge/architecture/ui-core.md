@@ -590,6 +590,16 @@ a tick with no animation, never jumped to full.
   a closed list in the web verify's overlay acceptance, never a token; a chart column's share of its
   slot (`w-2/3`) is structural the same way. A size the data decides (a meter's fill width, a chart
   column's height) is the value's share, set by the component on both platforms, never a class.
+- A column cell is a width and nothing else (`w-full max-w-<width>`: `THREAD_COLUMN`,
+  `ACTION_BAR_SELECTION`, `EMPTY_COLUMN`), so a column's alignment is its region's: a region that
+  owns its frame's width centres what it holds (a filling Thread's log, a docked foot, the
+  EmptyState's region), and a column standing among sections keeps the region's start, as `Text`
+  and `Prose` hold the measure. The web regions spell `items-center` as an overlay on the desktop
+  alone, since on touch the column cell is absent and the content spans the region; the phone's docked foot centres a
+  selection bar. A region that holds a page's sections stands them a sections gap apart
+  (`PAGE_BODY`, `SPLIT_MAIN rest`, `SPLIT_PANE`, `SHEET_BODY`, and a Split's list by
+  `SPLIT_LIST_STACK`, which the phone's list reads as well), so no wrapper restates the gap; a
+  `Form` is one child, so the gap shows only between a sheet's sections.
 - A class with no look is structural, an overlay the web's class sweep classifies: a stacking
   order inside one component (`z-1`, a frozen table column over the cells that scroll under it,
   inside `isolate`, the grid its own stacking context so the column never stands over a sheet),
@@ -751,8 +761,10 @@ a tick with no animation, never jumped to full.
   and unknown before the data, each at its loaded height (yours its bubble over its time's bar,
   `figures` wide, as the loaded bubble stands over its time); failed, the failed EmptyState with
   `sentence` and Retry; no message, `empty`; each in the log's column. On the desktop both stand in
-  a measure-wide column centred in the page (`THREAD_COLUMN`, held by no entry: a `MessageInput` and
-  a record's `ItemHeader` over a filling Thread stand in it too), on touch in the screen's. A Thread
+  a measure-wide column (`THREAD_COLUMN`, held by no entry: a `MessageInput` and a record's
+  `ItemHeader` over a filling Thread stand in it too), on touch in the screen's. The column is a
+  width alone (below, column rule); a filling Thread's log and its docked foot centre it, and a
+  Thread among sections keeps their start. A Thread
   in a Place's body fills the page at every width, decided by where it stands, from its first
   render: the frame hands it `ThreadRoom`, and the body draws no inset and leaves scrolling to it,
   its log scrolls at the page inset (`THREAD_LOG`), opening at the newest message and following each

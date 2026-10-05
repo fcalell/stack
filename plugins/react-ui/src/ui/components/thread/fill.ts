@@ -11,7 +11,7 @@ export const BODY_FILLED =
 // `fills` one.
 export const MAIN_FILLED =
 	"[&:has(>[data-fill])]:gap-0 [&:has(>[data-fill])]:pb-0";
-// The record's head stands in `THREAD_COLUMN` under its main's mark
-// (`group/main`).
+// The record's head stands in `THREAD_COLUMN`, centred over the log's column,
+// under its main's mark (`group/main`).
 export const COLUMN_FILLED =
 	"group-[:has(>[data-fill])]/main:w-full group-[:has(>[data-fill])]/main:max-w-measure group-[:has(>[data-fill])]/main:mx-auto";

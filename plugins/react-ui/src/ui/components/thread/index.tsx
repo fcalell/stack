@@ -44,7 +44,11 @@ const FILL = "flex flex-col grow min-h-0";
 // keeps, under the head's hairline.
 const BLEED = "-mx-page";
 // The log rings inset, its edge meeting the page's.
-const SCROLLS = "grow min-h-0 overflow-y-auto focus-visible:-outline-offset-2";
+const SCROLLS =
+	"flex flex-col grow min-h-0 overflow-y-auto focus-visible:-outline-offset-2";
+// The log and the docked foot own their frame's width: on the desktop they
+// centre the measure column; on touch the messages and the input span it.
+const CENTRES = "items-center";
 // The docked foot names itself the anchor the Shell's toasts stand above.
 const DOCKED = "flex flex-col shrink-0 [anchor-name:--docked-foot]";
 // The region over the foot: the log, and the Latest act floating at its foot.
@@ -207,7 +211,9 @@ export function Thread<T>(props: ThreadProps<T>) {
 	slots.current = props.message;
 	const children = logOf(props, listState(input), words.retry, slots);
 	// The column is a structure that follows density, as the Shell's tree is.
-	const column = !useTouch() && THREAD_COLUMN;
+	const desktop = !useTouch();
+	const column = desktop && THREAD_COLUMN;
+	const centres = desktop && CENTRES;
 	const fill = use(ThreadRoom);
 	const bleeds = use(ThreadBleeds);
 	const title = use(PageTitle);
@@ -270,7 +276,7 @@ export function Thread<T>(props: ThreadProps<T>) {
 						atEnd.current = end;
 						setAway(!end);
 					}}
-					className={cn(THREAD_LOG, SCROLLS)}
+					className={cn(THREAD_LOG, SCROLLS, centres)}
 				>
 					<div ref={content} className={cn(THREAD, column, STACK)}>
 						{children}
@@ -279,7 +285,7 @@ export function Thread<T>(props: ThreadProps<T>) {
 				<Latest onBack={away ? toLatest : null} />
 			</div>
 			{foot ? (
-				<div className={cn(FOOT_DOCKED, DOCKED)}>
+				<div className={cn(FOOT_DOCKED, DOCKED, centres)}>
 					<div className={cn(column, STACK)}>{foot}</div>
 				</div>
 			) : null}

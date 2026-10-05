@@ -5,9 +5,10 @@ import type {
 } from "@fcalell/ui-core/descriptors";
 import { useState } from "react";
 import { MessageInput } from "../../components/message-input/index.tsx";
+import { Section } from "../../components/section/index.tsx";
 import { type MessageSlots, Thread } from "../../components/thread/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
-import { queryOf } from "./layout-context.tsx";
+import { queryOf, StandInList } from "./layout-context.tsx";
 import { ATTACHED, REPLY, today } from "./message.tsx";
 
 const act = () => {};
@@ -143,11 +144,12 @@ export const TURNS: Turn[] = [
 	},
 ];
 
-// Board 53's thread in a Place body (the Place's frame is context): system
-// lines (one opening, one folding its reads, a free act over its code, a
-// proposal as its row), yours and the assistant's replies, the input in the
-// foot with its notice, the answer still working. Each frame draws its state:
-// the waiting turns, the failed form, the empty form, the conversation.
+// Board 53's thread in a Place body (the Place's frame is context) among the
+// page's sections, under one: system lines (one opening, one folding its
+// reads, a free act over its code, a proposal as its row), yours and the
+// assistant's replies, the input in the foot with its notice, the answer still
+// working. Each frame draws its state: the waiting turns, the failed form, the
+// empty form, the conversation.
 export function drawThread(frame: ShowcaseFrame) {
 	return <Conversation state={frame.state} />;
 }
@@ -158,6 +160,10 @@ function Conversation(props: { state: ShowcaseFrame["state"] }) {
 	return (
 		<div className="flex flex-col w-screen max-w-full overflow-hidden rounded-card border border-edge bg-surface">
 			<div className="flex flex-col gap-sections p-page">
+				{/* A Section over the Thread: on the desktop the messages start where its rows start and end at the measure. */}
+				<Section title="Deploys">
+					<StandInList />
+				</Section>
 				<Thread
 					query={queryOf(props.state, TURNS)}
 					sentence="The conversation did not load."
