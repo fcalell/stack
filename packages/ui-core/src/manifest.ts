@@ -124,4 +124,20 @@ export const uiCoreGuide = [
 		page: "patterns/loading-and-pending",
 		trigger: "Composing or judging a loading or pending state",
 	},
+	{
+		page: "patterns/selection-bar",
+		trigger: "Composing or judging a selection bar at a list's foot",
+	},
+	{
+		page: "patterns/state-rail",
+		trigger: "Composing or judging a rail of fixed states",
+	},
+	{
+		page: "patterns/stats",
+		trigger: "Composing or judging a stat strip or a lone figure",
+	},
+	{
+		page: "patterns/ten-foot",
+		trigger: "Composing or judging a screen read from across a room",
+	},
 ].map((p) => ({ domain: "ui-core", package: name, ...p }));

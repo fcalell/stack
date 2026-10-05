@@ -15,26 +15,26 @@ pattern whose shortlist is thinner than the rest says so on its page, with what 
 
 ## Anchor apps
 
-Apps that recur across the 24 pattern shortlists, by count of cited executions
-(155 rows, 69 apps; three or more listed). They are the anchors by evidence, not by assumption.
+Apps that recur across the 28 pattern shortlists, by count of cited executions
+(161 rows, 88 apps; three or more listed). They are the anchors by evidence, not by assumption.
 
 | App | Executions |
 | --- | --- |
-| Linear | 8 |
+| Linear | 9 |
 | Notion | 7 |
 | Vercel | 6 |
 | Vapi | 5 |
 | Twenty | 5 |
 | Railway | 5 |
+| Neon | 5 |
 | Supabase | 4 |
-| Neon | 4 |
 | Attio | 4 |
+| Plain | 4 |
+| Mintlify | 4 |
+| Framer | 4 |
 | v0 | 3 |
-| Plain | 3 |
-| Mintlify | 3 |
 | Lovable | 3 |
 | Laravel Cloud | 3 |
-| Framer | 3 |
 | Airtable | 3 |
 
 `v0` is Vercel's; counted together Vercel leads with Linear. Linear, Notion, Vercel, Supabase
