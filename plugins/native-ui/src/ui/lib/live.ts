@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { AccessibilityInfo, Platform } from "react-native";
-import { announcement, type Taken } from "./announce";
+import { announcement, kept, type Taken } from "./announce";
 
 // The one place a phone component tells assistive tech about a change: a live
 // region for the text it holds. Android announces a change of the view
@@ -27,7 +27,7 @@ export function useLive(
 	const last = useRef<Taken | null>(appears ? null : { text, id });
 	useEffect(() => {
 		const said = announcement(last.current, { text, id });
-		last.current = { text, id };
+		last.current = kept(last.current, { text, id });
 		if (said === undefined || Platform.OS !== "ios") return;
 		if (assertive)
 			AccessibilityInfo.announceForAccessibilityWithOptions(said, {

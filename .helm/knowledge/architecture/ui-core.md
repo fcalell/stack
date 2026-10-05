@@ -362,14 +362,15 @@ a tick with no animation, never jumped to full.
   `role="status"` there and speak only on change, so a screen opening on one does not read it. An
   `undefined` text holds the baseline (a log still loading). An `id` names what the text belongs to
   and is announced when it changes, not the text. The `Thread` passes its newest message's key and
-  that message's body at that moment, so a reply is read once as it arrives, a streaming reply is
-  not read per chunk, and a second reply with an identical body is still read. Its own messages
-  (author `you`) are silent, and it is silent on opening its history, after a failed load (a retry
-  that lands announces no history) and while the thread is missing; an empty log holds `""`, so its
-  first message is news. The sites: the toast and banner sentences (assertive when failed or
-  danger), the pending bar's sentence, a form field's and a list row entry's error line, the
-  one-time code's checking line, the `Thread`'s newest reply, the `ItemHeader` save fact and the
-  selection bar's count. A test pins that no other file names either API.
+  that message's body at that moment, and an empty text under an id is not taken, so a reply is read
+  once with its first text (a stream that lands empty first is read as its text arrives), a
+  streaming reply is not read per chunk, and a second reply with an identical body is still read.
+  Its own messages (author `you`) are silent, and it is silent on opening its history, after a
+  failed load (a retry that lands announces no history) and while the thread is missing; an empty
+  log holds `""`, so its first message is news. The sites: the toast and banner sentences (assertive
+  when failed or danger), the pending bar's sentence, a form field's and a list row entry's error
+  line, the one-time code's checking line, the `Thread`'s newest reply, the `ItemHeader` save fact
+  and the selection bar's count. A test pins that no other file names either API.
 - `running` is work under way and `active` a steady state (a watch that stands, a service that is
   up): both wear the accent, and `running` draws a `Spinner` where every other state draws its
   dot, wherever a status draws one (a `Status`, a list row's `{ status }` leading, an
@@ -663,24 +664,24 @@ a tick with no animation, never jumped to full.
   bar there only (below `tablet` on the web, always on the phone); on the desktop the head tick is
   the select-all and the bar draws none. The act stands beside the count, words in a pill
   (`PILL_ACT`) reading `chooseAll` while some rows stand unchosen and `chooseNone` once all are, as
-  the head tick toggles, and calls `onAll(true)` or `onAll(false)`. `of` counts the rows that can be chosen, so a list with
-  blocked rows still reaches the cleared state. It draws the slot word `chosenOf` at meta at the
-  bar's start (one phrase, since the count left behind is `of - count`), in a polite live region,
-  and the acts beside it at the end (`ACTION_BAR_CHOSEN`, a pair apart), the bar's one filled act
-  the page's one; on touch the count stands over the full-width act. The act's label ("Publish 4
-  changes") and its blocked reason stay the consumer's `Act`. The bar is not a new component:
-  `ActionBar` already owns the filled act, its pending state, the reason and the touch stacking, and
-  `Place.foot` already docks, scrolls the body under it and stands above the tab bar and the toasts.
-  A grid re-renders only the rows and cells whose state changed: rows and cells are memoised
-  components fed per-cell values and one stable set of callbacks. On the web a cell holds the
-  pointer's hover itself (an editable cell under the pointer shows its control), so a pointer
-  crossing the grid renders the cells it leaves and enters; the cursor moves by focus, and a focus
-  on the cursor's own cell sets nothing. On the phone a row's two halves (the frozen leading cell
-  and the cells that scroll) wash together on a press, so both read one store of the pressed row's
-  id, each only whether it is the pressed one; a sortable header washes through the Pressable's own
-  pressed state. The web mounts both forms and CSS hides one, since the switch is the page's
-  container width, which no store reads: a sort, a selection or a data change renders the rows twice
-  until Place and Screen hand their page's width to one external store.
+  the head tick toggles, and calls `onAll(true)` or `onAll(false)`. `of` counts the rows that can be
+  chosen, so a list with blocked rows still reaches the cleared state. It draws the slot word
+  `chosenOf` at meta at the bar's start (one phrase, since the count left behind is `of - count`),
+  in a polite live region, and the acts beside it at the end (`ACTION_BAR_CHOSEN`, a pair apart),
+  the bar's one filled act the page's one; on touch the count stands over the full-width act. The
+  act's label ("Publish 4 changes") and its blocked reason stay the consumer's `Act`. The bar is not
+  a new component: `ActionBar` already owns the filled act, its pending state, the reason and the
+  touch stacking, and `Place.foot` already docks, scrolls the body under it and stands above the tab
+  bar and the toasts. A grid re-renders only the rows and cells whose state changed: rows and cells
+  are memoised components fed per-cell values and one stable set of callbacks. On the web a cell
+  holds the pointer's hover itself (an editable cell under the pointer shows its control), so a
+  pointer crossing the grid renders the cells it leaves and enters; the cursor moves by focus, and a
+  focus on the cursor's own cell sets nothing. On the phone a row's two halves (the frozen leading
+  cell and the cells that scroll) wash together on a press, so both read one store of the pressed
+  row's id, each only whether it is the pressed one; a sortable header washes through the
+  Pressable's own pressed state. The web mounts both forms and CSS hides one, since the switch is
+  the page's container width, which no store reads: a sort, a selection or a data change renders the
+  rows twice until Place and Screen hand their page's width to one external store.
 - A thread is a molecule (`Thread`), a collection: its Messages from `query` (with `sentence`) or
   `items` (waiting on `loading`) through the `message` map, one function per `Message` slot (`key`,
   `author`, `name`, `body`, `at`, `attachments` and `meta` for a turn, `onOpen` returning a system

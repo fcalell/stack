@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readdirSync, readFileSync } from "node:fs";
 import { test } from "node:test";
-import { announcement, type Taken } from "../src/ui/lib/announce.ts";
+import { announcement, kept, type Taken } from "../src/ui/lib/announce.ts";
 
 const ui = new URL("../src/ui/", import.meta.url);
 
@@ -24,7 +24,7 @@ const said = (steps: Taken[]) => {
 	const out: (string | undefined)[] = [];
 	for (const step of steps.slice(1)) {
 		out.push(announcement(before, step));
-		before = step;
+		before = kept(before, step);
 	}
 	return out;
 };
@@ -67,7 +67,19 @@ test("with an id a second message with an identical body is announced", () => {
 	);
 });
 
-test("with an id, silence for an empty text still moves the identity on", () => {
+test("a reply whose body starts empty is announced with its first text, once", () => {
+	assert.deepEqual(
+		said([
+			{ text: "one", id: "1" },
+			{ text: "", id: "2" },
+			{ text: "Hel", id: "2" },
+			{ text: "Hello", id: "2" },
+		]),
+		[undefined, "Hel", undefined],
+	);
+});
+
+test("the reader's own turn is silence, and the next reply is read", () => {
 	assert.deepEqual(
 		said([
 			{ text: "one", id: "1" },

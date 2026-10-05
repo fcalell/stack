@@ -23,3 +23,11 @@ export function announcement(
 		now.id === undefined ? before.text !== now.text : before.id !== now.id;
 	return changed ? now.text : undefined;
 }
+
+// What `useLive` keeps after taking `now`. Under an id, an empty text is not
+// taken: a streamed reply that lands empty first keeps its id unspent, so it is
+// announced with its first text, and the reader's own turn (an empty text from
+// the log) leaves the last reply as the one the next is compared against.
+export function kept(before: Taken | null, now: Taken): Taken | null {
+	return now.id !== undefined && now.text === "" ? before : now;
+}

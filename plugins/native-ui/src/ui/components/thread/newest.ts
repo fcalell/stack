@@ -2,8 +2,8 @@ import type { ListState } from "@fcalell/ui-core/list-state";
 import type { MessageSlots } from "./index";
 
 // What the log announces: the newest message, by its key, with its body as it
-// stands. The reader's own message is silence (a `""` text) that still moves
-// the identity on. `undefined` holds the baseline: a log still waiting for its
+// stands. The reader's own message is silence (a `""` text), which `useLive`
+// does not take, so the next reply is compared against the last one. `undefined` holds the baseline: a log still waiting for its
 // first answer, failed or missing stands as no history, so opening on its
 // history, or a retry that lands after a failure, announces nothing. `""` is
 // an empty log, so its first message is news.
