@@ -12,6 +12,7 @@ import type { ReactNode } from "react";
 import { Group } from "../../components/group/index.tsx";
 import { List, type RowSlots } from "../../components/list/index.tsx";
 import { ListRow } from "../../components/list-row/index.tsx";
+import { ago } from "../ago.ts";
 import type { ShowcaseFrame } from "../cells.ts";
 
 const act = () => {};
@@ -69,7 +70,7 @@ const DEPLOYS: Deploy[] = [
 		glyph: "GitBranch",
 		title: "web · fix/checkout",
 		meta: ["b71d0e2", "Ana Ruiz"],
-		age: "40 min",
+		age: ago(40),
 		status: { state: "failed", label: "Failed" },
 		chip: { family: "red", label: "Rolled back" },
 	},
@@ -78,7 +79,7 @@ const DEPLOYS: Deploy[] = [
 		glyph: "Server",
 		title: "worker · main",
 		meta: ["0c5e4aa", "Ema Okafor"],
-		age: "2 h",
+		age: ago(120),
 		status: { state: "done", label: "Ready" },
 		chip: { family: "teal", label: "Production" },
 	},
@@ -102,8 +103,8 @@ const SERVICE_ROW: RowSlots<Service> = {
 };
 
 const SERVICES: Service[] = [
-	{ id: "api", glyph: "Rocket", title: "api · main", age: "Just now" },
-	{ id: "cron", glyph: "Clock", title: "cron · main", age: "1 h" },
+	{ id: "api", glyph: "Rocket", title: "api · main", age: ago(0.5) },
+	{ id: "cron", glyph: "Clock", title: "cron · main", age: ago(60) },
 ];
 
 // An issue: its assignee leading, its area and key, its age, its state.
@@ -136,7 +137,7 @@ function issues(): Issue[] {
 			assignee: "Ben Kaya",
 			title: "Fix invoice rounding",
 			meta: ["ACM-142", "Billing"],
-			age: "2 h",
+			age: ago(120),
 			status: { state: "active", label: "In progress" },
 			href: location.pathname,
 		},
@@ -145,7 +146,7 @@ function issues(): Issue[] {
 			assignee: "Ema Okafor",
 			title: "Export cohorts to CSV",
 			meta: ["ACM-139", "Growth"],
-			age: "5 h",
+			age: ago(300),
 			status: { state: "waiting", label: "Todo" },
 			href: "#acm-139",
 		},
@@ -154,7 +155,7 @@ function issues(): Issue[] {
 			assignee: "Ana Ruiz",
 			title: "Retry failed webhooks with backoff",
 			meta: ["ACM-137", "Infra"],
-			age: "1 d",
+			age: ago(1440),
 			status: { state: "attention", label: "Blocked" },
 			href: "#acm-137",
 		},

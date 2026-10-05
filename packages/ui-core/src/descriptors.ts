@@ -171,7 +171,8 @@ export interface Rule<V extends string | null = string> {
 }
 
 // A list row's trailing: a value that cannot change (an age, a count, a
-// word), or a pick.
+// word), or a pick. An `age` is an ISO moment: the row words it short ("2 min")
+// and keeps it current from the shared clock.
 export type RowTrailing<V extends string | null = string> =
 	| { age: string }
 	| { count: number }

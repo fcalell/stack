@@ -33,6 +33,8 @@ import {
 	treeBleed,
 } from "@fcalell/ui-core/variants";
 import { type KeyboardEvent, type ReactNode, use, useId, useMemo } from "react";
+import { ageShort } from "../../lib/age.ts";
+import { useClock } from "../../lib/clock.ts";
 import type { Closed } from "../../lib/closed.ts";
 import { InlineField } from "../../lib/field.ts";
 import { GroundContext } from "../../lib/ground.ts";
@@ -291,8 +293,14 @@ function ActButton(props: {
 	);
 }
 
-function trailingWord(trailing: RowTrailing<string | null>): string {
-	if ("age" in trailing) return trailing.age;
+// A trailing age's short words, read off the shared clock: the row draws
+// again only when they change.
+function Age(props: { moment: string }) {
+	return useClock((now) => ageShort(props.moment, now));
+}
+
+function trailingWord(trailing: RowTrailing<string | null>): ReactNode {
+	if ("age" in trailing) return <Age moment={trailing.age} />;
 	if ("count" in trailing) return String(trailing.count);
 	if ("value" in trailing) return trailing.value;
 	return "";

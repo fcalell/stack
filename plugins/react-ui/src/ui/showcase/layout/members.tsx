@@ -19,6 +19,7 @@ import { Switch } from "../../components/switch/index.tsx";
 import { Table } from "../../components/table/index.tsx";
 import { confirm } from "../../lib/confirm.ts";
 import { toast } from "../../lib/toast.ts";
+import { ago } from "../ago.ts";
 import { settle, useFixture } from "./here.ts";
 
 const ROLES = [
@@ -45,9 +46,6 @@ interface Member {
 	deploys: boolean;
 	active: string;
 }
-
-const ago = (minutes: number) =>
-	new Date(Date.now() - minutes * 60_000).toISOString();
 
 const MEMBERS: Member[] = [
 	{

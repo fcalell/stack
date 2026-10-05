@@ -20,7 +20,9 @@ A component's props, each with what it draws on the phone, are its props type in
 
 `toast(sentence, { state, act })` queues a toast and `confirm(confirmation)` (`lib/confirm`) asks
 for a decision; the `Shell` draws each decision as a bottom sheet and the toasts at the screen's
-foot, over any open sheet. `setTheme("light" | "dark" | "system")` (`lib/theme`) switches the mode at runtime. The
+foot, over any open sheet. `age(moment, now)` (`lib/age`) words an ISO moment as its age from `now`
+("2 minutes ago") and `ageShort(moment, now)` in its short form ("2 min"); read `now` from the
+shared clock, `useClock((now) => age(moment, now))` (`lib/clock`). `setTheme("light" | "dark" | "system")` (`lib/theme`) switches the mode at runtime. The
 icon set is Lucide, drawn from `lucide-react-native`: every `icon` a component takes is an
 `IconName`, a Lucide PascalCase name.
 

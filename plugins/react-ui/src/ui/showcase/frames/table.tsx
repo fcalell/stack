@@ -13,6 +13,7 @@ import { Place } from "../../components/place/index.tsx";
 import type { QueryLike } from "../../components/query-boundary/index.tsx";
 import { Table } from "../../components/table/index.tsx";
 import { PortalContainer } from "../../lib/portal.ts";
+import { ago } from "../ago.ts";
 import type { ShowcaseFrame } from "../cells.ts";
 import { key, Stage } from "./overlay-stage.tsx";
 import { Column } from "./place.tsx";
@@ -146,9 +147,6 @@ function ruled(ids: readonly string[]): string[] {
 	}
 	return [...set];
 }
-
-const ago = (minutes: number) =>
-	new Date(Date.now() - minutes * 60_000).toISOString();
 
 const TASKS: Task[] = [
 	{

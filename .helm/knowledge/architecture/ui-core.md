@@ -219,7 +219,11 @@ localized by the component; the schema rejects a translation that drops a slot. 
 connective (`of`) composed around the figures, a sentence fragment a language cannot reorder. A
 moment drawn as its age (a table's `age` cell, an ISO moment so the table sorts by it) is no word
 either: each plugin formats it with the platform's `Intl.RelativeTimeFormat` (`numeric: "auto"`) in
-the document's language, in one helper over ui-core's `ageWords` (`./clock`). Every `Intl` formatter
+the document's language, in one helper over ui-core's `ageWords` (`./clock`, its `ageOf` the one
+walk from a moment to a value and unit). A row's trailing age is that moment too (`RowTrailing`'s
+`age`): the `ListRow` words it short ("2 min", `Intl.NumberFormat` `unitDisplay: "short"` through
+`ageShort`) and ticks it from the clock, so a caller and a Table pass the moment and run no
+clock plumbing; a moment after now keeps the long form, since a short "2 min" cannot say "in". Every `Intl` formatter
 either plugin uses (an age, a moment, a meter's figures, a chart's ticks, a slider's value, the
 phone's `compact`) comes from ui-core's `formatterFor(kind, lang, options)` (`./format`), built once
 per kind, language and options at module scope, since building one costs far more than formatting
@@ -228,8 +232,8 @@ per kind, language and options at module scope, since building one costs far mor
 
 Ages and pending bars read one coarse clock per plugin (`lib/clock`, `useClock(read, until)`): an
 external store read with `useSyncExternalStore`, ticking once a second while a reader holds it.
-A reader renders again only when what its `read` returns changes (an age cell its words, a touch
-list its rows' words joined), leaves once now passes its `until`, and the interval stops when no
+A reader renders again only when what its `read` returns changes (an age cell or a row's trailing age its words),
+leaves once now passes its `until`, and the interval stops when no
 reader is left, so a bar past its `until` ticks nothing. What they draw is pure in ui-core's
 `./clock`: `timeLeft(end, now)`, and a `PendingRun` (`start`, `end`, `from`) whose
 `pendingShare(run, now)` is the fill; a moved `until` starts a new run from the share reached, so

@@ -71,7 +71,8 @@ Seventeen subpaths:
   `level`).
 - `@fcalell/ui-core/clock`: what a clock-read part draws, as functions of its times and now:
   `timeLeft`, a `PendingRun` with `pendingRun` and `pendingShare` (a `PendingBar`'s clock and
-  fill), and `ageWords` (an ISO moment's age). Both plugins tick `now` from one shared clock.
+  fill), and an ISO moment's age: `ageOf` (its value and unit), `ageWords` (long) and `ageShort`
+  (a row's "2 min"). Both plugins tick `now` from one shared clock.
 - `@fcalell/ui-core/roster`: the component roster as data (`ROSTER`, `STATES`, `CLOSED_PROPS`): the
   layer, prop names, drawn cells, states and owned tokens of every component both plugins ship.
 - `@fcalell/ui-core/harness`: internal. The shared core of the packages' `scripts/verify.ts`.

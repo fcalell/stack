@@ -1069,19 +1069,6 @@ function Phone(props: {
 	const cell = (record: TableRecord, column: TableColumn | undefined) =>
 		column ? record.cells[column.key] : undefined;
 	const { onOpen } = props;
-	// The rows' ages from the shared clock, one line each: the list draws
-	// again only when one of their words changes.
-	const ages = useClock(
-		(now) =>
-			props.rows
-				.map((record) => {
-					const when = cell(record, ageColumn);
-					return typeof when === "string" ? age(when, now) : "";
-				})
-				.join("\n"),
-		ageColumn ? undefined : 0,
-	).split("\n");
-	const ageOf = new Map(props.rows.map((record, at) => [record.id, ages[at]]));
 	// A slot is declared only when a column fills it, so the waiting rows
 	// stand in the slots the loaded ones draw.
 	const row: RowSlots<TableRecord> = {
@@ -1123,10 +1110,11 @@ function Phone(props: {
 						return lines.length ? lines : undefined;
 					}
 				: undefined,
+		// The row words its age moment and keeps it current itself.
 		trailing: ageColumn
 			? (record) => {
-					const words = ageOf.get(record.id);
-					return words ? { age: words } : undefined;
+					const when = cell(record, ageColumn);
+					return typeof when === "string" ? { age: when } : undefined;
 				}
 			: undefined,
 		status: status

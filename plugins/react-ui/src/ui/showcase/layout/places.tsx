@@ -18,6 +18,7 @@ import { Split } from "../../components/split/index.tsx";
 import { Text } from "../../components/text/index.tsx";
 import { navigate } from "../../lib/navigate.ts";
 import { toast } from "../../lib/toast.ts";
+import { ago } from "../ago.ts";
 import { act, settle, useFixture, useTo } from "./here.ts";
 
 // ── Projects: a board, a column per stage ───────────────────────────
@@ -26,23 +27,23 @@ const STAGES = [
 	{
 		title: "Building",
 		projects: [
-			{ name: "acme-web", meta: "main · a41c9e2", age: "2 min" },
-			{ name: "acme-api", meta: "main · 3f8b1d0", age: "6 min" },
+			{ name: "acme-web", meta: "main · a41c9e2", age: ago(2) },
+			{ name: "acme-api", meta: "main · 3f8b1d0", age: ago(6) },
 		],
 	},
 	{
 		title: "Preview",
 		projects: [
-			{ name: "acme-docs", meta: "preview/search", age: "1 h" },
-			{ name: "acme-admin", meta: "preview/roles", age: "3 h" },
-			{ name: "acme-mail", meta: "preview/mjml", age: "1 d" },
+			{ name: "acme-docs", meta: "preview/search", age: ago(60) },
+			{ name: "acme-admin", meta: "preview/roles", age: ago(180) },
+			{ name: "acme-mail", meta: "preview/mjml", age: ago(1440) },
 		],
 	},
 	{
 		title: "Production",
 		projects: [
-			{ name: "acme-cdn", meta: "main · e93a6c0", age: "1 d" },
-			{ name: "acme-status", meta: "main · 51aa7e3", age: "4 d" },
+			{ name: "acme-cdn", meta: "main · e93a6c0", age: ago(1440) },
+			{ name: "acme-status", meta: "main · 51aa7e3", age: ago(5760) },
 		],
 	},
 ];

@@ -19,8 +19,10 @@ import { Screen } from "../../components/screen/index.tsx";
 import { Section } from "../../components/section/index.tsx";
 import { Split } from "../../components/split/index.tsx";
 import { Toolbar } from "../../components/toolbar/index.tsx";
+import { age } from "../../lib/age.ts";
 import { confirm } from "../../lib/confirm.ts";
 import { toast } from "../../lib/toast.ts";
+import { ago } from "../ago.ts";
 import { DeployChanges } from "./changes.tsx";
 import { act, HereContext, settle, useFixture, useTo } from "./here.ts";
 
@@ -46,7 +48,7 @@ const DEPLOYS: Deploy[] = [
 		message: "Cache build output between deploys",
 		branch: "main",
 		commit: "a41c9e2",
-		age: "2 min",
+		age: ago(2),
 		state: "active",
 		env: PRODUCTION,
 	},
@@ -56,7 +58,7 @@ const DEPLOYS: Deploy[] = [
 		message: "Move image resizing to the edge",
 		branch: "preview/img-edge",
 		commit: "7d0e2b1",
-		age: "18 min",
+		age: ago(18),
 		state: "done",
 		env: PREVIEW,
 	},
@@ -66,7 +68,7 @@ const DEPLOYS: Deploy[] = [
 		message: "Pin wrangler to 4.12",
 		branch: "main",
 		commit: "0c5e4aa",
-		age: "1 h",
+		age: ago(60),
 		state: "failed",
 		env: PRODUCTION,
 	},
@@ -76,7 +78,7 @@ const DEPLOYS: Deploy[] = [
 		message: "Add Frankfurt to the region list",
 		branch: "preview/regions",
 		commit: "b71d0e2",
-		age: "3 h",
+		age: ago(180),
 		state: "waiting",
 		env: PREVIEW,
 	},
@@ -86,7 +88,7 @@ const DEPLOYS: Deploy[] = [
 		message: "Nightly rebuild",
 		branch: "main",
 		commit: "e93a6c0",
-		age: "1 d",
+		age: ago(1440),
 		state: "done",
 		env: PRODUCTION,
 	},
@@ -219,7 +221,7 @@ function Record(props: { deploy: Deploy }) {
 						},
 					},
 					deploy.author,
-					`${deploy.age} ago`,
+					age(deploy.age),
 					{ count: 3, label: "Checks" },
 				]}
 			/>

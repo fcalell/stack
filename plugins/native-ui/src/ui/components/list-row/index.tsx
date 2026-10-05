@@ -31,6 +31,8 @@ import {
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, useContext, useMemo } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
+import { ageShort } from "../../lib/age";
+import { useClock } from "../../lib/clock";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { FieldDisabled, FieldError, InlineField } from "../../lib/field";
@@ -288,8 +290,14 @@ function ActButton(props: {
 	);
 }
 
-function trailingWord(trailing: RowTrailing<string | null>): string {
-	if ("age" in trailing) return trailing.age;
+// A trailing age's short words, read off the shared clock: the row draws
+// again only when they change.
+function Age(props: { moment: string }) {
+	return useClock((now) => ageShort(props.moment, now));
+}
+
+function trailingWord(trailing: RowTrailing<string | null>): ReactNode {
+	if ("age" in trailing) return <Age moment={trailing.age} />;
 	if ("count" in trailing) return String(trailing.count);
 	if ("value" in trailing) return trailing.value;
 	return "";

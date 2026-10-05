@@ -4,6 +4,7 @@ import { Input } from "../../components/input/index.tsx";
 import { List } from "../../components/list/index.tsx";
 import { Place } from "../../components/place/index.tsx";
 import { Section } from "../../components/section/index.tsx";
+import { ago } from "../ago.ts";
 import type { ShowcaseFrame } from "../cells.ts";
 import { queryOf } from "./layout-context.tsx";
 import { Column } from "./place.tsx";
@@ -28,9 +29,14 @@ const NOTES: Note[] = [
 ];
 
 const DEPLOYS: Deploy[] = [
-	{ id: "d1", author: "Ana Ruiz", message: "Fix invoice rounding", age: "2 h" },
-	{ id: "d2", author: "Ben Kaya", message: "Export cohorts", age: "5 h" },
-	{ id: "d3", author: "Ema Okafor", message: "Retry webhooks", age: "1 d" },
+	{
+		id: "d1",
+		author: "Ana Ruiz",
+		message: "Fix invoice rounding",
+		age: ago(120),
+	},
+	{ id: "d2", author: "Ben Kaya", message: "Export cohorts", age: ago(300) },
+	{ id: "d3", author: "Ema Okafor", message: "Retry webhooks", age: ago(1440) },
 ];
 
 interface HostKey {

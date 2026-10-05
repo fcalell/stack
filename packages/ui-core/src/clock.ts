@@ -45,6 +45,22 @@ const UNITS: ReadonlyArray<readonly [Intl.RelativeTimeFormatUnit, number]> = [
 	["year", Number.POSITIVE_INFINITY],
 ];
 
+// An ISO moment's age from `now`: the nearest whole `value` of the largest
+// `unit` it spans, negative before now; null when the moment does not parse.
+export function ageOf(
+	moment: string,
+	now: number,
+): { value: number; unit: Intl.RelativeTimeFormatUnit } | null {
+	const at = Date.parse(moment);
+	if (Number.isNaN(at)) return null;
+	let value = (at - now) / 1000;
+	for (const [unit, size] of UNITS) {
+		if (Math.abs(value) < size) return { value: Math.round(value), unit };
+		value /= size;
+	}
+	return null;
+}
+
 // An ISO moment as its age from now ("2 minutes ago", "yesterday") in the
 // words `format` speaks; a moment that does not parse reads as itself.
 export function ageWords(
@@ -52,12 +68,22 @@ export function ageWords(
 	now: number,
 	format: Intl.RelativeTimeFormat,
 ): string {
-	const at = Date.parse(moment);
-	if (Number.isNaN(at)) return moment;
-	let value = (at - now) / 1000;
-	for (const [unit, size] of UNITS) {
-		if (Math.abs(value) < size) return format.format(Math.round(value), unit);
-		value /= size;
-	}
-	return moment;
+	const age = ageOf(moment, now);
+	return age ? format.format(age.value, age.unit) : moment;
+}
+
+// An ISO moment as its short age ("2 min", "16 sec"), each unit worded by
+// the platform's unit formatter `unit` returns. A moment after now keeps the
+// long form from `long`, since a short "2 min" cannot say "in"; one that does
+// not parse reads as itself.
+export function ageShort(
+	moment: string,
+	now: number,
+	unit: (unit: Intl.RelativeTimeFormatUnit) => Intl.NumberFormat,
+	long: Intl.RelativeTimeFormat,
+): string {
+	const age = ageOf(moment, now);
+	if (!age) return moment;
+	if (age.value > 0) return long.format(age.value, age.unit);
+	return unit(age.unit).format(Math.abs(age.value));
 }
