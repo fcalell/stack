@@ -305,6 +305,13 @@ Back, never Retry: Back goes to the enclosing `Screen`'s `back`, else to the pla
 with neither there is no act. Pass the `useQuery` result whole so its `error` arrives; a record
 opened by an address after it was removed then needs no screen of its own.
 
+A missing state decided from data (a record the loaded list lacks, an address nothing serves) is
+a `Missing`, never an `EmptyState`: its `sentence` defaults to the `missing` word and its `act` is
+a `LinkAct` (`{ label, href }`, a way back) defaulting to the same Back, drawn as the hairline
+act with no plus. An `EmptyState`'s act is the create act. A catch-all route composes `<Place
+title="Not found"><Missing sentence="Nothing is at this address." act={{ label: "Open Now", href:
+"/" }} /></Place>`.
+
 A `Table` takes its data the same way: `query` with `sentence`, or `items`; each column reads its
 cell from the item by `cell`, and `row` gives the row's `id`, `href`, `locked`, `warning` (what is
 wrong with it, drawn after its name) and `change` (where it stands in a change set, its mark ahead

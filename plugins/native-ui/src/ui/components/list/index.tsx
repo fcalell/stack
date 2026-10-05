@@ -40,13 +40,13 @@ import { DefinitionRow } from "../definition-row";
 import { DefinitionWait } from "../definition-row/wait";
 import type { EmptyStateProps } from "../empty-state";
 import { EmptyStateBase } from "../empty-state/base";
-import { Missing } from "../empty-state/missing";
 import { FileRow } from "../file-row";
 import { FileWait } from "../file-row/wait";
 import { ListRow } from "../list-row";
 import { RowWait, WAITING_ROWS } from "../list-row/wait";
 import { Meter } from "../meter";
 import { MeterWait } from "../meter/wait";
+import { Missing } from "../missing";
 import type { QueryLike } from "../query-boundary";
 
 const WAITING = Array.from({ length: WAITING_ROWS }, (_, index) => index);

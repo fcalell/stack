@@ -1741,6 +1741,33 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				sizes: ["empty", "control", "control-compact", "icon-control"],
 			},
 		},
+		// The EmptyState's missing form, at rest ink with no mark: the sentence
+		// at meta (the `missing` word unless given) and the way back, the
+		// hairline act with no plus (the Back of the Screen or Place unless
+		// given), in the EmptyState's frames, so it draws the EmptyState's
+		// cells less the create act and the title role.
+		Missing: {
+			props: ["sentence", "act"],
+			draws: [
+				"EMPTY_COLUMN",
+				"EMPTY_TEXT",
+				"EMPTY_FRAME",
+				"EMPTY_CARD",
+				"TEXT.role.meta",
+				"BUTTON.act.secondary",
+				"BUTTON.fit.bar",
+				"BUTTON.fit.body",
+				"BUTTON_LABEL.act.secondary",
+			],
+			states: ["rest"],
+			owns: {
+				roles: ["body", "meta"],
+				colors: ["edge", "ink-body", "ink-meta"],
+				radii: ["card", "control"],
+				spacing: ["fields", "pair", "card", "inside", "control-x"],
+				sizes: ["empty", "control", "control-compact"],
+			},
+		},
 		// Loading, the body's own loading form (`loading`), else the loading
 		// form of the Group or List it composes (a Section's busy head through
 		// the Section either way); failed, the EmptyState's failed form with its

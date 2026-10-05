@@ -24,9 +24,9 @@ import { Strut } from "../../lib/strut";
 import { useWords } from "../../lib/words";
 import { Chip } from "../chip";
 import { EmptyStateBase } from "../empty-state/base";
-import { Missing } from "../empty-state/missing";
 import { Group } from "../group";
 import type { ListSource } from "../list";
+import { Missing } from "../missing";
 import { Status } from "../status";
 import { StatusBase } from "../status/base";
 

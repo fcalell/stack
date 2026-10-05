@@ -23,9 +23,9 @@ import { SectionContext } from "../../lib/section.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Chip } from "../chip/index.tsx";
 import { EmptyStateBase } from "../empty-state/base.tsx";
-import { Missing } from "../empty-state/missing.tsx";
 import { Group } from "../group/index.tsx";
 import type { ListSource } from "../list/index.tsx";
+import { Missing } from "../missing/index.tsx";
 import { StatusBase } from "../status/base.tsx";
 import { Status } from "../status/index.tsx";
 

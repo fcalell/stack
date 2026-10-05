@@ -1064,9 +1064,15 @@ a tick with no animation, never jumped to full.
   for such a query, and `boundaryState` makes a `QueryBoundary` draw it when every failed query
   answers not found (one that failed otherwise keeps Retry). Every collection that takes `query`
   (List, Table, Thread, Comparison, BarChart) and the boundary draw the missing form
-  (`empty-state/missing.tsx`): the EmptyState at rest ink with no mark, the word `missing`
+  (`missing/base.tsx`): the EmptyState at rest ink with no mark, the word `missing`
   ("This no longer exists.") and Back, the hairline act with no plus (a Back is no create act,
-  as Retry is not; the base's internal `missing` tone carries it), never Retry. An OptionList
+  as Retry is not; the base's internal `missing` tone carries it), never Retry. The form is
+  public as `Missing` (`sentence?`, `act?: LinkAct`) for a missing state decided from data (a
+  loaded list lacking the record, an address nothing serves): `LinkAct` is the act that goes to a
+  route (`{ label, href }`), the one descriptor both platforms carry, and the act defaults to
+  Back. Rejected: an `EmptyState` flag for the act's kind (a consumer option to pick a look) and
+  deriving it from `href` (a create act that navigates, "Add a repo", keeps its plus). `tone`
+  stays internal, as does `fill`. Stack drawing an unmatched address itself is not part of it. An OptionList
   draws it as its card's line, `missing` beside a secondary Back, as its failed line stands.
   Back goes to `BackRoute`, the enclosing `Screen`'s `back`, else to the Shell's `PlaceRoute`;
   with neither it draws no act. Going to a route is navigation, so on the web Back is an anchor
@@ -1376,7 +1382,7 @@ a tick with no animation, never jumped to full.
   Rejected: optional `value` and `onChange` on every control read from the field's context, which
   would compile a control with no value anywhere and could not type a boolean field against an
   `Input`.
-- The roster is data: `ROSTER` in `packages/ui-core/src/roster.ts` names 63 components in four
+- The roster is data: `ROSTER` in `packages/ui-core/src/roster.ts` names 64 components in four
   layers (atoms, layout molecules, shared molecules, content molecules) with their prop names, the
   cells each draws (a whole matrix family, one family cell as `FAMILY.axis.value`, or a single cell)
   and the states it has a form for, the same in both plugins; the showcase draws exactly those

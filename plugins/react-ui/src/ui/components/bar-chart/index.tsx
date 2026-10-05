@@ -29,8 +29,8 @@ import { LoadingContext } from "../../lib/loading.ts";
 import { SectionContext } from "../../lib/section.ts";
 import { useWords } from "../../lib/words.tsx";
 import { EmptyStateBase } from "../empty-state/base.tsx";
-import { Missing } from "../empty-state/missing.tsx";
 import type { ListEmpty } from "../list/index.tsx";
+import { MissingBase } from "../missing/base.tsx";
 import type { QueryLike } from "../query-boundary/index.tsx";
 
 const STACK = "flex flex-col min-w-0";
@@ -161,7 +161,7 @@ export function BarChart<T>(props: BarChartProps<T>) {
 	if (state === "missing")
 		return (
 			<Stand keys={keys}>
-				<Missing fill />
+				<MissingBase fill />
 			</Stand>
 		);
 	if (state === "failed" && props.query !== undefined)

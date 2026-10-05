@@ -1,5 +1,5 @@
 import { cn } from "@fcalell/ui-core/cn";
-import type { Act, IconName } from "@fcalell/ui-core/descriptors";
+import type { Act, IconName, LinkAct } from "@fcalell/ui-core/descriptors";
 import {
 	EMPTY_CARD,
 	EMPTY_COLUMN,
@@ -18,7 +18,6 @@ import { Button } from "../button/index.tsx";
 import { ButtonLink } from "../button/link.tsx";
 import { Icon } from "../icon/index.tsx";
 import { Text } from "../text/index.tsx";
-import type { BackLink } from "./missing.tsx";
 
 // Alone in a page body it fills what the body leaves and centres there;
 // with children it stands at the body's top, centred across it.
@@ -45,8 +44,8 @@ export function EmptyStateBase(props: {
 	icon?: IconName;
 	title?: string;
 	sentence: string;
-	// A missing read's Back goes to a route, so it is a link.
-	act?: Act | BackLink;
+	// A missing form's way back goes to a route, so it is a link.
+	act?: Act | LinkAct;
 	children?: ReactNode;
 	// The frame fills the box it stands in, its content centred there (a
 	// chart's loaded height).
@@ -157,7 +156,7 @@ export function EmptyStateBase(props: {
 // The empty state's act: a Button that runs it, or the hairline link a
 // missing read's Back is.
 function ActButton(props: {
-	act: Act | BackLink;
+	act: Act | LinkAct;
 	kind: "primary" | "secondary";
 	fit: "bar" | "body";
 	icon?: IconName;

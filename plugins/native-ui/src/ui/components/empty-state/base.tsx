@@ -1,4 +1,4 @@
-import type { Act, IconName } from "@fcalell/ui-core/descriptors";
+import type { Act, IconName, LinkAct } from "@fcalell/ui-core/descriptors";
 import {
 	EMPTY_CARD,
 	EMPTY_COLUMN,
@@ -14,6 +14,7 @@ import { cn } from "../../lib/cn";
 import { PageTitle } from "../../lib/frame";
 import { GroundContext } from "../../lib/ground";
 import { Ink } from "../../lib/ink";
+import { navigate } from "../../lib/navigate";
 import { SectionContext } from "../../lib/section";
 import { Button } from "../button";
 import { Icon } from "../icon";
@@ -44,7 +45,9 @@ export function EmptyStateBase(props: {
 	icon?: IconName;
 	title?: string;
 	sentence: string;
-	act?: Act;
+	// A missing form's way back goes to a route, so it presses through
+	// `navigate`.
+	act?: Act | LinkAct;
 	children?: ReactNode;
 	// The frame fills the box it stands in, its content centred there (a
 	// chart's loaded height).
@@ -92,13 +95,10 @@ export function EmptyStateBase(props: {
 			</View>
 		);
 		const button = act ? (
-			<Button
-				act={framed ? "secondary" : "primary"}
+			<ActButton
+				act={act}
+				kind={framed ? "secondary" : "primary"}
 				fit={framed ? "bar" : "body"}
-				label={act.label}
-				onAct={act.onAct}
-				loading={act.loading}
-				blocked={act.blocked}
 			/>
 		) : null;
 		if (framed)
@@ -148,14 +148,11 @@ export function EmptyStateBase(props: {
 			</View>
 			{/* A failed read's Retry and a missing one's Back are no create act: the hairline one, no plus. */}
 			{act ? (
-				<Button
-					act={create ? "primary" : "secondary"}
+				<ActButton
+					act={act}
+					kind={create ? "primary" : "secondary"}
 					fit="bar"
 					icon={create ? "Plus" : undefined}
-					label={act.label}
-					onAct={act.onAct}
-					loading={act.loading}
-					blocked={act.blocked}
 				/>
 			) : null}
 		</View>
@@ -166,5 +163,38 @@ export function EmptyStateBase(props: {
 			{column}
 			{props.children}
 		</>
+	);
+}
+
+// The empty state's act: a Button that runs it, or the hairline one that goes
+// to the route a missing form's way back names.
+function ActButton(props: {
+	act: Act | LinkAct;
+	kind: "primary" | "secondary";
+	fit: "bar" | "body";
+	icon?: IconName;
+}) {
+	const { act } = props;
+	if ("href" in act) {
+		const { href } = act;
+		return (
+			<Button
+				act="secondary"
+				fit={props.fit}
+				label={act.label}
+				onAct={() => navigate(href)}
+			/>
+		);
+	}
+	return (
+		<Button
+			act={props.kind}
+			fit={props.fit}
+			icon={props.icon}
+			label={act.label}
+			onAct={act.onAct}
+			loading={act.loading}
+			blocked={act.blocked}
+		/>
 	);
 }

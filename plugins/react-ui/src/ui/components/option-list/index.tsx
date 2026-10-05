@@ -43,7 +43,7 @@ import { Button } from "../button/index.tsx";
 import { ButtonLink } from "../button/link.tsx";
 import { Checkbox } from "../checkbox/index.tsx";
 import { Chip } from "../chip/index.tsx";
-import { useBackAct } from "../empty-state/missing.tsx";
+import { useBackAct } from "../missing/base.tsx";
 import type { QueryLike } from "../query-boundary/index.tsx";
 
 const LIST = "flex flex-col";

@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import type { Closed } from "../../lib/closed";
 import { useWords } from "../../lib/words";
 import { EmptyStateBase } from "../empty-state/base";
-import { Missing } from "../empty-state/missing";
+import { Missing } from "../missing";
 
 // The part of a TanStack query result a boundary reads; a `useQuery` result
 // is one. A failed read's `error` that answers not found draws the missing

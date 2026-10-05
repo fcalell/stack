@@ -33,6 +33,7 @@ import { drawMenu } from "./frames/menu.tsx";
 import { drawMessage } from "./frames/message.tsx";
 import { drawMessageInput } from "./frames/message-input.tsx";
 import { drawMeter } from "./frames/meter.tsx";
+import { drawMissing } from "./frames/missing.tsx";
 import { drawOptionList } from "./frames/option-list.tsx";
 import { drawPendingBar } from "./frames/pending-bar.tsx";
 import { drawPicker } from "./frames/picker.tsx";
@@ -111,6 +112,7 @@ export const registry: Partial<
 	Menu: drawMenu,
 	OptionList: drawOptionList,
 	EmptyState: drawEmptyState,
+	Missing: drawMissing,
 	QueryBoundary: drawQueryBoundary,
 	Toast: drawToast,
 	Banner: drawBanner,

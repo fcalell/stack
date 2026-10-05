@@ -36,12 +36,13 @@ import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { GroupName, LabelTarget } from "../../lib/field";
+import { navigate } from "../../lib/navigate";
 import { Strut } from "../../lib/strut";
 import { useWords } from "../../lib/words";
 import { Button } from "../button";
 import { Checkbox } from "../checkbox";
 import { Chip } from "../chip";
-import { useBackAct } from "../empty-state/missing";
+import { useBackAct } from "../missing/base";
 import type { QueryLike } from "../query-boundary";
 
 // The row is the target of its box or radio: a press anywhere toggles or
@@ -269,7 +270,7 @@ export function OptionList<V extends string = string, T = unknown>(
 						act="secondary"
 						fit="bar"
 						label={back.label}
-						onAct={back.onAct}
+						onAct={() => navigate(back.href)}
 					/>
 				) : null}
 			</View>,

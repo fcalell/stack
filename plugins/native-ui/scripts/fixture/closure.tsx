@@ -42,6 +42,7 @@ import { Sheet } from "@fcalell/plugin-native-ui/components/sheet";
 import { Picker } from "@fcalell/plugin-native-ui/components/picker";
 import { OptionList } from "@fcalell/plugin-native-ui/components/option-list";
 import { EmptyState } from "@fcalell/plugin-native-ui/components/empty-state";
+import { Missing } from "@fcalell/plugin-native-ui/components/missing";
 import { Toast } from "@fcalell/plugin-native-ui/components/toast";
 import { Banner } from "@fcalell/plugin-native-ui/components/banner";
 import { PendingBar } from "@fcalell/plugin-native-ui/components/pending-bar";
@@ -675,6 +676,18 @@ export const closure = (
 		<EmptyState sentence="a" selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
 		<EmptyState sentence="a" placeholderTextColorClassName="text-ink-body" />
+		<Missing />
+		<Missing sentence="a" act={{ label: "a", href: "/" }} />
+		{/* @ts-expect-error: closed channel */}
+		<Missing className="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Missing style={{ flex: 1 }} />
+		{/* @ts-expect-error: closed channel */}
+		<Missing class="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Missing classList={{}} />
+		{/* @ts-expect-error: closed channel */}
+		<Missing colorClassName="text-ink-body" />
 		<Toast sentence="a" />
 		{/* @ts-expect-error: closed channel */}
 		<Toast sentence="a" className="x" />

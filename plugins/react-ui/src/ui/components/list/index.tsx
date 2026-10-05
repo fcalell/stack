@@ -49,13 +49,13 @@ import { DefinitionRow } from "../definition-row/index.tsx";
 import { DefinitionWait } from "../definition-row/wait.tsx";
 import { EmptyStateBase } from "../empty-state/base.tsx";
 import type { EmptyStateProps } from "../empty-state/index.tsx";
-import { Missing } from "../empty-state/missing.tsx";
 import { FileRow } from "../file-row/index.tsx";
 import { FileWait } from "../file-row/wait.tsx";
 import { ListRow } from "../list-row/index.tsx";
 import { RowWait, WAITING_ROWS } from "../list-row/wait.tsx";
 import { Meter } from "../meter/index.tsx";
 import { MeterWait } from "../meter/wait.tsx";
+import { Missing } from "../missing/index.tsx";
 import type { QueryLike } from "../query-boundary/index.tsx";
 
 const STACK = "flex flex-col";

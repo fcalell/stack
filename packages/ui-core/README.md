@@ -456,7 +456,7 @@ The canon binds every component either UI plugin ships:
 
 ## The roster
 
-`ROSTER` in `@fcalell/ui-core/roster` is the closed list: 63 components in four layers (atoms,
+`ROSTER` in `@fcalell/ui-core/roster` is the closed list: 64 components in four layers (atoms,
 layout molecules, shared molecules, content molecules), each with its prop names, the cells it draws
 (`draws`: a `FAMILIES` name for every cell of that family, `FAMILY.axis.value` for one of its cells,
 as `Text` draws `TEXT.role.body`, or a single-cell constant of `./variants`) and the states it has a

@@ -32,9 +32,9 @@ import { PageTitle, ThreadBleeds, ThreadRoom } from "../../lib/frame.ts";
 import { useTouch } from "../../lib/media.ts";
 import { useWords } from "../../lib/words.tsx";
 import { EmptyStateBase } from "../empty-state/base.tsx";
-import { Missing } from "../empty-state/missing.tsx";
 import type { ListEmpty } from "../list/index.tsx";
 import { Message } from "../message/index.tsx";
+import { Missing } from "../missing/index.tsx";
 import type { QueryLike } from "../query-boundary/index.tsx";
 import { Latest } from "./latest.tsx";
 

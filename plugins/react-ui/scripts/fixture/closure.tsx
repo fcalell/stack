@@ -32,6 +32,7 @@ import { Link } from "@fcalell/plugin-react-ui/components/link";
 import { Message } from "@fcalell/plugin-react-ui/components/message";
 import { MessageInput } from "@fcalell/plugin-react-ui/components/message-input";
 import { Meter } from "@fcalell/plugin-react-ui/components/meter";
+import { Missing } from "@fcalell/plugin-react-ui/components/missing";
 import { Stat } from "@fcalell/plugin-react-ui/components/stat";
 import { Stats } from "@fcalell/plugin-react-ui/components/stats";
 import { PendingBar } from "@fcalell/plugin-react-ui/components/pending-bar";
@@ -454,6 +455,16 @@ export const closure = (
 		<EmptyState sentence="x" class="x" />
 		{/* @ts-expect-error: closed channel */}
 		<EmptyState sentence="x" classList={{}} />
+		<Missing />
+		<Missing sentence="x" act={{ label: "x", href: "/" }} />
+		{/* @ts-expect-error: closed channel */}
+		<Missing className="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Missing style={{ flex: 1 }} />
+		{/* @ts-expect-error: closed channel */}
+		<Missing class="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Missing classList={{}} />
 		<QueryBoundary query={{ data: 1, isPending: false, isError: false, refetch: () => {} }} sentence="x" children={() => null} loading={null} />
 		<QueryBoundary query={{ data: 1, isPending: true, isError: false, refetch: () => {} }} sentence="x" children={() => null} loading={<List items={[]} loading row={{ key: String, title: String }} />} />
 		{/* @ts-expect-error: a QueryBoundary names its loading form */}

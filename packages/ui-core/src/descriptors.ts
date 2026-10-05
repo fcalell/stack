@@ -26,6 +26,13 @@ export interface Act {
 	quiet?: boolean;
 }
 
+// An act that goes to a route: a link on the web and a press that navigates on
+// the phone. A `Missing`'s way back is one; it is no create act.
+export interface LinkAct {
+	label: string;
+	href: Route;
+}
+
 // An icon-only act: the label is read aloud, never drawn.
 export interface IconAct {
 	icon: IconName;

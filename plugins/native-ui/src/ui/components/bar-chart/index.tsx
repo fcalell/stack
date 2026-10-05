@@ -31,8 +31,8 @@ import { SectionContext } from "../../lib/section";
 import { Strut } from "../../lib/strut";
 import { useWords } from "../../lib/words";
 import { EmptyStateBase } from "../empty-state/base";
-import { Missing } from "../empty-state/missing";
 import type { ListEmpty } from "../list";
+import { MissingBase } from "../missing/base";
 import type { QueryLike } from "../query-boundary";
 
 const STACK = "min-w-0";
@@ -183,7 +183,7 @@ export function BarChart<T>(props: BarChartProps<T>) {
 	if (state === "missing")
 		return (
 			<Stand keys={keys}>
-				<Missing fill />
+				<MissingBase fill />
 			</Stand>
 		);
 	if (state === "failed" && props.query !== undefined)
