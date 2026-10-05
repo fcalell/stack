@@ -7,6 +7,10 @@ import type {
 	TableRowSlots,
 } from "@fcalell/ui-core/descriptors";
 import {
+	changeKind,
+	changeMeta,
+	changeReading,
+	isChangeCell,
 	listState,
 	retryOf,
 	type TableRecord,
@@ -17,10 +21,12 @@ import {
 	FIGURES,
 	skeleton,
 	TABLE_CELL,
+	TABLE_CHANGE,
 	TABLE_EMPTY,
 	TABLE_FRAME,
 	TABLE_FROZEN,
 	type TableRowState,
+	tableChangeValue,
 	tableFrozenCell,
 	tableHead,
 	tableHeadLabel,
@@ -165,6 +171,7 @@ function optionsOf(column: TableColumn): readonly Option<string | null>[] {
 function shown(column: TableColumn, cell: TableCell | undefined): string {
 	if (cell === null || cell === undefined || typeof cell === "boolean")
 		return "";
+	if (isChangeCell(cell)) return cell.after ?? "";
 	if (typeof cell === "object") return cell.label ?? "";
 	if (column.kind === "age") return age(String(cell));
 	const option = optionsOf(column).find((o) => o.value === cell);
@@ -178,6 +185,7 @@ function order(
 	if (cell === null || cell === undefined) return "";
 	if (typeof cell === "boolean") return cell ? 1 : 0;
 	if (typeof cell === "number") return cell;
+	if (isChangeCell(cell)) return cell.after ?? "";
 	if (typeof cell === "object") return cell.label ?? cell.status;
 	if (column.kind === "age") return Date.parse(cell);
 	return shown(column, cell);
@@ -725,6 +733,7 @@ function CellValueView(props: {
 	cell: TableCell | undefined;
 }) {
 	const { column, cell } = props;
+	const words = useWords();
 	if (cell === null || cell === undefined) return null;
 	switch (column.kind) {
 		case "check":
@@ -744,6 +753,51 @@ function CellValueView(props: {
 		case "status": {
 			const status = cell as StatusCell;
 			return <StatusBase state={status.status} label={status.label} />;
+		}
+		case "change": {
+			if (!isChangeCell(cell)) return null;
+			const kind = changeKind(cell);
+			if (kind === undefined) return null;
+			// The words read it whole; the glyph and values only draw it.
+			return (
+				<View
+					accessible
+					accessibilityLabel={changeReading(cell, words)}
+					className={cn(CELL, TABLE_CHANGE)}
+				>
+					{cell.before !== null && (
+						<RNText
+							numberOfLines={1}
+							className={cn(
+								tableChangeValue({
+									kind: kind === "removed" ? "removed" : "before",
+								}),
+								VALUE,
+							)}
+						>
+							{cell.before}
+						</RNText>
+					)}
+					{kind === "changed" && (
+						<Ink.Provider value="ink-meta">
+							<Icon name="ArrowRight" fit="meta" />
+						</Ink.Provider>
+					)}
+					{cell.after !== null && (
+						<RNText
+							numberOfLines={1}
+							className={cn(
+								tableChangeValue({
+									kind: kind === "added" ? "added" : "after",
+								}),
+								VALUE,
+							)}
+						>
+							{cell.after}
+						</RNText>
+					)}
+				</View>
+			);
 		}
 		case "chip":
 			return (
@@ -926,6 +980,7 @@ function Phone(props: {
 							const at = cell(record, column);
 							if (column.kind === "check")
 								return at === true ? column.label : "";
+							if (isChangeCell(at)) return changeMeta(at, words);
 							if (column.kind === "number" && at !== null && at !== undefined)
 								return `${column.label} ${at}`;
 							return shown(column, at);
@@ -944,7 +999,9 @@ function Phone(props: {
 			? (record) => {
 					const state = cell(record, status);
 					// A status cell is the one object a cell holds.
-					return typeof state === "object" && state !== null
+					return typeof state === "object" &&
+						state !== null &&
+						"status" in state
 						? {
 								state: state.status,
 								label: state.label ?? words[state.status],

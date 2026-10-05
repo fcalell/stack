@@ -3,6 +3,7 @@
 // platforms run this one source, and it is tested without rendering.
 
 import type {
+	ChangeCell,
 	Option,
 	OptionGroup,
 	Route,
@@ -10,6 +11,7 @@ import type {
 	TableColumn,
 	TableRowSlots,
 } from "./descriptors.ts";
+import { filled, type Words } from "./tokens.ts";
 import type { RowGround } from "./variants.ts";
 
 export type ListState = "pending" | "failed" | "missing" | "empty" | "loaded";
@@ -443,4 +445,53 @@ export function tableRecords<T>(
 			columns.map((column) => [column.key, column.cell(item)]),
 		),
 	}));
+}
+
+// What a change cell is: both values, a value added (no before) or removed (no
+// after); none when it holds neither, drawing nothing.
+export type ChangeKind = "changed" | "added" | "removed";
+
+// A table cell that holds a change (the object with a `before`, as a status
+// cell is the one with a `status`).
+export function isChangeCell(cell: TableCell | undefined): cell is ChangeCell {
+	return typeof cell === "object" && cell !== null && "before" in cell;
+}
+
+export function changeKind(cell: ChangeCell): ChangeKind | undefined {
+	if (cell.before !== null && cell.after !== null) return "changed";
+	if (cell.after !== null) return "added";
+	if (cell.before !== null) return "removed";
+	return undefined;
+}
+
+// A change cell read aloud: "from X to Y", or the word added or removed
+// before the one value it holds.
+export function changeReading(
+	cell: ChangeCell,
+	words: Pick<Words, "changed" | "added" | "removed">,
+): string {
+	switch (changeKind(cell)) {
+		case "changed":
+			return filled(words.changed, {
+				before: cell.before ?? "",
+				after: cell.after ?? "",
+			});
+		case "added":
+			return `${words.added} ${cell.after}`;
+		case "removed":
+			return `${words.removed} ${cell.before}`;
+		default:
+			return "";
+	}
+}
+
+// A change cell as a touch row's meta part: "X → Y", or its reading when one
+// value stands alone.
+export function changeMeta(
+	cell: ChangeCell,
+	words: Pick<Words, "changed" | "added" | "removed">,
+): string {
+	return changeKind(cell) === "changed"
+		? `${cell.before} → ${cell.after}`
+		: changeReading(cell, words);
 }

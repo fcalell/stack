@@ -126,7 +126,7 @@ pinned by the package's verify suite; this entry holds the architecture and its 
 ## Words
 
 Every word a molecule draws or reads aloud on its own (the seven `Status` words, `recommended`,
-`copy`, `copied`, `download`, `back`, `close`, `cancel`, `dismiss`, `more`, `send`, `stop`, `attach`, `search`, `loading`, `checking`, `retry`, `saving`, `saved`, `notSaved`, `add`, `remove`, `details`, `places`, `notifications`, `code`, `added`, `removed`, `sort`, `ascending`, `descending`, `time`, `message`, `seen`, `unseen`, `copyFailed`, `latest`, `missing`, the counted `earlierLines`, and the slot words `meterValue`, `meterOver`, `linesAdded` and `linesRemoved`) comes
+`copy`, `copied`, `download`, `back`, `close`, `cancel`, `dismiss`, `more`, `send`, `stop`, `attach`, `search`, `loading`, `checking`, `retry`, `saving`, `saved`, `notSaved`, `add`, `remove`, `details`, `places`, `notifications`, `code`, `added`, `removed`, `sort`, `ascending`, `descending`, `time`, `message`, `seen`, `unseen`, `copyFailed`, `latest`, `missing`, the counted `earlierLines`, and the slot words `meterValue`, `meterOver`, `linesAdded`, `linesRemoved` and `changed`) comes
 from `words`, a closed typed object with English defaults. The `Words` type requires every key
 and `wordsSchema` is strict, so a translation missing a word fails `tsc` and the schema. It is a
 plugin option beside `theme`; each plugin contributes a `WordsProvider` into the generated entry
@@ -479,6 +479,15 @@ a tick with no animation, never jumped to full.
   its column's label. Where the grid scrolls sideways its leading column stays: the frozen cell
   on the surface (`TABLE_FROZEN`), its content carrying its end hairline and the row's wash
   (`TABLE_FROZEN_CELL`).
+  A `change` column holds a `ChangeCell` (`{ before, after }`, either null), read only and sorted
+  by its `after`. A kind beats a cell-level flag: the kind is how the Table types every cell, and
+  the touch row spells its meta part from it ("X → Y"). The cell draws `before` in the meta ink,
+  an `ArrowRight` and `after` in the body ink, neither tinted, since a changed value is no
+  verdict; only a value added (null `before`) takes `ok-soft` and one removed (null `after`)
+  `danger-soft`, struck, each a chip-radius pill (`TABLE_CHANGE`, `TABLE_CHANGE_VALUE`). It reads
+  aloud through the slot word `changed` ("from X to Y"), or `added` or `removed` before the one
+  value it holds. Rejected: tinting `after` for any change (a rename is not good news), and a
+  Comparison column (that sets facts side by side, not one value's movement).
   A grid re-renders only the rows and cells whose state changed: rows and cells are memoised
   components fed per-cell values and one stable set of callbacks. On the web a cell holds the
   pointer's hover itself (an editable cell under the pointer shows its control), so a pointer

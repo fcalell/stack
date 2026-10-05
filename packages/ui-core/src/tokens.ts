@@ -1135,6 +1135,7 @@ export const SLOT_WORDS = {
 	meterOver: ["amount"],
 	linesAdded: ["count"],
 	linesRemoved: ["count"],
+	changed: ["before", "after"],
 } as const satisfies Record<string, readonly string[]>;
 export type SlotWordKey = keyof typeof SLOT_WORDS;
 // `Object.keys` widens to `string`; the keys are the record's own.
@@ -1197,6 +1198,7 @@ export const ENGLISH: Words = {
 	meterOver: "{amount} over",
 	linesAdded: "{count} added",
 	linesRemoved: "{count} removed",
+	changed: "from {before} to {after}",
 };
 
 // A slot word with its values: `filled(words.meterValue, { value, max })`.

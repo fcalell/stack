@@ -489,6 +489,23 @@ export const TABLE_FROZEN_CELL = matrix({
 	defaultVariants: { state: "rest" },
 });
 
+// A change cell's value at the body role: the old value in the meta ink and
+// the new in the body ink, neither tinted; an added value on `ok-soft` and a
+// removed one on `danger-soft`, struck, each a soft pill.
+export const TABLE_CHANGE_VALUE = matrix({
+	base: "text-body leading-body font-normal",
+	variants: {
+		kind: {
+			before: "text-ink-meta",
+			after: "text-ink-body",
+			added: "rounded-chip bg-ok-soft px-inside text-ink-body",
+			removed:
+				"rounded-chip bg-danger-soft px-inside text-ink-body line-through",
+		},
+	},
+	defaultVariants: { kind: "after" },
+});
+
 // ── Segmented control ───────────────────────────────────────────────
 
 // A segment flush in its track at the compact control's height, selected

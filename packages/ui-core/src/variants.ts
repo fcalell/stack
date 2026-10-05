@@ -59,6 +59,7 @@ import {
 	STATUS_DOT,
 	SWITCH,
 	SWITCH_THUMB,
+	TABLE_CHANGE_VALUE,
 	TABLE_FROZEN_CELL,
 	TABLE_HEAD,
 	TABLE_HEAD_LABEL,
@@ -123,6 +124,7 @@ export const tableRow = build(TABLE_ROW);
 export const tableHead = build(TABLE_HEAD);
 export const tableHeadLabel = build(TABLE_HEAD_LABEL);
 export const tableFrozenCell = build(TABLE_FROZEN_CELL);
+export const tableChangeValue = build(TABLE_CHANGE_VALUE);
 export const segment = build(SEGMENT);
 export const segmentLabel = build(SEGMENT_LABEL);
 export const picker = build(PICKER);
@@ -217,6 +219,7 @@ export const FAMILIES: readonly Family[] = [
 	family("TABLE_HEAD", TABLE_HEAD, tableHead),
 	family("TABLE_HEAD_LABEL", TABLE_HEAD_LABEL, tableHeadLabel),
 	family("TABLE_FROZEN_CELL", TABLE_FROZEN_CELL, tableFrozenCell),
+	family("TABLE_CHANGE_VALUE", TABLE_CHANGE_VALUE, tableChangeValue),
 	family("SEGMENT", SEGMENT, segment),
 	family("SEGMENT_LABEL", SEGMENT_LABEL, segmentLabel),
 	family("PICKER", PICKER, picker),
@@ -511,11 +514,14 @@ export const COMPARISON_LABEL = "gap-inside";
 // edits it in place (the field's bar fit) puts its text where the cell's
 // stands. The frozen leading column's cell stands on the surface. An empty
 // grid's EmptyState stands a page inset under its header, across its width.
+// A change cell's values and the arrow between them stand an inside gap
+// apart, the arrow in the meta ink (the values' inks are `TABLE_CHANGE_VALUE`).
 export const TABLE_FRAME = "-mx-control-x";
 export const TABLE = "text-body";
 export const TABLE_CELL = "min-h-row border-x border-transparent px-control-x";
 export const TABLE_FROZEN = "bg-surface";
 export const TABLE_EMPTY = "pt-page";
+export const TABLE_CHANGE = "gap-inside text-ink-meta";
 // Message: yours in a bubble on the group ground; the name beside the time;
 // a system line's words beside its time, wrapping; the line that opens, a
 // pill at the target height with the pointer's washes. Under a system line,

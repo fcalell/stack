@@ -1,5 +1,6 @@
 import type {
 	CellValue,
+	ChangeCell,
 	StatusCell,
 	TableColumn,
 } from "@fcalell/ui-core/descriptors";
@@ -24,10 +25,12 @@ interface Task {
 	retries: number;
 	alerts: boolean;
 	last: StatusCell;
+	timeout: ChangeCell;
 	updated: string;
 }
 
-// Board 52's columns, one of each kind.
+// Board 52's columns, one of each kind, its timeout a value changed, added or
+// removed.
 const COLUMNS: TableColumn<Task>[] = [
 	{
 		key: "task",
@@ -84,6 +87,14 @@ const COLUMNS: TableColumn<Task>[] = [
 		cell: (task) => task.last,
 	},
 	{
+		key: "timeout",
+		label: "Timeout",
+		kind: "change",
+		width: "measure-short",
+		sortable: true,
+		cell: (task) => task.timeout,
+	},
+	{
 		key: "updated",
 		label: "Updated",
 		kind: "age",
@@ -110,6 +121,7 @@ const TASKS: Task[] = [
 		retries: 3,
 		alerts: true,
 		last: { status: "done", label: "Succeeded" },
+		timeout: { before: "30s", after: "60s" },
 		updated: ago(2),
 	},
 	{
@@ -120,6 +132,7 @@ const TASKS: Task[] = [
 		retries: 5,
 		alerts: true,
 		last: { status: "active", label: "Running" },
+		timeout: { before: "1m", after: "2m" },
 		updated: ago(6),
 	},
 	{
@@ -130,6 +143,7 @@ const TASKS: Task[] = [
 		retries: 1,
 		alerts: false,
 		last: { status: "failed", label: "Failed" },
+		timeout: { before: null, after: "5m" },
 		updated: ago(60),
 	},
 	{
@@ -140,6 +154,7 @@ const TASKS: Task[] = [
 		retries: 0,
 		alerts: false,
 		last: { status: "idle", label: "Paused" },
+		timeout: { before: "10m", after: null },
 		updated: ago(180),
 	},
 	{
@@ -150,6 +165,7 @@ const TASKS: Task[] = [
 		retries: 2,
 		alerts: true,
 		last: { status: "waiting", label: "Queued" },
+		timeout: { before: "45s", after: "90s" },
 		updated: ago(60 * 26),
 	},
 	{
@@ -160,6 +176,7 @@ const TASKS: Task[] = [
 		retries: 3,
 		alerts: true,
 		last: { status: "attention", label: "Slow" },
+		timeout: { before: "2m", after: "3m" },
 		updated: ago(60 * 48),
 	},
 ];

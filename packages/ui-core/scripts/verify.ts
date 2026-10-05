@@ -153,6 +153,7 @@ import {
 	STATUS_DOT,
 	SWITCH,
 	SWITCH_THUMB,
+	TABLE_CHANGE_VALUE,
 	TABLE_FROZEN_CELL,
 	TABLE_HEAD,
 	TABLE_HEAD_LABEL,
@@ -221,6 +222,7 @@ import {
 	statusDot,
 	switchThumb,
 	switchTrack,
+	tableChangeValue,
 	tableFrozenCell,
 	tableHead,
 	tableHeadLabel,
@@ -470,6 +472,7 @@ const MATRICES: readonly Registration[] = [
 	["TABLE_HEAD", TABLE_HEAD, tableHead],
 	["TABLE_HEAD_LABEL", TABLE_HEAD_LABEL, tableHeadLabel],
 	["TABLE_FROZEN_CELL", TABLE_FROZEN_CELL, tableFrozenCell],
+	["TABLE_CHANGE_VALUE", TABLE_CHANGE_VALUE, tableChangeValue],
 	["SEGMENT", SEGMENT, segment],
 	["SEGMENT_LABEL", SEGMENT_LABEL, segmentLabel],
 	["PICKER", PICKER, picker],
@@ -680,7 +683,7 @@ check("c03", "tokens.ts declares the contract", () => {
 	requireEqual(BREAKPOINTS.length, 3, "breakpoint count");
 	requireEqual(WORD_KEYS.length, 44, "word count");
 	requireEqual(COUNTED_WORD_KEYS.length, 1, "counted word count");
-	requireEqual(SLOT_WORD_KEYS.length, 4, "slot word count");
+	requireEqual(SLOT_WORD_KEYS.length, 5, "slot word count");
 	requireEqual(
 		[...CHART_SERIES].sort().join(" "),
 		[...CHIP_HUES].sort().join(" "),

@@ -265,7 +265,8 @@ interface ColumnBase {
 // A column by the kind of value its cells hold, each kind with the edits
 // that fit it: `text` and `source` (mono) are strings, typed or picked;
 // `number` is typed; `chip` is a picked value drawn on the column's family;
-// `check` is ticked; `status` and `age` (an ISO moment) are read only. Its
+// `check` is ticked; `status`, `age` (an ISO moment) and `change` (a value
+// before and after, sorted by its after) are read only. Its
 // `cell` reads its value from an item. Bare (`T` never), it is a column over
 // any item, its cell taking none.
 export type TableColumn<T = never> = (
@@ -273,7 +274,7 @@ export type TableColumn<T = never> = (
 	| (ColumnBase & { kind: "number"; edit?: CellInput })
 	| (ColumnBase & { kind: "chip"; family: ChipFamily; edit?: CellPick })
 	| (ColumnBase & { kind: "check"; edit?: CellCheck })
-	| (ColumnBase & { kind: "status" | "age"; edit?: never })
+	| (ColumnBase & { kind: "status" | "age" | "change"; edit?: never })
 ) & { cell: (item: T) => TableCell };
 
 export interface StatusCell {
@@ -281,9 +282,23 @@ export interface StatusCell {
 	label?: string;
 }
 
+// A `change` cell's value: what it was and what it is. A null `before` is a
+// value added, a null `after` a value removed.
+export interface ChangeCell {
+	before: string | null;
+	after: string | null;
+}
+
 // A cell's value, by its column's kind: a string (`text`, `source`, `chip`,
-// `age`), a number, a boolean (`check`) or a status; null is an empty cell.
-export type TableCell = string | number | boolean | StatusCell | null;
+// `age`), a number, a boolean (`check`), a status or a change; null is an
+// empty cell.
+export type TableCell =
+	| string
+	| number
+	| boolean
+	| StatusCell
+	| ChangeCell
+	| null;
 
 // What one committed edit hands back: the column's new value, null for a
 // picked cell cleared by its empty choice.

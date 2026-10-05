@@ -1,6 +1,6 @@
 ---
 id: 003-15
-status: backlog
+status: review
 sessions: {}
 ---
 # ui-core: a cell draws a value before and after
