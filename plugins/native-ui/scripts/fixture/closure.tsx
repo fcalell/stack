@@ -57,6 +57,7 @@ import { BarChart } from "@fcalell/plugin-native-ui/components/bar-chart";
 import { QrCode } from "@fcalell/plugin-native-ui/components/qr-code";
 import { Image } from "@fcalell/plugin-native-ui/components/image";
 import { Rules } from "@fcalell/plugin-native-ui/components/rules";
+import { StepCount } from "@fcalell/plugin-native-ui/components/step-count";
 import { Chip } from "@fcalell/plugin-native-ui/components/chip";
 import { Select } from "@fcalell/plugin-native-ui/components/select";
 import { Table } from "@fcalell/plugin-native-ui/components/table";
@@ -1050,5 +1051,20 @@ export const closure = (
 		<Image src="a" alt="a" selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
 		<Image src="a" alt="a" placeholderTextColorClassName="text-ink-body" />
+		<StepCount at={1} of={3} />
+		{/* @ts-expect-error: closed channel */}
+		<StepCount at={1} of={3} className="x" />
+		{/* @ts-expect-error: closed channel */}
+		<StepCount at={1} of={3} style={{ flex: 1 }} />
+		{/* @ts-expect-error: closed channel */}
+		<StepCount at={1} of={3} class="x" />
+		{/* @ts-expect-error: closed channel */}
+		<StepCount at={1} of={3} classList={{}} />
+		{/* @ts-expect-error: closed channel */}
+		<StepCount at={1} of={3} colorClassName="text-ink-body" />
+		{/* @ts-expect-error: closed channel */}
+		<StepCount at={1} of={3} selectionColorClassName="text-ink-body" />
+		{/* @ts-expect-error: closed channel */}
+		<StepCount at={1} of={3} placeholderTextColorClassName="text-ink-body" />
 	</>
 );

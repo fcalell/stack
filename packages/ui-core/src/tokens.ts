@@ -527,6 +527,16 @@ export function levelOf(share: number, near: number = METER_NEAR): MeterLevel {
 	return "under";
 }
 
+export type StepState = "done" | "current" | "later";
+
+// The state of a step counted from one when the flow stands at `at`. Both
+// platforms read it, so one step count draws one state per segment.
+export function stepStateOf(step: number, at: number): StepState {
+	if (step < at) return "done";
+	if (step === at) return "current";
+	return "later";
+}
+
 // ── Type ────────────────────────────────────────────────────────────
 
 // Two rules decide which role a piece of text takes. Size follows structure,
@@ -1159,6 +1169,7 @@ export const SLOT_WORDS = {
 	linesRemoved: ["count"],
 	changed: ["before", "after"],
 	wrongType: ["name", "types"],
+	stepOf: ["at", "of"],
 } as const satisfies Record<string, readonly string[]>;
 export type SlotWordKey = keyof typeof SLOT_WORDS;
 // `Object.keys` widens to `string`; the keys are the record's own.
@@ -1227,6 +1238,7 @@ export const ENGLISH: Words = {
 	linesRemoved: "{count} removed",
 	changed: "from {before} to {after}",
 	wrongType: "{name} isn't one of {types}",
+	stepOf: "Step {at} of {of}",
 };
 
 // A slot word with its values: `filled(words.meterValue, { value, max })`.

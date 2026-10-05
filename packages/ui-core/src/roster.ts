@@ -173,6 +173,28 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				sizes: ["chip"],
 			},
 		},
+		// An onboarding flow's place in it: `of` segments (two to four) at the
+		// `meter` height, the steps up to `at` in the meta ink and the rest a
+		// wash, never the accent, over "Step n of m" (`stepOf`) at meta, which
+		// is also its accessible name.
+		StepCount: {
+			props: ["at", "of"],
+			draws: [
+				"STEP_COUNT",
+				"STEP_COUNT_SEGMENTS",
+				"STEP_COUNT_SEGMENT",
+				"TEXT.role.meta",
+			],
+			holds: ["STEP_COUNT", "STEP_COUNT_SEGMENTS", "STEP_COUNT_SEGMENT"],
+			states: ["rest"],
+			owns: {
+				roles: ["meta"],
+				colors: ["ink-meta", "fill-neutral"],
+				radii: ["chip"],
+				spacing: ["pair", "inside"],
+				sizes: ["meter"],
+			},
+		},
 		// A mark, never an act: a status that moves is a `Picker` whose options
 		// carry states. Its loading form (a table's waiting status cell) is the
 		// dot's and the word's skeletons at its gap, through its internal base.

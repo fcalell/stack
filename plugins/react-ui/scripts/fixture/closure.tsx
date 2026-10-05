@@ -24,6 +24,7 @@ import { IconButton } from "@fcalell/plugin-react-ui/components/icon-button";
 import { Input } from "@fcalell/plugin-react-ui/components/input";
 import { InputOtp } from "@fcalell/plugin-react-ui/components/input-otp";
 import { Image } from "@fcalell/plugin-react-ui/components/image";
+import { StepCount } from "@fcalell/plugin-react-ui/components/step-count";
 import { ItemHeader } from "@fcalell/plugin-react-ui/components/item-header";
 import { Link } from "@fcalell/plugin-react-ui/components/link";
 import { Message } from "@fcalell/plugin-react-ui/components/message";
@@ -592,6 +593,15 @@ export const closure = (
 		<Image src="x" alt="x" class="x" />
 		{/* @ts-expect-error: closed channel */}
 		<Image src="x" alt="x" classList={{}} />
+		<StepCount at={1} of={3} />
+		{/* @ts-expect-error: closed channel */}
+		<StepCount at={1} of={3} className="x" />
+		{/* @ts-expect-error: closed channel */}
+		<StepCount at={1} of={3} style={{ flex: 1 }} />
+		{/* @ts-expect-error: closed channel */}
+		<StepCount at={1} of={3} class="x" />
+		{/* @ts-expect-error: closed channel */}
+		<StepCount at={1} of={3} classList={{}} />
 		<Thread items={[]} message={{ key: String, author: () => "you", body: String }} />
 		<Thread query={{ data: ["a"], isPending: false, isError: false, refetch: () => {} }} sentence="x" empty={{ sentence: "x" }} message={{ key: String, author: () => "system", body: String, onOpen: () => () => {} }} foot={null} />
 		{/* @ts-expect-error: a thread takes a query or items, never both */}

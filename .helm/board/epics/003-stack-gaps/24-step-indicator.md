@@ -1,6 +1,6 @@
 ---
 id: 003-24
-status: backlog
+status: review
 sessions: {}
 ---
 # ui-core: an onboarding step indicator

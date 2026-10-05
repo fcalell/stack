@@ -803,6 +803,23 @@ export const METER_FILL = matrix({
 	defaultVariants: { level: "under" },
 });
 
+// ── Step count ──────────────────────────────────────────────────────
+
+// One segment of an onboarding step count at the meter's height: the steps
+// done and the current one in the meta ink, the later ones a wash; never the
+// accent. The segments share the row's width.
+export const STEP_COUNT_SEGMENT = matrix({
+	base: "h-meter rounded-chip",
+	variants: {
+		state: {
+			done: "bg-ink-meta",
+			current: "bg-ink-meta",
+			later: "bg-fill-neutral",
+		},
+	},
+	defaultVariants: { state: "later" },
+});
+
 // ── Bar chart ───────────────────────────────────────────────────────
 
 // One of the four bands the plot's height splits into, its top a gridline

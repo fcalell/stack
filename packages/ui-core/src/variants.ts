@@ -61,6 +61,7 @@ import {
 	SKELETON_ROW,
 	SPLIT_MAIN,
 	STATUS_DOT,
+	STEP_COUNT_SEGMENT,
 	SWITCH,
 	SWITCH_THUMB,
 	TABLE_CHANGE_VALUE,
@@ -159,6 +160,7 @@ export const placeRowGlyph = build(PLACE_ROW_GLYPH);
 export const placeTab = build(PLACE_TAB);
 export const placeTabLabel = build(PLACE_TAB_LABEL);
 export const splitMain = build(SPLIT_MAIN);
+export const stepCountSegment = build(STEP_COUNT_SEGMENT);
 export const section = build(SECTION);
 export const columns = build(COLUMNS);
 export const form = build(FORM);
@@ -258,6 +260,7 @@ export const FAMILIES: readonly Family[] = [
 	family("PLACE_TAB", PLACE_TAB, placeTab),
 	family("PLACE_TAB_LABEL", PLACE_TAB_LABEL, placeTabLabel),
 	family("SPLIT_MAIN", SPLIT_MAIN, splitMain),
+	family("STEP_COUNT_SEGMENT", STEP_COUNT_SEGMENT, stepCountSegment),
 	family("SECTION", SECTION, section),
 	family("COLUMNS", COLUMNS, columns),
 	family("FORM", FORM, form),
@@ -634,6 +637,9 @@ export const QR_TILE = "size-qr rounded-card border border-edge bg-surface";
 // the picture, as the Latest act floats over a log.
 export const IMAGE_FULL = "p-page";
 export const IMAGE_CLOSE = "rounded-control bg-raised shadow-float";
+// StepCount: its segments a gap apart over its words.
+export const STEP_COUNT = "gap-pair";
+export const STEP_COUNT_SEGMENTS = "gap-inside";
 
 // ── Layout ──────────────────────────────────────────────────────────
 

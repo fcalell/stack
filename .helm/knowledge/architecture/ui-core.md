@@ -129,7 +129,7 @@ pinned by the package's verify suite; this entry holds the architecture and its 
 ## Words
 
 Every word a molecule draws or reads aloud on its own (the seven `Status` words, `recommended`,
-`copy`, `copied`, `download`, `back`, `close`, `cancel`, `dismiss`, `more`, `send`, `stop`, `attach`, `search`, `loading`, `checking`, `retry`, `saving`, `saved`, `notSaved`, `add`, `remove`, `details`, `places`, `notifications`, `code`, `added`, `removed`, `sort`, `ascending`, `descending`, `time`, `message`, `seen`, `unseen`, `copyFailed`, `latest`, `missing`, `typeValue`, `pickValue`, `chooseFile`, the counted `earlierLines`, and the slot words `meterValue`, `meterOver`, `meterMark`, `linesAdded`, `linesRemoved` and `changed`) comes
+`copy`, `copied`, `download`, `back`, `close`, `cancel`, `dismiss`, `more`, `send`, `stop`, `attach`, `search`, `loading`, `checking`, `retry`, `saving`, `saved`, `notSaved`, `add`, `remove`, `details`, `places`, `notifications`, `code`, `added`, `removed`, `sort`, `ascending`, `descending`, `time`, `message`, `seen`, `unseen`, `copyFailed`, `latest`, `missing`, `typeValue`, `pickValue`, `chooseFile`, the counted `earlierLines`, and the slot words `meterValue`, `meterOver`, `meterMark`, `linesAdded`, `linesRemoved`, `changed`, `wrongType` and `stepOf`) comes
 from `words`, a closed typed object with English defaults. The `Words` type requires every key
 and `wordsSchema` is strict, so a translation missing a word fails `tsc` and the schema. It is a
 plugin option beside `theme`; each plugin contributes a `WordsProvider` into the generated entry
@@ -772,6 +772,7 @@ a tick with no animation, never jumped to full.
   The role's children are presentational to assistive tech, so the counts stand outside the
   element carrying the meter role. The `List`'s `meter` map takes `counts` (a function of the item,
   exclusive with `meta`) and `mark`.
+- A `StepCount` (`{ at, of }`) is an onboarding flow's place in it: `of` segments (two to four) at the `meter` height (`STEP_COUNT_SEGMENT {state}`, radius `chip`, a gap `inside` apart), the steps before `at` `done`, `at` `current` and the rest `later` (`stepStateOf`, so both platforms draw one state per segment), over "Step n of m" (the slot word `stepOf`) at meta, which is also the component's accessible name. `done` and `current` fill `ink-meta`, `later` `fill-neutral`, never the accent, which the rubric leaves to checked controls and the active dot. It is an atom, not a prop on `Place`, `Form` or `Sheet`: an onboarding step can be any of the three. It takes the count alone, not a `Step[]`: onboarding steps carry no label or date.
 - On the web every route reader shares the page's one `popstate` listener (`useRoute` in
   `lib/navigate`). A List reads the route once and hands it to its rows through `ListedRoute`,
   internal: a row's `useRoute` takes it from there and subscribes to nothing, and a ListRow or
@@ -853,7 +854,7 @@ a tick with no animation, never jumped to full.
   satisfy. Rejected: optional
   `value` and `onChange` on every control read from the field's context, which would compile a
   control with no value anywhere and could not type a boolean field against an `Input`.
-- The roster is data: `ROSTER` in `packages/ui-core/src/roster.ts` names 58 components in four
+- The roster is data: `ROSTER` in `packages/ui-core/src/roster.ts` names 59 components in four
   layers (atoms, layout molecules, shared molecules, content molecules) with their prop names,
   the cells each draws (a whole matrix family, one family cell as `FAMILY.axis.value`, or a single
   cell) and the states it has a form for, the same in both plugins; the showcase draws exactly those matrix cells and states. Each plugin's verify suite reads every component's exported props type

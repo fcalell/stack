@@ -155,6 +155,7 @@ import {
 	SKELETON_ROW,
 	SPLIT_MAIN,
 	STATUS_DOT,
+	STEP_COUNT_SEGMENT,
 	SWITCH,
 	SWITCH_THUMB,
 	TABLE_CHANGE_VALUE,
@@ -229,6 +230,7 @@ import {
 	splitMain,
 	statusContentTone,
 	statusDot,
+	stepCountSegment,
 	switchThumb,
 	switchTrack,
 	tableChangeValue,
@@ -512,6 +514,7 @@ const MATRICES: readonly Registration[] = [
 	["PLACE_TAB", PLACE_TAB, placeTab],
 	["PLACE_TAB_LABEL", PLACE_TAB_LABEL, placeTabLabel],
 	["SPLIT_MAIN", SPLIT_MAIN, splitMain],
+	["STEP_COUNT_SEGMENT", STEP_COUNT_SEGMENT, stepCountSegment],
 	["SECTION", SECTION, section],
 	["COLUMNS", COLUMNS, columns],
 	["FORM", FORM, form],
@@ -696,7 +699,7 @@ check("c03", "tokens.ts declares the contract", () => {
 	requireEqual(BREAKPOINTS.length, 3, "breakpoint count");
 	requireEqual(WORD_KEYS.length, 47, "word count");
 	requireEqual(COUNTED_WORD_KEYS.length, 1, "counted word count");
-	requireEqual(SLOT_WORD_KEYS.length, 7, "slot word count");
+	requireEqual(SLOT_WORD_KEYS.length, 8, "slot word count");
 	requireEqual(
 		[...CHART_SERIES].sort().join(" "),
 		[...CHIP_HUES].sort().join(" "),
@@ -1856,7 +1859,7 @@ check(
 	"the roster is closed, camelCase, and off the style channels",
 	() => {
 		const entries = rosterEntries();
-		requireEqual(entries.length, 58, "component count");
+		requireEqual(entries.length, 59, "component count");
 		const names = new Set<string>();
 		for (const [, name, { props }] of entries) {
 			assert(/^[A-Z][A-Za-z]+$/.test(name), `${name} is not PascalCase`);

@@ -1408,6 +1408,30 @@ components:
     padding: "{spacing.page}"
   split-main-empty:
     padding: "{spacing.page}"
+  step-count-segment-done:
+    height: "{spacing.meter}"
+    rounded: "{rounded.chip}"
+    backgroundColor: "{colors.ink-meta}"
+  step-count-segment-done-dark:
+    height: "{spacing.meter}"
+    rounded: "{rounded.chip}"
+    backgroundColor: "{colors.ink-meta-dark}"
+  step-count-segment-current:
+    height: "{spacing.meter}"
+    rounded: "{rounded.chip}"
+    backgroundColor: "{colors.ink-meta}"
+  step-count-segment-current-dark:
+    height: "{spacing.meter}"
+    rounded: "{rounded.chip}"
+    backgroundColor: "{colors.ink-meta-dark}"
+  step-count-segment-later:
+    height: "{spacing.meter}"
+    rounded: "{rounded.chip}"
+    backgroundColor: "{colors.fill-neutral}"
+  step-count-segment-later-dark:
+    height: "{spacing.meter}"
+    rounded: "{rounded.chip}"
+    backgroundColor: "{colors.fill-neutral-dark}"
   skeleton-line:
     height: "{spacing.skeleton}"
     rounded: "{rounded.chip}"
@@ -2168,6 +2192,7 @@ The front matter's components are the matrix cells: one entry per axis value of 
 | `Button` | atom | `BUTTON`, `BUTTON_LABEL`, `ICON.fit.control`, `COUNT`, `COUNT_LABEL` | rest, hover, focus, active, disabled, loading |
 | `IconButton` | atom | `ICON_BUTTON` | rest, hover, focus, active |
 | `Count` | atom | `COUNT`, `COUNT_LABEL` | rest |
+| `StepCount` | atom | `STEP_COUNT`, `STEP_COUNT_SEGMENTS`, `STEP_COUNT_SEGMENT`, `TEXT.role.meta` | rest |
 | `Status` | atom | `STATUS`, `STATUS_DOT`, `STATUS_SPINNER`, `STATUS_LABEL`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC`, `SKELETON.kind.dot`, `SKELETON.kind.line` | rest |
 | `Chip` | atom | `CHIP`, `CHIP_LABEL`, `CHIP_REMOVE_HIT` | rest, hover, focus, active |
 | `Input` | atom | `FIELD`, `FIELD_VALUE`, `FIELD_PLACEHOLDER`, `FIELD_UNIT`, `FIELD_GLYPH` | rest, hover, focus, disabled, error |
@@ -2231,6 +2256,7 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | `Button` | `body`, `meta`, `caption` | `act-`, `on-act-`, `edge`, `ink-body`, `ink-meta`, `fill-neutral`, `danger`, `wash-hover`, `wash-press`, `fill-disabled`, `ink-disabled`, `ring` | `control`, `full` | `inside`, `control-x`, `pair` | `control`, `control-compact`, `field`, `icon-control`, `chip` | none |
 | `IconButton` | none | `ink-meta`, `ink-body`, `wash-hover`, `wash-press`, `ink-disabled`, `ring` | `control` | none | `control`, `control-compact` | none |
 | `Count` | `caption` | `fill-neutral`, `ink-meta` | `full` | `inside` | `chip` | none |
+| `StepCount` | `meta` | `ink-meta`, `fill-neutral` | `chip` | `pair`, `inside` | `meter` | none |
 | `Status` | `meta` | `accent-ink`, `ink-meta`, `ok`, `warn`, `danger`, `skeleton` | `full`, `chip` | `inside` | `dot`, `spinner`, `measure-short`, `skeleton` | none |
 | `Chip` | `caption` | `chip-`, `wash-hover`, `wash-press`, `ring` | `full` | `inside` | `chip`, `measure-short` | none |
 | `Input` | `body`, `code` | `surface`, `edge`, `edge-hover`, `edge-error`, `ink-body`, `ink-meta`, `fill-disabled`, `ink-disabled`, `ring` | `control` | `inside`, `control-x` | `field`, `control-compact` | none |
@@ -2310,4 +2336,4 @@ Durations are read as `duration-<rung>`; every rung is 0 under `prefers-reduced-
 - Do draw one `title` per screen, no `heading` inside a row, no `caption` sentence; emphasis is weight, never size.
 - Do keep text at 4.5:1 or more on its fill; the contract measures every pair it draws.
 - Do time motion with a duration rung and a contract curve; don't write a literal duration.
-- Do take every word a component draws from `words`; a sentence is a prop. A counted word (`earlierLines`) is `{ one, other }`, each form spelling `{count}` where the number stands, drawn through `counted(word, count)`. A slot word (`meterValue`, `meterOver`, `meterMark`, `linesAdded`, `linesRemoved`, `changed`, `wrongType`) spells its named slots as `{name}` where each value stands, drawn through `filled(word, values)`.
+- Do take every word a component draws from `words`; a sentence is a prop. A counted word (`earlierLines`) is `{ one, other }`, each form spelling `{count}` where the number stands, drawn through `counted(word, count)`. A slot word (`meterValue`, `meterOver`, `meterMark`, `linesAdded`, `linesRemoved`, `changed`, `wrongType`, `stepOf`) spells its named slots as `{name}` where each value stands, drawn through `filled(word, values)`.

@@ -55,6 +55,16 @@ the scrim with a Close act, Escape and a press outside. The full view takes no z
 <Image src={shot.url} alt={shot.title} fit="thumb" loading={shot.pending} />
 ```
 
+## An onboarding step shows its count
+
+A flow of two to four steps shows where it stands as a `StepCount`: `at` (counted from one) and
+`of`. It draws a segment per step and "Step n of m", never a hand-built bar or a row of dots. It
+heads the step's page, whether that is a `Place`, an auth column or a sheet page.
+
+```tsx
+<StepCount at={2} of={3} />
+```
+
 ## Data, never nodes
 
 A composed region is data its molecule renders: an `Act` (`{ label, onAct, destructive? }`),
