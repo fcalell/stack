@@ -399,8 +399,13 @@ export const ROW_TRAILING =
 // A two-line row's meta line, one line: its marks keep their place at its
 // end and its parts truncate first, so every row keeps one height.
 export const ROW_META_LINE = "gap-x-inside";
-// A list row's marks on its meta line (a status, a chip) and its end acts.
+// A list row's marks on its meta line, in order (a status, a warning, a lock,
+// a chip), a gap apart, and its end acts. They yield from the end: the chip
+// truncates first, then the lock's label (the glyph alone below `tablet`),
+// and the warning's label keeps. The warning's glyph is in `warn`, its label
+// in the meta ink.
 export const ROW_MARKS = "gap-inside";
+export const ROW_WARNING = "text-warn";
 export const ROW_ACTS = "gap-acts";
 // A list row's entry: the title, the input with its act and the error line a
 // pair apart, the error in the error ink under the input.
@@ -561,6 +566,8 @@ export const TABLE_CELL = "min-h-row border-x border-transparent px-control-x";
 export const TABLE_FROZEN = "bg-surface";
 export const TABLE_EMPTY = "pt-page";
 export const TABLE_CHANGE = "gap-inside text-ink-meta";
+// A leading cell's name and its warning a gap apart.
+export const TABLE_NAME = "gap-inside";
 // Message: yours in a bubble on the group ground; the name beside the time;
 // a system line's words beside its time, wrapping; the line that opens, a
 // pill at the target height with the pointer's washes. Under a system line,
@@ -843,6 +850,11 @@ export function toastContentTone(state: ToastState): ContentTone {
 // A folded question's glyph ink.
 export function summaryContentTone(): ContentTone {
 	return toneOf(FORM_FIELD_SUMMARY_GLYPH);
+}
+
+// A row's warning glyph ink.
+export function rowWarningContentTone(): ContentTone {
+	return toneOf(ROW_WARNING);
 }
 
 // A banner's glyph ink, its kind's.

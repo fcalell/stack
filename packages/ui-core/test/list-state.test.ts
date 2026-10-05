@@ -162,6 +162,16 @@ test("the waiting shape follows the declared slots and runs none of them", () =>
 		chip: true,
 		marks: true,
 	});
+	assert.deepEqual(rowShape({ warning: spy("warning") }), {
+		...none,
+		meta: true,
+		marks: true,
+	});
+	assert.deepEqual(rowShape({ lock: spy("lock") }), {
+		...none,
+		meta: true,
+		marks: true,
+	});
 	assert.deepEqual(rowShape({ entry: spy("entry"), act: spy("act") }), {
 		...none,
 		entry: true,
@@ -345,18 +355,21 @@ test("a table's rows read each column's cell and the row map from the item", () 
 			id: (member) => member.id,
 			href: (member) => `/members/${member.id}`,
 			locked: (member) => (member.owner ? ["role"] : undefined),
+			warning: (member) => (member.owner ? undefined : "Name conflicts"),
 		}),
 		[
 			{
 				id: "ana",
 				href: "/members/ana",
 				locked: ["role"],
+				warning: undefined,
 				cells: { name: "Ana Ruiz", role: "admin", owner: true },
 			},
 			{
 				id: "ben",
 				href: "/members/ben",
 				locked: undefined,
+				warning: "Name conflicts",
 				cells: { name: "Ben Kaya", role: "member", owner: false },
 			},
 		],
@@ -368,6 +381,7 @@ test("a table's rows read each column's cell and the row map from the item", () 
 				id: "ana",
 				href: undefined,
 				locked: undefined,
+				warning: undefined,
 				cells: { name: "Ana Ruiz", role: "admin", owner: true },
 			},
 		],

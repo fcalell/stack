@@ -263,6 +263,56 @@ const STEPS: Step[] = [
 	},
 ];
 
+// A change set entry carrying every mark at once: its count a meta part, its
+// status, a warning (the act that clears it the row's own), the lock it holds
+// and its change chip; the second row's marks are long enough to yield.
+interface Entry {
+	id: string;
+	title: string;
+	meta: string[];
+	status: StatusMark;
+	warning: string;
+	lock: string;
+	chip: ChipMark;
+	act: Act;
+}
+
+const ENTRY_ROW: RowSlots<Entry> = {
+	key: (entry) => entry.id,
+	leading: { icon: () => "FileDiff" },
+	title: (entry) => entry.title,
+	meta: (entry) => entry.meta,
+	status: (entry) => entry.status,
+	warning: (entry) => entry.warning,
+	lock: (entry) => entry.lock,
+	chip: (entry) => entry.chip,
+	act: (entry) => entry.act,
+	more: () => MORE,
+};
+
+const ENTRIES: Entry[] = [
+	{
+		id: "checkout",
+		title: "Checkout redesign",
+		meta: ["+5 fields"],
+		status: { state: "done", label: "Passing" },
+		warning: "Name conflicts with Checkout",
+		lock: "Holds 3 fields",
+		chip: { family: "amber", label: "Changed" },
+		act: { label: "Resolve", onAct: act },
+	},
+	{
+		id: "invoice",
+		title: "Invoice export with the quarterly reconciliation",
+		meta: ["+12 fields"],
+		status: { state: "failed", label: "Failing" },
+		warning: "Stale since the last release of the billing schema",
+		lock: "Holds 14 fields across two environments",
+		chip: { family: "green", label: "Added" },
+		act: { label: "Refresh", onAct: act },
+	},
+];
+
 // An import source asking for its URL: its input and Import act on the row;
 // the second row's address failed.
 interface Source {
@@ -307,7 +357,8 @@ function Issues() {
 
 // Board 40's props: deploys in a List (a glyph leading, a status and a chip
 // on the meta line, the more act), services on one line, a job's stages (a
-// running row beside an active one), and members in a Group (a trailing
+// running row beside an active one), change set entries (every mark and the
+// act that clears the warning), and members in a Group (a trailing
 // value, a trailing pick, a status dot leading).
 function Props() {
 	return (
@@ -317,6 +368,7 @@ function Props() {
 			<List items={STAGES} row={STAGE_ROW} />
 			<List items={STEPS} row={STEP_ROW} />
 			<List items={SOURCES} row={SOURCE_ROW} />
+			<List items={ENTRIES} row={ENTRY_ROW} />
 			<Group>
 				<ListRow
 					leading={{ icon: "Globe" }}
@@ -390,6 +442,8 @@ function Waiting(props: { kind: "avatar" | "icon" | "status" }) {
 			<List items={STEPS} row={STEP_ROW} />
 			<List items={[]} loading row={SOURCE_ROW} />
 			<List items={SOURCES} row={SOURCE_ROW} />
+			<List items={[]} loading row={ENTRY_ROW} />
+			<List items={ENTRIES} row={ENTRY_ROW} />
 		</>
 	);
 }
@@ -421,6 +475,8 @@ export function drawListRow(frame: ShowcaseFrame) {
 		cell.startsWith("BUTTON") ||
 		cell.startsWith("FIELD") ||
 		cell.startsWith("FORM_FIELD") ||
+		cell === "ROW_MARKS" ||
+		cell === "ROW_WARNING" ||
 		cell === "ROW_ACTS";
 	return <Wide>{props ? <Props /> : <Issues />}</Wide>;
 }

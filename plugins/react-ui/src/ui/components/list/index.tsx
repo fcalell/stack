@@ -81,6 +81,10 @@ export interface RowSlots<T, V extends string | null = string> {
 	trailing?: (item: T) => RowTrailing<V> | undefined;
 	/** The row's status mark. */
 	status?: (item: T) => StatusMark | undefined;
+	/** What is wrong with the row, a warning mark. */
+	warning?: (item: T) => string | undefined;
+	/** What the row holds, a lock mark. */
+	lock?: (item: T) => string | undefined;
 	/** The row's chip mark. */
 	chip?: (item: T) => ChipMark | undefined;
 	/** The row's input and its act, in the meta line's place; the waiting rows draw it in place of the meta line. */
@@ -271,6 +275,8 @@ export function List<T, V extends string | null = string>(
 					meta={row.meta?.(item)}
 					trailing={row.trailing?.(item)}
 					status={row.status?.(item)}
+					warning={row.warning?.(item)}
+					lock={row.lock?.(item)}
 					chip={row.chip?.(item)}
 					entry={row.entry?.(item)}
 					act={row.act?.(item)}

@@ -121,7 +121,7 @@ export type LeadingKind = "avatar" | "icon" | "status";
 
 // The slots a waiting ListRow draws, known before any item: its leading mark
 // by kind, a meta line (at a chip's height when a chip may stand on it, the
-// marks' bar at its end when a status or a chip may), an entry's field and
+// marks' bar at its end when a status, a warning, a lock or a chip may), an entry's field and
 // button in the meta line's place (it wins over the meta line), a labelled act
 // at the row's end, a trailing value, and the more act's room, kept empty.
 export interface RowShape {
@@ -152,20 +152,24 @@ export function rowShape(slots: {
 	leading?: LeadingKeys;
 	meta?: unknown;
 	status?: unknown;
+	warning?: unknown;
+	lock?: unknown;
 	chip?: unknown;
 	entry?: unknown;
 	act?: unknown;
 	trailing?: unknown;
 	more?: unknown;
 }): RowShape {
+	const marks =
+		slots.status !== undefined ||
+		slots.warning !== undefined ||
+		slots.lock !== undefined ||
+		slots.chip !== undefined;
 	return {
 		leading: leadingKind(slots.leading),
-		meta:
-			slots.meta !== undefined ||
-			slots.status !== undefined ||
-			slots.chip !== undefined,
+		meta: slots.meta !== undefined || marks,
 		chip: slots.chip !== undefined,
-		marks: slots.status !== undefined || slots.chip !== undefined,
+		marks,
 		entry: slots.entry !== undefined,
 		act: slots.act !== undefined,
 		trailing: slots.trailing !== undefined,
@@ -443,6 +447,7 @@ export interface TableRecord {
 	id: string;
 	href: Route | undefined;
 	locked: readonly string[] | undefined;
+	warning: string | undefined;
 	cells: Readonly<Record<string, TableCell>>;
 }
 
@@ -456,6 +461,7 @@ export function tableRecords<T>(
 		id: row.id(item),
 		href: row.href?.(item),
 		locked: row.locked?.(item),
+		warning: row.warning?.(item),
 		cells: Object.fromEntries(
 			columns.map((column) => [column.key, column.cell(item)]),
 		),

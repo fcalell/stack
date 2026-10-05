@@ -1171,6 +1171,7 @@ export const WORD_KEYS = [
 	"typeValue",
 	"pickValue",
 	"locked",
+	"warning",
 ] as const;
 export type WordKey = (typeof WORD_KEYS)[number];
 
@@ -1254,6 +1255,7 @@ export const ENGLISH: Words = {
 	typeValue: "Type a value",
 	pickValue: "Pick a field",
 	locked: "Locked",
+	warning: "Warning",
 	earlierLines: {
 		one: "Show {count} earlier line",
 		other: "Show {count} earlier lines",

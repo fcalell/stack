@@ -443,10 +443,13 @@ export type TableCell =
 export type CellValue = string | number | boolean | null;
 
 // A table row's own slots, each read from the item: its id, unique in the
-// table; `href`, its leading cell's link, so it opens in a new tab; and
-// `locked`, the columns whose cells it draws read only.
+// table; `href`, its leading cell's link, so it opens in a new tab; `locked`,
+// the columns whose cells it draws read only; and `warning`, what is wrong
+// with the row, drawn after its leading cell's name (a warn glyph and the
+// sentence; the phone's row carries it as a `ListRow` warning).
 export interface TableRowSlots<T> {
 	id: (item: T) => string;
 	href?: (item: T) => Route | undefined;
 	locked?: (item: T) => readonly string[] | undefined;
+	warning?: (item: T) => string | undefined;
 }

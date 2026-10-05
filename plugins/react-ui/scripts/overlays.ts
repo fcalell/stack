@@ -366,6 +366,10 @@ export const OVERLAYS: readonly string[] = [
 	"px-card",
 	"pb-card",
 	"focus-visible:-outline-offset-2",
+	"shrink-2",
+	"shrink-4",
+	"sr-only",
+	"page-max-tablet:sr-only",
 	// Prose, Code, Diff, ProseDiff, FileRow, Comparison
 	"inline-block",
 	"whitespace-pre",

@@ -43,6 +43,7 @@ import { MenuBase } from "../menu/base";
 import { Picker } from "../picker";
 import { Status } from "../status";
 import { StatusDot } from "../status/dot";
+import { LockMark, WarningMark } from "./marks";
 
 const ROW = "relative flex-row items-center";
 // A list row's wash is square on the phone, where it meets the screen's edge.
@@ -85,6 +86,12 @@ export interface ListRowProps<V extends string | null = string> extends Closed {
 	trailing?: RowTrailing<V>;
 	// A work state on the meta line; a waiting act is told by its tone.
 	status?: StatusMark;
+	// What is wrong with the row, on the meta line after the status: a warn
+	// glyph and the sentence. The act that clears it is the row's `act`.
+	warning?: string;
+	// What the row holds, on the meta line after the warning: a lock glyph,
+	// its label read aloud.
+	lock?: string;
 	// A data value's chip on the meta line.
 	chip?: ChipMark;
 	// An input and its act under the title, in the meta line's place: `meta`,
@@ -159,7 +166,7 @@ function trailingWord(trailing: RowTrailing<string | null>): string {
 }
 
 // The leading slot, the title with its trailing value over the meta line (its
-// status and chip at the end) or the entry (its input and act, its error
+// status, warning, lock and chip at the end, the chip yielding first) or the entry (its input and act, its error
 // under it), a trailing pick, then the row's act and the more act. A row that
 // opens is one hit under its pick and acts, current (the selection wash) at
 // its `href`. In a `Group` it runs edge to edge at the card's inset,
@@ -170,6 +177,8 @@ export function ListRow<V extends string | null = string>({
 	meta,
 	trailing,
 	status,
+	warning,
+	lock,
 	chip,
 	entry,
 	act,
@@ -183,7 +192,11 @@ export function ListRow<V extends string | null = string>({
 	const named = partText(title);
 	const current = href !== undefined && isCurrent(href, pathname);
 	const open = href !== undefined ? () => navigate(href) : onOpen;
-	const marked = status !== undefined || chip !== undefined;
+	const marked =
+		status !== undefined ||
+		warning !== undefined ||
+		lock !== undefined ||
+		chip !== undefined;
 	const lines = entry || meta?.length || marked ? "two" : "one";
 	const entryReason = useReasonLine(entry?.act.blocked);
 	const actReason = useReasonLine(act?.blocked);
@@ -300,6 +313,8 @@ export function ListRow<V extends string | null = string>({
 										<Status state={status.state} label={status.label} />
 									</View>
 								) : null}
+								{warning !== undefined ? <WarningMark label={warning} /> : null}
+								{lock !== undefined ? <LockMark label={lock} /> : null}
 								{chip ? (
 									<View className={CHIP_MARK}>
 										<Chip family={chip.family} label={chip.label} />

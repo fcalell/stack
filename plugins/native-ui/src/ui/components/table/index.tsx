@@ -22,12 +22,14 @@ import { BREAKPOINT_PX } from "@fcalell/ui-core/tokens";
 import {
 	FIGURES,
 	LOCK_GLYPH,
+	rowWarningContentTone,
 	skeleton,
 	TABLE_CELL,
 	TABLE_CHANGE,
 	TABLE_EMPTY,
 	TABLE_FRAME,
 	TABLE_FROZEN,
+	TABLE_NAME,
 	type TableRowState,
 	tableChangeValue,
 	tableFrozenCell,
@@ -286,6 +288,7 @@ export function Table<T>(props: TableProps<T>) {
 							onSort={setSort}
 							onOpen={onOpen}
 							loading={waiting}
+							warns={props.row.warning !== undefined}
 						/>
 					</SectionContext.Provider>
 				)}
@@ -392,13 +395,18 @@ const LeadRow = memo(function LeadRow(props: {
 	actions: GridActions;
 }) {
 	const { row, lead, name, chosen, opens, store, actions } = props;
+	const words = useWords();
 	const state = useRowState(store, row.id, chosen);
 	let role: "link" | "button" | undefined;
 	if (opens) role = props.link ? "link" : "button";
 	return (
 		<Pressable
 			accessibilityRole={role}
-			accessibilityLabel={name}
+			accessibilityLabel={
+				row.warning === undefined
+					? name
+					: `${name}. ${words.warning}. ${row.warning}`
+			}
 			accessibilityState={{ selected: chosen }}
 			{...pressOf(row, opens, store, actions)}
 			className={cn(tableRow({ state: "rest" }), TABLE_FROZEN)}
@@ -408,6 +416,7 @@ const LeadRow = memo(function LeadRow(props: {
 					TABLE_CELL,
 					CELL,
 					isEnd(lead) && CELL_END,
+					row.warning !== undefined && TABLE_NAME,
 					tableFrozenCell({ state }),
 				)}
 			>
@@ -421,6 +430,15 @@ const LeadRow = memo(function LeadRow(props: {
 				>
 					{name}
 				</RNText>
+				{row.warning === undefined ? null : (
+					// The frozen column is a short measure wide: the glyph alone, the
+					// sentence read with the row's name.
+					<View className={GLYPH}>
+						<Ink.Provider value={rowWarningContentTone()}>
+							<Icon name="TriangleAlert" fit="meta" />
+						</Ink.Provider>
+					</View>
+				)}
 			</View>
 		</Pressable>
 	);
@@ -940,6 +958,7 @@ function Phone(props: {
 	onSort: (sort: Sort) => void;
 	onOpen: ((id: string) => void) | undefined;
 	loading: boolean | undefined;
+	warns: boolean;
 }) {
 	const words = useWords();
 	const { columns, sort } = props;
@@ -1037,6 +1056,7 @@ function Phone(props: {
 						: undefined;
 				}
 			: undefined,
+		warning: props.warns ? (record) => record.warning : undefined,
 		chip:
 			chip?.kind === "chip"
 				? (record) => {

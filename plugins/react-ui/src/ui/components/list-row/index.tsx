@@ -43,6 +43,7 @@ import { MenuBase } from "../menu/base.tsx";
 import { Picker } from "../picker/index.tsx";
 import { StatusDot } from "../status/dot.tsx";
 import { Status } from "../status/index.tsx";
+import { LockMark, WarningMark } from "./marks.tsx";
 
 const ROW = "relative flex items-center";
 // A list row's wash is square on touch, where it meets the screen's edge.
@@ -71,6 +72,8 @@ const META_FIRST = "shrink-0";
 const META = "truncate grow w-0";
 const MARKS = "flex items-center min-w-0";
 const STATUS_MARK = "flex shrink-0";
+// The chip yields first, then the lock's label; the warning's keeps.
+const CHIP_MARK = "flex min-w-0 shrink-4";
 const ACTS = "relative flex shrink-0 items-center";
 // The entry stands above the hit: the input and its act, the field filling
 // the room the act leaves.
@@ -89,6 +92,10 @@ export interface ListRowProps<V extends string | null = string> extends Closed {
 	trailing?: RowTrailing<V>;
 	/** A work state on the meta line; a waiting act is told by its tone. */
 	status?: StatusMark;
+	/** What is wrong with the row, on the meta line after the status: a warn glyph and the sentence. The act that clears it is the row's `act`. */
+	warning?: string;
+	/** What the row holds, on the meta line after the warning: a lock glyph and its label, shown from `tablet` and read aloud always. */
+	lock?: string;
 	/** A data value's chip on the meta line. */
 	chip?: ChipMark;
 	/** An input and its act under the title, in the meta line's place: `meta`, `status` and `chip` are not drawn while it stands. Give them in its place once the act settles. */
@@ -162,13 +169,15 @@ function trailingWord(trailing: RowTrailing<string | null>): string {
 	return "";
 }
 
-/** The leading slot, the title with its trailing value over the meta line (its status and chip at the end) or the entry (its input and act, its error under it), a trailing pick, then the row's act and the more act. A row that opens is one hit under its pick and acts, current (the selection wash) at its `href`; it washes under the pointer and the press. In a `Group` it runs edge to edge at the card's inset, elsewhere it is an inset rounded wash, square on touch. */
+/** The leading slot, the title with its trailing value over the meta line (its status, warning, lock and chip at the end, yielding from the chip) or the entry (its input and act, its error under it), a trailing pick, then the row's act and the more act. A row that opens is one hit under its pick and acts, current (the selection wash) at its `href`; it washes under the pointer and the press. In a `Group` it runs edge to edge at the card's inset, elsewhere it is an inset rounded wash, square on touch. */
 export function ListRow<V extends string | null = string>({
 	leading,
 	title,
 	meta,
 	trailing,
 	status,
+	warning,
+	lock,
 	chip,
 	entry,
 	act,
@@ -182,7 +191,11 @@ export function ListRow<V extends string | null = string>({
 	const named = partText(title);
 	const current = href !== undefined && isCurrent(href, at);
 	const opens = href !== undefined || onOpen !== undefined;
-	const marked = status !== undefined || chip !== undefined;
+	const marked =
+		status !== undefined ||
+		warning !== undefined ||
+		lock !== undefined ||
+		chip !== undefined;
 	const lines = entry || meta?.length || marked ? "two" : "one";
 	const entryReason = useReasonLine(entry?.act.blocked);
 	const actReason = useReasonLine(act?.blocked);
@@ -299,7 +312,13 @@ export function ListRow<V extends string | null = string>({
 										<Status state={status.state} label={status.label} />
 									</span>
 								) : null}
-								{chip ? <Chip family={chip.family} label={chip.label} /> : null}
+								{warning !== undefined ? <WarningMark label={warning} /> : null}
+								{lock !== undefined ? <LockMark label={lock} /> : null}
+								{chip ? (
+									<span className={CHIP_MARK}>
+										<Chip family={chip.family} label={chip.label} />
+									</span>
+								) : null}
 							</span>
 						) : null}
 					</span>

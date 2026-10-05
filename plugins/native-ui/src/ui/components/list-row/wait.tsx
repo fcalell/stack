@@ -33,7 +33,7 @@ const LEADING_WAIT = { avatar: "avatar", icon: "icon", status: "dot" } as const;
 const TRAILING = "shrink-0";
 // A trailing value is an age or a count: four figures at most.
 const TRAILING_BAR = "w-figures";
-// The marks (a status, a chip) end the meta line: their bar at the end of
+// The marks (a status, a warning, a lock, a chip) end the meta line: their bar at the end of
 // their own short-label lane, half its width.
 const MARKS_ROOM = "flex-row grow justify-end min-w-0";
 const MARKS_BAR = "w-1/2";

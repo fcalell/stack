@@ -27,6 +27,7 @@ interface Task {
 	last: StatusCell;
 	timeout: ChangeCell;
 	updated: string;
+	warning?: string;
 }
 
 // Board 52's columns, one of each kind, its timeout a value changed, added or
@@ -110,6 +111,7 @@ const ROW = {
 	id: (task: Task) => task.id,
 	href: (task: Task) => `#${task.id}`,
 	locked: (task: Task) => (task.id === "purge" ? ["schedule"] : undefined),
+	warning: (task: Task) => task.warning,
 };
 
 const ago = (minutes: number) =>
@@ -181,6 +183,7 @@ const TASKS: Task[] = [
 		last: { status: "attention", label: "Slow" },
 		timeout: { before: "2m", after: "3m" },
 		updated: ago(60 * 48),
+		warning: "Overlaps Invoice sweep",
 	},
 ];
 

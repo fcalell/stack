@@ -99,6 +99,10 @@ an `IconAct`, a row's `StatusMark` and `ChipMark`, a menu's `MenuItem`s, a `Plac
 `onAct`, the form busy while it pends. A `FormField` takes a `FieldBinding` from the
 app's own form state; a `confirm()` takes a `Confirmation`.
 
+A row's marks are named props on the meta line, at most one each, in order: `status`, `warning`
+(what is wrong, a string), `lock` (what it holds, a string, a glyph read aloud) and `chip`; the
+act that clears a warning is the row's `act`.
+
 A row's next step is its `act`, one labelled `Act` at its end ahead of the more menu (an act the
 row waits on keeps its pending press there, never also in `more`). An input on a row is its
 `entry`, a `RowEntry` (`label`, `field`, `placeholder`, `act`, `error`) standing under the title
@@ -144,6 +148,8 @@ cell from the item by `cell`, and `row` gives the row's `id`, `href` and `locked
 states itself, with no `QueryBoundary` around it. An editable table (`onEdit`) draws a lock after a
 cell its row locks; a column's own `locked` (a reason) makes it read only, its lock in the head
 alone.
+
+cell from the item by `cell`, and `row` gives the row's `id`, `href`, `locked` and `warning` (what is wrong with it, drawn after its name). It draws its
 
 ```tsx
 <List

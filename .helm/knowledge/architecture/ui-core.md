@@ -129,7 +129,7 @@ pinned by the package's verify suite; this entry holds the architecture and its 
 ## Words
 
 Every word a molecule draws or reads aloud on its own (the seven `Status` words, `recommended`,
-`copy`, `copied`, `download`, `back`, `close`, `cancel`, `dismiss`, `more`, `send`, `stop`, `attach`, `search`, `loading`, `checking`, `retry`, `saving`, `saved`, `notSaved`, `add`, `remove`, `edit`, `details`, `places`, `notifications`, `code`, `added`, `removed`, `sort`, `ascending`, `descending`, `time`, `message`, `seen`, `unseen`, `copyFailed`, `latest`, `missing`, `typeValue`, `pickValue`, `chooseFile`, `locked`, the counted `earlierLines`, and the slot words `meterValue`, `meterOver`, `meterMark`, `linesAdded`, `linesRemoved`, `changed`, `wrongType` and `stepOf`) comes
+`copy`, `copied`, `download`, `back`, `close`, `cancel`, `dismiss`, `more`, `send`, `stop`, `attach`, `search`, `loading`, `checking`, `retry`, `saving`, `saved`, `notSaved`, `add`, `remove`, `edit`, `details`, `places`, `notifications`, `code`, `added`, `removed`, `sort`, `ascending`, `descending`, `time`, `message`, `seen`, `unseen`, `copyFailed`, `latest`, `missing`, `typeValue`, `pickValue`, `chooseFile`, `warning`, `locked`, the counted `earlierLines`, and the slot words `meterValue`, `meterOver`, `meterMark`, `linesAdded`, `linesRemoved`, `changed`, `wrongType` and `stepOf`) comes
 from `words`, a closed typed object with English defaults. The `Words` type requires every key
 and `wordsSchema` is strict, so a translation missing a word fails `tsc` and the schema. It is a
 plugin option beside `theme`; each plugin contributes a `WordsProvider` into the generated entry
@@ -372,8 +372,8 @@ a tick with no animation, never jumped to full.
   divider utility yet and draws the hairline per row.
 - A row's leading is one slot at the avatar's size (`ROW_LEADING`), the dot, spinner or glyph centred
   in it, so the titles of a list share one x whatever leads them; its meta line (`ROW_META_LINE`)
-  is one line that yields in order: the later parts truncate first, then the chip; the first part
-  (naming the item) and the status keep their width, and past them the line clips at the row's
+  is one line that yields in order: the later parts truncate first, then the chip, then the lock's
+  label; the first part (naming the item), the status and the warning keep their width, and past them the line clips at the row's
   edge rather than overprint. The parts' box is at least the first part's width because the later
   parts take no width of their own (`w-0`, growing into the room the marks leave). Every row keeps
   one height, so its waiting form matches it by construction. A short label (a chip's, a status
@@ -662,6 +662,23 @@ a tick with no animation, never jumped to full.
   props, its act the one that fills the list). Its decisions (which state, the waiting shape, the
   count, Retry) and the Section's total (`sectionCount`) are ui-core's `./list-state`, which both
   platforms import, tested without rendering.
+- A `ListRow` carries several marks as named props, not a `marks` record: `status`, `warning`,
+  `lock`, `chip`, at most one each, in that order on the meta line (`ROW_MARKS`). `warning` is
+  what is wrong with the row (a string: "Name conflicts with Checkout"), a `TriangleAlert` glyph
+  at the meta icon size in `warn` (`ROW_WARNING`) beside its label in the meta ink, read after the
+  `warning` word; `lock` is what the row holds ("Holds 3 fields"), a `Lock` glyph in the meta ink
+  whose label shows from `tablet` and is read aloud always, the glyph alone below. The act that
+  clears a warning is the row's `act`, one visible act a row; a mark that is itself a press would
+  put a second hit inside a row that may open. The marks yield from the end of the line: the chip
+  truncates first, then the lock's label, and the warning's label keeps. Why named props: `List`'s
+  per-slot functions let a waiting row know which marks to reserve before any item exists
+  (`rowShape` reads `warning` and `lock` by key, as it does `status` and `chip`); a `marks`
+  record function would hide that. A change is not a mark but a part of the row's start (the
+  change cell kinds), a count a meta part, a test status a `status`, so no cell kind is added.
+  A `Table` row's `warning` (`TableRowSlots.warning`) is drawn after its leading cell's name on the
+  grid, the same glyph and label; on touch it is the `ListRow` warning, and on the phone's frozen
+  leading column, a short measure wide, the glyph alone with the sentence read with the row's name.
+  The Table has no row act, so a warning's act on a Table row is the row's open.
 - A `ListRow` shows a labelled act and holds an input by two props, not a second row kind. `act`
   is one `Act` at the row's end ahead of the more act, a secondary Button at the bar fit with its
   pending and blocked forms; the more menu stays the row's other acts, so an act the row waits on

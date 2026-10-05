@@ -884,7 +884,10 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// An `entry` (an Input at the bar fit and its labelled Button) stands
 		// under the title in the meta line's place, its error under it; the
 		// consumer gives `meta` or `status` once the act settles. At most one
-		// Status and one Chip, on the meta line. Its trailing is a value, or a
+		// each of Status, warning, lock and Chip, on the meta line in that
+		// order: a warning is what is wrong with the row (the act that clears
+		// it is the row's `act`), a lock what the row holds (its label shown
+		// from `tablet`, read aloud always). Its trailing is a value, or a
 		// pick: a `Picker` at the `row` fit, centred in the row.
 		ListRow: {
 			props: [
@@ -893,6 +896,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"meta",
 				"trailing",
 				"status",
+				"warning",
+				"lock",
 				"chip",
 				"entry",
 				"act",
@@ -915,11 +920,13 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"ROW_META_LINE",
 				"ROW_TRAILING",
 				"ROW_MARKS",
+				"ROW_WARNING",
 				"ROW_ACTS",
 				"TEXT.role.body",
 				"TEXT_STRONG.role.body",
 				"TEXT.role.meta",
 				"ICON.fit.body",
+				"ICON.fit.meta",
 				"AVATAR",
 				"AVATAR_LABEL",
 				"STATUS",
@@ -956,6 +963,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			holds: [
 				"ROW_TRAILING",
 				"ROW_MARKS",
+				"ROW_WARNING",
 				"ROW_ACTS",
 				"ROW_ENTRY",
 				"ROW_ENTRY_ERROR",
@@ -991,6 +999,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"row-2",
 					"avatar",
 					"icon",
+					"icon-meta",
 					"dot",
 					"spinner",
 					"measure-short",
@@ -1990,9 +1999,11 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"STATUS_DOT",
 				"STATUS_LABEL",
 				"STATUS_SPINNER",
+				"ROW_WARNING",
 				"TABLE",
 				"TABLE_CELL",
 				"TABLE_CHANGE",
+				"TABLE_NAME",
 				"TABLE_CHANGE_VALUE.kind.added",
 				"TABLE_CHANGE_VALUE.kind.after",
 				"TABLE_CHANGE_VALUE.kind.before",
@@ -2015,6 +2026,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"TABLE_ROW",
 				"TABLE_CELL",
 				"TABLE_CHANGE",
+				"TABLE_NAME",
 				"TABLE_CHANGE_VALUE",
 				"TABLE_HEAD",
 				"TABLE_HEAD_LABEL",
