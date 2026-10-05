@@ -1,4 +1,5 @@
 import type { IconName } from "@fcalell/ui-core/descriptors";
+import { counted } from "@fcalell/ui-core/tokens";
 import {
 	type ButtonAct,
 	type ButtonFit,
@@ -15,6 +16,7 @@ import { ActInert } from "../../lib/form";
 import { Ink } from "../../lib/ink";
 import { ReasonHostContext, usePressed } from "../../lib/reason";
 import { useTouched } from "../../lib/touched";
+import { useWords } from "../../lib/words";
 import { Count } from "../count";
 import { Icon } from "../icon";
 import { Spinner } from "../spinner";
@@ -65,6 +67,7 @@ export interface ButtonProps extends Closed {
 	icon?: IconName;
 	label: string;
 	count?: number;
+	wait?: number;
 	onAct?: () => void;
 	loading?: boolean;
 	blocked?: string;
@@ -82,16 +85,19 @@ export function Button({
 	icon,
 	label,
 	count,
+	wait,
 	onAct,
 	loading,
 	blocked,
 }: ButtonProps) {
+	const words = useWords();
 	const kind = act ?? "primary";
 	const muted = blocked !== undefined;
 	const { touched } = useTouched();
 	const host = useContext(ReasonHostContext);
 	// Inert where it stands: the blocked look and no press, no reason.
-	const inert = useContext(ActInert) && !loading;
+	const waiting = wait !== undefined && wait > 0;
+	const inert = (useContext(ActInert) || waiting) && !loading;
 	const [pressed, keep] = usePressed(blocked);
 	const said = muted && (pressed || touched);
 	const look = lookOf(kind, loading === true, muted || inert);
@@ -107,7 +113,9 @@ export function Button({
 	const control = (
 		<Pressable
 			accessibilityRole="button"
-			accessibilityLabel={label}
+			accessibilityLabel={
+				waiting ? `${label}, ${counted(words.waitLeft, wait)}` : label
+			}
 			accessibilityState={{
 				disabled: loading || muted || inert,
 				busy: loading,
@@ -128,7 +136,15 @@ export function Button({
 				>
 					{label}
 				</RNText>
-				{count !== undefined ? (
+				{wait !== undefined ? (
+					<View
+						accessibilityElementsHidden
+						importantForAccessibility="no-hide-descendants"
+						className={loading || !waiting ? PENDING : undefined}
+					>
+						<Count value={wait} />
+					</View>
+				) : count !== undefined ? (
 					<View className={loading ? PENDING : undefined}>
 						<Count value={count} />
 					</View>

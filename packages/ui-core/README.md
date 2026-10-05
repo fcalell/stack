@@ -144,7 +144,7 @@ beside `theme`: the seven `Status` words, `recommended`, `copy`, `copied`, `down
 `notifications`, `code`, `added`, `removed`, `sort`, `ascending`, `descending`, `time`, `message`,
 `seen`, `unseen`, `copyFailed`, `downloadFailed`, `latest`, `missing`, `chooseFile`, `typeValue`,
 `pickValue`, `locked`, `warning`, `photos`, `files`, `changed`, `unchanged`, `stale`, `chooseAll`,
-`chooseNone`, `noMatches`, `imageFiles`, `audioFiles`, `videoFiles`, `textFiles`, `expand`, `collapse`, the counted `earlierLines`, and the slot words `meterValue`,
+`chooseNone`, `noMatches`, `imageFiles`, `audioFiles`, `videoFiles`, `textFiles`, `expand`, `collapse`, the counted `earlierLines` and `waitLeft`, and the slot words `meterValue`,
 `meterOver`, `meterMark`, `linesAdded`, `linesRemoved`, `changedFrom`, `wrongType`, `stepOf` and
 `chosenOf`. A counted word is `{ one, other }`, each form spelling `{count}` where the number
 stands, drawn through `counted(word, count)` (`one` at a count of one, `other` at any other). A slot

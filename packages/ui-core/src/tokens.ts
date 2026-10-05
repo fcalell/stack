@@ -1226,7 +1226,7 @@ export type WordKey = (typeof WORD_KEYS)[number];
 
 // A word drawn with a number: `one` where the count is one, `other` at
 // every other count, each spelling `{count}` where the number stands.
-export const COUNTED_WORD_KEYS = ["earlierLines"] as const;
+export const COUNTED_WORD_KEYS = ["earlierLines", "waitLeft"] as const;
 export type CountedWordKey = (typeof COUNTED_WORD_KEYS)[number];
 
 export interface CountedWord {
@@ -1324,6 +1324,10 @@ export const ENGLISH: Words = {
 	earlierLines: {
 		one: "Show {count} earlier line",
 		other: "Show {count} earlier lines",
+	},
+	waitLeft: {
+		one: "{count} second left",
+		other: "{count} seconds left",
 	},
 	meterValue: "{value} of {max}",
 	meterOver: "{amount} over",

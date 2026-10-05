@@ -1,6 +1,7 @@
 import { Button as BaseButton } from "@base-ui/react/button";
 import { cn } from "@fcalell/ui-core/cn";
 import type { IconName } from "@fcalell/ui-core/descriptors";
+import { counted } from "@fcalell/ui-core/tokens";
 import {
 	type ButtonAct,
 	type ButtonFit,
@@ -12,6 +13,7 @@ import type { Closed } from "../../lib/closed.ts";
 import { ActInert, endSubmit, SubmitContext } from "../../lib/form.ts";
 import { ReasonHostContext, usePressed } from "../../lib/reason.ts";
 import { useTouched } from "../../lib/touched.ts";
+import { useWords } from "../../lib/words.tsx";
 import { Count } from "../count/index.tsx";
 import { Icon } from "../icon/index.tsx";
 import { Spinner } from "../spinner/index.tsx";
@@ -60,6 +62,8 @@ export interface ButtonProps extends Closed {
 	label: string;
 	/** A number after the label, in a grey pill. */
 	count?: number;
+	/** A wait, in seconds left: the act is inert while it is above zero, its count drawn and its name carrying the seconds left, and it draws no reason, so its row never grows. At zero the count's slot stays, hidden, so the act keeps its width. */
+	wait?: number;
 	/** Runs the act. */
 	onAct?: () => void;
 	/** The act is running: inert, its glyph and label hidden under a spinner, its name kept. */
@@ -75,10 +79,12 @@ export function Button({
 	icon,
 	label,
 	count,
+	wait,
 	onAct,
 	loading,
 	blocked,
 }: ButtonProps) {
+	const words = useWords();
 	const kind = act ?? "primary";
 	const reason = useId();
 	const muted = blocked !== undefined;
@@ -86,7 +92,8 @@ export function Button({
 	const host = use(ReasonHostContext);
 	const submits = use(SubmitContext);
 	// Inert beside a pending act: the blocked look and no press, no reason.
-	const inert = use(ActInert) && !loading;
+	const waiting = wait !== undefined && wait > 0;
+	const inert = (use(ActInert) || waiting) && !loading;
 	const [pressed, keep] = usePressed(blocked);
 	const said = muted && (pressed || touched);
 	const look = lookOf(kind, loading === true, muted || inert);
@@ -104,6 +111,9 @@ export function Button({
 			disabled={loading}
 			focusableWhenDisabled
 			type={submits ? "submit" : "button"}
+			aria-label={
+				waiting ? `${label}, ${counted(words.waitLeft, wait)}` : undefined
+			}
 			aria-disabled={loading || muted || inert || undefined}
 			aria-busy={loading || undefined}
 			aria-describedby={muted ? (host?.id ?? reason) : undefined}
@@ -121,7 +131,14 @@ export function Button({
 			<span className={cn(buttonLabel({ act: kind }), LABEL, labelLook)}>
 				{label}
 			</span>
-			{count !== undefined ? (
+			{wait !== undefined ? (
+				<span
+					aria-hidden
+					className={cn(GLYPH, (loading || !waiting) && PENDING)}
+				>
+					<Count value={wait} />
+				</span>
+			) : count !== undefined ? (
 				<span className={cn(GLYPH, loading && PENDING)}>
 					<Count value={count} />
 				</span>

@@ -108,6 +108,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"icon",
 				"label",
 				"count",
+				"wait",
 				"onAct",
 				"loading",
 				"blocked",

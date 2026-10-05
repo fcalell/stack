@@ -194,6 +194,8 @@ an `IconAct`, a row's `StatusMark` and `ChipMark`, a `PlaceSpec`, all from
 `children` is open only where the roster gives it. A `Form` submits through its `ActionBar`'s
 filled act, the act pending while its promise pends; a `confirm()` takes a `Confirmation`, its `cancel` the way out's own label ("Keep editing") where the `cancel` word is not the decision's.
 
+An act that is out of reach for a while (a resend after a code is sent) is a `Button` with `wait`, its seconds left, never a `blocked` reason that grows its row: it draws the count in its label, is inert while the count is above zero, names the seconds left to assistive tech, and keeps its width at zero. Pass `wait` every tick, `0` once it is live; a `Button` is never wrapped in a context of the roster's own to be inert.
+
 A row's marks are named props on the meta line, at most one each, in order: `status`, `warning`
 (what is wrong, a string), `lock` (what it holds, a string, its label shown from `tablet`) and
 `chip`; the act that clears a warning is the row's `act`.

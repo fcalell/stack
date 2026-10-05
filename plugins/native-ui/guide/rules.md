@@ -228,6 +228,8 @@ A value outside its editable context is a `DefinitionRow` with `locked`, a `Lock
 with an `href` ("Held by CR-12, Ana"). A locked row takes no `description`, `act`, `href` or
 `onOpen`. A held value is never a disabled `FormField`.
 
+An act that is out of reach for a while (a resend after a code is sent) is a `Button` with `wait`, its seconds left, never a `blocked` reason that grows its row: it draws the count in its label, is inert while the count is above zero, names the seconds left to assistive tech, and keeps its width at zero. Pass `wait` every tick, `0` once it is live; a `Button` is never wrapped in a context of the roster's own to be inert.
+
 ## A form about an object opens on that object
 
 A form about an object (a domain, a project) opens on that object as one `ListRow` in a `Group`,
