@@ -5,7 +5,10 @@ page it needs and ends with its check.
 
 ## What `stack deploy` does
 
-1. Runs `stack build`, which regenerates `.stack/` and builds the web client to `dist/client`.
+1. Runs `stack build`, which regenerates `.stack/`, builds the web client to `dist/client` and
+   writes `dist/client/_headers`, which makes every asset unframeable (`frame-ancestors 'none'`,
+   `X-Frame-Options: DENY`): a stack app is never framed and has no option to be. A
+   `public/_headers` fails the build; remove it.
 2. Runs every pre-deploy check. With a D1 database: a placeholder `databaseId`, a schema change
    with no committed migration, or a newest migration that drops a table or column without its
    `-- stack:allow-destructive` marker each stop the deploy here.

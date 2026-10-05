@@ -101,6 +101,22 @@ export function aggregateViteConfig(payload: CodegenViteConfigPayload): string {
 			},
 		});
 	}
+	const headerNames = Object.keys(payload.clientHeaders).sort();
+	if (headerNames.length > 0) {
+		serverProps.push({
+			key: "headers",
+			value: {
+				kind: "object",
+				properties: headerNames.map((name) => ({
+					key: name,
+					value: {
+						kind: "string",
+						value: payload.clientHeaders[name] as string,
+					},
+				})),
+			},
+		});
+	}
 	if (payload.fsAllow.length > 0) {
 		serverProps.push({
 			key: "fs",

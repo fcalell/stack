@@ -131,6 +131,16 @@ const outDir = slot.value<string | null>({
 	seed: () => null,
 });
 
+// Headers every response the web client's host serves carries: the dev
+// server renders them into `server.headers`, cloudflare writes them to the
+// assets' `_headers` file, node's static server sets them. Vite owns the
+// slot because the headers belong to the web client; without vite it
+// resolves `{}`.
+const clientHeaders = slot.map<string>({
+	source: SOURCE,
+	name: "clientHeaders",
+});
+
 // Rendered `.stack/vite.config.ts` source. Pulled into `cli.slots.artifactFiles`
 // by the contribution below — gated on at least one plugin call or import
 // so a vite-less config never writes an empty file.
@@ -147,6 +157,7 @@ const viteConfig = slot.derived({
 		proxy: serverProxy,
 		fsAllow,
 		watchIgnored,
+		clientHeaders,
 	},
 	compute: (inp): string | null => {
 		if (inp.outDir === null) return null;
@@ -161,6 +172,7 @@ const viteConfig = slot.derived({
 			serverProxy: inp.proxy,
 			fsAllow: inp.fsAllow,
 			watchIgnored: inp.watchIgnored,
+			clientHeaders: inp.clientHeaders,
 		});
 	},
 });
@@ -185,11 +197,19 @@ export const vite = plugin("vite", {
 		serverProxy,
 		fsAllow,
 		watchIgnored,
+		clientHeaders,
 		viteConfig,
 	},
 
 	contributes: (self) => [
 		self.slots.outDir.contribute(() => "dist/client"),
+
+		// No stack app is framed: `frame-ancestors` is the standard, and
+		// `X-Frame-Options` covers a browser without it.
+		self.slots.clientHeaders.contribute(() => ({
+			"Content-Security-Policy": "frame-ancestors 'none'",
+			"X-Frame-Options": "DENY",
+		})),
 
 		// Framework preset — the providers virtual module plugin.
 		self.slots.configImports.contribute(

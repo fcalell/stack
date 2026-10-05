@@ -40,6 +40,7 @@ Using the target in an app lives in `guide/`, indexed into a consumer's `.stack/
 | `vite.slots.serverProxy` | Every `api.slots.routePrefixes` path to the wrangler dev port |
 | `vite.slots.watchIgnored` | `**/.wrangler/**`: wrangler's scratch bundle lands in `.stack/.wrangler/tmp/`, inside Vite's root, where Tailwind's source scan would answer each worker edit with a full reload |
 | `cliSlots.devProcesses` | `wrangler dev --persist-to .wrangler/state` on port 8787 |
+| `cliSlots.buildSteps` | `client-headers`, phase `post`: writes `<outDir>/_headers` with one `/*` rule holding `vite.slots.clientHeaders`, names sorted. Cloudflare applies the file to asset responses only, so worker paths keep the worker's headers. A `public/_headers` Vite copied into the directory fails the build: Cloudflare joins a header two rules set with a comma, so stack refuses instead of merging. No step without vite or with the slot empty |
 | `cliSlots.deploySteps` | `wrangler deploy`, phase `main` |
 | `cliSlots.postWrite` | `wrangler types` into `.stack/worker-configuration.d.ts`; on failure it warns and removes the file, so a stale `Env` never type-checks |
 

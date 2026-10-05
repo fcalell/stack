@@ -34,6 +34,9 @@ export interface NodeServerOptions {
 	// fallback; a missing directory serves 404s (dev serves the SPA from vite
 	// instead).
 	staticRoot: string | null;
+	// Headers the static files and the SPA fallback carry; the worker, `/ws`
+	// and service mounts answer before the static layer and never do.
+	clientHeaders?: Record<string, string>;
 	// Entries may be a single spec or an array of specs (the generated
 	// consumer barrel hands over its whole `services` array as one entry).
 	services?: ReadonlyArray<ServiceSpec | readonly ServiceSpec[]>;
@@ -60,6 +63,7 @@ export function createNodeServer(options: NodeServerOptions): NodeServer {
 		worker,
 		workerPaths = [],
 		staticRoot,
+		clientHeaders = {},
 		env = process.env,
 		log = consoleLog,
 	} = options;
@@ -127,6 +131,12 @@ export function createNodeServer(options: NodeServerOptions): NodeServer {
 	}
 
 	if (staticRoot !== null) {
+		app.use("*", async (c, next) => {
+			await next();
+			for (const [name, value] of Object.entries(clientHeaders)) {
+				c.header(name, value);
+			}
+		});
 		app.use("*", serveStatic({ root: staticRoot }));
 		// SPA fallback: any remaining GET (deep links like /board/012-01) gets
 		// the client shell. Worker paths never reach here — they matched above.

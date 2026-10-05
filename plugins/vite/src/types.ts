@@ -47,4 +47,6 @@ export interface CodegenViteConfigPayload {
 	// Globs rendered into `server.watch.ignored`, which Vite adds to its own
 	// defaults (`.git`, `node_modules`, its cache dir).
 	watchIgnored: string[];
+	// Headers rendered into `server.headers`, names sorted.
+	clientHeaders: Record<string, string>;
 }

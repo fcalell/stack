@@ -54,6 +54,7 @@ there.
 | `vite.slots.resolveAliases` | `list<{ find, replacement }>` | `resolve.alias` entries |
 | `vite.slots.devServerPort` | `value<number>` | Dev server port (defaults to `options.port ?? 3000`) |
 | `vite.slots.watchIgnored` | `list<string>` | Globs rendered into `server.watch.ignored`, added to Vite's defaults; a plugin whose tool writes scratch files under `.stack/` contributes their glob |
+| `vite.slots.clientHeaders` | `map<string>` | Headers every response of the web client's host carries: `Content-Security-Policy: frame-ancestors 'none'` and `X-Frame-Options: DENY`, contributed by vite itself, so no stack app is framed and there is no option to allow it. Rendered into the config's `server.headers` (Vite sends them on documents, the SPA fallback and modules, never on a proxied worker path); cloudflare writes them to `_headers` and node's static server sets them |
 | `vite.slots.viteConfig` | `derived<string \| null>` | Final `.stack/vite.config.ts` source |
 
 ## Lifecycle contributions

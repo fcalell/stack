@@ -90,7 +90,7 @@ e.g. consulting `ctx.fileExists` before writing.
 | `vars` | `map<string, string>` | Plain-text `[vars]` |
 | `compatibilityDate` | `value<string>` | Defaults to today; override with `value` + `override:true` |
 | `compatibilityFlags` | `list<string>` | Wrangler `compatibility_flags`; deduped + sorted, omitted when empty (e.g. auth contributes `nodejs_compat`) |
-| `wranglerToml` | `derived<string>` | Final `.stack/wrangler.toml` source; reads `api.slots.env` so a consumer `[vars]` key naming a declared var fails generate, and `vite.slots.outDir` with `api.slots.routePrefixes` for the framework-managed `[assets]` table (the client build as a single-page app, `run_worker_first` each prefix bare and with `/*`, since `/mcp/*` alone misses `/mcp`; none without vite, and a consumer `[assets]` fails generate). Generate's `postWrite` creates the assets directory when missing, which `wrangler dev` refuses to start without, and runs `wrangler types` |
+| `wranglerToml` | `derived<string>` | Final `.stack/wrangler.toml` source; reads `api.slots.env` so a consumer `[vars]` key naming a declared var fails generate, and `vite.slots.outDir` with `api.slots.routePrefixes` for the framework-managed `[assets]` table (the client build as a single-page app, `run_worker_first` each prefix bare and with `/*`, since `/mcp/*` alone misses `/mcp`; none without vite, and a consumer `[assets]` fails generate). Cloudflare also contributes a `cliSlots.buildSteps` step (`client-headers`, phase `post`, none without vite or with `clientHeaders` empty) that writes `<outDir>/_headers`, one `/*` rule with `vite.slots.clientHeaders`, and fails the build when a `public/_headers` already sits there. Generate's `postWrite` creates the assets directory when missing, which `wrangler dev` refuses to start without, and runs `wrangler types` |
 
 ## `node.slots.*` (plugin-node)
 
@@ -101,7 +101,7 @@ e.g. consulting `ctx.fileExists` before writing.
 | `services` | `list<ServiceEntry>` (`uniqueBy: name`) | Codegen entries (`{ name, imports, expression }`) for the generated server's `services` array; each expression evaluates to a ServiceSpec or ServiceSpec[]; the consumer barrel lands here as one entry |
 | `consumerServices` | `value<{ identifier } \| null>` | Consumer services barrel identifier (seeded from `src/server/services` contents) |
 | `serviceBarrelSource` | `derived<string \| null>` | Rendered `src/server/services/index.ts` barrel; null when no service modules exist |
-| `serverSource` | `derived<string \| null>` | Final `.stack/server.ts` source; reads `api.slots.workerSource` + `routePrefixes`, and `vite.slots.outDir` as the static root (null mounts no static files or SPA fallback); null when there is no worker and no services |
+| `serverSource` | `derived<string \| null>` | Final `.stack/server.ts` source; reads `api.slots.workerSource` + `routePrefixes`, and `vite.slots.outDir` as the static root (null mounts no static files or SPA fallback) with `vite.slots.clientHeaders` as the `clientHeaders` the static files and the fallback carry (rendered only with a static root); null when there is no worker and no services |
 
 ## `vite.slots.*` (plugin-vite)
 
@@ -116,6 +116,7 @@ e.g. consulting `ctx.fileExists` before writing.
 | `serverProxy` | `list<ServerProxyEntry>` (`uniqueBy: path`) | Dev-server proxy rules (`{ path, target, ws? }`) rendered into `server.proxy`; deploy targets contribute worker-owned paths so dev stays same-origin like prod |
 | `fsAllow` | `list<TsExpression>` | Extra `server.fs.allow` path expressions; plugins serving assets from their own package contribute their real location so a workspace-linked stack still serves them in dev. Any entry makes the rendered list explicit, prefixed with the consumer's workspace root |
 | `watchIgnored` | `list<string>` (sorted) | Globs rendered into `server.watch.ignored`, added to Vite's own defaults; a plugin whose tool writes scratch files under Vite's root contributes their glob so the writes never reach hot-update handling. plugin-cloudflare contributes `**/.wrangler/**` (wrangler's dev bundle in `.stack/.wrangler/tmp/`) |
+| `clientHeaders` | `map<string>` | Headers every response of the web client's host carries; vite contributes `Content-Security-Policy: frame-ancestors 'none'` and `X-Frame-Options: DENY`, so no stack app is framed and no option allows it. Three readers: vite renders it into `server.headers` (dev), cloudflare writes it to `<outDir>/_headers` in a `post` build step, node passes it to its static server; resolves `{}` without vite |
 | `viteConfig` | `derived<string \| null>` | Final `.stack/vite.config.ts` source; null when nothing to emit |
 
 ## `react.slots.*` (plugin-react)

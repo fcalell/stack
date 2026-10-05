@@ -42,6 +42,7 @@ only `ws/`.
 | `cliSlots.devProcesses` | `node --watch .stack/server.ts` with `STACK_DEV=1` and each `api.slots.env` var's dev default the shell leaves unset; ready on `listening on` |
 | `api.slots.localOrigins` | `deployed` when `host` is a loopback address |
 | `api.slots.devTargetOrigins` | `http://localhost:<port>`, unless `app.origins` is set |
+| `vite.slots.clientHeaders` (read) | `serverSource` passes it to the server as `clientHeaders`, with a static root only |
 | `vite.slots.serverProxy` | Every worker path, and `/ws` as a WebSocket |
 | `cliSlots.devWatchers` | Rewrites the services barrel when a service file appears or goes |
 | `cliSlots.removeFiles` | `src/server/` |
@@ -53,6 +54,8 @@ the services barrel are passed as module URLs, not imports: route files import
 `virtual:stack-procedure`, which plain Node resolves only through the `registerHooks` hook the
 boot installs before loading them. The server mounts, in order, `/ws`, service mounts (longest
 prefix wins), the worker paths, then, with `vite()`, static files from `dist/client` and the
-`index.html` fallback.
+`index.html` fallback. Those two carry `clientHeaders` (`frame-ancestors 'none'` and
+`X-Frame-Options: DENY`, from `vite.slots.clientHeaders`); the earlier layers never do. A stack app
+is never framed and has no option to be.
 Services start in order before listen and stop in reverse on `SIGINT` or `SIGTERM`; a failed boot
 logs and exits 1.

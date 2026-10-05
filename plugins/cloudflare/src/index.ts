@@ -1,5 +1,11 @@
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, rmSync } from "node:fs";
+import {
+	existsSync,
+	mkdirSync,
+	readFileSync,
+	rmSync,
+	writeFileSync,
+} from "node:fs";
 import { join } from "node:path";
 import { log } from "@clack/prompts";
 import { type ContributionCtx, plugin, slot } from "@fcalell/cli";
@@ -288,6 +294,34 @@ export const cloudflare = plugin("cloudflare", {
 				args: ["wrangler", "deploy", ...(await wranglerConfigArgs(ctx))],
 			},
 		})),
+
+		// The web client's headers for every asset: Cloudflare reads a
+		// `_headers` file from the assets directory and never serves it, and
+		// its rules apply to asset responses only, so the worker's paths need
+		// no exclusion. The step runs after vite's build has emptied and
+		// filled the directory. A `public/_headers` Vite copied there is
+		// refused: Cloudflare joins a header two rules set with a comma
+		// (`DENY, SAMEORIGIN` is invalid), so merging is not safe.
+		cliSlots.buildSteps.contribute(async (ctx) => {
+			const clientDir = await ctx.resolve(vite.slots.outDir);
+			const headers = await ctx.resolve(vite.slots.clientHeaders);
+			const names = Object.keys(headers).sort();
+			if (clientDir === null || names.length === 0) return undefined;
+			return {
+				name: "client-headers",
+				phase: "post" as const,
+				run: async () => {
+					const file = join(ctx.cwd, clientDir, "_headers");
+					if (existsSync(file)) {
+						throw new Error(
+							"public/_headers is refused: stack writes the web client's _headers from vite.slots.clientHeaders, and Cloudflare joins a header two rules set. Remove public/_headers.",
+						);
+					}
+					const rules = names.map((n) => `  ${n}: ${headers[n]}`).join("\n");
+					writeFileSync(file, `/*\n${rules}\n`);
+				},
+			};
+		}),
 
 		// wrangler refuses to start when `assets.directory` is missing, which it
 		// is until the first `stack build`; an empty one serves nothing and

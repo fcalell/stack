@@ -50,6 +50,9 @@ export interface CodegenServerPayload {
 	// The web client's build directory, relative to the project root; null
 	// when there is no web client.
 	staticRoot: string | null;
+	// Headers the static files and the shell carry; rendered only with a
+	// static root.
+	clientHeaders: Record<string, string>;
 	hasConsumerServices: boolean;
 	services: ServiceEntry[];
 }

@@ -47,6 +47,13 @@ to the worker's dev process, so the browser reaches the API on the page's own or
 in production. The API client and the auth client therefore take no `baseURL` and no absolute
 `url`: their defaults are relative, and the session cookie is first-party.
 
+## Framing
+
+A stack app is never framed. In dev, on Cloudflare and on node, every document and asset carries
+`Content-Security-Policy: frame-ancestors 'none'` and `X-Frame-Options: DENY`, and there is no
+option to allow embedding. On Cloudflare a `public/_headers` fails the build, because stack writes
+the file itself.
+
 ## Files the app owns
 
 - `src/app/`: the routes and every module the web app imports. `#src/` in an import is `src/`,

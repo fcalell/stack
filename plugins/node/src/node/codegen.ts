@@ -75,6 +75,22 @@ export function aggregateServer(payload: CodegenServerPayload): string {
 				? { kind: "null" }
 				: { kind: "string", value: payload.staticRoot },
 	});
+	const headerNames = Object.keys(payload.clientHeaders).sort();
+	if (payload.staticRoot !== null && headerNames.length > 0) {
+		properties.push({
+			key: "clientHeaders",
+			value: {
+				kind: "object",
+				properties: headerNames.map((name) => ({
+					key: name,
+					value: {
+						kind: "string",
+						value: payload.clientHeaders[name] as string,
+					},
+				})),
+			},
+		});
+	}
 	properties.push({
 		key: "servicesModule",
 		value: payload.hasConsumerServices

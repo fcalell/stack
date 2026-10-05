@@ -42,6 +42,13 @@ is checked on the first request, which refuses to serve while one is missing.
 - Cloudflare bindings do not exist here: a feature backed by one (auth's rate limiters) skips
   itself.
 
+## Framing
+
+The server answers the web client's files and its `index.html` fallback with
+`Content-Security-Policy: frame-ancestors 'none'` and `X-Frame-Options: DENY`: a stack app is
+never framed, and there is no option to allow it. The worker's own paths keep the headers the
+worker sets.
+
 ## Dev
 
 `stack dev` runs `node --watch .stack/server.ts` on the port. With `vite()` in the config, the dev

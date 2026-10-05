@@ -8,6 +8,10 @@ const payload = {
 	hasWorker: true,
 	workerPaths: ["/rpc"],
 	staticRoot: "dist/client",
+	clientHeaders: {
+		"X-Frame-Options": "DENY",
+		"Content-Security-Policy": "frame-ancestors 'none'",
+	},
 	hasConsumerServices: false,
 	services: [],
 };
@@ -35,4 +39,14 @@ test("the generated entry serves the web client's build directory", () => {
 test("the generated entry serves no static root without a web client", () => {
 	const source = aggregateServer({ ...payload, host: null, staticRoot: null });
 	assert.match(source, /staticRoot: null,/);
+});
+
+test("the server is given the client headers", () => {
+	const source = aggregateServer({ ...payload, host: null });
+	assert.match(
+		source,
+		/clientHeaders: \{\s*"Content-Security-Policy": "frame-ancestors 'none'",\s*"X-Frame-Options": "DENY"\s*\},/,
+	);
+	const bare = aggregateServer({ ...payload, host: null, staticRoot: null });
+	assert.doesNotMatch(bare, /clientHeaders/);
 });
