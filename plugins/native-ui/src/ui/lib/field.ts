@@ -1,4 +1,5 @@
-import { createContext, useContext } from "react";
+import { createContext, type RefObject, useContext, useEffect } from "react";
+import type { TextInput } from "react-native";
 
 // What names a typing control: the label of the `FormField` around it, else
 // the title of the `Sheet` it sits in bare, since a sheet holding a bare field
@@ -59,3 +60,38 @@ export const CellField = createContext<
 export const InlineField = createContext<
 	{ label: string; focus?: boolean } | undefined
 >(undefined);
+
+// Set by an `AuthColumn` around its body: the typing control of the column
+// that holds focus, if any. An `Input` or `InputOtp` that mounts there takes
+// focus unless one holds it, so the first field of a page or of a step that
+// replaces the body takes it, and a second field beside it, or one revealed
+// while another is typed in, never does. An `ActionBar` in it with no `fit`
+// reads `full`.
+export const AuthColumnFocus =
+	createContext<RefObject<TextInput | null> | null>(null);
+
+// A typing control's claim on its `AuthColumn`'s focus: it takes focus as it
+// mounts when none holds it, and holds it for as long as it is focused.
+// `onFocus` and `onBlur` join the control's own handlers.
+export function useColumnFocus(input: RefObject<TextInput | null>) {
+	const column = useContext(AuthColumnFocus);
+	useEffect(() => {
+		const control = input.current;
+		if (!column || !control) return;
+		if (!column.current) {
+			column.current = control;
+			control.focus();
+		}
+		return () => {
+			if (column.current === control) column.current = null;
+		};
+	}, [column, input]);
+	return {
+		onFocus: () => {
+			if (column) column.current = input.current;
+		},
+		onBlur: () => {
+			if (column && column.current === input.current) column.current = null;
+		},
+	};
+}

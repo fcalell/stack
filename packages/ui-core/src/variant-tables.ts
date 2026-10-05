@@ -95,7 +95,8 @@ export const ICON = matrix({
 // `act` is the button's kind: `primary` the accent fill (one per screen),
 // `danger` the danger fill (a confirm's one filled act), `secondary` a
 // hairline with no fill, `destructive` the hairline with its label in
-// `danger`. `fit` is its container's: a body control, compact in a
+// `danger`, `quiet` words in the meta ink with no fill and no hairline (a
+// resend, a skip). `fit` is its container's: a body control, compact in a
 // bar, or full width at a field's height under the field it submits. min-h,
 // never h: the label must be able to grow the control under OS font scaling.
 // The fill carries the act's ink for the web's glyph and spinner
@@ -108,6 +109,7 @@ export const BUTTON = matrix({
 			danger: "bg-act-danger text-on-act-danger",
 			secondary: "border border-edge text-ink-body",
 			destructive: "border border-edge text-danger",
+			quiet: "text-ink-meta",
 		},
 		fit: {
 			body: "min-h-control",
@@ -126,6 +128,7 @@ export const BUTTON_LABEL = matrix({
 			danger: "text-on-act-danger",
 			secondary: "text-ink-body",
 			destructive: "text-danger",
+			quiet: "text-ink-meta",
 		},
 	},
 	defaultVariants: { act: "primary" },

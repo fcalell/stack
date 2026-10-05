@@ -758,6 +758,12 @@ export const SWITCHER_SLOT = "p-float";
 export const SHELL_PLACES = "gap-rows p-float";
 // The shell on touch: the tab bar on the canvas under a hairline.
 export const SHELL_TAB_BAR = "px-float bg-canvas border-t border-edge";
+// A page outside the shell, an AuthColumn: the surface ground at the page
+// inset, one column at the `auth` width a fields gap between its parts, the
+// head's title and sentence a pair apart.
+export const AUTH_PAGE = "bg-surface p-page";
+export const AUTH_COLUMN = "w-full max-w-auth gap-fields";
+export const AUTH_HEAD = "gap-pair";
 // The switcher's trigger in a touch top bar; in the sidebar it is a
 // `PLACE_ROW` with the name at body 500.
 export const SWITCHER = "gap-inside min-h-target rounded-control";

@@ -1163,8 +1163,33 @@ a tick with no animation, never jumped to full.
   of m" (the slot word `stepOf`) at meta, which is also the component's accessible name. `done` and
   `current` fill `ink-meta`, `later` `fill-neutral`, never the accent, which the rubric leaves to
   checked controls and the active dot. It is an atom, not a prop on `Place`, `Form` or `Sheet`: an
-  onboarding step can be any of the three. It takes the count alone, not a `Step[]`: onboarding
+  onboarding step can be any of the three. The one frame that owns its place is `AuthColumn`, whose
+  `step` draws it between the product line and the title. It takes the count alone, not a `Step[]`: onboarding
   steps carry no label or date.
+- `AuthColumn` is the layout frame of a page outside the shell (a sign-in, a consent step), beside
+  `Shell`, `Place`, `Screen` and `Split` rather than a variant of `Place`, whose strip, acts, foot
+  and floating act all assume the sidebar or tab bar beside it; a host element at the `auth` width
+  would be a numeric dimension, which the rules refuse. Its props are `product`, `step`, `title`,
+  `sentence`, `banner` and `children`, the style channels closed. It draws, on the surface at the
+  page inset (`AUTH_PAGE`), one column `w-full max-w-auth` (`AUTH_COLUMN`, parts a `fields` gap apart,
+  centred across, and down by an auto margin while it fits, never `justify-center`, which clips the
+  top of a column taller than the viewport): the `banner` (a `Banner`, first at the column's width),
+  the `product` name as a line at meta and 500 (text, no mark asset exists), the `StepCount`, then
+  the head (`AUTH_HEAD`, a `pair` apart): the `title` at the `title` role, the page's one `h1`, its
+  body's `Section`s a level under, and the `sentence`, a `string | readonly Run[]` (`Run` in
+  `./descriptors`: a string, or `{ strong }` at 500, the way a nested `Text strong` draws), data
+  because composed regions are data. On touch it spans the viewport inside the page inset; on the
+  phone it keeps the safe area and its keyboard-aware scroll keeps the focused field and the submit
+  act in view. It draws no word of its own, and `toast()` and `confirm()` stand only inside a
+  `Shell`. Inside it a `Form`'s `ActionBar` with no `fit` draws `full` (an explicit `fit` wins), and
+  a typing control takes focus as it mounts, unless focus already stands in a typing control of the
+  same column: the first field of the page or of a step that replaces the body takes it, a second
+  field beside it or one revealed while another is typed in never does. Both platforms follow the
+  rule: the web reads `document.activeElement` against the column's root, native keeps the column's
+  held `TextInput` and its controls claim it as they mount and on focus. Programmatic focus opens no
+  keyboard on mobile Safari; on the phone it does, which suits a one-task page. A `Select` or
+  `Picker` that reveals a typed field hands focus to that field, since a pick holds no typing focus.
+  A logo, and a client's mark joined to the product, are later gaps.
 - A count strip is `Stats` (`items: StatSpec[]`) and one display figure is `Stat`, the two members
   of one figure-with-its-label mechanism. The strip is one card (`STATS`) whose cells draw their own
   top and start hairline (`STATS_CELL`) so it splits wherever the cells wrap, which `divide-*`
@@ -1311,7 +1336,7 @@ a tick with no animation, never jumped to full.
   Rejected: optional `value` and `onChange` on every control read from the field's context, which
   would compile a control with no value anywhere and could not type a boolean field against an
   `Input`.
-- The roster is data: `ROSTER` in `packages/ui-core/src/roster.ts` names 62 components in four
+- The roster is data: `ROSTER` in `packages/ui-core/src/roster.ts` names 63 components in four
   layers (atoms, layout molecules, shared molecules, content molecules) with their prop names, the
   cells each draws (a whole matrix family, one family cell as `FAMILY.axis.value`, or a single cell)
   and the states it has a form for, the same in both plugins; the showcase draws exactly those
@@ -1377,7 +1402,9 @@ a tick with no animation, never jumped to full.
 - An `Act` says what it does, never how it looks: `destructive` marks an act that removes or
   ends something, and the `ActionBar` draws it as `danger` when it is the bar's one filled act
   and as `destructive` (the hairline form) otherwise, so a confirm's filled act needs no kind of
-  its own.
+  its own. `quiet` draws a non-filled act as `BUTTON {act: quiet}`: words in the meta ink, no fill
+  and no hairline, the sign-in pattern's Resend (the login-and-otp range's muted 12 text); it has no
+  press ink of its own beyond the wash.
 - A confirm's act runs the work, as a Form's submit does: `ConfirmAct.onAct` returns a promise,
   the act is pending and the sheet's other acts inert while it pends, and the sheet closes when it
   resolves and stays open to retry when it rejects (the caller says why, a toast). `confirm()`

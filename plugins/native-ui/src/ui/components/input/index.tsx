@@ -22,6 +22,7 @@ import {
 	FieldError,
 	FieldFocus,
 	InlineField,
+	useColumnFocus,
 	useFieldName,
 } from "../../lib/field";
 import { Ink } from "../../lib/ink";
@@ -74,6 +75,8 @@ const KEYBOARD: Record<InputKind, KeyboardTypeOptions> = {
 // command, a path, a host), mono and never corrected or capitalized; `email`
 // opens the email keyboard, offers the address the system knows and is never
 // corrected or capitalized; `act` is an icon act inside the field's end.
+// In an `AuthColumn` it takes focus as it mounts unless a typing control there
+// holds it.
 // `onCommit` hears the value once the viewer is done with it: on leaving the
 // field or on the keyboard's return, only when it changed since the field took
 // focus; with it, a hardware Escape puts back the value at focus and leaves
@@ -101,6 +104,7 @@ export function Input({
 	const cell = useContext(CellField);
 	const inline = useContext(InlineField);
 	const input = useRef<TextInput>(null);
+	const column = useColumnFocus(input);
 	// A placeholder's colour is a prop, never a class: `FIELD_PLACEHOLDER`'s ink.
 	const placeholderInk = useTokenColor("--color-ink-meta");
 	const which = kind ?? "text";
@@ -163,8 +167,12 @@ export function Input({
 						: "sentences"
 				}
 				autoCorrect={which === "text"}
-				onFocus={() => moment.focus(value)}
+				onFocus={() => {
+					column.onFocus();
+					moment.focus(value);
+				}}
 				onBlur={() => {
+					column.onBlur();
 					moment.leave(value, commit);
 					cell?.done();
 				}}

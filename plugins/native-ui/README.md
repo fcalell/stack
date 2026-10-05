@@ -2,7 +2,7 @@
 
 The phone half of the stack design system: the CLI plugin that renders `@fcalell/ui-core`'s
 contract into the uniwind stylesheet, embeds the font files, composes the app's providers, and
-ships the roster: 62 components in four layers. Requires `expo` (it contributes into
+ships the roster: 63 components in four layers. Requires `expo` (it contributes into
 `plugin-expo`'s slots) plus `api` and `auth` (the wired Query and Auth providers import their
 native subpaths).
 
@@ -62,6 +62,13 @@ it. `QrCode`'s tile is a light scope (uniwind's `ScopedTheme`). `Image`'s full v
 base's `view` form: a gorhom modal at the screen's height inside the safe area, with no handle,
 ground, body or foot, so a sheet's chrome never takes the picture's room. It stands under the toasts
 like every sheet, and it draws the picture contain-fit with no pinch-zoom.
+
+`AuthColumn` is the frame of a page outside the shell (a sign-in, a consent step): the banner, the
+product's name, an optional `StepCount`, the title, the sentence and the body in one column at the
+`auth` width inside the page inset, scrolling over the keyboard (`Scroll`) and keeping the safe
+area. It hands `AuthColumnFocus` (`./lib/field`) to its body: an `Input` or `InputOtp` that mounts in
+it takes focus unless a typing control of the column holds it, and an `ActionBar` with no `fit` reads
+`full`.
 
 ## Verify
 

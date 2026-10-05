@@ -22,6 +22,7 @@ import {
 import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
+import { AuthColumnFocus } from "../../lib/field";
 import { FormContext } from "../../lib/form";
 import { useLive } from "../../lib/live";
 import { ReasonHostContext } from "../../lib/reason";
@@ -44,11 +45,14 @@ const ALL_INERT = "text-ink-disabled";
 // filled and the hairline `destructive` otherwise.
 function kindOf(act: Act, last: boolean): ButtonAct {
 	if (act.destructive) return last ? "danger" : "destructive";
+	if (act.quiet && !last) return "quiet";
 	return last ? "primary" : "secondary";
 }
 
 export interface ActionBarProps extends Closed {
 	acts: Act[];
+	// Where the bar stands: at its container's end (the default), or across it
+	// (the default inside an `AuthColumn`).
 	fit?: ActionBarFit;
 	// A selection bar's count, "N of M chosen" at meta over the acts (a
 	// `Table`'s `choose` set against its rows), announced as it changes, with
@@ -139,7 +143,9 @@ function ActHost(props: {
 // act keeps its row and stretches as a live one does. With `chosen` the count
 // stands over the acts at the bar's start.
 export function ActionBar({ acts, fit, chosen }: ActionBarProps) {
-	const where = fit ?? "end";
+	// Inside an `AuthColumn` a bar with no `fit` stands across the column.
+	const inColumn = useContext(AuthColumnFocus) !== null;
+	const where = fit ?? (inColumn ? "full" : "end");
 	const pend = useContext(FormContext);
 	const [running, setRunning] = useState(false);
 	const { touched } = useTouched();

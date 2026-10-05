@@ -21,6 +21,9 @@ export interface Act {
 	blocked?: string;
 	loading?: boolean;
 	destructive?: boolean;
+	// A quiet act: words in the meta ink with no hairline (a resend). An
+	// `ActionBar` draws it so unless it is the bar's filled act.
+	quiet?: boolean;
 }
 
 // An icon-only act: the label is read aloud, never drawn.
@@ -316,6 +319,10 @@ export interface StageEnd {
 	label: string;
 	reason: string;
 }
+
+// One run of a meta line: plain words, or a part at strong weight (the
+// address a sentence names), the way a nested `Text strong` draws.
+export type Run = string | { strong: string };
 
 // A place in the shell: a route, a label, an icon, an optional count.
 export interface PlaceSpec {

@@ -26,7 +26,7 @@ Open the platform's rules page (`node_modules/@fcalell/plugin-react-ui/guide/rul
 `plugin-native-ui`'s), `node_modules/@fcalell/ui-core/DESIGN.md` for cells, states and tokens,
 and each component's `src/ui/components/<dir>/index.tsx` for its props. Map each part to one
 component: the frame (`Shell`, `Place` in the shell, `Screen` pushed over it, `Split` for a list
-beside its record), the rhythm (`Section` over a `Group` or a `List`), each control and text role.
+beside its record, `AuthColumn` for a page outside the shell: sign-in, a consent step), the rhythm (`Section` over a `Group` or a `List`), each control and text role.
 
 A part no component composes (a component, variant, token or state the roster lacks) is a gap:
 leave it out, compose the rest, and file it by `node_modules/@fcalell/cli/guide/gap.md`.

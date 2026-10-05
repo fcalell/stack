@@ -112,6 +112,14 @@ graph, compiles it with the Tailwind CLI in `scripts/fixture/`, and holds the co
 | `b-nouns` | no product noun in `src` |
 | `b-exports` | every component and lib subpath resolves through `exports` to its own file |
 
+- **A page outside the shell.** `AuthColumn` is the layout frame of a sign-in or a consent step:
+  one column at the `auth` width on the surface, centred across and down the viewport, holding a
+  `banner`, the `product`'s name, an optional `step` (`StepCount`), the `title` (the page's one
+  `h1`), a `sentence` (a string or `Run[]` with `{ strong }` parts) and the body. It hands its
+  root to `AuthColumnRoot` (`./lib/frame`): an `Input` or `InputOtp` that mounts in it takes focus
+  unless a typing control of the column holds it (`useColumnFocus` in `./lib/field`), and an
+  `ActionBar` with no `fit` reads `full`.
+
 ## The showcase
 
 `Showcase` (`@fcalell/plugin-react-ui/showcase`) is a page generated from data: for every roster

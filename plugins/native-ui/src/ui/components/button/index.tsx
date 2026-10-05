@@ -30,6 +30,7 @@ const PRESS: Record<ButtonAct, string> = {
 	danger: "active:bg-act-danger-press",
 	secondary: "active:bg-wash-press",
 	destructive: "active:bg-wash-press",
+	quiet: "active:bg-wash-press",
 };
 
 const FILL_PENDING: Record<ButtonAct, string> = {
@@ -37,6 +38,7 @@ const FILL_PENDING: Record<ButtonAct, string> = {
 	danger: "bg-act-danger-pending",
 	secondary: "",
 	destructive: "",
+	quiet: "",
 };
 
 // The blocked ink is the label's and the glyph's, through `Ink`: a view draws
@@ -46,6 +48,7 @@ const BLOCKED: Record<ButtonAct, string> = {
 	danger: "bg-fill-disabled",
 	secondary: "",
 	destructive: "",
+	quiet: "",
 };
 
 // Pending and blocked are both inert, so one look is chosen: pending over

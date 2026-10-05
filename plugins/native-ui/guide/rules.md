@@ -7,7 +7,7 @@ composes components and never restyles them.
 
 ## Pick the component first
 
-Find the roster component that owns the shape: the frame (`Shell`, `Place`, `Screen`, `Split`),
+Find the roster component that owns the shape: the frame (`Shell`, `Place`, `Screen`, `Split`, `AuthColumn`),
 the rhythm (`Section`, `Group`, `List`), the row (`ListRow`, `DefinitionRow`, `FormField`), the
 control, the text role (`Text`). A `View` rebuilding one is drift. A `Split` is its page's frame
 region: it stands as the bleeding `Place`'s (or `Screen`'s) direct child, never inside a component
@@ -35,7 +35,7 @@ in React Native's `Text`.
 
 Every colour, size, radius and spacing is a contract token, never an arbitrary value (`h-[34px]`),
 a literal colour or raw pixels. Copy renders through `Text` (`body` or `meta`, with `strong`) or
-the molecule that owns its role (`title` is `Place`'s and `Screen`'s, `heading` `Section`'s,
+the molecule that owns its role (`title` is `Place`'s, `Screen`'s and `AuthColumn`'s, `heading` `Section`'s,
 `figure` `Stats`', `display` `Stat`'s); colour comes through a component's props.
 
 ## A picture is an `Image`
@@ -84,11 +84,37 @@ label in the sheet and on the trigger; `status` stays for a work state that move
 />
 ```
 
+## A page outside the shell is an `AuthColumn`
+
+A page with no sidebar or tab bar beside it (sign-in, a consent step) is an `AuthColumn`, never a
+`Place`, a `Screen` or a hand-built centred `View`. It takes `product` (the product's name, the line that
+leads the column), `step` (`{ at, of }`, a `StepCount` between the product and the title),
+`title` (the page's one header), `sentence` (a meta line: a string, or `Run[]` from
+`@fcalell/ui-core/descriptors`, each run a string or `{ strong }` at weight 500, never a node),
+`banner` (a `Banner`, first in the column) and `children`, the step's body (a `Form`, a `Group`,
+an `OptionList`, a `List`). It stands one column at most the `auth` width, centred; on touch it spans the
+viewport inside the page inset. An `Input` or `InputOtp` that mounts in it takes focus unless a
+typing control of the column holds it, and a `Form`'s `ActionBar` in it draws `full`. It draws no
+word of its own, and `toast()` and `confirm()` stand only inside a `Shell`: say an outcome in a field
+or a banner.
+
+```tsx
+<AuthColumn
+  product="Acme"
+  step={{ at: 1, of: 2 }}
+  title="Choose a workspace"
+  sentence={["Signed in as ", { strong: "ana@acme.dev" }]}
+  banner={expired ? <Banner kind="warn" sentence="This request has expired." /> : undefined}
+>
+  <Group><List items={workspaces} row={row} /></Group>
+</AuthColumn>
+```
+
 ## An onboarding step shows its count
 
 A flow of two to four steps shows where it stands as a `StepCount`: `at` (counted from one) and
 `of`. It draws a segment per step and "Step n of m", never a hand-built bar or a row of dots. It
-heads the step's screen, whether that is a `Place`, an auth column or a sheet page.
+heads the step's screen, whether that is a `Place`, a sheet page or, as its `step`, an `AuthColumn`, which draws it between the product and the title.
 
 ```tsx
 <StepCount at={2} of={3} />
@@ -148,7 +174,8 @@ mode, and a screen across a room reads best dark, so run the app dark (`defaultM
 
 ## Data, never nodes
 
-A composed region is data its molecule draws: an `Act` (`{ label, onAct, destructive? }`),
+A composed region is data its molecule draws: an `Act` (`{ label, onAct, destructive?, quiet? }`; `quiet` draws an `ActionBar`'s
+act as words in the meta ink with no hairline, a resend or a skip, never its filled act),
 an `IconAct`, a row's `StatusMark` and `ChipMark`, a menu's `MenuItem`s, a `PlaceSpec`, all from
 `@fcalell/ui-core/descriptors`. An icon is an `IconName`, a Lucide glyph's PascalCase name.
 `children` is open only where the roster gives it. A `Form`'s `ActionBar` filled act runs its

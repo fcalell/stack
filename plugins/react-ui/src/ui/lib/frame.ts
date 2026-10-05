@@ -1,6 +1,6 @@
 import type { Dialog } from "@base-ui/react/dialog";
 import type { Switcher } from "@fcalell/ui-core/descriptors";
-import { createContext, type ReactNode } from "react";
+import { createContext, type ReactNode, type RefObject } from "react";
 
 // What the frame molecules hand each other. The Shell hands its switcher to
 // the Place, which draws its trigger at the start of its touch top bar.
@@ -56,3 +56,9 @@ export const ActRoom = createContext<ReactNode>(null);
 
 // The id of the Place's or Screen's title, which names a Split's list.
 export const PageTitle = createContext<string | undefined>(undefined);
+
+// The root of the `AuthColumn` a part stands in, unset outside one: an
+// `ActionBar` with no `fit` reads `full` there, and an `Input` or `InputOtp`
+// that mounts takes focus unless one of the column's typing controls holds it.
+export const AuthColumnRoot =
+	createContext<RefObject<HTMLElement | null> | null>(null);

@@ -1,9 +1,14 @@
 import { OTP, OTP_DIGIT, otpBox, text } from "@fcalell/ui-core/variants";
-import { useContext } from "react";
+import { useContext, useRef } from "react";
 import { Text as RNText, TextInput, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import { FieldError, FieldFocus, useFieldName } from "../../lib/field";
+import {
+	FieldError,
+	FieldFocus,
+	useColumnFocus,
+	useFieldName,
+} from "../../lib/field";
 import { useLive } from "../../lib/live";
 import { useTouched } from "../../lib/touched";
 import { useWords } from "../../lib/words";
@@ -22,7 +27,8 @@ export interface InputOtpProps extends Closed {
 // lies over the boxes, invisible, so a tap anywhere focuses it and the
 // system's code suggestion and a paste of the whole code fill it at once; the
 // boxes draw it. It takes focus as it mounts where `FieldFocus` asks, as an
-// `Input` does, so a code sheet is typed into at once. `onComplete`
+// `Input` does, so a code sheet is typed into at once, and in an
+// `AuthColumn` unless a typing control there holds it. `onComplete`
 // hears the code once its last digit lands; `loading` holds the boxes at rest
 // while the code is checked, the input inert (unwritable and marked
 // disabled, still read) and the row busy, the spinner and its line under it.
@@ -39,6 +45,8 @@ export function InputOtp({
 	const error = useContext(FieldError);
 	const focused = useContext(FieldFocus);
 	const live = useLive(loading ? words.checking : "");
+	const input = useRef<TextInput>(null);
+	const column = useColumnFocus(input);
 	return (
 		<View className="gap-pair">
 			<View
@@ -60,6 +68,9 @@ export function InputOtp({
 					</View>
 				))}
 				<TextInput
+					ref={input}
+					onFocus={column.onFocus}
+					onBlur={column.onBlur}
 					accessibilityLabel={name}
 					accessibilityState={{ disabled: loading, busy: loading }}
 					autoFocus={focused}

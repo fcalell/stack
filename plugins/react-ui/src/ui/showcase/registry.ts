@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { ShowcaseFrame } from "./cells.ts";
 import { drawActionBar } from "./frames/action-bar.tsx";
+import { drawAuthColumn } from "./frames/auth-column.tsx";
 import { drawAvatar } from "./frames/avatar.tsx";
 import { drawBanner } from "./frames/banner.tsx";
 import { drawBarChart } from "./frames/bar-chart.tsx";
@@ -89,6 +90,7 @@ export const registry: Partial<
 	Avatar: drawAvatar,
 	Link: drawLink,
 	Place: drawPlace,
+	AuthColumn: drawAuthColumn,
 	Screen: drawScreen,
 	Split: drawSplit,
 	Section: drawSection,

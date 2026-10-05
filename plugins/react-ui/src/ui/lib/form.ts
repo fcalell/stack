@@ -22,3 +22,14 @@ export const ActInert = createContext(false);
 // form's column; anywhere else the form stands on a page's, at most a line of
 // running text wide.
 export const FormStands = createContext<FormIn>("page");
+
+// A submit button's press runs the act itself, so the press ends the native
+// submit it would start: a step the act swaps in leaves the form detached,
+// and a submit still pending then logs "the form is not connected". Enter in a
+// field presses the same button, so click and Enter share this one path.
+export function endSubmit(
+	submits: boolean,
+	event: { preventDefault: () => void },
+): void {
+	if (submits) event.preventDefault();
+}

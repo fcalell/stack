@@ -426,7 +426,8 @@ The canon binds every component either UI plugin ships:
    their avatars, the current value, and `act`, the act that makes a new one), never a node; the
    owning molecule renders it. An `Act` says what it does, never how it looks: `destructive` marks
    one that removes or ends something, and an `ActionBar` draws it as `danger` when it is the bar's
-   one filled act and as `destructive`, the hairline form, otherwise. An `Act` names no glyph (a
+   one filled act and as `destructive`, the hairline form, otherwise; `quiet` marks one drawn as words in the meta ink
+   with no hairline (`BUTTON {act: quiet}`), never the bar's filled act. An `Act` names no glyph (a
    `Place`'s act is the page's create act and the `Place` draws it with `Plus`); an `IconAct` is an
    icon-only act whose label is read aloud, never drawn. A `Form` has no submit handler: its
    `ActionBar`'s filled act submits it (on the web Enter in a field runs it), that act's `onAct` is
@@ -444,13 +445,13 @@ The canon binds every component either UI plugin ships:
    matrices do not cover is a matrix cell or a consumer primitive under `ui/`, in that order.
 5. Every word a component draws on its own comes from `words`; every sentence is a prop.
 6. `Text` draws `body` and `meta`, with `strong`; every other type role is drawn by the molecule
-   that owns its place (`title` by `Place` and `Screen`, `heading` by `Section` and `Card`,
+   that owns its place (`title` by `Place`, `Screen` and `AuthColumn`, `heading` by `Section` and `Card`,
    `caption` by `Chip` and `Kbd`, `code` by `Code`, `display` by `Stat`, `figure` by `Stats`).
    `TEXT` keeps all eight roles as the table those owners draw from.
 
 ## The roster
 
-`ROSTER` in `@fcalell/ui-core/roster` is the closed list: 62 components in four layers (atoms,
+`ROSTER` in `@fcalell/ui-core/roster` is the closed list: 63 components in four layers (atoms,
 layout molecules, shared molecules, content molecules), each with its prop names, the cells it draws
 (`draws`: a `FAMILIES` name for every cell of that family, `FAMILY.axis.value` for one of its cells,
 as `Text` draws `TEXT.role.body`, or a single-cell constant of `./variants`) and the states it has a

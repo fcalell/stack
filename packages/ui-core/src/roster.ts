@@ -630,6 +630,31 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				elevation: ["float"],
 			},
 		},
+		// A page outside the shell (sign-in, a consent step): one centred column at
+		// the `auth` width, a `Banner` first, the product's name at meta and 500, an
+		// optional `StepCount`, the title (the page's one `h1`), the sentence (runs,
+		// the strong one at 500) a pair under it, then the step's body. On touch it
+		// spans the viewport inside the page inset. A typing field that opens in it
+		// takes focus, and a `Form`'s `ActionBar` in it draws `full`.
+		AuthColumn: {
+			props: ["product", "step", "title", "sentence", "banner", "children"],
+			draws: [
+				"AUTH_PAGE",
+				"AUTH_COLUMN",
+				"AUTH_HEAD",
+				"TEXT.role.title",
+				"TEXT.role.meta",
+				"TEXT_STRONG.role.meta",
+			],
+			holds: ["AUTH_PAGE", "AUTH_COLUMN", "AUTH_HEAD"],
+			states: ["rest"],
+			owns: {
+				roles: ["title", "meta"],
+				colors: ["ink-body", "ink-meta", "surface"],
+				spacing: ["page", "fields", "pair"],
+				sizes: ["auth"],
+			},
+		},
 		// A pushed page: the back act first, no act; on touch its toasts stand
 		// at its foot.
 		Screen: {
@@ -838,12 +863,14 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"BUTTON.act.danger",
 				"BUTTON.act.secondary",
 				"BUTTON.act.destructive",
+				"BUTTON.act.quiet",
 				"BUTTON.fit.body",
 				"BUTTON.fit.field",
 				"BUTTON_LABEL.act.primary",
 				"BUTTON_LABEL.act.danger",
 				"BUTTON_LABEL.act.secondary",
 				"BUTTON_LABEL.act.destructive",
+				"BUTTON_LABEL.act.quiet",
 			],
 			holds: [
 				"ACTION_BAR",

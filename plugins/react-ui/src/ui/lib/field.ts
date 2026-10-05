@@ -1,4 +1,5 @@
-import { createContext } from "react";
+import { createContext, type RefObject, use, useEffect } from "react";
+import { AuthColumnRoot } from "./frame.ts";
 
 // Whether the field around an act is disabled. Base UI's field context is
 // internal and its Button reads none, so a field hands its state to the acts
@@ -54,3 +55,19 @@ export const CellField = createContext<
 export const InlineField = createContext<
 	{ label: string; focus?: boolean } | undefined
 >(undefined);
+
+// A typing control takes focus as it mounts in an `AuthColumn`, unless focus
+// already stands in a typing control of that column: the first field of a page
+// or of a step that replaces the body takes it, a second field beside it or one
+// revealed while another is typed in never does.
+export function useColumnFocus(input: RefObject<HTMLInputElement | null>) {
+	const column = use(AuthColumnRoot);
+	useEffect(() => {
+		const root = column?.current;
+		const control = input.current;
+		if (!root || !control) return;
+		const held = document.activeElement;
+		if (held?.matches("input, textarea") && root.contains(held)) return;
+		control.focus();
+	}, [column, input]);
+}

@@ -13,6 +13,7 @@ export const PRESS: Record<ButtonAct, string> = {
 	danger: "hover:bg-act-danger-hover active:bg-act-danger-press",
 	secondary: "hover:bg-wash-hover active:bg-wash-press",
 	destructive: "hover:bg-wash-hover active:bg-wash-press",
+	quiet: "hover:bg-wash-hover active:bg-wash-press",
 };
 
 /** The secondary act that goes to a route: an anchor in the Button's hairline look, for a read's Back. Outside the package's exports. */

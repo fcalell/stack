@@ -9,7 +9,7 @@ import {
 } from "@fcalell/ui-core/variants";
 import { use, useId } from "react";
 import type { Closed } from "../../lib/closed.ts";
-import { ActInert, SubmitContext } from "../../lib/form.ts";
+import { ActInert, endSubmit, SubmitContext } from "../../lib/form.ts";
 import { ReasonHostContext, usePressed } from "../../lib/reason.ts";
 import { useTouched } from "../../lib/touched.ts";
 import { Count } from "../count/index.tsx";
@@ -29,6 +29,7 @@ const FILL_PENDING: Record<ButtonAct, string> = {
 	danger: "aria-busy:bg-act-danger-pending",
 	secondary: "",
 	destructive: "",
+	quiet: "",
 };
 
 const BLOCKED: Record<ButtonAct, string> = {
@@ -36,6 +37,7 @@ const BLOCKED: Record<ButtonAct, string> = {
 	danger: "aria-disabled:bg-fill-disabled aria-disabled:text-ink-disabled",
 	secondary: "aria-disabled:text-ink-disabled",
 	destructive: "aria-disabled:text-ink-disabled",
+	quiet: "aria-disabled:text-ink-disabled",
 };
 
 // Pending and blocked both set aria-disabled, so one look is chosen: pending
@@ -48,7 +50,7 @@ function lookOf(kind: ButtonAct, loading: boolean, muted: boolean): string {
 
 /** A labelled act. */
 export interface ButtonProps extends Closed {
-	/** The act's kind: the accent fill (`primary`, the default), the danger fill, a hairline, or the hairline in danger ink. */
+	/** The act's kind: the accent fill (`primary`, the default), the danger fill, a hairline, the hairline in danger ink, or quiet words in the meta ink. */
 	act?: ButtonAct;
 	/** What it sits in: a body (the default), a bar, or full width under a field. */
 	fit?: ButtonFit;
@@ -105,7 +107,10 @@ export function Button({
 			aria-disabled={loading || muted || inert || undefined}
 			aria-busy={loading || undefined}
 			aria-describedby={muted ? (host?.id ?? reason) : undefined}
-			onClick={press}
+			onClick={(event) => {
+				endSubmit(submits, event);
+				press();
+			}}
 			className={cn(button({ act: kind, fit }), BOX, look)}
 		>
 			{icon ? (

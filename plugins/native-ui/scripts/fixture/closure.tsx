@@ -10,6 +10,7 @@ import { Button } from "@fcalell/plugin-native-ui/components/button";
 import { IconButton } from "@fcalell/plugin-native-ui/components/icon-button";
 import { Count } from "@fcalell/plugin-native-ui/components/count";
 import { Status } from "@fcalell/plugin-native-ui/components/status";
+import { AuthColumn } from "@fcalell/plugin-native-ui/components/auth-column";
 import { Input } from "@fcalell/plugin-native-ui/components/input";
 import { FileInput } from "@fcalell/plugin-native-ui/components/file-input";
 import { TextArea } from "@fcalell/plugin-native-ui/components/text-area";
@@ -1124,5 +1125,23 @@ export const closure = (
 		<StepCount at={1} of={3} selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
 		<StepCount at={1} of={3} placeholderTextColorClassName="text-ink-body" />
+		<AuthColumn product="a" title="a" />
+		<AuthColumn product="a" step={{ at: 1, of: 2 }} title="a" sentence={["a", { strong: "b" }]} banner={<Banner sentence="a" />}><Text>a</Text></AuthColumn>
+		{/* @ts-expect-error: a sentence is words or runs, never a node */}
+		<AuthColumn product="a" title="a" sentence={<Text>a</Text>} />
+		{/* @ts-expect-error: closed channel */}
+		<AuthColumn product="a" title="a" className="x" />
+		{/* @ts-expect-error: closed channel */}
+		<AuthColumn product="a" title="a" style={{ flex: 1 }} />
+		{/* @ts-expect-error: closed channel */}
+		<AuthColumn product="a" title="a" class="x" />
+		{/* @ts-expect-error: closed channel */}
+		<AuthColumn product="a" title="a" classList={{}} />
+		{/* @ts-expect-error: closed channel */}
+		<AuthColumn product="a" title="a" colorClassName="text-ink-body" />
+		{/* @ts-expect-error: closed channel */}
+		<AuthColumn product="a" title="a" selectionColorClassName="text-ink-body" />
+		{/* @ts-expect-error: closed channel */}
+		<AuthColumn product="a" title="a" placeholderTextColorClassName="text-ink-body" />
 	</>
 );

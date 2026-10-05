@@ -8,6 +8,7 @@ const LABEL: Record<ButtonAct, string> = {
 	primary: "Save",
 	danger: "Delete",
 	secondary: "Cancel",
+	quiet: "Resend",
 	destructive: "Delete",
 };
 const REASON = "Name the project first.";

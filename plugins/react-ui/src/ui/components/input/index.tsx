@@ -9,10 +9,15 @@ import {
 	field,
 	fieldValue,
 } from "@fcalell/ui-core/variants";
-import { type MouseEvent, use } from "react";
+import { type MouseEvent, use, useRef } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { useCommit } from "../../lib/commit.ts";
-import { CellField, FieldDisabled, InlineField } from "../../lib/field.ts";
+import {
+	CellField,
+	FieldDisabled,
+	InlineField,
+	useColumnFocus,
+} from "../../lib/field.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Icon } from "../icon/index.tsx";
 import { IconButton } from "../icon-button/index.tsx";
@@ -91,7 +96,7 @@ export interface InputProps extends Closed {
 	act?: IconAct;
 }
 
-/** A field box on the surface: hairline at rest, `edge-hover` under the pointer, the ring on focus, `edge-error` when its `FormField` is in error, the disabled fill when it is disabled. In a `Table` cell it stands at the bar fit, named by the cell; in a `ListRow`'s entry or a `Rules` term, named by its label. */
+/** A field box on the surface (in an `AuthColumn` it takes focus as it mounts unless a typing control there holds it): hairline at rest, `edge-hover` under the pointer, the ring on focus, `edge-error` when its `FormField` is in error, the disabled fill when it is disabled. In a `Table` cell it stands at the bar fit, named by the cell; in a `ListRow`'s entry or a `Rules` term, named by its label. */
 export function Input({
 	kind,
 	value,
@@ -108,8 +113,11 @@ export function Input({
 	const cell = use(CellField);
 	const inline = use(InlineField);
 	const commit = useCommit(value, onChange, onCommit, true);
+	const control = useRef<HTMLInputElement>(null);
+	useColumnFocus(control);
 	return (
 		<Control
+			ref={control}
 			value={value}
 			onValueChange={(next) => onChange(next)}
 			{...commit}

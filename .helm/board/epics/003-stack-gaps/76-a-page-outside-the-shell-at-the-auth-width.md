@@ -1,6 +1,6 @@
 ---
 id: 003-76
-status: backlog
+status: done
 sessions: {}
 ---
 # ui-core: a page outside the shell at the auth width
@@ -33,7 +33,10 @@ agent-connect sheet measures Mintlify at about 400, Plain at 420 and Notion's ca
 same frame with a step count.
 
 ## Acceptance criteria
-- [ ] Stack provides the part on every platform the app runs on.
+- [x] Stack provides the part on every platform the app runs on.
 
 ## Open questions
-- [ ] Its shape (a component, a variant, a token, an option): the stack session decides.
+- [x] Its shape (a component, a variant, a token, an option): the stack session decides. A component.
+
+## Progress
+Built as `AuthColumn`, a layout frame in ui-core's roster, react-ui and native-ui: `product`, `step`, `title`, `sentence` (a string or `Run[]`), `banner` and `children`, one column at the `auth` width. An `Input` or `InputOtp` that mounts in it takes focus unless a typing control of the column holds it, and a `Form`'s `ActionBar` in it draws `full`. The showcase draws it at `/layout?place=sign-in` and `?place=connect`.

@@ -9,6 +9,7 @@ import { Home } from "./layout/home.tsx";
 import { Members } from "./layout/members.tsx";
 import { Domains, Logs, Projects, Verify, Welcome } from "./layout/places.tsx";
 import { Settings } from "./layout/settings.tsx";
+import { Connect, SignIn } from "./layout/sign-in.tsx";
 import { Usage } from "./layout/usage.tsx";
 import { useView, ViewBar } from "./view.tsx";
 
@@ -27,6 +28,17 @@ const PAGES = {
 } as const;
 type Page = keyof typeof PAGES;
 const SCREENS = { verify: Verify } as const;
+
+// The pages outside the shell, by the `place` the URL names: the first run,
+// the sign-in (email, then code) and the first Connect step, each standing
+// on its own with no sidebar or tab bar.
+const OUTSIDE = {
+	welcome: Welcome,
+	"sign-in": SignIn,
+	connect: Connect,
+} as const;
+const isOutside = (place: string): place is keyof typeof OUTSIDE =>
+	place in OUTSIDE;
 
 const isPage = (place: string): place is Page => place in PAGES;
 const isScreen = (screen: string): screen is keyof typeof SCREENS =>
@@ -67,20 +79,26 @@ const SWITCHER: Switcher = {
 // URL names (`?place=`, a Screen pushed over it by `&screen=`, a record open
 // by `&record=`, a query forced by
 // `&query=loading|error|missing|empty`), at the URL's mode and density. The
-// first run (`?place=welcome`) stands outside the shell. The view's toggles
+// first run (`?place=welcome`), the sign-in (`?place=sign-in`) and the first
+// Connect step (`?place=connect`) stand outside the shell. The view's toggles
 // sit under the app, past the viewport.
 export function Layout() {
 	const [view, change] = useView();
 	const here = readHere(view);
 	return (
 		<HereContext value={here}>
-			{here.place === "welcome" ? <Welcome /> : <App />}
+			{isOutside(here.place) ? <Outside place={here.place} /> : <App />}
 			<footer className="flex flex-row flex-wrap items-center gap-inside p-page">
 				<p className={text({ role: "title" })}>Layout</p>
 				<ViewBar view={view} onChange={change} />
 			</footer>
 		</HereContext>
 	);
+}
+
+function Outside(props: { place: keyof typeof OUTSIDE }) {
+	const Page = OUTSIDE[props.place];
+	return <Page />;
 }
 
 function App() {
