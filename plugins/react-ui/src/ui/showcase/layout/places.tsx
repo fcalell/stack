@@ -10,6 +10,7 @@ import { Group } from "../../components/group/index.tsx";
 import { InputOtp } from "../../components/input-otp/index.tsx";
 import { Link } from "../../components/link/index.tsx";
 import { List } from "../../components/list/index.tsx";
+import { ListRow } from "../../components/list-row/index.tsx";
 import { Place } from "../../components/place/index.tsx";
 import { Screen } from "../../components/screen/index.tsx";
 import { Section } from "../../components/section/index.tsx";
@@ -159,12 +160,23 @@ export function Domains() {
 
 // ── Verify domain: a Screen pushed over Domains ─────────────────────
 
+// The form is about one domain, so it opens on that domain: one ListRow in a
+// Group, its glyph, name and project, opening Domains to change it.
+
 export function Verify() {
 	const to = useTo();
 	const [code, setCode] = useState("482913");
 	return (
 		<Screen title="Verify domain" back={to({ place: "domains" })}>
 			<Form>
+				<Group>
+					<ListRow
+						leading={{ icon: "Globe" }}
+						title="shop.acme.dev"
+						meta={["acme-web", "Production"]}
+						onOpen={() => navigate(to({ place: "domains" }))}
+					/>
+				</Group>
 				<Text>
 					Enter the six-digit code from the TXT record we added to
 					shop.acme.dev.
