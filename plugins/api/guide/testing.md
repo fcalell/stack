@@ -28,9 +28,16 @@ router: the barrel skips `*.test.ts`.
 ## The handle
 
 `boot()` returns `env` (the live env object every request reads), `worker`, `fetch` (a relative
-URL resolves against `http://stack.test`), `client({ cookie })`, `dispose()` and
-`Symbol.asyncDispose`, plus what each testing setup provides. `app.client({ cookie })` answers as
-that session.
+URL resolves against `http://stack.test`), `client({ cookie })`, `mcp({ token, era })`,
+`dispose()` and `Symbol.asyncDispose`, plus what each testing setup provides.
+`app.client({ cookie })` answers as that session.
+
+- `app.mcp({ token, era })` is an MCP client over `fetch`, for a worker serving
+  [MCP](./mcp.md): `listTools()` answers `{ tools, instructions }` and `callTool(name, args)`
+  answers the result, `isError` ones included. `token` is an access token from `auth.oauth`;
+  `era` is `"modern"` (2026-07-28, the default) or `"legacy"` (the 2025 handshake). A refused
+  request rejects with an error carrying `status` and `wwwAuthenticate`; an unknown tool
+  rejects with the protocol error, its `code` `-32602`.
 
 - `boot({ env })` overrides baked values for one boot. Each boot loads a fresh worker, so its env
   checks run against that boot's env.

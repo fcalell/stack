@@ -328,3 +328,37 @@ test("the testing entry bakes mcp only when it is on", async () => {
 	const off = await authTestingEntry(auth({ organization: true }));
 	assert.equal(off?.options && "mcp" in off.options, false);
 });
+
+test("mcp sets the slot the MCP mount needs", async () => {
+	const graphOf = (options: AuthOptions) => {
+		const cwd = mkdtempSync(join(tmpdir(), "stack-auth-codegen-"));
+		mkdirSync(join(cwd, "src/worker/routes"), { recursive: true });
+		writeFileSync(
+			join(cwd, "src/worker/routes/hello.ts"),
+			"export const hello = {};\n",
+		);
+		writeFileSync(join(cwd, "src/worker/mcp.ts"), "export default {};\n");
+		return buildGraphFromDiscovered({
+			discovered: [
+				discover(api, api()),
+				discover(db, db({ dialect: "sqlite", path: "app.sqlite" })),
+				discover(auth, auth({ emailOtp: false, ...options })),
+			],
+			app: { name: "codegen", domain: "example.com" },
+			cwd,
+		}).graph;
+	};
+
+	const source =
+		(await graphOf({ organization: true, mcp: true }).resolve(
+			api.slots.workerSource,
+		)) ?? "";
+	assert.match(source, /\.handler\(routes, \{ mcp: mcp, name: "codegen" \}\)/);
+	assert.match(source, /reservedSlugs: \[[^\]]*"mcp"/);
+
+	// The file needs the provider that authenticates it.
+	await assert.rejects(
+		graphOf({ organization: true }).resolve(api.slots.workerSource),
+		/auth\(\{ mcp: true \}\)/,
+	);
+});

@@ -47,6 +47,7 @@ my-app/
       plugins/
         auth.ts              # auth.defineCallbacks() — runtime callbacks + the consumer's own better-auth plugins
       routes/                # business logic (procedures; barrel generated to index.ts)
+      mcp.ts                 # optional: `defineMcp({ instructions, tools })`, the procedures an MCP client may call; needs `auth({ mcp: true })` (auto-wired into the worker's `.handler(routes, { mcp, name })`)
       middleware.ts          # optional Hono middleware, before context injection (auto-wired via api.slots.middlewareEntries)
       middleware.context.ts  # optional Hono middleware, after it; reaches db/auth via stackContext(c)
     server/                  # node target only; checked with the worker project, under Node's types

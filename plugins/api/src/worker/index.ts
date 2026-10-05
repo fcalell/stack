@@ -10,11 +10,13 @@ import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { secureHeaders } from "hono/secure-headers";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
+import type { McpDefinition } from "../mcp.ts";
 import {
 	createProcedure,
 	extractIp,
 	type RateLimitBinding,
 } from "../procedure.ts";
+import { buildMcpTools, createMcpEndpoint, createMcpRoute } from "./mcp.ts";
 
 export type { InferRouter } from "../types.ts";
 
@@ -27,6 +29,28 @@ export type { InferRouter } from "../types.ts";
 // that also declare `rateLimit: "ip"`) and let /rpc volume starve
 // /api/auth's independent budget.
 export const RATE_LIMITER_RPC = "RATE_LIMITER_RPC";
+
+// The path the MCP endpoint answers at, beside the RPC prefix.
+const MCP_PATH = "/mcp";
+
+// Blanket per-IP volume limiter, on its own dedicated `RATE_LIMITER_RPC`
+// binding (see the constant above) — never the per-procedure
+// `ctx._rateLimiter` bindings, so this guard's budget never competes with
+// `rateLimit: "ip"` procedures or the auth surface. Production-only; skips
+// silently when no RATE_LIMITER_RPC binding is present (worker-only projects
+// that haven't run `wrangler types` / deployed the binding yet). True when
+// the limiter refuses.
+async function ipLimited(
+	c: Context,
+	ctx: Record<string, unknown>,
+): Promise<boolean> {
+	const limiter = (c.env as Record<string, unknown> | null | undefined)?.[
+		RATE_LIMITER_RPC
+	] as RateLimitBinding | undefined;
+	if (!limiter || ctx._devMode) return false;
+	const result = await limiter.limit({ key: extractIp(c.req.raw.headers) });
+	return !result.success;
+}
 
 // ---------- Worker export ----------
 
@@ -148,9 +172,18 @@ export interface AppBuilder<TContext extends Record<string, unknown>> {
 
 	useAfterContext(middleware: MiddlewareHandler): AppBuilder<TContext>;
 
+	// `mcp` mounts `POST /mcp` over the routes it names (the generated worker
+	// passes `src/worker/mcp.ts` and the app's name).
 	handler<TRoutes extends Record<string, unknown>>(
 		consumerRoutes?: TRoutes,
+		mount?: McpMount,
 	): WorkerExport<TRoutes>;
+}
+
+export interface McpMount {
+	mcp: McpDefinition;
+	// The MCP server's name, as a client lists it.
+	name: string;
 }
 
 // ---------- Base context ----------
@@ -318,6 +351,7 @@ function createAppBuilder<TContext extends Record<string, unknown>>(
 
 		handler<TRoutes extends Record<string, unknown>>(
 			consumerRoutes?: TRoutes,
+			mount?: McpMount,
 		): WorkerExport<TRoutes> {
 			const {
 				prefix: rpcPrefix,
@@ -382,6 +416,20 @@ function createAppBuilder<TContext extends Record<string, unknown>>(
 			// construction time is intentional — it lets a worker boot before
 			// any consumer routes have been authored.
 			const fullRouter = { ...pluginRoutes, ...(consumerRoutes ?? {}) };
+
+			// Resolved at construction, so a tool the endpoint cannot serve fails
+			// the boot, naming the tool.
+			const mcpRoute = mount
+				? createMcpRoute({
+						endpoint: createMcpEndpoint({
+							tools: buildMcpTools(consumerRoutes, mount.mcp),
+							instructions: mount.mcp.instructions,
+							name: mount.name,
+						}),
+						isForbiddenOrigin,
+						ipLimited,
+					})
+				: null;
 
 			// biome-ignore lint/suspicious/noExplicitAny: oRPC RPCHandler expects internal router type
 			const rpcHandler = new RPCHandler(fullRouter as any, {
@@ -528,22 +576,8 @@ function createAppBuilder<TContext extends Record<string, unknown>>(
 
 				const ctx = c.get("__stackCtx");
 
-				// Blanket per-IP volume limiter across the whole /rpc tree, on its
-				// own dedicated `RATE_LIMITER_RPC` binding (see the constant above)
-				// — never the per-procedure `ctx._rateLimiter` bindings, so this
-				// guard's budget never competes with `rateLimit: "ip"` procedures or
-				// the auth surface. Production-only; skips silently when no
-				// RATE_LIMITER_RPC binding is present (worker-only projects that
-				// haven't run `wrangler types` / deployed the binding yet).
-				const rpcLimiter = (
-					c.env as Record<string, unknown> | null | undefined
-				)?.[RATE_LIMITER_RPC] as RateLimitBinding | undefined;
-				if (rpcLimiter && !(ctx as { _devMode?: boolean })._devMode) {
-					const ip = extractIp(c.req.raw.headers);
-					const result = await rpcLimiter.limit({ key: ip });
-					if (!result.success) {
-						return c.json({ code: "TOO_MANY_REQUESTS" }, 429);
-					}
+				if (await ipLimited(c, ctx)) {
+					return c.json({ code: "TOO_MANY_REQUESTS" }, 429);
 				}
 
 				const { matched, response } = await rpcHandler.handle(c.req.raw, {
@@ -557,6 +591,13 @@ function createAppBuilder<TContext extends Record<string, unknown>>(
 
 				return c.json({ error: "Not found", code: "NOT_FOUND" }, 404);
 			});
+
+			if (mcpRoute) {
+				// The one MCP route: any other method is refused before anything
+				// else, and `POST` verifies its bearer token first.
+				app.post(MCP_PATH, (c) => mcpRoute(c, c.get("__stackCtx")));
+				app.all(MCP_PATH, (c) => c.body(null, 405, { Allow: "POST" }));
+			}
 
 			app.onError((err, c) => {
 				if (err instanceof ORPCError) {

@@ -84,7 +84,7 @@ const BASE_CONTEXT: Record<BaseContextKey, true> = {
 };
 // ...and what the runtimes and middlewares add before a scope resolves:
 // plugin-api's dev flag, plugin-db's client, this plugin's runtime and auth
-// middleware, and the organization level.
+// middleware, the MCP endpoint's caller, and the organization level.
 const RESERVED = new Set([
 	...Object.keys(BASE_CONTEXT),
 	"_devMode",
@@ -96,6 +96,9 @@ const RESERVED = new Set([
 	"session",
 	"organization",
 	"member",
+	// The MCP endpoint's verified caller, and the OAuth capability with `mcp`.
+	"_caller",
+	"oauth",
 ]);
 
 export function defineScope<

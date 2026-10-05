@@ -331,6 +331,9 @@ function createAuthMiddleware() {
 	}: {
 		context: {
 			reqHeaders: Headers;
+			// Set only by the MCP endpoint, which has verified its bearer token:
+			// the caller it names stands in for the cookie session.
+			_caller?: { user: unknown; session: unknown };
 			auth: {
 				api: {
 					getSession: (opts: {
@@ -341,6 +344,14 @@ function createAuthMiddleware() {
 		};
 		next: (opts: { context: unknown }) => Promise<unknown>;
 	}) => {
+		if (context._caller) {
+			return next({
+				context: {
+					user: context._caller.user,
+					session: context._caller.session,
+				},
+			});
+		}
 		// Nothing here is caught. A session-store outage (D1 down, binding
 		// misconfigured) must surface as a 500: folding it into UNAUTHORIZED
 		// reads to the client as "your session is invalid" and triggers a
@@ -655,6 +666,15 @@ interface OrpcChain {
 // only read it as our opaque `Procedure<TInput, TOutput>` brand.
 interface OrpcTerminal {
 	readonly "~orpc": unknown;
+	meta(meta: Record<string, unknown>): OrpcTerminal;
+}
+
+// What a procedure's terminal call says it is, as the oRPC meta the MCP
+// endpoint reads: a query is read-only, a mutation and a bare handler are not.
+type ProcedureKind = "query" | "mutation";
+
+function stamp(terminal: OrpcTerminal, kind: ProcedureKind): OrpcTerminal {
+	return terminal.meta({ kind });
 }
 
 interface BuilderState {
@@ -704,6 +724,15 @@ function createBuilder<
 		return chain.handler(fn);
 	}
 
+	// The three terminal calls of a chain ending at `end`.
+	function terminals(end: (fn: OrpcHandlerFn) => OrpcTerminal) {
+		return {
+			handler: end,
+			query: (fn: OrpcHandlerFn) => stamp(end(fn), "query"),
+			mutation: (fn: OrpcHandlerFn) => stamp(end(fn), "mutation"),
+		};
+	}
+
 	const builder = {
 		use(
 			middleware: Middleware<Record<string, unknown>, Record<string, unknown>>,
@@ -723,15 +752,9 @@ function createBuilder<
 					const withOutputChain = withInputChain.output(outputSchema);
 					const runWithOutput = (fn: OrpcHandlerFn) =>
 						withOutputChain.handler(fn);
-					return {
-						handler: runWithOutput,
-						query: runWithOutput,
-						mutation: runWithOutput,
-					};
+					return terminals(runWithOutput);
 				},
-				handler: run,
-				query: run,
-				mutation: run,
+				...terminals(run),
 			};
 			// Boundary: our literal shares method names/arities with
 			// `ProcedureWithInput`, but its internal generics don't propagate
@@ -757,11 +780,9 @@ function createBuilder<
 						mergeInput(baseShape, inputSchema),
 					);
 					const run = (fn: OrpcHandlerFn) => innerChain.handler(fn);
-					return { handler: run, query: run, mutation: run };
+					return terminals(run);
 				},
-				handler: runOutput,
-				query: runOutput,
-				mutation: runOutput,
+				...terminals(runOutput),
 			};
 			// Same boundary as in `input()` above.
 			return withOutput as unknown as ProcedureWithOutput<
@@ -771,9 +792,7 @@ function createBuilder<
 			>;
 		},
 
-		handler: terminate,
-		query: terminate,
-		mutation: terminate,
+		...terminals(terminate),
 	};
 
 	// Final boundary: this literal satisfies every method required by

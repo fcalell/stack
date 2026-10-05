@@ -3,6 +3,7 @@ import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, dirname, isAbsolute, join, relative } from "node:path";
 import { test } from "node:test";
+import { plugin } from "@fcalell/cli";
 import { buildGraphFromDiscovered } from "@fcalell/cli/build-graph";
 import { cliSlots } from "@fcalell/cli/cli-slots";
 import type { DiscoveredPlugin } from "@fcalell/cli/discovery";
@@ -19,11 +20,14 @@ function devGraph({
 	wrangler,
 	web = true,
 	routes = false,
+	mcp = false,
 }: {
 	devVars?: string;
 	wrangler?: string;
 	web?: boolean;
 	routes?: boolean;
+	// A `src/worker/mcp.ts` and the OAuth provider auth would bring.
+	mcp?: boolean;
 } = {}) {
 	const cwd = mkdtempSync(join(tmpdir(), "stack-cloudflare-dev-"));
 	if (devVars !== undefined) writeFileSync(join(cwd, ".dev.vars"), devVars);
@@ -37,6 +41,14 @@ function devGraph({
 			"export const hello = {};\n",
 		);
 	}
+	if (mcp) {
+		mkdirSync(join(cwd, "src/worker"), { recursive: true });
+		writeFileSync(join(cwd, "src/worker/mcp.ts"), "export default {};\n");
+	}
+	const oauthStub = plugin("auth", {
+		label: "auth",
+		contributes: [api.slots.mcpAuth.contribute(() => true)],
+	});
 	const plugins = [
 		{
 			factory: api,
@@ -44,6 +56,7 @@ function devGraph({
 				env: [{ name: "RESEND_API_KEY", devDefault: "re_dev" }],
 			}),
 		},
+		...(mcp ? [{ factory: oauthStub, config: oauthStub() }] : []),
 		{ factory: cloudflare, config: cloudflare() },
 		...(web ? [{ factory: vite, config: vite() }] : []),
 	];
@@ -168,7 +181,18 @@ test("the generated wrangler config serves the web client as assets", async () =
 	assert.deepEqual(parseToml(toml).assets, {
 		directory: "../dist/client",
 		not_found_handling: "single-page-application",
-		run_worker_first: ["/rpc/*"],
+		run_worker_first: ["/rpc", "/rpc/*"],
+	});
+});
+
+test("every worker prefix is routed bare and with its subtree", async () => {
+	const toml = await devGraph({ routes: true, mcp: true }).resolve(
+		cloudflare.slots.wranglerToml,
+	);
+	assert.deepEqual(parseToml(toml).assets, {
+		directory: "../dist/client",
+		not_found_handling: "single-page-application",
+		run_worker_first: ["/mcp", "/mcp/*", "/rpc", "/rpc/*"],
 	});
 });
 

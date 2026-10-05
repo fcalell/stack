@@ -1,4 +1,9 @@
 import { registerHooks } from "node:module";
+import type {
+	CallToolResult,
+	Client,
+	Tool,
+} from "@modelcontextprotocol/client";
 import { createClient } from "../client.ts";
 import type { RouterClient } from "../types.ts";
 import type { WorkerExport } from "../worker/index.ts";
@@ -15,6 +20,41 @@ type Router = Record<string, unknown>;
 // The host every test request carries. The worker never checks it; a
 // relative `fetch` input resolves against it.
 const TEST_ORIGIN = "http://stack.test";
+
+// An MCP client over the handle's `fetch`, the SDK's own, one connection per
+// call: the endpoint holds no session.
+export interface McpTestClient {
+	// What `tools/list` answers, with the instructions the server sent on
+	// connecting.
+	listTools(): Promise<{ tools: Tool[]; instructions: string | undefined }>;
+	// A tool's result, `isError` ones included; an unknown tool rejects with
+	// the SDK's `ProtocolError`.
+	callTool(
+		name: string,
+		args?: Record<string, unknown>,
+	): Promise<CallToolResult>;
+}
+
+// What the endpoint answers before any tool runs: a refusal by HTTP status,
+// whichever way the SDK client reports it.
+export class McpRefusal extends Error {
+	readonly status: number;
+	readonly wwwAuthenticate: string | null;
+
+	constructor(status: number, wwwAuthenticate: string | null) {
+		super(`MCP endpoint refused the request with ${status}`);
+		this.name = "McpRefusal";
+		this.status = status;
+		this.wwwAuthenticate = wwwAuthenticate;
+	}
+}
+
+export interface McpOptions {
+	// The OAuth access token sent as the bearer; none sends no credential.
+	token?: string;
+	// `modern` pins protocol 2026-07-28; `legacy` is the 2025 handshake.
+	era?: "modern" | "legacy";
+}
 
 export interface TestingContext {
 	// The consumer root, for resolving a path a plugin baked relative to it.
@@ -53,6 +93,9 @@ export interface TestApp<TRouter extends Router> {
 	worker: WorkerExport<TRouter>;
 	fetch(input: string | URL | Request, init?: RequestInit): Promise<Response>;
 	client(options?: { cookie?: string }): RouterClient<TRouter>;
+	// The MCP endpoint's client: needs `src/worker/mcp.ts`, and a token an
+	// OAuth grant issued.
+	mcp(options?: McpOptions): McpTestClient;
 	// Runs every plugin's disposer, in reverse setup order, once.
 	dispose(): Promise<void>;
 	[Symbol.asyncDispose](): Promise<void>;
@@ -75,7 +118,14 @@ export interface TestEntryOptions {
 	env: Record<string, string>;
 }
 
-const HANDLE_KEYS = new Set(["env", "worker", "fetch", "client", "dispose"]);
+const HANDLE_KEYS = new Set([
+	"env",
+	"worker",
+	"fetch",
+	"client",
+	"mcp",
+	"dispose",
+]);
 
 // `registerHooks` appends to the process's hook chain and a resolved module
 // stays cached, so one process serves one `virtual:stack-procedure` target.
@@ -145,6 +195,69 @@ async function runDisposers(
 		}
 	}
 	return errors;
+}
+
+function mcpClient(
+	fetch: (input: string | URL, init?: RequestInit) => Promise<Response>,
+	options: McpOptions = {},
+): McpTestClient {
+	// Runs `use` on a freshly connected client. The SDK reports a 401 or 403 as
+	// its own errors and any other refusal as an HTTP error, none carrying the
+	// status or the challenge, so the last refused response is kept and thrown.
+	async function withClient<T>(
+		use: (client: Client) => Promise<T>,
+	): Promise<T> {
+		const { Client, StreamableHTTPClientTransport, ProtocolError } =
+			await import("@modelcontextprotocol/client");
+		let refusal: McpRefusal | undefined;
+		const transport = new StreamableHTTPClientTransport(
+			new URL("/mcp", TEST_ORIGIN),
+			{
+				fetch: async (input, init) => {
+					const response = await fetch(input, init);
+					if (!response.ok) {
+						refusal = new McpRefusal(
+							response.status,
+							response.headers.get("www-authenticate"),
+						);
+					}
+					return response;
+				},
+				requestInit: options.token
+					? { headers: { authorization: `Bearer ${options.token}` } }
+					: undefined,
+			},
+		);
+		const client = new Client(
+			{ name: "stack-testing", version: "1.0.0" },
+			{
+				versionNegotiation: {
+					mode: options.era === "legacy" ? "legacy" : { pin: "2026-07-28" },
+				},
+			},
+		);
+		try {
+			await client.connect(transport);
+			return await use(client);
+		} catch (error) {
+			if (refusal && !(error instanceof ProtocolError)) throw refusal;
+			throw error;
+		} finally {
+			await client.close().catch(() => {});
+		}
+	}
+	return {
+		listTools: () =>
+			withClient(async (client) => ({
+				tools: (await client.listTools()).tools,
+				instructions: client.getInstructions(),
+			})),
+		callTool: (name, args) =>
+			withClient(
+				(client) =>
+					client.callTool({ name, arguments: args }) as Promise<CallToolResult>,
+			),
+	};
 }
 
 async function boot<TRouter extends Router>(
@@ -229,6 +342,7 @@ async function boot<TRouter extends Router>(
 		worker,
 		fetch,
 		client,
+		mcp: (mcpOptions?: McpOptions) => mcpClient(fetch, mcpOptions),
 		dispose,
 		[Symbol.asyncDispose]: dispose,
 	};

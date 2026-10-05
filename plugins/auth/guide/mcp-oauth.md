@@ -16,9 +16,9 @@ export * from "@fcalell/plugin-auth/schema/oauth"; // the grant and signing-key 
 
 The worker serves the discovery documents (`/.well-known/oauth-authorization-server`,
 `/.well-known/oauth-protected-resource`) and binds `RATE_LIMITER_AGENT` (120 calls per 60 s per
-grant, `rateLimiter.agent`). On Cloudflare with a web build, the bare
-`/.well-known/oauth-protected-resource` is a static asset; the challenge names the address with
-`/mcp` inserted, which the worker serves. The scopes are `mcp` (the whole tool list) and
+grant, `rateLimiter.agent`). On Cloudflare with a web build, the worker answers each prefix bare and
+under `/*`, so `/.well-known/oauth-protected-resource` and `/mcp` reach it before the static
+assets. The scopes are `mcp` (the whole tool list) and
 `offline_access` (the refresh token); a request without a `resource` gets a token the verifier
 refuses.
 
@@ -35,6 +35,12 @@ The authorization sends the member to three addresses, each carrying a signed qu
 Consent is asked on every authorization. A member of one organization skips the choice; a choice
 the member's membership does not resolve (an expired external member, an unknown id, none) is
 refused `403` with code `ORGANIZATION_NOT_RESOLVED`.
+
+## The endpoint
+
+`src/worker/mcp.ts` lists the procedures an agent may call, and the worker serves them at
+`POST /mcp` behind this verification (api's `mcp` page). `mcp` is then a
+reserved organization slug.
 
 ## Verifying a call
 

@@ -61,6 +61,11 @@ export type ApiOptions = z.input<typeof apiOptionsSchema>;
 
 const SOURCE = "api";
 
+// The consumer's MCP definition and the one path it is served at.
+const MCP_FILE = "src/worker/mcp.ts";
+const MCP_PREFIX = "/mcp";
+const MCP_IMPORT_SOURCE = "../src/worker/mcp.ts";
+
 // Sort imports by source so the emitted worker file is independent of
 // `config.plugins` array order. dedupeImports preserves insertion order
 // within a group, so we sort the raw list first.
@@ -119,6 +124,46 @@ const routesHandler = slot.value<{ identifier: string } | null>({
 	source: SOURCE,
 	name: "routesHandler",
 	seed: (ctx) => (hasRoutableFiles(ctx.cwd) ? { identifier: "routes" } : null),
+});
+
+// Whether the worker holds an OAuth provider for MCP clients, which
+// authenticates `/mcp`: auth contributes true under `auth({ mcp: true })` (api
+// never imports auth). `src/worker/mcp.ts` is refused without it.
+const mcpAuth = slot.value<boolean>({
+	source: SOURCE,
+	name: "mcpAuth",
+	override: true,
+	seed: () => false,
+});
+
+// The MCP endpoint's mount: set when `src/worker/mcp.ts` exists, and then
+// refused unless every part it stands on is there. null without the file.
+const mcpMount = slot.derived({
+	source: SOURCE,
+	name: "mcpMount",
+	inputs: { auth: mcpAuth, handler: routesHandler },
+	compute: async (
+		inp,
+		ctx: ContributionCtx<z.output<typeof apiOptionsSchema>>,
+	): Promise<{ identifier: string; name: string } | null> => {
+		if (!(await ctx.fileExists(MCP_FILE))) return null;
+		if (!inp.auth) {
+			throw new Error(
+				`api: ${MCP_FILE} serves MCP, which authenticates through the OAuth provider: set auth({ mcp: true }) in stack.config.ts.`,
+			);
+		}
+		if (inp.handler === null) {
+			throw new Error(
+				`api: ${MCP_FILE} lists procedures of src/worker/routes, which has no routable file.`,
+			);
+		}
+		if (ctx.options.prefix === MCP_PREFIX) {
+			throw new Error(
+				`api: the prefix ${MCP_PREFIX} is where the MCP endpoint answers; pick another api({ prefix }).`,
+			);
+		}
+		return { identifier: "mcp", name: ctx.app.name };
+	},
 });
 
 // Free-form extra CORS origins contributed by frontend plugins (e.g. vite's
@@ -420,6 +465,7 @@ const workerSource = slot.derived({
 		middlewareCalls,
 		middlewareImports,
 		handler: routesHandler,
+		mcp: mcpMount,
 		callbacks,
 	},
 	compute: (inp): string | null => {
@@ -435,6 +481,7 @@ const workerSource = slot.derived({
 			pluginRuntimes: inp.runtimes,
 			middlewareChain: inp.middlewareCalls,
 			handler: inp.handler,
+			mcp: inp.mcp,
 			callbacks: inp.callbacks,
 		};
 		return aggregateWorker(payload);
@@ -471,7 +518,9 @@ const procedureSource = slot.derived({
 		return aggregateProcedure({
 			base: inp.base,
 			runtimes: inp.runtimes,
-			imports: inp.imports,
+			// The MCP definition types itself against the routes, which import
+			// this file back, as the route barrel does.
+			imports: inp.imports.filter((imp) => imp.source !== MCP_IMPORT_SOURCE),
 			middlewareChain: inp.middlewareCalls,
 			middlewareImports: inp.middlewareImports,
 			statements: inp.statements,
@@ -549,6 +598,11 @@ export const api = plugin("api", {
 				"Guarding every request, or adding a raw route outside the RPC tree (an upload, a webhook)",
 		},
 		{
+			page: "mcp",
+			trigger:
+				"Letting an MCP client call procedures: `src/worker/mcp.ts`, `defineMcp`, or testing a tool",
+		},
+		{
 			page: "client",
 			trigger:
 				"Calling the API from the app: the typed client, queries, cache invalidation or `useAbility`",
@@ -572,6 +626,8 @@ export const api = plugin("api", {
 		middlewareCalls,
 		middlewareImports,
 		routesHandler,
+		mcpAuth,
+		mcpMount,
 		corsOrigins,
 		devCorsOrigins,
 		devTargetOrigins,
@@ -597,6 +653,10 @@ export const api = plugin("api", {
 		// The oRPC prefix is a worker-owned URL space; deploy targets read
 		// routePrefixes to mount or forward it.
 		self.slots.routePrefixes.contribute(() => self.options.prefix),
+		// `/mcp` is the endpoint's own, when it is served.
+		self.slots.routePrefixes.contribute(async (ctx) =>
+			(await ctx.resolve(self.slots.mcpMount)) ? MCP_PREFIX : undefined,
+		),
 		self.slots.env.contribute(() => self.options.env),
 		// The dev half of the explicit-origins partition: local origins the
 		// consumer listed in `app.origins` are honoured, but only under
@@ -631,6 +691,18 @@ export const api = plugin("api", {
 				namespace: handler.identifier,
 			};
 		}),
+
+		// The consumer's MCP definition: its default export, passed to `.handler`.
+		self.slots.workerImports.contribute(
+			async (ctx): Promise<TsImportSpec | undefined> => {
+				const mount = await ctx.resolve(self.slots.mcpMount);
+				if (!mount) return undefined;
+				return {
+					source: MCP_IMPORT_SOURCE,
+					default: mount.identifier,
+				};
+			},
+		),
 
 		// Consumer middleware is an implicit contribution via two conventional
 		// files, each published via `middlewareEntries` so third-party plugins

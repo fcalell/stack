@@ -16,7 +16,7 @@ Writing procedures, worker middleware, the client, tests, options, pagination an
 `guide/`, indexed into a consumer's `.stack/guide.md`:
 [`add-a-procedure.md`](./guide/add-a-procedure.md), [`procedures.md`](./guide/procedures.md),
 [`middleware.md`](./guide/middleware.md), [`client.md`](./guide/client.md),
-[`testing.md`](./guide/testing.md), [`config.md`](./guide/config.md) and
+[`testing.md`](./guide/testing.md), [`mcp.md`](./guide/mcp.md), [`config.md`](./guide/config.md) and
 [`utilities.md`](./guide/utilities.md).
 
 ## Plugin implementation
@@ -50,6 +50,8 @@ export const api = plugin("api", {
 | `api.slots.middlewareCalls` | `derived<MiddlewareCall[]>` | Sorted calls from `middlewareEntries`, each with the method that mounts it (`use` / `useAfterContext`) |
 | `api.slots.middlewareImports` | `derived<TsImportSpec[]>` | Deduplicated middleware imports |
 | `api.slots.routesHandler` | `value<{ identifier } \| null>` | Routes namespace identifier (seeded from `src/worker/routes` existence) |
+| `api.slots.mcpAuth` | `value<boolean>` (`override`, seed false) | Whether the worker holds an OAuth provider for MCP clients; auth contributes true under `auth({ mcp: true })`, and `src/worker/mcp.ts` is refused without it |
+| `api.slots.mcpMount` | `derived<{ identifier, name } \| null>` | The MCP endpoint's mount, set when `src/worker/mcp.ts` exists; refuses the file without `mcpAuth`, without routable files, or under `api({ prefix: "/mcp" })`; `/mcp` joins `routePrefixes` and the file's default export is `.handler`'s `mcp` |
 | `api.slots.corsOrigins` | `list<string>` | Extra production origins |
 | `api.slots.devCorsOrigins` | `list<string>` | Frontend dev origins (vite and expo push their localhost here, api the local entries of `app.origins`); applied only under `STACK_DEV` |
 | `api.slots.devTargetOrigins` | `list<string>` | Deploy-target dev origins (node and cloudflare push their dev process's localhost here); baked after `devCorsOrigins` as `createWorker({ devCors })`, applied only under `STACK_DEV` |
@@ -114,7 +116,7 @@ export type AppRouter = typeof worker._router;
 export default worker;
 ```
 
-The builder chain (`createWorker(options).use(plugin).handler(routes)`) accumulates context from each `.use()` call. Every call starts from the base context: `env`, `httpRequest` (the raw HTTP `Request`), `reqHeaders`, `resHeaders`, `executionCtx` and the `_devMode` flag. A scope's row lands in the context under the scope's name, so `defineScope` refuses these keys, the ones plugin-db and plugin-auth add (`db`, `auth`, `tenancy`, `_rateLimiter`, `user`, `session`) and the organization level's (`organization`, `member`). The final `.handler()` creates a Hono app with CORS, logging, secure headers, and the oRPC handler mounted at the configured prefix.
+The builder chain (`createWorker(options).use(plugin).handler(routes)`) accumulates context from each `.use()` call. Every call starts from the base context: `env`, `httpRequest` (the raw HTTP `Request`), `reqHeaders`, `resHeaders`, `executionCtx` and the `_devMode` flag. A scope's row lands in the context under the scope's name, so `defineScope` refuses these keys, the ones plugin-db and plugin-auth add (`db`, `auth`, `tenancy`, `_rateLimiter`, `user`, `session`, and `oauth` with `mcp`), the MCP endpoint's verified caller (`_caller`) and the organization level's (`organization`, `member`). The final `.handler()` creates a Hono app with CORS, logging, secure headers, and the oRPC handler mounted at the configured prefix. With `src/worker/mcp.ts` the generated call is `.handler(routes, { mcp, name })`, which also mounts `POST /mcp` after context injection (any other method is `405`): `oauth.verify` gates it, the `Origin` is checked, and each listed procedure runs in process as the grant's member with its `_caller` standing in for the cookie session.
 
 The CLI also generates `.stack/procedure.ts` -- the `virtual:stack-procedure` target route files import,
 mapped via a `paths` entry in the consumer's `tsconfig.json`. It rebuilds the same `.use()` chain (minus
@@ -145,11 +147,12 @@ export const procedure = createProcedure<WorkerContext, RbacStatements, Entity>(
 |---------|---------|
 | `@fcalell/plugin-api` | `api()`, `ApiOptions`, `ApiError`, `Middleware`, `InferRouter` |
 | `@fcalell/plugin-api/runtime` | `createWorker()`, `AppBuilder`, `WorkerExport`, `ApiWorkerOptions`, `stackContext()`, `isForbiddenOrigin()` |
+| `@fcalell/plugin-api/mcp` | `defineMcp()`, `McpDefinition`, `ProcedurePath` -- what `src/worker/mcp.ts` default-exports |
 | `@fcalell/plugin-api/procedure` | `createProcedure()`, `Middleware`, `ProcedureConfig`, `STACK_READS_HEADER`, `STACK_WRITES_HEADER` -- what the generated `.stack/procedure.ts` (`virtual:stack-procedure`) imports |
 | `@fcalell/plugin-api/error` | `ApiError` -- worker-safe (no Node-only deps); import this from route files |
 | `@fcalell/cli/runtime` | `RuntimePlugin` |
 | `@fcalell/plugin-api/client` | `createClient()`, `RouterClient`, `ClientConfig` |
-| `@fcalell/plugin-api/testing` | `createTestEntry()`, `TestEntry`, `TestApp`, `TestingPlugin`, `TestingContext`, `TestingSetup`, `ORPCError` -- the Node-only runtime `.stack/testing.ts` calls |
+| `@fcalell/plugin-api/testing` | `createTestEntry()`, `TestEntry`, `TestApp`, `TestingPlugin`, `TestingContext`, `TestingSetup`, `McpTestClient`, `McpOptions`, `McpRefusal`, `ORPCError` -- the Node-only runtime `.stack/testing.ts` calls |
 | `@fcalell/plugin-api/tanstack-query` | `createQueryClient()`, `createApiQueryUtils()`, `QueryProvider`, `useAbility(organizationId, recordRules?)`, `ORG_RULES_QUERY_KEY`, `orgRulesQueryKey()`, query hooks -- native TanStack Query client (runtime-only) |
 | `@fcalell/plugin-api/query-invalidation` | `captureEntityHeaders()`, `invalidateForWrites()`, `handleMutationSuccess()`, `createEntityRegistry()` -- framework-agnostic auto-invalidation core (runtime-only) |
 | `@fcalell/plugin-api/ability-client` | `composeAbility()`, `fetchOrgRules(organizationId)`, `registerApiClient()`, `ORG_RULES_QUERY_KEY`, `orgRulesQueryKey()`, `PackedRulesLike` -- framework-agnostic `useAbility()` core (runtime-only), consumed by `./tanstack-query` |

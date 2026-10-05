@@ -51,11 +51,29 @@ so `context.env.APP_URL` reads as `string` and an undeclared var is a type error
 that names one (node) `env` is `unknown`. The parameter is type-only; `envChecks` stays the runtime
 guard. Plugin-db adds
 `db`, plugin-auth's runtime `auth`, `tenancy` and `_rateLimiter` (and `oauth` with `mcp`), and its auth middleware `user`
-and `session`. A scoped procedure then writes each resolved level's row under its scope's name,
+and `session`; the MCP endpoint adds `_caller`. A scoped procedure then writes each resolved level's row under its scope's name,
 `organization` and `member` at the root. The raw request is `httpRequest`, not `request`, because
 a consumer's scope takes its table's name and `request` is a common one. `defineScope` refuses
 every one of these keys as a scope name, since the row would overwrite it; its list checks
 plugin-api's `BaseContext` keys by type, so a key added there fails to compile until it is listed.
+
+With `src/worker/mcp.ts`, `.handler(routes, { mcp, name })` also mounts `POST /mcp` after context
+injection (any other method is `405`). Its order: a forbidden `Origin` is `403`; the context's
+`oauth.verify(request)` answers the verified agent or its challenge `Response`, returned unchanged
+(`401` first draws the per-IP `RATE_LIMITER_RPC` budget, outside dev mode, since a forged `kid`
+costs a key refetch; an accepted token never does, `verify` limits per grant); the body is read to
+4 MiB (`413`; invalid JSON `400`, a batch `400`). The MCP SDK serves it statelessly for both
+protocol eras, each request a fresh server. Each listed procedure runs through oRPC in process
+with the stack context, the pinned `tenancy`, `_caller: { user, session }` from `verify` (the
+auth gate takes it in place of `getSession`; `/rpc` never sets it), `reqHeaders` without
+`cookie` and `authorization`, an `httpRequest` rebuilt from them with no body, and a fresh
+`resHeaders`. The tools resolve against the consumer routes when `.handler()` runs, so a tool the
+endpoint cannot serve fails the boot; the SDK loads on the first `/mcp` request. `.query()` and
+`.mutation()` stamp oRPC meta `kind`, from which a query tool carries `readOnlyHint`. An
+`ORPCError` is an `isError` result of `{ code, message, data }`; any other throw is a masked
+`INTERNAL_SERVER_ERROR` result and is logged. The test handle's `mcp({ token, era })` is the SDK
+client over `fetch`, one connection per call, turning an HTTP refusal into an error with
+`status` and `wwwAuthenticate`.
 
 Env vars the worker reads are declared on `api.slots.env` by the plugin that reads them, never
 by a deploy target: cloudflare renders the list into `.dev.vars` (each var deploys as a secret), node sets each

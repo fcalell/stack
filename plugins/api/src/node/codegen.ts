@@ -70,7 +70,32 @@ export function aggregateWorker(payload: WorkerPayload): string {
 			chain = {
 				kind: "call",
 				callee: { kind: "member", object: chain, property: "handler" },
-				args: [{ kind: "identifier", name: payload.handler.identifier }],
+				args: [
+					{ kind: "identifier", name: payload.handler.identifier },
+					...(payload.mcp
+						? [
+								{
+									kind: "object" as const,
+									properties: [
+										{
+											key: "mcp",
+											value: {
+												kind: "identifier" as const,
+												name: payload.mcp.identifier,
+											},
+										},
+										{
+											key: "name",
+											value: {
+												kind: "string" as const,
+												value: payload.mcp.name,
+											},
+										},
+									],
+								},
+							]
+						: []),
+				],
 			};
 		} else {
 			chain = {

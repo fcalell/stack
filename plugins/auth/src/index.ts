@@ -506,6 +506,13 @@ export const auth = plugin("auth", {
 				: AUTH_PREFIX,
 		),
 
+		// The MCP endpoint (api's `src/worker/mcp.ts`) authenticates through
+		// this provider, and answers at `/mcp`: no organization may take it.
+		api.slots.mcpAuth.contribute(() => (self.options.mcp ? true : undefined)),
+		self.slots.reservedSlugs.contribute(() =>
+			self.options.mcp ? "mcp" : undefined,
+		),
+
 		// The extension stays, as on the callbacks import: the node target runs
 		// the generated worker as written.
 		api.slots.workerImports.contribute(

@@ -156,9 +156,13 @@ export function aggregateWrangler(opts: {
 	// The web client's build, served for every path the worker does not own.
 	// `directory` resolves against `.stack/`, where the config lands.
 	if (opts.payload.clientDir !== null) {
-		const runWorkerFirst = opts.payload.routePrefixes
-			.map((prefix) => `${prefix}/*`)
-			.sort();
+		// Each prefix bare and with `/*`: `/mcp/*` alone misses `/mcp`, which
+		// the web client's fallback would answer.
+		const runWorkerFirst = [
+			...new Set(
+				opts.payload.routePrefixes.flatMap((prefix) => [prefix, `${prefix}/*`]),
+			),
+		].sort();
 		root.assets = {
 			directory: posix.join("..", posix.normalize(opts.payload.clientDir)),
 			not_found_handling: "single-page-application",
