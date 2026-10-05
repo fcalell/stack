@@ -17,6 +17,7 @@ import {
 import type { ReactNode } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { useCopy } from "../../lib/copy.ts";
+import { follow } from "../../lib/navigate.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Icon } from "../icon/index.tsx";
 import { IconButton } from "../icon-button/index.tsx";
@@ -149,7 +150,7 @@ export function DefinitionRow({
 	let title: ReactNode = <span className={name}>{label}</span>;
 	if (href !== undefined)
 		title = (
-			<a href={href} className={name}>
+			<a href={href} onClick={follow} className={name}>
 				{label}
 			</a>
 		);

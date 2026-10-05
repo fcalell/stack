@@ -46,6 +46,16 @@ const entryImports = slot.list<TsImportSpec>({
 	sortBy: (a, b) => a.source.localeCompare(b.source),
 });
 
+// A function a peer needs to call with the router instance (`named` imports
+// only; each is called as `<name>(router)` right after `createRouter`).
+// Sorted by source so the emitted calls are independent of plugin iteration
+// order. Only the default mount calls them: a peer's own mount owns its router.
+const routerBindings = slot.list<TsImportSpec>({
+	source: SOURCE,
+	name: "routerBindings",
+	sortBy: (a, b) => a.source.localeCompare(b.source),
+});
+
 // The root mount: verbatim statements with the imports they need. A value
 // slot so a peer plugin can replace the mount; `override: true` lets it cede
 // cleanly. `null` means "no mount" → entry.tsx is skipped.
@@ -187,6 +197,7 @@ export const react = plugin("react", {
 	slots: {
 		providers,
 		entryImports,
+		routerBindings,
 		mountExpression,
 		htmlShell,
 		htmlHead,
@@ -297,8 +308,17 @@ export const react = plugin("react", {
 			async (ctx): Promise<Mount | undefined> => {
 				if ((await ctx.resolve(self.slots.routesDir)) === null)
 					return undefined;
+				const bindings = await ctx.resolve(self.slots.routerBindings);
+				const calls = bindings.flatMap((spec) =>
+					"named" in spec
+						? spec.named.map(
+								(n) => `${typeof n === "string" ? n : n.alias}(router);`,
+							)
+						: [],
+				);
 				return {
 					imports: [
+						...bindings,
 						{ source: "react", named: ["StrictMode"] },
 						{ source: "react-dom/client", named: ["createRoot"] },
 						{
@@ -310,6 +330,7 @@ export const react = plugin("react", {
 					],
 					body: [
 						"const router = createRouter({ routeTree });",
+						...calls,
 						"",
 						'createRoot(document.getElementById("app") as HTMLElement).render(',
 						"\t<StrictMode>",

@@ -125,6 +125,7 @@ e.g. consulting `ctx.fileExists` before writing.
 |------|------|---------|
 | `providers` | `list<ProviderSpec>` | JSX wrappers / siblings for `.stack/virtual-providers.tsx` (sorted by `order`, lower = outer), served as `virtual:stack-providers` |
 | `entryImports` | `list<TsImportSpec>` | Extra imports for `.stack/entry.tsx` |
+| `routerBindings` | `list<TsImportSpec>` (sorted by source) | A named import of a function that takes the router instance; the default mount calls each as `<name>(router);` right after `createRouter`, before render. The generic seam for a peer that needs the router (react-ui contributes `bindRouter`, its routing module, when routing is on); a peer's own `mountExpression` owns its router and calls none |
 | `mountExpression` | `value<Mount \| null>` (`override`) | The root mount: verbatim statements plus their imports. react seeds the TanStack router inside `<StrictMode><Providers>` when routing is on; a peer replaces it for a custom mount. Null skips `entry.tsx` and its script tag |
 | `htmlShell` | `value<URL \| null>` (`override`) | HTML shell template URL |
 | `htmlHead` | `list<HtmlInjection>` (one `title`, one of each `html-attr`) | `<head>` injections (title, meta, link, script, html-attr); react contributes `lang`, the title (`title` ?? `app.name`), `description`, `themeColor`, `icon` |

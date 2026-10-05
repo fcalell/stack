@@ -9,6 +9,7 @@ import {
 	text,
 } from "@fcalell/ui-core/variants";
 import type { Closed } from "../../lib/closed.ts";
+import { follow } from "../../lib/navigate.ts";
 import { CountLinks } from "../meter/count-links.tsx";
 import { StatsWait } from "./wait.tsx";
 
@@ -48,6 +49,7 @@ export function Stats({ items, loading }: StatsProps) {
 							// biome-ignore lint/a11y/useAnchorContent: the hit covers the cell, named by its label, value and unit
 							<a
 								href={item.href}
+								onClick={follow}
 								aria-label={`${item.label}, ${number.format(item.value)}${item.unit ? ` ${item.unit}` : ""}`}
 								className={HIT}
 							/>

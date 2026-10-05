@@ -149,6 +149,11 @@ waits at the loaded height from the `items` you pass: one waiting cell per item,
 (`meta` or `counts`) it declares. With no items, four cells of label and figure stand in, so a
 strip whose cells carry a line moves when its data lands.
 
+A `Link`'s `href` is a route of the app (a plain click opens it through the router, with no
+document load) or an external URL (the browser follows it). Every route anchor stays an `<a href>`,
+so a new tab, a copied link and a middle click work. `navigate(route)` from
+`@fcalell/plugin-react-ui/lib/navigate` opens a route from a handler the same way.
+
 ```tsx
 <Stats items={[
   { label: "Projects", value: projects.length, href: "/projects" },

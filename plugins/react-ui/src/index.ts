@@ -334,6 +334,18 @@ export const reactUi = plugin("react-ui", {
 		react.slots.entryImports.contribute(
 			(): TsImportSpec => ({ source: "./app.css", sideEffect: true }),
 		),
+		// The app's router, handed to react-ui's navigation, so an act opens a
+		// route in place; with routing off the entry has no router to hand over.
+		react.slots.routerBindings.contribute(
+			async (ctx): Promise<TsImportSpec | undefined> => {
+				if ((await ctx.resolve(react.slots.routesDir)) === null)
+					return undefined;
+				return {
+					source: "@fcalell/plugin-react-ui/lib/navigate",
+					named: ["bindRouter"],
+				};
+			},
+		),
 		emitArtifact(".stack/app.css", self.slots.appCssSource),
 		// ui-core is no plugin: each UI plugin indexes its guide pages.
 		cliSlots.guide.contribute(() => uiCoreGuide),

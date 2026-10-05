@@ -5,6 +5,7 @@ import {
 	button,
 	buttonLabel,
 } from "@fcalell/ui-core/variants";
+import { follow } from "../../lib/navigate.ts";
 
 export const BOX = "relative inline-flex items-center justify-center";
 export const LABEL = "truncate";
@@ -25,6 +26,7 @@ export function ButtonLink(props: {
 	return (
 		<a
 			href={props.href}
+			onClick={follow}
 			className={cn(
 				button({ act: "secondary", fit: props.fit }),
 				BOX,

@@ -17,7 +17,7 @@ import {
 import { use } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { GroundContext } from "../../lib/ground.ts";
-import { isCurrent, useRoute } from "../../lib/navigate.ts";
+import { follow, isCurrent, useRoute } from "../../lib/navigate.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Chip } from "../chip/index.tsx";
 import { Icon } from "../icon/index.tsx";
@@ -153,6 +153,7 @@ export function FileRow({
 			// biome-ignore lint/a11y/useAnchorContent: the hit covers the row, named by its path and counts
 			<a
 				href={href}
+				onClick={follow}
 				aria-label={named}
 				aria-current={current ? "page" : undefined}
 				className={hitClass}

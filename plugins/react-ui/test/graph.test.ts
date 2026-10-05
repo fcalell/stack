@@ -6,17 +6,17 @@ import { test } from "node:test";
 import { buildGraphFromDiscovered } from "@fcalell/cli/build-graph";
 import { cliSlots } from "@fcalell/cli/cli-slots";
 import type { DiscoveredPlugin } from "@fcalell/cli/discovery";
-import { react } from "@fcalell/plugin-react";
+import { type ReactOptions, react } from "@fcalell/plugin-react";
 import { vite } from "@fcalell/plugin-vite";
 import { ENGLISH } from "@fcalell/ui-core/tokens";
 import { type ReactUiOptions, reactUi } from "../src/index.ts";
 
 // The graph `stack generate` resolves for vite + react + react-ui.
-function graph(options: ReactUiOptions = {}) {
+function graph(options: ReactUiOptions = {}, reactOptions: ReactOptions = {}) {
 	const cwd = mkdtempSync(join(tmpdir(), "stack-react-ui-"));
 	const plugins = [
 		{ factory: vite, config: vite() },
-		{ factory: react, config: react() },
+		{ factory: react, config: react(reactOptions) },
 		{ factory: reactUi, config: reactUi(options) },
 	];
 	const discovered = plugins.map(
@@ -37,8 +37,11 @@ function graph(options: ReactUiOptions = {}) {
 
 async function artifacts(
 	options: ReactUiOptions = {},
+	reactOptions: ReactOptions = {},
 ): Promise<Map<string, string>> {
-	const files = await graph(options).resolve(cliSlots.artifactFiles);
+	const files = await graph(options, reactOptions).resolve(
+		cliSlots.artifactFiles,
+	);
 	return new Map(files.map((f) => [f.path, f.content]));
 }
 
@@ -168,4 +171,18 @@ test("words mount a provider only when given", async () => {
 		words ?? "",
 		/earlierLines: \{ one: "Show \{count\} earlier line", other: "Show \{count\} earlier lines" \}/,
 	);
+});
+
+test("the entry hands the router to react-ui's navigation, and not without routes", async () => {
+	const entry = (await artifacts()).get(".stack/entry.tsx") ?? "";
+	assert.match(
+		entry,
+		/import \{ bindRouter \} from "@fcalell\/plugin-react-ui\/lib\/navigate";/,
+	);
+	assert.match(
+		entry,
+		/const router = createRouter\(\{ routeTree \}\);\nbindRouter\(router\);/,
+	);
+	const off = (await artifacts({}, { routes: false })).get(".stack/entry.tsx");
+	assert.doesNotMatch(off ?? "", /bindRouter/);
 });

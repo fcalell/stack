@@ -19,7 +19,7 @@ import { type ReactNode, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { PlaceRoute, ShellSwitcher } from "../../lib/frame.ts";
 import { useTouch } from "../../lib/media.ts";
-import { isCurrent, useRoute } from "../../lib/navigate.ts";
+import { follow, isCurrent, useRoute } from "../../lib/navigate.ts";
 import { toasts } from "../../lib/toast.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Count } from "../count/index.tsx";
@@ -113,6 +113,7 @@ export function Shell({ places, banner, switcher, children }: ShellProps) {
 						<a
 							key={spec.route}
 							href={spec.route}
+							onClick={follow}
 							aria-current={current ? "page" : undefined}
 							className={cn(
 								placeRow({ state }),
@@ -214,6 +215,7 @@ function TabBar(props: {
 					<a
 						key={spec.route}
 						href={spec.route}
+						onClick={follow}
 						aria-current={current ? "page" : undefined}
 						className={cn(
 							placeTab({ state: current ? "selected" : "idle" }),

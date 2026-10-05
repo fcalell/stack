@@ -5,6 +5,7 @@ import { type IconButtonFit, iconButton } from "@fcalell/ui-core/variants";
 import { type ComponentProps, useContext } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { FieldDisabled } from "../../lib/field.ts";
+import { follow } from "../../lib/navigate.ts";
 import { InsetRing } from "../../lib/ring.ts";
 import { Icon } from "../icon/index.tsx";
 
@@ -59,6 +60,7 @@ export function IconButtonLink(props: {
 	return (
 		<a
 			href={props.href}
+			onClick={follow}
 			aria-label={props.label}
 			className={cn(iconButton({ fit: props.fit }), BOX, PRESS)}
 		>

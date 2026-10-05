@@ -68,7 +68,7 @@ import { CellField, LabelTarget } from "../../lib/field.ts";
 import { PageTitle } from "../../lib/frame.ts";
 import { LoadingContext } from "../../lib/loading.ts";
 import { useTouch } from "../../lib/media.ts";
-import { navigate } from "../../lib/navigate.ts";
+import { follow, navigate } from "../../lib/navigate.ts";
 import { SectionContext } from "../../lib/section.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Checkbox } from "../checkbox/index.tsx";
@@ -1035,7 +1035,7 @@ function CellValueView(props: {
 		);
 		const name =
 			props.href !== undefined ? (
-				<a href={props.href} tabIndex={-1} className={strong}>
+				<a href={props.href} onClick={follow} tabIndex={-1} className={strong}>
 					{shown(column, cell)}
 				</a>
 			) : (

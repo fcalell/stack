@@ -33,7 +33,7 @@ conventions and typed routes; and [`add-a-route.md`](./guide/add-a-route.md), th
 
 ## Slots
 
-Peers contribute providers, entry imports, `<head>` and end-of-body tags, replace the mount, the shell or the home scaffold, and read `topLevelRoutes`. The table lives in [`slot-catalog.md`](../../.helm/knowledge/architecture/slot-catalog.md).
+Peers contribute providers, entry imports, router bindings (a function the default mount calls with the router), `<head>` and end-of-body tags, replace the mount, the shell or the home scaffold, and read `topLevelRoutes`. The table lives in [`slot-catalog.md`](../../.helm/knowledge/architecture/slot-catalog.md).
 
 ## License
 

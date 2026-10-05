@@ -2,6 +2,7 @@ import { cn } from "@fcalell/ui-core/cn";
 import { LINK_TARGET, type LinkFit, link } from "@fcalell/ui-core/variants";
 import type { ReactNode } from "react";
 import type { Closed } from "../../lib/closed.ts";
+import { follow } from "../../lib/navigate.ts";
 
 // Inline is underlined at rest and plain under the pointer; standalone the
 // other way round, on the target height. A standalone link's box keeps to its
@@ -28,7 +29,11 @@ export interface LinkProps extends Closed {
 export function Link({ href, fit, children }: LinkProps) {
 	const place = fit ?? "inline";
 	return (
-		<a href={href} className={cn(link({ fit: place }), OVERLAY[place])}>
+		<a
+			href={href}
+			onClick={follow}
+			className={cn(link({ fit: place }), OVERLAY[place])}
+		>
 			{children}
 		</a>
 	);

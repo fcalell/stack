@@ -3,6 +3,7 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
+import { plugin } from "@fcalell/cli";
 import { buildGraphFromDiscovered } from "@fcalell/cli/build-graph";
 import { cliSlots } from "@fcalell/cli/cli-slots";
 import type { DiscoveredPlugin } from "@fcalell/cli/discovery";
@@ -76,6 +77,50 @@ test("the entry mounts the router inside the providers under StrictMode", async 
 	assert.match(
 		files.get(".stack/index.html") ?? "",
 		/<script src="\/entry\.tsx" type="module"><\/script>/,
+	);
+});
+
+// A peer that needs the router instance, as react-ui does.
+const needsRouter = plugin("needs-router", {
+	label: "Needs router",
+	contributes: [
+		react.slots.routerBindings.contribute(() => ({
+			source: "peer/b",
+			named: ["bindB"],
+		})),
+		react.slots.routerBindings.contribute(() => ({
+			source: "peer/a",
+			named: [{ name: "bindA", alias: "bindOther" }],
+		})),
+	],
+});
+
+test("a peer's router binding is imported and called with the router, by source, before render", async () => {
+	const cwd = mkdtempSync(join(tmpdir(), "stack-react-"));
+	const discovered = [
+		{ factory: vite, config: vite() },
+		{ factory: react, config: react() },
+		{ factory: needsRouter, config: needsRouter() },
+	].map(
+		({ factory, config }) =>
+			({
+				name: config.__plugin,
+				cli: factory.cli,
+				factory,
+				options: config.options,
+			}) as unknown as DiscoveredPlugin,
+	);
+	const { graph: peered } = buildGraphFromDiscovered({
+		discovered,
+		app: { name: "shop", domain: "example.com" },
+		cwd,
+	});
+	const entry = (await peered.resolve(react.slots.entrySource)) ?? "";
+	assert.match(entry, /import \{ bindB \} from "peer\/b";/);
+	assert.match(entry, /import \{ bindA as bindOther \} from "peer\/a";/);
+	assert.match(
+		entry,
+		/const router = createRouter\(\{ routeTree \}\);\nbindOther\(router\);\nbindB\(router\);\n\ncreateRoot/,
 	);
 });
 

@@ -1057,7 +1057,10 @@ a tick with no animation, never jumped to full.
   with neither it draws no act. Going to a route is navigation, so on the web Back is an anchor
   in the hairline act's look (the internal `ButtonLink`), as a Place's and a Screen's back and
   Close acts are anchors in the icon act's (`IconButtonLink`); native presses through
-  `navigate`. A missing list gives the Section no count.
+  `navigate`. On the web every anchor routes in place: its `onClick` is `lib/navigate`'s
+  `follow`, which opens a plain primary click on a route of the app through the app's router
+  (bound by the generated entry through `react.slots.routerBindings`) and leaves every other
+  click (modified, middle, external) to the browser. A missing list gives the Section no count.
 - A `Comparison` is a collection of facts with the List's source (`query` with `sentence` and
   `empty`, or `items` waiting on `loading`) and a `row` map over a fact's slots: `key`, `label`,
   `values` (one per column, in order), `chips` and `status`. A fact's `status` is its verdict, a
@@ -1213,8 +1216,12 @@ a tick with no animation, never jumped to full.
   protocol-relative `//`) opens through `Linking`. Both platforms' `href` is a string, so the
   props stay the same; the router's route types are checked where a `Route` is a prop
   (`CountLink`, a row), not in the Link's string.
-- On the web every route reader shares the page's one `popstate` listener (`useRoute` in
-  `lib/navigate`). A List reads the route once and hands it to its rows through `ListedRoute`,
+- On the web every route reader shares the page's one listener (`useRoute` in `lib/navigate`):
+  the bound router's `onResolved`, so the route read is the resolved location (a place's
+  selection flips with the page drawn), and `popstate` and `hashchange` while unbound (routes
+  off). The free `navigate` opens a route through the router the same way, with `location.assign`
+  for an external URL or no router. `lib/navigate` imports no router: it takes the slice it
+  needs structurally. A List reads the route once and hands it to its rows through `ListedRoute`,
   internal: a row's `useRoute` takes it from there and subscribes to nothing, and a ListRow or
   FileRow standing alone subscribes itself. Rows are not memoised: a route change redraws the
   List's rows, cheaper and plainer than serializing each row's props to skip it. On the phone a

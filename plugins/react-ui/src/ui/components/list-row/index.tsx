@@ -35,7 +35,7 @@ import { type KeyboardEvent, type ReactNode, use, useId, useMemo } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { InlineField } from "../../lib/field.ts";
 import { GroundContext } from "../../lib/ground.ts";
-import { isCurrent, navigate, useRoute } from "../../lib/navigate.ts";
+import { follow, isCurrent, navigate, useRoute } from "../../lib/navigate.ts";
 import { joinParts, META_CUT, partText } from "../../lib/parts.ts";
 import { ReasonHostContext, usePressed } from "../../lib/reason.ts";
 import { useTouched } from "../../lib/touched.ts";
@@ -398,6 +398,7 @@ export function ListRow<V extends string | null = string>({
 		hit = (
 			<a
 				href={href}
+				onClick={follow}
 				aria-label={named}
 				aria-current={!tree && current ? "page" : undefined}
 				className={hitClass}
