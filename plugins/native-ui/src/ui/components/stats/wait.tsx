@@ -2,13 +2,14 @@ import {
 	lineBox,
 	STATS,
 	STATS_CELL,
+	STATS_EDGE,
 	skeleton,
 } from "@fcalell/ui-core/variants";
 import { Text as RNText, View } from "react-native";
 import { cn } from "../../lib/cn";
 
 const CLIP = "overflow-hidden";
-const CELLS = "flex-row flex-wrap -mt-px -ml-px";
+const CELLS = "flex-row flex-wrap";
 const CELL = "min-w-0 grow basis-1/2";
 // A loading line stands in its text's line box: a zero-width line of the
 // role beside the bar, so the loading strip keeps the loaded one's height.
@@ -36,6 +37,7 @@ export function StatsWait() {
 					</View>
 				))}
 			</View>
+			<View pointerEvents="none" className={STATS_EDGE} />
 		</View>
 	);
 }

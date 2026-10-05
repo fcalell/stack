@@ -630,8 +630,12 @@ export const METER_MARK = "w-track bg-ink-body -inset-y-inside";
 // platform overlay bleeds the cells by a hairline and the card clips the
 // outer ones). The cell is the label over the figure (and its unit) over the
 // meta line, or over its counts, a gap apart with no glyph between.
-export const STATS = "rounded-card border border-edge bg-surface";
+export const STATS = "relative rounded-card bg-surface";
 export const STATS_CELL = "gap-pair p-card border-t border-l border-edge";
+// The card's outer edge, drawn over its cells: their own top and start
+// hairlines at the card's edge sit under it, so the edge is one hairline at
+// every density, with no cell pulled back by a width of its own.
+export const STATS_EDGE = "absolute inset-0 rounded-card border border-edge";
 export const STATS_FIGURE = "gap-inside";
 export const STATS_COUNTS = "gap-inside";
 // Stat: the figure first (read "2, need you") with its label under it.
@@ -723,6 +727,9 @@ export const TOASTS = "p-page gap-pair";
 // insets its sections at the page inset; a bleeding body draws none, and
 // whatever stands first in it carries its own top inset.
 export const PAGE_HEAD = "px-page border-b border-edge";
+// A room Place stands its head the page inset from the top as it does from
+// the sides: the ten-foot safe area is all round.
+export const PAGE_HEAD_ROOM = "pt-page";
 export const PAGE_TOP_BAR = "gap-acts min-h-strip";
 // The touch title over the head's hairline, a pair apart from it.
 export const PAGE_TITLE = "pb-pair";

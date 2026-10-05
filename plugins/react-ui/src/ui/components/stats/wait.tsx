@@ -3,11 +3,13 @@ import {
 	lineBox,
 	STATS,
 	STATS_CELL,
+	STATS_EDGE,
 	skeleton,
 } from "@fcalell/ui-core/variants";
 
 const CLIP = "overflow-hidden";
-const CELLS = "flex flex-wrap -mt-px -ml-px";
+const CELLS = "flex flex-wrap";
+const EDGE = "pointer-events-none";
 const CELL = "flex flex-col min-w-0 grow basis-1/2 page-tablet:basis-0";
 const LINE = "flex items-center h-lh";
 // A strip's length is the data's, unknown while it waits.
@@ -29,6 +31,7 @@ export function StatsWait() {
 					</div>
 				))}
 			</div>
+			<div aria-hidden className={cn(STATS_EDGE, EDGE)} />
 		</div>
 	);
 }

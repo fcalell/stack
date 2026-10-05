@@ -13,6 +13,7 @@ import {
 	PAGE_BODY,
 	PAGE_BODY_OVER_FOOT,
 	PAGE_HEAD,
+	PAGE_HEAD_ROOM,
 	PAGE_TITLE,
 	PAGE_TOP_BAR,
 	text,
@@ -166,7 +167,9 @@ export function Place({
 				<PageTitle.Provider value={title}>
 					<View className={PLACE}>
 						{split.beside ? null : (
-							<View className={PAGE_HEAD}>
+							<View
+								className={cn(PAGE_HEAD, distance === "room" && PAGE_HEAD_ROOM)}
+							>
 								{bar ? (
 									<View className={cn(PAGE_TOP_BAR, TOP_BAR)}>
 										{lead}

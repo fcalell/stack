@@ -126,7 +126,8 @@ pinned by the package's verify suite; this entry holds the architecture and its 
   (`ROOM_TYPE_SIZE`, 80 canvas units, so a glanceable figure stands 5.3× its meta label where the
   references run 5–9×; 2.77 stays right for a stat inside a page), and `page` is 12 rungs, 48
   canvas units all round (one role serves both axes, so it costs the height 42 units over the 27
-  the guidance allows top and bottom). The radii, the fixed widths (every width but the two `ch`
+  the guidance allows top and bottom; the Place's head stands that inset from the top too,
+  `PAGE_HEAD_ROOM`, since `PAGE_HEAD` pads the sides alone). The radii, the fixed widths (every width but the two `ch`
   measures, which follow the type), the hairline and the ring scale by `u` too: a 1 px hairline
   vanishes at three metres, a 6 px radius on an 88 px control reads square, and a pane must hold
   the characters it holds on a phone. Motion is unchanged, and focus is the existing ring,
@@ -941,10 +942,11 @@ a tick with no animation, never jumped to full.
 - A `StepCount` (`{ at, of }`) is an onboarding flow's place in it: `of` segments (two to four) at the `meter` height (`STEP_COUNT_SEGMENT {state}`, radius `chip`, a gap `inside` apart), the steps before `at` `done`, `at` `current` and the rest `later` (`stepStateOf`, so both platforms draw one state per segment), over "Step n of m" (the slot word `stepOf`) at meta, which is also the component's accessible name. `done` and `current` fill `ink-meta`, `later` `fill-neutral`, never the accent, which the rubric leaves to checked controls and the active dot. It is an atom, not a prop on `Place`, `Form` or `Sheet`: an onboarding step can be any of the three. It takes the count alone, not a `Step[]`: onboarding steps carry no label or date.
 
 - A count strip is `Stats` (`items: StatSpec[]`) and one display figure is `Stat`, the two
-  members of one figure-with-its-label mechanism. The strip is one hairline card (`STATS`) whose
+  members of one figure-with-its-label mechanism. The strip is one card (`STATS`) whose
   cells draw their own top and start hairline (`STATS_CELL`) so it splits wherever the cells
-  wrap, which `divide-*` cannot do and native has not; a platform overlay bleeds the cells by a
-  hairline and the card clips the outer ones. A cell is the label in meta over its figure at the
+  wrap, which `divide-*` cannot do and native has not; the card's edge (`STATS_EDGE`) is a layer
+  drawn over the cells, so their outer hairlines lie under it: one hairline at every density,
+  where a cell pulled back by `-mt-px` stays 1 px while the room's hairline scales. A cell is the label in meta over its figure at the
   `figure` role (a ratio of the body, 1.69, so 22 desktop and 27 touch at 500 and tabular: the
   strip's measured range is 18 to 26, and a body-strong figure reads as meta-sized beside its
   label) with a unit muted beside it, then a meta line or the cell's sub-counts as `Link`s, or the

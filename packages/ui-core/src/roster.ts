@@ -557,6 +557,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			],
 			draws: [
 				"PAGE_HEAD",
+				"PAGE_HEAD_ROOM",
 				"PAGE_TOP_BAR",
 				"PAGE_TITLE",
 				"TEXT.role.title",
@@ -2505,11 +2506,18 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"STATS",
 				"STATS_CELL",
 				"STATS_COUNTS",
+				"STATS_EDGE",
 				"STATS_FIGURE",
 				"TEXT.role.figure",
 				"TEXT.role.meta",
 			],
-			holds: ["STATS", "STATS_CELL", "STATS_FIGURE", "STATS_COUNTS"],
+			holds: [
+				"STATS",
+				"STATS_CELL",
+				"STATS_EDGE",
+				"STATS_FIGURE",
+				"STATS_COUNTS",
+			],
 			states: ["rest", "loading"],
 			owns: {
 				roles: ["figure", "meta"],

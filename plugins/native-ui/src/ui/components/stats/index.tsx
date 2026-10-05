@@ -5,6 +5,7 @@ import {
 	STATS,
 	STATS_CELL,
 	STATS_COUNTS,
+	STATS_EDGE,
 	STATS_FIGURE,
 	text,
 } from "@fcalell/ui-core/variants";
@@ -16,9 +17,9 @@ import { Link } from "../link";
 import { StatsWait } from "./wait";
 
 const CLIP = "overflow-hidden";
-// Each cell draws its own top and start hairline; the strip bleeds by one so
-// the card clips the outer ones.
-const CELLS = "flex-row flex-wrap -mt-px -ml-px";
+// Each cell draws its own top and start hairline; the card's edge is drawn over
+// them, so the outer ones are the edge's own.
+const CELLS = "flex-row flex-wrap";
 // Two to a row.
 const CELL = "min-w-0 grow basis-1/2";
 const HIT = "absolute inset-0 active:bg-wash-press";
@@ -91,6 +92,7 @@ export function Stats({ items, loading }: StatsProps) {
 					);
 				})}
 			</View>
+			<View pointerEvents="none" className={STATS_EDGE} />
 		</View>
 	);
 }

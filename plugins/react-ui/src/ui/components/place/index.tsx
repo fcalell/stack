@@ -17,6 +17,7 @@ import {
 	PAGE_BODY,
 	PAGE_BODY_OVER_FOOT,
 	PAGE_HEAD,
+	PAGE_HEAD_ROOM,
 	PAGE_TITLE,
 	PAGE_TOP_BAR,
 	THREAD_COLUMN,
@@ -281,7 +282,7 @@ export function Place({
 	// title's place, the spacer and the strip's act differ, each a slot that
 	// holds `null` where it does not draw, so the acts after it never shift.
 	const head = (
-		<header className={cn(PAGE_HEAD, HEAD, HEAD_BESIDE)}>
+		<header className={cn(PAGE_HEAD, far && PAGE_HEAD_ROOM, HEAD, HEAD_BESIDE)}>
 			<div className={cn(PAGE_TOP_BAR, bar ? ROW : ROW_MARKED)}>
 				{back}
 				{lead}
