@@ -286,7 +286,8 @@ a tick with no animation, never jumped to full.
 - The Picker's trigger takes `PICKER {fit}`: `field`, the field box at the bar fit; `bar`, the same
   box filling the column a `Rules` row gives it; or `row`, a list row's trailing pick, its value
   (`PICKER_VALUE`) and chevron in a `PILL_ACT` that pulls back by its own padding at the row's end
-  (`-me-inside`). The Picker's `fit` prop picks it, and a `ListRow`'s trailing pick (`RowTrailing`'s
+  (`-me-inside`). A field or bar trigger yields only past its line (a Toolbar's acts row yields
+  inside the strip), so a value wider than the line truncates before the chevron. The Picker's `fit` prop picks it, and a `ListRow`'s trailing pick (`RowTrailing`'s
   `pick`) passes `row`. `PILL_ACT` is shared: the Picker's row-fit trigger and the `ItemHeader`'s
   opening fact draw it.
 - A pick of several is the Picker given an array `value` (`MultiPick`), never a second component:

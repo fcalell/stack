@@ -7,6 +7,9 @@ import { Input } from "../input/index.tsx";
 
 const STRIP = "flex flex-col";
 const ROW = "flex flex-wrap items-center";
+// The acts row yields inside the strip's row, so a field trigger wider than the
+// line truncates its value instead of holding the row at its full label.
+const ACTS = "min-w-0";
 const SEARCH = "flex grow min-w-0 touch:w-full";
 // Below `tablet` of its page, with a record standing alone (its Split marked
 // `data-record`), the strip leaves with the list it works on.
@@ -33,7 +36,7 @@ export function Toolbar({ children }: ToolbarProps) {
 			<div className={cn(TOOLBAR_ROW, ROW)}>
 				{search.length > 0 ? <div className={SEARCH}>{search}</div> : null}
 				{acts.length > 0 ? (
-					<div className={cn(TOOLBAR_ROW, ROW)}>{acts}</div>
+					<div className={cn(TOOLBAR_ROW, ROW, ACTS)}>{acts}</div>
 				) : null}
 			</div>
 			{chips.length > 0 ? (

@@ -23,8 +23,9 @@ import type { PickerProps, PickOneProps, PickSeveralProps } from "./index";
 import { PickSheet, useOptionGroups } from "./sheet";
 
 // A field-fit trigger is the field box at the bar fit; in a table cell it
-// fills the cell it stands in for.
-const FIELD_TRIGGER = "flex-row shrink-0 items-center";
+// fills the cell it stands in for. It yields only past its line, so a long
+// value truncates before the chevron.
+const FIELD_TRIGGER = "flex-row max-w-full items-center";
 const FILL = "w-full";
 const FIELD_VALUE = "min-w-0 grow shrink";
 // A pick of several: the chips wrap in a run, and the trigger that opens the

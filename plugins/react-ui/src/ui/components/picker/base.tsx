@@ -56,9 +56,10 @@ import { Status } from "../status/index.tsx";
 import type { PickerProps, PickOneProps, PickSeveralProps } from "./index.tsx";
 
 // A field-fit trigger is the field box at the bar fit; open, it keeps the
-// ring, as the `Select`'s does.
+// ring, as the `Select`'s does. It yields only past its line, so a long value
+// truncates before the chevron.
 const FIELD_TRIGGER =
-	"flex shrink-0 items-center text-start hover:border-edge-hover";
+	"flex min-w-0 max-w-full items-center text-start hover:border-edge-hover";
 const FIELD_OPEN = "outline-2 outline-offset-2 outline-ring";
 // In a table cell, or at the bar fit in a rule row, the trigger fills the
 // cell or column it stands in for.

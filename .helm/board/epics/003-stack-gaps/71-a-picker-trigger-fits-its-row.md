@@ -1,6 +1,6 @@
 ---
 id: 003-71
-status: backlog
+status: review
 sessions: {}
 ---
 # react-ui: a picker's field trigger fits a narrow toolbar
