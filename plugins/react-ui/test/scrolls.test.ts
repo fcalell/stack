@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { takesStop } from "../src/ui/lib/scrolls.ts";
+import { changesChildren, takesStop } from "../src/ui/lib/scrolls.ts";
 
 const column = {
 	scrollWidth: 300,
@@ -26,4 +26,14 @@ test("a region reads the axis it scrolls on", () => {
 	const row = { ...column, scrollWidth: 800, scrollHeight: 600 };
 	assert.equal(takesStop(row, "x", false), true);
 	assert.equal(takesStop(row, "y", false), false);
+});
+
+test("a change to the region's own children rebinds what is watched, a deeper one only re-measures", () => {
+	const node = {};
+	const own = { type: "childList", target: node };
+	const deeper = { type: "childList", target: {} };
+	const attribute = { type: "attributes", target: node };
+	assert.equal(changesChildren([own], node), true);
+	assert.equal(changesChildren([deeper, attribute], node), false);
+	assert.equal(changesChildren([deeper, own], node), true);
 });

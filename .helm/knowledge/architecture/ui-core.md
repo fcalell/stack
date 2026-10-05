@@ -1296,8 +1296,9 @@ a tick with no animation, never jumped to full.
   (`CountLink`, a row), not in the Link's string.
 - On the web every route reader shares the page's one listener (`useRoute` in `lib/navigate`):
   the bound router's `onResolved`, so the route read is the resolved location (a place's
-  selection flips with the page drawn), and `popstate` and `hashchange` while unbound (routes
-  off). The free `navigate` opens a route through the router the same way, with `location.assign`
+  selection flips with the page drawn), and the window's `popstate` and `hashchange`, which
+  the readers hear only while unbound (routes off; bound, the router resolves a move and
+  `onResolved` tells them once). The free `navigate` opens a route through the router the same way, with `location.assign`
   for an external URL or no router. `lib/navigate` imports no router: it takes the slice it
   needs structurally. A List reads the route once and hands it to its rows through `ListedRoute`,
   internal: a row's `useRoute` takes it from there and subscribes to nothing, and a ListRow or
@@ -1395,7 +1396,10 @@ a tick with no animation, never jumped to full.
   scrollers (the Place's and Screen's body, the Split's list, main and pane, a sheet's body) follow
   the same rule through `lib/scrolls.ts`, on the vertical axis, with one more condition: a
   region takes the stop only while it scrolls and holds nothing a keyboard reaches (axe's
-  `scrollable-region-focusable`), so a body of links gains no stop, and a body of text, which
+  `scrollable-region-focusable`; what a keyboard reaches is `isTabbable` of `lib/focus`, the rule a
+  docked Sheet's focus hand-back reads), re-measured when its content changes anywhere inside it or
+  an element's tab-affecting attribute does, since a waiting form holds its loaded size and resizes
+  nothing, so a body of links gains no stop, and a body of text, which
   Safari leaves unreachable, gains one, ringed inset. It takes no role or name; focus reads the
   content inside `main`. A native scroll view has no tab order.
 - `Code`'s `download` is the file's name, a string because the name is the one value stack cannot

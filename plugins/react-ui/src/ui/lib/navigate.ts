@@ -33,17 +33,23 @@ export function bindRouter(router: InPlaceRouter): void {
 	hear();
 }
 
+// Bound, the router resolves a history move and `onResolved` tells the
+// readers, so the window's events are heard only while unbound.
+const hearWindow = () => {
+	if (!bound) hear();
+};
+
 function onLocation(notify: () => void): () => void {
 	if (readers.size === 0) {
-		addEventListener("popstate", hear);
-		addEventListener("hashchange", hear);
+		addEventListener("popstate", hearWindow);
+		addEventListener("hashchange", hearWindow);
 	}
 	readers.add(notify);
 	return () => {
 		readers.delete(notify);
 		if (readers.size === 0) {
-			removeEventListener("popstate", hear);
-			removeEventListener("hashchange", hear);
+			removeEventListener("popstate", hearWindow);
+			removeEventListener("hashchange", hearWindow);
 		}
 	};
 }

@@ -1,8 +1,5 @@
 import { useEffect, useState } from "react";
-
-// What a keyboard reaches by Tab inside a region.
-const TABBABLE =
-	'a[href], button:not([disabled]), input:not([type="hidden"], [disabled]), select:not([disabled]), textarea:not([disabled]), summary, [tabindex]:not([tabindex="-1"])';
+import { isTabbable } from "./focus.ts";
 
 /** Whether a region takes a tab stop of its own: it runs past its box along `axis` and holds nothing a keyboard reaches, so no other stop scrolls it. */
 export function takesStop(
@@ -22,7 +19,28 @@ export function takesStop(
 	return scrolls && !tabbable;
 }
 
-/** Whether a scrolling region takes a tab stop (`takesStop`), measured as it resizes. Its children are watched too, since new content resizes them and not the box; a childList change rebinds them. */
+/** Whether a mutation changed `node`'s own children, the ones its size is watched on; a change deeper in the subtree only needs a re-measure. */
+export function changesChildren(
+	records: ReadonlyArray<{ type: string; target: unknown }>,
+	node: unknown,
+): boolean {
+	return records.some(
+		(record) => record.type === "childList" && record.target === node,
+	);
+}
+
+// The attributes that make an element reachable by Tab, or not (`isTabbable`).
+const TABBABLE_ATTRIBUTES = [
+	"tabindex",
+	"disabled",
+	"hidden",
+	"inert",
+	"aria-hidden",
+	"href",
+	"contenteditable",
+];
+
+/** Whether a scrolling region takes a tab stop (`takesStop`), measured as it resizes. Its children are watched too, since new content resizes them and not the box; a change to its own children rebinds them. Content swapping anywhere inside it, or an element becoming or ceasing to be tabbable, re-measures it, since a loaded body holds its waiting size and resizes nothing. */
 export function useScrolls(node: HTMLElement | null, axis: "x" | "y"): boolean {
 	const [stop, setStop] = useState(false);
 	useEffect(() => {
@@ -32,9 +50,7 @@ export function useScrolls(node: HTMLElement | null, axis: "x" | "y"): boolean {
 				takesStop(
 					node,
 					axis,
-					[...node.querySelectorAll(TABBABLE)].some(
-						(found) => found.getClientRects().length > 0,
-					),
+					Array.from(node.querySelectorAll<HTMLElement>("*")).some(isTabbable),
 				),
 			);
 		const resize = new ResizeObserver(measure);
@@ -44,12 +60,20 @@ export function useScrolls(node: HTMLElement | null, axis: "x" | "y"): boolean {
 			for (const child of node.children) resize.observe(child);
 			measure();
 		};
-		const children = new MutationObserver(watch);
-		children.observe(node, { childList: true });
+		const content = new MutationObserver((records) => {
+			if (changesChildren(records, node)) watch();
+			else measure();
+		});
+		content.observe(node, {
+			childList: true,
+			subtree: true,
+			attributes: true,
+			attributeFilter: TABBABLE_ATTRIBUTES,
+		});
 		watch();
 		return () => {
 			resize.disconnect();
-			children.disconnect();
+			content.disconnect();
 		};
 	}, [node, axis]);
 	return stop;
