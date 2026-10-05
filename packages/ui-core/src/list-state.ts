@@ -13,6 +13,7 @@ import type {
 	RuleTerms,
 	RuleValue,
 	TableCell,
+	TableChoice,
 	TableColumn,
 	TableRowSlots,
 } from "./descriptors.ts";
@@ -118,7 +119,7 @@ export function groupWait(lists: number): "rows" | "settings" {
 }
 
 // The kind of mark every row of a list leads with.
-export type LeadingKind = "avatar" | "icon" | "status";
+export type LeadingKind = "avatar" | "icon" | "status" | "check";
 
 // The slots a waiting ListRow draws, known before any item: its change mark's
 // lane, its leading mark by kind, a meta line (at a chip's height when a chip may stand on it, the
@@ -138,13 +139,19 @@ export interface RowShape {
 }
 
 // A `leading` slot: one of its keys holds the item's mark.
-type LeadingKeys = { avatar?: unknown; icon?: unknown; status?: unknown };
+type LeadingKeys = {
+	avatar?: unknown;
+	icon?: unknown;
+	status?: unknown;
+	check?: unknown;
+};
 
 // The kind a `leading` slot declares by its one key.
 function leadingKind(leading: LeadingKeys | undefined): LeadingKind | null {
 	if (leading === undefined) return null;
 	if (leading.avatar !== undefined) return "avatar";
 	if (leading.icon !== undefined) return "icon";
+	if (leading.check !== undefined) return "check";
 	return "status";
 }
 
@@ -453,14 +460,18 @@ export interface TableRecord {
 	locked: readonly string[] | undefined;
 	warning: string | undefined;
 	change: ChangeKind | undefined;
+	blocked: string | undefined;
+	moved: string | undefined;
 	cells: Readonly<Record<string, TableCell>>;
 }
 
-// The Table's rows: each item through the row map and every column's `cell`.
+// The Table's rows: each item through the row map, every column's `cell` and
+// the reasons its choice gives.
 export function tableRecords<T>(
 	items: readonly T[],
 	columns: readonly TableColumn<T>[],
 	row: TableRowSlots<T>,
+	choose?: TableChoice<T>,
 ): TableRecord[] {
 	return items.map((item) => ({
 		id: row.id(item),
@@ -468,6 +479,8 @@ export function tableRecords<T>(
 		locked: row.locked?.(item),
 		warning: row.warning?.(item),
 		change: row.change?.(item),
+		blocked: choose?.blocked?.(item),
+		moved: choose?.moved?.(item),
 		cells: Object.fromEntries(
 			columns.map((column) => [column.key, column.cell(item)]),
 		),
@@ -497,6 +510,52 @@ export function cellLocked(
 ): boolean {
 	if (!edits || leading || column.locked !== undefined) return false;
 	return column.edit !== undefined && row.locked?.includes(column.key) === true;
+}
+
+// The rows a tick reaches: every row with no blocked reason.
+function tickable(rows: readonly TableRecord[]): TableRecord[] {
+	return rows.filter((row) => row.blocked === undefined);
+}
+
+// The head tick over the rows that can be ticked: checked when all are
+// chosen, mixed when some are, unchecked when none are (or none can be).
+export function chooseHead(
+	rows: readonly TableRecord[],
+	chosen: readonly string[],
+): boolean | "mixed" {
+	const reach = tickable(rows);
+	const ticked = reach.filter((row) => chosen.includes(row.id)).length;
+	if (ticked === 0) return false;
+	return ticked === reach.length ? true : "mixed";
+}
+
+// A row's tick: its id in the chosen set, or out of it.
+export function chooseRow(
+	chosen: readonly string[],
+	id: string,
+	on: boolean,
+): string[] {
+	const rest = chosen.filter((each) => each !== id);
+	return on ? [...rest, id] : rest;
+}
+
+// What the head tick chooses: every tickable row once all of them are chosen
+// is turned off, otherwise (unchecked or mixed) turned on. A chosen id the
+// rows do not hold keeps its place, and the rows added join in row order.
+export function chooseAllToggled(
+	rows: readonly TableRecord[],
+	chosen: readonly string[],
+): string[] {
+	const reach = tickable(rows).map((row) => row.id);
+	if (chooseHead(rows, chosen) === true)
+		return chosen.filter((id) => !reach.includes(id));
+	return [...chosen, ...reach.filter((id) => !chosen.includes(id))];
+}
+
+// The reason a row's tick stands as it does, drawn under its leading cell: why
+// it cannot be ticked, else why a rule moved it.
+export function chooseReason(row: TableRecord): string | undefined {
+	return row.blocked ?? row.moved;
 }
 
 // What a change cell is: both values, a value added (no before) or removed (no

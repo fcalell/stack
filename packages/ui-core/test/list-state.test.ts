@@ -5,6 +5,10 @@ import {
 	boundaryState,
 	CHANGE_GLYPH,
 	CHANGE_WORD,
+	chooseAllToggled,
+	chooseHead,
+	chooseReason,
+	chooseRow,
 	factShape,
 	fileShape,
 	groupWait,
@@ -191,6 +195,7 @@ test("the waiting shape follows the declared slots and runs none of them", () =>
 		rowShape({ leading: { status: spy("status") } }).leading,
 		"status",
 	);
+	assert.equal(rowShape({ leading: { check: spy("check") } }).leading, "check");
 	assert.deepEqual(meterShape({}), { meta: false });
 	assert.deepEqual(meterShape({ meta: spy("meta") }), { meta: true });
 	assert.deepEqual(meterShape({ counts: spy("counts") }), { meta: true });
@@ -374,6 +379,8 @@ test("a table's rows read each column's cell and the row map from the item", () 
 				locked: ["role"],
 				warning: undefined,
 				change: "unchanged",
+				blocked: undefined,
+				moved: undefined,
 				cells: { name: "Ana Ruiz", role: "admin", owner: true },
 			},
 			{
@@ -382,6 +389,8 @@ test("a table's rows read each column's cell and the row map from the item", () 
 				locked: undefined,
 				warning: "Name conflicts",
 				change: "added",
+				blocked: undefined,
+				moved: undefined,
 				cells: { name: "Ben Kaya", role: "member", owner: false },
 			},
 		],
@@ -395,6 +404,8 @@ test("a table's rows read each column's cell and the row map from the item", () 
 				locked: undefined,
 				warning: undefined,
 				change: undefined,
+				blocked: undefined,
+				moved: undefined,
 				cells: { name: "Ana Ruiz", role: "admin", owner: true },
 			},
 		],
@@ -444,4 +455,73 @@ test("a change mark's ink is its kind's: added ok, removed danger, changed warn"
 	assert.equal(changeContentTone("changed"), "warn");
 	assert.equal(changeContentTone("stale"), "warn");
 	assert.equal(changeContentTone("unchanged"), "ink-meta");
+});
+
+const choosing = (blocked?: string, moved?: string) => ({
+	id: "x",
+	href: undefined,
+	locked: undefined,
+	warning: undefined,
+	change: undefined,
+	blocked,
+	moved,
+	cells: {},
+});
+const ROWS = ["a", "b", "c"].map((id) => ({ ...choosing(), id }));
+const WITH_BLOCKED = [...ROWS, { ...choosing("Held by CR-12"), id: "d" }];
+
+test("a table's records carry the reasons its choice gives, read from the item", () => {
+	const [ana, ben] = tableRecords(
+		MEMBERS,
+		COLUMNS,
+		{ id: (member) => member.id },
+		{
+			chosen: [],
+			onChange: () => {},
+			blocked: (member) => (member.owner ? "Owner" : undefined),
+			moved: (member) => (member.owner ? undefined : "Needed by Ana"),
+		},
+	);
+	assert.equal(ana?.blocked, "Owner");
+	assert.equal(ana?.moved, undefined);
+	assert.equal(ben?.blocked, undefined);
+	assert.equal(ben?.moved, "Needed by Ana");
+});
+
+test("the head tick is unchecked, mixed or checked over the rows that can be ticked", () => {
+	assert.equal(chooseHead(ROWS, []), false);
+	assert.equal(chooseHead(ROWS, ["b"]), "mixed");
+	assert.equal(chooseHead(ROWS, ["a", "b", "c"]), true);
+	// A blocked row is outside the head tick, ticked or not.
+	assert.equal(chooseHead(WITH_BLOCKED, ["a", "b", "c"]), true);
+	assert.equal(chooseHead(WITH_BLOCKED, ["a", "d"]), "mixed");
+	assert.equal(chooseHead(WITH_BLOCKED, ["d"]), false);
+	// An id the rows do not hold is no row's tick.
+	assert.equal(chooseHead(ROWS, ["z"]), false);
+	assert.equal(chooseHead([], []), false);
+	assert.equal(chooseHead([choosing("Held")], []), false);
+});
+
+test("the head tick chooses every tickable row from unchecked or mixed, and clears them from checked", () => {
+	assert.deepEqual(chooseAllToggled(ROWS, []), ["a", "b", "c"]);
+	assert.deepEqual(chooseAllToggled(ROWS, ["b"]), ["b", "a", "c"]);
+	assert.deepEqual(chooseAllToggled(ROWS, ["a", "b", "c"]), []);
+	// A blocked row is never chosen by it, and a chosen id the rows do not
+	// hold stays.
+	assert.deepEqual(chooseAllToggled(WITH_BLOCKED, ["z"]), ["z", "a", "b", "c"]);
+	assert.deepEqual(chooseAllToggled(WITH_BLOCKED, ["z", "a", "b", "c"]), ["z"]);
+	assert.deepEqual(chooseAllToggled([], ["z"]), ["z"]);
+});
+
+test("a row's tick puts its id in the chosen set once, or takes it out", () => {
+	assert.deepEqual(chooseRow(["a"], "b", true), ["a", "b"]);
+	assert.deepEqual(chooseRow(["a", "b"], "b", true), ["a", "b"]);
+	assert.deepEqual(chooseRow(["a", "b"], "a", false), ["b"]);
+	assert.deepEqual(chooseRow(["a"], "z", false), ["a"]);
+});
+
+test("a row's reason is why it cannot be ticked, else why its tick moved", () => {
+	assert.equal(chooseReason(choosing("Held", "Needed by A")), "Held");
+	assert.equal(chooseReason(choosing(undefined, "Needed by A")), "Needed by A");
+	assert.equal(chooseReason(choosing()), undefined);
 });

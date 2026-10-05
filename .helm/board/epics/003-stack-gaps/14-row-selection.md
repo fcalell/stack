@@ -1,6 +1,6 @@
 ---
 id: 003-14
-status: backlog
+status: review
 sessions: {}
 ---
 # ui-core: a table chooses rows, and a rule can move the ticks

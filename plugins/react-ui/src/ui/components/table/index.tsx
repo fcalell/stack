@@ -1,3 +1,4 @@
+import { Field } from "@base-ui/react/field";
 import { cn } from "@fcalell/ui-core/cn";
 import type {
 	CellValue,
@@ -5,6 +6,7 @@ import type {
 	Option,
 	StatusCell,
 	TableCell,
+	TableChoice,
 	TableColumn,
 	TableRowSlots,
 } from "@fcalell/ui-core/descriptors";
@@ -14,6 +16,10 @@ import {
 	changeKind,
 	changeMeta,
 	changeReading,
+	chooseAllToggled,
+	chooseHead,
+	chooseReason,
+	chooseRow,
 	isChangeCell,
 	listState,
 	retryOf,
@@ -46,6 +52,8 @@ import {
 	memo,
 	type ReactNode,
 	use,
+	useId,
+	useMemo,
 	useRef,
 	useState,
 } from "react";
@@ -95,8 +103,19 @@ const MAX = "w-max table-fixed";
 const HEAD_CELL = "p-0 font-normal";
 const START = "text-start";
 const END = "text-end";
-// The frozen column stands over the cells that scroll beneath it.
-const FROZEN = "sticky left-0 z-1";
+// The frozen columns stand over the cells that scroll beneath them: the tick
+// column first, the leading column after it (at the tick column's width when
+// the table chooses rows).
+const FROZEN = "sticky z-1";
+const FROZEN_AT = "left-0";
+const FROZEN_AFTER_TICK = "left-row";
+// The tick column is a square the row's height, its tick centred. A row that
+// carries a reason grows to the two-line row, in every cell of it.
+const TICK_WIDTH = "w-row";
+const TICK_BOX = "flex items-center justify-center min-h-row";
+const TALL = "min-h-row-2";
+// The leading cell's name over the reason a row's tick stands as it does.
+const REASON_STACK = "flex flex-col min-w-0";
 const SORT =
 	"group/sort flex items-center w-full min-w-0 hover:bg-wash-hover active:bg-wash-press focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring";
 const HEAD = "flex items-center min-w-0";
@@ -199,6 +218,8 @@ interface TableBase<T> extends Closed {
 	row: TableRowSlots<T>;
 	/** The open record's id, washed as selected. */
 	selected?: string;
+	/** The rows the viewer ticks: a tick column leads the grid (its head tick over the rows that can be ticked) and, below `tablet`, each row's leading is its tick. `chosen` is the ticked ids and `onChange` hears the set a tick makes, which the consumer applies its rule to and hands back through `chosen`; `blocked` and `moved` give a row's reason under its leading cell. */
+	choose?: TableChoice<T>;
 	/** What the table holds while it has no rows, an `EmptyState`. */
 	empty?: ReactNode;
 }
@@ -317,7 +338,11 @@ export function Table<T>(props: TableProps<T>) {
 	const items = (props.query ? props.query.data : props.items) ?? [];
 	const records = waiting
 		? []
-		: sorted(tableRecords(items, columns, props.row), columns, sort);
+		: sorted(
+				tableRecords(items, columns, props.row, props.choose),
+				columns,
+				sort,
+			);
 	let slot: ReactNode = null;
 	if (state === "missing") slot = <Missing />;
 	else if (state === "failed" && props.query)
@@ -339,6 +364,7 @@ export function Table<T>(props: TableProps<T>) {
 				sort={sort}
 				onSort={(key) => setSort((current) => next(current, key))}
 				selected={selected}
+				choose={props.choose}
 				onOpen={onOpen}
 				onEdit={onEdit}
 				loading={waiting}
@@ -356,6 +382,7 @@ export function Table<T>(props: TableProps<T>) {
 							sort={sort}
 							onSort={setSort}
 							onOpen={onOpen}
+							choose={props.choose}
 							loading={waiting}
 							warns={props.row.warning !== undefined}
 							changes={props.row.change !== undefined}
@@ -376,17 +403,21 @@ interface GridActions {
 	edit: (row: TableRecord, column: TableColumn, value: CellValue) => void;
 	click: (event: MouseEvent, row: TableRecord) => void;
 	home: (row: number, column: number) => HTMLElement | undefined;
+	tick: (row: TableRecord, on: boolean) => void;
 }
 
 type Editing = "started" | "entered";
 
-// A row re-renders only when its record, its selection or the cursor's place
-// in it changes.
+// A row re-renders only when its record, its selection, its tick or the
+// cursor's place in it changes. The cursor's columns count the tick column
+// first when the table chooses rows (`choosing`).
 const Row = memo(function Row(props: {
 	row: TableRecord;
 	index: number;
 	columns: readonly TableColumn[];
 	chosen: boolean;
+	choosing: boolean;
+	ticked: boolean;
 	opens: boolean;
 	touch: boolean;
 	edits: boolean;
@@ -395,9 +426,12 @@ const Row = memo(function Row(props: {
 	editing: Editing | undefined;
 	actions: GridActions;
 }) {
-	const { row, index, columns, chosen, opens, actions } = props;
+	const { row, index, columns, chosen, choosing, opens, actions } = props;
 	const lead = columns[0];
 	const name = lead ? shown(lead, row.cells[lead.key]) : "";
+	const shift = choosing ? 1 : 0;
+	const reason = chooseReason(row);
+	const reasonId = useId();
 	return (
 		<tr
 			aria-selected={chosen || undefined}
@@ -408,28 +442,109 @@ const Row = memo(function Row(props: {
 				opens && (chosen ? ROW_CHOSEN_PRESS : ROW_PRESS),
 			)}
 		>
+			{choosing ? (
+				<TickCell
+					row={row}
+					index={index}
+					name={name}
+					ticked={props.ticked}
+					describedBy={reason === undefined ? undefined : reasonId}
+					tall={reason !== undefined}
+					frozen={props.touch}
+					chosen={chosen}
+					opens={opens}
+					here={props.cursor === 0}
+					actions={actions}
+				/>
+			) : null}
 			{columns.map((column, place) => (
 				<Cell
 					key={column.key}
 					row={row}
 					index={index}
 					column={column}
-					place={place}
+					place={place + shift}
+					leading={place === 0}
 					cell={row.cells[column.key]}
 					name={`${column.label}, ${name}`}
 					control={editOf(columns, place, props.edits, row)?.control}
 					locked={cellLocked(column, place === 0, props.edits, row)}
 					frozen={props.touch && place === 0}
+					shifted={choosing}
+					reason={reason}
+					reasonId={reasonId}
 					chosen={chosen}
 					opens={opens}
-					here={props.cursor === place}
-					editing={props.cursor === place ? props.editing : undefined}
+					here={props.cursor === place + shift}
+					editing={props.cursor === place + shift ? props.editing : undefined}
 					actions={actions}
 				/>
 			))}
 		</tr>
 	);
 });
+
+// A row's tick cell: a Checkbox named by the leading cell's name and
+// described by the row's reason, disabled while the row is blocked. Frozen
+// first on touch, where the leading column freezes after it.
+function TickCell(props: {
+	row: TableRecord;
+	index: number;
+	name: string;
+	ticked: boolean;
+	describedBy: string | undefined;
+	tall: boolean;
+	frozen: boolean;
+	chosen: boolean;
+	opens: boolean;
+	here: boolean;
+	actions: GridActions;
+}) {
+	const { row, index, actions } = props;
+	const box = cn(
+		TICK_BOX,
+		props.tall && TALL,
+		props.frozen &&
+			tableFrozenCell({ state: props.chosen ? "selected" : "rest" }),
+		props.frozen &&
+			props.opens &&
+			(props.chosen ? FROZEN_CHOSEN_PRESS : FROZEN_PRESS),
+	);
+	return (
+		<td
+			data-row={index}
+			data-column={0}
+			data-choose=""
+			tabIndex={props.here ? 0 : -1}
+			className={cn(
+				BODY_CELL,
+				props.frozen && cn(TABLE_FROZEN, FROZEN, FROZEN_AT),
+			)}
+		>
+			{/* biome-ignore lint/a11y/noLabelWithoutControl: the Checkbox inside is the control */}
+			<label className={box}>
+				<Field.Root disabled={row.blocked !== undefined}>
+					<CellField
+						value={{
+							label: props.name,
+							starts: false,
+							done: actions.done,
+							home: () => actions.home(index, 0),
+						}}
+					>
+						<LabelTarget value={{ describedBy: props.describedBy }}>
+							<Checkbox
+								checked={props.ticked}
+								onChange={(on) => actions.tick(row, on)}
+								label={props.name}
+							/>
+						</LabelTarget>
+					</CellField>
+				</Field.Root>
+			</label>
+		</td>
+	);
+}
 
 // A cell holds the pointer's hover itself, so a pointer crossing the grid
 // re-renders only the cells it leaves and enters: an editable cell under the
@@ -438,13 +553,20 @@ const Cell = memo(function Cell(props: {
 	row: TableRecord;
 	index: number;
 	column: TableColumn;
+	// The cursor's column, counting the tick column first when there is one.
 	place: number;
+	leading: boolean;
 	cell: TableCell | undefined;
 	name: string;
 	control: NonNullable<TableColumn["edit"]>["control"] | undefined;
 	// Its row locks a value its column edits: a lock ends the cell.
 	locked: boolean;
 	frozen: boolean;
+	// A tick column stands before it.
+	shifted: boolean;
+	// The leading cell's reason under the name, the id its tick is described by.
+	reason: string | undefined;
+	reasonId: string;
 	chosen: boolean;
 	opens: boolean;
 	here: boolean;
@@ -470,6 +592,7 @@ const Cell = memo(function Cell(props: {
 		TABLE_CELL,
 		CELL,
 		isEnd(column) && CELL_END,
+		props.leading && props.reason !== undefined && TALL,
 		props.frozen &&
 			tableFrozenCell({ state: props.chosen ? "selected" : "rest" }),
 		props.frozen &&
@@ -490,7 +613,15 @@ const Cell = memo(function Cell(props: {
 					? undefined
 					: () => actions.start(index, place)
 			}
-			className={cn(BODY_CELL, props.frozen && cn(TABLE_FROZEN, FROZEN))}
+			className={cn(
+				BODY_CELL,
+				props.frozen &&
+					cn(
+						TABLE_FROZEN,
+						FROZEN,
+						props.shifted ? FROZEN_AFTER_TICK : FROZEN_AT,
+					),
+			)}
 		>
 			{live ? (
 				<CellField value={field(starts)}>
@@ -519,10 +650,12 @@ const Cell = memo(function Cell(props: {
 					<CellValueView
 						column={column}
 						cell={cell}
-						leading={place === 0}
+						leading={props.leading}
 						href={row.href}
 						warning={row.warning}
 						change={row.change}
+						reason={props.reason}
+						reasonId={props.reasonId}
 					/>
 					{props.locked ? <LockMark /> : null}
 				</div>
@@ -542,13 +675,19 @@ function Grid(props: {
 	sort: Sort | undefined;
 	onSort: (key: string) => void;
 	selected: string | undefined;
+	choose: Pick<TableChoice<never>, "chosen" | "onChange"> | undefined;
 	onOpen: ((id: string) => void) | undefined;
 	onEdit: ((id: string, key: string, value: CellValue) => void) | undefined;
 	loading: boolean | undefined;
 	children: ReactNode;
 }) {
-	const { columns, rows, sort, loading } = props;
+	const { columns, rows, sort, loading, choose } = props;
+	const words = useWords();
 	const touch = useTouch();
+	// A tick column leads the cursor's columns: the leading cell is its
+	// column `shift`.
+	const shift = choose ? 1 : 0;
+	const ticked = useMemo(() => new Set(choose?.chosen), [choose?.chosen]);
 	const title = use(PageTitle);
 	const frame = useRef<HTMLDivElement>(null);
 	const [cursor, setCursor] = useState<Cursor>({ row: 0, column: 0 });
@@ -562,7 +701,7 @@ function Grid(props: {
 	};
 	const at: Cursor = {
 		row: Math.min(cursor.row, Math.max(rows.length - 1, 0)),
-		column: Math.min(cursor.column, Math.max(columns.length - 1, 0)),
+		column: Math.min(cursor.column, Math.max(columns.length - 1 + shift, 0)),
 	};
 	const edits = props.onEdit !== undefined;
 
@@ -570,11 +709,13 @@ function Grid(props: {
 		frame.current?.querySelector<HTMLElement>(
 			`td[data-row="${row}"][data-column="${column}"]`,
 		);
-	// The cursor's cell stays clear of the frozen column it scrolls beneath.
+	// The cursor's cell stays clear of the frozen columns it scrolls beneath:
+	// the leading column, and the tick column before it.
 	const clear = (cell: HTMLElement) => {
 		const scroller = frame.current;
-		const frozen = cell.parentElement?.firstElementChild;
-		if (!touch || !scroller || !frozen || frozen === cell) return;
+		const frozen = cell.parentElement?.children[shift];
+		if (!touch || !scroller || !frozen || Number(cell.dataset.column) <= shift)
+			return;
 		const box = cell.getBoundingClientRect();
 		const under = frozen.getBoundingClientRect().right - box.left;
 		const past = box.right - scroller.getBoundingClientRect().right;
@@ -594,6 +735,8 @@ function Grid(props: {
 	};
 	const edit = (row: TableRecord, column: TableColumn, value: CellValue) =>
 		props.onEdit?.(row.id, column.key, value);
+	const tick = (row: TableRecord, on: boolean) =>
+		choose?.onChange(chooseRow(choose.chosen, row.id, on));
 
 	const onFocus = (event: FocusEvent) => {
 		const target = event.target as HTMLElement;
@@ -624,8 +767,10 @@ function Grid(props: {
 		const row = Number(cell.dataset.row);
 		const column = Number(cell.dataset.column);
 		const record = rows[row];
-		const field = columns[column];
-		if (!record || !field) return;
+		// The tick column has no field.
+		const place = column - shift;
+		const field = columns[place];
+		if (!record || (!field && column >= shift)) return;
 		if (inEdit(target)) {
 			// An open edit: Enter has committed and Escape put the value back and
 			// ended the moment, so the field leaving for its cell commits nothing
@@ -640,7 +785,7 @@ function Grid(props: {
 			}
 			return;
 		}
-		const last = columns.length - 1;
+		const last = columns.length - 1 + shift;
 		const move: Record<string, Cursor | undefined> = {
 			ArrowRight: { row, column: Math.min(column + 1, last) },
 			ArrowLeft: { row, column: Math.max(column - 1, 0) },
@@ -662,7 +807,11 @@ function Grid(props: {
 		}
 		if (event.key !== "Enter" && event.key !== " ") return;
 		event.preventDefault();
-		const control = editOf(columns, column, edits, record)?.control;
+		if (!field) {
+			if (record.blocked === undefined) tick(record, !ticked.has(record.id));
+			return;
+		}
+		const control = editOf(columns, place, edits, record)?.control;
 		if (control === "checkbox") {
 			edit(record, field, record.cells[field.key] !== true);
 			return;
@@ -671,7 +820,7 @@ function Grid(props: {
 			start(row, column);
 			return;
 		}
-		if (column === 0 && event.key === "Enter") {
+		if (place === 0 && event.key === "Enter") {
 			const link = cell.querySelector("a");
 			if (link) link.click();
 			else open(record);
@@ -683,20 +832,30 @@ function Grid(props: {
 		const target = event.target as HTMLElement;
 		// A pick in a cell's popup reaches the row through React's tree alone.
 		if (!event.currentTarget.contains(target)) return;
-		if (target.closest("td[data-edit], a")) return;
+		if (target.closest("td[data-edit], td[data-choose], a")) return;
 		if (props.onOpen || row.href !== undefined) open(row);
 	};
 
 	const opens = props.onOpen !== undefined;
-	const latest = useRef({ start, done, edit, click: onClick, home: cellAt });
-	latest.current = { start, done, edit, click: onClick, home: cellAt };
+	const latest = useRef({
+		start,
+		done,
+		edit,
+		click: onClick,
+		home: cellAt,
+		tick,
+	});
+	latest.current = { start, done, edit, click: onClick, home: cellAt, tick };
 	const [actions] = useState<GridActions>(() => ({
 		start: (row, column) => latest.current.start(row, column),
 		done: () => latest.current.done(),
 		edit: (row, column, value) => latest.current.edit(row, column, value),
 		click: (event, row) => latest.current.click(event, row),
 		home: (row, column) => latest.current.home(row, column) ?? undefined,
+		tick: (row, on) => latest.current.tick(row, on),
 	}));
+	// The head tick reaches the rows that can be ticked; with none it is off.
+	const reach = rows.some((row) => row.blocked === undefined);
 
 	return (
 		<div className={GRID}>
@@ -712,6 +871,7 @@ function Grid(props: {
 					className={cn(TABLE, touch ? MAX : FIT)}
 				>
 					<colgroup>
+						{choose ? <col className={TICK_WIDTH} /> : null}
 						{columns.map((column) => (
 							<col
 								key={column.key}
@@ -727,12 +887,39 @@ function Grid(props: {
 					</colgroup>
 					<thead>
 						<tr className={tableRow({ state: "rest" })}>
+							{choose ? (
+								<th
+									scope="col"
+									className={cn(
+										HEAD_CELL,
+										touch && cn(TABLE_FROZEN, FROZEN, FROZEN_AT),
+									)}
+								>
+									<div
+										className={cn(
+											TICK_BOX,
+											touch && tableFrozenCell({ state: "rest" }),
+										)}
+									>
+										<Field.Root disabled={!reach}>
+											<Checkbox
+												checked={chooseHead(rows, choose.chosen)}
+												onChange={() =>
+													choose.onChange(chooseAllToggled(rows, choose.chosen))
+												}
+												label={words.chooseAll}
+											/>
+										</Field.Root>
+									</div>
+								</th>
+							) : null}
 							{columns.map((column, place) => (
 								<HeadCell
 									key={column.key}
 									column={column}
 									sort={sort}
 									frozen={touch && place === 0}
+									shifted={choose !== undefined}
 									onSort={() => props.onSort(column.key)}
 								/>
 							))}
@@ -747,6 +934,7 @@ function Grid(props: {
 										bars={bars}
 										odd={index % 2 === 1}
 										touch={touch}
+										choosing={choose !== undefined}
 									/>
 								))
 							: rows.map((row, index) => (
@@ -756,6 +944,8 @@ function Grid(props: {
 										index={index}
 										columns={columns}
 										chosen={row.id === props.selected}
+										choosing={choose !== undefined}
+										ticked={ticked.has(row.id)}
 										opens={opens}
 										touch={touch}
 										edits={edits}
@@ -792,6 +982,8 @@ function HeadCell(props: {
 	column: TableColumn;
 	sort: Sort | undefined;
 	frozen: boolean;
+	// A tick column stands before it.
+	shifted: boolean;
 	onSort: () => void;
 }) {
 	const { column, sort, frozen } = props;
@@ -837,7 +1029,12 @@ function HeadCell(props: {
 			className={cn(
 				HEAD_CELL,
 				end ? END : START,
-				frozen && cn(TABLE_FROZEN, FROZEN),
+				frozen &&
+					cn(
+						TABLE_FROZEN,
+						FROZEN,
+						props.shifted ? FROZEN_AFTER_TICK : FROZEN_AT,
+					),
 			)}
 		>
 			{column.sortable ? (
@@ -872,7 +1069,8 @@ function Age(props: { moment: string }) {
 }
 
 // A cell at rest: the leading cell the record's name (its link when it has
-// one) with its change mark ahead of it and its warning after it, the others by their column's kind.
+// one) with its change mark ahead of it and its warning after it, and its
+// tick's reason under that line, the others by their column's kind.
 function CellValueView(props: {
 	column: TableColumn;
 	cell: TableCell | undefined;
@@ -880,6 +1078,8 @@ function CellValueView(props: {
 	href: string | undefined;
 	warning: string | undefined;
 	change: ChangeKind | undefined;
+	reason: string | undefined;
+	reasonId: string;
 }) {
 	const { column, cell, leading } = props;
 	const words = useWords();
@@ -898,14 +1098,25 @@ function CellValueView(props: {
 			) : (
 				<span className={strong}>{shown(column, cell)}</span>
 			);
-		if (props.warning === undefined && props.change === undefined) return name;
+		const line =
+			props.warning === undefined && props.change === undefined ? (
+				name
+			) : (
+				<span className={cn(TABLE_NAME, CHANGE)}>
+					{props.change ? <ChangeMark kind={props.change} /> : null}
+					{name}
+					{props.warning === undefined ? null : (
+						<WarningMark label={props.warning} />
+					)}
+				</span>
+			);
+		if (props.reason === undefined) return line;
 		return (
-			<span className={cn(TABLE_NAME, CHANGE)}>
-				{props.change ? <ChangeMark kind={props.change} /> : null}
-				{name}
-				{props.warning === undefined ? null : (
-					<WarningMark label={props.warning} />
-				)}
+			<span className={REASON_STACK}>
+				{line}
+				<span id={props.reasonId} className={cn(text({ role: "meta" }), VALUE)}>
+					{props.reason}
+				</span>
 			</span>
 		);
 	}
@@ -1029,10 +1240,28 @@ function SkeletonRow(props: {
 	bars: readonly string[];
 	odd: boolean;
 	touch: boolean;
+	choosing: boolean;
 }) {
 	let bar = 0;
 	return (
 		<tr aria-hidden className={tableRow({ state: "rest" })}>
+			{props.choosing ? (
+				<td
+					className={cn(
+						SKELETON_CELL,
+						props.touch && cn(TABLE_FROZEN, FROZEN, FROZEN_AT),
+					)}
+				>
+					<div
+						className={cn(
+							TICK_BOX,
+							props.touch && tableFrozenCell({ state: "rest" }),
+						)}
+					>
+						<span className={skeleton({ kind: "check" })} />
+					</div>
+				</td>
+			) : null}
 			{props.columns.map((column, place) => {
 				const frozen = props.touch && place === 0;
 				let wait: ReactNode;
@@ -1051,7 +1280,15 @@ function SkeletonRow(props: {
 				return (
 					<td
 						key={column.key}
-						className={cn(SKELETON_CELL, frozen && cn(TABLE_FROZEN, FROZEN))}
+						className={cn(
+							SKELETON_CELL,
+							frozen &&
+								cn(
+									TABLE_FROZEN,
+									FROZEN,
+									props.choosing ? FROZEN_AFTER_TICK : FROZEN_AT,
+								),
+						)}
 					>
 						<div
 							className={cn(
@@ -1077,12 +1314,13 @@ function Phone(props: {
 	sort: Sort | undefined;
 	onSort: (sort: Sort) => void;
 	onOpen: ((id: string) => void) | undefined;
+	choose: Pick<TableChoice<never>, "chosen" | "onChange"> | undefined;
 	loading: boolean | undefined;
 	warns: boolean;
 	changes: boolean;
 }) {
 	const words = useWords();
-	const { columns, sort } = props;
+	const { columns, sort, choose } = props;
 	const [leading, ...rest] = columns;
 	const status = rest.find((column) => column.kind === "status");
 	const chip = rest.find((column) => column.kind === "chip");
@@ -1141,22 +1379,37 @@ function Phone(props: {
 		key: (record) => record.id,
 		title: (record) =>
 			leading ? shown(leading, cell(record, leading)) : record.id,
-		meta: meta.length
-			? (record) => {
-					const parts = meta
-						.map((column) => {
-							const at = cell(record, column);
-							if (column.kind === "check")
-								return at === true ? column.label : "";
-							if (isChangeCell(at)) return changeMeta(at, words);
-							if (column.kind === "number" && at !== null && at !== undefined)
-								return `${column.label} ${at}`;
-							return shown(column, at);
-						})
-						.filter((part) => part !== "");
-					return parts.length ? parts : undefined;
+		// A tick draws a blocked reason itself (`ListRow`'s `check.blocked`);
+		// the reason of a moved tick leads the row's meta.
+		leading: choose
+			? {
+					check: (record) => ({
+						checked: choose.chosen.includes(record.id),
+						onChange: (on) =>
+							choose.onChange(chooseRow(choose.chosen, record.id, on)),
+						blocked: record.blocked,
+					}),
 				}
 			: undefined,
+		meta:
+			meta.length || choose
+				? (record) => {
+						const parts = meta
+							.map((column) => {
+								const at = cell(record, column);
+								if (column.kind === "check")
+									return at === true ? column.label : "";
+								if (isChangeCell(at)) return changeMeta(at, words);
+								if (column.kind === "number" && at !== null && at !== undefined)
+									return `${column.label} ${at}`;
+								return shown(column, at);
+							})
+							.filter((part) => part !== "");
+						if (record.blocked === undefined && record.moved !== undefined)
+							parts.unshift(record.moved);
+						return parts.length ? parts : undefined;
+					}
+				: undefined,
 		trailing: ageColumn
 			? (record) => {
 					const words = ageOf.get(record.id);

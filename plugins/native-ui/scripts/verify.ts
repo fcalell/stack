@@ -179,6 +179,8 @@ const NATIVE_OVERLAYS = [
 	"max-w-full",
 	"min-h-0",
 	"min-h-chip",
+	"min-h-row",
+	"min-h-row-2",
 	"min-h-target",
 	"min-w-0",
 	"min-w-target",
@@ -224,6 +226,7 @@ const NATIVE_OVERLAYS = [
 	"w-full",
 	"w-icon-meta",
 	"w-measure-short",
+	"w-row",
 ];
 
 // ── The swept sources, enumerated ───────────────────────────────────

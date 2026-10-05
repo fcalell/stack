@@ -935,6 +935,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// it is the row's `act`), a lock what the row holds (its label shown
 		// from `tablet`, read aloud always). Its trailing is a value, or a
 		// pick: a `Picker` at the `row` fit, centred in the row.
+		// A `leading` of `check` is the row's tick, a `Checkbox` in the leading
+		// slot named by the title; its `blocked` reason draws it disabled and
+		// leads the meta line.
 		ListRow: {
 			props: [
 				"change",
@@ -970,6 +973,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"ROW_WARNING",
 				"ROW_ACTS",
 				"CHANGE_MARK",
+				"CHECKBOX",
+				"CHECKBOX_MARK",
 				"TEXT.role.body",
 				"TEXT_STRONG.role.body",
 				"TEXT.role.meta",
@@ -1001,6 +1006,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"SKELETON.kind.avatar",
 				"SKELETON.kind.icon",
 				"SKELETON.kind.dot",
+				"SKELETON.kind.check",
 				"SKELETON.kind.bar",
 				"SKELETON_LANE.role.body",
 				"SKELETON_LANE.role.meta",
@@ -1039,6 +1045,11 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"avatar-",
 					"chip-",
 					"skeleton",
+					"fill-disabled",
+					"edge-strong",
+					"toggle-on",
+					"toggle-on-hover",
+					"on-accent",
 				],
 				radii: ["row", "full", "control", "chip"],
 				spacing: ["inside", "rows", "control-x", "card", "acts", "pair"],
@@ -1055,6 +1066,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"control-compact",
 					"skeleton",
 					"figures",
+					"check",
+					"target",
 				],
 			},
 		},
@@ -2038,10 +2051,19 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// ListRows with the sort a Picker above it. It takes `query` (with
 		// `sentence`) or `items`, each column reading its cell from the item and
 		// `row` the row's own slots, and draws its four states. It sorts in its
-		// own state (descending, ascending, off) and draws no checked rows;
-		// `onEdit` requires `onOpen`, and with `onOpen` the leading column never
-		// edits. A row's `change` slot draws the change mark ahead of the leading
-		// cell's name (a `ListRow` change below tablet), the kind's word its name.
+		// own state (descending, ascending, off); `onEdit` requires `onOpen`, and
+		// with `onOpen` the leading column never edits. A row's `change` slot draws
+		// the change mark ahead of the leading cell's name (a `ListRow` change
+		// below tablet), the kind's word its name. `choose` (`TableChoice`,
+		// controlled: `chosen` ids, `onChange` hearing the set a tick makes, the
+		// consumer applying its rule) leads the grid with a tick column: a
+		// Checkbox per row named by its leading cell, and a head Checkbox named
+		// by `chooseAll`, unchecked, mixed or checked over the rows that can be
+		// ticked. A `blocked` row's tick is disabled and a `moved` row says why,
+		// each reason a meta line under the leading cell, growing only that row
+		// to the two-line row; below tablet the tick leads the row (a `ListRow`
+		// check) and the reason leads its meta. The table draws no count: the
+		// selection bar's is the count.
 		Table: {
 			props: [
 				"columns",
@@ -2051,6 +2073,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"loading",
 				"row",
 				"selected",
+				"choose",
 				"onOpen",
 				"onEdit",
 				"empty",
@@ -2141,6 +2164,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"skeleton",
 					"ok-soft",
 					"danger-soft",
+					"fill-disabled",
+					"ink-disabled",
 				],
 				radii: ["full", "chip", "control"],
 				spacing: ["control-x", "inside", "pair", "page"],
@@ -2148,6 +2173,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				sizes: [
 					...WIDTHS,
 					"row",
+					"row-2",
+					"target",
 					"icon-meta",
 					"chip",
 					"check",

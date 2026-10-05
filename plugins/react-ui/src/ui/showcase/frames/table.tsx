@@ -3,6 +3,7 @@ import type {
 	ChangeCell,
 	ChangeKind,
 	StatusCell,
+	TableChoice,
 	TableColumn,
 } from "@fcalell/ui-core/descriptors";
 import { type ReactNode, useLayoutEffect, useRef, useState } from "react";
@@ -127,6 +128,24 @@ const STANDING: Record<string, ChangeKind> = {
 };
 const CHANGE_SET = { ...ROW, change: (task: Task) => STANDING[task.id] };
 
+// The change set's rule: a change under a parent needs it, so ticking the
+// change ticks the parent, and the parent stays ticked while a change under it
+// is. The session purge is removed by a held change, so it cannot be ticked.
+const NEEDS: Record<string, string> = {
+	rollup: "invoices",
+	digest: "backup",
+};
+const HELD = "Held by CR-12, Ana";
+
+function ruled(ids: readonly string[]): string[] {
+	const set = new Set(ids);
+	for (const id of ids) {
+		const need = NEEDS[id];
+		if (need) set.add(need);
+	}
+	return [...set];
+}
+
 const ago = (minutes: number) =>
 	new Date(Date.now() - minutes * 60_000).toISOString();
 
@@ -219,10 +238,26 @@ function queryOf(
 function Tasks(props: {
 	readOnly?: boolean;
 	changes?: boolean;
+	choosing?: boolean;
 	state: ShowcaseFrame["state"];
 }) {
-	const row = props.changes ? CHANGE_SET : ROW;
+	const row = props.changes || props.choosing ? CHANGE_SET : ROW;
 	const [tasks, setTasks] = useState(TASKS);
+	const [chosen, setChosen] = useState(["rollup", "invoices"]);
+	const choose: TableChoice<Task> | undefined = props.choosing
+		? {
+				chosen,
+				onChange: (ids) => setChosen(ruled(ids)),
+				blocked: (task) => (task.id === "purge" ? HELD : undefined),
+				moved: (task) => {
+					const child = Object.keys(NEEDS).find(
+						(id) => NEEDS[id] === task.id && chosen.includes(id),
+					);
+					const name = TASKS.find((each) => each.id === child)?.task;
+					return name === undefined ? undefined : `Needed by ${name}`;
+				},
+			}
+		: undefined;
 	const change = (id: string, at: string, value: CellValue) =>
 		setTasks((current) =>
 			current.map((task) => (task.id === id ? { ...task, [at]: value } : task)),
@@ -245,6 +280,7 @@ function Tasks(props: {
 					sentence="Cron tasks did not load."
 					row={row}
 					selected={props.state === "selected" ? "reindex" : undefined}
+					choose={choose}
 					empty={empty}
 					onOpen={act}
 					onEdit={change}
@@ -326,7 +362,9 @@ const READY: Partial<Record<string, (frame: HTMLElement) => void>> = {
 
 // The Table on every cell it draws, the cell picking what the frame shows: an
 // edit open on the field's cells, a read-only grid (the check as its glyph)
-// on the body icon, the change set's marks on the change mark, an ascending sort on the sorted label, the rest sorted
+// on the body icon, the change set's marks on the change mark, the change
+// set's rule (a head tick mixed over its rows, a blocked row, a moved one) on
+// the mixed checkbox, an ascending sort on the sorted label, the rest sorted
 // newest first. The state picks the query's answer: the open record
 // selected, pending, failed, empty.
 export function drawTable(frame: ShowcaseFrame) {
@@ -335,6 +373,7 @@ export function drawTable(frame: ShowcaseFrame) {
 		<Tasks
 			readOnly={cell === "ICON.fit.body"}
 			changes={cell.startsWith("CHANGE_MARK")}
+			choosing={cell === "CHECKBOX.state.mixed"}
 			state={frame.state}
 		/>
 	);

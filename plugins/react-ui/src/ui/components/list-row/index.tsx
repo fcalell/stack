@@ -37,6 +37,7 @@ import { useWords } from "../../lib/words.tsx";
 import { Avatar } from "../avatar/index.tsx";
 import { Button } from "../button/index.tsx";
 import { Reason } from "../button/reason.tsx";
+import { Checkbox } from "../checkbox/index.tsx";
 import { Chip } from "../chip/index.tsx";
 import { Icon } from "../icon/index.tsx";
 import { Input } from "../input/index.tsx";
@@ -58,6 +59,9 @@ const CHOSEN_PRESS = "hover:bg-wash-selected-hover active:bg-wash-press";
 const HIT = "absolute inset-0 focus-visible:-outline-offset-2";
 const HIT_LIST = "rounded-row touch:rounded-none";
 const LEADING = "flex shrink-0 items-center justify-center";
+// A tick takes its hit box and stands above the row's hit, so a press on it
+// ticks and never opens.
+const TICK = "relative size-target";
 const GLYPH = "flex text-ink-meta";
 const TEXT = "flex flex-col grow min-w-0";
 const LINE = "flex items-center min-w-0";
@@ -86,7 +90,7 @@ const ENTRY_FIELD = "grow min-w-0";
 export interface ListRowProps<V extends string | null = string> extends Closed {
 	/** Where the row stands in a change set: its mark at the row's start, ahead of the leading slot. Mark a set's untouched rows `unchanged` so the titles line up. */
 	change?: ChangeKind;
-	/** A glyph, a status's mark (its dot, or the spinner while `running`) or an avatar, in one slot at the avatar's size. */
+	/** A glyph, a status's mark (its dot, or the spinner while `running`), an avatar, or a tick that chooses the row (disabled while `blocked`, its reason leading the meta line), in one slot at the avatar's size; a tick takes its hit box. */
 	leading?: RowLeading;
 	/** What the row names, at body 500. */
 	title: Part;
@@ -114,9 +118,19 @@ export interface ListRowProps<V extends string | null = string> extends Closed {
 	onOpen?: () => void;
 }
 
-function Leading(props: { leading: RowLeading }) {
+function Leading(props: { leading: RowLeading; named: string }) {
 	const words = useWords();
 	const { leading } = props;
+	if ("check" in leading)
+		return (
+			<Field.Root disabled={leading.check.blocked !== undefined}>
+				<Checkbox
+					checked={leading.check.checked}
+					onChange={leading.check.onChange}
+					label={props.named}
+				/>
+			</Field.Root>
+		);
 	if ("avatar" in leading)
 		return <Avatar name={leading.avatar.name} src={leading.avatar.src} />;
 	if ("status" in leading)
@@ -201,10 +215,13 @@ export function ListRow<V extends string | null = string>({
 		warning !== undefined ||
 		lock !== undefined ||
 		chip !== undefined;
-	const lines = entry || meta?.length || marked ? "two" : "one";
+	const ticks = leading !== undefined && "check" in leading;
+	const blocked = ticks ? leading.check.blocked : undefined;
+	const parts = blocked === undefined ? meta : [blocked, ...(meta ?? [])];
+	const lines = entry || parts?.length || marked ? "two" : "one";
 	const entryReason = useReasonLine(entry?.act.blocked);
 	const actReason = useReasonLine(act?.blocked);
-	const [first, ...rest] = meta ?? [];
+	const [first, ...rest] = parts ?? [];
 	const value =
 		trailing && !("pick" in trailing) ? (
 			<span className={cn(ROW_TRAILING, TRAILING)}>
@@ -250,8 +267,8 @@ export function ListRow<V extends string | null = string>({
 			{hit}
 			{change ? <ChangeMark kind={change} /> : null}
 			{leading ? (
-				<span className={cn(ROW_LEADING, LEADING)}>
-					<Leading leading={leading} />
+				<span className={cn(ROW_LEADING, LEADING, ticks && TICK)}>
+					<Leading leading={leading} named={named} />
 				</span>
 			) : null}
 			{lines === "one" ? (

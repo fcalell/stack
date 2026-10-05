@@ -176,7 +176,7 @@ pinned by the package's verify suite; this entry holds the architecture and its 
 ## Words
 
 Every word a molecule draws or reads aloud on its own (the seven `Status` words, `recommended`,
-`copy`, `copied`, `download`, `back`, `close`, `cancel`, `dismiss`, `more`, `send`, `stop`, `attach`, `search`, `loading`, `checking`, `retry`, `saving`, `saved`, `notSaved`, `add`, `remove`, `edit`, `details`, `places`, `notifications`, `code`, `added`, `removed`, `sort`, `ascending`, `descending`, `time`, `message`, `seen`, `unseen`, `copyFailed`, `latest`, `missing`, `typeValue`, `pickValue`, `chooseFile`, `photos`, `files`, `warning`, `locked`, `modified`, the counted `earlierLines`, and the slot words `meterValue`, `meterOver`, `meterMark`, `linesAdded`, `linesRemoved`, `changed`, `unchanged`, `stale`, `wrongType` and `stepOf`) comes
+`copy`, `copied`, `download`, `back`, `close`, `cancel`, `dismiss`, `more`, `send`, `stop`, `attach`, `search`, `loading`, `checking`, `retry`, `saving`, `saved`, `notSaved`, `add`, `remove`, `edit`, `details`, `places`, `notifications`, `code`, `added`, `removed`, `sort`, `ascending`, `descending`, `time`, `message`, `seen`, `unseen`, `copyFailed`, `latest`, `missing`, `typeValue`, `pickValue`, `chooseFile`, `photos`, `files`, `warning`, `locked`, `modified`, `chooseAll`, the counted `earlierLines`, and the slot words `meterValue`, `meterOver`, `meterMark`, `linesAdded`, `linesRemoved`, `changed`, `unchanged`, `stale`, `wrongType` and `stepOf`) comes
 from `words`, a closed typed object with English defaults. The `Words` type requires every key
 and `wordsSchema` is strict, so a translation missing a word fails `tsc` and the schema. It is a
 plugin option beside `theme`; each plugin contributes a `WordsProvider` into the generated entry
@@ -595,6 +595,25 @@ a tick with no animation, never jumped to full.
   aloud through the slot word `changed` ("from X to Y"), or `added` or `removed` before the one
   value it holds. Rejected: tinting `after` for any change (a rename is not good news), and a
   Comparison column (that sets facts side by side, not one value's movement).
+  A Table chooses rows through `choose` (`TableChoice<T>`: `chosen`, the ticked ids, and
+  `onChange`, which hears the set a tick makes; optional `blocked` and `moved`, each a row's reason
+  from its item). It is controlled and the rule stays the consumer's: `onChange` hears the viewer's
+  toggle, and the consumer returns the ruled set (ticking a change under a new parent ticks the
+  parent) through `chosen`. One controlled set beats a per-row `onTick` because the head tick and a
+  parent and child rule both act on sets; the prop is `choose` because `selected` is already the open
+  record. A tick column leads the grid, a square the row's height (`w-row`) in the cell cursor's
+  first column (Space or Enter ticks), each row's `Checkbox` named by its leading cell and described
+  by its reason, the head tick `unchecked`, `mixed` or `checked` over the rows that can be ticked
+  and named by the word `chooseAll` (`chooseHead` and `chooseAllToggled` in `./list-state`: from
+  mixed it checks every tickable row, from checked it clears them, and a chosen id the rows do not
+  hold keeps its place). A `blocked` row's tick is disabled (a field's disabled state around the
+  Checkbox); its reason, or the `moved` one ("Needed by Checkout"), is a meta line under the leading
+  cell (`chooseReason`: blocked first), and only that row grows to `row-2`, in every cell of it, so
+  the row's halves still line up. A reason is a meta line, never a tick tooltip, since a tooltip is
+  unreachable on touch and by assistive tech. On touch the leading and tick columns both freeze (the
+  leading one at the tick column's width); below `tablet` the tick is the `ListRow`'s leading
+  `check` and a moved reason leads its meta. The head tick draws no count, and the table none:
+  "N of M chosen" belongs to the selection bar, which reads this selection.
   A grid re-renders only the rows and cells whose state changed: rows and cells are memoised
   components fed per-cell values and one stable set of callbacks. On the web a cell holds the
   pointer's hover itself (an editable cell under the pointer shows its control), so a pointer
@@ -782,6 +801,12 @@ a tick with no animation, never jumped to full.
   set marks its untouched rows `unchanged`; `rowShape` reads a declared `change` slot, so a waiting
   row draws the lane. Why one prop, no wrapper: the four parts each own their row box, a wrapper
   would have to reach into it, and the canon has no node slots.
+- A row's `leading` may be a tick: `RowLeading` gains `{ check: { checked, onChange, blocked? } }`,
+  a `Checkbox` in the leading slot at its hit box (`target`) above the row's open hit, named by the
+  title. `blocked` (the reason it cannot be ticked) draws it disabled and leads the row's meta line,
+  so the row grows to two lines. It is how a touch Table chooses rows; a `List`'s `leading` slot takes
+  `check` as it does `avatar`, `icon` and `status`, and `rowShape` reads it so a waiting row holds
+  the tick's skeleton in the same slot.
 - A `ListRow` shows a labelled act and holds an input by two props, not a second row kind. `act`
   is one `Act` at the row's end ahead of the more act, a secondary Button at the bar fit with its
   pending and blocked forms; the more menu stays the row's other acts, so an act the row waits on

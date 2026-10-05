@@ -26,7 +26,7 @@ import { useContext, useMemo } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import { FieldError, InlineField } from "../../lib/field";
+import { FieldDisabled, FieldError, InlineField } from "../../lib/field";
 import { GroundContext } from "../../lib/ground";
 import { Ink } from "../../lib/ink";
 import { isCurrent, navigate, usePathname } from "../../lib/navigate";
@@ -37,6 +37,7 @@ import { useTouched } from "../../lib/touched";
 import { useWords } from "../../lib/words";
 import { Avatar } from "../avatar";
 import { Button } from "../button";
+import { Checkbox } from "../checkbox";
 import { Chip } from "../chip";
 import { Icon } from "../icon";
 import { Input } from "../input";
@@ -54,6 +55,8 @@ const SQUARE = "rounded-none";
 // press wash; the text lets a press through to it.
 const HIT = "absolute inset-0 active:bg-wash-press";
 const LEADING = "shrink-0 items-center justify-center";
+// A tick takes its hit box, and its own touch.
+const TICK = "size-target";
 const TEXT = "flex-1 min-w-0";
 const LINE = "flex-row items-center min-w-0";
 const TITLE = "grow shrink";
@@ -80,8 +83,10 @@ export interface ListRowProps<V extends string | null = string> extends Closed {
 	// of the leading slot. Mark a set's untouched rows `unchanged` so the titles
 	// line up.
 	change?: ChangeKind;
-	// A glyph, a status's mark (its dot, or the spinner while `running`) or an
-	// avatar, in one slot at the avatar's size.
+	// A glyph, a status's mark (its dot, or the spinner while `running`), an
+	// avatar, or a tick that chooses the row (disabled while `blocked`, its
+	// reason leading the meta line), in one slot at the avatar's size; a tick
+	// takes its hit box.
 	leading?: RowLeading;
 	// What the row names, at body 500.
 	title: Part;
@@ -116,8 +121,18 @@ export interface ListRowProps<V extends string | null = string> extends Closed {
 	onOpen?: () => void;
 }
 
-function Leading({ leading }: { leading: RowLeading }) {
+function Leading({ leading, named }: { leading: RowLeading; named: string }) {
 	const words = useWords();
+	if ("check" in leading)
+		return (
+			<FieldDisabled.Provider value={leading.check.blocked !== undefined}>
+				<Checkbox
+					checked={leading.check.checked}
+					onChange={leading.check.onChange}
+					label={named}
+				/>
+			</FieldDisabled.Provider>
+		);
 	if ("avatar" in leading)
 		return <Avatar name={leading.avatar.name} src={leading.avatar.src} />;
 	if ("status" in leading)
@@ -204,10 +219,13 @@ export function ListRow<V extends string | null = string>({
 		warning !== undefined ||
 		lock !== undefined ||
 		chip !== undefined;
-	const lines = entry || meta?.length || marked ? "two" : "one";
+	const ticks = leading !== undefined && "check" in leading;
+	const blocked = ticks ? leading.check.blocked : undefined;
+	const parts = blocked === undefined ? meta : [blocked, ...(meta ?? [])];
+	const lines = entry || parts?.length || marked ? "two" : "one";
 	const entryReason = useReasonLine(entry?.act.blocked);
 	const actReason = useReasonLine(act?.blocked);
-	const [first, ...rest] = meta ?? [];
+	const [first, ...rest] = parts ?? [];
 	const value =
 		trailing && !("pick" in trailing) ? (
 			<RNText className={cn(ROW_TRAILING, TRAILING)}>
@@ -245,8 +263,11 @@ export function ListRow<V extends string | null = string>({
 			) : null}
 			{change ? <ChangeMark kind={change} /> : null}
 			{leading ? (
-				<View pointerEvents="none" className={cn(ROW_LEADING, LEADING)}>
-					<Leading leading={leading} />
+				<View
+					pointerEvents={ticks ? "auto" : "none"}
+					className={cn(ROW_LEADING, LEADING, ticks && TICK)}
+				>
+					<Leading leading={leading} named={named} />
 				</View>
 			) : null}
 			{lines === "one" ? (

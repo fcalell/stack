@@ -3,6 +3,7 @@ import type {
 	Option,
 	StatusCell,
 	TableCell,
+	TableChoice,
 	TableColumn,
 	TableRowSlots,
 } from "@fcalell/ui-core/descriptors";
@@ -13,6 +14,10 @@ import {
 	changeKind,
 	changeMeta,
 	changeReading,
+	chooseAllToggled,
+	chooseHead,
+	chooseReason,
+	chooseRow,
 	isChangeCell,
 	listState,
 	retryOf,
@@ -60,7 +65,7 @@ import { age } from "../../lib/age";
 import { useClock } from "../../lib/clock";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import { CellField, LabelTarget } from "../../lib/field";
+import { CellField, FieldDisabled, LabelTarget } from "../../lib/field";
 import { Ink } from "../../lib/ink";
 import { LoadingContext } from "../../lib/loading";
 import { navigate } from "../../lib/navigate";
@@ -84,11 +89,19 @@ const ROOT = "grow";
 // sticky cell, and the two halves of a row share its height because every
 // cell holds one line at the row's height.
 const FRAME = "flex-row";
-const FROZEN_COLUMN = "shrink-0 w-measure-short";
+// It is as wide as its tick column (when the table chooses rows) and the
+// leading column's width.
+const FROZEN_COLUMN = "shrink-0";
 const SCROLLS = "grow";
 const ROW_LINE = "flex-row";
 // On touch every column stands at one width.
 const COLUMN = "w-measure-short";
+// The tick column is a square the row's height, its tick centred. A row that
+// carries a reason grows to the two-line row, in every cell of it.
+const TICK_BOX = "w-row min-h-row items-center justify-center";
+const TALL = "min-h-row-2";
+// The leading cell's name over the reason a row's tick stands as it does.
+const REASON_STACK = "shrink min-w-0";
 // A sortable header washes under the press through the Pressable's own
 // pressed state.
 const SORT = "flex-row items-center w-full min-w-0 active:bg-wash-press";
@@ -148,6 +161,13 @@ interface TableBase<T> extends Closed {
 	columns: readonly TableColumn<T>[];
 	row: TableRowSlots<T>;
 	selected?: string;
+	// The rows the viewer ticks: a tick column leads the grid (its head tick
+	// over the rows that can be ticked) and, below `tablet`, each row's leading
+	// is its tick. `chosen` is the ticked ids and `onChange` hears the set a
+	// tick makes, which the consumer applies its rule to and hands back through
+	// `chosen`; `blocked` and `moved` give a row's reason under its leading
+	// cell.
+	choose?: TableChoice<T>;
 	empty?: ReactNode;
 }
 
@@ -264,7 +284,11 @@ export function Table<T>(props: TableProps<T>) {
 	const items = (props.query ? props.query.data : props.items) ?? [];
 	const records = waiting
 		? []
-		: sorted(tableRecords(items, columns, props.row), columns, sort);
+		: sorted(
+				tableRecords(items, columns, props.row, props.choose),
+				columns,
+				sort,
+			);
 	let slot: ReactNode = null;
 	if (state === "missing") slot = <Missing />;
 	else if (state === "failed" && props.query)
@@ -289,6 +313,7 @@ export function Table<T>(props: TableProps<T>) {
 							sort={sort}
 							onSort={setSort}
 							onOpen={onOpen}
+							choose={props.choose}
 							loading={waiting}
 							warns={props.row.warning !== undefined}
 							changes={props.row.change !== undefined}
@@ -305,6 +330,7 @@ export function Table<T>(props: TableProps<T>) {
 				sort={sort}
 				onSort={(key) => setSort((current) => next(current, key))}
 				selected={selected}
+				choose={props.choose}
 				onOpen={onOpen}
 				onEdit={onEdit}
 				loading={waiting}
@@ -329,6 +355,7 @@ interface GridActions {
 	start: (row: string, key: string) => void;
 	done: () => void;
 	edit: (row: string, key: string, value: CellValue) => void;
+	tick: (row: string, on: boolean) => void;
 }
 
 // The pressed row's id. A row's two halves (its frozen leading cell and the
@@ -386,13 +413,16 @@ function pressOf(
 		: { disabled: true };
 }
 
-// The frozen half of a row: its leading cell, the record's name with its change
-// mark ahead of it and its warning glyph after it.
+// The frozen half of a row: its tick when the table chooses rows, then its
+// leading cell, the record's name with its change mark ahead of it, its
+// warning glyph after it and its tick's reason under it.
 const LeadRow = memo(function LeadRow(props: {
 	row: TableRecord;
 	lead: TableColumn;
 	name: string;
 	chosen: boolean;
+	choosing: boolean;
+	ticked: boolean;
 	opens: boolean;
 	link: boolean;
 	store: PressStore;
@@ -403,53 +433,94 @@ const LeadRow = memo(function LeadRow(props: {
 	const state = useRowState(store, row.id, chosen);
 	let role: "link" | "button" | undefined;
 	if (opens) role = props.link ? "link" : "button";
+	const reason = chooseReason(row);
+	const named = reason === undefined ? name : `${name}. ${reason}`;
 	const spoken =
 		row.warning === undefined
-			? name
-			: `${name}. ${words.warning}. ${row.warning}`;
-	return (
-		<Pressable
-			accessibilityRole={role}
-			accessibilityLabel={
-				row.change === undefined
-					? spoken
-					: `${words[CHANGE_WORD[row.change]]}. ${spoken}`
-			}
-			accessibilityState={{ selected: chosen }}
-			{...pressOf(row, opens, store, actions)}
-			className={cn(tableRow({ state: "rest" }), TABLE_FROZEN)}
-		>
-			<View
+			? named
+			: `${named}. ${words.warning}. ${row.warning}`;
+	const gap =
+		(row.warning !== undefined || row.change !== undefined) && TABLE_NAME;
+	const line = (
+		<>
+			{row.change ? <ChangeMark kind={row.change} /> : null}
+			<RNText
+				numberOfLines={1}
 				className={cn(
-					TABLE_CELL,
-					CELL,
-					isEnd(lead) && CELL_END,
-					(row.warning !== undefined || row.change !== undefined) && TABLE_NAME,
-					tableFrozenCell({ state }),
+					text({ role: "body" }),
+					textStrong({ role: "body" }),
+					VALUE,
 				)}
 			>
-				{row.change ? <ChangeMark kind={row.change} /> : null}
-				<RNText
-					numberOfLines={1}
+				{name}
+			</RNText>
+			{row.warning === undefined ? null : (
+				// The frozen column is a short measure wide: the glyph alone, the
+				// sentence read with the row's name.
+				<View className={GLYPH}>
+					<Ink.Provider value={rowWarningContentTone()}>
+						<Icon name="TriangleAlert" fit="meta" />
+					</Ink.Provider>
+				</View>
+			)}
+		</>
+	);
+	return (
+		<View className={cn(tableRow({ state: "rest" }), TABLE_FROZEN, ROW_LINE)}>
+			{props.choosing ? (
+				<View
 					className={cn(
-						text({ role: "body" }),
-						textStrong({ role: "body" }),
-						VALUE,
+						TICK_BOX,
+						reason !== undefined && TALL,
+						tableFrozenCell({ state }),
 					)}
 				>
-					{name}
-				</RNText>
-				{row.warning === undefined ? null : (
-					// The frozen column is a short measure wide: the glyph alone, the
-					// sentence read with the row's name.
-					<View className={GLYPH}>
-						<Ink.Provider value={rowWarningContentTone()}>
-							<Icon name="TriangleAlert" fit="meta" />
-						</Ink.Provider>
-					</View>
-				)}
-			</View>
-		</Pressable>
+					<FieldDisabled.Provider value={row.blocked !== undefined}>
+						<Checkbox
+							checked={props.ticked}
+							onChange={(on) => actions.tick(row.id, on)}
+							label={name}
+						/>
+					</FieldDisabled.Provider>
+				</View>
+			) : null}
+			<Pressable
+				accessibilityRole={role}
+				accessibilityLabel={
+					row.change === undefined
+						? spoken
+						: `${words[CHANGE_WORD[row.change]]}. ${spoken}`
+				}
+				accessibilityState={{ selected: chosen }}
+				{...pressOf(row, opens, store, actions)}
+				className={COLUMN}
+			>
+				<View
+					className={cn(
+						TABLE_CELL,
+						CELL,
+						isEnd(lead) && CELL_END,
+						reason !== undefined && TALL,
+						reason === undefined && gap,
+						tableFrozenCell({ state }),
+					)}
+				>
+					{reason === undefined ? (
+						line
+					) : (
+						<View className={REASON_STACK}>
+							<View className={cn(CELL, gap)}>{line}</View>
+							<RNText
+								numberOfLines={1}
+								className={cn(text({ role: "meta" }), VALUE)}
+							>
+								{reason}
+							</RNText>
+						</View>
+					)}
+				</View>
+			</Pressable>
+		</View>
 	);
 });
 
@@ -463,6 +534,8 @@ const RestRow = memo(function RestRow(props: {
 	edits: boolean;
 	// The key of the column this row edits, if any.
 	editing: string | undefined;
+	// Its leading cell carries a reason, so every cell stands at the two-line row.
+	tall: boolean;
 	store: PressStore;
 	actions: GridActions;
 }) {
@@ -482,6 +555,7 @@ const RestRow = memo(function RestRow(props: {
 						name={name}
 						edits={props.edits}
 						editing={props.editing === column.key}
+						tall={props.tall}
 						actions={actions}
 					/>
 				</View>
@@ -520,13 +594,19 @@ function Cell(props: {
 	name: string;
 	edits: boolean;
 	editing: boolean;
+	tall: boolean;
 	actions: GridActions;
 }) {
 	const { row, column, actions } = props;
 	const value = row.cells[column.key];
 	const control = cellEdit(column, false, props.edits, row)?.control;
 	const label = `${column.label}, ${props.name}`;
-	const box = cn(TABLE_CELL, CELL, isEnd(column) && CELL_END);
+	const box = cn(
+		TABLE_CELL,
+		CELL,
+		isEnd(column) && CELL_END,
+		props.tall && TALL,
+	);
 	const edit = (next: CellValue) => actions.edit(row.id, column.key, next);
 	if (control === "checkbox")
 		return (
@@ -578,11 +658,16 @@ function Grid(props: {
 	sort: Sort | undefined;
 	onSort: (key: string) => void;
 	selected: string | undefined;
+	choose: Pick<TableChoice<never>, "chosen" | "onChange"> | undefined;
 	onOpen: ((id: string) => void) | undefined;
 	onEdit: ((id: string, key: string, value: CellValue) => void) | undefined;
 	loading: boolean | undefined;
 }) {
-	const { columns, rows, sort } = props;
+	const { columns, rows, sort, choose } = props;
+	const words = useWords();
+	const ticked = useMemo(() => new Set(choose?.chosen), [choose?.chosen]);
+	// The head tick reaches the rows that can be ticked; with none it is off.
+	const reach = rows.some((row) => row.blocked === undefined);
 	const lead = columns[0];
 	const rest = useMemo(() => columns.slice(1), [columns]);
 	const [store] = useState(pressStore);
@@ -603,6 +688,10 @@ function Grid(props: {
 		start: (row, key) => setEditing({ row, key }),
 		done: () => setEditing(undefined),
 		edit: (row, key, value) => latest.current.onEdit?.(row, key, value),
+		tick: (row, on) => {
+			const { choose: now } = latest.current;
+			now?.onChange(chooseRow(now.chosen, row, on));
+		},
 	}));
 
 	return (
@@ -612,22 +701,56 @@ function Grid(props: {
 		>
 			{lead ? (
 				<View className={FROZEN_COLUMN}>
-					<View className={cn(tableRow({ state: "rest" }), TABLE_FROZEN)}>
-						<HeadCell
-							column={lead}
-							sort={sort}
-							frozen
-							onSort={() => props.onSort(lead.key)}
-						/>
+					<View
+						className={cn(tableRow({ state: "rest" }), TABLE_FROZEN, ROW_LINE)}
+					>
+						{choose ? (
+							<View
+								className={cn(TICK_BOX, tableFrozenCell({ state: "rest" }))}
+							>
+								<FieldDisabled.Provider value={!reach}>
+									<Checkbox
+										checked={chooseHead(rows, choose.chosen)}
+										onChange={() =>
+											choose.onChange(chooseAllToggled(rows, choose.chosen))
+										}
+										label={words.chooseAll}
+									/>
+								</FieldDisabled.Provider>
+							</View>
+						) : null}
+						<View className={COLUMN}>
+							<HeadCell
+								column={lead}
+								sort={sort}
+								frozen
+								onSort={() => props.onSort(lead.key)}
+							/>
+						</View>
 					</View>
 					{props.loading
 						? LOADING_BARS.map((bars, index) => (
 								<View
 									key={bars.join(" ") + String(index)}
-									className={cn(tableRow({ state: "rest" }), TABLE_FROZEN)}
+									className={cn(
+										tableRow({ state: "rest" }),
+										TABLE_FROZEN,
+										ROW_LINE,
+									)}
 								>
+									{choose ? (
+										<View
+											className={cn(
+												TICK_BOX,
+												tableFrozenCell({ state: "rest" }),
+											)}
+										>
+											<View className={skeleton({ kind: "check" })} />
+										</View>
+									) : null}
 									<View
 										className={cn(
+											COLUMN,
 											TABLE_CELL,
 											CELL,
 											isEnd(lead) && CELL_END,
@@ -645,6 +768,8 @@ function Grid(props: {
 									lead={lead}
 									name={name(row)}
 									chosen={row.id === props.selected}
+									choosing={choose !== undefined}
+									ticked={ticked.has(row.id)}
 									opens={opens(row)}
 									link={props.onOpen === undefined}
 									store={store}
@@ -707,6 +832,7 @@ function Grid(props: {
 									opens={opens(row)}
 									edits={edits}
 									editing={editing?.row === row.id ? editing.key : undefined}
+									tall={chooseReason(row) !== undefined}
 									store={store}
 									actions={actions}
 								/>
@@ -966,12 +1092,13 @@ function Phone(props: {
 	sort: Sort | undefined;
 	onSort: (sort: Sort) => void;
 	onOpen: ((id: string) => void) | undefined;
+	choose: Pick<TableChoice<never>, "chosen" | "onChange"> | undefined;
 	loading: boolean | undefined;
 	warns: boolean;
 	changes: boolean;
 }) {
 	const words = useWords();
-	const { columns, sort } = props;
+	const { columns, sort, choose } = props;
 	const [leading, ...rest] = columns;
 	const status = rest.find((column) => column.kind === "status");
 	const chip = rest.find((column) => column.kind === "chip");
@@ -1030,22 +1157,37 @@ function Phone(props: {
 		key: (record) => record.id,
 		title: (record) =>
 			leading ? shown(leading, cell(record, leading)) : record.id,
-		meta: meta.length
-			? (record) => {
-					const parts = meta
-						.map((column) => {
-							const at = cell(record, column);
-							if (column.kind === "check")
-								return at === true ? column.label : "";
-							if (isChangeCell(at)) return changeMeta(at, words);
-							if (column.kind === "number" && at !== null && at !== undefined)
-								return `${column.label} ${at}`;
-							return shown(column, at);
-						})
-						.filter((part) => part !== "");
-					return parts.length ? parts : undefined;
+		// A tick draws a blocked reason itself (`ListRow`'s `check.blocked`);
+		// the reason of a moved tick leads the row's meta.
+		leading: choose
+			? {
+					check: (record) => ({
+						checked: choose.chosen.includes(record.id),
+						onChange: (on) =>
+							choose.onChange(chooseRow(choose.chosen, record.id, on)),
+						blocked: record.blocked,
+					}),
 				}
 			: undefined,
+		meta:
+			meta.length || choose
+				? (record) => {
+						const parts = meta
+							.map((column) => {
+								const at = cell(record, column);
+								if (column.kind === "check")
+									return at === true ? column.label : "";
+								if (isChangeCell(at)) return changeMeta(at, words);
+								if (column.kind === "number" && at !== null && at !== undefined)
+									return `${column.label} ${at}`;
+								return shown(column, at);
+							})
+							.filter((part) => part !== "");
+						if (record.blocked === undefined && record.moved !== undefined)
+							parts.unshift(record.moved);
+						return parts.length ? parts : undefined;
+					}
+				: undefined,
 		trailing: ageColumn
 			? (record) => {
 					const words = ageOf.get(record.id);

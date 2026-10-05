@@ -1208,6 +1208,7 @@ export const WORD_KEYS = [
 	"modified",
 	"unchanged",
 	"stale",
+	"chooseAll",
 ] as const;
 export type WordKey = (typeof WORD_KEYS)[number];
 
@@ -1297,6 +1298,7 @@ export const ENGLISH: Words = {
 	modified: "Changed",
 	unchanged: "Unchanged",
 	stale: "Stale",
+	chooseAll: "Select all",
 	earlierLines: {
 		one: "Show {count} earlier line",
 		other: "Show {count} earlier lines",

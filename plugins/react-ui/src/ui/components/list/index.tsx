@@ -49,22 +49,32 @@ export type LeadingSlot<T> =
 			avatar: (item: T) => Extract<RowLeading, { avatar: unknown }>["avatar"];
 			icon?: never;
 			status?: never;
+			check?: never;
 	  }
 	| {
 			icon: (item: T) => Extract<RowLeading, { icon: unknown }>["icon"];
 			avatar?: never;
 			status?: never;
+			check?: never;
 	  }
 	| {
 			status: (item: T) => Extract<RowLeading, { status: unknown }>["status"];
 			avatar?: never;
 			icon?: never;
+			check?: never;
+	  }
+	| {
+			check: (item: T) => Extract<RowLeading, { check: unknown }>["check"];
+			avatar?: never;
+			icon?: never;
+			status?: never;
 	  };
 
 // The item's leading mark, of the kind the slot names.
 function leadingOf<T>(slot: LeadingSlot<T>, item: T): RowLeading {
 	if (slot.avatar !== undefined) return { avatar: slot.avatar(item) };
 	if (slot.icon !== undefined) return { icon: slot.icon(item) };
+	if (slot.check !== undefined) return { check: slot.check(item) };
 	return { status: slot.status(item) };
 }
 

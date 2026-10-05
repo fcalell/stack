@@ -82,14 +82,22 @@ export interface OptionGroup<V extends string | null = string> {
 }
 
 // A list row's leading: a glyph, a status's mark (its dot, or the spinner
-// while `running`), or a person's avatar, one slot at the avatar's size
-// whatever leads.
+// while `running`), a person's avatar, or a tick that chooses the row (drawn
+// disabled when `blocked`, the reason the row cannot be ticked, which the row
+// carries on its meta line), one slot at the avatar's size whatever leads.
 export type RowLeading =
 	| {
 			icon: IconName;
 	  }
 	| { status: StatusState }
-	| { avatar: { name: string; src?: string } };
+	| { avatar: { name: string; src?: string } }
+	| {
+			check: {
+				checked: boolean;
+				onChange: (checked: boolean) => void;
+				blocked?: string;
+			};
+	  };
 
 // A pick that applies at once where a value stands (a row's trailing, a
 // record's status fact), drawn as a `Picker` at the row fit.
@@ -445,6 +453,18 @@ export type TableCell =
 	| StatusCell
 	| ChangeCell
 	| null;
+
+// The rows a table chooses, controlled: `chosen` the ids ticked and
+// `onChange` hearing the set the viewer's tick or the head tick makes, which
+// the consumer applies its rule to and hands back through `chosen`. `blocked`
+// names why a row cannot be ticked, `moved` why a rule moved its tick; each
+// reason stands under the row's leading cell.
+export interface TableChoice<T> {
+	chosen: readonly string[];
+	onChange: (ids: string[]) => void;
+	blocked?: (item: T) => string | undefined;
+	moved?: (item: T) => string | undefined;
+}
 
 // What one committed edit hands back: the column's new value, null for a
 // picked cell cleared by its empty choice.

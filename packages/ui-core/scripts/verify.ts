@@ -712,7 +712,7 @@ check("c03", "tokens.ts declares the contract", () => {
 	requireEqual(SHADOW_LEVELS.length, 2, "shadow level count");
 	requireEqual(WIDTHS.length, 12, "width count");
 	requireEqual(BREAKPOINTS.length, 3, "breakpoint count");
-	requireEqual(WORD_KEYS.length, 55, "word count");
+	requireEqual(WORD_KEYS.length, 56, "word count");
 	requireEqual(COUNTED_WORD_KEYS.length, 1, "counted word count");
 	requireEqual(SLOT_WORD_KEYS.length, 8, "slot word count");
 	requireEqual(
@@ -1877,8 +1877,9 @@ check(
 					(/^<V extends string \| null = string>$/.test(params) &&
 						/\b(?:Option|Row|MultiPick|Either|Rule)\w*</.test(header[0])) ||
 					(/^<T = never>$/.test(params) && /\bTableColumn</.test(header[0])) ||
-					(/^<T>$/.test(params) && /\bTableRowSlots</.test(header[0])),
-				`type parameters must be exactly <V> on a field binding, <V extends string | null = string> on an option or a row's pick, <T = never> on a table column or <T> on its row map, got ${params}`,
+					(/^<T>$/.test(params) &&
+						/\bTable(?:RowSlots|Choice)</.test(header[0])),
+				`type parameters must be exactly <V> on a field binding, <V extends string | null = string> on an option or a row's pick, <T = never> on a table column or <T> on its row map or its choice, got ${params}`,
 			);
 		}
 		for (const name of [
@@ -1905,6 +1906,7 @@ check(
 			"TableCell",
 			"CellValue",
 			"TableRowSlots",
+			"TableChoice",
 			"MultiPick",
 			"EitherValue",
 			"EitherPick",

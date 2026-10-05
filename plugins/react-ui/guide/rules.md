@@ -215,6 +215,15 @@ of its name). It draws its states itself, with no `QueryBoundary` around it. An 
 (`onEdit`) draws a lock after a cell its row locks; a column's own `locked` (a reason) makes it read
 only, its lock in the head alone.
 
+A table that acts on rows takes `choose`: `chosen` (the ticked ids) and `onChange`, with `blocked`
+and `moved` reading a row's reason from its item. A tick column leads the grid and its head tick is
+unchecked, mixed or checked over the rows that can be ticked. `onChange` hears the viewer's tick
+and your rule decides what the set becomes (ticking a change under a new parent ticks the parent):
+return the ruled set through `chosen`. A `blocked` row cannot be ticked and a `moved` row says why
+its tick moved ("Needed by Checkout"), each as a line under the row's name. The table draws no
+count; the selection bar has it. A row of a `List` leads with a tick as `leading: { check }` (its
+`blocked` reason leads the meta line).
+
 ```tsx
 <List
   query={notes}

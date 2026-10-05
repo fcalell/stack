@@ -339,6 +339,51 @@ const CHANGES: Change[] = [
 	{ id: "archive", kind: "stale", title: "Archive", meta: ["Step 5"] },
 ];
 
+// A change set entry the viewer ticks to publish: one ticked, one not, one
+// that cannot be ticked, its reason leading its meta line.
+interface Tick {
+	id: string;
+	title: string;
+	meta: string[];
+	checked: boolean;
+	blocked?: string;
+}
+
+const TICK_ROW: RowSlots<Tick> = {
+	key: (tick) => tick.id,
+	leading: {
+		check: (tick) => ({
+			checked: tick.checked,
+			onChange: act,
+			blocked: tick.blocked,
+		}),
+	},
+	title: (tick) => tick.title,
+	meta: (tick) => tick.meta,
+};
+
+const TICKS: Tick[] = [
+	{
+		id: "checkout",
+		title: "Checkout redesign",
+		meta: ["+5 fields"],
+		checked: true,
+	},
+	{
+		id: "invoice",
+		title: "Invoice export",
+		meta: ["+12 fields"],
+		checked: false,
+	},
+	{
+		id: "legacy",
+		title: "Manual approval",
+		meta: ["Removed"],
+		checked: false,
+		blocked: "Held by CR-12, Ana",
+	},
+];
+
 // An import source asking for its URL: its input and Import act on the row;
 // the second row's address failed.
 interface Source {
@@ -384,7 +429,8 @@ function Issues() {
 // Board 40's props: deploys in a List (a glyph leading, a status and a chip
 // on the meta line, the more act), services on one line, a job's stages (a
 // running row beside an active one), change set entries (every mark and the
-// act that clears the warning), a change set (one row of every kind), and members in a Group (a trailing
+// act that clears the warning), a change set (one row of every kind), ticked
+// entries (one ticked, one blocked), and members in a Group (a trailing
 // value, a trailing pick, a status dot leading).
 function Props() {
 	return (
@@ -396,6 +442,7 @@ function Props() {
 			<List items={SOURCES} row={SOURCE_ROW} />
 			<List items={ENTRIES} row={ENTRY_ROW} />
 			<List items={CHANGES} row={CHANGE_ROW} />
+			<List items={TICKS} row={TICK_ROW} />
 			<Group>
 				<ListRow
 					leading={{ icon: "Globe" }}
@@ -440,7 +487,7 @@ function Props() {
 // Waiting rows over the loaded ones they stand in for, led by the kind the
 // cell names (a glyph by default), then a note's title over its meta with no
 // leading.
-function Waiting(props: { kind: "avatar" | "icon" | "status" }) {
+function Waiting(props: { kind: "avatar" | "icon" | "status" | "check" }) {
 	let led = (
 		<>
 			<List items={[]} loading row={DEPLOY_ROW} />
@@ -461,6 +508,13 @@ function Waiting(props: { kind: "avatar" | "icon" | "status" }) {
 				<List items={INVITES} row={INVITE_ROW} />
 			</>
 		);
+	if (props.kind === "check")
+		led = (
+			<>
+				<List items={[]} loading row={TICK_ROW} />
+				<List items={TICKS} row={TICK_ROW} />
+			</>
+		);
 	return (
 		<>
 			{led}
@@ -478,8 +532,9 @@ function Waiting(props: { kind: "avatar" | "icon" | "status" }) {
 }
 
 // The leading kind a skeleton cell stands for.
-function waitingKind(cell: string): "avatar" | "icon" | "status" {
+function waitingKind(cell: string): "avatar" | "icon" | "status" | "check" {
 	if (cell === "SKELETON.kind.avatar") return "avatar";
+	if (cell === "SKELETON.kind.check") return "check";
 	if (cell === "SKELETON.kind.dot") return "status";
 	return "icon";
 }
@@ -507,6 +562,7 @@ export function drawListRow(frame: ShowcaseFrame) {
 		cell === "ROW_MARKS" ||
 		cell === "ROW_WARNING" ||
 		cell.startsWith("CHANGE_MARK") ||
+		cell.startsWith("CHECKBOX") ||
 		cell === "ROW_ACTS";
 	return <Wide>{props ? <Props /> : <Issues />}</Wide>;
 }

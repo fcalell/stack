@@ -31,7 +31,14 @@ const TITLE = "flex grow min-w-0";
 // meta line rather than of the row.
 const BAR_ROOM = "flex grow";
 // A leading kind's skeleton: the mark it stands in for, at that mark's size.
-const LEADING_WAIT = { avatar: "avatar", icon: "icon", status: "dot" } as const;
+const LEADING_WAIT = {
+	avatar: "avatar",
+	icon: "icon",
+	status: "dot",
+	check: "check",
+} as const;
+// A tick's slot is its hit box, as the loaded row's.
+const TICK = "size-target";
 const TRAILING = "shrink-0";
 // A trailing value is an age or a count: four figures at most.
 const TRAILING_BAR = "w-figures";
@@ -83,7 +90,13 @@ export function RowWait(props: { shape: RowShape; index: number }) {
 				</span>
 			) : null}
 			{shape.leading ? (
-				<span className={cn(ROW_LEADING, LEADING)}>
+				<span
+					className={cn(
+						ROW_LEADING,
+						LEADING,
+						shape.leading === "check" && TICK,
+					)}
+				>
 					<span className={skeleton({ kind: LEADING_WAIT[shape.leading] })} />
 				</span>
 			) : null}
