@@ -9,7 +9,7 @@ import {
 	text,
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, use, useId, useState } from "react";
-import { backGlyph } from "../../lib/back.ts";
+import { backGlyph, LIST_BACK, LIST_BACK_REPLACED } from "../../lib/back.ts";
 import type { Closed } from "../../lib/closed.ts";
 import {
 	ActRoom,
@@ -26,6 +26,7 @@ import { IconButtonLink } from "../icon-button/base.tsx";
 import { IconButton } from "../icon-button/index.tsx";
 import { Menu } from "../menu/index.tsx";
 import { DETAILS, Details } from "../place/index.tsx";
+import { splitOf } from "../split/index.tsx";
 
 // A screen is the size container a Split inside decides its regions by.
 // A pushed screen marks its root `data-screen`: the Shell hides its tab bar
@@ -69,7 +70,7 @@ export interface ScreenProps extends Closed {
 	children?: ReactNode;
 }
 
-/** A page pushed over a place: the back act first and no filled act. Its head draws one hairline: on the desktop it stands in the shell's column under one strip; on touch the top bar (back, actions, more) stands over the title and the screen covers the tab bar. A Split inside decides its regions by the screen's width and its pane's Details act stands in its head, drawn below `wide` of it. As a Split's `beside` record it stands in its page: its title is a heading at the level where it stands at every width (where its head stands alone the Place's `h1` stays read, unseen), it covers no tab bar, and from `wide` of the page its back act draws as Close. Below `tablet` of the page its head stands alone in the Place's stead, one top bar with its back act to the main, and draws the Details act of the Split's pane while it is open; its body keeps the room of the act floating over it. */
+/** A page pushed over a place: the back act first and no filled act. Its head draws one hairline: on the desktop it stands in the shell's column under one strip; on touch the top bar (back, actions, more) stands over the title and the screen covers the tab bar. A Split inside decides its regions by the screen's width and its pane's Details act stands in its head, drawn below `wide` of it; while its record stands alone (below `tablet`) the back act returns to the Split's `back` when it names one. As a Split's `beside` record it stands in its page: its title is a heading at the level where it stands at every width (where its head stands alone the Place's `h1` stays read, unseen), it covers no tab bar, and from `wide` of the page its back act draws as Close. Below `tablet` of the page its head stands alone in the Place's stead, one top bar with its back act to the main, and draws the Details act of the Split's pane while it is open; its body keeps the room of the act floating over it. */
 export function Screen({ title, back, actions, more, children }: ScreenProps) {
 	const touch = useTouch();
 	const words = useWords();
@@ -87,6 +88,9 @@ export function Screen({ title, back, actions, more, children }: ScreenProps) {
 	const fit = touch ? "body" : "bar";
 	const levels = screenLevels(beside, level);
 	const Heading = `h${levels.title}` as const;
+	// While a Split's record inside stands alone the back act returns to the
+	// list: where the Split says it stands, else the screen's own `back`.
+	const list = splitOf(children)?.back;
 	const goBack =
 		back === undefined ? null : (
 			<IconButtonLink
@@ -96,19 +100,36 @@ export function Screen({ title, back, actions, more, children }: ScreenProps) {
 				href={back}
 			/>
 		);
+	const goList =
+		list === undefined ? null : (
+			<IconButtonLink
+				icon={backGlyph(touch)}
+				fit={fit}
+				label={words.back}
+				href={list}
+			/>
+		);
 	const close =
 		back === undefined ? null : (
 			<span className={CLOSE}>
 				<IconButtonLink icon="X" fit={fit} label={words.close} href={back} />
 			</span>
 		);
+	const standing = goList ? (
+		<>
+			{goBack ? <span className={LIST_BACK_REPLACED}>{goBack}</span> : null}
+			<span className={LIST_BACK}>{goList}</span>
+		</>
+	) : (
+		goBack
+	);
 	const backAct = beside ? (
 		<>
 			{goBack ? <span className={BACK}>{goBack}</span> : null}
 			{close}
 		</>
 	) : (
-		goBack
+		standing
 	);
 	const acts = (actions ?? []).map((action) => (
 		<IconButton key={action.label} {...action} fit={fit} />

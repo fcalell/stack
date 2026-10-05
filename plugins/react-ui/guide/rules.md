@@ -13,7 +13,8 @@ control, the text role (`Text`). A host element that rebuilds one of these is dr
 its page's frame region: it stands as the bleeding `Place`'s (or `Screen`'s) direct child, never
 inside a component of the app's, so the page's head draws its back and Details acts. Its back act
 returns to the place's route; a list that stands at a deeper route names it as `back`
-(`<Split back={treeRoute} …>`), which an open record returns to and a missing read in it leads to.
+(`<Split back={treeRoute} …>`), which an open record returns to, whether its page is a `Place` or a
+pushed `Screen`, and a missing read in it leads to, ahead of the `Screen`'s own `back`.
 
 A record the open record links to opens beside it: the `Split`'s `beside` holds a `Screen` whose
 `back` is the open record's route. From `wide` it stands beside the main, its back act a Close;

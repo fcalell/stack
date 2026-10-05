@@ -16,11 +16,11 @@ import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import {
 	ActRoom,
+	BackRoute,
 	Beside,
 	DetailsOpen,
 	type DetailsState,
 	PageTitle,
-	PlaceRoute,
 	ThreadBleeds,
 	ThreadRoom,
 } from "../../lib/frame";
@@ -57,12 +57,15 @@ export interface SplitProps extends Closed {
 // as a sheet. It stands as its page's direct child, where the page reads its
 // props (`useSplitHead`); deeper it draws as a plain region and no head draws its
 // acts. `empty` is the desktop's, so the phone never draws it. `back` is the
-// route where the list stands alone: the record's back act returns to it, and
-// so does a missing read in its regions, in the place's route's stead.
+// route where the list stands alone: the record's back act returns to it, in
+// a Place and in a pushed Screen, and so does a missing read in its regions,
+// in the place's route's and the Screen's `back`'s stead.
 export function Split({ list, main, beside, pane, back }: SplitProps) {
 	const words = useWords();
 	const title = useContext(PageTitle);
-	const place = useContext(PlaceRoute);
+	// The regions lead back to the list's route, outranking the route the
+	// Screen around leads back to; unset, they keep the one they stand under.
+	const outer = useContext(BackRoute);
 	const held = useContext(DetailsOpen);
 	const room = useContext(ActRoom);
 	const [own, setOwn] = useState(false);
@@ -117,7 +120,7 @@ export function Split({ list, main, beside, pane, back }: SplitProps) {
 			</Scroll>
 		);
 	return (
-		<PlaceRoute.Provider value={back ?? place}>
+		<BackRoute.Provider value={back ?? outer}>
 			{region}
 			<Sheet
 				fit="pane"
@@ -127,7 +130,7 @@ export function Split({ list, main, beside, pane, back }: SplitProps) {
 			>
 				{pane}
 			</Sheet>
-		</PlaceRoute.Provider>
+		</BackRoute.Provider>
 	);
 }
 

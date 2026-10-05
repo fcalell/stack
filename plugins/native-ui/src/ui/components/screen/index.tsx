@@ -60,6 +60,9 @@ export function Screen({ title, back, actions, more, children }: ScreenProps) {
 	// keeps the room of the act floating over it, as the main does.
 	const room = useContext(ActRoom);
 	const split = useSplitHead(children);
+	// A record the Split shows alone returns to the list: where the Split says
+	// it stands, else the screen's own `back`.
+	const exit = split.record ? (split.back ?? back) : back;
 	const insets = useSafeAreaInsets();
 	return (
 		<DetailsOpen.Provider value={split.held}>
@@ -70,12 +73,12 @@ export function Screen({ title, back, actions, more, children }: ScreenProps) {
 				>
 					<View className={PAGE_HEAD}>
 						<View className={cn(PAGE_TOP_BAR, TOP_BAR)}>
-							{back === undefined ? null : (
+							{exit === undefined ? null : (
 								<IconButton
 									icon="ChevronLeft"
 									fit="body"
 									label={words.back}
-									onAct={() => navigate(back)}
+									onAct={() => navigate(exit)}
 								/>
 							)}
 							<View className={SPACER} />

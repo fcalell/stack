@@ -12,11 +12,11 @@ import { Children, isValidElement, type ReactNode, use, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import {
 	ActRoom,
+	BackRoute,
 	Beside,
 	DetailsSheet,
 	OverThread,
 	PageTitle,
-	PlaceRoute,
 	ThreadBleeds,
 	ThreadRoom,
 } from "../../lib/frame.ts";
@@ -86,12 +86,14 @@ export function splitOf(children: ReactNode): SplitProps | undefined {
 	return isValidElement<SplitProps>(split) ? split.props : undefined;
 }
 
-/** The list at its width inside a hairline beside the main, decided by its page's width: from `wide` the pane stands beside the main, below it the Details act its Place or Screen draws opens the pane as a sheet. Below `tablet` one region stands at a time: the list, or the open record, whose Place then leads its strip or top bar with a back act to the list: the place's route, or the Split's `back` where the list stands deeper, which a missing read in its regions leads back to as well. A record the main opened (`beside`) stands beside the main from `wide`, the two sharing what the list leaves, its back act drawn as Close and the pane behind the Details act at every width; below `wide` it stands in the main's place with its back act to the main, and below `tablet` its head stands alone, the Place drawing none. A Thread in the main fills it: the main stops scrolling, the record's head stays at the page inset over the Thread's log, which scrolls, and its input docks at the main's foot. It sits in a bleeding Place, whose strip heads it. */
+/** The list at its width inside a hairline beside the main, decided by its page's width: from `wide` the pane stands beside the main, below it the Details act its Place or Screen draws opens the pane as a sheet. Below `tablet` one region stands at a time: the list, or the open record, whose Place then leads its strip or top bar with a back act to the list: the place's route, or the Split's `back` where the list stands deeper, which a missing read in its regions leads back to as well, and which a pushed Screen's back act leads to in their stead while the record stands alone. A record the main opened (`beside`) stands beside the main from `wide`, the two sharing what the list leaves, its back act drawn as Close and the pane behind the Details act at every width; below `wide` it stands in the main's place with its back act to the main, and below `tablet` its head stands alone, the Place drawing none. A Thread in the main fills it: the main stops scrolling, the record's head stays at the page inset over the Thread's log, which scrolls, and its input docks at the main's foot. It sits in a bleeding Place, whose strip heads it. */
 export function Split({ list, main, beside, pane, empty, back }: SplitProps) {
 	const words = useWords();
 	const title = use(PageTitle);
 	const room = use(ActRoom);
-	const place = use(PlaceRoute);
+	// The regions lead back to the list's route, outranking the route the
+	// Screen around leads back to; unset, they keep the one they stand under.
+	const outer = use(BackRoute);
 	const [open, setOpen] = useState(false);
 	// The page around holds the sheet's handle, so its Details act stands from
 	// its first frame.
@@ -114,7 +116,7 @@ export function Split({ list, main, beside, pane, empty, back }: SplitProps) {
 		MAIN_FITS,
 	);
 	return (
-		<PlaceRoute value={back ?? place}>
+		<BackRoute value={back ?? outer}>
 			<div
 				data-split
 				data-record={opened || undefined}
@@ -185,6 +187,6 @@ export function Split({ list, main, beside, pane, empty, back }: SplitProps) {
 					{pane}
 				</SheetBase>
 			</div>
-		</PlaceRoute>
+		</BackRoute>
 	);
 }

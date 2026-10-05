@@ -22,7 +22,7 @@ import {
 	text,
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, use, useId, useRef, useState } from "react";
-import { backGlyph } from "../../lib/back.ts";
+import { backGlyph, LIST_BACK, LIST_BACK_REPLACED } from "../../lib/back.ts";
 import type { Closed } from "../../lib/closed.ts";
 import { useFootFocus } from "../../lib/focus.ts";
 import {
@@ -59,8 +59,6 @@ const PAGE = "@container/page group/page";
 // `tablet` with a record open, the switcher giving it its place; the Details
 // act below `wide` with a pane, and at every width beside a record. A touch
 // top bar holding nothing else stands only while one of them shows.
-const BACK = "hidden page-max-tablet:group-has-data-record/page:flex";
-const BESIDE_BACK = "flex page-max-tablet:group-has-data-record/page:hidden";
 export const DETAILS =
 	"hidden page-max-wide:group-has-data-pane/page:flex group-has-[[data-pane][data-beside]]/page:flex";
 const ROW_MARKED =
@@ -211,7 +209,7 @@ export function Place({
 	const fit = touch ? "body" : "bar";
 	const back =
 		list !== undefined ? (
-			<span className={BACK}>
+			<span className={LIST_BACK}>
 				<IconButtonLink
 					icon={backGlyph(touch)}
 					fit={fit}
@@ -225,7 +223,7 @@ export function Place({
 	const pick =
 		switcher && !far ? <SwitcherPick switcher={switcher} touch /> : null;
 	const lead = !touch ? null : back ? (
-		<span className={BESIDE_BACK}>{pick}</span>
+		<span className={LIST_BACK_REPLACED}>{pick}</span>
 	) : (
 		pick
 	);

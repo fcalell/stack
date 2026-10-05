@@ -77,7 +77,8 @@ export const Beside = createContext<BesideFrame | null>(null);
 export const PlaceRoute = createContext<Route | undefined>(undefined);
 
 // The route a Screen's back act returns to, where a read inside that answers
-// not found leads back; outside a Screen it leads to `PlaceRoute`.
+// not found leads back; a Split inside hands its `back` in its stead; with none
+// a read leads to `PlaceRoute`.
 export const BackRoute = createContext<Route | undefined>(undefined);
 
 // Whether the record of the Place's Split stands alone, read off the Split's

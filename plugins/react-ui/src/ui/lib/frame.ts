@@ -32,7 +32,8 @@ export const Beside = createContext<BesideFrame | null>(null);
 export const PlaceRoute = createContext<string | undefined>(undefined);
 
 // The route a Screen's back act returns to, where a read inside that answers
-// not found leads back; outside a Screen it leads to `PlaceRoute`.
+// not found leads back; a Split inside hands its `back` in its stead; with none
+// a read leads to `PlaceRoute`.
 export const BackRoute = createContext<string | undefined>(undefined);
 
 // Whether a Thread standing here fills the region it stands in: true in a

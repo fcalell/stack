@@ -475,11 +475,12 @@ a tick with no animation, never jumped to full.
   `PlaceSpec` prefix list (a consumer option for a derivable fact), and the router's layout match
   (exact, but a second mechanism per platform for one rule). A Split's list can stand at a route
   deeper than the place, which no component can derive (the list and its record share one layout
-  component), so `Split.back` names it: the route its record's back act returns to, and where a
-  missing read in its regions leads back to (the Split hands its regions `PlaceRoute` as `back`),
+  component), so `Split.back` names it: the route its record's back act returns to, in a Place and
+  in a pushed Screen alike, and where a missing read in its regions leads back to (the Split hands
+  its regions `BackRoute` as `back`, outranking the enclosing Screen's own), the Screen's `back` or
   the place's route when unset. The page reads it off its direct child Split as it reads the rest
-  (`splitOf` on the web, `useSplitHead` on native); a tree standing alone at a deeper route draws
-  no back act of its own.
+  (`splitOf` on the web, `useSplitHead` on native); a Screen's own back act stays while the list
+  stands beside the record; a tree standing alone at a deeper route draws no back act of its own.
 - A molecule whose structure follows density keeps one constant per structure, never a density axis:
   the page's head (`PAGE_HEAD`, one hairline at both densities) holds the desktop strip
   (`PAGE_TOP_BAR` with the title and acts in one row) or the touch one (`PAGE_TOP_BAR` over the
@@ -1121,9 +1122,9 @@ a tick with no animation, never jumped to full.
   deriving it from `href` (a create act that navigates, "Add a repo", keeps its plus). `tone`
   stays internal, as does `fill`. Stack drawing an unmatched address itself is not part of it. An OptionList
   draws it as its card's line, `missing` beside a secondary Back, as its failed line stands.
-  Back goes to `BackRoute`, the enclosing `Screen`'s `back`, else to `PlaceRoute`, the route of
-  the place that owns the address (`placeAt` in `./route`, which the Shell reads, below) or of
-  the Split's `back` inside one; with neither it draws no act. Going to a route is navigation, so on the web Back is an anchor
+  Back goes to `BackRoute`, the enclosing `Screen`'s `back` or the `back` of a Split between
+  them and the read (which wins), else to `PlaceRoute`, the route of the place that owns the
+  address (`placeAt` in `./route`, which the Shell reads, below); with neither it draws no act. Going to a route is navigation, so on the web Back is an anchor
   in the hairline act's look (the internal `ButtonLink`), as a Place's and a Screen's back and
   Close acts are anchors in the icon act's (`IconButtonLink`); native presses through
   `navigate`. On the web every anchor routes in place: its `onClick` is `lib/navigate`'s
