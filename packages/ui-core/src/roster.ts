@@ -520,13 +520,29 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// strip, the act a bar-fit primary rightmost; on touch the top bar holds
 		// the acts over the title and the act floats over the body's end. A
 		// `foot` (a field, never beside the act) docks under the scrolling body.
+		// A `context` is a pick beside the title (the page's change set, its
+		// version), a Picker at the row fit that takes the option's chip.
 		Place: {
-			props: ["title", "actions", "act", "more", "bleed", "foot", "children"],
+			props: [
+				"title",
+				"context",
+				"actions",
+				"act",
+				"more",
+				"bleed",
+				"foot",
+				"children",
+			],
 			draws: [
 				"PAGE_HEAD",
 				"PAGE_TOP_BAR",
 				"PAGE_TITLE",
 				"TEXT.role.title",
+				"PILL_ACT",
+				"PICKER_VALUE",
+				"ICON.fit.meta",
+				"CHIP",
+				"CHIP_LABEL",
 				"PAGE_BODY",
 				"FOOT",
 				"PAGE_BODY_OVER_FOOT",
@@ -550,7 +566,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			],
 			states: ["rest"],
 			owns: {
-				roles: ["title", "body", "meta"],
+				roles: ["title", "body", "meta", "caption"],
 				colors: [
 					"ink-body",
 					"ink-meta",
@@ -560,8 +576,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"wash-hover",
 					"wash-press",
 					"danger",
+					"chip-",
 				],
-				radii: ["control"],
+				radii: ["control", "full"],
 				spacing: [
 					"acts",
 					"page",
@@ -578,6 +595,10 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"popover",
 					"list",
 					"measure",
+					"target",
+					"icon-meta",
+					"chip",
+					"measure-short",
 				],
 				elevation: ["float"],
 			},
@@ -1283,7 +1304,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// opens a popover of rows (a sheet of rows on touch), a search field
 		// above six options; an option may lead with its avatar, and one act
 		// (the act that makes a new option) ends the list under a hairline. At
-		// the `bar` fit the field box fills its column. Its `value` an array
+		// the `bar` fit the field box fills its column. An option's `chip` draws
+		// after its label in the list and on the trigger. Its `value` an array
 		// makes it a pick of several: the rows tick and the list stays open, and
 		// the box holds one removable neutral chip per value.
 		Picker: {
@@ -1297,6 +1319,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"PILL_ACT",
 				"PICKER_VALUE",
 				"ICON.fit.meta",
+				"CHIP",
+				"CHIP_LABEL",
 				"FIELD.fit.bar",
 				"FIELD.trailing.none",
 				"FIELD.state.rest",
@@ -1332,6 +1356,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"edge-hover",
 					"raised",
 					"avatar-",
+					"chip-",
 					"edge-raised",
 					"wash-hover",
 					"wash-press",
@@ -1344,6 +1369,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"control-compact",
 					"popover",
 					"avatar",
+					"chip",
+					"measure-short",
 					"row",
 					"row-2",
 					"icon-meta",

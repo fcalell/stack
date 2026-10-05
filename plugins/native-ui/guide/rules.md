@@ -52,6 +52,31 @@ takes no pinch-zoom.
 <Image src={shot.url} alt={shot.title} fit="thumb" loading={shot.pending} />
 ```
 
+## A page read in a context names it beside its title
+
+A page read in a context (Live, one change set, a past version) takes `context` on its `Place`: a
+`Switcher`, the same descriptor the shell's switcher takes (`label`, `options`, `value`,
+`onChange`, and `act` ending the list with the way to open a new context). It draws a pick on the
+title line. An option's `chip` (`{ family, label }`) is its kind (Draft, Ready), drawn after its
+label in the sheet and on the trigger; `status` stays for a work state that moves. Never a
+`Picker` of your own beside the `title`, and never the kind in the label.
+
+```tsx
+<Place
+  title="Billing"
+  context={{
+    label: "Context",
+    value: context,
+    onChange: setContext,
+    options: [
+      { value: "live", label: "Live" },
+      { value: "billing", label: "Billing limits", chip: { family: "amber", label: "Draft" } },
+    ],
+    act: { icon: "Plus", label: "New change set", onAct: openNew },
+  }}
+/>
+```
+
 ## An onboarding step shows its count
 
 A flow of two to four steps shows where it stands as a `StepCount`: `at` (counted from one) and

@@ -168,7 +168,7 @@ const optionRow = (
 
 // An option's label (the empty choice in the placeholder's ink) over its
 // description; an option carrying a state leads with its status's dot, one
-// carrying an avatar with its avatar.
+// carrying an avatar with its avatar, and its chip after the text.
 function OptionText(props: {
 	option: Option<string | null>;
 	chip?: ChipFamily;
@@ -207,6 +207,7 @@ function OptionText(props: {
 					</span>
 				) : null}
 			</span>
+			{option.chip ? <Chip {...option.chip} /> : null}
 		</>
 	);
 }
@@ -335,6 +336,8 @@ export function PickerBase<V extends string | null = string>(
 	const status = current?.status ? (
 		<Status state={current.status} label={current.label} />
 	) : null;
+	// The option's kind stands after its value, on the trigger as in the list.
+	const kind = current?.chip ? <Chip {...current.chip} /> : null;
 	// With no value the trigger shows what is picked in the placeholder's ink.
 	const unset = current === undefined;
 	const rowValue = status ?? (
@@ -434,6 +437,7 @@ export function PickerBase<V extends string | null = string>(
 			>
 				{glyph}
 				{fit === "row" ? rowValue : fieldShown}
+				{kind}
 				<Icon name="ChevronDown" fit={fit === "row" ? "meta" : "control"} />
 			</button>
 		);

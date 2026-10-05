@@ -5,6 +5,7 @@ import type {
 	IconAct,
 	IconName,
 	MenuItem,
+	Switcher,
 } from "@fcalell/ui-core/descriptors";
 import {
 	FLOATING_ACT,
@@ -38,6 +39,7 @@ import { Button } from "../button/index.tsx";
 import { IconButtonBase, IconButtonLink } from "../icon-button/base.tsx";
 import { IconButton } from "../icon-button/index.tsx";
 import { Menu } from "../menu/index.tsx";
+import { Picker } from "../picker/index.tsx";
 import { SwitcherPick } from "../shell/switcher.tsx";
 import { BODY_FILLED } from "../thread/fill.ts";
 
@@ -64,6 +66,12 @@ const HEAD_BESIDE = "page-max-tablet:group-has-data-beside/page:hidden";
 const ROW = "flex items-center";
 const SPACER = "grow";
 const TITLE = "min-w-0 grow truncate";
+// With a context the title and its pick stand on one line a pair apart, the
+// line taking the spacer's room; the pick pulls back by its own padding at
+// its start.
+const TITLE_LINE = "flex min-w-0 grow items-center gap-pair";
+const TITLE_FIT = "min-w-0 truncate";
+const CONTEXT = "inline-flex shrink-0 -ms-inside";
 // The body fills the column, so an EmptyState alone in it centres, and
 // scrolls under the fixed head; a bleeding body fills the rest and
 // leaves scrolling, and its top inset, to its child.
@@ -127,6 +135,8 @@ export function backGlyph(touch: boolean): IconName {
 interface PlaceBase extends Closed {
 	/** The page's title, its one `h1`. */
 	title: string;
+	/** The context the page is read in (a change set, a version): a pick beside the title, its option's chip on its trigger, `act` ending its list. */
+	context?: Switcher;
 	/** Icon acts beside the title, in order. */
 	actions?: IconAct[];
 	/** The acts past the actions, in a menu under the more act. */
@@ -153,9 +163,10 @@ type PlaceEnd =
 /** A page in the shell. */
 export type PlaceProps = PlaceBase & PlaceEnd;
 
-/** A page under a head and its hairline: on the desktop the title and its acts share one strip; on touch the top bar (the shell's switcher, the actions, more) stands over the title and the act floats over the body's end, lifted. A `foot` docks at the page's bottom at both densities a sections gap under the body's end, the body scrolling under it, above the tab bar on touch; on the desktop it stands in the measure-wide column a Thread's foot stands in. A Place is the size container what stands in it decides its structure by (a Split its regions, a Table its grid): a Thread in its body fills it, unless the Place has a `foot`, where it stands among the sections; it draws the Details act of a Split's pane, below `wide` of its width, and with a record open a back act to the place's route, drawn below `tablet` first: before the title in the strip, in the switcher's stead in the top bar. While a record stands beside the main, below `tablet` the Place draws no head: that record's head is the page's one. */
+/** A page under a head and its hairline: on the desktop the title, its `context` pick and its acts share one strip, on touch the pick stands on the title line under the top bar; on touch the top bar (the shell's switcher, the actions, more) stands over the title and the act floats over the body's end, lifted. A `foot` docks at the page's bottom at both densities a sections gap under the body's end, the body scrolling under it, above the tab bar on touch; on the desktop it stands in the measure-wide column a Thread's foot stands in. A Place is the size container what stands in it decides its structure by (a Split its regions, a Table its grid): a Thread in its body fills it, unless the Place has a `foot`, where it stands among the sections; it draws the Details act of a Split's pane, below `wide` of its width, and with a record open a back act to the place's route, drawn below `tablet` first: before the title in the strip, in the switcher's stead in the top bar. While a record stands beside the main, below `tablet` the Place draws no head: that record's head is the page's one. */
 export function Place({
 	title,
+	context,
 	actions,
 	act,
 	more,
@@ -202,10 +213,26 @@ export function Place({
 	const heading = (
 		<h1
 			id={titleId}
-			className={cn(text({ role: "title" }), TITLE, touch && PAGE_TITLE)}
+			className={cn(
+				text({ role: "title" }),
+				context ? TITLE_FIT : TITLE,
+				touch && !context && PAGE_TITLE,
+			)}
 		>
 			{title}
 		</h1>
+	);
+	// The pick stands right after the title on the title line, on touch under
+	// the top bar as on the desktop in the strip.
+	const line = context ? (
+		<div className={cn(TITLE_LINE, touch && PAGE_TITLE)}>
+			{heading}
+			<span className={CONTEXT}>
+				<Picker {...context} fit="row" />
+			</span>
+		</div>
+	) : (
+		heading
 	);
 	// The page's act is its create act by rule, so it carries the plus.
 	const button = act ? (
@@ -244,14 +271,14 @@ export function Place({
 			<div className={cn(PAGE_TOP_BAR, bar ? ROW : ROW_MARKED)}>
 				{back}
 				{lead}
-				{touch ? null : heading}
+				{touch ? null : line}
 				{touch ? <span className={SPACER} /> : null}
 				{acts}
 				{details}
 				{overflow}
 				{touch ? null : button}
 			</div>
-			{touch ? heading : null}
+			{touch ? line : null}
 		</header>
 	);
 	// A Thread in the body fills it, as a bleeding body's child does: no

@@ -33,6 +33,8 @@ const SEVERAL_TRIGGER =
 const FIELD_STATUS = "min-w-0 grow shrink flex-row";
 // A chip column's value is its chip.
 const CHIP_SLOT = "flex-row grow min-w-0";
+// An option's own chip, centred on the value's line (a chip hugs the top of its row).
+const KIND = "shrink-0 self-center";
 // A row-fit trigger centres in its row and pulls back by its own padding at
 // the row's end; it stands over a row's hit. Open, it holds the press wash
 // and the value takes the body ink.
@@ -201,6 +203,11 @@ export function PickerBase<V extends string | null = string>(
 		>
 			{glyph}
 			{shown}
+			{current?.chip ? (
+				<View className={KIND}>
+					<Chip {...current.chip} />
+				</View>
+			) : null}
 			<Ink.Provider value={ink}>
 				<Icon name="ChevronDown" fit={row ? "meta" : "control"} />
 			</Ink.Provider>

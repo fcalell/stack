@@ -81,6 +81,39 @@ function Deploys(props: { loading?: boolean }) {
 	);
 }
 
+// A spec read in a context: Live, or a change set whose kind is its chip,
+// the list ending with the act that opens a new one.
+function Spec() {
+	const [context, setContext] = useState("billing");
+	return (
+		<Place
+			title="Billing"
+			context={{
+				label: "Context",
+				value: context,
+				onChange: setContext,
+				options: [
+					{ value: "live", label: "Live" },
+					{
+						value: "billing",
+						label: "Billing limits",
+						chip: { family: "amber", label: "Draft" },
+					},
+					{
+						value: "onboarding",
+						label: "Onboarding copy",
+						chip: { family: "green", label: "Ready" },
+					},
+				],
+				act: { icon: "Plus", label: "New change set", onAct: act },
+			}}
+			actions={SEARCH}
+		>
+			<StandInList />
+		</Place>
+	);
+}
+
 // An assistant's home: its sections scrolling under the ask field docked at
 // its foot, the latest exchange inline in the last section.
 function Home() {
@@ -115,10 +148,31 @@ function Home() {
 // act; the primary act that act loading; the bar fit a bleeding body under
 // one action; the bar icon act its more menu open; the body icon act (the
 // touch top bar's) an assistant's home under its search act, its ask field
-// docked at its foot, since the foot draws no matrix cell of its own. The
-// other cells are the atoms' own.
+// docked at its foot, since the foot draws no matrix cell of its own; the
+// pick's pill cells a spec read in a change set (its chip on the trigger),
+// and the chip cells the same with its list open on the desktop. The other
+// cells are the atoms' own.
 export function drawPlace(frame: ShowcaseFrame) {
 	const cell = frame.cell.name;
+	if (cell.startsWith("CHIP") && frame.density === "desktop")
+		return (
+			<Opened popup="listbox">
+				<Column>
+					<Spec />
+				</Column>
+			</Opened>
+		);
+	if (
+		cell === "PILL_ACT" ||
+		cell === "PICKER_VALUE" ||
+		cell === "ICON.fit.meta" ||
+		cell.startsWith("CHIP")
+	)
+		return (
+			<Column>
+				<Spec />
+			</Column>
+		);
 	if (cell === "TEXT.role.title")
 		return (
 			<Column>

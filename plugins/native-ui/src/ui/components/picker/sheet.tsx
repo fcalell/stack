@@ -40,6 +40,8 @@ const TICK = "shrink-0";
 const LEADING = "shrink-0 items-center justify-center";
 // A chip column's options are its chips.
 const CHIP_SLOT = "flex-row grow min-w-0";
+// An option's own chip, centred on the label's line (a chip hugs the top of its row).
+const KIND = "shrink-0 self-center";
 // The act that ends the list stands under a hairline across it, a float
 // inset below the line.
 const ACT_SLOT = "border-t pt-float";
@@ -89,8 +91,8 @@ const asChip = (
 
 // An option's label (the empty choice in the placeholder's ink) over its
 // description; an option carrying a glyph leads with it, one carrying a state
-// with its status's dot, one carrying an avatar with its avatar; a chip
-// column's option is its chip.
+// with its status's dot, one carrying an avatar with its avatar, and its chip
+// after the text; a chip column's option is its chip alone.
 function OptionText({
 	option,
 	chip,
@@ -133,6 +135,11 @@ function OptionText({
 					</RNText>
 				) : null}
 			</View>
+			{option.chip ? (
+				<View className={KIND}>
+					<Chip {...option.chip} />
+				</View>
+			) : null}
 		</>
 	);
 }

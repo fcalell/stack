@@ -1,4 +1,9 @@
-import type { Act, IconAct, MenuItem } from "@fcalell/ui-core/descriptors";
+import type {
+	Act,
+	IconAct,
+	MenuItem,
+	Switcher,
+} from "@fcalell/ui-core/descriptors";
 import {
 	FLOATING_ACT,
 	FLOATING_ACT_FOOT,
@@ -32,6 +37,7 @@ import { useWords } from "../../lib/words";
 import { Button } from "../button";
 import { IconButton } from "../icon-button";
 import { Menu } from "../menu";
+import { Picker } from "../picker";
 import { SwitcherPick } from "../shell/switcher";
 import { useSplitHead } from "../split";
 import { holdsThread } from "../thread";
@@ -41,6 +47,11 @@ const PLACE = "flex-1";
 const TOP_BAR = "flex-row items-center";
 const SPACER = "flex-1";
 const TITLE = "min-w-0 grow";
+// With a context the title and its pick stand on one line a pair apart, the
+// pick pulling back by its own padding at its start.
+const TITLE_LINE = "flex-row items-center gap-pair";
+const TITLE_FIT = "min-w-0 shrink";
+const CONTEXT = "shrink-0 flex-row -ms-inside";
 // The body scrolls under the fixed head; a bleeding body leaves scrolling
 // to its child, which keeps the act's room.
 const BODY = "flex-1";
@@ -68,6 +79,7 @@ const SCROLL_ROOM = <View className={FLOATING_ACT_ROOM} />;
 
 interface PlaceBase extends Closed {
 	title: string;
+	context?: Switcher;
 	actions?: IconAct[];
 	more?: MenuItem[];
 	bleed?: boolean;
@@ -81,7 +93,7 @@ type PlaceEnd = { act?: Act; foot?: never } | { foot?: ReactNode; act?: never };
 export type PlaceProps = PlaceBase & PlaceEnd;
 
 // A page in the shell: the top bar (the shell's switcher, the actions, more)
-// over the title, the body under it, and the one act floating lifted over
+// over the title, its `context` pick (a change set, a version) beside it, the body under it, and the one act floating lifted over
 // the body's end, the body keeping room under its last row (a bleeding body's scrolling child
 // keeps it) so the act never covers it. With `bleed` the body is the whole box under the title, with no
 // side inset and no scroll, for a child that scrolls itself; a Thread standing as
@@ -94,6 +106,7 @@ export type PlaceProps = PlaceBase & PlaceEnd;
 // Shell's tab bar stands under it all, and its toasts over the body.
 export function Place({
 	title,
+	context,
 	actions,
 	act,
 	more,
@@ -157,12 +170,27 @@ export function Place({
 										) : null}
 									</View>
 								) : null}
-								<RNText
-									accessibilityRole="header"
-									className={cn(text({ role: "title" }), TITLE, PAGE_TITLE)}
-								>
-									{title}
-								</RNText>
+								{context ? (
+									<View className={cn(TITLE_LINE, PAGE_TITLE)}>
+										<RNText
+											accessibilityRole="header"
+											numberOfLines={1}
+											className={cn(text({ role: "title" }), TITLE_FIT)}
+										>
+											{title}
+										</RNText>
+										<View className={CONTEXT}>
+											<Picker {...context} fit="row" />
+										</View>
+									</View>
+								) : (
+									<RNText
+										accessibilityRole="header"
+										className={cn(text({ role: "title" }), TITLE, PAGE_TITLE)}
+									>
+										{title}
+									</RNText>
+								)}
 							</View>
 						)}
 						<Lifted

@@ -11,7 +11,7 @@ import { isSeveral, PickerBase } from "./base.tsx";
 interface Shared<V extends string | null> extends Closed {
 	/** What is picked: the trigger's name, and the touch sheet's title. */
 	label: string;
-	/** The choices, flat or under group labels; an option may carry a status or an avatar. */
+	/** The choices, flat or under group labels; an option may carry a status, an avatar or a chip. */
 	options: readonly Option<V>[] | readonly OptionGroup<V>[];
 	/** Where it stands: a field box (the default), a field box filling its column (`bar`), or a row's trailing value in a pill. */
 	fit?: PickerFit;

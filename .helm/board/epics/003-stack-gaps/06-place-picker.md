@@ -1,6 +1,6 @@
 ---
 id: 003-06
-status: backlog
+status: review
 sessions: {}
 ---
 # ui-core: a Place carries a picker beside its title

@@ -248,6 +248,18 @@ a tick with no animation, never jumped to full.
   (`Option.status`), its options and its value drawn as the `Status`, as an ItemHeader's moving
   status fact (`{ pick }`) is. Rejected: `Status` with `onOpen`, an act that opened a menu of
   states the mark could not show as the current one.
+- A page read in a context (Live, one change set, a past version) names it by a pick beside its
+  title: `Place.context`, a `Switcher` (an `OptionPick` with its closing `IconAct`, the type the
+  shell's switcher takes), drawn as the Picker at the `row` fit right after the `h1`, a `pair` apart
+  and pulled back by `-ms-inside` as an `ItemHeader`'s pick fact is. It stands on the title line
+  under the top bar on touch too, since the context is part of the page's address and the top bar
+  is the shell's switcher. A context's kind (Draft, Ready) is `Option.chip`, the `ChipMark` a
+  `ListRow` carries: the chip draws after the option's label in the list and on the trigger, and
+  `Option.status` keeps meaning a work state that moves. Rejected: a Picker trigger variant or a
+  Place slot for a Picker the consumer built (a Place's props are descriptors, never nodes), and
+  Draft and Ready as a `status` (they are a kind, not a state the pick moves). The Place and the
+  Picker hold `CHIP` and `CHIP_LABEL`; a chip column's option (the Picker's `chip` family) draws its
+  own chip alone and ignores `Option.chip`.
 - A header fact in words that opens a sheet is `{ label: Part; onOpen }` on `ItemHeader`: the words
   in the meta ink and a trailing `ChevronRight` at the meta fit in a `PILL_ACT`, pulled back at its
   start as a pick fact is, a button named by the fact; the consumer's `onOpen` opens its own `Sheet`.

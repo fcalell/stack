@@ -1,3 +1,4 @@
+import type { Option } from "@fcalell/ui-core/descriptors";
 import { useState } from "react";
 import { Group } from "../../components/group/index.tsx";
 import { ListRow } from "../../components/list-row/index.tsx";
@@ -34,6 +35,20 @@ const OWNERS = [
 	{ value: "ema", label: "Ema Okafor", description: "ema@acme.app" },
 	{ value: "felix", label: "Felix Varga", description: "felix@acme.app" },
 ];
+// Options carrying their kind as a chip after the label.
+const CONTEXTS = [
+	{ value: "live", label: "Live" },
+	{
+		value: "billing",
+		label: "Billing limits",
+		chip: { family: "amber", label: "Draft" },
+	},
+	{
+		value: "onboarding",
+		label: "Onboarding copy",
+		chip: { family: "green", label: "Ready" },
+	},
+] satisfies Option[];
 const MEMBERS = [
 	{ name: "Ben Kaya", email: "ben@acme.app", role: "admin" },
 	{ name: "Chen Wu", email: "Invited 2 days ago", role: "member" },
@@ -76,6 +91,19 @@ function Triggers() {
 			<Picker label="Owner" options={OWNERS} value={null} onChange={change} />
 			<Picker label="Reviewer" options={OWNERS.slice(1)} onChange={change} />
 			<Picker label="Role" options={[...ROLES]} onChange={change} fit="row" />
+			<Picker
+				label="Context"
+				options={CONTEXTS}
+				value="billing"
+				onChange={change}
+			/>
+			<Picker
+				label="Context"
+				options={CONTEXTS}
+				value="billing"
+				onChange={change}
+				fit="row"
+			/>
 		</div>
 	);
 }
@@ -130,7 +158,8 @@ function openFirst(stage: HTMLElement) {
 // The row fit's cells draw the members' picks; the open state draws the
 // role pick's list (four options, no search) on the row fit cells and the
 // owner filter's (seven, the search leading) on the field cells; every other
-// cell the field-fit triggers, with a value, with the empty choice and with
+// cell the field-fit triggers (two of them an option's chip after its label),
+// with a value, with the empty choice and with
 // none (its label in the placeholder's ink, a row fit's too).
 export function drawPicker(frame: ShowcaseFrame) {
 	const cell = frame.cell.name;

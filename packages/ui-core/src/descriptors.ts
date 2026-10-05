@@ -61,6 +61,9 @@ export interface ChipMark {
 // drawn from the label's initials or `src`, leads it.
 // An option carrying `icon` leads with its glyph (a sort's direction), in
 // the trigger too. An option takes one leading form.
+// An option carrying `chip` draws it after its label, in the list and on the
+// trigger: the option's kind (a context's Draft, Ready), where `status` is a
+// work state that moves.
 export interface Option<V extends string | null = string> {
 	value: V;
 	label: string;
@@ -69,6 +72,7 @@ export interface Option<V extends string | null = string> {
 	status?: StatusState;
 	avatar?: { src?: string };
 	icon?: IconName;
+	chip?: ChipMark;
 }
 
 // Options under a group label, in a `Picker`'s list and its searchable sheet.
@@ -237,10 +241,11 @@ export interface MenuItem {
 	blocked?: string;
 }
 
-// What the shell's switcher switches between (a workspace, an account): a
-// pick whose options carry their avatars, the current one on the trigger and
-// ticked in the list, and `act`, the act that makes a new one, under a
-// hairline after the options.
+// What the shell's switcher switches between (a workspace, an account), or the
+// context a `Place` stands in beside its title (a change set, a version): a
+// pick whose options carry their avatars or chips, the current one on the
+// trigger and ticked in the list, and `act`, the act that makes a new one,
+// under a hairline after the options.
 export interface Switcher extends OptionPick {
 	act?: IconAct;
 }
