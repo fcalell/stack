@@ -35,6 +35,7 @@ Using the target in an app lives in `guide/`, indexed into a consumer's `.stack/
 | `cliSlots.artifactFiles` | `.stack/wrangler.toml`, from `wranglerToml` |
 | `cloudflare.slots.bindings` | `RATE_LIMITER_RPC`, 1000 requests per 60 s per IP over the API tree, when any worker path exists |
 | `cliSlots.artifactFiles` | `.dev.vars` (created, or topped up with what it lacks) and its mirror `.stack/.dev.vars`, where wrangler reads it. `STACK_DEV` never enters `api.slots.env`, so it never becomes a secret |
+| `api.slots.envType` | The global `Env` `wrangler types` declares, so a procedure's `context.env` is typed on Cloudflare |
 | `api.slots.devTargetOrigins` | `http://localhost:8787`, unless `app.origins` is set |
 | `vite.slots.serverProxy` | Every `api.slots.routePrefixes` path to the wrangler dev port |
 | `vite.slots.watchIgnored` | `**/.wrangler/**`: wrangler's scratch bundle lands in `.stack/.wrangler/tmp/`, inside Vite's root, where Tailwind's source scan would answer each worker edit with a full reload |

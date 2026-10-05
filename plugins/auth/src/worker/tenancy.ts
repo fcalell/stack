@@ -3,7 +3,7 @@ import {
 	member,
 	organization as organizationTable,
 } from "../schema/organization.ts";
-import type { MemberRow, Membership, Scope } from "../scope.ts";
+import type { MemberRow, Membership, Scope, ScopeContext } from "../scope.ts";
 
 // The request context's tenancy capability, which plugin-api's `scope`,
 // `can` and `rbac` procedure options call. Resolution is stateless: the
@@ -14,20 +14,20 @@ export interface Tenancy {
 	// caller's `member` row; null when any level is absent, the caller is no
 	// member, or a consumer predicate fails (the membership one at the root, a
 	// scope's visibility one at its level), so a guessed id never confirms that
-	// a row exists.
-	resolve(
-		scope: Scope,
+	// a row exists. The answer is typed by the scope: `ScopeContext<S>`.
+	resolve<S extends Scope>(
+		scope: S,
 		id: string,
 		userId: string,
-	): Promise<Record<string, unknown> | null>;
+	): Promise<ScopeContext<S> | null>;
 	// The same chain for the row a URL names: its slug, unique within the
 	// parent whose id comes along (none for the organization).
-	bySlug(
-		scope: Scope,
+	bySlug<S extends Scope>(
+		scope: S,
 		slug: string,
 		parentId: string | undefined,
 		userId: string,
-	): Promise<Record<string, unknown> | null>;
+	): Promise<ScopeContext<S> | null>;
 	// Whether `role` grants every action named in `permissions`.
 	can(role: string, permissions: Record<string, readonly string[]>): boolean;
 }
@@ -84,13 +84,13 @@ export function createTenancy(
 	// read per level that declares a visibility predicate. A non-member never
 	// reaches a visibility read, and a level under an invisible one is refused
 	// with it.
-	async function resolve(
-		scope: Scope,
+	async function resolve<S extends Scope>(
+		scope: S,
 		id: string,
 		userId: string,
-	): Promise<Record<string, unknown> | null> {
+	): Promise<ScopeContext<S> | null> {
 		const levels: { scope: Scope; id: string; row: unknown }[] = [];
-		let level = scope;
+		let level: Scope = scope;
 		let levelId = id;
 		while (level.parent !== null) {
 			const [parent, parentColumn] = level.parent;
@@ -123,15 +123,23 @@ export function createTenancy(
 			}
 			entries[below.name] = row;
 		}
-		return entries;
+		return entries as ScopeContext<S>;
 	}
 
 	return {
 		resolve,
-		async bySlug(scope, slug, parentId, userId) {
+		async bySlug<S extends Scope>(
+			scope: S,
+			slug: string,
+			parentId: string | undefined,
+			userId: string,
+		): Promise<ScopeContext<S> | null> {
 			if (scope.slug === null) return null;
 			if (scope.parent === null) {
-				return resolveOrganization(eq(scope.slug, slug), userId);
+				return resolveOrganization(
+					eq(scope.slug, slug),
+					userId,
+				) as Promise<ScopeContext<S> | null>;
 			}
 			if (parentId === undefined) return null;
 			const found = (await client
