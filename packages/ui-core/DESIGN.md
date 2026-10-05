@@ -460,10 +460,8 @@ components:
     textColor: "{colors.accent-ink-dark}"
   link-standalone:
     textColor: "{colors.accent-ink}"
-    height: "{spacing.target}"
   link-standalone-dark:
     textColor: "{colors.accent-ink-dark}"
-    height: "{spacing.target}"
   avatar-1:
     rounded: "{rounded.full}"
     height: "{spacing.avatar}"
@@ -1421,20 +1419,16 @@ components:
     rounded: "{rounded.card}"
   image-loading:
     rounded: "{rounded.card}"
-    height: "{spacing.image-tile}"
     backgroundColor: "{colors.skeleton}"
   image-loading-dark:
     rounded: "{rounded.card}"
-    height: "{spacing.image-tile}"
     backgroundColor: "{colors.skeleton-dark}"
   image-error:
     rounded: "{rounded.card}"
-    height: "{spacing.image-tile}"
     padding: "{spacing.inside}"
     backgroundColor: "{colors.group}"
   image-error-dark:
     rounded: "{rounded.card}"
-    height: "{spacing.image-tile}"
     padding: "{spacing.inside}"
     backgroundColor: "{colors.group-dark}"
   stage-done:
@@ -1461,6 +1455,24 @@ components:
   stage-ended-dark:
     typography: "{typography.body}"
     textColor: "{colors.ink-body-dark}"
+  stage-mark-done:
+    height: "{spacing.icon-meta}"
+    width: "{spacing.icon-meta}"
+    rounded: "{rounded.full}"
+    backgroundColor: "{colors.ink-meta}"
+  stage-mark-done-dark:
+    height: "{spacing.icon-meta}"
+    width: "{spacing.icon-meta}"
+    rounded: "{rounded.full}"
+    backgroundColor: "{colors.ink-meta-dark}"
+  stage-mark-current:
+    height: "{spacing.icon-meta}"
+    width: "{spacing.icon-meta}"
+    rounded: "{rounded.full}"
+  stage-mark-later:
+    height: "{spacing.icon-meta}"
+    width: "{spacing.icon-meta}"
+    rounded: "{rounded.full}"
   place-row-rest:
     height: "{spacing.row}"
     rounded: "{rounded.row}"
@@ -1806,6 +1818,10 @@ components:
   image-close-dark:
     rounded: "{rounded.control}"
     backgroundColor: "{colors.raised-dark}"
+  image-failed-ink:
+    textColor: "{colors.ink-meta}"
+  image-failed-ink-dark:
+    textColor: "{colors.ink-meta-dark}"
   image-full:
     padding: "{spacing.page}"
   image-remove:
@@ -1817,6 +1833,8 @@ components:
   image-remove-disc-dark:
     backgroundColor: "{colors.raised-dark}"
   item-fact:
+    height: "{spacing.target}"
+  link-target:
     height: "{spacing.target}"
   lock-glyph:
     textColor: "{colors.ink-meta}"
@@ -2078,9 +2096,13 @@ components:
   split-pane:
     padding: "{spacing.page}"
   stage-check:
-    textColor: "{colors.ink-meta}"
+    textColor: "{colors.canvas}"
   stage-check-dark:
-    textColor: "{colors.ink-meta-dark}"
+    textColor: "{colors.canvas-dark}"
+  stage-cross:
+    textColor: "{colors.danger}"
+  stage-cross-dark:
+    textColor: "{colors.danger-dark}"
   stats:
     rounded: "{rounded.card}"
     backgroundColor: "{colors.surface}"
@@ -2369,7 +2391,7 @@ The front matter's components are the matrix cells: one entry per axis value of 
 | `Checkbox` | atom | `CHECKBOX`, `CHECKBOX_MARK` | rest, hover, focus, active, disabled, selected |
 | `Spinner` | atom | `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC` | rest |
 | `Avatar` | atom | `AVATAR`, `AVATAR_LABEL` | rest |
-| `Link` | atom | `LINK` | rest, hover, focus, active |
+| `Link` | atom | `LINK`, `LINK_TARGET` | rest, hover, focus, active |
 | `Place` | layout | `PAGE_HEAD`, `PAGE_HEAD_ROOM`, `PAGE_TOP_BAR`, `PAGE_TITLE`, `TEXT.role.title`, `PILL_ACT`, `PICKER_VALUE`, `ICON.fit.meta`, `CHIP`, `CHIP_LABEL`, `PAGE_BODY`, `FOOT_DOCKED`, `PAGE_BODY_OVER_FOOT`, `FLOATING_ACT`, `FLOATING_ACT_LIFT`, `FLOATING_ACT_ROOM`, `FLOATING_ACT_FOOT`, `BUTTON.act.primary`, `BUTTON.fit.bar`, `BUTTON.fit.body`, `BUTTON_LABEL.act.primary`, `ICON_BUTTON.fit.bar`, `ICON_BUTTON.fit.body` | rest |
 | `Screen` | layout | `PAGE_HEAD`, `PAGE_TOP_BAR`, `PAGE_TITLE`, `TEXT.role.title`, `PAGE_BODY`, `ICON_BUTTON.fit.bar`, `ICON_BUTTON.fit.body` | rest |
 | `Split` | layout | `SPLIT_LIST`, `SPLIT_MAIN`, `SPLIT_BESIDE`, `SPLIT_PANE`, `ICON_BUTTON.fit.bar` | rest, empty |
@@ -2405,14 +2427,14 @@ The front matter's components are the matrix cells: one entry per axis value of 
 | `Rules` | content | `ICON.fit.meta`, `RULES`, `RULE_ROW`, `RULE_CARD`, `RULE_ARROW`, `TEXT.role.meta` | rest |
 | `Message` | content | `CHIP.family.neutral`, `CHIP_LABEL.family.neutral`, `IMAGE.fit.thumb`, `IMAGE_PICTURE.fit.thumb`, `MESSAGE_ATTACHMENTS`, `ICON.fit.meta`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `MESSAGE`, `MESSAGE_BUBBLE`, `MESSAGE_HEAD`, `MESSAGE_LINE`, `MESSAGE_OPEN`, `MESSAGE_CARD`, `MESSAGE_CODE`, `MESSAGE_FOLD`, `SKELETON.kind.line`, `TEXT.role.body`, `TEXT.role.meta`, `TEXT.role.code`, `TEXT_STRONG.role.body` | rest, hover, focus, active, loading |
 | `MessageInput` | content | `BUTTON.act.primary`, `BUTTON.act.secondary`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.primary`, `BUTTON_LABEL.act.secondary`, `CHIP.family.neutral`, `CHIP.trailing.remove`, `CHIP_LABEL.family.neutral`, `REMOVE_HIT`, `FIELD.fit.bar`, `FIELD.state.rest`, `FIELD.trailing.none`, `FIELD_VALUE.kind.text`, `ICON.fit.control`, `ICON.fit.meta`, `ICON_BUTTON.fit.bar`, `IMAGE.fit.thumb`, `IMAGE_PICTURE.fit.thumb`, `IMAGE_REMOVE`, `IMAGE_REMOVE_DISC`, `MESSAGE_ATTACH_SLOT`, `MESSAGE_ATTACHMENTS`, `MESSAGE_INPUT`, `MESSAGE_INPUT_BOX`, `MESSAGE_INPUT_CHIPS`, `MESSAGE_INPUT_FIELD`, `MESSAGE_INPUT_FOOT`, `MESSAGE_INPUT_ROW`, `MESSAGE_INPUT_TEXT`, `MESSAGE_INPUT_VALUE`, `MESSAGE_NOTICE`, `MESSAGE_NOTICE_TEXT`, `SPINNER`, `SPINNER_ARC`, `SPINNER_TRACK`, `THREAD_COLUMN`, `TEXT.role.meta` | rest, hover, focus, disabled |
-| `Meter` | content | `COUNT_LINKS`, `FIGURES`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `METER`, `METER_FILL`, `METER_HEAD`, `METER_ITEM`, `METER_MARK`, `METER_TRACK`, `SKELETON.kind.line`, `SKELETON.kind.meter`, `TEXT.role.body`, `TEXT.role.meta`, `TEXT_STRONG.role.body` | rest, loading |
-| `Stages` | content | `ICON.fit.meta`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `STAGE`, `STAGE_CHECK`, `STAGE_RAIL`, `STAGE_ROW`, `STAGE_WORDS`, `STATUS_DOT.state.active`, `STATUS_DOT.state.failed`, `STATUS_DOT.state.idle`, `TEXT.role.meta` | rest |
-| `Stats` | content | `COUNT_LINKS`, `FIGURES`, `LINE_BOX.role.figure`, `LINE_BOX.role.meta`, `SKELETON.kind.line`, `STATS`, `STATS_CELL`, `STATS_EDGE`, `STATS_FIGURE`, `TEXT.role.figure`, `TEXT.role.meta` | rest, loading |
+| `Meter` | content | `LINK_TARGET`, `COUNT_LINKS`, `FIGURES`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `LINK.fit.standalone`, `METER`, `METER_FILL`, `METER_HEAD`, `METER_ITEM`, `METER_MARK`, `METER_TRACK`, `SKELETON.kind.line`, `SKELETON.kind.meter`, `TEXT.role.body`, `TEXT.role.meta`, `TEXT_STRONG.role.body` | rest, loading |
+| `Stages` | content | `ICON.fit.meta`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `STAGE`, `STAGE_CHECK`, `STAGE_CROSS`, `STAGE_MARK`, `STAGE_RAIL`, `STAGE_ROW`, `STAGE_WORDS`, `TEXT.role.meta` | rest |
+| `Stats` | content | `LINK_TARGET`, `COUNT_LINKS`, `FIGURES`, `LINE_BOX.role.figure`, `LINE_BOX.role.meta`, `LINK.fit.standalone`, `SKELETON.kind.line`, `STATS`, `STATS_CELL`, `STATS_EDGE`, `STATS_FIGURE`, `TEXT.role.figure`, `TEXT.role.meta` | rest, loading |
 | `Stat` | content | `LINE_BOX.role.display`, `LINE_BOX.role.meta`, `SKELETON.kind.line`, `STAT`, `STAT_FIGURE`, `TEXT.role.display`, `TEXT.role.meta` | rest, loading |
 | `BarChart` | content | `CHART`, `CHART_BAND`, `CHART_BODY`, `CHART_FILL`, `CHART_GRID`, `CHART_HEAD`, `CHART_KEY`, `CHART_KEYS`, `CHART_KEY_DOT`, `CHART_MAIN`, `CHART_PART_SPLIT`, `CHART_TICK_LANE`, `CHART_TOTAL`, `FIGURES`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `SKELETON.kind.chart`, `SKELETON.kind.line`, `TEXT.role.body`, `TEXT.role.meta`, `TEXT_STRONG.role.body` | rest, loading, error, empty |
 | `Thread` | content | `THREAD`, `THREAD_COLUMN`, `THREAD_LOG`, `THREAD_UNDER_HEAD`, `FOOT`, `THREAD_LATEST` | rest, loading, error, empty |
 | `QrCode` | content | `QR_CODE`, `QR_TILE` | rest, loading |
-| `Image` | content | `IMAGE`, `IMAGE_PICTURE`, `IMAGE_FULL`, `IMAGE_CLOSE`, `ICON.fit.body`, `ICON_BUTTON.fit.body`, `TEXT.role.meta`, `SCRIM` | rest, hover, focus, active, loading, error |
+| `Image` | content | `IMAGE`, `IMAGE_PICTURE`, `IMAGE_FULL`, `IMAGE_CLOSE`, `IMAGE_FAILED_INK`, `ICON.fit.body`, `ICON_BUTTON.fit.body`, `TEXT.role.meta`, `SCRIM` | rest, hover, focus, active, loading, error |
 
 A component owns the tokens it may draw: a cell it draws that spells a type role, a colour, a radius, a spacing role, a size or a shadow outside its row is a contract error. A colour ending in `-` is a family (`chip-` is every chip role).
 
@@ -2471,14 +2493,14 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | `Rules` | `meta` | `ink-meta`, `ink-disabled` | none | `inside`, `pair`, `card` | `icon-meta` | none |
 | `Message` | `meta`, `body`, `code`, `caption` | `ink-meta`, `group`, `ink-body`, `edge`, `surface`, `skeleton`, `wash-hover`, `ring`, `wash-press`, `chip-` | `card`, `control`, `chip`, `full` | `pair`, `tile`, `inside` | `target`, `icon-meta`, `skeleton`, `figures`, `chip`, `measure-short`, `image-tile` | none |
 | `MessageInput` | `body`, `meta`, `caption` | `edge`, `surface`, `ink-meta`, `ink-body`, `act-accent`, `on-act-accent`, `fill-disabled`, `ink-disabled`, `edge-hover`, `ring`, `raised`, `chip-neutral-soft`, `chip-neutral-ink` | `card`, `control`, `full` | `pair`, `rows`, `inside`, `control-x` | `message-input`, `control-compact`, `icon-control`, `chip`, `measure`, `measure-short`, `icon-meta`, `target`, `spinner`, `image-tile` | none |
-| `Meter` | `body`, `meta` | `ink-body`, `ink-meta`, `fill-neutral`, `warn`, `danger`, `skeleton` | `chip` | `pair`, `inside`, `card` | `meter`, `track`, `skeleton` | none |
-| `Stages` | `body`, `meta` | `ink-body`, `ink-meta`, `edge`, `accent-ink`, `danger` | `full` | `pair` | `icon-meta`, `dot` | none |
-| `Stats` | `figure`, `meta` | `edge`, `surface`, `ink-body`, `ink-meta`, `skeleton`, `wash-hover`, `wash-press` | `card`, `chip` | `pair`, `inside`, `card` | `skeleton` | none |
+| `Meter` | `body`, `meta` | `ink-body`, `ink-meta`, `accent-ink`, `fill-neutral`, `warn`, `danger`, `skeleton` | `chip` | `pair`, `inside`, `card` | `meter`, `track`, `skeleton`, `target` | none |
+| `Stages` | `body`, `meta` | `ink-body`, `ink-meta`, `edge`, `edge-strong`, `accent-ink`, `canvas`, `danger` | `full` | `pair` | `icon-meta` | none |
+| `Stats` | `figure`, `meta` | `edge`, `surface`, `ink-body`, `ink-meta`, `accent-ink`, `skeleton`, `wash-hover`, `wash-press` | `card`, `chip` | `pair`, `inside`, `card` | `skeleton`, `target` | none |
 | `Stat` | `display`, `meta` | `ink-body`, `ink-meta`, `skeleton` | `chip` | `pair`, `inside` | `skeleton` | none |
 | `BarChart` | `body`, `meta` | `ink-body`, `ink-meta`, `edge`, `skeleton`, `chip-` | `full`, `chip` | `fields`, `inside`, `pair` | `chart`, `dot`, `skeleton`, `figures` | none |
 | `Thread` | none | `raised`, `edge` | `control` | `sections`, `page`, `pair` | `measure` | `float` |
 | `QrCode` | none | `edge`, `surface`, `ink-body`, `skeleton` | `card` | none | `qr` | none |
-| `Image` | `meta` | `edge`, `edge-hover`, `edge-strong`, `skeleton`, `group`, `ink-meta`, `raised`, `scrim` | `control`, `card` | `page`, `inside` | `image-tile`, `image-cap`, `icon`, `control` | `float` |
+| `Image` | `meta` | `edge`, `edge-hover`, `ink-body`, `skeleton`, `group`, `ink-meta`, `raised`, `scrim` | `control`, `card` | `page`, `inside` | `image-tile`, `image-cap`, `icon`, `control` | `float` |
 
 ### Motion
 

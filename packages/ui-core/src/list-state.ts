@@ -252,20 +252,34 @@ export function fileShape(slots: {
 	return { change: slots.change !== undefined, chip: slots.chip !== undefined };
 }
 
+// The line a waiting figure or bar draws under it, known before any data: the
+// slot declared, `counts` (a link's target box, the taller) over `meta` (one
+// meta line), or none.
+export type WaitLine = "none" | "meta" | "counts";
+
+// The waiting line from the slots declared, read by key: no slot function
+// runs.
+export function waitLine(slots: {
+	meta?: unknown;
+	counts?: unknown;
+}): WaitLine {
+	if (slots.counts !== undefined) return "counts";
+	return slots.meta !== undefined ? "meta" : "none";
+}
+
 // The slots a waiting Meter draws, known before any item: the label, share
 // and bar always, the line under the bar when the `meter` map declares `meta`
 // or `counts`.
 export interface MeterShape {
-	meta: boolean;
+	line: WaitLine;
 }
 
-// The waiting meter's shape from the slots a `meter` map declares, read by
-// key: no slot function runs.
+// The waiting meter's shape from the slots a `meter` map declares.
 export function meterShape(slots: {
 	meta?: unknown;
 	counts?: unknown;
 }): MeterShape {
-	return { meta: slots.meta !== undefined || slots.counts !== undefined };
+	return { line: waitLine(slots) };
 }
 
 // The bars a waiting Comparison's fact draws, known before any item: one

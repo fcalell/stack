@@ -1,4 +1,6 @@
+import type { WaitLine } from "@fcalell/ui-core/list-state";
 import {
+	LINK_TARGET,
 	METER,
 	METER_HEAD,
 	METER_ITEM,
@@ -15,14 +17,16 @@ const HEAD = "flex-row items-center";
 // A loading line stands in its text's line box: a zero-width line of the
 // role beside the bar, so the loading meter keeps the loaded one's height.
 const LINE = "flex-row items-center";
+const COUNTS_LINE = "justify-center";
 const LABEL_WAIT = "grow";
 const SHARE_WAIT = "justify-end shrink-0";
 const BAR = "w-full";
 
-// A Meter waiting: the label, share, bar and, when `meta` (a meta line or
-// counts), the line under the bar as bars in their line boxes; busy when it
-// waits alone (a list of them is busy once). Outside the package's exports.
-export function MeterWait(props: { busy: boolean; meta: boolean }) {
+// A Meter waiting: the label, share, bar and, when `line` is not `none`, the
+// line under the bar as bars in their boxes (a meta line's, or one count
+// link's target box); busy when it waits alone (a list of them is busy once).
+// Outside the package's exports.
+export function MeterWait(props: { busy: boolean; line: WaitLine }) {
 	// In a Group the meter is one of its items, at the card's inset.
 	const item = useContext(GroundContext) === "group" && METER_ITEM;
 	return (
@@ -41,9 +45,14 @@ export function MeterWait(props: { busy: boolean; meta: boolean }) {
 				</View>
 			</View>
 			<View className={skeleton({ kind: "meter" })} />
-			{props.meta ? (
+			{props.line === "meta" ? (
 				<View className={LINE}>
 					<Strut role="meta" />
+					<View className={cn(skeleton({ kind: "line" }), "w-1/2")} />
+				</View>
+			) : null}
+			{props.line === "counts" ? (
+				<View className={cn(LINK_TARGET, COUNTS_LINE)}>
 					<View className={cn(skeleton({ kind: "line" }), "w-1/2")} />
 				</View>
 			) : null}

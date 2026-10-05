@@ -1,4 +1,4 @@
-import { counted } from "@fcalell/ui-core/tokens";
+import { counted, named } from "@fcalell/ui-core/tokens";
 import {
 	CODE_ACT,
 	CODE_FOLD,
@@ -50,16 +50,17 @@ export interface CodeProps extends Closed {
 	// The text, its lines split on newlines.
 	text: string;
 	// What the text is (a file's name, the tool it goes into), in a head over
-	// it; it names the copy act.
+	// it; it names the acts.
 	title?: string;
 	// Shows only the last lines, this many, behind an act that reveals the
 	// earlier ones.
 	tail?: number;
-	// Adds the copy act: in the head with a title, else in its own column
-	// beside the first line.
+	// Adds the copy act, named by the title (else just Copy): in the head with a
+	// title, else in its own column beside the first line.
 	copy?: boolean;
 	// Adds the download act, saving the text as a file of this name
-	// (`recovery-codes.txt`): after the copy act, in the same place.
+	// (`recovery-codes.txt`), named by the title (else by the file): after the
+	// copy act, in the same place.
 	download?: string;
 	// The text waits: line boxes stand in for it under the head, `tail` of
 	// them under the fold's when it folds.
@@ -68,13 +69,13 @@ export interface CodeProps extends Closed {
 
 // The copy act: a check and the word Copied for two seconds once copied; a
 // refused write raises the failed Toast.
-function CopyAct({ name, value }: { name: string; value: string }) {
+function CopyAct({ name, value }: { name?: string; value: string }) {
 	const words = useWords();
 	const [done, copy] = useCopy();
 	return (
 		<IconButton
 			icon={done ? "Check" : "Copy"}
-			label={done ? words.copied : `${words.copy} ${name}`}
+			label={done ? words.copied : named(words.copy, name)}
 			onAct={() => copy(value)}
 		/>
 	);
@@ -93,7 +94,7 @@ function DownloadAct(props: { name: string; value: string; file: string }) {
 	return (
 		<IconButton
 			icon="Download"
-			label={`${words.download} ${props.name}`}
+			label={named(words.download, props.name)}
 			onAct={() => {
 				save().catch(() => toast(words.downloadFailed, { state: "failed" }));
 			}}
@@ -124,12 +125,11 @@ export function Code({
 		if (unfolded && textRef.current)
 			AccessibilityInfo.sendAccessibilityEvent(textRef.current, "focus");
 	}, [unfolded]);
-	const name = title ?? words.code;
 	const acts = (
 		<>
-			{copy ? <CopyAct name={name} value={source} /> : null}
+			{copy ? <CopyAct name={title} value={source} /> : null}
 			{download ? (
-				<DownloadAct name={name} value={source} file={download} />
+				<DownloadAct name={title ?? download} value={source} file={download} />
 			) : null}
 		</>
 	);

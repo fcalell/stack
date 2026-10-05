@@ -167,6 +167,8 @@ import {
 	SKELETON_ROW,
 	SPLIT_MAIN,
 	STAGE,
+	STAGE_MARK,
+	STAGE_RAIL,
 	STATUS_DOT,
 	STEP_COUNT_SEGMENT,
 	SWITCH,
@@ -214,6 +216,7 @@ import {
 	icon,
 	iconButton,
 	image,
+	imageContentTone,
 	imagePicture,
 	lineBox,
 	link,
@@ -247,6 +250,8 @@ import {
 	splitMain,
 	stage,
 	stageContentTone,
+	stageMark,
+	stageRail,
 	statusContentTone,
 	statusDot,
 	stepCountSegment,
@@ -380,6 +385,8 @@ const TEXT_FLOORS: Array<[ColorName, ColorName[]]> = [
 // A boundary or a mark at 3:1 on each ground it is drawn on.
 const GRAPHIC_FLOORS: Array<[ColorName, ColorName[]]> = [
 	["edge-strong", ["surface", "group"]],
+	// A done stage's check on its disc.
+	["canvas", ["ink-meta"]],
 	["accent", ["canvas", "surface", "group"]],
 	["on-act-accent", ["act-accent-pending"]],
 	["on-act-danger", ["act-danger-pending"]],
@@ -534,6 +541,8 @@ const MATRICES: readonly Registration[] = [
 	["IMAGE", IMAGE, image],
 	["IMAGE_PICTURE", IMAGE_PICTURE, imagePicture],
 	["STAGE", STAGE, stage],
+	["STAGE_MARK", STAGE_MARK, stageMark],
+	["STAGE_RAIL", STAGE_RAIL, stageRail],
 	["PLACE_ROW", PLACE_ROW, placeRow],
 	["PLACE_ROW_GLYPH", PLACE_ROW_GLYPH, placeRowGlyph],
 	["PLACE_TAB", PLACE_TAB, placeTab],
@@ -1842,7 +1851,9 @@ check("c22", "the content tones are contract colors", () => {
 		assert(colors.has(token), `ruleArrowContentTone(${state}): ${token}`);
 		checked++;
 	}
-	requireEqual(stageContentTone(), "ink-meta", "done stage's check ink");
+	requireEqual(stageContentTone("check"), "canvas", "done stage's check ink");
+	requireEqual(stageContentTone("cross"), "danger", "ended stage's cross ink");
+	requireEqual(imageContentTone(), "ink-meta", "failed image's glyph ink");
 	checked++;
 	requireEqual(toastContentTone("done"), "ok", "done glyph ink");
 	requireEqual(bannerContentTone("note"), "accent-ink", "note glyph ink");

@@ -148,13 +148,14 @@ export const ICON_BUTTON = matrix({
 // ── Link ────────────────────────────────────────────────────────────
 
 // Accent ink at 500 in the type of the line it sits in. `inline` is
-// underlined at rest; `standalone` stands on the target height.
+// underlined at rest; `standalone` is not, and stands on the target height
+// (`LINK_TARGET`).
 export const LINK = matrix({
 	base: "font-medium text-accent-ink",
 	variants: {
 		fit: {
 			inline: "underline",
-			standalone: "min-h-target",
+			standalone: "no-underline",
 		},
 	},
 	defaultVariants: { fit: "inline" },
@@ -911,6 +912,35 @@ export const STAGE = matrix({
 	},
 });
 
+// A stage's mark at the meta icon size, the shape saying where the rail
+// stands: done a filled disc (its check drawn on it, `STAGE_CHECK`), current
+// a ring in the accent, later a hollow ring in the meta ink. An ended rail's
+// mark is a cross (`STAGE_CROSS`) with no shape of its own.
+export const STAGE_MARK = matrix({
+	base: "size-icon-meta rounded-full",
+	variants: {
+		state: {
+			done: "bg-ink-meta",
+			current: "border-2 border-accent-ink",
+			later: "border border-ink-meta",
+		},
+	},
+	defaultVariants: { state: "later" },
+});
+
+// The rail from a stage's mark to the next: solid in the strong hairline
+// through the done stages, the plain hairline after.
+export const STAGE_RAIL = matrix({
+	base: "border-l",
+	variants: {
+		state: {
+			done: "border-edge-strong",
+			ahead: "border-edge",
+		},
+	},
+	defaultVariants: { state: "ahead" },
+});
+
 // ── Bar chart ───────────────────────────────────────────────────────
 
 // One of the four bands the plot's height splits into, its top a gridline
@@ -968,21 +998,22 @@ export const QR_CODE = matrix({
 
 // The frame an image stands in, a hairline on the page. A thumbnail is a
 // square tile at its radius; the content fit takes its container's width and
-// the card's radius. Waiting it is a skeleton and failed a group ground
-// holding a glyph over the alt text, each at least the tile's height, since
-// the content fit knows no aspect before its bytes; loaded, the content fit's
-// height is its picture's.
+// the card's radius, down to the height cap. Waiting it is a skeleton and
+// failed a group ground holding a glyph over the alt text, each at the
+// loaded height: the thumbnail's side, and the content fit's aspect (the
+// consumer's, else `IMAGE_ASPECT`, since its bytes have none yet); loaded,
+// the content fit's height is its picture's.
 export const IMAGE = matrix({
 	base: "border border-edge",
 	variants: {
 		fit: {
 			thumb: "size-image-tile rounded-control",
-			content: "w-full rounded-card",
+			content: "w-full max-h-image-cap rounded-card",
 		},
 		state: {
 			rest: "",
-			loading: "min-h-image-tile bg-skeleton",
-			error: "min-h-image-tile gap-inside p-inside bg-group",
+			loading: "bg-skeleton",
+			error: "gap-inside p-inside bg-group",
 		},
 	},
 	defaultVariants: { fit: "content", state: "rest" },

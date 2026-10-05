@@ -26,6 +26,7 @@ import {
 	tableRecords,
 	toggled,
 	treeRows,
+	waitLine,
 } from "../src/list-state.ts";
 import { leadingOf, sizePx } from "../src/scales.ts";
 import { ENGLISH } from "../src/tokens.ts";
@@ -224,9 +225,10 @@ test("the waiting shape follows the declared slots and runs none of them", () =>
 		"status",
 	);
 	assert.equal(rowShape({ leading: { check: spy("check") } }).leading, "check");
-	assert.deepEqual(meterShape({}), { meta: false });
-	assert.deepEqual(meterShape({ meta: spy("meta") }), { meta: true });
-	assert.deepEqual(meterShape({ counts: spy("counts") }), { meta: true });
+	assert.deepEqual(meterShape({}), { line: "none" });
+	assert.deepEqual(meterShape({ meta: spy("meta") }), { line: "meta" });
+	assert.deepEqual(meterShape({ counts: spy("counts") }), { line: "counts" });
+	assert.equal(waitLine({ meta: "Of 10", counts: [] }), "counts");
 	assert.deepEqual(fileShape({}), { change: false, chip: false });
 	assert.deepEqual(fileShape({ chip: spy("chip") }), {
 		change: false,

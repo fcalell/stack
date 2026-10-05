@@ -1319,6 +1319,12 @@ export function filled(word: string, values: Record<string, string>): string {
 	);
 }
 
+// An act's word over what it acts on, the word alone when there is nothing
+// to name: `named(words.copy, "Terminal")`, `named(words.copy, undefined)`.
+export function named(word: string, name: string | undefined): string {
+	return name === undefined ? word : `${word} ${name}`;
+}
+
 // A counted word at a count: `counted(words.earlierLines, 3)`.
 export function counted(word: CountedWord, count: number): string {
 	return (count === 1 ? word.one : word.other).replace(

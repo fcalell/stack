@@ -47,12 +47,19 @@ with `strong`) or the molecule that owns its role (`title` is `Place`'s and `Scr
 
 A picture is an `Image`, never an `<img>`: `src`, `alt` (a sentence naming what it shows), a `fit`
 (`thumb`, a square tile beside the lines that say where it came from, or `content`, the
-container's width at the picture's own aspect, capped in height) and `loading`. It draws its own
-waiting and failed forms (the failed form says the `alt`), and a press opens the full picture over
-the scrim with a Close act, Escape and a press outside. The full view takes no zoom.
+container's width at the picture's own aspect, capped in height), an `aspect` and `loading`. It
+draws its own waiting and failed forms (the failed form says the `alt`), and a press opens the full
+picture over the scrim with a Close act, Escape and a press outside. The full view takes no zoom.
+
+A `content` picture has no aspect until its bytes arrive, so its waiting and failed forms stand at
+the aspect you give: `aspect` is its width over its height (`16 / 9`), and its box holds that
+aspect in every state, the picture cover-cropped to it. Give it whenever you know the picture's
+shape. Without one the box waits at 3:2 and a loaded picture takes its own aspect, so the page
+moves when they differ. A `thumb` is always square and takes none.
 
 ```tsx
 <Image src={shot.url} alt={shot.title} fit="thumb" loading={shot.pending} />
+<Image src={shot.url} alt={shot.title} aspect={shot.width / shot.height} />
 ```
 
 ## A page read in a context names it beside its title
@@ -110,7 +117,10 @@ A strip of counts is `Stats`, never a `Columns` of `Text`: `items`, each a `Stat
 `CountLink` with its own `href`), never both. Zeros are counts, drawn. It stands two cells to a row
 below `tablet`. One figure that is the focal point of its screen is a `Stat` (`label`, `value`,
 `unit`), once per screen, its label read after it ("2 need you"); a `Stats` cell's label is read
-before it.
+before it. Each `counts` link is a standalone link on the target height. While `loading`, a `Stats`
+waits at the loaded height from the `items` you pass: one waiting cell per item, with the line
+(`meta` or `counts`) it declares. With no items, four cells of label and figure stand in, so a
+strip whose cells carry a line moves when its data lands.
 
 ```tsx
 <Stats items={[

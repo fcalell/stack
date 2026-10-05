@@ -19,11 +19,22 @@ const REJECTED = [
 	{ label: "Live", state: "later" },
 ] as const;
 
-// Every cell draws the rail in flight and the rail ended under it.
+// A rail whose later stages stand mid-rail, one after another.
+const IN_SPEC = [
+	{ label: "Submitted", state: "done", at: "2026-09-14T09:12:00Z" },
+	{ label: "In spec", state: "current", at: "2026-09-16T15:40:00Z" },
+	{ label: "In build", state: "later" },
+	{ label: "In review", state: "later" },
+	{ label: "Live", state: "later" },
+] as const;
+
+// Every cell draws the rail in flight, one with later stages mid-rail and the
+// rail ended under them.
 export function drawStages() {
 	return (
 		<Wide>
 			<Stages steps={IN_BUILD} />
+			<Stages steps={IN_SPEC} />
 			<Stages
 				steps={REJECTED}
 				ended={{

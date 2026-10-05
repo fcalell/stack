@@ -24,10 +24,12 @@ const HIT = "absolute inset-0 active:bg-wash-press";
 const FIGURE = "flex-row items-baseline";
 
 export interface StatsProps extends Closed {
-	// The cells, in order: each a label over its figure.
+	// The cells, in order: each a label over its figure. While `loading`, the
+	// items known (their `meta` or `counts` set each waiting cell's line);
+	// none, and four cells of label and figure stand in.
 	items: readonly StatSpec[];
-	// The cells wait as bars in their line boxes; the strip's length is the
-	// data's, so four stand in.
+	// A cell per item waits as bars in its line boxes, the line it declares
+	// included, at the loaded height.
 	loading?: boolean;
 }
 
@@ -37,7 +39,7 @@ export interface StatsProps extends Closed {
 // drawn. Two cells to a row. A cell that is a link takes its press on a hit
 // laid last over it, so it stands on top of the cell's text.
 export function Stats({ items, loading }: StatsProps) {
-	if (loading) return <StatsWait />;
+	if (loading) return <StatsWait items={items} />;
 	const number = formatterFor("number");
 	return (
 		<View className={cn(STATS, CLIP)}>

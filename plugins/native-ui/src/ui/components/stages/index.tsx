@@ -1,11 +1,12 @@
 import type { Stage, StageEnd, StepState } from "@fcalell/ui-core/descriptors";
 import { stagesShown } from "@fcalell/ui-core/list-state";
 import {
-	STAGE_RAIL,
 	STAGE_ROW,
 	STAGE_WORDS,
 	stage,
 	stageContentTone,
+	stageMark,
+	stageRail,
 	text,
 } from "@fcalell/ui-core/variants";
 import type { ReactNode } from "react";
@@ -17,15 +18,16 @@ import { moment } from "../../lib/moment";
 import { Strut } from "../../lib/strut";
 import { useWords } from "../../lib/words";
 import { Icon } from "../icon";
-import { StatusDot } from "../status/dot";
 
 const LIST = "min-w-0";
 const ROW = "flex-row min-w-0";
-// The marks' column is the check's width, the rail running down its middle.
+// The marks' column is the mark's width, the rail running down its middle.
 const MARKS = "items-center shrink-0 w-icon-meta";
 // The mark beside a zero-width line of the label's role, so it stands on the
 // label's first line.
 const MARK = "flex-row items-center justify-center shrink-0";
+// The done disc centres its check.
+const DISC = "items-center justify-center";
 const RAIL = "grow w-0";
 const WORDS = "flex-1 min-w-0";
 
@@ -61,7 +63,14 @@ function Row(props: {
 					<Strut role={role} />
 					{props.mark}
 				</View>
-				{props.last ? null : <View className={cn(STAGE_RAIL, RAIL)} />}
+				{props.last ? null : (
+					<View
+						className={cn(
+							stageRail({ state: props.state === "done" ? "done" : "ahead" }),
+							RAIL,
+						)}
+					/>
+				)}
 			</View>
 			<View className={cn(props.last ? undefined : STAGE_WORDS, WORDS)}>
 				{props.children}
@@ -70,11 +79,12 @@ function Row(props: {
 	);
 }
 
-// Its stages top to bottom on a hairline rail joining their marks: a done
-// one a check with its moment under the label, the current one the active
-// dot with its label at 500, a later one a hollow dot with its label in meta;
-// an ended rail closes on the failed dot, its label and its reason in meta.
-// React Native has no current-step role: the current row is the selected one.
+// Its stages top to bottom on a hairline rail joining their marks, solid
+// through the done stages: a done one a disc with a check and its moment under
+// the label, the current one a ring in the accent with its label at 500, a
+// later one a hollow ring with its label in meta; an ended rail closes on a
+// danger cross, its label and its reason in meta. React Native has no
+// current-step role: the current row is the selected one.
 export function Stages({ steps, ended }: StagesProps) {
 	const words = useWords();
 	const shown = stagesShown(steps, ended !== undefined);
@@ -82,19 +92,21 @@ export function Stages({ steps, ended }: StagesProps) {
 		<View className={LIST}>
 			{shown.map((step, at) => {
 				const last = ended === undefined && at === shown.length - 1;
-				let mark = <StatusDot state="idle" />;
+				let mark = <View className={stageMark({ state: "later" })} />;
 				let spoken: string = words.waiting;
 				if (step.state === "done") {
 					spoken = words.done;
 					mark = (
-						<Ink.Provider value={stageContentTone()}>
-							<Icon name="Check" fit="meta" />
-						</Ink.Provider>
+						<View className={cn(stageMark({ state: "done" }), DISC)}>
+							<Ink.Provider value={stageContentTone("check")}>
+								<Icon name="Check" fit="meta" />
+							</Ink.Provider>
+						</View>
 					);
 				}
 				if (step.state === "current") {
 					spoken = words.active;
-					mark = <StatusDot state="active" />;
+					mark = <View className={stageMark({ state: "current" })} />;
 				}
 				return (
 					<Row
@@ -122,7 +134,11 @@ export function Stages({ steps, ended }: StagesProps) {
 			{ended ? (
 				<Row
 					state="ended"
-					mark={<StatusDot state="failed" />}
+					mark={
+						<Ink.Provider value={stageContentTone("cross")}>
+							<Icon name="X" fit="meta" />
+						</Ink.Provider>
+					}
 					last
 					spoken={[words.failed, ended.label, ended.reason].join(", ")}
 				>

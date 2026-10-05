@@ -406,6 +406,7 @@ export const OVERLAYS: readonly string[] = [
 	// Image
 	"object-contain",
 	"size-full",
+	"h-full",
 	// Rules
 	"col-span-4",
 	"items-stretch",

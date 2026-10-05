@@ -25,7 +25,7 @@ export function drawStats(frame: ShowcaseFrame) {
 	if (frame.state === "loading")
 		return (
 			<Wide>
-				<Stats items={[]} loading />
+				<Stats items={HOME} loading />
 			</Wide>
 		);
 	return (

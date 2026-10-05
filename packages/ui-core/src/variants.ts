@@ -65,6 +65,8 @@ import {
 	SKELETON_ROW,
 	SPLIT_MAIN,
 	STAGE,
+	STAGE_MARK,
+	STAGE_RAIL,
 	STATUS_DOT,
 	STEP_COUNT_SEGMENT,
 	SWITCH,
@@ -164,6 +166,8 @@ export const chartBand = build(CHART_BAND);
 export const chartFill = build(CHART_FILL);
 export const qrCode = build(QR_CODE);
 export const stage = build(STAGE);
+export const stageMark = build(STAGE_MARK);
+export const stageRail = build(STAGE_RAIL);
 export const image = build(IMAGE);
 export const imagePicture = build(IMAGE_PICTURE);
 export const placeRow = build(PLACE_ROW);
@@ -271,6 +275,8 @@ export const FAMILIES: readonly Family[] = [
 	family("IMAGE", IMAGE, image),
 	family("IMAGE_PICTURE", IMAGE_PICTURE, imagePicture),
 	family("STAGE", STAGE, stage),
+	family("STAGE_MARK", STAGE_MARK, stageMark),
+	family("STAGE_RAIL", STAGE_RAIL, stageRail),
 	family("PLACE_ROW", PLACE_ROW, placeRow),
 	family("PLACE_ROW_GLYPH", PLACE_ROW_GLYPH, placeRowGlyph),
 	family("PLACE_TAB", PLACE_TAB, placeTab),
@@ -646,10 +652,16 @@ export const METER_TRACK = "h-meter rounded-chip bg-fill-neutral";
 // `inside` above and below. It sits outside the track, which clips.
 export const METER_MARK =
 	"w-track bg-ink-body -inset-y-inside -translate-x-1/2";
-// A line of counts that lead to their lists: links a gap apart with no glyph
-// between (a meter's line under its bar, a stats cell's line under its
-// figure).
-export const COUNT_LINKS = "gap-inside";
+// A line of counts that lead to their lists: standalone links a gap apart
+// with no glyph between (a meter's line under its bar, a stats cell's line
+// under its figure). Each link's box is the target height (`LINK_TARGET`),
+// and the line waits as one such box with a bar centred in it.
+export const COUNT_LINKS = "gap-x-inside";
+// A standalone link's box at the target height: the web's anchor carries it,
+// the phone's pressable (a text's own box takes no touch past its words'
+// centre). Unheld, drawn by each that has one: the Link and a count line's
+// waiting form.
+export const LINK_TARGET = "min-h-target";
 // Stats: the card on the surface holding the cells. A cell draws its own top
 // and start hairlines, so the strip splits wherever its cells wrap; the card's
 // outer edge is `STATS_EDGE`, drawn over the cells. The cell is the label over
@@ -702,18 +714,23 @@ export const QR_TILE = "size-qr rounded-card border border-edge bg-surface";
 // Stages: a rail of fixed states. A stage is its mark beside its words, the
 // words the label with one meta line under it; a hairline in the edge ink
 // runs from each mark to the next (`STAGE_RAIL`), and the room between two
-// stages is the words' own bottom inset, so the rail runs unbroken. The
-// check's ink is the meta ink; the current, later and ended marks are status
-// dots.
+// stages is the words' own bottom inset, so the rail runs unbroken. A done
+// mark's check stands on its disc in the canvas ink (`STAGE_CHECK`), an ended
+// rail's cross is the danger ink (`STAGE_CROSS`).
 export const STAGE_ROW = "gap-pair";
 export const STAGE_WORDS = "pb-pair";
-export const STAGE_RAIL = "border-l border-edge";
-export const STAGE_CHECK = "text-ink-meta";
+export const STAGE_CHECK = "text-canvas";
+export const STAGE_CROSS = "text-danger";
 // Image: its full view stands on the scrim with no frame, the picture inside
 // the page inset; the close act is a lifted ground at the control radius over
 // the picture, as the Latest act floats over a log.
 export const IMAGE_FULL = "p-page";
 export const IMAGE_CLOSE = "rounded-control bg-raised shadow-float";
+// A failed image's glyph, in the meta ink its alt text is drawn in.
+export const IMAGE_FAILED_INK = "text-ink-meta";
+// The aspect a content image waits at when its consumer gives none: the
+// width over the height of a photograph (3:2).
+export const IMAGE_ASPECT = 3 / 2;
 // StepCount: its segments a gap apart over its words.
 export const STEP_COUNT = "gap-pair";
 export const STEP_COUNT_SEGMENTS = "gap-inside";
@@ -919,9 +936,26 @@ export function changeContentTone(kind: ChangeKind): ContentTone {
 	return toneOf(CHANGE_MARK.variants.kind[kind]);
 }
 
-// A done stage's check ink.
-export function stageContentTone(): ContentTone {
-	return toneOf(STAGE_CHECK);
+// A stage mark's glyph ink: the done mark's check, the ended mark's cross.
+export function stageContentTone(glyph: "check" | "cross"): ContentTone {
+	return toneOf(glyph === "check" ? STAGE_CHECK : STAGE_CROSS);
+}
+
+// A failed image's glyph ink.
+export function imageContentTone(): ContentTone {
+	return toneOf(IMAGE_FAILED_INK);
+}
+
+// The aspect an image's box stands at, a thumbnail's being its square: a
+// content image's is its consumer's, else `IMAGE_ASPECT` until its bytes are
+// here, when a picture with none given takes its own (undefined).
+export function imageAspect(
+	fit: ImageFit,
+	aspect: number | undefined,
+	loaded: boolean,
+): number | undefined {
+	if (fit === "thumb") return undefined;
+	return aspect ?? (loaded ? undefined : IMAGE_ASPECT);
 }
 
 // A toast's glyph ink, its state's.

@@ -1,6 +1,6 @@
 import { Button as BaseButton } from "@base-ui/react/button";
 import { cn } from "@fcalell/ui-core/cn";
-import { counted } from "@fcalell/ui-core/tokens";
+import { counted, named } from "@fcalell/ui-core/tokens";
 import {
 	CODE_ACT,
 	CODE_FOLD,
@@ -46,13 +46,13 @@ const BAR = "w-full";
 export interface CodeProps extends Closed {
 	/** The text, its lines split on newlines. */
 	text: string;
-	/** What the text is (a file's name, the tool it goes into), in a head over it; it names the text. */
+	/** What the text is (a file's name, the tool it goes into), in a head over it; it names the text and its acts. */
 	title?: string;
 	/** Shows only the last lines, this many, behind an act that reveals the earlier ones. */
 	tail?: number;
-	/** Adds the copy act: in the head with a title, else in a column beside the first line. */
+	/** Adds the copy act, named by the title (else just Copy): in the head with a title, else in a column beside the first line. */
 	copy?: boolean;
-	/** Adds the download act, saving the text as a file of this name (`recovery-codes.txt`): after the copy act, in the same place. */
+	/** Adds the download act, saving the text as a file of this name (`recovery-codes.txt`), named by the title (else by the file): after the copy act, in the same place. */
 	download?: string;
 	/** The text waits: line boxes stand in for it under the head, `tail` of them under the fold's when it folds. */
 	loading?: boolean;
@@ -66,7 +66,7 @@ function DownloadAct(props: { name: string; text: string; file: string }) {
 		<InsetRing value>
 			<IconButton
 				icon="Download"
-				label={`${words.download} ${props.name}`}
+				label={named(words.download, props.name)}
 				onAct={() => {
 					const url = URL.createObjectURL(
 						new Blob([props.text], { type: "text/plain" }),
@@ -83,14 +83,14 @@ function DownloadAct(props: { name: string; text: string; file: string }) {
 }
 
 // The copy act: a check and the word Copied for two seconds once copied.
-function CopyAct(props: { name: string; text: string }) {
+function CopyAct(props: { name?: string; text: string }) {
 	const words = useWords();
 	const [done, copy] = useCopy();
 	return (
 		<InsetRing value>
 			<IconButton
 				icon={done ? "Check" : "Copy"}
-				label={done ? words.copied : `${words.copy} ${props.name}`}
+				label={done ? words.copied : named(words.copy, props.name)}
 				onAct={() => copy(props.text)}
 			/>
 		</InsetRing>
@@ -113,9 +113,9 @@ export function Code({
 	const name = title ?? words.code;
 	const acts = (
 		<>
-			{copy ? <CopyAct name={name} text={source} /> : null}
+			{copy ? <CopyAct name={title} text={source} /> : null}
 			{download ? (
-				<DownloadAct name={name} text={source} file={download} />
+				<DownloadAct name={title ?? download} text={source} file={download} />
 			) : null}
 		</>
 	);

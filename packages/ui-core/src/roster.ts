@@ -528,7 +528,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		},
 		Link: {
 			props: ["href", "fit", "children"],
-			draws: ["LINK"],
+			draws: ["LINK", "LINK_TARGET"],
 			holds: ["LINK"],
 			states: [...PRESS],
 			owns: { colors: ["accent-ink", "ring"], sizes: ["target"] },
@@ -2466,10 +2466,12 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"loading",
 			],
 			draws: [
+				"LINK_TARGET",
 				"COUNT_LINKS",
 				"FIGURES",
 				"LINE_BOX.role.body",
 				"LINE_BOX.role.meta",
+				"LINK.fit.standalone",
 				"METER",
 				"METER_FILL",
 				"METER_HEAD",
@@ -2496,6 +2498,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				colors: [
 					"ink-body",
 					"ink-meta",
+					"accent-ink",
 					"fill-neutral",
 					"warn",
 					"danger",
@@ -2503,18 +2506,20 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				],
 				radii: ["chip"],
 				spacing: ["pair", "inside", "card"],
-				sizes: ["meter", "track", "skeleton"],
+				sizes: ["meter", "track", "skeleton", "target"],
 			},
 		},
 		// A known sequence with a position in it, top to bottom on a hairline
 		// rail: each `steps` entry a `Stage` (`done`, `current` or `later`), a
-		// done one a check at the meta icon size, its `at` a moment under the
-		// label, the current one the active dot, its label at 500 and
-		// `aria-current="step"`, a later one the hollow dot with its label in
-		// meta. `ended` replaces every step after the last done one with a
-		// terminal row: the failed dot, its label and its reason in meta. The
-		// hue is the marks'; a label's ink is its own. Static data, so it has no
-		// waiting form.
+		// done one a filled disc with its check, its `at` a moment under the
+		// label, the current one a ring in the accent, its label at 500 and
+		// `aria-current="step"`, a later one a hollow ring with its label in
+		// meta, every mark at the meta icon size. `ended` replaces every step
+		// after the last done one with a terminal row: a cross in `danger`, its
+		// label and its reason in meta. The rail is solid in the strong hairline
+		// through the done stages, the plain hairline after. The hue is the
+		// marks'; a label's ink is its own. Static data, so it has no waiting
+		// form.
 		Stages: {
 			props: ["steps", "ended"],
 			draws: [
@@ -2523,22 +2528,37 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"LINE_BOX.role.meta",
 				"STAGE",
 				"STAGE_CHECK",
+				"STAGE_CROSS",
+				"STAGE_MARK",
 				"STAGE_RAIL",
 				"STAGE_ROW",
 				"STAGE_WORDS",
-				"STATUS_DOT.state.active",
-				"STATUS_DOT.state.failed",
-				"STATUS_DOT.state.idle",
 				"TEXT.role.meta",
 			],
-			holds: ["STAGE", "STAGE_ROW", "STAGE_WORDS", "STAGE_RAIL", "STAGE_CHECK"],
+			holds: [
+				"STAGE",
+				"STAGE_ROW",
+				"STAGE_WORDS",
+				"STAGE_MARK",
+				"STAGE_RAIL",
+				"STAGE_CHECK",
+				"STAGE_CROSS",
+			],
 			states: ["rest"],
 			owns: {
 				roles: ["body", "meta"],
-				colors: ["ink-body", "ink-meta", "edge", "accent-ink", "danger"],
+				colors: [
+					"ink-body",
+					"ink-meta",
+					"edge",
+					"edge-strong",
+					"accent-ink",
+					"canvas",
+					"danger",
+				],
 				radii: ["full"],
 				spacing: ["pair"],
-				sizes: ["icon-meta", "dot"],
+				sizes: ["icon-meta"],
 			},
 		},
 		// A strip of counts in one hairline card, its cells split by hairlines:
@@ -2549,10 +2569,12 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		Stats: {
 			props: ["items", "loading"],
 			draws: [
+				"LINK_TARGET",
 				"COUNT_LINKS",
 				"FIGURES",
 				"LINE_BOX.role.figure",
 				"LINE_BOX.role.meta",
+				"LINK.fit.standalone",
 				"SKELETON.kind.line",
 				"STATS",
 				"STATS_CELL",
@@ -2570,13 +2592,14 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"surface",
 					"ink-body",
 					"ink-meta",
+					"accent-ink",
 					"skeleton",
 					"wash-hover",
 					"wash-press",
 				],
 				radii: ["card", "chip"],
 				spacing: ["pair", "inside", "card"],
-				sizes: ["skeleton"],
+				sizes: ["skeleton", "target"],
 			},
 		},
 		// One figure at the `display` role, its label under it (figure first, read
@@ -2713,30 +2736,40 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		},
 		// A picture a press opens full size: a square tile (`thumb`) or its
 		// container's width at its own aspect down to a height cap (`content`).
-		// Waiting it is a skeleton at its box; failed, an `ImageOff` glyph with
+		// A content picture's consumer may give its `aspect` (width over height),
+		// which fixes its box in every state; without one the box waits at
+		// `IMAGE_ASPECT` and a loaded picture takes its own. Waiting it is a
+		// skeleton at its box; failed, an `ImageOff` glyph in the meta ink with
 		// the alt text in meta under it and nothing to open. The full view
 		// stands over the sheet base's scrim and focus trap, contain-fit inside
 		// the page inset, with a lifted Close act.
 		Image: {
-			props: ["src", "alt", "fit", "loading"],
+			props: ["src", "alt", "fit", "aspect", "loading"],
 			draws: [
 				"IMAGE",
 				"IMAGE_PICTURE",
 				"IMAGE_FULL",
 				"IMAGE_CLOSE",
+				"IMAGE_FAILED_INK",
 				"ICON.fit.body",
 				"ICON_BUTTON.fit.body",
 				"TEXT.role.meta",
 				"SCRIM",
 			],
-			holds: ["IMAGE", "IMAGE_PICTURE", "IMAGE_FULL", "IMAGE_CLOSE"],
+			holds: [
+				"IMAGE",
+				"IMAGE_PICTURE",
+				"IMAGE_FULL",
+				"IMAGE_CLOSE",
+				"IMAGE_FAILED_INK",
+			],
 			states: [...PRESS, "loading", "error"],
 			owns: {
 				roles: ["meta"],
 				colors: [
 					"edge",
 					"edge-hover",
-					"edge-strong",
+					"ink-body",
 					"skeleton",
 					"group",
 					"ink-meta",

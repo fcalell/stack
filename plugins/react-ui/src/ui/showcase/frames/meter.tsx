@@ -5,6 +5,11 @@ import { Section } from "../../components/section/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
 import { Wide } from "./layout-context.tsx";
 
+const COUNTS = [
+	{ label: "failing", value: 3, href: "/tests/failing" },
+	{ label: "untested", value: 5, href: "/tests/untested" },
+];
+
 function Usage() {
 	return (
 		<Section title="Hobby plan" description="Resets on Oct 31.">
@@ -132,16 +137,28 @@ export function drawMeter(frame: ShowcaseFrame) {
 	let drawn = LEVELS[frame.cell.name] ?? <Usage />;
 	if (frame.state === "loading")
 		drawn = (
-			<div className="grid grid-cols-2 gap-x-fields">
-				<Meter
-					label="Seats"
-					value={1}
-					max={12}
-					unit="seats"
-					meta="1 of 12 seats"
-				/>
-				<Meter label="" value={0} max={0} loading />
-			</div>
+			<>
+				<div className="grid grid-cols-2 gap-x-fields">
+					<Meter
+						label="Seats"
+						value={1}
+						max={12}
+						unit="seats"
+						meta="1 of 12 seats"
+					/>
+					<Meter label="" value={0} max={0} meta="" loading />
+				</div>
+				<div className="grid grid-cols-2 gap-x-fields">
+					<Meter
+						label="Passing"
+						value={34}
+						max={42}
+						unit="tests"
+						counts={COUNTS}
+					/>
+					<Meter label="" value={0} max={0} counts={COUNTS} loading />
+				</div>
+			</>
 		);
 	return <Wide>{drawn}</Wide>;
 }

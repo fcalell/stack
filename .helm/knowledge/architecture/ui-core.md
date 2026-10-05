@@ -1059,7 +1059,14 @@ a tick with no animation, never jumped to full.
   value, href }`) is the shared descriptor for a count that leads to its list; every molecule
   carrying counts takes it and composes `Link`, never spelling it: the line of links is
   `COUNT_LINKS`, one cell the Meter and the Stats cell both draw through one private `CountLinks`
-  part per platform. A `mark` (`{ value, label }`, `MeterMark`) is a tick across the track centred
+  part per platform. Each count is a `fit="standalone"` link: it stands alone on its line, so it
+  takes the `target` box (`LINK_TARGET`, 24 / 44; the web's anchor carries it, the phone's link is a
+  pressable of that height with its words centred, since a text's own box takes no touch past its
+  words) rather than the inline fit's line-high one. A waiting meter or strip cell stands at the
+  loaded height by the line it declares (`WaitLine` in `./list-state`: `counts`, a target-high
+  box, over `meta`, a meta line box, over none), read off the `meta` or `counts` it is given even
+  while it waits; `Stats` waits one cell per item it is given, four of label and figure when it
+  has none. A `mark` (`{ value, label }`, `MeterMark`) is a tick across the track centred
   on `value / max` (`METER_MARK`, outside the clipping track) and the meter's near point in place of
   `METER_NEAR`; its label and value are read aloud (`meterMark`). The role's children are
   presentational to assistive tech, so the counts stand outside the element carrying the meter role.
@@ -1124,15 +1131,22 @@ a tick with no animation, never jumped to full.
   header and eight lines wait at the loaded rows' heights and code start, and its height changes on
   load by the line count, and on touch by the lines that wrap, which no waiting form can know.
 - A picture is `Image`, one component for every place a picture stands (a record's screenshot, a
-  message's attachment, a message input's pending file): `src`, `alt`, `fit` and `loading`. `thumb`
-  is a square tile (`IMAGE`, `size-image-tile`, the control radius) and `content` the container's
-  width at the picture's own aspect down to a height cap (`image-cap`, the card radius), both
-  cover-cropped inside the hairline `edge` (`IMAGE_PICTURE`). The picture mounts while it waits,
-  hidden, so the frame (`IMAGE {state}`: a skeleton, at least a tile high since the content fit
-  knows no aspect before its bytes, an accepted height change on load) is replaced by the bytes
-  without a second fetch; a failed fetch draws a group-ground tile with an `ImageOff` glyph over the
-  alt text in meta and nothing to open, so `alt` is the one word the form needs and `words` gains
-  none. A loaded picture is a button named by `alt`; a press opens it over the scrim with no frame,
+  message's attachment, a message input's pending file): `src`, `alt`, `fit`, `aspect` and
+  `loading`. `thumb` is a square tile (`IMAGE`, `size-image-tile`, the control radius) and
+  `content` the container's width at the picture's own aspect down to a height cap (`image-cap`,
+  the card radius), both cover-cropped inside the hairline `edge` (`IMAGE_PICTURE`). A content
+  picture has no aspect before its bytes, so its waiting form stands at the loaded height through
+  `aspect`, an optional number (width over height, `16 / 9`) that fixes the box in every state with
+  the picture cover-cropped to it; without one the box waits at `IMAGE_ASPECT` (3:2) and a loaded
+  picture takes its own, a height change on load that the consumer avoids by passing the aspect it
+  knows (`imageAspect` in `./variants` reads it for both platforms). The picture mounts while it
+  waits, hidden, so the frame (`IMAGE {state}`: a skeleton at that height) is replaced by the bytes
+  without a second fetch; a failed fetch draws a group-ground tile at the same box with an
+  `ImageOff` glyph in the meta ink (`IMAGE_FAILED_INK`, 4.5:1 on `group` in both modes with the alt
+  text it labels) over the alt text in meta and nothing to open (a thumbnail's alt wraps to two
+  lines), so `alt` is the one word the form needs and `words` gains none. A press moves the
+  frame's hairline: `edge-hover` under the pointer, `ink-body` while pressed, since `edge-hover`
+  aliases `edge-strong` and a pressed frame must differ from a hovered one. A loaded picture is a button named by `alt`; a press opens it over the scrim with no frame,
   contain-fit inside the page inset (`IMAGE_FULL`), with a Close act on a lifted ground
   (`IMAGE_CLOSE`, as `THREAD_LATEST` lifts the Latest act, since the icon act's meta ink has no
   ground of its own over a scrim). The view is the sheet's internal base at its `view` form on the
@@ -1147,17 +1161,20 @@ a tick with no animation, never jumped to full.
 - A rail of fixed states is `Stages`, a known sequence with a position in it (an activity feed draws
   what happened, onboarding's step progress is its own molecule): `steps`, each a `Stage` (`{ label,
   state: "done" | "current" | "later", at? }`, its own descriptor), and `ended`, a `StageEnd` (`{
-  label, reason }`). Stages stand top to bottom as an ordered list on a hairline rail in the `edge`
-  ink (`STAGE_RAIL`) running from each mark to the next, so at phone width the line is what reads as
-  sequence. A done stage is a check at `icon-meta` (the meta ink, `STAGE_CHECK`, read on the phone
-  through `stageContentTone`) with its `at` as a moment in meta under the label; the current stage
-  is the active status dot with its label at body 500 and `aria-current="step"` (the phone: the
-  selected row); a later stage is the hollow `idle` dot with its label in meta. `at` is typed off a
-  later stage, which draws none. `ended` replaces every stage after the last done one (`stagesShown`
-  in `./list-state`, so both platforms draw the same rows, the current one included) with a terminal
-  row: the failed dot, its label at 500 and its reason in meta. The marks carry the hue (the current
-  dot's accent, the failed dot's danger) and a label's ink is its own in every state; the rail is
-  the one hairline whether a stage is done or not. `STAGE {state}` is the label's cell, the row's
+  label, reason }`). Stages stand top to bottom as an ordered list on a hairline rail
+  (`STAGE_RAIL`) running from each mark to the next, so at phone width the line is what reads as
+  sequence: the strong hairline through the done stages, the plain `edge` after (a solid rail then a
+  grey one, never dashed, since a React Native border dashes only on a view's four sides). Every
+  mark is the meta icon size (`STAGE_MARK`, 12 / 14, the state rail's 8–13 dots): a done stage a
+  filled `ink-meta` disc with its check on it (`STAGE_CHECK`, the canvas ink, 3:1 on the disc in
+  both modes, read on the phone through `stageContentTone`) and its `at` as a moment in meta under
+  the label; the current stage a ring in `accent-ink` with its label at body 500 and
+  `aria-current="step"` (the phone: the selected row); a later stage a hollow ring in `ink-meta`
+  with its label in meta. `at` is typed off a later stage, which draws none. `ended` replaces every
+  stage after the last done one (`stagesShown` in `./list-state`, so both platforms draw the same
+  rows, the current one included) with a terminal row: a cross in `danger` (`STAGE_CROSS`), its
+  label at 500 and its reason in meta. The marks carry the hue (the current ring's accent, the
+  cross's danger) and a label's ink is its own in every state. `STAGE {state}` is the label's cell, the row's
   gap and the words' bottom inset (`STAGE_ROW`, `STAGE_WORDS`) carry the room between stages, inside
   the rail's run. Each mark stands on its label's first line (a later label is meta, so its mark is
   on a meta line) and names its state to assistive tech through the existing status words (`done`,
@@ -1172,7 +1189,9 @@ a tick with no animation, never jumped to full.
   column. The web saves a `Blob` of the text through an anchor's `download`; the phone writes it to
   the cache directory with `expo-file-system` and hands it to the share sheet with `expo-sharing`,
   from which iOS and Android save to Files, so both are native-ui peers beside `expo-clipboard`. A
-  refused write or share raises the failed Toast, which says `downloadFailed`.
+  refused write or share raises the failed Toast, which says `downloadFailed`. The acts are named by
+  what they act on (`named` in `./tokens`): the title, else the file's name for download and the
+  bare word for copy, never the generic `code` word, which names the text group alone.
 
 ## The canon, the roster and the closed props
 

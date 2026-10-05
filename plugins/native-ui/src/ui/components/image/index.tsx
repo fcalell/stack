@@ -3,6 +3,8 @@ import {
 	IMAGE_FULL,
 	type ImageFit,
 	image,
+	imageAspect,
+	imageContentTone,
 	imagePicture,
 	text,
 } from "@fcalell/ui-core/variants";
@@ -22,11 +24,17 @@ import { IconButton } from "../icon-button";
 import { SheetBase } from "../sheet/base";
 
 const FRAME = "overflow-hidden";
-const PRESS = "active:border-edge-strong";
+const PRESS = "active:border-ink-body";
 // A waiting picture is mounted to fetch, and drawn when its bytes are here.
 const FETCHING = "absolute inset-0 opacity-0";
+// A picture in a box of its aspect fills the box, cover-cropped.
+const FILLS = "h-full";
 const FAILED = "items-center justify-center overflow-hidden";
-const ALT = "shrink max-w-full";
+// The words of a failed tile: a thumbnail's wrap to two lines inside it.
+const ALT: Record<ImageFit, string> = {
+	thumb: "shrink max-w-full text-center",
+	content: "shrink max-w-full",
+};
 // A press on the scrim around the picture closes the view.
 const SCRIM_HIT = "absolute inset-0";
 const VIEW = "flex-1 items-center justify-center";
@@ -43,6 +51,10 @@ export interface ImageProps extends Closed {
 	// A square `thumb` tile, or `content` (the default): the container's width
 	// at the picture's own aspect, capped in height.
 	fit?: ImageFit;
+	// A `content` picture's width over its height (`16 / 9`), when known: its
+	// box stands at it in every state, the picture cover-cropped to it. Without
+	// one the box waits at 3:2 and a loaded picture takes its own aspect.
+	aspect?: number;
 	// The tile at its box, a skeleton.
 	loading?: boolean;
 }
@@ -55,31 +67,47 @@ interface Seen {
 }
 
 // The picture in a hairline frame, cover-cropped to its tile or its cap.
-// Waiting, the frame is a skeleton; failed, an `ImageOff` glyph over the alt
-// text and nothing to open. Pressed, the full picture opens in a sheet's view
+// Waiting, the frame is a skeleton at the loaded height (a thumbnail's square,
+// a content picture's `aspect`, else 3:2); failed, an `ImageOff` glyph in the
+// meta ink over the alt text and nothing to open. Pressed, the full picture opens in a sheet's view
 // over the scrim (under the toasts), contain-fit inside the page inset and the
 // safe area, with a Close act, the system's back and a press on the scrim.
-export function Image({ src, alt, fit, loading }: ImageProps) {
+export function Image({ src, alt, fit, aspect, loading }: ImageProps) {
 	const place = fit ?? "content";
 	const [seen, setSeen] = useState<Seen>();
 	const [open, setOpen] = useState(false);
 	// Keyed by the address, so a new `src` is fetched again.
 	const current = seen?.src === src ? seen : undefined;
 	const pending = current === undefined;
+	// The box's aspect: the consumer's, or the default while waiting; a loaded
+	// picture with none given is as tall as its own aspect makes it.
+	const boxed = imageAspect(
+		place,
+		aspect,
+		current?.status === "loaded" && !loading,
+	);
+	const box = boxed === undefined ? undefined : { aspectRatio: boxed };
 	if (loading)
 		return (
 			<View
 				accessibilityState={{ busy: true }}
+				style={box}
 				className={cn(image({ fit: place, state: "loading" }), FRAME)}
 			/>
 		);
 	if (current?.status === "failed")
 		return (
-			<View className={cn(image({ fit: place, state: "error" }), FAILED)}>
-				<Ink.Provider value="ink-meta">
+			<View
+				style={box}
+				className={cn(image({ fit: place, state: "error" }), FAILED)}
+			>
+				<Ink.Provider value={imageContentTone()}>
 					<Icon name="ImageOff" />
 				</Ink.Provider>
-				<RNText numberOfLines={1} className={cn(text({ role: "meta" }), ALT)}>
+				<RNText
+					numberOfLines={place === "thumb" ? 2 : 1}
+					className={cn(text({ role: "meta" }), ALT[place])}
+				>
 					{alt}
 				</RNText>
 			</View>
@@ -91,6 +119,7 @@ export function Image({ src, alt, fit, loading }: ImageProps) {
 				accessibilityLabel={alt}
 				accessibilityState={{ busy: pending }}
 				onPress={() => setOpen(true)}
+				style={box}
 				className={cn(
 					image({ fit: place, state: pending ? "loading" : "rest" }),
 					FRAME,
@@ -111,11 +140,13 @@ export function Image({ src, alt, fit, loading }: ImageProps) {
 					}
 					onError={() => setSeen({ src, status: "failed" })}
 					style={
-						place === "content" && current?.aspect
+						place === "content" && box === undefined && current?.aspect
 							? { aspectRatio: current.aspect }
 							: undefined
 					}
-					className={pending ? FETCHING : imagePicture({ fit: place })}
+					className={
+						pending ? FETCHING : cn(imagePicture({ fit: place }), box && FILLS)
+					}
 				/>
 			</Pressable>
 			<SheetBase

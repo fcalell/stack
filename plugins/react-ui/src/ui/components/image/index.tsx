@@ -2,9 +2,11 @@ import { Dialog } from "@base-ui/react/dialog";
 import { cn } from "@fcalell/ui-core/cn";
 import {
 	IMAGE_CLOSE,
+	IMAGE_FAILED_INK,
 	IMAGE_FULL,
 	type ImageFit,
 	image,
+	imageAspect,
 	imagePicture,
 	text,
 } from "@fcalell/ui-core/variants";
@@ -16,13 +18,20 @@ import { IconButtonBase } from "../icon-button/base.tsx";
 import { SheetBase } from "../sheet/base.tsx";
 
 const FRAME = "block relative overflow-hidden";
-// A press moves the frame's hairline; the ring is the base layer's.
-const PRESS = "hover:border-edge-hover active:border-edge-strong";
+// A press moves the frame's hairline, the pointer's step lighter than the
+// press's; the ring is the base layer's.
+const PRESS = "hover:border-edge-hover active:border-ink-body";
 const PICTURE = "block object-cover";
 // A waiting picture is mounted to fetch, and drawn when its bytes are here.
 const FETCHING = "absolute inset-0 opacity-0";
+// A picture in a box of its aspect fills the box, cover-cropped.
+const BOXED = "absolute inset-0 h-full";
 const FAILED = "flex flex-col items-center justify-center";
-const ALT = "min-w-0 max-w-full truncate";
+// The words of a failed tile: a thumbnail's wrap to two lines inside it.
+const ALT: Record<ImageFit, string> = {
+	thumb: "min-w-0 max-w-full line-clamp-2 break-words text-center",
+	content: "min-w-0 max-w-full truncate",
+};
 // The full view fills the sheet's layer, which takes no press: the picture
 // and the act take theirs, and a press anywhere else is on the scrim. The
 // picture is contained inside the page inset.
@@ -42,14 +51,16 @@ export interface ImageProps extends Closed {
 	alt: string;
 	/** A square `thumb` tile, or `content` (the default): the container's width at the picture's own aspect, capped in height. */
 	fit?: ImageFit;
+	/** A `content` picture's width over its height (`16 / 9`), when known: its box stands at it in every state, the picture cover-cropped to it. Without one the box waits at 3:2 and a loaded picture takes its own aspect. */
+	aspect?: number;
 	/** The tile at its box, a skeleton. */
 	loading?: boolean;
 }
 
 type Status = "pending" | "loaded" | "failed";
 
-/** The picture in a hairline frame, cover-cropped to its tile or its cap. Waiting, the frame is a skeleton; failed, an `ImageOff` glyph over the alt text and nothing to open. Pressed, the full picture opens over the scrim, contain-fit inside the page inset, with a Close act, Escape and a press outside. */
-export function Image({ src, alt, fit, loading }: ImageProps) {
+/** The picture in a hairline frame, cover-cropped to its tile or its cap. Waiting, the frame is a skeleton at the loaded height (a thumbnail's square, a content picture's `aspect`, else 3:2); failed, an `ImageOff` glyph in the meta ink over the alt text and nothing to open. Pressed, the full picture opens over the scrim, contain-fit inside the page inset, with a Close act, Escape and a press outside. */
+export function Image({ src, alt, fit, aspect, loading }: ImageProps) {
 	const place = fit ?? "content";
 	const words = useWords();
 	const [seen, setSeen] = useState<{ src: string; status: Status }>();
@@ -63,18 +74,29 @@ export function Image({ src, alt, fit, loading }: ImageProps) {
 		if (node?.complete && status === "pending")
 			settle(node.naturalWidth > 0 ? "loaded" : "failed");
 	};
+	// The box's aspect is data (the consumer's, or the default while waiting).
+	const ratio = imageAspect(place, aspect, status === "loaded" && !loading);
+	const box = ratio === undefined ? undefined : { aspectRatio: ratio };
 	if (loading)
 		return (
 			<div
 				aria-busy
+				style={box}
 				className={cn(image({ fit: place, state: "loading" }), FRAME)}
 			/>
 		);
 	if (status === "failed")
 		return (
-			<div className={cn(image({ fit: place, state: "error" }), FAILED)}>
+			<div
+				style={box}
+				className={cn(
+					image({ fit: place, state: "error" }),
+					FAILED,
+					IMAGE_FAILED_INK,
+				)}
+			>
 				<Icon name="ImageOff" />
-				<span className={cn(text({ role: "meta" }), ALT)}>{alt}</span>
+				<span className={cn(text({ role: "meta" }), ALT[place])}>{alt}</span>
 			</div>
 		);
 	return (
@@ -83,6 +105,7 @@ export function Image({ src, alt, fit, loading }: ImageProps) {
 				type="button"
 				aria-busy={status === "pending" || undefined}
 				onClick={() => setOpen(true)}
+				style={box}
 				className={cn(
 					image({
 						fit: place,
@@ -101,6 +124,7 @@ export function Image({ src, alt, fit, loading }: ImageProps) {
 					className={cn(
 						imagePicture({ fit: place }),
 						status === "pending" ? FETCHING : PICTURE,
+						status === "loaded" && box && BOXED,
 					)}
 				/>
 			</button>

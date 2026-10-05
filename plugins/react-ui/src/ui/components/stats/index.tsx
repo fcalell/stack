@@ -26,15 +26,15 @@ const FIGURE = "flex items-baseline";
 
 /** A strip of counts. */
 export interface StatsProps extends Closed {
-	/** The cells, in order: each a label over its figure. */
+	/** The cells, in order: each a label over its figure. While `loading`, the items known (their `meta` or `counts` set each waiting cell's line); none, and four cells of label and figure stand in. */
 	items: readonly StatSpec[];
-	/** The cells wait as bars in their line boxes; the strip's length is the data's, so four stand in. */
+	/** A cell per item waits as bars in its line boxes, the line it declares included, at the loaded height. */
 	loading?: boolean;
 }
 
 /** One hairline card of counts split by hairlines, each cell its label in meta over its figure in tabular figures (its unit muted beside it), then a meta line or sub-counts as links, or the whole cell a link to its list. Zeros are drawn. Two cells to a row below `tablet` of the page. */
 export function Stats({ items, loading }: StatsProps) {
-	if (loading) return <StatsWait />;
+	if (loading) return <StatsWait items={items} />;
 	const number = formatterFor("number");
 	return (
 		<div className={cn(STATS, CLIP)}>

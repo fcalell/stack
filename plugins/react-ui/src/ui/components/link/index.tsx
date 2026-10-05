@@ -1,14 +1,17 @@
 import { cn } from "@fcalell/ui-core/cn";
-import { type LinkFit, link } from "@fcalell/ui-core/variants";
+import { LINK_TARGET, type LinkFit, link } from "@fcalell/ui-core/variants";
 import type { ReactNode } from "react";
 import type { Closed } from "../../lib/closed.ts";
 
 // Inline is underlined at rest and plain under the pointer; standalone the
-// other way round. A standalone link's box keeps to its words in a stretching
-// parent.
+// other way round, on the target height. A standalone link's box keeps to its
+// words in a stretching parent.
 const OVERLAY: Record<LinkFit, string> = {
 	inline: "hover:no-underline active:no-underline",
-	standalone: "inline-flex items-center w-fit hover:underline active:underline",
+	standalone: cn(
+		LINK_TARGET,
+		"inline-flex items-center w-fit hover:underline active:underline",
+	),
 };
 
 /** A navigation to another place. */

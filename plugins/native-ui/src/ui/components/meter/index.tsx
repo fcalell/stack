@@ -1,6 +1,6 @@
 import type { CountLink, MeterMark } from "@fcalell/ui-core/descriptors";
 import { formatterFor } from "@fcalell/ui-core/format";
-import { levelOf } from "@fcalell/ui-core/list-state";
+import { levelOf, waitLine } from "@fcalell/ui-core/list-state";
 import { filled } from "@fcalell/ui-core/tokens";
 import {
 	FIGURES,
@@ -42,7 +42,8 @@ interface MeterBase extends Closed {
 	// A tick across the track at the mark's value, named to assistive tech:
 	// the point the fill turns `warn` at, in place of the near share.
 	mark?: MeterMark;
-	// The label, share, bar and the line under it as bars in their line boxes.
+	// The label, share, bar and the line under it (the `meta` or `counts` given)
+	// as bars in their boxes.
 	loading?: boolean;
 }
 
@@ -81,7 +82,7 @@ export function Meter({
 	const words = useWords();
 	// In a Group the meter is one of its items, at the card's inset.
 	const item = useContext(GroundContext) === "group" && METER_ITEM;
-	if (loading) return <MeterWait busy meta />;
+	if (loading) return <MeterWait busy line={waitLine({ meta, counts })} />;
 	const share = max > 0 ? value / max : 0;
 	const markShare = mark && max > 0 ? mark.value / max : undefined;
 	const number = formatterFor("number");
