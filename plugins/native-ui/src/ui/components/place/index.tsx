@@ -9,7 +9,7 @@ import {
 	FLOATING_ACT_FOOT,
 	FLOATING_ACT_LIFT,
 	FLOATING_ACT_ROOM,
-	FOOT,
+	FOOT_DOCKED,
 	PAGE_BODY,
 	PAGE_BODY_OVER_FOOT,
 	PAGE_HEAD,
@@ -49,11 +49,10 @@ const PLACE = "flex-1";
 const TOP_BAR = "flex-row items-center";
 const SPACER = "flex-1";
 const TITLE = "min-w-0 grow";
-// With a context the title and its pick stand on one line a pair apart, the
-// pick pulling back by its own padding at its start.
+// With a context the title and its pick stand on one line a pair apart.
 const TITLE_LINE = "flex-row items-center gap-pair";
 const TITLE_FIT = "min-w-0 shrink";
-const CONTEXT = "shrink-0 flex-row -ms-inside";
+const CONTEXT = "shrink-0 flex-row";
 // The body scrolls under the fixed head; a bleeding body leaves scrolling
 // to its child, which keeps the act's room.
 const BODY = "flex-1";
@@ -262,7 +261,9 @@ export function Place({
 								) : null}
 								{toasts}
 							</View>
-							{foot ? <View className={cn(FOOT, DOCKED)}>{foot}</View> : null}
+							{foot ? (
+								<View className={cn(FOOT_DOCKED, DOCKED)}>{foot}</View>
+							) : null}
 						</Lifted>
 						{tabs}
 					</View>

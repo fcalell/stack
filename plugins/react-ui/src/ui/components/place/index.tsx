@@ -12,7 +12,7 @@ import {
 	FLOATING_ACT_FOOT,
 	FLOATING_ACT_LIFT,
 	FLOATING_ACT_ROOM,
-	FOOT,
+	FOOT_DOCKED,
 	type IconButtonFit,
 	PAGE_BODY,
 	PAGE_BODY_OVER_FOOT,
@@ -39,7 +39,7 @@ import { Button } from "../button/index.tsx";
 import { IconButtonBase, IconButtonLink } from "../icon-button/base.tsx";
 import { IconButton } from "../icon-button/index.tsx";
 import { Menu } from "../menu/index.tsx";
-import { Picker } from "../picker/index.tsx";
+import { PickerBase } from "../picker/base.tsx";
 import { SwitcherPick } from "../shell/switcher.tsx";
 import { BODY_FILLED } from "../thread/fill.ts";
 
@@ -67,11 +67,10 @@ const ROW = "flex items-center";
 const SPACER = "grow";
 const TITLE = "min-w-0 grow truncate";
 // With a context the title and its pick stand on one line a pair apart, the
-// line taking the spacer's room; the pick pulls back by its own padding at
-// its start.
+// line taking the spacer's room; the pick's list hangs from its start.
 const TITLE_LINE = "flex min-w-0 grow items-center gap-pair";
 const TITLE_FIT = "min-w-0 truncate";
-const CONTEXT = "inline-flex shrink-0 -ms-inside";
+const CONTEXT = "inline-flex shrink-0";
 // The body fills the column, so an EmptyState alone in it centres, and
 // scrolls under the fixed head; a bleeding body fills the rest and
 // leaves scrolling, and its top inset, to its child.
@@ -239,7 +238,7 @@ export function Place({
 		<div className={cn(TITLE_LINE, touch && PAGE_TITLE)}>
 			{heading}
 			<span className={CONTEXT}>
-				<Picker {...context} fit="row" />
+				<PickerBase {...context} fit="row" align="start" />
 			</span>
 		</div>
 	) : (
@@ -323,7 +322,9 @@ export function Place({
 								{body}
 								{layer}
 							</div>
-							{foot ? <div className={cn(FOOT, DOCKED)}>{foot}</div> : null}
+							{foot ? (
+								<div className={cn(FOOT_DOCKED, DOCKED)}>{foot}</div>
+							) : null}
 						</div>
 					</HeadingContext>
 				</PageTitle>

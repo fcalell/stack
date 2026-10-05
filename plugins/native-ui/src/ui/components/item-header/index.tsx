@@ -13,7 +13,13 @@ import {
 	skeletonRow,
 	text,
 } from "@fcalell/ui-core/variants";
-import { Pressable, Text as RNText, View } from "react-native";
+import { useRef } from "react";
+import {
+	AccessibilityInfo,
+	Pressable,
+	Text as RNText,
+	View,
+} from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { Ink } from "../../lib/ink";
@@ -21,7 +27,6 @@ import { useLive } from "../../lib/live";
 import { joinParts, META_CUT, partText } from "../../lib/parts";
 import { Strut } from "../../lib/strut";
 import { useWords } from "../../lib/words";
-import { Button } from "../button";
 import { Count } from "../count";
 import { Icon } from "../icon";
 import { Picker } from "../picker";
@@ -32,9 +37,10 @@ const FACT = "flex-row items-center";
 // A pick in the facts line pulls back at its start as well as its end, so its
 // dot and word sit where a plain fact's would.
 const PICK = "flex-row -ms-inside";
-// A fact that opens pulls back at its start as a pick does and washes at the
-// press.
-const OPEN = "flex-row items-center -ms-inside active:bg-wash-press";
+// A fact that acts washes at the press; one that opens pulls back at its start
+// as a pick does.
+const ACT = "flex-row items-center active:bg-wash-press";
+const OPEN = cn(ACT, "-ms-inside");
 // A loading line stands in its text's line box (a zero-width line of the
 // role beside the bar), so the loading head keeps the loaded head's height;
 // the facts wrap to a second line on the phone, which the loading head
@@ -86,21 +92,32 @@ function SaveFact({
 	const words = useWords();
 	const said = save === "failed" ? words.notSaved : words[save];
 	const live = useLive(said);
+	// The region holds the screen reader's focus a pressed Retry leaves as that
+	// act gives way to the saving words.
+	const region = useRef<View>(null);
+	const retry = () => {
+		onRetry();
+		if (region.current)
+			AccessibilityInfo.sendAccessibilityEvent(region.current, "focus");
+	};
 	return (
-		<View {...live} className={cn(ITEM_FACT, FACT)}>
-			{save === "failed" ? (
-				<>
+		<View className={cn(ITEM_FACT, FACT)}>
+			<View ref={region} accessible {...live} className={cn(ITEM_FACT, FACT)}>
+				{save === "failed" ? (
 					<Status state="failed" label={said} />
-					<Button
-						act="secondary"
-						fit="bar"
-						label={words.retry}
-						onAct={onRetry}
-					/>
-				</>
-			) : (
-				<RNText className={text({ role: "meta" })}>{said}</RNText>
-			)}
+				) : (
+					<RNText className={text({ role: "meta" })}>{said}</RNText>
+				)}
+			</View>
+			{save === "failed" ? (
+				<Pressable
+					accessibilityRole="button"
+					onPress={retry}
+					className={cn(PILL_ACT, ACT)}
+				>
+					<RNText className={text({ role: "meta" })}>{words.retry}</RNText>
+				</Pressable>
+			) : null}
 		</View>
 	);
 }

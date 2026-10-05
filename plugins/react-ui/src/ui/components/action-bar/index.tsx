@@ -6,6 +6,7 @@ import { filled } from "@fcalell/ui-core/tokens";
 import {
 	ACTION_BAR_ACTS,
 	ACTION_BAR_CHOSEN,
+	ACTION_BAR_SELECTION,
 	type ActionBarFit,
 	actionBar,
 	type ButtonAct,
@@ -69,7 +70,7 @@ export interface ActionBarProps extends Closed {
 	acts: Act[];
 	/** Where the bar stands: at its container's end (the default), or across it with each act at the field's height. */
 	fit?: ActionBarFit;
-	/** A selection bar's count, "N of M chosen" at meta at the bar's start (a `Table`'s `choose` set against its rows), announced as it changes, with `onAll` a select-all or deselect-all act beside it on touch (the desktop `Table`'s head tick is that act); the act's label and its blocked reason stay the act's. Docked as a `Place`'s `foot`. */
+	/** A selection bar's count, "N of M chosen" at meta at the bar's start (a `Table`'s `choose` set against its rows), announced as it changes, with `onAll` a select-all or deselect-all act beside it on touch (the desktop `Table`'s head tick is that act); the act's label and its blocked reason stay the act's. Docked as a `Place`'s `foot`, its count and acts in a column that stands at the foot's start, no wider than a table-wide bar. */
 	chosen?: ChosenCount;
 }
 
@@ -178,7 +179,13 @@ export function ActionBar({ acts, fit, chosen }: ActionBarProps) {
 			</BaseButton>
 		) : null;
 	return (
-		<div className={cn(actionBar({ fit: where }), BAR[where])}>
+		<div
+			className={cn(
+				actionBar({ fit: where }),
+				BAR[where],
+				chosen && ACTION_BAR_SELECTION,
+			)}
+		>
 			{chosen ? (
 				<div className={cn(ACTION_BAR_CHOSEN, ROW[where])}>
 					<div className={cn(ACTION_BAR_CHOSEN, COUNT)}>

@@ -948,7 +948,9 @@ export const RING_OFFSET_PX = 2;
 // lane), the widths of lifted layers, each at its pattern's range (a layer
 // never stretches to its container), the one measure for running text, and
 // the fixed regions of a frame (the sidebar, a split's list column and record
-// pane, a board column, the auth column, an empty state's column).
+// pane, a board column, the auth column, an empty state's column) and the
+// column a selection bar's count and acts stand in, the selection-bar
+// pattern's table-wide width.
 // A width name never repeats a size name: `max-w-*` reads `--spacing-*` first.
 export const WIDTHS = [
 	"measure-short",
@@ -963,6 +965,7 @@ export const WIDTHS = [
 	"column",
 	"auth",
 	"empty",
+	"selection",
 ] as const;
 export type Width = (typeof WIDTHS)[number];
 
@@ -990,6 +993,7 @@ export const WIDTH_VALUE: Record<Width, string> = {
 	column: "300px",
 	auth: "400px",
 	empty: "320px",
+	selection: "1060px",
 };
 
 export const BREAKPOINTS = ["tablet", "desktop", "wide"] as const;

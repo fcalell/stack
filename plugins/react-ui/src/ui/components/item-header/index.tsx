@@ -16,17 +16,16 @@ import {
 	skeletonRow,
 	text,
 } from "@fcalell/ui-core/variants";
-import { use } from "react";
+import { use, useRef } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { OverThread } from "../../lib/frame.ts";
 import { HeadingContext } from "../../lib/heading.ts";
 import { useTouch } from "../../lib/media.ts";
 import { joinParts, META_CUT, partText } from "../../lib/parts.ts";
 import { useWords } from "../../lib/words.tsx";
-import { Button } from "../button/index.tsx";
 import { Count } from "../count/index.tsx";
 import { Icon } from "../icon/index.tsx";
-import { Picker } from "../picker/index.tsx";
+import { PickerBase } from "../picker/base.tsx";
 import { Status } from "../status/index.tsx";
 import { COLUMN_FILLED } from "../thread/fill.ts";
 
@@ -37,10 +36,11 @@ const FACT = "inline-flex items-center";
 // A pick in the facts line pulls back at its start as well as its end, so its
 // dot and word sit where a plain fact's would.
 const PICK = "inline-flex -ms-inside";
-// A fact that opens pulls back at its start as a pick does and washes at the
-// pointer, its words and chevron in the meta ink.
-const OPEN =
-	"inline-flex items-center -ms-inside text-ink-meta hover:bg-wash-hover active:bg-wash-press";
+// A fact that acts washes at the pointer, its words in the meta ink; one that
+// opens pulls back at its start as a pick does.
+const ACT =
+	"inline-flex items-center text-ink-meta hover:bg-wash-hover active:bg-wash-press";
+const OPEN = cn(ACT, "-ms-inside");
 // A loading line stands in its text's line box, so the loading head keeps
 // the loaded head's height.
 const LINE_WAIT = "flex items-center h-lh";
@@ -85,7 +85,8 @@ function factKey<V extends string | null>(fact: Fact<V>): string {
 
 // The region stands from the record's open, `saved` at rest, and stays mounted
 // as the save moves between its states, so a screen reader announces each
-// change, the first "Saving…" included.
+// change, the first "Saving…" included. It holds the focus a pressed Retry
+// leaves as that act gives way to the saving words.
 function SaveFact({
 	save,
 	onRetry,
@@ -94,21 +95,30 @@ function SaveFact({
 	onRetry: () => void;
 }) {
 	const words = useWords();
+	const region = useRef<HTMLSpanElement>(null);
+	const retry = () => {
+		onRetry();
+		region.current?.focus();
+	};
 	return (
-		<span role="status" className={cn(ITEM_FACT, FACT)}>
-			{save === "failed" ? (
-				<>
+		<span className={cn(ITEM_FACT, FACT)}>
+			<span
+				ref={region}
+				tabIndex={-1}
+				role="status"
+				className={cn(ITEM_FACT, FACT)}
+			>
+				{save === "failed" ? (
 					<Status state="failed" label={words.notSaved} />
-					<Button
-						act="secondary"
-						fit="bar"
-						label={words.retry}
-						onAct={onRetry}
-					/>
-				</>
-			) : (
-				<span className={text({ role: "meta" })}>{words[save]}</span>
-			)}
+				) : (
+					<span className={text({ role: "meta" })}>{words[save]}</span>
+				)}
+			</span>
+			{save === "failed" ? (
+				<BaseButton onClick={retry} className={cn(PILL_ACT, ACT)}>
+					<span className={text({ role: "meta" })}>{words.retry}</span>
+				</BaseButton>
+			) : null}
 		</span>
 	);
 }
@@ -129,7 +139,7 @@ function FactPart<V extends string | null>({ fact }: { fact: Fact<V> }) {
 	if (typeof fact === "object" && "pick" in fact)
 		return (
 			<span className={PICK}>
-				<Picker {...fact.pick} fit="row" />
+				<PickerBase {...fact.pick} fit="row" align="start" />
 			</span>
 		);
 	if (typeof fact === "object" && "status" in fact)

@@ -4,6 +4,7 @@ import { filled } from "@fcalell/ui-core/tokens";
 import {
 	ACTION_BAR_ACTS,
 	ACTION_BAR_CHOSEN,
+	ACTION_BAR_SELECTION,
 	type ActionBarFit,
 	actionBar,
 	type ButtonAct,
@@ -147,7 +148,9 @@ export function ActionBar({ acts, fit, chosen }: ActionBarProps) {
 		void ran.then(done, done);
 	};
 	return (
-		<View className={actionBar({ fit: where })}>
+		<View
+			className={cn(actionBar({ fit: where }), chosen && ACTION_BAR_SELECTION)}
+		>
 			{chosen ? <Chosen chosen={chosen} /> : null}
 			<View className={cn(ACTION_BAR_ACTS, ACTS)}>
 				{acts.map((act, at) => {

@@ -450,10 +450,12 @@ export const DEFINITION_ROW_CHEVRON = "size-control-compact";
 export const LOCK_GLYPH = "shrink-0 text-ink-meta";
 // A record's head: the overline, the title and the facts line a pair apart;
 // the facts wrap at the fields rhythm, a counted fact its word beside its
-// count.
+// count. A fact that acts or changes (a pick, an opening fact, a save) stands
+// at the target height, as the loading line does, so the head keeps one height
+// whichever fact the line holds.
 export const ITEM_HEADER = "gap-pair";
 export const ITEM_FACTS = "gap-x-fields gap-y-pair";
-export const ITEM_FACT = "gap-inside";
+export const ITEM_FACT = "gap-inside min-h-target";
 // A folded question: one row at the row height, its glyph (in the `ok` ink),
 // its label, its answer and its edit act an inside apart.
 export const FORM_FIELD_SUMMARY = "gap-inside min-h-row";
@@ -761,6 +763,10 @@ export const PAGE_BODY = "gap-sections p-page";
 // A docked foot (a Place's `foot`, a filling Thread's input) stands under
 // what scrolls past it at the page inset, a sections gap under its end.
 export const FOOT = "px-page pb-page";
+// A Place's docked foot is a region of its own: a hairline and a surface step
+// under the body that scrolls to its edge, a pair above and below what it
+// holds (a selection bar stands at its height range, a field at its own).
+export const FOOT_DOCKED = "border-t border-edge bg-surface px-page py-pair";
 export const PAGE_BODY_OVER_FOOT = "pb-sections";
 // A touch Place's act, floating over the body's end on a layer at the page
 // inset, lifted off what scrolls under it as a Thread's Latest act is, and
@@ -814,6 +820,9 @@ export const ACTION_BAR_ACTS = "gap-acts";
 // acts (the count at the start and the acts at the end, or stacked on touch)
 // and the count's own row with its choose-all act.
 export const ACTION_BAR_CHOSEN = "gap-pair";
+// A selection bar's column: its container's width up to the selection-bar
+// pattern's table-wide width, standing at the container's start.
+export const ACTION_BAR_SELECTION = "w-full max-w-selection";
 // A toolbar's band under a bleeding page's strip, a hairline across the page
 // and its controls at the page inset: its controls and acts in wrapping rows
 // at the acts rhythm, the applied filters' chips at the pair rhythm.

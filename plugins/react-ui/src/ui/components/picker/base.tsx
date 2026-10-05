@@ -267,6 +267,8 @@ interface Composed {
 	chip?: ChipFamily;
 	/** The trigger's name where its composer says more than the value (a sort's direction). */
 	name?: string;
+	/** Which edge of the trigger the desktop list hangs from: its end (the default), or its start where the trigger leads its line (a title's context, a header's fact). */
+	align?: "start" | "end";
 }
 
 // Overloaded as `Picker` is, so a handler's parameter is typed by the value
@@ -283,7 +285,16 @@ export function PickerBase<V extends string | null = string>(
 export function PickerBase<V extends string | null = string>(
 	props: PickerProps<V> & Composed,
 ) {
-	const { label, options, fit = "field", act, drawn, chip, name } = props;
+	const {
+		label,
+		options,
+		fit = "field",
+		act,
+		drawn,
+		chip,
+		name,
+		align,
+	} = props;
 	// A pick of several: its value is an array, which `Several` types as one.
 	const several = isSeveral(props) ? props : undefined;
 	const value = isSeveral(props) ? undefined : props.value;
@@ -478,6 +489,7 @@ export function PickerBase<V extends string | null = string>(
 				trigger={trigger}
 				act={act}
 				chip={chip}
+				align={align}
 			/>
 		);
 	return (
@@ -494,6 +506,7 @@ export function PickerBase<V extends string | null = string>(
 			trigger={trigger}
 			act={act}
 			chip={chip}
+			align={align}
 		/>
 	);
 }
@@ -538,6 +551,7 @@ interface PickParts<V extends string | null> {
 	trigger: (props: ComponentProps<"button">) => ReactElement;
 	act?: IconAct;
 	chip?: ChipFamily;
+	align?: "start" | "end";
 	// A pick of several: its chosen values and what hears their new set.
 	several?: Several<V>;
 }
@@ -554,7 +568,7 @@ function PickList<V extends string | null>(
 	const container = use(PortalContainer);
 	const keyboard = useKeyed(props.trigger);
 	// In a table cell the list hangs from the cell's start.
-	const align = use(CellField) ? "start" : "end";
+	const align = use(CellField) ? "start" : (props.align ?? "end");
 	return (
 		<Select.Root
 			multiple={props.several !== undefined}
@@ -647,7 +661,7 @@ function PickSearch<V extends string | null>(
 	const container = use(PortalContainer);
 	const words = useWords();
 	const keyboard = useKeyed(props.trigger);
-	const align = use(CellField) ? "start" : "end";
+	const align = use(CellField) ? "start" : (props.align ?? "end");
 	return (
 		<Combobox.Root
 			items={props.groups}

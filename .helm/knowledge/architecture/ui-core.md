@@ -322,7 +322,9 @@ a tick with no animation, never jumped to full.
 - A page read in a context (Live, one change set, a past version) names it by a pick beside its
   title: `Place.context`, a `Switcher` (an `OptionPick` with its closing `IconAct`, the type the
   shell's switcher takes), drawn as the Picker at the `row` fit right after the `h1`, a `pair` apart
-  and pulled back by `-ms-inside` as an `ItemHeader`'s pick fact is. Its value is capped at
+  box to box, so its wash and ring never reach the title. Its list hangs from the trigger's start
+  (the Picker's internal `align`, as an `ItemHeader`'s pick fact's does): a pick that leads its
+  line would otherwise hang its end-aligned list past the page's start edge. Its value is capped at
   `measure-short` and truncates (`PICKER_VALUE`, as a status label is), so a long label cannot crush
   the title. It stands on the title line under the top bar on touch too, since the context is part
   of the page's address and the top bar is the shell's switcher. A context's kind (Draft, Ready) is
@@ -342,10 +344,15 @@ a tick with no animation, never jumped to full.
 - A field that saves as it is typed shows its save as an `ItemHeader` fact, `{ save: "saving" |
   "saved" | "failed"; onRetry }`, which stack owns so the words (`saving`, `saved`, `notSaved`,
   `retry`) and the announcement are not the consumer's to spell. `saving` and `saved` are meta-ink
-  words; `failed` is the `failed` Status with `notSaved`, then a `secondary` bar-fit `Button`
-  labelled `retry`. The fact stands in a polite live region (`role="status"` on the web; on the
-  phone `useLive`, below) and keeps one key across its states, so the region persists and each
-  change is announced. The fact stands from the record's open, `saved` at rest: a region that first
+  words; `failed` is the `failed` Status with `notSaved`, then `retry` as words in a
+  `PILL_ACT` (a button named by the fact, in the meta ink as an opening fact is), so the fact stands
+  at the target height (`ITEM_FACT`, `min-h-target`) in all three states and the head keeps the
+  loading head's height as the save moves. The words stand in a polite live region
+  (`role="status"` on the web; on the phone `useLive`, below) that excludes the Retry act, so it
+  announces "Not saved" alone, and keeps one key across the states, so the region persists and each
+  change is announced. It also takes the focus a pressed Retry leaves as that act gives way to the
+  saving words (`tabIndex={-1}` and `focus()` on the web, `sendAccessibilityEvent` on the phone),
+  so a keyboard or screen-reader user keeps their place. The fact stands from the record's open, `saved` at rest: a region that first
   mounts holding `saving` has no earlier text to change from, so that first save may go unheard. The
   selection bar's count announces through the same hook. Rejected: a generic fact that carries an
   act, which lets any fact hold acts and leaves the words and the announcement to the consumer; a
@@ -501,9 +508,10 @@ a tick with no animation, never jumped to full.
   lifted (`FLOATING_ACT_LIFT`, `shadow-float` at the control radius) as a Thread's Latest act is:
   an act floating over what scrolls is a lifted layer, the one shadow it carries.
 - A field that stays in view while a Place's sections scroll (an ask box over a home) is the Place's
-  `foot`, an explicit slot: it docks under the body at both densities on the shared `FOOT` cell (the
-  page inset at the sides and foot, the cell a filling Thread's input docks on, held by no entry),
-  the body scrolling past it, above the tab bar on touch and, on native, lifted over the keyboard
+  `foot`, an explicit slot: it docks under the body at both densities on the `FOOT_DOCKED` cell (the
+  page inset at the sides, a pair above and below, under a hairline on a surface step, so the body
+  that scrolls to its edge never cuts into what it holds and a selection bar stands in its 38–52
+  height range; held by no entry; a filling Thread's own input docks on `FOOT`), the body scrolling past it, above the tab bar on touch and, on native, lifted over the keyboard
   (the body and the foot share one `KeyboardAvoidingView`, `Lifted`). The body ends a sections gap
   over it (`PAGE_BODY_OVER_FOOT`), as a filling Thread's log ends over its input, so the field reads
   apart from the last section; the foot spans the body at every density, whatever it holds (the
@@ -545,7 +553,7 @@ a tick with no animation, never jumped to full.
   `viewport-fit=cover`), an overlay the tab bar spells beside `SHELL_TAB_BAR`; native pads the
   same inset from `react-native-safe-area-context`.
 - A frame's fixed regions are widths (`sidebar`, `list`, `pane`, `column`, `auth`, `empty` an empty
-  state's column), so a region keeps its measure at any viewport. A skeleton bar alone takes a
+  state's column, `selection` a selection bar's column), so a region keeps its measure at any viewport. A skeleton bar alone takes a
   fraction width (`w-1/12`, `w-1/5`, `w-1/4` to `w-3/4`) to stand at its text's length: structural,
   a closed list in the web verify's overlay acceptance, never a token; a chart column's share of its
   slot (`w-2/3`) is structural the same way. A size the data decides (a meter's fill width, a chart
@@ -669,6 +677,9 @@ a tick with no animation, never jumped to full.
   `chosenOf` at meta at the bar's start (one phrase, since the count left behind is `of - count`),
   in a polite live region, and the acts beside it at the end (`ACTION_BAR_CHOSEN`, a pair apart),
   the bar's one filled act the page's one; on touch the count stands over the full-width act. The
+  foot spans the body, but the bar's count and acts stand in a column at its start no wider than
+  the `selection` width (`ACTION_BAR_SELECTION`, the selection-bar pattern's table-wide bar), so
+  the count and the act stay a reading distance apart on a wide screen. The
   act's label ("Publish 4 changes") and its blocked reason stay the consumer's `Act`. The bar is not
   a new component: `ActionBar` already owns the filled act, its pending state, the reason and the
   touch stacking, and `Place.foot` already docks, scrolls the body under it and stands above the tab
