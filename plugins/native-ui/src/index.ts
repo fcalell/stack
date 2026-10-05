@@ -302,7 +302,7 @@ export const nativeUi = plugin("native-ui", {
 		"expo-secure-store": "~56.0.0",
 		"@tanstack/react-query": "^5.101.0",
 		"@orpc/tanstack-query": "^1.14.4",
-		"@better-auth/expo": "^1.6.14",
+		"@better-auth/expo": "1.7.7",
 		// @better-auth/expo's client statically imports expo-constants +
 		// expo-linking and dynamically imports expo-network + expo-web-browser.
 		// They're declared optional peers there, but Metro bundles every import

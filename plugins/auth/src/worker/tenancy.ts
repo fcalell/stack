@@ -47,10 +47,14 @@ interface SelectClient {
 	};
 }
 
+// `pin` restricts every organization match to one organization id, so a call
+// made as an agent resolves its grant's organization and no other the member
+// belongs to: anything else is absent, as a guessed id is.
 export function createTenancy(
 	db: unknown,
 	roles: Record<string, unknown>,
 	membership: Membership | null = null,
+	pin?: string,
 ): Tenancy {
 	const client = db as SelectClient;
 
@@ -73,6 +77,7 @@ export function createTenancy(
 					where,
 					eq(member.userId, userId),
 					membership ? sql`(${membership.where})` : undefined,
+					pin === undefined ? undefined : eq(organizationTable.id, pin),
 				),
 			)
 			.get()) as { organization: unknown; member: MemberRow } | undefined;
@@ -156,6 +161,35 @@ export function createTenancy(
 			);
 		},
 	};
+}
+
+// The ids of the organizations `userId` is a member of, the membership
+// predicate applied: what a tenancy resolves for them at the root. The
+// authorization flow counts these to decide whether the member chooses.
+export async function listOrganizations(
+	db: unknown,
+	membership: Membership | null,
+	userId: string,
+): Promise<string[]> {
+	const rows = (await (
+		db as {
+			select(fields: Record<string, unknown>): {
+				from(table: unknown): {
+					where(condition: unknown): { all(): unknown };
+				};
+			};
+		}
+	)
+		.select({ id: member.organizationId })
+		.from(member)
+		.where(
+			and(
+				eq(member.userId, userId),
+				membership ? sql`(${membership.where})` : undefined,
+			),
+		)
+		.all()) as { id: string }[];
+	return rows.map((row) => row.id);
 }
 
 // A role's grants, either the bare `{resource: actions[]}` record

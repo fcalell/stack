@@ -11,7 +11,7 @@
 		"test": "node --test 'src/**/*.test.ts'"
 	},
 	"dependencies": {
-		"@better-auth/expo": "^1.6.14",
+		"@better-auth/expo": "1.7.7",
 		"@fcalell/plugin-api": "workspace:*",
 		"@fcalell/plugin-auth": "workspace:*",
 		"@fcalell/plugin-cloudflare": "workspace:*",

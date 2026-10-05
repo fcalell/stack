@@ -9,14 +9,16 @@ import { eq } from "@fcalell/plugin-db/orm";
 import dbRuntime from "@fcalell/plugin-db/runtime/sqlite";
 import { makeSignature } from "better-auth/crypto";
 import * as authSchema from "../src/schema/index.ts";
+import * as oauthSchema from "../src/schema/oauth.ts";
 import * as organizationSchema from "../src/schema/organization.ts";
 import authTesting from "../src/testing/index.ts";
 import type { AppRouter } from "./fixtures/testing/worker.ts";
+import type { AppRouter as AppRouterWithMcp } from "./fixtures/testing/worker-mcp.ts";
 import type { AppRouter as AppRouterWithoutOrganization } from "./fixtures/testing/worker-without-organization.ts";
 
 // One file, so its process holds one `virtual:stack-procedure` target.
 
-const schema = { ...authSchema, ...organizationSchema };
+const schema = { ...authSchema, ...organizationSchema, ...oauthSchema };
 const SECRET = "test-secret-at-least-32-characters";
 const ROLES = ["owner", "admin", "editor", "viewer"] as const;
 
@@ -289,4 +291,102 @@ test("the setup refuses a boot with no db testing plugin by name", async () => {
 			.boot(),
 		/"db" testing plugin.*d1/,
 	);
+});
+
+const mcpTesting = createTestEntry<AppRouterWithMcp>({
+	worker: fixture("worker-mcp.ts"),
+	procedure: fixture("procedure.ts"),
+	root: new URL("..", import.meta.url),
+	prefix: "/rpc",
+	env: { STACK_DEV: "1", AUTH_SECRET: SECRET, APP_URL: "http://localhost" },
+})
+	.use(sqliteDb)
+	.use(
+		authTesting({
+			cookiePrefix: "probe",
+			secretVar: "AUTH_SECRET",
+			appUrlVar: "APP_URL",
+			roles: ["owner", "admin", "editor", "viewer"],
+			mcp: true,
+		}),
+	);
+
+test("auth.oauth connects a member and refreshes", async () => {
+	await using app = await mcpTesting.boot();
+	const acme = await app.auth.organization();
+	const beta = await app.auth.organization();
+	const inAcme = await app.auth.member({
+		organizationId: acme.id,
+		role: "owner",
+	});
+	// The same user, a second organization: the authorization asks which.
+	const inBeta = await app.auth.member({
+		organizationId: beta.id,
+		role: "viewer",
+		user: inAcme.user,
+	});
+	const client = await app.auth.oauth.register();
+	assert.match(client.clientId, /^test-client-/);
+
+	const whoami = async (token: string) => {
+		const response = await app.fetch("/rpc/probe/whoami", {
+			method: "POST",
+			headers: {
+				authorization: `Bearer ${token}`,
+				"content-type": "application/json",
+			},
+			body: JSON.stringify({}),
+		});
+		const body = (await response.json()) as { json: unknown };
+		return { status: response.status, body: body.json };
+	};
+
+	for (const [member, organization, role] of [
+		[inBeta, beta, "viewer"],
+		[inAcme, acme, "owner"],
+	] as const) {
+		const grant = await app.auth.oauth.connect({
+			member,
+			organizationId: organization.id,
+			client,
+		});
+		const expected = {
+			userId: inAcme.user.id,
+			agent: true,
+			organizationId: organization.id,
+			role,
+		};
+		assert.deepEqual(await whoami(grant.accessToken), {
+			status: 200,
+			body: expected,
+		});
+		const rotated = await app.auth.oauth.refresh(grant.refreshToken, client);
+		assert.notEqual(rotated.refreshToken, grant.refreshToken);
+		assert.deepEqual(await whoami(rotated.accessToken), {
+			status: 200,
+			body: expected,
+		});
+		assert.ok(grant.grantId);
+	}
+
+	assert.equal((await whoami("not-a-token")).status, 401);
+	// A member of Acme alone is granted Acme, and asking for Beta is a mistake
+	// the helper names.
+	const solo = await app.auth.member({
+		organizationId: acme.id,
+		role: "editor",
+	});
+	await assert.rejects(
+		app.auth.oauth.connect({
+			member: solo,
+			organizationId: beta.id,
+			client,
+		}),
+		/not the one asked for/,
+	);
+});
+
+test("without mcp the handle has no oauth helpers", async () => {
+	await using app = await testing.boot();
+	assert.equal("oauth" in app.auth, false);
 });

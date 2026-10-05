@@ -51,7 +51,7 @@ export const auth = plugin("auth", {
     push: { description: "Push schema", handler: async (ctx, flags) => { /* ... */ } },
   },
 
-  dependencies: { "better-auth": "^1.7.2" },                 // auto-wired into cliSlots.initDeps
+  dependencies: { "better-auth": "1.7.7" },                   // auto-wired into cliSlots.initDeps
   devDependencies: { /* ... */ },                            // auto-wired into cliSlots.initDevDeps
   gitignore: [".wrangler"],                                  // auto-wired into cliSlots.gitignore
   guide: [{ page: "sessions", trigger: "Reading the signed-in user" }], // auto-wired into cliSlots.guide

@@ -10,6 +10,8 @@ export type SessionUser = {
 	image: string | null;
 	createdAt: Date;
 	updatedAt: Date;
+	// Set only on a call an agent makes through an OAuth grant at `/mcp`.
+	agent?: true;
 };
 
 type BaseSession = {

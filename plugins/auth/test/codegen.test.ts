@@ -7,6 +7,7 @@ import { plugin } from "@fcalell/cli";
 import { buildGraphFromDiscovered } from "@fcalell/cli/build-graph";
 import type { DiscoveredPlugin } from "@fcalell/cli/discovery";
 import { api } from "@fcalell/plugin-api";
+import { cloudflare } from "@fcalell/plugin-cloudflare";
 import { db } from "@fcalell/plugin-db";
 import { createAccessControl } from "../src/access.ts";
 import { auth } from "../src/index.ts";
@@ -237,4 +238,93 @@ test("the magic link alone requires the callbacks file", async () => {
 		true,
 	);
 	assert.equal((await flagsFor({ emailOtp: false }))?.magicLink, false);
+});
+
+// The graph a `mcp` consumer composes: cloudflare owns the bindings and the
+// prefixes the worker serves.
+async function mcpGraph(options: AuthOptions) {
+	const { graph } = buildGraphFromDiscovered({
+		discovered: [
+			discover(api, api()),
+			discover(db, db({ dialect: "sqlite", path: "app.sqlite" })),
+			discover(cloudflare, cloudflare()),
+			discover(auth, auth({ emailOtp: false, ...options })),
+		],
+		app: { name: "codegen", domain: "example.com" },
+		cwd: mkdtempSync(join(tmpdir(), "stack-auth-codegen-")),
+	});
+	return graph;
+}
+
+test("mcp wires its bindings, prefixes and tables", async () => {
+	assert.throws(
+		() => auth({ emailOtp: false, mcp: true }),
+		/`mcp` needs `organization`/,
+	);
+
+	const graph = await mcpGraph({ organization: true, mcp: true });
+	const agent = (await graph.resolve(cloudflare.slots.bindings)).find(
+		(binding) =>
+			binding.kind === "rate_limiter" &&
+			binding.binding === "RATE_LIMITER_AGENT",
+	);
+	assert.deepEqual(agent, {
+		kind: "rate_limiter",
+		binding: "RATE_LIMITER_AGENT",
+		simple: { limit: 120, period: 60 },
+	});
+	const prefixes = await graph.resolve(api.slots.routePrefixes);
+	for (const prefix of [
+		"/api/auth",
+		"/.well-known/oauth-authorization-server",
+		"/.well-known/oauth-protected-resource",
+	]) {
+		assert.ok(prefixes.includes(prefix), prefix);
+	}
+	const entities = await graph.resolve(api.slots.entities);
+	for (const name of ["oauthConsent", "oauthClient", "jwks"]) {
+		assert.ok(entities.includes(name), name);
+	}
+	assert.ok(
+		(await graph.resolve(db.slots.schemaModules)).includes(
+			"@fcalell/plugin-auth/schema/oauth",
+		),
+	);
+	assert.equal((await graph.resolve(auth.slots.clientFlags))?.mcp, true);
+	const source = (await graph.resolve(api.slots.workerSource)) ?? "";
+	assert.match(source, /mcp: true/);
+	assert.match(source, /agent: \{\s*binding: "RATE_LIMITER_AGENT"/);
+
+	// Without `mcp` none of it is there.
+	const plain = await mcpGraph({ organization: true });
+	assert.equal(
+		(await plain.resolve(cloudflare.slots.bindings)).some(
+			(binding) =>
+				binding.kind === "rate_limiter" &&
+				binding.binding === "RATE_LIMITER_AGENT",
+		),
+		false,
+	);
+	assert.deepEqual(await plain.resolve(api.slots.routePrefixes), [
+		"/api/auth",
+		"/rpc",
+	]);
+	assert.equal(
+		(await plain.resolve(db.slots.schemaModules)).includes(
+			"@fcalell/plugin-auth/schema/oauth",
+		),
+		false,
+	);
+	assert.equal((await plain.resolve(auth.slots.clientFlags))?.mcp, false);
+	assert.doesNotMatch(
+		(await plain.resolve(api.slots.workerSource)) ?? "",
+		/mcp:|RATE_LIMITER_AGENT/,
+	);
+});
+
+test("the testing entry bakes mcp only when it is on", async () => {
+	const on = await authTestingEntry(auth({ organization: true, mcp: true }));
+	assert.deepEqual(on?.options?.mcp, { kind: "boolean", value: true });
+	const off = await authTestingEntry(auth({ organization: true }));
+	assert.equal(off?.options && "mcp" in off.options, false);
 });

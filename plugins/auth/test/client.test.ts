@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { test } from "node:test";
+import { mock, test } from "node:test";
 import { createAuthClient } from "../src/client.ts";
 
 test("the organization flag adds the organization methods", () => {
@@ -79,4 +79,52 @@ test("the magic link flag adds signIn.magicLink", () => {
 	const off = createAuthClient({});
 	// @ts-expect-error the magic-link plugin is off
 	assert.ok(off.signIn.magicLink);
+});
+
+test("the mcp flag adds the OAuth provider client", async () => {
+	const on = createAuthClient({ organization: true, mcp: true });
+	assert.equal(typeof on.oauth2.consent, "function");
+	assert.equal(typeof on.oauth2.continue, "function");
+	assert.equal(typeof on.oauth2.publicClient, "function");
+	assert.equal(typeof on.organization.setActive, "function");
+
+	// The provider's client plugin attaches the login page's signed query to
+	// every POST it makes: the wire carries `oauth_query`.
+	const sent: string[] = [];
+	const original = globalThis.window;
+	// biome-ignore lint/suspicious/noExplicitAny: a browser location stand-in.
+	(globalThis as any).window = {
+		location: {
+			search: "?client_id=x&sig=y&ba_param=client_id&ba_param=ba_param",
+		},
+	};
+	const fetchMock = mock.method(
+		globalThis,
+		"fetch",
+		async (input: unknown, init?: RequestInit) => {
+			sent.push(
+				input instanceof Request
+					? await input.clone().text()
+					: String(init?.body),
+			);
+			return Response.json({});
+		},
+	);
+	try {
+		const withQuery = createAuthClient({
+			mcp: true,
+			baseURL: "http://localhost/api/auth",
+		});
+		await withQuery.oauth2.consent({ accept: true });
+	} finally {
+		fetchMock.mock.restore();
+		// biome-ignore lint/suspicious/noExplicitAny: restoring the stand-in.
+		(globalThis as any).window = original;
+	}
+	assert.equal(sent.length, 1);
+	assert.match(sent[0] ?? "", /"oauth_query":"client_id=x&sig=y&ba_param=/);
+
+	const off = createAuthClient({ organization: true });
+	// @ts-expect-error the OAuth provider client is off
+	assert.ok(off.oauth2);
 });

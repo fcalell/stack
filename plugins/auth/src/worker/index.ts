@@ -44,11 +44,20 @@ import type {
 	ResolvedSocialProvider,
 	SocialProviderName,
 } from "../types.ts";
-import { AUTH_PREFIX } from "../types.ts";
+import { AUTH_PREFIX, OAUTH_DISCOVERY_PREFIXES } from "../types.ts";
 import { emailKey } from "./email-key.ts";
+import {
+	createOAuth,
+	type GrantAdapter,
+	MCP_DISABLED_PATHS,
+	mcpPlugins,
+	type OAuth,
+	tooManyRequests,
+} from "./oauth.ts";
 import { createTenancy, resolveGrants, type Tenancy } from "./tenancy.ts";
 
 export type { OtpType } from "../types.ts";
+export type { OAuth, VerifiedAgent } from "./oauth.ts";
 // The request context carries a `Tenancy`, so a declaration emit of the
 // consumer's generated `.stack/procedure.ts` names it through this subpath.
 export type { Tenancy } from "./tenancy.ts";
@@ -148,6 +157,10 @@ export interface AuthRuntimeInput extends AuthRuntimeOptions {
 	// server-side expo() plugin (native client deep-link / cookie / origin
 	// handling); contributes no database tables.
 	expo?: boolean;
+	// Set by codegen when the consumer enables `mcp`: the OAuth authorization
+	// server for MCP clients and the `oauth` capability on the request context.
+	// Needs `organization`.
+	mcp?: boolean;
 	// Set by codegen when the consumer enables `passkey`, every default
 	// already derived.
 	passkey?: {
@@ -162,7 +175,12 @@ export interface AuthRuntimeInput extends AuthRuntimeOptions {
 	// derivation from the plugin's `rateLimiter` schema defaults. Limit/period
 	// aren't included here — they're enforced by the binding config itself,
 	// not read at request time.
-	rateLimiter?: { ip: { binding: string }; email: { binding: string } };
+	// `agent` is baked with `mcp` only.
+	rateLimiter?: {
+		ip: { binding: string };
+		email: { binding: string };
+		agent?: { binding: string };
+	};
 	// The slugs an organization may not take, baked by codegen with
 	// organizations on: plugin-api's reserved words and the app's top-level
 	// routes, since an organization is served at `/<slug>`.
@@ -194,6 +212,11 @@ type TenancyContext<TOptions> = TOptions extends { organization: infer O }
 	? O extends undefined | false
 		? object
 		: { tenancy: Tenancy }
+	: object;
+
+// The OAuth capability exists only with `mcp` on.
+type OAuthContext<TOptions> = TOptions extends { mcp: true }
+	? { oauth: OAuth }
 	: object;
 
 // `$Infer.Session` is derived from `AuthRuntimeInput` via the SAME
@@ -290,12 +313,41 @@ class MissingSendMagicLinkError extends Error {
 	}
 }
 
+// The grants the roles table resolves: the consumer's, else better-auth's own.
+function organizationRoles(options: AuthRuntimeInput): Record<string, unknown> {
+	return (
+		typeof options.organization === "object" && options.organization.roles
+			? options.organization.roles
+			: defaultOrgRoles
+	) as Record<string, unknown>;
+}
+
 function buildAuth(
 	env: Record<string, unknown>,
 	db: unknown,
 	options: AuthRuntimeInput,
 ) {
 	const plugins: BetterAuthPlugin[] = [];
+	if (options.mcp && !options.organization) {
+		throw new Error(
+			"plugin-auth: `mcp` needs `organization`: a grant is to one organization.",
+		);
+	}
+	// The grant deletions of the organization hooks run without an endpoint
+	// context, so they reach the instance through this once it exists.
+	let authContext: Promise<{ adapter: GrantAdapter }> | undefined;
+	const mcpSetup = options.mcp
+		? mcpPlugins({
+				appUrl: env[options.appUrlVar] as string,
+				db,
+				roles: organizationRoles(options),
+				membership: consumerMembership(options.scopes),
+				context: () => {
+					if (!authContext) throw new Error("plugin-auth: auth is not built");
+					return authContext;
+				},
+			})
+		: undefined;
 
 	if (options.emailOtp !== false) {
 		const sendOTP = options.callbacks?.sendOTP;
@@ -374,6 +426,8 @@ function buildAuth(
 						refuseReservedSlug(reserved, organization.slug),
 					beforeUpdateOrganization: async ({ organization }) =>
 						refuseReservedSlug(reserved, organization.slug),
+					// With `mcp`, a member's grants end with their membership.
+					...mcpSetup?.organizationHooks,
 				},
 				// biome-ignore lint/suspicious/noExplicitAny: AccessControl type is internal to better-auth.
 				ac: ac as any,
@@ -426,6 +480,10 @@ function buildAuth(
 		);
 	}
 
+	// jwt, the OAuth provider and CIMD, then the guards around them, before the
+	// consumer's own plugins.
+	if (mcpSetup) plugins.push(...mcpSetup.plugins);
+
 	plugins.push(...(options.callbacks?.plugins ?? []));
 
 	// Read each configured provider's credentials from env (never baked into
@@ -459,7 +517,7 @@ function buildAuth(
 	const trustedOrigins = [...(options.trustedOrigins ?? []), ...devOrigins];
 	const sameSite = devOrigins.length > 0 ? "none" : options.sameSite;
 
-	return betterAuth({
+	const instance = betterAuth({
 		baseURL: env[options.appUrlVar] as string,
 		secret: env[options.secretVar] as string,
 		trustedOrigins,
@@ -554,7 +612,12 @@ function buildAuth(
 				}
 			: undefined,
 		plugins,
+		...(options.mcp ? { disabledPaths: MCP_DISABLED_PATHS } : {}),
 	});
+	authContext = instance.$context as unknown as Promise<{
+		adapter: GrantAdapter;
+	}>;
+	return instance;
 }
 
 function getOrInitAuth(
@@ -578,13 +641,6 @@ const EMAIL_SEND_SUFFIXES = [
 	"/email-otp/send-verification-otp",
 	"/sign-in/magic-link",
 ];
-
-function tooManyRequests(): Response {
-	return new Response(JSON.stringify({ code: "TOO_MANY_REQUESTS" }), {
-		status: 429,
-		headers: { "content-type": "application/json" },
-	});
-}
 
 // Reads `email` off a cloned request body — the original must still reach
 // Better Auth unconsumed. A body that fails to parse, or carries no
@@ -725,13 +781,10 @@ export default function authRuntime<TOptions extends AuthRuntimeInput>(
 	{
 		auth: AuthInstance<TOptions>;
 		_rateLimiter?: { ip?: RateLimitBinding; email?: RateLimitBinding };
-	} & TenancyContext<TOptions>
+	} & TenancyContext<TOptions> &
+		OAuthContext<TOptions>
 > {
-	const roles = (
-		typeof options.organization === "object" && options.organization.roles
-			? options.organization.roles
-			: defaultOrgRoles
-	) as Record<string, unknown>;
+	const roles = organizationRoles(options);
 	const scopes = consumerScopes(options.scopes);
 	const membership = consumerMembership(options.scopes);
 
@@ -810,6 +863,11 @@ export default function authRuntime<TOptions extends AuthRuntimeInput>(
 
 			const rateLimiter: { ip?: RateLimitBinding; email?: RateLimitBinding } =
 				{};
+			const agentBinding = options.rateLimiter?.agent?.binding;
+			const agentLimiter =
+				agentBinding && !isDevMode(e)
+					? (e[agentBinding] as RateLimitBinding | undefined)
+					: undefined;
 			const ipBinding = options.rateLimiter?.ip.binding;
 			if (ipBinding && e[ipBinding]) {
 				rateLimiter.ip = e[ipBinding] as RateLimitBinding;
@@ -819,19 +877,30 @@ export default function authRuntime<TOptions extends AuthRuntimeInput>(
 				rateLimiter.email = e[emailBinding] as RateLimitBinding;
 			}
 
+			const auth = getOrInitAuth(env, u.db, options);
 			return {
 				// `getOrInitAuth` returns whatever better-auth infers from the
 				// literal built inside `buildAuth`; it structurally satisfies
 				// `AuthApi` at runtime. This cast is the one place the
 				// hand-declared `AuthInstance<TOptions>` contract stands in for
 				// better-auth's own (differently-parameterized) inferred type.
-				auth: getOrInitAuth(
-					env,
-					u.db,
-					options,
-				) as unknown as AuthInstance<TOptions>,
+				auth: auth as unknown as AuthInstance<TOptions>,
 				...(options.organization
 					? { tenancy: createTenancy(u.db, roles, membership) }
+					: {}),
+				...(options.mcp
+					? {
+							oauth: createOAuth({
+								auth: auth as unknown as Parameters<
+									typeof createOAuth
+								>[0]["auth"],
+								db: u.db,
+								roles,
+								membership,
+								appUrl: e[options.appUrlVar] as string,
+								limiter: agentLimiter,
+							}),
+						}
 					: {}),
 				...(rateLimiter.ip || rateLimiter.email
 					? { _rateLimiter: rateLimiter }
@@ -839,11 +908,21 @@ export default function authRuntime<TOptions extends AuthRuntimeInput>(
 			} as {
 				auth: AuthInstance<TOptions>;
 				_rateLimiter?: { ip?: RateLimitBinding; email?: RateLimitBinding };
-			} & TenancyContext<TOptions>;
+			} & TenancyContext<TOptions> &
+				OAuthContext<TOptions>;
 		},
 		async fetch(request, _env, upstream) {
 			const url = new URL(request.url);
-			if (!url.pathname.startsWith(AUTH_PREFIX)) return null;
+			// With `mcp`, the discovery documents are Better Auth's too, behind
+			// the same limiter.
+			const served =
+				url.pathname.startsWith(AUTH_PREFIX) ||
+				(options.mcp &&
+					OAUTH_DISCOVERY_PREFIXES.some(
+						(prefix) =>
+							url.pathname === prefix || url.pathname.startsWith(`${prefix}/`),
+					));
+			if (!served) return null;
 			const u = upstream as {
 				auth: AuthInstance<TOptions>;
 				_rateLimiter?: { ip?: RateLimitBinding; email?: RateLimitBinding };

@@ -18,11 +18,25 @@ import {
 	AUTH_PREFIX,
 	type AuthCallbackPayloads,
 	authOptionsSchema,
+	OAUTH_DISCOVERY_PREFIXES,
 	type ResolvedAuthOptions,
 	resolveSocialProviders,
 } from "./types.ts";
 
 const SOURCE = "auth";
+
+// The tables `@fcalell/plugin-auth/schema/oauth` exports, by export name, the
+// entity vocabulary `mcp` adds.
+const OAUTH_ENTITIES = [
+	"jwks",
+	"oauthAccessToken",
+	"oauthClient",
+	"oauthClientAssertion",
+	"oauthClientResource",
+	"oauthConsent",
+	"oauthRefreshToken",
+	"oauthResource",
+];
 
 // Canonical path for the consumer's auth callback file. Auto-scaffolded by
 // the plugin builder from `templates/callbacks.ts` when callbacks are
@@ -127,7 +141,13 @@ const runtimeOptions = slot.derived({
 		rawOptions.rateLimiter = {
 			ip: { binding: ctx.options.rateLimiter.ip.binding },
 			email: { binding: ctx.options.rateLimiter.email.binding },
+			...(ctx.options.mcp
+				? { agent: { binding: ctx.options.rateLimiter.agent.binding } }
+				: {}),
 		};
+		// Baked only when on, so the runtime's context types the `oauth`
+		// capability from the literal.
+		if (!ctx.options.mcp) delete rawOptions.mcp;
 		// Bake resolved provider → env-var references (never the raw
 		// `true`/object input). Only var names are emitted; the runtime reads
 		// credentials from env. Drop the key entirely when no provider is set.
@@ -327,6 +347,11 @@ export const auth = plugin("auth", {
 				"Adding OAuth, passkeys or magic links, or calling auth from the web or native client",
 		},
 		{
+			page: "mcp-oauth",
+			trigger:
+				"Letting an MCP client connect (`mcp: true`), verifying its access token, or revoking a grant",
+		},
+		{
 			page: "organizations",
 			trigger:
 				"Working with organizations, members, invitations, roles or organization slugs",
@@ -421,6 +446,19 @@ export const auth = plugin("auth", {
 					period: self.options.rateLimiter.email.period,
 				},
 			},
+			// One bucket per agent grant, bound only while agents connect.
+			...(self.options.mcp
+				? [
+						{
+							kind: "rate_limiter" as const,
+							binding: self.options.rateLimiter.agent.binding,
+							simple: {
+								limit: self.options.rateLimiter.agent.limit,
+								period: self.options.rateLimiter.agent.period,
+							},
+						},
+					]
+				: []),
 		]),
 
 		// Env: AUTH_SECRET + APP_URL (consumer-renameable via options).
@@ -460,7 +498,13 @@ export const auth = plugin("auth", {
 		// The auth surface is worker-owned but lives outside api's own
 		// prefix, so deploy targets (vite's dev proxy, the node server's mount
 		// table) only route it once it is declared here.
-		api.slots.routePrefixes.contribute(() => AUTH_PREFIX),
+		// With `mcp`, the two discovery documents an MCP client reads first
+		// are the worker's too.
+		api.slots.routePrefixes.contribute(() =>
+			self.options.mcp
+				? [AUTH_PREFIX, ...OAUTH_DISCOVERY_PREFIXES]
+				: AUTH_PREFIX,
+		),
 
 		// The extension stays, as on the callbacks import: the node target runs
 		// the generated worker as written.
@@ -476,6 +520,7 @@ export const auth = plugin("auth", {
 			emailOtp: self.options.emailOtp,
 			magicLink: self.options.magicLink,
 			organization: organizationAccess(self.options.organization),
+			mcp: self.options.mcp,
 		})),
 
 		// Worker runtime entry. Resolves `runtimeOptions` inside the
@@ -527,6 +572,7 @@ export const auth = plugin("auth", {
 							? { expiresIn: self.options.session.expiresIn }
 							: {}),
 						...(roles ? { roles } : {}),
+						...(self.options.mcp ? { mcp: true } : {}),
 					}),
 				};
 			},
@@ -611,7 +657,7 @@ export const auth = plugin("auth", {
 
 		// Entity vocabulary handoff (WS3.2/WS1 fix)
 		// — auth owns these Drizzle tables (`../schema/index.ts`,
-		// `../schema/organization.ts`, `../schema/passkey.ts`) but a consumer's `src/schema/index.ts`
+		// `../schema/organization.ts`, `../schema/passkey.ts`, `../schema/oauth.ts`) but a consumer's `src/schema/index.ts`
 		// only ever `export *`s them, which `extractSchemaEntities`
 		// (plugin-db) deliberately can't see through. Contributing the export
 		// names directly here is what makes `procedure({ reads: ["member"] })`
@@ -624,6 +670,7 @@ export const auth = plugin("auth", {
 				names.push("invitation", "member", "organization");
 			}
 			if (self.options.passkey) names.push("passkey");
+			if (self.options.mcp) names.push(...OAUTH_ENTITIES);
 			return names;
 		}),
 
@@ -636,6 +683,9 @@ export const auth = plugin("auth", {
 			}
 			if (self.options.passkey) {
 				modules.push("@fcalell/plugin-auth/schema/passkey");
+			}
+			if (self.options.mcp) {
+				modules.push("@fcalell/plugin-auth/schema/oauth");
 			}
 			return modules;
 		}),

@@ -24,6 +24,10 @@
 			"types": "./dist/schema/organization.d.ts",
 			"default": "./dist/schema/organization.js"
 		},
+		"./schema/oauth": {
+			"types": "./dist/schema/oauth.d.ts",
+			"default": "./dist/schema/oauth.js"
+		},
 		"./schema/passkey": {
 			"types": "./dist/schema/passkey.d.ts",
 			"default": "./dist/schema/passkey.js"
@@ -70,15 +74,19 @@
 		"clear": "rm -rf dist node_modules .turbo"
 	},
 	"dependencies": {
-		"@better-auth/expo": "^1.7.2",
-		"@better-auth/passkey": "1.7.2",
+		"@better-auth/cimd": "1.7.7",
+		"@better-auth/core": "1.7.7",
+		"@better-auth/expo": "1.7.7",
+		"@better-auth/mcp": "1.7.7",
+		"@better-auth/oauth-provider": "1.7.7",
+		"@better-auth/passkey": "1.7.7",
 		"@casl/ability": "^7.0.1",
 		"@fcalell/cli": "workspace:*",
 		"@fcalell/plugin-api": "workspace:*",
 		"@fcalell/plugin-cloudflare": "workspace:*",
 		"@fcalell/plugin-db": "workspace:*",
 		"@orpc/server": "^1.14.4",
-		"better-auth": "^1.7.2",
+		"better-auth": "1.7.7",
 		"zod": "^4.3.6"
 	},
 	"peerDependencies": {

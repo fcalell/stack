@@ -1,3 +1,4 @@
+import { oauthProviderClient } from "@better-auth/oauth-provider/client";
 import { passkeyClient } from "@better-auth/passkey/client";
 import {
 	emailOTPClient,
@@ -41,6 +42,12 @@ export interface AuthClientOptions {
 	// the methods take (`inviteMember({ role })`); `true` keeps better-auth's
 	// default owner, admin and member, as the worker does.
 	organization?: boolean | OrganizationAccess;
+	// `auth({ mcp: true })`: adds the OAuth provider's methods, which resume
+	// an authorization after sign-in, after the organization choice, and at
+	// consent (`oauth2.continue`, `oauth2.consent`, `oauth2.publicClient`),
+	// and attach the authorization's signed query to every request the login
+	// page makes.
+	mcp?: boolean;
 }
 
 // better-auth's client options for the access control, typed by it: the
@@ -66,6 +73,7 @@ type ClientPlugins<O extends AuthClientOptions> = [
 		: O["organization"] extends infer A extends OrganizationAccess
 			? [ReturnType<typeof organizationClient<OrganizationClientAccess<A>>>]
 			: []),
+	...(O["mcp"] extends true ? [ReturnType<typeof oauthProviderClient>] : []),
 ];
 
 // Named, not inferred: the inferred type reaches better-auth's own zod copy,
@@ -104,6 +112,7 @@ export function createAuthClient<const O extends AuthClientOptions>(
 		...(options.emailOtp === false ? [] : [emailOTPClient()]),
 		...(options.magicLink ? [magicLinkClient()] : []),
 		...(options.organization ? [organizationPlugin(options.organization)] : []),
+		...(options.mcp ? [oauthProviderClient()] : []),
 	] as ClientPlugins<O>;
 	return createBetterAuthClient({ baseURL: options.baseURL, plugins });
 }

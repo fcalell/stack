@@ -27,9 +27,10 @@ auth({
 | `passkey` | `false` | `{}` turns passkeys on, see [sign-in](./sign-in.md) |
 | `organization` | off | `true` or `{ ac, roles }`, see [organizations](./organizations.md) |
 | `user.deleteUser` | `false` | Account deletion, see [callbacks](./callbacks.md). A native app on the App Store needs it |
+| `mcp` | `false` | An authorization server for MCP clients; needs `organization`, see [mcp-oauth](./mcp-oauth.md) |
 | `expo` | off | A native client: trusts the deep-link scheme `expo()` registers; see `node_modules/@fcalell/plugin-expo/guide/native-auth.md` |
 | `secretVar` / `appUrlVar` | `AUTH_SECRET` / `APP_URL` | The env var names below |
-| `rateLimiter.ip` / `.email` | 100 and 3 per 60 s | Cloudflare rate-limiter `binding`, `limit` and `period` (10 or 60). Node has no limiter |
+| `rateLimiter.ip` / `.email` / `.agent` | 100, 3 and 120 per 60 s | Cloudflare rate-limiter `binding`, `limit` and `period` (10 or 60). `agent` is one bucket per MCP grant, bound only with `mcp`. Node has no limiter |
 
 ## Env vars
 
@@ -52,6 +53,7 @@ the adapter never creates a table.
 export * from "@fcalell/plugin-auth/schema"; // user, session, account, verification: always
 export * from "@fcalell/plugin-auth/schema/organization"; // organization, member, invitation: with `organization`
 export * from "@fcalell/plugin-auth/schema/passkey"; // passkey: with `passkey`
+export * from "@fcalell/plugin-auth/schema/oauth"; // the OAuth grant tables and jwks: with `mcp`
 ```
 
 ## Rules
@@ -59,6 +61,8 @@ export * from "@fcalell/plugin-auth/schema/passkey"; // passkey: with `passkey`
 - Migrate the auth tables with the db plugin's commands, never `@better-auth/cli migrate`.
 - Never add a column to an auth table. Data kept per user or per organization lives in your own
   table keyed by `user.id` or `organization.id`, its reference `onDelete: "cascade"`.
+- The OAuth tables carry no cascade, so a user with grants cannot be deleted, as one with
+  memberships cannot.
 - The auth tables' names are entities already: `reads: ["member"]` type-checks without your
   schema exporting them under its own names.
 - The session's user has `id`, `name`, `email`, `emailVerified`, `image`, `createdAt` and

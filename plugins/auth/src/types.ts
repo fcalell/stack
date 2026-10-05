@@ -4,6 +4,28 @@ import { z } from "zod";
 // and the codegen contribution to `api.slots.routePrefixes` can never drift.
 export const AUTH_PREFIX = "/api/auth";
 
+// The discovery documents an MCP client reads before it opens an
+// authorization: the authorization server's and the protected resource's.
+// Served by better-auth at the issuer-inserted and resource-inserted
+// aliases below these prefixes, so each prefix is a worker route.
+export const OAUTH_DISCOVERY_PREFIXES = [
+	"/.well-known/oauth-authorization-server",
+	"/.well-known/oauth-protected-resource",
+] as const;
+
+// The protected resource an access token is bound to, under the app URL,
+// and the pages the authorization sends the member to. Pinned, not options:
+// the screens that serve them are the app's, built to these addresses.
+export const MCP_RESOURCE_PATH = "/mcp";
+export const MCP_LOGIN_PAGE = "/sign-in";
+export const MCP_ORGANIZATION_PAGE = "/connect/organization";
+export const MCP_CONSENT_PAGE = "/connect/consent";
+
+// The scopes an agent's grant holds: `mcp` is the whole tool list,
+// `offline_access` the refresh token.
+export const MCP_SCOPE = "mcp";
+export const MCP_SCOPES = [MCP_SCOPE, "offline_access"] as const;
+
 const rateLimiterIpSchema = z
 	.object({
 		binding: z.string().default("RATE_LIMITER_IP"),
@@ -35,6 +57,22 @@ const rateLimiterEmailSchema = z
 			.default(60),
 	})
 	.default({ binding: "RATE_LIMITER_EMAIL", limit: 3, period: 60 });
+
+// Per-grant limit on agent calls, one bucket per grant, the same Cloudflare
+// rate-limiter shape. Bound only while `mcp` is on.
+const rateLimiterAgentSchema = z
+	.object({
+		binding: z.string().default("RATE_LIMITER_AGENT"),
+		limit: z
+			.number()
+			.positive({ error: "auth: rateLimiter.limit must be a positive number" })
+			.default(120),
+		period: z
+			.number()
+			.positive({ error: "auth: rateLimiter.period must be a positive number" })
+			.default(60),
+	})
+	.default({ binding: "RATE_LIMITER_AGENT", limit: 120, period: 60 });
 
 const organizationObjectSchema = z.object({
 	ac: z.unknown().optional(),
@@ -78,93 +116,106 @@ const passkeyObjectSchema = z.object({
 		.optional(),
 });
 
-export const authOptionsSchema = z.object({
-	cookies: z
-		.object({
-			prefix: z.string().optional(),
-			domain: z.string().optional(),
-		})
-		.optional(),
-	session: z
-		.object({
-			// `positive` emits a "too_small" issue whose path is
-			// ["session", "expiresIn"] — the path substring satisfies the
-			// `.toThrow("expiresIn")` assertion.
-			expiresIn: z
-				.number()
-				.positive({
-					error: "auth: session.expiresIn must be a positive number",
-				})
-				.optional(),
-			updateAge: z.number().optional(),
-			// How recently the session must have been created for better-auth to
-			// treat it as fresh; account deletion without email confirmation needs
-			// a fresh session. 0 disables the check entirely, so any stolen
-			// session cookie of any age can delete the account. Passwordless
-			// consumers should implement the `sendDeleteVerification` callback
-			// (email confirmation, no freshness requirement) instead of 0.
-			freshAge: z
-				.number()
-				.nonnegative({
-					error: "auth: session.freshAge must be zero or a positive number",
-				})
-				.optional(),
-		})
-		.optional(),
-	// The plugin owns the identity tables, so they carry no consumer columns:
-	// data a consumer keeps per user or per organization lives in its own
-	// table, keyed by that id.
-	user: z
-		.object({
-			// Account deletion (App Store 5.1.1(v) requires it for a native app).
-			// Off unless asked for: the endpoint destroys rows. The consumer's
-			// `beforeDelete` callback vetoes or cleans up. With the
-			// `sendDeleteVerification` callback implemented, deletion goes
-			// through an emailed confirmation link; without it, a session older
-			// than `session.freshAge` is refused.
-			deleteUser: z.boolean().optional(),
-		})
-		.optional(),
-	organization: z.union([z.boolean(), organizationObjectSchema]).optional(),
-	// Email one-time-password sign-in. On by default; OAuth-only consumers set
-	// `false` to drop the email-OTP plugin and its required callback file.
-	emailOtp: z.boolean().default(true),
-	// Magic-link sign-in. Off by default; on, the consumer's `sendMagicLink`
-	// callback is required. The token lives 5 minutes, is stored hashed and
-	// is spent on its first verification; an unknown address signs up.
-	magicLink: z.boolean().default(false),
-	// OAuth social providers. `true` enables a provider with conventional env
-	// var names (e.g. GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET); an object
-	// overrides the var names. The runtime reads credentials from env at request
-	// time — only the var names are baked into the generated worker.
-	socialProviders: z
-		.object({
-			google: z.union([z.boolean(), socialProviderConfigSchema]).optional(),
-			apple: z.union([z.boolean(), appleProviderConfigSchema]).optional(),
-		})
-		.optional(),
-	// Native (Expo) consumer flag. When set, the worker enables Better Auth's
-	// server-side `expo()` plugin — required for a native client's deep-link /
-	// cookie / origin handling — and adds the deep-link scheme expo registers
-	// (`api.slots.nativeScheme`) to `trustedOrigins`. The CSRF origin check runs
-	// even for native ID-token sign-in, so the scheme must be trusted.
-	expo: z.boolean().optional(),
-	// Passkey (WebAuthn) sign-in through `@better-auth/passkey`. Off by
-	// default; `{}` enables it with every field derived. The consumer migrates
-	// the `passkey` table by re-exporting `@fcalell/plugin-auth/schema/passkey`.
-	passkey: z.union([z.literal(false), passkeyObjectSchema]).default(false),
-	secretVar: z.string().default("AUTH_SECRET"),
-	appUrlVar: z.string().default("APP_URL"),
-	rateLimiter: z
-		.object({
-			ip: rateLimiterIpSchema,
-			email: rateLimiterEmailSchema,
-		})
-		.default({
-			ip: { binding: "RATE_LIMITER_IP", limit: 100, period: 60 },
-			email: { binding: "RATE_LIMITER_EMAIL", limit: 3, period: 60 },
-		}),
-});
+export const authOptionsSchema = z
+	.object({
+		cookies: z
+			.object({
+				prefix: z.string().optional(),
+				domain: z.string().optional(),
+			})
+			.optional(),
+		session: z
+			.object({
+				// `positive` emits a "too_small" issue whose path is
+				// ["session", "expiresIn"] — the path substring satisfies the
+				// `.toThrow("expiresIn")` assertion.
+				expiresIn: z
+					.number()
+					.positive({
+						error: "auth: session.expiresIn must be a positive number",
+					})
+					.optional(),
+				updateAge: z.number().optional(),
+				// How recently the session must have been created for better-auth to
+				// treat it as fresh; account deletion without email confirmation needs
+				// a fresh session. 0 disables the check entirely, so any stolen
+				// session cookie of any age can delete the account. Passwordless
+				// consumers should implement the `sendDeleteVerification` callback
+				// (email confirmation, no freshness requirement) instead of 0.
+				freshAge: z
+					.number()
+					.nonnegative({
+						error: "auth: session.freshAge must be zero or a positive number",
+					})
+					.optional(),
+			})
+			.optional(),
+		// The plugin owns the identity tables, so they carry no consumer columns:
+		// data a consumer keeps per user or per organization lives in its own
+		// table, keyed by that id.
+		user: z
+			.object({
+				// Account deletion (App Store 5.1.1(v) requires it for a native app).
+				// Off unless asked for: the endpoint destroys rows. The consumer's
+				// `beforeDelete` callback vetoes or cleans up. With the
+				// `sendDeleteVerification` callback implemented, deletion goes
+				// through an emailed confirmation link; without it, a session older
+				// than `session.freshAge` is refused.
+				deleteUser: z.boolean().optional(),
+			})
+			.optional(),
+		organization: z.union([z.boolean(), organizationObjectSchema]).optional(),
+		// Email one-time-password sign-in. On by default; OAuth-only consumers set
+		// `false` to drop the email-OTP plugin and its required callback file.
+		emailOtp: z.boolean().default(true),
+		// Magic-link sign-in. Off by default; on, the consumer's `sendMagicLink`
+		// callback is required. The token lives 5 minutes, is stored hashed and
+		// is spent on its first verification; an unknown address signs up.
+		magicLink: z.boolean().default(false),
+		// OAuth social providers. `true` enables a provider with conventional env
+		// var names (e.g. GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET); an object
+		// overrides the var names. The runtime reads credentials from env at request
+		// time — only the var names are baked into the generated worker.
+		socialProviders: z
+			.object({
+				google: z.union([z.boolean(), socialProviderConfigSchema]).optional(),
+				apple: z.union([z.boolean(), appleProviderConfigSchema]).optional(),
+			})
+			.optional(),
+		// Native (Expo) consumer flag. When set, the worker enables Better Auth's
+		// server-side `expo()` plugin — required for a native client's deep-link /
+		// cookie / origin handling — and adds the deep-link scheme expo registers
+		// (`api.slots.nativeScheme`) to `trustedOrigins`. The CSRF origin check runs
+		// even for native ID-token sign-in, so the scheme must be trusted.
+		expo: z.boolean().optional(),
+		// Passkey (WebAuthn) sign-in through `@better-auth/passkey`. Off by
+		// default; `{}` enables it with every field derived. The consumer migrates
+		// the `passkey` table by re-exporting `@fcalell/plugin-auth/schema/passkey`.
+		passkey: z.union([z.literal(false), passkeyObjectSchema]).default(false),
+		// An OAuth authorization server for MCP clients (`@better-auth/mcp`): an
+		// agent connects by signing in, never by a pasted secret. Needs
+		// `organization`; the consumer migrates the OAuth and JWT tables by
+		// re-exporting `@fcalell/plugin-auth/schema/oauth`.
+		mcp: z.boolean().default(false),
+		secretVar: z.string().default("AUTH_SECRET"),
+		appUrlVar: z.string().default("APP_URL"),
+		rateLimiter: z
+			.object({
+				ip: rateLimiterIpSchema,
+				email: rateLimiterEmailSchema,
+				agent: rateLimiterAgentSchema,
+			})
+			.default({
+				ip: { binding: "RATE_LIMITER_IP", limit: 100, period: 60 },
+				email: { binding: "RATE_LIMITER_EMAIL", limit: 3, period: 60 },
+				agent: { binding: "RATE_LIMITER_AGENT", limit: 120, period: 60 },
+			}),
+	})
+	.refine((options) => !options.mcp || options.organization, {
+		error:
+			"auth: `mcp` needs `organization`: an agent's grant is to one organization.",
+		path: ["mcp"],
+	});
 
 // Input type: user-supplied options (defaults remain optional at input).
 export type AuthOptions = z.input<typeof authOptionsSchema>;

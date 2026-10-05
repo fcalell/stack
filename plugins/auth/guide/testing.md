@@ -31,13 +31,19 @@ test("only a member lists the organization's projects", async () => {
 | `auth.session(userId)` | Signs that user in and answers the cookie header |
 | `auth.organization({ name?, slug? })` | Writes an organization. Only with `organization` on |
 | `auth.member({ organizationId, role, user? })` | Writes a member of `role`, creating the user unless one is given, signs it in, and answers `{ user, member, cookie }`. Only with `organization` on |
+| `auth.oauth.register()` | Writes a public client of both scopes with a loopback redirect, and answers `{ clientId, redirectUri }`. Only with `mcp` on |
+| `auth.oauth.connect({ member, organizationId, client })` | Runs the authorization for a signed-in member (authorize, the organization choice, consent, the PKCE exchange) and answers `{ accessToken, refreshToken, grantId }` |
+| `auth.oauth.refresh(refreshToken, client)` | Answers the rotated `{ accessToken, refreshToken }` |
 
 `role` is typed to the configured role names, so another name is a compile error. `cookie` is
-what `client({ cookie })` sends.
+what `client({ cookie })` sends. `connect` throws when the member's authorization resolves another
+organization than `organizationId` (a member of one organization is granted that one), naming it.
+A token reaches a route of your own through `context.oauth.verify` ([mcp-oauth](./mcp-oauth.md)).
 
 ## Rules
 
-- Sign in with the helpers, never through a code or an OAuth flow: a session is a row written
+- Sign in with the helpers, never through a code or an OAuth flow (`auth.oauth` runs the flow
+  with no network: its client is written to the database, never fetched by its metadata document): a session is a row written
   straight to the database and a cookie signed with the env's `AUTH_SECRET`.
 - Write a scope's own rows (a project under the organization) through `app.db`, the test's
   drizzle client, before calling a procedure scoped to them.

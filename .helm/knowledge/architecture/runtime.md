@@ -50,7 +50,7 @@ carry it, and the generated worker and procedure entry render `createWorker<Env>
 so `context.env.APP_URL` reads as `string` and an undeclared var is a type error. Without a target
 that names one (node) `env` is `unknown`. The parameter is type-only; `envChecks` stays the runtime
 guard. Plugin-db adds
-`db`, plugin-auth's runtime `auth`, `tenancy` and `_rateLimiter`, and its auth middleware `user`
+`db`, plugin-auth's runtime `auth`, `tenancy` and `_rateLimiter` (and `oauth` with `mcp`), and its auth middleware `user`
 and `session`. A scoped procedure then writes each resolved level's row under its scope's name,
 `organization` and `member` at the root. The raw request is `httpRequest`, not `request`, because
 a consumer's scope takes its table's name and `request` is a common one. `defineScope` refuses
@@ -146,8 +146,39 @@ WebAuthn requires of the relying party), `rpName` from `app.name`, `origin` from
 production CORS list. A `localhost` ceremony matches neither, so codegen also bakes
 `passkey.devOrigin` (the dev origins) and the runtime, under `STACK_DEV`, passes
 `rpID: "localhost"` and those origins to `passkey()` instead, as it does for
-`devTrustedOrigins`. `@better-auth/passkey` is pinned to the exact `better-auth` version: each
-release peer-requires its own version of `better-auth` and `@better-auth/core`.
+`devTrustedOrigins`. `@better-auth/passkey`, `/expo`, `/mcp`, `/oauth-provider`, `/cimd` and
+`/core` are pinned to the exact `better-auth` version: each release peer-requires its own version
+of `better-auth` and `@better-auth/core`.
+
+`auth({ mcp: true })` (refused without `organization`) makes the worker an OAuth authorization
+server for MCP clients. The runtime adds `jwt()`, `mcp()` and `cimd()` (profile
+`mcp-2026-07-28`) in that order, then a guards plugin, and `disabledPaths` closes the session
+`/token` and the four `/oauth2/*-consent(s)` paths. The pins: the login, organization-choice and
+consent pages (`/sign-in`, `/connect/organization`, `/connect/consent`), the resource
+`${APP_URL}/mcp`, scopes `mcp` and `offline_access`, the authorization-code and refresh grants only,
+a 600 s code, a 3600 s access JWT, a 30-day refresh token reusable for 30 s, dynamic registration
+off, and `clientPrivileges` refusing every action (clients come from metadata documents, never a
+session). The guards force `prompt=consent` on every external authorization (CIMD clients share a
+`client_id`), refuse a `set-active` carrying the authorization's signed query for an organization
+the tenancy does not resolve (`ORGANIZATION_NOT_RESOLVED`) and mark the request that chose, which
+is what lets the resumed authorization pass the organization step, delete a client's older tokens
+when its consent is accepted, and, with the organization hooks, delete a member's grants when they
+are removed, leave, or the organization is deleted. A grant is one `oauthConsent` row, unique by
+client, member and organization (`referenceId`). The runtime's `fetch` also hands the two
+`/.well-known/oauth-*` prefixes to Better Auth behind the IP limiter.
+
+`context.oauth.verify(request)` reads only the `Authorization` header: signature against the stored
+keys (never a fetch of the worker's own JWKS URL), issuer, exact audience, `typ` `at+jwt`, expiry,
+scope `mcp`, DPoP binding, then one read joining the consent (client, member, `organization_id`),
+the user and the member under the membership predicate; a token issued before the consent's
+`createdAt` is refused. It answers `{ user (with `agent: true`), session (the grant's, no token),
+member, grant, tenancy }` or the `401`, `403` or `429` `Response` a client reads, and its
+`tenancy` resolves the grant's organization alone. `revokeGrant(id)` ends a grant by its consent id.
+The per-grant limiter (`RATE_LIMITER_AGENT`) is applied inside `verify`, skipped under dev mode.
+The CIMD transport is `worker/cimd-transport.ts`: HTTPS `GET`/`HEAD` only, no IP literal or
+special-use name, the host resolved over DNS over HTTPS and every address required public, redirects
+returned unfollowed; it cannot pin the connection to the checked address, a window accepted because
+a Worker's egress reaches the public internet only.
 
 The callbacks file is the consumer's seam into better-auth's own extension mechanism:
 `AuthCallbacks.plugins` are registered after the framework's plugins, and the file is wired
@@ -239,7 +270,10 @@ spawned `stack`.
   `boot({ env })`, and a missing one is refused by its var name. A boot with no `db` testing
   plugin upstream (a sqlite consumer's) is refused by that name. The organization helpers exist
   only when roles are baked, so `role` is typed to the configured names and a consumer without
-  organizations has no `auth.member` at all.
+  organizations has no `auth.member` at all. With `mcp`, `auth.oauth` runs the authorization through
+  the worker's `fetch` with a cookie jar: `register()` writes a managed public client (no metadata
+  lookup leaves the process), `connect({ member, organizationId, client })` authorizes, chooses the
+  organization when asked, consents and exchanges the PKCE code, and `refresh` rotates the pair.
 
 ## `virtual:stack-procedure`
 

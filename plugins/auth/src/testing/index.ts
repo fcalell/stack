@@ -1,9 +1,24 @@
-import { randomBytes, randomUUID } from "node:crypto";
-import type { TestingPlugin } from "@fcalell/plugin-api/testing";
+import { createHash, randomBytes, randomUUID } from "node:crypto";
+import type {
+	TestingContext,
+	TestingPlugin,
+} from "@fcalell/plugin-api/testing";
 import type { SQLiteTable } from "@fcalell/plugin-db/orm";
+import { and, eq } from "@fcalell/plugin-db/orm";
 import { makeSignature } from "better-auth/crypto";
 import { session, user } from "../schema/index.ts";
+import {
+	oauthClient,
+	oauthClientResource,
+	oauthConsent,
+} from "../schema/oauth.ts";
 import { member, organization } from "../schema/organization.ts";
+import {
+	MCP_CONSENT_PAGE,
+	MCP_ORGANIZATION_PAGE,
+	MCP_RESOURCE_PATH,
+	MCP_SCOPES,
+} from "../types.ts";
 
 // Signs a consumer test in without an OTP and without a Better Auth instance:
 // a `session` row written through the drizzle client the db testing plugin
@@ -21,6 +36,11 @@ const DEFAULT_EXPIRES_IN = 60 * 60 * 24 * 7;
 export interface TestingDb {
 	insert(table: SQLiteTable): {
 		values(row: Record<string, unknown>): { run(): unknown };
+	};
+	select(): {
+		from(table: SQLiteTable): {
+			where(condition: unknown): { get(): unknown };
+		};
 	};
 }
 
@@ -92,6 +112,8 @@ export interface AuthTestingOptions<TRole extends string = string> {
 	expiresIn?: number;
 	// Baked exactly when organizations are on: the configured role names.
 	roles?: readonly TRole[];
+	// Baked when `auth({ mcp: true })` is on: the `oauth` helpers exist.
+	mcp?: boolean;
 }
 
 export interface UserHelpers {
@@ -114,11 +136,42 @@ export interface OrganizationHelpers<TRole extends string> {
 	}): Promise<TestMember<TRole>>;
 }
 
+// A client the authorization server knows without a metadata lookup: a
+// managed public client with a loopback redirect, which is the CIMD path's
+// stand-in, since no lookup may leave the process.
+export interface OAuthTestClient {
+	clientId: string;
+	redirectUri: string;
+}
+
+export interface OAuthHelpers<TRole extends string> {
+	// Writes a client of both scopes, linked to the `/mcp` resource.
+	register(): Promise<OAuthTestClient>;
+	// Runs the authorization for `member`, signed in by their cookie: the
+	// authorize call, the organization choice when the provider asks, consent,
+	// and the PKCE code exchange, all through the worker's `fetch`. Answers
+	// the tokens and the grant's id (its consent row's).
+	connect(input: {
+		member: TestMember<TRole>;
+		organizationId: string;
+		client: OAuthTestClient;
+	}): Promise<{ accessToken: string; refreshToken: string; grantId: string }>;
+	// Exchanges a refresh token for the rotated pair.
+	refresh(
+		refreshToken: string,
+		client: OAuthTestClient,
+	): Promise<{ accessToken: string; refreshToken: string }>;
+}
+
 // The organization helpers exist exactly when roles are baked, as the
-// worker's tenancy exists exactly when organizations are on.
+// worker's tenancy exists exactly when organizations are on, and the OAuth
+// helpers exactly when `mcp` is.
 export type AuthTesting<TOptions extends AuthTestingOptions> = UserHelpers &
 	(TOptions extends { roles: readonly (infer TRole extends string)[] }
-		? OrganizationHelpers<TRole>
+		? OrganizationHelpers<TRole> &
+				(TOptions extends { mcp: true }
+					? { oauth: OAuthHelpers<TRole> }
+					: object)
 		: object);
 
 function readVar(env: Record<string, unknown>, name: string): string {
@@ -140,6 +193,234 @@ function requireDb(db: TestingDb | undefined): TestingDb {
 		);
 	}
 	return db;
+}
+
+const LOOPBACK_REDIRECT = "http://127.0.0.1:33418/callback";
+
+// The cookies a request carries and a response sets, for the one browser a
+// `connect` stands in for.
+class Cookies {
+	private readonly jar = new Map<string, string>();
+
+	constructor(header: string) {
+		this.take(header.split("; "));
+	}
+
+	private take(pairs: string[]): void {
+		for (const pair of pairs) {
+			const eq = pair.indexOf("=");
+			if (eq > 0) this.jar.set(pair.slice(0, eq), pair.slice(eq + 1));
+		}
+	}
+
+	store(response: Response): void {
+		this.take(
+			response.headers
+				.getSetCookie()
+				.map((cookie) => cookie.slice(0, cookie.indexOf(";"))),
+		);
+	}
+
+	header(): string {
+		return [...this.jar].map(([name, value]) => `${name}=${value}`).join("; ");
+	}
+}
+
+function oauthHelpers(
+	ctx: TestingContext,
+	db: TestingDb,
+	appUrl: string,
+): OAuthHelpers<string> {
+	const origin = new URL(appUrl).origin;
+	const resource = `${appUrl.replace(/\/+$/, "")}${MCP_RESOURCE_PATH}`;
+
+	async function exchangeTokens(
+		params: Record<string, string>,
+	): Promise<{ access_token: string; refresh_token: string }> {
+		const response = await ctx.fetch(
+			new URL("/api/auth/oauth2/token", origin),
+			{
+				method: "POST",
+				headers: { "content-type": "application/x-www-form-urlencoded" },
+				body: new URLSearchParams(params).toString(),
+			},
+		);
+		const body = await response.text();
+		if (!response.ok) {
+			throw new Error(
+				`authTesting: the token exchange answered ${response.status}: ${body}`,
+			);
+		}
+		return JSON.parse(body);
+	}
+
+	return {
+		async register() {
+			// The first request builds the auth instance, which seeds the resource
+			// the client links to.
+			await ctx.fetch(new URL("/.well-known/oauth-protected-resource", origin));
+			const clientId = `test-client-${randomUUID()}`;
+			const now = new Date();
+			await db
+				.insert(oauthClient)
+				.values({
+					id: randomUUID(),
+					clientId,
+					clientDiscoveryId: null,
+					name: "Test client",
+					redirectUris: [LOOPBACK_REDIRECT],
+					scopes: [...MCP_SCOPES],
+					grantTypes: ["authorization_code", "refresh_token"],
+					responseTypes: ["code"],
+					tokenEndpointAuthMethod: "none",
+					applicationType: "native",
+					requirePKCE: true,
+					disabled: false,
+					createdAt: now,
+					updatedAt: now,
+				} satisfies Partial<typeof oauthClient.$inferInsert>)
+				.run();
+			await db
+				.insert(oauthClientResource)
+				.values({
+					id: randomUUID(),
+					clientId,
+					resourceId: resource,
+					createdAt: now,
+				} satisfies typeof oauthClientResource.$inferInsert)
+				.run();
+			return { clientId, redirectUri: LOOPBACK_REDIRECT };
+		},
+
+		async connect({ member: signedIn, organizationId, client }) {
+			const cookies = new Cookies(signedIn.cookie);
+			const send = async (path: string, init: RequestInit = {}) => {
+				const headers = new Headers(init.headers);
+				headers.set("origin", origin);
+				headers.set("cookie", cookies.header());
+				if (init.body && !headers.has("content-type")) {
+					headers.set("content-type", "application/json");
+				}
+				const response = await ctx.fetch(new URL(path, origin), {
+					...init,
+					headers,
+					redirect: "manual",
+				});
+				cookies.store(response);
+				return response;
+			};
+			const nextPage = async (response: Response): Promise<URL> => {
+				const text = await response.text();
+				if (!response.ok) {
+					throw new Error(
+						`authTesting: the authorization answered ${response.status}: ${text}`,
+					);
+				}
+				return new URL((JSON.parse(text) as { url: string }).url, origin);
+			};
+
+			const verifier = randomBytes(32).toString("base64url");
+			const authorize = await send(
+				`/api/auth/oauth2/authorize?${new URLSearchParams({
+					response_type: "code",
+					client_id: client.clientId,
+					redirect_uri: client.redirectUri,
+					scope: MCP_SCOPES.join(" "),
+					state: randomBytes(8).toString("hex"),
+					code_challenge: createHash("sha256")
+						.update(verifier)
+						.digest("base64url"),
+					code_challenge_method: "S256",
+					resource,
+				})}`,
+			);
+			if (authorize.status !== 302) {
+				throw new Error(
+					`authTesting: the authorization answered ${authorize.status}: ${await authorize.text()}`,
+				);
+			}
+			let page = new URL(authorize.headers.get("location") ?? "", origin);
+			if (page.pathname === MCP_ORGANIZATION_PAGE) {
+				page = await nextPage(
+					await send("/api/auth/organization/set-active", {
+						method: "POST",
+						body: JSON.stringify({
+							organizationId,
+							oauth_query: page.search.slice(1),
+						}),
+					}),
+				);
+			}
+			if (page.pathname !== MCP_CONSENT_PAGE) {
+				throw new Error(
+					`authTesting: the authorization did not reach consent for the member: it went to ${page.href}`,
+				);
+			}
+			const callback = await nextPage(
+				await send("/api/auth/oauth2/consent", {
+					method: "POST",
+					body: JSON.stringify({
+						accept: true,
+						oauth_query: page.search.slice(1),
+					}),
+				}),
+			);
+			const code = callback.searchParams.get("code");
+			if (!code) {
+				throw new Error(`authTesting: no code was issued: ${callback.href}`);
+			}
+			const tokens = await exchangeTokens({
+				grant_type: "authorization_code",
+				code,
+				redirect_uri: client.redirectUri,
+				client_id: client.clientId,
+				code_verifier: verifier,
+				resource,
+			});
+			const claims = JSON.parse(
+				Buffer.from(
+					tokens.access_token.split(".")[1] ?? "",
+					"base64url",
+				).toString(),
+			) as { organization_id?: string };
+			if (claims.organization_id !== organizationId) {
+				throw new Error(
+					`authTesting: the grant is to ${claims.organization_id}, not ${organizationId}: the member belongs to one organization and it is not the one asked for.`,
+				);
+			}
+			const consent = (await db
+				.select()
+				.from(oauthConsent)
+				.where(
+					and(
+						eq(oauthConsent.clientId, client.clientId),
+						eq(oauthConsent.userId, signedIn.user.id),
+						eq(oauthConsent.referenceId, organizationId),
+					),
+				)
+				.get()) as { id: string } | undefined;
+			if (!consent)
+				throw new Error("authTesting: the grant left no consent row.");
+			return {
+				accessToken: tokens.access_token,
+				refreshToken: tokens.refresh_token,
+				grantId: consent.id,
+			};
+		},
+
+		async refresh(refreshToken, client) {
+			const tokens = await exchangeTokens({
+				grant_type: "refresh_token",
+				refresh_token: refreshToken,
+				client_id: client.clientId,
+				resource,
+			});
+			return {
+				accessToken: tokens.access_token,
+				refreshToken: tokens.refresh_token,
+			};
+		},
+	};
 }
 
 export default function authTesting<const TOptions extends AuthTestingOptions>(
@@ -235,6 +516,7 @@ export default function authTesting<const TOptions extends AuthTestingOptions>(
 					auth: {
 						...helpers,
 						...organizationHelpers,
+						...(options.mcp ? { oauth: oauthHelpers(ctx, db, appUrl) } : {}),
 					} as unknown as AuthTesting<TOptions>,
 				},
 			};
