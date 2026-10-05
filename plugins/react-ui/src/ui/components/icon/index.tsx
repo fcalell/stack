@@ -1,5 +1,6 @@
 import { cn } from "@fcalell/ui-core/cn";
 import type { IconName } from "@fcalell/ui-core/descriptors";
+import { ICON_STROKE, type IconStroke } from "@fcalell/ui-core/tokens";
 import { type IconFit, icon } from "@fcalell/ui-core/variants";
 import * as lucide from "lucide-react";
 import type { Closed } from "../../lib/closed.ts";
@@ -18,11 +19,24 @@ export interface IconProps extends Closed {
 	fit?: IconFit;
 }
 
-/** A glyph in the ink of its place (currentColor), at the size of what it sits beside. */
-export function Icon({ name, fit }: IconProps) {
+/** What every icon draws: the public `Icon` at the line weight, or a mark that carries meaning (a change mark) at the mark weight. Outside the package's exports. */
+export function IconBase({
+	name,
+	fit,
+	stroke,
+}: IconProps & { stroke: IconStroke }) {
 	const Glyph = GLYPHS[name];
 	// Decorative: the text beside it or the control around it names it.
 	return (
-		<Glyph className={cn(icon({ fit: fit ?? "body" }), GLYPH)} aria-hidden />
+		<Glyph
+			className={cn(icon({ fit: fit ?? "body" }), GLYPH)}
+			strokeWidth={ICON_STROKE[stroke]}
+			aria-hidden
+		/>
 	);
+}
+
+/** A glyph in the ink of its place (currentColor), at the size of what it sits beside. */
+export function Icon({ name, fit }: IconProps) {
+	return <IconBase name={name} fit={fit} stroke="line" />;
 }

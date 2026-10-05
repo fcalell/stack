@@ -949,6 +949,16 @@ export const HAIRLINE_PX = 1;
 export const RING_PX = 2;
 export const RING_OFFSET_PX = 2;
 
+// An icon's stroke, in units of Lucide's 24-unit grid, so it scales with the
+// icon: `line` is an icon's own weight (Lucide's default), `mark` the weight
+// of a mark that carries meaning at the meta icon size (a checkbox's tick or
+// dash, a change mark's glyph), where `line` draws 1 px at 12 px, straddling
+// two pixel rows at half coverage. `mark` is 3.5 units, 1.75 px at 12 px and
+// 2.04 px at 14 px. Both platforms pass it as the glyph's `strokeWidth`; no
+// component spells a stroke literal.
+export const ICON_STROKE = { line: 2, mark: 3.5 } as const;
+export type IconStroke = keyof typeof ICON_STROKE;
+
 // The measure of a short label (a chip's, a status word, a skeleton label's
 // lane), the widths of lifted layers, each at its pattern's range (a layer
 // never stretches to its container), the one measure for running text, and

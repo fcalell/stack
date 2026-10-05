@@ -1,5 +1,6 @@
 import { Checkbox as Base } from "@base-ui/react/checkbox";
 import { cn } from "@fcalell/ui-core/cn";
+import { ICON_STROKE } from "@fcalell/ui-core/tokens";
 import { CHECKBOX_MARK, checkbox } from "@fcalell/ui-core/variants";
 import { Check, type IconNode, Minus } from "lucide";
 import { createElement, use } from "react";
@@ -23,9 +24,6 @@ const WASH =
 	"absolute inset-0 group-not-aria-disabled/toggle:group-hover/toggle:bg-wash-hover group-not-aria-disabled/toggle:group-active/toggle:bg-wash-press";
 const MARK = "flex data-disabled:text-ink-disabled";
 const GLYPH = "w-full";
-// Lucide's 24-unit grid at the mark's 12 px (desktop) or 14 px (touch): 3.5
-// units draw 1.75 px or 2.04 px.
-const STROKE = 3.5;
 const STATES = {
 	true: "checked",
 	false: "unchecked",
@@ -88,7 +86,7 @@ function Mark({ node }: { node: IconNode }) {
 			viewBox="0 0 24 24"
 			fill="none"
 			stroke="currentColor"
-			strokeWidth={STROKE}
+			strokeWidth={ICON_STROKE.mark}
 			strokeLinecap="round"
 			strokeLinejoin="round"
 			aria-hidden="true"

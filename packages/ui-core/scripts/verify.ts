@@ -76,6 +76,7 @@ import {
 	filled,
 	GAP_ROLES,
 	HAIRLINE_PX,
+	ICON_STROKE,
 	KNOB_DEFAULTS,
 	LOOP_MS,
 	MEASURE_CHARACTERS,
@@ -1172,6 +1173,23 @@ check("c07", "the shadows are two sRGB layers per level and mode", () => {
 	);
 	return `${base.shadows.light.float} / ${base.shadows.dark.modal}`;
 });
+
+check(
+	"c38",
+	"a mark's stroke draws at least 1.5 px at the meta icon size",
+	() => {
+		const drawn = DENSITIES.map((density) => {
+			const px = (ICON_STROKE.mark * SIZE_PX[density]["icon-meta"]) / 24;
+			assert(px >= 1.5, `${density} mark stroke draws ${px} px, under 1.5`);
+			return `${density} ${px}`;
+		});
+		assert(
+			ICON_STROKE.mark > ICON_STROKE.line,
+			"the mark stroke is heavier than the line stroke",
+		);
+		return `${drawn.join(", ")} px`;
+	},
+);
 
 check("c37", "the layers stand over the page in order, toasts on top", () => {
 	const root = rootTokens(base);

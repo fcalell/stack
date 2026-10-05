@@ -107,7 +107,14 @@ its rationale.
   them in px at `SANS_ADVANCE` (Plex Sans's "0", 0.6 em) of the touch body size, rounded up (173 and
   557). That is a native limit: there every short label's cap is the body's 18 characters whatever
   its role (a chip's caption included, and `SKELETON_LANE`'s role axis draws one width), and a named
-  sans with a wider "0" overflows them. `themeTokens` seeds the touch set on both platforms; the web
+  sans with a wider "0" overflows them. An icon's stroke is `ICON_STROKE`, a constant beside the
+  sizes rather than a class or an `ICON` axis cell: the web's Lucide and native's Lucide and
+  `react-native-svg` all take `strokeWidth` as a number prop, so one value in `tokens` reaches
+  both platforms the same way and no class has to resolve to a stroke. `line` (2) is an icon's own weight, `mark` (3.5) the weight
+  of a mark that carries meaning at the meta size, where `line`'s 1 px at 12 px straddles two pixel
+  rows and a mark's hue drops under the 3:1 floor. The checkbox and the change mark (through each
+  plugin's internal `IconBase`, whose public `Icon` stays at `line`) read `mark`; each plugin's
+  verify fails any other stroke weight literal in `src/ui`. `themeTokens` seeds the touch set on both platforms; the web
   overrides it with the desktop set in a `:root` rule in `@layer base` under a fine pointer at
   `tablet` width and wider (so a desktop window narrower than `tablet` draws the touch set and
   structure), the cascade the dark layer rides, so no cell carries a density class: a non-inline

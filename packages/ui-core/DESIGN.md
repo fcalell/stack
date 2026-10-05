@@ -2351,6 +2351,8 @@ Sizes are heights and squares in the same namespace. Density is a theme and neve
 | `chips-inset` | 3px | 9px | 9 | the inset above and below the chips of a pick of several: half of what the compact control has over a chip, less the border |
 | `line-body` | 20px | 24px | 24 | one body line's box: a part on a wrapped title's first line is pinned to it |
 
+An icon's stroke is a weight on Lucide's 24-unit grid, so it scales with the icon: `line` 2, an icon's own, and `mark` 3.5, a mark that carries meaning at the meta size (a checkbox's tick and dash, a change mark's glyph), which at 12px draws 1.75 px where `line` draws 1 px across two pixel rows at half coverage. No component spells a stroke number.
+
 Widths of lifted layers, never stretched to their container, and of a frame's fixed regions: `measure-short` 18ch (native 173px, at the body size, so a label's own size is lost there), `popover` 240px, `toast` 360px, `dialog` 520px, `sheet` 640px, `sidebar` 240px, `list` 360px, `pane` 320px, `column` 300px, `auth` 400px, `empty` 320px, `selection` 1060px. Breakpoints: `tablet` 768px, `desktop` 1024px, `wide` 1440px; they are the only responsive variants, of the viewport (`tablet:`) and, on the web, of a page's width (`page-tablet:`, `page-max-tablet:`), by which a Split decides its regions.
 
 ## Elevation & Depth

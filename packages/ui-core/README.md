@@ -302,6 +302,13 @@ taller part overflows), or the height of what a part swaps with (`PENDING_TRACK`
 any other container takes its height from its content and padding, its parts centred on its tallest,
 never from another component's size.
 
+An icon's stroke is `ICON_STROKE` in `tokens`, a weight in units of Lucide's 24-unit grid, so it
+scales with the icon: `line` 2 (an icon's own) and `mark` 3.5, for a mark that carries meaning at
+the meta icon size, which it draws 1.75 px at 12 px where `line` draws 1 px across two pixel rows
+at half coverage and a mark's contrast falls under the 3:1 floor. The checkbox's tick and dash and
+a change mark's glyph read `mark`; every other icon reads `line`. Both platforms pass the value as
+the glyph's `strokeWidth`, and each plugin's verify fails a stroke weight spelled anywhere else.
+
 Seven radius roles, density-invariant, a radius naming the role and never the size: `chip` 4
 (an outlined chip, a skeleton bar, a checkbox), `control` 6 (a button, a field, a segmented
 control), `row` 6 (a menu item, a highlighted row), `card` 8 (a card, a toast), `popover` 8,

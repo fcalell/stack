@@ -3,7 +3,7 @@ import type { ChangeKind } from "@fcalell/ui-core/descriptors";
 import { CHANGE_GLYPH } from "@fcalell/ui-core/list-state";
 import { changeMark } from "@fcalell/ui-core/variants";
 import { useWords } from "../../lib/words.tsx";
-import { Icon } from "../icon/index.tsx";
+import { IconBase } from "../icon/index.tsx";
 
 const BOX = "flex shrink-0 items-center justify-center";
 const SPOKEN = "sr-only";
@@ -14,7 +14,7 @@ export function ChangeMark(props: { kind: ChangeKind }) {
 	const { kind } = props;
 	return (
 		<span className={cn(changeMark({ kind }), BOX)}>
-			<Icon name={CHANGE_GLYPH[kind]} fit="meta" />
+			<IconBase name={CHANGE_GLYPH[kind]} fit="meta" stroke="mark" />
 			<span className={SPOKEN}>{words[kind]}</span>
 		</span>
 	);

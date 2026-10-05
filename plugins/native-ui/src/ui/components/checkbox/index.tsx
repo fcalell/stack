@@ -1,3 +1,4 @@
+import { ICON_STROKE } from "@fcalell/ui-core/tokens";
 import { CHECKBOX_MARK, checkbox } from "@fcalell/ui-core/variants";
 import { Check, type IconNode, Minus } from "lucide";
 import { useContext } from "react";
@@ -8,8 +9,6 @@ import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { FieldDisabled, LabelTarget } from "../../lib/field";
 
-// Lucide's 24-unit grid at the mark's 14 px (touch): 3.5 units draw 2.04 px.
-const STROKE = 3.5;
 const STATES = {
 	true: "checked",
 	false: "unchecked",
@@ -95,7 +94,7 @@ function Mark({ node, disabled }: { node: IconNode; disabled: boolean }) {
 			fill="none"
 			stroke="currentColor"
 			color={color}
-			strokeWidth={STROKE}
+			strokeWidth={ICON_STROKE.mark}
 			strokeLinecap="round"
 			strokeLinejoin="round"
 			aria-hidden

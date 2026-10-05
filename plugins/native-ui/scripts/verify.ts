@@ -1343,6 +1343,27 @@ check("b-holds", "no component imports a cell another one holds", () => {
 	return `${read} component files, no held cell imported outside its holder`;
 });
 
+check("b-stroke", "no stroke weight is spelled outside ICON_STROKE", () => {
+	const hits: string[] = [];
+	for (const path of walk(resolve(pkgDir, "src/ui"), /\.(ts|tsx)$/)) {
+		const source = withoutComments(readFileSync(path, "utf8"));
+		const name = relative(pkgDir, path);
+		// A stroke weight is the prop or attribute, or a `stroke-<n>` class: each
+		// reads the contract's `ICON_STROKE`, never a number.
+		for (const match of source.matchAll(
+			/\bstroke(?:Width|-width)\s*[=:]\s*(?!\{?\s*ICON_STROKE\b)[^\n]*|["'\s]stroke-(?:\d|\[)[^\s"']*/g,
+		)) {
+			const at = source.slice(0, match.index).split("\n").length;
+			hits.push(`${name}:${at}: ${match[0].trim()}`);
+		}
+	}
+	assert(
+		hits.length === 0,
+		`a stroke weight is spelled outside ICON_STROKE:\n  ${hits.join("\n  ")}`,
+	);
+	return "every stroke weight reads ICON_STROKE";
+});
+
 check("b-words", "no word is drawn from a literal", () => {
 	const hits: string[] = [];
 	for (const path of COMPONENT_FILES) {

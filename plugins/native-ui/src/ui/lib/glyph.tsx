@@ -1,4 +1,5 @@
 import type { IconName } from "@fcalell/ui-core/descriptors";
+import { ICON_STROKE, type IconStroke } from "@fcalell/ui-core/tokens";
 import type { ContentTone } from "@fcalell/ui-core/variants";
 import * as lucide from "lucide-react-native";
 import { useTokenColor } from "./theme";
@@ -15,11 +16,13 @@ export function Glyph({
 	icon: Icon,
 	tone = "ink-body",
 	size = GLYPH_SIZE,
+	stroke = "line",
 }: {
 	icon: lucide.LucideIcon;
 	tone?: ContentTone;
 	size?: number;
+	stroke?: IconStroke;
 }) {
 	const color = useTokenColor(`--color-${tone}`);
-	return <Icon size={size} color={color} strokeWidth={2} />;
+	return <Icon size={size} color={color} strokeWidth={ICON_STROKE[stroke]} />;
 }

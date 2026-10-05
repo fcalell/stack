@@ -14,6 +14,7 @@ import {
 	DURATIONS,
 	EASINGS,
 	type FontWeight,
+	ICON_STROKE,
 	LABEL,
 	METER_NEAR,
 	MODES,
@@ -475,6 +476,8 @@ function body(resolved: ResolvedTheme): string[] {
 				SIZE_USE[size],
 			]),
 		),
+		"",
+		`An icon's stroke is a weight on Lucide's 24-unit grid, so it scales with the icon: \`line\` ${ICON_STROKE.line}, an icon's own, and \`mark\` ${ICON_STROKE.mark}, a mark that carries meaning at the meta size (a checkbox's tick and dash, a change mark's glyph), which at ${resolved.sizes.desktop["icon-meta"]} draws ${(ICON_STROKE.mark * sizePx("desktop", "icon-meta")) / 24} px where \`line\` draws 1 px across two pixel rows at half coverage. No component spells a stroke number.`,
 		"",
 		`Widths of lifted layers, never stretched to their container, and of a frame's fixed regions: ${WIDTHS.filter(
 			(width) => width !== "measure",
