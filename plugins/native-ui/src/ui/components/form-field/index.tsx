@@ -1,8 +1,14 @@
-import type { FieldBinding, FieldControl } from "@fcalell/ui-core/descriptors";
+import type {
+	Answered,
+	FieldBinding,
+	FieldControl,
+} from "@fcalell/ui-core/descriptors";
 import {
 	FORM_FIELD_ERROR,
+	FORM_FIELD_SUMMARY,
 	formField,
 	lineBox,
+	summaryContentTone,
 	text,
 	textStrong,
 } from "@fcalell/ui-core/variants";
@@ -13,12 +19,17 @@ import { cn } from "../../lib/cn";
 import {
 	FieldDisabled,
 	FieldError,
+	FieldFocus,
 	FieldNameContext,
 	FieldRefusal,
 	GroupName,
 	LabelTarget,
 } from "../../lib/field";
+import { Ink } from "../../lib/ink";
+import { useWords } from "../../lib/words";
 import { Checkbox, type CheckboxProps } from "../checkbox";
+import { Icon } from "../icon";
+import { IconButton } from "../icon-button";
 import { OptionList } from "../option-list";
 import { SegmentedControl } from "../segmented-control";
 import { Slider } from "../slider";
@@ -33,6 +44,9 @@ const LABEL_BLOCK = "flex-1 min-w-0";
 const BOX_LINE = "flex-row shrink-0 items-center";
 const DISABLED = "text-ink-disabled";
 const STRUT = "​";
+const SUMMARY = "flex-row items-center min-w-0";
+const SUMMARY_LABEL = "shrink min-w-0";
+const SUMMARY_ANSWER = "flex-1 min-w-0";
 
 interface FormFieldBase extends Closed {
 	// The control's name, drawn over it (beside a switch or a checkbox).
@@ -42,6 +56,10 @@ interface FormFieldBase extends Closed {
 	// The control takes no input: the label in the disabled ink, the control
 	// its disabled form.
 	disabled?: boolean;
+	// The question is answered: while set the field folds to one summary row
+	// (a check, the label, `answer`, an Edit act) and renders no control.
+	// Clearing it unfolds the field and focuses a typing control.
+	answered?: Answered;
 }
 
 // Unbound, the consumer gives the error and the control; bound, the form's
@@ -95,12 +113,23 @@ function formOf(control: ReactNode) {
 // names a typing control; disabled, the label takes the disabled ink, the
 // control its disabled cells, and the description stays as the reason.
 export function FormField<V>(props: FormFieldProps<V>) {
-	const { label, description, disabled = false } = props;
+	const { label, description, disabled = false, answered } = props;
+	const words = useWords();
+	const folded = answered !== undefined;
 	// What a control refused (a file of the wrong type) stands in the error
 	// line until its next pick.
 	const [refused, refuse] = useState<string>();
+	// A field unfolding mounts its control afresh, which takes focus as it
+	// mounts where `FieldFocus` asks.
+	const [wasFolded, setWasFolded] = useState(folded);
+	const [reopened, setReopened] = useState(false);
+	if (wasFolded !== folded) {
+		setWasFolded(folded);
+		setReopened(wasFolded);
+	}
 	const error = refused ?? (props.field ? props.field.error : props.error);
-	const control = fieldControl(props);
+	// A folded field draws no control, so the consumer's function is not called.
+	const control = folded ? null : fieldControl(props);
 	const form = formOf(control);
 	const said = error ?? description;
 	// What a group of controls is named and described by, one value per change.
@@ -118,6 +147,29 @@ export function FormField<V>(props: FormFieldProps<V>) {
 	) : description ? (
 		<RNText className={text({ role: "meta" })}>{description}</RNText>
 	) : null;
+	if (answered)
+		return (
+			<View className={cn(FORM_FIELD_SUMMARY, SUMMARY)}>
+				<Ink.Provider value={summaryContentTone()}>
+					<Icon name="Check" />
+				</Ink.Provider>
+				<RNText numberOfLines={1} className={cn(labelClass, SUMMARY_LABEL)}>
+					{label}
+				</RNText>
+				<RNText
+					numberOfLines={1}
+					className={cn(text({ role: "meta" }), SUMMARY_ANSWER)}
+				>
+					{answered.answer}
+				</RNText>
+				<IconButton
+					icon="Pencil"
+					fit="bar"
+					label={`${words.edit} ${label}`}
+					onAct={answered.onEdit}
+				/>
+			</View>
+		);
 	// A group takes no field context: its label and its line under it name
 	// and describe the group, never the controls inside.
 	if (form === "group")
@@ -158,7 +210,9 @@ export function FormField<V>(props: FormFieldProps<V>) {
 			<FieldDisabled.Provider value={disabled}>
 				<FieldError.Provider value={Boolean(error)}>
 					<FieldRefusal.Provider value={refuse}>
-						{control}
+						<FieldFocus.Provider value={reopened}>
+							{control}
+						</FieldFocus.Provider>
 					</FieldRefusal.Provider>
 				</FieldError.Provider>
 			</FieldDisabled.Provider>

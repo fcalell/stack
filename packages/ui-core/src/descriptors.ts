@@ -168,6 +168,13 @@ export interface RowEntry {
 	error?: string;
 }
 
+// A `FormField` whose question is answered: it folds to one summary row with
+// `answer` and an Edit act that `onEdit` hears; clearing it reopens the field.
+export interface Answered {
+	answer: string;
+	onEdit: () => void;
+}
+
 // What a typing control inside a bound `FormField` takes: the field's value,
 // its change handler, and, when the binding autosaves, what hears each
 // commit (`CommitMoment` in `./commit`: the viewer left the field or pressed

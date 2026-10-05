@@ -1068,23 +1068,47 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// The label at body 500 over the control, the description and the
 		// error line in meta; disabled, the label in the disabled ink and the
 		// description kept as the reason. A switch stands at the label's end,
-		// a checkbox on the label's line ahead of it.
+		// a checkbox on the label's line ahead of it. `answered` folds the field
+		// to one summary row at the row height (a check in the `ok` ink, the
+		// label, the answer in meta, a pencil act named by the `edit` word) and
+		// renders no control; once `onEdit` clears it the field unfolds and
+		// focuses its control. A folded field is a rest field: it shows no
+		// description, error or disabled form.
 		FormField: {
-			props: ["label", "description", "error", "disabled", "field", "children"],
+			props: [
+				"label",
+				"description",
+				"error",
+				"disabled",
+				"answered",
+				"field",
+				"children",
+			],
 			draws: [
 				"FORM_FIELD",
 				"FORM_FIELD_ERROR",
+				"FORM_FIELD_SUMMARY",
+				"FORM_FIELD_SUMMARY_GLYPH",
+				"ICON.fit.body",
+				"ICON_BUTTON.fit.bar",
 				"LINE_BOX.role.body",
 				"TEXT.role.body",
 				"TEXT_STRONG.role.body",
 				"TEXT.role.meta",
 			],
-			holds: ["FORM_FIELD", "FORM_FIELD_ERROR"],
+			holds: [
+				"FORM_FIELD",
+				"FORM_FIELD_ERROR",
+				"FORM_FIELD_SUMMARY",
+				"FORM_FIELD_SUMMARY_GLYPH",
+			],
 			states: ["rest", "disabled", "error"],
 			owns: {
 				roles: ["body", "meta"],
-				colors: ["ink-body", "ink-meta", "ink-error", "ink-disabled"],
+				colors: ["ink-body", "ink-meta", "ink-error", "ink-disabled", "ok"],
+				radii: ["control"],
 				spacing: ["pair", "fields", "inside"],
+				sizes: ["row", "icon", "control-compact"],
 			},
 		},
 		// Loading, each line keeps its line box and the facts line the height

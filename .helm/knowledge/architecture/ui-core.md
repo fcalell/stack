@@ -129,7 +129,7 @@ pinned by the package's verify suite; this entry holds the architecture and its 
 ## Words
 
 Every word a molecule draws or reads aloud on its own (the seven `Status` words, `recommended`,
-`copy`, `copied`, `download`, `back`, `close`, `cancel`, `dismiss`, `more`, `send`, `stop`, `attach`, `search`, `loading`, `checking`, `retry`, `saving`, `saved`, `notSaved`, `add`, `remove`, `details`, `places`, `notifications`, `code`, `added`, `removed`, `sort`, `ascending`, `descending`, `time`, `message`, `seen`, `unseen`, `copyFailed`, `latest`, `missing`, `typeValue`, `pickValue`, `chooseFile`, the counted `earlierLines`, and the slot words `meterValue`, `meterOver`, `meterMark`, `linesAdded`, `linesRemoved`, `changed`, `wrongType` and `stepOf`) comes
+`copy`, `copied`, `download`, `back`, `close`, `cancel`, `dismiss`, `more`, `send`, `stop`, `attach`, `search`, `loading`, `checking`, `retry`, `saving`, `saved`, `notSaved`, `add`, `remove`, `edit`, `details`, `places`, `notifications`, `code`, `added`, `removed`, `sort`, `ascending`, `descending`, `time`, `message`, `seen`, `unseen`, `copyFailed`, `latest`, `missing`, `typeValue`, `pickValue`, `chooseFile`, the counted `earlierLines`, and the slot words `meterValue`, `meterOver`, `meterMark`, `linesAdded`, `linesRemoved`, `changed`, `wrongType` and `stepOf`) comes
 from `words`, a closed typed object with English defaults. The `Words` type requires every key
 and `wordsSchema` is strict, so a translation missing a word fails `tsc` and the schema. It is a
 plugin option beside `theme`; each plugin contributes a `WordsProvider` into the generated entry
@@ -832,7 +832,7 @@ a tick with no animation, never jumped to full.
 - The canon binds every component either UI plugin ships: one name per concept (`label`,
   `loading`, `onChange`, `onAct`, `act`, `blocked`, `sentence`), composed regions as typed
   descriptors (`Act`, `StatusMark`, `ChipMark`, `RowLeading`, `RowTrailing`, `PlaceSpec`, `Switcher`, `Option`, `OptionGroup`, `Part`, `FieldBinding`, `MessageDetail`,
-  `Confirmation`, `MenuItem`, `RowEntry`, `TableColumn`, `TableRowSlots`) instead of node slots, and no
+  `Confirmation`, `MenuItem`, `RowEntry`, `Answered`, `TableColumn`, `TableRowSlots`) instead of node slots, and no
   `class` / `className` / `classList` / `style` prop. Laws live in the README under `## The
   canon`. An icon is an `IconName`, a closed type over Lucide's PascalCase
   names read off the `lucide` package ui-core depends on: the set is baked in, never a consumer
@@ -890,6 +890,17 @@ a tick with no animation, never jumped to full.
   drag-over as the focus ring (the contract has no dashed edge); the phone has no drop.
   `expo-document-picker` is a native-ui peer declared as `expo-clipboard` is; its config
   plugin only sets an iCloud container, so the component needs none.
+- A `FormField` folds an answered question by `answered` (`{ answer, onEdit }`): one summary row
+  at the row height (`FORM_FIELD_SUMMARY`: a `Check` in the `ok` ink, the label in body 500, the
+  answer truncated in meta, a trailing `Pencil` `IconButton` at the bar fit named by the `edit`
+  word and the label), the control not rendered. The question stays one `FormField`, so its label
+  is one across fold and unfold, and the field unfolds when the consumer clears `answered`: the
+  web focuses the first control it holds, the phone mounts a typing control afresh under
+  `FieldFocus` (a pick control opens its sheet only when pressed, so nothing is focused). A
+  choice that reveals the next question is the consumer's conditional rendering inside one
+  `Form`; the field keeps no fold state. Rejected: a `ListRow` per answer above the open field,
+  which loses the focus return and draws a chevron where this edits in place; a labelled "Edit"
+  `Button`, which makes every folded row louder than the question it summarises.
 - A component that sits in more than one container takes `fit`, a closed enum read off its
   matrix's `fit` axis (`IconFit`, `ButtonFit`, `IconButtonFit`, `LinkFit`, `ActionBarFit`,
   `FieldFit`, `SheetFit`, `PickerFit`, `ColumnsFit`),

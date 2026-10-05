@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Checkbox } from "../../components/checkbox/index.tsx";
 import { FormField } from "../../components/form-field/index.tsx";
 import { Input } from "../../components/input/index.tsx";
@@ -12,9 +13,63 @@ const REGIONS = [
 	{ value: "us-east-1", label: "N. Virginia, us-east-1" },
 ];
 
+// A single-page request form: an answered question folds to its summary row
+// and Edit reopens it, focusing its control; the open question holds no
+// answer yet, so it stays open.
+function Questions() {
+	const [name, setName] = useState("Acme Inc");
+	const [region, setRegion] = useState<string | undefined>("eu-central-1");
+	const [contact, setContact] = useState("");
+	const [editing, setEditing] = useState<string>();
+	const fold = (key: string, answer: string | undefined) =>
+		answer && editing !== key
+			? { answer, onEdit: () => setEditing(key) }
+			: undefined;
+	return (
+		<>
+			<FormField label="Workspace name" answered={fold("name", name)}>
+				<Input
+					value={name}
+					onChange={setName}
+					onCommit={() => setEditing(undefined)}
+				/>
+			</FormField>
+			<FormField
+				label="Default region"
+				answered={fold(
+					"region",
+					REGIONS.find((option) => option.value === region)?.label,
+				)}
+			>
+				<Select
+					value={region}
+					onChange={(next) => {
+						setRegion(next);
+						setEditing(undefined);
+					}}
+					options={REGIONS}
+					placeholder="Choose a region"
+				/>
+			</FormField>
+			<FormField
+				label="Billing contact"
+				description="Receives every invoice."
+				answered={fold("contact", contact)}
+			>
+				<Input
+					value={contact}
+					onChange={setContact}
+					onCommit={() => setEditing(undefined)}
+				/>
+			</FormField>
+		</>
+	);
+}
+
 // Board 41's fields: typed fields under their labels, then a switch and a
 // checkbox inline; in error the messages take the descriptions' places, and
-// disabled the labels take the disabled ink, the descriptions kept.
+// disabled the labels take the disabled ink, the descriptions kept. At rest
+// the three-question form follows.
 export function drawFormField(frame: ShowcaseFrame) {
 	const { state } = frame;
 	const disabled = state === "disabled";
@@ -69,6 +124,7 @@ export function drawFormField(frame: ShowcaseFrame) {
 					}
 				/>
 			</FormField>
+			{state === "rest" ? <Questions /> : null}
 		</Wide>
 	);
 }

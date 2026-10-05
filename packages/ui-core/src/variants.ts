@@ -417,6 +417,10 @@ export const ITEM_FACT = "gap-inside";
 // A field's error line under its control, in the error ink.
 export const FORM_FIELD_ERROR =
 	"text-meta leading-meta font-normal text-ink-error";
+// A folded question: one row at the row height, its glyph (in the `ok` ink),
+// its label, its answer and its edit act an inside apart.
+export const FORM_FIELD_SUMMARY = "gap-inside min-h-row";
+export const FORM_FIELD_SUMMARY_GLYPH = "text-ok";
 // A list of options, several or one chosen: its option groups on a hairline
 // card at the float inset; an option's box or radio beside its label, and
 // the children under a chosen option inset past the box.
@@ -798,6 +802,11 @@ export function statusContentTone(state: StatusState): ContentTone {
 // A toast's glyph ink, its state's.
 export function toastContentTone(state: ToastState): ContentTone {
 	return toneOf(TOAST_STATE.variants.state[state]);
+}
+
+// A folded question's glyph ink.
+export function summaryContentTone(): ContentTone {
+	return toneOf(FORM_FIELD_SUMMARY_GLYPH);
 }
 
 // A banner's glyph ink, its kind's.
