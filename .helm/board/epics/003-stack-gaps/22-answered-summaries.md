@@ -1,6 +1,6 @@
 ---
 id: 003-22
-status: review
+status: done
 sessions: {}
 ---
 # ui-core: answered questions fold to summary rows

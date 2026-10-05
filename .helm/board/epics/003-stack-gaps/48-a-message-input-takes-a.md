@@ -1,6 +1,6 @@
 ---
 id: 003-48
-status: review
+status: done
 sessions: {}
 ---
 # ui-core: a message input takes a pasted or dropped file

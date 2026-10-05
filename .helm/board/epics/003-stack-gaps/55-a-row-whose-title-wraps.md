@@ -1,6 +1,6 @@
 ---
 id: 003-55
-status: review
+status: done
 sessions: {}
 ---
 # ui-core: a row whose title wraps in full

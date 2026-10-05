@@ -1,6 +1,6 @@
 ---
 id: 003-54
-status: review
+status: done
 sessions: {}
 ---
 # ui-core: a meter marks a threshold on its track

@@ -1,6 +1,6 @@
 ---
 id: 003-50
-status: review
+status: done
 sessions: {}
 ---
 # ui-core: a way back to the newest message

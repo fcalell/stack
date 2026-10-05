@@ -1,6 +1,6 @@
 ---
 id: 003-15
-status: review
+status: done
 sessions: {}
 ---
 # ui-core: a cell draws a value before and after

@@ -1,6 +1,6 @@
 ---
 id: 003-20
-status: review
+status: done
 sessions: {}
 ---
 # ui-core: a field that saves as typed shows a failed save with retry

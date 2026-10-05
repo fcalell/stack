@@ -1,6 +1,6 @@
 ---
 id: 003-12
-status: review
+status: done
 sessions: {}
 ---
 # ui-core: rows off a highlighted path dim

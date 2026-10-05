@@ -1,6 +1,6 @@
 ---
 id: 003-26
-status: review
+status: done
 sessions: {}
 ---
 # ui-core: a rail of fixed states

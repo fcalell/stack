@@ -1,6 +1,6 @@
 ---
 id: 003-41
-status: review
+status: done
 sessions: {}
 ---
 # ui-core: a record the main opened stands beside it

@@ -1,6 +1,6 @@
 ---
 id: 003-30
-status: review
+status: done
 sessions: {}
 ---
 # ui-core: a full-screen searchable picker on the phone

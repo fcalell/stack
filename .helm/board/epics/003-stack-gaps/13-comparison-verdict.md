@@ -1,6 +1,6 @@
 ---
 id: 003-13
-status: review
+status: done
 sessions: {}
 ---
 # ui-core: a comparison row carries its verdict

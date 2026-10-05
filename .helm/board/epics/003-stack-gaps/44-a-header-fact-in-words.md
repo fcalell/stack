@@ -1,6 +1,6 @@
 ---
 id: 003-44
-status: review
+status: done
 sessions: {}
 ---
 # ui-core: a header fact in words opens a sheet

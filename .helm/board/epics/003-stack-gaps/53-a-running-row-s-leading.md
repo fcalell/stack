@@ -1,6 +1,6 @@
 ---
 id: 003-53
-status: review
+status: done
 sessions: {}
 ---
 # ui-core: a running row's leading spins

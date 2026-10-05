@@ -1,6 +1,6 @@
 ---
 id: 003-58
-status: review
+status: done
 sessions: {}
 ---
 # ui-core: a code block saves its text as a file

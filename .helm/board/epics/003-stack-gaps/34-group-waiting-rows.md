@@ -1,6 +1,6 @@
 ---
 id: 003-34
-status: review
+status: done
 sessions: {}
 ---
 # react-ui, native-ui: a Group's waiting setting rows stand at the loaded rows' geometry

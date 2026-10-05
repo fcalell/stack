@@ -1,6 +1,6 @@
 ---
 id: 003-31
-status: review
+status: done
 sessions: {}
 ---
 # ui-core: an image that opens full size

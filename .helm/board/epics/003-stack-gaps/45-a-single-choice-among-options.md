@@ -1,6 +1,6 @@
 ---
 id: 003-45
-status: review
+status: done
 sessions: {}
 ---
 # ui-core: a single choice among options with descriptions

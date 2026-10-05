@@ -1,6 +1,6 @@
 ---
 id: 003-21
-status: review
+status: done
 sessions: {}
 ---
 # ui-core: a form opens on a read-only object header

@@ -1,6 +1,6 @@
 ---
 id: 003-17
-status: review
+status: done
 sessions: {}
 ---
 # ui-core: a file control

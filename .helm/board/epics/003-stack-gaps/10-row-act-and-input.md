@@ -1,6 +1,6 @@
 ---
 id: 003-10
-status: review
+status: done
 sessions: {}
 ---
 # ui-core: a row shows a labelled act, and holds an input with its act

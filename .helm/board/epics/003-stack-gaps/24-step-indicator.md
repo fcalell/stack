@@ -1,6 +1,6 @@
 ---
 id: 003-24
-status: review
+status: done
 sessions: {}
 ---
 # ui-core: an onboarding step indicator

@@ -1,6 +1,6 @@
 ---
 id: 003-38
-status: review
+status: done
 sessions: {}
 ---
 # native-ui: a sheet sizes once, shows its acts under reduced motion and rises above the keyboard

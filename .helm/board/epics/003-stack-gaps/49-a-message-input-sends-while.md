@@ -1,6 +1,6 @@
 ---
 id: 003-49
-status: review
+status: done
 sessions: {}
 ---
 # ui-core: a message input sends while an answer streams

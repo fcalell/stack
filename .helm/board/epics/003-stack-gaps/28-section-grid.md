@@ -1,6 +1,6 @@
 ---
 id: 003-28
-status: review
+status: done
 sessions: {}
 ---
 # ui-core: sections stand two to a row

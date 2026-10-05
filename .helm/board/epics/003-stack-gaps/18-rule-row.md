@@ -1,6 +1,6 @@
 ---
 id: 003-18
-status: review
+status: done
 sessions: {}
 ---
 # ui-core: a rule row

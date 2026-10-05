@@ -1,6 +1,6 @@
 ---
 id: 003-52
-status: review
+status: done
 sessions: {}
 ---
 # ui-core: an ask field docked over a place's sections

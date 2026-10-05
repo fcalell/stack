@@ -1,6 +1,6 @@
 ---
 id: 003-27
-status: review
+status: done
 sessions: {}
 ---
 # ui-core: a count strip

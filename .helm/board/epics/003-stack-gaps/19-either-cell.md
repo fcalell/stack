@@ -1,6 +1,6 @@
 ---
 id: 003-19
-status: review
+status: done
 sessions: {}
 ---
 # ui-core: a cell holds a picked option or a typed value

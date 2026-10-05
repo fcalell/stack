@@ -1,6 +1,6 @@
 ---
 id: 003-04
-status: review
+status: done
 sessions: {}
 ---
 # cli: stack plugin new inside the checkout links the workspace

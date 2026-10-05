@@ -1,6 +1,6 @@
 ---
 id: 003-46
-status: review
+status: done
 sessions: {}
 ---
 # ui-core: a card among a conversation's messages

@@ -1,6 +1,6 @@
 ---
 id: 003-51
-status: review
+status: done
 sessions: {}
 ---
 # ui-core: a conversation in a Split's main

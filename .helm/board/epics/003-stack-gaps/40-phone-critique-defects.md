@@ -1,6 +1,6 @@
 ---
 id: 003-40
-status: review
+status: done
 sessions: {}
 ---
 # native-ui: the phone critique's component defects
