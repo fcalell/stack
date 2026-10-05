@@ -737,6 +737,17 @@ test("a member chooses an organization and consents each time", async () => {
 	assert.equal(codesIssued(f), codesBefore);
 });
 
+test("a consent's scopes read back as the list better-auth wrote", async () => {
+	stubNetwork();
+	const f = await setup();
+	await connect(f, f.browser(), "ada@example.com", { organizationId: "acme" });
+	const [row] = grantRows(f, "ada", "acme");
+	assert.ok(row);
+	// Stored once-encoded, as better-auth's adapter reads it.
+	assert.equal(row.scopes, '["mcp","offline_access"]');
+	assert.deepEqual(oauthSchema.scopesOf(row.scopes), ["mcp", "offline_access"]);
+});
+
 test("verify answers the member in the grant's organization", async () => {
 	stubNetwork();
 	const f = await setup();

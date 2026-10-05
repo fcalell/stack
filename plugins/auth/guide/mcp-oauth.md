@@ -55,7 +55,7 @@ const { user, session, member, grant, tenancy } = verified;
 
 `user` is the member's user row with `agent: true`. `session.id` is the grant's id and carries no
 token. `tenancy` resolves the grant's organization for the member and no other. `grant` is
-`{ id, clientId, organizationId, scopes }`. A token is refused when its signature, issuer,
+`{ id, clientId, organizationId, scopes }`. The grant tables store a list as the JSON text better-auth writes, so a drizzle read of a row's `scopes` answers that text; `scopesOf` from `@fcalell/plugin-auth/schema/oauth` returns the list. A token is refused when its signature, issuer,
 audience (exactly the resource), `typ` (`at+jwt`) or expiry fails, when `mcp` is missing (`403`),
 when its grant's consent no longer stands, when the member's membership no longer counts, or when
 it was issued before the consent that now stands. The grant's id keys the limiter, except under

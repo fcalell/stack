@@ -13,6 +13,13 @@
 // reference a table the consumer only migrates when `mcp` is on. Regenerate
 // and diff after a Better Auth bump.
 //
+// Two departures from the generator's output. It types every JSON and string
+// list field `text(..., { mode: "json" })`, but better-auth's adapter already
+// writes those as JSON text for sqlite, so drizzle's json mode would encode
+// the text a second time and a drizzle read would answer a string, not the
+// value. They are plain `text` here, which stores what better-auth stores; a
+// list is read with `scopesOf` below.
+//
 // One addition the generator does not emit: a unique index on the consent's
 // client, user and reference, so a grant is one row per client, member and
 // organization however the authorization races.
@@ -42,6 +49,19 @@ import {
 } from "@fcalell/plugin-db/orm";
 import { session, user } from "./index.ts";
 
+// The scopes a consent, access token or refresh token row stores, as the list
+// better-auth wrote.
+export function scopesOf(stored: string): string[] {
+	const scopes: unknown = JSON.parse(stored);
+	if (
+		!Array.isArray(scopes) ||
+		!scopes.every((scope) => typeof scope === "string")
+	) {
+		throw new Error("Stored scopes are not a list of strings");
+	}
+	return scopes;
+}
+
 export const jwks = sqliteTable("jwks", {
 	id: text("id").primaryKey(),
 	publicKey: text("public_key").notNull(),
@@ -63,24 +83,22 @@ export const oauthClient = sqliteTable(
 		skipConsent: integer("skip_consent", { mode: "boolean" }),
 		enableEndSession: integer("enable_end_session", { mode: "boolean" }),
 		subjectType: text("subject_type"),
-		scopes: text("scopes", { mode: "json" }),
-		clientCredentialsScopes: text("client_credentials_scopes", {
-			mode: "json",
-		}).default([]),
+		scopes: text("scopes"),
+		clientCredentialsScopes: text("client_credentials_scopes").default("[]"),
 		userId: text("user_id").references(() => user.id),
 		createdAt: integer("created_at", { mode: "timestamp_ms" }),
 		updatedAt: integer("updated_at", { mode: "timestamp_ms" }),
 		name: text("name"),
 		uri: text("uri"),
 		icon: text("icon"),
-		contacts: text("contacts", { mode: "json" }),
+		contacts: text("contacts"),
 		tos: text("tos"),
 		policy: text("policy"),
 		softwareId: text("software_id"),
 		softwareVersion: text("software_version"),
 		softwareStatement: text("software_statement"),
-		redirectUris: text("redirect_uris", { mode: "json" }).notNull(),
-		postLogoutRedirectUris: text("post_logout_redirect_uris", { mode: "json" }),
+		redirectUris: text("redirect_uris").notNull(),
+		postLogoutRedirectUris: text("post_logout_redirect_uris"),
 		backchannelLogoutUri: text("backchannel_logout_uri"),
 		backchannelLogoutSessionRequired: integer(
 			"backchannel_logout_session_required",
@@ -90,14 +108,14 @@ export const oauthClient = sqliteTable(
 		applicationType: text("application_type"),
 		jwks: text("jwks"),
 		jwksUri: text("jwks_uri"),
-		grantTypes: text("grant_types", { mode: "json" }),
-		responseTypes: text("response_types", { mode: "json" }),
+		grantTypes: text("grant_types"),
+		responseTypes: text("response_types"),
 		requirePKCE: integer("require_pkce", { mode: "boolean" }),
 		dpopBoundAccessTokens: integer("dpop_bound_access_tokens", {
 			mode: "boolean",
 		}).default(false),
 		referenceId: text("reference_id"),
-		metadata: text("metadata", { mode: "json" }),
+		metadata: text("metadata"),
 	},
 	(table) => [index("oauthClient_userId_idx").on(table.userId)],
 );
@@ -110,8 +128,8 @@ export const oauthResource = sqliteTable("oauth_resource", {
 	refreshTokenTtl: integer("refresh_token_ttl"),
 	signingAlgorithm: text("signing_algorithm"),
 	signingKeyId: text("signing_key_id"),
-	allowedScopes: text("allowed_scopes", { mode: "json" }),
-	customClaims: text("custom_claims", { mode: "json" }),
+	allowedScopes: text("allowed_scopes"),
+	customClaims: text("custom_claims"),
 	dpopBoundAccessTokensRequired: integer("dpop_bound_access_tokens_required", {
 		mode: "boolean",
 	}).default(false),
@@ -119,7 +137,7 @@ export const oauthResource = sqliteTable("oauth_resource", {
 	createdAt: integer("created_at", { mode: "timestamp_ms" }),
 	updatedAt: integer("updated_at", { mode: "timestamp_ms" }),
 	policyVersion: integer("policy_version").default(1),
-	metadata: text("metadata", { mode: "json" }),
+	metadata: text("metadata"),
 });
 
 export const oauthClientResource = sqliteTable(
@@ -132,7 +150,7 @@ export const oauthClientResource = sqliteTable(
 		resourceId: text("resource_id")
 			.notNull()
 			.references(() => oauthResource.identifier, { onDelete: "cascade" }),
-		metadata: text("metadata", { mode: "json" }),
+		metadata: text("metadata"),
 		createdAt: integer("created_at", { mode: "timestamp_ms" }),
 	},
 	(table) => [
@@ -161,10 +179,8 @@ export const oauthRefreshToken = sqliteTable(
 			.references(() => user.id),
 		referenceId: text("reference_id"),
 		authorizationCodeId: text("authorization_code_id"),
-		resources: text("resources", { mode: "json" }),
-		requestedUserInfoClaims: text("requested_user_info_claims", {
-			mode: "json",
-		}),
+		resources: text("resources"),
+		requestedUserInfoClaims: text("requested_user_info_claims"),
 		expiresAt: integer("expires_at", { mode: "timestamp_ms" }),
 		createdAt: integer("created_at", { mode: "timestamp_ms" }),
 		revoked: integer("revoked", { mode: "timestamp_ms" }),
@@ -174,8 +190,8 @@ export const oauthRefreshToken = sqliteTable(
 			mode: "timestamp_ms",
 		}),
 		authTime: integer("auth_time", { mode: "timestamp_ms" }),
-		confirmation: text("confirmation", { mode: "json" }),
-		scopes: text("scopes", { mode: "json" }).notNull(),
+		confirmation: text("confirmation"),
+		scopes: text("scopes").notNull(),
 	},
 	(table) => [
 		index("oauthRefreshToken_clientId_idx").on(table.clientId),
@@ -201,16 +217,14 @@ export const oauthAccessToken = sqliteTable(
 		userId: text("user_id").references(() => user.id),
 		referenceId: text("reference_id"),
 		authorizationCodeId: text("authorization_code_id"),
-		resources: text("resources", { mode: "json" }),
-		requestedUserInfoClaims: text("requested_user_info_claims", {
-			mode: "json",
-		}),
+		resources: text("resources"),
+		requestedUserInfoClaims: text("requested_user_info_claims"),
 		refreshId: text("refresh_id").references(() => oauthRefreshToken.id),
 		expiresAt: integer("expires_at", { mode: "timestamp_ms" }),
 		createdAt: integer("created_at", { mode: "timestamp_ms" }),
 		revoked: integer("revoked", { mode: "timestamp_ms" }),
-		confirmation: text("confirmation", { mode: "json" }),
-		scopes: text("scopes", { mode: "json" }).notNull(),
+		confirmation: text("confirmation"),
+		scopes: text("scopes").notNull(),
 	},
 	(table) => [
 		index("oauthAccessToken_clientId_idx").on(table.clientId),
@@ -232,11 +246,9 @@ export const oauthConsent = sqliteTable(
 			.references(() => oauthClient.clientId),
 		userId: text("user_id").references(() => user.id),
 		referenceId: text("reference_id"),
-		resources: text("resources", { mode: "json" }),
-		requestedUserInfoClaims: text("requested_user_info_claims", {
-			mode: "json",
-		}),
-		scopes: text("scopes", { mode: "json" }).notNull(),
+		resources: text("resources"),
+		requestedUserInfoClaims: text("requested_user_info_claims"),
+		scopes: text("scopes").notNull(),
 		createdAt: integer("created_at", { mode: "timestamp_ms" }),
 		updatedAt: integer("updated_at", { mode: "timestamp_ms" }),
 	},
