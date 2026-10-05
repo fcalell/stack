@@ -306,6 +306,8 @@ function sizePx(density: Density, size: Size): number {
 		return Math.ceil(4 * MONO_ADVANCE * sizeOf(density, "code"));
 	}
 	if (size === "message-input") return 8 * leadingOf(density, "body");
+	if (size === "image-tile") return 4 * leadingOf(density, "body");
+	if (size === "image-cap") return 20 * leadingOf(density, "body");
 	return px[size];
 }
 

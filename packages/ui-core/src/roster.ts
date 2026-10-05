@@ -2326,6 +2326,44 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				sizes: ["qr"],
 			},
 		},
+		// A picture a press opens full size: a square tile (`thumb`) or its
+		// container's width at its own aspect down to a height cap (`content`).
+		// Waiting it is a skeleton at its box; failed, an `ImageOff` glyph with
+		// the alt text in meta under it and nothing to open. The full view
+		// stands over the sheet base's scrim and focus trap, contain-fit inside
+		// the page inset, with a lifted Close act.
+		Image: {
+			props: ["src", "alt", "fit", "loading"],
+			draws: [
+				"IMAGE",
+				"IMAGE_PICTURE",
+				"IMAGE_FULL",
+				"IMAGE_CLOSE",
+				"ICON.fit.body",
+				"ICON_BUTTON.fit.body",
+				"TEXT.role.meta",
+				"SCRIM",
+			],
+			holds: ["IMAGE", "IMAGE_PICTURE", "IMAGE_FULL", "IMAGE_CLOSE"],
+			states: [...PRESS, "loading", "error"],
+			owns: {
+				roles: ["meta"],
+				colors: [
+					"edge",
+					"edge-hover",
+					"edge-strong",
+					"skeleton",
+					"group",
+					"ink-meta",
+					"raised",
+					"scrim",
+				],
+				radii: ["control", "card"],
+				spacing: ["page", "inside"],
+				sizes: ["image-tile", "image-cap", "icon", "control"],
+				elevation: ["float"],
+			},
+		},
 	},
 };
 

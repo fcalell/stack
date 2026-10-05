@@ -58,6 +58,10 @@ const LAYER_SIDE = "fixed inset-0 z-(--layer-sheet) flex justify-end";
 const LAYER_CENTRED =
 	"fixed inset-0 z-(--layer-sheet) flex items-center justify-center";
 const BOX = "relative flex flex-col";
+// A view stands over the whole layer, fading in with the scrim. It takes no
+// press, so the layer around its content hears one as a press on the scrim
+// and dismisses; its content takes its own.
+const BOX_VIEW = "relative size-full pointer-events-none";
 // A tall bottom sheet stops at the viewport's top and its body scrolls; the
 // bottom inset clears a phone's home indicator.
 const BOX_BOTTOM = "max-h-full pb-safe";
@@ -90,8 +94,8 @@ export interface SheetBaseProps {
 	fit?: SheetFit;
 	/** A decision's acts, the foot's `ActionBar` at both densities. */
 	acts?: Act[];
-	/** A decision is centred on the desktop; a menu's rows stand under the head with no body or foot. */
-	form?: "centred" | "menu";
+	/** A decision is centred on the desktop; a menu's rows stand under the head with no body or foot; a view (an image's full size) is its children over the whole layer, named by `title`, with no head, body, foot or close act of its own. */
+	form?: "centred" | "menu" | "view";
 	/** An act pends: the close act is inert and says so. */
 	busy?: boolean;
 	/** What the sheet opens focused on: its first field (a confirm's typed name), or the element a ref holds (a pick's option). */
@@ -150,6 +154,7 @@ export function SheetBase({
 	}
 	const iconFit = touch ? "body" : "bar";
 	const centred = form === "centred" && !touch;
+	const view = form === "view";
 	// A decision draws no close act: its acts dismiss it.
 	const close = acts ? null : (
 		<Dialog.Close
@@ -243,7 +248,7 @@ export function SheetBase({
 				{actionBar}
 			</div>
 		) : null;
-	const content = centred ? (
+	const framed = centred ? (
 		<>
 			{headRow}
 			{children}
@@ -268,12 +273,16 @@ export function SheetBase({
 			{form === "menu" ? null : footer}
 		</>
 	);
-	const box = touch
-		? cn(SHEET, BOX, BOX_BOTTOM, BOTTOM_MOTION)
-		: centred
-			? cn(SHEET_CENTERED, BOX, BOX_FLOAT, CENTRED_MOTION)
-			: cn(sheetSide({ fit }), BOX, BOX_FLOAT, SIDE_MOTION);
-	const layer = touch ? LAYER_BOTTOM : centred ? LAYER_CENTRED : LAYER_SIDE;
+	const content = view ? children : framed;
+	const box = view
+		? cn(BOX_VIEW, SCRIM_MOTION)
+		: touch
+			? cn(SHEET, BOX, BOX_BOTTOM, BOTTOM_MOTION)
+			: centred
+				? cn(SHEET_CENTERED, BOX, BOX_FLOAT, CENTRED_MOTION)
+				: cn(sheetSide({ fit }), BOX, BOX_FLOAT, SIDE_MOTION);
+	const layer =
+		view || centred ? LAYER_CENTRED : touch ? LAYER_BOTTOM : LAYER_SIDE;
 	return (
 		<Dialog.Root
 			handle={handle}
@@ -307,7 +316,8 @@ export function SheetBase({
 								: focus
 						}
 						role={centred ? "alertdialog" : "dialog"}
-						aria-labelledby={titleId}
+						aria-label={view ? title : undefined}
+						aria-labelledby={view ? undefined : titleId}
 						aria-describedby={description ? descriptionId : undefined}
 						// A field inside takes input: a blocked act says its reason.
 						onChange={touchedValue.touch}

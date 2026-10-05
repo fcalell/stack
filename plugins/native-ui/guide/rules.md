@@ -38,6 +38,19 @@ a literal colour or raw pixels. Copy renders through `Text` (`body` or `meta`, w
 the molecule that owns its role (`title` is `Place`'s and `Screen`'s, `heading` `Section`'s); colour
 comes through a component's props.
 
+## A picture is an `Image`
+
+A picture is an `Image`, never React Native's: `src`, `alt` (a sentence naming what it shows), a
+`fit` (`thumb`, a square tile beside the lines that say where it came from, or `content`, the
+container's width at the picture's own aspect, capped in height) and `loading`. It draws its own
+waiting and failed forms (the failed form says the `alt`), and a press opens the full picture in a
+modal over the scrim with a Close act, the system's back and a press on the scrim. The full view
+takes no pinch-zoom.
+
+```tsx
+<Image src={shot.url} alt={shot.title} fit="thumb" loading={shot.pending} />
+```
+
 ## Data, never nodes
 
 A composed region is data its molecule draws: an `Act` (`{ label, onAct, destructive? }`),

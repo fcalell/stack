@@ -21,6 +21,7 @@ import { drawFormField } from "./frames/form-field.tsx";
 import { drawGroup } from "./frames/group.tsx";
 import { drawIcon } from "./frames/icon.tsx";
 import { drawIconButton } from "./frames/icon-button.tsx";
+import { drawImage } from "./frames/image.tsx";
 import { drawInput } from "./frames/input.tsx";
 import { drawInputOtp } from "./frames/input-otp.tsx";
 import { drawItemHeader } from "./frames/item-header.tsx";
@@ -114,6 +115,7 @@ export const registry: Partial<
 	Meter: drawMeter,
 	BarChart: drawBarChart,
 	QrCode: drawQrCode,
+	Image: drawImage,
 	Prose: drawProse,
 	Code: drawCode,
 	Diff: drawDiff,

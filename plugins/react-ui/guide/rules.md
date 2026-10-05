@@ -43,6 +43,18 @@ Every colour, size, radius and spacing is a contract token; never an arbitrary v
 with `strong`) or the molecule that owns its role (`title` is `Place`'s and `Screen`'s, `heading`
 `Section`'s); colour comes through a component's props.
 
+## A picture is an `Image`
+
+A picture is an `Image`, never an `<img>`: `src`, `alt` (a sentence naming what it shows), a `fit`
+(`thumb`, a square tile beside the lines that say where it came from, or `content`, the
+container's width at the picture's own aspect, capped in height) and `loading`. It draws its own
+waiting and failed forms (the failed form says the `alt`), and a press opens the full picture over
+the scrim with a Close act, Escape and a press outside. The full view takes no zoom.
+
+```tsx
+<Image src={shot.url} alt={shot.title} fit="thumb" loading={shot.pending} />
+```
+
 ## Data, never nodes
 
 A composed region is data its molecule renders: an `Act` (`{ label, onAct, destructive? }`),

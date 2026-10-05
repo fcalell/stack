@@ -396,6 +396,9 @@ export const OVERLAYS: readonly string[] = [
 	"invisible",
 	"flex-1",
 	"self-start",
+	// Image
+	"object-contain",
+	"size-full",
 	// Table
 	"font-normal",
 	"p-0",

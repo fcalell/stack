@@ -838,6 +838,43 @@ export const QR_CODE = matrix({
 	defaultVariants: { state: "rest" },
 });
 
+// ── Image ───────────────────────────────────────────────────────────
+
+// The frame an image stands in, a hairline on the page. A thumbnail is a
+// square tile at its radius; the content fit takes its container's width and
+// the card's radius. Waiting it is a skeleton and failed a group ground
+// holding a glyph over the alt text, each at least the tile's height, since
+// the content fit knows no aspect before its bytes; loaded, the content fit's
+// height is its picture's.
+export const IMAGE = matrix({
+	base: "border border-edge",
+	variants: {
+		fit: {
+			thumb: "size-image-tile rounded-control",
+			content: "w-full rounded-card",
+		},
+		state: {
+			rest: "",
+			loading: "min-h-image-tile bg-skeleton",
+			error: "min-h-image-tile gap-inside p-inside bg-group",
+		},
+	},
+	defaultVariants: { fit: "content", state: "rest" },
+});
+
+// The picture inside its frame: a thumbnail fills its square; the content fit
+// fills the width at the image's own aspect, down to the height cap.
+export const IMAGE_PICTURE = matrix({
+	base: "",
+	variants: {
+		fit: {
+			thumb: "size-full",
+			content: "w-full max-h-image-cap",
+		},
+	},
+	defaultVariants: { fit: "content" },
+});
+
 // ── Place ───────────────────────────────────────────────────────────
 
 // Navigation keeps the accent out: a place is selected by a grey fill in the

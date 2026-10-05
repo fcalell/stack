@@ -23,6 +23,7 @@ import { Icon } from "@fcalell/plugin-react-ui/components/icon";
 import { IconButton } from "@fcalell/plugin-react-ui/components/icon-button";
 import { Input } from "@fcalell/plugin-react-ui/components/input";
 import { InputOtp } from "@fcalell/plugin-react-ui/components/input-otp";
+import { Image } from "@fcalell/plugin-react-ui/components/image";
 import { ItemHeader } from "@fcalell/plugin-react-ui/components/item-header";
 import { Link } from "@fcalell/plugin-react-ui/components/link";
 import { Message } from "@fcalell/plugin-react-ui/components/message";
@@ -572,6 +573,15 @@ export const closure = (
 		<QrCode value="x" class="x" />
 		{/* @ts-expect-error: closed channel */}
 		<QrCode value="x" classList={{}} />
+		<Image src="x" alt="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Image src="x" alt="x" className="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Image src="x" alt="x" style={{ flex: 1 }} />
+		{/* @ts-expect-error: closed channel */}
+		<Image src="x" alt="x" class="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Image src="x" alt="x" classList={{}} />
 		<Thread items={[]} message={{ key: String, author: () => "you", body: String }} />
 		<Thread query={{ data: ["a"], isPending: false, isError: false, refetch: () => {} }} sentence="x" empty={{ sentence: "x" }} message={{ key: String, author: () => "system", body: String, onOpen: () => () => {} }} foot={null} />
 		{/* @ts-expect-error: a thread takes a query or items, never both */}

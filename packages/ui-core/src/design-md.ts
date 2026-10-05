@@ -151,6 +151,10 @@ const SIZE_USE: Record<(typeof SIZES)[number], string> = {
 		"four tabular figures at the code size: a diff's number columns, a file row's count lanes",
 	"message-input":
 		"a message input's tallest text: eight body line boxes, scrolling past it",
+	"image-tile":
+		"an image thumbnail's side: four body line boxes, the lines of provenance it stands beside",
+	"image-cap":
+		"the tallest an image grows at its container's width: twenty body line boxes",
 };
 
 const RADIUS_USE: Record<(typeof RADIUS_ROLES)[number], string> = {

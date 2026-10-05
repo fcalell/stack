@@ -2,7 +2,7 @@
 
 The phone half of the stack design system: the CLI plugin that renders `@fcalell/ui-core`'s
 contract into the uniwind stylesheet, embeds the font files, composes the app's providers, and
-ships the roster: 56 components in four layers. Requires `expo` (it contributes into
+ships the roster: 57 components in four layers. Requires `expo` (it contributes into
 `plugin-expo`'s slots) plus `api` and `auth` (the wired Query and Auth providers import their
 native subpaths).
 
@@ -58,7 +58,10 @@ A raised ground re-points the hairline as the web's does: `RaisedGround` (`lib/r
 `--color-edge` to the mode's `edge-raised` through uniwind's `ScopedVariables`, so a part's
 `border-edge` inside a sheet (its head, body and foot, a `Menu`'s and a Picker's sheet with it) or
 a toast draws the raised hairline. A ground on `group` holds no part that draws `edge`, so none
-wraps it. `QrCode`'s tile is a light scope (uniwind's `ScopedTheme`).
+wraps it. `QrCode`'s tile is a light scope (uniwind's `ScopedTheme`). `Image`'s full view is a
+React Native `Modal` over the scrim, never a gorhom sheet: it has no head, so a sheet's chrome
+would only take the picture's room. It stands over the toasts, and it draws the picture
+contain-fit with no pinch-zoom.
 
 ## Verify
 

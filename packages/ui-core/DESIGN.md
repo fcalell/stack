@@ -266,6 +266,8 @@ spacing:
   qr: "160px"
   figures: "29px"
   message-input: "160px"
+  image-tile: "80px"
+  image-cap: "400px"
 components:
   text-display:
     typography: "{typography.display}"
@@ -1301,6 +1303,32 @@ components:
     textColor: "{colors.skeleton}"
   qr-code-loading-dark:
     textColor: "{colors.skeleton-dark}"
+  image-thumb:
+    height: "{spacing.image-tile}"
+    width: "{spacing.image-tile}"
+    rounded: "{rounded.control}"
+  image-content:
+    rounded: "{rounded.card}"
+  image-rest:
+    rounded: "{rounded.card}"
+  image-loading:
+    rounded: "{rounded.card}"
+    height: "{spacing.image-tile}"
+    backgroundColor: "{colors.skeleton}"
+  image-loading-dark:
+    rounded: "{rounded.card}"
+    height: "{spacing.image-tile}"
+    backgroundColor: "{colors.skeleton-dark}"
+  image-error:
+    rounded: "{rounded.card}"
+    height: "{spacing.image-tile}"
+    padding: "{spacing.inside}"
+    backgroundColor: "{colors.group}"
+  image-error-dark:
+    rounded: "{rounded.card}"
+    height: "{spacing.image-tile}"
+    padding: "{spacing.inside}"
+    backgroundColor: "{colors.group-dark}"
   place-row-rest:
     height: "{spacing.row}"
     rounded: "{rounded.row}"
@@ -1610,6 +1638,14 @@ components:
   group-ground-dark:
     rounded: "{rounded.card}"
     backgroundColor: "{colors.group-dark}"
+  image-close:
+    rounded: "{rounded.control}"
+    backgroundColor: "{colors.raised}"
+  image-close-dark:
+    rounded: "{rounded.control}"
+    backgroundColor: "{colors.raised-dark}"
+  image-full:
+    padding: "{spacing.page}"
   message-attach-slot:
     width: "{spacing.control-compact}"
   message-bubble:
@@ -2088,6 +2124,8 @@ Sizes are heights and squares in the same namespace. Density is a theme and neve
 | `qr` | 160px | 240px | a QR code's square, its quiet zone inside it |
 | `figures` | 29px | 36px | four tabular figures at the code size: a diff's number columns, a file row's count lanes |
 | `message-input` | 160px | 192px | a message input's tallest text: eight body line boxes, scrolling past it |
+| `image-tile` | 80px | 96px | an image thumbnail's side: four body line boxes, the lines of provenance it stands beside |
+| `image-cap` | 400px | 480px | the tallest an image grows at its container's width: twenty body line boxes |
 
 Widths of lifted layers, never stretched to their container, and of a frame's fixed regions: `measure-short` 18ch (native 173px, at the body size, so a label's own size is lost there), `popover` 240px, `toast` 360px, `dialog` 520px, `sheet` 640px, `sidebar` 240px, `list` 360px, `pane` 320px, `column` 300px, `auth` 400px, `empty` 320px. Breakpoints: `tablet` 768px, `desktop` 1024px, `wide` 1440px; they are the only responsive variants, of the viewport (`tablet:`) and, on the web, of a page's width (`page-tablet:`, `page-max-tablet:`), by which a Split decides its regions.
 
@@ -2169,6 +2207,7 @@ The front matter's components are the matrix cells: one entry per axis value of 
 | `BarChart` | content | `CHART`, `CHART_BAND`, `CHART_BODY`, `CHART_FILL`, `CHART_GRID`, `CHART_HEAD`, `CHART_KEY`, `CHART_KEYS`, `CHART_KEY_DOT`, `CHART_MAIN`, `CHART_PART_SPLIT`, `CHART_TICK_LANE`, `CHART_TOTAL`, `FIGURES`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `SKELETON.kind.chart`, `SKELETON.kind.line`, `TEXT.role.body`, `TEXT.role.meta`, `TEXT_STRONG.role.body` | rest, loading, error, empty |
 | `Thread` | content | `THREAD`, `THREAD_COLUMN`, `THREAD_LOG`, `THREAD_UNDER_HEAD`, `FOOT`, `THREAD_LATEST` | rest, loading, error, empty |
 | `QrCode` | content | `QR_CODE`, `QR_TILE` | rest, loading |
+| `Image` | content | `IMAGE`, `IMAGE_PICTURE`, `IMAGE_FULL`, `IMAGE_CLOSE`, `ICON.fit.body`, `ICON_BUTTON.fit.body`, `TEXT.role.meta`, `SCRIM` | rest, hover, focus, active, loading, error |
 
 A component owns the tokens it may draw: a cell it draws that spells a type role, a colour, a radius, a spacing role, a size or a shadow outside its row is a contract error. A colour ending in `-` is a family (`chip-` is every chip role).
 
@@ -2229,6 +2268,7 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | `BarChart` | `body`, `meta` | `ink-body`, `ink-meta`, `edge`, `skeleton`, `chip-` | `full`, `chip` | `fields`, `inside`, `pair` | `chart`, `dot`, `skeleton`, `figures` | none |
 | `Thread` | none | `raised`, `edge` | `control` | `sections`, `page`, `pair` | `measure` | `float` |
 | `QrCode` | none | `edge`, `surface`, `ink-body`, `skeleton` | `card` | none | `qr` | none |
+| `Image` | `meta` | `edge`, `edge-hover`, `edge-strong`, `skeleton`, `group`, `ink-meta`, `raised`, `scrim` | `control`, `card` | `page`, `inside` | `image-tile`, `image-cap`, `icon`, `control` | `float` |
 
 ### Motion
 

@@ -84,12 +84,15 @@ pinned by the package's verify suite; this entry holds the architecture and its 
   the desktop set, 16 on touch, each role a ratio rounded to the pixel, its line box to the even
   pixel), the eleven spacing roles (multiples of 4, one rung looser on touch except the float
   and page insets and the acts gap; a list bleeds by `control-x`, so its rows' leading meets
-  the title over it at either density) and the thirty sizes (control 32/44, field 38/48, target 24/44, the switch and
+  the title over it at either density) and the thirty-two sizes (control 32/44, field 38/48, target 24/44, the switch and
   its derived thumb travel, the avatar, three icon sizes by the text beside them, the check,
   the slider track, the one-time-code box, the meter's bar, the chart's plot, the QR square, and
-  three derived from the type: the text area's three body lines, the message input's eight, and
-  `figures`, four tabular figures at the code size, held by a diff's number columns and a
-  file row's count lanes). A size counted in figures is px at
+  five derived from the type: the text area's three body lines, the message input's eight, an
+  image thumbnail's four (`image-tile`, 80/96, the lines of provenance it stands beside), an
+  image's height cap of twenty (`image-cap`, 400/480) and `figures`, four tabular figures at the
+  code size, held by a diff's number columns and a file row's count lanes). The thumbnail's name
+  is not `thumb`, which the switch's knob holds: `size-*` and `max-w-*` read one `--spacing-*`
+  namespace. A size counted in figures is px at
   `MONO_ADVANCE` (Plex Mono's 0.6 em), never a `ch` width, because uniwind has no `ch` unit and
   native draws the figures too; a named mono with a wider advance overflows it. The two measures are `ch` on the web (`measure-short` 18ch, `measure` 58ch), so each label keeps 18 characters of its own font; native has no `ch`, so `nativeMeasureTokens` declares them in px at `SANS_ADVANCE` (Plex Sans's "0", 0.6 em) of the touch body size, rounded up (173 and 557). That is a native limit: there every short label's cap is the body's 18 characters whatever its role (a chip's caption included, and `SKELETON_LANE`'s role axis draws one width), and a named sans with a wider "0" overflows them. `themeTokens` seeds the touch set on both platforms; the web
   overrides it with the desktop set in a `:root` rule in `@layer base` under a fine pointer at
@@ -759,6 +762,26 @@ a tick with no animation, never jumped to full.
   count lanes are `figures` wide. A waiting Diff is a collection of unknown length: its hunk
   header and eight lines wait at the loaded rows' heights and code start, and its height changes on
   load by the line count, and on touch by the lines that wrap, which no waiting form can know.
+- A picture is `Image`, one component for every place a picture stands (a record's screenshot,
+  a message's attachment, a message input's pending file): `src`, `alt`, `fit` and `loading`.
+  `thumb` is a square tile (`IMAGE`, `size-image-tile`, the control radius) and `content` the
+  container's width at the picture's own aspect down to a height cap (`image-cap`, the card
+  radius), both cover-cropped inside the hairline `edge` (`IMAGE_PICTURE`). The picture mounts
+  while it waits, hidden, so the frame (`IMAGE {state}`: a skeleton, at least a tile high since
+  the content fit knows no aspect before its bytes, an accepted height change on load) is
+  replaced by the bytes without a second fetch; a failed fetch draws a group-ground tile with
+  an `ImageOff` glyph over the alt text in meta and nothing to open, so `alt` is the one word
+  the form needs and `words` gains none. A loaded picture is a button named by `alt`; a press
+  opens it over the scrim with no frame, contain-fit inside the page inset (`IMAGE_FULL`), with
+  a Close act on a lifted ground (`IMAGE_CLOSE`, as `THREAD_LATEST` lifts the Latest act, since
+  the icon act's meta ink has no ground of its own over a scrim). The view is the sheet's
+  internal base at its `view` form on the web, for the scrim, the focus trap, Escape, the layer
+  and the portal container: no head, body or foot, and the popup takes no press so a press
+  around the picture is a press on the scrim. A `view` is not a `SheetFit`, since a sheet's head
+  and inset would take the picture's room. On the phone it is a React Native `Modal`, since the
+  full-height gorhom sheet carries the same head, and a picture raises no toast to stand under.
+  Rejected: an `image` slot on `FileRow` or
+  `Message`, which would repeat the open-full mechanism per component.
 - A copy act (`Code`'s, `DefinitionRow`'s) reads Copied for two seconds from the last copy: each
   copy is a counted moment and the reset is keyed on it, so a copy inside the window restarts it.
 - `Code`'s `download` is the file's name, a string because the name is the one value stack cannot
@@ -797,7 +820,7 @@ a tick with no animation, never jumped to full.
   satisfy. Rejected: optional
   `value` and `onChange` on every control read from the field's context, which would compile a
   control with no value anywhere and could not type a boolean field against an `Input`.
-- The roster is data: `ROSTER` in `packages/ui-core/src/roster.ts` names 56 components in four
+- The roster is data: `ROSTER` in `packages/ui-core/src/roster.ts` names 57 components in four
   layers (atoms, layout molecules, shared molecules, content molecules) with their prop names,
   the cells each draws (a whole matrix family, one family cell as `FAMILY.axis.value`, or a single
   cell) and the states it has a form for, the same in both plugins; the showcase draws exactly those matrix cells and states. Each plugin's verify suite reads every component's exported props type
@@ -939,6 +962,7 @@ cell, an off-contract utility, or a drawn word outside `words` each fails a name
 - A native Button's `count` is not read aloud: the pressable's accessible name is its `label` alone.
 - A failed toast's announcement is Base UI's visually hidden `role="alert"` wrapper beside the toasts' viewport, which exists only while a failed toast stands and the viewport is unfocused, and carries no `aria-live`. When a sheet opens while a failed toast stands, the modal marks that wrapper `aria-hidden`, so a failed toast raised while one has stood continuously since before the sheet opened is not announced. Once no failed toast stands the wrapper is gone, and the next is announced.
 - The native toasts' layer stands over a box measured against the Shell's root (`ToastRoom`, `ToastFrame`): the layer must stand after the sheets' host, outside the page's tree, so no layout places it, and it follows a growing input a layout late.
+- An `Image`'s full view takes no pinch-zoom or pan: it is contain-fit, as large as the page inset leaves room for. The phone's view is a React Native `Modal`, which stands over the Shell's toasts.
 - A product cannot draw in the platform font: `fonts.sans` unset is IBM Plex Sans, and the platform stack only stands behind the named family and its metric fallback face.
 - Comparison's `hyphens-auto` is unverified: the Nix Playwright browsers ship no hyphenation dictionaries, so a value wider than its column breaks mid-letter there.
 - Native Diff and Comparison name a `list`-role container (React Native has no table role); whether VoiceOver and TalkBack announce that name is unverified.

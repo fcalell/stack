@@ -29,6 +29,8 @@ import {
 	FORM_FIELD,
 	ICON,
 	ICON_BUTTON,
+	IMAGE,
+	IMAGE_PICTURE,
 	LINE_BOX,
 	LINK,
 	type Matrix,
@@ -147,6 +149,8 @@ export const meterFill = build(METER_FILL);
 export const chartBand = build(CHART_BAND);
 export const chartFill = build(CHART_FILL);
 export const qrCode = build(QR_CODE);
+export const image = build(IMAGE);
+export const imagePicture = build(IMAGE_PICTURE);
 export const placeRow = build(PLACE_ROW);
 export const placeRowGlyph = build(PLACE_ROW_GLYPH);
 export const placeTab = build(PLACE_TAB);
@@ -242,6 +246,8 @@ export const FAMILIES: readonly Family[] = [
 	family("CHART_BAND", CHART_BAND, chartBand),
 	family("CHART_FILL", CHART_FILL, chartFill),
 	family("QR_CODE", QR_CODE, qrCode),
+	family("IMAGE", IMAGE, image),
+	family("IMAGE_PICTURE", IMAGE_PICTURE, imagePicture),
 	family("PLACE_ROW", PLACE_ROW, placeRow),
 	family("PLACE_ROW_GLYPH", PLACE_ROW_GLYPH, placeRowGlyph),
 	family("PLACE_TAB", PLACE_TAB, placeTab),
@@ -610,6 +616,11 @@ export const THREAD_UNDER_HEAD = "mt-page border-t border-edge";
 export const THREAD_LATEST = "mb-pair rounded-control bg-raised shadow-float";
 // QrCode: the tile at the qr size inside a hairline on the surface.
 export const QR_TILE = "size-qr rounded-card border border-edge bg-surface";
+// Image: its full view stands on the scrim with no frame, the picture inside
+// the page inset; the close act is a lifted ground at the control radius over
+// the picture, as the Latest act floats over a log.
+export const IMAGE_FULL = "p-page";
+export const IMAGE_CLOSE = "rounded-control bg-raised shadow-float";
 
 // ── Layout ──────────────────────────────────────────────────────────
 
@@ -723,6 +734,8 @@ export type SegmentState = keyof (typeof SEGMENT)["variants"]["state"];
 export type RowLines = keyof (typeof ROW)["variants"]["lines"];
 export type RowGround = keyof (typeof ROW)["variants"]["ground"];
 export type SheetFit = keyof (typeof SHEET_SIDE)["variants"]["fit"];
+export type ImageFit = keyof (typeof IMAGE)["variants"]["fit"];
+export type ImageState = keyof (typeof IMAGE)["variants"]["state"];
 export type FormIn = keyof (typeof FORM)["variants"]["in"];
 export type BannerKind = keyof (typeof BANNER)["variants"]["kind"];
 export type ToastState = keyof (typeof TOAST_STATE)["variants"]["state"];

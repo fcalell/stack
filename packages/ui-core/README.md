@@ -242,7 +242,7 @@ toolbar control), `field` 38 / 48 (a form input), `row` 32 / 48 (a one-line row)
 `thumb` and both insets), `skeleton` 12 / 12, `icon-meta` 12 / 14 (an icon beside meta or
 caption text), `icon` 14 / 18 (beside body text), `icon-control` 16 / 20 (inside a control),
 `check` 16 / 20 (a checkbox's box), `track` 2 / 4 (a slider's track thickness), `otp` 44 / 48 (a
-one-time-code box, square), `text-area` 60 / 72 (a text area's least value height, derived: three body line boxes), `meter` 6 / 8 (a meter's bar), `chart` 128 / 192 (a chart's plot, its gridlines four bands), `qr` 160 / 240 (a QR code's square, its quiet zone inside it), `figures` 29 / 36 (four tabular figures at the code size: a diff's number columns, a file row's count lanes; derived at `MONO_ADVANCE`, Plex Mono's 0.6 em, rounded up, since native has no `ch`), `message-input` 160 / 192 (a message input's tallest text, derived: eight body line boxes, the text scrolling past it). On touch every target is at least 44. A cell says `min-h`, never `h`: a label
+one-time-code box, square), `text-area` 60 / 72 (a text area's least value height, derived: three body line boxes), `meter` 6 / 8 (a meter's bar), `chart` 128 / 192 (a chart's plot, its gridlines four bands), `qr` 160 / 240 (a QR code's square, its quiet zone inside it), `figures` 29 / 36 (four tabular figures at the code size: a diff's number columns, a file row's count lanes; derived at `MONO_ADVANCE`, Plex Mono's 0.6 em, rounded up, since native has no `ch`), `message-input` 160 / 192 (a message input's tallest text, derived: eight body line boxes, the text scrolling past it), `image-tile` 80 / 96 (an image thumbnail's side, derived: four body line boxes, the lines of provenance it stands beside) and `image-cap` 400 / 480 (the tallest an image grows at its container's width, derived: twenty body line boxes); `thumb` is the switch's knob, so neither takes that name. On touch every target is at least 44. A cell says `min-h`, never `h`: a label
 must be able to grow its control under OS font scaling. A minimum height is the floor of something pressed (a control, a field, a target, a chip, a row), the set height of a bar (`strip`, a page's strip and its touch top bar), an intrinsic size, or the height of what a part swaps with (`PENDING_TRACK` an action bar's); any other container takes its height from its content and padding, its parts centred on its tallest, never from another component's size.
 
 Seven radius roles, density-invariant, a radius naming the role and never the size: `chip` 4
@@ -376,7 +376,7 @@ The canon binds every component either UI plugin ships:
 
 ## The roster
 
-`ROSTER` in `@fcalell/ui-core/roster` is the closed list: 56 components in four layers (atoms,
+`ROSTER` in `@fcalell/ui-core/roster` is the closed list: 57 components in four layers (atoms,
 layout molecules, shared molecules, content molecules), each with its prop names, the cells it
 draws (`draws`: a `FAMILIES` name for every cell of that family, `FAMILY.axis.value` for one of
 its cells, as `Text` draws `TEXT.role.body`, or a single-cell constant of `./variants`) and the states it

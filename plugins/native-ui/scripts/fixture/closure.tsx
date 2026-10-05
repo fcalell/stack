@@ -55,6 +55,7 @@ import { MessageInput } from "@fcalell/plugin-native-ui/components/message-input
 import { Meter } from "@fcalell/plugin-native-ui/components/meter";
 import { BarChart } from "@fcalell/plugin-native-ui/components/bar-chart";
 import { QrCode } from "@fcalell/plugin-native-ui/components/qr-code";
+import { Image } from "@fcalell/plugin-native-ui/components/image";
 import { Chip } from "@fcalell/plugin-native-ui/components/chip";
 import { Select } from "@fcalell/plugin-native-ui/components/select";
 import { Table } from "@fcalell/plugin-native-ui/components/table";
@@ -1018,5 +1019,20 @@ export const closure = (
 		<QrCode value="a" selectionColorClassName="text-ink-body" />
 		{/* @ts-expect-error: closed channel */}
 		<QrCode value="a" placeholderTextColorClassName="text-ink-body" />
+		<Image src="a" alt="a" />
+		{/* @ts-expect-error: closed channel */}
+		<Image src="a" alt="a" className="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Image src="a" alt="a" style={{ flex: 1 }} />
+		{/* @ts-expect-error: closed channel */}
+		<Image src="a" alt="a" class="x" />
+		{/* @ts-expect-error: closed channel */}
+		<Image src="a" alt="a" classList={{}} />
+		{/* @ts-expect-error: closed channel */}
+		<Image src="a" alt="a" colorClassName="text-ink-body" />
+		{/* @ts-expect-error: closed channel */}
+		<Image src="a" alt="a" selectionColorClassName="text-ink-body" />
+		{/* @ts-expect-error: closed channel */}
+		<Image src="a" alt="a" placeholderTextColorClassName="text-ink-body" />
 	</>
 );

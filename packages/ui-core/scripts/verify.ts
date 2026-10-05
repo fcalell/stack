@@ -123,6 +123,8 @@ import {
 	FORM_FIELD,
 	ICON,
 	ICON_BUTTON,
+	IMAGE,
+	IMAGE_PICTURE,
 	LINE_BOX,
 	LINK,
 	type Matrix,
@@ -192,6 +194,8 @@ import {
 	formField,
 	icon,
 	iconButton,
+	image,
+	imagePicture,
 	lineBox,
 	link,
 	menu,
@@ -495,6 +499,8 @@ const MATRICES: readonly Registration[] = [
 	["CHART_BAND", CHART_BAND, chartBand],
 	["CHART_FILL", CHART_FILL, chartFill],
 	["QR_CODE", QR_CODE, qrCode],
+	["IMAGE", IMAGE, image],
+	["IMAGE_PICTURE", IMAGE_PICTURE, imagePicture],
 	["PLACE_ROW", PLACE_ROW, placeRow],
 	["PLACE_ROW_GLYPH", PLACE_ROW_GLYPH, placeRowGlyph],
 	["PLACE_TAB", PLACE_TAB, placeTab],
@@ -676,7 +682,7 @@ check("c03", "tokens.ts declares the contract", () => {
 	requireEqual(TYPE_ROLES.length, 7, "type role count");
 	requireEqual(SPACING_ROLES.length, 11, "spacing role count");
 	requireEqual(GAP_ROLES.length, 6, "gap role count");
-	requireEqual(SIZES.length, 30, "size count");
+	requireEqual(SIZES.length, 32, "size count");
 	requireEqual(RADIUS_ROLES.length, 7, "radius role count");
 	requireEqual(SHADOW_LEVELS.length, 2, "shadow level count");
 	requireEqual(WIDTHS.length, 12, "width count");
@@ -824,6 +830,8 @@ check("c06", "every scale is its ratio of the base", () => {
 				4 * MONO_ADVANCE * Number.parseInt(tokens["--text-code"] ?? "", 10),
 			),
 			"message-input": 8 * Number.parseInt(tokens["--leading-body"] ?? "", 10),
+			"image-tile": 4 * Number.parseInt(tokens["--leading-body"] ?? "", 10),
+			"image-cap": 20 * Number.parseInt(tokens["--leading-body"] ?? "", 10),
 		};
 		for (const size of SIZES) {
 			requireEqual(
@@ -1830,7 +1838,7 @@ check(
 	"the roster is closed, camelCase, and off the style channels",
 	() => {
 		const entries = rosterEntries();
-		requireEqual(entries.length, 56, "component count");
+		requireEqual(entries.length, 57, "component count");
 		const names = new Set<string>();
 		for (const [, name, { props }] of entries) {
 			assert(/^[A-Z][A-Za-z]+$/.test(name), `${name} is not PascalCase`);

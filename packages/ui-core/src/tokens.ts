@@ -746,8 +746,10 @@ export const SPACING_RATIO: Record<Density, Record<SpacingRole, number>> = {
 // the `icon` rung: it replaces a row's glyph and sits beside body text.
 // `meter` is a meter's bar, `chart` a chart's plot, `qr` a QR code's
 // square, `figures` four tabular figures at the code size (a diff's number
-// columns, a file row's count lanes) and `message-input` the
-// tallest a message input's text grows before it scrolls.
+// columns, a file row's count lanes), `message-input` the
+// tallest a message input's text grows before it scrolls, `image-tile` an
+// image thumbnail's side and `image-cap` the tallest an image grows at its
+// container's width (`thumb` is the switch's knob).
 export const SIZES = [
 	"control",
 	"control-compact",
@@ -779,6 +781,8 @@ export const SIZES = [
 	"qr",
 	"figures",
 	"message-input",
+	"image-tile",
+	"image-cap",
 ] as const;
 export type Size = (typeof SIZES)[number];
 
@@ -786,12 +790,15 @@ export type Size = (typeof SIZES)[number];
 // and its inset on both sides; a text area's least value height, three body
 // line boxes; `figures`, four tabular figures at the code size at
 // `MONO_ADVANCE`, rounded up to the pixel; a message input's tallest text,
-// eight body line boxes.
+// eight body line boxes; an image thumbnail's side, four body line boxes (the
+// provenance lines it stands beside); an image's height cap, twenty.
 export type DerivedSize =
 	| "switch-travel"
 	| "text-area"
 	| "figures"
-	| "message-input";
+	| "message-input"
+	| "image-tile"
+	| "image-cap";
 
 export const SIZE_PX: Record<
 	Density,
