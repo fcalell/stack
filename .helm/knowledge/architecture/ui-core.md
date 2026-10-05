@@ -591,7 +591,7 @@ a tick with no animation, never jumped to full.
   inline among sections it has no bound, since the page scrolls. On the desktop the docked Sheet holds
   `THREAD_COLUMN` in the foot that centres it. Focus: each page (a new `title`) takes the body's first
   field on the web and on the phone (a first-mount claim, `FieldClaim`, which the AuthColumn provides too; its `full` bar fit stays the AuthColumn frame's alone), Escape on the web
-  calls `onClose`, and a docked foot hands focus to its first typing control when the page that held
+  calls `onClose`, and a docked foot, and a Thread's inline one, hands focus to its first typing control when the page that held
   it leaves (the web region reads who held focus in the render that swaps the foot; the phone's
   region holds a `FootReturn` claim the leaving Sheet sets and the `MessageInput` that mounts takes).
   Rejected: a `Thread` `form` prop or a `DockedForm` component (a second component for the same
@@ -635,9 +635,10 @@ a tick with no animation, never jumped to full.
   `ACTION_BAR_SELECTION`, `EMPTY_COLUMN`), so a column's alignment is its region's: a region that
   owns its frame's width centres what it holds (a filling Thread's log, a docked foot, the
   EmptyState's region), and a column standing among sections keeps the region's start, as `Text`
-  and `Prose` hold the measure. The web regions spell `items-center` as an overlay on the desktop
-  alone, since on touch the column cell is absent and the content spans the region; the phone's docked foot centres a
-  selection bar. A region that holds a page's sections stands them a sections gap apart
+  and `Prose` hold the measure. A Thread's regions spell `items-center` as an overlay on the desktop
+  alone, since on touch the column cell is absent and the content spans the region; a Place's docked foot
+  centres at every density on both platforms, so a selection bar wider than the screen's measure
+  stands centred on a wide touch screen too, and what else it holds spans it (`w-full`). A region that holds a page's sections stands them a sections gap apart
   (`PAGE_BODY`, `SPLIT_MAIN rest`, `SPLIT_PANE`, `SHEET_BODY`, and a Split's list by
   `SPLIT_LIST_STACK`, which the phone's list reads as well), so no wrapper restates the gap; a
   `Form` is one child, so the gap shows only between a sheet's sections.

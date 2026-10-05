@@ -91,10 +91,11 @@ const BODY =
 const BLEED = "flex flex-col grow min-h-0";
 const BODY_WRAP = "relative flex flex-col grow min-h-0";
 // The foot stays under the body, which scrolls past it, and spans it; a field
-// keeps its own measure column inside, which the foot centres on the desktop.
+// keeps its own measure column inside, which the foot centres at every density,
+// so a selection bar wider than the screen's measure stands centred on touch too.
 // The docked foot names itself the anchor the Shell's toasts stand above.
-const DOCKED = "flex flex-col shrink-0 [anchor-name:--docked-foot]";
-const DOCKED_CENTRES = "items-center";
+const DOCKED =
+	"flex flex-col items-center shrink-0 [anchor-name:--docked-foot]";
 const ACT_ROOM = "shrink-0";
 // The layer marks itself `data-act-floats`: the Shell's toasts stand above
 // the act by its room while the mark stands in its column.
@@ -341,10 +342,7 @@ export function Place({
 								{layer}
 							</div>
 							{foot ? (
-								<div
-									ref={dock}
-									className={cn(FOOT_DOCKED, DOCKED, !touch && DOCKED_CENTRES)}
-								>
+								<div ref={dock} className={cn(FOOT_DOCKED, DOCKED)}>
 									<FootPlace value="docked">{foot}</FootPlace>
 								</div>
 							) : null}

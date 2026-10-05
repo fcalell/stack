@@ -15,14 +15,19 @@ import { FormStands } from "../../lib/form.ts";
 import { FootPlace } from "../../lib/frame.ts";
 import { useTouch } from "../../lib/media.ts";
 import { useScrolls } from "../../lib/scrolls.ts";
-import { TouchedContext, useTouchState } from "../../lib/touched.ts";
+import {
+	TouchedContext,
+	usePageTurn,
+	useTouchState,
+} from "../../lib/touched.ts";
 import { useWords } from "../../lib/words.tsx";
 import { ActionBar } from "../action-bar/index.tsx";
 import { IconButton } from "../icon-button/index.tsx";
 
 // The sheet fills its foot, which bounds it: the head and the foot keep their
-// height and the body scrolls in what is left.
-const ROOT = "flex flex-col min-h-0";
+// height and the body scrolls in what is left. The foot centres what it holds,
+// so the sheet spans it.
+const ROOT = "flex flex-col w-full min-h-0";
 const HEAD = "flex flex-col shrink-0";
 const HEAD_ROW = "flex items-center";
 const TITLE = "grow min-w-0 truncate";
@@ -64,14 +69,7 @@ export function SheetDocked({
 	const [body, setBody] = useState<HTMLDivElement | null>(null);
 	const stop = useScrolls(body, "y");
 	const [touchedValue, setTouched] = useTouchState();
-	// A page the sheet opens on has taken no input: reset during render, so it
-	// never draws the last page's reason.
-	const page = `${title}\n${description ?? ""}`;
-	const [shown, setShown] = useState({ open, page });
-	if (shown.open !== open || shown.page !== page) {
-		setShown({ open, page });
-		if (open) setTouched(false);
-	}
+	const page = usePageTurn(open, title, description, () => setTouched(false));
 	// Each page, a wizard's turn, takes focus in its first field; a page with
 	// none leaves it where it was.
 	// biome-ignore lint/correctness/useExhaustiveDependencies: a new page takes focus

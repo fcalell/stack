@@ -201,7 +201,7 @@ function logOf<T>(
 	));
 }
 
-/** The messages, a log region so an arriving one is announced, a sections gap apart, one rung above a reply's block gap, and the input a sections gap under them; on the desktop each stands in a measure-wide column centred in the page, on touch in the screen's column. In a Place's body it fills the page, and in a Split's main the main under the record's head: the log scrolls at the page inset, opening at the newest message and following each that arrives while the reader is at the end, the input docked at the foot; while the reader is scrolled up, a Latest act floats centred above the foot and returns to the newest message. It draws its collection's states, the input under each: while its query is pending or `loading` is set, Message's loading forms (another's reply, yours, another's reply), the log at its end; a failed query, the failed EmptyState with `sentence` and Retry in the log's column; a query that answers not found, the form saying it no longer exists with Back; no message, `empty` in the log; then one Message per item. */
+/** The messages, a log region so an arriving one is announced, a sections gap apart, one rung above a reply's block gap, and the input a sections gap under them; on the desktop each stands in a measure-wide column its region centres, on touch in the screen's column. In a Place's body it fills the page, and in a Split's main the main under the record's head: the log scrolls at the page inset, opening at the newest message and following each that arrives while the reader is at the end, the input docked at the foot, which holds a docked `Sheet` as well; while the reader is scrolled up, a Latest act floats centred above the foot and returns to the newest message. It draws its collection's states, the input under each: while its query is pending or `loading` is set, Message's loading forms (another's reply, yours, another's reply), the log at its end; a failed query, the failed EmptyState with `sentence` and Retry in the log's column; a query that answers not found, the form saying it no longer exists with Back; no message, `empty` in the log; then one Message per item. */
 export function Thread<T>(props: ThreadProps<T>) {
 	const { foot } = props;
 	const words = useWords();
@@ -266,7 +266,9 @@ export function Thread<T>(props: ThreadProps<T>) {
 				</div>
 				{foot ? (
 					<FootPlace value="inline">
-						<div className={cn(column, STACK)}>{foot}</div>
+						<div ref={dock} className={cn(column, STACK)}>
+							{foot}
+						</div>
 					</FootPlace>
 				) : null}
 			</div>

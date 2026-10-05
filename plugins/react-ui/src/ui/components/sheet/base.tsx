@@ -30,7 +30,11 @@ import { useTouch } from "../../lib/media.ts";
 import { PortalContainer } from "../../lib/portal.ts";
 import { ReasonHostContext } from "../../lib/reason.ts";
 import { useScrolls } from "../../lib/scrolls.ts";
-import { TouchedContext, useTouchState } from "../../lib/touched.ts";
+import {
+	TouchedContext,
+	usePageTurn,
+	useTouchState,
+} from "../../lib/touched.ts";
 import { useWords } from "../../lib/words.tsx";
 import { ActionBar } from "../action-bar/index.tsx";
 import { Button } from "../button/index.tsx";
@@ -152,19 +156,10 @@ export function SheetBase({
 	// The submit's press stands while it is blocked by the reason it came
 	// under (`@fcalell/ui-core/reason`).
 	const pressed = pressStands(submit?.blocked, pressedUnder);
-	// A sheet as it opens, and a new page (a wizard's, or the next queued
-	// decision's), has taken no input: reset during render, so it never draws
-	// the last one's reason, while a closing sheet keeps its own until it is
-	// gone.
-	const page = `${title}\n${description ?? ""}`;
-	const [shown, setShown] = useState({ open, page });
-	if (shown.open !== open || shown.page !== page) {
-		setShown({ open, page });
-		if (open) {
-			setTouched(false);
-			setPressedUnder(undefined);
-		}
-	}
+	usePageTurn(open, title, description, () => {
+		setTouched(false);
+		setPressedUnder(undefined);
+	});
 	const iconFit = touch ? "body" : "bar";
 	const centred = form === "centred" && !touch;
 	const view = form === "view";

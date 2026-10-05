@@ -21,7 +21,7 @@ import { FieldClaim, FieldNameContext } from "../../lib/field";
 import { FormStands } from "../../lib/form";
 import { FootPlace, FootReturn } from "../../lib/frame";
 import { Scroll } from "../../lib/hosts";
-import { TouchedContext } from "../../lib/touched";
+import { TouchedContext, usePageTurn } from "../../lib/touched";
 import { useWords } from "../../lib/words";
 import { ActionBar } from "../action-bar";
 import { IconButton } from "../icon-button";
@@ -72,14 +72,7 @@ export function SheetDocked({
 	const [touched, setTouched] = useState(false);
 	const touch = useCallback(() => setTouched(true), []);
 	const touchedValue = useMemo(() => ({ touched, touch }), [touched, touch]);
-	// A page the sheet opens on has taken no input: reset during render, so it
-	// never draws the last page's reason.
-	const page = `${title}\n${description ?? ""}`;
-	const [shown, setShown] = useState({ open, page });
-	if (shown.open !== open || shown.page !== page) {
-		setShown({ open, page });
-		if (open) setTouched(false);
-	}
+	usePageTurn(open, title, description, () => setTouched(false));
 	useEffect(
 		() => () => {
 			if (claim) claim.current = true;

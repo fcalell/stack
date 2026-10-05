@@ -268,7 +268,9 @@ export function Thread<T>(props: ThreadProps<T>) {
 					{children}
 				</View>
 				{foot ? (
-					<FootPlace.Provider value="inline">{foot}</FootPlace.Provider>
+					<FootPlace.Provider value="inline">
+						<FootReturn.Provider value={claim}>{foot}</FootReturn.Provider>
+					</FootPlace.Provider>
 				) : null}
 			</View>
 		);

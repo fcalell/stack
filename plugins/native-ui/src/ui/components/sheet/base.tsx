@@ -50,7 +50,7 @@ import { FormStands } from "../../lib/form";
 import { timing } from "../../lib/motion";
 import { RaisedGround } from "../../lib/raised";
 import { type ReasonHost, ReasonHostContext } from "../../lib/reason";
-import { type Touched, TouchedContext } from "../../lib/touched";
+import { type Touched, TouchedContext, usePageTurn } from "../../lib/touched";
 import { useWords } from "../../lib/words";
 import { ActionBar } from "../action-bar";
 import { Button } from "../button";
@@ -420,19 +420,10 @@ export function SheetBase({
 	// The submit's press stands while it is blocked by the reason it came
 	// under (`@fcalell/ui-core/reason`).
 	const pressed = pressStands(submit?.blocked, pressedUnder);
-	// A sheet as it opens, and a new page (a wizard's, or the next queued
-	// decision's), has taken no input: reset during render, so it never draws
-	// the last one's reason, while a closing sheet keeps its own until it is
-	// gone.
-	const page = `${title}\n${description ?? ""}`;
-	const [shown, setShown] = useState({ open, page });
-	if (shown.open !== open || shown.page !== page) {
-		setShown({ open, page });
-		if (open) {
-			setTouched(false);
-			setPressedUnder(undefined);
-		}
-	}
+	usePageTurn(open, title, description, () => {
+		setTouched(false);
+		setPressedUnder(undefined);
+	});
 	// gorhom sizes a sheet to its content once it has measured the content
 	// and the head; a footer it measures after them sizes it a second time.
 	// So the foot stands at the content's end, measured with it, and moves to
