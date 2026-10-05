@@ -1,11 +1,10 @@
-import type { Stage, StageEnd } from "@fcalell/ui-core/descriptors";
-import { stagesShown } from "@fcalell/ui-core/tokens";
+import type { Stage, StageEnd, StepState } from "@fcalell/ui-core/descriptors";
+import { stagesShown } from "@fcalell/ui-core/list-state";
 import {
 	lineBox,
 	STAGE_RAIL,
 	STAGE_ROW,
 	STAGE_WORDS,
-	type StageState,
 	stage,
 	stageContentTone,
 	text,
@@ -41,7 +40,7 @@ export interface StagesProps extends Closed {
 }
 
 function Row(props: {
-	state: StageState;
+	state: StepState | "ended";
 	mark: ReactNode;
 	last: boolean;
 	current?: boolean;
@@ -100,7 +99,8 @@ export function Stages({ steps, ended }: StagesProps) {
 				}
 				return (
 					<Row
-						key={step.label}
+						// biome-ignore lint/suspicious/noArrayIndexKey: the stages are fixed-order data, and two may share a label
+						key={`${step.label}${at}`}
 						state={step.state}
 						mark={mark}
 						last={last}

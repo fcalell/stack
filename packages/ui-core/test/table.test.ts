@@ -16,7 +16,7 @@ test("an empty grid's EmptyState stands a page inset under the header, across th
 });
 
 const words = {
-	changed: "from {before} to {after}",
+	changedFrom: "from {before} to {after}",
 	added: "Added",
 	removed: "Removed",
 };

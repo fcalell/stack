@@ -1,6 +1,6 @@
 import { cn } from "@fcalell/ui-core/cn";
 import type { ChangeKind } from "@fcalell/ui-core/descriptors";
-import { CHANGE_GLYPH, CHANGE_WORD } from "@fcalell/ui-core/list-state";
+import { CHANGE_GLYPH } from "@fcalell/ui-core/list-state";
 import { changeMark } from "@fcalell/ui-core/variants";
 import { useWords } from "../../lib/words.tsx";
 import { Icon } from "../icon/index.tsx";
@@ -15,7 +15,7 @@ export function ChangeMark(props: { kind: ChangeKind }) {
 	return (
 		<span className={cn(changeMark({ kind }), BOX)}>
 			<Icon name={CHANGE_GLYPH[kind]} fit="meta" />
-			<span className={SPOKEN}>{words[CHANGE_WORD[kind]]}</span>
+			<span className={SPOKEN}>{words[kind]}</span>
 		</span>
 	);
 }

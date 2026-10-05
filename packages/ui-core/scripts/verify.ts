@@ -689,7 +689,7 @@ check("c02", "package.json shape", () => {
 		Object.keys(pkg.exports ?? {})
 			.sort()
 			.join(" "),
-		"./clock ./cn ./commit ./derive ./descriptors ./emit ./file ./format ./harness ./list-state ./manifest ./reason ./roster ./schema ./tokens ./variants",
+		"./clock ./cn ./commit ./derive ./descriptors ./emit ./file ./format ./harness ./list-state ./manifest ./reason ./roster ./rules ./schema ./tokens ./variants",
 		"export subpaths",
 	);
 	assert(pkg.peerDependencies?.zod, "zod is not a peerDependency");
@@ -713,7 +713,7 @@ check("c03", "tokens.ts declares the contract", () => {
 	requireEqual(TYPE_ROLES.length, 8, "type role count");
 	requireEqual(SPACING_ROLES.length, 11, "spacing role count");
 	requireEqual(GAP_ROLES.length, 6, "gap role count");
-	requireEqual(SIZES.length, 33, "size count");
+	requireEqual(SIZES.length, 34, "size count");
 	requireEqual(RADIUS_ROLES.length, 7, "radius role count");
 	requireEqual(SHADOW_LEVELS.length, 2, "shadow level count");
 	requireEqual(WIDTHS.length, 12, "width count");
@@ -748,7 +748,7 @@ check("c03", "tokens.ts declares the contract", () => {
 	for (const word of ["marine", "navy", "brand", "tint", "label", "floor"]) {
 		assert(!new RegExp(`"${word}"`).test(source), `tokens.ts names "${word}"`);
 	}
-	return `${COLOR_NAMES.length} colors, 7 roles, 11 spacing roles (6 gaps), ${SIZES.length} sizes, 7 radii, 2 shadows, 12 widths, 3 breakpoints, ${WORD_KEYS.length} words, ${COUNTED_WORD_KEYS.length} counted and ${SLOT_WORD_KEYS.length} with slots, ${CHART_SERIES.length} chart series`;
+	return `${COLOR_NAMES.length} colors, ${TYPE_ROLES.length} roles, 11 spacing roles (6 gaps), ${SIZES.length} sizes, 7 radii, 2 shadows, 12 widths, 3 breakpoints, ${WORD_KEYS.length} words, ${COUNTED_WORD_KEYS.length} counted and ${SLOT_WORD_KEYS.length} with slots, ${CHART_SERIES.length} chart series`;
 });
 
 check("c05", "the computed colors follow their color-mix rules", () => {
@@ -826,8 +826,11 @@ check("c05", "the computed colors follow their color-mix rules", () => {
 
 check("c06", "every scale is its ratio of the base", () => {
 	for (const density of DENSITIES) {
+		const tokens =
+			density === "room"
+				? roomTokens((units) => `${units}px`)
+				: densityTokens(base, density);
 		const body = BODY_SIZE[density];
-		const tokens = densityTokens(base, density);
 		for (const role of TYPE_ROLES) {
 			const ratio =
 				(density === "room" ? ROOM_TYPE_SIZE[role] : undefined) ??
@@ -866,6 +869,7 @@ check("c06", "every scale is its ratio of the base", () => {
 			"message-input": 8 * Number.parseInt(tokens["--leading-body"] ?? "", 10),
 			"image-tile": 4 * Number.parseInt(tokens["--leading-body"] ?? "", 10),
 			"image-cap": 20 * Number.parseInt(tokens["--leading-body"] ?? "", 10),
+			"chips-inset": (px["control-compact"] - px.chip) / 2,
 		};
 		for (const size of SIZES) {
 			requireEqual(
@@ -949,7 +953,7 @@ check("c06", "every scale is its ratio of the base", () => {
 			rung,
 		);
 	}
-	return "7 roles × 3 densities with even line boxes, 12 spacing roles, 17 sizes, 4 trackings, 8 radii, 11 widths, 3 breakpoints, 2 families with their fallback faces, 4 durations";
+	return `${TYPE_ROLES.length} roles × 3 densities with even line boxes, 12 spacing roles, 17 sizes, 4 trackings, 8 radii, 11 widths, 3 breakpoints, 2 families with their fallback faces, 4 durations`;
 });
 
 check(
@@ -1012,7 +1016,11 @@ check(
 			);
 		}
 		const touch = densityTokens(base, "touch");
-		const canvas = densityTokens(base, "room");
+		const canvas = Object.fromEntries(
+			Object.entries(roomTokens((units) => `${units}px`)).filter(
+				([key]) => key in touch,
+			),
+		);
 		const number = (value: string) => Number.parseFloat(value);
 		// What the room moves off the touch set: a figure stands five times its
 		// label, and the page inset is the ten-foot safe area.
@@ -1024,7 +1032,6 @@ check(
 		]);
 		const unit1 = roomTokens((units) => units);
 		for (const [key, value] of Object.entries(canvas)) {
-			requireEqual(unit1[key], number(value), `${key} at u = 1`);
 			if (!moved.has(key)) requireEqual(value, touch[key], `${key} is touch's`);
 		}
 		requireEqual(canvas["--text-display"], "80px", "display is 5 body");

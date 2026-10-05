@@ -2,16 +2,14 @@ import { cn } from "@fcalell/ui-core/cn";
 import type { StatSpec } from "@fcalell/ui-core/descriptors";
 import { formatterFor } from "@fcalell/ui-core/format";
 import {
-	FIGURES,
 	STATS,
 	STATS_CELL,
-	STATS_COUNTS,
 	STATS_EDGE,
 	STATS_FIGURE,
 	text,
 } from "@fcalell/ui-core/variants";
 import type { Closed } from "../../lib/closed.ts";
-import { Link } from "../link/index.tsx";
+import { CountLinks } from "../meter/count-links.tsx";
 import { StatsWait } from "./wait.tsx";
 
 const CLIP = "overflow-hidden";
@@ -25,7 +23,6 @@ const CELL =
 const OPENS = "hover:bg-wash-hover active:bg-wash-press";
 const HIT = "absolute inset-0 focus-visible:-outline-offset-2";
 const FIGURE = "flex items-baseline";
-const COUNTS = "flex flex-wrap";
 
 /** A strip of counts. */
 export interface StatsProps extends Closed {
@@ -49,7 +46,11 @@ export function Stats({ items, loading }: StatsProps) {
 					>
 						{item.href !== undefined ? (
 							// biome-ignore lint/a11y/useAnchorContent: the hit covers the cell, named by its label
-							<a href={item.href} aria-label={item.label} className={HIT} />
+							<a
+								href={item.href}
+								aria-label={`${item.label}, ${number.format(item.value)}`}
+								className={HIT}
+							/>
 						) : null}
 						<span className={text({ role: "meta" })}>{item.label}</span>
 						<p className={cn(STATS_FIGURE, FIGURE)}>
@@ -63,18 +64,7 @@ export function Stats({ items, loading }: StatsProps) {
 						{item.meta ? (
 							<p className={text({ role: "meta" })}>{item.meta}</p>
 						) : null}
-						{item.counts ? (
-							<p className={cn(text({ role: "meta" }), STATS_COUNTS, COUNTS)}>
-								{item.counts.map((count) => (
-									<Link key={`${count.href}${count.label}`} href={count.href}>
-										<span className={FIGURES}>
-											{number.format(count.value)}
-										</span>{" "}
-										{count.label}
-									</Link>
-								))}
-							</p>
-						) : null}
+						{item.counts ? <CountLinks counts={item.counts} /> : null}
 					</li>
 				))}
 			</ul>

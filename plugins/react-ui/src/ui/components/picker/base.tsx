@@ -7,9 +7,11 @@ import type {
 	Option,
 	OptionGroup,
 } from "@fcalell/ui-core/descriptors";
-import { toggled } from "@fcalell/ui-core/list-state";
+import { toggled } from "@fcalell/ui-core/rules";
 import type { ChipFamily } from "@fcalell/ui-core/tokens";
 import {
+	CHIPS_BOX,
+	CHIPS_TRIGGER,
 	FIELD_GLYPH,
 	FIELD_PLACEHOLDER,
 	field,
@@ -377,6 +379,7 @@ export function PickerBase<V extends string | null = string>(
 				field({ fit: "bar" }),
 				picker({ fit: "bar" }),
 				FIELD_GLYPH,
+				CHIPS_BOX,
 				SEVERAL_BOX,
 				FILL,
 				open && FIELD_OPEN,
@@ -387,16 +390,14 @@ export function PickerBase<V extends string | null = string>(
 					key={String(option.value)}
 					family="neutral"
 					label={option.label}
-					onRemove={() =>
-						picks.onChange(picks.value.filter((one) => one !== option.value))
-					}
+					onRemove={() => picks.onChange(toggled(picks.value, option.value))}
 				/>
 			))}
 			<button
 				{...handed}
 				type="button"
 				aria-label={named}
-				className={SEVERAL_TRIGGER}
+				className={cn(CHIPS_TRIGGER, SEVERAL_TRIGGER)}
 			>
 				{chosen.length === 0 ? (
 					<span

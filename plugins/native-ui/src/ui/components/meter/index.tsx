@@ -1,10 +1,10 @@
 import type { CountLink, MeterMark } from "@fcalell/ui-core/descriptors";
 import { formatterFor } from "@fcalell/ui-core/format";
-import { filled, levelOf } from "@fcalell/ui-core/tokens";
+import { levelOf } from "@fcalell/ui-core/list-state";
+import { filled } from "@fcalell/ui-core/tokens";
 import {
 	FIGURES,
 	METER,
-	METER_COUNTS,
 	METER_HEAD,
 	METER_ITEM,
 	METER_MARK,
@@ -19,7 +19,7 @@ import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { GroundContext } from "../../lib/ground";
 import { useWords } from "../../lib/words";
-import { Link } from "../link";
+import { CountLinks } from "./count-links";
 import { MeterWait } from "./wait";
 
 const STACK = "min-w-0";
@@ -29,7 +29,6 @@ const SHARE = "shrink-0";
 const BAR = "relative";
 const TRACK = "overflow-hidden";
 const TICK = "absolute";
-const COUNTS = "flex-row flex-wrap";
 
 interface MeterBase extends Closed {
 	// What is measured.
@@ -56,7 +55,7 @@ type MeterLine =
 	  }
 	| {
 			// The line under the bar as links: counts that lead to their lists.
-			counts: CountLink[];
+			counts: readonly CountLink[];
 			meta?: never;
 	  };
 
@@ -156,23 +155,7 @@ export function Meter({
 					) : null}
 				</View>
 			</View>
-			{counts ? (
-				<View className={cn(METER_COUNTS, COUNTS)}>
-					{counts.map((count) => (
-						<RNText
-							key={`${count.href}${count.label}`}
-							className={text({ role: "meta" })}
-						>
-							<Link href={count.href}>
-								<RNText className={FIGURES}>
-									{number.format(count.value)}
-								</RNText>{" "}
-								{count.label}
-							</Link>
-						</RNText>
-					))}
-				</View>
-			) : null}
+			{counts ? <CountLinks counts={counts} /> : null}
 			{meta ? <RNText className={text({ role: "meta" })}>{meta}</RNText> : null}
 		</View>
 	);

@@ -1,5 +1,5 @@
 import type { ChangeKind } from "@fcalell/ui-core/descriptors";
-import { CHANGE_GLYPH, CHANGE_WORD } from "@fcalell/ui-core/list-state";
+import { CHANGE_GLYPH } from "@fcalell/ui-core/list-state";
 import { changeContentTone, changeMark } from "@fcalell/ui-core/variants";
 import { View } from "react-native";
 import { cn } from "../../lib/cn";
@@ -17,7 +17,7 @@ export function ChangeMark({ kind }: { kind: ChangeKind }) {
 	return (
 		<View
 			accessible
-			accessibilityLabel={words[CHANGE_WORD[kind]]}
+			accessibilityLabel={words[kind]}
 			className={cn(changeMark({ kind }), BOX)}
 		>
 			<Ink.Provider value={changeContentTone(kind)}>

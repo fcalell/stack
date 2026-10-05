@@ -73,6 +73,7 @@ export function sizePx(density: Density, size: Size): number {
 	if (size === "message-input") return 8 * leadingOf(density, "body");
 	if (size === "image-tile") return 4 * leadingOf(density, "body");
 	if (size === "image-cap") return 20 * leadingOf(density, "body");
+	if (size === "chips-inset") return (px["control-compact"] - px.chip) / 2;
 	return px[size];
 }
 

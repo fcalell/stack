@@ -8,7 +8,6 @@ import type {
 	TableRowSlots,
 } from "@fcalell/ui-core/descriptors";
 import {
-	CHANGE_WORD,
 	cellEdit,
 	cellLocked,
 	changeKind,
@@ -487,9 +486,7 @@ const LeadRow = memo(function LeadRow(props: {
 			<Pressable
 				accessibilityRole={role}
 				accessibilityLabel={
-					row.change === undefined
-						? spoken
-						: `${words[CHANGE_WORD[row.change]]}. ${spoken}`
+					row.change === undefined ? spoken : `${words[row.change]}. ${spoken}`
 				}
 				accessibilityState={{ selected: chosen }}
 				{...pressOf(row, opens, store, actions)}

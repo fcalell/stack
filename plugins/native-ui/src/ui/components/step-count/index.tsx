@@ -1,4 +1,5 @@
-import { filled, stepStateOf } from "@fcalell/ui-core/tokens";
+import { stepStateOf } from "@fcalell/ui-core/list-state";
+import { filled } from "@fcalell/ui-core/tokens";
 import {
 	STEP_COUNT,
 	STEP_COUNT_SEGMENTS,

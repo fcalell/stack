@@ -1,10 +1,8 @@
 import type { StatSpec } from "@fcalell/ui-core/descriptors";
 import { formatterFor } from "@fcalell/ui-core/format";
 import {
-	FIGURES,
 	STATS,
 	STATS_CELL,
-	STATS_COUNTS,
 	STATS_EDGE,
 	STATS_FIGURE,
 	text,
@@ -13,7 +11,7 @@ import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { navigate } from "../../lib/navigate";
-import { Link } from "../link";
+import { CountLinks } from "../meter/count-links";
 import { StatsWait } from "./wait";
 
 const CLIP = "overflow-hidden";
@@ -24,7 +22,6 @@ const CELLS = "flex-row flex-wrap";
 const CELL = "min-w-0 grow basis-1/2";
 const HIT = "absolute inset-0 active:bg-wash-press";
 const FIGURE = "flex-row items-baseline";
-const COUNTS = "flex-row flex-wrap";
 
 export interface StatsProps extends Closed {
 	// The cells, in order: each a label over its figure.
@@ -63,27 +60,11 @@ export function Stats({ items, loading }: StatsProps) {
 							{item.meta ? (
 								<RNText className={text({ role: "meta" })}>{item.meta}</RNText>
 							) : null}
-							{item.counts ? (
-								<View className={cn(STATS_COUNTS, COUNTS)}>
-									{item.counts.map((count) => (
-										<RNText
-											key={`${count.href}${count.label}`}
-											className={text({ role: "meta" })}
-										>
-											<Link href={count.href}>
-												<RNText className={FIGURES}>
-													{number.format(count.value)}
-												</RNText>{" "}
-												{count.label}
-											</Link>
-										</RNText>
-									))}
-								</View>
-							) : null}
+							{item.counts ? <CountLinks counts={item.counts} /> : null}
 							{href !== undefined ? (
 								<Pressable
 									accessibilityRole="link"
-									accessibilityLabel={item.label}
+									accessibilityLabel={`${item.label}, ${number.format(item.value)}`}
 									onPress={() => navigate(href)}
 									className={HIT}
 								/>

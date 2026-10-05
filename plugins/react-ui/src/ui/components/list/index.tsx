@@ -20,9 +20,9 @@ import {
 	meterShape,
 	retryOf,
 	rowShape,
-	toggled,
 	treeRows,
 } from "@fcalell/ui-core/list-state";
+import { toggled } from "@fcalell/ui-core/rules";
 import { LIST, LIST_TREE } from "@fcalell/ui-core/variants";
 import { type ReactNode, use, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
@@ -168,7 +168,7 @@ export type MeterSlots<T> = MeterSlotsBase<T> &
 		  }
 		| {
 				/** The line under the bar as links: counts that lead to their lists. */
-				counts: (item: T) => CountLink[];
+				counts: (item: T) => readonly CountLink[];
 				meta?: never;
 		  }
 	);

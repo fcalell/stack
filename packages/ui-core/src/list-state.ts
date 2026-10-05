@@ -5,19 +5,17 @@
 import type {
 	ChangeCell,
 	ChangeKind,
-	EitherValue,
 	IconName,
 	Option,
 	OptionGroup,
 	Route,
-	RuleTerms,
-	RuleValue,
+	StepState,
 	TableCell,
 	TableChoice,
 	TableColumn,
 	TableRowSlots,
 } from "./descriptors.ts";
-import { filled, type WordKey, type Words } from "./tokens.ts";
+import { filled, METER_NEAR, type Words } from "./tokens.ts";
 import type { RowGround } from "./variants.ts";
 
 export type ListState = "pending" | "failed" | "missing" | "empty" | "loaded";
@@ -626,11 +624,11 @@ export function changeKind(cell: ChangeCell): ChangeCellKind | undefined {
 // before the one value it holds.
 export function changeReading(
 	cell: ChangeCell,
-	words: Pick<Words, "changed" | "added" | "removed">,
+	words: Pick<Words, "changedFrom" | "added" | "removed">,
 ): string {
 	switch (changeKind(cell)) {
 		case "changed":
-			return filled(words.changed, {
+			return filled(words.changedFrom, {
 				before: cell.before ?? "",
 				after: cell.after ?? "",
 			});
@@ -647,15 +645,14 @@ export function changeReading(
 // value stands alone.
 export function changeMeta(
 	cell: ChangeCell,
-	words: Pick<Words, "changed" | "added" | "removed">,
+	words: Pick<Words, "changedFrom" | "added" | "removed">,
 ): string {
 	return changeKind(cell) === "changed"
 		? `${cell.before} → ${cell.after}`
 		: changeReading(cell, words);
 }
 
-// A change mark's glyph and the word that names it, by kind: the glyph is
-// drawn, the word is what assistive tech reads.
+// A change mark's glyph by kind: drawn, and named by the kind's own word.
 export const CHANGE_GLYPH: Readonly<Record<ChangeKind, IconName>> = {
 	added: "Plus",
 	changed: "PencilLine",
@@ -664,74 +661,34 @@ export const CHANGE_GLYPH: Readonly<Record<ChangeKind, IconName>> = {
 	stale: "History",
 };
 
-export const CHANGE_WORD: Readonly<Record<ChangeKind, WordKey>> = {
-	added: "added",
-	changed: "modified",
-	removed: "removed",
-	unchanged: "unchanged",
-	stale: "stale",
-};
+export type MeterLevel = "under" | "near" | "over";
 
-// A picked option that carries no leading form of its own leads with this
-// glyph, which marks the value as a field and not typed text.
-export const PICKED_GLYPH: IconName = "Braces";
-
-// A typed form is the only one that carries `typed`.
-export function isTyped<V extends string | null>(
-	value: EitherValue<V>,
-): value is { typed: string } {
-	return "typed" in value;
+// The level a share of the max stands at: past the max over, from `near` near
+// (`METER_NEAR`, or a meter's own mark), else under. Both platforms read it, so
+// one meter draws one level.
+export function levelOf(share: number, near: number = METER_NEAR): MeterLevel {
+	if (share > 1) return "over";
+	if (share >= near) return "near";
+	return "under";
 }
 
-// Whether a rule's term holds a value: a pick its option, a several-pick any
-// option, a typed cell any text, a picked cell its option.
-export function termSet<V extends string | null>(value: RuleValue<V>): boolean {
-	if (value.pick) return value.pick.value !== undefined;
-	if (value.picks) return value.picks.value.length > 0;
-	const either = value.either.value;
-	return isTyped(either) ? either.typed !== "" : either.picked !== undefined;
+// The state of a step counted from one when the flow stands at `at`. Both
+// platforms read it, so one step count draws one state per segment.
+export function stepStateOf(step: number, at: number): StepState {
+	if (step < at) return "done";
+	if (step === at) return "current";
+	return "later";
 }
 
-// What a rule's term picks, which names its row's remove act.
-export function termLabel<V extends string | null>(
-	value: RuleValue<V>,
-): string {
-	return (value.pick ?? value.picks ?? value.either).label;
-}
-
-// A pair's arrow is drawn faded until both its sides hold a value; a
-// condition draws no arrow.
-export function pairSet<V extends string | null>(terms: RuleTerms<V>): boolean {
-	if (!terms.from) return false;
-	return termSet(terms.from) && termSet(terms.to);
-}
-
-// A value toggled in a several-pick's set: out when it is in, else in at the
-// end.
-export function toggled<V extends string | null>(
-	values: readonly V[],
-	value: V,
-): V[] {
-	return values.includes(value)
-		? values.filter((one) => one !== value)
-		: [...values, value];
-}
-
-// The options of a pick that leads its picked form with a glyph: each option
-// with no leading form of its own takes `PICKED_GLYPH`, the empty choice
-// none, and the grouping is kept.
-export function marked<V extends string | null>(
-	options: readonly Option<V>[] | readonly OptionGroup<V>[],
-): readonly Option<V>[] | readonly OptionGroup<V>[] {
-	const mark = (option: Option<V>): Option<V> =>
-		option.value === null || option.icon || option.status || option.avatar
-			? option
-			: { ...option, icon: PICKED_GLYPH };
-	const first = options[0];
-	if (first === undefined || !("options" in first))
-		return (options as readonly Option<V>[]).map(mark);
-	return (options as readonly OptionGroup<V>[]).map((group) => ({
-		...group,
-		options: group.options.map(mark),
-	}));
+// The stages a rail draws: all of them, or, once the rail has ended, those up
+// to the last done one (every stage after it gives way to the terminal row).
+// Both platforms read it, so one rail draws the same rows.
+export function stagesShown<T extends { state: string }>(
+	steps: readonly T[],
+	ended: boolean,
+): readonly T[] {
+	if (!ended) return steps;
+	let last = steps.length;
+	while (last > 0 && steps[last - 1]?.state !== "done") last--;
+	return steps.slice(0, last);
 }

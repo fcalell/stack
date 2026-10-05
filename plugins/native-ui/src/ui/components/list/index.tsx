@@ -19,9 +19,9 @@ import {
 	meterShape,
 	retryOf,
 	rowShape,
-	toggled,
 	treeRows,
 } from "@fcalell/ui-core/list-state";
+import { toggled } from "@fcalell/ui-core/rules";
 import { LIST, LIST_TREE } from "@fcalell/ui-core/variants";
 import { type ReactElement, useContext, useState } from "react";
 import { View } from "react-native";
@@ -151,7 +151,7 @@ interface MeterSlotsBase<T> {
 export type MeterSlots<T> = MeterSlotsBase<T> &
 	(
 		| { meta?: (item: T) => string | undefined; counts?: never }
-		| { counts: (item: T) => CountLink[]; meta?: never }
+		| { counts: (item: T) => readonly CountLink[]; meta?: never }
 	);
 
 // What an empty list draws: an EmptyState's mark, title, sentence and the

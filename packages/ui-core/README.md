@@ -39,6 +39,9 @@ Eleven subpaths:
   `Option`, `OptionGroup`, `PlaceSpec`, `Switcher`, `Hunk`, `FieldBinding`, `Confirmation`,
   `MenuItem`, `RowEntry`, `Lock`, `Answered`, `TableColumn`, `TableRowSlots`, `CellEdit`, `Stage`,
   `StageEnd` and the other framework-free types a prop carries.
+- `@fcalell/ui-core/rules`: what the Rules editor and the Picker decide before they draw, free of
+  any framework: `termSet`, `pairSet`, `termLabel`, `isTyped`, `toggled` and `marked` (with
+  `PICKED_GLYPH`).
 - `@fcalell/ui-core/commit`: `commitMoment()`, when a typing control's value is final: on
   leaving the field or Enter, only when it changed since focus, Escape restoring the value at
   focus, and ending the edit. Both plugins' `Input` and `TextArea` drive their `onCommit` with it.
@@ -123,9 +126,9 @@ once beside `theme`: the seven `Status` words, `recommended`, `copy`, `copied`, 
 `retry`, `saving`, `saved`, `notSaved`, `add`, `remove`, `edit`, `details`, `places`,
 `notifications`, `code`, `added`, `removed`, `sort`, `ascending`, `descending`, `time`, `message`,
 `seen`, `unseen`, `copyFailed`, `downloadFailed`, `latest`, `missing`, `chooseFile`, `typeValue`, `pickValue`,
-`locked`, `warning`, `photos`, `files`, `modified`, `unchanged`, `stale`, `chooseAll`, `expand`,
+`locked`, `warning`, `photos`, `files`, `changed`, `unchanged`, `stale`, `chooseAll`, `expand`,
 `collapse`, the counted `earlierLines`, and the slot words `meterValue`, `meterOver`, `meterMark`,
-`linesAdded`, `linesRemoved`, `changed`, `wrongType`, `stepOf` and `chosenOf`. A counted word is
+`linesAdded`, `linesRemoved`, `changedFrom`, `wrongType`, `stepOf` and `chosenOf`. A counted word is
 `{ one, other }`, each form spelling `{count}` where the number stands, drawn through
 `counted(word, count)` (`one` at a count of one, `other` at any other). A slot word spells each of
 its named slots as `{name}` where the value stands (`meterValue` `{value}` and `{max}`, `meterOver`
@@ -263,7 +266,7 @@ units. Six are gap roles, what a container may put between its children: `inside
 `rows`, `fields`, `sections`; the other five (`control-x`, `card`, `tile`, `float`, `page`) are
 insets.
 
-Thirty-three sizes per density sit in the same `--spacing-*` namespace, so a cell names them as it
+Thirty-four sizes per density sit in the same `--spacing-*` namespace, so a cell names them as it
 names a role (`min-h-control`, `size-avatar`), and nothing is spaced by them. Desktop then touch:
 `control` 32 / 44 (a button, a segmented control), `control-compact` 28 / 44 (a menu item, a toolbar
 control), `field` 38 / 48 (a form input), `row` 32 / 48 (a one-line row), `row-2` 48 / 64 (a
@@ -282,14 +285,15 @@ tabular figures at the code size: a diff's number columns, a file row's count la
 `MONO_ADVANCE`, Plex Mono's 0.6 em, rounded up, since native has no `ch`), `message-input` 160 / 192
 (a message input's tallest text, derived: eight body line boxes, the text scrolling past it),
 `image-tile` 80 / 96 (an image thumbnail's side, derived: four body line boxes, the lines of
-provenance it stands beside) and `image-cap` 400 / 480 (the tallest an image grows at its
-container's width, derived: twenty body line boxes); `thumb` is the switch's knob, so neither takes
-that name. On touch every target is at least 44. A cell says `min-h`, never `h`: a label must be
-able to grow its control under OS font scaling. A minimum height is the floor of something pressed
-(a control, a field, a target, a chip, a row), the set height of a bar (`strip`, a page's strip and
-its touch top bar), an intrinsic size, or the height of what a part swaps with (`PENDING_TRACK` an
-action bar's); any other container takes its height from its content and padding, its parts centred
-on its tallest, never from another component's size.
+provenance it stands beside), `image-cap` 400 / 480 (the tallest an image grows at its container's
+width, derived: twenty body line boxes) and `chips-inset` 4 / 10 (the inset above and below the
+chips of a pick of several, derived: half of what the compact control has over a chip); `thumb` is
+the switch's knob, so neither takes that name. On touch every target is at least 44. A cell says
+`min-h`, never `h`: a label must be able to grow its control under OS font scaling. A minimum height
+is the floor of something pressed (a control, a field, a target, a chip, a row), the set height of a
+bar (`strip`, a page's strip and its touch top bar), an intrinsic size, or the height of what a part
+swaps with (`PENDING_TRACK` an action bar's); any other container takes its height from its content
+and padding, its parts centred on its tallest, never from another component's size.
 
 Seven radius roles, density-invariant, a radius naming the role and never the size: `chip` 4
 (an outlined chip, a skeleton bar, a checkbox), `control` 6 (a button, a field, a segmented

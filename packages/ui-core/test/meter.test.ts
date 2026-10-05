@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { ENGLISH, filled, levelOf, METER_NEAR } from "../src/tokens.ts";
+import { levelOf } from "../src/list-state.ts";
+import { ENGLISH, filled, METER_NEAR } from "../src/tokens.ts";
 
 test("a meter is under below METER_NEAR, near from it, over past the max", () => {
 	assert.equal(levelOf(0), "under");

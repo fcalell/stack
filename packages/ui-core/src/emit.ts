@@ -9,13 +9,13 @@ import {
 import {
 	BREAKPOINTS,
 	COLOR_NAMES,
-	type Density,
 	DURATIONS,
 	EASINGS,
 	FONT_ROLES,
 	HAIRLINE_PX,
 	MEASURES,
 	type Mode,
+	type PixelDensity,
 	RADIUS_PX,
 	RADIUS_ROLES,
 	RING_OFFSET_PX,
@@ -116,7 +116,7 @@ export function rootTokens(resolved: ResolvedTheme): Record<string, string> {
 // root, which is how the showcase and a board pin a density.
 export function densityTokens(
 	resolved: ResolvedTheme,
-	density: Density,
+	density: PixelDensity,
 ): Record<string, string> {
 	const tokens: Record<string, string> = {};
 	for (const role of TYPE_ROLES) {

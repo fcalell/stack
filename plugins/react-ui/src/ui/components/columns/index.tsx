@@ -27,14 +27,7 @@ export function Columns({ fit, children }: ColumnsProps) {
 	const title = use(PageTitle);
 	const place = fit ?? "board";
 	if (place === "half")
-		return (
-			<section
-				aria-labelledby={title}
-				className={cn(columns({ fit: place }), HALF)}
-			>
-				{children}
-			</section>
-		);
+		return <div className={cn(columns({ fit: place }), HALF)}>{children}</div>;
 	// The row scrolls, so it is the region its page names and takes focus for
 	// the keyboard to scroll it even when its columns hold nothing focusable.
 	return (

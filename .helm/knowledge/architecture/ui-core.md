@@ -68,58 +68,59 @@ pinned by the package's verify suite; this entry holds the architecture and its 
   (`act-accent`, `act-danger`) with their states, and the switch's five with the shared `toggle-on`.
   `COLOR_GROUPS` holds the roles by those groups and `COLOR_NAMES` is its flattening. A chart's
   series take the chip marks in `CHART_SERIES` order and a meter's level turns on `METER_NEAR`,
-  contract data the cells are keyed by (`CHART_FILL {series}`, `METER_FILL {level}`; `levelOf` reads
-  it, a meter's `mark` standing in for `METER_NEAR`), so both platforms draw the same series colour
-  and the same level for a value. The dark hairline is two tokens because the dark ladder spans more
-  than one hairline can straddle: a group or a lifted layer re-points `--color-edge` to
-  `edge-raised` for everything inside it, so a part never picks between them. The grounds are
-  `RAISED_GROUNDS` and the re-point `raisedGroundTokens`; the web scopes it on `.bg-group` and
-  `.bg-raised` in `@layer base` after the mode scopes. Native has no selector to hang it on, so a
-  raised surface wraps its content in `RaisedGround` (native-ui `lib/raised`), uniwind's
-  `ScopedVariables` holding each re-pointed variable at the value its read resolves to in the mode
-  (a scoped variable takes a value, never a `var()`); a sheet's three trees and a toast wrap, and no
-  native `group` ground holds a part that draws `edge`. Rejected: a hue computed per avatar name
-  (neither a token nor a cell); chip hues stepped off the accent (a family must never wear the
-  accent, so the six are fixed and the accent's band is left out); `Status` with a family mode (a
-  state and a data value are two concepts, so two names).
+  contract data the cells are keyed by (`CHART_FILL {series}`, `METER_FILL {level}`; `levelOf` in
+  `./list-state` reads it, a meter's `mark` standing in for `METER_NEAR`), so both platforms draw
+  the same series colour and the same level for a value. The dark hairline is two tokens because the
+  dark ladder spans more than one hairline can straddle: a group or a lifted layer re-points
+  `--color-edge` to `edge-raised` for everything inside it, so a part never picks between them. The
+  grounds are `RAISED_GROUNDS` and the re-point `raisedGroundTokens`; the web scopes it on
+  `.bg-group` and `.bg-raised` in `@layer base` after the mode scopes. Native has no selector to
+  hang it on, so a raised surface wraps its content in `RaisedGround` (native-ui `lib/raised`),
+  uniwind's `ScopedVariables` holding each re-pointed variable at the value its read resolves to in
+  the mode (a scoped variable takes a value, never a `var()`); a sheet's three trees and a toast
+  wrap, and no native `group` ground holds a part that draws `edge`. Rejected: a hue computed per
+  avatar name (neither a token nor a cell); chip hues stepped off the accent (a family must never
+  wear the accent, so the six are fixed and the accent's band is left out); `Status` with a family
+  mode (a state and a data value are two concepts, so two names).
 - Density is a theme, and it moves three scales (the room set, below, scales the radii, the fixed
   widths, the hairline and the ring too): the type roles (body 13 on the desktop set, 16 on touch,
   each role a ratio rounded to the pixel, its line box to the even pixel), the eleven spacing roles
   (multiples of 4, one rung looser on touch except the float and page insets and the acts gap; a
   list bleeds by `control-x`, so its rows' leading meets the title over it at either density) and
-  the thirty-three sizes (control 32/44, field 38/48, target 24/44, `indent` 16/20 (a tree row's
-  step in), the switch and its derived thumb travel, the avatar, three icon sizes by the text beside
+  the thirty-four sizes (control 32/44, field 38/48, target 24/44, `indent` 16/20 (a tree row's step
+  in), the switch and its derived thumb travel, the avatar, three icon sizes by the text beside
   them, the check, the slider track, the one-time-code box, the meter's bar, the chart's plot, the
   QR square, and five derived from the type: the text area's three body lines, the message input's
   eight, an image thumbnail's four (`image-tile`, 80/96, the lines of provenance it stands beside),
   an image's height cap of twenty (`image-cap`, 400/480) and `figures`, four tabular figures at the
-  code size, held by a diff's number columns and a file row's count lanes). The thumbnail's name is
-  not `thumb`, which the switch's knob holds: `size-*` and `max-w-*` read one `--spacing-*`
-  namespace. A size counted in figures is px at `MONO_ADVANCE` (Plex Mono's 0.6 em), never a `ch`
-  width, because uniwind has no `ch` unit and native draws the figures too; a named mono with a
-  wider advance overflows it. The two measures are `ch` on the web (`measure-short` 18ch, `measure`
-  58ch), so each label keeps 18 characters of its own font; native has no `ch`, so
-  `nativeMeasureTokens` declares them in px at `SANS_ADVANCE` (Plex Sans's "0", 0.6 em) of the touch
-  body size, rounded up (173 and 557). That is a native limit: there every short label's cap is the
-  body's 18 characters whatever its role (a chip's caption included, and `SKELETON_LANE`'s role axis
-  draws one width), and a named sans with a wider "0" overflows them. `themeTokens` seeds the touch
-  set on both platforms; the web overrides it with the desktop set in a `:root` rule in `@layer
-  base` under a fine pointer at `tablet` width and wider (so a desktop window narrower than `tablet`
-  draws the touch set and structure), the cascade the dark layer rides, so no cell carries a density
-  class: a non-inline `@theme` utility reads its variable, so `text-body` and `min-h-control`
-  follow. `data-density` on the web root pins any set on any device, the showcase's pin, never a
-  consumer option. Native is touch-only outside a room Place. A molecule whose structure follows
-  density (an action bar at natural width on the desktop, full width on touch) reads it through the
-  web's `touch:` custom variant, emitted over the density layer's own condition (the touch pin, or
-  no desktop pin where the pointer is not fine or the viewport is narrower than `tablet`), and
-  `useTouch` reads the same one query, so a structural class, a tree and the token set cannot
-  disagree; native always draws the touch set, so it draws the touch structure with no variant; the
-  variant sits in a web molecule's overlay, never a cell. A value that flips by density is the same
-  overlay over the desktop cell, never a matrix value. Structure is decided by CSS wherever CSS can,
-  a runtime check (`useTouch`) only where the tree differs (the Shell, Place and Screen). Rejected:
-  a `fine:` variant in the cells (an interaction condition in a shared cell, meaningless on native)
-  and one type scale at every density (13 on a phone is unreadable and 16 on a desktop row wastes
-  the row).
+  code size, held by a diff's number columns and a file row's count lanes), and one derived from two
+  sizes: `chips-inset`, what the compact control has over a chip, halved (4/10, a pick of several's
+  vertical inset). The thumbnail's name is not `thumb`, which the switch's knob holds: `size-*` and
+  `max-w-*` read one `--spacing-*` namespace. A size counted in figures is px at `MONO_ADVANCE`
+  (Plex Mono's 0.6 em), never a `ch` width, because uniwind has no `ch` unit and native draws the
+  figures too; a named mono with a wider advance overflows it. The two measures are `ch` on the web
+  (`measure-short` 18ch, `measure` 58ch), so each label keeps 18 characters of its own font; native
+  has no `ch`, so `nativeMeasureTokens` declares them in px at `SANS_ADVANCE` (Plex Sans's "0", 0.6
+  em) of the touch body size, rounded up (173 and 557). That is a native limit: there every short
+  label's cap is the body's 18 characters whatever its role (a chip's caption included, and
+  `SKELETON_LANE`'s role axis draws one width), and a named sans with a wider "0" overflows them.
+  `themeTokens` seeds the touch set on both platforms; the web overrides it with the desktop set in
+  a `:root` rule in `@layer base` under a fine pointer at `tablet` width and wider (so a desktop
+  window narrower than `tablet` draws the touch set and structure), the cascade the dark layer
+  rides, so no cell carries a density class: a non-inline `@theme` utility reads its variable, so
+  `text-body` and `min-h-control` follow. `data-density` on the web root pins any set on any device,
+  the showcase's pin, never a consumer option. Native is touch-only outside a room Place. A molecule
+  whose structure follows density (an action bar at natural width on the desktop, full width on
+  touch) reads it through the web's `touch:` custom variant, emitted over the density layer's own
+  condition (the touch pin, or no desktop pin where the pointer is not fine or the viewport is
+  narrower than `tablet`), and `useTouch` reads the same one query, so a structural class, a tree
+  and the token set cannot disagree; native always draws the touch set, so it draws the touch
+  structure with no variant; the variant sits in a web molecule's overlay, never a cell. A value
+  that flips by density is the same overlay over the desktop cell, never a matrix value. Structure
+  is decided by CSS wherever CSS can, a runtime check (`useTouch`) only where the tree differs (the
+  Shell, Place and Screen). Rejected: a `fine:` variant in the cells (an interaction condition in a
+  shared cell, meaningless on native) and one type scale at every density (13 on a phone is
+  unreadable and 16 on a desktop row wastes the row).
 - The `room` density is the third set, the one tier a screen declares (`Place.distance: "room"`),
   because no media query detects viewing distance; desktop and touch stay automatic. Both
   platforms' ten-foot guidance designs on one 960 × 540 canvas scaled to the screen (Microsoft at
@@ -191,9 +192,9 @@ Every word a molecule draws or reads aloud on its own (the seven `Status` words,
 `attach`, `search`, `loading`, `checking`, `retry`, `saving`, `saved`, `notSaved`, `add`, `remove`,
 `edit`, `details`, `places`, `notifications`, `code`, `added`, `removed`, `sort`, `ascending`,
 `descending`, `time`, `message`, `seen`, `unseen`, `copyFailed`, `downloadFailed`, `latest`, `missing`, `chooseFile`,
-`typeValue`, `pickValue`, `locked`, `warning`, `photos`, `files`, `modified`, `unchanged`, `stale`,
+`typeValue`, `pickValue`, `locked`, `warning`, `photos`, `files`, `changed`, `unchanged`, `stale`,
 `chooseAll`, `expand`, `collapse`, the counted `earlierLines`, and the slot words `meterValue`,
-`meterOver`, `meterMark`, `linesAdded`, `linesRemoved`, `changed`, `wrongType`, `stepOf` and
+`meterOver`, `meterMark`, `linesAdded`, `linesRemoved`, `changedFrom`, `wrongType`, `stepOf` and
 `chosenOf`) comes from `words`, a closed typed object with English defaults. The `Words` type
 requires every key and `wordsSchema` is strict, so a translation missing a word fails `tsc` and the
 schema. It is a plugin option beside `theme`; each plugin contributes a `WordsProvider` into the
@@ -281,7 +282,10 @@ a tick with no animation, never jumped to full.
 - A pick of several is the Picker given an array `value` (`MultiPick`), never a second component:
   the list's rows tick, it stays open while the viewer picks (Base UI's `multiple` on the select
   and the combobox, a toggle in the touch sheet), and the box holds one removable neutral `Chip`
-  per value in a wrapping row, so it grows past the bar height only when the chips wrap. The chips
+  per value in a wrapping row, so it grows past the bar height only when the chips wrap, the
+  chips inset above and below by what centres one in the bar height (`CHIPS_BOX`, the derived
+  size `chips-inset`; the trigger reaches back across it, `CHIPS_TRIGGER`, so its hit stays the
+  box's height). A chip's remove act hears the set with its value toggled out (`toggled`). The chips
   hold their own remove acts, so the box is no button: the trigger that opens the list is a
   button after the chips, filling the line, and the box is a `div` on the field cells. The
   rows tick as a single pick's do (`Check`), not a `CHECKBOX` per row, since an option row is
@@ -294,7 +298,8 @@ a tick with no animation, never jumped to full.
   each a bar-fit `Picker` or an `Input`: `pick` (`OptionPick`), `picks` (`MultiPick`, the
   chips) or `either` (`EitherPick`): a picked option or a typed value, `EitherValue`
   `{ picked?: V } | { typed: string }`. The picked form is a Picker whose options lead with their
-  own glyph, or `Braces` when they carry no leading form (`marked`), and whose list ends with the
+  own glyph, or `Braces` when they carry no leading form (`marked`, with the other Rules and pick
+  logic in `./rules`), and whose list ends with the
   act `typeValue`; the typed form is an `Input` at the bar fit (read from `InlineField`, the
   context that names it by the term and focuses it after the viewer's own act) whose trailing act
   `pickValue` (`ListFilter`) returns to the pick. The mark of which form it is is that leading
@@ -610,7 +615,7 @@ a tick with no animation, never jumped to full.
   `ArrowRight` and `after` in the body ink, neither tinted, since a changed value is no verdict;
   only a value added (null `before`) takes `ok-soft` and one removed (null `after`) `danger-soft`,
   struck, each a chip-radius pill (`TABLE_CHANGE`, `TABLE_CHANGE_VALUE`). It reads aloud through the
-  slot word `changed` ("from X to Y"), or `added` or `removed` before the one value it holds.
+  slot word `changedFrom` ("from X to Y"), or `added` or `removed` before the one value it holds.
   Rejected: tinting `after` for any change (a rename is not good news), and a Comparison column
   (that sets facts side by side, not one value's movement). A Table chooses rows through `choose`
   (`TableChoice<T>`: `chosen`, the ticked ids, and `onChange`, which hears the set a tick makes;
@@ -814,21 +819,21 @@ a tick with no animation, never jumped to full.
   The Table has no row act, so a warning's act on a Table row is the row's open.
 - A row, a fact or a field carries where it stands in a change set as one `change?: ChangeKind`
   (`added`, `changed`, `removed`, `unchanged`, `stale`, in `descriptors.ts`, the one `ChangeKind`;
-  the change cell's own kinds are the subset `ChangeCellKind`) across `ListRow`, `DefinitionRow`
-  and `FormField`, with a `change` slot on `RowSlots` and `TableRowSlots`. One internal mark draws it
+  the change cell's own kinds are the subset `ChangeCellKind`) across `ListRow`, `DefinitionRow` and
+  `FormField`, with a `change` slot on `RowSlots` and `TableRowSlots`. One internal mark draws it
   (`ChangeMark`, beside `StatusDot`, not a roster entry): the kind's glyph (`CHANGE_GLYPH`: `Plus`,
   `PencilLine`, `Minus`, `Equal`, `History`) at the meta icon size in the kind's ink (`CHANGE_MARK`:
   added `ok`, removed `danger`, changed and stale `warn`, unchanged `ink-meta`, the same hues as the
-  change cell's added and removed values) in a lane one icon wide, so the marked rows of a set line up (an
-  unmarked row draws no lane). The glyph carries kind and hue: no edge bar, which the rubric keeps for the diff.
-  Its word (`CHANGE_WORD`: `added`, `modified`, `removed`, `unchanged`, `stale`) is its accessible
-  name; `changed` is the change cell's from-to slot word, so the mark's own word is `modified`,
-  spoken "Changed". The lane stands ahead of the leading slot (`ListRow`), the label
-  (`DefinitionRow`), the field on its label's line (`FormField`, every form of it), and the name in a
-  Table's leading cell (on touch the `ListRow` change). A row with no `change` draws no lane, so a
-  set marks its untouched rows `unchanged`; `rowShape` reads a declared `change` slot, so a waiting
-  row draws the lane. Why one prop, no wrapper: the four parts each own their row box, a wrapper
-  would have to reach into it, and the canon has no node slots.
+  change cell's added and removed values) in a lane one icon wide, so the marked rows of a set line
+  up (an unmarked row draws no lane). The glyph carries kind and hue: no edge bar, which the rubric
+  keeps for the diff. Its word is the kind's own (`added`, `changed`, `removed`, `unchanged`,
+  `stale`, plain words), its accessible name, spoken "Changed" for `changed`; the change cell's
+  from-to slot word is `changedFrom`. The lane stands ahead of the leading slot (`ListRow`), the
+  label (`DefinitionRow`), the field on its label's line (`FormField`, every form of it), and the
+  name in a Table's leading cell (on touch the `ListRow` change). A row with no `change` draws no
+  lane, so a set marks its untouched rows `unchanged`; `rowShape` reads a declared `change` slot, so
+  a waiting row draws the lane. Why one prop, no wrapper: the four parts each own their row box, a
+  wrapper would have to reach into it, and the canon has no node slots.
 - A row's `leading` may be a tick: `RowLeading` gains `{ check: { checked, onChange, blocked? } }`,
   a `Checkbox` in the leading slot at its hit box (`target`) above the row's open hit, named by the
   title. `blocked` (the reason it cannot be ticked) draws it disabled and leads the row's meta line,
@@ -1006,23 +1011,26 @@ a tick with no animation, never jumped to full.
 - A Meter in a Group stands as its item at the card's inset (`METER_ITEM`, by `GroundContext`), the
   Group's hairline between; a set of them from data is a `List` taking `meter`, in the Group. A
   FileRow is selected at its `href`, as a ListRow is.
-- A Meter's one line under its bar is `meta` (words) or `counts` (`CountLink[]`, links), exclusive
-  in the type, as the meter's head already carries the share. `CountLink` (`{ label, value, href }`)
-  is the shared descriptor for a count that leads to its list; every molecule carrying counts
-  takes it and composes `Link`, never spelling it. A `mark` (`{ value, label }`, `MeterMark`) is
-  a tick across the track at `value / max` (`METER_MARK`, outside the clipping track) and the
-  meter's near point in place of `METER_NEAR`; its label and value are read aloud (`meterMark`).
-  The role's children are presentational to assistive tech, so the counts stand outside the
-  element carrying the meter role. The `List`'s `meter` map takes `counts` (a function of the item,
-  exclusive with `meta`) and `mark`.
+- A Meter's one line under its bar is `meta` (words) or `counts` (`readonly CountLink[]`, links),
+  exclusive in the type, as the meter's head already carries the share. `CountLink` (`{ label,
+  value, href }`) is the shared descriptor for a count that leads to its list; every molecule
+  carrying counts takes it and composes `Link`, never spelling it: the line of links is
+  `COUNT_LINKS`, one cell the Meter and the Stats cell both draw through one private `CountLinks`
+  part per platform. A `mark` (`{ value, label }`, `MeterMark`) is a tick across the track centred
+  on `value / max` (`METER_MARK`, outside the clipping track) and the meter's near point in place of
+  `METER_NEAR`; its label and value are read aloud (`meterMark`). The role's children are
+  presentational to assistive tech, so the counts stand outside the element carrying the meter role.
+  The `List`'s `meter` map takes `counts` (a function of the item, exclusive with `meta`) and
+  `mark`.
 - A `StepCount` (`{ at, of }`) is an onboarding flow's place in it: `of` segments (two to four) at
   the `meter` height (`STEP_COUNT_SEGMENT {state}`, radius `chip`, a gap `inside` apart), the steps
-  before `at` `done`, `at` `current` and the rest `later` (`stepStateOf`, so both platforms draw one
-  state per segment), over "Step n of m" (the slot word `stepOf`) at meta, which is also the
-  component's accessible name. `done` and `current` fill `ink-meta`, `later` `fill-neutral`, never
-  the accent, which the rubric leaves to checked controls and the active dot. It is an atom, not a
-  prop on `Place`, `Form` or `Sheet`: an onboarding step can be any of the three. It takes the count
-  alone, not a `Step[]`: onboarding steps carry no label or date.
+  before `at` `done`, `at` `current` and the rest `later` (`stepStateOf` in `./list-state`, so both
+  platforms draw one state per segment, its `StepState` the type a `Stage` takes too), over "Step n
+  of m" (the slot word `stepOf`) at meta, which is also the component's accessible name. `done` and
+  `current` fill `ink-meta`, `later` `fill-neutral`, never the accent, which the rubric leaves to
+  checked controls and the active dot. It is an atom, not a prop on `Place`, `Form` or `Sheet`: an
+  onboarding step can be any of the three. It takes the count alone, not a `Step[]`: onboarding
+  steps carry no label or date.
 - A count strip is `Stats` (`items: StatSpec[]`) and one display figure is `Stat`, the two members
   of one figure-with-its-label mechanism. The strip is one card (`STATS`) whose cells draw their own
   top and start hairline (`STATS_CELL`) so it splits wherever the cells wrap, which `divide-*`
@@ -1098,7 +1106,7 @@ a tick with no animation, never jumped to full.
   meta under the label; the current stage is the active status dot with its label at body 500
   and `aria-current="step"` (the phone: the selected row); a later stage is the hollow `idle`
   dot with its label in meta. `at` is typed off a later stage, which draws none. `ended` replaces
-  every stage after the last done one (`stagesShown`, so both platforms draw the same rows, the
+  every stage after the last done one (`stagesShown` in `./list-state`, so both platforms draw the same rows, the
   current one included) with a terminal row: the failed dot, its label at 500 and its reason in
   meta. The marks carry the hue (the current dot's accent, the failed dot's danger) and a label's
   ink is its own in every state; the rail is the one hairline whether a stage is done or not.

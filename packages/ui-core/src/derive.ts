@@ -19,8 +19,6 @@ import {
 	COLORS,
 	type ColorName,
 	type ColorValue,
-	DENSITIES,
-	type Density,
 	DURATION_MS,
 	DURATIONS,
 	type Duration,
@@ -39,6 +37,8 @@ import {
 	type Measure,
 	MODES,
 	type Mode,
+	PIXEL_DENSITIES,
+	type PixelDensity,
 	RADIUS_PX,
 	RADIUS_ROLES,
 	type RadiusRole,
@@ -71,10 +71,13 @@ export interface ResolvedTheme {
 	// The three scales density moves, each set complete on its own. The
 	// `room` set is in canvas units (`ROOM_CANVAS`), each `Npx` standing for N
 	// times the room unit, never a pixel count.
-	type: Record<Density, Record<TypeRole, { size: string; leading: string }>>;
+	type: Record<
+		PixelDensity,
+		Record<TypeRole, { size: string; leading: string }>
+	>;
 	tracking: Record<TrackedRole, string>;
-	spacing: Record<Density, Record<SpacingRole, string>>;
-	sizes: Record<Density, Record<Size, string>>;
+	spacing: Record<PixelDensity, Record<SpacingRole, string>>;
+	sizes: Record<PixelDensity, Record<Size, string>>;
 	radii: Record<RadiusRole, string>;
 	widths: Record<Width, string>;
 	// Native's two measures in px, since uniwind reads no `ch`.
@@ -252,9 +255,11 @@ function shadowsFor(mode: Mode, knobs: Knobs): Record<ShadowLevel, string> {
 	return out;
 }
 
-function perDensity<T>(build: (density: Density) => T): Record<Density, T> {
-	const out = {} as Record<Density, T>;
-	for (const density of DENSITIES) out[density] = build(density);
+function perDensity<T>(
+	build: (density: PixelDensity) => T,
+): Record<PixelDensity, T> {
+	const out = {} as Record<PixelDensity, T>;
+	for (const density of PIXEL_DENSITIES) out[density] = build(density);
 	return out;
 }
 

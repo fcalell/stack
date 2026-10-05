@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { stagesShown } from "../src/tokens.ts";
+import { stagesShown } from "../src/list-state.ts";
 
 const steps = [
 	{ label: "Submitted", state: "done" },

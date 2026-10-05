@@ -15,7 +15,7 @@ import {
 	termLabel,
 	termSet,
 	toggled,
-} from "../src/list-state.ts";
+} from "../src/rules.ts";
 
 const OPTIONS: Option[] = [
 	{ value: "page", label: "Page type" },

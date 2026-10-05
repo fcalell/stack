@@ -299,11 +299,15 @@ export interface MeterMark {
 	label: string;
 }
 
+// Where a flow stands at one of its steps: done, the current one, or still to
+// come. A step count's segments and a rail's stages both read it.
+export type StepState = "done" | "current" | "later";
+
 // One stage of a rail of fixed states: its label and where the rail stands at
 // it. A done or current stage may carry the moment it was reached or began
 // (`at`, an ISO moment); a later one has none to give.
 export type Stage =
-	| { label: string; state: "done" | "current"; at?: string }
+	| { label: string; state: Exclude<StepState, "later">; at?: string }
 	| { label: string; state: "later"; at?: never };
 
 // How a rail ended short of its last stage: the terminal row that stands in

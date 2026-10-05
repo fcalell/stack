@@ -25,6 +25,11 @@ export type Mode = (typeof MODES)[number];
 export const DENSITIES = ["touch", "desktop", "room"] as const;
 export type Density = (typeof DENSITIES)[number];
 
+// The sets a theme resolves to px: `room` stands in canvas units, which
+// `./scales` reads and the theme never holds.
+export const PIXEL_DENSITIES = ["touch", "desktop"] as const;
+export type PixelDensity = (typeof PIXEL_DENSITIES)[number];
+
 // The canvas the room set is drawn on, the ten-foot guidance's own
 // (Microsoft's XAML at 200 %, Android TV at mdpi): the room unit is the
 // screen over it on the tighter axis, never under one pixel.
@@ -525,40 +530,6 @@ export const CHART_SERIES = [
 // is over.
 export const METER_NEAR = 0.9;
 
-export type MeterLevel = "under" | "near" | "over";
-
-// The level a share of the max stands at: past the max over, from `near` near
-// (`METER_NEAR`, or a meter's own mark), else under. Both platforms read it, so
-// one meter draws one level.
-export function levelOf(share: number, near: number = METER_NEAR): MeterLevel {
-	if (share > 1) return "over";
-	if (share >= near) return "near";
-	return "under";
-}
-
-export type StepState = "done" | "current" | "later";
-
-// The state of a step counted from one when the flow stands at `at`. Both
-// platforms read it, so one step count draws one state per segment.
-export function stepStateOf(step: number, at: number): StepState {
-	if (step < at) return "done";
-	if (step === at) return "current";
-	return "later";
-}
-
-// The stages a rail draws: all of them, or, once the rail has ended, those up
-// to the last done one (every stage after it gives way to the terminal row).
-// Both platforms read it, so one rail draws the same rows.
-export function stagesShown<T extends { state: string }>(
-	steps: readonly T[],
-	ended: boolean,
-): readonly T[] {
-	if (!ended) return steps;
-	let last = steps.length;
-	while (last > 0 && steps[last - 1]?.state !== "done") last--;
-	return steps.slice(0, last);
-}
-
 // ── Type ────────────────────────────────────────────────────────────
 
 // Two rules decide which role a piece of text takes. Size follows structure,
@@ -809,7 +780,9 @@ export const SPACING_RATIO: Record<Density, Record<SpacingRole, number>> = {
 // columns, a file row's count lanes), `message-input` the
 // tallest a message input's text grows before it scrolls, `image-tile` an
 // image thumbnail's side and `image-cap` the tallest an image grows at its
-// container's width (`thumb` is the switch's knob).
+// container's width, `chips-inset` the inset above and below the chips of a
+// pick of several that centres a chip in the compact control (`thumb` is the
+// switch's knob).
 export const SIZES = [
 	"control",
 	"control-compact",
@@ -844,6 +817,7 @@ export const SIZES = [
 	"message-input",
 	"image-tile",
 	"image-cap",
+	"chips-inset",
 ] as const;
 export type Size = (typeof SIZES)[number];
 
@@ -852,14 +826,16 @@ export type Size = (typeof SIZES)[number];
 // line boxes; `figures`, four tabular figures at the code size at
 // `MONO_ADVANCE`, rounded up to the pixel; a message input's tallest text,
 // eight body line boxes; an image thumbnail's side, four body line boxes (the
-// provenance lines it stands beside); an image's height cap, twenty.
+// provenance lines it stands beside); an image's height cap, twenty; the chips
+// inset, half of what the compact control has over a chip.
 export type DerivedSize =
 	| "switch-travel"
 	| "text-area"
 	| "figures"
 	| "message-input"
 	| "image-tile"
-	| "image-cap";
+	| "image-cap"
+	| "chips-inset";
 
 // The room set is the touch one, in canvas units: every target is then at
 // least 44 of 960, the 32 the ten-foot guidance asks, and 88 at 1920.
@@ -1210,7 +1186,7 @@ export const WORD_KEYS = [
 	"warning",
 	"photos",
 	"files",
-	"modified",
+	"changed",
 	"unchanged",
 	"stale",
 	"chooseAll",
@@ -1237,7 +1213,7 @@ export const SLOT_WORDS = {
 	meterMark: ["name", "value"],
 	linesAdded: ["count"],
 	linesRemoved: ["count"],
-	changed: ["before", "after"],
+	changedFrom: ["before", "after"],
 	wrongType: ["name", "types"],
 	stepOf: ["at", "of"],
 	chosenOf: ["count", "of"],
@@ -1304,7 +1280,7 @@ export const ENGLISH: Words = {
 	warning: "Warning",
 	photos: "Photos",
 	files: "Files",
-	modified: "Changed",
+	changed: "Changed",
 	unchanged: "Unchanged",
 	stale: "Stale",
 	chooseAll: "Select all",
@@ -1319,7 +1295,7 @@ export const ENGLISH: Words = {
 	meterMark: "{name} at {value}",
 	linesAdded: "{count} added",
 	linesRemoved: "{count} removed",
-	changed: "from {before} to {after}",
+	changedFrom: "from {before} to {after}",
 	wrongType: "{name} isn't one of {types}",
 	stepOf: "Step {at} of {of}",
 	chosenOf: "{count} of {of} chosen",

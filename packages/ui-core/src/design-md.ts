@@ -5,6 +5,7 @@
 import type { ResolvedTheme } from "./derive.ts";
 import { rootTokens } from "./emit.ts";
 import { rosterEntries } from "./roster.ts";
+import { leadingOf, sizeOf, sizePx, spacingOf } from "./scales.ts";
 import {
 	BREAKPOINTS,
 	CHART_SERIES,
@@ -158,6 +159,8 @@ const SIZE_USE: Record<(typeof SIZES)[number], string> = {
 		"an image thumbnail's side: four body line boxes, the lines of provenance it stands beside",
 	"image-cap":
 		"the tallest an image grows at its container's width: twenty body line boxes",
+	"chips-inset":
+		"the inset above and below the chips of a pick of several: half of what the compact control has over a chip",
 };
 
 const RADIUS_USE: Record<(typeof RADIUS_ROLES)[number], string> = {
@@ -304,11 +307,6 @@ function components(): Array<[string, Record<string, string>]> {
 // YAML's double-quoted scalar is JSON's string syntax.
 const q = JSON.stringify;
 
-// A room value without its `px`: the canvas units it stands for.
-function canvas(value: string): string {
-	return value.replace(/px$/, "");
-}
-
 // The front matter carries the desktop set, the default on the web; the
 // touch set is the body's table.
 function frontMatter(resolved: ResolvedTheme): string[] {
@@ -429,7 +427,7 @@ function body(resolved: ResolvedTheme): string[] {
 		"",
 		"## Typography",
 		"",
-		`Eight roles named by place. Two rules decide the role: size follows structure, never emphasis (the primary line of anything is \`body\`, a secondary line is \`meta\`, emphasis inside a line is weight ${WEIGHT[STRONG_WEIGHT]}, never a size change); and a size role names a place once (\`title\` the page's name, once per screen; \`heading\` a section's or a card's name, never inside a row; \`caption\` text inside a small component, never a sentence; \`code\` what a machine reads; \`figure\` a count's number in a strip of them). There is no label role: a field label and a row's leading cell are \`body\` at ${WEIGHT[STRONG_WEIGHT]}, a table header is \`meta\` at ${WEIGHT[STRONG_WEIGHT]}. The scale moves with density (desktop body 13, touch body 16, room body 16 canvas units); nothing else moves it, except that in the room \`display\` stands five times the body (a glanceable figure, not a stat inside a page).`,
+		`${TYPE_ROLES.length} roles, named by place. Two rules decide the role: size follows structure, never emphasis (the primary line of anything is \`body\`, a secondary line is \`meta\`, emphasis inside a line is weight ${WEIGHT[STRONG_WEIGHT]}, never a size change); and a size role names a place once (\`title\` the page's name, once per screen; \`heading\` a section's or a card's name, never inside a row; \`caption\` text inside a small component, never a sentence; \`code\` what a machine reads; \`figure\` a count's number in a strip of them). There is no label role: a field label and a row's leading cell are \`body\` at ${WEIGHT[STRONG_WEIGHT]}, a table header is \`meta\` at ${WEIGHT[STRONG_WEIGHT]}. The scale moves with density (desktop body 13, touch body 16, room body 16 canvas units); nothing else moves it, except that in the room \`display\` stands five times the body (a glanceable figure, not a stat inside a page).`,
 		"",
 		...table(
 			["Role", "Desktop", "Touch", "Room", "Weight", "Ink", "Place"],
@@ -437,7 +435,7 @@ function body(resolved: ResolvedTheme): string[] {
 				code(role),
 				`${resolved.type.desktop[role].size} / ${resolved.type.desktop[role].leading}`,
 				`${resolved.type.touch[role].size} / ${resolved.type.touch[role].leading}`,
-				`${canvas(resolved.type.room[role].size)} / ${canvas(resolved.type.room[role].leading)}`,
+				`${sizeOf("room", role)} / ${leadingOf("room", role)}`,
 				String(WEIGHT[TYPE_SCALE[role].weight]),
 				code(TYPE_SCALE[role].ink),
 				TYPE_USE[role],
@@ -456,12 +454,12 @@ function body(resolved: ResolvedTheme): string[] {
 				code(role),
 				resolved.spacing.desktop[role],
 				resolved.spacing.touch[role],
-				canvas(resolved.spacing.room[role]),
+				String(spacingOf("room", role)),
 				SPACING_USE[role],
 			]),
 		),
 		"",
-		`Sizes are heights and squares in the same namespace. Density is a theme and never a knob: the web draws the desktop set where the primary pointer is fine and the viewport is at least \`tablet\` wide (${resolved.breakpoints.tablet}) and the touch set everywhere else, native draws the touch set, and a \`data-density\` attribute on the web root pins either. A molecule whose structure follows density (an action bar at natural width on the desktop, full width on touch) reads it through the web's \`touch:\` variant, the same rule (a \`data-density="touch"\` pin, or no \`desktop\` pin where the pointer is not fine or the viewport is narrower than \`tablet\`); native is the touch set, so its molecules draw the touch structure with no variant. The room is the one set a screen declares (\`Place\`'s \`distance\`), since no query detects how far a screen is read from: the touch set drawn on a ${ROOM_CANVAS.width} × ${ROOM_CANVAS.height} canvas, so the Room columns are canvas units, each multiplied by the room unit \`u = max(1px, min(100vw / ${ROOM_CANVAS.width}, 100dvh / ${ROOM_CANVAS.height}))\` (native computes it from the window's size), 2 px at 1920 × 1080. The room's \`page\` is ${canvas(resolved.spacing.room.page)} all round (the ten-foot safe area), its radii, fixed widths, hairline and ring scale by \`u\` too, and its structure is the touch one (\`touch:\` matches inside it). A room page holds one column and never splits, because breakpoints stay px while its widths scale, and it holds no menu, picker or sheet, whose layers open outside it. Two limits: \`vw\` sizes ignore browser zoom, and a scaled size is fractional, outside the even-pixel rule. Every touch target is at least ${resolved.sizes.touch.target}; on the desktop every interactive part keeps a ${resolved.sizes.desktop.target} hit area whatever it draws.`,
+		`Sizes are heights and squares in the same namespace. Density is a theme and never a knob: the web draws the desktop set where the primary pointer is fine and the viewport is at least \`tablet\` wide (${resolved.breakpoints.tablet}) and the touch set everywhere else, native draws the touch set, and a \`data-density\` attribute on the web root pins either. A molecule whose structure follows density (an action bar at natural width on the desktop, full width on touch) reads it through the web's \`touch:\` variant, the same rule (a \`data-density="touch"\` pin, or no \`desktop\` pin where the pointer is not fine or the viewport is narrower than \`tablet\`); native is the touch set, so its molecules draw the touch structure with no variant. The room is the one set a screen declares (\`Place\`'s \`distance\`), since no query detects how far a screen is read from: the touch set drawn on a ${ROOM_CANVAS.width} × ${ROOM_CANVAS.height} canvas, so the Room columns are canvas units, each multiplied by the room unit \`u = max(1px, min(100vw / ${ROOM_CANVAS.width}, 100dvh / ${ROOM_CANVAS.height}))\` (native computes it from the window's size), 2 px at 1920 × 1080. The room's \`page\` is ${spacingOf("room", "page")} all round (the ten-foot safe area), its radii, fixed widths, hairline and ring scale by \`u\` too, and its structure is the touch one (\`touch:\` matches inside it). A room page holds one column and never splits, because breakpoints stay px while its widths scale, and it holds no menu, picker or sheet, whose layers open outside it. Two limits: \`vw\` sizes ignore browser zoom, and a scaled size is fractional, outside the even-pixel rule. Every touch target is at least ${resolved.sizes.touch.target}; on the desktop every interactive part keeps a ${resolved.sizes.desktop.target} hit area whatever it draws.`,
 		"",
 		...table(
 			["Size", "Desktop", "Touch", "Room", "Is"],
@@ -469,7 +467,7 @@ function body(resolved: ResolvedTheme): string[] {
 				code(size),
 				resolved.sizes.desktop[size],
 				resolved.sizes.touch[size],
-				canvas(resolved.sizes.room[size]),
+				String(sizePx("room", size)),
 				SIZE_USE[size],
 			]),
 		),

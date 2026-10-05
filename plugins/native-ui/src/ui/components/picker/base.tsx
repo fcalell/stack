@@ -1,6 +1,8 @@
-import { toggled } from "@fcalell/ui-core/list-state";
+import { toggled } from "@fcalell/ui-core/rules";
 import type { ChipFamily } from "@fcalell/ui-core/tokens";
 import {
+	CHIPS_BOX,
+	CHIPS_TRIGGER,
 	FIELD_PLACEHOLDER,
 	field,
 	fieldValue,
@@ -147,7 +149,12 @@ export function PickerBase<V extends string | null = string>(
 	// box is no press: the trigger that opens the sheet stands after them.
 	const trigger = several ? (
 		<View
-			className={cn(field({ fit: "bar" }), picker({ fit: "bar" }), SEVERAL_BOX)}
+			className={cn(
+				field({ fit: "bar" }),
+				picker({ fit: "bar" }),
+				CHIPS_BOX,
+				SEVERAL_BOX,
+			)}
 		>
 			{chosen.map((option) => (
 				<Chip
@@ -155,9 +162,7 @@ export function PickerBase<V extends string | null = string>(
 					family="neutral"
 					label={option.label}
 					onRemove={() =>
-						several.onChange(
-							several.value.filter((one) => one !== option.value),
-						)
+						several.onChange(toggled(several.value, option.value))
 					}
 				/>
 			))}
@@ -166,7 +171,7 @@ export function PickerBase<V extends string | null = string>(
 				accessibilityLabel={name ?? label}
 				accessibilityState={{ expanded: open }}
 				onPress={() => setOpen(true)}
-				className={SEVERAL_TRIGGER}
+				className={cn(CHIPS_TRIGGER, SEVERAL_TRIGGER)}
 			>
 				{chosen.length === 0 ? (
 					<RNText

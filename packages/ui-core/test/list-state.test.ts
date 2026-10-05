@@ -4,7 +4,6 @@ import type { ChangeKind, TableColumn } from "../src/descriptors.ts";
 import {
 	boundaryState,
 	CHANGE_GLYPH,
-	CHANGE_WORD,
 	chooseAllToggled,
 	chooseHead,
 	chooseReason,
@@ -453,7 +452,7 @@ test("a Table whose query failed draws the failed form, and its Retry refetches"
 	assert.equal(calls, 1);
 });
 
-test("a change mark has one glyph and one spoken word per kind", () => {
+test("a change mark has one glyph per kind, named by the kind's own word", () => {
 	const kinds: ChangeKind[] = [
 		"added",
 		"changed",
@@ -462,15 +461,11 @@ test("a change mark has one glyph and one spoken word per kind", () => {
 		"stale",
 	];
 	assert.deepEqual(Object.keys(CHANGE_GLYPH), kinds);
-	assert.deepEqual(Object.keys(CHANGE_WORD), kinds);
 	assert.equal(new Set(Object.values(CHANGE_GLYPH)).size, kinds.length);
 	for (const kind of kinds) {
-		assert.ok(ENGLISH[CHANGE_WORD[kind]], `${kind} has a word`);
+		assert.ok(ENGLISH[kind], `${kind} has a word`);
 	}
-	// `changed` is the change cell's from-to sentence, so the mark's own word
-	// is another key.
-	assert.notEqual(CHANGE_WORD.changed, "changed");
-	assert.equal(ENGLISH[CHANGE_WORD.changed], "Changed");
+	assert.equal(ENGLISH.changed, "Changed");
 });
 
 test("a change mark's ink is its kind's: added ok, removed danger, changed warn", () => {

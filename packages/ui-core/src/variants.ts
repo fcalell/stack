@@ -353,6 +353,12 @@ export const FIELD_PLACEHOLDER = "text-ink-meta";
 // A field's unit after its value, and its glyph (search, chevron).
 export const FIELD_UNIT = "text-body leading-body font-normal text-ink-meta";
 export const FIELD_GLYPH = "text-ink-meta";
+// A field's box around a pick of several: its chips wrap inside it, inset
+// above and below by what centres a chip in the compact control (so one line of
+// chips stands at the control's height); the trigger after them reaches back
+// across the inset, so its hit stays the box's height.
+export const CHIPS_BOX = "py-chips-inset";
+export const CHIPS_TRIGGER = "-my-chips-inset py-chips-inset";
 // A text area's value: three body lines at least, a line more for each past them.
 export const TEXT_AREA_VALUE = "min-h-text-area";
 // A one-time code's row of boxes and the digit in each.
@@ -628,17 +634,19 @@ export const METER = "gap-pair";
 export const METER_ITEM = "p-card";
 export const METER_HEAD = "gap-inside";
 export const METER_TRACK = "h-meter rounded-chip bg-fill-neutral";
-// A meter's counts: its links on the line under the bar, a gap apart with no
-// glyph between.
-export const METER_COUNTS = "gap-inside";
-// A meter's mark: a tick across the track at the mark's share, standing proud
-// of it by `inside` above and below. It sits outside the track, which clips.
-export const METER_MARK = "w-track bg-ink-body -inset-y-inside";
-// Stats: one hairline card on the surface holding the cells. A cell draws its
-// own top and start hairlines, so the card splits wherever its cells wrap (a
-// platform overlay bleeds the cells by a hairline and the card clips the
-// outer ones). The cell is the label over the figure (and its unit) over the
-// meta line, or over its counts, a gap apart with no glyph between.
+// A meter's mark: a tick across the track centred on the mark's share (so one
+// at the max stands on the track's end), standing proud of the track by
+// `inside` above and below. It sits outside the track, which clips.
+export const METER_MARK =
+	"w-track bg-ink-body -inset-y-inside -translate-x-1/2";
+// A line of counts that lead to their lists: links a gap apart with no glyph
+// between (a meter's line under its bar, a stats cell's line under its
+// figure).
+export const COUNT_LINKS = "gap-inside";
+// Stats: the card on the surface holding the cells. A cell draws its own top
+// and start hairlines, so the strip splits wherever its cells wrap; the card's
+// outer edge is `STATS_EDGE`, drawn over the cells. The cell is the label over
+// the figure (and its unit) over the meta line, or over its counts.
 export const STATS = "relative rounded-card bg-surface";
 export const STATS_CELL = "gap-pair p-card border-t border-l border-edge";
 // The card's outer edge, drawn over its cells: their own top and start
@@ -646,7 +654,6 @@ export const STATS_CELL = "gap-pair p-card border-t border-l border-edge";
 // every density, with no cell pulled back by a width of its own.
 export const STATS_EDGE = "absolute inset-0 rounded-card border border-edge";
 export const STATS_FIGURE = "gap-inside";
-export const STATS_COUNTS = "gap-inside";
 // Stat: the figure first (read "2, need you") with its label under it.
 export const STAT = "gap-pair";
 export const STAT_FIGURE = "gap-inside";
@@ -833,7 +840,6 @@ export type SegmentState = keyof (typeof SEGMENT)["variants"]["state"];
 export type RowLines = keyof (typeof ROW)["variants"]["lines"];
 export type RowGround = keyof (typeof ROW)["variants"]["ground"];
 export type SheetFit = keyof (typeof SHEET_SIDE)["variants"]["fit"];
-export type StageState = keyof (typeof STAGE)["variants"]["state"];
 export type ImageFit = keyof (typeof IMAGE)["variants"]["fit"];
 export type ImageState = keyof (typeof IMAGE)["variants"]["state"];
 export type FormIn = keyof (typeof FORM)["variants"]["in"];

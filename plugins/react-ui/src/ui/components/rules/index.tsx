@@ -5,12 +5,7 @@ import type {
 	Rule,
 	RuleValue,
 } from "@fcalell/ui-core/descriptors";
-import {
-	isTyped,
-	marked,
-	pairSet,
-	termLabel,
-} from "@fcalell/ui-core/list-state";
+import { isTyped, marked, pairSet, termLabel } from "@fcalell/ui-core/rules";
 import {
 	RULE_CARD,
 	RULE_ROW,
