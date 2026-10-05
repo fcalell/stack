@@ -1,6 +1,6 @@
 ---
 id: 003-14
-status: review
+status: done
 sessions: {}
 ---
 # ui-core: a table chooses rows, and a rule can move the ticks

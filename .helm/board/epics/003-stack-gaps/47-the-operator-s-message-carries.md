@@ -1,6 +1,6 @@
 ---
 id: 003-47
-status: review
+status: done
 sessions: {}
 ---
 # ui-core: the operator's message carries what came with it

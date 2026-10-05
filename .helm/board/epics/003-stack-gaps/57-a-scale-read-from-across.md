@@ -1,6 +1,6 @@
 ---
 id: 003-57
-status: review
+status: done
 sessions: {}
 ---
 # ui-core: a scale read from across a room

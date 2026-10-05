@@ -1,6 +1,6 @@
 ---
 id: 003-07
-status: review
+status: done
 sessions: {}
 ---
 # ui-core: a row carries its change mark
