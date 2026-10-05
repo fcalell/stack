@@ -37,7 +37,7 @@ const FILES: Attachment[] = [
 // An image and a file, as the viewer pastes or drops them.
 const PICTURES: Attachment[] = [
 	{ id: "p", name: "Checkout page after the failed payment", src: SCREEN },
-	{ id: "q", name: "deploy-api-4f2c.log" },
+	{ id: "q", name: "deploy-4f2c.log" },
 ];
 const UPGRADE: Notice = {
 	sentence: "12 of 50 answers left this month.",

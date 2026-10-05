@@ -97,6 +97,13 @@ export const TURNS: Turn[] = [
 		at: today("10:05"),
 	},
 	{
+		id: "t6-log",
+		author: "other",
+		body: "The log of that deploy is attached.",
+		at: today("10:05"),
+		attachments: ATTACHED.slice(1),
+	},
+	{
 		id: "t7",
 		author: "system",
 		body: "Ran migrate",

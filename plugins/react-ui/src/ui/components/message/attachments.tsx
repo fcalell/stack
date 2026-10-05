@@ -3,6 +3,7 @@ import { cn } from "@fcalell/ui-core/cn";
 import type { Attachment } from "@fcalell/ui-core/descriptors";
 import {
 	IMAGE_REMOVE,
+	IMAGE_REMOVE_DISC,
 	MESSAGE_ATTACHMENTS,
 	REMOVE_HIT,
 } from "@fcalell/ui-core/variants";
@@ -13,13 +14,17 @@ import { Chip } from "../chip/index.tsx";
 import { Icon } from "../icon/index.tsx";
 import { Image } from "../image/index.tsx";
 
-const ROW = "flex flex-wrap max-w-full";
+// Items align to the start, so a chip keeps its own height beside a thumbnail.
+const ROW = "flex flex-wrap items-start max-w-full";
 const END = "justify-end";
 const ITEM = "relative flex min-w-0";
-// The disc stands at the thumbnail's corner; its press fills it.
-const DISC = "absolute top-0 end-0 flex overflow-hidden";
-const REMOVE =
-	"flex grow items-center justify-center text-ink-meta hover:bg-wash-hover active:bg-wash-press focus-visible:-outline-offset-2";
+// The remove act stands at the thumbnail's corner: its hit box centres the
+// disc, and the washes of the pointer fill the disc.
+const HIT =
+	"group absolute top-0 end-0 flex items-center justify-center focus-visible:-outline-offset-2";
+const DISC = "flex overflow-hidden";
+const WASH =
+	"flex grow items-center justify-center text-ink-meta group-hover:bg-wash-hover group-active:bg-wash-press";
 
 // A message's attachments and a message input's, in one wrapping row. An
 // attachment with `src` is an `Image` thumbnail, one without a chip of its
@@ -52,15 +57,17 @@ export function Attachments(props: {
 						<>
 							<Image src={attachment.src} alt={attachment.name} fit="thumb" />
 							{onRemove ? (
-								<span className={cn(REMOVE_HIT, IMAGE_REMOVE, DISC)}>
-									<BaseButton
-										aria-label={`${words.remove} ${attachment.name}`}
-										onClick={() => remove(attachment.id, index)}
-										className={REMOVE}
-									>
-										<Icon name="X" fit="meta" />
-									</BaseButton>
-								</span>
+								<BaseButton
+									aria-label={`${words.remove} ${attachment.name}`}
+									onClick={() => remove(attachment.id, index)}
+									className={cn(IMAGE_REMOVE, HIT)}
+								>
+									<span className={cn(REMOVE_HIT, IMAGE_REMOVE_DISC, DISC)}>
+										<span className={WASH}>
+											<Icon name="X" fit="meta" />
+										</span>
+									</span>
+								</BaseButton>
 							) : null}
 						</>
 					) : (

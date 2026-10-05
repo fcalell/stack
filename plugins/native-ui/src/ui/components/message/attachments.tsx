@@ -1,6 +1,7 @@
 import type { Attachment } from "@fcalell/ui-core/descriptors";
 import {
 	IMAGE_REMOVE,
+	IMAGE_REMOVE_DISC,
 	MESSAGE_ATTACHMENTS,
 	REMOVE_HIT,
 } from "@fcalell/ui-core/variants";
@@ -14,12 +15,15 @@ import { Chip } from "../chip";
 import { Icon } from "../icon";
 import { Image } from "../image";
 
-const ROW = "flex-row flex-wrap max-w-full";
+// Items align to the start, so a chip keeps its own height beside a thumbnail.
+const ROW = "flex-row flex-wrap items-start max-w-full";
 const END = "justify-end";
 const ITEM = "min-w-0";
-// The disc stands at the thumbnail's corner; its press fills it.
-const DISC =
+// The remove act stands at the thumbnail's corner: its hit box centres the
+// disc, and its press washes the hit box.
+const HIT =
 	"absolute top-0 right-0 items-center justify-center active:bg-wash-press";
+const DISC = "items-center justify-center overflow-hidden";
 
 interface ItemHooks {
 	ref: (node: View | null) => void;
@@ -58,11 +62,13 @@ const Item = memo(function Item({
 					accessibilityRole="button"
 					accessibilityLabel={`${words.remove} ${name}`}
 					onPress={hooks.remove}
-					className={cn(REMOVE_HIT, IMAGE_REMOVE, DISC)}
+					className={cn(IMAGE_REMOVE, HIT)}
 				>
-					<Ink.Provider value="ink-meta">
-						<Icon name="X" fit="meta" />
-					</Ink.Provider>
+					<View className={cn(REMOVE_HIT, IMAGE_REMOVE_DISC, DISC)}>
+						<Ink.Provider value="ink-meta">
+							<Icon name="X" fit="meta" />
+						</Ink.Provider>
+					</View>
 				</Pressable>
 			) : null}
 		</View>

@@ -716,10 +716,13 @@ export const IMAGE_CLOSE = "rounded-control bg-raised shadow-float";
 export const STEP_COUNT = "gap-pair";
 export const STEP_COUNT_SEGMENTS = "gap-inside";
 
-// A thumbnail's remove act (an attachment's, in the `MessageInput`): the
-// `REMOVE_HIT` box on a lifted disc, a gap in from the thumbnail's corner, the
-// disc keeping the glyph legible over any picture.
-export const IMAGE_REMOVE = "m-inside bg-raised shadow-float";
+// A thumbnail's remove act (an attachment's, in the `MessageInput`): a hit box
+// the target's size (24, 44 on touch) a gap in from the thumbnail's corner
+// (`IMAGE_REMOVE`), the `REMOVE_HIT` disc centred in it on the raised ground
+// inside a hairline, so the glyph stays legible over any picture
+// (`IMAGE_REMOVE_DISC`).
+export const IMAGE_REMOVE = "m-inside min-h-target min-w-target rounded-full";
+export const IMAGE_REMOVE_DISC = "border border-edge bg-raised";
 
 // ── Layout ──────────────────────────────────────────────────────────
 

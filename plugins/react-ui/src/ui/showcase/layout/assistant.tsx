@@ -156,15 +156,21 @@ export function Assistant() {
 						value={value}
 						onChange={setValue}
 						attachments={attachments}
-						onAttach={() =>
+						onAttach={(files) =>
 							setAttachments((all) => [
 								...all,
-								{ id: `file${all.length}`, name: "wrangler.jsonc" },
+								...files.map((file) => ({
+									id: crypto.randomUUID(),
+									name: file.name,
+									src: file.src,
+								})),
 							])
 						}
-						onDetach={(id) =>
-							setAttachments((all) => all.filter((each) => each.id !== id))
-						}
+						onDetach={(id) => {
+							const gone = attachments.find((each) => each.id === id)?.src;
+							if (gone?.startsWith("blob:")) URL.revokeObjectURL(gone);
+							setAttachments((all) => all.filter((each) => each.id !== id));
+						}}
 						placeholder="Ask about your deploys"
 						notice={working ? QUEUED : notice(to)}
 						working={working}

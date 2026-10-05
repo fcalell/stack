@@ -138,9 +138,18 @@ function Rest(props: { author: Author }) {
 						author="other"
 						name="Assistant"
 						body="Here is the page as the customer saw it."
-						attachments={ATTACHED.slice(0, 1)}
+						attachments={ATTACHED}
 						meta={["Kitchen"]}
 						at={today("10:09")}
+					/>
+				</Pane>
+				<Pane>
+					<Message
+						author="other"
+						name="Assistant"
+						body="The full log is attached."
+						attachments={ATTACHED.slice(1)}
+						at={today("10:10")}
 					/>
 				</Pane>
 			</>

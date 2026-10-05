@@ -90,6 +90,8 @@ export const OVERLAYS: readonly string[] = [
 	"size-thumb",
 	"group-hover:bg-toggle-on-hover",
 	"group-active:bg-toggle-on-hover",
+	"group-hover:bg-wash-hover",
+	"group-active:bg-wash-press",
 	"group-data-disabled:bg-ink-disabled",
 	"not-in-data-disabled:group-hover:bg-wash-hover",
 	"not-in-data-disabled:group-active:bg-wash-press",

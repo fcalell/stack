@@ -776,9 +776,11 @@ a tick with no animation, never jumped to full.
   "Kitchen"), joined by a middle dot before the time in the line under the bubble, beside the name
   over a reply; a message with no body draws no bubble, so an image sent alone stands alone. The row
   is one internal part (`message/attachments`) in each plugin that `MessageInput` draws as well, so
-  the two never differ; only the input passes `onRemove`. A thumbnail's remove act is `REMOVE_HIT`
-  (the chip remove's round hit box, held by no entry) with `IMAGE_REMOVE`, a lifted disc a gap in
-  from the tile's corner, so the glyph reads over any picture; the outside-content mark a product
+  the two never differ; only the input passes `onRemove`. The row aligns its items to the start, so a
+  chip keeps its own height beside a thumbnail. A thumbnail's remove act is a `target`-sized hit
+  box (`IMAGE_REMOVE`: 24, 44 on touch, a gap in from the tile's corner) centring the `REMOVE_HIT`
+  disc (the chip remove's round box, held by no entry) on the raised ground in a hairline
+  (`IMAGE_REMOVE_DISC`), so the glyph reads over any picture; the outside-content mark a product
   may want on each attachment is not built, since the product says it once (a notice or a header
   fact).
 - `MessageInput.onAttach(files)` hears every file the viewer brings, as `PickedFile`s (the
