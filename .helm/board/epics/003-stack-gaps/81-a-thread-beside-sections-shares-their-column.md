@@ -11,8 +11,13 @@ Stead's Now list holds the ask box's exchange (a Thread) among Sections, and a c
 ## Approach
 A Thread that does not fill its page centres its column at the measure (`THREAD_COLUMN = w-full max-w-measure mx-auto`, thread/index.tsx), while its sibling Sections stand at the region's width; no geometry class lines them up. Seen at stack f6563f6.
 
+## Shape
+Web only: the phone's inline Thread draws no measure column. Rule C1: a column cell is a width and alignment belongs to its region. `THREAD_COLUMN` becomes `w-full max-w-measure` without `mx-auto`, so a Thread among Sections keeps their start, at the measure, ragged against full-width Groups as a `Text` paragraph is.
+The regions that own their frame's width centre: the filling Thread's log and the docked foot gain `items-center`, and `COLUMN_FILLED` (`thread/fill.ts`) restates the centring. `ACTION_BAR_SELECTION` drops `mx-auto` the same way; it only docks, so it still centres. `MessageInput` keeps `THREAD_COLUMN`.
+Rejected: the inline Thread at the region's full width. `overlays.ts` gains `items-center`; a showcase Thread among Sections at 768 and 1440, and one rules sentence. Same unit as 82.
+
 ## Acceptance criteria
 - [ ] Stack provides the part on every platform the app runs on.
 
 ## Open questions
-- [ ] Its shape (a component, a variant, a token, an option): the stack session decides.
+- [x] Its shape (a component, a variant, a token, an option): the stack session decides.

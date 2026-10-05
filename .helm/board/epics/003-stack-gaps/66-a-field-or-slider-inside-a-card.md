@@ -11,8 +11,14 @@ Stead's Rules and Repos put an add field in the read hosts' card over its list, 
 ## Approach
 `Group` holds static rows or a List. A FormField or a Slider inside it stands flush with the card's edge, with no row inset, since only rows and Meter read the group context; the app now stands them in the Section beside the Group.
 
+## Shape
+A `FormField` and a `Slider` read `GroundContext` as `Meter` already does and stand in a Group as one of the card's items at the card's inset, with the Group's hairline between them: derivation, no prop.
+ui-core renames `METER_ITEM` to `GROUP_ITEM = "p-card"`, drawn by `Meter`, `FormField` and `Slider` and held by none (like `FIELD_ERROR_LINE`; the held-cell holder count drops by one). `FormField` and `Slider` add `card` to the spacing they own. The field keeps its label; no variant is added. A List after the field in the Group needs nothing.
+Rejected: a List `add` slot (covers neither Usage's Slider nor a field over a DefinitionRow) and a Group `inset` prop. Only `FormField` and `Slider` read it, since a control in a card is always named. A waiting Group keeps the field live over the List's waiting rows.
+Both platforms, after 65. A critique judges the item's vertical inset (`p-card`) against the rows' rhythm beside it.
+
 ## Acceptance criteria
 - [ ] Stack provides the part on every platform the app runs on.
 
 ## Open questions
-- [ ] Its shape (a component, a variant, a token, an option): the stack session decides.
+- [x] Its shape (a component, a variant, a token, an option): the stack session decides.
