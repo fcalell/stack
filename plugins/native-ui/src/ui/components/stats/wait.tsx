@@ -1,12 +1,12 @@
 import {
-	lineBox,
 	STATS,
 	STATS_CELL,
 	STATS_EDGE,
 	skeleton,
 } from "@fcalell/ui-core/variants";
-import { Text as RNText, View } from "react-native";
+import { View } from "react-native";
 import { cn } from "../../lib/cn";
+import { Strut } from "../../lib/strut";
 
 const CLIP = "overflow-hidden";
 const CELLS = "flex-row flex-wrap";
@@ -14,7 +14,6 @@ const CELL = "min-w-0 grow basis-1/2";
 // A loading line stands in its text's line box: a zero-width line of the
 // role beside the bar, so the loading strip keeps the loaded one's height.
 const LINE = "flex-row items-center";
-const STRUT = "​";
 // A strip's length is the data's, unknown while it waits.
 const WAITING = ["a", "b", "c", "d"] as const;
 
@@ -27,11 +26,11 @@ export function StatsWait() {
 				{WAITING.map((key) => (
 					<View key={key} className={cn(STATS_CELL, CELL)}>
 						<View className={LINE}>
-							<RNText className={lineBox({ role: "meta" })}>{STRUT}</RNText>
+							<Strut role="meta" />
 							<View className={cn(skeleton({ kind: "line" }), "w-1/2")} />
 						</View>
 						<View className={LINE}>
-							<RNText className={lineBox({ role: "figure" })}>{STRUT}</RNText>
+							<Strut role="figure" />
 							<View className={cn(skeleton({ kind: "line" }), "w-1/3")} />
 						</View>
 					</View>

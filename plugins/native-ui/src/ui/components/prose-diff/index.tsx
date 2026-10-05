@@ -1,6 +1,5 @@
 import {
 	CONTENT_FRAME,
-	lineBox,
 	PROSE_DIFF_BODY,
 	PROSE_DIFF_TEXT,
 	proseDiffRun,
@@ -12,13 +11,13 @@ import { type ReactNode, useMemo } from "react";
 import { Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
+import { Strut } from "../../lib/strut";
 import { useWords } from "../../lib/words";
 
 const FRAME = "min-w-0 overflow-hidden";
 // A line of the body role: a zero-width strut sets its height, the bar
 // centred on it.
 const LINE = "flex-row items-center";
-const STRUT = "​";
 // The loading lines, each bar at the length of the line it stands in for.
 const BARS = ["w-full", "w-full", "w-full", "w-1/2"] as const;
 
@@ -92,7 +91,7 @@ export function ProseDiff({ before, after, loading }: ProseDiffProps) {
 						{BARS.map((width, index) => (
 							// biome-ignore lint/suspicious/noArrayIndexKey: the lines are fixed stand-ins
 							<View key={index} className={LINE}>
-								<RNText className={lineBox({ role: "body" })}>{STRUT}</RNText>
+								<Strut role="body" />
 								<View className={cn(skeleton({ kind: "line" }), width)} />
 							</View>
 						))}

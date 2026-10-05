@@ -16,7 +16,6 @@ import {
 	chartBand,
 	chartFill,
 	FIGURES,
-	lineBox,
 	skeleton,
 	text,
 	textStrong,
@@ -28,6 +27,7 @@ import { cn } from "../../lib/cn";
 import { compact } from "../../lib/compact";
 import { LoadingContext } from "../../lib/loading";
 import { SectionContext } from "../../lib/section";
+import { Strut } from "../../lib/strut";
 import { useWords } from "../../lib/words";
 import { EmptyStateBase } from "../empty-state/base";
 import { Missing } from "../empty-state/missing";
@@ -59,7 +59,6 @@ const TIME = "items-center flex-1 min-w-0";
 // A loading line stands in its text's line box: a zero-width line of the
 // role beside the bar, so the loading chart keeps the loaded one's boxes.
 const LINE = "flex-row items-center";
-const STRUT = "​";
 const TIMES_WAIT = "flex-row justify-between";
 const BAR = "w-full";
 // A failed or empty chart's EmptyState stands over the loaded boxes, held
@@ -431,7 +430,7 @@ function Stand(props: { keys?: readonly string[]; children: ReactNode }) {
 function Loading(props: { keys?: readonly string[]; busy: boolean }) {
 	const total = (
 		<View className={LINE}>
-			<RNText className={lineBox({ role: "body" })}>{STRUT}</RNText>
+			<Strut role="body" />
 			<View className={cn(skeleton({ kind: "line" }), "w-1/4")} />
 		</View>
 	);
@@ -447,7 +446,7 @@ function Loading(props: { keys?: readonly string[]; busy: boolean }) {
 						{props.keys.map((key, at) => (
 							<Key key={key} name={key} at={at}>
 								<View className={cn(LINE, CHART_TICK_LANE)}>
-									<RNText className={lineBox({ role: "meta" })}>{STRUT}</RNText>
+									<Strut role="meta" />
 									<View className={cn(skeleton({ kind: "line" }), BAR)} />
 								</View>
 							</Key>
@@ -469,7 +468,7 @@ function Loading(props: { keys?: readonly string[]; busy: boolean }) {
 							)}
 						>
 							<View className={cn(LINE, BAR, TICK)}>
-								<RNText className={lineBox({ role: "meta" })}>{STRUT}</RNText>
+								<Strut role="meta" />
 								<View className={cn(skeleton({ kind: "line" }), BAR)} />
 							</View>
 						</View>
@@ -480,7 +479,7 @@ function Loading(props: { keys?: readonly string[]; busy: boolean }) {
 					<View className={TIMES_WAIT}>
 						{[0, 1].map((end) => (
 							<View key={end} className={cn(LINE, "w-1/12")}>
-								<RNText className={lineBox({ role: "meta" })}>{STRUT}</RNText>
+								<Strut role="meta" />
 								<View className={cn(skeleton({ kind: "line" }), BAR)} />
 							</View>
 						))}

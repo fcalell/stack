@@ -7,7 +7,6 @@ import {
 	ITEM_FACT,
 	ITEM_FACTS,
 	ITEM_HEADER,
-	lineBox,
 	PILL_ACT,
 	SKELETON_LINES,
 	skeleton,
@@ -20,6 +19,7 @@ import { cn } from "../../lib/cn";
 import { Ink } from "../../lib/ink";
 import { useLive } from "../../lib/live";
 import { joinParts, META_CUT, partText } from "../../lib/parts";
+import { Strut } from "../../lib/strut";
 import { useWords } from "../../lib/words";
 import { Button } from "../button";
 import { Count } from "../count";
@@ -42,7 +42,6 @@ const OPEN = "flex-row items-center -ms-inside active:bg-wash-press";
 const LINE_WAIT = "flex-row items-center";
 const FACTS_LINE_WAIT = "flex-row items-center";
 const COUNT_WAIT = "shrink-0";
-const STRUT = "​";
 
 // One fact under the title: words, a status, words that open a sheet, a status that
 // moves (a pick whose options carry states), a count beside its word, or the state of a save
@@ -149,7 +148,7 @@ function FactPart({ fact }: { fact: Fact }) {
 function LineWait({ role, bar }: { role: "meta" | "heading"; bar: string }) {
 	return (
 		<View className={LINE_WAIT}>
-			<RNText className={lineBox({ role })}>{STRUT}</RNText>
+			<Strut role={role} />
 			<View className={cn(skeleton({ kind: "line" }), bar)} />
 		</View>
 	);

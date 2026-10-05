@@ -1,21 +1,20 @@
 import {
-	lineBox,
 	METER,
 	METER_HEAD,
 	METER_ITEM,
 	skeleton,
 } from "@fcalell/ui-core/variants";
 import { useContext } from "react";
-import { Text as RNText, View } from "react-native";
+import { View } from "react-native";
 import { cn } from "../../lib/cn";
 import { GroundContext } from "../../lib/ground";
+import { Strut } from "../../lib/strut";
 
 const STACK = "min-w-0";
 const HEAD = "flex-row items-center";
 // A loading line stands in its text's line box: a zero-width line of the
 // role beside the bar, so the loading meter keeps the loaded one's height.
 const LINE = "flex-row items-center";
-const STRUT = "​";
 const LABEL_WAIT = "grow";
 const SHARE_WAIT = "justify-end shrink-0";
 const BAR = "w-full";
@@ -33,18 +32,18 @@ export function MeterWait(props: { busy: boolean; meta: boolean }) {
 		>
 			<View className={cn(METER_HEAD, HEAD)}>
 				<View className={cn(LINE, LABEL_WAIT)}>
-					<RNText className={lineBox({ role: "body" })}>{STRUT}</RNText>
+					<Strut role="body" />
 					<View className={cn(skeleton({ kind: "line" }), "w-1/3")} />
 				</View>
 				<View className={cn(LINE, SHARE_WAIT, "w-1/12")}>
-					<RNText className={lineBox({ role: "meta" })}>{STRUT}</RNText>
+					<Strut role="meta" />
 					<View className={cn(skeleton({ kind: "line" }), BAR)} />
 				</View>
 			</View>
 			<View className={skeleton({ kind: "meter" })} />
 			{props.meta ? (
 				<View className={LINE}>
-					<RNText className={lineBox({ role: "meta" })}>{STRUT}</RNText>
+					<Strut role="meta" />
 					<View className={cn(skeleton({ kind: "line" }), "w-1/2")} />
 				</View>
 			) : null}

@@ -1,5 +1,4 @@
 import {
-	lineBox,
 	PROSE,
 	PROSE_BLOCKS,
 	PROSE_CODESPAN,
@@ -20,6 +19,7 @@ import { type ReactNode, useMemo } from "react";
 import { Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
+import { Strut } from "../../lib/strut";
 import { Code } from "../code";
 import { Link } from "../link";
 
@@ -33,7 +33,6 @@ const QUOTED = "text-ink-meta";
 // A line of the body role: a zero-width strut sets its height, the bar
 // centred on it.
 const LINE = "flex-row items-center";
-const STRUT = "​";
 // The loading paragraphs' lines, each bar at the length of the line it
 // stands in for; the phone's column wraps the second paragraph once more.
 const BARS = [
@@ -308,7 +307,7 @@ export function Prose({ markdown, loading }: ProseProps) {
 							{paragraph.map((width, line) => (
 								// biome-ignore lint/suspicious/noArrayIndexKey: the lines are fixed stand-ins
 								<View key={line} className={LINE}>
-									<RNText className={lineBox({ role: "body" })}>{STRUT}</RNText>
+									<Strut role="body" />
 									<View className={cn(skeleton({ kind: "line" }), width)} />
 								</View>
 							))}

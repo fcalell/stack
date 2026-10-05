@@ -9,7 +9,6 @@ import {
 import {
 	COMPARISON_LABEL,
 	COMPARISON_ROW,
-	lineBox,
 	skeleton,
 	skeletonLane,
 	text,
@@ -21,6 +20,7 @@ import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { LoadingContext } from "../../lib/loading";
 import { SectionContext } from "../../lib/section";
+import { Strut } from "../../lib/strut";
 import { useWords } from "../../lib/words";
 import { Chip } from "../chip";
 import { EmptyStateBase } from "../empty-state/base";
@@ -45,7 +45,6 @@ const LABEL_WAIT = "flex-row items-center w-full min-w-0";
 const BAR_ROOM = "flex-1 flex-row items-center min-w-0";
 // A chip stands taller than the label's line.
 const CHIP_LINE = "min-h-chip";
-const STRUT = "​";
 // The waiting facts: four rows of a label's bar (a chip's bar and a status's
 // beside it when declared) and each column's bar, every bar a share of the
 // short-label lane of the line it stands in, so it stands at the length of a
@@ -90,7 +89,7 @@ function FactWait(props: { shape: FactShape; index: number }) {
 	return (
 		<View className={cn(COMPARISON_ROW, ROW_WAIT)}>
 			<View className={cn(LABEL_WAIT, shape.chips && CHIP_LINE)}>
-				<RNText className={lineBox({ role: "body" })}>{STRUT}</RNText>
+				<Strut role="body" />
 				<View
 					className={cn(
 						skeletonLane({ role: "body" }),
@@ -117,7 +116,7 @@ function FactWait(props: { shape: FactShape; index: number }) {
 			{Array.from({ length: shape.values }, (_, column) => (
 				// biome-ignore lint/suspicious/noArrayIndexKey: the columns are fixed stand-ins
 				<View key={column} className={CELL_WAIT}>
-					<RNText className={lineBox({ role: "body" })}>{STRUT}</RNText>
+					<Strut role="body" />
 					<View className={cn(skeletonLane({ role: "body" }), BAR_ROOM)}>
 						<View
 							className={cn(

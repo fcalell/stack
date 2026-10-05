@@ -13,6 +13,7 @@ import { useMemo } from "react";
 import { Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
+import { Strut } from "../../lib/strut";
 
 const FRAME = "min-w-0 overflow-hidden";
 // A line's cells stand from its top, the numbers on its first line.
@@ -23,7 +24,6 @@ const CODE = "flex-1 min-w-0";
 // centred on it.
 const LINE = "flex-row items-center";
 const BAR_LINE = "flex-1 flex-row items-center";
-const STRUT = "​";
 // The loading form: the hunk header's bar, then each line's bar at the
 // length of the line it stands in for.
 const HEADER_BAR = "w-1/3";
@@ -145,7 +145,7 @@ export function Diff({ label, hunks, before, after, loading }: DiffProps) {
 			>
 				<View className={diffLine({ kind: "header" })}>
 					<View className={cn(DIFF_HUNK, LINE)}>
-						<RNText className={diffLine({ kind: "header" })}>{STRUT}</RNText>
+						<Strut role="code" />
 						<View className={cn(skeleton({ kind: "line" }), HEADER_BAR)} />
 					</View>
 				</View>
@@ -157,7 +157,7 @@ export function Diff({ label, hunks, before, after, loading }: DiffProps) {
 					>
 						<Gutters />
 						<View className={cn(DIFF_CODE, BAR_LINE)}>
-							<RNText className={diffLine({ kind: "context" })}>{STRUT}</RNText>
+							<Strut role="code" />
 							<View className={cn(skeleton({ kind: "line" }), width)} />
 						</View>
 					</View>

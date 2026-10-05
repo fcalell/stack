@@ -16,7 +16,6 @@ import {
 	type SetChoice,
 } from "@fcalell/ui-core/list-state";
 import {
-	lineBox,
 	OPTION_CHILDREN,
 	OPTION_GROUP_LABEL,
 	OPTION_INDENT,
@@ -37,6 +36,7 @@ import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { GroupName, LabelTarget } from "../../lib/field";
+import { Strut } from "../../lib/strut";
 import { useWords } from "../../lib/words";
 import { Button } from "../button";
 import { Checkbox } from "../checkbox";
@@ -77,7 +77,6 @@ const ROW_BARS = [
 // end.
 const NOTE = "flex-row items-center";
 const SENTENCE = "flex-1 min-w-0";
-const STRUT = "​";
 
 // Where an OptionList's options come from.
 type OptionSource<T, V extends string> =
@@ -159,7 +158,7 @@ function Wait({
 		<View className={SELECT_GROUP}>
 			{shape.group ? (
 				<View className={cn(OPTION_GROUP_LABEL, LABEL_WAIT)}>
-					<RNText className={lineBox({ role: "meta" })}>{STRUT}</RNText>
+					<Strut role="meta" />
 					<View className={cn(skeletonLane({ role: "meta" }), BAR_ROOM)}>
 						<View className={cn(skeleton({ kind: "line" }), LABEL_BAR)} />
 					</View>
@@ -176,19 +175,19 @@ function Wait({
 				>
 					<View className={cn(OPTION_LINE, LINE)}>
 						<View className={BOX_LINE}>
-							<RNText className={lineBox({ role: "body" })}>{STRUT}</RNText>
+							<Strut role="body" />
 							<View className={skeleton({ kind: mark })} />
 						</View>
 						<View className={TEXT}>
 							<View className={STRUT_BAR}>
-								<RNText className={lineBox({ role: "body" })}>{STRUT}</RNText>
+								<Strut role="body" />
 								<View className={cn(skeletonLane({ role: "body" }), BAR_ROOM)}>
 									<View className={cn(skeleton({ kind: "line" }), label)} />
 								</View>
 							</View>
 							{shape.description ? (
 								<View className={cn(ROW_META_LINE, STRUT_BAR)}>
-									<RNText className={lineBox({ role: "meta" })}>{STRUT}</RNText>
+									<Strut role="meta" />
 									<View
 										className={cn(skeletonLane({ role: "meta" }), BAR_ROOM)}
 									>
@@ -321,9 +320,7 @@ export function OptionList<V extends string = string, T = unknown>(
 							>
 								<View className={cn(OPTION_LINE, LINE)}>
 									<View className={BOX_LINE}>
-										<RNText className={lineBox({ role: "body" })}>
-											{STRUT}
-										</RNText>
+										<Strut role="body" />
 										{one ? (
 											<View
 												className={cn(

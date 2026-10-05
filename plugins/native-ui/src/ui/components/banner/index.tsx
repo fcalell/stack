@@ -5,13 +5,13 @@ import {
 	type BannerKind,
 	banner,
 	bannerContentTone,
-	lineBox,
 	text,
 } from "@fcalell/ui-core/variants";
 import { Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { Ink } from "../../lib/ink";
+import { Strut } from "../../lib/strut";
 import { Button } from "../button";
 import { Icon } from "../icon";
 
@@ -24,7 +24,6 @@ const LINE = "flex-row items-start self-stretch";
 const GLYPH_BOX = "flex-row items-center shrink-0";
 const SENTENCE = "min-w-0 flex-1";
 const ACT_SLOT = "flex-row shrink-0";
-const STRUT = "​";
 
 const GLYPHS: Record<BannerKind, IconName> = {
 	note: "Info",
@@ -55,7 +54,7 @@ export function Banner({ kind, sentence, act }: BannerProps) {
 			<View className={cn(BANNER_MAIN, MAIN)}>
 				<View className={cn(BANNER_ROW, LINE)}>
 					<View className={GLYPH_BOX}>
-						<RNText className={lineBox({ role: "body" })}>{STRUT}</RNText>
+						<Strut role="body" />
 						<Ink.Provider value={bannerContentTone(drawn)}>
 							<Icon name={GLYPHS[drawn]} />
 						</Ink.Provider>

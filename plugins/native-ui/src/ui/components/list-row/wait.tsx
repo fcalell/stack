@@ -1,6 +1,5 @@
 import type { RowShape } from "@fcalell/ui-core/list-state";
 import {
-	lineBox,
 	ROW_ACTS,
 	ROW_ENTRY,
 	ROW_LEADING,
@@ -12,9 +11,10 @@ import {
 	TREE_LANE,
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, useContext } from "react";
-import { Text as RNText, View } from "react-native";
+import { View } from "react-native";
 import { cn } from "../../lib/cn";
 import { GroundContext } from "../../lib/ground";
+import { Strut } from "../../lib/strut";
 
 // The geometry of the row it stands in for (`./index.tsx`); a strut sets
 // each line's height.
@@ -64,7 +64,6 @@ const ACT_BAR = "w-measure-short shrink-0";
 // The more act's room, empty: the act waits with nothing to act on.
 const ACTS = "relative flex-row shrink-0 items-center";
 const MORE = "size-control-compact";
-const STRUT = "​";
 // Each waiting row's title and meta bars, at the lengths of the lines they
 // stand in for.
 const BARS = [
@@ -88,7 +87,7 @@ function TitleBar(props: { width: string }) {
 	return (
 		<View className={cn(ROW_TITLE_LINE, LINE)}>
 			<View className={STRUT_BAR}>
-				<RNText className={lineBox({ role: "body" })}>{STRUT}</RNText>
+				<Strut role="body" />
 				<View className={cn(skeletonLane({ role: "body" }), BAR_ROOM)}>
 					<View className={cn(skeleton({ kind: "line" }), props.width)} />
 				</View>
@@ -159,7 +158,7 @@ export function RowWait(props: { shape: RowShape; index: number }) {
 				) : (
 					<View className={cn(ROW_TITLE_LINE, LINE)}>
 						<View className={STRUT_BAR}>
-							<RNText className={lineBox({ role: "body" })}>{STRUT}</RNText>
+							<Strut role="body" />
 							<View className={cn(skeletonLane({ role: "body" }), BAR_ROOM)}>
 								<View className={cn(skeleton({ kind: "line" }), title)} />
 							</View>
@@ -175,7 +174,7 @@ export function RowWait(props: { shape: RowShape; index: number }) {
 				) : shape.meta ? (
 					<View className={cn(ROW_META_LINE, LINE, shape.chip && CHIP_LINE)}>
 						<View className={STRUT_BAR}>
-							<RNText className={lineBox({ role: "meta" })}>{STRUT}</RNText>
+							<Strut role="meta" />
 							<View className={cn(skeletonLane({ role: "meta" }), BAR_ROOM)}>
 								<View className={cn(skeleton({ kind: "line" }), meta)} />
 							</View>

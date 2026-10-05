@@ -1,7 +1,6 @@
 import { groupWait } from "@fcalell/ui-core/list-state";
 import {
 	GROUP,
-	lineBox,
 	ROW_TITLE_LINE,
 	skeleton,
 	skeletonRow,
@@ -16,12 +15,13 @@ import {
 	useRef,
 	useState,
 } from "react";
-import { Text as RNText, View } from "react-native";
+import { View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { GroundContext } from "../../lib/ground";
 import { between, GroupContext, type GroupHost } from "../../lib/group";
 import { LoadingContext } from "../../lib/loading";
+import { Strut } from "../../lib/strut";
 
 const BOX = "overflow-hidden";
 // A waiting setting row stands in the loaded DefinitionRow's boxes: the
@@ -35,7 +35,6 @@ const LABEL_WAIT = "flex-1 min-w-0 flex-row items-center";
 const LINE_WAIT = "flex-row items-center";
 const SWITCH_WAIT =
 	"shrink-0 items-center justify-center min-h-target min-w-target";
-const STRUT = "​";
 // The loading rows' bars, a label over a value, each at the length of the
 // line it stands in for.
 const BARS = [
@@ -90,7 +89,7 @@ export function Group({ loading, children }: GroupProps) {
 						<View className={LINES_WAIT}>
 							<View className={cn(ROW_TITLE_LINE, TITLE_WAIT)}>
 								<View className={LABEL_WAIT}>
-									<RNText className={lineBox({ role: "body" })}>{STRUT}</RNText>
+									<Strut role="body" />
 									<View className={cn(skeleton({ kind: "line" }), label)} />
 								</View>
 								<View className={SWITCH_WAIT}>
@@ -98,7 +97,7 @@ export function Group({ loading, children }: GroupProps) {
 								</View>
 							</View>
 							<View className={LINE_WAIT}>
-								<RNText className={lineBox({ role: "meta" })}>{STRUT}</RNText>
+								<Strut role="meta" />
 								<View className={cn(skeleton({ kind: "line" }), value)} />
 							</View>
 						</View>

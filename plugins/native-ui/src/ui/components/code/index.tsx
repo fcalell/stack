@@ -6,7 +6,6 @@ import {
 	CODE_UNDER_HEAD,
 	CONTENT_FRAME,
 	codeText,
-	lineBox,
 	skeleton,
 	text,
 } from "@fcalell/ui-core/variants";
@@ -24,6 +23,7 @@ import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { useCopy } from "../../lib/copy";
 import { Ink } from "../../lib/ink";
+import { Strut } from "../../lib/strut";
 import { toast } from "../../lib/toast";
 import { useWords } from "../../lib/words";
 import { Icon } from "../icon";
@@ -39,7 +39,6 @@ const ACT = "shrink-0 flex-row gap-acts";
 // the bar centred on it.
 const LINE = "flex-row items-center";
 const FOLD = "flex-row items-center w-full active:bg-wash-press";
-const STRUT = "​";
 // The loading lines, each at the length of the line it stands in for, in
 // turn; the fold's word at a third.
 const BARS = ["w-2/3", "w-1/2", "w-3/4"] as const;
@@ -157,7 +156,7 @@ export function Code({
 				{tail === undefined ? null : (
 					<View className={cn(CODE_FOLD, title && CODE_UNDER_HEAD, FOLD_WAIT)}>
 						<View className={cn(LINE, FOLD_BAR)}>
-							<RNText className={lineBox({ role: "meta" })}>{STRUT}</RNText>
+							<Strut role="meta" />
 							<View className={cn(skeleton({ kind: "line" }), BAR)} />
 						</View>
 					</View>
@@ -171,7 +170,7 @@ export function Code({
 					{waiting.map((width, index) => (
 						// biome-ignore lint/suspicious/noArrayIndexKey: the lines are fixed stand-ins
 						<View key={index} className={LINE}>
-							<RNText className={lineBox({ role: "code" })}>{STRUT}</RNText>
+							<Strut role="code" />
 							<View className={cn(skeleton({ kind: "line" }), width)} />
 						</View>
 					))}

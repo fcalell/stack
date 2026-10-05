@@ -8,7 +8,6 @@ import {
 	FIELD_ERROR_LINE,
 	FORM_FIELD_SUMMARY,
 	formField,
-	lineBox,
 	summaryContentTone,
 	text,
 	textStrong,
@@ -27,6 +26,7 @@ import {
 	LabelTarget,
 } from "../../lib/field";
 import { Ink } from "../../lib/ink";
+import { Strut } from "../../lib/strut";
 import { useWords } from "../../lib/words";
 import { Checkbox, type CheckboxProps } from "../checkbox";
 import { Icon } from "../icon";
@@ -49,7 +49,6 @@ const BOX_LINE = "flex-row shrink-0 items-center";
 const MARKED = "flex-row items-start gap-inside min-w-0";
 const MARKED_BODY = "flex-1 min-w-0";
 const DISABLED = "text-ink-disabled";
-const STRUT = "​";
 const SUMMARY = "flex-row items-center min-w-0";
 const SUMMARY_LABEL = "shrink min-w-0";
 const SUMMARY_ANSWER = "flex-1 min-w-0";
@@ -201,7 +200,7 @@ function FieldBody<V>(props: FormFieldProps<V>) {
 				className={cn(formField({ holds: "checkbox" }), AHEAD)}
 			>
 				<View className={BOX_LINE}>
-					<RNText className={lineBox({ role: "body" })}>{STRUT}</RNText>
+					<Strut role="body" />
 					<FieldDisabled.Provider value={disabled}>
 						<LabelTarget.Provider value>{control}</LabelTarget.Provider>
 					</FieldDisabled.Provider>
@@ -256,7 +255,7 @@ export function FormField<V>(props: FormFieldProps<V>) {
 	return (
 		<View className={MARKED}>
 			<View className={BOX_LINE}>
-				<RNText className={lineBox({ role: "body" })}>{STRUT}</RNText>
+				<Strut role="body" />
 				<ChangeMark kind={change} />
 			</View>
 			<View className={MARKED_BODY}>{field}</View>

@@ -4,7 +4,6 @@ import type {
 	Part,
 } from "@fcalell/ui-core/descriptors";
 import {
-	lineBox,
 	MESSAGE_BUBBLE,
 	MESSAGE_CARD,
 	MESSAGE_CODE,
@@ -25,6 +24,7 @@ import { GroundContext } from "../../lib/ground";
 import { Ink } from "../../lib/ink";
 import { moment } from "../../lib/moment";
 import { joinParts, META_CUT } from "../../lib/parts";
+import { Strut } from "../../lib/strut";
 import { Icon } from "../icon";
 import { ListRow } from "../list-row";
 import { Prose } from "../prose";
@@ -50,7 +50,6 @@ const TIME = "shrink-0";
 // A loading line stands in its text's line box: a zero-width line of the
 // role beside the bar, so the loading turn keeps the loaded one's height.
 const LINE = "flex-row items-center";
-const STRUT = "​";
 // A loading reply: one paragraph of three lines, each bar at its line's length.
 const REPLY_BARS = ["w-full", "w-full", "w-2/3"] as const;
 // A loading time: four figures, as the time it stands in for.
@@ -179,7 +178,7 @@ function SystemMessage(props: {
 function LineWait({ role, bar }: { role: "body" | "meta"; bar: string }) {
 	return (
 		<View className={LINE}>
-			<RNText className={lineBox({ role })}>{STRUT}</RNText>
+			<Strut role={role} />
 			<View className={cn(skeleton({ kind: "line" }), bar)} />
 		</View>
 	);
@@ -208,7 +207,7 @@ export const Message = memo(function Message(props: MessageProps) {
 					className={cn(message({ author }), SYSTEM)}
 				>
 					<View className={cn(LINE, "w-1/3")}>
-						<RNText className={lineBox({ role: "meta" })}>{STRUT}</RNText>
+						<Strut role="meta" />
 						<View className={cn(skeleton({ kind: "line" }), "w-full")} />
 					</View>
 				</View>

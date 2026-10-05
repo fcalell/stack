@@ -1,7 +1,6 @@
 import type { Act, IconAct, Part } from "@fcalell/ui-core/descriptors";
 import { sectionState } from "@fcalell/ui-core/list-state";
 import {
-	lineBox,
 	SECTION_HEAD,
 	SECTION_HEAD_ROW,
 	SECTION_TITLE,
@@ -25,6 +24,7 @@ import {
 	type SectionKinds,
 	sectionPartsOf,
 } from "../../lib/section";
+import { Strut } from "../../lib/strut";
 import { BarChart } from "../bar-chart";
 import { Button } from "../button";
 import { Comparison } from "../comparison";
@@ -58,7 +58,6 @@ const LABEL_WAIT = "w-1/4";
 // The label's bar stands in the label's line box: a strut sets the line's
 // height, as the web's `h-lh` does.
 const LABEL_LINE = "flex-row items-center";
-const STRUT = "\u200B";
 const BODY_FOLDED = "hidden";
 // The body's own wrapper stays mounted, hidden, while skeleton fields stand
 // in for it.
@@ -216,9 +215,7 @@ export function Section({
 							).map((key) => (
 								<View key={key} className={skeletonRow({ kind: "field" })}>
 									<View className={LABEL_LINE}>
-										<RNText className={lineBox({ role: "body" })}>
-											{STRUT}
-										</RNText>
+										<Strut role="body" />
 										<View
 											className={cn(skeleton({ kind: "line" }), LABEL_WAIT)}
 										/>

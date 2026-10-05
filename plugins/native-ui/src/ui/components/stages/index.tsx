@@ -1,7 +1,6 @@
 import type { Stage, StageEnd, StepState } from "@fcalell/ui-core/descriptors";
 import { stagesShown } from "@fcalell/ui-core/list-state";
 import {
-	lineBox,
 	STAGE_RAIL,
 	STAGE_ROW,
 	STAGE_WORDS,
@@ -15,6 +14,7 @@ import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { Ink } from "../../lib/ink";
 import { moment } from "../../lib/moment";
+import { Strut } from "../../lib/strut";
 import { useWords } from "../../lib/words";
 import { Icon } from "../icon";
 import { StatusDot } from "../status/dot";
@@ -28,7 +28,6 @@ const MARKS = "items-center shrink-0 w-icon-meta";
 const MARK = "flex-row items-center justify-center shrink-0";
 const RAIL = "grow w-0";
 const WORDS = "flex-1 min-w-0";
-const STRUT = "​";
 
 export interface StagesProps extends Closed {
 	// The stages in order, each done, current or later; a done or current
@@ -59,7 +58,7 @@ function Row(props: {
 		>
 			<View className={MARKS}>
 				<View className={MARK}>
-					<RNText className={lineBox({ role })}>{STRUT}</RNText>
+					<Strut role={role} />
 					{props.mark}
 				</View>
 				{props.last ? null : <View className={cn(STAGE_RAIL, RAIL)} />}
