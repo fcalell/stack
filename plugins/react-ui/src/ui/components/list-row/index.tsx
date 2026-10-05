@@ -13,19 +13,23 @@ import type {
 	StatusMark,
 } from "@fcalell/ui-core/descriptors";
 import {
+	lineBox,
 	ROW_ACTS,
 	ROW_ENTRY,
 	ROW_ENTRY_ERROR,
 	ROW_LEADING,
 	ROW_MARKS,
 	ROW_META_LINE,
+	ROW_STEPS,
 	ROW_TITLE_LINE,
 	ROW_TRAILING,
 	row,
+	rowStep,
+	rowTitle,
+	rowTitleForm,
 	text,
-	textStrong,
 } from "@fcalell/ui-core/variants";
-import { use, useId, useMemo } from "react";
+import { type ReactNode, use, useId, useMemo } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { InlineField } from "../../lib/field.ts";
 import { GroundContext } from "../../lib/ground.ts";
@@ -49,6 +53,10 @@ import { Status } from "../status/index.tsx";
 import { LockMark, WarningMark } from "./marks.tsx";
 
 const ROW = "relative flex items-center";
+// A row whose title wraps whole stands its parts on the title's first line.
+const ROW_WHOLE = "relative flex items-start";
+// The box one body line tall a part stands in, centred on the first line.
+const FIRST_LINE = "flex shrink-0 items-center h-lh";
 // A list row's wash is square on touch, where it meets the screen's edge.
 const SQUARE = "touch:rounded-none";
 // A row that opens washes under the pointer and the press; the chosen one a
@@ -66,6 +74,8 @@ const GLYPH = "flex text-ink-meta";
 const TEXT = "flex flex-col grow min-w-0";
 const LINE = "flex items-center min-w-0";
 const TITLE = "truncate grow";
+const TITLE_WHOLE = "grow min-w-0 wrap-break-word";
+const LINE_WHOLE = "flex items-start min-w-0";
 const TRAILING = "shrink-0";
 // The meta line is one line that yields in order: the later parts truncate
 // first, then the chip; the first part (naming the item) and the status keep
@@ -77,6 +87,10 @@ const META_PARTS = "flex grow shrink-0";
 const META_FIRST = "shrink-0";
 const META = "truncate grow w-0";
 const MARKS = "flex items-center min-w-0";
+// A step is one meta line; its label truncates before its mark does.
+const STEPS = "flex flex-col min-w-0";
+const STEP = "flex items-center min-w-0 h-lh";
+const STEP_LABEL = "truncate";
 const STATUS_MARK = "flex shrink-0";
 // The chip yields first, then the lock's label; the warning's keeps.
 const CHIP_MARK = "flex min-w-0 shrink-4";
@@ -92,7 +106,7 @@ export interface ListRowProps<V extends string | null = string> extends Closed {
 	change?: ChangeKind;
 	/** A glyph, a status's mark (its dot, or the spinner while `running`), an avatar, or a tick that chooses the row (disabled while `blocked`, its reason leading the meta line), in one slot at the avatar's size; a tick takes its hit box. */
 	leading?: RowLeading;
-	/** What the row names, at body 500. */
+	/** What the row names, at body 500; at 400 in the meta ink while `dim`, and wrapped whole at 400 while `wrap`. */
 	title: Part;
 	/** The line under the title, its parts joined by a middle dot. */
 	meta?: readonly Part[];
@@ -108,6 +122,12 @@ export interface ListRowProps<V extends string | null = string> extends Closed {
 	chip?: ChipMark;
 	/** An input and its act under the title, in the meta line's place: `meta`, `status` and `chip` are not drawn while it stands. Give them in its place once the act settles. */
 	entry?: RowEntry;
+	/** The steps of the work the row's act pends on, one line each in the meta line's place (`meta` and the marks are not drawn while they stand): a status dot, or the spinner while `running`, and its label, the running step in the body ink and the others in the meta ink. Give `meta` back once the act settles. */
+	steps?: readonly StatusMark[];
+	/** The row stands off a highlighted path: its title in the meta ink at 400, never faded, so it stays legible; still a hit and focusable, its leading glyph and marks keeping their hue. */
+	dim?: boolean;
+	/** The title is a passage read whole: it wraps to every line, and the leading, trailing and acts stand on its first line. */
+	wrap?: boolean;
 	/** One labelled act at the row's end, ahead of the more act: the next step the row names. An act the row waits on keeps its pending press here, never also in `more`. */
 	act?: Act;
 	/** The row's acts, in a menu under the more act at its end; an act the row waits on leads it. */
@@ -116,6 +136,16 @@ export interface ListRowProps<V extends string | null = string> extends Closed {
 	href?: string;
 	/** Opens what the row names. */
 	onOpen?: () => void;
+}
+
+// A part standing on the title's first line while the title wraps whole.
+function First(props: { on: boolean; children: ReactNode }) {
+	if (!props.on) return props.children;
+	return (
+		<span className={cn(lineBox({ role: "body" }), FIRST_LINE)}>
+			{props.children}
+		</span>
+	);
 }
 
 function Leading(props: { leading: RowLeading; named: string }) {
@@ -187,7 +217,7 @@ function trailingWord(trailing: RowTrailing<string | null>): string {
 	return "";
 }
 
-/** The change mark, the leading slot, the title with its trailing value over the meta line (its status, warning, lock and chip at the end, yielding from the chip) or the entry (its input and act, its error under it), a trailing pick, then the row's act and the more act. A row that opens is one hit under its pick and acts, current (the selection wash) at its `href`; it washes under the pointer and the press. In a `Group` it runs edge to edge at the card's inset, elsewhere it is an inset rounded wash, square on touch. */
+/** The change mark, the leading slot, the title with its trailing value over the meta line (its status, warning, lock and chip at the end, yielding from the chip), the entry (its input and act, its error under it) or the step list, a trailing pick, then the row's act and the more act. A row that opens is one hit under its pick and acts, current (the selection wash) at its `href`; it washes under the pointer and the press. In a `Group` it runs edge to edge at the card's inset, elsewhere it is an inset rounded wash, square on touch. */
 export function ListRow<V extends string | null = string>({
 	change,
 	leading,
@@ -199,6 +229,9 @@ export function ListRow<V extends string | null = string>({
 	lock,
 	chip,
 	entry,
+	steps,
+	dim = false,
+	wrap = false,
 	act,
 	more,
 	href,
@@ -218,25 +251,35 @@ export function ListRow<V extends string | null = string>({
 	const ticks = leading !== undefined && "check" in leading;
 	const blocked = ticks ? leading.check.blocked : undefined;
 	const parts = blocked === undefined ? meta : [blocked, ...(meta ?? [])];
-	const lines = entry || parts?.length || marked ? "two" : "one";
+	const listed = steps?.length ? steps : undefined;
+	const lined = Boolean(entry || listed || parts?.length || marked);
+	const stacked = lined ? "two" : "one";
+	const lines = wrap ? "whole" : stacked;
 	const entryReason = useReasonLine(entry?.act.blocked);
 	const actReason = useReasonLine(act?.blocked);
 	const [first, ...rest] = parts ?? [];
 	const value =
 		trailing && !("pick" in trailing) ? (
-			<span className={cn(ROW_TRAILING, TRAILING)}>
-				{trailingWord(trailing)}
-			</span>
+			<First on={wrap}>
+				<span className={cn(ROW_TRAILING, TRAILING)}>
+					{trailingWord(trailing)}
+				</span>
+			</First>
 		) : null;
 	const titled = (
 		<span
 			className={cn(
-				text({ role: "body" }),
-				textStrong({ role: "body" }),
-				TITLE,
+				rowTitle({ form: rowTitleForm(wrap, dim) }),
+				wrap ? TITLE_WHOLE : TITLE,
 			)}
 		>
 			{named}
+		</span>
+	);
+	const titleLine = (
+		<span className={cn(ROW_TITLE_LINE, wrap ? LINE_WHOLE : LINE)}>
+			{titled}
+			{value}
 		</span>
 	);
 	const hitClass = cn(HIT, ground === "list" && HIT_LIST);
@@ -259,24 +302,27 @@ export function ListRow<V extends string | null = string>({
 		<div
 			className={cn(
 				row({ lines, ground, state: current ? "selected" : "rest" }),
-				ROW,
+				wrap ? ROW_WHOLE : ROW,
 				ground === "list" && SQUARE,
 				opens && (current ? CHOSEN_PRESS : PRESS),
 			)}
 		>
 			{hit}
-			{change ? <ChangeMark kind={change} /> : null}
-			{leading ? (
-				<span className={cn(ROW_LEADING, LEADING, ticks && TICK)}>
-					<Leading leading={leading} named={named} />
-				</span>
+			{change ? (
+				<First on={wrap}>
+					<ChangeMark kind={change} />
+				</First>
 			) : null}
-			{lines === "one" ? (
-				<span className={TEXT}>
-					<span className={cn(ROW_TITLE_LINE, LINE)}>
-						{titled}
-						{value}
+			{leading ? (
+				<First on={wrap}>
+					<span className={cn(ROW_LEADING, LEADING, ticks && TICK)}>
+						<Leading leading={leading} named={named} />
 					</span>
+				</First>
+			) : null}
+			{!lined ? (
+				<span className={TEXT}>
+					{titleLine}
 					{actReason.line}
 				</span>
 			) : entry ? (
@@ -284,10 +330,7 @@ export function ListRow<V extends string | null = string>({
 					invalid={Boolean(entry.error)}
 					className={cn(ROW_ENTRY, TEXT)}
 				>
-					<span className={cn(ROW_TITLE_LINE, LINE)}>
-						{titled}
-						{value}
-					</span>
+					{titleLine}
 					<InlineField value={{ label: entry.label }}>
 						<span className={cn(ROW_META_LINE, ENTRY)}>
 							<span className={ENTRY_FIELD}>
@@ -309,12 +352,30 @@ export function ListRow<V extends string | null = string>({
 					{entryReason.line}
 					{actReason.line}
 				</Field.Root>
+			) : listed ? (
+				<span className={TEXT}>
+					{titleLine}
+					<span className={cn(ROW_STEPS, STEPS)}>
+						{listed.map((step) => (
+							<span
+								key={step.label}
+								className={cn(
+									rowStep({
+										state: step.state === "running" ? "running" : "rest",
+									}),
+									STEP,
+								)}
+							>
+								<StatusDot state={step.state} />
+								<span className={STEP_LABEL}>{step.label}</span>
+							</span>
+						))}
+					</span>
+					{actReason.line}
+				</span>
 			) : (
 				<span className={TEXT}>
-					<span className={cn(ROW_TITLE_LINE, LINE)}>
-						{titled}
-						{value}
-					</span>
+					{titleLine}
 					<span className={cn(ROW_META_LINE, META_LINE)}>
 						{first === undefined ? null : (
 							<span className={META_PARTS}>
@@ -323,7 +384,7 @@ export function ListRow<V extends string | null = string>({
 								</span>
 								{rest.length ? (
 									<span className={cn(text({ role: "meta" }), META)}>
-										{`\u00A0· ${joinParts(rest, META_CUT)}`}
+										{` · ${joinParts(rest, META_CUT)}`}
 									</span>
 								) : null}
 							</span>
@@ -349,19 +410,23 @@ export function ListRow<V extends string | null = string>({
 				</span>
 			)}
 			{trailing && "pick" in trailing ? (
-				<Picker {...trailing.pick} fit="row" />
+				<First on={wrap}>
+					<Picker {...trailing.pick} fit="row" />
+				</First>
 			) : null}
 			{act || more?.length ? (
-				<span className={cn(ROW_ACTS, ACTS)}>
-					{act ? <ActButton act={act} host={actReason.host} /> : null}
-					{more?.length ? (
-						<MenuBase
-							label={`${words.more} ${named}`}
-							title={named}
-							items={more}
-						/>
-					) : null}
-				</span>
+				<First on={wrap}>
+					<span className={cn(ROW_ACTS, ACTS)}>
+						{act ? <ActButton act={act} host={actReason.host} /> : null}
+						{more?.length ? (
+							<MenuBase
+								label={`${words.more} ${named}`}
+								title={named}
+								items={more}
+							/>
+						) : null}
+					</span>
+				</First>
 			) : null}
 		</div>
 	);

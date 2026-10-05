@@ -982,6 +982,8 @@ components:
   row-setting:
     height: "{spacing.row-setting}"
     rounded: "{rounded.row}"
+  row-whole:
+    rounded: "{rounded.row}"
   row-rest:
     height: "{spacing.row}"
     rounded: "{rounded.row}"
@@ -1022,6 +1024,42 @@ components:
     rounded: "{rounded.row}"
   row-group:
     height: "{spacing.row}"
+  row-title-strong:
+    typography: "{typography.body}"
+    textColor: "{colors.ink-body}"
+  row-title-strong-dark:
+    typography: "{typography.body}"
+    textColor: "{colors.ink-body-dark}"
+  row-title-dim:
+    typography: "{typography.body}"
+    textColor: "{colors.ink-meta}"
+  row-title-dim-dark:
+    typography: "{typography.body}"
+    textColor: "{colors.ink-meta-dark}"
+  row-title-whole:
+    typography: "{typography.body}"
+    textColor: "{colors.ink-body}"
+  row-title-whole-dark:
+    typography: "{typography.body}"
+    textColor: "{colors.ink-body-dark}"
+  row-title-whole-dim:
+    typography: "{typography.body}"
+    textColor: "{colors.ink-meta}"
+  row-title-whole-dim-dark:
+    typography: "{typography.body}"
+    textColor: "{colors.ink-meta-dark}"
+  row-step-running:
+    typography: "{typography.meta}"
+    textColor: "{colors.ink-body}"
+  row-step-running-dark:
+    typography: "{typography.meta}"
+    textColor: "{colors.ink-body-dark}"
+  row-step-rest:
+    typography: "{typography.meta}"
+    textColor: "{colors.ink-meta}"
+  row-step-rest-dark:
+    typography: "{typography.meta}"
+    textColor: "{colors.ink-meta-dark}"
   line-box-body:
     typography: "{typography.body}"
   line-box-meta:
@@ -2335,7 +2373,7 @@ The front matter's components are the matrix cells: one entry per axis value of 
 | `ActionBar` | layout | `ACTION_BAR`, `ACTION_BAR_ACTS`, `ACTION_BAR_CHOSEN`, `TEXT.role.meta`, `BUTTON.act.primary`, `BUTTON.act.danger`, `BUTTON.act.secondary`, `BUTTON.act.destructive`, `BUTTON.fit.body`, `BUTTON.fit.field`, `BUTTON_LABEL.act.primary`, `BUTTON_LABEL.act.danger`, `BUTTON_LABEL.act.secondary`, `BUTTON_LABEL.act.destructive` | rest, loading, disabled |
 | `Columns` | layout | `COLUMNS`, `COLUMN` | rest |
 | `Shell` | layout | `SHELL_SIDEBAR`, `SHELL_COLUMN`, `SHELL_BANNER`, `SWITCHER_SLOT`, `SWITCHER`, `SHELL_PLACES`, `PLACE_ROW`, `PLACE_ROW_GLYPH`, `SHELL_TAB_BAR`, `PLACE_TAB`, `PLACE_TAB_LABEL`, `TOASTS`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `ICON.fit.body`, `ICON.fit.control`, `COUNT`, `COUNT_LABEL` | rest, hover, focus, active, selected |
-| `ListRow` | shared | `ROW.lines.one`, `ROW.lines.two`, `ROW.state.rest`, `ROW.state.highlighted`, `ROW.state.pressed`, `ROW.state.selected`, `ROW.state.selected-hover`, `ROW.ground.list`, `ROW.ground.group`, `ROW_LEADING`, `ROW_TITLE_LINE`, `ROW_META_LINE`, `ROW_TRAILING`, `ROW_MARKS`, `ROW_WARNING`, `ROW_ACTS`, `CHANGE_MARK`, `CHECKBOX`, `CHECKBOX_MARK`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `TEXT.role.meta`, `ICON.fit.body`, `ICON.fit.meta`, `AVATAR`, `AVATAR_LABEL`, `STATUS`, `STATUS_DOT`, `STATUS_SPINNER`, `STATUS_LABEL`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC`, `CHIP`, `CHIP_LABEL`, `ICON_BUTTON.fit.bar`, `BUTTON.act.secondary`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.secondary`, `FIELD.fit.bar`, `FIELD.trailing.none`, `FIELD.state.rest`, `FIELD.state.error`, `FIELD_VALUE.kind.text`, `FIELD_PLACEHOLDER`, `ROW_ENTRY`, `ROW_ENTRY_ERROR`, `SKELETON.kind.avatar`, `SKELETON.kind.icon`, `SKELETON.kind.dot`, `SKELETON.kind.check`, `SKELETON.kind.bar`, `SKELETON_LANE.role.body`, `SKELETON_LANE.role.meta`, `SKELETON.kind.line`, `LINE_BOX.role.body`, `LINE_BOX.role.meta` | rest, hover, focus, active, loading, error, selected |
+| `ListRow` | shared | `ROW.lines.one`, `ROW.lines.two`, `ROW.lines.whole`, `ROW.state.rest`, `ROW.state.highlighted`, `ROW.state.pressed`, `ROW.state.selected`, `ROW.state.selected-hover`, `ROW.ground.list`, `ROW.ground.group`, `ROW_TITLE`, `ROW_STEPS`, `ROW_STEP`, `ROW_LEADING`, `ROW_TITLE_LINE`, `ROW_META_LINE`, `ROW_TRAILING`, `ROW_MARKS`, `ROW_WARNING`, `ROW_ACTS`, `CHANGE_MARK`, `CHECKBOX`, `CHECKBOX_MARK`, `TEXT.role.meta`, `ICON.fit.body`, `ICON.fit.meta`, `AVATAR`, `AVATAR_LABEL`, `STATUS`, `STATUS_DOT`, `STATUS_SPINNER`, `STATUS_LABEL`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC`, `CHIP`, `CHIP_LABEL`, `ICON_BUTTON.fit.bar`, `BUTTON.act.secondary`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.secondary`, `FIELD.fit.bar`, `FIELD.trailing.none`, `FIELD.state.rest`, `FIELD.state.error`, `FIELD_VALUE.kind.text`, `FIELD_PLACEHOLDER`, `ROW_ENTRY`, `ROW_ENTRY_ERROR`, `SKELETON.kind.avatar`, `SKELETON.kind.icon`, `SKELETON.kind.dot`, `SKELETON.kind.check`, `SKELETON.kind.bar`, `SKELETON_LANE.role.body`, `SKELETON_LANE.role.meta`, `SKELETON.kind.line`, `LINE_BOX.role.body`, `LINE_BOX.role.meta` | rest, hover, focus, active, loading, error, selected |
 | `DefinitionRow` | shared | `ROW.lines.one`, `ROW.lines.setting`, `ROW.state.rest`, `ROW.state.highlighted`, `ROW.state.pressed`, `ROW.ground.group`, `DEFINITION_ROW`, `DEFINITION_ROW_CHEVRON`, `ROW_TITLE_LINE`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `TEXT.role.meta`, `TEXT.role.code`, `ICON.fit.body`, `ICON.fit.meta`, `LINK.fit.inline`, `LOCK_GLYPH`, `STATUS`, `STATUS_DOT`, `STATUS_SPINNER`, `STATUS_LABEL`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC`, `ICON_BUTTON.fit.bar`, `CHANGE_MARK` | rest, hover, focus, active |
 | `FormField` | shared | `FORM_FIELD`, `FORM_FIELD_ERROR`, `FORM_FIELD_SUMMARY`, `FORM_FIELD_SUMMARY_GLYPH`, `CHANGE_MARK`, `ICON.fit.body`, `ICON.fit.meta`, `ICON_BUTTON.fit.bar`, `LINE_BOX.role.body`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `TEXT.role.meta` | rest, disabled, error |
 | `ItemHeader` | shared | `ITEM_HEADER`, `THREAD_COLUMN`, `ITEM_FACTS`, `ITEM_FACT`, `PILL_ACT`, `ICON.fit.meta`, `TEXT.role.meta`, `TEXT.role.heading`, `STATUS`, `STATUS_DOT`, `STATUS_SPINNER`, `STATUS_LABEL`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC`, `COUNT`, `COUNT_LABEL`, `BUTTON.act.secondary`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.secondary`, `LINE_BOX.role.meta`, `LINE_BOX.role.heading`, `SKELETON_LINES`, `SKELETON_ROW.kind.facts`, `SKELETON.kind.line`, `SKELETON.kind.count` | rest, loading |

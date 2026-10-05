@@ -834,6 +834,32 @@ a tick with no animation, never jumped to full.
   for a row, and a Group child loses the row's leading and title. `RowSlots` carries `act` and
   `entry`; `rowShape` reads them by key, so a waiting row draws a field-high bar and an act's
   bar (`SKELETON {kind: bar}`) in their places, the entry's line in the meta line's.
+- A `ListRow` takes three more props, each a look the consumer cannot know and the row cannot
+  derive. `dim` (`RowSlots.dim`, per item) stands the row off a highlighted path: its title in
+  `ink-meta` at 400 (`ROW_TITLE` `form` `dim`), never faded, since opacity drops the title under
+  the 4.5:1 text floor and only a disabled part is carved out of it; the row stays a hit and
+  focusable, its leading glyph and marks keep their hue (a status colour is meaning, not path),
+  and the trailing is already `ink-meta`. It is an axis cell and never an overlay because the
+  pointer and selection states of `ROW.state` are drawn from outside and `dim` is given.
+  `steps` (`readonly StatusMark[]`, `RowSlots.steps`, per item) stands in the meta line's place
+  while the row's act pends (the entry's rank: `entry`, then `steps`, then `meta` and the marks;
+  the consumer gives `meta` back once the act settles), one line each (`ROW_STEPS`, a pair gap, and
+  `ROW_STEP`): the status mark (`StatusDot`, the spinner while `running`, the same cells as
+  `Status`) and the label at meta size, the running step in `ink-body` and the others in
+  `ink-meta`. It takes no descriptor of its own, so it shares nothing with `Stage` (a rail of
+  fixed stages: a progress indicator, not a status list). A waiting row draws the meta line a
+  `steps` slot declares, never the steps (`rowShape` reads `steps` as a meta line).
+  `wrap` (`RowSlots.wrap`, one boolean for the list) is a title read whole: `ROW.lines.whole`
+  (no minimum height, a `pair` pad, the lines set the height) wraps it to every line at body 400
+  (`ROW_TITLE` `form` `whole`, so a list of notes is not a wall of medium weight), the change
+  mark, leading, trailing value or pick and acts standing in a box one body line tall on its
+  first line (the web's `h-lh`, the phone's strut). A `Quoted` title still wraps to two lines
+  and adds quotes (a model-written name), `Prose` has no per-item meta or more, `Message` is a
+  turn; a row whose title wraps is none of them. `rowShape.wrap` is the list's flag, so the
+  waiting row draws two body lines and keeps its leading, trailing and acts on the first. The
+  one `ROW_TITLE` family holds the four forms (`strong`, `dim`, `whole`, `whole-dim`) so a title's
+  weight and ink are one cell, not a call-site pick; `rowTitleForm(wrap, dim)` names it for both
+  platforms.
 - A value outside its editable context reads locked on the fact's own row: `DefinitionRow.locked`
   is a `Lock` (`reason`, `href`), drawing a `LOCK_GLYPH` (`Lock` at `icon-meta`, the meta ink,
   read aloud as the word `locked`) after the value and the reason as the row's meta line, the

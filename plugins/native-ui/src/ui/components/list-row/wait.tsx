@@ -10,7 +10,7 @@ import {
 	skeleton,
 	skeletonLane,
 } from "@fcalell/ui-core/variants";
-import { useContext } from "react";
+import { type ReactNode, useContext } from "react";
 import { Text as RNText, View } from "react-native";
 import { cn } from "../../lib/cn";
 import { GroundContext } from "../../lib/ground";
@@ -18,6 +18,11 @@ import { GroundContext } from "../../lib/ground";
 // The geometry of the row it stands in for (`./index.tsx`); a strut sets
 // each line's height, as the web's `h-lh` does.
 const ROW = "relative flex-row items-center";
+// A wrapped title's row stands its parts on the title's first line.
+const ROW_WHOLE = "relative flex-row items-start";
+const FIRST_LINE = "flex-row shrink-0 items-center";
+const LINE_WHOLE = "flex-row items-start min-w-0";
+const TITLE_LINES = "flex-1 min-w-0";
 const SQUARE = "rounded-none";
 const LEADING = "shrink-0 items-center justify-center";
 // The change mark's lane, one icon wide.
@@ -69,8 +74,33 @@ const BARS = [
 // How many rows a waiting list draws.
 export const WAITING_ROWS = BARS.length;
 
+// A part on the title's first line while the title wraps.
+function First(props: { on: boolean; children: ReactNode }) {
+	if (!props.on) return props.children;
+	return (
+		<View className={FIRST_LINE}>
+			<RNText className={lineBox({ role: "body" })}>{STRUT}</RNText>
+			{props.children}
+		</View>
+	);
+}
+
+// One body line of a title's bar, a strut setting the line's height.
+function TitleBar(props: { width: string }) {
+	return (
+		<View className={cn(ROW_TITLE_LINE, LINE)}>
+			<View className={STRUT_BAR}>
+				<RNText className={lineBox({ role: "body" })}>{STRUT}</RNText>
+				<View className={cn(skeletonLane({ role: "body" }), BAR_ROOM)}>
+					<View className={cn(skeleton({ kind: "line" }), props.width)} />
+				</View>
+			</View>
+		</View>
+	);
+}
+
 // A ListRow waiting, the `index`th of a waiting list: the change mark's
-// skeleton in its lane, the leading mark's skeleton by its kind, a bar in the title line (the trailing's at its end, four figures
+// skeleton in its lane, the leading mark's skeleton by its kind, a bar in the title line (two when the list wraps its titles, its leading, trailing and acts on the first; the trailing's at its end, four figures
 // wide) and one in the meta line (the marks' at its end) or, with an entry, a
 // field's bar and an act's bar in its place, each at its slot's place, a
 // labelled act's bar at the row's end and the more act's room left empty. Outside the package's exports.
@@ -78,48 +108,66 @@ export function RowWait(props: { shape: RowShape; index: number }) {
 	const ground = useContext(GroundContext);
 	const { shape } = props;
 	const [title, meta] = BARS[props.index % BARS.length] ?? BARS[0];
+	const stacked = shape.meta || shape.entry ? "two" : "one";
+	const trailing = shape.trailing ? (
+		<First on={shape.wrap}>
+			<View
+				className={cn(skeleton({ kind: "line" }), TRAILING_BAR, TRAILING)}
+			/>
+		</First>
+	) : null;
 	return (
 		<View
 			className={cn(
 				row({
-					lines: shape.meta || shape.entry ? "two" : "one",
+					lines: shape.wrap ? "whole" : stacked,
 					ground,
 					state: "rest",
 				}),
-				ROW,
+				shape.wrap ? ROW_WHOLE : ROW,
 				ground === "list" && SQUARE,
 			)}
 		>
 			{shape.change ? (
-				<View className={BOX}>
-					<View className={skeleton({ kind: "icon" })} />
-				</View>
+				<First on={shape.wrap}>
+					<View className={BOX}>
+						<View className={skeleton({ kind: "icon" })} />
+					</View>
+				</First>
 			) : null}
 			{shape.leading ? (
-				<View
-					className={cn(
-						ROW_LEADING,
-						LEADING,
-						shape.leading === "check" && TICK,
-					)}
-				>
-					<View className={skeleton({ kind: LEADING_WAIT[shape.leading] })} />
-				</View>
+				<First on={shape.wrap}>
+					<View
+						className={cn(
+							ROW_LEADING,
+							LEADING,
+							shape.leading === "check" && TICK,
+						)}
+					>
+						<View className={skeleton({ kind: LEADING_WAIT[shape.leading] })} />
+					</View>
+				</First>
 			) : null}
 			<View className={cn(TEXT, shape.entry && ROW_ENTRY)}>
-				<View className={cn(ROW_TITLE_LINE, LINE)}>
-					<View className={STRUT_BAR}>
-						<RNText className={lineBox({ role: "body" })}>{STRUT}</RNText>
-						<View className={cn(skeletonLane({ role: "body" }), BAR_ROOM)}>
-							<View className={cn(skeleton({ kind: "line" }), title)} />
+				{shape.wrap ? (
+					<View className={cn(ROW_TITLE_LINE, LINE_WHOLE)}>
+						<View className={TITLE_LINES}>
+							<TitleBar width="w-full" />
+							<TitleBar width={title} />
 						</View>
+						{trailing}
 					</View>
-					{shape.trailing ? (
-						<View
-							className={cn(skeleton({ kind: "line" }), TRAILING_BAR, TRAILING)}
-						/>
-					) : null}
-				</View>
+				) : (
+					<View className={cn(ROW_TITLE_LINE, LINE)}>
+						<View className={STRUT_BAR}>
+							<RNText className={lineBox({ role: "body" })}>{STRUT}</RNText>
+							<View className={cn(skeletonLane({ role: "body" }), BAR_ROOM)}>
+								<View className={cn(skeleton({ kind: "line" }), title)} />
+							</View>
+						</View>
+						{trailing}
+					</View>
+				)}
 				{shape.entry ? (
 					<View className={cn(ROW_META_LINE, ENTRY)}>
 						<View className={cn(skeleton({ kind: "bar" }), ENTRY_FIELD)} />
@@ -142,12 +190,14 @@ export function RowWait(props: { shape: RowShape; index: number }) {
 				) : null}
 			</View>
 			{shape.act || shape.more ? (
-				<View className={cn(ROW_ACTS, ACTS)}>
-					{shape.act ? (
-						<View className={cn(skeleton({ kind: "bar" }), ACT_BAR)} />
-					) : null}
-					{shape.more ? <View className={MORE} /> : null}
-				</View>
+				<First on={shape.wrap}>
+					<View className={cn(ROW_ACTS, ACTS)}>
+						{shape.act ? (
+							<View className={cn(skeleton({ kind: "bar" }), ACT_BAR)} />
+						) : null}
+						{shape.more ? <View className={MORE} /> : null}
+					</View>
+				</First>
 			) : null}
 		</View>
 	);

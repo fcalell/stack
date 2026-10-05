@@ -339,6 +339,124 @@ const CHANGES: Change[] = [
 	{ id: "archive", kind: "stale", title: "Archive", meta: ["Step 5"] },
 ];
 
+// A journey's hops with the run's path highlighted: the rows on it at full
+// contrast, the rest dimmed, each still a link.
+interface Hop {
+	id: string;
+	title: string;
+	meta: string[];
+	onPath: boolean;
+	status: StatusMark;
+}
+
+const HOP_ROW: RowSlots<Hop> = {
+	key: (hop) => hop.id,
+	leading: { icon: () => "Workflow" },
+	title: (hop) => hop.title,
+	meta: (hop) => hop.meta,
+	status: (hop) => hop.status,
+	dim: (hop) => !hop.onPath,
+	href: (hop) => `#${hop.id}`,
+};
+
+const HOPS: Hop[] = [
+	{
+		id: "signup",
+		title: "Sign up",
+		meta: ["Trigger"],
+		onPath: true,
+		status: { state: "done", label: "Taken" },
+	},
+	{
+		id: "welcome",
+		title: "Send welcome email",
+		meta: ["Email"],
+		onPath: true,
+		status: { state: "done", label: "Taken" },
+	},
+	{
+		id: "survey",
+		title: "Ask for a survey",
+		meta: ["Email"],
+		onPath: false,
+		status: { state: "waiting", label: "Skipped" },
+	},
+	{
+		id: "upsell",
+		title: "Offer the annual plan",
+		meta: ["Banner"],
+		onPath: false,
+		status: { state: "failed", label: "Failed" },
+	},
+];
+
+// An import whose act pends: its steps stand in its meta line's place, one
+// done, one running, one waiting; the settled row below gives its meta back.
+interface Import {
+	id: string;
+	title: string;
+	meta: string[];
+	steps?: StatusMark[];
+}
+
+const IMPORT_ROW: RowSlots<Import> = {
+	key: (run) => run.id,
+	leading: { icon: () => "Globe" },
+	title: (run) => run.title,
+	meta: (run) => run.meta,
+	steps: (run) => run.steps,
+	act: (run) => ({
+		label: "Import",
+		onAct: act,
+		loading: run.steps !== undefined,
+	}),
+	more: () => MORE,
+};
+
+const IMPORTS: Import[] = [
+	{
+		id: "docs",
+		title: "Documentation site",
+		meta: ["Imported 2 min ago"],
+		steps: [
+			{ state: "done", label: "Fetched 48 pages" },
+			{ state: "running", label: "Reading the pages" },
+			{ state: "waiting", label: "Indexing" },
+		],
+	},
+	{
+		id: "help",
+		title: "Help centre",
+		meta: ["Imported yesterday", "212 pages"],
+	},
+];
+
+// A memory note read whole: its title wraps to every line it needs, its origin
+// on the meta line, its more act on the first line.
+interface Memory {
+	id: string;
+	title: string;
+	origin: string;
+}
+
+const MEMORY_ROW: RowSlots<Memory> = {
+	key: (memory) => memory.id,
+	title: (memory) => memory.title,
+	meta: (memory) => [memory.origin],
+	wrap: true,
+	more: () => MORE,
+};
+
+const MEMORIES: Memory[] = [
+	{
+		id: "tone",
+		title:
+			"Ana prefers short replies with the decision first, then the reasons, and never more than three bullet points in a message to the whole team.",
+		origin: "From a chat on Monday",
+	},
+	{ id: "tz", title: "Works from Lisbon.", origin: "From her profile" },
+];
+
 // A change set entry the viewer ticks to publish: one ticked, one not, one
 // that cannot be ticked, its reason leading its meta line.
 interface Tick {
@@ -430,7 +548,9 @@ function Issues() {
 // on the meta line, the more act), services on one line, a job's stages (a
 // running row beside an active one), change set entries (every mark and the
 // act that clears the warning), a change set (one row of every kind), ticked
-// entries (one ticked, one blocked), and members in a Group (a trailing
+// entries (one ticked, one blocked), a journey's hops (the rows off the
+// path dimmed), an import whose steps stand in its meta line's place, notes
+// whose titles wrap whole, and members in a Group (a trailing
 // value, a trailing pick, a status dot leading).
 function Props() {
 	return (
@@ -443,6 +563,9 @@ function Props() {
 			<List items={ENTRIES} row={ENTRY_ROW} />
 			<List items={CHANGES} row={CHANGE_ROW} />
 			<List items={TICKS} row={TICK_ROW} />
+			<List items={HOPS} row={HOP_ROW} />
+			<List items={IMPORTS} row={IMPORT_ROW} />
+			<List items={MEMORIES} row={MEMORY_ROW} />
 			<Group>
 				<ListRow
 					leading={{ icon: "Globe" }}
@@ -527,6 +650,10 @@ function Waiting(props: { kind: "avatar" | "icon" | "status" | "check" }) {
 			<List items={ENTRIES} row={ENTRY_ROW} />
 			<List items={[]} loading row={CHANGE_ROW} />
 			<List items={CHANGES} row={CHANGE_ROW} />
+			<List items={[]} loading row={IMPORT_ROW} />
+			<List items={IMPORTS} row={IMPORT_ROW} />
+			<List items={[]} loading row={MEMORY_ROW} />
+			<List items={MEMORIES} row={MEMORY_ROW} />
 		</>
 	);
 }
@@ -554,6 +681,9 @@ export function drawListRow(frame: ShowcaseFrame) {
 	const props =
 		cell === "ROW.ground.group" ||
 		cell === "ROW.lines.one" ||
+		cell === "ROW.lines.whole" ||
+		cell.startsWith("ROW_TITLE") ||
+		cell.startsWith("ROW_STEP") ||
 		cell.startsWith("CHIP") ||
 		cell.startsWith("ICON") ||
 		cell.startsWith("BUTTON") ||

@@ -53,6 +53,8 @@ import {
 	PROSE_MARKER,
 	QR_CODE,
 	ROW,
+	ROW_STEP,
+	ROW_TITLE,
 	RULE_ARROW,
 	SECTION,
 	SEGMENT,
@@ -128,6 +130,8 @@ export const switchThumb = build(SWITCH_THUMB);
 export const checkbox = build(CHECKBOX);
 export const optionRadio = build(OPTION_RADIO);
 export const row = build(ROW);
+export const rowTitle = build(ROW_TITLE);
+export const rowStep = build(ROW_STEP);
 export const lineBox = build(LINE_BOX);
 export const tableRow = build(TABLE_ROW);
 export const tableHead = build(TABLE_HEAD);
@@ -230,6 +234,8 @@ export const FAMILIES: readonly Family[] = [
 	family("CHECKBOX", CHECKBOX, checkbox),
 	family("OPTION_RADIO", OPTION_RADIO, optionRadio),
 	family("ROW", ROW, row),
+	family("ROW_TITLE", ROW_TITLE, rowTitle),
+	family("ROW_STEP", ROW_STEP, rowStep),
 	family("LINE_BOX", LINE_BOX, lineBox),
 	family("TABLE_ROW", TABLE_ROW, tableRow),
 	family("TABLE_HEAD", TABLE_HEAD, tableHead),
@@ -411,6 +417,9 @@ export const ROW_META_LINE = "gap-x-inside";
 export const ROW_MARKS = "gap-inside";
 export const ROW_WARNING = "text-warn";
 export const ROW_ACTS = "gap-acts";
+// A list row's step list, in the meta line's place while its act pends: one
+// line per step (`rowStep`), a pair gap apart.
+export const ROW_STEPS = "gap-pair";
 // A list row's entry: the title, the input with its act and the error line a
 // pair apart, the error in the error ink under the input.
 export const ROW_ENTRY = "gap-pair";
@@ -853,6 +862,17 @@ function toneOf(cell: string): ContentTone {
 
 export function buttonContentTone(act: ButtonAct): ContentTone {
 	return toneOf(BUTTON_LABEL.variants.act[act]);
+}
+
+// A list row's title form: a name (`strong`) or a passage wrapped whole
+// (`whole`), off a highlighted path (`dim`) or not.
+const TITLE_DIM = { strong: "dim", whole: "whole-dim" } as const;
+export function rowTitleForm(
+	wrap: boolean,
+	dim: boolean,
+): keyof (typeof ROW_TITLE)["variants"]["form"] {
+	const read = wrap ? "whole" : "strong";
+	return dim ? TITLE_DIM[read] : read;
 }
 
 // A status's colour: the dot's, or the running spinner's.

@@ -1,6 +1,6 @@
 ---
 id: 003-25
-status: backlog
+status: review
 sessions: {}
 ---
 # ui-core: a row shows a step list while its act pends

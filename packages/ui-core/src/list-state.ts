@@ -125,8 +125,12 @@ export type LeadingKind = "avatar" | "icon" | "status" | "check";
 // lane, its leading mark by kind, a meta line (at a chip's height when a chip may stand on it, the
 // marks' bar at its end when a status, a warning, a lock or a chip may), an entry's field and
 // button in the meta line's place (it wins over the meta line), a labelled act
-// at the row's end, a trailing value, and the more act's room, kept empty.
+// at the row's end, a trailing value, and the more act's room, kept empty. A
+// step list is a meta line while it waits (the steps draw once an act pends,
+// which no waiting row has), and a `wrap` list's waiting row draws two body
+// lines in the title's place, its leading, trailing and acts at the first.
 export interface RowShape {
+	wrap: boolean;
 	change: boolean;
 	leading: LeadingKind | null;
 	meta: boolean;
@@ -158,9 +162,11 @@ function leadingKind(leading: LeadingKeys | undefined): LeadingKind | null {
 // The waiting row's shape from the slots a `row` map declares, read by key:
 // no slot function runs.
 export function rowShape(slots: {
+	wrap?: boolean;
 	change?: unknown;
 	leading?: LeadingKeys;
 	meta?: unknown;
+	steps?: unknown;
 	status?: unknown;
 	warning?: unknown;
 	lock?: unknown;
@@ -176,9 +182,10 @@ export function rowShape(slots: {
 		slots.lock !== undefined ||
 		slots.chip !== undefined;
 	return {
+		wrap: slots.wrap === true,
 		change: slots.change !== undefined,
 		leading: leadingKind(slots.leading),
-		meta: slots.meta !== undefined || marks,
+		meta: slots.meta !== undefined || slots.steps !== undefined || marks,
 		chip: slots.chip !== undefined,
 		marks,
 		entry: slots.entry !== undefined,

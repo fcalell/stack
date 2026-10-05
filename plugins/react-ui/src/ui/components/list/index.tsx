@@ -102,6 +102,12 @@ export interface RowSlots<T, V extends string | null = string> {
 	chip?: (item: T) => ChipMark | undefined;
 	/** The row's input and its act, in the meta line's place; the waiting rows draw it in place of the meta line. */
 	entry?: (item: T) => RowEntry | undefined;
+	/** The steps of the work the row's act pends on, in the meta line's place; the waiting rows draw the meta line. */
+	steps?: (item: T) => readonly StatusMark[] | undefined;
+	/** Whether the row stands off a highlighted path. */
+	dim?: (item: T) => boolean | undefined;
+	/** Whether every row's title wraps whole (a list of notes); one value for the list, so the waiting rows draw it. */
+	wrap?: boolean;
 	/** The row's labelled act at its end. */
 	act?: (item: T) => Act | undefined;
 	/** The row's acts. */
@@ -293,6 +299,9 @@ export function List<T, V extends string | null = string>(
 					lock={row.lock?.(item)}
 					chip={row.chip?.(item)}
 					entry={row.entry?.(item)}
+					steps={row.steps?.(item)}
+					dim={row.dim?.(item)}
+					wrap={row.wrap}
 					act={row.act?.(item)}
 					more={row.more?.(item)}
 					href={row.href?.(item)}

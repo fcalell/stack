@@ -27,7 +27,12 @@ import {
 	tableRecords,
 } from "../src/list-state.ts";
 import { ENGLISH } from "../src/tokens.ts";
-import { changeContentTone } from "../src/variants.ts";
+import {
+	changeContentTone,
+	rowStep,
+	rowTitle,
+	rowTitleForm,
+} from "../src/variants.ts";
 
 const refetch = () => {};
 const base: ListInput = {
@@ -140,6 +145,7 @@ test("the waiting shape follows the declared slots and runs none of them", () =>
 		return undefined;
 	};
 	const none = {
+		wrap: false,
 		change: false,
 		leading: null,
 		meta: false,
@@ -185,6 +191,14 @@ test("the waiting shape follows the declared slots and runs none of them", () =>
 		...none,
 		change: true,
 	});
+	// A step list waits as the meta line it replaces.
+	assert.deepEqual(rowShape({ steps: spy("steps") }), { ...none, meta: true });
+	assert.deepEqual(rowShape({ wrap: true, meta: spy("meta") }), {
+		...none,
+		wrap: true,
+		meta: true,
+	});
+	assert.equal(rowShape({ wrap: false }).wrap, false);
 	assert.deepEqual(rowShape({ entry: spy("entry"), act: spy("act") }), {
 		...none,
 		entry: true,
@@ -524,4 +538,26 @@ test("a row's reason is why it cannot be ticked, else why its tick moved", () =>
 	assert.equal(chooseReason(choosing("Held", "Needed by A")), "Held");
 	assert.equal(chooseReason(choosing(undefined, "Needed by A")), "Needed by A");
 	assert.equal(chooseReason(choosing()), undefined);
+});
+
+test("a dim title keeps its ink off the fade: the meta ink at 400, never opacity", () => {
+	const strong = rowTitle({ form: "strong" });
+	const dim = rowTitle({ form: "dim" });
+	assert.match(strong, /font-medium/);
+	assert.match(strong, /text-ink-body/);
+	assert.match(dim, /font-normal/);
+	assert.match(dim, /text-ink-meta/);
+	assert.doesNotMatch(dim, /opacity/);
+	// A title read whole is body 400 in the body ink, its dim form the meta ink.
+	assert.match(rowTitle({ form: "whole" }), /font-normal text-ink-body/);
+	assert.match(rowTitle({ form: "whole-dim" }), /text-ink-meta/);
+	assert.equal(rowTitleForm(false, false), "strong");
+	assert.equal(rowTitleForm(false, true), "dim");
+	assert.equal(rowTitleForm(true, false), "whole");
+	assert.equal(rowTitleForm(true, true), "whole-dim");
+});
+
+test("a step list's running step is in the body ink, the others in the meta ink", () => {
+	assert.match(rowStep({ state: "running" }), /text-ink-body/);
+	assert.match(rowStep({ state: "rest" }), /text-ink-meta/);
 });

@@ -399,7 +399,9 @@ export const OPTION_RADIO = matrix({
 
 // A row in a group, a list or a popover. `lines` is what it stands
 // for: one line, a title over its meta, or a setting (a label over its
-// description); the two taller forms pad so a wrapped line keeps air. Highlighted (the
+// description), or `whole`, a title wrapped to every line it needs (no
+// minimum height, the lines set it); the taller forms pad so a wrapped line
+// keeps air. Highlighted (the
 // keyboard's or the pointer's current option) under the hover wash, pressed
 // under the press wash, selected under the selection wash, and the selection
 // under the pointer a step darker. `ground` is what holds it: a list or a
@@ -415,6 +417,7 @@ export const ROW = matrix({
 			one: "min-h-row",
 			two: "min-h-row-2 py-rows",
 			setting: "min-h-row-setting py-pair",
+			whole: "py-pair",
 		},
 		state: {
 			rest: "",
@@ -429,6 +432,38 @@ export const ROW = matrix({
 		},
 	},
 	defaultVariants: { lines: "one", state: "rest", ground: "list" },
+});
+
+// A list row's title at body size, its weight and ink by how it stands:
+// `strong` a row's name (500); `dim` a row off a highlighted path, in the
+// meta ink at 400, never faded, so it keeps the text floor; `whole` a title
+// read as a passage (a note) at 400, wrapped to every line, and `whole-dim`
+// the same off the path.
+export const ROW_TITLE = matrix({
+	base: "text-body leading-body",
+	variants: {
+		form: {
+			strong: "font-medium text-ink-body",
+			dim: "font-normal text-ink-meta",
+			whole: "font-normal text-ink-body",
+			"whole-dim": "font-normal text-ink-meta",
+		},
+	},
+	defaultVariants: { form: "strong" },
+});
+
+// One step of a row's step list: a status mark beside its label at meta
+// size, the running step in the body ink and the others (done, waiting) in
+// the meta ink; the status colour stays on the mark.
+export const ROW_STEP = matrix({
+	base: "gap-inside text-meta leading-meta font-normal",
+	variants: {
+		state: {
+			running: "text-ink-body",
+			rest: "text-ink-meta",
+		},
+	},
+	defaultVariants: { state: "rest" },
 });
 
 // A box one line of a type role tall: a control or a skeleton bar centred on

@@ -159,6 +159,14 @@ row waits on keeps its pending press there, never also in `more`). An input on a
 in the meta line's place; once its act settles, give the row `meta` or `status` instead of
 `entry`. A `List`'s `row` map declares `act` and `entry` only if every item fills them.
 
+A row off a highlighted path (a journey's untaken steps) is `dim`: its title in the meta ink at
+400, never faded, still a link and focusable, its glyph and marks keeping their hue. While a
+row's act pends, its work's steps are `steps` (a `StatusMark` each, the running one in `running`):
+one line each in the meta line's place, so give `meta` back once the act settles. A title read
+whole (a note, a memory) is `wrap`: it wraps to every line at 400 with its leading, trailing and
+acts on the first line, and a `List`'s `row` map takes it as one boolean for every row. A
+`{ quoted }` title marks a model-written name; `wrap` is for text a person approved.
+
 Rows of inline terms (a mapping of sources to targets, a filter's conditions) are `Rules`: each
 `Rule` is `{ id, terms, onRemove? }`, its `terms` a pair (`{ from, to }`) or a condition
 (`{ field, operator, value }`), each term a `RuleValue`, one of `{ pick }` (an `OptionPick`),

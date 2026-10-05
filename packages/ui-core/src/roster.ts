@@ -944,6 +944,13 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// A `leading` of `check` is the row's tick, a `Checkbox` in the leading
 		// slot named by the title; its `blocked` reason draws it disabled and
 		// leads the meta line.
+		// A `dim` row stands off a highlighted path: its title in the meta ink at
+		// 400, never faded, so it stays legible, a hit and focusable, its leading
+		// glyph and marks keeping their hue. `steps` (StatusMarks) stand in the
+		// meta line's place while the row's act pends, one line each, the
+		// running step in the body ink with the spinner. `wrap` is a title read
+		// whole: it wraps to every line at 400, the leading, trailing and acts
+		// aligned to its first line.
 		ListRow: {
 			props: [
 				"change",
@@ -956,6 +963,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"lock",
 				"chip",
 				"entry",
+				"steps",
+				"dim",
+				"wrap",
 				"act",
 				"more",
 				"href",
@@ -964,6 +974,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			draws: [
 				"ROW.lines.one",
 				"ROW.lines.two",
+				"ROW.lines.whole",
 				"ROW.state.rest",
 				"ROW.state.highlighted",
 				"ROW.state.pressed",
@@ -971,6 +982,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"ROW.state.selected-hover",
 				"ROW.ground.list",
 				"ROW.ground.group",
+				"ROW_TITLE",
+				"ROW_STEPS",
+				"ROW_STEP",
 				"ROW_LEADING",
 				"ROW_TITLE_LINE",
 				"ROW_META_LINE",
@@ -981,8 +995,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"CHANGE_MARK",
 				"CHECKBOX",
 				"CHECKBOX_MARK",
-				"TEXT.role.body",
-				"TEXT_STRONG.role.body",
 				"TEXT.role.meta",
 				"ICON.fit.body",
 				"ICON.fit.meta",
@@ -1021,6 +1033,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"LINE_BOX.role.meta",
 			],
 			holds: [
+				"ROW_TITLE",
+				"ROW_STEPS",
+				"ROW_STEP",
 				"ROW_TRAILING",
 				"ROW_MARKS",
 				"ROW_WARNING",
