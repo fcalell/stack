@@ -29,6 +29,7 @@ import { useClock } from "../../lib/clock";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { Ink } from "../../lib/ink";
+import { useLive } from "../../lib/live";
 import { ReasonHostContext, usePressed } from "../../lib/reason";
 import { useTouched } from "../../lib/touched";
 import { Button } from "../button";
@@ -92,6 +93,7 @@ export function PendingBar({ sentence, until, act }: PendingBarProps) {
 	);
 	if (end !== undefined && run?.end !== end) setRun(pendingRun(end, now, run));
 	const { touched } = useTouched();
+	const live = useLive(sentence, { appears: true });
 	const blocked = act?.blocked;
 	const [pressed, press] = usePressed(blocked);
 	const host = useMemo(
@@ -111,7 +113,7 @@ export function PendingBar({ sentence, until, act }: PendingBarProps) {
 					)}
 					<RNText
 						numberOfLines={1}
-						accessibilityLiveRegion="polite"
+						{...live}
 						className={cn(text({ role: "body" }), SENTENCE)}
 					>
 						{sentence}

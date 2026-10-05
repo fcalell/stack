@@ -32,6 +32,7 @@ import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { ThreadBleeds, ThreadRoom } from "../../lib/frame";
 import { Lifted } from "../../lib/hosts";
+import { useLive } from "../../lib/live";
 import { useWords } from "../../lib/words";
 import { EmptyStateBase } from "../empty-state/base";
 import { Missing } from "../empty-state/missing";
@@ -202,6 +203,20 @@ function logOf<T>(
 	));
 }
 
+// What the log announces: the newest message's body. A log still waiting for
+// its first answer holds the baseline, so a thread opening on its history
+// announces nothing.
+function newest<T>(
+	props: ThreadProps<T>,
+	state: ListState,
+): string | undefined {
+	if (state === "pending") return undefined;
+	if (state !== "loaded") return "";
+	const items = (props.query ? props.query.data : props.items) ?? [];
+	const last = items.at(-1);
+	return last === undefined ? "" : props.message.body(last);
+}
+
 // The messages a sections gap apart, one rung above a reply's block gap, and
 // the input a sections gap under them, in the screen's column (native draws
 // the touch structure, so no measure-wide column). In a Place's body it
@@ -210,8 +225,8 @@ function logOf<T>(
 // the input docked at the foot over the keyboard; while the reader is scrolled
 // up, a Latest act floats centred above the foot and returns to the newest
 // message. React Native has no log
-// role: the messages are a polite live region, so an arriving one is
-// announced (Android; VoiceOver reads them in order). It draws its
+// role: the log is a polite live region, so an arriving message is announced
+// on Android, and `useLive` announces the newest one's body on iOS. It draws its
 // collection's states, the input under each: while its query is pending or
 // `loading` is set, Message's loading forms (another's reply, yours,
 // another's reply), the log at its end; a failed query, the failed
@@ -234,7 +249,9 @@ export function Thread<T>(props: ThreadProps<T>) {
 	// and its acts call when pressed.
 	const slots = useRef(props.message);
 	slots.current = props.message;
-	const children = logOf(props, listState(input), words.retry, slots);
+	const state = listState(input);
+	const children = logOf(props, state, words.retry, slots);
+	const live = useLive(newest(props, state));
 	const fill = useContext(ThreadRoom);
 	const bleeds = useContext(ThreadBleeds);
 	const log = useRef<ScrollView>(null);
@@ -248,11 +265,7 @@ export function Thread<T>(props: ThreadProps<T>) {
 	if (!fill)
 		return (
 			<View className={THREAD}>
-				<View
-					accessibilityLiveRegion="polite"
-					accessibilityState={{ busy }}
-					className={THREAD}
-				>
+				<View {...live} accessibilityState={{ busy }} className={THREAD}>
 					{children}
 				</View>
 				{foot ?? null}
@@ -276,7 +289,7 @@ export function Thread<T>(props: ThreadProps<T>) {
 			<View className={REGION}>
 				<ScrollView
 					ref={log}
-					accessibilityLiveRegion="polite"
+					{...live}
 					accessibilityState={{ busy }}
 					style={INVERTED}
 					// A message arriving at the origin keeps a scrolled-up reader's

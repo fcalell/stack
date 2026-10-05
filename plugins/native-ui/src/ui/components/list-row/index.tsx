@@ -36,6 +36,7 @@ import { cn } from "../../lib/cn";
 import { FieldDisabled, FieldError, InlineField } from "../../lib/field";
 import { GroundContext } from "../../lib/ground";
 import { Ink } from "../../lib/ink";
+import { useLive } from "../../lib/live";
 import { isCurrent, navigate, usePathname } from "../../lib/navigate";
 import { joinParts, META_CUT, partText } from "../../lib/parts";
 import { ReasonHostContext, usePressed } from "../../lib/reason";
@@ -318,6 +319,7 @@ export function ListRow<V extends string | null = string>({
 	const lines = wrap ? "whole" : stacked;
 	const inline = useMemo(() => ({ label: entry?.label ?? "" }), [entry?.label]);
 	const entryReason = useReasonLine(entry?.act.blocked);
+	const live = useLive(entry?.error ?? "");
 	const actReason = useReasonLine(act?.blocked);
 	const [first, ...rest] = parts ?? [];
 	const value =
@@ -404,10 +406,7 @@ export function ListRow<V extends string | null = string>({
 						</FieldError.Provider>
 					</InlineField.Provider>
 					{entry.error ? (
-						<RNText
-							accessibilityLiveRegion="polite"
-							className={FIELD_ERROR_LINE}
-						>
+						<RNText {...live} className={FIELD_ERROR_LINE}>
 							{entry.error}
 						</RNText>
 					) : null}

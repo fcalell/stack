@@ -11,6 +11,7 @@ import { Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { Ink } from "../../lib/ink";
+import { useLive } from "../../lib/live";
 import { Strut } from "../../lib/strut";
 import { Button } from "../button";
 import { Icon } from "../icon";
@@ -45,10 +46,14 @@ export interface BannerProps extends Closed {
 // bar fit, under the line.
 export function Banner({ kind, sentence, act }: BannerProps) {
 	const drawn = kind ?? "note";
+	const live = useLive(sentence, {
+		assertive: drawn === "danger",
+		appears: true,
+	});
 	return (
 		<View
 			role={drawn === "danger" ? "alert" : "status"}
-			accessibilityLiveRegion={drawn === "danger" ? "assertive" : "polite"}
+			{...live}
 			className={cn(banner({ kind: drawn }), BOX)}
 		>
 			<View className={cn(BANNER_MAIN, MAIN)}>

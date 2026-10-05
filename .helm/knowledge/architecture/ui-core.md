@@ -344,14 +344,24 @@ a tick with no animation, never jumped to full.
   `retry`) and the announcement are not the consumer's to spell. `saving` and `saved` are meta-ink
   words; `failed` is the `failed` Status with `notSaved`, then a `secondary` bar-fit `Button`
   labelled `retry`. The fact stands in a polite live region (`role="status"` on the web; on the
-  phone `useLive` in `lib/live`: an Android live region plus an iOS
-  `AccessibilityInfo.announceForAccessibility` on each change, never on mount) and keeps one key
+  phone `useLive`, below) and keeps one key
   across its states, so the region persists and each change is announced. The fact stands from the
   record's open, `saved` at rest: a region that first mounts holding `saving` has no earlier text to
   change from, so that first save may go unheard. The selection bar's count announces through the
   same hook. Rejected: a generic fact that carries an act, which lets any fact hold acts and leaves
   the words and the announcement to the consumer; a `Banner`, which is loud for a save that usually
   succeeds. An autosaving `FieldBinding` feeding this fact is not built.
+- A phone component announces a change only through `useLive` in `lib/live`: React Native's
+  `accessibilityLiveRegion` is Android's alone, so the hook returns that prop and, on iOS, calls
+  `AccessibilityInfo.announceForAccessibility` (`announceForAccessibilityWithOptions` at high
+  priority when `assertive`) once per change of the text. It never announces the text standing at
+  mount, an empty text, or a repeat of the last text; `appears` marks a component that is itself the
+  news (`Toast`, `Banner`, `PendingBar`), announced as it mounts; an `undefined` text holds the
+  baseline (a `Thread` still loading, so opening on its history is silent). The sites: the toast and
+  banner sentences (assertive when failed or danger), the pending bar's sentence, a form field's and
+  a list row entry's error line, the one-time code's checking line, the newest message of a `Thread`,
+  the `ItemHeader` save fact and the selection bar's count. A test pins that no other file names
+  either API. A thread's newest message that repeats the last one's body is not announced.
 - `running` is work under way and `active` a steady state (a watch that stands, a service that is
   up): both wear the accent, and `running` draws a `Spinner` where every other state draws its
   dot, wherever a status draws one (a `Status`, a list row's `{ status }` leading, an

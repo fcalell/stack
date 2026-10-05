@@ -4,6 +4,7 @@ import { Text as RNText, TextInput, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { FieldError, FieldFocus, useFieldName } from "../../lib/field";
+import { useLive } from "../../lib/live";
 import { useTouched } from "../../lib/touched";
 import { useWords } from "../../lib/words";
 import { Spinner } from "../spinner";
@@ -37,6 +38,7 @@ export function InputOtp({
 	const name = useFieldName();
 	const error = useContext(FieldError);
 	const focused = useContext(FieldFocus);
+	const live = useLive(loading ? words.checking : "");
 	return (
 		<View className="gap-pair">
 			<View
@@ -79,10 +81,7 @@ export function InputOtp({
 				/>
 			</View>
 			{loading ? (
-				<View
-					accessibilityLiveRegion="polite"
-					className="flex-row items-center gap-inside"
-				>
+				<View {...live} className="flex-row items-center gap-inside">
 					<Spinner />
 					<RNText className={text({ role: "meta" })}>{words.checking}</RNText>
 				</View>

@@ -1,6 +1,6 @@
 ---
 id: 003-60
-status: backlog
+status: review
 sessions: {}
 ---
 # native-ui: one live region announces on both phone platforms
