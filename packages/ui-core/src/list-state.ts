@@ -5,6 +5,7 @@
 import type {
 	Option,
 	OptionGroup,
+	Route,
 	TableCell,
 	TableColumn,
 	TableRowSlots,
@@ -418,7 +419,7 @@ export const WAITING_MESSAGES = [
 // column's cell by key, read from its item once.
 export interface TableRecord {
 	id: string;
-	href: string | undefined;
+	href: Route | undefined;
 	locked: readonly string[] | undefined;
 	cells: Readonly<Record<string, TableCell>>;
 }
