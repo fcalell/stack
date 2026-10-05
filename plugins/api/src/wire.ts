@@ -10,6 +10,11 @@
 export const STACK_READS_HEADER = "x-stack-reads";
 export const STACK_WRITES_HEADER = "x-stack-writes";
 
+// What an entity name may contain. Names reach `Headers.set` comma-joined, and
+// comma is the client-side split delimiter, so `procedure()` and the
+// `api({ entities })` config parse share this one pattern.
+export const ENTITY_NAME_RE = /^[A-Za-z0-9_.-]+$/;
+
 // Router path of the framework-owned org-rules procedure (WS6). plugin-auth's
 // runtime registers it via `RuntimePlugin.routes()` when organization support
 // is enabled; the `useAbility` client hook queries it. Owned here (not in

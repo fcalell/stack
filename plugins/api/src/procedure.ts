@@ -2,7 +2,11 @@ import { ORPCError, os } from "@orpc/server";
 import { z } from "zod";
 import { DEFAULT_LIMIT, MAX_LIMIT } from "./lib/cursor.ts";
 import type { Procedure } from "./types.ts";
-import { STACK_READS_HEADER, STACK_WRITES_HEADER } from "./wire.ts";
+import {
+	ENTITY_NAME_RE,
+	STACK_READS_HEADER,
+	STACK_WRITES_HEADER,
+} from "./wire.ts";
 
 // Re-exported for `@fcalell/plugin-api/procedure` consumers (generated code,
 // plugins/auth's worker) — see `./wire.ts` for why these live there and not
@@ -545,8 +549,6 @@ function createErrorLoggingMiddleware(): OrpcMiddlewareFn {
 // construction time — module init, loud — rather than let an illegal
 // character reach `Headers.set` at request time, which would throw AFTER a
 // mutation's handler already committed.
-const ENTITY_NAME_RE = /^[A-Za-z0-9_.-]+$/;
-
 function assertValidEntityNames(
 	kind: "reads" | "writes",
 	entities: readonly string[],

@@ -54,7 +54,7 @@ export const projects = {
 | `can` / `rbac` | Require `auth: true` and a `scope`. Check the caller's role in the scope's organization against the roles the auth config declares. Names autocomplete from `auth({ organization: { ac } })`; with no organization they cannot be set |
 | `rateLimit` | `"ip"`, `"email"` (keyed by `input.email`) or both |
 | `paginated: true` | Adds `cursor` and `limit` to the input; `limit` defaults to 20 and a value outside 1 to 100 answers `BAD_REQUEST` |
-| `reads` / `writes` | The entities the procedure reads or writes, autocompleting from the Drizzle schema's exports and auth's tables. On success the response carries `x-stack-reads` / `x-stack-writes`; a thrown error carries neither |
+| `reads` / `writes` | The entities the procedure reads or writes, autocompleting from the Drizzle schema's exports, auth's tables and the names `api`'s `entities` option adds. On success the response carries `x-stack-reads` / `x-stack-writes`; a thrown error carries neither |
 
 ## Input and output
 

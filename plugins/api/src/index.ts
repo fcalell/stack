@@ -23,6 +23,7 @@ import {
 	type WorkerPayload,
 } from "./node/types.ts";
 import type { EnvSpec } from "./types.ts";
+import { ENTITY_NAME_RE } from "./wire.ts";
 
 const envSpecSchema = z.object({
 	name: z.string().min(1),
@@ -47,6 +48,17 @@ export const apiOptionsSchema = z.object({
 	// declared like a plugin's so every deploy target and the env assertion
 	// see them.
 	env: z.array(envSpecSchema).default([]),
+	// Names of state the app keeps outside any plugin's tables (git, files, a
+	// remote), declared so `reads`/`writes` type them. A table's name is
+	// already an entity, so a name a plugin declares is an error.
+	entities: z
+		.array(
+			z.string().regex(ENTITY_NAME_RE, {
+				error:
+					'api: an entity name may only contain letters, digits, "_", ".", and "-"',
+			}),
+		)
+		.default([]),
 });
 
 export type ApiOptions = z.input<typeof apiOptionsSchema>;
@@ -417,7 +429,8 @@ const rbacStatements = slot.value<Record<string, readonly string[]> | null>({
 
 // Entity vocabulary for `procedure({ reads, writes })`'s type-level
 // autocomplete (WS3.1) — a UNION across every
-// plugin that owns a set of entity names: plugin-db contributes the
+// contributor of entity names: the consumer's `entities` option names state
+// outside any plugin's tables (a repo, files), plugin-db contributes the
 // consumer's Drizzle schema table export names, plugin-auth contributes its
 // own runtime-owned tables (`account`/`session`/`user`/`verification`, plus
 // `invitation`/`member`/`organization` when `organization` is enabled) so
@@ -658,6 +671,7 @@ export const api = plugin("api", {
 			(await ctx.resolve(self.slots.mcpMount)) ? MCP_PREFIX : undefined,
 		),
 		self.slots.env.contribute(() => self.options.env),
+		self.slots.entities.contribute(() => self.options.entities),
 		// The dev half of the explicit-origins partition: local origins the
 		// consumer listed in `app.origins` are honoured, but only under
 		// STACK_DEV. The `cors` derivation above strips them from the baked
