@@ -1002,13 +1002,17 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			},
 		},
 		// A row's act is an icon act, never a labelled one; a link's chevron
-		// stands in the act's square.
+		// stands in the act's square. A locked row keeps its value, a lock
+		// after it and its reason as the line under it (the whole line a link
+		// with an `href`); it takes no description, act or open, since its
+		// reason is the one line and the one link.
 		DefinitionRow: {
 			props: [
 				"label",
 				"description",
 				"value",
 				"copyable",
+				"locked",
 				"act",
 				"href",
 				"onOpen",
@@ -1028,6 +1032,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"TEXT.role.meta",
 				"TEXT.role.code",
 				"ICON.fit.body",
+				"ICON.fit.meta",
+				"LINK.fit.inline",
+				"LOCK_GLYPH",
 				"STATUS",
 				"STATUS_DOT",
 				"STATUS_SPINNER",
@@ -1059,6 +1066,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"row-setting",
 					"control-compact",
 					"icon",
+					"icon-meta",
 					"dot",
 					"spinner",
 					"measure-short",
@@ -1973,6 +1981,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"FIGURES",
 				"ICON.fit.body",
 				"ICON.fit.meta",
+				"LOCK_GLYPH",
 				"SKELETON.kind.check",
 				"SKELETON.kind.dot",
 				"SKELETON.kind.line",

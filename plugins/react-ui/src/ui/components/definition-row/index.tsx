@@ -1,9 +1,10 @@
 import { Button as BaseButton } from "@base-ui/react/button";
 import { cn } from "@fcalell/ui-core/cn";
-import type { IconAct, StatusState } from "@fcalell/ui-core/descriptors";
+import type { IconAct, Lock, StatusState } from "@fcalell/ui-core/descriptors";
 import {
 	DEFINITION_ROW,
 	DEFINITION_ROW_CHEVRON,
+	LOCK_GLYPH,
 	ROW_TITLE_LINE,
 	row,
 	text,
@@ -15,6 +16,7 @@ import { useCopy } from "../../lib/copy.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Icon } from "../icon/index.tsx";
 import { IconButton } from "../icon-button/index.tsx";
+import { Link } from "../link/index.tsx";
 import { Status } from "../status/index.tsx";
 
 const ROW = "relative flex items-center";
@@ -34,6 +36,8 @@ const VALUE_SLOT = "flex basis-0 grow min-w-0 justify-end";
 const ACTS = "relative flex shrink-0";
 // The chevron draws in the slot's ink (currentColor).
 const CHEVRON = "flex shrink-0 items-center justify-center text-ink-meta";
+const LOCK = "flex items-center";
+const LOCK_NAME = "sr-only";
 
 /** What a definition shows: words, a status, or an in-place control. */
 export type DefinitionValue =
@@ -41,23 +45,38 @@ export type DefinitionValue =
 	| { status: StatusState; label?: string }
 	| ReactNode;
 
-/** A labelled fact in a Group. */
-export interface DefinitionRowProps extends Closed {
+interface DefinitionRowBase extends Closed {
 	/** What the fact is. */
 	label: string;
-	/** A sentence under the label and the value, at the row's width. */
-	description?: string;
 	/** The fact: words, a status, or a control that changes it in place. */
 	value?: DefinitionValue;
 	/** Words that are copied whole (an identifier): drawn in the code role with a copy act. */
 	copyable?: boolean;
-	/** The row's one icon act at its end. */
-	act?: IconAct;
-	/** Where the row goes when opened; a chevron stands at its end. */
-	href?: string;
-	/** Opens what the row names; a chevron stands at its end. */
-	onOpen?: () => void;
 }
+
+/** A labelled fact in a Group: editable here, or locked with its reason. */
+export type DefinitionRowProps = DefinitionRowBase &
+	(
+		| {
+				locked?: never;
+				/** A sentence under the label and the value, at the row's width. */
+				description?: string;
+				/** The row's one icon act at its end. */
+				act?: IconAct;
+				/** Where the row goes when opened; a chevron stands at its end. */
+				href?: string;
+				/** Opens what the row names; a chevron stands at its end. */
+				onOpen?: () => void;
+		  }
+		| {
+				/** The value outside its editable context: a lock after it and the reason under it, the whole line a link with an `href`. It takes no description, act or open. */
+				locked: Lock;
+				description?: never;
+				act?: never;
+				href?: never;
+				onOpen?: never;
+		  }
+	);
 
 function isStatus(
 	value: DefinitionValue,
@@ -65,16 +84,18 @@ function isStatus(
 	return typeof value === "object" && value !== null && "status" in value;
 }
 
-/** The label at body 500 with the value at the line's end, the description under both; an icon act, or a link's chevron in the act's square, at the row's end, so values with either end at one x. */
+/** The label at body 500 with the value at the line's end, the description under both; an icon act, or a link's chevron in the act's square, at the row's end, so values with either end at one x. A locked row draws a lock after its value and its reason under both in the description's place, the whole line a link with an `href`. */
 export function DefinitionRow({
 	label,
 	description,
 	value,
 	copyable,
+	locked,
 	act,
 	href,
 	onOpen,
 }: DefinitionRowProps) {
+	const words = useWords();
 	const opens = href !== undefined || onOpen !== undefined;
 	const copied = copyable && typeof value === "string" ? value : undefined;
 	let shown: ReactNode = null;
@@ -132,11 +153,19 @@ export function DefinitionRow({
 				{label}
 			</BaseButton>
 		);
+	let under: ReactNode = description;
+	if (locked)
+		under =
+			locked.href === undefined ? (
+				locked.reason
+			) : (
+				<Link href={locked.href}>{locked.reason}</Link>
+			);
 	return (
 		<div
 			className={cn(
 				row({
-					lines: description ? "setting" : "one",
+					lines: under ? "setting" : "one",
 					state: "rest",
 					ground: "group",
 				}),
@@ -149,10 +178,14 @@ export function DefinitionRow({
 				<span className={cn(ROW_TITLE_LINE, LINE)}>
 					{title}
 					{shown}
+					{locked ? (
+						<span className={cn(LOCK_GLYPH, LOCK)}>
+							<Icon name="Lock" fit="meta" />
+							<span className={LOCK_NAME}>{words.locked}</span>
+						</span>
+					) : null}
 				</span>
-				{description ? (
-					<span className={text({ role: "meta" })}>{description}</span>
-				) : null}
+				{under ? <span className={text({ role: "meta" })}>{under}</span> : null}
 			</span>
 			{end}
 		</div>

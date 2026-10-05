@@ -462,6 +462,31 @@ export function tableRecords<T>(
 	}));
 }
 
+// The edit a cell takes: its column's, in a table that edits, never the
+// leading column's, nor a column locked whole, nor a column its row locks.
+export function cellEdit(
+	column: TableColumn,
+	leading: boolean,
+	edits: boolean,
+	row: TableRecord,
+): TableColumn["edit"] {
+	if (!edits || leading || column.locked !== undefined) return undefined;
+	if (row.locked?.includes(column.key)) return undefined;
+	return column.edit;
+}
+
+// A cell its row locks that its column would edit: it draws the lock (a
+// locked column draws it in its head alone).
+export function cellLocked(
+	column: TableColumn,
+	leading: boolean,
+	edits: boolean,
+	row: TableRecord,
+): boolean {
+	if (!edits || leading || column.locked !== undefined) return false;
+	return column.edit !== undefined && row.locked?.includes(column.key) === true;
+}
+
 // What a change cell is: both values, a value added (no before) or removed (no
 // after); none when it holds neither, drawing nothing.
 export type ChangeKind = "changed" | "added" | "removed";

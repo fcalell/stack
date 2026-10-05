@@ -1,7 +1,8 @@
-import type { IconAct, StatusState } from "@fcalell/ui-core/descriptors";
+import type { IconAct, Lock, StatusState } from "@fcalell/ui-core/descriptors";
 import {
 	DEFINITION_ROW,
 	DEFINITION_ROW_CHEVRON,
+	LOCK_GLYPH,
 	ROW_TITLE_LINE,
 	row,
 	text,
@@ -18,6 +19,7 @@ import type { Route } from "../../lib/route";
 import { useWords } from "../../lib/words";
 import { Icon } from "../icon";
 import { IconButton } from "../icon-button";
+import { Link } from "../link";
 import { Status } from "../status";
 
 const ROW = "relative flex-row items-center";
@@ -33,27 +35,46 @@ const VALUE = "flex-1 min-w-0 text-right";
 const VALUE_SLOT = "flex-1 min-w-0 flex-row justify-end";
 const ACTS = "relative flex-row shrink-0";
 const CHEVRON = "shrink-0 items-center justify-center";
+const LOCK = "justify-center";
 
 export type DefinitionValue =
 	| string
 	| { status: StatusState; label?: string }
 	| ReactNode;
 
-export interface DefinitionRowProps extends Closed {
+interface DefinitionRowBase extends Closed {
 	label: string;
-	// A sentence under the label and the value, at the row's width.
-	description?: string;
 	// The fact: words, a status, or a control that changes it in place.
 	value?: DefinitionValue;
 	// Words that are copied whole (an identifier): drawn in the code role with
 	// a copy act.
 	copyable?: boolean;
-	// The row's one icon act at its end.
-	act?: IconAct;
-	// Where the row goes when opened; a chevron stands at its end.
-	href?: Route;
-	onOpen?: () => void;
 }
+
+// A labelled fact in a Group: editable here, or locked with its reason.
+export type DefinitionRowProps = DefinitionRowBase &
+	(
+		| {
+				locked?: never;
+				// A sentence under the label and the value, at the row's width.
+				description?: string;
+				// The row's one icon act at its end.
+				act?: IconAct;
+				// Where the row goes when opened; a chevron stands at its end.
+				href?: Route;
+				onOpen?: () => void;
+		  }
+		| {
+				// The value outside its editable context: a lock after it and the
+				// reason under it, the whole line a link with an `href`. It takes
+				// no description, act or open.
+				locked: Lock;
+				description?: never;
+				act?: never;
+				href?: never;
+				onOpen?: never;
+		  }
+	);
 
 function isStatus(
 	value: DefinitionValue,
@@ -64,16 +85,20 @@ function isStatus(
 // The label at body 500 with the value at the line's end, the description
 // under both; an icon act, or a link's chevron in the act's square, at the
 // row's end, so values with either end at one x. A row that opens is one hit
-// under its acts.
+// under its acts. A locked row draws a lock after its value and its reason
+// under both in the description's place, the whole line a link with an
+// `href`.
 export function DefinitionRow({
 	label,
 	description,
 	value,
 	copyable,
+	locked,
 	act,
 	href,
 	onOpen,
 }: DefinitionRowProps) {
+	const words = useWords();
 	const open = href !== undefined ? () => navigate(href) : onOpen;
 	const copied = copyable && typeof value === "string" ? value : undefined;
 	let shown: ReactNode = null;
@@ -120,11 +145,19 @@ export function DefinitionRow({
 				</Ink.Provider>
 			</View>
 		);
+	let under: ReactNode = description;
+	if (locked)
+		under =
+			locked.href === undefined ? (
+				locked.reason
+			) : (
+				<Link href={locked.href}>{locked.reason}</Link>
+			);
 	return (
 		<View
 			className={cn(
 				row({
-					lines: description ? "setting" : "one",
+					lines: under ? "setting" : "one",
 					state: "rest",
 					ground: "group",
 				}),
@@ -153,9 +186,20 @@ export function DefinitionRow({
 						{label}
 					</RNText>
 					{shown}
+					{locked ? (
+						<View
+							accessible
+							accessibilityLabel={words.locked}
+							className={cn(LOCK_GLYPH, LOCK)}
+						>
+							<Ink.Provider value="ink-meta">
+								<Icon name="Lock" fit="meta" />
+							</Ink.Provider>
+						</View>
+					) : null}
 				</View>
-				{description ? (
-					<RNText className={text({ role: "meta" })}>{description}</RNText>
+				{under ? (
+					<RNText className={text({ role: "meta" })}>{under}</RNText>
 				) : null}
 			</View>
 			{end}

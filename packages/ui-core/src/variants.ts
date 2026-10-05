@@ -408,6 +408,9 @@ export const DEFINITION_ROW = "gap-fields";
 // A definition row's link chevron, centred in the square of the icon act it
 // stands in for, so values with an act or a link end at one x.
 export const DEFINITION_ROW_CHEVRON = "size-control-compact";
+// A lock glyph (`Lock` at the meta icon size) after a value or in a column's
+// head: the meta ink, an inside gap from what it follows.
+export const LOCK_GLYPH = "ms-inside shrink-0 text-ink-meta";
 // A record's head: the overline, the title and the facts line a pair apart;
 // the facts wrap at the fields rhythm, a counted fact its word beside its
 // count.

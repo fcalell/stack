@@ -30,7 +30,7 @@ interface Task {
 }
 
 // Board 52's columns, one of each kind, its timeout a value changed, added or
-// removed.
+// removed and locked whole by the change set that holds it.
 const COLUMNS: TableColumn<Task>[] = [
 	{
 		key: "task",
@@ -92,6 +92,7 @@ const COLUMNS: TableColumn<Task>[] = [
 		kind: "change",
 		width: "measure-short",
 		sortable: true,
+		locked: "Held by CR-12, Ana",
 		cell: (task) => task.timeout,
 	},
 	{
@@ -104,9 +105,11 @@ const COLUMNS: TableColumn<Task>[] = [
 	},
 ];
 
+// The session purge's schedule is a cell its row locks, ending in a lock.
 const ROW = {
 	id: (task: Task) => task.id,
 	href: (task: Task) => `#${task.id}`,
+	locked: (task: Task) => (task.id === "purge" ? ["schedule"] : undefined),
 };
 
 const ago = (minutes: number) =>

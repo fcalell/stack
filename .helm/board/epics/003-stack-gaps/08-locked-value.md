@@ -1,6 +1,6 @@
 ---
 id: 003-08
-status: backlog
+status: review
 sessions: {}
 ---
 # ui-core: a value outside its editable context reads locked, with its reason

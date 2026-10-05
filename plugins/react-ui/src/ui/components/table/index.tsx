@@ -8,6 +8,8 @@ import type {
 	TableRowSlots,
 } from "@fcalell/ui-core/descriptors";
 import {
+	cellEdit,
+	cellLocked,
 	changeKind,
 	changeMeta,
 	changeReading,
@@ -19,6 +21,7 @@ import {
 } from "@fcalell/ui-core/list-state";
 import {
 	FIGURES,
+	LOCK_GLYPH,
 	skeleton,
 	TABLE,
 	TABLE_CELL,
@@ -107,6 +110,7 @@ const CELL = "flex items-center min-w-0";
 const CELL_END = "justify-end";
 const VALUE = "truncate";
 const CHANGE = "flex items-center min-w-0";
+const LOCK = "flex items-center";
 const TICK = "flex shrink-0 text-ink-body";
 // A ticked read-only check reads as its column's label, as the phone's row does.
 const TICK_NAME = "sr-only";
@@ -280,8 +284,6 @@ const inEdit = (target: HTMLElement) =>
 const isEnd = (column: TableColumn) =>
 	(column.align ?? (column.kind === "number" ? "end" : "start")) === "end";
 
-// The edit a cell takes: its column's, never the leading column's nor a
-// column its row locks.
 function editOf(
 	columns: readonly TableColumn[],
 	at: number,
@@ -289,8 +291,7 @@ function editOf(
 	row: TableRecord,
 ) {
 	const column = columns[at];
-	if (!edits || at === 0 || row.locked?.includes(column?.key ?? "")) return;
-	return column?.edit;
+	return column ? cellEdit(column, at === 0, edits, row) : undefined;
 }
 
 /** From `tablet` of its page a grid: a header of sortable acts (the table sorts in its own state: newest or largest first, then turned over, then off) over one row per record, its leading cell the record's name; on touch every column stands at the short measure and the grid scrolls sideways under its frozen leading column. Its keyboard is a cell cursor (one Tab stop, the arrows, Home and End; Enter opens the row from its leading cell or edits an editable cell, Space ticks a check, Escape leaves an edit); a press on a row opens it, a press on an editable value edits it in place: typed in an `Input`, picked in a `Picker`, ticked in a `Checkbox`. Below `tablet` one `ListRow` per record (its leading cell the title, its age trailing, its status and chip the marks, the other values its meta line) under the sort's pick. It draws its four states: while its query is pending, `loading` is set or a loading Section around it waits, the header stands over skeleton rows (on touch, the list's waiting rows; a Section around busy, its count waiting); a query that answers not found draws the rest EmptyState saying it no longer exists with Back, never Retry, and a failed query the failed EmptyState with `sentence` and Retry, each under the header on the grid; no row draws `empty`; then one row per item, which a Section around counts. */
@@ -411,6 +412,7 @@ const Row = memo(function Row(props: {
 					cell={row.cells[column.key]}
 					name={`${column.label}, ${name}`}
 					control={editOf(columns, place, props.edits, row)?.control}
+					locked={cellLocked(column, place === 0, props.edits, row)}
 					frozen={props.touch && place === 0}
 					chosen={chosen}
 					opens={opens}
@@ -434,6 +436,8 @@ const Cell = memo(function Cell(props: {
 	cell: TableCell | undefined;
 	name: string;
 	control: NonNullable<TableColumn["edit"]>["control"] | undefined;
+	// Its row locks a value its column edits: a lock ends the cell.
+	locked: boolean;
 	frozen: boolean;
 	chosen: boolean;
 	opens: boolean;
@@ -512,6 +516,7 @@ const Cell = memo(function Cell(props: {
 						leading={place === 0}
 						href={row.href}
 					/>
+					{props.locked ? <LockMark /> : null}
 				</div>
 			)}
 		</td>
@@ -759,6 +764,22 @@ function Grid(props: {
 	);
 }
 
+// A lock glyph: the word Locked read aloud, then the column's reason when it
+// has one.
+function LockMark(props: { reason?: string }) {
+	const words = useWords();
+	return (
+		<span className={cn(LOCK_GLYPH, LOCK)}>
+			<Icon name="Lock" fit="meta" />
+			<span className={TICK_NAME}>
+				{props.reason === undefined
+					? words.locked
+					: `${words.locked}, ${props.reason}`}
+			</span>
+		</span>
+	);
+}
+
 function HeadCell(props: {
 	column: TableColumn;
 	sort: Sort | undefined;
@@ -790,10 +811,13 @@ function HeadCell(props: {
 			<Icon name="ArrowUpDown" fit="meta" />
 		</span>
 	);
+	const lock =
+		column.locked === undefined ? null : <LockMark reason={column.locked} />;
 	const content = (
 		<>
 			{end ? glyph : null}
 			{label}
+			{lock}
 			{end ? null : glyph}
 		</>
 	);
@@ -826,6 +850,7 @@ function HeadCell(props: {
 					<span className={cn(tableHeadLabel({ sort: "none" }), LABEL)}>
 						{column.label}
 					</span>
+					{lock}
 				</div>
 			)}
 		</th>

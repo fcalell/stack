@@ -7,6 +7,8 @@ import type {
 	TableRowSlots,
 } from "@fcalell/ui-core/descriptors";
 import {
+	cellEdit,
+	cellLocked,
 	changeKind,
 	changeMeta,
 	changeReading,
@@ -19,6 +21,7 @@ import {
 import { BREAKPOINT_PX } from "@fcalell/ui-core/tokens";
 import {
 	FIGURES,
+	LOCK_GLYPH,
 	skeleton,
 	TABLE_CELL,
 	TABLE_CHANGE,
@@ -92,6 +95,7 @@ const CELL = "flex-row items-center min-w-0";
 const CELL_END = "justify-end";
 const VALUE = "shrink";
 const TICK = "shrink-0";
+const LOCK = "justify-center";
 // A Chip hugs its top edge in a row, so it stands centred in a slot of its own.
 const CHIP = "shrink min-w-0";
 // An edit fills the cell it stands in.
@@ -459,8 +463,30 @@ const RestRow = memo(function RestRow(props: {
 	);
 });
 
+// A lock glyph, read aloud as the word Locked, then the column's reason when
+// it has one.
+function LockMark(props: { reason?: string }) {
+	const words = useWords();
+	return (
+		<View
+			accessible
+			accessibilityLabel={
+				props.reason === undefined
+					? words.locked
+					: `${words.locked}, ${props.reason}`
+			}
+			className={cn(LOCK_GLYPH, LOCK)}
+		>
+			<Ink.Provider value="ink-meta">
+				<Icon name="Lock" fit="meta" />
+			</Ink.Provider>
+		</View>
+	);
+}
+
 // A cell past the leading one, by whether and how its column edits (the
-// leading column never edits, nor a column its row locks).
+// leading column never edits, nor a column locked whole, nor a column its row
+// locks); a value its row locks that its column edits ends in a lock.
 function Cell(props: {
 	row: TableRecord;
 	column: TableColumn;
@@ -471,10 +497,7 @@ function Cell(props: {
 }) {
 	const { row, column, actions } = props;
 	const value = row.cells[column.key];
-	const control =
-		props.edits && !row.locked?.includes(column.key)
-			? column.edit?.control
-			: undefined;
+	const control = cellEdit(column, false, props.edits, row)?.control;
 	const label = `${column.label}, ${props.name}`;
 	const box = cn(TABLE_CELL, CELL, isEnd(column) && CELL_END);
 	const edit = (next: CellValue) => actions.edit(row.id, column.key, next);
@@ -517,6 +540,7 @@ function Cell(props: {
 	return (
 		<View className={box}>
 			<CellValueView column={column} cell={value} />
+			{cellLocked(column, false, props.edits, row) ? <LockMark /> : null}
 		</View>
 	);
 }
@@ -688,10 +712,13 @@ function HeadCell(props: {
 			{column.label}
 		</RNText>
 	);
+	const lock =
+		column.locked === undefined ? null : <LockMark reason={column.locked} />;
 	if (!column.sortable)
 		return (
 			<View className={cn(TABLE_CELL, edge, HEAD, end && CELL_END)}>
 				{label}
+				{lock}
 			</View>
 		);
 	// A sorted column's arrow takes the label's ink; an unsorted column shows
@@ -716,6 +743,7 @@ function HeadCell(props: {
 		>
 			{end ? glyph : null}
 			{label}
+			{lock}
 			{end ? null : glyph}
 		</Pressable>
 	);

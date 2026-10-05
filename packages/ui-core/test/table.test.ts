@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import type { TableColumn } from "../src/descriptors.ts";
 import {
+	cellEdit,
+	cellLocked,
 	changeKind,
 	changeMeta,
 	changeReading,
@@ -47,4 +50,38 @@ test("a changed value is neutral; only added and removed take a ground, the remo
 	const removed = tableChangeValue({ kind: "removed" });
 	assert.match(removed, /bg-danger-soft/);
 	assert.match(removed, /line-through/);
+});
+
+const record = (locked?: readonly string[]) => ({
+	id: "1",
+	href: undefined,
+	locked,
+	cells: {},
+});
+const editable: TableColumn = {
+	key: "role",
+	label: "Role",
+	cell: () => "",
+	edit: { control: "input" },
+};
+const held: TableColumn = { ...editable, locked: "Held by CR-12" };
+const plain: TableColumn = { key: "role", label: "Role", cell: () => "" };
+
+test("a cell edits through its column, unless the row or the column locks it", () => {
+	assert.deepEqual(cellEdit(editable, false, true, record()), {
+		control: "input",
+	});
+	assert.equal(cellEdit(editable, false, false, record()), undefined);
+	assert.equal(cellEdit(editable, true, true, record()), undefined);
+	assert.equal(cellEdit(editable, false, true, record(["role"])), undefined);
+	assert.equal(cellEdit(held, false, true, record()), undefined);
+});
+
+test("a cell its row locks draws the lock; a locked column draws it in its head alone", () => {
+	assert.equal(cellLocked(editable, false, true, record(["role"])), true);
+	assert.equal(cellLocked(editable, false, true, record(["name"])), false);
+	assert.equal(cellLocked(editable, false, false, record(["role"])), false);
+	assert.equal(cellLocked(editable, true, true, record(["role"])), false);
+	assert.equal(cellLocked(held, false, true, record(["role"])), false);
+	assert.equal(cellLocked(plain, false, true, record(["role"])), false);
 });

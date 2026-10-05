@@ -17,7 +17,8 @@ function Region() {
 }
 
 // Board 40's settings: an act, a copyable code value under a description, a
-// link, a status under a description, and a row with neither act nor link.
+// link, a status under a description, a row with neither act nor link, and
+// two locked values, their reason a link to the request that holds one.
 function General(props: { status: StatusState }) {
 	return (
 		<Group>
@@ -46,6 +47,16 @@ function General(props: { status: StatusState }) {
 				label="Plan"
 				description="Your organisation manages it."
 				value="Business"
+			/>
+			<DefinitionRow
+				label="Contract end"
+				value="31 Dec 2026"
+				locked={{ reason: "Held by CR-12, Ana", href: "#cr-12" }}
+			/>
+			<DefinitionRow
+				label="Billing contact"
+				value="ana@acme.test"
+				locked={{ reason: "Set by your organisation" }}
 			/>
 		</Group>
 	);

@@ -129,7 +129,7 @@ pinned by the package's verify suite; this entry holds the architecture and its 
 ## Words
 
 Every word a molecule draws or reads aloud on its own (the seven `Status` words, `recommended`,
-`copy`, `copied`, `download`, `back`, `close`, `cancel`, `dismiss`, `more`, `send`, `stop`, `attach`, `search`, `loading`, `checking`, `retry`, `saving`, `saved`, `notSaved`, `add`, `remove`, `edit`, `details`, `places`, `notifications`, `code`, `added`, `removed`, `sort`, `ascending`, `descending`, `time`, `message`, `seen`, `unseen`, `copyFailed`, `latest`, `missing`, `typeValue`, `pickValue`, `chooseFile`, the counted `earlierLines`, and the slot words `meterValue`, `meterOver`, `meterMark`, `linesAdded`, `linesRemoved`, `changed`, `wrongType` and `stepOf`) comes
+`copy`, `copied`, `download`, `back`, `close`, `cancel`, `dismiss`, `more`, `send`, `stop`, `attach`, `search`, `loading`, `checking`, `retry`, `saving`, `saved`, `notSaved`, `add`, `remove`, `edit`, `details`, `places`, `notifications`, `code`, `added`, `removed`, `sort`, `ascending`, `descending`, `time`, `message`, `seen`, `unseen`, `copyFailed`, `latest`, `missing`, `typeValue`, `pickValue`, `chooseFile`, `locked`, the counted `earlierLines`, and the slot words `meterValue`, `meterOver`, `meterMark`, `linesAdded`, `linesRemoved`, `changed`, `wrongType` and `stepOf`) comes
 from `words`, a closed typed object with English defaults. The `Words` type requires every key
 and `wordsSchema` is strict, so a translation missing a word fails `tsc` and the schema. It is a
 plugin option beside `theme`; each plugin contributes a `WordsProvider` into the generated entry
@@ -500,7 +500,12 @@ a tick with no animation, never jumped to full.
   counts once in the Section around it, which reads the Table's own props, and mounts its touch
   List with no `SectionContext`, since on the web both forms are mounted.
   A row with `href` is its leading cell's link (`tabindex -1`, so a new tab opens it); a row's
-  `locked` names the columns it draws read only (an owner's role). A chip
+  `locked` names the columns it draws read only (an owner's role), and in an editable table a
+  cell it locks (one its column would edit) ends in a `LOCK_GLYPH`, read aloud as the word
+  `locked`. A column's own `locked` (a reason string) makes the column read only in this table:
+  its cells never edit and carry no glyph, since a lock on every cell of a column is noise, and
+  its head draws the glyph after the label, reading aloud "Locked, {reason}". Both scopes share
+  `cellEdit` and `cellLocked` in `./list-state`. A chip
   column's pick draws its value and options as the column's chips (the Picker's internal base), and
   an Input, a Picker or a Checkbox inside a cell stands at the bar fit, named by the cell and out of
   the tab order, by the cell's context. An edit the keyboard or a tap starts mounts its cell's
@@ -665,6 +670,15 @@ a tick with no animation, never jumped to full.
   for a row, and a Group child loses the row's leading and title. `RowSlots` carries `act` and
   `entry`; `rowShape` reads them by key, so a waiting row draws a field-high bar and an act's
   bar (`SKELETON {kind: bar}`) in their places, the entry's line in the meta line's.
+- A value outside its editable context reads locked on the fact's own row: `DefinitionRow.locked`
+  is a `Lock` (`reason`, `href`), drawing a `LOCK_GLYPH` (`Lock` at `icon-meta`, the meta ink,
+  read aloud as the word `locked`) after the value and the reason as the row's meta line, the
+  whole line an inline `Link` when `href` names what holds it ("Held by CR-12, Ana"). The value
+  stays (`copyable` too); the row takes no `description`, `act`, `href` or `onOpen` (a union on
+  `locked`), since the reason is its one line and its one link, never a link inside a row that
+  opens. `FormField` keeps `disabled` for a control that cannot take input now; a held fact is
+  not a disabled input. Rejected: a `Part` kind carrying a link, which would put links in every
+  meta line where the row itself may be the hit.
 - A read that answers not found is `missing`, a state of its own beside `failed`: every read
   ends in content, "does not exist" with a way back, or Retry, and Retry cannot bring back what
   was removed. `missing(query)` in `./list-state` reads the query's `error` by shape, true for
@@ -832,7 +846,7 @@ a tick with no animation, never jumped to full.
 - The canon binds every component either UI plugin ships: one name per concept (`label`,
   `loading`, `onChange`, `onAct`, `act`, `blocked`, `sentence`), composed regions as typed
   descriptors (`Act`, `StatusMark`, `ChipMark`, `RowLeading`, `RowTrailing`, `PlaceSpec`, `Switcher`, `Option`, `OptionGroup`, `Part`, `FieldBinding`, `MessageDetail`,
-  `Confirmation`, `MenuItem`, `RowEntry`, `Answered`, `TableColumn`, `TableRowSlots`) instead of node slots, and no
+  `Confirmation`, `MenuItem`, `RowEntry`, `Lock`, `Answered`, `TableColumn`, `TableRowSlots`) instead of node slots, and no
   `class` / `className` / `classList` / `style` prop. Laws live in the README under `## The
   canon`. An icon is an `IconName`, a closed type over Lucide's PascalCase
   names read off the `lucide` package ui-core depends on: the set is baked in, never a consumer

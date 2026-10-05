@@ -102,6 +102,11 @@ array `value`.
 />
 ```
 
+A value outside its editable context is a `DefinitionRow` with `locked`, a `Lock` (`reason`,
+`href`): the value stays, a lock follows it and the reason stands under it, the whole line a link
+with an `href` ("Held by CR-12, Ana"). A locked row takes no `description`, `act`, `href` or
+`onOpen`. A held value is never a disabled `FormField`.
+
 ## Collections take data
 
 A collection takes data and draws its states. A `List` takes its `query` (or static
@@ -125,7 +130,9 @@ opened by an address after it was removed then needs no screen of its own.
 
 A `Table` takes its data the same way: `query` with `sentence`, or `items`; each column reads its
 cell from the item by `cell`, and `row` gives the row's `id`, `href` and `locked`. It draws its
-states itself, with no `QueryBoundary` around it.
+states itself, with no `QueryBoundary` around it. An editable table (`onEdit`) draws a lock after a
+cell its row locks; a column's own `locked` (a reason) makes it read only, its lock in the head
+alone.
 
 ```tsx
 <List

@@ -175,6 +175,14 @@ export interface Answered {
 	onEdit: () => void;
 }
 
+// A fact outside the context that can edit it: why it cannot change here, a
+// request that holds it ("Held by CR-12, Ana"). With `href` the whole
+// reason is a link to what holds it.
+export interface Lock {
+	reason: string;
+	href?: Route;
+}
+
 // What a typing control inside a bound `FormField` takes: the field's value,
 // its change handler, and, when the binding autosaves, what hears each
 // commit (`CommitMoment` in `./commit`: the viewer left the field or pressed
@@ -359,6 +367,9 @@ interface ColumnBase {
 	width?: ColumnWidth;
 	align?: "start" | "end";
 	sortable?: boolean;
+	// Why the column is read only in this table: its cells never edit (its
+	// `edit` is ignored) and its head draws a lock, the reason read aloud.
+	locked?: string;
 }
 
 // A column by the kind of value its cells hold, each kind with the edits
