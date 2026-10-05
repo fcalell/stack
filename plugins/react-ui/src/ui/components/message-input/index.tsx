@@ -1,5 +1,9 @@
 import { cn } from "@fcalell/ui-core/cn";
-import type { Attachment, Notice } from "@fcalell/ui-core/descriptors";
+import type {
+	Attachment,
+	Notice,
+	PickedFile,
+} from "@fcalell/ui-core/descriptors";
 import {
 	field,
 	fieldValue,
@@ -16,16 +20,26 @@ import {
 	MESSAGE_NOTICE_TEXT,
 	text,
 } from "@fcalell/ui-core/variants";
-import { type KeyboardEvent, type ReactNode, useId, useRef } from "react";
+import {
+	type ChangeEvent,
+	type ClipboardEvent,
+	type DragEvent,
+	type KeyboardEvent,
+	type ReactNode,
+	useId,
+	useRef,
+	useState,
+} from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { FieldDisabled } from "../../lib/field.ts";
 import { ActInert } from "../../lib/form.ts";
 import { useTouch } from "../../lib/media.ts";
+import { pickedFrom } from "../../lib/picked.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Button } from "../button/index.tsx";
-import { Chip } from "../chip/index.tsx";
 import { IconButtonBase } from "../icon-button/base.tsx";
 import { IconButton } from "../icon-button/index.tsx";
+import { Attachments } from "../message/attachments.tsx";
 
 const ROOT = "flex flex-col w-full";
 const STACK = "flex flex-col";
@@ -39,7 +53,8 @@ const FIELD_BOX = "flex flex-col justify-center grow min-w-0";
 const VALUE =
 	"block w-full resize-none field-sizing-content overflow-y-auto outline-none placeholder:text-ink-meta disabled:text-ink-disabled disabled:placeholder:text-ink-disabled";
 const ROW = "flex items-end";
-const CHIPS = "flex flex-wrap";
+// A file dragged over the input lights its boundary as the pointer does.
+const OVER = "border-edge-hover";
 const FOOT = "flex items-center";
 const SPACER = "grow";
 // Stop, while an answer comes, and Send: never narrowed by the text.
@@ -54,11 +69,11 @@ export interface MessageInputProps extends Closed {
 	value: string;
 	/** Hears every keystroke's value. */
 	onChange: (value: string) => void;
-	/** The files going with the message, each a chip. */
+	/** The files going with the message: an attachment with `src` a thumbnail, one without a chip of its name. */
 	attachments?: readonly Attachment[];
-	/** Adds a file: the attach act stands before the text. */
-	onAttach?: () => void;
-	/** Removes an attachment by its id: each chip carries its remove act. */
+	/** Hears the files the viewer brings: the attach act opens the system's file dialog before the text, and a file pasted into the text or dropped on the input comes the same way. Turn each into an `Attachment` and pass it back. */
+	onAttach?: (files: readonly PickedFile[]) => void;
+	/** Removes an attachment by its id: each carries its remove act. */
 	onDetach?: (id: string) => void;
 	/** The hint drawn while the text is empty; never the field's name. */
 	placeholder?: string;
@@ -93,7 +108,8 @@ export function MessageInput({
 	const empty = value.trim() === "";
 	const sendable = !empty && !disabled;
 	const textField = useRef<HTMLTextAreaElement>(null);
-	const chipRow = useRef<HTMLDivElement>(null);
+	const chooser = useRef<HTMLInputElement>(null);
+	const [over, setOver] = useState(false);
 	const noticeId = useId();
 	// Focus never drops to the page: Send and Stop hand it to the text, a
 	// removed chip to the next chip's remove, else the previous one's.
@@ -105,12 +121,43 @@ export function MessageInput({
 		onStop?.();
 		textField.current?.focus();
 	};
-	const detach = (id: string, index: number) => {
-		const removes = chipRow.current?.querySelectorAll("button") ?? [];
-		const next = removes[index + 1] ?? removes[index - 1] ?? textField.current;
-		onDetach?.(id);
-		next?.focus();
+	// Every way a file arrives (the dialog, a paste, a drop) ends here.
+	const take = (files: ArrayLike<File>) => {
+		if (files.length > 0) onAttach?.(Array.from(files, pickedFrom));
 	};
+	const choose = (event: ChangeEvent<HTMLInputElement>) => {
+		take(event.currentTarget.files ?? []);
+		// The same file chosen again is a change the input would not report.
+		event.currentTarget.value = "";
+	};
+	// A pasted screenshot is a file; pasted text stays the text area's.
+	const paste = (event: ClipboardEvent<HTMLTextAreaElement>) => {
+		if (event.clipboardData.files.length === 0) return;
+		event.preventDefault();
+		take(event.clipboardData.files);
+	};
+	const dropping =
+		onAttach && !disabled
+			? {
+					onDragOver: (event: DragEvent<HTMLDivElement>) => {
+						if (!event.dataTransfer.types.includes("Files")) return;
+						event.preventDefault();
+						setOver(true);
+					},
+					onDragLeave: (event: DragEvent<HTMLDivElement>) => {
+						const next = event.relatedTarget;
+						if (next instanceof Node && event.currentTarget.contains(next))
+							return;
+						setOver(false);
+					},
+					onDrop: (event: DragEvent<HTMLDivElement>) => {
+						setOver(false);
+						if (event.dataTransfer.files.length === 0) return;
+						event.preventDefault();
+						take(event.dataTransfer.files);
+					},
+				}
+			: undefined;
 	// A phone's return key breaks the line; the desktop's sends.
 	const keyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
 		if (touch || event.key !== "Enter" || event.shiftKey) return;
@@ -118,7 +165,7 @@ export function MessageInput({
 		event.preventDefault();
 		if (sendable) send();
 	};
-	const box = cn(BOX_FOCUS, disabled ? BOX_DISABLED : BOX_HOVER);
+	const box = cn(BOX_FOCUS, disabled ? BOX_DISABLED : BOX_HOVER, over && OVER);
 	// A disabled input keeps its attach act, inert, so the field stands at one
 	// x and width in both forms.
 	const attach = onAttach ? (
@@ -127,21 +174,18 @@ export function MessageInput({
 				icon="Paperclip"
 				fit="bar"
 				label={words.attach}
-				onAct={onAttach}
+				onAct={() => chooser.current?.click()}
 			/>
 		</FieldDisabled>
 	) : null;
 	const chips =
-		attachments && attachments.length > 0
-			? attachments.map((attachment, index) => (
-					<Chip
-						key={attachment.id}
-						family="neutral"
-						label={attachment.name}
-						onRemove={onDetach && (() => detach(attachment.id, index))}
-					/>
-				))
-			: null;
+		attachments && attachments.length > 0 ? (
+			<Attachments
+				attachments={attachments}
+				onRemove={onDetach}
+				fallback={textField}
+			/>
+		) : null;
 	const textarea = (
 		<textarea
 			ref={textField}
@@ -149,6 +193,7 @@ export function MessageInput({
 			value={value}
 			onChange={(event) => onChange(event.target.value)}
 			onKeyDown={keyDown}
+			onPaste={onAttach && paste}
 			aria-label={words.message}
 			placeholder={placeholder}
 			disabled={disabled}
@@ -199,6 +244,7 @@ export function MessageInput({
 			<div className={cn(MESSAGE_INPUT_ROW, ROW)}>
 				{attach}
 				<div
+					{...dropping}
 					className={cn(
 						field({ fit: "bar", trailing: "none", state: "rest" }),
 						MESSAGE_INPUT_FIELD,
@@ -206,11 +252,7 @@ export function MessageInput({
 						box,
 					)}
 				>
-					{chips ? (
-						<div ref={chipRow} className={cn(MESSAGE_INPUT_ROW, CHIPS)}>
-							{chips}
-						</div>
-					) : null}
+					{chips}
 					{textarea}
 				</div>
 				{acts}
@@ -240,12 +282,8 @@ export function MessageInput({
 			);
 	} else {
 		input = (
-			<div className={cn(MESSAGE_INPUT_BOX, STACK, box)}>
-				{chips ? (
-					<div ref={chipRow} className={cn(MESSAGE_INPUT_CHIPS, CHIPS)}>
-						{chips}
-					</div>
-				) : null}
+			<div {...dropping} className={cn(MESSAGE_INPUT_BOX, STACK, box)}>
+				{chips ? <div className={MESSAGE_INPUT_CHIPS}>{chips}</div> : null}
 				<div className={MESSAGE_INPUT_TEXT}>{textarea}</div>
 				<div className={cn(MESSAGE_INPUT_FOOT, FOOT)}>
 					{attach}
@@ -266,6 +304,9 @@ export function MessageInput({
 	}
 	return (
 		<div className={cn(MESSAGE_INPUT, ROOT)}>
+			{onAttach ? (
+				<input ref={chooser} type="file" multiple hidden onChange={choose} />
+			) : null}
 			{input}
 			{under}
 		</div>

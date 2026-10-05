@@ -1,10 +1,14 @@
-import type { MessageDetail } from "@fcalell/ui-core/descriptors";
+import type {
+	Attachment,
+	MessageDetail,
+	Part,
+} from "@fcalell/ui-core/descriptors";
 import { useState } from "react";
 import { MessageInput } from "../../components/message-input/index.tsx";
 import { type MessageSlots, Thread } from "../../components/thread/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
 import { queryOf } from "./layout-context.tsx";
-import { REPLY, today } from "./message.tsx";
+import { ATTACHED, REPLY, today } from "./message.tsx";
 
 const act = () => {};
 
@@ -17,6 +21,9 @@ interface Turn {
 	opens?: boolean;
 	// What stands under a system line.
 	detail?: MessageDetail;
+	// What came with a turn, and where it came from.
+	attachments?: Attachment[];
+	meta?: Part[];
 }
 
 const NAME = { you: "You", other: "Assistant" } as const;
@@ -30,6 +37,8 @@ export const TURN: MessageSlots<Turn> = {
 	at: (turn) => turn.at,
 	onOpen: (turn) => (turn.opens ? act : undefined),
 	detail: (turn) => turn.detail,
+	attachments: (turn) => turn.attachments,
+	meta: (turn) => turn.meta,
 };
 
 export const TURNS: Turn[] = [
@@ -72,6 +81,14 @@ export const TURNS: Turn[] = [
 		author: "you",
 		body: "Open it, and hold the redeploy until I have read it.",
 		at: today("10:05"),
+		meta: ["by voice", "Kitchen"],
+	},
+	{
+		id: "t5-shot",
+		author: "you",
+		body: "Why did this payment fail?",
+		at: today("10:05"),
+		attachments: ATTACHED,
 	},
 	{
 		id: "t6",

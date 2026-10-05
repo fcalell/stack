@@ -14,6 +14,7 @@ import {
 import { type ChangeEvent, type DragEvent, use, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { FieldDisabled, FieldRefusal } from "../../lib/field.ts";
+import { pickedFrom } from "../../lib/picked.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Icon } from "../icon/index.tsx";
 import { IconButton } from "../icon-button/index.tsx";
@@ -50,15 +51,6 @@ export interface FileInputProps extends Closed {
 	onChange: (file: PickedFile | null) => void;
 	/** The types it takes: MIME types or families (`text/csv`, `image/*`) and extensions (`.har`). */
 	accept: readonly string[];
-}
-
-function pickedFrom(file: File): PickedFile {
-	return {
-		name: file.name,
-		size: file.size,
-		type: file.type,
-		blob: () => Promise.resolve(file),
-	};
 }
 
 /** A field box that is the act: empty it reads Choose file, chosen it shows the file's name and size with an act that removes it. A file dropped on the box is taken as one chosen; a file of another type is refused into its `FormField`'s error line, which clears on the next pick. */

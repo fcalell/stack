@@ -405,6 +405,7 @@ export const OVERLAYS: readonly string[] = [
 	"self-start",
 	// Stages
 	"w-icon-meta",
+	"border-edge-hover",
 	// Image
 	"object-contain",
 	"size-full",

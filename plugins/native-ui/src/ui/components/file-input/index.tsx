@@ -20,6 +20,7 @@ import {
 	useFieldName,
 } from "../../lib/field";
 import { Ink } from "../../lib/ink";
+import { pickedFromDocument } from "../../lib/picked";
 import { useTouched } from "../../lib/touched";
 import { useWords } from "../../lib/words";
 import { Icon } from "../icon";
@@ -36,15 +37,6 @@ export interface FileInputProps extends Closed {
 	value: PickedFile | null;
 	onChange: (file: PickedFile | null) => void;
 	accept: readonly string[];
-}
-
-function pickedFrom(asset: DocumentPicker.DocumentPickerAsset): PickedFile {
-	return {
-		name: asset.name,
-		size: asset.size ?? 0,
-		type: asset.mimeType ?? "",
-		blob: () => fetch(asset.uri).then((response) => response.blob()),
-	};
 }
 
 // A field box that is the act: a press anywhere in it opens the system's
@@ -69,7 +61,7 @@ export function FileInput({ value, onChange, accept }: FileInputProps) {
 		const asset = result.canceled ? undefined : result.assets[0];
 		if (!asset) return;
 		touch();
-		const file = pickedFrom(asset);
+		const file = pickedFromDocument(asset);
 		if (!accepts(file, accept)) {
 			refuse?.(
 				filled(words.wrongType, { name: file.name, types: accept.join(", ") }),

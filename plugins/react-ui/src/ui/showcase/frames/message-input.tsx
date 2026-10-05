@@ -1,7 +1,12 @@
-import type { Attachment, Notice } from "@fcalell/ui-core/descriptors";
+import type {
+	Attachment,
+	Notice,
+	PickedFile,
+} from "@fcalell/ui-core/descriptors";
 import { type ReactNode, useState } from "react";
 import { MessageInput } from "../../components/message-input/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
+import { SCREEN } from "./image.tsx";
 import { Wide } from "./layout-context.tsx";
 
 const act = () => {};
@@ -29,6 +34,11 @@ const FILES: Attachment[] = [
 	{ id: "b", name: "deploy-api-a81d-production-rollback.log" },
 	{ id: "c", name: "wrangler.toml" },
 ];
+// An image and a file, as the viewer pastes or drops them.
+const PICTURES: Attachment[] = [
+	{ id: "p", name: "Checkout page after the failed payment", src: SCREEN },
+	{ id: "q", name: "deploy-api-4f2c.log" },
+];
 const UPGRADE: Notice = {
 	sentence: "12 of 50 answers left this month.",
 	act: { label: "Upgrade", onAct: act },
@@ -37,8 +47,17 @@ const QUEUED: Notice = {
 	sentence: "A message sent now is read once this answer ends.",
 };
 
+// A consumer's answer to `onAttach`: an image keeps a local address to draw
+// as its thumbnail, any other file only its name.
+async function attachmentOf(file: PickedFile): Promise<Attachment> {
+	const id = crypto.randomUUID();
+	if (!file.type.startsWith("image/")) return { id, name: file.name };
+	return { id, name: file.name, src: URL.createObjectURL(await file.blob()) };
+}
+
 // One input as a viewer drives it: typing, sending (which clears the text
-// and works until Stop), attaching and detaching.
+// and works until Stop), attaching (the dialog, a paste, a drop) and
+// detaching.
 function Live(props: {
 	value?: string;
 	attachments?: Attachment[];
@@ -55,7 +74,11 @@ function Live(props: {
 			value={value}
 			onChange={setValue}
 			attachments={files}
-			onAttach={act}
+			onAttach={(picked) =>
+				Promise.all(picked.map(attachmentOf)).then((added) =>
+					setFiles((now) => [...(now ?? []), ...added]),
+				)
+			}
 			onDetach={(id) =>
 				setFiles((now) => now?.filter((file) => file.id !== id))
 			}
@@ -113,6 +136,8 @@ function Rest(props: { cell: string }) {
 		return (
 			<Live value="What changed between these two runs?" attachments={FILES} />
 		);
+	if (cell.startsWith("IMAGE") || cell === "MESSAGE_ATTACHMENTS")
+		return <Live value="Why did this payment fail?" attachments={PICTURES} />;
 	if (cell.startsWith("FIELD"))
 		return (
 			<>

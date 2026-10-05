@@ -573,12 +573,16 @@ export const TABLE_NAME = "gap-inside";
 // pill at the target height with the pointer's washes. Under a system line,
 // its card: one list row in a hairline card on the surface; a free act's code
 // and its fold's lines start-aligned across the column at the pill's inset,
-// the code in the meta ink, ranking under its verb.
+// the code in the meta ink, ranking under its verb. Its attachments stand in
+// one wrapping row a gap apart, over the bubble at the column's end (the
+// `MessageInput` draws the same row over its text), and its provenance line
+// (`meta`) leads the time.
 export const MESSAGE_BUBBLE = "rounded-card bg-group px-tile py-pair";
 export const MESSAGE_HEAD = "gap-inside";
 export const MESSAGE_LINE = "gap-x-inside";
 export const MESSAGE_OPEN =
 	"gap-inside rounded-control px-inside min-h-target text-ink-meta";
+export const MESSAGE_ATTACHMENTS = "gap-inside";
 export const MESSAGE_CARD = "rounded-card border border-edge bg-surface";
 export const MESSAGE_CODE = "px-inside text-ink-meta";
 export const MESSAGE_FOLD = "px-inside";
@@ -593,7 +597,7 @@ export const MESSAGE_FOLD = "px-inside";
 export const MESSAGE_INPUT = "gap-pair";
 export const MESSAGE_INPUT_BOX =
 	"gap-rows rounded-card border border-edge bg-surface p-inside";
-export const MESSAGE_INPUT_CHIPS = "gap-inside px-inside pt-inside";
+export const MESSAGE_INPUT_CHIPS = "px-inside pt-inside";
 export const MESSAGE_INPUT_TEXT = "px-inside py-inside";
 export const MESSAGE_INPUT_VALUE = "max-h-message-input";
 export const MESSAGE_INPUT_FOOT = "gap-inside";
@@ -681,6 +685,12 @@ export const IMAGE_CLOSE = "rounded-control bg-raised shadow-float";
 // StepCount: its segments a gap apart over its words.
 export const STEP_COUNT = "gap-pair";
 export const STEP_COUNT_SEGMENTS = "gap-inside";
+
+// A thumbnail's remove act (an attachment's, in the `MessageInput`): the chip
+// remove's round hit box on a lifted disc, a gap in from the thumbnail's
+// corner, the disc keeping the glyph legible over any picture.
+export const IMAGE_REMOVE =
+	"m-inside min-h-chip min-w-chip rounded-full bg-raised shadow-float";
 
 // ── Layout ──────────────────────────────────────────────────────────
 

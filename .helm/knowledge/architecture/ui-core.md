@@ -129,7 +129,7 @@ pinned by the package's verify suite; this entry holds the architecture and its 
 ## Words
 
 Every word a molecule draws or reads aloud on its own (the seven `Status` words, `recommended`,
-`copy`, `copied`, `download`, `back`, `close`, `cancel`, `dismiss`, `more`, `send`, `stop`, `attach`, `search`, `loading`, `checking`, `retry`, `saving`, `saved`, `notSaved`, `add`, `remove`, `edit`, `details`, `places`, `notifications`, `code`, `added`, `removed`, `sort`, `ascending`, `descending`, `time`, `message`, `seen`, `unseen`, `copyFailed`, `latest`, `missing`, `typeValue`, `pickValue`, `chooseFile`, `warning`, `locked`, the counted `earlierLines`, and the slot words `meterValue`, `meterOver`, `meterMark`, `linesAdded`, `linesRemoved`, `changed`, `wrongType` and `stepOf`) comes
+`copy`, `copied`, `download`, `back`, `close`, `cancel`, `dismiss`, `more`, `send`, `stop`, `attach`, `search`, `loading`, `checking`, `retry`, `saving`, `saved`, `notSaved`, `add`, `remove`, `edit`, `details`, `places`, `notifications`, `code`, `added`, `removed`, `sort`, `ascending`, `descending`, `time`, `message`, `seen`, `unseen`, `copyFailed`, `latest`, `missing`, `typeValue`, `pickValue`, `chooseFile`, `photos`, `files`, `warning`, `locked`, the counted `earlierLines`, and the slot words `meterValue`, `meterOver`, `meterMark`, `linesAdded`, `linesRemoved`, `changed`, `wrongType` and `stepOf`) comes
 from `words`, a closed typed object with English defaults. The `Words` type requires every key
 and `wordsSchema` is strict, so a translation missing a word fails `tsc` and the schema. It is a
 plugin option beside `theme`; each plugin contributes a `WordsProvider` into the generated entry
@@ -560,8 +560,9 @@ a tick with no animation, never jumped to full.
   renders the rows twice until Place and Screen hand their page's width to one external store.
 - A thread is a molecule (`Thread`), a collection: its Messages from `query` (with `sentence`)
   or `items` (waiting on `loading`) through the `message` map, one function per `Message` slot
-  (`key`, `author`, `name`, `body`, `at`, `onOpen` returning a system line's handler or none,
-  and `detail` returning a system line's `MessageDetail` or none), a sections gap apart (one rung above Prose's block gap), and its `MessageInput` its `foot`, the
+  (`key`, `author`, `name`, `body`, `at`, `attachments` and `meta` for a turn, `onOpen`
+  returning a system line's handler or none, and `detail` returning a system line's
+  `MessageDetail` or none), a sections gap apart (one rung above Prose's block gap), and its `MessageInput` its `foot`, the
   one authored part, drawn in every state. Pending, the log holds Message's own loading forms in a
   fixed order (`WAITING_MESSAGES`: another's reply, yours, another's reply), for each author is
   the item's and unknown before the data, each at its loaded height (yours its bubble over its
@@ -645,6 +646,32 @@ a tick with no animation, never jumped to full.
   (`keyboardShouldPersistTaps="handled"`) and a docked foot standing outside any scroll. The web
   input refocuses its text after Send and Stop, which is keyboard focus management there. A
   removed chip hands the screen reader's focus on (`sendAccessibilityEvent`), never the keyboard.
+- A message carries what came with it: `Message` for `you` and `other` takes `attachments`
+  (`Attachment`: an id, a name and an optional `src`, an image's address) and `meta` (`Part[]`,
+  the name `ListRow` gives its meta line), `system` takes neither. The attachments stand in one
+  wrapping row (`MESSAGE_ATTACHMENTS`) over the bubble at the column's end, over another's reply
+  start-aligned; one with `src` is an `Image` at `thumb` (it opens full size, so the mechanism
+  stays Image's), one without a neutral `Chip` of its name. `meta` is the provenance ("by voice",
+  "Kitchen"), joined by a middle dot before the time in the line under the bubble, beside the
+  name over a reply; a message with no body draws no bubble, so an image sent alone stands
+  alone. The row is one internal part (`message/attachments`) in each plugin that `MessageInput`
+  draws as well, so the two never differ; only the input passes `onRemove`. A thumbnail's
+  remove act is `IMAGE_REMOVE`, the chip remove's round hit box on a lifted disc a gap in from the
+  tile's corner, so the glyph reads over any picture; the outside-content mark a product may want
+  on each attachment is not built, since the product says it once (a notice or a header fact).
+- `MessageInput.onAttach(files)` hears every file the viewer brings, as `PickedFile`s (the
+  file control's descriptor, its `accepts` left to the consumer, who turns a file into an
+  `Attachment`, uploading or reading it as the product needs, and passes it back). Stack owns the
+  chooser. On the web the attach act clicks a hidden multiple file input, a file pasted into the
+  text (any clipboard file; pasted text stays the text area's) and one dropped on the input come
+  through the same callback, and a drag-over draws the field's `edge-hover` boundary. On the
+  phone the act opens the menu sheet with Photos (`expo-image-picker`, the library, no permission
+  asked for the system picker) and Files (`expo-document-picker`), both native-ui peers
+  declared as `expo-clipboard` is. The phone has no paste: React Native 0.85's `TextInput`
+  exposes no paste event and hands over no pasted image, so the phone takes files through the
+  attach act alone, a limit until React Native gives the text input one. A picked photo's
+  `PickedFile` reads its bytes through `blob()` like every file; it carries no local address, so
+  a phone product shows its thumbnail once the file is uploaded and has an address.
 - Focus at mount is declarative on native: a typing control (`Input`, `InputOtp`) takes
   `autoFocus` from `FieldFocus`, which the caller that knows no other field holds focus sets (a
   confirm's typed name), never a mount effect reading the focused input.

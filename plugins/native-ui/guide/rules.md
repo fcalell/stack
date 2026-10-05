@@ -192,7 +192,7 @@ form: a set (`onChange` hears the set) draws check rows, one value or `null` (`o
 the value) radio rows, one answer among a few described options.
 
 A `Thread` takes its `query` (or `items`) the same way through a `message` map (`key`,
-`author`, `name`, `body`, `at`, `onOpen`, `detail`), each reading only its item, since a message
+`author`, `name`, `body`, `at`, `attachments`, `meta`, `onOpen`, `detail`), each reading only its item, since a message
 draws again only when its item changes; its `MessageInput` stays the `foot`. In a
 `Place`'s body, or in a `Split`'s `main` under the record's `ItemHeader`, it fills what holds it:
 its log scrolls and the input docks at the foot. It stands there as the body's direct child, or
@@ -202,6 +202,13 @@ system line names stands under it as its `detail`, a `MessageDetail`, exactly on
 (a `ListRow`'s slots, in a hairline card, opening its record), a free act's `code` under its
 verb, or a `fold` of lines the line opens in place; never a `ListRow` or a `Code` between the
 messages.
+
+A `MessageInput`'s `onAttach` hears `PickedFile`s: the paperclip opens the photo library or the
+files, and a file picked comes through it. A paste into the text brings nothing, since React
+Native's `TextInput` hands over no pasted image. Turn each file into an `Attachment`
+(`{ id, name, src? }`, `src` for an image) and pass it back through `attachments`: an image
+draws as a thumbnail with its remove act, a file as a chip. A `Message` for `you` or `other`
+takes the same `attachments`, and `meta` (`"by voice"`, `"Kitchen"`) before its time.
 
 A field that stays in view while a `Place`'s sections scroll under it (an ask box over a
 home's sections) is the Place's `foot`: it docks at the Place's bottom, above the tab bar on

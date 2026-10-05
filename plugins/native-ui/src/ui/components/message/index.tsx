@@ -1,4 +1,8 @@
-import type { MessageDetail } from "@fcalell/ui-core/descriptors";
+import type {
+	Attachment,
+	MessageDetail,
+	Part,
+} from "@fcalell/ui-core/descriptors";
 import {
 	lineBox,
 	MESSAGE_BUBBLE,
@@ -20,9 +24,11 @@ import { cn } from "../../lib/cn";
 import { GroundContext } from "../../lib/ground";
 import { Ink } from "../../lib/ink";
 import { moment } from "../../lib/moment";
+import { joinParts, META_CUT } from "../../lib/parts";
 import { Icon } from "../icon";
 import { ListRow } from "../list-row";
 import { Prose } from "../prose";
+import { Attachments } from "./attachments";
 
 const YOURS = "items-end";
 // The line centred; a free act's code or an open fold's lines under it
@@ -34,6 +40,8 @@ const LINE_TEXT = "flex-row flex-wrap justify-center min-w-0";
 // A React Native text never shrinks in a row unless told, so a long line
 // wraps inside the row instead of running past it.
 const WORDS = "shrink min-w-0 text-center";
+const TRAIL = "shrink min-w-0";
+const TRAIL_END = "max-w-4/5 text-right";
 const OPEN = "flex-row items-center min-w-0 active:bg-wash-press";
 const HEAD = "flex-row items-baseline";
 const BUBBLE = "max-w-4/5";
@@ -63,6 +71,13 @@ export type MessageProps =
 			author: "you" | "other";
 			// Who said it: drawn over `other`'s reply, read aloud before yours.
 			name?: string;
+			// What came with it, one row over the bubble (yours at the column's
+			// end) or the reply: an attachment with `src` a thumbnail that opens
+			// full size, one without a chip of its name.
+			attachments?: readonly Attachment[];
+			// Where it came from ("by voice", "Kitchen"), joined by a middle dot
+			// before the time.
+			meta?: readonly Part[];
 			onOpen?: never;
 			detail?: never;
 	  })
@@ -76,6 +91,8 @@ export type MessageProps =
 			// lines the line opens in place (it takes no `onOpen` then).
 			detail?: MessageDetail;
 			name?: never;
+			attachments?: never;
+			meta?: never;
 	  });
 
 // A system line and its detail: the fold's toggle over its lines, or the line
@@ -168,8 +185,10 @@ function LineWait({ role, bar }: { role: "body" | "meta"; bar: string }) {
 	);
 }
 
-// Yours a bubble on the group ground at the column's end, the time under it;
-// another's the name at body 500 beside the time over the reply as Prose; a
+// Yours a bubble on the group ground at the column's end, its attachments in
+// one row over it, its provenance line and the time under it;
+// another's the name at body 500 beside the provenance and the time over its
+// attachments and the reply as Prose; a
 // system line one meta line centred in a row at the target height, its time
 // beside it.
 // Memoised on its props: a thread's re-render skips each message whose
@@ -203,7 +222,26 @@ export const Message = memo(function Message(props: MessageProps) {
 			/>
 		);
 	}
-	const { name } = props;
+	const { name, attachments, meta } = props;
+	const attached = attachments?.length ? (
+		<Attachments attachments={attachments} end={author === "you"} />
+	) : null;
+	// The provenance leads the time, one unit that wraps at its dots.
+	const line = meta?.length ? (
+		<RNText
+			className={cn(
+				text({ role: "meta" }),
+				TRAIL,
+				author === "you" && TRAIL_END,
+			)}
+		>
+			{[joinParts(meta, META_CUT), at && moment(at)]
+				.filter(Boolean)
+				.join(" · ")}
+		</RNText>
+	) : (
+		time
+	);
 	if (author === "you") {
 		if (loading)
 			return (
@@ -221,15 +259,18 @@ export const Message = memo(function Message(props: MessageProps) {
 		// the words as part of the bubble's name.
 		return (
 			<View className={cn(message({ author }), YOURS)}>
-				<View className={cn(MESSAGE_BUBBLE, BUBBLE)}>
-					<RNText
-						accessibilityLabel={name ? `${name}, ${body}` : undefined}
-						className={text({ role: "body" })}
-					>
-						{body}
-					</RNText>
-				</View>
-				{time}
+				{attached}
+				{body ? (
+					<View className={cn(MESSAGE_BUBBLE, BUBBLE)}>
+						<RNText
+							accessibilityLabel={name ? `${name}, ${body}` : undefined}
+							className={text({ role: "body" })}
+						>
+							{body}
+						</RNText>
+					</View>
+				) : null}
+				{line}
 			</View>
 		);
 	}
@@ -247,7 +288,7 @@ export const Message = memo(function Message(props: MessageProps) {
 		);
 	return (
 		<View className={message({ author })}>
-			{name || time ? (
+			{name || line ? (
 				<View className={cn(MESSAGE_HEAD, HEAD)}>
 					{name ? (
 						<RNText
@@ -259,10 +300,11 @@ export const Message = memo(function Message(props: MessageProps) {
 							{name}
 						</RNText>
 					) : null}
-					{time}
+					{line}
 				</View>
 			) : null}
-			<Prose markdown={body} />
+			{attached}
+			{body ? <Prose markdown={body} /> : null}
 		</View>
 	);
 });

@@ -1,6 +1,10 @@
 import { Button as BaseButton } from "@base-ui/react/button";
 import { cn } from "@fcalell/ui-core/cn";
-import type { MessageDetail } from "@fcalell/ui-core/descriptors";
+import type {
+	Attachment,
+	MessageDetail,
+	Part,
+} from "@fcalell/ui-core/descriptors";
 import {
 	lineBox,
 	MESSAGE_BUBBLE,
@@ -19,9 +23,11 @@ import { memo, type ReactNode, useId, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { GroundContext } from "../../lib/ground.ts";
 import { moment } from "../../lib/moment.ts";
+import { joinParts, META_CUT } from "../../lib/parts.ts";
 import { Icon } from "../icon/index.tsx";
 import { ListRow } from "../list-row/index.tsx";
 import { Prose } from "../prose/index.tsx";
+import { Attachments } from "./attachments.tsx";
 
 const STACK = "flex flex-col";
 const YOURS = "flex flex-col items-end";
@@ -41,6 +47,7 @@ const BUBBLE = "max-w-4/5";
 // A token too long for the line (a link, a hash) breaks anywhere.
 const BODY = "whitespace-pre-wrap wrap-anywhere";
 const WORDS = "min-w-0 wrap-anywhere";
+const TRAIL_END = "max-w-4/5 text-end";
 const LINE = "flex items-center h-lh";
 const BAR = "w-full";
 // A time reads as one unit: it never shrinks or breaks beside a long line.
@@ -66,6 +73,10 @@ export type MessageProps =
 			author: "you" | "other";
 			/** Who said it: drawn over `other`'s reply, read aloud before yours. */
 			name?: string;
+			/** What came with it, one row over the bubble (yours at the column's end) or the reply: an attachment with `src` a thumbnail that opens full size, one without a chip of its name. */
+			attachments?: readonly Attachment[];
+			/** Where it came from ("by voice", "Kitchen"), joined by a middle dot before the time. */
+			meta?: readonly Part[];
 			onOpen?: never;
 			detail?: never;
 	  })
@@ -77,6 +88,8 @@ export type MessageProps =
 			/** What stands under the line, one of three: a row in a hairline card that opens its record, a free act's arguments in the code role, or lines the line opens in place (it takes no `onOpen` then). */
 			detail?: MessageDetail;
 			name?: never;
+			attachments?: never;
+			meta?: never;
 	  });
 
 // A system line and its detail: the fold's toggle over its lines, or the line
@@ -155,7 +168,7 @@ function SystemMessage(props: {
 
 // Memoised on its props: a thread's re-render skips each message whose
 // author, body and time are unchanged.
-/** Yours a bubble on the group ground at the column's end, the time under it; another's the name at body 500 beside the time over the reply as Prose; a system line one meta line centred in a row at the target height, its time beside it, its detail under it: a free act's code in the meta ink or a fold's meta lines once its chevron opens them, each start-aligned across the column, or a hairline card holding one row. */
+/** Yours a bubble on the group ground at the column's end, its attachments in one row over it, its provenance line and the time under it; another's the name at body 500 beside the provenance and the time over its attachments and the reply as Prose; a system line one meta line centred in a row at the target height, its time beside it, its detail under it: a free act's code in the meta ink or a fold's meta lines once its chevron opens them, each start-aligned across the column, or a hairline card holding one row. */
 export const Message = memo(function Message(props: MessageProps) {
 	const { author, body, at, loading } = props;
 	const time = at ? (
@@ -181,7 +194,26 @@ export const Message = memo(function Message(props: MessageProps) {
 			/>
 		);
 	}
-	const { name } = props;
+	const { name, attachments, meta } = props;
+	const attached = attachments?.length ? (
+		<Attachments attachments={attachments} end={author === "you"} />
+	) : null;
+	// The provenance leads the time, one unit that wraps at its dots.
+	const line = meta?.length ? (
+		<span
+			className={cn(
+				text({ role: "meta" }),
+				WORDS,
+				author === "you" && TRAIL_END,
+			)}
+		>
+			{joinParts(meta, META_CUT)}
+			{time ? " · " : null}
+			{time}
+		</span>
+	) : (
+		time
+	);
 	if (author === "you") {
 		if (loading)
 			return (
@@ -199,10 +231,13 @@ export const Message = memo(function Message(props: MessageProps) {
 		return (
 			<article className={cn(message({ author }), YOURS)}>
 				{name ? <p className={HIDDEN_HEAD}>{name}</p> : null}
-				<div className={cn(MESSAGE_BUBBLE, BUBBLE)}>
-					<p className={cn(text({ role: "body" }), BODY)}>{body}</p>
-				</div>
-				{time}
+				{attached}
+				{body ? (
+					<div className={cn(MESSAGE_BUBBLE, BUBBLE)}>
+						<p className={cn(text({ role: "body" }), BODY)}>{body}</p>
+					</div>
+				) : null}
+				{line}
 			</article>
 		);
 	}
@@ -227,7 +262,7 @@ export const Message = memo(function Message(props: MessageProps) {
 		);
 	return (
 		<article className={cn(message({ author }), STACK)}>
-			{name || time ? (
+			{name || line ? (
 				<p className={cn(MESSAGE_HEAD, HEAD)}>
 					{name ? (
 						<span
@@ -239,10 +274,11 @@ export const Message = memo(function Message(props: MessageProps) {
 							{name}
 						</span>
 					) : null}
-					{time}
+					{line}
 				</p>
 			) : null}
-			<Prose markdown={body} />
+			{attached}
+			{body ? <Prose markdown={body} /> : null}
 		</article>
 	);
 });

@@ -1,6 +1,6 @@
 ---
 id: 003-47
-status: backlog
+status: review
 sessions: {}
 ---
 # ui-core: the operator's message carries what came with it

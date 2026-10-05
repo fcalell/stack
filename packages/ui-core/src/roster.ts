@@ -2132,14 +2132,32 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				sizes: ["icon-meta"],
 			},
 		},
-		// Its props are a union on `author`: `you` and `other` take `name`, `system`
-		// takes `onOpen` and `detail` (a `MessageDetail`: a row, one `ListRow`
-		// in a hairline card, a free act's code, or a fold its line opens). A reply's body
-		// is a `Prose`; `at` is an ISO moment each plugin formats in the
-		// document's language (the time alone today).
+		// Its props are a union on `author`: `you` and `other` take `name`,
+		// `attachments` (an attachment with `src` a thumbnail, one without a
+		// chip of its name, in one row over the bubble) and `meta` (the
+		// provenance line before the time), `system` takes `onOpen` and
+		// `detail` (a `MessageDetail`: a row, one `ListRow` in a hairline card,
+		// a free act's code, or a fold its line opens). A reply's body is a
+		// `Prose`; `at` is an ISO moment each plugin formats in the document's
+		// language (the time alone today).
 		Message: {
-			props: ["author", "name", "body", "at", "onOpen", "detail", "loading"],
+			props: [
+				"author",
+				"name",
+				"body",
+				"at",
+				"attachments",
+				"meta",
+				"onOpen",
+				"detail",
+				"loading",
+			],
 			draws: [
+				"CHIP.family.neutral",
+				"CHIP_LABEL.family.neutral",
+				"IMAGE.fit.thumb",
+				"IMAGE_PICTURE.fit.thumb",
+				"MESSAGE_ATTACHMENTS",
 				"ICON.fit.meta",
 				"LINE_BOX.role.body",
 				"LINE_BOX.role.meta",
@@ -2169,7 +2187,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			],
 			states: [...PRESS, "loading"],
 			owns: {
-				roles: ["meta", "body", "code"],
+				roles: ["meta", "body", "code", "caption"],
 				colors: [
 					"ink-meta",
 					"group",
@@ -2180,17 +2198,29 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"wash-hover",
 					"ring",
 					"wash-press",
+					"chip-",
 				],
-				radii: ["card", "control", "chip"],
+				radii: ["card", "control", "chip", "full"],
 				spacing: ["pair", "tile", "inside"],
-				sizes: ["target", "icon-meta", "skeleton", "figures"],
+				sizes: [
+					"target",
+					"icon-meta",
+					"skeleton",
+					"figures",
+					"chip",
+					"measure-short",
+					"image-tile",
+				],
 			},
 		},
 		// Stacked on the desktop, one row on touch; `onDetach(id)` removes an
 		// attachment, and the notice's act carries its own pending, so the input
-		// has no loading form. While `working`, Stop stands before Send (an icon
-		// act on touch) and Send still sends; the notice says what becomes of a
-		// message sent then.
+		// has no loading form. `onAttach(files)` hears every file the attach act
+		// chooses (and, on the web, a paste or a drop on the input); the
+		// consumer turns a file into an `Attachment` and passes it back, a
+		// thumbnail with its remove act at its corner when it has `src`. While
+		// `working`, Stop stands before Send (an icon act on touch) and Send
+		// still sends; the notice says what becomes of a message sent then.
 		MessageInput: {
 			props: [
 				"value",
@@ -2222,7 +2252,11 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"ICON.fit.control",
 				"ICON.fit.meta",
 				"ICON_BUTTON.fit.bar",
+				"IMAGE.fit.thumb",
+				"IMAGE_PICTURE.fit.thumb",
+				"IMAGE_REMOVE",
 				"MESSAGE_ATTACH_SLOT",
+				"MESSAGE_ATTACHMENTS",
 				"MESSAGE_INPUT",
 				"MESSAGE_INPUT_BOX",
 				"MESSAGE_INPUT_CHIPS",
@@ -2265,6 +2299,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"ink-disabled",
 					"edge-hover",
 					"ring",
+					"raised",
 					"chip-neutral-soft",
 					"chip-neutral-ink",
 				],
@@ -2278,7 +2313,9 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"measure-short",
 					"icon-meta",
 					"spinner",
+					"image-tile",
 				],
+				elevation: ["float"],
 			},
 		},
 		// A bar at the `meter` size, its fill by level, its value read aloud with

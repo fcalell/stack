@@ -1,4 +1,8 @@
-import type { MessageDetail } from "@fcalell/ui-core/descriptors";
+import type {
+	Attachment,
+	MessageDetail,
+	Part,
+} from "@fcalell/ui-core/descriptors";
 import {
 	type ListState,
 	listBusy,
@@ -73,6 +77,12 @@ export interface MessageSlots<T> {
 	body: (item: T) => string;
 	// An ISO moment.
 	at?: (item: T) => string | undefined;
+	// What came with a turn: its attachments, one row over its bubble or
+	// reply; a system line takes none.
+	attachments?: (item: T) => readonly Attachment[] | undefined;
+	// Where a turn came from ("by voice", "Kitchen"), before its time; a
+	// system line takes none.
+	meta?: (item: T) => readonly Part[] | undefined;
 	// What a system line opens: the line becomes the act; a turn takes none.
 	onOpen?: (item: T) => (() => void) | undefined;
 	// What stands under a system line (a row, a free act's code, a fold); a
@@ -129,7 +139,14 @@ function ThreadItemBase<T>({
 	const at = read.at?.(item);
 	if (author !== "system")
 		return (
-			<Message author={author} name={read.name?.(item)} body={body} at={at} />
+			<Message
+				author={author}
+				name={read.name?.(item)}
+				body={body}
+				at={at}
+				attachments={read.attachments?.(item)}
+				meta={read.meta?.(item)}
+			/>
 		);
 	const opens = read.onOpen?.(item) !== undefined;
 	let detail = read.detail?.(item);

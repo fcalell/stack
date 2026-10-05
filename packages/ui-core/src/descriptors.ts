@@ -337,9 +337,12 @@ export interface PickedFile {
 	blob: () => Promise<Blob>;
 }
 
+// A file that goes with a message: a chip of its name, or, with `src` (an
+// image's address), a thumbnail that opens full size.
 export interface Attachment {
 	id: string;
 	name: string;
+	src?: string;
 }
 
 // A sentence and an act under a message input.

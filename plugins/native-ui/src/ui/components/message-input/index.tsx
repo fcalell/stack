@@ -1,4 +1,8 @@
-import type { Attachment, Notice } from "@fcalell/ui-core/descriptors";
+import type {
+	Attachment,
+	Notice,
+	PickedFile,
+} from "@fcalell/ui-core/descriptors";
 import {
 	field,
 	fieldValue,
@@ -10,23 +14,22 @@ import {
 	MESSAGE_NOTICE_TEXT,
 	text,
 } from "@fcalell/ui-core/variants";
-import { memo, useRef } from "react";
-import {
-	AccessibilityInfo,
-	Text as RNText,
-	TextInput,
-	View,
-} from "react-native";
+import * as DocumentPicker from "expo-document-picker";
+import * as ImagePicker from "expo-image-picker";
+import { useRef, useState } from "react";
+import { Text as RNText, TextInput, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { FieldDisabled } from "../../lib/field";
 import { ActInert } from "../../lib/form";
+import { pickedFromDocument, pickedFromImage } from "../../lib/picked";
 import { useTokenColor } from "../../lib/theme";
 import { useWords } from "../../lib/words";
 import { Button } from "../button";
-import { Chip } from "../chip";
 import { IconButton } from "../icon-button";
 import { IconButtonBase } from "../icon-button/base";
+import { MenuSheet } from "../menu/sheet";
+import { Attachments } from "../message/attachments";
 
 const ROOT = "w-full";
 const ROW = "flex-row items-end";
@@ -34,7 +37,6 @@ const FIELD_BOX = "justify-center grow min-w-0";
 const FIELD_DISABLED = "bg-fill-disabled";
 const VALUE = "py-0";
 const VALUE_DISABLED = "text-ink-disabled";
-const CHIPS = "flex-row flex-wrap";
 const NOTICE = "flex-row items-center";
 const NOTICE_TEXT = "flex-1 min-w-0";
 const ATTACH_SLOT = "shrink-0";
@@ -44,11 +46,15 @@ export interface MessageInputProps extends Closed {
 	value: string;
 	// Hears every keystroke's value.
 	onChange: (value: string) => void;
-	// The files going with the message, each a chip.
+	// The files going with the message: an attachment with `src` a thumbnail,
+	// one without a chip of its name.
 	attachments?: readonly Attachment[];
-	// Adds a file: the attach act stands before the text.
-	onAttach?: () => void;
-	// Removes an attachment by its id: each chip carries its remove act.
+	// Hears the files the viewer brings: the attach act stands before the text
+	// and offers the photo library or the files. A paste into the text brings
+	// nothing, since React Native's `TextInput` hands over no pasted image.
+	// Turn each file into an `Attachment` and pass it back.
+	onAttach?: (files: readonly PickedFile[]) => void;
+	// Removes an attachment by its id: each carries its remove act.
 	onDetach?: (id: string) => void;
 	// The hint drawn while the text is empty; never the field's name.
 	placeholder?: string;
@@ -64,32 +70,6 @@ export interface MessageInputProps extends Closed {
 	// inert in its place.
 	disabled?: boolean;
 }
-
-interface ChipHooks {
-	ref: (node: View | null) => void;
-	remove: () => void;
-}
-
-// An attachment's chip, which renders again only when its name or its
-// removability changes.
-const AttachmentChip = memo(function AttachmentChip({
-	name,
-	hooks,
-	removable,
-}: {
-	name: string;
-	hooks: ChipHooks;
-	removable: boolean;
-}) {
-	return (
-		<Chip
-			ref={hooks.ref}
-			family="neutral"
-			label={name}
-			onRemove={removable ? hooks.remove : undefined}
-		/>
-	);
-});
 
 // One row: the attach act, the field growing upward to eight lines (its
 // attachments over the text), Stop's icon act while an answer comes and
@@ -112,41 +92,21 @@ export function MessageInput({
 	// A placeholder's colour is a prop, never a class: `FIELD_PLACEHOLDER`'s ink.
 	const placeholderInk = useTokenColor("--color-ink-meta");
 	const textField = useRef<TextInput>(null);
+	const [choosing, setChoosing] = useState(false);
 	const sendable = value.trim() !== "" && !disabled;
-	// Each chip's remove act, by attachment id.
-	const removes = useRef(new Map<string, View>());
-	// Focus never drops to the screen: a removed chip hands the screen
-	// reader's focus to the next chip's remove, else the previous one's, else
-	// the text, without raising the keyboard.
-	const detach = (id: string) => {
-		const ids = attachments?.map((attachment) => attachment.id) ?? [];
-		const index = ids.indexOf(id);
-		const near = ids[index + 1] ?? ids[index - 1];
-		const next = near === undefined ? undefined : removes.current.get(near);
-		onDetach?.(id);
-		const to = next ?? textField.current;
-		if (to) AccessibilityInfo.sendAccessibilityEvent(to, "focus");
+	const photos = async () => {
+		const result = await ImagePicker.launchImageLibraryAsync({
+			mediaTypes: ["images"],
+			allowsMultipleSelection: true,
+		});
+		if (!result.canceled) onAttach?.(result.assets.map(pickedFromImage));
 	};
-	// One ref and one remove per attachment id, kept across renders, so a
-	// keystroke re-renders no chip; the remove reads the latest list.
-	const latest = useRef(detach);
-	latest.current = detach;
-	const hooks = useRef(new Map<string, ChipHooks>());
-	const hooksOf = (id: string): ChipHooks => {
-		const known = hooks.current.get(id);
-		if (known) return known;
-		const made: ChipHooks = {
-			ref: (node) => {
-				if (node) removes.current.set(id, node);
-				else {
-					removes.current.delete(id);
-					hooks.current.delete(id);
-				}
-			},
-			remove: () => latest.current(id),
-		};
-		hooks.current.set(id, made);
-		return made;
+	const files = async () => {
+		const result = await DocumentPicker.getDocumentAsync({
+			type: "*/*",
+			multiple: true,
+		});
+		if (!result.canceled) onAttach?.(result.assets.map(pickedFromDocument));
 	};
 	return (
 		<View className={cn(MESSAGE_INPUT, ROOT)}>
@@ -158,7 +118,7 @@ export function MessageInput({
 							icon="Paperclip"
 							fit="bar"
 							label={words.attach}
-							onAct={onAttach}
+							onAct={() => setChoosing(true)}
 						/>
 					</FieldDisabled.Provider>
 				) : null}
@@ -171,16 +131,11 @@ export function MessageInput({
 					)}
 				>
 					{attachments && attachments.length > 0 ? (
-						<View className={cn(MESSAGE_INPUT_ROW, CHIPS)}>
-							{attachments.map((attachment) => (
-								<AttachmentChip
-									key={attachment.id}
-									name={attachment.name}
-									hooks={hooksOf(attachment.id)}
-									removable={onDetach !== undefined}
-								/>
-							))}
-						</View>
+						<Attachments
+							attachments={attachments}
+							onRemove={onDetach}
+							fallback={textField}
+						/>
 					) : null}
 					<TextInput
 						ref={textField}
@@ -244,6 +199,18 @@ export function MessageInput({
 						/>
 					) : null}
 				</View>
+			) : null}
+			{onAttach ? (
+				<MenuSheet
+					label={words.attach}
+					title={words.attach}
+					items={[
+						{ label: words.photos, icon: "Image", onAct: photos },
+						{ label: words.files, icon: "File", onAct: files },
+					]}
+					open={choosing}
+					onClose={() => setChoosing(false)}
+				/>
 			) : null}
 		</View>
 	);

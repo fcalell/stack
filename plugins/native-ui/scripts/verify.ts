@@ -191,6 +191,7 @@ const NATIVE_OVERLAYS = [
 	"px-page",
 	"py-0",
 	"relative",
+	"right-0",
 	"rounded-none",
 	"self-center",
 	"self-end",

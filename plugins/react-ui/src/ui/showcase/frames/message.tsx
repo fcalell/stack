@@ -1,6 +1,8 @@
+import type { Attachment } from "@fcalell/ui-core/descriptors";
 import type { ReactNode } from "react";
 import { Message } from "../../components/message/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
+import { SCREEN } from "./image.tsx";
 import { Wide } from "./layout-context.tsx";
 
 const open = () => {};
@@ -16,6 +18,12 @@ export function today(time: string): string {
 export const REPLY =
 	"The build failed on step 4. The migration `0042_add_invoices` reads a column the production database does not have yet.\n\nRun the pending migration against production, then redeploy.";
 
+// What came with a message: a picture and a file.
+export const ATTACHED: Attachment[] = [
+	{ id: "shot", name: "Checkout page after the failed payment", src: SCREEN },
+	{ id: "log", name: "deploy-api-4f2c.log" },
+];
+
 // Board 53's context: a thread's pane, the surface a thread stands on.
 export function Pane(props: { children: ReactNode }) {
 	return (
@@ -30,7 +38,15 @@ type Author = "you" | "other" | "system";
 // The author a cell stands for: a `MESSAGE.author` cell its own, the strong
 // name another's, the meta line, the chevron and the code a system line's,
 // the body line yours.
-const YOURS = ["MESSAGE.author.you", "TEXT.role.body"];
+const YOURS = [
+	"MESSAGE.author.you",
+	"TEXT.role.body",
+	"MESSAGE_ATTACHMENTS",
+	"IMAGE.fit.thumb",
+	"IMAGE_PICTURE.fit.thumb",
+	"CHIP.family.neutral",
+	"CHIP_LABEL.family.neutral",
+];
 const SYSTEMS = [
 	"MESSAGE.author.system",
 	"TEXT.role.meta",
@@ -71,6 +87,33 @@ function Rest(props: { author: Author }) {
 						body="Read https://acme.dev/deploys/api/4f2c9a1e7b3d5f60a8c2e4b6d8f0a1c3e5b7d9f1a3c5e7b9d1f3a5c7e9b1d3f5"
 					/>
 				</Pane>
+				<Pane>
+					<Message
+						author="you"
+						name="You"
+						body="Why did this payment fail?"
+						at={today("10:07")}
+						attachments={ATTACHED}
+					/>
+				</Pane>
+				<Pane>
+					<Message
+						author="you"
+						name="You"
+						body="Open the migration and hold the redeploy."
+						meta={["by voice", "Kitchen"]}
+						at={today("10:08")}
+					/>
+				</Pane>
+				<Pane>
+					<Message
+						author="you"
+						name="You"
+						body=""
+						attachments={ATTACHED.slice(0, 1)}
+						meta={["by voice"]}
+					/>
+				</Pane>
 			</>
 		);
 	if (props.author === "other")
@@ -88,6 +131,16 @@ function Rest(props: { author: Author }) {
 					<Message
 						author="other"
 						body="Opened `0042_add_invoices`. The redeploy waits for you."
+					/>
+				</Pane>
+				<Pane>
+					<Message
+						author="other"
+						name="Assistant"
+						body="Here is the page as the customer saw it."
+						attachments={ATTACHED.slice(0, 1)}
+						meta={["Kitchen"]}
+						at={today("10:09")}
 					/>
 				</Pane>
 			</>
