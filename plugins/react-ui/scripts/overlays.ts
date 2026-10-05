@@ -198,6 +198,8 @@ export const OVERLAYS: readonly string[] = [
 	"overflow-hidden",
 	"overflow-x-auto",
 	"-mx-page",
+	"grid-cols-1",
+	"page-desktop:grid-cols-2",
 	// Form, Toolbar, ActionBar
 	"page-max-tablet:hidden",
 	"flex",
@@ -208,6 +210,7 @@ export const OVERLAYS: readonly string[] = [
 	"justify-end",
 	"min-w-0",
 	"grid",
+	"grid-flow-col",
 	"touch:w-full",
 	"touch:flex",
 	"touch:flex-col",
@@ -403,6 +406,9 @@ export const OVERLAYS: readonly string[] = [
 	"col-span-4",
 	"items-stretch",
 	"self-end",
+	// the four columns (term, arrow, term, remove) size to their content or share what is left; no width token names an auto/fr template
+	"grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_auto]",
+	"grid-cols-subgrid",
 	// Table
 	"font-normal",
 	"p-0",

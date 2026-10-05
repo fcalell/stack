@@ -891,13 +891,17 @@ a tick with no animation, never jumped to full.
   plugin only sets an iCloud container, so the component needs none.
 - A component that sits in more than one container takes `fit`, a closed enum read off its
   matrix's `fit` axis (`IconFit`, `ButtonFit`, `IconButtonFit`, `LinkFit`, `ActionBarFit`,
-  `FieldFit`, `SheetFit`, `PickerFit`),
+  `FieldFit`, `SheetFit`, `PickerFit`, `ColumnsFit`),
   defaulting to the matrix's default; the composing molecule sets it (a `Place` passes `bar` to
   its strip's acts, a field's trailing act `field`, a `Form` under an auth column `full`, a
   `Split` its details sheet `pane`) and a
   call site may. `ACTION_BAR`'s two fits carry no cell: `end` and `full` differ in structure
   (an overlay) and in the `Button` fit the bar passes (`body`, `field`), and the matrix exists
-  so the closed type is read off an axis like every other fit.
+  so the closed type is read off an axis like every other fit. `Columns` takes `fit` the same
+  way: `board` (the default) is a row of sections at the column width scrolling sideways from the
+  page inset, `half` is two to a row filling the body from the Place's `page-desktop` width and
+  stacking in order below it, at the `sections` gap, with no bleed and no column width (a web
+  grid overlay, no scroll region). The phone stacks both: it never reaches `desktop`.
 - An `Act` says what it does, never how it looks: `destructive` marks an act that removes or
   ends something, and the `ActionBar` draws it as `danger` when it is the bar's one filled act
   and as `destructive` (the hairline form) otherwise, so a confirm's filled act needs no kind of

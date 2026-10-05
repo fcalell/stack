@@ -2253,7 +2253,7 @@ A component owns the tokens it may draw: a cell it draws that spells a type role
 | `Form` | none | `edge` | none | `fields`, `sections` | `measure` | none |
 | `Toolbar` | none | `edge` | none | `pair`, `page`, `inside`, `acts` | none | none |
 | `ActionBar` | `meta`, `body` | `ink-meta`, `ink-body`, `edge`, `danger`, `act-accent`, `on-act-accent`, `act-danger`, `on-act-danger` | `control` | `pair`, `acts`, `inside`, `control-x` | `control`, `field` | none |
-| `Columns` | none | none | none | `fields`, `page` | `column` | none |
+| `Columns` | none | none | none | `fields`, `page`, `sections` | `column` | none |
 | `Shell` | `body`, `caption` | `canvas`, `surface`, `edge`, `ink-body`, `ink-meta`, `fill-neutral`, `wash-hover`, `wash-press`, `wash-selected`, `wash-selected-hover`, `ring` | `row`, `control`, `full` | `inside`, `control-x`, `rows`, `pair`, `float`, `page` | `row`, `sidebar`, `target`, `chip`, `icon`, `icon-control`, `popover` | none |
 | `ListRow` | `body`, `meta`, `caption` | `ink-body`, `ink-meta`, `ink-disabled`, `ink-error`, `surface`, `edge`, `edge-error`, `wash-hover`, `wash-press`, `wash-selected`, `wash-selected-hover`, `ring`, `accent-ink`, `ok`, `warn`, `danger`, `avatar-`, `chip-`, `skeleton` | `row`, `full`, `control`, `chip` | `inside`, `rows`, `control-x`, `card`, `acts`, `pair` | `row`, `row-2`, `avatar`, `icon`, `dot`, `spinner`, `measure-short`, `chip`, `control-compact`, `skeleton`, `figures` | none |
 | `DefinitionRow` | `body`, `meta`, `code` | `ink-body`, `ink-meta`, `wash-hover`, `wash-press`, `ring`, `accent-ink`, `ok`, `warn`, `danger` | `full`, `control` | `fields`, `card`, `inside`, `pair` | `row`, `row-setting`, `control-compact`, `icon`, `dot`, `spinner`, `measure-short` | none |

@@ -20,6 +20,7 @@ import {
 	CHIP,
 	CHIP_LABEL,
 	CODE_TEXT,
+	COLUMNS,
 	DIFF_LINE,
 	FIELD,
 	FIELD_VALUE,
@@ -159,6 +160,7 @@ export const placeTab = build(PLACE_TAB);
 export const placeTabLabel = build(PLACE_TAB_LABEL);
 export const splitMain = build(SPLIT_MAIN);
 export const section = build(SECTION);
+export const columns = build(COLUMNS);
 export const form = build(FORM);
 export const actionBar = build(ACTION_BAR);
 export const skeleton = build(SKELETON);
@@ -257,6 +259,7 @@ export const FAMILIES: readonly Family[] = [
 	family("PLACE_TAB_LABEL", PLACE_TAB_LABEL, placeTabLabel),
 	family("SPLIT_MAIN", SPLIT_MAIN, splitMain),
 	family("SECTION", SECTION, section),
+	family("COLUMNS", COLUMNS, columns),
 	family("FORM", FORM, form),
 	family("ACTION_BAR", ACTION_BAR, actionBar),
 	family("SKELETON", SKELETON, skeleton),
@@ -701,9 +704,7 @@ export const GROUP =
 // A list bleeds its rows' inset, so a row's leading meets the title over it
 // and its wash hangs into the inset around it.
 export const LIST = "gap-rows -mx-control-x";
-// A board's columns: the row scrolls sideways from the page inset (a web
-// overlay bleeds it to the Place's edge), each column at its width.
-export const COLUMNS = "gap-fields px-page";
+// A board's column at its width.
 export const COLUMN = "w-column";
 // A sectioned form's foot: its action bar under a hairline across the form.
 export const FORM_FOOT = "border-t border-edge pt-fields";
@@ -758,6 +759,7 @@ export type AvatarStep = keyof (typeof AVATAR)["variants"]["step"];
 export type ChipCell = keyof (typeof CHIP)["variants"]["family"];
 export type PlaceRowState = keyof (typeof PLACE_ROW)["variants"]["state"];
 export type PlaceTabState = keyof (typeof PLACE_TAB)["variants"]["state"];
+export type ColumnsFit = keyof (typeof COLUMNS)["variants"]["fit"];
 export type ActionBarFit = keyof (typeof ACTION_BAR)["variants"]["fit"];
 export type PickerFit = keyof (typeof PICKER)["variants"]["fit"];
 

@@ -783,11 +783,11 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			},
 		},
 		Columns: {
-			props: ["children"],
+			props: ["fit", "children"],
 			draws: ["COLUMNS", "COLUMN"],
 			holds: ["COLUMNS", "COLUMN"],
 			states: ["rest"],
-			owns: { spacing: ["fields", "page"], sizes: ["column"] },
+			owns: { spacing: ["fields", "page", "sections"], sizes: ["column"] },
 		},
 		// The sidebar on the desktop, the tab bar on touch.
 		Shell: {

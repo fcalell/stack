@@ -173,6 +173,7 @@ const CLASS_ROOTS = [
 	"max-w",
 	"max-h",
 	"flex",
+	"grid",
 	"inline",
 	"items",
 	"justify",

@@ -1003,6 +1003,25 @@ export const FORM = matrix({
 	defaultVariants: { holds: "fields", in: "page" },
 });
 
+// ── Columns ─────────────────────────────────────────────────────────
+
+// A page's sections side by side. `fit` is where they stand: `board` is a
+// row at the column width scrolling sideways from the page inset (a web
+// overlay bleeds it to the Place's edge); `half` is two to a row filling the
+// body from the Place's `desktop` width and stacking in order below it (a
+// web overlay), at the sections rhythm between rows and columns. The phone
+// stacks every fit.
+export const COLUMNS = matrix({
+	base: "",
+	variants: {
+		fit: {
+			board: "gap-fields px-page",
+			half: "gap-sections",
+		},
+	},
+	defaultVariants: { fit: "board" },
+});
+
 // ── Action bar ──────────────────────────────────────────────────────
 
 // The acts row over a blocked act's reason. `fit` is where the bar stands:
