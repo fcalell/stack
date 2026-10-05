@@ -292,6 +292,9 @@ export const nativeUi = plugin("native-ui", {
 		"expo-font": "~56.0.0",
 		// The copy acts (Code, a copyable DefinitionRow) write the clipboard.
 		"expo-clipboard": "~56.0.3",
+		// Code's download act writes the text to a file and hands it to the share sheet.
+		"expo-file-system": "~56.0.7",
+		"expo-sharing": "~56.0.16",
 		"expo-secure-store": "~56.0.0",
 		"@tanstack/react-query": "^5.101.0",
 		"@orpc/tanstack-query": "^1.14.4",

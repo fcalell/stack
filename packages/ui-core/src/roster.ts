@@ -1572,10 +1572,10 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			},
 		},
 		// The frame Code, Diff and ProseDiff share; the head a strip-high bar, the
-		// copy act its IconButton at the body fit; `tail` folds the earlier lines
+		// copy and download acts its IconButtons at the body fit; `tail` folds the earlier lines
 		// behind a one-way act, the focus landing on the code.
 		Code: {
-			props: ["text", "title", "tail", "copy", "loading"],
+			props: ["text", "title", "tail", "copy", "download", "loading"],
 			draws: [
 				"CODE_ACT",
 				"CODE_FOLD",

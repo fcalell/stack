@@ -10,6 +10,8 @@ import {
 	skeleton,
 	text,
 } from "@fcalell/ui-core/variants";
+import { File, Paths } from "expo-file-system";
+import * as Sharing from "expo-sharing";
 import { useEffect, useRef, useState } from "react";
 import {
 	AccessibilityInfo,
@@ -22,6 +24,7 @@ import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { useCopy } from "../../lib/copy";
 import { Ink } from "../../lib/ink";
+import { toast } from "../../lib/toast";
 import { useWords } from "../../lib/words";
 import { Icon } from "../icon";
 import { IconButton } from "../icon-button";
@@ -31,7 +34,7 @@ const HEAD = "flex-row items-center";
 const TITLE = "grow shrink min-w-0";
 const BODY = "flex-row min-w-0";
 const TEXT_BESIDE = "flex-1 min-w-0";
-const ACT = "shrink-0";
+const ACT = "shrink-0 flex-row gap-acts";
 // A line of the code role: a zero-width strut sets its height, the act or
 // the bar centred on it.
 const LINE = "flex-row items-center";
@@ -56,6 +59,9 @@ export interface CodeProps extends Closed {
 	// Adds the copy act: in the head with a title, else in its own column
 	// beside the first line.
 	copy?: boolean;
+	// Adds the download act, saving the text as a file of this name
+	// (`recovery-codes.txt`): after the copy act, in the same place.
+	download?: string;
 	// The text waits: line boxes stand in for it under the head, `tail` of
 	// them under the fold's when it folds.
 	loading?: boolean;
@@ -75,13 +81,41 @@ function CopyAct({ name, value }: { name: string; value: string }) {
 	);
 }
 
+// The download act: the text written to the cache directory as a file of the
+// given name and handed to the share sheet, from which the phone saves it to
+// Files. A refused write or share raises the failed Toast.
+function DownloadAct(props: { name: string; value: string; file: string }) {
+	const words = useWords();
+	const save = async () => {
+		const file = new File(Paths.cache, props.file);
+		await file.write(props.value);
+		await Sharing.shareAsync(file.uri, { mimeType: "text/plain" });
+	};
+	return (
+		<IconButton
+			icon="Download"
+			label={`${words.download} ${props.name}`}
+			onAct={() => {
+				save().catch(() => toast(words.failed, { state: "failed" }));
+			}}
+		/>
+	);
+}
+
 // Mono at the code role in the frame Code, Diff and ProseDiff share; never
 // wraps, the text scrolling sideways inside the frame. A head names it
-// (`title`) and carries the copy act; without a title the act stands in its
-// own column beside the first line. `tail` folds the earlier lines behind a
+// (`title`) and carries the copy and download acts; without a title they
+// stand side by side in a column beside the first line. `tail` folds the earlier lines behind a
 // one-way act that reveals them and leaves, the screen reader's focus
 // landing on the text.
-export function Code({ text: source, title, tail, copy, loading }: CodeProps) {
+export function Code({
+	text: source,
+	title,
+	tail,
+	copy,
+	download,
+	loading,
+}: CodeProps) {
 	const words = useWords();
 	const textRef = useRef<RNText>(null);
 	const [unfolded, setUnfolded] = useState(false);
@@ -92,12 +126,20 @@ export function Code({ text: source, title, tail, copy, loading }: CodeProps) {
 			AccessibilityInfo.sendAccessibilityEvent(textRef.current, "focus");
 	}, [unfolded]);
 	const name = title ?? words.code;
+	const acts = (
+		<>
+			{copy ? <CopyAct name={name} value={source} /> : null}
+			{download ? (
+				<DownloadAct name={name} value={source} file={download} />
+			) : null}
+		</>
+	);
 	const head = title ? (
 		<View className={cn(CODE_HEAD, HEAD)}>
 			<RNText numberOfLines={1} className={cn(text({ role: "meta" }), TITLE)}>
 				{title}
 			</RNText>
-			{copy && !loading ? <CopyAct name={name} value={source} /> : null}
+			{loading ? null : acts}
 		</View>
 	) : null;
 	// A folding text waits as it lands: the fold's row over `tail` lines.
@@ -140,7 +182,7 @@ export function Code({ text: source, title, tail, copy, loading }: CodeProps) {
 	const hidden =
 		tail !== undefined && !unfolded ? Math.max(0, lines.length - tail) : 0;
 	const shown = hidden > 0 ? lines.slice(hidden) : lines;
-	const beside = copy === true && !title;
+	const beside = (copy === true || download !== undefined) && !title;
 	const fold =
 		hidden > 0 ? (
 			<Pressable
@@ -181,9 +223,7 @@ export function Code({ text: source, title, tail, copy, loading }: CodeProps) {
 					{/* The act stands at the column's top, not centred on the first
 					line: an act taller than the line would overhang its box, and
 					iOS delivers no touch outside a view's bounds. */}
-					<View className={cn(CODE_ACT, ACT)}>
-						<CopyAct name={name} value={source} />
-					</View>
+					<View className={cn(CODE_ACT, ACT)}>{acts}</View>
 				</View>
 			) : (
 				body

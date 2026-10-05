@@ -126,7 +126,7 @@ pinned by the package's verify suite; this entry holds the architecture and its 
 ## Words
 
 Every word a molecule draws or reads aloud on its own (the seven `Status` words, `recommended`,
-`copy`, `copied`, `back`, `close`, `cancel`, `dismiss`, `more`, `send`, `stop`, `attach`, `search`, `loading`, `checking`, `retry`, `add`, `remove`, `details`, `places`, `notifications`, `code`, `added`, `removed`, `sort`, `ascending`, `descending`, `time`, `message`, `seen`, `unseen`, `copyFailed`, `latest`, `missing`, the counted `earlierLines`, and the slot words `meterValue`, `meterOver`, `linesAdded` and `linesRemoved`) comes
+`copy`, `copied`, `download`, `back`, `close`, `cancel`, `dismiss`, `more`, `send`, `stop`, `attach`, `search`, `loading`, `checking`, `retry`, `add`, `remove`, `details`, `places`, `notifications`, `code`, `added`, `removed`, `sort`, `ascending`, `descending`, `time`, `message`, `seen`, `unseen`, `copyFailed`, `latest`, `missing`, the counted `earlierLines`, and the slot words `meterValue`, `meterOver`, `linesAdded` and `linesRemoved`) comes
 from `words`, a closed typed object with English defaults. The `Words` type requires every key
 and `wordsSchema` is strict, so a translation missing a word fails `tsc` and the schema. It is a
 plugin option beside `theme`; each plugin contributes a `WordsProvider` into the generated entry
@@ -712,6 +712,12 @@ a tick with no animation, never jumped to full.
   load by the line count, and on touch by the lines that wrap, which no waiting form can know.
 - A copy act (`Code`'s, `DefinitionRow`'s) reads Copied for two seconds from the last copy: each
   copy is a counted moment and the reset is keyed on it, so a copy inside the window restarts it.
+- `Code`'s `download` is the file's name, a string because the name is the one value stack cannot
+  derive. The act sits beside the copy act, in the head with a title, else side by side in the copy
+  column. The web saves a `Blob` of the text through an anchor's `download`; the phone writes it to
+  the cache directory with `expo-file-system` and hands it to the share sheet with `expo-sharing`,
+  from which iOS and Android save to Files, so both are native-ui peers beside `expo-clipboard`. A
+  refused write or share raises the failed Toast.
   Unfolding a `Code` moves focus to its already-mounted text in the press, before the fold act
   unmounts, so focus never drops to the page.
 

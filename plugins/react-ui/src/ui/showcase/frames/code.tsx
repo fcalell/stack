@@ -5,6 +5,12 @@ import { Wide } from "./layout-context.tsx";
 const ENV = `DATABASE_URL=postgres://app@db.internal:5432/app
 STACK_ACCOUNT_ID=7f3k9q2m4x
 STACK_API_TOKEN=sk_live_51NcQ2rTb8w`;
+const CODES = `7k2m-9xq4
+4tpw-h8nz
+c3vd-2rfj
+9bqe-m6yk
+x5ha-t7cs
+r2wn-4djp`;
 const INSTALL = "pnpm add @fcalell/stack\npnpm stack init";
 const CURL = `curl -X POST https://api.stack.dev/v1/projects/7f3k9q2m4x/deploys -H "Authorization: Bearer $STACK_API_TOKEN" -d '{"branch":"main"}'`;
 // Board 50's build log: 18 lines, the last 4 shown.
@@ -28,7 +34,8 @@ const BUILD_LOG = `[12:04:20] pnpm install --frozen-lockfile
 [12:04:34] built in 3.18s`;
 
 // Board 50's head forms: title and copy, title alone, neither, copy without
-// a title, a long line.
+// a title, a long line; the recovery codes with copy and download, titled and
+// without a title.
 function Heads() {
 	return (
 		<>
@@ -37,6 +44,13 @@ function Heads() {
 			<Code text={INSTALL} />
 			<Code text={INSTALL} copy />
 			<Code text={CURL} title="Terminal" copy />
+			<Code
+				text={CODES}
+				title="Recovery codes"
+				copy
+				download="recovery-codes.txt"
+			/>
+			<Code text={CODES} copy download="recovery-codes.txt" />
 		</>
 	);
 }
@@ -74,7 +88,7 @@ export function drawCode(frame: ShowcaseFrame) {
 		if (cell === "ICON_BUTTON.fit.body" || cell === "ICON.fit.control")
 			return (
 				<Wide>
-					<Code text={INSTALL} copy />
+					<Code text={INSTALL} copy download="install.txt" />
 				</Wide>
 			);
 		return (

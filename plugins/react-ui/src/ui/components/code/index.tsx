@@ -31,6 +31,7 @@ const TEXT =
 const TEXT_BESIDE = "grow min-w-0";
 const ACT = "shrink-0";
 const LINE = "flex items-center h-lh";
+const ACTS = "gap-acts";
 const FOLD =
 	"flex items-center w-full hover:bg-wash-hover active:bg-wash-press focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring";
 const WAIT = "flex flex-col";
@@ -49,10 +50,34 @@ export interface CodeProps extends Closed {
 	title?: string;
 	/** Shows only the last lines, this many, behind an act that reveals the earlier ones. */
 	tail?: number;
-	/** Adds the copy act: in the head with a title, else in its own column beside the first line. */
+	/** Adds the copy act: in the head with a title, else in a column beside the first line. */
 	copy?: boolean;
+	/** Adds the download act, saving the text as a file of this name (`recovery-codes.txt`): after the copy act, in the same place. */
+	download?: string;
 	/** The text waits: line boxes stand in for it under the head, `tail` of them under the fold's when it folds. */
 	loading?: boolean;
+}
+
+// The download act: the text as a file of the given name, saved through an
+// anchor.
+function DownloadAct(props: { name: string; text: string; file: string }) {
+	const words = useWords();
+	return (
+		<InsetRing value>
+			<IconButton
+				icon="Download"
+				label={`${words.download} ${props.name}`}
+				onAct={() => {
+					const url = URL.createObjectURL(new Blob([props.text]));
+					const link = document.createElement("a");
+					link.href = url;
+					link.download = props.file;
+					link.click();
+					setTimeout(() => URL.revokeObjectURL(url));
+				}}
+			/>
+		</InsetRing>
+	);
 }
 
 // The copy act: a check and the word Copied for two seconds once copied.
@@ -70,17 +95,32 @@ function CopyAct(props: { name: string; text: string }) {
 	);
 }
 
-/** Mono at the code role in the frame Code, Diff and ProseDiff share; never wraps, the text scrolling sideways inside the frame. A head names it (`title`) and carries the copy act; without a title the act stands in its own column beside the first line. `tail` folds the earlier lines behind a one-way act that reveals them and leaves, the focus landing on the text. */
-export function Code({ text: source, title, tail, copy, loading }: CodeProps) {
+/** Mono at the code role in the frame Code, Diff and ProseDiff share; never wraps, the text scrolling sideways inside the frame. A head names it (`title`) and carries the copy and download acts; without a title they stand side by side in a column beside the first line. `tail` folds the earlier lines behind a one-way act that reveals them and leaves, the focus landing on the text. */
+export function Code({
+	text: source,
+	title,
+	tail,
+	copy,
+	download,
+	loading,
+}: CodeProps) {
 	const words = useWords();
 	const id = useId();
 	const textRef = useRef<HTMLPreElement>(null);
 	const [unfolded, setUnfolded] = useState(false);
 	const name = title ?? words.code;
+	const acts = (
+		<>
+			{copy ? <CopyAct name={name} text={source} /> : null}
+			{download ? (
+				<DownloadAct name={name} text={source} file={download} />
+			) : null}
+		</>
+	);
 	const head = title ? (
 		<div className={cn(CODE_HEAD, HEAD)}>
 			<span className={cn(text({ role: "meta" }), TITLE)}>{title}</span>
-			{copy && !loading ? <CopyAct name={name} text={source} /> : null}
+			{loading ? null : acts}
 		</div>
 	) : null;
 	// A folding text waits as it lands: the fold's row over `tail` lines.
@@ -119,7 +159,7 @@ export function Code({ text: source, title, tail, copy, loading }: CodeProps) {
 	const hidden =
 		tail !== undefined && !unfolded ? Math.max(0, lines.length - tail) : 0;
 	const shown = hidden > 0 ? lines.slice(hidden) : lines;
-	const beside = copy === true && !title;
+	const beside = (copy === true || download !== undefined) && !title;
 	const fold =
 		hidden > 0 ? (
 			<BaseButton
@@ -167,8 +207,8 @@ export function Code({ text: source, title, tail, copy, loading }: CodeProps) {
 				<div className={BODY}>
 					{body}
 					<span className={cn(CODE_ACT, ACT)}>
-						<span className={cn(lineBox({ role: "code" }), LINE)}>
-							<CopyAct name={name} text={source} />
+						<span className={cn(lineBox({ role: "code" }), LINE, ACTS)}>
+							{acts}
 						</span>
 					</span>
 				</div>
