@@ -214,10 +214,11 @@ export const STATUS_DOT = matrix({
 	},
 });
 
-// A row's change mark: its glyph in the kind's ink in a lane one icon wide,
-// so every row of a change set aligns whether or not it is marked. Added is
-// `ok`, removed `danger`, changed and stale `warn` (told apart by their
-// glyphs), unchanged the meta ink.
+// A row's change mark: its glyph in the kind's ink in a lane one icon wide.
+// A marked row's lane stands ahead of its label, so the marked rows of a
+// change set align; an unmarked row draws no lane. Added is `ok`, removed
+// `danger`, changed and stale `warn` (told apart by their glyphs), unchanged
+// the meta ink.
 export const CHANGE_MARK = matrix({
 	base: "size-icon",
 	variants: {

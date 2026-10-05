@@ -1,5 +1,9 @@
 import type { Attachment } from "@fcalell/ui-core/descriptors";
-import { IMAGE_REMOVE, MESSAGE_ATTACHMENTS } from "@fcalell/ui-core/variants";
+import {
+	IMAGE_REMOVE,
+	MESSAGE_ATTACHMENTS,
+	REMOVE_HIT,
+} from "@fcalell/ui-core/variants";
 import { memo, type RefObject, useRef } from "react";
 import type { TextInput } from "react-native";
 import { AccessibilityInfo, Pressable, View } from "react-native";
@@ -54,7 +58,7 @@ const Item = memo(function Item({
 					accessibilityRole="button"
 					accessibilityLabel={`${words.remove} ${name}`}
 					onPress={hooks.remove}
-					className={cn(IMAGE_REMOVE, DISC)}
+					className={cn(REMOVE_HIT, IMAGE_REMOVE, DISC)}
 				>
 					<Ink.Provider value="ink-meta">
 						<Icon name="X" fit="meta" />

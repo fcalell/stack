@@ -29,6 +29,7 @@ import {
 // opens the system dialog and the keyboard reaches it, so the box rings on its
 // focus as an `Input`'s does. The remove act stands above it.
 const PICK = "absolute inset-0 opacity-0";
+const ANCHOR = "relative";
 const ABOVE = "relative flex";
 const VALUE = "min-w-0 grow truncate";
 const SIZE = "shrink-0";
@@ -113,7 +114,7 @@ export function FileInput({ value, onChange, accept }: FileInputProps) {
 						FIELD_GLYPH,
 						BOX,
 						BOX_FOCUS,
-						"relative",
+						ANCHOR,
 						over && OVER,
 						state.disabled
 							? BOX_DISABLED
@@ -147,7 +148,7 @@ export function FileInput({ value, onChange, accept }: FileInputProps) {
 								<FieldDisabled value={state.disabled}>
 									<IconButton
 										icon="X"
-										label={words.remove}
+										label={`${words.remove} ${value.name}`}
 										onAct={() => {
 											refuse?.(undefined);
 											onChange(null);

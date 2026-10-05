@@ -123,7 +123,7 @@ export function FileInput({ value, onChange, accept }: FileInputProps) {
 			{value ? (
 				<IconButton
 					icon="X"
-					label={words.remove}
+					label={`${words.remove} ${value.name}`}
 					onAct={() => {
 						touch();
 						refuse?.(undefined);

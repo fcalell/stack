@@ -68,7 +68,9 @@ function DownloadAct(props: { name: string; text: string; file: string }) {
 				icon="Download"
 				label={`${words.download} ${props.name}`}
 				onAct={() => {
-					const url = URL.createObjectURL(new Blob([props.text]));
+					const url = URL.createObjectURL(
+						new Blob([props.text], { type: "text/plain" }),
+					);
 					const link = document.createElement("a");
 					link.href = url;
 					link.download = props.file;

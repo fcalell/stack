@@ -1,6 +1,5 @@
-import { Field } from "@base-ui/react/field";
-import { text } from "@fcalell/ui-core/variants";
 import { FileInput } from "../../components/file-input/index.tsx";
+import { FormField } from "../../components/form-field/index.tsx";
 import type { ShowcaseFrame } from "../cells.ts";
 
 const change = () => {};
@@ -12,11 +11,12 @@ const CHOSEN = {
 	blob: () => Promise.resolve(new Blob()),
 };
 
-// The frame's `error` and `disabled` reach the control through Base UI's
-// `Field`, as a `FormField` puts them; `FIELD.state.error` is in error in
-// every state. The cells that draw the box's own parts stand empty (the word
-// in its placeholder ink, the whole box the act); the rest hold a chosen
-// file, its size after the name and the act that removes it.
+// A file control stands in a `FormField`, which labels it and draws the error
+// line a refused file lands in; the frame's `error` and `disabled` reach the
+// control through it. `FIELD.state.error` is in error in every state. The
+// cells that draw the box's own parts stand empty (the word in its placeholder
+// ink, the whole box the act); the rest hold a chosen file, its size after the
+// name and the act that removes it.
 export function drawFileInput(frame: ShowcaseFrame) {
 	const name = frame.cell.name;
 	const empty =
@@ -25,17 +25,18 @@ export function drawFileInput(frame: ShowcaseFrame) {
 		name === "FIELD.trailing.none" ||
 		name === "FIELD.state.error" ||
 		name === "FIELD_PLACEHOLDER";
+	const error = frame.state === "error" || name === "FIELD.state.error";
 	return (
-		<Field.Root
-			invalid={frame.state === "error" || name === "FIELD.state.error"}
+		<FormField
+			label="Leads file"
+			error={error ? "Choose a CSV or HAR file." : undefined}
 			disabled={frame.state === "disabled"}
 		>
-			<Field.Label className={text({ role: "body" })}>Leads file</Field.Label>
 			<FileInput
 				value={empty ? null : CHOSEN}
 				onChange={change}
 				accept={ACCEPT}
 			/>
-		</Field.Root>
+		</FormField>
 	);
 }

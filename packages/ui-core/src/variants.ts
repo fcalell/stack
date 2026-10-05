@@ -342,8 +342,13 @@ export const STATUS_LABEL =
 // meets plain text (an overlay), so its words sit where static words do.
 // Shared by both drawers.
 export const PILL_ACT = "rounded-full px-inside min-h-target";
-// A removable chip's remove act: a round hit box the chip's height.
-export const CHIP_REMOVE_HIT = "min-h-chip min-w-chip rounded-full";
+// A remove act's round hit box, the chip's height: a chip's and a
+// thumbnail's (`IMAGE_REMOVE`). Unheld, drawn by each that has one.
+export const REMOVE_HIT = "min-h-chip min-w-chip rounded-full";
+// An error line under its control, in the error ink: a field's (`FormField`)
+// and a row entry's (`ListRow`). Unheld, drawn by each that has one.
+export const FIELD_ERROR_LINE =
+	"text-meta leading-meta font-normal text-ink-error";
 export const FIELD_PLACEHOLDER = "text-ink-meta";
 // A field's unit after its value, and its glyph (search, chevron).
 export const FIELD_UNIT = "text-body leading-body font-normal text-ink-meta";
@@ -421,10 +426,8 @@ export const ROW_ACTS = "gap-acts";
 // line per step (`rowStep`), a pair gap apart.
 export const ROW_STEPS = "gap-pair";
 // A list row's entry: the title, the input with its act and the error line a
-// pair apart, the error in the error ink under the input.
+// pair apart, the error (`FIELD_ERROR_LINE`) under the input.
 export const ROW_ENTRY = "gap-pair";
-export const ROW_ENTRY_ERROR =
-	"text-meta leading-meta font-normal text-ink-error";
 // A definition row: its text and its end acts a fields gap apart, over the
 // row's own gap.
 export const DEFINITION_ROW = "gap-fields";
@@ -440,9 +443,6 @@ export const LOCK_GLYPH = "ms-inside shrink-0 text-ink-meta";
 export const ITEM_HEADER = "gap-pair";
 export const ITEM_FACTS = "gap-x-fields gap-y-pair";
 export const ITEM_FACT = "gap-inside";
-// A field's error line under its control, in the error ink.
-export const FORM_FIELD_ERROR =
-	"text-meta leading-meta font-normal text-ink-error";
 // A folded question: one row at the row height, its glyph (in the `ok` ink),
 // its label, its answer and its edit act an inside apart.
 export const FORM_FIELD_SUMMARY = "gap-inside min-h-row";
@@ -703,11 +703,10 @@ export const IMAGE_CLOSE = "rounded-control bg-raised shadow-float";
 export const STEP_COUNT = "gap-pair";
 export const STEP_COUNT_SEGMENTS = "gap-inside";
 
-// A thumbnail's remove act (an attachment's, in the `MessageInput`): the chip
-// remove's round hit box on a lifted disc, a gap in from the thumbnail's
-// corner, the disc keeping the glyph legible over any picture.
-export const IMAGE_REMOVE =
-	"m-inside min-h-chip min-w-chip rounded-full bg-raised shadow-float";
+// A thumbnail's remove act (an attachment's, in the `MessageInput`): the
+// `REMOVE_HIT` box on a lifted disc, a gap in from the thumbnail's corner, the
+// disc keeping the glyph legible over any picture.
+export const IMAGE_REMOVE = "m-inside bg-raised shadow-float";
 
 // ── Layout ──────────────────────────────────────────────────────────
 

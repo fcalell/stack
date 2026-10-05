@@ -110,7 +110,7 @@ function RuleRow<V extends string | null>({ rule }: { rule: Rule<V> }) {
 		<Text role="meta">{terms.operator}</Text>
 	);
 	return (
-		<View className={cn(RULE_ROW, RULE_CARD)}>
+		<View role="listitem" className={cn(RULE_ROW, RULE_CARD)}>
 			{terms.from ? (
 				<Term value={terms.from} />
 			) : (
@@ -142,7 +142,7 @@ export function Rules<V extends string | null = string>({
 	return (
 		<View className={STACK}>
 			{rules.length > 0 ? (
-				<View className={GROUP_SLOT}>
+				<View accessibilityRole="list" className={GROUP_SLOT}>
 					<Group>
 						{rules.map((rule) => (
 							<RuleRow key={rule.id} rule={rule} />

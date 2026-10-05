@@ -250,9 +250,22 @@ messages.
 A `MessageInput`'s `onAttach` hears `PickedFile`s: the paperclip opens the photo library or the
 files, and a file picked comes through it. A paste into the text brings nothing, since React
 Native's `TextInput` hands over no pasted image. Turn each file into an `Attachment`
-(`{ id, name, src? }`, `src` for an image) and pass it back through `attachments`: an image
-draws as a thumbnail with its remove act, a file as a chip. A `Message` for `you` or `other`
-takes the same `attachments`, and `meta` (`"by voice"`, `"Kitchen"`) before its time.
+(`{ id, name, src? }`, the picked file's own `src` for an image) and pass it back through
+`attachments`: an image draws as a thumbnail with its remove act, a file as a chip. A `Message`
+for `you` or `other` takes the same `attachments`, and `meta` (`"by voice"`, `"Kitchen"`) before
+its time.
+
+A picked file's `src` is a local address to draw it from before it is uploaded: the asset's uri,
+set on every file the photo library and the file picker hand over.
+
+A `FileInput` stands only inside a `FormField`, which labels it and draws the error line a refused
+file lands in; outside one the refusal vanishes.
+
+```tsx
+<FormField label="Leads file">
+  <FileInput value={file} onChange={setFile} accept={["text/csv"]} />
+</FormField>
+```
 
 A field that stays in view while a `Place`'s sections scroll under it (an ask box over a
 home's sections) is the Place's `foot`: it docks at the Place's bottom, above the tab bar on

@@ -7,7 +7,7 @@ import type {
 	FieldControl,
 } from "@fcalell/ui-core/descriptors";
 import {
-	FORM_FIELD_ERROR,
+	FIELD_ERROR_LINE,
 	FORM_FIELD_SUMMARY,
 	FORM_FIELD_SUMMARY_GLYPH,
 	formField,
@@ -129,20 +129,12 @@ function formOf(control: ReactNode) {
 	return "field";
 }
 
-/** The label (body 500) over its control, the description (meta) under it and the error in the description's place; a switch stands at the label's end and a checkbox on its first line. Base UI's field wires the label, the description, the error, the validity and the disabled state into the control. A `change` draws the change mark ahead of the field, on its label's line. */
-export function FormField<V>(props: FormFieldProps<V>) {
-	const { label, description, disabled, answered, change } = props;
-	const marked = (field: ReactNode) =>
-		change === undefined ? (
-			field
-		) : (
-			<div className={MARKED}>
-				<span className={cn(lineBox({ role: "body" }), BOX_LINE)}>
-					<ChangeMark kind={change} />
-				</span>
-				<div className={MARKED_BODY}>{field}</div>
-			</div>
-		);
+// The field itself: the label over its control, the description (meta) under
+// it and the error in the description's place; a switch stands at the label's
+// end and a checkbox on its first line. Base UI's field wires the label, the
+// description, the error, the validity and the disabled state into the control.
+function FieldBody<V>(props: FormFieldProps<V>) {
+	const { label, description, disabled, answered } = props;
 	const words = useWords();
 	const folded = answered !== undefined;
 	// What a control refused (a file of the wrong type) stands in the error
@@ -184,7 +176,7 @@ export function FormField<V>(props: FormFieldProps<V>) {
 		</Field.Label>
 	);
 	const said = error ? (
-		<Field.Error match className={FORM_FIELD_ERROR}>
+		<Field.Error match className={FIELD_ERROR_LINE}>
 			{error}
 		</Field.Error>
 	) : description ? (
@@ -195,7 +187,7 @@ export function FormField<V>(props: FormFieldProps<V>) {
 	// A group takes no field context: its label and its line under it name and
 	// describe the group, never the controls inside.
 	if (answered)
-		return marked(
+		return (
 			<div ref={root} className={cn(FORM_FIELD_SUMMARY, SUMMARY)}>
 				<span className={cn(FORM_FIELD_SUMMARY_GLYPH, SUMMARY_GLYPH)}>
 					<Icon name="Check" />
@@ -218,10 +210,10 @@ export function FormField<V>(props: FormFieldProps<V>) {
 					label={`${words.edit} ${label}`}
 					onAct={answered.onEdit}
 				/>
-			</div>,
+			</div>
 		);
 	if (form === "group")
-		return marked(
+		return (
 			<div ref={root} className={cn(formField({ holds: "field" }), STACK)}>
 				<p
 					id={labelId}
@@ -237,18 +229,18 @@ export function FormField<V>(props: FormFieldProps<V>) {
 				{error || description ? (
 					<p
 						id={saidId}
-						className={error ? FORM_FIELD_ERROR : text({ role: "meta" })}
+						className={error ? FIELD_ERROR_LINE : text({ role: "meta" })}
 					>
 						{error ?? description}
 					</p>
 				) : null}
-			</div>,
+			</div>
 		);
 	const box = cn(
 		formField({ holds }),
 		holds === "switch" ? BESIDE : holds === "checkbox" ? AHEAD : STACK,
 	);
-	return marked(
+	return (
 		<Field.Root
 			ref={root}
 			invalid={Boolean(error)}
@@ -273,6 +265,21 @@ export function FormField<V>(props: FormFieldProps<V>) {
 				</div>
 			)}
 			{holds === "switch" ? control : null}
-		</Field.Root>,
+		</Field.Root>
+	);
+}
+
+/** The label (body 500) over its control, the description (meta) under it and the error in the description's place; a switch stands at the label's end and a checkbox on its first line. Base UI's field wires the label, the description, the error, the validity and the disabled state into the control. A `change` draws the change mark ahead of the field, on its label's line. */
+export function FormField<V>(props: FormFieldProps<V>) {
+	const { change, ...body } = props;
+	const field = <FieldBody<V> {...body} />;
+	if (change === undefined) return field;
+	return (
+		<div className={MARKED}>
+			<span className={cn(lineBox({ role: "body" }), BOX_LINE)}>
+				<ChangeMark kind={change} />
+			</span>
+			<div className={MARKED_BODY}>{field}</div>
+		</div>
 	);
 }

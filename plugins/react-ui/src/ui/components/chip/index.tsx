@@ -1,7 +1,7 @@
 import { Button as BaseButton } from "@base-ui/react/button";
 import { cn } from "@fcalell/ui-core/cn";
 import type { ChipFamily } from "@fcalell/ui-core/tokens";
-import { CHIP_REMOVE_HIT, chip, chipLabel } from "@fcalell/ui-core/variants";
+import { chip, chipLabel, REMOVE_HIT } from "@fcalell/ui-core/variants";
 import type { Closed } from "../../lib/closed.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Icon } from "../icon/index.tsx";
@@ -37,7 +37,7 @@ export function Chip({ label, family, onRemove }: ChipProps) {
 				<BaseButton
 					aria-label={`${words.remove} ${label}`}
 					onClick={onRemove}
-					className={cn(CHIP_REMOVE_HIT, REMOVE)}
+					className={cn(REMOVE_HIT, REMOVE)}
 				>
 					<Icon name="X" fit="meta" />
 				</BaseButton>

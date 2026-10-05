@@ -47,12 +47,10 @@ const QUEUED: Notice = {
 	sentence: "A message sent now is read once this answer ends.",
 };
 
-// A consumer's answer to `onAttach`: an image keeps a local address to draw
-// as its thumbnail, any other file only its name.
-async function attachmentOf(file: PickedFile): Promise<Attachment> {
-	const id = crypto.randomUUID();
-	if (!file.type.startsWith("image/")) return { id, name: file.name };
-	return { id, name: file.name, src: URL.createObjectURL(await file.blob()) };
+// A consumer's answer to `onAttach`: the picked file's own local address
+// draws as its thumbnail (an image has one, any other file only its name).
+function attachmentOf(file: PickedFile): Attachment {
+	return { id: crypto.randomUUID(), name: file.name, src: file.src };
 }
 
 // One input as a viewer drives it: typing, sending (which clears the text
@@ -75,13 +73,13 @@ function Live(props: {
 			onChange={setValue}
 			attachments={files}
 			onAttach={(picked) =>
-				Promise.all(picked.map(attachmentOf)).then((added) =>
-					setFiles((now) => [...(now ?? []), ...added]),
-				)
+				setFiles((now) => [...(now ?? []), ...picked.map(attachmentOf)])
 			}
-			onDetach={(id) =>
-				setFiles((now) => now?.filter((file) => file.id !== id))
-			}
+			onDetach={(id) => {
+				setFiles((now) => now?.filter((file) => file.id !== id));
+				const gone = files?.find((file) => file.id === id)?.src;
+				if (gone?.startsWith("blob:")) URL.revokeObjectURL(gone);
+			}}
 			placeholder={PLACEHOLDER}
 			notice={props.notice}
 			working={working}

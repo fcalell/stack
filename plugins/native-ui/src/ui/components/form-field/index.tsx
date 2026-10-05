@@ -5,7 +5,7 @@ import type {
 	FieldControl,
 } from "@fcalell/ui-core/descriptors";
 import {
-	FORM_FIELD_ERROR,
+	FIELD_ERROR_LINE,
 	FORM_FIELD_SUMMARY,
 	formField,
 	lineBox,
@@ -149,7 +149,7 @@ function FieldBody<V>(props: FormFieldProps<V>) {
 	);
 	const named = <RNText className={labelClass}>{label}</RNText>;
 	const line = error ? (
-		<RNText accessibilityLiveRegion="polite" className={FORM_FIELD_ERROR}>
+		<RNText accessibilityLiveRegion="polite" className={FIELD_ERROR_LINE}>
 			{error}
 		</RNText>
 	) : description ? (

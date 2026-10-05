@@ -125,6 +125,9 @@ function RuleRow<V extends string | null>({
 	) : (
 		<Text role="meta">{terms.operator}</Text>
 	);
+	// The grid's fourth column stands empty for a rule that cannot go; a
+	// stacked card has no column to hold.
+	const absent = touch ? null : <span />;
 	const remove = rule.onRemove ? (
 		<span className={cn(MARK, touch && REMOVE_END)}>
 			<IconButton
@@ -135,11 +138,14 @@ function RuleRow<V extends string | null>({
 			/>
 		</span>
 	) : (
-		<span />
+		absent
 	);
 	const Row = touch ? "div" : "li";
 	return (
-		<Row className={cn(RULE_ROW, touch ? cn(RULE_CARD, STACKED) : ROW)}>
+		<Row
+			role={touch ? "listitem" : undefined}
+			className={cn(RULE_ROW, touch ? cn(RULE_CARD, STACKED) : ROW)}
+		>
 			{terms.from ? (
 				<Term value={terms.from} />
 			) : (
@@ -176,7 +182,8 @@ export function Rules<V extends string | null = string>({
 		return (
 			<div className={STACK}>
 				{rows.length > 0 ? (
-					<div className={GROUP_SLOT}>
+					// biome-ignore lint/a11y/useSemanticElements: the Group's card sits between the list and its cards, and a `ul` over it cannot hold its `div`
+					<div role="list" className={GROUP_SLOT}>
 						<Group>{rows}</Group>
 					</div>
 				) : null}

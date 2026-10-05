@@ -10,10 +10,10 @@ import type {
 	StatusMark,
 } from "@fcalell/ui-core/descriptors";
 import {
+	FIELD_ERROR_LINE,
 	lineBox,
 	ROW_ACTS,
 	ROW_ENTRY,
-	ROW_ENTRY_ERROR,
 	ROW_LEADING,
 	ROW_MARKS,
 	ROW_META_LINE,
@@ -406,7 +406,7 @@ export function ListRow<V extends string | null = string>({
 					{entry.error ? (
 						<RNText
 							accessibilityLiveRegion="polite"
-							className={ROW_ENTRY_ERROR}
+							className={FIELD_ERROR_LINE}
 						>
 							{entry.error}
 						</RNText>

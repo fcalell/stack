@@ -1,5 +1,5 @@
 import type { ChipFamily } from "@fcalell/ui-core/tokens";
-import { CHIP_REMOVE_HIT, chip, chipLabel } from "@fcalell/ui-core/variants";
+import { chip, chipLabel, REMOVE_HIT } from "@fcalell/ui-core/variants";
 import type { Ref } from "react";
 import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
@@ -44,7 +44,7 @@ export function Chip({
 					accessibilityLabel={`${words.remove} ${label}`}
 					onPress={onRemove}
 					className={cn(
-						CHIP_REMOVE_HIT,
+						REMOVE_HIT,
 						"items-center justify-center active:bg-wash-press",
 					)}
 				>

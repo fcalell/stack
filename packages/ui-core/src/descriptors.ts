@@ -337,12 +337,17 @@ export interface Hunk {
 // A file the viewer chose or dropped, the same on both platforms so one
 // upload serves both: the web wraps its `File` (`blob` resolves to it), the
 // phone the document picker's asset (`blob` reads its uri). `size` is in
-// bytes and `type` a MIME type, empty when the platform knows none.
+// bytes and `type` a MIME type, empty when the platform knows none. `src` is
+// a local address the file can be drawn from before it is uploaded (an
+// `Attachment`'s thumbnail): the phone's asset uri, set on every file, and on
+// the web an object URL the picker makes for an image alone, which the
+// consumer revokes (`URL.revokeObjectURL`) when it no longer shows the file.
 export interface PickedFile {
 	name: string;
 	size: number;
 	type: string;
 	blob: () => Promise<Blob>;
+	src?: string;
 }
 
 // A file that goes with a message: a chip of its name, or, with `src` (an

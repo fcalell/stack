@@ -8,6 +8,7 @@ export function pickedFromDocument(asset: DocumentPickerAsset): PickedFile {
 		size: asset.size ?? 0,
 		type: asset.mimeType ?? "",
 		blob: () => fetch(asset.uri).then((response) => response.blob()),
+		src: asset.uri,
 	};
 }
 
@@ -19,5 +20,6 @@ export function pickedFromImage(asset: ImagePickerAsset): PickedFile {
 		size: asset.fileSize ?? 0,
 		type: asset.mimeType ?? "",
 		blob: () => fetch(asset.uri).then((response) => response.blob()),
+		src: asset.uri,
 	};
 }

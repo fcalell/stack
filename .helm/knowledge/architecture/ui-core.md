@@ -177,7 +177,7 @@ pinned by the package's verify suite; this entry holds the architecture and its 
 ## Words
 
 Every word a molecule draws or reads aloud on its own (the seven `Status` words, `recommended`,
-`copy`, `copied`, `download`, `back`, `close`, `cancel`, `dismiss`, `more`, `send`, `stop`, `attach`, `search`, `loading`, `checking`, `retry`, `saving`, `saved`, `notSaved`, `add`, `remove`, `edit`, `details`, `places`, `notifications`, `code`, `added`, `removed`, `sort`, `ascending`, `descending`, `time`, `message`, `seen`, `unseen`, `copyFailed`, `latest`, `missing`, `typeValue`, `pickValue`, `chooseFile`, `photos`, `files`, `warning`, `locked`, `modified`, `chooseAll`, `expand`, `collapse`, the counted `earlierLines`, and the slot words `meterValue`, `meterOver`, `meterMark`, `linesAdded`, `linesRemoved`, `changed`, `unchanged`, `stale`, `wrongType`, `stepOf` and `chosenOf`) comes
+`copy`, `copied`, `download`, `back`, `close`, `cancel`, `dismiss`, `more`, `send`, `stop`, `attach`, `search`, `loading`, `checking`, `retry`, `saving`, `saved`, `notSaved`, `add`, `remove`, `edit`, `details`, `places`, `notifications`, `code`, `added`, `removed`, `sort`, `ascending`, `descending`, `time`, `message`, `seen`, `unseen`, `copyFailed`, `downloadFailed`, `latest`, `missing`, `typeValue`, `pickValue`, `chooseFile`, `photos`, `files`, `warning`, `locked`, `modified`, `chooseAll`, `expand`, `collapse`, the counted `earlierLines`, and the slot words `meterValue`, `meterOver`, `meterMark`, `linesAdded`, `linesRemoved`, `changed`, `unchanged`, `stale`, `wrongType`, `stepOf` and `chosenOf`) comes
 from `words`, a closed typed object with English defaults. The `Words` type requires every key
 and `wordsSchema` is strict, so a translation missing a word fails `tsc` and the schema. It is a
 plugin option beside `theme`; each plugin contributes a `WordsProvider` into the generated entry
@@ -734,22 +734,26 @@ a tick with no animation, never jumped to full.
   name over a reply; a message with no body draws no bubble, so an image sent alone stands
   alone. The row is one internal part (`message/attachments`) in each plugin that `MessageInput`
   draws as well, so the two never differ; only the input passes `onRemove`. A thumbnail's
-  remove act is `IMAGE_REMOVE`, the chip remove's round hit box on a lifted disc a gap in from the
-  tile's corner, so the glyph reads over any picture; the outside-content mark a product may want
+  remove act is `REMOVE_HIT` (the chip remove's round hit box, held by no entry) with
+  `IMAGE_REMOVE`, a lifted disc a gap in from the tile's corner, so the glyph reads over any picture; the outside-content mark a product may want
   on each attachment is not built, since the product says it once (a notice or a header fact).
 - `MessageInput.onAttach(files)` hears every file the viewer brings, as `PickedFile`s (the
   file control's descriptor, its `accepts` left to the consumer, who turns a file into an
   `Attachment`, uploading or reading it as the product needs, and passes it back). Stack owns the
   chooser. On the web the attach act clicks a hidden multiple file input, a file pasted into the
-  text (any clipboard file; pasted text stays the text area's) and one dropped on the input come
+  text (any clipboard file when the clipboard holds no text; pasted text stays the text area's, so
+  an image beside copied text pastes as the text) and one dropped on the input come
   through the same callback, and a drag-over draws the field's `edge-hover` boundary. On the
   phone the act opens the menu sheet with Photos (`expo-image-picker`, the library, no permission
   asked for the system picker) and Files (`expo-document-picker`), both native-ui peers
   declared as `expo-clipboard` is. The phone has no paste: React Native 0.85's `TextInput`
   exposes no paste event and hands over no pasted image, so the phone takes files through the
-  attach act alone, a limit until React Native gives the text input one. A picked photo's
-  `PickedFile` reads its bytes through `blob()` like every file; it carries no local address, so
-  a phone product shows its thumbnail once the file is uploaded and has an address.
+  attach act alone, a limit until React Native gives the text input one. A picked file's
+  `PickedFile` reads its bytes through `blob()` like every file, and carries `src`, a local address
+  to draw its thumbnail from before it is uploaded: the asset's uri on the phone, and on the web an
+  object URL the picker makes for an image (`URL.createObjectURL`). The package never revokes it,
+  since it cannot know when the consumer stops showing the file: the consumer calls
+  `URL.revokeObjectURL(file.src)` once it drops the attachment.
 - Focus at mount is declarative on native: a typing control (`Input`, `InputOtp`) takes
   `autoFocus` from `FieldFocus`, which the caller that knows no other field holds focus sets (a
   confirm's typed name), never a mount effect reading the focused input.
@@ -803,8 +807,8 @@ a tick with no animation, never jumped to full.
   (`ChangeMark`, beside `StatusDot`, not a roster entry): the kind's glyph (`CHANGE_GLYPH`: `Plus`,
   `PencilLine`, `Minus`, `Equal`, `History`) at the meta icon size in the kind's ink (`CHANGE_MARK`:
   added `ok`, removed `danger`, changed and stale `warn`, unchanged `ink-meta`, the same hues as the
-  change cell's added and removed values) in a lane one icon wide, so a set lines up whether or not
-  a row is marked. The glyph carries kind and hue: no edge bar, which the rubric keeps for the diff.
+  change cell's added and removed values) in a lane one icon wide, so the marked rows of a set line up (an
+  unmarked row draws no lane). The glyph carries kind and hue: no edge bar, which the rubric keeps for the diff.
   Its word (`CHANGE_WORD`: `added`, `modified`, `removed`, `unchanged`, `stale`) is its accessible
   name; `changed` is the change cell's from-to slot word, so the mark's own word is `modified`,
   spoken "Changed". The lane stands ahead of the leading slot (`ListRow`), the label
@@ -825,7 +829,8 @@ a tick with no animation, never jumped to full.
   has one home, `act`. `entry` is a `RowEntry` (`label`, `field`, `placeholder`, `act`, `error`):
   an Input at the bar fit and a labelled Button on one line under the title, in the meta line's
   place (it wins over `meta`, `status` and `chip`), its error under it in the error ink
-  (`ROW_ENTRY_ERROR`, held by ListRow beside `ROW_ENTRY`'s gap). The row keeps no state: the
+  (`FIELD_ERROR_LINE`, the cell a `FormField`'s error draws too, held by neither; `ROW_ENTRY` is the gap,
+  held by ListRow). The row keeps no state: the
   consumer gives `meta` or `status` in place of `entry` once the act settles. The Input is named
   by the entry's `label` and reads its bar fit from an internal context (`InlineField`, shared with a `Rules` term), as a
   Table cell's does from `CellField`. A blocked act's reason draws on the row's own line, the
@@ -1091,7 +1096,7 @@ a tick with no animation, never jumped to full.
   column. The web saves a `Blob` of the text through an anchor's `download`; the phone writes it to
   the cache directory with `expo-file-system` and hands it to the share sheet with `expo-sharing`,
   from which iOS and Android save to Files, so both are native-ui peers beside `expo-clipboard`. A
-  refused write or share raises the failed Toast.
+  refused write or share raises the failed Toast, which says `downloadFailed`.
   Unfolding a `Code` moves focus to its already-mounted text in the press, before the fold act
   unmounts, so focus never drops to the page.
 
@@ -1139,13 +1144,15 @@ a tick with no animation, never jumped to full.
   (`Input`, `Select`, `TextArea`, the Picker's field fit, the touch `MessageInput`), the row with
   its leading slot and its title and meta lines (`ListRow`, `FileRow`), the content frame,
   `FIGURES`, the option group and its label (`SELECT_GROUP`, `OPTION_GROUP_LABEL`: `Select`,
-  `Picker`, `OptionList`), the line box, the popover, the skeleton, the page cells `Place` and `Screen` share, and the toasts'
+  `Picker`, `OptionList`), the error line (`FIELD_ERROR_LINE`: `FormField`, `ListRow`'s entry), the remove
+  act's round hit box (`REMOVE_HIT`: `Chip`, an attachment's thumbnail), the line box, the popover,
+  the skeleton, the page cells `Place` and `Screen` share, and the toasts'
   layer (`TOASTS`, which the Shell stands over its page). A Split's details sheet is the
   `Sheet` at the `pane` fit, composed through the sheet's internal base. `Select`, the
   single-choice field over `options`, is the field box (`FIELD`) whose open list is a popover
   (`POPOVER`) of rows (`ROW`); on native it opens the same option sheet as `Picker`.
 - `FileInput` is the field box (`FIELD`) that chooses a file. Its value is `PickedFile`
-  (`{ name, size, type, blob() }`), one descriptor on both platforms so a consumer's upload code
+  (`{ name, size, type, blob(), src? }`), one descriptor on both platforms so a consumer's upload code
   is one: the web wraps its `File` (`blob` resolves to it) and the phone the document picker's
   asset (`blob` is `fetch(uri).blob()`); a message input's paste or drop reuses it. `accept`
   entries are MIME types, MIME families and dotted extensions, matched by `accepts` in
@@ -1154,7 +1161,10 @@ a tick with no animation, never jumped to full.
   every type when `accept` holds an extension. A refused file never reaches `onChange`: it is
   drawn in the `FormField`'s own error line (the `FieldRefusal` context a `FormField` gives its
   control, the line then in error and the box on `edge-error`), cleared by the next pick, so the
-  error stays one place. Outside a `FormField` a refusal has nowhere to stand. The web draws a
+  error stays one place. A `FileInput` therefore stands only inside a `FormField`: outside one a
+  refusal has nowhere to stand and vanishes, and the control has no error line of its own (react-ui's
+  verify flags a `FileInput` drawn outside a `FormField` in the package's own sources; an app's
+  `.tsx` is out of its reach, so the rule is the guide's). The web draws a
   drag-over as the focus ring (the contract has no dashed edge); the phone has no drop.
   `expo-document-picker` is a native-ui peer declared as `expo-clipboard` is; its config
   plugin only sets an iCloud container, so the component needs none.

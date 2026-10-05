@@ -1686,10 +1686,6 @@ components:
     height: "{spacing.icon-meta}"
     width: "{spacing.icon-meta}"
     textColor: "{colors.on-accent-dark}"
-  chip-remove-hit:
-    height: "{spacing.chip}"
-    width: "{spacing.chip}"
-    rounded: "{rounded.full}"
   code-fold:
     height: "{spacing.target}"
     textColor: "{colors.ink-meta}"
@@ -1750,6 +1746,12 @@ components:
     width: "{spacing.control}"
     rounded: "{rounded.full}"
     backgroundColor: "{colors.fill-neutral-dark}"
+  field-error-line:
+    typography: "{typography.meta}"
+    textColor: "{colors.ink-error}"
+  field-error-line-dark:
+    typography: "{typography.meta}"
+    textColor: "{colors.ink-error-dark}"
   field-glyph:
     textColor: "{colors.ink-meta}"
   field-glyph-dark:
@@ -1774,12 +1776,6 @@ components:
     rounded: "{rounded.control}"
   floating-act-room:
     height: "{spacing.control}"
-  form-field-error:
-    typography: "{typography.meta}"
-    textColor: "{colors.ink-error}"
-  form-field-error-dark:
-    typography: "{typography.meta}"
-    textColor: "{colors.ink-error-dark}"
   form-field-summary:
     height: "{spacing.row}"
   form-field-summary-glyph:
@@ -1807,14 +1803,8 @@ components:
   image-full:
     padding: "{spacing.page}"
   image-remove:
-    height: "{spacing.chip}"
-    width: "{spacing.chip}"
-    rounded: "{rounded.full}"
     backgroundColor: "{colors.raised}"
   image-remove-dark:
-    height: "{spacing.chip}"
-    width: "{spacing.chip}"
-    rounded: "{rounded.full}"
     backgroundColor: "{colors.raised-dark}"
   lock-glyph:
     textColor: "{colors.ink-meta}"
@@ -1964,12 +1954,10 @@ components:
     width: "{spacing.qr}"
     rounded: "{rounded.card}"
     backgroundColor: "{colors.surface-dark}"
-  row-entry-error:
-    typography: "{typography.meta}"
-    textColor: "{colors.ink-error}"
-  row-entry-error-dark:
-    typography: "{typography.meta}"
-    textColor: "{colors.ink-error-dark}"
+  remove-hit:
+    height: "{spacing.chip}"
+    width: "{spacing.chip}"
+    rounded: "{rounded.full}"
   row-leading:
     height: "{spacing.avatar}"
     width: "{spacing.avatar}"
@@ -2356,7 +2344,7 @@ The front matter's components are the matrix cells: one entry per axis value of 
 | `Count` | atom | `COUNT`, `COUNT_LABEL` | rest |
 | `StepCount` | atom | `STEP_COUNT`, `STEP_COUNT_SEGMENTS`, `STEP_COUNT_SEGMENT`, `TEXT.role.meta` | rest |
 | `Status` | atom | `CHANGE_MARK`, `ICON.fit.meta`, `STATUS`, `STATUS_DOT`, `STATUS_SPINNER`, `STATUS_LABEL`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC`, `SKELETON.kind.dot`, `SKELETON.kind.line` | rest |
-| `Chip` | atom | `CHIP`, `CHIP_LABEL`, `CHIP_REMOVE_HIT` | rest, hover, focus, active |
+| `Chip` | atom | `CHIP`, `CHIP_LABEL`, `REMOVE_HIT` | rest, hover, focus, active |
 | `Input` | atom | `FIELD`, `FIELD_VALUE`, `FIELD_PLACEHOLDER`, `FIELD_UNIT`, `FIELD_GLYPH` | rest, hover, focus, disabled, error |
 | `FileInput` | atom | `FIELD.fit.form`, `FIELD.trailing.none`, `FIELD.trailing.act`, `FIELD.state.rest`, `FIELD.state.error`, `FIELD_VALUE.kind.text`, `FIELD_PLACEHOLDER`, `TEXT.role.meta`, `FIELD_GLYPH`, `ICON.fit.control` | rest, hover, focus, disabled, error, empty |
 | `TextArea` | atom | `TEXT_AREA`, `TEXT_AREA_BUDGET`, `TEXT_AREA_VALUE`, `FIELD_VALUE`, `FIELD_PLACEHOLDER` | rest, hover, focus, disabled, error |
@@ -2379,9 +2367,9 @@ The front matter's components are the matrix cells: one entry per axis value of 
 | `ActionBar` | layout | `ACTION_BAR`, `ACTION_BAR_ACTS`, `ACTION_BAR_CHOSEN`, `TEXT.role.meta`, `BUTTON.act.primary`, `BUTTON.act.danger`, `BUTTON.act.secondary`, `BUTTON.act.destructive`, `BUTTON.fit.body`, `BUTTON.fit.field`, `BUTTON_LABEL.act.primary`, `BUTTON_LABEL.act.danger`, `BUTTON_LABEL.act.secondary`, `BUTTON_LABEL.act.destructive` | rest, loading, disabled |
 | `Columns` | layout | `COLUMNS`, `COLUMN` | rest |
 | `Shell` | layout | `SHELL_SIDEBAR`, `SHELL_COLUMN`, `SHELL_BANNER`, `SWITCHER_SLOT`, `SWITCHER`, `SHELL_PLACES`, `PLACE_ROW`, `PLACE_ROW_GLYPH`, `SHELL_TAB_BAR`, `PLACE_TAB`, `PLACE_TAB_LABEL`, `TOASTS`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `ICON.fit.body`, `ICON.fit.control`, `COUNT`, `COUNT_LABEL` | rest, hover, focus, active, selected |
-| `ListRow` | shared | `ROW.lines.one`, `ROW.lines.two`, `ROW.lines.whole`, `ROW.state.rest`, `ROW.state.highlighted`, `ROW.state.pressed`, `ROW.state.selected`, `ROW.state.selected-hover`, `ROW.ground.list`, `ROW.ground.group`, `ROW_TITLE`, `ROW_STEPS`, `ROW_STEP`, `TREE_RAIL`, `TREE_LANE`, `ROW_LEADING`, `ROW_TITLE_LINE`, `ROW_META_LINE`, `ROW_TRAILING`, `ROW_MARKS`, `ROW_WARNING`, `ROW_ACTS`, `CHANGE_MARK`, `CHECKBOX`, `CHECKBOX_MARK`, `TEXT.role.meta`, `ICON.fit.body`, `ICON.fit.meta`, `AVATAR`, `AVATAR_LABEL`, `STATUS`, `STATUS_DOT`, `STATUS_SPINNER`, `STATUS_LABEL`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC`, `CHIP`, `CHIP_LABEL`, `ICON_BUTTON.fit.bar`, `BUTTON.act.secondary`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.secondary`, `FIELD.fit.bar`, `FIELD.trailing.none`, `FIELD.state.rest`, `FIELD.state.error`, `FIELD_VALUE.kind.text`, `FIELD_PLACEHOLDER`, `ROW_ENTRY`, `ROW_ENTRY_ERROR`, `SKELETON.kind.avatar`, `SKELETON.kind.icon`, `SKELETON.kind.dot`, `SKELETON.kind.check`, `SKELETON.kind.bar`, `SKELETON_LANE.role.body`, `SKELETON_LANE.role.meta`, `SKELETON.kind.line`, `LINE_BOX.role.body`, `LINE_BOX.role.meta` | rest, hover, focus, active, loading, error, selected |
+| `ListRow` | shared | `ROW.lines.one`, `ROW.lines.two`, `ROW.lines.whole`, `ROW.state.rest`, `ROW.state.highlighted`, `ROW.state.pressed`, `ROW.state.selected`, `ROW.state.selected-hover`, `ROW.ground.list`, `ROW.ground.group`, `ROW_TITLE`, `ROW_STEPS`, `ROW_STEP`, `TREE_RAIL`, `TREE_LANE`, `ROW_LEADING`, `ROW_TITLE_LINE`, `ROW_META_LINE`, `ROW_TRAILING`, `ROW_MARKS`, `ROW_WARNING`, `ROW_ACTS`, `CHANGE_MARK`, `CHECKBOX`, `CHECKBOX_MARK`, `TEXT.role.meta`, `ICON.fit.body`, `ICON.fit.meta`, `AVATAR`, `AVATAR_LABEL`, `STATUS`, `STATUS_DOT`, `STATUS_SPINNER`, `STATUS_LABEL`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC`, `CHIP`, `CHIP_LABEL`, `ICON_BUTTON.fit.bar`, `BUTTON.act.secondary`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.secondary`, `FIELD.fit.bar`, `FIELD.trailing.none`, `FIELD.state.rest`, `FIELD.state.error`, `FIELD_VALUE.kind.text`, `FIELD_PLACEHOLDER`, `ROW_ENTRY`, `FIELD_ERROR_LINE`, `SKELETON.kind.avatar`, `SKELETON.kind.icon`, `SKELETON.kind.dot`, `SKELETON.kind.check`, `SKELETON.kind.bar`, `SKELETON_LANE.role.body`, `SKELETON_LANE.role.meta`, `SKELETON.kind.line`, `LINE_BOX.role.body`, `LINE_BOX.role.meta` | rest, hover, focus, active, loading, error, selected |
 | `DefinitionRow` | shared | `ROW.lines.one`, `ROW.lines.setting`, `ROW.state.rest`, `ROW.state.highlighted`, `ROW.state.pressed`, `ROW.ground.group`, `DEFINITION_ROW`, `DEFINITION_ROW_CHEVRON`, `ROW_TITLE_LINE`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `TEXT.role.meta`, `TEXT.role.code`, `ICON.fit.body`, `ICON.fit.meta`, `LINK.fit.inline`, `LOCK_GLYPH`, `STATUS`, `STATUS_DOT`, `STATUS_SPINNER`, `STATUS_LABEL`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC`, `ICON_BUTTON.fit.bar`, `CHANGE_MARK` | rest, hover, focus, active |
-| `FormField` | shared | `FORM_FIELD`, `FORM_FIELD_ERROR`, `FORM_FIELD_SUMMARY`, `FORM_FIELD_SUMMARY_GLYPH`, `CHANGE_MARK`, `ICON.fit.body`, `ICON.fit.meta`, `ICON_BUTTON.fit.bar`, `LINE_BOX.role.body`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `TEXT.role.meta` | rest, disabled, error |
+| `FormField` | shared | `FORM_FIELD`, `FIELD_ERROR_LINE`, `FORM_FIELD_SUMMARY`, `FORM_FIELD_SUMMARY_GLYPH`, `CHANGE_MARK`, `ICON.fit.body`, `ICON.fit.meta`, `ICON_BUTTON.fit.bar`, `LINE_BOX.role.body`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `TEXT.role.meta` | rest, disabled, error |
 | `ItemHeader` | shared | `ITEM_HEADER`, `THREAD_COLUMN`, `ITEM_FACTS`, `ITEM_FACT`, `PILL_ACT`, `ICON.fit.meta`, `TEXT.role.meta`, `TEXT.role.heading`, `STATUS`, `STATUS_DOT`, `STATUS_SPINNER`, `STATUS_LABEL`, `SPINNER`, `SPINNER_TRACK`, `SPINNER_ARC`, `COUNT`, `COUNT_LABEL`, `BUTTON.act.secondary`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.secondary`, `LINE_BOX.role.meta`, `LINE_BOX.role.heading`, `SKELETON_LINES`, `SKELETON_ROW.kind.facts`, `SKELETON.kind.line`, `SKELETON.kind.count` | rest, loading |
 | `SegmentedControl` | shared | `SEGMENTED_CONTROL`, `SEGMENT`, `SEGMENT_LABEL` | rest, hover, focus, active, selected |
 | `Sheet` | shared | `SHEET`, `SHEET_SIDE`, `SHEET_CENTERED`, `SHEET_HEAD`, `SHEET_HEAD_ROW`, `SHEET_BODY`, `SHEET_FOOT`, `SCRIM`, `TEXT.role.heading`, `TEXT.role.body`, `TEXT_STRONG.role.body`, `TEXT.role.meta`, `ICON_BUTTON.fit.bar`, `ICON_BUTTON.fit.body`, `BUTTON.act.primary`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.primary` | rest, disabled, loading |
@@ -2402,7 +2390,7 @@ The front matter's components are the matrix cells: one entry per axis value of 
 | `Table` | content | `CHECKBOX`, `CHECKBOX_MARK`, `CHANGE_MARK`, `CHIP.family.teal`, `CHIP.trailing.none`, `CHIP_LABEL.family.teal`, `FIELD.fit.bar`, `FIELD.state.rest`, `FIELD.trailing.none`, `FIGURES`, `ICON.fit.body`, `ICON.fit.meta`, `LOCK_GLYPH`, `SKELETON.kind.check`, `SKELETON.kind.dot`, `SKELETON.kind.line`, `SPINNER`, `SPINNER_ARC`, `SPINNER_TRACK`, `STATUS`, `STATUS_DOT`, `STATUS_LABEL`, `STATUS_SPINNER`, `ROW_WARNING`, `TABLE`, `TABLE_CELL`, `TABLE_CHANGE`, `TABLE_NAME`, `TABLE_CHANGE_VALUE.kind.added`, `TABLE_CHANGE_VALUE.kind.after`, `TABLE_CHANGE_VALUE.kind.before`, `TABLE_CHANGE_VALUE.kind.removed`, `TABLE_EMPTY`, `TABLE_FRAME`, `TABLE_FROZEN`, `TABLE_FROZEN_CELL`, `TABLE_HEAD`, `TABLE_HEAD_LABEL`, `TABLE_ROW`, `TEXT.role.body`, `TEXT.role.code`, `TEXT.role.meta`, `TEXT_STRONG.role.body` | rest, hover, focus, active, loading, error, selected, empty |
 | `Rules` | content | `ICON.fit.meta`, `RULES`, `RULE_ROW`, `RULE_CARD`, `RULE_ARROW`, `TEXT.role.meta` | rest |
 | `Message` | content | `CHIP.family.neutral`, `CHIP_LABEL.family.neutral`, `IMAGE.fit.thumb`, `IMAGE_PICTURE.fit.thumb`, `MESSAGE_ATTACHMENTS`, `ICON.fit.meta`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `MESSAGE`, `MESSAGE_BUBBLE`, `MESSAGE_HEAD`, `MESSAGE_LINE`, `MESSAGE_OPEN`, `MESSAGE_CARD`, `MESSAGE_CODE`, `MESSAGE_FOLD`, `SKELETON.kind.line`, `TEXT.role.body`, `TEXT.role.meta`, `TEXT.role.code`, `TEXT_STRONG.role.body` | rest, hover, focus, active, loading |
-| `MessageInput` | content | `BUTTON.act.primary`, `BUTTON.act.secondary`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.primary`, `BUTTON_LABEL.act.secondary`, `CHIP.family.neutral`, `CHIP.trailing.remove`, `CHIP_LABEL.family.neutral`, `CHIP_REMOVE_HIT`, `FIELD.fit.bar`, `FIELD.state.rest`, `FIELD.trailing.none`, `FIELD_VALUE.kind.text`, `ICON.fit.control`, `ICON.fit.meta`, `ICON_BUTTON.fit.bar`, `IMAGE.fit.thumb`, `IMAGE_PICTURE.fit.thumb`, `IMAGE_REMOVE`, `MESSAGE_ATTACH_SLOT`, `MESSAGE_ATTACHMENTS`, `MESSAGE_INPUT`, `MESSAGE_INPUT_BOX`, `MESSAGE_INPUT_CHIPS`, `MESSAGE_INPUT_FIELD`, `MESSAGE_INPUT_FOOT`, `MESSAGE_INPUT_ROW`, `MESSAGE_INPUT_TEXT`, `MESSAGE_INPUT_VALUE`, `MESSAGE_NOTICE`, `MESSAGE_NOTICE_TEXT`, `SPINNER`, `SPINNER_ARC`, `SPINNER_TRACK`, `TEXT.role.meta` | rest, hover, focus, disabled |
+| `MessageInput` | content | `BUTTON.act.primary`, `BUTTON.act.secondary`, `BUTTON.fit.bar`, `BUTTON_LABEL.act.primary`, `BUTTON_LABEL.act.secondary`, `CHIP.family.neutral`, `CHIP.trailing.remove`, `CHIP_LABEL.family.neutral`, `REMOVE_HIT`, `FIELD.fit.bar`, `FIELD.state.rest`, `FIELD.trailing.none`, `FIELD_VALUE.kind.text`, `ICON.fit.control`, `ICON.fit.meta`, `ICON_BUTTON.fit.bar`, `IMAGE.fit.thumb`, `IMAGE_PICTURE.fit.thumb`, `IMAGE_REMOVE`, `MESSAGE_ATTACH_SLOT`, `MESSAGE_ATTACHMENTS`, `MESSAGE_INPUT`, `MESSAGE_INPUT_BOX`, `MESSAGE_INPUT_CHIPS`, `MESSAGE_INPUT_FIELD`, `MESSAGE_INPUT_FOOT`, `MESSAGE_INPUT_ROW`, `MESSAGE_INPUT_TEXT`, `MESSAGE_INPUT_VALUE`, `MESSAGE_NOTICE`, `MESSAGE_NOTICE_TEXT`, `SPINNER`, `SPINNER_ARC`, `SPINNER_TRACK`, `TEXT.role.meta` | rest, hover, focus, disabled |
 | `Meter` | content | `FIGURES`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `METER`, `METER_COUNTS`, `METER_FILL`, `METER_HEAD`, `METER_ITEM`, `METER_MARK`, `METER_TRACK`, `SKELETON.kind.line`, `SKELETON.kind.meter`, `TEXT.role.body`, `TEXT.role.meta`, `TEXT_STRONG.role.body` | rest, loading |
 | `Stages` | content | `ICON.fit.meta`, `LINE_BOX.role.body`, `LINE_BOX.role.meta`, `STAGE`, `STAGE_CHECK`, `STAGE_RAIL`, `STAGE_ROW`, `STAGE_WORDS`, `STATUS_DOT.state.active`, `STATUS_DOT.state.failed`, `STATUS_DOT.state.idle`, `TEXT.role.meta` | rest |
 | `Stats` | content | `FIGURES`, `LINE_BOX.role.figure`, `LINE_BOX.role.meta`, `SKELETON.kind.line`, `STATS`, `STATS_CELL`, `STATS_COUNTS`, `STATS_EDGE`, `STATS_FIGURE`, `TEXT.role.figure`, `TEXT.role.meta` | rest, loading |

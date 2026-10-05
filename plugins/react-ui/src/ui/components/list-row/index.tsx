@@ -13,10 +13,10 @@ import type {
 	StatusMark,
 } from "@fcalell/ui-core/descriptors";
 import {
+	FIELD_ERROR_LINE,
 	lineBox,
 	ROW_ACTS,
 	ROW_ENTRY,
-	ROW_ENTRY_ERROR,
 	ROW_LEADING,
 	ROW_MARKS,
 	ROW_META_LINE,
@@ -414,7 +414,7 @@ export function ListRow<V extends string | null = string>({
 						</span>
 					</InlineField>
 					{entry.error ? (
-						<Field.Error match className={ROW_ENTRY_ERROR}>
+						<Field.Error match className={FIELD_ERROR_LINE}>
 							{entry.error}
 						</Field.Error>
 					) : null}

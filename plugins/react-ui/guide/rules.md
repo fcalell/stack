@@ -267,10 +267,25 @@ verb, or a `fold` of lines the line opens in place; never a `ListRow` or a `Code
 messages.
 
 A `MessageInput`'s `onAttach` hears `PickedFile`s: the paperclip's dialog, a file pasted into the
-text and a file dropped on the input all come through it. Turn each into an `Attachment`
-(`{ id, name, src? }`, `src` for an image) and pass it back through `attachments`: an image
-draws as a thumbnail with its remove act, a file as a chip. A `Message` for `you` or `other`
-takes the same `attachments`, and `meta` (`"by voice"`, `"Kitchen"`) before its time.
+text and a file dropped on the input all come through it. A paste brings the clipboard's files
+only when it holds no text, so copied text with an image beside it pastes as the text. Turn each
+into an `Attachment` (`{ id, name, src? }`, the picked file's own `src` for an image) and pass it
+back through `attachments`: an image draws as a thumbnail with its remove act, a file as a chip.
+A `Message` for `you` or `other` takes the same `attachments`, and `meta` (`"by voice"`,
+`"Kitchen"`) before its time.
+
+A picked file's `src` is a local address to draw it from before it is uploaded. On the web it is an
+object URL the picker makes for an image, and it stays until you revoke it
+(`URL.revokeObjectURL(file.src)`) once the attachment is dropped.
+
+A `FileInput` stands only inside a `FormField`, which labels it and draws the error line a refused
+file lands in; outside one the refusal vanishes.
+
+```tsx
+<FormField label="Leads file">
+  <FileInput value={file} onChange={setFile} accept={["text/csv"]} />
+</FormField>
+```
 
 A field that stays in view while a `Place`'s sections scroll under it (an ask box over a
 home's sections) is the Place's `foot`: it docks at the Place's bottom, above the tab bar on

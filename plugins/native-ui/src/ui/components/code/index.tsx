@@ -96,7 +96,7 @@ function DownloadAct(props: { name: string; value: string; file: string }) {
 			icon="Download"
 			label={`${words.download} ${props.name}`}
 			onAct={() => {
-				save().catch(() => toast(words.failed, { state: "failed" }));
+				save().catch(() => toast(words.downloadFailed, { state: "failed" }));
 			}}
 		/>
 	);

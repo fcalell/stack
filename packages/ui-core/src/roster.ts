@@ -242,8 +242,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		},
 		Chip: {
 			props: ["label", "family", "onRemove"],
-			draws: ["CHIP", "CHIP_LABEL", "CHIP_REMOVE_HIT"],
-			holds: ["CHIP", "CHIP_LABEL", "CHIP_REMOVE_HIT"],
+			draws: ["CHIP", "CHIP_LABEL", "REMOVE_HIT"],
+			holds: ["CHIP", "CHIP_LABEL"],
 			states: [...PRESS],
 			owns: {
 				roles: ["caption"],
@@ -294,7 +294,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// leading glyph and the `chooseFile` word); chosen, the name, the size
 		// and an act that removes it. The web's box also takes a dropped file,
 		// ringed while one is over it. A file of another type is refused into its
-		// `FormField`'s error line and never reaches `onChange`.
+		// `FormField`'s error line and never reaches `onChange`, so it stands only
+		// inside a `FormField`.
 		FileInput: {
 			props: ["value", "onChange", "accept"],
 			draws: [
@@ -1030,7 +1031,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"FIELD_VALUE.kind.text",
 				"FIELD_PLACEHOLDER",
 				"ROW_ENTRY",
-				"ROW_ENTRY_ERROR",
+				"FIELD_ERROR_LINE",
 				"SKELETON.kind.avatar",
 				"SKELETON.kind.icon",
 				"SKELETON.kind.dot",
@@ -1053,7 +1054,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"ROW_WARNING",
 				"ROW_ACTS",
 				"ROW_ENTRY",
-				"ROW_ENTRY_ERROR",
 			],
 			states: [...PRESS, "loading", "error", "selected"],
 			owns: {
@@ -1204,7 +1204,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			],
 			draws: [
 				"FORM_FIELD",
-				"FORM_FIELD_ERROR",
+				"FIELD_ERROR_LINE",
 				"FORM_FIELD_SUMMARY",
 				"FORM_FIELD_SUMMARY_GLYPH",
 				"CHANGE_MARK",
@@ -1216,12 +1216,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"TEXT_STRONG.role.body",
 				"TEXT.role.meta",
 			],
-			holds: [
-				"FORM_FIELD",
-				"FORM_FIELD_ERROR",
-				"FORM_FIELD_SUMMARY",
-				"FORM_FIELD_SUMMARY_GLYPH",
-			],
+			holds: ["FORM_FIELD", "FORM_FIELD_SUMMARY", "FORM_FIELD_SUMMARY_GLYPH"],
 			states: ["rest", "disabled", "error"],
 			owns: {
 				roles: ["body", "meta"],
@@ -2358,7 +2353,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"CHIP.family.neutral",
 				"CHIP.trailing.remove",
 				"CHIP_LABEL.family.neutral",
-				"CHIP_REMOVE_HIT",
+				"REMOVE_HIT",
 				"FIELD.fit.bar",
 				"FIELD.state.rest",
 				"FIELD.trailing.none",

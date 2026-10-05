@@ -1,7 +1,11 @@
 import { Button as BaseButton } from "@base-ui/react/button";
 import { cn } from "@fcalell/ui-core/cn";
 import type { Attachment } from "@fcalell/ui-core/descriptors";
-import { IMAGE_REMOVE, MESSAGE_ATTACHMENTS } from "@fcalell/ui-core/variants";
+import {
+	IMAGE_REMOVE,
+	MESSAGE_ATTACHMENTS,
+	REMOVE_HIT,
+} from "@fcalell/ui-core/variants";
 import type { RefObject } from "react";
 import { useRef } from "react";
 import { useWords } from "../../lib/words.tsx";
@@ -48,7 +52,7 @@ export function Attachments(props: {
 						<>
 							<Image src={attachment.src} alt={attachment.name} fit="thumb" />
 							{onRemove ? (
-								<span className={cn(IMAGE_REMOVE, DISC)}>
+								<span className={cn(REMOVE_HIT, IMAGE_REMOVE, DISC)}>
 									<BaseButton
 										aria-label={`${words.remove} ${attachment.name}`}
 										onClick={() => remove(attachment.id, index)}

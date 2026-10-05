@@ -130,9 +130,15 @@ export function MessageInput({
 		// The same file chosen again is a change the input would not report.
 		event.currentTarget.value = "";
 	};
-	// A pasted screenshot is a file; pasted text stays the text area's.
+	// A pasted screenshot is a file; pasted text stays the text area's, even
+	// when the clipboard carries an image beside it (copied from an office
+	// document).
 	const paste = (event: ClipboardEvent<HTMLTextAreaElement>) => {
-		if (event.clipboardData.files.length === 0) return;
+		if (
+			event.clipboardData.files.length === 0 ||
+			event.clipboardData.getData("text/plain") !== ""
+		)
+			return;
 		event.preventDefault();
 		take(event.clipboardData.files);
 	};

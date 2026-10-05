@@ -50,7 +50,7 @@ import {
 	WIDTHS,
 } from "@fcalell/ui-core/tokens";
 import { SHELL_COLUMN } from "@fcalell/ui-core/variants";
-import { Node, Project } from "ts-morph";
+import { Node, Project, SyntaxKind } from "ts-morph";
 import { reactUi } from "../src/index.ts";
 import { OVERLAYS, SKELETON_WIDTHS } from "./overlays.ts";
 
@@ -650,6 +650,41 @@ check("b-holds", "no component imports a cell another one holds", () => {
 	}
 	assert(hits.length === 0, `held cells spelled:\n  ${hits.join("\n  ")}`);
 	return `${read} component files, no held cell imported outside its holder`;
+});
+
+// A refused file stands in its `FormField`'s error line, so a `FileInput`
+// outside one loses it. The check reads the JSX of this package's own sources
+// (components and showcase), where an element's ancestors are visible; an
+// app's `.tsx` is a consumer's and out of this script's reach.
+check("b-file-input", "every FileInput stands inside a FormField", () => {
+	const project = new Project({ skipAddingFilesFromTsConfig: true });
+	const hits: string[] = [];
+	let drawn = 0;
+	for (const path of walk(resolve(pkgDir, "src/ui"), /\.tsx$/)) {
+		const file = project.addSourceFileAtPath(path);
+		const elements = [
+			...file.getDescendantsOfKind(SyntaxKind.JsxOpeningElement),
+			...file.getDescendantsOfKind(SyntaxKind.JsxSelfClosingElement),
+		].filter((element) => element.getTagNameNode().getText() === "FileInput");
+		for (const element of elements) {
+			drawn++;
+			const inside = element
+				.getAncestors()
+				.some(
+					(ancestor) =>
+						Node.isJsxElement(ancestor) &&
+						ancestor.getOpeningElement().getTagNameNode().getText() ===
+							"FormField",
+				);
+			if (!inside)
+				hits.push(`${relative(pkgDir, path)}:${element.getStartLineNumber()}`);
+		}
+	}
+	assert(
+		hits.length === 0,
+		`a FileInput outside a FormField:\n  ${hits.join("\n  ")}`,
+	);
+	return `${drawn} FileInput, each inside a FormField`;
 });
 
 check("b-words", "no word is drawn from a literal", () => {

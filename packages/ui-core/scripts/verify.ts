@@ -718,7 +718,7 @@ check("c03", "tokens.ts declares the contract", () => {
 	requireEqual(SHADOW_LEVELS.length, 2, "shadow level count");
 	requireEqual(WIDTHS.length, 12, "width count");
 	requireEqual(BREAKPOINTS.length, 3, "breakpoint count");
-	requireEqual(WORD_KEYS.length, 58, "word count");
+	requireEqual(WORD_KEYS.length, 59, "word count");
 	requireEqual(COUNTED_WORD_KEYS.length, 1, "counted word count");
 	requireEqual(SLOT_WORD_KEYS.length, 9, "slot word count");
 	requireEqual(
