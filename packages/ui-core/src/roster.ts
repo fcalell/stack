@@ -539,8 +539,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// strip, the act a bar-fit primary rightmost; on touch the top bar holds
 		// the acts over the title and the act floats over the body's end. A
 		// `foot` (a field or an action bar, never beside the act) docks under the
-		// scrolling body; a foot holding a bar spans the body, a field keeps the
-		// measure column.
+		// scrolling body and spans it; a `MessageInput` keeps its own measure column.
 		// A `context` is a pick beside the title (the page's change set, its
 		// version), a Picker at the row fit that takes the option's chip.
 		// A `distance` of `room` draws the page for a screen read from across a
@@ -572,7 +571,6 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"PAGE_BODY",
 				"FOOT",
 				"PAGE_BODY_OVER_FOOT",
-				"THREAD_COLUMN",
 				"FLOATING_ACT",
 				"FLOATING_ACT_LIFT",
 				"FLOATING_ACT_ROOM",
@@ -819,13 +817,16 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// filled and `destructive` otherwise. `fit: full` passes the acts
 		// `fit: field`. `chosen` makes it a selection bar over a list: "N of M
 		// chosen" (the slot word `chosenOf`) at meta at the bar's start, the acts
-		// at its end, stacked on touch with the count over the acts.
+		// at its end, stacked on touch with the count over the acts; `chosen.onAll`
+		// adds the act beside the count that chooses every row (the word
+		// `chooseAll`) or, once all are, clears them (`chooseNone`).
 		ActionBar: {
 			props: ["acts", "fit", "chosen"],
 			draws: [
 				"ACTION_BAR",
 				"ACTION_BAR_ACTS",
 				"ACTION_BAR_CHOSEN",
+				"PILL_ACT",
 				"TEXT.role.meta",
 				"BUTTON.act.primary",
 				"BUTTON.act.danger",
@@ -851,10 +852,12 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"on-act-accent",
 					"act-danger",
 					"on-act-danger",
+					"wash-hover",
+					"wash-press",
 				],
-				radii: ["control"],
+				radii: ["control", "full"],
 				spacing: ["pair", "acts", "inside", "control-x"],
-				sizes: ["control", "field"],
+				sizes: ["control", "field", "target"],
 			},
 		},
 		Columns: {
@@ -1956,19 +1959,22 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		},
 		// A one-line row on its ground, its leading the row's slot, the path cut
 		// as text by the component to the room its chip leaves, each count in its
-		// own lane. At most one Chip, between the path and the counts.
+		// own lane, the change mark in a lane before the glyph. At most one Chip, between
+		// the path and the counts.
 		FileRow: {
 			props: [
 				"path",
 				"added",
 				"removed",
 				"seen",
+				"change",
 				"chip",
 				"href",
 				"onOpen",
 				"loading",
 			],
 			draws: [
+				"CHANGE_MARK",
 				"CHIP",
 				"CHIP_LABEL",
 				"FILE_COUNT",
@@ -1976,6 +1982,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"FILE_PATH",
 				"FILE_PATH_PART",
 				"ICON.fit.body",
+				"ICON.fit.meta",
 				"ROW.ground.group",
 				"ROW.ground.list",
 				"ROW.lines.one",
@@ -1999,6 +2006,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"ink-meta",
 					"ink-body",
 					"ok",
+					"warn",
 					"danger",
 					"wash-hover",
 					"ring",
@@ -2018,6 +2026,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"skeleton",
 					"measure-short",
 					"chip",
+					"icon-meta",
 				],
 			},
 		},
@@ -2382,6 +2391,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"SPINNER",
 				"SPINNER_ARC",
 				"SPINNER_TRACK",
+				"THREAD_COLUMN",
 				"TEXT.role.meta",
 			],
 			holds: [
@@ -2422,6 +2432,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"control-compact",
 					"icon-control",
 					"chip",
+					"measure",
 					"measure-short",
 					"icon-meta",
 					"spinner",

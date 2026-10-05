@@ -385,10 +385,11 @@ export const SLIDER_THUMB =
 // A picker's empty choice and its control with no value: a placeholder's
 // look.
 export const PICKER_EMPTY = "text-ink-meta";
-// The value a row's pick shows in its pill (`PICKER {fit: row}`); the field
-// fit's value is `FIELD_VALUE`'s.
+// The value a row's pick shows in its pill (`PICKER {fit: row}`), bounded as a
+// status' label is so a long one truncates before the title beside it does;
+// the field fit's value is `FIELD_VALUE`'s.
 export const PICKER_VALUE =
-	"tabular-nums text-meta leading-meta font-normal text-ink-meta";
+	"max-w-measure-short tabular-nums text-meta leading-meta font-normal text-ink-meta";
 // The pick's popover at the popover's width (its ground and inset are
 // `POPOVER`'s).
 export const PICKER_POPOVER = "w-popover";
@@ -676,7 +677,8 @@ export const CHART_TICK_LANE = "w-figures";
 // Thread: the messages a sections gap apart, one rung above Prose's block
 // gap, and under them the input; on the desktop the messages and the input
 // each stand in a measure-wide column centred in the page, as do the record's
-// head over a Thread filling a Split's main and a Place's docked foot.
+// head over a Thread filling a Split's main and a `MessageInput` (so a Place's
+// docked foot spans the body and the field keeps the column).
 export const THREAD = "gap-sections";
 export const THREAD_COLUMN = "w-full max-w-measure mx-auto";
 // A Thread in a Place's body fills it: the log scrolls under the page's head

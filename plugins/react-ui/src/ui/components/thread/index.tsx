@@ -28,12 +28,7 @@ import {
 	useState,
 } from "react";
 import type { Closed } from "../../lib/closed.ts";
-import {
-	PageTitle,
-	ThreadBleeds,
-	ThreadRoom,
-	ToLatest,
-} from "../../lib/frame.ts";
+import { PageTitle, ThreadBleeds, ThreadRoom } from "../../lib/frame.ts";
 import { useTouch } from "../../lib/media.ts";
 import { useWords } from "../../lib/words.tsx";
 import { EmptyStateBase } from "../empty-state/base.tsx";
@@ -281,9 +276,7 @@ export function Thread<T>(props: ThreadProps<T>) {
 						{children}
 					</div>
 				</div>
-				<ToLatest value={away ? toLatest : null}>
-					<Latest />
-				</ToLatest>
+				<Latest onBack={away ? toLatest : null} />
 			</div>
 			{foot ? (
 				<div className={cn(FOOT, DOCKED)}>

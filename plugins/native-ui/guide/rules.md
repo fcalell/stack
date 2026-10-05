@@ -43,9 +43,9 @@ the molecule that owns its role (`title` is `Place`'s and `Screen`'s, `heading` 
 A picture is an `Image`, never React Native's: `src`, `alt` (a sentence naming what it shows), a
 `fit` (`thumb`, a square tile beside the lines that say where it came from, or `content`, the
 container's width at the picture's own aspect, capped in height) and `loading`. It draws its own
-waiting and failed forms (the failed form says the `alt`), and a press opens the full picture in a
-modal over the scrim with a Close act, the system's back and a press on the scrim. The full view
-takes no pinch-zoom.
+waiting and failed forms (the failed form says the `alt`), and a press opens the full picture over
+the scrim (under any toast) with a Close act, the system's back and a press on the scrim. The full
+view takes no pinch-zoom.
 
 ```tsx
 <Image src={shot.url} alt={shot.title} fit="thumb" loading={shot.pending} />
@@ -118,13 +118,14 @@ A `Link`'s `href` is a route of the app (it navigates through the router) or an 
 
 ## A screen read from across a room declares its distance
 
-A screen read from across a room (a wall display, a tablet on a stand) takes `distance="room"`
-on its `Place`: nothing detects the viewing distance, so the page states it. The page draws the
-touch set on a 960 × 540 canvas, scaled to the window by its width and height (never under one):
-on a 1920 × 1080 window the body is 32, the title 44, a control 88 and a `Stat`'s figure 160,
-five times its label, and a rotation or a resize rescales it. It holds one column of `Columns`,
-`Stats` and one `Stat`, and takes no `context`, `more` or `foot`, whose layers open outside it.
-Set it on the screen's one page, never on a part of a page. A scaled size is fractional.
+A screen read from across a room (a wall display, a tablet on a stand) takes `distance="room"` on
+its `Place`: nothing detects the viewing distance, so the page states it. The page draws the touch
+set on a 960 × 540 canvas, scaled to the window by its width and height (never under one): on a 1920
+× 1080 window the body is 32, the title 44, a control 88 and a `Stat`'s figure 160, five times its
+label, and a rotation or a resize rescales it. It holds one column of `Columns`, `Stats` and one
+`Stat`, and takes no `context`, `more` or `foot`, whose layers open outside it. Set it on the
+screen's one page, never on a part of a page. A scaled size is fractional. The page keeps the app's
+mode, and a screen across a room reads best dark, so run the app dark (`defaultMode: "dark"`).
 
 ```tsx
 <Place title="Deploys" distance="room">
@@ -207,18 +208,18 @@ the `Form`'s first child: the object's glyph as `leading`, its name as `title`, 
 
 ## Collections take data
 
-A collection takes data and draws its states. A `List` takes its `query` (or static
-`items`) and one item map, `row` for `ListRow`s, `file` for `FileRow`s or `meter` for `Meter`s,
-one function per slot; declare a slot only if every item fills it. Pending, it waits in those
-slots; failed, it shows `sentence` and Retry; empty, `empty`, with the act that fills it. Rows
-share one `leading` kind (`avatar`, `icon` or `status`) or none. The first meta part names the
-item; it and the status stay whole as the later parts, then the chip, truncate. A file row's `chip`
-says why it is listed or what its change is; it stays whole and the path yields to it. A Section
-counts them and waits with them when they stand as its direct children, inside a direct `Group`,
-or as a direct `QueryBoundary`'s query; a collection inside the app's own component, or inside a
-`QueryBoundary`'s body, draws itself but adds no count and no busy state to the Section's head. A
-`Group` holds static rows; rows from data in a card are a `List` placed in the `Group`, drawing
-its states on the card, never a `.map` of `ListRow`s or `Meter`s.
+A collection takes data and draws its states. A `List` takes its `query` (or static `items`) and one
+item map, `row` for `ListRow`s, `file` for `FileRow`s or `meter` for `Meter`s, one function per
+slot; declare a slot only if every item fills it. Pending, it waits in those slots; failed, it shows
+`sentence` and Retry; empty, `empty`, with the act that fills it. Rows share one `leading` kind
+(`avatar`, `icon` or `status`) or none. The first meta part names the item; it and the status stay
+whole as the later parts, then the chip, truncate. A file row's `change` (a `ChangeKind`) draws the
+change mark ahead of its glyph, and its `chip` says why it is listed; the chip stays whole and the
+path yields to it. A Section counts them and waits with them when they stand as its direct children,
+inside a direct `Group`, or as a direct `QueryBoundary`'s query; a collection inside the app's own
+component, or inside a `QueryBoundary`'s body, draws itself but adds no count and no busy state to
+the Section's head. A `Group` holds static rows; rows from data in a card are a `List` placed in the
+`Group`, drawing its states on the card, never a `.map` of `ListRow`s or `Meter`s.
 
 A read that answers not found (its query's `error` carries `code: "NOT_FOUND"`, as a stack
 procedure throws it, or `status: 404`) draws "This no longer exists." (the `missing` word) with
@@ -239,10 +240,12 @@ and `moved` reading a row's reason from its item. Below `tablet` each row leads 
 `tablet` a tick column leads the grid and its head tick is unchecked, mixed or checked over the rows
 that can be ticked. `onChange` hears the viewer's tick and your rule decides what the set becomes
 (ticking a change under a new parent ticks the parent): return the ruled set through `chosen`. The
-table draws no count. Its count is the `ActionBar`'s: dock
-`<ActionBar chosen={{ count, of }} acts={[publish]} />` as the Place's `foot`, and it reads "N of M
-chosen" over the full-width act, whose label you set ("Publish 4 changes") and whose `blocked`
-reason you give when nothing can go.
+table draws no count. Its count is the `ActionBar`'s: dock `<ActionBar chosen={{ count, of, onAll }}
+acts={[publish]} />` as the Place's `foot`, and it reads "N of M chosen" over the full-width act,
+whose label you set ("Publish 4 changes") and whose `blocked` reason you give when nothing can go.
+The phone has no head tick, so `onAll` puts a choose-all act beside the count, which reads "Select
+all" while some rows stand unchosen and "Deselect all" once all are (`of` counts the rows that can
+be chosen) and calls `onAll(true)` or `onAll(false)`: apply your rule to it as to a tick.
 
 ```tsx
 <List

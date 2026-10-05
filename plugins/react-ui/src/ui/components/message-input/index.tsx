@@ -18,6 +18,7 @@ import {
 	MESSAGE_INPUT_VALUE,
 	MESSAGE_NOTICE,
 	MESSAGE_NOTICE_TEXT,
+	THREAD_COLUMN,
 	text,
 } from "@fcalell/ui-core/variants";
 import {
@@ -105,6 +106,9 @@ export function MessageInput({
 }: MessageInputProps) {
 	const words = useWords();
 	const touch = useTouch();
+	// A docked foot spans the page body, so the field keeps its own measure
+	// column on the desktop.
+	const column = !touch && THREAD_COLUMN;
 	const empty = value.trim() === "";
 	const sendable = !empty && !disabled;
 	const textField = useRef<HTMLTextAreaElement>(null);
@@ -309,7 +313,7 @@ export function MessageInput({
 			);
 	}
 	return (
-		<div className={cn(MESSAGE_INPUT, ROOT)}>
+		<div className={cn(MESSAGE_INPUT, ROOT, column)}>
 			{onAttach ? (
 				<input ref={chooser} type="file" multiple hidden onChange={choose} />
 			) : null}

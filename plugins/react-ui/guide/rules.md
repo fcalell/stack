@@ -122,14 +122,15 @@ before it.
 ## A screen read from across a room declares its distance
 
 A screen read from across a room (a television, a wall display) takes `distance="room"` on its
-`Place`: no query detects the viewing distance, so the page states it. The page draws the touch
-set on a 960 × 540 canvas, scaled to the screen by its width and height (`min(100vw / 960,
-100dvh / 540)`, never under one pixel): at 1920 × 1080 the body is 32, the title 44, a control 88
-and a `Stat`'s figure 160, five times its label. It holds one column of `Columns`, `Stats` and
-one `Stat` and never splits, since breakpoints stay px while its widths scale, and it takes no
-`context`, `more` or `foot`, whose layers open outside it. Set it on the screen's one page,
-never on a part of a page, and never a density of your own: `data-density` is the showcase's pin.
-Its sizes ignore browser zoom, and a scaled size is fractional.
+`Place`: no query detects the viewing distance, so the page states it. The page draws the touch set
+on a 960 × 540 canvas, scaled to the screen by its width and height (`min(100vw / 960, 100dvh /
+540)`, never under one pixel): at 1920 × 1080 the body is 32, the title 44, a control 88 and a
+`Stat`'s figure 160, five times its label. It holds one column of `Columns`, `Stats` and one `Stat`
+and never splits, since breakpoints stay px while its widths scale, and it takes no `context`,
+`more` or `foot`, whose layers open outside it. Set it on the screen's one page, never on a part of
+a page, and never a density of your own: `data-density` is the showcase's pin. Its sizes ignore
+browser zoom, and a scaled size is fractional. The page keeps the app's mode, and a screen across a
+room reads best dark, so run the app dark (`defaultMode: "dark"`).
 
 ```tsx
 <Place title="Deploys" distance="room">
@@ -227,18 +228,18 @@ the `Form`'s first child: the object's glyph as `leading`, its name as `title`, 
 
 ## Collections take data
 
-A collection takes data and draws its states. A `List` takes its `query` (or static
-`items`) and one item map, `row` for `ListRow`s, `file` for `FileRow`s or `meter` for `Meter`s,
-one function per slot; declare a slot only if every item fills it. Pending, it waits in those
-slots; failed, it shows `sentence` and Retry; empty, `empty`, with the act that fills it. Rows
-share one `leading` kind (`avatar`, `icon` or `status`) or none. The first meta part names the
-item; it and the status stay whole as the later parts, then the chip, truncate. A file row's `chip`
-says why it is listed or what its change is; it stays whole and the path yields to it. A Section
-counts them and waits with them when they stand as its direct children, inside a direct `Group`,
-or as a direct `QueryBoundary`'s query; a collection inside the app's own component, or inside a
-`QueryBoundary`'s body, draws itself but adds no count and no busy state to the Section's head. A
-`Group` holds static rows; rows from data in a card are a `List` placed in the `Group`, drawing
-its states on the card, never a `.map` of `ListRow`s or `Meter`s.
+A collection takes data and draws its states. A `List` takes its `query` (or static `items`) and one
+item map, `row` for `ListRow`s, `file` for `FileRow`s or `meter` for `Meter`s, one function per
+slot; declare a slot only if every item fills it. Pending, it waits in those slots; failed, it shows
+`sentence` and Retry; empty, `empty`, with the act that fills it. Rows share one `leading` kind
+(`avatar`, `icon` or `status`) or none. The first meta part names the item; it and the status stay
+whole as the later parts, then the chip, truncate. A file row's `change` (a `ChangeKind`) draws the
+change mark ahead of its glyph, and its `chip` says why it is listed; the chip stays whole and the
+path yields to it. A Section counts them and waits with them when they stand as its direct children,
+inside a direct `Group`, or as a direct `QueryBoundary`'s query; a collection inside the app's own
+component, or inside a `QueryBoundary`'s body, draws itself but adds no count and no busy state to
+the Section's head. A `Group` holds static rows; rows from data in a card are a `List` placed in the
+`Group`, drawing its states on the card, never a `.map` of `ListRow`s or `Meter`s.
 
 A read that answers not found (its query's `error` carries `code: "NOT_FOUND"`, as a stack
 procedure throws it, or `status: 404`) draws "This no longer exists." (the `missing` word) with
@@ -255,15 +256,19 @@ only, its lock in the head alone.
 
 A table that acts on rows takes `choose`: `chosen` (the ticked ids) and `onChange`, with `blocked`
 and `moved` reading a row's reason from its item. A tick column leads the grid and its head tick is
-unchecked, mixed or checked over the rows that can be ticked. `onChange` hears the viewer's tick
-and your rule decides what the set becomes (ticking a change under a new parent ticks the parent):
+unchecked, mixed or checked over the rows that can be ticked. `onChange` hears the viewer's tick and
+your rule decides what the set becomes (ticking a change under a new parent ticks the parent):
 return the ruled set through `chosen`. A `blocked` row cannot be ticked and a `moved` row says why
 its tick moved ("Needed by Checkout"), each as a line under the row's name. The table draws no
-count. Its count is the `ActionBar`'s: dock `<ActionBar chosen={{ count, of }} acts={[publish]} />`
-as the Place's `foot`, and it reads "N of M chosen" at the bar's start beside the one act, whose
-label you set ("Publish 4 changes") and whose `blocked` reason you give when nothing can go. On the
-desktop the bar spans the page's width; on touch the count stands over the full-width act. A row
-of a `List` leads with a tick as `leading: { check }` (its `blocked` reason leads the meta line).
+count. Its count is the `ActionBar`'s: dock `<ActionBar chosen={{ count, of, onAll }}
+acts={[publish]} />` as the Place's `foot`, and it reads "N of M chosen" at the bar's start beside
+the one act, whose label you set ("Publish 4 changes") and whose `blocked` reason you give when
+nothing can go. `onAll` puts a choose-all act beside the count, which reads "Select all" while some
+rows stand unchosen and "Deselect all" once all are (`of` counts the rows that can be chosen) and
+calls `onAll(true)` or `onAll(false)`: apply your rule to it as to a tick. Touch has no head tick,
+so a list there takes `onAll`. On the desktop the bar spans the page's width; on touch the count
+stands over the full-width act. A row of a `List` leads with a tick as `leading: { check }` (its
+`blocked` reason leads the meta line).
 
 ```tsx
 <List

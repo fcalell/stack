@@ -4,24 +4,22 @@ import {
 	type ImageFit,
 	image,
 	imagePicture,
-	SCRIM,
 	text,
 } from "@fcalell/ui-core/variants";
 import { useState } from "react";
 import {
-	Modal,
 	Pressable,
 	Image as RNImage,
 	Text as RNText,
 	View,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { Ink } from "../../lib/ink";
 import { useWords } from "../../lib/words";
 import { Icon } from "../icon";
 import { IconButton } from "../icon-button";
+import { SheetBase } from "../sheet/base";
 
 const FRAME = "overflow-hidden";
 const PRESS = "active:border-edge-strong";
@@ -29,7 +27,6 @@ const PRESS = "active:border-edge-strong";
 const FETCHING = "absolute inset-0 opacity-0";
 const FAILED = "items-center justify-center overflow-hidden";
 const ALT = "shrink max-w-full";
-const FULL = "flex-1";
 // A press on the scrim around the picture closes the view.
 const SCRIM_HIT = "absolute inset-0";
 const VIEW = "flex-1 items-center justify-center";
@@ -59,9 +56,9 @@ interface Seen {
 
 // The picture in a hairline frame, cover-cropped to its tile or its cap.
 // Waiting, the frame is a skeleton; failed, an `ImageOff` glyph over the alt
-// text and nothing to open. Pressed, the full picture opens in a modal over
-// the scrim, contain-fit inside the page inset and the safe area, with a
-// Close act, the system's back and a press on the scrim.
+// text and nothing to open. Pressed, the full picture opens in a sheet's view
+// over the scrim (under the toasts), contain-fit inside the page inset and the
+// safe area, with a Close act, the system's back and a press on the scrim.
 export function Image({ src, alt, fit, loading }: ImageProps) {
 	const place = fit ?? "content";
 	const [seen, setSeen] = useState<Seen>();
@@ -121,69 +118,48 @@ export function Image({ src, alt, fit, loading }: ImageProps) {
 					className={pending ? FETCHING : imagePicture({ fit: place })}
 				/>
 			</Pressable>
-			<FullView
+			<SheetBase
 				open={open}
 				onClose={() => setOpen(false)}
-				src={src}
-				alt={alt}
-			/>
+				title={alt}
+				form="view"
+			>
+				<FullView onClose={() => setOpen(false)} src={src} alt={alt} />
+			</SheetBase>
 		</>
 	);
 }
 
-function FullView(props: {
-	open: boolean;
-	onClose: () => void;
-	src: string;
-	alt: string;
-}) {
-	const insets = useSafeAreaInsets();
+function FullView(props: { onClose: () => void; src: string; alt: string }) {
 	const words = useWords();
 	return (
-		<Modal
-			visible={props.open}
-			transparent
-			animationType="fade"
-			statusBarTranslucent
-			onRequestClose={props.onClose}
-		>
-			<View
-				accessibilityViewIsModal
-				style={{
-					paddingTop: insets.top,
-					paddingBottom: insets.bottom,
-					paddingLeft: insets.left,
-					paddingRight: insets.right,
-				}}
-				className={cn(SCRIM, FULL)}
-			>
-				<Pressable
-					accessible={false}
-					onPress={props.onClose}
-					className={SCRIM_HIT}
+		<>
+			<Pressable
+				accessible={false}
+				onPress={props.onClose}
+				className={SCRIM_HIT}
+			/>
+			<View pointerEvents="none" className={cn(IMAGE_FULL, VIEW)}>
+				<RNImage
+					source={{ uri: props.src }}
+					resizeMode="contain"
+					accessible
+					accessibilityRole="image"
+					accessibilityLabel={props.alt}
+					accessibilityIgnoresInvertColors
+					className={FULL_PICTURE}
 				/>
-				<View pointerEvents="none" className={cn(IMAGE_FULL, VIEW)}>
-					<RNImage
-						source={{ uri: props.src }}
-						resizeMode="contain"
-						accessible
-						accessibilityRole="image"
-						accessibilityLabel={props.alt}
-						accessibilityIgnoresInvertColors
-						className={FULL_PICTURE}
+			</View>
+			<View pointerEvents="box-none" className={cn(IMAGE_FULL, CLOSE_LAYER)}>
+				<View className={IMAGE_CLOSE}>
+					<IconButton
+						icon="X"
+						fit="body"
+						label={words.close}
+						onAct={props.onClose}
 					/>
 				</View>
-				<View pointerEvents="box-none" className={cn(IMAGE_FULL, CLOSE_LAYER)}>
-					<View className={IMAGE_CLOSE}>
-						<IconButton
-							icon="X"
-							fit="body"
-							label={words.close}
-							onAct={props.onClose}
-						/>
-					</View>
-				</View>
 			</View>
-		</Modal>
+		</>
 	);
 }

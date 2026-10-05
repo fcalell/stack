@@ -1,4 +1,8 @@
-import type { ChipMark, IconName } from "@fcalell/ui-core/descriptors";
+import type {
+	ChangeKind,
+	ChipMark,
+	IconName,
+} from "@fcalell/ui-core/descriptors";
 import { filled } from "@fcalell/ui-core/tokens";
 import {
 	FILE_COUNTS,
@@ -19,6 +23,7 @@ import type { Route } from "../../lib/route";
 import { useWords } from "../../lib/words";
 import { Chip } from "../chip";
 import { Icon } from "../icon";
+import { ChangeMark } from "../status/change";
 import { FileWait } from "./wait";
 
 const ROW = "relative flex-row items-center";
@@ -26,6 +31,8 @@ const ROW = "relative flex-row items-center";
 const SQUARE = "rounded-none";
 // The hit covers the row under its text and takes the press wash.
 const HIT = "absolute inset-0 active:bg-wash-press";
+// The change mark stands in its own lane at the row's start, ahead of the glyph.
+const MARK = "shrink-0";
 const LEADING = "shrink-0 items-center justify-center";
 const PATH = "flex-1 flex-row min-w-0 overflow-hidden";
 const DIRECTORY = "shrink min-w-0";
@@ -46,8 +53,11 @@ export interface FileRowProps extends Closed {
 	// Whether the reviewer has seen the file: a tick when seen, a ring when
 	// not; absent, the file glyph leads.
 	seen?: boolean;
-	// Why the file is listed or what its change is, a data value's chip
-	// between the path and the counts.
+	// Where the file stands in a change set: the change mark at the row's start,
+	// ahead of the glyph.
+	change?: ChangeKind;
+	// Why the file is listed, a data value's chip between the path and the
+	// counts.
 	chip?: ChipMark;
 	// Where the row goes when opened; the row is selected at it.
 	href?: Route;
@@ -120,6 +130,7 @@ export function FileRow({
 	added,
 	removed,
 	seen,
+	change,
 	chip,
 	href,
 	onOpen,
@@ -128,10 +139,14 @@ export function FileRow({
 	const words = useWords();
 	const ground = useContext(GroundContext);
 	const pathname = usePathname();
-	if (loading) return <FileWait busy chip={chip !== undefined} />;
+	if (loading)
+		return (
+			<FileWait busy change={change !== undefined} chip={chip !== undefined} />
+		);
 	const seenWord = seen ? words.seen : words.unseen;
 	const named = [
 		path,
+		change ? words[change] : undefined,
 		chip?.label,
 		added > 0 ? filled(words.linesAdded, { count: String(added) }) : undefined,
 		removed > 0
@@ -161,6 +176,16 @@ export function FileRow({
 					onPress={open}
 					className={HIT}
 				/>
+			) : null}
+			{change ? (
+				<View
+					pointerEvents="none"
+					accessibilityElementsHidden
+					importantForAccessibility="no-hide-descendants"
+					className={MARK}
+				>
+					<ChangeMark kind={change} />
+				</View>
 			) : null}
 			<View
 				pointerEvents="none"

@@ -129,6 +129,7 @@ export interface FileSlots<T> {
 	added: (item: T) => number;
 	removed: (item: T) => number;
 	seen?: (item: T) => boolean | undefined;
+	change?: (item: T) => ChangeKind | undefined;
 	chip?: (item: T) => ChipMark | undefined;
 	href?: (item: T) => Route | undefined;
 	onOpen?: (item: T) => void;
@@ -337,6 +338,7 @@ export function List<T, V extends string | null = string>(
 				added={file.added(item)}
 				removed={file.removed(item)}
 				seen={file.seen?.(item)}
+				change={file.change?.(item)}
 				chip={file.chip?.(item)}
 				href={file.href?.(item)}
 				onOpen={file.onOpen ? () => file.onOpen?.(item) : undefined}

@@ -10,6 +10,8 @@ import { GroundContext } from "../../lib/ground.ts";
 
 const WAIT = "flex items-center";
 const WAIT_LEADING = "flex shrink-0 items-center justify-center";
+// The change mark's lane, one icon wide.
+const WAIT_MARK = "flex shrink-0 items-center justify-center";
 const WAIT_GLYPH = "shrink-0";
 const WAIT_PATH = "flex grow min-w-0";
 // The chip's lane and the counts' lane share the room the path leaves, each
@@ -21,8 +23,12 @@ const PATH_BAR = "w-1/2";
 const CHIP_BAR = "w-1/2";
 const COUNTS_BAR = "w-1/3";
 
-/** A FileRow waiting: the glyph, the path's bar, a chip's bar when `chip` is declared, and the counts' bar, busy when it waits alone (a list of them is busy once). Outside the package's exports. */
-export function FileWait(props: { busy: boolean; chip: boolean }) {
+/** A FileRow waiting: the change mark's skeleton in its lane when `change` is declared, the glyph, the path's bar, a chip's bar when `chip` is declared, and the counts' bar, busy when it waits alone (a list of them is busy once). Outside the package's exports. */
+export function FileWait(props: {
+	busy: boolean;
+	change: boolean;
+	chip: boolean;
+}) {
 	const ground = use(GroundContext);
 	return (
 		<div
@@ -35,6 +41,11 @@ export function FileWait(props: { busy: boolean; chip: boolean }) {
 				WAIT,
 			)}
 		>
+			{props.change ? (
+				<span className={WAIT_MARK}>
+					<span className={skeleton({ kind: "icon" })} />
+				</span>
+			) : null}
 			<span className={cn(ROW_LEADING, WAIT_LEADING)}>
 				<span className={cn(skeleton({ kind: "icon" }), WAIT_GLYPH)} />
 			</span>

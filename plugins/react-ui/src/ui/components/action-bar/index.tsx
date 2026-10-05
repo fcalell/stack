@@ -1,5 +1,6 @@
+import { Button as BaseButton } from "@base-ui/react/button";
 import { cn } from "@fcalell/ui-core/cn";
-import type { Act } from "@fcalell/ui-core/descriptors";
+import type { Act, ChosenCount } from "@fcalell/ui-core/descriptors";
 import { pressStands } from "@fcalell/ui-core/reason";
 import { filled } from "@fcalell/ui-core/tokens";
 import {
@@ -9,6 +10,7 @@ import {
 	actionBar,
 	type ButtonAct,
 	type ButtonFit,
+	PILL_ACT,
 	text,
 } from "@fcalell/ui-core/variants";
 import {
@@ -48,6 +50,12 @@ const ROW: Record<ActionBarFit, string> = {
 	full: "flex flex-col self-stretch",
 };
 
+// The count and its all-or-clear act stand a pair apart at the row's start; the
+// act is words in a pill, washed at the pointer.
+const COUNT = "flex items-center";
+const ALL =
+	"inline-flex items-center text-ink-meta hover:bg-wash-hover active:bg-wash-press";
+
 // The last act is the one filled act; a destructive act draws `danger`
 // filled and the hairline `destructive` otherwise.
 function kindOf(act: Act, last: boolean): ButtonAct {
@@ -61,8 +69,8 @@ export interface ActionBarProps extends Closed {
 	acts: Act[];
 	/** Where the bar stands: at its container's end (the default), or across it with each act at the field's height. */
 	fit?: ActionBarFit;
-	/** A selection bar's count, "N of M chosen" at meta at the bar's start (a `Table`'s `choose` set against its rows), announced as it changes; the act's label and its blocked reason stay the act's. Docked as a `Place`'s `foot`. */
-	chosen?: { count: number; of: number };
+	/** A selection bar's count, "N of M chosen" at meta at the bar's start (a `Table`'s `choose` set against its rows), announced as it changes, with `onAll` a select-all or deselect-all act beside it; the act's label and its blocked reason stay the act's. Docked as a `Place`'s `foot`. */
+	chosen?: ChosenCount;
 }
 
 // An act's reason host: the same object while the act stays blocked by one
@@ -155,16 +163,33 @@ export function ActionBar({ acts, fit, chosen }: ActionBarProps) {
 			})}
 		</div>
 	);
+	// The act chooses every row while some stand unchosen and clears them once
+	// all are, as a table's head tick does.
+	const every = chosen !== undefined && chosen.count >= chosen.of;
+	const all =
+		chosen?.onAll !== undefined && chosen.of > 0 ? (
+			<BaseButton
+				onClick={() => chosen.onAll?.(!every)}
+				className={cn(PILL_ACT, ALL)}
+			>
+				<span className={text({ role: "meta" })}>
+					{every ? words.chooseNone : words.chooseAll}
+				</span>
+			</BaseButton>
+		) : null;
 	return (
 		<div className={cn(actionBar({ fit: where }), BAR[where])}>
 			{chosen ? (
 				<div className={cn(ACTION_BAR_CHOSEN, ROW[where])}>
-					<span role="status" className={text({ role: "meta" })}>
-						{filled(words.chosenOf, {
-							count: String(chosen.count),
-							of: String(chosen.of),
-						})}
-					</span>
+					<div className={cn(ACTION_BAR_CHOSEN, COUNT)}>
+						<span role="status" className={text({ role: "meta" })}>
+							{filled(words.chosenOf, {
+								count: String(chosen.count),
+								of: String(chosen.of),
+							})}
+						</span>
+						{all}
+					</div>
 					{buttons}
 				</div>
 			) : (

@@ -144,7 +144,9 @@ pinned by the package's verify suite; this entry holds the architecture and its 
   the characters it holds on a phone. Motion is unchanged, and focus is the existing ring,
   scaled (no scale transform: the roster draws focus as a ring everywhere, and a scaled element
   blurs its text on most TV compositors). The structure is touch's: the `touch:` variant and
-  `useTouch` match inside a room Place, so nothing depends on hover.
+  `useTouch` match inside a room Place, so nothing depends on hover. A room Place keeps the app's
+  mode (it scopes no colours), and the ten-foot guidance runs dark, so an app that draws a room
+  screen runs dark (`defaultMode: "dark"`).
   Emission: `roomTokens(scale)` is one record whose values are canvas units, `scale` turning them
   into the platform's value, so both platforms share one derivation. The web's `roomScope`
   renders each as `calc(N * var(--room-unit))` under `[data-density="room"]`, which the Place
@@ -193,7 +195,7 @@ Every word a molecule draws or reads aloud on its own (the seven `Status` words,
 `edit`, `details`, `places`, `notifications`, `code`, `added`, `removed`, `sort`, `ascending`,
 `descending`, `time`, `message`, `seen`, `unseen`, `copyFailed`, `downloadFailed`, `latest`, `missing`, `chooseFile`,
 `typeValue`, `pickValue`, `locked`, `warning`, `photos`, `files`, `changed`, `unchanged`, `stale`,
-`chooseAll`, `expand`, `collapse`, the counted `earlierLines`, and the slot words `meterValue`,
+`chooseAll`, `chooseNone`, `expand`, `collapse`, the counted `earlierLines`, and the slot words `meterValue`,
 `meterOver`, `meterMark`, `linesAdded`, `linesRemoved`, `changedFrom`, `wrongType`, `stepOf` and
 `chosenOf`) comes from `words`, a closed typed object with English defaults. The `Words` type
 requires every key and `wordsSchema` is strict, so a translation missing a word fails `tsc` and the
@@ -322,7 +324,9 @@ a tick with no animation, never jumped to full.
 - A page read in a context (Live, one change set, a past version) names it by a pick beside its
   title: `Place.context`, a `Switcher` (an `OptionPick` with its closing `IconAct`, the type the
   shell's switcher takes), drawn as the Picker at the `row` fit right after the `h1`, a `pair` apart
-  and pulled back by `-ms-inside` as an `ItemHeader`'s pick fact is. It stands on the title line
+  and pulled back by `-ms-inside` as an `ItemHeader`'s pick fact is. Its value is capped at
+  `measure-short` and truncates (`PICKER_VALUE`, as a status label is), so a long label cannot
+  crush the title. It stands on the title line
   under the top bar on touch too, since the context is part of the page's address and the top bar
   is the shell's switcher. A context's kind (Draft, Ready) is `Option.chip`, the `ChipMark` a
   `ListRow` carries: the chip draws after the option's label in the list and on the trigger, and
@@ -342,10 +346,13 @@ a tick with no animation, never jumped to full.
   "saved" | "failed"; onRetry }`, which stack owns so the words (`saving`, `saved`, `notSaved`,
   `retry`) and the announcement are not the consumer's to spell. `saving` and `saved` are meta-ink
   words; `failed` is the `failed` Status with `notSaved`, then a `secondary` bar-fit `Button`
-  labelled `retry`. The fact stands in a polite live region (`role="status"` on the web;
-  `accessibilityLiveRegion="polite"` on the phone, plus `AccessibilityInfo.announceForAccessibility`
-  on iOS, which has no live region) and keeps one key across its states, so the region persists and
-  each change is announced. Rejected: a generic fact that carries an act, which lets any fact hold
+  labelled `retry`. The fact stands in a polite live region (`role="status"` on the web; on the
+  phone `useLive` in `lib/live`: an Android live region plus an iOS
+  `AccessibilityInfo.announceForAccessibility` on each change, never on mount) and keeps one key
+  across its states, so the region persists and each change is announced. The fact stands from
+  the record's open, `saved` at rest: a region that first mounts holding `saving` has no earlier
+  text to change from, so that first save may go unheard. The selection bar's count announces
+  through the same hook. Rejected: a generic fact that carries an act, which lets any fact hold
   acts and leaves the words and the announcement to the consumer; a `Banner`, which is loud for a
   save that usually succeeds. An autosaving `FieldBinding` feeding this fact is not built.
 - `running` is work under way and `active` a steady state (a watch that stands, a service that is
@@ -487,18 +494,17 @@ a tick with no animation, never jumped to full.
   no entry), the body scrolling past it, above the tab bar on touch and, on native, lifted over
   the keyboard (the body and the foot share one `KeyboardAvoidingView`, `Lifted`). The body
   ends a sections gap over it (`PAGE_BODY_OVER_FOOT`), as a filling Thread's log ends over its
-  input, so the field reads apart from the last section; on the desktop the foot stands in the
-  measure-wide column (`THREAD_COLUMN`) a Thread's input stands in, unless the foot is an
-  `ActionBar`, which spans the body (the Place reads the foot's element type in render, a
-  structure choice, never a width prop; a bar a consumer wraps in its own component keeps the
-  column). It reports
+  input, so the field reads apart from the last section; the foot spans the body at every
+  density, whatever it holds (the Place never reads its element type), and a docked `MessageInput`
+  keeps its own measure column (`THREAD_COLUMN`) inside it on the desktop, the column a Thread's
+  input stands in. It names
   the Shell's toasts' anchor as a filling Thread's input does. `act` and `foot` are exclusive in the props type:
   the foot's Send is the screen's one filled act, so a floating act beside it would be a second.
   A Place with a `foot` gives a Thread no room to fill (`ThreadRoom`), so a Thread in its body stands inline among the
   sections with no foot of its own, and no Latest act stands over the Place's foot. Rejected: a
   foot derived from a Thread's position (a Thread in the last Section docking its input), which
   hides the dock from the call site; a `MessageInput` docked variant, since docking is the
-  frame's, never the field's.
+  frame's, never the field's (the column the field keeps is its own at every use, not a docked form).
 - A record the main opened is the Split's `beside`: a `Screen` whose `back` is the main's route,
   given by the consumer because the route's depth differs by surface and no component can derive it.
   From `wide` of the page the list, the main and the beside record stand together, main and beside
@@ -615,7 +621,7 @@ a tick with no animation, never jumped to full.
   `ArrowRight` and `after` in the body ink, neither tinted, since a changed value is no verdict;
   only a value added (null `before`) takes `ok-soft` and one removed (null `after`) `danger-soft`,
   struck, each a chip-radius pill (`TABLE_CHANGE`, `TABLE_CHANGE_VALUE`). It reads aloud through the
-  slot word `changedFrom` ("from X to Y"), or `added` or `removed` before the one value it holds.
+  slot word `changed` ("from X to Y"), or `added` or `removed` before the one value it holds.
   Rejected: tinting `after` for any change (a rename is not good news), and a Comparison column
   (that sets facts side by side, not one value's movement). A Table chooses rows through `choose`
   (`TableChoice<T>`: `chosen`, the ticked ids, and `onChange`, which hears the set a tick makes;
@@ -636,24 +642,28 @@ a tick with no animation, never jumped to full.
   assistive tech. On touch the leading and tick columns both freeze (the leading one at the tick
   column's width); below `tablet` the tick is the `ListRow`'s leading `check` and a moved reason
   leads its meta. The head tick draws no count, and the table none: "N of M chosen" belongs to the
-  selection bar, which reads this selection: an `ActionBar` with `chosen: { count, of }` docked as
-  the Place's `foot`. It draws the slot word `chosenOf` at meta at the bar's start (one phrase,
-  since the count left behind is `of - count`), in a polite live region, and the acts beside it at
-  the end (`ACTION_BAR_CHOSEN`, a pair apart), the bar's one filled act the page's one; on touch the
-  count stands over the full-width act. The act's label ("Publish 4 changes") and its blocked reason
-  stay the consumer's `Act`. The bar is not a new component: `ActionBar` already owns the filled
-  act, its pending state, the reason and the touch stacking, and `Place.foot` already docks, scrolls
-  the body under it and stands above the tab bar and the toasts. A grid re-renders only the rows and
-  cells whose state changed: rows and cells are memoised components fed per-cell values and one
-  stable set of callbacks. On the web a cell holds the pointer's hover itself (an editable cell
-  under the pointer shows its control), so a pointer crossing the grid renders the cells it leaves
-  and enters; the cursor moves by focus, and a focus on the cursor's own cell sets nothing. On the
-  phone a row's two halves (the frozen leading cell and the cells that scroll) wash together on a
-  press, so both read one store of the pressed row's id, each only whether it is the pressed one; a
-  sortable header washes through the Pressable's own pressed state. The web mounts both forms and
-  CSS hides one, since the switch is the page's container width, which no store reads: a sort, a
-  selection or a data change renders the rows twice until Place and Screen hand their page's width
-  to one external store.
+  selection bar, which reads this selection: an `ActionBar` with `chosen: { count, of, onAll? }`
+  docked as the Place's `foot`. Touch has no head tick, so `onAll` puts the choose-all act on the
+  bar: beside the count, words in a pill (`PILL_ACT`) reading `chooseAll` while some rows stand
+  unchosen and `chooseNone` once all are, as the head tick toggles, and calling `onAll(true)` or
+  `onAll(false)`. `of` counts the rows that can be chosen, so a list with blocked rows still reaches
+  the cleared state. It draws the slot word `chosenOf` at meta at the bar's start (one phrase, since
+  the count left behind is `of - count`), in a polite live region, and the acts beside it at the end
+  (`ACTION_BAR_CHOSEN`, a pair apart), the bar's one filled act the page's one; on touch the count
+  stands over the full-width act. The act's label ("Publish 4 changes") and its blocked reason stay
+  the consumer's `Act`. The bar is not a new component: `ActionBar` already owns the filled act, its
+  pending state, the reason and the touch stacking, and `Place.foot` already docks, scrolls the body
+  under it and stands above the tab bar and the toasts. A grid re-renders only the rows and cells
+  whose state changed: rows and cells are memoised components fed per-cell values and one stable set
+  of callbacks. On the web a cell holds the pointer's hover itself (an editable cell under the
+  pointer shows its control), so a pointer crossing the grid renders the cells it leaves and enters;
+  the cursor moves by focus, and a focus on the cursor's own cell sets nothing. On the phone a row's
+  two halves (the frozen leading cell and the cells that scroll) wash together on a press, so both
+  read one store of the pressed row's id, each only whether it is the pressed one; a sortable header
+  washes through the Pressable's own pressed state. The web mounts both forms and CSS hides one,
+  since the switch is the page's container width, which no store reads: a sort, a selection or a
+  data change renders the rows twice until Place and Screen hand their page's width to one external
+  store.
 - A thread is a molecule (`Thread`), a collection: its Messages from `query` (with `sentence`) or
   `items` (waiting on `loading`) through the `message` map, one function per `Message` slot (`key`,
   `author`, `name`, `body`, `at`, `attachments` and `meta` for a turn, `onOpen` returning a system
@@ -664,7 +674,7 @@ a tick with no animation, never jumped to full.
   and unknown before the data, each at its loaded height (yours its bubble over its time's bar,
   `figures` wide, as the loaded bubble stands over its time); failed, the failed EmptyState with
   `sentence` and Retry; no message, `empty`; each in the log's column. On the desktop both stand in
-  a measure-wide column centred in the page (`THREAD_COLUMN`, held by no entry: a Place's `foot` and
+  a measure-wide column centred in the page (`THREAD_COLUMN`, held by no entry: a `MessageInput` and
   a record's `ItemHeader` over a filling Thread stand in it too), on touch in the screen's. A Thread
   in a Place's body fills the page at every width, decided by where it stands, from its first
   render: the frame hands it `ThreadRoom`, and the body draws no inset and leaves scrolling to it,
@@ -706,10 +716,10 @@ a tick with no animation, never jumped to full.
   `latest`) floats centred at the foot of the log's region, a pair above the foot, on a lifted
   ground at its radius (`THREAD_LATEST`: `bg-raised`, `shadow-float`, since the secondary act draws
   no fill); pressing it scrolls to the end and resumes following (the web log takes the focus the
-  act held). It takes no prop: the Thread hands its way back through `ToLatest` (the handler, `null`
-  at the end), and the internal `Latest` draws from that context in whatever region stands over a
-  docked foot. The layer is anchored inside that region, never hung above the foot by `bottom-full`,
-  because Android does not hit-test a child outside its parent's bounds.
+  act held). It takes no prop: the Thread hands its way back to the internal `Latest` (`onBack`,
+  `null` at the end), which it draws in the log's region over its docked foot. The layer is anchored
+  inside that region, never hung above the foot by `bottom-full`, because Android does not hit-test
+  a child outside its parent's bounds.
 - A content molecule derives once per input: `Prose` lexes and folds its markdown, `Diff` runs
   its patch, `ProseDiff` its word diff and runs, and `QrCode` its encoding and module path, each
   memoised on its text and skipped while it waits (a waiting QR tile draws a version 2 code's 25
@@ -1060,7 +1070,10 @@ a tick with no animation, never jumped to full.
   List's rows, cheaper and plainer than serializing each row's props to skip it. On the phone a
   Group keys each row's wrapper by the row's own key (`Children.toArray`'s, its place among the
   children as written), so a conditional row appearing shifts no later row's state.
-- A FileRow carries at most one `ChipMark` (why the file is listed, or what its change is),
+- A FileRow's own change is its `change` (a `ChangeKind`): the one change mark every row draws,
+  in its lane before the glyph and read aloud with the row, its waiting form reserving the lane.
+  The chip never carries it.
+- A FileRow carries at most one `ChipMark` (why the file is listed),
   standing between the path and the count lanes at its label's `measure-short` cap; the path
   takes the room the chip leaves, so the chip stays whole and the path yields: the chip is
   why the row is listed and reads in one glance, where a cut path gives up its directory first,
@@ -1076,26 +1089,27 @@ a tick with no animation, never jumped to full.
   count lanes are `figures` wide. A waiting Diff is a collection of unknown length: its hunk
   header and eight lines wait at the loaded rows' heights and code start, and its height changes on
   load by the line count, and on touch by the lines that wrap, which no waiting form can know.
-- A picture is `Image`, one component for every place a picture stands (a record's screenshot,
-  a message's attachment, a message input's pending file): `src`, `alt`, `fit` and `loading`.
-  `thumb` is a square tile (`IMAGE`, `size-image-tile`, the control radius) and `content` the
-  container's width at the picture's own aspect down to a height cap (`image-cap`, the card
-  radius), both cover-cropped inside the hairline `edge` (`IMAGE_PICTURE`). The picture mounts
-  while it waits, hidden, so the frame (`IMAGE {state}`: a skeleton, at least a tile high since
-  the content fit knows no aspect before its bytes, an accepted height change on load) is
-  replaced by the bytes without a second fetch; a failed fetch draws a group-ground tile with
-  an `ImageOff` glyph over the alt text in meta and nothing to open, so `alt` is the one word
-  the form needs and `words` gains none. A loaded picture is a button named by `alt`; a press
-  opens it over the scrim with no frame, contain-fit inside the page inset (`IMAGE_FULL`), with
-  a Close act on a lifted ground (`IMAGE_CLOSE`, as `THREAD_LATEST` lifts the Latest act, since
-  the icon act's meta ink has no ground of its own over a scrim). The view is the sheet's
-  internal base at its `view` form on the web, for the scrim, the focus trap, Escape, the layer
-  and the portal container: no head, body or foot, and the popup takes no press so a press
-  around the picture is a press on the scrim. A `view` is not a `SheetFit`, since a sheet's head
-  and inset would take the picture's room. On the phone it is a React Native `Modal`, since the
-  full-height gorhom sheet carries the same head, and a picture raises no toast to stand under
-  (the `Modal` stands over the Shell's toasts). Rejected: an `image` slot on `FileRow` or `Message`,
-  which would repeat the open-full mechanism per component.
+- A picture is `Image`, one component for every place a picture stands (a record's screenshot, a
+  message's attachment, a message input's pending file): `src`, `alt`, `fit` and `loading`. `thumb`
+  is a square tile (`IMAGE`, `size-image-tile`, the control radius) and `content` the container's
+  width at the picture's own aspect down to a height cap (`image-cap`, the card radius), both
+  cover-cropped inside the hairline `edge` (`IMAGE_PICTURE`). The picture mounts while it waits,
+  hidden, so the frame (`IMAGE {state}`: a skeleton, at least a tile high since the content fit
+  knows no aspect before its bytes, an accepted height change on load) is replaced by the bytes
+  without a second fetch; a failed fetch draws a group-ground tile with an `ImageOff` glyph over the
+  alt text in meta and nothing to open, so `alt` is the one word the form needs and `words` gains
+  none. A loaded picture is a button named by `alt`; a press opens it over the scrim with no frame,
+  contain-fit inside the page inset (`IMAGE_FULL`), with a Close act on a lifted ground
+  (`IMAGE_CLOSE`, as `THREAD_LATEST` lifts the Latest act, since the icon act's meta ink has no
+  ground of its own over a scrim). The view is the sheet's internal base at its `view` form on the
+  web, for the scrim, the focus trap, Escape, the layer and the portal container: no head, body or
+  foot, and the popup takes no press so a press around the picture is a press on the scrim. A `view`
+  is not a `SheetFit`, since a sheet's head and inset would take the picture's room. On the phone it
+  is the native sheet base's `view` form too: gorhom's modal at the screen's height inside the safe
+  area with no handle, ground, body or foot, the picture and its own Close act over the scrim, and
+  the scrim and the Close act dismiss it. It stands under the Shell's toasts like every sheet.
+  Rejected: an `image` slot on `FileRow` or `Message`, which would repeat the open-full mechanism
+  per component.
 - A rail of fixed states is `Stages`, a known sequence with a position in it (an activity feed
   draws what happened, onboarding's step progress is its own molecule): `steps`, each a `Stage`
   (`{ label, state: "done" | "current" | "later", at? }`, its own descriptor), and `ended`, a
@@ -1330,9 +1344,9 @@ cell, an off-contract utility, or a drawn word outside `words` each fails a name
 - The native toasts' layer stands over a box measured against the Shell's root (`ToastRoom`,
   `ToastFrame`): the layer must stand after the sheets' host, outside the page's tree, so no layout
   places it, and it follows a growing input a layout late.
-- An `Image`'s full view takes no pinch-zoom or pan: it is contain-fit, as large as the page inset leaves room for.
-- A product cannot draw in the platform font: `fonts.sans` unset is IBM Plex Sans, and the platform
-  stack only stands behind the named family and its metric fallback face.
+- An `Image`'s full view takes no pinch-zoom or pan: it is contain-fit, as large as the page inset
+  leaves room for.- A product cannot draw in the platform font: `fonts.sans` unset is IBM Plex Sans,
+  and the platform stack only stands behind the named family and its metric fallback face.
 - Comparison's `hyphens-auto` is unverified: the Nix Playwright browsers ship no hyphenation
   dictionaries, so a value wider than its column breaks mid-letter there.
 - Native Diff and Comparison name a `list`-role container (React Native has no table role); whether

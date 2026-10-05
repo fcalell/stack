@@ -234,15 +234,20 @@ export function treeRows<T>(
 }
 
 // The slots a waiting FileRow draws beyond its glyph, path and counts, known
-// before any item: a chip's bar between the path and the counts.
+// before any item: the change mark's lane before the glyph, a chip's bar
+// between the path and the counts.
 export interface FileShape {
+	change: boolean;
 	chip: boolean;
 }
 
 // The waiting file row's shape from the slots a `file` map declares, read by
 // key: no slot function runs.
-export function fileShape(slots: { chip?: unknown }): FileShape {
-	return { chip: slots.chip !== undefined };
+export function fileShape(slots: {
+	change?: unknown;
+	chip?: unknown;
+}): FileShape {
+	return { change: slots.change !== undefined, chip: slots.chip !== undefined };
 }
 
 // The slots a waiting Meter draws, known before any item: the label, share

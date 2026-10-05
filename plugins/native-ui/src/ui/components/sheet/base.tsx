@@ -19,6 +19,7 @@ import {
 	type BottomSheetFooterProps,
 	BottomSheetModal,
 	BottomSheetScrollView,
+	BottomSheetView,
 	INITIAL_LAYOUT_VALUE,
 	KEYBOARD_STATUS,
 	useBottomSheetInternal,
@@ -66,6 +67,8 @@ const TITLE_SLOT = "flex-row items-center min-w-0";
 const TITLE = "shrink";
 const REASON = "text-right";
 const BODY = "grow min-h-0";
+// A view's children fill the whole layer over the scrim.
+const VIEW = "flex-1";
 // The foot's end inset, which the home indicator's inset joins: a style
 // overrides the class, so the sum is one value.
 const FOOT_END = "pb-card";
@@ -81,6 +84,7 @@ const LEAVE = timing("base", "in");
 
 // The scrim under the sheet, its own fill at full opacity.
 const ScrimBase = withUniwind(BottomSheetBackdrop);
+const ViewBody = withUniwind(BottomSheetView);
 
 // What the head, the foot and the scrim draw. gorhom renders each slot as an
 // element type, so a new component identity remounts its tree (a typing
@@ -359,8 +363,11 @@ export interface SheetBaseProps {
 	fit?: SheetFit;
 	// A decision's acts, the foot's `ActionBar`.
 	acts?: Act[];
-	// A menu's rows stand under the head with no body inset or foot.
-	form?: "menu";
+	// A menu's rows stand under the head with no body inset or foot; a view (an
+	// image's full size) is its children over the whole screen inside the safe
+	// area, named by `title`, with no head, body or foot: the scrim and the
+	// children's own close act dismiss it.
+	form?: "menu" | "view";
 	// Fixed under the head, over the scrolling body: the Picker's search, which
 	// stands a menu full height.
 	above?: ReactNode;
@@ -403,8 +410,11 @@ export function SheetBase({
 	const [touched, setTouched] = useState(false);
 	const [pressedUnder, setPressedUnder] = useState<string>();
 	const touch = useCallback(() => setTouched(true), []);
+	const view = form === "view";
 	const tall =
 		(form === "menu" && above !== undefined) || holdsTextArea(children);
+	// A tall sheet and a view stand at the full height of the screen.
+	const full = tall || view;
 	const blocked = submit?.blocked !== undefined;
 	// The submit's press stands while it is blocked by the reason it came
 	// under (`@fcalell/ui-core/reason`).
@@ -471,7 +481,8 @@ export function SheetBase({
 		return { store: created, Layer: layerOf(created) };
 	});
 	useLayoutEffect(() => store.set(parts));
-	const footed = form !== "menu" && (foot !== undefined || acts !== undefined);
+	const footed =
+		form === undefined && (foot !== undefined || acts !== undefined);
 	const fixed = footed && (tall || capped);
 	let end: { paddingBottom: number } | undefined;
 	if (!footed) end = { paddingBottom: insets.bottom };
@@ -493,27 +504,41 @@ export function SheetBase({
 			}}
 			containerComponent={Layer}
 			accessible={false}
-			backgroundComponent={Ground}
+			backgroundComponent={view ? null : Ground}
 			backdropComponent={Scrim}
-			handleComponent={Head}
+			handleComponent={view ? null : Head}
 			footerComponent={fixed ? Footer : undefined}
 			enablePanDownToClose={!busy}
-			enableDynamicSizing={!tall}
+			enableDynamicSizing={!full}
 			maxDynamicContentSize={cap}
-			snapPoints={tall ? FULL : undefined}
+			snapPoints={full ? FULL : undefined}
 			animationConfigs={settled ? LEAVE : ENTER}
 		>
-			<BottomSheetScrollView
-				enableFooterMarginAdjustment={fixed && tall}
-				keyboardShouldPersistTaps="handled"
-				contentContainerStyle={end}
-			>
-				<RaisedGround>
-					{body}
-					{footed && !fixed ? <Foot /> : null}
-					{footed && !tall ? <Fits /> : null}
-				</RaisedGround>
-			</BottomSheetScrollView>
+			{view ? (
+				<ViewBody
+					style={{
+						paddingTop: insets.top,
+						paddingBottom: insets.bottom,
+						paddingLeft: insets.left,
+						paddingRight: insets.right,
+					}}
+					className={VIEW}
+				>
+					{children}
+				</ViewBody>
+			) : (
+				<BottomSheetScrollView
+					enableFooterMarginAdjustment={fixed && tall}
+					keyboardShouldPersistTaps="handled"
+					contentContainerStyle={end}
+				>
+					<RaisedGround>
+						{body}
+						{footed && !fixed ? <Foot /> : null}
+						{footed && !tall ? <Fits /> : null}
+					</RaisedGround>
+				</BottomSheetScrollView>
+			)}
 		</BottomSheetModal>
 	);
 }

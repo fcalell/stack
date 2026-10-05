@@ -83,8 +83,9 @@ function factKey<V extends string | null>(fact: Fact<V>): string {
 	return partText(fact);
 }
 
-// The region stays mounted as the save moves between its states, so a screen
-// reader announces each change.
+// The region stands from the record's open, `saved` at rest, and stays mounted
+// as the save moves between its states, so a screen reader announces each
+// change, the first "Saving…" included.
 function SaveFact({
 	save,
 	onRetry,

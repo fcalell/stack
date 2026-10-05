@@ -287,11 +287,18 @@ function Tasks(props: {
 		loading: props.publish === "loading",
 		blocked: chosen.length === 0 ? "Choose a change to publish." : undefined,
 	};
+	// The rows that can be chosen: the held one cannot, so `of` counts the rest.
+	const tickable = tasks.filter((task) => task.id !== "purge");
 	const placed = publishing
 		? {
 				foot: (
 					<ActionBar
-						chosen={{ count: chosen.length, of: tasks.length }}
+						chosen={{
+							count: chosen.length,
+							of: tickable.length,
+							onAll: (all) =>
+								setChosen(ruled(all ? tickable.map((task) => task.id) : [])),
+						}}
 						acts={[publishAct]}
 					/>
 				),

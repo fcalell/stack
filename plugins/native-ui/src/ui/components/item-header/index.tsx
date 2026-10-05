@@ -14,17 +14,11 @@ import {
 	skeletonRow,
 	text,
 } from "@fcalell/ui-core/variants";
-import { useEffect } from "react";
-import {
-	AccessibilityInfo,
-	Platform,
-	Pressable,
-	Text as RNText,
-	View,
-} from "react-native";
+import { Pressable, Text as RNText, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
 import { Ink } from "../../lib/ink";
+import { useLive } from "../../lib/live";
 import { joinParts, META_CUT, partText } from "../../lib/parts";
 import { useWords } from "../../lib/words";
 import { Button } from "../button";
@@ -83,8 +77,6 @@ function factKey(fact: Fact): string {
 	return partText(fact);
 }
 
-// A live region announces on Android; iOS has none, so each change is
-// announced by hand.
 function SaveFact({
 	save,
 	onRetry,
@@ -94,11 +86,9 @@ function SaveFact({
 }) {
 	const words = useWords();
 	const said = save === "failed" ? words.notSaved : words[save];
-	useEffect(() => {
-		if (Platform.OS === "ios") AccessibilityInfo.announceForAccessibility(said);
-	}, [said]);
+	const live = useLive(said);
 	return (
-		<View accessibilityLiveRegion="polite" className={cn(ITEM_FACT, FACT)}>
+		<View {...live} className={cn(ITEM_FACT, FACT)}>
 			{save === "failed" ? (
 				<>
 					<Status state="failed" label={said} />

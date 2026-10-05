@@ -3,7 +3,7 @@ import type { SpacingRole } from "@fcalell/ui-core/tokens";
 import { createContext, use, useSyncExternalStore } from "react";
 
 // The density rule the `touch:` variant and the density layer draw by: a room
-// (a root pinned to it, or a `Place` that declares its `distance`), the
+// (a `Place` that declares its `distance`), the
 // touch pin, or no desktop pin outside the desktop query (a fine pointer at
 // `tablet` and wider). A molecule whose tree differs by density (the Shell's
 // sidebar or tab bar) reads it here, so its structure and the token set
@@ -21,7 +21,6 @@ function desktopQuery(): MediaQueryList {
 
 function touchNow(): boolean {
 	const pinned = document.documentElement.dataset.density;
-	if (pinned === "room") return true;
 	if (pinned === "touch" || pinned === "desktop") return pinned === "touch";
 	return !desktopQuery().matches;
 }
@@ -50,12 +49,12 @@ function onDensity(listener: () => void): () => void {
 
 // A `Place` that declares its `distance` as `room` hands it down, so what
 // stands inside draws the touch tree whatever the pointer.
-export const RoomContext = createContext(false);
+export const DistanceContext = createContext(false);
 
 export function useTouch(): boolean {
-	const room = use(RoomContext);
+	const far = use(DistanceContext);
 	const touch = useSyncExternalStore(onDensity, touchNow, () => false);
-	return room || touch;
+	return far || touch;
 }
 
 const REDUCED = "(prefers-reduced-motion: reduce)";

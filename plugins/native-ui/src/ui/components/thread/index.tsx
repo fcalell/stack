@@ -30,7 +30,7 @@ import {
 import { Platform, ScrollView, View } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
-import { ThreadBleeds, ThreadRoom, ToLatest } from "../../lib/frame";
+import { ThreadBleeds, ThreadRoom } from "../../lib/frame";
 import { Lifted } from "../../lib/hosts";
 import { useWords } from "../../lib/words";
 import { EmptyStateBase } from "../empty-state/base";
@@ -293,9 +293,7 @@ export function Thread<T>(props: ThreadProps<T>) {
 				>
 					{cells}
 				</ScrollView>
-				<ToLatest.Provider value={away ? toLatest : null}>
-					<Latest />
-				</ToLatest.Provider>
+				<Latest onBack={away ? toLatest : null} />
 				{/* The page's toasts stand over the log, above the docked input. */}
 				<ToastRoom />
 			</View>

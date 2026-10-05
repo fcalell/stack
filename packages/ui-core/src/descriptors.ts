@@ -463,6 +463,16 @@ export type TableCell =
 	| ChangeCell
 	| null;
 
+// A selection bar's count of the rows a list chooses: `count` of `of` (the rows
+// that can be chosen). `onAll` adds the act beside the count that chooses every
+// row while some stand unchosen (it hears `true`) and clears them once all are
+// (`false`), as a table's head tick does; a list with a head tick omits it.
+export interface ChosenCount {
+	count: number;
+	of: number;
+	onAll?: (all: boolean) => void;
+}
+
 // The rows a table chooses, controlled: `chosen` the ids ticked and
 // `onChange` hearing the set the viewer's tick or the head tick makes, which
 // the consumer applies its rule to and hands back through `chosen`. `blocked`

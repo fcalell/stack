@@ -20,10 +20,9 @@ import {
 	PAGE_HEAD_ROOM,
 	PAGE_TITLE,
 	PAGE_TOP_BAR,
-	THREAD_COLUMN,
 	text,
 } from "@fcalell/ui-core/variants";
-import { isValidElement, type ReactNode, use, useId, useState } from "react";
+import { type ReactNode, use, useId, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import {
 	ActRoom,
@@ -34,9 +33,8 @@ import {
 	ThreadRoom,
 } from "../../lib/frame.ts";
 import { HeadingContext } from "../../lib/heading.ts";
-import { RoomContext, useTouch } from "../../lib/media.ts";
+import { DistanceContext, useTouch } from "../../lib/media.ts";
 import { useWords } from "../../lib/words.tsx";
-import { ActionBar } from "../action-bar/index.tsx";
 import { Button } from "../button/index.tsx";
 import { IconButtonBase, IconButtonLink } from "../icon-button/base.tsx";
 import { IconButton } from "../icon-button/index.tsx";
@@ -80,12 +78,10 @@ const CONTEXT = "inline-flex shrink-0 -ms-inside";
 const BODY = "flex flex-col grow overflow-y-auto";
 const BLEED = "flex flex-col grow min-h-0";
 const BODY_WRAP = "relative flex flex-col grow min-h-0";
-// The foot stays under the body, which scrolls past it; on the desktop a
-// field stands in the measure-wide column a Thread's foot stands in, an action
-// bar spans the body.
+// The foot stays under the body, which scrolls past it, and spans it; a field
+// keeps its own measure column inside.
 // The docked foot names itself the anchor the Shell's toasts stand above.
 const DOCKED = "flex flex-col shrink-0 [anchor-name:--docked-foot]";
-const FOOT_COLUMN = "flex flex-col";
 const ACT_ROOM = "shrink-0";
 // The layer marks itself `data-act-floats`: the Shell's toasts stand above
 // the act by its room while the mark stands in its column.
@@ -177,7 +173,7 @@ type PlaceDistance =
 /** A page in the shell. */
 export type PlaceProps = PlaceBase & PlaceEnd & PlaceDistance;
 
-/** A page under a head and its hairline: on the desktop the title, its `context` pick and its acts share one strip, on touch the pick stands on the title line under the top bar; on touch the top bar (the shell's switcher, the actions, more) stands over the title and the act floats over the body's end, lifted. A `foot` docks at the page's bottom at both densities a sections gap under the body's end, the body scrolling under it, above the tab bar on touch; on the desktop a field stands in the measure-wide column a Thread's foot stands in, an `ActionBar` across the body's width. A Place is the size container what stands in it decides its structure by (a Split its regions, a Table its grid): a Thread in its body fills it, unless the Place has a `foot`, where it stands among the sections; it draws the Details act of a Split's pane, below `wide` of its width, and with a record open a back act to the place's route, drawn below `tablet` first: before the title in the strip, in the switcher's stead in the top bar. While a record stands beside the main, below `tablet` the Place draws no head: that record's head is the page's one. With `distance` `room` it draws the room set and the touch structure, without the shell's switcher. */
+/** A page under a head and its hairline: on the desktop the title, its `context` pick and its acts share one strip, on touch the pick stands on the title line under the top bar; on touch the top bar (the shell's switcher, the actions, more) stands over the title and the act floats over the body's end, lifted. A `foot` docks at the page's bottom at both densities a sections gap under the body's end, the body scrolling under it, above the tab bar on touch; it spans the body, and a `MessageInput` keeps its own measure column inside it. A Place is the size container what stands in it decides its structure by (a Split its regions, a Table its grid): a Thread in its body fills it, unless the Place has a `foot`, where it stands among the sections; it draws the Details act of a Split's pane, below `wide` of its width, and with a record open a back act to the place's route, drawn below `tablet` first: before the title in the strip, in the switcher's stead in the top bar. While a record stands beside the main, below `tablet` the Place draws no head: that record's head is the page's one. With `distance` `room` it draws the room set and the touch structure, without the shell's switcher. */
 export function Place({
 	title,
 	distance,
@@ -197,11 +193,6 @@ export function Place({
 	const titleId = useId();
 	const [sheet] = useState(() => Dialog.createHandle<unknown>());
 	const fit = touch ? "body" : "bar";
-	// The foot's column is a structure that follows density, as the Thread's
-	// is, and what it holds: a field keeps the measure column, an action bar
-	// spans the body.
-	const barFoot = isValidElement(foot) && foot.type === ActionBar;
-	const column = !touch && !barFoot && THREAD_COLUMN;
 	// A record standing alone returns to the list, the place's own route.
 	const back =
 		route !== undefined ? (
@@ -320,7 +311,7 @@ export function Place({
 	);
 	return (
 		<DetailsSheet value={sheet}>
-			<RoomContext value={far}>
+			<DistanceContext value={far}>
 				<PageTitle value={titleId}>
 					<HeadingContext value={2}>
 						<div
@@ -332,15 +323,11 @@ export function Place({
 								{body}
 								{layer}
 							</div>
-							{foot ? (
-								<div className={cn(FOOT, DOCKED)}>
-									<div className={cn(column, FOOT_COLUMN)}>{foot}</div>
-								</div>
-							) : null}
+							{foot ? <div className={cn(FOOT, DOCKED)}>{foot}</div> : null}
 						</div>
 					</HeadingContext>
 				</PageTitle>
-			</RoomContext>
+			</DistanceContext>
 		</DetailsSheet>
 	);
 }

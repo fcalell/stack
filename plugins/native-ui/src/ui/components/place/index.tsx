@@ -125,6 +125,7 @@ export function Place({
 	foot,
 	children,
 }: PlaceProps) {
+	const far = distance === "room";
 	const words = useWords();
 	const switcher = useContext(ShellSwitcher);
 	const route = useContext(PlaceRoute);
@@ -151,7 +152,7 @@ export function Place({
 				label={words.back}
 				onAct={() => navigate(route)}
 			/>
-		) : switcher && distance !== "room" ? (
+		) : switcher && !far ? (
 			<SwitcherPick switcher={switcher} />
 		) : null;
 	const acts = [...(actions ?? []), ...(split.details ? [split.details] : [])];
@@ -168,9 +169,7 @@ export function Place({
 				<PageTitle.Provider value={title}>
 					<View className={PLACE}>
 						{split.beside ? null : (
-							<View
-								className={cn(PAGE_HEAD, distance === "room" && PAGE_HEAD_ROOM)}
-							>
+							<View className={cn(PAGE_HEAD, far && PAGE_HEAD_ROOM)}>
 								{bar ? (
 									<View className={cn(PAGE_TOP_BAR, TOP_BAR)}>
 										{lead}
@@ -271,5 +270,5 @@ export function Place({
 			</RecordShown.Provider>
 		</DetailsOpen.Provider>
 	);
-	return distance === "room" ? <RoomScope>{page}</RoomScope> : page;
+	return far ? <RoomScope>{page}</RoomScope> : page;
 }

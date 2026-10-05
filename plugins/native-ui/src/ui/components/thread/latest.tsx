@@ -1,7 +1,5 @@
 import { THREAD_LATEST } from "@fcalell/ui-core/variants";
-import { useContext } from "react";
 import { View } from "react-native";
-import { ToLatest } from "../../lib/frame";
 import { useWords } from "../../lib/words";
 import { Button } from "../button";
 
@@ -10,11 +8,10 @@ import { Button } from "../button";
 const LAYER = "absolute inset-0 items-center justify-end";
 
 // The act back to the newest message, centred at the foot of the region it
-// stands in while `ToLatest` holds the way back.
-export function Latest() {
-	const back = useContext(ToLatest);
+// stands in while `onBack` holds the way back (`null` at the end).
+export function Latest({ onBack }: { onBack: (() => void) | null }) {
 	const words = useWords();
-	if (!back) return null;
+	if (!onBack) return null;
 	return (
 		<View pointerEvents="box-none" className={LAYER}>
 			<View className={THREAD_LATEST}>
@@ -22,7 +19,7 @@ export function Latest() {
 					act="secondary"
 					icon="ArrowDown"
 					label={words.latest}
-					onAct={back}
+					onAct={onBack}
 				/>
 			</View>
 		</View>

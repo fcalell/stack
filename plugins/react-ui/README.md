@@ -54,7 +54,7 @@ tab bar) reads `useTouch`. A token never needs it: a size, a spacing role and a 
 density through their variables. The room set is the one scope a `Place` declares
 (`distance="room"`): `[data-density="room"]` in the density layer (`ROOM_SCOPE`) holds
 `--room-unit` and every room value as a `calc` over it, the `touch:` variant matches inside it,
-and `useTouch` reads the Place's `RoomContext` as well as the query.
+and `useTouch` reads the Place's `DistanceContext` as well as the query.
 
 `page-<breakpoint>:` and `page-max-<breakpoint>:` draw from or below a breakpoint's width of the
 `page` container (`@container/page`), emitted from the contract's breakpoint values. `pb-safe`

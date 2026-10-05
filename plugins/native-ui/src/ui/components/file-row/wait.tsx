@@ -11,6 +11,8 @@ import { GroundContext } from "../../lib/ground";
 
 const WAIT = "flex-row items-center";
 const LEADING = "shrink-0 items-center justify-center";
+// The change mark's lane, one icon wide.
+const MARK = "shrink-0 items-center justify-center";
 const WAIT_GLYPH = "shrink-0";
 const WAIT_PATH = "flex-1 flex-row min-w-0";
 // The chip's lane and the counts' lane share the room the path leaves, each
@@ -22,10 +24,15 @@ const PATH_BAR = "w-1/2";
 const CHIP_BAR = "w-1/2";
 const COUNTS_BAR = "w-1/3";
 
-// A FileRow waiting: the glyph, the path's bar, a chip's bar when `chip` is
-// declared, and the counts' bar, busy when it waits alone (a list of them is
+// A FileRow waiting: the change mark's skeleton in its lane when `change` is
+// declared, the glyph, the path's bar, a chip's bar when `chip` is declared, and
+// the counts' bar, busy when it waits alone (a list of them is
 // busy once). Outside the package's exports.
-export function FileWait(props: { busy: boolean; chip: boolean }) {
+export function FileWait(props: {
+	busy: boolean;
+	change: boolean;
+	chip: boolean;
+}) {
 	const ground = useContext(GroundContext);
 	return (
 		<View
@@ -37,6 +44,11 @@ export function FileWait(props: { busy: boolean; chip: boolean }) {
 				WAIT,
 			)}
 		>
+			{props.change ? (
+				<View className={MARK}>
+					<View className={skeleton({ kind: "icon" })} />
+				</View>
+			) : null}
 			<View className={cn(ROW_LEADING, LEADING)}>
 				<View className={cn(skeleton({ kind: "icon" }), WAIT_GLYPH)} />
 			</View>

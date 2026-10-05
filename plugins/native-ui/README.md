@@ -58,10 +58,10 @@ A raised ground re-points the hairline as the web's does: `RaisedGround` (`lib/r
 `--color-edge` to the mode's `edge-raised` through uniwind's `ScopedVariables`, so a part's
 `border-edge` inside a sheet (its head, body and foot, a `Menu`'s and a Picker's sheet with it) or
 a toast draws the raised hairline. A ground on `group` holds no part that draws `edge`, so none
-wraps it. `QrCode`'s tile is a light scope (uniwind's `ScopedTheme`). `Image`'s full view is a
-React Native `Modal` over the scrim, never a gorhom sheet: it has no head, so a sheet's chrome
-would only take the picture's room. It stands over the toasts, and it draws the picture
-contain-fit with no pinch-zoom.
+wraps it. `QrCode`'s tile is a light scope (uniwind's `ScopedTheme`). `Image`'s full view is the sheet base's `view` form: a gorhom
+modal at the screen's height inside the safe area, with no handle, ground, body or foot, so a
+sheet's chrome never takes the picture's room. It stands under the toasts like every sheet, and it
+draws the picture contain-fit with no pinch-zoom.
 
 ## Verify
 

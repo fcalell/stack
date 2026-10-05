@@ -1,6 +1,10 @@
 import { Button as BaseButton } from "@base-ui/react/button";
 import { cn } from "@fcalell/ui-core/cn";
-import type { ChipMark, IconName } from "@fcalell/ui-core/descriptors";
+import type {
+	ChangeKind,
+	ChipMark,
+	IconName,
+} from "@fcalell/ui-core/descriptors";
 import { filled } from "@fcalell/ui-core/tokens";
 import {
 	FILE_COUNTS,
@@ -17,6 +21,7 @@ import { isCurrent, useRoute } from "../../lib/navigate.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Chip } from "../chip/index.tsx";
 import { Icon } from "../icon/index.tsx";
+import { ChangeMark } from "../status/change.tsx";
 import { FileWait } from "./wait.tsx";
 
 const ROW = "relative flex items-center";
@@ -27,6 +32,8 @@ const CHOSEN_PRESS = "hover:bg-wash-selected-hover active:bg-wash-press";
 // The hit covers the row and rings inset.
 const HIT = "absolute inset-0 focus-visible:-outline-offset-2";
 const HIT_LIST = "rounded-row touch:rounded-none";
+// The change mark stands in its own lane at the row's start, ahead of the glyph.
+const MARK = "flex shrink-0";
 const LEADING = "flex shrink-0 items-center justify-center text-ink-meta";
 const PATH = "flex grow min-w-0";
 const DIRECTORY = "min-w-0 truncate";
@@ -53,7 +60,9 @@ export interface FileRowProps extends Closed {
 	removed: number;
 	/** Whether the reviewer has seen the file: a tick when seen, a ring when not; absent, the file glyph leads. */
 	seen?: boolean;
-	/** Why the file is listed or what its change is, a data value's chip between the path and the counts. */
+	/** Where the file stands in a change set: the change mark at the row's start, ahead of the glyph. */
+	change?: ChangeKind;
+	/** Why the file is listed, a data value's chip between the path and the counts. */
 	chip?: ChipMark;
 	/** Where the row goes when opened; the row is selected at it. */
 	href?: string;
@@ -110,6 +119,7 @@ export function FileRow({
 	added,
 	removed,
 	seen,
+	change,
 	chip,
 	href,
 	onOpen,
@@ -118,10 +128,14 @@ export function FileRow({
 	const words = useWords();
 	const ground = use(GroundContext);
 	const at = useRoute();
-	if (loading) return <FileWait busy chip={chip !== undefined} />;
+	if (loading)
+		return (
+			<FileWait busy change={change !== undefined} chip={chip !== undefined} />
+		);
 	const seenWord = seen ? words.seen : words.unseen;
 	const named = [
 		path,
+		change ? words[change] : undefined,
 		chip?.label,
 		added > 0 ? filled(words.linesAdded, { count: String(added) }) : undefined,
 		removed > 0
@@ -158,6 +172,11 @@ export function FileRow({
 			)}
 		>
 			{hit ?? <span className={SPOKEN}>{named}</span>}
+			{change ? (
+				<span aria-hidden className={MARK}>
+					<ChangeMark kind={change} />
+				</span>
+			) : null}
 			<span aria-hidden className={cn(ROW_LEADING, LEADING)}>
 				<Icon name={glyph(seen)} />
 			</span>

@@ -135,6 +135,8 @@ export interface FileSlots<T> {
 	removed: (item: T) => number;
 	/** Whether the reviewer has seen the file. */
 	seen?: (item: T) => boolean | undefined;
+	/** Where the file stands in a change set, its change mark. */
+	change?: (item: T) => ChangeKind | undefined;
 	/** The file's chip mark. */
 	chip?: (item: T) => ChipMark | undefined;
 	/** Where the row goes. */
@@ -369,6 +371,7 @@ export function List<T, V extends string | null = string>(
 				added={file.added(item)}
 				removed={file.removed(item)}
 				seen={file.seen?.(item)}
+				change={file.change?.(item)}
 				chip={file.chip?.(item)}
 				href={file.href?.(item)}
 				onOpen={file.onOpen ? () => file.onOpen?.(item) : undefined}

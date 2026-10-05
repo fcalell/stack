@@ -1190,6 +1190,7 @@ export const WORD_KEYS = [
 	"unchanged",
 	"stale",
 	"chooseAll",
+	"chooseNone",
 	"expand",
 	"collapse",
 ] as const;
@@ -1284,6 +1285,7 @@ export const ENGLISH: Words = {
 	unchanged: "Unchanged",
 	stale: "Stale",
 	chooseAll: "Select all",
+	chooseNone: "Deselect all",
 	expand: "Expand",
 	collapse: "Collapse",
 	earlierLines: {
