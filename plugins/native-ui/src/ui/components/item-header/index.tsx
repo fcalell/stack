@@ -8,6 +8,7 @@ import {
 	ITEM_FACTS,
 	ITEM_HEADER,
 	lineBox,
+	PILL_ACT,
 	SKELETON_LINES,
 	skeleton,
 	skeletonRow,
@@ -17,15 +18,18 @@ import { useEffect } from "react";
 import {
 	AccessibilityInfo,
 	Platform,
+	Pressable,
 	Text as RNText,
 	View,
 } from "react-native";
 import type { Closed } from "../../lib/closed";
 import { cn } from "../../lib/cn";
+import { Ink } from "../../lib/ink";
 import { joinParts, META_CUT, partText } from "../../lib/parts";
 import { useWords } from "../../lib/words";
 import { Button } from "../button";
 import { Count } from "../count";
+import { Icon } from "../icon";
 import { Picker } from "../picker";
 import { Status } from "../status";
 
@@ -34,6 +38,9 @@ const FACT = "flex-row items-center";
 // A pick in the facts line pulls back at its start as well as its end, so its
 // dot and word sit where a plain fact's would.
 const PICK = "flex-row -ms-inside";
+// A fact that opens pulls back at its start as a pick does and washes at the
+// press.
+const OPEN = "flex-row items-center -ms-inside active:bg-wash-press";
 // A loading line stands in its text's line box (a zero-width line of the
 // role beside the bar), so the loading head keeps the loaded head's height;
 // the facts wrap to a second line on the phone, which the loading head
@@ -43,12 +50,13 @@ const FACTS_LINE_WAIT = "flex-row items-center";
 const COUNT_WAIT = "shrink-0";
 const STRUT = "​";
 
-// One fact under the title: words, a status, a status that moves (a pick
-// whose options carry states), a count beside its word, or the state of a save
+// One fact under the title: words, a status, words that open a sheet, a status that
+// moves (a pick whose options carry states), a count beside its word, or the state of a save
 // that runs as the record is typed, a failed one with its retry.
 export type Fact =
 	| Part
 	| { status: StatusState; label?: string }
+	| { label: Part; onOpen: () => void }
 	| { pick: OptionPick }
 	| { count: number; label: string }
 	| { save: "saving" | "saved" | "failed"; onRetry: () => void };
@@ -66,6 +74,7 @@ export interface ItemHeaderProps extends Closed {
 
 function factKey(fact: Fact): string {
 	if (typeof fact === "object" && "pick" in fact) return fact.pick.label;
+	if (typeof fact === "object" && "onOpen" in fact) return partText(fact.label);
 	if (typeof fact === "object" && "status" in fact)
 		return `${fact.status} ${fact.label ?? ""}`;
 	if (typeof fact === "object" && "count" in fact)
@@ -108,6 +117,21 @@ function SaveFact({
 }
 
 function FactPart({ fact }: { fact: Fact }) {
+	if (typeof fact === "object" && "onOpen" in fact)
+		return (
+			<Pressable
+				accessibilityRole="button"
+				onPress={fact.onOpen}
+				className={cn(PILL_ACT, ITEM_FACT, OPEN)}
+			>
+				<RNText className={text({ role: "meta" })}>
+					{partText(fact.label, META_CUT)}
+				</RNText>
+				<Ink.Provider value="ink-meta">
+					<Icon name="ChevronRight" fit="meta" />
+				</Ink.Provider>
+			</Pressable>
+		);
 	if (typeof fact === "object" && "pick" in fact)
 		return (
 			<View className={PICK}>

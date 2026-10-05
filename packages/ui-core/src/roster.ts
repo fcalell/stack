@@ -1120,7 +1120,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 			},
 		},
 		// Loading, each line keeps its line box and the facts line the height
-		// of the status that moves on it.
+		// of the status that moves on it. A fact in words that opens a sheet is its
+		// words and a chevron in a `PILL_ACT`, a button named by the fact.
 		ItemHeader: {
 			props: ["overline", "title", "facts", "loading"],
 			draws: [
@@ -1128,6 +1129,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"THREAD_COLUMN",
 				"ITEM_FACTS",
 				"ITEM_FACT",
+				"PILL_ACT",
+				"ICON.fit.meta",
 				"TEXT.role.meta",
 				"TEXT.role.heading",
 				"STATUS",
@@ -1176,6 +1179,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"chip",
 					"dot",
 					"spinner",
+					"icon-meta",
 					"measure-short",
 					"measure",
 				],
@@ -1307,13 +1311,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"TEXT.role.meta",
 				"ICON.fit.body",
 			],
-			holds: [
-				"PICKER",
-				"PILL_ACT",
-				"PICKER_VALUE",
-				"PICKER_EMPTY",
-				"PICKER_POPOVER",
-			],
+			holds: ["PICKER", "PICKER_VALUE", "PICKER_EMPTY", "PICKER_POPOVER"],
 			states: [...PRESS, "selected"],
 			owns: {
 				roles: ["body", "meta", "caption"],

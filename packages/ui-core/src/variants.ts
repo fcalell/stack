@@ -326,9 +326,11 @@ export const STATUS = "gap-inside";
 export const STATUS_SPINNER = "text-accent-ink";
 export const STATUS_LABEL =
 	"max-w-measure-short text-meta leading-meta font-normal text-ink-meta";
-// A pick drawn as its value in a pill with no boundary at rest (a row's pick,
-// a status that moves). It pulls back by its own padding on the side that
+// Words that act in a pill with no boundary at rest: a row's pick and a
+// status that moves (Picker), a header fact that opens a sheet (ItemHeader).
+// It pulls back by its own padding on the side that
 // meets plain text (an overlay), so its words sit where static words do.
+// Shared by both drawers.
 export const PILL_ACT = "rounded-full px-inside min-h-target";
 // A removable chip's remove act: a round hit box the chip's height.
 export const CHIP_REMOVE_HIT = "min-h-chip min-w-chip rounded-full";

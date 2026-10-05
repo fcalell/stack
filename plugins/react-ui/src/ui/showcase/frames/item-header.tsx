@@ -56,7 +56,7 @@ function SavingHead() {
 // wraps over one that does not, the lines a pair apart in both, the first
 // fact a status that moves; loading the bars in each line's box. A
 // `STATUS_DOT.state` cell stands on that state. A third head carries a save
-// fact that cycles its three states.
+// fact that cycles its three states, a fourth a fact in words that opens.
 export function drawItemHeader(frame: ShowcaseFrame) {
 	const [family, , value] = frame.cell.name.split(".");
 	// The third segment of a `STATUS_DOT.state` cell is a state key.
@@ -80,6 +80,11 @@ export function drawItemHeader(frame: ShowcaseFrame) {
 				facts={[moving(state), ...REST]}
 			/>
 			<SavingHead />
+			<ItemHeader
+				overline={OVERLINE}
+				title="Read the vendor's onboarding email"
+				facts={[{ label: "Outside content", onOpen: move }, ...REST]}
+			/>
 		</Wide>
 	);
 }

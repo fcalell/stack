@@ -1,3 +1,4 @@
+import { Button as BaseButton } from "@base-ui/react/button";
 import { cn } from "@fcalell/ui-core/cn";
 import type {
 	OptionPick,
@@ -9,6 +10,7 @@ import {
 	ITEM_FACTS,
 	ITEM_HEADER,
 	lineBox,
+	PILL_ACT,
 	SKELETON_LINES,
 	skeleton,
 	skeletonRow,
@@ -23,6 +25,7 @@ import { joinParts, META_CUT, partText } from "../../lib/parts.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Button } from "../button/index.tsx";
 import { Count } from "../count/index.tsx";
+import { Icon } from "../icon/index.tsx";
 import { Picker } from "../picker/index.tsx";
 import { Status } from "../status/index.tsx";
 import { COLUMN_FILLED } from "../thread/fill.ts";
@@ -34,6 +37,10 @@ const FACT = "inline-flex items-center";
 // A pick in the facts line pulls back at its start as well as its end, so its
 // dot and word sit where a plain fact's would.
 const PICK = "inline-flex -ms-inside";
+// A fact that opens pulls back at its start as a pick does and washes at the
+// pointer, its words and chevron in the meta ink.
+const OPEN =
+	"inline-flex items-center -ms-inside text-ink-meta hover:bg-wash-hover active:bg-wash-press";
 // A loading line stands in its text's line box, so the loading head keeps
 // the loaded head's height.
 const LINE_WAIT = "flex items-center h-lh";
@@ -43,10 +50,11 @@ const FACTS_WAIT = "flex flex-col";
 const FACTS_LINE_WAIT = "flex items-center";
 const COUNT_WAIT = "inline-flex shrink-0";
 
-/** One fact under the title: words, a status, a status that moves (a pick whose options carry states), a count beside its word, or the state of a save that runs as the record is typed, a failed one with its retry. */
+/** One fact under the title: words, a status, words that open a sheet, a status that moves (a pick whose options carry states), a count beside its word, or the state of a save that runs as the record is typed, a failed one with its retry. */
 export type Fact<V extends string | null = string> =
 	| Part
 	| { status: StatusState; label?: string }
+	| { label: Part; onOpen: () => void }
 	| { pick: OptionPick<V> }
 	| { count: number; label: string }
 	| { save: "saving" | "saved" | "failed"; onRetry: () => void };
@@ -66,6 +74,7 @@ export interface ItemHeaderProps<V extends string | null = string>
 
 function factKey<V extends string | null>(fact: Fact<V>): string {
 	if (typeof fact === "object" && "pick" in fact) return fact.pick.label;
+	if (typeof fact === "object" && "onOpen" in fact) return partText(fact.label);
 	if (typeof fact === "object" && "status" in fact)
 		return `${fact.status} ${fact.label ?? ""}`;
 	if (typeof fact === "object" && "count" in fact)
@@ -104,6 +113,18 @@ function SaveFact({
 }
 
 function FactPart<V extends string | null>({ fact }: { fact: Fact<V> }) {
+	if (typeof fact === "object" && "onOpen" in fact)
+		return (
+			<BaseButton
+				onClick={fact.onOpen}
+				className={cn(PILL_ACT, ITEM_FACT, OPEN)}
+			>
+				<span className={text({ role: "meta" })}>
+					{partText(fact.label, META_CUT)}
+				</span>
+				<Icon name="ChevronRight" fit="meta" />
+			</BaseButton>
+		);
 	if (typeof fact === "object" && "pick" in fact)
 		return (
 			<span className={PICK}>

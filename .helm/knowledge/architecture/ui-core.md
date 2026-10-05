@@ -211,7 +211,7 @@ a tick with no animation, never jumped to full.
   same box filling the column a `Rules` row gives it; or `row`,
   a list row's trailing pick, its value (`PICKER_VALUE`) and chevron in a `PILL_ACT` that
   pulls back by its own padding at the row's end (`-me-inside`). The Picker's `fit` prop picks it,
-  and a `ListRow`'s trailing pick (`RowTrailing`'s `pick`) passes `row`. The Picker holds `PILL_ACT`.
+  and a `ListRow`'s trailing pick (`RowTrailing`'s `pick`) passes `row`. `PILL_ACT` is shared: the Picker's row-fit trigger and the `ItemHeader`'s opening fact draw it.
 - A pick of several is the Picker given an array `value` (`MultiPick`), never a second component:
   the list's rows tick, it stays open while the viewer picks (Base UI's `multiple` on the select
   and the combobox, a toggle in the touch sheet), and the box holds one removable neutral `Chip`
@@ -248,6 +248,13 @@ a tick with no animation, never jumped to full.
   (`Option.status`), its options and its value drawn as the `Status`, as an ItemHeader's moving
   status fact (`{ pick }`) is. Rejected: `Status` with `onOpen`, an act that opened a menu of
   states the mark could not show as the current one.
+- A header fact in words that opens a sheet is `{ label: Part; onOpen }` on `ItemHeader`: the words
+  in the meta ink and a trailing `ChevronRight` at the meta fit in a `PILL_ACT`, pulled back at its
+  start as a pick fact is, a button named by the fact; the consumer's `onOpen` opens its own `Sheet`.
+  The chevron stays because on touch there is no hover and an unmarked opening fact cannot be
+  found; it is the form a system `Message` line takes with `onOpen`. Rejected: `Status` with
+  `onOpen` (a status carries a hue, a fact in words none), a `Button` beside the facts (a second
+  control for one fact) and a `Link` (the accent hue).
 - A field that saves as it is typed shows its save as an `ItemHeader` fact, `{ save: "saving" |
   "saved" | "failed"; onRetry }`, which stack owns so the words (`saving`, `saved`, `notSaved`,
   `retry`) and the announcement are not the consumer's to spell. `saving` and `saved` are meta-ink
