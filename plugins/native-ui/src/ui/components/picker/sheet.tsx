@@ -146,8 +146,10 @@ function OptionText({
 
 // The sheet a `Picker` and a `Select` open: a menu sheet titled `title`, its
 // rows edge to edge at the card's inset under their group labels, the chosen
-// one ticked, a search leading them past six options and an act (the act that
-// makes a new option) under a hairline after them; a pick or the act closes it.
+// one ticked, a search leading them past six options (the sheet then stands
+// full height, `SheetBase` reading the search in its head) and an act (the act
+// that makes a new option) under a hairline after them; a pick or the act
+// closes it.
 // A `chosen` set makes it a pick of several: the options in it are ticked and a
 // pick toggles one without closing the sheet. Outside the package's exports.
 export function PickSheet<V extends string | null>({

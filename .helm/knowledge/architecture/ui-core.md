@@ -1042,11 +1042,15 @@ a tick with no animation, never jumped to full.
   resolves and stays open to retry when it rejects (the caller says why, a toast). `confirm()`
   returns nothing: a caller that awaited a boolean and then did the work left the sheet closed
   with nothing pending while the work ran, and lost the retry.
-- A sheet knows what it holds before it presents. A phone sheet stands full height when it holds
-  a `TextArea` (which grows with its value), read in render off the elements it is given, a
-  `FormField`'s control included, so its snap point and dynamic sizing are set before
-  `present()` and follow a wizard's page; a TextArea an app component draws inside itself is out
-  of its sight. Rejected: the TextArea asking the sheet from a mount effect (gorhom mounts the
+- A sheet knows what it holds before it presents. A sheet stands full height when it holds
+  a `TextArea` (which grows with its value) or a menu that searches (a pick past six options,
+  whose list would else jump as the filter narrows), read in render: on the phone off the
+  elements it is given, a `FormField`'s control included, and off the menu's search, so its snap
+  point and dynamic sizing are set before `present()` and follow a wizard's page; a TextArea an
+  app component draws inside itself is out of its sight. On the web only the touch sheet of a
+  searching pick stands tall, up to the page inset under the viewport's top,
+  and the desktop pick is a popover. Every touch sheet keeps that strip of scrim above it, so a press there closes it; a searching pick is never
+  a pushed page. Rejected: the TextArea asking the sheet from a mount effect (gorhom mounts the
   content only once presented, so the sheet opened content-tall and re-snapped after paint, and
   never shrank back), and a public height prop.
 - A sheet keeps its content until it has left. State that belongs to one opening resets as the

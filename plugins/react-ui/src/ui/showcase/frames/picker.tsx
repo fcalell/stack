@@ -27,7 +27,7 @@ const ROLES = [
 ] as const;
 type Role = (typeof ROLES)[number]["value"];
 const OWNERS = [
-	{ value: null, label: "Anyone" },
+	{ value: null, label: "Anyone", description: "Every owner, no filter" },
 	{ value: "ana", label: "Ana Ruiz", description: "ana@acme.app" },
 	{ value: "ben", label: "Ben Kaya", description: "ben@acme.app" },
 	{ value: "chen", label: "Chen Wu", description: "chen@acme.app" },
@@ -157,7 +157,8 @@ function openFirst(stage: HTMLElement) {
 
 // The row fit's cells draw the members' picks; the open state draws the
 // role pick's list (four options, no search) on the row fit cells and the
-// owner filter's (seven, the search leading) on the field cells; every other
+// owner filter's (seven two-line options, the search leading and an act after
+// them, which stands the touch sheet full height) on the field cells; every other
 // cell the field-fit triggers (two of them an option's chip after its label),
 // with a value, with the empty choice and with
 // none (its label in the placeholder's ink, a row fit's too).
@@ -186,6 +187,12 @@ function opened(row: boolean, bar: boolean) {
 	if (row) return <Members />;
 	if (bar) return <Bars />;
 	return (
-		<Picker label="Owner" options={OWNERS} value={null} onChange={change} />
+		<Picker
+			label="Owner"
+			options={OWNERS}
+			value={null}
+			onChange={change}
+			act={{ icon: "Plus", label: "Add an owner", onAct: change }}
+		/>
 	);
 }

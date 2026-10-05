@@ -52,8 +52,10 @@ const BOTTOM_MOTION =
 	"transition-transform duration-slow ease-out data-starting-style:translate-y-full data-ending-style:translate-y-full data-ending-style:duration-base data-ending-style:ease-in";
 const CENTRED_MOTION =
 	"transition-[opacity,translate] duration-slow ease-out data-starting-style:translate-y-pair data-starting-style:opacity-0 data-ending-style:opacity-0 data-ending-style:duration-base data-ending-style:ease-in";
+// The page inset above a bottom sheet keeps a strip of scrim over the tallest
+// one, so a press above it still dismisses.
 const LAYER_BOTTOM =
-	"fixed inset-0 z-(--layer-sheet) flex flex-col justify-end";
+	"fixed inset-0 z-(--layer-sheet) flex flex-col justify-end pt-page";
 const LAYER_SIDE = "fixed inset-0 z-(--layer-sheet) flex justify-end";
 const LAYER_CENTRED =
 	"fixed inset-0 z-(--layer-sheet) flex items-center justify-center";
@@ -62,9 +64,12 @@ const BOX = "relative flex flex-col";
 // press, so the layer around its content hears one as a press on the scrim
 // and dismisses; its content takes its own.
 const BOX_VIEW = "relative size-full pointer-events-none";
-// A tall bottom sheet stops at the viewport's top and its body scrolls; the
+// A bottom sheet stops at the viewport's top and its body scrolls; the
 // bottom inset clears a phone's home indicator.
 const BOX_BOTTOM = "max-h-full pb-safe";
+// A menu that searches grows to the layer's height, which `max-h-full` caps at
+// the page inset under the viewport's top.
+const BOX_TALL = "grow";
 const BOX_FLOAT = "max-w-full";
 const HEAD = "flex flex-col";
 const HEAD_ROW = "flex items-center";
@@ -96,6 +101,8 @@ export interface SheetBaseProps {
 	acts?: Act[];
 	/** A decision is centred on the desktop; a menu's rows stand under the head with no body or foot; a view (an image's full size) is its children over the whole layer, named by `title`, with no head, body, foot or close act of its own. */
 	form?: "centred" | "menu" | "view";
+	/** A menu that searches stands the whole viewport height from its first frame, so its list does not jump as the filter narrows. */
+	tall?: boolean;
 	/** An act pends: the close act is inert and says so. */
 	busy?: boolean;
 	/** What the sheet opens focused on: its first field (a confirm's typed name), or the element a ref holds (a pick's option). */
@@ -119,6 +126,7 @@ export function SheetBase({
 	fit,
 	acts,
 	form,
+	tall,
 	handle,
 	busy,
 	focus,
@@ -277,7 +285,7 @@ export function SheetBase({
 	const box = view
 		? cn(BOX_VIEW, SCRIM_MOTION)
 		: touch
-			? cn(SHEET, BOX, BOX_BOTTOM, BOTTOM_MOTION)
+			? cn(SHEET, BOX, BOX_BOTTOM, tall && BOX_TALL, BOTTOM_MOTION)
 			: centred
 				? cn(SHEET_CENTERED, BOX, BOX_FLOAT, CENTRED_MOTION)
 				: cn(sheetSide({ fit }), BOX, BOX_FLOAT, SIDE_MOTION);

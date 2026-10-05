@@ -18,5 +18,8 @@ test("a sheet's height is read off what it holds: a TextArea reads no sheet cont
 	assert.doesNotMatch(textArea, /useEffect/);
 	const base = source("sheet/base.tsx");
 	assert.doesNotMatch(base, /GrowContext|useSheetGrow|setTall|\bgrow:/);
-	assert.match(base, /const tall = holdsTextArea\(children\)/);
+	assert.match(
+		base,
+		/const tall =\s*\(form === "menu" && above !== undefined\) \|\| holdsTextArea\(children\)/,
+	);
 });

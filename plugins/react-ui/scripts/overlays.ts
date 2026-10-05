@@ -285,6 +285,7 @@ export const OVERLAYS: readonly string[] = [
 	"max-w-full",
 	"max-h-full",
 	"pb-safe",
+	"pt-page",
 	"shrink-0",
 	"truncate",
 	"text-start",

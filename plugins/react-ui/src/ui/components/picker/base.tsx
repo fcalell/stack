@@ -760,7 +760,8 @@ type SheetParts<V extends string | null> = PickParts<V> & {
 };
 
 // The touch sheet: the rows edge to edge under the sheet's head, a search
-// leading them past six options. It opens focused on the options' tab stop.
+// leading them past six options, which stands the sheet full height. It opens
+// focused on the options' tab stop.
 function PickSheet<V extends string | null>(props: SheetParts<V>) {
 	const [sheet] = useState(() => Dialog.createHandle<unknown>());
 	const first = useRef<HTMLButtonElement>(null);
@@ -772,6 +773,7 @@ function PickSheet<V extends string | null>(props: SheetParts<V>) {
 			/>
 			<SheetBase
 				form="menu"
+				tall={props.searching}
 				handle={sheet}
 				open={props.open}
 				onOpen={() => props.setOpen(true)}

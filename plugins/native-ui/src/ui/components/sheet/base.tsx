@@ -329,7 +329,9 @@ function Fits() {
 // Whether the sheet holds a `TextArea`, read off the elements it is given
 // (through a `FormField`'s control), so it stands full height from its first
 // frame and a wizard's page without one returns to content height. A
-// TextArea an app component draws inside itself is out of its sight.
+// TextArea an app component draws inside itself is out of its sight. A menu
+// that searches (it holds its search in `above`) is read as tall as well, so
+// its list does not jump as the filter narrows.
 function holdsTextArea(node: ReactNode): boolean {
 	return Children.toArray(node).some((child) => {
 		if (!isValidElement<{ children?: ReactNode }>(child)) return false;
@@ -359,7 +361,8 @@ export interface SheetBaseProps {
 	acts?: Act[];
 	// A menu's rows stand under the head with no body inset or foot.
 	form?: "menu";
-	// Fixed under the head, over the scrolling body: the Picker's search.
+	// Fixed under the head, over the scrolling body: the Picker's search, which
+	// stands a menu full height.
 	above?: ReactNode;
 	// An act pends: the close act, the scrim and the drag are inert.
 	busy?: boolean;
@@ -367,7 +370,7 @@ export interface SheetBaseProps {
 }
 
 // A bottom sheet over the scrim, content-tall up to the screen under its top
-// inset (full height when it holds a TextArea): the head fixed at the top
+// inset (full height when it holds a TextArea or a menu searches): the head fixed at the top
 // (the close act, or back on a second page, or neither for a decision, whose
 // acts dismiss it, the title and the submit at its
 // end where a keyboard would cover a bar, the description under them and a
@@ -400,7 +403,8 @@ export function SheetBase({
 	const [touched, setTouched] = useState(false);
 	const [pressedUnder, setPressedUnder] = useState<string>();
 	const touch = useCallback(() => setTouched(true), []);
-	const tall = holdsTextArea(children);
+	const tall =
+		(form === "menu" && above !== undefined) || holdsTextArea(children);
 	const blocked = submit?.blocked !== undefined;
 	// The submit's press stands while it is blocked by the reason it came
 	// under (`@fcalell/ui-core/reason`).
