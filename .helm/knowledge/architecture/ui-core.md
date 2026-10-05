@@ -1066,7 +1066,8 @@ a tick with no animation, never jumped to full.
   The `List`'s `meter` map takes `counts` (a function of the item, exclusive with `meta`) and
   `mark`.
 - A `StepCount` (`{ at, of }`) is an onboarding flow's place in it: `of` segments (two to four) at
-  the `meter` height (`STEP_COUNT_SEGMENT {state}`, radius `chip`, a gap `inside` apart), the steps
+  the `meter` height, 6/8, inside the 3–6 the references measure (`STEP_COUNT_SEGMENT {state}`,
+  radius `chip`, a gap `inside` apart), the steps
   before `at` `done`, `at` `current` and the rest `later` (`stepStateOf` in `./list-state`, so both
   platforms draw one state per segment, its `StepState` the type a `Stage` takes too), over "Step n
   of m" (the slot word `stepOf`) at meta, which is also the component's accessible name. `done` and
