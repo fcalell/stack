@@ -19,6 +19,7 @@ import {
 } from "../../lib/frame.ts";
 import { HeadingContext, screenLevels } from "../../lib/heading.ts";
 import { useTouch } from "../../lib/media.ts";
+import { useScrolls } from "../../lib/scrolls.ts";
 import { useWords } from "../../lib/words.tsx";
 import { IconButtonLink } from "../icon-button/base.tsx";
 import { IconButton } from "../icon-button/index.tsx";
@@ -36,10 +37,6 @@ const SCREEN = "@container/page group/page flex flex-col grow min-h-0";
 const SCREEN_BESIDE = "flex flex-col grow min-h-0";
 const SECTIONS_BESIDE = "@container/page flex flex-col shrink-0 grow";
 const ALONE = "page-tablet:hidden";
-// Where its head stands alone the beside record draws its title as the page's
-// `h1`, and under the Place's head at the level where it stands; `hidden`
-// takes the other out of the accessibility tree.
-const TITLE_UNDER = "page-max-tablet:hidden";
 // Beside, the back act draws as Close to the same route from `wide` of the
 // page, where the main stands with it.
 const BACK = "flex page-wide:hidden";
@@ -52,12 +49,14 @@ const ROW = "flex items-center";
 const SPACER = "grow";
 const TITLE = "min-w-0 grow truncate";
 // The body fills the screen, so an EmptyState alone in it centres, and
-// scrolls under the fixed head.
-const BODY = "flex flex-col grow overflow-y-auto";
+// scrolls under the fixed head, taking a tab stop only while it scrolls with
+// nothing tabbable inside.
+const BODY =
+	"flex flex-col grow overflow-y-auto focus-visible:-outline-offset-2";
 
 /** A pushed page. */
 export interface ScreenProps extends Closed {
-	/** The page's title, its one `h1`; beside a Split's main, a heading at the level where it stands, the `h1` where its head stands alone. */
+	/** The page's title, its one `h1`; beside a Split's main, a heading at the level where it stands, at every width. */
 	title: string;
 	/** The route the back act returns to; none draws no back act. */
 	back?: string;
@@ -69,7 +68,7 @@ export interface ScreenProps extends Closed {
 	children?: ReactNode;
 }
 
-/** A page pushed over a place: the back act first and no filled act. Its head draws one hairline: on the desktop it stands in the shell's column under one strip; on touch the top bar (back, actions, more) stands over the title and the screen covers the tab bar. A Split inside decides its regions by the screen's width and its pane's Details act stands in its head, drawn below `wide` of it. As a Split's `beside` record it stands in its page: its title is a heading at the level where it stands, it covers no tab bar, and from `wide` of the page its back act draws as Close. Below `tablet` of the page its head stands alone in the Place's stead, its title the page's `h1` over a body at the lower level, one top bar with its back act to the main, and draws the Details act of the Split's pane while it is open; its body keeps the room of the act floating over it. */
+/** A page pushed over a place: the back act first and no filled act. Its head draws one hairline: on the desktop it stands in the shell's column under one strip; on touch the top bar (back, actions, more) stands over the title and the screen covers the tab bar. A Split inside decides its regions by the screen's width and its pane's Details act stands in its head, drawn below `wide` of it. As a Split's `beside` record it stands in its page: its title is a heading at the level where it stands at every width (where its head stands alone the Place's `h1` stays read, unseen), it covers no tab bar, and from `wide` of the page its back act draws as Close. Below `tablet` of the page its head stands alone in the Place's stead, one top bar with its back act to the main, and draws the Details act of the Split's pane while it is open; its body keeps the room of the act floating over it. */
 export function Screen({ title, back, actions, more, children }: ScreenProps) {
 	const touch = useTouch();
 	const words = useWords();
@@ -82,6 +81,8 @@ export function Screen({ title, back, actions, more, children }: ScreenProps) {
 	const [own] = useState(() => Dialog.createHandle<unknown>());
 	const sheet = (beside ? use(DetailsSheet) : null) ?? own;
 	const titleId = useId();
+	const [bodyNode, setBodyNode] = useState<HTMLDivElement | null>(null);
+	const stop = useScrolls(bodyNode, "y");
 	const fit = touch ? "body" : "bar";
 	const levels = screenLevels(beside, level);
 	const Heading = `h${levels.title}` as const;
@@ -122,12 +123,9 @@ export function Screen({ title, back, actions, more, children }: ScreenProps) {
 	) : null;
 	const titleClass = cn(text({ role: "title" }), TITLE, touch && PAGE_TITLE);
 	const heading = (
-		<>
-			{beside ? <h1 className={cn(titleClass, ALONE)}>{title}</h1> : null}
-			<Heading id={titleId} className={cn(titleClass, beside && TITLE_UNDER)}>
-				{title}
-			</Heading>
-		</>
+		<Heading id={titleId} className={titleClass}>
+			{title}
+		</Heading>
 	);
 	// The head is one tree on both densities, so crossing the density line
 	// keeps its acts, their focus and an open sheet's trigger. Only the
@@ -158,14 +156,24 @@ export function Screen({ title, back, actions, more, children }: ScreenProps) {
 						>
 							{head}
 							{beside ? (
-								<div className={BODY}>
+								<div
+									ref={setBodyNode}
+									tabIndex={stop ? 0 : undefined}
+									className={BODY}
+								>
 									<div className={cn(PAGE_BODY, SECTIONS_BESIDE)}>
 										{children}
 									</div>
 									{room ? <div className={ALONE}>{room}</div> : null}
 								</div>
 							) : (
-								<div className={cn(PAGE_BODY, BODY)}>{children}</div>
+								<div
+									ref={setBodyNode}
+									tabIndex={stop ? 0 : undefined}
+									className={cn(PAGE_BODY, BODY)}
+								>
+									{children}
+								</div>
 							)}
 						</div>
 					</HeadingContext>

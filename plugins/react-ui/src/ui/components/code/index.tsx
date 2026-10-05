@@ -12,10 +12,11 @@ import {
 	skeleton,
 	text,
 } from "@fcalell/ui-core/variants";
-import { useEffect, useId, useState } from "react";
+import { useId, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { useCopy } from "../../lib/copy.ts";
 import { InsetRing } from "../../lib/ring.ts";
+import { useScrolls } from "../../lib/scrolls.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Icon } from "../icon/index.tsx";
 import { IconButton } from "../icon-button/index.tsx";
@@ -56,23 +57,6 @@ export interface CodeProps extends Closed {
 	download?: string;
 	/** The text waits: line boxes stand in for it under the head, `tail` of them under the fold's when it folds. */
 	loading?: boolean;
-}
-
-// Whether the text runs past its box sideways: a text that scrolls takes a tab
-// stop so a keyboard can scroll it, one that does not takes none. Its `code`
-// child is watched too, since new text resizes it and not the box.
-function useScrolls(node: HTMLElement | null): boolean {
-	const [scrolls, setScrolls] = useState(false);
-	useEffect(() => {
-		if (!node) return;
-		const measure = () => setScrolls(node.scrollWidth > node.clientWidth);
-		measure();
-		const observer = new ResizeObserver(measure);
-		observer.observe(node);
-		if (node.firstElementChild) observer.observe(node.firstElementChild);
-		return () => observer.disconnect();
-	}, [node]);
-	return scrolls;
 }
 
 // The download act: the text as a file of the given name, saved through an
@@ -126,7 +110,7 @@ export function Code({
 	const words = useWords();
 	const id = useId();
 	const [textNode, setTextNode] = useState<HTMLPreElement | null>(null);
-	const scrolls = useScrolls(textNode);
+	const scrolls = useScrolls(textNode, "x");
 	const [unfolded, setUnfolded] = useState(false);
 	const name = title ?? words.code;
 	// The acts' name: the title, else the file the download saves.

@@ -18,6 +18,7 @@ import {
 	ThreadBleeds,
 	ThreadRoom,
 } from "../../lib/frame.ts";
+import { useScrolls } from "../../lib/scrolls.ts";
 import { useWords } from "../../lib/words.tsx";
 import { SheetBase } from "../sheet/base.tsx";
 import { MAIN_FILLED } from "../thread/fill.ts";
@@ -25,7 +26,10 @@ import { MAIN_FILLED } from "../thread/fill.ts";
 // The split fills its bleeding body; the list, the main and the pane each
 // scroll on their own. Its page is the size container its regions query.
 const SPLIT = "flex min-w-0 grow min-h-0";
-const LIST = "flex flex-col shrink-0 overflow-y-auto";
+// The list, the main and the pane each take a tab stop only while they scroll
+// with nothing tabbable inside.
+const LIST =
+	"flex flex-col shrink-0 overflow-y-auto focus-visible:-outline-offset-2";
 // Below `tablet` the list stands alone: the page's width under its own top
 // inset, with no hairline.
 const LIST_ALONE =
@@ -37,7 +41,8 @@ const BEHIND = "page-max-tablet:hidden";
 const ALONE = "page-tablet:hidden";
 // The main scrolls; its inset is its content's, so beside a record its own
 // box is the half it shares and the inset counts against neither half.
-const MAIN = "flex flex-col min-w-0 grow overflow-y-auto";
+const MAIN =
+	"flex flex-col min-w-0 grow overflow-y-auto focus-visible:-outline-offset-2";
 const MAIN_INSET = "flex flex-col shrink-0 grow";
 // A Thread filling the main (its `data-fill` mark) scrolls its own log under
 // the record's head, which stays put: the inset fits the main, which keeps the
@@ -52,7 +57,8 @@ const MAIN_SHARED = "basis-0 page-max-wide:hidden";
 // hairline parts it from the main, below it the list's hairline is its edge.
 const BESIDE = "flex flex-col min-w-0 border-edge page-wide:border-l";
 const EMPTY = "flex grow min-w-0 items-center justify-center";
-const PANE = "flex flex-col shrink-0 overflow-y-auto page-max-wide:hidden";
+const PANE =
+	"flex flex-col shrink-0 overflow-y-auto focus-visible:-outline-offset-2 page-max-wide:hidden";
 
 /** A list beside the record it opens. */
 export interface SplitProps extends Closed {
@@ -78,6 +84,12 @@ export function Split({ list, main, beside, pane, empty }: SplitProps) {
 	// its first frame.
 	const [own] = useState(() => Dialog.createHandle<unknown>());
 	const sheet = use(DetailsSheet) ?? own;
+	const [listNode, setListNode] = useState<HTMLElement | null>(null);
+	const [mainNode, setMainNode] = useState<HTMLElement | null>(null);
+	const [paneNode, setPaneNode] = useState<HTMLElement | null>(null);
+	const listStop = useScrolls(listNode, "y");
+	const mainStop = useScrolls(mainNode, "y");
+	const paneStop = useScrolls(paneNode, "y");
 	const opened = main !== undefined;
 	const detailed = opened && pane !== undefined;
 	const besides = opened && beside !== undefined;
@@ -97,6 +109,8 @@ export function Split({ list, main, beside, pane, empty }: SplitProps) {
 			className={SPLIT}
 		>
 			<nav
+				ref={setListNode}
+				tabIndex={listStop ? 0 : undefined}
 				aria-labelledby={title}
 				className={cn(
 					SPLIT_LIST,
@@ -110,7 +124,11 @@ export function Split({ list, main, beside, pane, empty }: SplitProps) {
 				{room}
 			</nav>
 			{opened ? (
-				<div className={record}>
+				<div
+					ref={setMainNode}
+					tabIndex={mainStop ? 0 : undefined}
+					className={record}
+				>
 					<div className={inset}>
 						<ThreadRoom value>
 							<ThreadBleeds value>
@@ -133,7 +151,12 @@ export function Split({ list, main, beside, pane, empty }: SplitProps) {
 				</div>
 			) : null}
 			{detailed && !besides ? (
-				<aside aria-label={words.details} className={cn(SPLIT_PANE, PANE)}>
+				<aside
+					ref={setPaneNode}
+					tabIndex={paneStop ? 0 : undefined}
+					aria-label={words.details}
+					className={cn(SPLIT_PANE, PANE)}
+				>
 					{pane}
 				</aside>
 			) : null}

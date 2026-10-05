@@ -13,7 +13,7 @@ test("a Split takes the record its main opened beside it, a Screen whose back is
 	assert.ok(ROSTER.layout.Split?.draws.includes("SPLIT_BESIDE"));
 });
 
-test("a beside record titles at the level where it stands and its body reads below it, the page's `h1` its alone title's", () => {
+test("a beside record titles at the level where it stands and its body reads below it, at every width", () => {
 	assert.deepEqual(screenLevels(false, 2), { title: 1, body: 2 });
 	assert.deepEqual(screenLevels(true, 2), { title: 2, body: 3 });
 });

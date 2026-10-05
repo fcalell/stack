@@ -16,7 +16,9 @@ inside a component of the app's, so the page's head draws its back and Details a
 A record the open record links to opens beside it: the `Split`'s `beside` holds a `Screen` whose
 `back` is the open record's route. From `wide` it stands beside the main, its back act a Close;
 below `wide` it stands in the main's place with its back act, and below `tablet` its head is the
-page's only head, its back act to the main.
+page's only head, its back act to the main. The record's title keeps its heading level at every
+width, and below `tablet` the `Place`'s `h1` stays read, unseen, so the outline is the same at
+every width.
 
 ```tsx
 <Split list={rows} main={<Item />} beside={<Screen title="Run 12" back={itemRoute}><Run /></Screen>} />

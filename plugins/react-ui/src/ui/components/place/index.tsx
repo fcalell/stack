@@ -34,6 +34,7 @@ import {
 } from "../../lib/frame.ts";
 import { HeadingContext } from "../../lib/heading.ts";
 import { DistanceContext, useTouch } from "../../lib/media.ts";
+import { useScrolls } from "../../lib/scrolls.ts";
 import { useWords } from "../../lib/words.tsx";
 import { Button } from "../button/index.tsx";
 import { IconButtonBase, IconButtonLink } from "../icon-button/base.tsx";
@@ -63,8 +64,11 @@ const ROW_MARKED =
 	"hidden items-center page-max-tablet:group-has-data-record/page:flex page-max-wide:group-has-data-pane/page:flex group-has-[[data-pane][data-beside]]/page:flex";
 const HEAD = "flex flex-col";
 // Below `tablet` of the page a record standing beside the main stands alone,
-// its head the page's one, so the Place draws none.
+// its head the page's one, so the Place draws none; its title stays read as
+// an unseen `h1`, so the page keeps its `h1` and the record its level.
 const HEAD_BESIDE = "page-max-tablet:group-has-data-beside/page:hidden";
+const TITLE_ALONE =
+	"sr-only hidden page-max-tablet:group-has-data-beside/page:block";
 const ROW = "flex items-center";
 const SPACER = "grow";
 const TITLE = "min-w-0 grow truncate";
@@ -77,8 +81,10 @@ const TITLE_FIT = "min-w-0 max-w-full truncate";
 const CONTEXT = "inline-flex shrink-0";
 // The body fills the column, so an EmptyState alone in it centres, and
 // scrolls under the fixed head; a bleeding body fills the rest and
-// leaves scrolling, and its top inset, to its child.
-const BODY = "flex flex-col grow overflow-y-auto";
+// leaves scrolling, and its top inset, to its child. It takes a tab stop only
+// while it scrolls with nothing tabbable inside.
+const BODY =
+	"flex flex-col grow overflow-y-auto focus-visible:-outline-offset-2";
 const BLEED = "flex flex-col grow min-h-0";
 const BODY_WRAP = "relative flex flex-col grow min-h-0";
 // The foot stays under the body, which scrolls past it, and spans it; a field
@@ -177,7 +183,7 @@ type PlaceDistance =
 /** A page in the shell. */
 export type PlaceProps = PlaceBase & PlaceEnd & PlaceDistance;
 
-/** A page under a head and its hairline: on the desktop the title, its `context` pick and its acts share one strip, on touch the pick stands on the title line under the top bar; on touch the top bar (the shell's switcher, the actions, more) stands over the title and the act floats over the body's end, lifted. A `foot` docks at the page's bottom at both densities a sections gap under the body's end, the body scrolling under it, above the tab bar on touch; it spans the body, and a `MessageInput` keeps its own measure column inside it. A Place is the size container what stands in it decides its structure by (a Split its regions, a Table its grid): a Thread in its body fills it, unless the Place has a `foot`, where it stands among the sections; it draws the Details act of a Split's pane, below `wide` of its width, and with a record open a back act to the place's route, drawn below `tablet` first: before the title in the strip, in the switcher's stead in the top bar. While a record stands beside the main, below `tablet` the Place draws no head: that record's head is the page's one. With `distance` `room` it draws the room set and the touch structure, without the shell's switcher. */
+/** A page under a head and its hairline: on the desktop the title, its `context` pick and its acts share one strip, on touch the pick stands on the title line under the top bar; on touch the top bar (the shell's switcher, the actions, more) stands over the title and the act floats over the body's end, lifted. A `foot` docks at the page's bottom at both densities a sections gap under the body's end, the body scrolling under it, above the tab bar on touch; it spans the body, and a `MessageInput` keeps its own measure column inside it. A Place is the size container what stands in it decides its structure by (a Split its regions, a Table its grid): a Thread in its body fills it, unless the Place has a `foot`, where it stands among the sections; it draws the Details act of a Split's pane, below `wide` of its width, and with a record open a back act to the place's route, drawn below `tablet` first: before the title in the strip, in the switcher's stead in the top bar. While a record stands beside the main, below `tablet` the Place draws no head, its `h1` staying read, unseen: that record's head is the page's one. With `distance` `room` it draws the room set and the touch structure, without the shell's switcher. */
 export function Place({
 	title,
 	distance,
@@ -195,6 +201,8 @@ export function Place({
 	const switcher = use(ShellSwitcher);
 	const route = use(PlaceRoute);
 	const titleId = useId();
+	const [bodyNode, setBodyNode] = useState<HTMLDivElement | null>(null);
+	const stop = useScrolls(bodyNode, "y");
 	const [sheet] = useState(() => Dialog.createHandle<unknown>());
 	const fit = touch ? "body" : "bar";
 	// A record standing alone returns to the list, the place's own route.
@@ -305,6 +313,8 @@ export function Place({
 		</div>
 	) : (
 		<div
+			ref={setBodyNode}
+			tabIndex={stop ? 0 : undefined}
 			className={cn(PAGE_BODY, BODY, foot ? PAGE_BODY_OVER_FOOT : BODY_FILLED)}
 		>
 			<ThreadRoom value={!foot}>{children}</ThreadRoom>
@@ -322,6 +332,7 @@ export function Place({
 							data-density={far ? "room" : undefined}
 							className={cn(PLACE, PAGE)}
 						>
+							<h1 className={TITLE_ALONE}>{title}</h1>
 							{head}
 							<div className={BODY_WRAP}>
 								{body}

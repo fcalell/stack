@@ -1,6 +1,6 @@
 ---
 id: 003-73
-status: backlog
+status: review
 sessions: {}
 ---
 # react-ui: a beside record's headings follow its title below wide

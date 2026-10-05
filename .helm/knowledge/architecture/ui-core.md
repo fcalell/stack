@@ -571,11 +571,12 @@ a tick with no animation, never jumped to full.
   `beside` prop (native), and draws no head, so one top bar holds one back act, to the main, and the
   list is reached by going back from the main; the Split hands the Details act to that head through
   `Beside`. The Split hands the Screen `Beside`: the Screen covers no tab bar, its title is a
-  heading at the level where it stands, and where its head stands alone the page's top heading
-  (native's header role has no level; the web draws the title twice, the `h1` below `tablet` of the
-  page and the lower level from it, the other `hidden` out of the accessibility tree, since a
-  container query swaps a pair but changes no tag; its body keeps the lower level, a body no pair
-  can swap), and on the web its body's sections, not its root, are the `page` container, so its
+  heading at the level where it stands at every width, and where its head stands alone the Place's
+  `h1` stays read, unseen (native's header role has no level; the web's Place draws its title's twin
+  `h1` as `sr-only`, shown only where the beside record stands alone, `HEAD_BESIDE`'s mark, so the
+  outline is `h1` Place, the record's title a level under, its sections under that, at every width;
+  a body's levels cannot swap by container query, which is why the record keeps its level and the
+  page's `h1` is the one that returns), and on the web its body's sections, not its root, are the `page` container, so its
   head's acts and the floating act's room read the outer page's width and what stands in its body
   reads its own. Rejected: the record in the pane (the pane is the open record's details, at
   forty-five characters), a `Sheet` (an overlay over the scrim with no back to the main), and a
@@ -1344,7 +1345,13 @@ a tick with no animation, never jumped to full.
   Unfolding a `Code` moves focus to its already-mounted text in the press, before the fold act
   unmounts, so focus never drops to the page. The web's text takes a tab stop only while it
   scrolls sideways (a resize observer reads it), else it is focusable by script alone, so the fold
-  still lands on it and a reader passes no region with nothing to scroll.
+  still lands on it and a reader passes no region with nothing to scroll. The web's page-frame
+  scrollers (the Place's and Screen's body, the Split's list, main and pane, a sheet's body) follow
+  the same rule through `lib/scrolls.ts`, on the vertical axis, with one more condition: a
+  region takes the stop only while it scrolls and holds nothing a keyboard reaches (axe's
+  `scrollable-region-focusable`), so a body of links gains no stop, and a body of text, which
+  Safari leaves unreachable, gains one, ringed inset. It takes no role or name; focus reads the
+  content inside `main`. A native scroll view has no tab order.
 - `Code`'s `download` is the file's name, a string because the name is the one value stack cannot
   derive. The act sits beside the copy act, in the head with a title, else side by side in the copy
   column. The web saves a `Blob` of the text through an anchor's `download`; the phone writes it to

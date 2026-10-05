@@ -28,6 +28,7 @@ import { FormStands } from "../../lib/form.ts";
 import { useTouch } from "../../lib/media.ts";
 import { PortalContainer } from "../../lib/portal.ts";
 import { ReasonHostContext } from "../../lib/reason.ts";
+import { useScrolls } from "../../lib/scrolls.ts";
 import { TouchedContext, useTouchState } from "../../lib/touched.ts";
 import { useWords } from "../../lib/words.tsx";
 import { ActionBar } from "../action-bar/index.tsx";
@@ -76,7 +77,9 @@ const HEAD_ROW = "flex items-center";
 const TITLE_BLOCK = "flex flex-col grow min-w-0";
 const TITLE_SLOT = "flex items-center min-w-0";
 const TITLE = "truncate";
-const BODY = "flex flex-col grow min-h-0 overflow-y-auto overscroll-contain";
+// The body takes a tab stop only while it scrolls with nothing tabbable inside.
+const BODY =
+	"flex flex-col grow min-h-0 overflow-y-auto overscroll-contain focus-visible:-outline-offset-2";
 const FOOT_ROW = "flex items-center";
 const FOOT_STACK = "flex flex-col";
 const FOOT_LINE = "flex items-center min-w-0";
@@ -143,6 +146,8 @@ export function SheetBase({
 	const [pressedUnder, setPressedUnder] = useState<string>();
 	const [running, setRunning] = useState(false);
 	const popup = useRef<HTMLDivElement>(null);
+	const [bodyNode, setBodyNode] = useState<HTMLDivElement | null>(null);
+	const stop = useScrolls(bodyNode, "y");
 	const blocked = submit?.blocked !== undefined;
 	// The submit's press stands while it is blocked by the reason it came
 	// under (`@fcalell/ui-core/reason`).
@@ -276,7 +281,13 @@ export function SheetBase({
 			{form === "menu" ? (
 				children
 			) : children ? (
-				<div className={cn(SHEET_BODY, BODY)}>{children}</div>
+				<div
+					ref={setBodyNode}
+					tabIndex={stop ? 0 : undefined}
+					className={cn(SHEET_BODY, BODY)}
+				>
+					{children}
+				</div>
 			) : null}
 			{form === "menu" ? null : footer}
 		</>
