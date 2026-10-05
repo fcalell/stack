@@ -781,6 +781,15 @@ export const GROUP =
 // A list bleeds its rows' inset, so a row's leading meets the title over it
 // and its wash hangs into the inset around it.
 export const LIST = "gap-rows -mx-control-x";
+// A tree's list: its rows abut, so a level's rail runs unbroken down them.
+export const LIST_TREE = "-mx-control-x";
+// A tree row's level: one `indent` step in, its hairline rail on the end, so
+// the rail falls under the middle of the parent's fold lane. A row draws one
+// per level of its depth.
+export const TREE_RAIL = "w-indent border-r border-edge";
+// The lane every row of a tree reserves ahead of its leading, as wide as the
+// fold act's square: a branch's fold act stands in it, a leaf leaves it empty.
+export const TREE_LANE = "w-control-compact";
 // A board's column at its width.
 export const COLUMN = "w-column";
 // A sectioned form's foot: its action bar under a hairline across the form.

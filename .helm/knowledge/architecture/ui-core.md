@@ -85,7 +85,7 @@ pinned by the package's verify suite; this entry holds the architecture and its 
   the desktop set, 16 on touch, each role a ratio rounded to the pixel, its line box to the even
   pixel), the eleven spacing roles (multiples of 4, one rung looser on touch except the float
   and page insets and the acts gap; a list bleeds by `control-x`, so its rows' leading meets
-  the title over it at either density) and the thirty-two sizes (control 32/44, field 38/48, target 24/44, the switch and
+  the title over it at either density) and the thirty-three sizes (control 32/44, field 38/48, target 24/44, `indent` 16/20 (a tree row's step in), the switch and
   its derived thumb travel, the avatar, three icon sizes by the text beside them, the check,
   the slider track, the one-time-code box, the meter's bar, the chart's plot, the QR square, and
   five derived from the type: the text area's three body lines, the message input's eight, an
@@ -177,7 +177,7 @@ pinned by the package's verify suite; this entry holds the architecture and its 
 ## Words
 
 Every word a molecule draws or reads aloud on its own (the seven `Status` words, `recommended`,
-`copy`, `copied`, `download`, `back`, `close`, `cancel`, `dismiss`, `more`, `send`, `stop`, `attach`, `search`, `loading`, `checking`, `retry`, `saving`, `saved`, `notSaved`, `add`, `remove`, `edit`, `details`, `places`, `notifications`, `code`, `added`, `removed`, `sort`, `ascending`, `descending`, `time`, `message`, `seen`, `unseen`, `copyFailed`, `latest`, `missing`, `typeValue`, `pickValue`, `chooseFile`, `photos`, `files`, `warning`, `locked`, `modified`, `chooseAll`, the counted `earlierLines`, and the slot words `meterValue`, `meterOver`, `meterMark`, `linesAdded`, `linesRemoved`, `changed`, `unchanged`, `stale`, `wrongType`, `stepOf` and `chosenOf`) comes
+`copy`, `copied`, `download`, `back`, `close`, `cancel`, `dismiss`, `more`, `send`, `stop`, `attach`, `search`, `loading`, `checking`, `retry`, `saving`, `saved`, `notSaved`, `add`, `remove`, `edit`, `details`, `places`, `notifications`, `code`, `added`, `removed`, `sort`, `ascending`, `descending`, `time`, `message`, `seen`, `unseen`, `copyFailed`, `latest`, `missing`, `typeValue`, `pickValue`, `chooseFile`, `photos`, `files`, `warning`, `locked`, `modified`, `chooseAll`, `expand`, `collapse`, the counted `earlierLines`, and the slot words `meterValue`, `meterOver`, `meterMark`, `linesAdded`, `linesRemoved`, `changed`, `unchanged`, `stale`, `wrongType`, `stepOf` and `chosenOf`) comes
 from `words`, a closed typed object with English defaults. The `Words` type requires every key
 and `wordsSchema` is strict, so a translation missing a word fails `tsc` and the schema. It is a
 plugin option beside `theme`; each plugin contributes a `WordsProvider` into the generated entry
@@ -860,6 +860,27 @@ a tick with no animation, never jumped to full.
   one `ROW_TITLE` family holds the four forms (`strong`, `dim`, `whole`, `whole-dim`) so a title's
   weight and ink are one cell, not a call-site pick; `rowTitleForm(wrap, dim)` names it for both
   platforms.
+- A `List` whose `row` map gives `children` is a tree, not a new component: folding hides rows a
+  lone `ListRow` does not own, and a tree component would copy the List's four states. `treeRows`
+  in `./list-state` flattens the items to the visible rows (each item, then its children one depth
+  in unless its key is folded), pure and tested; the List holds the folded keys (open by default;
+  `RowSlots.key` names a branch, so keys are unique across the tree) and hands each row its depth
+  and fold through an internal context, so `ListRow`'s roster props do not change. Each level is
+  one `indent` step (a size, 16 desktop and 20 touch: the leading slot plus the gap would be 30 or
+  40 per level, and three levels would cost 90 px of a 360 px list column) with a hairline on its
+  end (`TREE_RAIL`), which falls under the middle of the parent's fold lane. Every row of the tree
+  reserves the lane (`TREE_LANE`, the `control-compact` square; waiting rows too, through
+  `rowShape.tree`), a branch's fold act standing in it as the bar-fit `IconButton` with a
+  `ChevronRight` or `ChevronDown`, named by the words `expand` and `collapse` before the title. The
+  levels and the lane stand as one box that bleeds the row's padding (`-my-rows` on a two-line
+  row, `-my-pair` on a wrapped one), and the tree's list drops the row gap (`LIST_TREE`), so a rail
+  is unbroken from row to row. The web draws `role="tree"` on the list and `treeitem` with
+  `aria-level` and `aria-expanded` on each row, Arrow Left folding an open branch and Arrow Right
+  opening a closed one, except in a `Group`, whose card holds the rows directly (its hairline is a
+  child selector a `tree` wrapper would break); the phone reads the fold act's
+  `accessibilityState.expanded`. `dim` composes by item: an off-path branch gives `dim` to its
+  parent and each child, so the branch reads grey whole, its rail and chevron staying in the meta
+  ink. A Section counts a tree's top level, not every node.
 - A value outside its editable context reads locked on the fact's own row: `DefinitionRow.locked`
   is a `Lock` (`reason`, `href`), drawing a `LOCK_GLYPH` (`Lock` at `icon-meta`, the meta ink,
   read aloud as the word `locked`) after the value and the reason as the row's meta line, the

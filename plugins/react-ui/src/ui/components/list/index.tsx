@@ -20,14 +20,17 @@ import {
 	meterShape,
 	retryOf,
 	rowShape,
+	toggled,
+	treeRows,
 } from "@fcalell/ui-core/list-state";
-import { LIST } from "@fcalell/ui-core/variants";
-import { type ReactNode, use } from "react";
+import { LIST, LIST_TREE } from "@fcalell/ui-core/variants";
+import { type ReactNode, use, useState } from "react";
 import type { Closed } from "../../lib/closed.ts";
 import { useGroupList } from "../../lib/group.ts";
 import { LoadingContext } from "../../lib/loading.ts";
 import { ListedRoute, useRoute } from "../../lib/navigate.ts";
 import { SectionContext } from "../../lib/section.ts";
+import { TreeContext } from "../../lib/tree.ts";
 import { useWords } from "../../lib/words.tsx";
 import { EmptyStateBase } from "../empty-state/base.tsx";
 import type { EmptyStateProps } from "../empty-state/index.tsx";
@@ -84,6 +87,8 @@ export interface RowSlots<T, V extends string | null = string> {
 	key: (item: T) => string;
 	/** The row's title. */
 	title: (item: T) => Part;
+	/** The item's children, which makes the list a tree: they draw one level in under it, and its fold act folds them (open by default, the list holds the state). Every item's `key` is unique across the whole tree. */
+	children?: (item: T) => readonly T[] | undefined;
 	/** Where the row stands in a change set, its change mark; a row of the set that is untouched is `unchanged`. */
 	change?: (item: T) => ChangeKind | undefined;
 	/** The rows' leading mark, one kind for every row of the list. */
@@ -229,6 +234,8 @@ export function List<T, V extends string | null = string>(
 ) {
 	const words = useWords();
 	const at = useRoute();
+	// The keys of the tree's folded branches; every branch starts open.
+	const [folded, setFolded] = useState<readonly string[]>([]);
 	const base = {
 		query: props.query,
 		items: props.items,
@@ -244,12 +251,17 @@ export function List<T, V extends string | null = string>(
 	// In a Group the card is the rows' box: they stand in it directly, so its
 	// hairline falls once between them.
 	// The rows read the route the List read once, through `ListedRoute`.
-	const frame = (rows: ReactNode) => (
+	// A tree's rows abut, so its rails run unbroken, and stand in a `tree`.
+	const frame = (rows: ReactNode, tree = false) => (
 		<ListedRoute value={at}>
 			{ground === "group" ? (
 				rows
 			) : (
-				<div aria-busy={busy || undefined} className={cn(LIST, STACK)}>
+				<div
+					role={tree ? "tree" : undefined}
+					aria-busy={busy || undefined}
+					className={cn(tree ? LIST_TREE : LIST, STACK)}
+				>
 					{rows}
 				</div>
 			)}
@@ -285,29 +297,49 @@ export function List<T, V extends string | null = string>(
 	const items = (props.query ? props.query.data : props.items) ?? [];
 	if (props.row) {
 		const { row } = props;
+		const rowOf = (item: T) => (
+			<ListRow
+				key={row.key(item)}
+				change={row.change?.(item)}
+				leading={row.leading && leadingOf(row.leading, item)}
+				title={row.title(item)}
+				meta={row.meta?.(item)}
+				trailing={row.trailing?.(item)}
+				status={row.status?.(item)}
+				warning={row.warning?.(item)}
+				lock={row.lock?.(item)}
+				chip={row.chip?.(item)}
+				entry={row.entry?.(item)}
+				steps={row.steps?.(item)}
+				dim={row.dim?.(item)}
+				wrap={row.wrap}
+				act={row.act?.(item)}
+				more={row.more?.(item)}
+				href={row.href?.(item)}
+				onOpen={row.onOpen ? () => row.onOpen?.(item) : undefined}
+			/>
+		);
+		const { children } = row;
+		if (children === undefined) return frame(items.map(rowOf));
+		// Each row of the tree reads its depth and fold from its own provider.
 		return frame(
-			items.map((item) => (
-				<ListRow
-					key={row.key(item)}
-					change={row.change?.(item)}
-					leading={row.leading && leadingOf(row.leading, item)}
-					title={row.title(item)}
-					meta={row.meta?.(item)}
-					trailing={row.trailing?.(item)}
-					status={row.status?.(item)}
-					warning={row.warning?.(item)}
-					lock={row.lock?.(item)}
-					chip={row.chip?.(item)}
-					entry={row.entry?.(item)}
-					steps={row.steps?.(item)}
-					dim={row.dim?.(item)}
-					wrap={row.wrap}
-					act={row.act?.(item)}
-					more={row.more?.(item)}
-					href={row.href?.(item)}
-					onOpen={row.onOpen ? () => row.onOpen?.(item) : undefined}
-				/>
+			treeRows(items, { key: row.key, children }, folded).map((each) => (
+				<TreeContext
+					key={each.key}
+					value={{
+						depth: each.depth,
+						fold: each.branch
+							? {
+									open: each.open,
+									onToggle: () => setFolded(toggled(folded, each.key)),
+								}
+							: undefined,
+					}}
+				>
+					{rowOf(each.item)}
+				</TreeContext>
 			)),
+			true,
 		);
 	}
 	if (props.meter) {

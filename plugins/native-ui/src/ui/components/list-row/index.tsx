@@ -24,6 +24,8 @@ import {
 	rowStep,
 	rowTitle,
 	rowTitleForm,
+	TREE_LANE,
+	TREE_RAIL,
 	text,
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, useContext, useMemo } from "react";
@@ -38,12 +40,14 @@ import { joinParts, META_CUT, partText } from "../../lib/parts";
 import { ReasonHostContext, usePressed } from "../../lib/reason";
 import type { Route } from "../../lib/route";
 import { useTouched } from "../../lib/touched";
+import { type RowTree, TreeContext } from "../../lib/tree";
 import { useWords } from "../../lib/words";
 import { Avatar } from "../avatar";
 import { Button } from "../button";
 import { Checkbox } from "../checkbox";
 import { Chip } from "../chip";
 import { Icon } from "../icon";
+import { IconButtonBase } from "../icon-button/base";
 import { Input } from "../input";
 import { MenuBase } from "../menu/base";
 import { Picker } from "../picker";
@@ -92,6 +96,12 @@ const ACTS = "relative flex-row shrink-0 items-center";
 // The entry takes the touch itself: the input filling the room its act leaves.
 const ENTRY = "flex-row items-center min-w-0";
 const ENTRY_FIELD = "flex-1 min-w-0";
+// A tree row's levels and fold lane stand as one box that runs the row's full
+// height, over its padding, so a level's rail is unbroken from row to row. A
+// press on any of it falls through to the row's hit but the fold act.
+const TREE = "flex-row shrink-0 self-stretch";
+const FOLD = "shrink-0 items-center justify-center self-center";
+const BLEED = { one: "", two: "-my-rows", whole: "-my-pair" } as const;
 
 export interface ListRowProps<V extends string | null = string> extends Closed {
 	// Where the row stands in a change set: its mark at the row's start, ahead
@@ -148,6 +158,40 @@ export interface ListRowProps<V extends string | null = string> extends Closed {
 	// Where the row goes when opened; the row is current at it.
 	href?: Route;
 	onOpen?: () => void;
+}
+
+// A tree row's rails and fold lane: a rail per level, then the lane every row
+// of the tree reserves, a branch's fold act standing in it.
+function TreeLead(props: {
+	tree: RowTree;
+	lines: keyof typeof BLEED;
+	wrap: boolean;
+	named: string;
+}) {
+	const words = useWords();
+	const { tree, lines, wrap, named } = props;
+	const { depth, fold } = tree;
+	const levels = Array.from({ length: depth }, (_, level) => level);
+	return (
+		<View pointerEvents="box-none" className={cn(TREE, BLEED[lines])}>
+			{levels.map((level) => (
+				<View key={level} pointerEvents="none" className={TREE_RAIL} />
+			))}
+			<First on={wrap}>
+				<View pointerEvents="box-none" className={cn(TREE_LANE, FOLD)}>
+					{fold ? (
+						<IconButtonBase
+							icon={fold.open ? "ChevronDown" : "ChevronRight"}
+							fit="bar"
+							label={`${fold.open ? words.collapse : words.expand} ${named}`}
+							onAct={fold.onToggle}
+							expanded={fold.open}
+						/>
+					) : null}
+				</View>
+			</First>
+		</View>
+	);
 }
 
 // A part standing on the title's first line while the title wraps whole.
@@ -226,6 +270,9 @@ function trailingWord(trailing: RowTrailing<string | null>): string {
 	return "";
 }
 
+// Inside a tree `List` the row opens with a rail per level and the fold lane
+// every row of the tree reserves, a branch's fold act in it (its
+// `accessibilityState.expanded` the branch's state).
 // The change mark, the leading slot, the title with its trailing value over the meta line (its
 // status, warning, lock and chip at the end, the chip yielding first), the entry (its input and act, its error
 // under it) or the step list, a trailing pick, then the row's act and the more act. A row that
@@ -253,6 +300,7 @@ export function ListRow<V extends string | null = string>({
 }: ListRowProps<V>) {
 	const words = useWords();
 	const ground = useContext(GroundContext);
+	const tree = useContext(TreeContext);
 	const pathname = usePathname();
 	const named = partText(title);
 	const current = href !== undefined && isCurrent(href, pathname);
@@ -313,6 +361,9 @@ export function ListRow<V extends string | null = string>({
 					onPress={open}
 					className={HIT}
 				/>
+			) : null}
+			{tree ? (
+				<TreeLead tree={tree} lines={lines} wrap={wrap} named={named} />
 			) : null}
 			{change ? (
 				<First on={wrap}>

@@ -25,13 +25,17 @@ import {
 	sectionCount,
 	sectionState,
 	tableRecords,
+	treeRows,
 } from "../src/list-state.ts";
+import { sizePx } from "../src/scales.ts";
 import { ENGLISH } from "../src/tokens.ts";
 import {
 	changeContentTone,
+	LIST_TREE,
 	rowStep,
 	rowTitle,
 	rowTitleForm,
+	TREE_RAIL,
 } from "../src/variants.ts";
 
 const refetch = () => {};
@@ -146,6 +150,7 @@ test("the waiting shape follows the declared slots and runs none of them", () =>
 	};
 	const none = {
 		wrap: false,
+		tree: false,
 		change: false,
 		leading: null,
 		meta: false,
@@ -199,6 +204,11 @@ test("the waiting shape follows the declared slots and runs none of them", () =>
 		meta: true,
 	});
 	assert.equal(rowShape({ wrap: false }).wrap, false);
+	// A tree's waiting rows reserve its fold lane, whatever the children are.
+	assert.deepEqual(rowShape({ children: spy("children") }), {
+		...none,
+		tree: true,
+	});
 	assert.deepEqual(rowShape({ entry: spy("entry"), act: spy("act") }), {
 		...none,
 		entry: true,
@@ -560,4 +570,76 @@ test("a dim title keeps its ink off the fade: the meta ink at 400, never opacity
 test("a step list's running step is in the body ink, the others in the meta ink", () => {
 	assert.match(rowStep({ state: "running" }), /text-ink-body/);
 	assert.match(rowStep({ state: "rest" }), /text-ink-meta/);
+});
+
+interface Node {
+	id: string;
+	children?: Node[];
+}
+const TREE: Node[] = [
+	{
+		id: "a",
+		children: [
+			{ id: "a1", children: [{ id: "a1x" }, { id: "a1y" }] },
+			{ id: "a2", children: [] },
+		],
+	},
+	{ id: "b" },
+	{ id: "c", children: [{ id: "c1" }] },
+];
+const NODES = {
+	key: (node: Node) => node.id,
+	children: (node: Node) => node.children,
+};
+const shown = (folded: readonly string[]) =>
+	treeRows(TREE, NODES, folded).map((row) => `${row.depth}:${row.key}`);
+
+test("a tree draws each item then its children one depth in, every level open by default", () => {
+	assert.deepEqual(shown([]), [
+		"0:a",
+		"1:a1",
+		"2:a1x",
+		"2:a1y",
+		"1:a2",
+		"0:b",
+		"0:c",
+		"1:c1",
+	]);
+	assert.deepEqual(treeRows([], NODES, []), []);
+});
+
+test("a folded item hides every descendant and keeps its own row", () => {
+	assert.deepEqual(shown(["a"]), ["0:a", "0:b", "0:c", "1:c1"]);
+	assert.deepEqual(shown(["a1"]), [
+		"0:a",
+		"1:a1",
+		"1:a2",
+		"0:b",
+		"0:c",
+		"1:c1",
+	]);
+	// A folded descendant stays folded under an open parent, and a key no item
+	// holds changes nothing.
+	assert.deepEqual(shown(["a1", "a", "zzz"]), ["0:a", "0:b", "0:c", "1:c1"]);
+});
+
+test("only an item with children is a branch, and a row says whether its children are drawn", () => {
+	const rows = treeRows(TREE, NODES, ["a1"]);
+	const byKey = Object.fromEntries(rows.map((row) => [row.key, row]));
+	assert.equal(byKey.a?.branch, true);
+	assert.equal(byKey.a?.open, true);
+	assert.equal(byKey.a1?.branch, true);
+	assert.equal(byKey.a1?.open, false);
+	// No children, or an empty list, is a leaf.
+	assert.equal(byKey.b?.branch, false);
+	assert.equal(byKey.a2?.branch, false);
+	assert.equal(byKey.a?.item, TREE[0]);
+});
+
+test("a tree's rail is one indent step with a hairline, and its rows abut", () => {
+	assert.match(TREE_RAIL, /\bw-indent\b/);
+	assert.match(TREE_RAIL, /\bborder-r border-edge\b/);
+	assert.doesNotMatch(LIST_TREE, /\bgap-/);
+	assert.equal(sizePx("desktop", "indent"), 16);
+	assert.equal(sizePx("touch", "indent"), 20);
 });

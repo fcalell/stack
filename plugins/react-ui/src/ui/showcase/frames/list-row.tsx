@@ -390,6 +390,75 @@ const HOPS: Hop[] = [
 	},
 ];
 
+// A branching journey as a tree of three levels: a choice point's legs under
+// it, a leg's steps under that, the leg off the run's path dimmed whole.
+interface Leg extends Hop {
+	children?: Leg[];
+}
+
+const LEG_ROW: RowSlots<Leg> = {
+	...HOP_ROW,
+	children: (leg) => leg.children,
+};
+
+const LEGS: Leg[] = [
+	{
+		id: "tree-signup",
+		title: "Sign up",
+		meta: ["Trigger"],
+		onPath: true,
+		status: { state: "done", label: "Taken" },
+		children: [
+			{
+				id: "tree-paid",
+				title: "Plan is paid",
+				meta: ["Choice"],
+				onPath: true,
+				status: { state: "done", label: "Taken" },
+				children: [
+					{
+						id: "tree-welcome",
+						title: "Send welcome email",
+						meta: ["Email"],
+						onPath: true,
+						status: { state: "done", label: "Taken" },
+					},
+					{
+						id: "tree-billing",
+						title: "Add to the billing list",
+						meta: ["Segment"],
+						onPath: true,
+						status: { state: "running", label: "Running" },
+					},
+				],
+			},
+			{
+				id: "tree-free",
+				title: "Plan is free",
+				meta: ["Choice"],
+				onPath: false,
+				status: { state: "waiting", label: "Skipped" },
+				children: [
+					{
+						id: "tree-survey",
+						title: "Ask for a survey",
+						meta: ["Email"],
+						onPath: false,
+						status: { state: "waiting", label: "Skipped" },
+					},
+					{
+						id: "tree-upsell",
+						title: "Offer the annual plan",
+						meta: ["Banner"],
+						onPath: false,
+						status: { state: "failed", label: "Failed" },
+					},
+				],
+			},
+		],
+	},
+];
+
 // An import whose act pends: its steps stand in its meta line's place, one
 // done, one running, one waiting; the settled row below gives its meta back.
 interface Import {
@@ -549,7 +618,7 @@ function Issues() {
 // running row beside an active one), change set entries (every mark and the
 // act that clears the warning), a change set (one row of every kind), ticked
 // entries (one ticked, one blocked), a journey's hops (the rows off the
-// path dimmed), an import whose steps stand in its meta line's place, notes
+// path dimmed) and the same journey as a tree of three levels, an import whose steps stand in its meta line's place, notes
 // whose titles wrap whole, and members in a Group (a trailing
 // value, a trailing pick, a status dot leading).
 function Props() {
@@ -564,6 +633,7 @@ function Props() {
 			<List items={CHANGES} row={CHANGE_ROW} />
 			<List items={TICKS} row={TICK_ROW} />
 			<List items={HOPS} row={HOP_ROW} />
+			<List items={LEGS} row={LEG_ROW} />
 			<List items={IMPORTS} row={IMPORT_ROW} />
 			<List items={MEMORIES} row={MEMORY_ROW} />
 			<Group>
@@ -650,6 +720,8 @@ function Waiting(props: { kind: "avatar" | "icon" | "status" | "check" }) {
 			<List items={ENTRIES} row={ENTRY_ROW} />
 			<List items={[]} loading row={CHANGE_ROW} />
 			<List items={CHANGES} row={CHANGE_ROW} />
+			<List items={[]} loading row={LEG_ROW} />
+			<List items={LEGS} row={LEG_ROW} />
 			<List items={[]} loading row={IMPORT_ROW} />
 			<List items={IMPORTS} row={IMPORT_ROW} />
 			<List items={[]} loading row={MEMORY_ROW} />

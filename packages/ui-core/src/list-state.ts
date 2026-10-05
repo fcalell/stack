@@ -122,7 +122,7 @@ export function groupWait(lists: number): "rows" | "settings" {
 export type LeadingKind = "avatar" | "icon" | "status" | "check";
 
 // The slots a waiting ListRow draws, known before any item: its change mark's
-// lane, its leading mark by kind, a meta line (at a chip's height when a chip may stand on it, the
+// lane, a tree's fold lane, its leading mark by kind, a meta line (at a chip's height when a chip may stand on it, the
 // marks' bar at its end when a status, a warning, a lock or a chip may), an entry's field and
 // button in the meta line's place (it wins over the meta line), a labelled act
 // at the row's end, a trailing value, and the more act's room, kept empty. A
@@ -131,6 +131,7 @@ export type LeadingKind = "avatar" | "icon" | "status" | "check";
 // lines in the title's place, its leading, trailing and acts at the first.
 export interface RowShape {
 	wrap: boolean;
+	tree: boolean;
 	change: boolean;
 	leading: LeadingKind | null;
 	meta: boolean;
@@ -163,6 +164,7 @@ function leadingKind(leading: LeadingKeys | undefined): LeadingKind | null {
 // no slot function runs.
 export function rowShape(slots: {
 	wrap?: boolean;
+	children?: unknown;
 	change?: unknown;
 	leading?: LeadingKeys;
 	meta?: unknown;
@@ -183,6 +185,7 @@ export function rowShape(slots: {
 		slots.chip !== undefined;
 	return {
 		wrap: slots.wrap === true,
+		tree: slots.children !== undefined,
 		change: slots.change !== undefined,
 		leading: leadingKind(slots.leading),
 		meta: slots.meta !== undefined || slots.steps !== undefined || marks,
@@ -193,6 +196,43 @@ export function rowShape(slots: {
 		trailing: slots.trailing !== undefined,
 		more: slots.more !== undefined,
 	};
+}
+
+// One row of a tree as the list draws it: its item at a depth (the roots at
+// 0), whether it has children to fold, and whether they are drawn.
+export interface TreeRow<T> {
+	item: T;
+	key: string;
+	depth: number;
+	branch: boolean;
+	open: boolean;
+}
+
+// The rows a tree draws, in order: each item, then its children one depth in
+// unless its key is folded, so a folded item hides every descendant. A list
+// folds nothing until a key is given; an item with no children (none, or an
+// empty list) is a leaf and cannot fold. `folded` names keys no item holds
+// harmlessly.
+export function treeRows<T>(
+	items: readonly T[],
+	slots: {
+		key: (item: T) => string;
+		children: (item: T) => readonly T[] | undefined;
+	},
+	folded: readonly string[],
+): TreeRow<T>[] {
+	const rows: TreeRow<T>[] = [];
+	const walk = (level: readonly T[], depth: number) => {
+		for (const item of level) {
+			const key = slots.key(item);
+			const below = slots.children(item) ?? [];
+			const open = !folded.includes(key);
+			rows.push({ item, key, depth, branch: below.length > 0, open });
+			if (open) walk(below, depth + 1);
+		}
+	};
+	walk(items, 0);
+	return rows;
 }
 
 // The slots a waiting FileRow draws beyond its glyph, path and counts, known

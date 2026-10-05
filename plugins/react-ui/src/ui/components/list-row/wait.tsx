@@ -10,6 +10,7 @@ import {
 	row,
 	skeleton,
 	skeletonLane,
+	TREE_LANE,
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, use } from "react";
 import { GroundContext } from "../../lib/ground.ts";
@@ -24,6 +25,8 @@ const LINE_WHOLE = "flex items-start min-w-0";
 const TITLE_LINES = "flex flex-col grow min-w-0";
 const SQUARE = "touch:rounded-none";
 const LEADING = "flex shrink-0 items-center justify-center";
+// A tree's fold lane, empty: no row waiting has depth or a branch.
+const FOLD = "shrink-0";
 // The change mark's lane, one icon wide.
 const BOX = "flex shrink-0 items-center justify-center";
 const TEXT = "flex flex-col grow min-w-0";
@@ -92,7 +95,7 @@ function TitleBar(props: { width: string }) {
 	);
 }
 
-/** A ListRow waiting, the `index`th of a waiting list: the change mark's skeleton in its lane, the leading mark's skeleton by its kind, a bar in the title line (two when the list wraps its titles, its leading, trailing and acts on the first; the trailing's at its end, four figures wide) and one in the meta line (the marks' at its end) or, with an entry, a field's bar and an act's bar in its place, each at its slot's place, a labelled act's bar at the row's end and the more act's room left empty. Outside the package's exports. */
+/** A ListRow waiting, the `index`th of a waiting list: a tree's fold lane, empty, the change mark's skeleton in its lane, the leading mark's skeleton by its kind, a bar in the title line (two when the list wraps its titles, its leading, trailing and acts on the first; the trailing's at its end, four figures wide) and one in the meta line (the marks' at its end) or, with an entry, a field's bar and an act's bar in its place, each at its slot's place, a labelled act's bar at the row's end and the more act's room left empty. Outside the package's exports. */
 export function RowWait(props: { shape: RowShape; index: number }) {
 	const ground = use(GroundContext);
 	const { shape } = props;
@@ -118,6 +121,7 @@ export function RowWait(props: { shape: RowShape; index: number }) {
 				ground === "list" && SQUARE,
 			)}
 		>
+			{shape.tree ? <span className={cn(TREE_LANE, FOLD)} /> : null}
 			{shape.change ? (
 				<First on={shape.wrap}>
 					<span className={BOX}>

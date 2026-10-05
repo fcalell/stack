@@ -165,6 +165,12 @@ a memory) is `wrap`: it wraps to every line at 400 with its leading, trailing an
 first line, and a `List`'s `row` map takes it as one boolean for every row. A `{ quoted }` title
 marks a model-written name; `wrap` is for text a person approved.
 
+Rows that branch (a journey's choice points and their legs) are a tree: the `List`'s `row` map gives
+`children`, each item's children, and the List draws a rail per level, a fold act on every parent
+(open by default, read aloud as expanded or collapsed) and a lane every row reserves for it, so give
+each item a `key` unique across the whole tree. Never indent rows with a class, a nested `List` or
+a `ListRow` of your own. A `dim` branch gives `dim` to the parent and every child.
+
 Rows of inline terms (a mapping of sources to targets, a filter's conditions) are `Rules`, each
 rule a card of stacked terms: each `Rule` is `{ id, terms, onRemove? }`, its `terms` a pair
 (`{ from, to }`) or a condition (`{ field, operator, value }`), each term a `RuleValue`, one of

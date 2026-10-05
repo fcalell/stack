@@ -129,6 +129,7 @@ const SIZE_USE: Record<(typeof SIZES)[number], string> = {
 	"row-setting": "a setting row: label and description beside a control",
 	strip: "a page header bar: a Place's or Screen's title and acts",
 	target: "the least hit area of any interactive part",
+	indent: "a tree row's step in: one per level, a hairline rail on its end",
 	dot: "a status or chip mark",
 	chip: "a chip's height",
 	avatar: "an avatar's side",

@@ -799,7 +799,8 @@ export const SPACING_RATIO: Record<Density, Record<SpacingRole, number>> = {
 // it names a role (`min-h-control`, `size-avatar`). Desktop: control 32,
 // compact 28 (menus, toolbars), field 38, one-line row 32, two-line row 48,
 // setting row 64, strip 40 (a page header bar: the title and its acts),
-// target 24. Touch: every target at least 44. An
+// target 24, indent 16 (a tree row's step in, one per level). Touch: every
+// target at least 44, indent 20. An
 // icon is sized by what it sits beside: `icon-meta` meta or caption text,
 // `icon` body text, `icon-control` the inside of a control. The spinner is
 // the `icon` rung: it replaces a row's glyph and sits beside body text.
@@ -818,6 +819,7 @@ export const SIZES = [
 	"row-setting",
 	"strip",
 	"target",
+	"indent",
 	"dot",
 	"chip",
 	"avatar",
@@ -870,6 +872,7 @@ const TOUCH_SIZES: Record<Exclude<Size, DerivedSize>, number> = {
 	"row-setting": 72,
 	strip: 44,
 	target: 44,
+	indent: 20,
 	dot: 8,
 	chip: 24,
 	avatar: 32,
@@ -903,6 +906,7 @@ export const SIZE_PX: Record<
 		"row-setting": 64,
 		strip: 40,
 		target: 24,
+		indent: 16,
 		dot: 6,
 		chip: 20,
 		avatar: 24,
@@ -1209,6 +1213,8 @@ export const WORD_KEYS = [
 	"unchanged",
 	"stale",
 	"chooseAll",
+	"expand",
+	"collapse",
 ] as const;
 export type WordKey = (typeof WORD_KEYS)[number];
 
@@ -1300,6 +1306,8 @@ export const ENGLISH: Words = {
 	unchanged: "Unchanged",
 	stale: "Stale",
 	chooseAll: "Select all",
+	expand: "Expand",
+	collapse: "Collapse",
 	earlierLines: {
 		one: "Show {count} earlier line",
 		other: "Show {count} earlier lines",

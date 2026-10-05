@@ -9,6 +9,7 @@ import {
 	row,
 	skeleton,
 	skeletonLane,
+	TREE_LANE,
 } from "@fcalell/ui-core/variants";
 import { type ReactNode, useContext } from "react";
 import { Text as RNText, View } from "react-native";
@@ -25,6 +26,8 @@ const LINE_WHOLE = "flex-row items-start min-w-0";
 const TITLE_LINES = "flex-1 min-w-0";
 const SQUARE = "rounded-none";
 const LEADING = "shrink-0 items-center justify-center";
+// A tree's fold lane, empty: no row waiting has depth or a branch.
+const FOLD = "shrink-0";
 // The change mark's lane, one icon wide.
 const BOX = "shrink-0 items-center justify-center";
 const TEXT = "flex-1 min-w-0";
@@ -99,7 +102,7 @@ function TitleBar(props: { width: string }) {
 	);
 }
 
-// A ListRow waiting, the `index`th of a waiting list: the change mark's
+// A ListRow waiting, the `index`th of a waiting list: a tree's fold lane, empty, the change mark's
 // skeleton in its lane, the leading mark's skeleton by its kind, a bar in the title line (two when the list wraps its titles, its leading, trailing and acts on the first; the trailing's at its end, four figures
 // wide) and one in the meta line (the marks' at its end) or, with an entry, a
 // field's bar and an act's bar in its place, each at its slot's place, a
@@ -128,6 +131,7 @@ export function RowWait(props: { shape: RowShape; index: number }) {
 				ground === "list" && SQUARE,
 			)}
 		>
+			{shape.tree ? <View className={cn(TREE_LANE, FOLD)} /> : null}
 			{shape.change ? (
 				<First on={shape.wrap}>
 					<View className={BOX}>

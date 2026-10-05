@@ -773,7 +773,10 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// (`row` for ListRows, `file` for FileRows, `meter` for Meters), its
 		// waiting rows the row's own in the slots the map declares, its failed
 		// and empty EmptyStates its own. In a Group its rows and forms stand on
-		// the card, the card their box.
+		// the card, the card their box. A `row` map with `children` makes it a
+		// tree: the rows abut (`LIST_TREE`), each level one step in, and the List
+		// owns which branches are folded (open by default), handing every row
+		// its depth and fold.
 		List: {
 			props: [
 				"query",
@@ -785,8 +788,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"items",
 				"loading",
 			],
-			draws: ["LIST"],
-			holds: ["LIST"],
+			draws: ["LIST", "LIST_TREE"],
+			holds: ["LIST", "LIST_TREE"],
 			states: ["rest", "loading", "error", "empty"],
 			owns: {
 				spacing: ["rows", "control-x"],
@@ -951,6 +954,11 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 		// running step in the body ink with the spinner. `wrap` is a title read
 		// whole: it wraps to every line at 400, the leading, trailing and acts
 		// aligned to its first line.
+		// Inside a tree List (`row.children`) a row reads its depth and fold from the
+		// List: a rail per level (`TREE_RAIL`, one `indent` step) and a fold lane
+		// (`TREE_LANE`) ahead of its change mark, every row of the tree reserving
+		// it; a branch's fold act is the bar-fit IconButton's square with a
+		// chevron, a leaf's lane is empty.
 		ListRow: {
 			props: [
 				"change",
@@ -985,6 +993,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"ROW_TITLE",
 				"ROW_STEPS",
 				"ROW_STEP",
+				"TREE_RAIL",
+				"TREE_LANE",
 				"ROW_LEADING",
 				"ROW_TITLE_LINE",
 				"ROW_META_LINE",
@@ -1036,6 +1046,8 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 				"ROW_TITLE",
 				"ROW_STEPS",
 				"ROW_STEP",
+				"TREE_RAIL",
+				"TREE_LANE",
 				"ROW_TRAILING",
 				"ROW_MARKS",
 				"ROW_WARNING",
@@ -1089,6 +1101,7 @@ export const ROSTER: Record<Layer, Record<string, RosterEntry>> = {
 					"figures",
 					"check",
 					"target",
+					"indent",
 				],
 			},
 		},

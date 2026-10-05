@@ -331,6 +331,8 @@ export const OVERLAYS: readonly string[] = [
 	"w-fit",
 	"max-h-(--available-height)",
 	"-outline-offset-2",
+	"-my-pair",
+	"-my-rows",
 	"max-w-full",
 	"gap-pair",
 	"pt-pair",

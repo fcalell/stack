@@ -23,6 +23,7 @@ export function IconButtonBase({
 	fit,
 	disabled,
 	open,
+	expanded,
 }: {
 	icon: IconName;
 	label: string;
@@ -30,12 +31,14 @@ export function IconButtonBase({
 	fit?: IconButtonFit;
 	disabled?: boolean;
 	open?: boolean;
+	// The act folds a branch: its state is read aloud, with no press wash.
+	expanded?: boolean;
 }) {
 	return (
 		<Pressable
 			accessibilityRole="button"
 			accessibilityLabel={label}
-			accessibilityState={{ disabled, expanded: open }}
+			accessibilityState={{ disabled, expanded: expanded ?? open }}
 			disabled={disabled}
 			onPress={onAct}
 			className={cn(iconButton({ fit }), BOX, !disabled && PRESS, open && OPEN)}
